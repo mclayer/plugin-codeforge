@@ -1,0 +1,77 @@
+# base-labels.tsv — codeforge base GitHub label SSOT (name<TAB>color<TAB>desc).
+# CFP-2250 (ADR-027 Amendment 11): bootstrap-labels.sh hardcode 추출 → .sh + .ps1 공유 SSOT.
+# 형식: 3 tab-separated field. 빈 줄 / # 시작 줄 = skip (reader 무시).
+# 순서 = bootstrap-labels.sh dry-run base section 출력 순서 (check-label-registry.sh cross-verify 보존).
+# 동적 label (hotfix-bypass:* / component:*) 은 본 파일 외 — registry / project.yaml python parse 영역.
+impl-manifest	fbca04	Sub-issue (Impl Manifest 파일 단위)
+phase:요구사항	1d76db	Phase: 요구사항
+phase:설계	1d76db	Phase: 설계
+phase:설계-리뷰	1d76db	Phase: 설계-리뷰
+phase:구현	1d76db	Phase: 구현
+phase:구현-리뷰	1d76db	Phase: 구현-리뷰
+phase:구현-테스트	1d76db	Phase: 구현-테스트
+phase:보안-테스트	1d76db	Phase: 보안-테스트
+phase:배포	1d76db	Phase: 배포
+phase:배포-리뷰	1d76db	Phase: 배포-리뷰
+phase:reservation	ededed	Phase: reservation (CFP-260 / ADR-036 — brainstorming KEY 사전 확보, 30 일 미진행 시 자동 close)
+gate:design-review-pass	0e8a16	Design review PASS
+gate:security-test-pass	0e8a16	Security test PASS
+gate:live-entry-pass	0e8a16	Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)
+gate:retro-complete	0e8a16	Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-045). 미부착 시 retro-mandatory.yml 가 close 차단.
+gate:channel-canary-promotion	0e8a16	Canary tier 활성 PR 4-tuple evidence quad 충족 marker (CFP-991, consumer Tier-2 advisory)
+gate:channel-beta-promotion	0e8a16	Beta tier promotion gate marker (canary→beta transition, CFP-991)
+gate:channel-stable-promotion	0e8a16	Stable tier promotion gate marker (beta→stable transition, CFP-991)
+gate:deploy-pass	0e8a16	Deploy lane PASS (CFP-1059 / ADR-087 — blue-green + atomic swap + healthcheck + 3-시간 보존 timer + 자동 rollback 미발동 영역)
+gate:deploy-review-pass	0e8a16	Deploy Review lane PASS (CFP-1059 / ADR-088 — smoke / 성능 비교 / cutover 사후 검증 3종 PASS, terminal gate)
+gate:cross-layer-impact-pass	0e8a16	Cross-layer impact 분석 통과 (CFP-1059 / ADR-090 §결정 1 — multi-layer 의존 매핑 + 변경 순서 invariant 검증 PASS)
+gate:dependency-order-pass	0e8a16	Dependency order invariant 통과 (CFP-1059 / ADR-090 §결정 2 — expand=source-first / contract=leaf-first)
+gate:bidirectional-smoke-pass	0e8a16	Bidirectional smoke (양방향 호환) 통과 (CFP-1059 / ADR-089 §결정 4 — blue ↔ green traffic mix window 안 schema 양방향 호환 verify PASS)
+fix:설계-리뷰-retry	e99695	FIX retry: 설계-리뷰
+fix:구현-리뷰-retry	e99695	FIX retry: 구현-리뷰
+fix:구현-테스트-retry	e99695	FIX retry: 구현-테스트
+fix:보안-테스트-retry	e99695	FIX retry: 보안-테스트
+hotfix:minimal	ff9999	Hotfix minimal
+hotfix:critical	ff0000	Hotfix critical
+audit:post-hotfix	fef2c0	Post-hotfix audit Story
+audit:debut-eval	fbca04	데뷔 평가 (consumer 첫 사용 사례) 발견 사항
+audit:from-mctrader-debut	fef2c0	mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)
+from-cfp-425-followup	fbca04	Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker
+audit:spec-amendment	fbca04	Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)
+early-close:duplicate	d4c5f9	다른 Story 와 중복 — early-close 정당화
+early-close:reclassified	d4c5f9	Out-of-scope 재분류 — 다른 Epic / 별도 Story 로 이전
+early-close:epic-rolled-up	d4c5f9	Epic 종료 시 child Story 일괄 close — Epic close PR 가 absorbing
+category:lane-progression	0e8a16	#1 — 7 lane 통과 / 막힘 (owner: PMOAgent)
+category:agent-gap	d93f0b	#2 — phase 별 gap + 과부하 (owner: ArchitectPL, ADR-021 R1-R4)
+category:decision-table	1d76db	#3 — 원인 판정 row 모호 / 신규 (owner: wrapper Orchestrator)
+category:deputy-mandate	5319e7	#4 — 6 deputy mandate 부족 (owner: ArchitectPL)
+category:workflow-invariant	bfd4f2	#5 — GitHub Actions 강제 누락 (owner: wrapper Orchestrator)
+category:template	c5def5	#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)
+category:contract-schema	bfdadc	#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)
+parent:CFP-949	ededed	Child Story of Sub-Epic CFP-949 (6 lane plugin self-owned architecture doc seed)
+plugin:codeforge-requirements	ededed	Plugin namespace: codeforge-requirements (요구사항 lane)
+plugin:codeforge-design	ededed	Plugin namespace: codeforge-design (설계 lane)
+plugin:codeforge-develop	ededed	Plugin namespace: codeforge-develop (구현 lane)
+plugin:codeforge-test	ededed	Plugin namespace: codeforge-test (통합테스트 lane)
+plugin:codeforge-deploy	5319e7	Plugin namespace: codeforge-deploy (배포 lane, CFP-1059 / ADR-087 신설 carrier)
+plugin:codeforge-deploy-review	5319e7	Plugin namespace: codeforge-deploy-review (배포-리뷰 lane, CFP-1059 / ADR-088 신설 carrier)
+conflict:file-overlap	e4e669	다른 open PR과 변경 파일 중복 (parallel-epic-conflict-check.yml 자동 감지)
+conflict:adr-number	e4e669	ADR-RESERVATION.md 동시 수정 감지 — ADR 번호 충돌 위험
+conflict:section-locked	d93f0b	section-ownership.yaml locked 섹션 동시 수정 감지 — merge 순서 조율 필요
+merge-order:1	0075ca	병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)
+merge-order:2	e4e669	병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무
+fallback:manual	c5def5	fallback: per-Issue ad-hoc override marker (CFP-658 / ADR-027 Amendment 2 §결정 6.A) — Orchestrator 가 부착 시 bootstrap.fallback_mode: action_blocked 와 무관 manual agent direct write path 활성
+fallback:rate-limited	c5def5	fallback: rate-limited skip audit marker (CFP-658 / ADR-027 Amendment 2 §결정 6.G) — manual-story-init-fallback.sh exponential backoff max 3 retry 초과 시 자동 부착
+post-merge-fix	0e8a16	cross-repo Story land_order 후 발견된 safe defect 의 post-merge hotfix PR — phase-gate-mergeable.yml 4번째 fast-pass source (3-조건 AND 중 조건 1). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 FIX Ledger row binding + 조건 3 원 MERGED PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier. 사용법: Orchestrator 가 post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성 (Orchestrator monopoly, CFP-32) + corrects_pr: marker PR body 기재 + story_uri: marker 병기 의무.
+sibling-pr	0e8a16	CFP-499 / ADR-010 Amendment 4 cross-repo Story mirror PR fast-pass channel — phase-gate-mergeable workflow 의 hasCode=true PR 가 wrapper Story binding 없이도 fast-pass 통과 (sibling PR 가 wrapper Story 의 mirror 임을 명시). 사용법: cross-repo Story mirror PR (codeforge family lane plugin repo 의 sibling sync PR — codeforge-pmo / codeforge-review / codeforge-design / codeforge-develop / codeforge-test / codeforge-requirements / codeforge-deploy / codeforge-deploy-review) open 시 부착 — wrapper Story `## Sibling PRs` 섹션 binding 명시. anti-misuse 안전망 lint 영역 = CFP-521 v2.5 family member 9th (ADR-010 Amendment 4 §결정 5 sibling-pr-label-author-check workflow). fast-pass category 2번째 family member (CFP-795 v2.21 post-merge-fix 1번째 후 답습, CFP-1485 v2.60 SSOT codify).
+channel:stable	0e8a16	channel: stable tier marker (LOW risk class — default tier). consumer .claude/_overlay/project.yaml codeforge.channel.tier: stable 선언 시 Issue/PR channel-aware annotation. ADR-076 §결정 9.1 3-tier taxonomy default. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier.
+channel:beta	d4c5f9	channel: beta tier marker (MEDIUM risk class — opt-in incremental track). ADR-076 §결정 9.1 3-tier taxonomy intermediate. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier.
+channel:canary	f9d0c4	channel: canary tier marker (HIGH risk class — production-impact awareness). ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-72 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor (Wave 4 sub-Epic #1 Story-3 carrier 영역). CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier.
+production-touching	b60205	Story touches production cutover surface — explicit user go-ahead required before lane entry (ADR-72 §결정 3 trigger axis 정합). HIGH severity invariant (severity-propagation-v1 v1.0 binding). canary tier (channel:canary) 와 2-axis disjoint (양 label 동시 부착 가능). CFP-954 Wave 4 sub-Epic #882 Story-3 carrier.
+axis:aggregate-architect	5319e7	AggregateArchitect deputy axis — RDB OLTP aggregate invariant + 트랜잭션 경계 + Alembic 정책 (tool-agnostic policy layer). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier.
+axis:api-contract-architect	5319e7	APIContractArchitect deputy axis — transport contract (REST/GraphQL/gRPC/WebSocket) + API versioning + DTO + OpenAPI/GraphQL schema + contract testing. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier.
+axis:module-architect	5319e7	ModuleArchitect deputy axis — module/package boundary + dependency direction + layered/hexagonal/clean (module-level). Rename from axis:code-architect (CFP-1026 W2 S3 신설 → CFP-1086 rename). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier.
+axis:data-architect	5319e7	DataArchitect deputy axis — 빅데이터 OLAP only (Parquet/객체저장소/DuckDB/streaming). RDB 영역은 axis:aggregate-architect 로 분리. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier.
+codeforge-kpi-alert	f29513	codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard). rate-limit-fallback-kpi.yml workflow 가 sample_size_sufficient=true AND fallback_rate_percent >= 1.0% 시 Issue auto-open. ADR-060 evidence-enforceable framework 첫 non-sunset application.
+codeforge-kpi-infra-error	d73a4a	KPI workflow infrastructure failure — oncall investigation required. rate-limit-fallback-kpi.yml workflow 가 clone fail / aggregator script error / auto-PR fail detect 시 Issue auto-open. measurement alert (codeforge-kpi-alert) 와 분리된 channel — audience routing (oncall vs 정책 의사결정자). CFP-451 v2.3 sub-axis 다축 완결.
+codeforge-kpi-update	0e8a16	KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a)).
+ops-signal	e4e669	ops-signal: 운영 신호 회로 Issue label (CFP-1193 / ADR-106 Amendment 1 §결정 1 단계 2-a carrier). rollback signal monitor 가 감지한 신호(에러율/burn rate 임계 초과 / 보존 window 만료 / kill-switch 활성 감사)에 대해 발의하는 Issue 의 분류 label. ADR-106 self-improving loop 회로 단계 2-a (auto-rollback trigger 동반 사후 알림) 채널. 단계 2-b (일반 ops-signal Issue) / 단계 3 (PMOAgent escalation) = S6 carrier.

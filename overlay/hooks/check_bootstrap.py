@@ -6,7 +6,7 @@ PowerShell (`check-bootstrap.ps1`) wrapper 둘 다 본 모듈을 호출.
 
 CFP-103 (Phase 2a of CFP-96 Epic). 10 check (CFP-660 NEW check 10):
   1. Workflow permissions (org-level) — 기존 (CFP-11)
-  2. 18 plugin label 존재 — 기존 (CFP-11)
+  2. 15 plugin label 존재 — 기존 (CFP-11), CFP-2250: type:* native Issue Type 이관 (type 3 row 제거)
   3. workflow_distribution.mode=degraded missing_workflows 안내 — 기존 (CFP-86/89/95)
   4. consumer-scripts manifest drift — 기존 (CFP-97)
   5. 10 plugin install (~/.claude/plugins/installed_plugins.json) — 기존 (CFP-103)
@@ -27,7 +27,7 @@ Strict mode opt-in (CFP-127 / ADR-032 amendment 1, CFP-660 / ADR-032 amendment 2
     (a) project.yaml 부재 → exit 1
     (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치 → exit 1
     (c) settings.json 의 3 hook 미등록 → exit 1
-    (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 → exit 1
+    (d) 15 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 → exit 1
     (e) consumer workflow version drift — stale `.github/workflows/<name>.yml` vs wrapper
         templates SHA / 핵심 line mismatch (CFP-660 / ADR-032 amendment 2 §결정 6) → exit 1
   Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip.
@@ -53,8 +53,11 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+# CFP-2250 / ADR-049 — type:epic/story/bug 는 native GitHub Issue Type (org-level) 으로 이관.
+# bootstrap-labels.sh 가 더 이상 생성하지 않으므로 REQUIRED_LABELS 에 잔존 시 check 2 가 항상
+# "부재" 로 오탐. type 3 row 제거 (15 종 잔존). impl-manifest 는 별 axis (sub-issue marker) 라 보존.
 REQUIRED_LABELS = [
-    "type:epic", "type:story", "type:bug", "impl-manifest",
+    "impl-manifest",
     "phase:요구사항", "phase:설계", "phase:설계-리뷰", "phase:구현",
     "phase:구현-리뷰", "phase:구현-테스트", "phase:보안-테스트",
     "gate:design-review-pass", "gate:security-test-pass",
@@ -143,20 +146,31 @@ def _resolve_overlay_yaml(env: dict[str, str]) -> Path:
 
 
 def _resolve_plugins_json(env: dict[str, str]) -> Path:
-    """OS branch path resolution.
+    """OS-aware 결정적 plugins.json path resolution (CFP-2250 결함2).
 
     Linux/macOS: ~/.claude/plugins/installed_plugins.json
     Windows: $env:USERPROFILE/.claude/plugins/installed_plugins.json
-    WSL/dual-env: HOME + USERPROFILE 둘 다 set — 둘 다 try, 첫 file 존재 path 반환.
+
+    WSL/dual-env (HOME ∧ USERPROFILE 둘 다 set + 양쪽 파일 존재) 비결정성 제거:
+    고정 [HOME, USERPROFILE] 순서가 아니라 **OS 맥락 우선순위** 로 결정 —
+      - Windows (os.name == 'nt'): USERPROFILE 우선 → HOME
+      - POSIX: HOME 우선 → USERPROFILE
+    동일 입력(os, env, 파일존재) → 동일 path (결정적). 우선 candidate 에 파일 존재 시 즉시 채택;
+    우선 쪽 부재 + 차선 쪽 존재 시 차선 채택; 둘 다 부재 시 우선 candidate path 반환 (main 측 WARN).
     """
-    candidates: list[str] = [v for v in (env.get("HOME"), env.get("USERPROFILE")) if v]
-    for c in candidates:
+    home = env.get("HOME")
+    userprofile = env.get("USERPROFILE")
+    if os.name == "nt":
+        ordered = [v for v in (userprofile, home) if v]
+    else:
+        ordered = [v for v in (home, userprofile) if v]
+    for c in ordered:
         p = Path(c) / ".claude" / "plugins" / "installed_plugins.json"
         if p.is_file():
             return p
-    # Fallback: 둘 다 file 미존재. 첫 candidate 반환 (main 측에서 WARN 처리).
-    if candidates:
-        return Path(candidates[0]) / ".claude" / "plugins" / "installed_plugins.json"
+    # Fallback: 둘 다 file 미존재. OS-우선 candidate 반환 (결정적, main 측 WARN 처리).
+    if ordered:
+        return Path(ordered[0]) / ".claude" / "plugins" / "installed_plugins.json"
     return Path(".claude") / "plugins" / "installed_plugins.json"
 
 
@@ -205,7 +219,7 @@ def check_workflow_permissions(org: str, repo: str) -> list[str]:
 
 
 def check_plugin_labels(org: str, repo: str) -> list[str]:
-    """기존 check 2 — 18 plugin label 존재."""
+    """기존 check 2 — plugin label 존재 (len(REQUIRED_LABELS) 종, CFP-2250: type:* 제거)."""
     try:
         result = subprocess.run(
             ["gh", "label", "list", "--limit", "100", "--repo", f"{org}/{repo}",
@@ -218,7 +232,7 @@ def check_plugin_labels(org: str, repo: str) -> list[str]:
         missing = [lbl for lbl in REQUIRED_LABELS if lbl not in existing]
         if missing:
             warns = [
-                f"[bootstrap] WARN: {len(missing)}/18 plugin label 부재",
+                f"[bootstrap] WARN: {len(missing)}/{len(REQUIRED_LABELS)} plugin label 부재",
             ]
             if len(missing) <= 5:
                 warns.append(f"           누락: {' '.join(missing)}")
@@ -278,7 +292,14 @@ def check_consumer_scripts_manifest(plugin_root: Path, overlay_yaml: Path | None
     """
     manifest_path = plugin_root / "templates" / "consumer-scripts.manifest"
     if not manifest_path.is_file():
-        return []
+        # CFP-2250 결함3 preflight: plugin_root 의 manifest 자체 부재 = wrapper plugin 미설치 /
+        # PLUGIN_ROOT 오해석 = bootstrap 미완. silent return 대신 원인 명시 (story-init 발동 전 진단).
+        return [
+            "[bootstrap] WARN: wrapper plugin manifest 부재 — bootstrap 미완 또는 PLUGIN_ROOT 오해석 (CFP-2250 결함3)",
+            f"           검색 위치: {manifest_path}",
+            "           → wrapper plugin 설치 확인 (codeforge@mclayer) + 'bash scripts/bootstrap-consumer.sh' 1회 실행",
+            "           → 미해결 시 consumer-distributable script preflight 검증 skip (story-init 의존 자산 누락 원인 불명)",
+        ]
 
     # CFP-109: workflow_distribution.missing_workflows for degraded suppression
     wd_missing: set[str] = set()
@@ -804,7 +825,7 @@ def _classify_strict_eligible(
       (a) project.yaml 부재 — 별도 main() 검사
       (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치
       (c) settings.json 의 3 hook 미등록 (check 9)
-      (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
+      (d) 15 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
       (e) consumer workflow drift — STRICT_ELIGIBLE_WORKFLOWS 영역 (CFP-660 NEW)
 
     Returns:
@@ -922,6 +943,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[check-bootstrap] STRICT mode active (source={strict_source}) — strict-eligible (a) drift:",
                   file=sys.stderr)
             print(f"           {overlay_yaml} 부재 — Orchestrator config 미인식, lane spawn 정합 불가",
+                  file=sys.stderr)
+            print("           → preflight: story-init 발동 전 bootstrap 필요 (project.yaml = org/repo 라우팅 SSOT, CFP-2250 결함3)",
                   file=sys.stderr)
             print("           → 'bash scripts/bootstrap-consumer.sh' 1회 실행 (CFP-125 quickstart)",
                   file=sys.stderr)

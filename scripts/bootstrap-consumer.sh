@@ -139,7 +139,10 @@ run_or_dry() {
     if [ $DRY_RUN -eq 1 ]; then
         printf '[dry-run] %s\n' "$*" >&2
     else
-        eval "$@"
+        # CFP-2250 FIX (Codex P2): eval 제거 → argv 직접 실행 (공백 경로 안전, 재해석 0).
+        # 모든 호출부 argv 형식 (run_or_dry cp "$a" "$b" 등) — redirection (2>/dev/null) 은
+        # 호출부에서 outer shell 이 소비 (argv 비포함) → 동작 동등.
+        "$@"
     fi
 }
 
@@ -164,6 +167,14 @@ stage_1_precheck() {
         return 1
     fi
     log "  org=$ORG repo=$REPO"
+    # CFP-2250 결함3 preflight: manifest / project.yaml 결손 사전 안내 (story-init 발동 전 진단).
+    # project.yaml 부재 = Stage 3 에서 자동 scaffold. manifest 부재 = Stage 7 skip. story-init 은 별 lane(S4).
+    if [ ! -f ".claude/_overlay/project.yaml" ]; then
+        log "  preflight: project.yaml 부재 — Stage 3 에서 example 로 자동 scaffold (이후 org/repo 직접 치환 의무)"
+    fi
+    if [ ! -f "$PLUGIN_ROOT/templates/consumer-scripts.manifest" ]; then
+        log "  preflight: consumer-scripts.manifest 부재 — Stage 7 skip (wrapper plugin 설치 확인 권장)"
+    fi
     mark_step "stage_1_precheck"
 }
 
@@ -171,6 +182,7 @@ stage_1_precheck() {
 stage_2_plugin_reminder() {
     log "Stage 2: plugin install reminder"
     local plugins_json="${HOME:-$USERPROFILE}/.claude/plugins/installed_plugins.json"
+    # CFP-2250 / ADR-122 — superpowers 더 이상 codeforge 의존 아님 (check_bootstrap.py REQUIRED_PLUGINS 정합, 11→10).
     local required=(
         "codeforge@mclayer"
         "codeforge-requirements@mclayer"
@@ -181,7 +193,6 @@ stage_2_plugin_reminder() {
         "codeforge-pmo@mclayer"
         "github@claude-plugins-official"
         "codex@openai-codex"
-        "superpowers@claude-plugins-official"
         "claude-md-management@claude-plugins-official"
     )
     local missing=()
@@ -203,7 +214,7 @@ stage_2_plugin_reminder() {
         for p in "${missing[@]}"; do log "    /plugins install $p"; done
         log "  → Claude Code 에서 위 명령 직접 실행 의무 (platform-level)"
     else
-        log "  ✓ 11/${#required[@]} plugin 설치 확인"
+        log "  ✓ ${#required[@]}/${#required[@]} plugin 설치 확인"
     fi
     mark_step "stage_2_plugin_reminder"
 }
@@ -309,7 +320,14 @@ stage_6_labels() {
     if [ $DRY_RUN -eq 1 ]; then
         log "  (dry-run) bash $PLUGIN_ROOT/scripts/bootstrap-labels.sh $ORG/$REPO"
     else
-        bash "$PLUGIN_ROOT/scripts/bootstrap-labels.sh" "$ORG/$REPO" 2>&1 | sed 's/^/  /' >&2 || true
+        # CFP-2250 FIX (Codex P1): silent skip 제거 — bash 종료코드 전파 (이전 `|| true` 가 실패를 삼킴).
+        # ${PIPESTATUS[0]} = pipe 첫 명령(bash)의 exit code (sed 의 0 이 아닌 bash 자체 결과).
+        bash "$PLUGIN_ROOT/scripts/bootstrap-labels.sh" "$ORG/$REPO" 2>&1 | sed 's/^/  /' >&2
+        local labels_rc=${PIPESTATUS[0]}
+        if [ "$labels_rc" -ne 0 ]; then
+            log "  ERROR: label 시드 실패 (bootstrap-labels.sh exit $labels_rc)"
+            return 1
+        fi
     fi
     mark_step "stage_6_labels"
 }

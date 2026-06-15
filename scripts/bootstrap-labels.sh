@@ -75,144 +75,28 @@ create_label() {
 
 [ $DRY_RUN -eq 0 ] && echo "Plugin label 부트스트랩..."
 
-# type:* — CFP-140 / ADR-049: label hack deprecated, replaced by native GitHub Issue Types
-# type:epic / type:story / type:bug → native Issue Types (org-level, see templates/issue-types.yaml)
-# See: label-registry-v2.md (Active) supersedes label-registry-v1.md (Archived)
-# impl-manifest = separate axis (retained — sub-issue visual marker)
-create_label "impl-manifest"    "fbca04" "Sub-issue (Impl Manifest 파일 단위)"
-
-# phase:* (9종, single-active) — CFP-1059 / ADR-087 + ADR-088: 배포 + 배포-리뷰 추가 (7 → 9 phase lane).
-# 기존 7 phase loop pattern 답습 (single description prefix), description 본문은 yaml 정식 entry 가 SSOT.
-for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트 보안-테스트 배포 배포-리뷰; do
-    create_label "phase:$p" "1d76db" "Phase: $p"
-done
-
-# phase:reservation (v1.4 / CFP-260 / ADR-036) — atomic key reservation Issue 의 임시 phase
-create_label "phase:reservation" "ededed" "Phase: reservation (CFP-260 / ADR-036 — brainstorming KEY 사전 확보, 30 일 미진행 시 자동 close)"
-
-# gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
-create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
-create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
-create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
-# gate:retro-complete (v1.5 / CFP-138 / ADR-045) — Story 완료 회고 작성 mandate forcing function
-create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-045). 미부착 시 retro-mandatory.yml 가 close 차단."
-# gate:channel-*-promotion (3종 — CFP-991 / ADR-72 Amd 3 + ADR-076 §결정 9.6) — consumer canary→beta→stable 4-tuple evidence quad marker (Tier-2 admin advisory)
-create_label "gate:channel-canary-promotion"  "0e8a16" "Canary tier 활성 PR 4-tuple evidence quad 충족 marker (CFP-991, consumer Tier-2 advisory)"
-create_label "gate:channel-beta-promotion"    "0e8a16" "Beta tier promotion gate marker (canary→beta transition, CFP-991)"
-create_label "gate:channel-stable-promotion"  "0e8a16" "Stable tier promotion gate marker (beta→stable transition, CFP-991)"
-
-# gate:deploy-* / gate:cross-layer-impact-pass / gate:dependency-order-pass / gate:bidirectional-smoke-pass (5종 — CFP-1059 / ADR-087 + ADR-088 + ADR-089 + ADR-090)
-# Deploy lane + Deploy Review lane 신설 (8 lane 확장) + cross-layer / dependency-order / bidirectional-smoke gate 신설.
-# yaml SSOT (label-registry-v2 v2.42) 본문 description 은 verbose — 본 hardcode 는 short label form (기존 gate:* pattern 답습).
-create_label "gate:deploy-pass"              "0e8a16" "Deploy lane PASS (CFP-1059 / ADR-087 — blue-green + atomic swap + healthcheck + 3-시간 보존 timer + 자동 rollback 미발동 영역)"
-create_label "gate:deploy-review-pass"       "0e8a16" "Deploy Review lane PASS (CFP-1059 / ADR-088 — smoke / 성능 비교 / cutover 사후 검증 3종 PASS, terminal gate)"
-create_label "gate:cross-layer-impact-pass"  "0e8a16" "Cross-layer impact 분석 통과 (CFP-1059 / ADR-090 §결정 1 — multi-layer 의존 매핑 + 변경 순서 invariant 검증 PASS)"
-create_label "gate:dependency-order-pass"    "0e8a16" "Dependency order invariant 통과 (CFP-1059 / ADR-090 §결정 2 — expand=source-first / contract=leaf-first)"
-create_label "gate:bidirectional-smoke-pass" "0e8a16" "Bidirectional smoke (양방향 호환) 통과 (CFP-1059 / ADR-089 §결정 4 — blue ↔ green traffic mix window 안 schema 양방향 호환 verify PASS)"
-
-# fix:* (4종)
-for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
-    create_label "fix:$r-retry" "e99695" "FIX retry: $r"
-done
-
-# hotfix / audit (3종)
-create_label "hotfix:minimal"     "ff9999" "Hotfix minimal"
-create_label "hotfix:critical"    "ff0000" "Hotfix critical"
-create_label "audit:post-hotfix"  "fef2c0" "Post-hotfix audit Story"
-
-# debut audit (2종, source) + category (7종, mutually exclusive) — CFP-60 / debut-audit-triage-v1
-# 색상 = label-registry-v1.md SSOT
-create_label "audit:debut-eval"            "fbca04" "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
-create_label "audit:from-mctrader-debut"   "fef2c0" "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
-# CFP-429: from-cfp-425-followup (Epic CFP-425 gate FAIL 분기 후속 carrier provenance marker, label-registry-v2 v2.5)
-create_label "from-cfp-425-followup"       "fbca04" "Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker"
-# CFP-88: audit:spec-amendment (CFP-87 / playbook §6.8 follow-up, label-registry v1.2)
-create_label "audit:spec-amendment"        "fbca04" "Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)"
-# CFP-90: early-close:* (CFP-85 / phase-invariant terminal state follow-up, label-registry v1.2)
-create_label "early-close:duplicate"       "d4c5f9" "다른 Story 와 중복 — early-close 정당화"
-create_label "early-close:reclassified"    "d4c5f9" "Out-of-scope 재분류 — 다른 Epic / 별도 Story 로 이전"
-create_label "early-close:epic-rolled-up"  "d4c5f9" "Epic 종료 시 child Story 일괄 close — Epic close PR 가 absorbing"
-create_label "category:lane-progression"   "0e8a16" "#1 — 7 lane 통과 / 막힘 (owner: PMOAgent)"
-create_label "category:agent-gap"          "d93f0b" "#2 — phase 별 gap + 과부하 (owner: ArchitectPL, ADR-021 R1-R4)"
-create_label "category:decision-table"     "1d76db" "#3 — 원인 판정 row 모호 / 신규 (owner: wrapper Orchestrator)"
-create_label "category:deputy-mandate"     "5319e7" "#4 — 6 deputy mandate 부족 (owner: ArchitectPL)"
-create_label "category:workflow-invariant" "bfd4f2" "#5 — GitHub Actions 강제 누락 (owner: wrapper Orchestrator)"
-create_label "category:template"           "c5def5" "#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)"
-create_label "category:contract-schema"    "bfdadc" "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
-
-# parent:CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed (CFP-949 / ADR-078 / label-registry-v2 v2.33)
-# 기존 parent:CFP-* family pattern 답습 (parent:CFP-541 / parent:CFP-425 / parent:CFP-525 / parent:CFP-548 선례).
-create_label "parent:CFP-949"               "ededed" "Child Story of Sub-Epic CFP-949 (6 lane plugin self-owned architecture doc seed)"
-
-# plugin:codeforge-{requirements,design,develop,test} — 4 lane plugin namespace marker (label-registry-v2 v2.33).
-# Wave 1 CFP-968/969/970 + Wave 2 CFP-972 carrier. Note: plugin:codeforge-{review,pmo} 는 사전 wrapper repo 환경에서 부트스트랩 형태로 이미 존재.
-create_label "plugin:codeforge-requirements" "ededed" "Plugin namespace: codeforge-requirements (요구사항 lane)"
-create_label "plugin:codeforge-design"       "ededed" "Plugin namespace: codeforge-design (설계 lane)"
-create_label "plugin:codeforge-develop"      "ededed" "Plugin namespace: codeforge-develop (구현 lane)"
-create_label "plugin:codeforge-test"         "ededed" "Plugin namespace: codeforge-test (통합테스트 lane)"
-
-# plugin:codeforge-{deploy,deploy-review} — 2 lane plugin namespace marker (CFP-1059 / ADR-087 + ADR-088, label-registry-v2 v2.42).
-# yaml SSOT color = "5319e7" (axis:* family precedent). Phase 1 declarative — plugin seed 신설 = S2/S3 sub-Story carrier.
-create_label "plugin:codeforge-deploy"        "5319e7" "Plugin namespace: codeforge-deploy (배포 lane, CFP-1059 / ADR-087 신설 carrier)"
-create_label "plugin:codeforge-deploy-review" "5319e7" "Plugin namespace: codeforge-deploy-review (배포-리뷰 lane, CFP-1059 / ADR-088 신설 carrier)"
-
-# conflict:* + merge-order:* (5종 — 병렬 에픽 충돌 조율, ADR-050 / CFP-344)
-create_label "conflict:file-overlap"   "e4e669" "다른 open PR과 변경 파일 중복 (parallel-epic-conflict-check.yml 자동 감지)"
-create_label "conflict:adr-number"     "e4e669" "ADR-RESERVATION.md 동시 수정 감지 — ADR 번호 충돌 위험"
-create_label "conflict:section-locked" "d93f0b" "section-ownership.yaml locked 섹션 동시 수정 감지 — merge 순서 조율 필요"
-create_label "merge-order:1"           "0075ca" "병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)"
-create_label "merge-order:2"           "e4e669" "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
-
-# fallback:* (2종 — CFP-658 / ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 manual agent direct write path)
-# label-registry-v2 v2.12 MINOR bump 동반. canonical-only (kind:registry — sibling sync scope 외).
-create_label "fallback:manual"        "c5def5" "fallback: per-Issue ad-hoc override marker (CFP-658 / ADR-027 Amendment 2 §결정 6.A) — Orchestrator 가 부착 시 bootstrap.fallback_mode: action_blocked 와 무관 manual agent direct write path 활성"
-create_label "fallback:rate-limited"  "c5def5" "fallback: rate-limited skip audit marker (CFP-658 / ADR-027 Amendment 2 §결정 6.G) — manual-story-init-fallback.sh exponential backoff max 3 retry 초과 시 자동 부착"
-
-# fast-pass:* category — CFP-795 / ADR-026 Amendment 4 §결정 6 carrier — cross-repo land_order post-merge hotfix 3-조건 AND fast-pass gate 조건 1
-# label-registry-v2 v2.21 MINOR bump 동반 (신규 category `fast-pass` 신설). canonical-only (kind:registry — sibling sync scope 외).
-# CFP-1485 v2.60 — sibling-pr fast-pass category 2번째 family member append (CFP-499 / ADR-010 Amendment 4 §결정 5 cross-repo Story mirror PR fast-pass channel SSOT codify carrier — 3-repo silent drift 정정).
-create_label "post-merge-fix"         "0e8a16" "cross-repo Story land_order 후 발견된 safe defect 의 post-merge hotfix PR — phase-gate-mergeable.yml 4번째 fast-pass source (3-조건 AND 중 조건 1). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 FIX Ledger row binding + 조건 3 원 MERGED PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier. 사용법: Orchestrator 가 post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성 (Orchestrator monopoly, CFP-32) + corrects_pr: marker PR body 기재 + story_uri: marker 병기 의무."
-create_label "sibling-pr"             "0e8a16" "CFP-499 / ADR-010 Amendment 4 cross-repo Story mirror PR fast-pass channel — phase-gate-mergeable workflow 의 hasCode=true PR 가 wrapper Story binding 없이도 fast-pass 통과 (sibling PR 가 wrapper Story 의 mirror 임을 명시). 사용법: cross-repo Story mirror PR (codeforge family lane plugin repo 의 sibling sync PR — codeforge-pmo / codeforge-review / codeforge-design / codeforge-develop / codeforge-test / codeforge-requirements / codeforge-deploy / codeforge-deploy-review) open 시 부착 — wrapper Story \`## Sibling PRs\` 섹션 binding 명시. anti-misuse 안전망 lint 영역 = CFP-521 v2.5 family member 9th (ADR-010 Amendment 4 §결정 5 sibling-pr-label-author-check workflow). fast-pass category 2번째 family member (CFP-795 v2.21 post-merge-fix 1번째 후 답습, CFP-1485 v2.60 SSOT codify)."
-
-# channel:* category — CFP-906 / Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) — multi-version channel pin declare layer.
-# label-registry-v2 v2.30 MINOR bump 동반 (신규 category `channel` 신설, 3 신규 family member). canonical-only (kind:registry — sibling sync scope 외, marketplace.json sync 면제 — declare layer only, plugin.json bump 미동반).
-# 3-tier closed-enum (stable/beta/canary) annotation marker — consumer `.claude/_overlay/project.yaml codeforge.channel.tier: <enum>` 선언 시 GitHub Issue/PR channel-aware marker. ADR-076 §결정 9 + ADR-016 Amendment 3 + ADR-063 Amendment 6 §결정 17 carrier. ADR-72 §결정 1 cross-ref (canary tier production-impact = ProductionEvidenceDeputy spawn trigger semantic anchor, Wave 4 sub-Epic #1 Story-3 carrier 영역).
-create_label "channel:stable"         "0e8a16" "channel: stable tier marker (LOW risk class — default tier). consumer .claude/_overlay/project.yaml codeforge.channel.tier: stable 선언 시 Issue/PR channel-aware annotation. ADR-076 §결정 9.1 3-tier taxonomy default. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
-create_label "channel:beta"           "d4c5f9" "channel: beta tier marker (MEDIUM risk class — opt-in incremental track). ADR-076 §결정 9.1 3-tier taxonomy intermediate. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
-create_label "channel:canary"         "f9d0c4" "channel: canary tier marker (HIGH risk class — production-impact awareness). ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-72 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor (Wave 4 sub-Epic #1 Story-3 carrier 영역). CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
-
-# production-impact:* (1 entry — CFP-954 / ADR-72 §결정 1 + §결정 5, Wave 4 sub-Epic #882 Story-3 production cutover layer mandate activation declare scope).
-# 신규 category enum production-impact (channel category 와 2-axis disjoint — channel = release lifecycle / production-impact = production risk, DataMigrationArch §G.3 정합).
-# label-registry-v2 v2.33 정합 (frontmatter 정식 entry, severity:high binding via severity-propagation-v1 v1.0 cross-ref only).
-# 기존 GitHub label list 이미 존재 — registry drift 정정 carrier (DataMigrationArch §G.2 정합).
-create_label "production-touching"    "b60205" "Story touches production cutover surface — explicit user go-ahead required before lane entry (ADR-72 §결정 3 trigger axis 정합). HIGH severity invariant (severity-propagation-v1 v1.0 binding). canary tier (channel:canary) 와 2-axis disjoint (양 label 동시 부착 가능). CFP-954 Wave 4 sub-Epic #882 Story-3 carrier."
-
-# axis:* category — CFP-1086 Wave 1 Story-1 (Epic CFP-1086 BackendArchitect) — deputy axis 1st-class taxonomy.
-# 4 deputy axis = AggregateArch (RDB OLTP) / APIContractArch (transport) / ModuleArch (module boundary) / DataArch (OLAP).
-# ADR-042 Amendment 8 (5+3 → 7+3+1 roster) carrier. label-registry-v2 v2.41 정합.
-create_label "axis:aggregate-architect"     "5319e7" "AggregateArchitect deputy axis — RDB OLTP aggregate invariant + 트랜잭션 경계 + Alembic 정책 (tool-agnostic policy layer). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
-create_label "axis:api-contract-architect"  "5319e7" "APIContractArchitect deputy axis — transport contract (REST/GraphQL/gRPC/WebSocket) + API versioning + DTO + OpenAPI/GraphQL schema + contract testing. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
-create_label "axis:module-architect"        "5319e7" "ModuleArchitect deputy axis — module/package boundary + dependency direction + layered/hexagonal/clean (module-level). Rename from axis:code-architect (CFP-1026 W2 S3 신설 → CFP-1086 rename). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
-create_label "axis:data-architect"          "5319e7" "DataArchitect deputy axis — 빅데이터 OLAP only (Parquet/객체저장소/DuckDB/streaming). RDB 영역은 axis:aggregate-architect 로 분리. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
+# base label SSOT — templates/labels/base-labels.tsv (CFP-2250 / ADR-027 Amendment 11).
+# 기존 hardcoded create_label 블록을 TSV read 로 전환 — .sh ↔ .ps1 (bootstrap-labels.ps1) 공유 SSOT.
+# 형식: name<TAB>color<TAB>desc. 빈 줄 / # 시작 줄 = skip. 순서 = TSV 등재 순서 보존 (dry-run 출력 + check-label-registry.sh cross-verify 불변).
+# provenance (CFP 번호 / ADR 근거) = label-registry-v2.md SSOT — TSV 는 데이터 평면화.
+# type:epic/story/bug = native GitHub Issue Type (ADR-049) — 미생성 (impl-manifest 만 type axis 잔존, TSV 1행).
+BASE_LABELS_TSV="${BASE_LABELS_TSV:-${_BOOTSTRAP_SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}/../templates/labels/base-labels.tsv}"
+if [ ! -f "$BASE_LABELS_TSV" ]; then
+    echo "ERROR: base label TSV 부재 — $BASE_LABELS_TSV" >&2
+    exit 1
+fi
+while IFS=$'\t' read -r name color desc; do
+    # skip 빈 줄 + # 주석 줄
+    case "$name" in ''|'#'*) continue ;; esac
+    create_label "$name" "$color" "$desc"
+done < "$BASE_LABELS_TSV"
 
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
 #           (duplicate creation 발생 — dynamic read 가 yaml row 처리 + 본 hardcoded 라인 = 2 invocations, 3-way self-check FAIL).
 #           DRY status restored: hardcoded 0 + yaml row 1 = single source of truth via dynamic parse only.
-
-# monitoring:* (3종 — CFP-451 v2.3 sub-axis 다축 완결 / CFP-393 v2.2 신설 tier, ADR-057 Amendment 2 / ADR-060)
-# KPI / metric / dashboard / alert 영역. 기존 `audit` (후처리 분류) 와 분리.
-# sub-axis: info (kpi-update) / warn (kpi-alert) / error (kpi-infra-error).
-# rate-limit-fallback-kpi.yml workflow 가 자동 부착.
-create_label "codeforge-kpi-alert"        "f29513" "codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard). rate-limit-fallback-kpi.yml workflow 가 sample_size_sufficient=true AND fallback_rate_percent >= 1.0% 시 Issue auto-open. ADR-060 evidence-enforceable framework 첫 non-sunset application."
-create_label "codeforge-kpi-infra-error"  "d73a4a" "KPI workflow infrastructure failure — oncall investigation required. rate-limit-fallback-kpi.yml workflow 가 clone fail / aggregator script error / auto-PR fail detect 시 Issue auto-open. measurement alert (codeforge-kpi-alert) 와 분리된 channel — audience routing (oncall vs 정책 의사결정자). CFP-451 v2.3 sub-axis 다축 완결."
-create_label "codeforge-kpi-update"       "0e8a16" "KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a))."
-
-# operational-signal:* (1종 — CFP-1193 v2.45, ADR-106 Amendment 1 §결정 1 단계 2-a carrier)
-# ops-signal category: rollback signal monitor / regression-health monitor / self-improving loop closure 가 감지한 운영 신호 회로 Issue label.
-# ADR-105 §결정 3 + ADR-106 §결정 4 loop closure 3-principle OR-fire 채널 (단계 2-a + 단계 2-b 공용 label).
-create_label "ops-signal"  "e4e669" "ops-signal: 운영 신호 회로 Issue label (CFP-1193 / ADR-106 Amendment 1 §결정 1 단계 2-a carrier). rollback signal monitor 가 감지한 신호(에러율/burn rate 임계 초과 / 보존 window 만료 / kill-switch 활성 감사)에 대해 발의하는 Issue 의 분류 label. ADR-106 self-improving loop 회로 단계 2-a (auto-rollback trigger 동반 사후 알림) 채널. 단계 2-b (일반 ops-signal Issue) / 단계 3 (PMOAgent escalation) = S6 carrier."
+# 주: monitoring:* (codeforge-kpi-*) + operational-signal:* (ops-signal) base label 은 CFP-2250 에서 base-labels.tsv 로 이관 (위 TSV read 블록 처리).
 
 # hotfix-bypass:* (CFP-598) — label-registry-v2.md §3 yaml dynamic read.
 # canonical-only category (component:* 와 달리 consumer overlay 아님) — DRY_RUN + actual 양 모드 모두 처리.
@@ -278,7 +162,9 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 56 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1193: 55 → 56 base label (+1 ops-signal operational-signal category, label-registry-v2 v2.45 정합). CFP-1059: 46 → 55 base label (+9 hardcoded — 2 phase:* loop + 5 gate:* + 2 plugin:*; 7 hotfix-bypass:* 는 yaml dynamic read 영역 — label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 Deploy lane + Deploy Review lane + Schema 7 + Cross-layer 정책 carrier). CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier).
+    # CFP-2250: base label count = TSV 데이터 행 (빈 줄 / # 주석 제외) — hardcode 수치 stale 방지.
+    _base_count="$(grep -cve '^\s*#' -e '^\s*$' "$BASE_LABELS_TSV" 2>/dev/null || echo '?')"
+    echo "✓ ${_base_count} base label (templates/labels/base-labels.tsv) + hotfix-bypass:* (registry 동적) + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

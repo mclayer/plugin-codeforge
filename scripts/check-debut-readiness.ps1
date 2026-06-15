@@ -68,14 +68,15 @@ function Check-1-Bootstrap {
 
 # Check 2
 function Check-2-Plugins {
-    Log "Check 2/4: plugin 11종 presence"
+    Log "Check 2/4: plugin 10종 presence"
     $userProfile = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
     $pluginsJson = Join-Path $userProfile ".claude/plugins/installed_plugins.json"
+    # CFP-2250 / ADR-122 — superpowers 제거 (check_bootstrap.py REQUIRED_PLUGINS 정합, 11→10).
     $required = @(
         "codeforge@mclayer", "codeforge-requirements@mclayer", "codeforge-design@mclayer",
         "codeforge-develop@mclayer", "codeforge-test@mclayer", "codeforge-review@mclayer",
         "codeforge-pmo@mclayer", "github@claude-plugins-official", "codex@openai-codex",
-        "superpowers@claude-plugins-official", "claude-md-management@claude-plugins-official"
+        "claude-md-management@claude-plugins-official"
     )
     if (-not (Test-Path $pluginsJson)) {
         $script:FailCount++
@@ -88,10 +89,10 @@ function Check-2-Plugins {
         $missing = $required | Where-Object { $installed -notcontains $_ }
         if ($missing.Count -gt 0) {
             $script:FailCount++
-            $script:FailDetails += "Check 2: $($missing.Count)/11 plugin 미설치 — $($missing -join ' ')"
+            $script:FailDetails += "Check 2: $($missing.Count)/$($required.Count) plugin 미설치 — $($missing -join ' ')"
         } else {
             $script:PassCount++
-            Log "  ✓ 11/11 plugin 설치 확인"
+            Log "  ✓ $($required.Count)/$($required.Count) plugin 설치 확인"
         }
     } catch {
         $script:FailCount++

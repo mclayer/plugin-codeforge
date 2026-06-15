@@ -127,6 +127,14 @@ function Stage-1-Precheck {
         return $false
     }
     Log "  org=$script:Org repo=$script:Repo"
+    # CFP-2250 결함3 preflight: manifest / project.yaml 결손 사전 안내 (story-init 발동 전 진단).
+    # project.yaml 부재 = Stage 3 에서 자동 scaffold. manifest 부재 = Stage 7 skip. story-init 은 별 lane(S4).
+    if (-not (Test-Path ".claude/_overlay/project.yaml")) {
+        Log "  preflight: project.yaml 부재 — Stage 3 에서 example 로 자동 scaffold (이후 org/repo 직접 치환 의무)"
+    }
+    if (-not (Test-Path (Join-Path $PluginRoot "templates/consumer-scripts.manifest"))) {
+        Log "  preflight: consumer-scripts.manifest 부재 — Stage 7 skip (wrapper plugin 설치 확인 권장)"
+    }
     Mark-Step "stage_1_precheck"
     return $true
 }
@@ -136,11 +144,12 @@ function Stage-2-PluginReminder {
     Log "Stage 2: plugin install reminder"
     $userProfile = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
     $pluginsJson = Join-Path $userProfile ".claude/plugins/installed_plugins.json"
+    # CFP-2250 / ADR-122 — superpowers 더 이상 codeforge 의존 아님 (check_bootstrap.py REQUIRED_PLUGINS 정합, 11→10).
     $required = @(
         "codeforge@mclayer", "codeforge-requirements@mclayer", "codeforge-design@mclayer",
         "codeforge-develop@mclayer", "codeforge-test@mclayer", "codeforge-review@mclayer",
         "codeforge-pmo@mclayer", "github@claude-plugins-official", "codex@openai-codex",
-        "superpowers@claude-plugins-official", "claude-md-management@claude-plugins-official"
+        "claude-md-management@claude-plugins-official"
     )
     $missing = @()
     if (Test-Path $pluginsJson) {
@@ -255,20 +264,43 @@ function Stage-5-GithubSetup {
     return $true
 }
 
-# Stage 6
+# Stage 6 — CFP-2250 결함1: 3-tier fallback (bash → PowerShell-native → ERROR). silent skip 제거.
 function Stage-6-Labels {
-    Log "Stage 6: labels bootstrap (delegate to bootstrap-labels.sh)"
-    $bootstrapLabels = Join-Path $PluginRoot "scripts/bootstrap-labels.sh"
+    Log "Stage 6: labels bootstrap"
+    $bootstrapLabelsSh = Join-Path $PluginRoot "scripts/bootstrap-labels.sh"
+    $bootstrapLabelsPs1 = Join-Path $PluginRoot "scripts/bootstrap-labels.ps1"
+    $bashCmd = Get-Command bash -ErrorAction SilentlyContinue
     if ($DryRun) {
-        Log "  (dry-run) bash $bootstrapLabels $script:Org/$script:Repo"
-    } else {
-        # Windows: bash via Git Bash 또는 WSL
-        $bashCmd = Get-Command bash -ErrorAction SilentlyContinue
-        if ($bashCmd) {
-            & bash $bootstrapLabels "$script:Org/$script:Repo" 2>&1 | ForEach-Object { Log "  $_" }
-        } else {
-            Log "  WARN: bash 미설치 — Git Bash 또는 WSL 필요. label bootstrap manual 실행 의무: bash $bootstrapLabels $script:Org/$script:Repo"
+        $bashPresent = [bool]$bashCmd
+        Log "  (dry-run) label seed (bash present=$bashPresent → $(if ($bashPresent) {'bootstrap-labels.sh'} else {'bootstrap-labels.ps1 native fallback'}))"
+        Mark-Step "stage_6_labels"
+        return $true
+    }
+    if ($bashCmd) {
+        # tier 1: bash (POSIX 경로 — WSL/Git Bash 검증된 경로, 회귀 0)
+        # CFP-2250 FIX (Codex P1): 파이프(| ForEach-Object) 제거 — $LASTEXITCODE 가 bash native exit 를
+        # 확실히 보존하도록 출력 캡처 후 검사 (이전: exit 미검사 → 실패를 성공으로 삼킴).
+        $labelsOut = & bash $bootstrapLabelsSh "$script:Org/$script:Repo" 2>&1
+        $labelsRc = $LASTEXITCODE
+        foreach ($l in $labelsOut) { Log "  $l" }
+        if ($labelsRc -ne 0) {
+            Log "  ERROR: bash label 시드 실패 (bootstrap-labels.sh exit $labelsRc)"
+            return $false
         }
+    } elseif (Test-Path $bootstrapLabelsPs1) {
+        # tier 2: PowerShell-native fallback (결함1 해소 핵심 — bash 부재 네이티브 Windows)
+        Log "  bash 미발견 — PowerShell-native label 시드 (bootstrap-labels.ps1)"
+        $labelsOut = & $bootstrapLabelsPs1 -Repo "$script:Org/$script:Repo" 2>&1
+        $labelsRc = $LASTEXITCODE
+        foreach ($l in $labelsOut) { Log "  $l" }
+        if ($labelsRc -ne 0) {
+            Log "  ERROR: PowerShell label 시드 실패 (exit $labelsRc)"
+            return $false
+        }
+    } else {
+        # tier 3: bash + .ps1 모두 부재 (이론상) — silent skip 금지, 명시적 ERROR
+        Log "  ERROR: bash + bootstrap-labels.ps1 모두 부재 — label 시드 불가 (plugin 설치 확인)"
+        return $false
     }
     Mark-Step "stage_6_labels"
     return $true
