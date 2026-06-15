@@ -48,7 +48,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           # CFP-476 / ADR-026 Amendment 1 §결정 5.D — T2 PR_TITLE shell expansion mitigation.
-          # PR_TITLE injected via env: block (env indirection), never inline ${{ ... }}.
+          # PR_TITLE injected via env: block (env indirection), never interpolated inline into the run script.
 
           # CFP-74 followup: chore PR detection + multi-CFP aggregating PR detection.
           # 1) chore(*) prefix → skip Story-tied actions (chore PR not tied to single Story)
@@ -157,7 +157,7 @@ jobs:
         run: |
           # CFP-476 / ADR-026 Amendment 1 §결정 5.A-5.D
           # dual-source AND semantic + terminal-phase gate + multi-match audit + cross-repo skip
-          # Security: PR_BODY injected via env: block (T1 mitigation). Never inline ${{ ... }}.
+          # Security: PR_BODY injected via env: block (T1 mitigation). Never interpolated inline into the run script.
           set -euo pipefail
 
           STORY_KEY="${{ steps.meta.outputs.story_key }}"
