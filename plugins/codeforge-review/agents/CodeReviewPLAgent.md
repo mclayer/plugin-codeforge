@@ -32,7 +32,7 @@ permissions:
 
 **구현 리뷰 레인 PL**. 구현 레인 완료 + Architect 매핑표 감사 PASS 후 Orchestrator 스폰. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=code packet 주입해 병렬 리뷰 보고 수집·종합.
 
-**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
+**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 ## 착수 전 Label Preflight (CFP-318)
 
@@ -100,7 +100,7 @@ review_packet:
 - **최대 3회** — 초과 시 ESCALATE
 - 구현 테스트/보안 테스트 FAIL → 구현 재실행 → 구현 리뷰 재진입 시 §10에 `RESET 구현-리뷰` 마커 추가, RESET 이후 iteration만 합산
 - §10 FIX Ledger `레인 = 구현-리뷰`로 누적
-- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — fast-path 자격 분류 SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — fast-path 자격 분류 SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 ## 1차 원인 가정 (FIX 시 — DeveloperPL/Architect 전달 초안)
 

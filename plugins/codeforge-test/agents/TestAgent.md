@@ -49,7 +49,7 @@ permissions:
 | `performance` | 모드 2만 실행 (성능 baseline 비교) |
 | `all` (default) | 모드 1 → 모드 2 순차 실행 (기존 동작, 단일 spawn 시) |
 
-**병렬 spawn 절차** (Orchestrator 측, [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §3.1):
+**병렬 spawn 절차** (Orchestrator 측, [`docs/orchestrator-playbook.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/orchestrator-playbook.md) §3.1):
 1. 한 메시지에 두 spawn dispatch:
    - `Agent({subagent_type: 'TestAgent', prompt: '...subset: functional...'})`
    - `Agent({subagent_type: 'TestAgent', prompt: '...subset: performance...'})`

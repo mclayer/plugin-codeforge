@@ -33,7 +33,7 @@ permissions:
 
 **보안 테스트 레인 PL**. 구현 테스트 레인(TestAgent) PASS 이후 Orchestrator 스폰 (Fast-path 없음). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=security packet 주입해 병렬 리뷰 보고 수집·종합. 추가로 **1차 layer (GitHub native)** 결과 fetch 의무.
 
-**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
+**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 ## 착수 전 Label Preflight (CFP-318)
 
@@ -91,7 +91,7 @@ reusable workflow: [`mclayer/plugin-codeforge/templates/github-workflows/contain
 
 trivy / hadolint 는 **`infra_strategy: docker_first` consumer 만 active**. project.yaml 에 미설정 또는 다른 strategy 인 경우 PL 이 본 2종 fetch skip 가능 (3 GitHub native 만 의무). consumer overlay 검출 책임 = PL.
 
-`<owner>/<repo>`는 [`.claude/_overlay/project.yaml`](../docs/project-config-schema.md) `github.org` / `github.repo`에서 추출.
+`<owner>/<repo>`는 [`.claude/_overlay/project.yaml`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/project-config-schema.md) `github.org` / `github.repo`에서 추출.
 
 1차 layer 결과를 워커 packet에 inline 첨부 → 워커는 이미 보고된 finding은 skip하고 **high-level 분석(trust boundary·auth model)에 집중**.
 
@@ -145,7 +145,7 @@ review_packet:
 
 - **무제한** (테스트 레인 family 정책 — 보안 결함은 ESCALATE 없이 끝까지 수정)
 - §10 FIX Ledger `레인 = 보안-테스트`로 누적
-- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — **단 injection · credential · CVE · trust-boundary 카테고리는 항상 `none`** (코드 의미 변경 동반). SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — **단 injection · credential · CVE · trust-boundary 카테고리는 항상 `none`** (코드 의미 변경 동반). SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 ## 1차 원인 가정 (FIX 시 — DeveloperPL/Architect 전달 초안)
 

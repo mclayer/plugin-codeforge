@@ -126,7 +126,7 @@ rm -f "$OUT"
 
 ## Story file §5 갱신 의뢰 (atomic per-agent, 의무)
 
-codex 결과 수령 후 **§5 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장). 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT.
+codex 결과 수령 후 **§5 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장). 큐 파일 스키마는 [docs/orchestrator-playbook.md](https://github.com/mclayer/plugin-codeforge/blob/main/docs/orchestrator-playbook.md) §11.2 SSOT.
 
 ```
 .claude-work/doc-queue/<story>/<seq>-story-section-5.md
