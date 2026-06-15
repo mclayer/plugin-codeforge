@@ -24,7 +24,7 @@ related_stories:
   - CFP-627
   - CFP-477  # §결정 5 본문 표 sublayer 확장 (local pre-push auto-rebase guidance row, Amendment 발의 0건)
   - CFP-906  # Amendment 6 §결정 17 carrier — Wave 4 sub-Epic #1 Story-1 (mirrored field × channel matrix + 3-way channel invariant)
-  - CFP-1059 # Amendment 7 §결정 18 carrier — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (codeforge-deploy + codeforge-deploy-review 신설 정합)
+  - CFP-1059 # Amendment 7 §결정 18-B carrier — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (codeforge-deploy + codeforge-deploy-review 신설 정합)
   - CFP-1179 # Amendment 8 §결정 19 carrier — Tier 분리 (Tier 1 wrapper bundle vs Tier 2 lane per-walk atomic scope 명확화)
   - CFP-2174 # Amendment 11 §결정 24/25 carrier — Epic #2151 S5 marketplace source git-subdir 전환 + 단일-repo plugins/ 시대 Tier 2 atomic scope 재정의 (ADR-118 D6 예약 carrier)
   - CFP-2203 # Amendment 12 §결정 26/27 carrier — post-merge local activation 책임 = Orchestrator (`claude plugin update` CLI 직접 실행 + cache 실측, CFP-2191 오안내 사고 재발 차단)
@@ -64,7 +64,7 @@ amendments:
   - amendment: 7
     date: 2026-05-20
     cfp: CFP-1059
-    summary: "§결정 18 신설 — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (CFP-1059 Story-1 sibling carrier — ADR-023 Amendment 1 + ADR-087 + ADR-088 lane plugin 6 → 8 확장 atomic). 기존 §결정 1 family scope (wrapper + 6 lane = 7 plugin) → wrapper + 8 lane = 9 plugin 확장 (codeforge-deploy + codeforge-deploy-review 신설). MAJOR version bump 시 9 plugin atomic invariant codify — 단일 plugin 만 MAJOR bump 후 sibling 8 plugin 미bump 시 lane plugin family compatibility break (예: codeforge-deploy v2.0 + codeforge-design v1.x mixed install → Story §3 ↔ Story §12 contract mismatch). MAJOR atomic bump 시 9 plugin 모두 동시 MAJOR bump 의무 (CHANGELOG.md `BREAKING:` section 양 9 file + marketplace.json 9 entry 동시 sync — `hotfix-bypass:marketplace-atomic-major` 신규 label family member, 기존 `hotfix-bypass:marketplace-atomic` 와 분리). MINOR / PATCH bump 는 본 invariant 영역 외 (per-plugin sibling sync 보존, §결정 1 invariant 정합). 3-way version invariant (§결정 15 Amendment 5) × MAJOR atomic invariant cross-axis — publisher (per-plugin MAJOR bump) × registry (marketplace.json 9 entry MAJOR sync) × consumer (codeforge.version_pin.version 9 plugin pin 동시 갱신) 3-way × 9-plugin matrix. ratchet 강화 방향 (7 plugin → 9 plugin scope 확장 + MAJOR atomic invariant codify, ADR-058 §결정 5 정합) — Strengthening direction only."
+    summary: "§결정 18-B 신설 — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (CFP-1059 Story-1 sibling carrier — ADR-023 Amendment 1 + ADR-087 + ADR-088 lane plugin 6 → 8 확장 atomic). 기존 §결정 1 family scope (wrapper + 6 lane = 7 plugin) → wrapper + 8 lane = 9 plugin 확장 (codeforge-deploy + codeforge-deploy-review 신설). MAJOR version bump 시 9 plugin atomic invariant codify — 단일 plugin 만 MAJOR bump 후 sibling 8 plugin 미bump 시 lane plugin family compatibility break (예: codeforge-deploy v2.0 + codeforge-design v1.x mixed install → Story §3 ↔ Story §12 contract mismatch). MAJOR atomic bump 시 9 plugin 모두 동시 MAJOR bump 의무 (CHANGELOG.md `BREAKING:` section 양 9 file + marketplace.json 9 entry 동시 sync — `hotfix-bypass:marketplace-atomic-major` 신규 label family member, 기존 `hotfix-bypass:marketplace-atomic` 와 분리). MINOR / PATCH bump 는 본 invariant 영역 외 (per-plugin sibling sync 보존, §결정 1 invariant 정합). 3-way version invariant (§결정 15 Amendment 5) × MAJOR atomic invariant cross-axis — publisher (per-plugin MAJOR bump) × registry (marketplace.json 9 entry MAJOR sync) × consumer (codeforge.version_pin.version 9 plugin pin 동시 갱신) 3-way × 9-plugin matrix. ratchet 강화 방향 (7 plugin → 9 plugin scope 확장 + MAJOR atomic invariant codify, ADR-058 §결정 5 정합) — Strengthening direction only."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 7 = family scope 7 → 9 plugin 확장 + MAJOR atomic invariant codify 강화 방향 only — scope 확장 + invariant 강도 상승). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (family scope 축소 / MAJOR atomic bump invariant 약화 = sunset_justification 3-tuple 의무)."
   - amendment: 8
@@ -593,13 +593,40 @@ plugins:
 - §결정 11 (Amendment 2, CFP-631) — description verbatim PR-time lint 정합 (channel 별 description 불변 invariant)
 - label-registry-v2 v2.30 (3 `channel:*` label + 신규 category enum `channel`) — channels[] enum SSOT
 
-### 결정 18: Self-application — Amendment 6 ratchet 검증
+### 결정 18-A: Self-application — Amendment 6 ratchet 검증
+
+> **번호 disambiguation (CFP-2173)**: 본 §결정 18-A = Amendment 6 self-application. 과거 단일 "§결정 18" 이 Amendment 7 의 family-scope 결정(아래 §결정 18-B)과 번호 충돌하여 suffix 로 분리함. 정수 §결정 19~27 은 불변.
 
 본 Amendment 6 = 강화 방향 only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장 + invariant 강도 상승 — 3-way version invariant 위에 channel 차원 추가). ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: channel matrix 축소 / per-channel mirrored field merge / channels[] supply-chain trust 약화 / single channel 으로 회귀) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 6 = mirrored field × channel matrix 확장 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
 
 **Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별 CFP). frontmatter `mechanical_enforcement_actions[]` Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
+### 결정 18-B: family scope 7 → 9 plugin 확장 + MAJOR atomic bump invariant (Amendment 7 / CFP-1059)
+
+**Context (family scope 확장 + MAJOR break 위험)**: 기존 §결정 1 family scope = wrapper + 6 lane = **7 plugin**. ADR-023 Amendment 1 + ADR-087 + ADR-088 로 lane plugin 이 6 → 8 로 확장 (`codeforge-deploy` + `codeforge-deploy-review` 신설) 됨에 따라 family scope 도 wrapper + 8 lane = **9 plugin** 으로 확장된다. 단일 plugin 만 MAJOR bump 후 sibling 8 plugin 이 미bump 상태로 mixed install 되면 lane plugin family compatibility break (예: `codeforge-deploy` v2.0 + `codeforge-design` v1.x → Story §3 ↔ Story §12 contract mismatch) 가 발생한다.
+
+**family scope 확장 (7 → 9 plugin)**:
+- 기존 §결정 1 family scope (wrapper + 6 lane = 7 plugin) → wrapper + 8 lane = **9 plugin** 확장.
+- 신설 lane = `codeforge-deploy` + `codeforge-deploy-review` (ADR-023 Amendment 1 + ADR-087 + ADR-088 정합).
+
+**MAJOR atomic bump invariant**:
+- MAJOR version bump 시 9 plugin 모두 **동시 MAJOR bump 의무** — `CHANGELOG.md` `BREAKING:` section 9 file + `marketplace.json` 9 entry 동시 sync.
+- 신규 label `hotfix-bypass:marketplace-atomic-major` (기존 `hotfix-bypass:marketplace-atomic` 와 분리된 별도 family member).
+- MAJOR bump 시 단일 plugin 만 bump 후 sibling 8 plugin 미bump = family compatibility break = invariant 위반.
+
+**MINOR / PATCH bump = 본 invariant 영역 외**:
+- MINOR / PATCH bump 은 본 MAJOR atomic invariant 영역 밖 — §결정 1 의 per-plugin sibling sync 보존 (per-plugin 독립 bump 허용).
+
+**3-way version invariant × MAJOR atomic cross-axis**:
+- §결정 15 (Amendment 5) 의 3-way version invariant × MAJOR atomic invariant cross-axis = publisher (per-plugin MAJOR bump) × registry (`marketplace.json` 9 entry MAJOR sync) × consumer (`codeforge.version_pin.version` 9 plugin pin 동시 갱신) = 3-way × 9-plugin matrix.
+
+**Ratchet 강화 방향 only**:
+- 7 plugin → 9 plugin scope 확장 + MAJOR atomic invariant codify = scope 확장 + invariant 강도 상승 (강화 방향 only).
+- ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet 정합 — 약화 방향 (family scope 축소 / MAJOR atomic bump invariant 약화) 미해당.
+
+(번호 disambiguation, CFP-2173: 본 결정은 frontmatter amendment 7 이 원래 "§결정 18" 로 carrier 했던 substantive 결정의 본문 SSOT. Amendment 6 self-application 은 §결정 18-A.)
 
 ### 결정 19: Tier 분리 — marketplace atomic invariant Tier scope 명확화 (Amendment 8 / CFP-1179)
 
@@ -623,14 +650,14 @@ plugins:
 - `walk_plan.py` `resolve_min_prereq_topological()` 함수 재사용 (재구현 금지 — DRY invariant)
 - cross-Tier 의존이 없는 lane bump 는 topological gate 비발동 (즉시 per-plugin walk 가능)
 
-**MAJOR-atomic 비약화 (Amendment 7 §결정 18 보존)**:
-- Amendment 7 §결정 18 의 "MAJOR bump 시 family 전체 동시 MAJOR atomic" invariant 는 본 Tier 분리로 **약화되지 않음**.
+**MAJOR-atomic 비약화 (Amendment 7 §결정 18-B 보존)**:
+- Amendment 7 §결정 18-B 의 "MAJOR bump 시 family 전체 동시 MAJOR atomic" invariant 는 본 Tier 분리로 **약화되지 않음**.
 - MAJOR bump 은 Tier 무관 family bundle (family_atomic) 경로 강제 — 즉 MAJOR bump 시 Tier 2 lane 도 Tier 1 bundle walk 로 강제 routing (per-walk 독립 금지).
 - Tier 2 per-walk 독립성 (`family_atomic = False`) 은 **MINOR / PATCH bump 영역에만** 적용 (§결정 1 "MINOR/PATCH = per-plugin sibling sync" invariant 정합). `atomic_scope_for_tier` 의 per-tier base scope = MINOR/PATCH 영역.
 - 따라서 Tier 분리 = scope 명확화 (강화 방향), MAJOR-atomic invariant 약화 0 (ADR-058 §결정 5 정합).
 
 **CFP-1059 9-plugin family 정합 (deferred follow-up)**:
-- Amendment 7 §결정 18 이 family scope 를 7 → **9 plugin** (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
+- Amendment 7 §결정 18-B 이 family scope 를 7 → **9 plugin** (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
 - 현 walk-infra (`TOPOLOGICAL_ORDER`, ADR-096 §결정 2) 는 7-plugin DAG 가정 — deploy lane 의 DAG 위치 (의존성 방향) 결정 + `TOPOLOGICAL_ORDER` / `min_prerequisite_version` manifest 9-plugin 확장 = **별 follow-up CFP** (deploy lane lifecycle 의존성 분석 필요, 본 Story scope 외).
 - `LANE_PLUGINS` 가 `TOPOLOGICAL_ORDER` 에서 derive 하므로, 그 follow-up 에서 `TOPOLOGICAL_ORDER` 9-plugin 확장 시 본 Tier classification roster 자동 정합 (수동 동기화 0 — drift 차단).
 
@@ -844,7 +871,7 @@ ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Gap A l
 
 **(d) source 필드 ≠ mirrored field**: source 교체 단독은 mirrored field 4종 (name/version/description/author) 외 — 3-file atomic trigger 아님. 동반 version bump 는 §결정 21 Step 1.5 Rule (a) 정상 trigger (`marketplace_sync_required: true`).
 
-**(e) family scope 9-plugin 불변**: Amendment 7 보존 — 본 전환은 scope 변경 없음. (인용 주의: Amendment 7 frontmatter 표기 = "§결정 18 신설" 이나 본문 `### 결정 18` 헤더는 Amendment 6 self-application 절이 점유 — **결정 번호 충돌 pre-existing**, 정정 = follow-up #2173 위임. 본 Amendment 의 결정 영역 외.)
+**(e) family scope 9-plugin 불변**: Amendment 7 §결정 18-B 보존 — 본 전환은 scope 변경 없음. (인용 주의: 과거 Amendment 7 frontmatter 표기 "§결정 18 신설" 과 본문 `### 결정 18`(Amendment 6 self-application 점유) 사이 결정 번호 충돌이 pre-existing 했으나, CFP-2173 으로 suffix 분리 해소 — Amendment 7 family-scope 결정 = §결정 18-B, Amendment 6 self-application = §결정 18-A.)
 
 **(g) Tier 1 (wrapper) atomic scope 재정의 — CHANGELOG 축 ADR-092 위임 (direction: weaken, evidence-gate 통과)**:
 

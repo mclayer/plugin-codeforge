@@ -10,7 +10,7 @@ codeforge ζ arc PMO lane plugin. PMOAgent 가 codeforge core 의 Orchestrator �
 
 ## Inter-plugin contracts
 
-- `pmo_output v1` — [`docs/inter-plugin-contracts/pmo-output-v1.md`](docs/inter-plugin-contracts/pmo-output-v1.md) (canonical SSOT)
+- `pmo_output v1` — wrapper repo 루트 `docs/inter-plugin-contracts/pmo-output-v1.md` (canonical SSOT — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공)
 - codeforge wrapper 측 sibling reference: `mclayer/plugin-codeforge/docs/inter-plugin-contracts/pmo-output-v1.md`
 
 ## Self-write 책임 (CFP-36 ζ arc 패턴 + CFP-139 GitOps)

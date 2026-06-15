@@ -1265,7 +1265,7 @@ ADR-045 §D-9 pattern_count ≥ threshold 2 reach = Mandatory framing 발동 영
 
 **2-step 축소 path (mirrored field 변경 0건 — 예: doc-only fast-path batch)**: 선행 plugin PR merge → 후행 plugin PR rebase + merge (CHANGELOG chronological append). plugin.json bump 0 이라도 base SHA 변경 시 후행 rebase 의무 (race coordination 자체는 mirrored field 무관 적용).
 
-**ordering invariant (ADR-037 §결정 1 정합)**: race resolution priority = MAJOR > MINOR > PATCH 선행 merge. 동일 surface category race = lower CFP 번호 선행 (ADR-050 §3.4.2 답습). 후행 rebase 후 bump 재계산 = base 변경분 + 후행 변경분 합산 SemVer monotonic 보장 (MAJOR+MINOR 는 ADR-063 Amendment 7 §결정 18 atomic MAJOR scope 정합 시 atomic bundle 의무).
+**ordering invariant (ADR-037 §결정 1 정합)**: race resolution priority = MAJOR > MINOR > PATCH 선행 merge. 동일 surface category race = lower CFP 번호 선행 (ADR-050 §3.4.2 답습). 후행 rebase 후 bump 재계산 = base 변경분 + 후행 변경분 합산 SemVer monotonic 보장 (MAJOR+MINOR 는 ADR-063 Amendment 7 §결정 18-B atomic MAJOR scope 정합 시 atomic bundle 의무).
 
 **Race resolution evidence (Wave 3, 2026-05-25 KST)**: #1580 (MINOR 6.8.0) + #1559 (PATCH 6.7.3) same base 6.7.2 race — §3.5.1 `pr_open` polling detect → MINOR 선행 merge → #1559 rebase 6.7.3→6.8.1 + marketplace sibling sync. 실측 7-step 전개 = ADR-045 §D-9 carrier 기록 (CFP-1603).
 
