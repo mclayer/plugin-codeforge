@@ -670,12 +670,12 @@ def apply_overlay_file(
 #
 # family roster SSOT = TOPOLOGICAL_ORDER (위 §b — 현 walk-infra family roster, ADR-096 §결정 2).
 #   LANE_PLUGINS 는 TOPOLOGICAL_ORDER 에서 derive (dual-roster drift 차단 — single SSOT).
-# CFP-1059 9-plugin 정합 (realized in CFP-1199): ADR-063 Amendment 7 §결정 18 이 family scope 를
+# CFP-1059 9-plugin 정합 (realized in CFP-1199): ADR-063 Amendment 7 §결정 18-B 이 family scope 를
 #   7 → 9 plugin (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
 #   CFP-1199 F1 — TOPOLOGICAL_ORDER 9-plugin 확장 완료: deploy lane 의존성 결정 (wrapper 단방향,
 #   pmo 이후 보수 lifecycle 순서) + TOPOLOGICAL_ORDER 2 entry 추가. LANE_PLUGINS 가
 #   TOPOLOGICAL_ORDER 에서 derive 하므로 roster 자동 정합 (수동 동기화 0, §결정 19 참조).
-# MAJOR-atomic 비약화: Amendment 7 §결정 18 의 "MAJOR bump 시 family 전체 동시 atomic" invariant 는
+# MAJOR-atomic 비약화: Amendment 7 §결정 18-B 의 "MAJOR bump 시 family 전체 동시 atomic" invariant 는
 #   Tier 분리로 약화되지 않음 — MAJOR bump 은 Tier 1 bundle (family_atomic) 강제,
 #   Tier 2 per-walk 독립성은 MINOR / PATCH bump 영역에만 적용 (§결정 19 참조).
 
@@ -699,7 +699,7 @@ class AtomicScope:
       Tier 2 (lane):    files = 2-tuple (plugin.json + marketplace.json)
                         family_atomic = False (per-plugin 독립 walk 허용 — MINOR/PATCH only)
 
-    MAJOR-atomic 비약화 (Amendment 7 §결정 18): MAJOR bump 은 Tier 무관 family 전체 atomic 강제 —
+    MAJOR-atomic 비약화 (Amendment 7 §결정 18-B): MAJOR bump 은 Tier 무관 family 전체 atomic 강제 —
       MAJOR bump 시 Tier 2 도 Tier 1 bundle (family_atomic) 경로로 강제 routing (§결정 19).
       본 helper 의 per-tier base scope = MINOR/PATCH bump 영역 (per-plugin sibling sync 보존).
 

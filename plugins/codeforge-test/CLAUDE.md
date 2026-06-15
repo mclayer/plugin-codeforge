@@ -12,8 +12,8 @@ codeforge 통합테스트 lane plugin. IntegrationTestAgent 전담 — Epic 하�
 
 ## Inter-plugin contracts
 
-- `test_verdict v1` — [`docs/inter-plugin-contracts/test-verdict-v1.md`](docs/inter-plugin-contracts/test-verdict-v1.md) — Archived (CFP-317 / ADR-048)
-- `test_verdict v2.1` — [`docs/inter-plugin-contracts/test-verdict-v2.md`](docs/inter-plugin-contracts/test-verdict-v2.md) (canonical SSOT) — Active (CFP-367 / ADR-055 · CFP-371 Epic-level)
+- `test_verdict v1` — wrapper repo 루트 `docs/inter-plugin-contracts/test-verdict-v1.md` (canonical — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공) — Archived (CFP-317 / ADR-048)
+- `test_verdict v2.1` — wrapper repo 루트 `docs/inter-plugin-contracts/test-verdict-v2.md` (canonical SSOT — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공) — Active (CFP-367 / ADR-055 · CFP-371 Epic-level)
 
 ## Self-write 책임
 

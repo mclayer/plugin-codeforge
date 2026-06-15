@@ -294,7 +294,7 @@ Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` 
 - `scripts/bootstrap-labels.sh` dynamic read 자동 흡수 (CFP-598 parse-hotfix-bypass-labels.py 분기 — yaml row 추가만으로 bootstrap 자동 반영, script 변경 0건).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
 - ADR-008 §결정 3 SSOT: 신규 label entry append + 신규 category 신설 = MINOR bump.
-- plugin.json MINOR 동반 (5.78.0 → 5.79.0) — marketplace.json sync required (ADR-063 atomic invariant §결정 18).
+- plugin.json MINOR 동반 (5.78.0 → 5.79.0) — marketplace.json sync required (ADR-063 atomic invariant §결정 1).
 
 **v2.20 (CFP-722 / ADR-060 Amendment 13 §결정 27, 2026-05-16)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 28번째 family member append, post-CFP-771 v2.19 rebase).
 - **추가**: `hotfix-bypass:story-section-ownership` (color `fef2c0` audit tier) — `templates/github-workflows/story-section-ownership-check.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **28번째 hotfix-bypass:* family member**). ADR-060 Amendment 13 §결정 27 carrier — heading-anchored per-section INV-DI-1 destructive-non-owner + INV-DI-2 monopoly-unauthorized 검출 (PR #441 +216/-850 destructive rewrite incident prevention).
@@ -353,7 +353,7 @@ Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` 
 - `comment-prefix-registry-v1` `[SECURITY-FALLBACK]` prefix 신설 (SecurityArch 조건 4 carrier) — 본 entry 와 동행, separate PR.
 - `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 1 PR scope — fallback:* 2 entry 직접 hardcoded append, ADR-065 §결정 1 #1 self-check PASS gate).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
-- ADR-063 §결정 18 정합: plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) → marketplace.json sync required (별 PR, mclayer/marketplace repo, 선행 merge 의무).
+- ADR-063 §결정 1 정합: plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) → marketplace.json sync required (별 PR, mclayer/marketplace repo, 선행 merge 의무).
 
 **v2.10 (CFP-631 / ADR-063 Amendment 2, 2026-05-14)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 17번째 family member append). rebase race 4th sample 반영 (버전 재산정: 5.48.0 → 5.50.0).
 - **추가**: `hotfix-bypass:marketplace-description-verbatim` (color `fef2c0` audit tier) — `templates/github-workflows/marketplace-description-verbatim.yml` (Phase 2 carrier) blocking-on-pr lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **17번째 hotfix-bypass:* family member** — CFP-598 backfill 12 entry + CFP-610 wording-dictionary 14th + CFP-619 retro-mandatory-deployed 15th + CFP-628 retro-alert-pickup 16th + 본 entry 17th. ADR-063 Amendment 2 §결정 11 mandate carrier — description PR-time mechanical proactive lint, blocking-on-pr 직접 시작 근거 = ADR-060 §결정 5 default warning explicit exception + §결정 19 Amendment 6 (CFP-509) auto_blocking manual gate path + 사용자 directive Story §1 verbatim).
@@ -1045,7 +1045,7 @@ labels:
 
   # hotfix-bypass:actionlint + hotfix-bypass:post-merge-followup-success-rate (2종 — CFP-688 / ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d carrier)
   # actionlint prevention layer + KPI detection layer. canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
-  # plugin.json PATCH bump 동반 (5.72.0 → 5.73.0) — marketplace.json sync required (ADR-063 §결정 18).
+  # plugin.json PATCH bump 동반 (5.72.0 → 5.73.0) — marketplace.json sync required (ADR-063 §결정 1).
   - name: hotfix-bypass:actionlint
     category: hotfix-bypass
     color: "fef2c0"
@@ -1055,7 +1055,7 @@ labels:
 
   # fallback:* (2종 — CFP-658 / ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 manual agent direct write path)
   # 신규 category enum: fallback (별 axis). canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
-  # plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) — marketplace.json sync required (ADR-063 §결정 18).
+  # plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) — marketplace.json sync required (ADR-063 §결정 1).
   - name: fallback:manual
     category: fallback
     color: "c5def5"

@@ -10,7 +10,7 @@ codeforge ζ arc Requirements lane plugin. 7 agent 병렬 (PL + 6 sub: Domain·A
 
 ## Inter-plugin contracts
 
-- `requirements_output v1` — [`docs/inter-plugin-contracts/requirements-output-v1.md`](docs/inter-plugin-contracts/requirements-output-v1.md) (canonical SSOT)
+- `requirements_output v1` — wrapper repo 루트 `docs/inter-plugin-contracts/requirements-output-v1.md` (canonical SSOT — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공)
 
 ## Self-write 책임 (CFP-37 ζ arc 패턴)
 

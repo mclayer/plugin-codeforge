@@ -8,7 +8,7 @@ codeforge core (>= 4.0.0) 의존.
 
 ## Inter-plugin contracts
 
-- `develop_output v1` — [`docs/inter-plugin-contracts/develop-output-v1.md`](docs/inter-plugin-contracts/develop-output-v1.md)
+- `develop_output v1` — wrapper repo 루트 `docs/inter-plugin-contracts/develop-output-v1.md` (canonical — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공)
 
 ## Self-write 책임
 

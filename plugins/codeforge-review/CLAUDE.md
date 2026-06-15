@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `codeforge-review` Claude Code plugin. 실행 코드 없음 — markdown(agents/templates) + shell hook.
 
-**단독 동작 불가**: [`codeforge@mclayer`](https://github.com/mclayer/plugin-codeforge) core plugin (>= 0.17.0) 의존. core의 Orchestrator가 본 plugin의 PL agent에 review_packet 주입, [`review_verdict v4`](docs/inter-plugin-contracts/review-verdict-v4.md) contract로 결과 수령 (CFP-61). core 미설치 시 [overlay/hooks/session-start-deps-check.sh](overlay/hooks/session-start-deps-check.sh) fail-fast. core v0.16.0 (`1e75442`)에서 Phase 1 분리 — [docs/adr/ADR-001-extracted-from-codeforge.md](docs/adr/ADR-001-extracted-from-codeforge.md).
+**단독 동작 불가**: [`codeforge@mclayer`](https://github.com/mclayer/plugin-codeforge) core plugin (>= 0.17.0) 의존. core의 Orchestrator가 본 plugin의 PL agent에 review_packet 주입, `review_verdict v4` (canonical = 본 repo 루트 `docs/inter-plugin-contracts/review-verdict-v4.md` — 설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공) contract로 결과 수령 (CFP-61). core 미설치 시 [overlay/hooks/session-start-deps-check.sh](overlay/hooks/session-start-deps-check.sh) fail-fast. core v0.16.0 (`1e75442`)에서 Phase 1 분리 — [docs/adr/ADR-001-extracted-from-codeforge.md](docs/adr/ADR-001-extracted-from-codeforge.md).
 
 ## Architecture — PL + Worker 패턴
 
@@ -28,7 +28,7 @@ Orchestrator(core)
 
 ## Inter-plugin contract — review_verdict v4 (CFP-137 / ADR-044)
 
-PL이 Orchestrator에 생성하는 typed schema packet. SSOT(canonical) = 본 repo의 [`docs/inter-plugin-contracts/review-verdict-v4.md`](docs/inter-plugin-contracts/review-verdict-v4.md) — wrapper repo 측은 sibling reference (ADR-010 sync 의무). 본 plugin은 packet 구성만 책임 (최종 write는 Orchestrator). ADR-022 참조.
+PL이 Orchestrator에 생성하는 typed schema packet. SSOT(canonical) = 본 repo 루트 `docs/inter-plugin-contracts/review-verdict-v4.md` (설치 캐시 기준 plugin 디렉터리 외부, 링크 비제공) — wrapper repo 측은 sibling reference (ADR-010 sync 의무). 본 plugin은 packet 구성만 책임 (최종 write는 Orchestrator). ADR-022 참조.
 
 ## Versioning 룰
 
