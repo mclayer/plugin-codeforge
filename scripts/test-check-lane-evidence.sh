@@ -116,6 +116,16 @@ STORY_WITH_14='mkdir -p docs/stories; cat > docs/stories/CFP-TEST.md <<EOF
 \`\`\`
 EOF'
 
+# CFP-2293 sibling: no-§ §14 heading (`## 14.`) — story-init renderer 컨벤션(§ 없음).
+# §? 수용 fix 전에는 extract_section_14 가 못 잡아 [FAIL](YAML block 부재) → fix 후 [OK].
+STORY_WITH_14_NOSEC='mkdir -p docs/stories; cat > docs/stories/CFP-TEST-NOSEC.md <<EOF
+## 14. Lane Evidence
+\`\`\`yaml
+- lane: 설계
+  iteration: 1
+\`\`\`
+EOF'
+
 # 비-mixed stub detector (case 8): 항상 unknown(exit 3) 반환.
 DETECT_STUB='printf "#!/usr/bin/env python3\nprint(\"unknown\")\nimport sys; sys.exit(3)\n" > templates/scripts/detect-repo-kind.py'
 
@@ -149,6 +159,10 @@ run_case "4 regress-unknown-no-exempt" '\[FAIL\]' '\[N/A\]' "" "" ""
 #    --story 로 Story file 직접 주입 (sandbox 는 git 무관 → branch auto-detect 불가).
 run_case "5 mixed-with-story-no-exempt" '\[OK\]' '\[N/A\]' \
     "" "$STORY_WITH_14" "--story docs/stories/CFP-TEST.md" plugin overlay
+
+# 5b. no-§ §14 (`## 14.`): renderer 컨벤션 story → §? 로 파싱되어 [OK] (CFP-2293 sibling 회귀가드)
+run_case "5b mixed-with-nosec-story" '\[OK\]' '\[N/A\]' \
+    "" "$STORY_WITH_14_NOSEC" "--story docs/stories/CFP-TEST-NOSEC.md" plugin overlay
 
 # 6. fail-safe: python 신호 불가 (python3/python stub 이 비-0 exit, stdout 무방출) → 면제 억제
 run_case "6 failsafe-no-python" '\[FAIL\]' '\[N/A\]' \

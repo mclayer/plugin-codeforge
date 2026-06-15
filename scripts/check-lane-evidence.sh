@@ -143,9 +143,14 @@ parse_story_section_14() {
         return 1
     fi
     # Find §14 section + extract YAML block (between ```yaml and ```)
+    # CFP-2293 sibling: heading § 선택적. story-init renderer 는 `## N.`(§ 없음) 헤딩을
+    #   생성하고 실 story 는 `## 14.` / `## §14.` 양쪽이 혼재(34건 no-§ 실측) → 양쪽 수용.
+    #   `(§)?` 그룹 = multibyte-safe (§ = 2바이트 C2A7; awk byte-mode/mawk 에서 `§?` 는
+    #   2번째 바이트만 optional → no-§ 미스. 그룹으로 전체 § 를 optional 처리).
+    #   section-end terminator 도 (§)? + 숫자 anchor 로 일반화(`## 15.`/`## §15.` 모두 종료).
     awk '
-        /^## §14|^### §14|^#### §14/ { in14=1; next }
-        in14 && /^## §|^### §[0-9]/ { in14=0 }
+        /^## (§)?14|^### (§)?14|^#### (§)?14/ { in14=1; next }
+        in14 && /^## (§)?[0-9]|^### (§)?[0-9]/ { in14=0 }
         in14 && /^```yaml/ { yaml=1; next }
         in14 && /^```/ && yaml { yaml=0; next }
         in14 && yaml { print }
