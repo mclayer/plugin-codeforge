@@ -1,6 +1,6 @@
 # Code Review 체크리스트 (lane=code)
 
-CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입하는 구현 리뷰 체크리스트. SSOT 분리는 [ADR-001](../../docs/adr/ADR-001-review-agent-unification.md).
+CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입하는 구현 리뷰 체크리스트. SSOT 분리는 [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 ## 리뷰 대상 (scope_globs)
 

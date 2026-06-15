@@ -1,6 +1,6 @@
 # Security Review 체크리스트 (lane=security)
 
-SecurityTestPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입하는 보안 테스트 체크리스트. SSOT 분리는 [ADR-001](../../docs/adr/ADR-001-review-agent-unification.md).
+SecurityTestPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입하는 보안 테스트 체크리스트. SSOT 분리는 [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 ## 리뷰 대상 (scope_globs)
 
