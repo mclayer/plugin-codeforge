@@ -25,6 +25,17 @@ is_transitional: false
 
 **Amendment 1 (2026-05-08, CFP-275)** — §결정 1 의 "Wrapper Orchestrator self-write committed lane evidence" 정의 확장: **Orchestrator-owned delegate subagent** (Orchestrator 가 §14 row append 전용으로 spawn 한 subagent) 의 §14 lane evidence write 도 본 §결정 1 의 "Orchestrator self-write" 정의에 포함됨. mechanism level subagent 경유여도 ownership identity = Orchestrator 유지. lane plugin agent 가 자체 임의 §14 직접 append 는 여전히 금지 (lane plugin spawn ≠ Orchestrator-owned delegate spawn). Cross-ref: ADR-039 §결정 3 + §결정 12.
 
+**Amendment 2 (2026-06-15, CFP-2270)** — **§14 applicability 경량 노트: wrapper-self dogfood (repo-kind `mixed`) 면제.** §결정 1 의 §14 storage location (= Story file `§14 Lane Evidence` section) 은 Story file 이 commit 영역에 실존함을 전제한다. 그러나 wrapper plugin 자기개선 dogfood Story 는 **ADR-013 dogfood-out** 에 의해 wrapper repo `docs/stories/<KEY>.md` 가 구조적으로 부재하고 (정본 = GitHub Issue + `mclayer/codeforge-internal-docs`), 본 repo 는 `.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 양존 = `detect-repo-kind.py` 분류 `mixed` (exit 2, ADR-027 Amendment 6 §결정 10 + ADR-083 §결정 1 4-way truth-table SSOT). 이 상태에서 `scripts/check-lane-evidence.sh` 의 Story-file presence / §14 YAML block 검사는 **충족 불가능한 검사** (검사 대상 자체가 dogfood-out 으로 부재) — false-red advisory 노이즈만 발생한다.
+
+따라서 다음을 **applicability 노트**로 명문화한다 (정식 lint enforcement 승격 아님 — pattern_count:1, advisory 수준):
+
+1. **면제 조건 (교집합, 좁게)**: `detect-repo-kind` 분류 == `mixed` **AND** auto-detect 후 STORY_PATH 가 비었을 때 (Story file 미발견). 두 조건 모두 참일 때만 §14 검사를 면제하고 `[N/A]` advisory 로 대체 (FAIL count 미증가).
+2. **회귀 보존 (over-broad 금지)**: `consumer` / `plugin` / `unknown` repo-kind 의 진짜 Story 누락 또는 §14 누락은 **면제 대상 아님** — 종전 advisory-red 보존. 면제는 dogfood `mixed` 한정. consumer 의 §14 누락까지 면제하면 lane-evidence invariant 자체가 무력화되므로 명시 차단.
+3. **fail-safe (신호 불확실 → 면제 억제)**: detect subprocess 가 신호를 못 줄 때 (python3 미설치 / script 부재 / 예외 / 비-`mixed` exit) 는 면제하지 않고 **기존 advisory-red 동작 보존** (보수 측 fallback). `bootstrap-first-gate.py` `_detect_repo_kind` 의 `-1` sentinel→발화 억제 fail-safe (hook L141) 와 대칭 — 양쪽 모두 "불확실 시 더 안전한 측" 으로 degrade.
+4. **CI 무영향**: `lane-evidence-check.yml` CI 워크플로는 §14 를 요구하지 않고 Phase 2 PR body `## Lane evidence` 블록만 검증하므로 본 면제와 무관 (무변경). 본 면제는 로컬 `check-lane-evidence.sh` advisory 노이즈만 다룸.
+
+본 Amendment 는 §결정 1~5 의 normative 결정을 변경하지 않는다 — Story file 이 존재하는 모든 consumer / 일반 wrapper Story 에는 §14 evidence trail 이 종전과 동일하게 의무. 단지 "Story file 이 구조적으로 부재한 dogfood `mixed` 환경" 에 대한 applicability 공백을 advisory 면제로 보완한다. Cross-ref: ADR-013 (dogfood-out) / ADR-027 Amendment 6 §결정 10 (4-way truth-table) / ADR-083 §결정 1-2 (filesystem-only detection) / 짝 변경 #2247 (외부 script fork 테스트 distinct-marker — exit code 단독 판정 금지, stdout sentinel 병행).
+
 ## 컨텍스트
 
 CFP-124 진단 (2026-05-06) §1.3 architectural root cause A1:
@@ -183,3 +194,11 @@ N/A — permanent policy
 - plan: `codeforge-internal-docs/wrapper/plans/2026-05-NN-cfp-126-lane-spawn-evidence-trail-plan.md` (CFP-126 Phase 1)
 - carrier story: `codeforge-internal-docs/wrapper/stories/CFP-126.md`
 - parent Epic: `codeforge-internal-docs/wrapper/stories/CFP-124.md`
+
+### Amendment 2 (CFP-2270) 관련 파일
+- `scripts/check-lane-evidence.sh` (Phase 2 — `mixed` repo-kind + STORY_PATH 부재 시 §14 면제 분기 추가)
+- `scripts/test-check-lane-evidence.sh` (Phase 2 — D2 회귀+fail-safe bash harness 신설, CFP-126 ADR 본문 NEW 표기가 미실현이었음을 본 Amendment 가 실현)
+- `hooks/tests/test_bootstrap_first_gate.py` (Phase 2 — #2247 짝, TC9 family stdout sentinel 병행 assert)
+- `plugins/codeforge-develop/agents/QADeveloperAgent.md` (Phase 2 — #2247 짝, distinct-marker 가이드 신설)
+- `templates/scripts/detect-repo-kind.py` (무변경 — SSOT 재사용 대상)
+- Story 정본: GitHub Issue mclayer/plugin-codeforge#2270 (wrapper-self dogfood, ADR-013 dogfood-out)
