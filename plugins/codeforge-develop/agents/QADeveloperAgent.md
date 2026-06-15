@@ -97,6 +97,18 @@ cross-layer TDD (QADev RED ∥ DeveloperAgent GREEN, 별도 세션) 에서 GREEN
 - working-tree drift 로 GREEN 선착 시 본 stash 기법으로 진정성 입증 의무
 - 매핑표 PASS 발화 차단 logic: cross-layer Story 영역 + GREEN 선착 working-tree drift 검출 시 본 입증 보고 부재 → 매핑표 PASS 차단 + DevPL → QADev 재spawn
 
+#### 외부 script subprocess fork 테스트 — distinct-marker 의무 (exit code 단독 판정 금지)
+
+테스트가 외부 script 를 `subprocess` 로 fork 해 결과를 판정할 때, **도메인 exit code 단독으로 통과 판정 금지**. 도메인 고유 stdout sentinel (또는 distinct marker) 을 **병행 assert** 의무. 본 subsection 은 위 git stash 기법(working-tree drift 대응)과 직교 — subprocess fork **진정성**(테스트가 실제로 외부 script 를 fork 했는가) 축을 다룬다.
+
+**anti-pattern (silent false-positive)**: interpreter / shell 의 표준 exit code (예: 미 fork 시 `python script.py` 가 파일 부재로 exit 2 "can't open file", 또는 shell 의 1/126/127) 가 도메인 exit code (예: detect-repo-kind 의 `mixed=2`) 와 **우연히 일치**하면, fork 가 실제로 일어나지 않았는데도 exit-code-only assert 가 통과한다 — fork 진정성을 검증하지 못하는 vacuous 거짓통과. exit code 는 fork 진정성에 본질적으로 약하다.
+
+**방어 (distinct-marker 병행 assert)**: 도메인 고유 stdout sentinel 은 도메인 코드 경로에서만 방출되므로, 미 fork 시 빈 문자열 또는 interpreter 에러 텍스트가 되어 `== "<sentinel>"` 가 자연히 실패한다. 따라서 `(returncode, stdout.strip())` **튜플 동시 assert** 를 권고한다 (부분일치 차단). 도메인 exit code 가 표준 exit (1/2/126/127) 과 겹칠 가능성이 있으면 stdout sentinel 추가 신호는 **의무**.
+
+**입증 의무**: distinct-marker 추가 시, 미 fork 조건(예: 잘못된 script 경로)을 강제하는 RED 재현으로 sentinel assert 가 **genuine 실패**(exit-code-only 였다면 통과했을 케이스)함을 1회 입증 — vacuous 아님 증명.
+
+**근거 (1 instance)**: CFP-2243 TC9-mixed (`hooks/tests/test_bootstrap_first_gate.py`). 미 fork 조건(worktree 상위에 script 부재)에서 `python script.py` 가 interpreter exit 2 (can't open file) 를 반환 → 도메인 `mixed=2` 와 우연 일치 → exit-code-only assert 가 실 fork 0 통과(silent false-positive). stdout sentinel `mixed` 병행 assert 로 차단(#2247).
+
 ### 작성 대상 우선순위
 
 1. **신규 함수·클래스·포트**: §8 범위에서 UnitTest

@@ -30,6 +30,7 @@ STRICT=0
 STORY_PATH=""
 PR_NUMBER=""
 CHECK_PARALLELIZATION=0
+EXEMPT_SECTION_14=0   # ADR-031 Amendment 2 (CFP-2270): wrapper-self dogfood §14 면제 플래그
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -77,6 +78,61 @@ auto_detect_pr() {
     if command -v gh >/dev/null 2>&1; then
         PR_NUMBER="$(gh pr view --json number --jq '.number' 2>/dev/null || true)"
     fi
+}
+
+# ADR-031 Amendment 2 (CFP-2270): wrapper-self dogfood (repo-kind `mixed`) §14 면제 probe.
+#
+# 면제 판정 (교집합, 좁게 — INV-D2-exempt-narrow):
+#   detect-repo-kind 분류 == `mixed` (exit 2 AND stdout sentinel "mixed" 동시 일치)
+#   AND auto-detect 후 STORY_PATH 가 비었을 때 (Story file 미발견).
+# 두 조건 모두 참일 때만 §14 검사를 면제 (Check 1/2 의 FAIL → [N/A] advisory 로 대체).
+#
+# fail-safe (INV-D2-failsafe — 면제 억제 측): python 미탐지 / script 부재 / 예외 / 비-`mixed`
+#   exit 면 면제하지 않고 기존 advisory-red 동작 보존 (보수 측 fallback). bootstrap-first-gate.py
+#   `_detect_repo_kind` 의 `-1` sentinel→발화 억제 와 대칭 — 불확실 시 더 안전한 측으로 degrade.
+#
+# 경로해석: CLAUDE_PLUGIN_ROOT env 우선 → fallback ${BASH_SOURCE[0]} 기준 plugin root
+#   (symlink 견고성 — $0 금지). bootstrap-first-gate.py `_plugin_root()` (env→__file__ parent) 정합.
+detect_section_14_exemption() {
+    EXEMPT_SECTION_14=0
+
+    # auto-detect 후에도 STORY_PATH 가 실존하면 면제 불가 (over-broad 차단)
+    if [ -n "$STORY_PATH" ] && [ -f "$STORY_PATH" ]; then
+        return 0
+    fi
+
+    # python interpreter 탐지 (없으면 면제 억제)
+    local py=""
+    if command -v python3 >/dev/null 2>&1; then
+        py="$(command -v python3)"
+    elif command -v python >/dev/null 2>&1; then
+        py="$(command -v python)"
+    else
+        return 0  # fail-safe: python 미탐지 → 면제 억제
+    fi
+
+    # detect-repo-kind.py 경로 해석 (env 우선 → BASH_SOURCE 기준 fallback)
+    local detect_script
+    if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+        detect_script="${CLAUDE_PLUGIN_ROOT}/templates/scripts/detect-repo-kind.py"
+    else
+        detect_script="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/templates/scripts/detect-repo-kind.py"
+    fi
+    if [ ! -f "$detect_script" ]; then
+        return 0  # fail-safe: script 부재 → 면제 억제
+    fi
+
+    # detect 호출: stdout(kind) + exit code 둘 다 취득 (exit code 단독 의존 금지)
+    local kind rc
+    kind="$("$py" "$detect_script" --repo-root . 2>/dev/null)"
+    rc=$?
+
+    # mixed 확정 = exit 2 AND stdout sentinel "mixed" 동시 일치 (둘 중 하나만이면 면제 억제)
+    if [ "$rc" -eq 2 ] && [ "$kind" = "mixed" ]; then
+        EXEMPT_SECTION_14=1
+    fi
+    # 비-mixed exit / sentinel 불일치 / 예외 → EXEMPT_SECTION_14=0 유지 (fail-safe)
+    return 0
 }
 
 # Parse Story §14 Lane Evidence YAML block
@@ -208,13 +264,20 @@ check_parallelization() {
 run_check() {
     auto_detect_story
     auto_detect_pr
+    detect_section_14_exemption
 
     local fail=0
 
     # Check 1: Story §14 presence
     if [ -z "$STORY_PATH" ] || [ ! -f "$STORY_PATH" ]; then
-        log_err "[FAIL] Story file path detect 실패 또는 file 부재 — --story <path> 명시"
-        fail=$((fail + 1))
+        if [ "${EXEMPT_SECTION_14:-0}" -eq 1 ]; then
+            # ADR-031 Amendment 2: wrapper-self dogfood (mixed repo-kind) — Story file 부재는
+            # ADR-013 dogfood-out 정상. FAIL count 미증가.
+            log "[N/A] wrapper-self dogfood Story (repo-kind mixed) — §14 면제 (ADR-031 Amendment 2)"
+        else
+            log_err "[FAIL] Story file path detect 실패 또는 file 부재 — --story <path> 명시"
+            fail=$((fail + 1))
+        fi
     else
         log "[OK] Story file: $STORY_PATH"
     fi
@@ -229,6 +292,9 @@ run_check() {
         else
             log "[OK] Story §14 YAML block detected"
         fi
+    elif [ "${EXEMPT_SECTION_14:-0}" -eq 1 ]; then
+        # ADR-031 Amendment 2: Story file 부재 dogfood → §14 YAML block 검사도 면제.
+        log "[N/A] §14 YAML block — wrapper-self dogfood 면제 (ADR-031 Amendment 2)"
     fi
 
     # Check 3: PR description `## Lane evidence` presence

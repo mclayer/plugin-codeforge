@@ -2,6 +2,12 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.10.4 (2026-06-15) — CFP-2270 QADeveloperAgent distinct-marker 가이드 신설 (PATCH)
+
+### Added
+
+- `agents/QADeveloperAgent.md` — 신설 subsection "외부 script subprocess fork 테스트 — distinct-marker 의무 (exit code 단독 판정 금지)". subprocess fork 진정성 축(git stash 기법과 직교): 도메인 exit code 단독 통과 판정 금지 + 도메인 고유 stdout sentinel 병행 assert 의무 + `(returncode, stdout.strip())` 튜플 동시 assert 권고 + 미 fork 조건 RED 재현 입증 의무. 근거 1 instance = CFP-2243 TC9-mixed silent false-positive (#2247). agent file minor edit (가이드 문구 추가) = ADR-037 §결정 1 (a) PATCH.
+
 ## 0.10.3 (2026-06-15) — CFP-2249 superpowers 의존 완전 제거 (PATCH)
 
 ### Changed

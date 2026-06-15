@@ -29,7 +29,7 @@ is_transitional: false
 
 따라서 다음을 **applicability 노트**로 명문화한다 (정식 lint enforcement 승격 아님 — pattern_count:1, advisory 수준):
 
-1. **면제 조건 (교집합, 좁게)**: `detect-repo-kind` 분류 == `mixed` **AND** auto-detect 후 STORY_PATH 가 비었을 때 (Story file 미발견). 두 조건 모두 참일 때만 §14 검사를 면제하고 `[N/A]` advisory 로 대체 (FAIL count 미증가).
+1. **면제 조건 (교집합, 좁게)**: `detect-repo-kind` 분류 == `mixed` **AND** auto-detect 후 STORY_PATH 가 비었을 때 (Story file 미발견). 두 조건 모두 참일 때만 §14 검사를 면제하고 `[N/A]` advisory 로 대체 (FAIL count 미증가). 여기서 `mixed` 판정 = detect subprocess 의 **exit code 2 AND stdout sentinel(`mixed`) 이 동시에 일치**할 때만 성립한다 (exit code 단독 의존 금지 — I-4 wording SSOT, 짝 변경 #2247 distinct-marker 와 동일 원리). 둘 중 하나만 일치하면 (예: interpreter 우연 exit 2 + 빈 stdout) `mixed` 로 인정하지 않고 fail-safe (§3) 로 면제 억제한다.
 2. **회귀 보존 (over-broad 금지)**: `consumer` / `plugin` / `unknown` repo-kind 의 진짜 Story 누락 또는 §14 누락은 **면제 대상 아님** — 종전 advisory-red 보존. 면제는 dogfood `mixed` 한정. consumer 의 §14 누락까지 면제하면 lane-evidence invariant 자체가 무력화되므로 명시 차단.
 3. **fail-safe (신호 불확실 → 면제 억제)**: detect subprocess 가 신호를 못 줄 때 (python3 미설치 / script 부재 / 예외 / 비-`mixed` exit) 는 면제하지 않고 **기존 advisory-red 동작 보존** (보수 측 fallback). `bootstrap-first-gate.py` `_detect_repo_kind` 의 `-1` sentinel→발화 억제 fail-safe (hook L141) 와 대칭 — 양쪽 모두 "불확실 시 더 안전한 측" 으로 degrade.
 4. **CI 무영향**: `lane-evidence-check.yml` CI 워크플로는 §14 를 요구하지 않고 Phase 2 PR body `## Lane evidence` 블록만 검증하므로 본 면제와 무관 (무변경). 본 면제는 로컬 `check-lane-evidence.sh` advisory 노이즈만 다룸.
