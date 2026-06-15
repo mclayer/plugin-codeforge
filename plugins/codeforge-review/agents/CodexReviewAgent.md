@@ -34,7 +34,7 @@ permissions:
 
 **Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계·구현·보안 3 lane 공통 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
 
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
+ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 re-entry: 상위 = lane PL (Design/Code/SecurityTest) / 형제 = ClaudeReviewAgent (병렬 peer) / 호출 시점 = 각 리뷰 lane 진입.
 
@@ -46,7 +46,7 @@ Codex 플러그인 미설치 시 **모든 리뷰 lane 진행 불가** — Orches
 
 **Schema SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) §2 — 공통 필드 + lane-specific 확장 (security lane은 `first_layer_findings` 필수). 본 md는 schema 자체를 재인용하지 않는다 — drift 회피.
 
-**Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환, Codex 호출 자체 skip, generic fallback 금지 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) §결정 4번):
+**Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환, Codex 호출 자체 skip, generic fallback 금지 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) §결정 4번):
 
 1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)

@@ -58,7 +58,7 @@ overlay/hooks/
 
 PL이 워커 결과 종합 후 codeforge core (Orchestrator) 에 반환하는 typed schema. **review plugin은 직접 write 안 함** — Story §9 / GitHub PR comment / gate label 등 lifecycle write는 모두 core/DocsAgent 책임.
 
-상세 schema (canonical SSOT): 본 repo의 [`docs/inter-plugin-contracts/review-verdict-v4.md`](docs/inter-plugin-contracts/review-verdict-v4.md). 본 plugin이 그 contract version v4를 준수. Historical: v1 / v2 / v3 (Archived).
+상세 schema (canonical SSOT): 본 repo의 [`docs/inter-plugin-contracts/review-verdict-v4.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/review-verdict-v4.md). 본 plugin이 그 contract version v4를 준수. Historical: v1 / v2 / v3 (Archived).
 
 향후 contract 변경 시:
 - v4.x backward-compat: 새 선택 필드 추가만 가능 (양쪽 plugin 무관)
