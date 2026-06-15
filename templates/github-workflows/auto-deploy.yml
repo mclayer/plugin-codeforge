@@ -86,11 +86,11 @@ jobs:
             echo "::notice::project.yaml 발견: ${PROJECT_YAML}"
             # deploy.enabled, deploy.retention_hours, deploy.ssh_targets 등
             DEPLOY_ENABLED=$(python3 -c "
-import yaml, sys
-with open('${PROJECT_YAML}') as f:
-    cfg = yaml.safe_load(f)
-print(cfg.get('deploy', {}).get('enabled', False))
-" 2>/dev/null || echo "false")
+          import yaml, sys
+          with open('${PROJECT_YAML}') as f:
+              cfg = yaml.safe_load(f)
+          print(cfg.get('deploy', {}).get('enabled', False))
+          " 2>/dev/null || echo "false")
             echo "deploy_enabled=${DEPLOY_ENABLED}" >> "${GITHUB_OUTPUT}"
           else
             echo "::warning::project.yaml 미존재 — consumer overlay 필요"

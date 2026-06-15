@@ -90,10 +90,10 @@ jobs:
 
           SINCE_EPOCH=$(date -u -d "${SINCE_TS}" +%s 2>/dev/null || \
             python3 -c "
-from datetime import datetime, timezone
-ts = datetime.strptime('${SINCE_TS}', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-print(int(ts.timestamp()))
-")
+          from datetime import datetime, timezone
+          ts = datetime.strptime('${SINCE_TS}', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+          print(int(ts.timestamp()))
+          ")
 
           while IFS= read -r issue; do
             [ -z "$issue" ] && continue
@@ -108,10 +108,10 @@ print(int(ts.timestamp()))
               # created_at >= SINCE_TS
               COMMENT_EPOCH=$(date -u -d "$CREATED_AT" +%s 2>/dev/null || \
                 python3 -c "
-from datetime import datetime, timezone
-ts = datetime.strptime('$CREATED_AT', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-print(int(ts.timestamp()))
-" 2>/dev/null || echo 0)
+          from datetime import datetime, timezone
+          ts = datetime.strptime('$CREATED_AT', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+          print(int(ts.timestamp()))
+          " 2>/dev/null || echo 0)
               if [ "$COMMENT_EPOCH" -ge "$SINCE_EPOCH" ]; then
                 ALERT_COUNT=$((ALERT_COUNT + 1))
               fi
@@ -131,10 +131,10 @@ print(int(ts.timestamp()))
           RETRO_COUNT=0
           SINCE_EPOCH=$(date -u -d "${SINCE_TS}" +%s 2>/dev/null || \
             python3 -c "
-from datetime import datetime, timezone
-ts = datetime.strptime('${SINCE_TS}', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-print(int(ts.timestamp()))
-")
+          from datetime import datetime, timezone
+          ts = datetime.strptime('${SINCE_TS}', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+          print(int(ts.timestamp()))
+          ")
           for f in docs/retros/*.md; do
             [ -f "$f" ] || continue
             FILE_EPOCH=$(date -u -r "$f" +%s 2>/dev/null || stat -c '%Y' "$f" 2>/dev/null || echo 0)
@@ -167,9 +167,9 @@ print(int(ts.timestamp()))
             RATE=$(python3 -c "print(round(${RETRO_COUNT} / ${ALERT_COUNT} * 100, 1))" 2>/dev/null || echo "null")
             # sunset_gate: ≥ 90.0% = ok, < 90.0% = violated
             GATE=$(python3 -c "
-rate = ${RATE:-0}
-print('ok' if rate >= 90.0 else 'violated')
-" 2>/dev/null || echo "unknown")
+          rate = ${RATE:-0}
+          print('ok' if rate >= 90.0 else 'violated')
+          " 2>/dev/null || echo "unknown")
           fi
 
           MEASURED_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
@@ -249,27 +249,27 @@ print('ok' if rate >= 90.0 else 'violated')
           git push origin "$BRANCH"
 
           PR_BODY=$(cat <<EOF
-## CFP-628 — ADR-045 §D-5 retro alert pickup KPI monthly refresh
+          ## CFP-628 — ADR-045 §D-5 retro alert pickup KPI monthly refresh
 
-docs/kpi/retro-alert-pickup-rate.json 갱신 (monthly cron / workflow_dispatch).
+          docs/kpi/retro-alert-pickup-rate.json 갱신 (monthly cron / workflow_dispatch).
 
-### KPI summary
+          ### KPI summary
 
-- Window: ${WINDOW_KEY}
-- Rate: ${RATE}%
-- Gate: ${GATE} (sunset_gate threshold ≥ 90%)
+          - Window: ${WINDOW_KEY}
+          - Rate: ${RATE}%
+          - Gate: ${GATE} (sunset_gate threshold ≥ 90%)
 
-### 정책 cross-ref
+          ### 정책 cross-ref
 
-- ADR-045 §D-5 — Orchestrator SessionStart retro alert scan mandate
-- ADR-024 §결정 6 — main 직접 push 금지, auto-PR 패턴 정합
-- ADR-060 — evidence-enforceable framework (warning tier — advisory only, no merge block)
-- evidence-checks-registry.yaml entry: retro-alert-pickup-rate
+          - ADR-045 §D-5 — Orchestrator SessionStart retro alert scan mandate
+          - ADR-024 §결정 6 — main 직접 push 금지, auto-PR 패턴 정합
+          - ADR-060 — evidence-enforceable framework (warning tier — advisory only, no merge block)
+          - evidence-checks-registry.yaml entry: retro-alert-pickup-rate
 
-### Auto-merge 가능 여부
+          ### Auto-merge 가능 여부
 
-본 PR = data-only refresh. lint 영향 0건. 사용자가 검토 후 merge 가능.
-EOF
+          본 PR = data-only refresh. lint 영향 0건. 사용자가 검토 후 merge 가능.
+          EOF
           )
 
           gh pr create --title "chore(kpi): retro-alert-pickup monthly refresh (${WINDOW_KEY})" \
