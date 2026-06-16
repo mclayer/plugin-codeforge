@@ -530,9 +530,26 @@ atlassian:
                                      # wrapper-managed marker block 안 ownership
                                      # conflict resolution: consumer-authored 영역 우선 (OOS edge case 4번 carrier)
                                      # 예: {adr: {parent_page_id: "12345"}}
-  jira:                              # W4+ (ADR-103 sync mechanism) — S2 declare-only, schema placeholder
-    project_key: <string>            # NOT secret (Internal 분류)
-                                     # 예: "PROJ"
+  jira:                              # CFP-2285 원격 채널 (opt-in). 미설정/enabled:false = no-op.
+                                     # 채널 runtime 은 addCommentToJiraIssue 1종만 사용 (ADR-099 §A1-1).
+                                     #   이슈 생성(createJiraIssue)·status 전이(transitionJiraIssue) 는 deny
+                                     #   → control/mirror 이슈는 운영자가 사전 생성한다.
+    decision_channel:                # Arc A 비동기 결정 채널(입력/HITL). 결정 fork 를 Jira 로 라우팅
+      enabled: <bool>                # true = 판단-기반 라우팅 활성
+      cloud_id: <string>             # Atlassian cloudId (getAccessibleAtlassianResources)
+      control_project_key: <string>  # 결정 채널 Jira 프로젝트 key (비공개·단일 운영자 권장 — ADR-099 §A1-3 신뢰가정)
+      control_issue_key: <string>    # 운영자 사전 생성한 control 결정 이슈(assignee=운영자=native notify). 결정을 이 이슈 코멘트로 post
+      issue_type: <string>           # 결정 이슈 타입(있으면). 예: "작업"
+      notify: assignee | watcher     # Jira native 알림 (assignee 또는 watcher)
+      timeout_minutes: <int>         # 미응답 재알림(escalation) 임계. 예: 1440 = 24h
+      escalation: { intervals_minutes: [<int>, ...] }   # 재알림 점증 스케줄(분). 예: [60, 240, 1440]
+      auto_decide_on_timeout: false  # 박제 — timeout 도달해도 자동결정 절대 금지(결정은 끝까지 운영자 몫)
+    progress_mirror:                 # Arc B 세션·작업 모니터링(출력, write-only, comment-only)
+      enabled: <bool>                # true = 진행 미러 활성 (opt-in, 기본 off)
+      project_key: <string>          # 진행 미러 대상 control project (decision_channel 과 같은 project 공유 가능)
+      cloud_id: <string>             # Atlassian cloudId (decision_channel 과 공유 가능)
+      mirror_issue_key: <string>     # 운영자 사전 생성 모니터링 이슈(빈값=no-op). 진행을 코멘트로 미러
+      current_activity: pinned-comment-update   # "현재 무엇 하는중" 1줄 = 단일 코멘트 update 방식
 
 # [선택] Branch protection consumer overlay (CFP-1809 / [ADR-083](adr/ADR-083-consumer-applicability-filter.md) instance)
 # default = applicable: wrapper_only (codeforge family plugin repo SSOT 만 유지 — wrapper CLAUDE.md "6 lane plugin branch protection contexts SSOT" 표 자체 governance)
