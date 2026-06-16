@@ -95,11 +95,6 @@ def secrets_present(extra=()):
     return all(os.environ.get(v) for v in need)
 
 
-def missing_secrets(extra=()):
-    need = tuple(SECRET_ENV_VARS) + tuple(extra)
-    return [v for v in need if not os.environ.get(v)]
-
-
 # ── mirror 대상 분류 ──────────────────────────────────────────────────────
 
 def is_retain_ban(path_str):
@@ -247,8 +242,8 @@ def cmd_build_manifest(args):
     extra = ("CONFLUENCE_SPACE_ID",)
     dry_run = not secrets_present(extra)
     if dry_run:
-        miss = missing_secrets(extra)
-        print(f"[build-manifest] dry-run (secret 부재: {miss}) — 실제 space 조회 0건.")
+        need_names = ", ".join(tuple(SECRET_ENV_VARS) + tuple(extra))
+        print(f"[build-manifest] dry-run (secret 미설정) — 실제 space 조회 0건. 필요: {need_names}")
 
     manifest = load_manifest()
     existing = manifest.get("pages", {}) or {}
@@ -298,8 +293,9 @@ def cmd_sync(args):
     """
     dry_run = args.dry_run or not secrets_present()
     if dry_run:
-        miss = missing_secrets() if not args.dry_run else ["(--dry-run 강제)"]
-        print(f"[sync] dry-run (사유: {miss}) — 실제 AI/Confluence 호출 0건.")
+        reason = "--dry-run 강제" if args.dry_run else "secret 미설정"
+        need_names = ", ".join(SECRET_ENV_VARS)
+        print(f"[sync] dry-run ({reason}) — 실제 AI/Confluence 호출 0건. 필요 secret: {need_names}")
 
     targets, skipped_retain = collect_changed_docs(
         args.files, args.git_diff, args.diff_base
