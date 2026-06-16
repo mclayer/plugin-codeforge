@@ -21,6 +21,14 @@ permissions:
   issues: write    # Issue auto-create (carrier Issue per signature)
   contents: read   # gh api search/issues (merged PR label scan)
 
+# ── concurrency 가드 (ADR-063 §결정 13 E-6) ──
+# cron + workflow_dispatch 동시 트리거 시 비원자 search-then-create dedup 가 중복 Issue 를
+# 만들 수 있으므로 단일 run 만 진행되도록 직렬화. cancel-in-progress: false —
+# 진행 중인 counter run 을 중단하면 부분 count 상태가 남을 수 있어 보존(완료 우선).
+concurrency:
+  group: bypass-label-counter
+  cancel-in-progress: false
+
 jobs:
   count-and-issue:
     runs-on: ubuntu-latest

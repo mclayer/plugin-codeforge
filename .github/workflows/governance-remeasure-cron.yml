@@ -22,6 +22,14 @@ permissions:
   issues: write    # Issue auto-create (drift alert per metric)
   contents: read   # git ls-files 측정 (self-repo checkout)
 
+# ── concurrency 가드 (ADR-063 §결정 13 E-6) ──
+# cron + workflow_dispatch 동시 트리거 시 비원자 search-then-create dedup 가 중복 Issue 를
+# 만들 수 있으므로 단일 run 만 진행되도록 직렬화. cancel-in-progress: false —
+# 진행 중인 measure run 을 중단하면 부분 drift alert 상태가 남을 수 있어 보존(완료 우선).
+concurrency:
+  group: governance-remeasure-cron
+  cancel-in-progress: false
+
 jobs:
   measure-and-alert:
     runs-on: ubuntu-latest
