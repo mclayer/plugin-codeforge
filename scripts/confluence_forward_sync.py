@@ -6,10 +6,18 @@
 # ADR-123 — 읽기 표준 (AI 재렌더 기준)
 """git → Confluence forward 동기화 스캐폴드 (A-prime 운영 모델, 앞 방향).
 
-운영 모델 (A-prime, ADR-103 Amendment 3 §결정 7):
+이 스크립트·워크플로 = 선택적 무인(headless) fallback (ADR-103 Amendment 4 §결정 8-B).
+    1차(기본) 경로는 git 문서를 편집한 Claude 세션(codeforge 에이전트/Orchestrator)이
+    같은 흐름(문서 PR 머지 후처리, ADR-026 post-merge)에서 MCP(Atlassian)로 Confluence 를
+    직접 갱신하는 것이다 — secret·CI·cron 불필요 (세션 OAuth scope 사용, ADR-103 §결정 8-A).
+    본 스크립트·CI 워크플로는 세션 없이 무인으로 돌릴 때만 쓰는 보조 경로이며, 이때만
+    토큰 secret 이 필요하다 (CI runner 는 세션 연결이 없으므로 basic-auth 토큰 의존).
+
+운영 모델 (A-prime, ADR-103 Amendment 3 §결정 7 + Amendment 4 §결정 8):
     git = 작성 정본(SoR-work) — 변하지 않음.
     Confluence = 공식 "정본 읽기 + 사람 편집 화면" 으로 격상.
-    forward (본 스크립트) = git 문서 변경(main 머지) → Confluence 자동 갱신.
+    forward (앞 방향) = git 문서 변경(main 머지) → Confluence 자동 갱신.
+        1차 = Claude 세션 MCP 갱신(secret 불필요) / fallback = 본 스크립트(무인 CI, secret 필요).
     backward (별도, 설계만) = 사람이 Confluence 편집 → git PR 제안 으로 역류.
 
 모드 2개:
@@ -38,7 +46,9 @@
       playbook §재이관 절차 정합) — "최초 수동 발행 필요" 로그 후 skip.
 
 본 스크립트는 declaration + scaffold 수준이다 — 실제 자동 발행 활성화는 secret 주입 +
-manifest 전수 채움(후속 과제) 이후다.
+manifest 전수 채움(후속 과제) 이후다. 그러나 이는 어디까지나 무인 보조(fallback) 경로의
+활성화이며, 일상 forward 의 1차 경로(Claude 세션 MCP 직접 갱신)는 secret 없이 동작한다
+(ADR-103 §결정 8-A).
 """
 import argparse
 import json
