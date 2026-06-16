@@ -82,6 +82,29 @@ rank_name() {
   esac
 }
 
+# ──────────────────────────── 1b. changed-files line 파서 (F-3 입력 guard) ────────────────────────────
+# 입력: 단일 line ("<status>\t<path>") → CR strip + 형식 검증.
+# 출력(전역): PARSED_STATUS / PARSED_PATH. 반환: 0=유효 / 1=skip(빈 line·TAB 부재·형식불량).
+#   blank / TAB 없는 line → cut -f2- 가 전체 line 을 path 로 오인(허위 wrapper scope) 하는 것을 차단.
+#   fail-closed 방향 보존 — guard 는 형식 불량 line 만 skip (정상 line 은 그대로 통과).
+PARSED_STATUS=""
+PARSED_PATH=""
+parse_diff_line() {
+  local raw="$1"
+  raw="${raw%$'\r'}"                 # CRLF CR strip (parser CR 대칭)
+  [ -n "$raw" ] || return 1          # 빈 line skip
+  case "$raw" in
+    *$'\t'*) : ;;                    # TAB 포함 = 유효 후보
+    *) return 1 ;;                    # TAB 부재 = 형식불량 skip (cut -f2- garbage 차단)
+  esac
+  PARSED_STATUS="$(printf '%s' "$raw" | cut -f1)"
+  PARSED_PATH="$(printf '%s' "$raw" | cut -f2-)"
+  # status / path 둘 다 비공백이어야 유효
+  [ -n "$PARSED_STATUS" ] || return 1
+  [ -n "$PARSED_PATH" ]   || return 1
+  return 0
+}
+
 # ──────────────────────────── 2. commit_signal (v1 재사용, Conventional Commits) ────────────────────────────
 # 입력: 멀티라인 commit 메시지 문자열 → none/patch/minor/major
 compute_commit_signal() {
@@ -189,14 +212,17 @@ compute_diff_signal_for_scope() {
   fi
 
   local max_rank=0
-  # mirror dedup tracking: 이미 카운트한 templates/github-workflows basename 집합
+  # mirror dedup tracking: 이미 카운트한 templates/github-workflows basename 집합.
+  # F-6 note: rank 산출이 max-accumulator 라 동일 rank 중복 가산은 idempotent (결과 불변) —
+  #   dedup 의 실효는 "mirror 쌍이 서로 다른 surface category 로 잘못 이중 분류되는 것" 차단
+  #   (F-D5 SSOT 1회 평가 계약 보존). 본 self-test scope 에선 결과 동등하나 계약 문서화 목적 유지.
   local -A seen_mirror_base=()
 
   local line status path rel
   while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    status="$(printf '%s' "$line" | cut -f1)"
-    path="$(printf '%s' "$line" | cut -f2-)"
+    parse_diff_line "$line" || continue   # F-3 입력 guard (빈/TAB부재/CR line skip)
+    status="$PARSED_STATUS"
+    path="$PARSED_PATH"
 
     # 이 scope 에 귀속되는 파일만 평가
     local pclass
@@ -238,8 +264,8 @@ compute_diff_signal_for_scope() {
     # 2단 매핑 표 — glob → surface category → rank (보수 하한 patch=1)
     local r=1
     case "$rel" in
-      agents/*.md|agents/*)
-        # (a) Agent file — 추가=minor / 삭제=major / edit=patch
+      agents/*)
+        # (a) Agent file — 추가=minor / 삭제=major / edit=patch (F-6: 중복 agents/*.md glob 제거)
         case "$status" in A) r=2 ;; D) r=3 ;; *) r=1 ;; esac
         ;;
       skills/*)
@@ -312,9 +338,9 @@ compute_coupling_signal() {
 
   local line status path
   while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    status="$(printf '%s' "$line" | cut -f1)"
-    path="$(printf '%s' "$line" | cut -f2-)"
+    parse_diff_line "$line" || continue   # F-3 입력 guard
+    status="$PARSED_STATUS"
+    path="$PARSED_PATH"
 
     # T2 agent topology: 어느 lane plugins/<lane>/agents/*.md 삭제(D) 또는 역할 재정의
     #   (휴리스틱: 삭제 = topology 변경. 역할 재정의 의미판정은 author override 경로)
@@ -364,11 +390,15 @@ compute_verdict() {
   local -A head_v=()
   local bline pname spec bv hv
   while IFS= read -r bline; do
+    bline="${bline%$'\r'}"      # F-2: CRLF interior line CR strip (roster tr -d '\r' 와 parallel-anchor 대칭)
     [ -n "$bline" ] || continue
     pname="${bline%%:*}"
     spec="${bline#*:}"          # base_v->head_v
     bv="${spec%%->*}"
     hv="${spec##*->}"
+    # F-2: 버전 값 자체에 잔존할 수 있는 CR 방어 제거 (interior field → (( )) syntax error 방지)
+    bv="${bv%$'\r'}"; bv="${bv//$'\r'/}"
+    hv="${hv%$'\r'}"; hv="${hv//$'\r'/}"
     base_v["$pname"]="$bv"
     head_v["$pname"]="$hv"
     if [ -z "$bv" ] || [ "$bv" = "null" ]; then
@@ -394,8 +424,8 @@ compute_verdict() {
   local any_attributed_surface=0   # A2-6 no-surface-touch: 어느 scope 든 귀속 surface 1+ 있으면 1
   local line path pclass
   while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    path="$(printf '%s' "$line" | cut -f2-)"
+    parse_diff_line "$line" || continue   # F-3 입력 guard
+    path="$PARSED_PATH"
     pclass="$(classify_path "$path")"
     if [ "$pclass" = "wrapper" ]; then
       wrapper_touched=1
@@ -419,8 +449,8 @@ compute_verdict() {
   # ── 평가 대상 scope 집합 (변경 파일이 귀속된 scope만) ──
   local -A scopes=()
   while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    path="$(printf '%s' "$line" | cut -f2-)"
+    parse_diff_line "$line" || continue   # F-3 입력 guard
+    path="$PARSED_PATH"
     pclass="$(classify_path "$path")"
     if [ "$pclass" = "wrapper" ]; then scopes["wrapper"]=1
     elif [[ "$pclass" == lane:* ]]; then scopes["$pclass"]=1; fi

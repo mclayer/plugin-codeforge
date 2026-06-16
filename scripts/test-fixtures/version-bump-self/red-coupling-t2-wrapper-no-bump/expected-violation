@@ -1,0 +1,2 @@
+coupling_signal: major
+::violation:: \[codeforge\] under-bump — expected .major.
