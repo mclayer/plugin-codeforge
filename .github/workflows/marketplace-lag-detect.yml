@@ -36,6 +36,14 @@ permissions:
   issues: write    # Issue auto-create (lag alert)
   contents: read   # repo plugin.json 측정 (self-repo checkout)
 
+# ── concurrency 가드 (ADR-063 §결정 13 E-6) ──
+# cron + workflow_dispatch 동시 트리거 시 비원자 search-then-create dedup 가 중복 Issue 를
+# 만들 수 있으므로 단일 run 만 진행되도록 직렬화. cancel-in-progress: false —
+# 진행 중인 detect run 을 중단하면 부분 Issue 발행 상태가 남을 수 있어 보존(완료 우선).
+concurrency:
+  group: marketplace-lag-detect
+  cancel-in-progress: false
+
 jobs:
   # ── self-test (게이트 로직 RED→GREEN proof — 정상 게이팅, exit 1 on regression / dead-suite 회피) ──
   self-test:
@@ -58,7 +66,12 @@ jobs:
         run: bash scripts/test-check-marketplace-cadence-lag.sh "$GITHUB_WORKSPACE"
 
   # ── detect-and-alert (실 main↔marketplace 비교 — warning-first, 항상 exit 0, advisory) ──
+  # needs: self-test — self-test(게이트 로직 RED→GREEN proof) FAIL 시 본 alert 잡 skip.
+  #   두 잡 병렬이면 깨진 dedup/판정 로직이 같은 run 에서 라이브 Issue 를 발행할 수 있어,
+  #   self-test 통과를 alert 의 hard 선행 조건으로 강제 (workflow 주석의 "self-test 가 차단"
+  #   자기주장을 구조로 실현 — needs 부재 시 게이팅 0 였던 P2 결함 수정).
   detect-and-alert:
+    needs: self-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
