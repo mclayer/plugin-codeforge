@@ -1,0 +1,108 @@
+name: check-plugin-version-bump-self (CFP-2310 S2 / ADR-037 Amd 2)
+
+# ADR-037 Amendment 2 Arc A v2 게이트 — wrapper-self application (CFP-2310 S2 #2312).
+#
+# §결정 5 forward-only deferred self-application 실현. wrapper(codeforge) + 8 lane plugin
+# 모노레포 9-plugin 구조에서 commit_signal + diff_signal(surface-table) + coupling_signal(T1/T2/T3)
+# 의 normalization-before-max(A2-6) → β lenient 비대칭(A2-5) 검사 + actual_bump=major 시
+# 9-plugin MAJOR atomic cross-check(A2-9).
+#
+# tier = warning-first (A2-7): production-eval job 은 위반을 ::warning:: 으로 보고하되 항상 exit 0
+#   (non-blocking). 절대 branch protection required contexts 에 추가 금지.
+#   blocking 승격 = #2098 식 evidence 누적 후 별 amendment/Story (A2-7) — placeholder.
+#
+# self-test job 은 게이트 로직 자체의 RED→GREEN proof 를 검증 (lint 결함 차단) — 이 job 은
+#   정상 게이팅(exit 1 on regression). production-eval(대상 PR 평가)만 warning-first.
+#
+# 이 workflow 는 wrapper-self 전용 — templates/github-workflows/ mirror 짝 없음
+#   (consumer 는 v1 check-plugin-version-bump.yml 을 배포받음, ADR-037 §결정 5 forward-only).
+#   → invariant-check Workflow parity(templates 순회)는 본 파일을 점검하지 않음(비대상).
+#
+# Bypass: BYPASS_VERSION_BUMP=1 + BYPASS_VERSION_BUMP_REASON env (audit trail, v1 패턴 보존).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      # wrapper root surface (ADR-037 Amd 2 §결정 A2-3 귀속 표)
+      - '.claude-plugin/plugin.json'
+      - 'scripts/**'
+      - 'templates/**'
+      - 'skills/**'
+      - 'hooks/**'
+      - 'commands/**'
+      - 'agents/**'
+      - 'docs/**'
+      - 'CLAUDE.md'
+      # lane surface (모노레포 — lane-only PR 감지, v1 미포함 갭 해소)
+      - 'plugins/codeforge-*/**'
+      # family invariant ADR (T3 supersede 감지)
+      - 'archive/adr/ADR-009-*.md'
+      - 'archive/adr/ADR-016-*.md'
+      - 'archive/adr/ADR-024-*.md'
+      - 'archive/adr/ADR-008-*.md'
+      - 'archive/adr/ADR-037-*.md'
+      # 게이트 자기 자신 변경 시 self-test 재실행
+      - 'scripts/check-plugin-version-bump-self.sh'
+      - 'scripts/test-check-plugin-version-bump-self.sh'
+      - 'scripts/test-fixtures/version-bump-self/**'
+      - '.github/workflows/check-plugin-version-bump-self.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # ── self-test (게이트 로직 RED→GREEN proof — 정상 게이팅, exit 1 on regression) ──
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Run version-bump-self lint self-test (5 discriminating fixtures)
+        run: bash scripts/test-check-plugin-version-bump-self.sh "$GITHUB_WORKSPACE"
+
+  # ── production-eval (대상 PR 평가 — warning-first, 항상 exit 0, non-blocking, A2-7) ──
+  version-bump-self-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR HEAD
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Bypass check
+        id: bypass
+        env:
+          BYPASS: ${{ vars.BYPASS_VERSION_BUMP || secrets.BYPASS_VERSION_BUMP }}
+          REASON: ${{ vars.BYPASS_VERSION_BUMP_REASON || secrets.BYPASS_VERSION_BUMP_REASON }}
+        run: |
+          set -euo pipefail
+          if [[ "${BYPASS:-0}" == "1" ]]; then
+            if [[ -z "${REASON:-}" ]]; then
+              echo "::error::BYPASS_VERSION_BUMP=1 requires BYPASS_VERSION_BUMP_REASON (non-empty audit trail)"
+              exit 1
+            fi
+            echo "::warning::BYPASS_VERSION_BUMP=1, reason: $REASON"
+            echo "bypassed=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "bypassed=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run v2 self-check (warning-first — A2-7 non-blocking)
+        if: steps.bypass.outputs.bypassed == '0'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -uo pipefail
+          # production 모드 = 항상 exit 0 (warning-first). 위반은 ::warning:: 으로 표면화.
+          bash scripts/check-plugin-version-bump-self.sh \
+            --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --root "$GITHUB_WORKSPACE"
+
+      - name: A2-7 promotion path note (warning → required)
+        if: steps.bypass.outputs.bypassed == '0'
+        run: |
+          echo "::notice::ADR-037 A2-7 — 현재 tier=warning (non-blocking). blocking 승격 = #2098 식 evidence 누적 후 별 amendment/Story (required context 전환 + fail-open/closed + bypass 보존, A2-9 InfraOperationalArch 동반 설계)."
+          echo "::notice::SSOT: archive/adr/ADR-037-plugin-version-bump-rule.md Amendment 2 §결정 A2-7."
