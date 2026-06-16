@@ -1,7 +1,14 @@
 name: confluence forward sync (A-prime, git → Confluence)
-# ADR-103 Amendment 3 §결정 7-B — A-prime forward 동기화 (git 문서 변경 → Confluence 자동 갱신).
+# ADR-103 Amendment 3 §결정 7-B + Amendment 4 §결정 8-B — A-prime forward 동기화
+#   (git 문서 변경 → Confluence 자동 갱신).
 #   git = 작성 정본(SoR-work) / Confluence = 공식 읽기 + 사람 편집 표면 (격상).
 #   변경 doc 추출 → ADR-123 읽기 표준 AI 재렌더 → manifest 의 page id 로 Confluence update.
+#
+# 이 워크플로 = 선택적 무인(headless) fallback (ADR-103 Amendment 4 §결정 8-B).
+#   1차(기본) 경로는 git 문서를 편집한 Claude 세션(에이전트/Orchestrator)이 같은 흐름(문서 PR
+#   머지 후처리)에서 MCP(Atlassian)로 Confluence 를 직접 갱신하는 것이다 — secret·CI·cron 불필요
+#   (세션 OAuth scope, ADR-103 §결정 8-A). 본 CI 경로는 세션 없이 무인으로 돌릴 때만 쓰며,
+#   이때만 아래 token secret 이 필요하다 (CI runner 는 세션 연결이 없으므로 basic-auth 의존).
 #
 # Tier: 별도 워크플로 (required check 아님 — branch protection contexts 미부착).
 #   secret 미설정 시 dry-run (실제 AI/Confluence 호출 0건, scripts/confluence_forward_sync.py §dry-run).
