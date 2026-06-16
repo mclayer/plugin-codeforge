@@ -832,6 +832,39 @@ dry-run 결과 검증:
 
 참조: [ADR-100](../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) · [ADR-111](../archive/adr/ADR-111-confluence-mirror-classification-policy.md) · [ADR-099](../archive/adr/ADR-099-atlassian-allow-redefinition.md) · [ADR-101](../archive/adr/ADR-101-verify-before-trust-confluence-rest.md) · [ADR-103](../archive/adr/ADR-103-git-confluence-sync-mechanism.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill `codeforge:confluence-migration`
 
+## Jira 원격 채널 활성화 (선택)
+
+> **opt-in** — `atlassian.jira.*` block 부재 또는 `enabled: false` 시 비활성(no-op), 기존 동작(세션 직접 대화 + TodoWrite 진행 시각화) 유지. Confluence doc-mirror(§1o)와 독립 — Jira 채널만 단독 켤 수 있다. wrapper-self dogfood 운용이며 신규 외부 trust boundary 를 도입하므로 아래 **보안** 단락을 반드시 함께 읽는다.
+
+### 무엇
+
+코드·산출물과 섞이지 않는 비공개 Jira **control project** 하나로 두 방향의 원격 채널을 운용한다.
+
+- **Arc A — 결정 채널([`codeforge:jira-decision-channel`](../skills/jira-decision-channel/SKILL.md))**: codeforge 가 가치판단 결정 fork 에서 자리 비운 듯하면 control 이슈에 평문 질문을 코멘트로 post 하고, 운영자가 세션 또는 Jira 어느 쪽으로 답해도 채택한다(**dual-input** — 한 채널 응답을 양 채널에 기록). 결정을 어디서나 Jira 로 받는다.
+- **Arc B — 진행 미러([`codeforge:jira-progress-mirror`](../skills/jira-progress-mirror/SKILL.md))**: Story/lane 진행(진입/PASS/FIX 검출/원인 판정/재진입/완료 6 전이점 + "현재 무엇 하는중" 1줄)을 mirror 이슈에 단방향(write-only) 코멘트로 내보낸다. 진행을 세션 밖(이메일/모바일/Jira 보드)에서 본다.
+
+### 전제
+
+- Atlassian/Jira 접근(비공개 control project 권장) + Jira MCP 연결(`/mcp` 인증).
+- 운영자가 Jira UI 에서 control/mirror 이슈를 **사전 생성**(채널 runtime 은 이슈를 만들지 않는다 — 아래 4 참조).
+
+### 활성화 절차
+
+1. **control 결정 이슈 1개 생성** — Jira 에 결정 채널 전용 control 이슈를 만든다(비공개 프로젝트 권장). **assignee = 운영자** 로 두면 Jira native 알림(이메일/모바일)이 결정 post 시 도달한다.
+2. **(Arc B 사용 시) 모니터링 이슈 1개 생성** — 진행 미러 대상 이슈. Arc A 와 같은 control project·같은 이슈를 재사용해도 안전하다(sentinel·echo-guard 정합으로 cross-echo 차단).
+3. **overlay 설정** — `.claude/_overlay/project.yaml` 의 `atlassian.jira.decision_channel` / `progress_mirror` 를 채운다: `cloud_id`, `project_key`(`control_project_key`), `control_issue_key` / `mirror_issue_key`, `enabled: true`. 필드 스키마 = [project-config-schema §atlassian 섹션 설명](project-config-schema.md) `jira:` block 참조.
+4. **권한** — `addCommentToJiraIssue` 만 user-level settings 에서 narrow-allow. 이슈 생성(`createJiraIssue`)·status 전이(`transitionJiraIssue`)·issue-field write(`editJiraIssue`)는 deny 유지 → control/mirror 이슈는 **사전 생성**해야 한다(ADR-099 §A1-1).
+5. **라우팅 trigger** — consumer 자기 `CLAUDE.md`(또는 운영 습관)에 다음을 추가한다: "가치판단 결정 fork 에서 자리 비운 듯하면 [`codeforge:jira-decision-channel`](../skills/jira-decision-channel/SKILL.md) 경유, **자동결정 금지**(`auto_decide_on_timeout: false`), dual-input 으로 세션·Jira 양 채널에 기록." (wrapper 예시 = plugin `CLAUDE.md` 의 "결정·대화 원칙".)
+
+### 보안
+
+- **신뢰가정 (ADR-099 §A1-3)** — 본 채널의 신뢰 근거 = "비공개·단일 운영자 Jira control project 접근 권한 = 결정 권한". 코멘트 author 필드는 신뢰하지 않으며(shared-account·spoofing 비방어), 한 fork 당 첫 유효 답변만 채택(first-valid-immutable) + 짧은 open-window 로 답변 race 를 차단한다.
+- **payload deny-scan (ADR-099 §A1-2)** — Jira 로 송신하는 모든 코멘트는 송신 전 deny-scan 으로 hard-block 한다: secret/credential/token·절대경로·full transcript/코드블록 통째 송신 차단(통과 못하면 송신 자체를 막음).
+- **wrapper-side audit (ADR-099 §A1-4)** — 모든 Orchestrator Jira write 를 세션 transcript 에 기록(Jira author 추적 비신뢰)하고, narrow-allow 는 1-step 으로 가역(`addCommentToJiraIssue` 제거 → deny 원복)이다.
+- **멀티테넌트 한계** — 현 v1 은 단일 운영자·비공개 신뢰 경계 전제의 경량 방어다. **협업자/멀티테넌트 환경이면 강한 인증(nonce/HMAC challenge-response)이 필요**하나 v1 미지원 — 그 시점 후속 carrier 가 nonce/HMAC + scope re-tighten 을 도입한다.
+
+참조: [ADR-099 Amendment 1 §A1-1~A1-4](../archive/adr/ADR-099-atlassian-allow-redefinition.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill [`codeforge:jira-decision-channel`](../skills/jira-decision-channel/SKILL.md) · [`codeforge:jira-progress-mirror`](../skills/jira-progress-mirror/SKILL.md)
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```
