@@ -1,0 +1,87 @@
+name: marketplace-lag-detect (CFP-2310 S3 / Arc B 발행 cadence)
+
+# ADR-063 §결정 2 ordering / Amendment 12 — Arc B 발행 cadence lag detect (CFP-2310 S3 #2313).
+#
+# main↔marketplace version drift 자동 감지 + Issue 자동생성 (advisory, warning tier).
+# 9-plugin roster(wrapper codeforge + 8 lane) 각각의 repo main plugin.json version 을
+# mclayer/marketplace marketplace.json version 과 비교해 lag(불일치)을 감지한다.
+#
+# ★★ scope (Epic #2310 U5 / ADR-063 Amendment 12) — detect + alert ONLY ★★
+#   본 workflow 는 lag 를 감지해 Issue 만 발행한다. 실 sync PR 은 **절대 자동 생성하지 않는다**.
+#   marketplace 선행 merge ordering(ADR-063 §결정 2) 을 자동화가 깰 위험이 있어, 실 sync 는
+#   Orchestrator 가 같은 Story 안에서 marketplace sync PR 선행 merge → plugin PR merge 순서로
+#   수동 책임진다 (ADR-063 Amendment 12). 본 파일에 sync PR 생성 로직을 추가하는 것을 금지한다.
+#
+# tier = warning-first (ADR-060 §결정 31 답습): detect-and-alert job 은 lag 를 ::warning:: +
+#   Issue 로 표면화하되 항상 exit 0 (비차단). branch protection required context 아님.
+#
+# self-test job 은 게이트 로직 자체의 RED→GREEN proof 를 검증 (lint 결함 / dead-suite 차단) —
+#   이 job 은 정상 게이팅(exit 1 on regression). detect-and-alert 만 advisory.
+#
+# 이 workflow 는 wrapper-self 전용 — templates/github-workflows/ mirror 짝 없음
+#   (consumer 는 본 cadence 게이트 비배포, ADR-083 wrapper-self applicability).
+#   → invariant-check Workflow parity(templates 순회)는 본 파일을 점검하지 않음(비대상,
+#     S2 check-plugin-version-bump-self.yml 선례 동형).
+#
+# cron 시각: '15 2 * * *' (daily 02:15 UTC = 11:15 KST)
+#   — governance-remeasure-cron(01:30) / bypass-label-counter(00:00) 와 시각 분산
+#     (PAT rate-limit 동시 burst 회피, ADR-109).
+
+on:
+  schedule:
+    - cron: '15 2 * * *'  # daily 02:15 UTC = 11:15 KST (시각 분산, ADR-109)
+  workflow_dispatch:
+
+permissions:
+  issues: write    # Issue auto-create (lag alert)
+  contents: read   # repo plugin.json 측정 (self-repo checkout)
+
+jobs:
+  # ── self-test (게이트 로직 RED→GREEN proof — 정상 게이팅, exit 1 on regression / dead-suite 회피) ──
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run cadence-lag self-test (discriminating fixtures — live CI, gh 불요)
+        # marketplace.json 은 fixture 합성본을 --marketplace-json 으로 override → gh api 우회.
+        # live Issue 생성 0 (MLD_SKIP_ISSUE_CREATE=1 + dry-run, harness 내부 강제).
+        run: bash scripts/test-check-marketplace-cadence-lag.sh "$GITHUB_WORKSPACE"
+
+  # ── detect-and-alert (실 main↔marketplace 비교 — warning-first, 항상 exit 0, advisory) ──
+  detect-and-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run marketplace cadence lag detect (detect + alert only — NO sync PR)
+        env:
+          # ADR-066 single PAT — marketplace.json (별 repo) read + Issue create.
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          # detect + alert only. 실 sync PR 자동생성 금지 (Epic #2310 U5 / ADR-063 Amd 12) —
+          #   본 step 은 lag 감지 시 dedup 된 Issue 만 발행한다. sync 는 Orchestrator 수동 책임.
+          bash scripts/check-marketplace-cadence-lag.sh check --repo-root "$GITHUB_WORKSPACE"
+
+      - name: No-auto-sync note (ADR-063 §결정 2 ordering 보존)
+        run: |
+          echo "::notice::Arc B detect+alert only — 실 marketplace sync PR 은 자동 생성하지 않음 (Epic #2310 U5)."
+          echo "::notice::marketplace 선행 merge ordering(ADR-063 §결정 2) 보존 — 실 sync = Orchestrator 책임 (ADR-063 Amendment 12)."
