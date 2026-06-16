@@ -242,8 +242,8 @@ def cmd_build_manifest(args):
     extra = ("CONFLUENCE_SPACE_ID",)
     dry_run = not secrets_present(extra)
     if dry_run:
-        need_names = ", ".join(tuple(SECRET_ENV_VARS) + tuple(extra))
-        print(f"[build-manifest] dry-run (secret 미설정) — 실제 space 조회 0건. 필요: {need_names}")
+        print("[build-manifest] dry-run (secret 미설정) — 실제 space 조회 0건. "
+              "필요한 환경변수 목록은 파일 상단 docstring 참조.")
 
     manifest = load_manifest()
     existing = manifest.get("pages", {}) or {}
@@ -294,8 +294,8 @@ def cmd_sync(args):
     dry_run = args.dry_run or not secrets_present()
     if dry_run:
         reason = "--dry-run 강제" if args.dry_run else "secret 미설정"
-        need_names = ", ".join(SECRET_ENV_VARS)
-        print(f"[sync] dry-run ({reason}) — 실제 AI/Confluence 호출 0건. 필요 secret: {need_names}")
+        print(f"[sync] dry-run ({reason}) — 실제 AI/Confluence 호출 0건. "
+              "필요한 환경변수 목록은 파일 상단 docstring 참조.")
 
     targets, skipped_retain = collect_changed_docs(
         args.files, args.git_diff, args.diff_base
