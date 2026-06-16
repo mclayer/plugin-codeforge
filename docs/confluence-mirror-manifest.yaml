@@ -1,0 +1,43 @@
+# Confluence 사본(미러) 좌표표 — 파일경로 → Confluence page id 매핑
+#
+# 용도 (ADR-103 Amendment 3 §결정 7-B, A-prime forward 동기화):
+#   git 문서가 본 가지(main)에 반영되면 forward 동기화가 이 표에서 대상 page id 를
+#   찾아 같은 Confluence 페이지를 갱신(update)한다. 여기 없는 문서는 자동으로 새
+#   페이지를 만들지 않고(중복 페이지 대량 생성 차단) "최초 수동 발행 필요"로 기록·건너뛴다.
+#
+# 채우는 법:
+#   scripts/confluence_forward_sync.py --build-manifest
+#     → Confluence space 페이지(title)를 조회해 git 문서와 title 로 매칭하고 이 파일을
+#       생성/갱신한다. secret(CONFLUENCE_* + CONFLUENCE_SPACE_ID) 부재 시 dry-run
+#       (실제 조회 0건, 대상 doc 목록만 로그).
+#
+# 대상 범위 (ADR-111 §결정 1 closed-enum 5 + 사람이 읽는 안내서):
+#   설계결정(ADR) / 살아있는 아키텍처 / 변경 계획 / 업무 지식 / 총괄 운영 안내서 + 안내서.
+#   제외 (ADR-111 §결정 2 Issue-only retain): 작업 단위 파일 / 고침 기록 / 근거 묶음 /
+#   결정 묶음 / 생성 지시문 — Confluence 사본 금지(git·이슈 채널 한정).
+#
+# 흐름 방향: 한 방향 git → Confluence (앞 방향 자동). 사람이 Confluence 를 편집하면
+#   되돌리기(backward)는 git 변경 제안(PR)으로만 흐른다 — git 이 최종 정본
+#   (ADR-103 Amendment 3 §결정 7, docs/confluence-mirror-playbook.md §되돌리기 설계).
+#
+# entry schema:
+#   pages:
+#     <git 파일경로(repo 루트 기준)>:
+#       page_id: "<Confluence page id>"   # 필수 — 발행 대상 페이지 식별자
+#       title:   "<Confluence 페이지 제목>" # 선택 — 사람 확인용 (매칭은 page_id 기준)
+#   (scalar 축약도 허용: <git 파일경로>: "<page_id>")
+#
+# 아래는 예시 2~3 entry 다 (실제 page_id 는 placeholder — --build-manifest 로 전수 채움이 후속 과제).
+
+schema_version: "1.0"
+
+pages:
+  archive/adr/ADR-100-confluence-doc-ssot-recognition.md:
+    page_id: "PLACEHOLDER-ADR-100"
+    title: "설계결정 100 — Confluence 문서 정본 인정"
+  archive/adr/ADR-103-git-confluence-sync-mechanism.md:
+    page_id: "PLACEHOLDER-ADR-103"
+    title: "설계결정 103 — git과 Confluence 사본 동기화 방식"
+  docs/confluence-mirror-playbook.md:
+    page_id: "PLACEHOLDER-PLAYBOOK"
+    title: "Confluence 읽기 사본 운영 안내서"

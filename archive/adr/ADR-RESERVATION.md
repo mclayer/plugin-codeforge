@@ -479,6 +479,18 @@ amendments_reserved:
     reserved_by_cfp: CFP-1787
     reservation_date: 2026-05-27 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier) — Amendment 33 §결정 1 layer 1 sub-scope (1-V) 신설 execution_context_reconciliation. PMOAgent retro write-time + chief author write-time + deputy write-time verdict packet 5 sub-field declare (working_dir_abs_path / target_write_repo / staged_files_required / branch_required / remote_sync_required). cluster anchor pattern_count 4 reach verified (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ADR-045 §D-9 Mandatory threshold 2 초과 Mandatory escalation 산물. Wave 1 (declarative anchor sub-scope 1-V codify) + Wave 2 (mechanical wire scripts/lib/check_execution_context_state.py + workflow + bats + label-registry v2.85 MINOR + evidence-checks-registry entry) single Story combined PR (CFP-1648/CFP-1688/CFP-1734/CFP-1755 combined precedent 답습). verified-via `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] max=32 → next=33 2026-05-27 KST. status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). META self-applied (sub-scope 1-G 18th applied case + sub-scope 1-L spawn prompt fact verify + sub-scope 1-V dogfood self-application).
+
+  - adr_number: 103
+    amendment_id: 3
+    reserved_by_cfp: CFP-confluence-aprime
+    reservation_date: 2026-06-16 KST
+    status: active   # commit time 점유 (Story Phase 1 PR carrier) — Amendment 3 §결정 7 신설 A-prime 운영 모델 (forward 자동 git→Confluence + backward Confluence 편집 → git PR 제안). git = 작성 정본(SoR-work) 불변 + Confluence = 공식 읽기 + 사람 편집 표면 격상 (역전 아님). forward = §결정 1 one-way push 의 CI 자동화 instantiate (변경 감지 + ADR-123 읽기 표준 AI 재렌더 + manifest page id 발행 + 3-anchor stamp), secret 부재 dry-run. backward = git PR 제안 (lossy-tolerant, 사람 검토 + git 최종 정본 — inbound 직접 write 0건, 설계만). mirror 대상 = ADR-111 §결정 1 closed-enum 5 + guides, 면제 = ADR-111 §결정 2 Issue-only retain 5. scaffold (scripts/confluence_forward_sync.py + .github/workflows/confluence-forward-sync.yml + docs/confluence-mirror-manifest.yaml). ratchet 강화 방향 (운영 모델 codify + 자동화 scaffold, 약화 surface 0건 — one-way push invariant §결정 1 / git=SoR-work ADR-100 §결정 1 / ADR-101 policy 무손상). ADR-100 Amendment 3 동반 발의 (axis disjoint — git=SoR-work 보존 cross-ref). verified-via Read worktree archive/adr/ADR-103-git-confluence-sync-mechanism.md frontmatter amendment_log[] max=2 (Amd 1 CFP-1492 / Amd 2 CFP-1321) → next=3. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
+
+  - adr_number: 100
+    amendment_id: 3
+    reserved_by_cfp: CFP-confluence-aprime
+    reservation_date: 2026-06-16 KST
+    status: active   # commit time 점유 (Story Phase 1 PR carrier) — Amendment 3 §결정 1 cross-ref A-prime 운영 모델. Confluence 가 "공식 읽기 + 사람 편집 표면" 으로 격상되되 작성 정본 = git 유지 (역전 아님, 편집은 PR 역류 lossy-tolerant). git SoR-work ↔ Confluence SoR-docs disjoint axis 무손상 확장. 운영 mechanism SSOT = ADR-103 Amendment 3 §결정 7 (본 ADR-100 = git=SoR-work 보존 cross-ref 1-2문장). ADR-103 Amendment 3 동반 발의 (axis disjoint). ratchet-up (사람 편집 표면 격상 + 작성 정본 git 명시, forbid scope 축소 0). verified-via Read worktree archive/adr/ADR-100-confluence-doc-ssot-recognition.md frontmatter amendment_log[] max=2 (Amd 1 CFP-1419 / Amd 2 CFP-1668) → next=3. sunset_justification N/A (ratchet-up, ADR-058 §결정 5 면제).
 ```
 
 ## 해소 기준

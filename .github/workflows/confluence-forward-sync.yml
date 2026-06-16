@@ -1,0 +1,61 @@
+name: confluence forward sync (A-prime, git → Confluence)
+# ADR-103 Amendment 3 §결정 7-B — A-prime forward 동기화 (git 문서 변경 → Confluence 자동 갱신).
+#   git = 작성 정본(SoR-work) / Confluence = 공식 읽기 + 사람 편집 표면 (격상).
+#   변경 doc 추출 → ADR-123 읽기 표준 AI 재렌더 → manifest 의 page id 로 Confluence update.
+#
+# Tier: 별도 워크플로 (required check 아님 — branch protection contexts 미부착).
+#   secret 미설정 시 dry-run (실제 AI/Confluence 호출 0건, scripts/confluence_forward_sync.py §dry-run).
+#
+# secret (운영 환경 주입 — 미설정 시 dry-run):
+#   ANTHROPIC_API_KEY / CONFLUENCE_BASE_URL / CONFLUENCE_USER_EMAIL / CONFLUENCE_API_TOKEN / CONFLUENCE_SPACE_ID
+#
+# 대상 범위 (ADR-111 §결정 1 closed-enum 5 + 안내서) / 제외 (ADR-111 §결정 2 Issue-only retain):
+#   대상 = ADR / 살아있는 아키텍처 / 변경 계획 / 업무 지식 / 총괄 운영 안내서 + 안내서.
+#   제외 = 작업 단위 파일 / 고침 기록 / 근거 묶음 / 결정 묶음 / 생성 지시문 (스크립트가 자체 필터).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'archive/adr/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  forward-sync:
+    runs-on: ubuntu-latest
+    # 별도 워크플로 — sync 실패가 merge/CI 를 차단하지 않는다 (required check 아님).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # forward sync 는 직전 commit 의 변경 doc 을 git diff 으로 추출 — 2 commit 필요.
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Extract changed docs (push 직전 commit 대비)
+        id: changed
+        run: |
+          git diff --name-only HEAD~1 HEAD > changed-files.txt || true
+          echo "count=$(wc -l < changed-files.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Run forward sync (secret 부재 시 dry-run, 실 호출 0)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CONFLUENCE_BASE_URL: ${{ secrets.CONFLUENCE_BASE_URL }}
+          CONFLUENCE_USER_EMAIL: ${{ secrets.CONFLUENCE_USER_EMAIL }}
+          CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+          CONFLUENCE_SPACE_ID: ${{ secrets.CONFLUENCE_SPACE_ID }}
+        run: |
+          mapfile -t FILES < changed-files.txt
+          python3 scripts/confluence_forward_sync.py "${FILES[@]}"
