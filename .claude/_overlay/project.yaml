@@ -61,6 +61,9 @@ atlassian:
       control_project_key: "KAN"
       issue_type: "작업"
       notify: "assignee"   # assignee | watcher — Jira native 알림
+      # ---- CFP-2294 활성 (판단 기반 라우팅) ----
+      enabled: true
+      control_issue_key: "KAN-2"   # operator 생성 control 결정 이슈(사용자 assignee). 결정 질문을 이 이슈에 코멘트 post.
       # ---- S4 타임아웃 재알림 (자동결정 금지) ----
       # timeout_minutes = 이 시간(분) 미응답 시 재알림(escalation) 시작 임계. 기본 1440 = 24h.
       timeout_minutes: 1440
@@ -80,7 +83,7 @@ atlassian:
     # 입도 = ADR-038 6-point lane 전이(진입/PASS/FIX 검출/원인 판정/재진입/완료)는 코멘트 텍스트로,
     #   현재활동 1줄은 단일 코멘트 update 로(라이브 turn-단위 아님). skill = codeforge:jira-progress-mirror.
     progress_mirror:
-      enabled: false          # opt-in (기본 off — 비활성/미설정 = no-op skip)
+      enabled: true           # CFP-2294 활성 (decision_channel 과 동일 control 이슈 공유)
       # project_key = 진행 미러 대상 control project. decision_channel.control_project_key 와
       #   같은 project 공유 가능(sentinel·echo-guard 정합으로 cross-echo 차단 — 안전).
       project_key: "KAN"
@@ -88,7 +91,7 @@ atlassian:
       # mirror_issue_key = 운영자가 **사전 생성**한 모니터링 이슈 1개의 key(Epic 당 또는 기존 이슈 재사용).
       #   skill 은 이슈를 만들지 않는다(createJiraIssue deny). 빈값/미지정 = no-op skip(warn 1회).
       #   SKILL.md §1 참조. 예: "KAN-123".
-      mirror_issue_key: ""
+      mirror_issue_key: "KAN-2"
       # current_activity = "현재 무엇 하는중" 1줄 갱신 방식. pinned-comment-update = 단일 "현재활동"
       #   코멘트를 commentId 로 update(addCommentToJiraIssue 1종 — issue-field write 안 함). SKILL.md §3.
       current_activity: "pinned-comment-update"
