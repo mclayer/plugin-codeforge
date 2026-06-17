@@ -86,7 +86,7 @@ review_packet:
     - api-compatibility
     - observability
     - slo-missing
-    - external-tech-selection      # CFP-2327 / ADR-124 Amendment 1 — 외부 기술선택 좁은 예외
+    - external-tech-selection
   severity_overrides:
     - "ADR violation → P0"
     - "§8 Test Contract 누락 → P0"
