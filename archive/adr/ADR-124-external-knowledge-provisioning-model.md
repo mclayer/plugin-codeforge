@@ -14,7 +14,7 @@ related_adrs:
   - ADR-119  # §결정 5·6 — 원칙(보편) ↔ 실행(전담) 분리를 단계②③ lane-disjoint 정합으로 명문화. §결정 6 "조사했으므로 옳다 단정 금지" = 검사연극 금지 SSOT
   - ADR-056  # §결정 1·4·5 — concept/ 디렉터리 silo = by-design indirection (§6 compact summary single read surface). 결함 재규정 비대상
   - ADR-039  # §결정 1·2 — spawn = Orchestrator 전용 binary always-spawn + closed 4-entry whitelist. lane 개수 axis 와 disjoint (spawn mechanism 무변), amendment 불요
-  - ADR-121  # §결정 1 — 배포·배포리뷰 2 lane 폐지. 단계③ 배포리뷰 미적용 사유 (lane 부재)
+  - ADR-121  # §결정 1 — 배포·배포리뷰 2 lane 폐지 결정. 단계③ 배포리뷰 미적용 사유 (폐지 결정·deprecation 진행 중 + production 경험적 측정 무의존)
   - ADR-058  # §결정 5 — 약화 evidence-gate. 본 ADR 의 단계① 정밀화가 ratchet 강화 방향임을 보증
 related_files:
   - archive/adr/ADR-124-external-knowledge-provisioning-model.md
@@ -32,7 +32,7 @@ Accepted (2026-06-17 KST, CFP-2325 carrier — Epic [#2324](https://github.com/m
 
 ## 본질 선언
 
-> **외부지식을 codeforge 흐름의 어디에서·누가 충당하는지를 3-단계로 규정한다.** ① 개념 정립·요구사항 재편 (요구사항 lane, ResearcherAgent) — 능동적 unknown-unknown 탐구, 좁은 just-in-case. ② 결정 범위에 한정한 얕은(shallow) 조사 (각 lane 자가 충당) — 결정 직전 known-unknown 의 즉응 보강. ③ 깊은(deep) 다출처 검증 (리뷰 게이트 + 후순위 on-demand) — adversarial 검증 + 출처 인용. 본 ADR 은 이 3-단계의 **경계·근거·적합도만** 박제하며, 실 게이트 trigger·lane 배선·차등 실구현은 후속 Story (S2~S5) 영역이다.
+> **외부지식을 codeforge 흐름의 어디에서·누가 충당하는지를 3-단계로 규정한다.** ① 개념 정립·요구사항 재편 (요구사항 lane, ResearcherAgent) — 능동적 unknown-unknown 탐구, 좁은 just-in-case. ② 결정 범위에 한정한 얕은(shallow) 조사 (각 lane 자가 충당) — 결정 직전 known-unknown 의 즉응 보강. ③ 깊은(deep) 다출처 검증 (리뷰 게이트 + 후순위 on-demand) — adversarial 검증 + 출처 인용. 본 ADR 은 이 3-단계의 **경계·근거·적합도만** 박제하며, 실 게이트 trigger·lane 배선·차등 실구현은 후속 Story (S2~S5) 에서 다룬다.
 
 ## 어휘 충돌 회피 (필수 선언)
 
@@ -72,7 +72,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 | ② 결정-범위 얕은(shallow) 조사 | 각 lane 자가 충당 (이미 실무에서 발생) | 그 lane 의 에이전트 자신 (Researcher 산출물 인용 또는 자기 도구) | 반응적(reactive) known-unknown — 눈앞 결정 범위에 닿는 사실을 즉시 확인 | 결정 범위로 한정 — 결정에 필요 없는 폭은 조사하지 않음 |
 | ③ 깊은(deep) 다출처 검증 | 리뷰 게이트 (주) + on-demand (후순위) | 리뷰 lane 의 검증 주체 | adversarial 검증 — 외부사실에 의존하는 리뷰 결론을 다출처로 교차 검증 + 출처 인용 | 외부사실 의존 지점으로 한정 (결정 2 게이트) |
 
-**②(shallow) ↔ ③(deep) 분기 = 검증 깊이(depth) 임계**: 단계② 는 결정 직전 그 lane 이 자기 결정 범위에 한해 얕게 확인하는 것이고, 단계③ 은 리뷰 시점에 결론의 외부사실 의존을 다출처로 깊이 교차 검증하는 것이다. 두 단계의 분기 기준은 *조사 깊이(depth) 임계* 이며, 그 임계의 정량 trigger 설계는 본 ADR 범위 밖 (S2 게이트 설계 영역 — 결정 5 참조).
+**②(shallow) ↔ ③(deep) 분기 = 검증 깊이(depth) 임계**: 단계② 는 결정 직전 그 lane 이 자기 결정 범위에 한해 얕게 확인하는 것이고, 단계③ 은 리뷰 시점에 결론의 외부사실 의존을 다출처로 깊이 교차 검증하는 것이다. 두 단계의 분기 기준은 *조사 깊이(depth) 임계* 이며, 그 임계의 정량 trigger 설계는 본 ADR 범위 밖 (S2 게이트 설계 — 결정 5 참조).
 
 **3축 disjoint 관계** (ADR-119 §결정 5 표 + ADR-046 §결정 1 boundary 실측 근거):
 
@@ -104,9 +104,9 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 | 보안테스트 | 高 (기존 web 단계 심화 = 강화) | 취약점·CVE·공급망 사실은 본질적으로 외부지식 — 기존 web 조사 단계를 심화하는 강화 방향 |
 | 설계리뷰 | 부분 (외부 기술선택만) | 외부 기술선택 (라이브러리·프로토콜·표준 채택) 결론에만 외부사실 의존. 내부 근거만으로 닫히는 설계 정합성 (ADR 위반·경계·계약 일관성) 은 내부근거-only 경계 보존 — 깊은 외부조사 비대상 |
 | 구현리뷰 | 低 (미적용) | 구현 품질·런타임 결함·테스트 품질은 내부 코드 사실 축 — 외부지식 의존 거의 없음, 단계③ 미적용 |
-| 배포리뷰 | 미적용 — lane 부재 | 배포·배포리뷰 2 lane 은 ADR-121 §결정 1 로 폐지됨 (배포 = consumer GitHub Actions 완전 위임). lane 자체가 없으므로 적합도 等級 (高/低 등) 을 부여하지 않고 "미적용" 으로만 표기한다 |
+| 배포리뷰 | 미적용 | 배포·배포리뷰 2 lane 은 ADR-121 §결정 1 로 **폐지 결정(deprecated)** 됨 (sunset 2026-07-13 예정, 물리 제거 = Epic #2217 Wave 2 미완 → 현재 deprecation 진행 중). 신규 spawn 비권장 + 배포리뷰는 본질적으로 production 환경의 경험적 측정 (성능·cutover 사후 검증) 이라 외부 다출처 조사에 의존하지 않음 → 적합도 等級 (高/低 등) 을 부여하지 않고 단계③ (깊은 다출처 검증) 적용 대상에서 "미적용" 으로 표기한다 |
 
-> **배포리뷰 행 주의 (필수)**: 배포리뷰는 lane 이 존재하지 않으므로 "적합도 낮음" 이 아니라 "미적용 (lane 부재)" 이다. 사유는 ADR-121 §결정 1 (배포·배포리뷰 2 lane 폐지) 이며, 폐지된 ADR-088 의 현행 근거 인용은 금지한다 (ADR-088 = ADR-121 로 Superseded — stale source).
+> **배포리뷰 행 주의 (필수)**: 배포리뷰는 "적합도 낮음" 이 아니라 "미적용" 이다. 사유는 ① ADR-121 §결정 1 의 **폐지 결정(deprecated)** — sunset 2026-07-13 예정, Wave 2 물리 제거 미완 → 신규 spawn 비권장, ② 배포리뷰가 본질적으로 production 환경의 경험적 측정 (성능·cutover 사후 검증) 이라 단계③ (깊은 다출처 검증) 에 무의존 — 두 가지다. 적합도 等級 (高/低 등) 은 부여하지 않는다. 폐지된 ADR-088 의 현행 근거 인용은 금지한다 (ADR-088 = ADR-121 로 Superseded — stale source).
 
 ### 결정 4 — cross-ref 의무 (각 관계 명시)
 
@@ -122,7 +122,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 
 ### 결정 5 — 범위 경계 (S1 한정)
 
-본 ADR (Epic CFP-2324 S1) 은 **원칙·매트릭스·근거만** 박제한다. 아래는 모두 본 ADR 범위 밖이며 후속 Story 영역이다 (scope creep 차단).
+본 ADR (Epic CFP-2324 S1) 은 **원칙·매트릭스·근거만** 박제한다. 아래는 모두 본 ADR 범위 밖이며 후속 Story 에서 다룬다 (scope creep 차단).
 
 | 영역 | 담당 Story |
 |---|---|
@@ -130,7 +130,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 | 깊은 검증 (deep-research) 차등 실구현 | **S3** |
 | ResearcherAgent 재초점 (단계① mandate 조정) | **S4** |
 | on-demand 깊은 검증 경로 | **S5** |
-| 단계②③ 깊이 임계의 정량 trigger (경계(?) 항목 최종 확정 포함 — 결정 6) | **S2** (게이트 설계 영역) |
+| 단계②③ 깊이 임계의 정량 trigger (경계(?) 항목 최종 확정 포함 — 결정 6) | **S2** (게이트 설계) |
 
 ### 결정 6 — "외부사실 의존" 판정 휴리스틱 (operational 정의)
 
@@ -142,8 +142,8 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 | 의존 X | 팀 암묵지식 / 내부 코드·규칙 사실 | 없음 (repo·내부 축, ADR-119 §결정 1 repo 사실 row) — 단계③ 미적용 |
 | 경계 (?) | 시장정보 / 벤치마크 / StackOverflow 등 준-외부 출처 | 경계 — **최종 확정 deferral** |
 
-- **경계(?) 항목**: 위 준-외부 출처가 단계② (얕은 자가 조사) 로 충분한지, 단계③ (깊은 다출처 검증) 까지 필요한지의 최종 확정은 본 ADR 에서 lock-in 하지 않는다. 이는 ②↔③ 깊이 임계 (결정 1) 설계와 결합되므로 **S2 게이트 설계 영역으로 명시 deferral** 한다.
-- **abstention escape 정합**: 출처 확보 불가 영역은 ADR-119 §결정 3.2 의 "확인 불가/추정" 명시 후 진행 (데드락 회피) 을 그대로 따른다.
+- **경계(?) 항목**: 위 준-외부 출처가 단계② (얕은 자가 조사) 로 충분한지, 단계③ (깊은 다출처 검증) 까지 필요한지의 최종 확정은 본 ADR 에서 lock-in 하지 않는다. 이는 ②↔③ 깊이 임계 (결정 1) 설계와 결합되므로 **S2 게이트 설계에서 확정하도록 deferral** 한다.
+- **abstention escape 정합**: 출처 확보 불가 시 ADR-119 §결정 3.2 의 "확인 불가/추정" 명시 후 진행 (데드락 회피) 을 그대로 따른다.
 
 ## 근거
 
