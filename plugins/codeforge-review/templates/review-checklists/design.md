@@ -35,6 +35,8 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 - **API 변경 시 deprecation timeline 미정의** → P1 (`api-compatibility`)
 - **신규 컴포넌트 metric 종류 미명시** → P1 (`observability`)
 - **SLO 목표 측정 방법 부재** → P1 (`slo-missing`)
+- **외부 기술선택 결론(positive∩negative)의 외부사실 근거 부재/검증 불가** → P1 (`external-tech-selection`) — CFP-2327 / ADR-124 Amd 1
+- **외부 기술선택 채택 근거 명백한 사실 오류(폐기 프로토콜·미지원 버전 단정)** → P0 강제 (`external-tech-selection`) — CFP-2327 / ADR-124 Amd 1
 
 ## 체크리스트 (5축)
 
