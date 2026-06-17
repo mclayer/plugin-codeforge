@@ -12,11 +12,21 @@ amendment_log:
     date: 2026-05-11
     adr: ADR-056
     summary: "domain/ vs concept/ 물리 디렉터리 분리 + PLAgent 합성 순서 명문화 + §6 compact summary"
-related_stories: []
+  - number: 2
+    date: 2026-06-17
+    carrier_story: CFP-2328
+    parent_epic: "mclayer/plugin-codeforge#2324"
+    summary: "Mandate 2 demand-anchored 재초점(정밀화) — 개념 정립 지원 + unknown-unknown proactive 발굴 초점 재배치 + ①③ 작성자 역할(Concept formulation / Requirement reshape) 강조 + concept/ silo close-loop 명문화(독자 = 미래 Story 의 Researcher 자신) + §6 외부지식 하류 도달 주 채널 = Section 5 Refined Requirements(reshape) 정정 + ADR-046 §결정3 6-section schema ↔ ResearcherAgent.md 현행 drift 정합. downstream 기술자료 제공 책임은 삭제 아니라 S2(ADR-125 단계③)/S5(on-demand)로 이관 — strengthen 방향."
+    direction: strengthen
+    sunset_justification: null
+related_stories:
+  - CFP-2328
 related_adrs:
   - ADR-013
   - ADR-037
   - ADR-042
+  - ADR-124
+  - ADR-125
 related_files:
   - mclayer/plugin-codeforge-requirements/agents/ResearcherAgent.md
   - mclayer/plugin-codeforge-requirements/CLAUDE.md
@@ -135,6 +145,52 @@ ADR-042 §결정 1 (g) Opus tier criteria — "Deep research with reshape mandat
 물리 디렉터리 분리(`domain/` vs `concept/`), PLAgent 합성 순서 명문화, §6 compact summary 추가.
 상세: [ADR-056](ADR-056-domain-concept-knowledge-dir-separation.md)
 
+### Amendment 2 (CFP-2328, 2026-06-17) — Mandate 2 demand-anchored 재초점 + concept silo close-loop
+
+**carrier**: CFP-2328 (Epic `mclayer/plugin-codeforge#2324` S4). **`direction: strengthen`, `sunset_justification: null`.**
+
+ADR-124 §결정 1 이 외부지식 충당을 3-단계로 정식 규정하면서 단계① (개념 정립·요구사항 재편) 의 주체를 본 ADR 의 Researcher 3 mandate 로 식별했고, §결정 5 표가 "ResearcherAgent 재초점 (단계① mandate 조정)" 을 S4 로 deferral 했다 (`ADR-124:199`). 본 Amendment 가 그 S4 row 를 이행한다.
+
+#### Mandate 2 demand-anchored 재초점 (정밀화 — 약화 아님)
+
+§결정 1 표의 Mandate 2 (Deep Exploration — 외부 unknown unknowns) 의 *초점*을 **"개념 정립 지원 + unknown-unknown proactive 발굴"** 로 재배치한다. 외부 선행사례·표준·경쟁 솔루션 조사는 **개념 정립(Mandate 1)·요구사항 재편(Mandate 3) 을 *지원*하는 한도** 안에서 수행한다 (demand-anchored). 이는 ADR-124 §결정 4 가 명시한 "§결정 4 적극 탐색 default skew 에 demand-anchored frame 을 더하는 것은 정밀화이며 '약화' frame 이 아니다" 와 정합한다 (`ADR-124:185`). Never-skippable invariant (§결정 4) 무손상, ADR-058 §결정 5 ratchet 강화 방향 정합.
+
+3-mandate 골격은 무손상 — Mandate 1/3 의 구조·boundary, Mandate 2 의 mandate 자체는 보존하고 *초점*만 demand-anchored 로 정밀화한다.
+
+#### downstream 이관 명시 (약화 0 증명)
+
+외부 기술자료를 하류 lane 에 *제공*하는 책임은 본 Amendment 가 *삭제*하지 않는다. 그 책임은 외부지식 충당 3-단계 (ADR-124 §결정 1) 의 후속 단계로 *이관*됐다:
+
+- **단계③ (S2 — ADR-125 요구사항리뷰 lane)**: 외부사실 의존 결론의 깊은 다출처 검증 (리뷰측 독립 producer 게이트). `ADR-125:101` / `ADR-125:148`.
+- **S5 (on-demand 경로)**: 깊은 검증 on-demand 차등 메커니즘 (`ADR-124:199` deferral 경계, `ADR-125:154`).
+
+따라서 본 Amendment 는 책임 *재배치*이지 책임 *삭제*가 아니다 — strengthen 방향, `sunset_justification: null`.
+
+#### ①③ 작성자 역할 강조 + 외부지식 하류 도달 주 채널 정정
+
+Researcher 의 비-중복 (Sonnet 대수 불가) 가치 = **① Concept formulation (개념 정립 / unknown-unknown proactive 발굴)** + **③ Requirement reshape (요구사항 재편)**. 즉 Researcher 는 외부 기술자료를 *수집·전달*하는 검색기가 아니라, 그것을 재료로 개념을 정립하고 요구사항을 *재편(reshape)* 하는 *작성자* 다.
+
+외부지식이 하류 lane 에 도달하는 **주 채널 = ③ reshape = §6 Section 5 (Refined Requirements)** — 외부지식을 요구사항 텍스트에 *녹여* 전달한다. **concept/ silo 의 직접 열람이나 §6 raw dump 가 주 채널이 아니다.** §6 의 6-section schema (§결정 3) 자체는 무변경이며, Section 6 (Concept Summary) 는 PL 합성 보조 (single-read-surface — `ADR-056:79` §결정 4) 역할을 보존한다. "§6 이 하류 *기술수요*를 충당한다" 는 기대는 제거한다 (그 수요는 위 단계③/S5 가 담당).
+
+#### concept silo close-loop (CL-1 = (가))
+
+`concept/` 디렉터리의 "직접 독자 없음" 구조는 ADR-056 §결정 4/5 가 정의한 **by-design indirection** 이며 ADR-124 §결정 4 가 "결함으로 재규정하지 않는다" 로 못박았다 (`ADR-124:187`, `ADR-056:79`). 본 Amendment 는 이 by-design 보존을 무손상으로 둔 채 **read-loop 만 추가**해 silo 를 닫는다:
+
+- **독자 = 미래 Story 의 Researcher 자신**. 누적된 `concept/` 자산이 다음 Story 의 Researcher 에게 "이미 정립된 개념" 으로 재공급된다 (close-loop).
+- 이 read 는 **Mandate 2 재초점에 구조적으로 결합**된다 — 단순 "실행 초입 Glob 1-step" 절차가 아니라, *기존 concept/ 자산 = unknown-unknown 발굴·개념 정립의 출발점* 이라는 mandate-aligned 동기로 read 한다 (stateless one-shot·incentive 부재·토큰비용 3중 장벽을 mandate 결합으로 돌파).
+- **토큰 회피**: §6 Section 6 compact summary 를 역방향 재사용 (raw concept 파일 대신 요약 우선 read) + Mode policy `skip`/`light` 시 read 면제. concept/ 소유 (ResearcherAgent 단독 write) 는 무변경 — 소유 재배치 0, close-loop read 만 추가 (= strengthen). ADR-056 §결정 1/4/5 무손상.
+
+#### §6 schema drift 정합 (CL-2)
+
+§결정 3 의 6-section schema 와 `ResearcherAgent.md` 현행 6-section 출력 표현이 함께 정합됨을 명시한다 (이중 SSOT drift 해소). 본 Amendment 는 section 개수·이름을 *재설계*하지 않는다 — schema *정합* (drift 해소) 만 수행하며 §결정 3 과 일치를 유지한다.
+
+#### cross-ref
+
+- ADR-124 §결정 1·4·5 (외부지식 3-단계 / 단계① demand-anchored 정밀화 / S4 deferral) — `ADR-124:139`, `ADR-124:185`, `ADR-124:199`.
+- ADR-125 단계③ (하류 깊은 검증 이관처) — `ADR-125:101`, `ADR-125:148`.
+- ADR-056 (`ADR-056-domain-concept-knowledge-dir-separation.md`) §결정 1/4/5 (concept silo by-design, 무손상) — `ADR-056:79`.
+- ADR-058 §결정 5 (약화 evidence-gate — ratchet 강화 방향 보증).
+
 ## 대안 검토
 
 | 대안 | 기각 사유 |
@@ -172,3 +228,5 @@ N/A — permanent policy
 - [ADR-013](ADR-013-codeforge-family-dogfood-out-policy.md) — dogfood-out waiver (본 ADR 발동 근거)
 - [ADR-037](ADR-037-plugin-version-bump-rule.md) — plugin version bump rule (5.6.0 → 5.7.0 MINOR 정합)
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — Agent model selection policy (본 ADR 가 §결정 2 deferred fence 해소)
+- [ADR-124](ADR-124-external-knowledge-provisioning-model.md) — 외부지식 충당 3-단계 (Amendment 2 가 단계① S4 재초점 이행 — §결정 4 demand-anchored 정밀화 anchor)
+- [ADR-125](ADR-125-requirements-review-lane.md) — 요구사항리뷰 lane (Amendment 2 의 downstream 기술자료 검증 이관처 단계③)
