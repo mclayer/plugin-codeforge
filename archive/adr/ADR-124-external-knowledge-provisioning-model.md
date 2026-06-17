@@ -9,6 +9,7 @@ parent_epic: "mclayer/plugin-codeforge#2324"
 is_transitional: false
 related_stories:
   - CFP-2325  # 본 ADR 신설 carrier (Epic CFP-2324 S1)
+  - CFP-2327  # Amendment 1 carrier — 차등 실구현 + 양면 휴리스틱 instantiate (Epic CFP-2324 S3)
 related_adrs:
   - ADR-046  # §결정 1·4 — Researcher 3 mandate 의 요구사항 lane 시점이 단계① 묶음. 본 ADR 은 적극 탐색 default skew 에 demand-anchored frame 을 더한 정밀화/강화 (약화 아님)
   - ADR-119  # §결정 5·6 — 원칙(보편) ↔ 실행(전담) 분리를 단계②③ lane-disjoint 정합으로 명문화. §결정 6 "조사했으므로 옳다 단정 금지" = 검사연극 금지 SSOT
@@ -20,8 +21,20 @@ related_files:
   - archive/adr/ADR-124-external-knowledge-provisioning-model.md
   - skills/review-responsibility/SKILL.md  # 단계③ 매트릭스 요약 mirror (SSOT = 본 ADR)
   - CLAUDE.md  # 핵심 흐름 요구사항리뷰 lane 도입 근거 서술
-amendments: []
-amendment_log: []
+amendments:
+  - Amendment 1  # CFP-2327 S3 — 단계③ 차등 실구현 (mechanical) + "외부 기술선택" 양면(positive∩negative) 휴리스틱 instantiate + 검사연극 금지 재확인 + ADR-058 §결정 5 강화 방향 명시
+amendment_log:
+  - amendment: Amendment 1
+    date: 2026-06-17
+    carrier_story: CFP-2327
+    parent_epic: "mclayer/plugin-codeforge#2324"
+    summary: |
+      §결정 5 deferred "차등 실구현" 의 mechanical 실현. 본 amendment 는 신규 규범 0 — S1 결정 3 적합도 표·결정 2 외부사실 의존 게이트·결정 6 휴리스틱을 lane 산출물 (보안테스트 web 단계 심화 / 설계리뷰 좁은 예외 / 리뷰 worker web 권한 차등) 에 instantiate 만 한다.
+      ① 보안테스트: 단계③ 깊은 다출처 검증을 기존 web 조사 단계의 *심화* 로 정착 (대체 아님) — 1차 자동도구 (Dependabot/CodeQL) 와 구분되는 2차 워커 web 단계를 다출처 (NVD + GitHub Advisory + CISA KEV) + adversarial verify + 시의성 (0-day / mature) 으로 강화.
+      ② 설계리뷰: "외부 기술선택" 좁은 예외만 단계③ 적용 — 양면 정의 (positive-list ∩ negative-list) 로 검사연극 drift 차단. code 행 web 금지 전면 보존 (설계리뷰만 좁은 예외, 대칭 붕괴 차단).
+      ③ "외부 기술선택" 양면 휴리스틱 신설 — positive-list (라이브러리·프로토콜·알고리즘·성능모델) ∩ negative-list (ADR 위반·boundary·계약·§8·섹션 존재 = internal-only 보존). 진입 질문: "결론이 외부 기술의 진위에 좌우되는가? YES→예외 / NO→internal-only 금지".
+    direction: strengthen  # 단계③ 적용 지점 mechanical 정착 = 적용 capability 추가 (약화 0건). 보안테스트 "심화", 설계리뷰 "예외 추가", code 전면금지 "보존". ADR-058 §결정 5 약화 차단 정합.
+    sunset_justification: null  # strengthen 방향 — 신규 규범 0, 기존 결정 instantiate 만. ADR-058 §결정 5 약화 evidence-gate 무관. is_transitional: false 유지.
 ---
 
 # ADR-124: 외부지식 충당 3-단계 모델
@@ -33,6 +46,61 @@ Accepted (2026-06-17 KST, CFP-2325 carrier — Epic [#2324](https://github.com/m
 ## 본질 선언
 
 > **외부지식을 codeforge 흐름의 어디에서·누가 충당하는지를 3-단계로 규정한다.** ① 개념 정립·요구사항 재편 (요구사항 lane, ResearcherAgent) — 능동적 unknown-unknown 탐구, 좁은 just-in-case. ② 결정 범위에 한정한 얕은(shallow) 조사 (각 lane 자가 충당) — 결정 직전 known-unknown 의 즉응 보강. ③ 깊은(deep) 다출처 검증 (리뷰 게이트 + 후순위 on-demand) — adversarial 검증 + 출처 인용. 본 ADR 은 이 3-단계의 **경계·근거·적합도만** 박제하며, 실 게이트 trigger·lane 배선·차등 실구현은 후속 Story (S2~S5) 에서 다룬다.
+
+## Amendment 1 (CFP-2327 S3) — 단계③ 차등 실구현 + "외부 기술선택" 양면 휴리스틱
+
+> **신규 규범 0건.** 본 amendment 는 S1 §결정 5 가 S3 으로 deferral 한 "깊은 검증 (deep-research) 차등 실구현" 의 **mechanical 실현**이다. S1 의 §결정 2 (외부사실 의존 게이트) · §결정 3 (lane별 적합도 표) · §결정 6 (외부사실 의존 휴리스틱) 을 lane 산출물에 **instantiate** 할 뿐, 새 원칙을 신설하지 않는다. 방향은 **강화 (strengthen)** — 단계③ 적용 capability 를 lane 에 정착시키며 어느 기존 결정도 약화하지 않는다 (ADR-058 §결정 5 약화 차단 정합, 아래 A1-5).
+
+### A1-1 — 보안테스트: 단계③ = 기존 web 단계의 *심화* (대체 아님)
+
+S1 §결정 3 표 "보안테스트 = 高 (기존 web 단계 심화 = 강화)" 를 mechanical 로 정착한다. **기존 보안 lane web 조사 단계를 폐기·대체하지 않고 깊이를 더하는 강화 방향**이다.
+
+- **1차 layer (자동도구) 와 2차 워커 (web) 의 구분 보존**: 1차 = GitHub native 자동도구 (Dependabot / CodeQL / Secret Scanning) + container (trivy / hadolint) — SecurityTestPL fetch 의무 (기존). 2차 = Claude/Codex 워커의 web 조사 단계 — 본 amendment 가 심화 대상.
+- **2차 워커 web 단계 심화 3 요소** (외부사실 의존 결론에만 — §결정 2 게이트):
+  1. **다출처 교차** — 단일 출처 단정 금지. CVE·취약점 사실은 최소 2 출처 교차 (예: NVD + GitHub Security Advisory (GHSA) + CISA KEV catalog). 출처 간 불일치 시 finding `body` 에 명시.
+  2. **adversarial verify** — "이 의존성이 안전하다" 가 아니라 "이 버전·구성에서 알려진 악용 경로가 있는가" 로 반증 시도. fixed-version 주장은 changelog·advisory 원문 직접 확인.
+  3. **시의성 (recency)** — 취약점이 0-day / actively-exploited (CISA KEV 등재) 인지, mature / patched 인지 구분. 시의성이 severity 판정 (P0 vs P1) 에 영향.
+- **검사연극 차단 보존**: 외부사실 의존이 없는 내부 코드 결함 (injection 패턴·hardcoded credential 등 코드 사실 축) 에는 깊은 web 조사를 강제하지 않는다 (§결정 2 / §결정 6 의존 X row). web 조사는 CVE·공급망·표준 등 외부사실 의존 지점 한정.
+- **mechanical anchor**: `templates/review-checklists/security.md` §7 (의존성 취약점) 에 심화 명세 + SecurityTestPLAgent.md "2차 워커 web 단계 심화" 절.
+
+### A1-2 — 설계리뷰: "외부 기술선택" 좁은 예외 (양면 정의)
+
+S1 §결정 3 표 "설계리뷰 = 부분 (외부 기술선택만)" 을 mechanical 로 정착한다. 설계리뷰 워커는 **원칙적으로 repo 내부 근거만** 사용하나, **외부 기술선택 결론에 한해** 단계③ (깊은 외부 검증) 의 좁은 예외를 적용한다.
+
+**"외부 기술선택" 판정 = 양면 정의 (positive-list ∩ negative-list 동시 충족)**:
+
+| 면 | 정의 | 예시 |
+|---|---|---|
+| **positive-list** (예외 자격 — 외부 검증 허용) | 결론이 *외부 기술의 진위* 에 좌우되는 설계 결정 | 라이브러리·프레임워크 채택 / 프로토콜 선택 (gRPC vs REST 등) / 알고리즘 선택 (정확성·복잡도가 외부 사실) / 성능 모델 (벤더 성능 특성 단정) |
+| **negative-list** (예외 배제 — internal-only 보존) | 결론이 *내부 근거만으로 닫히는* 설계 정합성 | ADR 위반 여부 / module·aggregate boundary / inter-plugin 계약 일관성 / §8 Test Contract 타당성 / 섹션 존재·완결성 (§7 / §7.4 / §11 등) |
+
+- **진입 질문 (1줄 게이트)**: **"이 설계 결론이 외부 기술의 진위에 좌우되는가? YES → 외부 검증 예외 / NO → internal-only, 외부조사 금지."** positive-list 만 보고 외부조사를 발의하면 검사연극이다 — negative-list 에 닿는 결론 (ADR·boundary·계약·섹션 존재) 은 외부조사 대상이 아니다.
+- **검사연극 최대 리스크 차단**: positive-list 만 제시하면 "외부 기술선택" 의 외연이 무한 확장돼 모든 설계 결론에 외부조사를 끼워 넣는 drift 가 발생한다. negative-list 를 동등 1급으로 박제해, internal-only 경계 (ADR-119 §결정 1 repo 사실 row) 가 보존됨을 명시한다.
+- **mechanical anchor**: `templates/review-checklists/design.md` "외부 기술선택 검증" sub-section + DesignReviewPLAgent.md packet 확장 + ClaudeReviewAgent.md (design 행만 예외) + CodexReviewAgent.md (design focus prompt).
+
+### A1-3 — code lane 웹금지 전면 보존 (대칭 붕괴 차단, [P0])
+
+설계리뷰의 좁은 예외 신설이 **구현리뷰 (code lane) 의 web 금지를 흔들지 않는다.** S1 §결정 3 표 "구현리뷰 = 低 (미적용)" 는 무손상이다.
+
+- 구현 품질·런타임 결함·테스트 품질은 **내부 코드 사실 축** — 외부지식 의존이 거의 없다 (§결정 3 근거).
+- code lane 워커의 WebSearch/WebFetch 는 **전면 금지 유지** (`lane=design` 좁은 예외와 비대칭). 설계리뷰에 예외가 생겼다고 code lane 에 확산시키면 검사연극 + 대칭 붕괴다.
+- 4 anchor (ClaudeReviewAgent.md 진단 도구 절 + 제약 절 / CodexReviewAgent.md design focus prompt / codeforge-review/CLAUDE.md Worker 호출 규약) 를 **동시 갱신** 해, web 허용 lane 이 `security` + `requirements-review` + (design 좁은 예외) 3 종으로 정확히 한정되고 code lane 이 명시적으로 배제됨을 4 곳 정합으로 보장한다.
+
+### A1-4 — 검사연극 금지 재확인 (declarative 일관, ADR-119 §결정 6 cross-ref)
+
+본 amendment 의 세 instantiate (A1-1/A1-2/A1-3) 는 모두 **검사연극 금지** 원칙 위에 선다. ADR-119 §결정 6 ("'조사했으므로 옳다' 단정 금지" — 조사 = traceability + 정직성 수단이지 결론의 정당성 보증 아님) 을 **cross-ref 로 인용** 하며, 각 lane 산출물에 문구를 복붙하지 않는다 (drift 회피, SSOT = ADR-119 §결정 6).
+
+- 발동 = declarative-only (매 Story 강제 아님). 적합도 표 (高/부분/低) 는 *발동 잠재력* 이지 매 Story 강제 발동이 아니다 (S1 §결정 3 / ADR-119 §결정 8 declarative-only 정합).
+- 외부사실 의존 게이트 (§결정 2) 가 실제 발동을 결정 — 내부근거-only 결론에 외부조사를 강제하는 finding 발의는 모든 lane 에서 금지.
+
+### A1-5 — ADR-058 §결정 5 약화 차단 (강화 방향 명시)
+
+본 amendment 는 `direction: strengthen` 이다 (frontmatter `amendment_log` 정합). 약화 0건임을 명시한다.
+
+- **보안테스트** = 기존 web 단계 *심화* (대체·축소 0). 1차 자동도구 단계 무손상, 2차 워커 단계에 깊이 추가만.
+- **설계리뷰** = 외부 기술선택 좁은 예외 *추가* (internal-only 경계 negative-list 로 보존, 기존 정합성 검증 축소 0).
+- **구현리뷰** = web 금지 *전면 보존* (변경 0).
+- S1 의 어느 결정도 흡수·약화하지 않으며, ADR-046/119 의 어느 mandate 도 손대지 않는다. 따라서 ADR-058 §결정 5 의 sunset_justification 의무는 strengthen 방향이므로 `null` (약화 evidence-gate 무관). is_transitional: false 유지.
 
 ## 어휘 충돌 회피 (필수 선언)
 
@@ -127,7 +195,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 | 영역 | 담당 Story |
 |---|---|
 | 실 게이트 trigger·phase 라벨·lane 배선 (요구사항리뷰 lane 실 wiring, 8→9 카운트 hard-commit) | **S2** |
-| 깊은 검증 (deep-research) 차등 실구현 | **S3** |
+| 깊은 검증 (deep-research) 차등 실구현 | **S3** (✅ Amendment 1 으로 실현 — 보안테스트 web 단계 심화 / 설계리뷰 좁은 예외 / code lane web 금지 보존) |
 | ResearcherAgent 재초점 (단계① mandate 조정) | **S4** |
 | on-demand 깊은 검증 경로 | **S5** |
 | 단계②③ 깊이 임계의 정량 trigger (경계(?) 항목 최종 확정 포함 — 결정 6) | **S2** (게이트 설계) |
@@ -156,7 +224,8 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 
 - 외부지식 충당 3-단계의 normative anchor 신설 — 요구사항리뷰 lane 도입 (S2~) 의 근거 SSOT.
 - 단계③ (깊은 검증) 매트릭스의 SSOT = 본 ADR. `skills/review-responsibility/SKILL.md` 는 요약 mirror 만 두고 본 ADR 을 cross-ref 한다 (drift 회피).
-- mechanical_enforcement_actions: [] — S1 declarative-only. 실 게이트 trigger·lane 배선·차등 실구현 = S2~S5 별 carrier (ADR-054 §결정 6.1 / ADR-119 §결정 8 declarative-only 패턴 정합).
+- mechanical_enforcement_actions (S1 시점): [] — S1 declarative-only. 실 게이트 trigger·lane 배선·차등 실구현 = S2~S5 별 carrier (ADR-054 §결정 6.1 / ADR-119 §결정 8 declarative-only 패턴 정합).
+- mechanical_enforcement_actions (Amendment 1, CFP-2327 S3): 단계③ 차등 실구현 정착 — ① `templates/review-checklists/security.md` §7 2차 워커 web 단계 심화 (다출처+adversarial+시의성) + SecurityTestPLAgent.md ② `templates/review-checklists/design.md` "외부 기술선택 검증" sub-section (positive∩negative 휴리스틱) + DesignReviewPLAgent.md packet ③ ClaudeReviewAgent.md (design 행만 web 예외, code 금지 보존) + CodexReviewAgent.md design focus prompt ④ codeforge-review/CLAUDE.md Worker 호출 규약 web 허용 lane 3 종 한정. 발동 = declarative-only (외부사실 의존 게이트가 실 발동 결정).
 
 ## sunset_justification (ADR-058 §결정 5 — 약화 차단)
 

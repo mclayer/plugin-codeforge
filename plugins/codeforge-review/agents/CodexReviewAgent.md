@@ -117,10 +117,21 @@ design document review for docs/change-plans/<slug>.md (story: <STORY_KEY>):
 3. CodebaseMapper (defender) ↔ RefactorAgent (innovator) balance
 4. "0-context developer premise" concreteness — files, signatures, types finalized
 5. §8 Test Contract validity (coverage, boundaries, performance baseline §8.3)
+6. External tech selection verification (CFP-2327 / ADR-124 Amd 1 — narrow exception):
+   ONLY for conclusions that hinge on external-tech truth (positive-list: library/framework
+   adoption, protocol choice, algorithm correctness, vendor performance model). Entry question:
+   "does this conclusion depend on the truth of external tech? YES → external verify / NO → forbidden".
+   negative-list (internal-only, NO external research): ADR violation, module/aggregate boundary,
+   inter-plugin contract consistency, §8 Test Contract validity, section existence/completeness.
+   Verification theater forbidden — do NOT force external research on internal-only conclusions
+   (ADR-119 §결정 6). WebSearch/WebFetch allowed for this narrow case only. N/A if no external-tech
+   selection in the Story.
 Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {adr-mismatch,
 design-completeness, mapper-refactor-balance, implementability, test-contract,
-section-missing, security-design, data-migration, api-compatibility, observability, slo-missing}, location as path:section, ADR reference where applicable.
-Auto-P0: ADR violation, §8 missing, §3-6 sections missing, §7 보안 설계 누락, §7.4 운영 리스크 누락 또는 N/A 사유 부재 (CFP-46 / ADR-014), §7.7 N/A 사유 부재, §11 데이터 마이그레이션 누락, §11.6 Idempotency 누락 또는 N/A 사유 부재 (CFP-46 / ADR-014), §11.7 N/A 사유 부재, API breaking without versioning (public/SLA-bound), boundary-component without observability decisions, public/SLA-bound service without SLO.
+section-missing, security-design, data-migration, api-compatibility, observability, slo-missing,
+external-tech-selection}, location as path:section, ADR reference where applicable.
+Auto-P0: ADR violation, §8 missing, §3-6 sections missing, §7 보안 설계 누락, §7.4 운영 리스크 누락 또는 N/A 사유 부재 (CFP-46 / ADR-014), §7.7 N/A 사유 부재, §11 데이터 마이그레이션 누락, §11.6 Idempotency 누락 또는 N/A 사유 부재 (CFP-46 / ADR-014), §11.7 N/A 사유 부재, API breaking without versioning (public/SLA-bound), boundary-component without observability decisions, public/SLA-bound service without SLO, external-tech-selection 채택 근거 명백한 사실 오류 (폐기 프로토콜·미지원 버전 단정).
+Auto-P1: external-tech-selection 결론(positive∩negative 충족)의 외부사실 근거 부재/검증 불가.
 ```
 
 #### lane=code
@@ -155,7 +166,13 @@ flaws + injection attack surfaces + sensitive data handling + dependency CVEs
 4. Credential/secret exposure (hardcoded in code/config/log/error/.env.example) — auto-P0
 5. Crypto misuse (weak algos, nonce/IV reuse, ECB, hardcoded keys) — auto-P1
 6. PII/financial/health data leakage (logs, responses, cache) — auto-P1
-7. Dependency CVEs (manifest scan, cross-check Dependabot 1st-layer) — auto-P0 on CRITICAL
+7. Dependency CVEs (manifest scan, cross-check Dependabot 1st-layer) — auto-P0 on CRITICAL.
+   2nd-layer web deepening (CFP-2327 / ADR-124 Amd 1) for external-fact-dependent conclusions:
+   multi-source cross-check (NVD + GitHub Security Advisory + CISA KEV), adversarial verify
+   (try to disprove "safe"; confirm fixed-version from advisory/changelog source), recency
+   (0-day/actively-exploited vs mature/patched — affects severity). 1st-layer auto-tools are NOT
+   replaced — deepened. Verification theater forbidden: no deep web research on internal-code-fact
+   defects (injection/credential) — external-fact-dependent points only (ADR-119 §결정 6).
 8. Config/deploy security (default creds, open ports, TLS, file permissions)
 9. Race/TOCTOU vulnerabilities
 Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {injection,

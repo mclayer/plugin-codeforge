@@ -95,6 +95,18 @@ trivy / hadolint 는 **`infra_strategy: docker_first` consumer 만 active**. pro
 
 1차 layer 결과를 워커 packet에 inline 첨부 → 워커는 이미 보고된 finding은 skip하고 **high-level 분석(trust boundary·auth model)에 집중**.
 
+## 2차 워커 web 단계 심화 (CFP-2327 / ADR-124 Amendment 1)
+
+보안 lane 은 외부지식 충당 3-단계 ([ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md)) 중 **단계③ (깊은 다출처 검증) 의 주 발동 lane** 이다. 본 절은 **기존 2차 워커 web 조사 단계를 대체하지 않고 심화** 한다 (강화 방향 — A1-1).
+
+- **1차 ↔ 2차 구분 보존**: 1차 = GitHub native 자동도구 (위 §1차 layer fetch 의무, PL fetch). 2차 = Claude/Codex 워커의 WebSearch/WebFetch 조사 — 본 절이 심화 대상. 1차를 폐기·축소하지 않는다.
+- **2차 워커 web 단계 심화 3 요소** (외부사실 의존 결론 한정 — ADR-124 결정 2 게이트):
+  1. **다출처 교차** — CVE·취약점 사실은 최소 2 출처 (NVD + GitHub Security Advisory + CISA KEV catalog 등). 출처 간 불일치 시 finding `body` 명시.
+  2. **adversarial verify** — "안전" 단정이 아니라 악용 경로 반증 시도. fixed-version 주장은 advisory·changelog 원문 직접 확인.
+  3. **시의성 (recency)** — 0-day / actively-exploited (CISA KEV) vs mature / patched 구분. severity 판정 (P0 vs P1) 입력.
+- **검사연극 차단**: web 조사는 CVE·공급망·표준 등 외부사실 의존 지점 한정. injection·credential 등 내부 코드 사실 축 결함에는 깊은 web 조사 강제 금지 ([ADR-119](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-119-research-before-claims.md) §결정 6 — 문구 SSOT, 복붙 금지).
+- **packet 주입**: 본 심화 directive 는 `checklist_path` (`templates/review-checklists/security.md` §7.1-§7.3) 로 워커에 전달. PL 은 별도 inline 복제 없이 checklist pointer 로 위임 (drift 회피).
+
 ## 워커 packet 작성 (lane=security)
 
 ```yaml

@@ -98,7 +98,7 @@ tools: Read
 
 ## 깊은 검증(deep-research) 차등 적용 원칙 (ADR-124)
 
-> **SSOT = [ADR-124](../../archive/adr/ADR-124-external-knowledge-provisioning-model.md)** (외부지식 충당 3-단계 모델) + [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) (요구사항리뷰 lane 신설 — 단계③ 주 발동 lane 의 게이트·배선). 본 절은 요약 mirror 이며, 충돌 시 ADR-124/ADR-125 가 우선한다. 실 게이트 trigger·phase 라벨·lane 배선 = CFP-2326 / ADR-125 (요구사항리뷰 lane: phase:요구사항-리뷰 + gate:requirements-review-pass). 깊은 검증 차등 실구현 = S3 (본 skill 범위 밖).
+> **SSOT = [ADR-124](../../archive/adr/ADR-124-external-knowledge-provisioning-model.md)** (외부지식 충당 3-단계 모델 + Amendment 1 차등 실구현) + [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) (요구사항리뷰 lane 신설 — 단계③ 주 발동 lane 의 게이트·배선). 본 절은 요약 mirror 이며, 충돌 시 ADR-124/ADR-125 가 우선한다. 실 게이트 trigger·phase 라벨·lane 배선 = CFP-2326 / ADR-125 (요구사항리뷰 lane: phase:요구사항-리뷰 + gate:requirements-review-pass). 깊은 검증 차등 실구현 = **CFP-2327 / ADR-124 Amendment 1 으로 실구현 완료** (보안테스트 2차 web 단계 심화 = 다출처+adversarial+시의성 / 설계리뷰 외부 기술선택 좁은 예외 = positive∩negative 양면 / code lane web 금지 전면 보존).
 
 리뷰 게이트의 깊은 다출처 검증 (외부지식 충당 3-단계 중 단계③) 은 **무조건 발동이 아니다.**
 
@@ -109,10 +109,10 @@ tools: Read
 
 | lane | 적합도 (잠재력) | 근거 |
 |---|---|---|
-| 요구사항리뷰 | 高 (주) | 요구사항 결론이 외부 개념·시장·표준 사실에 가장 자주 의존 |
-| 보안테스트 | 高 (기존 web 단계 심화 = 강화) | 취약점·CVE·공급망 = 본질적 외부지식 |
-| 설계리뷰 | 부분 (외부 기술선택만) | 외부 기술선택 결론에만 의존 — 내부근거-only 설계 정합성은 비대상 (내부근거 경계 보존) |
-| 구현리뷰 | 低 (미적용) | 구현 품질·런타임 결함 = 내부 코드 사실 축 |
+| 요구사항리뷰 | 高 (주) | 요구사항 결론이 외부 개념·시장·표준 사실에 가장 자주 의존 (실 wiring = CFP-2326 / ADR-125) |
+| 보안테스트 | 高 (2차 web 단계 심화 = 강화) | 취약점·CVE·공급망 = 본질적 외부지식. 실구현 = CFP-2327 — 2차 워커 web 단계 다출처(NVD+GHSA+CISA KEV)+adversarial+시의성 (1차 자동도구 대체 아님, security.md §7.1-§7.3) |
+| 설계리뷰 | 부분 (외부 기술선택만) | 외부 기술선택 결론에만 의존 — 내부근거-only 설계 정합성은 비대상. 실구현 = CFP-2327 — positive-list(라이브러리·프로토콜·알고리즘·성능모델) ∩ negative-list(ADR·boundary·계약·§8·섹션) 양면 휴리스틱 (design.md "외부 기술선택 검증") |
+| 구현리뷰 | 低 (미적용) | 구현 품질·런타임 결함 = 내부 코드 사실 축. web 금지 전면 보존 (설계리뷰 좁은 예외와 비대칭 — CFP-2327 / ADR-124 Amd 1 A1-3) |
 | 배포리뷰 | 미적용 | 배포·배포리뷰 2 lane = ADR-121 §결정 1 **폐지 결정(deprecated)** (deprecation 진행 중) + production 경험적 측정이라 단계③ 무의존 (적합도 等級 부여 안 함) |
 
 > 적합도가 높다는 것은 그 lane 의 결론이 외부사실에 의존할 *잠재력* 이 높다는 뜻이지, 매 Story 마다 깊은 검증이 강제 발동된다는 뜻이 아니다 (실제 발동 = 외부사실 의존 게이트가 결정). 외부사실 의존 판정 휴리스틱 (O: 팩트체크·벤더·표준·CVE / X: 팀 암묵지식 / 경계?: 시장정보·벤치마크·StackOverflow — ADR-125 결정 6 운영 판정: 단계② 우선 + 리뷰어 재량 escalation) 상세 = ADR-124 결정 6 + ADR-125 결정 6.

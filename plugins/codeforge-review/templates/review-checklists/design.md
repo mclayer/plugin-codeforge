@@ -14,7 +14,7 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 
 ## Category enum (출력 분류)
 
-`adr-mismatch | design-completeness | mapper-refactor-balance | implementability | test-contract | section-missing | security-design | data-migration | api-compatibility | observability | slo-missing`
+`adr-mismatch | design-completeness | mapper-refactor-balance | implementability | test-contract | section-missing | security-design | data-migration | api-compatibility | observability | slo-missing | external-tech-selection`
 
 ## Severity 자동 룰
 
@@ -35,6 +35,8 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 - **API 변경 시 deprecation timeline 미정의** → P1 (`api-compatibility`)
 - **신규 컴포넌트 metric 종류 미명시** → P1 (`observability`)
 - **SLO 목표 측정 방법 부재** → P1 (`slo-missing`)
+- **외부 기술선택 결론(positive∩negative)의 외부사실 근거 부재/검증 불가** → P1 (`external-tech-selection`) — CFP-2327 / ADR-124 Amd 1
+- **외부 기술선택 채택 근거 명백한 사실 오류(폐기 프로토콜·미지원 버전 단정)** → P0 강제 (`external-tech-selection`) — CFP-2327 / ADR-124 Amd 1
 
 ## 체크리스트 (5축)
 
@@ -67,6 +69,29 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 - 커버리지 계획·경계 조건·invariant·성능 baseline 기준 명시
 - Change Plan 범위 대비 커버리지 공백 식별
 - 성능 baseline §8.3 프로토콜 (mean 10% 악화 기준 측정 절차) 명시 여부
+
+## 외부 기술선택 검증 (`external-tech-selection`, CFP-2327 / ADR-124 Amendment 1 — 좁은 예외)
+
+설계리뷰는 **원칙적으로 repo 내부 근거만** 사용한다 (외부 검색 금지). 단 **"외부 기술선택" 결론에 한해** 외부지식 충당 3-단계 ([ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md)) 단계③ 의 **좁은 예외** 로 WebSearch/WebFetch 를 허용한다. 보안·요구사항리뷰 lane 의 전면 허용과 달리 설계리뷰는 이 좁은 예외만 — 그 외 설계 결론은 내부근거-only 다.
+
+### "외부 기술선택" 판정 = 양면 정의 (positive-list ∩ negative-list 동시)
+
+> **진입 질문 (1줄 게이트)**: **"이 설계 결론이 외부 기술의 진위에 좌우되는가? YES → 외부 검증 예외 / NO → internal-only, 외부조사 금지."**
+
+| 면 | 의미 | 예시 (외부 검증 자격) / (internal-only 보존) |
+|---|---|---|
+| **positive-list** (예외 자격) | 결론이 *외부 기술의 진위* 에 좌우 | 라이브러리·프레임워크 채택 / 프로토콜 선택 (gRPC vs REST 등) / 알고리즘 선택 (정확성·복잡도가 외부 사실) / 성능 모델 (벤더 성능 특성 단정) |
+| **negative-list** (예외 배제) | 결론이 *내부 근거만으로 닫힘* | ADR 위반 여부 / module·aggregate boundary / inter-plugin 계약 일관성 / §8 Test Contract 타당성 / 섹션 존재·완결성 (§7 / §7.4 / §11 등) |
+
+- **검사연극 차단 (필수)**: positive-list 만 보고 외부조사를 발의하면 **검사연극** 이다. negative-list 에 닿는 결론 (ADR·boundary·계약·섹션 존재) 은 외부조사 대상이 아니며, internal-only 경계 ([ADR-119](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-119-research-before-claims.md) §결정 1 repo 사실 row / §결정 6 — 문구 SSOT, 복붙 금지) 가 보존된다. positive-list 만 제시하면 "외부 기술선택" 외연이 무한 확장돼 모든 설계 결론에 외부조사를 끼워 넣는 drift 가 최대 리스크다 — negative-list 를 동등 1급으로 박제한다.
+- **다출처 + adversarial**: 예외 자격 충족 시에도 단일 출처 단정 금지 — 라이브러리·프로토콜 동작은 공식 문서·표준 번호 (RFC 등) 등 다출처 교차. 벤더 성능 단정은 반증 시도.
+- **declarative-only**: 매 Story 강제 발동 아님 (ADR-124 결정 3 적합도 = 발동 잠재력). 외부 기술선택 결론이 없는 Story 는 본 sub-section N/A.
+
+### Severity 자동 룰
+
+- 외부 기술선택 결론 (positive∩negative 충족) 의 외부사실 근거 부재 / 검증 불가 → **P1** (`external-tech-selection`)
+- 외부 기술선택 채택 근거가 명백히 사실 오류 (예: 폐기된 프로토콜·미지원 버전 단정) → **P0** (`external-tech-selection`)
+- 내부근거-only 결론에 외부조사 강제 finding 발의 → **발의 금지** (검사연극, ADR-119 §결정 6)
 
 ## §7 보안 설계 감사 (SecurityArchitectAgent + InfraOperationalArchitectAgent 산출물 통합 결과 검증)
 

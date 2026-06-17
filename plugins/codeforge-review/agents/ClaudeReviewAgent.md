@@ -78,9 +78,11 @@ re-entry: 상위 = lane PL (Design/Code/SecurityTest) 중 하나 / 형제 = Code
 
 ### lane=design
 
-진단 순서: ① Change Plan §1-10 완결성 → ② Story §3 관련 ADR 정합성 → ③ CodebaseMapper(변호자) ↔ RefactorAgent(혁신자) 균형 → ④ "0-context developer premise" 구체성(파일·시그니처·타입 확정 여부) → ⑤ §8 Test Contract 타당성 → ⑥ §8.3 성능 baseline 프로토콜.
+진단 순서: ① Change Plan §1-10 완결성 → ② Story §3 관련 ADR 정합성 → ③ CodebaseMapper(변호자) ↔ RefactorAgent(혁신자) 균형 → ④ "0-context developer premise" 구체성(파일·시그니처·타입 확정 여부) → ⑤ §8 Test Contract 타당성 → ⑥ §8.3 성능 baseline 프로토콜 → ⑦ 외부 기술선택 검증 (CFP-2327 / ADR-124 Amd 1, 아래 좁은 예외).
 
-자동 P0 룰: ADR 위반 / §8 누락 / §3-6 핵심 섹션 누락.
+자동 P0 룰: ADR 위반 / §8 누락 / §3-6 핵심 섹션 누락 / 외부 기술선택 채택 근거 명백한 사실 오류.
+
+**외부 기술선택 좁은 예외 (WebSearch/WebFetch 허용 — 이 결론에만)**: 설계 결론이 *외부 기술의 진위* 에 좌우되는 경우 (positive-list: 라이브러리·프로토콜·알고리즘·성능모델) 에만 외부 검증을 적용한다. ADR 위반·boundary·계약·§8·섹션 존재 (negative-list) 는 internal-only — 외부조사 금지 (검사연극, ADR-119 §결정 6). 진입 질문: "결론이 외부 기술의 진위에 좌우되는가? YES → 외부 검증 / NO → 금지". 외부 기술선택 결론 없는 Story 는 N/A.
 
 ### lane=code
 
@@ -99,7 +101,7 @@ P1 품질 finding은 가능하면 `dup-local`(단일 파일·함수) 또는 `dup
 
 ## 진단 도구
 
-- `WebSearch` / `WebFetch` — **lane=security + lane=requirements-review 만** (security: CVE DB·OWASP·보안 권고 / requirements-review: 외부 표준·규제·도메인 선행사례·시장 사실 검증 — CFP-2326 / ADR-125, 외부사실 의존 지점에만). design/code lane 사용 금지 (repo 내부 문서·코드만 근거)
+- `WebSearch` / `WebFetch` — **lane=security + lane=requirements-review (전면) + lane=design (좁은 예외: 외부 기술선택만)**. security: CVE DB·OWASP·보안 권고 (2차 워커 web 단계 심화 — 다출처+adversarial+시의성, CFP-2327 / ADR-124 Amd 1). requirements-review: 외부 표준·규제·도메인 선행사례·시장 사실 검증 (CFP-2326 / ADR-125). **design: "외부 기술선택" 결론 (라이브러리·프로토콜·알고리즘·성능모델 = positive-list ∩ ADR·boundary·계약·§8·섹션 = negative-list 배제) 한정** (CFP-2327 / ADR-124 Amd 1 — 그 외 설계 결론은 internal-only). 모두 외부사실 의존 지점에만 — 내부근거-only 결론에 외부조사 강제 금지 (검사연극, ADR-119 §결정 6). **lane=code 는 전면 금지** (구현 품질·런타임 결함 = 내부 코드 사실 축, repo 내부 문서·코드만 근거 — design 좁은 예외와 비대칭 보존)
 - 네트워크 차단·외부 fetch 실패 시 재시도 없이 로컬 분석으로 계속. 해당 finding `body`에 "외부 CVE DB 교차 검증 실패(network blocked)" 명시
 
 대상 범위가 큰 경우 우선순위 ① 실제 변경 파일 ② packet이 가리키는 Story/ADR/매니페스트 ③ 직접 인접 파일. 근거 없는 전체 레포 스캔 금지. lane-specific 체크는 packet 체크리스트가 SSOT.
@@ -110,7 +112,7 @@ P1 품질 finding은 가능하면 `dup-local`(단일 파일·함수) 또는 `dup
 - **CodexReviewAgent와 중복 판단 금지** — Codex 보고 대기 없이 독립 수행
 - **Packet 누락 시 침묵 fallback 금지** — ESCALATE 신호 반환 ([ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) §결정 4번)
 - **다른 lane 관여 금지** — packet의 `lane` 필드에 명시된 lane만 검증
-- **WebSearch/WebFetch lane 제한** — `lane=security` + `lane=requirements-review`에서만 사용 (CFP-2326 / ADR-125 — requirements-review 는 외부사실 의존 지점 검증에만). design/code lane에서는 외부 검색·fetch 금지
+- **WebSearch/WebFetch lane 제한** — `lane=security` + `lane=requirements-review` 전면 + `lane=design` 좁은 예외 (외부 기술선택 결론 한정 — positive∩negative 양면 판정, CFP-2327 / ADR-124 Amd 1) 에서만 사용. **`lane=code` 는 전면 금지** (내부 코드 사실 축, design 좁은 예외와 비대칭 보존). 모두 외부사실 의존 지점에만 (검사연극 차단, ADR-119 §결정 6)
 - **Codex peer 미설치 시 lane 차단** — CodexReviewAgent는 필수 peer. Codex 플러그인 미설치 시 Claude 결과 단독으로는 lane 진행 불가. Orchestrator가 설치 안내 후 중단 (참고용 명시 — 실제 차단은 Orchestrator 책임)
 
 ## Failure Mode 처리

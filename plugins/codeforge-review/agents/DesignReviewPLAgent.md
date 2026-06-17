@@ -86,6 +86,7 @@ review_packet:
     - api-compatibility
     - observability
     - slo-missing
+    - external-tech-selection
   severity_overrides:
     - "ADR violation → P0"
     - "§8 Test Contract 누락 → P0"
@@ -104,6 +105,8 @@ review_packet:
     - "API 변경 시 deprecation timeline 미정의 → P1"
     - "신규 컴포넌트 metric 종류 미명시 → P1"
     - "SLO 목표 측정 방법 부재 → P1"
+    - "외부 기술선택 결론(positive∩negative)의 외부사실 근거 부재/검증 불가 → P1 (CFP-2327 / ADR-124 Amd 1)"
+    - "외부 기술선택 채택 근거 명백한 사실 오류(폐기 프로토콜·미지원 버전 단정) → P0"
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```
@@ -141,6 +144,15 @@ FIX → Orchestrator → ArchitectPLAgent 회귀 → ArchitectAgent (chief autho
 base의 PASS/FIX/ESCALATE 형식 그대로 사용. 다음 단계 라인을 lane에 맞게:
 - PASS: `다음 단계: Orchestrator post-Sonnet이 gate:design-review-pass 라벨 + phase 전환 → QADev + DeveloperPL 병렬 스폰 (Phase 2 PR open + 구현 lane)`
 - FIX: `다음 단계: Orchestrator → ArchitectPLAgent 회귀 → ArchitectAgent 재스폰 → Change Plan 갱신 → 설계 리뷰 재실행`
+
+## 외부 기술선택 좁은 예외 (CFP-2327 / ADR-124 Amendment 1)
+
+설계리뷰 워커는 **원칙적으로 repo 내부 근거만** 사용한다 (외부 검색 금지). 단 **"외부 기술선택" 결론에 한해** WebSearch/WebFetch 좁은 예외를 적용한다 (외부지식 충당 3-단계 단계③ — [ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md) Amendment 1).
+
+- **판정 = 양면 정의** — positive-list (라이브러리·프로토콜·알고리즘·성능모델) ∩ negative-list (ADR 위반·boundary·계약·§8·섹션 존재 = internal-only 보존) 동시 충족. 진입 질문: "결론이 외부 기술의 진위에 좌우되는가? YES → 예외 / NO → 외부조사 금지".
+- **검사연극 차단**: negative-list 에 닿는 결론에 외부조사 강제 금지 ([ADR-119](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-119-research-before-claims.md) §결정 6 — 문구 SSOT). 매 Story 강제 아님 (declarative-only).
+- **상세 SSOT** = `templates/review-checklists/design.md` "외부 기술선택 검증" sub-section (워커 packet `checklist_path` 로 전달 — 본 md inline 복제 없음, drift 회피).
+- **code lane 비대칭 보존**: 본 예외는 설계리뷰 한정. 구현리뷰 (code lane) web 금지는 전면 보존 (ADR-124 Amendment 1 A1-3).
 
 ## 추가 체크 항목 (CFP-1424 / ADR-111)
 

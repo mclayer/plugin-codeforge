@@ -44,7 +44,7 @@ PL이 Orchestrator에 생성하는 typed schema packet. SSOT(canonical) = 본 re
 - **Packet 누락 = 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환**
 - 워커는 서로 보고 미참조 — 독립 peer로 병렬 수행
 - 워커는 **직접 다른 subagent 스폰 불가**
-- **WebSearch/WebFetch는 `lane=security` + `lane=requirements-review`만** 사용 가능 (CFP-2326 / ADR-125 — 요구사항리뷰 lane 은 외부사실 의존 결론의 다출처 검증 필요, ADR-124 단계③ 외부사실 의존 게이트. 단 외부사실 의존 지점에만 — 검사연극 차단). `lane=design` / `lane=code` 는 repo 내부 문서·코드만 근거 (외부 검색 금지)
+- **WebSearch/WebFetch는 `lane=security` + `lane=requirements-review` 전면 + `lane=design` 좁은 예외(외부 기술선택만)** 사용 가능. security/requirements-review = 외부사실 의존 결론 다출처 검증 (CFP-2326 / ADR-125, ADR-124 단계③ 게이트). `lane=design` = "외부 기술선택" 결론 한정 (positive-list 라이브러리·프로토콜·알고리즘·성능모델 ∩ negative-list ADR·boundary·계약·§8·섹션 배제 — CFP-2327 / ADR-124 Amd 1). 모두 외부사실 의존 지점에만 — 검사연극 차단 (ADR-119 §결정 6). **`lane=code` 는 전면 금지** (repo 내부 문서·코드만 근거 — design 좁은 예외와 비대칭 보존)
 - `lane=security` PL은 워커 spawn 전 GitHub native 1차 layer fetch 의무
 
 ## Dogfood policy (CFP-45)
