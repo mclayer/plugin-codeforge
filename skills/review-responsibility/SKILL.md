@@ -1,6 +1,6 @@
 ---
 name: review-responsibility
-description: Design/Code/Security 리뷰 책임 매트릭스. 5 lane(DesignLane·DesignReview·CodeReview·SecurityTest·DeployReview) 체크 항목 분담 테이블 + 요구사항리뷰 외부사실 의존 체크(원칙·매트릭스 — 상세 trigger=S2). 설계리뷰·구현리뷰·보안테스트·배포리뷰 lane 진입 시 Orchestrator 호출 의무.
+description: Design/Code/Security 리뷰 책임 매트릭스. 6 lane(RequirementsReview·DesignLane·DesignReview·CodeReview·SecurityTest·DeployReview) 체크 항목 분담 테이블 + 요구사항리뷰 외부사실 의존 체크(실 trigger=CFP-2326 / ADR-125). 요구사항리뷰·설계리뷰·구현리뷰·보안테스트·배포리뷰 lane 진입 시 Orchestrator 호출 의무.
 tools: Read
 ---
 
@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전), 배포리뷰 lane 진입 시 (DeployReviewPLAgent spawn 전).
+요구사항리뷰 lane 진입 시 (RequirementsReviewPL spawn 전 — CFP-2326 / ADR-125), 설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전), 배포리뷰 lane 진입 시 (DeployReviewPLAgent spawn 전).
 
 ## 개요
 
@@ -74,11 +74,14 @@ tools: Read
 | **Container network mode / port exposure** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) | — |
 | **Container secret / env mount 전략** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) | — |
 | **§7.4 Container restart policy / volume DR** | ✅ InfraOperationalArch | (감사) | — | (검증) | — |
-| **요구사항 외부사실 의존성 식별** (외부 개념·시장·표준 의존 요구사항 표면화 — 상세 trigger = CFP-2325 S2) | — | — | — | — | ✅ (포인터) |
-| **요구사항 외부지식 단정 검증** (외부사실 의존 결론 다출처 검증, 검사연극 금지 — ADR-124 결정 2) | — | — | — | — | ✅ (포인터) |
+| **요구사항 외부사실 의존성 식별** (외부 개념·시장·표준 의존 요구사항 표면화 — CFP-2326 / ADR-125, checklist `requirements.md` §1·5) | — | — | — | — | ✅ RequirementsReviewPL |
+| **요구사항 외부지식 단정 검증** (외부사실 의존 결론 다출처 검증, 검사연극 금지 — ADR-124 결정 2 / ADR-125 결정 6, checklist `requirements.md` §2-5) | — | — | — | — | ✅ RequirementsReviewPL |
+| **외부 표준/규제 누락 (RFC·법규·산업표준)** | — | — | — | — | ✅ (규제 위험 동반 시 P0) |
+| **AC 외부검증가능성 / 시장·벤더 단정 출처** | — | — | — | — | ✅ (외부사실 의존 시 P1) |
 
-## Lane 역할 요약 (CFP-1059 / ADR-087+088 후 — 4 → 5 review lane)
+## Lane 역할 요약 (CFP-2326 / ADR-125 후 — 5 → 6 review lane, RequirementsReview 신설)
 
+- **RequirementsReview (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md))**: 요구사항 산출물 (Story §1-7 + 사용자 원문 + 도메인 지식) 의 **외부사실 의존성** 게이트. Phase 1 내부 sub-gate (요구사항 → 요구사항리뷰 → 설계). 외부지식 충당 3-단계 (ADR-124) 중 단계③ 주 발동 lane. 작성측 ADR-052 touchpoint #4 self-check (단계②) 와 disjoint axis (리뷰측 producer 게이트, 단계③). RequirementsReviewPL → Claude/Codex dual-peer (WebSearch/WebFetch 허용 — 외부사실 검증). 검사연극 금지 (내부근거-only 결론에 외부조사 강제 금지). PASS → gate:requirements-review-pass → phase:설계
 - **DesignLane**: 설계 결정 (trust boundary·threat model·auth model·민감 데이터 흐름). SecurityArch 산출물 → ArchitectAgent §7 반영
 - **DesignReview**: 문서(Change Plan + ADR) 감사. 실구현 코드 미검토. §7 완결성 감사
 - **CodeReview**: 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심
@@ -95,7 +98,7 @@ tools: Read
 
 ## 깊은 검증(deep-research) 차등 적용 원칙 (ADR-124)
 
-> **SSOT = [ADR-124](../../archive/adr/ADR-124-external-knowledge-provisioning-model.md)** (외부지식 충당 3-단계 모델). 본 절은 요약 mirror 이며, 충돌 시 ADR-124 가 우선한다. 실 게이트 trigger·phase 라벨·lane 배선 = CFP-2325 S2 (본 skill 범위 밖).
+> **SSOT = [ADR-124](../../archive/adr/ADR-124-external-knowledge-provisioning-model.md)** (외부지식 충당 3-단계 모델) + [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) (요구사항리뷰 lane 신설 — 단계③ 주 발동 lane 의 게이트·배선). 본 절은 요약 mirror 이며, 충돌 시 ADR-124/ADR-125 가 우선한다. 실 게이트 trigger·phase 라벨·lane 배선 = CFP-2326 / ADR-125 (요구사항리뷰 lane: phase:요구사항-리뷰 + gate:requirements-review-pass). 깊은 검증 차등 실구현 = S3 (본 skill 범위 밖).
 
 리뷰 게이트의 깊은 다출처 검증 (외부지식 충당 3-단계 중 단계③) 은 **무조건 발동이 아니다.**
 
@@ -112,6 +115,6 @@ tools: Read
 | 구현리뷰 | 低 (미적용) | 구현 품질·런타임 결함 = 내부 코드 사실 축 |
 | 배포리뷰 | 미적용 | 배포·배포리뷰 2 lane = ADR-121 §결정 1 **폐지 결정(deprecated)** (deprecation 진행 중) + production 경험적 측정이라 단계③ 무의존 (적합도 等級 부여 안 함) |
 
-> 적합도가 높다는 것은 그 lane 의 결론이 외부사실에 의존할 *잠재력* 이 높다는 뜻이지, 매 Story 마다 깊은 검증이 강제 발동된다는 뜻이 아니다 (실제 발동 = 외부사실 의존 게이트가 결정). 외부사실 의존 판정 휴리스틱 (O: 팩트체크·벤더·표준·CVE / X: 팀 암묵지식 / 경계?: 시장정보·벤치마크·StackOverflow — S2 deferred) 상세 = ADR-124 결정 6.
+> 적합도가 높다는 것은 그 lane 의 결론이 외부사실에 의존할 *잠재력* 이 높다는 뜻이지, 매 Story 마다 깊은 검증이 강제 발동된다는 뜻이 아니다 (실제 발동 = 외부사실 의존 게이트가 결정). 외부사실 의존 판정 휴리스틱 (O: 팩트체크·벤더·표준·CVE / X: 팀 암묵지식 / 경계?: 시장정보·벤치마크·StackOverflow — ADR-125 결정 6 운영 판정: 단계② 우선 + 리뷰어 재량 escalation) 상세 = ADR-124 결정 6 + ADR-125 결정 6.
 
 > **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../archive/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.

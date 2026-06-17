@@ -180,7 +180,8 @@ jobs:
             const isSiblingPr = allLabels.includes('sibling-pr');
             // CFP-260 / CFP-261 / CFP-262 — scripts/ + CONTRIBUTING.md 추가 (operational tooling, not src code).
             // Bootstrap script entries / drift check script / version bump CI helper 등 wrapper 운영 도구.
-            const isDocOnly = !hasCode && files.every(f =>
+            // CFP-2326 / ADR-125: const → let — 요구사항리뷰 lane guard 가 fast-pass 제외 시 재할당 (아래 isDocOnly 계산 직후 guard).
+            let isDocOnly = !hasCode && files.every(f =>
               f.filename.endsWith('.md') ||
               f.filename.startsWith('docs/') ||
               f.filename.startsWith('wrapper/') ||
@@ -198,6 +199,22 @@ jobs:
               f.filename === 'CONTRIBUTING.md' ||
               (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup, fast-pass 허용 (src/overlay 삭제는 여전히 비허용)
             );
+
+            // CFP-2326 / ADR-125 결정 3 — 요구사항리뷰 lane fast-pass guard (해법 A, INV-1).
+            //   요구사항리뷰 lane PR (대부분 doc-only Phase 1 산출물) 이 gate:requirements-review-pass 미부착인
+            //   채로 isDocOnly fast-pass 로 게이트를 우회하는 것을 차단한다.
+            //   guard: phase:요구사항-리뷰 부착 ∧ gate:requirements-review-pass 미부착 → isDocOnly=false 강제
+            //          (fast-pass 제외, required block 으로 fall-through → gate:requirements-review-pass 요구).
+            //   additive (INV-1 ratchet): 다른 PR 의 isDocOnly 무변경 — phase:요구사항-리뷰 부착 PR 만 좁게 target.
+            //   required block phase branch (아래 L491 else 위) 와 반드시 쌍 — branch 누락 시 else → gate:design-review-pass
+            //   오요구 = wrong-gate deadlock (INV-3). 본 guard 단독으로는 불충분.
+            const isRequirementsReviewPhase =
+              allLabels.includes('phase:요구사항-리뷰') || allLabels.includes('요구사항-리뷰');
+            const hasReqReviewGate =
+              allLabels.includes('gate:requirements-review-pass');
+            if (isRequirementsReviewPhase && !hasReqReviewGate) {
+              isDocOnly = false;  // fast-pass 제외 → required block 으로 fall-through (INV-4 enforce)
+            }
 
             // CFP-795 / ADR-026 Amendment 4 §결정 6 — 4번째 fast-pass source: isPostMergeFix (3-조건 AND)
             //
@@ -488,6 +505,10 @@ jobs:
             } else if (phaseLabel === 'phase:배포-리뷰' || phaseLabel === '배포-리뷰') {
               // CFP-1333 / ADR-088: Deploy Review lane PR — gate:deploy-review-pass single AND-매핑
               required = { phase: phaseLabel, gates: ['gate:deploy-review-pass'] };
+            } else if (phaseLabel === 'phase:요구사항-리뷰' || phaseLabel === '요구사항-리뷰') {
+              // CFP-2326 / ADR-125 결정 2·3: 요구사항리뷰 lane PR (9번째 lane) — gate:requirements-review-pass single AND-매핑.
+              //   위 fast-pass guard 와 쌍 (INV-2/INV-3): else (gate:design-review-pass 오요구) 보다 위에 삽입 — wrong-gate deadlock 차단.
+              required = { phase: phaseLabel, gates: ['gate:requirements-review-pass'] };
             } else {
               // No Story binding — file-based heuristic (legacy).
               // CFP-317 / ADR-048: code PRs no longer require gate:security-test-pass by default.
@@ -532,7 +553,8 @@ jobs:
                 // Lane → gate prefix mapping (CFP-1302: 배열 순회 대응)
                 const lanePrefixForGate = {
                   'gate:design-review-pass': '[설계-리뷰]',
-                  'gate:security-test-pass': '[보안-테스트]'
+                  'gate:security-test-pass': '[보안-테스트]',
+                  'gate:requirements-review-pass': '[요구사항-리뷰]'  // CFP-2326 / ADR-125 결정 3 (P1 — CFP-133 일관성: comment evidence PASS|N/A 인식)
                 };
                 // CFP-1302: required.gates[] 각 gate 별 comment evidence 수집 (AND invariant)
                 const evidenceForGate = {};

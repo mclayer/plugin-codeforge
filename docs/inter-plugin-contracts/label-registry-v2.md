@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.95"
+version: "2.96"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-06-17  # CFP-2326 / ADR-125 v2.96 — 요구사항리뷰 lane (9번째 lane) 신설 3 entry 추가: phase:요구사항-리뷰 (single_active:true) + gate:requirements-review-pass (single_active:false) + fix:요구사항-리뷰-retry (single_active:false). MINOR bump additive (3 entry 추가, backward-compat 무영향, ADR-008 §결정 2), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (label-registry mirrored field 무관 — codeforge-review plugin.json bump 는 별 agent surface 변경 carrier). MANIFEST.yaml row "2.95" → "2.96" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-15  # CFP-2252 / ADR-049 Amendment 2 v2.95 — type:epic/story/bug 삭제 sequencing 명시 (물리 삭제 = canary 후 Orchestrator gh label delete, 3단계 promotion invariant PC-1∧2∧3). entry 자체 변경 0 (description 의 "물리 삭제는 S4" → "canary 후" 명료화 + deprecated:true 유지). MINOR bump additive (entry 추가/제거 0, 마킹 텍스트 명료화), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.94" → "2.95" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-15  # CFP-2251 / ADR-049 Amendment 1 v2.94 — type:* deprecated entry 마킹 (deprecated:true + replaced_by_native_issue_type) — native Issue Type cutover marking, MINOR bump additive
 date: 2026-06-10  # #2112 (de-bloat #2105 FU) v2.93 — 고아 hotfix-bypass label 12건 제거 (hotfix-bypass:evidence-naming / hotfix-bypass:marketplace-drift-detection / hotfix-bypass:channel-drift-detection / hotfix-bypass:adr-077-ratchet / hotfix-bypass:adr-077-design-reading / hotfix-bypass:architecture-drift / hotfix-bypass:ddd-pattern-frontmatter / hotfix-bypass:self-improving-loop / hotfix-bypass:amendment-number-stale / hotfix-bypass:spawn-prompt-head-pin / hotfix-bypass:amendment-slot-reservation / hotfix-bypass:mid-spawn-drift-detection). 제거 근거: #2110 에서 제거된 21 theater registry 엔트리의 짝 bypass channel — raison d'être 소멸 (CFP-2061-S5 v2.92 동형 선례). raw active grep count 12 감소 (109→97). MINOR bump (12 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.92" → "2.93" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-2061-S5 v2.92 NOTE 답습).
@@ -529,13 +530,20 @@ labels:
     single_active: false
     attach_owner_plugin: "subissue-from-impl-manifest.yml CI Action (자동)"
 
-  # phase:* (8종 — phase:reservation 포함, single-active enforced by phase-label-invariant.yml)
+  # phase:* (9종 — phase:reservation 포함, phase:요구사항-리뷰 added v2.96 CFP-2326, single-active enforced by phase-label-invariant.yml)
   - name: phase:요구사항
     category: phase
     color: "1d76db"
     description: "Phase: 요구사항"
     single_active: true
     attach_owner_plugin: "codeforge-requirements (CFP-37 후) / DocsAgent (CFP-32 시점) / story-init.yml (초기 부착) / auto-phase-label.yml (CFP-481 — PR open 시 branch=cfp-NNN/requirements 1순위 inference)"
+
+  - name: phase:요구사항-리뷰
+    category: phase
+    color: "1d76db"
+    description: "Phase: 요구사항-리뷰 (CFP-2326 / ADR-125 — 9번째 lane, Phase 1 내부 sub-gate. 요구사항 §1-7 직후·설계 진입 전 요구사항 결론의 외부사실 의존성 독립 검증. 외부지식 충당 3-단계 ADR-124 결정 1 중 단계③ 주 발동 lane. codeforge-review plugin host (1 plugin 다 lane). PASS → gate:requirements-review-pass + phase:요구사항-리뷰 → phase:설계)"
+    single_active: true
+    attach_owner_plugin: "codeforge-review (RequirementsReviewPLAgent — CFP-2326 신설) / Orchestrator post-Sonnet (phase 전환) / auto-phase-label.yml (CFP-2326 — PR open 시 branch=cfp-NNN/requirements-review 1순위 inference)"
 
   - name: phase:설계
     category: phase
@@ -601,7 +609,14 @@ labels:
     single_active: true
     attach_owner_plugin: "Orchestrator (deploy lane PASS 후 자동 trigger, CFP-1059 deploy review lane 신설 carrier) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
 
-  # gate:* (4종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
+  # gate:* (4종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030) / gate:requirements-review-pass added v2.96 (CFP-2326 / ADR-125)
+  - name: gate:requirements-review-pass
+    category: gate
+    color: "0e8a16"
+    description: "Requirements review PASS (CFP-2326 / ADR-125 — 9번째 lane, 요구사항 결론의 외부사실 의존성 게이트). phase:요구사항-리뷰 → phase:설계 transition 직전 부착. phase-gate-mergeable.yml required.gates 내부 매핑 (branch protection 6-tuple contexts 무변경 — ADR-125 결정 2). comment evidence prefix = [요구사항-리뷰] (lanePrefixForGate, CFP-133 일관성)."
+    single_active: false
+    attach_owner_plugin: "codeforge-review (RequirementsReviewPLAgent synthesis) / Orchestrator post-Sonnet (final 부착, CFP-61 / ADR-022 §결정 4)"
+
   - name: gate:design-review-pass
     category: gate
     color: "0e8a16"
@@ -666,7 +681,14 @@ labels:
     single_active: false
     attach_owner_plugin: "bidirectional-smoke.yml CI Action (자동, Phase 2 carrier wire) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
 
-  # fix:* (4종, 누적 가능)
+  # fix:* (4종, 누적 가능) — fix:요구사항-리뷰-retry added v2.96 (CFP-2326 / ADR-125)
+  - name: fix:요구사항-리뷰-retry
+    category: fix
+    color: "e99695"
+    description: "FIX retry: 요구사항-리뷰 (CFP-2326 / ADR-125 — 9번째 lane FIX 카운터)"
+    single_active: false
+    attach_owner_plugin: "fix-ledger-sync.yml CI Action (자동)"
+
   - name: fix:설계-리뷰-retry
     category: fix
     color: "e99695"

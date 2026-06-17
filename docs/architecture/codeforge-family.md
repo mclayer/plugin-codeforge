@@ -24,7 +24,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | **codeforge** (wrapper) | family identity + cross-cutting policy SSOT + skill pointer. agent 0개 (Orchestrator 가 lane plugin agent spawn) | 0 (wrapper-only) | Active |
 | **codeforge-requirements** | 요구사항 레인 — 사용자 요구 접수 → 통합 요구사항 명세 | 7 (PL + DomainAgent + RequirementsAnalyst + Researcher + ChangeImpactAgent + FeasibilityAgent + ContinuityAgent) | Active |
 | **codeforge-design** | 설계 레인 — Change Plan + ADR 확정 | PL + ArchitectAgent chief + 6 permanent SubAgent + 3+1 CONDITIONAL + 4-tuple sub-tuple (CFP-1126 / ADR-042 Amd 10 — 6+3+1, AggregateArch deprecated + ModuleArch boundary axis unified) | Active |
-| **codeforge-review** | 설계리뷰 / 구현리뷰 / 보안테스트 레인 — 산출물 검수 | 5 (3 PL + 2 worker) | Active |
+| **codeforge-review** | 요구사항리뷰 / 설계리뷰 / 구현리뷰 / 보안테스트 레인 — 산출물 검수 (1 plugin 다 lane, CFP-2326 / ADR-125 요구사항리뷰 host 추가) | 6 (4 PL + 2 worker) | Active |
 | **codeforge-develop** | 구현 레인 — TDD 구현 + QA | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | Active |
 | **codeforge-test** | 통합테스트 레인 — Epic-level 통합 검증 | 1 (IntegrationTestAgent) | Active |
 | **codeforge-deploy** (CFP-1059 / ADR-087) | 배포 레인 — Epic 묶음 종료 후 변경 repo blue-green + atomic swap + 3-시간 보존 + 자동 rollback | 2 (DeployPLAgent + DeployWorkerAgent, Sonnet) | Phase 1 declarative — plugin seed 신설 = S2 sub-Story carrier |
@@ -80,6 +80,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 ```
 사용자 요구 접수
   → 요구사항 lane (codeforge-requirements:RequirementsPLAgent) → Story §1-§6 synthesis
+  → 요구사항리뷰 lane (codeforge-review:RequirementsReviewPLAgent) → review_verdict [CFP-2326 / ADR-125, Phase 1 내부 sub-gate — 외부사실 의존성 게이트]
   → 설계 lane (codeforge-design:ArchitectPLAgent) → Change Plan + ADR + Story §3/§7/§11 + architecture_doc 갱신
   → 설계리뷰 lane (codeforge-review:DesignReviewPLAgent) → review_verdict
   → 구현 lane (codeforge-develop:DeveloperPLAgent) → Phase 2 PR
@@ -150,7 +151,7 @@ graph LR
 **Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function).
 
 **in-scope vs out-of-scope**:
-- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 설계 → 리뷰 → 구현 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 8 lane)
+- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 9 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설)
 - out-of-scope = production runtime monitoring / live incident response / customer-facing UI / billing — codeforge 는 dev lifecycle plugin (operational lifecycle 영역 = consumer 책임)
 
 ### arc42 §5 — Building Block View
@@ -170,7 +171,7 @@ graph TB
     subgraph "Production lanes (6 active)"
         Req[codeforge-requirements<br/>7 agent]
         Design[codeforge-design<br/>PL + chief + 6+3+1 SubAgent + 3 sub-tuple]
-        Review[codeforge-review<br/>3 PL + 2 worker]
+        Review[codeforge-review<br/>4 PL + 2 worker]
         Develop[codeforge-develop<br/>5 + dynamic role:dev]
         Test[codeforge-test<br/>1 IntegrationTestAgent]
         PMO[codeforge-pmo<br/>2 PMO + GitOps]
@@ -286,13 +287,16 @@ graph TB
         Chief --> SubTuple[3 sub-tuple:<br/>CodebaseMapper/Refactor/<br/>ArchitectAnalyst]
     end
 
-    subgraph "codeforge-review (Review lane × 3)"
+    subgraph "codeforge-review (Review lane × 4 — CFP-2326 / ADR-125)"
         ReviewBase[review-pl-base.md<br/>공통 SSOT]
+        ReviewBase -.->|inherit| ReqReviewPL[RequirementsReviewPLAgent<br/>9번째 lane, 외부사실 의존성 게이트]
         ReviewBase -.->|inherit| DesignReviewPL[DesignReviewPLAgent]
         ReviewBase -.->|inherit| CodeReviewPL[CodeReviewPLAgent]
         ReviewBase -.->|inherit| SecurityTestPL[SecurityTestPLAgent]
-        DesignReviewPL --> ClaudeWorker[ClaudeReviewAgent<br/>worker peer]
-        DesignReviewPL --> CodexWorker[CodexReviewAgent<br/>worker peer]
+        ReqReviewPL --> ClaudeWorker[ClaudeReviewAgent<br/>worker peer]
+        ReqReviewPL --> CodexWorker[CodexReviewAgent<br/>worker peer]
+        DesignReviewPL --> ClaudeWorker
+        DesignReviewPL --> CodexWorker
         CodeReviewPL --> ClaudeWorker
         CodeReviewPL --> CodexWorker
         SecurityTestPL --> ClaudeWorker
