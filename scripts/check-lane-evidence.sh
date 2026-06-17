@@ -50,8 +50,8 @@ done
 log() { [ $QUIET -eq 0 ] && printf '%s\n' "$1"; }
 log_err() { printf '%s\n' "$1" >&2; }
 
-# Lane names (한국어 7종)
-declare -a LANES=("요구사항" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트")
+# Lane names (한국어 8종 — CFP-2326 / ADR-125: 요구사항-리뷰 9번째 lane 추가)
+declare -a LANES=("요구사항" "요구사항-리뷰" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트")
 
 # Auto-detect story path from branch
 auto_detect_story() {

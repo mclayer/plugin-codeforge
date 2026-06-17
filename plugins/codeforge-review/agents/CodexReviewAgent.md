@@ -1,7 +1,7 @@
 ---
 name: CodexReviewAgent
 model: haiku
-description: 외부 Codex(GPT-5) 모델로 lane-agnostic 리뷰 수행 — 설계/구현/보안 3 lane 공유, PL이 packet으로 도메인 주입, ClaudeReviewAgent와 독립 peer
+description: 외부 Codex(GPT-5) 모델로 lane-agnostic 리뷰 수행 — 요구사항리뷰/설계/구현/보안 4 lane 공유, PL이 packet으로 도메인 주입, ClaudeReviewAgent와 독립 peer
 permissions:
   allow:
     - Read
@@ -32,7 +32,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계·구현·보안 3 lane 공통 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
+**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 요구사항리뷰·설계·구현·보안 4 lane 공통 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
 
 ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
@@ -51,6 +51,7 @@ Codex 플러그인 미설치 시 **모든 리뷰 lane 진행 불가** — Orches
 1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
 3. **lane-conditional 추가 검증**:
+   - `lane=requirements-review` (CFP-2326 / ADR-125): `story_key` 필수. Story §1-§6 (요구사항 산출물 — use case / AC / edge / 암묵 가정) 을 `Read`로 열 수 없으면 ESCALATE. `scope_globs`에 요구사항 산출물 (Story §1-§6) ≥ 1 포함
    - `lane=design`: `related_adrs` 또는 Story §3에서 추적 가능한 ADR 입력 ≥ 1. 둘 다 비어 있으면 ESCALATE
    - `lane=code`: `story_key` 필수. Story file §8.5 Impl Manifest를 `Read`로 열 수 없거나 매핑 표가 비어 있으면 ESCALATE
    - `lane=security`: packet은 1차 layer 결과(Dependabot · CodeQL · Secret Scanning · Push Protection)를 inline 포함 + `scope_globs`에 의존성 매니페스트 ≥ 1 포함. 둘 중 하나라도 부재 시 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-001 §결정 4번 invariant policing — fetch 책임은 SecurityTestPL 소유, 워커 비차단 fallback은 silently 약한 보안 lane을 만들 수 있음)
@@ -86,6 +87,25 @@ node "$CMD" review --wait --focus "<lane별 focus prompt>"
 ### Lane별 focus prompt 템플릿
 
 워커가 packet `lane` 값에 따라 아래 prompt를 inline 조립.
+
+#### lane=requirements-review (CFP-2326 / ADR-125)
+
+```
+requirements review for docs/stories/<STORY_KEY>.md §1-§6 (use cases / AC / edge / 암묵 가정) + domain knowledge:
+외부사실 의존성 게이트 (외부지식 충당 3-단계 ADR-124 단계③). 외부사실 의존 결론에만 깊은 다출처 검증 적용.
+1. External standard/regulation dependency (RFC / 법규 / industry standard) — identified & cited?
+2. Domain prior-art investigation (established practice for the problem class)
+3. AC external verifiability (외부사실 의존 AC 가 외부검증 가능한가)
+4. Market/vendor fact claims — sourced? (경계(?) 준-외부 출처: 단계② 우선 + 리뷰어 재량 escalation)
+5. ADR-124 결정 6 휴리스틱 적용 (외부사실 의존 O / X / 경계?)
+Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {external-standard-missing,
+prior-art-gap, ac-external-verifiability, market-vendor-claim-unsourced, external-fact-dependency,
+requirements-completeness, section-missing}, location as path:§section, external source (URL/표준 번호) where applicable.
+Auto-P1: 외부사실 의존 결론에 출처/검증 부재, AC 외부검증 불가, 시장·벤더 단정 출처 부재.
+Auto-P0: 외부 규제·표준(법규·RFC) 명백한 누락 (규제 미준수 위험 동반 시), 요구사항 핵심 섹션 누락.
+검사연극 금지: 내부근거-only 결론에 외부조사 강제 finding 발의 금지 (ADR-119 §결정 6). 매 Story 강제 아님 (declarative-only).
+WebSearch/WebFetch 사용 가능 — 외부사실 의존 지점 검증에만.
+```
 
 #### lane=design
 
@@ -153,7 +173,7 @@ location as path:line, CWE/CVE reference where applicable.
 
 ```
 [Codex Review 정규화]
-lane: design | code | security
+lane: requirements-review | design | code | security
 verdict: PASS | ISSUES | NO_SHIP | ESCALATE_PACKET_INCOMPLETE
 counts: { P0: N, P1: N, P2: N, P3: N, unclassified: N }
 findings:

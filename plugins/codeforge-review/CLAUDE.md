@@ -12,15 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 Orchestrator(core)
-  └─ DesignReviewPL  | CodeReviewPL | SecurityTestPL   ← lane 진입 시 1개 스폰
+  └─ RequirementsReviewPL | DesignReviewPL | CodeReviewPL | SecurityTestPL   ← lane 진입 시 1개 스폰
        ↓ review_packet 주입
        └─ ClaudeReviewAgent ∥ CodexReviewAgent          ← 한 메시지에 병렬 dispatch
 ```
 
-- **3 PL agent** (`agents/{Design,Code,SecurityTest}ReviewPLAgent.md`) — 각 lane의 packet builder + verdict 종합. 워커 결과를 dedup → severity 종합 → `review_verdict_packet` 구성. **Synthesis only** — Story §9/GitHub comment/gate label/phase transition 은 Orchestrator 가 PL packet 받아 최종 write (CFP-61 / ADR-022). **Code/docs 직접 수정 금지**.
-- **2 worker agent** (`agents/{Claude,Codex}ReviewAgent.md`) — lane-agnostic. PL이 packet으로 도메인(checklist · scope · category enum · severity override) 주입. **둘 다 필수 peer** — Claude/Codex 단독 fallback 허용 안 함.
-- **공통 base** [templates/review-pl-base.md](templates/review-pl-base.md) — 3 PL이 공유하는 severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성 SSOT. 각 PL md는 lane-specific 4가지(checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트)만 본문에 명시.
-- **3 lane checklist** (`templates/review-checklists/{design,code,security}.md`) — 각 lane의 항목·자동 P0 룰. PL이 packet의 `checklist_path`로 워커에 전달.
+- **4 PL agent** (`agents/{RequirementsReview,Design,Code,SecurityTest}ReviewPLAgent.md`) — 각 lane의 packet builder + verdict 종합. 워커 결과를 dedup → severity 종합 → `review_verdict_packet` 구성. **Synthesis only** — Story §9/GitHub comment/gate label/phase transition 은 Orchestrator 가 PL packet 받아 최종 write (CFP-61 / ADR-022). **Code/docs 직접 수정 금지**. (RequirementsReviewPL = CFP-2326 / ADR-125 신설 — 9번째 lane, 요구사항 외부사실 의존성 게이트.)
+- **2 worker agent** (`agents/{Claude,Codex}ReviewAgent.md`) — lane-agnostic. PL이 packet으로 도메인(checklist · scope · category enum · severity override) 주입. **둘 다 필수 peer** — Claude/Codex 단독 fallback 허용 안 함. **신규 worker 신설 0** (ADR-001 lane-agnostic 재사용 — requirements-review lane 도 동일 2 worker).
+- **공통 base** [templates/review-pl-base.md](templates/review-pl-base.md) — 4 PL이 공유하는 severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성 SSOT. 각 PL md는 lane-specific 4가지(checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트)만 본문에 명시.
+- **4 lane checklist** (`templates/review-checklists/{requirements,design,code,security}.md`) — 각 lane의 항목·자동 P0 룰. PL이 packet의 `checklist_path`로 워커에 전달.
 
 ## Drift-avoidance discipline (수정 시 반드시 지키세)
 
@@ -44,7 +44,7 @@ PL이 Orchestrator에 생성하는 typed schema packet. SSOT(canonical) = 본 re
 - **Packet 누락 = 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환**
 - 워커는 서로 보고 미참조 — 독립 peer로 병렬 수행
 - 워커는 **직접 다른 subagent 스폰 불가**
-- **WebSearch/WebFetch는 `lane=security`만** 사용 가능
+- **WebSearch/WebFetch는 `lane=security` + `lane=requirements-review`만** 사용 가능 (CFP-2326 / ADR-125 — 요구사항리뷰 lane 은 외부사실 의존 결론의 다출처 검증 필요, ADR-124 단계③ 외부사실 의존 게이트. 단 외부사실 의존 지점에만 — 검사연극 차단). `lane=design` / `lane=code` 는 repo 내부 문서·코드만 근거 (외부 검색 금지)
 - `lane=security` PL은 워커 spawn 전 GitHub native 1차 layer fetch 의무
 
 ## Dogfood policy (CFP-45)

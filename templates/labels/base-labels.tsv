@@ -5,6 +5,7 @@
 # 동적 label (hotfix-bypass:* / component:*) 은 본 파일 외 — registry / project.yaml python parse 영역.
 impl-manifest	fbca04	Sub-issue (Impl Manifest 파일 단위)
 phase:요구사항	1d76db	Phase: 요구사항
+phase:요구사항-리뷰	1d76db	Phase: 요구사항-리뷰
 phase:설계	1d76db	Phase: 설계
 phase:설계-리뷰	1d76db	Phase: 설계-리뷰
 phase:구현	1d76db	Phase: 구현
@@ -14,6 +15,7 @@ phase:보안-테스트	1d76db	Phase: 보안-테스트
 phase:배포	1d76db	Phase: 배포
 phase:배포-리뷰	1d76db	Phase: 배포-리뷰
 phase:reservation	ededed	Phase: reservation (CFP-260 / ADR-036 — brainstorming KEY 사전 확보, 30 일 미진행 시 자동 close)
+gate:requirements-review-pass	0e8a16	Requirements review PASS (CFP-2326 / ADR-125 — 9번째 lane, 외부사실 의존성 게이트)
 gate:design-review-pass	0e8a16	Design review PASS
 gate:security-test-pass	0e8a16	Security test PASS
 gate:live-entry-pass	0e8a16	Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)
@@ -26,6 +28,7 @@ gate:deploy-review-pass	0e8a16	Deploy Review lane PASS (CFP-1059 / ADR-088 — s
 gate:cross-layer-impact-pass	0e8a16	Cross-layer impact 분석 통과 (CFP-1059 / ADR-090 §결정 1 — multi-layer 의존 매핑 + 변경 순서 invariant 검증 PASS)
 gate:dependency-order-pass	0e8a16	Dependency order invariant 통과 (CFP-1059 / ADR-090 §결정 2 — expand=source-first / contract=leaf-first)
 gate:bidirectional-smoke-pass	0e8a16	Bidirectional smoke (양방향 호환) 통과 (CFP-1059 / ADR-089 §결정 4 — blue ↔ green traffic mix window 안 schema 양방향 호환 verify PASS)
+fix:요구사항-리뷰-retry	e99695	FIX retry: 요구사항-리뷰
 fix:설계-리뷰-retry	e99695	FIX retry: 설계-리뷰
 fix:구현-리뷰-retry	e99695	FIX retry: 구현-리뷰
 fix:구현-테스트-retry	e99695	FIX retry: 구현-테스트

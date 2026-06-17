@@ -1,6 +1,6 @@
 # Review/Test PL 공통 base 템플릿
 
-3개 리뷰 레인 PL(`DesignReviewPLAgent` · `CodeReviewPLAgent` · `SecurityTestPLAgent`)이 공유하는 **severity 종합 · dedup · noise 분류 · 보고 형식 · escalation 절차**의 SSOT. 각 PL md는 본 템플릿을 참조하고 lane-specific 4가지(체크리스트 packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트 라벨)만 본문에 명시한다.
+4개 리뷰 레인 PL(`RequirementsReviewPLAgent` · `DesignReviewPLAgent` · `CodeReviewPLAgent` · `SecurityTestPLAgent`)이 공유하는 **severity 종합 · dedup · noise 분류 · 보고 형식 · escalation 절차**의 SSOT. 각 PL md는 본 템플릿을 참조하고 lane-specific 4가지(체크리스트 packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트 라벨)만 본문에 명시한다. (`RequirementsReviewPLAgent` = CFP-2326 / ADR-125 신설 — 9번째 lane.)
 
 ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
@@ -25,8 +25,8 @@ PL은 lane 진입 시 다음 필드를 채운 packet을 워커에 주입한다. 
 review_packet:
   contract_version: "1.1"                                       # 필수 — review_verdict v1 contract enforcement
                                                                # v1.0→v1.1 MINOR bump (CFP-2111): pr_phase optional 필드 추가 (ADR-008 §결정 2)
-  lane: design | code | security                               # 필수
-  checklist_path: templates/review-checklists/{design,code,security}.md  # 필수
+  lane: design | code | security | requirements-review        # 필수 (requirements-review: CFP-2326 / ADR-125 — 9번째 lane, 요구사항 외부사실 의존성 게이트)
+  checklist_path: templates/review-checklists/{requirements,design,code,security}.md  # 필수
   scope_globs:                                                  # 필수
     - <file glob list>     # 예: ["docs/change-plans/**", "docs/stories/<KEY>.md"]
   category_enum:                                                # 필수
@@ -58,20 +58,20 @@ review_packet:
 
 워커는 1차 layer가 이미 보고한 finding은 skip하고 **high-level 분석(trust boundary·auth model)에 집중**. `lane=design` / `lane=code` 는 이 필드 없음.
 
-**lane별 packet 필수 필드 매트릭스**:
+**lane별 packet 필수 필드 매트릭스** (requirements-review 열 = CFP-2326 / ADR-125):
 
-| 필드 | design | code | security |
-|------|:------:|:----:|:--------:|
-| contract_version | ✅ | ✅ | ✅ |
-| lane | ✅ | ✅ | ✅ |
-| checklist_path | ✅ | ✅ | ✅ |
-| scope_globs | ✅ | ✅ | ✅ |
-| category_enum | ✅ | ✅ | ✅ |
-| story_key | ✅ | ✅ | ✅ |
-| severity_overrides | ◯ | ◯ | ◯ |
-| related_adrs | ◯ | ◯ | ◯ |
-| **pr_phase** | ◯ | ◯ | ◯ |
-| **first_layer_findings** | — | — | ✅ |
+| 필드 | requirements-review | design | code | security |
+|------|:-------------------:|:------:|:----:|:--------:|
+| contract_version | ✅ | ✅ | ✅ | ✅ |
+| lane | ✅ | ✅ | ✅ | ✅ |
+| checklist_path | ✅ | ✅ | ✅ | ✅ |
+| scope_globs | ✅ | ✅ | ✅ | ✅ |
+| category_enum | ✅ | ✅ | ✅ | ✅ |
+| story_key | ✅ | ✅ | ✅ | ✅ |
+| severity_overrides | ◯ | ◯ | ◯ | ◯ |
+| related_adrs | ◯ | ◯ | ◯ | ◯ |
+| **pr_phase** | ◯ | ◯ | ◯ | ◯ |
+| **first_layer_findings** | — | — | — | ✅ |
 
 ---
 
@@ -510,6 +510,7 @@ PL의 output boundary (CFP-61 ADR-022):
 - ❌ Story §9, GitHub comment, gate label, phase — Orchestrator 책임
 
 **Lane → gate label / next phase 매핑 (Orchestrator이 Sonnet 호출 후 적용)**:
+- `lane=requirements-review` + `sonnet_final_status=PASS` → `gate:requirements-review-pass` + `phase:요구사항-리뷰` → `phase:설계` (CFP-2326 / ADR-125 — 9번째 lane, Phase 1 내부 sub-gate)
 - `lane=design` + `sonnet_final_status=PASS` → `gate:design-review-pass` + `phase:설계-리뷰` → `phase:구현`
 - `lane=code` + `sonnet_final_status=PASS` → 게이트 라벨 없음 + `phase:구현-리뷰` → `phase:구현-테스트`
 - `lane=security` + `sonnet_final_status=PASS` → `gate:security-test-pass` + `phase:보안-테스트` → (Story 완료, Phase 2 PR mergeable)
