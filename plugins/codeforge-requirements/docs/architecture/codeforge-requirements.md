@@ -67,7 +67,7 @@ lane 의 외부 surface — kind:contract producer / kind:registry consumer / go
 
 - **ADR-077** (clarification 강제 재조사 — recheck_counter cap=5) — RequirementsPLAgent 가 lane 진입 후 clarification 답변이 §2/§5/§6 의미 변경 도달 시 재spawn 의무 (§9.0 Clarification 재스폰 이력 §10 FIX Ledger 와 disjoint 제3 채널, fix:* 미부착).
 - **ADR-052 Amendment 1 Touchpoint #4** (mandatory) — RequirementsPLAgent §1-§6 완료 직후 Codex Proactive Check 자동 dispatch + divergence 감지 시 `debate-protocol-v1` 발동. divergence 영역 4 criteria (AC 의미 / Edge Case 누락 / Why 해석 mismatch / fact-check drift). PL synthesis fact claim 영역 marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + reverse-explicit `[verification-out-of-scope: <사유>]` 의무.
-- **ADR-046** (ResearcherAgent role redefinition) — Opus tier rationale + 3 mandate (Concept formulation + Deep exploration + Requirement reshape) anchor.
+- **ADR-046** (ResearcherAgent role redefinition) — Opus tier rationale + 3 mandate (Concept formulation + Deep exploration + Requirement reshape) anchor. Amendment 2 (CFP-2328) = Mandate 2 demand-anchored 재초점 + concept/ silo close-loop read (독자 = 미래 Story 의 Researcher 자신) + 외부지식 하류 도달 주 채널 = §6 Section 5 reshape (모듈/경계/dimension 구조 무변경, governance 정밀화).
 - **ADR-056** (concept-knowledge schema) — `docs/domain-knowledge/concept/**` ResearcherAgent direct write + `kind: concept_definition` schema.
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer). 계약 schema field-level 상세 = 해당 contract file + `MANIFEST.yaml` SSOT.

@@ -61,7 +61,9 @@ permissions:
    합성은 아래 순서로 수행 — 병렬 스폰 순서와 무관:
    (a) §5 Analyst 먼저 — 모호성 목록 확정, 언어적 불확실성 해소
    (b) §2 Domain — 내부 제약 적용, 시스템 경계 확인
-   (c) §6 Researcher — 외부 개념으로 용어 disambiguation (§6 Section 6 compact summary 활용)
+   (c) §6 Researcher — 외부 개념으로 용어 disambiguation
+       · **외부지식 하류 도달 주 채널 = §6 Section 5 (Refined Requirements = reshape)** — 외부지식이 요구사항 텍스트에 녹아 전달됨 (ADR-046 Amd 2). PL 은 reshape 결과를 1차 합성 재료로 본다.
+       · §6 Section 6 (Concept Summary) compact summary 활용 = concept 파일 직접 Glob 부담 제거용 single-read-surface 보조 (ADR-056 §결정 4 무손상). **§6 가 하류 *기술수요*를 충당한다는 기대 금지** — 그 수요는 ADR-125 단계③(S2)/on-demand(S5)가 담당.
    (d) PLAgent 최종 결정 — 요구사항·AC·Non-goal 작성
    **금지**: ResearcherAgent §6의 개념·재편 요구사항을 DomainAgent §2 내부 제약과 조화시키지 않은 채
    요구사항에 직접 복사하는 것을 금지한다. Researcher는 선택지·개념을 제공하고 PLAgent가 결정한다.
