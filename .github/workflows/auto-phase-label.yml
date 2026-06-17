@@ -61,7 +61,6 @@ jobs:
             // ─── Branch → phase mapping SSOT (ADR-024 Amendment 4 §결정 6.A.1 verbatim) ───
             const LANE_MAP = {
               'requirements':  'phase:요구사항',
-              'requirements-review': 'phase:요구사항-리뷰',  // CFP-2326 / ADR-125 — 9번째 lane (branch=cfp-NNN/requirements-review)
               'design':        'phase:설계',
               'design-review': 'phase:설계-리뷰',
               'develop':       'phase:구현',

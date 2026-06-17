@@ -247,7 +247,7 @@ printf '%s' "$ANSWER_COMMENT" | bash scripts/jira-channel/parse-answer.sh
 
 세션 시작/재개 시 **미해결 결정 fork** 를 Jira 에서 복원한다. Jira = durable store 라 미act 결정을 복원할 수 있다(§7 poll(e) 의 at-most-once drop window 를 메우는 짝 — crash-safety 비대칭 해소).
 
-연계: 세션 resume 절차([`codeforge:session-recovery`](session-recovery))가 활성 Story 복원 시 본 rehydrate 를 1회 호출한다(미해결 fork 도 활성 Story 와 함께 복원 대상).
+연계: 세션 resume 절차([`codeforge:session-recovery`](../session-recovery/SKILL.md))가 활성 Story 복원 시 본 rehydrate 를 1회 호출한다(미해결 fork 도 활성 Story 와 함께 복원 대상).
 
 **복원 판정 (PROCESSED 마커 부재 = 미해결)**:
 
