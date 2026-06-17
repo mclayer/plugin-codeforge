@@ -16,7 +16,7 @@ amendment_log:
     date: 2026-06-17
     carrier_story: CFP-2328
     parent_epic: "mclayer/plugin-codeforge#2324"
-    summary: "Mandate 2 demand-anchored 재초점(정밀화) — 개념 정립 지원 + unknown-unknown proactive 발굴 초점 재배치 + ①③ 작성자 역할(Concept formulation / Requirement reshape) 강조 + concept/ silo close-loop 명문화(독자 = 미래 Story 의 Researcher 자신) + §6 외부지식 하류 도달 주 채널 = Section 5 Refined Requirements(reshape) 정정 + ADR-046 §결정3 6-section schema ↔ ResearcherAgent.md 현행 drift 정합. downstream 기술자료 제공 책임은 삭제 아니라 S2(ADR-125 단계③)/S5(on-demand)로 이관 — strengthen 방향."
+    summary: "Mandate 2 demand-anchored 재초점(정밀화) — 개념 정립 지원 + unknown-unknown proactive 발굴 초점 재배치 + ①③ 작성자 역할(Concept formulation / Requirement reshape) 강조 + concept/ silo close-loop 명문화(독자 = 미래 Story 의 Researcher 자신) + §6 외부지식 하류 도달 주 채널 = Section 5 Refined Requirements(reshape) 정정 + ADR-046 §결정3 6-section schema ↔ ResearcherAgent.md 현행 drift 식별·기록 (실 reconcile = 별도 carrier). downstream 기술자료 제공 책임은 삭제 아니라 S2(ADR-125 단계③)/S5(on-demand)로 이관 — strengthen 방향."
     direction: strengthen
     sunset_justification: null
 related_stories:
@@ -170,7 +170,7 @@ ADR-124 §결정 1 이 외부지식 충당을 3-단계로 정식 규정하면서
 
 Researcher 의 비-중복 (Sonnet 대수 불가) 가치 = **① Concept formulation (개념 정립 / unknown-unknown proactive 발굴)** + **③ Requirement reshape (요구사항 재편)**. 즉 Researcher 는 외부 기술자료를 *수집·전달*하는 검색기가 아니라, 그것을 재료로 개념을 정립하고 요구사항을 *재편(reshape)* 하는 *작성자* 다.
 
-외부지식이 하류 lane 에 도달하는 **주 채널 = ③ reshape = §6 Section 5 (Refined Requirements)** — 외부지식을 요구사항 텍스트에 *녹여* 전달한다. **concept/ silo 의 직접 열람이나 §6 raw dump 가 주 채널이 아니다.** §6 의 6-section schema (§결정 3) 자체는 무변경이며, Section 6 (Concept Summary) 는 PL 합성 보조 (single-read-surface — `ADR-056:79` §결정 4) 역할을 보존한다. "§6 이 하류 *기술수요*를 충당한다" 는 기대는 제거한다 (그 수요는 위 단계③/S5 가 담당).
+외부지식이 하류 lane 에 도달하는 **주 채널 = ③ reshape = §6 Section 5 (Refined Requirements)** — 외부지식을 요구사항 텍스트에 *녹여* 전달한다. **concept/ silo 의 직접 열람이나 §6 raw dump 가 주 채널이 아니다.** §6 의 6-section 출력 schema 자체는 이번 Amendment 가 *재작성하지 않으며* (§결정 3 ↔ 에이전트 출력 drift 는 아래 CL-2 절에서 식별·기록만 — 실 reconcile 은 별도 carrier), Section 6 (Concept Summary) 는 PL 합성 보조 (single-read-surface — `ADR-056:79` §결정 4) 역할을 보존한다. "§6 이 하류 *기술수요*를 충당한다" 는 기대는 제거한다 (그 수요는 위 단계③/S5 가 담당).
 
 #### concept silo close-loop (CL-1 = (가))
 
@@ -180,9 +180,9 @@ Researcher 의 비-중복 (Sonnet 대수 불가) 가치 = **① Concept formulat
 - 이 read 는 **Mandate 2 재초점에 구조적으로 결합**된다 — 단순 "실행 초입 Glob 1-step" 절차가 아니라, *기존 concept/ 자산 = unknown-unknown 발굴·개념 정립의 출발점* 이라는 mandate-aligned 동기로 read 한다 (stateless one-shot·incentive 부재·토큰비용 3중 장벽을 mandate 결합으로 돌파).
 - **토큰 회피**: §6 Section 6 compact summary 를 역방향 재사용 (raw concept 파일 대신 요약 우선 read) + Mode policy `skip`/`light` 시 read 면제. concept/ 소유 (ResearcherAgent 단독 write) 는 무변경 — 소유 재배치 0, close-loop read 만 추가 (= strengthen). ADR-056 §결정 1/4/5 무손상.
 
-#### §6 schema drift 정합 (CL-2)
+#### §6 schema drift 식별·기록 (CL-2 — 실 reconcile 은 별도 carrier)
 
-§결정 3 의 6-section schema 와 `ResearcherAgent.md` 현행 6-section 출력 표현이 함께 정합됨을 명시한다 (이중 SSOT drift 해소). 본 Amendment 는 section 개수·이름을 *재설계*하지 않는다 — schema *정합* (drift 해소) 만 수행하며 §결정 3 과 일치를 유지한다.
+§결정 3 본문 6-section (① Concept formulation / ② External knowledge map / ③ Refined requirement / ④ Knowledge gap / ⑤ ADR 정합성 점검 / ⑥ PL 재질의 후보) 과 `ResearcherAgent.md` 현행 출력 6-section (① Concept Map / ② External Knowledge / ③ Knowledge Gaps / ④ Feasibility Assessment / ⑤ Refined Requirements / ⑥ Concept Summary + 무번호 Cross-agent Signal) 은 **이름·순서·내용·개수가 불일치하는 drift 상태** 다 (이중 SSOT). 본 Amendment 는 이 drift 를 **식별·기록**할 뿐, **실 reconcile (canonical 6-section 확정 + 양측 정렬) 은 수행하지 않는다** — 그것은 §결정 3 본문 ↔ 에이전트 출력 ↔ ADR-056 §결정 4 (Concept Summary single-read-surface 요구) 를 종합하는 별도 결정이며 S4 scope (Mandate 2 재초점) 를 초과한다. 따라서 실 reconcile 은 **별도 follow-up carrier** 로 보존한다 (3문 게이트 통과 시 발의). 본 Amendment 가 이번에 한 것은 Mandate 2 재초점에 수반된 §6 Section 5/6 의 *역할 라벨* 명시 (주 채널 = Section 5 reshape / Section 6 = PL 합성 보조) 이지 section schema 정합이 아니다.
 
 #### cross-ref
 
