@@ -1590,16 +1590,17 @@ ORG_REPO="<your-org>/<your-repo>"
 gh label create "impl-manifest" --color "FBCA04" --repo "$ORG_REPO"
 
 # Phase labels (single-active, phase-label-invariant.yml Action이 강제)
-for phase in "요구사항" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트"; do
+for phase in "요구사항" "요구사항-리뷰" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트"; do
   gh label create "phase:$phase" --color "FEF2C0" --repo "$ORG_REPO"
 done
 
 # Gate labels (review pass)
+gh label create "gate:requirements-review-pass" --color "C2E0C6" --repo "$ORG_REPO"
 gh label create "gate:design-review-pass" --color "C2E0C6" --repo "$ORG_REPO"
 gh label create "gate:security-test-pass" --color "C2E0C6" --repo "$ORG_REPO"
 
 # Fix labels (cumulative)
-for lane in "설계-리뷰" "구현-리뷰" "구현-테스트" "보안-테스트"; do
+for lane in "요구사항-리뷰" "설계-리뷰" "구현-리뷰" "구현-테스트" "보안-테스트"; do
   gh label create "fix:${lane}-retry" --color "F9D0C4" --repo "$ORG_REPO"
 done
 

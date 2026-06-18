@@ -1,7 +1,7 @@
 ---
 title: codeforge family 전체 구조 (wrapper + 8 lane plugin)
 last_captured: 2026-05-24
-last_update_cfp: CFP-1427  # Sub-C S3.3 — 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
+last_update_cfp: CFP-2341  # lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1). 이전: CFP-1427 Sub-C S3.3 — 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
 kind: architecture_doc
 ---
 
@@ -75,7 +75,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 ## 데이터 흐름
 
-**Story lane spawn flow** (Orchestrator 가 lane 진입 시 해당 lane plugin PL 1개 spawn — non-skippable. 8 lane 확장 CFP-1059 / ADR-087+088):
+**Story lane spawn flow** (Orchestrator 가 lane 진입 시 해당 lane plugin PL 1개 spawn — non-skippable. 10 lane (요구사항리뷰 CFP-2326 / ADR-125 + 배포 2 lane CFP-1059 / ADR-087+088)):
 
 ```
 사용자 요구 접수
@@ -151,7 +151,7 @@ graph LR
 **Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function).
 
 **in-scope vs out-of-scope**:
-- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 9 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설)
+- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 10 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설)
 - out-of-scope = production runtime monitoring / live incident response / customer-facing UI / billing — codeforge 는 dev lifecycle plugin (operational lifecycle 영역 = consumer 책임)
 
 ### arc42 §5 — Building Block View
@@ -289,7 +289,7 @@ graph TB
 
     subgraph "codeforge-review (Review lane × 4 — CFP-2326 / ADR-125)"
         ReviewBase[review-pl-base.md<br/>공통 SSOT]
-        ReviewBase -.->|inherit| ReqReviewPL[RequirementsReviewPLAgent<br/>9번째 lane, 외부사실 의존성 게이트]
+        ReviewBase -.->|inherit| ReqReviewPL[RequirementsReviewPLAgent<br/>10번째 lane, 외부사실 의존성 게이트]
         ReviewBase -.->|inherit| DesignReviewPL[DesignReviewPLAgent]
         ReviewBase -.->|inherit| CodeReviewPL[CodeReviewPLAgent]
         ReviewBase -.->|inherit| SecurityTestPL[SecurityTestPLAgent]
