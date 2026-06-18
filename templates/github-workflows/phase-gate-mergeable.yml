@@ -180,7 +180,7 @@ jobs:
             const isSiblingPr = allLabels.includes('sibling-pr');
             // CFP-260 / CFP-261 / CFP-262 — scripts/ + CONTRIBUTING.md 추가 (operational tooling, not src code).
             // Bootstrap script entries / drift check script / version bump CI helper 등 wrapper 운영 도구.
-            const isDocOnly = !hasCode && files.every(f =>
+            let isDocOnly = !hasCode && files.every(f =>
               f.filename.endsWith('.md') ||
               f.filename.startsWith('docs/') ||
               f.filename.startsWith('wrapper/') ||
@@ -198,6 +198,15 @@ jobs:
               f.filename === 'CONTRIBUTING.md' ||
               (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup, fast-pass 허용 (src/overlay 삭제는 여전히 비허용)
             );
+
+            // CFP-2324 S2 / ADR-125 §결정 3 해법 A (1) — 요구사항리뷰 게이트 fast-pass guard.
+            //   phase:요구사항-리뷰 부착 ∧ gate:requirements-review-pass 미부착 → isDocOnly=false 강제
+            //   (fast-pass 제외 → required block fall-through). additive — 다른 PR isDocOnly 무변경 (ADR-064 ratchet, INV-1).
+            const reqReviewPhaseAttached = allLabels.includes('phase:요구사항-리뷰');
+            const reqReviewGateAttached = allLabels.includes('gate:requirements-review-pass');
+            if (reqReviewPhaseAttached && !reqReviewGateAttached) {
+              isDocOnly = false;
+            }
 
             // CFP-795 / ADR-026 Amendment 4 §결정 6 — 4번째 fast-pass source: isPostMergeFix (3-조건 AND)
             //
@@ -476,6 +485,10 @@ jobs:
             let required;
             if (phaseLabel === 'phase:설계' || phaseLabel === '설계' || phaseLabel === 'phase:설계-리뷰' || phaseLabel === '설계-리뷰') {
               required = { phase: phaseLabel, gates: ['gate:design-review-pass'] };
+            } else if (phaseLabel === 'phase:요구사항-리뷰' || phaseLabel === '요구사항-리뷰') {
+              // CFP-2324 S2 / ADR-125 §결정 3 해법 A (2) — 요구사항리뷰 게이트 required branch.
+              //   누락 시 else → gate:design-review-pass 오요구 wrong-gate deadlock (INV-3) 이므로 쌍으로 적용.
+              required = { phase: phaseLabel, gates: ['gate:requirements-review-pass'] };
             } else if (phaseLabel === 'phase:보안-테스트' || phaseLabel === '보안-테스트') {
               required = { phase: phaseLabel, gates: ['gate:security-test-pass'] };
             } else if (phaseLabel === 'phase:구현' || phaseLabel === '구현' || phaseLabel === 'phase:구현-리뷰' || phaseLabel === '구현-리뷰') {
@@ -531,6 +544,7 @@ jobs:
                 });
                 // Lane → gate prefix mapping (CFP-1302: 배열 순회 대응)
                 const lanePrefixForGate = {
+                  'gate:requirements-review-pass': '[요구사항-리뷰]',
                   'gate:design-review-pass': '[설계-리뷰]',
                   'gate:security-test-pass': '[보안-테스트]'
                 };
@@ -616,3 +630,128 @@ jobs:
               conclusion: allOk ? 'success' : 'action_required',
               output: { title: 'Phase Gate', summary: summary }
             });
+
+            // ── CFP-2324 S6 provenance — warning-first (fail-safe) ───────────────────────
+            //   active-gate PR (요구사항/설계리뷰·보안·배포리뷰 gate 매핑, 즉 review/test producer lane) 의
+            //   CLAIMED pass 가 multi-anchor provenance 를 갖는지 검사.
+            //   anchor 1 = review-verdict-v4 packet (PR body 또는 comment) 필수 필드 동반.
+            //   anchor 2 = Story §14 lane-evidence binding (## Lane evidence 섹션 + lane row 1+).
+            //   mixed repo (wrapper-self, ADR-031 §14 면제) = anchor 1(packet) 이 mixed anchor 겸함.
+            //   warning emit only — merge conclusion 무변경 (checks.create 이후 실행, 재호출 0).
+            //   fail-safe: 전체 try/catch silent — honest PR 막지 않음 (CFP-900 §4.13 패턴).
+            try {
+              const provenanceGates = ['gate:requirements-review-pass', 'gate:design-review-pass', 'gate:security-test-pass', 'gate:deploy-review-pass'];
+              const isActiveGatePr = required.gates.some(g => provenanceGates.includes(g));
+              const gatePassLabelAttached = allLabels.some(l => provenanceGates.includes(l));
+              // CLAIMED pass = active-gate PR ∧ (gate-pass label 부착 OR comment evidence 존재)
+              if (isActiveGatePr && (gatePassLabelAttached || gateCommentEvidence)) {
+                // anchor 1 helper: review-verdict-v4 packet 존재 (필수 필드 동반)
+                const hasReviewVerdictPacket = (text) => {
+                  if (!text) return false;
+                  const hasVerdictKey = /review[_-]verdict/i.test(text);
+                  if (!hasVerdictKey) return false;
+                  return /contract_version/.test(text) &&
+                    /lane:/.test(text) &&
+                    /story_key/.test(text) &&
+                    /iteration/.test(text) &&
+                    /pl_recommendation/.test(text);
+                };
+                // PR body + 모든 PR comment 에서 packet 검색 (anchor 1)
+                let hasPacket = hasReviewVerdictPacket(body);
+                if (!hasPacket) {
+                  try {
+                    const { data: provComments } = await github.rest.issues.listComments({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: pr.number,
+                      per_page: 100
+                    });
+                    hasPacket = provComments.some(c => hasReviewVerdictPacket(c.body || ''));
+                  } catch (_) { /* listComments 실패 = packet 미발견 취급 (fail-safe) */ }
+                }
+                // anchor 2: Story §14 lane-evidence binding (PR body)
+                const hasSection14 = /^##\s+Lane evidence/m.test(body);
+                // mixed repo 판정 (wrapper-self = plugin-codeforge, ADR-031 §14 면제)
+                const isMixedRepo = context.repo.repo === 'plugin-codeforge';
+                // warning 조건:
+                //   !hasPacket → anchor 1 누락
+                //   else if (!isMixedRepo && !hasSection14) → anchor 2 누락 (non-mixed)
+                //   else → no warning
+                let provWarnReason = null;
+                if (!hasPacket) {
+                  provWarnReason = 'anchor 1 누락 — review-verdict-v4 packet (PR body/comment) 미발견 (필수 필드: contract_version, lane, story_key, iteration, pl_recommendation)';
+                } else if (!isMixedRepo && !hasSection14) {
+                  provWarnReason = 'anchor 2 누락 — Story §14 `## Lane evidence` 섹션 미발견 (non-mixed repo)';
+                }
+                if (provWarnReason) {
+                  const provMsg = `[CFP-2324 S6 provenance — warning] CLAIMED gate-pass provenance 검증 미충족:\n  ${provWarnReason}\n게이트 merge 미차단 (warning tier only — ADR-125 §결정 3 fail-safe). review-verdict-v4 packet + Story §14 lane-evidence 동반 권장.`;
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: pr.number,
+                      body: provMsg
+                    });
+                  } catch (_) { /* comment 실패 = silent (warning tier) */ }
+                }
+              }
+            } catch (_) { /* S6 provenance fail-safe: silent — honest PR 막지 않음 (CFP-900 §4.13 패턴) */ }
+            // ── CFP-2324 S6 provenance warning end ────────────────────────────────────────
+
+            // ── CFP-2324 S7 operational throughput AC — warning-first (fail-safe) ─────────
+            //   operational:true label PR 의 2-axis measurable AC (throughput + bounded-memory/RSS)
+            //   + empirical-source annotation + component:* companion label 검사.
+            //   [empirical-source: TBD] 박제 = 정상 (TBD AC 골격 = no warning).
+            //   warning emit only — merge conclusion 무변경. fail-safe: try/catch silent.
+            try {
+              if (allLabels.includes('operational:true')) {
+                // throughput axis helper
+                const hasThroughputAc = (text) => {
+                  if (!text) return false;
+                  return /≥\s*\d|\d+\s*(req\/s|requests\/s|events\/s|msg\/s|tps|rps)/i.test(text) ||
+                    /throughput[^\n]*(\d|TBD)/i.test(text);
+                };
+                // bounded-memory (RSS) axis helper
+                const hasRssAc = (text) => {
+                  if (!text) return false;
+                  const axisKey = /(RSS|resident set|bounded[- ]memory)/i.test(text);
+                  if (!axisKey) return false;
+                  return /≤\s*\d|\d+\s*(MB|GB|MiB|GiB)/i.test(text) || /TBD/.test(text);
+                };
+                // empirical-source annotation helper ([empirical-source: TBD] 도 VALID)
+                const hasEmpiricalSource = (text) => {
+                  if (!text) return false;
+                  return /\[empirical-source:\s*[^\]]+\]/i.test(text);
+                };
+                const hasComponentLabel = allLabels.some(l => l.startsWith('component:'));
+                const s7Violations = [];
+                const hasThr = hasThroughputAc(body);
+                const hasRss = hasRssAc(body);
+                if (!hasThr) {
+                  s7Violations.push('throughput axis AC 미발견 (예: `≥ N req/s` 또는 throughput + 수치/TBD)');
+                }
+                if (!hasRss) {
+                  s7Violations.push('bounded-memory(RSS) axis AC 미발견 (예: `RSS ≤ N MB` 또는 RSS + 수치/TBD)');
+                }
+                if (hasThr && hasRss && !hasEmpiricalSource(body)) {
+                  s7Violations.push('empirical-source annotation 미발견 (`[empirical-source: <근거>]`, TBD 허용)');
+                }
+                if (!hasComponentLabel) {
+                  s7Violations.push('component:* companion label 미부착');
+                }
+                if (s7Violations.length > 0) {
+                  const s7Msg = `[CFP-2324 S7 throughput AC — warning] operational:true PR 의 throughput AC 검증 미충족:\n` +
+                    s7Violations.map(v => `  - ${v}`).join('\n') +
+                    `\n게이트 merge 미차단 (warning tier only — ADR-014 Amendment 6 §7.4.7 warning-first / fail-safe). 2-axis measurable AC + empirical-source([empirical-source: TBD] 박제 허용) + component:* 동반 권장.`;
+                  try {
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: pr.number,
+                      body: s7Msg
+                    });
+                  } catch (_) { /* comment 실패 = silent (warning tier) */ }
+                }
+              }
+            } catch (_) { /* S7 throughput AC fail-safe: silent */ }
+            // ── CFP-2324 S7 throughput AC warning end ─────────────────────────────────────
