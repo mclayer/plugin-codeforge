@@ -4,6 +4,7 @@
 Interface (Change Plan §4.1 CFP-598):
   argv[1]: registry-md-path (str)
   stdout:  name<TAB>color<TAB>description (1 line per hotfix-bypass:* entry)
+           description 는 GitHub label 한도(100자)에 맞춰 truncate (초과분 "…").
   stderr:  error messages (PARSE_ERROR / NO_ENTRIES / FILE_NOT_FOUND / INVALID_ENTRY)
   Exit codes:
     0 = success (1+ entry emitted)
@@ -117,6 +118,16 @@ def main() -> int:
         if not name.startswith("hotfix-bypass:"):
             print(f"INVALID_ENTRY: category=hotfix-bypass 이나 name prefix 불일치 — name={name}", file=sys.stderr)
             return 1
+
+        # GitHub label description hard limit = 100 chars → 초과 시 create 가 HTTP 422
+        # ("description is too long") 로 실패한다. registry 의 rich provenance description 은
+        # 100자 초과가 빈번하므로 라벨용으로 truncate (full provenance 는 label-registry-v2.md SSOT 보존).
+        # 한도는 **codepoint(문자) 기준이지 byte 가 아니다** — GitHub 422 body 실측 확인 +
+        # main 의 한글 라벨(예: 97 codepoint / 132 byte)이 정상 생성되는 것이 증거. 따라서
+        # len()/슬라이스(codepoint 기반)로 절단해야 안전 (byte 절단 시 multibyte 문자 파손).
+        # "…"(U+2026) = 1 codepoint → desc[:99] + "…" = 정확히 100 codepoint.
+        if len(description) > 100:
+            description = description[:99] + "…"
 
         results.append((name, color, description))
 

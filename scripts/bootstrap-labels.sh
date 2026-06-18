@@ -68,9 +68,13 @@ create_label() {
     fi
     # already-exists 는 create 실패 + edit 성공으로 위에서 return 0 처리됨 (멱등 보존).
     # 여기 도달 = create AND edit 모두 실패 = 진짜 실패 (권한/네트워크/API).
-    local _gh_err="${_edit_err:-$_create_err}"
-    _gh_err=$(printf '%s' "$_gh_err" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
-    echo "  ! $name: create/edit 실패 — ${_gh_err:-(gh stderr 비어있음 — 권한/네트워크 점검)}"
+    # create 실패가 신규 label 의 진짜 원인 (예: HTTP 422 description too long). edit 는
+    # "label 부재" 404 noise 이므로, 둘 다 표기해 masked false-diagnosis 를 차단한다
+    # (이전엔 _edit_err 우선 → 422 가 404 로 가려져 오진을 유발).
+    local _create_clean _edit_clean
+    _create_clean=$(printf '%s' "$_create_err" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+    _edit_clean=$(printf '%s' "$_edit_err" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+    echo "  ! $name: create/edit 실패 — create: ${_create_clean:-(빈 stderr)} | edit: ${_edit_clean:-(빈 stderr)}"
 }
 
 [ $DRY_RUN -eq 0 ] && echo "Plugin label 부트스트랩..."
