@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.96"
+version: "2.97"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-06-18  # CFP-2331 / ADR-014 Amendment 6 v2.97 — operational:true 1 entry 추가 (production-impact category, single_active:false). 운영(부하-critical) component Story 분류 marker — §5 throughput + bounded-memory(RSS) 2축 measurable AC mandate (warning-first, Epic CFP-2324 S7). ops-signal (ADR-106 런타임 경보 Issue label) 과 axis 다름 disambiguate. MINOR bump additive (1 entry 추가, backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.96" → "2.97" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-17  # CFP-2326 / ADR-125 v2.96 — 요구사항리뷰 lane (9번째 lane) 신설 3 entry 추가: phase:요구사항-리뷰 (single_active:true) + gate:requirements-review-pass (single_active:false) + fix:요구사항-리뷰-retry (single_active:false). MINOR bump additive (3 entry 추가, backward-compat 무영향, ADR-008 §결정 2), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (label-registry mirrored field 무관 — codeforge-review plugin.json bump 는 별 agent surface 변경 carrier). MANIFEST.yaml row "2.95" → "2.96" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-15  # CFP-2252 / ADR-049 Amendment 2 v2.95 — type:epic/story/bug 삭제 sequencing 명시 (물리 삭제 = canary 후 Orchestrator gh label delete, 3단계 promotion invariant PC-1∧2∧3). entry 자체 변경 0 (description 의 "물리 삭제는 S4" → "canary 후" 명료화 + deprecated:true 유지). MINOR bump additive (entry 추가/제거 0, 마킹 텍스트 명료화), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.94" → "2.95" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-15  # CFP-2251 / ADR-049 Amendment 1 v2.94 — type:* deprecated entry 마킹 (deprecated:true + replaced_by_native_issue_type) — native Issue Type cutover marking, MINOR bump additive
@@ -1316,6 +1317,20 @@ labels:
     description: "Story touches production cutover surface — explicit user go-ahead required before lane entry (ADR-72 §결정 3 trigger axis 정합 — Live touching + production cutover both = ProductionEvidence + LiveOps + LiveOrdering 9 SubAgent both spawn 의무). CFP-954 Story-3 carrier — production cutover layer mandate **activation declare** scope (실 first spawn = consumer Story 영역, wrapper-self-app N/A ADR-72 §결정 6 정합). 본 label 부착 PR/Issue = HIGH severity invariant (severity-propagation-v1 v1.0 cross-ref). production-cutover-evidence.yml workflow PR-open trigger 영역. canary tier (channel:canary) 와 2-axis disjoint — channel = release lifecycle / production-impact = production risk (DataMigrationArch §G.3 정합, 양 label 동시 부착 가능 semantic axis 2-way split)."
     single_active: false
     attach_owner_plugin: "사용자 직접 (Phase 1 PR open 전 explicit go-ahead 의무 진입) / Orchestrator (Story §1 frontmatter `production_cutover_touching: true` 선언 PR/Issue open 시 부착)"
+
+  # operational:true (1 entry — CFP-2331 / ADR-014 Amendment 6 §7.4.7 carrier, Epic CFP-2324 S7, #2323 흡수)
+  # production-impact category 2번째 entry (production-touching 1번째 후 답습). 운영(부하-critical) component Story 분류 marker.
+  # axis disambiguation: operational:true = Story 분류 marker (설계 시점, §5 throughput/RSS 2축 AC mandate trigger) ↔ ops-signal (ADR-106 런타임 경보 회로 Issue label, 운영 시점). 두 label 동음 회피 — semantic axis 다름.
+  # component:* (consumer overlay 동적 — project.yaml.labels.components[]) 와 동반 의무 (operational:true Story = component:runner|ingestion|persistence 1+ 동반).
+  # canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2). marketplace.json sync 면제, plugin.json bump 0.
+  # ADR-008 §결정 3 SSOT: 신규 label entry append = MINOR bump (v2.96 → v2.97).
+  # MANIFEST.yaml ratchet 동반 ("2.96" CFP-2326 → "2.97" CFP-2331 carrier).
+  - name: operational:true
+    category: production-impact
+    color: "0e8a16"
+    description: "Story 가 부하-critical 운영 component (component:runner / component:ingestion / component:persistence 중 1+ 동반 의무) 를 도입/변경 — §5 acceptance criteria 에 throughput + bounded-memory(RSS) 2축 measurable AC + `[empirical-source: <ref> | TBD]` annotation 작성 의무 (warning-first → ratchet, CFP-2331 / ADR-014 Amendment 6 §7.4.7 carrier). 설계-시점 design-AC mandate axis — AC 존재·방향·2축 = 설계 시점 hard(non-deferrable), 실측 숫자만 evidence-driven defer (§7.4.4 Rate limit cross-ref shell 의 policy 전체 defer 와 disjoint). wrapper-self = declarative (annotation 존재만, 실측 면제 ADR-005). consumer = wrapper post-deploy throughput-benchmark workflow seed 위임 실측 (ADR-121 §결정 3, deploy-review lane 부활 아님). **ops-signal (ADR-106 Amendment 1 §결정 1 런타임 경보 회로 Issue label) 과 axis 다름** — operational:true = Story 설계-시점 분류 marker / ops-signal = runtime alert Issue 분류 (운영-시점). CFP-2331 (Epic CFP-2324 S7) declare carrier. ADR-068 Amendment 1 I-5 dimensional empirical (throughput/scale dimension empirical-source annotation) binding cross-ref."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (Story §1 frontmatter `operational: true` 선언 또는 component:* 운영 component 도입 PR/Issue open 시 부착) / 사용자 직접"
 
   # canary promotion criteria (4 entries — CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier, Wave 4 sub-Epic #1 Story-4 enforcement layer)
   # hotfix-bypass:canary-promotion-criteria = 46번째 family member (warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel).

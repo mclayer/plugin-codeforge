@@ -8,6 +8,7 @@ related_stories:
   - CFP-46 (parent — Operational Risk Architect 신설 + §7.4 SSOT 분산)
   - CFP-128 (amends — Docker-first §7.4 mandate 4 항목 확장)
   - CFP-1059 (Amendment 5 — InfraOperationalArchitect ↔ DeployPL boundary axis 명시, 운영 risk SSOT vs 배포 행위 disjoint)
+  - CFP-2331 (Amendment 6 — §7.4.7 operational throughput/scale = primary (non-deferrable) design-stage AC mandate, warning-first, Epic CFP-2324 S7, #2323 흡수. #1079 test-parity/container axis additive slot + conflict:adr-number / merge-order 마킹)
 related_files:
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
@@ -403,3 +404,80 @@ ADR-72 §결정 1 (ProductionEvidence Deputy 신설) 의 ownership 위치 = wrap
 - ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 only — 약화 0)
 
 cross-ref: CFP-128 spec §3.4 / Change Plan §3.5 / Story §3.1.
+
+## Amendment 6 (CFP-2331, 2026-06-18): §7.4.7 operational throughput/scale = primary (non-deferrable) design-stage AC mandate (warning-first)
+
+> **형식 주의 (EC-5)**: 본 ADR-014 의 amendment 는 body `## Amendment N` section 방식 (frontmatter amendment_log field 부재 — frontmatter `amendments: [ADR-033]` 만 + `related_stories` Amendment 6 row). Amendment 1/2/3/4/5 동일 패턴 답습.
+
+### 동기
+
+Epic CFP-2324 S7 (CFP-2331, escalation #2323 흡수) carrier. 운영(부하-critical) component 를 도입/변경하는 Story 가 throughput/scale 설계 결정을 **evidence-driven defer** 로 미루는 표면이 §7.4.4 (Rate limit, cross-ref shell) 와 혼동되어 throughput AC 자체가 설계 시점에 누락되는 갭. 실측 정정 (Epic #2324 S7 본문): `phase-gate-mergeable.yml:488-490` 가 `phase:배포-리뷰` 라벨 시 `gate:deploy-review-pass` 를 이미 required 로 강제 — 진짜 갭은 (1) 운영 Story 가 throughput/bounded-memory AC 를 설계 시점에 measurable 형태로 작성하도록 강제하는 forcing function 부재 + (2) throughput AC 가 §7.4.4 처럼 통째로 evidence-driven 유예되는 오용. **deploy-review lane 부활 아님** — ADR-121 (deploy/deploy-review 2 lane 폐지, supersedes ADR-087/088) 에 정합. 본 Amendment 6 = §7.4.7 신설 (설계-시점 design-AC mandate) 만, 배포 lane 메커니즘 무관.
+
+본 Amendment 6 = ADR-014 결정 1~5 본문 변경 0건 — §7.4 schema 에 §7.4.7 sub 추가 (codeforge-design plugin canonical 본문 = W2 sibling, 본 wrapper SSOT = 책임 매트릭스 row 갱신만, 결정 1/2 정합). `is_transitional: false` 유지.
+
+### 결정 1 — §7.4.7 Operational throughput/scale = primary (non-deferrable)
+
+InfraOperationalArchitect §7.4 schema 에 **§7.4.7 Operational throughput/scale** sub 신설 — **primary 분류 (Amendment 4 §결정 2 의 primary 4-sub 와 동일 class — 설계 시점 결정 가능)**. 단 §7.4.1/.3/.5/.6 primary 와 구분되는 특성: throughput/scale 의 **AC 존재·방향·2축 자체는 설계 시점 hard 결정 (non-deferrable)** 이되, **실측 숫자(measured value)만 evidence-driven defer** 허용.
+
+**적용 조건 (CONDITIONAL trigger)**: Story 가 운영(부하-critical) component 도입/변경 — `operational:true` label 부착 Story (`component:runner` / `component:ingestion` / `component:persistence` 중 1+ 동반 의무, consumer overlay 현행 component 택소노미). 비운영 Story = `N/A — non-operational (부하-critical component 0)` 명시.
+
+**§7.4.7 의무 항목 (운영 component Story)** — Story §5 (acceptance criteria) 에 **2축 measurable AC** 작성 의무:
+
+| 축 | AC 형식 | 설계 시점 (hard) | 실측 (defer 가능) |
+|---|---|---|---|
+| throughput | 측정가능 목표 (예: `≥ N req/s sustained` / `≥ M events/s ingest`) + `[empirical-source: <ref> \| TBD]` annotation | AC 존재 + 방향(≥/≤) + 측정 단위·시나리오 = 설계 시점 확정 | 목표 숫자 N/M = `[empirical-source: TBD]` 박제 허용 (실측 전 lock-in 금지) |
+| bounded-memory (RSS) | 측정가능 상한 (예: `RSS ceiling ≤ X MB under sustained load`) + `[empirical-source: <ref> \| TBD]` annotation | AC 존재 + bounded(상한 존재) 선언 + 측정 조건 = 설계 시점 확정 | ceiling 숫자 X = `[empirical-source: TBD]` 박제 허용 |
+
+**non-deferrable 의 의미 (§7.4.4 evidence-driven defer 와 disjoint)**:
+- **§7.4.4 (Rate limit, cross-ref shell, Amendment 4 §결정 2)**: policy *값 전체* 가 evidence-driven — 설계 시점 = 측정 대상 정의 + §8.6 pointer 만, policy 값 자체 공백(`policy_value: null`) PASS.
+- **§7.4.7 (본 결정 1, primary non-deferrable)**: AC *존재·방향·2축* 은 설계 시점 hard (공백 = FAIL/warning) — **실측 숫자만** defer (`[empirical-source: TBD]`). 즉 "throughput AC 가 아예 없음" 은 §7.4.7 위반이지만 "throughput 목표 = TBD (실측 전)" 은 정상.
+- 두 sub 의 disjoint = "측정 대상 정의 후 policy 통째 defer (§7.4.4)" vs "AC 골격 hard + 숫자만 defer (§7.4.7)". cross-pollinate 금지.
+
+**ADR-068 Amendment 1 I-5 dimensional empirical 정합**: §7.4.7 의 throughput/scale = I-5 10-dimension enum 중 `throughput` / `scale` dimension — 모든 quantitative parameter 가 `[empirical-source: <ref> | TBD]` annotation 보유 의무 (review-verdict-v4 `dimensional_empirical_self_check_passed` self-check binding). 본 §7.4.7 = I-5 의 운영 component 영역 forcing function 강화.
+
+### 결정 2 — wrapper-self declarative vs consumer 실측 위임
+
+- **wrapper-self (dogfood) = declarative (annotation 존재만)**: codeforge wrapper-self Story 는 실 부하 측정 환경 부재 (runtime behavior 0, governance Story) → §7.4.7 AC = annotation 존재 + `[empirical-source: TBD]` 박제만 의무 (실측 면제, ADR-005 `plugin-meta-na` 정합).
+- **consumer = wrapper 가 post-deploy throughput-benchmark workflow seed 제공**: consumer 측 실측은 consumer GitHub CI (post-deploy benchmark job). wrapper 는 ADR-121 §결정 3 ("wrapper 제공물 = consumer 위임 템플릿만 — workflow seed + Environments 설정 가이드 + post-deploy smoke job") 위임 정합 하에 **post-deploy throughput-benchmark workflow seed** 를 제공. **deploy-review lane 부활 아님** — seed = consumer GitHub Actions post-deploy job (ADR-121 완전 위임 모델 안). RSS ceiling 측정 PoC = 설계-리뷰 open question (S7 §5.5).
+
+### 결정 3 — posture = warning-first → ratchet
+
+- **Phase 1 (declarative anchor)**: §7.4.7 신설 + 2축 measurable AC schema codify + `operational:true` label declare (base-labels.tsv). mechanical enforce 부재.
+- **Phase 2 (advisory CI 경고, mechanical wire — 별 sub-CFP / S7 Phase 2 carrier defer)**: `operational:true` label Story 의 Phase 1 PR 에서 §5 throughput + RSS 2축 AC 부재 OR `[empirical-source]` annotation 부재 detect 시 **warning tier emit + PR comment advisory** (merge 미차단). anti-theater discriminating test = 라벨만 부착 + AC 없음 mutation 이 실제 경고 트리거, 정상 Story (2축 AC + annotation) = false-positive 0.
+- **hard-block 승격 = 별 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
+
+### 결정 4 — #1079 (OpsExecutionArchitect 신설 + §7.4 mandate 보강) additive slot + conflict/merge-order 마킹
+
+[#1079](https://github.com/mclayer/plugin-codeforge/issues/1079) (CFP — OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강, dormant) 는 §7.4 에 **test-parity / container axis** mandate 보강을 예정한다. 본 Amendment 6 의 §7.4.7 신설과 동일 §7.4 schema surface 를 touch 하므로 충돌 회피 구조화:
+
+- **#1079 = §7.4 에 additive 로 끼는 구조**: #1079 의 test-parity / container axis 는 본 §7.4.7 (throughput/scale) 와 **disjoint sub** (별 §7.4.8+ slot 또는 §7.4.6 Container Docker 확장) — 본 Amendment 6 은 §7.4.7 단일 sub 만 점유, #1079 가 향후 §7.4.8 (test-parity) 또는 §7.4.6 확장 (container axis) 으로 additive 진입할 자리 보존. **본 Amendment 6 은 #1079 영역 무점유 (fold 안 함, dormant 보존)**.
+- **conflict 마킹**: 본 Amendment 6 PR 과 #1079 carrier PR 이 동시 open 시 `conflict:adr-number` label 부착 의무 (ADR-RESERVATION.md / ADR-014 §7.4 동시 수정 감지) — 단 본 Amendment = ADR-014 body Amendment 방식 (frontmatter amendment_log 부재) 이라 ADR 번호 충돌 자체는 무 (둘 다 ADR-014 body section), §7.4 schema row 충돌만 해당.
+- **merge-order 마킹**: 본 Amendment 6 (CFP-2331) 선행 merge → #1079 carrier 가 후속 (rebase main 후 §7.4.8 additive append). 역순 시 #1079 가 §7.4.7 자리 점유 회피 의무. `merge-order:1` (본 Amendment 6) / `merge-order:2` (#1079) 관례 적용 — 동시 진행 시.
+- **#1079 dormant 보존 (fold 안 함)**: 본 Amendment 6 은 #1079 의 OpsExecutionArchitect 신설 / test-parity / container mandate 를 흡수하지 않음 — #1079 는 독립 carrier 로 dormant 유지, 본 Amendment 는 throughput/scale axis 만 codify + #1079 의 additive 진입 자리 + merge-order 좌표만 박제.
+
+### 결정 5 — ADR-121 정합 (deploy-review lane 부활 금지, ADR-088 amend 금지)
+
+- **deploy-review lane 부활 금지**: 본 Amendment 6 의 throughput AC mandate 는 **설계 시점 design-AC** 만 — 배포-리뷰 성능 자동 verdict (ADR-088 §결정 2, ADR-121 §결정 C 로 소실 수용) 부활 아님. consumer 실측 = ADR-121 완전 위임 모델 안 consumer GitHub CI post-deploy benchmark job.
+- **ADR-088 amend 금지 (superseded라 결격)**: ADR-088 = `status: Superseded by ADR-121` (ADR-121 §결과) — superseded ADR 은 amend 결격. throughput gate 의 배포 영역 cross-ref = **ADR-121** (현행 SSOT). 본 Amendment 6 frontmatter / 본문 어디에도 ADR-088 amend 표기 0.
+- **cross-ref = ADR-121**: 운영 component 배포 시점 throughput 실측 = ADR-121 §결정 3 (consumer workflow seed 위임) + §결정 C (성능 자동 verdict 소실 수용) — 본 §7.4.7 design-AC 는 consumer post-deploy benchmark seed 와 연결 (wrapper 제공 seed → consumer CI 실측).
+
+### 결정 6 — wrapper SSOT 3 영역 매트릭스 갱신
+
+본 Amendment 6 = wrapper SSOT 3 영역 (책임 매트릭스 §7.4 row + 원인 판정 decision table §7.4 row + SubAgent mandate 경계 매트릭스 — 결정 2 정합) 의 §7.4 row 에 §7.4.7 sub 추가 declare. §7.4.7 schema 자체 정의 (2축 AC + empirical-source annotation 본문) = codeforge-design plugin canonical (`agents/infra-operational-architect.md` + `templates/change-plan.md` §7.4.7 + deputy-mandate skill — W2 sibling PR). 본 wrapper SSOT = row 추가만.
+
+### 기존 정책 변경 0건 (ADR-014 본문)
+
+본 Amendment 6 = ADR-014 결정 1~5 본문 변경 0건. 변경 = (a) 본 `## Amendment 6` body section (b) `related_stories` frontmatter row append (CFP-2331). §7.4 schema 자체 codeforge-design SSOT (결정 1) + wrapper SSOT 3 영역 한정 (결정 2) + §11 idempotency CONDITIONAL (결정 3) + N/A allowed 조항 (결정 4) + design-output BREAKING bump (결정 5) 모두 정책 변경 0건. ratchet 강화 방향 (§7.4.7 primary sub 신설 + AC mandate — scope 명시 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (강화 방향 only, 약화 0).
+
+### Cross-references
+
+- ADR-121 (deploy/deploy-review 2 lane 폐지, supersedes ADR-087/088 — 배포 완전 위임 cross-ref SSOT, 본 throughput AC 의 consumer 실측 위임 정합) §결정 3 (consumer workflow seed) + §결정 C (성능 verdict 소실 수용)
+- ADR-088 (Superseded by ADR-121 — amend 결격, 본 Amendment 은 ADR-088 amend 0건, cross-ref = ADR-121)
+- ADR-014 Amendment 4 §결정 2 (primary 4-sub vs cross-ref shell 2-sub — §7.4.7 = primary non-deferrable, §7.4.4 evidence-driven defer 와 disjoint)
+- ADR-068 Amendment 1 I-5 (dimensional empirical grounding — throughput/scale dimension `[empirical-source: <ref> | TBD]` annotation, review-verdict-v4 dimensional_empirical_self_check_passed binding)
+- [#1079](https://github.com/mclayer/plugin-codeforge/issues/1079) (OpsExecutionArchitect 신설 + §7.4 test-parity/container mandate 보강, dormant — 본 Amendment 6 §7.4.7 와 additive disjoint, merge-order coordinate, fold 안 함)
+- ADR-005 (plugin self-application NA — wrapper-self declarative 면제 정합)
+- ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 only — 약화 0)
+- ADR-014 Amendment 6 paired sibling = ADR-045 Amendment 12 (CFP-2330, S6 gate-provenance) — 동일 Epic CFP-2324 gate-model 일관 설계 묶음
+
+cross-ref: Epic CFP-2324 §why (S7) / Change Plan CFP-2324-gate-core §7.4 / Story CFP-2331 §3.
