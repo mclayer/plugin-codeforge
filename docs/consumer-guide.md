@@ -771,27 +771,20 @@ atlassian:
 | `domain_knowledge` | 선택 | 도메인 지식 공유 필요 시 |
 | `orchestrator_playbook` | 선택 | consumer-facing playbook 공유 필요 시 |
 
-#### Step 4 — 첫 push dry-run
+#### Step 4 — 첫 push (현재 메커니즘 = MCP-direct)
 
-> **주의**: `scripts/confluence-sync-3anchor.py` 는 **wrapper-only** 내부 도구 — consumer 배포 자산에 포함되지 않으므로 consumer 가 직접 호출하면 안 됨. consumer 가 받는 Confluence 관련 자산은 `templates/github-workflows/` 의 워크플로우 **3종**뿐:
-> - `confluence-doc-sync.yml` — mark engine git→Confluence push (ADR-103 §결정 1)
-> - `confluence-drift-detection.yml` — 사후 3-anchor drift verify
-> - `issue-design-content-confluence-link.yml`
+> **현행 sync 메커니즘 = MCP-direct** (invariant 4 / IA tree `deviation_path.active: mcp-direct`, mark engine = retain_for_future). **consumer 전용 Confluence sync 워크플로우는 아직 productize 되지 않았다** — `templates/github-workflows/` 에 `confluence-*.yml` 부재 (2026-06 기준). wrapper 의 `.github/workflows/confluence-forward-sync.yml` 및 `scripts/confluence-sync-3anchor.py` / `confluence_forward_sync.py` 는 **wrapper-self dogfood 전용**이라 consumer 가 직접 호출/복사하지 않는다.
+>
+> (과거 본 문서는 consumer 배포 워크플로우 3종 `confluence-doc-sync.yml` / `confluence-drift-detection.yml` / `issue-design-content-confluence-link.yml` 을 안내했으나, 해당 자산은 미존재 — 워크플로우 경로는 향후 productize 시 본 절 갱신.)
 
-**dry-run (권장 1순위 — 워크플로우 경로)**:
+**첫 push (MCP-direct)**:
 
-GitHub Actions UI 에서 `confluence-doc-sync.yml` → **Run workflow** → `full_sync: false` (또는 기본값) 로 실행. 워크플로우 내부에서 mark `--dry-run` flag 가 적용된 경우 실제 Confluence 업데이트 없이 렌더링 결과만 출력함.
+`atlassian.confluence` block 설정 + `mirror_targets` 선언 후, codeforge Orchestrator/agent 가 `mirror_targets` 대상 문서(예: `docs/adr/*`, `docs/architecture/*`)를 Confluence MCP 도구로 직접 push 한다 — page create/update + content property 에 3-anchor stamp (git-source sha256 / native version / sync commit SHA). 절차 SSOT = skill [`codeforge:confluence-migration`](../skills/confluence-migration/SKILL.md).
 
-> mark `--dry-run` flag 공식 동작: "resolve page and ancestry, show resulting HTML and exit" — 실제 Confluence write 0. mark 버전에 따라 flag 가 워크플로우에 wire 되어 있는지 확인 (`confluence-doc-sync.yml` 내 `mark` 호출 라인 참조).
-
-**apply (실제 push)**:
-
-GitHub Actions UI 에서 `confluence-doc-sync.yml` → **Run workflow** → `full_sync: true` 로 실행.
-
-dry-run 결과 검증:
-- mapping table (git path → Confluence page) 정합 확인
-- 3-anchor drift verify 는 `confluence-drift-detection.yml` 워크플로우 실행으로 수행 (sha256 / version / commit SHA)
-- fail 시 → ADR-101 verify-before-trust path (응답 검증 의무)
+- **greenfield consumer** (Confluence 기존 page 없음): 전부 `create`. (mctrader = MCT space 신규 → 정상.)
+- **non-greenfield** (이미 curated page 보유): 아래 **Step 4b** title 정합 gate 선행 의무 (중복 page 대량 생성 차단).
+- 첫 push 전 대상 문서가 repo 에 실재해야 함 — 문서 0건이면 push 대상 0 (no-op).
+- 3-anchor verify fail 시 → ADR-101 verify-before-trust path (응답 검증 의무).
 
 #### Step 4b — non-greenfield consumer: title 정합 사전 검증 (apply 전 필수 gate)
 

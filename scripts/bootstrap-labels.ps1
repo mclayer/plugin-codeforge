@@ -65,10 +65,13 @@ function New-Label {
     $editErr = & gh label edit $Name --color $Color --description $Desc @RepoArg 2>&1
     if ($LASTEXITCODE -eq 0) { return }
     # create AND edit 모두 실패 = 진짜 실패 (권한/네트워크/API) — stderr verbatim (masked false-success 차단)
-    $ghErr = if ($editErr) { "$editErr" } else { "$createErr" }
-    $ghErr = ($ghErr -replace '\r?\n', ' ' -replace '\s+', ' ').Trim()
-    if (-not $ghErr) { $ghErr = "(gh stderr 비어있음 — 권한/네트워크 점검)" }
-    [Console]::Error.WriteLine("  ! $Name`: create/edit 실패 — $ghErr")
+    # create 실패가 신규 label 의 진짜 원인 (예: HTTP 422 description too long). edit 는 "label 부재"
+    # 404 noise 이므로 둘 다 표기 (이전엔 editErr 우선 → 422 가 404 로 가려져 오진 유발).
+    $createClean = ("$createErr" -replace '\r?\n', ' ' -replace '\s+', ' ').Trim()
+    $editClean = ("$editErr" -replace '\r?\n', ' ' -replace '\s+', ' ').Trim()
+    if (-not $createClean) { $createClean = '(빈 stderr)' }
+    if (-not $editClean) { $editClean = '(빈 stderr)' }
+    [Console]::Error.WriteLine("  ! $Name`: create/edit 실패 — create: $createClean | edit: $editClean")
 }
 
 if (-not $DryRun) {
