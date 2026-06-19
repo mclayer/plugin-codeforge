@@ -1736,7 +1736,7 @@ debate-protocol-v1 (§3.13) = **agent ↔ agent** debate domain. 본 §3.14 = **
 
 **(a) 메시지 직전 self-check 3 문항** — 사용자가 답해야 할 것이 한 문장으로 명확한가 / 비-codeforge 맥락 사람이 이해 가능한가 / 답하는 데 필요한 배경 (왜 / trade-off / 걸려있는 것) 충분한가. 3 문항 모두 PASS 후 발화.
 
-**(b) 사실/가치 분리** — 사실 → derived default 적용. 가치 → `AskUserQuestion` 발화. 모호 → 가치 측 (safe direction). [§결정 5 결정 트리 참조](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md).
+**(b) 사실/가치 분리** — 사실 → derived default 적용. **모호 포함 ask-trigger 미해당 → derived default 적용 + 진행 + 1줄 정정 초대** ("안전하니 일단 물어" 금지). `AskUserQuestion` 은 **ask-trigger 3종**(① 요구 애매 / ② 진짜 가치 trade-off·default 비자명 / ③ 비가역·고비용: 중대결함·대거삭제·rollback·외부발송)일 때만. [§결정 5 → §결정 20 redirect 참조](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md).
 
 **(c) sub-agent 결과 평이 번역** — raw packet 노출 금지, codeforge 내부 용어 평이한 한글, **3 줄 제약 거부** (길이 자유), "왜 / trade-off / 걸려있는 것" 배경 포함, 원본 packet 은 사용자 요청 시 별도.
 
@@ -1791,15 +1791,15 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 - **schema**: 8-column (iter / timestamp / story_key / pattern_dimension / pattern_summary / trigger / different_dimension_after_halt / escalation_outcome). [ADR-071 §결정 6](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) verbatim.
 - **사용자 escalation 후 다음 incident**: pattern_dimension 강제 전환 (sub-mechanism 2 정합).
 
-#### 사실/가치 판단 결정 트리 (ADR-071 §결정 5)
+#### 사실/가치 판단 결정 트리 (ADR-071 §결정 5 → §결정 20 redirect, Amendment 10)
 
-결정 후보 발화 직전 `is_factual?` 분기:
+결정 후보 발화 직전 `ask-trigger 해당?` 분기 (멈춰 묻는 건 ask-trigger 3종일 때만 — 그 외 모호 포함 전부 진행):
 
 | 판정 | 행동 | 예시 |
 |---|---|---|
-| 사실 (YES) | derived default 적용 (컨텍스트로 추론 가능 시) + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
-| 가치 (NO) | `AskUserQuestion` 발화 의무 | 사용자 선호 (UX / 보고 길이) / 정책 강화 방향 / scope 결정 / brainstorm 채택안 |
-| 모호 (AMBIGUOUS) | 가치 측 분류 (safe direction) → `AskUserQuestion` 발화 의무 | derived default 추론 가능 + future 작업 영향 큼 |
+| 사실 | derived default 적용 (컨텍스트로 추론 가능 시) + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
+| ask-trigger 해당 (① 요구 애매 / ② 진짜 가치 trade-off·default 비자명 / ③ 비가역·고비용: 중대결함·대거삭제·rollback·외부발송) | `AskUserQuestion` 발화 | ① 요구 자체 애매 / ② 제품 방향·우선순위 default 비자명 + 사용자 선호가 결과 가름 / ③ 대거 삭제·rollback·배포·외부 발송 |
+| ask-trigger 미해당 / 모호 | derived default 적용 + 진행 + 1줄 정정 초대 ("안전하니 일단 물어" 금지 — safe-direction default-to-ask 폐기) | derived default 추론 가능 — future 작업 영향 큼만으론 ask 사유 아님 |
 
 #### 3 memory entry normative 승격 mapping (ADR-071 §결정 8)
 
@@ -1829,7 +1829,7 @@ Orchestrator 가 사용자에게 **말 거는 시점·빈도** (frequency / timi
 
 | touchpoint | 발화 사유 | scope |
 |---|---|---|
-| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판 — wrong-dataset risk 차단) | 가치 / 명세 판단 — `AskUserQuestion` 발화 (§결정 5 결정 트리 — 모호 → 가치 측 분류) |
+| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판 — wrong-dataset risk 차단) | `AskUserQuestion` 발화 (§결정 5 → §결정 20: ask-trigger ① 요구 모호 + ③ rollback 비쌈 해당 — 일반 모호 자동 ask 아님) |
 | **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가, 사용자 행동 필요 | ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 |
 | **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 (산출물 = 최종 결과 자체) | ADR-039 inline whitelist 4번 entry (Status report) scope 안 |
 
