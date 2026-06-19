@@ -1,0 +1,51 @@
+name: duplication-check
+# CFP-2369 — Reusability duplication-ratio 측정 (consumer-template, warning-tier, non-required).
+#
+# CFP-2364 Amendment 13 (ADR-042) 의 (d) Reusability 축 측정 연동 Phase-2 mechanical wire.
+# RefactorAgent (d) advocacy 의 정량 before 신호 (duplication ratio) 를 consumer CI 에서
+# mechanical 산출 — 에이전트 권한 확장 없음, 도구는 본 CI 가 구동.
+#
+# **consumer-template**: consumer 가 자기 repo .github/workflows/ 로 복사해 wire 하는 seed.
+# wrapper-self CI 아님 (wrapper 는 declarative-only repo, src 부재 → graceful skip).
+# **warning-tier / non-required**: branch protection 무변경, merge 미차단. GitHub Actions UI
+# 에 경고만 표시하고 job 은 성공(exit 0). blocking 승격은 evidence 누적 후 별 CFP.
+# repo-level 분해 mechanical gate 는 out-of-scope (advisory 유지).
+#
+# detector: 기본 jscpd (node setup 후 npx). consumer 가 DUPLICATION_TOOL env 로 override 가능.
+#   DUPLICATION_THRESHOLD / DUPLICATION_TARGET 환경변수로 임계·대상 tune.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  duplication-check:
+    name: duplication ratio (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run check-duplication-ratio.sh
+        # warning-tier — 항상 exit 0 (비차단). consumer 는 아래 env 로 tune 가능.
+        # env:
+        #   DUPLICATION_THRESHOLD: "5.0"
+        #   DUPLICATION_TARGET: "src"
+        #   DUPLICATION_TOOL: "<override detector command>"
+        run: bash scripts/check-duplication-ratio.sh
+
+  duplication-check-test:
+    name: discriminating test (dirty/clean fixture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test-check-duplication-ratio.sh
+        run: bash scripts/test-check-duplication-ratio.sh

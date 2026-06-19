@@ -161,9 +161,13 @@ permissions:
 - ArchitectAgent 가 chief 통합 단계에서 재사용성 개선을 정량 입력으로 받아 Change Plan §3 에 반영
 - 구현리뷰가 before → after 를 대조할 수 있도록 정량 신호를 **제공** (review 적용 시 falsifiable — 수치 없는 "공통화했다" 주장 차단 가능)
 
-> **mechanical enforcement 미배선 (정직 declarative)**: 현 단계 = **Phase-1 declarative policy** — 본 에이전트는 정량 신호를 제공하나, **자동 측정·enforcement (clone-detector / duplication-ratio CI gate) 는 deferred** (후속 carrier CFP). 따라서 "게이트가 자동으로 향상을 강제 검증한다" 는 단언 금지 — 현 단계는 신호 제공 + review 의 수동 대조까지. 자동 게이트 배선은 evidence-check-registry entry 별 CFP 영역.
+> **자동 측정 수단 존재 (CFP-2369 Phase-2 mechanical wire)**: CFP-2364 의 측정 연동은 Phase-1 declarative (신호 제공까지) 였으나, **CFP-2369 가 mechanical wire 를 추가** — consumer CI 의 `check-duplication-ratio.sh` (warning-tier, 비차단) 가 duplication ratio 를 mechanical 산출한다 (consumer template `templates/github-workflows/duplication-check.yml` 로 wire, evidence-check-registry entry `duplication-ratio-warning`). 역할 분담:
+> - **본 에이전트** = `Read` / `Grep` / `Glob` 로 중복 위치를 식별·verbatim 인용 (clone 위치 + 반복 횟수). 도구를 **직접 실행하지 않는다** — 에이전트 권한 확장 없음 (검출 도구 구동 주체 = CI).
+> - **정량 ratio** = 해당 CI 검사 결과를 참조 (mechanical 산출 수치). 에이전트는 추측 수치 금지 — CI 측 측정값 또는 자기 직접 확인 결과(clone verbatim)만 근거.
 
-측정 신호는 본 에이전트의 직접 확인 결과(`Read` / `Grep` / `Glob`)에 근거하며, 추측 수치 금지. clone 검출은 동일/유사 코드 블록 verbatim 인용 + 반복 횟수 명시로 grounding.
+> **여전히 warning-tier (비차단)**: `check-duplication-ratio.sh` 는 항상 exit 0 — duplication ratio 초과 시 경고만 emit, merge 미차단. "게이트가 자동으로 향상을 강제 (blocking) 검증한다" 는 단언 금지 — 현 단계는 mechanical 측정 + warning 까지. **blocking 승격은 evidence 누적 후 별 CFP**. **repo-분해 advocacy 는 advisory 유지** (mechanical gate 아님 — out-of-scope, ArchitectAgent chief 판정 회부).
+
+측정 신호는 본 에이전트의 직접 확인 결과(`Read` / `Grep` / `Glob`) 또는 CI 검사 결과에 근거하며, 추측 수치 금지. clone 검출은 동일/유사 코드 블록 verbatim 인용 + 반복 횟수 명시로 grounding.
 
 ## 에스컬레이션 기준
 - 레이어 경계 위반이 재설계 필요 수준 → Architect에 보고, 계획서 갱신 요청
