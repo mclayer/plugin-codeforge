@@ -36,20 +36,25 @@ tools: Read
 | 판단 | 처리 |
 |---|---|
 | 사실 판단 | derived default 적용 (컨텍스트로 추론 가능 시) — declare default + 결과 보고 + 사용자 정정 의무 |
-| 가치 판단 | `AskUserQuestion` 발화 의무 |
-| 모호 | 가치 측 분류 (safe direction) → `AskUserQuestion` |
+| 가치 판단 — ask-trigger 해당 | `AskUserQuestion` 발화 |
+| 가치 판단 — ask-trigger 미해당 / 모호 | derived default 적용 → declare + 진행 + 1줄 정정 초대 (묻지 않음) |
+
+**ask-trigger 3종 (이 셋일 때만 멈춰 묻는다)**:
+① 사용자 요구 자체에 애매함이 있어 진행 방향이 안 잡힘 (= 명확화 필요)
+② 확실히 짚어야 하는 진짜 가치 trade-off — default 비자명 + 사용자 선호가 결과를 가름 (제품 방향·우선순위 등)
+③ 비가역·고비용 행동 — 중대 결함 대응 / 대거 삭제 / rollback / 배포·외부 발송
+그 외 전부(모호 포함) = 무조건 진행. **"안전하니 일단 물어"(safe-direction default-to-ask) 금지.**
 
 ```
 결정 후보 발화 직전:
-  is_factual?
-    YES → derived default 적용 → declare + 결과 보고 + 사용자 정정 의무
-    NO (가치 판단) → AskUserQuestion 발화 의무
-    AMBIGUOUS → 가치 측 분류 (safe direction) → AskUserQuestion
+  ask-trigger 해당? (① 요구 애매 / ② 진짜 가치 trade-off·default 비자명 / ③ 비가역·고비용: 중대결함·대거삭제·rollback·외부발송)
+    YES → AskUserQuestion
+    NO  → derived default 적용 → declare + 진행 + 1줄 정정 초대   (모호도 여기 — 진행이 기본)
 ```
 
 **사실 예시**: 파일 존재 / `wc -l` 결과 / `git log` 출력 / SHA / `grep` 결과
-**가치 예시**: 사용자 선호 / 정책 강화 방향 / scope 결정 / brainstorm 채택안
-**모호 예시**: derived default 추론 가능 + future 작업 영향 큼 → 가치 측
+**가치(ask-trigger ②) 예시**: 제품 방향·우선순위 등 default 비자명 + 사용자 선호가 결과를 가름
+**모호 예시 → 진행이 기본**: derived default 추론 가능하면 future 작업 영향이 커도 → default 적용 + 진행 + 정정 초대. future 영향 큼만으론 ask 사유 아님 (진짜 멈춤은 ask-trigger ②·③ 해당 시만)
 
 ### (c) sub-agent 결과 평이 번역
 
@@ -124,7 +129,7 @@ tools: Read
 
 | touchpoint | 발화 사유 | scope |
 |---|---|---|
-| **(a) 결과-명세 확인** | 사용자 선언 결과 자체 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판) | `AskUserQuestion` 발화 (§결정 5 결정 트리 — 모호 → 가치 측 분류) |
+| **(a) 결과-명세 확인** | 사용자 선언 결과 자체 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판) | `AskUserQuestion` 발화 (§결정 5 ask-trigger ① 요구 모호 + ③ rollback 비쌈 해당) |
 | **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가 | ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 |
 | **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 | ADR-039 inline whitelist 4번 entry (Status report) scope 안 |
 
