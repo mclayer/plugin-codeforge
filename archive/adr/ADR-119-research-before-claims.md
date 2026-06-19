@@ -15,9 +15,16 @@ amendments:
     summary: "§결정 9 신설 — 제안·보고 grounding 확장: §결정 1~8 의 substantive 주장(claim) 검증 후 단언을 substantive 제안(proposal)·보고(report) 로 확장. 제안 필요성 3문 게이트(① 깨졌나·강제 요인 ② 이득>비용·리스크 ③ 관찰자 없어도 할 일 — 셋 다 YES 아니면 발의 금지) + 완료보고 정직성(작업 상태 단정 = §결정 1 ② 실측 대상, 재검증 후에만 단언, 추측성 backlog 패딩 금지). Orchestrator + 전 lane PL/agent(PMOAgent retro PROMOTE 포함) 적용 + consumer 자동 상속(§결정 7) + Phase 1 declarative-only(§결정 8). CLAUDE.md 형제 bullet + consumer-guide §7.4 cross-ref + skills 2종 cross-ref 동반."
     is_transitional: false
     sunset_justification: "N/A — permanent governance. ADR-064 top-down ratchet 정합(Amendment 1 = research-before-claims 를 claim→proposal/report 로 확장, 강화 방향 only). ADR-058 §결정 5 약화 차단 통과."
+  - amendment: 2
+    date: 2026-06-19
+    cfp: CFP-2347
+    summary: "§결정 10 신설 — 검증-후-단언을 두 미적용 판정면으로 확장: ① 게이트 verdict('PASS/정상') ② 실패 진단('근본 원인=X'). 둘 다 substantive 단정인데 표면 신호 섣부른 단정(premature judgment)이 허용되던 공백. 경제 논거 = bounded 선제 검증 > unbounded 헛발질(비대칭 비용), 진단면 비대칭 결정규칙(file:line invariant 1개 > '확인함 OK' N개)과 동형. ① 게이트 outcome 판정면 실 wire = child S2/S3(게이트 verdict = 외부 관측 end-outcome ground truth, internal liveness proxy 아님 — §결정 1 row2 운영 outcome 확장 + accumulation-class 리스크 발현조건 기반 관측 창). 실 측정 주체 = consumer post-deploy CI/관측(ADR-121 §결정 3 위임 — codeforge 배포/배포리뷰 lane 은 ADR-121 로 폐지). ② 진단 falsification 판정면 실 wire = child S4/S5(runtime 실패 진단 = acted-on 전 falsification 통과 + 요구사항 lane 재진입). 단 root-cause 사다리 3rd rung('문제정의 오류→요구사항 lane 재진입')은 신규 개념 — 현 root-cause-decision 사다리는 2-rung(구현↔설계)이고 ADR-064 §결정 7(evidence-gated symmetric ratchet)은 ratchet 방향 규칙이지 진단 사다리 아님. 3rd rung 신설 = child S4(#2350). 재진입 lane carrier = ADR-125(status: Proposed). Phase 1 declarative-only(§결정 8 정합, umbrella anchor) — 실 wire = child Story S2~S5(ADR-060 4-tier). consumer 자동 상속(§결정 7). incident: mctrader-data#447 / collector#25."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance, 강화 방향 only(검증 적용면 확장, 약화 0). ADR-058 §결정 5 약화 차단 통과 + ADR-064 §결정 7 additive ratchet 정합."
 related_stories:
   - CFP-2162
   - CFP-2284  # Amendment 1 §결정 9 carrier — 제안 필요성 게이트 + 완료보고 정직성
+  - CFP-2347  # Amendment 2 §결정 10 carrier — 게이트 verdict + 실패 진단 두 판정면 확장 (Epic #2346 umbrella anchor)
 related_adrs:
   - ADR-073  # Orchestrator verify-before-assert — repo/cross-repo 사실 axis (disjoint 보완 대상)
   - ADR-070  # Codex 외부 워커 output verify (외부 "워커" ↔ 외부 "지식" axis disjoint)
@@ -29,7 +36,11 @@ related_adrs:
   - ADR-054  # §결정 6.1 declarative seed fast-path (본 ADR Wave 1 declarative-only 적격 근거)
   - ADR-058  # §결정 5 ratchet (약화 amendment sunset_justification 의무)
   - ADR-060  # 4-tier enforcement promotion framework (mechanical 승격 경로)
-  - ADR-064  # §결정 7 evidence-gated symmetric ratchet (약화 시 evidence-grounded justification)
+  - ADR-064  # §결정 7 evidence-gated symmetric ratchet (Amendment 2 = additive ratchet 강화 방향 정합 — 약화 0). 주: root-cause 사다리 3rd rung 은 ADR-064 미존재 개념 — 현 root-cause-decision 사다리는 2-rung(구현↔설계, skills/root-cause-decision/SKILL.md), 3rd rung 신설 = child S4(#2350)
+  - ADR-014  # §7.4 operational AC — Amendment 2 §결정 10 ① 게이트 outcome-signal 선언 schema(§7.4.7, child S2)의 운영 AC 측 정합 (실측 아닌 설계-시점 선언)
+  - ADR-125  # 요구사항리뷰 lane (status: Proposed — 미수락 시 재진입 lane 미발효, child S4 가 Amendment carrier) — Amendment 2 §결정 10 ② runtime 실패 진단 시 문제정의 재검증 lane
+  - ADR-121  # deploy 위임 — Amendment 2 §결정 10 ① 게이트 outcome 실 측정 주체 = consumer post-deploy CI/관측(ADR-121 §결정 3 위임). codeforge 배포/배포리뷰 lane 은 ADR-121 로 폐지됨(측정 주체 아님) — 위임 경계 정합 용도
+  - ADR-015  # stateful soak — Amendment 2 §결정 10 ① accumulation/lifetime-class 리스크 발현조건 기반 관측 창(soak) 도출 근거
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -169,6 +180,44 @@ Orchestrator 자신의 사용자 대화 중 외부 지식 주장 = 자체 조사
 - **적용 주체**: Orchestrator + 모든 lane PL/agent. 특히 PMOAgent retro follow-up 발의 — ADR-045 §D-11 4-option decision tree 의 **PROMOTE 결정도 본 3문 게이트 선통과 의무** (pattern_count 도달 ≠ 무조건 발의).
 - **consumer 자동 상속**: §결정 7 정합 — consumer Orchestrator·PMOAgent 자동 적용, overlay 축소 불가 (확장만 가능). cross-ref anchor = `docs/consumer-guide.md` §7.4.
 - **enforcement**: §결정 8 정합 **Phase 1 declarative-only** — mechanical lint 미신설. 필요성(necessity) 은 기계 비탐지 영역 (behavioral directive), lint 신설 = over-build. 향후 필요 시 별도 CFP (ADR-060 4-tier 승격 경로).
+
+### §결정 10 — 판정면 grounding 확장 (Amendment 2 / CFP-2347): 게이트 verdict + 실패 진단 두 미적용 면
+
+§결정 1~9 의 검증-후-단언은 *claim·proposal·report* 면을 덮었으나 **두 판정면이 누락**됐다 — ① **게이트 verdict** ("PASS / 정상") ② **실패 진단** ("근본 원인 = X"). 둘 다 substantive 단정인데 현재 *표면 신호로 섣부른 단정* (premature judgment) 이 허용된다. 본 Amendment 는 동일 grounding 원칙을 이 두 면으로 확장한다 (Epic #2346 umbrella anchor — 본 ADR §결정 10 = root anchor, 실 wire = child Story S2~S5).
+
+- **확장 명제**: §결정 1~9 의 "substantive claim/proposal/report 검증 후 단언" 을 **게이트 verdict 면 + 실패 진단 면** 으로 확장. 두 면 모두 "표면 신호 섣부른 단정" 이라는 단일 약점의 두 발현.
+- **정당화 (경제 논거)**: bounded 선제 검증 (예: 1h) > unbounded 헛발질 (예: 10h) — **무조건 이득** (비대칭 비용). 이 비대칭은 진단면의 **비대칭 결정규칙** (file:line 으로 짚힌 위반 invariant 1개 > "확인함 OK" N개) 과 **동형** — 프로세스 레벨 (선제 검증 vs 헛발질) 과 증거 레벨 (반증 1개 vs 안심 N개) 의 같은 원리.
+- **incident 근거**: consumer 수집기가 전 lane PASS 했으나 제품 사망 — 게이트가 internal proxy (loop-lag / fence / CPU) green 으로 PASS (진짜 outcome = downstream 적재 성장은 미측정), 진단은 표면 증상 ("lease-thrash") 으로 원인 단정 (코드·invariant 미실측) → 약 10h 3회 헛수정. (evidence: mctrader-data#447 / collector#25)
+
+#### ① 게이트 verdict 판정면
+
+게이트의 PASS 조건은 **외부 관측 가능 end-outcome (ground truth)** 이어야 하며 internal liveness proxy 가 아니다 — §결정 1 row2 ("repo·cross-repo 사실 = 실측") 의 **운영 outcome 확장** (실측 대상이 코드 사실 → 운영 결과로 확대). loop-lag / fence / CPU 같은 internal liveness 지표가 green 이어도 진짜 outcome (downstream 적재 성장 등) 이 미측정이면 PASS 단정 금지.
+
+- **outcome 의 실 측정 주체 = consumer post-deploy CI / 관측** (ADR-121 §결정 3 위임). codeforge 의 배포 / 배포리뷰 lane 은 ADR-121 로 **폐지** 됐으므로 outcome 측정 주체가 아니다. wrapper 측 = 설계-시점 **outcome-signal 선언 schema** (ADR-014 §7.4.7, child S2) — 게이트가 어떤 end-outcome 을 PASS 조건으로 선언하는가의 *설계* 이지 runtime 실측이 아니다.
+- accumulation / lifetime-class 리스크 (누적·수명 의존 실패) 의 관측 창 (soak) 은 **발현조건 기반** 으로 도출 — 고정 단창 (fixed window) 금지. 리스크가 발현되는 조건 (누적량 / 경과 시간 / 자원 고갈점) 을 먼저 식별하고 그 조건이 재현되는 길이로 관측 창을 잡는다 (ADR-015 stateful soak 정합).
+- 게이트 outcome 판정면의 실 wire = **S2 (#2348) / S3 (#2349)** (구체 mechanical 경로는 child 설계 lane 위임).
+
+#### ② 실패 진단 판정면
+
+runtime 실패의 진단 ("원인 = X") 은 acted-on (수정 착수) **전에 falsification 을 통과** 해야 한다 — 표면 증상에서 원인으로 직행하는 섣부른 단정 차단:
+
+- **가설 격리** — 기존 진단을 검증 대상 가설 (prohibited prior) 로 격리 (가설을 정답 아닌 *반증 대상* 으로 숨김 — 확증 편향 차단).
+- **다양한 독립 falsifier** — 단일 신호 아닌 서로 독립인 반증 시도 복수.
+- **generative invariant sweep** — 실패 경로의 long-lived mutable 구조 열거 + bound / lifetime / ordering invariant 명시 + 코드 보존 여부 실측.
+- **비대칭 규칙** — file:line 으로 짚힌 위반 invariant 1개 > "확인함 OK" N개 (위 동형 비대칭).
+- runtime 실패는 FIX loop (구현 ↔ 설계 왕복) 가 아니라 **요구사항 lane 재진입** 으로 문제정의 자체를 재검증한다. 현 root-cause-decision 사다리는 **2-rung (구현 ↔ 설계)** 이다 (`skills/root-cause-decision/SKILL.md` — 요구사항 / 문제정의 rung 부재). 본 Amendment 의 child Story **S4 (#2350)** 가 **3번째 rung ('문제정의 오류 → 요구사항 lane 재진입') 을 신설** 한다 (= 신규 개념, 기존 ADR 미존재). 재진입 lane carrier = **ADR-125 (status: Proposed — 미수락 시 재진입 lane 미발효, child S4 가 Amendment carrier)**. ADR-064 §결정 7 (evidence-gated symmetric ratchet) 은 본 Amendment 의 *강화 방향 ratchet 정합* 근거이지 root-cause 진단 사다리가 아니다 (ADR-064 에 사다리 / rung 개념 미존재).
+- 진단 falsification 판정면의 실 wire = **S4 (#2350) / S5 (#2351)** (구체 mechanical 경로는 child 설계 lane 위임).
+
+#### enforcement / 경계
+
+- **Phase 1 declarative-only** (§결정 8 정합) — 본 §결정 10 = umbrella anchor, mechanical lint **미신설**. 실 wire 는 child Story S2~S5 (ADR-060 4-tier promotion 경로 — warning-tier entry → 승격 gate).
+- **consumer 자동 상속** (§결정 7 정합) — consumer Orchestrator·전 lane 자동 적용, overlay 축소 불가 (확장만 가능).
+
+#### 거절된 대안
+
+- (D-A) 게이트면 (① A/B) 과 진단면 (② C/D) 을 **별 원칙으로 분리** — 거절. 둘 다 "표면 신호 섣부른 단정" 이라는 단일 약점의 두 발현이라 한 umbrella (§결정 10) 가 정합. 분리 시 동형 비대칭 (프로세스 ↔ 증거 레벨) 이 두 ADR 로 쪼개져 SSOT 가 갈림.
+
+**ADR-058 §결정 5 / ADR-064 §결정 7 정합**: 본 Amendment = additive ratchet **강화 방향** (검증 적용면 claim/proposal/report → verdict/diagnosis 로 확장) → sunset_justification = "N/A — permanent governance, 강화 방향 only". 약화 0.
 
 ## 결과
 
