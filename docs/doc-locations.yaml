@@ -406,3 +406,20 @@ doc_types:
       mirror 대상 closed-enum: [adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook] 완결 (ADR-111 Amendment 2 §결정 1 5-tuple).
       parallel-edit policy = append-only (playbook = governance narrative, Orchestrator owner).
       Phase 1 (CFP-1668) = doc type 등록 + ADR-111 Amendment 2 §결정 1 carrier. Sub-B sync = Wave 2 별 carrier.
+
+  - name: system_invariants
+    variants:
+      single_repo: "<owner-repo>/docs/system-invariants.md"
+    owner_agent: codeforge-design:ArchitectAgent
+    introduced_by: CFP-2361
+    naming_pattern: "system-invariants\\.md"
+    frontmatter_required: false
+    examples:
+      - "<owner-repo>/docs/system-invariants.md (consumer operational Story 운영 불변식 standing surface — CFP-2361 PS4)"
+    notes: |
+      CFP-2361 PS4 (ADR-014 Amendment 7 + ADR-015 Amendment 1 + ADR-068 I-8) carrier — operational Story 의 impl PR 이
+      도입하는 장기-수명 mutable 구조(accumulation/lifetime-class) 의 standing 불변식 표 정의 SSOT.
+      consumer 측 operational Story 각각이 impl PR 확장으로 본 문서를 갱신 (새 row append).
+      본 doc type entry = declarative 위치 SSOT (실 operating 불변식 table 내용은 consumer Story 가 관리).
+      Wrapper-self = N/A (operational Story 0개 governance, declarative-only).
+      parallel-edit policy = append-only (운영 테스트/모니터링이 다양하므로 consumer Story 별 독립 추가).
