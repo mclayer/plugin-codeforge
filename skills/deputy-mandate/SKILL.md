@@ -42,7 +42,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | §3 aggregate (RDB OLTP — aggregate invariant + 트랜잭션 경계 + persistence-bound) | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified, AggregateArch carry-over; CONDITIONAL `aggregate_arch.applicable`) | Sonnet |
 | §3 API contract (transport + versioning + DTO + OpenAPI/GraphQL) | **APIContractArchitectAgent** (CFP-1086 신설, skeleton S1 / body 심화 S2) | Sonnet |
 | §3 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) | **DataArchitectAgent** (CFP-1086 mandate 축소 — RDB OLTP 영역 제거) | Opus |
-| §3 도입할 설계 (refactor 시각) + §6 리팩토링 선행 | RefactorAgent (4-tuple sub-tuple) | Sonnet |
+| §3 도입할 설계 (refactor 시각 — decoupling + reusability + pattern + interface 분리) + §6 리팩토링 선행 (중복제거/공통추출/repo-분해 advocacy, escalation-tier) | RefactorAgent (4-tuple sub-tuple) | Sonnet |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent | Opus |
 | §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus |
 | §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334**) | TestContractArchitectAgent | Opus |
@@ -59,6 +59,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 - ModuleArch (aggregate-level RDB OLTP) ↔ DataArch (빅데이터 OLAP) — ELT/ETL/CDC cross-layer = co-author 영역 (deferred carrier)
 - APIContractArch (transport surface) ↔ ModuleArch (module placement) — module public API ↔ transport contract = co-author 영역
 - SecurityArch (PII 정책) ↔ ModuleArch (aggregate-level PII persistence schema) — column type / encryption-at-rest schema = co-author 영역
+- RefactorAgent (reusability/decoupling **advocacy** — 중복·공통추출·repo-split pressure) ↔ ModuleArch (boundary **authority** — 경계 placement) = disjoint (CFP-2364 / ADR-042 Amendment 13). RefactorAgent 는 재사용 단위 / repo 분해 pressure 를 escalation-tier 로 제안만, 경계 확정은 ModuleArch + ArchitectAgent chief.
 
 > ⚠ **AggregateArch deprecated footnote** (CFP-1126 / ADR-042 Amd 10 + ADR-091 Amd 1, CFP-1168 realized): mandate carry-over to ModuleArch (boundary axis unified) 완료 — 본 matrix owner + axis disjoint 4 영역 + RACI 3-way 9-cell 모두 재편 완료 상태. agent file 실 deprecate = Wave 2 별 CFP carrier.
 
@@ -104,7 +105,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | ModuleArchitectAgent (boundary axis unified) | module-level boundary + aggregate-level boundary 통합 (layered / hexagonal / clean / DDD bounded context module placement + module boundary + dependency direction + RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙 — AggregateArch carry-over per CFP-1126) |
 | DataArchitectAgent | 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) |
 | CodebaseMapperAgent (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
-| RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 |
+| RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 + reusability(중복제거·공통추출·repo-분해 pressure) |
 | ArchitectAnalystAgent (sub-tuple) | prior art / industry pattern analyst |
 
 > sub-tuple 3 = Domain Service role 이지만 **deputy column 아님** (4-tuple flat spawn 논리적 그룹핑). `bounded_context: codeforge-governance`, `ddd_pattern: Domain Service` (ADR-091 §결정 5 frontmatter field).

@@ -135,6 +135,19 @@ amendment_log:
       - "전체 tier 표 (개별 agent tier 분류 변경 0건 — 버전 표기 방식만 별칭화)"
     cross_ref:
       - ADR-057 Amendment 4 (CFP-1845 — Orchestrator 버전 핀 → 별칭 sibling, atomic)
+  - amendment_id: 13
+    date: "2026-06-19"
+    status: applied
+    summary: "CFP-2364 — RefactorAgent Reusability 1급 축 신설 (ISO/IEC 25010 유지보수성 gap 충당). 실증 결과 RefactorAgent 가 ISO/IEC 25010 Maintainability 5축 (Modularity / Reusability / Analysability / Modifiability / Testability) 중 Modularity 1축 (decoupling / pattern / interface 분리) 만 1급으로 다루고 Reusability 명시 공백 (증거 ①~⑦). 기존 3 카테고리 (a Decoupling / b Pattern / c Interface) → 4 카테고리 (+ d Reusability) 확장 — 카테고리 (d) 신설: 중복 코드 제거 · 공통 추상 추출 · DRY/WET · 재사용 가능 단위 식별. 트리거 = rule-of-three (동일/유사 블록 3회 이상) / duplication-ratio 임계 초과 / cross-module 동형 로직 발견 시 공통화 제안. DRY/WET 는 (b) Pattern 에서 (d) 로 이관 (개념 정합 — 본질이 중복/재사용), (b) 는 아키텍처 패턴 (Hexagonal/Clean/Ports&Adapters) 만 retain. output 슬롯 (d) Reusability advocacy 신설 (중복 위치 + 추출 대상 공통 단위 + 재사용 단위 배치 ModuleArch consult 표식 + 측정 신호 + repo 분해 escalation 표식). scope guard escalation 예외 — cross-cutting 공통추출 / repo-level 분해는 본질적으로 cross-module/global 이므로 요건 범위 밖이라도 escalation-tier 제안 가능 (escalation 표식 + ArchitectAgent 판정 회부 의무, 그 외 무관한 전역 리팩터링 여전히 금지). repo-level 분해 advocacy (응집 cluster → 별 deploy/ownership 단위 분리) escalation-tier 신설. 측정 연동 — (d) 제안마다 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) emit → ArchitectAgent 통합 + 구현리뷰 게이트 falsifiable 검증 (증거 ⑤ 충당). axis disjoint = RefactorAgent reusability/decoupling advocacy (중복·공통추출·repo-split pressure 식별·제안) ↔ ModuleArch boundary authority (경계 placement 결정) — RefactorAgent 는 pressure 제안만, 경계 확정은 ModuleArch + ArchitectAgent chief. RefactorAgent = 기존 sub-tuple agent 의 mandate 확장 (신설 아님) — roster 6 permanent + 3 sub-tuple 카운트 무변경, model tier Sonnet 무변경. ADR-086 framework self-application (axis 분석 + 5-checklist) — mandate 확장 lens 적용. SSOT propagation 3원본 (RefactorAgent.md + skills/deputy-mandate/SKILL.md + plugins/codeforge-design/CLAUDE.md mirror). bump 0.25.4 → 0.26.0 MINOR (mandate 확장 — ADR-037). marketplace version sync (ADR-063). ratchet 강화 방향 (카테고리 3 → 4 = scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불요."
+    ref: CFP-2364
+    carrier_story: CFP-2364
+    sunset_justification: null
+    affected_agents:
+      - RefactorAgent (mandate 확장 — decoupling / pattern / interface 분리 3 카테고리 → + reusability(d) 4 카테고리, codeforge-design — Sonnet 무변경. 신설 아님 — 기존 sub-tuple agent 의 mandate scope 확장)
+    cross_ref:
+      - ADR-086 (CFP-2364 — Deputy 신설 결정 framework self-application, mandate 확장 lens 적용 — axis 분석 + 5-checklist)
+      - ADR-063 (marketplace atomic version sync — codeforge-design 0.25.4 → 0.26.0 MINOR mirrored field)
+      - ADR-037 (plugin version bump rule — mandate 확장 = MINOR bump trigger)
 related_stories:
   - CFP-448
   - CFP-676
@@ -143,6 +156,7 @@ related_stories:
   - CFP-1126  # Amendment 10 carrier — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback, ratchet 축소 첫 carrier, ADR-058 §결정 5 first applied)
   - CFP-1155  # Amendment 11 carrier — UpgradeAgent walker model tier (declarative Sonnet → imperative walk Opus, ADR-098 §결정 2 carry, CFP-1111 Wave 2 Story-4)
   - CFP-1845  # Amendment 12 carrier — model 버전 핀 → 별칭(opus/sonnet/haiku) 전환 (항상 최신 tier 지칭, ADR-057 Amendment 4 sibling atomic)
+  - CFP-2364  # Amendment 13 carrier — RefactorAgent Reusability 1급 축 신설 (3 카테고리 → 4 카테고리, ISO/IEC 25010 Maintainability gap, axis disjoint advocacy ↔ ModuleArch authority, ADR-086 self-application)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -225,6 +239,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 > **Amendment 4 (2026-05-11)**: CodebaseMapperAgent·RefactorAgent는 Opus로 복원됨 — ADR-057 참조.
 >
 > **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref.
+>
+> **Amendment 13 (2026-06-19, CFP-2364)**: Sonnet (a) single-mandate advocate **RefactorAgent** 의 mandate scope 확장 — decoupling / pattern / interface 분리 3 카테고리 → + **(d) Reusability (재사용성)** 4 카테고리 (ISO/IEC 25010 Maintainability gap 충당, 신설 아님 — 기존 sub-tuple agent mandate 확장). model tier Sonnet 무변경 (single-mandate advocacy 패턴 유지 — reusability pressure 식별·제안 단일 축, multi-source synthesis 는 ArchitectAgent chief Opus). axis disjoint = RefactorAgent reusability advocacy ↔ ModuleArch boundary authority. 상세 = 본 ADR `## Amendment 13` body section.
 >
 > **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
 | **Haiku** | haiku | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
@@ -785,3 +801,92 @@ UpgradeAgent ownership = **codeforge-pmo 흡수** (ADR-098 §결정 1, cross-cut
 - `docs/inter-plugin-contracts/imperative-walker-protocol-v1.md` §2.F.2 — UpgradeAgent runtime ownership + `model_tier_reassessment: required` cross-ref (R-1 stale forward-ref 정정 = CFP-1155 change-plan §R-1 follow-up carrier)
 - [ADR-068 §결정 1 I-5](ADR-068-boundary-completeness-invariants.md) — walker walk source count 7 / grace window 12mo·9mo K8s dimensional empirical grounding (CFP-1155 change-plan §13.C)
 - CFP-1155 change-plan (`docs/change-plans/cfp-1155-upgrade-walker-runtime.md`) — UpgradeAgent walker runtime 재정의 설계 SSOT (§3 walk+plan+apply / §R model tier 근거)
+
+---
+
+## Amendment 13 — RefactorAgent Reusability 1급 축 신설 (ISO/IEC 25010 유지보수성 gap 충당, CFP-2364)
+
+**날짜**: 2026-06-19
+
+### 동기 (실증 증거 + ISO/IEC 25010 정합)
+
+ISO/IEC 25010 Maintainability(유지보수성) 는 5 sub-characteristics — **Modularity / Reusability / Analysability / Modifiability / Testability** — 로 구성되며, 그 중 **Reusability** 는 "the potential for assets to be utilized across multiple systems"(자산이 여러 시스템에서 재사용될 잠재력) 로 명시 정의된다. source: ISO/IEC 25010:2023(en) Product quality model (https://www.iso.org/obp/ui/en/#!iso:std:78176:en).
+
+실증 결과 RefactorAgent 는 이 5축 중 **Modularity 1축** (decoupling / pattern / interface 분리) 만 1급으로 다루고 **Reusability 는 명시 공백**. 7 증거:
+
+1. agent file 본문에 "재사용성" 0회 등장
+2. 검출이 size-only (줄수 / 메서드수 임계) 라 중복 (clone) 에 맹목 — duplication / 동형 로직 미검출
+3. structured output 에 reusability 슬롯 부재
+4. scope guard ("요건 범위 외 advocacy 금지") 가 cross-cutting 공통추출을 억제 — cross-module 공통화가 본질적으로 요건 범위를 넘는데 일률 금지
+5. 측정 metric 부재 — 재사용성 향상 falsifiable 검증 불가
+6. sibling deputy (ModuleArch 등) 도 code reusability 를 owned 축으로 보유 안 함 — orphan 영역
+7. repo-level 분해 mandate 0 — 응집 cluster 의 별 repo 분리 advocacy 없음
+
+본 Amendment 13 = RefactorAgent **기존 mandate 의 scope 확장** (신설 deputy 아님) — Sonnet (a) single-mandate advocacy 패턴 유지하에 ISO/IEC 25010 Reusability 축을 1급 advocacy 로 codify.
+
+### 변경 사항
+
+| Agent | 변경 | model tier | §결정 1 매트릭스 row |
+|---|---|---|---|
+| **RefactorAgent** | **mandate 확장** — decoupling / pattern / interface 분리 3 카테고리 → + **(d) Reusability (재사용성)** 4 카테고리. DRY/WET 를 (b) Pattern 에서 (d) 로 이관 (개념 정합 — DRY/WET 본질 = 중복/재사용), (b) 는 아키텍처 패턴 (Hexagonal/Clean/Ports&Adapters) 만 retain | **Sonnet 유지** | (a) 무변경 — single-mandate advocacy 패턴 유지 (reusability pressure 식별·제안 단일 축, multi-source synthesis 는 ArchitectAgent chief Opus) |
+
+카테고리 (d) Reusability 핵심:
+
+- **검출 트리거**: 동일/유사 코드 블록 **rule of three** (3회 이상 반복) 또는 **duplication ratio** (중복 라인 비율) 임계 초과 또는 cross-module 동형 로직 발견 시 공통화 제안
+- **output 슬롯**: (d) Reusability advocacy — 중복/유사 위치 verbatim + 추출 대상 공통 단위 + 재사용 단위 배치 (ModuleArch consult 표식) + 측정 신호 (duplication ratio / 제거 예상 중복 LOC / clone 수) + (repo-level) 분리 단위 + 경계 근거 + escalation 표식
+- **scope guard escalation 예외**: cross-cutting 공통추출 / repo-level 분해는 본질적으로 cross-module/global 이므로 요건 범위 밖이라도 **escalation-tier 제안 가능** (escalation 표식 + ArchitectAgent 판정 회부 의무). 그 외 무관한 전역 리팩터링은 여전히 금지 — escalation 예외는 reusability(d) cross-cutting/repo-level 에 한정
+- **repo-level 분해 advocacy**: 응집 cluster 가 별 deploy/ownership 단위로 분리 가치 시 repo 분해 제안 (escalation-tier) — 경계 확정은 ModuleArch + ArchitectAgent chief
+- **측정 연동**: (d) 제안마다 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) emit → ArchitectAgent 통합 + 구현리뷰 게이트가 before → after 대조로 향상 여부 falsifiable 검증 (증거 ⑤ 충당)
+
+### axis disjoint (RefactorAgent advocacy ↔ ModuleArch authority — 반드시 보존)
+
+본 Amendment 의 핵심 설계 원칙:
+
+- **RefactorAgent** = reusability / decoupling **advocacy** — 중복 · DRY · 공통추출 · repo-split **pressure 식별·제안**. pressure 를 제안만 한다.
+- **ModuleArchitectAgent** = boundary **authority** — module / package / aggregate 경계 **placement 결정**. 경계를 확정한다.
+- 둘은 **disjoint** — RefactorAgent 가 재사용 단위 / repo 분해 pressure 를 escalation-tier 로 제안하면, 경계 **확정** 은 ModuleArch + ArchitectAgent (chief) 가 한다. RefactorAgent 의 경계 단독 확정 시도 = ModuleArch authority 침범 (boundary 위반).
+
+본 disjoint 는 ADR-086 §결정 1 axis 분석 의무 정합 — reusability advocacy axis (pressure 식별) 와 boundary placement authority axis (경계 확정) 가 orthogonal.
+
+### ADR-086 framework self-application (mandate 확장 lens)
+
+RefactorAgent 는 **신설 deputy 가 아니라 기존 sub-tuple agent 의 mandate 확장**이므로, ADR-086 5-checklist 를 mandate 확장 lens 로 적용:
+
+| # | Check | 통과 기준 | CFP-2364 self-app (RefactorAgent mandate 확장) |
+|---|---|---|---|
+| 1 | **axis disjoint** | 확장 mandate 가 기존 deputy 와 axis 중복 0 | **PASS** — reusability advocacy (중복·공통추출·repo-split pressure 식별·제안) ↔ ModuleArch boundary authority (경계 placement 결정) disjoint. DRY/WET 이관 = RefactorAgent 내부 카테고리 재정렬 (cross-deputy 충돌 0). cross-module 공통화 pressure 와 경계 확정 = orthogonal axis. |
+| 2 | **cost-token budget** | spawn count 증가 시 ADR-068 I-5 empirical grounding | **PASS (N/A 증가)** — roster 무변경 (신설 deputy 0). RefactorAgent 1 agent 의 mandate scope 확장만 — spawn count 무변경 (평균 26 / full 38 유지, Amendment 10 base). 추가 token = 단일 agent 의 output 슬롯 1개 (d) 추가분 한정 (marginal). |
+| 3 | **consumer carrier** | consumer overlay 필드 명시 / `project.yaml` schema 갱신 | **N/A** — reusability advocacy 는 모든 consumer 무조건 applicable (CONDITIONAL applicability 불요 — frontend/backend/data 무관하게 중복/공통추출은 보편). duplication ratio 임계는 consumer overlay 가 향후 tune 가능하나 본 Amendment 의 default (rule-of-three) 로 충분 — 신규 schema key 신설 0. |
+| 4 | **sibling Epic align** | 진행 중 sibling Epic 과 RACI 충돌 0 또는 cross-ref | **PASS** — ModuleArch (boundary authority) 와 RACI 충돌 0 (axis disjoint codify 로 명시 분리). 진행 중 sibling Epic 의 RefactorAgent / ModuleArch mandate 변경 carrier 부재 (CFP-2364 단독). |
+| 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 | **PASS** — duplication ratio 자동 측정 도구 (clone detector LSP 연동 mechanical enforcement) 는 향후 evidence-check-registry entry 별 CFP carrier (declaration-only Wave 1 — 본 Amendment 는 정책 + agent mandate codify, 자동 측정 wire 는 후속). repo-분해 escalation 의 mechanical gate 도 deferred. |
+
+axis 분석 (§결정 1): 기존 N deputy axis 와 RefactorAgent 확장 axis (reusability pressure) 가 orthogonal — ModuleArch = 경계 placement authority / DataArch = 빅데이터 OLAP / APIContract = transport / SecurityArch = 보안 정책 / InfraOpArch = 운영 리스크 / TestContract = test contract 어느 것도 code reusability pressure 식별을 owned 축으로 보유 안 함 (증거 ⑥ orphan 영역 → RefactorAgent 흡수 정당). RefactorAgent 내부 (a)~(d) 4 카테고리 간 = single agent 내부 정합 (DRY/WET 이관 = 내부 재정렬).
+
+종합: **mandate 확장 PASS** — 5-checklist 1 FAIL 0, axis disjoint 통과. 신설 deputy 가 아니므로 roster 6 permanent + 3 sub-tuple 카운트 + RefactorAgent sub-tuple 사실 무변경.
+
+### SSOT propagation (3 원본)
+
+본 Amendment 의 RefactorAgent mandate 서술은 3 원본에 byte-consistent 의미로 sync:
+
+1. `plugins/codeforge-design/agents/RefactorAgent.md` — agent file SSOT (4 카테고리 표 + (d) 슬롯 + scope guard escalation 예외 + 측정 연동 + escalation 기준)
+2. `skills/deputy-mandate/SKILL.md` — wrapper canonical SSOT (primary axis matrix RefactorAgent row + DDD pattern mapping + axis disjoint 검증 단락)
+3. `plugins/codeforge-design/CLAUDE.md` — mirror (sibling sync — 4-tuple sub-tuple line + Sub-agent fan-out 표 row)
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 13 은 ADR-042 의 결정 1~6 본문 변경 0건. 변경 = (a) §결정 1 Sonnet 표 후 inline marker (Amendment 13 발화 marker) (b) 본 `## Amendment 13` body section (c) frontmatter amendment_log row 13 + related_stories CFP-2364 + cross_ref (ADR-086 / ADR-063 / ADR-037) append. tier criteria (결정 1) + invariant (결정 2) + 신규 agent ADR 의무 (결정 3) + inheritance (결정 4) + Haiku rollback (결정 5) + 재-audit (결정 6) 모두 정책 변경 0건. ratchet 강화 방향 (카테고리 3 → 4 = scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불요 (frontmatter amendment_id:13 `sunset_justification: null`).
+
+### bump + marketplace sync
+
+- `plugins/codeforge-design/.claude-plugin/plugin.json`: version **0.25.4 → 0.26.0 MINOR** (RefactorAgent mandate 확장 — ADR-037 plugin version bump rule, mandate scope 확장 = MINOR trigger)
+- marketplace version sync (ADR-063 atomic invariant) — `mclayer/marketplace` 의 codeforge-design entry version mirror (sync PR 선행 merge)
+
+### Cross-ref
+
+- ADR-086 (CFP-2364 — Deputy 신설 결정 framework self-application, mandate 확장 lens — axis 분석 + 5-checklist 위 §self-app 표)
+- ADR-058 §결정 5 — ratchet 강화 방향 (3 → 4 카테고리 scope 확장) → sunset_justification 불요
+- ADR-037 (plugin version bump rule — mandate 확장 = MINOR bump trigger, 0.25.4 → 0.26.0)
+- ADR-063 (marketplace atomic version sync — codeforge-design mirrored field version 변경)
+- ADR-091 §결정 1/5 (RefactorAgent DDD pattern mapping — `domain-service-sub-tuple` 4 카테고리 정합)
+- ISO/IEC 25010:2023(en) Maintainability sub-characteristics (Reusability 정의 source — https://www.iso.org/obp/ui/en/#!iso:std:78176:en)
+- `skills/deputy-mandate/SKILL.md` + `plugins/codeforge-design/CLAUDE.md` — SSOT 3 원본 propagation (sibling sync)

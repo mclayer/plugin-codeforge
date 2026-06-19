@@ -3079,7 +3079,7 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 |---|---|---|---|
 | ArchitectAgent (chief author) | Orchestrator (flat) | 전 deputy + 3 sub-tuple 산출물 multi-source synthesis | Opus |
 | CodebaseMapper | Orchestrator (flat) | existing codebase fact (as-is) | Sonnet |
-| RefactorAgent | Orchestrator (flat) | decoupling / pattern advocacy (to-be) | Sonnet |
+| RefactorAgent | Orchestrator (flat) | decoupling / reusability / pattern advocacy (to-be) | Sonnet |
 | ArchitectAnalyst (PriorArtAgent rename) | Orchestrator (flat) | 변경 전 기존 설계 (ADR / Change Plan / Story) 분석 단일 축 | Sonnet |
 
 #### (c) 정적 overlay 메커니즘 vs 동적 spawn-time Context Packet — 명시적 대비
