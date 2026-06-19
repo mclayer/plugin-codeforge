@@ -16,7 +16,7 @@ tools: Read
 
 ## 4-tuple sub-tuple spawn 가이드 (CFP-681 / ADR-044 CFP-676 reaffirm)
 
-> **deputy column 아님 — flat spawn 논리적 그룹핑** (물리적 spawn 계층(nested) 아님 — "4-level nested spawn" 오해 차단). 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling/pattern advocacy) + **ArchitectAnalyst** (Sonnet, 기존 설계 분석 단일 축).
+> **deputy column 아님 — flat spawn 논리적 그룹핑** (물리적 spawn 계층(nested) 아님 — "4-level nested spawn" 오해 차단). 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling / reusability / pattern / interface advocacy) + **ArchitectAnalyst** (Sonnet, 기존 설계 분석 단일 축).
 
 - **spawn gate**: 4 component 모두 Orchestrator 가 **flat spawn** — 재귀 spawn 금지 (platform inherent) / nested team 금지 / sub-lead 격상 0건 (ADR-044 + ADR-009 §결정 1 + ADR-039 정합).
 - ArchitectPLAgent = PL synthesizer — 산출물 통합 검수만, sub-agent 재귀 spawn 금지 (env=0 fallback = Orchestrator 직접 spawn one-shot).
@@ -59,7 +59,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 - ModuleArch (aggregate-level RDB OLTP) ↔ DataArch (빅데이터 OLAP) — ELT/ETL/CDC cross-layer = co-author 영역 (deferred carrier)
 - APIContractArch (transport surface) ↔ ModuleArch (module placement) — module public API ↔ transport contract = co-author 영역
 - SecurityArch (PII 정책) ↔ ModuleArch (aggregate-level PII persistence schema) — column type / encryption-at-rest schema = co-author 영역
-- RefactorAgent (reusability/decoupling **advocacy** — 중복·공통추출·repo-split pressure) ↔ ModuleArch (boundary **authority** — 경계 placement) = disjoint (CFP-2364 / ADR-042 Amendment 13). RefactorAgent 는 재사용 단위 / repo 분해 pressure 를 escalation-tier 로 제안만, 경계 확정은 ModuleArch + ArchitectAgent chief.
+- RefactorAgent (reusability/decoupling **advocacy** — 중복·공통추출·repo-split pressure) ↔ ModuleArch (boundary **authority** — 경계 placement) = disjoint (CFP-2364 / ADR-042 Amendment 13). RefactorAgent 는 pressure 를 escalation-tier 로 제안만. 경계 확정 권한: module/aggregate-level 경계 = ModuleArch authority / **repo-level 분해 경계 = ArchitectAgent chief authority** (macro-architecture, ModuleArch mandate 초과 — ModuleArch consult).
 
 > ⚠ **AggregateArch deprecated footnote** (CFP-1126 / ADR-042 Amd 10 + ADR-091 Amd 1, CFP-1168 realized): mandate carry-over to ModuleArch (boundary axis unified) 완료 — 본 matrix owner + axis disjoint 4 영역 + RACI 3-way 9-cell 모두 재편 완료 상태. agent file 실 deprecate = Wave 2 별 CFP carrier.
 
