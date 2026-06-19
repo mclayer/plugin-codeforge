@@ -56,7 +56,7 @@ permissions:
 |---|---|---|
 | ArchitectAgent (chief author) | Opus | multi-source synthesizer |
 | CodebaseMapperAgent | Sonnet | 현재 codebase fact |
-| RefactorAgent | Sonnet | decoupling / pattern advocacy |
+| RefactorAgent | Sonnet | decoupling / reusability / pattern advocacy |
 | **본 agent (ArchitectAnalyst)** | Sonnet | 변경 전 기존 설계 ADR / Change Plan / Story 분석 |
 
 - **deputy column 아님** — 4-tuple sub-tuple = 논리적 그룹핑(어느 deputy 영역 Context Packet 으로 spawn 됐는지 표기)일 뿐 물리적 nested spawn 계층 아님. "4-level nested spawn" 오해 차단 invariant.
