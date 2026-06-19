@@ -15,7 +15,9 @@
 #   - 환경변수 DUPLICATION_TOOL = "target dir 를 $1 로 받아 중복 백분율(float, 예 4.2)을
 #     stdout 1줄로 출력하는 command". 설정 시 그대로 호출.
 #   - 미설정 시 default = 내장 jscpd 호출 (npx --yes jscpd ... --reporters json) 후 json 의
-#     statistics.total.percentage 추출 (jq → python → grep fallback).
+#     total percentage 추출 (jq → python → grep fallback). top-level key = `statistics`(복수)
+#     가 주 키 (jscpd v5.0.10 실측 — `.statistics.total.percentage`). 구 버전/문서 일부는
+#     `statistic`(단수) 사용 → 파서는 **양쪽 키 모두 허용** (버전 편차 흡수).
 #
 # 환경변수:
 #   DUPLICATION_TOOL       — detector command override (위 계약)
@@ -39,30 +41,47 @@
 #
 set -euo pipefail
 
-THRESHOLD="${DUPLICATION_THRESHOLD:-5.0}"
-
-# target dir 결정: 인자 $1 > env DUPLICATION_TARGET > default.
-# default = src 있으면 src. src 부재 + 명시 target 0 = "측정할 source 없음" → graceful exit 0.
-# (wrapper-self = declarative-only repo 라 src 부재 → 암묵 whole-repo(.) scan 안 함, 조용히 통과.)
-# explicit target("." 포함) 은 그대로 존중.
-TARGET="${1:-${DUPLICATION_TARGET:-}}"
-if [ -z "$TARGET" ]; then
-  if [ -d src ]; then
-    TARGET="src"
-  else
-    # ① target source 부재 (default 해소 실패) → 조용히 exit 0
-    exit 0
-  fi
-fi
-
-# ① 명시 target 이 dir 아님 → 조용히 exit 0
-if [ ! -d "$TARGET" ]; then
-  exit 0
-fi
+# ─── 함수 정의 (source 시 main 로직 미실행 — 아래 lib 진입점 참조) ───
 
 # float 비교 헬퍼 (awk — bash 산술은 정수 only). a > b 면 0 반환.
 gt() {
   awk -v a="$1" -v b="$2" 'BEGIN { exit !(a > b) }'
+}
+
+# FIX 1 — jscpd json report 파싱 (별도 함수로 추출 = 테스트 가능).
+# top-level key 버전 편차 흡수: `statistics`(복수, jscpd v5.0.10 실측 주 키) → `statistic`(단수,
+# 구 버전/문서 변종) 순으로 try. jq → python → grep fallback. 추출 실패 시 빈 문자열.
+parse_jscpd_percentage() {
+  local report="$1"
+  [ -f "$report" ] || return 0
+
+  local pct=""
+  # jq — 양쪽 키 모두 시도 (// 연산자로 복수 → 단수 fallback)
+  if command -v jq >/dev/null 2>&1; then
+    pct="$(jq -r '.statistics.total.percentage // .statistic.total.percentage // empty' "$report" 2>/dev/null || true)"
+  fi
+  # python — statistics(복수) → statistic(단수) 순서로 try (둘 다 KeyError 시 빈 문자열)
+  local py=""
+  if [ -z "$pct" ]; then
+    if command -v python3 >/dev/null 2>&1; then py="python3"; elif command -v python >/dev/null 2>&1; then py="python"; fi
+    if [ -n "$py" ]; then
+      pct="$("$py" -c '
+import json,sys
+d=json.load(open(sys.argv[1]))
+for k in ("statistics","statistic"):
+    try:
+        print(d[k]["total"]["percentage"]); break
+    except (KeyError, TypeError):
+        continue
+' "$report" 2>/dev/null || true)"
+    fi
+  fi
+  # grep fallback — "percentage": 4.2 형태 첫 매치 (키 무관, total 우선 보장 없음 — 최후 수단)
+  if [ -z "$pct" ]; then
+    pct="$(grep -o '"percentage"[[:space:]]*:[[:space:]]*[0-9.]*' "$report" 2>/dev/null | head -1 | grep -o '[0-9.]*$' || true)"
+  fi
+
+  printf '%s' "$pct"
 }
 
 # detector 실행 → ratio (float, stdout 1줄) 반환. 불가 시 비어 있는 문자열 반환.
@@ -91,31 +110,47 @@ measure_ratio() {
     return 0  # jscpd 실행 실패 (네트워크 / 미설치) → 빈 문자열 → ② unavailable
   fi
 
-  local report="$tmp/jscpd-report.json"
-  if [ ! -f "$report" ]; then
-    rm -rf "$tmp" 2>/dev/null || true
-    return 0
-  fi
-
-  # statistics.total.percentage 추출 — jq → python → grep fallback
-  local pct=""
-  if command -v jq >/dev/null 2>&1; then
-    pct="$(jq -r '.statistics.total.percentage // empty' "$report" 2>/dev/null || true)"
-  fi
-  if [ -z "$pct" ] && command -v python3 >/dev/null 2>&1; then
-    pct="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["statistics"]["total"]["percentage"])' "$report" 2>/dev/null || true)"
-  fi
-  if [ -z "$pct" ] && command -v python >/dev/null 2>&1; then
-    pct="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["statistics"]["total"]["percentage"])' "$report" 2>/dev/null || true)"
-  fi
-  if [ -z "$pct" ]; then
-    # grep fallback — "percentage": 4.2 형태 첫 매치
-    pct="$(grep -o '"percentage"[[:space:]]*:[[:space:]]*[0-9.]*' "$report" 2>/dev/null | head -1 | grep -o '[0-9.]*$' || true)"
-  fi
+  local pct
+  pct="$(parse_jscpd_percentage "$tmp/jscpd-report.json")"
 
   rm -rf "$tmp" 2>/dev/null || true
   printf '%s' "$pct"
 }
+
+# 테스트 sourcing 진입점 — DUPLICATION_RATIO_LIB=1 로 source 하면 함수만 로드, main 미실행.
+if [ "${DUPLICATION_RATIO_LIB:-0}" = "1" ]; then
+  return 0 2>/dev/null || exit 0
+fi
+
+# ─── main 로직 ───
+
+THRESHOLD="${DUPLICATION_THRESHOLD:-5.0}"
+
+# FIX 3 — THRESHOLD 비숫자(오타/오설정)면 gt awk 비교가 fail-silent (초과 신호 소멸).
+# 숫자 검증 후 비숫자면 default 5.0 fallback + warning (조용한 소실 차단).
+if ! printf '%s' "$THRESHOLD" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; then
+  echo "::warning::duplication threshold misconfig ('${THRESHOLD}' 비숫자) — default 5.0 사용 (재사용성: DUPLICATION_THRESHOLD 설정 확인)"
+  THRESHOLD="5.0"
+fi
+
+# target dir 결정: 인자 $1 > env DUPLICATION_TARGET > default.
+# default = src 있으면 src. src 부재 + 명시 target 0 = "측정할 source 없음" → graceful exit 0.
+# (wrapper-self = declarative-only repo 라 src 부재 → 암묵 whole-repo(.) scan 안 함, 조용히 통과.)
+# explicit target("." 포함) 은 그대로 존중.
+TARGET="${1:-${DUPLICATION_TARGET:-}}"
+if [ -z "$TARGET" ]; then
+  if [ -d src ]; then
+    TARGET="src"
+  else
+    # ① target source 부재 (default 해소 실패) → 조용히 exit 0
+    exit 0
+  fi
+fi
+
+# ① 명시 target 이 dir 아님 → 조용히 exit 0
+if [ ! -d "$TARGET" ]; then
+  exit 0
+fi
 
 RATIO="$(measure_ratio "$TARGET" | head -1 | tr -d '[:space:]')"
 

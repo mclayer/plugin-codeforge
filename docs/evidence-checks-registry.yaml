@@ -2754,8 +2754,10 @@ entries:
       RefactorAgent (d) advocacy 의 정량 before 신호 (duplication ratio) 를 consumer CI 에서
       mechanical 산출. detector 계약: DUPLICATION_TOOL env (target dir → 중복 백분율 stdout)
       override 가능, 미설정 시 default jscpd (npx --yes jscpd --reporters json) 후
-      statistics.total.percentage 추출 (jq → python → grep fallback).
-      DUPLICATION_THRESHOLD (default 5.0%) 초과 시 ::warning:: emit, 이하면 무출력.
+      total percentage 추출 (parse_jscpd_percentage 함수 — top-level key statistics(복수,
+      jscpd v5.0.10 실측 주 키) 우선 + statistic(단수) 구 변종 허용 버전 편차 흡수,
+      jq → python → grep fallback).
+      DUPLICATION_THRESHOLD (default 5.0%, 비숫자면 5.0 fallback + warning) 초과 시 ::warning:: emit, 이하면 무출력.
       항상 exit 0 (warning-tier, 비차단). graceful degradation 3종 (target source 부재 /
       detector 불가 / ratio ≤ threshold) 모두 exit 0. wrapper-self = src 부재 declarative-only
       → graceful skip (CI 통과). consumer template = templates/github-workflows/duplication-check.yml

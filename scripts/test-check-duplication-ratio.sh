@@ -141,6 +141,65 @@ else
   FAIL=$((FAIL+1))
 fi
 
+# ── FIX 1+2: default jscpd json 파싱 경로 직접 검증 (anti-theater gap 메움) ──
+# parse_jscpd_percentage 함수를 lib source 로 로드해 실 jscpd 형태 fixture 로 검증.
+# (stub detector 만으로는 default 파싱 경로가 untested — P2 버그가 숨었던 이유.)
+# DUPLICATION_RATIO_LIB=1 로 source = 함수만 로드, main 미실행.
+# shellcheck disable=SC1090
+( DUPLICATION_RATIO_LIB=1 source "$SCRIPT" ) >/dev/null 2>&1  # syntax/source 가능 sanity
+DUPLICATION_RATIO_LIB=1 source "$SCRIPT" >/dev/null 2>&1
+
+# 실 jscpd v5 형태 (statistics 복수, jscpd 5.0.10 실측 키)
+echo '{"statistics":{"total":{"percentage":45.33}}}' > "$TMP/real-jscpd.json"
+# 구 버전/문서 변종 (statistic 단수)
+echo '{"statistic":{"total":{"percentage":12.7}}}' > "$TMP/old-jscpd.json"
+# 파싱 불가 (키 둘 다 없음)
+echo '{"duplicates":[]}' > "$TMP/no-pct.json"
+
+P_REAL="$(parse_jscpd_percentage "$TMP/real-jscpd.json")"
+P_OLD="$(parse_jscpd_percentage "$TMP/old-jscpd.json")"
+P_NONE="$(parse_jscpd_percentage "$TMP/no-pct.json")"
+
+if [ "$P_REAL" = "45.33" ]; then
+  echo "+ PASS: T7a: parse_jscpd_percentage(statistics 복수, 실 jscpd v5) = 45.33"
+  PASS=$((PASS+1))
+else
+  echo "x FAIL: T7a: statistics(복수) 파싱 실패 — got [$P_REAL] expected 45.33"
+  FAIL=$((FAIL+1))
+fi
+
+if [ "$P_OLD" = "12.7" ]; then
+  echo "+ PASS: T7b: parse_jscpd_percentage(statistic 단수, 구 변종) = 12.7 (버전 편차 흡수)"
+  PASS=$((PASS+1))
+else
+  echo "x FAIL: T7b: statistic(단수) 변종 흡수 실패 — got [$P_OLD] expected 12.7"
+  FAIL=$((FAIL+1))
+fi
+
+if [ -z "$P_NONE" ]; then
+  echo "+ PASS: T7c: percentage 키 부재 json → 빈 문자열 (caller 가 unavailable 처리)"
+  PASS=$((PASS+1))
+else
+  echo "x FAIL: T7c: percentage 부재인데 비어있지 않음 — got [$P_NONE]"
+  FAIL=$((FAIL+1))
+fi
+
+# ── FIX 3: 비숫자 threshold → default 5.0 fallback + misconfig warning ──
+# 비숫자 threshold(예 'abc') 면 gt 비교가 fail-silent 했던 회귀 차단.
+# stub ratio 9.0 > fallback 5.0 → duplication warning 도 함께 살아있어야 함 (신호 미소실).
+T8_OUT=$( cd "$TMP" && DUPLICATION_TOOL="bash $STUB_DIRTY" DUPLICATION_THRESHOLD="abc" bash "$SCRIPT" 2>&1 ) || true
+T8_EXIT=0; ( cd "$TMP" && DUPLICATION_TOOL="bash $STUB_DIRTY" DUPLICATION_THRESHOLD="abc" bash "$SCRIPT" >/dev/null 2>&1 ) || T8_EXIT=$?
+if echo "$T8_OUT" | grep -q "threshold misconfig" \
+   && echo "$T8_OUT" | grep -q "duplication ratio 9.0%" \
+   && [ "$T8_EXIT" -eq 0 ]; then
+  echo "+ PASS: T8: 비숫자 threshold → misconfig warning + default 5.0 로 9.0% 초과 신호 유지 (exit 0)"
+  PASS=$((PASS+1))
+else
+  echo "x FAIL: T8: 비숫자 threshold fallback 미작동 (fail-silent 회귀)"
+  echo "  exit=$T8_EXIT Output: $T8_OUT"
+  FAIL=$((FAIL+1))
+fi
+
 echo ""
 echo "============================================"
 echo "Total: PASS=$PASS FAIL=$FAIL"
