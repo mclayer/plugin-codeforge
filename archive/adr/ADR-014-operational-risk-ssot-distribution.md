@@ -9,6 +9,7 @@ related_stories:
   - CFP-128 (amends — Docker-first §7.4 mandate 4 항목 확장)
   - CFP-1059 (Amendment 5 — InfraOperationalArchitect ↔ DeployPL boundary axis 명시, 운영 risk SSOT vs 배포 행위 disjoint)
   - CFP-2331 (Amendment 6 — §7.4.7 operational throughput/scale = primary (non-deferrable) design-stage AC mandate, warning-first, Epic CFP-2324 S7, #2323 흡수. #1079 test-parity/container axis additive slot + conflict:adr-number / merge-order 마킹)
+  - CFP-2348 (Amendment 7 — §7.4.7 에 outcome-signal 3요소 선언 의무 추가 (terminal downstream sink / monotone progress metric / 발현조건 임계). ingest-boundary proxy 가 아닌 terminal downstream sink 의 monotone 진행을 게이트 PASS 1차 metric 으로. ADR-119 §결정 10 ① 운영 AC instantiation, Epic #2346 감지축 A S2. §7.4.7 internal 확장만 — #1079 §7.4.8 자리 무점유, merge-order:1)
 related_files:
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
@@ -18,6 +19,8 @@ related_files:
   - docs/inter-plugin-contracts/design-output-v2.md (created in PR-E canonical / PR-F sibling)
 amendments:
   - ADR-033
+  - ADR-119  # Amendment 7 — §결정 10 ① 게이트 verdict = outcome ground-truth, 본 §7.4.7 outcome-signal 선언이 그 운영 AC instantiation
+  - ADR-121  # Amendment 7 — outcome 실 측정 주체 = consumer post-deploy CI (§결정 3 위임). codeforge 배포/배포리뷰 lane 폐지 → 측정 주체 아님 (설계-시점 선언 schema 만)
 is_transitional: false
 ---
 
@@ -481,3 +484,71 @@ InfraOperationalArchitect §7.4 schema 에 **§7.4.7 Operational throughput/scal
 - ADR-014 Amendment 6 paired sibling = ADR-045 Amendment 12 (CFP-2330, S6 gate-provenance) — 동일 Epic CFP-2324 gate-model 일관 설계 묶음
 
 cross-ref: Epic CFP-2324 §why (S7) / Change Plan CFP-2324-gate-core §7.4 / Story CFP-2331 §3.
+
+## Amendment 7 (CFP-2348, 2026-06-19): §7.4.7 에 outcome-signal 선언 의무 추가 (terminal downstream sink / monotone progress metric / 발현조건 임계 — 차단형 declarative)
+
+> **형식 주의 (EC-5)**: 본 ADR-014 의 amendment 는 body `## Amendment N` section 방식 (frontmatter amendment_log field 부재 — frontmatter `amendments: [ADR-033, ADR-119, ADR-121]` 만 + `related_stories` Amendment 7 row). Amendment 1/2/3/4/5/6 동일 패턴 답습.
+
+### 동기
+
+Epic #2346 (감지축 A) S2 (CFP-2348) carrier — ADR-119 Amendment 2 §결정 10 ① (게이트 verdict = 외부 관측 가능 end-outcome ground-truth, internal liveness proxy 아님 — verified via worktree Read ADR-119 line 192-198) 의 **운영 AC instantiation**. Amendment 6 (CFP-2331) 가 §7.4.7 에 2축 measurable AC (throughput / bounded-memory RSS) 를 신설했으나, throughput 축의 예시 `≥ M events/s **ingest**` (verified via worktree Read ADR-014 **Amendment 6 §7.4.7 throughput 축** — `≥ M events/s ingest` 예시) 는 **ingest-boundary** — 수집 경계의 internal proxy 다. ingest 가 green 이어도 downstream 적재가 동결될 수 있다 (incident: WAL 수용 green → drain 동결 → terminal object-store 미성장 — ADR-119 line 190/196 incident 근거 mctrader-data#447 / collector#25 정합, verified via worktree Read).
+
+따라서 게이트 PASS 조건의 1차 metric 은 **terminal downstream sink 의 monotone 진행 (outcome ground-truth)** 이어야 하며 ingest/internal liveness proxy 가 아니다 — ADR-119 §결정 10 ① 의 운영 AC 측 정합 (실측 아닌 설계-시점 선언). 본 Amendment 7 = §7.4.7 **internal 확장만** (신규 §7.4.8+ sub 신설 0) — Amendment 6 의 2축 AC 위에 outcome-signal 3요소 선언 의무를 additive 로 강화.
+
+본 Amendment 7 = ADR-014 결정 1~5 본문 변경 0건 — §7.4 schema 의 §7.4.7 sub 를 internal 확장 (codeforge-design plugin canonical 본문 = Phase 2 sibling, 본 wrapper SSOT = 책임 매트릭스 row 갱신만, 결정 1/2 정합). `is_transitional: false` 유지.
+
+### 결정 1 — §7.4.7 에 outcome-signal 3요소 선언 의무 (차단형 declarative)
+
+operational(`operational:true` label 부착) Story 의 §7.4.7 AC 는 Amendment 6 의 기존 2축 (throughput / RSS) 에 더해 **outcome-signal 3요소** 를 선언해야 한다:
+
+| 요소 | 정의 | 예시 | 설계 시점 (hard / non-deferrable) | 실측 (defer 가능) |
+|---|---|---|---|---|
+| ① **terminal downstream sink** | 최종 적재처 경로 (수집 경계 proxy 아닌 outcome ground-truth 의 도달점) | object-store parts / DB committed rows / message offset | sink 경로 식별·명시 = 설계 시점 확정 | — (경로는 숫자 아님) |
+| ② **monotone progress metric** | 그 sink 의 단조 증가 metric (시간에 따라 monotone, 동결 = outcome 정지 신호) | written parts 수 / committed row count / consumer-committed offset | metric 명·단조 방향 = 설계 시점 확정 | metric 의 임계 숫자만 (③) |
+| ③ **발현조건 임계** | accumulation/lifetime-class 리스크가 드러나는 누적량 (그 sink 가 성장해야 할 최소 진행) | `≥ 8 MiB/shard` flush 누적 / `≥ N rows committed per window` | 임계의 존재·축 = 설계 시점 확정 | 숫자값 = `[empirical-source: <ref> \| TBD]` 박제 허용 |
+
+**근본 교정 (이 Amendment 의 delta)**:
+- Amendment 6 의 throughput 축 예시 `≥ M events/s **ingest**` (Amendment 6 §7.4.7 throughput 축) 는 **ingest-boundary** (내부 proxy) — ingest 가 green 이어도 terminal 적재가 동결될 수 있다.
+- 따라서 게이트 PASS 조건의 **1차 metric = terminal downstream sink 의 monotone 진행** (outcome ground-truth) 이어야 하며 ingest / internal liveness proxy 가 아니다. → ADR-119 §결정 10 ① ("게이트 PASS 조건 = 외부 관측 가능 end-outcome ground truth, internal liveness proxy 아님" — verified via worktree Read ADR-119 line 194) 의 **운영 AC instantiation**.
+- ③ 발현조건 임계 = ADR-119 §결정 10 ① "accumulation / lifetime-class 리스크의 관측 창 (soak) 은 발현조건 기반 도출 — 고정 단창 금지" (verified via worktree Read ADR-119 line 197 + ADR-015 stateful soak 정합) 의 설계-시점 선언 면 (어떤 누적량에서 리스크가 발현되는지를 설계 시점에 임계로 declare).
+
+**적용 조건 (CONDITIONAL trigger)**: Amendment 6 결정 1 과 동일 — `operational:true` label 부착 Story (`component:runner` / `component:ingestion` / `component:persistence` 중 1+ 동반). 비운영 Story = `N/A — non-operational (terminal sink 부재)` 명시.
+
+### 결정 2 — 측정 주체 경계 (ADR-121 정합 — runtime 게이트 신설 아님)
+
+- **outcome 의 실 측정 주체 = consumer post-deploy CI / 관측** (ADR-121 §결정 3 "wrapper 제공물 = consumer 위임 템플릿만 (workflow seed + Environments 설정 가이드 + post-deploy smoke job)" — verified via worktree Read ADR-121 line 61). codeforge 배포 / 배포리뷰 lane 은 ADR-121 로 **폐지** (verified via worktree Read ADR-121 line 47/66) → 측정 주체 아님.
+- 본 Amendment 7 = **설계-시점 선언 schema** (어떤 terminal sink·metric·임계를 게이트 PASS 조건으로 declare 하는가) 이지 **runtime 게이트 신설 아님**. **deploy-review lane 부활 금지** (Amendment 6 결정 5 정합 — ADR-088 amend 0건, ADR-121 완전 위임 모델 안 consumer post-deploy benchmark job 으로 연결).
+
+### 결정 3 — wrapper-self declarative (실측 면제)
+
+- **wrapper-self (dogfood) = declarative**: codeforge wrapper-self Story 는 runtime 0 (governance Story, 실 부하 / terminal sink 측정 환경 부재) → outcome-signal 선언 (① terminal sink 경로 명시 + ② metric 명 + ③ 임계 `[empirical-source: TBD]`) **존재만 의무, 실측 면제** (ADR-005 `plugin-meta-na` 정합 — Amendment 6 결정 2 답습).
+- **non-deferrable 경계 (Amendment 6 §7.4.7 패턴 답습)**: outcome-signal 3요소의 **존재·구조** 는 설계 시점 hard (공백 = 위반) — 실측 임계 숫자 (③) 만 `[empirical-source: TBD]` defer 허용. 즉 "terminal sink / monotone metric 선언이 아예 없음" 은 §7.4.7 위반이지만 "임계 = TBD (실측 전)" 은 정상.
+
+### 결정 4 — enforcement = Phase 1 declarative-only
+
+- **Phase 1 (본 Amendment 7, declarative anchor)**: §7.4.7 에 outcome-signal 3요소 선언 의무 codify (schema 확장). mechanical enforce 부재.
+- **Phase 2 (별 carrier defer)**: (a) `operational:true` Story 의 outcome-signal 누락 detect mechanical lint (b) change-plan §7.4.7 body mirror (codeforge-design canonical) (c) consumer post-deploy benchmark seed — 모두 **별 sub-carrier defer** (ADR-119 §결정 8 declarative-only / ADR-060 4-tier promotion / Amendment 6 결정 3 Phase 1/2 split 답습 — verified via worktree Read ADR-119 line 213).
+
+### 결정 5 — §7.4.8 무점유 + #1079 merge-order 보존
+
+- 본 Amendment 7 = §7.4.7 **internal 확장만** (신규 sub 신설 0) — #1079 의 §7.4.8 (test-parity / container axis) 자리 **무점유** (Amendment 6 결정 4 정합 — verified via worktree Read ADR-014 **Amendment 6 결정 4** — #1079 §7.4.8 disjoint slot).
+- **conflict 마킹**: 본 Amendment 7 PR 과 #1079 carrier PR 동시 open 시 `conflict:adr-number` label (§7.4 schema row 동시 수정 감지) — 단 본 Amendment = ADR-014 body Amendment 방식이라 ADR 번호 충돌 자체는 무 (둘 다 ADR-014 body section).
+- **merge-order 마킹**: `merge-order:1` (본 Amendment 7, CFP-2348) / `merge-order:2` (#1079) 관례 적용 — 동시 진행 시. #1079 dormant 보존 (fold 안 함).
+
+### 기존 정책 변경 0건 (ADR-014 본문)
+
+본 Amendment 7 = ADR-014 결정 1~5 본문 변경 0건 + Amendment 1~6 본문 변경 0건. 변경 = (a) 본 `## Amendment 7` body section (b) `related_stories` frontmatter row append (CFP-2348) (c) `amendments:` frontmatter ADR list 에 ADR-119 / ADR-121 cross-ref 추가. §7.4 schema 자체 codeforge-design SSOT (결정 1) + wrapper SSOT 3 영역 한정 (결정 2) + §11 idempotency CONDITIONAL (결정 3) + N/A allowed 조항 (결정 4) + design-output BREAKING bump (결정 5) 모두 정책 변경 0건. ratchet 강화 방향 (§7.4.7 에 outcome-signal 3요소 선언 의무 additive — Amendment 6 의 2축 위에 outcome ground-truth 1차 metric 강화, scope 명시 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (강화 방향 only, 약화 0).
+
+### Cross-references
+
+- ADR-119 Amendment 2 §결정 10 ① (게이트 verdict = 외부 관측 가능 end-outcome ground truth, internal liveness proxy 아님 — 본 §7.4.7 outcome-signal 선언이 그 운영 AC instantiation. verified via worktree Read ADR-119 line 192-198. ADR-014 §7.4.7 child S2 = ADR-119 line 40/196 에서 명시)
+- ADR-121 §결정 3 (consumer 위임 템플릿 — workflow seed + post-deploy smoke job, outcome 실 측정 주체 = consumer post-deploy CI. verified via worktree Read ADR-121 line 61) + 배포/배포리뷰 lane 폐지 (line 47/66 — codeforge 측정 주체 아님, runtime 게이트 신설 아님)
+- ADR-014 Amendment 6 §결정 1 (§7.4.7 2축 measurable AC + non-deferrable 패턴 — 본 Amendment 7 이 outcome-signal 3요소로 additive 강화, throughput 축의 ingest-boundary 예시 근본 교정. verified via worktree Read ADR-014 **Amendment 6 §결정 1** — §7.4.7 의무 항목 2축 measurable AC table)
+- ADR-014 Amendment 6 §결정 5 (deploy-review lane 부활 금지 / ADR-088 amend 결격 — 본 Amendment 7 무변경 계승)
+- ADR-015 stateful soak (accumulation/lifetime-class 리스크 발현조건 기반 관측 창 — ③ 발현조건 임계 정합, ADR-119 line 197 cross-ref)
+- ADR-068 Amendment 1 I-5 (dimensional empirical grounding — outcome-signal ③ 임계 = `[empirical-source: <ref> | TBD]` annotation, review-verdict-v4 dimensional_empirical_self_check_passed binding)
+- ADR-005 (plugin self-application NA — wrapper-self declarative 면제 정합)
+- ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 only — 약화 0)
+- [#1079](https://github.com/mclayer/plugin-codeforge/issues/1079) (OpsExecutionArchitect 신설 + §7.4 test-parity/container mandate 보강, dormant — 본 Amendment 7 §7.4.7 internal 확장과 §7.4.8 자리 disjoint, merge-order:1 / #1079 merge-order:2 coordinate, fold 안 함)
+
+cross-ref: Epic #2346 §감지축 A (S2) / Story CFP-2348 §3 / ADR-119 Amendment 2 §결정 10 ①.
