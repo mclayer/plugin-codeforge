@@ -779,7 +779,7 @@ async def soak_order_batch_accumulator():
 #### Wrapper-self 면제 (declarative-only)
 
 wrapper 자체 governance Story (예: codeforge agent 신설, 설계 도구 변경) = operational:true 부착 불가 (wrapper 는 운영 부하 0). 대신:
-- Change Plan §7.4.7 에 `[empirical-source: TBD]` 박제 + outcome-signal 3요소 선언
+- Change Plan §7.4.7 에 `[empirical-source: TBD]` 기재 + outcome-signal 3요소 선언
 - §8.5.1 soak 실행 면제 + "declarative-only" 명시
 
 ### 1p. Confluence migration 셋업 (opt-in, CFP-1668 / [ADR-100 Amendment 2](../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) + [ADR-111 Amendment 2](../archive/adr/ADR-111-confluence-mirror-classification-policy.md))
