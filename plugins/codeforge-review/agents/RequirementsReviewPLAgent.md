@@ -93,6 +93,41 @@ review_packet:
   related_adrs: <Story §3 또는 요구사항 산출물에서 추출>
 ```
 
+## 워커 packet 작성 — runtime-failure 변종 (lane=requirements-review, ADR-125 Amendment 2)
+
+> 위 외부사실 의존성 게이트 (§워커 packet 작성 + §검증 스코프) 는 **무손상** 이다. 본 섹션은 runtime-failure Story 한정으로 발동하는 **additive 축** — 외부사실 mandate 와 disjoint 한 **internal-invariant ground-truth falsification** 축 (ADR-124 §결정 6 무약화). 정상 요구사항 산출물 리뷰는 위 외부사실 게이트로 발동, 본 변종 N/A.
+
+**트리거**: Story 가 runtime-failure 요구사항 lane 재진입 (ADR-064 §결정 13 root-cause 사다리 3rd rung — 문제정의 오류 → 요구사항 lane 재진입) 인 경우. 트리거 조건 = (a) 직전 진단이 표면 증상-anchored (코드·invariant 미실측) 또는 (b) 같은 가설이 hypothesis-differentiation escalation 종점 (현재 '설계') 까지 가서도 반복 FAIL → 1차 가정을 문제정의 오류로 재분류. lane=requirements-review 유지 (lane enum 무변경 — `requirements-review` 값을 internal-invariant 축으로 재사용, 외부사실 축과 disjoint 공존).
+
+**packet 변종 — hypothesis-withheld 4-tuple**:
+
+```yaml
+review_packet:
+  contract_version: "1.1"
+  lane: requirements-review
+  checklist_path: templates/review-checklists/requirements-runtime-failure.md   # 변종 checklist
+  variant: runtime-failure                  # internal-invariant falsification 축 식별
+  hypothesis_withheld: true                  # 기존 진단(prohibited prior) 숨김 — 확증 편향 차단
+  falsifier_tuple:                           # 4-tuple — Orchestrator 의 기존 원인 단정 제외
+    code: <실패 경로 코드 file>
+    symptom: <관찰된 runtime 실패 증상>
+    outcome_contract: <충족되어야 했던 outcome 계약>
+    invariant_surface: docs/system-invariants.md   # ADR-068 I-8 standing surface
+  scope_globs:
+    - <실패 경로 코드 file>
+    - docs/system-invariants.md              # I-8 standing invariant-surface 색인
+  category_enum:
+    - invariant-violation                    # review-verdict-v4 §18.1 (12번째 literal, v4.14 live)
+  severity_overrides:
+    - "증상을 설명하는 file:line 위반 invariant → P0/P1 (비대칭 규칙 — 단일 falsification > N attestation)"
+    - "증상-anchored 단정 / 가설 확증 / 외부조사 강제 (검사연극) → finding 발의 금지 (ADR-119 §결정 6 / §결정 10 ②)"
+  story_key: <STORY_KEY>
+```
+
+**비대칭 verdict 규칙 (필수)**: review-verdict-v4 §18.3 `invariant-violation` finding (증상을 설명하는 file:line 으로 짚힌 위반 invariant) **1개 > N개 "verified OK"**. 단일 falsification 이 N attestation 을 이기므로 (Popper), "전부 확인함 OK" attestation 만으로 PASS 불가 — falsifier 탐색이 의무. 워커는 **generative invariant sweep** 수행: 실패 경로 long-lived mutable 구조 열거 + bound/lifetime/ordering invariant 명시 + 코드 보존 file:line 실측 (ADR-068 I-8 standing invariant-surface cross-ref — `docs/system-invariants.md` 색인과 대조).
+
+**enforcement note**: ADR-064 §결정 13 root-cause 사다리 측 wire (skill body) 와 sibling carrier (disjoint axis 두 짝). review-verdict-v4 §18 (v4.14, PS1 merged) = packet 레벨 realization SSOT — 본 lane 은 그 `invariant-violation` finding 을 emit·종합.
+
 ## FIX 카운터 정책
 
 - **최대 3회** — 초과 시 ESCALATE (사용자 지시 대기)
