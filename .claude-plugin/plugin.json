@@ -1,7 +1,7 @@
 {
   "name": "codeforge",
-  "version": "6.27.0",
-  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행",
+  "version": "6.28.0",
+  "description": "+ CFP-2369 (2026-06-19) — Reusability(d) 중복비율 측정 Phase-2 mechanical wire (warning-tier): scripts/check-duplication-ratio.sh (DUPLICATION_TOOL/THRESHOLD/TARGET env, default jscpd, 항상 exit 0 비차단) + scripts/test-check-duplication-ratio.sh (stub detector dirty/clean RED→GREEN 변별 anti-theater) + templates/github-workflows/duplication-check.yml (consumer-template, non-required) + evidence-checks-registry entry duplication-ratio-warning. CFP-2364 (RefactorAgent (d) 축) 측정 연동 deferred → mechanical 실현, ADR-042 Amendment 14. repo-분해 advisory 유지. 6.27.0 → 6.28.0 MINOR (consumer-facing surface 신규). marketplace version sync(ADR-063). Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행",
   "author": {
     "name": "Josh"
   },

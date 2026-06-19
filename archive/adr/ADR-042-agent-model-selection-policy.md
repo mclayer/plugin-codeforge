@@ -148,6 +148,21 @@ amendment_log:
       - ADR-086 (CFP-2364 — Deputy 신설 결정 framework 의 axis 분석 lens adjacent-case 적용 — axis disjoint + 5-checklist as 도구. mandate 확장은 ADR-086 explicit scope 미열거이므로 framework 전면 self-application 주장 아님)
       - ADR-063 (marketplace atomic version sync — codeforge-design 0.26.0 → 0.27.0 MINOR mirrored field)
       - ADR-037 (plugin version bump rule — mandate 확장 = MINOR bump trigger)
+  - amendment_id: 14
+    date: "2026-06-19"
+    status: applied
+    summary: "CFP-2369 — RefactorAgent (d) Reusability 축 측정 연동 Phase-2 mechanical wire (warning-tier duplication-ratio 측정). CFP-2364 Amendment 13 가 (d) Reusability 축을 1급 advocacy 로 신설하되 측정은 Phase-1 declarative (RefactorAgent 가 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) emit 하나 자동 측정·enforcement deferred) 로 두었음 (Amendment 13 §변경 사항 '측정 연동 (declaration-only Wave 1)' + ADR-086 5-checklist #5 deferred trigger). 본 Amendment 14 = 그 deferred 를 mechanical wire 로 실현 — warning-tier duplication-ratio 측정 도구 (scripts/check-duplication-ratio.sh) + consumer template (templates/github-workflows/duplication-check.yml) + anti-theater discriminating test (scripts/test-check-duplication-ratio.sh, stub detector 로 dirty/clean RED→GREEN 변별 실증) + evidence-check-registry entry (duplication-ratio-warning, owner_adr ADR-042 / carrier_adr ADR-060, warning tier) codify. detector 계약 = DUPLICATION_TOOL env (target dir → 중복 백분율 stdout) override 가능, 미설정 시 default jscpd (npx --yes jscpd --reporters json) statistics.total.percentage 추출. DUPLICATION_THRESHOLD (default 5.0%) 초과 시 ::warning:: emit, 항상 exit 0 (비차단). wrapper-self = src 부재 declarative-only → graceful skip (CI 통과). RefactorAgent 역할 = Grep/Glob 로 중복 위치 식별·verbatim 인용 + 정량 ratio 는 CI 검사 결과 참조 (에이전트 권한 확장 0 — 도구 직접 실행 안 함, CI 가 구동). **여전히 warning-tier (비차단)** — blocking 승격은 evidence 누적 후 별 CFP. **repo-분해 mechanical gate 는 advisory 유지 (out-of-scope)** — 응집 cluster → repo 분리 advocacy 는 ArchitectAgent chief 판정 회부 (mechanical gate 아님). RefactorAgent.md 측정 연동 단락 deferred → tool-grounded 정정 (frontmatter / roster / 카테고리 4 / model tier Sonnet 무변경 — 본문 측정 단락만 갱신). bump 0.27.0 → 0.28.0 (codeforge-design, RefactorAgent 측정 grounding) + 6.27.0 → 6.28.0 (wrapper root codeforge, scripts/templates/workflow/registry 신규 consumer-facing surface) MINOR (ADR-037). marketplace version sync (ADR-063). ratchet 강화 방향 (declarative → mechanical 측정 = enforcement scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불요."
+    ref: CFP-2369
+    carrier_story: CFP-2369
+    sunset_justification: null
+    affected_agents:
+      - RefactorAgent (측정 연동 단락 deferred → tool-grounded 정정 — mandate / 카테고리 4 / model tier Sonnet 무변경, codeforge-design. 본문 측정 단락만 갱신)
+    cross_ref:
+      - ADR-042 Amendment 13 (CFP-2364 — Phase-1 declarative substrate, (d) Reusability 축 신설 + 측정 연동 deferred. 본 Amendment 14 = 그 deferred trigger follow-through)
+      - ADR-060 (evidence-checks-registry framework — duplication-ratio-warning entry carrier, warning tier)
+      - ADR-086 5-checklist #5 (deferred trigger 명시 — CFP-2364 adjacent-case 적용 표의 후속 carrier 별 CFP 가 본 CFP-2369)
+      - ADR-037 (plugin version bump rule — consumer-facing surface 신규 = MINOR bump trigger, codeforge-design 0.27.0 → 0.28.0 + wrapper 6.27.0 → 6.28.0)
+      - ADR-063 (marketplace atomic version sync — codeforge-design + wrapper mirrored field version 변경)
 related_stories:
   - CFP-448
   - CFP-676
@@ -157,6 +172,7 @@ related_stories:
   - CFP-1155  # Amendment 11 carrier — UpgradeAgent walker model tier (declarative Sonnet → imperative walk Opus, ADR-098 §결정 2 carry, CFP-1111 Wave 2 Story-4)
   - CFP-1845  # Amendment 12 carrier — model 버전 핀 → 별칭(opus/sonnet/haiku) 전환 (항상 최신 tier 지칭, ADR-057 Amendment 4 sibling atomic)
   - CFP-2364  # Amendment 13 carrier — RefactorAgent Reusability 1급 축 신설 (3 카테고리 → 4 카테고리, ISO/IEC 25010 Maintainability gap, axis disjoint advocacy ↔ ModuleArch authority, ADR-086 axis 분석 lens adjacent-case 적용)
+  - CFP-2369  # Amendment 14 carrier — (d) Reusability 측정 연동 Phase-2 mechanical wire (warning-tier duplication-ratio 측정: check-duplication-ratio.sh + consumer template + evidence-registry entry, CFP-2364 deferred trigger follow-through, repo-분해 advisory 유지)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -241,6 +257,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 > **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref.
 >
 > **Amendment 13 (2026-06-19, CFP-2364)**: Sonnet (a) single-mandate advocate **RefactorAgent** 의 mandate scope 확장 — decoupling / pattern / interface 분리 3 카테고리 → + **(d) Reusability (재사용성)** 4 카테고리 (ISO/IEC 25010 Maintainability gap 충당, 신설 아님 — 기존 sub-tuple agent mandate 확장). model tier Sonnet 무변경 (single-mandate advocacy 패턴 유지 — reusability pressure 식별·제안 단일 축, multi-source synthesis 는 ArchitectAgent chief Opus). axis disjoint = RefactorAgent reusability advocacy ↔ ModuleArch boundary authority. 상세 = 본 ADR `## Amendment 13` body section.
+>
+> **Amendment 14 (2026-06-19, CFP-2369)**: Amendment 13 의 (d) Reusability **측정 연동** 을 Phase-1 declarative (신호 제공까지) 에서 **Phase-2 mechanical wire (warning-tier duplication-ratio 측정)** 로 실현. model tier / roster / 카테고리 4 무변경 — RefactorAgent.md 측정 연동 단락만 deferred → tool-grounded 정정. 도구 = `scripts/check-duplication-ratio.sh` (warning-tier, 항상 exit 0) + consumer template + evidence-registry entry `duplication-ratio-warning`. RefactorAgent 권한 확장 0 (도구 구동 주체 = CI). repo-분해 mechanical gate 는 advisory 유지 (out-of-scope). 상세 = 본 ADR `## Amendment 14` body section.
 >
 > **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
 | **Haiku** | haiku | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
@@ -893,3 +911,56 @@ axis 분석 (§결정 1): 기존 N deputy axis 와 RefactorAgent 확장 axis (re
 - ADR-091 §결정 1/5 (RefactorAgent DDD pattern mapping — `domain-service-sub-tuple` 4 카테고리 정합)
 - ISO/IEC 25010:2023(en) Maintainability sub-characteristics (Reusability 정의 source — https://www.iso.org/obp/ui/en/#!iso:std:78176:en)
 - `skills/deputy-mandate/SKILL.md` + `plugins/codeforge-design/CLAUDE.md` — SSOT 3 원본 propagation (sibling sync)
+
+---
+
+## Amendment 14 — (d) Reusability 측정 연동 Phase-2 mechanical wire (warning-tier duplication-ratio, CFP-2369)
+
+**날짜**: 2026-06-19
+
+### 동기 (Amendment 13 의 deferred trigger follow-through)
+
+Amendment 13 (CFP-2364) 는 RefactorAgent 에 (d) Reusability 축을 1급 advocacy 로 신설하되, **측정은 Phase-1 declarative** 로 두었다 — RefactorAgent 가 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) 를 emit 하나, **자동 측정·enforcement (clone-detector / duplication-ratio CI gate) 는 deferred** (Amendment 13 §변경 사항 "측정 연동 (declaration-only Wave 1)" + ADR-086 5-checklist #5 "deferred trigger 명시 — 향후 evidence-check-registry entry 별 CFP carrier"). 본 Amendment 14 = 그 **deferred trigger 의 follow-through** — warning-tier mechanical wire 로 실현한다.
+
+### 변경 사항 (mechanical wire 4 산출물 + 정정)
+
+| # | 산출물 | 내용 |
+|---|---|---|
+| 1 | `scripts/check-duplication-ratio.sh` (신규) | warning-tier duplication-ratio 측정 — 항상 exit 0. detector 계약: `DUPLICATION_TOOL` env (target dir → 중복 백분율 stdout) override / 미설정 시 default jscpd (`npx --yes jscpd --reporters json`) 후 `statistics.total.percentage` 추출 (jq → python → grep fallback). `DUPLICATION_THRESHOLD` (default 5.0%) 초과 시 `::warning::` emit, 이하면 무출력. graceful degradation 3종 (target source 부재 / detector 불가 / ratio ≤ threshold) 모두 exit 0 |
+| 2 | `scripts/test-check-duplication-ratio.sh` (신규) | anti-theater discriminating test — **stub detector** 로 dirty(ratio 9.0 > thr 5.0)=warning ↔ clean(1.0 ≤ thr)=no-warning **RED→GREEN 변별 실증** (둘 다 warning/no-warning 이면 theater). missing-case (경계값 ratio==thr → ≤ clean 처리) + warning 문자열 수치 grounding + exit code assert 포함 |
+| 3 | `templates/github-workflows/duplication-check.yml` (신규, consumer-template) | consumer 가 `.github/workflows` 로 복사해 wire 하는 seed — node setup + `check-duplication-ratio.sh` (warning-tier) + `test-...sh` 2 job. **non-required** (branch protection 무변경). wrapper-self CI 아님 |
+| 4 | `docs/evidence-checks-registry.yaml` entry `duplication-ratio-warning` | tier=warning, owner_adr ADR-042 / carrier_adr ADR-060, detect_command + consumer template workflow + sibling_dependencies CFP-2364 |
+| — | `plugins/codeforge-design/agents/RefactorAgent.md` 정정 | "재사용성 측정 연동" 단락 deferred → tool-grounded — 자동 측정 수단 존재 (consumer CI 의 check-duplication-ratio.sh), 본 에이전트는 Grep/Glob 로 중복 위치 verbatim 인용 + 정량 ratio 는 CI 검사 결과 참조 (**에이전트 권한 확장 0 — 도구 직접 실행 안 함**). frontmatter / roster / 카테고리 4 / model tier Sonnet 무변경 |
+
+### warning-tier 불변 + repo-분해 out-of-scope
+
+- **warning-tier (비차단)**: `check-duplication-ratio.sh` 는 모든 경로 exit 0 — duplication ratio 초과 시 경고만 emit, merge 미차단. "게이트가 자동으로 향상을 강제 (blocking) 검증한다" 단언 금지 — 현 단계는 mechanical 측정 + warning 까지. **blocking 승격은 evidence 누적 후 별 CFP** (ADR-060 §결정 6 promotion gate).
+- **repo-분해 mechanical gate 는 advisory 유지 (out-of-scope)**: Amendment 13 의 repo-level 분해 advocacy (응집 cluster → 별 deploy/ownership 단위 분리) 는 본 Amendment 의 mechanical wire 대상이 아니다. repo-분해 경계 확정 = ArchitectAgent chief authority (macro-architecture) 로 advisory 유지 — 본 duplication-ratio 측정은 코드-수준 중복 비율만 산출하며 repo 분리 판정을 mechanical 하게 강제하지 않는다.
+
+### RefactorAgent 권한 경계 (확장 0)
+
+본 Amendment 는 RefactorAgent 의 permission frontmatter 를 변경하지 않는다. 측정 도구 (jscpd 등) 구동 주체 = **consumer CI** (workflow). RefactorAgent 는 `Read` / `Grep` / `Glob` 로 중복 위치를 식별·verbatim 인용하고, 정량 ratio 는 CI 검사 결과를 참조한다 — 도구를 직접 실행하지 않는다 (읽기 전용 분석·제안 역할 보존).
+
+### ADR-086 5-checklist #5 follow-through
+
+Amendment 13 의 ADR-086 adjacent-case 적용 표 #5 (deferred trigger 명시) 가 "duplication ratio 자동 측정 도구 (mechanical enforcement) 는 향후 evidence-check-registry entry 별 CFP carrier" 로 명시했으며, 본 CFP-2369 = 그 명시된 후속 carrier 다. 신설 deputy 0 / roster 무변경 / axis disjoint 보존 (RefactorAgent advocacy ↔ ModuleArch authority — 측정은 advocacy 정량 신호 산출일 뿐 경계 확정 권한과 무관).
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 14 는 ADR-042 의 결정 1~6 본문 변경 0건. 변경 = (a) §결정 1 Sonnet 표 후 inline marker (Amendment 14 발화 marker) (b) 본 `## Amendment 14` body section (c) frontmatter amendment_log row 14 + related_stories CFP-2369 + cross_ref (ADR-042 Amd13 / ADR-060 / ADR-086 / ADR-037 / ADR-063) append. tier criteria (결정 1) + invariant (결정 2) + 신규 agent ADR 의무 (결정 3) + inheritance (결정 4) + Haiku rollback (결정 5) + 재-audit (결정 6) 모두 정책 변경 0건. ratchet 강화 방향 (declarative → mechanical 측정 = enforcement scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불요 (frontmatter amendment_id:14 `sunset_justification: null`).
+
+### bump + marketplace sync
+
+- `plugins/codeforge-design/.claude-plugin/plugin.json`: version **0.27.0 → 0.28.0 MINOR** (RefactorAgent 측정 grounding — ADR-037 plugin version bump rule)
+- 루트 `.claude-plugin/plugin.json` (codeforge wrapper root): version **6.27.0 → 6.28.0 MINOR** (scripts/templates/workflow/registry 신규 consumer-facing surface — ADR-037)
+- marketplace version sync (ADR-063 atomic invariant) — `mclayer/marketplace` 의 codeforge-design + codeforge wrapper entry version mirror (sync PR 선행 merge)
+
+### Cross-ref
+
+- ADR-042 Amendment 13 (CFP-2364 — Phase-1 declarative substrate: (d) Reusability 축 신설 + 측정 연동 deferred. 본 Amendment 14 = deferred trigger follow-through)
+- ADR-060 (evidence-checks-registry framework — `duplication-ratio-warning` entry carrier, warning tier)
+- ADR-086 5-checklist #5 (deferred trigger 명시 — CFP-2364 adjacent-case 적용 표의 후속 carrier 가 본 CFP-2369)
+- ADR-058 §결정 5 — ratchet 강화 방향 (declarative → mechanical 측정 scope 확장) → sunset_justification 불요
+- ADR-037 (plugin version bump rule — consumer-facing surface 신규 = MINOR bump, codeforge-design 0.27.0 → 0.28.0 + wrapper 6.27.0 → 6.28.0)
+- ADR-063 (marketplace atomic version sync — codeforge-design + wrapper mirrored field version 변경)
+- ISO/IEC 25010:2023(en) Maintainability — Reusability (duplication ratio = reusability potential 의 inverse 정량 proxy, https://www.iso.org/obp/ui/en/#!iso:std:78176:en)

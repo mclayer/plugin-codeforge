@@ -2746,3 +2746,43 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: Active
+
+  - name: duplication-ratio-warning
+    description: |
+      CFP-2369 / ADR-042 Amendment 14 — Reusability(d) duplication-ratio 측정 (warning-tier).
+      CFP-2364 Amendment 13 의 (d) Reusability 축 측정 연동 Phase-2 mechanical wire —
+      RefactorAgent (d) advocacy 의 정량 before 신호 (duplication ratio) 를 consumer CI 에서
+      mechanical 산출. detector 계약: DUPLICATION_TOOL env (target dir → 중복 백분율 stdout)
+      override 가능, 미설정 시 default jscpd (npx --yes jscpd --reporters json) 후
+      statistics.total.percentage 추출 (jq → python → grep fallback).
+      DUPLICATION_THRESHOLD (default 5.0%) 초과 시 ::warning:: emit, 이하면 무출력.
+      항상 exit 0 (warning-tier, 비차단). graceful degradation 3종 (target source 부재 /
+      detector 불가 / ratio ≤ threshold) 모두 exit 0. wrapper-self = src 부재 declarative-only
+      → graceful skip (CI 통과). consumer template = templates/github-workflows/duplication-check.yml
+      (consumer 가 .github/workflows 로 복사해 wire — non-required, branch protection 무변경).
+      anti-theater discriminating test = scripts/test-check-duplication-ratio.sh
+      (stub detector 로 dirty/clean RED→GREEN 변별 실증). blocking 승격은 evidence 누적 후
+      별 CFP. repo-분해 mechanical gate 는 out-of-scope (advisory 유지 — Amendment 14 §결정).
+    detect_command: bash scripts/check-duplication-ratio.sh
+    workflow: templates/github-workflows/duplication-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:duplication-ratio
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2364   # Phase-1 declarative substrate (Amendment 13 — RefactorAgent (d) 축 신설)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-2369
+    introduced_date: 2026-06-19    # KST (CFP-2364 측정 연동 Phase-2 mechanical wire)
+    owner_adr: ADR-042             # Amendment 14 — Reusability(d) 측정 연동 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
