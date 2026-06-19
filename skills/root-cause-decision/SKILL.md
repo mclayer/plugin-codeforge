@@ -12,6 +12,8 @@ tools: Read
 
 FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 / 배포 / 배포리뷰 FAIL). DeveloperPL 1차 진단 전 Orchestrator 호출.
 
+- **runtime 실패 분기 (3rd rung)**: runtime 실패(제품 동작 실패)가 표면 증상-anchored 진단 OR 설계 escalation 종점까지 가서도 반복 FAIL 이면 — 이는 FIX loop(구현 ↔ 설계 ping-pong) 가 아니라 **문제정의 오류 → 요구사항 lane 재진입** 의 별 경로다 (아래 §iteration 가설 차별화 원칙 의 3rd rung escalation 적용). ADR-064 §결정 13.
+
 ## 프로세스
 
 설계 리뷰 FIX는 DeveloperPL 개입 없이 ArchitectPLAgent 직접 회귀. 구현 리뷰·구현 테스트·보안 테스트 FIX는 DeveloperPL 1차 원인 진단 → Orchestrator 경유 → ArchitectPLAgent 최종 판정. 모든 경우 evidence pack(Change Plan 버전 + 리뷰 findings + 테스트 로그) 첨부 의무. Story file §10 FIX Ledger에 누적.
@@ -66,6 +68,7 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 | **배포 리뷰 schema 7 원칙 self-check FAIL (CFP-1059 / ADR-089)** | **설계** | §11 데이터 마이그레이션 안 7 원칙 (양방향 호환 / expand-contract 분리 / reverse / 양방향 smoke / cross-repo / backup / hard limit) 위반 — ArchitectAgent Phase 1 self-check 미흡 |
 | **Cross-layer 의존 영향 mis-감지 (CFP-1059 / ADR-090 §결정 1)** | 구현 | ADR-090 §결정 1 자동 감지 (deps / volume / ORM / contract MANIFEST) miss → 설계, 사용자 declare 영역 누락 → 구현 (consumer overlay deploy.* schema 영역) |
 | **변경 순서 invariant 위반 (expand source-first / contract leaf-first, CFP-1059 / ADR-090 §결정 2)** | **설계** | ADR-090 §결정 2 변경 순서 invariant 미준수 — 묶음 전체 rollback 영역, Change Plan §11 layer dependency 영역 부재 |
+| **runtime 실패 (제품 동작 실패) — 표면 증상-anchored 진단 OR escalation 종점(설계) 반복 FAIL (CFP-2358 / ADR-064 §결정 13)** | **요구사항(문제정의 오류)** | 문제정의 자체 재검증 필요 → 요구사항 lane 재진입 (FIX loop 아님). ADR-064 §결정 13 |
 
 ## P1 품질 local vs boundary 판정 기준
 
@@ -84,5 +87,10 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 
 - **매 FIX iteration 은 직전 iteration 과 다른 가설을 세운다.** 같은 원인 가설로 반복 수정(동일 fix 재시도)은 금지 — FIX Ledger §10 에 직전 iteration 의 가설이 기록되므로, 새 iteration 은 그것과 구별되는 가설을 명시해야 한다.
 - **같은 가설이 2회 연속 FAIL 하면 1차 가정(구현 vs 설계)을 재분류** — 구현 가설이 반복 실패하면 설계 원인으로 escalate 고려 (위 decision table 의 "설계 원인 escalate 조건" 재평가).
+- **3rd rung escalation (runtime 실패 — 문제정의 오류로 재분류)**: runtime 실패(제품 동작 실패) Story 에서 설계 escalation 종점까지 가서도 반복 FAIL **이거나** 직전 진단이 표면 증상-anchored(코드·invariant 미실측 상태에서 로그 문구·에러 메시지·관찰 현상으로 원인 직행 단정)이면 — 1차 가정을 **구현/설계가 아니라 문제정의 오류로 재분류** → FIX loop(구현 ↔ 설계 ping-pong) 가 아니라 **요구사항 lane 재진입** 으로 전환한다. 재진입 시 아래 재진입 규율 3종을 적용한다:
+  1. **prohibited prior (가설 격리)** — 기존 진단(Orchestrator / lane 의 원인 단정)을 '검증 대상 가설' 로 격리한다. 재진입한 요구사항 / 요구사항리뷰 lane 에 **가설을 숨기고**(hypothesis-withheld) `{코드, 증상, outcome-contract, invariant-surface}` 4-tuple 만 제공한다 — 가설을 정답이 아닌 반증 대상으로 숨겨 확증 편향을 차단.
+  2. **generative invariant sweep** — 실패 경로의 long-lived mutable 구조를 열거하고, 각 구조의 bound / lifetime / ordering invariant 를 명시하고, 코드 보존 여부를 실측한다 (ADR-068 I-8 standing invariant-surface = `docs/system-invariants.md` 색인을 cross-ref 해 enumeration 완전성 보강 — I-8 색인이 standing 기록처, 본 sweep 이 그 surface 의 소비자).
+  3. **비대칭 결정규칙** — 증상을 설명하는 **file:line 으로 짚힌 위반 invariant 1개 > "확인함 OK" N개**. 단일 falsification 이 N attestation 을 이긴다 (Popper 비대칭).
+  근거: ADR-064 §결정 13 (root-cause 사다리 3rd rung) + ADR-125 Amendment 2 (요구사항리뷰 lane 측 internal-invariant falsification 게이트, sibling carrier).
 - DeveloperPL 1차 진단 보고 시 다음 형식으로 가설 차별을 명시할 것: **"이번 iteration 가설: \<X\> (직전 iteration 가설 \<Y\> 와 차별점: \<Z\>)"**.
 - 근거: ADR-064 normative (FIX 의사결정 원칙). 외부 디버깅 skill 이 제공하던 hypothesis-differentiation discipline 을 본 skill 이 흡수.
