@@ -89,16 +89,16 @@ amendments:
     summary: |
       §결정 5 결정 트리 redirect — over-asking 안전편향 제거, ask-trigger 3종 한정 (§결정 20 신설). 기존 "모호 → 가치 측 분류(safe direction) → AskUserQuestion" 폐기. 대신 ask-trigger 3종 (① 사용자 요구 자체 애매 = 명확화 필요 / ② 확실히 짚어야 하는 진짜 가치 trade-off = default 비자명 + 사용자 선호가 결과를 가름 / ③ 비가역·고비용 = 중대 결함 대응·대거 삭제·rollback·배포·외부 발송) 에 해당할 때만 AskUserQuestion 발화. 그 외 전부 — 모호 포함 — derived default 적용 + declare + 진행 + 1줄 정정 초대 ("안전하니 일단 물어" = safe-direction default-to-ask 금지). §결정 5 본문에 "§결정 20 으로 redirect" 1줄 cross-ref 추가 (본문 통째 삭제 아님 — 이력 보존).
 
-      근거 (사용자 반복 directive 3회 — 2026-05-26 / 2026-06-09 / 2026-06-19): "묻는 건 ① 내 요구에 애매함 있을 때 ② 확실하게 짚고 가야 할 때만. 그 외엔 무조건 진행. 중대한 결함·대거 삭제·rollback 같은 거 아니면 무조건 진행." over-asking 안전편향이 CLAUDE.md:49 자율 정책("자명하면 묻지 말고 진행")을 위반 — safe-direction-ask 가 기계적 default (문서화·착수·lane 진입·FIX 진행) 를 질문으로 오분류해 정주행을 중단시킴.
+      근거 (사용자 반복 directive 3회 — 2026-05-26 / 2026-06-09 / 2026-06-19): "묻는 건 ① 내 요구에 애매함 있을 때 ② 확실하게 짚고 가야 할 때만. 그 외엔 무조건 진행. 중대한 결함·대거 삭제·rollback 같은 거 아니면 무조건 진행." over-asking 안전편향이 CLAUDE.md "## 결정 · 대화 원칙" 자율 정책("자명하면 묻지 말고 진행")을 위반 — safe-direction-ask 가 기계적 default (문서화·착수·lane 진입·FIX 진행) 를 질문으로 오분류해 정주행을 중단시킴.
 
       무손상 invariant — frame mode 4 step (§결정 1) / Layer 1-4 cognitive enum (§결정 3) / sub-mechanism 2 종 (§결정 4) / §결정 2(c) richness (3 줄 제약 거부 · 길이 자유 · 배경 포함) / 3 touchpoint frequency-richness (§결정 15) 모두 무변경. 말 거는 빈도 (frequency / 어떤 결정에서 멈추느냐) 만 좁히고 말할 때의 풍부함은 그대로 보존 (ADR-071 §결정 15 frequency-richness 분리 invariant 정합). 5번째 cognitive layer 신설 아님 (§결정 3 Layer 1-4 enum count 불변, §결정 12.3 re-home invariant 정합 — 본 amendment 는 §결정 5 분류 규칙 변경, cognitive layer 추가 아님).
 
       ratchet 방향 — 본 amendment 는 "묻기 강화" 가 아니라 "묻기 절제" (weaken-direction). Amendment 9 (DialogFidelityAgent sunset) 에 이은 두 번째 weaken-direction amendment — ADR-058 §결정 5 약화 evidence-gate + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합. sunset_justification 3축 evidence object 로 약화 근거 명시 (사용자 반복 directive = behavioral evidence). doc-only fast-path Story (ADR-054, src/tests touch 0, 단일 PR). additive cross-ref — §결정 5 본문 immutability 미충돌 (redirect pointer 1줄만 추가, 기존 본문 보존).
     sunset_justification:
-      dead_mandate: "기존 §결정 5 'AMBIGUOUS → 가치 측 분류(safe direction) → AskUserQuestion' 룰이 CLAUDE.md:49 자율 정책('합리적 default 가 자명하면 묻지 말고 진행')과 직접 충돌 — 기계적 default (문서화·착수·lane 진입·FIX 진행) 를 가치 측으로 오분류해 over-asking 유발. 사용자 반복 directive 3회 (2026-05-26 / 2026-06-09 / 2026-06-19) = behavioral evidence, pattern_count 3 ≫ ADR-045 §D-9 threshold 2."
+      dead_mandate: "기존 §결정 5 'AMBIGUOUS → 가치 측 분류(safe direction) → AskUserQuestion' 룰이 CLAUDE.md \"## 결정 · 대화 원칙\" 자율 정책('합리적 default 가 자명하면 묻지 말고 진행')과 직접 충돌 — 기계적 default (문서화·착수·lane 진입·FIX 진행) 를 가치 측으로 오분류해 over-asking 유발. 사용자 반복 directive 3회 (2026-05-26 / 2026-06-09 / 2026-06-19) = behavioral evidence, pattern_count 3 ≫ ADR-045 §D-9 threshold 2."
       verification_ground_redundancy: "진짜 멈춰야 하는 가치 trade-off (default 비자명 + 사용자 선호가 결과를 가름) 는 ask-trigger ② 로 보존, 비가역·고비용 안전판은 ask-trigger ③ (+ touchpoint (a) 결과-명세 확인) 으로 보존 — safe-direction 모호 자동 격상 없이도 진짜 결정 분기는 그대로 cover. 모호 영역의 derived default 추론 능력은 ADR-064 §결정 3 룰 1 (사실 판단 default) 과 동형."
       cost_vs_effect_zero: "모호 자동 ask 격상의 효과 (잘못된 default 회피) < 비용 (정주행 중단 + 사용자 burden + 자율 정책 위반) — derived default 추론 가능 시 future 영향 큼만으론 ask 사유 부족. 잘못 추측 비용이 진짜 큰 경우는 ask-trigger ③ (rollback 비쌈) + touchpoint (a) 가 이미 잡음."
-      meta_policy_alignment: "ADR-058 §결정 5 (약화 evidence-gate) + ADR-064 §결정 7 (evidence-gated symmetric ratchet, 강화/약화 양방향 1급) — Amendment 9 에 이은 second weaken-direction amendment, evidence-grounded 1급 허용. CLAUDE.md:49 자율 정책 + feedback_autonomous_until_decision (진짜 가치 선택 분기에서만 정지) 정합."
+      meta_policy_alignment: "ADR-058 §결정 5 (약화 evidence-gate) + ADR-064 §결정 7 (evidence-gated symmetric ratchet, 강화/약화 양방향 1급) — Amendment 9 에 이은 second weaken-direction amendment, evidence-grounded 1급 허용. CLAUDE.md \"## 결정 · 대화 원칙\" 자율 정책 + feedback_autonomous_until_decision (진짜 가치 선택 분기에서만 정지) 정합."
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -230,10 +230,10 @@ frame mode 진입 후 적용되는 세부 룰. CFP-612 §1 verbatim "후보 1·2
 
 길이 제약 없음 (3 문항 모두 PASS 후 메시지 발화 의무).
 
-**(b) 후보 2 — 사실/가치 분리, 모호 시 가치 측 분류**:
+**(b) 후보 2 — 사실/가치 분리, 모호 시 진행 기본 (ask-trigger 3종 한정 — §결정 20 redirect)**:
 - 사실 판단 → derived default 적용 (ADR-064 §결정 3 룰 1 정합)
-- 가치 판단 → 무조건 explicit 사용자 확인 (`AskUserQuestion` 발화 의무, ADR-064 §결정 3 룰 5 정합)
-- 모호 시 → 가치 측 분류 (safe direction)
+- 가치 판단 (ask-trigger ② 해당 — 진짜 가치 trade-off·default 비자명) → explicit 사용자 확인 (`AskUserQuestion` 발화, ADR-064 §결정 3 룰 5 정합)
+- 모호 시(ask-trigger 미해당) → derived default 적용 + 진행 + 1줄 정정 초대. AskUserQuestion 은 ask-trigger 3종(① 요구 애매 / ② 진짜 가치 trade-off·default 비자명 / ③ 비가역·고비용)일 때만 — **safe-direction default-to-ask 폐기, §결정 20 redirect**
 
 memory entry `feedback_question_quality` 의 normative 승격 carrier (§결정 8 mapping 표 참조).
 
@@ -673,7 +673,7 @@ Orchestrator 의 사용자 발화 허용 시점 = closed enumeration 3 종. 그 
 
 | touchpoint | 발화 사유 | 분류 |
 |---|---|---|
-| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 | 가치 / 명세 판단 (§결정 5 결정 트리 — 모호 → 가치 측 분류, `AskUserQuestion` 의무) |
+| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 | 요구사항 disambiguation (§결정 20 ask-trigger ① 요구 모호 + ③ rollback 비쌈 해당 — 일반 모호 자동 ask 아님), `AskUserQuestion` 의무 |
 | **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가, 사용자 행동 필요 | 차단 해소 (ADR-039 inline whitelist 1번 entry scope 안 — 사용자 dialog) |
 | **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 | 산출물 = 최종 결과 자체 (ADR-039 inline whitelist 4번 entry scope 안 — Status report) |
 
