@@ -1,0 +1,44 @@
+name: operational-outcome-signal-lint
+# CFP-2361 PS4 — Operational outcome-signal schema enforcement (warning-tier).
+#
+# ADR-014 Amendment 7 §7.4.7 + ADR-015 Amendment 1 §8.5.1 compliance:
+# - Story §7.4.7 outcome-signal 3요소 (terminal sink / metric / 발현조건) 선언 검증
+# - Story §8.5.1 soak 도출 (manifestation-derived / duration floor) 검증
+#
+# Non-required workflow (branch protection 무변경, merge 미차단).
+# Warning-tier: GitHub Actions UI 에 경고 표시 하지만 job 성공(exit 0).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  operational-outcome-signal-lint:
+    name: operational outcome-signal schema presence (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-operational-outcome-signal.sh
+        run: bash scripts/check-operational-outcome-signal.sh
+
+  operational-outcome-signal-test:
+    name: discriminating test (dirty/clean fixture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-operational-outcome-signal.sh
+        run: bash scripts/test-check-operational-outcome-signal.sh

@@ -1,0 +1,203 @@
+name: Post-deploy benchmark
+# BEGIN wrapper-managed
+# CFP-2360 / ADR-014 §7.4.7 (Amendment 6+7) / ADR-015 §8.5.1 (Amendment 1) / ADR-121 §결정 3
+#   — post-deploy throughput/scale benchmark seed (운영 component 의 outcome-signal 실측)
+# Tier: declarative (consumer-template)
+# Bypass channel: 불요 — consumer repo 복사용 seed (wrapper required gate 비대상, wrapper-self 는 실행 안 함)
+#
+# 역할 (ADR-014 §7.4.7 outcome-signal 의 consumer 실측 위임 — ADR-121 §결정 3 완전 위임 모델):
+#   설계-시점 §7.4.7 이 선언한 outcome-signal 3요소를 post-deploy 로 실측한다 —
+#     ① terminal downstream sink 경로의
+#     ② monotone progress metric 이
+#     ③ 발현조건 임계(soak)까지 단조 증가하는가를 assert.
+#   1차 metric = terminal downstream sink 의 monotone 진행 (outcome ground-truth) —
+#   ingest-boundary / internal liveness proxy 아님 (ADR-119 §결정 10 ①).
+#   ingest 가 green 이어도 downstream 적재가 동결될 수 있으므로 terminal sink 만 신뢰.
+#   FAIL = exit 1 -> workflow 실패 -> consumer-deploy-seed.yml 의 needs: 체인이
+#   다음 환경 promote 를 차단 (자동 rollback 0 — 사람 판단, ADR-121 §결정 C).
+#
+# soak 지속 = 발현조건 기반 도출 (ADR-015 Amendment 1 — 고정 단창 금지):
+#   manifestation_threshold (③ 발현조건 임계) 도달까지 구동.
+#   임계 정량 도출 불가 시 duration_floor_seconds 로 hard fallback (예 ≥ 1800s = 30분).
+#   manifestation-derived 임계 OR duration floor 둘 중 하나는 반드시 충족.
+#
+# 호출 형태 2종:
+#   (a) workflow_call — consumer-deploy-seed.yml 의 환경 promote 사이에 job 으로 삽입 (권장)
+#   (b) workflow_dispatch — 수동 단발 benchmark
+#
+# [consumer 주입 지점] — 아래 3개 placeholder step 을 consumer 가 자기 sink 측정으로 교체:
+#   1. sink_metric_query: terminal downstream sink 의 monotone metric 현재값 조회 (수 1개 출력)
+#   2. throughput AC assert: §7.4.7 (A) throughput 2축 측정 (≥ N req/s 등)
+#   3. RSS ceiling assert: §7.4.7 (A) bounded-memory (≤ X MB) 측정
+# END wrapper-managed
+
+on:
+  workflow_call:
+    inputs:
+      sink_label:
+        description: '① terminal downstream sink 식별 (예: s3://bucket/parts · orders 테이블 committed rows · topic-X consumer offset)'
+        required: true
+        type: string
+      manifestation_threshold:
+        description: '③ 발현조건 임계 — monotone metric 이 도달해야 할 최소 진행 (예: 8388608 = 8 MiB flush 누적 / N rows). [empirical-source: TBD] 시 0 -> duration_floor 로 fallback'
+        required: false
+        type: number
+        default: 0
+      duration_floor_seconds:
+        description: 'duration floor fallback (초) — 임계 정량 미도출 시 hard 최소 soak (placeholder default 1800 = 30분, consumer 가 발현조건 기반으로 조정)'
+        required: false
+        type: number
+        default: 1800
+      poll_interval_seconds:
+        description: 'monotone metric poll 간격 (초) — placeholder default'
+        required: false
+        type: number
+        default: 30
+      throughput_target:
+        description: '§7.4.7 (A) throughput AC 목표 (예: "100" req/s) — placeholder, 미제공 시 throughput assert warning 후 skip'
+        required: false
+        type: string
+        default: ''
+      rss_ceiling_mb:
+        description: '§7.4.7 (A) bounded-memory RSS ceiling (MB) — placeholder, 미제공 시 RSS assert warning 후 skip'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      sink_label:
+        description: '① terminal downstream sink 식별'
+        required: true
+        type: string
+      manifestation_threshold:
+        description: '③ 발현조건 임계 (0 = duration_floor fallback)'
+        required: false
+        type: number
+        default: 0
+      duration_floor_seconds:
+        description: 'duration floor (초)'
+        required: false
+        type: number
+        default: 1800
+      poll_interval_seconds:
+        description: 'poll 간격 (초)'
+        required: false
+        type: number
+        default: 30
+      throughput_target:
+        description: 'throughput AC 목표 (미제공 시 skip)'
+        required: false
+        type: string
+        default: ''
+      rss_ceiling_mb:
+        description: 'RSS ceiling MB (미제공 시 skip)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      SINK_LABEL: ${{ inputs.sink_label }}
+      MANIFESTATION_THRESHOLD: ${{ inputs.manifestation_threshold }}
+      DURATION_FLOOR_SECONDS: ${{ inputs.duration_floor_seconds }}
+      POLL_INTERVAL_SECONDS: ${{ inputs.poll_interval_seconds }}
+      THROUGHPUT_TARGET: ${{ inputs.throughput_target }}
+      RSS_CEILING_MB: ${{ inputs.rss_ceiling_mb }}
+    steps:
+      - name: 'outcome-signal soak — terminal downstream sink monotone 진행 assert (①②③)'
+        run: |
+          set -euo pipefail
+          echo "=== outcome-signal soak: sink=$SINK_LABEL ==="
+          echo "    ① terminal downstream sink = $SINK_LABEL (ingest-boundary 아님 — outcome ground-truth)"
+
+          # soak 종점 결정 (ADR-015 Amendment 1 — 고정 단창 금지):
+          #   manifestation_threshold > 0 -> 임계 도달까지 (manifestation-derived)
+          #   manifestation_threshold == 0 -> duration_floor_seconds 로 hard fallback
+          if [ "$MANIFESTATION_THRESHOLD" -gt 0 ]; then
+            echo "    ③ soak 종점 = 발현조건 임계 (manifestation-derived): metric ≥ $MANIFESTATION_THRESHOLD"
+          else
+            echo "::warning::③ 발현조건 임계 미제공 (TBD) — duration_floor ${DURATION_FLOOR_SECONDS}s 로 fallback (ADR-015 Amd1 hard floor)"
+          fi
+
+          # [placeholder] consumer 가 sink 의 monotone metric 현재값을 출력하는 query 로 교체.
+          #   반드시 terminal downstream sink (최종 적재처) 의 진행값 — ingest/큐 깊이/내부 liveness proxy 금지.
+          #   예: written_parts=$(aws s3 ls "$SINK_LABEL" --recursive | wc -l)
+          #   예: committed_rows=$(psql -tA -c "SELECT count(*) FROM orders WHERE committed")
+          #   예: consumer_offset=$(kafka-consumer-groups --describe ... | awk '{print $4}')
+          sink_metric() {
+            # [placeholder] — consumer 교체 의무. 미교체 시 0 반환 -> soak 가 즉시 동결 감지로 FAIL.
+            echo "0"
+          }
+
+          deadline=$(( $(date +%s) + DURATION_FLOOR_SECONDS ))
+          prev=-1
+          first=-1   # floor window 시작 sample (fallback 경로의 net 순증 판정 기준)
+          while true; do
+            cur=$(sink_metric)
+            now=$(date +%s)
+            [ "$first" -lt 0 ] && first=$cur
+            echo "    ② monotone metric: $cur (prev=$prev, $(( deadline - now ))s 남음)"
+
+            # ② sink metric 역행 ($cur < $prev) = outcome 후퇴 신호 -> 즉시 FAIL
+            # (동결 $cur == $prev 은 임계/floor 미도달 시 계속 구동 — 종점에서 net 순증으로 freeze 판정)
+            if [ "$prev" -ge 0 ] && [ "$cur" -lt "$prev" ]; then
+              echo "::error::② sink metric 역행 ($prev -> $cur) — outcome 후퇴 (monotone 위반), benchmark FAIL (exit 1)"
+              exit 1
+            fi
+
+            # ③ 발현조건 임계 도달 = manifestation-derived 종점 (PASS)
+            if [ "$MANIFESTATION_THRESHOLD" -gt 0 ] && [ "$cur" -ge "$MANIFESTATION_THRESHOLD" ]; then
+              echo "    ③ 발현조건 임계 도달 ($cur ≥ $MANIFESTATION_THRESHOLD) — soak PASS"
+              break
+            fi
+
+            # duration floor 도달 (임계 미제공 fallback 경로의 종점)
+            if [ "$now" -ge "$deadline" ]; then
+              if [ "$MANIFESTATION_THRESHOLD" -gt 0 ]; then
+                echo "::error::③ duration_floor (${DURATION_FLOOR_SECONDS}s) 경과했으나 발현조건 임계 미도달 ($cur < $MANIFESTATION_THRESHOLD) — soak FAIL (exit 1)"
+                exit 1
+              fi
+              # 임계 미제공(fallback): floor window 동안 sink 가 net 순증(freeze-safe) 해야 PASS.
+              # freeze (양수 도달 후 동결) = $cur == $first 도 outcome 정지 -> FAIL.
+              # (이 Epic 핵심: 'non-zero proxy 는 freeze 못 잡음' — 순증 기준으로 freeze 검출)
+              if [ "$cur" -le "$first" ]; then
+                echo "::error::② duration_floor (${DURATION_FLOOR_SECONDS}s) 동안 sink net 순증 없음 (start=$first end=$cur) — terminal sink 동결, benchmark FAIL (exit 1) [placeholder sink_metric 미교체 또는 적재 freeze]"
+                exit 1
+              fi
+              echo "    duration_floor 경과 + sink net 순증 확인 (start=$first end=$cur) — soak PASS (fallback 경로)"
+              break
+            fi
+
+            prev=$cur
+            sleep "$POLL_INTERVAL_SECONDS"
+          done
+
+      - name: '§7.4.7 (A) throughput AC assert (consumer fixture)'
+        run: |
+          set -euo pipefail
+          if [ -z "$THROUGHPUT_TARGET" ]; then
+            echo "::warning::throughput AC 실 fixture 미제공 — consumer throughput 측정 연동 필요 (throughput_target 입력)"
+            exit 0
+          fi
+          echo "=== throughput assert: 목표 ≥ ${THROUGHPUT_TARGET} (§7.4.7 A) ==="
+          # [placeholder] consumer 가 throughput 측정으로 교체 — 미달 시 exit 1 이 promote 차단
+          # 예: measured=$(hey -z 60s -c 50 "$URL" | awk '/Requests\/sec/{print $2}')
+          #     awk -v m="$measured" -v t="$THROUGHPUT_TARGET" 'BEGIN{exit !(m>=t)}'
+          echo "[placeholder] throughput 측정 — consumer 가 채움 (현재 통과 처리)"
+
+      - name: '§7.4.7 (A) bounded-memory RSS ceiling assert (consumer fixture)'
+        run: |
+          set -euo pipefail
+          if [ -z "$RSS_CEILING_MB" ]; then
+            echo "::warning::RSS ceiling 실 fixture 미제공 — consumer bounded-memory 측정 연동 필요 (rss_ceiling_mb 입력)"
+            exit 0
+          fi
+          echo "=== RSS ceiling assert: ≤ ${RSS_CEILING_MB} MB under sustained load (§7.4.7 A) ==="
+          # [placeholder] consumer 가 RSS 측정으로 교체 — 초과 시 exit 1 이 promote 차단
+          # 예: peak_mb=$(...) ; awk -v p="$peak_mb" -v c="$RSS_CEILING_MB" 'BEGIN{exit !(p<=c)}'
+          echo "[placeholder] RSS 측정 — consumer 가 채움 (현재 통과 처리)"

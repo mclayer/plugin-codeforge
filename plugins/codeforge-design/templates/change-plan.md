@@ -139,6 +139,34 @@ production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <
 - 승인 게이트 (live 배포 시 별도 approval flow)
 - 누설 차단 (live key 가 staging 노출 검증)
 
+#### §7.4.7 Operational throughput/scale (CONDITIONAL — ADR-014 Amendment 6 + Amendment 7)
+
+> InfraOperationalArchitectAgent §7.4 primary sub (non-deferrable). 적용 조건 = `operational:true` label 부착 Story (`component:runner` / `component:ingestion` / `component:persistence` 중 1+ 동반, consumer overlay component 택소노미). 비운영 Story = `N/A — non-operational (부하-critical component 0 / terminal sink 부재)` 명시.
+>
+> **non-deferrable 의 의미 (§7.4.4 Rate limit evidence-driven defer 와 disjoint)**: AC 의 **존재·방향·축·구조** 는 설계 시점 hard (공백 = 위반) — **실측 숫자(measured value)만** `[empirical-source: <ref> | TBD]` 박제 허용 (추정값 lock-in 금지). "throughput AC 가 아예 없음" / "terminal sink 선언이 아예 없음" 은 §7.4.7 위반이지만 "목표/임계 = TBD (실측 전)" 은 정상.
+>
+> **wrapper-self (dogfood) = declarative**: runtime 0 governance Story 는 annotation 존재 + `[empirical-source: TBD]` 박제만 의무, 실측 면제 (ADR-005 `plugin-meta-na` 정합).
+
+##### (A) 2축 measurable AC (Amendment 6 — Story §5 acceptance criteria 작성 의무)
+
+| 축 | AC 형식 | 설계 시점 (hard) | 실측 (defer 가능) | 본 Story 값 |
+|---|---|---|---|---|
+| throughput | 측정가능 목표 (예: `≥ N req/s sustained` / `≥ M events/s ingest`) | AC 존재 + 방향(≥/≤) + 측정 단위·시나리오 확정 | 목표 숫자 = `[empirical-source: TBD]` | `<값 또는 N/A>` |
+| bounded-memory (RSS) | 측정가능 상한 (예: `RSS ceiling ≤ X MB under sustained load`) | AC 존재 + bounded(상한 존재) 선언 + 측정 조건 확정 | ceiling 숫자 = `[empirical-source: TBD]` | `<값 또는 N/A>` |
+
+##### (B) outcome-signal 3요소 선언 (Amendment 7 — terminal downstream sink ground-truth)
+
+> 게이트 PASS 조건의 **1차 metric = terminal downstream sink 의 monotone 진행 (outcome ground-truth)** — ingest-boundary / internal liveness proxy 아님 (ADR-119 §결정 10 ① 운영 AC instantiation). ingest 가 green 이어도 downstream 적재 동결 가능.
+
+| 요소 | 정의 | 예시 | 설계 시점 (hard / non-deferrable) | 실측 defer | 본 Story 값 |
+|---|---|---|---|---|---|
+| ① **terminal downstream sink** | 최종 적재처 경로 (수집 경계 proxy 아닌 outcome 도달점) | object-store parts / DB committed rows / message offset | sink 경로 식별·명시 = 설계 시점 확정 | — (경로는 숫자 아님) | `<sink 경로>` |
+| ② **monotone progress metric** | 그 sink 의 단조 증가 metric (동결 = outcome 정지 신호) | written parts 수 / committed row count / consumer-committed offset | metric 명·단조 방향 = 설계 시점 확정 | — | `<metric 명·방향>` |
+| ③ **발현조건 임계** | accumulation/lifetime-class 리스크가 드러나는 누적량 (sink 가 성장해야 할 최소 진행) | `≥ 8 MiB/shard` flush 누적 / `≥ N rows committed per window` | 임계의 존재·축 = 설계 시점 확정 | 숫자값 = `[empirical-source: <ref> \| TBD]` | `<임계 또는 TBD>` |
+
+- **③ 발현조건 임계 ↔ §8.5.1 soak 연결**: 본 ③ 임계 = §8.5.1 long-running invariant test 의 soak 구동 종점 (manifestation-derived, ADR-015 Amendment 1). cross-ref 의무.
+- **consumer 실측 위임**: 위 2축 + outcome-signal 의 실 측정 = consumer GitHub CI post-deploy benchmark job ([`post-deploy-benchmark.yml`](https://github.com/mclayer/plugin-codeforge/blob/main/templates/github-workflows/post-deploy-benchmark.yml) seed, ADR-121 §결정 3 완전 위임). deploy-review lane 부활 아님 — 설계-시점 선언 schema 만.
+
 #### §7.5 민감 데이터 분류 + 흐름
 - 데이터 분류표 (Public / Internal / PII / Secret)
 - 데이터 흐름 (발생 → 흐름 → 저장 → 마스킹·암호화 지점)
@@ -206,6 +234,11 @@ TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitect
 - **테스트 대상 invariant** (sustained load 동안 유지되어야 할 속성):
   - cache eviction rate / depth bound / sequence consistency / worker queue bound / time-window correctness 등
 - **부하 시나리오 + 지속 시간** (예: 6시간 sustained / N/sec / Y업데이트 누적)
+  - **soak 지속 시간 = 발현조건 기반 도출 (manifestation-derived — ADR-015 Amendment 1, 고정 단창 금지)**: long-lived mutable 구조가 **accumulation/lifetime-class 리스크** (capacity 회계 monotone·미회수 / 무한 누적 / lifetime cap) 일 때, soak 는 아래 둘 중 하나로 도출 (자유서술 고정 단창 ≤ 수분 금지):
+    1. **manifestation-derived (발현조건 임계까지 구동)**: "N 분 고정" 이 아니라 §7.4.7 outcome-signal ③ 발현조건 임계 (예: `≥ 8 MiB/shard` flush 누적) 도달까지 구동 — 그 임계가 곧 soak 의 구동 종점.
+    2. **duration floor fallback (정량 임계 미도출 시)**: 발현조건 임계를 정량 도출 불가 (비결정·환경의존) 시 **duration floor** (설계가 정한 최소 지속, 예 `≥ 30 분`) 로 hard fallback + "발현조건 미상" 리스크를 본문에 명시. floor 미충족 고정 단창 금지.
+  - **accumulation/lifetime-class 해당 여부 명시**: 어떤 long-lived mutable 구조가 monotone/lifetime 리스크인가를 본문에 명시 — §8.5.0 applicability 1+ Y 사유 cross-ref. 비-accumulation 구조 (예: per-request stateless) 는 본 도출 규칙 면제 (기존 자유 지속 시간 유지).
+  - **wrapper-self declarative**: runtime 0 governance Story 는 soak-derivation 규칙 (manifestation-derived 임계 OR duration floor) 의 schema 존재만 의무, 실 soak 구동 면제 (실측 임계 숫자만 `[empirical-source: TBD]` defer).
 - **invariant assertion 주기** (예: 매 N분 / 매 M update / 매 K 이벤트)
 - **expected baseline + tolerance** (drift 허용 범위)
 - **테스트 fixture / framework** (consumer 환경 — pytest-anyio / asyncio long-running fixture / load generator 등)

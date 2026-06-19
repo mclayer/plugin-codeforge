@@ -41,8 +41,9 @@ jobs:
           # CFP-367 / ADR-055 — test.yml = consumer 배포용 테스트 workflow 템플릿.
           # wrapper 자체 테스트 스위트 부재 (PR #2103 dead suite 제거) — self-app copy 미운용 (theater 제거).
           # CFP-2227 / ADR-121 — consumer-deploy-seed.yml + post-deploy-smoke.yml = 배포 완전 위임 consumer seed.
+          # CFP-2360 / ADR-014 Amд7 + ADR-121 §결정3 — post-deploy-benchmark.yml = consumer post-deploy throughput/outcome-signal benchmark seed (terminal sink monotone assert). wrapper repo 에 배포 대상 0 → self-app copy 미운용.
           # wrapper repo 에 dev/stg/prd Environments 부재 — self-app copy 시 환경 오염 (배포 대상 0).
-          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml" "test.yml" "consumer-deploy-seed.yml" "post-deploy-smoke.yml")
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml" "test.yml" "consumer-deploy-seed.yml" "post-deploy-smoke.yml" "post-deploy-benchmark.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
             skip_file=0
