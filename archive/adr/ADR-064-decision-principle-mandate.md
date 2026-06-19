@@ -152,6 +152,18 @@ amendment_log:
       META self-application: 본 amendment 도입 직후 Orchestrator 가 `ScheduleWakeup` 호출 시 본 hook 의 reminder 가 PreToolUse 단계에서 prompt context 에 주입됨 — Amendment 11 declarative anchor 의 immediate runtime feedback layer. 본 Story 자체 PR merge 후 첫 ScheduleWakeup 호출 = first applied case.
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (declarative → mechanical 격상, scope 약화 0건)
+  - amendment: 13
+    carrier_story: CFP-2350
+    date: 2026-06-19
+    summary: |
+      §결정 13 신설 (Trace 9) — root-cause-decision 사다리 3번째 rung 신설 (문제정의 오류 → 요구사항 lane 재진입). 현 root-cause-decision 사다리 = 2-rung (구현 ↔ 설계, `skills/root-cause-decision/SKILL.md` §85-88 hypothesis-differentiation) — 본 Amendment 가 3번째 rung 을 신설 (= 신규 개념, 기존 ADR 미존재. ADR-064 §결정 7 evidence-gated symmetric ratchet 은 사다리 / rung 개념이 아니라 amendment 강화/약화 방향 gate — 혼동 주의).
+      트리거 = runtime 실패 Story 에서 (a) 직전 진단이 표면 증상-anchored (코드·invariant 미실측) 이거나 (b) 같은 가설이 §85-88 hypothesis-differentiation escalation 종점 (현재 '설계') 까지 가서도 반복 FAIL → 1차 가정을 구현/설계가 아니라 문제정의 오류로 재분류 → FIX loop (구현 ↔ 설계 ping-pong) 가 아니라 요구사항 lane 재진입.
+      재진입 규율 3종 (declarative): (1) prohibited prior (가설 격리) — 기존 진단을 검증 대상 가설로 격리, 재진입 lane 에 가설 숨김 (hypothesis-withheld), {코드, 증상, outcome-contract, invariant-surface} 4-tuple 만 제공. (2) generative invariant sweep — 실패 경로 long-lived mutable 구조 열거 + 각 bound/lifetime/ordering invariant 명시 + 코드 보존 여부 실측 (ADR-068 I-8 standing invariant-surface cross-ref 로 enumeration 완전성 보강). (3) 비대칭 결정규칙 — file:line 으로 짚힌 위반 invariant 1개 > "확인함 OK" N개 (Popper 비대칭, 단일 falsification 이 N attestation 을 이긴다).
+      ADR-119 §결정 10 ② (실패 진단 판정면) 의 instantiation — 본 §결정 13 = 그 umbrella anchor 가 S4 (#2350) 로 deferral 한 root-cause 사다리 측 wire. ADR-125 Amendment 2 가 요구사항리뷰 lane 측 falsification 게이트 (sibling carrier).
+      enforcement = Phase 1 declarative-only — 본 Amendment = 3rd rung normative 선언만. `skills/root-cause-decision/SKILL.md` 사다리 표·§85-88 upgrade (hypothesis-withheld + invariant sweep 주입) = 별 carrier Phase 2 defer (review-verdict-v4 / SKILL.md 무수정 — 본 Story 미접촉, 병렬 충돌 회피).
+      ratchet 강화 방향 (사다리 rung 추가 = 진단 escalation 표현력 확장, scope 약화 0건). is_transitional: false 정합. 약화 방향 (3rd rung 제거 / 재진입 규율 3종 1+ 축소 / 비대칭 결정규칙 완화) = ADR-058 §결정 5 sunset_justification 의무.
+    direction: strengthen
+    sunset_justification: null  # ratchet 강화 방향 (root-cause 사다리 3rd rung 신설 = 진단 escalation 표현력 확장, scope 약화 0건)
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
     binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)
@@ -175,6 +187,7 @@ related_stories:
   - CFP-1645 # Amendment 10 carrier — §결정 11 신설 (Trace 7 Orchestrator scope boundary primitive 3-axis: 사실 / 구체 환경 분석 / Orchestrator scope)
   - CFP-1753 # Amendment 11 carrier — §결정 12 신설 (Trace 8 autonomous loop idle-without-purpose 자동 종료, 4-tuple AND gate + Anti-pattern enum + ScheduleWakeup-skip mandate)
   - CFP-1755 # Amendment 12 carrier — §결정 12 Wave 2A mechanical wire activation (PreToolUse `ScheduleWakeup` advisory reminder hook, hooks/schedule-wakeup-reminder + hooks/hooks.json second PreToolUse entry, CFP-1738 reminder pattern 2nd instantiation)
+  - CFP-2350 # Amendment 13 carrier — §결정 13 신설 (Trace 9 root-cause-decision 사다리 3rd rung = 문제정의 오류 → 요구사항 lane 재진입, ADR-119 §결정 10 ② instantiation, Epic #2346 진단축 C)
 related_adrs:
   - ADR-039
   - ADR-044  # CFP-609 Amendment 1 — agent teams enabled context (env=1) TeamCreate fan-out 자연 정합
@@ -188,8 +201,10 @@ related_adrs:
   - ADR-071  # CFP-612 Wave 5 — Trace 2 (결정 제시 5 룰) mechanical version 승격 + scope 확장 (proposing-time → 전 turn). 본문 변경 0, cross-ref only (ADR-064 §결정 7 top-down ratchet 정합 — 강화 방향 only, ADR-071 §결정 11 ADR-039 inline whitelist 1번 entry cognitive 강화 declare).
   - ADR-013  # CFP-750 Amendment 5 — dogfood-out path SSOT (change-plan = internal-docs/wrapper/change-plans/)
   - ADR-065  # CFP-750 Amendment 5 — ArchitectAgent Phase 1 mechanical 7-item self-check 의무 (label-registry sync / doc-locations regen / workflow self-app / link target Phase 분배 / MANIFEST.yaml / section-ownership / doc-locations row)
-  - ADR-068  # CFP-750 Amendment 5 — boundary completeness 4 invariants + I-5 dimensional empirical grounding self-check 의무 (verdict packet 양 별도 boolean field)
+  - ADR-068  # CFP-750 Amendment 5 — boundary completeness 4 invariants + I-5 dimensional empirical grounding self-check 의무 (verdict packet 양 별도 boolean field). CFP-2350 Amendment 13 — I-8 standing invariant-surface cross-ref: §결정 13 재진입 규율 (2) generative invariant sweep 이 ADR-068 I-8 declaration(Amendment 6 §결정 1) 을 cross-ref 해 enumeration 완전성 보강 (본문 0건 변경)
   - ADR-097  # CFP-1134 Amendment 7 — paradigm replacement governance anchor (§결정 5 면제 exception clause sibling carrier)
+  - ADR-119  # CFP-2350 Amendment 13 — §결정 10 ② 실패 진단 판정면 umbrella anchor. 본 Amendment 13 (§결정 13 root-cause 3rd rung) = 그 진단면이 S4 (#2350) 로 deferral 한 root-cause 사다리 측 instantiation
+  - ADR-125  # CFP-2350 Amendment 13 — 요구사항리뷰 lane (재진입 lane carrier). §결정 13 의 "요구사항 lane 재진입" 시 ADR-125 Amendment 2 falsification 게이트로 instantiate (sibling carrier, status: Proposed)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -1034,6 +1049,62 @@ CFP-1738 (`hooks/plain-language-reminder` UserPromptSubmit + `hooks/plain-langua
 본 Amendment 12 carrier 4 file (`hooks/schedule-wakeup-reminder` + `hooks/hooks.json` + `docs/adr/ADR-064-decision-principle-mandate.md` + `CLAUDE.md`) = 모두 wrapper-self file. sibling sync 면제 (ADR-010 §결정 2 정합 — wrapper-canonical SSOT 영역, plugin-root hooks/ 는 ADR-038 Amendment 3 §결정 11 plugin-root first-class registration).
 
 review-verdict-v4 schema 변경 0건 (advisory hook 은 verdict packet 영역 외, ADR-060 4-tier framework 외).
+
+## Amendment 13 — root-cause-decision 사다리 3번째 rung 신설 (Trace 9, CFP-2350, 2026-06-19)
+
+### 배경
+
+본 Amendment 는 Epic [#2346](https://github.com/mclayer/plugin-codeforge/issues/2346) (진단축 C — runtime 실패 진단 falsification) 의 child Story CFP-2350 carrier 다. [ADR-119](ADR-119-research-before-claims.md) §결정 10 ② (실패 진단 판정면) 가 umbrella anchor 로서 "runtime 실패의 진단은 acted-on 전에 falsification 을 통과해야 한다" 를 박제하면서, root-cause 사다리 측 실 wire 를 child **S4 (#2350) / S5 (#2351)** 로 deferral 했다 [cited_adr: ADR-119 §결정 10 ②, cited_value: "진단 falsification 판정면의 실 wire = S4 (#2350) / S5 (#2351)", verify_status: verified — worktree Read ADR-119 §결정 10 ② (실패 진단 판정면)]. 본 Amendment 가 그 root-cause 사다리 측 wire 를 ADR-064 에 신설한다.
+
+**현 root-cause-decision 사다리 = 2-rung (구현 ↔ 설계)**: `skills/root-cause-decision/SKILL.md` §85-88 hypothesis-differentiation 이 "같은 가설이 2회 연속 FAIL 하면 1차 가정(구현 vs 설계)을 재분류" 를 규정하며, escalation 종점이 현재 '설계' 다 [cited_adr: skills/root-cause-decision/SKILL.md §85-88, cited_value: "같은 가설이 2회 연속 FAIL 하면 1차 가정(구현 vs 설계)을 재분류 ... 설계 원인으로 escalate", verify_status: verified — worktree Read SKILL.md §iteration 가설 차별화 원칙 (hypothesis-differentiation)]. 그 SKILL.md §iteration 가설 차별화 원칙 의 근거 줄은 "ADR-064 normative (FIX 의사결정 원칙)" 를 사다리의 근거로 인용한다 [cited_adr: skills/root-cause-decision/SKILL.md, cited_value: "근거: ADR-064 normative (FIX 의사결정 원칙)", verify_status: verified — worktree Read SKILL.md §iteration 가설 차별화 원칙 (근거 줄)]. 본 Amendment 는 그 사다리에 **3번째 rung (문제정의 오류 → 요구사항 lane 재진입)** 을 신설한다 (= 신규 개념, 기존 ADR 미존재).
+
+> **S1 오인 주의 (verify-before-assert)**: ADR-064 §결정 7 = **evidence-gated symmetric ratchet** (amendment 강화/약화 방향의 evidence gate) 이며, **사다리 / rung 개념이 아니다** [cited_adr: ADR-064 §결정 7, cited_value: "본 ADR amendment 는 강화/약화 양방향 허용 ... evidence-gate 를 양방향 동등 적용", verify_status: verified — worktree Read ADR-064 §결정 7 본문(Evidence-gated symmetric ratchet 정의)]. §결정 7 은 본 Amendment 의 *강화 방향 ratchet 정합 근거* 이지 root-cause 진단 사다리 자체가 아니다. (S1 에서 §결정 7 을 ladder 로 오인해 P0 FIX 가 발생한 lineage 의 명시 차단.)
+
+### 결정 13 — 문제정의 오류 rung (Trace 9, 3rd rung)
+
+root-cause-decision 사다리에 **3번째 rung = 문제정의 오류 (요구사항 lane 재진입)** 를 신설한다. 현 2-rung (구현 ↔ 설계) 위에 한 단 더 — runtime 실패는 구현/설계 ping-pong 의 한 단을 넘어 문제정의 자체를 의심해야 하는 영역이다.
+
+**트리거** (둘 중 1+):
+
+| Trigger | 운영적 정의 |
+|---|---|
+| **(a) 표면 증상-anchored 진단** | 직전 진단이 코드·invariant 미실측 상태에서 표면 증상 (로그 문구 / 에러 메시지 / 관찰된 현상) 으로 원인을 직행 단정한 경우 (ADR-119 §결정 10 ② "표면 증상에서 원인으로 직행하는 섣부른 단정") |
+| **(b) escalation 종점 후 반복 FAIL** | 같은 가설이 §85-88 hypothesis-differentiation 의 escalation 종점 (현재 '설계') 까지 가서도 반복 FAIL — 2-rung 사다리가 소진된 영역 (runtime 실패는 한 단 더) |
+
+트리거 충족 시 1차 가정을 **구현/설계가 아니라 문제정의 오류로 재분류** → FIX loop (구현 ↔ 설계 ping-pong) 가 아니라 **요구사항 lane 재진입** 으로 전환. 재진입 lane = 요구사항 / 요구사항리뷰 ([ADR-125](ADR-125-requirements-review-lane.md) Amendment 2 가 요구사항리뷰 측 falsification 게이트 — sibling carrier, status: Proposed 이므로 미수락 시 재진입 lane 미발효).
+
+**재진입 규율 3종 (declarative)**:
+
+1. **prohibited prior (가설 격리)** — 기존 진단 (Orchestrator / lane 의 원인 단정) 을 '검증 대상 가설' 로 격리한다. 재진입한 요구사항 / 요구사항리뷰 lane 에 **가설을 숨기고** (hypothesis-withheld) `{코드, 증상, outcome-contract, invariant-surface}` 4-tuple 만 제공한다. 가설을 정답이 아닌 반증 대상으로 숨겨 확증 편향을 차단한다 (ADR-119 §결정 10 ② "가설 격리 — 기존 진단을 검증 대상 가설 (prohibited prior) 로 격리" 정합).
+2. **generative invariant sweep** — 실패 경로의 long-lived mutable 구조를 열거하고, 각 구조의 bound / lifetime / ordering invariant 를 명시하고, 코드 보존 여부를 실측한다 ([ADR-068](ADR-068-boundary-completeness-invariants.md) I-8 standing invariant-surface 를 cross-ref 해 enumeration 완전성을 보강 — I-8 색인이 standing 기록처, 본 sweep 이 그 surface 의 소비자) [cited_adr: ADR-068 I-8, cited_value: "I-8 = ADR-119 §결정 10 ② generative invariant sweep 의 standing 기록처 instantiation", verify_status: verified — worktree Read ADR-068 I-8 declaration(Amendment 6 §결정 1)].
+3. **비대칭 결정규칙** — 증상을 설명하는 **file:line 으로 짚힌 위반 invariant 1개 > "확인함 OK" N개**. 단일 falsification 이 N attestation 을 이긴다 (Popper 비대칭 — ADR-119 §결정 10 ② "비대칭 규칙 — file:line 으로 짚힌 위반 invariant 1개 > '확인함 OK' N개" 와 동일).
+
+### Amendment 결정 1 — ADR-119 §결정 10 ② instantiation (umbrella ↔ root-cause 사다리 wire)
+
+본 §결정 13 = ADR-119 §결정 10 ② 진단 판정면의 **root-cause 사다리 측 instantiation** 이다. ADR-119 §결정 10 ② 는 umbrella anchor (검증-후-단언의 "실패 진단" 판정면 확장 원칙) 이고, 본 §결정 13 은 그 원칙을 FIX 의사결정 사다리 (구현/설계/문제정의 3-rung) 에 구체화한 wire 다. ADR-125 Amendment 2 (요구사항리뷰 lane 측 falsification 게이트) 와 sibling — 두 carrier 가 각각 사다리 측 (본 Amendment) / lane 게이트 측 (ADR-125 Amd 2) 을 담당한다 (disjoint axis).
+
+### Amendment 결정 2 — enforcement = Phase 1 declarative-only
+
+본 Amendment = 3rd rung normative 선언만이다. mechanical wire 는 별 carrier Phase 2 defer:
+
+- `skills/root-cause-decision/SKILL.md` 사다리 표 + §85-88 upgrade (hypothesis-withheld + generative invariant sweep 주입) = **Phase 2 별 carrier defer** (본 Story SKILL.md 무수정 — 병렬 충돌 회피, S4 가 같은 file 의 single-owner 아님).
+- `review-verdict-v4.md` runtime-failure verdict enum + 비대칭 self-check field = **Phase 2 별 carrier defer** (review-verdict-v4 무수정 — 본 Story 미접촉).
+
+declaration-only Wave 1 retain 패턴 답습 (ADR-082 §결정 6 / ADR-070 §D5 / ADR-076 §결정 1 — `mechanical_enforcement_actions` 신규 entry 0).
+
+### Amendment 결정 3 — Self-application + ratchet (§결정 7 정합)
+
+ratchet 방향 = **강화** (사다리 rung 추가 = 진단 escalation 표현력 확장, 2-rung → 3-rung). scope 약화 0건 — 기존 2-rung (구현 ↔ 설계) 무손상, 3rd rung disjoint append. 약화 방향 (3rd rung 제거 / 재진입 규율 3종 1+ 축소 / 비대칭 결정규칙 완화) = ADR-058 §결정 5 sunset_justification 의무. is_transitional: false 정합.
+
+§결정 7 (evidence-gated symmetric ratchet) 정합 — evidence = ADR-119 §결정 10 ② incident 근거 (consumer 수집기가 전 lane PASS 했으나 제품 사망, 표면 증상 진단으로 약 10h 3회 헛수정 — mctrader-data#447 / collector#25) [cited_adr: ADR-119 §결정 10, cited_value: "consumer 수집기가 전 lane PASS 했으나 제품 사망 ... 약 10h 3회 헛수정", verify_status: verified — worktree Read ADR-119 §결정 10 incident 근거].
+
+### Amendment 결정 4 — §결정 1-12 disjoint axis 보존
+
+§결정 13 = FIX 의사결정 사다리 (구현/설계/문제정의 rung) 영역 — §결정 1-12 어느 axis 와도 disjoint. 결정 1-5 (결정 menu 내용 + 제시 룰) / 결정 6 (proposing-time scope) / 결정 7 (ratchet) / 결정 8 (declaration only) / 결정 9 (stop-time wording + question quality) / 결정 10 (skill body precedence) / 결정 11 (proposing-time 3-axis) / 결정 12 (autonomous loop tick frequency) / **결정 13 (root-cause 사다리 3rd rung)**. §결정 13 은 FIX 루프 영역 (failure-time) 으로 proposing-time / stop-time / loop-tick 영역과 별개 axis.
+
+### Amendment 결정 5 — Marketplace / version bump 영향
+
+본 Amendment 13 = wrapper-self ADR doc-only 변경 (ADR-064 본문 amendment + ADR-125 Amendment 2 sibling). CLAUDE.md 의미 변경 0건 (CLAUDE.md "레인 진입 시 스킬 호출" 표의 `codeforge:root-cause-decision` entry 무변경 — SKILL.md 사다리 표는 Phase 2 defer). plugin.json mirrored field 변경 0건 → marketplace sync 불요 (`marketplace_sync_required: false`). doc-only fast-path (ADR-054) 정합.
 
 ## 결과
 
