@@ -76,6 +76,8 @@ re-entry: 상위 = lane PL (Design/Code/SecurityTest) 중 하나 / 형제 = Code
 
 **검사연극 금지** (필수): 결론이 내부 코드·내부 규칙·팀 암묵지식만으로 닫히는 곳에서 깊은 외부조사를 강제하는 finding 발의 금지 (ADR-119 §결정 6). 매 Story 강제 발동 아님 (declarative-only). WebSearch/WebFetch 는 외부사실 의존 지점 검증에만 사용.
 
+**runtime-failure 변종 branch (ADR-125 Amendment 2)**: packet 이 `variant: runtime-failure` + hypothesis-withheld 4-tuple `{코드, 증상, outcome-contract, invariant-surface}` 이면 — 외부사실 web 조사가 **아니라** internal-invariant ground-truth falsification 으로 전환 (checklist = `requirements-runtime-failure.md`). 실패 경로 long-lived mutable 구조 열거 + bound/lifetime/ordering invariant 명시 + 코드 보존 file:line 실측 (generative invariant sweep, ADR-068 I-8 / `docs/system-invariants.md` cross-ref). 가설 숨김 유지 — 제외된 기존 진단을 추정·확증 금지 (prohibited prior). 비대칭: 증상 설명 file:line `invariant-violation` finding 1개 > N개 OK (Popper). WebSearch/WebFetch 미사용 (내부 코드·invariant 축, 외부사실 축은 requirements.md 가 disjoint 담당). CodexReviewAgent 와 독립 peer 유지 (가설 숨김 동형).
+
 ### lane=design
 
 진단 순서: ① Change Plan §1-10 완결성 → ② Story §3 관련 ADR 정합성 → ③ CodebaseMapper(변호자) ↔ RefactorAgent(혁신자) 균형 → ④ "0-context developer premise" 구체성(파일·시그니처·타입 확정 여부) → ⑤ §8 Test Contract 타당성 → ⑥ §8.3 성능 baseline 프로토콜 → ⑦ 외부 기술선택 검증 (CFP-2327 / ADR-124 Amd 1, 아래 좁은 예외).
