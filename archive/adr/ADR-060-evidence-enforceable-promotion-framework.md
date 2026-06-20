@@ -40,6 +40,12 @@ mechanical_enforcement_actions:
     status: warning               # Phase 2 full-lane wire (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats + registry row). warning tier first per §결정 5
     progress_note: "CFP-2061-S4 Amendment 17 carrier — 거버넌스 지표 7종(검사수/워크플로수/매-PR워크플로/셸수/셸LOC/ADR수/ADR바이트) baseline JSON 대비 drift 상대 증가율 임계 초과 시 이슈 자동 발행(dedup). dedup signature = sha256(governance-drift|metric|increase|bucket) — current_val 절대 제외(폭주 함정 회피). advisory exit 0 (warning tier). Phase 2 = scripts/lib/check_governance_drift.py + scripts/check-governance-drift.sh + templates+.github/workflows/governance-remeasure-cron.yml (ADR-005 byte-parity) + docs/kpi/governance-bloat-baseline.json (provisional) + tests/bats 19 TC RED->GREEN. prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). warning tier first per §결정 5"
     target_section: §결정 31      # 본 Amendment 17 의 mechanical action ↔ §결정 binding
+  # Amendment 18 (CFP-2381, 2026-06-20 KST) — 16번째 warning-tier entry 도입 (deferred-followup-reconcile,
+  # §결정 19 auto_blocking 라벨의 mechanical forcing function carrier — carrier-부재 reconciliation 게이트).
+  - action: deferred-followup-reconcile
+    status: warning               # Phase 2 full-lane wire (Python SSOT + bash wrapper + warning workflow + self-validation test job + registry self-entry + STALE 2 flip). warning tier first per §결정 5. self-entry 는 §32.E self-application 자연 회피 정합 — 게이트 자체 script/workflow 실존 예정이라 self-flag 안 됨 (carrier_absent == false)
+    progress_note: "CFP-2381 Amendment 18 carrier — §결정 19 (Amendment 6) auto_blocking 라벨이 '별도 carrier 가 평가 의무' 선언만 하고 carrier 발의 강제 forcing function 부재 → '임계 초과 + auto_blocking + 전용 carrier 부재' entry 자동 검출 + 강제 action 3택 (배선/강등/폐기). carrier-부재 검출 = detect_command/workflow 경로 파일 실존 (OR 결합 — 하나라도 ABSENT 면 carrier-incomplete, deterministic + 외부의존 0 + backfill 0). 검출 status-agnostic broad criterion (stale-local-main status:Active 도 포착). Phase 2 = scripts/lib/check_deferred_followup_reconcile.py + scripts/check-deferred-followup-reconcile.sh + templates+.github/workflows/deferred-followup-reconcile.yml (test-job byte-parity = §32.E Phase 2 결정) + scripts/test-check-deferred-followup-reconcile.sh (self-validation, exit-1 회귀 차단) + registry self-entry append + STALE 2 status flip (bootstrap-labels-precondition + schema-change-7-principles-self-check) + TBD 주석 제거. prior art 답습: check_governance_drift.py (registry-class lint) + check-increment-justification.sh (trigger-path 감지 presence-grep) + operational-outcome-signal-lint.yml (self-validation test job). warning tier first per §결정 5"
+    target_section: §결정 32      # 본 Amendment 18 의 mechanical action ↔ §결정 binding
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -586,6 +592,120 @@ amendment_log:
       framework 자연 사용 사례 entry 추가 only. ADR-064 §결정 7 정합).
       ADR-058 §결정 5 sunset_justification 의무 = is_transitional:false 영구
       framework trigger 자체 미해당.
+  - amendment: 18
+    carrier_story: CFP-2381
+    date: 2026-06-20
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 자체 미해당 (강화/약화 방향 무관 — trigger 는 is_transitional 값 기준). 본 Amendment 18 = 강화 방향 (16번째 warning-tier entry deferred-followup-reconcile 등록 = framework entry count 15 → 16 ratchet-UP + §결정 19 auto_blocking 라벨에 mechanical forcing function 결합). 약화 영역 0건 (enum 값 / tier 추가 / bypass channel 동작 변경 없음).
+    summary: |
+      신설 §결정 32 — 16번째 warning-tier evidence-checks-registry entry
+      `deferred-followup-reconcile` 등록 carrier amendment + §결정 19
+      auto_blocking 라벨의 mechanical forcing function 결합.
+
+      직접 동인 (Story §2 carrier-부재 검출): §결정 19 (Amendment 6)
+      이 `recurrence.promotion_trigger: auto_blocking` 을 "별도 carrier
+      Story 가 actual 승격 평가 의무" 로 선언했으나 (§결정 19 L1143
+      "자동 transition 아님 — governance 보존" + §결정 6 승격 gate 는
+      *더 나중* 단계), **carrier 발의 자체를 강제하는 mechanical
+      forcing function 이 framework 어디에도 부재**. 결과 = "임계
+      초과 + auto_blocking 선언 + 전용 carrier 부재" entry 가 적체
+      (issue-body-claim-pre-screen count 7/3 + spawn-prompt-fact-verify
+      count 3/3 + stale-local-main-checkout-divergence-check count 8/3
+      등) 되어도 무경보. worktree 정리(CFP-2377) / de-bloat 재증식
+      (CFP-2061-S4) 와 동일 병 — 규정 있고 강제 없음.
+
+      carrier-부재 검출 방식 = **detect_command/workflow 가 가리키는
+      파일의 실존 여부** (deterministic + 외부의존 0 + CI offline 가능
+      + backfill 0). registry 데이터에 이미 박혀 있는 신호 — 2026-06-10
+      de-bloat 가 "detect_command·workflow 가 가리키는 워크플로 부재 =
+      실행경로 0 거짓 inventory" 로 3 entry 제거한 선례 (registry
+      last_updated log) 와 동형. carrier-부재 = (detect_command 경로
+      ABSENT) OR (workflow 경로 ABSENT) — 둘 중 하나라도 부재면
+      carrier-incomplete (stale-local-main = script EXISTS but workflow
+      ABSENT 사례가 OR 의 근거).
+
+      검출 status 필터 경계 (Story 결정점 2) = **status-agnostic broad
+      criterion 채택** (chief author 판정). 1급 firing 조건 =
+      (count >= threshold) AND (promotion_trigger == auto_blocking) AND
+      (carrier 부재). status 무관 — `status: deferred-followup` 뿐 아니라
+      `status: Active` 로 의도 등록된 stale-local-main (Wave 2 mechanical
+      wire 자체이나 workflow 미배선) 도 포착. forcing function 의 실제
+      의도 = "강제됐어야 하는데 안 된 것" 전부 (status 라벨 아닌 실제
+      배선 결손). warning-tier 이므로 broad-scope noise 비차단 (false
+      positive 비용 = advisory only). promotion_trigger == advisory +
+      over-threshold = secondary informational tier (강제 아님 — §결정 19
+      advisory 의미 보존). warning_tier_initial entry (fix-loop-reverify
+      / retro-fact-verify) 는 firing scope 외 (auto_blocking/advisory
+      아님 — "should-be-blocking" 신호 아님), §32.B 에 명시.
+
+      강제 action 3택 (검출 시 warning emit): ① 배선 carrier
+      (script+workflow) 발의 (#1602 5-element 템플릿 자원) / ②
+      `tier-downgrade-justification:` 근거 강등 (선례
+      check-tier-downgrade-guard.sh 마커 패턴) / ③ 폐기 (entry 제거).
+
+      STALE 2건 status flip (Story 결정점 4, Phase 2 impl 대상):
+      bootstrap-labels-precondition (registry L965) + schema-change-
+      7-principles-self-check (registry L1590) 둘 다 `status:
+      deferred-followup` → flip. firsthand 실측 — bootstrap-labels:
+      scripts/bootstrap-labels.sh + templates/+.github/workflows/
+      bootstrap-labels.yml 3 file EXISTS / schema-7: scripts/check-
+      schema-7-principles.sh (Python delegate 실구현) + templates/+
+      .github/workflows/schema-7-principles-check.yml 3 file EXISTS.
+      schema-7 L1591/L1592 `# TBD — S2 carrier wire` 주석은 stale
+      (파일 실재) → status flip + TBD 주석 2건 제거 동반. flip 방향 =
+      deferred-followup → Active = 강화 방향 (검사 실작동 상태). 강등
+      아님 → tier-downgrade-justification 마커 불요. (Architect §3 에서
+      check-tier-downgrade-guard.sh 가 flip 을 무단하향 오탐하는지 확인
+      의무.)
+
+      self-application 무한루프 회피 (Story 결정점 3): 본 게이트
+      self-entry `deferred-followup-reconcile` 는 처음부터 `status:
+      Active` (current_tier: warning) 등록 + detect_command/workflow
+      실파일을 동일 Phase 2 PR 에 동반 신설 → 자기 검출 시 carrier
+      실존으로 자연 PASS (별도 self-skip 분기 불요). 선례 =
+      adr-citation-slug entry (registry "자기 진원 RED 0 → status:
+      warning 직접") + Amendment 11 evidence-registry-anomaly ALLOWLIST
+      self-exempt.
+
+      schema doc drift catch-up (권고, Architect 재량): docs/inter-
+      plugin-contracts/evidence-check-registry-v1.md `status` field enum
+      = `Active / Deprecated / Archived` (L70) 인데 registry 에
+      `deferred-followup` 20건 사용 중 (schema-lint 미검출 drift). 본
+      게이트 carrier 가 부수 해소 여부 = Architect 판단 (scope cohesion
+      vs CFP-scope-unitary ADR-064 §결정 5 — Phase 1 schema doc enum
+      append 1줄 = 본 게이트 status-scan 의 데이터 정합 기반이므로
+      cohesive 추정).
+
+      중복 0 (Story §8 disjoint 입증): #1600/#1687 (current_tier 축
+      warning→blocking 승격, 더 나중 단계) + #2166 (신규 entry 도입
+      carrier) 와 disjoint — 본 게이트 = status 축 (선언만 ∧ 미배선 ∧
+      임계초과 carrier-부재 검출). #1602 = 자원-사용 (① 배선 강제 시
+      5-element 템플릿 소비).
+
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작
+      변경 없음, framework 의 자연스러운 사용 사례 entry 추가 +
+      §결정 19 auto_blocking 라벨의 mechanical layer 강화 only (ADR-058
+      §결정 5 sunset_justification 의무 = is_transitional:false 영구
+      framework 이므로 trigger 자체 미해당 — 강화 방향 amendment).
+      lane 분류 = full-lane (신규 script/workflow 동반 → ADR-054
+      §결정 5 doc-only 부적격). branch protection 6-tuple 무변경
+      (ADR-127 ratchet — required 신설 0). change-plan 면제 = ADR-carrier
+      (본 Amendment 가 설계 서사 host, ADR-054 §결정 4 신규 ADR 회피 +
+      framework self-application sub-decision 은 Amendment host 구조적
+      정합 §결정 11). Phase 1 = ADR Amd18 + frontmatter entry + Story
+      §3·§7 + (schema doc enum drift catch-up 권고) + STALE 2 flip
+      준비, Phase 2 = scripts/lib/check_deferred_followup_reconcile.py +
+      scripts/check-deferred-followup-reconcile.sh + templates/
+      github-workflows/deferred-followup-reconcile.yml + .github/
+      workflows/ self-app byte-identical + self-validation test job +
+      registry self-entry append + STALE 2 status flip + TBD 주석 제거 +
+      plugin.json MINOR bump (marketplace sync).
+
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449,
+      CFP-481, CFP-506, CFP-509, CFP-508, CFP-530, CFP-583, CFP-662,
+      CFP-734]` (Amendment 2 §결정 6 (c) chain 정합, self-carrier
+      CFP-2381 제외 — self promotion gate 평가 trigger = 자기 PR merge
+      tautology 회피 convention).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -602,6 +722,7 @@ related_stories:
   - CFP-722  # Amendment 13 carrier — 신설 §결정 27 11번째 warning-tier entry story-section-ownership + lane-self-write-boundary mechanical-enforcement layer (CFP-688 Phase 2 PR #441 destructive rewrite incident 차단 forcing function, ADR-031 §14 monopoly + CFP-32 fix-event-v1 §10 monopoly cross-ref only — ownership semantic 재정의 0건). full-lane (script + workflow + bats + dual-deployment per-repo self-app).
   - CFP-963  # Amendment 14 carrier — 신설 §결정 28 12번째 warning-tier entry codex-network-scope-presence + ADR-081 Amendment 4 §결정 D1.D 본문 확장 (boolean → 4-tier enum strict ratchet-up) mechanical enforcement layer. ADR-040 Amendment 3 §결정 7.A self-application (ADR-081 mechanical_enforcement_actions[]=[] → list[object] 전환). full-lane (Phase 1 = 3 ADR Amd + 2 contract MINOR + SSOT doc + Story + Change Plan, Phase 2 = scripts/lib/2 workflow/bats/fixture pair CX-963-3 P2 boundary mandate). CFP-509 v1.1→v1.2 sibling MANIFEST sync miss INV-1 parity 영역의 evidence-check-registry-v1 MANIFEST row stale "1.1" → "1.3" atomic catch-up (CFP-963 silent stale 영역 catch-up + 신규 v1.3 MINOR network_scope_actual optional schema field codify, 단일 PR row write).
   - CFP-2061-S4  # Amendment 17 carrier — 신설 §결정 31 15번째 warning-tier entry governance-drift-detection + 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 (advisory, cron). full-lane (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats 19 TC). prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). de-bloat 재증식 감시 경보 채널.
+  - CFP-2381  # Amendment 18 carrier — 신설 §결정 32 16번째 warning-tier entry deferred-followup-reconcile + §결정 19 auto_blocking 강제력 0 라벨 → mechanical forcing function 연결 (carrier-부재 검출 = detect_command/workflow 경로 파일 실존, deterministic + 외부의존 0 + backfill 0). STALE 2건 (bootstrap-labels-precondition + schema-change-7-principles-self-check) status flip + stale TBD 주석 제거. full-lane (Python SSOT + bash wrapper + warning workflow + self-validation test job + registry self-entry). prior art 답습: check_governance_drift.py + increment-justification + operational-outcome-signal-lint test-job (신규 발명 최소).
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -2004,3 +2125,121 @@ TC-1 측정 정확성 (discriminating — glob 결함 RED verify) + TC-2 dedup s
 - **ADR-109** — rate-limit-429-mitigation: cron 시각 분산 정합.
 - **ADR-058 §결정 5** — `is_transitional: false` 영구 framework trigger 미해당 + 강화 방향 (15번째 entry ratchet-UP).
 - **prior art** — `scripts/check-marketplace-drift.sh` + `scripts/check-bypass-label-counter.py` + `scripts/lib/gh-api-helpers.sh`.
+
+## Amendment 18 (CFP-2381, 2026-06-20)
+
+### Amendment 18-결정 32 (신설) — 16번째 warning-tier entry `deferred-followup-reconcile` + §결정 19 auto_blocking 라벨의 mechanical forcing function 결합
+
+**Carrier**: CFP-2381 (Epic CFP-2380 S1) / Issue [mclayer/plugin-codeforge#2381](https://github.com/mclayer/plugin-codeforge/issues/2381). Story file = GitHub Issue (wrapper-self Story, ADR-013 dogfood-out 정합).
+
+#### 32.A — 메우는 갭 (forcing function 부재)
+
+§결정 19 (Amendment 6, CFP-509) 가 `recurrence.promotion_trigger: auto_blocking` 을 "별도 carrier Story 가 actual `current_tier: warning → blocking-on-pr` 승격 평가 의무 (자동 transition 아님 — governance 보존)" 로 선언했다 (L1143). 그러나 **그 carrier 발의 자체를 강제하는 mechanical forcing function 이 framework 어디에도 없다.**
+
+- §결정 19 = "auto_blocking 이면 carrier 가 평가해야 한다" 라는 *라벨* 만 부여 — 강제력 0.
+- §결정 6 승격 gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling merged) 는 *더 나중* 단계 (carrier 가 이미 존재한다는 전제).
+- 결과: "임계 초과 + auto_blocking 선언 + 전용 carrier 부재" entry 가 무경보 적체. 실측 (Story §4):
+
+| entry | count/thr | promotion_trigger | detect_command/workflow 실파일 |
+|---|---|---|---|
+| `issue-body-claim-pre-screen` | 7/3 | auto_blocking | 둘 다 ABSENT |
+| `spawn-prompt-fact-verify` | 3/3 | auto_blocking | 둘 다 ABSENT |
+| `stale-local-main-checkout-divergence-check` | 8/3 | auto_blocking | script EXISTS / **workflow ABSENT** (status=Active) |
+
+worktree 정리(CFP-2377) / de-bloat 재증식(CFP-2061-S4) 와 동일 병 — **규정 있고 강제 없음**.
+
+#### 32.B — 검출 기준 결정 (Story 결정점 2 — chief author 판정 = status-agnostic broad criterion)
+
+검출 1급 firing 조건 = **3-AND, status-agnostic**:
+
+```
+flag(entry) := (recurrence.count >= recurrence.threshold)
+             AND (recurrence.promotion_trigger == "auto_blocking")
+             AND (carrier_absent(entry))
+```
+
+- **status 필드 무관** — `status: deferred-followup` 뿐 아니라 `status: Active` 로 의도 등록된 `stale-local-main-checkout-divergence-check` (Wave 2 mechanical wire 자체이나 workflow 미배선) 도 포착. forcing function 의 실제 의도 = "강제됐어야 하는데 안 된 것" 전부 (status 라벨이 아닌 *실제 배선 결손* 기준).
+- **broad 채택 근거**: narrow (`status == deferred-followup`) 기준이면 stale-local-main (의미상 동일 결함) 을 누락 — `status: Active` 가 "deferred-followup [아님]" 으로 의도 등록됐기 때문 (registry L1973-1974). 그러나 carrier 부재라는 결함은 동일. status 는 "선언만 됐나" lifecycle 라벨일 뿐 carrier 실존을 보장하지 않음.
+- **noise 비용 = 0 차단**: warning-tier (continue-on-error) 이므로 broad-scope false positive 가 PR merge 를 차단하지 않음 (advisory only). 강제 신설 0 (ADR-127 ratchet, branch protection 6-tuple 무변경).
+
+**`carrier_absent` 정의** (Story 결정점 1 — detect_command/workflow 파일 실존 변형):
+
+```
+carrier_absent(entry) := NOT exists(resolve_path(entry.detect_command))
+                      OR NOT exists(resolve_path(entry.workflow))
+```
+
+**`detect_command` 경로 추출 spec — 닫힌집합 + fail-loud** (F2 robustness, firsthand registry 다형 실측 반영): registry 의 `detect_command` 는 단일 `bash <path>` 외에도 다형 형태가 실재한다 (firsthand: `bash -c '...diff...yml'` L702 / `A.sh && B.sh` L414 / env-prefix `bash x.sh --repo "${VAR}"` L1850 / `github-actions-runtime` L501 / `workflow inline — ...` prose L183/206/274 / `null` L734/779). 추정 분해는 false-positive/negative 를 유발하므로 **지원 command 형태를 닫힌집합으로 한정 + 닫힌집합 외는 fail-loud (검사 보류, 추정 금지)**:
+
+| 형태 | 처리 |
+|---|---|
+| `bash <path.sh>` / `python3 <path.py>` / `python <path.py>` (단일 interpreter + 단일 파일 token, optional flag/env-prefix 뒤따름) | 첫 `*.sh`/`*.py` token = resolve 대상 (env-prefix `${VAR}` 인자는 무시 — 경로 token 만) |
+| `null` / prose 마커 (`workflow inline — ...` / `github-actions-runtime` 등 파일 경로 아님) | detect_command 축 **검사 제외** (경로 미보유 = carrier_absent 판정 입력 아님 — false-positive 차단) |
+| **복합·모호** (`bash -c '...'` / `A && B` 다중 파일 / 위 닫힌집합 미매칭) | **fail-loud** — 해당 entry 를 `UNRESOLVED` 로 분류 + warning 출력 (carrier_absent True/False 단정 금지, 추정 회피). reviewer 가 수동 판정 / 향후 spec 확장 carrier. exit code 는 FLAG 와 동급 warning (continue-on-error 무차단) |
+
+**`workflow` field resolve 규칙 (2-root parity)**: `workflow` 값은 prose 아닌 **verbatim 파일 경로** 로 해석. 값이 `templates/github-workflows/<f>.yml` 이면 ADR-005 byte-parity 의무상 self-app `.github/workflows/<f>.yml` 도 동반 실존해야 하므로 **2-root 둘 다 확인** (둘 중 하나라도 ABSENT = carrier-incomplete). 값이 `.github/workflows/<f>.yml` single-root 이면 그 경로만 확인 (단 §32.E self-entry 는 template-mirror 채택 권고 — Phase 2 결정 §32.E).
+
+- **OR 결합** (AND 아님): detect_command 경로 OR workflow 경로 중 하나라도 ABSENT 면 carrier-incomplete. 근거 = `stale-local-main` 실측 — script EXISTS but workflow ABSENT 인데도 carrier 미완 (검사가 CI 에서 돌지 않음). 둘 다 실존해야 carrier 완결. (현 firing 3건 = 단일-token detect_command 라 UNRESOLVED 미발생 — 닫힌집합 spec 은 향후 다형 entry 대비 + Phase 2 fixture 커버 의무 §8.)
+- **deterministic + 외부의존 0 + backfill 0**: GitHub API / PAT / 검색 무의존, CI offline 실행 가능, registry 20+ entry 전수 schema backfill 불요 (데이터에 이미 경로 존재). 2026-06-10 de-bloat (registry `last_updated` log) 가 "detect_command·workflow 가 가리키는 워크플로 부재 = 실행경로 0 거짓 inventory" 로 3 entry 제거한 선례와 동형 신호.
+
+**대안 기각** (Story 결정점 1):
+- (a) `wire_carrier:` 필드 신설 = schema 확장 + 기존 20+ entry 전수 backfill 비용 → 기각.
+- (b) GitHub Issue 검색 = PAT/API/auth 의존 + 검색어 false-positive → fragile, 기각.
+
+#### 32.C — secondary tier + firing scope 외 (firing 경계 명시)
+
+- **advisory + over-threshold (secondary, informational)**: `promotion_trigger == advisory` AND over-threshold AND carrier-absent = secondary tier 로 별도 보고 (강제 action 3택 미요구 — §결정 19 advisory 의미 "PR comment 만, blocking transition 없음" 보존). 1급 firing (강제) 아님.
+- **firing scope 외 (검출 제외)**:
+  - `promotion_trigger == warning_tier_initial` (예: `fix-loop-reverify-mandate` count 3/2, `retro-fact-verify-mandate` count 2/2) — auto_blocking / advisory 어느 것도 아님 = "should-be-blocking" 신호 아님 → 검출 대상 아님. (Story §4 표는 이 2건을 "현재 carrier 부재" 사실로 열거하나, *본 게이트의 강제 firing 모집단* 은 auto_blocking 한정 — 이들의 직접 배선은 Epic CFP-2380 S2/S3 담당, §결정 19 의미 정합.)
+  - `recurrence.threshold` 미정의 entry — count 비교 불가 → 검출 제외 (false-positive 차단).
+  - 본 게이트 self-entry (carrier 실존) — §32.E 자연 PASS.
+
+#### 32.D — 강제 action 3택 (검출 시 warning emit)
+
+flag 된 entry 마다 PR 작성자에게 다음 중 **택일** 강제 (warning emit, blocking 아님):
+
+- **① 배선 carrier (script + workflow) 발의** — `#1602` 5-element 템플릿 자원 사용 (자원-사용 관계, disjoint 아님).
+- **② `tier-downgrade-justification:` 근거 강등** — 선례 `scripts/check-tier-downgrade-guard.sh` 마커 패턴 (auto_blocking → none/advisory 로 의도적 강등 + 근거 명시).
+- **③ 폐기** — entry 제거 (de-bloat).
+
+출력 형식 = 각 flag entry 의 `(name / count-threshold / promotion_trigger / absent-path[detect_command|workflow])` + 3택 안내 + 본 게이트 = warning mode 1줄 (decision-principle-vocabulary.yml sticky comment 패턴 답습).
+
+#### 32.E — self-application 무한루프 회피 (Story 결정점 3)
+
+본 게이트 self-entry `deferred-followup-reconcile` 는 **처음부터 `status: Active` (current_tier: warning)** 로 등록 + `detect_command` (scripts/check-deferred-followup-reconcile.sh) / `workflow` (deferred-followup-reconcile.yml — root 선택 = §32.H F4 Phase 2 결정에 종속) 실파일을 **동일 Phase 2 PR 에 동반 신설**. 자기 검출 시 `carrier_absent == false` (실파일 실존) → 자연 PASS. 별도 self-skip 분기 불요. (self-entry `workflow` field 값이 어느 root 인지는 §32.B 2-root parity resolve 규칙과 일관돼야 함 — F4 결정 후 확정.)
+
+- 선례: `adr-citation-slug` entry ("자기 진원 RED 0 → status: warning 직접") + Amendment 11 `evidence-registry-anomaly` ALLOWLIST self-exempt.
+- recurrence 미부여 (count/threshold 미정의) — self-entry 는 sentinel-driven 아닌 forcing-function carrier 이므로 promotion_trigger 무관 (검출 모집단 제외 이중 안전).
+
+#### 32.F — STALE 2건 status flip (Story 결정점 4 — Phase 2 impl)
+
+firsthand 실측 (file 실존 검증) 기반 2건 `status: deferred-followup` → `Active` flip:
+
+| entry | registry 라인 | detect_command 실파일 | workflow 실파일 | 동반 정리 |
+|---|---|---|---|---|
+| `bootstrap-labels-precondition` | L965 | `scripts/bootstrap-labels.sh` EXISTS | `templates/+.github/workflows/bootstrap-labels.yml` EXISTS | status 라인만 변경 |
+| `schema-change-7-principles-self-check` | L1590 | `scripts/check-schema-7-principles.sh` EXISTS (Python delegate 실구현) | `templates/+.github/workflows/schema-7-principles-check.yml` EXISTS | status flip + **L1591/L1592 `# TBD — S2 carrier wire` stale 주석 2건 제거** |
+
+- flip 방향 = deferred-followup → Active = **강화 방향** (검사가 실제로 도는 상태로). 강등 아님 → `tier-downgrade-justification:` 마커 불요. (Architect §3 = `check-tier-downgrade-guard.sh` 가 flip 을 무단하향으로 오탐하는지 git diff 기준 확인 의무 — Story 결정점 3.)
+- schema-7 TBD 주석은 파일 실재이므로 stale → status flip 과 동반 제거 (firsthand 우선 — 파일 실측 > registry 주석).
+
+#### 32.G — schema doc enum drift catch-up (권고)
+
+`docs/inter-plugin-contracts/evidence-check-registry-v1.md` §status field enum (L70) = `Active / Deprecated / Archived` — `deferred-followup` 미등재인데 registry 20건 사용 중 (schema-lint 미검출 drift). 본 게이트의 status-scan 데이터 정합 기반이므로 Phase 1 에서 enum 에 `deferred-followup` 1줄 append 권고 (scope cohesion vs ADR-064 §결정 5 — cohesive 추정, Architect 재량 + DesignReview 확인).
+
+#### 32.H — TDD anti-theater test (self-validation test job — AC-6)
+
+- **discriminating test** = registry fixture (over-threshold-uncarried entry 1+ 포함) → 검출돼야 할 entry 가 검출 안 되면 RED (missing-case) + exit code assert.
+- **CI 실행 배선 동반 필수** (AC-6 — 과거 test 스위트 dead PR #2103 재발 차단): bats 별도 러너 신규 배선이 wrapper-self 에 부재하므로, **`operational-outcome-signal-lint.yml` (CFP-2361 PS4) 패턴 답습** — 동일 workflow file 안 2번째 job (`deferred-followup-reconcile-test`) 이 `bash scripts/test-check-deferred-followup-reconcile.sh` 실행 + 회귀 시 exit 1 (continue-on-error 미적용, lint 결함 차단). mutation 생존 0 (검출 로직 1줄 깨뜨리면 RED).
+- **[Phase 2 결정 필요] self-validation test-job byte-parity 충돌 해소** (F4): §32.E/I 는 ADR-005 `templates/github-workflows/` ↔ `.github/workflows/` byte-identical mirror 를 요구하나, 답습 대상 `operational-outcome-signal-lint.yml` 은 firsthand 실측상 **`.github/` single-root (template 부재)**. 두 선택지 중 Phase 2 구현 lane 이 택일 — **(택1) wrapper-self test job = `.github/` single-root** (operational-outcome-signal-lint 답습 그대로, ADR-005 byte-parity scope 외 처리 = `invariant-check.yml` `CONSUMER_ONLY_WORKFLOWS` 배열에 `deferred-followup-reconcile.yml` 등록 필요 — firsthand: 동 배열 실재 L47) / **(택2) template mirror 채택 = templates/+.github/ 2-root byte-identical** (ADR-005 정합, consumer 도 게이트 상속 — 단 consumer 의 registry 가 wrapper 형식과 동형이어야 의미, 검토 필요). 본 ADR 은 결정 미선점 (구현 lane scope) — **"Phase 2 결정 필요" 박제** 만 의무. lint 본체 workflow (게이트 자체) 의 root 선택도 동일 결정에 종속 (§32.E self-entry `workflow` 값이 어느 root 인지가 §32.B 2-root parity resolve 와 일관돼야 함).
+- 추가 bats (tests/scripts/) 는 보조 — CI 진실 source = self-validation test job.
+
+#### 32.I — Cross-ref
+
+- **§결정 19 (Amendment 6)** — 본 게이트가 mechanical forcing function 을 결합하는 직접 대상 (auto_blocking 라벨 강제력 0 → warning emit 연결).
+- **§결정 5 / §결정 6 / §결정 11** — warning-first / standard promotion threshold (carrier 가 평가) / framework permanent SSOT host (self-application sub-decision = Amendment host 구조 정합).
+- **ADR-061** — thin wrapper bash + `scripts/lib/check_deferred_followup_reconcile.py` Python SSOT (multi-line Python 외부 .py, NO heredoc). **ADR-005** — `templates/github-workflows/` ↔ `.github/workflows/` byte-identical mirror.
+- **ADR-127** — required 신설 0 ratchet (warning-tier, branch protection 6-tuple 무변경). **ADR-054 §결정 4** — 신규 ADR 회피 (Amendment host) = change-plan 면제 (ADR-carrier).
+- **ADR-058 §결정 5** — `is_transitional: false` 영구 framework trigger 미해당 + 강화 방향 (16번째 entry ratchet-UP).
+- **disjoint** (Story §8 중복 0): #1600/#1687 (current_tier 축 승격) + #2166 (신규 entry 도입) 와 disjoint — 본 게이트 = status 축 (carrier-부재 검출). #1602 = 자원-사용 (① 배선 강제 시 5-element 템플릿).
+- **prior art** (worktree 실존 확인 — ADR-119): `scripts/lib/check_governance_drift.py` (registry/거버넌스 지표 PyYAML 파싱 + dedup signature + advisory exit + bash thin wrapper) = registry-class lint 살아있는 등가물 (구 `check_evidence_registry_anomaly.py` 는 2026-06-10 de-bloat 제거됨 — 인용 금지) + `scripts/check-increment-justification.sh` (trigger-path 감지 ∧ marker 부재 → WARNING presence-grep) + `operational-outcome-signal-lint.yml` (self-validation test job in-workflow).
