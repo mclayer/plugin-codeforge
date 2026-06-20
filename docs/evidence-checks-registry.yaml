@@ -962,7 +962,7 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
       last_occurrence: 2026-05-09    # [empirical-source: mctrader-data PR #14 timestamp, RETRO-MCT-104]
       promotion_trigger: advisory    # count=1 < threshold=3 → 발화 없음 (단일 발생 시점)
-    status: deferred-followup        # CFP-662 Phase 2 carrier 신설 후 Active 전환 (workflow self-app 시점)
+    status: Active                   # CFP-2381 Phase 2 (ADR-060 Amd18 §32.F) — flip: scripts/bootstrap-labels.sh + templates/+.github/workflows/bootstrap-labels.yml 3 file 실존 firsthand 확인 → 강화 방향 flip (검사 실작동)
 
   - name: workflow-actionlint-precommit
     description: |
@@ -1587,9 +1587,9 @@ entries:
       count: 0
       threshold: 3
       promotion_trigger: none
-    status: deferred-followup
-    detect_command: bash scripts/check-schema-7-principles.sh  # TBD — S2 carrier wire
-    workflow: templates/github-workflows/schema-7-principles-check.yml  # TBD — S2 carrier wire
+    status: Active  # CFP-2381 Phase 2 (ADR-060 Amd18 §32.F) — flip: detect_command/workflow 실파일 실존 firsthand 확인 (script Python delegate 실구현 + templates/+.github/workflows/schema-7-principles-check.yml) → 강화 방향 flip. TBD 주석 = stale (파일 실재) 제거.
+    detect_command: bash scripts/check-schema-7-principles.sh
+    workflow: templates/github-workflows/schema-7-principles-check.yml
     current_tier: warning
     bypass_label: hotfix-bypass:big-change-manual  # 60번째 family member (label-registry-v2 v2.42 — hard limit 영역 primary bypass)
     promotion_criteria:
@@ -2837,3 +2837,44 @@ entries:
       threshold: 3
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+
+  # CFP-2381 Phase 2 (ADR-060 Amendment 18 §결정 32) — deferred-followup reconcile 게이트 self-entry.
+  # §32.E self-application 무한루프 자연 회피: detect_command/workflow 실파일을 동일 PR 동반 신설 →
+  #   자기 검출 시 carrier_absent == false (실파일 실존) → 자연 PASS. 별도 self-skip 분기 불요.
+  #   recurrence 미부여 (count/threshold 미정의) — forcing-function carrier 라 검출 모집단 제외 이중 안전.
+  - name: deferred-followup-reconcile
+    description: |
+      ADR-060 Amendment 18 §결정 32 mechanical forcing function — §결정 19 (Amendment 6)
+      auto_blocking 라벨이 "별도 carrier 가 승격 평가 의무" 선언만 하고 carrier 발의 강제
+      forcing function 부재 → "임계 초과 (recurrence.count >= recurrence.threshold) +
+      promotion_trigger == auto_blocking + 전용 carrier 부재" evidence-checks-registry entry 를
+      PR-time 에 자동 검출 + 강제 action 3택 (배선/강등/폐기) warning emit.
+
+      carrier-부재 검출 = detect_command OR workflow 경로 파일 ABSENT (OR 결합 — 하나라도
+      ABSENT 면 carrier-incomplete, deterministic + 외부의존 0 + backfill 0). 검출 status-agnostic
+      broad criterion (stale-local-main status:Active 도 포착 — 실제 배선 결손 기준).
+      경로 추출 = 닫힌집합 + fail-loud (단일 interpreter `bash <sh>`/`python3 <py>` + env-prefix
+      resolve / null·prose 검사 제외 / 복합·모호 token UNRESOLVED fail-loud — carrier_absent
+      단정 금지). workflow field 2-root parity (templates 값이면 .github self-app 둘 다 확인).
+      warning-tier (continue-on-error) — branch protection 6-tuple 무변경 (ADR-127 ratchet).
+    detect_command: bash scripts/check-deferred-followup-reconcile.sh check
+    workflow: .github/workflows/deferred-followup-reconcile.yml   # F4 §32.H — .github single-root (operational-outcome-signal-lint.yml 답습, template mirror 미운용)
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error)
+    bypass_label: hotfix-bypass:deferred-followup-reconcile   # label-registry-v2 MINOR (Phase 1 동반)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2381                   # 본 entry 도입 carrier (Epic CFP-2380 S1)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = registry static scan, modal 어휘 검사 미포함
+    introduced_by: CFP-2381
+    introduced_date: 2026-06-20      # KST (ADR-060 Amendment 18 §결정 32)
+    owner_adr: ADR-060               # framework SSOT — §결정 32 forcing function 정책 owner
+    carrier_adr: ADR-060             # self-carrier (Amendment 18)
+    spec_invariant_measurement_required: false  # presence/structural classification 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    status: Active                   # §32.E — 처음부터 Active (실파일 실존 동반 → carrier_absent==false 자연 PASS, recurrence 미부여)
