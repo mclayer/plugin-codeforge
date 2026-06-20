@@ -2873,9 +2873,11 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 
 ## 10. Hotfix 경로 (운영 장애 대응)
 
-정상 7-레인 full flow 는 Story 1건당 반나절~수일 소요. 운영 장애로 즉시 대응 필요한 경우 **Minimal Path** (`severity:bug`, ≤30 lines) 또는 **Medium Path** (`severity:critical`, multi-file) 중 하나 선택. 어느 경로든 **사후 감사 (next working session 자동 수행) 의무**.
+> **[POLICY-RETIRED — ADR-127 §결정 3]** hotfix Minimal/Medium lane-skip 긴급경로는 폐지됐다. 운영 장애 시에도 정식 풀 플로우(요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트 → 배포 → 배포리뷰)를 **무조건** 거친다. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, **lane 생략 0**. 대기시간 축약(정식 lane 병렬 dispatch + check timeout 상한 + on-call reviewer 선지정)만 허용 — 증거 0 축약 (ADR-127 §결정 3.4). 아래는 historical 기록.
 
-상세 = [`docs/hotfix-playbook.md`](hotfix-playbook.md) (CFP-93, P2-9 follow-up — cognitive overhead reduction 목적으로 별도 분리). mctrader debut audit (Issue #181 P2-9) 까지 사용 사례 0 — 본 경로는 첫 운영 장애 발생 시 활성화.
+정상 full flow 는 Story 1건당 반나절~수일 소요. (구 정책 — retired) 운영 장애로 즉시 대응 필요한 경우 Minimal Path (`severity:bug`, ≤30 lines) 또는 Medium Path (`severity:critical`, multi-file) 중 하나 선택. 어느 경로든 사후 감사 (next working session 자동 수행) 의무.
+
+상세 = [`docs/hotfix-playbook.md`](hotfix-playbook.md) (CFP-93, P2-9 follow-up — cognitive overhead reduction 목적으로 별도 분리, 상단 [POLICY-RETIRED] 배너 참조). mctrader debut audit (Issue #181 P2-9) 까지 사용 사례 0 — lane-skip 경로는 ADR-127 §결정 3 으로 폐지 (정식 풀 플로우로 대체).
 
 ---
 

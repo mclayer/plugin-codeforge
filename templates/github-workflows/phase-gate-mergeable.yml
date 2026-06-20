@@ -161,10 +161,10 @@ jobs:
               )
             );
 
-            // 5a. Doc-only / type:epic fast-pass (CFP-106 fix #143).
-            //     mctrader debut F6: Epic close + doc-only PR 가 phase-gate-mergeable 의
+            // 5a. type:epic fast-pass (CFP-106 fix #143). (ADR-127 §K — doc-only fast-pass 폐지로 isDocOnly 분기 삭제)
+            //     mctrader debut F6: Epic close PR 가 phase-gate-mergeable 의
             //     phase:보안-테스트/gate 라벨 부재 → 항상 ACTION_REQUIRED → admin merge 의존.
-            //     Resolution: type:epic 라벨 OR all-doc files (`docs/`, `wrapper/`, `*.md`) → fast-pass success.
+            //     Resolution: type:epic 라벨 → fast-pass success (Epic close deadlock 방지, §결정 8 보존).
             const prFullForEpic = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
