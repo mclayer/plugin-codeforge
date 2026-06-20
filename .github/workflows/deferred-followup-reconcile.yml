@@ -1,0 +1,49 @@
+name: deferred-followup-reconcile
+# CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트 (warning-tier).
+#
+# §결정 19 auto_blocking 라벨의 mechanical forcing function — "임계 초과 + auto_blocking +
+# 전용 carrier 부재" evidence-checks-registry entry 를 PR-time 에 자동 검출 + 강제 action 3택.
+#
+# F4 결정 (§32.H): .github/ single-root (operational-outcome-signal-lint.yml 답습).
+#   ADR-005 byte-parity scope 외 — template mirror 미운용 (게이트 = wrapper-self governance
+#   registry 검사라 .github-only 정합). invariant-check.yml parity loop 은 templates → .github
+#   방향이라 .github-only 파일은 미검출 (CONSUMER_ONLY_WORKFLOWS 등록 불요).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
+# Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deferred-followup-reconcile:
+    name: deferred-followup carrier-부재 검출 (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-deferred-followup-reconcile.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-deferred-followup-reconcile.sh check
+
+  deferred-followup-reconcile-test:
+    name: discriminating test (다형 fixture — mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-deferred-followup-reconcile.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-deferred-followup-reconcile.sh
