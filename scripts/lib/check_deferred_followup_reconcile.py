@@ -50,8 +50,8 @@ if hasattr(sys.stderr, "reconfigure"):
 
 DEFAULT_REGISTRY_REL = os.path.join("docs", "evidence-checks-registry.yaml")
 
-# 닫힌집합 — 지원 단일 interpreter (§32.B 표 1행)
-_INTERPRETERS = {"bash", "python", "python3"}
+# 닫힌집합 — 지원 단일 interpreter (§32.B 표 1행). `sh` = 정당한 POSIX shell (F-CR-2381-1).
+_INTERPRETERS = {"bash", "sh", "python", "python3"}
 
 # 닫힌집합 — 경로 token 으로 인정하는 확장자 (§32.B + §7.2)
 _PATH_SUFFIXES = (".sh", ".py", ".yml", ".yaml")
@@ -89,7 +89,9 @@ def resolve_command(raw):
 
     # 복합·모호 1: shell 연산자 (다중 명령 / 다중 파일) → fail-loud
     #   `&&` / `||` / `;` / pipe `|` 발견 시 단일 파일 단정 불가.
-    if re.search(r"&&|\|\||;|\s\|\s|\s\|$", s):
+    #   pipe 는 무공백 `A.sh|B.sh` 도 잡음 (F-CR-2381-2 — 공백 의존 regex false-negative 차단,
+    #   &&·;·pipe 와 일관). bare `|` 1개라도 = 다중 명령 → UNRESOLVED.
+    if re.search(r"&&|;|\|", s):
         return {"kind": "unresolved", "reason": "shell-operator (다중 명령/파일)"}
 
     tokens = s.split()
@@ -423,7 +425,7 @@ def cmd_check(args):
 
 def cmd_resolve(args):
     """detect_command 문자열 닫힌집합 resolve 결과 진단 출력 (test/디버그용)."""
-    result = resolve_command(args.command)
+    result = resolve_command(args.cmd_str)
     print("kind=%s" % result["kind"])
     if result["kind"] == "path":
         print("path=%s" % result["path"])
@@ -451,7 +453,10 @@ def main():
     )
 
     resolve_p = subparsers.add_parser("resolve", help="detect_command 닫힌집합 resolve 진단")
-    resolve_p.add_argument("--command", required=True, help="detect_command 값 문자열")
+    # dest=cmd_str — subparser dest="command" 덮어쓰기 회피 (F-CR-2381-3: --command 가 args.command
+    #   ("resolve") 를 clobber 해 resolve 분기 미진입하던 broken-as-written 정정).
+    resolve_p.add_argument("--command", dest="cmd_str", required=True,
+                           help="detect_command 값 문자열")
 
     args = parser.parse_args()
 
