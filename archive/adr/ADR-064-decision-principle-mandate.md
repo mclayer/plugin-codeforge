@@ -1133,6 +1133,26 @@ ratchet 방향 = **강화** (사다리 rung 추가 = 진단 escalation 표현력
 
 본 ADR 도입 = CLAUDE.md 의미 변경 → ADR-037 룰에 의한 codeforge wrapper **MINOR 버전 bump** 발화. ADR-063 3-file atomic invariant 적용 의무: `.claude-plugin/plugin.json` + `CHANGELOG.md` + `mclayer/marketplace/.claude-plugin/marketplace.json` 동시 sync. version bump 자체 + atomic invariant 절차 결정은 본 ADR §결정 4 parallel default 정합 — ordering 은 ADR-063 §결정 2 정합 (marketplace sync PR 선행 merge → plugin PR merge). plugin PR 선행 merge 는 ADR-063 §결정 2 Anti-pattern.
 
+## Amendment 14 — §결정 3 룰 1/5 의 process-skip-offer 적용 금지 (CFP-2374, 2026-06-20 KST)
+
+### 컨텍스트
+
+[ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) (정식 플로우 무조건화, CFP-2374) 가 dialog skip-offer(런타임에 "생략/간소화/빠르게 갈까요?" 를 사용자 선택지로 제시)를 금지했다. 본 ADR §결정 3 룰 1(derived default) / 룰 5(`AskUserQuestion` 범위 제한 = 가치판단·미공개컨텍스트 2종 한정)은 이미 §결정 2 forbid-list 어휘(`단계적`/`일단`/`가벼운`/`quick win`/`minimal viable`)로 결정 제안 menu 에서 약화 옵션을 차단해왔으나, "process 생략 여부 자체를 묻는" 행위의 명시 금지는 없었다.
+
+### 결정
+
+§결정 3 룰 1/5 에 명문 추가 — **"process 생략·단축 여부"는 derived default 가 항상 "정식"으로 자명**하므로 (정식 풀 플로우 = 비협상 기본값, ADR-127), `AskUserQuestion` 발화 금지. 생략은 애초에 결정 분기가 아니다.
+
+- 룰 1(derived default): "process 생략/단축" = derived default 항상 정식 → declare 도 불요(생략은 옵션이 아니므로). 그냥 정식 진행.
+- 룰 5(`AskUserQuestion` 범위 제한): "생략 여부"는 가치판단 영역이 **아님** (default 자명) → 본 도구 발화 금지.
+- §결정 2 forbid-list 와 정합 강화 — 결정 제안 menu 에서 약화 어휘를 빼는 것 + 생략 자체를 묻지 않는 것은 같은 방향.
+
+본 Amendment 는 §결정 3 본문 무변경 (anti-drift) — 적용 금지 declare 만. SSOT = ADR-127 §결정 4.
+
+### Sunset justification
+
+강화 방향 (불필요한 멈춤·약화 옵션 제거). 약화 아님 → ADR-058 §결정 5 비대상. ADR-127 §결정 4 위임.
+
 ## 해소 기준
 
 N/A — permanent policy

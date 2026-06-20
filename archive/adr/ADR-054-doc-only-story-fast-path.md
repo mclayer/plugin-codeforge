@@ -1,7 +1,7 @@
 ---
 adr_number: 54
 title: "doc-only Story fast-path 분류 표 + fallback 규칙"
-status: Accepted
+status: Superseded by ADR-127
 date: 2026-05-10
 category: Process
 carrier_story: CFP-363
@@ -65,9 +65,11 @@ is_transitional: false
 
 # ADR-054: doc-only Story fast-path 분류 표 + fallback 규칙
 
+> **[SUPERSEDED — ADR-127 / CFP-2374, 2026-06-20 KST]** 본 ADR 이 정의한 doc-only Story fast-path(구현 lane 생략, Phase 1/2 미분리, 단일 PR) 경로는 **폐지**됐다. 현행 SSOT = [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) (정식 플로우 무조건화 — 모든 면제·단축경로 폐지). 본 ADR 본문은 historical record (carrier-preserved, 통째 삭제 아님 — 이력 보존). §결정 1 표의 "doc-only fast-path" 분류, §결정 3 경량 lane sequence, §결정 6(Amendment 1 declarative seed fast-path), §결정 7(Amendment 2 Codex 6-touchpoint 면제) 모두 더 이상 신뢰 source 아님. 모든 Story = full 10 lane + Phase 1 PR + Phase 2 PR 분리 (ADR-127 §결정 2).
+
 ## 상태
 
-**Accepted (2026-05-10)** — CFP-363 carrier story.
+**Superseded by [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) (2026-06-20 KST, CFP-2374)** — 원: Accepted (2026-05-10) CFP-363 carrier story. doc-only fast-path 폐지로 status 전환 (본문 byte 무변경, redirect 배너만).
 
 ## 컨텍스트
 

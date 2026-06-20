@@ -8,6 +8,17 @@ carrier_story: CFP-1685
 is_transitional: false
 amends: null
 supersedes: null
+amendments:
+  - amendment_id: 1
+    date: 2026-06-20
+    carrier_story: CFP-2374
+    title: "minimal-path-direct 의 lane spawn skip 무력화 — 정식 플로우 무조건화 (ADR-127) 정합"
+    description: |
+      ADR-127 (정식 플로우 무조건화, CFP-2374) 가 모든 lane/process 생략을 폐지.
+      ADR-114 §결정 2 절차 3 ("lane spawn skip + Orchestrator inline write") 은 lane spawn skip
+      본질을 가지므로 무효화. 단 escalation audit-trail 가치 (FIX 3회 + ESCALATE 시점 §10/§14
+      marker 기록) 는 보존 — 그 다음 행동을 "lane 생략 inline write" 가 아니라 "정식 lane 재진입
+      + 긴급 우선순위 표기" 로 재정의. ratchet 강화 방향 (lane skip 제거), sunset_justification 비대상.
 related_adrs:
   - ADR-039  # inline whitelist closed 4-entry + inline exception per user directive
   - ADR-064  # §결정 5 CFP scope unitary (minimal path direct = single carrier 보존 패턴)
@@ -90,6 +101,26 @@ minimal path direct = exception channel (full-lane default 우선). exception pa
 ## 해소 기준
 
 N/A — `is_transitional: false` (permanent governance protocol). minimal path direct = full-lane process 의 영구 escalation fallback channel. ADR-058 §결정 7 governance carrier default presumption 정합.
+
+## Amendment 1 (2026-06-20 KST) — CFP-2374 — lane spawn skip 무력화 (정식 플로우 무조건화 정합)
+
+### 컨텍스트
+
+[ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) (정식 플로우 무조건화, CFP-2374) 가 모든 lane/process 생략 경로를 폐지했다. 본 ADR 의 minimal-path-direct 는 "full-lane default + 사용자 directive 필수 escalation fallback (FIX 3회 + ESCALATE 후)" 성격이라 Orchestrator 자발적 "생략 제안"과 다르지만, **§결정 2 절차 3 ("lane spawn skip + Orchestrator inline write")** 의 lane spawn skip 본질이 ADR-127 directive 와 충돌한다.
+
+### 결정
+
+§결정 2 절차 3 (lane spawn skip + Orchestrator Edit/Write/Bash 직접 산출물 작성) = **무효화**. minimal-path-direct 발동 시에도 lane 생략은 0이다.
+
+- **보존**: escalation 정형 (FIX iteration ≥ 3 + N+ ambiguity blocker + ESCALATE_PACKET_INCOMPLETE 감지) + 그 시점 Story §10 FIX Ledger / §14 Lane Evidence 의 audit-trail marker 기록 의무 (§결정 3 lane evidence preservation).
+- **재정의**: ESCALATE 후 다음 행동 = "lane 생략 inline write" → **"정식 lane 재진입 + 긴급 우선순위 표기"** (ADR-127 §결정 3). 1st attempt PRs close + 새 branch (§결정 2 절차 1/2) 는 보존 (race/drift 회피 audit), 단 새 branch 에서도 정식 10 lane 전부 거침.
+- §결정 4 (exception path = norm 아님, 사용자 directive 필수) invariant 보존 — 단 exception 의 내용이 "lane skip" 에서 "긴급 우선순위 표기 + 정식 lane" 로 전환.
+
+본 Amendment 는 §결정 1/3/4 본문 무변경 (anti-drift) — §결정 2 절차 3 의 lane-skip 만 무효 declare. SSOT = ADR-127 §결정 3.
+
+### Sunset justification
+
+강화 방향 ratchet (lane skip 제거 = 정식성 강화). 약화 아님 → ADR-058 §결정 5 비대상. ADR-127 §결정 3 위임.
 
 ## Wave 2 (Phase 2 PR scope — future carrier)
 

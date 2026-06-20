@@ -1834,3 +1834,37 @@ ADR-058 §결정 5 + ADR-064 §self-application evidence-gated symmetric ratchet
 - **ADR-058 §결정 5**: sunset_justification N/A — is_transitional: false permanent governance policy + ratchet 강화 방향
 - **ADR-082 §결정 1 sub-scope (1-G) + (1-K)**: amendment-slot pre-reservation + numeric claim write-time strict claim — 본 Amendment 18 slot pre-claim 정합 (ADR-RESERVATION row append + 4-step verify-before-write)
 
+## Amendment 19 (2026-06-20 KST) — CFP-2374 — §결정 6.A.10 isChoreOnly/isDocOnly process-derived fast-pass → deadlock-resolver 재설계 + hotfix-bypass:* family 전면 폐지 보류
+
+### 컨텍스트
+
+[ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) (정식 플로우 무조건화, CFP-2374) 가 chore 면제(Story 없이 commit) + doc-only fast-path 를 폐지했다. §결정 6.A.10 의 `isChoreOnly` fast-pass source 는 성공 조건이 `noStoryBinding`(Story 미연결, phase-gate-mergeable.yml L405-406 실측)이므로, ADR-127 §결정 1(모든 변경 Story 의무) 발효 후 **Story 없는 PR 자체가 사라져 isChoreOnly 는 자연 dead path** 가 된다. 동시에 `isDocOnly` allowlist(`.github/`/`templates/`/`scripts/`/`.claude/_overlay/`/`scope_manifests/` 까지 success)는 거버넌스 변경을 구현 lane 없이 통과시키는 살아있는 exemption carrier(Codex adversarial 검증 P0)로 식별됐다. 설계리뷰 FIX iter 1 에서 실 구현이 본 Story in-scope 로 격상됐다(Wave 2 분리 폐기).
+
+### 결정
+
+#### A. isChoreOnly/isDocOnly process-derived fast-pass → deadlock-resolver 재설계 (본 Story in-scope)
+
+§결정 6.A.10 의 isChoreOnly fast-pass 는 **process-skip(Story/lane 생략)을 정당화하는 근거로 인용 금지**한다. PR-level CI mergeability(phase 라벨 mismatch deadlock 방지)와 process-level 생략은 직교 축이며, ADR-127 이 후자를 폐지했다:
+
+1. **`isChoreOnly` = ADR-127 발효 후 자연 dead path** — Story 의무화로 `noStoryBinding` 성공 경로 소멸. 계산 블록 제거.
+2. **`isDocOnly` = process-derived fast-pass 폐지** — 단 즉시 삭제 시 CFP-1845 deadlock(branch protection 손작업 우회 + enforce_admins:true 위배 = 보안 약화) 재발 → **좁은 deadlock-resolver predicate `isLabelMismatchOnly` 로 대체**: "Story binding 존재 ∧ phase gate 라벨 부착 ∧ phase 라벨만 mismatch" 인 경우에만 unblock. "doc-only diff / Story 없음" 을 성공 근거에서 제거. 실 구현 = ADR-127 §K (본 Story Phase 2 — 두 phase-gate-mergeable.yml byte-identical mirror).
+3. **`isPostMergeFix` / `isEpicLabel` / `isSiblingPr` = 보존** (ADR-127 §결정 8 — cross-repo land_order safe-defect 정정 / Epic close deadlock 방지 / sibling sync 보증 = process 생략 아님).
+4. **`enforce_admins:true` invariant 보존** — Amendment 18 의 CFP-1845 anti-pattern 구조적 해소는 deadlock-resolver `isLabelMismatchOnly` 가 계승. fast-pass 단순 삭제 금지.
+
+#### B. §결정 6.A hotfix-bypass:* family — required-6-tuple-skip blocking-tier 0건 실측 + "required check bypass 신설 금지" invariant 신설
+
+설계리뷰 FIX iter 2 에서 사용자 결정 = 차단(blocking)형 hotfix-bypass 폐지 in-scope, 경고(warning)형 제외. ADR-127 §결정 9 가 실측 분류한 결과:
+
+- **blocking-tier 정의** = merge 를 실제 막는 required 6-tuple check(`phase-gate-mergeable / invariant-check / doc frontmatter schema / doc section schema / check-gate / Verify deploy lane presence`)를 hotfix-bypass 로 fail→pass/skip 전환시키는 라벨.
+- **실측 결과 = 0건**. required 6-tuple 5 workflow 전수 grep 결과 어느 것도 hotfix-bypass 미참조(verified-via `.github/workflows/{phase-gate-mergeable,invariant-check,lint,story-section-schema,deploy-lane-presence}.yml` 전수 grep, 2026-06-20). invariant-check / phase-gate-mergeable evidence-registry entry 도 bypass 필드 0. → **required check 는 애초에 hotfix-bypass escape valve 미설계** = "차단형 우회 0" 목표가 이미 달성 상태.
+- **warning-tier 제외**: hotfix-bypass 를 읽는 ~35 workflow 는 전부 required 6-tuple 외부 — 대다수 `continue-on-error: true`(advisory), 일부 `blocking-on-pr` tier(worktree-first-* / wrapper-managed-block)는 `continue-on-error: false` 지만 branch protection 6-tuple 미등록 = enforce_admins 로 실제 merge 차단 안 함. 폐지해도 merge 무차단 = no-op(검사연극). 제외 확정.
+- **wrapper 단일**: lane 8 repo archived(CFP-2178 S6 — 활성 관리 wrapper 단일). 8-repo mirror 불요.
+
+**§결정 6.A 처리 (invariant 신설)**: per-entry namespace 본문 무변경(anti-drift). 본 Amendment 가 **"required 6-tuple check 에는 hotfix-bypass escape valve 신설 금지" invariant 를 명문화**한다 — 현 상태(required check bypass 0)를 영구 고정(미래에 누가 required check 에 bypass channel 추가하는 것 차단, 강화 ratchet). 폐지할 label 0건이나 invariant 로 directive("차단형 우회 0")의 실질·영구 이행. SSOT = ADR-127 §결정 9/§M.
+
+본 Amendment 는 §결정 6.A / 6.A.10 본문 무변경 (anti-drift, historic-preserving) — A(fast-pass 재설계) + B(hotfix-bypass blocking-tier 0건 실측 + invariant) declare. A 실 코드 변경 = ADR-127 §K (본 Story Phase 2).
+
+### Sunset justification
+
+강화 방향 ratchet (A: process 생략 carrier 제거 + deadlock-resolver 로 좁힘 = gate 강화 / B: required check bypass 신설 금지 invariant 신설 = gate 강화, 약화 0). ADR-058 §결정 5 비대상. ADR-127 §결정 5/8/9 SSOT 위임.
+
