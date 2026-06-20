@@ -42,7 +42,7 @@ mechanical_enforcement_actions:
   # 갭 A backstop 자동 트리거 복원 = SessionEnd async dispatch (mechanical wire = Phase 2). 갭 B 수렴 = 절차 명문화 (mechanical 게이트 신설 0, AC-9).
   - action: worktree-clean-completion-gate
     status: deferred-followup     # Wave 1 declarative (본 Phase 1 ADR + playbook §9.7.1 precondition + skill SSOT). actual local check 스크립트 + evidence-registry workflow:null entry = Phase 2 PR scope.
-    progress_note: "phase:완료 transition precondition 의 worktree-clean self-check (eager 미실행 검출 게이트). backstop(age 7d+)과 disjoint — 완료 worktree 는 0일령. 로컬-only (workflow:null, ADR-099/ADR-122 선례). required check 신설 금지 (AC-12 / ADR-024 Amd19 §B). fail-safe 4종 상속 (ADR-040 Amendment 9 §결정 9.A.4). Phase 2 = scripts/check-worktree-completion-clean.sh + evidence-registry warning-tier entry."
+    progress_note: "phase:완료 transition precondition 의 worktree-clean self-check (eager 미실행 검출 게이트). backstop(age 7d+)과 disjoint — 완료 worktree 는 0일령. 로컬-only (workflow:null, ADR-099/ADR-122 선례). required check 신설 금지 (AC-12 / ADR-024 Amd19 §B). fail-safe 4종 상속 + 대상 판정 계약(sub-worktree vs Story root) = ADR-040 Amendment 9 §결정 7.K. dead-check 자동삭제 방어 = removal_protocol (detect_command liveness 아님 — F1 정정). Phase 2 = scripts/check-worktree-completion-clean.sh + evidence-registry warning-tier entry."
     target_section: §결정 2
 related_carrier_issues:
   - 608   # OPEN sentinel #5 — Phase 1→2 boundary worktree sync (§결정 6 해소: 본 ADR 와 axis disjoint, 충돌 0)
@@ -100,8 +100,14 @@ Accepted (2026-06-20 KST, CFP-2377 carrier). `is_transitional: false` — 영구
 `phase:완료` transition 은 Orchestrator self-write(로컬)이고 worktree 는 클라우드 러너 미접근 `[verified]`(playbook §0a-prime line 162; GitOpsAgent §5). 따라서 worktree-clean 게이트는 **GitHub Actions required CI check 불가**. 3-조합으로 기계화:
 
 1. **(a) Orchestrator behavioral precondition** — playbook §9.7.1 `phase:완료` precondition 행에 worktree-clean self-check 1항 추가 (ADR-045 Amendment 13 §결정 13.A).
-2. **(b) 로컬 check 스크립트** — `scripts/check-worktree-completion-clean.sh` (Phase 2). 완료 Story 의 worktree 가 잔존하는지 검출 (eager 미실행 게이트).
-3. **(c) evidence-checks-registry 등록 = warning-tier + `workflow: null`** — 로컬 전용. `workflow: null` = CI 미wire 의도적 선언 (ADR-099 §결정 3 / ADR-122 회귀 방지 gate 선례 — `# CI 미wire — standalone manual / 세션-개시 호출` marker 동형). dead-check 가드 면제 = `detect_command` live + workflow:null marker (de-bloat 기준 "detect_command·workflow 모두 부재 = dead" 와 disjoint — `detect_command` live 인 local-only check 는 dead 아님).
+2. **(b) 로컬 check 스크립트** — `scripts/check-worktree-completion-clean.sh` (Phase 2). 완료 Story 의 worktree 가 잔존하는지 검출 (eager 미실행 게이트). **대상 판정 계약 = ADR-040 Amendment 9 §결정 7.K "완료-게이트 대상 판정 계약"** (F2): (a) 본 Story `cfp-NNN` scope ∧ ((b) sub-worktree `cfp-NNN/lane/*`·`cfp-NNN/fix-iter-*` 잔존 = 즉시 검출 OR (c) Story root `cfp-NNN` flat = Phase 2 PR `mergedAt` non-null 일 때만 검출, open(보존 중)이면 제외). 둘 다 0일령이라 시간 disjoint 불가 → branch 패턴 + `mergedAt` 으로 구분 (EC-2/EC-3 정합). 0-context implementer 가 구분 규칙 자체 발명 금지.
+3. **(c) evidence-checks-registry 등록 = warning-tier + `workflow: null`** — 로컬 전용. `workflow: null` = CI 미wire 의도적 선언 (ADR-099 §결정 3 / ADR-122 회귀 방지 gate 선례 — `# CI 미wire — standalone manual / 세션-개시 호출` marker 동형, registry line 1779/2726 실측 동형 패턴).
+
+**dead-check 자동 삭제 방어 — 사실대로 (F1 정정)**: 본 local-only entry 의 자동 삭제 차단은 "dead 후보 아님" 이 아니라 **`removal_protocol`** 이 보장한다 (`docs/check-dead-criteria.yaml:153-167` 실측).
+
+- dead static_signals = `advisory_tier ∧ not_required_context ∧ no_exclude_tag` **3-AND 뿐** (`check-dead-criteria.yaml:41-71` 실측 — `detect_command`/`workflow` presence 신호 **부재**). 본 entry(warning-tier + non-required + exclude-tag 미보유)는 3-AND 를 충족해 **dead 후보로 분류될 수 있다.**
+- 실효 안전 = `removal_protocol.automatic_deletion: false` + 제거 시 `scripts/check-tier-downgrade-guard.sh` 의 `tier-downgrade-justification:` 마커 부재 시 exit 1 차단(`required_before_removal.justification_marker`). 즉 dead 후보여도 정당화 마커 없이는 자동 삭제 불가.
+- **정정 박제**: 초안의 "`detect_command` live = dead 아님 / de-bloat 기준 'detect_command·workflow 부재 = dead' 와 disjoint" 근거는 **사실 오기** — dead 기준에 detect_command/workflow presence 신호가 없다. CFP-2377 설계리뷰 FIX iter 2 F1 수용 (firsthand 실측 정정).
 
 **branch protection 6-tuple 무변경** — required check 신설 0 (ADR-024 Amendment 19 §B "required 6-tuple check 에 bypass escape valve 신설 금지" invariant 정합 — 신규 required check 자체를 안 만들어 우회 채널 신설 문제 원천 회피).
 

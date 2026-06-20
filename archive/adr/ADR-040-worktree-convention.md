@@ -80,8 +80,10 @@ mechanical_enforcement_actions:
     target_section: §결정 7.J     # filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default + agent spawn prompt `git -C <worktree_abs_path>` directive 강제 확장
   # Amendment 9 (CFP-2377, 2026-06-20) — backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire)
   # check-worktree-stale.sh 스크립트 로직 무변경 (트리거만 복원). Phase 2 = hooks.json SessionEnd async wire + dispatch script.
+  # F4 정책 (§결정 7.K.1): 본 action = hook-wire action (evidence-check lint 아님) → §결정 7.A "registry 미등록 금지" 계약 N/A.
+  #                       enforcement evidence = hooks.json SessionEnd entry presence (CI lint 아닌 hook 배선 자체). evidence-registry entry 신설 안 함.
   - action: worktree-backstop-autotrigger
-    status: deferred-followup     # Wave 1 declarative (본 Amendment 9 §결정 5 트리거 복원 + 7.K). actual wire = Phase 2 hooks.json SessionEnd async entry + hooks/<event> dispatch (background GC 호출). 트리거 단일화 invariant (SessionEnd 단독, Stop 동시 wire 금지).
+    status: deferred-followup     # Wave 1 declarative (본 Amendment 9 §결정 5 트리거 복원 + 7.K). actual wire = Phase 2 hooks.json SessionEnd async entry + hooks/<event> dispatch (background GC 호출). 트리거 단일화 invariant (SessionEnd 단독, Stop 동시 wire 금지). hook-wire action — evidence-registry entry 미등록 (§결정 7.K.1 F4 정책).
     target_section: §결정 5       # Stale GC trigger 복원 — SessionStart 동기 제거(Amd 8 §0a-prime)분의 비동기 대체
 related_stories:
   - CFP-134
@@ -1086,9 +1088,27 @@ ADR-128(완료 단계 정식화) 의 갭 A 해소 carrier. 본 Amendment 9 = 두
 
 **fail-safe 4종 상속 (AC-4)**: 신규 완료-게이트 스크립트(`scripts/check-worktree-completion-clean.sh`, Phase 2)는 backstop 의 fail-safe 를 상속 — (1) gh 미인증 시 "정리 확인 불가" advisory 후 진행(보존) (2) dirty 보존 (3) data-loss 가드 (4) always exit 0 advisory. **data-loss 가능한 hard-block 금지** + `BYPASS_WORKTREE_GC=1` 존중 (EC-6).
 
-**순서 invariant 준수 (EC-3)**: 완료-게이트의 worktree-clean 판정 시점이 `gh pr view --json mergedAt` non-null 확인보다 앞서면 false-positive (보존 중인 Story root worktree 를 orphan 으로 오판) → Amendment 2 cleanup 순서 invariant(`mergedAt` non-null 확인 후 prune) 준수. sub-worktree(`cfp-NNN/lane/<sub>`) vs Story root 구분(EC-2) — Story root 는 Phase 2 PR merge 까지 보존.
+**순서 invariant 준수 (EC-3)**: 완료-게이트의 worktree-clean 판정 시점이 `gh pr view --json mergedAt` non-null 확인보다 앞서면 false-positive (보존 중인 Story root worktree 를 orphan 으로 오판) → Amendment 2 cleanup 순서 invariant(`mergedAt` non-null 확인 후 prune) 준수.
+
+**완료-게이트 대상 판정 계약 (F2 — sub-worktree vs Story root 구분, 0-context implementer 가 발명 금지)**: 완료-게이트는 backstop 의 age 축처럼 시간으로 disjoint 보장이 안 되므로(완료 worktree·보존 Story root 둘 다 0일령) **구분 규칙을 명세**한다. 완료-게이트가 "정리됐어야 할 worktree" 로 판정하는 대상 = 다음 3-조건 AND:
+
+1. **(a) 본 Story scope** — worktree 의 branch 가 완료 처리 중인 Story 의 `cfp-NNN` 계열 (Story root `cfp-NNN[-slug]` 또는 sub-branch `cfp-NNN/lane/*` / `cfp-NNN/fix-iter-*`). 타 Story worktree 는 본 게이트 대상 아님 (backstop 영역).
+2. **(b) sub-worktree (즉시 정리 대상)** — branch 가 `cfp-NNN/lane/<lane>[/<sub>]` 또는 `cfp-NNN/fix-iter-<N>` 패턴 (§결정 2 hierarchical naming). sub-worktree 는 lane/Story 완료 시 즉시 정리 대상 (Amendment 1 `on_story_close` "sub-worktree prune"). → 완료 시점에 잔존 = eager 누락 검출(advisory).
+3. **(c) Story root (조건부 제외)** — branch 가 Story root `cfp-NNN` flat 패턴이면, **Phase 2 PR 이 open 상태(`mergedAt` null)일 때 게이트 대상에서 제외(보존)**. Phase 2 PR `mergedAt` non-null 확인 후에만 정리 대상 (Amendment 2 순서 invariant + Amendment 1 "Story root 는 Phase 2 PR merge 까지 보존"). EC-2(Epic 중간 Story 의 Story root worktree 는 Phase 2 PR merge 까지 보존) 정합.
+
+→ 즉 게이트 검출 대상 = (a) ∧ ((b) sub-worktree 잔존 OR (c) Story root ∧ Phase 2 PR `mergedAt` non-null 인데 잔존). 보존 중 Story root(Phase 2 PR open)는 orphan 으로 오판하지 않는다. 이 계약을 Phase 2 `scripts/check-worktree-completion-clean.sh` 구현이 따른다 (branch 패턴 매칭 + `gh pr view --json mergedAt` 확인). TC-6 가 이 계약을 assert.
 
 **게이트 tier — required CI 불가 (AC-2 / AC-12)**: `phase:완료` transition = Orchestrator self-write(로컬), worktree 클라우드 러너 미접근 → required CI check 불가. 3-조합 = (a) Orchestrator behavioral precondition (ADR-045 Amendment 13) + (b) 로컬 check 스크립트 + (c) evidence-checks-registry warning-tier + `workflow: null` (ADR-099/ADR-122 local-only 선례 동형). branch protection 6-tuple 무변경. 신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합.
+
+**완료-게이트 evidence-registry entry 의 dead-check 자동삭제 방어 (F1 — 사실대로)**: `worktree-clean-completion-gate` entry(warning-tier + `workflow: null`)는 `docs/check-dead-criteria.yaml:41-71` 의 dead static_signals 3-AND(`advisory_tier ∧ not_required_context ∧ no_exclude_tag`, `detect_command`/`workflow` presence 신호 부재 — 실측)를 충족해 **dead 후보로 분류될 수 있다.** 자동 삭제 차단은 "dead 후보 아님" 이 아니라 `removal_protocol`(`check-dead-criteria.yaml:153-167` — `automatic_deletion: false` + `scripts/check-tier-downgrade-guard.sh` `tier-downgrade-justification:` 마커 강제)이 보장한다. Phase 2 registry entry 주석에 본 근거(removal_protocol 의존, detect_command liveness 아님)를 박제 의무 — 잘못된 면제 근거 재발 차단.
+
+#### §결정 7.K.1 — hook-wire action 의 evidence-registry 등록 면제 정책 (F4)
+
+`mechanical_enforcement_actions[]` 의 action 중 **hook-wire action**(GitHub Actions CI lint 가 아닌, Claude Code hook 배선 자체로 enforce 되는 action — 예: `worktree-backstop-autotrigger`)은 §결정 7.A "registry 미등록 entry 직접 명시 금지 — 먼저 registry append 의무" 계약의 **N/A 대상**이다.
+
+- **근거**: §결정 7.A 의 registry-binding 계약은 `action` = `docs/evidence-checks-registry.yaml` 의 lint entry (CI workflow + detect_command 보유) 를 전제한다. hook-wire action 의 enforcement evidence = `hooks/hooks.json` 의 해당 event entry **presence** (배선 자체)이지 evidence-registry lint 가 아니다 → registry entry 신설은 dead inventory(실행경로 0 거짓 entry)를 만든다 (CFP-2103/2159 de-bloat 선례 — workflow 부재 entry 제거 정신 정합).
+- **frontmatter↔registry 정합 처리**: hook-wire action 은 frontmatter `mechanical_enforcement_actions[]` 에 declare 하되(`status: deferred-followup` Wave 1 → Phase 2 hook 배선 후에도 registry entry 미등록 유지), 본문 §결정 N reference 의무(§결정 7.B)는 충족(target_section: §결정 5). 즉 frontmatter ↔ 본문 정합은 유지, frontmatter ↔ registry 정합만 면제.
+- **반대 케이스**: 완료-게이트(`worktree-clean-completion-gate`)는 hook-wire 가 아닌 **로컬 check 스크립트 + evidence-registry entry** 형태 → §결정 7.A registry-binding 적용 대상(Phase 2 registry append 의무, `workflow: null` 로 등록). 두 action 의 차이 = enforcement vehicle(hook 배선 vs local check + registry).
 
 ### 이행 의무
 
