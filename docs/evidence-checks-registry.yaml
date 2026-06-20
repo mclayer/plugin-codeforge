@@ -2169,8 +2169,8 @@ entries:
       §D-9 escalation 산물 (CFP-1493 commit message defer 사유 inheritance / CFP-1523 사용자 spawn
       prompt 4 fact stale / CFP-1591 Issue body canonical/sibling 역할 반전 ADR-010 §결정 1 위배).
       pattern_count >= 5 재발 시 follow-up CFP MUST promote to blocking tier.
-    detect_command: bash scripts/check-spawn-prompt-fact-verify.sh  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, script 부재 — TBD via Wave 2 mechanical wire)
-    workflow: .github/workflows/spawn-prompt-fact-verify.yml  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, workflow 부재 — TBD via Wave 2 mechanical wire)
+    detect_command: bash scripts/check-spawn-prompt-fact-verify.sh  # CFP-2383 Wave 2 mechanical wire — script 실존 (Python SSOT + thin wrapper)
+    workflow: .github/workflows/spawn-prompt-fact-verify.yml  # CFP-2383 Wave 2 mechanical wire — .github single-root workflow 실존
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
     bypass_label: hotfix-bypass:spawn-prompt-fact-verify
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2178,7 +2178,7 @@ entries:
       pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized — STANDARD threshold (ADR-068 I-5 dimensional empirical grounding 정합)
       failure_threshold: 0          # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-TBD                   # Wave 2 mechanical wire carrier (별 sub-CFP) — lint script + workflow + bats fixture + label-registry-v2 MINOR
+        - CFP-2383                  # Wave 2 mechanical wire carrier — lint script (Python SSOT + thin wrapper) + .github single-root workflow + self-contained discriminating test
     modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
     introduced_by: CFP-1590
     introduced_date: 2026-05-25
@@ -2188,8 +2188,8 @@ entries:
       count: 3                      # 3 occurrences pattern reach (CFP-1493 + CFP-1523 + CFP-1591) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
       last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1591 Issue body canonical/sibling 역할 반전 detection + 본 carrier mid-flight CFP-1601 collision recovery 2026-05-25 KST, ADR-079 KST normative
-      promotion_trigger: auto_blocking  # count=3 ≥ threshold=3 → 즉시 발화 (Wave 2 mechanical wire 후 Active 전환 + promotion path blocking-on-pr 평가)
-    status: deferred-followup       # Phase 1 declare (본 CFP-1590) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+      promotion_trigger: auto_blocking  # count=3 ≥ threshold=3 → 즉시 발화. CFP-2383 Wave 2 mechanical wire 후 Active. current_tier:warning 유지 — blocking 승격은 pattern_count >= 5 재발 시 별 follow-up CFP (description 말미, PR-body-proxy 위조 false-PASS 구조적 한계 → 보안 통제 신뢰 금지).
+    status: Active                  # CFP-2383 Phase 2 (ADR-082 Amd37 sub-scope 1-Z) — flip: detect_command/workflow/test 실파일 실존 firsthand 확인 (Python SSOT check_spawn_prompt_fact_verify.py + thin wrapper + .github single-root workflow + self-contained discriminating test) → 강화 방향 flip (검사 실작동). 신규 carrier_absent==false 자연 PASS (S1 deferred-followup-reconcile 게이트 대상에서 제외). current_tier:warning 불변.
 
   # ─── CFP-1589 Phase 1 (ADR-082 Amendment 24 Wave 1 declarative anchor — synthesis-vs-commit-gap-check, 2026-05-25 KST) ───
   # ADR-082 Amendment 24 §결정 1 layer 1 sub-scope (1-M) — own-author synthesis 보고 vs actual git commit gap verify mandate (F-DR-003 carrier)
