@@ -2104,7 +2104,7 @@ entries:
       Python SSOT per ADR-061 + `scripts/check-issue-body-claim-pre-screen.sh` bash thin wrapper +
       `.github/workflows/issue-body-claim-pre-screen.yml` workflow (.github single-root — S1 CFP-2381
       deferred-followup-reconcile.yml 동형, ADR-005 byte-parity scope 외 = template mirror 미운용,
-      invariant-check parity loop .github-only 미검출) + `scripts/test-issue-body-claim-pre-screen.sh`
+      invariant-check parity loop .github-only 미검출) + `scripts/test-check-issue-body-claim-pre-screen.sh`
       self-contained discriminating test (S1 동형 — bats 미사용, mutation 생존 0). cross-plugin
       ContinuityAgent 8-tuple matrix scope expansion + RequirementsPL spawn prompt
       `issue_body_pre_screen_warnings` field = 본 Story scope 외 별 follow-up 분리 (lint 배선과 별 axis).

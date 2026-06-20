@@ -93,46 +93,58 @@ def strip_inline_code(line):
     """
     line 내 inline code-span (backtick `...` pair) 구간을 공백으로 masking.
 
-    F7 (잔여 P2) — unbalanced / double-backtick(``) / nested 경계 안전 처리:
-      - balanced pair 만 strip (정규 markdown inline code).
-      - dangling(홀수) backtick 은 strip 안 함 (마지막 미닫힘 backtick 이후 텍스트 보존 —
-        unbalanced 일 때 claim 을 임의로 삼키지 않음, FP-안전 방향: 오히려 검출 보존).
-      - double-backtick(``code``) span: GFM 은 동일 run 길이 fence pair 매칭. 본 strip 은
-        run-length 매칭으로 ``...`` 도 한 쌍으로 인식 (single 보다 longer run 우선).
-      - nested 는 markdown inline code 에 부재 (code-span 내부는 literal) — run-length 매칭이
-        자연 처리 (open run 과 동일 길이 close run 까지 literal).
+    F7 (잔여 P2) — unbalanced / double-backtick(``) / nested 경계 안전 처리.
+    F-CR-2382-1 (P2) 정정 — ambiguous backtick line 은 strip 생략, claim 보존:
+      - 알고리즘: line 의 backtick run 들을 좌→우로 쌍짓는다 (open run ↔ 동일 길이 delimited close run).
+        delimited = close run 의 길이가 정확히 open run 길이와 같아야 함 (longer run 의 부분 매칭 금지 —
+        stray single backtick 이 ``...`` double-run 의 첫 backtick 을 close 로 오인해 claim 을 삼키던
+        false-negative 차단).
+      - 모든 run 이 깨끗이 쌍지어지면(짝수·경계 일치) → 각 pair 의 [open..close] 구간을 공백 masking (GFM
+        inline code 정합).
+      - run 이 하나라도 짝 못 찾으면(홀수 / 길이 불일치 / 경계 모호) → **strip 생략, raw line 그대로 반환**
+        (§7.5 FP-안전 방향 = 불확실 시 검출 보존). claim 이 임의로 사라지지 않는다.
 
-    반환: code-span 구간이 동일 길이 공백으로 치환된 line (line_num/offset 보존).
+    반환: code-span 구간이 동일 길이 공백으로 치환된 line, 또는 ambiguous 시 raw line.
     """
     if "`" not in line:
         return line
 
-    out = []
+    # 1) backtick run 위치·길이 수집 (run = 연속 backtick 묶음)
+    runs = []  # (start_idx, run_len)
     i = 0
     n = len(line)
     while i < n:
-        ch = line[i]
-        if ch != "`":
-            out.append(ch)
+        if line[i] != "`":
             i += 1
             continue
-        # backtick run 길이 측정 (open fence)
         run_start = i
         while i < n and line[i] == "`":
             i += 1
-        run_len = i - run_start
-        open_ticks = "`" * run_len
-        # 동일 길이 close run 탐색 (GFM run-length 매칭)
-        close_idx = line.find(open_ticks, i)
-        if close_idx == -1:
-            # unbalanced — 닫는 run 부재 → strip 안 함 (open ticks literal 보존, FP-안전)
-            out.append(open_ticks)
-            continue
-        # balanced span: open run + 내부 + close run 전체를 공백으로 masking (길이 보존)
-        span_end = close_idx + run_len
-        out.append(" " * (span_end - run_start))
-        i = span_end
-    return "".join(out)
+        runs.append((run_start, i - run_start))
+
+    # 2) 좌→우 동일-길이 delimited pairing. 짝 못 찾으면 ambiguous → 전체 strip 생략.
+    spans = []  # (open_start, close_end) — masking 대상 구간
+    idx = 0
+    while idx < len(runs):
+        open_start, open_len = runs[idx]
+        close_pos = None
+        for j in range(idx + 1, len(runs)):
+            if runs[j][1] == open_len:        # 정확히 동일 길이 run 만 close 후보 (delimited)
+                close_pos = j
+                break
+        if close_pos is None:
+            # 짝 없는 run 존재 → ambiguous line → strip 생략, claim 보존 (FP-안전)
+            return line
+        close_start, close_len = runs[close_pos]
+        spans.append((open_start, close_start + close_len))
+        idx = close_pos + 1               # close run 다음부터 재개 (내부 run 은 code literal 로 소비)
+
+    # 3) 깨끗이 쌍지어진 경우에만 masking (길이 보존)
+    chars = list(line)
+    for s, e in spans:
+        for k in range(s, e):
+            chars[k] = " "
+    return "".join(chars)
 
 
 # ─────────────────────── scan (line-by-line in_fence toggle masking) ─────────
@@ -185,7 +197,9 @@ def scan_issue_body(body_text):
             m = pat.search(line_masked)
             if m and not has_annotation:
                 findings.append((line_num, raw_line.rstrip(), pat_name, m.group(0)))
-                # 동일 line 다중 패턴 누적: 한 line 에서 패턴별 1회만 (중복 noise 회피)
+                # F-CR-2382-3: 라인당 매칭 패턴마다 1 finding 누적 (라인 단일 suppression 없음 —
+                #   break 부재로 a/c 등 동일 라인 다중 패턴이 각각 별도 finding, TC-9 정합).
+                #   동일 (line, pattern) 쌍은 pat.search 첫 매치 1회만 → 패턴 내부 중복 noise 회피.
     return findings
 
 

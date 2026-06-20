@@ -299,6 +299,20 @@ run_test \
   "mutation-10 차단: unbalanced backtick 안전 (dangling 이후 claim 보존)"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# TC-4d-stray (신규 F-CR-2382-1): stray single-backtick + claim + double-backtick
+# ─────────────────────────────────────────────────────────────────────────────
+# 라인: Note ` and PR #1234 uses ``x`` here
+# 설명: stray single backtick(`) + 같은 줄 claim(PR #1234) + double-backtick span(``x``)
+# 정정 전(strip ambiguous 미동작): ` 가 `` 의 첫 틱을 닫고 claim 삼킴 → no FLAG (RED)
+# 정정 후(strip 생략, claim 보존): ambiguous line → raw line 반환 → PR #1234 검출 → FLAG (GREEN)
+run_test \
+  "TC-4d-stray: F-CR-2382-1 — stray backtick + claim + double-backtick (ambiguous)" \
+  "Note \`and PR #1234 uses \`\`x\`\` here" \
+  "yes" \
+  "1" \
+  "정정(F-CR-2382-1) 의존: ambiguous backtick line → strip 생략 → PR #1234 claim 보존"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # TC-5 (EXEMPT blockquote): blockquote > 내부 claim
 # ─────────────────────────────────────────────────────────────────────────────
 run_test \
@@ -454,6 +468,10 @@ if [ "$FAIL" -eq 0 ]; then
   echo ""
   echo "Mutation-10 (unbalanced backtick handling remove):"
   echo "  Disable dangling backtick safety → TC-4d-dangling RED"
+  echo ""
+  echo "Mutation-11 (F-CR-2382-1 미적용 — ambiguous backtick strip 반환):"
+  echo "  Old strip_inline_code (paired 만 masking, ambiguous 미처리) → TC-4d-stray RED"
+  echo "  New strip_inline_code (ambiguous line skip, claim 보존) → TC-4d-stray GREEN"
   echo ""
   exit 0
 else
