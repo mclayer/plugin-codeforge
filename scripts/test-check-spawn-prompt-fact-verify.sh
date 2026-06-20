@@ -154,6 +154,74 @@ run_test_with_message_assert() {
   fi
 }
 
+run_test_with_hint_assert() {
+  local test_name="$1"
+  local prompt_text="$2"
+  local should_have_flag="$3"
+  local expected_exit_code="$4"
+  local description="$5"
+  local hint_positive_pattern="$6"   # 1-L 신호 (grep positive assert, e.g., "sister PR")
+  local hint_negative_pattern="$7"   # 1-W 잔재 (grep negative assert, e.g., "Orchestrator")
+
+  local prompt_file
+  prompt_file=$(mktemp)
+  trap "rm -f '$prompt_file'" RETURN
+  printf '%s' "$prompt_text" > "$prompt_file"
+
+  local output
+  local exit_code=0
+  output=$( bash "$REPO_ROOT/scripts/check-spawn-prompt-fact-verify.sh" "$prompt_file" 2>&1 ) || exit_code=$?
+
+  # Exit code 검증
+  if [ "$exit_code" -ne "$expected_exit_code" ]; then
+    echo "✗ FAIL: $test_name (exit code)"
+    echo "  Expected exit code $expected_exit_code, got $exit_code"
+    FAIL=$((FAIL+1))
+    return 1
+  fi
+
+  # FLAG 여부 검증
+  local has_flag=0
+  if echo "$output" | grep -q "::warning::check-spawn-prompt-fact-verify: FLAG"; then
+    has_flag=1
+  fi
+
+  if [ "$should_have_flag" = "yes" ] && [ "$has_flag" -eq 1 ]; then
+    # hint text actionability: 1-L signal positive + 1-W residue negative 동시 assert
+    if ! echo "$output" | grep -q "$hint_positive_pattern"; then
+      echo "✗ FAIL: $test_name (1-L hint signal assertion)"
+      echo "  Expected 1-L signal '$hint_positive_pattern' in output"
+      echo "  Output: $output"
+      FAIL=$((FAIL+1))
+      return 1
+    fi
+    if echo "$output" | grep -q "$hint_negative_pattern"; then
+      echo "✗ FAIL: $test_name (1-W residue rejection)"
+      echo "  Found unexpected 1-W residue '$hint_negative_pattern' in output (should not be present)"
+      echo "  Output: $output"
+      FAIL=$((FAIL+1))
+      return 1
+    fi
+    echo "✓ PASS: $test_name (FLAG + 1-L hint signal + no 1-W residue)"
+    PASS=$((PASS+1))
+    return 0
+  elif [ "$should_have_flag" = "no" ] && [ "$has_flag" -eq 0 ]; then
+    echo "✓ PASS: $test_name (no FLAG, exit $exit_code)"
+    PASS=$((PASS+1))
+    return 0
+  else
+    echo "✗ FAIL: $test_name (flag mismatch)"
+    echo "  Expected FLAG: $should_have_flag, Got FLAG: $has_flag"
+    FAIL=$((FAIL+1))
+    return 1
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Test execution (set +e to allow all tests to run even if one fails)
+# ─────────────────────────────────────────────────────────────────────────────
+set +e
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-C1-RED: C1 counter "144 entries" annotation 부재
 # ─────────────────────────────────────────────────────────────────────────────
@@ -481,15 +549,22 @@ run_test \
   "다중 fact + 부분 annotation → FLAG 1개 이상"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-1W-hint-RED (§B P1 anti-theater): C3 SHA 의 hint 가 1-L 스코프여야 함
-# → hint 에서 "sister PR" / "sibling" / "Orchestrator spawn" 등의 1-L sink 신호 검증
+# TC-1W-hint (§B P1 anti-theater): C3 SHA 의 hint 가 1-L 스코프여야 함
+# → hint 에서 "sister PR" 신호 포함되고, "Orchestrator subagent" 잔재 미포함 동시 assert
 # ─────────────────────────────────────────────────────────────────────────────
-run_test \
+run_test_with_hint_assert \
   "TC-1W-hint: C3 SHA hint contains 1-L signal (not 1-W residue)" \
   "The spawn source a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0 is referenced." \
   "yes" \
   "1" \
-  "mutation-12 차단: 1-L hint verification (§B P1 anti-theater)"
+  "mutation-12 차단: 1-L hint verification (§B P1 anti-theater)" \
+  "sister PR" \
+  "Orchestrator subagent"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Restore exit-on-error for summary section
+# ─────────────────────────────────────────────────────────────────────────────
+set -e
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
