@@ -2788,3 +2788,52 @@ entries:
       threshold: 3
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+
+  - name: worktree-clean-completion-gate
+    description: |
+      CFP-2377 / ADR-128 §결정 2 + ADR-040 Amendment 9 §결정 7.K +
+      ADR-045 Amendment 13 §D-12 — phase:완료 worktree-clean self-check (완료-게이트).
+      "완료 처리 중인 Story 의 worktree 가 eager 정리됐는가" 검출 (eager 미실행 검출 게이트).
+      정리 실행 owner = GitOpsAgent eager (불변) — 본 게이트는 검증만 (ADR-040 가정 1).
+      backstop(check-worktree-stale.sh) 과 disjoint: backstop = age 7d+ orphan(비정상 종료),
+      본 게이트 = 0일령 완료 worktree 의 eager 누락(정상 완료 경로). branch 패턴 + mergedAt 으로 구분.
+      F2 대상 판정 계약 (ADR-040 Amendment 9 §결정 7.K): (a) 본 STORY_KEY scope ∧
+      ((b) sub-worktree cfp-NNN/lane/* · cfp-NNN/fix-iter-* 잔존 = 즉시 검출 OR
+      (c) Story root cfp-NNN flat = Phase 2 PR mergedAt non-null 일 때만 검출, open=보존 제외).
+      fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0 advisory).
+      tier = warning (로컬 self-check). phase:완료 transition = Orchestrator self-write(로컬) +
+      worktree 클라우드 러너 미접근 → required CI check 불가 (AC-2/AC-12) → workflow: null.
+      anti-theater 변별 test = scripts/test-check-worktree-completion-clean.sh
+      (git/gh stub 으로 sub/root/open-PR/gh미인증/dirty 변별). branch protection 6-tuple 무변경
+      (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합).
+      gate:worktree-clean label 신설 안 함 (사용자 방향 "기존 게이트 확장", label 없이 Orchestrator self-check).
+    detect_command: STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh
+    workflow: null   # CI 미wire — local-only check (phase:완료 transition = Orchestrator self-write + worktree 클라우드 러너 미접근, AC-2/AC-12). ADR-099/ADR-122 local-only 선례 동형.
+    # dead-check 자동삭제 방어 = removal_protocol 의존 (정당화 마커 강제) — detect_command liveness 가 면제 근거 아님 (F1 정정).
+    #   본 entry(warning-tier + non-required + exclude-tag 미보유)는 check-dead-criteria.yaml:41-71 의
+    #   dead static_signals 3-AND(advisory_tier ∧ not_required_context ∧ no_exclude_tag — detect_command/workflow presence 신호 부재)를
+    #   충족해 dead 후보로 분류될 수 있다. 자동 삭제 차단은 "dead 후보 아님" 이 아니라 removal_protocol
+    #   (check-dead-criteria.yaml:153-167 — automatic_deletion: false + check-tier-downgrade-guard.sh tier-downgrade-justification 마커 강제)이 보장한다.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 self-check, blocking 승격 불가 — required CI 구조적 불가)
+    bypass_label: hotfix-bypass:worktree-clean-completion
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2377   # 본 entry 도입 carrier (완료 단계 정식화 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # worktree 잔존 검출 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2377
+    introduced_date: 2026-06-20    # KST (ADR-128 완료 단계 정식화 Phase 2)
+    owner_adr: ADR-128             # 완료 단계 정식화 umbrella — 완료-게이트 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active

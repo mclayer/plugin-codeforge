@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# hooks/session-end — SessionEnd hook: worktree stale GC backstop 자동 트리거
+#
+# Carrier: CFP-2377 (ADR-128 완료 단계 정식화 — 갭 A backstop 자동 트리거 복원)
+#          ADR-040 Amendment 9 §결정 5 (backstop SessionEnd async dispatch 단일 wire)
+#
+# 책임 경계:
+#   - SessionEnd 시점(세션당 1회 종료)에 backstop GC (check-worktree-stale.sh) 를 자동 트리거.
+#     세션당 1회 발화 → backstop 의 7일 GC cadence 와 빈도 정합 (ADR-128 §결정 3).
+#   - 본 hook 은 hooks.json 에서 async: true 로 wire (요구사항리뷰 PASS 확정 외부사실 1순위).
+#     async hook 은 stdout/stderr/exit/JSON 무시 (hooks.md "Run hooks in the background")
+#     → 사용자-가시 GC 로그가 async 경로에서 안 보임. 대응 = 별도 로그 파일 기록 (아래).
+#   - check-worktree-stale.sh 스크립트 로직 무변경 — 본 hook 은 트리거만 복원 (문서-실배선 drift 복원).
+#
+# 트리거 단일화 invariant (ADR-040 Amendment 9 §결정 5 — race 1순위 안전장치, 비협상):
+#   - backstop GC 는 SessionEnd 단일 event 에만 wire. Stop / SessionStart 동시 wire 금지.
+#     단일 트리거면 동시 GC 실행 race 자체 미발생 (멱등성 가정 불요).
+#   - SessionStart async:true 는 무시되어 동기 실행 = 지연 회귀 → SessionEnd 채택 (ADR-128 §결정 3 배제 근거).
+#
+# ADR-115 invariant 상속 (Stop hook 동형 — block 금지·exit 0·trap ERR):
+#   (a) set -uo pipefail + exit 0 trap — 어떤 fail 도 세션 teardown block 금지.
+#   (b) stdout 출력 없음 — async 무시 + block field 미등장.
+#   (c) 어떤 fail 도 graceful degradation (스크립트 부재 / bash 부재 → silent skip).
+#
+# Bypass:
+#   BYPASS_WORKTREE_GC=1 — check-worktree-stale.sh 가 자체 존중 (origin 접촉 0 + prune 0).
+#                          본 hook 은 스크립트에 위임 (env 중복 가드 불요).
+
+set -uo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — 세션 teardown block 금지 (ADR-115 §결정 2·5 동형)
+trap 'exit 0' ERR
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 0
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)" || exit 0
+
+SCRIPT="${REPO_ROOT}/templates/scripts/check-worktree-stale.sh"
+
+# 스크립트 부재 시 silent skip (non-blocking 원칙 — graceful degradation)
+if [ ! -f "${SCRIPT}" ]; then
+  exit 0
+fi
+
+# 로그 파일 — async hook stdout 무시 대응 (사용자-가시 GC 결과 영속화).
+# repo 밖 scratch 경로 (repo-confinement 가드 회피). 부재 시 mkdir, 실패해도 non-blocking.
+LOG_DIR="${HOME:-/tmp}/.claude/codeforge-scratch"
+mkdir -p "${LOG_DIR}" 2>/dev/null || true
+LOG_FILE="${LOG_DIR}/worktree-stale-gc.log"
+
+# GC 실행 — exit code 무시 (advisory, check-worktree-stale.sh 자체 always exit 0).
+# 결과를 로그 파일에 timestamp 와 함께 append (async stdout 무시 대응).
+{
+  echo "=== [session-end backstop GC] $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+  bash "${SCRIPT}" 2>&1 || true
+} >> "${LOG_FILE}" 2>/dev/null || true
+
+exit 0

@@ -157,9 +157,10 @@ related:
 
    worktree 정리 = 2-경로 (GitOpsAgent 소유 — agents/GitOpsAgent.md §5 SSOT):
    - **primary (eager)**: Story/Epic 완료 회고 시점에 GitOpsAgent 가 완료 Story worktree(들)을 mergedAt 확인 후 경로 기반 제거 (§1.2/§1.3 완료 flow). deterministic — 정상 완료분은 여기서 정리.
-   - **backstop (주기적)**: 크래시·중단으로 회고를 못 거친 orphan 전용. `templates/scripts/check-worktree-stale.sh` — 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean (임시파일 제외) AND not-locked. preview = `GC_DRY_RUN=1`. bypass = `BYPASS_WORKTREE_GC=1`.
+   - **backstop (주기적)**: 크래시·중단으로 회고를 못 거친 orphan 전용. `templates/scripts/check-worktree-stale.sh` — 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean (임시파일 제외) AND not-locked. **자동 트리거 = `SessionEnd` async dispatch 단일 wire** (`hooks/hooks.json` SessionEnd entry `async: true` → `hooks/session-end` 가 background GC 호출, ADR-040 Amendment 9 §결정 5 / ADR-128 §결정 3). 세션당 1회 종료 발화 → 7일 GC cadence 빈도 정합. **트리거 단일화 invariant (비협상)**: SessionEnd + Stop 동시 wire 금지 (동시 GC race 안전장치). preview = `GC_DRY_RUN=1`. bypass = `BYPASS_WORKTREE_GC=1`. 수동/스케줄 호출도 병행 가능.
+   - **완료-게이트 (phase:완료 worktree-clean self-check)**: 정상 완료 경로의 eager 누락 검출 (backstop 과 disjoint — 완료 worktree 는 0일령). `STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` — 완료 처리 중 Story 의 sub-worktree(`cfp-NNN/lane/*`·`cfp-NNN/fix-iter-*`) 잔존 즉시 검출 + Story root(`cfp-NNN` flat)는 Phase 2 PR mergedAt non-null 일 때만 검출(open=보존). `phase:완료` transition precondition (§9.7.1) 의 (b) 로컬 check (ADR-040 Amendment 9 §결정 7.K / ADR-045 Amendment 13 §D-12). warning-tier advisory (required CI 불가 — worktree 클라우드 러너 미접근).
 
-   > 과거 SessionStart hook 동기 호출은 **제거됨** — worktree 90+ 동기 스캔으로 세션 시작 지연. 또 GitHub post-merge automation 은 클라우드 러너라 로컬 worktree 미접근 → 로컬 세션 완료 시점이 유일한 deterministic 정리 지점. 주기 backstop 은 수동/스케줄 호출.
+   > 과거 SessionStart hook 동기/주기 호출은 **제거됨** — worktree 90+ 동기 스캔으로 세션 시작 지연. SessionStart async:true 는 무시되어 동기 실행 = 지연 회귀라 배제 (요구사항리뷰 PASS 확정 외부사실, hooks.md "SessionStart and Setup hooks do not support async"). 또 GitHub post-merge automation 은 클라우드 러너라 로컬 worktree 미접근 → 로컬 세션 종료 시점(SessionEnd)이 backstop 의 유일한 deterministic 자동 트리거 지점. (문서-실배선 drift 복원 SSOT — 2026-06-12 stale worktree 230개 누적이 동인.)
 
    **0i. Deferred tool 스키마 선제 로드 — SessionStart hook tier (ADR-038 Amendment 2 §결정 9, CFP-500)**
 
@@ -1165,7 +1166,7 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 
 **Conflict 처리**: worktree-merge.sh conflict detect 시 exit code 2 → Orchestrator 가 chief author / 충돌 SubAgent 재spawn (cwd = parent worktree) 또는 PMOAgent escalation (CFP-139 GitOpsAgent 도입 후).
 
-**주기 backstop (orphan 안전망 — eager 정리를 못 거친 worktree 전용)**: `bash templates/scripts/check-worktree-stale.sh` 수동/스케줄 호출 (SessionStart 동기 호출은 시작 지연으로 제거됨). 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean AND not-locked. preview `GC_DRY_RUN=1` / bypass `BYPASS_WORKTREE_GC=1`.
+**주기 backstop (orphan 안전망 — eager 정리를 못 거친 worktree 전용)**: `bash templates/scripts/check-worktree-stale.sh`. **자동 트리거 = `SessionEnd` async dispatch 단일 wire** (`hooks/hooks.json` SessionEnd `async: true` → `hooks/session-end` background GC, ADR-040 Amendment 9 §결정 5). SessionStart 동기 호출은 시작 지연으로 제거됨. 수동/스케줄 호출 병행 가능. **트리거 단일화 invariant**: SessionEnd + Stop 동시 wire 금지 (동시 GC race 안전장치). 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean AND not-locked. preview `GC_DRY_RUN=1` / bypass `BYPASS_WORKTREE_GC=1`.
 
 **Cross-platform**: Windows `${HOME}\.claude\worktrees\<repo>\<branch-flat>` / macOS·Linux `~/.claude/worktrees/<repo>/<branch-flat>`. path 변환 = `worktree-path-util.sh` (`is_windows`, `to_posix_path`).
 
@@ -2855,19 +2856,40 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 | `phase:보안-테스트` (opt-in) | `phase:보안-테스트` | `phase:구현-테스트` | `gate:security-test-pass` | 통합테스트 PASS + SecurityTestPLAgent spawn 직전 (consumer `lanes.security_ai: true` 시에만) | Orchestrator |
 | `phase:배포` (CFP-1059) | `phase:배포` | `phase:보안-테스트` (또는 `phase:구현-테스트` if security 미활성) | `gate:deploy-pass` | Epic 묶음 완료 후 DeployPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
 | `phase:배포-리뷰` (CFP-1059) | `phase:배포-리뷰` | `phase:배포` | `gate:deploy-review-pass` | DeployPL PASS + DeployReviewPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
-| **`phase:완료`** | `phase:완료` | `phase:구현-리뷰` (또는 `phase:배포-리뷰` if deploy lane 활성) | **precondition AND**: `gate:design-review-pass` (또는 활성 lane 의 terminal gate) + `gate:retro-complete` (label-registry-v2 line 558, ADR-045) | **Phase 2 PR merge 후 + retro write 완료 후** (PMOAgent `gate:retro-complete` 부착 확인 후) | Orchestrator (phase 전환) + PMOAgent (`gate:retro-complete` self-write) |
+| **`phase:완료`** | `phase:완료` | `phase:구현-리뷰` (또는 `phase:배포-리뷰` if deploy lane 활성) | **precondition AND**: `gate:design-review-pass` (또는 활성 lane 의 terminal gate) + `gate:retro-complete` (label-registry-v2 line 558, ADR-045) + **worktree-clean self-check** (완료 Story worktree eager 정리 확인, ADR-045 Amendment 13 §D-12) | **Phase 2 PR merge 후 + retro write 완료 후 + worktree-clean self-check 후** (PMOAgent `gate:retro-complete` 부착 확인 + `STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0 확인) | Orchestrator (phase 전환 + worktree-clean self-check) + PMOAgent (`gate:retro-complete` self-write) |
 
 **핵심 invariant (CFP-1577 — `phase:완료` premature attach 차단)**:
 
-- `phase:완료` 부착은 **2 gate AND** 의무: (a) Phase 2 PR merge 후 활성 lane 의 terminal gate label (`gate:design-review-pass` default, deploy lane 활성 시 `gate:deploy-review-pass`) (b) `gate:retro-complete` (PMOAgent self-write 후). 양 gate 부재 시 `phase-gate-mergeable.yml` ACTION_REQUIRED 발생 (workflow line 391-404 default fallback path = `phaseOk = (phaseLabel === required.phase)` mismatch).
+- `phase:완료` 부착은 **2 gate AND + worktree-clean self-check** 의무: (a) Phase 2 PR merge 후 활성 lane 의 terminal gate label (`gate:design-review-pass` default, deploy lane 활성 시 `gate:deploy-review-pass`) (b) `gate:retro-complete` (PMOAgent self-write 후) (c) **worktree-clean self-check** (`STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0, ADR-045 Amendment 13 §D-12). 양 gate 부재 시 `phase-gate-mergeable.yml` ACTION_REQUIRED 발생 (workflow line 391-404 default fallback path = `phaseOk = (phaseLabel === required.phase)` mismatch).
 - `phase:완료` attach precondition 위반 = `phase:구현-리뷰` (또는 적용 가능한 직전 phase) + 해당 gate 재부착으로 정정 후 PASS (CFP-1539+CFP-1540 batch incident resolution pattern).
 - `gate:retro-complete` 부재 시 `retro-mandatory.yml` (ADR-045) 가 Story Issue close 차단 (auto-reopen) — `phase:완료` attach 와 함께 retro write 완료 확인 의무.
+- **worktree-clean self-check 미통과 (detected>=1)** = GitOpsAgent eager 정리 누락 → 정리 실행 후 재확인이지 "생략 후 진행" 아님 (ADR-127 정합). 본 self-check 는 transition precondition (label attach 직전)이지 Issue close 차단(reopen)이 아니다 — `retro-mandatory.yml` close-blocking auto-reopen 과 axis disjoint (ADR-045 Amendment 13 §13.C, #772 EC-5 정합). warning-tier 로컬 self-check (required CI 불가 — worktree 클라우드 러너 미접근, branch protection 6-tuple 무변경).
 
 **Cross-ref (transition timing 의무)**:
 
 - `codeforge:story-epic-flow-preflight` skill = lane entry preflight 3-check (phase 라벨 정합 / docs file 선행 섹션 / 외부 의존성). 본 §9.7.1 = preflight 의 *phase label 정합* 항목 source SSOT (skill body 1-row cross-ref append per CFP-1577 AC-3).
 - ADR-026 Amendment 4 (CFP-795) = `phase-gate-mergeable.yml` post-merge fix exemption (axis disjoint — workflow logic expansion vs. 본 §9.7.1 = Orchestrator timing codification layer).
 - workflow yml `phase-gate-mergeable.yml` 본문 변경 0건 (CFP-1577 Out of scope §3) — 본 §9.7.1 = documentation layer only.
+
+#### 9.7.2 완료 단계 수렴 SSOT (CFP-2377 / ADR-128 §결정 4 — 4-트리거 수렴점)
+
+> **완료 단계 = 정식 분류 (no new lane, ADR-128 §결정 1)**. merge 직후 "마무리(wrap-up)" 가 4개 독립 트리거로 흩어져 있다. 본 §9.7.2 = 그 **수렴·종결 단일 SSOT** (갭 B). 단일 자동 수렴 검증기는 **구조적 불가** (클라우드↔로컬 실행평면 비대칭 — 클라우드 러너가 로컬 worktree 미접근). 따라서 **절차 명문화 + 기존 텔레메트리 관찰 조합**으로 수렴을 확인한다 (신규 기계 게이트 신설 0).
+
+| # | 트리거 | 실행평면 | 완료 시점 확인 방법 |
+|---|---|---|---|
+| 1 | `post-merge-followup.yml` (phase label 전환 / Story §9 write / carrier close) | 클라우드 | post-merge OUTCOME 텔레메트리 관찰 (`<internal-docs>/wrapper/post-merge-counters.jsonl` outcome 필드 = auto_completed / partial / manual_only) |
+| 2 | `retro-mandatory.yml` (`gate:retro-complete` + close-blocking auto-reopen) | 클라우드 | `gate:retro-complete` label 부착 + retro write 확인 |
+| 3 | GitOpsAgent worktree eager teardown | 로컬 | worktree-clean self-check (§9.7.1 (c) — `STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0) |
+| 4 | Orchestrator `phase:완료` transition | 로컬 | precondition 3-조합 통과 확인 (§9.7.1 — terminal gate + `gate:retro-complete` + worktree-clean self-check) |
+
+**수렴 확인 절차** (Orchestrator 완료 시점):
+- 로컬 트리거 (3·4) = 완료 시점에 Orchestrator 가 한 곳에서 확인 (worktree-clean self-check + precondition 3-조합).
+- 클라우드 트리거 (1·2) = post-merge OUTCOME 텔레메트리 관찰 + `gate:retro-complete` label 확인.
+- **"단일 자동 수렴 검증기" 과설계 금지** — 클라우드↔로컬 비대칭으로 구조적 불가. 절차+텔레메트리 조합이 정답 (ADR-128 §결정 4).
+
+**갭 C pointer (Living Architecture / Confluence mirror 재정합)**: 완료 시 문서 재정합 = **본 수렴 SSOT 범위 제외(유예)**, 이미 owner 존재 — Living Architecture 재정합 = ADR-112 per-Epic 게이트가 담당(Epic 완료 시) + Confluence mirror SLA = ADR-111 §결정 5. per-Epic 게이트(ADR-112)와 per-Story 완료 게이트(본 §9.7.1) 의 granularity 축이 달라 본 수렴에 편입하지 않는다 (ADR-128 §결정 5 — pointer awareness 만).
+
+**절차 SSOT cross-ref**: post-merge automation flow 절차 + retro batch closure 절차 = `codeforge:post-merge-closure` skill (본 §9.7.2 = 게이트 명제·수렴 순서 SSOT, skill = 절차 — dup 회피, ADR-120 §결정 3 정합).
 
 ---
 
