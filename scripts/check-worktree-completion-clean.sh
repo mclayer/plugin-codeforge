@@ -149,9 +149,8 @@ evaluate_worktree() {
   [[ -z "$wt_path" ]] && return 0
   [[ "$wt_path" == "$REPO_ROOT" ]] && return 0   # main / primary repo
   [[ "$bare" == "1" ]] && return 0               # bare worktree
-  # NOTE: dir 존재 여부로 early-skip 하지 않는다 — dirty 판정은 git status 가 source
-  #       (is_worktree_dirty). dir 부재/접근불가 ghost worktree 는 status 실패 → 보수적 dirty →
-  #       보존(검출 안 함, data-loss 가드). 실 검출 대상 = 실재하는 clean sub/merged-root worktree.
+  # NOTE: dir 존재 여부로 early-skip 하지 않는다 — 보존/검출 판정은 is_worktree_dirty(git status) 가 source.
+  #       검출 대상 = git status 가 clean 인 sub-worktree / merged Story root worktree.
   if [[ "$locked" == "1" ]]; then
     echo "[completion-clean] KEEP (locked): $wt_path" >&2
     return 0
@@ -161,11 +160,16 @@ evaluate_worktree() {
   # (a) 본 Story scope 아니면 본 게이트 대상 아님 (backstop 영역)
   in_story_scope "$branch" || return 0
 
-  # fail-safe (2): dirty(tracked/임시 외 untracked 변경) worktree = 보존 (data-loss 가드).
-  #   uncommitted work 보유 = 정리됐어야 한다는 단언 불가 → eager 누락으로 flag 안 함 (보존).
-  #   gh 미인증(fail-safe 1)과 동형 "보존 = 검출 안 함" 대칭.
+  # 보존 판정 (검출 안 함) — is_worktree_dirty 가 true 인 두 사유를 정확 메시지로 구분 (동작 동일):
+  #   ① dir 존재 + tracked/임시 외 untracked 변경 = 실제 dirty (data-loss 가드).
+  #   ② dir 부재/접근불가 = git status 실패 → 보수적 dirty (손실할 데이터 0, ghost — git prune 정리 대상).
+  #   둘 다 "보존 = 검출 안 함" (eager 누락으로 flag 안 함). gh 미인증(fail-safe 1)과 동형 대칭.
   if is_worktree_dirty "$wt_path"; then
-    echo "[completion-clean] KEEP (dirty — uncommitted 변경 보호, data-loss 가드): $wt_path branch=$branch" >&2
+    if [[ ! -d "$wt_path" ]]; then
+      echo "[completion-clean] KEEP (worktree dir 부재 — git status 불가, 보수적 보존): $wt_path branch=$branch" >&2
+    else
+      echo "[completion-clean] KEEP (dirty — uncommitted 변경 보호, data-loss 가드): $wt_path branch=$branch" >&2
+    fi
     return 0
   fi
 
