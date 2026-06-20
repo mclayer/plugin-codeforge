@@ -161,10 +161,10 @@ jobs:
               )
             );
 
-            // 5a. Doc-only / type:epic fast-pass (CFP-106 fix #143).
-            //     mctrader debut F6: Epic close + doc-only PR 가 phase-gate-mergeable 의
+            // 5a. type:epic fast-pass (CFP-106 fix #143). (ADR-127 §K — doc-only fast-pass 폐지로 isDocOnly 분기 삭제)
+            //     mctrader debut F6: Epic close PR 가 phase-gate-mergeable 의
             //     phase:보안-테스트/gate 라벨 부재 → 항상 ACTION_REQUIRED → admin merge 의존.
-            //     Resolution: type:epic 라벨 OR all-doc files (`docs/`, `wrapper/`, `*.md`) → fast-pass success.
+            //     Resolution: type:epic 라벨 → fast-pass success (Epic close deadlock 방지, §결정 8 보존).
             const prFullForEpic = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -178,37 +178,12 @@ jobs:
             //   Orchestrator 가 sibling-pr label 부착 시 fast-pass — sibling PR 의 design review 정합성 은
             //   wrapper Story PR 의 design review PASS 가 보증.
             const isSiblingPr = allLabels.includes('sibling-pr');
-            // CFP-260 / CFP-261 / CFP-262 — scripts/ + CONTRIBUTING.md 추가 (operational tooling, not src code).
-            // Bootstrap script entries / drift check script / version bump CI helper 등 wrapper 운영 도구.
-            let isDocOnly = !hasCode && files.every(f =>
-              f.filename.endsWith('.md') ||
-              f.filename.startsWith('docs/') ||
-              f.filename.startsWith('wrapper/') ||
-              f.filename.startsWith('.github/') ||
-              f.filename.startsWith('templates/') ||
-              f.filename.startsWith('scripts/') ||
-              f.filename.startsWith('.claude-plugin/') ||
-              f.filename.startsWith('.claude/_overlay/') ||   // CFP-758 #758 — consumer overlay SSOT (state-only)
-              f.filename === '.claude/settings.json' ||        // orchestrator runtime config (permissions/sandbox state, non-executable) — .claude/_overlay/ sibling
-              f.filename === '.claude/settings.local.json' ||  // 기계-로컬 권한 설정 (non-executable state) — settings.json sibling (#2175 후속 오커밋 정리)
-              f.filename.startsWith('.codeforge/') ||          // CFP-758 #503/#723 — counter reservation (non-executable state)
-              f.filename.startsWith('scope_manifests/') ||     // CFP-758 #503/#723 — Epic scope manifest (governance state)
-              f.filename === 'CHANGELOG.md' ||
-              f.filename === 'README.md' ||
-              f.filename === 'CONTRIBUTING.md' ||
-              (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup, fast-pass 허용 (src/overlay 삭제는 여전히 비허용)
-            );
+            // ADR-127 §K — isDocOnly process-derived fast-pass 폐지 (doc-only fast-path 폐지, §결정 2).
+            //   "doc-only diff" 를 성공 근거로 삼던 branch 제거 → deadlock-resolver(isLabelMismatchOnly)로 대체.
+            //   요구사항리뷰 가드(reqReviewPhaseAttached && !reqReviewGateAttached)는 deadlock-resolver 의
+            //   "gate 라벨 부착 필수" 조건이 흡수 (gate 미부착 = unblock 불가).
 
-            // CFP-2324 S2 / ADR-125 §결정 3 해법 A (1) — 요구사항리뷰 게이트 fast-pass guard.
-            //   phase:요구사항-리뷰 부착 ∧ gate:requirements-review-pass 미부착 → isDocOnly=false 강제
-            //   (fast-pass 제외 → required block fall-through). additive — 다른 PR isDocOnly 무변경 (ADR-064 ratchet, INV-1).
-            const reqReviewPhaseAttached = allLabels.includes('phase:요구사항-리뷰');
-            const reqReviewGateAttached = allLabels.includes('gate:requirements-review-pass');
-            if (reqReviewPhaseAttached && !reqReviewGateAttached) {
-              isDocOnly = false;
-            }
-
-            // CFP-795 / ADR-026 Amendment 4 §결정 6 — 4번째 fast-pass source: isPostMergeFix (3-조건 AND)
+            // CFP-795 / ADR-026 Amendment 4 §결정 6 — fast-pass source: isPostMergeFix (3-조건 AND)
             //
             // 보안 설계 요약 (Change Plan §7 / §3 verbatim):
             //   조건 1 (label) = PR author 영역 (단독 불충분 — self-declare 위조 attack surface)
@@ -335,89 +310,57 @@ jobs:
               isPostMergeFix = cond2 && cond3;  // 조건 1(label)은 진입 가드, AND 결합은 2∧3
             }
 
-            // CFP-1850-S1 §3 — 5번째 fast-pass source: isChoreOnly (4-조건 AND)
+            // ADR-127 §K — isChoreOnly process-derived fast-pass 폐지 (chore 면제 폐지, §결정 1).
+            //   isChoreOnly 의 성공 조건 = noStoryBinding (Story 미연결). §결정 1(모든 변경 Story 의무) 발효로
+            //   Story 없는 PR 자체가 소멸 = dead path. dead path 명시 제거 + deadlock-resolver 로 대체.
             //
-            // 보안 설계 요약 (Change Plan §7 / §3 verbatim):
-            //   조건 (a) label   = phase:unclassified 존재 (PR author 영역 — 단독 불충분)
-            //   조건 (b) Story 미연결 = story_uri marker 부재 AND linked type:story Issue 0
-            //                          (Orchestrator 영역 — PR author 위조 불가)
-            //   조건 (c) sibling/impl label 부재 = (Orchestrator monopoly)
-            //   조건 (d) diff chore-safe path 만 = isDocOnly 허용 경로 + agents/*.md 승격
-            //   4-조건 AND = single point of forgery 제거 (isPostMergeFix 3-조건 AND 동형)
-            //   fail-closed: 판정 불가 시 isChoreOnly=false → 기존 평가 경로 진입
-
-            // 조건 (b) helper: Story 미연결 확인 (Orchestrator monopoly)
-            async function checkNoStoryBinding(body, localRefs, github, context) {
-              // (b.1) story_uri marker 부재
-              if (body.match(/story_uri:\s*(\S+)/)) return false;
-              // (b.2) linked Issue 중 type:story 보유 0
+            // ADR-127 §결정 5/8 — deadlock-resolver: full-flow 증거(Story binding ∧ gate 라벨) 충족 ∧
+            //   phase 라벨만 mismatch 인 경우에만 unblock. "Story 없음 / doc-only diff" 를 성공 근거로 삼지 않음.
+            //   CFP-1845 anti-pattern(branch protection 손작업 우회 + enforce_admins:true 위배 = 보안 약화) 재발
+            //   차단 — fast-pass 단순 삭제 금지, 좁은 resolver 로 대체.
+            async function checkLabelMismatchOnly(body, localRefs, phaseLabel, prGateLabels, github, context) {
+              // (1) full-flow 증거 #1 — Story binding 존재 (story_uri marker OR linked type:story Issue)
+              //     "Story 없음" 은 여기서 즉시 false (chore 면제 폐지 §결정 1 — 모든 PR = Story 보유)
+              const hasStoryUri = !!body.match(/story_uri:\s*(\S+)/);
+              let hasStoryIssue = false;
               for (const n of localRefs) {
                 try {
                   const { data: issue } = await github.rest.issues.get({
-                    owner: context.repo.owner, repo: context.repo.repo, issue_number: n
-                  });
-                  const labels = issue.labels.map(l => l.name || l);
-                  if (labels.includes('type:story')) return false;  // Story 연결 발견 → chore 아님
+                    owner: context.repo.owner, repo: context.repo.repo, issue_number: n });
+                  if (issue.labels.map(l => l.name || l).includes('type:story')) { hasStoryIssue = true; break; }
                 } catch (e) {
-                  if (e.status === 404) continue;   // issue 부재 = 정상 skip
-                  return false;                      // network/rate-limit/403/5xx = 판정 불가 → fail-closed (chore 아님)
+                  if (e.status === 404) continue;
+                  return false;          // network/rate-limit/403/5xx = 판정 불가 → fail-closed (정식 차단)
                 }
               }
-              return true;  // 양 source 모두 부재 = Story 미연결
+              if (!hasStoryUri && !hasStoryIssue) return false;   // Story 미연결 → unblock 불가 (정식 차단)
+
+              // (2) full-flow 증거 #2 — 현 단계 gate 라벨 부착 (lane PASS 증거)
+              //     gate 라벨 0건 = lane 미통과 = unblock 불가 (요구사항리뷰 가드 흡수 — gate 미부착 차단).
+              if (!prGateLabels || prGateLabels.length === 0) return false;
+
+              // (3) phaseLabel 부재(미부착) = mismatch 가 아니라 라벨 누락 → 정식 차단(라벨 부착 의무).
+              if (!phaseLabel) return false;
+
+              // (4) 통과: full-flow 증거(Story ∧ gate) 충족 ∧ phaseLabel 만 required gate phase 와 어긋남.
+              //     → unblock + 라벨 정합 안내(phase 라벨을 현 lane 단계로 전환 권고).
+              //     주의: 차단 사유가 "phase mismatch 외 다른 실패원(예: required gate 미충족)"이면
+              //     이 분기에 도달하지 않음 — required gate 평가는 OR-gate 이후 기존 로직이 담당.
+              return true;
             }
 
-            // 조건 (a) — phase:unclassified label (PR author self-attach 가능 — 단독 불충분)
-            const hasChoreLabel = allLabels.includes('phase:unclassified');
+            const isLabelMismatchOnly = await checkLabelMismatchOnly(body, localRefs, phaseLabel, prGateLabels, github, context);
 
-            // 조건 (c) — sibling/impl label 부재 (Orchestrator monopoly)
-            const noSiblingOrImplLabel = !allLabels.includes('sibling-pr') &&
-                                         !allLabels.includes('impl-manifest');
-
-            // 조건 (d) — chore-safe path only (isDocOnly 허용 경로 + agents/ 승격, src/tests/overlay/ 제외)
-            const choreSafePaths = files.every(f =>
-              f.filename.endsWith('.md') ||
-              f.filename.startsWith('docs/') ||
-              f.filename.startsWith('wrapper/') ||
-              f.filename.startsWith('.github/') ||
-              f.filename.startsWith('templates/') ||
-              f.filename.startsWith('scripts/') ||
-              f.filename.startsWith('.claude-plugin/') ||
-              f.filename.startsWith('.claude/_overlay/') ||
-              f.filename === '.claude/settings.json' ||
-              f.filename === '.claude/settings.local.json' ||
-              f.filename.startsWith('.codeforge/') ||
-              f.filename.startsWith('scope_manifests/') ||
-              f.filename === 'CHANGELOG.md' ||
-              f.filename === 'README.md' ||
-              f.filename === 'CONTRIBUTING.md' ||
-              f.filename === '.gitignore' ||
-              f.filename === '.gitattributes' ||
-              f.filename === '.editorconfig' ||
-              f.filename === '.dockerignore' ||   // CFP-2139: 루트 hygiene dotfile chore-safe 승격 (CFP-1850-S1 allowlist 연장, additive)
-              f.filename.startsWith('agents/') ||   // CFP-1850-S1: agents/ chore-safe 승격 (#2188: plugins/<name>/agents/*.md 도 .md 조건으로 chore-safe — 루트 승격과 동형, 의도된 동작)
-              (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup (src/overlay 삭제는 여전히 배제)
-            );
-
-            // short-circuit + 통합: (a)/(c)/(d) 즉시 평가 후 (b) API call (비용 최소화)
-            let isChoreOnly = false;
-            if (hasChoreLabel && noSiblingOrImplLabel && choreSafePaths) {
-              // 조건 a / c / d 통과 — 조건 b (API call) 마지막 평가
-              const noStoryBinding = await checkNoStoryBinding(body, localRefs, github, context);
-              isChoreOnly = noStoryBinding;
-            }
-
-            // OR-gate 5-way 확장 (Refactor: additive, 기존 4 source 무변경 — Change Plan §3.1/§3.2)
-            if (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly) {
-              const fastPassTitle = isChoreOnly ? 'Phase Gate (chore fast-pass)' : 'Phase Gate (fast-pass)';
+            // OR-gate (ADR-127 §K — isDocOnly/isChoreOnly process-derived fast-pass → isLabelMismatchOnly deadlock-resolver 교체)
+            if (isEpicLabel || isSiblingPr || isPostMergeFix || isLabelMismatchOnly) {
+              const fastPassTitle = isLabelMismatchOnly ? 'Phase Gate (label-mismatch resolver)' : 'Phase Gate (fast-pass)';
               const reason = isEpicLabel
                 ? `type:epic label fast-pass (CFP-106 #143 fix)`
                 : isSiblingPr
                 ? `sibling-pr label fast-pass (CFP-499 / ADR-010 Amendment 4 — wrapper Story mirror sync PR)`
-                : isDocOnly
-                ? `doc-only PR fast-pass — files: ${files.map(f=>f.filename).slice(0,3).join(', ')}${files.length>3?'...':''} (CFP-106 #143 fix)`
                 : isPostMergeFix
                 ? `post-merge-fix 3-조건 AND fast-pass (ADR-026 Amendment 4 §결정 6 — label ∧ Story §10 binding ∧ 원 PR §7 보안 non-touch 양면)`
-                : `chore-only 4-조건 AND fast-pass (CFP-1850 §3 — phase:unclassified ∧ no Story binding ∧ no sibling/impl label ∧ chore-safe diff)`;
+                : `full-flow 증거(Story binding ∧ gate 라벨) 충족 ∧ phase 라벨만 mismatch — 라벨 정합 권고 (ADR-127 §결정 5). phase 라벨을 현 lane 단계로 전환하세요.`;
 
               // ── CFP-900 §4.13 fast_pass_content_sanity — warning tier (orthogonal layer) ──
               // fast-pass OR-gate PASS 자체 보존 (게이트 약화 0 — ADR-064 ratchet invariant).

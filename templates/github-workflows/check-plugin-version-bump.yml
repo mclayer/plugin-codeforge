@@ -6,7 +6,7 @@ name: check-plugin-version-bump (CFP-261 / ADR-037)
 # Phase 2 v2 (follow-up CFP) — 결정 1 surface table mapping + 결정 2 wrapper-coupling T1/T2/T3.
 #
 # Trigger: PR open / synchronize / reopened.
-# Bypass: BYPASS_VERSION_BUMP=1 + BYPASS_VERSION_BUMP_REASON env (audit trail).
+# Bypass: 폐지 (ADR-127 §결정 3.3) — BYPASS_VERSION_BUMP env 우회 제거. 버전 bump 는 정식 플로우 안 무조건 수행.
 
 on:
   pull_request:
@@ -36,26 +36,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bypass check
-        id: bypass
-        env:
-          BYPASS: ${{ vars.BYPASS_VERSION_BUMP || secrets.BYPASS_VERSION_BUMP }}
-          REASON: ${{ vars.BYPASS_VERSION_BUMP_REASON || secrets.BYPASS_VERSION_BUMP_REASON }}
-        run: |
-          set -euo pipefail
-          if [[ "${BYPASS:-0}" == "1" ]]; then
-            if [[ -z "${REASON:-}" ]]; then
-              echo "::error::BYPASS_VERSION_BUMP=1 requires BYPASS_VERSION_BUMP_REASON (non-empty audit trail)"
-              exit 1
-            fi
-            echo "::warning::BYPASS_VERSION_BUMP=1, reason: $REASON"
-            echo "bypassed=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "bypassed=0" >> "$GITHUB_OUTPUT"
-          fi
+      # Bypass step 폐지 (ADR-127 §결정 3.3) — BYPASS_VERSION_BUMP env 우회 제거.
+      # 버전 bump 는 정식 플로우 안 무조건 수행. 아래 step 들의 bypass 가드도 함께 제거.
 
       - name: Compute commit signal (Conventional Commits)
-        if: steps.bypass.outputs.bypassed == '0'
         id: commit_signal
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -93,7 +77,6 @@ jobs:
           echo "::notice::commit signal = $signal"
 
       - name: Compute version bump (plugin.json before/after)
-        if: steps.bypass.outputs.bypassed == '0'
         id: version_bump
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -142,7 +125,6 @@ jobs:
           echo "::notice::plugin.json version bump = $actual ($base_v → $head_v)"
 
       - name: Validate consistency
-        if: steps.bypass.outputs.bypassed == '0'
         env:
           COMMIT_SIGNAL: ${{ steps.commit_signal.outputs.signal }}
           ACTUAL: ${{ steps.version_bump.outputs.actual }}
@@ -195,7 +177,6 @@ jobs:
           echo "::notice::version bump consistency OK ($COMMIT_SIGNAL signal ↔ $ACTUAL bump)"
 
       - name: Phase 2 v2 follow-up reminder (β surface table + T1/T2/T3 triggers)
-        if: steps.bypass.outputs.bypassed == '0'
         run: |
           echo "::notice::CFP-261 Phase 2 v1 enforcement — commit signal + version field consistency."
           echo "::notice::Follow-up enforcement (β surface table mapping + Wrapper-coupling T1/T2/T3) = 별도 CFP."

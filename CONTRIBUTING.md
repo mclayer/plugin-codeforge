@@ -71,9 +71,9 @@ wrapper plugin (codeforge) 은 자체 surface 변경 외에 다음 3 trigger 시
 
 상세 SSOT: [`archive/adr/ADR-037-plugin-version-bump-rule.md`](archive/adr/ADR-037-plugin-version-bump-rule.md).
 
-### Bypass
+### Bypass 폐지 (ADR-127 §결정 3.3)
 
-긴급 hotfix 시 `BYPASS_VERSION_BUMP=1` + `BYPASS_VERSION_BUMP_REASON=<text>` env 로 우회 가능 (audit trail 보존). hotfix-playbook 정합 ([`docs/hotfix-playbook.md`](docs/hotfix-playbook.md)).
+버전 bump 우회(`BYPASS_VERSION_BUMP` env) 폐지 — 버전 bump 는 정식 플로우 안 무조건 수행한다 (ADR-037 self-app). 긴급 hotfix lane-skip 경로 자체가 폐지됐다 (ADR-127 §결정 3, [`docs/hotfix-playbook.md`](docs/hotfix-playbook.md) [POLICY-RETIRED]).
 
 ## Marketplace mirror sync (ADR-016)
 
@@ -90,14 +90,13 @@ main branch protection = 다음 4 check PASS 의무:
 
 추가 check (advisory): `markdown internal links` / `inter-plugin-drift` / `marketplace mirrored fields drift` / `label-registry sync` / 등.
 
-## Story discipline (ADR-013 / CFP-45)
+## Story discipline (ADR-013 / CFP-45 / ADR-127)
 
-매 변경 시작 시 cutoff 분류 — 강제 / 면제 결정. 모호 시 강제 측 분류.
+**모든 변경 = Story 작성 의무 (면제 0 — ADR-127 §결정 1).** chore 면제 분류 폐지 — 매 변경이 정식 풀 플로우 + Story file 작성 대상.
 
-**강제 대상**: 신규 ADR / 아키텍처 변경 / agent topology / workflow 변경 / SSOT semantic / breaking change.
-**면제 대상**: typo / 링크 / lint auto-fix / dependency lock / README 단순 문구 수정.
+**강제 대상 (예시 enumeration — 분류 분기 아님, 전부 강제)**: 신규 ADR / 아키텍처 변경 / agent topology / workflow 변경 / SSOT semantic / breaking change / typo·링크·lint auto-fix·dependency lock·버전범프·README 단순 문구 수정 (종전 면제 대상 — Story 작성 의무 승격).
 
-면제 시 commit body 에 `Story 면제 사유: <이유>` 1줄 명시.
+`Story 면제 사유:` commit body marker 채널 폐지 (ADR-127 §결정 1). doc-only fast-path 단일 PR 폐지 — 모든 Story = Phase 1 + Phase 2 PR 분리 (ADR-127 §결정 2).
 
 ## Internal-docs (codeforge-internal-docs)
 

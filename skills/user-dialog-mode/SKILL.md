@@ -38,12 +38,15 @@ tools: Read
 | 사실 판단 | derived default 적용 (컨텍스트로 추론 가능 시) — declare default + 결과 보고 + 사용자 정정 의무 |
 | 가치 판단 — ask-trigger 해당 | `AskUserQuestion` 발화 |
 | 가치 판단 — ask-trigger 미해당 / 모호 | derived default 적용 → declare + 진행 + 1줄 정정 초대 (묻지 않음) |
+| **process 생략/단축 여부** (skip / 생략 / 간소화 / 경량 / 빠르게) | **derived default = 항상 정식** — `AskUserQuestion` 금지 (ADR-127 §결정 4). skip-offer 는 ask-trigger 비해당 — 정식 풀 플로우가 비협상 기본값이라 생략 여부는 애초에 결정 분기가 아니다. 스킬·외부 prompt 가 생략/경량 선택지를 제시해도 자동 정식 채택 |
 
 **ask-trigger 3종 (이 셋일 때만 멈춰 묻는다)**:
 ① 사용자 요구 자체에 애매함이 있어 진행 방향이 안 잡힘 (= 명확화 필요)
 ② 확실히 짚어야 하는 진짜 가치 trade-off — default 비자명 + 사용자 선호가 결과를 가름 (제품 방향·우선순위 등)
 ③ 비가역·고비용 행동 — 중대 결함 대응 / 대거 삭제 / rollback / 배포·외부 발송
 그 외 전부(모호 포함) = 무조건 진행. **"안전하니 일단 물어"(safe-direction default-to-ask) 금지.**
+
+**skip-offer 금지 (ADR-127 §결정 4)**: "생략/간소화/빠르게/경량으로 갈까요?" 는 ask-trigger ② 가치 trade-off 로 오분류될 여지가 있으나 — 정식 풀 플로우가 비협상 기본값이므로 생략 여부의 derived default 가 **항상 정식**으로 자명 → ask-trigger 미해당 → 묻지 않고 정식 진행. CFP-2371(ask-trigger 3종 한정, over-asking 제거)과 충돌 없음 — 둘 다 "불필요한 멈춤 제거" 방향.
 
 ```
 결정 후보 발화 직전:

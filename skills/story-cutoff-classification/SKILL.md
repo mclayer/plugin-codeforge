@@ -1,16 +1,18 @@
 ---
 name: story-cutoff-classification
-description: Story 작성 의무 vs chore commit 면제 분류 시 (사용자 요구사항 접수 직후). 강제 대상 / doc-only fast-path / 면제 대상 3종 분류 기준을 정의한다.
+description: 모든 변경 Story 작성 의무 분류 (사용자 요구사항 접수 직후). 면제·단축 0 — 모든 변경이 정식 풀 플로우 + Story file 작성 대상 (ADR-127).
 tools: Read
 ---
 
-# Story 작성 의무 분류 기준 (CFP-45)
+# Story 작성 의무 분류 기준 (CFP-45 / ADR-127)
 
-> 참조 테이블 skill — 요구사항 접수 직후 Story 작성 의무 vs chore commit 면제를 판정하세요.
+> 참조 테이블 skill — 요구사항 접수 직후 Story 작성 의무를 확인하세요. **면제·단축경로 0 — 모든 변경이 Story 작성 대상**(ADR-127 §결정 1).
 
-매 변경 시작 시 Orchestrator 가 cutoff 분류 → 강제/면제 결정. **모호 시 강제 측 분류**. Plugin 자체 + consumer 프로젝트 모두 적용. 정책 SSOT: [ADR-013](../../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md). Story file 위치 = `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md` (Plugin repo Issue body 와 bidirectional `story_uri`/`story_issues` binding). 새 Story = internal-docs `story.yml` Issue Form → `story-init.yml` Action 자동 생성 + Phase 1 PR open.
+매 변경 시작 시 Orchestrator 가 cutoff 분류 → **모든 변경 = Story 작성 의무**(chore 면제 / doc-only fast-path 폐지 — ADR-127). 오타·lint·버전범프·링크수정 같은 순수 기계적 변경도 정식 풀 플로우 + Story file 작성 대상. Plugin 자체 + consumer 프로젝트 모두 적용. 정책 SSOT: [ADR-013](../../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (+ Amendment 8) + [ADR-127](../../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md). Story file 위치 = `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md` (Plugin repo Issue body 와 bidirectional `story_uri`/`story_issues` binding). 새 Story = internal-docs `story.yml` Issue Form → `story-init.yml` Action 자동 생성 + Phase 1 PR open.
 
-## 강제 대상 (Story file 작성 의무)
+## 모든 변경 = Story 작성 의무 (강제 단일 분류 — ADR-127 §결정 1)
+
+아래는 **예시 enumeration** 일 뿐, 분류 분기가 아니다 — 모든 변경이 Story 작성 + 정식 풀 플로우 대상이다.
 
 - 신규 ADR 결정 / 기존 ADR 변경
 - 아키텍처·도메인 모델 추가·삭제·재정의
@@ -18,22 +20,9 @@ tools: Read
 - Workflow 정의(`templates/github-workflows/**`) 변경
 - SSOT 문서(`templates/`·`presets/`·`CLAUDE.md`·`docs/orchestrator-playbook.md`) 의미 변경
 - Breaking change · consumer migration 영향
+- 오타·문법·줄바꿈·마크다운 형식·링크수정·lint 자동fix·dependency lock·버전범프·README 단순 문구 (종전 chore 면제 대상 — ADR-127 §결정 1 로 Story 작성 의무 승격)
 
-## doc-only fast-path 대상 (ADR-054)
-
-SSOT 문서 변경 + 기존 ADR Amendment 또는 ADR 없음 + src/tests 무변경인 Story.
-lane: 요구사항 → 설계 → 경량 설계리뷰 → 단일 PR close (구현 lane skip).
-신규 ADR 도입 Story = full-lane 강제. 모호 시 full-lane 강제 (안전 방향).
-판정 표 SSOT: [ADR-054](../../archive/adr/ADR-054-doc-only-story-fast-path.md).
-
-## 면제 대상 (chore commit OK)
-
-- Typo · 문법 · 줄바꿈 · 마크다운 형식 정리
-- 링크 깨짐 수정 / 죽은 링크 제거
-- Lint 자동 fix · dependency lock · version bump (security 영향 없는 경우)
-- README 단순 문구 수정
-
-면제 시 commit body 에 `Story 면제 사유: <이유>` 1줄 명시. 판단 시점: cutoff 분류 선언 (변경 시작 시) + commit 직전 재확인.
+**chore 면제 폐지 (ADR-127 §결정 1)**: `Story 면제 사유:` commit body marker 채널 폐지. doc-only fast-path(단일 PR, 구현 lane skip) 폐지 — 모든 Story = full 10 lane + Phase 1 PR(§1-7) + Phase 2 PR(§8-11) 분리 무조건(ADR-127 §결정 2). "lane 의 노력 절감 skip" 만 폐지 — lane 이 검사할 산출물 target 이 부재한 자연 N/A 는 정식 분류의 정상 결과(ADR-005 / ADR-127 §결정 5 3축 AND).
 
 ## Brainstorming/writing-plans skill default override
 
@@ -44,7 +33,7 @@ Plugin repo (codeforge family) 작업 시:
 - Plugin repo CI (`dogfood-artifact-paths`) 가 PR 단계에서 fail-closed (ADR-017). Skill prompt 정책 인지는 1차 안전망, CI 가 authoritative
 - `codeforge:brainstorm` skill = codeforge 프로젝트 전용 강화 brainstorming (ADR-034 Amendment 1·2). Phase 0 자동 실행 (CFP-386, Amendment 2). 외부 plugin 없이 자립 (ADR-122 §결정2).
 
-Consumer overlay: `.claude/_overlay/project.yaml` `story_cutoff.additional_exempt_categories[]` 로 도메인 특화 면제 추가 가능 (**강제 항목 축소 불허** — 안전 방향만). Schema [`docs/project-config-schema.md`](../../docs/project-config-schema.md) §2.
+Consumer overlay: **면제 추가 불가** — `story_cutoff.additional_exempt_categories[]` 면제 확장채널 폐지(ADR-127 §결정 6). overlay 는 정책을 **확장(더 엄격하게 — 강제 추가)** 만 가능하고 면제 추가(강제 축소)는 애초에 invariant 위반이었다. consumer 는 강제 정책을 더할 수만 있다. Schema [`docs/project-config-schema.md`](../../docs/project-config-schema.md) §2.
 
 본 plugin repo dogfooding: KEY prefix `CFP`. Plugin meta 변경 시 무의미한 lane 은 `N/A — <사유>` 명시 (ADR-005 standardization).
 

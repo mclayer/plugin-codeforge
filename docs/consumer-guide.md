@@ -285,6 +285,8 @@ bootstrap:
 
 Issue 발의자 또는 Orchestrator 가 `fallback:manual` label 부착. 일시 outage / 사용자 explicit 선택 시. environment default 와 무관 활성 (per-Issue override > env default).
 
+> **manual fallback ≠ lane 생략 (ADR-127 §결정 8)**: `fallback:manual` 은 story-init **자동화 outage** 시 Story **생성** 경로만 수동 대체하는 degraded-mode 가용성 장치다. manual fallback Story 도 정식 10 lane 전부 거친다 — lane 생략 0. ADR-127 의 폐지 대상(chore 면제 / doc-only fast-path / hotfix lane-skip)이 아니다 (산출물 SSOT 통합·가용성 장치는 면제경로 아님).
+
 #### Consumer runbook
 
 1. `.claude/_overlay/project.yaml` 의 `bootstrap.fallback_mode: action_blocked` 설정 (영구 차단 환경)
@@ -2488,6 +2490,8 @@ Migration Epic = [ADR-020 Cross-Repo Epic Pattern](../archive/adr/ADR-020-cross-
 
 #### Migration Epic §5 tiered template
 
+> **§section 작성 면제 ≠ lane 생략 (ADR-127 §결정 5 보존)**: 아래 tiered delta 표의 "면제 (N/A 허용)" 은 Migration Epic 문서의 **§section 작성 면제**(산출물 target 부재)일 뿐 lane 생략이 아니다 — ADR-127 §결정 5 의 "산출물 target 부재 N/A" 영역(단축 아닌 정식 분류 N/A). 면제 §section 은 ADR-005 표기 의무(`N/A — <사유>` 1줄) 정합으로 보존된다. 모든 lane 은 정식으로 거친다.
+
 delta 크기에 따라 필수 §section이 다르다. PMOAgent가 Tier를 결정하고 사용자 확인 optional.
 
 | Delta 크기 | 필수 §section | 면제 (N/A 허용) |
@@ -2875,7 +2879,7 @@ corrects_pr: <owner>/<repo>#<N>     # 정정 대상 원 MERGED PR
 
 **consumer hub repo 화이트리스트**: dogfood default = `github.com/mclayer/codeforge-internal-docs`. consumer hub repo 가 다른 경우 (1) `.claude/_overlay/project.yaml` 에 `phase_gate.allowed_hub_repos[]` 로 선언 (2) codeforge-upgrade 후 `bash scripts/inject-allowed-hub-repos.sh` 실행 (idempotent, ADR-116 확장-only 정합 — 축소 불가). 자동 wire 미활성 시 manual step. `docs/hotfix-playbook.md §6` 상세 참조.
 
-**EC-2 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별 경로). `hotfix:minimal` = 운영 장애 단일 파일 수정, 보안테스트 필수. `post-merge-fix` = cross-repo land_order 정정 전용, 보안 non-touch 역참조 시 보안테스트 실질 N/A.
+**EC-2 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별 경로). `hotfix:minimal`(운영 장애 단일 파일 lane-skip 수정)은 **ADR-127 §결정 3 으로 폐지** — 운영 장애도 정식 풀 플로우 무조건. `post-merge-fix` = cross-repo land_order 정정 전용 PR-level CI 안전판으로 **존속**(보안 non-touch 역참조 시 보안테스트 실질 N/A). 두 경로 혼동 금지 — post-merge-fix 는 운영 장애 hotfix 아님.
 
 ### enforce_admins toggle 기법 (BLOCKED + MERGEABLE 케이스)
 

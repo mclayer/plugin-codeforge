@@ -443,6 +443,24 @@ CFP-2252 (Epic #2244 S4, native Issue Type cutover 완결 Story) 가 story-init.
 
 확장-only (default 보존, override 만 추가) — 기존 §결정 1 internal-docs SSOT 의도 약화 0. 하드코딩 → 파라미터화 = 일반화 ratchet (mclayer 운영 동작 byte-identical, fork override 경로 추가만). 약화/reversal 방향 아님 — sunset/원복 trigger 부재. ADR-058 §결정 5 정합.
 
+## Amendment 8 (2026-06-20 KST) — CFP-2374 — chore 면제 폐지 (모든 변경 Story 작성 의무)
+
+### 컨텍스트
+
+본 ADR §강제/면제 분류는 Story 작성 의무의 강제/면제 기준을 정의해왔고, `story-cutoff-classification` SKILL.md §면제 대상(typo·문법·줄바꿈·마크다운·링크수정·lint 자동fix·dependency lock·버전범프·README 단순 문구)이 그 mirror였다. 사용자 directive (CFP-2374, 2026-06-20 KST): "면제·단축경로 전부 폐지 — 오타·lint 같은 순수 기계적 변경도 정식 풀 플로우." 사용자가 비용 고지받고 명시 선택. 상세 SSOT = [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 1.
+
+### 결정
+
+본 ADR 의 **chore 면제 분류를 폐지**한다. 강제/면제 2분법 → **강제 단일 분류** (모든 변경 = Story file 작성 의무). "면제 대상 (chore commit OK)" 카테고리 + `Story 면제 사유:` commit body marker 채널 무효.
+
+- `story-cutoff-classification` SKILL §면제 대상 섹션 삭제 (ADR-127 구현 spec §A).
+- consumer overlay 면제 확장채널 `story_cutoff.additional_exempt_categories[]` 폐지 (ADR-127 §결정 6 — overlay 축소-불가 invariant 강화).
+- 본 §결정 1 본문(7 plugin repo dogfood-out 영역)은 무변경 — 본 Amendment 는 §강제/면제 분류 영역만 무력화 (anti-drift, historic-preserving — 본 Amendment 가 신규 SSOT).
+
+### Sunset justification
+
+강화 방향 ratchet (면제 제거 = 정식성 강화). 약화 아님 → ADR-058 §결정 5 sunset_justification 비대상. ADR-127 §결정 1 SSOT 위임.
+
 ## 관련 파일
 
 - [CFP-45 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-45-dogfood-out-restructure-design.md) — parent
