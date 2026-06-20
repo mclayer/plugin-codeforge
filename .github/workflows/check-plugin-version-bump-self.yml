@@ -18,7 +18,7 @@ name: check-plugin-version-bump-self (CFP-2310 S2 / ADR-037 Amd 2)
 #   (consumer 는 v1 check-plugin-version-bump.yml 을 배포받음, ADR-037 §결정 5 forward-only).
 #   → invariant-check Workflow parity(templates 순회)는 본 파일을 점검하지 않음(비대상).
 #
-# Bypass: BYPASS_VERSION_BUMP=1 + BYPASS_VERSION_BUMP_REASON env (audit trail, v1 패턴 보존).
+# Bypass: 폐지 (ADR-127 §결정 3.3) — BYPASS_VERSION_BUMP env 우회 제거. 버전 bump 는 정식 플로우 안 무조건 수행.
 
 on:
   pull_request:
@@ -72,26 +72,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bypass check
-        id: bypass
-        env:
-          BYPASS: ${{ vars.BYPASS_VERSION_BUMP || secrets.BYPASS_VERSION_BUMP }}
-          REASON: ${{ vars.BYPASS_VERSION_BUMP_REASON || secrets.BYPASS_VERSION_BUMP_REASON }}
-        run: |
-          set -euo pipefail
-          if [[ "${BYPASS:-0}" == "1" ]]; then
-            if [[ -z "${REASON:-}" ]]; then
-              echo "::error::BYPASS_VERSION_BUMP=1 requires BYPASS_VERSION_BUMP_REASON (non-empty audit trail)"
-              exit 1
-            fi
-            echo "::warning::BYPASS_VERSION_BUMP=1, reason: $REASON"
-            echo "bypassed=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "bypassed=0" >> "$GITHUB_OUTPUT"
-          fi
+      # Bypass step 폐지 (ADR-127 §결정 3.3) — BYPASS_VERSION_BUMP env 우회 제거.
+      # 버전 bump 는 정식 플로우 안 무조건 수행. 아래 step 들의 bypass 가드도 함께 제거.
 
       - name: Run v2 self-check (warning-first — A2-7 non-blocking)
-        if: steps.bypass.outputs.bypassed == '0'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -102,7 +86,6 @@ jobs:
             --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --root "$GITHUB_WORKSPACE"
 
       - name: A2-7 promotion path note (warning → required)
-        if: steps.bypass.outputs.bypassed == '0'
         run: |
-          echo "::notice::ADR-037 A2-7 — 현재 tier=warning (non-blocking). blocking 승격 = #2098 식 evidence 누적 후 별 amendment/Story (required context 전환 + fail-open/closed + bypass 보존, A2-9 InfraOperationalArch 동반 설계)."
+          echo "::notice::ADR-037 A2-7 — 현재 tier=warning (non-blocking). blocking 승격 = #2098 식 evidence 누적 후 별 amendment/Story (required context 전환 + fail-open/closed 설계, A2-9 InfraOperationalArch 동반). bypass 우회 채널 신설 금지 (ADR-127 §결정 3.3)."
           echo "::notice::SSOT: archive/adr/ADR-037-plugin-version-bump-rule.md Amendment 2 §결정 A2-7."
