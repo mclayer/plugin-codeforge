@@ -149,3 +149,11 @@ Batch closure 산출 retro PR 의 closure forcing function 3 step (ADR-045 §D-1
 - **ADR-082 §결정 12** = retro-time verify-before-trust adjacent axis (PMOAgent retro write-time vs PMOAgent batch closure-time 분리)
 - **playbook §13.5 PMOAgent 보고 기록** = `[PMO]` phase prefix comment 정합 batch closure 영역 sub-domain
 
+## 3부 — 완료 단계 수렴 SSOT pointer (CFP-2377 / ADR-128 §결정 4)
+
+> **수렴 SSOT = playbook §9.7.2 "완료 단계 수렴 SSOT"** (본 skill 미수록 — dup 회피, ADR-128 §결정 4 "신규 SSOT 신설 0"). merge 직후 wrap-up 의 4-트리거 (① `post-merge-followup.yml` 클라우드 / ② `retro-mandatory.yml` 클라우드 / ③ GitOpsAgent worktree eager teardown 로컬 / ④ Orchestrator `phase:완료` transition 로컬) 의 수렴·종결 단일 SSOT = playbook §9.7.2.
+
+- 본 skill 1부(post-merge automation)·2부(retro batch closure) = 위 트리거 ①·② 의 **절차** carrier. 트리거 ③(worktree-clean self-check)·④(`phase:완료` precondition) = playbook §9.7.1/§9.7.2 SSOT.
+- 단일 자동 수렴 검증기는 **구조적 불가** (클라우드↔로컬 실행평면 비대칭 — 클라우드 러너가 로컬 worktree 미접근). 수렴 확인 = 절차 명문화 + 텔레메트리 관찰 조합 (`post-merge-counters.jsonl` outcome + `gate:retro-complete` label + worktree-clean self-check detected=0). 상세 = playbook §9.7.2.
+- 갭 C (Living Architecture / Confluence mirror 재정합) = 유예 — ADR-112 per-Epic 게이트 / ADR-111 mirror SLA 가 owner (playbook §9.7.2 pointer 참조).
+

@@ -58,6 +58,8 @@ push → PR 생성 → gh pr view <N> --json mergedAt 확인 (non-null) → git 
 
 eager 정리(§3)를 못 거친 크래시·중단 orphan 전용. eager 와 disjoint 2-경로 (playbook Step 0a-prime).
 
+**자동 트리거 = `SessionEnd` async dispatch 단일 wire** (ADR-040 Amendment 9 §결정 5 / ADR-128 §결정 3): `hooks/hooks.json` SessionEnd entry (`async: true`) → `hooks/session-end` 가 background GC (`check-worktree-stale.sh`) 호출. 세션당 1회 종료 발화 → 7일 GC cadence 빈도 정합. **트리거 단일화 invariant (비협상)**: SessionEnd + Stop 동시 wire 금지 (동시 GC race 안전장치). 수동/스케줄 호출도 병행 가능:
+
 ```bash
 GC_DRY_RUN=1 bash templates/scripts/check-worktree-stale.sh   # preview (prune 대상만 보고)
 bash templates/scripts/check-worktree-stale.sh                # 실제 prune — 수동/스케줄 호출
@@ -70,7 +72,17 @@ prune 조건 = 4 조건 **ALL** (스크립트 헤더 SSOT):
 3. worktree CLEAN (tracked 변경 0 + 알려진 임시파일 외 untracked 0 — 잔여 변경 있으면 절대 prune 금지)
 4. 현재/main worktree 아님 + `locked` 아님
 
-> 과거 SessionStart hook 동기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연) — 수동/스케줄 호출만.
+> 과거 SessionStart hook 동기/주기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연). SessionStart async:true 는 무시되어 동기 실행 = 지연 회귀라 배제 (요구사항리뷰 PASS 확정 외부사실). backstop 자동 트리거 = SessionEnd async 단일 wire + 수동/스케줄 병행.
+
+## 4b. 완료-게이트 — phase:완료 worktree-clean self-check
+
+backstop(§4, age 7d+ orphan)과 **disjoint** — 정상 완료 경로의 eager 누락(0일령 worktree 잔존)을 검출하는 advisory 게이트 (ADR-040 Amendment 9 §결정 7.K / ADR-045 Amendment 13 §D-12). 정리 *실행* owner = GitOpsAgent eager 불변 — 본 게이트는 *검증*만.
+
+```bash
+STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh   # detected=0 = eager 정리 완료
+```
+
+검출 대상 (F2 구분 계약, ADR-040 §결정 7.K): (a) 본 STORY_KEY scope ∧ ((b) sub-worktree `cfp-NNN/lane/*`·`cfp-NNN/fix-iter-*` 잔존 = 즉시 검출 OR (c) Story root `cfp-NNN` flat = Phase 2 PR `mergedAt` non-null 일 때만 검출, open(보존 중)이면 제외). fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0). `phase:완료` transition precondition (playbook §9.7.1 (c)) 에서 Orchestrator self-check 가 호출. warning-tier 로컬 self-check (required CI 불가 — worktree 클라우드 러너 미접근).
 
 ## 5. bypass env 2종 — disjoint scope
 
