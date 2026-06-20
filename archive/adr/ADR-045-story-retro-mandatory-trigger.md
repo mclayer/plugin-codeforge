@@ -25,6 +25,7 @@ related_stories:
   - CFP-1632  # Amendment 10 carrier — §D-10 Wave 2 mechanical wire activation evidence (CFP-1623 Wave 1 declarative anchor 발효 후 mechanical layer activation: scripts/lib/check_retro_batch_adr_draft_pre_publish.py + thin bash wrapper + canonical workflow + self-app mirror + bats fixture cohort + evidence-checks-registry 132nd entry + label-registry-v2 v2.76→v2.77 102nd hotfix-bypass:* family member + pmo-output-v1 v1.2→v1.3 retro_section_6_pre_publish_verify optional field codify, evidence-only Amendment ADR-045 §결정 본문 변경 0건, 13-instance Wave 1→Wave 2 established pattern 13번째 instance)
   - CFP-1680  # Amendment 11 carrier — §D-11 신설 (PMOAgent retro batch closure pattern normative codify, HIGH normative consolidation doc-only fast-path ADR-054 Cat 1, 4-option decision enum CLOSE_AS_OBVIATED/CLOSE_AS_SENTINEL/PROMOTE/DEFER + 5 sub-scope verify-before-trust mandate + closure summary table SSOT 5-column + 3 step closure forcing function, paired sibling carrier playbook §18, 6 applied case evidence chain CFP-963/1339/1612/1637/1648/1680 pattern_count 6 reach threshold 2 = 3.0x, META 24th applied case)
   - CFP-2330  # Amendment 12 carrier — §D-9 sub-decision (c) 신설 (Pattern A 반응형→예방형 merge-time gate-provenance self-attest, warning-first → ratchet posture, Epic CFP-2324 S6, #2322 흡수). gate verdict 의 lane-produced machine-checkable artifact (review-verdict-v4 packet 형식·필수필드) ∧ Story §14 lane-evidence binding multi-anchor AND (wrapper-self `mixed` repo = ADR-031 §14 면제라 PR body/코멘트 병행 anchor). 위협모델 = honest-but-careless (연극 게이트). 악의 단일계정 위조 = out-of-scope accepted risk 명시 박제. 모든 게이트 (요구사항리뷰/설계리뷰/보안테스트/배포리뷰) 적용. multi-anchor AND 3-source 패턴 = ADR-026 §결정 6 isPostMergeFix 답습.
+  - CFP-2377  # Amendment 13 carrier — §D-12 신설 (phase:완료 precondition worktree-clean self-check 추가, ADR-128 완료 단계 정식화 묶음, paired sibling ADR-040 Amendment 9)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -36,6 +37,8 @@ related_adrs:
   - ADR-035
   - ADR-039
   - ADR-082  # Amendment 6 — §D-9 cross_story_pattern_adr_trigger 적용 evidence (ADR-082 = pattern_count 3 산물)
+  - ADR-128  # Amendment 13 — 완료 단계 정식화 umbrella (본 §D-12 = phase:완료 worktree-clean precondition carrier)
+  - ADR-040  # Amendment 13 — paired sibling Amendment 9 (§결정 7.K worktree-clean cleanup invariant + backstop SessionEnd 트리거)
 supersedes: null
 superseded_by: null
 amends:
@@ -118,6 +121,15 @@ amendment_log:
     scope: "§D-9 sub-decision (c) 신설 — Pattern A (chief-author self-attest false claim) 반응형(reactive)→예방형(preventive) merge-time gate-provenance self-attest forcing function (additive ratchet, sub-decision (a)/(b) RETAIN, §D-9 본문 의미 변경 0건). Epic CFP-2324 S6 carrier (escalation #2322 흡수). 기존 §D-9 (a) post-detection escalation + (b) pre-publish 3-source AND verify 는 PMOAgent retro-time 영역. 본 (c) = gate verdict write-time 영역 (Orchestrator self-write gate-pass label/comment 직전 self-attest preventive gate). axis 분리: (a)/(b) = retro corpus / ADR draft 영역 ↔ (c) = gate verdict provenance 영역 (disjoint). carrier source = CFP-1353 Pattern A 'chief author self-attest false claim' pattern (명칭 SSOT = docs/agent-prompt-guardrails.md:26, Pattern A-2 = InfraEng FIX iter 1 false self-attest tests_passed 19/19 vs actual 10/27). 기존 ADR-082 §결정 1 (write-time self-write verify) + ADR-073 (verify-before-assert) 는 author 가 자기 claim 을 스스로 verify 하는 self-discipline layer = 반응형 (위반해도 검출 시점 = downstream review/retro). 본 (c) = merge-time mechanical preventive gate — gate verdict 가 (1) lane-produced machine-checkable artifact (review-verdict-v4 packet 형식 준수 + 필수필드 contract_version/lane/story_key/iteration/pl_recommendation 존재) ∧ (2) Story §14 lane-evidence binding (해당 lane row 존재 + output_status/outcome 정합) multi-anchor AND 충족 시에만 정당. wrapper-self `mixed` repo = ADR-031 §결정 (Amendment, mixed repo §14 면제) 라 §14 anchor 대신 PR body/코멘트 review-verdict packet 병행 anchor 로 충당. multi-anchor AND 3-source 패턴 = ADR-026 §결정 6 isPostMergeFix (label ∧ Story §10 binding ∧ §7 보안 non-touch) 답습 — single point of forgery 제거 mechanism. 위협모델 = honest-but-careless (연극 게이트 / 실수로 빈 verdict 부착 / artifact 부재인데 gate-pass label 부착). 악의 단일계정 위조 (single-session·single-account = git author 기반 implementer≠certifier separation 불가) = out-of-scope accepted risk 명시 박제 (mitigation 비용 > 이득, dogfood wrapper-self 환경 single-operator). 적용 = 모든 게이트 (요구사항리뷰 [ADR-125 신규 lane, S2 self-attest 구멍 공동 차단] / 설계리뷰 / 보안테스트 / 배포리뷰). posture = warning-first → ratchet — Phase 1 = declarative anchor (본 sub-decision 신설 + multi-anchor AND schema codify), Phase 2 = advisory CI 경고 (mechanical wire, gate-pass label 부착 PR 에서 multi-anchor 부재 시 warning emit + PR comment, merge 미차단). hard-block 승격 = 별 follow-up Story (ADR-060 §결정 6 promotion gate AND 3/3 충족 후, ratchet 강화 방향). gate label authority SSOT = 기존 (ADR-022 §결정 4 review-verdict gate outcome contract + base-labels.tsv gate:* registry) — 신규 gate-provenance ADR 발의 안 함 (3문 게이트: 신규 ADR 비용 > 이득, ADR-045 §D-9 sub-decision 확장으로 충분). ratchet ↑ direction (강화 방향 only, sub-decision (a)/(b) 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire (advisory CI warning) = 별 sub-CFP / S6 Phase 2 carrier defer. paired sibling = S7 (CFP-2331, ADR-014 Amendment 6) 동일 Epic gate-model 일관 설계 묶음 (phase-gate-mergeable.yml 게이트 매핑 공유)."
     status: applied
     ref: §D-9 sub-decision (c) + carrier source CFP-1353 Pattern A (docs/agent-prompt-guardrails.md:26) + ADR-026 §결정 6 multi-anchor AND 답습 + ADR-031 §14 lane-evidence binding + ADR-022 §결정 4 gate authority cross-ref
+    sunset_justification: null
+    direction: strengthening
+    nature: ratchet-up
+  - amendment_id: 13
+    cfp: CFP-2377
+    date: 2026-06-20
+    scope: "§D-12 신설 — phase:완료 transition precondition 에 worktree-clean self-check 추가 (gate:retro-complete close-blocking 골격 확장, ADR-128 완료 단계 정식화 묶음 carrier, additive ratchet). 기존 phase:완료 precondition = 2-gate AND (활성 lane terminal gate `gate:design-review-pass`/`gate:deploy-review-pass` + `gate:retro-complete`, playbook §9.7.1 line 2858 SSOT). 본 Amendment 13 = precondition 에 worktree-clean self-check 1항 추가 → 2-gate AND + worktree-clean self-check. worktree-clean = '완료 Story 의 worktree 가 eager 정리됐는가' (eager 미실행 검출 게이트, 정리 실행 owner=GitOpsAgent eager 불변 — 본 게이트는 검증만). tier = Orchestrator behavioral precondition (로컬 self-write) — phase:완료 transition = Orchestrator self-write + worktree 클라우드 러너 미접근이라 required CI check 불가 (AC-2/AC-12). 3-조합 기계화 = (a) playbook §9.7.1 precondition 행 + (b) 로컬 check 스크립트 scripts/check-worktree-completion-clean.sh (Phase 2) + (c) evidence-checks-registry warning-tier `workflow: null` (ADR-099/ADR-122 local-only 선례). data-loss hard-block 금지 (fail-safe 4종 상속 — ADR-040 Amendment 9 §결정 7.K). close lifecycle 무영향 = worktree-clean self-check 는 transition precondition (label attach 직전)이지 Issue close 차단(reopen)이 아님 → retro-mandatory.yml gate:retro-complete close-blocking auto-reopen 과 axis disjoint (#772 EC-5 정합, 중복 reopen 0). branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합). ADR-045 §결정 5 close-blocking + §D-6 gate:retro-complete entry 의미 변경 0건 (precondition 1항 추가만). paired sibling carrier = ADR-040 Amendment 9 (backstop SessionEnd async 트리거 복원 + §결정 7.K worktree-clean cleanup invariant) + ADR-128 (완료 단계 정식화 umbrella). gate label authority SSOT = 기존 (ADR-022 §결정 4 gate outcome contract) — 신규 gate:worktree-clean label 신설 안 함 (사용자 방향 '기존 게이트 확장', label 없이 Orchestrator self-check). ratchet ↑ direction (강화 방향 only, §결정 1-8 + §D-9~D-11 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire (로컬 check 스크립트 + evidence-registry entry) = Phase 2 carrier."
+    status: applied
+    ref: §D-12 + paired sibling ADR-040 Amendment 9 (§결정 7.K worktree-clean cleanup invariant) + ADR-128 (완료 단계 정식화 umbrella) + playbook §9.7.1 line 2858 precondition + ADR-099 workflow:null local-only 선례
     sunset_justification: null
     direction: strengthening
     nature: ratchet-up
@@ -780,6 +792,51 @@ Pattern A pattern_count 3 ≥ threshold 2 = Mandatory escalation (§D-9 forcing 
 - ADR-022 §결정 4 (review-verdict gate outcome contract-fixed) = anchor 1 gate label authority SSOT (무변경)
 - ADR-082 §결정 1 (write-time self-write verify) + ADR-073 (verify-before-assert) = reactive self-discipline layer (본 (c) preventive 와 disjoint axis — self-discipline vs mechanical gate)
 - docs/agent-prompt-guardrails.md:26 (Pattern A 명칭 SSOT, carrier CFP-1353) = carrier source citation
+
+## D-12 — phase:완료 transition precondition 에 worktree-clean self-check 추가 (Amendment 13, CFP-2377, 2026-06-20)
+
+ADR-128(완료 단계 정식화) 의 갭 A 해소 carrier 의 ADR-045 측 amendment. ADR-040 Amendment 9(backstop SessionEnd 트리거 + §결정 7.K worktree-clean cleanup invariant) 와 paired sibling.
+
+### §13.A — precondition 확장 (2-gate AND → 2-gate + worktree-clean self-check)
+
+`phase:완료` transition 의 기존 precondition (playbook §9.7.1 line 2858 SSOT):
+
+> **precondition AND**: 활성 lane 의 terminal gate (`gate:design-review-pass` default, deploy lane 활성 시 `gate:deploy-review-pass`) + `gate:retro-complete`
+
+본 Amendment 13 이 worktree-clean self-check 1항을 추가한다:
+
+> **precondition AND**: 활성 lane terminal gate + `gate:retro-complete` + **worktree-clean self-check** (완료 Story 의 worktree 가 eager 정리됐는가)
+
+- worktree-clean self-check = **eager 미실행 검출 게이트** (정리 실행 owner = GitOpsAgent eager 불변, 본 게이트는 검증만 — ADR-040 가정 1).
+- backstop(check-worktree-stale.sh, age 7d+)과 **다른 검사** — 완료 worktree 는 0일령이라 age 7d 조건과 충돌하지 않는다 (AC-3, 2-layer 책임 분리 = ADR-040 Amendment 9 §결정 7.K 표).
+
+### §13.B — tier = Orchestrator behavioral precondition (required CI 불가)
+
+`phase:완료` transition = Orchestrator self-write(로컬) + worktree 클라우드 러너 미접근 → **required CI check 불가** (AC-2/AC-12). 3-조합 기계화:
+
+1. **(a) Orchestrator behavioral precondition** — playbook §9.7.1 `phase:완료` precondition 행에 worktree-clean self-check 1항 추가 (본 §13.A).
+2. **(b) 로컬 check 스크립트** — `scripts/check-worktree-completion-clean.sh` (Phase 2). fail-safe 4종 상속 (ADR-040 Amendment 9 §결정 7.K — gh 미인증 보존 / dirty 보존 / data-loss 가드 / always exit 0).
+3. **(c) evidence-checks-registry 등록** — warning-tier + `workflow: null` (ADR-099/ADR-122 local-only 선례 동형, `# CI 미wire — standalone manual / 세션-개시 호출` marker).
+
+**branch protection 6-tuple 무변경** — 신규 required check 0 → ADR-024 Amendment 19 §B "required check bypass escape valve 신설 금지" invariant 원천 정합. **`gate:worktree-clean` label 신설 안 함** — 사용자 방향 "기존 게이트 확장", label 없이 Orchestrator self-check (가벼운 forcing function).
+
+### §13.C — close lifecycle 무영향 (#772 EC-5 정합)
+
+worktree-clean self-check 는 `phase:완료` **transition precondition** (label attach 직전)이지 Issue **close 차단(reopen)** 이 아니다. `retro-mandatory.yml` 의 `gate:retro-complete` close-blocking auto-reopen(§결정 5, line 376-456) 과 **axis disjoint** — worktree-clean 은 reopen trigger 가 아니다.
+
+- #772(OPEN, close-event auto-reopen 일반화 forcing function) 와 정합 — 본 게이트가 close lifecycle 에 **새 reopen 경로를 추가하지 않음** (중복 reopen / reopen 충돌 0).
+- ADR-045 §결정 5 close-blocking + §D-6 `gate:retro-complete` entry **의미 변경 0** — precondition 에 self-check 1항 추가만.
+
+### 정합성 검증
+
+- **ADR-128 정합**: 본 Amendment 13 = ADR-128 §결정 2(완료-게이트) 의 ADR-045 측 carrier. ADR-040 Amendment 9 와 paired sibling.
+- **ADR-040 Amendment 9 정합**: §결정 7.K(worktree-clean cleanup invariant 2-layer) 와 동일 검사를 phase:완료 precondition 으로 wire — fail-safe / 순서 invariant(EC-3) / sub-worktree vs Story root 구분(EC-2) 상속.
+- **ADR-058 §결정 5 정합**: precondition 1항 추가 = strengthening direction (ratchet) — `is_transitional: false` permanent. amendment_log id:13 `sunset_justification: null` + `direction: strengthening`.
+- **ADR-024 Amendment 19 §B 정합**: required 6-tuple 신설 0 → bypass 신설 금지 invariant 원천 정합.
+- **ADR-099 / ADR-122 정합**: `workflow: null` local-only check 선례 동형.
+- **ADR-127 정합**: forcing function 추가 방향 (process-skip 채널 0). worktree-clean self-check 미통과 = 정리 후 재확인이지 "생략 후 진행" 아님.
+- **ADR-009 invariant 무손상**: precondition 추가 + 로컬 check + registry entry — wrapper agent 신설 0.
+- **ADR-045 §결정 1-8 + §D-9~D-11 무손상**: §D-12 sub-section 추가만, 기존 결정 변경 없음.
 
 ## 해소 기준
 

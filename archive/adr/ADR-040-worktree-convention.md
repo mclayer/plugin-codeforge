@@ -47,6 +47,11 @@ amendments:
     date: 2026-06-12
     title: worktree-lifecycle skill carrier — lookup mirror skill 신설 + CLAUDE.md 압축 (정리 의무 가시성 승격, 기존 결정 무변경)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 8 = 인지 경로 보강만 — skills/worktree-lifecycle/SKILL.md lookup mirror 신설 + CLAUDE.md 항상-로드 anchor 강화 (생성 의무 단독 → 생성 + 완결 시 정리 + skill 참조 3요소). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~7 무손상, 신규 enforcement 0 — 기존 mechanical_enforcement_actions[] 5 entry (worktree-first 4종 + filesystem-worktree-pinned-default — Amd 7) 가 이미 cover) — sunset 면제. 동인 실증: 2026-06-12 worktree GC 캠페인 stale worktree 약 230개 (4.3G→192M) — eager 정리 의무가 항상-로드 정책에 부재했던 것이 누적 1차 원인."
+  - id: 9
+    carrier_story: CFP-2377
+    date: 2026-06-20
+    title: Backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire) + worktree-clean 확인을 cleanup invariant 에 편입 (ADR-128 완료 단계 정식화 묶음, §결정 5 트리거 복원 + §결정 7.K 신설)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 9 = §결정 5 backstop GC 의 자동 트리거 복원 (현재 트리거 0 → SessionEnd async dispatch 단일 wire) + §결정 7.K 신설 (eager 정리 검증 = phase:완료 worktree-clean self-check 를 cleanup invariant 에 편입, 정리 실행 owner=GitOpsAgent eager 불변, 본 게이트는 검증만). check-worktree-stale.sh 스크립트 로직 무변경 (트리거만 복원). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~8 무손상, backstop 자동 발화 복원 = enforcement 보강) — sunset 면제. 동인 실증: hooks.json SessionStart 에 check-worktree-stale 호출 0건 (문서-실배선 drift) + 2026-06-12 stale 230개 누적."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -73,6 +78,11 @@ mechanical_enforcement_actions:
   - action: filesystem-worktree-pinned-default
     status: deferred-followup     # Wave 1 declarative; actual mechanical lint script `scripts/lib/check_filesystem_worktree_pinned.py` + bats + workflow body wire = Phase 2 PR scope (Wave 2 carrier)
     target_section: §결정 7.J     # filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default + agent spawn prompt `git -C <worktree_abs_path>` directive 강제 확장
+  # Amendment 9 (CFP-2377, 2026-06-20) — backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire)
+  # check-worktree-stale.sh 스크립트 로직 무변경 (트리거만 복원). Phase 2 = hooks.json SessionEnd async wire + dispatch script.
+  - action: worktree-backstop-autotrigger
+    status: deferred-followup     # Wave 1 declarative (본 Amendment 9 §결정 5 트리거 복원 + 7.K). actual wire = Phase 2 hooks.json SessionEnd async entry + hooks/<event> dispatch (background GC 호출). 트리거 단일화 invariant (SessionEnd 단독, Stop 동시 wire 금지).
+    target_section: §결정 5       # Stale GC trigger 복원 — SessionStart 동기 제거(Amd 8 §0a-prime)분의 비동기 대체
 related_stories:
   - CFP-134
   - CFP-136
@@ -87,6 +97,7 @@ related_stories:
   - CFP-531  # Story 5 — Amendment 5 carrier (actual warning → blocking-on-pr 승격 declaration, closing-the-loop 최종 closing moment)
   - CFP-843  # Amendment 6 carrier — agent-internal write worktree-membership enforcement (CFP-825 retro §6 후보 1 + §3 RC-1 동근원 + #836 spurious artifact evidence)
   - CFP-2191 # Amendment 8 carrier — worktree-lifecycle skill (lookup mirror) 신설 + CLAUDE.md 압축
+  - CFP-2377 # Amendment 9 carrier — backstop SessionEnd async 트리거 복원 + worktree-clean cleanup invariant 편입 (ADR-128 묶음)
 related_adrs:
   - ADR-009
   - ADR-024  # Amendment 3 hotfix-bypass label family 동반
@@ -1022,3 +1033,91 @@ agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
 - `docs/orchestrator-playbook.md` §3.5 + Step 0a-prime (절차 SSOT — 무변경)
 - ADR-054 (doc-only Story fast-path)
 - ADR-063 (marketplace atomic invariant — version MINOR 6.16.0 mirror sync 선행 merge 대상)
+
+
+## Amendment 9 — Backstop GC 자동 트리거 복원 + worktree-clean cleanup invariant 편입 (CFP-2377, 2026-06-20)
+
+**제목**: §결정 5 backstop GC 의 자동 트리거 복원 (SessionEnd async dispatch 단일 wire) + §결정 7.K 신설 (eager 정리 검증 = phase:완료 worktree-clean self-check 를 cleanup invariant 에 편입) — ADR-128 완료 단계 정식화 묶음 carrier
+
+**상태**: Proposed → CFP-2377 Phase 1 PR merge 시점 Accepted.
+
+### 컨텍스트
+
+ADR-128(완료 단계 정식화) 의 갭 A 해소 carrier. 본 Amendment 9 = 두 부분:
+
+1. **backstop GC 자동 트리거 복원** — §결정 5 의 `templates/scripts/check-worktree-stale.sh` 는 견고함이 실측 확인됨 (4조건 AND + fail-safe 4종 + always exit 0) `[verified]`. 문제는 스크립트가 아니라 **자동 트리거 0** — `hooks/hooks.json` SessionStart = `session-start`/`stale-local-main-checkout`/`stray-scratch-leak` 3개만, `check-worktree-stale` 호출 0건 `[verified]`(hooks.json:3-24). Amendment 8 §0a-prime 가 "과거 SessionStart hook 동기 호출은 제거됨 (worktree 90+ 동기 스캔 시작 지연)" 을 명시하나 비동기 대체 트리거가 미배선 = 문서-실배선 drift. 2026-06-12 stale worktree 약 230개 누적 (4.3G→192M) = 실증.
+
+2. **worktree-clean cleanup invariant 편입** — eager 정리(§결정 3 `on_team_delete_post` / Amendment 2 branch-protected lifecycle)가 정상 완료 경로에서 누락되지 않았는지 **검증**하는 게이트를 cleanup invariant 에 명시. 정리 **실행** owner = GitOpsAgent eager 불변 (가정 1) — 본 게이트는 검증만.
+
+### Amendment
+
+#### §결정 5 보완 — backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire)
+
+§결정 5 의 GC trigger 목록(`on_session_start` hook + ad-hoc 사용자 호출)에 **자동 비동기 트리거**를 복원한다. 스크립트 로직(4조건 AND·fail-safe·exit 0)은 **무변경** — 트리거만 복원.
+
+**확정 트리거 (요구사항리뷰 lane PASS 외부사실, 재논의 금지)**:
+
+| 방식 | 채택 | 근거 |
+|---|---|---|
+| **`SessionEnd` async dispatch 단일 wire** | **1순위 (권장)** | SessionEnd = 세션당 1회 종료 발화 → backstop 7일 GC cadence 빈도 정합. async 지원 event (공식 문서 hooks.md). termination race 노출 최소 (세션당 1회). |
+| `Stop` async dispatch | 대안 (PoC fail 시 fallback) | repo 에 live 비차단 Stop hook 존재(`hooks/stop`, `trap 'exit 0' ERR`, exit 0 항상 `[verified]`). 단 **매 turn 발화 = 과빈도** → timestamp 파일 + N시간 쿨다운 throttle 필수. |
+| SessionStart `async:true` | **배제(확정)** | 공식 문서 verbatim: "SessionStart and Setup hooks do not support `async` or `asyncRewake`; the fields are ignored if set" → 무시되고 동기 실행 = 지연 회귀. |
+| SessionStart 동기 | **배제(확정)** | 제거 사유(worktree 90+ 동기 스캔 시작 지연) 재발 (Amendment 8 §0a-prime). |
+| GitHub Actions cron | **배제(구조적)** | 클라우드 러너가 로컬 worktree 미접근. |
+
+**async hook caveat (공식 문서 — 설계 반영 의무)**: async hook 의 stdout/stderr/exit code/JSON 은 무시(asyncRewake:true + exit 2 제외). backstop 의 사용자-가시 로그(`[stale-check] DONE: pruned=N`)는 async 경로에서 안 보인다 → 운영 가시성 필요 시 asyncRewake(실패 시만, exit 0 = no wakeup) 또는 별도 로그 파일. 세션 조기 종료 시 미완 프로세스 termination(부분 GC) — check-worktree-stale.sh 의 record-unit 독립평가 + always exit 0 로 부분 실행도 안전 추정(`[hypothesis]`, 구현 lane 실측 확인).
+
+**트리거 단일화 invariant (race 1순위 안전장치 — 비협상)**: backstop 자동 트리거는 **단일 event(SessionEnd 권장)에만** wire. SessionEnd + Stop 동시 wire **금지**. 단일 트리거면 동시 GC 실행 race 자체가 발생하지 않음 → `git worktree remove --force` 멱등성 가정 불요 (멱등성은 무출처 단정이라 의존 안 함). check-worktree-stale.sh 의 기존 안전장치(dirty/locked 보존 / merged-only / always exit 0)는 **데이터 손실 방지**이지 동시 실행 race 방지가 아니므로 — 후자는 트리거 단일화로 해결.
+
+**`BYPASS_WORKTREE_GC=1` env 무손상** — §결정 5 SSOT short-circuit 동작 유지. 자동 트리거 경로에서도 env 활성 시 origin 접촉 0 + prune 0 + exit 0.
+
+#### §결정 7.K — eager 정리 검증을 cleanup invariant 에 편입 (worktree-clean self-check)
+
+§결정 3 hook lifecycle + Amendment 2 branch-protected cleanup invariant 의 **검증 layer** 를 추가한다. 정리 실행 owner = GitOpsAgent eager(불변) — 본 게이트는 "정상 완료 경로에서 eager 가 실제로 정리했는가" 검증만.
+
+**2-layer 책임 분리 (EC-1)**:
+
+| layer | 대상 | 검사 | tier |
+|---|---|---|---|
+| **완료-게이트 (§7.K, 신규)** | 정상 완료 경로의 eager 누락 | 완료 Story 의 worktree 잔존 여부 (0일령 worktree 검출) | warning-tier + Orchestrator behavioral precondition (ADR-045 Amendment 13 §13.A, phase:완료 transition 직전) |
+| **backstop (§결정 5)** | 비정상 종료(크래시·중단) orphan | age 7d+ AND merged AND clean AND not-locked | warning-tier 로컬 GC (SessionEnd async 자동) |
+
+두 layer 는 **disjoint** — backstop 은 age 7d+ 조건이라 0일령 완료 worktree 와 충돌하지 않는다 (AC-3). 단 판정 함수(`is_worktree_dirty`/`merged_pr_head`/porcelain 파싱)는 `scripts/lib/` 공통 추출 후 재사용 권장(DRY) — actual = Phase 2.
+
+**fail-safe 4종 상속 (AC-4)**: 신규 완료-게이트 스크립트(`scripts/check-worktree-completion-clean.sh`, Phase 2)는 backstop 의 fail-safe 를 상속 — (1) gh 미인증 시 "정리 확인 불가" advisory 후 진행(보존) (2) dirty 보존 (3) data-loss 가드 (4) always exit 0 advisory. **data-loss 가능한 hard-block 금지** + `BYPASS_WORKTREE_GC=1` 존중 (EC-6).
+
+**순서 invariant 준수 (EC-3)**: 완료-게이트의 worktree-clean 판정 시점이 `gh pr view --json mergedAt` non-null 확인보다 앞서면 false-positive (보존 중인 Story root worktree 를 orphan 으로 오판) → Amendment 2 cleanup 순서 invariant(`mergedAt` non-null 확인 후 prune) 준수. sub-worktree(`cfp-NNN/lane/<sub>`) vs Story root 구분(EC-2) — Story root 는 Phase 2 PR merge 까지 보존.
+
+**게이트 tier — required CI 불가 (AC-2 / AC-12)**: `phase:완료` transition = Orchestrator self-write(로컬), worktree 클라우드 러너 미접근 → required CI check 불가. 3-조합 = (a) Orchestrator behavioral precondition (ADR-045 Amendment 13) + (b) 로컬 check 스크립트 + (c) evidence-checks-registry warning-tier + `workflow: null` (ADR-099/ADR-122 local-only 선례 동형). branch protection 6-tuple 무변경. 신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합.
+
+### 이행 의무
+
+- 본 Phase 1 PR (CFP-2377) 에:
+  - ADR-040 frontmatter `amendments[]` row 9 append + `mechanical_enforcement_actions[]` `worktree-backstop-autotrigger` entry(deferred-followup) append + `related_stories` CFP-2377 append + 본 §결정 5 보완 + §결정 7.K sub-section append
+  - `docs/orchestrator-playbook.md` §0a-prime backstop 자동 트리거 = SessionEnd async 명시 (문서-실배선 drift 복원 SSOT 선언) — 본문 절차 wire 동반
+  - `skills/worktree-lifecycle/SKILL.md` §4 backstop 트리거 = "수동/스케줄 호출만" → "SessionEnd async 자동 + 수동/스케줄" 갱신
+- 본 Phase 2 PR (CFP-2377) 에:
+  - `hooks/hooks.json` SessionEnd async entry 1-wire (`async: true`) + dispatch 경로 (`hooks/<event>` background GC 호출 — 직접 spawn vs detached 설계 영역, Stop hook ADR-115 block 금지·exit 0 invariant 상속)
+  - `scripts/check-worktree-completion-clean.sh` (eager 미실행 검출, fail-safe 상속) + `docs/evidence-checks-registry.yaml` `worktree-clean-completion-gate` entry append (warning-tier, `workflow: null`)
+  - bats TC (backstop SessionEnd wire 존재 test + 완료-게이트 missing-case + exit-code assert, anti-theater)
+
+### 정합성 검증
+
+- **ADR-128 정합**: 본 Amendment 9 = ADR-128 §결정 2(완료-게이트)/§결정 3(backstop 트리거) 의 ADR-040 측 carrier. ADR-045 Amendment 13 (phase:완료 precondition) 과 paired sibling.
+- **ADR-058 §결정 5 정합**: backstop 자동 발화 복원 + 검증 layer 추가 = strengthening direction (ratchet 강화) — `is_transitional: false` permanent. frontmatter row 9 `sunset_justification` 명시.
+- **ADR-024 Amendment 19 §B 정합**: required 6-tuple check 신설 0 → bypass escape valve 신설 금지 invariant 원천 정합 (신규 required check 자체 미존재).
+- **ADR-099 / ADR-122 정합**: `workflow: null` local-only check 선례 동형 (`# CI 미wire — standalone manual / 세션-개시 호출` marker).
+- **ADR-127 정합**: forcing function 추가 방향 (process-skip 채널 0). `BYPASS_WORKTREE_GC` = debugging/offline fail-safe (required check 우회 아님).
+- **ADR-009 invariant 무손상**: trigger 복원 + 검증 게이트 + skill/playbook 갱신 — wrapper agent 신설 0.
+- **ADR-040 §결정 1-7 + Amendment 1-8 무손상**: §결정 5 보완(트리거 추가, 스크립트 로직 무변경) + §결정 7.K sub-section 추가만. 기존 결정 변경 없음.
+- **ADR-063 정합**: hooks.json/skill semantic 변경 = wrapper plugin.json MINOR bump 후보 (Phase 2 판정) + (GitOpsAgent.md semantic 변경 시) codeforge-pmo PATCH.
+
+### Related
+
+- CFP-2377 본 Amendment 9 carrier (ADR-128 완료 단계 정식화 묶음)
+- ADR-128 (완료 단계 정식화 umbrella — 본 Amendment 9 = 갭 A carrier)
+- ADR-045 Amendment 13 (phase:완료 precondition worktree-clean self-check — paired sibling)
+- hooks.md "Run hooks in the background" (SessionStart/Setup async 미지원, Stop/SessionEnd 지원, async caveat — 요구사항리뷰 lane firsthand 검증 외부사실)
+- 2026-06-12 worktree GC 캠페인 (stale 약 230개, 4.3G→192M) — 동인 실증
+- ADR-099 / ADR-122 (`workflow: null` local-only check 선례)
+- ADR-024 Amendment 19 §B (required check bypass 신설 금지 invariant)
