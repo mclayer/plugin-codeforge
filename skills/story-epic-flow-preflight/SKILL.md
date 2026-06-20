@@ -18,7 +18,7 @@ tools: Read
                                                            [배포] → [배포 리뷰] → Epic close
 ```
 
-모든 Story는 **full 9 레인 + CI gate** 통과 (CFP-2326 후 — 요구사항 리뷰 신설; CFP-1059 후 — 배포 + 배포 리뷰 신설). 요구사항 리뷰는 Phase 1 내부 sub-gate (요구사항 §1-7 직후·설계 진입 전 — ADR-125 결정 1). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 를 백그라운드(Bash run_in_background)로 실행 — required check 만 대기 (전체 검사 대기 금지), watch 종료 시 자동 재개 → PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). required check 5분+ stuck 시 re-trigger 1회 → admin merge fallback + 사후 검증 + 결과 보고 자동 진행; required check 0건 repo 는 전체 watch fallback. FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution + Amendment 2).
+모든 Story는 **full 9 레인 + CI gate** 통과 (CFP-2326 후 — 요구사항 리뷰 신설; CFP-1059 후 — 배포 + 배포 리뷰 신설). 요구사항 리뷰는 Phase 1 내부 sub-gate (요구사항 §1-7 직후·설계 진입 전 — ADR-125 결정 1). **Fast-path 없음 (예외 0).** Hotfix 긴급경로(Minimal / Medium)도 폐지 — 운영 장애 시에도 정식 풀 플로우 무조건 거침. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, lane 생략 0 (ADR-127 §결정 3). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 를 백그라운드(Bash run_in_background)로 실행 — required check 만 대기 (전체 검사 대기 금지), watch 종료 시 자동 재개 → PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). required check 5분+ stuck 시 re-trigger 1회 → admin merge fallback + 사후 검증 + 결과 보고 자동 진행; required check 0건 repo 는 전체 watch fallback. FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution + Amendment 2).
 
 **배포 lane (Phase 1 declarative — CFP-1059 / ADR-087)**: Epic 묶음 종료 후 (모든 Story merged) Orchestrator → DeployPLAgent 자동 trigger. 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위). 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (단일 매커니즘 고정). FAIL 시 자동 rollback + FIX dispatch. 활성 조건 = consumer `project.yaml` 안 `deploy:` block 등록 + codeforge-deploy plugin install (opt-in).
 
@@ -30,7 +30,7 @@ tools: Read
 - **Phase 1 PR** (요구사항 + 요구사항리뷰 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` (소비자 repo) / `archive/adr/ADR-NNN-<slug>.md` (plugin-codeforge wrapper 자기 — prune 이후 이동). **(internal-docs SSOT 적용 시, ADR-013 dogfood-out + amendment)**: change-plan 위치는 `<internal-docs-clone>/<plugin-folder>/change-plans/<slug>.md`. Codeforge family / dogfood Story 의 경우 본 path override. 또한 doc-only Story (예: ADR carrier 가 architecture decision SSOT 인 경우) 는 **별도 change-plan 면제** — ADR 가 §3 도입할 설계 SSOT 역할 충족 (ADR-013 정합).
 - **Phase 2 PR** (구현 + 구현리뷰 + 구현테스트 + 보안테스트 lane): `src/**` + `tests/**` + `docs/stories/<KEY>.md` §8-11 append
 
-**doc-only fast-path (ADR-054 적용 시)**: **1 Story = 1 PR** — Phase 1/2 분리 없음. 단일 PR에 요구사항·설계·경량 설계리뷰 결과 포함; Story file §1·§2·§11 필수, §3~§10은 `N/A — doc-only fast-path (ADR-054)` 선언 의무.
+**doc-only 단일 PR 폐지 (ADR-127 §결정 2)**: 모든 Story = Phase 1 PR + Phase 2 PR 분리 무조건. 구 "doc-only fast-path = 1 Story = 1 PR" 형태 폐지 — SSOT 문서만 바뀌는 변경도 정식 full 10 lane + Phase 1/2 분리. lane 이 검사할 산출물 target 이 부재한 lane 은 정식 분류상 `N/A — <사유>`(ADR-005 / ADR-127 §결정 5 3축 AND) — 단축이 아니라 정상 N/A.
 
 ## Epic flow (cross-repo 또는 multi-Story Epic)
 

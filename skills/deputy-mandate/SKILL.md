@@ -12,7 +12,7 @@ tools: Read
 
 - 설계 lane 진입 시 — ArchitectPLAgent 가 6 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 (CFP-1126 — 6 permanent).
 - ArchitectPLAgent 가 4-tuple sub-tuple flat spawn 을 결정하기 전 (CFP-681) — 아래 "4-tuple sub-tuple spawn 가이드" + playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) cross-ref.
-- doc-only fast-path mechanism codify Story 진입 시 (실 설계 결정 0) — 매트릭스 + 4-tuple 가이드를 읽고 chief author 중심 + 자기 mandate deputy consult 만으로 codify 범위 확정.
+- 거버넌스 codify Story 진입 시 (실 설계 결정 0) — 매트릭스 + 4-tuple 가이드를 읽고 chief author 중심 + 자기 mandate deputy consult 만으로 codify 범위 확정. (deputy 무-target N/A 는 ADR-127 §결정 5 의 "산출물 target 부재 N/A" — 단축 아닌 정식 분류 결과.)
 
 ## 4-tuple sub-tuple spawn 가이드 (CFP-681 / ADR-044 CFP-676 reaffirm)
 

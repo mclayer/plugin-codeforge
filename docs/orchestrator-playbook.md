@@ -409,6 +409,8 @@ skill body 안에서 "구현 실행 방식 선택" 프롬프트(Subagent-Driven 
 
 이 정책은 wrapper + 모든 consumer에 동일 적용. behavioral directive → memory 저장 금지 (normative) 케이스 — playbook이 enforcement SSOT.
 
+**skip-offer 금지 cross-ref (ADR-127 §결정 4)**: 스킬·외부 prompt 가 "생략/간소화/빠르게/경량으로" 선택지를 제시하더라도, §3.0.5 의 자동-정식 채택 패턴과 동형으로 **자동으로 정식 풀 플로우를 채택**한다. 정식 풀 플로우는 비협상 기본값이므로 생략 여부는 `AskUserQuestion` 발화 대상이 아니다 (derived default = 항상 정식). user-dialog-mode §결정 5 결정 트리 "process 생략/단축 여부" row 정합.
+
 **Generalized normative SSOT (ADR-064 §결정 10, Amendment 3 CFP-637)**: 본 §3.0.5 (Subagent-Driven 자동 선택) 와 동일 패턴 (skill body 안 AskUserQuestion 지시 override) 은 **ADR-064 §결정 10 Skill body ↔ CLAUDE.md normative priority precedence** 로 generalize. CLAUDE.md normative > ADR > skill body > external skill body. 본 §3.0.5 = §결정 10 의 specific case (CFP-358 / CFP-374 carrier), §결정 10 = 전체 skill body 영역 generalized precedence (codeforge:brainstorm Phase 1 dialog reflex / 외부 plugin skill body checklist 등 포함).
 
 #### §3.0.6 Ownership ≠ Mechanism 분리 (ADR-039 §결정 3 + §결정 12)
@@ -440,7 +442,7 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 - **TodoWrite scratchpad**: TodoWrite tool surface 자체 standalone 정당화 (file write 아님 — meta progress channel). ADR-041 = informational reference, normative dep 아님 (PR #277 머지 order 무관).
 - **Subagent semantics 분기**: [ADR-035](../archive/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (default subagent context 의 one-shot subagent — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`)
 - **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
-- **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
+- **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (lane-skip 폐지 — [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정 3 / spawn 의무는 ADR-039 유지, lane 생략 0 — 운영 장애 시에도 정식 풀 플로우 무조건)
 
 #### §3.0.9 Pre-action fact verification (normative — wrapper + all consumers)
 
@@ -1800,6 +1802,7 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 | 사실 | derived default 적용 (컨텍스트로 추론 가능 시) + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
 | ask-trigger 해당 (① 요구 애매 / ② 진짜 가치 trade-off·default 비자명 / ③ 비가역·고비용: 중대결함·대거삭제·rollback·외부발송) | `AskUserQuestion` 발화 | ① 요구 자체 애매 / ② 제품 방향·우선순위 default 비자명 + 사용자 선호가 결과 가름 / ③ 대거 삭제·rollback·배포·외부 발송 |
 | ask-trigger 미해당 / 모호 | derived default 적용 + 진행 + 1줄 정정 초대 ("안전하니 일단 물어" 금지 — safe-direction default-to-ask 폐기) | derived default 추론 가능 — future 작업 영향 큼만으론 ask 사유 아님 |
+| **process 생략/단축 여부** (skip / 생략 / 간소화 / 경량 / 빠르게) | **derived default = 항상 정식 → `AskUserQuestion` 금지 (ADR-127 §결정 4)** + 자동 정식 채택 (skip-offer 는 ask-trigger 비해당, 정식이 비협상 기본값) | 스킬·외부 prompt 가 생략/경량 선택지 제시 → 묻지 않고 정식 풀 플로우 진행 |
 
 #### 3 memory entry normative 승격 mapping (ADR-071 §결정 8)
 
@@ -2016,7 +2019,7 @@ Wave 2 mechanical wire (`scripts/check-admin-merge-preflight.sh` + workflow + ba
 
 ## 3B. Preflight 체크 (lane 진입 직전)
 
-**doc-only fast-path 분기 (ADR-054)**: Story 분류 판정 직후, Orchestrator가 §결정 1 분류 표 적용. `doc-only fast-path` 해당 시: 설계 lane → 경량 설계리뷰 → 단일 PR close (구현 lane spawn 금지). `full-lane` 해당 시: 기존 5-lane 전체. 모호 시 full-lane 강제. 판정 표 SSOT: [ADR-054](../archive/adr/ADR-054-doc-only-story-fast-path.md).
+**full-lane 단일 분류 (ADR-127 §결정 1/2 — doc-only fast-path 폐지)**: Story 분류 판정 직후, Orchestrator가 **모든 Story = full 10 lane + Phase 1/2 PR 분리**로 적용한다. 구 3-way 분류(chore 면제 / doc-only fast-path / full-lane)는 폐지 — chore 면제·doc-only 단일 PR 경로 모두 소멸. SSOT 문서만 바뀌는 변경도 정식 풀 플로우. lane 이 검사할 산출물 target 이 부재한 lane 은 **N/A 3축 AND 판정**(① 산출물 부재 ∧ ② downstream 무변경 ∧ ③ 미래 의무 무선결 — ADR-127 §결정 5)으로 `N/A — <사유>` 표기(ADR-005), 단축 아닌 정식 분류의 정상 결과. 1축이라도 위반 시 정식 lane 무조건 진입. SSOT: [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정 1/2/5.
 
 Orchestrator가 **각 레인 진입 직전에 의무 수행**. 3개 체크 중 하나라도 FAIL이면 **block + report**: 에이전트 스폰 없이 사용자에게 실패 사유 반환.
 

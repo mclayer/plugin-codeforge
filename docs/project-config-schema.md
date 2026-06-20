@@ -75,12 +75,13 @@ labels:
   components:                       # 각 항목이 "component:<name>" 라벨로 생성
     - <string>                      # e.g. "api", "ui", "data"
 
-# [선택] Story 작성 의무 cutoff 확장 (CLAUDE.md "Story 작성 의무" 섹션 참조)
-# Plugin core가 정의한 강제 항목 6종은 축소 불허. Consumer는 도메인 특화 면제 항목만 추가 가능.
-story_cutoff:
-  additional_exempt_categories:     # 각 항목 1줄 자유 텍스트 면제 사유 카테고리
-    - <string>                      # e.g. "auto-generated migration files"
-    - <string>                      # e.g. "vendored library updates (security 영향 없음)"
+# [DEPRECATED — ADR-127 §결정 6] story_cutoff.additional_exempt_categories 면제 확장채널 폐지.
+# 모든 변경 = Story 작성 의무 (chore 면제 폐지 — ADR-127 §결정 1). consumer overlay 는 면제 추가 불가
+# (overlay 는 정책 확장(더 엄격하게 — 강제 추가)만 가능, 면제 추가=강제 축소는 invariant 위반).
+# 본 field 는 schema 에서 deprecated — 신규 overlay 에 사용 금지. (validate_config.py 는 backward-compat
+# 으로 기존 overlay 의 본 key 를 reject 하지 않으나, 면제 효과는 ADR-127 발효로 무력화됨.)
+# story_cutoff:
+#   additional_exempt_categories: []   # [DEPRECATED] 면제 효과 없음 (ADR-127 §결정 6)
 
 # [선택] Workflow distribution mode (CFP-86 / consumer-guide §2c, CFP-89)
 # default = "full" (Path A — 7 workflow 모두 보유 — CFP-94 후 story-section-schema.yml 추가)
@@ -802,7 +803,7 @@ integration_test:
 - **DomainAgent**: Domain Knowledge 트리(`docs/domain-knowledge/`) read + Discussions 질의 시 `discussions.domain_kb_category` 사용
 - **PMOAgent**: 회고·Cross-Story 패턴 분석 시 GitHub Issue search query에 `org`·`repo` 활용
 - **All lane plugin agents**: **Multi-repo system 활성 시** (CFP-342 / ADR-069) `codeforge.stories.repos[].path` + `components` 활용해 작업 target repo 결정 (priority: frontmatter `story_scope: repo` + `repo` → `story_scope: hub` → `component` label mapping → ESCALATE)
-- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피). 매 변경 시작 시 `story_cutoff.additional_exempt_categories`(있으면)를 cutoff 분류 입력으로 사용. **Multi-repo system 활성 시** Project Config Packet 에 `codeforge.stories.repos[]` slice 포함 의무
+- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피). 매 변경 시작 시 **모든 변경 = Story 작성 의무**(chore 면제 폐지 — ADR-127 §결정 1). `story_cutoff.additional_exempt_categories` 면제 입력 사용 폐지(deprecated — ADR-127 §결정 6). **Multi-repo system 활성 시** Project Config Packet 에 `codeforge.stories.repos[]` slice 포함 의무
 
 ### 4b. Write 금지
 모든 에이전트는 `.claude/_overlay/project.yaml` **write 금지**. 이 파일은 consumer가 직접 관리. DocsAgent도 쓰지 않음.
