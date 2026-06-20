@@ -2087,9 +2087,11 @@ entries:
           `[verified-via: gh pr view <N> state=... pinned_at: ...]` presence 검사)
       (b) CFP-NNNN MERGED/CLOSED state stale — Issue body author 가 sibling CFP state mention 시 stale 가능
           (regex `CFP-\d{4,5}` 발견 시 동반 state keyword presence + verified-via cross-validate)
-      (c) count number stale — quantitative count cite stale (regex `\d+\s+(VIOLATIONs?|defects?|
-          occurrences?|times?|pattern_count)` 발견 시 동반 verified-via annotation cross-validate;
-          semantic count vs grep count gap 영역 false-positive risk Wave 2 design 시 enum-style guard)
+      (c) count number stale — quantitative count cite stale (regex `\d+\s*(VIOLATIONs?|defects?|
+          occurrences?|times?|pattern_count|건|개|곳|줄|회|어휘)` 발견 시 동반 verified-via annotation
+          cross-validate; CFP-2382 rev2 R2 — 한글 주언어 repo 정책상 한글 count-명백 단위 enum 확장
+          (F6 — ordinal-모호 단위 번/항목/차례 제외, `4번째`=ordinal≠count FP 보수). semantic count vs
+          grep count gap false-positive risk = enum 닫힌집합 guard 로 완화)
       (d) sister carrier origin claim stale — Orchestrator-authored followup Issue 안 sister carrier
           attribution (regex `(carrier|sibling|paired)\s*:?\s*CFP-\d+` 발견 시 carrier 영역
           cross-attribution verify)
@@ -2100,11 +2102,13 @@ entries:
       axis disjoint). Wave 1 declaration-only Wave 2 mechanical wire 별 sub-CFP 분리 (CFP-1437/1436/1435
       → CFP-1489/1500/1497/1502 precedent 답습 — `scripts/lib/check_issue_body_claim_pre_screen.py`
       Python SSOT per ADR-061 + `scripts/check-issue-body-claim-pre-screen.sh` bash thin wrapper +
-      `templates/github-workflows/issue-body-claim-pre-screen.yml` workflow + `.github/workflows/`
-      byte-identical mirror + `tests/scripts/cfp-issue-body-claim-pre-screen.bats` fixture RED→GREEN
-      stash proof per ADR-082 §결정 11.A + ContinuityAgent agent file cross-plugin ADR-010 sibling sync —
-      codeforge-requirements:ContinuityAgent.md verify-before-trust 8-tuple matrix scope expansion +
-      RequirementsPL spawn prompt `issue_body_pre_screen_warnings` field 추가). False-positive 완화
+      `.github/workflows/issue-body-claim-pre-screen.yml` workflow (.github single-root — S1 CFP-2381
+      deferred-followup-reconcile.yml 동형, ADR-005 byte-parity scope 외 = template mirror 미운용,
+      invariant-check parity loop .github-only 미검출) + `scripts/test-issue-body-claim-pre-screen.sh`
+      self-contained discriminating test (S1 동형 — bats 미사용, mutation 생존 0). cross-plugin
+      ContinuityAgent 8-tuple matrix scope expansion + RequirementsPL spawn prompt
+      `issue_body_pre_screen_warnings` field = 본 Story scope 외 별 follow-up 분리 (lint 배선과 별 axis).
+      Wave 2 mechanical wire 실현 = CFP-2382). False-positive 완화
       guards (Wave 2 design scope): code-span EXEMPT (backtick block) + quoted-text EXEMPT (blockquote /
       quote) + templates/** EXEMPT (canonical example pattern) + docs/stories/§9 transcript EXEMPT
       (Round 0 verbatim cite). Issue body scope = `issue_origin: orchestrator_authored_followup` Issue
@@ -2114,8 +2118,8 @@ entries:
       stale claim lineage 4 = 합산 ≥ 7, threshold 2 의 3.5배 large margin). PER_BLOCK_SCAN_CAP=50 line
       CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel verbatim 답습 — nested quantifier regex 절대 금지).
       pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier.
-    detect_command: bash scripts/check-issue-body-claim-pre-screen.sh  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, script 부재 — TBD via Wave 2 mechanical wire)
-    workflow: .github/workflows/issue-body-claim-pre-screen.yml  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, workflow 부재 — TBD via Wave 2 mechanical wire)
+    detect_command: bash scripts/check-issue-body-claim-pre-screen.sh  # CFP-2382 Wave 2 mechanical wire — script 실존 (Python SSOT + thin wrapper)
+    workflow: .github/workflows/issue-body-claim-pre-screen.yml  # CFP-2382 Wave 2 mechanical wire — .github single-root workflow 실존
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
     bypass_label: hotfix-bypass:issue-body-claim-pre-screen
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2123,7 +2127,7 @@ entries:
       pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized — STANDARD threshold (ADR-068 I-5 dimensional empirical grounding 정합)
       failure_threshold: 0          # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-TBD                   # Wave 2 mechanical wire carrier (별 sub-CFP) — lint script + workflow + bats fixture + ContinuityAgent cross-plugin sync (codeforge-requirements ADR-010 sibling sync)
+        - CFP-2382                  # Wave 2 mechanical wire carrier — lint script (Python SSOT + thin wrapper) + .github single-root workflow + self-contained discriminating test (ContinuityAgent cross-plugin sync = 별 follow-up 분리)
     modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
     introduced_by: CFP-1559
     introduced_date: 2026-05-25
@@ -2133,8 +2137,8 @@ entries:
       count: 7                      # CFP-FU-B Issue #1477 5-defect 3 PIVOT (60% stale rate) + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 = 합산 ≥ 7 reach. threshold: 3 = ADR-045 §D-9 N=2 baseline 보다 strict (sister carrier pattern_count 7+ Mandatory escalation 산물 reflective).
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict
       last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-FU-B 5-defect 3 PIVOT batch retro emission 2026-05-25 KST, ADR-079 KST normative
-      promotion_trigger: auto_blocking  # count=7 ≫ threshold=3 → 7번째 occurrence 시 자동 발화. Wave 2 mechanical wire 후 Active 전환 + promotion path blocking-on-pr 평가.
-    status: deferred-followup       # Phase 1 declare (본 CFP-1559) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture + ContinuityAgent cross-plugin sync, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+      promotion_trigger: auto_blocking  # count=7 ≫ threshold=3 → 7번째 occurrence 시 자동 발화. CFP-2382 Wave 2 mechanical wire 후 Active. current_tier:warning 유지 — blocking 승격은 pattern_count >= 3 재발 시 별 follow-up CFP (description 말미).
+    status: Active                  # CFP-2382 Phase 2 (ADR-082 Amd20 §결정 15) — flip: detect_command/workflow/test 실파일 실존 firsthand 확인 (Python SSOT check_issue_body_claim_pre_screen.py + thin wrapper + .github single-root workflow + self-contained discriminating test) → 강화 방향 flip (검사 실작동). 신규 carrier_absent==false 자연 PASS (S1 deferred-followup-reconcile 게이트 대상에서 제외). current_tier:warning 불변.
 
 
   # ─── CFP-1581 Phase 1 (ADR-073 Amendment 16 Wave 2 mechanical wire — architect-chief-author-base-sha-freeze-verify, 2026-05-25 KST) ───
