@@ -106,6 +106,13 @@ amendments:
     summary: |
       §결정 21 신설 — dialog skip-offer 금지. 런타임에 Orchestrator 가 사용자에게 "생략/간소화/빠르게/경량으로 갈까요" 를 선택지로 제시하는 것 금지. 정식 풀 플로우는 비협상(non-negotiable) 기본값(ADR-127)이므로 생략은 애초에 결정 분기가 아니다 → AskUserQuestion 비대상. §결정 20 (Amendment 10, CFP-2371) ask-trigger 3종 한정과 정합 — CFP-2371 = 질문 빈도 절제, 본 Amendment = 특정 질문 종류(skip-offer)의 PATH 폐지. "생략 여부" 는 derived default 항상 정식으로 자명 → ask-trigger ② 미해당 → 묻지 않고 정식 진행. 둘 다 "불필요한 멈춤 제거" 방향 정합. SSOT = ADR-127 §결정 4.
     sunset_justification: null   # 강화 방향 (skip-offer 라는 약화 옵션 제거 = ratchet 강화) — Amendment 9/10 의 weaken-direction(묻기 절제)과 달리 본 Amendment 는 정식성 약화 선택지 자체 제거 = 강화 방향 → ADR-058 §결정 5 약화 evidence-gate 비대상. 무손상 — frame mode(§결정 1) / Layer 1-4(§결정 3) / sub-mechanism(§결정 4) / §결정 2(c) richness / 3 touchpoint(§결정 15) / 5번째 cognitive layer 신설 금지 invariant 전부 보존 (§결정 5 분류 규칙 변경 아닌 skip-offer PATH 폐지, layer count 불변).
+  - amendment_id: 12
+    date: "2026-06-24"
+    carrier_story: CFP-2392
+    issue: https://github.com/mclayer/plugin-codeforge/issues/2392
+    summary: |
+      §18.7 deferred carrier 해제 — "MEMORY.md 인덱스 entry 슬림화 mechanism" 의 별 carrier 가 ADR-129 로 확정. §18.7:1030 deferred 마커에 `resolved_carrier: ADR-129` 추가 (defer 해제). ADR-129(OMC-adopt 지식캡처 + 메모리 다이어트) §결정 2 가 §18.2 24.4KB cap + §18.3 슬림화 normative 를 실 mechanism(2-layer budget: per-entry ~200자 one-line(harness reminder 도출) + total 24.4KB(§18.2 도출) + oldest-first/completed-Story consolidate 슬림화 + archive-not-delete + active-Story preserve lossless invariant)으로 실현. §18 본문(§결정 18 / anti-pattern 7종 / axis disjoint / §18.1-18.6) 의미 변경 0건 — §18.7 out-of-scope 항목 1건의 carrier 지정만(deferred → resolved). char-budget 은 OMC 차용 아님(firsthand: OMC skillify char-cap/descriptor-only split 없음) = internal 도출 명시. paired sibling = ADR-045 Amendment 14 (§D-13 phase:완료 capture self-check) + ADR-129 (umbrella). ADR-051 skill form(skills/knowledge-capture-gate/SKILL.md §2 slimming-protocol SSOT). SSOT = ADR-129 §결정 2.
+    sunset_justification: null   # 강화 방향 (deferred mechanism 을 실 규약으로 실현 = forcing function 추가, ratchet 강화) — ADR-058 §결정 5 약화 evidence-gate 비대상. 무손상 — §결정 18 / anti-pattern 7종 / §18.1-18.6 / §18.8 전부 보존 (§18.7 out-of-scope 항목 1건 carrier 지정만, deferred → resolved).
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -127,6 +134,8 @@ related_stories:
   - CFP-1764 # Amendment 8 carrier (agent burst output paste 합성 시 mid-turn glossary lookup 의무 — §결정 19 신설, docs/wording-dictionary.md 카테고리 (c) codename → 평이 어휘 mapping table SSOT, closed 15 codename 첫 batch + ratchet extensibility, source incident mctrader-hub#517 4-turn 누적 jargon leak)
   - CFP-2236 # Amendment 9 carrier (DialogFidelityAgent 전면 폐지 sunset — §결정 12/13/14 + §17.4.3 DialogFidelity 부분 carrier-preserved 강등, first weaken-direction amendment, sunset_justification 3축 evidence object, codeforge-pmo agent count 3→2, ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합)
   - CFP-2371 # Amendment 10 carrier (§결정 5 결정 트리 redirect — over-asking 안전편향 제거, ask-trigger 3종 한정 §결정 20 신설, "모호 → 가치 측(safe direction)" 폐기 → 모호 포함 전부 derived default+진행이 기본, second weaken-direction amendment, sunset_justification 3축 evidence object, 사용자 반복 directive 3회 evidence pattern_count 3 reach, frame mode/Layer 1-4/sub-mechanism/3 touchpoint richness 무손상)
+  - CFP-2374 # Amendment 11 carrier (§결정 21 신설 — dialog skip-offer 금지, third strengthen-direction amendment, ADR-127 §결정 4 SSOT)
+  - CFP-2392 # Amendment 12 carrier (§18.7 MEMORY.md 슬림화 mechanism deferred 해제 resolved_carrier: ADR-129, OMC-adopt 지식캡처+메모리다이어트 묶음, paired sibling ADR-045 Amendment 14)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -147,6 +156,8 @@ related_adrs:
   - ADR-060  # Amendment 8 — evidence-checks-registry warning-tier 23번째 entry codename-glossary-lookup (Story-2 carrier)
   - ADR-037  # Amendment 9 — plugin bump semantics (DialogFidelityAgent 제거 = capability 축소 = MINOR, CFP-777 신규 agent MINOR 와 대칭)
   - ADR-042  # Amendment 9 — Amendment 6 Opus pilot tier entry (DialogFidelityAgent) retired (ADR-042 본문 무수정 — 본 ADR-071 amendment forward-pointer 충분)
+  - ADR-129  # Amendment 12 — §18.7 MEMORY.md 슬림화 mechanism deferred 해제 resolved_carrier (OMC-adopt 지식캡처+메모리다이어트 umbrella)
+  - ADR-045  # Amendment 12 — paired sibling Amendment 14 (§D-13 phase:완료 capture self-check precondition)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -1027,7 +1038,7 @@ DialogFidelityAgent (Amendment 1-3 3-anchor / Amendment 6 4-anchor) 가 `post_us
 본 Amendment 7 **out-of-scope** (별 carrier):
 
 - **`/compact` slash command 자체 정의 / 실 mechanism** — Claude Code harness 영역 (외부), codeforge governance scope 외.
-- **MEMORY.md 인덱스 entry 슬림화 mechanism** — auto-memory file 영역 (Claude Code harness), codeforge governance scope 외. 별 carrier (사용자 memory management protocol) defer.
+- **MEMORY.md 인덱스 entry 슬림화 mechanism** — auto-memory file 영역 (Claude Code harness), codeforge governance scope 외. 별 carrier (사용자 memory management protocol) defer. `resolved_carrier: ADR-129` (Amendment 12, CFP-2392, 2026-06-24 — defer 해제: ADR-129 §결정 2 가 2-layer budget + oldest-first/completed-Story consolidate 슬림화 + lossless invariant 로 mechanism 실현. skills/knowledge-capture-gate/SKILL.md §2 slimming-protocol SSOT).
 - **Mechanical lint** — anti-pattern 7종 detect mechanical check = behavioral directive only, 별 follow-up CFP carrier (deferred-followup, ADR-060 §결정 5 모든 신규 entry warning 시작 정합).
 - **DialogFidelityAgent runtime hook 확장** (`post_user_turn` anchor 안 anti-pattern 7종 detect) — Wave 2 별 cross-repo CFP carrier (codeforge-pmo plugin).
 - **session lifecycle 결정 mechanism 자체** (어떤 session 을 어떻게 끝낼지) — 사용자 영역, Orchestrator self-determination scope 외.
