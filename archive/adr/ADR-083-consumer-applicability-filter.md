@@ -22,6 +22,10 @@ amendment_log:
     date: 2026-05-23
     cfp: CFP-1293
     summary: "§결정 5 wire location expand — walker apply Stage D 영역 wire active (walk_plan.py apply_overlay_file caller + UpgradeAgent.md Stage 3 apply Step A/D R-3 sub-section + imperative-walker-protocol-v1 §2.E.4 sub-§ append v1.1.0 → v1.2.0 MINOR). sunset_justification 실현 carrier (β2 audit #1113 Anchor 2 LOSSLESS declared ↔ origin/main walk_plan.py 안 `FILTER_REPO_KIND|detect-repo-kind|consumer_applicable|applicable_to|repo_kind` grep 0 match drift evidence-based — verify-before-trust catch, ADR-073 §결정 1 정합). ratchet 강화 (`declaration-only-Wave-1` → walker apply Stage D wire active), 약화 0건. ADR-097 §결정 3 carrier-preserved sunset 정합 — sunset 영역 wire 가 self-defeating 아니라 sunset_justification 약속 실현 (long-term metric `walker per-step applicable_to filter logic` instantiation). Issue #1268 결함 2 paradigm-aware 정정 carrier."
+  - amendment_id: 4
+    date: 2026-06-25
+    cfp: CFP-2395
+    summary: "superseded_by scalar → list 확장 (imperative-walker-protocol-v1 + ADR-130). ADR-130 (applicability ⊥ closure 분류규칙 + closure-완전성 SSOT, Epic CFP-2394 Story A) 이 본 ADR 을 supersede — ADR-130 §결정 8 위임 cross-ref. un-sunset 아님(walk_plan.py 36 match wire LIVE 로 sunset 정당, ADR-097 carrier-preserved). 본 ADR 의 sunset_status: Sunsetted 보존 — ADR-130 §결정 8 본문 verbatim. ADR-130 이 본 ADR 8 invariant 를 verbatim 계승하고 그 위에 closure 축을 1급 정의(강화 ratchet, 약화 0). ⚠ Amendment 3 의 'walk_plan.py 0 match drift' 서술은 당시 시점 한정 stale (CFP-1293 Phase 2 에서 wire 실재화 → 현재 36 match) — verbatim 인용 금지 (ADR-130 §결정 8 (a))."
 sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
 related_stories:
   - CFP-899  # carrier (Wave 4 sub-Epic CFP-858 S2 base layer — S3 CFP-900 prerequisite)
@@ -58,7 +62,7 @@ related_files:
   - templates/agents/UpgradeAgent.md  # Amendment 3 wire location 3/3 — walker contract, Stage 3 apply Step A/D R-3 sub-section (Phase 1 carrier)
 is_transitional: false   # CFP-1186 Amendment 2 — true → false (Sunsetted). 효용 lossless carry 완료 — walker repo-kind detection hook (detect-repo-kind.py 재사용 + per-step applicable_to filter). β2 audit (#1113) Anchor 2 LOSSLESS 확인. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (ADR-097 §결정 3 carrier-preserved sunset 정합).
 sunset_status: Sunsetted
-superseded_by: imperative-walker-protocol-v1
+superseded_by: [imperative-walker-protocol-v1, ADR-130]   # ADR-130 추가 (CFP-2395 Amendment 4) — ADR-130 §결정 8 위임. un-sunset 아닌 supersede.
 mechanical_enforcement_actions:
   - action: consumer-applicability-filter-detection
     decision_binding: "§결정 5 — reconcile-overlay.sh MARKER_NONE branch filter hook (consumer signal detect → whitelist filter → fail-closed unknown). evidence-checks-registry warning tier entry (Phase 2 carrier — `templates/scripts/detect-repo-kind.py` 실 구현 + tests/test_detect_repo_kind.py 18 TC + tests/integration/test_reconcile_overlay_consumer_filter.bats integration after Phase 2 PR)"
