@@ -47,7 +47,7 @@ tools: Read
 
 | 지식 성격 | 산출물 | 위치 |
 |---|---|---|
-| 절차 / 실행 가능한 운영 지식 (어떻게 하는가) | `skills/<slug>/SKILL.md` | ADR-051 form (subdir + frontmatter name/description + trigger ≥20 lines) |
+| 절차 / 실행 가능한 운영 지식 (어떻게 하는가) | `skills/<slug>/SKILL.md` | ADR-051 form (subdir + frontmatter name/description + trigger 명시 의무 (ADR-051 §결정 4)) |
 | 사실 / 원리 / 패턴 지식 (무엇이 참인가) | `docs/domain-knowledge/<category>/<slug>.md` | 예: `docs/domain-knowledge/domain/governance-principle/` |
 
 split 근거 = ADR-120 §결정 3 (skill = 절차 / domain-knowledge = 지식). 경로는 codeforge in-repo SSOT — OMC 의 `~/.claude/skills/omc-learned/`·`.omc/skills/` 미차용 (ADR-129 §컨텍스트).
