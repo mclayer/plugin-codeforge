@@ -103,6 +103,58 @@ fi
 >&2 printf '  Orchestrator = subagent artifacts verbatim Read + mismatch reject + §10 FP count tally.\n'
 >&2 printf '  ADR-071 §결정 17 back-translation gate: [USER-UTTERANCE-VERBATIM] block 유무 확인.\n'
 
+# ── agent_type 및 agent_id 추출 ───────────────────────────────────────────────
+# SubagentStop hook payload 에서 agent_type / agent_id 시도 추출
+AGENT_TYPE="unknown-agent"
+AGENT_ID=""
+
+if [ -n "$PAYLOAD" ] && command -v python3 >/dev/null 2>&1; then
+  AGENT_TYPE="$(printf '%s' "${PAYLOAD}" | python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    agent_type = data.get('subagent_type') or data.get('agent_type') or 'unknown-agent'
+    print(agent_type, end='')
+except Exception:
+    print('unknown-agent', end='')
+" 2>/dev/null || true)"
+
+  AGENT_ID="$(printf '%s' "${PAYLOAD}" | python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    agent_id = data.get('agent_id', '')
+    print(agent_id, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+elif [ -n "$PAYLOAD" ] && command -v python >/dev/null 2>&1; then
+  AGENT_TYPE="$(printf '%s' "${PAYLOAD}" | python -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    agent_type = data.get('subagent_type') or data.get('agent_type') or 'unknown-agent'
+    print(agent_type, end='')
+except Exception:
+    print('unknown-agent', end='')
+" 2>/dev/null || true)"
+
+  AGENT_ID="$(printf '%s' "${PAYLOAD}" | python -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    agent_id = data.get('agent_id', '')
+    print(agent_id, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+fi
+
+# Fallback: AGENT_TYPE 미추출 시 기본값
+if [ -z "$AGENT_TYPE" ]; then
+  AGENT_TYPE="unknown-agent"
+fi
+
 # ── Python verifier 경로 결정 ─────────────────────────────────────────────────
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
 APPEND_SCRIPT=""
@@ -143,6 +195,26 @@ fi
   --session-id "${SESSION_ID}" \
   --ledger-path "${LEDGER_FILE}" \
   2>/dev/null || true
+
+# ── spawn-event append (opt-in gate) ──────────────────────────────────────────
+# telemetry/spawn-event opt-in flag 검토 (append_spawn_event.py 가 직접 config 읽음)
+APPEND_SPAWN_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_spawn_event.py" ]; then
+  APPEND_SPAWN_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_spawn_event.py"
+elif [ -f "scripts/lib/append_spawn_event.py" ]; then
+  APPEND_SPAWN_SCRIPT="scripts/lib/append_spawn_event.py"
+fi
+
+# spawn-event append 실행 (append_spawn_event.py 가 opt-in 자체를 gate 함)
+if [ -n "$APPEND_SPAWN_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
+  "$PYTHON_CMD" "$APPEND_SPAWN_SCRIPT" \
+    --agent-type "${AGENT_TYPE}" \
+    --agent-id "${AGENT_ID}" \
+    --session-id "${SESSION_ID}" \
+    --ledger-path "${LEDGER_FILE}" \
+    2>/dev/null || true
+fi
 
 # ── 항상 exit 0 (ADR-115 §결정 2 — block 금지) ───────────────────────────────
 exit 0
