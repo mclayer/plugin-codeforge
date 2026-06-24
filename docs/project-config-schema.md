@@ -272,7 +272,7 @@ telemetry:
   channels:
     stop_event: false                         # stop-event-v1 ledger (default false)
     spawn_event: false                        # spawn-event-v1 per-agent token/cost attribution ledger (default false — ADR-042 Amendment 1 / ADR-043 Amendment 2, CFP-2393. oh-my-claudecode MIT 차용)
-  storage_path: ".claude-work/measurement/"   # default sqlite location (ADR-042 §결정 4). spawn-event JSONL = .claude/ledger/spawn-event.jsonl (consumer override 시 wrapper dir escape 금지 — ADR-042 §결정 9)
+  storage_path: ".claude-work/measurement/"   # storage_path override = parent dir 대체 (basename 고정). per-channel 별 default: stop-event sqlite default parent = .claude-work/measurement/ (basename stop-event.sqlite, ADR-042 §결정 4); spawn-event JSONL default parent = .claude/ledger/ (basename spawn-event.jsonl 고정 — spawn-event-v1.md §3 storage_path_override_rule SSOT). override 지정 시 양 channel parent dir 함께 대체(각자 basename 유지), wrapper dir escape 금지 — ADR-042 §결정 9
   retention_hot_days: 14                      # default 14d (range: 7-30, Researcher §6.6 InfluxData 중간값)
 
 # [선택] 통합테스트 Baseline Suite 정의 (ADR-055 Amendment 2)

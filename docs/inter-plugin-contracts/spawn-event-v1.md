@@ -61,9 +61,9 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 §14.12 는 spawn-event land 이후에도 **Tier-1 quota-only 채널로 잔존**한다 (deprecate 안 함 — playbook §14.12 "관계" note). 두 채널의 disjoint = playbook §15.2 **4번째 boundary invariant** 로 명문화. cross-write 금지 — 한쪽이 다른 쪽을 읽거나 mirror 하지 않는다(50ms ceiling + cross-channel coupling 회피, §3 append_rules).
 
-## 2. Schema (Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
+## 2. Schema (19개 필드 Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
 
-각 spawn-event ledger row entry. **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
+각 spawn-event ledger row entry = **19개 필드 Allow-list** (아래 표 19 row, §4 변경 규칙 SSOT). **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
 
 | 필드 | 타입 | 필수 | 설명 | Sanitize |
 |---|---|---|---|---|
@@ -72,7 +72,7 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `timestamp` | ISO8601 UTC | required | **UTC Z strict** — `2026-06-24T14:22:33Z`. +00:00 / bare datetime 불허 (fix-event-v1 §4 / stop-event-v1 정합) | — |
 | `story_key` | string | required | e.g. `CFP-2393` (KEY prefix overlay 정합). Public non-sensitive | non-sensitive (public) |
 | `lane_label` | enum | required | 요구사항 / 요구사항-리뷰 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 / 배포 / 배포-리뷰 / 없음 (label-registry-v2 정합 — 10 lane + 없음). closed-set | non-sensitive |
-| `agent_type` | enum | required | spawn 된 subagent 종류 (e.g. `ArchitectPLAgent` / `DomainAgent` / `DeveloperAgent`). **Public non-PII enum** (SecurityArch — Allow-list safe). closed-set = role roster (project.yaml roster + lane plugin agent 목록). 미등재 agent = `unknown-agent` (Deny-list 불요 — enum 강제) | non-sensitive |
+| `agent_type` | enum (semi-open) | required | spawn 된 subagent 종류 (e.g. `ArchitectPLAgent` / `DomainAgent` / `DeveloperAgent`). **Public non-PII** (SecurityArch — Allow-list safe). **value set = roster-derived + `unknown-agent` fallback (semi-open, NOT strict closed-set)** — value ∈ (`templates/` agent roster ∪ consumer `project.yaml` roster); roster 미등재 = `unknown-agent` fallback (정확 closed-set 이 아닌 이유 = 미등재 값을 reject 하지 않고 fallback bucket 으로 흡수. Deny-list 불요 — fallback 이 free-form leak 차단). **lint(§8.1)은 enum membership reject 검증 아님** — `unknown-agent` 가 fallback 으로 존재함을 검증 (lint-vs-reality gap 회피) | non-sensitive |
 | `attribution_confidence` | enum | required | `{attributed, unattributed, unsupported}`. **default = `unattributed`** (token source 정확도 미보장 시 — F2 transcript undercount caveat). `attributed` = 정확 source 확보 / `unattributed` = source 부정확·불가 (token field = null) / `unsupported` = 플랫폼이 token surface 미제공. **추정치 저장 금지** (ADR-119 검증-후-단언) | non-sensitive |
 | `input_tokens` | int \| null | optional | OMC `SubagentInfo.token_usage.input_tokens` 차용. `attribution_confidence != attributed` 시 **null** (추정 합산 금지). numeric only | non-sensitive (count) |
 | `output_tokens` | int \| null | optional | OMC 차용. 위 동일 (null when not attributed) | non-sensitive (count) |
@@ -131,12 +131,20 @@ spawn_event_schema:
     type: enum
     required: true
     values: [요구사항, 요구사항-리뷰, 설계, 설계-리뷰, 구현, 구현-리뷰, 구현-테스트, 보안-테스트, 배포, 배포-리뷰, 없음]
-    note: "label-registry-v2 lane enum 정합 (10 lane + 없음). closed-set — 신규 lane 추가 시 ADR-043 §결정 2 Amendment 동반"
+    note: "label-registry-v2 lane enum 정합 (10 lane + 없음, 11 값). closed-set — 신규 lane 추가 시 ADR-043 §결정 2 Amendment 동반"
+    stop_event_alignment: "spawn-event lane_label = 11 값 registry 정합(현행). stop-event 측 lane_label 표현은 stale — **stop-event lane_label alignment = Phase 2 deferred** (stop-event 영역 over-reach 회피, 본 spawn-event Story scope 외). spawn-event 는 이 stale 을 복사하지 않음."
 
   agent_type:
-    type: enum
+    type: "enum (semi-open — roster-derived + unknown-agent fallback)"
     required: true
-    note: "Public non-PII (SecurityArch — Allow-list safe). closed-set = project.yaml dev roster + lane plugin agent roster. 미등재 = unknown-agent fallback (enum 강제 — Deny-list 불요)"
+    value_set: "(templates/ agent roster ∪ consumer project.yaml roster) ∪ {unknown-agent}"
+    note: |
+      Public non-PII (SecurityArch — Allow-list safe).
+      **semi-open enum (NOT strict closed-set)**: value ∈ (templates/ agent roster ∪ consumer project.yaml dev/lane roster).
+      roster 미등재 = `unknown-agent` fallback — 미등재 값을 reject 하지 않고 fallback bucket 으로 흡수.
+      이 fallback 이 free-form string leak 을 구조적 차단 (Deny-list 불요).
+      **strict closed-set 이 아닌 이유**: roster 가 lane plugin/consumer overlay 로 진화하므로 정확 enumeration 을 contract 가 freeze 할 수 없음 → roster-derived 동적 + fallback semi-open 으로 lint-vs-reality gap 회피.
+    lint_target: "Phase 2 §8.1 lint 은 enum membership reject 검증이 아니라 `unknown-agent` fallback 존재 + roster-derived 규칙 명시를 검증 (semi-open semantics 반영)"
 
   attribution_confidence:
     type: enum
@@ -211,7 +219,15 @@ append_rules:
     storage:
       type: JSONL  # append-only (stop-event runtime 와 동일 — sqlite 계약 理想 미채택, drift 회피)
       path: "${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl"  # consumer overlay telemetry.storage_path 로 override (단 wrapper dir 로 escape 금지 — InfraOpArch §7.4.5)
+      storage_path_override_rule: |
+        **telemetry.storage_path override = parent dir 대체 규칙 (per-channel 별 default, basename 고정)**:
+          - spawn-event 의 basename = `spawn-event.jsonl` **고정** (override 가 basename 을 바꾸지 않음). override 값은 **parent dir 만** 대체한다 → 최종 path = `<storage_path>/spawn-event.jsonl`.
+          - spawn-event default parent = `.claude/ledger/` (storage_path 미지정 시).
+          - stop-event(sqlite) default parent = `.claude-work/measurement/` (basename = `stop-event.sqlite`). storage_path 미지정 시 이 default.
+          - **per-channel 별 default 가 다름** — `telemetry.storage_path` 는 양 channel 에 동일 적용된다 (지정 시 두 channel 의 parent dir 을 함께 대체, 각자 자기 basename 유지). 미지정 시 각 channel 의 위 default parent 사용.
+          - escape 금지: override 값이 wrapper checkout dir 로 escape 금지 (InfraOpArch §7.4.5 / ADR-042 §결정 9 isolation). project-config-schema.md telemetry.storage_path comment 정합.
       note: "JSONL 채택 사유 = (1) DB UNIQUE 부재여도 deterministic event_id + read-time dedup 로 idempotency 충분 (InfraOpArch §11.6) (2) stop-event runtime 와 동형 = 운영 패턴 검증됨. sqlite 는 stop-event 계약 理想이나 runtime 미구현 = drift — spawn-event 는 contract=runtime 일치 우선"
+      pattern_a_disclaimer: "**host-local ledger ≠ Pattern A 대상**. race-condition-handling-pattern.md 의 Pattern A(SHA-based optimistic concurrency) 는 cross-repo Contents API write(post-merge-counters.jsonl) 전용 — host-local O_APPEND per-row(spawn-event/stop-event)에는 적용하지 않는다. Tier-3 ledger 라고 전부 Pattern A 가 아니다 (write 토폴로지로 갈림: cross-repo=Pattern A 의무, host-local=O_APPEND kernel-atomic 로 충분). measurement-channel.md Tier-3 분기 note 정합."
     append_io:
       rule: "**O_APPEND per-row** — os.open(path, O_APPEND | O_CREAT) 1 row write (InfraOpArch H1 권고). stop-event runtime 의 read-modify-write(whole-file read + append + os.replace) 패턴 복사 금지 — 병렬 spawn 동시 SubagentStop 시 lost-update race (append_stop_event.py _atomic_append). os.replace 는 torn-write 막지만 lost-update 못 막음"
     file_mode: "0600 (Unix); Windows = ACL 영역 외 no-op"
