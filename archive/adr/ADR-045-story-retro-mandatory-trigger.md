@@ -26,6 +26,7 @@ related_stories:
   - CFP-1680  # Amendment 11 carrier — §D-11 신설 (PMOAgent retro batch closure pattern normative codify, HIGH normative consolidation doc-only fast-path ADR-054 Cat 1, 4-option decision enum CLOSE_AS_OBVIATED/CLOSE_AS_SENTINEL/PROMOTE/DEFER + 5 sub-scope verify-before-trust mandate + closure summary table SSOT 5-column + 3 step closure forcing function, paired sibling carrier playbook §18, 6 applied case evidence chain CFP-963/1339/1612/1637/1648/1680 pattern_count 6 reach threshold 2 = 3.0x, META 24th applied case)
   - CFP-2330  # Amendment 12 carrier — §D-9 sub-decision (c) 신설 (Pattern A 반응형→예방형 merge-time gate-provenance self-attest, warning-first → ratchet posture, Epic CFP-2324 S6, #2322 흡수). gate verdict 의 lane-produced machine-checkable artifact (review-verdict-v4 packet 형식·필수필드) ∧ Story §14 lane-evidence binding multi-anchor AND (wrapper-self `mixed` repo = ADR-031 §14 면제라 PR body/코멘트 병행 anchor). 위협모델 = honest-but-careless (연극 게이트). 악의 단일계정 위조 = out-of-scope accepted risk 명시 박제. 모든 게이트 (요구사항리뷰/설계리뷰/보안테스트/배포리뷰) 적용. multi-anchor AND 3-source 패턴 = ADR-026 §결정 6 isPostMergeFix 답습.
   - CFP-2377  # Amendment 13 carrier — §D-12 신설 (phase:완료 precondition worktree-clean self-check 추가, ADR-128 완료 단계 정식화 묶음, paired sibling ADR-040 Amendment 9)
+  - CFP-2392  # Amendment 14 carrier — §D-13 신설 (phase:완료 precondition capture self-check 추가, ADR-129 OMC-adopt 지식캡처 묶음, paired sibling ADR-071 Amendment 12)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -39,6 +40,8 @@ related_adrs:
   - ADR-082  # Amendment 6 — §D-9 cross_story_pattern_adr_trigger 적용 evidence (ADR-082 = pattern_count 3 산물)
   - ADR-128  # Amendment 13 — 완료 단계 정식화 umbrella (본 §D-12 = phase:완료 worktree-clean precondition carrier)
   - ADR-040  # Amendment 13 — paired sibling Amendment 9 (§결정 7.K worktree-clean cleanup invariant + backstop SessionEnd 트리거)
+  - ADR-129  # Amendment 14 — OMC-adopt 지식캡처+메모리다이어트 umbrella (본 §D-13 = phase:완료 capture self-check precondition carrier)
+  - ADR-071  # Amendment 14 — paired sibling Amendment 12 (§18.7 MEMORY.md 슬림화 mechanism deferred 해제)
 supersedes: null
 superseded_by: null
 amends:
@@ -130,6 +133,15 @@ amendment_log:
     scope: "§D-12 신설 — phase:완료 transition precondition 에 worktree-clean self-check 추가 (gate:retro-complete close-blocking 골격 확장, ADR-128 완료 단계 정식화 묶음 carrier, additive ratchet). 기존 phase:완료 precondition = 2-gate AND (활성 lane terminal gate `gate:design-review-pass`/`gate:deploy-review-pass` + `gate:retro-complete`, playbook §9.7.1 line 2858 SSOT). 본 Amendment 13 = precondition 에 worktree-clean self-check 1항 추가 → 2-gate AND + worktree-clean self-check. worktree-clean = '완료 Story 의 worktree 가 eager 정리됐는가' (eager 미실행 검출 게이트, 정리 실행 owner=GitOpsAgent eager 불변 — 본 게이트는 검증만). tier = Orchestrator behavioral precondition (로컬 self-write) — phase:완료 transition = Orchestrator self-write + worktree 클라우드 러너 미접근이라 required CI check 불가 (AC-2/AC-12). 3-조합 기계화 = (a) playbook §9.7.1 precondition 행 + (b) 로컬 check 스크립트 scripts/check-worktree-completion-clean.sh (Phase 2) + (c) evidence-checks-registry warning-tier `workflow: null` (ADR-099/ADR-122 local-only 선례). data-loss hard-block 금지 (fail-safe 4종 상속 — ADR-040 Amendment 9 §결정 7.K). close lifecycle 무영향 = worktree-clean self-check 는 transition precondition (label attach 직전)이지 Issue close 차단(reopen)이 아님 → retro-mandatory.yml gate:retro-complete close-blocking auto-reopen 과 axis disjoint (#772 EC-5 정합, 중복 reopen 0). branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합). ADR-045 §결정 5 close-blocking + §D-6 gate:retro-complete entry 의미 변경 0건 (precondition 1항 추가만). paired sibling carrier = ADR-040 Amendment 9 (backstop SessionEnd async 트리거 복원 + §결정 7.K worktree-clean cleanup invariant) + ADR-128 (완료 단계 정식화 umbrella). gate label authority SSOT = 기존 (ADR-022 §결정 4 gate outcome contract) — 신규 gate:worktree-clean label 신설 안 함 (사용자 방향 '기존 게이트 확장', label 없이 Orchestrator self-check). ratchet ↑ direction (강화 방향 only, §결정 1-8 + §D-9~D-11 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire (로컬 check 스크립트 + evidence-registry entry) = Phase 2 carrier."
     status: applied
     ref: §D-12 + paired sibling ADR-040 Amendment 9 (§결정 7.K worktree-clean cleanup invariant) + ADR-128 (완료 단계 정식화 umbrella) + playbook §9.7.1 line 2858 precondition + ADR-099 workflow:null local-only 선례
+    sunset_justification: null
+    direction: strengthening
+    nature: ratchet-up
+  - amendment_id: 14
+    cfp: CFP-2392
+    date: 2026-06-24
+    scope: "§D-13 신설 — phase:완료 transition precondition 에 capture self-check 추가 (완료시점 재사용지식 외부화 게이트, ADR-129 OMC-adopt 지식캡처 묶음 carrier, additive ratchet). ADR-128 Amendment 13 §D-12 worktree-clean self-check 와 동형 구조 (둘 다 phase:완료 local-only warning-tier self-check). 기존 phase:완료 precondition = 2-gate AND + worktree-clean self-check (§D-12) → 본 Amendment 14 = capture self-check 1항 추가. capture self-check = '이번 Story 에서 재사용 가능한 지식이 외부화됐는가' — capture artifact (신규 skills/<slug>/SKILL.md 또는 docs/domain-knowledge/.../*.md) OR 명시적 no-capture note('캡처 대상 검토 완료 — 외부화 불요(사유)' 1줄) 흔적 검사. 둘 다 부재 = WARN (silent skip 금지, forced-no-silent-skip). 3문 admission(구글5분/코드베이스특정/실제노력) 자체 판정 = semantic(behavioral, Orchestrator self-eval), lint 은 '흔적 존재'만 presence 검사. tier = Orchestrator behavioral precondition (로컬 self-write) — phase:완료 transition = Orchestrator self-write + 완료 marker working-tree 검출이라 required CI check 불가. 3-조합 기계화 = (a) playbook §9.7.2 완료 단계 수렴 SSOT capture self-check pointer + (b) 로컬 check 스크립트 scripts/check-capture-gate-completion.sh (Phase 2) + (c) evidence-checks-registry warning-tier knowledge-capture-completion-gate workflow:null (ADR-099/ADR-122/ADR-128 local-only 선례). data-loss hard-block 금지 (git/gh 미인증 시 exit 0 보존). close lifecycle 무영향 (worktree-clean §D-12 동형 — transition precondition 이지 Issue close 차단 아님). branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합). ADR-045 §결정 5 close-blocking + §D-6/§D-12 entry 의미 변경 0건 (precondition 1항 추가만). paired sibling carrier = ADR-071 Amendment 12 (§18.7 MEMORY.md 슬림화 mechanism deferred 해제) + ADR-129 (OMC-adopt 지식캡처+메모리다이어트 umbrella). gate label authority SSOT = 기존 (ADR-022 §결정 4) — 신규 gate:capture label 신설 안 함 (ADR-128 §D-12 worktree-clean label 미신설 패턴 답습). axis-disjoint vs §D-9 retro: TIMING(pre-completion vs post-hoc) / UNIT(single-task vs multi-Story) / OUTPUT(skill·domain-knowledge artifact vs ADR escalation) 3축 disjoint → §D-9 흡수 불가, ADR-129 NEW umbrella (ADR-128 archetype 답습). ratchet ↑ direction (강화 방향 only, §결정 1-8 + §D-9~D-12 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire = Phase 2 carrier."
+    status: applied
+    ref: §D-13 + paired sibling ADR-071 Amendment 12 (§18.7 MEMORY.md 슬림화 deferred 해제) + ADR-129 (OMC-adopt 지식캡처+메모리다이어트 umbrella) + ADR-128 §D-12 worktree-clean self-check 동형 + playbook §9.7.2 완료 단계 수렴 SSOT + ADR-099/ADR-122/ADR-128 workflow:null local-only 선례
     sunset_justification: null
     direction: strengthening
     nature: ratchet-up
@@ -837,6 +849,56 @@ worktree-clean self-check 는 `phase:완료` **transition precondition** (label 
 - **ADR-127 정합**: forcing function 추가 방향 (process-skip 채널 0). worktree-clean self-check 미통과 = 정리 후 재확인이지 "생략 후 진행" 아님.
 - **ADR-009 invariant 무손상**: precondition 추가 + 로컬 check + registry entry — wrapper agent 신설 0.
 - **ADR-045 §결정 1-8 + §D-9~D-11 무손상**: §D-12 sub-section 추가만, 기존 결정 변경 없음.
+
+## D-13 — phase:완료 transition precondition 에 capture self-check 추가 (Amendment 14, CFP-2392, 2026-06-24)
+
+ADR-129(OMC-adopt 지식캡처 + 메모리 다이어트) 의 갭 A(capture timing 공백) 해소 carrier 의 ADR-045 측 amendment. ADR-071 Amendment 12(§18.7 MEMORY.md 슬림화 mechanism deferred 해제) 와 paired sibling. ADR-128 Amendment 13 §D-12(worktree-clean self-check) 와 **동형 구조** — 둘 다 phase:완료 local-only warning-tier self-check.
+
+### §14.A — precondition 확장 (§D-12 worktree-clean + capture self-check)
+
+`phase:완료` transition 의 precondition (§D-12 이후 SSOT):
+
+> **precondition AND**: 활성 lane terminal gate + `gate:retro-complete` + worktree-clean self-check (§D-12)
+
+본 Amendment 14 가 capture self-check 1항을 추가한다:
+
+> **precondition AND**: 활성 lane terminal gate + `gate:retro-complete` + worktree-clean self-check + **capture self-check** (이번 Story 에서 재사용 가능한 지식이 외부화됐는가)
+
+- capture self-check = **완료시점 재사용지식 외부화 검출 게이트** — capture artifact (신규 `skills/<slug>/SKILL.md` 또는 `docs/domain-knowledge/.../*.md`) **OR** 명시적 no-capture note(`"캡처 대상 검토 완료 — 외부화 불요(사유)"` 1줄) 흔적을 검사. 둘 다 부재 = WARN (silent skip 금지 = forced-no-silent-skip, ADR-129 §결정 1(4)).
+- 3문 admission(구글5분 / 코드베이스특정 / 실제노력 — OMC skillify(MIT) 차용)은 **semantic judgment** → behavioral (Orchestrator self-eval). lint 은 "흔적 존재"만 presence 검사 (Story §8.3 anti-theater 분류).
+
+### §14.B — tier = Orchestrator behavioral precondition (required CI 불가)
+
+`phase:완료` transition = Orchestrator self-write(로컬) + 완료 marker = working-tree 검출 → **required CI check 불가**. 3-조합 기계화 (§D-12 / ADR-128 §결정 2 답습):
+
+1. **(a) Orchestrator behavioral precondition** — playbook §9.7.2 완료 단계 수렴 SSOT 에 capture self-check pointer 1줄 + 본 §14.A.
+2. **(b) 로컬 check 스크립트** — `scripts/check-capture-gate-completion.sh` (Phase 2). fail-safe = git/gh 미인증 시 exit 0 보존 (data-loss 가드, hard-block 금지) / 완료 marker 부재 시 exit 0 no-op.
+3. **(c) evidence-checks-registry 등록** — warning-tier + `workflow: null` (`knowledge-capture-completion-gate`, ADR-099/ADR-122/ADR-128 local-only 선례 동형).
+
+**branch protection 6-tuple 무변경** — 신규 required check 0 → ADR-024 Amendment 19 §B "required check bypass escape valve 신설 금지" invariant 원천 정합. **`gate:capture` label 신설 안 함** — ADR-128 §D-12 worktree-clean label 미신설 패턴 답습 (label 없이 Orchestrator self-check).
+
+### §14.C — axis-disjoint vs §D-9 retro (흡수 거부, ADR-129 NEW umbrella 정당)
+
+본 capture self-check 는 §D-9 retro 와 **3축 disjoint** 라 §D-9 로 흡수 불가:
+
+| 축 | capture self-check (본 §D-13) | §D-9 retro |
+|---|---|---|
+| TIMING | pre-completion forcing (완료 직전) | post-hoc (Phase 2 PR merge 후) |
+| UNIT | single-task (이번 작업) | multi-Story (cross-Story pattern) |
+| OUTPUT | skill / domain-knowledge artifact | ADR escalation |
+
+→ ADR-129 NEW umbrella (ADR-128 archetype 답습 — 흡수 거부 + paired Amendments). ADR-045 §결정 5 close-blocking + §D-6/§D-12 entry **의미 변경 0** (precondition 1항 추가만).
+
+### 정합성 검증 (§D-13)
+
+- **ADR-129 정합**: 본 Amendment 14 = ADR-129 §결정 1(완료시점 capture 게이트) 의 ADR-045 측 carrier. ADR-071 Amendment 12 와 paired sibling.
+- **ADR-128 §D-12 동형**: worktree-clean self-check 와 동일 구조(phase:완료 local-only warning-tier self-check + fail-safe + required CI 불가) — 3-조합 기계화·tier·label 미신설 상속.
+- **ADR-058 §결정 5 정합**: precondition 1항 추가 = strengthening direction (ratchet) — amendment_log id:14 `sunset_justification: null` + `direction: strengthening`.
+- **ADR-024 Amendment 19 §B 정합**: required 6-tuple 신설 0 → bypass 신설 금지 invariant 원천 정합.
+- **ADR-099 / ADR-122 / ADR-128 정합**: `workflow: null` local-only check 선례 동형.
+- **ADR-127 정합**: forcing function 추가 방향 (process-skip 채널 0). capture self-check 미통과 = 외부화(또는 no-capture note) 후 재확인이지 "생략 후 진행" 아님.
+- **ADR-119 정합 (통합 금지)**: 3문 admission 과 ADR-119 §결정 9 제안 필요성 3문 게이트는 동형이나 도메인 disjoint(지식 캡처 ↔ 작업 제안) → 통합 금지, cross-ref 만.
+- **ADR-045 §결정 1-8 + §D-9~D-12 무손상**: §D-13 sub-section 추가만, 기존 결정 변경 없음.
 
 ## 해소 기준
 

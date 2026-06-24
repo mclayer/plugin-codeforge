@@ -2887,6 +2887,8 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 - 클라우드 트리거 (1·2) = post-merge OUTCOME 텔레메트리 관찰 + `gate:retro-complete` label 확인.
 - **"단일 자동 수렴 검증기" 과설계 금지** — 클라우드↔로컬 비대칭으로 구조적 불가. 절차+텔레메트리 조합이 정답 (ADR-128 §결정 4).
 
+**capture self-check pointer (CFP-2392 / ADR-129 §결정 1 + ADR-045 Amendment 14 §D-13)**: `phase:완료` precondition 에는 worktree-clean self-check 와 함께 **capture self-check** 도 포함된다 — "이번 Story 에서 재사용 가능한 지식이 외부화됐는가" (capture artifact `skills/<slug>/SKILL.md`·`docs/domain-knowledge/.../*.md` OR 명시적 no-capture note 흔적; 둘 다 부재 = WARN, silent skip 금지). worktree-clean self-check 와 동형 (phase:완료 local-only warning-tier, required CI 불가). 절차·3문 admission(OMC skillify MIT 차용)·routing·MEMORY.md 용량관리 SSOT = `codeforge:knowledge-capture-gate` skill.
+
 **갭 C pointer (Living Architecture / Confluence mirror 재정합)**: 완료 시 문서 재정합 = **본 수렴 SSOT 범위 제외(유예)**, 이미 owner 존재 — Living Architecture 재정합 = ADR-112 per-Epic 게이트가 담당(Epic 완료 시) + Confluence mirror SLA = ADR-111 §결정 5. per-Epic 게이트(ADR-112)와 per-Story 완료 게이트(본 §9.7.1) 의 granularity 축이 달라 본 수렴에 편입하지 않는다 (ADR-128 §결정 5 — pointer awareness 만).
 
 **절차 SSOT cross-ref**: post-merge automation flow 절차 + retro batch closure 절차 = `codeforge:post-merge-closure` skill (본 §9.7.2 = 게이트 명제·수렴 순서 SSOT, skill = 절차 — dup 회피, ADR-120 §결정 3 정합).
