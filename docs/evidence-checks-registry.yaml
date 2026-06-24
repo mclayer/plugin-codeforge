@@ -2882,3 +2882,83 @@ entries:
     carrier_adr: ADR-060             # self-carrier (Amendment 18)
     spec_invariant_measurement_required: false  # presence/structural classification 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     status: Active                   # §32.E — 처음부터 Active (실파일 실존 동반 → carrier_absent==false 자연 PASS, recurrence 미부여)
+
+  - name: knowledge-capture-completion-gate
+    description: |
+      CFP-2392 / ADR-129 §결정 1 + ADR-045 Amendment 14 §D-13 —
+      phase:완료 capture self-check (완료시점 재사용지식 외부화 게이트).
+      완료 처리 시점에 capture artifact(skills/<slug>/SKILL.md 또는
+      docs/domain-knowledge/.../*.md 신규) OR 명시적 no-capture note 흔적이
+      존재하는가 검출 (forced-no-silent-skip — 둘 다 부재 = WARN).
+      3문 admission(구글5분/코드베이스특정/실제노력) 자체 = semantic(behavioral,
+      Orchestrator self-eval) — lint 은 "흔적 존재" presence 검사만 (honest decline).
+      tier = warning (로컬 self-check). phase:완료 transition = Orchestrator self-write(로컬) +
+      완료 marker working-tree → required CI check 불가 → workflow: null
+      (ADR-099/ADR-122/ADR-128 worktree-clean 선례 동형).
+      fail-safe = git/gh 미인증 시 exit 0 보존(data-loss 가드) / STORY_KEY 부재 exit 0 no-op.
+      anti-theater 변별 test = scripts/test-check-capture-gate-completion.sh
+      (capture artifact / no-capture note / 둘다부재 WARN / fail-safe 변별).
+      branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B 정합).
+      3문 admission = oh-my-claudecode(MIT, Copyright (c) 2025 Yeachan Heo) skillify 차용.
+    detect_command: STORY_KEY=cfp-NNN bash scripts/check-capture-gate-completion.sh
+    workflow: null   # CI 미wire — local-only check (phase:완료 transition = Orchestrator self-write + 완료 marker working-tree). ADR-099/ADR-122/ADR-128 worktree-clean 선례 동형.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 self-check, blocking 승격 불가 — required CI 구조적 불가)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2392   # 본 entry 도입 carrier (지식캡처 게이트 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # capture 흔적 presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2392
+    introduced_date: 2026-06-25    # KST (ADR-129 OMC-adopt 지식캡처 Phase 2)
+    owner_adr: ADR-129             # OMC-adopt 지식캡처+메모리다이어트 umbrella — capture 게이트 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  - name: memory-capacity-gate
+    description: |
+      CFP-2392 / ADR-129 §결정 2 + ADR-071 Amendment 12 §18.7 —
+      MEMORY.md 용량관리 게이트 (ADR-071 §18.2 24.4KB cap + §18.3 슬림화 normative
+      deferred mechanism 실현). MEMORY.md size > 24.4KB 시 slimming 수행 흔적
+      (size 감소 또는 archive 갱신) AND active-Story entry 보존(lossless invariant) 검출.
+      "이 entry 가 archive 적격 완료-Story 인가" 판정 = semantic → lint 불가(honest decline,
+      ADR-119 abstention) — lint 은 size + entry presence 만.
+      tier = warning (로컬 self-check). MEMORY.md = ~/.claude/projects/<hash>/memory/MEMORY.md =
+      repo 외부 + 클라우드 러너 미접근 → CI lint 불가 (ADR-128 worktree-clean 동근원) → workflow: null.
+      fail-safe = MEMORY.md 경로 부재 시 exit 0 no-op(graceful).
+      anti-theater 변별 test = scripts/test-check-memory-capacity.sh
+      (size<=cap no-op / size>cap WARN / lossless invariant 위반 WARN / 경로부재 no-op 변별).
+      branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B 정합).
+      2-layer budget(per-entry ~200자 + total 24.4KB) + char-budget = internal 도출(OMC 차용 아님).
+    detect_command: bash scripts/check-memory-capacity.sh
+    workflow: null   # CI 미wire — local-only check (MEMORY.md = ~/.claude 외부 파일, 클라우드 러너 미접근). ADR-128 worktree-clean 동근원.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 self-check, blocking 승격 불가 — required CI 구조적 불가)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2392   # 본 entry 도입 carrier (MEMORY.md 용량관리 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # size/presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2392
+    introduced_date: 2026-06-25    # KST (ADR-129 MEMORY.md 용량관리 Phase 2)
+    owner_adr: ADR-129             # OMC-adopt 지식캡처+메모리다이어트 umbrella — 용량관리 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # size/presence 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
