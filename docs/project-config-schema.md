@@ -262,7 +262,7 @@ aggregate_arch:
   # Tool layer = consumer 자유 override (default alembic Python stack)
   migration_tool: alembic          # enum: [alembic, prisma-migrate, typeorm, goose, golang-migrate, flyway, liquibase, sqlx-migrate, custom]
 
-# [선택] Telemetry / measurement channel (CFP-283 / ADR-042 / ADR-043)
+# [선택] Telemetry / measurement channel (CFP-283 / ADR-042 / ADR-043; CFP-2393 spawn-event)
 # default = 모든 channel disabled (opt-in default false invariant — ADR-043 §결정 1)
 # Phase 1 = wrapper / consumer 동일 trust model — default false + 사용자 explicit opt-in 의무
 # wrapper dogfood always-on enforcement (env flag / hook / runtime validation) = Phase 2 follow-up CFP
@@ -271,8 +271,8 @@ telemetry:
   enabled: false                              # global gate (default false)
   channels:
     stop_event: false                         # stop-event-v1 ledger (default false)
-    # spawn_event: false                      # spawn-event-v1 (Phase 2 deferred — ADR-042 §결정 3)
-  storage_path: ".claude-work/measurement/"   # default sqlite location (ADR-042 §결정 4)
+    spawn_event: false                        # spawn-event-v1 per-agent token/cost attribution ledger (default false — ADR-042 Amendment 1 / ADR-043 Amendment 2, CFP-2393. oh-my-claudecode MIT 차용)
+  storage_path: ".claude-work/measurement/"   # storage_path override = parent dir 대체 (basename 고정). per-channel 별 default: stop-event sqlite default parent = .claude-work/measurement/ (basename stop-event.sqlite, ADR-042 §결정 4); spawn-event JSONL default parent = .claude/ledger/ (basename spawn-event.jsonl 고정 — spawn-event-v1.md §3 storage_path_override_rule SSOT). override 지정 시 양 channel parent dir 함께 대체(각자 basename 유지), wrapper dir escape 금지 — ADR-042 §결정 9
   retention_hot_days: 14                      # default 14d (range: 7-30, Researcher §6.6 InfluxData 중간값)
 
 # [선택] 통합테스트 Baseline Suite 정의 (ADR-055 Amendment 2)
