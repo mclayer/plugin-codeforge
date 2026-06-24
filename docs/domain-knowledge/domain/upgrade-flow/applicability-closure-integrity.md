@@ -55,7 +55,7 @@ ADR-083 이 applicability 필터(4-way repo-kind + positive whitelist)를 정의
 
 | reconciliation layer | applicability/closure 의 역할 |
 |---|---|
-| **Desired state** (wrapper SSOT 9 영역) | whitelist = desired state 의 "consumer 에 배포될 부분집합" 정의. closure 규칙 = desired state 의 "함께 배포돼야 실행되는 동반 자산" 정의. |
+| **Desired state** (wrapper SSOT 11 영역) | whitelist = desired state 의 "consumer 에 배포될 부분집합" 정의. closure 규칙 = desired state 의 "함께 배포돼야 실행되는 동반 자산" 정의. |
 | **Current state** (consumer overlay + plugin install) | consumer `.github/workflows/` + `scripts/` 의 실제 배포 상태. closure 불완전 = current state 가 desired 의 실행가능 폐포를 못 채운 drift. |
 | **Customization layer** (marker block 밖) | 본 모델 직접 대상 아님. 단 closure 자산이 consumer customization 과 충돌하지 않아야 한다는 경계는 보존. |
 
