@@ -29,8 +29,13 @@ related_files:
   - docs/consumer-guide.md  # §7.0.7 telemetry_enabled flag 안내
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
   - docs/change-plans/cfp-283-adr-039-measurement-channel.md  # internal-docs SSOT (ADR-013)
+  - docs/inter-plugin-contracts/spawn-event-v1.md  # Amendment 1 (CFP-2393) — spawn-event-v1 신설 carrier
 is_transitional: false
----
+amendment_log:
+  - amendment: 1
+    date: 2026-06-24
+    carrier_story: CFP-2393
+    summary: "§결정 3 spawn-event-v1 보류 해제 (supersede) + §결정 1 4-channel boundary 표 8번째 channel (spawn-event-v1) 추가 + Out-of-scope token attribution deferral 해제 + §결정 13 amendment 의무 이행 (§14↔spawn-event dedup script Phase 2 commitment). Epic CFP-2391 S3 directive 가 §결정 3 보류근거 #3 (30+ run ROI gate) 를 supersede — OMC-adopt per-agent replay/cost observability. Phase 1 = doc-only (stop-event 선례 §결정 12). 신규 ADR 미신설 (§결정 1 self-amendment 의무 + §결정 13 'Amendment N 신설' 명시 정합)."
 
 # ADR-042: Codeforge measurement channel architecture
 
@@ -413,3 +418,42 @@ N/A — permanent policy
 - `docs/adr/ADR-043-codeforge-telemetry-privacy-policy.md` (sibling Phase 1 PR)
 - `mclayer/codeforge-internal-docs:wrapper/stories/CFP-283.md`
 - `mclayer/codeforge-internal-docs:wrapper/change-plans/cfp-283-adr-039-measurement-channel.md`
+
+## Amendment 1 (CFP-2393, 2026-06-24) — spawn-event-v1 보류 해제 + token attribution deferral 해제
+
+### 배경
+
+Epic CFP-2391 S3 (OMC-adopt per-agent replay/cost observability) 가 spawn-event-v1 신설을 carrier 한다. 본 ADR §결정 13 이 명시한 amendment 의무 ("spawn-event-v1 신설 시 §결정 1 boundary 표 갱신 + §결정 3 보류 결정 supersede(`Amendment N` 신설) + §14↔spawn-event dedup script 신설 의무") 의 이행이다. 차용원 = oh-my-claudecode(MIT, https://github.com/Yeachan-Heo/oh-my-claudecode). 신규 contract = [`docs/inter-plugin-contracts/spawn-event-v1.md`](../../docs/inter-plugin-contracts/spawn-event-v1.md) (kind:registry v1.0). Phase 1 = doc-only (§결정 12 stop-event 선례 정합).
+
+### Amendment 내용
+
+**(A) §결정 3 (spawn-event-v1 신설 보류) supersede** — 보류 해제. **원 §결정 3 본문은 보존**(이력) 하되 본 Amendment 가 supersede 한다. spawn-event-v1 = 본 Amendment 로 land. 원 보류근거 3 의 처리:
+- 보류근거 #1 (§14↔spawn-event dual-write race) → spawn-event-v1 contract §3 `append_rules.idempotency.section14_dedup` 이 **§14↔spawn-event dedup script 를 Phase 2 precondition AC 로 commit** (read-time dedup, append-time 아님 — cross-channel coupling 회피). race 자체는 SubagentStop single-write(option i) + O_APPEND per-row 로 구조적 차단.
+- 보류근거 #2 (aggregate script 로 충분) → per-agent token/cost attribution + replay 재구성은 §14 row count + post-merge-counters.jsonl 로 도출 **불가** (lane-coarse, token granularity 부재). spawn-event = 별 channel 필요성이 Epic directive 로 확정.
+- 보류근거 #3 (30+ post-merge-counters run ROI gate) → **아래 §근거 의 ROI gate 처리 참조**.
+
+**(B) §결정 1 4-channel boundary 표 8번째 channel 추가** — boundary 표에 spawn-event-v1 row 추가:
+
+| Channel | Tier | Granularity | Storage | Owner | Lifecycle |
+|---|---|---|---|---|---|
+| **spawn-event-v1 ledger** (본 Amendment 1) | 3 persistent | per-agent spawn (subagent 1개 = row 1개) | hot tier JSONL (`.claude/ledger/spawn-event.jsonl`) | Orchestrator-owned delegate subagent | persistent append-only / opt-in default false |
+
+playbook §15.1 8-channel boundary table SSOT 동반 갱신 (§결정 1 land 위치). boundary 차단 invariant 에 **§14.12 ↔ spawn-event-v1 role-separation** 4번째 invariant 추가 (Tier-1 quota-only mini-table vs Tier-3 persistent accounting — double-count 아닌 역할 분리). playbook §15.2 동반.
+
+**(C) Out-of-scope "Token attribution model" deferral 해제** — 원 Out-of-scope line "Token attribution model (Anthropic API usage 4 필드 합산) — spawn-event-v1 deferred 와 동반 deferred" 해제. **단 정확도 caveat 명시**: transcript JSONL `usage.input_tokens` 는 streaming placeholder 로 input 100-174x / output 10-17x undercount (verified-via https://gille.ai/en/blog/claude-code-jsonl-logs-undercount-tokens/). 따라서 token attribution 은 "정확 source 확보 시에만 attributed, 그 외 unattributed (추정치 저장 금지)" = spawn-event-v1 contract `attribution_confidence` enum default `unattributed` 가 강제 (ADR-119 검증-후-단언). 0 API call constraint(§결정 8) 하 pricing = 로컬 상수.
+
+**(D) §결정 13 amendment 의무 이행 commit** — §14↔spawn-event dedup script = spawn-event-v1 contract §3 `append_rules.idempotency.section14_dedup` 이 Phase 2 precondition AC 로 명문 commit. (Phase 1 = doc-only — script 실 구현은 Phase 2.)
+
+### 근거
+
+- **§결정 13 자체가 amendment 경로를 지정** — "Amendment N 신설" 명시. 신규 ADR 미신설 (§결정 1 self-amendment 의무 + §결정 13 정합). 본 Amendment 가 첫 amendment (frontmatter `amendment_log` 신규 — 본 ADR 의 첫 amendment).
+- **30+ run ROI gate (보류근거 #3) 처리 — 정직 기록**: 본 Story 시점에 post-merge-counters.jsonl 30+ run 누적 ROI 평가의 **충족 evidence 는 본 lane 에서 실측 미확보** (firsthand 미검증). 그러나 보류 해제 정당화 = **Epic CFP-2391 S3 directive 가 deferral 을 supersede** — 사용자/Epic 의 명시 우선순위 결정이 ROI gate 의 subjective threshold (ADR-022 §결정 11 Sonnet decider 패턴) 를 대체. ROI gate 는 "ROI 미확정 시 보류" 의 *default* 였고, Epic directive 는 그 default 를 명시적으로 override 하는 상위 결정이다. (silent skip 금지 — ArchitectAnalyst FLAG 정합. ROI gate 미평가 사실을 숨기지 않고 directive supersede 로 명문화.)
+- **Phase 1 doc-only 정합** (§결정 12) — stop-event-v1 선례. 실 hook/append/replay/dedup script = Phase 2.
+
+### 비-영향
+
+- §결정 2 (stop-event-v1 schema) 무변경 — spawn-event 는 별 contract.
+- §결정 4 (stop-event hot tier sqlite) 무변경 — spawn-event 는 JSONL (contract=runtime 일치 우선, drift 회피 — spawn-event-v1 §3 / Change Plan §2.4). stop-event 자체의 sqlite↔JSONL drift 정정은 본 Amendment scope 외 (별 follow-up — 3문 게이트).
+- §결정 5/6/7/8/9/10/11 (Allow-list / opt-in / 2-layer flag / 0-API·50ms / isolation / measurement-vs-fix / ROI) = spawn-event-v1 inherit (변경 없음, 적용 확장만).
+- 6 lane plugin / inter-plugin contract 6 변경 0건 (§결정 12 비-Phase 1 scope 정합).
+- stop-event-v1 contract 무변경 (spawn-event 가 sibling 로 추가될 뿐).

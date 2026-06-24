@@ -353,6 +353,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 | **#1320 사용자 dependency** | 사용자 발화 영역의 hard dependency — 본 Sub-C 진행 중 absorb 필요 시 status update | Issue #1320 |
 | **#1439 MCP labels bug** | MCP labels API 영역 known bug — codeforge family 안 cross-cutting 영향 (label-registry-v2 propagation 차단 가능) | Issue #1439 (독립 fix carrier) |
 | **CFP-1126 / ADR-042 Amd 10 — AggregateArch deprecated 실 agent file 정리** | 정책 codify 완료 (CFP-1168 realized) — 실 agent file deprecate = `plugins/codeforge-design/` in-tree Wave 2 추후 CFP carrier (sibling sync 폐지 — ADR-118 D5) | follow-up sub-CFP (codeforge-design plugin agent file deprecation) |
+| **observability Tier-3 spawn-event-v1 (per-agent token/cost attribution + replay) — LANDED (Phase 1 doc-only)** | CFP-2393 / Epic CFP-2391 S3. ADR-042(measurement) §결정 3 보류 해제 (Amendment 1) + ADR-043 Amendment 2. 8번째 observability channel. oh-my-claudecode(MIT) 차용. **Phase 2 미실현** = append_spawn_event.py (O_APPEND) + SubagentStop agent_id/agent_type capture wiring + replay script + §14↔spawn-event dedup script (ADR-042 §결정 13 precondition) + lint. token attribution 정확도 = transcript undercount caveat → attribution_confidence=unattributed default | follow-up Phase 2 PR (CFP-2393 S3 구현분) |
 
 > **본 Open Decisions 영역 = 매 ADR-078 Amd 2 §결정 2 per-Epic 현행화 시점에 갱신 의무**. ArchitectAnalystAgent / 신규 contributor / design lane 진입 시 본 표가 "지금 codeforge 의 모호성" 즉시 visible answer 의 single SSOT.
 
