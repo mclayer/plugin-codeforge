@@ -280,6 +280,49 @@ R=$(mktemp -d); build_baseline "$R"
 run_fixture "F10b-onpaths-falsepos-guard" "0" "on.paths 안 dep 토큰은 closure 아님 (run:-block-aware AM-3)" "$R"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# F12 env-sibling-not-extracted ★ [구현리뷰 FIX iter 2 P1]: whitelist workflow 의 list-item `- run:` 의
+#   sibling `env:` 키(run: 와 동일 컬럼) 안 script 토큰은 closure 아님 → manifest 미등재여도 PASS(0).
+#   kill: run_indent=len(prefix) 정정 revert(=버그 복원) 시 env: 값(미등재 script) 오추출 → F12 FAIL=RED.
+# ─────────────────────────────────────────────────────────────────────────────
+R=$(mktemp -d); build_baseline "$R"
+# wf-a.yml 을 list-item `- run:` + sibling env: (미등재 script 토큰 포함) 으로 재작성.
+# check-a.sh = 실 run: dep(manifest 등재) / check-env-phantom.sh = env: 값(closure 아님, 미등재).
+cat > "$R/templates/github-workflows/wf-a.yml" <<'EOF'
+name: wf-a
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: bash scripts/check-a.sh
+        env:
+          SCRIPT_REF: bash scripts/check-env-phantom.sh
+EOF
+run_fixture "F12-env-sibling-not-extracted" "0" "list-item run: 의 env: sibling script 토큰 = closure 아님 (오추출 0)" "$R"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# F13 with-sibling-not-extracted ★ [구현리뷰 FIX iter 2 P1]: 동형 — sibling `with:` 키 안 script 토큰은
+#   closure 아님 → PASS(0). kill: run_indent 버그 복원 시 with: args: 값 오추출 → F13 FAIL=RED.
+# ─────────────────────────────────────────────────────────────────────────────
+R=$(mktemp -d); build_baseline "$R"
+cat > "$R/templates/github-workflows/wf-a.yml" <<'EOF'
+name: wf-a
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: bash scripts/check-a.sh
+        with:
+          args: bash scripts/check-with-phantom.sh
+EOF
+run_fixture "F13-with-sibling-not-extracted" "0" "list-item run: 의 with: sibling script 토큰 = closure 아님 (오추출 0)" "$R"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # F11a data-absence-whitelist ★: whitelist txt 파일 자체 부재 → PASS(exit 0, honest no-op)
 #   kill Mutation-11a (data-absence→silent FAIL exit 1/2 mutate → fail-open 退化 시 RED).
 # ─────────────────────────────────────────────────────────────────────────────
@@ -332,6 +375,8 @@ if [ "$FAIL" -eq 0 ]; then
   echo "Mutation-10 (방향3 whitelist→manifest coverage 제거) → F10 PASS 면 RED"
   echo "            (run:-block-aware AM-3 추출 → naive grep 이면 F10b false-FAIL)"
   echo "Mutation-11a/b/c (data-absence→silent FAIL exit 1/2) → F11a/b/c FAIL 면 RED (fail-open 退化)"
+  echo "Mutation-12/13 (run_indent=len(prefix) → len(whitespace-only) 버그 복원) → F12/F13 FAIL 면 RED"
+  echo "            (list-item run: 의 env:/with: sibling 컬럼 오판 → script 토큰 오추출)"
   echo ""
   exit 0
 else

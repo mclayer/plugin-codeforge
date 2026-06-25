@@ -165,7 +165,16 @@ def _extract_run_block_deps(yml_path):
         if run_match:
             in_run_block = True
             prefix = run_match.group(1)
-            run_indent = len(re.match(r"^\s*", prefix).group(0))
+            # run_indent = run: 키가 시작하는 컬럼 (= prefix 전체 길이, list marker `- ` 포함).
+            #   list-item `      - run:` → prefix="      - "(8) → run_indent=8.
+            #   비-list `    run:` → prefix="    "(4) → run_indent=4.
+            #   top-level `- run:` → prefix="- "(2) → run_indent=2.
+            # [구현리뷰 FIX iter 2 P0 — len(re.match(r"^\s*", prefix)) (dash 앞 whitespace 만 = 6) 버그 정정]:
+            #   이전 산식은 list-item 의 sibling 키(env:/with:, run: 와 동일 컬럼 8)를 line_indent(8) >
+            #   run_indent(6) = TRUE 로 block 안 오판 → env: SCRIPT: / with: args: 값 안 script 토큰 오추출.
+            #   len(prefix)=8 정정 시 sibling 키(컬럼 8)는 8 > 8 = FALSE → block 종료 → 미scan.
+            #   block scalar 내용은 YAML 강제로 run: 키보다 더 들여쓰므로 항상 > len(prefix) 유지 = 정상 추출 보존.
+            run_indent = len(prefix)
             inline_val = stripped[run_match.end():]
             if inline_val and not inline_val.lstrip().startswith("|"):
                 for pat in _DEP_PATTERNS:
