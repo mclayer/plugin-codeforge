@@ -120,7 +120,7 @@ installed_version() {
 # Fetch marketplace latest version
 marketplace_version() {
   local plugin="$1" mp="$2"
-  gh api "repos/${mp}/contents/marketplace.json" --jq '.content' 2>/dev/null \
+  gh api "repos/${mp}/contents/.claude-plugin/marketplace.json" --jq '.content' 2>/dev/null \
     | base64 --decode 2>/dev/null \
     | jq -r --arg name "$plugin" '.plugins[] | select(.name==$name) | .version' 2>/dev/null
 }
