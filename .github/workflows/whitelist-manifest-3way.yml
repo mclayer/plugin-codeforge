@@ -1,0 +1,69 @@
+name: whitelist-manifest-3way
+# CFP-2412 / ADR-130 §결정 3/5 (Epic CFP-2394 Story D, 최종 통합 게이트) — whitelist↔manifest↔
+# templates/github-workflows 3-way 일관성 게이트 (warning-tier).
+#
+# consumer-applicability whitelist(templates/scripts/consumer_applicable_workflows.txt 28) ↔
+# 배포 source(templates/github-workflows/<name>.{yml,yaml}) ↔ closure manifest
+# (templates/consumer-scripts.manifest 49) 의 삼각 일관성(triangle invariant) 검증:
+#   방향1 (전수)    whitelist <name> → templates/github-workflows/<name> 실존 (miss=FAIL real-dead)
+#   방향2 (부분집합) manifest dep_workflow → whitelist membership 또는 plugin-only 분류 정합
+#   방향3 (coverage) whitelist workflow 의 run: 블록 1-hop closure 자산 manifest 등재완전성 (★ 진짜 3-way 완성 변)
+#   depth-2         hard-exit 데이터 dep(yml→.sh→.tsv) 의 script·data 모두 manifest 등재
+# 기존 check-consumer-scripts-manifest.sh(entry 내부 lint) + mirror-dependency-closure.py(closure
+#   depth-1) 와 책임축 disjoint (D=cross-table 3-way + depth-2 등재완전성).
+#
+# single-root (.github only): templates/github-workflows/ 미사용 — 게이트 = wrapper-self governance
+#   도구라 .github-only 정합 (consumer 무전파 = ADR-130 §결정6 mandatory 안전성). ADR-005 byte-parity
+#   scope 외 (template mirror 미운용). invariant-check.yml parity loop 은 templates → .github 단방향이라
+#   .github-only 파일은 미검출 (CONSUMER_ONLY_WORKFLOWS 등록 불요). spawn-prompt-fact-verify.yml /
+#   consumer-scripts-manifest.yml 동형.
+#
+# graceful-degradation (change-plan §3.5 — ADR-130 §결정4/L102 정합):
+#   data-absence(A)=fail-open(스크립트 EXIT 0, honest 분류) / setup-error(B)=fail-closed(EXIT 2).
+#   path-filter / `on.paths` skip 금지 (비협상) — required check "Pending(expected)" 영구 차단 회피.
+#     스크립트가 내부에서 data-absence 를 EXIT 0 처리 (워크플로 `if:` skip 아님, path-filter 절대 아님).
+#   on.paths 사용 시: paths 안 매칭 PR → 워크플로 미트리거 → check 미생성 → "Pending(expected)" 영구
+#     + whitelist 만 바꾸고 manifest 안 바꾼 PR(3-way 위반 핵심 케이스) 을 paths 필터가 놓침.
+#   채택 형태 = spawn-prompt-fact-verify.yml: on: pull_request types + workflow_dispatch, paths 0.
+#
+# injection-safe: on: pull_request (NOT pull_request_target — fork PR base secret 미노출) +
+#   permissions: contents:read (write/secret 0). repo 내 3 파일만 read → 외부 mutable 입력 0 (PR body
+#   입력도 0 → injection 노출면 spawn-prompt-fact-verify 보다 더 작음).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: lint job 은
+#   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). main 7일 green → required 등록은
+#   별 후속 Story (transition Story = continue-on-error 1줄 제거 + contexts 1개 추가 최소 surface).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  whitelist-manifest-3way:
+    name: whitelist-manifest 3-way consistency (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-whitelist-manifest-3way.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-whitelist-manifest-3way.sh
+
+  whitelist-manifest-3way-test:
+    name: whitelist-manifest-3way discriminating test (mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-whitelist-manifest-3way.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-whitelist-manifest-3way.sh
