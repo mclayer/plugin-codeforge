@@ -73,6 +73,6 @@ workflow-yaml-parse.yml
 #
 # 구체 항목:
 #   check-plugin-version-bump.yml     — (B)
-#   inter-plugin-contracts-parity.yml — (K)
+#   inter-plugin-contracts-parity.yml — (K) [은퇴: CFP-2159/ADR-118 S3 — 후신 contract-lint.yml, 양 채널 부재]
 #   reservation-cleanup.yml           — plugin ADR-RESERVATION 전용
 # ─────────────────────────────────────────────────────────────────────────────
