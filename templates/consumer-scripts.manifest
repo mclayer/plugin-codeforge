@@ -50,3 +50,56 @@ scripts/codeforge-upgrade.sh
 scripts/codeforge-upgrade.ps1
 scripts/lib/path_normalize.py
 scripts/atomic-upgrade-7-plugins.sh
+
+# CFP-2408 (Epic CFP-2394 Story B) — full closure manifest 등록. Story C 가
+# 확정한 consumer-applicability whitelist 28 항목의 consumer-applicable workflow
+# 가 consumer 에서 실제 동작하도록 full closure(scripts + 데이터 + depth-2
+# companion)를 등재. ADR-130 closure-완전성 §결정3/6 적용 (B = manifest write-owner).
+# tier 근거 = change-plan §5 (Tier1 hard-block / Tier1b hard-exit 데이터 /
+# Tier2 functional / Tier3 async). base-labels.tsv·.mjs = Check 4 확장자-인지
+# 면제 대상(데이터/import-only, +x 안 함).
+
+# Tier1 — hard-block (MUST, 5): required check 의 실 차단면.
+scripts/check-worktree-first-pre-checkout.sh:templates/github-workflows/worktree-first-pre-checkout.yml
+scripts/check-worktree-first-pre-commit-main-block.sh:templates/github-workflows/worktree-first-pre-commit-main-block.yml
+scripts/check-worktree-first-spawn-evidence-cwd.sh:templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
+scripts/check-wrapper-managed-block.sh:templates/github-workflows/wrapper-managed-block.yml
+.github/scripts/check-lane-evidence-block.mjs:templates/github-workflows/lane-evidence-check.yml
+
+# Tier1b — hard-exit 데이터 (MUST, 2): bootstrap-labels.sh 가 base-labels.tsv
+# 부재 시 exit 1 (hard-exit). tsv = depth-2 데이터 companion, workflow-직접-invoke
+# 아님 → dep_workflow 미부착. Check 4 확장자 면제 대상.
+scripts/bootstrap-labels.sh:templates/github-workflows/bootstrap-labels.yml
+templates/labels/base-labels.tsv
+
+# Tier2 — functional (SHOULD, 15, depth-2 lib 포함): warning-tier(coe:true)
+# functional dep. depth-2 lib(.py 3종) + 다수-wf 공유 .sh = script-only(dep_workflow 미부착).
+scripts/check-bypass-audit-comment.sh
+scripts/check-adr-sunset-criteria.sh:templates/github-workflows/adr-sunset-criteria.yml
+scripts/check-decision-principle-vocabulary.sh:templates/github-workflows/decision-principle-vocabulary.yml
+scripts/check-claude-md-line-cap.sh:templates/github-workflows/claude-md-line-cap.yml
+scripts/check-wording-dictionary.sh:templates/github-workflows/wording-dictionary.yml
+scripts/check-kst-timestamp.sh:templates/github-workflows/kst-timestamp-display.yml
+scripts/lib/check_kst_timestamp.py
+scripts/check-bypass-justification-marker.sh:templates/github-workflows/bypass-justification-marker.yml
+scripts/check-bypass-label-counter.sh:templates/github-workflows/bypass-label-counter.yml
+scripts/check-story-section-ownership.sh:templates/github-workflows/story-section-ownership-check.yml
+scripts/lib/check_story_section_ownership.py
+scripts/check-workflow-permissions-presence.sh:templates/github-workflows/workflow-permissions-check.yml
+scripts/check-workflow-yaml-parse.sh:templates/github-workflows/workflow-yaml-parse.yml
+scripts/check-write-target-membership.sh:templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
+scripts/check-write-target-membership.py
+
+# Tier3 — async (SHOULD, 11): background workflow(on:issues/closed/schedule)
+# dep. story-init lib .py 5종 = script-only(workflow 가 호출하는 진입 셸의 1-hop lib).
+scripts/lib/workflow_story_init_compute_key.py
+scripts/lib/workflow_story_init_render_story.py
+scripts/lib/workflow_story_init_project_config_key_prefix.py
+scripts/lib/workflow_story_init_project_config_name.py
+scripts/lib/workflow_story_init_project_config_story_ssot_repo.py
+scripts/next-phase.sh:templates/github-workflows/post-merge-followup.yml
+scripts/post-merge-story-writer.sh:templates/github-workflows/post-merge-followup.yml
+scripts/extract-security-ai.sh:templates/github-workflows/post-merge-followup.yml
+scripts/post-merge-telemetry.sh:templates/github-workflows/post-merge-followup.yml
+scripts/retro-retry-helper.sh:templates/github-workflows/retro-mandatory.yml
+scripts/retro-attempts-update.py:templates/github-workflows/retro-mandatory.yml

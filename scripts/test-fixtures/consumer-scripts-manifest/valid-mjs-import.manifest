@@ -1,0 +1,4 @@
+# CFP-2408 fixture: .mjs import-only ESM 자산 = Check 4 확장자 면제 → exit 0.
+# check-lane-evidence-block.mjs 는 git index 100644(shebang 부재, import() 전용)
+# 이나 .mjs 말단확장자 → exec-bit 면제 → lint PASS (Tier1 hard-block 등재 가능화).
+.github/scripts/check-lane-evidence-block.mjs:templates/github-workflows/lane-evidence-check.yml

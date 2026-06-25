@@ -1,0 +1,4 @@
+# CFP-2408 fixture: 깨진 non-exec .sh = strict branch → exit 1.
+# 말단확장자 .sh 는 allowlist(.tsv/.mjs) 밖 → 면제 안 됨 → Check 4 strict →
+# git index 100644(non-exec) 이므로 "not executable" FAIL. strictness ratchet 보존.
+scripts/test-fixtures/consumer-scripts-manifest/targets/nonexec-target.sh

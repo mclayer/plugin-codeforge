@@ -1,0 +1,4 @@
+# CFP-2408 fixture: 이중확장 foo.sh.txt non-exec = exit 1.
+# 말단확장자 .txt = allowlist 밖 + 경로에 .sh 존재 → 면제 안 됨 → strict →
+# non-exec FAIL. 이중확장 우회(.txt arm 으로 깨진 .sh slip) 차단 mutation-kill.
+scripts/test-fixtures/consumer-scripts-manifest/targets/double-ext.sh.txt

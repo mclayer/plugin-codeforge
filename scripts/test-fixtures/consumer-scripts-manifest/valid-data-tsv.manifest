@@ -1,0 +1,4 @@
+# CFP-2408 fixture: .tsv 데이터 자산 = Check 4 확장자 면제 → exit 0.
+# base-labels.tsv 는 git index 100644(non-exec 데이터)이나 .tsv 말단확장자 →
+# exec-bit 면제 → lint PASS (Tier1b hard-exit 데이터 등재 가능화).
+templates/labels/base-labels.tsv

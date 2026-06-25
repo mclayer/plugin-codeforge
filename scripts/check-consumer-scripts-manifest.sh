@@ -128,8 +128,23 @@ while IFS= read -r line; do
         entry_fail=1
     fi
 
-    # Check 4: script executable (perm bit)
-    if [ -f "$script_path" ] && [ ! -x "$script_path" ]; then
+    # Check 4: script executable (perm bit) — 확장자-인지 면제 (CFP-2408, 설계리뷰 P1#1)
+    # 면제 = 말단확장자 ∈ {.tsv,.mjs} (데이터/import-only ESM) AND 경로에
+    # exec-script 확장자(.sh/.py/.ps1/.bash)가 어디에도 부재. 이중확장
+    # (scripts/foo.sh.txt / x.sh.tsv 류)은 exec-script 확장자 보유 → strict 우선
+    # → 여전히 FAIL (strictness ratchet 보존). 광역 allowlist(.md/.txt/.json 등)는
+    # 본 Story 등록 대상 0건 → 면제 안 함(strict branch).
+    exempt=0
+    case "$script_path" in
+        *.tsv|*.mjs)  # 말단확장자 = 데이터/import-only
+            case "$script_path" in
+                *.sh|*.sh.*|*.py|*.py.*|*.ps1|*.ps1.*|*.bash|*.bash.*)
+                    exempt=0 ;;          # 이중확장(.sh.tsv 등) = exec-script 확장자 보유 → strict 우선
+                *) exempt=1 ;;           # 순수 .tsv/.mjs 만 면제
+            esac
+            ;;
+    esac
+    if [ "$exempt" -eq 0 ] && [ -f "$script_path" ] && [ ! -x "$script_path" ]; then
         echo "[manifest-lint] FAIL line $LINE_NUM: script not executable: $script_path" >&2
         entry_fail=1
     fi
