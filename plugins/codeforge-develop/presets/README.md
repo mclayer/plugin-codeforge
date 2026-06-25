@@ -10,14 +10,23 @@ Preset은 **참조 레시피**. Consumer가 필요 시 수동으로 `.claude/_ov
 presets/
 ├── README.md                    # 이 파일
 ├── docker-compose.test.yml      # 통합테스트 격리 환경 템플릿 (CFP-367 / ADR-055)
-└── webapp/                      # 웹 애플리케이션 preset
+├── webapp/                      # 웹 애플리케이션 preset
+│   ├── README.md
+│   └── agents/
+│       ├── BackendDeveloperAgent.md    (role: dev, model: sonnet)
+│       └── FrontendDeveloperAgent.md   (role: dev, model: sonnet)
+└── backend-service/             # 비-webapp backend service preset (frontend-less)
     ├── README.md
     └── agents/
-        ├── BackendDeveloperAgent.md    (role: dev)
-        └── FrontendDeveloperAgent.md   (role: dev)
+        └── ServiceDeveloperAgent.md    (role: dev, model: sonnet)
 ```
 
-추가 preset은 실수요 기반으로 Stage 2 이후 확장 예정 (cli-tool, library, embedded, game, desktop-app 등).
+| preset | shape | 포함 agent | 적합 프로젝트 |
+|---|---|---|---|
+| `webapp` | 풀스택/반-스택 웹 (서버·클라 이원화) | Backend + Frontend Developer | 서버 라우트 + 템플릿/정적 자산 분할이 있는 웹앱 |
+| `backend-service` | 비-webapp backend service (frontend-less) | Service Developer | 인터넷 비도달·long-running service / CLI / daemon / worker (Rust·Go·Python 공통) |
+
+추가 preset은 실수요 기반으로 확장 예정 (cli-tool, library, embedded, game, desktop-app 등).
 
 ## 사용법
 
