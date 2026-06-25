@@ -3494,7 +3494,7 @@ Orchestrator 는 매 spawn 결과 수령 후 **Spawn token telemetry 대장**을
 **관계 (§15 observability channel boundary)**:
 - 본 대장은 Tier 1 ephemeral 채널 (`.claude-work/progress/<KEY>.md` cache 와 동일 파일). gitignored.
 - stop-event-v1 (Tier 3) 과 이중 기록 금지 — quota 분석용 로컬 계산 전용.
-- **spawn-event-v1 land 이후 (CFP-2393) 관계 = 역할 분리(role separation), double-count 아님** (§15.2 4번째 boundary invariant SSOT): 본 §14.12 = **Tier-1 quota-only 로 잔존** (예산 대비 실적, gitignored, Story-only). spawn-event-v1 = Tier-3 persistent per-agent **회계(accounting) + replay**. 본 대장은 spawn-event land 후에도 deprecate 안 됨 — 두 채널 disjoint. **cross-write 금지** (한쪽이 다른 쪽 read/mirror 금지 — 50ms ceiling + cross-channel coupling 회피). 신뢰도 표기 차이: §14.12 = `?` placeholder / spawn-event = `attribution_confidence` enum (1급 상태, 추정치 저장 금지). 상세 = [spawn-event-v1 §1.1](../inter-plugin-contracts/spawn-event-v1.md).
+- **spawn-event-v1 land 이후 (CFP-2393) 관계 = 역할 분리(role separation), double-count 아님** (§15.2 4번째 boundary invariant SSOT): 본 §14.12 = **Tier-1 quota-only 로 잔존** (예산 대비 실적, gitignored, Story-only). spawn-event-v1 = Tier-3 persistent per-agent **회계(accounting) + replay**. 본 대장은 spawn-event land 후에도 deprecate 안 됨 — 두 채널 disjoint. **cross-write 금지** (한쪽이 다른 쪽 read/mirror 금지 — 50ms ceiling + cross-channel coupling 회피). 신뢰도 표기 차이: §14.12 = `?` placeholder / spawn-event = `attribution_confidence` enum (1급 상태, 추정치 저장 금지). 상세 = [spawn-event-v1 §1.1](inter-plugin-contracts/spawn-event-v1.md).
 
 ---
 

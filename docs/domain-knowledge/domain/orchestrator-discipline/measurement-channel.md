@@ -45,7 +45,7 @@ codeforge orchestration 의 **4-channel observability boundary** SSOT. Tier 3 (p
 신규 persistent ledger 도입 시 — **write 토폴로지 먼저 분기** (Pattern A 적용 여부가 갈림):
 1. **cross-repo Contents API write** (예: `post-merge-counters.jsonl`) 인 경우만 — `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` **Pattern A (SHA-based optimistic concurrency) 의무** + long-lived branch + 단일 rolling PR (ADR-026 §결정 4). **host-local write** (예: `stop-event-v1` / `spawn-event-v1`) 은 Pattern A·long-lived-branch **불요** — host-local O_APPEND per-row (kernel-atomic, ADR-042 §결정 8 0-API) 로 충분, cross-repo Contents API race 무관. Pattern A 는 cross-repo Contents API write 전용이다.
 2. ADR-042 §channel boundary 준수 — Tier 1/2 와 중복 측정 금지 (spawn-event-v1 = §14.12 Tier-1 mini-table 와 role separation, double-count 아님 — playbook §15.2 4번째 invariant)
-3. stop-event-v1 schema 의 SSOT = [stop-event-v1.md](../../../../inter-plugin-contracts/stop-event-v1.md) §2 (18 field). spawn-event-v1 schema SSOT = [spawn-event-v1.md](../../../../inter-plugin-contracts/spawn-event-v1.md) §2 (19 field, enum/numeric/hash only)
+3. stop-event-v1 schema 의 SSOT = [stop-event-v1.md](../../../inter-plugin-contracts/stop-event-v1.md) §2 (18 field). spawn-event-v1 schema SSOT = [spawn-event-v1.md](../../../inter-plugin-contracts/spawn-event-v1.md) §2 (19 field, enum/numeric/hash only)
    > **drift note (CFP-2393, 미정정 — stop-event 영역 over-reach 회피)**: 본 page 위 line "stop-event-v1 schema: `stop_event` field + `story_key` + `ts` + `session_id`" 표현은 stop-event-v1.md §2 계약(18 field)·실 runtime(append_stop_event.py 5 field) 양쪽과 모두 불일치하는 3-way drift 의 한 갈래다. 정정은 stop-event 영역 별 follow-up (본 spawn-event Story scope 외). spawn-event-v1 은 이 drift 를 복사하지 않기 위해 fix-event-v1 동형으로 author 됐다.
 
 ## 정의

@@ -32,6 +32,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install pyyaml
+        run: pip install pyyaml
       - name: Run check-deferred-followup-reconcile.sh (warning, 비차단)
         continue-on-error: true
         run: bash scripts/check-deferred-followup-reconcile.sh check
@@ -45,5 +47,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install pyyaml
+        run: pip install pyyaml
       - name: Run test-check-deferred-followup-reconcile.sh (회귀 시 exit 1 차단)
         run: bash scripts/test-check-deferred-followup-reconcile.sh
