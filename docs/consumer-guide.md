@@ -2181,12 +2181,36 @@ SSOT 상수는 `.claude/_overlay/project.yaml` 참조.
 
 프로젝트 shape이 플러그인 preset과 맞으면 preset agents를 overlay로 복사.
 
+#### preset 선택 기준
+
+| 프로젝트 shape | preset | 포함 agent |
+|---|---|---|
+| 풀스택/반-스택 웹 (서버 라우트 + 템플릿/정적 자산 이원화) | `webapp` | Backend + Frontend Developer (sonnet) |
+| 비-webapp backend service — 인터넷 비도달·long-running service / CLI / daemon / worker (frontend 없음, Rust·Go·Python 공통) | `backend-service` | Service Developer (sonnet) |
+
+#### webapp preset
+
 ```bash
-cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
+cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 ```
 
-상세는 [`plugins/codeforge-develop/presets/README.md`](../plugins/codeforge-develop/presets/README.md) 참조.
+#### backend-service preset (비-webapp, frontend-less)
+
+```bash
+cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/backend-service/agents/*.md \
+      .claude/_overlay/agents/
+```
+
+`ServiceDeveloperAgent`(`model: sonnet`, `role: dev`)가 develop lane 의 sonnet 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
+
+#### 충돌 방지 (preset import 시 의무)
+
+두 preset 모두 core generic `DeveloperAgent`(광역 `Write(src/**)` 소유)와 경로가 겹친다. import 시 consumer overlay에서 generic `DeveloperAgent`를 비활성화한다 (해결책 A — `ServiceDeveloperAgent`/Backend·Frontend Developer가 `src/**` 구현을 단독 소유). preset 파일은 generic `DeveloperAgent`를 건드리지 않으므로 비활성화는 overlay 측 지시로만 수행한다.
+
+또한 `backend-service` preset 의 `ServiceDeveloperAgent`는 `src/**/adapters/storage/**` + `src/**/adapters/sources/**`를 deny한다 (core `DataEngineerAgent` 소유 경계 보존). `DataEngineerAgent` 미사용 consumer가 이 영역을 넘기려면 overlay에서 해당 deny를 해제한다.
+
+상세는 [`plugins/codeforge-develop/presets/README.md`](../plugins/codeforge-develop/presets/README.md) + 각 preset README 참조.
 
 ### 3d. `.claude/_overlay/agents/<Name>.md` 예시
 
