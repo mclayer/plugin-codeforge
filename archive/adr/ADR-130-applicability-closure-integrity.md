@@ -8,7 +8,22 @@ carrier_story: CFP-2395
 parent_epic: CFP-2394
 supersedes: [ADR-083]
 amends: null
-amendments: []
+amendments: [1]
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2398
+    date: 2026-06-25
+    summary: |
+      §결정 5 3-way 일관성 채널 SSOT 정정 (Epic CFP-2394 Story C) — 평가 정본 채널을
+      `.github/workflows/`(wrapper-self dogfood live) → `templates/github-workflows/`(consumer-distributable 배포 source) 로 정정.
+      template-only consumer workflow (templates 존재 · wrapper `.github` 부재 = consumer-only, wrapper-self N/A)
+      를 3-way 일관성 위반으로 오판하지 않도록 채널 SSOT 명문화 (silent harm 차단 방향 — 채널 정확화).
+      근거 코드 실측: bootstrap-consumer.sh:284 (cp source = `templates/github-workflows/`) /
+      reconcile-overlay.sh:500-510 (consumer repo_kind 일 때만 whitelist basename grep) /
+      check-consumer-scripts-manifest.sh:142-146 (closure manifest dep_workflow 경로제약 = `templates/github-workflows/*.{yml,yaml}`) /
+      consumer-guide.md:630/875 (templates = consumer-distributable, `.github`/confluence-* = wrapper-self dogfood 전용).
+      Story D(3-way 일관성 CI gate) 설계 입력 = templates 채널 anchor 고정 (`.github` 부재 자산을 영구 FAIL 로 오판 차단).
+      is_transitional:false 강화 방향 유지 (채널 정확화 — 약화 0). 8 invariant·다른 §결정 무변경 (§결정 5 채널 표기만 정정).
 related_stories:
   - CFP-2395  # 본 ADR 신설 carrier (Epic CFP-2394 Story A — gating Story)
   - CFP-2394  # parent Epic — consumer-applicability whitelist↔manifest closure 정합 복원
@@ -152,7 +167,27 @@ GitHub 권장 패턴:
 
 - **whitelist = applicability SSOT (live)**: `templates/scripts/consumer_applicable_workflows.txt` 가 applicability 판정의 단일 정본이다. walker(`scripts/lib/walk_plan.py`) + `reconcile-overlay.sh` 가 이 파일을 **실시간 read** 한다 (36 match wire-active). whitelist 변경 = applicability 판정 변경 (즉발 효력).
 - **manifest = closure SSOT**: `templates/consumer-scripts.manifest` 가 closure 등재의 단일 정본이다.
-- **3-way 일관성**: whitelist ↔ `.github/workflows/` (live basename) ↔ manifest 의 일관성이 현재 어디서도 강제되지 않는다 — Story D 가 CI gate 로 강제한다.
+- **3-way 일관성**: whitelist ↔ **`templates/github-workflows/`** (배포 source basename) ↔ manifest 의 일관성이 현재 어디서도 강제되지 않는다 — Story D 가 CI gate 로 강제한다. [Amendment 1 정정 — 구 표기 `.github/workflows/`(wrapper-self dogfood live)는 평가 정본 채널이 아니다. §결정 5-A 참조.]
+
+#### 채널 SSOT 정정 (§결정 5-A — Amendment 1, Epic CFP-2394 Story C)
+
+[verified-via: PL 코드 실측 — `git show origin/main` / worktree HEAD]
+
+3-way 일관성의 평가 정본 채널은 **`templates/github-workflows/`** (consumer-distributable 배포 source) 이지, **`.github/workflows/`** (wrapper-self dogfood live) 가 **아니다**. ADR-083 path drift 와 동질의 채널 표기 drift 를 정정한다.
+
+| 작용점 | anchor 채널 | evidence |
+|---|---|---|
+| consumer 복사 source (bootstrap) | `templates/github-workflows/` | [verified-via: `scripts/bootstrap-consumer.sh:284` — `cp "$PLUGIN_ROOT/templates/github-workflows/$w" ".github/workflows/$w"`] |
+| consumer applicability filter (reconcile) | `templates/github-workflows/` 의 wrapper_file basename ↔ whitelist | [verified-via: `scripts/reconcile-overlay.sh:500-510` — `repo_kind == consumer` 일 때만 `grep -Fxq basename` whitelist 매칭, miss=skip] |
+| closure manifest 경로제약 | `templates/github-workflows/*.{yml,yaml}` | [verified-via: `scripts/check-consumer-scripts-manifest.sh:142-146` — dep_workflow 경로제약 = `templates/github-workflows/*.{yml,yaml}` direct child] |
+| 채널 의미 분리 | templates = consumer-distributable / `.github`·confluence-* = wrapper-self dogfood 전용 | [verified-via: `docs/consumer-guide.md:630/875`] |
+
+**template-only consumer workflow 처리 (load-bearing — silent harm 차단)**: `templates/github-workflows/` 에는 존재하나 wrapper `.github/workflows/` 에는 부재한 워크플로(= **consumer-only template**, wrapper-self 미채택)는 dual-channel 의 정상 분기다. 평가 채널을 `.github/workflows/` 로 잘못 anchor 하면 이런 consumer-only template 을 "whitelist 가 가리키나 대상 부재 = dead-ref" 로 **오판**해 silent 제거 → consumer 가 해당 거버넌스를 silent 하게 잃는다(본 ADR 이 차단하려는 silent harm 그 자체). 따라서:
+
+- **3-way gate 의 채널 anchor = `templates/github-workflows/` 단일 SSOT.** whitelist basename 의 대상 실존 검증은 templates 채널에서만 수행한다. `.github/workflows/` 부재는 일관성 위반 신호가 **아니다** (consumer-only template = 정상).
+- **Story D CI gate 직접 적용**: Story D 의 3-way 일관성 mechanical 강제는 templates 채널을 anchor 로 설계해야 한다. `.github` anchor 시 consumer-only template 을 영구 FAIL 로 오판 → PR merge 영구 block.
+
+[verified-via: Story C 실측 — `templates/github-workflows/` 에만 존재하고 `.github/workflows/` 부재인 whitelist 등재 항목 3건(`story-section-1-immutable.yml` / `subissue-from-impl-manifest.yml` / `fix-ledger-sync.yml`) = consumer-only template(dead 아님). templates 채널 기준 whitelist real-dead = 0건.]
 
 #### 경로 정정 (ADR-083 path drift)
 
