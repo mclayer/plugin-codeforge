@@ -1,0 +1,4 @@
+# CFP-2408 fixture target — 이중확장 scripts/...sh.txt (non-exec, git index 100644).
+# 말단확장자 = .txt (allowlist 밖) 이고 경로에 .sh (exec-script 확장자) 존재 →
+# Check 4 면제 안 됨 → strict branch → non-exec FAIL. 이중확장 우회 차단 검증.
+echo "double-ext .sh.txt — must FAIL (double-ext block + non-allowlisted suffix)"

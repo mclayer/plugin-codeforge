@@ -1,0 +1,5 @@
+# CFP-2408 fixture target — 이중확장 scripts/...sh.tsv (non-exec, git index 100644).
+# 말단확장자 = .tsv (allowlist 안) 이나 경로에 .sh (exec-script 확장자) 존재 →
+# 이중확장 차단 분기(*.sh.*)가 exempt=0 강제 → strict branch → non-exec FAIL.
+# 면제 우회(.tsv 말단으로 깨진 .sh slip) 차단 검증 — mutation-kill 핵심.
+echo "double-ext .sh.tsv — must FAIL (exec-script ext present overrides .tsv suffix)"
