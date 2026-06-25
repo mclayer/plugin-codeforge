@@ -236,6 +236,17 @@ append_rules:
     rule: "deterministic event_id (random UUID 금지) + read-time dedup (aggregate/replay 시점, append-time 아님)"
     nested_spawn_dedup: "parent_event_id chain — nested spawn 이중계산 방지 (read-time)"
     section14_dedup: "**§14 Lane Evidence ↔ spawn-event dedup script = ADR-042 §결정 13 precondition AC (Phase 2 의무)**. §14 row count(lane spawn coarse) 와 spawn-event row count(per-agent) 정합 검증. dedup = aggregate/read-time script 책임 (append-time 아님 — cross-channel coupling + 50ms 위반 회피, Refactor MED)"
+    lane_context_limitation: |
+      **SubagentStop trigger 에 story_key / lane_label source 부재 (플랫폼 한계 — F-CR-002)**:
+      SubagentStop hook 가용 source = CLAUDE_SESSION_ID / CLAUDE_PROJECT_DIR / CLAUDE_PLUGIN_ROOT env
+      + payload(stop_reason / subagent_completed / subagent_type|agent_type / agent_id) 뿐.
+      story_key / lane_label 은 env·payload 어디에도 없음 (sibling stop-event runtime 도 동일 미수령).
+      → SubagentStop single-write 경로로 append 되는 row 는 story_key="" / lane_label="없음" (default fallback).
+      **dedup gate 의 silent-vacuous 회피**: ledger row 가 전부 lane_label="없음" (대조 가능 lane 0) 인 경우
+      dedup 는 "consistent" 가 아니라 **"vacuous" status** 를 emit 한다 (정합 PASS 위장 금지 — ADR-119 검증-후-단언).
+      lane-context writer (lane plugin agent 가 spawn-time 에 lane_label 을 주입하는 별 채널) 가 가용해지기
+      전까지 meaningful §14 ↔ spawn-event reconcile 은 불가 — vacuous 가 정상 상태. **dedup gate 를 lane-context
+      writer 가용 시점까지 명시 defer 할지 = 설계 결정 (ArchitectPLAgent 판정 대상, Change Plan §8 갱신 후보).**
 
   opt_in_default_false:
     rule: "telemetry.enabled: false default + telemetry.channels.spawn_event: false default (ADR-043 §결정 1 inherit — wrapper / consumer 동일 trust model)"

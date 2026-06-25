@@ -51,6 +51,11 @@ run_discriminating_test() {
   local is_file="$3"           # "file" or "inline"
   local expected_lint_result="$4"  # "PASS" or "RED"
   local description="$5"
+  # F-CR-003: surgical mutant 변별력 강화 — RED 가 표적 check 로만 fire 하는지 검증.
+  #   required_sentinel = RED output 에 반드시 등장해야 하는 정규식 (표적 violation).
+  #   forbidden_sentinel = RED output 에 절대 등장하면 안 되는 정규식 (off-target = 비특이).
+  local required_sentinel="${6:-}"   # e.g. attribution check (d) 표적
+  local forbidden_sentinel="${7:-}"  # e.g. (a)/(b)/(c) off-target violation 금지
 
   # Temporary directory for test artifacts
   TMP_TEST_DIR=$(mktemp -d)
@@ -101,6 +106,28 @@ run_discriminating_test() {
       echo "  (exit code was $lint_exit)"
       # Still count as pass (exit code was correct), but warn
     fi
+
+    # F-CR-003: surgical mutant 변별력 — RED 가 표적 check 로만 fire 하는지 hard assert.
+    #   (1) required_sentinel 이 RED output 에 반드시 등장 (표적 violation 검출 확인).
+    if [ -n "$required_sentinel" ]; then
+      if ! echo "$lint_output" | grep -qE "$required_sentinel"; then
+        echo "✗ FAIL: $test_name — RED 했으나 표적 violation 부재 (비특이 mutant)"
+        echo "  required_sentinel: $required_sentinel"
+        echo "  Output: $lint_output"
+        FAIL=$((FAIL+1))
+        return 1
+      fi
+    fi
+    #   (2) forbidden_sentinel 이 RED output 에 등장하면 off-target = 비특이 → FAIL.
+    if [ -n "$forbidden_sentinel" ]; then
+      if echo "$lint_output" | grep -qE "$forbidden_sentinel"; then
+        echo "✗ FAIL: $test_name — off-target violation 검출 (mutant 비특이)"
+        echo "  forbidden_sentinel: $forbidden_sentinel"
+        echo "  Output: $lint_output"
+        FAIL=$((FAIL+1))
+        return 1
+      fi
+    fi
   fi
 
   echo "✓ PASS: $test_name (lint result: $lint_passed, exit $lint_exit)"
@@ -123,10 +150,30 @@ run_discriminating_test \
 # RED Mutations — markdown contract with targeted deletions
 # ═════════════════════════════════════════════════════════════════════════════
 
-# Helper: create RED mutant (remove attribution_confidence row from §3)
+# Helper: create RED mutant — SURGICAL attribution-invariant removal (F-CR-003).
+#
+# 기존 mutant 은 contract 를 2줄로 붕괴시켜 RED 가 ~8 이유(frontmatter parse 실패 / 전
+# heading 부재 / 19 field 전멸 / ...)로 fire → check (d) attribution invariant 가
+# 실제로 작동하는지 변별 불가 (non-discriminating). 이를 surgical single-purpose
+# 변형으로 교체: attribution_confidence 의 **invariant content (enum 3값 + default
+# unattributed + literal)만** 제거하고 나머지 contract 구조(frontmatter / 4 heading /
+# 19 field name cell / agent_type semi-open / event_type / idempotency / opt-in)는
+# 전부 보존한다. 결과 lint RED 는 **오직 check (d)** 만 fire → check (d) 가 깨지면
+# TC-2 가 false PASS 로 flip 하여 회귀를 잡는다 (genuine mutation discrimination).
+#
+# 변형 4 line (attribution invariant token만 표적):
+#   (1) §3 yaml `values: [attributed, unattributed, unsupported]` 라인 제거
+#   (2) §3 yaml `default: unattributed` 라인 제거
+#   (3) §2 table attribution_confidence row 의 enum/default 명시구를 placeholder 로 치환
+#       (단 `| \`attribution_confidence\` |` field-name cell 은 보존 → check (c) PASS 유지)
+#   (4) 산재 enum literal (frontmatter / example row / degradation) 전역 제거 → enum literal 0
 create_red_mutant_missing_attribution() {
-  # Read contract, remove attribution_confidence subsection (from "attribution_confidence:" to next "  [a-z_]*:")
-  sed '/^  attribution_confidence:/,/^  [a-z_]*:/!d; /^  attribution_confidence:/,/^  [a-z_]*:/{/^  attribution_confidence:/!{/^  [a-z_]*:/!d;};}' "$CONTRACT_GREEN"
+  sed -E \
+    -e '/^    values: \[attributed, unattributed, unsupported\]/d' \
+    -e '/^    default: unattributed/d' \
+    -e 's/`\{attributed, unattributed, unsupported\}`\. \*\*default = `unattributed`\*\*[^|]*/(enum 설명 제거됨) /' \
+    -e 's/(attributed|unattributed|unsupported)//g' \
+    "$CONTRACT_GREEN"
 }
 
 # Helper: create RED mutant (remove unknown-agent fallback from agent_type definition)
@@ -142,7 +189,9 @@ run_discriminating_test \
   "$CONTRACT_RED_ATTR" \
   "inline" \
   "RED" \
-  "Mutation-1: attribution_confidence field removed from §3 (contract allow-list violation)"
+  "Mutation-1 (surgical): attribution invariant content 제거 — RED 는 오직 check (d) 만 fire" \
+  '\(d\) attribution_confidence' \
+  '\(a\) |\(b\) §|\(c\) '
 
 # Mutation-2: Remove unknown-agent fallback declaration (agent_type semi-open semantics violated)
 CONTRACT_RED_UNKNOWN=$(create_red_mutant_no_unknown_agent)

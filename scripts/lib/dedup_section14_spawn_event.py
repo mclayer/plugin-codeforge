@@ -234,6 +234,7 @@ def reconcile(story_path, ledger_path, repo_root):
     story_key = _infer_story_key(story_path)
     rows = _read_ledger_rows(ledger_path)
     rows = _dedup_rows(rows)
+    physical_row_count = len(rows)  # story_key filter 적용 전 물리 row 수 (vacuous 판정 원천)
     ledger_lanes, row_count = _extract_ledger_lanes(rows, story_key)
 
     # spawn-event 에 있는 lane 중 §14 에 없는 것 = mismatch
@@ -241,13 +242,40 @@ def reconcile(story_path, ledger_path, repo_root):
     comparable = {l for l in ledger_lanes if l != "없음"}
     missing_in_section14 = sorted(comparable - section14_lanes)
 
-    status = "mismatch" if missing_in_section14 else "consistent"
+    # ── F-CR-002 (P1) 수정: silent-vacuous "consistent" 회피 ───────────────────
+    # SubagentStop trigger 에 story_key/lane_label source 부재 → append 되는 row 가
+    # story_key="" / lane_label="없음" (hooks/subagent-stop F-CR-002 note — 플랫폼 한계).
+    # 이 경우 두 단계로 comparable 가 비어버린다:
+    #   (1) story_key filter (_extract_ledger_lanes line 200) 가 story_key="" row 를 전부
+    #       제외 → row_count(post-filter) = 0.
+    #   (2) lane_label="없음" 은 comparable 에서 추가 제외.
+    # 기존 로직은 이 둘 어느 경로로든 comparable 가 비면 무조건 "consistent" 를 반환했다 —
+    # reconcile 가 실제로 ledger 의 물리 row 와 아무것도 대조하지 못한 상태를 정합 PASS 로
+    # 위장하는 silent-vacuous gate.
+    # → **물리 row 는 있으나(physical_row_count > 0) comparable lane 이 0** 인 경우를
+    #   'vacuous' status 로 명시 분리한다 (정합도 mismatch 도 아닌 '판정 불가' 3번째 상태).
+    #   물리 row 가 0 (ledger 빈 파일 / telemetry opt-in off) 인 경우는 vacuous 아님 —
+    #   대조할 대상 자체가 없는 정상 consistent.
+    #   lane-context writer (비-없음 lane_label + story_key 주입 채널) 가용 전까지 본 gate
+    #   는 meaningful reconcile 불가임을 정직하게 표기 (ADR-119 검증-후-단언).
+    # NOTE(설계 회부 표식): "dedup gate 를 lane-context writer 가용 시점까지 명시 defer
+    #   할지 / vacuous 를 warning-tier 로 둘지" = 설계 결정 → ArchitectPLAgent 회부
+    #   (Orchestrator 경유, Change Plan §8 갱신 후보). 본 수정은 silent-vacuous 제거의
+    #   mechanical 최소 변경.
+    if missing_in_section14:
+        status = "mismatch"
+    elif physical_row_count > 0 and not comparable:
+        status = "vacuous"
+    else:
+        status = "consistent"
+
     return {
         "status": status,
         "section14_lanes": sorted(section14_lanes),
         "ledger_lanes": sorted(ledger_lanes),
         "missing_in_section14": missing_in_section14,
         "ledger_row_count": row_count,
+        "physical_row_count": physical_row_count,
         "error": None,
     }
 
@@ -286,6 +314,25 @@ def cmd_check(args):
         print(
             "  advisory (ADR-042 §결정 13 AC — warning tier, 비차단). "
             "§14 에 누락 lane evidence 추가 또는 spawn-event lane_label 정정 검토."
+        )
+        sys.exit(1)
+
+    # ── F-CR-002 (P1): vacuous = 판정 불가 (silent "consistent" 위장 금지) ──────
+    if result["status"] == "vacuous":
+        print(
+            "::warning::dedup-section14-spawn-event: VACUOUS — "
+            "물리 ledger row %d 개 존재하나 §14 와 대조 가능한 lane 0 "
+            "(story_key='' filter 제외 + lane_label='없음' fallback). "
+            "meaningful reconcile 불가 (정합 PASS 아님)."
+            % result.get("physical_row_count", 0)
+        )
+        print(
+            "  원인: SubagentStop trigger 에 story_key/lane_label source 부재 "
+            "(hooks/subagent-stop F-CR-002 note). lane-context writer 가용 시 해소."
+        )
+        print(
+            "  advisory (warning tier, 비차단). 설계 회부: dedup gate 의 명시 defer "
+            "여부 = ArchitectPLAgent 판정 대상."
         )
         sys.exit(1)
 

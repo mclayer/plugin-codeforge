@@ -207,12 +207,32 @@ elif [ -f "scripts/lib/append_spawn_event.py" ]; then
 fi
 
 # spawn-event append 실행 (append_spawn_event.py 가 opt-in 자체를 gate 함)
+#
+# ── F-CR-001 (P0) 수정: --ledger-path 절대 전달 금지 ─────────────────────────
+# ${LEDGER_FILE} = stop-event.jsonl (stop-event 전용 경로). 이를 spawn append 에
+# 넘기면 spawn-event-v1 row 가 stop-event.jsonl 에 cross-write 되어:
+#   (1) contract 경로 .claude/ledger/spawn-event.jsonl 가 미생성 → replay/dedup 가
+#       default spawn-event.jsonl(빈 파일) 을 읽어 read stack 死.
+#   (2) stop-event.jsonl 에 두 schema(stop-event-v1 + spawn-event-v1) row 가 혼입.
+# → --ledger-path arg 를 제거해 append_spawn_event.py 의 _resolve_storage_path()
+#   default(${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl) 가 적용되게 한다.
+#   (append_spawn_event.py 가 CLAUDE_PROJECT_DIR 를 직접 env 에서 읽음 — 본 hook 환경
+#   에 이미 export 돼 있어 추가 전달 불요.)
+#
+# ── F-CR-002 (P1) note: story_key / lane_label 은 SubagentStop trigger 에 부재 ──
+# SubagentStop hook 가용 source = CLAUDE_SESSION_ID / CLAUDE_PROJECT_DIR /
+# CLAUDE_PLUGIN_ROOT env + payload(stop_reason / subagent_completed /
+# subagent_type|agent_type / agent_id) 뿐. story_key / lane_label 은 env·payload
+# 어디에도 없음 (sibling append_stop_event.py 도 동일하게 미수령 — 플랫폼 한계).
+# → spawn append 에 --story-key / --lane-label 미전달. 결과 row 는 story_key=""
+#   / lane_label="없음" (append_spawn_event default fallback). lane-context writer
+#   가용 시점까지 dedup gate 의 silent-vacuous 회피는 dedup 측에서 처리
+#   (dedup_section14_spawn_event.py vacuous status — F-CR-002 대응).
 if [ -n "$APPEND_SPAWN_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
   "$PYTHON_CMD" "$APPEND_SPAWN_SCRIPT" \
     --agent-type "${AGENT_TYPE}" \
     --agent-id "${AGENT_ID}" \
     --session-id "${SESSION_ID}" \
-    --ledger-path "${LEDGER_FILE}" \
     2>/dev/null || true
 fi
 
