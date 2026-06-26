@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install PyYAML (helper self-test 의존)
+        run: python3 -m pip install --user pyyaml
+
       - name: Run trigger-expr truth-table self-test (TC-6~11 + baseline — CFP-2252 F5)
         run: |
           # stdlib only — node 의존 0 (self-host 안전). 11 truth-table case 평가.
@@ -47,5 +50,5 @@ jobs:
 
       - name: Run helper YAML validation self-test (TC-HELPER-1~8 — CFP-2423 §8.3)
         run: |
-          # stdlib only. 8 fixture case: repos[] 구조 + 정규화 + 편집 에러 대응
+          # PyYAML 의존 (위 Install PyYAML step). 8 fixture case: repos[] 구조 + 정규화 + 편집 에러 대응
           python3 scripts/lib/workflow_story_init_project_config_repos.py --self-test
