@@ -13,6 +13,8 @@
 #                (multi-line amendment_log block 다음 sibling live `description:` STALE 까지 silent 면제 = false-negative).
 #  - Mutation-4: 축⑤ counterfactual 정규식 over-broaden(`만약` 가정 마커 anchor 제거 → 모든 lane-count 토큰 면제)
 #                → F-COUNTERFACTUAL-NEG RED (`만약` 부재 단독 `9 레인` silent 면제 = false-negative).
+#  - Mutation-5: ordinal lookbehind 가드 제거(F-CR-2426-P2, `(?<![0-9])([6-9])번째 lane` → `([6-9])번째 lane`)
+#                → F-GUARD-1 RED (`16번째 lane` leading-digit `6` false-FLAG = 과검출).
 #
 # Exit code:
 #  0 = all tests pass (discriminating test validates lint)
@@ -164,6 +166,13 @@ run_test "F-DUAL-1 within-line 이중토큰" \
 run_test "F-DUAL-2 dual + 별 라인 잔여 stale" \
   "$(printf '세션이 8 lane plugin 의 에이전트를 spawn.\n현재 작업레인은 9 레인 으로 구성된다.\n')" \
   yes 1 "한 라인 8 lane plugin (면제) + 별 라인 9 레인 (검출) → FLAG (잔여만, AC-5 엣지)"
+
+echo ""
+echo "── F-GUARD (leading-digit ordinal lookbehind 가드 — F-CR-2426-P2) ──"
+
+run_test "F-GUARD-1 leading-digit ordinal" \
+  '본 항목은 16번째 lane 항목이자 26번째 lane 후보 (ordinal 번호, lane count 단언 아님).' \
+  no 0 "16번째 lane / 26번째 lane (leading-digit ordinal) → no-FLAG (lookbehind 가드, 가드 제거 시 RED)"
 
 echo ""
 echo "── F-NEG (negation) ──"
@@ -331,6 +340,15 @@ mutate_and_check "Mutation-4 (counterfactual over-broaden)" \
   '현재 작업레인은 9 레인 으로 운영 중이다 (만약 마커 부재 단독 현재-상태 단언).' \
   yes "counterfactual 정규식 over-broaden(가정 마커 제거 → 일반 lane-count 면제) 시 단독 9 레인(F-COUNTERFACTUAL-NEG) silent 면제 = false-negative RED"
 
+# Mutation-5: ordinal lookbehind 가드 제거 (F-CR-2426-P2) → F-GUARD-1 false-FLAG RED.
+#   `(?<![0-9])([6-9])번째 lane` → `([6-9])번째 lane` 으로 가드 제거 시 `16번째 lane` 의 leading-digit
+#   `6` 이 false-FLAG → F-GUARD-1(no-FLAG 기대)이 과검출 RED.
+mutate_and_check "Mutation-5 (ordinal 가드 제거)" \
+  'r"(?<![0-9])([6-9])번째\s{0,3}lane"' \
+  'r"([6-9])번째\s{0,3}lane"' \
+  '본 항목은 16번째 lane 항목이자 26번째 lane 후보 (ordinal 번호, lane count 단언 아님).' \
+  no "ordinal lookbehind 가드 제거 시 16번째 lane leading-digit false-FLAG(F-GUARD-1 과검출) = RED"
+
 # ─────────────────────── 종합 ───────────────────────────────────────────────────
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -341,5 +359,5 @@ if [ "$FAIL" -gt 0 ]; then
   echo "✗ self-test FAILED (lint 결함 또는 mutation 생존 — 회귀 차단)"
   exit 1
 fi
-echo "✓ self-test PASSED (전 fixture + 4 mutation kill — discriminating power 입증)"
+echo "✓ self-test PASSED (전 fixture + 5 mutation kill — discriminating power 입증)"
 exit 0

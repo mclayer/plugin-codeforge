@@ -88,7 +88,6 @@ SELF_EXCLUDE_PATHS = (
     "scripts/check-lane-count-ssot.sh",
     "scripts/test-check-lane-count-ssot.sh",
     ".github/workflows/lane-count-ssot.yml",
-    "templates/github-workflows/lane-count-ssot.yml",
 )
 
 
@@ -99,8 +98,9 @@ SELF_EXCLUDE_PATHS = (
 _RE_HANGUL_LANE = re.compile(r"(?<![0-9])([6-9])\s{0,3}레인")
 # 한글 lane 표기 (개-form): `레인 5개`·`레인 8개`
 _RE_HANGUL_LANE_GAE = re.compile(r"레인\s{0,3}([5-9])개")
-# 영문 표기: `9번째 lane`
-_RE_ENG_ORDINAL_LANE = re.compile(r"([6-9])번째\s{0,3}lane")
+# 영문 표기: `9번째 lane` (앞에 숫자 비인접 — `16번째 lane`/`26번째 lane` 류 leading-digit
+#   false-FLAG 차단, 한글형 `_RE_HANGUL_LANE` 가드 대칭화. F-CR-2426-P2)
+_RE_ENG_ORDINAL_LANE = re.compile(r"(?<![0-9])([6-9])번째\s{0,3}lane")
 
 _DETECT_PATTERNS = [_RE_HANGUL_LANE, _RE_HANGUL_LANE_GAE, _RE_ENG_ORDINAL_LANE]
 
