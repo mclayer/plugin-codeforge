@@ -13,7 +13,7 @@
 # Cross-platform: Windows Git Bash / macOS / Linux
 #
 # Usage:
-#   bash scripts/check-codeforge-version-drift.sh           # 9 plugin 모두 검사
+#   bash scripts/check-codeforge-version-drift.sh           # 10 plugin 모두 검사 (codeforge 9 + codex)
 #   bash scripts/check-codeforge-version-drift.sh --plugin codeforge  # 특정 plugin 만
 #   bash scripts/check-codeforge-version-drift.sh --json    # machine-readable JSON
 #
@@ -41,8 +41,9 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 2
 fi
 
-# Plugin → marketplace 매핑 (11 entry — codeforge 9 plugin + codex + superpowers)
+# Plugin → marketplace 매핑 (10 entry — codeforge 9 plugin + codex)
 # CFP-1219: codeforge-deploy + codeforge-deploy-review 추가 (ADR-087/088, CFP-1059 S2/S3 resolved)
+# CFP-2433: superpowers 엔트리 제거 (CFP-2249/ADR-122 의존 0 + 실 source .version 부재)
 declare -A PLUGIN_MARKETPLACE=(
   [codeforge]="mclayer/marketplace"
   [codeforge-requirements]="mclayer/marketplace"
@@ -54,7 +55,13 @@ declare -A PLUGIN_MARKETPLACE=(
   [codeforge-deploy]="mclayer/marketplace"          # ADR-087 Deploy lane (CFP-1219 활성)
   [codeforge-deploy-review]="mclayer/marketplace"   # ADR-088 Deploy Review lane (CFP-1219 활성)
   [codex]="openai-codex/marketplace"
-  [superpowers]="claude-plugins-official/marketplace"
+)
+
+# CFP-2433: registry-name → GitHub source repo override (registry name ≠ source repo 인 경우만 등재).
+# 키 = registry name (= ${mp%/marketplace} = cache dir 명). known_marketplaces.json SSOT 정적 스냅샷.
+# marketplace_version() 안에서만 consult — installed_version()/install hint 의 cache-key 파생 무손상.
+declare -A MARKETPLACE_REPO=(
+  [openai-codex]="openai/codex-plugin-cc"
 )
 
 # Single plugin filter (--plugin <name>)
@@ -120,7 +127,10 @@ installed_version() {
 # Fetch marketplace latest version
 marketplace_version() {
   local plugin="$1" mp="$2"
-  gh api "repos/${mp}/contents/.claude-plugin/marketplace.json" --jq '.content' 2>/dev/null \
+  # CFP-2433: registry name ≠ GitHub source repo 인 경우 override 맵 consult (codex 등). 미등재 = $mp fallback (mclayer 동형).
+  local registry="${mp%/marketplace}"
+  local repo="${MARKETPLACE_REPO[$registry]:-$mp}"
+  gh api "repos/${repo}/contents/.claude-plugin/marketplace.json" --jq '.content' 2>/dev/null \
     | base64 --decode 2>/dev/null \
     | jq -r --arg name "$plugin" '.plugins[] | select(.name==$name) | .version' 2>/dev/null
 }
