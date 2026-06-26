@@ -189,8 +189,30 @@ codeforge:
         path: <string>                  # role=implementation 시 required, sibling checkout 위치
         github: <string>                # role=implementation 시 required (예: "mclayer/mctrader-data")
         story_dir: <string>             # default: "docs/stories", optional
-        components:                     # role=implementation 시 권장 (target repo fallback)
+        components:                     # role=implementation 시 권장 (story-init.yml S3 component→owner_repo 라우팅 실 source)
           - <string>                    # 예: "data", "pipeline"
+          # CFP-2423 / ADR-069 Amendment 1 (Phase 2) — Component-based repo routing
+          #
+          # 동작:
+          #   - story-init.yml 의 "Route component to owner repo" step 이 ### Component 값을 파싱
+          #   - 정규화(lowercase+trim, 매칭 시점만) 후 repos[].components[] 로 매핑
+          #   - 1:1 매핑 → owner_repo=target (Story file 생성 repo)
+          #   - 0 매핑 / 미매핑 → hub fallback (story_ssot_repo 또는 GITHUB_REPOSITORY)
+          #   - N≥2 매핑 (component 중복 소유) → ESCALATE (fail-closed, Issue comment + workflow exit 1)
+          #
+          # 저장값 보존 원칙:
+          #   - project-config-schema.md + 라벨(component:<원문>) + overlay 값: 원문 보존
+          #   - 매칭 비교 시점만: 정규화(lowercase+trim)
+          #
+          # Topology validation:
+          #   - repo_topology.responsibilities[].owner_repo 와 라우팅 결과(owner_repo) 대조 (ADR-131 소유레포 SSOT)
+          #   - 불일치 시: surface(warning/notice), hard-block 아님 (AC-5)
+          #   - topology applicable!=true / 미주입 → 대조 skip, PASS (AC-6)
+          #   - multi-mapping + 중복소유 검출 → ADR-131 메타불변식 ③ 정합
+          #
+          # Backward compat:
+          #   - repos[] 미선언 시: single-repo hub-flat 모드 유지 (기존 동작 100% 보존)
+          #   - 라벨 부착(component:<원문>), Story frontmatter 생성 무변경
         creates_repo_stories: <bool>    # default: true (governance role 은 false), optional
 
   # [선택] Wrapper plugin version 고정 — 3-way version atomic invariant consumer layer

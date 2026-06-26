@@ -127,6 +127,63 @@ jobs:
             echo "::notice::generic consumer detected (project.name=$project_name) — local write branch active (AC-5 정합)"
           fi
 
+          # CFP-2423 / ADR-069 Amendment 1 (Phase 2) — multi-repo component routing (additive branch)
+          # Extract codeforge.stories.repos[] and component→owner_repo mapping from project.yaml.
+          # Additive only — backward-compat: single-repo flow unchanged if repos[] absent.
+          #
+          # Routing logic:
+          #   1. Extract repos[] list + codeforge.stories.repo_topology (if present)
+          #   2. Build component→[owner_repos] mapping (duplicate detection for ESCALATE)
+          #   3. Output: routed_target_repo (or hub_fallback), routed_component_source
+          #   4. ESCALATE if component multi-mapped (N≥2 repos claim same component)
+          #
+          # INV-PAT-ROUTE: Upfront precheck of all declared repos[].github write scope
+          # (moved to dedicated pat_precheck_multiRepo step below).
+
+          if command -v yq >/dev/null 2>&1; then
+            # yq read: codeforge.stories.repos[] → for each component, output: component\tgithub
+            # Format: one line per component mapping (not per repo), raw component names (no normalization here)
+            repos_mapping=$(yq -r '.codeforge.stories.repos[]? | select(.github != null) | .github as $g | .components[]? | select(. != "") | . + "\t" + $g' "$cfg" 2>/dev/null || true)
+          else
+            # Python fallback: extract repos[].github + components[]
+            # Format: identical to yq (one line per component, component\tgithub, raw names)
+            repos_mapping=$(CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_project_config_repos.py" 2>/dev/null || true)
+          fi
+
+          # Output raw mapping (parsed later in component routing step)
+          {
+            echo "repos_mapping<<REPOS_EOF"
+            printf '%s\n' "$repos_mapping"
+            echo "REPOS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          # CFP-2423 §3.2 AC-5/AC-6 — repo_topology SSOT 대조 input 추출 (component_routing step 이 소비).
+          # ADR-131 토폴로지 SSOT schema verbatim: repo_topology.applicable(bool) + responsibilities[].owner_repo.
+          # awk-parseable 2 output 으로 emit:
+          #   - repo_topology_applicable: 'true' 일 때만 대조 활성 (AC-5). 그 외(false/미주입/yq부재) = skip(PASS, AC-6).
+          #   - repo_topology_owner_repos: responsibilities[].owner_repo newline-separated 집합 (대조 대상).
+          # NOTE: yq 부재 시 대조 skip (AC-6 PASS 경로로 degrade) — design §3.1#5 (helper 는 repos[] read 만, topology 미포함).
+          if command -v yq >/dev/null 2>&1; then
+            # applicable 값 ('true' 만 활성, default false — schema L608)
+            repo_topology_applicable=$(yq -r '.repo_topology.applicable // false' "$cfg" 2>/dev/null || echo "false")
+            # responsibilities[].owner_repo 집합 (대조 대상). applicable!=true 면 빈값으로 무의미화.
+            if [[ "$repo_topology_applicable" == "true" ]]; then
+              repo_topology_owner_repos=$(yq -r '.repo_topology.responsibilities[]?.owner_repo // empty' "$cfg" 2>/dev/null | grep -v '^$' || true)
+            else
+              repo_topology_owner_repos=""
+            fi
+          else
+            # yq 부재: 대조 skip (AC-6 PASS 경로로 degrade — component_routing step 이 applicable!=true 분기로 처리)
+            repo_topology_applicable="false"
+            repo_topology_owner_repos=""
+          fi
+          echo "repo_topology_applicable=$repo_topology_applicable" >> "$GITHUB_OUTPUT"
+          {
+            echo "repo_topology_owner_repos<<TOPO_OWNERS_EOF"
+            printf '%s\n' "$repo_topology_owner_repos"
+            echo "TOPO_OWNERS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Compute story key (CFP-260 / ADR-036 Option B + CFP-671 / ADR-036 Amendment 1 — title regex precedence + Issue# fallback)
         id: key
         env:
@@ -183,6 +240,51 @@ jobs:
             exit 1
           fi
           echo "::notice::PAT scope 사전검증 PASS — ${STORY_SSOT_REPO} write 가용 (ADR-066 §결정 2 정합)"
+
+      - name: Pre-validate repos[].github write scope (multi-repo component routing — CFP-2423 / ADR-069 Amendment 1, INV-PAT-ROUTE)
+        id: pat_precheck_multirepo
+        if: steps.project_config.outputs.is_codeforge_family == 'true' && steps.project_config.outputs.repos_mapping != ''
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          REPOS_MAPPING: ${{ steps.project_config.outputs.repos_mapping }}
+        run: |
+          # CFP-2423 §3.2 — INV-PAT-ROUTE enforcement (upfront precheck of all repos[].github)
+          # Precheck all declared repos[].github for write scope before component routing (fail-fast).
+          # Extract unique repos from mapping (normalized_component\tgithub format).
+          set -euo pipefail
+
+          # Extract unique github repos from REPOS_MAPPING (tab-separated, 2nd column)
+          REPOS_TO_CHECK=$(printf '%s' "$REPOS_MAPPING" | awk -F'\t' '{print $2}' | sort -u)
+
+          if [[ -z "$REPOS_TO_CHECK" ]]; then
+            # No repos to check — skip
+            echo "::notice::No repos[] declared for component routing — skipping multi-repo PAT precheck"
+            exit 0
+          fi
+
+          # Check each unique repo for write scope (permissions.push)
+          FAILED_REPOS=()
+          while IFS= read -r repo; do
+            [[ -z "$repo" ]] && continue
+            if ! gh api "repos/${repo}" --jq '.permissions.push // false' >/dev/null 2>&1; then
+              echo "::error::PAT 가 ${repo} 접근 불가 — repo access list 또는 scope 확인 (ADR-066 §결정 2)"
+              FAILED_REPOS+=("$repo")
+            else
+              CAN_PUSH=$(gh api "repos/${repo}" --jq '.permissions.push // false' 2>/dev/null || echo "false")
+              if [[ "$CAN_PUSH" != "true" ]]; then
+                echo "::error::PAT 가 ${repo} write 권한 부재 (permissions.push=false) — ADR-066 §결정 2 확인"
+                FAILED_REPOS+=("$repo")
+              fi
+            fi
+          done <<< "$REPOS_TO_CHECK"
+
+          if [[ ${#FAILED_REPOS[@]} -gt 0 ]]; then
+            echo "::error::INV-PAT-ROUTE precheck FAILED — 다음 repos 에 write 권한 부재: ${FAILED_REPOS[*]}"
+            exit 1
+          fi
+
+          echo "::notice::INV-PAT-ROUTE precheck PASS — 모든 repos[].github write 가용"
+          exit 0
 
       - name: Skip if first firing already published (two-stage existence_check — CFP-596 / ADR-013 Amendment 5)
         id: existence_check
@@ -297,6 +399,173 @@ jobs:
                         | sed '/^$/d' | head -1)
           echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
 
+      - name: Route component to owner repo (multi-repo support — CFP-2423 / ADR-069 Amendment 1)
+        id: component_routing
+        if: steps.existence_check.outputs.skip != 'true'
+        env:
+          COMPONENT: ${{ steps.parse.outputs.component }}
+          REPOS_MAPPING: ${{ steps.project_config.outputs.repos_mapping }}
+          IS_CODEFORGE_FAMILY: ${{ steps.project_config.outputs.is_codeforge_family }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
+          REPO_TOPOLOGY_APPLICABLE: ${{ steps.project_config.outputs.repo_topology_applicable }}
+          REPO_TOPOLOGY_OWNER_REPOS: ${{ steps.project_config.outputs.repo_topology_owner_repos }}
+        run: |
+          set -euo pipefail
+
+          # CFP-2423 §3.2 — component → owner_repo routing logic
+          # AC-1: 1:1 mapping → TARGET_REPO=owner_repo
+          # AC-3: 0 mapping (no repos[] or component absent) → fallback to story_ssot_repo/hub
+          # AC-4: N≥2 mapping (component claimed by multiple repos) → ESCALATE + exit 1
+          # AC-5: topology mismatch → surface(warning) + TARGET_REPO=owner_repo (hard-block 아님)
+          # AC-6: repo topology applicable!=true / absent → skip validation, PASS, TARGET_REPO=owner_repo
+
+          ROUTED_TARGET_REPO="$STORY_SSOT_REPO"
+          ROUTED_COMPONENT_SOURCE="hub-fallback"
+          ESCALATE_FLAG="false"
+
+          # Non-codeforge family: fallback to local GITHUB_REPOSITORY (no multi-repo routing)
+          if [[ "$IS_CODEFORGE_FAMILY" != "true" ]]; then
+            echo "component_routed_target_repo=${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=consumer-local" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Empty component or no repos[] declared: fallback
+          if [[ -z "$COMPONENT" || -z "$REPOS_MAPPING" ]]; then
+            echo "component_routed_target_repo=$ROUTED_TARGET_REPO" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=$ROUTED_COMPONENT_SOURCE" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Normalize component (lowercase + trim) for matching
+          COMPONENT_NORMALIZED=$(printf '%s' "$COMPONENT" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;' | tr '[:upper:]' '[:lower:]')
+
+          if [[ -z "$COMPONENT_NORMALIZED" ]]; then
+            # Empty after normalization
+            echo "component_routed_target_repo=$ROUTED_TARGET_REPO" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=$ROUTED_COMPONENT_SOURCE" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Build mapping: normalize each line in REPOS_MAPPING, then match
+          # REPOS_MAPPING format (both yq and python): component\tgithub (raw component names, not normalized)
+          # Normalize component names during matching (lowercase + trim for both sides)
+          # awk script: split each line by tab, normalize $1, compare with COMPONENT_NORMALIZED, collect $2
+          MATCHING_REPOS=$(printf '%s' "$REPOS_MAPPING" | awk -F'\t' \
+            -v comp="$COMPONENT_NORMALIZED" \
+            'NF==2 {
+              comp_raw=$1;
+              github=$2;
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", comp_raw);
+              comp_normalized=tolower(comp_raw);
+              if (comp_normalized == comp) print github
+            }' | sort -u)
+          # CFP-2423 F-CR-2423-P1-3 — count-0 멱등 정규화 (shell grep-c idiom 결함 수정):
+          #   buggy: `grep -c . || echo 0` — MATCHING_REPOS 빈값(AC-3: repos[] 선언 + component 미매핑)일 때
+          #   `grep -c .` 가 stdout '0' + exit 1 동시 → `|| echo 0` 추가 발화 → MATCHING_COUNT="0\n0"(2줄)
+          #   → `[[ "0\n0" -eq 0 ]]` syntax error → if/elif false → else=AC-4 ESCALATE false fall-through.
+          #   fix: 빈값 선분기로 count 를 항상 단일 정수 보장. 비빈값 path 는 grep -c . 가 항상 exit 0(≥1줄).
+          if [[ -z "$MATCHING_REPOS" ]]; then
+            MATCHING_COUNT=0
+          else
+            MATCHING_COUNT=$(printf '%s' "$MATCHING_REPOS" | grep -c .)
+          fi
+
+          if [[ $MATCHING_COUNT -eq 0 ]]; then
+            # AC-3: no mapping — hub fallback
+            echo "component_routed_target_repo=$ROUTED_TARGET_REPO" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=hub-fallback (component=$COMPONENT unmapped)" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [[ $MATCHING_COUNT -eq 1 ]]; then
+            # AC-1: 1:1 mapping — route to owner_repo
+            OWNER_REPO=$(printf '%s' "$MATCHING_REPOS" | head -1)
+            ROUTED_TARGET_REPO="$OWNER_REPO"
+            ROUTED_COMPONENT_SOURCE="component-routed (component=$COMPONENT → $OWNER_REPO)"
+
+            # CFP-2423 §3.2 AC-5/AC-6 — 토폴로지 SSOT 대조 (ADR-131 토폴로지 SSOT).
+            #   applicable==true 시: 라우팅된 owner_repo 가 repo_topology.responsibilities[].owner_repo 집합에
+            #   포함되는지 cross-check.
+            #     - 일치 (집합 안) → TARGET_REPO=owner_repo (AC-1, surface 없음)
+            #     - 불일치 (집합 밖) → ::warning:: surface + TARGET_REPO=owner_repo (AC-5, hard-block 아님)
+            #   applicable!=true / 미주입 (owner_repos 빈값) → 대조 skip (AC-6 PASS).
+            #   검사연극 금지: 불일치는 surface 만, exit 1 차단 없음 (ADR-131 §결정4 / ADR-119).
+            if [[ "$REPO_TOPOLOGY_APPLICABLE" == "true" && -n "${REPO_TOPOLOGY_OWNER_REPOS//[$'\n']/}" ]]; then
+              TOPO_MATCH="false"
+              while IFS= read -r topo_owner; do
+                [[ -z "$topo_owner" ]] && continue
+                if [[ "$topo_owner" == "$OWNER_REPO" ]]; then
+                  TOPO_MATCH="true"
+                  break
+                fi
+              done <<< "$REPO_TOPOLOGY_OWNER_REPOS"
+              if [[ "$TOPO_MATCH" == "true" ]]; then
+                echo "::notice::토폴로지 SSOT 대조 일치 — owner_repo '$OWNER_REPO' ∈ repo_topology.responsibilities[].owner_repo (AC-5 정합)"
+              else
+                # AC-5 — 불일치 surface (hard-block 아님). 라우팅은 그대로 owner_repo 로 진행.
+                echo "::warning::토폴로지 SSOT 대조 불일치 (AC-5) — 라우팅 owner_repo '$OWNER_REPO' 가 repo_topology.responsibilities[].owner_repo 집합에 부재. surface only (hard-block 아님, ADR-131 §결정4). 책임 배치 SSOT 점검 권장."
+                ROUTED_COMPONENT_SOURCE="component-routed (component=$COMPONENT → $OWNER_REPO; topology-mismatch surfaced)"
+              fi
+            fi
+
+            echo "component_routed_target_repo=$ROUTED_TARGET_REPO" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=$ROUTED_COMPONENT_SOURCE" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            # AC-4: N≥2 mapping — ESCALATE
+            REPOS_LIST=$(printf '%s' "$MATCHING_REPOS" | tr '\n' ',' | sed 's/,$//')
+            echo "::warning::component multi-mapping detected — component '$COMPONENT' claimed by multiple repos: $REPOS_LIST (AC-4 ESCALATE)"
+            echo "component_routed_target_repo=" >> "$GITHUB_OUTPUT"
+            echo "component_routed_source=escalate (component=$COMPONENT multi-mapped)" >> "$GITHUB_OUTPUT"
+            echo "component_escalate=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+      - name: Handle component multi-mapping ESCALATE (AC-4)
+        if: steps.component_routing.outputs.component_escalate == 'true'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMPONENT: ${{ steps.parse.outputs.component }}
+          COMPONENT_ROUTED_SOURCE: ${{ steps.component_routing.outputs.component_routed_source }}
+          REPOS_MAPPING: ${{ steps.project_config.outputs.repos_mapping }}
+        run: |
+          set -euo pipefail
+          # CFP-2423 §3.2 AC-4 — multi-mapping ESCALATE (fail-closed + Issue comment)
+          # 자동 single-repo 선택 금지(ambiguous) — user/architect 가 Story scope 명시 후 재트리거 의존.
+
+          # Extract matching repos from REPOS_MAPPING for Issue comment detail
+          # CFP-2423 F-CR-2423-P1-1 — handler awk 정규화 통일 (routing step 과 동치):
+          #   raw `$1 == comp` 는 mixed-case/whitespace component 시 빈 목록 → ESCALATE comment 누락.
+          #   routing step (component_routing) 과 동일 gsub(trim)+tolower 정규화로 통일.
+          COMPONENT_NORMALIZED=$(printf '%s' "$COMPONENT" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;' | tr '[:upper:]' '[:lower:]')
+          MATCHING_REPOS=$(printf '%s' "$REPOS_MAPPING" | awk -F'\t' \
+            -v comp="$COMPONENT_NORMALIZED" \
+            'NF==2 {
+              comp_raw=$1;
+              github=$2;
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", comp_raw);
+              comp_normalized=tolower(comp_raw);
+              if (comp_normalized == comp) print github
+            }' | sort -u)
+
+          ISSUE_BODY_DETAIL=$(printf 'Component multi-mapping ESCALATE (AC-4):\n\nComponent: `%s`\nMatching repos:\n' "$COMPONENT")
+          while IFS= read -r repo; do
+            [[ -z "$repo" ]] && continue
+            ISSUE_BODY_DETAIL="$ISSUE_BODY_DETAIL- $repo"$'\n'
+          done <<< "$MATCHING_REPOS"
+          ISSUE_BODY_DETAIL="$ISSUE_BODY_DETAIL"$'\n'"Story scope 모호성 해소 필요. Story file frontmatter 에 \`story_scope: repo\` + \`repo: <name>\` 명시 후 재트리거하거나, component 값을 1개 repo 만 claim 하도록 project.yaml 조정 후 재시작."
+
+          if ! gh issue comment "$ISSUE_NUMBER" --body "$(printf '%s' "$ISSUE_BODY_DETAIL")"; then
+            echo "::warning::ESCALATE Issue comment 부착 실패 (workflow 는 실패로 진행) — manual review 필요"
+          fi
+
+          echo "::error::Component multi-mapping ESCALATE (AC-4) — component '$COMPONENT' claimed by multiple repos in repos[].components. Story scope 명시 또는 project.yaml 조정 필요."
+          exit 1
+
       - name: Render Story file content
         id: render
         if: steps.existence_check.outputs.skip != 'true'
@@ -315,7 +584,8 @@ jobs:
       - name: Create branch + Story file (codeforge family — cross-repo write)
         if: >
           steps.existence_check.outputs.skip != 'true' &&
-          steps.project_config.outputs.is_codeforge_family == 'true'
+          steps.project_config.outputs.is_codeforge_family == 'true' &&
+          steps.component_routing.outputs.component_escalate != 'true'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
           KEY: ${{ steps.key.outputs.key }}
@@ -323,13 +593,20 @@ jobs:
           TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
           STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
+          COMPONENT_ROUTED_TARGET_REPO: ${{ steps.component_routing.outputs.component_routed_target_repo }}
           CONTENT_B64: ${{ steps.render.outputs.content_b64 }}
           SKIP_BRANCH_CREATE: ${{ steps.existence_check.outputs.skip_branch_create }}
           AUTO_RECOVERED: ${{ steps.existence_check.outputs.auto_recovered }}
         run: |
           set -euo pipefail
           # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
-          TARGET_REPO="${STORY_SSOT_REPO}"
+          # CFP-2423 / ADR-069 Amendment 1 — TARGET_REPO 라우팅 (component routing 결과 사용)
+          # Routing priority: component-routed → story_ssot_repo (hub fallback)
+          if [[ -n "${COMPONENT_ROUTED_TARGET_REPO}" ]]; then
+            TARGET_REPO="${COMPONENT_ROUTED_TARGET_REPO}"
+          else
+            TARGET_REPO="${STORY_SSOT_REPO}"
+          fi
           BRANCH="feat/${KEY}-${SLUG}"
           STORY_PATH="${DOGFOOD_FOLDER}/stories/${KEY}.md"
           COMMIT_MSG="[${KEY}] feat: Story init — §1 verbatim, §2-11 placeholder"
@@ -367,7 +644,8 @@ jobs:
       - name: Create Phase 1 PR (codeforge family — internal-docs PR)
         if: >
           steps.existence_check.outputs.skip != 'true' &&
-          steps.project_config.outputs.is_codeforge_family == 'true'
+          steps.project_config.outputs.is_codeforge_family == 'true' &&
+          steps.component_routing.outputs.component_escalate != 'true'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
           KEY: ${{ steps.key.outputs.key }}
@@ -375,11 +653,18 @@ jobs:
           TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
           STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
+          COMPONENT_ROUTED_TARGET_REPO: ${{ steps.component_routing.outputs.component_routed_target_repo }}
           AUTO_RECOVERED: ${{ steps.existence_check.outputs.auto_recovered }}
         run: |
           set -euo pipefail
           # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
-          TARGET_REPO="${STORY_SSOT_REPO}"
+          # CFP-2423 / ADR-069 Amendment 1 — TARGET_REPO 라우팅 (component routing 결과 사용)
+          # Routing priority: component-routed → story_ssot_repo (hub fallback)
+          if [[ -n "${COMPONENT_ROUTED_TARGET_REPO}" ]]; then
+            TARGET_REPO="${COMPONENT_ROUTED_TARGET_REPO}"
+          else
+            TARGET_REPO="${STORY_SSOT_REPO}"
+          fi
           REPO_OWNER="${TARGET_REPO%%/*}"
           BRANCH="feat/${KEY}-${SLUG}"
 
