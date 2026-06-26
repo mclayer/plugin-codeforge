@@ -463,7 +463,16 @@ jobs:
               comp_normalized=tolower(comp_raw);
               if (comp_normalized == comp) print github
             }' | sort -u)
-          MATCHING_COUNT=$(printf '%s' "$MATCHING_REPOS" | grep -c . || echo 0)
+          # CFP-2423 F-CR-2423-P1-3 — count-0 멱등 정규화 (shell grep-c idiom 결함 수정):
+          #   buggy: `grep -c . || echo 0` — MATCHING_REPOS 빈값(AC-3: repos[] 선언 + component 미매핑)일 때
+          #   `grep -c .` 가 stdout '0' + exit 1 동시 → `|| echo 0` 추가 발화 → MATCHING_COUNT="0\n0"(2줄)
+          #   → `[[ "0\n0" -eq 0 ]]` syntax error → if/elif false → else=AC-4 ESCALATE false fall-through.
+          #   fix: 빈값 선분기로 count 를 항상 단일 정수 보장. 비빈값 path 는 grep -c . 가 항상 exit 0(≥1줄).
+          if [[ -z "$MATCHING_REPOS" ]]; then
+            MATCHING_COUNT=0
+          else
+            MATCHING_COUNT=$(printf '%s' "$MATCHING_REPOS" | grep -c .)
+          fi
 
           if [[ $MATCHING_COUNT -eq 0 ]]; then
             # AC-3: no mapping — hub fallback

@@ -31,7 +31,7 @@ scope:
   - 분기(decide): count 기반 AC-1/3/4 판정
 
 Usage:
-  # self-test (8 truth-table case — TC-ROUTE-1~8):
+  # self-test (13 truth-table case — TC-ROUTE-1~13 + shell count idiom 가드 TC-SHELL-COUNT-0~2):
   python3 scripts/lib/eval_story_init_component_routing.py --self-test
   # single fixture (JSON on stdin):
   echo '{"mapping": "data\tmclayer/mctrader-data", "component": "data"}' \
@@ -378,6 +378,95 @@ TRUTH_TABLE = [
 ]
 
 
+# === CFP-2423 F-CR-2423-P1-3 — shell count idiom 회귀 가드 ===
+# 상위 Python truth-table 는 count 를 len() 로 계산해 workflow 의 shell `grep -c .` idiom 결함을
+# 미모델링했다 (count-0 시 `grep -c . || echo 0` 가 stdout '0' + exit 1 동시 발화 → MATCHING_COUNT='0\n0'
+# 2줄 → `[[ '0\n0' -eq 0 ]]` syntax error → if/elif false → else=AC-4 ESCALATE false fall-through).
+# 본 가드는 workflow 의 실제 count idiom shell 코드를 bash 로 직접 실행해 count-0(빈 MATCHING_REPOS)
+# = AC-3 hub-fallback (ESCALATE 아님) 을 discriminating 검증한다. bash 부재 환경은 skip (non-blocking).
+SHELL_COUNT_CASES = [
+    # (id, matching_repos(awk|sort -u 출력 후), expect_count, expect_branch, note)
+    ("TC-SHELL-COUNT-0", "", 0, "AC-3", "빈 MATCHING_REPOS (repos[] 선언 + component 미매핑) → count 0 → hub-fallback (ESCALATE 아님)"),
+    ("TC-SHELL-COUNT-1", "mclayer/mctrader-data", 1, "AC-1", "1 repo → count 1 → route"),
+    ("TC-SHELL-COUNT-2", "repoA\nrepoB", 2, "AC-4", "2 repo → count 2 → escalate"),
+]
+
+# workflow component_routing step 의 count→분기 로직 발췌 (byte-faithful — story-init.yml 동치).
+# MATCHING_REPOS 는 stdin 으로 주입 (argv 경유 시 newline 이 MSYS/Windows Git Bash 에서 truncate 되는
+# 환경 의존 함정 회피 — Linux CI 는 무관하나 cross-platform 결정성 확보).
+_SHELL_COUNT_SNIPPET = r'''
+set -euo pipefail
+MATCHING_REPOS=$(cat)
+if [[ -z "$MATCHING_REPOS" ]]; then
+  MATCHING_COUNT=0
+else
+  MATCHING_COUNT=$(printf '%s' "$MATCHING_REPOS" | grep -c .)
+fi
+if [[ $MATCHING_COUNT -eq 0 ]]; then
+  echo "${MATCHING_COUNT}|AC-3"
+elif [[ $MATCHING_COUNT -eq 1 ]]; then
+  echo "${MATCHING_COUNT}|AC-1"
+else
+  echo "${MATCHING_COUNT}|AC-4"
+fi
+'''
+
+
+def _find_bash() -> str:
+    """Locate a bash interpreter (Linux/macOS native + Windows Git Bash). 부재 시 빈 문자열."""
+    import shutil
+    for cand in ("bash", "/bin/bash", "/usr/bin/bash"):
+        path = shutil.which(cand) if not cand.startswith("/") else (cand if __import__("os").path.exists(cand) else None)
+        if path:
+            return path
+    return ""
+
+
+def run_shell_count_guard() -> int:
+    """Run the workflow's actual shell count idiom against count-0/1/2 — RED on the buggy idiom.
+
+    bash 부재(예: CI 외 일부 환경) 시 skip (return 0, non-blocking) — CI 는 ubuntu-latest 로 항상 bash 보유.
+    """
+    import subprocess
+    bash = _find_bash()
+    if not bash:
+        print("[SKIP] shell count idiom guard — bash 부재 (non-blocking; CI ubuntu-latest 는 항상 실행)")
+        return 0
+
+    failures = []
+    for case_id, matching_repos, expect_count, expect_branch, note in SHELL_COUNT_CASES:
+        try:
+            proc = subprocess.run(
+                [bash, "-c", _SHELL_COUNT_SNIPPET],
+                input=matching_repos,
+                capture_output=True, text=True, timeout=30,
+            )
+        except Exception as e:  # noqa: BLE001 — guard 실행 자체 실패 = FAIL
+            print(f"[FAIL] {case_id}: shell 실행 예외 {e}")
+            failures.append(case_id)
+            continue
+        out = proc.stdout.strip()
+        # 단일 정수 + 분기 검증. 버그 시 stdout 에 'syntax error' (stderr) + 잘못된 분기.
+        ok = (
+            proc.returncode == 0
+            and "|" in out
+            and out.split("|", 1)[0] == str(expect_count)
+            and out.split("|", 1)[1] == expect_branch
+            and "\n" not in out  # MATCHING_COUNT 가 단일 줄(단일 정수)임을 보장 — '0\n0' 버그 RED
+        )
+        status = "PASS" if ok else "FAIL"
+        print(f"[{status}] {case_id}: expect={expect_count}|{expect_branch} got='{out}' "
+              f"(rc={proc.returncode}, stderr={proc.stderr.strip()[:80]!r}) — {note}")
+        if not ok:
+            failures.append(case_id)
+
+    print(f"\n{len(SHELL_COUNT_CASES) - len(failures)}/{len(SHELL_COUNT_CASES)} shell count idiom guard PASS")
+    if failures:
+        print(f"FAIL (shell count guard): {', '.join(failures)}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def run_self_test() -> int:
     failures = []
     for (
@@ -412,8 +501,14 @@ def run_self_test() -> int:
             failures.append(case_id)
 
     print(f"\n{len(TRUTH_TABLE) - len(failures)}/{len(TRUTH_TABLE)} truth-table case PASS")
-    if failures:
-        print(f"FAIL: {', '.join(failures)}", file=sys.stderr)
+
+    # CFP-2423 F-CR-2423-P1-3 — shell count idiom 회귀 가드 (Python len() 미모델 영역).
+    print("\n--- shell count idiom 회귀 가드 (F-CR-2423-P1-3) ---")
+    shell_rc = run_shell_count_guard()
+
+    if failures or shell_rc != 0:
+        if failures:
+            print(f"FAIL: {', '.join(failures)}", file=sys.stderr)
         return 1
     return 0
 
