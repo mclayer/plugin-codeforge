@@ -8,6 +8,24 @@ carrier_story: CFP-2419
 parent_epic: CFP-2418
 supersedes: null
 amends: null
+amendments: [1]
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2428
+    date: 2026-06-26
+    summary: |
+      declared-marker layer(L1 코드→책임) 신설 (Epic CFP-2418 deferred FU) — §결정 3/4 가 deferred 한
+      "책임 의미단위 깊은 파생 — 마커 시스템 선결" 의 marker layer 실현. L2(책임→레포, CFP-2422) 의
+      sibling layer — 검사 layer disjoint(L1 코드 위치 정합 vs L2 소유레포 정합), join-key=responsibility
+      byte-identical namespace 공유, 합쳐져 L1→L2→L3 transitive 일관성 완성. drift 3종(a unmarked / b
+      marker↔topology 불일치 / c stale marker) = warning-tier(continue-on-error, OPA Gatekeeper
+      enforcementAction 점진 승격 — hard-block 은 별 후속 CFP). 재정의 명문: "의미단위 깊은 파생" 중
+      *의미* 부분은 의미추론=검사연극(ADR-119 위반)이라 불가 판명 → *구조* 일관성+drift 만 기계화,
+      *의미* 정합은 attestation 영구화(review-responsibility 행 d 무변경). ratchet 강화 방향(marker
+      layer 신설 = governance 확장, 약화 surface 0) — is_transitional:false 유지. 신규 ADR 번호 0
+      (Amendment — ADR-RESERVATION 무변경). 신규 영구·CONDITIONAL deputy 0 / RACI R row 0 / axis-disjoint.
+      Phase 1 = 본 Amendment(선언만) / Phase 2(구현 lane) = 스키마 본문 + drift-check 스크립트 +
+      workflow(templates+.github byte-identical) + tests. branch protection 6-tuple 무변경.
 deputy_inputs:
   CodebaseMapper: as-is_roster_mandate_facts_+_ADR-042_876_chief_authority_+_RefactorAgent_46_advisory_boundary
   Refactor: repo-분해_advisory_무축소_경계_확정_(escalation-tier_제안만,_확정은_disjoint)
@@ -18,6 +36,7 @@ deputy_inputs:
 related_stories:
   - CFP-2419  # 본 ADR 신설 carrier (Epic CFP-2418 Story 1 — 선행 Story)
   - CFP-2418  # parent Epic — cross-repo 책임 배치 거버넌스 (wrapper-self)
+  - CFP-2428  # Amendment 1 carrier — declared-marker layer (Epic CFP-2418 deferred FU)
 related_adrs:
   - ADR-069   # multi-repo story key system — repos[].components 예약필드 활성화 source (Amendment 1 동반 발의)
   - ADR-130   # applicability ⊥ closure 메타불변식 게이트 — 상류 토대 (패턴 계보), ⚠ 공백 처리 방향 차이 (layer 분리 명시)
@@ -30,6 +49,7 @@ related_files:
   - archive/adr/ADR-069-multi-repo-story-key-system.md
   - archive/adr/ADR-RESERVATION.md
   - plugins/codeforge-design/agents/ArchitectAgent.md
+  - tests/scripts/test_check-responsibility-topology.sh
 is_transitional: false
 ---
 
@@ -167,6 +187,56 @@ declared↔derived 일관성 모델은 Bazel strict-deps(forward — actual ⊆ 
 ## 해소 기준
 
 N/A — permanent policy (영구 강화 ratchet, 약화 surface 0 — chief authority 확장 + 메타불변식 추가, sunset_justification 비대상 ADR-058 §결정 5).
+
+## Amendment 1 (CFP-2428 — declared-marker layer 신설, Epic CFP-2418 deferred FU)
+
+> [Amendment 1 — carrier CFP-2428, 2026-06-26 KST] §결정 3/4 가 명시 deferred 한 **"책임 의미단위 깊은 파생 — 마커 시스템 선결"** 의 **marker layer(L1 코드→책임)** 를 신설한다. ratchet **강화 방향**(governance 확장 — marker layer 추가) — 약화 surface 0. 본 ADR 의 L2(책임→레포) 메타불변식 게이트(§결정 2/3, CFP-2422)의 **sibling layer**. 신규 ADR 번호 0 (Amendment — ADR-RESERVATION 무변경).
+
+### A1-1 declared-marker layer(L1 코드→책임) 신설 — §결정 3/4 deferred 의 marker layer 실현
+
+§결정 3/4 + Out-of-Scope 가 "책임 의미단위 깊은 파생검증 = 마커 시스템 선결 → deferred follow-up (별 CFP)" 로 미룬 그 **별 CFP = CFP-2428**. 본 Amendment 는 deferred 항목 중 **marker layer 자체**를 신설한다:
+
+- **L1 marker layer = 코드↔책임 marker manifest** — consumer overlay 의 per-repo "경로/모듈 → 책임" 선언 산출물(`repo_topology.responsibility_markers[]`). 본 ADR 의 **L2(책임↔레포 = `repo_topology.responsibilities[]`)** 와 **검사 layer 가 disjoint** — L2 게이트(CFP-2422)는 책임의 *소유레포* 정합(고아/중복/거친파생), L1 게이트(CFP-2428)는 책임의 *코드 위치* 정합(unmarked/불일치/stale). 둘이 합쳐져 **L1→L2→L3(fs) transitive 일관성**을 완성한다 (보강 관계, 중복 0).
+- **join-key = `responsibility` byte-identical namespace 계약** — L1 manifest 의 책임 식별자와 L2 `repo_topology.responsibilities[].responsibility` 가 **byte-identical 동일 namespace**. 이 키가 두 선언 산출물(L1·L2)을 묶는 유일 연결고리이며, drift 검출은 이 키 기준 set 대조로 환원(의미 추론 0 — 문자열 매칭).
+
+### A1-2 재정의 명문 — "의미단위 깊은 파생" 중 *의미* 부분은 검사연극이라 불가, *구조* 일관성만 기계화
+
+§결정 3/4 의 deferred 문구("마커 시스템 선결 → 책임 의미단위 깊은 파생/검증 기계화")는 *의미 정합의 기계 추론*을 약속하는 뉘앙스였으나, CFP-2428 Phase 0 외부도구 조사(ArchUnit·Nx tags·Bazel·CODEOWNERS·dependency-cruiser·CodeQL — source: 6 도구 firsthand 조사) 결과 **코드의 *의미*를 추론해 "이 코드 = 책임 R" 을 자율 귀속하는 도구는 0** 으로 판명. 전부 **사람 선언 마커 + 구조 대조** 방식. 따라서:
+
+- **"의미단위 깊은 검증"의 *의미* = (불가능한) 의미 추론이 아니라 선언마커 transitive 일관성**이다 — L1(코드↔책임 marker manifest) + L2(책임↔레포 topology) + L3(실제 fs 위치)의 transitive 일관성 + drift 검출(실현 가능). 의미 추론(불가·검사연극·ADR-119 위반)이 아님.
+- **honest promise-gap acknowledge (silent drop 아님)**: 본 ADR deferred 문구의 "의미단위 깊은 파생" 중 *구조* 부분만 CFP-2428 이 기계화하고, *의미* 부분("이 책임이 *의미상* 옳은 도메인 레포냐")은 **사람 attestation 으로 영구화**(기계 자동화로 흡수되지 않음). 간극을 조용히 누락하지 않고 명시한다 (ADR-119 정합).
+
+### A1-3 drift 3종 = warning-tier (점진 승격, CFP-2422 동형)
+
+L1 marker drift surface 3종 — 전부 **구조적 사실**(set membership / 문자열 동등 / 경로 존재)이라 기계 단정 가능, false GREEN/RED 0:
+
+- **(a) unmarked** — L2 토폴로지가 선언한 책임 R 이 L1 manifest 에 entry 0 (`R ∈ topology.responsibilities` 이나 `R ∉ manifest`). set-diff `topology.responsibilities − manifest.responsibilities ≠ ∅`.
+- **(b) marker↔topology 불일치** — L1 manifest 의 책임 R 이 가리키는 레포 ≠ L2 `owner_repo[R]`. 문자열 동등 `manifest[R].repo ≠ topology.owner_repo[R]`.
+- **(c) stale marker** — L1 manifest entry 경로/모듈이 L3 실제 fs 에 부재(이동·소멸 코드). 경로 존재 fs-stat `os.path.exists`.
+
+세 종류 모두 **warning-tier(continue-on-error 비차단)** — §결정 3 의 L2 게이트와 동형 점진 승격(OPA Gatekeeper `enforcementAction` warn→deny — source: OPA Gatekeeper). hard-block ratchet 은 증거 축적 후 **별 후속 CFP** (본 Amendment scope = warning 까지). manifest 자체가 stale 될 수 있는 자기적용 함정은 warning-tier 라 *차단 아닌 변경시점 surfacing* 으로 회피 (hard-block 이었다면 manifest 갱신 누락이 무관 PR 을 막는 자기모순 — CFP-2422 동형).
+
+### A1-4 의미정합 attestation 영구화 — review-responsibility 행 (d) 무변경
+
+§결정 4 의 "의미적 정합 = 사람 판정" 은 marker layer 도입 후에도 **무변경**:
+
+- 기계는 *선언 마커의 구조 일관성 + drift 3종* 만 담당. "risk-metrics 책임이 mctrader-engine 에 있는 게 *도메인상* 옳은가" 는 review-responsibility 매트릭스 **attestation 행 (d)**(리뷰어 근거인용)에 영구 위임 — 기계가 단정하면 검사연극(false GREEN/RED, ADR-119 위반).
+- review-responsibility 매트릭스 attestation 행 (d) **무변경** (marker 도입 = 구조 검사 layer 추가일 뿐 의미 판정 자동화 0).
+
+### A1-5 axis-disjoint + ratchet 강화 (약화 surface 0)
+
+§axis-disjoint 5-checklist 동형 자기적용 — marker layer 신설이 기존 roster/게이트 권한을 축소·중복하지 않음:
+
+1. **axis disjoint** — L1 marker layer(**코드↔책임 위치 정합**) ⊥ L2 topology(**책임↔레포 소유 정합**, 본 ADR §결정 2) ⊥ ModuleArch(**레포 *내부* boundary**) ⊥ RefactorAgent(**repo-분해 advocacy**). 검사 명제 비중첩(같은 join-key `responsibility` 공유하나 대조 대상 disjoint).
+2. **deputy 0 / RACI R row 0** — 영구·CONDITIONAL deputy roster 무변경, 신규 advocate 에이전트 0, 신규 RACI R row 0 (marker manifest 스키마 author = ArchitectAgent chief, 기존 §결정 1 토폴로지 SSOT 1급 author 권한의 자연 확장).
+3. **wrapper 메타불변식만 / consumer overlay 주입** — wrapper 는 schema 유효성 + join-key namespace 일관성만 강제, 구체 "어느 경로 = 무슨 책임" 맵은 consumer overlay 주입(consumer-authored, wrapper write 0). **공백/미주입 = PASS**(layer 분리 fail-open, §결정 2 동형).
+4. **ratchet 강화** — marker layer 신설 = governance 확장(강화 방향), 약화 surface 0. `is_transitional: false` 유지 (sunset_justification 비대상, ADR-058 §결정 5).
+
+### A1-6 신규 ADR 0 + Phase 분리
+
+- **신규 ADR 번호 0** — Amendment 이므로 ADR-RESERVATION 무변경 (본 Amendment 발의 시 reservation max = 131 = 본 ADR 자신, 신규 row append 0).
+- **Phase 분리 (ADR-127)**: CFP-2428 Phase 1 = 본 Amendment(선언만). Phase 2(구현 lane) = `docs/project-config-schema.md` marker manifest 스키마 본문 + drift-check 스크립트(`check-responsibility-marker-drift.sh` + `lib/check_responsibility_marker_drift.py`) + warning-tier workflow(templates + `.github` byte-identical) + discriminating tests. branch protection 6-tuple 무변경 invariant 절대 보존(non-required warning-tier).
+- **상세 설계 SSOT** = Change Plan `<internal-docs>/wrapper/change-plans/cfp-2428-responsibility-marker-drift.md` + Story CFP-2428 §3.
 
 ## 관련 파일
 
