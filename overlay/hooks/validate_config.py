@@ -164,6 +164,40 @@ def _is_list_of_repo_entries(v: Any) -> bool:
     return True
 
 
+def _is_list_of_responsibility_entries(v: Any) -> bool:
+    """list of dict, each = 1 책임 배치 entry; 4 필수 필드 + unknown child key reject.
+
+    Schema SSOT: docs/project-config-schema.md repo_topology + ADR-131 §결정2 (4 메타불변식 schema layer).
+    - responsibility: required non-empty string
+    - owner_repo: required non-empty string (메타불변식 ①: 정확히 1 소유레포 — 단일 string field 라 구조적 충족)
+    - rationale: required non-empty string
+    - linked_artifact: required list of non-empty str, len>=1 (메타불변식 ④ — 빈 list = 무효)
+    - 위 4 키 외 자식 키 = unknown reject (per-entry fixed shape).
+    NOTE: cross-entry 고아/중복 검사는 Story 2 carrier — 여기서는 per-entry 구조만 검증.
+    """
+    if not isinstance(v, list):
+        return False
+    allowed = {"responsibility", "owner_repo", "rationale", "linked_artifact"}
+    for entry in v:
+        if not isinstance(entry, dict):
+            return False
+        # required non-empty str: responsibility / owner_repo / rationale
+        for field in ("responsibility", "owner_repo", "rationale"):
+            if not _is_str(entry.get(field)):
+                return False
+        # required: linked_artifact (list of non-empty str, len>=1)
+        if "linked_artifact" not in entry:
+            return False
+        linked = entry["linked_artifact"]
+        if not _is_list_of_str(linked) or len(linked) < 1:
+            return False
+        # unknown child key reject (4 키만 허용)
+        for key in entry:
+            if key not in allowed:
+                return False
+    return True
+
+
 SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # (path, required, type_check, description)
     ("project", True, dict, "project section (mapping)"),
@@ -409,6 +443,24 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("security", False, dict, "security section (mapping), optional"),
     ("security.pat_rotation_cadence_days", False, _is_int,
      "security.pat_rotation_cadence_days (int days — PAT rotation cadence override, 강화 방향만), optional"),
+
+    # -------------------------------------------------------------------------
+    # CFP-2419 / ADR-131 — doc↔validator drift 수정: repo_topology 신규 optional 블록
+    # docs/project-config-schema.md 가 repo_topology 사용을 안내하는데 validator 미등록 →
+    # _check_unknown_keys 가 exit 4 → SessionStart abort. 문서 스키마대로 OPTIONAL 등록.
+    # layer 분리: applicable=false/absent = 메타불변식 게이트 PASS (비차단). consumer-authored only.
+    # 주의: 본 블록 = SCHEMA SELF-CONSISTENCY 만 — 고아/중복/cross-repo 메타불변식 hard-block 은 Story 2.
+    # -------------------------------------------------------------------------
+
+    # [선택] repo_topology — Cross-repo 책임 배치 토폴로지 SSOT
+    # Schema SSOT: docs/project-config-schema.md §repo_topology (~L585-597) · consumer-authored
+    ("repo_topology", False, dict,
+     "repo_topology section (mapping), optional — CFP-2419 / ADR-131 cross-repo 책임 배치 토폴로지 SSOT"),
+    ("repo_topology.applicable", False, _is_bool,
+     "repo_topology.applicable (bool, default false — false/absent = 메타불변식 게이트 PASS), optional"),
+    ("repo_topology.responsibilities", False, _is_list_of_responsibility_entries,
+     "repo_topology.responsibilities (list of {responsibility, owner_repo, rationale, linked_artifact[>=1]} dicts), optional — "
+     "applicable=true 시 per-consumer 책임 배치 맵"),
 ]
 
 
