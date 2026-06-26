@@ -57,6 +57,7 @@ tools: Read
 | 레이어 경계·의존성 방향 준수 | — | 부분(패턴 수준) | 주(실구현) | — | — |
 | Impl Manifest §8.5 ↔ 실제 파일 일치 | — | — | ✅ | — | — |
 | **4 invariants cross-validate (ADR-068 §결정 2 dual-binding)**: I-1 API contract semantic completeness / I-2 cross-module propagation completeness / I-3 unconditional vs conditional guard placement intent / I-4 wording SSOT | ✅ (I-1~I-4 설계 author emit) | ✅ (I-1~I-4 문서 감사) | ✅ (I-1~I-4 구현 cross-validate) | — | — |
+| **소유레포 선언됨 + 리뷰어 근거인용 attestation** (cross-repo 책임 배치 — 기계 hard-block(고아/중복/거친파생)은 메타불변식 게이트(`responsibility-topology-check`)가 처리, 사람은 *의미정합* attestation. ADR-131 §결정4 기계/사람 판정 분리 / ADR-119 검사연극 금지. 직접 선례 = GitHub CODEOWNERS — 파일경로↔owner 구조 매칭만 강제, owner 적절성은 리뷰어 위임) | — | ✅ **merge-blocking** | ✅ **merge-blocking** | — | — |
 | Injection 공격 표면 (SQL·Command·Template·NoSQL) | — | — | — | ✅ | — |
 | **Trust boundary 위반 (외부 입력 검증 누락)** | (설계) | — | — | ✅ (코드 준수 검증) | — |
 | Credential / secret 노출 (hardcoded·log·error) | — | — | — | ✅ (1차: Secret Scanning) | — |

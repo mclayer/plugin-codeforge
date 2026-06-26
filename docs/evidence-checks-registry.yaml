@@ -3047,3 +3047,47 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
     status: Active                  # CFP-2412 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_whitelist_manifest_3way.py + thin wrapper scripts/check-whitelist-manifest-3way.sh + .github single-root workflow + self-contained discriminating test scripts/test-check-whitelist-manifest-3way.sh, 15 fixture mutation 생존 0). 강화 방향 flip (검사 실작동). current_tier:warning 불변.
+
+  # cross-repo 책임 배치 메타불변식 게이트 mechanical wire (CFP-2422 / ADR-131 §결정3/4, Epic CFP-2418 Story 2 — enforcement carrier).
+  # 선행 S1(CFP-2419/ADR-131 — 메타불변식 선언 + repo_topology 스키마 신설) merged-state 위에 본 Story = enforcement(hard-block).
+  - name: responsibility-topology
+    description: |
+      ADR-131 §결정 3/4 신설 (CFP-2422 carrier, Epic CFP-2418 Story 2) — cross-repo 책임 배치
+      메타불변식 게이트. 멀티레포 consumer overlay project.yaml 의 repo_topology 섹션(S1/CFP-2419
+      가 docs/project-config-schema.md 에 신설)을 읽어 메타불변식(ADR-131 §결정2)을 구조적 사실로
+      hard-block. 검사 (exit 3-tier):
+      (a) 고아 (메타불변식②) owner_repo well-formed 빈 리스트(0 entry) = 주인없는 책임 → exit 1.
+      (b) 중복소유 (메타불변식③) 동일 responsibility 가 N≥2 owner_repo → exit 1 (동일 책임·동일 레포
+        2회 선언 = 정규화(set dedup) 후 단일소유면 PASS = 중복선언 ≠ 중복소유).
+      (c) 거친파생 declared 소유레포 집합 ≠ actual 변경레포 집합 = 양방향 차집합(declared\actual /
+        actual\declared) 각각 출력 → exit 1. actual_changed_repos = git diff 기반(offline-first,
+        gh api 0) 또는 --changed-repos sentinel(fixture).
+      layer 분리 fail-open (ADR-131 §결정2 verbatim, ADR-130 fail-closed 와 다른 LAYER): repo_topology
+        미주입 / applicable:false / 빈맵 = 정책값 공백 layer = PASS(exit 0, honest ::notice::).
+      SS-1 경계: owner_repo 키 부재/malformed = exit2(스키마 무효 SETUP, 메타불변식④) / 키 존재+빈
+        리스트(0 entry) = exit1(고아). 기계(구조 hard-block) vs 사람(의미정합 attestation = review-
+        responsibility 매트릭스 행 d) 판정 분리 (ADR-131 §결정4 / ADR-119 검사연극 금지). offline-first
+        (gh 불요). graceful-degradation: data-absence=fail-open(exit 0 honest 분류), setup-error=
+        fail-closed(exit 2). path-filter skip 금지 (Pending trap 차단, 스크립트 EXIT 0 처리).
+    detect_command: bash scripts/check-responsibility-topology.sh  # CFP-2422 Phase 2 mechanical wire — script 실존 (Python SSOT check_responsibility_topology.py + thin wrapper)
+    workflow: .github/workflows/responsibility-topology-check.yml  # templates+.github byte-identical (Story §1 verbatim — ADR-005 정합)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:responsibility-topology
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2422                  # Phase 2 mechanical wire carrier — lint script (Python SSOT) + 2-file workflow + self-test
+    modal_anti_pattern_dictionary: {}  # set 비교 구조 lint, modal 어휘 무관
+    introduced_by: CFP-2422
+    introduced_date: 2026-06-26      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-131              # declaration source — §결정 2/3/4 메타불변식 + 게이트 hard-block + 기계/사람 분리
+    paired_owner_adr: ADR-131       # ArchitectPL packet forward — paired_owner_adr=ADR-131 (Story 지시)
+    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.4 Perf Baseline N/A)
+    recurrence:
+      count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
+    status: Active                  # CFP-2422 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_responsibility_topology.py + thin wrapper scripts/check-responsibility-topology.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-responsibility-topology.sh, 16 fixture mutation 생존 0). current_tier:warning 불변.
