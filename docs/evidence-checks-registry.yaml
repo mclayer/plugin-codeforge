@@ -3091,3 +3091,46 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
     status: Active                  # CFP-2422 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_responsibility_topology.py + thin wrapper scripts/check-responsibility-topology.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-responsibility-topology.sh, 16 fixture mutation 생존 0). current_tier:warning 불변.
+
+  - name: responsibility-marker-drift
+    description: |
+      ADR-131 Amendment 1 신설 (CFP-2428 carrier, Epic CFP-2418 deferred FU) — declared-marker
+      layer(L1 코드→책임) drift 게이트. CFP-2422 메타불변식 게이트(L2 책임→레포)의 sibling layer.
+      멀티레포 consumer overlay project.yaml 의 repo_topology.responsibility_markers 섹션(CFP-2428
+      가 docs/project-config-schema.md 에 sibling 신설)을 읽어, 선언마커(L1)가 토폴로지(L2
+      responsibilities[]) 및 파일시스템(L3)과 transitive 일관성을 유지하는지 구조적으로만 대조.
+      join-key = responsibility byte-identical 동일 namespace (L1·L2 묶는 유일 연결고리). 검사 (exit 3-tier):
+      (a) unmarked  L2 책임 R 이 L1 manifest 에 entry 0 (set-diff topology − markers ≠ ∅) → exit 1.
+      (b) 불일치    repo 지정 marker entry 의 marker.repo ≠ topology.owner_repo[R] (문자열 동등) → exit 1.
+      (c) stale     marker entry path/glob 이 fs 에 부재 (os.path.exists / glob.glob 0건) → exit 1.
+        offline-first (fs-stat only, gh api 0). 역방향 고아(marker 에만 있고 topology 에 없는 R) =
+        ::notice:: 만 (warning 아님, drift 카운트 0 — micro-decision ③).
+      layer 분리 fail-open (ADR-131 §결정2 동형, ADR-130 fail-closed 와 다른 LAYER): repo_topology
+        미주입 / applicable!=true / markers 미주입·빈맵 = 정책값 공백 layer = PASS(exit 0, honest ::notice::).
+      스키마 무효(path/responsibility 키 부재·malformed·yaml 파싱 실패) = exit2(setup-error fail-closed).
+        기계(구조 대조) vs 사람(의미정합 attestation = review-responsibility 매트릭스 행 d) 판정 분리
+        (ADR-131 §결정4 / ADR-119 검사연극 금지). graceful-degradation: data-absence=fail-open(exit 0
+        honest 분류), setup-error=fail-closed(exit 2). path-filter skip 금지 (Pending trap 차단, 스크립트
+        EXIT 0 처리). disjoint from CFP-2422 L2 게이트 (L1 marker vs L2 topology — 같은 부모, 검사 명제 비중첩).
+    detect_command: bash scripts/check-responsibility-marker-drift.sh  # CFP-2428 Phase 2 mechanical wire — script 실존 (Python SSOT check_responsibility_marker_drift.py + thin wrapper)
+    workflow: .github/workflows/responsibility-marker-drift-check.yml  # templates+.github byte-identical (Story §1 verbatim — ADR-005 정합)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:responsibility-marker-drift
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2428                  # Phase 2 mechanical wire carrier — lint script (Python SSOT) + 2-file workflow + self-test
+    modal_anti_pattern_dictionary: {}  # set 비교 구조 lint, modal 어휘 무관
+    introduced_by: CFP-2428
+    introduced_date: 2026-06-26      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-131              # declaration source — Amendment 1 declared-marker layer L1 + drift 3종 + 기계/사람 분리
+    paired_owner_adr: ADR-131       # ArchitectPL packet forward — paired_owner_adr=ADR-131 (Story 지시)
+    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.3 Perf Baseline N/A)
+    recurrence:
+      count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
+    status: Active                  # CFP-2428 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_responsibility_marker_drift.py + thin wrapper scripts/check-responsibility-marker-drift.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-responsibility-marker-drift.sh, drift 3종 + fail-open discriminating mutation 생존 0). current_tier:warning 불변.
