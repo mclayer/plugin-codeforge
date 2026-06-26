@@ -157,20 +157,31 @@ jobs:
             echo "REPOS_EOF"
           } >> "$GITHUB_OUTPUT"
 
-          # Try to extract repo_topology for validation (optional, may be absent)
-          # NOTE: yq 부재 시 repo_topology 대조 skip (AC-6 PASS 경로로 degrade) — design §3.1#5 범위
-          # yq 가용 환경에서만 topology 검증 수행 (AC-5 불일치 warning 생성)
+          # CFP-2423 §3.2 AC-5/AC-6 — repo_topology SSOT 대조 input 추출 (component_routing step 이 소비).
+          # ADR-131 토폴로지 SSOT schema verbatim: repo_topology.applicable(bool) + responsibilities[].owner_repo.
+          # awk-parseable 2 output 으로 emit:
+          #   - repo_topology_applicable: 'true' 일 때만 대조 활성 (AC-5). 그 외(false/미주입/yq부재) = skip(PASS, AC-6).
+          #   - repo_topology_owner_repos: responsibilities[].owner_repo newline-separated 집합 (대조 대상).
+          # NOTE: yq 부재 시 대조 skip (AC-6 PASS 경로로 degrade) — design §3.1#5 (helper 는 repos[] read 만, topology 미포함).
           if command -v yq >/dev/null 2>&1; then
-            repo_topology=$(yq -r '.repo_topology // ""' "$cfg" 2>/dev/null || true)
+            # applicable 값 ('true' 만 활성, default false — schema L608)
+            repo_topology_applicable=$(yq -r '.repo_topology.applicable // false' "$cfg" 2>/dev/null || echo "false")
+            # responsibilities[].owner_repo 집합 (대조 대상). applicable!=true 면 빈값으로 무의미화.
+            if [[ "$repo_topology_applicable" == "true" ]]; then
+              repo_topology_owner_repos=$(yq -r '.repo_topology.responsibilities[]?.owner_repo // empty' "$cfg" 2>/dev/null | grep -v '^$' || true)
+            else
+              repo_topology_owner_repos=""
+            fi
           else
-            # yq 부재: repo_topology skip (CFP-2423 Change Plan §3.1#5 — helper 는 repos[] read 만, topology 미포함)
-            # 이 경우 component_routing step 에서 AC-6 (applicable!=true 또는 미주입) PASS 경로로 처리됨
-            repo_topology=""
+            # yq 부재: 대조 skip (AC-6 PASS 경로로 degrade — component_routing step 이 applicable!=true 분기로 처리)
+            repo_topology_applicable="false"
+            repo_topology_owner_repos=""
           fi
+          echo "repo_topology_applicable=$repo_topology_applicable" >> "$GITHUB_OUTPUT"
           {
-            echo "repo_topology<<TOPO_EOF"
-            printf '%s\n' "$repo_topology"
-            echo "TOPO_EOF"
+            echo "repo_topology_owner_repos<<TOPO_OWNERS_EOF"
+            printf '%s\n' "$repo_topology_owner_repos"
+            echo "TOPO_OWNERS_EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Compute story key (CFP-260 / ADR-036 Option B + CFP-671 / ADR-036 Amendment 1 — title regex precedence + Issue# fallback)
@@ -396,6 +407,8 @@ jobs:
           REPOS_MAPPING: ${{ steps.project_config.outputs.repos_mapping }}
           IS_CODEFORGE_FAMILY: ${{ steps.project_config.outputs.is_codeforge_family }}
           STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
+          REPO_TOPOLOGY_APPLICABLE: ${{ steps.project_config.outputs.repo_topology_applicable }}
+          REPO_TOPOLOGY_OWNER_REPOS: ${{ steps.project_config.outputs.repo_topology_owner_repos }}
         run: |
           set -euo pipefail
 
@@ -463,6 +476,32 @@ jobs:
             OWNER_REPO=$(printf '%s' "$MATCHING_REPOS" | head -1)
             ROUTED_TARGET_REPO="$OWNER_REPO"
             ROUTED_COMPONENT_SOURCE="component-routed (component=$COMPONENT → $OWNER_REPO)"
+
+            # CFP-2423 §3.2 AC-5/AC-6 — 토폴로지 SSOT 대조 (ADR-131 토폴로지 SSOT).
+            #   applicable==true 시: 라우팅된 owner_repo 가 repo_topology.responsibilities[].owner_repo 집합에
+            #   포함되는지 cross-check.
+            #     - 일치 (집합 안) → TARGET_REPO=owner_repo (AC-1, surface 없음)
+            #     - 불일치 (집합 밖) → ::warning:: surface + TARGET_REPO=owner_repo (AC-5, hard-block 아님)
+            #   applicable!=true / 미주입 (owner_repos 빈값) → 대조 skip (AC-6 PASS).
+            #   검사연극 금지: 불일치는 surface 만, exit 1 차단 없음 (ADR-131 §결정4 / ADR-119).
+            if [[ "$REPO_TOPOLOGY_APPLICABLE" == "true" && -n "${REPO_TOPOLOGY_OWNER_REPOS//[$'\n']/}" ]]; then
+              TOPO_MATCH="false"
+              while IFS= read -r topo_owner; do
+                [[ -z "$topo_owner" ]] && continue
+                if [[ "$topo_owner" == "$OWNER_REPO" ]]; then
+                  TOPO_MATCH="true"
+                  break
+                fi
+              done <<< "$REPO_TOPOLOGY_OWNER_REPOS"
+              if [[ "$TOPO_MATCH" == "true" ]]; then
+                echo "::notice::토폴로지 SSOT 대조 일치 — owner_repo '$OWNER_REPO' ∈ repo_topology.responsibilities[].owner_repo (AC-5 정합)"
+              else
+                # AC-5 — 불일치 surface (hard-block 아님). 라우팅은 그대로 owner_repo 로 진행.
+                echo "::warning::토폴로지 SSOT 대조 불일치 (AC-5) — 라우팅 owner_repo '$OWNER_REPO' 가 repo_topology.responsibilities[].owner_repo 집합에 부재. surface only (hard-block 아님, ADR-131 §결정4). 책임 배치 SSOT 점검 권장."
+                ROUTED_COMPONENT_SOURCE="component-routed (component=$COMPONENT → $OWNER_REPO; topology-mismatch surfaced)"
+              fi
+            fi
+
             echo "component_routed_target_repo=$ROUTED_TARGET_REPO" >> "$GITHUB_OUTPUT"
             echo "component_routed_source=$ROUTED_COMPONENT_SOURCE" >> "$GITHUB_OUTPUT"
             echo "component_escalate=false" >> "$GITHUB_OUTPUT"
@@ -490,8 +529,19 @@ jobs:
           # 자동 single-repo 선택 금지(ambiguous) — user/architect 가 Story scope 명시 후 재트리거 의존.
 
           # Extract matching repos from REPOS_MAPPING for Issue comment detail
+          # CFP-2423 F-CR-2423-P1-1 — handler awk 정규화 통일 (routing step 과 동치):
+          #   raw `$1 == comp` 는 mixed-case/whitespace component 시 빈 목록 → ESCALATE comment 누락.
+          #   routing step (component_routing) 과 동일 gsub(trim)+tolower 정규화로 통일.
           COMPONENT_NORMALIZED=$(printf '%s' "$COMPONENT" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;' | tr '[:upper:]' '[:lower:]')
-          MATCHING_REPOS=$(printf '%s' "$REPOS_MAPPING" | awk -F'\t' -v comp="$COMPONENT_NORMALIZED" '$1 == comp { print $2 }' | sort -u)
+          MATCHING_REPOS=$(printf '%s' "$REPOS_MAPPING" | awk -F'\t' \
+            -v comp="$COMPONENT_NORMALIZED" \
+            'NF==2 {
+              comp_raw=$1;
+              github=$2;
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", comp_raw);
+              comp_normalized=tolower(comp_raw);
+              if (comp_normalized == comp) print github
+            }' | sort -u)
 
           ISSUE_BODY_DETAIL=$(printf 'Component multi-mapping ESCALATE (AC-4):\n\nComponent: `%s`\nMatching repos:\n' "$COMPONENT")
           while IFS= read -r repo; do
