@@ -616,6 +616,17 @@ repo_topology:
       rationale: <string>            # required, 배치 근거 (왜 이 레포가 소유하나 — 도메인 귀속 서술)
       linked_artifact:               # required, ≥1 — 연결 작업단위/ADR/change-plan 링크 (배치 결정 추적성)
         - <string>                   # e.g. "CFP-2418" / "ADR-131" / "wrapper/change-plans/cfp-2419-...md" — 최소 1개 필수
+
+  # ── 신설 (L1 코드→책임) — CFP-2428 / ADR-131 Amendment 1 (Epic CFP-2418 deferred FU) ──
+  responsibility_markers:            # [선택] applicable=true 시 per-repo 코드→책임 마커 manifest (배열).
+                                     # 미주입/빈 = PASS (fail-open, L2 responsibilities[] 동형). consumer-authored, wrapper write 0.
+                                     # join-key = responsibility (아래) ↔ repo_topology.responsibilities[].responsibility byte-identical 동일 namespace.
+    - path: <string|glob>            # required, 경로 또는 모듈 glob (예: "engine/src/risk/**", "packages/order/*").
+                                     #   파일별 *언어 주석* 아님 — per-repo 구조화 매핑 (polyglot-safe, AC-5).
+      responsibility: <string>       # required, join-key — repo_topology.responsibilities[].responsibility 와
+                                     #   byte-identical 동일 namespace 의무 (AC-1). 의미 내용 검사 안 함 (구조 대조만).
+      repo: <string>                 # [선택] 이 마커가 속한 레포 (예: "mclayer/mctrader-engine"). 미지정 시
+                                     #   불일치(b) 검사 비대상(역방향 추론 안 함). 지정 시 topology.owner_repo[R] 와 문자열 대조.
 ```
 
 - **secret 분류** (SecurityArch §7.1 정합):
@@ -694,6 +705,31 @@ Cross-repo **책임 배치(responsibility placement)** 토폴로지 SSOT 의 con
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). 토폴로지 SSOT *스키마 문서*(본 섹션) author = ArchitectAgent(chief, ADR-131 §결정1 — repo-level 배치 1급 author), 그러나 consumer 의 *실 값*(`responsibilities[]` 맵)은 consumer overlay 가 작성 — wrapper agent 는 값 write 0 (메타불변식 게이트 = read-only compare-only).
 
 - **ADR-131 framework cross-ref**: ADR-131 = cross-repo 책임 배치 거버넌스 모델 SSOT (토폴로지 SSOT 1급화 + 메타불변식 게이트 계약 + 기계/사람 판정 분리). 본 `repo_topology` 스키마는 그 모델의 schema-specific instance — overlay 주입형 책임 배치 맵 영역 특화 (vs `branch_protection.applicable` = branch protection 영역 / `aggregate_arch.applicable` = aggregate boundary 영역). disjoint scope — 같은 axis 아님.
+
+### `responsibility_markers` 섹션 설명 (CFP-2428 / [ADR-131](../archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md) Amendment 1, Epic CFP-2418)
+
+`repo_topology` 하위 **declared-marker layer(L1 코드→책임)** 의 consumer overlay 영역. CFP-2422 가 신설한 메타불변식 게이트(L2 책임→레포)의 **sibling layer** — 멀티레포 consumer 가 "이 경로/모듈은 무슨 책임을 구현하는가"를 per-repo 구조화 산출물(marker manifest)로 선언하면, 그 선언이 상위 토폴로지(L2 `responsibilities[]`) 및 실제 파일시스템(L3)과 **transitive 일관성**을 유지하는지 wrapper 가 *구조적으로만* 대조하고 위반 3종을 **warning-tier(continue-on-error 비차단)** 로 surface 한다. **의미 추론 0 / hard-block 0 / 파일별 어노테이션 0** (Story §1 verbatim MVP invariant). 외부 6도구(ArchUnit·Nx tags·Bazel·CODEOWNERS·dependency-cruiser·CodeQL) 전부 책임 *자율 귀속* 0 — 따라서 "의미단위 깊은 검증" = (불가능한)의미 추론이 아니라 **선언마커(L1)↔토폴로지(L2)↔실제 위치(L3) transitive 일관성 + drift 검출**.
+
+- **`repo_topology.responsibility_markers`** (선택, array): `applicable=true` 시 per-repo 코드→책임 마커 manifest. 각 항목 = 1 마커 entry. 필수 2 필드 + 선택 1 필드:
+  - **`path`** (required, string|glob) — 경로 또는 모듈 glob (예: `"engine/src/risk/**"`, `"packages/order/*"`). 파일별 *언어 주석* 아님 — per-repo 구조화 매핑(polyglot-safe, Rust+Python+TS 단일 주석문법 부재 + 유지보수 폭발 회피, AC-5).
+  - **`responsibility`** (required, string) — **join-key**. `repo_topology.responsibilities[].responsibility` 와 **byte-identical 동일 namespace** 의무(AC-1). 의미 내용("이 경로가 정말 그 책임이냐")은 검사 안 함 — 구조적 set 대조만.
+  - **`repo`** (선택, string) — 이 마커가 속한 레포 (예: `"mclayer/mctrader-engine"`). 미지정 시 불일치(b) 검사 비대상(역방향 추론 안 함 — 의미추론 회피). 지정 시 `topology.owner_repo[R]` 와 문자열 동등 대조.
+
+- **drift 3종 (warning-tier — continue-on-error 비차단)**:
+  - **(a) unmarked** — L2 책임 R 이 L1 manifest 에 entry 0 (set-diff `{topology.responsibilities} − {markers.responsibility} ≠ ∅`) → exit 1.
+  - **(b) marker↔topology 불일치** — `repo` 지정된 entry 의 `marker.repo ≠ topology.owner_repo[marker.responsibility]` (문자열 동등) → exit 1.
+  - **(c) stale marker** — manifest entry `path`/glob 이 fs 에 부재 (`os.path.exists` / `glob.glob` 매칭 0건) → exit 1. offline-first(fs only, gh 0).
+  - manifest→topology **역방향 고아**(manifest 에만 있고 topology 에 없는 R) = informational `::notice::` 만(warning 아님, drift 카운트 0 — micro-decision ③).
+
+- **exit 매트릭스 (falsifiable, L2 게이트 동형 5상태)**: `responsibility_markers` 미주입 = **exit 0**(fail-open PASS + honest `::notice::`) / `applicable != true` = **exit 0** / `applicable:true` + 빈 맵 = **exit 0**(스키마 유효성만) / manifest **malformed**(`path`/`responsibility` 키 부재·yaml 파싱 실패) = **exit 2**(setup-error fail-closed) / drift 위반(a/b/c 1+) = **exit 1**(warning, continue-on-error 라 merge 비차단).
+
+- **layer 분리** (ADR-131 §결정2 동형): 공백/미주입/`applicable:false` = **PASS**(consumer 정책 미주입 layer, ADR-130 fail-closed 와 다른 LAYER). frontend-only/단일레포/marker 미도입 consumer 비차단.
+
+- **미정의 시 동작**: `responsibility_markers` 부재 = default 미주입 = PASS. additive only (schema rule §1.1 선택 필드 추가, 기존 mctrader/webapp overlay 무손상 — backward-compat invariant).
+
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). marker manifest *스키마 문서*(본 섹션) author = ArchitectAgent(chief), 그러나 consumer 의 *실 값*(`responsibility_markers[]` 맵)은 consumer overlay 가 작성 — wrapper agent 는 값 write 0 (drift 게이트 = read-only compare-only).
+
+- **L1↔L2 disjoint**: 본 marker layer(L1 코드→책임)는 CFP-2422 메타불변식 게이트(L2 책임→레포)와 **검사 명제 비중첩** — L2 는 책임의 *소유레포 유일성*(고아/중복/거친파생)을 강제하고, L1 은 *코드 위치 정합*(unmarked/불일치/stale)을 surface. 같은 `repo_topology` 부모 + 같은 `responsibility` join-key 를 공유하나 검사 layer disjoint.
 
 ## 3. 예시 (webapp)
 

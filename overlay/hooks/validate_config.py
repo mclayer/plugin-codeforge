@@ -198,6 +198,40 @@ def _is_list_of_responsibility_entries(v: Any) -> bool:
     return True
 
 
+def _is_list_of_marker_entries(v: Any) -> bool:
+    """list of dict, each = 1 책임 마커 entry (L1 코드→책임); path/responsibility 필수 + repo 선택.
+
+    Schema SSOT: docs/project-config-schema.md §repo_topology.responsibility_markers +
+      ADR-131 Amendment 1 (CFP-2428, Epic CFP-2418 deferred FU — declared-marker layer L1).
+    - path: required non-empty string (경로 또는 module glob — 파일별 주석 아님, polyglot-safe AC-5)
+    - responsibility: required non-empty string (join-key — repo_topology.responsibilities[].responsibility
+        byte-identical 동일 namespace 의무 AC-1; 의미 내용 검사 안 함)
+    - repo: optional non-empty string (지정 시 불일치(b) 검사 대상, 미지정 시 비대상 — 역방향 추론 안 함)
+    - 위 3 키 외 자식 키 = unknown reject (per-entry fixed shape).
+    NOTE: cross-entry drift 3종(unmarked/불일치/stale)·join-key 일관성 검사는 drift 게이트 carrier
+      (scripts/lib/check_responsibility_marker_drift.py) — 여기서는 per-entry 구조만 검증.
+    미주입/빈맵 tolerate (optional block — drift fix 선례, L2 _is_list_of_responsibility_entries 동형).
+    """
+    if not isinstance(v, list):
+        return False
+    allowed = {"path", "responsibility", "repo"}
+    for entry in v:
+        if not isinstance(entry, dict):
+            return False
+        # required non-empty str: path / responsibility
+        for field in ("path", "responsibility"):
+            if not _is_str(entry.get(field)):
+                return False
+        # optional: repo (지정 시 non-empty str)
+        if "repo" in entry and not _is_str(entry["repo"]):
+            return False
+        # unknown child key reject (3 키만 허용)
+        for key in entry:
+            if key not in allowed:
+                return False
+    return True
+
+
 SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # (path, required, type_check, description)
     ("project", True, dict, "project section (mapping)"),
@@ -461,6 +495,13 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("repo_topology.responsibilities", False, _is_list_of_responsibility_entries,
      "repo_topology.responsibilities (list of {responsibility, owner_repo, rationale, linked_artifact[>=1]} dicts), optional — "
      "applicable=true 시 per-consumer 책임 배치 맵"),
+
+    # [선택] responsibility_markers — declared-marker layer L1 코드→책임 (CFP-2428 / ADR-131 Amendment 1)
+    # Schema SSOT: docs/project-config-schema.md §repo_topology.responsibility_markers · consumer-authored
+    # 미주입/빈맵 = PASS (fail-open, L2 responsibilities[] 동형). drift 3종 hard-block 은 별 게이트 carrier.
+    ("repo_topology.responsibility_markers", False, _is_list_of_marker_entries,
+     "repo_topology.responsibility_markers (list of {path, responsibility, repo?} dicts), optional — "
+     "applicable=true 시 per-repo 코드→책임 마커 manifest (join-key=responsibility byte-identical namespace)"),
 ]
 
 
