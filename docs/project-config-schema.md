@@ -578,6 +578,22 @@ branch_protection:
                                      # true = lint 가 family[] 안 consumer repo 도 iteration (consumer 측 contexts drift 자동 감지)
     family:                          # enabled=true 시 의무 — 검사 대상 consumer repo list
       - <string>                     # e.g. "mclayer/mctrader-hub" / "mclayer/mctrader-data"
+
+# [선택] Cross-repo 책임 배치 토폴로지 SSOT (CFP-2419 / [ADR-131](archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md), Epic CFP-2418)
+# default = applicable: false (미주입 → 메타불변식 게이트 PASS — frontend-only/단일레포 consumer 비차단)
+# wrapper 는 메타불변식(구조적 사실)만 강제, 구체 "어느 레포가 무엇" 맵은 consumer overlay 가 주입 (Nx @nx/owners 컴파일 모델 — 선언=프로젝트단위/강제=파일단위, source: Nx Enterprise @nx/owners. 개념 인용·채택 도구 아님)
+repo_topology:
+  applicable: <bool>                 # default false. false (또는 미주입) → 메타불변식 게이트 PASS (비차단).
+                                     # true = 멀티레포 consumer 가 책임 배치 맵 주입 → wrapper 메타불변식 검사 대상.
+                                     # "정책값 공백 = PASS" 는 ADR-130 fail-closed(unknown=exit 1)와 다른 LAYER — wrapper 구조검증 vs consumer 정책 opt-in (ADR-131 §결정2).
+
+  responsibilities:                  # applicable=true 시 per-consumer 책임 배치 맵 (배열). 각 항목 = 1 책임.
+                                     # wrapper 는 스키마 유효성(아래 3 필수 필드 존재)만 mechanical check. 맵 내용(어느 레포가 옳은가)은 검사 안 함 (의미 판정 = 리뷰어 attestation, ADR-131 §결정4).
+    - responsibility: <string>       # required, 책임 식별자 (예: "risk-metrics-sharpe-mdd", "order-execution")
+      owner_repo: <string>           # required, 소유레포 (예: "mclayer/mctrader-engine"). 메타불변식: 정확히 1개 (0/N≥2 = 위반).
+      rationale: <string>            # required, 배치 근거 (왜 이 레포가 소유하나 — 도메인 귀속 서술)
+      linked_artifact:               # required, ≥1 — 연결 작업단위/ADR/change-plan 링크 (배치 결정 추적성)
+        - <string>                   # e.g. "CFP-2418" / "ADR-131" / "wrapper/change-plans/cfp-2419-...md" — 최소 1개 필수
 ```
 
 - **secret 분류** (SecurityArch §7.1 정합):
@@ -630,6 +646,32 @@ Consumer 측 main branch protection contexts governance 의 consumer overlay 영
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). `branch-protection-context-parity` lint (CFP-1807 carrier) = read-only compare-only (write surface 0). consumer 가 본 field 등록은 자율 (codeforge 강제 안 함, default `wrapper_only` 보존).
 
 - **ADR-083 framework cross-ref**: ADR-083 = consumer-applicability filter general framework (walker per-step `applicable_to: {consumer/wrapper/both}` filter). 본 `branch_protection.applicable` 4-enum 은 framework 의 schema-specific instance — branch protection 영역 특화 enum (4-way) vs walker filter 영역 일반 enum (3-way). disjoint scope — 두 4-enum 이 같은 axis 가 아님 (walker filter = workflow yml copy 영역, branch protection = consumer repo gh api response 검사 영역).
+
+### `repo_topology` 섹션 설명 (CFP-2419 / [ADR-131](../archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md), Epic CFP-2418)
+
+Cross-repo **책임 배치(responsibility placement)** 토폴로지 SSOT 의 consumer overlay 영역. 멀티레포 consumer(예: mctrader 14 repo)에서 "어느 레포가 무슨 책임을 소유하는가"를 1급 산출물로 격상한다(ADR-131 §결정1). wrapper 는 **메타불변식(구조적 사실)만 강제**하고, 구체 "어느 레포가 무엇" 맵은 consumer overlay 가 주입한다 — `branch_protection.applicable` / `aggregate_arch.applicable` 와 동형 overlay 주입 패턴 (ADR-083 consumer-applicability filter framework instance). 본 섹션은 **Phase 1 declarative-only** — 실 메타불변식 hard-block 검사 스크립트는 Story 2, story-init.yml 라우팅 자동화는 Story 3 carrier (검사 스크립트·required check 0 신설 — 회귀 0 차단).
+
+- **`repo_topology.applicable`** (선택, bool, default `false`): 책임 배치 토폴로지 거버넌스 활성화 여부.
+  - **`false`** (default, 또는 섹션 미주입) — 메타불변식 게이트 **PASS** (비차단). frontend-only / 단일레포 consumer 무손상 (EC-1).
+  - **`true`** — 멀티레포 consumer 가 `responsibilities[]` 맵을 주입 → wrapper 메타불변식 검사 대상.
+
+- **`repo_topology.responsibilities`** (조건부 의무, array): `applicable=true` 시 per-consumer 책임 배치 맵. 각 항목 = 1 책임. 각 항목 필수 3 필드:
+  - **`responsibility`** (required, string) — 책임 식별자.
+  - **`owner_repo`** (required, string) — 소유레포. 메타불변식 ① **정확히 1개**(0개 = 주인없는 책임 위반 / N≥2 = 중복소유 위반).
+  - **`rationale`** (required, string) — 배치 근거(왜 이 레포가 소유하나 — 도메인 귀속 서술). 의미 판정 attestation 의 근거 텍스트.
+  - **`linked_artifact`** (required, array, **≥1**) — 연결된 작업단위/ADR/change-plan 링크 1개 이상 필수(배치 결정 추적성). 0개 = 스키마 무효(메타불변식 ④ 위반).
+
+- **4 메타불변식** (wrapper 강제 대상 — ADR-131 §결정2): ① 모든 책임 정확히 1 소유레포 ② 주인없는 책임 0 ③ 중복소유 0 ④ SSOT 파일 존재 + 스키마 유효. wrapper 는 **구조의 유효성**(위 3 필수 필드 존재 + 4 메타불변식)만 검사하고 **맵 내용**("이 레포가 *의미상* 옳은가")은 검사 안 한다 — 의미 판정 = 리뷰어 근거인용 attestation 요구만(승인 자체는 대신 판단 안 함, 검사연극 금지 ADR-119 정합, ADR-131 §결정4).
+
+- **layer 분리** (ADR-131 §결정2 verbatim): **"정책값 공백 = PASS"** 는 [ADR-130](../archive/adr/ADR-130-applicability-closure-integrity.md) 의 **fail-closed(`unknown` = exit 1)** 와 **다른 LAYER** 이다. ADR-130 fail-closed = *wrapper 구조 검증* layer(미분류 자산 안전 차단), `repo_topology` 의 "공백 PASS" = *consumer 정책값 미주입* layer(opt-in 무손상). `applicable=true` 후 `responsibilities[]` 를 비워도 스키마 유효성만 검사하되 정책 내용 공백은 PASS (EC-2). 모순 아님.
+
+- **미정의 시 동작**: `repo_topology` 섹션 자체가 없으면 default 적용(`applicable: false`). codeforge wrapper 강제 안 함(consumer 자율 — backward-compat invariant). 기존 consumer overlay 영향 0 (additive only — schema rule §1.1 선택 필드 추가, 기존 mctrader/webapp overlay 무손상).
+
+- **유지보수 루프 (변경시점 고아검사)**: 책임을 추가/이동하는 변경은 `repo_topology.responsibilities[]` 갱신을 필수로 한다(새 책임 = SSOT 등재 강제) → SSOT 가 stale prose 로 썩는 것 방지(거짓 GREEN 차단, UC-3). 실 고아검사 hard-block = Story 2 carrier.
+
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). 토폴로지 SSOT *스키마 문서*(본 섹션) author = ArchitectAgent(chief, ADR-131 §결정1 — repo-level 배치 1급 author), 그러나 consumer 의 *실 값*(`responsibilities[]` 맵)은 consumer overlay 가 작성 — wrapper agent 는 값 write 0 (메타불변식 게이트 = read-only compare-only).
+
+- **ADR-131 framework cross-ref**: ADR-131 = cross-repo 책임 배치 거버넌스 모델 SSOT (토폴로지 SSOT 1급화 + 메타불변식 게이트 계약 + 기계/사람 판정 분리). 본 `repo_topology` 스키마는 그 모델의 schema-specific instance — overlay 주입형 책임 배치 맵 영역 특화 (vs `branch_protection.applicable` = branch protection 영역 / `aggregate_arch.applicable` = aggregate boundary 영역). disjoint scope — 같은 axis 아님.
 
 ## 3. 예시 (webapp)
 
