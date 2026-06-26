@@ -8,7 +8,7 @@ tools: Read
 
 > 참조 테이블 skill — lane 진입 전 Story / Epic flow 패턴과 Preflight 체크 요건을 확인하세요.
 
-## 레인 9개 · 단계 정의 (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) — 8 → 9 lane 확장, 요구사항리뷰 신설. 선행 CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
+## 레인 10개 · 단계 정의 (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) — 9 → 10 lane 확장, 요구사항리뷰 신설. 선행 CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
 
 ```
 [Story] 요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]  ← N회 반복
