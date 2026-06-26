@@ -2,7 +2,7 @@
 
 RequirementsReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입하는 요구사항 리뷰 체크리스트. 두 워커가 **공통 입력**으로 사용. SSOT 분리는 [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) 결정.
 
-CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-125-requirements-review-lane.md) 신설 (9번째 lane). 외부지식 충당 3-단계 ([ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md)) 중 **단계③ (깊은 다출처 검증) 의 주 발동 lane**. 본 체크리스트는 요구사항 결론의 **외부사실 의존성** 을 설계 진입 전 독립 검증한다 (작성측 ADR-052 touchpoint #4 self-check (단계②) 와 disjoint axis — ADR-125 결정 4).
+CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-125-requirements-review-lane.md) 신설 (10번째 lane). 외부지식 충당 3-단계 ([ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md)) 중 **단계③ (깊은 다출처 검증) 의 주 발동 lane**. 본 체크리스트는 요구사항 결론의 **외부사실 의존성** 을 설계 진입 전 독립 검증한다 (작성측 ADR-052 touchpoint #4 self-check (단계②) 와 disjoint axis — ADR-125 결정 4).
 
 ## 리뷰 대상 (scope_globs)
 

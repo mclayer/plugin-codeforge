@@ -1549,8 +1549,8 @@ playbook_split_pages:
     split_note: "Step 0 본문 1318 line → 16 sub-§ child page 분산 (이 page = navigation hub only)"
   - id: "4784129"
     parent: 4554754
-    title: "§3.1 9 레인 + Cross-cutting 스폰 순서"
-    source_section: "### 3.1 9 레인 + Cross-cutting 스폰 순서 (요약, CFP-1059 / ADR-087 + ADR-088 — 7 → 9 lane 확장)"
+    title: "§3.1 10 레인 + Cross-cutting 스폰 순서"
+    source_section: "### 3.1 10 레인 + Cross-cutting 스폰 순서 (요약, CFP-1059 / ADR-087 + ADR-088 — 7 → 9 lane 확장 · CFP-2326 / ADR-125 — 9 → 10 lane 확장)"
     source_line_range: [669, 781]
     source_line_count: 113
     estimated_byte_size: 10913

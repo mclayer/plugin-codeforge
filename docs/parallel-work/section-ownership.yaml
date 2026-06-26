@@ -462,7 +462,7 @@ owned_sections:
     # ratchet 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
 
   - file: docs/orchestrator-playbook.md
-    section: "§3.1 9 레인 + Cross-cutting 스폰 순서"
+    section: "§3.1 10 레인 + Cross-cutting 스폰 순서"
     owner_adr: ADR-087
     parallel_edit: locked
     # NOTE (CFP-1059): CFP-1059 Story-1 carrier 가 7 → 9 lane spawn 순서 확장

@@ -31,7 +31,7 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
-**요구사항 리뷰 레인 PL** (9번째 lane, CFP-2326 / ADR-125). RequirementsPLAgent 요구사항 lane 산출 (Story §1-§6 synthesis) 완료 직후, **설계 lane 진입 전** Orchestrator 스폰 (Phase 1 내부 sub-gate — `요구사항 → 요구사항리뷰 → 설계`). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=requirements-review packet 주입해 병렬 리뷰 보고 수집·종합.
+**요구사항 리뷰 레인 PL** (10번째 lane, CFP-2326 / ADR-125). RequirementsPLAgent 요구사항 lane 산출 (Story §1-§6 synthesis) 완료 직후, **설계 lane 진입 전** Orchestrator 스폰 (Phase 1 내부 sub-gate — `요구사항 → 요구사항리뷰 → 설계`). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=requirements-review packet 주입해 병렬 리뷰 보고 수집·종합.
 
 **lane 식별자 = `requirements-review`** (리뷰 lane). 작성 lane `requirements` 와 분리 — 본 lane 은 요구사항 결론의 외부사실 의존성을 독립 검증하는 **producer** 게이트 (ADR-125 결정 4 disjoint axis: 작성측 ADR-052 touchpoint #4 self-check (단계②) ↔ 리뷰측 깊은 검증 (단계③)). 외부지식 충당 3-단계 (ADR-124 결정 1) 중 단계③ 의 주 발동 lane.
 
