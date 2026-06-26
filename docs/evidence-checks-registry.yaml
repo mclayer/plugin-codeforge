@@ -3134,3 +3134,39 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
     status: Active                  # CFP-2428 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_responsibility_marker_drift.py + thin wrapper scripts/check-responsibility-marker-drift.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-responsibility-marker-drift.sh, drift 3종 + fail-open discriminating mutation 생존 0). current_tier:warning 불변.
+
+  # lane-count SSOT 일관성 게이트 (CFP-2426 / ADR-060 Amendment 19 §결정 33 — 17번째 warning-tier entry).
+  # canonical 작업레인 수(10, ADR-125 Amd1)가 governance 문서 전반에서 단조 유지되는지 grep-기반 mechanical 검출.
+  - name: lane-count-ssot-consistency
+    description: |
+      ADR-060 Amendment 19 §결정 33 신설 (CFP-2426 carrier) — canonical 작업레인 수(10)
+      SSOT mechanical consistency 게이트. governance 문서 전반의 현재-상태 lane-count 단언
+      (N 레인 / N번째 lane / 레인 N개, N≠10) 가 canonical=10(ADR-125 Amd1) 과 어긋나는지
+      grep-기반 검출 + 5축 allowlist(within-line 이중토큰 / negation / history / path / counterfactual) false-positive 차단.
+      exit 3-tier: 0=PASS(FLAG 0) / 1=FLAG 1+(warning emit, continue-on-error 비차단) / 2=SETUP.
+      same-file channel-split: live description:/section: 값 = 검출 / date:/source_section:/amendment_log span = 면제.
+      amendment_log span = line-local boolean toggle(enter=헤더 key / exit=dedent·sibling list / 다음 top-level key), multi-line regex 0(ReDoS-safe).
+      counterfactual(가정문 "만약 ... N번째 lane 으로 신설하면 ... 충돌") = 현재-상태 count 단언 아님 → 면제.
+      면제 단위 = syntactic channel(line-prefix key) 또는 counterfactual 마커, 토큰 자체 아님.
+    detect_command: bash scripts/check-lane-count-ssot.sh  # CFP-2426 Phase 2 — thin wrapper (Python SSOT check_lane_count_ssot.py)
+    workflow: .github/workflows/lane-count-ssot.yml  # .github single-root (wrapper-self governance lane-count 자기일관성 검사 — template mirror 미운용, deferred-followup-reconcile 동형)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:lane-count-ssot-consistency
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a)
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2426                  # Phase 2 mechanical wire carrier
+    modal_anti_pattern_dictionary: {}  # grep 토큰 lint, modal 어휘 무관
+    introduced_by: CFP-2426
+    introduced_date: 2026-06-26      # KST
+    owner_adr: ADR-060              # framework host — Amendment 19 §결정 33
+    paired_owner_adr: ADR-060       # (Story 지시 — owner=paired=ADR-060)
+    carrier_adr: ADR-060
+    spec_invariant_measurement_required: false  # 정적 grep lint — runtime spec invariant 0 (§8.3 Perf Baseline N/A)
+    recurrence:
+      count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
+    status: Active                  # 실파일 동반 신설 firsthand — self-entry 자연 PASS (Amd19 §33.D, Python SSOT check_lane_count_ssot.py + thin wrapper scripts/check-lane-count-ssot.sh + .github single-root workflow + self-contained discriminating test scripts/test-check-lane-count-ssot.sh, 22 fixture + 4 mutation 생존 0). current_tier:warning 불변.
