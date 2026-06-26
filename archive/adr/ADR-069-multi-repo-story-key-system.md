@@ -276,6 +276,18 @@ Schema + 문서 + counter mechanism + Story dispatcher 모두 단일 PR.
 - Counter file lock library 의존성 결정 (`filelock` vs custom `fcntl`)
 - Agent prompt multi-repo target 결정 로직 추가 (lane plugin 자체 결정)
 
+## Amendment 1 — `repos[].components` → repo 라우팅 Phase 2 codify (CFP-2419, Epic CFP-2418 Story 1)
+
+> 2026-06-26 KST. carrier = CFP-2419 (Epic CFP-2418 cross-repo 책임 배치 거버넌스 Story 1). ArchitectAgent direct write per ADR-070 / CFP-578 chief author precedent. is_transitional: false 영구 강화 ratchet (예약필드 활성화 codify, 약화 surface 0). frontmatter `amendments[]` array 부재 → 본문 `## Amendment` 섹션 신설 (ADR 표준 in-body 패턴, ADR-064/082 single-block precedent 동형).
+
+**범위**: 기존 `repos[].components` 예약필드(§결정1 schema L82 "implementation 시 권장 — target repo 결정 fallback")의 실 라우팅 격상을 **Phase 2 구현 영역으로 codify** 한다. 본 Amendment 는 *예약필드 활성화 선언* + cross-ref 만 담고, 실 소비 자동화(`story-init.yml` 의 `components` 소비 라우팅)는 **별 carrier = CFP-2419 Epic CFP-2418 Story 3** 가 구현한다 (본 ADR-069 §"Phase 2 (mechanism 구현)" carrier 의 multi-repo 라우팅 sub-scope 구체화).
+
+**소유레포 결정 source cross-ref (ADR-131 토폴로지 SSOT)**: §결정4 priority 1 ("Frontmatter primary — `story_scope: repo` + `repo: <name>`")의 *채움 source* = **ADR-131 토폴로지 SSOT** 다. 즉 Story frontmatter 의 소유레포 값이 어디서 결정되느냐 = ADR-131 이 1급화한 cross-repo 책임 배치 토폴로지 SSOT 가 정본이다. 마찬가지로 §결정4 priority 3 ("Component fallback — `component:*` label → `repos[].components` mapping")의 `components` 라우팅 활성화(Phase 2)도 ADR-131 메타불변식(모든 책임 정확히 1 소유레포 / 중복소유 0)을 따르는 라우팅이어야 한다. 이 cross-ref 없이는 "소유레포 결정 권한"이 069↔131 사이에서 ambiguous — **069 = target repo 결정 *mechanism*(priority 순서·라우팅) / 131 = 소유레포 결정 *source*(토폴로지 SSOT 1급화)** 로 axis disjoint.
+
+**Component multi-mapping 정합 (§결정4 ESCALATE 재사용)**: §결정4 "동일 component 가 N(≥2) repo 의 `components[]` 에 등장 시 → mapping ambiguous → ESCALATE"(L157)는 ADR-131 메타불변식 ③(중복소유 0)과 동형 — Phase 2 라우팅 구현 시 이 ESCALATE 가 ADR-131 의 중복소유 hard-block 과 정합하게 wire 된다 (Story 3 carrier).
+
+**ADR-020 직교 보존**: 본 Amendment 는 ADR-020 Mode A/B/C(Story file 라우팅 *조직 패턴*)와 무충돌 — ADR-020 = 조직 패턴 SSOT / ADR-069 = mechanism(라우팅·counter) / ADR-131 = 소유레포 결정 source. 세 axis disjoint (ADR-069 §"ADR-020 Amendment 3 cross-ref" 정합 유지).
+
 ## 6 SubAgent synthesis (audit trail)
 
 본 결정은 codeforge-design lane 의 6 SubAgent 통합 산출물을 ArchitectAgent (chief author) 가 합성. 각 SubAgent 핵심 input:
