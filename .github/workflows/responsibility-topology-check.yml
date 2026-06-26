@@ -1,0 +1,71 @@
+name: responsibility-topology-check
+# CFP-2422 / ADR-131 §결정 3/4 (Epic CFP-2418 Story 2) — cross-repo 책임 배치 메타불변식 게이트 (warning-tier).
+#
+# consumer overlay project.yaml 의 repo_topology 섹션(S1/CFP-2419 가 docs/project-config-schema.md 에 신설)
+# 메타불변식(ADR-131 §결정2) 을 구조적 사실로 hard-block:
+#   (a) 고아         owner_repo well-formed 빈 리스트(0 entry) = 주인없는 책임 (메타불변식②) → exit 1
+#   (b) 중복소유     동일 responsibility 가 N≥2 owner_repo (메타불변식③) → exit 1
+#   (c) 거친파생     declared 소유레포 집합 ≠ actual 변경레포 집합 (양방향 차집합) → exit 1
+#   + layer 분리     repo_topology 미주입 / applicable:false / 빈맵 = 정책 공백 fail-open(exit 0)
+# 기계(구조 hard-block) vs 사람(의미정합 attestation — review-responsibility 매트릭스 행 d) 판정 분리
+#   (ADR-131 §결정4 / ADR-119 검사연극 금지). 의미정합('올바른 레포인가')은 리뷰어 위임.
+#
+# single-root (.github only): 게이트 = wrapper-self governance 도구라 .github-only 정합 (consumer 무전파).
+#   단 Story §1 verbatim = templates/github-workflows/ + .github/workflows/ 양쪽 byte-identical write
+#   (ADR-005 정합 안전, AC-7). invariant-check.yml parity loop 은 templates → .github 단방향 검증 —
+#   byte-identical 이라 drift 0 (whitelist-manifest-3way 와 다른 운용: 본 게이트는 양쪽 명시).
+#
+# graceful-degradation (change-plan §3.6 / §7.5-FO — 2-tier 엄격 분리):
+#   data-absence(A)=fail-open(스크립트 EXIT 0, honest 분류 ::notice::) / setup-error(B)=fail-closed(EXIT 2).
+#   path-filter / `on.paths` skip 금지 (비협상, InfraOp P0) — required check "Pending(expected)" 영구
+#     차단 회피 + 게이트 핵심 케이스(diff 가 topology yaml 안 건드려도 소유 레포 집합 건드린 PR) 구조적
+#     놓침 회피. 스크립트가 내부에서 data-absence 를 EXIT 0 처리 (워크플로 `if:` skip 아님, path-filter 절대 아님).
+#   채택 형태 = whitelist-manifest-3way.yml: on: pull_request types + workflow_dispatch, paths 0.
+#
+# injection-safe: on: pull_request (NOT pull_request_target — fork PR base secret 미노출) +
+#   permissions: contents:read (write/secret 0). repo 내 파일(consumer overlay + git diff)만 read —
+#   외부 mutable 입력 0 (overlay 값 shell-interpolate 0 — Python 본체가 yaml 파싱, fork-PR injection 차단).
+#
+# offline-first: actual_changed_repos = git diff 기반 도출, gh api 호출 0 (§3.7 invariant — §7.4.4 N/A 전제).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: lint job 은
+#   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). main 7일 green → required 등록은
+#   별 후속 Story (transition Story = continue-on-error 1줄 제거 + contexts 1개 추가 최소 surface).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  responsibility-topology:
+    name: responsibility-topology meta-invariant (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Run check-responsibility-topology.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-responsibility-topology.sh
+
+  responsibility-topology-test:
+    name: responsibility-topology discriminating test (mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Run test_check-responsibility-topology.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-responsibility-topology.sh
