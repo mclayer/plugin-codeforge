@@ -103,3 +103,18 @@ scripts/extract-security-ai.sh:templates/github-workflows/post-merge-followup.ym
 scripts/post-merge-telemetry.sh:templates/github-workflows/post-merge-followup.yml
 scripts/retro-retry-helper.sh:templates/github-workflows/retro-mandatory.yml
 scripts/retro-attempts-update.py:templates/github-workflows/retro-mandatory.yml
+
+# CFP-2434 (Epic CFP-2418 deferred 배선 closure) — placement governance 게이트 2종
+# (CFP-2422 L2 책임→레포 토폴로지 + CFP-2428 L1 코드→책임 marker drift) 의 full
+# closure 등재. warning-tier(continue-on-error) → Tier2(functional, coe:true) 정합.
+# whitelist(consumer_applicable_workflows.txt) += 2 basename 과 atomic 동일 PR
+# (3-way gate AC-3). ADR-130 §결정3/5 closure-완전성: yml run-block 1-hop = .sh
+# (ADR-061 thin wrapper), .sh→python3 lib/*.py = depth-2 SSOT → 둘 다 등재 의무.
+# .sh = :dep_workflow 부착(신규 whitelist basename, 방향2 membership + degraded
+#   suppression). .py = script-only(:dep_workflow 미부착 — 방향2 비대상 phantom 회피,
+#   §결정3 closure-완전성으로 직접 등재). 4 asset 모두 chmod +x(100755) — Check 4
+#   exec-bit 의무(.sh/.py 비면제, check-consumer-scripts-manifest.sh L137-148).
+scripts/check-responsibility-topology.sh:templates/github-workflows/responsibility-topology-check.yml
+scripts/lib/check_responsibility_topology.py
+scripts/check-responsibility-marker-drift.sh:templates/github-workflows/responsibility-marker-drift-check.yml
+scripts/lib/check_responsibility_marker_drift.py
