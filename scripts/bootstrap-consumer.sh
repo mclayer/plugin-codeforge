@@ -53,7 +53,7 @@ while [ $# -gt 0 ]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLUGIN_ROOT="${PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 STATE_DIR=".claude/_overlay"
 STATE_FILE="$STATE_DIR/.bootstrap-state.json"
 
@@ -271,6 +271,9 @@ stage_5_github_setup() {
     # Workflows — consumer_applicable_workflows.txt whitelist 구동 (CFP-2439)
     local whitelist="$PLUGIN_ROOT/templates/scripts/consumer_applicable_workflows.txt"
     local workflows=()
+    local fallback_workflows=( "phase-gate-mergeable.yml" "phase-label-invariant.yml" "story-init.yml" \
+                               "story-section-1-immutable.yml" "subissue-from-impl-manifest.yml" \
+                               "fix-ledger-sync.yml" "story-section-schema.yml" )
     if [ -f "$whitelist" ] && [ -r "$whitelist" ]; then
         # non-comment non-blank line iterate (reconcile §4.12 whitelist_file_format 동형 규칙)
         while IFS= read -r line; do
@@ -283,9 +286,12 @@ stage_5_github_setup() {
     else
         # AC-4 fail-safe degrade — whitelist 부재/read-fail: 고정 7종 fallback + WARN + non-abort
         log "  [WARN] whitelist 부재/read-fail ($whitelist) — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3)"
-        workflows=( "phase-gate-mergeable.yml" "phase-label-invariant.yml" "story-init.yml" \
-                    "story-section-1-immutable.yml" "subissue-from-impl-manifest.yml" \
-                    "fix-ledger-sync.yml" "story-section-schema.yml" )
+        workflows=( "${fallback_workflows[@]}" )
+    fi
+    # F-CR-001: whitelist 존재하나 parse 결과 0종 (전부 주석/공백/0-byte) → degrade (0종 fail-closed 금지, §3.3, ADR-116)
+    if [ ${#workflows[@]} -eq 0 ]; then
+        log "  [WARN] whitelist parse 결과 0종 (전부 주석/공백/empty) — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3, ADR-116 never-reduce: 0종 미배포 차단)"
+        workflows=( "${fallback_workflows[@]}" )
     fi
     for w in "${workflows[@]}"; do
         local src="$PLUGIN_ROOT/templates/github-workflows/$w"

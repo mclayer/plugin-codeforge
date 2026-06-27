@@ -27,5 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # F-CR-003: TC-5 동적 base(merge-base HEAD origin/main) 해소 — shallow checkout vacuous-pass 차단
       - name: Run bootstrap-consumer whitelist test (pure bash)
         run: bash tests/scripts/test_bootstrap-consumer-whitelist.sh

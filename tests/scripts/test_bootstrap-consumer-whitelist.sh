@@ -23,6 +23,7 @@
 #  - Mutation-diff-change    (게이트/whitelist 파일 수정) → TC-5 RED
 #  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거) → TC-6 RED
 #  - Mutation-no-degrade     (whitelist 1개 추가 → 미포함) → TC-7 RED
+#  - Mutation-empty-check    (empty-check 제거 → 0종 fallback 미실행) → TC-8 RED
 
 set -euo pipefail
 
@@ -36,11 +37,11 @@ PASS=0
 FAIL=0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Helper: count non-comment non-blank lines from whitelist
+# Helper: count non-comment non-blank lines from whitelist (FIX-CR-007: avoid "00" grep duplication)
 # ─────────────────────────────────────────────────────────────────────────────
 count_whitelist_entries() {
   local wl="$1"
-  grep -v '^\s*#' "$wl" | grep -c '\S' || echo 0
+  grep -v '^\s*#' "$wl" | grep -c '\S' || true
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +58,35 @@ get_whitelist_entries() {
 extract_cp_basenames() {
   local output="$1"
   echo "$output" | grep '\[dry-run\] cp.*\.github/workflows' | sed 's/.*\.github\/workflows\/\([^ ]*\).*/\1/' | sort || true
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper: 임시 fixture plugin-root 생성 (실 SSOT 격리, FIX-CR-002)
+# 실 templates/scripts/consumer_applicable_workflows.txt + templates/github-workflows/ 복제
+# ─────────────────────────────────────────────────────────────────────────────
+make_fixture_plugin_root() {
+  local fpr
+  fpr="$(mktemp -d)"
+  mkdir -p "$fpr/templates/scripts" "$fpr/templates/github-workflows"
+
+  # whitelist 복제
+  cp "$WHITELIST" "$fpr/templates/scripts/consumer_applicable_workflows.txt"
+
+  # whitelist 에서 참조하는 workflow source 복제 (존재하면 cp, 없으면 touch stub)
+  while IFS= read -r line; do
+    line="${line%%$'\r'}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in \#*) continue;; esac
+    local src="$REPO_ROOT/templates/github-workflows/$line"
+    if [ -f "$src" ]; then
+      cp "$src" "$fpr/templates/github-workflows/$line"
+    else
+      touch "$fpr/templates/github-workflows/$line"
+    fi
+  done < "$WHITELIST"
+
+  echo "$fpr"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -182,22 +212,42 @@ test_tc2_idempotent() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-3: fail-safe degrade (whitelist 부재 → 7종 fallback + WARN + exit 0)
+# TC-3: fail-safe degrade (whitelist 부재 → 7종 fallback + WARN + exit 0) [FIX-CR-002]
 # Assertion:
 #  - stdout 에 "[WARN]" 마커 포함
 #  - dry-run 산출 정확히 7개 cp (fallback 배열)
 #  - exit 0 (non-abort)
-# Approach: whitelist 일시 rename (부재 상태 시뮬레이션) → bootstrap dry-run → restore
+# Approach: 실 SSOT 무손상 — fixture plugin-root 안에서 whitelist 삭제 시뮬레이션
 # Mutation-no-whitelist: whitelist 읽기 로직 제거 → fallback 미실행 RED
 # Mutation-degrade-warn: [WARN] 마커 제거 → TC-3 pass 면 동시 RED (discriminating 의무)
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc3_degrade_warn() {
   local test_name="TC-3-degrade-warn"
-  local fixture_root tmp_consumer
+  local fixture_root fixture_plugin_root tmp_consumer
 
   fixture_root="$(mktemp -d)"
+  fixture_plugin_root="$fixture_root/fixture-plugin"
   tmp_consumer="$fixture_root/consumer"
   mkdir -p "$tmp_consumer"
+
+  # fixture plugin-root 생성 (실 templates/ 복제)
+  mkdir -p "$fixture_plugin_root/templates/scripts" "$fixture_plugin_root/templates/github-workflows"
+  cp "$WHITELIST" "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
+  while IFS= read -r line; do
+    line="${line%%$'\r'}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in \#*) continue;; esac
+    local src="$REPO_ROOT/templates/github-workflows/$line"
+    if [ -f "$src" ]; then
+      cp "$src" "$fixture_plugin_root/templates/github-workflows/$line"
+    else
+      touch "$fixture_plugin_root/templates/github-workflows/$line"
+    fi
+  done < "$WHITELIST"
+
+  # fixture 안 whitelist 삭제 (부재 상태 시뮬레이션)
+  rm -f "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
 
   cd "$tmp_consumer"
   # git repo 초기화
@@ -206,20 +256,8 @@ test_tc3_degrade_warn() {
   git config user.name "Test User"
   git remote add origin https://github.com/test/test-repo.git
 
-  # whitelist 일시 rename (부재 상태 시뮬레이션)
-  local whitelist_backup
-  whitelist_backup="$WHITELIST.tc3-backup-$$"
-  if [ -f "$WHITELIST" ]; then
-    mv "$WHITELIST" "$whitelist_backup"
-  fi
-
   local output exit_code=0
-  output=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || exit_code=$?
-
-  # whitelist 복구
-  if [ -f "$whitelist_backup" ]; then
-    mv "$whitelist_backup" "$WHITELIST"
-  fi
+  output=$( PLUGIN_ROOT="$fixture_plugin_root" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || exit_code=$?
 
   local has_warn=0
   echo "$output" | grep -q '\[WARN\]' && has_warn=1
@@ -234,7 +272,7 @@ test_tc3_degrade_warn() {
   [ "$exit_code" -eq 0 ] || ok=0
 
   if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name (warn=$has_warn, cp=$cp_count, exit=$exit_code) — degrade fallback + WARN + exit 0"
+    echo "✓ PASS: $test_name (warn=$has_warn, cp=$cp_count, exit=$exit_code) — degrade fallback + WARN + exit 0 (fixture-isolated)"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
@@ -301,22 +339,44 @@ test_tc4_parity() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-5: 게이트 본체·whitelist 무변경 (diff-empty)
-# Assertion: git diff base~0..HEAD --name-only 에서 scripts/bootstrap-consumer.* 및
+# TC-5: 게이트 본체·whitelist 무변경 (diff-empty) [FIX-CR-003 동적 base]
+# Assertion: git diff base...HEAD --name-only 에서 scripts/bootstrap-consumer.* 및
 #           templates/github-workflows/*, templates/scripts/consumer_applicable_workflows.txt 외
 #           다른 파일 미포함 (workflow/whitelist 본체 미변경). TC-6 스크립트 2종만 변경.
-# base SHA = 현 main (33bfffc520d293ec9046cd43369ac0811aa5157d)
+# base ref = merge-base HEAD origin/main (없으면 origin/main, 둘다 없으면 FAIL-base-unresolvable)
 # Mutation-diff-change: 게이트/whitelist 파일 수정 시 실패 → RED
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc5_gateway_whitelist_unchanged() {
   local test_name="TC-5-gateway-whitelist-unchanged"
-  local base_sha="33bfffc520d293ec9046cd43369ac0811aa5157d"
 
   cd "$REPO_ROOT"
 
-  # 파일 목록: diff base~0..HEAD (현재 branch 모든 변경)
+  # 동적 base SHA 결정 (merge-base 우선, 실패시 origin/main)
+  local base_ref
+  base_ref="$(git merge-base HEAD origin/main 2>/dev/null)" || base_ref=""
+  if [ -z "$base_ref" ]; then
+    base_ref="$(git rev-parse origin/main 2>/dev/null)" || base_ref=""
+  fi
+
+  # base ref 해소 불가 = 동적 base 부재 (shallow-checkout 등) → FAIL (silent pass 차단, FIX-CR-003)
+  if [ -z "$base_ref" ]; then
+    echo "✗ FAIL: $test_name"
+    echo "  Base ref 해소 불가 (shallow checkout? fetch-depth:0 필요). git diff 불가능."
+    echo "  silent pass 를 피하기 위해 FAIL 처리."
+    FAIL=$((FAIL+1))
+    return 1
+  fi
+
+  # 파일 목록: diff base...HEAD (현재 branch 모든 변경)
   local diff_files
-  diff_files=$( git diff "$base_sha"...HEAD --name-only 2>/dev/null || echo "" )
+  diff_files=$( git diff "$base_ref"...HEAD --name-only 2>/dev/null )
+
+  if [ $? -ne 0 ]; then
+    echo "✗ FAIL: $test_name"
+    echo "  git diff 실패 (base=$base_ref 도달 불가?). silent pass 차단."
+    FAIL=$((FAIL+1))
+    return 1
+  fi
 
   # templates/github-workflows/ 안 파일 변경 여부
   local wf_changed=0
@@ -334,7 +394,7 @@ test_tc5_gateway_whitelist_unchanged() {
   [ "$wl_changed" -eq 0 ] || ok=0
 
   if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name — workflow/whitelist 게이트 본체 무변경 (script 변경만)"
+    echo "✓ PASS: $test_name — workflow/whitelist 게이트 본체 무변경 (script 변경만, base=$base_ref)"
     PASS=$((PASS+1))
     return 0
   else
@@ -446,22 +506,45 @@ test_tc6_ps1_parity() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-7: 신규 whitelisted 자동배포 (whitelist 1개 추가 → 코드수정 0 → 신규 배포)
+# TC-7: 신규 whitelisted 자동배포 (whitelist 1개 추가 → 코드수정 0 → 신규 배포) [FIX-CR-002]
 # Assertion:
-#  - 실제 whitelist 에 신규 entry 일시 추가 (__tc7-synthetic-gate.yml)
-#  - plugin-root 에 그 source stub 생성
+#  - fixture plugin-root 의 whitelist 에 신규 entry 추가 (__tc7-synthetic-gate.yml)
+#  - fixture 에 그 source stub 생성
 #  - dry-run 산출에 신규 entry 포함
 #  - placement gate 2종 정상 포함 (responsibility-topology-check.yml, responsibility-marker-drift-check.yml)
-# Approach: whitelist 에 신규 entry 추가 + 스텁 생성 → dry-run → restore
+# Approach: 실 SSOT 무손상 — fixture plugin-root 안에서 whitelist 수정 + stub 생성
 # Mutation-no-degrade: whitelist 1개 추가 → 미포함 → RED
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc7_whitelist_autoconfig() {
   local test_name="TC-7-whitelist-autoconfig"
-  local fixture_root tmp_consumer
+  local fixture_root fixture_plugin_root tmp_consumer
 
   fixture_root="$(mktemp -d)"
+  fixture_plugin_root="$fixture_root/fixture-plugin"
   tmp_consumer="$fixture_root/consumer"
   mkdir -p "$tmp_consumer"
+
+  # fixture plugin-root 생성 (실 templates/ 복제)
+  mkdir -p "$fixture_plugin_root/templates/scripts" "$fixture_plugin_root/templates/github-workflows"
+  cp "$WHITELIST" "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
+  while IFS= read -r line; do
+    line="${line%%$'\r'}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in \#*) continue;; esac
+    local src="$REPO_ROOT/templates/github-workflows/$line"
+    if [ -f "$src" ]; then
+      cp "$src" "$fixture_plugin_root/templates/github-workflows/$line"
+    else
+      touch "$fixture_plugin_root/templates/github-workflows/$line"
+    fi
+  done < "$WHITELIST"
+
+  # fixture 안에서만 신규 entry 추가
+  local synthetic_name="__tc7-synthetic-gate-$$.yml"
+  local synthetic_stub="$fixture_plugin_root/templates/github-workflows/$synthetic_name"
+  touch "$synthetic_stub"
+  echo "$synthetic_name" >> "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
 
   cd "$tmp_consumer"
   # git repo 초기화
@@ -470,26 +553,8 @@ test_tc7_whitelist_autoconfig() {
   git config user.name "Test User"
   git remote add origin https://github.com/test/test-repo.git
 
-  # 신규 whitelist entry + stub source 를 일시 추가
-  local synthetic_name="__tc7-synthetic-gate-$$.yml"
-  local synthetic_stub="$PLUGIN_ROOT_REAL/templates/github-workflows/$synthetic_name"
-  local whitelist_line_count_before
-  whitelist_line_count_before=$( wc -l < "$WHITELIST" )
-
-  # stub 생성 + whitelist 에 entry 추가
-  touch "$synthetic_stub"
-  echo "$synthetic_name" >> "$WHITELIST"
-
   local output
-  output=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
-
-  # cleanup: stub + whitelist 라인 제거
-  rm -f "$synthetic_stub"
-  local whitelist_line_count_after
-  whitelist_line_count_after=$(( $(wc -l < "$WHITELIST") - 1 ))
-  # 마지막 라인만 제거 (우리가 추가한 라인)
-  head -n "$whitelist_line_count_before" "$WHITELIST" > "${WHITELIST}.tmp"
-  mv "${WHITELIST}.tmp" "$WHITELIST"
+  output=$( PLUGIN_ROOT="$fixture_plugin_root" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
 
   local has_synthetic=0
   echo "$output" | grep -q "\[dry-run\] cp.*\.github/workflows/$synthetic_name" && has_synthetic=1
@@ -506,7 +571,7 @@ test_tc7_whitelist_autoconfig() {
   [ "$has_marker_drift" -eq 1 ] || ok=0
 
   if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name — whitelist 신규 entry 자동배포 + placement gate 2종 포함"
+    echo "✓ PASS: $test_name — whitelist 신규 entry 자동배포 + placement gate 2종 포함 (fixture-isolated)"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
@@ -523,11 +588,88 @@ test_tc7_whitelist_autoconfig() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# TC-8: empty/all-comment whitelist → 7종 fallback (FIX-CR-001)
+# Assertion:
+#  - fixture plugin-root 의 whitelist 를 전부 주석/공백으로 덮어쓰기 (파일 존재, entry 0)
+#  - dry-run 산출 정확히 7개 cp (fallback 배열)
+#  - [WARN] 마커 포함
+#  - exit 0 (non-abort)
+# Approach: 실 SSOT 무손상 — fixture 안에서만 whitelist 를 비우기
+# Mutation-empty-check: empty-check 제거 → fallback 미실행, 0 cp → RED (discriminating)
+# ─────────────────────────────────────────────────────────────────────────────
+test_tc8_empty_whitelist_fallback() {
+  local test_name="TC-8-empty-whitelist-fallback"
+  local fixture_root fixture_plugin_root tmp_consumer
+
+  fixture_root="$(mktemp -d)"
+  fixture_plugin_root="$fixture_root/fixture-plugin"
+  tmp_consumer="$fixture_root/consumer"
+  mkdir -p "$tmp_consumer"
+
+  # fixture plugin-root 생성 (실 templates/ 복제)
+  mkdir -p "$fixture_plugin_root/templates/scripts" "$fixture_plugin_root/templates/github-workflows"
+  cp "$WHITELIST" "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
+  while IFS= read -r line; do
+    line="${line%%$'\r'}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in \#*) continue;; esac
+    local src="$REPO_ROOT/templates/github-workflows/$line"
+    if [ -f "$src" ]; then
+      cp "$src" "$fixture_plugin_root/templates/github-workflows/$line"
+    else
+      touch "$fixture_plugin_root/templates/github-workflows/$line"
+    fi
+  done < "$WHITELIST"
+
+  # fixture 안에서만 whitelist 를 공백/주석으로 덮어쓰기 (파일 존재하나 entry 0)
+  printf '# all comments and blanks\n\n   \n' > "$fixture_plugin_root/templates/scripts/consumer_applicable_workflows.txt"
+
+  cd "$tmp_consumer"
+  # git repo 초기화
+  git init -q
+  git config user.email "test@example.com"
+  git config user.name "Test User"
+  git remote add origin https://github.com/test/test-repo.git
+
+  local output exit_code=0
+  output=$( PLUGIN_ROOT="$fixture_plugin_root" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || exit_code=$?
+
+  local has_warn=0
+  echo "$output" | grep -q '\[WARN\]' && has_warn=1
+
+  local cp_count
+  cp_count=$( echo "$output" | grep -c '\[dry-run\] cp.*\.github/workflows' || echo 0 )
+  cp_count=$(echo "$cp_count" | tr -d '\r\n')
+
+  local ok=1
+  [ "$cp_count" -eq 7 ] || ok=0
+  [ "$has_warn" -eq 1 ] || ok=0
+  [ "$exit_code" -eq 0 ] || ok=0
+
+  if [ "$ok" -eq 1 ]; then
+    echo "✓ PASS: $test_name (cp=$cp_count, warn=$has_warn, exit=$exit_code) — empty whitelist → 7 fallback + WARN + exit 0 (fixture-isolated)"
+    PASS=$((PASS+1))
+    rm -rf "$fixture_root"
+    return 0
+  else
+    echo "✗ FAIL: $test_name"
+    echo "  Expected: cp count=7, [WARN] present, exit=0"
+    echo "  Got: cp=$cp_count, warn=$has_warn, exit=$exit_code"
+    echo "  Output excerpt:"
+    echo "$output" | head -20
+    FAIL=$((FAIL+1))
+    rm -rf "$fixture_root"
+    return 1
+  fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Main: run all fixtures
 # ─────────────────────────────────────────────────────────────────────────────
 echo "═══════════════════════════════════════════════════════════════════════════════"
 echo "CFP-2439 Phase 2: bootstrap-consumer.sh Stage 5 whitelist iterate"
-echo "TDD Test Suite (TC-1~7)"
+echo "TDD Test Suite (TC-1~8)"
 echo "═══════════════════════════════════════════════════════════════════════════════"
 echo ""
 
@@ -538,6 +680,7 @@ test_tc4_parity
 test_tc5_gateway_whitelist_unchanged
 test_tc6_ps1_parity
 test_tc7_whitelist_autoconfig
+test_tc8_empty_whitelist_fallback
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════════════════════"
@@ -551,3 +694,11 @@ else
   echo "Some tests FAILED ✗"
   exit 1
 fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FIX Summary (CFP-2439 Phase 2 P1 fixes):
+# ─────────────────────────────────────────────────────────────────────────────
+# FIX-CR-001: TC-8 신규 추가 (empty whitelist → 7 fallback discriminating)
+# FIX-CR-002: TC-3, TC-7 실 SSOT mutate 격리 (make_fixture_plugin_root helper)
+# FIX-CR-003: TC-5 hardcoded SHA → 동적 base (merge-base / origin/main, base 해소실패=FAIL)
+# FIX-CR-007: grep -c || echo 0 중복 "00" 제거 (|| true 로 대체)
