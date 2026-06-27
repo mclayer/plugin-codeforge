@@ -615,7 +615,7 @@ aggregate_arch:
 
 같은 agent role(현 Amd16 = InfraOperationalArchitectAgent 단독)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다. low-stakes Story shape(백테스트 엔진 / 데이터 파이프라인 / 웹 UI / 인터페이스 lib 등)에서 wrapper Orchestrator 가 InfraOperationalArchitectAgent 를 opus→sonnet 으로 spawn-time override, high-stakes(실자금 / production cutover / 신규 신뢰경계 / live 외부 API) 는 opus 유지.
 
-> **consumer 가 직접 down-tier 못 한다 — 보수 방향(opus 강제)만 가능 (확장-only, [ADR-127](../archive/adr/ADR-127-no-exemption-mandatory-full-flow.md) §결정6).** low-stakes tier-flip 판정은 wrapper Orchestrator 의 4-AND shape 분석 전용. consumer 의 stakes 자기보고로 sonnet 강등은 불가(2중 enforcement 가 거부).
+> **consumer 가 직접 down-tier 못 한다 — 보수 방향(opus 강제)만 가능 (확장-only, [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정6).** low-stakes tier-flip 판정은 wrapper Orchestrator 의 4-AND shape 분석 전용. consumer 의 stakes 자기보고로 sonnet 강등은 불가(2중 enforcement 가 거부).
 
 #### `story_stakes.conservative_override` (보수 opus 강제 — 항상 허용)
 
@@ -645,7 +645,7 @@ story_stakes:
 
 `story_stakes.*` field = **consumer-authored only**. 모든 codeforge agent 는 본 field write 금지. wrapper Orchestrator = read-only (overlay value 를 spawn-time clamp 입력으로 수신).
 
-참조: [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md) (Story-shape 조건부 model tier) · [ADR-127](../archive/adr/ADR-127-no-exemption-mandatory-full-flow.md) §결정6 (확장-only) · [project-config-schema §story_stakes 섹션 설명](project-config-schema.md) · `scripts/check-stakes-tier-gating.sh` (4-AND + clamp SSOT)
+참조: [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md) (Story-shape 조건부 model tier) · [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정6 (확장-only) · [project-config-schema §story_stakes 섹션 설명](project-config-schema.md) · `scripts/check-stakes-tier-gating.sh` (4-AND + clamp SSOT)
 
 ### 1n. 배포 — consumer GitHub Actions/Environments 완전 위임 (CFP-2227 / [ADR-121](../archive/adr/ADR-121-deprecate-deploy-lanes.md)) + 구 Deploy lane (Deprecated)
 
