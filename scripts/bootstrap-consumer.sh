@@ -268,20 +268,34 @@ stage_4_settings_json() {
 stage_5_github_setup() {
     log "Stage 5: GitHub workflows / forms / CODEOWNERS / PR template"
     run_or_dry mkdir -p .github/workflows .github/ISSUE_TEMPLATE
-    # Workflows (7종 consumer-distributable)
-    local workflows=(
-        "phase-gate-mergeable.yml"
-        "phase-label-invariant.yml"
-        "story-init.yml"
-        "story-section-1-immutable.yml"
-        "subissue-from-impl-manifest.yml"
-        "fix-ledger-sync.yml"
-        "story-section-schema.yml"
-    )
+    # Workflows — consumer_applicable_workflows.txt whitelist 구동 (CFP-2439)
+    local whitelist="$PLUGIN_ROOT/templates/scripts/consumer_applicable_workflows.txt"
+    local workflows=()
+    if [ -f "$whitelist" ] && [ -r "$whitelist" ]; then
+        # non-comment non-blank line iterate (reconcile §4.12 whitelist_file_format 동형 규칙)
+        while IFS= read -r line; do
+            line="${line%%$'\r'}"            # CRLF 정규화
+            line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"  # trim
+            [ -z "$line" ] && continue        # blank skip
+            case "$line" in \#*) continue;; esac  # comment skip
+            workflows+=("$line")
+        done < "$whitelist"
+    else
+        # AC-4 fail-safe degrade — whitelist 부재/read-fail: 고정 7종 fallback + WARN + non-abort
+        log "  [WARN] whitelist 부재/read-fail ($whitelist) — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3)"
+        workflows=( "phase-gate-mergeable.yml" "phase-label-invariant.yml" "story-init.yml" \
+                    "story-section-1-immutable.yml" "subissue-from-impl-manifest.yml" \
+                    "fix-ledger-sync.yml" "story-section-schema.yml" )
+    fi
     for w in "${workflows[@]}"; do
+        local src="$PLUGIN_ROOT/templates/github-workflows/$w"
         local dst=".github/workflows/$w"
-        if [ ! -f "$dst" ]; then
-            run_or_dry cp "$PLUGIN_ROOT/templates/github-workflows/$w" "$dst"
+        if [ ! -f "$src" ]; then
+            log "  [WARN] whitelist source 부재 — skip: $w (개별 missing 은 abort 금지, §5.3)"
+            continue
+        fi
+        if [ ! -f "$dst" ]; then                 # idempotent guard 보존 (ADR-116)
+            run_or_dry cp "$src" "$dst"
             log "  cp $dst"
         fi
     done

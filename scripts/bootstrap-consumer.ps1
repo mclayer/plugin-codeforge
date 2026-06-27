@@ -226,15 +226,26 @@ function Stage-4-SettingsJson {
 function Stage-5-GithubSetup {
     Log "Stage 5: GitHub workflows / forms / CODEOWNERS / PR template"
     Run-OrDry { New-Item -ItemType Directory -Path ".github/workflows", ".github/ISSUE_TEMPLATE" -Force | Out-Null } "mkdir .github/{workflows,ISSUE_TEMPLATE}"
-    $workflows = @(
-        "phase-gate-mergeable.yml", "phase-label-invariant.yml", "story-init.yml",
-        "story-section-1-immutable.yml", "subissue-from-impl-manifest.yml",
-        "fix-ledger-sync.yml", "story-section-schema.yml"
-    )
+    $whitelist = Join-Path $PluginRoot "templates/scripts/consumer_applicable_workflows.txt"
+    if (Test-Path $whitelist) {
+        $workflows = Get-Content $whitelist |
+            Where-Object { $_ -notmatch '^\s*#' -and $_ -match '\S' } |
+            ForEach-Object { $_.Trim() }       # CRLF/trailing-whitespace 정규화 (.sh .Trim() 동형)
+    } else {
+        # AC-4 fail-safe degrade — 고정 7종 fallback + WARN + non-abort (.sh 동형)
+        Log "  [WARN] whitelist 부재/read-fail ($whitelist) — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3)"
+        $workflows = @(
+            "phase-gate-mergeable.yml", "phase-label-invariant.yml", "story-init.yml",
+            "story-section-1-immutable.yml", "subissue-from-impl-manifest.yml",
+            "fix-ledger-sync.yml", "story-section-schema.yml"
+        )
+    }
     foreach ($w in $workflows) {
+        $src = Join-Path $PluginRoot "templates/github-workflows/$w"
         $dst = ".github/workflows/$w"
-        if (-not (Test-Path $dst)) {
-            Run-OrDry { Copy-Item -Path (Join-Path $PluginRoot "templates/github-workflows/$w") -Destination $dst } "cp $dst"
+        if (-not (Test-Path $src)) { Log "  [WARN] whitelist source 부재 — skip: $w"; continue }
+        if (-not (Test-Path $dst)) {            # idempotent guard 보존 (ADR-116)
+            Run-OrDry { Copy-Item -Path $src -Destination $dst } "cp $dst"
             Log "  cp $dst"
         }
     }
