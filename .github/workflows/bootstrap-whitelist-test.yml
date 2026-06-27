@@ -1,0 +1,33 @@
+name: bootstrap-whitelist-test
+# CFP-2439 Phase 2 — bootstrap-consumer.sh/.ps1 whitelist 구동 TDD 검증
+#
+# QADev 작성 tests/scripts/test_bootstrap-consumer-whitelist.sh 의 CI 구현.
+# whitelist iterate 로직 검증:
+#   - 30 entry 전수 읽기
+#   - 주석/빈줄 필터
+#   - CRLF 정규화
+#   - source 부재/copy 성공/idempotent 추적
+#   - AC-4 fail-safe degrade (whitelist 부재 시 고정 7종 fallback)
+#
+# 신규 workflow (6.41.1 → 6.42.0 추가, CFP-2439 구현체).
+# wrapper-self 전용 (consumer red 회피 — CFP-2437 #2438 선례).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-whitelist-test:
+    name: bootstrap-whitelist-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # F-CR-003: TC-5 동적 base(merge-base HEAD origin/main) 해소 — shallow checkout vacuous-pass 차단
+      - name: Run bootstrap-consumer whitelist test (pure bash)
+        run: bash tests/scripts/test_bootstrap-consumer-whitelist.sh

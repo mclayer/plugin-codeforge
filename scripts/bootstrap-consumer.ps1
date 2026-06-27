@@ -26,7 +26,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PluginRoot = Split-Path -Parent $ScriptDir
+# F-CR-005: env override seam (test fixture 격리 지원 — PLUGIN_ROOT 주면 override, 없으면 기본값)
+$PluginRoot = if ($env:PLUGIN_ROOT) { $env:PLUGIN_ROOT } else { Split-Path -Parent $ScriptDir }
 $StateDir = ".claude/_overlay"
 $StateFile = "$StateDir/.bootstrap-state.json"
 
@@ -226,15 +227,36 @@ function Stage-4-SettingsJson {
 function Stage-5-GithubSetup {
     Log "Stage 5: GitHub workflows / forms / CODEOWNERS / PR template"
     Run-OrDry { New-Item -ItemType Directory -Path ".github/workflows", ".github/ISSUE_TEMPLATE" -Force | Out-Null } "mkdir .github/{workflows,ISSUE_TEMPLATE}"
-    $workflows = @(
+    $whitelist = Join-Path $PluginRoot "templates/scripts/consumer_applicable_workflows.txt"
+    $fallbackWorkflows = @(
         "phase-gate-mergeable.yml", "phase-label-invariant.yml", "story-init.yml",
         "story-section-1-immutable.yml", "subissue-from-impl-manifest.yml",
         "fix-ledger-sync.yml", "story-section-schema.yml"
     )
+    $workflows = @()
+    if (Test-Path $whitelist) {
+        try {
+            # FIX-CR-004/006: try/catch 로 unreadable whitelist 를 degrade 경로로 라우팅 + UTF-8 명시 (F-CR-004/006)
+            $workflows = @(Get-Content $whitelist -Encoding utf8 -ErrorAction Stop |
+                Where-Object { $_ -notmatch '^\s*#' -and $_ -match '\S' } |
+                ForEach-Object { $_.Trim() })    # CRLF/trailing-whitespace 정규화 (.sh .Trim() 동형)
+        } catch {
+            # AC-4 fail-safe degrade — read-fail (권한/인코딩 등) + WARN + non-abort (.sh 동형)
+            Log "  [WARN] whitelist read-fail ($whitelist): $($_.Exception.Message) — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3, .sh parity)"
+            $workflows = @()   # 아래 empty-check 가 7종 fallback 라우팅
+        }
+    }
+    # F-CR-001: whitelist 부재/read-fail/parse 0종 → degrade (0종 fail-closed 금지, §3.3, ADR-116)
+    if ($null -eq $workflows -or @($workflows).Count -eq 0) {
+        Log "  [WARN] whitelist 부재/read-fail/parse 0종 — 고정 7종 fallback 으로 degrade (CFP-2439 §3.3, ADR-116 never-reduce: 0종 미배포 차단)"
+        $workflows = $fallbackWorkflows
+    }
     foreach ($w in $workflows) {
+        $src = Join-Path $PluginRoot "templates/github-workflows/$w"
         $dst = ".github/workflows/$w"
-        if (-not (Test-Path $dst)) {
-            Run-OrDry { Copy-Item -Path (Join-Path $PluginRoot "templates/github-workflows/$w") -Destination $dst } "cp $dst"
+        if (-not (Test-Path $src)) { Log "  [WARN] whitelist source 부재 — skip: $w"; continue }
+        if (-not (Test-Path $dst)) {            # idempotent guard 보존 (ADR-116)
+            Run-OrDry { Copy-Item -Path $src -Destination $dst } "cp $dst"
             Log "  cp $dst"
         }
     }
