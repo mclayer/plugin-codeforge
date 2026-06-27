@@ -58,6 +58,7 @@ jobs:
 
   responsibility-topology-test:
     name: responsibility-topology discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
