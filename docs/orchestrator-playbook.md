@@ -520,9 +520,9 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 
 판별: result 에 `"currently unavailable"` / `"may not exist or you may not have access"` 포함 시 model-unavailable. **floor-fail 구분(hypothesis)**: ADR-117 §결정 3 의 floor (< 2.1.170 → 미인식 ID spawn 실패)은 별개 사건 — 정정 = `Reload Window`/버전 업그레이드(opus fallback 아님). floor-fail string 과 model-unavailable string 의 동일성은 미실증(floor-fail string 만 verified) → string-match 만으로 무조건 fallback 시 floor 환경 문제 은폐 위험. 구분 = `claude --model fable -p "ok"` fresh CLI smoke 대조(fresh PASS + in-process FAIL = floor-fail). 미분류 오류 = task failure 로 routing(fallback 미발동).
 
-#### §3.0.12a Story-shape 조건부 model tier gating (CFP-2432 / ADR-042 Amendment 16)
+#### §3.0.12a Story-shape 조건부 model tier gating (CFP-2432 / ADR-042 Amendment 16 · CFP-2445 / Amendment 17)
 
-설계 lane 진입 시 ArchitectPLAgent deputy spawn 결정(`codeforge:deputy-mandate` skill)과 함께, Orchestrator 는 **InfraOperationalArchitectAgent** 의 model tier 를 Story 의 stakes(결과 위험)로 분기한다. tier = f(mandate depth, **stakes**). 메커니즘 신설 0 — `opts.model` override(§3.0.12) 를 재사용.
+설계 lane 진입 시 ArchitectPLAgent deputy spawn 결정(`codeforge:deputy-mandate` skill)과 함께, Orchestrator 는 **InfraOperationalArchitectAgent** 의 model tier 를 Story 의 stakes(결과 위험)로 분기한다. tier = f(mandate depth, **stakes**). 메커니즘 신설 0 — `opts.model` override(§3.0.12) 를 재사용. **DomainAgent (Amd17)** 는 요구사항 lane spawn 으로 별도 분기(아래 "DomainAgent financial-invariant-0 분기" — (4-AND low-stakes) AND (financial-invariant-0 shape) 2-predicate AND).
 
 **판정 절차 (spawn 직전)**:
 
@@ -543,8 +543,26 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 **불변식**:
 - frontmatter `model: opus` 보존 = fail-safe default (override 누락 / gating 미수행 = opus, 현행 동작 무변경).
 - consumer overlay 는 보수 방향(opus 강제)만 — down-tier(opus→sonnet) 공격적 override 불가. enforcement 2중: schema-gate(`check_bootstrap.py` check 11) + spawn-time clamp(`check-stakes-tier-gating.sh` `max(floor,overlay)`).
-- 대상 = InfraOperationalArchitectAgent 단독(Amd16). DomainAgent = v1 제외(follow-up CFP). SecurityArch/DataArch/TestContractArch = scope 외.
+- 대상 = InfraOperationalArchitectAgent(Amd16, 설계 lane) + **DomainAgent(Amd17, 요구사항 lane — financial-invariant-0 shape 한정 flip)**. SecurityArch/DataArch/TestContractArch = scope 외.
 - tier-flip = provisional(F1 evidence-gate) — sonnet 산출물 품질 ≥ opus baseline 측정 protocol + 미달 시 opus 복원. SSOT = `docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md` (AC-9).
+
+**DomainAgent financial-invariant-0 분기 (CFP-2445 / ADR-042 Amendment 17)**:
+
+DomainAgent 는 **요구사항 lane spawn**(InfraOpArch = 설계 lane). financial-invariant-0 = stakes 4-AND 와 **orthogonal 한 financial-correctness 결과접촉 축**의 별 predicate — DomainAgent 가 그 Story 에서 백테스트 결과 숫자(equity/PnL/position/체결가/universe/파라미터)를 생성·변형·해석하지 *않을* 때만 financial invariant 해석 표면이 0(sonnet cover). flip 조건 = **(4-AND low-stakes) AND (financial-invariant-0 shape)** 2-predicate AND.
+
+1. **spawn-전 외부 shape 판정** (self-assessment 아님 — DomainAgent 해석 mandate 가 shape 무관 상존이라 self 가 표면 0 을 declare 하면 self-referential paradox). Orchestrator 가 spawn *전* 판정:
+   - **판정 입력 한정 (닭-달걀 회피)**: DomainAgent spawn 시점 = 요구사항 lane *진입 직후* 로 §4.1 변경 델타(ChangeImpactAgent 산출)는 **아직 미존재**(병렬 산출). 따라서 5-AND 판정 입력 = **`§1 사용자 원문 verbatim` + `directive 경로 키워드`(원문 명시 파일/모듈/작업 유형 토큰)** 로 한정. §4.1 변경 델타 경로 의존 금지(미존재 surface 참조 = 닭-달걀).
+   - **financial-invariant-0 5-AND 신호** (전부 충족해야 invariant-0, fail-safe): ① 결과-숫자 비접촉 ② 시간-인과 비접촉 ③ 체결/비용 모델 비접촉 ④ data lineage 비접촉 ⑤ (보조) 변경 경로가 도메인 숫자 repo(`-engine`/`-data`/strategy) 밖. §1 원문만으로 명확히 충족 안 되면 opus(불확실=opus). catalog 참조 = `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md`.
+2. **tier 결정 = `scripts/check-stakes-tier-gating.sh`** (DomainAgent 분기):
+   ```bash
+   STAKES_AGENT=DomainAgent \
+   STAKES_REAL_FUNDS=<yes|no> STAKES_PRODUCTION_CUTOVER=<yes|no> \
+   STAKES_NEW_TRUST_BOUNDARY=<yes|no> STAKES_LIVE_EXTERNAL_API=<yes|no> \
+   STAKES_FINANCIAL_INVARIANT_ZERO=<yes|""> STAKES_OVERLAY_FLOOR=<opus|""> \
+   bash scripts/check-stakes-tier-gating.sh
+   ```
+   - `STAKES_FINANCIAL_INVARIANT_ZERO=yes` = financial 결과 비접촉(5-AND 전부 충족) 확정. 그 외(no/빈 값/미상) = fail-safe opus(INV-fin0). 4-AND 가 high 면 financial-invariant-0 여부 무관 opus(stakes-gated 보존). consumer overlay `conservative_override[]` 에 DomainAgent 있으면 `STAKES_OVERLAY_FLOOR=opus` 변환.
+3. **spawn** — 결과가 `sonnet` 이면 DomainAgent 를 `opts.model: sonnet` **fresh `Agent` spawn**. `opus` 이면 frontmatter default(opus) 그대로. **SendMessage resume 금지**(§3.0.12 fresh-spawn-only invariant). **FIX 재진입도 fresh spawn 으로 shape 재판정**(silent 풀림 차단).
 
 #### §3.0.13 PR description `## Lane evidence` manual append 정책 (CFP-507)
 

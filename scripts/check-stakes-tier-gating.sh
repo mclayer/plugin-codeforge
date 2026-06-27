@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # check-stakes-tier-gating.sh — Story-shape 조건부 model tier 판정 로직 SSOT
-#   (CFP-2432 / ADR-042 Amendment 16)
+#   (CFP-2432 / ADR-042 Amendment 16 — InfraOperationalArchitectAgent)
+#   (CFP-2445 / ADR-042 Amendment 17 — DomainAgent financial-invariant-0 별 predicate)
 #
-# 같은 agent role (InfraOperationalArchitectAgent) 의 model tier 를 Story 의
-#   stakes(결과 위험)로 분기한다 — tier = f(mandate depth, stakes).
-#   low-stakes shape(4-AND) → sonnet, high-stakes → opus (fail-safe default).
+# 같은 agent role 의 model tier 를 Story 의 stakes(결과 위험)로 분기한다 — tier = f(mandate depth, stakes).
+#   InfraOperationalArchitectAgent: low-stakes shape(4-AND) → sonnet, high-stakes → opus (fail-safe).
+#   DomainAgent (Amd17): (4-AND low-stakes) AND (financial-invariant-0 shape) → sonnet, else opus.
+#     financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축의 별 predicate.
+#     4-AND 가 끄는 것 = stakes·safety mandate, financial-invariant-0 가 끄는 것 = DomainAgent financial mandate.
+#     두 predicate AND — 어느 한쪽이라도 false 면 opus (4-AND false=stakes-gated 보존 / inv-0 false=financial mandate 살아있음).
 #
 # 본 스크립트 = Orchestrator spawn-time 판정 로직의 **결정론적 단일 출처**.
 #   Orchestrator 가 직접 호출(stdout 의 tier 를 opts.model 로 사용)하거나,
@@ -19,12 +23,19 @@
 #                               (read-only 시세 수집 포함 — G3 가드)
 #   STAKES_OVERLAY_FLOOR        consumer 보수 override         (opus = 강제 opus / 그 외 무시+로그)
 #   STAKES_AGENT                대상 agent 이름                 (default InfraOperationalArchitectAgent)
+#   STAKES_FINANCIAL_INVARIANT_ZERO  financial-invariant-0 shape 여부 (Amd17 별 predicate, DomainAgent 한정)
+#                               (yes = financial 결과 비접촉(invariant-0 확정) / 그 외 = 결과 접촉/미상 → fail-safe opus)
+#                               STAKES_AGENT != DomainAgent 면 본 신호 무시(InfraOpArch 동작 무변경).
 #
 # ── 판정 규칙 (change-plan §3.1 / §8.2) ──
 #   INV-1 (fail-safe monotone): 신호 부재/파싱불가 → high(opus). 절대 sonnet 아님.
 #   INV-2 (high-absorbing):     임의 1개 high → 전체 high(opus). "하나라도 high면 high".
 #   INV-3 (확장-only monotone):  overlay 는 opus 방향(보수)으로만 이동 — sonnet 방향 불가.
 #                               clamp = max(wrapper_floor, overlay). down-tier 무시+로그.
+#   INV-fin0 (Amd17 별 predicate, DomainAgent): financial-invariant-0 신호가 'yes'(결과 비접촉 확정)
+#                               아니면 wrapper_floor 를 opus 로 force (financial mandate 살아있음).
+#                               별 predicate 이므로 4-AND 와 AND — 4-AND low 여도 inv-0 미확정이면 opus.
+#                               fail-safe monotone (INV-1 동형) — 미상/파싱불가 → opus.
 #
 # ── 출력 ──
 #   stdout: 최종 tier — "opus" 또는 "sonnet" (한 줄)
@@ -68,6 +79,38 @@ if [ -n "$HIGH_REASONS" ]; then
   WRAPPER_FLOOR="opus"
 else
   WRAPPER_FLOOR="sonnet"
+fi
+
+# ── financial-invariant-0 별 predicate (CFP-2445 / ADR-042 Amd17, DomainAgent 한정) ──
+#   stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축의 *별* predicate.
+#   판정 = (4-AND low-stakes) AND (financial-invariant-0 shape). 두 predicate AND.
+#   - STAKES_AGENT != DomainAgent → 본 predicate 미적용 (InfraOpArch 동작 무변경, 4-AND 단독).
+#   - STAKES_AGENT == DomainAgent →
+#       · 4-AND 가 이미 opus (WRAPPER_FLOOR=opus) → financial-invariant-0 여부 무관 opus 유지 (stakes-gated 보존).
+#       · 4-AND low (WRAPPER_FLOOR=sonnet) → financial-invariant-0 신호가 'yes' 확정일 때만 sonnet 유지.
+#         그 외(결과 접촉 / 미상 / 파싱불가) → opus 로 force (financial mandate 살아있음, fail-safe INV-fin0).
+#   fail-safe monotone (INV-1 동형) — financial-invariant-0 신호는 'yes' 명시 외 전부 보수 opus.
+if [ "$AGENT" = "DomainAgent" ]; then
+  FIN_INV0_RAW="$(printf '%s' "${STAKES_FINANCIAL_INVARIANT_ZERO:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+  case "$FIN_INV0_RAW" in
+    yes)
+      FIN_INV0="confirmed" ;;     # financial 결과 비접촉 확정 (5-AND 전부 충족)
+    *)
+      FIN_INV0="not_confirmed" ;; # no / 빈 값 / 미상 / 파싱불가 = 결과 접촉 가능 → fail-safe opus
+  esac
+
+  if [ "$WRAPPER_FLOOR" = "sonnet" ] && [ "$FIN_INV0" = "confirmed" ]; then
+    # 2-predicate AND 충족 (4-AND low ∧ financial-invariant-0 확정) → sonnet 유지 (tier-flip)
+    echo "[stakes-tier] ${AGENT}: financial-invariant-0 확정(STAKES_FINANCIAL_INVARIANT_ZERO=yes) ∧ 4-AND low → sonnet eligible (Amd17 2-predicate AND)" >&2
+  else
+    # 어느 한 predicate false → opus force (별 predicate AND, financial mandate 살아있음)
+    if [ "$WRAPPER_FLOOR" = "opus" ]; then
+      echo "[stakes-tier] ${AGENT}: 4-AND high → opus (financial-invariant-0 여부 무관, stakes-gated 보존, Amd17 §결정1)" >&2
+    else
+      echo "[stakes-tier] ${AGENT}: 4-AND low 이나 financial-invariant-0 미확정(STAKES_FINANCIAL_INVARIANT_ZERO='${FIN_INV0_RAW:-(unset)}') → opus force (financial mandate 살아있음, fail-safe INV-fin0)" >&2
+    fi
+    WRAPPER_FLOOR="opus"
+  fi
 fi
 
 # ── tier rank (확장-only clamp 용, 사다리 haiku<sonnet<opus) ──

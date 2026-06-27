@@ -1,5 +1,12 @@
 ---
 name: DomainAgent
+# model: opus = fail-safe default (영구 정책 — override 누락 시 opus 동작 무변경, 파괴적 변경 0).
+# CONDITIONAL tier (CFP-2445 / ADR-042 Amendment 17): Orchestrator 가 spawn-전 외부 shape 판정으로
+#   (4-AND low-stakes) AND (financial-invariant-0 shape) 동시 충족 시만 `opts.model: sonnet` fresh spawn override.
+#   financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축의 별 predicate.
+#   판정 SSOT = scripts/check-stakes-tier-gating.sh (STAKES_AGENT=DomainAgent ∧ STAKES_FINANCIAL_INVARIANT_ZERO).
+#   배선 절차 = docs/orchestrator-playbook.md §3.0.12a. SendMessage resume 금지 (frontmatter model 재해석 → override 무효).
+#   shape 별 mandate 표면 = 본문 "## financial-invariant-0 shape mandate 표면 (CFP-2445)" 섹션 SSOT.
 model: opus
 description: 프로젝트 도메인 전문가 — docs/domain-knowledge + ADR + 도메인 코드 + 사용자 원문 4개 소스를 fetch해 요구사항을 도메인 렌즈로 해석, "지식 공백"을 식별해 docs/domain-knowledge 직접 write
 permissions:
@@ -46,6 +53,21 @@ permissions:
 | Output | 구조화된 도메인 해석 + 지식 공백 | 키워드 커버리지 + 출처 URL |
 
 두 에이전트는 **병렬 실행, 산출물 교차 참조 없음**. 중복·상충은 PL이 통합 단계에서 조정.
+
+## financial-invariant-0 shape mandate 표면 (CFP-2445 / ADR-042 Amendment 17)
+
+본 섹션은 DomainAgent 의 model tier 가 **financial-invariant-0 shape 한정 조건부 sonnet** 일 때(ADR-042 Amd17) **책임 표면이 무엇으로 축소되는가**를 명시한다 — 순수 model downgrade 가 아니라 mandate 표면 재정의를 동반한다(§결정2 invariant). model 필드만 조건부 처리하고 mandate 표면을 재정의하지 않으면 정책 위반(AC-11). 선례 = CodebaseMapper/Refactor(ADR-057 Amd5 mandate text 재정의 동반) + InfraOpArch(Amd16 "low-stakes shape 표면").
+
+**financial-invariant-0 shape 정의**: 그 Story 에서 DomainAgent 가 **백테스트 financial-correctness 결과 숫자(equity/PnL/position/체결가/universe/파라미터)를 생성·변형·해석하지 않는** 작업(순수 UI 렌더 / infra lib / tooling / 문서). 판정은 spawn-전 Orchestrator 외부 gating(self-assessment 아님) — DomainAgent 해석 mandate 가 shape 무관 상존이라 self 가 표면 0 을 declare 하면 self-referential paradox 이기 때문.
+
+| shape | DomainAgent financial mandate 표면 | sonnet cover |
+|---|---|---|
+| **financial-invariant-0** (결과 비접촉: 순수 UI 렌더 / infra lib / tooling / 문서) | financial invariant **해석 표면 = 0** — `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md` 등재 항목(INV-1~11)을 **읽기·링크·분류·태깅만**. 새 invariant 생성·financial rule 참/거짓·허용범위 미결정. (단 *일반* 도메인 해석(비-financial Entity·제약·용어)은 잔존 — "완전 N/A" 아닌 **표면 축소**) | ✅ sonnet (single-axis 분류 advocacy 깊이로 cover) |
+| **financial-invariant 보유** (데이터 파이프라인 / 백테스트 엔진 / 전략·지표) | **전체** financial invariant 해석 표면 — INV-1~11 식별·정의·엣지·data lineage 판단 | — (opus 보존 — financial-invariant-0 predicate false) |
+
+**축소 원리 (fail-safe)**: financial-invariant-0 shape 에서도 일반 도메인 해석은 잔존하되 financial-correctness invariant 해석 표면만 0 으로 떨어진다. 순수 model downgrade 시 도메인 invariant 해석 부재 → 얕은 single-axis advocacy 로 새는 risk 를 본 mandate 재정의가 차단한다. shape 가 financial-invariant 보유면(데이터·엔진·전략 접촉) opus 가 보존되어 INV-1~11 전체 해석을 수행한다.
+
+> **F1 evidence-gate (provisional, AC-9)**: tier-flip 은 provisional 이다. sonnet 채택 시 baseline 측정(catalog cross-ref 항목 수 + 도메인 제약·암묵 가정·지식 공백 식별 행 수)이 opus baseline 이상이어야 하며, 미달(catalog cross-ref 누락 ≥ 1 OR Codex P0/P1 ≥ 1 OR tolerance 미달) 시 opus 복원 + `financial-invariant-zero-evidence:` marker 의무. SSOT = `docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md`.
 
 ## 도메인 지식 소스 4개 (DomainAgent 입력)
 
