@@ -37,7 +37,8 @@ set -euo pipefail
 AGENT="${STAKES_AGENT:-InfraOperationalArchitectAgent}"
 
 # ── 단일 stakes 신호 정규화 ──
-#   "no" (정확히) = low. 그 외(yes / 빈 값 / 미상 / 파싱불가) = high (fail-safe, INV-1).
+#   no / false / 0 / none = low 신호 (소문자+공백 trim 후 비교). 그 외(yes / 빈 값 / 미상 /
+#   파싱불가 임의 토큰) = high (fail-safe, INV-1).
 #   반환: "low" 또는 "high"
 normalize_signal() {
   local raw="$1"
@@ -88,9 +89,20 @@ if [ -n "$OVERLAY_RAW" ]; then
   floor_rank="$(tier_rank "$WRAPPER_FLOOR")"
   overlay_rank="$(tier_rank "$OVERLAY_RAW")"
   if [ "$overlay_rank" -gt "$floor_rank" ]; then
-    # overlay 가 더 보수적(opus 강제) → honor (확장 방향, INV-3 정합)
-    FINAL_TIER="$OVERLAY_RAW"
-    echo "[stakes-tier] overlay 보수 override honored — ${WRAPPER_FLOOR} → ${OVERLAY_RAW} (확장-only, ADR-127 §결정6)" >&2
+    # overlay 가 더 보수적 → honor (확장 방향, INV-3 정합).
+    # **F-CR-001**: honor 대입 전 known-enum 검증 — 미지 tier 가 tier_rank() 의 unknown→3
+    #   fallback 때문에 sonnet floor 를 out-rank 해 raw 값이 누출되는 leak 차단 (INV-1 정합).
+    case "$OVERLAY_RAW" in
+      haiku|sonnet|opus)
+        FINAL_TIER="$OVERLAY_RAW"
+        echo "[stakes-tier] overlay 보수 override honored — ${WRAPPER_FLOOR} → ${OVERLAY_RAW} (확장-only, ADR-127 §결정6)" >&2
+        ;;
+      *)
+        # 미지 tier (rank3 fallback 으로 floor 를 out-rank) = sanitize 없이 누출 위험 → fail-safe opus (INV-1)
+        echo "[stakes-tier] overlay 미지 tier '${OVERLAY_RAW}' 무시 — fail-safe opus (INV-1, 미지=보수)" >&2
+        FINAL_TIER="opus"
+        ;;
+    esac
   elif [ "$overlay_rank" -lt "$floor_rank" ]; then
     # overlay 가 더 약함(down-tier 공격적 override) → 무시 + 명시 거부 로그 (INV-3 / AC-3)
     echo "[stakes-tier] overlay down-tier 거부 — overlay='${OVERLAY_RAW}' < wrapper_floor='${WRAPPER_FLOOR}', clamp=max() 적용 (확장-only enforcement, ADR-127 §결정6)" >&2
@@ -98,6 +110,16 @@ if [ -n "$OVERLAY_RAW" ]; then
   fi
   # overlay == floor → no-op (변경 없음)
 fi
+
+# ── 최종 emit clamp (이중 안전망, F-CR-001) ──
+#   stdout 으로 나가는 값이 {haiku,sonnet,opus} 아니면 opus 로 강제 (어떤 경로로도 raw 누출 0, INV-1).
+case "$FINAL_TIER" in
+  haiku|sonnet|opus) ;;   # 정상 enum
+  *)
+    echo "[stakes-tier] 최종 tier '${FINAL_TIER}' 가 known-enum 아님 — fail-safe opus 강제 (INV-1 이중 안전망)" >&2
+    FINAL_TIER="opus"
+    ;;
+esac
 
 # ── 판정 근거 stderr ──
 if [ -n "$HIGH_REASONS" ]; then

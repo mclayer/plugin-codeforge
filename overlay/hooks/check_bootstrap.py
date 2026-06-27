@@ -339,13 +339,20 @@ def check_story_stakes_overlay(yaml_path: Path) -> tuple[list[str], bool]:
     violations: list[str] = []
 
     # tier_override 맵: agent → tier. floor 미만(rank 작음) 지정 = down-tier 거부.
+    # F-CR-001 짝: bash check-stakes-tier-gating.sh 와 known-enum allowlist {haiku,sonnet,opus} 통일.
+    #   미지 tier 는 recognized override 아님 — 양측 모두 보수 처리(bash=fail-safe opus / python=reject).
+    #   기존 unknown→rank3(opus-equiv) fallback 은 garbage 토큰을 silent honor 하던 불일치 → 거부로 통일.
     tier_override = ss.get("tier_override")
     if isinstance(tier_override, dict):
         for agent, tier in tier_override.items():
             tier_norm = str(tier).strip().lower()
             floor = STORY_STAKES_AGENT_FLOOR.get(str(agent).strip(), "opus")
             floor_rank = STORY_STAKES_TIER_RANK.get(floor, 3)
-            req_rank = STORY_STAKES_TIER_RANK.get(tier_norm, 3)
+            if tier_norm not in STORY_STAKES_TIER_RANK:
+                # 미지 tier = recognized enum 아님 → 거부 (silent honor 차단, bash fail-safe 와 정합)
+                violations.append(f"{agent}: '{tier_norm}' 미지 tier (known-enum {{haiku,sonnet,opus}} 아님)")
+                continue
+            req_rank = STORY_STAKES_TIER_RANK[tier_norm]
             if req_rank < floor_rank:
                 violations.append(f"{agent}: {tier_norm} < wrapper_floor={floor}")
 

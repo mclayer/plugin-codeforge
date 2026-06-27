@@ -254,43 +254,51 @@ run_test_case "DISCRIMINATING-opus-high" \
   "변별 가드: high-shape → opus (T-G2), sonnet ≠ opus 실제 갈림"
 
 # ═════════════════════════════════════════════════════════════════════════════
-# RED 변별 실증 섹션 (mutation testing)
-# 목적: mutation(항상 opus 반환) 사본에서 low-shape 케이스가 FALSE 가 되는지 입증
-#   → 정상 스크립트는 TRUE(sonnet), mutation 스크립트는 FALSE(opus) 다르게 출력
+# 회귀 케이스: garbage overlay + low-shape → opus (INV-1 이중 안전망, F-CR-001)
+# STAKES_OVERLAY_FLOOR=garbage(미지 tier) → fail-safe opus 로 clamp (known-enum guard)
+# ═════════════════════════════════════════════════════════════════════════════
+run_test_case "INV-1-garbage-overlay" \
+  'STAKES_REAL_FUNDS=no STAKES_PRODUCTION_CUTOVER=no STAKES_NEW_TRUST_BOUNDARY=no STAKES_LIVE_EXTERNAL_API=no STAKES_OVERLAY_FLOOR=garbage' \
+  'opus' \
+  "garbage overlay(미지 tier) + low-shape → opus (fail-safe clamp, INV-1)"
+
+run_test_case "INV-1-garbage-overlay-high" \
+  'STAKES_REAL_FUNDS=yes STAKES_OVERLAY_FLOOR=megamodel' \
+  'opus' \
+  "garbage overlay(megamodel) + high-shape → opus (fail-safe clamp, INV-1)"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# RED 변별 실증 섹션 (production sed mutation testing)
+# 목적: production 파일을 sed 로 변형한 사본에서 low-shape 케이스가 RED 로 뒤집히는지 입증
+#   → 정상 스크립트는 GREEN(sonnet), mutation 스크립트는 RED(opus) 다르게 출력
 # ═════════════════════════════════════════════════════════════════════════════
 
-# 임시 mutation 사본 생성 (항상 "opus" echo)
-MUTATION_WRAPPER="$(mktemp)"
-cat > "$MUTATION_WRAPPER" <<'MUTATION_EOF'
-#!/usr/bin/env bash
-# mutation: 항상 opus 반환 (low-shape 변별 강제)
-echo "opus"
-exit 0
-MUTATION_EOF
-chmod +x "$MUTATION_WRAPPER"
+# production wrapper_floor 계산을 항상 "opus" 로 강제하는 sed mutation 생성
+# 원본은 4-AND 로직으로 low-shape → sonnet 을 결정하는데,
+# sed 로 WRAPPER_FLOOR 할당 라인을 "always opus" 로 변경하면 low-shape 도 opus 가 됨
+MUTATION_WRAPPER_PROD="$(mktemp)"
 
-# mutation 사본에서 T-G1(low-shape sonnet 기대) 실행 → FAIL(opus 출력) 확인
-# 이는 정상 스크립트에서 PASS 인 것과 대비되어 변별성 입증
-TEMP_WRAPPER_SAVE="$WRAPPER"
-WRAPPER="$MUTATION_WRAPPER"
+# sed mutation: "else" 분기(wrapper_floor=sonnet)를 "wrapper_floor=opus" 로 변경
+# 이렇게 하면 4-AND=low 도 sonnet 아닌 opus 로 설정됨 → T-G1 케이스가 RED 뒤집힘
+sed 's/^  WRAPPER_FLOOR="sonnet"$/  WRAPPER_FLOOR="opus"  # MUTATION: force opus/' "$WRAPPER" > "$MUTATION_WRAPPER_PROD"
+chmod +x "$MUTATION_WRAPPER_PROD"
 
-# Mutation-run: T-G1 저장된 case (low-shape) 이 mutation 에서 FAIL 해야 RED 입증
-mut_out=""
+# mutation 버전에서 T-G1(low-shape) 실행 — sonnet 기대하는데 opus 나와야 RED 입증
+mut_out_prod=""
 exit_code=0
-mut_out=$( (eval "export STAKES_REAL_FUNDS=no STAKES_PRODUCTION_CUTOVER=no STAKES_NEW_TRUST_BOUNDARY=no STAKES_LIVE_EXTERNAL_API=no"; bash "$MUTATION_WRAPPER" 2>/dev/null) ) || exit_code=$?
-mut_out="$(printf '%s' "$mut_out" | tr -d '[:space:]')"
+mut_out_prod=$( (eval "export STAKES_REAL_FUNDS=no STAKES_PRODUCTION_CUTOVER=no STAKES_NEW_TRUST_BOUNDARY=no STAKES_LIVE_EXTERNAL_API=no"; bash "$MUTATION_WRAPPER_PROD" 2>/dev/null) ) || exit_code=$?
+mut_out_prod="$(printf '%s' "$mut_out_prod" | tr -d '[:space:]')"
 
-if [ "$mut_out" = "opus" ]; then
-  echo "✓ RED MUTATION-CHECK: T-G1 low-shape 케이스가 mutation 에서 다른 결과(opus≠sonnet) 출력 — 변별성 입증"
+if [ "$mut_out_prod" = "opus" ]; then
+  echo "✓ RED MUTATION-CHECK: T-G1 low-shape 케이스가 production sed mutation 에서 RED 뒤집힘(opus≠sonnet 기대) — 진정성 입증"
   PASS=$((PASS+1))
 else
-  echo "✗ FAIL MUTATION-CHECK: mutation 이 예상대로 작동 안 함 (동작 검증 실패)"
+  echo "✗ FAIL MUTATION-CHECK: sed mutation 결과 이상 (expected opus, got: $mut_out_prod)"
   FAIL=$((FAIL+1))
 fi
 
-# Cleanup mutation
-rm -f "$MUTATION_WRAPPER"
-WRAPPER="$TEMP_WRAPPER_SAVE"
+# Cleanup production mutation
+rm -f "$MUTATION_WRAPPER_PROD"
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Summary

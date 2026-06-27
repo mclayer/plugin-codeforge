@@ -537,6 +537,7 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
    STAKES_NEW_TRUST_BOUNDARY=<yes|no> STAKES_LIVE_EXTERNAL_API=<yes|no> \
    STAKES_OVERLAY_FLOOR=<opus|""> bash scripts/check-stakes-tier-gating.sh
    ```
+   - **namespace 브리지 (F-CR-005)**: consumer overlay `story_stakes.conservative_override[]` 에 InfraOperationalArchitectAgent 가 있으면 → `STAKES_OVERLAY_FLOOR=opus` 로 변환 입력(보수 강제). `tier_override` 의 known-enum opus 도 동일. down-tier(floor 미만)·미지 tier 는 schema-gate(check 11)가 이미 거부 + 스크립트가 known-enum 아니면 fail-safe opus 로 clamp(이중 안전망) — overlay raw 값 그대로 `STAKES_OVERLAY_FLOOR` 전달 금지(opus/빈 값만).
 3. **spawn** — 결과가 `sonnet` 이면 InfraOperationalArchitectAgent 를 `opts.model: sonnet` **fresh `Agent` spawn**. `opus` 이면 frontmatter default(opus) 그대로 spawn. **SendMessage resume 금지** — frontmatter `model: opus` 가 resume 시 재해석돼 override 무효(§3.0.12 fresh-spawn-only invariant). **FIX 재진입도 fresh spawn 으로 stakes 재판정**(silent 풀림 차단).
 
 **불변식**:

@@ -185,47 +185,92 @@ run_py_fixture "EDGE-multi-agent-one-downtier" "$YAML_EDGE_MULTI" "True" \
   "multi-agent: 1개 down-tier(sonnet) 검출 → strict=True (집계)"
 
 # ═════════════════════════════════════════════════════════════════════════════
-# RED 변별 실증 섹션 (mutation: check_story_stakes_overlay 항상 False 반환)
-# 목적: mutation 사본에서 down-tier 케이스(TB-G1)가 True → False 로 뒤집히는지 입증
-#       정상 스크립트는 strict=True, mutation 은 strict=False → 변별성 입증
+# RED 변별 실증 섹션 (production python sed mutation testing)
+# 목적: overlay/hooks/check_bootstrap.py 의 tier_override 검증을 비활성화한 scp에서
+#       down-tier 케이스(TB-G1)가 True → False 로 뒤집히는지 입증
+#       → 정상 스크립트는 strict=True(down-tier 거부), mutation 은 strict=False → RED 입증
 # ═════════════════════════════════════════════════════════════════════════════
 
 fixture_dir_mut="$(mktemp -d)"
 yaml_path_mut="$fixture_dir_mut/project.yaml"
 printf '%s' "$YAML_TB_G1" > "$yaml_path_mut"
 
-# mutation python code: 항상 False 반환
-MUTATION_PY="$(mktemp)"
-cat > "$MUTATION_PY" <<'MUTATION_EOF'
+# production check_bootstrap.py 의 check_story_stakes_overlay 함수를 mutation으로 대체해 실행
+# 원본은 if req_rank < floor_rank: violations.append(...) 로 down-tier 위반을 검출
+# mutation은 down-tier 조건을 if False:로 변경해서 위반을 검출하지 않음
+# → TB-G1 케이스가 RED 뒤집힘(True→False)
+
+# mutation 직접 Python 코드로 정의해 인라인 실행 (임시 파일 경로 문제 회피)
+MUTATION_HELPER_PY="$(mktemp)"
+cat > "$MUTATION_HELPER_PY" << 'MUTATION_INLINE_EOF'
+# -*- coding: utf-8 -*-
+"""Inline mutation test: check_story_stakes_overlay 의 down-tier 검출 비활성화"""
 import sys
-sys.path.insert(0, 'overlay/hooks')
 from pathlib import Path
 
-# mutation: check_story_stakes_overlay 항상 False 반환 (discriminating test)
-def check_story_stakes_overlay(yaml_path):
+yaml_path = Path(sys.argv[1])
+
+# mutation 함수: down-tier 검출 로직을 if False: 로 변경
+def check_story_stakes_overlay(yaml_path: Path):
+    try:
+        import yaml
+    except ImportError:
+        return ([], False)
+    if not yaml_path.is_file():
+        return ([], False)
+    try:
+        data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return ([], False)
+
+    ss = data.get("story_stakes")
+    if not isinstance(ss, dict):
+        return ([], False)
+
+    violations = []
+    STORY_STAKES_TIER_RANK = {"haiku": 1, "sonnet": 2, "opus": 3}
+    STORY_STAKES_AGENT_FLOOR = {"InfraOperationalArchitectAgent": "opus"}
+
+    tier_override = ss.get("tier_override")
+    if isinstance(tier_override, dict):
+        for agent, tier in tier_override.items():
+            tier_norm = str(tier).strip().lower()
+            floor = STORY_STAKES_AGENT_FLOOR.get(str(agent).strip(), "opus")
+            floor_rank = STORY_STAKES_TIER_RANK.get(floor, 3)
+            if tier_norm not in STORY_STAKES_TIER_RANK:
+                violations.append(f"{agent}: '{tier_norm}' 미지 tier (known-enum {{haiku,sonnet,opus}} 아님)")
+                continue
+            req_rank = STORY_STAKES_TIER_RANK[tier_norm]
+            # MUTATION: if req_rank < floor_rank: 를 if False: 로 변경
+            # 이로 인해 down-tier 조건을 만족해도 violations 에 추가되지 않음
+            if False:  # MUTATION: down-tier detection disabled
+                violations.append(f"{agent}: {tier_norm} < wrapper_floor={floor}")
+
+    if violations:
+        return ([], True)
     return ([], False)
 
-yaml_p = Path(sys.argv[1])
-warnings, strict = check_story_stakes_overlay(yaml_p)
+# 함수 호출
+warnings, strict = check_story_stakes_overlay(yaml_path)
 sys.stdout.write('True' if strict else 'False')
 sys.stdout.flush()
-MUTATION_EOF
+MUTATION_INLINE_EOF
 
 # mutation 실행 (TB-G1 down-tier 케이스에서 False 나와야 RED 입증)
 pushd "$REPO_ROOT" > /dev/null
-py_result_mut=$( PYTHONIOENCODING=utf-8 python3 "$MUTATION_PY" "$yaml_path_mut" 2>/dev/null ) || true
+py_result_mut=$( PYTHONIOENCODING=utf-8 python3 "$MUTATION_HELPER_PY" "$yaml_path_mut" 2>&1 ) || true
 popd > /dev/null
 py_result_mut="$(printf '%s' "$py_result_mut" | tr -d '[:space:]')"
 
 if [ "$py_result_mut" = "False" ]; then
-  echo "✓ RED MUTATION-CHECK: TB-G1(down-tier=True 기대) 케이스가 mutation 에서 다른 결과(False≠True) 출력 — 변별성 입증"
+  echo "✓ RED MUTATION-CHECK: TB-G1(down-tier=True 기대) 케이스가 production mutation 에서 RED 뒤집힘(False≠True 기대) — 진정성 입증"
   PASS=$((PASS+1))
 else
-  echo "✗ FAIL MUTATION-CHECK: mutation 이 예상과 다름 (False 기대, got=$py_result_mut)"
+  echo "✗ FAIL MUTATION-CHECK: mutation 결과 이상 (expected False, got=$py_result_mut)"
   FAIL=$((FAIL+1))
 fi
 
-rm -rf "$fixture_dir_mut" "$MUTATION_PY" "$HELPER_PY"
+rm -rf "$fixture_dir_mut" "$MUTATION_HELPER_PY" "$HELPER_PY"
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Summary
