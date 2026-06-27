@@ -196,6 +196,23 @@ amendment_log:
       - ADR-127 §결정 6 (consumer overlay 확장-only — down-tier 공격적 override 불가 근거)
       - ADR-042 Amendment 5 / Amendment 15 (Amd5 = ChangeImpactAgent opus 확정 source(본 Amd16 이 reversal) + invariant enforcement 선례(mandate text 재정의) / Amd15 = CFP-2401 'sonnet 미사용' 진단 1차, 본 Story 2차 follow-through)
       - ADR-086 (axis 분석 lens — stakes axis ⊥ mandate axis disjoint 검증 도구 adjacent-case. 본 Amendment = 신설 아님(tier 분기)이라 framework 전면 self-application 주장 아님)
+  - amendment_id: 17
+    date: "2026-06-28"
+    status: applied
+    summary: "CFP-2445 (CFP-2432 follow-up) — DomainAgent financial-invariant-0 조건부 sonnet tier. Amendment 16 이 'DomainAgent v1 제외 + follow-up CFP'(§결정 3) 로 예약한 자리를 선결충족 후 채움(reversal 아님 — 예약된 확장). financial-invariant-0 = stakes 4-AND(InfraOpArch 축)와 **orthogonal 한 financial-correctness 결과접촉 축**. DomainAgent sonnet flip 조건 = (4-AND low-stakes) AND (financial-invariant-0 shape) 2-predicate AND — financial-invariant-0 은 4-AND 에 5번째로 욱여넣지 않고 **DomainAgent 전용 별 predicate**(STAKES_FINANCIAL_INVARIANT_ZERO)로 명시 분리(check-stakes-tier-gating.sh 확장, 신설 0). 판정 축 = 'DomainAgent 가 그 Story 에서 financial-correctness 결과 숫자(equity/PnL/position/체결가/universe/파라미터)를 생성·변형·해석하는가' — NO(결과 비접촉)이면 invariant-0. falsifiable 신호 = §2.3 5-AND(결과숫자 비접촉 ∧ 시간인과 비접촉 ∧ 체결/비용모델 비접촉 ∧ data lineage 비접촉 ∧ 변경경로 도메인숫자 repo 밖) — 전부 fail-safe(불확실=opus, INV-1 동형). **D1 catalog**: 백테스트 financial-correctness invariant 11건(INV-1~11: lookahead/survivorship/fee·slippage/PnL·position/PIT/overfitting/order-fill/capacity/시간경계/storytelling/outliers — 요구사항 §2.2 9건 초안 + F2 storytelling(INV-10)·outliers(INV-11) 편입) docs/domain-knowledge/domain/backtesting-discipline/ 정식화(F1 survivorship 1.4%/년 정정 — Oxford Academic rfs 9:4:1097 다출처 수렴, F2 storytelling/outliers 편입(INV-10/11) + '의도적 제외' traceability(7 Sins 1:1 매핑), F3 invariant **A(정적 falsifiable: lookahead 코드패턴/fee 누락/PnL 산술) / B(프로세스·메타데이터 의존: PIT governance/시행횟수/survivorship 완전성)** 분리). 정식 catalog 파일 = Phase 2 산출(DomainAgent write), 설계 = 구조·분류·shape 매핑 확정. **§결정 2 invariant 동반 의무**: DomainAgent.md mandate 에 'financial-invariant-0 shape 에서 DomainAgent 책임 표면 축소'(도메인 invariant 해석 부재 → 얕은 single-axis advocacy) 명시 — 순수 model downgrade 금지(CodebaseMapper/Refactor ADR-057 Amd5 / InfraOpArch Amd16 mandate-재정의 선례 답습). **메커니즘 신설 0**: frontmatter model:opus = fail-safe default(override 누락 = opus) + Orchestrator spawn-time opts.model:sonnet fresh override(ADR-057 §결정 4, SendMessage resume 금지). **spawn 시점**: DomainAgent 는 요구사항 lane spawn(InfraOpArch self-assessment 패턴 부적합 — 해석 mandate 가 shape 무관 상존) → **spawn-전 외부 shape 판정**(Story 메타·경로 allow-list, OQ-3). **F1 evidence-gate**: CFP-2432 stakes-gated-model-tier-baseline.md protocol DomainAgent 확장 — baseline 측정 대상 = '도메인 invariant 식별 완결성'(catalog cross-ref 깊이 + 식별 항목 수) 신규 정의(InfraOpArch §7.4 표 완결성과 다름, OQ-6). **ADR-117 §결정 2 cross-ref**(OQ-8): DomainAgent sonnet(하향) ⊥ ADR-117 'Domain 단기 구조적 fable 제외'(상향) = 판정축 disjoint, silent override 금지 — Amd16 §결정 3 의 cross-ref 의무 실행, ADR-117 본체 미수정(Amd17 내 언급으로 충족). ratchet 약화 방향(opus→sonnet) → sunset_justification(evidence) 의무. 본 Phase 1 = ADR-042 Amd17 + change-plan + Story §7; Phase 2 = catalog 파일 신규 + DomainAgent.md frontmatter+mandate + check-stakes-tier-gating.sh predicate 확장 + project-config-schema + playbook §3.0.12a + F1 protocol 확장 + plugin bump + marketplace sync."
+    ref: CFP-2445
+    carrier_story: CFP-2445
+    sunset_justification: "opus→sonnet tier-flip(DomainAgent, financial-invariant-0 shape 한정) = ratchet 약화 방향(reasoning depth 하향) → ADR-058 §결정 5 / ADR-064 §결정 7 (is_transitional:false governance ADR 약화 방향 symmetric evidence-gate) evidence requirement 발화. evidence-grounded justification 3 axis — (a) **shape-gated 정제이지 flat 능력 감소 아님**: DomainAgent 의 financial invariant 해석 mandate 는 InfraOpArch safety mandate 와 달리 shape 무관 *상존*(백테스트도 financial-correctness invariant 보유 — Amd16 §결정 3 verbatim). 따라서 하향은 **financial-correctness 결과 숫자 비접촉 shape(순수 tooling/UI/infra lib/문서)에 엄격 한정** — 그 shape 에선 invariant 표면이 0(결과 정확성의 속성이 결과 비접촉 작업엔 표면 없음, §2.3 판정 원리). 데이터 파이프라인·백테스트 엔진·전략/지표 등 결과접촉 shape 는 opus 보존(financial-invariant-0 predicate false). InfraOpArch 의 '발현 trigger 물리 부재' 와 동형이되 dormant 가 아닌 '결과 비접촉으로 mandate 표면 0' 논리. (b) **falsifiable evidence-gate + indirect real-funds risk 가드**: tier-flip 은 provisional — F1 protocol(stakes-gated-model-tier-baseline.md) DomainAgent 확장으로 sonnet 산출물의 도메인 invariant 식별 완결성 ≥ opus baseline 측정 + 미달(catalog cross-ref 누락 ≥ 1 OR Codex P0/P1 OR tolerance 미달) 시 opus 복원(AC-9). 누설 = indirect real-funds risk(백테스트 결과 거짓→실자금 결정 오염, Amd16 §결정 3)이므로 fail-safe(불확실=opus) + 5-AND 전부 충족 요구 + evidence-gate 3중 가드. self-referential 판정 risk(도메인 비접촉 판정에 도메인 지식 필요)는 allow-list(순수 tooling 만 sonnet 허용) + fail-safe 로 완화, 잔존은 evidence-gate 흡수(완전 제거 아님 — OQ-2). (c) **지배적 financial-invariant-0 shape 의 비용효율**: CFP-2401 'sonnet 미사용' 진단의 follow-through 연장 — DomainAgent 가 매 요구사항 lane spawn 마다 opus 비용을 발생시키나 financial-correctness 결과 비접촉 Story(순수 UI/infra/tooling/문서)에선 financial invariant 해석 표면이 0. high-stakes/결과접촉 보존 + evidence-gate + 결과 비접촉 shape 비용효율 = 약화 방향의 1급 정당화. is_transitional: false 유지(영구 정책 정제, transitional pilot 아님 — Amd16 동형)."
+    affected_agents:
+      - DomainAgent (codeforge-requirements — frontmatter model:opus 유지 fail-safe default + financial-invariant-0 shape(4-AND low-stakes ∧ financial-correctness 결과 비접촉) Orchestrator spawn-time opts.model:sonnet override. agent file frontmatter conditional 주석 + mandate 표면 재정의(financial-invariant-0 shape 책임 축소 declare) = Phase 2 codeforge-requirements sibling PR. Amd16 의 'v1 제외' → CFP-2445 완료로 갱신)
+    cross_ref:
+      - ADR-042 Amendment 16 (CFP-2432 — §결정 3 가 'DomainAgent flip = catalog codify + 경계 falsifiable 확정 후 별 carrier' 로 본 Story 예약. Amd17 = 선결충족 확장(reversal 아님, Amd16 무효화 0). 메커니즘(opts.model override / 4-AND / F1 protocol / consumer overlay 확장-only) 전부 재사용 — 신설 0)
+      - ADR-058 §결정 5 (약화 방향 sunset_justification evidence requirement — DomainAgent tier-flip 하향 evidence-gate 발화)
+      - ADR-064 §결정 7 (is_transitional:false governance ADR 약화 방향 symmetric evidence-gate)
+      - ADR-117 §결정 2 (Domain '단기 구조적' fable 상향 제외 = 상향 축. 본 Amendment = 하향(sonnet) 축 disjoint — 직접 모순 아님. Amd16 §결정 3 cross-ref 의무 실행, ADR-117 본체 미수정(Amd17 내 언급 충족). silent override 금지)
+      - ADR-057 §결정 3 / §결정 4 (Codex 독립 review baseline 선례(F1 measurement) + spawn-time opts.model override fresh-spawn 메커니즘 SSOT(SendMessage resume 금지 상속))
+      - ADR-127 §결정 6 (consumer overlay 확장-only — DomainAgent down-tier 공격적 override 불가, max(floor,overlay) clamp 재사용)
+      - ADR-056 §결정 3 (요구사항 lane synthesis 순서 §5→§2→§6→PL — catalog 합성 근거) / DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny — catalog = domain/ 만 가능)
 related_stories:
   - CFP-448
   - CFP-676
@@ -208,6 +225,7 @@ related_stories:
   - CFP-2369  # Amendment 14 carrier — (d) Reusability 측정 연동 Phase-2 mechanical wire (warning-tier duplication-ratio 측정: check-duplication-ratio.sh + consumer template + evidence-registry entry, CFP-2364 deferred trigger follow-through, repo-분해 advisory 유지)
   - CFP-2401  # Amendment 15 carrier — 비-webapp(backend service) sonnet dev preset 신설 (ServiceDeveloperAgent, §결정 1(b) enumeration 확장, preset 2→3)
   - CFP-2432  # Amendment 16 carrier — Story-shape 조건부 model tier (stakes-gated static-per-context tier). low-stakes 4-AND shape 에서 InfraOperationalArchitectAgent opus→sonnet, high-stakes opus 유지. §결정 2 invariant 충돌 해소(stakes = mandate-orthogonal 축). ChangeImpactAgent sonnet 비준(Amd5 reversal) + DomainAgent v1 제외. ratchet 약화 방향 → sunset_justification(evidence) 의무
+  - CFP-2445  # Amendment 17 carrier — DomainAgent financial-invariant-0 조건부 sonnet (CFP-2432 follow-up). Amd16 §결정 3 가 예약한 DomainAgent flip 자리 선결충족(catalog codify + 경계 falsifiable 확정). financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축, DomainAgent 전용 별 predicate. flip 조건 = (4-AND low-stakes) AND (financial-invariant-0 shape). D1 catalog 11 invariant(INV-1~11, F2 storytelling/outliers 편입 INV-10/11) + A/B 분류 + F1 1.4% 정정. mandate 표면 재정의 동반(§결정 2). ratchet 약화 방향 → sunset_justification(evidence) 의무
 related_adrs:
   - ADR-009
   - ADR-013
@@ -231,6 +249,7 @@ related_adrs:
   - ADR-058  # Amendment 16 cross-ref (CFP-2432 — §결정 5 약화 방향 sunset_justification evidence requirement; tier-flip opus→sonnet 하향 evidence-gate)
   - ADR-064  # Amendment 16 cross-ref (CFP-2432 — §결정 7 is_transitional:false governance ADR 약화 symmetric evidence-gate)
   - ADR-127  # Amendment 16 cross-ref (CFP-2432 — §결정 6 consumer overlay 확장-only; down-tier 공격적 override 불가 근거)
+  - ADR-056  # Amendment 17 cross-ref (CFP-2445 — 요구사항 lane synthesis 순서 §5→§2→§6→PL catalog 합성 근거 + DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny))
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -304,6 +323,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 > **Amendment 15 (2026-06-25, CFP-2401)**: Sonnet (b) Implementation work enumeration 에 **ServiceDeveloperAgent** (codeforge-develop `presets/backend-service/`, frontend-less backend service shape sonnet dev) 추가 — webapp preset(web shape)에 이어 비-webapp shape 의 sonnet 구현 tier 신설. generic DeveloperAgent(ADR-117/CFP-2241 opus override) 와 disjoint(명시 sonnet). 상세 = 본 ADR `## Amendment 15` body section.
 >
 > **Amendment 16 (2026-06-27, CFP-2432)**: **Story-shape 조건부 model tier (stakes-gated static-per-context tier)** 도입 — tier = f(mandate depth, **stakes**) 로 codify. Opus 기준 (c)/(d)/(e) (high-stakes domain / safety boundary / real-funds) 는 **stakes-conditional** — Story 가 그 stakes 를 carry 할 때만 발화. **low-stakes Story shape (실자금 없음 ∧ production cutover 없음 ∧ 신규 신뢰경계 없음 ∧ live 외부 API 호출 없음 — 4-AND)** 에서 **InfraOperationalArchitectAgent** 를 spawn-time `opts.model: sonnet` override (frontmatter `model: opus` = fail-safe default 보존, override 누락 = opus). high-stakes shape = opus 유지. §결정 1(d) safety boundary owner 4종 중 InfraOpArch 만 1급 flip 후보(§7.4.1/.2/.3/.4 mandate 발현 trigger 가 live 부재 shape 에서 물리적 dormant — §7.4.5/.6 잔존분은 sonnet single-mandate advocacy 깊이로 cover). SecurityArch(ADR-117 surgical + 보안경계 상존)·DataArch·TestContractArch 제외; DomainAgent v1 제외(financial invariant 상존, follow-up). §결정 2 invariant 와 양립(stakes = mandate-orthogonal 축, shape별 mandate 표면 재정의 동반 의무). ratchet 약화 방향(opus→sonnet) → sunset_justification(evidence) 의무(ADR-058 §결정 5 / ADR-064 §결정 7). 상세 = 본 ADR `## Amendment 16` body section.
+>
+> **Amendment 17 (2026-06-28, CFP-2445)**: Amendment 16 이 v1 제외 + follow-up 으로 예약한 **DomainAgent** 를 **financial-invariant-0 shape 한정 조건부 sonnet** 으로 채움(선결충족 확장, reversal 아님). DomainAgent sonnet flip 조건 = **(4-AND low-stakes) AND (financial-invariant-0 shape)** — financial-invariant-0 은 Amendment 16 의 stakes 4-AND(InfraOpArch 축)와 **orthogonal 한 financial-correctness 결과접촉 축**, 4-AND 에 5번째로 욱여넣지 않고 **DomainAgent 전용 별 predicate**(`STAKES_FINANCIAL_INVARIANT_ZERO`)로 분리(check-stakes-tier-gating.sh 확장, 신설 0). 판정 축 = "DomainAgent 가 그 Story 에서 financial-correctness 결과 숫자(equity/PnL/position/체결가/universe/파라미터)를 생성·변형·해석하는가" — NO(결과 비접촉)이면 invariant-0(§2.3 5-AND, fail-safe 불확실=opus). D1 catalog 11 invariant(INV-1~11 — 요구사항 §2.2 9건 + F2 storytelling(INV-10)·outliers(INV-11) 편입) docs/domain-knowledge/domain/backtesting-discipline/ 정식화 + invariant **A(정적 falsifiable) / B(프로세스·메타데이터 의존)** 분리(F3) + F1 survivorship 1.4%/년 정정. **§결정 2 invariant 동반 의무** — DomainAgent.md mandate 에 "financial-invariant-0 shape 에서 책임 표면 축소" 명시(순수 model downgrade 금지, InfraOpArch Amd16 mandate-재정의 선례). frontmatter `model: opus` = fail-safe default + Orchestrator spawn-time `opts.model: sonnet` fresh override(메커니즘 신설 0). DomainAgent = 요구사항 lane spawn → **spawn-전 외부 shape 판정**(Story 메타·경로 allow-list — InfraOpArch self-assessment 패턴 부적합, 해석 mandate shape 무관 상존). F1 evidence-gate DomainAgent 확장(baseline = 도메인 invariant 식별 완결성). ADR-117 §결정 2 cross-ref(하향 sonnet ⊥ 상향 fable disjoint, silent override 금지 — Amd16 §결정 3 의무 실행, ADR-117 본체 미수정). ratchet 약화 방향 → sunset_justification(evidence) 의무. 상세 = 본 ADR `## Amendment 17` body section.
 >
 > **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
 | **Haiku** | haiku | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
@@ -1156,6 +1177,8 @@ DomainAgent 는 InfraOpArch 보다 tier-flip 정당성이 **약하다** — Infr
 
 **결정 = v1 보수: DomainAgent 제외 + follow-up CFP** (Orchestrator 권장 방향 (a)/(b) 중 (b) 택1). (a) financial-invariant surface 없는 shape(순수 tooling/UI/infra lib)로 4번째 조건 gating 하는 대안보다, (b) v1 제외가 falsifiable-conservative — 백테스트(financial invariant 보유)가 DomainAgent sonnet 으로 새지 않게 하는 안전한 경계. financial-invariant surface 의 falsifiable 경계 확정(어떤 shape 가 도메인 invariant 0 인지)이 v1 에서 충분히 닫히지 않아, premature flip 시 F3 가 경고한 risk(백테스트 invariant 누설)를 그대로 노출. → DomainAgent flip 은 financial-invariant catalog(F3) codify + 경계 falsifiable 확정 후 별 carrier.
 
+> **[Amendment 17 fulfillment 2026-06-28, CFP-2445]**: 위 "별 carrier" = **CFP-2445 / Amendment 17**. 예약 조건(catalog codify + 경계 falsifiable 확정)을 선결충족 후 DomainAgent 를 **financial-invariant-0 shape 한정 조건부 sonnet** 으로 채움 — (4-AND low-stakes) AND (financial-invariant-0 shape) 2-predicate. financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축(DomainAgent 전용 별 predicate). 본 §결정 3 의 "v1 제외" 는 v1(CFP-2432) 시점 frozen 결정으로 유효(Event Sourcing) — Amd17 = v1 이후 follow-up 자리 충족(Amd16 무효화 0). 상세 = 본 ADR `## Amendment 17` body section.
+
 > **ADR-117 결정 2 cross-ref (silent override 금지)**: ADR-117 §결정 2 가 "Domain"을 "단기 구조적 역할"로 fable 상향에서 명시 제외했으나, 그 단정 대상은 **fable 적격성(상향 축)** 뿐 — opus floor 적정성(하향 축)을 단정한 적 없음(ADR-117 전문 sonnet 하향 논의 0건, Continuity §4.3 falsifier verify). 두 ADR 이 같은 agent(DomainAgent)를 분류하므로, **본 Amendment 가 DomainAgent 를 v1 제외하되 향후 flip 시 ADR-117 §결정 2 "Domain opus 유지" 문구가 stakes-conditional 로 정제됨을 cross-ref 명시 의무** — 판정 축 disjoint(상향 fable vs 하향 sonnet), 직접 모순 아님.
 
 ### §결정 4 — conditional-model 메커니즘 (fail-safe, 신설 0)
@@ -1228,3 +1251,130 @@ opus→sonnet tier-flip = ratchet **약화 방향**(reasoning depth 하향) → 
 - ADR-042 Amendment 5(ChangeImpactAgent opus 확정 source — 본 Amd16 reversal + invariant enforcement mandate text 재정의 선례) / Amendment 15(CFP-2401 "sonnet 미사용" 진단 1차, 본 Story 2차 follow-through)
 - ADR-086 — axis 분석 lens(stakes axis ⊥ mandate axis disjoint 검증 도구 adjacent-case. 본 Amendment = 신설 아닌 tier 분기 → framework 전면 self-application 주장 아님)
 - CFP-2432 change-plan(internal-docs `wrapper/change-plans/`) — stakes-tier gating 설계 SSOT(§3 메커니즘 / §7 trust boundary / §8 Test Contract / §11 N/A)
+
+---
+
+## Amendment 17 — DomainAgent financial-invariant-0 조건부 sonnet tier (CFP-2445, CFP-2432 follow-up)
+
+**날짜**: 2026-06-28
+
+### 동기 — Amendment 16 가 예약한 자리
+
+Amendment 16(CFP-2432)이 Story-shape 조건부 model tier 를 `InfraOperationalArchitectAgent` 단독 flip 으로 v1 확정하며 **DomainAgent 는 §결정 3 에서 v1 명시 제외 + follow-up CFP** 로 deferred 했다. 사유: low-stakes 4-AND shape(실자금 없음 ∧ cutover 없음 ∧ 신규 신뢰경계 없음 ∧ live 외부 API 없음)라도 **백테스트는 financial-correctness invariant 상존**(lookahead bias / survivorship / fee·slippage / PnL) → DomainAgent 를 그대로 sonnet 으로 내리면 invariant 누설 risk(InfraOpArch 의 §7.4 stakes-coupled *물리적 dormant* 와 달리 정당성 약함). 사용자 directive(2026-06-28 KST, verbatim): CFP-2432 완료 직후 *"이어서 착수해"* — Amd16 §결정 3 가 예약한 "catalog codify + 경계 falsifiable 확정 후 별 carrier" 자리를 **선결충족 후 채운다**. **reversal 아님** — Amd16 무효화 0, v1 제외(CFP-2432 자체)는 frozen 유효, 본 Amendment = v1 이후 확장.
+
+### D1 — 백테스트 financial-correctness invariant catalog (11 invariant + A/B 분류)
+
+D2/D3 의 입력. 백테스트의 도메인 본질 = "숫자가 그럴듯한데 틀린" **silent corruption** — 거의 모든 invariant 위반이 백테스트 수익을 *부풀린다*(낙관 편향). crash 가 아니라 "좋아 보이는 틀린 결과"라 CI·테스트가 못 잡는다. 이 silent 성격이 financial invariant 식별을 **opus급 도메인 판단의 기본값**으로 만드는 근거다(결과 비접촉 shape 에서만 표면이 0).
+
+| # | invariant | 부류 (A 정적 / B 프로세스·메타데이터) | opus 판단 강도 |
+|---|---|---|---|
+| INV-1 | Lookahead bias / future-leak | **A** (시점 misalignment = 데이터 흐름 정적 패턴 falsifiable) | opus 필수 (코드 무증상, 시간 인과 추적) |
+| INV-2 | Survivorship bias | **B** (universe 완전성 = 데이터 출처·시점 메타데이터 의존) | opus 필수 (데이터 출처 신뢰 판단) |
+| INV-3 | Fee / commission / slippage / spread | **A** (모델 존재·값 = 정적 산술 falsifiable) + 모델 타당성은 opus | opus(모델 타당성) / sonnet(파라미터 검증) 2-층 |
+| INV-4 | PnL / position state 정합 | **A** (`equity = cash + Σ(holdings × mark)` 항등식 = 정적 단위테스트) | opus(정의·엣지) / sonnet(항등식 검증) 2-층 |
+| INV-5 | Point-in-time data 정합 | **B** (PIT 준수 = 시점 메타데이터·data lineage 없이 정적 falsify 불가) | opus 필수 (corporate-action·lineage) |
+| INV-6 | Regime change / overfitting / curve-fitting | **B** (시행 횟수 추적 = 프로세스 invariant, 단일 산출물 정적 검사 불가) | opus 필수 (통계 일반화·표본 충분성) |
+| INV-7 | Order fill 가정 (가격·시점·가능성) | **A** (fill 규칙 = 정적 코드 패턴) + INV-1 강결합 | opus 필수 (시장 미시구조 + INV-1/8 결합) |
+| INV-8 | Capacity / market impact / liquidity | **A**(impact 모델 존재) + **B**(자산별 유동성 데이터 의존) 혼합 | opus 필수 (impact 강도 = 자산별 유동성 도메인) |
+| INV-9 | 시간 경계 (funding/borrow, timezone, 거래시간) | **A**(timezone 정규화 정적) + **B**(funding·점검 캘린더 메타데이터) 혼합 | opus(funding·점검 정책) / sonnet(UTC 정합) 2-층 |
+| INV-10 | **Storytelling / narrative-fit** (F2 편입 — 7 Sins #3) | **B** (사후 서사 적합 = 방법론 메타, 정적 falsify 불가) | opus 필수 (가설 사전성·data-snooping 도메인) |
+| INV-11 | **Outliers / 비정상값 처리** (F2 편입 — 7 Sins #6) | **A**(outlier 처리 규칙 정적) + **B**(극단치 정당성 도메인) 혼합 | opus(처리 정책 타당성) / sonnet(규칙 적용 검증) 2-층 |
+
+**F1 정정 (확정)**: INV-2 survivorship 의 mutual-fund 정량 anchor = **Elton-Gruber-Blake(1996) 1.4%/년**(요구사항리뷰 dual-peer + PL 다출처 교차 = Oxford Academic *Review of Financial Studies* 9:4:1097 수렴, "확인 완료"). 요구사항 §6.3 Gap1 의 "0.9%" 단일 약출처(susanpotter.net)는 사실 오류로 기각. (단 survivorship 1-4%/Sharpe 0.09→0.66/PIT 1.5-2.0% 는 별도 출처로 grounding — F1 은 load-bearing 아님.)
+
+**F2 정정 (편입 + traceability)**: catalog 가 자기 인용 backbone "7 Sins of Quantitative Investing"(survivorship / look-ahead / **storytelling** / overfitting·data-snooping / turnover·transaction-cost / **outliers** / asymmetric-shorting-cost) 중 storytelling·outliers 2종 미수록 → **INV-10(storytelling) / INV-11(outliers) 편입**. 잔여 7 Sins 항목 traceability: survivorship=INV-2 / look-ahead=INV-1 / overfitting=INV-6 / transaction-cost=INV-3 / asymmetric-shorting=INV-9(borrow 비용)·INV-3 분산. **의도적 제외 0** — 7 Sins backbone 전부 1:1 매핑.
+
+**A/B 분류 의의 (F3 / OQ-4)**: 부류 **A(정적 falsifiable)** = lookahead 코드 패턴·fee 누락·PnL 산술처럼 단일 산출물 정적 검사로 falsify 가능. 부류 **B(프로세스·메타데이터 의존)** = PIT governance·시행 횟수·survivorship 완전성·storytelling 처럼 시점 메타데이터·프로세스 추적 없이 정적 falsify 불가. **financial-invariant-0 shape predicate 자체는 A-side 메커니즘**(Story 메타·경로로 결정론적 판정 — §결정 1) 이나, invariant *식별/검증*은 A+B 전부를 cover(opus 도메인 판단). 둘은 disjoint — shape 판정(A-side)이 sonnet 가능 여부를 가르고, 가른 후 sonnet 이 cover 하는 mandate 표면은 financial-invariant-0 에선 0(결과 비접촉).
+
+**정식 catalog 파일** = `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md`(Phase 2 산출, DomainAgent write 권한 경로 — concept/** deny 라 domain/ 만 가능, OQ-7). 본 Amendment = 구조·분류·shape 매핑 확정.
+
+### D2 — financial-invariant-0 shape (stakes 4-AND 와 orthogonal 한 별 축, OQ-1/OQ-5)
+
+**판정 원리**: invariant 표면이 0 이려면 그 작업이 **백테스트 결과 숫자(equity/체결/PnL/universe/파라미터)를 생성·변형·해석하지 않아야** 한다. invariant 는 "결과 정확성"의 속성이므로 결과 비접촉 작업엔 표면이 없다. InfraOpArch §7.4 가 live 부재 shape 에서 *dormant* 인 패턴과 **동형**이되, dormant(발현 trigger 부재)가 아닌 **"결과 비접촉으로 mandate 표면 0"** 논리.
+
+**orthogonal 축 확정 (OQ-1)**: financial-invariant-0 은 Amendment 16 의 stakes 4-AND(실자금/cutover/신규경계/live API = *stakes·safety* 축, InfraOpArch §7.4 mandate 를 끔)와 **다른 축** — *financial-correctness 결과 접촉* 축(DomainAgent financial mandate 를 끔). 두 predicate 가 끄는 mandate 표면이 다르므로 4-AND 에 5번째로 욱여넣지 않고 **DomainAgent 전용 별 predicate** 로 명시 분리. DomainAgent sonnet flip 조건 = **(4-AND low-stakes) AND (financial-invariant-0 shape)** — 2 predicate AND. 4-AND 가 false 면(live API/실자금 등) financial-invariant-0 여부와 무관하게 opus(stakes-gated 보존). 4-AND 가 true 여도 financial-invariant-0 가 false 면(결과 접촉) opus(financial mandate 살아있음).
+
+**falsifiable 신호 (5-AND — 모두 참이어야 financial-invariant-0, OQ-5 = 영향(행위) 기준)**:
+
+| # | 신호 | 차단 invariant |
+|---|---|---|
+| 1 | **결과-숫자 비접촉** — equity/PnL/position/체결가/universe/파라미터 생성·변형 안 함 | INV-3/4/7/8/10/11 |
+| 2 | **시간-인과 비접촉** — 시계열 시점 정렬·join·window·리샘플 미접촉 | INV-1/5 |
+| 3 | **체결/비용 모델 비접촉** — fee·slippage·fill·funding 로직 미변경 | INV-3/7/9 |
+| 4 | **data lineage 비접촉** — 데이터 출처·정정·universe 구성 미변경 | INV-2/5 |
+| 5 | **(보조) 변경 경로** — 도메인 숫자 repo(`-engine`/`-data`/strategy) 밖 (순수 렌더·infra·tooling·문서) | — (allow-list) |
+
+전부 **fail-safe** — 불충족·불확실 = opus(INV-1 동형, fail-safe monotone). **판정 축 = 영향(행위) 기준 — 코드 위치 아님**(OQ-5 확정): 같은 파일이라도 financial 의미(예: UI 문구 "estimated PnL"→"realized PnL")를 건드리면 shape 0 탈락. 신호 5(경로)는 보조 allow-list 일 뿐 단독 판정 아님 — 신호 1~4(영향) 가 1차.
+
+> **자료 출처 grounding**: 5-AND·A/B 분류·9→11 invariant 는 요구사항 §6 Researcher 14 출처(López de Prado & Bailey *Deflated Sharpe Ratio* / *Probability of Backtest Overfitting* 학술 1차 2종 + 7 Sins of Quantitative Investing 업계 표준 + CFA Level 2 + survivorship 정량 vendor 실측)로 cited grounding 완료, 요구사항리뷰 lane 외부사실 게이트 PASS(silently ungrounded 외부단정 0). 설계 lane 추가 외부 검증 불요(ADR-119 — 요구사항 §6 cited 재사용).
+
+### §결정 2 invariant 동반 의무 — DomainAgent mandate 표면 재정의
+
+model 필드만 조건부 처리 = §결정 2 위반(Amd16 §D2 verbatim "invariant 위반이 되는 유일한 경로 = shape 분류만 하고 mandate 표면 재정의를 동반 안 할 때"). 따라서 DomainAgent.md mandate 에 **"financial-invariant-0 shape 에서 DomainAgent 책임 표면이 무엇인가"** 를 명시 declare(Phase 2 agent file). shape별 mandate 표면:
+
+| shape | DomainAgent financial mandate 표면 | sonnet cover |
+|---|---|---|
+| **financial-invariant-0** (결과 비접촉: 순수 UI 렌더/infra lib/tooling/문서) | financial invariant 해석 표면 = **0** — catalog 등재 항목 읽기·링크·분류만, 새 invariant 생성·financial rule 참/거짓 미결정 | ✅ sonnet (single-axis 분류 advocacy 깊이로 cover) |
+| **financial-invariant 보유** (데이터 파이프라인 / 백테스트 엔진 / 전략·지표) | 전체 financial invariant 해석 표면 (INV-1~11 식별·정의·엣지·data lineage 판단) | — (opus 보존 — financial-invariant-0 predicate false) |
+
+**"완전 N/A" 아닌 표면 축소** — financial-invariant-0 shape 에서도 DomainAgent 의 *일반* 도메인 해석(비-financial Entity/제약/용어)은 잔존하되, financial-correctness invariant 해석 표면만 0. 순수 model downgrade 시 도메인 invariant 해석 부재 → 얕은 single-axis advocacy 로 새는 risk 를 mandate 재정의가 차단. **선례** = CodebaseMapper/Refactor(ADR-057 Amd5 mandate text 재정의 동시 산출물 의무) + InfraOpArch(Amd16 "low-stakes shape 표면" subsection) 답습.
+
+### §결정 3 — spawn 시점 = spawn-전 외부 shape 판정 (OQ-3)
+
+DomainAgent 는 **요구사항 lane spawn**(InfraOpArch = 설계 lane spawn). InfraOpArch 의 self-assessment 패턴(spawn 후 mandate 권위로 §7.4 dormant verify)은 DomainAgent 에 **부적합** — DomainAgent 해석 mandate 는 shape 무관하게 상존이라 "spawn 후 self-assess 로 표면 0 declare" 가 안 맞는다(상존 mandate 를 self 가 0 으로 declare 하면 self-referential paradox). 따라서 **spawn-전 외부 shape 판정** — Orchestrator 가 Story 메타(§1 원문·§4.1 변경 델타 경로·AC 키워드)로 financial-invariant-0 5-AND 를 spawn *전*에 판정한 뒤 그 결과로 opts.model 결정. self-assessment 가 아닌 external gating(InfraOpArch 의 spawn-time gating 과 동일 구조이나, InfraOpArch 는 spawn-후 self-assess 도 보조로 가능한 반면 DomainAgent 는 external 단독).
+
+**self-referential 판정 risk 완화 (OQ-2)**: "이 Story 가 financial domain 비접촉인가" 판정에 도메인 지식이 필요(닭과 달걀). 해소 = **allow-list**(순수 tooling/UI/infra lib/문서 = 결과 비접촉 negative-list 로 codify, 그 외 전부 opus) + **fail-safe**(불확실=opus). "순수 tooling 판정"이 한 단계 뒤로 밀릴 뿐 완전 제거는 아님 — 잔존 risk 는 F1 evidence-gate(sonnet 산출물 품질 ≥ opus baseline) 가 흡수.
+
+### §결정 4 — 메커니즘 신설 0 (Amendment 16 재사용)
+
+- **frontmatter `model: opus` 보존** = fail-safe default(override 누락 = opus). 영구 정책 주석으로 conditional 표기(InfraOpArch.md 선례 패턴).
+- **Orchestrator spawn-time `opts.model: sonnet` override** = (4-AND low-stakes) AND (financial-invariant-0 shape) 동시 충족 시만. **fresh `Agent` spawn 필수 — SendMessage resume 금지**(원본 frontmatter `model: opus` 재해석 → override 무효, ADR-057 §결정 4 / CFP-2236 실측). FIX 재진입도 fresh spawn 으로 shape 재판정(silent 풀림 차단).
+- **gating predicate 확장** = `scripts/check-stakes-tier-gating.sh` 에 `STAKES_FINANCIAL_INVARIANT_ZERO`(별 predicate) + DomainAgent 분기 추가(`STAKES_AGENT=DomainAgent` 시 4-AND ∧ financial-invariant-0 양 predicate AND). 별 스크립트 신설 아닌 기존 스크립트 확장(메커니즘 신설 0). **fail-safe 동형** — financial-invariant-0 신호 부재/파싱불가 → high(opus), INV-1 monotone 정합.
+- **consumer overlay** = 확장-only(opus 강제만, down-tier 불가) + `max(floor,overlay)` clamp 재사용(ADR-127 §결정 6). DomainAgent down-tier(opus→sonnet) 공격적 override 불가.
+
+### F1 evidence-gate — DomainAgent baseline 신규 정의 (OQ-6)
+
+tier-flip = **provisional**. CFP-2432 F1 protocol(`docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md`) 을 DomainAgent 에 동형 적용하되, **baseline 측정 대상이 다름** — InfraOpArch 는 "§7.4 운영 리스크 표 완결성(§7.4.1~.6 충족 행 수)" 이나 DomainAgent 는 **"도메인 invariant 식별 완결성"**:
+
+| step | DomainAgent 측정 정의 (정량 — 주관 어휘 금지) |
+|---|---|
+| (a) 측정 대상 | financial-invariant-0 shape Story 에서 DomainAgent 산출의 (catalog cross-ref 항목 수 + 도메인 제약·암묵 가정·지식 공백 식별 행 수) 정수 |
+| (b) opus baseline 캡처 | 1차 = Codex 독립 review verdict(ADR-057 §결정 3 선례). 2차 = 동일 Story 양 tier(opus/sonnet) 대조 spawn(packet 고정) 후 (a) 정량 비교 |
+| (c) "미달" 임계 (OR — falsifiable) | ① catalog cross-ref 누락 ≥ 1(opus 가 인용했는데 sonnet 이 누락) **OR** ② Codex review P0/P1 finding ≥ 1 **OR** ③ sonnet 식별 항목 수 < opus × tolerance(초기 1.0) |
+| (d) 복원 trigger | (c) 1개라도 해당 시 DomainAgent opus 복원(opts.model 제거) + sonnet 채택 시 commit/PR body `financial-invariant-zero-evidence:` marker 의무(부재 시 FAIL — `check-tier-downgrade-guard.sh` 동형) |
+
+복원 = 정책 철회 아닌 해당 shape/agent tier-flip 만 되돌림. **indirect real-funds risk 가드** — 누설 = 백테스트 결과 거짓→실자금 결정 오염이므로 fail-safe(불확실=opus) + 5-AND 전부 충족 요구 + evidence-gate 3중.
+
+### OQ-7 / OQ-8 — catalog 위치 + ADR-117 cross-ref
+
+- **OQ-7 (catalog 위치)**: `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md`. area 명 = `backtesting-discipline`(invariant 이 백테스트 방법론 규율이라는 본질 반영, `financial-correctness` 후보보다 도메인 적합). DomainAgent write 권한 = `docs/domain-knowledge/domain/**` 만(concept/** = ResearcherAgent deny, ADR-056) → domain/ 만 가능.
+- **OQ-8 (ADR-117 cross-ref)**: **ADR-042 Amd17 내 언급으로 충족, ADR-117 본체 미수정**. ADR-117 §결정 2 가 "Domain = 단기 구조적 역할" 로 **fable 상향**에서 명시 제외했으나, 그 단정 대상은 fable 적격성(상향 축)뿐 — opus floor 적정성(하향 sonnet 축)을 단정한 적 없음(ADR-117 전문 sonnet 하향 논의 0건). 두 ADR 이 같은 agent(DomainAgent)를 분류하므로 본 Amendment 가 **판정 축 disjoint(상향 fable vs 하향 sonnet) + "Domain opus 유지" 문구가 stakes-conditional(financial-invariant-0) 로 정제됨** 을 명시(Amd16 §결정 3 cross-ref 의무 실행). silent override 금지. ADR-117 본체에 현재 DomainAgent·financial 언급 0 → 별 amendment row 불요.
+
+### 기존 정책 변경 0건 (ADR-042 본문 결정 1~6)
+
+본 Amendment 17 = ADR-042 결정 1~6 본문 **변경 0건**. 변경 = (a) §결정 1 Sonnet 표 후 inline marker(Amendment 17 발화) + Amendment 16 §결정 3 body 후 fulfillment marker (b) 본 `## Amendment 17` body section (c) frontmatter amendment_log row 17 + related_stories CFP-2445 + related_adrs ADR-056 append. tier criteria(결정 1) — DomainAgent 의 (c)high-stakes domain 기준의 *financial-invariant-0 shape 조건부 발화 명시*이지 기준 자체 변경 아님. invariant(결정 2) — financial-invariant-0 = mandate-orthogonal 축 논증으로 양립 확인 + mandate 표면 재정의 동반 의무, invariant 텍스트 변경 0. 신규 agent ADR 의무(결정 3) / inheritance(결정 4) / Haiku rollback(결정 5) / 재-audit(결정 6) 모두 변경 0건. **§결정 6 미발동** — DomainAgent mandate 를 "패턴 실행" 방향으로 재정의하지 않음(financial-invariant-0 shape 표면 축소는 single-axis advocacy 정합이지 mechanical pattern 전환 아님).
+
+### ratchet 방향 — 약화(evidence-gate)
+
+opus→sonnet tier-flip(DomainAgent, financial-invariant-0 shape 한정) = ratchet **약화 방향** → `sunset_justification` evidence 의무(ADR-058 §결정 5 / ADR-064 §결정 7). frontmatter amendment_id:17 `sunset_justification` 본문 = evidence-grounded 3 axis(shape-gated 정제 / falsifiable evidence-gate + indirect real-funds risk 가드 / 지배 financial-invariant-0 shape 비용효율). is_transitional: false 유지(영구 정책 정제 — Amd16 동형).
+
+### 발효 timing — 비준(declarative) ≠ 즉시 런타임 적용(enforcement)
+
+본 Amendment 17 `status: applied` = **정책 비준(declarative ratification)** 이지 즉시 런타임 발효 아님. **Phase 1(본 Amendment) = 정책 비준** — financial-invariant-0 shape 정의 + 5-AND predicate + catalog 구조·A/B 분류·shape 매핑 + tier-flip 대상(DomainAgent) 확정. **실 발효(enforcement) = Phase 2 guardrail 완비 시점** — (a) catalog 파일 신규(DomainAgent write) + (b) DomainAgent.md frontmatter conditional 주석 + mandate 표면 재정의 + (c) `check-stakes-tier-gating.sh` predicate 확장 + (d) project-config-schema + playbook §3.0.12a 배선 + (e) F1 protocol DomainAgent 확장 + (f) `financial-invariant-zero-evidence:` marker gate 가 모두 갖춰져야 실제 override 발화. guardrail 완비 전까지 frontmatter `model: opus` fail-safe default 유지 → 현행 opus 동작 무변경(파괴적 변경 0). 선례 = Amd16 비준↔발효 split + Amendment 13→14 declarative→mechanical split 동형.
+
+### Scope 경계 (Phase 1 / Phase 2)
+
+- **Phase 1 (본 산출물)**: ADR-042 Amendment 17(frontmatter + inline marker + Amd16 fulfillment marker + body) + change-plan(internal-docs) + Story §7 설계 서사.
+- **Phase 2 (sibling PR)**: `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md` 신규(9→11 invariant, F1 1.4% 정정, A/B 분류 — DomainAgent write) + `DomainAgent.md` frontmatter conditional 주석 + mandate 표면 재정의(financial-invariant-0 shape 책임 축소 declare) + `scripts/check-stakes-tier-gating.sh` `STAKES_FINANCIAL_INVARIANT_ZERO` predicate + DomainAgent 분기 확장 + `tests/scripts/test-check-stakes-tier-gating.sh` DomainAgent truth-table 행(discriminating) + `docs/project-config-schema.md` DomainAgent gating 항목 + `docs/orchestrator-playbook.md` §3.0.12a DomainAgent 분기 + spawn-전 외부 shape 판정 절차 + `stakes-gated-model-tier-baseline.md` F1 protocol DomainAgent baseline 확장 + plugin bump(codeforge-requirements MINOR — mandate 표면 재정의, wrapper MINOR — scripts/schema consumer-facing surface, ADR-037) + marketplace sync(ADR-063).
+
+### Cross-ref
+
+- ADR-042 Amendment 16(CFP-2432) — §결정 3 가 본 Story 예약(catalog codify + 경계 falsifiable 확정 후 별 carrier). Amd17 = 선결충족 확장(reversal 아님, 무효화 0). 메커니즘(opts.model override / 4-AND / F1 protocol / consumer overlay 확장-only) 전부 재사용 — 신설 0
+- ADR-058 §결정 5 — 약화 방향 sunset_justification evidence requirement(DomainAgent tier-flip 하향 evidence-gate)
+- ADR-064 §결정 7 — is_transitional:false governance ADR 약화 symmetric evidence-gate
+- ADR-117 §결정 2 — Domain "단기 구조적" fable 상향 제외 = 상향 축. 본 Amendment = 하향(sonnet) 축 disjoint, silent override 금지(Amd16 §결정 3 cross-ref 의무 실행, ADR-117 본체 미수정 — Amd17 내 언급 충족)
+- ADR-057 §결정 3(Codex 독립 review baseline 선례 — F1 measurement) / §결정 4(spawn-time opts.model override fresh-spawn 메커니즘, SendMessage resume 금지 상속)
+- ADR-127 §결정 6 — consumer overlay 확장-only(DomainAgent down-tier 공격적 override 불가)
+- ADR-056 §결정 3 — 요구사항 lane synthesis 순서(catalog 합성 근거) + DomainAgent write 권한 경로 docs/domain-knowledge/domain/**(concept/** deny)
+- ADR-086 — axis 분석 lens(financial-invariant-0 axis ⊥ stakes axis ⊥ mandate depth axis disjoint 검증 adjacent-case. 본 Amendment = 신설 아닌 tier 분기 → framework 전면 self-application 주장 아님)
+- CFP-2445 change-plan(internal-docs `wrapper/change-plans/`) — financial-invariant-0 gating 설계 SSOT(§3 메커니즘 / §7 trust boundary / §8 Test Contract / §11 N/A)
