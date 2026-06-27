@@ -44,7 +44,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | §3 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) | **DataArchitectAgent** (CFP-1086 mandate 축소 — RDB OLTP 영역 제거) | Opus |
 | §3 도입할 설계 (refactor 시각 — decoupling + reusability + pattern + interface 분리) + §6 리팩토링 선행 (중복제거/공통추출/repo-분해 advocacy, escalation-tier) | RefactorAgent (4-tuple sub-tuple) | Sonnet |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent | Opus |
-| §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus |
+| §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus (high-stakes) / Sonnet (low-stakes 4-AND) ※ |
 | §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334**) | TestContractArchitectAgent | Opus |
 | §8.6 contract testing (Pact / Spring Cloud Contract — API consumer-provider) | **APIContractArchitectAgent** primary + TestContractArchitectAgent consult | Sonnet (APIContract) |
 | §11.1-§11.6 RDB OLTP (schema 변경 / migration / rollback / integrity / backfill / idempotency primary) + Alembic 정책 7 원칙 | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified primary, AggregateArch carry-over) | Sonnet |
@@ -53,6 +53,8 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | §13 Live Operational Discipline (CONDITIONAL Live touching) | LiveOpsDeputy | Opus |
 | §11 ledger reconcile + §8.5 order replay + §11.6 idempotency (order side, CONDITIONAL Live touching) | LiveOrderingDeputy | Opus |
 | Production evidence quad + EPIC CLOSED gate + post-cutover wiring + Family 7 canary pin (CONDITIONAL production cutover) | ProductionEvidenceDeputy | Opus inherit |
+
+> ※ **InfraOperationalArchitectAgent Story-shape 조건부 tier** (CFP-2432 / ADR-042 Amendment 16): frontmatter `model: opus` = fail-safe default. Orchestrator 가 low-stakes 4-AND shape(실자금 없음 ∧ production cutover 없음 ∧ 신규 신뢰경계 없음 ∧ live 외부 API 호출 없음)에서만 `opts.model: sonnet` fresh spawn override(SendMessage resume 금지), high-stakes 는 opus 보존. 판정 SSOT = `scripts/check-stakes-tier-gating.sh`(4-AND + `max(floor,overlay)` clamp). 배선 절차 = orchestrator-playbook §3.0.12a. consumer overlay 는 보수 방향(opus 강제)만 — down-tier 거부(확장-only). DomainAgent = v1 제외(follow-up).
 
 **axis disjoint 검증** (ADR-086 §결정 1 정합 — CFP-1126 통합 후 boundary axis 단일 advocate):
 - ModuleArch (boundary axis unified — module-level + aggregate-level) — module boundary ↔ aggregate boundary mapping = **단일 advocate 내부 정합 (CFP-1126 통합 — AggregateArch 자기 통합으로 cross-deputy consult 영역 제거)**

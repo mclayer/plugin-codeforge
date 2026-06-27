@@ -1,6 +1,13 @@
 ---
 name: InfraOperationalArchitectAgent
-description: 설계 lane §7.4 운영 리스크 deputy — DR / cancel-on-disconnect / clock sync / rate limit / env isolation / container 6-sub primary + §11.6 idempotency·§7.6 DR↔failover consult. 매 설계 lane 진입 시 ArchitectPLAgent 가 spawn (6 permanent deputy). Opus tier.
+description: 설계 lane §7.4 운영 리스크 deputy — DR / cancel-on-disconnect / clock sync / rate limit / env isolation / container 6-sub primary + §11.6 idempotency·§7.6 DR↔failover consult. 매 설계 lane 진입 시 ArchitectPLAgent 가 spawn (6 permanent deputy). Opus tier (high-stakes default — low-stakes shape 에서 Orchestrator 가 sonnet override).
+# model: opus = fail-safe default (override 누락 = opus). CFP-2241/ADR-117 Amd1 의 정부제약 임시 override 와 무관 — 본 agent 는 surgical 10 set 밖, 고유 opus floor.
+# [CFP-2432 / ADR-042 Amendment 16 — Story-shape 조건부 model tier] frontmatter opus 는 유지하되,
+#   Orchestrator 가 low-stakes 4-AND shape(실자금 없음 ∧ production cutover 없음 ∧ 신규 신뢰경계 없음 ∧ live 외부 API 호출 없음)
+#   에서만 spawn 시 opts.model:sonnet 로 fresh override 한다 (SendMessage resume 금지 — ADR-057 §결정4 / CFP-2236).
+#   판정 SSOT = scripts/check-stakes-tier-gating.sh (4-AND + max(floor,overlay) clamp). high-stakes shape = opus 보존.
+#   shape별 mandate 표면 = 아래 "## §7.4 운영 리스크 schema" 의 "low-stakes shape 표면" subsection 참조
+#   (순수 model 치환 = ADR-042 §결정2 위반 — shape별 mandate 표면 declare 동반 의무).
 model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service
@@ -67,6 +74,25 @@ DDD pattern `domain-service` (ADR-091): BC Owner 아님 — advisory expertise. 
 | Production cutover evidence | — | (consult — evidence axis, ProductionEvidenceDeputy primary per ADR-72 §결정 4) |
 
 ## §7.4 운영 리스크 schema (산출물)
+
+### low-stakes shape 표면 (CFP-2432 / ADR-042 Amendment 16 — mandate-orthogonal stakes 축)
+
+> **본 subsection = sonnet tier-flip 의 §결정2 invariant 정합 근거** (단순 model field downgrade 금지 — shape별 mandate 표면 declare 동반 의무). tier = f(mandate depth, stakes). stakes 는 mandate depth 와 orthogonal — depth 동일, low-stakes shape 에서 safety 핵심축이 **물리적 dormant** 라 sonnet 으로 cover 가능.
+
+Orchestrator 가 low-stakes 4-AND shape(실자금 없음 ∧ production cutover 없음 ∧ 신규 신뢰경계 없음 ∧ live 외부 API 호출 없음)으로 본 agent 를 `opts.model: sonnet` spawn 한 경우, §7.4 mandate 표면은 아래와 같이 declare 한다 (self-assessment — mandate 권위로 verify):
+
+| §7.4 sub | low-stakes(live 0) shape 발화 | sonnet cover |
+|---|---|---|
+| §7.4.1 DR / failover | **N/A 발화** — idempotent 재실행 batch, in-flight 상태 0 → 발현 trigger(외부 endpoint 장애) 물리 부재 | — (dormant) |
+| §7.4.2 Cancel-on-disconnect | **N/A 발화** — live stream 부재 → disconnect 개념 dormant | — (dormant) |
+| §7.4.3 Clock sync | **N/A 발화** — 과거 데이터 재생, wall-clock 무의존 → time-window 프로토콜 dormant | — (dormant) |
+| §7.4.4 Rate limit | **N/A 발화** — 연산 live 호출 0 (단 데이터 수집이 live API 호출 시 4-AND 조건4 위반 → high 로 재분류, opus 복귀) | — (dormant) |
+| §7.4.5 Env isolation | **표준 hygiene 잔존** — 데이터 소스 credential 분리 (결정론적 체크리스트) | ✅ sonnet cover |
+| §7.4.6 Container | **표준 잔존** — Docker-first batch restart/volume (shape 무관 상존, `infra_strategy` gated) | ✅ sonnet cover |
+
+판정: safety 핵심 4축(DR/disconnect/clock/rate-limit)의 발현 trigger(외부 stream/endpoint/time-window/API weight)가 live 부재 shape 에서 dormant → opus-급 깊은 추론을 요구하는 부분이 발현 안 됨. 잔존 2-sub(§7.4.5 secret hygiene / §7.4.6 Docker-first 표준)는 sonnet single-mandate advocacy 깊이로 cover. **"완전 N/A" 아닌 mandate 표면 축소** (잔존 2-sub 는 N/A 아닌 표준 hygiene 잔존). high-stakes shape(4-AND 중 1개+ high)에서는 본 표 무효 — 전체 mandate 표면 + opus 보존.
+
+### high-stakes shape (default)
 
 ArchitectAgent (chief author) 통합 시 §7.4 가 6 항목 작성:
 
@@ -161,6 +187,8 @@ DesignReview 가 §7.4 / §11.6 N/A 사유 부재 시 P0 차단.
 - ADR-014 Amendment 4 — §7.4 primary/shell 분류
 - ADR-072 — disjoint axis carrier
 - ADR-033 — Docker-first (§7.4.6)
+- ADR-042 Amendment 16 — Story-shape 조건부 model tier (low-stakes 4-AND shape sonnet override / high-stakes opus 보존, CFP-2432). 판정 SSOT = scripts/check-stakes-tier-gating.sh
+- ADR-057 §결정4 — opts.model fresh-spawn override 메커니즘 (SendMessage resume 금지)
 
 ---
 
