@@ -611,11 +611,13 @@ aggregate_arch:
 
 참조: [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 
-### 1m-2. Story-shape 조건부 model tier — `story_stakes` (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md))
+### 1m-2. Story-shape 조건부 model tier — `story_stakes` (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md) · CFP-2445 / [Amendment 17](../archive/adr/ADR-042-agent-model-selection-policy.md))
 
-같은 agent role(현 Amd16 = InfraOperationalArchitectAgent 단독)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다. low-stakes Story shape(백테스트 엔진 / 데이터 파이프라인 / 웹 UI / 인터페이스 lib 등)에서 wrapper Orchestrator 가 InfraOperationalArchitectAgent 를 opus→sonnet 으로 spawn-time override, high-stakes(실자금 / production cutover / 신규 신뢰경계 / live 외부 API) 는 opus 유지.
+같은 agent role(Amd16 = InfraOperationalArchitectAgent / Amd17 = DomainAgent)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다. low-stakes Story shape(백테스트 엔진 / 데이터 파이프라인 / 웹 UI / 인터페이스 lib 등)에서 wrapper Orchestrator 가 InfraOperationalArchitectAgent 를 opus→sonnet 으로 spawn-time override, high-stakes(실자금 / production cutover / 신규 신뢰경계 / live 외부 API) 는 opus 유지.
 
-> **consumer 가 직접 down-tier 못 한다 — 보수 방향(opus 강제)만 가능 (확장-only, [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정6).** low-stakes tier-flip 판정은 wrapper Orchestrator 의 4-AND shape 분석 전용. consumer 의 stakes 자기보고로 sonnet 강등은 불가(2중 enforcement 가 거부).
+**DomainAgent (Amd17 — financial-invariant-0 별 축)**: DomainAgent 는 **(4-AND low-stakes) AND (financial-invariant-0 shape)** 2-predicate 동시 충족 시만 sonnet. financial-invariant-0 = stakes 4-AND 와 **orthogonal 한 financial-correctness 결과접촉 축** — 그 Story 에서 DomainAgent 가 백테스트 결과 숫자(equity/PnL/position/체결가/universe/파라미터)를 생성·변형·해석하지 *않는* 작업(순수 UI 렌더 / infra lib / tooling / 문서)일 때만 financial invariant 해석 표면이 0 으로 떨어져 sonnet 으로 cover 된다. 데이터 파이프라인·백테스트 엔진·전략·지표를 건드리면(financial-invariant 보유) opus 보존. 판정은 wrapper Orchestrator 가 spawn-전 외부 shape 로 수행(§1 사용자 원문 + directive 경로 키워드, consumer 자기보고 아님) — 4-AND false 또는 financial-invariant-0 false 또는 미상 = opus(fail-safe).
+
+> **consumer 가 직접 down-tier 못 한다 — 보수 방향(opus 강제)만 가능 (확장-only, [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정6).** low-stakes tier-flip 판정은 wrapper Orchestrator 의 4-AND shape 분석(+ DomainAgent 의 financial-invariant-0 별 축) 전용. consumer 의 stakes 자기보고로 sonnet 강등은 불가(2중 enforcement 가 거부).
 
 #### `story_stakes.conservative_override` (보수 opus 강제 — 항상 허용)
 
