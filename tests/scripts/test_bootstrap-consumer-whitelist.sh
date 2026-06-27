@@ -21,7 +21,7 @@
 #  - Mutation-degrade-warn   ([WARN] 마커 제거) → TC-3 RED (exit0만으로 non-discriminating)
 #  - Mutation-no-parity-check(basename set 비교 로직 제거) → TC-4 RED
 #  - Mutation-diff-change    (게이트/whitelist 파일 수정) → TC-5 RED
-#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거) → TC-6 RED
+#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 30 ≠ ps1산출 7)
 #  - Mutation-no-degrade     (whitelist 1개 추가 → 미포함) → TC-7 RED
 #  - Mutation-empty-check    (empty-check 제거 → 0종 fallback 미실행) → TC-8 RED
 
@@ -443,10 +443,10 @@ test_tc6_ps1_parity() {
     local sh_set
     sh_set=$( extract_cp_basenames "$sh_output" )
 
-    # .ps1 dry-run (-DryRun flag 추정)
+    # .ps1 dry-run (-File 형태 — MSYS(Windows)/native(Linux) 경로 양립. -Command "& '...'" 은 string-literal 경로 미변환 버그)
     local ps1_output
     ps1_output=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" pwsh -NoProfile -NonInteractive \
-      -Command "& '$BOOTSTRAP_PS1' -DryRun 2>&1" ) || true
+      -File "$BOOTSTRAP_PS1" -DryRun 2>&1 ) || true
     local ps1_set
     ps1_set=$( extract_cp_basenames "$ps1_output" )
 
