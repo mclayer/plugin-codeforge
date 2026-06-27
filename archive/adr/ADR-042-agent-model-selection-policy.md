@@ -1209,6 +1209,10 @@ ChangeImpactAgent = **Sonnet 비준 (unconditional, stakes 무관)**. 역할 = s
 
 opus→sonnet tier-flip = ratchet **약화 방향**(reasoning depth 하향) → `sunset_justification` evidence 의무(ADR-058 §결정 5 / ADR-064 §결정 7 is_transitional:false governance symmetric evidence-gate). frontmatter amendment_id:16 `sunset_justification` 본문 = evidence-grounded 3 axis(stakes-gated 정제 / falsifiable evidence-gate 동반 / 지배 low-stakes shape 비용효율). is_transitional: false 유지(영구 정책 정제, transitional pilot 아님). ChangeImpactAgent sonnet 비준(D4)도 약화 방향이나 그 evidence = "역할 = single-mandate advocacy 단일 축 = §결정 1 Sonnet (a) 정합 + 사용자 directive verbatim" 으로 sunset_justification 본문에 포함(별 row 불요 — 같은 carrier).
 
+### 발효 timing — 비준(declarative) ≠ 즉시 런타임 적용(enforcement)
+
+본 Amendment 16 의 `amendment_id:16 status: applied` 는 **정책 비준(declarative ratification)** 의미이지 즉시 런타임 발효를 뜻하지 않는다. **Phase 1(본 Amendment) = 정책 비준** — stakes-gated tier 정책 + low-stakes 4-AND enum + tier-flip 대상(InfraOpArch) 확정. **실 발효(enforcement) = Phase 2 guardrail 완비 시점** — (a) InfraOperationalArchitectAgent.md frontmatter conditional 주석(shape별 mandate 표면 declare) + (b) `project.yaml story_stakes` schema + (c) gating 배선(orchestrator-playbook §3.0 spawn-time `opts.model` 결정 로직 + deputy-mandate SKILL) + (d) `stakes-tier-evidence:` marker gate 가 모두 갖춰져야 low-stakes shape 에서 실제 opus→sonnet override 가 발화한다. guardrail 완비 전까지는 frontmatter `model: opus` fail-safe default 가 유지되어 **현행 opus 동작 무변경**(파괴적 변경 0). 이 비준↔발효 split 은 AC-9 provisional / F1 evidence-gate 정합 — tier-flip 은 측정·복원 loop 으로 가드되는 provisional 정책이므로 비준만으로 무가드 런타임 적용 금지. **선례 = Amendment 13(declarative substrate) → Amendment 14(mechanical wire) 의 declarative→mechanical split 동형** (정책 비준과 enforcement realization 의 Phase 분리).
+
 ### Scope 경계 (Phase 1 / Phase 2)
 
 - **Phase 1 (본 산출물)**: ADR-042 Amendment 16(frontmatter + inline marker + body) + change-plan + Story §7 설계 서사.
