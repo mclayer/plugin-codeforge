@@ -3170,3 +3170,38 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
     status: Active                  # 실파일 동반 신설 firsthand — self-entry 자연 PASS (Amd19 §33.D, Python SSOT check_lane_count_ssot.py + thin wrapper scripts/check-lane-count-ssot.sh + .github single-root workflow + self-contained discriminating test scripts/test-check-lane-count-ssot.sh, 22 fixture + 4 mutation 생존 0). current_tier:warning 불변.
+
+  # Story-shape 조건부 model tier — sonnet tier-flip evidence-gate (CFP-2432 / ADR-042 Amendment 16).
+  # low-stakes shape 에서 InfraOperationalArchitectAgent 를 opus→sonnet tier-flip 채택 시 F1 evidence-gate
+  #   (sonnet≥opus baseline 측정 + opus 복원 trigger) 의 marker 존재를 검출. 약화 방향 ADR-058 §결정5 evidence requirement.
+  - name: stakes-tier-flip-evidence
+    description: |
+      ADR-042 Amendment 16 §F1 / AC-9 evidence-gate (CFP-2432 carrier) — low-stakes 4-AND shape 에서
+      InfraOperationalArchitectAgent opus→sonnet tier-flip 채택 시 baseline 측정 protocol marker 검출.
+      tier-flip = ratchet 약화 방향(reasoning depth 하향) → ADR-058 §결정5 evidence requirement 발화:
+      sonnet 채택 commit/PR body 에 `stakes-tier-evidence:` marker(baseline 측정 결과 + 3-임계 不해당 인용) 의무.
+      판정 SSOT = scripts/check-stakes-tier-gating.sh (4-AND + max(floor,overlay) clamp, discriminating test
+      tests/scripts/test-check-stakes-tier-gating.sh 가 truth-table 8행 + trust-boundary 3행 RED→GREEN 변별 강제).
+      baseline 측정 protocol = docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md (4-step + 3-임계 OR).
+      marker gate 동형 선례 = check-tier-downgrade-guard.sh justification-marker.
+    detect_command: bash tests/scripts/test-check-stakes-tier-gating.sh  # CFP-2432 Phase 2 — gating 판정 SSOT discriminating self-test (RED→GREEN 변별 실증)
+    workflow: null                  # warning-tier behavioral evidence-gate — dedicated CI workflow 미운용 (marker = PR review-time 검증, deferred-followup)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:stakes-tier-flip-evidence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a)
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2432                  # Phase 2 mechanical wire carrier (gating script + discriminating test)
+    modal_anti_pattern_dictionary: {}  # marker-presence + tier 판정 lint, modal 어휘 무관
+    introduced_by: CFP-2432
+    introduced_date: 2026-06-27      # KST
+    owner_adr: ADR-042              # 정책 host — Amendment 16 §F1 / AC-9
+    carrier_adr: ADR-060            # evidence-enforceable framework host
+    spec_invariant_measurement_required: true  # tier 판정 invariant(INV-1/2/3) = discriminating test 측정 대상
+    recurrence:
+      count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # warning ship → evidence 누적 후 별 후속 Story 에서 blocking 승격 검토
+    status: deferred-followup        # warning-tier behavioral evidence-gate — gating script + discriminating test 실존(Phase 2), dedicated CI workflow wire 는 별 후속 (evidence 누적 후)

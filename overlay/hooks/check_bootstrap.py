@@ -131,6 +131,18 @@ STRICT_ELIGIBLE_WORKFLOWS = {
     "story-section-schema.yml",      # CFP-94 schema check
 }
 
+# CFP-2432 / ADR-042 Amendment 16 — Story-shape 조건부 model tier wrapper-floor SSOT.
+# consumer overlay 의 story_stakes.* 는 보수 방향(opus 강제)만 honor — down-tier(opus→sonnet)
+#   공격적 override 는 schema-gate (check (f)) 가 거부 (확장-only, ADR-127 §결정6).
+# 본 map = "consumer 가 약화 못 하는 agent 의 wrapper floor tier" SSOT.
+#   tier 사다리: haiku(1) < sonnet(2) < opus(3) — overlay 가 floor 미만 지정 = strict-eligible drift.
+STORY_STAKES_TIER_RANK = {"haiku": 1, "sonnet": 2, "opus": 3}
+# floor 미만 down-tier 금지 대상 agent (Amd16 = InfraOperationalArchitectAgent 단독, floor=opus).
+#   향후 follow-up CFP 로 확장 가능 — 추가 = scope 확장(확장-only).
+STORY_STAKES_AGENT_FLOOR = {
+    "InfraOperationalArchitectAgent": "opus",
+}
+
 # CFP-660 / ADR-032 amendment 2 — Drift detection core marker lines (Tier 2 fallback when Tier 1 SHA unavailable)
 # Normalized whitespace 비교 (trailing whitespace / blank line collapse) — superficial diff 무시.
 WORKFLOW_CORE_MARKERS = (
@@ -277,6 +289,79 @@ def check_workflow_distribution(yaml_path: Path) -> list[str]:
     except Exception:
         pass
     return []
+
+
+# ------------------------------------------------------------ check 11 (CFP-2432)
+
+
+def check_story_stakes_overlay(yaml_path: Path) -> tuple[list[str], bool]:
+    """check 11 (CFP-2432 / ADR-042 Amendment 16 / F-3) — story_stakes overlay down-tier 거부.
+
+    Story-shape 조건부 model tier 의 schema-gate enforcement point. consumer overlay 는
+      tier 를 보수 방향(opus 강제)으로만 override 가능 — down-tier(opus→sonnet) 공격적
+      override 는 거부한다 (확장-only, ADR-127 §결정6 / AC-3 / INV-3).
+
+    합법 형태 (확장-only):
+      story_stakes:
+        conservative_override:            # 특정 agent 를 강제 opus (보수 — 항상 허용)
+          - InfraOperationalArchitectAgent
+
+    거부 형태 (down-tier — strict-eligible drift):
+      story_stakes:
+        tier_override:                    # agent → floor 미만 tier 매핑 = 공격적 down-tier
+          InfraOperationalArchitectAgent: sonnet   # floor=opus → sonnet 거부
+
+    문서규칙 단독 불충분 (`pat_rotation_cadence_days` honor-system 선례 답습 금지) →
+      2중 enforcement 중 (1) schema-gate 가 본 check. (2) spawn-time clamp 는
+      scripts/check-stakes-tier-gating.sh (max(wrapper_floor, overlay)).
+
+    Returns:
+      (warnings_list, is_strict_eligible_drift)
+      - warnings_list: empty if PASS, non-empty if down-tier 시도 검출
+      - is_strict_eligible_drift: True if any down-tier override 검출 (strict mode → exit 1)
+    """
+    try:
+        import yaml
+    except ImportError:
+        return ([], False)
+    if not yaml_path.is_file():
+        return ([], False)
+    try:
+        data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        # 파싱 불가 = 다른 check 가 보고. 본 check 는 보수적으로 통과 (false-positive 차단).
+        return ([], False)
+
+    ss = data.get("story_stakes")
+    if not isinstance(ss, dict):
+        return ([], False)   # 섹션 부재 = 현행 동작(wrapper floor 유지) — 정상 N/A
+
+    violations: list[str] = []
+
+    # tier_override 맵: agent → tier. floor 미만(rank 작음) 지정 = down-tier 거부.
+    tier_override = ss.get("tier_override")
+    if isinstance(tier_override, dict):
+        for agent, tier in tier_override.items():
+            tier_norm = str(tier).strip().lower()
+            floor = STORY_STAKES_AGENT_FLOOR.get(str(agent).strip(), "opus")
+            floor_rank = STORY_STAKES_TIER_RANK.get(floor, 3)
+            req_rank = STORY_STAKES_TIER_RANK.get(tier_norm, 3)
+            if req_rank < floor_rank:
+                violations.append(f"{agent}: {tier_norm} < wrapper_floor={floor}")
+
+    if violations:
+        warns = [
+            f"[bootstrap] WARN: story_stakes overlay down-tier 거부 — {len(violations)}건 (CFP-2432 / ADR-042 Amd16, strict-eligible)",
+        ]
+        for v in violations:
+            warns.append(f"           down-tier 시도: {v}")
+        warns.extend([
+            "           → consumer overlay 는 tier 를 보수 방향(opus 강제)으로만 override 가능 (확장-only, ADR-127 §결정6)",
+            "           → down-tier(opus→sonnet) 공격적 override 불가 — 합법 형태 = story_stakes.conservative_override[] (강제 opus)",
+            "           → low-stakes tier-flip 은 wrapper Orchestrator 의 4-AND shape 판정 전용 (consumer 자기보고 down-tier 차단)",
+        ])
+        return (warns, True)
+    return ([], False)
 
 
 # ---------------------------------------------------------------------- check 4
@@ -818,15 +903,17 @@ def _classify_strict_eligible(
     workflows_dir: Path | None = None,
     plugin_root: Path | None = None,
     expected_workflows: set[str] | None = None,
+    overlay_yaml: Path | None = None,
 ) -> list[str]:
-    """CFP-127 / ADR-032 — Strict-eligible drift 5종 detection (CFP-660 Wave 2 확장).
+    """CFP-127 / ADR-032 — Strict-eligible drift 6종 detection (CFP-660 + CFP-2432 확장).
 
-    5 type:
+    6 type:
       (a) project.yaml 부재 — 별도 main() 검사
       (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치
       (c) settings.json 의 3 hook 미등록 (check 9)
       (d) 15 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
       (e) consumer workflow drift — STRICT_ELIGIBLE_WORKFLOWS 영역 (CFP-660 NEW)
+      (f) story_stakes overlay down-tier 거부 — 확장-only 위반 (CFP-2432 / ADR-042 Amd16 NEW)
 
     Returns:
       list of strict-eligible drift findings (multi-line, ready to print).
@@ -891,6 +978,18 @@ def _classify_strict_eligible(
             findings.append("           → check 10 detail 참조 (warning 영역 본문)")
             findings.append(
                 "           → cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/"
+            )
+
+    # (f) story_stakes overlay down-tier (CFP-2432 / ADR-042 Amendment 16)
+    if overlay_yaml is not None:
+        _stakes_warns, stakes_strict = check_story_stakes_overlay(overlay_yaml)
+        if stakes_strict:
+            findings.append(
+                "[bootstrap] STRICT (f): story_stakes overlay down-tier 거부 — 확장-only 위반 (ADR-127 §결정6)"
+            )
+            findings.append("           → check 11 detail 참조 (warning 영역 본문)")
+            findings.append(
+                "           → 합법 형태 = story_stakes.conservative_override[] (보수 opus 강제만)"
             )
 
     return findings
@@ -981,6 +1080,8 @@ def main(argv: list[str] | None = None) -> int:
         workflows_dir, plugin_root, expected_workflows
     )
 
+    stakes_warnings, _ = check_story_stakes_overlay(overlay_yaml)   # CFP-2432 NEW check 11
+
     all_results: list[list[str]] = [
         check_workflow_permissions(org, repo) if gh_ready else [],
         check_plugin_labels(org, repo) if gh_ready else [],
@@ -996,6 +1097,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         hook_warnings,    # CFP-127 NEW check 9
         drift_warnings,   # CFP-660 NEW check 10
+        stakes_warnings,  # CFP-2432 NEW check 11 (story_stakes down-tier 거부)
     ]
     findings_count = sum(1 for r in all_results if r)
     warnings = [line for r in all_results for line in r]
@@ -1017,6 +1119,7 @@ def main(argv: list[str] | None = None) -> int:
             workflows_dir=workflows_dir,
             plugin_root=plugin_root,
             expected_workflows=expected_workflows,
+            overlay_yaml=overlay_yaml,
         )
         if strict_findings:
             print(f"[check-bootstrap] STRICT mode active (source={strict_source}) — strict-eligible drift detected:",

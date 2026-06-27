@@ -611,6 +611,42 @@ aggregate_arch:
 
 참조: [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 
+### 1m-2. Story-shape 조건부 model tier — `story_stakes` (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md))
+
+같은 agent role(현 Amd16 = InfraOperationalArchitectAgent 단독)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다. low-stakes Story shape(백테스트 엔진 / 데이터 파이프라인 / 웹 UI / 인터페이스 lib 등)에서 wrapper Orchestrator 가 InfraOperationalArchitectAgent 를 opus→sonnet 으로 spawn-time override, high-stakes(실자금 / production cutover / 신규 신뢰경계 / live 외부 API) 는 opus 유지.
+
+> **consumer 가 직접 down-tier 못 한다 — 보수 방향(opus 강제)만 가능 (확장-only, [ADR-127](../archive/adr/ADR-127-no-exemption-mandatory-full-flow.md) §결정6).** low-stakes tier-flip 판정은 wrapper Orchestrator 의 4-AND shape 분석 전용. consumer 의 stakes 자기보고로 sonnet 강등은 불가(2중 enforcement 가 거부).
+
+#### `story_stakes.conservative_override` (보수 opus 강제 — 항상 허용)
+
+```yaml
+# .claude/_overlay/project.yaml
+story_stakes:
+  conservative_override:
+    - InfraOperationalArchitectAgent   # 항상 opus 강제 (우리 프로젝트에선 low-stakes Story 라도 opus)
+```
+
+나열된 agent 는 Story shape 와 무관하게 항상 opus. 확장 방향(더 보수적)이라 항상 honor.
+
+#### down-tier 금지 (2중 enforcement)
+
+`tier_override` 맵으로 wrapper floor 미만 tier(예: `InfraOperationalArchitectAgent: sonnet`, floor=opus) 지정 시:
+
+1. **schema-gate** — SessionStart bootstrap hook (`check_bootstrap.py` check 11) 가 down-tier 검출 → strict mode 시 차단(exit 1), default mode 시 WARN.
+2. **spawn-time clamp** — Orchestrator 가 `scripts/check-stakes-tier-gating.sh` 의 `max(wrapper_floor, overlay)` 로 약한 요청 무시 + 거부 로그.
+
+→ consumer overlay 는 tier 를 약화할 수 없다. 합법 형태 = `conservative_override[]`(강제 opus)뿐.
+
+#### 미정의 시 동작
+
+`story_stakes` 섹션 자체가 없으면 모든 agent 현행 tier(wrapper floor) 유지 — 파괴적 변경 0(부재=현행 동작, optional). low-stakes tier-flip 은 wrapper 정책으로 자동 발화(consumer 설정 불요).
+
+#### Write boundary (§4b 정합)
+
+`story_stakes.*` field = **consumer-authored only**. 모든 codeforge agent 는 본 field write 금지. wrapper Orchestrator = read-only (overlay value 를 spawn-time clamp 입력으로 수신).
+
+참조: [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md) (Story-shape 조건부 model tier) · [ADR-127](../archive/adr/ADR-127-no-exemption-mandatory-full-flow.md) §결정6 (확장-only) · [project-config-schema §story_stakes 섹션 설명](project-config-schema.md) · `scripts/check-stakes-tier-gating.sh` (4-AND + clamp SSOT)
+
 ### 1n. 배포 — consumer GitHub Actions/Environments 완전 위임 (CFP-2227 / [ADR-121](../archive/adr/ADR-121-deprecate-deploy-lanes.md)) + 구 Deploy lane (Deprecated)
 
 > **Deprecated ([ADR-121](../archive/adr/ADR-121-deprecate-deploy-lanes.md), D-day 2026-06-13 KST / sunset 2026-07-13 KST — D+1 calendar month)** — 아래 "구 Deploy lane + Deploy Review lane 서술" 의 배포 매커니즘 (codeforge-deploy / codeforge-deploy-review 2 lane, ADR-087 + ADR-088) 은 폐지 결정 확정. sunset 경과 후 Wave 2 (Epic #2217 S5/S6) 가 물리 제거하며, 그때 본 §1n 의 Deprecated 단락도 삭제된다. 신규 consumer 는 아래 "배포 위임 모델"만 따른다.

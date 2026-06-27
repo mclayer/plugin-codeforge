@@ -520,6 +520,31 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 
 판별: result 에 `"currently unavailable"` / `"may not exist or you may not have access"` 포함 시 model-unavailable. **floor-fail 구분(hypothesis)**: ADR-117 §결정 3 의 floor (< 2.1.170 → 미인식 ID spawn 실패)은 별개 사건 — 정정 = `Reload Window`/버전 업그레이드(opus fallback 아님). floor-fail string 과 model-unavailable string 의 동일성은 미실증(floor-fail string 만 verified) → string-match 만으로 무조건 fallback 시 floor 환경 문제 은폐 위험. 구분 = `claude --model fable -p "ok"` fresh CLI smoke 대조(fresh PASS + in-process FAIL = floor-fail). 미분류 오류 = task failure 로 routing(fallback 미발동).
 
+#### §3.0.12a Story-shape 조건부 model tier gating (CFP-2432 / ADR-042 Amendment 16)
+
+설계 lane 진입 시 ArchitectPLAgent deputy spawn 결정(`codeforge:deputy-mandate` skill)과 함께, Orchestrator 는 **InfraOperationalArchitectAgent** 의 model tier 를 Story 의 stakes(결과 위험)로 분기한다. tier = f(mandate depth, **stakes**). 메커니즘 신설 0 — `opts.model` override(§3.0.12) 를 재사용.
+
+**판정 절차 (spawn 직전)**:
+
+1. **4 stakes 신호 판정** — Story(§1-§7) + Change Plan §3.1/§7 + project.yaml 에서 4-AND 판정:
+   - 실자금 없음 (실거래 주문 / 실계좌 잔고 mutation 부재)
+   - production cutover 없음 (코드 배포 / flag flip / config flip / credential rotation 부재)
+   - 신규 신뢰경계 없음 (§7.1 5-enum 0건 — 새 외부 의존(read-only 포함) / credential 종류 추가 / 권한 범위 확대 / 데이터 분류 상향 / 신뢰 등급 변경)
+   - live 외부 API 호출 없음 (read-only 시세 수집 포함 — G3 가드)
+2. **tier 결정 = `scripts/check-stakes-tier-gating.sh`** (결정론적 SSOT): 4 신호 + consumer overlay floor 를 입력 → stdout `opus`/`sonnet`. 4-AND 모두 low → sonnet, 하나라도 high → opus(high-absorbing), 누락 → opus(fail-safe).
+   ```bash
+   STAKES_REAL_FUNDS=<yes|no> STAKES_PRODUCTION_CUTOVER=<yes|no> \
+   STAKES_NEW_TRUST_BOUNDARY=<yes|no> STAKES_LIVE_EXTERNAL_API=<yes|no> \
+   STAKES_OVERLAY_FLOOR=<opus|""> bash scripts/check-stakes-tier-gating.sh
+   ```
+3. **spawn** — 결과가 `sonnet` 이면 InfraOperationalArchitectAgent 를 `opts.model: sonnet` **fresh `Agent` spawn**. `opus` 이면 frontmatter default(opus) 그대로 spawn. **SendMessage resume 금지** — frontmatter `model: opus` 가 resume 시 재해석돼 override 무효(§3.0.12 fresh-spawn-only invariant). **FIX 재진입도 fresh spawn 으로 stakes 재판정**(silent 풀림 차단).
+
+**불변식**:
+- frontmatter `model: opus` 보존 = fail-safe default (override 누락 / gating 미수행 = opus, 현행 동작 무변경).
+- consumer overlay 는 보수 방향(opus 강제)만 — down-tier(opus→sonnet) 공격적 override 불가. enforcement 2중: schema-gate(`check_bootstrap.py` check 11) + spawn-time clamp(`check-stakes-tier-gating.sh` `max(floor,overlay)`).
+- 대상 = InfraOperationalArchitectAgent 단독(Amd16). DomainAgent = v1 제외(follow-up CFP). SecurityArch/DataArch/TestContractArch = scope 외.
+- tier-flip = provisional(F1 evidence-gate) — sonnet 산출물 품질 ≥ opus baseline 측정 protocol + 미달 시 opus 복원. SSOT = `docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md` (AC-9).
+
 #### §3.0.13 PR description `## Lane evidence` manual append 정책 (CFP-507)
 
 Phase 2 PR description 안 `## Lane evidence` row append 시 Orchestrator (또는 Orchestrator-owned delegate subagent — §3.0.6 정합) 가 아래 3-step 절차를 준수한다. 본 정책은 CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — codeforge-develop sibling plugin DeveloperPLAgent body composition convention (`agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" section) 와 짝.
