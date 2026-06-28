@@ -1,0 +1,39 @@
+name: reconcile-overlay-workflow-channel-test
+# CFP-2440 Phase 2 — reconcile-overlay.sh workflow channel TDD 검증
+#
+# QADev 작성 tests/scripts/test_reconcile-overlay-workflow-channel.sh 의 CI 구현.
+# workflow 채널 동기화 로직 검증:
+#   - AC-5: anchor source base (WORKFLOW_SRC_DIR 기본값)
+#   - AC-2: update not bootstrap (구버전→신버전 갱신)
+#   - AC-6: over-broad-enumerate (consumer 자체 파일 보존)
+#   - AC-10: empty-vs-absent whitelist (삭제 방지)
+#   - AC-8: dry-run (filesystem touch 0)
+#   - AC-9: idempotency (2회 byte-identical)
+#   - AC-1: new propagation (신규 워크플로 전파)
+#   - AC-3: filter skip (plugin-only 워크플로 skip)
+#   - AC-4: repo-kind (plugin/mixed=full mirror, unknown=abort)
+#   - AC-7: loss-report (silent overwrite 0)
+#   - AC-11: rollback scope (snapshot에 워크플로 entry 존재)
+#
+# 신규 workflow (6.42.0 → 추가, CFP-2440 Phase 2 구현체).
+# wrapper-self 전용 (consumer red 회피 — CFP-2437 선례).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile-workflow-channel-test:
+    name: reconcile-workflow-channel-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # workflow channel fixture 검증용 full git history
+      - name: Run reconcile-overlay workflow channel test (pure bash)
+        run: bash tests/scripts/test_reconcile-overlay-workflow-channel.sh
