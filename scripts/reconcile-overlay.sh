@@ -47,6 +47,12 @@ RESULT_FIDELITY_OUTPUT_FILE="${RESULT_FIDELITY_OUTPUT_FILE:-}"
 WRAPPER_SSOT_DIR="$(cd "${WRAPPER_SSOT_DIR}" 2>/dev/null && pwd || echo "${WRAPPER_SSOT_DIR}")"
 CONSUMER_OVERLAY_DIR="$(cd "${CONSUMER_OVERLAY_DIR}" 2>/dev/null && pwd || echo "${CONSUMER_OVERLAY_DIR}")"
 
+# CFP-2440: CONSUMER_ROOT SSOT 선유도 (INV-B — §4.12 filter + 워크플로 채널 공통 consume)
+CONSUMER_ROOT="${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}"
+# CFP-2440: 워크플로 채널 env seam (test-injectable, ${VAR:-default} idiom)
+WORKFLOW_SRC_DIR="${RECONCILE_OVERLAY_WORKFLOW_SRC_DIR:-${SCRIPT_DIR}/../templates/github-workflows}"
+WORKFLOW_DST_DIR="${RECONCILE_OVERLAY_WORKFLOW_DST_DIR:-${CONSUMER_ROOT}/.github/workflows}"
+
 # FIFO N=5 snapshot retention (Story-3 §4 SSOT 재사용)
 SNAPSHOT_RETENTION="${RECONCILE_OVERLAY_SNAPSHOT_RETENTION:-5}"
 
@@ -138,10 +144,7 @@ if [[ "${MODE}" == "rollback" ]]; then
     fi
 
     echo "${SCRIPT_NAME} snapshot 복원: $(basename "${local_latest_snapshot}")"
-    local_overlay_parent="$(dirname "${CONSUMER_OVERLAY_DIR}")"
-    local_overlay_base="$(basename "${CONSUMER_OVERLAY_DIR}")"
-
-    tar xzf "${local_latest_snapshot}" -C "${local_overlay_parent}" 2>/dev/null || {
+    tar xzf "${local_latest_snapshot}" -C "${CONSUMER_ROOT}" 2>/dev/null || {
         echo "${SCRIPT_NAME} snapshot 복원 실패 (corrupt?)" >&2
         exit 1
     }
@@ -357,26 +360,31 @@ _base_state() {
 # ─────────────────────────────────────────────────────────────────────────────
 _create_snapshot() {
     local snap_dir="${1}"
-    local overlay_dir="${2}"
+    local root_dir="${2}"
+    shift 2
+    local rels=("$@")              # rel_1, rel_2, ...
     local version="${CODEFORGE_VERSION:-5.78.0}"
     local ts
     ts=$(date -u '+%Y%m%dT%H%M%SZ' 2>/dev/null || date '+%Y%m%dT%H%M%SZ')
     local snap_name="${ts}-${version}.tar.gz"
     local snap_path="${snap_dir}/${snap_name}"
-
     mkdir -p "${snap_dir}"
-    local parent_dir
-    parent_dir="$(dirname "${overlay_dir}")"
-    local rel_name
-    rel_name="$(basename "${overlay_dir}")"
-
-    if (cd "${parent_dir}" && tar czf "${snap_path}" "${rel_name}" 2>/dev/null); then
+    # 존재하는 rel 만 tar (dest-부재 워크플로 디렉터리는 tar 인자 제외 → tar 경고 회피)
+    local present_rels=()
+    local r
+    for r in "${rels[@]}"; do
+        if [[ -e "${root_dir}/${r}" ]]; then present_rels+=("${r}"); fi
+    done
+    if [[ "${#present_rels[@]}" -eq 0 ]]; then
+        echo "${SCRIPT_NAME} 경고: snapshot 대상 rel 0 — skip (비치명적)" >&2
+        return 0
+    fi
+    if (cd "${root_dir}" && tar czf "${snap_path}" "${present_rels[@]}" 2>/dev/null); then
         echo "${SCRIPT_NAME} snapshot 생성: ${snap_name}"
     else
         echo "${SCRIPT_NAME} 경고: snapshot 생성 실패 (비치명적)" >&2
     fi
-
-    # FIFO N=5 eviction
+    # FIFO N=5 eviction (무변경)
     local count
     count=$(ls "${snap_dir}"/*.tar.gz 2>/dev/null | wc -l || echo 0)
     if [[ "${count}" -gt "${SNAPSHOT_RETENTION}" ]]; then
@@ -397,9 +405,11 @@ _reconcile_file() {
     local base_state="${2}"       # BASE_OK | BASE_ABSENT
     local base_snapshot="${3}"    # snapshot tar path (if BASE_OK), else ""
     local dry_run="${4}"          # "true" | "false"
+    local src_base="${5}"         # wrapper source dir (CFP-2440)
+    local dest_base="${6}"        # consumer dest dir (CFP-2440)
 
-    local consumer_file="${CONSUMER_OVERLAY_DIR}/${rel_path}"
-    local wrapper_file="${WRAPPER_SSOT_DIR}/${rel_path}"
+    local consumer_file="${dest_base}/${rel_path}"
+    local wrapper_file="${src_base}/${rel_path}"
     local sidecar_file="${CONSUMER_OVERLAY_DIR}/.wrapper-managed-manifest.json"
 
     # Determine file marker capability
@@ -475,7 +485,7 @@ _reconcile_file() {
             # detect-repo-kind.py exit code = classification carrier (0=plugin/1=consumer/2=mixed/3=unknown)
             # WRONG: `$(...) || _repo_kind="unknown"` — consumer(exit 1) + mixed(exit 2) silently reclassified
             # RIGHT: capture stdout + exit code independently, then dispatch on _ec
-            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" 2>/dev/null)
+            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT}" 2>/dev/null)
             _ec=$?
             # validate _ec is a known classification exit code before dispatching on stdout
             case ${_ec} in
@@ -774,9 +784,10 @@ _S1_MAX_EXIT=0
 # S2 (§4.12 consumer-applicability filter) 최대 exit code 추적
 _S2_MAX_EXIT=0
 
-# §4.2 step 1: idempotency pre-check (AC-9(a))
-if _idempotency_check "${WRAPPER_SSOT_DIR}" "${CONSUMER_OVERLAY_DIR}"; then
-    echo "${SCRIPT_NAME} overlay 이미 wrapper SSOT 와 일치 — no-op 정상 종료 (AC-9(a))"
+# §4.2 step 1: idempotency pre-check (AC-9(a)) + CFP-2440 워크플로 채널 AND-합성
+if _idempotency_check "${WRAPPER_SSOT_DIR}" "${CONSUMER_OVERLAY_DIR}" \
+   && _idempotency_check "${WORKFLOW_SRC_DIR}" "${WORKFLOW_DST_DIR}"; then
+    echo "${SCRIPT_NAME} 두 채널 모두 wrapper SSOT 와 일치 — no-op 정상 종료 (AC-9(a))"
     exit 0
 fi
 
@@ -805,39 +816,40 @@ fi
 OVERALL_EXIT=0
 ABORT_DETECTED=false
 
-while IFS= read -r -d '' wrapper_file; do
-    rel_path="${wrapper_file#${WRAPPER_SSOT_DIR}/}"
-
-    # Skip sidecar manifest itself
-    if [[ "${rel_path}" == ".wrapper-managed-manifest.json" ]]; then
-        continue
-    fi
-
-    # Ensure consumer directory exists (--apply only)
-    if [[ "${DRY_RUN}" == "false" ]]; then
-        local_dir=$(dirname "${CONSUMER_OVERLAY_DIR}/${rel_path}")
-        mkdir -p "${local_dir}"
-    fi
-
+# CFP-2440: 채널 배열 — (src_base, dest_base) 쌍
+CHANNELS=(
+  "${WRAPPER_SSOT_DIR}|${CONSUMER_OVERLAY_DIR}"    # overlay (기존)
+  "${WORKFLOW_SRC_DIR}|${WORKFLOW_DST_DIR}"        # workflow (신규)
+)
+for ch in "${CHANNELS[@]}"; do
+  src_base="${ch%%|*}"; dest_base="${ch##*|}"
+  [[ -d "${src_base}" ]] || { echo "${SCRIPT_NAME} 채널 source 부재 skip: ${src_base}" >&2; continue; }   # safe-degrade
+  if [[ "${DRY_RUN}" == "false" ]]; then mkdir -p "${dest_base}"; fi                                       # dest 부재 시
+  while IFS= read -r -d '' wrapper_file; do
+    rel_path="${wrapper_file#${src_base}/}"
+    # sidecar skip 보존 (overlay 채널만 관련, 무해)
+    if [[ "${rel_path}" == ".wrapper-managed-manifest.json" ]]; then continue; fi
+    # dest 디렉터리 보장 (overlay nested rel_path 위해, --apply only)
+    if [[ "${DRY_RUN}" == "false" ]]; then mkdir -p "$(dirname "${dest_base}/${rel_path}")"; fi
     file_exit=0
-    _reconcile_file "${rel_path}" "${BASE_KIND}" "${BASE_SNAPSHOT_PATH}" "${DRY_RUN}" || file_exit=$?
-
+    _reconcile_file "${rel_path}" "${BASE_KIND}" "${BASE_SNAPSHOT_PATH}" "${DRY_RUN}" "${src_base}" "${dest_base}" || file_exit=$?
     case "${file_exit}" in
-        0) ;;
-        1) OVERALL_EXIT=1 ;;
-        2) ABORT_DETECTED=true; OVERALL_EXIT=1 ;;
-        3) ABORT_DETECTED=true; OVERALL_EXIT=1 ;;
+      0) ;;
+      1) OVERALL_EXIT=1 ;;
+      2) ABORT_DETECTED=true; OVERALL_EXIT=1 ;;
+      3) ABORT_DETECTED=true; OVERALL_EXIT=1 ;;
     esac
-
     if "${ABORT_DETECTED}"; then
-        echo "${SCRIPT_NAME} abort: reconcile 중단" >&2
-        break
+      echo "${SCRIPT_NAME} abort: reconcile 중단" >&2
+      break
     fi
-done < <(find "${WRAPPER_SSOT_DIR}" -type f -print0 2>/dev/null)
+  done < <(find "${src_base}" -type f -print0 2>/dev/null)
+  if "${ABORT_DETECTED}"; then break; fi   # 채널 간에도 abort 전파
+done
 
-# §4.2 step 6+7: post-reconcile snapshot
+# §4.2 step 6+7: post-reconcile snapshot (CFP-2440 multi-root)
 if [[ "${DRY_RUN}" == "false" ]] && ! "${ABORT_DETECTED}"; then
-    _create_snapshot "${SNAPSHOT_DIR}" "${CONSUMER_OVERLAY_DIR}"
+    _create_snapshot "${SNAPSHOT_DIR}" "${CONSUMER_ROOT}" ".claude/_overlay" ".github/workflows"
 fi
 
 # Loss report (EPIC-AC-4 surfacing)
@@ -897,6 +909,40 @@ if [[ -f "${RESULT_FIDELITY_AGGREGATOR_PY}" ]]; then
 else
     echo "${SCRIPT_NAME} [WARN] §4.13 result_fidelity_aggregator.py 미발견 — result enum 집계 skip" >&2
     echo "${SCRIPT_NAME} [WARN] 경로: ${RESULT_FIDELITY_AGGREGATOR_PY}" >&2
+fi
+
+# CFP-2440: 워크플로 채널 result-fidelity 2차 호출 (overlay 채널과 동일 구조)
+if [[ -d "${WORKFLOW_SRC_DIR}" ]] && [[ -f "${RESULT_FIDELITY_AGGREGATOR_PY}" ]]; then
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        echo "${SCRIPT_NAME} [dry-run] §4.13 result fidelity (workflow 채널): preview only (EC-2, result field 미적용)"
+        python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" \
+            --s1-exit "${_S1_MAX_EXIT}" \
+            --s2-exit "${_S2_MAX_EXIT}" \
+            --wrapper-dir "${WORKFLOW_SRC_DIR}" \
+            --consumer-dir "${WORKFLOW_DST_DIR}" \
+            --whitelist "${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}" \
+            --dry-run 2>/dev/null || true
+    else
+        _agg_wf_arg_list=(
+            "--s1-exit" "${_S1_MAX_EXIT}"
+            "--s2-exit" "${_S2_MAX_EXIT}"
+            "--wrapper-dir" "${WORKFLOW_SRC_DIR}"
+            "--consumer-dir" "${WORKFLOW_DST_DIR}"
+            "--whitelist" "${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        )
+        if [[ -n "${RESULT_FIDELITY_OUTPUT_FILE:-}" ]]; then
+            _agg_wf_arg_list+=("--output-file" "${RESULT_FIDELITY_OUTPUT_FILE}")
+        fi
+        _AGG_WF_EC=0
+        _AGG_WF_OUTPUT=$(python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" "${_agg_wf_arg_list[@]}" 2>/dev/null) || _AGG_WF_EC=$?
+        if [[ "${_AGG_WF_EC}" -eq 3 ]]; then
+            echo "${SCRIPT_NAME} [WARN] §4.13 result fidelity aggregator (workflow) internal error (exit 3) — honest report 불가" >&2
+        else
+            echo "${SCRIPT_NAME} §4.13 result fidelity (workflow 채널): ${_AGG_WF_OUTPUT}"
+            _result_wf_value=$(echo "${_AGG_WF_OUTPUT}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+            echo "${SCRIPT_NAME} result (workflow 채널): ${_result_wf_value}"
+        fi
+    fi
 fi
 
 if [[ "${OVERALL_EXIT}" -eq 0 ]]; then

@@ -328,6 +328,10 @@ graph TB
         PMO[PMOAgent<br/>Epic / retro / cross-Story]
         GitOps[GitOpsAgent<br/>long-running teammate]
     end
+
+    subgraph "codeforge (wrapper infrastructure)"
+        ReconcileOverlay["reconcile-overlay.sh<br/>ongoing-sync: overlay + workflow dual-channel<br/>(CFP-2440 Phase 2)"]
+    end
 ```
 
 **Component 책임 / 인접 관계 핵심 invariant**:
