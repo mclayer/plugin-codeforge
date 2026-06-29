@@ -72,7 +72,7 @@ amendments:
   - id: 16
     date: 2026-06-29
     carrier_story: CFP-2464
-    summary: "**touchpoint #8 신설 (mutation peer — surviving-mutant hollow-gate 탐지) — ADDITIVE 강화**. Epic CFP-2457 Story B. Amendment 15 가 신설한 touchpoint #7(merge-time adversarial gate, *산출물(PR diff)* 을 review = review-of-output) 와 **같은 적대적 검증 family, 다른 mechanism** — touchpoint #8 = *detector(테스트 스위트)* 를 변이로 probe (probe-the-detector). Codex 가 GREEN(이미 PASS) detector 보유 산출물에 국소 결함(mutant) 명세를 제기 → lane 이 적용+suite 재실행 → surviving(주입 후에도 PASS)이면 hollow-gate(검사연극) 신호. Amendment 15 D5.f 가 명시한 'merge-time adversarial dispatch pattern' 재사용 = ProactiveCheckPacket schema + verify-before-trust 무조건 + critic=hypothesis reshape + severity→처리 매핑 4축 상속. concept SSOT = `docs/domain-knowledge/concept/mutation-based-hollow-gate-detection.md`. **#7 흡수 아님** (timing·mechanism disjoint — #7 = merge-time/review-of-output, #8 = 구현리뷰 lane-time/probe-the-detector). 핵심 reshape (Story A 상속+mutation 특유): surviving mutant 주장 = `[hypothesis]` 지위, **어떤 입력에서 어떤 동작 차이** 동반 의무 + PL/QADev 재현 falsify(해당 mutant 실제 적용 후 suite 정말 PASS 재현) 통과 시만 `[verified]` hollow-gate 승격. mutation-특유 false-positive 2원천 = equivalent mutant(4~39%, undecidable — Madeyski 2013 via arxiv 2408.01760) + flaky 오염(미처리 시 mutant-test pair 9% unknown — ShiETAL19 ISSTA 2019) → 'surviving≠hollow' 양면. D1/D2/D3/D4 + Amendment 1-15 본문 의미 변경 0건 — touchpoint #8 신규 §결정 (D6 신설: mutation peer gate) + ProactiveCheckPacket schema enum `<1|..|7>` → `<1|..|8>` 확장(additive) sub-section append only. **Q-A 결정 = 경로 B (Codex = mutant 명세만 생성 = 신호원, lane 이 적용+실행)** — ADR-081 §결정 D8 `--sandbox read-only` 무손상 + 'Codex=신호원' 정합. dependency: ADR-070 Amendment 10 (verify-before-trust mutation scope + equivalent/flaky 불확정 disposition) + ADR-081 Amendment 10 (mutation severity rubric + payload split). **ADR-039 Amendment 불요** = mutation peer dispatch = 구현리뷰 lane worker(sub-agent)가 Codex 를 Bash `codex exec` 로 호출(CodexReviewAgent 동형 proven channel — 재귀 가드 미발동) → inline whitelist 신규 entry 0 (entry 6 merge-time 흡수 아님). marketplace 무관 (plugin.json 4-field 무변경 — Phase 1). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + 2 sibling ADR Amendment + concept landing + Story file, src/tests 무변경 — Phase 2 worker agent/playbook wire/dispatch contract 는 별 carrier). is_transitional=false, sunset_justification=N/A (ADDITIVE 강화 방향, scope 축소 0)."
+    summary: "**touchpoint #8 신설 (mutation peer — surviving-mutant hollow-gate 탐지) — ADDITIVE 강화**. Epic CFP-2457 Story B. Amendment 15 가 신설한 touchpoint #7(merge-time adversarial gate, *산출물(PR diff)* 을 review = review-of-output) 와 **같은 적대적 검증 family, 다른 mechanism** — touchpoint #8 = *detector(테스트 스위트)* 를 변이로 probe (probe-the-detector). Codex 가 GREEN(이미 PASS) detector 보유 산출물에 국소 결함(mutant) 명세를 제기 → lane 이 적용+suite 재실행 → surviving(주입 후에도 PASS)이면 hollow-gate(검사연극) 신호. Amendment 15 D5.f 가 명시한 'merge-time adversarial dispatch pattern' 재사용 = ProactiveCheckPacket schema + verify-before-trust 무조건 + critic=hypothesis reshape + severity→처리 매핑 4축 상속. concept SSOT = `docs/domain-knowledge/concept/mutation-based-hollow-gate-detection.md`. **#7 흡수 아님** (timing·mechanism disjoint — #7 = merge-time/review-of-output, #8 = 구현리뷰 lane-time/probe-the-detector). 핵심 reshape (Story A 상속+mutation 특유): surviving mutant 주장 = `[hypothesis]` 지위, **어떤 입력에서 어떤 동작 차이** 동반 의무 + PL/QADev 재현 falsify(해당 mutant 실제 적용 후 suite 정말 PASS 재현) 통과 시만 `[verified]` hollow-gate 승격. mutation-특유 false-positive 2원천 = equivalent mutant(4~39%, undecidable — Madeyski 2013 via arxiv 2408.01760) + flaky 오염(미처리 시 mutant-test pair 9% unknown — ShiETAL19 ISSTA 2019) → 'surviving≠hollow' 양면. D1/D2/D3/D4 + Amendment 1-15 본문 의미 변경 0건 — touchpoint #8 신규 §결정 (D6 신설: mutation peer gate) + ProactiveCheckPacket schema enum 리터럴 stale `<1|2|3|4|5|6>`(L146 본문 + L610 Amd5 verbatim) → `<1|2|3|4|5|6|7|8>` 정정 확장(A #7 누락분 + B #8, additive) sub-section append only. **Q-A 결정 = 경로 B (Codex = mutant 명세만 생성 = 신호원, lane 이 적용+실행)** — ADR-081 §결정 D8 `--sandbox read-only` 무손상 + 'Codex=신호원' 정합. dependency: ADR-070 Amendment 10 (verify-before-trust mutation scope + equivalent/flaky 불확정 disposition) + ADR-081 Amendment 10 (mutation severity rubric + payload split). **ADR-039 Amendment 불요** = mutation peer dispatch = 구현리뷰 lane worker(sub-agent)가 Bash(`node codex-companion.mjs review`)로 Codex 호출(CodexReviewAgent 동형 proven channel — Agent tool 아닌 Bash 호출이라 재귀 가드 미발동) → inline whitelist 신규 entry 0 (entry 6 merge-time 흡수 아님). marketplace 무관 (plugin.json 4-field 무변경 — Phase 1). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + 2 sibling ADR Amendment + concept landing + Story file, src/tests 무변경 — Phase 2 worker agent/playbook wire/dispatch contract 는 별 carrier). is_transitional=false, sunset_justification=N/A (ADDITIVE 강화 방향, scope 축소 0)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -143,7 +143,7 @@ Orchestrator가 6개 touchpoint에서 `Agent(subagent_type="codex:codex-rescue")
 ### D3. ProactiveCheckPacket v1 스키마
 
 ```yaml
-touchpoint: <1|2|3|4|5|6>
+touchpoint: <1|2|3|4|5|6|7|8>
 purpose: <한 줄 목적>
 context:
   lane: <requirements|design|develop|orchestrator>
@@ -607,7 +607,7 @@ Codex worker (codex:codex-rescue subagent) 의 sandbox-level file system access 
 기존 D3 ProactiveCheckPacket v1 schema (verbatim):
 
 ```yaml
-touchpoint: <1|2|3|4|5|6>
+touchpoint: <1|2|3|4|5|6|7|8>
 purpose: <한 줄 목적>
 context:
   lane: <requirements|design|develop|orchestrator>
@@ -1282,7 +1282,7 @@ ADR-022 (Sonnet-decider Codex review 자동발동 deprecate) scope = 구 Sonnet-
 
 ## Amendment 16 (2026-06-29 KST, CFP-2464)
 
-**touchpoint #8 신설 (mutation peer — surviving-mutant hollow-gate 탐지) — ADDITIVE 강화 + ProactiveCheckPacket enum `<1|..|7>` → `<1|..|8>` 확장 + probe-the-detector mechanism reshape.** Epic CFP-2457 Story B.
+**touchpoint #8 신설 (mutation peer — surviving-mutant hollow-gate 탐지) — ADDITIVE 강화 + ProactiveCheckPacket enum 리터럴 `<1|..|6>`(stale) → `<1|2|3|4|5|6|7|8>` 정정 확장(A #7 누락분 + B #8) + probe-the-detector mechanism reshape.** Epic CFP-2457 Story B.
 
 ### Context (Amendment 16)
 
@@ -1302,13 +1302,15 @@ concept 정립 = [`docs/domain-knowledge/concept/mutation-based-hollow-gate-dete
 
 **D6. touchpoint #8 — mutation peer gate (신규 §결정)**
 
-기존 D2 (touchpoint 자동 활성, opt-in 없음) 의 closed enumeration 에 **8번째 touchpoint** ADDITIVE append. ProactiveCheckPacket v1 schema (D3) 의 `touchpoint: <1|..|7>` enum → `touchpoint: <1|..|8>` 로 확장 (additive, 기존 1-7 의미 무변).
+기존 D2 (touchpoint 자동 활성, opt-in 없음) 의 closed enumeration 에 **8번째 touchpoint** ADDITIVE append. ProactiveCheckPacket v1 schema (D3) 의 `touchpoint` enum → `touchpoint: <1|2|3|4|5|6|7|8>` 로 확장 (additive, 기존 1-7 의미 무변).
+
+> **스키마 리터럴 정정 (본 Amendment 16)**: D3 schema 리터럴(본문 L146 + Amendment 5 verbatim 인용 L610)이 stale `<1|2|3|4|5|6>` 로 남아 있었다 — Amendment 15(Story A)가 touchpoint #7 을 신설하면서 enum 리터럴 갱신을 누락했기 때문. 본 Amendment 16 에서 A 의 #7 누락분 + B 의 #8 을 함께 `<1|2|3|4|5|6|7|8>` 로 정정한다 (additive, ratchet 무손상).
 
 | 항목 | touchpoint #8 명세 |
 |---|---|
 | **trigger 시점** | 구현리뷰(code-review) lane 진입 — detector(테스트 스위트)가 이미 GREEN(CI gate PASS or 구현 lane 직후 stable green) 인 산출물 한정. detector 없으면 변이를 죽일 대상 부재 → mutation 무의미 (Story §2.4) |
 | **purpose** | detector 의 adequacy 적대 falsify — GREEN 코드에 국소 결함(mutant) 주입 → suite 재실행 → surviving 이면 hollow-gate(검사연극) 신호 능동 탐색 |
-| **dispatch 주체** | **구현리뷰 lane worker (sub-agent) 가 Codex 를 Bash `codex exec` 로 호출** — CodexReviewAgent 동형 proven channel (재귀 가드 = subagent→**Agent tool** 호출 한정, Bash 호출은 미발동). **ADR-039 inline whitelist 신규 entry 불요** (entry 6 merge-time 흡수 아님 — D6.e) |
+| **dispatch 주체** | **구현리뷰 lane worker (sub-agent) 가 Bash(`node codex-companion.mjs review`) 로 Codex 호출** — CodexReviewAgent 동형 proven channel (재귀 가드 = subagent→**Agent tool** 호출 한정, Bash 호출은 미발동). **ADR-039 inline whitelist 신규 entry 불요** (entry 6 merge-time 흡수 아님 — D6.e) |
 | **Q-A 결정 = 경로 B** | **Codex = mutant 명세(어디에 어떤 국소 결함, baseline·예상 동작차이)만 생성 = 신호원** / lane(QADev/CodeReviewPL) 이 실제 patch 적용 + suite 실행 + 재현 falsify. ADR-081 §결정 D8 `--sandbox read-only` 무손상 + "Codex=신호원" 정합 (D6.a) |
 | **input** | mutation 대상 코드 + 해당 테스트 스위트 + baseline GREEN 결과 (ADR-081 D1.A-D 4 mandatory field + D2 verbatim + D8 file-redirect + payload split, Amendment 10) |
 | **프레이밍** | 적대적 변이 ("이 테스트가 임의 국소 결함을 잡는가, 못 잡으면 어디서 살아남는가") + anti-sycophancy + calibration ("죽일 수 없는 변이(equivalent)면 그렇게 보고, 없는 검사연극 날조 금지") |
@@ -1355,7 +1357,7 @@ surviving mutant 주장 = `[hypothesis]` 지위 default (ADR-052 Amendment 3 A3 
 
 **D6.e — ADR-039 Amendment 불요 (lane worker Bash 채널 — inline whitelist 신규 entry 0)**
 
-touchpoint #7 (Amendment 15) 은 **merge-time** 에 lane PL 부재라 Orchestrator top-level inline dispatch 가 필요했고, Codex 를 Agent tool 로 spawn 하면 재귀 가드 silent skip 되므로 ADR-039 Amendment 6 inline whitelist 6번째 entry 가 필요했다. touchpoint #8 은 **구현리뷰 lane-time** — CodeReviewPL 이 active 하고, 기존 CodexReviewAgent 가 이미 lane worker(sub-agent) 로서 Codex 를 **Bash `codex exec`** 로 호출하는 proven channel 을 보유 [verified](plugins/codeforge-review/agents/CodexReviewAgent.md:12-13 Bash 권한). 재귀 가드 = "subagent → **Agent tool** 호출 금지" (L474) 한정이라 Bash 호출 미발동. 따라서 mutation peer dispatch = lane worker spawn → Codex via Bash = ADR-039 §결정 1 binary always-spawn 정합 (수정 작업 = lane worker 가 수행) + inline whitelist 신규 entry 0 (entry 6 merge-time 흡수 아님, entry 7 신설 아님).
+touchpoint #7 (Amendment 15) 은 **merge-time** 에 lane PL 부재라 Orchestrator top-level inline dispatch 가 필요했고, Codex 를 Agent tool 로 spawn 하면 재귀 가드 silent skip 되므로 ADR-039 Amendment 6 inline whitelist 6번째 entry 가 필요했다. touchpoint #8 은 **구현리뷰 lane-time** — CodeReviewPL 이 active 하고, 기존 CodexReviewAgent 가 이미 lane worker(sub-agent) 로서 **Bash(`node codex-companion.mjs review`)** 로 Codex 를 호출하는 proven channel 을 보유 [verified](plugins/codeforge-review/agents/CodexReviewAgent.md:10 `Bash(node *)` 권한 grant + :84 `node "$CMD" review` 실 invocation). 재귀 가드 = "subagent → **Agent tool** 호출 금지" (L474) 한정이라 Bash 호출 미발동. 따라서 mutation peer dispatch = lane worker spawn → Codex via Bash = ADR-039 §결정 1 binary always-spawn 정합 (수정 작업 = lane worker 가 수행) + inline whitelist 신규 entry 0 (entry 6 merge-time 흡수 아님, entry 7 신설 아님).
 
 **D6.f — CodexReviewAgent 와 disjoint (channel 분리)**
 
