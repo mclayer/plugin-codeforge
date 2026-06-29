@@ -65,6 +65,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 8 + ## 결정 / D1 expansion (Amendment 3) fail-mode enum"
     sunset_justification: null
+  - amendment_id: 9
+    cfp: CFP-2458
+    date: 2026-06-29
+    scope: "**verify-before-trust merge-time scope cross-ref + fail-mode/fail-closed enum 신설** (ADR-052 Amendment 15 touchpoint #7 merge-time adversarial gate sibling). 2축 신설 — (1) §결정 D1 적용 scope 표에 merge-time adversarial gate (touchpoint #7) row append: 머지 직전 Codex finding 도 D1 verify-before-trust + D3 reject 흐름 무조건 적용 (critic 주장 = `[hypothesis]` → Orchestrator 직접 falsify 통과 시만 `[verified]` 승격해 머지 보류, ADR-077 I-4 reuse + overcorrection bias 차단 arxiv 2603.00539). (2) 신규 §결정 D7 — merge-time **fail-mode disposition** (fail-closed vs fail-open) enum codify: 기존 fail-mode 9-enum (`api_missing` ~ `codex_truncated_no_verdict`) 은 'Codex 가 왜 verdict 미생산했는가' axis (cause), 본 D7 = '게이트가 그 때 머지를 어떻게 처리하는가' axis (disposition) — disjoint. merge-time disposition 2-enum: `fail_closed_block_merge` (권장 default — 마지막 방어선, Codex 미가용 시 머지 보류 + provenance 기록 + 사용자 escalate) / `fail_open_proceed_with_marker` (lane-time proactive check 기존 동형, merge-time 부적용 default). 권장안 = fail-closed (Story §7 SSOT, Orchestrator 사용자 확인 후보 flag). §결정 D5 declaration-only retain 정합 — `mechanical_enforcement_actions: []` retain (provenance enforcement Phase 2 carrier). D1-D6 + Amendment 1-8 본문 의미 변경 0건 — §결정 D1 scope 표 row append + 신규 §결정 D7 sub-section append only. ADR-052 Amendment 15 + ADR-039 Amendment 6 + ADR-081 Amendment 9 sibling cross-ref. is_transitional: false, sunset_justification N/A (강화 방향 — merge-time scope 확장 + fail-closed disposition codify, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2458)."
+    status: applied
+    ref: "## Amendments / Amendment 9 + ## 결정 / D1 적용 scope merge-time row + 신규 §결정 D7"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
@@ -75,8 +82,11 @@ related_stories:
   - CFP-946-A  # Amendment 3 — §결정 1 substitution scope 3-path enum codify (parent_epic CFP-946)
   - CFP-988  # Amendment 4 — mandatory-real-execution-evidence STANDING + Epic-gate verify-don't-dismiss (E-1 pattern_count=4 + E-2 super-class)
   - CFP-1003 # Amendment 5 — reactive `codex:rescue` 채널 normative anchor codify (사용자 책임 영역 retain + best-effort 가이드 anchor 강화, ADR-052 Amd 9 + ADR-081 Amd 5 chain — Codex TP#4 CX-963 deferred scope closure)
+  - CFP-2458 # Amendment 9 — verify-before-trust merge-time scope (ADR-052 touchpoint #7) + 신규 §결정 D7 merge-time fail-mode disposition (fail-closed vs fail-open, 권장 fail-closed). Epic CFP-2457 Story A.
 related_adrs:
-  - ADR-052  # Codex proactive check 6 touchpoint
+  - ADR-052  # Codex proactive check 6 touchpoint (Amendment 15 touchpoint #7 merge-time gate — Amendment 9 sibling)
+  - ADR-077  # Amendment 9 (CFP-2458) — I-4 fact-check marker 무검증 승격 금지 (critic hypothesis→verified 승격 룰 reuse)
+  - ADR-119  # Amendment 9 (CFP-2458) — research-before-claims Amd 2 게이트 verdict ground-truth (merge-time verify-before-trust 상위 근거)
   - ADR-081  # Codex worker severity calibration rubric §결정 D6 (Amendment 2 disjoint 보완 — 사실 근거 layer ↔ severity 경중 layer)
   - ADR-082  # disjoint super-class (internal lane agent self-write verify — 외부 worker output ↔ lane agent self-write; D5 declaration-only retain 선례)
   - ADR-022  # Codex review 자동 발동 Deprecated (CFP-134 / ADR-035)
@@ -571,6 +581,52 @@ closed-enum expansion (8 → 9, additive, 정보 손실 0, 기존 8 value 의미
 **A4. mechanical detection 후속 (deferred-followup)**
 
 mechanical detection lint (예: Codex output verdict-block presence grep + sandbox artifact size threshold heuristic) 는 본 Wave 1 declarative scope 외 — pattern_count 2 reach 또는 사용자 직접 ratchet 의도 표명 시 별 Wave 2 sub-Story carrier (ADR-076 / ADR-082 / ADR-086 precedent 답습). 현 pattern_count = 1 (CFP-604 single sample, escalate_user → 사용자 직접 채택 → CFP-1286 carrier 발의).
+
+### Amendment 9 (2026-06-29 KST, CFP-2458)
+
+**verify-before-trust merge-time scope 확장 (§결정 D1 적용 scope row append) + 신규 §결정 D7 (merge-time fail-mode disposition — fail-closed vs fail-open enum).**
+
+ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) sibling cross-ref. 2축 신설.
+
+#### Context (Amendment 9)
+
+ADR-052 Amendment 15 가 머지 직전 (CI gate PASS 후 ~ `gh pr merge` 전) 시점에 Codex adversarial gate (touchpoint #7) 를 신설했다. 머지 직전 Codex finding 도 verify-before-trust 무조건 적용 대상이나 §결정 D1 적용 scope 표 (proactive 6 touchpoint / reactive codex:rescue / CodexReviewAgent) 에 merge-time row 부재였다. 추가로 — merge-time 은 **마지막 방어선**이라 Codex 미가용 시 처리 정책 (fail-closed = 머지 차단 / fail-open = 통과) 이 기존 proactive check (fail-open skip+marker) 와 충돌. 기존 fail-mode 9-enum 은 'Codex 가 왜 verdict 미생산했는가' (cause) axis — '게이트가 그 때 머지를 어떻게 disposition 하는가' axis 부재. 본 Amendment 가 두 gap 을 codify.
+
+#### B1. §결정 D1 적용 scope 표 merge-time row append
+
+기존 §결정 D1 적용 scope (proactive 6 touchpoint full 적용 / reactive 사용자 책임 / CodexReviewAgent 별 lane) 에 행 추가:
+
+- **merge-time adversarial gate (ADR-052 touchpoint #7)** — **full 적용** (proactive 영역과 동일 codeforge 강제). 머지 직전 Codex finding 의 모든 evidence 인용 (file:line / verbatim quote / grep count / cross-repo commit SHA) = Orchestrator 직접 Read 로 ground truth verify 의무. **critic = 신호원, 판정자 아님**: finding = `[hypothesis]` 지위 default → evidence(file:line) 동반 + Orchestrator falsify(verify-before-trust 5 sub-scope, ADR-081 D2) 통과 시만 `[verified]` 승격 → 머지 보류. mismatch → D3 reject 흐름 (finding reject + Story §10 false-positive tally + override rationale 4종). evidence 부재 finding = 무효 (머지 보류 trigger 아님). ADR-077 I-4 "fact-check marker 무검증 승격 금지" reuse + overcorrection bias (적대 framing FNR 26%→73%, source: arxiv 2603.00539) 차단.
+
+#### B2. 신규 §결정 D7 — merge-time fail-mode disposition (fail-closed vs fail-open)
+
+기존 fail-mode 9-enum (`api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only` / `subagent_recursion_blocked` / `dispatch_stall_or_stream_timeout` / `codex_truncated_no_verdict`) = **cause axis** ('Codex 가 왜 verdict 미생산'). 본 §결정 D7 = **disposition axis** ('게이트가 그 때 머지를 어떻게 처리') — 두 axis disjoint.
+
+**merge-time disposition 2-enum**:
+
+| disposition enum | semantics | 적용 trigger | provenance |
+|---|---|---|---|
+| **`fail_closed_block_merge`** (merge-time **권장 default**) | Codex 미가용 / sandbox 실패 (fail-mode 9-enum 중 하나) 시 **머지 보류** + provenance artifact 기록 (게이트 미완료 명시) + 사용자 escalate (재시도 또는 명시적 override 결정) | merge-time adversarial gate (touchpoint #7) 에서 Codex worker 가 verdict 미생산 | `[merge-gate-fail-closed: <fail-mode>]` Story §10 marker — 게이트 미완료 = PASS 불가 (artifact absence → 머지 보류) |
+| **`fail_open_proceed_with_marker`** (merge-time 부적용 default — lane-time proactive 동형) | Codex 미가용 시 머지 진행 + skip marker (기존 proactive check 동형) | lane-time proactive check (touchpoint #1/#3/#4/#6) — merge-time 부적용 | `[codex-sandbox-fallback: <fail-mode>]` (기존 ADR-070 §결정 D1 substitution `fallback_skip_with_marker` 정합) |
+
+**권장안 = `fail_closed_block_merge`** (merge-time). 근거 (Story §7 SSOT):
+
+1. **마지막 방어선 성격** — merge-time 게이트는 shift-right 최우측 (배포 직전 마지막 layer). 여기서 fail-open 이면 "Codex 없으면 게이트 무력화" = 게이트 존재 의의 소멸 (#2322 self-attest 위조면과 동형 — quality gate 가 'nobody reads' = gate 아님).
+2. **fail-open 의 게이트 연극화 risk** — Codex 간헐 실패를 fail-open 으로 처리하면 가장 검증이 필요한 순간(불안정)에 게이트가 자동 통과 → governance hole.
+3. **delivery 차단 risk 완화 설계** — fail-closed 가 delivery 를 영구 차단하지 않도록: (a) Codex 미가용 = 머지 *보류* (영구 차단 아님, 재시도 가능), (b) 사용자 명시적 override 채널 (ESCALATE → 사용자가 "Codex 없이 머지 승인" 결정 가능 — 자동 통과 아닌 인간 결정), (c) ADR-081 D8 file-redirect dispatch 자체가 Codex 간헐 실패 1차 회피층.
+
+**trade-off 잔존 (Orchestrator 사용자 확인 후보 flag)**: 이 환경에서 Codex 가 간헐 실패함 (CFP-2440/2449 evidence) → fail-closed 가 머지 보류를 빈발시킬 위험. 권장안은 fail-closed 이나 — 본 결정은 **거버넌스 게이트 무력화 위험 (fail-open) vs delivery 마찰 (fail-closed)** 의 진짜 가치 trade-off (default 비자명) 이므로 Orchestrator 가 사용자 확인 후보로 명확히 flag (Story §7 + §5.5). 사용자가 fail-open 선택 시 = consumer overlay 확장-only 정합 위해 본 enum 채택 변경만 (정책 축소 불허 — fail-closed → fail-open 다운그레이드는 게이트 약화이므로 ADR-058 §결정 5 sunset_justification 의무).
+
+#### B3. declaration-only retain + ratchet 정합
+
+- §결정 D5 declaration-only retain 정합 — `mechanical_enforcement_actions: []` retain (provenance enforcement mechanical wire = Phase 2 별 carrier, ADR-064 §결정 1 unitary).
+- ratchet 강화 방향 (merge-time scope 확장 + fail-closed disposition codify, 약화 0) — D1-D6 + Amendment 1-8 본문 의미 변경 0건. ADR-052 Amendment 15 + ADR-039 Amendment 6 + ADR-081 Amendment 9 sibling cross-ref.
+
+#### 거절된 대안 (Amendment 9)
+
+- (Amd9-A) **merge-time 도 fail-open default** (lane-time proactive 동형) — 마지막 방어선 게이트 무력화 risk (B2 근거 1/2). fail-closed default + 사용자 override 채널 채택.
+- (Amd9-B) **fail-mode 9-enum 에 disposition 흡수** (10번째 value 추가) — axis mismatch (cause ↔ disposition disjoint). 별 §결정 D7 disposition 2-enum 채택.
+- (Amd9-C) **fail-closed 를 비협상 hard invariant (사용자 override 불가)** — delivery 영구 차단 risk (Codex 간헐 실패 환경). 사용자 명시적 override 채널 (ESCALATE) 보존 — 자동 통과 아닌 인간 결정.
 
 ## 해소 기준
 
