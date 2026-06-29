@@ -65,6 +65,13 @@ amendments:
     status: applied
     ref: "## Amendment 8 / 본문 ### D9 + 거절된 대안 D9"
     sunset_justification: "ratchet 강화 방향 (Codex worker dispatch prompt body origin/main fetch directive normative anchor 신설 — working tree file 우회 + stale local checkout state 회피 invariant codify, prompt body directive 영역 신규 normative anchor §결정 D9). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D8 dispatch invocation 무변경, D1-D8 본문 의미 변경 0, scope 축소 0, mandatory field 추가 0 — sub-section append additive). CFP-1384 closing-the-loop empirical validation (5/5 TP outcome) evidence 가 ratchet 강화 정당성. ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 9
+    cfp: CFP-2458
+    date: 2026-06-29
+    scope: "신규 §결정 D10 (merge-time severity rubric) append — ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) sibling. §결정 D6 (Codex worker severity calibration rubric) 의 ground truth severity 우선순위 (primary = DesignReviewPL final verdict / fallback = CodeReviewPL standalone / 양쪽 = higher) 가 **merge-time 엔 닫혀 있음** — 머지 직전은 모든 review lane 종료 후라 review-lane verdict 가 ground truth 로 재사용 불가 (review lane = 머지 직전 폐쇄). 본 §결정 D10 = merge-time 전용 P0/P1/P2 severity rubric 신설 — review-lane verdict 대신 **머지 차단 영향 (merge-block impact)** 을 ground truth 축으로 재정의: P0 = 정확성/보안/데이터 무결성 결함 (배포 시 incident, 무조건 머지 보류) / P1 = 요구사항·AC 미충족 또는 설계의도 위반 (머지 보류 — Story §1/§3/§5 대비) / P2 = 스타일·minor·cosmetic·nice-to-have (비차단, 기록 후 진행). critic 의 severity 발화 자체는 `[hypothesis]` — Orchestrator 가 D6 bidirectional calibration (over-rate 금지 + security-relevant under-rate 금지) + verify-before-trust (ADR-070 Amendment 9) 통과 후 merge-time rubric 으로 최종 확정. boundary-completeness exception (D6.c) merge-time 정합 유지. D1-D9 본문 의미 변경 0건 — 신규 §결정 D10 sub-section append only. ADR-052 Amendment 15 + ADR-039 Amendment 6 + ADR-070 Amendment 9 sibling cross-ref. mechanical_enforcement_actions[] 변경 0건 (Amendment 4/8 entry retain, declaration-only retain — §D5 precedent chain 9번째 instance). is_transitional: false, sunset_justification N/A (강화 방향 — merge-time severity ground truth 재정의 신설, D6 review-lane rubric 무손상 보존, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2458)."
+    status: applied
+    ref: "## Amendment 9 / 본문 ### D10 + 거절된 대안 D10"
+    sunset_justification: "ratchet 강화 방향 (merge-time severity rubric 신설 — review-lane verdict 가 머지 직전 닫힌 영역에 merge-block impact ground truth 축 신설). 약화 영역 0건 (§결정 D6 review-lane severity calibration rubric 무손상, D1-D9 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -79,8 +86,10 @@ related_stories:
   - CFP-1244 # Amendment 6 — 신규 §결정 D8 Codex worker dispatch file-redirect mandate (codex exec --sandbox read-only < promptfile + result-via-file + synchronous block-wait 금지, CFP-1187 S4/S5/S6/S7 evidence)
   - CFP-1286 # Amendment 7 — ADR-070 Amendment 8 cross-ref (fail-mode enum 9-set sync, codex_truncated_no_verdict 9번째 value)
   - CFP-1383 # Amendment 8 — 신규 §결정 D9 Codex worker dispatch prompt body origin/main fetch directive mandate (working tree file 우회 + stale local checkout state 회피, CFP-1333 5/5 FP + CFP-1384 5/5 TP closing-the-loop empirical validation)
+  - CFP-2458 # Amendment 9 — 신규 §결정 D10 merge-time severity rubric (review-lane verdict 닫힌 영역 merge-block impact ground truth 재정의, ADR-052 touchpoint #7 sibling). Epic CFP-2457 Story A.
 related_adrs:
-  - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref)
+  - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref + Amendment 15 (CFP-2458) touchpoint #7 merge-time gate)
+  - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic severity hypothesis→verified 확정 절차 reuse)
   - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
   - ADR-082  # write-time self-write verification mandate (D5 declaration-only retain 선례 super-class)
   - ADR-058  # ADR sunset criteria mandate (§결정 1/2/3 정합)
@@ -952,6 +961,60 @@ D1.A-D 4 mandatory boilerplate field 무변경. D8 dispatch invocation 무변경
 - (Amendment 8-C) **working tree HEAD direct Read retain (origin/main fetch directive 미codify)** — CFP-1333 §9.1 Codex 5/5 FP evidence (working tree HEAD 5 commits behind state mis-bind) + CFP-1384 5/5 TP closing-the-loop empirical validation. working tree direct Read = systemic stale state risk. `git show origin/main:<path>` direct fetch + working_tree_avoidance: true 의무 채택.
 - (Amendment 8-D) **cross-repo file 영역 까지 §결정 D9 scope 확장** (own-repo + cross-repo 통합) — D1.C `sandbox_outside_paths` 영역 + D1.D `network_scope: web-fetch` 영역 두 axis 와 scope overlap. cross-repo file = D1.C verbatim 첨부 영역 (mcp__github__get_file_contents 또는 git fetch origin <repo> + git show), external resource = D1.D substitution path 영역. §결정 D9 scope = own-repo origin/main fetch directive 한정 채택 (3 axis disjoint 보존).
 - (Amendment 8-E) **fetch directive presence-grep mechanical lint inline 본 Amendment 8** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 §결정 D9) + Wave 2 mechanical (dispatch 발화 안 `[ORIGIN-MAIN-DIRECTIVE]` block presence-grep lint + `verbatim_command_pattern` value match + bats fixture + workflow + label entry + evidence-checks-registry entry) 별 CFP 분리 채택 — ADR-081 §D5 declaration-only retain precedent 정합 + CFP-1384 sibling Wave 2 split pattern 답습.
+
+---
+
+## Amendment 9 (CFP-2458, 2026-06-29 KST)
+
+**신규 §결정 D10 (merge-time severity rubric) append — ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) sibling.**
+
+### Context (Amendment 9)
+
+§결정 D6 (Codex worker severity calibration rubric, Amendment 1) 의 ground truth severity 우선순위 (D6.b: primary = DesignReviewPL final verdict / fallback = CodeReviewPL standalone / 양쪽 = higher) 는 **review lane verdict 를 ground truth 로 재사용**한다. 그러나 ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) 는 구현리뷰 PASS + CI gate PASS **이후** (모든 review lane 종료 후) dispatch — 머지 직전 시점엔 review-lane verdict 가 이미 닫혀 ground truth 로 재사용 불가 (review lane 폐쇄). D6 의 severity 우선순위 표가 merge-time 엔 적용 불능 (Story §4.2 ADR-081 Amendment 지적 / FeasibilityAgent H). 본 Amendment 가 merge-time 전용 severity rubric (D10) 을 신설한다.
+
+### D10. merge-time severity rubric (review-lane verdict 닫힌 영역의 ground truth 재정의)
+
+merge-time adversarial gate (touchpoint #7) finding 의 P0/P1/P2 severity 는 review-lane verdict 대신 **merge-block impact** (이 결함이 머지되면 어떤 영향인가) 를 ground truth 축으로 확정.
+
+| severity | merge-time 운영적 정의 (merge-block impact ground truth) | 머지 disposition |
+|---|---|---|
+| **P0** | 정확성 / 보안 / 데이터 무결성 결함 — 배포 시 incident (런타임 실패 / 데이터 손상 / 보안 노출 / 금융 invariant 위반). | **머지 보류 + FIX 루프 회부** (무조건) |
+| **P1** | 요구사항·AC 미충족 또는 설계의도 위반 — diff ↔ Story §1(요구사항) / §3(설계의도) / §5(AC) 불일치 (배포는 되나 약속한 동작 미충족). | **머지 보류 + FIX 루프 회부** (Story §1/§3/§5 대비 falsify 후) |
+| **P2** | 스타일 / minor / cosmetic / nice-to-have — 동작·요구사항 영향 없음. | **비차단 — 기록 후 진행** (Orchestrator 진행 판단, P2 진행 주체 = Story §7 사용자 확인 후보) |
+
+#### D10.a — critic severity = `[hypothesis]`, PL 확정 절차
+
+critic 의 P0/P1/P2 발화 자체는 `[hypothesis]` 지위 (ADR-077 §결정 7 정보 무결성 invariant reuse). Orchestrator 확정 절차:
+
+1. **verify-before-trust** (ADR-070 Amendment 9 merge-time scope) — finding evidence(file:line) ground truth Read verify. mismatch → reject (P0 발화여도 머지 보류 trigger 아님, false-positive tally).
+2. **D6 bidirectional calibration** (over-rate 금지 + security-relevant under-rate 금지) — Amendment 1 §결정 D6 정합. critic severity > 실제 merge-block impact → down-calibrate / security-relevant under-rate → up-calibrate.
+3. **D10 rubric 최종 확정** — verify + calibrate 통과 후 merge-block impact 표로 P0/P1/P2 최종 분류 → disposition 결정.
+
+#### D10.b — boundary-completeness exception merge-time 정합
+
+§결정 D6.c (Codex P0 boundary-completeness × review P1 = over-rate 아님, +1 tier 허용) merge-time 정합 유지 — 단 ground truth = review-lane verdict 대신 merge-block impact. boundary-completeness finding (ADR-068 I-1~I-5) 이 merge-block impact 상 정확성/요구사항 영향이면 P0/P1 retain (down-calibrate 아님).
+
+#### D10.c — D6 review-lane rubric 무손상 (disjoint axis)
+
+- §결정 D6 (review-lane severity calibration, review verdict ground truth) = lane-time (touchpoint #2/#3) 영역 — 무손상 보존.
+- §결정 D10 (merge-time severity rubric, merge-block impact ground truth) = merge-time (touchpoint #7) 영역 — 신설.
+- 두 rubric disjoint axis (review-lane verdict 재사용 가능 ↔ 닫힘). ground truth source 만 다름, calibration discipline (bidirectional / boundary-completeness exception) 은 공유.
+
+#### D10.d — declaration-only retain
+
+`mechanical_enforcement_actions[]` Amendment 4/8 entry retain — D10 = declaration-only normative anchor (§D5 precedent chain 9번째 instance). merge-time severity mechanical lint = Phase 2 별 carrier 영역 (ADR-064 §결정 1 unitary).
+
+### cross-ref (Amendment 9)
+
+- **ADR-052 Amendment 15** — touchpoint #7 merge-time adversarial gate (severity 결과 처리 = 본 D10 rubric).
+- **ADR-039 Amendment 6** — inline whitelist 6번째 entry (merge-time dispatch).
+- **ADR-070 Amendment 9** — verify-before-trust merge-time scope + fail-mode disposition (D10.a step 1 cross-ref).
+
+### 거절된 대안 (Amendment 9)
+
+- (Amendment 9-A) **review-lane verdict 를 merge-time 까지 carry-forward 해 D6 재사용** — review lane 종료 후 verdict 는 머지 직전 diff (FIX 반영 후) 와 mismatch 가능 (stale). merge-time 은 새 diff 대상이라 review verdict 재사용 불가. merge-block impact ground truth 축 신설 채택.
+- (Amendment 9-B) **merge-time severity 를 P0/P1 2-tier 로 단순화 (P2 제거)** — Story §1 verbatim "P2 는 기록 후 진행 판단" 명시. P2 비차단 tier 보존 (cry-wolf 차단 — P2 자동 차단 시 false-block 양산). 3-tier 채택.
+- (Amendment 9-C) **D6 rubric 자체를 merge-time 포함하도록 확장 (D10 신설 회피)** — ground truth source 가 disjoint (review verdict ↔ merge-block impact). D6 표 확장 시 review-lane verdict 우선순위 표가 merge-time 에 적용 불능 (닫힘) → 의미 mismatch. 별 §결정 D10 채택 (D6 무손상).
 
 ## 해소 기준
 

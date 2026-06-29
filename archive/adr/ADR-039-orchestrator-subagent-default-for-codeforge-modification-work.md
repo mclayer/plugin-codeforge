@@ -68,6 +68,14 @@ amendment_log:
     direction: strengthening
     sunset_justification: |
       §결정 1 binary always-spawn invariant 무변경 + §결정 2 inline whitelist 4-entry closed enumeration 무변경 (둘 다 보존, recommendation tier 만 추가). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (chief author span guideline 추가, recommendation tier), 약화 0건. carrier_story CFP-1438 = ADR-039 Amendment 5 + ADR-044 Amendment 3 paired sibling amendment 2-set (axis disjoint).
+  - amendment: 6
+    date: 2026-06-29
+    carrier_story: CFP-2458
+    summary: |
+      §결정 18 신설 (Inline whitelist **6번째 entry** — merge-time Codex adversarial gate dispatch). §결정 2 inline whitelist 표 (4 original + Amendment 2 §결정 15 entry 5 = 5-entry) 에 6번째 entry append. §결정 15 line 315 "6번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 (ADR-058 §결정 5 evidence-gate)" 충족 carrier. **H1 critical (게이트 연극화 차단)**: merge-time adversarial gate (ADR-052 Amendment 15 touchpoint #7) 의 Codex dispatch 는 **Orchestrator top-level inline 전용** — sub-agent/PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드("subagent → Agent tool 호출 금지" L474)로 Codex spawn 이 silent fallback skip (`subagent_recursion_blocked` fail-mode, ADR-070 Amendment 6) → 게이트 무발동 = 연극화. 본 entry = mechanism 차원 (inline vs spawn) — dispatch 자체는 read-only adversarial check (verify-before-trust 무조건 적용, ADR-070 Amendment 9) 이라 §결정 1 binary always-spawn 의 "수정 작업" 정의 (file edit / GitHub state change) 와 disjoint axis. §결정 1 binary always-spawn invariant 무변경 (수정 작업 영역 spawn 의무 유지) + Amendment 2 entry 5 (Story-file handoff) 무변경. 6번째 entry exhaustiveness declare — 7번째 entry = 별도 ADR Amendment. ADR-039 Amendment 4 (CFP-1354) 의 "ADR-039 5번째 entry 신설 REJECTED (retry primitive = skill body)" 와 disjoint — 본 entry = merge-time Codex dispatch (재귀 가드 회피 mechanism 차원), retry primitive 영역 아님. is_transitional false, sunset_justification N/A (강화 방향 closed enumeration 확장 additive, 약화 0). doc-only fast-path (ADR-054 §결정 1, ADR-052 Amd 15 + ADR-070 Amd 9 + ADR-081 Amd 9 sibling Amendment, src/tests 무변경).
+    direction: strengthening
+    sunset_justification: |
+      §결정 1 binary always-spawn invariant 무변경 + Amendment 2 §결정 15 entry 5 무변경 — 6번째 entry append (closed enumeration 확장 additive). ADR-039 §결정 15 line 315 "6번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 (ADR-058 §결정 5 evidence-gate)" 충족. evidence-gate = H1 게이트 연극화 차단 (subagent owner 면 재귀 가드 silent skip 실측 입증, Story §4.2 H1 [verified](ADR-039:474)). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (merge-time dispatch inline 예외 codify, 게이트 enforcement 확보), 약화 0건. carrier_story CFP-2458 = ADR-039 Amendment 6 + ADR-052 Amendment 15 + ADR-070 Amendment 9 + ADR-081 Amendment 9 sibling amendment 4-set (Epic CFP-2457 Story A).
 is_transitional: false
 ---
 
@@ -440,6 +448,40 @@ Chief author (특히 ArchitectAgent Opus) 의 single spawn 안 monolithic span (
 - Sub-CFP A/B/C (CFP-1437/1436/1435) 3-layer race detection/claim complement evidence (각 amendment_log audit trail)
 - ADR-073 / ADR-082 disjoint axis 4-layer table 정합 verify
 - §결정 1 binary always-spawn / §결정 2 closed 4-entry whitelist 무영향 verify (invariant 보존)
+
+
+### 결정 18 — Inline whitelist 6번째 entry (merge-time Codex adversarial gate dispatch — Amendment 6, CFP-2458)
+
+§결정 2 의 Inline whitelist 표 (4 original entry + Amendment 2 §결정 15 entry 5 = 현 5-entry) 에 **6번째 entry** append. §결정 15 line 315 exhaustiveness declare ("6번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 — ADR-058 §결정 5 evidence-gate") 의 충족 carrier.
+
+**Inline whitelist 5-entry → 6-entry 확장 표** (§결정 2 의 4-entry + Amendment 2 entry 5 위 추가):
+
+| # | Category | 설명 | Mechanism rationale |
+|---|---|---|---|
+| 6 | **Merge-time Codex adversarial gate dispatch** (Amendment 6, CFP-2458) | ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) 의 Codex worker dispatch — 구현리뷰 PASS + CI gate PASS 후 "merge gate 진입" 직후 / `gh pr merge` 직전, Orchestrator top-level inline 에서 `codex exec --sandbox read-only < <promptfile>` (ADR-081 D8 file-redirect) 1패스 발동 + result-via-file 수신 | **재귀 가드 회피 critical (H1 게이트 연극화 차단)**. sub-agent / PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드 ("subagent → Agent tool 호출 금지", L474 회피된 대안 C)로 Codex worker spawn 이 silent fallback skip (`subagent_recursion_blocked` fail-mode, ADR-070 Amendment 6) → 게이트 무발동 = 연극화 (Story §4.2 H1 실측 입증). 따라서 dispatch 주체 = Orchestrator top-level inline 고정 의무. dispatch 자체 = read-only adversarial check (verify-before-trust 무조건 적용 — ADR-070 Amendment 9, mismatch finding reject) 이라 §결정 1 "수정 작업" 정의 (file edit / GitHub state change) 와 disjoint axis — file/GitHub mutation 발생 0. 머지 보류·FIX 회부 등 후속 mutation 은 §결정 1/Amendment 2 영역 (별 mechanism). |
+
+**6번째 entry 적용 범위 (closed enumeration)**:
+
+1. **dispatch trigger**: ADR-052 touchpoint #7 (merge-time adversarial gate) 단일 — 다른 6 touchpoint (#1/#3/#4/#6 lane-time) 는 본 entry scope 외 (lane PL/Orchestrator 영역 기존 분류 유지).
+2. **dispatch 형식**: ADR-081 D8 file-redirect (`codex exec --sandbox read-only < <promptfile>`) + result-via-file (synchronous block-wait 금지 — CFP-2214 non-blocking 회귀 차단 정합).
+3. **mutation 0 invariant**: dispatch 행위 자체 = file write / GitHub state change 미발생 (read-only Codex check). 결과 처리(머지 보류 / FIX Ledger row / phase transition)는 §결정 1 (lane spawn) 또는 Amendment 2 entry 5 (Story-file 4-sub-scope inline) 영역 — 본 entry 와 disjoint.
+
+**§결정 1 binary always-spawn 무손상 (disjoint axis)**:
+
+- §결정 1 "수정 작업" 정의 (file edit / GitHub state change / Story file write / label transition / workflow yaml / ADR write) = 모두 subagent spawn 의무 유지 — 본 entry 는 read-only Codex dispatch mechanism (mutation 0) 만 inline 허용. 수정 작업 영역 spawn 정책 무변경.
+- Amendment 2 §결정 15 entry 5 (Story-file handoff 4-sub-scope inline) 무변경.
+
+**ADR-039 Amendment 4 (CFP-1354) 와 disjoint**:
+
+Amendment 4 가 reject 한 "ADR-039 5번째 entry 신설 (rate-limit retry primitive inline)" = retry primitive 영역 (해소 = skill body 위치). 본 entry 6 = merge-time Codex dispatch 재귀 가드 회피 (mechanism 차원, retry 영역 아님). 두 영역 disjoint — Amendment 4 의 closed enumeration 보호 invariant ("future '429 retry inline allowed' 압박 차단") 무손상. 본 entry 는 새 mechanism category (merge-time read-only adversarial dispatch) 의 evidence-gated 신설이지 retry 압박 routing 아님.
+
+**6번째 entry exhaustiveness declare**: 6번째 entry 추가 후 — 7번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 (ADR-058 §결정 5 evidence-gate). closed enumeration 안정성 보장.
+
+**Verification evidence**:
+- Story §4.2 H1 [verified](ADR-039:474 회피된 대안 C "subagent → Agent tool 호출 금지") — subagent owner 면 재귀 가드 silent skip = 게이트 연극화 실측 입증
+- ADR-070 Amendment 6 `subagent_recursion_blocked` fail-mode (CFP-1041 DesignReviewPL subagent context Codex spawn 차단 evidence) — 동형 재귀 가드 fail-mode precedent
+- ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) dispatch 주체 = Orchestrator top-level inline 정합 verify
+- §결정 1 binary always-spawn / Amendment 2 entry 5 무영향 verify (invariant 보존)
 
 
 ## 회피된 대안
