@@ -36,13 +36,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pyyaml
-        run: pip install pyyaml
-
       - name: Detect retro file candidates
         id: retro_files
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           set -uo pipefail
           # cross-repo PAT 부재 시 graceful skip (retro-mandatory.yml L289-292 패턴)
@@ -54,7 +52,7 @@ jobs:
 
           # internal-docs repo 에서 PR title 의 CFP-NNN 매칭 retro 파일 검색
           # 파일명 패턴: cfp-NNN, EPIC-RESULTS-CFP-NNN, <date>-cfp-NNN 등 (case-insensitive)
-          PR_TITLE="${{ github.event.pull_request.title }}"
+          # PR_TITLE = env-injection only (attacker-control 값 inline expression 보간 금지 — retro-mandatory.yml:90 규약)
           STORY_KEY=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || echo "")
 
           if [ -z "$STORY_KEY" ]; then
@@ -87,9 +85,10 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          RETRO_FILES: ${{ steps.retro_files.outputs.files }}
         run: |
           set -uo pipefail
-          RETRO_FILES="${{ steps.retro_files.outputs.files }}"
+          # RETRO_FILES = env-injection only (step output inline expression 보간 금지 — 동일 injection-safe 규약)
           IFS=',' read -ra FILES <<< "$RETRO_FILES"
 
           # retro 정본은 internal-docs cross-repo — 로컬 plugin-codeforge checkout 에 없으므로
