@@ -8,9 +8,11 @@ carrier_story: CFP-2374
 parent_epic: null
 supersedes: [ADR-054]
 amends: null
-amendments: []
+amendments:
+  - ADR-127-Amendment-1-CFP-2456  # CFP-2456 — §결정 4 dialog skip-offer 금지의 consumer 적용범위 명문화. 본 ADR 본문은 "런타임에 Orchestrator 가" 로 wrapper-self 만 규율, 소비자 세션 Orchestrator 전파를 결정하지 않음(propagation gap). 본 amendment = §결정 4 가 소비자에게도 적용됨을 명문화 + 전파 채널/메커니즘 SSOT 는 ADR-027 Amendment 12(§결정 15, consumer adoption protocol) 가 소유함을 cross-ref. 정책 신설 아닌 적용범위 확장(consumer propagation) — additive, ratchet 강화. enforcement 간극(behavioral 도달 ≠ hard block) 명문화. weakening 0건
 related_stories:
   - CFP-2374  # 본 ADR 신설 carrier
+  - CFP-2456  # Amendment 1 — §결정 4 skip-offer 금지 consumer 전파 적용범위 명문화 (채널 SSOT = ADR-027 Amendment 12 §결정 15)
 related_adrs:
   - ADR-013   # chore 면제 carrier — §강제/면제 분류 (본 ADR Amendment 8 동반: chore 면제 폐지)
   - ADR-054   # doc-only fast-path 전체 carrier — 본 ADR 이 supersede (status 전환)
@@ -388,3 +390,31 @@ N/A — `is_transitional: false` (영구 정책, 강화 방향 ratchet).
 - [ADR-114](ADR-114-minimal-path-direct-invocation-protocol.md) — minimal-path-direct lane-skip 무력화 (Amendment 1)
 - [ADR-005](ADR-005-plugin-self-application-na-standardization.md) — N/A 표준화 (단축 vs N/A 구분 anchor)
 - CFP-2374 — 본 ADR carrier Story
+- [ADR-027](ADR-027-consumer-adoption-protocol.md) Amendment 12 §결정 15 — §결정 4 skip-offer 금지의 consumer 전파 채널 SSOT (Amendment 1 동반)
+- CFP-2456 — Amendment 1 carrier Story (consumer propagation 명문화)
+
+## Amendment 1 — §결정 4 dialog skip-offer 금지의 consumer 적용 범위 명문화 (CFP-2456)
+
+**Effective**: 2026-06-29 (CFP-2456 Phase 1 설계 PR merge 시점, KST `+09:00`).
+
+**Carrier**: CFP-2456. 본 amendment = 정책 신설이 아니라 §결정 4 의 **적용 범위 확장(consumer propagation) 명문화** — additive, ratchet 강화 방향.
+
+### 컨텍스트 — propagation gap
+
+본 ADR §결정 4 (dialog skip-offer 금지)는 "런타임에 **Orchestrator** 가 사용자에게 '생략할까요 …' 를 선택지로 제시하는 것을 금지" 로 규정한다. 그러나 본문은 wrapper 자기 거버넌스 영역(wrapper `CLAUDE.md` + `skills/user-dialog-mode/SKILL.md` + ADR-071 Amendment 11)만을 규율했고, **소비자(consumer) 세션의 Orchestrator(LLM)로 이 규칙이 전파되는 경로는 결정하지 않았다.**
+
+CFP-2456 실측 결과: 소비자 세션 Orchestrator 가 매 turn 로드하는 4채널(소비자 root `CLAUDE.md` = 프로세스 정책 0 / **plugin-root `CLAUDE.md` = 미로드** [source: Claude Code plugins-reference 공식 docs — "A `CLAUDE.md` file at the plugin root is not loaded as project context"] / on-demand skill = 명시 호출 의존 / `overlay/hooks/userprompt_reminder.py` = stale + consumer settings.json 의존) 어디에도 §결정 4 규칙이 없다. 그 결과 소비자 Orchestrator 는 학습된 기본 reflex("작은 변경은 절차 생략 제안")로 phase-gate 라벨 후 `AskUserQuestion`(리뷰 lane 생략 제안)을 띄운다 — §결정 4 직접 위반. mctrader 만이 아니라 **모든 소비자가 영향** (낡은 설정 아님 — 전파 채널 자체가 비어 있음).
+
+### Amendment 결정
+
+1. **§결정 4 의 소비자 적용 명문화**: §결정 4 (dialog skip-offer 금지 — 정식 풀 플로우 비협상, 생략을 `AskUserQuestion` 으로 묻지 말 것)는 **wrapper 세션뿐 아니라 소비자 세션 Orchestrator 에도 동일하게 적용**된다. consumer overlay 는 이 규칙을 약화·무력화 불가다 (overlay invariant "정책 확장만 가능, 축소 불가" — ADR-071 §결정 10 + 본 ADR §결정 6 정합·강화).
+
+2. **전파 채널/메커니즘 SSOT 의 위치**: 본 규칙을 소비자 세션에 *어떻게* 도달시키는가(채널·hook·형식)는 본 ADR 이 아니라 **ADR-027 Amendment 12 (§결정 15)** 가 소유한다 — ADR-027 = consumer adoption protocol SSOT, §결정 2 Secondary trigger (UserPromptSubmit) 채널의 적용 범위 확장. 요지: plugin `hooks/hooks.json` 의 자동활성 UserPromptSubmit reminder hook (유일 자동 도달 채널, `/plugins install` 자동활성, unconditional fire, JSON `additionalContext` emit). 본 ADR 은 *정책 SSOT*, ADR-027 은 *전파 메커니즘 SSOT* — 경계 disjoint.
+
+3. **enforcement 간극 명문화 (behavioral 도달 ≠ hard block)**: 본 전파는 소비자 Orchestrator 컨텍스트에 §결정 4 규칙을 *도달*시키는 behavioral guidance 이지, skip-offer 발화를 *물리적으로 차단* 하는 hard enforcement 가 아니다. UserPromptSubmit hook 은 context inject 에 그치며(동작 block 은 PreToolUse 류 필요 — ADR-027 §결정 2 "warning inject only, enforcement = LLM 책임"), 어느 채널도 LLM 의 skip-offer 발화를 0-차단 못 한다 [source: Claude Code 공식 hooks docs — UserPromptSubmit = context injection, not a hard enforcement layer]. 따라서 "skip-offer 발화 0" 의 mechanical 보장은 구조적으로 불가하며(LLM trust 모델 의존), 기계적 consumer-facing skip-offer lint 는 OOS (정당 ask-trigger 오탐 + 검사연극 ADR-119 §결정 9). 본 amendment 의 목표 = "도달 + override guidance 제공" 이다.
+
+### 정합
+
+- 본 ADR 의 ratchet 강화 본질과 정합 — consumer 면제 확장채널 폐지(§결정 6)와 같은 방향(소비자에게 더 엄격한 규칙 추가 도달).
+- ADR-039 §결정 2 (`AskUserQuestion` inline whitelist 합법) 와 충돌 0 — §결정 4 가 이미 "skip-offer 종류만 narrowing(발화 대상 아님)" 으로 해소한 선례를 소비자로 동형 전파.
+- weakening 0건 — ADR-058 §결정 5 sunset_justification 불요 (강화 방향).

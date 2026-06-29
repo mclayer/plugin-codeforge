@@ -22,6 +22,7 @@ related_stories:
   - CFP-108
   - CFP-127
   - CFP-1059  # Amendment 7 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합 (ADR-023 Amendment 1 + ADR-087 sibling carrier). §결정 11 신설
+  - CFP-2456  # Amendment 12 — §결정 2 Secondary trigger 적용 범위 확장 (§결정 15 신설): ADR-127 §결정 4 dialog skip-offer 금지 규칙을 plugin-shipped 자동활성 UserPromptSubmit reminder hook 으로 소비자 세션 전파 (propagation gap 충당, unconditional fire + JSON additionalContext). ADR-127 Amendment 1 동반
 amendments:
   - ADR-032
   - ADR-027-Amendment-2-CFP-658  # CFP-658 Wave 1 of Epic CFP-431 — Action-blocked manual fallback path normative SSOT
@@ -33,6 +34,7 @@ amendments:
   - ADR-027-Amendment-8-CFP-1125  # CFP-1125 (CFP-1111 Wave-4 Story-11) — Amendment 6 sunset_boundary declarative (β2 audit #1113 Anchor 4 LOSSLESS 판정 carry). Amendment 6 §결정 10 4-way detection signals + D4 customization marker preserve invariant 의 효용을 CFP-1111 walker paradigm 으로 carry — walker repo-kind detection hook (detect-repo-kind.py 재사용) 동일 truth-table + walker per-step customization_marker_preserve flag 0 silent overwrite. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 본체 다른 amendment 영향 0). ratchet 강화 only (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건
   - ADR-027-Amendment-9-CFP-1177  # CFP-1177 Story-8 — customization marker block 을 paradigm-agnostic preserved layer 로 codify. 동일 invariant (marker 안 = wrapper SSOT wins, 밖 = consumer byte-identical 보존, integrity fingerprint check 의무, MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로에 동일 적용. Walk apply 는 merge_with_marker primitive 재사용 의무 (DRY — 재구현 금지). §결정 12 신설
   - ADR-027-Amendment-10-CFP-2243  # CFP-2243 — §결정 2 3-trigger enforcement 의 Secondary trigger (UserPromptSubmit) 구멍 메우기: "codeforge 의도 선언 + 미초기화 → bootstrap-first" 불변식 명문화 (§결정 13 신설). 기존 Secondary trigger regex 는 변경 동사만 잡고 "codeforge 사용 선언 시점(설계/brainstorm 요청) + 미초기화 감지" 미포착 → 미초기화 greenfield consumer 가 bootstrap 없이 superpowers:brainstorming 으로 silent fallback (Issue #2243). intent(변경동사 + codeforge 고유신호) ∧ detect-repo-kind exit 3 (unknown=진짜 greenfield) ∧ docs/adr·archive/adr 부재 AND-gate → wrapper plugin hooks/ 의 UserPromptSubmit 훅이 bootstrap 미충족 surface + 초기화 우선 유도 (warning inject only, exit 0 — hard-block 권한 보유하나 정책적 미사용). chicken-and-egg 해결 = overlay/ 아닌 wrapper plugin hooks/ 배치 (plugin 설치 즉시 활성). ADR-034 D1 옵션성 보존 (brainstorm 진입 차단 아님, 초기화 권고만). additive only, ratchet 강화 방향 — sunset_justification 불요
+  - ADR-027-Amendment-12-CFP-2456  # CFP-2456 — §결정 2 Secondary trigger (UserPromptSubmit) 적용 범위 확장 (§결정 15 신설): ADR-127 §결정 4 dialog skip-offer 금지 규칙을 소비자 세션에 자동 도달시키는 신규 plugin-shipped UserPromptSubmit reminder hook 신설. propagation gap = ADR-127 no-skip 규칙이 wrapper 자기 거버넌스(CLAUDE.md/skill)에만 존재, 소비자 로드 4채널(소비자 root CLAUDE.md=프로세스정책0 / plugin-root CLAUDE.md=미로드[plugins-reference] / on-demand skill=호출의존 / overlay reminder=stale+settings.json의존) 어디에도 부재 → 소비자 Orchestrator free-style skip-offer. 채널=plugin hooks.json UserPromptSubmit 3번째 entry(유일 자동도달, Amendment 10 bootstrap-first-gate 선례) + unconditional fire(변경동사 regex-gate 없음 — skip-offer 는 변경동사 없는 turn 에도 발생) + JSON additionalContext emit(plain stdout 회귀 #13912 회피) + 2-file 패턴(shim+py, bounded read, fail-safe exit0, stderr no-PII) + story.yml doc-only dropdown orphan 양파일 제거(ADR-127 §결정2 정합, byte-mirror). enforcement 간극 명문화(behavioral 도달 ≠ hard block — ADR-027 §결정2 warning-inject-only 정합). overlay invariant 정합(축소불가 강화). additive only, ratchet 강화 — sunset_justification 불요
   - ADR-027-Amendment-11-CFP-2250  # CFP-2250 (Epic CFP-2244 S2) — §결정 4 (cross-platform 의무 POSIX + Windows) 의 Windows-parity mechanical 강화 (§결정 14 신설). mctrader 데뷔(Windows) 발견 결함: (1) bootstrap-consumer.ps1 Stage 6 가 `& bash bootstrap-labels.sh` 위임 → Git Bash·WSL 부재 native Windows 에서 WARN+수동안내 종료 → label 미시드 → Issue Form `label not found` (silent 온보딩 깨짐). (2) check_bootstrap.py `_resolve_plugins_json` 의 [HOME, USERPROFILE] 고정 순서 → WSL/dual-env 비결정. (3) manifest/project.yaml 부재 검증이 story-init 발동 후 exit 1 (원인 불명). (4) check_bootstrap.py REQUIRED_LABELS 의 type:* (ADR-049 native Issue Type 이관, bootstrap-labels.sh 미생성) 잔존 오탐. (5) .github/workflows/ 전부 ubuntu-latest, windows runner 0 (결함1 회귀 안전망 부재). 해소: 신규 scripts/bootstrap-labels.ps1 (PowerShell-native 시드, label 데이터 SSOT templates/labels/base-labels.tsv 공유 — .sh/.ps1 drift 차단) + Stage 6 3-tier fallback (bash→pwsh→ERROR, silent skip 금지) + _resolve_plugins_json OS-aware 결정화 (os.name nt → USERPROFILE 우선 / posix → HOME 우선) + preflight 전진 (story-init 발동 전 bootstrap 결손 명시) + REQUIRED_LABELS type:* 제거 (18→15, check_bootstrap.py S2 단독 소유 — S3 type:* org cutover 와 파일 충돌 회피) + windows-bootstrap-smoke.yml (windows-latest, 기본 shell pwsh, dry-run smoke). 정합 부수: ADR-122 후속 — bootstrap-consumer.{sh,ps1}/check-debut-readiness.{sh,ps1} 의 required 목록 superpowers 잔존 제거 (check_bootstrap.py 는 CFP-2249 정합 완료). additive only, ratchet 강화 방향 (§결정 4 의 Windows 측 mechanical 이행 — weakening 0) — sunset_justification 불요
 amendment_log:
   - amendment_id: 8
@@ -59,6 +61,12 @@ amendment_log:
     summary: "§결정 4 (cross-platform 의무 POSIX + Windows) Windows-parity mechanical 강화 — §결정 14 신설. mctrader 데뷔(Windows) 발견 부트스트랩 5 결함 + 1 정합 부수 해소 (Epic CFP-2244 S2). 결함1 = bootstrap-consumer.ps1 Stage 6 bash 위임이 native Windows(Git Bash·WSL 부재)에서 수동안내 종료 → label 미시드 silent 깨짐. 결함2 = check_bootstrap.py _resolve_plugins_json [HOME, USERPROFILE] 고정순서 WSL/dual-env 비결정. 결함3 = manifest/project.yaml preflight 가 story-init 발동 후 (원인 불명). 결함4 = REQUIRED_LABELS type:* (ADR-049 native Issue Type 이관, bootstrap-labels.sh 미생성) 잔존 오탐. 결함5 = windows CI 안전망 0. 정합 부수 = ADR-122 후속 4 스크립트 superpowers required 잔존 제거. 해소 = 신규 bootstrap-labels.ps1 (PowerShell-native + label 데이터 SSOT base-labels.tsv 공유) + Stage 6 3-tier fallback (bash→pwsh→ERROR) + OS-aware resolve (os.name 분기) + preflight 전진 + REQUIRED_LABELS type:* 제거 (18→15, check_bootstrap.py S2 단독 소유) + windows-bootstrap-smoke.yml. additive only, ratchet 강화 (§결정 4 Windows 측 mechanical 이행), weakening 0건 — ADR-058 §결정 5 정합."
     is_transitional: false
     sunset_justification: "ratchet 강화 방향 전용 (§결정 4 cross-platform 의무의 Windows 측 mechanical enforcement 추가: bash↔PowerShell label 시드 parity + windows-latest CI smoke + OS-aware resolve 결정화 + REQUIRED_LABELS 오탐 제거). is_transitional: false permanent policy 무변경. metric = (a) bootstrap-labels.ps1 -DryRun count == bootstrap-labels.sh --dry-run count parity, (b) _resolve_plugins_json os=nt → USERPROFILE / posix → HOME 결정적 단위 TC, (c) REQUIRED_LABELS type:* 부재 + len 15 assert, (d) windows-bootstrap-smoke.yml windows-latest GREEN, (e) 4 스크립트 superpowers grep 0. who = scripts/bootstrap-labels.ps1 + overlay/hooks/check_bootstrap.py + .github/workflows/windows-bootstrap-smoke.yml. how = label 데이터 SSOT 단일화(.sh/.ps1 동일 파일 read 로 drift 구조적 차단) + Stage 6 3-tier fallback (silent skip 0) + os.name 분기 결정화 + native Issue Type 이관 정합. scope = §결정 4 Windows 측 미이행 mechanical 보강 (weakening 0 — bash POSIX 경로 무변경, PowerShell native 경로 신규 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
+  - amendment_id: 12
+    date: 2026-06-29
+    cfp: CFP-2456
+    summary: "§결정 2 Secondary trigger (UserPromptSubmit) 적용 범위 확장 — §결정 15 신설. ADR-127 §결정 4 dialog skip-offer 금지(정식 풀 플로우 비협상 / 리뷰·절차 생략 제안 AskUserQuestion 포함 금지) 규칙이 wrapper 자기 거버넌스(CLAUDE.md + skills/user-dialog-mode + ADR-071 Amd11)에만 존재, 소비자 세션 Orchestrator 로드 4채널(소비자 root CLAUDE.md=프로세스정책 0 / plugin-root CLAUDE.md=미로드[plugins-reference 공식docs] / on-demand skill=호출의존 / overlay/hooks/userprompt_reminder.py=stale+settings.json의존) 어디에도 부재 = propagation gap → 소비자 Orchestrator 가 기본 reflex 로 phase-gate 라벨 후 skip-offer free-style(ADR-127 §결정4 위반, 모든 소비자 영향). 해소 = ADR-127 no-skip 규칙을 plugin `hooks/hooks.json` UserPromptSubmit 3번째 entry(유일 자동도달 채널 — Amendment 10 bootstrap-first-gate 선례, /plugins install 자동활성, 소비자 settings.json 비의존 → 미초기화 소비자 도달) 로 ship 하는 신규 reminder hook 신설. KEY: unconditional fire(변경동사 regex-gate 없음 — skip-offer 는 변경동사 없는 turn 에도 발생, 기존 hook 과 차별 invariant) + JSON additionalContext emit(plain stdout 회귀 #13912 회피) + 2-file 패턴(extensionless shim + py, bounded read 1MiB, 전경로 exit0 fail-safe, stderr no-PII) + story.yml doc-only fast-path dropdown orphan 양파일(`.github/`+`templates/`) byte-mirror 제거(ADR-127 §결정2 정합). enforcement 간극 명문화: behavioral 도달 ≠ hard block(UserPromptSubmit = context inject, block 은 PreToolUse 필요 — ADR-027 §결정2 warning-inject-only 정합) → AC2 = 도달+override guidance 충족이지 발화 0 보장 아님, 기계적 skip-offer lint OOS(검사연극). overlay invariant(축소불가) 정합·강화. additive only(기존 2 entry 무변경, overlay reminder deprecated 1-release grace 무변경), ratchet 강화 방향, weakening 0건."
+    is_transitional: false
+    sunset_justification: "ratchet 강화 방향 전용 (§결정 2 Secondary trigger enforcement scope 확장: 변경동사-gated Story protocol reminder → ADR-127 no-skip 규칙 unconditional 소비자 전파 채널 추가). is_transitional: false permanent governance invariant 무변경. metric = (a) hook 단위 TC suite — unconditional fire(change-verb prompt AND non-change-verb prompt '진행해' 양쪽 reminder emit, 구 hook 과 차별 discriminating) / JSON additionalContext 구조 assert(json.loads 후 hookSpecificOutput.hookEventName=='UserPromptSubmit' + additionalContext key-path, substring-only 금지 anti-theater) / reminder content 키워드(ADR-127·정식·생략·skip) / 전경로 exit0 / stderr prompt-echo 0, (b) story.yml 양파일 dropdown `문서 (Doc-only fast-path)` 부재 grep(byte-mirror). who = hooks/skip-offer-reminder.py + hooks/skip-offer-reminder(shim) + hooks/hooks.json + .github/ISSUE_TEMPLATE/story.yml + templates/.github/ISSUE_TEMPLATE/story.yml. how = plugin-shipped UserPromptSubmit hook(자동활성, settings.json 비의존) ⟺ 매 turn ADR-127 no-skip 컨텍스트 자동 도달 invariant + 전경로 exit0 fail-safe. scope 확장 = weakening 0 (기존 변경동사 Secondary trigger + overlay reminder 무변경, no-skip unconditional 전파 신규 추가). ADR-058 §결정 5 = ratchet 강화 방향 전용 exemption 정합."
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -1062,3 +1070,85 @@ Cross-ref:
 - `scripts/bootstrap-consumer.ps1:258-275` / `scripts/bootstrap-labels.sh:46-82` / `overlay/hooks/check_bootstrap.py:56-64,145-160` — 실측 SSOT
 - https://github.blog/changelog/2019-10-17-github-actions-default-shell-on-windows-runners-is-changing-to-powershell/ — windows-latest 기본 shell pwsh (§결정 14.G CI 외부 사실)
 - internal-docs Change Plan `cfp-2250-bootstrap-hardening.md` §3/§8/§11 — 구현 계약 SSOT (ADR-013 dogfood-out)
+
+## Amendment 12 — Secondary trigger 채널의 ADR-127 skip-offer 금지 규칙 소비자 전파 (자동활성 reminder hook, unconditional fire) (CFP-2456)
+
+**Effective**: 2026-06-29 (CFP-2456 Phase 1 설계 PR merge 시점, KST `+09:00`).
+
+**Carrier**: CFP-2456 (`carrier_story`). 본 amendment = 본 ADR §결정 2 (3-trigger enforcement model) 의 **Secondary trigger (UserPromptSubmit) 적용 범위 확장** — Amendment 10 (CFP-2243, bootstrap-first-gate) 가 같은 §결정 2 Secondary trigger 채널에 **신규 자동활성 hook 을 plugin `hooks/hooks.json` 으로 ship** 한 선례를 답습한다. §결정 15 신설.
+
+### 컨텍스트 — propagation gap (실측 firsthand)
+
+ADR-127 §결정 4 (dialog skip-offer 금지 — "생략/간소화/빠르게?" 를 `AskUserQuestion` 선택지로 제시 금지)는 **wrapper 자기 거버넌스 영역**(wrapper `CLAUDE.md` + `skills/user-dialog-mode/SKILL.md` + ADR-071 Amendment 11)에만 존재했고, **소비자(consumer) 세션 Orchestrator 가 매 turn 실제 로드하는 컨텍스트로 전파되는 채널이 0** 이었다 (CFP-2456 §1-2 실측):
+
+| 소비자 로드 채널 | ADR-127 no-skip 규칙 존재 | 근거 |
+|---|---|---|
+| 소비자 repo root `CLAUDE.md` | **0** | 순수 프로젝트 설명서 — 프로세스 정책 0건 |
+| **plugin-root `CLAUDE.md`** | 소비자 컨텍스트 **미로드** | "A `CLAUDE.md` file at the plugin root is **not loaded as project context**. Plugins contribute context through skills, agents, and hooks rather than CLAUDE.md." [source: Claude Code 공식 docs — plugins-reference (code.claude.com/docs/en/plugins-reference, "File locations reference" 절 직전), 2026-06-29 verbatim 확인]. → wrapper plugin 이 자기 `CLAUDE.md` 에 규칙을 적어도 소비자 Orchestrator 는 못 봄 |
+| on-demand skill (`user-dialog-mode` 등) | 규칙 보유하나 소비자 호출 지시 0 | Skill tool 명시 호출 전 컨텍스트 미진입 |
+| `UserPromptSubmit` hook reminder | **0 (stale)** | `overlay/hooks/userprompt_reminder.py:135-166` = ADR-022/027 era, no-skip 0줄 + consumer settings.json 등록 의존(미초기화 소비자 무발동) |
+
+결과: 소비자 Orchestrator(LLM)는 학습된 기본 reflex("작은 변경은 절차 생략 제안")로 free-style 하며 phase-gate 라벨 후 `AskUserQuestion`(리뷰 lane 생략 제안)을 띄운다 — ADR-127 §결정 4 직접 위반. **mctrader 만이 아니라 모든 소비자가 영향** (낡은 설정 아님 — 전파 채널 자체가 빔).
+
+### 결정 15 — ADR-127 no-skip 규칙의 plugin-shipped 자동활성 reminder hook 전파
+
+본 ADR §결정 2 Secondary trigger (UserPromptSubmit) 채널에, ADR-127 §결정 4 (정식 풀 플로우 비협상 / 리뷰·절차 생략 제안 — `AskUserQuestion` 포함 — 금지) 규칙을 실어 소비자 세션에 **자동 도달**시키는 신규 plugin-level hook 을 신설한다.
+
+#### §결정 15.A — 채널 = plugin `hooks/hooks.json` UserPromptSubmit (유일 자동 도달 경로)
+
+소비자 로드 채널 4종 중 **plugin 이 자동 ship 가능 ∧ per-turn 자동 도달** 하는 유일 채널은 hook stdout 이다 (위 표 + plugins-reference 외부사실). plugin-root CLAUDE.md 는 미로드, project CLAUDE.md 는 plugin 자동 충전 불가, skill 은 명시 호출 의존. 따라서:
+
+- 신규 hook 을 wrapper plugin `hooks/hooks.json` 의 UserPromptSubmit 배열 **3번째 entry** 로 등록 (`hooks/hooks.json:67-82` — 기존 korean-english-recovery + bootstrap-first-gate 2 entry 뒤). 형식 = `"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" skip-offer-reminder` (async:false). `/plugins install` 만으로 소비자 수동 wiring 없이 자동 활성 (Amendment 10 bootstrap-first-gate 와 동일 메커니즘, ContinuityAgent 실측).
+- **AC4 핵심**: plugin-level hook 은 소비자 `.claude/settings.json` 비의존 → `.claude/` 미초기화 소비자(mctrader-market: `.claude/** = 0 files`)에도 도달. overlay/settings.json 의존 채널(`overlay/hooks/userprompt_reminder.py`)은 미초기화 소비자에서 무발동 = 부적합.
+
+#### §결정 15.B — unconditional fire (변경동사 regex-gate 없음)
+
+기존 Secondary trigger(`overlay/hooks/userprompt_reminder.py` CHANGE_PATTERNS, `:36-43`)와 bootstrap-first-gate(`:49-65` intent regex)는 **변경동사·codeforge 고유신호 매치 시에만** 발화한다. 그러나 skip-offer 는 변경동사 없는 turn — "진행해" / "다음 단계" / phase-gate 라벨 후 평문 — 에도 발생한다 (CFP-2456 KU-2). 따라서 본 reminder hook 은 **매 turn 무조건 발화** (regex-gate 없음). 이것이 기존 hook 과의 1급 차별 invariant — `_matches_intent` 류 gate 적용 금지.
+
+- false-positive 비용 = 무시 가능: reminder 텍스트는 짧은 governance 상기일 뿐 작업 차단 0 (모든 경로 exit 0).
+
+#### §결정 15.C — JSON `additionalContext` emit 형식 (plain stdout 회귀 회피)
+
+inject 는 plain stdout prepend 이 아니라 Claude Code hooks JSON `hookSpecificOutput.additionalContext` 형식으로 emit 한다. plain stdout prepend 은 일부 Claude Code 버전에서 컨텍스트 미주입 회귀가 보고됐다 [source: anthropics/claude-code GitHub issue #13912 — plain stdout UserPromptSubmit context inject 회귀]. JSON `additionalContext` 경로 [source: Claude Code hooks-guide — UserPromptSubmit `hookSpecificOutput.additionalContext`] 가 robust 권고. 정확한 schema(`{"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "<text>"}}`)는 구현 lane 이 live hooks-guide 로 재확인 의무 (설계 SSOT = "plain stdout 금지, JSON additionalContext 채택" 결정).
+
+#### §결정 15.D — 2-file 패턴 + fail-safe (bootstrap-first-gate 청사진 답습)
+
+신규 hook = 2-file 구조 (Amendment 10 bootstrap-first-gate 답습, `hooks/bootstrap-first-gate` + `hooks/bootstrap-first-gate.py`):
+- extensionless POSIX shim `hooks/skip-offer-reminder` (bash; `set -uo pipefail`; python3→python 탐색; python 부재 시 exit 0 fail-safe; `exec`). 확장자 없는 파일명 = Windows `.sh` auto-detect 회피(`run-hook.cmd` 요구).
+- python core `hooks/skip-offer-reminder.py`: bounded `_read_input` (`sys.stdin.read(1 << 20)` 1MiB — DoS 차단, bootstrap-first-gate `:80` 미러) + JSON key 추출(prompt/user_message/message/text/content) — 단 unconditional fire 라 입력 내용은 발화 판정에 미사용(읽되 echo 0). 정적 reminder 텍스트 build. **모든 경로 exit 0 (P0 fail-safe — 사용자 prompt erase 권한 미사용)**. stderr 1-line audit 에 **사용자 prompt 텍스트 절대 미기록**(PII/secret leak 차단, bootstrap-first-gate `:30` invariant 미러).
+
+#### §결정 15.E — enforcement 간극 명문화 (behavioral 도달 ≠ hard block)
+
+본 채널은 **behavioral guidance (도달)** 이지 **hard enforcement (물리적 차단)** 가 아니다. 본 ADR §결정 2 가 hook 을 "Block 아님 — warning inject only, enforcement = LLM 측 책임" 으로 규정한 것과 정합 (`ADR-027 §결정 2`). UserPromptSubmit stdout 은 context inject 에 그치며, 동작을 *block* 하려면 PreToolUse 류 차단 hook 이 필요하다 [source: Claude Code 공식 hooks docs — UserPromptSubmit = context injection layer, not a hard enforcement layer]. 따라서:
+- AC2(skip-offer reflex override)는 "도달 + override guidance 제공" 충족이며 "물리적 발화 0 보장" 이 **아니다**. 어느 채널도 LLM 의 skip-offer 발화를 0-차단 못 함 (LLM trust 모델 의존).
+- 기계적 skip-offer 탐지 lint(consumer-facing)는 **OOS** — runtime `AskUserQuestion` 발화는 정적 스캔 대상이 없고, 정당 ask-trigger 오탐 + 검사연극(ADR-119) 위험.
+
+#### §결정 15.F — 정합 부수: story.yml doc-only fast-path dropdown orphan 제거
+
+ADR-127 §결정 2 (doc-only fast-path 폐지) 발효 후에도 Story Issue Form dropdown 에 폐지된 옵션이 잔존했다 (실측):
+- `.github/ISSUE_TEMPLATE/story.yml:59` + `templates/.github/ISSUE_TEMPLATE/story.yml:59` 양쪽 `        - 문서 (Doc-only fast-path)` byte-identical. 두 파일은 byte-mirror 쌍(`# BEGIN/END wrapper-managed` block) → 동시 제거 의무 (ADR-005 mirror invariant). dropdown 에서 해당 옵션 1줄만 제거, 나머지 5 옵션 보존.
+
+### overlay invariant 정합 (강화 방향)
+
+전파될 no-skip 규칙은 소비자 overlay 로 약화·무력화 불가다. codeforge overlay invariant = "정책을 확장(더 엄격하게)만 가능, 축소 불가" (CLAUDE.md 정체 단락 + ADR-071 §결정 10). plugin-shipped hook 채널은 그 특성상 소비자 overlay 가 깎을 수 없다(소비자 settings.json 비의존). ADR-127 §결정 6 이 이미 consumer 면제 확장채널을 폐지해 같은 방향을 강화했다 → 본 전파는 invariant 와 **충돌 아니라 정합·강화** (소비자에게 더 엄격한 규칙을 추가 도달).
+
+### Default 미변경 = additive only
+
+기존 UserPromptSubmit 2 entry (korean-english-recovery / bootstrap-first-gate) 무변경. overlay/hooks/userprompt_reminder.py 무변경 (deprecated 1-release grace 경로 — 신설 hook 이 정본, 기존은 채널·내용 직교: 신설=no-skip rule unconditional, 기존=Story protocol change-verb-gated; dual-fire 저위험 — Refactor consult). 신규 hook = 3번째 entry 추가만. 기존 소비자 동작 즉시 변경 0 (backward-compat, `/plugins install` 갱신 시 자동 활성).
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 12 = §결정 2 Secondary trigger 적용 범위 확장 (변경동사-gated → ADR-127 no-skip unconditional 전파) = governance 강화 방향 ratchet (weakening 0건) — ADR-058 §결정 5 sunset_justification 불요.
+
+Cross-ref:
+- ADR-027 §결정 2 (3-trigger enforcement model) — 본 Amendment 12 = Secondary trigger 적용 범위 확장 carrier
+- ADR-027 Amendment 10 (CFP-2243, §결정 13 bootstrap-first-gate) — plugin-shipped 자동활성 UserPromptSubmit hook 선례 (2-file 패턴 + `hooks/hooks.json` 등록 + fail-safe exit 0 답습)
+- [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 4 (dialog skip-offer 금지) — 전파 대상 정책 SSOT. 본 amendment = ADR-127 의 consumer propagation gap 충당 (ADR-127 Amendment 1 동반 — consumer 전파 영역 명문화)
+- [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) §결정 10/21 — overlay 축소 불가 invariant + skip-offer 금지 dialog SSOT (정합·강화)
+- [ADR-039](ADR-039-subagent-default-and-inline-whitelist.md) §결정 2 — `AskUserQuestion` inline whitelist (합법) ↔ skip-offer 종류만 narrowing (ADR-127 §결정 4 해소 선례 답습, 충돌 0)
+- [ADR-005](ADR-005-plugin-self-application-na-standardization.md) — §결정 15.F story.yml byte-mirror 쌍 동시 제거 invariant
+- [ADR-119](ADR-119-research-before-claims.md) §결정 9 — 기계적 skip-offer lint OOS 근거 (검사연극 회피)
+- Claude Code plugins-reference (code.claude.com/docs/en/plugins-reference) — plugin-root CLAUDE.md 미로드 외부사실 (§결정 15.A/15.E 근거)
+- anthropics/claude-code issue #13912 — plain stdout UserPromptSubmit inject 회귀 (§결정 15.C JSON additionalContext 채택 근거)
+- `hooks/hooks.json:67-82` / `hooks/bootstrap-first-gate{,.py}` / `overlay/hooks/userprompt_reminder.py:36-43,135-166` / `.github/ISSUE_TEMPLATE/story.yml:59` + `templates/.github/ISSUE_TEMPLATE/story.yml:59` — 실측 SSOT (worktree HEAD 7abdb0a1)
+- internal-docs Story `wrapper/stories/CFP-2456.md` §3/§7/§8/§11 — 설계·테스트 계약 SSOT (ADR-013 dogfood-out, 별도 change-plan 면제 — 본 ADR 이 §3 설계 SSOT)
