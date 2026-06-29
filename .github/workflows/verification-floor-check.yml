@@ -1,0 +1,49 @@
+name: verification-floor-check
+# CFP-2471 / ADR-044 Amendment 4 §결정 10 (Epic CFP-2468 Track W / W3) — lane verification floor 게이트 (warning-tier).
+#
+# 검증 floor = ≥1 independent peer (SoD: implementer ≠ certifier). review-verdict-v4 (v4.15) verdict packet
+# 의 peer_degrade marker (peer_count / degrade_reason / degrade_acknowledged) 를 검사:
+#   축① self-audit verdict 무효 (peer_count:0 + PASS → 차단)
+#   축② silent degrade 차단 (peer_count:1 ∧ degrade_acknowledged 부재 → 차단)
+#   축③ deputy fan-out 관측 (check-lane-evidence.sh stale roster 정정 + <6 row honest WARN)
+#
+# enforcement (PreToolUse Agent matcher deny) 는 미구현 — matcher P2 정확 토큰 + CLI 런타임 발동 empirical
+# 미확정 ([empirical-source: TBD], 설계 §결정10d 보류). 본 workflow = 관측 baseline (discriminating self-test).
+#
+# F4 결정: .github single-root (deferred-followup-reconcile.yml / operational-outcome-signal-lint.yml 답습).
+#   ADR-005 byte-parity scope 외 — template mirror 미운용 (게이트 = wrapper-self review governance 검사라
+#   .github-only 정합). invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일은
+#   미검출 (CONSUMER_ONLY_WORKFLOWS 등록 불요).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet / ADR-128 warning-tier).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  verification-floor-test:
+    name: check-verification-floor discriminating test (mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test-check-verification-floor.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-verification-floor.sh
+
+  lane-evidence-axis3-test:
+    name: check-lane-evidence 축③ fan-out 관측 회귀 (mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-lane-evidence.sh (stale roster 정정 + WARN/SKIP 회귀 가드)
+        run: bash scripts/test-check-lane-evidence.sh
