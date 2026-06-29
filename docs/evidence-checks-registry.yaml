@@ -3244,3 +3244,49 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → evidence 누적 후 별 후속 Story 에서 blocking 승격 검토
     status: deferred-followup        # warning-tier behavioral evidence-gate — gating script + discriminating test 실존(Phase 2), dedicated CI workflow wire 는 별 후속 (evidence 누적 후)
+
+  - name: deferred-item-recovery
+    description: |
+      CFP-2470 / ADR-128 Amendment 1 — retro/회고 서사 deferred 항목 무음 drop 방지 게이트.
+      "미해결·연기·후속" 표시(deferred 판정)된 항목 각각을 (①추적 Issue 전환) 또는
+      (②관찰-only + 사유명시) 로 명시 판정 강제. silent drop 만 차단, 정책은 neutral
+      (tracked vs observed 둘다 수용, 차단형 아님 — ADR-128 무음차단 원칙).
+      dual-source AND (로컬 hook + PR-time CI) — hook 은 UserPromptSubmit phase:완료
+      근접 reminder inject (발화 intent = 완료/retro/회고/deferred/후속/미해결 키워드),
+      CI workflow 는 cross-repo retro 파일 후보 검출 후 check 스크립트 실행.
+      cross-repo PAT graceful skip (retro-mandatory.yml L289-292 패턴 답습) — PAT 부재 시
+      스크립트가 exit 0 fail-safe 하므로 별도 if-conditional 불요.
+      warning-tier: continue-on-error (merge 비차단).
+      branch protection 6-tuple 무변경 (required check 신설 0 — ADR-127 ratchet).
+    detect_command: bash scripts/check-deferred-item-recovery.sh <retro-file>
+    workflow: .github/workflows/deferred-item-recovery.yml   # CFP-2470 Phase 2 — retro 파일 후보 자동검출 + PR-time CI check (cross-repo PAT graceful skip). single-root (.github only — deferred-followup-reconcile.yml 선례 동형, template mirror 미운용)
+    # dead-check 자동삭제 방어 = removal_protocol 의존 (정당화 마커 강제) — detect_command/workflow presence 가 면제 근거 아님 (worktree-clean-completion-gate 동형, F1 정정).
+    #   본 entry(warning-tier + non-required + exclude-tag 미보유)는 check-dead-criteria.yaml 의
+    #   dead static_signals 3-AND(advisory_tier ∧ not_required_context ∧ no_exclude_tag)를 충족해
+    #   dead 후보로 분류될 수 있다. 자동 삭제 차단은 "dead 후보 아님"이 아니라 removal_protocol
+    #   (automatic_deletion: false + check-tier-downgrade-guard.sh tier-downgrade-justification 마커 강제)이 보장한다.
+    removal_protocol:
+      automatic_deletion: false
+    current_tier: warning            # ADR-060 §결정 5 — 신규 등록 warning
+    bypass_label: hotfix-bypass:deferred-item-recovery
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20           # ADR-060 §결정 6 (a)
+      failure_threshold: 0            # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2470                    # 본 entry 도입 carrier (deferred 판정 의무화 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # retro 검사 presence-gate — modal 어휘 검사 미포함
+    introduced_by: CFP-2470
+    introduced_date: 2026-06-30      # KST (ADR-128 Amendment 1 deferred 판정 의무화)
+    owner_adr: ADR-128               # 무음차단 정책 SSOT — 완료 단계 umbrella
+    carrier_adr: ADR-060             # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none        # ADR-060 §결정 19 standard default
+    status: Active

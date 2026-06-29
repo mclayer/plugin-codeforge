@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: deferred-recovery-reminder entry-gate
+# (CFP-2470, ADR-128 Amendment 1)
+#
+# 책임: phase:완료/회고(retro) 컨텍스트에서 deferred 판정 의무화 환기 reminder inject.
+#       silent drop 방지 게이트.
+#
+# 구현: intent regex·발화 판정은 python core 로 (bootstrap-first-gate 패턴 답습).
+#       python 없으면 통과(fail-safe). 모든 경로 exit 0 (사용자 prompt erase 권한 미사용).
+
+set -uo pipefail
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-safe)
+fi
+
+exec "$PY" "$DIR/deferred-recovery-reminder.py"

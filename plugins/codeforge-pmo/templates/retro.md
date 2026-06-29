@@ -120,7 +120,23 @@ pre_publish_verify_8tuple:
 1. ...
 2. ...
 3. ...
+
+## §deferred — narrative deferred 판정 (no-silent-drop, ADR-128 Amd1 / CFP-2470)
+
+> §4(try)·§8(개선 제안) 서사의 deferred 항목 각각을 아래 표로 명시 판정. silent drop 금지.
+> disposition enum (게이트 전용): tracked (추적 Issue 외부화) | observed (관찰-only + 사유)
+
+| disposition | item (deferred 요약) | tracking (Issue link) | rationale (observe-only 사유) | source (§4/§8 ref) |
+|---|---|---|---|---|
+| tracked | <항목> | #NNN | — | §4 항목N |
+| observed | <항목> | — | <왜 추적 안 하는가> | §8 항목N |
 ```
+
+**§deferred disposition enum 규칙 (게이트 고유 직교 2-value)**:
+
+- `tracked` = tracking-externalized — tracking column = open 추적 Issue 링크 의무 (`#NNN` Issue ref; merge/PR link 아님 — `tracked` 는 "추적 유지·미완"이라 닫힌 항목의 merge-link 와 구분, F4 정정). rationale 면제.
+- `observed` = observe-only — rationale column = 사유 텍스트 의무 (tracking 면제). "관찰됨·미조치" + 사유 1줄.
+- enum 은 정확히 이 2-value `{tracked, observed}`. ⚠ ADR-045 §D-11 closure enum (`CLOSE_AS_OBVIATED` / `CLOSE_AS_SENTINEL` / `PROMOTE` / `DEFER`) 값은 본 표에 등장하지 않는다 — 본 표는 그 5-column table 형태만 **참조 선례**로 답습하고 disposition enum 은 게이트 고유 직교 2-value 신설 (F1 정정).
 
 ---
 
