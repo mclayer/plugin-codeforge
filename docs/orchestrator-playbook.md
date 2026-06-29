@@ -796,7 +796,7 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
                          FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
 구현 테스트: CI gate (ADR-048 + Amendment 2) — Orchestrator inline 수행:
                          `gh pr checks <PR_NUMBER> --required --watch --fail-fast` — Bash run_in_background (백그라운드 비블로킹, watch 종료 시 자동 재개)
-                         → PASS + lanes.security_ai: false (default): merge gate 진입 (merge 직전 ADR-073 Amd 2 merge_transition sentinel polling 유지)
+                         → PASS + lanes.security_ai: false (default): merge gate 진입 → **★merge-time 적대적 반증 게이트 (touchpoint #7, §3.9-bis)** → merge 직전 ADR-073 Amd 2 merge_transition sentinel polling 유지
                          → PASS + lanes.security_ai: true: SecurityTestPL spawn
                          → FAIL: `gh run view --log-failed` 수집 → FIX loop (DeveloperPL 1차 진단 → ArchitectPL 최종 판정)
                          → stuck (required check 5분+ pending/expected): re-trigger 1회 → admin merge fallback + 사후 검증 (ADR-048 Amd 2 (d))
@@ -807,6 +807,7 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
              2차 layer: PL이 packet return → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
                          → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=security)
                          → PASS 시 Orchestrator post-Sonnet self-write (gate:security-test-pass 라벨 부착) → Phase 2 PR mergeable
+                         → (보안 테스트 lane 유무 무관) merge 직전 **★merge-time 적대적 반증 게이트 (touchpoint #7, §3.9-bis)** 통과 의무
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → PMOAgent 가 Story §11 직접 self-write (codeforge-pmo)
              → PMOAgent (회고)
 
@@ -860,6 +861,76 @@ FIX routing: DeveloperPL 1차 진단 (`gh run view` 출력 첨부) → Architect
 **Worktree dispatch**: 매 lane spawn 시 worktree 자동 생성 — 상세는 §3.5
 
 상세 분기 규칙은 CLAUDE.md "스폰 시퀀스" 섹션과 각 에이전트 md 참조.
+
+#### §3.9-bis merge-time 적대적 반증 게이트 (Codex touchpoint #7 — [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) / Epic CFP-2457 Story A)
+
+> **NORMATIVE.** 구현리뷰 PASS + CI gate PASS 이후 "merge gate 진입" 직후, merge_transition sentinel polling + `gh pr merge` **이전** 시점에 Orchestrator top-level inline 으로 발동하는 머지 직전 1패스 적대적 반증 게이트. 구현 주체(Claude)와 다른 모델 분포(Codex/GPT-5)의 독립 critic 이 PR diff + Story 컨텍스트(요구사항·설계의도·수용기준)를 받아 "이 PR 이 왜 틀렸거나 불완전한지" 반증한다. **critic = 신호원이지 차단 판정자 아님** — 모든 결함 주장 = `[hypothesis]`, Orchestrator falsify 통과 시만 `[verified]` 승격해 머지 보류 (개념 SSOT: [`merge-time-adversarial-verification-gate.md`](../docs/domain-knowledge/concept/merge-time-adversarial-verification-gate.md)).
+
+**dispatch 주체 = Orchestrator top-level inline 고정 (critical)**: sub-agent/PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드("subagent → Agent tool 호출 금지")로 Codex dispatch 가 silent fallback skip (`subagent_recursion_blocked`) → 게이트 무발동 = 연극화. [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist **6번째 entry** (merge-time Codex adversarial gate dispatch — read-only, mutation 0) 가 이 inline 발동을 codify. dispatch 자체는 read-only adversarial check (verify-before-trust 무조건 적용, ADR-070 Amendment 9) 이라 §3.0.2 "수정 작업" 정의와 disjoint axis.
+
+**8-step dispatch 흐름** (result-via-file 비블로킹 — synchronous block-wait 금지, CFP-2214 회귀 차단):
+
+```
+[구현리뷰 PASS] → [CI gate `gh pr checks --required --watch` PASS]
+  → ① "merge gate 진입" (Orchestrator inline)
+  → ② touchpoint #7 dispatch (Orchestrator top-level inline 고정)
+       payload = PR diff (git) + Story §1(요구사항)/§3(설계의도)/§5(AC) verbatim 첨부
+                 + 1st-layer hint (이미 PASS 한 구현리뷰/CI 결과 — 검출률↑)
+       형식 = ADR-081 §결정 D8 file-redirect `codex exec --sandbox read-only < <promptfile>`
+              + result-via-file (synchronous block-wait 금지)
+       프레이밍 = 적대적 반증 ("이 PR 이 왜 틀렸/불완전한지 찾아라")
+                 + anti-sycophancy (Story 서사 = "반증 대상", "정답" 아님)
+                 + calibration ("결함 없으면 없다고 보고, 없는 문제 발명 금지")
+  → ③ result file pickup → ProactiveCheckPacket #7 parse
+       {findings: [{severity: P0|P1|P2, description, evidence: <file:line>}], recommendation, rationale}
+  → ④ critic finding = [hypothesis] 지위 (자동 차단 아님)
+       evidence(file:line) 부재 finding = 무효 폐기 (머지 보류 trigger 아님)
+  → ⑤ Orchestrator verify-before-trust (ADR-070 Amendment 9 merge-time scope) — evidence ground truth 직접 Read
+       mismatch → finding reject + Story §10 false-positive tally + override rationale 4종
+       match → [verified] 승격
+  → ⑥ [verified] finding 을 merge-time severity rubric (ADR-081 Amendment 9 §결정 D10) 으로 분류
+       P0 (정확성/보안/데이터 무결성) → 머지 보류 + FIX 루프 회부 (무조건)
+       P1 (요구사항·AC 미충족 / 설계의도 위반, §1/§3/§5 대비) → 머지 보류 + FIX 루프 회부
+       P2 (스타일/minor/cosmetic) → 비차단, 기록 후 진행
+  → ⑦ provenance artifact 기록 (lane-produced, forgeable label self-attest 아님 — #2322 흡수)
+  → ⑧ 결함 없음(또는 P2-only) → merge_transition sentinel polling → `gh pr merge`
+```
+
+**critic reshape (핵심 — critic = 신호원, 판정자 아님)**:
+
+| 항목 | 결정 | 근거 |
+|---|---|---|
+| critic 인식론 지위 | 모든 결함 주장 = `[hypothesis]` default | overcorrection bias — 적대 framing FNR 26%→73% (arxiv 2603.00539) |
+| 승격 조건 | evidence(file:line) 동반 + Orchestrator falsify 통과 → `[verified]` | ADR-077 §결정 7 정보 무결성 invariant + ADR-070 verify-before-trust 무조건 |
+| evidence 부재 finding | 무효 (자동 폐기, 머지 보류 trigger 아님) | "one opinion from a probabilistic system isn't evidence" |
+| 차단 권한 | P0/P1 + verified 만 (P2 비차단) | cry-wolf 차단 — FP 10% 미만 유지가 채택 생존 조건 |
+| 판정 주체 | critic = 보류 신호만, Orchestrator = 최종 판정 | implementer ≠ certifier (SLSA), human/PL 최종 판정 보존 |
+
+**fail-mode disposition (하이브리드 `fail_closed_then_bounded_degrade` — 사용자 결정 2026-06-29, [ADR-070 Amendment 9 §결정 D7](../archive/adr/ADR-070-codex-verify-before-trust.md) SSOT)**:
+
+Codex 미가용 / sandbox 실패 (fail-mode 9-enum 중 하나) 시 disposition default = `fail_closed_then_bounded_degrade`:
+
+1. **① 기본 보류 (fail-closed)** — Codex 미가용/실패 시 우선 머지 보류.
+2. **② bounded 재시도** — N회 재시도 / time budget 까지 재 dispatch (transient 실패 흡수). **N·timeout = 설정값 (하드코딩 금지)** — consumer overlay 로 조정 가능 (확장-only). 미설정 시 fail-safe default = N=2, timeout=600s (보수적 보류 우선).
+3. **③ 한도 초과 시 사용자 알림 후 통과** — N 초과 또는 timeout 초과 시 **사용자 escalate(알림) 후** 통과 (자동 통과 아님). 통과 시 marker+provenance artifact 의무.
+
+| disposition enum | semantics | provenance marker (Story §10) |
+|---|---|---|
+| `fail_closed_then_bounded_degrade` (merge-time 권장 default — 하이브리드) | 보류 → N회 재시도/timeout → 한도 초과 시 사용자 알림 후 통과 (자동 통과 아님) | `[merge-gate-bounded-degrade: fail-mode=<...>, retries=<n>/<N>, elapsed=<t>/<timeout>, disposition=<blocked\|degraded-pass>]` — degraded-pass 시에도 provenance + 사용자 알림 의무 |
+| `fail_closed_block_merge` (순수 fail-closed strict 변형) | 머지 보류 + provenance + escalate (자동 통과 경로 없음) | `[merge-gate-fail-closed: <fail-mode>]` |
+| `fail_open_proceed_with_marker` (lane-time proactive 동형 — merge-time 부적용) | 머지 진행 + skip marker | `[codex-sandbox-fallback: <fail-mode>]` |
+
+fail-mode axis 분리: 기존 fail-mode 9-enum (`api_missing`~`codex_truncated_no_verdict`) = **cause** axis ("왜 verdict 미생산"). disposition 3-enum = **disposition** axis ("게이트가 머지를 어떻게 처리"). disjoint.
+
+**disposition invariant (silent auto-pass 0)**: degraded-pass 통과 시에도 (a) marker+provenance artifact 의무 (게이트가 정상 verdict 없이 통과했음 명시 기록), (b) 사용자 알림 의무 (silent pass 0), (c) ADR-081 D8 file-redirect 가 1차 회피층. 하이브리드 = fail-closed 약화가 아니라 fail-closed 기본 + bounded graceful degradation + 명시적 사용자 escalation.
+
+**CodexReviewAgent 와 disjoint (channel 분리 — 중복 아닌 defense-in-depth)**: CodexReviewAgent = lane=code / review-time / per-file src** / 코드품질 / CodeReviewPL dispatch ↔ touchpoint #7 = merge-time / PR-unit holistic / Story-context adversarial / Orchestrator top-level inline. 동일 채널 취급 금지.
+
+**무변경 default**: `.github/workflows/phase-gate-mergeable.yml` (label 정합 검사만, inline 절차이지 required CI check 아님). required check 강제(contexts 7-tuple) = 고비용·비가역, 본 요지 밖.
+
+**provenance/self-attest 차단 (#2322 흡수 — STRONG 반영)**: 게이트 결과 = lane-produced artifact (forgeable label self-attest 아님). artifact absence = PASS 불가. warning→blocking 승격 half (mechanical lint tier 격상) = 별 evidence-gated CFP 로 분리 (본 Story 비대상).
+
+**cross-ref**: [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) (touchpoint #7) / [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) (inline whitelist 6번째 entry) / [ADR-070 Amendment 9](../archive/adr/ADR-070-codex-verify-before-trust.md) (verify-before-trust merge-time scope + §결정 D7 하이브리드 disposition) / [ADR-081 Amendment 9](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) (§결정 D10 merge-time severity rubric) / §3.10 (ProactiveCheckPacket #7 등재).
 
 ### §3.11 Epic 통합테스트 게이트 (ADR-055 Amendment 2)
 
@@ -1428,7 +1499,7 @@ dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 **ProactiveCheckPacket 스키마**:
 
 ```yaml
-touchpoint: <1|2|3|4|5|6>
+touchpoint: <1|2|3|4|5|6|7>
 purpose: <한 줄 목적>
 context:
   lane: <requirements|design|develop|orchestrator>
@@ -1628,6 +1699,22 @@ DesignReview lane (review-verdict-v4 `findings[]` structured 비교) 과 달리 
 | 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent ADR 수정 후 설계리뷰 진입 |
 
 > **ADR-082 cross-ref (CFP-776)**: Codex proactive check 의 finding evidence 신뢰는 외부 worker output verify layer (ADR-070). lane agent 가 §9 evidence / corpus enumeration write 시점 source/value verify 누락은 별 disjoint layer ([ADR-082 §결정 2](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md)) — Codex proactive check 와 verify 대상 disjoint (Codex output ↔ lane self-write write-time).
+
+#### §3.10.7 Merge-time Adversarial Gate (touchpoint #7 — **merge-time** / [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) / Epic CFP-2457 Story A)
+
+기존 6 touchpoint (lane-time: #1 AskUserQuestion 직전 / #3 DevPL FIX 2+ / #4 RequirementsPL §1-6 / #6 ArchitectAgent ADR 초안) 와 **disjoint** — 머지 직전(shift-right 최우측, CI gate PASS 후 ~ `gh pr merge` 전) 위치 신설. **#2/#5 복원 아님** (Amendment 11 6→4 ratchet 무손상 — #2/#5 = lane-time 영역, #7 = merge-time 영역, 시점·대상·산출물 disjoint).
+
+| 항목 | touchpoint #7 명세 |
+|---|---|
+| **trigger 시점** | 구현리뷰 PASS + CI gate PASS 이후, "merge gate 진입" 직후 / merge_transition polling + `gh pr merge` 이전 (§3.9-bis dispatch 흐름 SSOT) |
+| **dispatch 주체** | Orchestrator top-level inline 전용 (ADR-039 Amendment 6 — 재귀 가드 회피) |
+| **input** | PR diff (git) + Story §1/§3/§5 verbatim 첨부 (ADR-081 D1.A-D + D2) + 1st-layer hint |
+| **프레이밍** | 적대적 반증 + anti-sycophancy + calibration (§3.9-bis) |
+| **출력** | ProactiveCheckPacket #7 `{findings: [{severity, description, evidence: <file:line>}], recommendation, rationale}` — evidence(file:line) 필드 의무 |
+| **결과 처리** | critic finding = `[hypothesis]` → verify-before-trust (ADR-070 Amendment 9) 통과 시 `[verified]` 승격 → merge-time severity rubric (ADR-081 §결정 D10): P0/P1 → 머지 보류 + FIX 회부 / P2 → 기록 후 진행 (§3.9-bis) |
+| **fail-mode disposition** | 하이브리드 `fail_closed_then_bounded_degrade` (ADR-070 §결정 D7) — §3.9-bis SSOT |
+
+전체 dispatch 흐름·하이브리드 fail-mode·critic reshape 본문 SSOT = **§3.9-bis**. 본 §3.10.7 = touchpoint 등재 + 6 touchpoint 와의 disjoint 경계 명시.
 
 ---
 
