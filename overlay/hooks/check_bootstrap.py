@@ -415,7 +415,7 @@ def check_branch_protection_readiness(org: str, repo: str, branch: str = "main")
                 "           → 또는 bash scripts/reapply-branch-protection.sh --repos "
                 f"{org}/{repo}",
             ]
-        # 403 등 권한/기타 = 점검 불가 (silent — 별 check 영역 아님)
+        # 403 등 권한 부족/기타 = 점검 불가 (silent — 본 check 책임 밖)
         return []
     try:
         data = json.loads(result.stdout)
