@@ -8,7 +8,17 @@ carrier_story: CFP-2392
 parent_epic: CFP-2391
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    date: 2026-06-29 KST
+    carrier_story: CFP-2453
+    summary: "§결정 1 capture 게이트 완료 self-check 에 term-drift routing 항목 +1문 추가 — 'consumer 도메인 용어를 신설/재정의했는가? → 했다면 lexicon.md/concept-dictionary.md 갱신, 안 했어도 no-update note 명시(silent skip 불허)'. §결정 1 (1) admission 3문 gate **무변경** — 별도 routing/완료 self-check 항목(§결정 1 (2) routing 확장 + §결정 1 (4) forced-no-silent-skip 동형 적용). 동음/유의/반의 관계 산출은 1-fact admission 과 disjoint 한 산출물 유형(CFP-2453 §2.1 도메인 framing)이라 admission 변경 아닌 routing 항목이 정합. §결정 3 axis-disjoint(ADR-119 §결정 9 와 통합 금지) 보존 — 본 항목도 admission gate 변경이 아닌 term-routing 항목이라 disjoint 축 유지. anti-theater discriminating case(capture 0 ∧ no-capture note 0 → WARN, Story §8.1 TC3) 는 +1문에도 동형 보존(갱신 0 ∧ no-update note 0 → WARN)."
+    sunset_justification: "본 ADR `is_transitional: false` (영구 정책) — Amendment 1 = forcing function 추가(ratchet 강화) 방향, 약화 0. ADR-058 §결정 5 cross-ref(강화 방향 sunset_justification 비대상). capture 게이트 약화(§결정 4 weakening clause)와 disjoint — 본 Amendment 는 routing 항목 추가만."
+    scope:
+      - "§결정 1 (2) routing 에 term-drift routing 항목 추가 (admission 3문 gate 무변경)"
+      - "§결정 1 (4) forced-no-silent-skip 동형 적용 (갱신 0 ∧ no-update note 0 → WARN)"
+      - "§결정 3 axis-disjoint 보존 명시 (admission gate 변경 아닌 term-routing 항목)"
+      - "skill mirror = skills/knowledge-capture-gate/SKILL.md §1.3 (별 carrier Phase 2 구현)"
 related_stories:
   - CFP-2392  # 본 ADR 신설 carrier (지식캡처 게이트 + MEMORY.md 용량관리)
   - CFP-2391  # parent Epic (OMC-adopt)
@@ -54,6 +64,34 @@ sunset_justification: null
 ---
 
 # ADR-129: OMC-adopt 지식캡처 + 메모리 다이어트
+
+## Amendment 1 (2026-06-29 KST, carrier CFP-2453)
+
+> capture 게이트 완료 self-check 에 **term-drift routing 항목 +1문** 추가. consumer application-BC 단어/개념 사전(lexicon/concept-dictionary) 생산·유지 표준화(CFP-2453)의 maintain trigger.
+
+### 변경 영역
+
+§결정 1 (2) routing 에 다음 완료 self-check 항목 1건 추가 (§결정 1 (1) admission 3문 gate **무변경**):
+
+> **term-drift routing (+1문)**: "이 작업이 consumer 도메인 용어를 신설/재정의했는가? → 했다면 `docs/domain-knowledge/domain/<area>/lexicon.md` / `concept-dictionary.md` 갱신, 안 했어도 'no-update' note 명시 (silent skip 불허)."
+
+### 왜 admission 변경이 아닌 routing 항목인가
+
+동음이의(같은 표기 다른 의미)·유의·반의는 **여러 용어를 함께 비교해야 드러나는 관계**라 1-fact 가 아니다 (CFP-2453 §2.1 도메인 framing). §결정 1 (1) admission 3문(구글5분/코드베이스특정/실노력)은 **1-fact 단위** 캡처 대상 판정이라, 관계 산출(lexicon)은 그 admission 과 disjoint 한 산출물 유형이다. 따라서 admission 3문을 4문으로 늘리는 것이 아니라 **완료 시점 routing 항목**으로 추가한다 — admission gate schema 무변경, OMC 차용 attribution(§결정 5) 범위 무변경.
+
+### §결정 3 axis-disjoint 보존
+
+본 +1문이 ADR-119 §결정 9(제안 필요성 3문 게이트)와 혼용되지 않도록: 본 항목 = **term-drift maintain routing** (지식 캡처 필터의 하위), ADR-119 §결정 9 = 작업 제안·follow-up 발의 필터 — disjoint 유지(§결정 3 통합 금지 정합).
+
+### anti-theater 보존 (forced-no-silent-skip 동형)
+
+§결정 1 (4) 의 `capture 0 ∧ no-capture note 0 → WARN` discriminating case 를 +1문에도 동형 적용: **갱신 0 ∧ no-update note 0 → WARN**. "용어 재정의했으나 사전 미갱신 + 사유 미기록" = silent skip = WARN. 이로써 +1문이 "항상 통과" 검사연극이 되지 않는다.
+
+### skill mirror
+
+`skills/knowledge-capture-gate/SKILL.md` §1.3 (forced-no-silent-skip) 아래 completion routing 항목으로 mirror (별 carrier — CFP-2453 Phase 2 구현 lane). 정책 SSOT = 본 Amendment.
+
+---
 
 ## 상태
 
