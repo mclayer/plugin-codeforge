@@ -32,9 +32,10 @@ related_files:
   - templates/story-page-structure.md  # Story-3 §ubiquitous_language
   - examples/ddd-golden-path-mct031.md  # Story-6 golden-path worked example
 mechanical_enforcement_actions:
-  - ubiquitous-language-drift-check       # Wave 2 mechanical wire (CFP-1117-S3 #1120) — scripts/check-ubiquitous-language.sh + templates/github-workflows/ubiquitous-language-drift.yml + evidence-checks-registry Active
-  - bounded-context-presence-check        # Wave 2 mechanical wire (CFP-1117-S3 #1120) — scripts/check-bounded-context-presence.sh + templates/github-workflows/bounded-context-presence.yml + evidence-checks-registry Active
-  - ddd-pattern-frontmatter-check         # Wave 2 mechanical wire (CFP-1117-S3 #1120) — scripts/check-ddd-pattern-frontmatter.sh (cross-plugin) + templates/github-workflows/ddd-pattern-frontmatter.yml + evidence-checks-registry Active
+  # CFP-2453 Amendment 3 stale 정정 — 아래 3 base lint = CFP-1117-S3 #1151 landed → prune #1972/#2110 으로 monorepo 부재 (firsthand ls falsify). 'Active' 선언은 stale. 재구현·entry 정리 = 별 carrier.
+  - ubiquitous-language-drift-check       # DECLARED Active (Wave 2, CFP-1117-S3 #1120) but PRUNED (#1972/#2110) — scripts/check-ubiquitous-language.sh 부재 (CFP-2453 Amd3 stale 정정)
+  - bounded-context-presence-check        # DECLARED Active (Wave 2, CFP-1117-S3 #1120) but PRUNED (#1972/#2110) — scripts/check-bounded-context-presence.sh 부재 (CFP-2453 Amd3 stale 정정)
+  - ddd-pattern-frontmatter-check         # DECLARED Active (Wave 2, CFP-1117-S3 #1120) but PRUNED (#1972/#2110) — scripts/check-ddd-pattern-frontmatter.sh 부재 (CFP-2453 Amd3 stale 정정)
 amendment_log: []
 amendments:
   - amendment_id: 1
@@ -57,6 +58,17 @@ amendments:
       - "frontmatter mechanical_enforcement_actions 3 entry 주석 갱신 (Wave 1 wire → Wave 2 mechanical wire + actual artifact path)"
       - "§결정 6 enforcement layer 2번째 tier (Template lint) Wave 2 wire 명시 (declaration-only → Active)"
       - "본문 ## Amendment 2 sub-section append (mechanical wire artifact enumeration)"
+  - amendment_id: 3
+    date: 2026-06-29 KST
+    carrier_story: CFP-2453
+    summary: "§결정 4 consumer scope 승격 — consumer application BC 어휘 사전(lexicon/concept-dictionary) 생산·유지 *활동* 을 표준 lane 산출물로 승격(content 작성 아닌 활동/machinery 표준만). (A) consumer application BC SSOT = docs/domain-knowledge/domain/<area>/lexicon.md + concept-dictionary.md (owner=DomainAgent, domain/** 권한 내), 기존 mctrader-hub/docs/glossary.md = consumer-specific 예시 cross-ref 유지, content 작성은 downstream Epic defer 유지. (B) frontmatter mechanical_enforcement_actions 3 entry 'Active' stale 정정 — base lint 3종(check-ubiquitous-language/bounded-context-presence/ddd-pattern-frontmatter)은 prune #1972/#2110 으로 monorepo 부재(CFP-2453 firsthand ls falsify). → lexicon-drift-check 는 확장 아닌 신규(responsibility-marker-drift archetype clone, ADR-131 Amd1 선례 — established 패턴 복제, parallel novel system 아님). (C) INV-R6 (BC-vocabulary-scope separation) 명문 invariant 추가 — application BC lexicon ↔ governance glossary 분리 controlled vocabulary, content 복제 금지 cross-ref only. §결정 3(2-entry separate)+§결정 4(Published Language 분리)+§결정 7(vocabulary theater forcing function INV-5) 보존 — D5 usage_citations 1급 필드로 INV-5 application-BC 강화 확장."
+    sunset_justification: "본 ADR `is_transitional: false` (permanent governance) — Amendment 3 = 강화 방향 (scope 확대 + INV-R6 신규 + INV-5 application-BC 확장, 약화 0) of ratchet 축소 아님. ADR-058 §결정 5 cross-ref. (B) stale 정정 = 부정확 'Active' 선언을 사실(prune 부재)로 교정 — ratchet 약화 아닌 정합 복원."
+    scope:
+      - "§결정 4 SSOT 표 + 본문 — consumer application BC 생산·유지 활동 표준 추가 (활동 표준화, content 미작성)"
+      - "frontmatter mechanical_enforcement_actions 3 entry 주석 stale 정정 ('Active' → 'DECLARED Active but PRUNED')"
+      - "§결정 7 INV-5 forcing function application-BC 확장 (D5 usage_citations 1급 schema 필드)"
+      - "INV-R6 신규 명문 invariant (BC-vocabulary-scope separation)"
+      - "본문 ## Amendment 3 sub-section append"
 is_transitional: false  # permanent governance — DDD vocabulary 영구 적용, 약화 방향 차단 ratchet (ADR-058 §결정 5 정합)
 sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용
 ---
@@ -138,6 +150,44 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 - 본 Amendment 2 = declaration-only Wave 1 → mechanical enforcement Wave 2 wire (ratchet 강화 — scope 무변경)
 - §결정 6 enforcement layer 1번째 tier (Agent prompt S2) + 3번째 tier (review-verdict-v4 enum S4) 영역 본문 무변경 (본 Amendment = 2번째 tier Template lint wire 한정)
 - mechanical_enforcement_actions 3 entry name 보존 (artifact path 주석만 갱신)
+
+## Amendment 3 (2026-06-29 KST, carrier CFP-2453)
+
+> **§결정 4 consumer scope 승격** — consumer application BC 어휘 사전(lexicon/concept-dictionary) **생산·유지 *활동*** 을 표준 lane 산출물로 승격. ratchet 강화(scope 확대 + forcing function 확장). `is_transitional: false` 정합 — sunset_justification 비대상.
+
+### 변경 영역
+
+**(A) §결정 4 consumer scope 승격 (활동 표준화)**
+
+§결정 4 가 consumer application BC glossary 를 "downstream Epic, 별 CFP" 로 **content 작성을 defer** 하되 그 **생산·유지 활동의 표준은 부재**했다. 본 Amendment 가 그 활동을 표준화:
+
+- consumer application BC 어휘 SSOT = `docs/domain-knowledge/domain/<area>/lexicon.md` (동음/유의/반의 관계) + `concept-dictionary.md` (개념별 정의/불변식/위치). owner = DomainAgent (codeforge-requirements, 기존 `domain/**` 권한 내 — glob 변경 0).
+- §결정 4 SSOT 표의 application BC 행 `mctrader-hub/docs/glossary.md` = consumer-specific 예시로 **cross-ref 유지** (표준 경로는 위 `docs/domain-knowledge/domain/<area>/` — consumer 별 overlay 가 노출 경로 매핑). content 작성(실 어휘) = 여전히 consumer downstream Epic 영역 (defer 유지) — 본 Amendment 는 **활동/machinery 표준만** 제정, content 미작성.
+- 생산 트리거 = bootstrap 1회 (4-plane multi-agent 수집 — "수집 단계 ↔ 최종 편집 owner(DomainAgent)" 분리 의무) + per-Story 증분 (capture-gate §1.3 term-drift routing, ADR-129 Amendment 1 정합).
+
+**(B) §결정 6/§결정 7 stale `mechanical_enforcement_actions` "Active" 정정 (firsthand falsify)**
+
+frontmatter `mechanical_enforcement_actions` 3 entry (`ubiquitous-language-drift-check` / `bounded-context-presence-check` / `ddd-pattern-frontmatter-check`) 의 "Active" 선언이 **stale** 임을 명문 정정한다: 해당 base lint 3종(`scripts/check-ubiquitous-language.sh` / `check-bounded-context-presence.sh` / `check-ddd-pattern-frontmatter.sh`)은 **현 monorepo 에 부재** (`[verified]` CFP-2453 ArchitectPL firsthand `ls` 실측 — CFP-1117-S3 #1151 로 landed → prune 캠페인 #1972/#2110 으로 삭제). frontmatter entry 주석을 `# Active` → `# DECLARED Active but PRUNED (#1972/#2110, monorepo 부재) — CFP-2453 Amendment 3 stale 정정` 으로 갱신 (별 carrier 가 actual 재구현 또는 entry 정리 — 본 Amendment 는 stale 사실 박제 + 정정 의무 명시).
+
+→ 귀결: CFP-2453 의 `lexicon-drift-check` 는 이 base lint 의 **"확장(extension)" 이 아니라 "신규(archetype clone)"** 다 (확장할 base 부재). archetype = `responsibility-marker-drift` 4-piece (CFP-2428 / ADR-131 Amendment 1, `[verified]` 전부 실재) — **established 패턴 복제이지 parallel novel system 아님** (ADR-131 Amendment 1 = "신규 ADR 0, 기존 거버넌스 내 새 layer established pattern 추가" 선례 답습). warning-tier + continue-on-error + non-required + path-filter skip 금지(required Pending trap 회피, ADR-099/ADR-128/§결정 7 chain 선례).
+
+**(C) R6 명문 invariant 추가 — BC-vocabulary-scope separation**
+
+§결정 4 Published Language 분리를 외부 표준(ANSI/NISO Z39.19 vocabulary boundary — inspiration 인용, conformance 아님)으로 재확인하는 **명문 invariant**:
+
+> **INV-R6 (BC-vocabulary-scope separation)**: application BC lexicon (consumer 측 `docs/domain-knowledge/domain/<area>/`) 과 governance BC glossary (wrapper 측 `docs/glossary.md`) 는 **분리된 controlled vocabulary** 다. content duplication 금지, cross-ref(RT-like link) only. 한쪽 entry 가 다른 쪽을 정의하지 않는다. ADR-091 §결정 4 + ADR-013 §결정 1 dogfood-out 정합.
+
+### 보존 의무 (W-3 — 약화 0)
+
+- **§결정 3** 동음이의 2-entry explicit-separate (한 entry 두 의미 통합 금지) — lexicon `relation: homonym` schema 가 상속. **불변**.
+- **§결정 4** Published Language 분리 (content 복제 금지, cross-ref only) — 본 Amendment 가 흐리지 않는다 (INV-R6 가 명문 강화). **불변**.
+- **§결정 7** vocabulary theater 차단 forcing function (INV-5) — D5(동음이의 entry 사용처 인용)가 application BC 재적용 (`usage_citations` 1급 schema 필드 — mechanical presence-check + DomainAgent semantic 이원화). **강화 확장**.
+
+### 방향
+
+ratchet 강화 (scope 확대 + INV-R6 신규 + INV-5 application-BC 확장). 약화 0 — `is_transitional: false` (`sunset_justification: null`) 정합, ADR-058 §결정 5 비대상.
+
+---
 
 ## 상태
 
