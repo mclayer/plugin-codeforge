@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # check-debut-readiness.sh — single-entry consumer setup verify (CFP-125 Phase 2).
 #
-# 4 verification orchestration (thin wrapper):
-#   1. check_bootstrap.py (8 check, ADR-027 §결정 1 SSOT)
+# 5 verification orchestration (thin wrapper):
+#   1. check_bootstrap.py (12 check, ADR-027 §결정 1 SSOT)
 #   2. Plugin 10종 presence (installed_plugins.json parse)
 #   3. project.yaml schema validation (validate_config.py delegate)
 #   4. settings.json hook 정합 (3 hook 등록 grep)
+#   5. branch protection readiness (dead-gate 검출 — wire-branch-protection.sh --inspect, CFP-2469 / ADR-132)
 #
 # Usage:
 #   bash scripts/check-debut-readiness.sh                    # default (advisory, exit 0)
@@ -164,15 +165,57 @@ check_4_settings_hooks() {
     fi
 }
 
+# Check 5 — branch protection readiness (CFP-2469 / ADR-132 §결정 8)
+# protection 활성 + required_status_checks 배선 + enforce_admins 점검.
+# WARN default (exit 0 advisory) / strict mode (CFP-127 후 활성) 시 FAIL.
+check_5_branch_protection() {
+    log "Check 5/5: branch protection readiness (dead-gate 검출, CFP-2469)"
+    local wire="$PLUGIN_ROOT/scripts/wire-branch-protection.sh"
+    if [ ! -f "$wire" ]; then
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        FAIL_DETAILS+=("Check 5: wire-branch-protection.sh 부재 (plugin 미설치 또는 PLUGIN_ROOT 잘못됨)")
+        return
+    fi
+    # org/repo = project.yaml github.{org,repo} 우선, gh 자동 탐지 fallback (wire-* 가 자체 탐지)
+    local repo=""
+    if [ -f ".claude/_overlay/project.yaml" ]; then
+        local y_org y_repo
+        y_org="$(grep -E '^[[:space:]]*org:' .claude/_overlay/project.yaml | head -1 | sed -E 's/^[[:space:]]*org:[[:space:]]*//; s/[\"'"'"' ]//g')"
+        y_repo="$(grep -E '^[[:space:]]*repo:' .claude/_overlay/project.yaml | head -1 | sed -E 's/^[[:space:]]*repo:[[:space:]]*//; s/[\"'"'"' ]//g')"
+        [ -n "$y_org" ] && [ -n "$y_repo" ] && repo="$y_org/$y_repo"
+    fi
+    local inspect_args=(--inspect)
+    [ -n "$repo" ] && inspect_args+=(--repo "$repo")
+    local out rc
+    out="$(bash "$wire" "${inspect_args[@]}" 2>&1)"
+    rc=$?
+    case "$rc" in
+        0)
+            PASS_COUNT=$((PASS_COUNT + 1))
+            log "  ✓ branch protection 배선 확인 (required_status_checks contexts 등록 + enforce_admins)"
+            ;;
+        3)
+            # dead gate (protection 부재 또는 contexts 0) — WARN default / strict FAIL
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            FAIL_DETAILS+=("Check 5: branch protection 미배선 (dead gate) — $(printf '%s' "$out" | tail -1) (wire-branch-protection.sh 로 배선)")
+            ;;
+        *)
+            # gh 미인증 / 권한 부족 등 점검 불가 — advisory (FAIL 비계상, PASS 도 비계상)
+            log "  (점검 불가 — gh 미인증 또는 권한 부족: $(printf '%s' "$out" | tail -1))"
+            ;;
+    esac
+}
+
 # Main
 log "=== check-debut-readiness 시작 ==="
 check_1_bootstrap
 check_2_plugins
 check_3_project_yaml
 check_4_settings_hooks
+check_5_branch_protection
 
 log ""
-log "=== Summary: $PASS_COUNT/4 PASS, $FAIL_COUNT/4 FAIL ==="
+log "=== Summary: $PASS_COUNT/5 PASS, $FAIL_COUNT/5 FAIL ==="
 if [ $FAIL_COUNT -gt 0 ]; then
     log_err ""
     log_err "FAIL 상세:"

@@ -298,7 +298,10 @@ Administration:write 권한을 보유한 org admin이 다음 절차로 적용하
        -f required_status_checks[strict]=true \\
        -f required_status_checks[contexts][]=phase-gate-mergeable \\
        ... (전체 contexts 목록)
-3. branch-protection-drift-check.yml (weekly cron) 이 drift 재감지 시 반복 수행
+3. check_bootstrap.py check 12 (branch protection readiness — dead-gate 재감지, CFP-2469 / ADR-132 §결정 8)
+   이 미배선 상태를 검출 시 위 절차 반복. 자동 배선 = scripts/wire-branch-protection.{sh,ps1}
+   (operator gh auth GET-merge-PUT). 구 branch-protection-drift-check.yml = never-built 정리됨
+   (ADR-024 Amendment 20 §결정 B / ADR-132 §결정 9 대체).
 
 자세한 내용: docs/consumer-guide.md §"branch protection 설정" 절
 OPERATOR

@@ -334,6 +334,42 @@ stage_5_github_setup() {
     mark_step "stage_5_github_setup"
 }
 
+# Stage 5b — Branch protection wire (CFP-2469 / ADR-132 §결정 1)
+# Stage 5 (workflow copy) 이후 — consumer 게이트 workflow 가 배포된 직후 그 context 를 배선.
+# operator gh auth 토큰 사용 (ADR-066 무손상). 403 → WARN graceful (bootstrap 비-abort).
+stage_5b_branch_protection() {
+    log "Stage 5b: branch protection wire (CFP-2469 / ADR-132 — dead-gate 출고 차단)"
+    local wire="$PLUGIN_ROOT/scripts/wire-branch-protection.sh"
+    if [ ! -f "$wire" ]; then
+        log "  WARN: wire-branch-protection.sh 부재 — skip (plugin 설치 확인)"
+        mark_step "stage_5b_branch_protection"
+        return 0
+    fi
+    # consumer 형상 = project.yaml branch_protection.shape (default solo — solo deadlock 회피, AC-2)
+    local shape="solo"
+    if [ -f ".claude/_overlay/project.yaml" ]; then
+        local y_shape
+        y_shape="$(grep -E '^[[:space:]]*shape:' .claude/_overlay/project.yaml | head -1 | sed -E 's/^[[:space:]]*shape:[[:space:]]*//; s/[\"'"'"' ]//g')"
+        case "$y_shape" in solo|team) shape="$y_shape" ;; esac
+    fi
+    local wire_args=(--repo "$ORG/$REPO" --shape "$shape")
+    if [ $DRY_RUN -eq 1 ]; then
+        wire_args+=(--dry-run)
+        log "  (dry-run) bash $wire ${wire_args[*]}"
+        mark_step "stage_5b_branch_protection"
+        return 0
+    fi
+    # graceful: wire-* exit 3 (403/dead-gate) 은 bootstrap abort 사유 아님 (AC-3).
+    bash "$wire" "${wire_args[@]}" 2>&1 | sed 's/^/  /' >&2
+    local wire_rc=${PIPESTATUS[0]}
+    case "$wire_rc" in
+        0) log "  ✓ branch protection 배선 완료 (merge 차단력 충전)" ;;
+        3) log "  WARN: branch protection 미배선 (403 권한 부족 또는 정합 게이트 산출 0) — graceful degrade (AC-3, 비-abort)" ;;
+        *) log "  WARN: wire-branch-protection.sh exit $wire_rc — graceful (bootstrap 비-abort)" ;;
+    esac
+    mark_step "stage_5b_branch_protection"
+}
+
 # Stage 6 — Labels bootstrap (delegate)
 stage_6_labels() {
     log "Stage 6: labels bootstrap (delegate to bootstrap-labels.sh)"
@@ -402,6 +438,7 @@ main() {
         "stage_3_overlay_scaffold"
         "stage_4_settings_json"
         "stage_5_github_setup"
+        "stage_5b_branch_protection"
         "stage_6_labels"
         "stage_7_consumer_scripts"
     )

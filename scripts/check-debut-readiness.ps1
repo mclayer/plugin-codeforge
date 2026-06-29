@@ -148,15 +148,52 @@ function Check-4-SettingsHooks {
     }
 }
 
+# Check 5 — branch protection readiness (CFP-2469 / ADR-132 §결정 8, .sh check_5_branch_protection 동형)
+function Check-5-BranchProtection {
+    Log "Check 5/5: branch protection readiness (dead-gate 검출, CFP-2469)"
+    $wire = Join-Path $PluginRoot "scripts/wire-branch-protection.ps1"
+    if (-not (Test-Path $wire)) {
+        $script:FailCount++
+        $script:FailDetails += "Check 5: wire-branch-protection.ps1 부재 (plugin 미설치 또는 PLUGIN_ROOT 잘못됨)"
+        return
+    }
+    $repo = ""
+    if (Test-Path ".claude/_overlay/project.yaml") {
+        $yaml = Get-Content ".claude/_overlay/project.yaml" -Raw
+        $yOrg = if ($yaml -match '(?m)^\s*org:\s*([^\s#"'']+)') { $matches[1] } else { "" }
+        $yRepo = if ($yaml -match '(?m)^\s*repo:\s*([^\s#"'']+)') { $matches[1] } else { "" }
+        if ($yOrg -and $yRepo) { $repo = "$yOrg/$yRepo" }
+    }
+    $inspectArgs = @("-Inspect")
+    if ($repo) { $inspectArgs += @("-Repo", $repo) }
+    $out = (& pwsh -File $wire @inspectArgs 2>&1) | Out-String
+    $rc = $LASTEXITCODE
+    $lastLine = ($out -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1)
+    switch ($rc) {
+        0 {
+            $script:PassCount++
+            Log "  ✓ branch protection 배선 확인 (required_status_checks contexts 등록 + enforce_admins)"
+        }
+        3 {
+            $script:FailCount++
+            $script:FailDetails += "Check 5: branch protection 미배선 (dead gate) — $lastLine (wire-branch-protection.ps1 로 배선)"
+        }
+        default {
+            Log "  (점검 불가 — gh 미인증 또는 권한 부족: $lastLine)"
+        }
+    }
+}
+
 # Main
 Log "=== check-debut-readiness 시작 ==="
 Check-1-Bootstrap
 Check-2-Plugins
 Check-3-ProjectYaml
 Check-4-SettingsHooks
+Check-5-BranchProtection
 
 Log ""
-Log "=== Summary: $PassCount/4 PASS, $FailCount/4 FAIL ==="
+Log "=== Summary: $PassCount/5 PASS, $FailCount/5 FAIL ==="
 if ($FailCount -gt 0) {
     LogErr ""
     LogErr "FAIL 상세:"
