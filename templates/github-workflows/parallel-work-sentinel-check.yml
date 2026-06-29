@@ -1,0 +1,95 @@
+name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+
+# Warning-tier (non-blocking) parallel-race 탐지 — PR open 시점에 title-search 모드로
+# 동일 CFP 다중 동시작업(중복 Issue/PR) 의심을 경고 표면화. 충돌 "의심"은 차단이 아니라
+# 경고이므로 비차단(continue-on-error). registry entry `parallel-work-sentinel-pickup`
+# (docs/evidence-checks-registry.yaml) 의 mechanical wire — CFP-953/CFP-946 2-incident sentinel.
+#
+# Bypass 2종:
+#   - env BYPASS_PARALLEL_WORK_SENTINEL=1 (스크립트 내부 무조건 skip, exit 0)
+#   - label hotfix-bypass:parallel-work-sentinel-pickup (본 workflow 가 sentinel run step skip)
+#
+# Graceful degradation: sentinel 스크립트 자체가 gh 403/429 → local git log fallback (exit 0)
+#   처리하므로 CI 환경 gh 인증 부재여도 비차단. python3 부재(exit 2) 도 `|| true` +
+#   continue-on-error 로 비차단 보장.
+#
+# Consumer distribution: 본 workflow + scripts/check-parallel-work-sentinel.sh +
+#   scripts/lib/check_parallel_work_sentinel.py 모두 copy 의무 (CFP-97 manifest entry —
+#   consumer-guide §2c manifest-driven loop 가 처리).
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  issues: read
+  pull-requests: read
+  contents: read
+
+jobs:
+  parallel-work-sentinel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Bypass note (label present)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}
+        run: |
+          echo "::notice::hotfix-bypass:parallel-work-sentinel-pickup label 감지 — parallel-work sentinel skip (audit: check-bypass-audit-comment.sh 마커 패턴 의무)."
+
+      - name: Run parallel-work sentinel (warning-tier, 비차단)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}
+        continue-on-error: true
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [ ! -f scripts/check-parallel-work-sentinel.sh ]; then
+            echo "::warning::scripts/check-parallel-work-sentinel.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
+            exit 0
+          fi
+          # CFP-2451 — STORY_KEY_PREFIX 동적 주입. sentinel 의 KEY prefix 가 하드코딩되면 consumer
+          # (prefix != "CFP") 에서 inert(hollow) 검사가 되므로, project.yaml github.story_key_prefix 를
+          # 읽어 sentinel 에 주입한다. read 관례 = story-init.yml prefix-read step 차용(yq 우선 + python fallback).
+          # warning-tier 비차단 정합: 파일/키 부재 시 기본값 "CFP" 로 degrade (story-init 의 exit 1 과 달리 비차단).
+          cfg=".claude/_overlay/project.yaml"
+          STORY_KEY_PREFIX="CFP"
+          if [ -f "$cfg" ]; then
+            if command -v yq >/dev/null 2>&1; then
+              _prefix="$(yq -r '.github.story_key_prefix // ""' "$cfg" 2>/dev/null || true)"
+            elif [ -f scripts/lib/workflow_story_init_project_config_key_prefix.py ]; then
+              _prefix="$(CFG_PATH="$cfg" python3 scripts/lib/workflow_story_init_project_config_key_prefix.py 2>/dev/null || true)"
+            else
+              _prefix=""
+            fi
+            if [ -n "$_prefix" ] && [ "$_prefix" != "null" ]; then
+              STORY_KEY_PREFIX="$_prefix"
+            fi
+          fi
+          export STORY_KEY_PREFIX
+          echo "::notice::STORY_KEY_PREFIX=${STORY_KEY_PREFIX} (project.yaml github.story_key_prefix, 부재 시 기본값 CFP)"
+          export CFP_CONTEXT="$PR_TITLE"
+          OUT="$(bash scripts/check-parallel-work-sentinel.sh --mode=title-search 2>&1 || true)"
+          echo "$OUT"
+          echo "## Parallel Work Sentinel (warning-tier, non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # CFP-2451 — discriminating self-test (mutation 생존 0). STORY_KEY_PREFIX 파라미터화가 hollow 가
+  # 아님을 보증: prefix 미스매치 title 은 안 잡히고 일치 title 만 잡힌다 + prefix 하드코딩 복귀 시 RED.
+  # wrapper-self 전용 게이트 — `if: github.repository == 'mclayer/plugin-codeforge'` 라 consumer 로
+  # byte-identical 전파돼도 consumer repository 에선 skip (responsibility-marker-drift-check.yml 답습).
+  # sentinel 본체는 stdlib(json/re/os)만 사용 → PyYAML 불요, gh mock seam 사용 → gh 인증 불요.
+  parallel-work-sentinel-test:
+    name: parallel-work-sentinel discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-parallel-work-sentinel.sh

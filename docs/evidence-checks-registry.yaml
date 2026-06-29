@@ -1355,7 +1355,7 @@ entries:
 
   # CFP-966 / ADR-073 Amendment 2 declarative anchor (Wave 4 sub-Epic family — same-day 2/2 parallel race incidents sentinel)
   # 2026-05-18 KST sentinel: CFP-953 (first incident, label-based search miss) + CFP-946 (second incident, 11분 gap Epic close miss)
-  # deferred-followup status — actual script (scripts/check-parallel-work-sentinel.{sh,py}) + workflow (.github/workflows/parallel-work-sentinel-check.yml) + hook json sample (templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample) = sibling Story-2 CFP-967 Phase 2 carrier 후 Active 전환
+  # deferred-followup status — actual script (scripts/check-parallel-work-sentinel.{sh,py}) + workflow (.github/workflows/parallel-work-sentinel-check.yml) + hook json sample (templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample) = sibling Story-2 CFP-967 Phase 2 carrier + CFP-2451 propagation wire 로 Active 전환 COMPLETE (2026-06-29)
   # ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 4-instance established pattern) 답습
   - name: parallel-work-sentinel-pickup
     description: |
@@ -1367,7 +1367,7 @@ entries:
       carrier) mechanical binding declarative anchor. CFP-953 + CFP-946 same-day
       2-occurrence sentinel evidence (2026-05-18 KST). deferred-followup status
       — actual script + workflow + hook json sample = sibling Story-2 CFP-967
-      mechanical wire Phase 2 carrier 후 Active 전환.
+      mechanical wire Phase 2 carrier + CFP-2451 propagation wire 로 Active 전환 COMPLETE.
     detect_command: bash scripts/check-parallel-work-sentinel.sh  # CFP-967 Phase 2 wire — scripts/check-parallel-work-sentinel.sh (thin wrapper, ADR-061) + scripts/lib/check_parallel_work_sentinel.py (Python SSOT) 실 file 존재
     workflow: templates/github-workflows/parallel-work-sentinel-check.yml  # CFP-967 Phase 2 wire — byte-identical self-app .github/workflows/parallel-work-sentinel-check.yml (ADR-005 parity)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
@@ -1394,7 +1394,7 @@ entries:
       threshold: 3                  # 3-occurrence 도달 시 warning → blocking-on-pr 자동 승격 trigger (ADR-060 §결정 19 Amendment 6 / schema v1.2 auto-firing)
       last_occurrence: "2026-05-18T06:53:30Z"  # CFP-946 PR #962 merge timestamp (second incident, 11분 gap from CFP-953 chain) per ISO8601 UTC Z suffix (registry schema v1.2 정합 — KST `15:53:30+09:00` = UTC Z notation)
       promotion_trigger: auto_blocking  # recurrence.count ≥ threshold 시 별 carrier 강제 (ADR-060 §결정 19 enum)
-    status: warning  # CFP-967 Phase 2 wire — script + workflow 신설 동반 승격 (deferred-followup → warning precedent: production-cutover-deputy-spawn-evidence / epic-cutover-gate-evidence-quad-check / CFP-845 답습). Active = 별 follow-up CFP (PR cumulative ≥ 20 + failure = 0 + sibling merged, ADR-060 §결정 6 승격 gate)
+    status: Active  # CFP-2451 Phase 2 wire COMPLETE — template+self-app workflow 신설 + manifest 2종 등록 + whitelist 추가 동반 Active 전환 (CFP-967 Phase 2 deferred → Active, ADR-073 Amendment 2). promotion gate (PR cumulative ≥ 20 + failure = 0) = 후속 별 carrier 추적.
   # CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier — Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
   - name: canary-compatibility-check
     description: |

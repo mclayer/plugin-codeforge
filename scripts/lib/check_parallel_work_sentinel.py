@@ -60,7 +60,12 @@ if hasattr(sys.stderr, "reconfigure"):
 # Constants
 # ---------------------------------------------------------------------------
 SCRIPT_NAME = "check_parallel_work_sentinel"
-CFP_PATTERN = re.compile(r"\bCFP-\d+\b")
+# Story KEY prefix 파라미터화 (CFP-2451) — consumer 전파 wire 가 동작하려면
+# prefix 가 하드코딩되면 안 됨 (consumer prefix 가 "CFP" 가 아닌 곳에서 inert 검사).
+# workflow 가 .claude/_overlay/project.yaml github.story_key_prefix 를 STORY_KEY_PREFIX
+# env 로 주입. 미주입(wrapper self-app / overlay 부재) 시 기본값 "CFP" → wrapper 동작 무변경(하위호환).
+_PREFIX = os.environ.get("STORY_KEY_PREFIX", "CFP")
+KEY_PATTERN = re.compile(rf"\b{re.escape(_PREFIX)}-\d+\b")
 BYPASS_ENV = "BYPASS_PARALLEL_WORK_SENTINEL"
 GH_MOCK_ENV = "CFP967_GH_MOCK_RESPONSE"
 GIT_LOG_MOCK_ENV = "CFP967_GIT_LOG_MOCK"
@@ -156,7 +161,7 @@ def mode_title_search(epic_id: Optional[str] = None) -> None:
     # Build gh issue list args
     gh_args = [
         "issue", "list",
-        "--search", f'"{search_fragment}" in:title' if search_fragment else "CFP- in:title",
+        "--search", f'"{search_fragment}" in:title' if search_fragment else f"{_PREFIX}- in:title",
         "--state", "all",
         "--json", "number,title,labels,closedAt",
         "--limit", "50",
@@ -205,8 +210,8 @@ def mode_title_search(epic_id: Optional[str] = None) -> None:
         title = issue.get("title", "")
         number = issue.get("number", 0)
         labels = [lbl.get("name", "") if isinstance(lbl, dict) else str(lbl) for lbl in issue.get("labels", [])]
-        if search_fragment and not CFP_PATTERN.search(title):
-            # If context given, ensure title has a CFP-\d+ pattern
+        if search_fragment and not KEY_PATTERN.search(title):
+            # If context given, ensure title has a <PREFIX>-\d+ pattern
             continue
         matches.append({"number": number, "title": title, "labels": labels})
 
@@ -262,8 +267,8 @@ def mode_epic_state_poll(epic_id: str) -> None:
 def _parse_siblings_from_body(body: str) -> list[dict]:
     """Extract sibling Story references from Epic body scope_manifest block."""
     siblings = []
-    # Look for <!-- scope_manifest --> block or plain CFP-\d+ references
-    cfp_matches = CFP_PATTERN.findall(body)
+    # Look for <!-- scope_manifest --> block or plain <PREFIX>-\d+ references
+    cfp_matches = KEY_PATTERN.findall(body)
     seen = set()
     for cfp_ref in cfp_matches:
         if cfp_ref not in seen:
@@ -310,8 +315,8 @@ def mode_head_compare(branch: str = "origin/main") -> None:
         ci = parts[1] if len(parts) > 1 else ""
         msg = parts[2] if len(parts) > 2 else ""
         delta_commits.append({"sha": sha, "time": ci, "msg": msg})
-        # parallel detection: any commit message containing CFP-\d+ pattern
-        if CFP_PATTERN.search(msg):
+        # parallel detection: any commit message containing <PREFIX>-\d+ pattern
+        if KEY_PATTERN.search(msg):
             parallel_detected = True
 
     # stale_label_grace: check if prior_sha is older than STALE_GRACE_SEC
@@ -397,7 +402,7 @@ def _handle_api_quota_exceeded(mode: str, context: str) -> None:
         if result.returncode == 0:
             cfp_refs = []
             for line in result.stdout.splitlines():
-                matches = CFP_PATTERN.findall(line)
+                matches = KEY_PATTERN.findall(line)
                 cfp_refs.extend(matches)
             print(
                 json.dumps({

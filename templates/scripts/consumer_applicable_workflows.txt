@@ -28,6 +28,7 @@ fix-ledger-sync.yml
 post-merge-followup.yml
 retro-mandatory.yml
 parallel-epic-conflict-check.yml
+parallel-work-sentinel-check.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Doc quality / invariant (consumer 필수)
