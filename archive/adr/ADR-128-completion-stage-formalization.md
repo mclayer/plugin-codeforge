@@ -8,9 +8,15 @@ carrier_story: CFP-2377
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - number: 1
+    date: 2026-06-30
+    carrier_story: CFP-2470
+    scope: "Amendment 1 — phase:완료 precondition 3-조합 → 4-조합 확장 (Track W/W2 deferred-recovery self-check 추가). 기존 3 self-check(worktree-clean §결정 2 / capture ADR-045 §D-13 / retro-complete) 에 deferred-recovery self-check 1항 추가. no-silent-drop 게이트 = retro/Story 서사의 deferred 각각이 (추적 Issue 전환) OR (관찰-only + 사유 명시) 중 하나로 명시 판정되게 강제 (silent drop 만 차단). structured disposition row schema = 게이트 전용 직교 2-value enum (tracked|observed) 신설 + 신규 5-column schema (ADR-045 §D-11 batch-closure 5-column table 는 structured-row-over-free-text 패턴의 참조 선례로만 인용 — closure enum 값 재사용 아님, 의미 축 직교: closure disposition ⊥ narrative deferred 판정). 자유텍스트 NLP 회피. 게이트 tier = §결정 2 동형 archetype (warning-tier + workflow:null + behavioral precondition 3-조합). cross-repo Contents API(internal-docs wrapper/retros) + CODEFORGE_CROSS_REPO_PAT graceful skip (retro-mandatory.yml L196-203/L289-292 패턴 재사용). consumer 전파 = hooks.json UserPromptSubmit reminder (CFP-2456 skip-offer-reminder 동형 채널). branch protection 6-tuple 무변경 / required check 신설 0 (ADR-024 Amd19 §B 정합). ADR-119 §결정9(발견≠필요 filter)와 순차직렬(충돌 아님). CFP-2380(evidence-checks-registry carrier)과 disjoint. 본문 = ## Amendment 1 섹션."
+    ref: "## Amendment 1 (phase:완료 4-조합 deferred-recovery self-check)"
 related_stories:
   - CFP-2377  # 본 ADR 신설 carrier (완료 단계 정식화)
+  - CFP-2470  # Amendment 1 carrier (deferred-recovery self-check — no-silent-drop 게이트, Track W/W2)
 related_adrs:
   - ADR-040   # Amendment 9 동반 — backstop SessionEnd async dispatch 자동 트리거 복원 + worktree-clean cleanup invariant 편입
   - ADR-045   # Amendment 13 동반 — phase:완료 precondition 에 worktree-clean self-check 추가 (2-gate AND → 2-gate + self-check)
@@ -23,10 +29,18 @@ related_adrs:
   - ADR-099   # workflow:null local-only check 선례 (CI 미wire — standalone/세션-개시 호출, verified)
   - ADR-112   # Living Architecture per-Epic update gate — 갭 C owner (수렴 SSOT pointer 대상)
   - ADR-111   # Confluence mirror classification — 갭 C owner (Living Architecture 변경 시 mirror SLA)
-  - ADR-119   # 검증-후-단언 + 제안 필요성 3문 게이트 — 갭 C 유예 판정 근거
+  - ADR-119   # 검증-후-단언 + 제안 필요성 3문 게이트 — 갭 C 유예 판정 근거 + Amendment 1 발견≠필요 filter (deferred-recovery 와 순차직렬)
+  - ADR-066   # Amendment 1 — cross-repo PAT 정책 (CODEFORGE_CROSS_REPO_PAT graceful skip, retro 정본 internal-docs read)
+  - ADR-026   # Amendment 1 — cross-repo PAT scope (internal-docs only) + post-merge automation 선례
 related_files:
   - archive/adr/ADR-040-worktree-convention.md
   - archive/adr/ADR-045-story-retro-mandatory-trigger.md
+  - scripts/lib/check_deferred_item_recovery.py          # Amendment 1 — structured disposition row scan (게이트 전용 tracked|observed enum anchored; ADR-045 §D-11 = 참조 선례)
+  - scripts/check-deferred-item-recovery.sh              # Amendment 1 — thin wrapper
+  - .github/workflows/deferred-item-recovery.yml         # Amendment 1 — warning-tier + cross-repo Contents API + PAT graceful skip
+  - hooks/skip-offer-reminder.py                          # Amendment 1 — consumer 전파 채널 선례 (UserPromptSubmit, CFP-2456)
+  - plugins/codeforge-pmo/templates/retro.md             # Amendment 1 — §deferred structured 섹션 신설 대상 (단일 SSOT — wrapper root templates/retro.md 부재)
+  - docs/domain-knowledge/concept/deferred-item-lifecycle.md   # Amendment 1 — 4-state lifecycle concept (CFP-2470 Phase 1 land)
   - docs/orchestrator-playbook.md
   - skills/worktree-lifecycle/SKILL.md
   - skills/post-merge-closure/SKILL.md
@@ -44,10 +58,16 @@ mechanical_enforcement_actions:
     status: deferred-followup     # Wave 1 declarative (본 Phase 1 ADR + playbook §9.7.1 precondition + skill SSOT). actual local check 스크립트 + evidence-registry workflow:null entry = Phase 2 PR scope.
     progress_note: "phase:완료 transition precondition 의 worktree-clean self-check (eager 미실행 검출 게이트). backstop(age 7d+)과 disjoint — 완료 worktree 는 0일령. 로컬-only (workflow:null, ADR-099/ADR-122 선례). required check 신설 금지 (AC-12 / ADR-024 Amd19 §B). fail-safe 4종 상속 + 대상 판정 계약(sub-worktree vs Story root) = ADR-040 Amendment 9 §결정 7.K. dead-check 자동삭제 방어 = removal_protocol (detect_command liveness 아님 — F1 정정). Phase 2 = scripts/check-worktree-completion-clean.sh + evidence-registry warning-tier entry."
     target_section: §결정 2
+  - action: deferred-item-recovery
+    status: deferred-followup     # Wave 1 declarative (본 Phase 1 ADR Amendment 1 + concept + retro.md §deferred schema + playbook §9.7.1 precondition 4th self-check). actual check 스크립트 + workflow:null entry + hooks.json reminder = Phase 2 PR scope (CFP-2470).
+    progress_note: "phase:완료 transition precondition 의 deferred-recovery self-check (no-silent-drop 게이트 — narrative-recorded deferred 의 명시 판정 강제). dual-source AND: 선언 disposition row(게이트 전용 tracked|observed enum; ADR-045 §D-11 = 참조 선례) ∧ ((tracked ∧ 실 tracking Issue 존재) OR (observed ∧ 사유 텍스트 존재)). theater 차단(선언만/실backing 없음 = WARN). 로컬·서사 영역 → required CI 불가, warning-tier + workflow:null + behavioral precondition (§결정 2 동형 archetype). cross-repo Contents API(internal-docs wrapper/retros) + CODEFORGE_CROSS_REPO_PAT graceful skip(retro-mandatory.yml L196-203/L289-292 패턴). ADR-119 §결정9 발견≠필요 filter 와 순차직렬(충돌 아님). CFP-2380 evidence-checks-registry carrier 와 모집단 disjoint. required check 신설 금지 (ADR-024 Amd19 §B / 6-tuple 무변경). consumer 전파 = hooks.json UserPromptSubmit (CFP-2456 동형). Phase 2 = scripts/lib/check_deferred_item_recovery.py + scripts/check-deferred-item-recovery.sh + .github/workflows/deferred-item-recovery.yml(continue-on-error) + evidence-registry warning-tier entry + hooks reminder + retro.md §deferred 섹션."
+    target_section: Amendment 1
 related_carrier_issues:
   - 608   # OPEN sentinel #5 — Phase 1→2 boundary worktree sync (§결정 6 해소: 본 ADR 와 axis disjoint, 충돌 0)
   - 549   # OPEN type:story doc-only-fast-path — ADR-026 vs ADR-040 enum 결정 (§결정 6 해소: ADR-127 supersede 로 전제 stale, 흡수 권고)
-  - 772   # OPEN adr-candidate — close-event auto-reopen 일반화 (§결정 6 해소: EC-5 정합, 본 게이트 ⊥ close lifecycle)
+  - 772   # OPEN adr-candidate — close-event auto-reopen 일반화 (§결정 6 해소: EC-5 정합, 본 게이트 ⊥ close lifecycle + Amendment 1 deferred-recovery 도 transition precondition, close 차단 아님 — 동형 disjoint)
+  - 2380  # CLOSED — evidence-checks-registry reconciliation (Amendment 1 disjoint: carrier entry 스캔 vs 서사 deferred 판정, 모집단·검출신호 완전 분리. 이름 "deferred-followup" 충돌만)
+  - 2470  # OPEN type:story — Amendment 1 carrier (Track W/W2 deferred 회수 게이트)
 is_transitional: false
 ---
 
@@ -172,6 +192,72 @@ backstop GC(`templates/scripts/check-worktree-stale.sh`)의 자동 트리거가 
 - 보안테스트 = trust boundary 변경 0(hook 트리거 복원 = 로컬 GC, 외부 API/auth 비접촉 — ADR-040 §결정 5 보안 면제 cross-ref) = N/A.
 - 배포/배포리뷰 = wrapper-self deploy target 부재 = N/A.
 
+## Amendment 1 (phase:완료 4-조합 deferred-recovery self-check)
+
+**carrier**: CFP-2470 (Track W/W2 — deferred follow-up 회수 게이트 = no-silent-drop). **date**: 2026-06-30. **부모 Epic**: CFP-2468 (codeforge 강제력·검증 균질성 복구 — mctrader 데뷔 회귀 차단). **방향**: forcing function 추가(ratchet ↑), 약화 0 → ADR-058 §결정5 evidence-gate 면제.
+
+### A1.1 — 문제 (mctrader 데뷔 감사 갭 #2)
+
+retro 체계는 한계·미해결을 **검출·기록**하는 데는 정직(retro §4 try / §8 개선 제안)하나, 그 기록 항목이 완료 시점에 **추적 Issue 외부화 OR 관찰-only 명시 판정되는 매커니즘이 없다.** 결과: deferred 항목이 retro markdown 안에만 남고 `phase:완료` 처리 시 **silent 누락(leak)**. `[verified: mctrader 데뷔 감사 firsthand — Epic CFP-2468 정의]`
+
+### A1.2 — 결정: 3-조합 → 4-조합 (deferred-recovery self-check 추가)
+
+`phase:완료` transition precondition self-check 묶음을 확장한다:
+
+| # | self-check | owner ADR | tier |
+|---|---|---|---|
+| 1 | worktree-clean | 본 §결정 2 / ADR-040 Amd9 | warning + workflow:null + behavioral |
+| 2 | capture (재사용지식) | ADR-045 §D-13 (ADR-129) | behavioral |
+| 3 | retro-complete | ADR-045 §결정 5 (gate:retro-complete) | close-blocking label |
+| **4 (신규)** | **deferred-recovery** | **본 Amendment 1** | **warning + workflow:null + behavioral** |
+
+self-check #4 = retro/Story 서사의 narrative-recorded deferred 각각이 **명시 판정**됐는지 강제. 판정 = `tracking-externalized`(추적 Issue 전환) OR `observe-only`(사유 명시) 택일. **silent drop(둘 다 아닌 채 완료) 만 차단.**
+
+### A1.3 — 범위 불변 (비협상 — Orchestrator + 요구사항리뷰 PASS 확정)
+
+- W2 = "deferred 전부 Issue **강제 전환**"이 **아니다.** observe-only + 사유 명시 = PASS. 전수 전환은 ADR-119 §결정9(발견≠필요 — 셋 다 YES 아니면 발의 금지)와 정면 충돌 + backlog 패딩. 게이트 대상 = "추적 여부"가 아니라 "**판정 여부**". `[verified: ADR-119 CLAUDE.md 제안 필요성 게이트 + concept §2.3]`
+- **ADR-119 와 순차직렬 (충돌 아님)**: `discovered → (ADR-119 filter: noise 억제) → narrative-recorded → (본 게이트 recover: leak 억제)`. filter 가 먼저 깎고, 살아남아 서사에 기록된 항목에만 recover 게이트 작동. `[verified: ADR-119 §결정9 + concept §2.4]`
+- **CFP-2380 과 disjoint**: CFP-2380(CLOSED) = `evidence-checks-registry.yaml` carrier entry(lint/workflow 파일 실존) 스캔. 본 Amendment = retro/Story markdown **서사** deferred 판정. 모집단·검출신호·메커니즘 완전 분리 — 이름("deferred-followup") 충돌만. 게이트가 registry carrier entry 를 스캔하지 않음(AC-5). `[verified: #2380 본문 + concept §2.4]`
+- **#2390 항목1 과 disjoint (인프라 공유)**: #2390 = retro 서사 사실 claim cross-repo verify. 본 Amendment = deferred 판정 누락 방지. cross-repo Contents API 인프라만 공유, 검사 대상 disjoint.
+
+### A1.4 — 게이트 tier (§결정 2 동형 archetype — 비협상)
+
+retro 정본 = internal-docs `wrapper/retros/`(wrapper CI surface 0) + `phase:완료` = Orchestrator self-write(로컬, 클라우드 러너 미접근) → **required CI check 불가.** §결정 2 와 동일 3-조합 기계화:
+
+1. **(a) behavioral precondition** — playbook §9.7.1 `phase:완료` precondition 행에 deferred-recovery self-check 1항 추가.
+2. **(b) 로컬 check 스크립트** — `scripts/lib/check_deferred_item_recovery.py`(structured disposition row scan) + thin `scripts/check-deferred-item-recovery.sh`(Phase 2).
+3. **(c) evidence-checks-registry 등록 = warning-tier + `workflow: null`** — 로컬 전용. dead-check 자동삭제 방어 = `removal_protocol.automatic_deletion: false` + tier-downgrade-justification 마커(§결정 2 F1 정정 상속).
+
+**branch protection 6-tuple 무변경** — required check 신설 0 (ADR-024 Amendment 19 §B 정합). `[verified: branch protection contexts = phase-gate-mergeable/invariant-check/doc frontmatter schema/doc section schema/check-gate/Verify deploy lane presence — 6-tuple gh api 실측 2026-06-30]`
+
+### A1.5 — structured disposition row schema (게이트 전용 어휘 — ADR-045 §D-11 은 참조 선례)
+
+거버넌스 게이트에서 자유텍스트 NLP 파싱은 false-positive/negative 양산 → **enum-anchored structured row** 채택. **structured-row-over-free-text 패턴의 참조 선례 = ADR-045 §D-11 (batch closure 5-column table, machine-checkable closed-set).** 단 ADR-045 §D-11 enum 의 *값 집합*은 본 게이트에 재사용하지 않는다 — 그 enum 은 **follow-up Issue batch closure** 축(closure disposition)이고, 본 게이트는 **narrative deferred 판정** 축이라 의미 축이 직교한다. ADR-045 §D-11 의 closure enum 을 그대로 쓰면 axis-confusion 이 발생(예: `CLOSE_AS_OBVIATED` = "carrier PR 이 이미 cover → **닫힘**, merge-link"이지 "추적 유지"가 아니고, `DEFER` = "**keep open**, 추적 유지"이지 "관찰-only"가 아님 — `[verified: ADR-045 §D-11 L671-674 verbatim + L692 Final-state column: OBVIATED/SENTINEL = closed, PROMOTE/DEFER = open]`). F1 정정으로 게이트 전용 직교 어휘를 신설한다:
+
+- **신규 게이트 전용 `disposition` enum (closed 2-value)** = `{ tracked | observed }` (ADR-045 closure enum 과 disjoint):
+  - `tracked` = tracking-externalized — 추적 Issue 로 외부화 (3문 게이트 통과 actionable). **tracking Issue link 의무.**
+  - `observed` = observe-only — 추적 안 함 + 사유 명시 ("관찰됨·미조치" + 사유). **rationale 텍스트 의무.**
+- enum 미스(`{tracked, observed}` 밖) = parse error → WARN (structured 위반).
+- **신규 5-column schema** (ADR-045 §D-11 5-column table 형태를 선례로 답습하되 *컬럼·enum 은 본 게이트 고유*): `disposition(tracked|observed) | item | tracking(Issue link) | rationale | source(§4/§8 ref)`.
+
+**dual-source AND (theater 차단)**: 선언 disposition row ∧ ((`tracked` ∧ tracking Issue link 非공백 ∧ 실 Issue 존재 cross-validate) OR (`observed` ∧ rationale 텍스트 非공백)). 선언만 있고 backing 없음 = theater → WARN (AC-1). EC-3(`observed` 인데 rationale 누락 → WARN) / EC-4(`tracked` 선언 but 실 Issue 없음 → WARN).
+
+### A1.6 — cross-repo + graceful skip (retro-mandatory.yml 패턴 재사용)
+
+retro 정본 internal-docs read = `gh api repos/mclayer/codeforge-internal-docs/contents/wrapper/retros`(Contents API) + `CODEFORGE_CROSS_REPO_PAT` graceful skip: `if [ -z "${GH_TOKEN:-}" ]; then echo "::warning::... PAT not configured — skipping"; exit 0; fi`. PAT 부재(consumer/offline) = 차단 아님(graceful degrade, ADR-066 정합, EC-2/AC-3). `[verified: retro-mandatory.yml L196-203 Contents API + L289-292 PAT skip — gh api ?ref=main 실측]`
+
+KU-3 결정: cross-repo Contents API + PAT skip 패턴은 **현 단계 복제**(낮은 coupling) — retro-mandatory.yml 에서 공유 추출은 #2390 land 시점 재검토(over-engineering 회피, YAGNI). `[근거: #2390 미land — 추출 대상 1개뿐이라 DRY 이득 < 추출 coupling 비용]`
+
+### A1.7 — consumer 전파 (hooks.json UserPromptSubmit — CFP-2456 동형)
+
+plugin-root CLAUDE.md 는 consumer 측 미로드(CFP-2456 lesson) → consumer 자동도달 유일 채널 = **hooks.json UserPromptSubmit reminder.** CFP-2456 `hooks/skip-offer-reminder.py`(hooks.json L82 entry) 동형 — deferred 판정 의무 환기 reminder hook 신설(Phase 2, AC-6). consumer 수동 wiring 0. `[verified: hooks/skip-offer-reminder.py + hooks.json L82 UserPromptSubmit entry — origin/main gh api 실측]`
+
+### A1.8 — N/A·면제 (ADR-127 §결정 5 정합)
+
+- 데이터 마이그레이션 = **N/A** — schema 변경 0, 신규 lint 채널만. 기존 retro 파일 backfill 불요 (게이트 forward-only — 신규 retro 부터 적용, retroactive 강제 0). `[근거: concept §정의 + AC scope]`
+- 통합테스트 = N/A (wrapper-self runtime behavior 부재). 보안테스트 = cross-repo PAT scope(internal-docs only, read-only Contents API) trust boundary 명시(§7), secret 노출 0 — 단 PAT scope 검증은 정식 보안 lane 대상.
+- change-plan = **작성**(면제 아님) — Phase 2 코드(스크립트/워크플로/hook/registry) 동반이라 doc-only 아님. 실 적재 = internal-docs `wrapper/change-plans/cfp-2470-deferred-item-recovery.md` (PR #1415, dogfood variant SSOT). doc-locations.yaml `change_plan` dogfood variant = `mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md` 정합 — codeforge family(wrapper) change-plan 정본은 internal-docs `wrapper/change-plans/`. `[verified: doc-locations.yaml change_plan dogfood variant + PR #1415 file list — wrapper/change-plans/cfp-2470-deferred-item-recovery.md 실재 firsthand]`
+
 ## 결과
 
 - 완료 단계 = 정식 분류 (no new lane). `phase:완료` precondition 에 worktree-clean self-check 추가 → 정상 완료 경로 eager 누락 검출.
@@ -199,4 +285,9 @@ N/A — `is_transitional: false` (영구 정책, 강화 방향 ratchet).
 - [ADR-112](ADR-112-living-architecture-update-gate.md) — Living Architecture per-Epic gate (갭 C owner)
 - [ADR-111](ADR-111-confluence-mirror-classification-policy.md) — Confluence mirror SLA (갭 C owner)
 - [ADR-099](ADR-099-atlassian-allow-redefinition.md) — workflow:null local-only check 선례
+- [ADR-045](ADR-045-story-retro-mandatory-trigger.md) — §D-11 batch closure 5-column table (Amendment 1 structured-row 패턴의 참조 선례 — closure enum 값 재사용 아님, 게이트는 직교 tracked|observed enum 신설)
+- [ADR-119](ADR-119-research-before-claims.md) — 발견≠필요 3문 게이트 (Amendment 1 deferred-recovery 와 순차직렬 filter↔recover)
+- [ADR-066](ADR-066-pat-rotation-policy.md) — cross-repo PAT graceful skip (Amendment 1 retro 정본 internal-docs read)
 - CFP-2377 — 본 ADR carrier Story
+- CFP-2470 — Amendment 1 carrier Story (deferred-recovery self-check, Track W/W2)
+- `docs/domain-knowledge/concept/deferred-item-lifecycle.md` — Amendment 1 4-state lifecycle concept
