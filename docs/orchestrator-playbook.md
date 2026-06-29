@@ -932,6 +932,58 @@ fail-mode axis 분리: 기존 fail-mode 9-enum (`api_missing`~`codex_truncated_n
 
 **cross-ref**: [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) (touchpoint #7) / [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) (inline whitelist 6번째 entry) / [ADR-070 Amendment 9](../archive/adr/ADR-070-codex-verify-before-trust.md) (verify-before-trust merge-time scope + §결정 D7 하이브리드 disposition) / [ADR-081 Amendment 9](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) (§결정 D10 merge-time severity rubric) / §3.10 (ProactiveCheckPacket #7 등재).
 
+#### §3.9-ter mutation peer 게이트 (Codex touchpoint #8 — [ADR-052 Amendment 16](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) / Epic CFP-2457 Story B)
+
+> **NORMATIVE.** 구현리뷰(code-review) lane 진입 시 detector(테스트 스위트)가 이미 GREEN(CI gate PASS 또는 구현 lane 직후 stable green)인 산출물에 대해, 구현리뷰 lane worker(sub-agent)가 발동하는 lane-time 변이 테스트 peer. Codex 가 GREEN 코드에 국소 결함(mutant) 명세를 제기 → lane(QADev/CodeReviewPL)이 patch 적용 + suite 재실행 + 재현 → surviving(주입 후에도 suite PASS)이면 hollow-gate(검사연극) 신호. touchpoint #7(merge-time, *산출물(PR diff)* review = review-of-output)과 **같은 적대적 검증 family, 다른 mechanism** — #8 = *detector(테스트 스위트)* 를 변이로 probe(probe-the-detector). #7 흡수 아님(timing·mechanism disjoint, defense-in-depth). **critic = 신호원이지 판정자 아님** — surviving mutant 주장 = `[hypothesis]`, PL/QADev 재현 falsify + equivalent/flaky 배제 통과 시만 `[verified]` hollow-gate 승격 (개념 SSOT: [`mutation-based-hollow-gate-detection.md`](../docs/domain-knowledge/concept/mutation-based-hollow-gate-detection.md)).
+
+**dispatch 주체 = 구현리뷰 lane worker (sub-agent) → Codex via Bash (critical — #7 과 다름)**: touchpoint #7(merge-time)은 lane PL 부재라 Orchestrator top-level inline + ADR-039 entry 6 가 필요했으나, touchpoint #8 은 **구현리뷰 lane-time** — CodeReviewPL 이 active 하고, 기존 CodexReviewAgent 가 이미 lane worker(sub-agent)로서 **Bash(`node codex-companion.mjs review`)** 로 Codex 를 호출하는 proven channel 을 보유. 재귀 가드 = "subagent → **Agent tool** 호출 금지" 한정이라 Bash 호출은 미발동 → **ADR-039 inline whitelist 신규 entry 불요** (entry 6 merge-time 흡수 아님). dispatch 자체 = read-only adversarial probe (`codex exec --sandbox read-only`, ADR-081 §결정 D8 무손상).
+
+**dispatch 흐름** (Q-A = 경로 B — Codex = mutant 명세만 생성 = 신호원, lane 적용+실행):
+
+```
+[구현리뷰 lane 진입] → [detector GREEN 확인 (CI gate PASS or 구현 lane 직후 stable green)]
+  → ① 구현리뷰 lane worker (sub-agent) 가 mutation peer dispatch (Bash `node codex-companion.mjs review`)
+       payload = mutation 대상 코드(diff-based) + 해당 테스트 스위트 + baseline GREEN 결과
+                 (ADR-081 D1.A-D 4 mandatory field + D2 verbatim + D8 file-redirect)
+       payload split (ADR-081 §결정 D12) = mutant 묶음을 소수 고가치 단위로 분할 dispatch
+                 (전수 금지 — concept M-4 비용 N배 폭증 / codex_truncated_no_verdict 회피)
+       프레이밍 = 적대적 변이 ("이 테스트가 임의 국소 결함을 잡는가, 못 잡으면 어디서 살아남나")
+                 + anti-sycophancy + calibration ("죽일 수 없는 변이(equivalent)면 그렇게 보고, 날조 금지")
+  → ② Codex result = mutant 명세 (어느 파일·라인에 어떤 국소 변형, baseline, 예상 동작차이)
+       surviving mutant 주장 = [hypothesis] 지위 (자동 차단 아님)
+       falsifiable evidence(어떤 입력에서 어떤 동작 차이) 부재 finding = 무효 (자동 폐기, equivalent 1차 필터)
+  → ③ lane(QADev/CodeReviewPL) 이 해당 mutant 실제 patch 적용 + suite 실행 + 재현 falsify
+       + 동일 mutant 다회 실행 결정론 확인 (또는 flaky baseline 격리, concept M-3)
+  → ④ verify-before-trust (ADR-070 Amendment 10 mutation scope) — evidence(위치+baseline/post+동작차이) ground truth Read verify
+       mismatch → finding reject + Story §10 false-positive tally + override rationale 4종
+  → ⑤ disposition 확정 (ADR-070 Amendment 10 §결정 D8, SSOT = scripts/lib/check_mutation_disposition.py):
+       hollow_gate_verified     — surviving + 재현통과 + 관측 동작차이 + 결정론 + evidence 일치 (5-AND)
+       undetermined (신설)      — equivalent 의심(동작차이 0) OR flaky 의심(비결정) → 보류 (자동 승격·자동 reject 둘 다 금지)
+       rejected_false_positive  — killed(suite RED) OR evidence mismatch → reject
+  → ⑥ hollow_gate_verified finding 을 severity rubric (ADR-081 Amendment 10 §결정 D11, hollow-gate 영향 ground truth) 으로 분류
+       P0 (정확성/보안/데이터 무결성 검증갭) → 결함 승격 + FIX 루프 회부 (테스트 보강)
+       P1 (요구사항·AC·설계의도 검증갭, §1/§3/§5 검증 못함) → 결함 승격 + FIX 루프 회부
+       P2 (스타일/minor 변이 갭) → 비차단, 기록 후 진행 (cry-wolf 차단)
+       undetermined = severity 미부여 (불확정 보류, Story §9 기록, 사람 검토 후보)
+  → ⑦ provenance artifact 기록 (lane-produced) → 구현리뷰 lane 진행
+```
+
+**critic reshape (Story A 상속 + mutation 특유)**: surviving mutant 주장 = `[hypothesis]` default. 승격 조건 = (1) falsifiable evidence(어느 mutant 어디서 생존 + baseline/post-mutation + 어떤 입력에서 어떤 동작차이) 동반 의무 — evidence 부재 finding 무효(equivalent mutant 는 정의상 동작차이 0 → 이 의무가 자동 1차 필터). (2) PL/QADev 직접 재현(해당 mutant 적용 후 suite 가 정말 PASS 재현되는지) 통과 시만 `[verified]`. (3) equivalent 의심 / flaky 의심 → 승격 금지(`undetermined` 보류). mutation-특유 false-positive 2원천 = equivalent mutant(4~39%, undecidable — Madeyski 2013) + flaky 오염(미처리 시 mutant-test pair 9% unknown — ShiETAL19 ISSTA 2019). surviving≠hollow-gate 양면 → 재현+전처리 후만 승격.
+
+**fail-mode disposition (lane-time fail-open `fail_open_then_record_with_marker` — Q-B, [ADR-070 Amendment 10 §결정 D8](../archive/adr/ADR-070-codex-verify-before-trust.md) (c) SSOT)**:
+
+Codex 미가용 / sandbox 실패 시 disposition = `fail_open_then_record_with_marker` — marker 기록 후 lane 진행(mutation 미수행 명시). merge-time #7 의 `fail_closed_then_bounded_degrade` 와 **disjoint** — lane-time ≠ 마지막 방어선(이후 구현리뷰 PASS → 통합/보안 테스트 → merge-time #7 다수 layer 잔존) + mutation 비용·간헐 실패 커서 lane-time fail-closed 면 delivery 마비. 거버넌스 hole 미발생 근거 = (a) marker 기록 의무(mutation 미수행 명시) + (b) mutant = 차단 권한 없는 advisory 신호(concept M-2/M-5) + (c) defense-in-depth(다른 layer 포착 가능).
+
+| disposition marker (Story §10) | semantics |
+|---|---|
+| `[mutation-peer-fallback: fail-mode=<...>, mutants-attempted=<n>, disposition=open]` | Codex 미가용 시 lane-time fail-open — marker 기록 후 lane 진행 (mutation 미수행) |
+
+**CodexReviewAgent 와 disjoint (channel 분리 — 중복 아닌 defense-in-depth)**: CodexReviewAgent = 코드 산출물 품질(runtime bug / layer / Impl Manifest mapping) / per-file src** review ↔ touchpoint #8 = detector(테스트 스위트) adequacy / 변이 주입 후 survival 관찰. 동일 lane(구현리뷰) 안 별 채널 (병렬 가능). 동일 채널 취급 금지.
+
+**disposition/check 스크립트 (개발자 검증 helper, CI 미배선)**: `scripts/lib/check_mutation_disposition.py`(3-상태 disposition 결정 SSOT, 순수 함수) + `scripts/check-mutation-disposition.sh`(thin wrapper) + `tests/scripts/test-check-mutation-disposition.sh`(discriminating self-test). Story A `check-merge-gate-disposition` / Story C `check-research-corroboration-contract` 선례 동형 — consumer-scripts.manifest 미등재 / evidence-checks-registry entry 0 / required check 신설 0 (branch protection 6-tuple 무변경).
+
+**cross-ref**: [ADR-052 Amendment 16](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) (touchpoint #8) / [ADR-070 Amendment 10](../archive/adr/ADR-070-codex-verify-before-trust.md) (verify-before-trust mutation scope + §결정 D8 surviving-mutant 3-상태 disposition) / [ADR-081 Amendment 10](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) (§결정 D11 mutation severity rubric + §결정 D12 payload split) / §3.10.8 (ProactiveCheckPacket #8 등재).
+
 ### §3.11 Epic 통합테스트 게이트 (ADR-055 Amendment 2)
 
 **트리거 조건**: Epic 하위 `stories_in_scope` 모든 Story의 CI gate PASS 확인.
@@ -1499,7 +1551,7 @@ dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 **ProactiveCheckPacket 스키마**:
 
 ```yaml
-touchpoint: <1|2|3|4|5|6|7>
+touchpoint: <1|2|3|4|5|6|7|8>
 purpose: <한 줄 목적>
 context:
   lane: <requirements|design|develop|orchestrator>
@@ -1715,6 +1767,23 @@ DesignReview lane (review-verdict-v4 `findings[]` structured 비교) 과 달리 
 | **fail-mode disposition** | 하이브리드 `fail_closed_then_bounded_degrade` (ADR-070 §결정 D7) — §3.9-bis SSOT |
 
 전체 dispatch 흐름·하이브리드 fail-mode·critic reshape 본문 SSOT = **§3.9-bis**. 본 §3.10.7 = touchpoint 등재 + 6 touchpoint 와의 disjoint 경계 명시.
+
+#### §3.10.8 Mutation Peer Gate (touchpoint #8 — **구현리뷰 lane-time** / [ADR-052 Amendment 16](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) / Epic CFP-2457 Story B)
+
+기존 6 touchpoint (lane-time codex-rescue 채널) + touchpoint #7 (merge-time, Orchestrator inline) 와 **disjoint** — 구현리뷰 lane-time(detector GREEN 시점)에 *detector(테스트 스위트)* 를 변이로 probe(probe-the-detector). **#7 흡수 아님** (#7 = merge-time/review-of-output, #8 = 구현리뷰 lane-time/probe-the-detector — timing·mechanism·dispatch 채널 disjoint).
+
+| 항목 | touchpoint #8 명세 |
+|---|---|
+| **trigger 시점** | 구현리뷰(code-review) lane 진입 — detector(테스트 스위트)가 이미 GREEN(CI gate PASS or 구현 lane 직후 stable green)인 산출물 한정 (detector 없으면 변이 죽일 대상 부재) (§3.9-ter dispatch 흐름 SSOT) |
+| **dispatch 주체** | 구현리뷰 lane worker (sub-agent) → Codex via Bash (`node codex-companion.mjs review`, CodexReviewAgent 동형) — **ADR-039 inline whitelist 신규 entry 불요** (재귀 가드 = subagent→Agent tool 한정, Bash 미발동) |
+| **Q-A 결정** | 경로 B — Codex = mutant 명세만 생성 = 신호원 / lane(QADev/CodeReviewPL)이 patch 적용 + suite 실행 + 재현 (ADR-081 §결정 D8 `--sandbox read-only` 무손상) |
+| **input** | mutation 대상 코드(diff-based) + 해당 테스트 스위트 + baseline GREEN 결과 (ADR-081 D1.A-D + D2 verbatim + D8 file-redirect + D12 payload split) |
+| **프레이밍** | 적대적 변이 + anti-sycophancy + calibration ("죽일 수 없는 변이(equivalent)면 그렇게 보고, 없는 검사연극 날조 금지") (§3.9-ter) |
+| **출력** | ProactiveCheckPacket `{findings: [{severity: P0\|P1\|P2, description, evidence: <mutant 위치 + baseline/post-mutation + 동작차이>}], recommendation, rationale}` — **falsifiable evidence 필드 의무** |
+| **결과 처리** | surviving mutant 주장 = `[hypothesis]` → verify-before-trust (ADR-070 Amendment 10) + PL/QADev 재현 falsify + equivalent/flaky 배제 → disposition 3-상태 (hollow_gate_verified / undetermined / rejected_false_positive) → hollow_gate_verified 만 severity rubric (ADR-081 §결정 D11): P0/P1 → FIX 회부 / P2 → 기록 후 진행 (§3.9-ter) |
+| **fail-mode disposition** | lane-time fail-open `fail_open_then_record_with_marker` (ADR-070 §결정 D8 (c), Q-B) — merge-time #7 fail-closed 와 disjoint (§3.9-ter SSOT) |
+
+전체 dispatch 흐름·3-상태 disposition·critic reshape·lane-time fail-open 본문 SSOT = **§3.9-ter**. 본 §3.10.8 = touchpoint 등재 + #7 및 CodexReviewAgent 와의 disjoint 경계 명시.
 
 ---
 
