@@ -6,8 +6,18 @@
 #
 # CFP-137 Phase 2 확장: --check-parallelization 플래그
 #   TEAM-DESIGN 6 deputy row 의 spawned_at diff < 60s 검증 (ADR-044 §결정 5 Parallelization measurable).
-#   대상 lane: 설계 (design). deputy role = CodebaseMapper / Refactor / SecurityArch / OpRiskArch /
-#              TestContractArch / DataMigrationArch (6개). spawned_at ISO8601 파싱 후 max-min < 60초 기준.
+#   대상 lane: 설계 (design). deputy role = 현 6 permanent (SecurityArchitectAgent /
+#              InfraOperationalArchitectAgent / TestContractArchitectAgent / DataArchitectAgent /
+#              ModuleArchitectAgent / APIContractArchitectAgent). spawned_at ISO8601 파싱 후 max-min < 60초 기준.
+#
+# CFP-2471 (Epic CFP-2468 W3) 축③ 확장 — lane verification floor fan-out 관측:
+#   (a) stale roster 정정: 구 6 토큰 (CodebaseMapper/Refactor/OpRiskArch/DataMigrationArch 등) →
+#       현 6 permanent deputy (plugins/codeforge-design/CLAUDE.md SSOT). CodebaseMapper/Refactor 는
+#       deputy 아닌 4-tuple sub-tuple 이므로 roster 제외.
+#   (b) <6 deputy row = silent SKIP (return 0 무로그) → honest WARN (fan-out 미spawn 의심 관측 baseline).
+#       env=0 (deputy row 부재) 는 honest SKIP 사유 명시 (meta-hollow-gate 차단 — concept R-5).
+#   enforcement (spawn 강제) 는 본 Story 미구현 — PR-time 관측 baseline 만 (PreToolUse Agent matcher P2
+#   empirical 미확정, [empirical-source: TBD], 설계 §결정10d 보류). warning-tier 유지 (ADR-128 상속).
 #
 # Usage:
 #   bash scripts/check-lane-evidence.sh [--story <path>] [--pr <number>] [--strict] [--quiet]
@@ -193,9 +203,15 @@ extract_pr_lanes() {
 
 # CFP-137 Phase 2: Parallelization check
 # TEAM-DESIGN 6 deputy spawned_at diff < 60s (ADR-044 §결정 5)
-# Deputy roles (any of): CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch
+# Deputy roles (현 6 permanent — CFP-2471 stale roster 정정):
+#   SecurityArchitectAgent / InfraOperationalArchitectAgent / TestContractArchitectAgent /
+#   DataArchitectAgent / ModuleArchitectAgent / APIContractArchitectAgent
+#   (구 토큰 CodebaseMapper/Refactor = 4-tuple sub-tuple, deputy 아님 → roster 제외.
+#    OpRiskArch → InfraOperationalArchitectAgent, DataMigrationArch → DataArchitectAgent rename)
 # Strategy: 설계 lane 의 모든 row 의 spawned_at 추출 → epoch 변환 → max-min 차이 < 60s 검증
-# 조건: 6개 이상 deputy row 존재할 때만 (agent teams env=1 context 만 의미있음 — env=0 시 deputy row 부재)
+# 조건: 6개 이상 deputy row 존재할 때만 timing 검증 (agent teams env=1 context 만 의미있음).
+#   CFP-2471 (W3): env=0 (deputy row 0개) = honest SKIP 사유 명시. 1~5 row (fan-out 미달 의심) = honest WARN
+#   (관측 baseline — silent SKIP 차단, meta-hollow-gate 회피). enforcement 미구현 (관측만, [empirical-source: TBD]).
 check_parallelization() {
     local yaml="$1"
     if [ -z "$yaml" ]; then
@@ -222,8 +238,18 @@ check_parallelization() {
     local row_count
     row_count=$(printf '%s\n' "$design_rows" | grep -c '[0-9]' || true)
 
-    if [ "$row_count" -lt 6 ]; then
-        log "[PARALLELIZATION SKIP] 설계 lane deputy rows < 6 ($row_count 개) — agent teams env=0 or deputy rows absent. skip (ADR-044 §결정 5 N/A in env=0)"
+    if [ "$row_count" -eq 0 ]; then
+        # env=0 (agent teams 미활성 — one-shot Agent tool spawn) → deputy row 구조적 부재.
+        # CFP-2471 (W3): silent SKIP 대신 honest SKIP 사유 명시 (meta-hollow-gate 차단 — concept R-5).
+        # 관측 불가를 은폐하지 않고 명시 표식. fan-out 미spawn 검출은 env=1 context 한정.
+        log "[PARALLELIZATION SKIP] 설계 lane deputy row 0개 — agent teams env=0 (one-shot Agent spawn, deputy row 구조적 부재). honest SKIP 사유: env=0 fan-out 관측 불가 (ADR-039 default, ADR-044 §결정 5 N/A in env=0)"
+        return 0
+    elif [ "$row_count" -lt 6 ]; then
+        # 1~5 row = deputy fan-out 미달 의심 (env=1 인데 6 permanent 미spawn). CFP-2471 (W3):
+        # silent SKIP (구 동작) 대신 honest WARN — 관측 baseline (fan-out 미spawn 의심 가시화).
+        # warning-tier 유지 (FAIL 아님 — enforcement 미구현, PreToolUse Agent matcher P2 [empirical-source: TBD]).
+        log_err "[PARALLELIZATION WARN] 설계 lane deputy row $row_count 개 (< 6 permanent) — fan-out 미spawn 의심 (CFP-2471 / Epic CFP-2468 W3). 현 6 permanent deputy = SecurityArchitectAgent / InfraOperationalArchitectAgent / TestContractArchitectAgent / DataArchitectAgent / ModuleArchitectAgent / APIContractArchitectAgent"
+        log_err "  (CONDITIONAL/N/A deputy (LiveOps/LiveOrdering/ProductionEvidence + aggregate_arch.applicable:false ModuleArch) 정당 skip 은 shape-aware 기대 roster 로 false-positive 차단 — 본 관측은 WARN 만, enforcement 미구현)"
         return 0
     fi
 

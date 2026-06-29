@@ -176,6 +176,64 @@ run_case "7 failsafe-script-absent" '\[FAIL\]' '\[N/A\]' \
 run_case "8 failsafe-detect-nonmixed" '\[FAIL\]' '\[N/A\]' \
     "" "$DETECT_STUB" "" plugin overlay
 
+# ── CFP-2471 (Epic CFP-2468 W3) 축③ fan-out 관측 회귀 가드 ──────────────────
+# stale roster 정정 + <6 deputy row silent SKIP → honest WARN/SKIP 분기.
+# 별도 fixture-only 케이스 (sandbox 불요 — --story 직접 주입). run_case 와 분리한 lightweight runner.
+echo "--- CFP-2471 W3 축③ fan-out 관측 ---"
+
+# 3 deputy row (1~5, env=1 fan-out 미달) → honest WARN (silent SKIP 차단)
+WARN_STORY="$(mktemp -d)/CFP-WARN.md"
+cat > "$WARN_STORY" <<'EOF'
+## §14 Lane Evidence
+```yaml
+- lane: 설계
+  spawned_at: 2026-06-30T09:00:00Z
+- lane: 설계
+  spawned_at: 2026-06-30T09:00:01Z
+- lane: 설계
+  spawned_at: 2026-06-30T09:00:02Z
+```
+EOF
+warn_out="$(bash "$SCRIPT_SRC" --story "$WARN_STORY" --check-parallelization 2>&1)"
+if printf '%s' "$warn_out" | grep -q 'PARALLELIZATION WARN'; then
+    echo "PASS W3-3a 1~5 deputy row → honest WARN (silent SKIP 차단)"
+    PASS=$((PASS + 1))
+else
+    echo "FAIL W3-3a 1~5 deputy row 가 WARN 미발화 (silent SKIP 회귀)"
+    printf '%s\n' "$warn_out" | sed 's/^/    | /'
+    FAIL=$((FAIL + 1))
+fi
+rm -rf "$(dirname "$WARN_STORY")"
+
+# 0 deputy row (env=0) → honest SKIP 사유 명시 (silent 0)
+ZERO_STORY="$(mktemp -d)/CFP-ZERO.md"
+cat > "$ZERO_STORY" <<'EOF'
+## §14 Lane Evidence
+```yaml
+- lane: 구현
+  iteration: 1
+```
+EOF
+zero_out="$(bash "$SCRIPT_SRC" --story "$ZERO_STORY" --check-parallelization 2>&1)"
+if printf '%s' "$zero_out" | grep -q 'env=0 fan-out 관측 불가'; then
+    echo "PASS W3-3b 0 deputy row → honest SKIP 사유 명시 (env=0)"
+    PASS=$((PASS + 1))
+else
+    echo "FAIL W3-3b 0 deputy row 가 honest SKIP 사유 미명시 (meta-hollow-gate 회귀)"
+    printf '%s\n' "$zero_out" | sed 's/^/    | /'
+    FAIL=$((FAIL + 1))
+fi
+rm -rf "$(dirname "$ZERO_STORY")"
+
+# stale roster 정정 회귀: 헤더 주석에 현 6 permanent 토큰 존재 + 구 토큰 (OpRiskArch/DataMigrationArch) 부재
+if grep -q 'InfraOperationalArchitectAgent' "$SCRIPT_SRC" && grep -q 'APIContractArchitectAgent' "$SCRIPT_SRC"; then
+    echo "PASS W3-3c stale roster 정정 — 현 6 permanent 토큰 (InfraOperationalArchitectAgent/APIContractArchitectAgent) 존재"
+    PASS=$((PASS + 1))
+else
+    echo "FAIL W3-3c 현 6 permanent deputy 토큰 부재 (stale roster 회귀)"
+    FAIL=$((FAIL + 1))
+fi
+
 echo ""
 echo "=== Summary: PASS=$PASS FAIL=$FAIL ==="
 [ "$FAIL" -eq 0 ]
