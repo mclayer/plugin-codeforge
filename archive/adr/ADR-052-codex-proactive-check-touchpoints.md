@@ -65,6 +65,10 @@ amendments:
     date: 2026-05-25
     carrier_story: CFP-1368
     summary: "CFP-1286 (Amendment 13 Wave 1 declarative anchor) 의 **Wave 2 mechanical wire** — 9 fail-mode enum 누적 카운터 lint mechanical enforcement layer activation. `mechanical_enforcement_actions: []` → `[codex-fallback-subclass-tally]` 전환 (declaration-only retain → warning-tier mechanical wire). evidence-checks-registry yaml entry `codex-fallback-subclass-tally` (warning tier, bypass `hotfix-bypass:codex-fallback-tally`) + scripts/lib/check_codex_fallback_tally.py + workflow yml (PR-open + daily cron `15 0 * * *` UTC) + bats fixture 9 TC (RED→GREEN stash proof, ADR-082 §결정 11.A + CFP-1334 mandate) + comment-prefix-registry-v1 v1.4 → v1.5 MINOR bump (2-entry append `[codex-sandbox-fallback]` + `[codex-substitution-scope-declared]`, PIVOT-5 NEW Q5 (a) atomic 채택, 15 → 17 prefix taxonomy) + jsonl seed `docs/kpi/codex-fallback-tally.jsonl` (ADR-013 §1 atomic rename pattern, ADR-076 misattribute 정정). ADR-045 §D-9 escalation_action `escalate_user` enum 정합 (per-enum threshold 3 strict tuning vs ADR-045 N=2 baseline, per-enum sub-domain self-tuned). first prod observation closure carrier (Wave A S1 `codex_truncated_no_verdict` first prod evidence + Wave B S3 sandbox path block sub-class disjoint evidence — retro internal-docs#811 fe8524a §6 F3). 10번째 enum candidate `codex_sandbox_path_blocked` = Out-of-scope (별 follow-up CFP carrier, ADR-064 §결정 1 scope unitary, Q1 (c) defer). PIVOT-6 META Codex calibration evidence acknowledge — Codex TP#4 F-5 self-stale 203 lines/v1.3 claim 정정 by Orchestrator FIX iter 1 ground truth 5건 direct file Read verify (ADR-052 line 812 + ls docs/observability/+kpi/ + wc comment-prefix-registry-v1.md = 219 lines/v1.4 + grep codex markers MISSING + grep bypass-justification line 178). label-registry-v2 v2.65 → v2.68 MINOR bump (sibling coordination: CFP-1306=v2.66 / CFP-1367=v2.67 / CFP-1368=v2.68 sequence, late-comer rebase invariant). marketplace atomic invariant (ADR-063 §결정 5) — plugin.json MINOR + CHANGELOG.md + marketplace.json sibling sync. dual-binding pattern 답습 (CFP-963 codex-network-scope-presence precedent — declaration source ADR-052/070/081 / enforcement source ADR-060 evidence-enforceable warning-tier framework). D1/D2/D3/D4 + Amendment 1-13 본문 의미 변경 0건 — frontmatter amendment_log + mechanical_enforcement_actions[] field 만 변경, sub-section append 패턴 정합. is_transitional=false, sunset_justification=N/A (ratchet 강화 방향 — declaration-only → warning tier mechanical enforcement layer activation, 약화 영역 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + mechanical_enforcement_actions[] field 만 변경 + sibling Bundle B coordination Phase 1, src/tests = Phase 2 carrier 분리)."
+  - id: 15
+    date: 2026-06-29
+    carrier_story: CFP-2458
+    summary: "**touchpoint #7 신설 (merge-time adversarial gate) — ADDITIVE 강화**. 6 touchpoint (Amendment 11 wrapper-self 6→4 conditional skip 후 잔존 #1/#3/#4/#6) 가 모두 lane 작업 *중* dispatch 라 머지 직전(shift-right 최우측, CI gate PASS 후 ~ `gh pr merge` 전) 위치가 부재 — Epic CFP-2457 Story A 가 이 빈자리에 독립 분포 LLM critic(Codex) 을 adversarial verifier 로 신설. **#2/#5 복원 아님** (Amendment 11 6→4 ratchet 무손상 — drop 된 #2 ArchitectAgent §3 / #5 ArchitectPL root cause 는 시점·대상·산출물 모두 disjoint, lane-time 영역; #7 = merge-time 영역). ADR-058 §결정 5 sunset_justification 면제 = **강화 방향** (touchpoint 신설 = closed enumeration 확장 additive, 약화 0). 핵심 reshape: critic = 신호원이지 차단 판정자 아님 — critic 의 모든 결함 주장 = `[hypothesis]` 지위, falsifiable evidence(file:line) 동반 의무 + Orchestrator 직접 falsify(ADR-070 verify-before-trust) 통과 시만 `[verified]` 승격해 머지 보류 (ADR-077 §결정 7 정보 무결성 invariant 무검증 승격 금지 + ADR-119 Amd 2 + overcorrection 증거 적대 framing 오거부율 26%→73% — arxiv 2603.00539). D1/D2/D3/D4 + Amendment 1-14 본문 의미 변경 0건 — touchpoint #7 신규 §결정 (D5 신설: merge-time adversarial gate) + ProactiveCheckPacket schema enum `<1|..|6>` → `<1|..|7>` 확장(additive) sub-section append only. dependency: ADR-039 Amendment 6 (inline whitelist 6번째 entry merge-time Codex dispatch — 재귀 가드 회피 critical) + ADR-070 Amendment 9 (verify-before-trust merge-time scope cross-ref + fail-mode/fail-closed enum) + ADR-081 Amendment 9 (merge-time severity rubric — D6 review-lane ground truth 머지직전 닫힘 대응). marketplace 무관 (plugin.json 4-field 무변경). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + 3 sibling ADR Amendment + concept 문서 + Story file, src/tests 무변경 — Phase 2 worker agent/playbook wire 는 별 carrier). is_transitional=false, sunset_justification=N/A (ADDITIVE 강화 방향, scope 축소 0)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -81,6 +85,7 @@ related_stories:
   - CFP-1244   # Amendment 12 — ADR-081 Amendment 6 file-redirect dispatch mandate cross-ref + ADR-070 Amendment 7 fail-mode enum 7 → 8 확장 cross-ref (dispatch_stall_or_stream_timeout 신설) + §A3 cross-ref 표 6-stale 정정 (CFP-1187 S4/S5/S7 evidence)
   - CFP-1286   # Amendment 13 — ADR-070 Amendment 8 cross-ref (fail-mode enum 8 → 9 확장, codex_truncated_no_verdict 9번째 value) + ADR-081 Amendment 7 cross-ref. CFP-604 retro F2 realized (single sample escalate_user).
   - CFP-1368   # Amendment 14 — CFP-1286 Wave 2 mechanical wire (codex-fallback-subclass-tally lint activation, mechanical_enforcement_actions [] → [codex-fallback-subclass-tally]). first prod observation closure carrier (CFP-1317 Wave A + Wave B sub-class disjoint evidence). PIVOT-6 META Codex calibration evidence (TP#4 F-5 self-stale catch by FIX iter 1 5-source ground truth verify). comment-prefix-registry-v1 v1.4 → v1.5 + label-registry-v2 v2.65 → v2.68 + evidence-checks-registry entry. CFP-1334 RED→GREEN stash proof + ADR-082 §결정 11.A mandate. 9-enum closed-set scope retain (10번째 candidate codex_sandbox_path_blocked = Out-of-scope 별 follow-up CFP).
+  - CFP-2458   # Amendment 15 — touchpoint #7 신설 (merge-time adversarial gate, ADDITIVE 강화). Epic CFP-2457 Story A. ProactiveCheckPacket enum 6→7. critic = 신호원 (hypothesis 지위, evidence 동반 + PL falsify 후 verified 승격). dependency: ADR-039 Amd 6 + ADR-070 Amd 9 + ADR-081 Amd 9. concept = merge-time-adversarial-verification-gate.md.
 related_adrs:
   - ADR-039
   - ADR-034
@@ -88,7 +93,9 @@ related_adrs:
   - ADR-059
   - ADR-064
   - ADR-070
-  - ADR-081  # Amendment 6 (CFP-819) boilerplate SSOT 분리 + Amendment 7 (CFP-844) §결정 D6 severity calibration cross-ref
+  - ADR-077  # Amendment 15 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) 재사용 (critic 주장 hypothesis→verified 승격 룰 anchor)
+  - ADR-081  # Amendment 6 (CFP-819) boilerplate SSOT 분리 + Amendment 7 (CFP-844) §결정 D6 severity calibration cross-ref + Amendment 9 (CFP-2458) merge-time severity rubric
+  - ADR-119  # Amendment 15 (CFP-2458) — research-before-claims Amd 2 게이트 verdict ground-truth (독립 검증자 충원 동인)
 related_files:
   - docs/orchestrator-playbook.md
   - docs/superpowers-integration.md
@@ -1164,4 +1171,105 @@ CFP-604 Phase 2 CodeReview Iter 1 evidence — Codex worker file-redirect dispat
 **B4. mechanical detection deferred-followup** — Wave 1 declarative (본 Amendment 13 enum 확장 + cross-ref), Wave 2 mechanical detection lint (Codex output verdict-block presence grep + sandbox artifact size threshold heuristic) = pattern_count 2 reach 시 별 CFP carrier (ADR-076/082/086 precedent). 현 pattern_count = 1 (CFP-604 single sample).
 
 **B5. doc-only fast-path 적용 (ADR-054 §결정 1)** — 본 Amendment 13 = ADR-052 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1286) = ADR-052 Amendment 13 + ADR-070 Amendment 8 + ADR-081 Amendment 7 = 단일 PR 적격.
+
+---
+
+## Amendment 15 (2026-06-29 KST, CFP-2458)
+
+**touchpoint #7 신설 (merge-time adversarial gate) — ADDITIVE 강화 + ProactiveCheckPacket enum `<1|..|6>` → `<1|..|7>` 확장 + critic = 신호원(hypothesis 지위) reshape.**
+
+### Context (Amendment 15)
+
+기존 6 touchpoint (Amendment 11 wrapper-self 6→4 conditional skip 후 잔존 = #1 AskUserQuestion 직전 / #3 DevPL FIX 2+ / #4 RequirementsPL §1-6 / #6 ArchitectAgent ADR 초안) 는 **모두 lane 작업 *중*** dispatch — 머지 직전(shift-right 최우측, 구현리뷰 PASS + CI gate `gh pr checks --required --watch` PASS 후 "merge gate 진입" ~ merge_transition sentinel polling 직전 ~ `gh pr merge` 직전) 위치가 비어 있다 [verified](archive/adr/ADR-052-codex-proactive-check-touchpoints.md:127-147 touchpoint 표 / docs/orchestrator-playbook.md merge-gate flow §3.10).
+
+**동인 3축** (Story §1 verbatim + §3 + §6):
+
+1. **ADR-119 Amendment 2 §결정 10** — "게이트 verdict('PASS') = internal proxy(loop-lag/CPU) 아닌 outcome ground-truth 로만 단정". 본 touchpoint #7 = 그 정책의 **독립 검증자 충원** mechanism (게이트 PASS 가 self-attest 가 아닌 외부 분포 검증을 거치게).
+2. **dual-peer track record** — CFP-2244/2440/2445/2451 등 다수 Story 에서 dual-peer Codex 가 Claude-miss P0/P1 을 firsthand 반복 포착 (MEMORY.md). 본 패턴을 머지 직전 시점으로 확장.
+3. **#2322 흡수** — gate 결과 = forgeable label 아닌 lane-produced artifact (SLSA separation-of-duties, implementer ≠ certifier). Orchestrator self-attests gates → preventive 로 격상.
+
+Codex API 한도 증가가 상시화 발동 계기. concept 정립 = [`docs/domain-knowledge/concept/merge-time-adversarial-verification-gate.md`](../../docs/domain-knowledge/concept/merge-time-adversarial-verification-gate.md) (CFP-2458 ResearcherAgent Mandate 1·2 산출물, 학계+산업 cited).
+
+### 결정 (Amendment 15)
+
+**D5. touchpoint #7 — merge-time adversarial gate (신규 §결정)**
+
+기존 D2 (6 touchpoint 자동 활성, opt-in 없음) 의 closed enumeration 에 **7번째 touchpoint** ADDITIVE append. ProactiveCheckPacket v1 schema (D3) 의 `touchpoint: <1|..|6>` enum → `touchpoint: <1|..|7>` 로 확장 (additive, 기존 1-6 의미 무변).
+
+| 항목 | touchpoint #7 명세 |
+|---|---|
+| **trigger 시점** | 구현리뷰 PASS + CI gate (`gh pr checks --required --watch`) PASS 이후, "merge gate 진입" 직후 / merge_transition sentinel polling + `gh pr merge` 이전 (AC-1/AC-2) |
+| **purpose** | merge 직전 1패스 적대적 반증 — diff ↔ Story 의도(요구사항 §1 / 설계의도 §3 / 수용기준 §5) 불일치 능동 탐색 |
+| **dispatch 주체** | **Orchestrator top-level inline 전용** (ADR-039 Amendment 6 inline whitelist 6번째 entry — 재귀 가드 회피 critical, sub-agent/PL owner 면 silent fallback skip = 게이트 연극화) |
+| **input** | PR diff (git) + Story context cross-repo verbatim 첨부 (ADR-081 D1.A-D 4 mandatory field + D2 verbatim + D8 file-redirect dispatch) |
+| **프레이밍** | 일반 리뷰 아닌 적대적 반증 ("이 PR 이 왜 틀렸거나 불완전한지 찾아라") + anti-sycophancy (Story 서사 = "정답" 아닌 "반증 대상") |
+| **출력** | ProactiveCheckPacket `{findings: [{severity: P0|P1|P2, description, evidence}], recommendation, rationale}` — **evidence(file:line) 필드 의무 (D5.a)** |
+| **결과 처리** | P0/P1 + PL falsify 통과 → 머지 보류 + FIX 루프 회부 / P2 → 기록 후 진행 (ADR-081 Amendment 9 merge-time rubric) |
+| **fail-mode** | Codex 미가용/sandbox 실패 = ADR-070 Amendment 9 fail-mode/substitution path (fail-closed 권장 — Story §7) |
+
+**D5.a — critic = 신호원이지 차단 판정자 아님 (핵심 reshape, ADDITIVE invariant)**
+
+touchpoint #7 의 Codex finding 은 **자동 머지 차단 아님**. critic 의 모든 결함 주장 = `[hypothesis]` 지위 default (ADR-052 Amendment 3 A3 marker dictionary 정합). 머지 보류로 승격하려면:
+
+1. finding 에 **falsifiable evidence(file:line) 동반 의무** — evidence 부재 finding = 무효 (자동 폐기, 머지 보류 trigger 아님).
+2. **Orchestrator 직접 falsify** (ADR-070 D1 verify-before-trust + Amendment 9 merge-time scope) 통과 시만 `[verified]` 승격 → 머지 보류.
+3. mismatch (evidence 가 ground truth 와 불일치) → finding reject + Story §10 false-positive tally + override rationale 4종 (ADR-070 D3).
+
+**근거** (overcorrection bias amplify):
+
+- 적대적/설명요구 프롬프트는 overcorrection(false-rejection) bias 를 증폭 — "Systematic Overcorrection" GPT-4o FNR 26.2%→73.2% (HumanEval), 35.9%→87.9% (MBPP), 거부 사유 48.2% 가 falsifiable evidence 없는 Logic Error 주장 (source: arxiv 2603.00539). 따라서 적대 프롬프트의 진짜 결함 포착력은 살리되, valid 코드의 대거 over-reject 를 verify-before-trust gate 로 차단.
+- ADR-077 §결정 7 정보 무결성 invariant ("fact-check marker 무검증 승격 금지") 와 동형 — critic 주장 `[hypothesis]` → PL falsify 후만 `[verified]` 승격 (ADR-077 reuse anchor).
+- codeforge dogfood 실측: Codex false-positive 가 반복돼 PL runtime-test/firsthand falsify 가 필수였음 (CFP-2440 Codex 2건 fp / CFP-2449 Codex 2건 fp). critic 은 신호원이지 판정자 아님.
+
+**D5.b — anti-sycophancy + calibration**
+
+- Story 컨텍스트에 동조한 무비판 "looks good" 반환 차단 — 프롬프트가 diff ↔ Story 의도의 *충돌* 을 능동 탐색하도록 구성 (confirmation bias 연구: PR description redaction 이 누락 검출 68.75% 회복, source: arxiv 2603.18740).
+- calibration 명시 — "결함 없으면 없다고 보고, 없는 문제 발명 금지" (cry-wolf 폐기 차단, FP 10% 미만 유지가 채택 생존 조건, source: Anthropic Code Review "<1% incorrect" + "verify findings").
+
+**D5.c — #2/#5 복원 아님 (Amendment 11 ratchet 무손상)**
+
+Amendment 11 (CFP-1131) 이 wrapper-self 6→4 로 drop 한 #2 (ArchitectAgent §3 직후) / #5 (ArchitectPL root cause 직후) 는 **lane-time** 영역. touchpoint #7 = **merge-time** 영역 — 시점·대상(PR-unit holistic)·산출물(머지 보류 verdict) 모두 disjoint. #2/#5 복원이 아니라 빈 위치 신설 → Amendment 11 ratchet 축소 무손상 (ADR-058 §결정 5 약화 차단 logic 통과: 본 Amendment = 강화 방향 additive, sunset_justification 면제).
+
+**D5.d — CodexReviewAgent 와 disjoint (channel 분리)**
+
+| 차원 | CodexReviewAgent (구현리뷰 lane) | touchpoint #7 (merge-gate) |
+|---|---|---|
+| lane | code (review-time) | merge-time (CI PASS 후) |
+| unit | per-file src/** | PR-unit holistic |
+| context | 코드 품질 (runtime bug / layer / Impl Manifest mapping) | Story-context 전체 (요구사항·설계의도·AC) adversarial |
+| dispatch 주체 | CodeReviewPL | Orchestrator top-level inline |
+
+동일 채널 취급 금지 (AC-12/AC-13). 중복 아닌 defense-in-depth (shift-left 우측에 추가).
+
+**D5.e — ADR-022 framing 정합 (충돌 아님)**
+
+ADR-022 (Sonnet-decider Codex review 자동발동 deprecate) scope = 구 Sonnet-decider 5-trigger 한정. 본 touchpoint #7 = proactive-check 계열 (ADR-052 #7) 로 위치 → ADR-001 (CodexReviewAgent 필수워커) + ADR-052 (proactive 자동 dispatch) 가 이미 재정립한 "리뷰/proactive 영역 자동 Codex" 와 정합. override 아님.
+
+**D5.f — Story B 재사용 named pattern**
+
+본 touchpoint #7 의 dispatch contract (ProactiveCheckPacket #7 + verify-before-trust 무조건 적용 + P0/P1/P2 severity → 머지 보류 매핑 + critic=hypothesis reshape) = Epic CFP-2457 Story B (변이 테스트 peer) 가 재사용할 **"merge-time adversarial dispatch pattern"** named pattern. concept 문서가 SSOT.
+
+### cross-ref (Amendment 15)
+
+- **ADR-039 Amendment 6** — inline whitelist 6번째 entry (merge-time Codex dispatch) 신설. 재귀 가드 회피 critical (substitution-side spawn 차단 방지).
+- **ADR-070 Amendment 9** — verify-before-trust merge-time scope cross-ref + fail-mode/fail-closed enum. merge-time finding 도 D1/D3 무조건 적용.
+- **ADR-081 Amendment 9** — merge-time severity rubric 신설 (D6 review-lane ground truth 머지 직전 닫힘 대응).
+- concept SSOT = `docs/domain-knowledge/concept/merge-time-adversarial-verification-gate.md`.
+
+### 결과 (Amendment 15)
+
+- touchpoint #7 (merge-time adversarial gate) 신규 §결정 D5 — 6 touchpoint 자동 활성 영역에 7번째 ADDITIVE append (ProactiveCheckPacket enum 6→7).
+- critic = 신호원(hypothesis 지위) reshape — evidence(file:line) 동반 + PL falsify 후 verified 승격 (D5.a, ADR-070/077 reuse).
+- anti-sycophancy + calibration (D5.b) / #2·#5 복원 아님 (D5.c) / CodexReviewAgent disjoint (D5.d) / ADR-022 framing 정합 (D5.e) / Story B named pattern (D5.f).
+- 3 sibling ADR Amendment (ADR-039 Amd 6 + ADR-070 Amd 9 + ADR-081 Amd 9) cross-ref.
+- D1/D2/D3/D4 + Amendment 1-14 본문 의미 변경 0건 — 신규 §결정 D5 + enum 확장 sub-section append only (Amendment 1-14 패턴 정합).
+- `mechanical_enforcement_actions` Amendment 14 entry retain (provenance enforcement Phase 2 carrier 분리 — ADR-064 §결정 1 unitary).
+
+### 거절된 대안 (Amendment 15)
+
+- (Amendment-AS) **touchpoint #2/#5 복원으로 머지직전 게이트 대체** — 시점·대상·산출물 disjoint (lane-time ↔ merge-time). 복원 시 Amendment 11 ratchet 축소 약화 (sunset_justification 의무 발생) + merge-time 빈자리 미해소. touchpoint #7 ADDITIVE 신설 채택.
+- (Amendment-AT) **CodexReviewAgent 흡수 (merge-time mandate 추가)** — lane mismatch (review-time per-file ↔ merge-time PR-unit holistic). channel-disjoint 식별 의무 (AC-12) 위배. 별 dispatch contract 채택 (worker agent 형태 = Phase 2 (a)/(b)/(c) 3택 설계 lane 결정).
+- (Amendment-AU) **critic finding 자동 머지 차단 (PL falsify 생략)** — overcorrection bias 로 false-block 양산 → cry-wolf 폐기 (D5.a 근거). verify-before-trust 무조건 적용 (critic = 신호원) 채택.
+- (Amendment-AV) **required CI check 강제 (phase-gate-mergeable.yml contexts 7-tuple)** — branch protection 6-tuple 변경 = 고비용·비가역, 본 요지 밖. inline 절차 + result-via-file 채택 (Story §4.1).
+- (Amendment-AW) **debate-protocol-v1 자동 발동 (Claude↔Codex multi-round)** — 목적 = 독립 검증자 추가이지 토론체계 도입 아님 (Story §5.4 암묵가정). 1패스 single-pass 채택 (debate 기본 미발동, divergence escalate 는 별 carrier).
 
