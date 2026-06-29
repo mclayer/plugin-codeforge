@@ -1,7 +1,7 @@
 ---
 title: codeforge family 전체 구조 (wrapper + 8 lane plugin)
 last_captured: 2026-05-24
-last_update_cfp: CFP-2341  # lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1). 이전: CFP-1427 Sub-C S3.3 — 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
+last_update_cfp: CFP-2469  # Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / ADR-078 boundaries axis. 이전: CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
 kind: architecture_doc
 ---
 
@@ -50,6 +50,8 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 **owner agent direct write** (CFP-26 Phase 0a): `docs/{change-plans,adr,domain-knowledge,retros,architecture}/**` = owner agent 직접 write (Orchestrator monopoly 영역과 disjoint).
 
 **scope partition**: dogfood artifacts (specs/plans/retros/stories/change-plans) = `mclayer/codeforge-internal-docs` monorepo SSOT (ADR-013). wrapper repo = policy/template/script SSOT. consumer overlay (`.claude/_overlay/`) = 정책 확장만 가능 (축소 불가).
+
+**Consumer merge-gate boundary** (ADR-132 / CFP-2469): consumer repo 의 게이트 강제력 = **2-layer** — (a) advisory hook 層 (UserPromptSubmit warning-inject-only, block 아님) ↔ (b) mechanical branch protection 層 (GitHub native `required_status_checks` merge 실차단). dead-gate(게이트 workflow 가 PR 마다 돌지만 `required_status_checks.contexts[]` 미등록 = merge 차단력 0) 해소 = mechanical 層 자동 충전 (`scripts/wire-branch-protection.*` operator gh auth GET-merge-PUT). 권한 경계: 자동 배선 = operator org-admin gh auth (codeforge PAT 미사용 — ADR-066 §결정 2 6-scope 무손상). 형상: `enforce_admins:true`(admin 우회 무력화 차단) + `review_count` solo=0/team≥1(deadlock 회피). 등록 context set = consumer 실제 배포 workflow job 표시명 ∩ codeforge 게이트(정적 manifest 복사 금지 — wrapper-self context 영구 pending 차단).
 
 ## 인터페이스 계약
 
