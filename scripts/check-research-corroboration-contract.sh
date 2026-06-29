@@ -134,7 +134,7 @@ check_ac1_four_stages() {
   local stage_block stage_names
   stage_block="$(awk '/^## 절차 추상 단계/{f=1} f&&/^---/{if(seen)exit} f{print; if(/^\|/)seen=1}' "$SKILL_FILE")"
   # 추상 단계 표 첫 컬럼의 백틱 stage 이름만 추출(헤더·구분선 제외)
-  stage_names="$(printf '%s\n' "$stage_block" | grep -oE '^\| `[^`]+`' | sed -E 's/^\| `([^`]+)`/\1/' | sort -u | tr '\n' ' ')"
+  stage_names="$(printf '%s\n' "$stage_block" | grep -oE '^\| `[^`]+`' | sed -E 's/^\| `([^`]+)`/\1/' | sort -u | tr '\n' ' ' || true)"
   if printf '%s\n' "$stage_block" | grep -q '`request`' && \
      printf '%s\n' "$stage_block" | grep -q '`execute`' && \
      printf '%s\n' "$stage_block" | grep -q '`inject`'; then
