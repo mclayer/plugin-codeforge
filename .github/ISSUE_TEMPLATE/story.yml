@@ -56,7 +56,6 @@ body:
         - 설계·정책 변경 (Policy/ADR)
         - 버그 수정 (Bug Story)
         - 리팩토링 (Refactor)
-        - 문서 (Doc-only fast-path)
         - 에픽 (Epic — 복수 Story)
     validations:
       required: true
