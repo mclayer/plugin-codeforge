@@ -62,6 +62,16 @@ split 근거 = ADR-120 §결정 3 (skill = 절차 / domain-knowledge = 지식). 
 
 > 이로써 게이트가 "항상 통과(failing fixture 부재)" 인 검사연극이 되지 않는다. anti-theater discriminating case = capture 0 ∧ note 0 → WARN (Story §8.1 TC3).
 
+#### §1.3.1 term-drift routing (+1문) — CFP-2453 / ADR-129 Amendment 1
+
+§1.1 admission **3문 무변경**. 완료 시점 routing/self-check 항목으로 1문 추가 (관계 산출 = 1-fact admission 과 disjoint — 동음/유의/반의는 여러 용어를 함께 비교해야 드러나는 *관계*라 1-fact 가 아님, CFP-2453 §2.1 도메인 framing):
+
+> **+1문 (완료 self-check)**: "이 작업이 consumer 도메인 용어를 신설/재정의했는가? → 했다면 `docs/domain-knowledge/domain/<area>/lexicon.md` / `concept-dictionary.md` 갱신, 안 했어도 `no-update` note 명시 (silent skip 불허)."
+
+- **anti-theater 동형 보존**: 위 §1.3 `capture 0 ∧ note 0 → WARN` 규칙이 +1문에도 동형 적용 — **"갱신 0 ∧ no-update note 0 → WARN"**. 용어 재정의 있었으나 lexicon/concept-dict 갱신도 no-update note 도 없으면 WARN.
+- **disjoint 유지 (ADR-129 §결정3)**: 본 +1문 = term-drift maintain routing (지식 캡처 필터의 하위), §1.1 admission 3문(1-fact) 과 별 축. admission gate schema 변경 아님 (routing 항목 추가). ADR-119 §결정9 제안 필요성 게이트와도 통합 금지 (disjoint).
+- 정책 SSOT = [ADR-129 Amendment 1](../../archive/adr/ADR-129-omc-knowledge-capture-memory-governance.md). lexicon drift 유지 trigger 의 maintain 측 (생산 측 = DomainAgent bootstrap, ADR-091 Amendment 3).
+
 ### §1.4 게이트 tier / fail-safe (로컬-only warning-tier)
 
 - tier = **warning + `workflow: null`** (로컬-only). `phase:완료` transition = Orchestrator self-write + 완료 marker = working-tree 검출이라 required CI check 불가 (ADR-099/ADR-122/ADR-128 선례 동형).

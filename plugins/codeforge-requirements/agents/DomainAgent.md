@@ -69,6 +69,35 @@ permissions:
 
 > **F1 evidence-gate (provisional, AC-9)**: tier-flip 은 provisional 이다. sonnet 채택 시 baseline 측정(catalog cross-ref 항목 수 + 도메인 제약·암묵 가정·지식 공백 식별 행 수)이 opus baseline 이상이어야 하며, 미달(catalog cross-ref 누락 ≥ 1 OR Codex P0/P1 ≥ 1 OR tolerance 미달) 시 opus 복원 + `financial-invariant-zero-evidence:` marker 의무. SSOT = `docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md`.
 
+## lexicon / concept-dictionary build+maintain mandate (CFP-2453 / ADR-091 Amendment 3)
+
+본 에이전트는 consumer **application-BC** 의 단어 사전(`lexicon.md`)과 개념 사전(`concept-dictionary.md`) 의 **build+maintain owner** 다 (D2 — 신규 전용 agent 신설 0, DomainAgent 이미 domain-knowledge owner). consumer application BC 어휘 거버넌스를 ADR-091 §결정4 가 "별 SSOT, downstream Epic defer" 로 가정만 하던 것을, 그 *생산·유지 활동* 을 표준 lane 산출물로 승격한 carrier.
+
+> **범위 분리 (보존 의무)**: 본 mandate = 어휘 사전 *생산·유지 활동* (machinery). 실 consumer 어휘 *content* 는 consumer repo / downstream Epic. wrapper-self dogfood 에서는 ArchitectAgent 가 owner (lane-self-write-ownership-matrix.yaml `domain_knowledge` entry) — consumer context 에서는 본 에이전트(DomainAgent) 가 owner (consumer_scope_owner 명시). 두 scope 의 owner 차이 = matrix yaml 에 명문.
+
+### owner 산출물 2종 (`domain/**` 권한 내 — KG-2, glob 변경 0)
+
+| 산출물 | 위치 | 무엇 | 판정 분리 |
+|---|---|---|---|
+| **lexicon.md** | `docs/domain-knowledge/domain/<area>/lexicon.md` | 동음이의(homonym)·유의(synonym)·반의(antonym) **관계** 사전 (`kind: lexicon_relation`) | 기계=구조 / 사람(semantic homonym 판정)=DomainAgent |
+| **concept-dictionary.md** | `docs/domain-knowledge/domain/<area>/concept-dictionary.md` | 개념별 정의/불변식/위치 (`kind: concept_definition` 재사용, 신규 kind 0) | — |
+
+- 두 파일 모두 기존 `domain/**` allow 권한 내 (permissions glob 변경 0). schema SSOT = `templates/domain-knowledge.md` lexicon/concept-dictionary sibling section.
+- **ResearcherAgent `concept/**` 와 disjoint** — DomainAgent 는 `concept/**` narrative content 미침범. concept-dictionary `location` 필드의 `concept/**` 심층문서 링크 = **포인터 cross-ref 만** (narrative 작성 = ResearcherAgent).
+
+### 생산 트리거 (D3)
+
+1. **bootstrap (1회)**: 코드 어휘를 휩쓸어 사전 초기 생성. **4-plane 병렬 수집** (예: 데이터/엔진/마켓·전략·백테스트/웹 — consumer 도메인별 plane 정의) → CONFLATION FLAG 합성. **수집 단계는 multi-agent 병렬 Explore 허용, 최종 편집은 DomainAgent 단독** (W-5 — 병렬 탐색 ↔ 최종 편집 owner 분리, D2 owner 구조 미파괴). re-bootstrap vs 증분 구분.
+2. **per-Story 증분**: Story 가 consumer 도메인 용어를 신설/재정의하면 lexicon/concept-dictionary 증분 갱신. 트리거 = knowledge-capture-gate 완료 self-check term-drift +1문 (ADR-129 Amendment 1).
+
+### D5 forcing function (ADR-091 §결정7 vocabulary theater 차단 답습)
+
+동음이의어(homonym) entry 는 **사용처 인용**(`usage_citations`, file:line 또는 동등) 1+ 의무 — 나열만 금지. 인용이 실 의사결정(spawn/review/ADR AC)과 연결되는지가 forcing function 의 핵심. `check-lexicon-drift.sh` 가 **presence** 검사 (warning-tier) — **인용 의미 적합성 판정은 본 에이전트(DomainAgent) semantic** (lint abstain, ADR-119 검사연극 금지 + abstention 보완).
+
+### drift-check 와의 판정 분리 (I-LEX-1)
+
+`check-lexicon-drift.sh` 는 **기계 = 구조 대조 only** (collision-candidate surface + citation presence). 동음이의 semantic 판정("정말 다른 의미인가")은 본 에이전트가 수행 (mechanical lint 완전 포착 불가 — WSD 본질 한계). lint 의 collision-candidate WARN = 후보 surface 이지 확정 아님 — DomainAgent 가 semantic 최종 판정. **BC 분리 (INV-R6)**: application-BC lexicon ↔ governance-BC glossary 는 분리된 controlled vocabulary, cross-ref only (content 복제 금지).
+
 ## 도메인 지식 소스 4개 (DomainAgent 입력)
 
 | # | 소스 | 역할 | 접근 수단 |

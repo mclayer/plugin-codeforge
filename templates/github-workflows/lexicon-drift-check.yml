@@ -1,0 +1,74 @@
+name: lexicon-drift-check
+# CFP-2453 / ADR-091 Amendment 3 — consumer application-BC 단어 사전(lexicon) drift 게이트 (warning-tier).
+#
+# consumer repo 의 docs/domain-knowledge/domain/<area>/lexicon.md frontmatter `kind: lexicon_relation`
+# entry 집합(term / relation(homonym|synonym|antonym) / conflict_with / usage_citations / definition)을
+# 읽어, 동음이의어 관계 사전이 *구조적으로만* 일관한지 대조하고 drift 2종을 surface:
+#   (a) collision-candidate  같은 표기(term)가 서로 다른 의미로 다중 출현하나 homonym 2-entry
+#       explicit-separate(상호 conflict_with) 구조 미선언 (ADR-091 §결정3) → exit 1
+#   (b) citation-absent       relation:homonym entry 가 usage_citations 0건 (D5 forcing function,
+#       ADR-091 §결정7 vocabulary theater 차단) → exit 1
+#   + data-absence fail-open  lexicon.md 부재 = 정책 공백(미생성 repo) = PASS(exit 0, honest ::notice::)
+# 기계(구조 대조 — collision surface + citation presence) vs 사람(의미정합 — DomainAgent semantic) 판정 분리
+#   (I-LEX-1, ADR-091 §결정3/§결정7 / ADR-119 검사연극 금지 + abstention). 동음이의 semantic 판정
+#   ('정말 다른 의미인가')은 DomainAgent 위임. I-LEX-2: 자동 rename/리네이밍 강제 0 (qualifier 권고).
+# archetype = templates/github-workflows/responsibility-marker-drift-check.yml (CFP-2428 / ADR-131 Amd1) 1:1 clone.
+#
+# single-root governance 도구라 .github-only 정합이나, ADR-005 정합 안전 =
+#   templates/github-workflows/ + .github/workflows/ 양쪽 byte-identical write.
+#   invariant-check.yml parity loop = templates → .github 단방향 검증 (byte-identical 이라 drift 0).
+#
+# graceful-degradation (change-plan §3.1 / §8.4 — 2-tier 엄격 분리):
+#   data-absence(A)=fail-open(스크립트 EXIT 0, honest 분류 ::notice::) / setup-error(B)=fail-closed(EXIT 2).
+#   path-filter / `on.paths` skip 금지 (비협상) — required check "Pending(expected)" 영구 차단 회피 +
+#     게이트 핵심 케이스(diff 가 lexicon.md 안 건드려도 코드 이동으로 용어 drift 유발하는 PR) 구조적
+#     놓침 회피. 스크립트가 내부에서 data-absence 를 EXIT 0 처리 (워크플로 `if:` skip 아님, path-filter 절대 아님).
+#
+# injection-safe: on: pull_request (NOT pull_request_target — fork PR base secret 미노출) +
+#   permissions: contents:read (write/secret 0). repo 내 파일(lexicon.md)만 read — 외부 mutable 입력 0
+#   (lexicon 값 shell-interpolate 0 — Python 본체가 yaml.safe_load 파싱, fork-PR injection 차단).
+#
+# offline-first: drift 검사 입력 = repo 내 lexicon.md frontmatter, gh api 호출 0.
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: lint job 은
+#   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). main 7일 green → required 등록은
+#   별 후속 Story (transition Story = continue-on-error 1줄 제거 + contexts 1개 추가 최소 surface).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  lexicon-drift:
+    name: lexicon-drift (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Run check-lexicon-drift.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-lexicon-drift.sh
+
+  lexicon-drift-test:
+    name: lexicon-drift discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Run test_check-lexicon-drift.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-lexicon-drift.sh

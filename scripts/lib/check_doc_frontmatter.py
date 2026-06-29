@@ -69,8 +69,12 @@ for prefix, fields in REQUIRED.items():
             warns.append(f"{md}: 필수 필드 누락 — {sorted(missing)}")
 
 # ADR-056 — kind 유효값 검증
+# CFP-2453 / ADR-091 Amd3 — lexicon_relation kind 등록 (consumer application-BC lexicon.md schema).
+#   domain/<area>/lexicon.md 는 domain_fact 와 동일 REQUIRED 필드 set(kind/title/area/topic_slug/
+#   status/updated) 공유 — KIND_VALID 만 확장 (REQUIRED 무변경). concept-dictionary 는 기존
+#   concept_definition 재사용(경로 owner 기반, 신규 kind 0) — concept/ KIND_VALID 무변경.
 KIND_VALID = {
-    "docs/domain-knowledge/domain": {"domain_fact"},
+    "docs/domain-knowledge/domain": {"domain_fact", "lexicon_relation"},
     "docs/domain-knowledge/concept": {"concept_definition"},
 }
 for prefix, valid_kinds in KIND_VALID.items():
