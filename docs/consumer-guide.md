@@ -1845,7 +1845,23 @@ bash templates/scripts/setup-branch-protection.sh --manifest-out /tmp/bp-manifes
 
 **종료 코드**: 0 = no drift / 2 = drift detected (informational, CI fail 아님) / 1 = error
 
-**실제 branch protection 등록 (operator manual — Administration:write 권한 필요)**:
+**자동 배선 (CFP-2469 / ADR-132 — operator gh auth GET-merge-PUT, 권장)**:
+
+```bash
+# bootstrap-consumer 가 Stage 5b 에서 자동 호출 — operator gh auth 토큰 사용 (codeforge PAT 미사용).
+# 단독 실행 / 재배선도 가능:
+bash scripts/wire-branch-protection.sh --repo $ORG_REPO --shape solo   # solo=review_count 0 (deadlock 회피)
+bash scripts/wire-branch-protection.sh --repo $ORG_REPO --shape team   # team=review_count 1
+bash scripts/wire-branch-protection.sh --repo $ORG_REPO --dry-run      # PUT 0 — payload preview
+# 16-repo 일괄 (Track M 등):
+bash scripts/reapply-branch-protection.sh --repos owner/a,owner/b --shape solo
+```
+
+- GET-merge-PUT idempotent (consumer 고유 context 보존, core contexts 삭제 불허) + `enforce_admins=true` + `restrictions=null` + `strict=true` default.
+- context↔job-name 정합 게이트 — 실제 배포된 workflow job 표시명과 미정합 context 는 배선 제외 (영구 pending 차단).
+- operator 권한 부족(403) = WARN graceful degrade (bootstrap 비-abort) → 아래 수동 절차 fallback.
+
+**수동 적용 (operator org-admin 직접 — Administration:write 권한 필요, fallback)**:
 
 ```bash
 # ADR-024 Amendment 2 §결정 C step 2: consumer admin operator가 수동 적용
@@ -1856,7 +1872,7 @@ gh api -X PUT repos/$ORG_REPO/branches/main/protection \
   -F restrictions=null
 ```
 
-> **FORM (b) constraint**: `setup-branch-protection.sh` 자체는 API write를 수행하지 않는다 (Administration:write credential 불요). 실제 등록은 consumer org admin의 기존 권한으로 수행한다. drift-check.yml (weekly cron)이 망각한 경우를 재감지하는 safety net 역할을 한다. [ADR-066 §결정 2 무변경 — F-P1-A 해소]
+> **FORM (b) constraint**: `setup-branch-protection.sh` 자체는 API write를 수행하지 않는다 (Administration:write credential 불요 — write 로직은 신규 `wire-branch-protection.{sh,ps1}` 에 분리, SoD). 실제 등록은 위 자동 배선 또는 consumer org admin의 기존 권한으로 수행한다. dead-gate(미배선) 재감지 safety net = `check_bootstrap.py` check 12 (branch protection readiness, CFP-2469 / ADR-132 §결정 8) — 구 `branch-protection-drift-check.yml` (never-built) 대체 (ADR-024 Amendment 20 §결정 B). [ADR-066 §결정 2 무변경 — F-P1-A 해소]
 
 #### phase-gate-mergeable label mapping (CFP-479)
 

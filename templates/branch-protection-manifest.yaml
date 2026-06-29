@@ -3,7 +3,9 @@
 #
 # required_status_checks.contexts 목록.
 # 실제 branch protection 설정과 반드시 일치해야 한다.
-# drift 감지: templates/github-workflows/branch-protection-drift-check.yml
+# drift 감지: overlay/hooks/check_bootstrap.py check 12 (branch protection readiness, CFP-2469 / ADR-132 §결정 8)
+#   — 구 branch-protection-drift-check.yml 은 never-built (ADR-024 Amendment 20 §결정 B / ADR-132 §결정 9 대체).
+# 자동 배선: scripts/wire-branch-protection.{sh,ps1} (GET-merge-PUT, operator gh auth — ADR-132).
 #
 # consumer overlay: .claude/_overlay/branch-protection-manifest.yaml 에서 확장 가능.
 # 기본 4개 삭제 불허 — 확장 전용.

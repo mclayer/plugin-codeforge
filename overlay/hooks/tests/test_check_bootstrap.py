@@ -690,3 +690,123 @@ def test_strict_a_message_has_preflight_phrase(tmp_path: Path, monkeypatch, caps
     captured = capsys.readouterr()
     assert rc == 1
     assert "story-init 발동 전" in captured.err or "preflight" in captured.err
+
+
+# ============================================================ Check 12 (CFP-2469 / ADR-132 §결정8) — branch protection readiness (dead-gate 검출)
+
+
+def _gh_result(*, returncode: int = 0, stdout: str = "", stderr: str = ""):
+    """check 12 mock 헬퍼 — gh api subprocess.run 결과 대역 (기존 _FakeResult 관습 답습).
+
+    4분기 discriminating 을 위해 returncode / stdout(json body) / stderr(404·403) 를 개별 조립.
+    """
+
+    class _FakeResult:
+        pass
+
+    r = _FakeResult()
+    r.returncode = returncode
+    r.stdout = stdout
+    r.stderr = stderr
+    return r
+
+
+def test_branch_protection_readiness_404_protection_absent(monkeypatch) -> None:
+    """(a) protection 부재 (404) → dead-gate WARN 4줄. wire-branch-protection.sh 안내 포함."""
+    monkeypatch.setattr(
+        check_bootstrap.subprocess,
+        "run",
+        lambda *a, **k: _gh_result(returncode=1, stderr="HTTP 404: Branch not protected"),
+    )
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns, "404 = protection 부재 → WARN 발화 의무 (dead gate)"
+    assert len(warns) == 4, f"404 분기 = 정확히 4줄 WARN (현 {len(warns)}줄)"
+    assert any("branch protection 부재" in w for w in warns)
+    assert any("dead gate" in w for w in warns)
+    assert any("wire-branch-protection.sh" in w for w in warns)
+    # 변별: contexts/enforce_admins 본문 메시지는 404 분기에 등장하지 않음 (다른 분기 격리)
+    assert not any("required_status_checks.contexts 0개" in w for w in warns)
+    assert not any("enforce_admins=false" in w for w in warns)
+
+
+def test_branch_protection_readiness_contexts_empty(monkeypatch) -> None:
+    """(b) protection 존재 + contexts 0개 → dead-gate WARN. enforce_admins=true 로 (c) 격리."""
+    body = json.dumps(
+        {
+            "required_status_checks": {"contexts": []},
+            "enforce_admins": {"enabled": True},
+        }
+    )
+    monkeypatch.setattr(
+        check_bootstrap.subprocess,
+        "run",
+        lambda *a, **k: _gh_result(returncode=0, stdout=body),
+    )
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns, "contexts 0개 = dead gate → WARN 의무"
+    assert any("required_status_checks.contexts 0개" in w for w in warns)
+    assert any("merge 차단력 부재" in w for w in warns)
+    assert any("wire-branch-protection.sh" in w for w in warns)
+    # 변별: enforce_admins=true 이므로 (c) WARN 부재 + 404 본문 부재
+    assert not any("enforce_admins=false" in w for w in warns)
+    assert not any("branch protection 부재" in w for w in warns)
+
+
+def test_branch_protection_readiness_enforce_admins_false(monkeypatch) -> None:
+    """(c) protection 존재 + contexts 등록 OK + enforce_admins false → admin 우회 WARN. (b) 격리."""
+    body = json.dumps(
+        {
+            "required_status_checks": {"contexts": ["phase-gate-mergeable"]},
+            "enforce_admins": {"enabled": False},
+        }
+    )
+    monkeypatch.setattr(
+        check_bootstrap.subprocess,
+        "run",
+        lambda *a, **k: _gh_result(returncode=0, stdout=body),
+    )
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns, "enforce_admins=false = admin 우회 가능 → WARN 의무"
+    assert any("enforce_admins=false" in w for w in warns)
+    assert any("admin 우회" in w for w in warns)
+    # 변별: contexts 등록돼 있으므로 (b) WARN 부재
+    assert not any("required_status_checks.contexts 0개" in w for w in warns)
+
+
+def test_branch_protection_readiness_fully_wired_silent(monkeypatch) -> None:
+    """(b)+(c) 음성 대조 — contexts 등록 + enforce_admins true → WARN 0 (정상 wire 오탐 0)."""
+    body = json.dumps(
+        {
+            "required_status_checks": {"contexts": ["phase-gate-mergeable", "check-gate"]},
+            "enforce_admins": {"enabled": True},
+        }
+    )
+    monkeypatch.setattr(
+        check_bootstrap.subprocess,
+        "run",
+        lambda *a, **k: _gh_result(returncode=0, stdout=body),
+    )
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns == [], f"정상 wire 인데 오탐: {warns}"
+
+
+def test_branch_protection_readiness_403_silent_skip(monkeypatch) -> None:
+    """(d) 403 권한 부족 → 점검 불가 silent-skip ([] 반환, 본 check 책임 밖). 404 분기와 변별."""
+    monkeypatch.setattr(
+        check_bootstrap.subprocess,
+        "run",
+        lambda *a, **k: _gh_result(returncode=1, stderr="HTTP 403: Resource not accessible"),
+    )
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns == [], "403 = 점검 불가 → silent skip ([]), dead-gate 오탐 금지"
+
+
+def test_branch_protection_readiness_subprocess_failure_silent(monkeypatch) -> None:
+    """gh 미설치/timeout 등 예외 → silent [] (gh_ready gate 가 main() 호출 제어, 방어적 격리)."""
+
+    def _boom(*a, **k):
+        raise FileNotFoundError("gh not found")
+
+    monkeypatch.setattr(check_bootstrap.subprocess, "run", _boom)
+    warns = check_bootstrap.check_branch_protection_readiness("example", "test")
+    assert warns == [], "subprocess 예외 = silent [] (hook 비차단 격리)"

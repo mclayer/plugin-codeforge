@@ -286,6 +286,42 @@ function Stage-5-GithubSetup {
     return $true
 }
 
+# Stage 5b — Branch protection wire (CFP-2469 / ADR-132 §결정 1, .sh stage_5b_branch_protection 동형)
+# Stage 5 (workflow copy) 이후. operator gh auth 토큰. 403 → WARN graceful (bootstrap 비-abort).
+function Stage-5b-BranchProtection {
+    Log "Stage 5b: branch protection wire (CFP-2469 / ADR-132 — dead-gate 출고 차단)"
+    $wire = Join-Path $PluginRoot "scripts/wire-branch-protection.ps1"
+    if (-not (Test-Path $wire)) {
+        Log "  WARN: wire-branch-protection.ps1 부재 — skip (plugin 설치 확인)"
+        Mark-Step "stage_5b_branch_protection"
+        return $true
+    }
+    # consumer 형상 = project.yaml branch_protection.shape (default solo — solo deadlock 회피, AC-2)
+    $shape = "solo"
+    if (Test-Path ".claude/_overlay/project.yaml") {
+        $yaml = Get-Content ".claude/_overlay/project.yaml" -Raw
+        if ($yaml -match '(?m)^\s*shape:\s*(solo|team)') { $shape = $matches[1] }
+    }
+    $wireArgs = @("-Repo", "$script:Org/$script:Repo", "-Shape", $shape)
+    if ($DryRun) {
+        $wireArgs += "-DryRun"
+        Log "  (dry-run) pwsh -File $wire $($wireArgs -join ' ')"
+        Mark-Step "stage_5b_branch_protection"
+        return $true
+    }
+    # graceful: wire-* exit 3 (403/dead-gate) 은 bootstrap abort 사유 아님 (AC-3).
+    $wireOut = (& pwsh -File $wire @wireArgs 2>&1)
+    $wireRc = $LASTEXITCODE
+    foreach ($l in $wireOut) { Log "  $l" }
+    switch ($wireRc) {
+        0 { Log "  ✓ branch protection 배선 완료 (merge 차단력 충전)" }
+        3 { Log "  WARN: branch protection 미배선 (403 권한 부족 또는 정합 게이트 산출 0) — graceful degrade (AC-3, 비-abort)" }
+        default { Log "  WARN: wire-branch-protection.ps1 exit $wireRc — graceful (bootstrap 비-abort)" }
+    }
+    Mark-Step "stage_5b_branch_protection"
+    return $true
+}
+
 # Stage 6 — CFP-2250 결함1: 3-tier fallback (bash → PowerShell-native → ERROR). silent skip 제거.
 function Stage-6-Labels {
     Log "Stage 6: labels bootstrap"
@@ -378,6 +414,7 @@ $stages = @(
     @{name = "stage_3_overlay_scaffold"; fn = { Stage-3-OverlayScaffold }},
     @{name = "stage_4_settings_json"; fn = { Stage-4-SettingsJson }},
     @{name = "stage_5_github_setup"; fn = { Stage-5-GithubSetup }},
+    @{name = "stage_5b_branch_protection"; fn = { Stage-5b-BranchProtection }},
     @{name = "stage_6_labels"; fn = { Stage-6-Labels }},
     @{name = "stage_7_consumer_scripts"; fn = { Stage-7-ConsumerScripts }}
 )

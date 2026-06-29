@@ -15,6 +15,9 @@ CFP-103 (Phase 2a of CFP-96 Epic). 10 check (CFP-660 NEW check 10):
   8. consumer CODEOWNERS 정합 — 기존 (CFP-103)
   9. .claude/settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 등록 — CFP-127
   10. consumer .github/workflows/<name>.yml SHA / 핵심 line drift vs wrapper templates — NEW (CFP-660)
+  11. story_stakes overlay down-tier 거부 (확장-only schema-gate) — NEW (CFP-2432 / ADR-042 Amd16)
+  12. branch protection readiness — required_status_checks.contexts 미등록(dead gate) +
+      enforce_admins 미설정 검출 — NEW (CFP-2469 / ADR-132 §결정 8)
 
 Default non-blocking: 발견된 drift 는 WARN 으로만 출력 (stderr). exit 0. ADR-027 §결정 2 정합.
 
@@ -369,6 +372,79 @@ def check_story_stakes_overlay(yaml_path: Path) -> tuple[list[str], bool]:
         ])
         return (warns, True)
     return ([], False)
+
+
+# ----------------------------------------------------------- check 12 (CFP-2469)
+
+
+def check_branch_protection_readiness(org: str, repo: str, branch: str = "main") -> list[str]:
+    """check 12 (CFP-2469 / ADR-132 §결정 8) — branch protection readiness (dead-gate 검출).
+
+    consumer 게이트 workflow 가 파일로 깔려 PR 마다 돌지만, GitHub branch protection 의
+    required_status_checks.contexts[] 에 그 status check 가 등록돼야 merge 가 실제 차단된다.
+    미등록 = dead gate (차단력 0 — workflow 존재하나 merge 차단력 0). 본 check 가 그 상태를
+    검출·경고한다.
+
+    점검 2종 (WARN tier — 기존 check 의 advisory 관습 답습, ADR-027 §결정 2 default non-blocking):
+      1. required_status_checks.contexts[] 미등록 (또는 protection 자체 부재) → dead gate WARN.
+      2. enforce_admins 미설정 → admin 우회로 게이트 무력화 가능 WARN.
+
+    이 check 가 never-built branch-protection-drift-check.yml 의 drift 재감지 safety-net 대체
+    (ADR-132 §결정 9). read-only GET — wire-branch-protection.sh --inspect 와 동형 검증 경로.
+
+    Skip 조건 (org/repo 부재 또는 gh 미인증) — gh_ready gate 가 main() 에서 호출 제어.
+    """
+    warns: list[str] = []
+    # protection object 존재 여부 (부재 = dead gate)
+    try:
+        result = subprocess.run(
+            ["gh", "api", f"repos/{org}/{repo}/branches/{branch}/protection"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (subprocess.TimeoutExpired, Exception):
+        return []
+    if result.returncode != 0:
+        # 404 = protection 부재 (dead gate) / 403 = 권한 부족 (점검 불가) 구분
+        err = (result.stderr or "") + (result.stdout or "")
+        if "404" in err or "Branch not protected" in err:
+            return [
+                f"[bootstrap] WARN: {org}/{repo}@{branch} branch protection 부재 (dead gate — CFP-2469 / ADR-132)",
+                "           게이트 workflow 가 PR 마다 돌지만 required_status_checks 미등록 = merge 차단력 0",
+                "           → bash scripts/wire-branch-protection.sh --repo "
+                f"{org}/{repo} (operator org-admin gh auth 필요)",
+                "           → 또는 bash scripts/reapply-branch-protection.sh --repos "
+                f"{org}/{repo}",
+            ]
+        # 403 등 권한 부족/기타 = 점검 불가 (silent — 본 check 책임 밖)
+        return []
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, Exception):
+        return []
+    # 1. required_status_checks.contexts[] 등록 여부
+    rsc = data.get("required_status_checks", {}) or {}
+    contexts = rsc.get("contexts", []) or []
+    if not contexts:
+        warns.append(
+            f"[bootstrap] WARN: {org}/{repo}@{branch} required_status_checks.contexts 0개 (dead gate, CFP-2469)"
+        )
+        warns.append(
+            "           protection 활성이나 등록 context 0 = 게이트 통과 강제 0 (merge 차단력 부재)"
+        )
+        warns.append(
+            f"           → bash scripts/wire-branch-protection.sh --repo {org}/{repo}"
+        )
+    # 2. enforce_admins 설정 여부
+    ea = data.get("enforce_admins", {}) or {}
+    ea_enabled = ea.get("enabled", False) if isinstance(ea, dict) else bool(ea)
+    if not ea_enabled:
+        warns.append(
+            f"[bootstrap] WARN: {org}/{repo}@{branch} enforce_admins=false (admin 우회로 게이트 무력화 가능, CFP-2469)"
+        )
+        warns.append(
+            "           → wire-branch-protection.sh 가 enforce_admins=true 로 강화 (dead-gate 차단 핵심, REQ-2)"
+        )
+    return warns
 
 
 # ---------------------------------------------------------------------- check 4
@@ -1105,6 +1181,7 @@ def main(argv: list[str] | None = None) -> int:
         hook_warnings,    # CFP-127 NEW check 9
         drift_warnings,   # CFP-660 NEW check 10
         stakes_warnings,  # CFP-2432 NEW check 11 (story_stakes down-tier 거부)
+        check_branch_protection_readiness(org, repo) if gh_ready else [],  # CFP-2469 NEW check 12 (dead-gate 검출)
     ]
     findings_count = sum(1 for r in all_results if r)
     warnings = [line for r in all_results for line in r]
