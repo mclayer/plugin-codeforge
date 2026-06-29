@@ -836,7 +836,7 @@ Amendment 5 (CFP-1565, 2026-06-01) 가 I-7 (chief-author cross-ADR scope/fact cl
 동인 = ADR-119 (검증-후-단언) 의 기계 자동화 + CFP-2457 에서 이 클래스의 drift 가 ≥4건 실발생 [verified: Story §2.2 PL 직접 ground-truth 검증]:
 
 1. ADR-039 inline whitelist entry "5번째↔6번째" mis-cite — 실제 = closed 4-entry [verified: ADR-039 §결정 2 = closed 4-entry enumeration, 5번째 추가 = ADR amendment 의무].
-2. ADR-052 D3 enum 리터럴 `<1..6>` stale — 실 리터럴 = `<1|2|3|4|5|6>` (pipe 구분) [verified: ADR-052:357,423].
+2. ADR-052 D3 ProactiveCheckPacket enum 리터럴 stale — CFP-2457 시점 형태 `<1..6>` → 현 정본 = `<1|2|3|4|5|6|7|8>` [verified: ADR-052 content-anchor `touchpoint: <1|2|3|4|5|6|7|8>` = L146 본문 + L610 Amendment 5 verbatim 인용, CFP-2464 Amendment 16 이 #7/#8 누락분 정정 확장]. **메타-dogfood (본 Amendment 자기 self-instance)**: 본 §case 2 의 초안이 `<1|2|3|4|5|6>` (6-value stale) + line-number 직접 cite (`:357,423` — 실제 L357 = Amendment 1 텍스트 / L423 = ProactiveCheckPacket schema 텍스트, enum 부재) 를 보유했고 설계리뷰 dual-peer 가 이를 포착 — 즉 본 감사기가 잡으려는 enum-value drift + line-number cite drift 가 감사기 ADR 자기 본문에도 실재했다. 정정 = content-anchor 인용 (line-number 직접 cite 제거 — U-2 결정과 본문 일치). 감사기 fixture intent 무손상 (Phase 2 TC-2 = 역사적 `<1..6>` stale 형태 대상).
 3. ADR-077 존재하지 않는 "I-4" ID 인용 — 실제 I-* invariant ID 0개, "I-4" 는 본 ADR-068 소유 (I-1..I-8) [verified: ADR-077 grep I-4 = 0 / ADR-068 본문]. **이 케이스 자체가 I-7 위반 인스턴스** (다른 ADR 의 ID 소유를 미검증 인용).
 4. citation 줄번호 오기 — line-number cite drift (코드/문서 변경 시 자동 shift).
 
