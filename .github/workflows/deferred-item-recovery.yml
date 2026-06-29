@@ -1,0 +1,121 @@
+name: deferred-item-recovery
+# CFP-2470 / ADR-128 Amendment 1 — deferred-item 회고 무음 drop 방지 게이트 (warning-tier).
+#
+# 목적: retro/회고 파일의 서사에서 "미해결·연기·후속" 표시(deferred 판정)된 항목 각각을
+#       (①추적 Issue 로 전환) 또는 (②관찰-only + 사유명시) 로 명시 판정해서
+#       silent drop(무음소각) 을 차단. ADR-128 Amd1 (CFP-2470) 강제.
+#
+# 구조:
+#   - warning-tier: lint job 검출 시 경고만 (continue-on-error, merge 비차단).
+#   - branch protection 6-tuple 무변경 (required check 신설 0 — ADR-127 ratchet).
+#   - cross-repo PAT (CODEFORGE_CROSS_REPO_PAT) graceful skip: PAT 부재 시 스크립트가
+#     exit 0 fail-safe 하므로 별도 if-conditional 불요 (패턴: retro-mandatory.yml L289-292).
+#   - retro 파일 후보 부재 시 graceful (스크립트가 SETUP exit 2 안 나게, 후보 0개면 skip).
+#
+# Firsthand 답습 패턴:
+#   - `.github/workflows/deferred-followup-reconcile.yml` (warning-tier continue-on-error).
+#   - `.github/workflows/retro-mandatory.yml` (cross-repo PAT graceful skip L289-292).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deferred-item-recovery:
+    name: deferred-item 무음 drop 검출 (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pyyaml
+        run: pip install pyyaml
+
+      - name: Detect retro file candidates
+        id: retro_files
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          set -uo pipefail
+          # cross-repo PAT 부재 시 graceful skip (retro-mandatory.yml L289-292 패턴)
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::notice::CODEFORGE_CROSS_REPO_PAT not configured — skipping deferred-item-recovery check"
+            echo "files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # internal-docs repo 에서 PR title 의 CFP-NNN 매칭 retro 파일 검색
+          # 파일명 패턴: cfp-NNN, EPIC-RESULTS-CFP-NNN, <date>-cfp-NNN 등 (case-insensitive)
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          STORY_KEY=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || echo "")
+
+          if [ -z "$STORY_KEY" ]; then
+            echo "::notice::No CFP-NNN found in PR title — skipping check"
+            echo "files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          STORY_NUM=$(echo "$STORY_KEY" | grep -oE '[0-9]+')
+          if [ -z "$STORY_NUM" ]; then
+            echo "files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Fetch retro files from internal-docs wrapper/retros/
+          RETRO_HITS=$(gh api repos/mclayer/codeforge-internal-docs/contents/wrapper/retros \
+            --jq "[.[] | select(.name | test(\"cfp-${STORY_NUM}\"; \"i\")) | .path] | join(\",\")" 2>/dev/null || echo "")
+
+          if [ -z "$RETRO_HITS" ]; then
+            echo "::notice::No retro files found for CFP-${STORY_NUM} in internal-docs — check not applicable"
+            echo "files=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "files=$RETRO_HITS" >> $GITHUB_OUTPUT
+          echo "::notice::Found retro files: $RETRO_HITS"
+
+      - name: Run check-deferred-item-recovery.sh (warning, 비차단)
+        if: steps.retro_files.outputs.files != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          set -uo pipefail
+          RETRO_FILES="${{ steps.retro_files.outputs.files }}"
+          IFS=',' read -ra FILES <<< "$RETRO_FILES"
+
+          # retro 정본은 internal-docs cross-repo — 로컬 plugin-codeforge checkout 에 없으므로
+          # Contents API 로 내용을 /tmp 로 내려받은 뒤(local file-input) check 실행.
+          # (check 스크립트는 로컬 파일 경로 입력 계약 — cross-repo fetch 는 workflow 책임.)
+          mkdir -p /tmp/deferred-retros
+          LOCAL_FILES=()
+          for FILE in "${FILES[@]}"; do
+            [ -z "$FILE" ] && continue
+            BASENAME=$(basename "$FILE")
+            DEST="/tmp/deferred-retros/$BASENAME"
+            if gh api "repos/mclayer/codeforge-internal-docs/contents/${FILE}" \
+                 --jq '.content' 2>/dev/null | base64 -d > "$DEST" 2>/dev/null && [ -s "$DEST" ]; then
+              LOCAL_FILES+=("$DEST")
+            else
+              echo "::warning::retro 파일 fetch 실패: $FILE (graceful skip)"
+            fi
+          done
+
+          if [ "${#LOCAL_FILES[@]}" -eq 0 ]; then
+            echo "::notice::검사 가능한 retro 파일 0개 (fetch 전부 실패 또는 후보 부재) — graceful"
+            exit 0
+          fi
+
+          EXIT_CODE=0
+          echo "::group::deferred-item-recovery check"
+          bash scripts/check-deferred-item-recovery.sh "${LOCAL_FILES[@]}" || EXIT_CODE=$?
+          echo "::endgroup::"
+          exit $EXIT_CODE
