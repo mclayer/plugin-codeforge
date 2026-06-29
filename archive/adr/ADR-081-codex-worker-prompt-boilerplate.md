@@ -89,7 +89,7 @@ related_stories:
   - CFP-2458 # Amendment 9 — 신규 §결정 D10 merge-time severity rubric (review-lane verdict 닫힌 영역 merge-block impact ground truth 재정의, ADR-052 touchpoint #7 sibling). Epic CFP-2457 Story A.
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref + Amendment 15 (CFP-2458) touchpoint #7 merge-time gate)
-  - ADR-077  # Amendment 9 (CFP-2458) — I-4 fact-check marker 무검증 승격 금지 (critic severity hypothesis→verified 확정 절차 reuse)
+  - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic severity hypothesis→verified 확정 절차 reuse)
   - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
   - ADR-082  # write-time self-write verification mandate (D5 declaration-only retain 선례 super-class)
   - ADR-058  # ADR sunset criteria mandate (§결정 1/2/3 정합)
@@ -984,7 +984,7 @@ merge-time adversarial gate (touchpoint #7) finding 의 P0/P1/P2 severity 는 re
 
 #### D10.a — critic severity = `[hypothesis]`, PL 확정 절차
 
-critic 의 P0/P1/P2 발화 자체는 `[hypothesis]` 지위 (ADR-077 I-4 reuse). Orchestrator 확정 절차:
+critic 의 P0/P1/P2 발화 자체는 `[hypothesis]` 지위 (ADR-077 §결정 7 정보 무결성 invariant reuse). Orchestrator 확정 절차:
 
 1. **verify-before-trust** (ADR-070 Amendment 9 merge-time scope) — finding evidence(file:line) ground truth Read verify. mismatch → reject (P0 발화여도 머지 보류 trigger 아님, false-positive tally).
 2. **D6 bidirectional calibration** (over-rate 금지 + security-relevant under-rate 금지) — Amendment 1 §결정 D6 정합. critic severity > 실제 merge-block impact → down-calibrate / security-relevant under-rate → up-calibrate.
