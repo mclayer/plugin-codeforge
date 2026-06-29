@@ -3167,7 +3167,7 @@ entries:
     introduced_date: 2026-06-29      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-091              # declaration source — Amendment 3 consumer scope 승격 + INV-R6 + INV-5 application-BC 확장
     carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
-    spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.5 Perf Baseline N/A)
+    spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.3 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
       threshold: 3                  # ADR-060 §결정 19 standard default

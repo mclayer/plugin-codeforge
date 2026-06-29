@@ -226,22 +226,19 @@ def _check_lexicon_drift(relations, path):
         defs = {e.get("definition") for e in entries}
         if len(defs) < 2:
             continue  # 같은 의미 중복 표기 = collision 아님 (의미 동일).
-        # homonym explicit-separate 선언 여부: 모든 entry 가 homonym + 상호 conflict_with 참조.
+        # homonym explicit-separate 선언 여부 = reciprocal 정합 (CR-F1 — 단순 presence 아닌 상호 참조).
+        #   ADR-091 §결정3 전제: 동음이의 충돌쌍은 각 의미를 별 entry + relation:homonym + **상호**
+        #   conflict_with 로 명시 분리. 단일 surface-token group 의 정상 separate = 모든 entry 가
+        #   homonym + conflict_with 가 같은 group 의 term(여기선 공유 surface = term 자신)을 가리킴.
+        #   conflict_with 가 group 밖 비-상호 term(phantom/오타)을 가리키면 separate 의도 미성립
+        #   → collision-candidate fall-through (presence-only 거짓-부정 차단, structure-check only).
         all_homonym = all(e.get("relation") == "homonym" for e in entries)
-        terms_in_group = {term}
         reciprocal = all_homonym and all(
-            isinstance(e.get("conflict_with"), str)
-            and e.get("conflict_with") in (terms_in_group | {term})
-            or (isinstance(e.get("conflict_with"), str) and e.get("conflict_with") == term)
+            isinstance(e.get("conflict_with"), str) and e.get("conflict_with") == term
             for e in entries
         )
-        # 단일 term group 의 explicit-separate: 각 entry conflict_with 가 같은 term 을 가리키며
-        # relation=homonym (동음이의 쌍이 같은 표기를 공유하는 정상 2-entry separate).
-        if all_homonym and all(
-            isinstance(e.get("conflict_with"), str) and e.get("conflict_with").strip()
-            for e in entries
-        ):
-            continue  # 정상 explicit-separate homonym pair — collision 아님.
+        if reciprocal:
+            continue  # 정상 explicit-separate homonym pair (상호 conflict_with) — collision 아님.
         collision_terms.append(term)
 
     if collision_terms:

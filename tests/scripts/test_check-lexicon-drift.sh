@@ -19,12 +19,15 @@
 #   discriminating separation.
 #
 # Mutation testing 1:1 주석표 (Change Plan §8.2 — 서로 다른 sub-fixture set RED 의무):
-#  - Mutation-collision (collision (a) 분기 제거)            → F-collision PASS 면 RED
-#  - Mutation-cite      (citation-presence (b) 분기 제거)    → F-missing-cite PASS 면 RED
-#  - Mutation-FO        (fail-open exit0 → exit1 강제)       → F-failopen-absent FAIL 면 RED
-#                        (+ F0-valid GREEN 유지 = fail-open 마커 "data-absence" ≠ PASS 마커
-#                           "lexicon drift OK", 두 set 분리)
-#  - Mutation-setup     (setup exit2 → exit0)                → F-setup-* exit≠2 면 RED
+#  - Mutation-collision    (collision (a) 분기 제거)            → F-collision PASS 면 RED
+#  - Mutation-cite         (citation-presence (b) 분기 제거)    → F-missing-cite PASS 면 RED
+#  - Mutation-reciprocity  (reciprocal 게이트 → presence-only)  → F-collision-bad-ref PASS(SURVIVE) 면 RED
+#                          (CR-F1 — conflict_with 상호참조 검사를 truthiness 만으로 되돌리면 phantom
+#                           참조 homonym 쌍이 거짓-부정으로 collision 검출 누락)
+#  - Mutation-FO           (fail-open exit0 → exit1 강제)       → F-failopen-absent FAIL 면 RED
+#                          (+ F0-valid GREEN 유지 = fail-open 마커 "data-absence" ≠ PASS 마커
+#                             "lexicon drift OK", 두 set 분리)
+#  - Mutation-setup        (setup exit2 → exit0)                → F-setup-* exit≠2 면 RED
 #
 # Exit code:
 #  0 = all fixtures pass (discriminating test validates lint)
@@ -187,6 +190,43 @@ EOF
 run_fixture_marker "F-missing-cite" "1" "(b)citation-absent" "homonym entry(position) usage_citations 키 부재 = citation-absent exit1 (presence-check only)" "$R"
 
 # ═════════════════════════════════════════════════════════════════════════════
+# F-collision-bad-ref (a, reciprocity): 같은 term 2-entry 가 둘 다 relation:homonym 이고 각각
+#   usage_citations 보유(→ (b) 미발동)이나 conflict_with 가 같은 surface-token(term=book)을 가리키지
+#   않고 group 밖 phantom/비-상호 term 을 가리킴 → explicit-separate 의도 미성립 → exit 1 +
+#   "(a)collision-candidate". presence-only(conflict_with 비어있지 않음) 만 보던 버그(CR-F1)에서는
+#   (잘못) PASS(exit0) 났음 — reciprocal 게이트 배선 후에만 collision 검출. discriminating fixture.
+#   kill Mutation-reciprocity. reciprocal 게이트를 presence-only(truthiness) 로 되돌리면 본 fixture
+#   가 SURVIVE(exit0=PASS) → RED.
+# ═════════════════════════════════════════════════════════════════════════════
+R=$(mktemp -d)
+write_lexicon "$R" <<'EOF'
+---
+kind: lexicon_relation
+title: vocabulary lexicon
+area: vocabulary
+topic_slug: lexicon
+status: active
+updated: 2026-06-29
+relations:
+  - term: book
+    relation: homonym
+    conflict_with: nonexistent_phantom_term
+    usage_citations:
+      - "engine/src/order/book.py:10"
+    definition: 호가창(order book)
+  - term: book
+    relation: homonym
+    conflict_with: another_phantom
+    usage_citations:
+      - "engine/src/library/catalog.py:42"
+    definition: 장부(회계 기록)
+---
+
+# Vocabulary lexicon
+EOF
+run_fixture_marker "F-collision-bad-ref" "1" "(a)collision-candidate" "homonym 쌍이나 conflict_with 가 group 밖 phantom 참조(비-상호) = explicit-separate 미성립 collision-candidate exit1 (presence-only 버그면 거짓-부정 PASS)" "$R"
+
+# ═════════════════════════════════════════════════════════════════════════════
 # F-failopen-absent: lexicon.md 1개도 부재(root 하위 미생성) → exit 0 + "data-absence" honest ::notice::
 #   kill Mutation-FO (fail-open exit0 → exit1 강제 시 FAIL=RED). exit-code-only assert 금지 —
 #   "data-absence" 마커로 assert(§8.4 load-bearing discriminating: fail-open ≠ valid-PASS).
@@ -304,13 +344,15 @@ if [ "$FAIL" -eq 0 ]; then
   echo ""
   echo "Mutation Testing Documentation (Change Plan §8.2 — 서로 다른 sub-fixture set RED 의무):"
   echo "────────────────────────────────────────────────────────────────────"
-  echo "Mutation-collision (collision (a) 분기 제거)          → F-collision PASS 면 RED"
-  echo "Mutation-cite      (citation-presence (b) 분기 제거)  → F-missing-cite PASS 면 RED"
-  echo "Mutation-FO        (fail-open exit0 → exit1 강제)     → F-failopen-absent FAIL 면 RED"
-  echo "                    (+ F0-valid GREEN 유지 = fail-open 마커 'data-absence' ≠ PASS 마커"
-  echo "                       'lexicon drift OK', 두 set 분리 — §8.4 discriminating separation)"
-  echo "Mutation-setup     (setup exit2 → exit0)              → F-setup-* exit≠2 면 RED"
-  echo "                    (F-setup-malformed / F-setup-schema-enum / -noterm / -norelation)"
+  echo "Mutation-collision   (collision (a) 분기 제거)          → F-collision PASS 면 RED"
+  echo "Mutation-cite        (citation-presence (b) 분기 제거)  → F-missing-cite PASS 면 RED"
+  echo "Mutation-reciprocity (reciprocal 게이트 → presence-only) → F-collision-bad-ref PASS(SURVIVE) 면 RED"
+  echo "                      (CR-F1 — conflict_with 상호참조 검사 누락 시 phantom 참조 거짓-부정)"
+  echo "Mutation-FO          (fail-open exit0 → exit1 강제)     → F-failopen-absent FAIL 면 RED"
+  echo "                      (+ F0-valid GREEN 유지 = fail-open 마커 'data-absence' ≠ PASS 마커"
+  echo "                         'lexicon drift OK', 두 set 분리 — §8.4 discriminating separation)"
+  echo "Mutation-setup       (setup exit2 → exit0)              → F-setup-* exit≠2 면 RED"
+  echo "                      (F-setup-malformed / F-setup-schema-enum / -noterm / -norelation)"
   echo ""
   exit 0
 else
