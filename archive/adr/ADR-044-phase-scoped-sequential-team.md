@@ -45,6 +45,21 @@ amendment_log:
     direction: strengthening  # recommendation tier 추가 = 강화 방향
     sunset_justification: |
       CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence root cause 한 측 (chief author monolithic span = wide drift window) 의 root cause 직접 축소 carrier. Sub-CFP A/B/C 가 race detection/claim mechanism complement, 본 Sub-CFP D = race window 자체 축소 (root cause 직접 축소). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (multi-step pattern recommendation + team-spec yaml schema additive), 약화 0건. carrier_story CFP-1438 = ADR-039 Amendment 5 + ADR-044 Amendment 3 paired sibling amendment 2-set (axis disjoint).
+  - amendment: 4
+    date: 2026-06-30
+    cfp: CFP-2471
+    summary: |
+      §결정 10 신설 (lane verification floor 정합 — Codex ad-hoc ceiling 보존 명문). Epic CFP-2468 Track W / W3 (lane 검증 균질성 강제) carrier. §결정 2 (Codex ad-hoc-only / default roster = PL + Claude worker) 위에 얹히는 정합 amendment — 검증 floor = ≥1 independent peer (SoD: implementer ≠ certifier), Codex 는 floor 아닌 ceiling 임을 명문화. 4 정합 결정:
+      (a) 검증 floor = ≥1 independent peer (SoD). floor 충족자 = ClaudeReviewAgent (default roster 상존). Codex = cross-model diversity ceiling — §결정 2 ad-hoc-only 와 disjoint·무충돌 (floor ≠ Codex 강제).
+      (b) dual-peer 2→1 degrade = honest (ADR-094 §결정 1 (c) 동형 — degraded mode 작동 + 가시 marker/사유 강제 기록, silent 금지). silent 2→1 = 게이트 차단 대상.
+      (c) review-pl-base.md:574 "CodexReviewAgent 미설치 시 lane 진입 불가·SKIPPED 불허" = "**silent degrade 금지**" 의미로 재해석 (single-peer honest degrade = 정식 floor 충족, 진입 불가 아님). team-spec-code-review.yaml:33-39 (default single-peer, Codex user_request_only) 와의 firsthand 문서 모순을 single-peer floor + Codex ceiling 방향으로 정합.
+      (d) concept doc `docs/domain-knowledge/concept/lane-verification-floor.md` (CFP-2471 Phase 1 landed) + (Phase 2 예정) review-verdict-v4 degrade marker (additive MINOR) cross-ref. 축③ deputy/role:dev fan-out enforcement (PreToolUse Agent matcher) = 정확 matcher 토큰 + CLI 런타임 발동 미확정 (요구사항리뷰 P2) → enforcement 활성 채택 전 empirical 확인 전제조건 (settled 단정 금지).
+      §결정 1 phase-scoped sequential team lifecycle invariant 무변경 + §결정 2 dispatch_mode SSOT 무변경 (재해석·정합만, Codex ad-hoc-only 약화 0건). Phase 2 mechanical wire (review-pl-base 정합 + verdict-v4 MINOR bump + check-verification-floor / check-lane-evidence 축③ + workflow + hook) = 별 carrier (본 Amendment = Phase 1 declarative 정합 declare).
+    affected_sections: ["§결정 10 (신설 — lane verification floor 정합)", "§결정 2 (재해석 cross-ref, 본문 무변경)"]
+    breaking: false  # 재해석·정합만 (Codex ad-hoc-only 결정 약화 0건), review-pl-base/team-spec 모순 해소 방향만 명문
+    direction: strengthening  # 검증 floor 명문화 + silent degrade 차단 = 강화 방향
+    sunset_justification: |
+      mctrader (첫 비-dogfood consumer) 데뷔 감사 evidence — fidelity-critical 코드 2-peer 없이 self-audit 머지 + dual-peer silent degrade + deputy fan-out 미spawn. "검증이 가장 필요한 곳에서 빠지는" 동일 class 결함의 강제력 복구 (Track M 교정 토대). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (floor 명문 + honest degrade + 문서 모순 정합), 약화 0건. §결정 2 Codex ad-hoc-only 는 무손상 (floor=Claude peer, Codex=ceiling 으로 disjoint axis 확정).
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
@@ -53,6 +68,9 @@ related_adrs:
   - ADR-035  # Epic architecture SSOT (D2 phase-scoped agent teams 의 implementation level)
   - ADR-039  # Orchestrator subagent default (default subagent context vs enabled context 분기)
   - ADR-040  # Worktree convention (TeamCreate / Delete + worktree integration 의존)
+  - ADR-094  # honest degrade — silent (a) 거부 / degraded+warning (c) 채택 (Amendment 4 §결정 10 dual-peer degrade 동형 anchor)
+  - ADR-119  # research-before-claims Amd 2 — 게이트 verdict = outcome ground-truth (Amendment 4 self-audit verdict 무효 근거)
+  - ADR-128  # 완료 단계 정식화 — local-only warning-tier + behavioral precondition (Amendment 4 W3 게이트 tier 상속)
 related_files:
   - docs/orchestrator-playbook.md
   - docs/consumer-guide.md
@@ -111,7 +129,7 @@ is_transitional: false
 5. **5 권장 패턴 measurable verification 미정식화** — Anthropic 권장 패턴 (Specialization / Parallelization / Adversarial / Cross-layer / Escalation) 이 codeforge lane 매핑 명시되었으나 (Story §2.2), AC-level metric 미정의.
 6. **default subagent context vs agent teams enabled context 분기 fallback 미정의** — ADR-039 default invariant 와 본 ADR 의 enabled context 활용 사이 동작 fallback 부재.
 
-## 결정 (9)
+## 결정 (10)
 
 ### 결정 1 — Phase-scoped sequential team lifecycle (ADR-035 D2 implementation)
 
@@ -356,6 +374,49 @@ teammates:
 - Sub-CFP A/B/C (CFP-1437/1436/1435) 3-layer race detection/claim complement evidence (각 amendment_log audit trail)
 - ADR-039 §결정 17 disjoint axis pair verify (orchestrator-side ↔ team-spec yaml)
 - §결정 1 / §결정 7 / §결정 8 invariant 무영향 verify
+
+### 결정 10 — lane verification floor 정합 (Codex ad-hoc ceiling 보존 명문) — Amendment 4 (CFP-2471, Epic CFP-2468 Track W / W3)
+
+**배경**: Epic CFP-2468 Track W3 (lane 검증 균질성 강제) 가 codeforge 의 **검증 강도 floor** 개념을 명문화한다. 동인 = mctrader (첫 비-dogfood consumer) 데뷔 감사 — fidelity-critical 코드가 2-peer 없이 self-audit 단독 머지, dual-peer 가 Codex 미가용 시 silent single-peer degrade, 설계 deputy / sonnet 구현자 fan-out 미spawn. 이 셋은 "검증이 가장 필요한 곳에서 빠지는" 동일 class 결함이다. concept SSOT = `docs/domain-knowledge/concept/lane-verification-floor.md` (CFP-2471 Phase 1 landed). 본 §결정 10 = §결정 2 (Codex ad-hoc-only) 와의 **정합 명문** — §결정 2 본문 무변경, 재해석·cross-ref 만.
+
+**(a) 검증 floor = ≥1 independent peer (SoD), Codex 는 floor 아닌 ceiling**
+
+검증 floor 의 본질 = **implementer ≠ certifier** (separation of duties — SLSA two-person review / four-eyes). floor 충족자 = ClaudeReviewAgent (review lane default roster 상존, §결정 2). Codex 는 cross-model diversity 이득을 더하는 **ceiling** (2nd peer) — §결정 2 가 Codex review 자동발동을 `dispatch_mode: user_request_only` ad-hoc-only 로 두는 것과 **disjoint·무충돌**. "검증 floor 강제"를 "Codex 강제"로 해석하면 §결정 2 위반이자 사용자 directive (2026-05-08 "codex review… codeforge가 임의로 수행해서는 안된다") 오독. floor=Claude peer 가 정설.
+> source: SLSA v1.0 levels (https://slsa.dev/spec/v1.0/levels) — two-person review / provenance attestation, implementer ≠ certifier.
+
+**(b) dual-peer 2→1 degrade = honest, ≠ silent, ≠ skip**
+
+2nd peer (Codex) 미가용 시 single-peer (Claude) 로 degrade 는 정상 경로 (floor 는 여전히 충족 — (a)). 단 [ADR-094](ADR-094-consumer-legacy-version-fallback-policy.md) §결정 1 동형 — (a) silent degraded 거부 (silent harm) / (c) degraded mode 작동 + **가시 marker + 사유 강제 기록** 채택. silent 2→1 (표식 없는 degrade) = 게이트 차단 대상. degrade ≠ skip ≠ 진입불가.
+> source: ADR-094 §결정 1 (archive/adr/ADR-094-...:65-78) — (c) hybrid grace = degraded mode + warning 보고 의무, silent harm (a) 거부.
+
+**(c) review-pl-base.md:574 문서 모순 정합 — "진입불가" → "silent degrade 금지" 재해석**
+
+firsthand 문서 모순: `plugins/codeforge-review/templates/review-pl-base.md:573-574` ("CodexReviewAgent 미설치 시 lane 진입 불가·`SKIPPED` 불허") ↔ `templates/team-spec-code-review.yaml:33-39` (`spawn_mode: conditional` / `activation_condition: user_explicit_request` / `dispatch_mode: user_request_only`, default 2-teammate single-peer). 전자는 Codex 를 필수워커로 (degrade 금지), 후자는 ad-hoc ceiling 으로 본다. **정합 방향 = single-peer floor + Codex ceiling (team-spec 방향)** — review-pl-base:574 의 "진입불가·SKIPPED 불허"는 "**silent degrade 금지**"로 재해석. single-peer honest degrade 는 진입불가가 아니라 정식 floor 충족. (이렇게 정합해야 (a) floor=Claude peer + §결정 2 Codex ad-hoc-only 무충돌. 반대 방향 (b) dual-peer 필수 유지 = consumer Codex 미설치 시 review lane 전면 마비 + §결정 2 정면 위배 → 거부.) review-pl-base.md 실 문구 정합 = Phase 2 carrier.
+
+**(d) lane별 floor 차등 + 축③ fan-out enforcement 의 미확정 전제조건**
+
+- **lane별 floor 차등 허용**: security lane floor 는 ≥1 peer 보다 높음 — packet 에 1차 native layer (Dependabot / CodeQL / Secret scanning / Push protection) inline + dependency manifest 필수 (`ClaudeReviewAgent.md:48`). 타 review lane (design / code / requirements-review) = 균일 ≥1 peer floor.
+- **축③ deputy/role:dev fan-out 관측·강제 의 layer 분리**: 관측 baseline (SubagentStart hook + `check-lane-evidence.sh` 축③ 확장 lint) = block 불가 platform fact 라 항상 관측-only. 강제 (PreToolUse `Agent` matcher `permissionDecision:"deny"`) = block 가능 layer. **단 — 요구사항리뷰 P2 carry (확인 불가/추정)**: PreToolUse spawn-deny 의 (i) 정확 matcher 토큰 (`Agent` (구 `Task` 아님)) 과 (ii) CLI 런타임 실 발동은 **empirical 미확정**. block 능력·방향 자체는 verified (concept `orchestrator-runtime-hook-enforcement.md:49` + ADR-039), 그러나 정확 토큰·CLI 발동은 documented claim 이지 empirical 검증 미완. 따라서 enforcement layer 의 **활성 채택은 전제조건 2개 (정확 토큰 확정 + CLI 런타임 empirical 확인) 통과 후로 보류** — Phase 2 에서 이 전제 미충족 시 관측-only baseline 만 활성, enforcement 는 정의만 하고 미활성. settled 사실로 단정 금지 (ADR-119 firsthand).
+> source (platform fact): concept `docs/domain-knowledge/concept/orchestrator-runtime-hook-enforcement.md:45-50` — SubagentStart=block 불가(관측만) / PreToolUse Agent matcher=block 가능. (정확 토큰·CLI 런타임 = 확인 불가/추정, empirical 검증 미완.)
+
+**(e) degrade marker schema cross-ref (Phase 2 carrier)**
+
+축② degrade 가시화·강제기록의 marker = `docs/inter-plugin-contracts/review-verdict-v4.md` verdict packet 확장 (additive MINOR — 현 v4.14, 8 verdict-level optional bool field + findings[].type closed-enum, additive 패턴 확립). 정확 schema (verdict-level bool `dual_peer_degrade_declared` 권장 / `peer_degrade` 3-key block `peer_count`·`degrade_reason`·`degrade_acknowledged` 대안) = Change Plan §3 결정, 실 MINOR bump = Phase 2 carrier. review-verdict-v4 = canonical 단일 (sibling sync 폐지 — ADR-118 D5).
+
+**불변 보존 (약화 0건)**:
+- §결정 1 phase-scoped sequential team lifecycle invariant 무변경.
+- §결정 2 dispatch_mode SSOT 무변경 — Codex `user_request_only` ad-hoc-only 약화 0건. 본 §결정 10 = floor=Claude peer / Codex=ceiling 으로 §결정 2 와 disjoint axis 확정 (재해석·정합만).
+- review lane default roster = PL + Claude worker 2-teammate 무변경. 거절된 대안 B (default 3-teammate Codex 포함) 재확인 거부.
+- branch protection 6-tuple 무변경 + warning-tier 상속 (ADR-128). W3 거버넌스 게이트 중 local-only 부분은 warning-tier + behavioral precondition.
+
+**Phase 분리**: 본 §결정 10 = Phase 1 declarative 정합 declare. Phase 2 mechanical wire = review-pl-base:574 실 문구 정합 + verdict-v4 degrade marker MINOR bump + `scripts/check-verification-floor` (축①/②) + `check-lane-evidence.sh` 축③ 확장 (stale roster 정정 → 현 6 permanent + <6 silent SKIP → WARN + shape-aware roster) + warning-tier workflow + (전제 통과 시) PreToolUse hook. 별 carrier.
+
+**Verification evidence**:
+- §결정 2 본문 무변경 verify (Codex ad-hoc-only 약화 0건 — disjoint axis 정합).
+- ADR-094 §결정 1 (c) honest degrade 동형 verify (archive/adr/ADR-094-...:65-78 직접 Read).
+- firsthand 문서 모순 verify (review-pl-base.md:573-574 ↔ team-spec-code-review.yaml:33-39 직접 Read).
+- check-lane-evidence.sh:196 stale roster verify (구 이름 ↔ 현 6 permanent `plugins/codeforge-design/CLAUDE.md:40-45` 직접 Read 대조).
+- matcher P2 미확정성 honest 표기 verify (settled 단정 0건 — (d) 전제조건으로 명시).
 
 ## 결과
 
