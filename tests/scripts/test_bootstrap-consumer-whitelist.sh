@@ -10,7 +10,7 @@
 #  - TC-2: idempotent 2회 실행 byte-identical
 #  - TC-3: fail-safe degrade (whitelist 부재 → 7종 fallback + WARN + exit 0)
 #  - TC-4: parity (dry-run 산출 basename == whitelist entry)
-#  - TC-5: 게이트 본체·whitelist 무변경 diff (base SHA ↔ HEAD)
+#  - TC-5 retired (CFP-2451): scope-guard 가 whitelist 성장 차단(latent defect), TC-7 중복 → 제거
 #  - TC-6: .ps1 parity (pwsh 가용시) + 정적 검사(미가용시)
 #  - TC-7: whitelist 신규 entry 추가 시 자동배포 (코드수정 0)
 #
@@ -20,7 +20,6 @@
 #  - Mutation-idempotent     ($dst 가드 제거) → TC-2 RED
 #  - Mutation-degrade-warn   ([WARN] 마커 제거) → TC-3 RED (exit0만으로 non-discriminating)
 #  - Mutation-no-parity-check(basename set 비교 로직 제거) → TC-4 RED
-#  - Mutation-diff-change    (게이트/whitelist 파일 수정) → TC-5 RED
 #  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 31 ≠ ps1산출 7)
 #  - Mutation-no-degrade     (whitelist 1개 추가 → 미포함) → TC-7 RED
 #  - Mutation-empty-check    (empty-check 제거 → 0종 fallback 미실행) → TC-8 RED
@@ -339,73 +338,10 @@ test_tc4_parity() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-5: 게이트 본체·whitelist 무변경 (diff-empty) [FIX-CR-003 동적 base]
-# Assertion: git diff base...HEAD --name-only 에서 scripts/bootstrap-consumer.* 및
-#           templates/github-workflows/*, templates/scripts/consumer_applicable_workflows.txt 외
-#           다른 파일 미포함 (workflow/whitelist 본체 미변경). TC-6 스크립트 2종만 변경.
-# base ref = merge-base HEAD origin/main (없으면 origin/main, 둘다 없으면 FAIL-base-unresolvable)
-# Mutation-diff-change: 게이트/whitelist 파일 수정 시 실패 → RED
+# TC-5 retired (CFP-2451): scope-guard("이 PR은 게이트 스크립트만 바꿨다") 가 영구 테스트로
+# 잘못 남아 whitelist 성장(정당한 entry 추가) 을 영구 차단(latent defect, TC-7 자동배포 설계와 모순).
+# whitelist-add invariant 는 TC-7 이 fixture 기반으로 완전 검증(Mutation-no-degrade 포함) → 중복 0.
 # ─────────────────────────────────────────────────────────────────────────────
-test_tc5_gateway_whitelist_unchanged() {
-  local test_name="TC-5-gateway-whitelist-unchanged"
-
-  cd "$REPO_ROOT"
-
-  # 동적 base SHA 결정 (merge-base 우선, 실패시 origin/main)
-  local base_ref
-  base_ref="$(git merge-base HEAD origin/main 2>/dev/null)" || base_ref=""
-  if [ -z "$base_ref" ]; then
-    base_ref="$(git rev-parse origin/main 2>/dev/null)" || base_ref=""
-  fi
-
-  # base ref 해소 불가 = 동적 base 부재 (shallow-checkout 등) → FAIL (silent pass 차단, FIX-CR-003)
-  if [ -z "$base_ref" ]; then
-    echo "✗ FAIL: $test_name"
-    echo "  Base ref 해소 불가 (shallow checkout? fetch-depth:0 필요). git diff 불가능."
-    echo "  silent pass 를 피하기 위해 FAIL 처리."
-    FAIL=$((FAIL+1))
-    return 1
-  fi
-
-  # 파일 목록: diff base...HEAD (현재 branch 모든 변경)
-  local diff_files
-  diff_files=$( git diff "$base_ref"...HEAD --name-only 2>/dev/null )
-
-  if [ $? -ne 0 ]; then
-    echo "✗ FAIL: $test_name"
-    echo "  git diff 실패 (base=$base_ref 도달 불가?). silent pass 차단."
-    FAIL=$((FAIL+1))
-    return 1
-  fi
-
-  # templates/github-workflows/ 안 파일 변경 여부
-  local wf_changed=0
-  echo "$diff_files" | grep -q '^templates/github-workflows/' && wf_changed=1
-
-  # whitelist 파일 변경 여부
-  local wl_changed=0
-  echo "$diff_files" | grep -q '^templates/scripts/consumer_applicable_workflows\.txt$' && wl_changed=1
-
-  # 허용 변경: scripts/bootstrap-consumer.{sh,ps1}
-  # 금지 변경: templates/github-workflows, consumer_applicable_workflows.txt
-
-  local ok=1
-  [ "$wf_changed" -eq 0 ] || ok=0
-  [ "$wl_changed" -eq 0 ] || ok=0
-
-  if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name — workflow/whitelist 게이트 본체 무변경 (script 변경만, base=$base_ref)"
-    PASS=$((PASS+1))
-    return 0
-  else
-    echo "✗ FAIL: $test_name"
-    echo "  Expected: no changes to templates/github-workflows/ or consumer_applicable_workflows.txt"
-    echo "  Got:"
-    echo "$diff_files" | grep '^templates/' || echo "  (no template changes)"
-    FAIL=$((FAIL+1))
-    return 1
-  fi
-}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-6: .ps1 parity (pwsh 가용시 dry-run 산출 set 비교, 미가용시 정적 검사)
@@ -669,7 +605,7 @@ test_tc8_empty_whitelist_fallback() {
 # ─────────────────────────────────────────────────────────────────────────────
 echo "═══════════════════════════════════════════════════════════════════════════════"
 echo "CFP-2439 Phase 2: bootstrap-consumer.sh Stage 5 whitelist iterate"
-echo "TDD Test Suite (TC-1~8)"
+echo "TDD Test Suite (TC-1~4,6~8 — TC-5 retired CFP-2451)"
 echo "═══════════════════════════════════════════════════════════════════════════════"
 echo ""
 
@@ -677,7 +613,6 @@ test_tc1_whitelist_iterate_count
 test_tc2_idempotent
 test_tc3_degrade_warn
 test_tc4_parity
-test_tc5_gateway_whitelist_unchanged
 test_tc6_ps1_parity
 test_tc7_whitelist_autoconfig
 test_tc8_empty_whitelist_fallback
@@ -700,5 +635,5 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # FIX-CR-001: TC-8 신규 추가 (empty whitelist → 7 fallback discriminating)
 # FIX-CR-002: TC-3, TC-7 실 SSOT mutate 격리 (make_fixture_plugin_root helper)
-# FIX-CR-003: TC-5 hardcoded SHA → 동적 base (merge-base / origin/main, base 해소실패=FAIL)
+# FIX-CR-003: TC-5 hardcoded SHA → 동적 base (merge-base / origin/main, base 해소실패=FAIL) [TC-5 자체는 CFP-2451 에서 retire]
 # FIX-CR-007: grep -c || echo 0 중복 "00" 제거 (|| true 로 대체)
