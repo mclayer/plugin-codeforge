@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: skip-offer 금지 reminder (CFP-2456, ADR-027 Amd12 §결정 15 + ADR-127 Amd1)
+#
+# 책임: 모든 turn 에 ADR-127 정식-풀-플로우-비협상 / 리뷰·절차 생략 제안(AskUserQuestion 포함) 금지
+#       규칙을 additionalContext 로 무조건 inject (소비자 세션 전파 — propagation gap 충당).
+#
+# 구현: reminder 텍스트 build·JSON emit 은 python core 로. python 없으면 통과(fail-safe).
+#       모든 경로 exit 0 (사용자 prompt erase 권한 미사용).
+# fail-safe: python 부재 / 오류 시 차단하지 않고 통과 (exit 0).
+set -uo pipefail
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-safe, 사용자 입력 차단 안 함)
+fi
+
+exec "$PY" "$DIR/skip-offer-reminder.py"

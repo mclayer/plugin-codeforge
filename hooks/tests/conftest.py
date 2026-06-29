@@ -29,3 +29,11 @@ _gbdmg_spec = importlib.util.spec_from_file_location(
 git_branch_delete_merge_gate = importlib.util.module_from_spec(_gbdmg_spec)
 _gbdmg_spec.loader.exec_module(git_branch_delete_merge_gate)
 sys.modules["git_branch_delete_merge_gate"] = git_branch_delete_merge_gate
+
+# skip-offer-reminder.py 를 skip_offer_reminder 모듈명으로 로드 (CFP-2456)
+_sor_spec = importlib.util.spec_from_file_location(
+    "skip_offer_reminder", HOOKS_DIR / "skip-offer-reminder.py"
+)
+skip_offer_reminder = importlib.util.module_from_spec(_sor_spec)
+_sor_spec.loader.exec_module(skip_offer_reminder)
+sys.modules["skip_offer_reminder"] = skip_offer_reminder
