@@ -79,6 +79,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 10 + ## 결정 / D1 적용 scope mutation row + 신규 §결정 D8"
     sunset_justification: null
+  - amendment_id: 11
+    cfp: CFP-2477
+    date: 2026-06-30
+    scope: "**verify-before-trust review-lane execution scope 확장 (§결정 D1 적용 scope carve-out 정리 + row append) + 신규 §결정 D9 (일반 실행검증 disposition — 3-상태 + 다회 결정론 전제 + lane-time fail-mode)** (Epic CFP-2476 E1 — Codex 실행형 재리뷰. ADR-052 touchpoint #7/#8 실행형 게이트의 일반화). 2축 신설 — (1) §결정 D1 적용 scope 표의 `CodexReviewAgent — 별도 lane scope (적용 외)` carve-out 정리: carve-out 은 review-verdict-v4 **producer 로서 정적 인용** 맥락 한정이고, CodexReviewAgent 가 실행 검증자로 전환 시 (E1) **실행 결과(exit/stdout)는 verify-before-trust full 적용** — critic = 신호원, finding = `[hypothesis]` default → 실행 evidence(실행 로그 + exit code) 동반 + PL 직접 재실행 falsify 통과 시만 `[verified]` 승격. evidence 부재 finding = 무효. mismatch/재현실패 → D3 reject 흐름. (정적 인용 producer scope 의 carve-out 은 보존 — 실행 검증 결과 axis 만 full 적용 분리.) (2) 신규 §결정 D9 — 일반 실행검증 disposition (Amd10 §결정 D8 mutation disposition 의 일반화): ① 3-상태 disposition `exec_mismatch_verified`(실행결과↔단정 모순 + PL 재실행 falsify 통과 + flaky/환경차 배제) / `undetermined`(flaky 의심 또는 환경 차이[deps 미설치·OS 차이] 의심 — 자동 finding 승격 금지, 보류) / `rejected_false_positive`(실행 evidence 가 ground truth 와 mismatch — D3 reject). ② 다회 실행 결정론 확인 전제 (M-3 동형 — flaky 가 false-RED 날조 + false-GREEN 은폐 양방향 오염). ③ lane-time fail-mode = `fail_open_then_record_with_marker` (#8 mutation D8 동형 — review lane-time = 마지막 방어선 아님, 이후 통합테스트→보안테스트→merge-time #7 다수 layer). marker = `[exec-verify-fallback: fail-mode=<...>, targets-attempted=<n>, disposition=open]`. ④ 실행 주체 = Codex CLI 자체 sandbox (read-only 기본 / network-off / `.git`·`.codex` 보호) — lane worker own-Bash 직접 실행 아님 (E1 D-2). §결정 D5 declaration-only retain 정합 — `mechanical_enforcement_actions: []` retain (실행검증 mechanical wire Phase 2 carrier). D1-D8 + Amendment 1-10 본문 의미 변경 0건 — §결정 D1 scope 표 carve-out 정리 + row append + 신규 §결정 D9 sub-section append only. ADR-081 Amendment (execution dispatch + execution axis) + ADR-044 정합 declare (user_request_only = producer 한정 + Amd10 floor/ceiling 재정의 — execution-bias 는 worker behavior 지 dispatch 발동 조건 아님, amendment 불요) sibling cross-ref. is_transitional: false, sunset_justification N/A (**강화 방향** — review-lane execution scope 신설 additive + carve-out 정리[review-lane 실행검증을 면제로 남기면 #7/#8 과 비대칭 = silent auto-trust governance hole] + 일반 실행검증 disposition codify, 약화 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2477)."
+    status: applied
+    ref: "## Amendments / Amendment 11 + ## 결정 / D1 적용 scope review-lane execution row + 신규 §결정 D9"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
@@ -91,6 +98,7 @@ related_stories:
   - CFP-1003 # Amendment 5 — reactive `codex:rescue` 채널 normative anchor codify (사용자 책임 영역 retain + best-effort 가이드 anchor 강화, ADR-052 Amd 9 + ADR-081 Amd 5 chain — Codex TP#4 CX-963 deferred scope closure)
   - CFP-2458 # Amendment 9 — verify-before-trust merge-time scope (ADR-052 touchpoint #7) + 신규 §결정 D7 merge-time fail-mode disposition (하이브리드 `fail_closed_then_bounded_degrade` 권장 default, 사용자 결정 2026-06-29). Epic CFP-2457 Story A.
   - CFP-2464 # Amendment 10 — verify-before-trust mutation scope (ADR-052 touchpoint #8) + 신규 §결정 D8 mutation surviving-mutant disposition (equivalent/flaky 불확정 보류 + lane-time fail-mode `fail_open_then_record_with_marker`, Q-B 결정). Epic CFP-2457 Story B.
+  - CFP-2477 # Amendment 11 — verify-before-trust review-lane execution scope (CodexReviewAgent execution-verifier transition, carve-out 정리) + 신규 §결정 D9 일반 실행검증 disposition (3-상태 + 다회 결정론 전제 + lane-time fail-mode). Epic CFP-2476 E1.
 related_adrs:
   - ADR-052  # Codex proactive check 6 touchpoint (Amendment 15 touchpoint #7 merge-time gate — Amendment 9 sibling)
   - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic hypothesis→verified 승격 룰 reuse)
@@ -155,7 +163,10 @@ Orchestrator 는 codex:codex-rescue subagent (ADR-052 6 touchpoint 자동 dispat
 
 - ADR-052 6 touchpoint 자동 dispatch 영역 — full 적용 (본 ADR 결정 SSOT)
 - codex:codex-rescue 사용자 ad-hoc 채널 (ADR-022 Deprecated default 영역) — 사용자 책임 영역 (적용 외)
-- CodexReviewAgent (review-verdict-v4 producer, ADR-044 §결정 2 `dispatch_mode: user_request_only`) — 별도 lane scope (적용 외)
+- CodexReviewAgent **정적 인용 (factual citation) axis** (review-verdict-v4 producer, ADR-044 §결정 2 `dispatch_mode: user_request_only`) — 별도 lane scope (적용 외, ADR-044 producer 영역 결정)
+- CodexReviewAgent **실행 검증 결과 (execution ground-truth) axis** (execution-verifier transition, Amendment 11 / CFP-2477) — **full 적용** (실행결과↔단정 불일치 finding = `[hypothesis]` → PL 직접 재실행 falsify 통과 시만 `[verified]` 승격, §결정 D9 disposition). 정적 인용 axis 와 disjoint
+- merge-time adversarial gate (ADR-052 touchpoint #7, Amendment 9 / CFP-2458) — full 적용 (§결정 D7 fail-mode disposition)
+- mutation peer gate (ADR-052 touchpoint #8, Amendment 10 / CFP-2464) — full 적용 (§결정 D8 surviving-mutant disposition)
 
 **거절된 대안 D1**:
 
@@ -693,6 +704,66 @@ ADR-052 Amendment 16 가 구현리뷰 lane-time 에 mutation peer (touchpoint #8
 - (Amd10-C) **equivalent 의심 mutant 자동 reject (제외)** — 진짜 hollow-gate 누락 risk (equivalent 판정도 undecidable, 자동 제외 = false negative). 불확정 보류(사람 검토 후보) 채택 — 자동 제외도 자동 승격도 아님.
 - (Amd10-D) **flaky 결정론 확인 생략 (단회 실행 surviving 판정)** — flaky 가 false kill + false survive 양방향 오염 (M-3, mutant-test pair 9% unknown). 다회 실행 결정론 확인 전제 채택.
 - (Amd10-E) **fail-mode 9-enum 에 mutation disposition 흡수** — axis mismatch (cause ↔ disposition disjoint, ADR-070 Amd 9 Amd9-B 선례). 별 §결정 D8 채택.
+
+### Amendment 11 (2026-06-30 KST, CFP-2477)
+
+**verify-before-trust review-lane execution scope 확장 (§결정 D1 적용 scope carve-out 정리 + row append) + 신규 §결정 D9 (일반 실행검증 disposition — 3-상태 + 다회 결정론 전제 + lane-time fail-mode).** Epic CFP-2476 E1 (Codex 실행형 재리뷰). 2축 신설.
+
+#### Context (Amendment 11)
+
+CFP-2477 = 리뷰 lane Codex peer(CodexReviewAgent)를 "diff/문서를 읽는 정적 비평가" → "repo 게이트·테스트·체크 스크립트를 실제 실행해 단정과 대조하는 실행 검증자" 로 전환한다. 동인 = CFP-2457 dogfood 실증 — 정적 diff 읽기(Claude peer + PL)가 놓친 ADR-037 version-bump P0(MINOR under-bump)를 Codex 의 *실 게이트 직접 실행* 만이 포착 [verified: project_cfp_2457 memory]. 그러나 §결정 D1 적용 scope 표는 `CodexReviewAgent (review-verdict-v4 producer, ADR-044 §결정 2 user_request_only) — 별도 lane scope (적용 외)` carve-out 을 두고 있어, CodexReviewAgent 가 실행 검증자로 전환하면 "실행 결과(exit/stdout)를 누가 재확인하나" anchor 가 부재 = governance hole. Amd9(merge-time #7)/Amd10(mutation #8)이 이미 실행형 게이트에 verify-before-trust 를 확장했으므로 review-lane 일반 실행검증을 carve-out 으로 남기면 #7/#8 과 비대칭(같은 실행 ground-truth 인데 review-lane 만 면제) = 정합 붕괴 + silent auto-trust. 본 Amendment 가 carve-out 정리(실행검증 axis full 적용) + 일반 실행검증 disposition codify.
+
+#### B1. §결정 D1 적용 scope 표 review-lane execution row append + carve-out 정리
+
+기존 §결정 D1 적용 scope (proactive 6 touchpoint / reactive codex:rescue / CodexReviewAgent 별 lane / merge-time #7 / mutation #8) 의 CodexReviewAgent carve-out 을 axis 분리로 정리 + 행 추가:
+
+- **review-lane execution verification (CodexReviewAgent execution-verifier transition, E1)** — **실행 검증 결과 axis = full 적용** (codeforge 강제). CodexReviewAgent 가 게이트·체크 스크립트를 실행해 발화한 "실행결과 ↔ 단정 불일치" finding 의 모든 실행 evidence (실행 명령 + exit code + stdout 발췌) = PL 직접 재실행 으로 ground truth verify 의무. **critic = 신호원, 판정자 아님**: finding = `[hypothesis]` 지위 default → 실행 evidence 동반 + PL 직접 재실행 falsify(동일 입력·동일 repo 상태 재실행) 통과 + flaky/환경차 배제 시만 `[verified]` 승격. mismatch (evidence 가 PL 재실행 결과와 불일치) 또는 재현 실패 → D3 reject 흐름 (finding reject + Story §10 false-positive tally + override rationale 4종). evidence 부재 finding = 무효 (정적 추정만으로 finding 승격 금지). ADR-077 §결정 7 정보 무결성 invariant ("fact-check marker 무검증 승격 금지") reuse + ADR-119 Amd 2 (게이트 verdict outcome ground-truth) 동형.
+- **carve-out 정리 (axis 분리)**: 기존 `CodexReviewAgent — 별도 lane scope (적용 외)` carve-out 은 **review-verdict-v4 producer 로서 정적 인용 (factual citation) axis 한정** 으로 보존된다 (정적 인용 producer scope 의 D1 적용 여부 = ADR-044 producer 영역 결정 — 본 Amendment 무변경). 본 Amendment 가 신설하는 것은 **실행 검증 결과 (execution ground-truth) axis** 로, 이 axis 는 full 적용 (정적 인용 axis 와 disjoint). 즉 CodexReviewAgent 가 (i) 정적 인용 producer 일 때 = 기존 carve-out 보존, (ii) 실행 검증자일 때 = 실행결과 axis full 적용.
+
+#### B2. 신규 §결정 D9 — 일반 실행검증 disposition (3-상태 + 다회 결정론 + lane-time fail-mode)
+
+기존 fail-mode 9-enum (cause axis) + §결정 D7 merge-time disposition + §결정 D8 mutation disposition 과 disjoint — 본 §결정 D9 = **일반 실행검증 (PR touch 한 임의 discriminating check 실행)** 의 승격 판정 disposition. Amd10 §결정 D8 mutation disposition 의 일반화 (mutation = surviving-mutant 특수형 / D9 = 임의 게이트 실행 일반형).
+
+**(a) 실행검증 3-상태 disposition** (단정-실행결과 대조 — flaky/환경차 양면 보존):
+
+| disposition | semantics | 적용 trigger | 후속 |
+|---|---|---|---|
+| **`exec_mismatch_verified`** | 실행결과 ↔ 단정 모순이 진짜 (PL 재실행 falsify 통과 + flaky/환경차 배제) | 동일 입력·동일 repo 상태 재실행 시 단정과 일관 모순 + 결정론 확인 | 결함 finding 승격 → ADR-081 severity rubric (category=`exec-result-mismatch`) |
+| **`undetermined`** (신설) | flaky 의심 또는 환경 차이(deps 미설치 / OS 차이 / encoding policy) 의심 — 모순이나 finding 단정 불가 | (i) 동일 입력 다회 실행 비결정 (flaky 의심) OR (ii) 실행 불가/실패가 검증 인프라 차이 (env 의심, UC-3 "검증 제약") | **자동 finding 승격 금지 + 자동 reject 도 아님** — '불확정' 보류 (Story §9 기록, "검증 제약" 으로 제품결함과 분리, 사람 검토 후보). cry-wolf 차단 |
+| **`rejected_false_positive`** | 실행 evidence 가 PL 재실행 ground truth 와 mismatch (D3 reject) | Codex 발화 실행 명령/exit/stdout 이 실제 재실행 결과와 불일치 | finding reject + Story §10 false-positive tally + override rationale |
+
+**(b) flaky 결정론 전제 (M-3 동형)**: 실행결과 RED/mismatch 판정 전 동일 입력 **다회 실행 결정론 확인** 의무. flaky 가 (i) false-RED (우연 실패로 없는 결함 날조 → cry-wolf) + (ii) false-GREEN (있는 결함 은폐 → 놓침) 양방향 오염. 미충족 시 `undetermined`. 결정론 확인 비용 baseline = Change Plan/Story §8 Perf Baseline.
+
+**(c) lane-time fail-mode = `fail_open_then_record_with_marker`** (#8 mutation D8 동형, merge-time #7 `fail_closed_then_bounded_degrade` 와 disjoint):
+
+| disposition enum | semantics | 적용 영역 | provenance marker (Story §10) |
+|---|---|---|---|
+| **`fail_open_then_record_with_marker`** (review lane-time **권장 default**) | Codex 미가용/sandbox 실패 (fail-mode 9-enum 중 하나) 시 marker 기록 후 **lane 진행** (실행검증 미수행 명시 기록) | 구현리뷰 lane-time 실행검증 (review-lane execution) | `[exec-verify-fallback: fail-mode=<...>, targets-attempted=<n>, disposition=open]` |
+| `fail_closed_then_bounded_degrade` (merge-time #7 동형 — review lane-time 부적용 default) | 보류 → bounded 재시도 → 사용자 알림 후 통과 | (consumer overlay 강화 선택 시만) | `[merge-gate-bounded-degrade: ...]` (Amd9 §결정 D7) |
+
+**D9 근거**:
+
+1. **lane-time ≠ 마지막 방어선** — review-lane 실행검증은 구현리뷰 lane-time. 이후 통합테스트 → 보안테스트 → merge-time(#7) → 배포리뷰 다수 layer 가 남음. #7 의 fail-closed 정당성(shift-right 최우측 마지막 방어선)은 review-lane 에 부적합 — #8 mutation lane-time 과 동일 위치.
+2. **실행 비용·환경 비결정 큼** — discriminating check N개 실행 + Codex API 한도 + 환경 의존(PowerShell encoding / 로컬 pwsh 부재 — CFP-2439 test-env-gap 선례). lane-time fail-closed 면 빈번한 lane 보류로 delivery 마비.
+3. **거버넌스 hole 미발생** — fail-open 이어도 (a) marker 기록 의무 (실행검증 미수행 명시), (b) 실행검증 = advisory 신호 (실행결과 GREEN 은 "PR 옳음" 증명 아님 — Popper 비대칭, falsify 전용), (c) 진짜 결함이면 다른 layer(merge-time #7 review-of-output / 통합테스트)에서도 포착 가능 (defense-in-depth).
+
+#### B3. 실행 주체 = Codex CLI 자체 sandbox (read-only 기본) + E2/E3 재사용 인터페이스 (execution-dispatch-pattern-v1)
+
+- **실행 주체** [verified: codex-companion.mjs origin install]: dispatch = `adversarial-review`(read-only 고정 turn, focus 지원, L411) primary / `task --write`(workspace-write toggle, L488) 예외 — 둘 다 §결정 D8 file-redirect 형식 정합. 실행은 **Codex CLI 자체 sandbox 안** (read-only 기본 / network-off / `.git`·`.codex` write 보호 / OS 격리 Seatbelt·Landlock) — lane worker own-Bash 직접 실행 아님 (권한 모델 일관 + injection 공격면을 Claude harness 권한으로 안 끌어옴, OWASP LLM06). CodexReviewAgent Bash allowlist 미확대 (실행=Codex sandbox).
+- **execution-dispatch-pattern-v1 (E2/E3 재사용 SSOT)**: 본 §결정 D9 가 codify 하는 실행 dispatch + 신뢰 승격 + disposition 은 Epic CFP-2476 E2(주장→증거 감사)/E3(정책게이트팩 + FIX ground-truth replay)가 그대로 재사용한다. 7-step = ① dispatch=adversarial-review/task(file-redirect) ② 실행주체=Codex sandbox(read-only 기본/network-off) ③ 실행결과=exit code(primary)+stdout(semantic body) ④ finding 구조={주장/기대상태, 실행대상, 실행 verdict, 충돌 요약} ⑤ 신뢰승격=critic 신호원→[hypothesis]→PL 재실행 falsify→[verified] ⑥ flaky=3-상태 disposition+다회 결정론 전제+lane-time fail-open ⑦ 대상선택=discriminating∩PR-touch 전수금지. concept SSOT = `docs/domain-knowledge/concept/execution-based-review-verification.md` (X-1~X-6).
+
+#### B4. declaration-only retain + ratchet 정합
+
+- §결정 D5 declaration-only retain 정합 — `mechanical_enforcement_actions: []` retain (실행검증 provenance/disposition enforcement mechanical wire = Phase 2 별 carrier, ADR-064 §결정 1 unitary).
+- ratchet 강화 방향 (review-lane execution scope 신설 additive + carve-out 정리[silent auto-trust hole 차단] + 일반 실행검증 disposition codify [cry-wolf 차단 강화], 약화 0) — D1-D8 + Amendment 1-10 본문 의미 변경 0건. ADR-081 Amendment (execution dispatch + execution axis) sibling cross-ref + ADR-044 정합 declare (amendment 불요).
+
+#### 거절된 대안 (Amendment 11)
+
+- (Amd11-A) **carve-out 유지 ("실행 결과 = 재현 가능 객관 사실" 이므로 verify-before-trust 면제)** — silent auto-trust = #2322 self-attest 위조면 동형 governance hole + #7/#8 과 비대칭. 실행결과도 flaky/환경차(deps 미설치·OS 차이) 오염 가능 (X-5) → PL 재실행 falsify 후 채택 필수. carve-out 정리(실행검증 axis full 적용) 채택.
+- (Amd11-B) **review-lane 도 merge-time fail-closed (`fail_closed_then_bounded_degrade`) default** — review lane-time = 마지막 방어선 아님 + 실행 비용·환경 비결정 큼 (B2 근거 1/2, #8 mutation 과 동일 위치). lane-time fail-open default 채택 (strict overlay 보존).
+- (Amd11-C) **실행결과 RED 즉시 finding 승격 (불확정 상태 생략)** — flaky/환경차 false-RED 양산 = cry-wolf (도구 폐기 risk). 불확정 제3 상태 + 다회 결정론 전제 채택.
+- (Amd11-D) **lane worker(CodexReviewAgent) own-Bash 직접 실행 (allowlist 에 python/pytest 확대)** — ADR-001 "읽기·분석·보고만" 표면 충돌 + injection 공격면을 Claude harness 권한으로 확대 (LLM06) + Codex sandbox 격리(.git 보호/network-off/OS 격리) 부재. Codex CLI 자체 sandbox 안 실행 채택 (allowlist 미확대).
+- (Amd11-E) **실행결과 추적을 review-verdict-v4 contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR doc-only fast-path 이탈. ADR-070 §D5 declaration-only retain precedent 정합 → Story §9/§10 prose marker + packet `execution_targets` 필드(review-pl-base schema, verdict contract 아님) 채택.
 
 ## 해소 기준
 

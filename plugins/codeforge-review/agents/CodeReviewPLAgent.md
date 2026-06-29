@@ -87,13 +87,26 @@ review_packet:
     - dup-local
     - dup-boundary
     - integration-test-readiness
+    - exec-result-mismatch                       # CFP-2477 / ADR-070 Amd11 §결정 D9 — 실행 검증 axis
   severity_overrides:
     - "Impl Manifest §8.5 매핑 누락 또는 실제 파일 불일치 → P0"
     - "레이어 경계·의존성 방향 위반 → P0"
     - "데이터 손실·panic·null deref 명백한 런타임 결함 → P0"
+    - "실행 결과 ↔ 단정/명백 정책 모순(PL 재실행 falsify 통과 + flaky/환경차 배제) → 모순이 드러낸 실 결함 기준 severity"
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출 — 아키텍처 ADR 우선>
+  execution_targets: <PR touch ∩ discriminating check 선별 — review-pl-base §2 lane-specific 확장. 부재 시 worker 자동 선별. CFP-2477>
 ```
+
+## 실행 검증 결과 재실행 falsify 책임 (CFP-2477 / ADR-070 Amendment 11 §결정 D9)
+
+Codex worker가 sandbox 안 게이트 실행으로 발화한 `exec-result-mismatch` finding 은 `[hypothesis]` 지위 — **CodeReviewPL이 직접 동일 게이트를 재실행(firsthand re-run)해 falsify 통과 시만 채택** (verify-before-trust). ADR-070 §결정 D6.1 mandatory-real-execution-evidence(현 DeveloperPL self-claim 대상)를 *Codex 실행 결과*로 확장:
+
+- Codex가 paste한 실행 stdout/exit 미신뢰 → CR-own 직접 재실행으로 ground truth 확정 후 accept/reject.
+- 실행 GREEN 은 finding 미승격 (Popper falsify 전용 — "PR 옳음" 증명 아님).
+- mismatch evidence가 CR 재실행 결과와 불일치 → D3 reject (Story §10 false-positive tally + override rationale 4종).
+- 동일 입력 다회 실행 비결정 또는 환경 차이(deps/encoding/OS) 의심 → `undetermined` 보류 (자동 승격·자동 reject 아님, Story §9 기록 + "검증 제약"으로 제품결함과 분리).
+- Codex 미가용 = lane-time `fail_open_then_record_with_marker` (`[exec-verify-fallback: ...]` Story §10, lane 진행).
 
 ## FIX 카운터 정책
 
