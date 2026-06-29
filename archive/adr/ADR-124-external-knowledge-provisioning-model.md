@@ -17,6 +17,7 @@ related_adrs:
   - ADR-039  # §결정 1·2 — spawn = Orchestrator 전용 binary always-spawn + closed 4-entry whitelist. lane 개수 axis 와 disjoint (spawn mechanism 무변), amendment 불요
   - ADR-121  # §결정 1 — 배포·배포리뷰 2 lane 폐지 결정. 단계③ 배포리뷰 미적용 사유 (폐지 결정·deprecation 진행 중 + production 경험적 측정 무의존)
   - ADR-058  # §결정 5 — 약화 evidence-gate. 본 ADR 의 단계① 정밀화가 ratchet 강화 방향임을 보증
+  - ADR-126  # 단계③ on-demand 경로 carrier (§결정 5 위임 이행). ADR-126 Amendment 1 (CFP-2459) 이 단계③ 방법론의 "다출처 교차"(Amendment 1 A1-1) + "시의성(recency)"(A1-1) 를 모델(학습분포) 축 + source-weighting 으로 확장 — Codex 2차 출처 corroboration. 본 ADR 무변경 (cross-ref only)
 related_files:
   - archive/adr/ADR-124-external-knowledge-provisioning-model.md
   - skills/review-responsibility/SKILL.md  # 단계③ 매트릭스 요약 mirror (SSOT = 본 ADR)

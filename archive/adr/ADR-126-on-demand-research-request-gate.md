@@ -9,6 +9,7 @@ parent_epic: "mclayer/plugin-codeforge#2324"
 is_transitional: false
 related_stories:
   - CFP-2329  # 본 ADR 신설 carrier (Epic CFP-2324 S5 — 마지막 child)
+  - CFP-2459  # Amendment 1 carrier — execute 단계 Codex 2차 출처 source-diversification + corroboration↔verify 경계 + 시점성 위계 + divergence abstention (Epic CFP-2457 Story C)
 related_adrs:
   - ADR-039  # §결정 1·2 — spawn=Orchestrator 전용 binary always-spawn + closed inline whitelist (cardinality 비고정). 본 ADR 이 §결정 1/2 정합을 자체 재논증 (ADR-124 §결정 4 disjoint 논리는 lane 개수 axis 한정이라 차용 불가). Amendment 4 = skill body primitive ↔ whitelist 무손상 선례
   - ADR-124  # §결정 1 단계③ "리뷰 게이트(주) + on-demand(후순위)" / §결정 2 외부사실 의존 게이트 + 검사연극 금지 / §결정 5 "on-demand 깊은 검증 경로 = S5" 위임 / §결정 6 외부사실 의존 휴리스틱 / Amendment 1 A1-3 code lane web 금지 [P0]
@@ -18,16 +19,98 @@ related_adrs:
   - ADR-058  # §결정 5 — 약화 evidence-gate. 본 ADR = additive skill 신설 + cross-ref only, strengthen 방향 → sunset_justification null
   - ADR-119  # §결정 6 검사연극 금지 SSOT / §결정 3.2 abstention escape
   - ADR-037  # plugin version bump rule — 신규 skill = skills/ 자동 발견, marketplace 4필드 무영향, CLAUDE.md 레인 진입 표 미등재 → bump 불요
+  - ADR-070  # Amendment 1 — verify-before-trust 적용 대상 = repo 파일 사실 한정 (Codex external worker output). 외부 web 사실 = file-Read-verify 구조적 미커버 → Amendment 1 이 disjoint layer 명시 (cross-ref only, ADR-070 본문 무변경). D1 scope = proactive 6 touchpoint + reactive, on-demand research path 는 ADR-126 owns
+  - ADR-081  # Amendment 1 — Codex worker dispatch boilerplate (network_scope: web-fetch enum 이미 정의, CFP-963 Amendment 4 — 신규 권한 0) + file-redirect dispatch (D8) + substitution 3-enum 상속. on-demand 2차 출처 Codex dispatch 가 기존 규약 재사용
+amendments:
+  - Amendment 1  # CFP-2459 (Epic CFP-2457 Story C) — execute 단계 Codex 2차 출처 source-diversification + corroboration↔verify disjoint layer 경계 + 시점성 위계 (변동성 spectrum) + divergence abstention + #2166 disjoint cross-ref
 related_files:
   - archive/adr/ADR-126-on-demand-research-request-gate.md
-  - skills/research-request-gate/SKILL.md  # 본 ADR 정책의 운영 절차 carrier
+  - skills/research-request-gate/SKILL.md  # 본 ADR 정책의 운영 절차 carrier (Amendment 1 execute/inject 절 확장 = Phase 2)
   - skills/jira-decision-channel/SKILL.md  # caller scope Orchestrator 한정 선례
   - skills/rate-limit-429-mitigation/SKILL.md  # skill body primitive ↔ whitelist 무손상 선례
   - CLAUDE.md  # 결정·대화 원칙 절 1줄 cross-ref (레인 진입 표 미등재 — on-demand 는 lane 진입 아닌 작업중 mechanism)
-amendment_log: []
+amendment_log:
+  - amendment: Amendment 1
+    date: 2026-06-29
+    carrier_story: CFP-2459
+    parent_epic: "mclayer/plugin-codeforge#2457"
+    summary: |
+      execute 단계 내부의 source-diversification — harness-native deep-research(web, N=1) 에 Codex/GPT-5 독립 2차 출처를 더해 N=2 로 확장. 새 단계 0 (request→gate→execute→inject 4단계 골격 무변경), 새 권한 0 (Codex dispatch = ADR-081 web-fetch enum + file-redirect + substitution 3-enum 재사용, spawn = Orchestrator 전용 ADR-039 정합). 4 결정:
+      ① execute 2차 출처 + corroboration 상태 3-분류 (corroborated / divergent / single-source) inject 주입 — divergent ≠ abstention 구분.
+      ② corroboration ↔ verify disjoint layer 경계 [P0 load-bearing] — ADR-070 verify-before-trust 적용 대상 = repo 파일 사실 한정, 외부 web 사실은 file-Read-verify 구조적 미커버 → corroboration 은 verify *대체 아님* (correlated error 로 false-corroboration 리스크), 외부 web 사실 = ADR-119 출처 인용 + abstention 이 verify 자리 대체 + corroboration = 보조 trust 신호. corroborated 에 "일치는 반증 부재이지 진리 증명 아님" 경고 의무. ADR-070 cross-ref only (본문 무변경).
+      ③ 시점성 위계 = 발동 후 source-weighting (새 게이트 아님) — 변동성 높음(버전·CVE·최신 API·가격)=WebSearch ground-truth-anchor·Codex 보조 / 변동성 낮음(수학·알고리즘·안정 표준·이론)=동등 교차. cutoff 날짜 하드코딩 금지 (방향성 부등식만). ADR-124 §결정 6 휴리스틱에 시점성 축 좁게 instantiate.
+      ④ divergence 끝까지 미결 시 abstention 으로 닫음 (다수결≠진리, 자동 추가조사 강제 안 함) + #2166 (source-annotation presence lint, enforcement 축) disjoint cross-ref (close 아님).
+    direction: strengthen  # execute 단계 출처 다양화 = 검증 capability 추가 (약화 0). 4단계 골격·권한·whitelist 무손상. ADR-070/124/081/039 무변경. ADR-058 §결정 5 약화 차단 정합.
+    sunset_justification: null  # strengthen 방향 — execute 내부 source 확장 + disjoint layer 명시, 기존 결정 instantiate. is_transitional: false 유지.
 ---
 
 # ADR-126: on-demand 깊은 조사 보충 경로 — research-request-gate 거버넌스
+
+## Amendment 1 (CFP-2459, Epic CFP-2457 Story C) — execute 단계 Codex 2차 출처 + corroboration↔verify disjoint layer
+
+> **새 단계 0 / 새 권한 0.** 본 amendment 는 §결정 1 의 on-demand 4단계(request → gate → execute → inject) 중 **`execute` 단계 *내부*의 source-diversification** 이다. `execute` 가 호출하는 harness-native deep-research(web, 해석자=Claude, N=1)에 **Codex/GPT-5 독립 2차 출처**를 더해 N=2 로 확장한다. 4단계 골격은 무변경(5번째 단계 신설 아님), Codex dispatch 권한은 기존 자산 재사용(ADR-081 `network_scope: web-fetch` enum + file-redirect dispatch §D8 + substitution 3-enum, 신규 권한 0), spawn 은 Orchestrator 전용(ADR-039 §결정 1 정합 — lane 자가-spawn 0). 방향은 **강화(strengthen)** — execute 단계의 검증 capability 를 늘리며 어느 기존 결정도 약화하지 않는다(ADR-070/124/081/039 무변경, A1-5).
+
+> **carrier 형식 판정 (ArchitectPL §3 결정)**: 본 변경 = ADR-126 Amendment (신규 ADR 아님). §결정 1 의 on-demand mechanism 골격(4단계)을 바꾸지 않고 `execute` 서술만 확장하므로, ADR-126 **회피된 대안 B**("새 mechanism = 신규 ADR / instantiate = Amendment")의 *instantiate* 쪽에 해당한다. ADR-070 의 verify 경계 충돌은 **본 Amendment 가 disjoint layer 로 명시 + ADR-070 cross-ref**(ADR-070 본문 무변경)로 닫는다 — ADR-070 9번째 Amendment 신설은 회피(아래 A1-2 rationale). 결과 = touch ADR **1 개**(ADR-126), ADR-070/124/081 = cross-ref only. (사용자 "독립·경량" 선언 정합.)
+
+### A1-1 — `execute` 단계 2차 출처 + corroboration 3-분류 inject
+
+`execute` 단계는 외부사실 의존 질문(§결정 6 게이트 통과)에 대해, harness-native deep-research(1차, web·Claude)와 **별개로** Codex/GPT-5 에 **의미-동등 질문**을 던져 독립 2차 의견을 수집한다. 두 출처를 분류해 `inject` block 에 명시한다.
+
+| corroboration 상태 | 정의 | inject 처리 |
+|---|---|---|
+| `corroborated` | 양 출처가 동일 결론 | 결론 + **"일치는 반증 부재이지 진리 증명 아님(공유 코퍼스 상관오류 가능)" 경고 의무 병기**(A1-2) |
+| `divergent` | 둘 다 단정하나 상이 | 분기 verbatim 병기 + 임의 채택 금지(다수결≠진리). 시점성 위계(A1-3) tie-break, 미결 시 abstention(A1-4) |
+| `single-source` (`secondary_unavailable`) | 한쪽만 응답 (Codex 미가용/sandbox-block/web 불가) | deep-research 단독 결론 + `single-source` 표기. on-demand 실패 아님 — graceful degradation(ADR-070 `fallback_skip_with_marker` 정합) |
+
+- **divergent ≠ abstention 구분 의무**: `divergent` = 두 출처가 둘 다 단정하나 충돌 / `abstention` = 출처 부재("확인 불가/추정", ADR-119 §결정 3.2). 불일치를 전부 abstention 처리하거나 그 반대 = 오류.
+- **의미-동등(semantic-equivalent) 질문**: byte-verbatim 아님 — Codex dispatch boilerplate(ADR-081 3 mandatory section + file-redirect)에 맞춘 prompt 재구성이 불가피하되 질문 *의미* 보존 의무. 의미 drift 시 corroboration 비교 무효.
+- **caller = Orchestrator 전용**: Codex 2차 출처 dispatch 도 `execute` 수행 주체인 Orchestrator inline(ADR-039 §결정 1, lane 자가-spawn 금지). deep-research skill 호출 + codex:codex-rescue subagent spawn 둘 다 Orchestrator 행위 → §결정 2/3 자체 재논증 그대로 재사용(신규 whitelist entry 0, 새 dispatch mechanism 0).
+
+### A1-2 — corroboration ↔ verify-before-trust disjoint layer [P0 load-bearing]
+
+본 Amendment 의 핵심. **corroboration 은 ADR-070 file-Read-verify 의 대체가 아니다.**
+
+- **ADR-070 의 verify 적용 대상 = repo 파일 사실 한정**: ADR-070 §결정 D1 의 verify-before-trust 는 "Codex finding evidence 의 factual ground truth = repo 내부 파일 사실(file content / ADR §결정 번호 / commit SHA)" 을 Orchestrator own working directory Read/Grep 로 확정하는 layer 다. **외부 web 사실(표준·벤더 동작·CVE)은 repo 밖이라 file Read verify 가 구조적으로 불가** — ADR-070 을 web 영역에 "그대로 상속"이라 쓰면 작동하지 않는 규약 = 검사연극.
+- **correlated error 로 corroboration ≠ verify**: 두 출처(Claude·GPT-5)가 같은 web 오정보를 공유하면 둘 다 틀려도 `corroborated` 판정되는 **false-corroboration 리스크**가 실재한다(공유 공개 웹 코퍼스 → 부분 상관오류). 따라서 corroboration 은 진리 보증이 아니라 **"독립 분포가 동일 결론을 통과"의 보조 trust 신호**일 뿐이다. `corroborated` 를 `[verified]` 로 무검증 승격 금지.
+- **외부 web 사실의 verify 자리 대체 채널**: 외부 web 사실은 ADR-070 file-Read-verify 를 **적용 면제**하고, 그 자리를 **ADR-119 출처 인용(§결정 1 "외부 지식 주장" row) + abstention(§결정 3.2)** 이 대체한다. corroboration(`corroborated`/`divergent`/`single-source`)은 이 위에 얹는 **보조** 신호다.
+- **disjoint layer 매핑 (명시)**:
+
+  | 사실 축 | verify 채널 | 본 Amendment 의 자리 |
+  |---|---|---|
+  | repo 파일 사실 (Codex finding evidence 등) | ADR-070 file-Read-verify (Orchestrator own dir Read/Grep) | 무변경 — 본 Amendment 비대상 |
+  | 외부 web 사실 (표준·벤더·CVE) | ADR-119 출처 인용 + abstention (file-Read-verify 면제) | corroboration = **보조 trust 신호**(verify 아님) |
+
+- **ADR-070 cross-ref only (본문 무변경)**: 본 Amendment 가 외부 web 사실 = ADR-070 적용 면제 disjoint layer 임을 **ADR-126 안에서 선언 + ADR-070 cross-ref** 한다. ADR-070 본문은 손대지 않는다(D1-D6 의미 변경 0). rationale = (i) 본 경계는 on-demand `execute` 경로의 성격(외부 web 사실 조사)이라 ADR-126 owns / (ii) ADR-070 D1 scope 는 명시적으로 "proactive 6 touchpoint + reactive" 채널이고 on-demand research path 는 그 enumeration 밖 새 context / (iii) touch ADR 1 개 유지(경량). **거절된 더 무거운 대안** = ADR-070 9번째 Amendment 신설(외부 web 사실 row 를 ADR-070 D1 scope 표에 추가) — ADR-070 D6.3 scope ratchet-up 선례상 가능하나, on-demand `execute` 의 web-fact verify 면제는 ADR-070 의 "Codex worker output 신뢰성" axis 가 아니라 ADR-126 의 "외부지식 조사 경로" axis 라 ADR-126 carrier 가 정합. (DesignReview 가 P0 로 이 경계 판정 재검 권장.)
+
+### A1-3 — 시점성 위계 = 발동 후 source-weighting (새 게이트 아님)
+
+시점성 위계는 **on-demand 발동(§결정 6 외부사실 의존 게이트 통과) *이후* 의 source-weighting 규칙**이다. 새 발동 게이트가 아니다 — "이 질문이 시간민감인가?" 를 매 조사 의무 체크박스로 만들면 검사연극이다.
+
+- **변동성(volatility) spectrum** (이분법보다 정확):
+  - 변동성 **높음** (버전 번호·CVE·최신 API·가격·릴리스 일자 — cutoff 이후 빠르게 노후): **WebSearch = ground-truth anchor / Codex = 보조**. Codex(training-bound)가 primary WebSearch(live retrieval) 를 뒤집지 못함.
+  - 변동성 **낮음** (수학·안정 알고리즘·확립 표준(RFC)·이론·패턴): **동등 교차** (Codex training-bound 로도 valid).
+  - 경계(예: "현재 best practice"): 시간민감으로 **보수 분류**.
+- **cutoff 날짜 하드코딩 금지**: "training-bound 모델은 cutoff 이후 변동성 높은 사실에 취약" 이라는 **방향성 부등식**만 규약에 사용. 특정 cutoff 날짜 값을 박제하면 모델 swap 마다 drift(cutoff 추적 = codex@openai-codex / OpenAI vendor OWNING 도메인, codeforge 는 날짜 추적 불요 — USING 경계).
+- **판정 주체 = Orchestrator**(execute 수행자). ADR-124 §결정 6 휴리스틱(의존 O/X/경계?)에 **시점성 축을 좁게 instantiate**(ADR-124 Amendment 1 A1-1 의 "시의성(recency)" 이 이미 단계③ 방법론에 존재 — 본 Amendment 는 그 recency 를 source-weighting 으로 명료화, 신규 규범 아님).
+- **graceful degradation 정합**: Codex 가 web 못 하면 변동성 높은 사실은 당연히 WebSearch 단독 + `single-source` 표기(A1-1), 변동성 낮은 사실은 Codex training-bound 로도 교차 valid — 시점성 위계가 codex sandbox web 미지수(OWNING)를 자연 흡수한다.
+
+### A1-4 — divergence 최종 미결 = abstention 으로 닫음
+
+`divergent` 가 시점성 위계(A1-3) tie-break 후에도 어느 쪽도 명백히 우세하지 않으면 **abstention("확인 불가/추정", ADR-119 §결정 3.2)으로 닫는다.**
+
+- **자동 추가조사 강제 안 함** — divergent 미결 시 deep-research 자동 재실행 루프를 강제하지 않는다(비용·latency·무한루프 리스크). 정직한 abstention 이 다수결(≠진리) 자동 채택보다 낫다.
+- **임의 채택 금지** — divergent 를 임의로 한쪽 채택하면 다수결≠진리 위배. 분기 verbatim 병기 후 미결이면 닫는다.
+- **declarative-only 상속**: Codex 2차 출처는 on-demand 발동 시에만 붙는다(매 Story/매 조사 강제 아님, §결정 6 declarative-only). 상시 강제화 = Codex API 한도 압박 + declarative-only 위배.
+
+### A1-5 — #2166 disjoint cross-ref + 약화 0 (ADR-058 §결정 5)
+
+- **#2166 = disjoint axis (흡수분 0, close 아님)**: [#2166](https://github.com/mclayer/plugin-codeforge/issues/2166) = research-before-claims **mechanical lint promotion**(`source:` annotation **presence** 검사 — "출처를 *달았는가*" 정적 enforcement 축, ADR-060 4-tier path, OPEN). 본 Amendment = **corroboration 축**("두 출처가 *일치하는가*" 런타임 교차). presence(있나) ≠ agreement(맞나) → disjoint. **#2166 close 금지**(전 lane presence lint 라 본 Amendment 의 on-demand inject 보다 넓음). 흡수 = on-demand `inject` 가 이미 `source:`/`abstention:` 병기로 #2166 의 presence 의무를 *on-demand 경로에 한정해* 선제 충족함을 #2166 에 cross-ref(mechanical lint 신설 아님).
+- **약화 0건 (strengthen)**: `execute` 단계 source 확장(N=1→N=2) + disjoint layer 명시 = 검증 capability 추가. on-demand 4단계 골격·spawn 독점(ADR-039)·inline whitelist·ADR-070 verify 채널·ADR-124 단계③ 방법론·ADR-081 dispatch enum 모두 무변경. ADR-058 §결정 5 약화 차단 정합 → `sunset_justification: null`, `is_transitional: false` 유지.
+
+### A1-6 — bump / mechanical_enforcement
+
+- **plugin.json bump 불요**: 기존 skill 본문 수정(research-request-gate SKILL.md execute/inject 절 확장 = Phase 2) + ADR Amendment — 신규 skill 0, marketplace 4필드 무영향, CLAUDE.md 레인 진입 표 미등재(ADR-037 정합, §결정 ADR-126 결과 절 답습).
+- **mechanical_enforcement_actions: [] (declaration-only)**: corroboration 동작은 prose 규약(ADR-126 선례 동형). 정량 KPI/일치율 측정 lint = OOS(후속). pattern_count ≥ 2 재발 시 follow-up CFP MUST promote(ADR-084 precedent).
 
 ## 상태
 
