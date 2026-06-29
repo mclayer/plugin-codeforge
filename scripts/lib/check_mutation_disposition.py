@@ -226,9 +226,15 @@ def _decide_one(m: dict) -> tuple[str, Any]:
     """단일 mutant → (disposition, severity) 판정.
 
     우선순위 (INV-M3 → INV-M2 → INV-M1):
-      1. evidence mismatch OR killed → rejected_false_positive (severity 미부여)
-      2. equivalent 의심(동작차이 0) OR flaky 의심(비결정) → undetermined (severity 미부여)
-      3. 5-AND 충족 → hollow_gate_verified (severity 부여 — INV-M4)
+      1. evidence mismatch OR killed (명시적 False) → rejected_false_positive (severity 미부여)
+      2. evidence_ok/survived 가 비-True (누락/None) → undetermined 안전 강등 (5-AND 미충족)
+      3. equivalent 의심(동작차이 0) OR flaky 의심(비결정) → undetermined (severity 미부여)
+      4. 5-AND 충족 → hollow_gate_verified (severity 부여 — INV-M4)
+
+    null-policy 대칭 (5-AND 정렬): 5 필드(evidence_ok / survived /
+    observable_diff / deterministic / reproduced_pass) 전부 is-not-True 패턴으로
+    검사 — 하나라도 누락/None/비-True 면 hollow_gate_verified 불가. evidence_ok /
+    survived 만 명시적 False 를 reject 로 추가 분기 (D3 mismatch / killed).
     """
     evidence_ok = m.get("evidence_matches_ground_truth")
     survived = m.get("survived")
@@ -236,13 +242,25 @@ def _decide_one(m: dict) -> tuple[str, Any]:
     deterministic = m.get("deterministic")
     reproduced_pass = m.get("reproduced_pass")
 
-    # ── INV-M3 (최우선): evidence mismatch 또는 killed → reject ──
+    # ── INV-M3 (최우선): evidence mismatch 또는 killed (명시적 False) → reject ──
     #   evidence 가 ground truth 와 불일치 (D3 reject) — hollow-gate 주장 자체 무효.
     if evidence_ok is False:
         return REJECTED_FALSE_POSITIVE, None
     #   mutant killed (suite 가 RED = 테스트가 실제로 잡음) — surviving 주장 틀림.
     if survived is False:
         return REJECTED_FALSE_POSITIVE, None
+
+    # ── 5-AND positive guard (누락/None/non-true 안전 강등) ──
+    #   evidence_ok / survived 는 명시적 False 만 reject (위). 그 외 비-True
+    #   (누락=None / 비-bool) 는 5-AND 미충족 → undetermined 로 안전 강등한다.
+    #   (앞선 is-False 가드가 명시적 reject 신호를 이미 흡수했으므로, 여기 도달한
+    #    비-True 는 "확정 불가" 상태일 뿐 reject 가 아님 — 양면 보존.)
+    #   이로써 5 필드 전부 is-not-True 패턴으로 정렬 → 하나라도 비-True 면
+    #   hollow_gate_verified 불가 (5-AND 위반 차단, ADR-070 D8 / docstring L54-55).
+    if evidence_ok is not True:
+        return UNDETERMINED, None  # evidence 확정 불가 (누락/None)
+    if survived is not True:
+        return UNDETERMINED, None  # surviving 확정 불가 (누락/None)
 
     # 여기 도달 = evidence_ok=true AND survived=true (= surviving mutant 후보)
 

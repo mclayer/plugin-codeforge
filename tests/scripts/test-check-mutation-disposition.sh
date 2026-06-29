@@ -253,6 +253,31 @@ else
   FAIL=$((FAIL+1))
 fi
 
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-11/TC-12: null-policy 대칭 회귀 (CFP-2464 FIX P1 — _decide_one null 가드 5-AND 정렬)
+#   배경: 이전 구현은 evidence_ok/survived 를 `is False` 로만 가드 → 누락(None)이면
+#     reject 를 건너뛰고 이후 positive 단언 없이 false hollow_gate_verified 산출
+#     (5-AND 위반, 부당 차단/cry-wolf). 나머지 3 필드는 `is not True` 라 안전.
+#   FIX: 5 필드 전부 is-not-True 로 정렬 → 누락/None 은 undetermined 안전 강등.
+#   ★ discriminating: 누락 필드(None)가 더 이상 hollow_gate_verified 안 냄을 변별.
+#     (회귀 시 = 이전 비대칭 복구 = hollow_gate_verified/exit 1 → FAIL)
+# ═════════════════════════════════════════════════════════════════════════════
+set +e
+echo ""
+echo "── TC-11/TC-12: null-policy 대칭 회귀 (FIX P1 — 누락 필드 5-AND 미충족) ──"
+
+# TC-11: survived 누락 + 나머지 4 true + P0 → undetermined (이전엔 false hollow_gate_verified)
+run_case "TC-11-survived-missing-undetermined" \
+  '{"mutants":[{"id":"m11","location":"src/a.py:110","evidence_matches_ground_truth":true,"observable_behavior_diff":true,"deterministic":true,"reproduced_pass":true,"severity":"P0"}],"codex_available":true}' \
+  "undetermined" 'null' 0 \
+  "survived 누락 (None) → 5-AND 미충족 → undetermined (FIX P1 — false hollow_gate_verified 차단)"
+
+# TC-12: evidence_matches_ground_truth 누락 + 나머지 4 true + P0 → undetermined
+run_case "TC-12-evidence-missing-undetermined" \
+  '{"mutants":[{"id":"m12","location":"src/a.py:120","survived":true,"observable_behavior_diff":true,"deterministic":true,"reproduced_pass":true,"severity":"P0"}],"codex_available":true}' \
+  "undetermined" 'null' 0 \
+  "evidence_matches_ground_truth 누락 (None) → 5-AND 미충족 → undetermined (FIX P1 — false hollow_gate_verified 차단)"
+
 set -e
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -280,6 +305,9 @@ if [ "$FAIL" -eq 0 ]; then
   echo "   → TC-2 / TC-3 FAIL = RED (surviving 이면 무조건 verified = 없는 검사연극 날조)"
   echo "M4 drop-killed-reject (INV-M3 survived=false → reject 제거)"
   echo "   → TC-4 FAIL = RED (killed 인데 reject 안 됨)"
+  echo "M5 null-asymmetric (evidence_ok/survived 를 is-not-True 대신 is-False 로만 가드 —"
+  echo "   FIX P1 이전 회귀: 누락(None) → reject 건너뛰고 false hollow_gate_verified)"
+  echo "   → TC-11 / TC-12 FAIL = RED (누락 필드인데 hollow_gate_verified, exit 1)"
   echo ""
   echo "핵심 discriminating 삼각: TC-1(surviving→verified) ↔ TC-2/TC-3(equivalent/flaky→undetermined)"
   echo "  ↔ TC-4/TC-5(killed/mismatch→rejected) — 세 상태가 서로 구별됨을 강제."
