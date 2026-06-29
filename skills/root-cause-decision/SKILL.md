@@ -81,6 +81,20 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 - **설계 원인 판정 시**: Change Plan 갱신 (§3/§6/§7/§8 해당 항목) → Phase 1 follow-up PR → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, Phase 2 PR commit append → 구현 리뷰 재실행
 
+### FIX-close 시점 ground-truth replay 의무 (CFP-2480 / ADR-070 Amendment 12 + ADR-119 §결정 10②)
+
+> 진단 시점(위 decision table)은 falsification discipline 을 강제하나, **닫기 시점은 공백** 이었다 — E3 가 이 공백을 메운다. 본 3rd rung generative invariant sweep 의 close-time Codex 자동화 layer (중복 게이트 아님 — 진단=falsify 발화 / 닫기=replay 반증 후 close, 같은 Popper 비대칭의 다른 시점).
+
+FIX "수정됨" 으로 §10 FIX Ledger 를 닫기 전, 원 finding 을 정당화한 reproducer 를 재실행해 **반증(이제 통과)** 확인 의무:
+
+- **close 조건 = 원 reproducer 가 결정론적 GREEN 재현** (외부 Retest — finding 정당화한 *바로 그* 실패 명령이 fix 포함 worktree HEAD 에서 통과). 주장만으로 닫기 불가. `replay_verdict == PASS` 시만 close (fix-event-v1 v1.4).
+- **reproduce-before-fix**: reproducer (실패 명령 + base SHA) 는 finding *생성 시점* 에 `reproducer_command` (fix-event-v1 v1.4) 로 기록 — 닫기 시점 재실행 가능하도록. reproducer 미기록 finding = close 불가 (`undetermined` 보류).
+- **다회 결정론 확인** (1회 GREEN close 금지): flaky 가 false-GREEN(수정 안 했는데 우연 통과 → 부당 close, §1 목적 정면 훼손 최위험) + false-RED(진짜 고쳤는데 flaky → max-FIX 부당 소진) 양방향 오염. `deterministic_runs_required` 횟수 전부 GREEN 후만 close. mixed → `undetermined` quarantine.
+- **실행자 ≠ 판정자**: Codex 가 replay 실행·보고, close 판정은 PL/Orchestrator 직접 재현 falsify 후 (`[hypothesis]` → `[verified]`). §10 close = Orchestrator 단독 (writer monopoly).
+- **replay-impossible**: 실행 가능 명령으로 환원 불가한 finding (코드 P1 가독성·의미 판정 등) = `replay_verdict: replay-impossible` + **사유 명시 의무** (silent 면제 금지). 사람 검토 후보로 별도 disposition.
+- **replay FAIL = max-FIX 카운터 disjoint** (`codeforge:fix-ledger-schema` 참조): replay `falsified` 는 닫기 거부((A)축 fail-closed)지 새 FIX iter 아님 — max-FIX 3/3 소비 안 함. 무한거부 backstop = fix-attempt 카운터.
+- **결정 SSOT**: `scripts/lib/fix_replay_disposition.py` (pure function `decide_replay_disposition(packet)` → (verdict, provenance), INV-FR1~5 + INV-FR-FLAKY-1~3 + provenance 동반). concept SSOT = `docs/domain-knowledge/concept/fix-ground-truth-replay.md` (F-1~F-5).
+
 ## iteration 가설 차별화 원칙
 
 > behavioral discipline — mechanical lint 불가, review/Orchestrator judgment 으로 검증.

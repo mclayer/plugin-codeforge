@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.4"
+version: "1.5"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
 date: 2026-05-19
@@ -12,6 +12,7 @@ authors:
   - CFP-509 (MINOR bump v1.1 → v1.2 — recurrence field 정식 도입 + ADR-060 promotion gate auto-firing, ADR-060 Amendment 6 carrier)
   - CFP-963 (MINOR bump v1.2 → v1.3 — neighbor `network_scope_actual` optional schema field 신설 §14 Lane Evidence row 13번째 optional field carrier, ADR-081 Amendment 4 §결정 D1.D 본문 확장의 mechanical enforcement layer + ADR-060 Amendment 14 §결정 28 신설 동반 carrier, Codex TP#4 CX-963-4 P3 finding integration)
   - CFP-2061-S2 (MINOR bump v1.3 → v1.4 — `entries[].tags` optional list field 신설 §3.2 codify, closed-set enum [security, consumer-whitelist] 검사 dead 자동 제외 hard-exclude 가드 carrier. SSOT = docs/check-dead-criteria.yaml. 신규 ADR 0 — doc-only fast-path ADR-054, framework data-substrate 하위 영역 append. CFP-2061-S1 §11 FU-1 tag SSOT 단일화 충족)
+  - CFP-2480 (MINOR bump v1.4 → v1.5 — `entries[].policy_pack_member` (bool) + `entries[].policy_pack_scope` (list[enum] wrapper/lane-plugin/consumer) optional field 신설 §3.3 codify, executable policy gate pack 멤버십 단일 SSOT. ADR-037 Amendment 4 진입점 carrier — version-bump 게이트 = 정책팩 첫 멤버. tags 와 분리 (orthogonal concern). changelog scope = ADR-092 §결정 3 wrapper 동결 반영 lane-plugin/consumer 한정. Epic CFP-2476 E3. 신규 ADR 0 — amendment-led, framework data-substrate 하위 append)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
@@ -20,6 +21,8 @@ related_adrs:
   - ADR-050  # parallel epic + warning mode prior art
   - ADR-058  # ADR sunset criteria mandate (직접 동인)
   - ADR-060  # Evidence-enforceable promotion framework (carrier)
+  - ADR-037  # v1.5 — 정책팩 진입점 (Amendment 4, version-bump 게이트 = 정책팩 첫 멤버)
+  - ADR-092  # v1.5 — changelog SSOT (§결정 3 wrapper 동결 → policy_pack_scope lane-plugin/consumer 한정)
 related_files:
   - docs/evidence-checks-registry.yaml
   - docs/inter-plugin-contracts/MANIFEST.yaml
@@ -105,6 +108,21 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 
 **backward-compat**: optional + omit-on-N/A — 기존 146 entry 영향 0 (1.3 ↔ 1.4 backward-compat). 기존 entry 는 `tags` 없이 정상 통과. 본 field 의 mechanical lint enforcement 는 본 S2 scope 외 (doc-only fast-path — 정적 SSOT 만; S5 가 삭제 시점에 본 field 를 dead 제외 신호로 소비). 향후 advisory lint 필요 판정 시 별도 carrier (full-lane 분기 — CFP-2061-S2 §3 OOS8).
 
+### 3.3 entry 의 `policy_pack_member` / `policy_pack_scope` optional field (v1.5, CFP-2480 — executable policy gate pack 멤버십 SSOT)
+
+**`entries[].policy_pack_member` + `entries[].policy_pack_scope`** (executable policy gate pack 멤버십 영역 신규 optional field) — v1.5 MINOR bump 신규 codify (CFP-2480 / Epic CFP-2476 E3 — 재사용 거버넌스 규칙을 Codex 가 *읽고 추정* 아닌 *실제 실행*하는 정책 게이트 팩의 멤버십 단일 SSOT). 신규 ADR 0 (amendment-led — ADR-037 Amendment 4 진입점 + ADR-060 framework data-substrate 하위 optional field append, recurrence/network_scope_actual/tags 선례 동형).
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `entries[].policy_pack_member` | bool | optional (omit-on-N/A pattern) | 본 entry 게이트가 executable policy gate pack 멤버인가. `true` = 리뷰/머지 시 Codex/lane worker 가 본 게이트를 *실제 실행*(읽고 추정 금지)해 exit/stdout ground-truth 를 PR/Story 단정·정책 invariant 와 대조하는 정책팩 멤버. 멤버 자격 = deterministic·machine-evaluable / 반복 incident 방지 / stable (concept `policy-pack-executable-governance.md` P-1). 미보유/`false` entry = 정책팩 비멤버 (기존 동작 영향 0). |
+| `entries[].policy_pack_scope` | list[enum] | optional (`policy_pack_member: true` 시 권장) | 정책팩 멤버 게이트의 적용 scope. closed-set enum = `wrapper` / `lane-plugin` / `consumer`. list 이므로 다중 scope 가능. **changelog 류 = ADR-092 §결정 3 wrapper CHANGELOG 동결 반영해 `[lane-plugin, consumer]` 한정** (wrapper 제외 — false-RED 차단, concept P-2). version-bump = `[wrapper]` (wrapper-self 적용). 미지정 + `policy_pack_member: true` = 전 scope 적용 (default — 단 changelog 류는 명시 의무). |
+
+**멤버십 SSOT 단일화**: 본 field 가 정책팩 멤버십의 단일 SSOT — 신규 manifest 회피 (ADR-064 minimal-change). `tags` closed-set enum(`[security, consumer-whitelist]`, dead-check-exclude semantic — §3.2)와 **분리** (orthogonal concern conflate 회피 — policy-pack 을 tags 에 넣으면 의도치 않은 dead-check 제외 결합).
+
+**enforcement tier 와 직교**: `policy_pack_member` (멤버십 여부) 는 `current_tier` (warning/blocking, §3 §4) 와 직교 axis — 정책팩 멤버여도 tier 는 독립 (멤버 = "실행 대상" / tier = "위반 시 차단 강도"). concept P-2 (tier = 자격 ⊕ 조직 결정).
+
+**backward-compat**: optional + omit-on-N/A — 기존 entry 영향 0 (1.4 ↔ 1.5 backward-compat). 기존 entry 는 `policy_pack_member` 없이 정상 통과. 본 field 의 mechanical lint enforcement 는 본 carrier scope 외 (정적 SSOT 만 — 정책팩 실행 자동 dispatch wire = Phase 2 / 후속 carrier).
+
 ## 4. 변경 규칙 (SemVer, ADR-008 정합 + 4-tier enforcement enum 정식 도입)
 
 **4-tier enum SSOT (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환 완료)**: 모든 registry yaml entry 는 다음 4 enum 중 정확히 하나의 `current_tier` 보유 의무 (대소문자 / 공백 정확 일치). 위반 시 `scripts/check-evidence-registry.sh` exit 1 (validation FAIL) + warning mode 단계 PR comment 경고 + blocking mode 승격 시 PR block.
@@ -121,6 +139,8 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 **v1.1 → v1.2 MINOR bump (CFP-509, 2026-05-13)**: `recurrence:` field 정식 도입 (optional object — count / last_occurrence / threshold / promotion_trigger). machine-usable recurrence metric framework 제공 — CFP-490 description-only `recurrence_count` (lane-evidence-trail entry) 의 schema 흡수 + ADR-060 §결정 새 추가 (recurrence.count ≥ recurrence.threshold 시 promotion gate auto-firing advisory). 22 entry retroactive 분류 검증 (기존 entry 는 recurrence 미정의 = backward-compat default).
 
 **v1.3 → v1.4 MINOR bump (CFP-2061-S2, 2026-06-09)**: `entries[].tags` optional list field 정식 도입 (closed-set enum `security` / `consumer-whitelist` — 검사 dead 자동 제외 hard-exclude 가드). SSOT = `docs/check-dead-criteria.yaml` (검사 dead 객관 판정 기준 + 양보불가 가드). 신규 ADR 0 — doc-only fast-path (ADR-054), framework data-substrate 하위 optional field append (recurrence / network_scope_actual 선례 동형). consumer-whitelist = `templates/scripts/consumer_applicable_workflows.txt`(ADR-083) derive 권장 (명시 tag 와 OR). 기존 146 entry 영향 0 (optional + omit-on-N/A pattern, backward-compat). CFP-2061-S1 §11 FU-1 tag SSOT 단일화 충족 (S1 게이트 exempt + S5 dead 제외 동일 참조). MANIFEST `evidence_check_registry` row `version: "1.3"` → `"1.4"` 동반 (sibling sync 면제 kind:registry, MANIFEST versioning 추적만).
+
+**v1.4 → v1.5 MINOR bump (CFP-2480, 2026-06-30)**: `entries[].policy_pack_member` (bool) + `entries[].policy_pack_scope` (list[enum] `wrapper`/`lane-plugin`/`consumer`) optional field 정식 도입 §3.3 codify — executable policy gate pack 멤버십 단일 SSOT. ADR-037 Amendment 4 진입점 carrier (version-bump 게이트 = 정책팩 첫 멤버, `policy_pack_member: true, policy_pack_scope: [wrapper]`). 신규 ADR 0 — amendment-led (ADR-037 Amd4 진입점 + ADR-060 framework data-substrate 하위 optional field append, recurrence/network_scope_actual/tags 선례 동형). `tags` 와 분리 (orthogonal concern — dead-check-exclude semantic conflate 회피). changelog 류 scope = ADR-092 §결정 3 wrapper CHANGELOG 동결 반영 `[lane-plugin, consumer]` 한정. `current_tier` 와 직교 axis (멤버십 ⊥ 차단 강도). 기존 entry 영향 0 (optional + omit-on-N/A pattern, backward-compat). 본 field mechanical lint enforcement (정책팩 실행 자동 dispatch) = 본 carrier scope 외 (Phase 2 / 후속). MANIFEST `evidence_check_registry` row `version: "1.4"` → `"1.5"` 동반 (sibling sync 면제 kind:registry, MANIFEST versioning 추적만).
 
 **v1.2 → v1.3 MINOR bump (CFP-963, 2026-05-19)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`, ADR-081 Amendment 4 §결정 D1.D 본문 확장 정합). ADR-060 Amendment 14 §결정 28 carrier — 12번째 warning-tier evidence-checks-registry entry `codex-network-scope-presence` 가 §14 row 안 본 field membership check 검증. Codex TP#4 CX-963-4 P3 finding integration. 기존 entry / 기존 §14 row 는 본 field 없이 정상 통과 (optional + omit-on-N/A pattern, backward-compat). **MANIFEST drift catch-up 동반**: `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 `evidence-check-registry-v1.md` row 의 `version: "1.1"` (CFP-509 v1.1→v1.2 sibling MANIFEST sync miss 영역의 silent stale — INV-1 parity drift) → `"1.3"` atomic catch-up (CFP-509 v1.1→v1.2 sibling sync 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer 단일 PR row write, INV-1 parity ratchet). 본 catch-up annotation = MANIFEST row inline comment SSOT.
 

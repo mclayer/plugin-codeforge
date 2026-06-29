@@ -22,6 +22,10 @@ related_files:
   - docs/adr/ADR-063-marketplace-atomic-invariant.md         # Amendment 2 — §결정 18-B 9-plugin MAJOR atomic cross-check 정합 + §결정 19 Tier 분리
   - docs/adr/ADR-092-changelog-ssot-location.md              # Amendment 2 — §결정 3 wrapper CHANGELOG 동결 → 새 게이트 CHANGELOG 비의존 명시 근거
   - docs/adr/ADR-054-doc-only-story-fast-path.md             # Amendment 2 — ADR Amendment(신규 ADR 아님) + src/tests 무변경 = doc-only fast-path 분류 근거
+  - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md  # Amendment 4 — 정책팩 멤버십 SSOT (evidence-checks-registry policy_pack_member field)
+  - docs/adr/ADR-070-codex-verify-before-trust.md            # Amendment 4 — 정책 실행 결과도 신호원 → PL falsify 후 채택 (execution-dispatch-pattern-v1 상속)
+  - scripts/check-plugin-version-bump-self.sh                # Amendment 4 — 정책팩 첫 멤버 게이트 (self-test/eval discriminating mode, 게이트 자체 무변경)
+  - docs/domain-knowledge/concept/policy-pack-executable-governance.md  # Amendment 4 — 정책 게이트 팩 concept SSOT
 related_stories:
   - CFP-261 (carrier)
   - CFP-259 (parent Epic)
@@ -29,6 +33,7 @@ related_stories:
   - CFP-744 (Amendment 1 carrier — Wave 2 Story-4, atomic upgrade 후 0 drift invariant)
   - CFP-2310 (parent Epic — version-bump self-application 모노레포-aware v2 게이트)
   - CFP-2311 (Amendment 2 carrier — Epic CFP-2310 S1, 모노레포 self-application boundary + diff_signal/coupling v2 모델)
+  - CFP-2480 (Amendment 4 carrier — Epic CFP-2476 E3, 정책 게이트 팩 진입점 codify + changelog scope 분기 cross-ref)
 is_transitional: false
 amendments:
   - id: 1
@@ -48,6 +53,12 @@ amendments:
     title: "drift-check 매핑 fact-correction (registry-name ↔ source-repo decouple + superpowers 제거 + §A1-2 carrier prose facts SSOT-정합)"
     direction: clarify
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). Amendment 3 = fact-correction (clarify) — 결정 내용 무변경 (§A1-2 codex/superpowers family atomic upgrade 0-drift scope 제외 = 2nd-class 결정 보존). carrier prose 의 정정된 facts 만 SSOT-정합: (1) codex source repo openai-codex/marketplace(404) → openai/codex-plugin-cc (registry name ≠ source repo, MARKETPLACE_REPO override 맵) (2) superpowers 엔트리 제거 (CFP-2249/ADR-122 의존 0 + 실 source .version 부재) (3) 9-plugin/family-7 stale count → 10 entry/codeforge family 9 (CFP-1219 deploy/deploy-review 반영). invariant 약화 0 — mapping/count fact 정정은 invariant 강도 무변경. ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상 (fact 정정만, 약화 요소 0건). T3 self-trigger 미발동 (additive amendment, supersede 0 — 결정 A2-4 boundary)."
+  - id: 4
+    carrier_story: CFP-2480
+    date: 2026-06-30
+    title: "정책 게이트 팩 진입점 codify (version-bump 게이트 = 정책팩 첫 멤버, 게이트 자체 무변경 — 실행 방식만 추가) + changelog scope 분기 cross-ref"
+    direction: strengthen
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). Amendment 4 = ratchet 강화 방향 only — version-bump 게이트(check-plugin-version-bump-self.sh)를 executable policy gate pack 의 첫 멤버로 진입점 codify (게이트 자체 로직·tier·exit semantics 무변경 — Codex/lane worker 가 게이트를 *읽고 추정* 아닌 *실제 실행*하는 실행 방식만 추가, E1 execution-dispatch-pattern-v1 상속). 멤버십 SSOT = evidence-checks-registry policy_pack_member optional field (ADR-060 framework, schema MINOR). changelog 정책 게이트 scope = ADR-092 §결정 3 wrapper CHANGELOG 동결 반영해 policy_pack_scope lane-plugin/consumer 한정 (wrapper 제외 — false-RED 차단) cross-ref. β lenient 비대칭(over-bump PASS / under-bump FAIL) 보존 — 약화 요소 0건. ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (강화 방향, scope 축소 0). Epic CFP-2476 E3."
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A schema (list[object]: action / status / target_section [+ optional progress_note]).
   # action name = docs/evidence-checks-registry.yaml entry name verbatim. governance category → mechanical action binding 의무.
@@ -473,9 +484,40 @@ ADR-063 §결정 18-B (Amendment 7) = MAJOR version bump 시 9 plugin 동시 MAJ
 
 본 Amendment 3 = **fact-correction (clarify)** — frontmatter `amendments[3].direction: clarify` + `sunset_justification` 명시. 결정 내용 무변경 (codex/superpowers family scope 제외 결정 보존) + carrier prose facts SSOT-정합 (mapping repo + count). 약화 요소 0건 (ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상 — invariant 약화 0, fact 정정만). T3 self-trigger 미발동 (additive amendment, supersede 0).
 
+## Amendment 4 — 정책 게이트 팩 진입점 codify + changelog scope 분기 (CFP-2480, 2026-06-30)
+
+Epic CFP-2476 E3 (Codex 실행형 정책 게이트 팩 + FIX ground-truth replay). version-bump 게이트가 "executable policy gate pack" 의 첫 멤버이자 진입점임을 codify. **게이트 자체(로직·tier·exit semantics)는 무변경** — Codex/lane worker 가 게이트를 *읽고 추정* 아닌 *실제 실행*하는 실행 방식만 추가.
+
+### Amendment 4 컨텍스트 — CFP-2457 P0 의 정확한 carrier
+
+CFP-2457 dogfood: 정적 diff 읽기(Claude peer + PL)가 놓친 ADR-037 version-bump P0(MINOR under-bump)를 Codex 의 *실 게이트 직접 실행* 만이 포착 [verified: project_cfp_2457 memory]. 즉 version-bump 게이트(`check-plugin-version-bump-self.sh`)가 정책 게이트 팩에 묶일 A급 자격(deterministic·CFP-2457 incident·stable, concept `policy-pack-executable-governance.md` P-1)을 충족한다. 단 self-test discriminating mode(`--self-test`)는 origin/main 기준 보유 — 본 E3 base(origin/cfp-2477 E1 tip 50b333b5)는 production CI + eval mode 만 배선 [verified: ArchitectAgent firsthand `bash scripts/check-plugin-version-bump-self.sh --self-test` → exit 2 unknown arg, header comment 와 실 arg parser 불일치]. E3 merge base(E1 머지 후 origin/main 기준 재계산) 에서 self-test mode 재확인 영역.
+
+### Amendment 4 결정
+
+#### A4-1 정책 게이트 팩 진입점 (version-bump = 첫 멤버, 게이트 무변경)
+
+version-bump 게이트(`scripts/check-plugin-version-bump-self.sh`)는 executable policy gate pack 의 첫 멤버다. 리뷰/머지 시 Codex/lane worker 가 PR touch 시 본 게이트를 **실제 실행**(읽고 추정 금지)해 exit/stdout ground-truth 를 PR/Story 단정·ADR-037 정책 invariant 와 대조하고 위반만 evidence finding 으로 보고한다.
+
+- **게이트 자체 무변경**: base 결정 1~5 + Amendment 1~3 (β lenient 비대칭 / v2 surface-table / coupling T1/T2/T3 / 0 drift invariant)의 로직·tier(warning-first)·exit semantics 모두 무변경. 본 Amendment 는 게이트 실행 *방식*(read→execute 전환)만 추가.
+- **실행 dispatch = E1 execution-dispatch-pattern-v1 상속** (ADR-070 Amendment 11 §B3 + ADR-081 Amendment 11 §D13 — 7-step SSOT). 신규 dispatch 발명 0. 실행 주체 = Codex CLI 자체 sandbox(read-only 기본/network-off) — lane worker own-Bash 직접 실행 아님.
+- **정책 실행 결과 = 신호원**: 실행 결과조차 자동 채택 금지 — `[hypothesis]` → PL 직접 재실행 falsify 통과 시만 `[verified]` 승격 (ADR-070 Amendment 12, concept P-6).
+- **새 touchpoint 신설 아님**: ADR-052 #7/#8 mechanism 일반화 — Epic CFP-2476 비대상(touchpoint #9/#10 추가 금지) 정합.
+
+#### A4-2 멤버십 SSOT = evidence-checks-registry policy_pack_member field
+
+정책팩 멤버십 선언 SSOT = `docs/evidence-checks-registry.yaml` 의 신규 optional field `policy_pack_member`(bool) + `policy_pack_scope`(list[enum])  (ADR-060 framework, schema MINOR — recurrence/network_scope_actual optional 선례 동형). **신규 manifest 회피**(ADR-064 minimal-change) + `tags` closed-set enum(dead-check-exclude semantic) 오버로드 회피. version-bump 게이트는 evidence-checks-registry 에 entry 부재였으므로 본 Amendment carrier 가 entry 신설(`policy_pack_member: true, policy_pack_scope: [wrapper]`, warning-tier — ADR-060 §결정 5 첫 도입 강제).
+
+#### A4-3 changelog 정책 게이트 scope 분기 (ADR-092 §결정 3 cross-ref)
+
+changelog 는 외부 PaC 자격상 정책팩 후보이나 ADR-092 §결정 3 이 wrapper 루트 CHANGELOG 를 **동결**(`archive/CHANGELOG-legacy.md` 보존, 신규 entry 금지)했다. 따라서 changelog 게이트의 `policy_pack_scope` = **lane-plugin / consumer 한정**(wrapper 제외) — wrapper PR 에 적용 시 항상 false-RED 차단 (concept P-2). 본 Amendment 는 cross-ref declare 만 (changelog 게이트 멤버 등재 자체는 후속 — version-bump 가 E3 초판 첫 멤버).
+
+### Amendment 4 self-application (ratchet 검증)
+
+본 Amendment 4 = **strengthen** — frontmatter `amendments[4].direction: strengthen` + `sunset_justification` 명시. version-bump 게이트를 정책팩 진입점으로 codify(실행 방식 추가 = scope 확장) + 멤버십 SSOT field 신설(invariant 강도 상승). β lenient 비대칭 보존, 게이트 로직·tier·exit 무변경 → 약화 요소 0건 (ADR-058 §결정 5 약화 방향 발의 차단 logic 통과). is_transitional: false 유지. ADR-070 Amendment 12 + ADR-060 (evidence-checks-registry MINOR) + ADR-092 §결정 3 + concept `policy-pack-executable-governance.md` sibling cross-ref.
+
 ## 해소 기준
 
-N/A — permanent policy (`is_transitional: false`). base 결정 1-5 + Amendment 1 (0 drift invariant) + Amendment 2 (모노레포-aware self-application + v2 모델) 모두 permanent governance — codeforge plugin family 가 deprecate 되지 않는 한 영구 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application). Amendment 1 = ratchet 강화 (detect-only → atomic 후 0 drift 의무 신설, scope 확장) — sunset_justification 면제 (frontmatter `amendments[].sunset_justification` 명시). Amendment 2 = ratchet 강화 (self-application boundary 실현 + diff_signal/coupling v2 형식화 + 공유 파일 귀속 정밀화, scope 확장 + invariant 강도 상승, β lenient 비대칭 보존) — sunset_justification 면제 (frontmatter `amendments[2].sunset_justification` 명시).
+N/A — permanent policy (`is_transitional: false`). base 결정 1-5 + Amendment 1 (0 drift invariant) + Amendment 2 (모노레포-aware self-application + v2 모델) 모두 permanent governance — codeforge plugin family 가 deprecate 되지 않는 한 영구 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application). Amendment 1 = ratchet 강화 (detect-only → atomic 후 0 drift 의무 신설, scope 확장) — sunset_justification 면제 (frontmatter `amendments[].sunset_justification` 명시). Amendment 2 = ratchet 강화 (self-application boundary 실현 + diff_signal/coupling v2 형식화 + 공유 파일 귀속 정밀화, scope 확장 + invariant 강도 상승, β lenient 비대칭 보존) — sunset_justification 면제 (frontmatter `amendments[2].sunset_justification` 명시). Amendment 4 = ratchet 강화 (정책 게이트 팩 진입점 codify — 게이트 실행 방식 추가 scope 확장 + 멤버십 SSOT field 신설, 게이트 로직·tier·exit 무변경 / β lenient 비대칭 보존) — sunset_justification 면제 (frontmatter `amendments[4].sunset_justification` 명시).
 
 
 

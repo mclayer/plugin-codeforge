@@ -24,10 +24,18 @@ amendment_log:
     scope_change: "declarative invariant preservation only — 기존 §결정 1-7 의미 invariant 변경 0. is_transitional: false 유지 (영구 architectural invariant, 본체 sunset 아님). β2 audit (#1113) Anchor 5 LOSSLESS 판정 carrier."
     breaking: false
     backward_compat: true
+  - date: 2026-06-30
+    amendment: 3
+    cfp: CFP-2480
+    summary: "FIX ground-truth replay ↔ max-FIX 카운터 disjoint 명문화 + fix-event-v1 v1.3 → v1.4 MINOR carrier (reproducer_command + replay_verdict 2 optional field). Epic CFP-2476 E3. 신규 §결정 8 — (1) replay FAIL(falsified, 여전히 RED) = 닫기 게이트(close 거부)지 max-FIX 3/3 카운터 소비 아님 (disjoint); 무한거부 backstop = fix-attempt 카운터 (실제 fix 시도 = §10 Iter 증가가 max-FIX 소진, replay 재실행 자체는 카운터 무관). (2) replay fail-mode 2축 분리 — (A) replay-verdict 축(여전히 RED) = fail-closed(닫기 거부, degrade 없음, fail-open reject — 수정이 실제로 안 됨); (B) Codex-미가용 축(replay 실행 자체 불가) = lane-time fail_open_then_record_with_marker (영구보류=delivery 마비 회피, merge-time #7 fail-closed-then-bounded-degrade 와 disjoint). (3) flaky false-RED = ADR-070 §결정 D9 undetermined 분기 → max-FIX 부당소진 차단. (4) reproducer schema 제약(repo-relative 게이트/테스트 호출만, raw shell free-string 금지 = stored-command injection vector 차단, SecurityArch THR-E3-2) + base SHA-pin (reproduce-before-fix 결정론) + INV-SEC-1 (PII/secret/credential/private-path 금지 — §결정 7 reasoning_carryover security invariant 동형 확장). (5) cross-lane RESET (§결정 4) 무관 declare — replay falsified 는 RESET? column 마커 미발동."
+    scope_change: "ratchet 강화 only — 기존 §결정 1-7 의미 invariant 변경 0. fix-event-v1 v1.4 additive-optional column (v1.1~v1.3 선례 4회 정합) + max-FIX disjoint 명문화(약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A (강화 방향)."
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
   - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
+  - CFP-2480  # Amendment 3 — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR carrier (Epic CFP-2476 E3)
 related_adrs:
   - ADR-008
   - ADR-024
@@ -40,6 +48,8 @@ related_adrs:
   - ADR-060   # Amendment 1 carrier — fix-event-depth-scope-presence warning-tier evidence-checks-registry entry
   - ADR-063
   - ADR-064
+  - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
+  - ADR-119   # Amendment 3 — §결정 10② close-time wire 실현 ("수정됨=반증 후 단언")
 related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
@@ -312,6 +322,55 @@ carry 증거 (β2 audit Anchor 5 LOSSLESS 확인):
 **본 sunset 영역 한정**: ADR-076 §결정 4 sibling carrier role 만 (= disjoint invariant 의 "ADR-076 쪽 선언 역할" carry). ADR-067 본체 §결정 1-7 FIX-loop RESET semantics 영역은 sunset 대상 아님 — 계속 유효.
 
 **본 ADR 본문 삭제 금지**: Sunsetted = 해당 영역의 carry 완료 선언. 본문은 historical record 로 영구 보존.
+
+## Amendment 3 (CFP-2480 carrier) — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR
+
+Epic CFP-2476 E3 (Codex 실행형 정책 게이트 팩 + FIX ground-truth replay). FIX "수정됨" close 를 원 reproducer 재실행 반증(외부 Retest)으로 강제하는 mechanism 이 본 ADR 의 max-FIX 카운터(§결정 1~3)와 어떻게 상호작용하는지 codify. 신규 §결정 8 추가 only — D1-D7 + Amendment 1/2 본문 의미 변경 0건.
+
+### 결정 8 — FIX replay ↔ max-FIX 카운터 disjoint + replay fail-mode 2축 + reproducer security invariant
+
+#### 8.1 replay FAIL ↔ max-FIX 카운터 disjoint (핵심)
+
+FIX "수정됨" 닫기 = 원 finding 을 정당화한 reproducer 재실행 GREEN(외부 Retest, ADR-119 §결정 10② close-time wire) 반증 후에만 성립 (fix-event-v1 v1.4 `replay_verdict == PASS`). replay 가 여전히 RED(`falsified`)일 때 이는 **max-FIX 3/3 카운터를 소비하지 않는다** — replay 는 "닫기 전 검증 게이트" 지 새 FIX iteration 이 아니다.
+
+- **disjoint 의미**: replay `falsified` = "현 iter 미완결(닫기 거부)" 이지 max 3/3 진입(`current_count → 4`, §결정 1 trigger) 이 아니다. replay 재실행 자체는 §10 row Iter 를 증가시키지 않는다.
+- **무한거부 backstop = fix-attempt 카운터**: replay 가 반복 `falsified` 면 무한루프 위험은 max-FIX 가 아니라 **실제 fix 시도** (새 §10 row Iter)가 backstop 한다. DeveloperPL 이 새 fix 를 시도(새 Iter append)할 때마다 max-FIX(설계-리뷰/구현-리뷰 lane)가 소진되고, 그 카운터 3/3 도달 시 §결정 1~3 implementability reassessment 가 정상 발동한다. replay 게이트는 닫기 정직성만 담당.
+- **§결정 1~3 무손상**: max-FIX trigger 범위(설계-리뷰/구현-리뷰 2 lane), escalation 의무 3종(§결정 2), RESET vs escalation 권한(§결정 3) 본문 의미 변경 0. replay 는 그 카운터의 입력도 출력도 아닌 disjoint axis (close-gate).
+
+**사용자 trade-off 정합 (req §5.6 #2)**: disjoint = 정직성↑ but 무한거부 위험 / 카운터 소비 = 수렴 강제 but 정직성 약화. 채택 = **disjoint** (정직성 우선, §1 "주장 아닌 실측") + safety valve = fix-attempt 카운터(max-FIX)가 별 채널로 수렴 강제. replay N회 `falsified` 반복 시 사용자 escalation 은 max-FIX implementability reassessment(§결정 2) 가 흡수.
+
+#### 8.2 replay fail-mode 2축 분리 (InfraOp refinement)
+
+replay 의 fail 은 두 disjoint 축이다 (혼동 시 게이트 hollow):
+
+| 축 | 의미 | disposition | 근거 |
+|---|---|---|---|
+| **(A) replay-verdict 축** | 원 reproducer 가 여전히 RED (수정이 실제로 안 됨) | **fail-closed (닫기 거부), degrade 없음** (`replay_verdict: falsified`) | replay 본질 = "주장 아닌 실측"(§1). fail-open 하면 게이트 자체 hollow = #2322 self-attest 위조면 동형 hole → fail-open reject |
+| **(B) Codex-미가용 축** | replay 실행 자체 불가 (Codex CLI/sandbox 미가용) | **lane-time `fail_open_then_record_with_marker`** (`[fix-replay-fallback: fail-mode=codex_unavailable, disposition=open]`) | 영구보류 = delivery 마비. lane-time ≠ 마지막 방어선 (ADR-070 Amd10/11 §D8/D9 동형) |
+
+merge-time #7 의 `fail_closed_then_bounded_degrade`(ADR-070 §결정 D7)와 다름 — **#7 의 degrade 는 (B)축(Codex 미가용)용** 이고 **FIX replay (A)축은 degrade 대상이 아니다** (수정이 실제로 안 됨 → 닫기 거부가 정답, degrade 시 부당 close).
+
+#### 8.3 flaky false-RED → undetermined (max-FIX 부당소진 차단)
+
+replay 가 flaky(다회 결정론 미충족 또는 mixed)면 `replay_verdict: undetermined` (ADR-070 §결정 D9 undetermined 분기 동형) — quarantine 보류. 1회 GREEN close 금지(false-GREEN = §1 목적 정면 훼손 최위험) + mixed quarantine(false-RED = 진짜 고쳤는데 flaky 실패로 max-FIX 부당 소진 차단). 결정론 확인 횟수 = 설정값(`deterministic_runs_required`, 하드코딩 금지 — §8 Perf Baseline).
+
+#### 8.4 reproducer security invariant (§결정 7 reasoning_carryover security invariant 동형 확장)
+
+fix-event-v1 v1.4 `reproducer_command` (실패 명령 verbatim + base SHA) 는 public PR mirror surface 다 (fix-ledger-sync.yml → Story Issue comment mirror). §결정 7 reasoning_carryover security invariant 를 reproducer 영역으로 동형 확장:
+
+- **schema 제약 (SecurityArch THR-E3-2 강한이의 반영)**: `reproducer_command.command` = **repo-relative 게이트/테스트 호출 형태만** (예: `bash scripts/check-plugin-version-bump-self.sh --self-test`). raw shell free-string 금지 = stored-command injection vector 차단 (Codex worker 발화 reproducer 가 inter-agent trust 경로로 더 위험 — Evgrafov 82.4% > direct 41.2%, ADR-070 X-4 cited).
+- **base SHA-pin** (InfraOp): reproduce-before-fix 결정론 기준. replay 기준 = "원 finding SHA 의 자식(fix 포함) worktree HEAD 에서 원 reproducer 재실행" = retest (명령·입력 결정론 고정, 과거 시간여행 아님).
+- **INV-SEC-1**: PII / secret / credential / API key / private absolute-path 금지 (repo-relative·환경독립 명령만). Orchestrator append 전 SCAN + 위반 시 fail-fast (자동 redact 금지, audit 가능성).
+- **INV-SEC-2**: `replay_verdict` 동반 stdout 발췌는 exit + 모순 라인만 최소 (전체 dump 금지).
+
+#### 8.5 cross-lane RESET (§결정 4) 무관 declare
+
+replay close-gate 는 §결정 4 cross-lane RESET semantics 와 disjoint — replay `falsified` 는 §10 row 의 `RESET?` column 마커를 발동하지 않는다 (닫기 거부일 뿐 lane 카운터 리셋 아님). Pause-and-resume(§결정 4) 영역 무변경.
+
+#### 8.6 declaration-only retain + ratchet 정합
+
+- `mechanical_enforcement_actions: []` retain (replay close-time 자동 wire = Phase 2 / 후속 carrier, ADR-064 §결정 1 unitary). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test, CI 미배선 — Story A/B 선례 동형 helper).
+- ratchet 강화 방향 (max-FIX disjoint 명문화 + replay fail-mode 2축 + reproducer security invariant codify, 약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A. ADR-070 Amendment 12 + ADR-119 §결정 10② + fix-event-v1 v1.4 sibling cross-ref.
 
 ## 관련 파일
 
