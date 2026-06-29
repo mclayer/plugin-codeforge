@@ -276,7 +276,9 @@ mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 *
 
 **Rationale (Q5 Codex verbatim)**: PL = Aggregate Root 는 supervised authority 의 metaphor only. Change Plan + ADR draft 산출물 자체는 real consistency boundary. 핵심 invariant: §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함. CFP 가 "agent control metaphor" vs "artifact consistency boundary" 를 explicit separate 해야 함.
 
-### §결정 4 — Published Language 분리 (codeforge + mctrader 2 SSOT)
+### §결정 4 — Published Language 분리 (codeforge + mctrader 2 SSOT) ⚠
+
+> ⚠ **Amendment 3 정합** (2026-06-29 KST): 본 §결정 4 consumer application BC scope 가 어휘 사전(lexicon/concept-dictionary) **생산·유지 활동 표준** 으로 승격 — content 작성은 여전히 consumer downstream Epic defer (cross-ref only, Published Language 분리 불변). SSOT 표의 mctrader application BC 행 `mctrader-hub/docs/glossary.md` = consumer-specific 예시로 cross-ref 유지 (표준 경로 = `docs/domain-knowledge/domain/<area>/lexicon.md` + `concept-dictionary.md`). 자세한 = 본 ADR 상단 `## Amendment 3` section 참조.
 
 | BC | Published Language SSOT |
 |---|---|
@@ -317,6 +319,8 @@ DDD vocabulary enforcement = 3-tier:
 ### §결정 7 — Vocabulary theater 차단 forcing function (INV-5) ⚠
 
 > ⚠ **Amendment 1 정합** (2026-05-21 KST): 본 §결정 7 의 forcing function 검증 대상 중 S5 deputy-mandate matrix scope = ADR-042 Amendment 10 정합 — 4-way RACI matrix → 3-way (AggregateArch column 흡수, ModuleArch unified column). cross-validate mechanism (review-verdict-v4 `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` finding type) 본문 변경 0건 (forcing function 자체 보존). 자세한 = 본 ADR 상단 `## Amendment 1` section 참조.
+
+> ⚠ **Amendment 3 정합** (2026-06-29 KST): 본 §결정 7 INV-5 forcing function 이 application BC 로 확장 — D5(동음이의 entry 사용처 인용)가 `usage_citations` 1급 schema 필드로 재적용 (mechanical presence-check + DomainAgent semantic 이원화). forcing function 자체 본문 변경 0건 (강화 확장만). 자세한 = 본 ADR 상단 `## Amendment 3` section 참조.
 
 본 ADR 의 핵심 forcing function. 6 Story acceptance criteria 각각 "어휘 emit ↔ spawn/review/ADR criteria 변경" 검증항목 1건 이상 의무. **본 ADR Phase 2 PR5 LAND gate** = mctrader ADR-031 golden-path worked example (S6) 의 FINAL VERDICT 섹션이 다음 5 영역에 대해 evidence enumeration 명시:
 
