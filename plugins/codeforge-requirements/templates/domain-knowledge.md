@@ -73,3 +73,71 @@ updated: YYYY-MM-DD                 # 마지막 수정일 (DomainAgent가 갱신
 4. Story file §3 "관련 ADR" 또는 별도 §5 "도메인 지식" 섹션에 링크 추가 — Orchestrator 경유 DocsAgent에 의뢰 (Story file은 multi-writer)
 5. 기존 page 갱신 시 frontmatter `updated` 필드 + "변경 이력" 섹션 append
 ```
+
+---
+
+## lexicon 산출물 schema (`kind: lexicon_relation`) — CFP-2453 / ADR-091 Amendment 3
+
+consumer **application-BC** 의 단어 사전(lexicon). 동음이의(homonym)·유의(synonym)·반의(antonym) **관계** 산출물 — 1-fact(`domain_fact`)와 disjoint 한 산출물 유형(여러 용어를 함께 비교해야 드러나는 관계). DomainAgent build+maintain owner.
+
+- **위치**: `docs/domain-knowledge/domain/<area>/lexicon.md` (DomainAgent `domain/**` 권한 내 — glob 변경 0). consumer overlay 가 `<area>` 정의 (예: `domain/vocabulary/lexicon.md`).
+- **owner write**: DomainAgent 직접. ResearcherAgent `concept/**` 와 disjoint — lexicon 은 `concept/**` 미침범(포인터 cross-ref 만).
+- **기계 검증**: `scripts/check-lexicon-drift.sh` (warning-tier) + doc-frontmatter `kind: lexicon_relation` allowlist (`scripts/lib/check_doc_frontmatter.py` KIND_VALID).
+- **prior-art (inspiration 인용만, conformance claim 아님)**: ANSI/NISO Z39.19 controlled vocabulary 관계어휘(USE/UF·RT) + ISO 704 concept-oriented terminology. 조항 번호는 추정 — conformance 주장 금지 (ADR-119 hedge).
+
+### lexicon frontmatter (필수)
+
+```yaml
+---
+kind: lexicon_relation
+title: <한 줄 제목 — 예: "<프로젝트> application-BC lexicon">
+area: <영역 — overlay에서 정의된 area 중 하나>
+topic_slug: lexicon
+status: draft | active | deprecated
+updated: YYYY-MM-DD
+relations:
+  - term: <표기>                              # mechanical
+    relation: homonym | synonym | antonym     # mechanical (enum)
+    conflict_with: <충돌 대상 term>           # relation=homonym/antonym 시 (mechanical)
+    usage_citations:                          # 1급 필드 — D5 forcing function (mechanical: presence)
+      - "<file:line 또는 동등 — 실 사용처>"   # homonym entry 는 1+ 의무 (semantic 적합성=DomainAgent)
+    definition: <의미 정의>                   # semantic
+  - <다음 entry ...>
+---
+```
+
+### lexicon 작성 규칙 (보존 의무)
+
+- **동음이의 2-entry explicit-separate (ADR-091 §결정3)**: 한 entry 에 두 의미를 함께 기술 금지. `relation: homonym` 충돌쌍은 **각각 별 entry** + 상호 `conflict_with` 참조. governance BC glossary 의 Aggregate 2-entry pair 가 살아있는 선례. drift-check collision-candidate 도 이 2-entry 구조를 전제로 surface.
+- **D5 forcing function (ADR-091 §결정7 답습)**: 동음이의어(homonym) entry 는 사용처 인용(`usage_citations`, file:line 1+) 의무 — 나열만 금지. drift-check 가 presence 검사 (인용 의미 적합성은 DomainAgent semantic, ADR-119 abstain).
+- **BC 분리 (INV-R6, ADR-091 §결정4)**: application-BC lexicon ↔ governance-BC glossary 는 **분리된 controlled vocabulary**. 한쪽이 다른 쪽을 정의하지 않고 cross-ref(link)만 — content 복제 금지.
+- **자동 action 0 (I-LEX-2)**: qualifier(예: `data-provenance`/`run-provenance`)는 *권고*. drift-check WARN 해도 자동 rename/리네이밍 강제 0 — 실 리팩터는 설계 lane 결정.
+
+---
+
+## concept-dictionary 산출물 schema (`kind: concept_definition` 재사용) — CFP-2453
+
+개념별 깊이(정의/불변식/위치) 산출물. lexicon(용어 간 관계)과 **다른 추상 레벨** — ISO 704 concept-oriented 정합(개념이 일차 단위, 용어는 표시). **신규 kind 신설 0** — 기존 `kind: concept_definition`(`templates/concept-knowledge.md`) 재사용.
+
+- **위치**: `docs/domain-knowledge/domain/<area>/concept-dictionary.md` (DomainAgent `domain/**` 권한 내).
+- **owner = 경로 기반**: `domain/<area>/concept-dictionary.md` (DomainAgent 소유) ↔ `concept/**` 의 동일 kind 파일(ResearcherAgent 소유) = 경로가 owner 결정. kind 재사용은 충돌 0 (kind = frontmatter schema 식별자이지 ownership 선언 아님). DomainAgent 는 `concept/**` narrative content 미침범 (포인터 cross-ref 만).
+
+### concept-dictionary frontmatter (필수 — concept_definition schema)
+
+```yaml
+---
+kind: concept_definition
+title: <한 줄 제목>
+slug: concept-dictionary
+status: draft | active | deprecated
+updated: YYYY-MM-DD
+---
+```
+
+### concept-dictionary 본문 entry 필드 (개념별)
+
+- `concept` — 개념명 (mechanical)
+- `definition` — 의미 정의 (semantic)
+- `invariants[]` — 개념 불변식 목록
+- `location` — 코드 경로 / bounded context / `concept/**` 심층문서 링크 (셋 다 허용 — ISO 704 concept 속성 관점)
+- `lexicon_refs[]` — 개념→용어 방향 참조 (R2 concept-우선 — concept-dictionary 가 lexicon entry 를 참조)

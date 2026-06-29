@@ -293,6 +293,22 @@ cross_plugin_doc_ownership:
         - "ADR-013 §결정 3 behavioral scope-out"
         - "docs/doc-locations.yaml domain_knowledge entry"
       notes: "Domain knowledge = ArchitectAgent direct write. wrapper-canonical."
+      # CFP-2453 / ADR-091 Amendment 3 — consumer scope owner 차이 명문 (design-review open-Q2).
+      # wrapper-self dogfood = ArchitectAgent (위 owner_agent, CFP-26 4 single-owner-doc convention 보존).
+      # consumer context 의 application-BC 어휘 사전(lexicon.md / concept-dictionary.md) = DomainAgent
+      # (DomainAgent.md permissions allow docs/domain-knowledge/domain/** + lane-self-write SKILL.md
+      # codeforge-requirements row). 두 scope 의 owner 차이 = by-design (wrapper-self ↔ consumer).
+      consumer_scope_owner:
+        owner_plugin: codeforge-requirements
+        owner_agent: DomainAgent
+        scope_paths:
+          - "docs/domain-knowledge/domain/<area>/lexicon.md"            # kind: lexicon_relation
+          - "docs/domain-knowledge/domain/<area>/concept-dictionary.md"  # kind: concept_definition (재사용)
+        cross_ref_ssot:
+          - "plugins/codeforge-requirements/agents/DomainAgent.md permissions allow(domain/**)"
+          - "skills/lane-self-write-boundary/SKILL.md codeforge-requirements row"
+          - "ADR-091 Amendment 3 §결정4 consumer scope 승격"
+        note: "ResearcherAgent concept/** 와 disjoint — DomainAgent 는 concept/** narrative 미침범(포인터 cross-ref 만)."
 
     - doc_type: spec
       paths:

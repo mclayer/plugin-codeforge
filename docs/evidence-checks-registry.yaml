@@ -3135,6 +3135,45 @@ entries:
       promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
     status: Active                  # CFP-2428 Phase 2 mechanical wire — 실파일 실존 firsthand 확인 (Python SSOT check_responsibility_marker_drift.py + thin wrapper scripts/check-responsibility-marker-drift.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-responsibility-marker-drift.sh, drift 3종 + fail-open discriminating mutation 생존 0). current_tier:warning 불변.
 
+  - name: lexicon-drift-check
+    description: |
+      ADR-091 Amendment 3 신설 (CFP-2453 carrier) — consumer application-BC 단어 사전(lexicon) drift
+      게이트. responsibility-marker-drift(CFP-2428 / ADR-131 Amd1) archetype 1:1 clone (established
+      패턴 복제, parallel novel system 아님). consumer repo 의 docs/domain-knowledge/domain/<area>/
+      lexicon.md frontmatter kind:lexicon_relation entry 집합(term / relation(homonym|synonym|antonym)
+      / conflict_with / usage_citations / definition)을 읽어 구조적으로만 대조. 검사 (exit 3-tier):
+      (a) collision-candidate  같은 표기(term)가 서로 다른 의미로 다중 출현하나 homonym 2-entry
+        explicit-separate(상호 conflict_with) 구조 미선언 (ADR-091 §결정3) → exit 1.
+      (b) citation-absent       relation:homonym entry 가 usage_citations 0건 (D5 forcing function,
+        ADR-091 §결정7 vocabulary theater 차단) → exit 1.
+      data-absence fail-open: lexicon.md 부재 = 정책 공백(미생성 repo) = PASS(exit 0, honest ::notice::).
+      setup-error(yaml 파싱 실패 / term·relation 키 부재·malformed / relation enum 위반) = exit2(fail-closed).
+      기계(구조 대조 — collision surface + citation presence) vs 사람(의미정합 homonym 판정 = DomainAgent
+      semantic) 판정 분리 (I-LEX-1, ADR-091 §결정3/§결정7 / ADR-119 검사연극 금지 + abstention). I-LEX-2:
+      자동 rename/리네이밍 강제 0 (qualifier 권고). path-filter skip 금지 (Pending trap 차단, 스크립트
+      EXIT 0 처리). offline-first (lexicon.md frontmatter only, gh api 0).
+    detect_command: bash scripts/check-lexicon-drift.sh  # CFP-2453 Phase 2 mechanical wire — script 실존 (Python SSOT check_lexicon_drift.py + thin wrapper)
+    workflow: .github/workflows/lexicon-drift-check.yml  # templates+.github byte-identical (ADR-005 정합)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:lexicon-drift
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2453                  # Phase 2 mechanical wire carrier — lint script (Python SSOT) + 2-file workflow + self-test
+    modal_anti_pattern_dictionary: {}  # collision/citation 구조 lint, modal 어휘 무관
+    introduced_by: CFP-2453
+    introduced_date: 2026-06-29      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-091              # declaration source — Amendment 3 consumer scope 승격 + INV-R6 + INV-5 application-BC 확장
+    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.3 Perf Baseline N/A)
+    recurrence:
+      count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # warning ship → main 7일 green → required 등록(별 후속 Story)
+    status: Active                  # CFP-2453 Phase 2 mechanical wire — 실파일 실존 (Python SSOT check_lexicon_drift.py + thin wrapper scripts/check-lexicon-drift.sh + templates+.github byte-identical workflow + self-contained discriminating test tests/scripts/test_check-lexicon-drift.sh, drift 2종 + fail-open discriminating mutation 생존 0). current_tier:warning 불변.
+
   # lane-count SSOT 일관성 게이트 (CFP-2426 / ADR-060 Amendment 19 §결정 33 — 17번째 warning-tier entry).
   # canonical 작업레인 수(10, ADR-125 Amd1)가 governance 문서 전반에서 단조 유지되는지 grep-기반 mechanical 검출.
   - name: lane-count-ssot-consistency
