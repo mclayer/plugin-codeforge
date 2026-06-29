@@ -69,7 +69,8 @@ function Resolve-ReviewCount {
     switch ($Shape) {
         "solo" { return "0" }
         "team" { return "1" }
-        default { Log "WARN: 미지 shape '$Shape' — solo(0) fail-safe"; return "0" }
+        # default 분기 불필요 — [ValidateSet("solo","team")] 가 param binding 단계에서
+        # 그 외 값을 차단 (N-CR-2469-2: dead code 제거). fail-safe 는 ValidateSet 이 담당.
     }
 }
 

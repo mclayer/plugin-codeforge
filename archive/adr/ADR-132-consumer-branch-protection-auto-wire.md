@@ -146,6 +146,8 @@ bootstrap·reapply 는 여러 번 실행될 수 있다 (재초기화 / drift 복
 - consumer repo main branch 의 `required_status_checks.contexts[]` 미등록(dead gate) 검출 → WARN.
 - `enforce_admins` 미설정 점검.
 
+readiness 점검 경로는 2개다 (defense-in-depth, F-CR-2469-1): (1) `check_bootstrap.py` check 12 (`check_branch_protection_readiness` — SessionStart 진단 hook 경로) + (2) `scripts/check-debut-readiness.{sh,ps1}` Check 5 (명시 readiness 스크립트 경로 — 원 요구사항이 check-debut-readiness 를 dead-gate 출고 차단 surface 로 명시). 양자 동일 read-only GET 검증 (`required_status_checks.contexts[]` + `enforce_admins`), 호출 시점만 상이.
+
 이 check 가 **drift 재감지 safety-net** 역할 — never-built weekly-cron `branch-protection-drift-check.yml` 을 *대체* 한다 (결정 9 참조).
 
 ### 결정 9 — dead-ref cluster 정리 (cleanup, not 실체화)
