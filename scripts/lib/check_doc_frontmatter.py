@@ -27,6 +27,7 @@ except ImportError:
 REQUIRED = {
     "docs/change-plans": {"title", "slug", "status", "author", "created", "story"},
     "docs/adr":          {"adr_number", "title", "status", "category", "date"},
+    "archive/adr":       {"adr_number", "title", "status", "category", "date"},
     "docs/domain-knowledge/domain": {"kind", "title", "area", "topic_slug", "status", "updated"},
     "docs/domain-knowledge/concept": {"kind", "title", "slug", "status", "updated"},
     "docs/retros":       {"title", "date", "sprint_period", "cfp_keys", "authors"},

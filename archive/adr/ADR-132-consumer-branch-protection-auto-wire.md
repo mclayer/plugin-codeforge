@@ -203,3 +203,16 @@ cleanup scope:
 - terraform/safe-settings full-replacement reconcile 표준 = terraform-provider-github docs / github/safe-settings README.
 - legacy branch protection 미deprecated = docs.github.com (rulesets 공존).
 repo 사실 단정은 firsthand 실측 (file:line 인용, 2026-06-29~30 KST).
+
+## 관련 파일
+
+- `scripts/wire-branch-protection.sh`
+- `scripts/wire-branch-protection.ps1`
+- `scripts/reapply-branch-protection.sh`
+- `scripts/reapply-branch-protection.ps1`
+- `scripts/bootstrap-consumer.sh`
+- `scripts/bootstrap-consumer.ps1`
+- `overlay/hooks/check_bootstrap.py`
+- `templates/scripts/setup-branch-protection.sh`
+- `templates/branch-protection-manifest.yaml`
+- `docs/consumer-guide.md`

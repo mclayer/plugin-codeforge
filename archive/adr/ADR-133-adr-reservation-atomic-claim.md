@@ -207,6 +207,15 @@ ADR-133 은 ADR-085 의 4·5번째 sub-decision 이 아니라 **별 입도의 �
 - **ADR-070** Codex verify-before-trust — chief author inline append precedent 정합 보존 의무.
 - **ADR-082** Amendment 17 sub-scope 1-G — amendment_id slot pre-claim 4-tuple 의 adr_number slot 일반화 원천.
 
+## 관련 파일
+
+- `archive/adr/ADR-RESERVATION.md`
+- `archive/adr/ADR-050-parallel-epic-conflict-coordination.md`
+- `scripts/post-merge-telemetry.sh`
+- `docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md`
+- `templates/github-workflows/parallel-epic-conflict-check.yml`
+- `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md`
+
 ## Amendment 1 — E3b 구현 결정 (CFP-2491, 2026-06-30 KST)
 
 > E3b(CFP-2491, Epic CFP-2481 Phase B) 설계 lane 이 §결정6 우열(구현) 을 실현하며 확정한 구현 결정. strengthen direction(약화 surface 0). canonical SSOT = Change Plan `wrapper/change-plans/cfp-2491-adr-reservation-atomic-claim-race-guard.md`(internal-docs). 본 Amendment = ADR 본문 결정 보강·보정 cross-ref.

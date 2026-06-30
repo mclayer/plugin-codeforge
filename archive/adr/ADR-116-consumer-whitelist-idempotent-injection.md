@@ -84,9 +84,17 @@ N/A — permanent policy. 본 ADR 은 consumer 보안 화이트리스트 확장-
 - 옵션 B(멱등 후처리 주입) **채택** — reconcile 무수정, 환경-특화 확장만 멱등 재적용, never-reduce 로 보안 화이트리스트 무결성 보존. ADR-024 Amendment 2 §결정 A 선례 동형.
 - awk 전면 fallback **기각** — 검증된 GREEN 구현(8 bats)을 흔들고 retroactive 안정성 훼손. 실행환경 한정 + guard 가 비용 대비 충분.
 
-## 영향 / 후속
+## 결과
 
 - consumer adoption(mctrader-data 등) = 별 cross-repo PR(본 ADR OOS).
 - ADR-057 오인용 정정(workflow 주석 + ADR-026 frontmatter + consumer-guide/schema/example + PR body) = 별 doc-only fix carrier CFP(CFP-1716 Story §11.3).
 - R1(version guard) / R2(mktemp IPC) = Phase 2 동반 또는 별 enhancement CFP.
 - auto-wire(reconcile→inject) = future codeforge-pmo UpgradeAgent 영역.
+
+## 관련 파일
+
+- `scripts/inject-allowed-hub-repos.sh`
+- `scripts/lib/extract_allowed_hub_repos.py`
+- `tests/scripts/cfp-1716/inject-allowed-hub-repos.bats`
+- `.github/workflows/phase-gate-mergeable.yml`
+- `.github/workflows/phase-gate-auto-cleanup.yml`

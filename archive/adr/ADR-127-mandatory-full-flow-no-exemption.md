@@ -393,6 +393,28 @@ N/A — `is_transitional: false` (영구 정책, 강화 방향 ratchet).
 - [ADR-027](ADR-027-consumer-adoption-protocol.md) Amendment 12 §결정 15 — §결정 4 skip-offer 금지의 consumer 전파 채널 SSOT (Amendment 1 동반)
 - CFP-2456 — Amendment 1 carrier Story (consumer propagation 명문화)
 
+## 관련 파일
+
+- `archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md`
+- `archive/adr/ADR-054-doc-only-story-fast-path.md`
+- `archive/adr/ADR-024-story-scoped-branch-policy.md`
+- `archive/adr/ADR-064-decision-principle-mandate.md`
+- `archive/adr/ADR-071-orchestrator-user-dialog-convergence.md`
+- `archive/adr/ADR-114-minimal-path-direct-invocation-protocol.md`
+- `skills/story-cutoff-classification/SKILL.md`
+- `skills/story-epic-flow-preflight/SKILL.md`
+- `skills/user-dialog-mode/SKILL.md`
+- `skills/deputy-mandate/SKILL.md`
+- `docs/hotfix-playbook.md`
+- `docs/orchestrator-playbook.md`
+- `docs/consumer-guide.md`
+- `docs/inter-plugin-contracts/label-registry-v2.md`
+- `docs/evidence-checks-registry.yaml`
+- `templates/github-workflows/phase-gate-mergeable.yml`
+- `CONTRIBUTING.md`
+- `CLAUDE.md`
+- `.claude-plugin/plugin.json`
+
 ## Amendment 1 — §결정 4 dialog skip-offer 금지의 consumer 적용 범위 명문화 (CFP-2456)
 
 **Effective**: 2026-06-29 (CFP-2456 Phase 1 설계 PR merge 시점, KST `+09:00`).

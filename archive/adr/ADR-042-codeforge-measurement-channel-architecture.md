@@ -36,6 +36,7 @@ amendment_log:
     date: 2026-06-24
     carrier_story: CFP-2393
     summary: "§결정 3 spawn-event-v1 보류 해제 (supersede) + §결정 1 4-channel boundary 표 8번째 channel (spawn-event-v1) 추가 + Out-of-scope token attribution deferral 해제 + §결정 13 amendment 의무 이행 (§14↔spawn-event dedup script Phase 2 commitment). Epic CFP-2391 S3 directive 가 §결정 3 보류근거 #3 (30+ run ROI gate) 를 supersede — OMC-adopt per-agent replay/cost observability. Phase 1 = doc-only (stop-event 선례 §결정 12). 신규 ADR 미신설 (§결정 1 self-amendment 의무 + §결정 13 'Amendment N 신설' 명시 정합)."
+---
 
 # ADR-042: Codeforge measurement channel architecture
 
