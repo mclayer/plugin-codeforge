@@ -37,6 +37,18 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 
 사용자 escalation gate timing: ArchitectPL 결정 — 3 trigger 중 1+ 충족 시 의무 escalation. 0 충족 시 RESET path 선택 가능 (사용자 escalation 생략). 상세: [playbook §6.4](../../docs/orchestrator-playbook.md).
 
+### FIX-close ground-truth replay = 닫기 조건 + max-FIX 카운터 disjoint (fix-event-v1 v1.4, CFP-2480 / ADR-067 Amendment 3)
+
+"수정됨" 으로 §10 row 를 닫기 전 **원 finding reproducer 재실행 통과(반증)** 가 닫기 조건이다 (`codeforge:root-cause-decision` "판정 후 액션" 의 close-time replay 의무 SSOT):
+
+- **닫기 조건 = `replay_verdict == PASS`** (fix-event-v1 v1.4 13번째 column) — 원 reproducer(`reproducer_command`, 12번째 column)가 결정론적 GREEN 재현 + PL falsify 통과. `falsified` = 닫기 거부.
+- **max-FIX 카운터 disjoint (핵심)**: replay `falsified`(여전히 RED) = **max-FIX 3/3 카운터를 소비하지 않는다**. replay 는 "닫기 전 검증 게이트" 지 새 FIX iteration 이 아니다 — `falsified` = "현 iter 미완결(닫기 거부)" 이지 max 3/3 진입이 아님.
+  - **무한거부 backstop**: replay 가 반복 `falsified` 면 무한루프 위험은 max-FIX 가 아니라 **fix-attempt 카운터** (실제 fix 시도 = §10 row Iter 증가)가 backstop. fix 를 새로 시도(새 Iter)할 때마다 max-FIX 가 소진되지, replay 재실행 자체는 카운터 무관.
+  - **flaky false-RED 보호**: replay 가 flaky 로 `undetermined`(mixed/횟수 미충족)면 max-FIX 부당 소진 차단 (quarantine 보류 — ADR-070 §결정 D9 undetermined 동형).
+- **(A)/(B)축 fail-mode 분리**: (A) replay-verdict 축 = `falsified` → fail-closed (닫기 거부, degrade 없음 — 수정이 실제로 안 됨). (B) Codex-미가용 축 = replay 실행 자체 불가 → lane-time `fail_open_then_record_with_marker` (`[fix-replay-fallback: fail-mode=codex_unavailable, disposition=open]`, 영구보류=delivery 마비 회피). merge-time #7 의 fail-closed-then-bounded-degrade 와 다름 — #7 degrade 는 (B)축용.
+- **cross-lane RESET 무관 declare**: replay close-gate 는 §10 RESET? column semantics 와 disjoint — replay `falsified` 는 RESET 마커를 찍지 않는다 (닫기 거부일 뿐 lane 카운터 리셋 아님).
+- 결정 SSOT = `scripts/lib/fix_replay_disposition.py` / concept = `docs/domain-knowledge/concept/fix-ground-truth-replay.md`.
+
 ### Cross-lane RESET 정책 (Pause-and-resume, ADR-067 §결정 4)
 
 escalation lane (예: 보안-테스트) 에서 FIX 처리 후 design/code lane 카운터는 Pause-and-resume 방식으로 운용된다:
