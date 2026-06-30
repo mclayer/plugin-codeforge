@@ -6,7 +6,7 @@
 # (bootstrap 이 side-effect: .github/workflows/ 생성).
 #
 # discriminating fixture 의무:
-#  - TC-1: whitelist iterate 전환 (32-entry dry-run vs 고정 7-element fallback)
+#  - TC-1: whitelist iterate 전환 (33-entry dry-run vs 고정 7-element fallback)
 #  - TC-2: idempotent 2회 실행 byte-identical
 #  - TC-3: fail-safe degrade (whitelist 부재 → 7종 fallback + WARN + exit 0)
 #  - TC-4: parity (dry-run 산출 basename == whitelist entry)
@@ -20,7 +20,7 @@
 #  - Mutation-idempotent     ($dst 가드 제거) → TC-2 RED
 #  - Mutation-degrade-warn   ([WARN] 마커 제거) → TC-3 RED (exit0만으로 non-discriminating)
 #  - Mutation-no-parity-check(basename set 비교 로직 제거) → TC-4 RED
-#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 32 ≠ ps1산출 7)
+#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 33 ≠ ps1산출 7)
 #  - Mutation-no-degrade     (whitelist 1개 추가 → 미포함) → TC-7 RED
 #  - Mutation-empty-check    (empty-check 제거 → 0종 fallback 미실행) → TC-8 RED
 
@@ -89,8 +89,8 @@ make_fixture_plugin_root() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-1: whitelist iterate 전환 (32개 기대 vs 고정 7종 fallback)
-# Assertion: dry-run stdout 에 정확히 32개 "cp .github/workflows/" 의도 라인 포함
+# TC-1: whitelist iterate 전환 (33개 기대 vs 고정 7종 fallback)
+# Assertion: dry-run stdout 에 정확히 33개 "cp .github/workflows/" 의도 라인 포함
 # Mutation-hardcode-7: 고정 배열 복귀 시 7종만 출력 → RED
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc1_whitelist_iterate_count() {
@@ -112,14 +112,14 @@ test_tc1_whitelist_iterate_count() {
   local output
   output=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
 
-  # 기대: "[dry-run] cp" + ".github/workflows" 정확히 32개 라인 (CFP-2505 css-lint.yml 등재로 31→32)
+  # 기대: "[dry-run] cp" + ".github/workflows" 정확히 33개 라인 (CFP-2504 venue-shape-fidelity-presence-check.yml 등재로 32→33)
   local cp_count
   cp_count=$( echo "$output" | grep -c '\[dry-run\] cp.*\.github/workflows' || echo 0 )
   cp_count=$(echo "$cp_count" | tr -d '\r\n')
 
-  local expected_count=32
+  local expected_count=33
   if [ "$cp_count" -eq "$expected_count" ]; then
-    echo "✓ PASS: $test_name (count=$cp_count) — dry-run 에 32개 workflow cp 의도"
+    echo "✓ PASS: $test_name (count=$cp_count) — dry-run 에 33개 workflow cp 의도"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
@@ -182,22 +182,22 @@ test_tc2_idempotent() {
   cp_count_2=$(echo "$cp_count_2" | tr -d '\r\n')
 
   local ok=1
-  # Assertion 1: 1회차 dry-run 에서 32개 출력 (CFP-2505 css-lint.yml 등재로 31→32)
-  [ "$cp_count_1" -eq 32 ] || ok=0
+  # Assertion 1: 1회차 dry-run 에서 33개 출력 (CFP-2504 venue-shape-fidelity-presence-check.yml 등재로 32→33)
+  [ "$cp_count_1" -eq 33 ] || ok=0
   # Assertion 2: 2회차 dry-run 에서 0개 출력 (guard skip)
   [ "$cp_count_2" -eq 0 ] || ok=0
 
   if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name (1st=32, 2nd=0) — dry-run 기반 idempotency: guard skip 검증"
+    echo "✓ PASS: $test_name (1st=33, 2nd=0) — dry-run 기반 idempotency: guard skip 검증"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
   else
     echo "✗ FAIL: $test_name"
-    echo "  Expected: 1st dry-run cp count=32, 2nd dry-run cp count=0"
+    echo "  Expected: 1st dry-run cp count=33, 2nd dry-run cp count=0"
     echo "  Got: 1st=$cp_count_1, 2nd=$cp_count_2"
-    if [ "$cp_count_1" -ne 32 ]; then
-      echo "  1st dry-run excerpt (expected 32 cp lines):"
+    if [ "$cp_count_1" -ne 33 ]; then
+      echo "  1st dry-run excerpt (expected 33 cp lines):"
       echo "$output1" | grep '\[dry-run\] cp .github/workflows/' | head -5
     fi
     if [ "$cp_count_2" -ne 0 ]; then
