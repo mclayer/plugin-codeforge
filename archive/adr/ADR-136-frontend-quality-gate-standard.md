@@ -8,6 +8,11 @@ carrier_story: CFP-2505
 parent_epic: null
 supersedes: null
 amends: null
+amendments:
+  - amendment: 1
+    date: 2026-07-01  # KST +09:00
+    cfp: CFP-2527
+    summary: "결정12 — 격리 toolchain extends resolution base 명시(STYLELINT_BASEDIR + --config-basedir) 동반 의무"
 related_adrs:
   - ADR-130  # applicability ⊥ closure + §결정4 graceful no-op job-level if: (path-filter skip 금지) + §결정6 required 등록 7일+unique job name + §결정1 positive whitelist — D1 직접 상위 토대
   - ADR-127  # overlay 확장-only/축소불가 invariant(§결정6 = 면제-카테고리 채널 폐지로 그 불변식 강화·재확인) — stylelint floor 영역 동형 적용(직접 근거 아닌 동형 선례/invariant 출처) + §결정5 N/A 3축 AND — D1 floor 축소불가 / D2 §8.7 N/A 근거
@@ -18,6 +23,7 @@ related_adrs:
   - ADR-116  # consumer 전파 reconcile-then-patch 멱등 주입 (본체 무수정 + never-reduce + idempotent) — D1 stylelint config 소급 전파 채널
   - ADR-042  # Amd8/10 aggregate_arch.applicable CONDITIONAL applicability flag schema 선례 — frontend.applicable 동형 차용
   - ADR-083  # consumer-applicability-filter (ADR-130 supersede) — conditional-applicability filter 1급 패턴 계보
+  - ADR-063  # marketplace atomic sync — 결정12 Phase 2 version+desc mirror 의무
 related_files:
   - templates/github-workflows/css-lint.yml
   - plugins/codeforge-develop/presets/webapp/.stylelintrc.json
@@ -172,6 +178,20 @@ ADR-116 은 env value 주입(예: ALLOWED_HUB_REPOS) 선례이나 `.stylelintrc.
 - **browser-in-CI 표면 최소** [SecurityArch M4]: Chromium headless 가 외부 URL navigate 없이 로컬 빌드만 렌더 → 추가 신뢰경계 최소(CI 격리 sandbox 안). 외부 navigate 금지.
 - **§7.4 운영 리스크 active 항목**: §7.4.4 rate-limit(npm registry / Playwright CDN fetch — 캐시 권장) / §7.4.6 container(`timeout-minutes` 명시, self-hosted runner Chromium 경고). §7.4.1 trust boundary = CI-only Node(consumer runtime 무영향). §7.4.2 disconnect / §7.4.3 clock = `N/A — long-running connection / time-window 의존 0`.
 - **§11.6 idempotency** [InfraOperationalArch consult]: D2 screenshot baseline 은 repo commit 으로 deterministic — CI render job 재실행 idempotency 보장(non-deterministic baseline 금지).
+
+### 결정 12 — D1 격리 toolchain resolution base 명시 동반 의무 (Amendment 1, CFP-2527)
+
+> **본 Amendment(CFP-2527, escalation #2502 consumer-side hollow-gate 실증)는 결정 11 의 Node CI-only 격리(`$RUNNER_TEMP/css-lint-toolchain/node_modules`)가 *미완성 wire* 였음을 보정한다. 결정 11 본문 무변경 — 결정 11 의 격리 설계 위에 "격리 채택 = resolution base 명시 비협상 동반" 이라는 강화(ratchet) 결합 조건을 추가한다(충돌 0, 약화 방향 0).**
+
+- **결함(reached-but-dead hollow-gate)**: css-lint.yml 이 toolchain 을 `$RUNNER_TEMP/css-lint-toolchain/node_modules` 에 격리 설치(결정 11)하면서 `STYLELINT_BIN` 만 `GITHUB_ENV` export 하고 **basedir 을 export 하지 않았다**. 후속 두 step(`Floor effective-config self-check` `--print-config`[결정 4-B] + `Run stylelint` 실 lint)이 `--config <repo-root-config>` 만 주고 `--config-basedir` 를 주지 않아, stylelint 이 `extends: stylelint-config-standard` 를 **config-file basedir(=consumer repo root, node_modules 부재) 기준** 으로 resolve 하다 `ConfigurationError: Could not find "stylelint-config-standard"` 로 rule 평가 *이전* 단계에서 죽는다. `continue-on-error: true`(warning-tier, 결정 5)라 merge 는 통과하나 단 한 줄도 lint 못 하는 hollow-gate.
+- **원인 메커니즘** = "설치 위치"와 "resolution 탐색 base" 의 분리. 격리 설치는 `node_modules` 를 의도적으로 repo 밖에 두나(host 오염 회피 — 결정 11), stylelint resolver 의 default base 는 config 파일이 사는 곳(또는 cwd)이지 격리 설치처가 아니다. 두 위치가 어긋나면 resolution 실패.
+- **결정 (R-1 비협상 결합)**: 격리 install dir 사용 시 stylelint extends/plugins resolution base 명시가 비협상 동반 조건이다. 따라서:
+  - (a) Install step 이 `STYLELINT_BASEDIR="$WORK/node_modules"`(= `$RUNNER_TEMP/css-lint-toolchain/node_modules`, `STYLELINT_BIN` export 와 동형 GITHUB_ENV 패턴) 를 `GITHUB_ENV` export.
+  - (b) **extends 를 resolve 하는 모든 호출**(`--print-config` floor self-check[결정 4-B] + 실 lint run)에 `--config-basedir "$STYLELINT_BASEDIR"` 명시.
+- **NODE_PATH 무효 (R-2)**: `getModulePath` 가 NODE_PATH 를 미참조하므로 NODE_PATH 로 격리처를 알리는 우회는 무효 — `--config-basedir`(CLI) / `configBasedir`(API)만 유효. [source: stylelint `lib/utils/getModulePath.mjs` @tag `17.13.0`]
+- **부분 적용 = 잔존 hollow (R-3)**: `--print-config` 와 실 lint 가 동일 `augmentConfigFull()` → `extendConfig()` extends-resolution 경로를 타므로(F-5), basedir 를 한 호출에만 주면 다른 호출에서 ConfigurationError 잔존. 양 호출 동반 의무. [source: stylelint `lib/augmentConfig.mjs` @tag `17.13.0`]
+- **출처 (ADR-119)**: stylelint 공식 docs(`stylelint.io/user-guide/options/`, `/cli/`, `/configure/`) + source(`getModulePath.mjs` resolution 순서 basedir→cwd→global / `augmentConfig.mjs` configBasedir fallback=`dirname(config filepath)`) @tag `17.13.0` + issue #1810. concept doc SSOT = [`docs/domain-knowledge/concept/config-extends-resolution-basedir.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/domain-knowledge/concept/config-extends-resolution-basedir.md) F-1~F-6. 요구사항리뷰 lane dual-peer(Claude tag source 대조 + Codex exit-code ground-truth) drift 0 confirm(CFP-2527 §9.1).
+- **ratchet 방향**: 결정 4(floor self-check)·결정 11(격리)의 *실효를 복구* 하는 강화 — 격리는 유지하되 그 격리가 검증 0 으로 죽지 않게 resolution base 를 명시. floor rule 집합·tier·격리 설계 변경 0. carrier = css-lint.yml 양 copy(`.github` + `templates`, byte-identical parity — invariant-check.yml Workflow parity step, CFP-65/67/68 consumer-only exclusion lineage) fix(Phase 2 구현 lane) + discriminating C5 fixture(`tests/scripts/test-css-lint.sh`, self-CI css-lint job 영구 skip 이라 단일 회귀 채널).
 
 ## 결과
 
