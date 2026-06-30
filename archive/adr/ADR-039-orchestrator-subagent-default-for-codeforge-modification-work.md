@@ -15,11 +15,13 @@ related_adrs:
   - ADR-035  # codeforge agent teams Epic (subagent semantics)
 related_stories:
   - CFP-275
+  - CFP-2521  # Amendment 8 (2026-06-30) — §결정 9 amend, DevPL self-read advisory detection (D3 enforcement slot)
 related_cfps:
   - CFP-275
   - CFP-134
   - CFP-46
   - CFP-26
+  - CFP-2521
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -84,6 +86,16 @@ amendment_log:
     direction: strengthening
     sunset_justification: |
       §결정 1 binary always-spawn invariant 무변경 + §결정 2 closed inline whitelist 6-entry 무변경 (disjoint axis — spawn-scope 위임 ≠ inline-mechanism). 본 amendment = spawn scope 단위 위임 codify (additive) — Orchestrator-only spawn 명목 보존 (lead 가 위임 주체, teammate 는 lead 가 confine 한 Story scope 안에서만 spawn) + 2-level bounded 토폴로지 (teammate→teammate 불가 = 무한 재귀 Model A 와 구분). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (병렬 dispatch spawn-권한 codify), 약화 0건. evidence = dogfood 실증 (background-Agent depth 0→1→2 실작동, 요구사항-리뷰 UNVERIFIABLE advisory PASS 전환) + 산업 lead-worker bounded-위임 표준 (Story §6.3 [verified] WebSearch). carrier_story CFP-2488 = ADR-039 Amendment 7 + ADR-134 신규 ADR (Epic CFP-2481 Phase A E1).
+  - amendment: 8
+    date: 2026-06-30
+    carrier_story: CFP-2521
+    summary: |
+      §결정 9 amend (Phase 2 enforcement/measurement deferred 목록에 **DevPL-side "PL self-read advisory detection"** 추가 — 기존 "Orchestrator inline write detect hook(PreToolUse on Write/Edit/mcp__github__*) + spawn cost telemetry" 와 동일 enforcement family slot). 동인 = CFP-2521 thin-PL context boundary mandate (ADR-044 Amendment 5 §결정 11) 의 D3 enforcement home. lane-PL(특히 DeveloperPL)이 비-essential 경로를 직접 read 하는 fat self-implementer drift 를 검출하는 advisory lint 의 deferred slot 을 §결정 9 deferred 목록 안에 명문 예약.
+      **D3 = advisory/warning-tier ONLY (즉시 blocking FORBIDDEN)** — 두 측정 layer: (layer 1) delegation-ratio proxy via **spawn-event-v1 (EXISTING wired channel — SubagentStop hook wired, opt-in default-false ADR-043 §결정 1)** — DevPL 세션당 delegation-worker spawn 수 = coarse "PL 이 위임하고 있나" proxy. 신규 measurement channel/wiring 신설 0 (opt-in enable 만). granularity = 1 spawn=1 row (token/cost), per-read-path 검출 불가. (layer 2) 본 §결정 9 inline-detect hook slot — UNIMPLEMENTED (firsthand: hooks.json PreToolUse matcher = Bash/ScheduleWakeup/Agent 3종, Write/Edit/mcp__github__* 부재) AND **영구 advisory 천장** (대안 B: hook 은 Read-for-Q&A vs Read-as-modification 구별 불가 → fine per-read 정밀 검출 infeasible). 승격 = ADR-060 evidence-gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 후만.
+      **CRITICAL invariant**: §결정 2 inline whitelist **4-entry closed enumeration 무변경** — PL read/compute boundary = **disjoint axis** (Orchestrator inline whitelist 과 다른 차원). 5번째 whitelist entry 신설 0 (§결정 2 line 161 "5번째 카테고리 추가 = ADR-039 amendment 의무" — 본 amendment 은 그것을 하지 않음, PL read budget 을 §결정 2 enumeration 에 붙이지 않는다 — disjoint 축이므로). §결정 1 binary always-spawn invariant 무변경 + §결정 3 Ownership≠Mechanism 무손상. D3 lint 실 impl = Phase 2 OOS (본 Amendment = §결정 9 deferred slot 예약 declarative). is_transitional false, sunset_justification N/A. doc-only (ADR-039 in-place amendment, src/tests 무변경).
+    direction: strengthening
+    sunset_justification: |
+      §결정 2 inline whitelist 4-entry closed enumeration 무변경 (disjoint axis — PL read/compute boundary ≠ Orchestrator inline whitelist, 5번째 entry 신설 0) + §결정 1 binary always-spawn invariant 무변경. 본 amendment = §결정 9 Phase 2 enforcement deferred 목록에 DevPL self-read advisory detection 추가 (additive, 기존 inline-detect hook + spawn cost telemetry 와 동일 family). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (thin-PL enforcement deferred slot 예약), 약화 0건. evidence = CFP-2521 §1 비용 측정 (PL context 97% PL 직접 read) + firsthand substrate 확인 (hooks.json PreToolUse matcher Write/Edit 부재 = inline-detect slot 미점유 / spawn-event-v1 SubagentStop wired = delegation-ratio proxy 가용). carrier_story CFP-2521 = ADR-039 Amendment 8 + ADR-044 Amendment 5 paired sibling amendment 2-set (axis disjoint — 본 ADR-039 = D3 enforcement deferred slot / ADR-044 = thin-PL 동작 mandate).
 is_transitional: false
 ---
 
@@ -208,6 +220,10 @@ ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern) — Phase 2 
 - **Orchestrator inline write detect hook** (PreToolUse on Write / Edit / mcp__github__\*). Orchestrator 직접 호출 detect → warning surface (또는 strict mode 시 차단).
 - **spawn cost telemetry** (token / latency 정량 측정). Researcher §6.F fact gap (spawn latency 정량 데이터 부재) 충당.
 - **rate-limited error → unwanted user-stop** second-order risk 측정 (OpRiskArch §7.4.4 운영 risk surfacing).
+- **DevPL-side "PL self-read advisory detection"** (Amendment 8, CFP-2521 — ADR-044 Amendment 5 §결정 11 D3 enforcement home). lane-PL(특히 DeveloperPL)이 비-essential 경로(docs/stories 밖 plugin.json/scripts/*.yaml/playbook)를 직접 read 하는 fat self-implementer drift 검출. **advisory/warning-tier ONLY (즉시 blocking FORBIDDEN)** — 두 측정 layer:
+  - **layer 1 — delegation-ratio proxy** via spawn-event-v1 (EXISTING wired channel — SubagentStop hook wired, opt-in default-false ADR-043 §결정 1). DevPL 세션당 delegation-worker spawn 수 = coarse "PL 이 위임하고 있나" proxy. 신규 channel/wiring 신설 0 (opt-in enable 만). granularity = 1 spawn=1 row, per-read-path 검출 불가.
+  - **layer 2 — inline-detect hook** = 위 "Orchestrator inline write detect hook(PreToolUse on Write/Edit/mcp__github__*)" slot 과 동일 family. UNIMPLEMENTED (firsthand: hooks.json PreToolUse matcher = Bash/ScheduleWakeup/Agent 3종, Write/Edit/mcp__github__* 부재) AND **영구 advisory 천장** (대안 B L465: hook 은 Read-for-Q&A vs Read-as-modification 구별 불가 → fine per-read 정밀 검출 infeasible).
+  - 승격 = ADR-060 evidence-gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 후만. **§결정 2 inline whitelist 4-entry closed enumeration 무변경** — PL read/compute boundary = disjoint axis (Orchestrator inline whitelist 과 다른 차원), 5번째 entry 신설 0. D3 lint 실 impl = CFP-2521 Phase 2 OOS.
 
 ROI 평가 후 enforcement 강도 결정. 본 Story scope = Phase 1 doc-only. **Update (Amendment 1, CFP-895)**: Pre-spawn-pin mandate (§결정 14 신설) = Phase 1 doc-only enforcement 의 일부분으로 자연 흡수. Phase 2 hook enforcement layer 가 발효되면 본 §결정 14 mandate 도 hook-level 자동 verify 로 격상.
 

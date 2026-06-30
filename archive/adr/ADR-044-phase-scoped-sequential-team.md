@@ -15,6 +15,7 @@ related_stories:
   - CFP-137
   - CFP-139
   - CFP-391  # Amendment 1 (2026-05-11) — dispatch_mode auto_on_divergence 추가
+  - CFP-2521  # Amendment 5 (2026-06-30) — §결정 11 thin-PL context boundary mandate
 amendment_log:
   - date: 2026-05-11
     cfp: CFP-391
@@ -60,6 +61,22 @@ amendment_log:
     direction: strengthening  # 검증 floor 명문화 + silent degrade 차단 = 강화 방향
     sunset_justification: |
       mctrader (첫 비-dogfood consumer) 데뷔 감사 evidence — fidelity-critical 코드 2-peer 없이 self-audit 머지 + dual-peer silent degrade + deputy fan-out 미spawn. "검증이 가장 필요한 곳에서 빠지는" 동일 class 결함의 강제력 복구 (Track M 교정 토대). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (floor 명문 + honest degrade + 문서 모순 정합), 약화 0건. §결정 2 Codex ad-hoc-only 는 무손상 (floor=Claude peer, Codex=ceiling 으로 disjoint axis 확정).
+  - amendment: 5
+    date: 2026-06-30
+    cfp: CFP-2521
+    summary: |
+      §결정 11 신설 (Thin-PL context boundary mandate — lane-PL READ/COMPUTE 경계 codify). lane-PL synthesizer lifecycle 안 PL 의 **READ/COMPUTE 경계** (어떤 파일을 PL 이 직접 읽어 컨텍스트에 보유하나) 를 1급 mandate 로 codify. **신규 원칙 아님** — 이미 stated 된 thin-synthesizer invariant (DeveloperPLAgent.md:269 "PL은 synthesizer 유지" + 본 ADR §결정 1 lane-PL lifecycle + ADR-039 §결정 3 Ownership≠Mechanism) 의 enforcement/codification. 동인 = DeveloperPL 비용 진단 (CFP-2521 §1 측정) — 비용 94%=컨텍스트 보유, 그 97%=PL 직접 read, worker 합성 1.4%. PL 이 thin synthesizer 가 아닌 fat self-implementer 로 동작 (설계-런타임 gap). 4 결정:
+      (a) **PL self-do 금지** — PL 은 비-essential 경로 (docs/stories 밖 plugin.json/scripts/*.yaml/playbook) 를 직접 Read/Bash 하지 않고 worker 요약으로만 보유. tier = **prompt-mandate (behavioral)** — permission-enforced Read-deny 아님 (Read path-scoping 은 agent frontmatter 에서 UNVERIFIED-IN-PRACTICE — fleet-wide Read(path) entry 0건 firsthand, 공식문서는 settings.json 존재만 확인 subagent honor 미확인). ADR-039 §결정 8 doc-only trust 선례 상속. permissions.allow Read/Grep/Glob 보존 (물리 제거 = FIX 진단·worker 합성 차단 over-restriction).
+      (b) **essential-read/IO carve-out = CLOSED enumeration** — PL 컨텍스트 보유 유지 6 항목: READ {(1) FIX 1차진단 reads, (2) worker-prompt 합성 발췌 Change Plan §0-§5, (3) spec invariant cross-validate QADev 매핑표, (4) Pre-spawn-pin Step 0 git rev-parse origin/main} + WRITE/EXEC {(5) §8.5 Impl Manifest Edit(docs/stories/**), (6) PR pre-flight Bash}. 추가 = ADR amendment 의무 (open-ended carve-out = hollow-gate anti-pattern).
+      (c) **위임 트리거 = re-read persistence (read-count 아님)** + R5 trivial-read 면제 LOCKED 비협상. 임계값 수치 = impl-measured lock (G1 deferred).
+      (d) **env 캐리어 divergence + PL self-spawn 금지** — env=1 = PL→team worker SendMessage (self-contained, 본 ADR §결정 8) / env=0 = PL work-request 반환 → Orchestrator read-worker pre-spawn (PL self-spawn 금지 — re-entrancy 3종 + ADR-009 wrapper-only). D1 prose 는 절대 "PL spawns workers" 로 쓰지 않음 (env=0=ADR-009 위반). INV-1: env=0 carrier 가 self-do escape-hatch 금지 (carrier 만 다름, 비-essential read 금지 의무 동일).
+      **CRITICAL invariant**: ADR-039 §결정 2 inline whitelist 4-entry closed enumeration **무변경** — PL read/compute boundary = **disjoint axis** (Orchestrator inline whitelist 과 다른 차원). 5번째 whitelist entry 신설 0. enforcement (D3) = advisory/warning-tier (ADR-039 Amendment 8 §결정 9 deferred slot) + ADR-060 evidence-gate 후 승격, 즉시 blocking 금지.
+      §결정 1 phase-scoped sequential team lifecycle invariant 무변경 + §결정 8 env=0/env=1 분기 SSOT 무변경 (재해석·정합·확장만). Phase 2 = DeveloperPLAgent.md "컨텍스트 경계 규약" prose 신설 + D3 advisory lint (opt-in spawn-event-v1 enable) = 별 carrier (본 Amendment = Phase 1 declarative). is_transitional false, sunset_justification N/A.
+    affected_sections: ["§결정 11 (신설 — thin-PL context boundary mandate)", "§결정 1 (cross-ref, 본문 무변경)", "§결정 8 (cross-ref env 캐리어, 본문 무변경)"]
+    breaking: false  # additive (prose mandate codify), permissions 축소 0, lifecycle/env 분기 본문 무변경
+    direction: strengthening  # thin-PL READ/COMPUTE 경계 codify = 강화 방향 (fat self-implementer drift 차단)
+    sunset_justification: |
+      §결정 1 lifecycle invariant 무변경 + §결정 8 env 분기 무변경 + ADR-039 §결정 2 4-entry closed enumeration 무변경 (disjoint axis — PL read/compute boundary ≠ Orchestrator inline whitelist). 본 amendment = thin-PL READ/COMPUTE 경계 codify (additive, 이미 stated invariant 의 enforcement) — fat self-implementer 동작 (설계-런타임 gap) 차단. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (read/compute 경계 mandate), 약화 0건. evidence = CFP-2521 §1 비용 측정 (PL context 97% PL 직접 read, worker 합성 1.4%). carrier_story CFP-2521 = ADR-044 Amendment 5 + ADR-039 Amendment 8 paired sibling amendment 2-set (axis disjoint — 본 ADR-044 = thin-PL 동작 mandate / ADR-039 = D3 enforcement deferred slot).
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
@@ -417,6 +434,64 @@ firsthand 문서 모순: `plugins/codeforge-review/templates/review-pl-base.md:5
 - firsthand 문서 모순 verify (review-pl-base.md:573-574 ↔ team-spec-code-review.yaml:33-39 직접 Read).
 - check-lane-evidence.sh:196 stale roster verify (구 이름 ↔ 현 6 permanent `plugins/codeforge-design/CLAUDE.md:40-45` 직접 Read 대조).
 - matcher P2 미확정성 honest 표기 verify (settled 단정 0건 — (d) 전제조건으로 명시).
+
+### 결정 11 — Thin-PL context boundary mandate (lane-PL READ/COMPUTE 경계 codify) — Amendment 5 (CFP-2521)
+
+**배경**: lane-PL 의 책무는 worker 산출물을 합성·중재하는 **thin synthesizer** 이고(§결정 1 lifecycle), 파일 I/O(Read/Edit/Bash)는 worker 책무다. 그러나 DeveloperPL 은 런타임에서 이 경계를 벗어나 자기가 파일을 직접 읽고 명령을 실행하는 **fat self-implementer** 로 동작 중이다(CFP-2521 §1 측정: PL context 비용 94%=컨텍스트 보유, 그 97%=PL 직접 read(Read 52.9% + Bash 38.7%), worker 합성 1.4%). 기존 codeforge governance 는 WRITE 경계(`lane-self-write-boundary`)만 codify 했고 **READ/COMPUTE 경계는 공백**이었다. 본 §결정 11 = 그 공백을 채우는 codify — **신규 원칙이 아니라** 이미 stated 된 thin-synthesizer invariant(`DeveloperPLAgent.md:269` + §결정 1 + ADR-039 §결정 3)의 **enforcement/codification**(설계-런타임 gap 차단). concept SSOT = `docs/domain-knowledge/concept/context-offloading-to-ephemeral-workers.md`(CFP-2521 Phase 1 landed).
+
+**(a) PL self-do 금지 (read/compute budget) — prompt-mandate(behavioral) tier**
+
+lane-PL 은 비-essential 경로(docs/stories 밖 `plugin.json` / `scripts/**` / `*.yaml` / playbook)를 **직접 Read/Bash 하지 않고** 필요한 사실을 worker 요약으로만 보유한다(synthesizer_port: input={Change Plan, Story, worker 요약}, output={§8.5 Impl Manifest, PR}, raw_file_contents/bash_output 의 PL prefix 진입 금지). tier = **prompt-mandate(behavioral)** — permission-enforced Read-deny 아님: Read path-scoping(`Read(docs/**)` allow-scope)은 agent frontmatter 에서 **UNVERIFIED-IN-PRACTICE**(fleet-wide `Read(path)` entry 0건 firsthand, `Bash(...)` 는 218곳 scoped; 공식문서는 `Read(path/**)` 가 settings.json 존재만 확인 subagent-frontmatter honor 미확인). → ADR-039 §결정 8 doc-only trust 선례 상속. `permissions.allow` 의 Read/Grep/Glob 는 보존(물리 제거 = FIX 진단·worker 합성 차단 over-restriction).
+> source (Anthropic pattern): orchestrator-worker / context offloading to subagents — lead 가 raw context 대신 요약만 보유 (https://www.anthropic.com/engineering/built-multi-agent-research-system). source (Read path-scoping 미확인): code.claude.com/docs/en/iam — settings.json permission, subagent-frontmatter honor 여부 미확인(추정).
+
+**(b) essential-read/IO carve-out = CLOSED enumeration (비협상)**
+
+전면 read-ban 은 본 mandate 자체를 모순으로 만든다(FIX 진단·worker prompt 합성·spec 합성 깨짐). PL 컨텍스트 보유 유지 6 항목(closed):
+
+| # | essential | anchor | 사유 |
+|---|---|---|---|
+| 1 | FIX 1차진단 reads — review verdict packet + §8.5 Impl Manifest + Change Plan §5/§8 + commit diff | DeveloperPLAgent.md:221 | FIX 진단 직접 read 전제 |
+| 2 | worker-prompt 합성 발췌 — Change Plan §0-§5 외부지식 packet | DeveloperPLAgent.md:262-266 | worker 인계 인용 원천 |
+| 3 | spec invariant cross-validate — QADev 매핑표 | DeveloperPLAgent.md:97-99 | synthesizer 본연 책무 |
+| 4 | Pre-spawn-pin Step 0 — `git rev-parse origin/main` 경량 Bash | DeveloperPLAgent.md:80-89 + ADR-039 §결정 14 | SHA self-pin 불변식(위임 시 신뢰 체인 붕괴) |
+| 5 | §8.5 Impl Manifest Edit — `Edit(docs/stories/**)` | DeveloperPLAgent.md:178/191 | ownership-preserved write(§결정 3 Ownership≠Mechanism), read leak 아님 |
+| 6 | PR pre-flight Bash — `git branch --show-current` + `gh pr create --base main` | DeveloperPLAgent.md:91-96 | PR 생성 mechanism |
+
+**CLOSED 선언**: 추가 = ADR amendment 의무. open-ended carve-out = hollow-gate(검사연극) anti-pattern — 무한 예외 escape-hatch 차단.
+
+**(c) 위임 트리거 = re-read persistence + R5 면제 LOCKED**
+
+위임 트리거 = read 결과가 **N+ 잔여 PL 턴 잔존(re-read persistence)** 인가이지 read 횟수가 아니다(R1 — 잔존 시 raw 가 누적 prefix 에 superlinear 비용으로 남음). **R5 trivial-read 면제 = LOCKED 비협상** — 1회성 trivial read(잔여 턴 미잔존)는 회피 재독 ≈ 0 이라 worker spawn 고정비 > 이득 → 순손실(hollow-gate). R5 누락 시 break-even 이 silently load-bearing. **면제 임계값 수치 = impl-measured lock(G1 deferred)** — worker 1-spawn `cache_creation_input_tokens` 실측(spawn-event-v1 또는 count_tokens).
+
+**(d) env 캐리어 divergence + PL self-spawn 금지**
+
+PL 은 worker 를 **스스로 spawn 할 수 없다**(re-entrancy 3종: 재귀 spawn 금지·nested team 금지·one-team-per-lead — `DeveloperPLAgent.md:271` + ADR-009 wrapper-only). 위임의 실 mechanism:
+
+| env | 위임 캐리어 |
+|---|---|
+| env=1(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) | PL → team worker **SendMessage** dispatch(self-contained — §결정 8 + DeveloperPLAgent.md:269) |
+| env=0(미활성) | PL **work-request 반환** → **Orchestrator read-worker pre-spawn**(PL self-spawn 금지 — ADR-009 + DeveloperPLAgent.md:269) |
+
+D1 prose 는 절대 "PL spawns workers" 로 쓰지 않는다(env=0=ADR-009 위반). 동형 precedent = §결정 9/§결정 10 chief-author multi-step "env=0 = sequential Agent tool calls(Orchestrator)". **INV-1**: env=0 carrier 가 self-do escape-hatch 금지 — Orchestrator pre-spawn 이 더 많은 step 이라는 이유로 PL 이 비-essential inline-read 금지(carrier 만 다름, 의무 동일).
+
+**(e) tier 비대칭 — CFP-1438 확장**
+
+CFP-1438(chief-author span 분할)은 RECOMMENDATION tier(§결정 9 + ADR-039 §결정 17 "monolithic span 채택 시 결격 0" = 미강제). 본 §결정 11 은 같은 family(fat-agent discipline)이나 DISJOINT mechanism(CFP-1438 = 시간-span 분해 / CFP-2521 = read/compute 경계) — 그 라인의 **확장(extends)**. tier = prompt-mandate(behavioral, permission 강제 불가) — enforcement 는 ADR-039 Amendment 8 §결정 9 D3 advisory + ADR-060 evidence-gate 로 deferred.
+
+**불변 보존 (약화 0건)**:
+- §결정 1 phase-scoped sequential team lifecycle invariant 무변경.
+- §결정 8 env=0/env=1 분기 SSOT 무변경(재해석·정합·확장만).
+- **ADR-039 §결정 2 inline whitelist 4-entry closed enumeration 무변경** — **PL read/compute boundary = disjoint axis**(Orchestrator inline whitelist 과 다른 차원). 5번째 whitelist entry 신설 0(ADR-039 §결정 2 line 161 "5번째 카테고리 추가 = ADR-039 amendment 의무" — 본 amendment 은 그것을 하지 않음, disjoint 축이므로).
+- §결정 3 Ownership≠Mechanism 무손상(§8/§8.5 self-write ownership 보존, mechanism 만 변경).
+
+**Phase 분리**: 본 §결정 11 = Phase 1 declarative. Phase 2 = DeveloperPLAgent.md "컨텍스트 경계 규약" prose 신설(D1) + D3 advisory lint(opt-in spawn-event-v1 enable, ADR-039 Amendment 8 §결정 9 slot) = 별 carrier.
+
+**Verification evidence**:
+- §결정 1/§결정 8 본문 무변경 verify(lifecycle/env 분기 무손상).
+- ADR-039 §결정 2 4-entry 무변경 + disjoint-axis verify(archive/adr/ADR-039-...:150-161 직접 Read — line 161 "5번째 카테고리 추가 = amendment 의무").
+- essential carve-out anchor verify(DeveloperPLAgent.md:80-99/178/191/196-238/262-271 직접 Read).
+- env=0 self-spawn 금지 verify(DeveloperPLAgent.md:269/271 + ADR-009 re-entrancy 3종).
+- tier 비대칭 verify(ADR-039 §결정 17 "monolithic span 채택 시 결격 0" = recommendation tier 직접 Read).
 
 ## 결과
 
