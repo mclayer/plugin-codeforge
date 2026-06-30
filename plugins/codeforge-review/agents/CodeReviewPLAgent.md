@@ -87,7 +87,7 @@ review_packet:
     - dup-local
     - dup-boundary
     - integration-test-readiness
-    - exec-result-mismatch                       # CFP-2477 / ADR-070 Amd11 §결정 D9 — 실행 검증 axis
+    - exec-result-mismatch
   severity_overrides:
     - "Impl Manifest §8.5 매핑 누락 또는 실제 파일 불일치 → P0"
     - "레이어 경계·의존성 방향 위반 → P0"
