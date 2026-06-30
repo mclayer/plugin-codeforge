@@ -40,15 +40,15 @@ rust-cli-minimal/
 링커 없는 host 에서도 로컬 사전검증을 당기려면 wrapper 의 `templates/scripts/build-local.{sh,ps1}` 를 이 repo 루트에서 실행:
 
 ```bash
-# bash (Linux / macOS / Git Bash / WSL2)
-./build-local.sh            # cargo check(링커 불요) → Docker 마운트 빌드 또는 native cargo build → graceful degrade
-./build-local.sh test       # 1번째 인자 = cargo 서브커맨드 passthrough (예: test)
+# bash (Linux / macOS / Git Bash / WSL2) — bootstrap 후 consumer repo 루트 기준 경로
+./templates/scripts/build-local.sh            # cargo check(링커 불요) → Docker 마운트 빌드 또는 native cargo build → graceful degrade
+./templates/scripts/build-local.sh test       # 1번째 인자 = cargo 서브커맨드 passthrough (예: test)
 ```
 
 ```powershell
-# PowerShell (Windows)
-./build-local.ps1
-./build-local.ps1 test
+# PowerShell (Windows) — bootstrap 후 consumer repo 루트 기준 경로
+./templates/scripts/build-local.ps1
+./templates/scripts/build-local.ps1 test
 ```
 
 동작 단계 (도메인 지식 R-1~R-5):
