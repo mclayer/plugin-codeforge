@@ -2582,8 +2582,9 @@ entries:
       crossref-consistency.sh (ADR-061) + scripts/lib + workflow yml + bats fixture
       RED→GREEN stash proof. pattern_count >= 2 재발 시 follow-up CFP MUST promote
       (ADR-082 §결정 6 정합).
-    detect_command: bash scripts/check-chief-author-crossref-consistency.sh  # TBD — Wave 2 sub-CFP carrier wire
-    workflow: templates/github-workflows/chief-author-crossref-consistency.yml  # TBD — Wave 2 sub-CFP carrier wire
+      Wave 2 carrier = CFP-2478 (Epic CFP-2476 E2) 충족 — layer A 결정론 cross-document sweep (a)cross-ADR 존재/(b)phantom ID ownership/(c)enum SSOT/(e)content-anchor + (d)version opt-in.
+    detect_command: bash scripts/check-adr-cross-ref-consistency.sh
+    workflow: .github/workflows/adr-cross-ref-consistency.yml
     current_tier: warning  # ADR-060 schema required field (deferred-followup status, tier 분류 = warning 의도)
     bypass_label: hotfix-bypass:boundary-wording  # ADR-068 owner family 재사용 (신규 label 신설 0건, dimensional-empirical-grounding deferred entry 의 기존 label 재사용 precedent 답습)
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh  # schema doc v1.1 §3 — bypass_label 정의 시 bypass_audit_lint 의무
@@ -2595,7 +2596,7 @@ entries:
       count: 1  # CFP-1522 retro F-003 P1 첫 occurrence (ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch)
       threshold: 2  # pattern_count >= 2 재발 시 Wave 2 mechanical wire warning-tier promotion MUST (ADR-082 §결정 6)
       promotion_trigger: none  # Wave 1 = declaration only. Wave 2 별 sub-CFP merge 후 warning 전환.
-    status: deferred-followup  # Wave 1 declaration only — actual mechanical lint = 별 sub-CFP Wave 2 carrier 후 warning 전환
+    status: warning  # CFP-2478 Phase 2 carrier 신설 완료 (Wave 2 mechanical wire) → deferred-followup → warning 전환 (2026-06-30)
     promotion_criteria:
       pr_cumulative_min: 20
       failure_threshold: 0
@@ -2603,7 +2604,7 @@ entries:
         - CFP-1565                              # 본 Story (declarative anchor Wave 1)
         - CFP-528                               # ADR-068 Amendment 1 I-5 (invariant 신설 precedent)
         - CFP-1087                              # ADR-068 Amendment 3 I-6 (invariant 신설 precedent)
-        - TBD-Wave-2-sub-CFP                    # Wave 2 mechanical wire (script + lib + workflow + bats 별 sub-CFP)
+        - CFP-2478                               # Wave 2 mechanical wire (script + lib + workflow + bats 별 sub-CFP)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
