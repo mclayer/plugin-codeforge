@@ -264,6 +264,62 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 - role:dev / QADev spawn prompt 작성 시 Change Plan §0-§5 의 외부 지식 단정 + `source:` annotation 을 발췌해 packet 에 포함 — tier B agent 인계 인용의 원천.
 - dev 가 "확인 불가" 로 회부한 외부 지식 질문에 자체 추측 답변 금지 — ArchitectPL 회부 (조사 권한 = 설계 lane 응집).
 
+## 컨텍스트 경계 규약 (ADR-044 §결정 11 — thin-PL READ/COMPUTE boundary)
+
+본 규약은 ADR-044 §결정 11 의 **prompt-mandate (behavioral)** 실현이다 — permission-enforced Read-deny 가 아니다.
+
+### 역할 = synthesizer (self-do 금지)
+
+- DeveloperPL = thin **synthesizer** (orchestrator-worker pattern lead). synthesizer interface:
+  - **input** = { Change Plan, Story file, worker 요약 }
+  - **output** = { §8.5 Impl Manifest, Phase 2 PR }
+  - **금지**: raw_file_contents / bash_output 가 PL 컨텍스트 prefix 로 진입.
+- PL 은 **비-essential 경로**(docs/stories 밖 `plugin.json` / `scripts/**` / `*.yaml` / playbook)를 직접 Read/Bash 하지 않고 필요한 사실을 **worker 요약으로만** 보유한다.
+- tier = **prompt-mandate (behavioral)** — `permissions.allow` 의 Read/Grep/Glob 는 보존한다 (물리 제거 = FIX 진단·worker 합성 차단 over-restriction). 근거: Read path-scoping 은 agent frontmatter 에서 UNVERIFIED-IN-PRACTICE → ADR-039 §결정 8 doc-only trust 선례 상속.
+- 비용 비대칭 동인 = cheaper-model 이 아니라 **prefix persistence** — 장수명 PL prefix persistence(누적 superlinear 비용) vs 단수명 worker 1-read→소멸.
+
+### essential-read/IO carve-out = CLOSED enumeration (6 항목, 비협상)
+
+전면 read-ban 은 mandate 자체를 모순으로 만든다 (FIX 진단·worker prompt 합성·spec 합성 깨짐). PL 컨텍스트 보유 유지 6 항목:
+
+| # | essential | 사유 |
+|---|---|---|
+| 1 | FIX 1차진단 reads — review verdict packet + §8.5 Impl Manifest + Change Plan §5/§8 + commit diff | FIX 진단 직접 read 전제 |
+| 2 | worker-prompt 합성 발췌 — Change Plan §0-§5 외부지식 packet | worker 인계 인용 원천 |
+| 3 | spec invariant cross-validate — QADev 매핑표 | synthesizer 본연 책무 |
+| 4 | Pre-spawn-pin Step 0 — `git rev-parse origin/main` 경량 Bash | SHA self-pin 불변식(위임 시 신뢰 체인 붕괴) |
+| 5 | §8.5 Impl Manifest Edit — `Edit(docs/stories/**)` | ownership-preserved write (read leak 아님) |
+| 6 | PR pre-flight Bash — `git branch --show-current` + `gh pr create --base main` | PR 생성 mechanism |
+
+**CLOSED 선언**: 추가 = ADR amendment 의무. open-ended carve-out = hollow-gate(검사연극) anti-pattern — 무한 예외 escape-hatch 차단.
+
+### 위임 트리거 + R5 면제 LOCKED
+
+- 위임 트리거 = read 결과가 **N+ 잔여 PL 턴 잔존(re-read persistence)** 인가이지 read **횟수**가 아니다 (잔존 시 raw 가 누적 prefix 에 superlinear 비용으로 남음).
+- **R5 trivial-read 면제 = LOCKED 비협상** — 1회성 trivial read(잔여 턴 미잔존)는 회피 재독 ≈ 0 이라 worker spawn 고정비 > 이득 → 순손실(hollow-gate). R5 누락 시 break-even 이 silently load-bearing.
+- 면제 임계값 수치 = impl-measured lock (G1 deferred — worker 1-spawn `cache_creation_input_tokens` 실측, spawn-event-v1).
+
+### env 캐리어 divergence + PL self-spawn 금지 (INV-1)
+
+PL 은 worker 를 **스스로 spawn 할 수 없다** (re-entrancy 3종: 재귀 spawn 금지·nested team 금지·one-team-per-lead — 본 파일 "Operating environment" 섹션 + ADR-009 wrapper-only). 위임 mechanism:
+
+| env | 위임 캐리어 |
+|---|---|
+| env=1 (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) | PL → team worker **SendMessage** dispatch (self-contained) |
+| env=0 (미활성) | PL **work-request 반환** → **Orchestrator read-worker pre-spawn** (PL self-spawn 금지) |
+
+- 본 규약 prose 는 절대 "PL spawns workers" 로 표현하지 않는다 (env=0 = ADR-009 위반).
+- **INV-1**: env=0 carrier 가 self-do escape-hatch 가 되지 않는다 — Orchestrator pre-spawn 이 더 많은 step 이라는 이유로 PL 이 비-essential inline-read 를 하지 않는다 (carrier 만 다르고 의무 동일).
+
+### 불변 보존 명문
+
+- **ADR-039 §결정 2 inline whitelist 4-entry closed enumeration 무변경** — PL read/compute boundary = **disjoint axis**(Orchestrator inline whitelist 과 다른 차원). 5번째 whitelist entry 신설 0.
+- §결정 1 lane-PL lifecycle + §결정 8 env 분기 + §결정 3 Ownership≠Mechanism 무손상 — 본 규약은 mechanism(직접 read vs 위임)만 강화.
+
+### enforcement tier
+
+enforcement = ADR-039 Amendment 8 §결정 9 D3 **advisory/warning-tier** + ADR-060 evidence-gate 후 승격. 즉시 blocking 아님.
+
 ## Operating environment (ADR-044)
 
 본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = Orchestrator가 PL 하위 agent 직접 spawn (PL은 synthesizer 유지, ADR-039).

@@ -1,0 +1,54 @@
+name: pl-delegation-ratio-check
+# CFP-2521 Phase 2 D3 — DeveloperPLAgent delegation-ratio advisory lint (warning-tier, non-blocking).
+#
+# ADR-044 §결정 11 + ADR-039 Amendment 8 §결정 9 — spawn-event-v1 ledger 기반 layer 1
+# delegation-ratio 측정. PL agent 과부하 / 낮은 delegation 패턴의 조기 신호.
+#
+# **advisory-tier / non-required**: branch protection 무변경, merge 미차단. GitHub Actions UI
+# 에 경고만 표시하고 job 은 성공(exit 0). 출력은 ::warning:: 마커.
+# blocking 승격은 evidence 누적 후 별 CFP (CFP-2521 Phase 2 advisorie limitation).
+#
+# layer 1 (spawn-event-v1) 측정: worker spawn 수 ≥ threshold 면 adequate, 미만이고
+# sustained pattern (≥MIN_SEGMENTS lane) 이면 advisory 경고.
+#
+# layer 2 (inline-detect, read target 구별) = 영구 deferred ("Read-Q&A vs Read-수정 구별 불가").
+#
+# 환경변수로 threshold 조정 가능:
+#   PL_DELEGATION_MIN_WORKERS  — worker spawn floor (default 1)
+#   PL_DELEGATION_MIN_SEGMENTS — sustained pattern floor (default 2)
+#   SPAWN_EVENT_LEDGER         — ledger file path (default .claude/ledger/spawn-event.jsonl)
+#
+# **consumer-template**: consumer 가 자기 repo .github/workflows/ 로 복사해 wire 하는 seed.
+# wrapper-self CI 아님 (wrapper 는 선언형 repo, spawn-event 부재 가능성 높음 → graceful skip).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  pl-delegation-ratio-check:
+    name: PL delegation ratio (advisory-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-pl-delegation-ratio.sh
+        # advisory-tier — 항상 exit 0 (비차단). consumer 는 아래 env 로 tune 가능.
+        # env:
+        #   PL_DELEGATION_MIN_WORKERS: "1"
+        #   PL_DELEGATION_MIN_SEGMENTS: "2"
+        #   SPAWN_EVENT_LEDGER: ".claude/ledger/spawn-event.jsonl"
+        run: bash scripts/check-pl-delegation-ratio.sh
+
+  pl-delegation-ratio-test:
+    name: discriminating test (carve-out R5 + AT-4 self-verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run test-check-pl-delegation-ratio.sh
+        run: bash scripts/test-check-pl-delegation-ratio.sh
