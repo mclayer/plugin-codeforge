@@ -3376,3 +3376,44 @@ entries:
       last_occurrence: null         # 첫 도입, lint 발화 0건 (carrier incident 는 consumer 측 MCT-58)
       promotion_trigger: warning_tier_initial
     status: deferred-followup       # Wave 1 declarative status — Phase 2 mechanical wire 후 `warning` 전환
+
+  # CFP-2490 신설 — ADR-135 (Epic CFP-2481 E2) — force-push pre-flight HEAD-pin 가드 L2 CI 사후 detect
+  - name: force-push-base-advance-detect
+    description: |
+      ADR-135 신설 (CFP-2490 carrier, Epic CFP-2481 E2) — own-branch force-push pre-flight
+      HEAD-pin 가드 의 L2 CI 사후 detect layer (#1027 ancestry_corruption carrier, pattern_count 2
+      CFP-967/991). force-push 는 CI 로 *차단* 불가 (발생 후 origin 변경 = 사후 detect 만, ADR-135
+      §결정 2) — PR head 가 base 보다 BEHIND(base-advance) / base 와 diverged(non-ff = force 의심)
+      인지를 git ancestry 로 실측해 warning emit. `--force-with-lease` 가 못 잡는 base(main) advance 를
+      직접 cover. 진짜 pre-flight 차단(L1) = opt-in local pre-push hook (templates/.claude/hooks/
+      pre-push.sh.sample, Step 1 확장, PRE_PUSH_BASE_CHECK=1) — opt-in 강제 한계 정직 기술 (ADR-119).
+      검사 (exit 3-tier): base-advance(head..base BEHIND>0) + divergence(merge-base --is-ancestor
+      false) → exit 1 (warning, 비차단). graceful-degradation: data-absence(base ref 미해결/shallow)=
+      fail-open(exit 0 honest no-op) / setup-error(git 미설치/repo 아님)=fail-closed(exit 2).
+      offline-first (gh 불요 — git ancestry only). de-bloat 재발 방지 (ADR-135 §결정 6 / spawn-prompt-
+      head-pin theater 제거 전례 답습 회피): live workflow + detect_command path 실존 + discriminating
+      self-test (force/non-force 판별 + mutation 생존 0) 3-종 동반.
+    detect_command: bash scripts/check-force-push-base-advance.sh  # CFP-2490 Phase 2 mechanical wire — script 실존 (Python SSOT check_force_push_base_advance.py + thin wrapper, ADR-061)
+    workflow: .github/workflows/force-push-base-advance-check.yml  # templates+.github byte-identical (Change Plan §5 row 4 — ADR-005 정합)
+    current_tier: warning           # ADR-060 §결정 5 / ADR-135 §결정 5 — 첫 도입 = warning mode (blocking 승격 = evidence-gated 별 carrier)
+    bypass_label: hotfix-bypass:force-push-base-advance-detect
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2490                  # Phase 2 mechanical wire carrier — lint script (Python SSOT) + 2-file workflow + self-test + L1 hook 확장
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}  # git ancestry 구조 lint, modal 어휘 무관
+    introduced_by: CFP-2490
+    introduced_date: 2026-06-30      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-135              # declaration source — own-branch push-time pre-flight + 2-layer + warning tier
+    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    spec_invariant_measurement_required: false  # structural git-ancestry lint — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A)
+    recurrence:
+      count: 2                      # CFP-967 first incident + CFP-991 second incident (ancestry_corruption, #1027 pattern_count 2 reach 2026-05) — both ISO8601 lineage
+      threshold: 3                  # ADR-060 §결정 19 standard — 3-occurrence 도달 시 별 evidence-gated carrier 평가 (ADR-135 §결정 5)
+      promotion_trigger: auto_blocking  # recurrence.count ≥ threshold 시 별 carrier 강제 (warning → blocking 승격 = evidence-gated 별 Story, 본 Story 승격 안 함)
+    status: Active                  # CFP-2490 Phase 2 wire COMPLETE — L1 hook 확장 + L2 workflow(byte-identical) + script + discriminating test live (ADR-135 §결정 6 3-종 동반)

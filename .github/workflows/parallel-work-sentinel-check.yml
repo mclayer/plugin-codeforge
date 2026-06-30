@@ -6,6 +6,15 @@ name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)
 # 경고이므로 비차단(continue-on-error). registry entry `parallel-work-sentinel-pickup`
 # (docs/evidence-checks-registry.yaml) 의 mechanical wire — CFP-953/CFP-946 2-incident sentinel.
 #
+# CFP-2490 (Epic CFP-2481 E2) — blockable-capable wire (warning 유지):
+#   tier 축을 단일 env `SENTINEL_TIER` (∈ {warning, blocking}, default warning) 1개 지점으로 집약.
+#   continue-on-error 는 그 축에서 derive — `${{ env.SENTINEL_TIER != 'blocking' }}` (warning=true 비차단,
+#   blocking=false 차단). default = warning 고정 (flip 안 함 — blocking 전환 = 변수 flip + 6-tuple
+#   context 등록 2-step, 본 Story 둘 다 무변경). tier 축이 1지점 집약돼야 "단일 축 변경만으로 blocking"
+#   = blockable-capable 보장 (산재 시 flip 이 다축 변경 = 위반). hollow 회피 = tests/scripts/
+#   test_check-parallel-work-sentinel.sh 의 workflow-mutate mutation-RED (continue-on-error 제거/false
+#   mutate copy → 차단 RED / 원본 warning GREEN 두 observation 분리).
+#
 # Bypass 2종:
 #   - env BYPASS_PARALLEL_WORK_SENTINEL=1 (스크립트 내부 무조건 skip, exit 0)
 #   - label hotfix-bypass:parallel-work-sentinel-pickup (본 workflow 가 sentinel run step skip)
@@ -27,6 +36,13 @@ permissions:
   pull-requests: read
   contents: read
 
+# CFP-2490 (Epic CFP-2481 E2) — tier 단일 축 (blockable-capable wire, warning 유지).
+#   continue-on-error 는 본 1개 지점에서만 derive (산재 금지). flip 1축만으로 blocking 전환됨을
+#   보장하되 default = warning 고정 (continue-on-error=true). blocking 전환은 본 값 flip + branch
+#   protection 6-tuple context 등록 2-step — 본 Story 둘 다 무변경 (AC-1/AC-2).
+env:
+  SENTINEL_TIER: warning  # {warning, blocking} — default warning. blocking 승격 = 별 evidence-gated carrier (ADR-060 §결정 19).
+
 jobs:
   parallel-work-sentinel:
     runs-on: ubuntu-latest
@@ -40,7 +56,7 @@ jobs:
 
       - name: Run parallel-work sentinel (warning-tier, 비차단)
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}
-        continue-on-error: true
+        continue-on-error: ${{ env.SENTINEL_TIER != 'blocking' }}  # CFP-2490 — tier 단일 축 derive (warning→true 비차단 / blocking→false 차단). flip 1축 = blockable-capable.
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |

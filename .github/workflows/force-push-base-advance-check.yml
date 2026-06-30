@@ -1,0 +1,97 @@
+name: force-push-base-advance-check
+# CFP-2490 / ADR-135 (Epic CFP-2481 E2) — force-push pre-flight HEAD-pin 가드 L2 CI 사후 detect (warning-tier).
+#
+# own-branch push-time race-guard (#1027 ancestry_corruption carrier, pattern_count 2 CFP-967/991) 의
+# **사후 detect** layer (L2). PR head 가 base 보다 BEHIND(base-advance) / base 와 diverged 인지를 git
+# ancestry 로 실측해 warning emit. `--force-with-lease` 가 못 잡는 base(main) advance 를 직접 cover.
+#
+# 본질 한계 정직 기술 (검사연극 금지 — ADR-135 §결정 2 / ADR-119):
+#   force-push 는 CI 로 *차단* 불가능 — force-push 발생 시점엔 이미 origin 변경 후라 사후 detect 만 가능.
+#   진짜 pre-flight 차단(L1) = opt-in local pre-push hook (templates/.claude/hooks/pre-push.sh.sample,
+#   PRE_PUSH_BASE_CHECK=1) 만 가능 — opt-in 이라 미설치/`--no-verify` 시 무력. 본 L2 는 가시화(warning).
+#
+# Bypass 2종:
+#   - env BYPASS_FORCE_PUSH_BASE_ADVANCE 미사용 (스크립트 무조건 skip env 미설계 — label gate 단일).
+#   - label hotfix-bypass:force-push-base-advance-detect (본 workflow 가 detect step skip + audit notice).
+#
+# graceful-degradation (change-plan §7.4 rate-limit / §7.5 — 2-tier 엄격 분리):
+#   data-absence(A)=fail-open(스크립트 EXIT 0, honest ::notice:: — base ref 미해결/shallow) /
+#   setup-error(B)=fail-closed(EXIT 2). path-filter / `on.paths` skip 금지 — required check Pending
+#   trap 차단(현재 비-required 이나 선제 정합) + 핵심 케이스(diff 가 특정 path 안 건드려도 base advance)
+#   놓침 회피. 스크립트가 내부에서 data-absence 를 EXIT 0 처리 (워크플로 if: skip 아님).
+#
+# injection-safe: on: pull_request (NOT pull_request_target — fork PR base secret 미노출) +
+#   permissions: contents:read (write/secret 0). 입력 = git ancestry (base/head ref) 만 — 외부 mutable
+#   입력 0 (PR_TITLE 등 shell-interpolate 0, fork-PR injection 차단).
+#
+# fetch-depth:0 — base..head ancestry 비교에 full history 필요 (shallow clone 시 data-absence fail-open).
+#
+# byte-identical mirror (ADR-005): templates/github-workflows/ + .github/workflows/ 양쪽 byte-identical
+#   write (Story §1 verbatim + Change Plan §5 row 4 양쪽 명시, responsibility-topology-check.yml 답습).
+#   invariant-check.yml parity loop 이 templates → .github 단방향 검증 (byte-identical = drift 0).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: detect job 은
+#   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). blocking 승격 = recurrence-driven
+#   별 evidence-gated carrier (ADR-060 §결정 19 / ADR-135 §결정 5 — 본 Story 승격 안 함).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  force-push-base-advance:
+    name: force-push base-advance/divergence detect (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # base..head ancestry 비교 — full history 필요 (shallow 시 data-absence fail-open)
+
+      - name: Bypass note (label present)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:force-push-base-advance-detect') }}
+        run: |
+          echo "::notice::hotfix-bypass:force-push-base-advance-detect label 감지 — force-push base-advance detect skip (audit: check-bypass-audit-comment.sh 마커 패턴 의무, ### Bypass reason PR body 섹션 필수)."
+
+      - name: Run force-push base-advance detect (warning, 비차단)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:force-push-base-advance-detect') }}
+        continue-on-error: true
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ ! -f scripts/check-force-push-base-advance.sh ]; then
+            echo "::warning::scripts/check-force-push-base-advance.sh 부재 — wrapper-self governance 도구 (ADR-135 L2). consumer 무전파 정상."
+            exit 0
+          fi
+          # base ref fetch (origin/<base> remote-tracking ref 확보 — base-advance 비교 입력).
+          if [ -n "${BASE_REF:-}" ]; then
+            git fetch origin "${BASE_REF}" --quiet 2>/dev/null || true
+          fi
+          OUT="$(bash scripts/check-force-push-base-advance.sh 2>&1 || true)"
+          echo "$OUT"
+          {
+            echo "## force-push base-advance/divergence detect (warning-tier, non-blocking — ADR-135 L2)"
+            echo '```'
+            echo "$OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # CFP-2490 — discriminating self-test (mutation 생존 0). force/non-force 판별 + base-advance/divergence
+  # 검출이 hollow 가 아님을 보증. wrapper-self 전용 게이트 — consumer repository 에선 skip (byte-identical
+  # 전파돼도 if: github.repository 로 skip, responsibility-topology-check.yml 답습).
+  force-push-base-advance-test:
+    name: force-push-base-advance discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Run test_check-force-push-base-advance.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-force-push-base-advance.sh
