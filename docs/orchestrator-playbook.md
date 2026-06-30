@@ -2559,6 +2559,60 @@ Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 
 
 ---
 
+### 4.5 Story-level 병렬 dispatch 운영절차 (단일-lead teammate 병렬 — ADR-134 / ADR-039 §결정 19)
+
+> **lookup mirror** — 정책 SSOT = [ADR-134](../archive/adr/ADR-134-parallel-eligibility-dispatch.md) (적격성·merge-time·dispatch) + [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 19 (Amendment 7, spawn-권한 위임). 본 절은 운영 진입점·절차 호출만 — **정책 본문 중복 금지**. 정의·근거·회피된 대안은 ADR-134 가 단일 원본.
+
+§4.1 (lane 내부 fan-out) / §3.4.2 (복수 사람-Orchestrator 세션, ADR-050) 와 disjoint 한 **세 번째 병렬** — 같은 Epic 안 독립 Story 들을 1 lead (Orchestrator) 가 per-Story teammate 로 동시 dispatch (3-layer disjoint: ADR-050 사람-세션-간 / ADR-085 session-level / ADR-134 Story-slot 단일-lead). lead 가 teammate 를 직접 보므로 ADR-050 의 GitHub 라벨 비동기 조율을 **lead 직접 감독**으로 대체·보강 (extends, supersede 아님).
+
+#### 4.5.1 적격성 판정 진입점 — 정적 disjoint 5조건 (AND, dispatch 시점 pre-screen)
+
+두 Story 동시 진행의 safe-parallel 사전 증명 = **5조건 모두 disjoint (AND)** — 하나라도 교집합 ≠ 0 이면 순차. 판정 입력 = 각 Story planned scope (scope_manifest, ADR-050 재사용). 5조건 정의·hotspot 대응 = **ADR-134 §결정 1 SSOT 호출** (본 절 중복 기재 금지):
+
+| # | 조건 (요지) |
+|---|---|
+| ① 파일 disjoint | touched path 교집합 0 |
+| ② ADR disjoint | ADR 번호·본문 동시 점유 0 |
+| ③ version-bump disjoint | `plugin.json` 버전 동시 bump 0 |
+| ④ inter-plugin-contract disjoint | 계약 frontmatter 3-location (version/bumped_at/amendments) 동시 수정 0 |
+| ⑤ data-dependency disjoint | 한 Story 산출물을 다른 Story 가 입력 요구 0 |
+
+5조건 = §4.1 lane-level 3조건의 Story-level superset (신규 판정 발명 아님 — 기존 판정 Story 입도 승격 + codeforge 공유 자원 축 추가).
+
+#### 4.5.2 dispatch 절차 — 배치 → 감독 → 회수 (ADR-134 §결정 3)
+
+1. **배치 (dispatch)** — 적격 Story (§4.5.1 5조건 AND PASS) 들을 per-Story background-Agent (Story-runner, SendMessage-addressable) 로 spawn. 각 teammate 는 자기 Story scope 안에서만 lane PL subagent spawn (2-level bounded 토폴로지 — lead 1 + teammate N, teammate→teammate spawn 불가, ADR-039 §결정 19). dispatch 메커니즘 = background-Agent-as-Story-runner (검증된 경로 — agent-teams teammate 특정 경로 미의존).
+2. **동시 Story cap = 2~4** — quota (Anthropic API rate limit) 선형 소비 주의 (resource-aware scheduling, ADR-109 / ADR-044 cross-ref). 경합 시 cap 축소.
+3. **감독 (supervise) + stall 처리 (의무 — 마찰 은폐 금지, ADR-119 검사연극 금지)** — lead 가 dispatch 한 모든 teammate 진행을 능동 모니터. **stall 마찰**: child (손자 = teammate 가 spawn 한 lane PL 의 SubAgent) 완료 통지가 parent (lane PL) 아닌 lead (main) 로 surface → parent 무한대기 (구조적 한계, ADR-039 §결정 19). lead 가 stall 검출 시 **force-resume (`SendMessage` 로 parent 깨우기) 또는 `TaskStop` (회수)** 책임.
+4. **회수 (reclaim) + 순차화** — teammate return 시 merge-time 2단 재검증 (§4.5.3) → PASS 면 merge, drift 검출 시 충돌 Story 순차화. 실행 중 data-dependency 가 드러나면 (E-1) **재분석 트리거** (ADR-077 dirty-이벤트 6-fan-out 재조사 메커니즘 정합, §4.4.1) → 충돌 Story 회수·순차화.
+
+#### 4.5.3 merge-time 동적 재검증 2단 (정적 판정 stale 차단 — ADR-134 §결정 2)
+
+정적 5조건 = dispatch 시점 스냅샷 (ABA 함정 — origin/main SHA = version stamp). merge 직전 2단 재검증:
+
+- **2단-(1) 실제 변경 delta 재교차** — dispatch 시점 planned scope ↔ 실제 작성된 diff 의 drift 를 실제 diff 로 5조건 재교차.
+- **2단-(2) base (origin/main) 갱신 후 충돌 재확인** — A Story merge 로 origin/main churn → B 정적 판정 stale. merge 직전 현재 origin/main SHA 로 충돌 재확인.
+
+> **기계 wire = sibling Story (E2/E3b) 소유** — 기존 `parallel-epic-conflict-check.yml` (PR overlap → `conflict:*` 라벨) 재사용 우선. 본 절·ADR-134 = 정책 정의만.
+
+#### 4.5.4 사용자 "병렬불가" 표기 우선 (적격성 판정 override — ADR-134 §결정 5)
+
+사용자가 특정 Story 를 "병렬불가" 표기하면 정적 5조건 (§4.5.1) 통과 여부와 **무관하게 순차 강제** (표기 무시 금지). 적격성 판정은 자동 disjoint 검사일 뿐 사용자 명시 순차 의도를 덮어쓰지 못함 — dispatch (§4.5.2) 가 이 표기를 first-class 입력으로 받아 순차 fallback.
+
+#### 4.5.5 직렬화 5지점 = Amdahl 임계 구역 (병렬화로 못 줄임 — ADR-134 §결정 4)
+
+병렬 Story 가 N 개여도 본질적으로 직렬이어야 하는 공유 자원·순서 불변식 (Amdahl `f` — 임계 구역, 적격성 5조건의 speedup 은 `(1−f)` 영역에서만 발생):
+
+1. **sentinel polling** — parallel-work sentinel (CFP-967 / ADR-073 Amd2) 3-mode detection 채널.
+2. **ADR 번호 append** — ADR-RESERVATION sequential-append (GitOpsAgent 전용). E3a 가 atomic 격상.
+3. **version-bump merge-order** — `plugin.json` bump + marketplace atomic sync (ADR-063). 동시 bump = atomic invariant 깨짐.
+4. **inter-plugin-contract frontmatter** — 계약 version / bumped_at / amendments 3-location.
+5. **FIX-ledger Orchestrator 독점** — Story §10 FIX Ledger row append (fix-event-v1, Orchestrator monopoly, §4.4.0 layer 2).
+
+직렬화 지점을 줄이려는 노력 (예: ADR 번호 append atomic 격상 = E3a) 은 `f` 자체를 줄여 speedup 상한을 끌어올리는 시도다 (단순 문서화 아님 — "병렬화로 줄일 수 없는 영역" 상한 선언).
+
+---
+
 ## 5. docs/stories file 동기화
 
 ### 5.1 Lane plugin self-write 체크리스트
