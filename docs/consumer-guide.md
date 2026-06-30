@@ -2361,7 +2361,7 @@ frontend:
 - **D1 (구조적 CSS lint)**: stylelint + stylelint-config-standard 가 미닫힌 `{` 등 CSS 구문 결함을 텍스트 층위에서 차단. 로컬은 `scripts/check-lint.sh`(`package.json` 에 `"stylelint"` 등재 시 자동 detect), CI 차단은 `css-lint.yml` workflow.
 - **D2 (UI 실렌더 검증, §8.7)**: UI/CSS 변경 PR 의 change-plan §8.7 본문에 실 layout 엔진(Playwright 권장) render-truth 검증을 요구. jsdom 계열은 layout 미계산이라 D2 부적격(공식 검증). lint·jsdom 통과 ≠ D2 승인.
 - **branch protection 경고**: D2(또는 css-lint.yml required 승격) wire 시 — consumer branch protection required status checks contexts 에 해당 CI job context 를 정확 매핑해야 한다. job-level conditional skip 은 'Success' 로 보고되므로 path-filter 가 아닌 job-level `if:` 로 graceful no-op 처리할 것(required check 가 path-filter skip 시 'Pending(expected)' 영구 → PR merge 영구 block — ADR-130 §결정4).
-- **supply-chain 비협상 기준선**: `npx <pkg>@latest` 즉석 설치 금지 — `stylelint` / `stylelint-config-standard` / `playwright` 버전 **pin + lockfile(package-lock.json) + `npm ci`** (fresh malicious 버전 실행 위험 차단 — ADR-136 결정11).
+- **supply-chain 비협상 기준선**: `npx <pkg>@latest` 즉석 설치 금지 — `stylelint` / `stylelint-config-standard` / `playwright` **version-pin + lockfile(package-lock.json) + `npm ci`** (fresh malicious 버전 실행 위험 차단 — ADR-136 결정11).
 
 #### backend-service preset (비-webapp, frontend-less)
 
