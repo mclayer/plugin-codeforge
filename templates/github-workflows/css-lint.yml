@@ -122,6 +122,7 @@ jobs:
           # lockfile 기준 재현 설치 (npm ci = lockfile MUST 존재 + 정확 재현).
           npm ci --no-audit --no-fund
           echo "STYLELINT_BIN=$WORK/node_modules/.bin/stylelint" >> "$GITHUB_ENV"
+          echo "STYLELINT_BASEDIR=$WORK/node_modules" >> "$GITHUB_ENV"
           echo "::notice title=css-lint::stylelint $("$WORK/node_modules/.bin/stylelint" --version) 설치(pinned 17.13.0 / config-standard 40.0.0)."
 
       # (e) effective-config self-check (anti-hollow, ADR-136 결정4):
@@ -139,7 +140,7 @@ jobs:
           fi
           echo "effective-config anchor: $ANCHOR"
           EFF="$RUNNER_TEMP/effective-config.json"
-          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" --print-config "$ANCHOR" > "$EFF"
+          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" --config-basedir "$STYLELINT_BASEDIR" --print-config "$ANCHOR" > "$EFF"
           # floor rule 집합이 effective-config 에 active(null 아님)인지 검증.
           node -e '
             const fs = require("fs");
@@ -179,7 +180,7 @@ jobs:
           fi
           printf '%s\n' "${TARGETS[@]}"
           # config_path 명시 — repo 표준 위치 / preset 배포 위치 양쪽 커버.
-          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" "${TARGETS[@]}"
+          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" --config-basedir "$STYLELINT_BASEDIR" "${TARGETS[@]}"
 
   # (j) discriminating test job — wrapper-self 에서만 fixture 회귀 test (선례
   #   responsibility-topology-check.yml *-test job 동형). consumer 미배포(if: repo gate).
