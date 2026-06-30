@@ -127,7 +127,7 @@ ArchitectPLAgent (PL: supervisor + FIX judge)
 - `docs/adr/ADR-005-plugin-self-application-na-standardization.md` (status `Accepted` 전이)
 - `docs/adr/ADR-004-architectpl-securityarch-restructure.md` (#1 closure cross-ref)
 
-## Amendment 1 (CFP-venue-shape-test-fidelity) — 외부 venue/시계열 데이터 형상 재현 fidelity 의무
+## Amendment 1 (CFP-2504) — 외부 venue/시계열 데이터 형상 재현 fidelity 의무
 
 > **carrier 근거 (1줄)**: mctrader MCT-58 — 합성 테스트(+1 seq 균일)로만 검증해 829 green·전 lane PASS인데, 실 Bithumb 의 μs-timestamp-as-seq snapshot-only 스트림(스냅샷마다 ~78ms 점프)을 재현 안 해 라이브 배포 직후 GAP-flood 발생. **합성 형상으로 replay 해도 통과**한 채널이 production 형상에서 깨졌다.
 

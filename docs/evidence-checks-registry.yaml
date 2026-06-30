@@ -3333,7 +3333,7 @@ entries:
       promotion_trigger: none
     status: Active                  # 게이트 자체 실존·Active (ADR-037 workflow 운용 중) — entry 는 멤버십 SSOT 부착 carrier
 
-  # ─── CFP-venue-shape-test-fidelity Phase 1 (ADR-006 Amendment 1 — 외부 venue/시계열 데이터 형상 재현 fidelity 의무) ───
+  # ─── CFP-2504 Phase 1 (ADR-006 Amendment 1 — 외부 venue/시계열 데이터 형상 재현 fidelity 의무) ───
   # carrier = mctrader MCT-58: 합성 +1 seq 균일 형상으로 829 green·전 lane PASS 인데 실 venue μs-as-seq
   # snapshot-only 스트림(~78ms 점프) 미재현 → 라이브 직후 GAP-flood. §8 Test Contract 에 형상 재현 fidelity 의무 신설.
   # Phase 1 = 선언적 mandate(TestContractArch §8.7 + design.md 체크리스트)만. 기계적 lint = 본질적 fuzzy → deferred-followup.
@@ -3367,7 +3367,7 @@ entries:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
-    introduced_by: CFP-venue-shape-test-fidelity
+    introduced_by: CFP-2504
     owner_adr: ADR-006-Amendment-1  # declaration source — §8 Test Contract 형상 재현 fidelity 의무 SSOT
     carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework carrier
     recurrence:
