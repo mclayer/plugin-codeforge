@@ -58,6 +58,18 @@ review_packet:
 
 워커는 1차 layer가 이미 보고한 finding은 skip하고 **high-level 분석(trust boundary·auth model)에 집중**. `lane=design` / `lane=code` 는 이 필드 없음.
 
+**`lane=code` 추가 선택 필드 `execution_targets`** (CFP-2477 / ADR-070 Amendment 11 §결정 D9 — 실행 검증 dispatch) — CodeReviewPL이 PR touch 분석 후 실행 대상 후보를 packet에 inline (Codex worker가 sandbox 안 실행해 단정과 대조):
+
+```yaml
+  execution_targets:                                             # code lane 선택 (CFP-2477) — 부재 시 worker가 PR-touch ∩ discriminating 자동 선별
+    - target: scripts/check-plugin-version-bump-self.sh --self-test   # 실행 대상 (discriminating ∩ PR-touch)
+      discriminating: true                                       # self-test/eval 모드 보유 (결함 시 RED)
+      sandbox: read-only | workspace-write                       # 기본 read-only, write 필요 게이트만 workspace-write (+marker)
+      asserted_state: "<PR/Story 단정 또는 명백 정책(ADR-037 등) — 실행결과와 대조할 기대값>"
+```
+
+`first_layer_findings` 동형 lane-specific 확장 (review-verdict-v4 contract field 신설 0 — packet schema 영역, doc-only). 워커 실행 결과 finding = `[hypothesis]` → CodeReviewPL 직접 재실행 falsify 통과 시만 채택 (verify-before-trust, ADR-070 Amd11). 실행 GREEN ≠ PR 옳음 (Popper falsify 전용). flaky/환경차 의심 = `undetermined` 보류. Codex 미가용 = lane-time `fail_open_then_record_with_marker`. `lane=requirements-review` / `lane=design` / `lane=security` 는 이 필드 없음 (E1 = code-review lane 우선, 4 lane 대칭 확장은 후속).
+
 **lane별 packet 필수 필드 매트릭스** (requirements-review 열 = CFP-2326 / ADR-125):
 
 | 필드 | requirements-review | design | code | security |
@@ -72,6 +84,7 @@ review_packet:
 | related_adrs | ◯ | ◯ | ◯ | ◯ |
 | **pr_phase** | ◯ | ◯ | ◯ | ◯ |
 | **first_layer_findings** | — | — | — | ✅ |
+| **execution_targets** (CFP-2477) | — | — | ◯ | — |
 
 ---
 

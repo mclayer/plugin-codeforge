@@ -79,6 +79,13 @@ amendments:
     status: applied
     ref: "## Amendment 10 / 본문 ### D11 + ### D12 + 거절된 대안"
     sunset_justification: "ratchet 강화 방향 (mutation surviving-mutant severity rubric [hollow-gate 영향 ground truth] + payload split 신설). 약화 영역 0건 (§결정 D6 review-lane / §결정 D10 merge-time rubric 무손상, D1-D10 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 11
+    cfp: CFP-2477
+    date: 2026-06-30
+    scope: "신규 §결정 D13 (Codex worker execution dispatch — 실행형 재리뷰 dispatch 형식 + execution ground-truth axis) append — ADR-070 Amendment 11 (review-lane execution scope + §결정 D9 disposition) sibling. Epic CFP-2476 E1. 2축 신설 — (1) §결정 D13 = execution dispatch 형식: 실행 검증 dispatch = `adversarial-review`(read-only 고정 turn, focus 지원) primary / `task --write`(workspace-write toggle) 예외 — 둘 다 §결정 D8 file-redirect (`codex exec --sandbox ... < <promptfile>`) 형식 정합 (turn 기반 stall 회피층 상속). 현 `review --focus` 는 native reviewer 가 custom focus 거부 (validateNativeReviewRequest throws) = 죽은 경로 → 교체. 실행 주체 = Codex CLI 자체 sandbox (read-only 기본 / network-off / `.git`·`.codex` 보호 / OS 격리) — lane worker own-Bash 직접 실행 아님 (CodexReviewAgent Bash allowlist 미확대, OWASP LLM06 최소권한). (2) §결정 D3 3-lane partition 에 execution ground-truth axis 추가: Codex worker scope = factual citation (file:line + verbatim + grep count + ADR §결정 번호 + cross-repo SHA) **∪ execution ground-truth (실행 exit code + stdout = 재현 가능 객관 사실)** — 양축 모두 verify-before-trust scope (ADR-070 D1/D2/D3 + Amendment 11 §결정 D9). D1.A-D 4 mandatory boilerplate field 무변경 (D8 dispatch invocation 영역 — execution dispatch 가 D8 정합임을 declare, prompt field 신설 0). D1-D12 본문 의미 변경 0건 — 신규 §결정 D13 sub-section append + §결정 D3 axis 추가 only. ADR-070 Amendment 11 + ADR-044 정합 declare (user_request_only = producer 한정, execution-bias 는 worker behavior 지 dispatch 발동 조건 아님) sibling cross-ref. mechanical_enforcement_actions[] 변경 0건 (declaration-only retain — §D5 precedent chain 11번째 instance). is_transitional: false, sunset_justification N/A (강화 방향 — execution dispatch 형식 + execution ground-truth axis 신설, D1-D12 무손상, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2477)."
+    status: applied
+    ref: "## Amendment 11 / 본문 ### D13 + §결정 D3 execution axis"
+    sunset_justification: "ratchet 강화 방향 (Codex worker execution dispatch 형식 + execution ground-truth axis 신설 — 실행형 재리뷰 dispatch normative anchor §결정 D13 + 3-lane partition factual citation ∪ execution axis 확장). 약화 영역 0건 (D1.A-D 4 mandatory field 무변경, D8 dispatch invocation 무변경, D1-D12 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -95,6 +102,7 @@ related_stories:
   - CFP-1383 # Amendment 8 — 신규 §결정 D9 Codex worker dispatch prompt body origin/main fetch directive mandate (working tree file 우회 + stale local checkout state 회피, CFP-1333 5/5 FP + CFP-1384 5/5 TP closing-the-loop empirical validation)
   - CFP-2458 # Amendment 9 — 신규 §결정 D10 merge-time severity rubric (review-lane verdict 닫힌 영역 merge-block impact ground truth 재정의, ADR-052 touchpoint #7 sibling). Epic CFP-2457 Story A.
   - CFP-2464 # Amendment 10 — 신규 §결정 D11 mutation surviving-mutant severity rubric (hollow-gate 영향 ground truth) + §결정 D12 mutation prompt payload split (codex_truncated 회피, 전수 금지 diff-based). ADR-052 touchpoint #8 sibling. Epic CFP-2457 Story B.
+  - CFP-2477 # Amendment 11 — 신규 §결정 D13 Codex worker execution dispatch (adversarial-review/task file-redirect + Codex sandbox 실행) + §결정 D3 3-lane partition execution ground-truth axis 추가. ADR-070 Amendment 11 sibling. Epic CFP-2476 E1.
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref + Amendment 15 (CFP-2458) touchpoint #7 merge-time gate)
   - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic severity hypothesis→verified 확정 절차 reuse)
@@ -336,13 +344,13 @@ Codex worker output 영역 vs lane review agent (DesignReviewPL / CodeReviewPL) 
 
 | Lane | scope | mechanical anchor | 영역 type |
 |---|---|---|---|
-| **Codex worker** | factual citation — file:line evidence + verbatim quote + grep count + ADR §결정 번호 + cross-repo commit SHA | ADR-081 D2 (5 sub-scope) + ADR-070 D1/D2/D3 + ADR-073 | **factual ground truth** (verify-before-trust scope) |
+| **Codex worker** | factual citation — file:line evidence + verbatim quote + grep count + ADR §결정 번호 + cross-repo commit SHA **∪ execution ground-truth — 실행 exit code + stdout(semantic) = 재현 가능 객관 사실 (Amendment 11 / CFP-2477, §결정 D13)** | ADR-081 D2 (5 sub-scope) + ADR-070 D1/D2/D3 + Amendment 11 §결정 D9 + ADR-073 | **factual ground truth ∪ execution ground-truth** (verify-before-trust scope) |
 | **DesignReviewPL** | boundary completeness — API contract semantic (I-1) + cross-module propagation (I-2) + conditional guard placement intent (I-3) + wording SSOT (I-4) + dimensional empirical grounding (I-5) | ADR-068 4 invariants + Amendment 1 I-5 | **boundary completeness self-audit** (review-verdict-v4 v4.4 carrier) |
 | **CodeReviewPL** | post-impl style + historical reference 보존성 영역 — Story §10 P2-defer row 안 historical 5 refs 인용 영역 보존 의도 | review-verdict-v4 v4.5 (CFP-810 P2 C-002 precedent) | **style + history preservation** (post-impl review scope) |
 
 **disjoint invariant**: 동일 anchor_id 영역에서 Codex + DesignReview + CodeReview 셋 모두 발화 시 = scope type mismatch 신호. 처리:
 
-- Codex 발화 = factual citation 영역만 (`[verified]` marker 의무)
+- Codex 발화 = factual citation **∪ execution ground-truth** 영역만 (`[verified]` marker 의무 — 실행 결과는 PL 직접 재실행 falsify 통과 시만 승격, ADR-070 Amendment 11 §결정 D9)
 - DesignReview 발화 = boundary completeness 영역만 (4 invariant 안 분류)
 - CodeReview 발화 = style + history 영역만 (post-impl scope)
 
@@ -1084,6 +1092,36 @@ mutation prompt (대상 코드 + 해당 테스트 스위트 + mutant 명세 + ba
 - (Amendment 10-B) **mutation severity 를 P0/P1 2-tier (P2 제거)** — P2 비차단 보존 = cry-wolf 차단 (P2 자동 차단 시 false-block 양산, concept M-5). 3-tier 채택 (D11.b).
 - (Amendment 10-C) **payload split 없이 전수 mutant 단일 prompt dispatch** — `codex_truncated_no_verdict` 상시 + 전수 비용 폭증 (concept M-4). 소수 고가치 분할 채택 (D12).
 - (Amendment 10-D) **`undetermined` mutant 에도 severity 부여** — equivalent/flaky 의심에 severity = cry-wolf (충족 불가능 요구). `hollow_gate_verified` 한정 severity 채택 (D11.a step 2).
+
+## Amendment 11 (CFP-2477, 2026-06-30 KST)
+
+**신규 §결정 D13 (Codex worker execution dispatch — 실행형 재리뷰 dispatch 형식) + §결정 D3 3-lane partition execution ground-truth axis 추가.** ADR-070 Amendment 11 (review-lane execution scope + §결정 D9 disposition) sibling. Epic CFP-2476 E1 (Codex 실행형 재리뷰). 2축 신설.
+
+### Context (Amendment 11)
+
+CFP-2477 = 리뷰 lane Codex peer(CodexReviewAgent)를 정적 비평가 → 실행 검증자로 전환한다. 그러나 (1) 현 dispatch `review --wait --focus "<lane prompt>"` 는 [verified: codex-companion.mjs origin install] native reviewer 가 custom focus 를 거부 (`validateNativeReviewRequest` L268-273 throws) = **이미 죽은 경로** (E1 이전부터 lane focus 미동작). (2) §결정 D3 3-lane partition 의 Codex worker scope = "factual citation" 한정이라 실행 검증 결과(exit/stdout)를 담을 axis 가 부재. 본 Amendment 가 execution dispatch 형식 normative anchor + execution ground-truth axis 를 codify.
+
+### A1. §결정 D13 — Codex worker execution dispatch (실행형 재리뷰 dispatch 형식)
+
+1. **dispatch 형식** [verified: codex-companion.mjs origin install]: 실행 검증 dispatch = **`adversarial-review`(read-only 고정 turn, focus 지원, L411) primary / `task --write`(workspace-write toggle, L488) 예외**. 현 `review --focus` 죽은 경로 → 교체 (AC-1). 둘 다 §결정 D8 file-redirect 형식 (`codex exec --sandbox ... < <promptfile>`) 정합 — turn 기반이라 D8 stall 회피층 상속.
+2. **실행 주체 = Codex CLI 자체 sandbox** (read-only 기본 / network-off / `.git`·`.codex` write 보호 / OS 격리 macOS Seatbelt·Linux Landlock+Seccomp [source: developers.openai.com/codex/concepts/sandboxing]) — **lane worker(CodexReviewAgent) own-Bash 직접 실행 아님**. CodexReviewAgent Bash allowlist 미확대 (python/pytest 추가 0) — 실행은 Codex sandbox 안. 근거: ADR-001 "읽기·분석·보고만" 표면 충돌 회피 + injection 공격면을 Claude harness 권한으로 안 끌어옴 (OWASP LLM06 최소권한).
+3. **write 예외**: fixture/temp/lockfile 쓰는 게이트만 `task --write`(workspace-write) + 명시 예외 declare + `[exec-verify-write-mode: <check>]` marker (게이트 자체 idempotent 책임).
+4. **D8/D1.A-D 무손상**: 본 §결정 D13 = dispatch invocation 영역 (D8 file-redirect 가 어느 subcommand 호출하는지 명시) — D1.A-D 4 mandatory boilerplate field 무변경, prompt field 신설 0.
+
+### A2. §결정 D3 3-lane partition execution ground-truth axis 추가
+
+Codex worker scope = factual citation (file:line + verbatim + grep count + ADR §결정 번호 + cross-repo SHA) **∪ execution ground-truth (실행 exit code[primary] + stdout[semantic, body 첨부] = 재현 가능 객관 사실)**. 양축 모두 verify-before-trust scope — 실행 결과 finding = `[hypothesis]` → PL 직접 재실행 falsify 통과 시만 `[verified]` 승격 (ADR-070 Amendment 11 §결정 D9). 정적 인용 axis 와 disjoint (정적 = "코드가 어떻게 보이는가" / execution = "코드가 실제 무엇을 하는가").
+
+### A3. E2/E3 재사용 인터페이스 (execution-dispatch-pattern-v1) + declaration-only retain
+
+- **execution-dispatch-pattern-v1**: §결정 D13 + ADR-070 Amendment 11 §결정 D9 가 함께 codify 하는 실행 dispatch + 신뢰 승격 + disposition = Epic CFP-2476 E2(주장→증거 감사)/E3(정책게이트팩 + FIX ground-truth replay)가 그대로 재사용 (SSOT = concept `execution-based-review-verification.md` X-6 + ADR-070 Amd11 B3).
+- **declaration-only retain**: `mechanical_enforcement_actions[]` 변경 0건 (§D5 precedent chain 11번째 instance). ratchet 강화 방향 (execution dispatch 형식 + execution ground-truth axis 신설, D1-D12 무손상, scope 축소 0). ADR-070 Amendment 11 + ADR-044 정합 declare sibling cross-ref.
+
+### 거절된 대안 (Amendment 11)
+
+- (Amendment 11-A) **`review --focus` 죽은 경로 유지 (dispatch 무변경)** — native reviewer 가 custom focus 거부 = 현행 장애 (AC-1). adversarial-review/task 교체 채택.
+- (Amendment 11-B) **lane worker own-Bash 직접 실행 (allowlist 에 python/pytest 확대)** — ADR-001 표면 충돌 + injection 공격면을 Claude harness 권한 확대 (LLM06) + Codex sandbox 격리 부재. Codex CLI 자체 sandbox 안 실행 채택 (allowlist 미확대). [load-bearing: discriminating 11종 중 8종 Python 의존/자체 실측 — Python 실행은 Codex sandbox python3 가용이 게이트, CodexReviewAgent allowlist 아님.]
+- (Amendment 11-C) **execution ground-truth 를 별 lane partition 신설** — Codex worker scope 의 axis 확장이지 새 lane 아님 (DesignReview/CodeReview partition 무손상). Codex worker factual ∪ execution axis 통합 채택.
 
 ## 해소 기준
 
