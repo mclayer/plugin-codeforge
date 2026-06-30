@@ -146,7 +146,7 @@ is_transitional: false
 5. **5 권장 패턴 measurable verification 미정식화** — Anthropic 권장 패턴 (Specialization / Parallelization / Adversarial / Cross-layer / Escalation) 이 codeforge lane 매핑 명시되었으나 (Story §2.2), AC-level metric 미정의.
 6. **default subagent context vs agent teams enabled context 분기 fallback 미정의** — ADR-039 default invariant 와 본 ADR 의 enabled context 활용 사이 동작 fallback 부재.
 
-## 결정 (10)
+## 결정 (11)
 
 ### 결정 1 — Phase-scoped sequential team lifecycle (ADR-035 D2 implementation)
 
