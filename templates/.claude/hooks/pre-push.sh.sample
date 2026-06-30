@@ -3,13 +3,22 @@
 #
 # Installs to: .git/hooks/pre-push (per worktree, opt-in)
 #
-# 검증 2종:
-#   (1) BEHIND-rebase awareness — origin/main 진행 시 warning
+# 검증 3종:
+#   (1) BEHIND-rebase awareness + force-push pre-flight base-advance/divergence 가드 (own-branch
+#       push-time race-guard — ADR-135 §결정 1/3, #1027 ancestry_corruption carrier). origin/<base>
+#       진행 시 warning + force-push 의심 시 강도 상향 (`PRE_PUSH_BASE_CHECK=1` opt-in abort).
 #   (2) Atomic invariant local check — plugin.json mirrored field 변경 시
 #       scripts/check-version-bump-atomic.sh 호출 (ADR-063 §결정 5 PR-time enforcement local 보완)
 #
 # 본 hook 은 advisory only — warning 후 push 진행 (non-blocking).
-# 차단이 필요한 경우 `export PRE_PUSH_BLOCKING=1` 환경 변수 설정.
+# 차단이 필요한 경우:
+#   `export PRE_PUSH_BLOCKING=1`   — 모든 warning(BEHIND/atomic) 시 차단.
+#   `export PRE_PUSH_BASE_CHECK=1` — base-advance/divergence(force-push 위험) 시 차단 (ADR-135 §결정 2 L1).
+#
+# 강제력 한계 정직 기술 (검사연극 금지 — ADR-119 / ADR-135 §결정 2):
+#   본 hook 은 **opt-in** (사용자 manual copy) 이며 `--no-verify` 로 우회 가능 — 미설치/우회 환경에서
+#   무력하다. server-side(GitHub.com) pre-receive hook 미지원이라 "강제력 있는 force-push 차단" 은
+#   구조적 불가능. 진짜 pre-flight 차단(L1)은 본 hook 만, CI(L2)는 사후 detect warning 만 가능.
 #
 # 설치 (opt-in):
 #   cp templates/.claude/hooks/pre-push.sh.sample .git/hooks/pre-push
@@ -20,13 +29,18 @@
 # Cross-ref:
 #   ADR-061 §결정 5 — sanity check 3종 (diff/lint/sample) local 자동화 확장
 #   ADR-063 §결정 5 — 작성 시점 enforce (PR-time CI 보완)
+#   ADR-135       — force-push pre-flight HEAD-pin 가드 (own-branch push-time, L1 본 hook + L2 CI detect)
+#   ADR-039 §결정 14 — Pre-spawn-pin (branch-create-time sibling 축). self-claim SHA 무조건 신뢰 금지.
 #   CFP-441 — check-version-bump-atomic.sh
 #   CFP-447 — 본 hook sample
+#   CFP-2490 — Step 1 force-push base-advance 확장 (Epic CFP-2481 E2, #1027 carrier)
 
 set -uo pipefail
 
 BLOCKING="${PRE_PUSH_BLOCKING:-0}"
+BASE_CHECK="${PRE_PUSH_BASE_CHECK:-0}"
 HAS_WARNING=0
+BASE_RISK=0   # CFP-2490 — base-advance/divergence(force-push 위험) 검출 플래그 (PRE_PUSH_BASE_CHECK 차단 축)
 
 # --- Helper: log + optionally block ---
 warn() {
@@ -34,7 +48,7 @@ warn() {
     HAS_WARNING=1
 }
 
-# --- Step 1: BEHIND-rebase awareness ---
+# --- Step 1: BEHIND-rebase awareness + force-push pre-flight base-advance 가드 (ADR-135) ---
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
@@ -48,19 +62,49 @@ if [[ "$CURRENT_BRANCH" == "main" ]]; then
     exit 0
 fi
 
-# Fetch origin/main (quiet, best-effort)
+# Base branch 결정 (default main — 대부분 feature branch 의 base).
+BASE_BRANCH="${PRE_PUSH_BASE_BRANCH:-main}"
+
+# Fetch origin/<base> (quiet, best-effort — 실패 시 advisory degrade, push 비차단 = §7.4 rate-limit 완화).
 if git ls-remote origin >/dev/null 2>&1; then
-    git fetch origin main --quiet 2>/dev/null || true
+    git fetch origin "$BASE_BRANCH" --quiet 2>/dev/null || true
 fi
 
-# BEHIND count vs origin/main
-if git rev-parse origin/main >/dev/null 2>&1; then
-    BEHIND_COUNT=$(git rev-list --count "${CURRENT_BRANCH}..origin/main" 2>/dev/null || echo "0")
+# BEHIND count vs origin/<base> (base-advance detect — `--force-with-lease` 가 못 잡는 base 진행 cover).
+if git rev-parse "origin/${BASE_BRANCH}" >/dev/null 2>&1; then
+    BEHIND_COUNT=$(git rev-list --count "${CURRENT_BRANCH}..origin/${BASE_BRANCH}" 2>/dev/null || echo "0")
     if [[ "$BEHIND_COUNT" -gt 0 ]]; then
-        warn "branch '$CURRENT_BRANCH' 가 origin/main 보다 $BEHIND_COUNT 커밋 BEHIND"
-        echo "    권고: git pull --rebase origin main 실행 후 push" >&2
+        warn "branch '$CURRENT_BRANCH' 가 origin/${BASE_BRANCH} 보다 $BEHIND_COUNT 커밋 BEHIND (base-advance — force-push 시 sibling commit overwrite 위험)"
+        echo "    권고: git pull --rebase origin ${BASE_BRANCH} 실행 후 push" >&2
+        BASE_RISK=1
+    fi
+
+    # Divergence detect — origin/<base> 가 HEAD 의 ancestor 가 아니면 diverged (rebase/force 필요 상태).
+    if ! git merge-base --is-ancestor "origin/${BASE_BRANCH}" HEAD 2>/dev/null; then
+        warn "branch '$CURRENT_BRANCH' 가 origin/${BASE_BRANCH} 와 diverged (ancestry corruption 위험 — force-push 전 rebase 권고)"
+        BASE_RISK=1
     fi
 fi
+
+# force-push 의심 강도 상향 — stdin <local_ref> <local_sha> <remote_ref> <remote_sha> 를 읽어,
+#   local_sha 가 remote_sha 의 descendant(fast-forward) 가 아니면 = non-ff = force-push 의심.
+#   git 은 hook 에 --force flag 를 직접 전달하지 않으므로 ancestry 로 추론 (ADR-135 §결정 1.3 정합).
+#   self-claim SHA 무조건 신뢰 금지 — remote_sha(서버 truth, stdin) vs local ancestry 실측.
+ZERO_SHA="0000000000000000000000000000000000000000"
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+    [[ -z "${local_sha:-}" ]] && continue
+    # local 삭제 push (local_sha = 0) skip.
+    [[ "$local_sha" == "$ZERO_SHA" ]] && continue
+    # 신규 ref (remote_sha = 0) = non-force create, fast-forward 무관 — skip.
+    [[ "$remote_sha" == "$ZERO_SHA" ]] && continue
+    # remote_sha 가 local 에 존재하고 local_sha 의 ancestor 면 fast-forward (non-force). 아니면 non-ff = force 의심.
+    if git cat-file -e "${remote_sha}^{commit}" 2>/dev/null; then
+        if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+            warn "non-fast-forward push 감지 (local_sha 가 remote_sha '${remote_sha:0:12}' 의 descendant 아님) — force-push 의심, 강도 상향"
+            BASE_RISK=1
+        fi
+    fi
+done
 
 # --- Step 2: Atomic invariant local check ---
 
@@ -91,6 +135,15 @@ fi
 
 # --- Final: blocking or advisory ---
 
+# CFP-2490 / ADR-135 §결정 2 (L1) — base-advance/divergence/force-push 위험 + PRE_PUSH_BASE_CHECK opt-in 시 차단.
+if [[ "$BASE_RISK" -eq 1 ]] && [[ "$BASE_CHECK" == "1" ]]; then
+    echo "" >&2
+    echo "❌ pre-push: PRE_PUSH_BASE_CHECK=1 + base-advance/divergence/force-push 위험 감지 → push 차단 (ADR-135 L1 pre-flight)" >&2
+    echo "   해소: git fetch origin && git rebase origin/${BASE_BRANCH:-main} 후 재push" >&2
+    echo "   bypass: unset PRE_PUSH_BASE_CHECK && git push (또는 --no-verify — 강제력 한계, ADR-135 §결정 2)" >&2
+    exit 1
+fi
+
 if [[ "$HAS_WARNING" -eq 1 ]] && [[ "$BLOCKING" == "1" ]]; then
     echo "" >&2
     echo "❌ pre-push: PRE_PUSH_BLOCKING=1 + warning 감지 → push 차단" >&2
@@ -101,7 +154,7 @@ fi
 if [[ "$HAS_WARNING" -eq 1 ]]; then
     echo "" >&2
     echo "ℹ pre-push: warning 진행 — push 계속 (advisory mode)" >&2
-    echo "   blocking mode: export PRE_PUSH_BLOCKING=1" >&2
+    echo "   blocking mode: export PRE_PUSH_BLOCKING=1 (warning) / export PRE_PUSH_BASE_CHECK=1 (force-push 위험만)" >&2
 fi
 
 exit 0
