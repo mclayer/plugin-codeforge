@@ -9,8 +9,16 @@ parent_epic: null
 supersedes: null
 amends:
   - ADR-014
+amendment_log:
+  - amendment_id: 1
+    date: 2026-06-30
+    status: applied
+    summary: "Rust consumer 로컬빌드 경로 표준 — Docker rust-image 마운트 빌드(공식 패턴 + CARGO_TARGET_DIR 분리 + --user + 공통-부모 마운트)를 1차 경로로, MSYS2/MSVC/WSL2 toolchain 을 대안 경로로 codify. cargo check(링커-less 사전검증) = 로컬 1차 권장. build-verification ↔ artifact-equivalence 분별선 명문(로컬=보강·CI=권위 불변식). examples/rust-cli-minimal + templates/scripts/build-local.{sh,ps1} + consumer-guide §1q 산출물. §결정 1-7 본문 변경 0건 — Docker-first 정책의 Rust 로컬 dev-feedback 적용 codify(인프라 전략 자체 무변경)."
+    ref: null
+    carrier_story: CFP-2506
 related_stories:
   - CFP-128
+  - CFP-2506
 related_files:
   - CLAUDE.md
   - templates/impl-manifest.md
@@ -21,6 +29,11 @@ related_files:
   - examples/webapp-minimal/
   - examples/cli-tool-minimal/
   - examples/library-minimal/
+  - examples/rust-cli-minimal/
+  - templates/scripts/build-local.sh
+  - templates/scripts/build-local.ps1
+  - templates/consumer-scripts.manifest
+  - docs/domain-knowledge/domain/build-toolchain/rust-local-build-equivalence.md
   - docs/inter-plugin-contracts/develop-output-v1.md
   - docs/inter-plugin-contracts/design-output-v2.md
 is_transitional: false
@@ -238,6 +251,70 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 - **D6 거절**: sec tooling 미도입 (Docker-first inconsistency), trivy + hadolint 둘 다 동시 (false positive 관리 부담), trivy-only (Dockerfile syntax 검증 공백)
 
 거절 합리성 = Codex 7-area review CFP-128-001 area_5_option_formulation **PASS**.
+
+## Amendment 1 — Rust consumer 로컬빌드 경로 표준 (CFP-2506, escalation #2503)
+
+**carrier_story**: CFP-2506. **date**: 2026-06-30 (KST). **status**: applied. **본 ADR §결정 1-7 본문 변경 0건** — Docker-first 인프라 전략 자체는 무변경. 본 Amendment = 그 전략을 **Rust consumer 의 로컬 개발-피드백 경로**에 적용하는 표준을 codify 한 것(인프라 전략의 새 적용면 명문화이지 전략 재정의 아님).
+
+### 동인
+
+Windows 개발 환경의 Rust consumer 가 링커·binutils(`as.exe`·`dlltool`·`gcc`) 부재로 로컬 `cargo build`/`cargo test` 가 불가 → 매 변경이 분 단위 CI 왕복으로만 검증되어 피드백 루프가 늘어남(escalation #2503, mctrader simulator 세션). 컴파일·타입 버그(예: 비-Copy 값 `E0382 partial-move`)가 CI 에서야 표면화.
+
+### A1-1 — Docker rust-image 마운트 빌드 = Rust 로컬빌드 1차 완전-빌드 경로 (ADR-033 §결정 1 Docker-first 정합)
+
+native 링커 부재 host 에서 로컬 `build`/`test` 가 필요하면 **Docker rust-image 마운트 빌드를 1차 경로**로 표준화한다. 공식 패턴:
+
+```
+docker run --rm --user "$(id -u)":"$(id -g)" \
+  -e CARGO_TARGET_DIR=/tmp/target \
+  -v "<repo>":/src -w /src rust:<tag> cargo check
+```
+
+- `--user $(id -u):$(id -g)` — host↔container uid 불일치로 인한 산출물 권한 오염 회피(출처: docker hub rust 이미지 공식 패턴).
+- `CARGO_TARGET_DIR` 분리 — host `target/`(Windows PE·캐시) ↔ container `target/`(ELF) 공유 시 캐시 오염 회피. named volume 으로 cargo registry 캐시 재사용 가능(출처: docker build cache / volumes 공식).
+- rust 이미지 multi-arch(amd64/arm64) → M-series Mac 동작.
+
+이 경로는 ADR-033 §결정 1(Docker-first default)·§결정 5 매트릭스 cell("§3 도입할 설계 ... image base / multi-stage 전략")의 자연 적용이다.
+
+### A1-2 — build-verification ↔ artifact-equivalence 분별선 (Docker linux target 한계)
+
+Docker linux 컨테이너 빌드는 target 이 `x86_64-unknown-linux-gnu`(ELF)로 바뀐다. 따라서:
+
+- **보장(build-verification)**: 타입 검사·차용 검사·대부분의 컴파일 에러·플랫폼-비의존 로직의 `cargo test` 통과 — CI 권위의 *보강*으로 충분.
+- **미보장(artifact-equivalence)**: `#[cfg(windows)]` 코드 경로·플랫폼-의존 동작(경로 구분자·파일 권한·FFI/winapi·줄바꿈)·Windows PE 산출물 ABI 자체. 이들의 ground-truth 는 **CI(Windows runner)** 가 권위.
+
+표준 문서는 Docker 경로를 "컴파일·타입·플랫폼-비의존 테스트 검증"으로만 advertise 하고, "로컬은 보강(pre-flight)·CI 는 단일 검증 권위" 불변식을 명문화한다. **로컬 GREEN ≠ 머지 게이트** — branch protection 6-tuple 무축소(순수 가산).
+
+### A1-3 — cargo check = 로컬 1차 권장(링커-less 사전검증)
+
+`cargo check`(+`cargo clippy`)는 codegen 직전 정지(`--emit=metadata`)해 링커·`as`·`dlltool` 불요 — 링커 부재 host 에서도 동작하며 `E0382` 류 타입·차용 버그를 즉시 검출한다. 따라서 로컬빌드 표준의 **최소·고-ROI 1차 명령 = `cargo check`**(완전 빌드는 Docker/MSYS2/WSL2 2차 경로). Docker 미설치 host 는 `cargo check`(1차) 또는 MSYS2/WSL2(A1-4)로 graceful degrade.
+
+### A1-4 — toolchain 대안 경로: MSYS2/MSVC/WSL2 (CI 권위 ABI 선결)
+
+완전 빌드 toolchain 보강 시:
+
+- **MSYS2(GNU ABI 보강)**: `pacman -S mingw-w64-x86_64-toolchain` 으로 `as`/`dlltool`/`gcc`(MinGW binutils) 채움 — `x86_64-pc-windows-gnu` target.
+- **MSVC 전환(GNU→MSVC)**: Visual Studio Build Tools 설치 — `x86_64-pc-windows-msvc` target(rustup 기본). MinGW binutils 자체가 불요.
+- **WSL2**: native linux rustup(repo 를 WSL2 native fs 에 둠 — `/mnt/c` NTFS cross-fs 는 3~10x 손실).
+
+**선결 조건(비협상)**: MSVC↔GNU 는 ABI 비호환(C 런타임·예외·맹글링·import-lib 상이). 따라서 로컬 권장 ABI 는 **CI runner 의 권위 ABI 와 일치**해야 한다 — "무조건 MSVC" 권고는 거짓(CI 가 GNU 권위면 로컬도 GNU 채워야 로컬 GREEN↔CI RED 괴리 무재발). CI 권위 ABI 명세 채널 = 가이드 문서 선결-조건 명문(무거운 `project.yaml` 스키마 신설은 OOS — 과설계 회피).
+
+### A1-5 — sibling crate 마운트 토폴로지 불변식
+
+Cargo `path = "../other-crate"` 의존은 단일-repo 마운트 컨테이너에서 `../` 가 미해소되어 빌드 실패. **불변식 = 컨테이너 내부 `path=` 상대 토폴로지가 host 와 동형**. 기본 권장 = **공통-부모 마운트**(`-v <parent>:/src -w /src/<crate>`). 대안 = 개별 마운트+동형 배치 / Windows junction. build-local 스크립트는 단일 crate ↔ sibling-path workspace 를 다르게 처리(silent fail 방지).
+
+### 산출물
+
+- `docs/consumer-guide.md` §1q (opt-in 고급 섹션 말미 신규 서브섹션) + §3c preset 표 cross-ref.
+- `examples/rust-cli-minimal/` (D1/D3 실증 fixture, cli-tool-minimal shape 답습).
+- `templates/scripts/build-local.{sh,ps1}` (D2 권장 스크립트 쌍) + `templates/consumer-scripts.manifest` 등재(dependent-workflow 미부착 — CI invoke 아닌 ad-hoc CLI, `scripts/codeforge-upgrade.sh` 선례).
+- `docs/domain-knowledge/domain/build-toolchain/rust-local-build-equivalence.md`(R-1~R-5 불변식 SSOT).
+
+### 정합
+
+- 신규 ADR 번호 미신설(in-flight Epic CFP-2481 번호 충돌 회피 + scope 과대 회피) → ADR-033 Amendment 로 처리.
+- 본 Amendment = 문서·스크립트·example 표준이지 신규 엔진·신규 스키마 아님(과설계 회피, ADR-119 제안 필요성 게이트 정합).
+- Story flow = Phase 1(§1-7 문서 + 본 Amendment + domain-knowledge) + Phase 2(consumer-guide·build-local·example·manifest 실체 + §8-11) — ADR-127 정식 풀 플로우.
 
 ## 해소 기준
 
