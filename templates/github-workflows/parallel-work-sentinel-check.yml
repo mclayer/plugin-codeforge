@@ -59,6 +59,7 @@ jobs:
         continue-on-error: ${{ env.SENTINEL_TIER != 'blocking' }}  # CFP-2490 — tier 단일 축 derive (warning→true 비차단 / blocking→false 차단). flip 1축 = blockable-capable.
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ ! -f scripts/check-parallel-work-sentinel.sh ]; then
             echo "::warning::scripts/check-parallel-work-sentinel.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
