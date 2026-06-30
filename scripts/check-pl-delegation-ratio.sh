@@ -104,10 +104,17 @@ fi
 # R5 §결정 1: worker 충분 시 fire 금지 (≥MIN_WORKERS 면 adequate).
 # R5 §결정 2: single segment 제외 (sustained pattern 요구 ≥MIN_SEGMENTS).
 #
+# F3: threshold integer 검증 — 잘못된 env 값은 silent gate-disable 대신 honest vacuous
+if ! [[ "$MIN_SEGMENTS" =~ ^[0-9]+$ ]] || ! [[ "$MIN_WORKERS" =~ ^[0-9]+$ ]]; then
+  echo "status=vacuous"
+  exit 0
+fi
+
 # jq 출력을 배열로 처리: map 으로 원소를 순회하면서 low-delegation 판정
 low_delegation_lanes=$(echo "$jq_output" | jq -r '
   map(
     select(
+      .lane != null and .lane != "없음" and
       .pl_count >= '"$MIN_SEGMENTS"' and
       .worker_count < '"$MIN_WORKERS"'
     ) | .lane

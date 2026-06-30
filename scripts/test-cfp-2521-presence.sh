@@ -248,7 +248,7 @@ assert_file_exists "$D3_SCRIPT" "D3-script-exists" || true
 if [ -f "$D3_SCRIPT" ]; then
   # ledger 미설정 시 exit 0 확인
   NONEXISTENT_LEDGER="/tmp/nonexistent-ledger-$RANDOM.jsonl"
-  if bash "$D3_SCRIPT" SPAWN_EVENT_LEDGER="$NONEXISTENT_LEDGER" >/dev/null 2>&1; then
+  if SPAWN_EVENT_LEDGER="$NONEXISTENT_LEDGER" bash "$D3_SCRIPT" >/dev/null 2>&1; then
     echo "✓ PASS: D3-C1-exit-0-advisory"
     PASS=$((PASS+1))
   else

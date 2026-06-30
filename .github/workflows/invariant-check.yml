@@ -44,7 +44,7 @@ jobs:
           # CFP-2360 / ADR-014 Amд7 + ADR-121 §결정3 — post-deploy-benchmark.yml = consumer post-deploy throughput/outcome-signal benchmark seed (terminal sink monotone assert). wrapper repo 에 배포 대상 0 → self-app copy 미운용.
           # wrapper repo 에 dev/stg/prd Environments 부재 — self-app copy 시 환경 오염 (배포 대상 0).
           # CFP-2369 / ADR-042 Amd14 — duplication-check.yml = consumer 재사용성 duplication-ratio warning-tier seed. wrapper 자체 src 부재 (declarative governance) → self-app copy 미운용 (consumer-only).
-          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml" "test.yml" "consumer-deploy-seed.yml" "post-deploy-smoke.yml" "post-deploy-benchmark.yml" "duplication-check.yml")
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml" "test.yml" "consumer-deploy-seed.yml" "post-deploy-smoke.yml" "post-deploy-benchmark.yml" "duplication-check.yml" "pl-delegation-ratio-check.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
             skip_file=0
