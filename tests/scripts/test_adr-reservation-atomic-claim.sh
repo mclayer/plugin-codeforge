@@ -230,48 +230,59 @@ assert_mutant_red() {
   fi
 }
 
-# ─── dead-gate 양-컨텍스트 fixture (AC-7, m5) ─────────────────────────────────
-# wrapper(.github) = archive/adr 충돌 검출, consumer(templates) = docs/adr 유지 (비대칭).
-test_ac7_deadgate_asymmetry() {
-  local test_name="AC-7-deadgate-asymmetry"
-  local gh_has_archive tmpl_has_docs gh_has_docs
-  # wrapper-self copy 는 archive/adr/ 패턴이어야(정정 완료).
-  # grep -c 는 미일치 시 0 출력 + exit1 — `|| echo 0` 추가 시 "0\n0" 중복 발생하므로 제거.
-  gh_has_archive=$(grep -c '\^archive/adr/ADR-RESERVATION\.md\$' "$GITHUB_WF" 2>/dev/null); gh_has_archive=${gh_has_archive:-0}
-  gh_has_docs=$(grep -c '\^docs/adr/ADR-RESERVATION\.md\$' "$GITHUB_WF" 2>/dev/null); gh_has_docs=${gh_has_docs:-0}
-  # consumer copy 는 docs/adr/ 패턴 유지(무변경).
-  tmpl_has_docs=$(grep -c '\^docs/adr/ADR-RESERVATION\.md\$' "$TEMPLATES_WF" 2>/dev/null); tmpl_has_docs=${tmpl_has_docs:-0}
+# ─── dead-gate path-agnostic 양-컨텍스트 (AC-7, m5) ───────────────────────────
+# 구현리뷰 invariant-check 정합: parallel-epic-conflict-check.yml 은 consumer-only 면제 목록 밖이라
+# `.github` ↔ `templates` byte-identical 의무. 따라서 dead-gate 정정 = 비대칭(컨텍스트별 분기)이 아니라
+# **path-agnostic 단일 regex** `^(docs|archive)/adr/ADR-RESERVATION.md$` (양 컨텍스트 동시 매치) →
+# byte-identical parity + wrapper(archive/adr) detection + consumer(docs/adr) detection 동시 충족.
+# AC-7 = dead-gate 가 wrapper archive/adr 와 consumer docs/adr 양 컨텍스트에서 살아있음(non-dead) 증명.
+test_ac7_deadgate_pathagnostic() {
+  local test_name="AC-7-deadgate-path-agnostic"
+  local gh_pa tmpl_pa identical=0
+  # 양 copy 가 path-agnostic regex (docs|archive) 를 보유해야(dead-gate 정정 완료).
+  gh_pa=$(grep -cE '\^\(docs\|archive\)/adr/ADR-RESERVATION\.md\$' "$GITHUB_WF" 2>/dev/null); gh_pa=${gh_pa:-0}
+  tmpl_pa=$(grep -cE '\^\(docs\|archive\)/adr/ADR-RESERVATION\.md\$' "$TEMPLATES_WF" 2>/dev/null); tmpl_pa=${tmpl_pa:-0}
+  # byte-identical parity (invariant-check 의무).
+  diff -q "$GITHUB_WF" "$TEMPLATES_WF" >/dev/null 2>&1 && identical=1
+  # 실 매치 검증: wrapper archive/adr + consumer docs/adr 둘 다 매치 (dead-gate non-dead).
+  local w_match=0 c_match=0
+  echo "archive/adr/ADR-RESERVATION.md" | grep -qE '^(docs|archive)/adr/ADR-RESERVATION\.md$' && w_match=1
+  echo "docs/adr/ADR-RESERVATION.md"    | grep -qE '^(docs|archive)/adr/ADR-RESERVATION\.md$' && c_match=1
 
-  if [ "$gh_has_archive" -ge 1 ] && [ "$gh_has_docs" -eq 0 ] && [ "$tmpl_has_docs" -ge 1 ]; then
-    echo "✓ PASS: $test_name — wrapper=archive/adr (정정), consumer=docs/adr (무변경) 비대칭 확인"
+  if [ "$gh_pa" -ge 1 ] && [ "$tmpl_pa" -ge 1 ] && [ "$identical" -eq 1 ] && [ "$w_match" -eq 1 ] && [ "$c_match" -eq 1 ]; then
+    echo "✓ PASS: $test_name — path-agnostic(docs|archive) 양 copy byte-identical + wrapper/consumer 양 컨텍스트 매치 (dead-gate non-dead + parity 정합)"
     PASS=$((PASS+1))
   else
-    echo "✗ FAIL: $test_name — gh_archive=$gh_has_archive gh_docs=$gh_has_docs tmpl_docs=$tmpl_has_docs (기대 ≥1/0/≥1)"
+    echo "✗ FAIL: $test_name — gh_pa=$gh_pa tmpl_pa=$tmpl_pa identical=$identical w_match=$w_match c_match=$c_match (기대 ≥1/≥1/1/1/1)"
     FAIL=$((FAIL+1))
   fi
 }
 
-# m5: wrapper(.github) copy 를 docs/adr 로 복귀시키면 wrapper archive/adr 충돌 미검출 → RED.
+# m5: path-agnostic regex 에서 archive 분기를 제거(`(docs|archive)` → `docs`)하면
+#     wrapper archive/adr 충돌 미검출(dead-gate 재도입) → RED.
 test_m5_deadgate_mutant() {
   local mutant_name="m5-deadgate-revert"
-  local mdir mutated archive_hit docs_hit
+  local mdir mutated w_match
   mdir="$(mktemp -d)"
   mutated="$mdir/wf.yml"
   cp "$GITHUB_WF" "$mutated"
-  # mutation: archive/adr → docs/adr 복귀 (dead-gate 재도입).
-  sed -i 's#\^archive/adr/ADR-RESERVATION\.md\$#^docs/adr/ADR-RESERVATION.md$#' "$mutated"
+  # mutation: path-agnostic `(docs|archive)` → `docs` only (wrapper archive/adr 분기 제거 = dead-gate 재도입).
+  sed -i 's#\^(docs|archive)/adr/ADR-RESERVATION\.md\$#^docs/adr/ADR-RESERVATION.md$#' "$mutated"
   if diff -q "$GITHUB_WF" "$mutated" >/dev/null 2>&1; then
-    echo "✗ FAIL: $mutant_name — sed no-op (mutant 정의 오류)"
+    echo "✗ FAIL: $mutant_name — sed no-op (mutant 정의 오류 — path-agnostic regex 미발견)"
     FAIL=$((FAIL+1)); rm -rf "$mdir"; return 1
   fi
-  archive_hit=$(grep -c '\^archive/adr/ADR-RESERVATION\.md\$' "$mutated" 2>/dev/null); archive_hit=${archive_hit:-0}
+  # mutated copy 의 grep 패턴 추출 후 wrapper archive/adr 매치 여부 — 미매치면 dead-gate RED.
+  local mutated_pat
+  mutated_pat=$(grep -oE '\^[^ "]*ADR-RESERVATION\.md\$' "$mutated" | head -1)
   rm -rf "$mdir"
-  # mutated wrapper copy 는 archive/adr 패턴 0 → wrapper ADR-RESERVATION 충돌 미검출(dead-gate).
-  if [ "$archive_hit" -eq 0 ]; then
-    echo "✓ PASS: $mutant_name — mutant KILLED (docs/adr 복귀 시 wrapper archive/adr 충돌 미검출 RED)"
+  w_match=1
+  echo "archive/adr/ADR-RESERVATION.md" | grep -qE "$mutated_pat" || w_match=0
+  if [ "$w_match" -eq 0 ]; then
+    echo "✓ PASS: $mutant_name — mutant KILLED (docs-only 복귀 시 wrapper archive/adr 미검출 = dead-gate RED, pat='$mutated_pat')"
     PASS=$((PASS+1))
   else
-    echo "✗ FAIL: $mutant_name — mutant SURVIVED (archive_hit=$archive_hit)"
+    echo "✗ FAIL: $mutant_name — mutant SURVIVED (wrapper archive/adr still matched by '$mutated_pat')"
     FAIL=$((FAIL+1))
   fi
 }
@@ -325,8 +336,8 @@ assert_mutant_red "m6-rewind" "monotonic_value" "OK:monotonic=201" \
   's/        next_number = state.max_adr_number + 1/        next_number = state.max_adr_number - 1/' || true
 
 echo ""
-echo "── dead-gate 비대칭 (AC-7 / m5) ──"
-test_ac7_deadgate_asymmetry || true
+echo "── dead-gate path-agnostic (AC-7 / m5) ──"
+test_ac7_deadgate_pathagnostic || true
 test_m5_deadgate_mutant || true
 
 # AC-6 e2e: 동일 blob SHA 2-client → 정확히 1성공 + 1×409 (race scenario 가 이를 증명 —
