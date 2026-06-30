@@ -515,6 +515,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-2491
     reservation_date: 2026-06-30 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier, ADR-070 chief author inline append precedent) — Amendment 1 E3b(CFP-2491, Epic CFP-2481 Phase B) 구현 결정: (A1-1) §결정6 dead-gate 정정 보정 = 두 copy 일괄 archive/adr/ → 비대칭(.github=archive/adr/ wrapper-self, templates=docs/adr/ consumer 정합 무변경) (A1-2) claimant identity field 신설(§결정4 상태전이 보강, (adr_number,claimant) idempotency key — at-least-once replay) (A1-3) claim-state branch protection mechanical(§결정5 ABA teeth — adr-reservation-state branch allow_force_pushes:false + required_linear_history:true) (A1-4) 언어=Python(ADR-061 §결정6 정합, Pattern A 알고리즘 무손상) + claim-state 별도 JSON artifact(2-channel 경계 보존, ADR-RESERVATION schema bump 0) + stale reclaim abandoned 마커+gap-allow+no-reuse(Herlihy&Wing 1990 단조성) (A1-5) EC-4 amendment_id slot scope deferred(Q2 = adr_number only, amendment_id 확장 = ADR-082 Amd17 Wave-2 follow-up). strengthen direction (약화 surface 0). verified-via `gh api repos/mclayer/plugin-codeforge/contents/archive/adr/ADR-133-...md?ref=main` frontmatter amendment_log[] = [] → next=1 2026-06-30 KST. status reserved 미경유 직접 active (ArchitectAgent chief author precedent). sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
+
+  - adr_number: 136
+    amendment_id: null
+    reserved_by_cfp: CFP-2505
+    reservation_date: 2026-06-30 KST
+    status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-136 frontend 품질게이트 표준, escalation #2502 / mctrader-web WEB-033 carrier). D1 구조적 CSS lint(stylelint) CI 게이트 + D2 UI 실렌더 검증(§8.7) + frontend.applicable CONDITIONAL flag — frontend-bearing consumer 조건부. 신규 메커니즘 0 (전부 기존 ADR 패턴 확장, supersede 0). verified-via worktree `git ls-tree origin/main archive/adr/` latest = ADR-135 (origin/main 55727a8) + ADR-RESERVATION row 135 → max+1 = 136. ⚠ 프롬프트 가정 ADR-132 는 stale (origin/main 에 ADR-132 consumer-branch-protection-auto-wire 가 이미 점유) — firsthand origin/main 실측으로 136 정정 (CFP-702 ADR collision 교훈 답습 — max+1 실측 후 점유). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
 ```
 
 ## 해소 기준
