@@ -277,6 +277,10 @@ evidence_driven_pointers:
 - **policy 공백 ↔ FIX root-cause decision table = disjoint axis**: §7.4.4/§7.4.2 의 policy 값 미결정은 "측정 대상"이지 "실패 원인"이 아니다. FIX 루프 (구현/설계 원인 판정) 와 별개 축 — cross-pollinate 금지 (ADR-014 Amendment 4 §결정 2 정합, CFP-681 §2.3 carry-over invariant 3).
 - primary 4-sub (§7.4.1 DR / §7.4.3 Clock / §7.4.5 Env / §7.4.6 Container) = 설계 시점 policy 값 확정 의무 — evidence_driven_pointers 대상 아님 (cross-ref shell 2-sub 한정).
 
+#### §8.7 UI 실렌더 검증 (CONDITIONAL — CFP-2505 / ADR-136)
+
+change-plan §8.7 미러 cross-ref (본문 상세 SSOT = change-plan.md §8.7). UI/CSS 변경 동반 Story 는 §8.7.0 applicability 표(CSS·컴포넌트·토큰·layout-affecting 4 행 Y/N)로 적용 판정 후 1+ Y 시 실 layout 엔진(Playwright 권장) render-truth 검증을 §8 개발 서사에 포함한다 — lint·jsdom 과 도구 독립인 직교 게이트. frontend 무관 / UI·CSS 변경 0 시 N/A (substantive 30자 이상 reason).
+
 ### §9. 품질 게이트 이력
 
 #### §9.0 Clarification 재스폰 이력 (FIX 아님)
