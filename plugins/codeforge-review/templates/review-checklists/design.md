@@ -69,6 +69,7 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 - 커버리지 계획·경계 조건·invariant·성능 baseline 기준 명시
 - Change Plan 범위 대비 커버리지 공백 식별
 - 성능 baseline §8.3 프로토콜 (mean 10% 악화 기준 측정 절차) 명시 여부
+- 외부 venue/시계열 데이터 의존 시(거래소 L2/tick·WS stream·snapshot·candle 시계열·seq ordering): 실-venue-형상 재현(captured-golden / 실 venue tap / seq 의미론·timestamp granularity·다중성·GAP/rate-spike/disorder 를 실형상 근거로 justify 한 fixture) 방법이 §8 에 명시됐는가 + **synthetic-only(균일 +1 seq·고정 interval) 불충분 인식** + N/A(venue 미접촉) 사유 명시 — ADR-006 Amendment 1 / §8.7 (수치 근거 축인 §8.5 push_interval empirical 확인과 disjoint)
 
 ## 외부 기술선택 검증 (`external-tech-selection`, CFP-2327 / ADR-124 Amendment 1 — 좁은 예외)
 

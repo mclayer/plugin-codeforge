@@ -116,6 +116,27 @@ OperationalRiskArch + DataMigrationArch consult — chief author dedup 의무 (c
 
 **Epic 소속 Story 시 §8.6에 `story_key: <KEY>` + `suite: "story"` 필수** — IntegrationTestAgent Story Suite 자동 생성 연동.
 
+## §8.7 Production-venue shape fidelity (CONDITIONAL — ADR-006 Amendment 1)
+
+외부 venue/시계열 데이터에 의존하는 Story 에서 **실제 데이터 형상 재현 fidelity 의무**를 §8 author input 에 반영한다. carrier = mctrader MCT-58 (합성 +1 seq 균일 형상으로 829 green·전 lane PASS 인데 실 venue 의 μs-as-seq snapshot-only 스트림을 재현 안 해 라이브 직후 GAP-flood).
+
+**applicability (CONDITIONAL trigger)** — 다음 1+ 충족 시 active:
+- 외부 venue/exchange/stream 실제 데이터 형상 의존 (거래소 L2/tick, WS stream, snapshot 프로토콜)
+- 외부 time-window 시계열 의존 (candle 시계열, sequence-number ordering, timestamp dedup/replay)
+- shape-sensitive 코드 — seq 의미론 / timestamp granularity·다중성 / GAP·rate-spike·disorder 패턴에 동작이 갈림
+
+active 시 §8 에 해당 venue 형상 재현 테스트 1+ 를 author input 으로 요구 — (a) **captured-golden**(실 venue tap/녹화 fixture) 또는 (b) **실형상-justified fixture**(seq 의미론 + timestamp granularity·다중성 + GAP/rate-spike/disorder 3 축을 실 venue 근거와 함께 명시·정당화한 합성 fixture). (b) 의 **seq 의미론·timestamp 규약·GAP 패턴 단정은 1차 출처(거래소 공식 spec/문서 또는 실 capture·wiretap) 인용 필수 — "정상 거래소 관행"·"일반적으로 +1 단조증가" 류 2차 추정은 근거로 불인정** (MCT-58 = unknown-unknown 오인이 추정 justify 로 그대로 통과한 사례 — 1차 출처 강제가 그 경로를 닫음). **합성-only(균일 +1 seq · 고정 interval)는 shape-sensitive 코드에 불충분** 명시 — discriminating fixture(CFP-1334)·mutation-RED 는 "변화 감지"를 강제하나 "올바른 형상"은 보장 못 함.
+
+미충족 시 적극적 이의(아래 "적극적 이의 제기 의무" 6번). N/A path = 외부 venue/시계열 의존 없음(메모리-only / 내부 결정론) → §8 N/A + 사유 1줄(ADR-005 정합), 사유 누락 시 DesignReview P0.
+
+**loop closure (설계→구현 gap 차단)**: 설계리뷰가 §8 선언을 강제하고, **구현리뷰(code-review)가 구현 fixture 의 형상 실재현을 검증**한다 — §8 에 형상 재현을 선언해도 구현 fixture 가 균일 +1 seq·고정 interval 합성이면 code-review 가 §8 contract 미이행으로 잡는다.
+
+**disjoint 경계 (중복 작성 금지)**:
+- 위 §8.5 "WS stream latency 가정 검토"(`push_interval` empirical source 확인) = *수치 근거* 축 / 본 §8.7 = *형상 재현* 축. push_interval 수치가 실증돼도 합성 +1 seq 형상이면 §8.7 미충족 (disjoint).
+- §8.5.3 idempotency replay = 재실행 *결과 동일성* / 본 §8.7 = replay 입력의 *형상 정확성*. 합성 형상 replay 도 §8.5.3 통과 — §8.7 이 입력 형상을 production-faithful 로 강제.
+
+**Phase 2 deferred**: synthetic-only 자동탐지 lint 는 본질적 fuzzy — 별도 follow-up(deferred-followup, evidence-checks-registry `venue-shape-fidelity-presence` placeholder). 본 항은 Phase 1 선언적 mandate 만.
+
 ## QADev 인터페이스
 
 | 차원 | TestContractArchitectAgent (본 에이전트) | QADeveloperAgent |
@@ -141,6 +162,7 @@ OperationalRiskArch + DataMigrationArch consult — chief author dedup 의무 (c
 3. 경계 조건(null, empty, 최대·최소값, 타임아웃, 동시성) 명시 부재
 4. invariant 정의 부재 또는 검증 불가
 5. 성능 영향 있는데 §8.3 Perf Baseline 미정의
+6. (§8.7 active 시) 외부 venue/시계열 형상 의존인데 합성-only(균일 +1 seq · 고정 interval) fixture 로만 검증 — captured-golden 또는 실형상-justified fixture 부재 (ADR-006 Amendment 1)
 
 반대 근거는 "어떤 테스트 공백이 있는가" + "왜 커버 필요한가" + "설계 단계 커버리지 제안" 형태로 제시.
 
