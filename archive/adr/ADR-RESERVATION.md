@@ -503,6 +503,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-confluence-aprime
     reservation_date: 2026-06-16 KST
     status: active   # commit time 점유 (Story Phase 1 PR carrier) — Amendment 3 §결정 1 cross-ref A-prime 운영 모델. Confluence 가 "공식 읽기 + 사람 편집 표면" 으로 격상되되 작성 정본 = git 유지 (역전 아님, 편집은 PR 역류 lossy-tolerant). git SoR-work ↔ Confluence SoR-docs disjoint axis 무손상 확장. 운영 mechanism SSOT = ADR-103 Amendment 3 §결정 7 (본 ADR-100 = git=SoR-work 보존 cross-ref 1-2문장). ADR-103 Amendment 3 동반 발의 (axis disjoint). ratchet-up (사람 편집 표면 격상 + 작성 정본 git 명시, forbid scope 축소 0). verified-via Read worktree archive/adr/ADR-100-confluence-doc-ssot-recognition.md frontmatter amendment_log[] max=2 (Amd 1 CFP-1419 / Amd 2 CFP-1668) → next=3. sunset_justification N/A (ratchet-up, ADR-058 §결정 5 면제).
+
+  - adr_number: 135
+    amendment_id: null
+    reserved_by_cfp: CFP-2490
+    reservation_date: 2026-06-30 KST
+    status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-135 force-push pre-flight HEAD-pin 가드, Epic CFP-2481 E2 / #1027 escalation carrier). own-branch push-time pre-flight 축 (spawn-time SHA-anchor / cross-repo state assertion 과 disjoint 3축). ADR-039 §결정 14 (branch-create-time pin) + ADR-073 Amendment 5 (CFP-1103 sibling 명시) sibling — supersede 아님. verified-via `git ls-tree origin/main archive/adr/` latest = ADR-134 + ADR-RESERVATION 135 collision check empty → available, 2026-06-30 KST 기준 origin/main 49efa242. status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). CFP-702 ADR collision 교훈 답습 (max+1 실측 후 점유).
 ```
 
 ## 해소 기준
