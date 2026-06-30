@@ -58,10 +58,7 @@ jobs:
           cat /tmp/overlap.txt
 
           # ADR-RESERVATION.md 충돌 여부
-          # CFP-2491 / ADR-133 §결정6 / Amd1 A1-1 — dead-gate 정정 (비대칭):
-          # wrapper-self(plugin-codeforge dogfood) ADR = archive/adr/ (doc-locations.yaml).
-          # consumer copy(templates/github-workflows/) 는 docs/adr/ 유지 — 무변경 (single_repo 정합).
-          grep -q "^archive/adr/ADR-RESERVATION.md$" /tmp/overlap.txt \
+          grep -qE "^(docs|archive)/adr/ADR-RESERVATION.md$" /tmp/overlap.txt \
             && echo "adr=true" >> $GITHUB_OUTPUT || echo "adr=false" >> $GITHUB_OUTPUT
 
           # locked 섹션 파일 충돌 여부
