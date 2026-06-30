@@ -15,8 +15,9 @@
 # Mutation 표 (어떤 구현 결함이 어느 TC 를 RED 로 만드는지)
 # ─────────────────────────────────────────────────────────────────────────────
 #
-#  Mutation-A (TC-1): ENUM_SSOT['adr039_inline_whitelist_count'] 삭제 또는
-#                     ordinal > count 검사 제거 → TC-1-RED 통과 = 결함 미검출
+#  TC-1 (회귀 가드): prose ordinal sub-check 는 P1(구현리뷰)로 제거됨 (self-instance stale
+#                     하드코딩 위험). TC-1 = ordinal 인용에 finding 0 검증 (재도입 차단).
+#                     누가 ordinal-vs-hardcoded-count 검사 재추가 시 TC-1 이 RED → 회귀 노출.
 #
 #  Mutation-B (TC-2): ENUM_SSOT['adr052_touchpoint'] 삭제 또는
 #                     _TOUCHPOINT_PATTERN 제거 → TC-2-RED 통과 = stale enum 미검출
@@ -89,56 +90,42 @@ run_wrapper() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-1-RED: entry-count drift — "5번째 entry" (실 closed 4) → exit 1 + marker
+# TC-1: prose ordinal ("N번째 entry") 비검증 = 의도적 non-coverage (구현리뷰 P1, CFP-2478)
 #
-# 검사 발동: (c) ENUM_SSOT['adr039_inline_whitelist_count']=4 + ordinal > count
-# 결함 제거 시 GREEN 전환: "4번째 entry" 로 정정 → ordinal ≤ 4 → exit 0
-# Mutation-A: ordinal-vs-count 검사 제거 시 이 TC 가 RED 로 통과 (결함 미검출)
+# 배경: AC-9 의 "ADR-039 entry 번호" fixture 는 당초 prose ordinal-vs-hardcoded-count 검사로
+#   구현됐으나, 구현리뷰 P1 (Codex self-instance) 이 그 하드코딩 count(4)가 ADR-039 Amd2/Amd6
+#   으로 4→6 entry 확장 후 stale 화 → "5/6번째 entry" 정당 참조를 FP 오판함을 포착.
+#   **cross-ref drift 잡는 검사기가 자기 안에 stale 하드코딩 = 본 Story 가 막으려는 anti-pattern.**
+#   → prose ordinal sub-check 제거, machine-readable canonical enum (TC-2) 만 결정론 대조 유지.
+#
+# 본 TC = 회귀 가드 (regression_guard): prose ordinal ("N번째 entry") 인용에 (c) 가 finding 을
+#   내지 않아야 함 (brittle/self-drift sub-check 재추가 방지). exit 0 GREEN 유지.
+# discriminating: 만약 누군가 ordinal-vs-hardcoded-count 검사를 재도입하면 이 TC 가 RED 로 변해
+#   self-instance stale 위험을 노출 (P1 회귀 차단).
 # ─────────────────────────────────────────────────────────────────────────────
-@test "TC-1-RED: entry-count drift — ADR-039 5번째 entry (실 closed 4) → exit 1" {
+@test "TC-1: prose ordinal 비검증 — ADR-039 N번째 entry 참조 finding 0 (P1 제거 회귀 가드)" {
   write_fx "archive/adr/ADR-039-orchestrator-inline-whitelist.md" \
     "# ADR-039" \
     "" \
-    "§결정 2 inline whitelist (closed, 4 entries):" \
+    "§결정 2 inline whitelist (closed enumeration):" \
     "1. 사용자 대화" \
     "2. TodoWrite" \
     "3. 읽기전용 Q&A" \
-    "4. 상태 보고"
+    "4. 상태 보고" \
+    "5. Story-file handoff (Amendment 2)" \
+    "6. merge-time Codex dispatch (Amendment 6)"
 
-  # 인용 문서: ordinal 5 > closed 4
-  write_fx "docs/stories/CFP-TEST-TC1-bad.md" \
+  # prose ordinal 참조 ("6번째 entry") — 실제 ADR-039 는 Amd2/Amd6 후 6 entry → 정당 참조.
+  # (c) prose-ordinal sub-check 가 제거됐으므로 finding 0 (exit 0) 이어야 함.
+  write_fx "docs/stories/CFP-TEST-TC1.md" \
     "# Test Story" \
     "" \
-    "ADR-039 §결정 2 inline whitelist 의 5번째 entry 에 해당한다."
-
-  run_wrapper "$FX"
-  [ "$status" -eq 1 ]
-  # finding marker: ordinal drift 관련 출력 (check=c, ordinal 관련)
-  [[ "$output" =~ "ADR-039" ]] || [[ "$output" =~ "entry" ]] || \
-    [[ "$output" =~ "ordinal" ]] || [[ "$output" =~ "5" ]]
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TC-1-GREEN: "4번째 entry" 로 정정 → exit 0
-# ─────────────────────────────────────────────────────────────────────────────
-@test "TC-1-GREEN: entry-count drift 정정 — 4번째 entry → exit 0" {
-  write_fx "archive/adr/ADR-039-orchestrator-inline-whitelist.md" \
-    "# ADR-039" \
-    "" \
-    "§결정 2 inline whitelist (closed, 4 entries):" \
-    "1. 사용자 대화" \
-    "2. TodoWrite" \
-    "3. 읽기전용 Q&A" \
-    "4. 상태 보고"
-
-  # 정정: "4번째 entry" — ordinal ≤ 4
-  write_fx "docs/stories/CFP-TEST-TC1-ok.md" \
-    "# Test Story" \
-    "" \
-    "ADR-039 §결정 2 inline whitelist 의 4번째 entry 에 해당한다."
+    "ADR-039 §결정 2 inline whitelist 의 6번째 entry 에 해당한다."
 
   run_wrapper "$FX"
   [ "$status" -eq 0 ]
+  # prose ordinal 관련 finding 이 없어야 함 (ordinal drift marker 부재)
+  [[ ! "$output" =~ "ordinal" ]]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -469,4 +456,50 @@ run_wrapper() {
 @test "TC-self-test: --self-test flag → exit 0" {
   run bash "$WRAPPER" --self-test
   [ "$status" -eq 0 ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-P2b-setup-exit2: ADR 디렉터리 전무 → exit 2 (SETUP/ENV, fail-loud)
+#
+# 구현리뷰 P2-b: docstring 이 "2 = SETUP/ENV error" 선언했으나 return 2 경로 0건이었음.
+# ADR-dir 부재 시 (a)(b) silent skip = 게이트 연극화 → fail-loud return 2 로 정정.
+# discriminating: return 2 미구현이면 exit 0/1 → 이 TC RED.
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-P2b-setup-exit2: ADR 디렉터리 전무 → exit 2 (fail-loud)" {
+  # archive/adr 없는 별도 fixture-root (setup 의 FX 와 분리)
+  local NOADR
+  NOADR=$(mktemp -d)
+  printf '# Test\n\nADR-068 I-7 참조한다.\n' > "$NOADR/doc.md"
+
+  run bash "$WRAPPER" --repo-root "$NOADR" "$NOADR/doc.md"
+  rm -rf "$NOADR"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "SETUP" ]] || [[ "$output" =~ "ADR" ]] || [[ "$output" =~ "디렉터리" ]]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-P2a-dedup: (e) content-anchor 동일 (file,line,reason) 중복 emit 억제
+#
+# 구현리뷰 P2-a: same-line + adjacent 양 경로서 동일 finding 2건 emit → dedup set 억제.
+# fixture: 한 줄에 quote + path (same-line emit) — 중복 없이 정확히 1 finding.
+# discriminating: dedup 제거 시 동일 (file,line,reason) 2건 → finding count 2.
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-P2a-dedup: content-anchor 동일 finding 중복 억제 — 1건만 emit" {
+  write_fx "docs/concept/target.md" \
+    "# Target" \
+    "" \
+    "이 파일에는 짧은 다른 내용만 있다."
+
+  # 같은 줄에 quote + path — 대상 파일에 그 텍스트 부재 → (e) finding 1건.
+  # dedup 없으면 same-line/adjacent 경로 중복으로 동일 (file,line,reason) 2건 위험.
+  write_fx "docs/stories/CFP-TEST-dedup.md" \
+    "# Test" \
+    "설계는 \"존재하지않는긴인용텍스트입니다정말\" ($FX/docs/concept/target.md) 를 따른다."
+
+  run_wrapper "$FX/docs/stories/CFP-TEST-dedup.md"
+  [ "$status" -eq 1 ]
+  # (E) finding 정확히 1건 (동일 file:line:reason 중복 0)
+  local e_count
+  e_count="$(printf '%s\n' "$output" | grep -c '(E)')"
+  [ "$e_count" -eq 1 ]
 }

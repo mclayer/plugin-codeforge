@@ -9,7 +9,8 @@ ADR-061 준수 — 외부 .py SSOT, no heredoc.
       (b) phantom 전제 전용: sentinel>=900 + tests/** skip, (a) 단독 finding = 파일 부재 시만)
   (b) phantom ID ownership — ADR-NNN <ID> 인용 시 해당 ADR 이 <ID> 를 실 소유하는지.
       정의 grep = 행두∪list∪heading∪table∪bold prefix (P2-1 정정, 비협상).
-  (c) enum SSOT 대조 — 정본 SSOT 명확 enum 한정 (ADR-052 touchpoint + ADR-039 inline-whitelist).
+  (c) enum SSOT 대조 — machine-readable canonical enum 리터럴만 (ADR-052 touchpoint <1|..|8>).
+      prose ordinal ("N번째 entry") 검증 = 비채택 (구현리뷰 P1 — self-instance stale 하드코딩 위험).
   (d) 버전 표기 parity — 기본 비활성 (--check-version opt-in). 자리표시.
   (e) content-anchor 대조 — 큰따옴표 인용구(>=8 chars) + (path)/(path:line) 인접 시 grep 실재.
 
@@ -173,12 +174,15 @@ _CASE_REFERENCE_MARKERS = re.compile(
 # key = 식별자, value = 정본 enum 문자열 (정규식이 아닌 비교 대상 리터럴)
 # ---------------------------------------------------------------------------
 
+# (c) 검사 = machine-readable canonical enum 리터럴 SSOT 대조만 (정본 SSOT 명확 enum 한정 — H6).
+# prose ordinal ("N번째 entry") 기계검증은 **비채택** (구현리뷰 P1, CFP-2478):
+#   ① brittle — 자연어 ordinal 표현 다양 (N번째 / entry N / Nth) ② 자기 drift 원 —
+#   하드코딩 count 가 대상 ADR amendment (ADR-039 Amd2/Amd6 으로 4→6 entry 확장) 와 stale 화 →
+#   cross-ref drift 잡는 검사기가 자기 안에 stale 하드코딩 = 본 Story 가 막으려는 바로 그 anti-pattern.
+#   canonical enum 리터럴 (ADR-052 `<1|..|8>` 류 machine-readable) 만 결정론 대조 적격.
 ENUM_SSOT = {
     # ADR-052 touchpoint 정본 = "<1|2|3|4|5|6|7|8>" (ADR-052 본문 content-anchor SSOT)
     'adr052_touchpoint': '<1|2|3|4|5|6|7|8>',
-    # ADR-039 inline whitelist closed 4-entry
-    # TC-1: 본문 "N번째 entry"(N>4) 인용 시 finding
-    'adr039_inline_whitelist_count': 4,
 }
 
 # ADR-052 touchpoint 패턴 탐지: "touchpoint: <...>" 또는 "touchpoint <...>"
@@ -187,11 +191,6 @@ _TOUCHPOINT_PATTERN = re.compile(
 )
 # 정본 SSOT 자기 정의 줄 skip — ADR-052 본문 내 literal (자기 대조 FAIL 방지)
 _TOUCHPOINT_SSOT_VALUE = '<1|2|3|4|5|6|7|8>'
-
-# ADR-039 ordinal: "N번째 entry" 패턴
-_ORDINAL_ENTRY_PATTERN = re.compile(
-    r'\bADR-039[^`\n]*?(\d+)번째\s+entry\b'
-)
 
 # ---------------------------------------------------------------------------
 # (e) content-anchor 패턴
@@ -369,8 +368,7 @@ def check_file(file_path, existing_adrs, adr_dir, check_version=False):
                     'reason': f'phantom ID: ADR-{adr_num:03d} 는 "{id_str}" 을 소유하지 않음 (owned={sorted(owned_set)[:5]})',
                 })
 
-        # (c) enum SSOT 대조
-
+        # (c) enum SSOT 대조 — machine-readable canonical enum 리터럴만 (prose ordinal 비채택, P1)
         # (c-1) ADR-052 touchpoint enum
         for m in _TOUCHPOINT_PATTERN.finditer(line):
             token = m.group(1)
@@ -384,19 +382,6 @@ def check_file(file_path, existing_adrs, adr_dir, check_version=False):
                 'content': stripped,
                 'reason': f'ADR-052 touchpoint enum stale: "{token}" ≠ 정본 "{_TOUCHPOINT_SSOT_VALUE}"',
             })
-
-        # (c-2) ADR-039 inline whitelist ordinal-vs-length (TC-1)
-        for m in _ORDINAL_ENTRY_PATTERN.finditer(line):
-            ordinal = int(m.group(1))
-            closed_count = ENUM_SSOT['adr039_inline_whitelist_count']
-            if ordinal > closed_count:
-                findings.append({
-                    'file': file_str,
-                    'line': lineno,
-                    'check': 'c',
-                    'content': stripped,
-                    'reason': f'ADR-039 inline whitelist ordinal drift: "{ordinal}번째 entry" > closed {closed_count}-entry',
-                })
 
         # (e) content-anchor 대조
         # 현재 줄 또는 인접 줄(prev)에 (path) 참조가 있을 때 큰따옴표 인용구를 대상 파일에서 grep
@@ -670,14 +655,8 @@ def run_self_test():
         findings_c_green = check_file(doc_c_green, existing_adrs, adr_dir)
         assert_finding('(c) GREEN: touchpoint 정본 일치', 'c', findings_c_green, False)
 
-        # (c) RED (TC-1): ADR-039 ordinal drift
-        doc_c_tc1 = tmp / 'doc_c_tc1.md'
-        doc_c_tc1.write_text(
-            "ADR-039 §결정 2 inline whitelist 의 5번째 entry 를 참조한다.\n",
-            encoding='utf-8'
-        )
-        findings_c_tc1 = check_file(doc_c_tc1, existing_adrs, adr_dir)
-        assert_finding('(c) RED (TC-1): ADR-039 5번째 entry > closed 4', 'c', findings_c_tc1, True)
+        # (참고) ADR-039 prose ordinal sub-check 는 P1(구현리뷰)로 제거 — self-instance stale
+        # 하드코딩 위험. (c) 는 machine-readable canonical enum (touchpoint) 만 대조.
 
         # ---------------------------------------------------------------
         # (e) RED: content-anchor 인용구 대상 파일 미존재
@@ -703,7 +682,7 @@ def run_self_test():
         findings_e_green = check_file(doc_e_green, existing_adrs, adr_dir)
         assert_finding('(e) GREEN: content-anchor 실재', 'e', findings_e_green, False)
 
-    total = 10
+    total = 9
     passed = total - len(failures)
     print()
     print(f'[self-test] {passed}/{total} fixtures PASSED')
@@ -733,17 +712,22 @@ def main(argv=None):
     if args.self_test:
         return run_self_test()
 
+    # SETUP/ENV guard (P2-b — 선언(exit 2)과 구현 일치, fail-loud)
     repo_root = _posix_to_path(args.repo_root).resolve()
+    if not repo_root.is_dir():
+        print(f"SETUP error: --repo-root 디렉터리 부재 ({repo_root})", file=sys.stderr)
+        return 2
+
     scan_paths = args.paths if args.paths else [str(repo_root)]
 
-    # ADR 디렉터리 로드
+    # ADR 디렉터리 로드 — 부재 = ENV/SETUP 오류 (fail-loud, return 2).
+    # (a)(b) 검사가 ADR 소유 ID set 에 의존 → ADR-dir 부재 시 silent skip = 게이트 연극화.
     adr_dir = find_adr_dir(repo_root)
     if adr_dir is None:
-        print(f"WARN: ADR 디렉터리 미발견 ({', '.join(ADR_DIR_CANDIDATES)}) — (a)(b) 검사 skip",
-              file=sys.stderr)
-        existing_adrs = None
-    else:
-        existing_adrs = load_existing_adrs(adr_dir)
+        print(f"SETUP error: ADR 디렉터리 미발견 ({', '.join(ADR_DIR_CANDIDATES)}) "
+              f"— (a)(b) 검사 불가, fail-loud (silent skip 차단)", file=sys.stderr)
+        return 2
+    existing_adrs = load_existing_adrs(adr_dir)
 
     files = collect_files(scan_paths, repo_root)
 
@@ -751,6 +735,17 @@ def main(argv=None):
     for f in files:
         findings = check_file(f, existing_adrs, adr_dir, check_version=args.check_version)
         all_findings.extend(findings)
+
+    # P2-a — 동일 (file, line, check, reason) 중복 finding 억제 (same-line ↔ adjacent 양쪽 emit dedup)
+    _seen = set()
+    deduped = []
+    for f in all_findings:
+        key = (f['file'], f['line'], f['check'], f['reason'])
+        if key in _seen:
+            continue
+        _seen.add(key)
+        deduped.append(f)
+    all_findings = deduped
 
     if not all_findings:
         print(f'[adr-cross-ref-consistency] PASS — 위반 0 ({len(files)} 파일 검사)')
