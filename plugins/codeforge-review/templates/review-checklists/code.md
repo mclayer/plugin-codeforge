@@ -55,6 +55,7 @@ CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입
 - 경계 케이스·invariant 검증
 - mock 경계 적절성 (외부 의존성만 mock, 내부 로직 mock 금지)
 - assertion 강도 (단순 not None vs 도메인 의미 검증)
+- (§8.7 active Story) 구현된 venue 형상 fixture가 §8에 선언된 형상(seq 의미론/timestamp granularity·다중성/GAP·rate-spike/disorder)을 **실제로 재현하는가** — §8 선언만으로 불충분, fixture 코드가 균일 +1 seq·고정 interval 합성이면 §8 contract 미이행 (ADR-006 Amendment 1 / §8.7)
 
 ### 6. Dead code · 미완성 (`dead-code`)
 

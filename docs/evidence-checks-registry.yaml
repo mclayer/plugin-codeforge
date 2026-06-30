@@ -3332,3 +3332,47 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none
     status: Active                  # 게이트 자체 실존·Active (ADR-037 workflow 운용 중) — entry 는 멤버십 SSOT 부착 carrier
+
+  # ─── CFP-2504 Phase 1 (ADR-006 Amendment 1 — 외부 venue/시계열 데이터 형상 재현 fidelity 의무) ───
+  # carrier = mctrader MCT-58: 합성 +1 seq 균일 형상으로 829 green·전 lane PASS 인데 실 venue μs-as-seq
+  # snapshot-only 스트림(~78ms 점프) 미재현 → 라이브 직후 GAP-flood. §8 Test Contract 에 형상 재현 fidelity 의무 신설.
+  # Phase 1 = 선언적 mandate(TestContractArch §8.7 + design.md 체크리스트)만. 기계적 lint = 본질적 fuzzy → deferred-followup.
+  # `deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴 답습 — detect_command / workflow omit (Phase 2 mechanical wire carrier 후 populate + warning 전환).
+  - name: venue-shape-fidelity-presence
+    description: |
+      ADR-006 Amendment 1 §A1-2/A1-8 — 외부 venue/시계열 데이터 의존 Story 의 §8 Test Contract 에
+      실-venue-형상 재현(captured-golden / 실 venue tap / seq 의미론·timestamp granularity·다중성·
+      GAP/rate-spike/disorder 를 실형상 근거로 justify 한 fixture) 방법 명시 또는 N/A(venue 미접촉) 사유
+      anchor presence 검출.
+
+      Wave 1 status (Phase 1 PR, 본 entry registration) = `deferred-followup`:
+        본 entry 등록 자체 = declarative anchor. detect_command / workflow omit (`deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴).
+        synthetic-only 자동탐지("fixture 가 균일 +1 seq·고정 interval 인가" + "shape-sensitive 코드인가")는
+        본질적 fuzzy(의미 추론 요구) — 단순 정적 grep 안정 검출 난망 → Phase 2 carrier 가 실 lint 알고리즘
+        (§8 anchor presence 검출 등) 설계 후 wire.
+
+      Wave 2 status (Phase 2 PR scope, future carrier) = `warning` 전환:
+        - detect_command / workflow populate (anchor presence lint — §8 에 형상 재현 또는 N/A 사유 부재 detect)
+        - bats fixture RED→GREEN stash proof (CFP-1334)
+    # detect_command: omit — `deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴 (Phase 2 mechanical wire carrier 후 populate)
+    # workflow: omit — Phase 2 carrier
+    current_tier: warning           # ADR-060 schema required field (deferred-followup status, tier 분류 = warning 의도)
+    bypass_label: hotfix-bypass:venue-shape-fidelity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []      # Phase 2 mechanical wire = 별 sub-CFP carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-2504
+    owner_adr: ADR-006-Amendment-1  # declaration source — §8 Test Contract 형상 재현 fidelity 의무 SSOT
+    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework carrier
+    recurrence:
+      count: 1                      # mctrader MCT-58 GAP-flood single occurrence (firsthand carrier evidence)
+      threshold: 2                  # ADR-045 §D-9 N=2 standard Mandatory escalation threshold
+      last_occurrence: null         # 첫 도입, lint 발화 0건 (carrier incident 는 consumer 측 MCT-58)
+      promotion_trigger: warning_tier_initial
+    status: deferred-followup       # Wave 1 declarative status — Phase 2 mechanical wire 후 `warning` 전환

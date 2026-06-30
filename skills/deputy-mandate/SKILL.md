@@ -45,7 +45,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | §3 도입할 설계 (refactor 시각 — decoupling + reusability + pattern + interface 분리) + §6 리팩토링 선행 (중복제거/공통추출/repo-분해 advocacy, escalation-tier) | RefactorAgent (4-tuple sub-tuple) | Sonnet |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent | Opus |
 | §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus (high-stakes) / Sonnet (low-stakes 4-AND) ※ |
-| §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334**) | TestContractArchitectAgent | Opus |
+| §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334** + **§8.7 production-venue shape fidelity CONDITIONAL — ADR-006 Amendment 1** [외부 venue/시계열 의존 시 captured-golden / 실형상-justified fixture, synthetic-only 불충분; §8.5 push_interval 수치 축과 disjoint]) | TestContractArchitectAgent | Opus |
 | §8.6 contract testing (Pact / Spring Cloud Contract — API consumer-provider) | **APIContractArchitectAgent** primary + TestContractArchitectAgent consult | Sonnet (APIContract) |
 | §11.1-§11.6 RDB OLTP (schema 변경 / migration / rollback / integrity / backfill / idempotency primary) + Alembic 정책 7 원칙 | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified primary, AggregateArch carry-over) | Sonnet |
 | §11 OLAP schema 진화 (Parquet schema / partition / column evolution) | **DataArchitectAgent** (CFP-1086 OLAP only) | Opus |
