@@ -61,41 +61,21 @@ jobs:
           echo "::notice::cutoff = $CUTOFF — claimed slot 이 이 시각 이전이고 대응 ADR 미존재면 abandoned 마킹"
 
           # ── abandoned 마킹 (max_adr_number 불변 — 번호 free 복원 0, gap 보존) ──
-          # 대응 ADR 파일 존재 여부: archive/adr/ADR-<n>-*.md glob.
-          echo "$STATE_JSON" > /tmp/claim-state.json
-          NEW_STATE=$(python3 - "$CUTOFF" "$ADR_DIR" <<'PY'
-          import json, sys, glob, os
-          cutoff = sys.argv[1]
-          adr_dir = sys.argv[2]
-          with open("/tmp/claim-state.json") as f:
-              data = json.load(f)
-          changed = 0
-          for c in data.get("claims", []):
-              if c.get("status") != "claimed":
-                  continue
-              if c.get("claimed_at", "") >= cutoff:
-                  continue  # 아직 TTL 미경과
-              n = c.get("adr_number")
-              # 대응 ADR 파일 존재 시 = committed/active → 회수 대상 아님.
-              hits = glob.glob(os.path.join(adr_dir, f"ADR-{n}-*.md"))
-              if hits:
-                  continue
-              # stale claimed + ADR 미존재 → abandoned 영구 마킹 (번호 재사용 금지).
-              c["status"] = "abandoned"
-              c["abandoned_at"] = cutoff
-              changed += 1
-          # max_adr_number 는 절대 감소 안 함 (단조성 보존 — gap 잔류).
-          print(json.dumps({"_changed": changed, "state": data}, ensure_ascii=False))
-          PY
-          )
-          CHANGED=$(echo "$NEW_STATE" | python3 -c "import json,sys; print(json.load(sys.stdin)['_changed'])")
+          # FIX (구현리뷰 P0 carry F1): inline heredoc Python → 별도 스크립트(scripts/lib/...) 추출.
+          #   heredoc 들여쓰기 fragility 근본 제거 + 테스트 가능(test-escape 폐쇄, ADR-061). 양 copy byte-identical.
+          # 대응 ADR 파일 존재 여부: archive/adr/ADR-<n>-*.md glob (스크립트 내부).
+          echo "$STATE_JSON" > "${RUNNER_TEMP:-/tmp}/claim-state.json"
+          CHANGED=$(python3 scripts/lib/adr-reservation-stale-reclaim.py \
+            --state-file "${RUNNER_TEMP:-/tmp}/claim-state.json" \
+            --adr-dir "$ADR_DIR" \
+            --cutoff "$CUTOFF" \
+            --out "${RUNNER_TEMP:-/tmp}/new-claim-state.json")
           if [ "$CHANGED" -eq 0 ]; then
             echo "::notice::stale claimed slot 0건 — no-op"
             exit 0
           fi
 
-          echo "$NEW_STATE" | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)['state'], ensure_ascii=False, indent=2))" > /tmp/new-claim-state.json
-          NEW_B64=$(base64 -w0 < /tmp/new-claim-state.json)
+          NEW_B64=$(base64 -w0 < "${RUNNER_TEMP:-/tmp}/new-claim-state.json")
 
           # ── conditional PUT (OCC — 동시 claim 과 race 시 409 → 다음 cron 재시도) ──
           ARGS=(-X PUT "repos/${REPO}/contents/${STATE_PATH}"

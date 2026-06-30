@@ -146,10 +146,11 @@ elif scenario == "exhausted":
     c = StubClient(max0=133, race_advances={i: 1 for i in range(1, 10)})
     r = claim("r", "s", "b", "Arch:CFP-2491:run3", max_attempts=4,
                              client=c, sleep_fn=lambda x: None, jitter_fn=lambda: 0)
-    if r.status == "exhausted" and r.adr_number is None:
-        emit("OK:exhausted:exit1")
+    # INV-2 직접 측정 (구현리뷰 P2 F2): retry ≤ 3 = 총 attempts == max_attempts(4) 직접 단언 (간접→직접 승격).
+    if r.status == "exhausted" and r.adr_number is None and r.attempts == 4:
+        emit("OK:exhausted:exit1:attempts=4")
     else:
-        emit(f"BAD:status={r.status}:num={r.adr_number}")
+        emit(f"BAD:status={r.status}:num={r.adr_number}:attempts={r.attempts}")
 
 elif scenario == "self_claim":
     # idempotency (A1-2): 동일 claimant 의 claimed row 이미 존재 → self-claim, 새 번호 미할당.

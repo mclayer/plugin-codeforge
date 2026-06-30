@@ -35,3 +35,5 @@ jobs:
           fetch-depth: 0
       - name: Run ADR-RESERVATION atomic claim mutation-RED test (pure bash + python mock seam)
         run: bash tests/scripts/test_adr-reservation-atomic-claim.sh
+      - name: Run ADR-RESERVATION stale-reclaim Python smoke test (test-escape 폐쇄 — 구현리뷰 P0 carry F1)
+        run: bash tests/scripts/test_adr-reservation-stale-reclaim.sh
