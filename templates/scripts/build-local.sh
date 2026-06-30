@@ -106,11 +106,15 @@ fi
 
 # 분기 ② Docker 부재 + native cargo 완전빌드 가능 시도
 echo "[build-local] [2/2] Docker 부재 — native cargo $CARGO_SUBCMD 시도..."
-if cargo "$CARGO_SUBCMD"; then
+# 주의: `if cargo CMD; then exit0; fi; rc=$?` 는 rc 에 if-구문 상태(else 없으면 조건
+#   false 시 0)가 담겨 cargo 실 실패코드를 삼킨다(degrade 진단이 항상 exit 0 표기).
+#   직접 실행 후 $? 캡처 — L55 check 분기 + .ps1 $LASTEXITCODE 와 parity (F-CR-001).
+cargo "$CARGO_SUBCMD"
+rc=$?
+if [ "$rc" -eq 0 ]; then
     echo "[build-local] native cargo $CARGO_SUBCMD PASS."
     exit 0
 fi
-rc=$?
 
 # 분기 ③ graceful degrade — 완전빌드 경로 미가용 (링커/toolchain 부재).
 #   1차 cargo check 는 이미 PASS 했으므로 non-zero 종료 금지(exit 0).
