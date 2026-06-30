@@ -12,8 +12,10 @@ amendments: [1]
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-2491
-    date: 2026-06-30
-    summary: "E3b 구현 결정 기록 — (1) §결정6 dead-gate 정정 보정: 두 copy 일괄 archive/adr/ → 비대칭(.github=archive/adr/, templates=docs/adr/ consumer 정합) (2) claimant identity field 신설(§결정4 상태전이 보강 — at-least-once idempotency key) (3) claim-state branch protection mechanical(§결정5 ABA teeth — allow_force_pushes:false + required_linear_history:true) (4) 언어=Python(ADR-061 §결정6 정합, Pattern A 알고리즘 무손상) (5) claim-state=별도 JSON artifact(2-channel 경계 보존, ADR-RESERVATION schema bump 0) (6) EC-4 amendment_id slot deferred(Q2, adr_number only). strengthen direction — ADR-058 §결정5 sunset_justification 면제."
+    date: 2026-06-30  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 4", "§결정 5", "§결정 6", "§결정 8"]
+    nature: ratchet-up  # E3b 구현 결정 record + §결정6 dead-gate 정정 보정 (강화 방향, ADR-058 §결정 5 면제)
+    note: "E3b(CFP-2491, Epic CFP-2481 Phase B) 구현 결정 — (A1-1) §결정6 dead-gate 정정 보정: 두 copy 일괄 archive/adr/ → 비대칭(.github=archive/adr/ wrapper-self, templates=docs/adr/ consumer 정합 무변경) (A1-2) claimant identity field 신설(§결정4 상태전이 보강 — (adr_number,claimant) at-least-once idempotency key) (A1-3) claim-state branch protection mechanical(§결정5 ABA teeth — adr-reservation-state branch allow_force_pushes:false + required_linear_history:true) (A1-4) 언어=Python(ADR-061 §결정6 정합, Pattern A 알고리즘 무손상) + claim-state=별도 JSON artifact(2-channel 경계 보존, ADR-RESERVATION schema bump 0) (A1-5) EC-4 amendment_id slot deferred(§결정8(b) Q2 — adr_number only, amendment_id 확장 = ADR-082 Amd17 Wave-2 follow-up). strengthen direction (약화 surface 0)."
 related_adrs:
   - ADR-050   # 강화 대상 — PR-level post-hoc re-sort 위에 artifact-slot-level pre-hoc atomic claim 1차 방어 layer 추가 (폐기 아닌 ratchet)
   - ADR-036   # 사고방식 상속 — server-side atomic 권위 위임 (KEY=Issue#). ADR-133 = ADR 번호에 OCC 적용
