@@ -9,6 +9,7 @@
 | [`webapp-minimal/`](webapp-minimal/) | 웹 애플리케이션 | webapp preset (Backend·Frontend) + DataEng + InfraEng + QADev |
 | [`cli-tool-minimal/`](cli-tool-minimal/) | CLI 툴 | Generic DeveloperAgent + InfraEng + QADev (preset 미사용) |
 | [`library-minimal/`](library-minimal/) | 배포 라이브러리 | Generic DeveloperAgent + InfraEng + QADev (preset 미사용, 공개 API 경로 scoping 강조) |
+| [`rust-cli-minimal/`](rust-cli-minimal/) | Rust CLI 툴 (로컬빌드 경로 실증) | Generic DeveloperAgent + InfraEng + QADev (preset 미사용, CFP-2506 build-local 경로) |
 
 세 예시는 플러그인이 **웹앱·CLI·라이브러리 shape에서 동일한 오케스트레이션으로 동작**함을 실증한다. Core `agents/`는 프로젝트 shape 중립, Dev roster는 `role: dev` frontmatter 태그로 런타임 discovery.
 

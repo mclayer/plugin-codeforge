@@ -1,0 +1,36 @@
+project:
+  name: "<REPLACE — e.g. rustlogparser>"
+
+github:
+  org: "<REPLACE — e.g. acme>"
+  repo: "<REPLACE — e.g. rustlogparser>"
+  default_branch: main
+
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: "<REPLACE — e.g. RLP>"
+
+  codeowners:
+    architect_team: "<REPLACE — e.g. @acme/architects>"
+    domain_expert_team: "<REPLACE — e.g. @acme/domain-experts>"
+
+  discussions:
+    domain_kb_category: "Domain Q&A"
+
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
+
+labels:
+  components:
+    - cli       # 명령·인자 처리
+    - parser    # 로그 파싱 엔진
+    - filter    # Event 필터링
+    - infra     # 패키징·릴리스
+
+# CFP-128 / ADR-033 — Rust CLI 도 Docker-first
+# CFP-2506 / ADR-033 Amendment 1 — Rust 로컬빌드 경로: 링커/binutils 부재 host 에서
+#   `templates/scripts/build-local.{sh,ps1}` 로 cargo check(링커 불요) + Docker
+#   마운트 빌드. toolchain/MSYS2/MSVC/WSL2 가이드 = docs/consumer-guide.md §1q.
+#   로컬 = 보강(pre-flight), CI = 단일 검증 권위.
+infra_strategy: docker_first
+infra_strategy_extras:
+  k8s_preset_enabled: false  # CLI binary 는 K8s preset 무관 (default false)

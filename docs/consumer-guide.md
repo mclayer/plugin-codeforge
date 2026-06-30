@@ -962,6 +962,103 @@ atlassian:
 
 참조: [ADR-100](../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) · [ADR-111](../archive/adr/ADR-111-confluence-mirror-classification-policy.md) · [ADR-099](../archive/adr/ADR-099-atlassian-allow-redefinition.md) · [ADR-101](../archive/adr/ADR-101-verify-before-trust-confluence-rest.md) · [ADR-103](../archive/adr/ADR-103-git-confluence-sync-mechanism.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill `codeforge:confluence-migration`
 
+### 1q. Rust 로컬빌드 경로 (Docker 마운트 빌드 + toolchain 가이드) (opt-in, CFP-2506 / [ADR-033 Amendment 1](../archive/adr/ADR-033-docker-first-infra-engineering.md))
+
+Windows 등 host 에 링커·binutils(`as.exe`·`dlltool`·`gcc` 또는 MSVC `link.exe`)가 없어 로컬 `cargo build`/`test` 가 불가할 때, **피드백 루프를 로컬로 당기는 표준 경로**. **opt-in / advisory(P2)** — Rust consumer 만 해당, 기존 동작 무변경(breaking 0). 도메인 근거 SSOT = `docs/domain-knowledge/domain/build-toolchain/rust-local-build-equivalence.md`(R-1~R-5) + concept `toolchain-decoupled-local-build-path.md`.
+
+> **불변식 — 로컬 = 보강, CI = 권위 (AC-4 / AC-11)**: 로컬빌드 경로는 *사전검증(pre-flight)* 일 뿐 머지 게이트가 아니다. 로컬 GREEN 이 CI GREEN 을 대체하지 않는다(로컬은 host/컨테이너 환경 drift 가능). 본 경로 추가는 **순수 가산(additive)** — 기존 CI 권위·branch protection 6-tuple 을 축소하지 않는다.
+
+#### 1q.1 빠른 시작 — `build-local` 스크립트
+
+wrapper 가 배포하는 `templates/scripts/build-local.{sh,ps1}`(bootstrap 시 consumer repo 에 1:1 mirror)를 Rust repo 루트에서 실행:
+
+```bash
+# bash (Linux / macOS / Git Bash / WSL2)
+./templates/scripts/build-local.sh          # cargo check → Docker 마운트 빌드 / native cargo → graceful degrade
+./templates/scripts/build-local.sh test     # 1번째 인자 = cargo 서브커맨드 passthrough
+```
+
+```powershell
+# PowerShell (Windows)
+./templates/scripts/build-local.ps1
+./templates/scripts/build-local.ps1 test
+```
+
+2-stage degrade 동작:
+
+1. **1차 `cargo check`(+가용 시 `cargo clippy`)** — codegen 직전 정지 → **링커 불요**(R-1). 타입·차용·E0382(partial move) 등 컴파일 버그를 링커 없이 즉시 검출. check 실패 = 실 에러 → 그 exit code 로 종료.
+2. **2차 완전빌드**(check 성공 시): Docker 가용 → 컨테이너 마운트 빌드 / Docker 부재 + native cargo 가능 → `cargo build` / 둘 다 불가 → graceful degrade(안내 후 종료, non-zero exit 없음).
+
+#### 1q.2 Docker 마운트 빌드 (D1) — 복붙 명령
+
+Docker 공식 `rust` 이미지(linux/glibc, multi-arch amd64/arm64)에 repo 를 bind-mount 해 컨테이너 안 linux toolchain 으로 빌드. 직접 실행:
+
+```bash
+# bash — 단일 crate / workspace (sibling path-dep 없음)
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e CARGO_TARGET_DIR=/tmp/target \
+  -v "$(pwd)":/src -w /src \
+  -v cargo-cache:/usr/local/cargo/registry \
+  rust:1-slim cargo build
+```
+
+```powershell
+# PowerShell (Windows) — --user 생략 ($(id -u) 미지원)
+docker run --rm `
+  -e CARGO_TARGET_DIR=/tmp/target `
+  -v "${PWD}:/src" -w /src `
+  -v cargo-cache:/usr/local/cargo/registry `
+  rust:1-slim cargo build
+```
+
+각 플래그 근거(concept R-개념-2 + 도메인 R-3):
+
+| 플래그 | 이유 |
+|---|---|
+| `--user "$(id -u):$(id -g)"` | host uid/gid 로 빌드 → `target/` 산출물 소유권 오염 방지. Windows PowerShell 은 생략(uid 모델 상이). |
+| `-e CARGO_TARGET_DIR=/tmp/target` | host `target/`(Windows PE·캐시) ↔ 컨테이너 `target/`(ELF) **캐시 오염 분리**. |
+| `-v cargo-cache:/usr/local/cargo/registry` | named volume 으로 cargo registry 캐시 재사용 → 반복 빌드 가속. |
+| `rust:1-slim` | multi-arch(amd64/arm64) 공식 이미지. 핀 고정(`rust:1.81-slim` 등)은 consumer 가 조정. |
+
+##### 공통-부모 마운트 (sibling path-dep workspace, R-4)
+
+Cargo `path = "../other-crate"` 의존이 있는 workspace 는 **단일-repo 마운트로 빌드 불가** — 컨테이너 안 `/src` 에서 `../other-crate` 가 컨테이너 루트 밖을 가리켜 부재 → 빌드 실패(silent fail). 해소 = **sibling 들의 공통 부모 디렉터리를 마운트**하고 `-w` 로 작업 crate 를 지정해 컨테이너 안 상대 토폴로지를 호스트와 동형 보존:
+
+```bash
+# 호스트: ~/workspace/{my-crate, shared-lib} 이고 my-crate 가 path="../shared-lib" 의존
+cd ~/workspace
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e CARGO_TARGET_DIR=/tmp/target \
+  -v "$(pwd)":/src -w /src/my-crate \
+  -v cargo-cache:/usr/local/cargo/registry \
+  rust:1-slim cargo build
+```
+
+> `build-local.{sh,ps1}` 는 `cargo locate-project --workspace` 로 workspace 루트를 자동 감지해 마운트 지점을 잡지만, 공통 부모 밖 sibling(예: workspace 멤버가 아닌 순수 `path=` 의존)은 위 수동 패턴이 필요하다. 대안 = 각 sibling 개별 마운트 + 컨테이너 내 동형 경로 배치, 또는 Windows junction(`mklink /J`)/symlink 으로 호스트 토폴로지 정규화. **불변식 = 컨테이너 내부 `path=` 의 상대 토폴로지가 호스트와 동형**.
+
+##### build-verification ↔ artifact-equivalence (R-3, 반드시 구분)
+
+- **Docker 빌드가 보장하는 것(build-verification)**: 타입 검사·차용 검사·대부분의 컴파일 에러·**플랫폼 비의존 로직의 `cargo test` 통과**. CI 권위의 *보강*으로 충분히 가치 있다.
+- **Docker 빌드가 보장 못 하는 것(artifact-equivalence)**: 컨테이너 빌드는 target 이 `x86_64-unknown-linux-gnu` 로 바뀐다 → 산출물은 **ELF linux 바이너리**이지 Windows PE 가 아니다. `#[cfg(windows)]` 코드 경로·플랫폼 의존 동작(경로 구분자·파일 권한·FFI/winapi·줄바꿈)은 linux 에서 다른 결과 → **false-GREEN/false-RED 위험**. **Windows 산출물·플랫폼 의존 동작의 ground-truth 는 CI(Windows runner)다.**
+
+#### 1q.3 toolchain 가이드 (D3) — host 에 직접 충당
+
+Docker 를 쓰지 않고 host 에서 직접 완전빌드하려면 toolchain 충당이 필요하다. Windows 에는 두 Tier-1 ABI 가 있다 (출처: [rustc Platform Support](https://doc.rust-lang.org/rustc/platform-support.html) / [rustup Windows](https://rust-lang.github.io/rustup/installation/windows.html)):
+
+| 경로 | target ABI | 충당 방법 | 비고 |
+|---|---|---|---|
+| **MSVC** (rustup Windows **기본 host**) | `x86_64-pc-windows-msvc` | Visual Studio Build Tools(MSVC) 또는 Windows SDK 설치 → `link.exe` 제공 | **MSYS2 `as.exe`/`dlltool`/`gcc` 불요.** `as.exe`·`dlltool` 부재 에러를 보면 → 사실은 GNU toolchain 을 쓰는 신호. MSVC 로 전환하면 그 결함 소멸 가능. |
+| **GNU** | `x86_64-pc-windows-gnu` | MSYS2 설치 후 `pacman -S mingw-w64-x86_64-toolchain` → `gcc`/`ld`/`as`/`dlltool`(MinGW binutils) 제공. `rustup target add x86_64-pc-windows-gnu` | 이 target 에서만 `as.exe`·`dlltool`·`gcc` 가 요구된다. |
+| **WSL2** | `x86_64-unknown-linux-gnu` | WSL2 안 native linux toolchain(`apt install build-essential`) + rustup | **성능 경고**: 프로젝트 파일을 `/mnt/c`(NTFS cross-fs) 가 아닌 **WSL2 native fs(`~/` 하위)** 에 두지 않으면 cross-fs I/O 로 3~10x 느림. |
+
+> **CI 권위 ABI 선결 조건 (R-5 — 무조건 MSVC 금지)**: MSVC 와 GNU 는 **ABI 가 다르다**(C 런타임·예외 처리·import lib 형식). 한 ABI 로 빌드한 크레이트를 다른 ABI 로 링크 불가. **로컬 권장 ABI 는 CI runner 의 권위 ABI 와 일치해야 한다** — 로컬과 CI 의 ABI 가 다르면 로컬 GREEN ↔ CI RED 괴리가 재발해 루프 단축 목적 자체가 무력화된다. consumer 의 CI 가 GNU 권위면 로컬도 GNU(MSYS2)를 채워야 하고, MSVC 권위면 MSVC Build Tools 를 채운다. **"MSVC 가 항상 정답"은 거짓 — CI 권위 ABI 가 기준.**
+
+#### 1q.4 example
+
+`examples/rust-cli-minimal/`(단일 crate)이 위 경로 전체(D1 Docker 마운트 빌드 + D2 build-local 스크립트 + D3 toolchain)를 실증한다. `src/main.rs` 가 비-Copy String 값을 move 해 `cargo check`(링커 불요)가 E0382 류 버그를 잡는 것을 보인다. `Dockerfile`(`FROM rust:1-slim`)은 컨테이너 마운트 빌드 실증용(production image 아님).
+
 ## Jira 원격 채널 활성화 (선택)
 
 > **opt-in** — `atlassian.jira.*` block 부재 또는 `enabled: false` 시 비활성(no-op), 기존 동작(세션 직접 대화 + TodoWrite 진행 시각화) 유지. Confluence doc-mirror(§1o)와 독립 — Jira 채널만 단독 켤 수 있다. wrapper-self dogfood 운용이며 신규 외부 trust boundary 를 도입하므로 아래 **보안** 단락을 반드시 함께 읽는다.
@@ -2257,6 +2354,8 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/backend-service/agents/*.m
 ```
 
 `ServiceDeveloperAgent`(`model: sonnet`, `role: dev`)가 develop lane 의 sonnet 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
+
+> **Rust consumer**: 링커/binutils 부재 host 에서 로컬 빌드가 막히면 **§1q. Rust 로컬빌드 경로**(Docker 마운트 빌드 + build-local 스크립트 + MSYS2/MSVC/WSL2 toolchain 가이드) 참조. example = `examples/rust-cli-minimal/`.
 
 #### 충돌 방지 (preset import 시 의무)
 
