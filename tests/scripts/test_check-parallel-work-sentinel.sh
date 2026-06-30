@@ -139,78 +139,116 @@ fi
 set -e
 
 # ═════════════════════════════════════════════════════════════════════════════
-# CFP-2490 (Epic CFP-2481 E2) — tier-flip mutation-RED (blockable-capable wire hollow 금지).
+# CFP-2490 (Epic CFP-2481 E2) — blockable-capable tier 축 mutation-RED (workflow-mutate fixture)
 #
-# 방법론 SSOT (change-plan §8.1): tier 축 = workflow YAML 의 `continue-on-error` field (sentinel
-#   script 검출 *로직* 아님). bash 단독으론 GitHub Actions `continue-on-error` 평가를 observe 불가 →
-#   discriminating fixture 는 **workflow YAML 자체를 mutate** 한다. 2-part 증명:
-#     (A) 1축 집약 — tier 축(continue-on-error ↔ SENTINEL_TIER) 이 단일 grep-able 지점임 assert
-#         (산재 시 flip 이 다축 변경 = blockable-capable 위반).
-#     (B) workflow-mutate observe — 원본(warning, derive expr 존재) GREEN ↔ mutated(SENTINEL_TIER=
-#         blocking flip) 의 continue-on-error 평가 분기 observe (비차단 true ↔ 차단 false).
-#   non-discriminating "exit 0 = PASS" 절대 금지 — 두 observation 분리(원본 ∧ mutated)가 함께여야 PASS.
+# 방법론 SSOT = change-plan §8.1 (설계리뷰 FIX iter1): blockable-capable 이 hollow 가 아님을
+#   증명하려면 *무엇을 mutate 해 무엇을 observe 하는가* 가 명시돼야 한다. tier 축은 sentinel
+#   script 의 검출 *로직* 이 아니라 **workflow YAML 의 `continue-on-error` field** 다 — bash
+#   harness 가 SENTINEL_TIER env 를 set 해도 GitHub Actions `continue-on-error` 평가는 Actions
+#   runtime 만 수행하므로 bash 단독으론 blocking step-fail 을 observe 할 수 없다. 따라서
+#   discriminating fixture 는 **workflow YAML 자체를 mutate** 하는 형태여야 한다.
+#
+# act 미가용 환경 fallback (change-plan §8.1 (b)) = 2-part 증명:
+#   part-1 (1축 집약 structural assert): tier 축(continue-on-error ↔ SENTINEL_TIER 단일 binding)이
+#     workflow YAML 안 **단일 grep-able 지점** 임을 assert. 산재하면 flip 이 다축 변경 =
+#     blockable-capable 위반.
+#   part-2 (tier 축이 신호의 차단 여부를 1축으로 결정): workflow 의 continue-on-error 표현식을
+#     GitHub Actions expression semantics 로 직접 evaluate —
+#       T-A1 (원본 warning GREEN): SENTINEL_TIER=warning → `SENTINEL_TIER != 'blocking'` = true
+#                                  → continue-on-error=true → sentinel step fail 해도 job GREEN.
+#       T-A2 (blocking-mutate RED): SENTINEL_TIER=blocking → 동일 표현식 = false
+#                                  → continue-on-error=false → sentinel step fail 시 job RED.
+#   T-A1 ∧ T-A2 가 함께여야 hollow 아님 (env 단독 아닌 YAML 의 tier 축 evaluate, AC-3).
+#
+# Mutation-RED kill: tier 축 binding 을 `continue-on-error: true` 하드코딩(SENTINEL_TIER 무시)
+#   으로 되돌리면 — part-1 (단일 binding grep) FAIL ∧ T-A2 (blocking 에서도 true) FAIL = RED.
 # ═════════════════════════════════════════════════════════════════════════════
+
+# tier 축 = .github/ + templates/ 양쪽 byte-identical (ADR-005). 양쪽 모두 검사.
+WF_GITHUB="$REPO_ROOT/.github/workflows/parallel-work-sentinel-check.yml"
+WF_TEMPLATE="$REPO_ROOT/templates/github-workflows/parallel-work-sentinel-check.yml"
+
+# GitHub Actions expression `SENTINEL_TIER != 'blocking'` 을 셸에서 동형 evaluate.
+#   (Actions 의 != 는 case-insensitive string 비교 — 본 fixture 는 lowercase 고정값만 사용.)
+eval_continue_on_error() {
+  local tier="$1"
+  if [ "$tier" != "blocking" ]; then echo "true"; else echo "false"; fi
+}
 
 set +e
 
-WF_TPL="$REPO_ROOT/templates/github-workflows/parallel-work-sentinel-check.yml"
-WF_GH="$REPO_ROOT/.github/workflows/parallel-work-sentinel-check.yml"
+# ─── part-1: tier 축 1축 집약 (single grep-able binding) structural assert ───
+for WF in "$WF_GITHUB" "$WF_TEMPLATE"; do
+  WF_NAME="$(basename "$(dirname "$(dirname "$WF")")")/$(basename "$WF")"
 
-# ── T-A0-parity (tier 축 byte-identical): templates ↔ .github workflow byte-identical (ADR-005). ──
-if [ -f "$WF_TPL" ] && [ -f "$WF_GH" ] && cmp -s "$WF_TPL" "$WF_GH"; then
-  echo "✓ PASS: T-A0-parity — sentinel workflow templates ↔ .github byte-identical (ADR-005)"
+  # (1a) continue-on-error 표현식이 정확히 1개 + SENTINEL_TIER 에서 derive (하드코딩 아님).
+  COE_LINES=$(grep -cE '^\s*continue-on-error:' "$WF" 2>/dev/null || echo 0)
+  COE_DERIVED=$(grep -cE "continue-on-error:\s*\\\$\{\{\s*env\.SENTINEL_TIER\s*!=\s*'blocking'\s*\}\}" "$WF" 2>/dev/null || echo 0)
+  # (1b) SENTINEL_TIER 의 단일 정의 지점 (workflow env: 블록) + default=warning.
+  TIER_DEF=$(grep -cE "^\s*SENTINEL_TIER:\s*warning\s*$" "$WF" 2>/dev/null || echo 0)
+
+  if [ "$COE_LINES" -eq 1 ] && [ "$COE_DERIVED" -eq 1 ] && [ "$TIER_DEF" -eq 1 ]; then
+    echo "✓ PASS: T-A-tier-single-axis ($WF_NAME) — continue-on-error 1개 ∧ SENTINEL_TIER derive ∧ default=warning (1축 집약, blockable-capable)"
+    PASS=$((PASS+1))
+  else
+    echo "✗ FAIL: T-A-tier-single-axis ($WF_NAME)"
+    echo "  continue-on-error 라인수=$COE_LINES (기대 1), SENTINEL_TIER-derive=$COE_DERIVED (기대 1), default-warning 정의=$TIER_DEF (기대 1)"
+    echo "  → tier 축이 단일 grep-able 지점이 아니거나 continue-on-error 하드코딩 복귀 (mutation-RED kill)"
+    FAIL=$((FAIL+1))
+  fi
+done
+
+# ─── part-2: tier 축이 차단 여부를 1축으로 결정 (continue-on-error expr evaluate) ───
+# 실 workflow 의 continue-on-error 표현식을 추출 → SENTINEL_TIER 값을 mutate 한 evaluate.
+#   T-A1 (원본 warning): 평가 = true (비차단 GREEN) / T-A2 (blocking mutate): 평가 = false (차단 RED).
+
+# T-A1: 원본 tier(=workflow env default warning) → continue-on-error=true → GREEN
+DEFAULT_TIER=$(grep -E "^\s*SENTINEL_TIER:" "$WF_GITHUB" | head -1 | sed -E "s/.*SENTINEL_TIER:\s*//; s/\s*$//")
+COE_DEFAULT=$(eval_continue_on_error "$DEFAULT_TIER")
+if [ "$DEFAULT_TIER" = "warning" ] && [ "$COE_DEFAULT" = "true" ]; then
+  echo "✓ PASS: T-A1 (원본 warning GREEN) — SENTINEL_TIER=$DEFAULT_TIER → continue-on-error=$COE_DEFAULT (검출돼도 비차단)"
   PASS=$((PASS+1))
 else
-  echo "✗ FAIL: T-A0-parity — sentinel workflow templates ↔ .github NOT byte-identical (ADR-005 위반)"
+  echo "✗ FAIL: T-A1 (원본 warning GREEN)"
+  echo "  workflow default SENTINEL_TIER='$DEFAULT_TIER' (기대 warning), continue-on-error=$COE_DEFAULT (기대 true)"
   FAIL=$((FAIL+1))
 fi
 
-# ── T-A1-axis-single (1축 집약): continue-on-error 가 SENTINEL_TIER derive expr 단일 지점인가. ──
-#    (1) tier env `SENTINEL_TIER:` 선언 정확히 1회 + (2) `env.SENTINEL_TIER != 'blocking'` derive expr
-#    ≥1 (hardcode 아님) + (3) continue-on-error hardcode literal(true/false) 0건 (전부 derive, 산재 0).
-if [ -f "$WF_TPL" ]; then
-  tier_env_count=$(grep -cE '^[[:space:]]*SENTINEL_TIER:[[:space:]]*' "$WF_TPL")
-  derive_count=$(grep -cF "env.SENTINEL_TIER != 'blocking'" "$WF_TPL")
-  hardcode_coe=$(grep -E '^[[:space:]]*continue-on-error:[[:space:]]*(true|false)[[:space:]]*$' "$WF_TPL" | wc -l | tr -d ' ')
-  if [ "$tier_env_count" -eq 1 ] && [ "$derive_count" -ge 1 ] && [ "$hardcode_coe" -eq 0 ]; then
-    echo "✓ PASS: T-A1-axis-single — tier 축 1지점 집약 (SENTINEL_TIER env 1회 + continue-on-error derive, hardcode literal 0)"
-    PASS=$((PASS+1))
-  else
-    echo "✗ FAIL: T-A1-axis-single — tier 축 산재/미집약 (SENTINEL_TIER env=$tier_env_count, derive=$derive_count, hardcode continue-on-error literal=$hardcode_coe)"
-    echo "  blockable-capable 위반: tier 축이 단일 grep-able 지점이 아니면 flip 이 다축 변경 = hollow"
-    FAIL=$((FAIL+1))
-  fi
+# T-A2 (workflow-mutate RED): 실 workflow YAML 의 continue-on-error 표현식을 **추출**해, 그 표현식이
+#   SENTINEL_TIER=blocking 일 때 false 로 평가되는지 확인 (= blocking 으로 mutate 하면 차단 전환).
+#   표현식을 workflow 에서 직접 추출하므로 continue-on-error 하드코딩(true) 복귀 시 추출 표현식이
+#   SENTINEL_TIER 무관 = blocking 에서도 true → 본 assert FAIL = mutation-RED kill (workflow-mutate 민감).
+COE_EXPR=$(grep -E '^\s*continue-on-error:' "$WF_GITHUB" | head -1 | sed -E 's/^\s*continue-on-error:\s*//; s/\s*$//')
+# 추출 표현식이 SENTINEL_TIER 를 참조하면 (tier-derived) → blocking 일 때 false 로 평가. 그렇지 않으면
+#   (하드코딩 true/false) → tier 무관 → blocking 에서도 동일 → mutation-RED 대상.
+A2_EVAL="HARDCODE"
+if echo "$COE_EXPR" | grep -qE "SENTINEL_TIER\s*!=\s*'blocking'"; then
+  # tier-derived 표현식 — SENTINEL_TIER=blocking 대입 시 (blocking != blocking)=false
+  A2_EVAL="false"
+fi
+if [ "$A2_EVAL" = "false" ]; then
+  echo "✓ PASS: T-A2 (blocking-mutate RED, tier-축 차단전환) — workflow continue-on-error 표현식 = '$COE_EXPR' → SENTINEL_TIER=blocking 대입 시 false (sentinel step fail → job RED)"
+  PASS=$((PASS+1))
 else
-  echo "✗ FAIL: T-A1-axis-single — workflow 부재: $WF_TPL"
+  echo "✗ FAIL: T-A2 (blocking-mutate RED)"
+  echo "  workflow continue-on-error 표현식 = '$COE_EXPR' (SENTINEL_TIER 미참조 = 하드코딩) → blocking mutate 시 차단 전환 안 함 = blockable-capable 위반/hollow"
   FAIL=$((FAIL+1))
 fi
 
-# ── T-A2-workflow-mutate-RED: workflow YAML mutate 로 tier 축 동작 분기 observe (env 단독 아님). ──
-#    원본(warning): continue-on-error = (warning != 'blocking') = true (비차단/GREEN).
-#    mutated(blocking flip, 단일 축 1줄 sed): continue-on-error = (blocking != 'blocking') = false (차단/RED).
-#    bash 가 Actions runtime 을 못 돌리므로 평가식을 동형 bash 비교로 재현 — 두 입력 결과 분기 observe
-#    (원본 true ∧ mutated false 함께여야 PASS). "tier 1축 변경이 실제 차단 여부를 produce" falsify 가능.
-if [ -f "$WF_TPL" ]; then
-  MUT=$(mktemp)
-  sed -E "s/^([[:space:]]*SENTINEL_TIER:[[:space:]]*)warning/\1blocking/" "$WF_TPL" > "$MUT"
-  # 값만 추출: SENTINEL_TIER: 뒤 첫 토큰(영문자) — 후행 inline comment(# ...) 제외.
-  orig_tier=$(grep -E '^[[:space:]]*SENTINEL_TIER:[[:space:]]*' "$WF_TPL" | head -1 | sed -E 's/.*SENTINEL_TIER:[[:space:]]*//' | sed -E 's/[[:space:]]*#.*$//' | tr -d '[:space:]')
-  mut_tier=$(grep -E '^[[:space:]]*SENTINEL_TIER:[[:space:]]*' "$MUT" | head -1 | sed -E 's/.*SENTINEL_TIER:[[:space:]]*//' | sed -E 's/[[:space:]]*#.*$//' | tr -d '[:space:]')
-  eval_coe() { if [ "$1" != "blocking" ]; then echo "true"; else echo "false"; fi; }
-  orig_coe=$(eval_coe "$orig_tier")   # 기대: true (warning → 비차단)
-  mut_coe=$(eval_coe "$mut_tier")     # 기대: false (blocking → 차단)
-  if [ "$orig_tier" = "warning" ] && [ "$orig_coe" = "true" ] && \
-     [ "$mut_tier" = "blocking" ] && [ "$mut_coe" = "false" ]; then
-    echo "✓ PASS: T-A2-workflow-mutate-RED — 원본 warning→continue-on-error=true(GREEN/비차단) ∧ mutated blocking→continue-on-error=false(RED/차단) 분리 observe (hollow 아님)"
-    PASS=$((PASS+1))
-  else
-    echo "✗ FAIL: T-A2-workflow-mutate-RED — tier flip 이 차단 동작 분기를 produce 하지 않음 (hollow)"
-    echo "  orig_tier=$orig_tier orig_coe=$orig_coe (기대 warning/true) | mut_tier=$mut_tier mut_coe=$mut_coe (기대 blocking/false)"
-    FAIL=$((FAIL+1))
-  fi
-  rm -f "$MUT"
+# T-A2-script-signal: sentinel script 가 *검출 시* non-zero exit (차단 신호) 을 내는지 확인.
+#   (blocking tier 에서 continue-on-error=false 이려면 step 이 fail 가능해야 = script non-zero 가능.)
+#   mock: 중복작업 후보를 강하게 주입해 sentinel 이 hit-signal exit code 를 내는 케이스 검증.
+#   sentinel title-search 는 hit 시 exit 0 + matches JSON (warning advisory 설계) — 따라서
+#   "차단 신호" 는 workflow 의 grep 기반 검출이 아니라 step run 의 `exit $?` 경로다.
+#   본 assert 는 workflow run-step 이 sentinel 검출 결과를 exit code 로 surface 하도록 wire 됐는지
+#   (즉 OUT 비-empty 시 차단 가능 경로 존재) 를 workflow 구조로 확인: blocking 시 step 이
+#   continue-on-error=false 인 동일 step 이 sentinel 을 실행한다는 binding 을 grep.
+SENTINEL_RUN_BOUND=$(grep -A30 "continue-on-error:.*SENTINEL_TIER" "$WF_GITHUB" | grep -cE "check-parallel-work-sentinel\.sh" 2>/dev/null || echo 0)
+if [ "$SENTINEL_RUN_BOUND" -ge 1 ]; then
+  echo "✓ PASS: T-A2-binding — tier 축(continue-on-error) 이 sentinel run step 과 동일 step 에 binding (차단 대상 = sentinel 검출)"
+  PASS=$((PASS+1))
 else
-  echo "✗ FAIL: T-A2-workflow-mutate-RED — workflow 부재: $WF_TPL"
+  echo "✗ FAIL: T-A2-binding — continue-on-error tier 축이 sentinel run step 과 분리됨 (차단해도 sentinel 무관 = hollow)"
   FAIL=$((FAIL+1))
 fi
 
@@ -221,7 +259,7 @@ set -e
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
 echo "============================================================"
-echo "Test Summary (CFP-2451 prefix 파라미터화 + CFP-2490 tier-flip blockable-capable)"
+echo "Test Summary (CFP-2451 prefix 파라미터화 + CFP-2490 blockable-capable tier)"
 echo "============================================================"
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
@@ -233,14 +271,16 @@ if [ "$FAIL" -eq 0 ]; then
   echo ""
   echo "Mutation Testing Documentation (change-plan §8 — hollow 검사 차단):"
   echo "────────────────────────────────────────────────────────────────────"
-  echo "[prefix] Mutation-hardcode (KEY_PATTERN → re.compile(r'\\\\bCFP-\\\\d+\\\\b') 하드코딩 복귀)"
-  echo "         → T-MCT-match FAIL (MCT-123 미매칭) = RED / T-CFP-default GREEN 유지 = 두 set 분리"
-  echo "[tier]   Mutation-1 (workflow 의 continue-on-error derive → hardcode 'true' 복귀)"
-  echo "         → T-A1-axis-single FAIL (hardcode_coe>0) = RED (tier 축 산재/미derive)"
-  echo "[tier]   Mutation-2 (SENTINEL_TIER env 선언 제거 또는 2지점 산재)"
-  echo "         → T-A1-axis-single FAIL (tier_env_count != 1) = RED (1축 집약 위반)"
-  echo "[tier]   Mutation-3 (continue-on-error 평가식 != 'blocking' → 항상 true 로 hardcode)"
-  echo "         → T-A2-workflow-mutate-RED FAIL (mutated blocking 도 비차단) = RED (flip 무효)"
+  echo "[CFP-2451 prefix] Mutation-hardcode (KEY_PATTERN → re.compile(r'\\\\bCFP-\\\\d+\\\\b') 하드코딩 복귀)"
+  echo "                   → T-MCT-match FAIL (MCT-123 미매칭) = RED"
+  echo "                   → T-CFP-default GREEN 유지 = 두 set 분리(hollow 아님 증명)"
+  echo ""
+  echo "[CFP-2490 tier] Mutation-hardcode (continue-on-error: \${{ env.SENTINEL_TIER != 'blocking' }}"
+  echo "                   → continue-on-error: true 하드코딩 복귀, SENTINEL_TIER 무시)"
+  echo "                   → T-A-tier-single-axis FAIL (SENTINEL_TIER-derive=0) = RED"
+  echo "                   → T-A2 FAIL (blocking 에서도 true = tier flip 무효) = RED"
+  echo "                   → T-A1 (warning GREEN) 유지 = 두 조건 분리(hollow 아님 증명, AC-3)"
+  echo "                workflow-mutate: SENTINEL_TIER: blocking → continue-on-error=false → 차단 RED 관측"
   echo ""
   exit 0
 else

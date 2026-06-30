@@ -2,194 +2,174 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_force_push_base_advance.py
-CFP-2490 / ADR-135 (Epic CFP-2481 E2) — force-push pre-flight HEAD-pin 가드 L2 CI
-사후 detect Python SSOT lint engine (warning tier, exit 3-tier).
+CFP-2490 / ADR-135 (Epic CFP-2481 E2) — force-push base-advance CI 사후 detect (L2, warning tier)
 
-own-branch push-time race-guard 의 **사후 detect** layer (L2). force-push 는 CI 로
-*차단* 불가능 (force-push 발생 후 origin 이 이미 변경됨) — 본 엔진은 PR head 가 base
-보다 BEHIND(base-advance) 인지 / base 와 diverged 인지를 git ancestry 로 실측해 warning
-emit 한다 (ADR-135 §결정 2 L2, §결정 5 warning tier 고정). 진짜 pre-flight 차단(L1)은
-opt-in local pre-push hook (templates/.claude/hooks/pre-push.sh.sample) 만 가능.
+own-branch force-push pre-flight 가드의 **L2 채널** (사후 가시화). force-push 는 발생 시점에
+이미 origin 이 변경된 후라 CI 는 **차단 불가능** — 사후 detect(warning) 만 가능 (ADR-135 §결정 2).
+진짜 pre-flight 차단은 L1 local pre-push hook(opt-in) 만 가능 (templates/.claude/hooks/pre-push.sh.sample).
 
-검사 (exit 3-tier):
-  1. base ref 결정 (CI: BASE_REF/GITHUB_BASE_REF env → origin/<base>, fallback main).
-     head ref 결정 (HEAD_SHA env → 아니면 git HEAD).
-  2. base-advance detect — `git rev-list --count <head>..<base>` (BEHIND>0 = base 진행).
-     `--force-with-lease` 가 못 잡는 base(main) advance 를 직접 cover.
-  3. divergence detect — `git merge-base --is-ancestor <base> <head>` false = diverged
-     (head 가 base 를 포함하지 않음 = rebase 필요 = force-push 시 ancestry corruption 위험).
+검사 명제 (ADR-135 §결정 1.2 — base-advance / divergence detect):
+  PR 의 head branch tip 이 base branch(origin/main) 의 advance 를 미반영한 채 열려 있으면
+  (= base 가 head 작성 이후 advance 했는데 rebase 안 됨) → force-push 시 sibling commit
+  ancestry corruption 위험 신호로 사후 표면화 (warning).
 
-graceful-degradation (2-tier 엄격 분리 — change-plan §7.4 rate-limit / §7.5):
-  data-absence(A) = fail-open(exit 0, honest ::notice:: — silent default 아님):
-    base ref 미해결(origin/<base> 부재 / shallow clone fetch 실패 / single-commit) =
-    비교 비대상 = 정책 공백과 동형 fail-open (false-PASS 아닌 honest no-op).
-  setup-error(B) = fail-closed(exit 2):
-    git 미설치 / git 명령 실행 실패(repo 아님) = 검증 로직 못 돎.
+  - base-advance: base 가 head..base 방향으로 N>0 commit advance (head 가 base 를 미포함).
+  - divergence  : base 가 head 의 ancestor 가 아님 (head 가 base 의 일부 commit 미반영).
 
-offline-first (gh 불요 — 입력 전부 git ancestry, actions/checkout fetch-depth:0 전제).
-ReDoS-safe (regex 미사용 — git plumbing + 정수 비교). read-only (verifier — write 0).
+입력 (CI 환경 — git ancestry 실측, PR-body-proxy 아님 = 위조 곤란):
+  --base-sha <SHA>   base branch tip SHA (예: origin/main, github.event.pull_request.base.sha)
+  --head-sha <SHA>   PR head tip SHA (github.event.pull_request.head.sha)
+  --base-ref <REF>   (선택) base ref 이름 (메시지용, default "main")
+  SHA 미제공 시 환경변수 BASE_SHA / HEAD_SHA fallback.
 
-Usage:
-  python3 check_force_push_base_advance.py [--base <ref>] [--head <ref>]
-    --base 미지정: env BASE_REF → GITHUB_BASE_REF → "main" 순서로 결정 (origin/<base> 우선).
-    --head 미지정: env HEAD_SHA → "HEAD".
+graceful degradation (§7.4 — rate-limit / offline 완화):
+  SHA 가 local repo 에 부재(shallow checkout / fetch 실패) → ::warning + exit 0 (비차단, advisory degrade).
+  git 미설치 / SHA 인자 전무 → SETUP exit 2.
+
+ReDoS-safe (ADR-061 Amd3 §결정 11):
+  git output parse only — line-by-line, 정규식은 SHA-shape anchored simple regex (nested quantifier 0).
+  shell injection 차단 = subprocess list-arg (shell=False), 사용자 입력 SHA 는 SHA-shape 검증 후 사용.
 
 Exit codes (ADR-060 §결정 5 3-tier — warning tier):
-  0 = PASS (base-advance/divergence 0) OR data-absence honest no-op (fail-open)
-  1 = base-advance 또는 divergence 검출 1+ (workflow continue-on-error 로 비차단, advisory warning)
-  2 = SETUP error (git 미설치 / repo 아님 / CLI 인자 형식 오류) — fail-closed
+  0 = PASS (base-advance/divergence 0) / graceful skip (SHA 부재)
+  1 = WARN (base-advance 또는 divergence 검출 — workflow continue-on-error 로 비차단, advisory only)
+  2 = SETUP error (git 미설치 / SHA 인자 전무)
 
-ADR refs: ADR-135 §결정 1/2/5 (carrier — own-branch push-time pre-flight + 2-layer + warning tier) /
-  ADR-060 §결정 5/6/19 (warning-tier evidence framework + 승격 evidence-gate) /
-  ADR-061 §결정 1 (Python SSOT + thin wrapper) / ADR-039 §결정 14 (self-claim SHA 신뢰 금지 sibling) /
-  ADR-119 (검사연극 금지 — opt-in/사후 detect 한계 정직 기술).
+ADR refs: ADR-135 (carrier, §결정 1·2·5·6) / ADR-039 §결정 14 (Pre-spawn-pin sibling) /
+  ADR-060 §결정 5 (warning tier) / ADR-061 (thin wrapper + Python SSOT) / ADR-005 (byte-identical workflow).
 """
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 
-# 출력 인코딩 robust 화 (env isolation — change-plan §7.4 / EC-5): Windows(MSYS/cp949) 등 비-UTF-8
-# locale 에서 print() 가 한글·em-dash(—) 를 못 encode 해 UnicodeEncodeError 로 죽는 것을 차단.
-# reconfigure 가능하면 UTF-8 + errors='replace' 로 전환 (Python 3.7+ TextIOWrapper.reconfigure).
-for _stream in (sys.stdout, sys.stderr):
+# Windows cp949 인코딩 회피 — stdout/stderr UTF-8 강제 (ADR-061 portability).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
+# SHA-shape anchored simple regex (ReDoS-safe — bounded quantifier, nested 0).
+_SHA_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
+
+EXIT_PASS = 0
+EXIT_WARN = 1
+EXIT_SETUP = 2
+
+
+def _emit_warning(msg: str) -> None:
+    """GitHub Actions warning annotation + stderr."""
+    print(f"::warning::{msg}", file=sys.stderr)
+
+
+def _git(args, check=False):
+    """subprocess git (shell=False, list-arg). 실패 시 (rc, out) 반환."""
     try:
-        _stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
-    except Exception:
-        pass
-
-EXIT_PASS = 0       # PASS or data-absence honest no-op (fail-open)
-EXIT_VIOLATION = 1  # base-advance / divergence 검출 (advisory warning, 비차단)
-EXIT_SETUP = 2      # SETUP·ENV error (fail-closed)
-
-
-def _notice(msg: str) -> None:
-    print(f"::notice::check-force-push-base-advance: {msg}")
-
-
-def _warning(msg: str) -> None:
-    print(f"::warning::check-force-push-base-advance: {msg}")
-
-
-def _error(msg: str) -> None:
-    print(f"::error::check-force-push-base-advance: {msg}", file=sys.stderr)
-
-
-def _git(args, cwd=None):
-    """git 실행. (returncode, stdout_stripped). 실행 자체 실패(FileNotFoundError)는 raise."""
-    proc = subprocess.run(
-        ["git", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-    )
-    return proc.returncode, proc.stdout.strip()
-
-
-def _resolve_ref(ref: str):
-    """ref → resolved commit SHA. 미해결 시 None (data-absence)."""
-    rc, out = _git(["rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"])
-    if rc == 0 and out:
-        return out
-    return None
-
-
-def _resolve_base(base_arg):
-    """base ref 후보 결정 + 해결. origin/<base> 우선, fallback <base>. 미해결 시 (None, label)."""
-    base = base_arg or os.environ.get("BASE_REF") or os.environ.get("GITHUB_BASE_REF") or "main"
-    base = base.strip()
-    # origin/<base> 우선 (CI fetch 후 remote-tracking ref).
-    for candidate in (f"origin/{base}", base):
-        sha = _resolve_ref(candidate)
-        if sha:
-            return sha, candidate
-    return None, base
-
-
-def run(base_arg=None, head_arg=None) -> int:
-    # setup: git 존재 + repo 여부 확인 (fail-closed).
-    try:
-        rc, _ = _git(["rev-parse", "--is-inside-work-tree"])
+        proc = subprocess.run(
+            ["git", *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return proc.returncode, (proc.stdout or "").strip()
     except FileNotFoundError:
-        _error("git not installed (setup-error, fail-closed exit 2)")
-        return EXIT_SETUP
-    if rc != 0:
-        _error("not inside a git work tree (setup-error, fail-closed exit 2)")
+        return 127, ""
+
+
+def _is_valid_sha(sha: str) -> bool:
+    return bool(sha) and bool(_SHA_RE.match(sha))
+
+
+def _rev_known(sha: str) -> bool:
+    """SHA 가 local repo 에서 resolvable 한지 (shallow checkout 에서 부재 가능)."""
+    rc, _ = _git(["cat-file", "-e", f"{sha}^{{commit}}"])
+    return rc == 0
+
+
+def check(base_sha: str, head_sha: str, base_ref: str) -> int:
+    # git 존재 확인 (SETUP).
+    rc, _ = _git(["--version"])
+    if rc == 127:
+        print("[codeforge-evidence-registry-infra-error] check-force-push-base-advance: git not installed",
+              file=sys.stderr)
         return EXIT_SETUP
 
-    head = (head_arg or os.environ.get("HEAD_SHA") or "HEAD").strip()
-    head_sha = _resolve_ref(head)
-    if not head_sha:
-        # head 미해결 = data-absence (detached/empty) — honest no-op.
-        _notice(f"head ref '{head}' 미해결 — 비교 비대상 (data-absence fail-open, exit 0)")
+    # SHA 인자 전무 = SETUP (호출 계약 위반).
+    if not base_sha and not head_sha:
+        print("[codeforge-evidence-registry-infra-error] check-force-push-base-advance: "
+              "--base-sha/--head-sha (또는 BASE_SHA/HEAD_SHA env) 미제공",
+              file=sys.stderr)
+        return EXIT_SETUP
+
+    # SHA-shape 검증 (injection-safe — shell 미사용이지만 형식 검증으로 fail-fast).
+    for label, sha in (("base", base_sha), ("head", head_sha)):
+        if sha and not _is_valid_sha(sha):
+            print(f"[codeforge-evidence-registry-infra-error] check-force-push-base-advance: "
+                  f"{label}-sha 형식 무효 (SHA-shape 아님): {sha!r}",
+                  file=sys.stderr)
+            return EXIT_SETUP
+
+    if not base_sha or not head_sha:
+        _emit_warning("base-sha/head-sha 중 하나가 비어 있음 — force-push base-advance check graceful skip (advisory degrade)")
         return EXIT_PASS
 
-    base_sha, base_label = _resolve_base(base_arg)
-    if not base_sha:
-        # base 미해결 = data-absence (origin/<base> 부재 / shallow / single-commit) — honest no-op.
-        _notice(
-            f"base ref '{base_label}' 미해결 — 비교 비대상 "
-            f"(data-absence fail-open, exit 0; CI 는 actions/checkout fetch-depth:0 + base fetch 필요)"
+    # graceful: SHA 가 local repo 에 부재(shallow / fetch 실패) → 비차단 degrade.
+    if not _rev_known(base_sha) or not _rev_known(head_sha):
+        _emit_warning(
+            f"base({base_sha[:12]}) 또는 head({head_sha[:12]}) SHA 가 local repo 에 부재 "
+            f"(shallow checkout / fetch 실패) — force-push base-advance check graceful skip (비차단)"
         )
         return EXIT_PASS
 
-    if base_sha == head_sha:
-        _notice(f"head == base ({base_label}) — base-advance/divergence 0 (PASS)")
-        return EXIT_PASS
-
-    violations = []
-
-    # (1) base-advance: head..base 의 BEHIND count.
-    rc, behind_out = _git(["rev-list", "--count", f"{head_sha}..{base_sha}"])
+    # base-advance: head..base 방향 commit 수 (base 가 head 를 넘어 advance 한 정도).
+    rc, out = _git(["rev-list", "--count", f"{head_sha}..{base_sha}"])
     if rc != 0:
-        # ancestry 비교 실패(공통 조상 없음 등) = data-absence — honest no-op.
-        _notice(
-            f"git rev-list 비교 실패 (head..{base_label}) — 공통 조상 미존재 가능, 비교 비대상 "
-            f"(data-absence fail-open, exit 0)"
-        )
+        _emit_warning("git rev-list 실패 — force-push base-advance check graceful skip (비차단)")
         return EXIT_PASS
     try:
-        behind = int(behind_out or "0")
-    except ValueError:
+        behind = int(out.splitlines()[0]) if out else 0
+    except (ValueError, IndexError):
         behind = 0
-    if behind > 0:
-        violations.append(
-            f"base-advance: head 가 {base_label} 보다 {behind} 커밋 BEHIND "
-            f"(force-push 시 sibling commit overwrite 위험 — git rebase origin/{base_label} 권고)"
-        )
 
-    # (2) divergence: base 가 head 의 ancestor 가 아니면 diverged.
-    rc, _ = _git(["merge-base", "--is-ancestor", base_sha, head_sha])
-    # rc 0 = base 가 head 의 ancestor (포함됨, non-diverged). rc 1 = diverged. rc>1 = error.
-    if rc == 1:
-        violations.append(
-            f"divergence: {base_label} 가 head 의 ancestor 아님 (head 가 base 미포함 = rebase 필요 = "
-            f"ancestry corruption 위험)"
-        )
+    # divergence: base 가 head 의 ancestor 인가 (아니면 head 가 base 의 일부 commit 미반영 = diverged).
+    rc_anc, _ = _git(["merge-base", "--is-ancestor", base_sha, head_sha])
+    diverged = (rc_anc != 0)  # rc 0 = base 가 head 의 ancestor (정상), 비-0 = diverged
 
-    if violations:
-        for v in violations:
-            _warning(v)
-        _warning(
-            "force-push pre-flight 한계 정직 기술 (ADR-135 §결정 2 / ADR-119): 본 L2 CI detect 는 "
-            "사후 가시화(warning) 만 — force-push 차단 불가. 진짜 pre-flight 차단(L1)은 opt-in "
-            "local pre-push hook (templates/.claude/hooks/pre-push.sh.sample, PRE_PUSH_BASE_CHECK=1) 만 가능."
+    if behind > 0 or diverged:
+        detail = []
+        if behind > 0:
+            detail.append(f"base(origin/{base_ref}) 가 head 보다 {behind} 커밋 advance")
+        if diverged:
+            detail.append(f"head 가 origin/{base_ref} 의 일부 commit 미반영 (diverged)")
+        _emit_warning(
+            "force-push base-advance 사후 detect (warning, 비차단) — "
+            + " / ".join(detail)
+            + f". head={head_sha[:12]} base={base_sha[:12]}. "
+            "force-push 전 base rebase 권고 (sibling commit ancestry corruption 위험). "
+            "차단형 가드는 L1 local pre-push hook (PRE_PUSH_BASE_CHECK=1) — ADR-135 §결정 2."
         )
-        return EXIT_VIOLATION
+        print(
+            f"::notice::본 detect 는 사후 가시화(warning) 입니다. force-push 는 이미 발생했을 수 있으며 "
+            f"CI 는 차단 불가 (ADR-135 §결정 2 한계 — opt-in L1 hook 만 진짜 pre-flight)."
+        )
+        return EXIT_WARN
 
-    _notice(f"base-advance/divergence 0 (head ↔ {base_label} fast-forward 정합) — PASS")
+    print(f"force-push base-advance check PASS — head 가 origin/{base_ref} 를 포함 (base-advance/divergence 0).")
     return EXIT_PASS
 
 
-def main() -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description="force-push pre-flight base-advance/divergence L2 CI 사후 detect (ADR-135, warning tier)."
+        description="force-push base-advance CI 사후 detect (L2, warning tier) — ADR-135"
     )
-    parser.add_argument("--base", default=None, help="base ref (default: env BASE_REF/GITHUB_BASE_REF/main, origin/<base> 우선)")
-    parser.add_argument("--head", default=None, help="head ref (default: env HEAD_SHA/HEAD)")
-    args = parser.parse_args()
-    return run(base_arg=args.base, head_arg=args.head)
+    parser.add_argument("--base-sha", default=os.environ.get("BASE_SHA", ""))
+    parser.add_argument("--head-sha", default=os.environ.get("HEAD_SHA", ""))
+    parser.add_argument("--base-ref", default=os.environ.get("BASE_REF", "main"))
+    args = parser.parse_args(argv)
+    return check(args.base_sha.strip(), args.head_sha.strip(), args.base_ref.strip() or "main")
 
 
 if __name__ == "__main__":
