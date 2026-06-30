@@ -75,6 +75,17 @@ responsibility-topology-check.yml
 responsibility-marker-drift-check.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Frontend quality gate (consumer — frontend-bearing 시 활성)
+# CFP-2505 / ADR-136 결정3/5/6: D1 구조적 CSS lint(stylelint) 게이트. positive whitelist
+#   등재 = consumer 배포 eligibility(ADR-130 §결정1). 실 런타임 활성 = project.yaml
+#   frontend.applicable: true authoritative gate (ADR-136 결정2 2-layer 분리) — flag false/
+#   미주입 consumer 는 css-lint.yml 의 job-level if: hashFiles(CSS 자산 0)로 no-op(Success).
+#   warning-tier(continue-on-error) 첫 도입 — branch protection 6-tuple 무변경. 7일 green +
+#   unique job name 충족 후 required 승격은 별 follow-up Story(wave rollout, ADR-130 §결정6).
+# ─────────────────────────────────────────────────────────────────────────────
+css-lint.yml
+
+# ─────────────────────────────────────────────────────────────────────────────
 # OMITTED (plugin-only — consumer 에 미전파):
 #
 # 분류 기준 (generalized rule):

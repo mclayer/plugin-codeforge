@@ -1,0 +1,16 @@
+{
+  "//": "ADR-136 결정7/4 — frontend-bearing(≈webapp) consumer 용 stylelint config preset SSOT.",
+  "//SSOT": "이 파일이 wrapper stylelint floor 의 SSOT. consumer overlay 는 ADR-127 overlay 확장-only/축소불가 invariant 에 따라 floor rule 을 약화(null override)할 수 없다 — 약화 방향 override 는 css-lint.yml 의 effective-config self-check(stylelint --print-config) 가 차단(ADR-136 결정4). 본 SSOT 자체에는 어떤 rule 도 null 로 두지 않는다(floor 약화 신호 0).",
+  "//floor-2part": "D1 floor = 2-part AND (ADR-136 결정4). (A) parser-level invariant: 미닫힌 brace = stylelint CssSyntaxError(rule 평가 *이전* 단계, rule 로 정의 불가 — non-zero exit 으로 자동 CI fail. WEB-033 류 1급 방어). (B) rule-level floor: 아래 rules. (A)는 rule 이 아니므로 본 config 에 선언하지 않는다 — parser 가 자동 처리.",
+  "//config-standard": "extends stylelint-config-standard(40.0.0, peer stylelint ^17) 가 block-no-empty 등 다수 floor 를 이미 active. 아래 rules = config-standard 가 active 시키는 것을 floor 의도로 명시 재선언(non-overridable 의도) + WEB-033 중첩/중복 floor.",
+  "//no-weaken": "rule 약화(null) 금지. overlay 가 약화 방향이면 css-lint.yml effective-config 검증이 차단(ADR-136 결정4 / ADR-127 invariant).",
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "block-no-empty": true,
+    "no-empty-source": true,
+    "no-invalid-double-slash-comments": true,
+    "declaration-block-no-duplicate-properties": true,
+    "no-duplicate-selectors": true
+  },
+  "//customSyntax-slot": "순수 .css/.scss = config-standard 직접 커버. styled-components/CSS-in-JS = consumer overlay 가 customSyntax(postcss-styled-syntax) 확장 슬롯에서 추가(ADR-136 결정4 §6 항목2 — 빠지면 silent skip 위험은 overlay 확장 책임). 확장-only 라 floor 무손상."
+}

@@ -1,0 +1,199 @@
+name: css-lint
+# ADR-136 (Story CFP-2505 Phase 2) — D1 구조적 CSS lint(stylelint) CI 게이트.
+#
+# WEB-033(escalation #2502) 실증: 미닫힌 CSS brace 가 lenient 빌더에 의해 에러 0 으로 보정돼
+#   전체 CSS 가 오중첩 → portal 모달 position:static 추락. 텍스트층(lint) CSS 파서 부재가 근본
+#   맹점이었다. 본 게이트는 그 텍스트 층위를 stylelint 으로 메운다 (D1 = 원인 차단,
+#   D2 = §8.7 UI 실렌더 = 증상 포착, 직교).
+#
+# D1 floor = 2-part AND (ADR-136 결정4):
+#   (A) parser-level invariant: 미닫힌 brace = stylelint CssSyntaxError(rule 평가 *이전* 단계,
+#       rule 로 정의 불가) → stylelint non-zero exit = lint fail. WEB-033 류 1급 방어.
+#   (B) rule-level floor: stylelint-config-standard + webapp preset .stylelintrc.json floor rule
+#       (block-no-empty 등)이 effective-config 에 active. effective-config self-check step 이
+#       null override(floor 약화) 검출 시 fail (anti-hollow, ADR-127 overlay 축소불가 invariant 강제).
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ on: paths: 절대 금지 (ADR-130 §결정4 — silent override 차단)
+#   required check 가 path/branch-filter 로 skip 되면 GitHub 가 'Pending(expected)' 를 영구
+#   보고 → PR merge 영구 차단(permanent-pending 함정). 따라서 본 workflow 는 path-filter 를
+#   절대 쓰지 않는다. 대신:
+#     (1) job-level if: hashFiles(...) — CSS/SCSS/HTML 자산 0개면 job 자체가 skip → GitHub
+#         'Success' 보고(required 승격 후에도 merge 비차단).
+#     (2) in-job EXIT 0 fast-exit — job 이 돌더라도 scan target 0 또는 config 부재면
+#         ::notice:: 후 exit 0 graceful (이중 보호, ADR-136 결정3).
+#   둘 중 하나라도 path-filter(on: paths:)로 구현하지 말 것. 이 워크플로 어디에도 on: paths: 없음.
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# frontend.applicable 게이트: frontend.applicable: true consumer 만 실 활성(project.yaml 게이트 —
+#   DeveloperAgent 가 docs/project-config-schema.md frontend 섹션에 정의). 단 workflow 자체는
+#   hashFiles graceful 로 frontend 무관 repo 에서 no-op(CSS 자산 0 → skip/Success) — flag 는
+#   런타임 활성 authoritative, whitelist 는 배포 eligibility (ADR-136 결정2 2-layer 분리).
+#
+# warning-tier 첫 도입(ADR-130 §결정6): continue-on-error: true. day-1 required 금지.
+#   branch protection 6-tuple 무변경. repo 7일 green + unique job name 충족 후 required 승격은
+#   별 follow-up Story(wave rollout, ADR-136 결정5).
+#
+# supply-chain 비협상(ADR-136 결정11 SecurityArch M1 — P0 dissent): stylelint /
+#   stylelint-config-standard 버전 pin + lockfile + npm ci. npx <pkg>@latest 즉석 설치 금지.
+#   pin: stylelint 17.13.0 (npm registry latest, engines node>=20.19.0) +
+#        stylelint-config-standard 40.0.0 (peer stylelint ^17 — 17.13.0 호환). [registry.npmjs.org 실측 2026-06-30]
+#
+# injection-safe: on: pull_request (NOT pull_request_target — fork PR base secret 미노출) +
+#   permissions: contents: read (write/secret 0, AC-SEC-1/2). 외부 URL navigate 0(로컬 CSS 파일만 lint).
+# Node CI-only 격리(ADR-136 결정11): consumer host stack(Python/Go/Rust) production runtime 에
+#   Node 강요 0 — setup-node + self-contained npm ci 는 CI job 안에서만.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  css-lint:
+    # (a)(b) graceful no-op = job-level if: (path-filter 아님). CSS/SCSS/HTML 자산 0개면 job
+    #   skip → GitHub 'Success'. workflow 는 항상 trigger 되되 job 이 conditional skip.
+    if: hashFiles('**/*.css', '**/*.scss', '**/*.html') != ''
+    # (i) unique job name (ADR-130 §결정6 — required 승격 전제, ambiguous required 회피).
+    name: css structural lint (stylelint, warning-tier)
+    runs-on: ubuntu-latest
+    # (h) timeout-minutes 명시 (ADR-136 §7.4.6 container 운영 리스크).
+    timeout-minutes: 10
+    # (c) warning-tier 첫 도입 — day-1 required 금지(ADR-130 §결정6).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # (b) in-job EXIT 0 fast-exit — config(.stylelintrc*) 부재 시 graceful exit 0.
+      #   webapp preset 미배포(frontend 무관)인 repo 에서 config 없이 lint 강제하지 않는다.
+      - name: Resolve stylelint config (graceful exit 0 if absent)
+        id: resolve_config
+        run: |
+          set -euo pipefail
+          # consumer 가 배포받는 webapp preset config 후보 경로 + repo 루트 표준 경로.
+          CONFIG=""
+          for c in \
+            .stylelintrc.json .stylelintrc.js .stylelintrc.cjs .stylelintrc.yml .stylelintrc.yaml .stylelintrc \
+            stylelint.config.js stylelint.config.cjs stylelint.config.mjs \
+            ".claude/_overlay/presets/webapp/.stylelintrc.json" \
+            "presets/webapp/.stylelintrc.json"; do
+            if [ -f "$c" ]; then CONFIG="$c"; break; fi
+          done
+          if [ -z "$CONFIG" ]; then
+            echo "::notice title=css-lint::stylelint config 부재 — frontend 미배포 repo 로 간주, graceful exit 0(no-op). config 배포 = bootstrap-consumer webapp preset scaffold(ADR-136 결정7)."
+            echo "config_found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=css-lint::stylelint config 발견: $CONFIG"
+            echo "config_found=true" >> "$GITHUB_OUTPUT"
+            echo "config_path=$CONFIG" >> "$GITHUB_OUTPUT"
+          fi
+
+      # supply-chain (d): 버전 pin + lockfile + npm ci. @latest 금지.
+      #   exact-pin package.json 작성 → npm install 로 deterministic lockfile 생성(exact pin 이라
+      #   resolution 단일) → npm ci 로 lockfile 기준 재현 설치. node_modules 격리(CI-only).
+      - name: Install stylelint (pinned + lockfile + npm ci)
+        if: steps.resolve_config.outputs.config_found == 'true'
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/css-lint-toolchain"
+          mkdir -p "$WORK"
+          cat > "$WORK/package.json" <<'JSON'
+          {
+            "name": "codeforge-css-lint-toolchain",
+            "private": true,
+            "description": "ADR-136 D1 CI-only stylelint toolchain — version pinned (no @latest).",
+            "dependencies": {
+              "stylelint": "17.13.0",
+              "stylelint-config-standard": "40.0.0"
+            }
+          }
+          JSON
+          cd "$WORK"
+          # exact pin → deterministic resolve → lockfile 생성.
+          npm install --no-audit --no-fund
+          # lockfile 기준 재현 설치 (npm ci = lockfile MUST 존재 + 정확 재현).
+          npm ci --no-audit --no-fund
+          echo "STYLELINT_BIN=$WORK/node_modules/.bin/stylelint" >> "$GITHUB_ENV"
+          echo "::notice title=css-lint::stylelint $("$WORK/node_modules/.bin/stylelint" --version) 설치(pinned 17.13.0 / config-standard 40.0.0)."
+
+      # (e) effective-config self-check (anti-hollow, ADR-136 결정4):
+      #   stylelint --print-config <CSS> 로 floor rule 이 effective-config 에 active 한지 실측.
+      #   floor rule 이 null(약화 override)이면 fail — config 차원 약화 공백 차단(ADR-127 invariant 강제).
+      - name: Floor effective-config self-check (--print-config)
+        if: steps.resolve_config.outputs.config_found == 'true'
+        run: |
+          set -euo pipefail
+          # 첫 CSS/SCSS 파일을 effective-config 측정 anchor 로.
+          ANCHOR="$(git ls-files '*.css' '*.scss' | head -n 1)"
+          if [ -z "$ANCHOR" ]; then
+            echo "::notice title=css-lint::CSS/SCSS 파일 0개 — effective-config self-check graceful skip(exit 0)."
+            exit 0
+          fi
+          echo "effective-config anchor: $ANCHOR"
+          EFF="$RUNNER_TEMP/effective-config.json"
+          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" --print-config "$ANCHOR" > "$EFF"
+          # floor rule 집합이 effective-config 에 active(null 아님)인지 검증.
+          node -e '
+            const fs = require("fs");
+            const eff = JSON.parse(fs.readFileSync(process.env.EFF_PATH, "utf8"));
+            const rules = (eff && eff.rules) || {};
+            // ADR-136 결정4 (B) rule-level floor — webapp preset .stylelintrc.json 과 정합.
+            const FLOOR = [
+              "block-no-empty",
+              "no-empty-source",
+              "no-invalid-double-slash-comments",
+              "declaration-block-no-duplicate-properties",
+              "no-duplicate-selectors"
+            ];
+            const weakened = FLOOR.filter(r => !(r in rules) || rules[r] === null || (Array.isArray(rules[r]) && rules[r][0] === null));
+            if (weakened.length) {
+              console.error("::error title=css-lint floor weakened::floor rule 이 effective-config 에서 약화(null/부재): " + weakened.join(", ") + " — overlay 가 floor 를 축소했다(ADR-127 invariant 위반). 정정 필요.");
+              process.exit(1);
+            }
+            console.log("floor effective-config OK — 약화 0: " + FLOOR.join(", "));
+          '
+        env:
+          EFF_PATH: ${{ runner.temp }}/effective-config.json
+
+      # ★ anti-hollow lint step: 실제 CSS 를 스캔(glob 커버리지) + 파일 count 보고.
+      #   0개 매칭이 "검사 없이 PASS"로 새지 않도록 count 를 ::notice:: 로 명시.
+      #   stylelint exit code: 0=clean / 1=경고만 / 2=lint problem(syntax error 포함) → CI fail.
+      - name: Run stylelint (scan coverage 보고)
+        if: steps.resolve_config.outputs.config_found == 'true'
+        run: |
+          set -euo pipefail
+          # 스캔 대상 명시 enumerate (hidden glob 신뢰 대신 실 count).
+          mapfile -t TARGETS < <(git ls-files '*.css' '*.scss')
+          echo "::notice title=css-lint::scan target = ${#TARGETS[@]} 파일"
+          if [ "${#TARGETS[@]}" -eq 0 ]; then
+            echo "::notice title=css-lint::CSS/SCSS 파일 0개 — graceful exit 0(hollow-gate 회피: scan 0 을 명시 보고)."
+            exit 0
+          fi
+          printf '%s\n' "${TARGETS[@]}"
+          # config_path 명시 — repo 표준 위치 / preset 배포 위치 양쪽 커버.
+          "$STYLELINT_BIN" --config "${{ steps.resolve_config.outputs.config_path }}" "${TARGETS[@]}"
+
+  # (j) discriminating test job — wrapper-self 에서만 fixture 회귀 test (선례
+  #   responsibility-topology-check.yml *-test job 동형). consumer 미배포(if: repo gate).
+  #   QADev 작성 test 스크립트 호출(경로 = tests/scripts/test-css-lint.sh, QADev 와 합의).
+  css-lint-test:
+    name: css-lint discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run test-css-lint.sh (brace-broken fixture 회귀 시 exit 1 차단)
+        run: bash tests/scripts/test-css-lint.sh

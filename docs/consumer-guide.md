@@ -121,7 +121,7 @@ bash scripts/check-lint.sh           # 검사
 bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 ```
 
-`scripts/check-lint.sh` 는 pyproject.toml (ruff + pyright) / package.json (eslint + tsc) 자동 detect, 없으면 silent skip.
+`scripts/check-lint.sh` 는 pyproject.toml (ruff + pyright) / package.json (eslint + tsc / **stylelint** — `package.json` 에 `"stylelint"` 등재 시 `npx stylelint "**/*.css" "**/*.scss"`, CFP-2505 / ADR-136 D1 보조 채널) 자동 detect, 없으면 silent skip.
 
 **Bypass (긴급 push)**: `git push --no-verify`
 
@@ -2345,6 +2345,23 @@ SSOT 상수는 `.claude/_overlay/project.yaml` 참조.
 cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 ```
+
+##### frontend 품질게이트 도입 (CFP-2505 / [ADR-136](../archive/adr/ADR-136-frontend-quality-gate-standard.md))
+
+frontend-bearing consumer 는 frontend 품질게이트 2종을 도입한다 — **D1 구조적 CSS lint(stylelint)** + **D2 UI 실렌더 검증(§8.7)**. 두 게이트는 직교·상보(D1 = 원인 차단 / D2 = 증상 포착)이며 frontend 무관 consumer 무손상(additive).
+
+**활성 스위치**: `.claude/_overlay/project.yaml` 에 `frontend.applicable: true` 설정 → D1 CI 게이트(`css-lint.yml`) + D2 §8.7 UI 실렌더 검증 활성. 미설정(default `false`)이면 게이트 비활성 + §8.7 N/A (스키마 = [project-config-schema.md `frontend` 섹션](project-config-schema.md)).
+
+```yaml
+# .claude/_overlay/project.yaml — frontend-bearing consumer 만
+frontend:
+  applicable: true
+```
+
+- **D1 (구조적 CSS lint)**: stylelint + stylelint-config-standard 가 미닫힌 `{` 등 CSS 구문 결함을 텍스트 층위에서 차단. 로컬은 `scripts/check-lint.sh`(`package.json` 에 `"stylelint"` 등재 시 자동 detect), CI 차단은 `css-lint.yml` workflow.
+- **D2 (UI 실렌더 검증, §8.7)**: UI/CSS 변경 PR 의 change-plan §8.7 본문에 실 layout 엔진(Playwright 권장) render-truth 검증을 요구. jsdom 계열은 layout 미계산이라 D2 부적격(공식 검증). lint·jsdom 통과 ≠ D2 승인.
+- **branch protection 경고**: D2(또는 css-lint.yml required 승격) wire 시 — consumer branch protection required status checks contexts 에 해당 CI job context 를 정확 매핑해야 한다. job-level conditional skip 은 'Success' 로 보고되므로 path-filter 가 아닌 job-level `if:` 로 graceful no-op 처리할 것(required check 가 path-filter skip 시 'Pending(expected)' 영구 → PR merge 영구 block — ADR-130 §결정4).
+- **supply-chain 비협상 기준선**: `npx <pkg>@latest` 즉석 설치 금지 — `stylelint` / `stylelint-config-standard` / `playwright` 버전 **pin + lockfile(package-lock.json) + `npm ci`** (fresh malicious 버전 실행 위험 차단 — ADR-136 결정11).
 
 #### backend-service preset (비-webapp, frontend-less)
 

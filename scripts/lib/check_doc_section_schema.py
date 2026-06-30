@@ -88,6 +88,20 @@ APPLICABILITY_ROW_RE = re.compile(
 )
 NA_85_SUBSTANTIVE_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{29,}", re.MULTILINE)
 
+# CFP-2505 / ADR-136 결정10 — §8.7 UI 실렌더 검증 CONDITIONAL lint (§8.5 동형).
+# ★ §8.6 gap allow: change-plan.md §8 은 §8.5.4 → §8.7 로 §8.6 을 의도적으로 건너뛴다
+# (§8.6 Integration 은 story-page-structure.md 에만 존재). REQUIRED_SECTIONS["docs/change-plans"]
+# 에 §8.6 패턴이 없으므로(추가 금지) §8.6 부재는 schema 오류로 오탐되지 않는다. 본 §8.7 lint 도
+# §8.6 존재를 전제하지 않는다 — §8.7 헤딩이 있으면 §8.7.0/§8.7.1 만 검사 (gap 무관).
+SECTION_8_7_HEADER_RE = re.compile(r"^####? §8\.7\b", re.MULTILINE)
+SECTION_8_7_0_HEADER_RE = re.compile(r"^#####? §8\.7\.0\b", re.MULTILINE)
+SECTION_8_7_1_HEADER_RE = re.compile(r"^#####? §8\.7\.1\b", re.MULTILINE)
+SECTION_8_7_X_HEADER_RE = re.compile(r"^#####? §8\.7\.x\b", re.MULTILINE)
+APPLICABILITY_8_7_ROW_RE = re.compile(
+    r"\|\s*(CSS/SCSS 파일 변경|컴포넌트 변경|스타일 토큰/테마 변경|layout-affecting 속성 변경)[^\|]*\|\s*([YN])\s*\|",
+    re.MULTILINE,
+)
+
 DEBATE_TRANSCRIPT_HEADER_RE = re.compile(
     r"^###\s+Debate transcript:\s*(?P<anchor>.*)$",
     re.MULTILINE,
@@ -233,11 +247,63 @@ def check_section_8_5(md_path: Path, body: str) -> list:
     return fails
 
 
+def check_section_8_7(md_path: Path, body: str) -> list:
+    # CFP-2505 / ADR-136 결정10 — §8.7 UI 실렌더 검증 CONDITIONAL lint (§8.5 동형).
+    # ★ §8.6 gap allow: §8.7 헤딩 존재만 트리거 — §8.6 존재를 전제하지 않으므로
+    #   change-plan.md §8.5.4 → §8.7 gap 이 false-positive 를 내지 않는다.
+    fails = []
+    if not SECTION_8_7_HEADER_RE.search(body):
+        return []
+
+    if not SECTION_8_7_0_HEADER_RE.search(body):
+        fails.append(f"{md_path}: §8.7 본문 존재하나 §8.7.0 Applicability decision 헤딩 부재")
+        return fails
+
+    rows = APPLICABILITY_8_7_ROW_RE.findall(body)
+    found_rows = {row[0]: row[1] for row in rows}
+    expected = {
+        "CSS/SCSS 파일 변경",
+        "컴포넌트 변경",
+        "스타일 토큰/테마 변경",
+        "layout-affecting 속성 변경",
+    }
+    missing = expected - set(found_rows.keys())
+    if missing:
+        fails.append(f"{md_path}: §8.7.0 표 의 4 적용 조건 행 누락 (Y/N 미파싱) — {sorted(missing)}")
+        return fails
+
+    yes_count = sum(1 for v in found_rows.values() if v == "Y")
+    no_count = sum(1 for v in found_rows.values() if v == "N")
+
+    if yes_count >= 1:
+        if not SECTION_8_7_1_HEADER_RE.search(body):
+            fails.append(
+                f"{md_path}: §8.7.0 에 1+ Y ({yes_count}개) 인데 §8.7.1 render-truth 도구 독립성 본문 부재"
+            )
+
+    if no_count == 4:
+        if not SECTION_8_7_X_HEADER_RE.search(body):
+            fails.append(f"{md_path}: §8.7.0 4 N 인데 §8.7.x N/A 명시 헤딩 부재")
+        else:
+            m_87x = SECTION_8_7_X_HEADER_RE.search(body)
+            start = m_87x.end()
+            next_header = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+            end = start + (next_header.start() if next_header else len(body) - start)
+            section_body = body[start:end].strip()
+            if not NA_85_SUBSTANTIVE_RE.search(section_body):
+                fails.append(
+                    f"{md_path}: §8.7.x N/A reason 가 substantive 30자 minimum 미충족 — vague reason 차단 (CFP-2505 / ADR-136 결정10)"
+                )
+
+    return fails
+
+
 def main():
     warns = []
     section_7_4_warns = []
     conditional_warns = []
     section_8_5_warns = []
+    section_8_7_warns = []
     debate_transcript_warns = []
     for prefix, patterns in REQUIRED_SECTIONS.items():
         path = Path(prefix)
@@ -277,6 +343,8 @@ def main():
                 conditional_warns.extend(cond_fails)
                 s85_fails = check_section_8_5(md, text)
                 section_8_5_warns.extend(s85_fails)
+                s87_fails = check_section_8_7(md, text)
+                section_8_7_warns.extend(s87_fails)
 
     for extra_prefix in ["docs/stories"]:
         extra_path = Path(extra_prefix)
@@ -295,7 +363,7 @@ def main():
             debate_fails = check_debate_transcript(md, text)
             debate_transcript_warns.extend(debate_fails)
 
-    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(debate_transcript_warns)
+    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(debate_transcript_warns)
     if total_fails:
         print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
         if warns:
@@ -313,6 +381,10 @@ def main():
         if section_8_5_warns:
             print(f"  [CFP-47 §8.5 applicability] {len(section_8_5_warns)} 건")
             for w in section_8_5_warns:
+                print(f"  - {w}")
+        if section_8_7_warns:
+            print(f"  [CFP-2505 §8.7 UI 실렌더 applicability] {len(section_8_7_warns)} 건")
+            for w in section_8_7_warns:
                 print(f"  - {w}")
         if debate_transcript_warns:
             print(f"  [CFP-391 §9 debate transcript schema] {len(debate_transcript_warns)} 건")

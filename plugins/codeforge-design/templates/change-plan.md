@@ -276,6 +276,55 @@ TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitect
 - 단순 "not applicable" / "해당 없음" / 길이 <30자 차단
 - check-doc-section-schema.sh 강제 (Codex 개선 #1)
 
+<!-- §8.6 의도적 gap (renumber 금지 — CFP-2505 / ADR-136 결정10): change-plan.md §8 본문은 §8.1~§8.5.4 까지만 존재한다(§8.6 부재 — §8.6 Integration 은 story-page-structure.md 에만 수록). 따라서 §8.5.4 → §8.7 로 §8.6 을 의도적으로 건너뛴다. 이는 story-page-structure §8.6 Integration 과의 cross-template 번호 정합(두 template 이 같은 §8.6/§8.7 의미 좌표 공유)을 위한 의도적 gap 이다 — Phase 2 가 §8.7 을 §8.6 으로 renumber 하지 말 것. -->
+
+#### §8.7 UI 실렌더 검증 (CONDITIONAL — CFP-2505 / ADR-136)
+
+TestContractArchitectAgent input contributor, ArchitectAgent(chief) author (§7 SecurityArch 동형 — 본문 author = ArchitectAgent(chief), TestContractArchitectAgent = input contributor, ADR-006 §결정2). lint·jsdom 과 도구 독립인 직교 게이트(§8.6 Integration 과도 disjoint axis — §8.6 = service 간 통합 / §8.7 = UI render-truth). CONDITIONAL — UI/CSS 변경 동반 시 본문, 무관 시 §8.7.0 표 4 행 모두 N + substantive reason 기재 후 §8.7.x N/A 명시.
+
+##### §8.7.0 Applicability decision (필수)
+
+| 적용 조건 | Y/N | 근거 1줄 (substantive — 단순 부정 X, 30자 이상) |
+|---|:-:|---|
+| CSS/SCSS 파일 변경 (순수 stylesheet) | □ | <근거> |
+| 컴포넌트 변경 (JSX/TSX/Vue/template 렌더 구조) | □ | <근거> |
+| 스타일 토큰/테마 변경 (design token / theme variable) | □ | <근거> |
+| layout-affecting 속성 변경 (position/display/z-index/grid 등 좌표 영향) | □ | <근거> |
+
+→ 1개라도 Y: §8.7.1+ 본문 필수
+→ 4개 모두 N + 각 substantive reason: §8.7 전체 N/A 허용 + §8.7.x 본문에 "N/A — <reason>" 명시
+→ 단순 "not applicable" / "해당 없음" / 길이 <30자 reason 차단 (`scripts/check-doc-section-schema.sh` 강제)
+→ "UI/CSS 변경" 트리거 정의 = 위 4 행 중 1+ (확장자만으로 정의하면 JSX className·테마·토큰 누락 위험 → 컴포넌트/토큰 포함 — ADR-136 결정9)
+
+##### §8.7.1 render-truth 도구 독립성 (적용 시)
+
+(§8.7.0 1+ Y 일 때 본문 필수)
+
+- **실 layout 엔진으로 outcome 검증** (Playwright 권장): 변경 UI 의 layout 결과를 실 Chromium 레이아웃 좌표/스타일 ground-truth 로 검증.
+- **jsdom 계열(testing-library + jsdom) = D2 부적격** (layout 미계산 — 공식 검증: jsdom README "Unimplemented parts: Layout", getBoundingClientRect/offsetTop 등 0 반환). jsdom 단위테스트 통과는 D2 충족이 아니다.
+- lint(텍스트 층위)·jsdom(DOM 트리 층위)과 **도구 독립인 직교 게이트** — 실 레이아웃 좌표 층위만 본 게이트가 본다.
+
+##### §8.7.2 min bar (적용 시)
+
+- **≥1 computed-style 단언(`toHaveCSS` / `boundingBox()`, 결정적) primary** + screenshot 회귀(`toHaveScreenshot`) optional.
+- **jsdom 통과 ≠ 승인**: jsdom 통과·실렌더 실패 → D2 실패.
+- **layout-result 속성 포함 권장**: WEB-033 류 회귀(position:static→fixed 추락)를 구조적으로 보장하려면 computed-style 단언이 **layout 결과 속성(`position` / 좌표 `boundingBox` / `visibility`)을 포함**해야 한다 — 색상·폰트만 단언하면 layout 회귀를 못 잡는다.
+
+##### §8.7.3 도구/baseline (적용 시)
+
+- **도구 = Playwright 권장**: raw CDP 동등 저수준이나 세션/대기/diff 직접 구현 고비용 → 권장 안 함.
+- **screenshot baseline = Linux(CI) 생성**으로 OS-drift 회피 + threshold 명시 (font/anti-aliasing 환경 차 흡수).
+- **anti-permanent-pending**: D2 가 consumer required wire 시 CI job context 이름을 branch protection required contexts 에 정확 매핑(skip 시 명시 Success — ADR-130 §결정4). consumer branch protection 에 context 추가 = D2 wiring 일부.
+
+##### §8.7.x N/A 명시 (4 적용 조건 모두 No 시 — frontend 무관 / UI·CSS 변경 0)
+
+- 표기: "N/A — <substantive reason 1줄>. 검증 채널: <대체 검증>. 면제 분류: plugin-meta-na | runtime-inert" (ADR-005 표기 + ADR-127 §결정5 N/A 3축)
+- substantive reason 예시:
+  - "본 Story 는 backend 서비스 코드만 수정 — UI/CSS/컴포넌트/스타일 토큰 변경 0개, 렌더 산출물 부재"
+  - "본 Story 는 agent md / template / docs 만 수정 — 실행 가능 frontend 코드 0줄 (plugin-meta-na)"
+- 단순 "not applicable" / "해당 없음" / 길이 <30자 차단
+- check-doc-section-schema.sh §8.7 lint 강제 (CFP-2505 / ADR-136 결정10)
+
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
 - 의존성 있으면 순서 명시 (예: DataEngineerAgent 스키마 → BackendDeveloperAgent 어댑터)
