@@ -216,6 +216,117 @@ else
 fi
 cd /; rm -rf "$C4"
 
+# ═════════════════════════════════════════════════════════════════════════════
+# 케이스5 — consumer-형상 --config-basedir discriminating (CFP-2527 §8.1)
+#   배포 형상 재현: config 파일은 repo root(=$ROOT), stylelint toolchain 은 격리 dir
+#   ($TC/node_modules)에 설치. config 의 `extends: stylelint-config-standard` 를
+#   resolve 하려면 stylelint 이 격리 toolchain 의 node_modules 를 basedir 로 알아야 한다.
+#   --config-basedir 없으면 config(repo root) 기준 basedir 로 extends resolve 실패
+#   → ConfigurationError("Could not find stylelint-config-standard"). fix =
+#   --config-basedir "$TC/node_modules" 부착. 본 케이스가 fix 의 discriminating 봉인.
+#
+#   3-위치 mktemp 분리(검증 형상 = 배포 형상 재현):
+#     TC   = toolchain dir (격리 설치, $TC/node_modules)
+#     ROOT = config + CSS dir (config=repo root 형상 재현, invoke cwd)
+#     bin  = $TC/node_modules/.bin/stylelint (격리 bin 직접 호출 — npx 우회, 정확 pin·cwd 비의존)
+#
+#   3-case:
+#     (i)   GREEN: --config + --config-basedir → print-config / lint 둘 다 exit 0 (AC-1)
+#     (ii)  RED:   --config-basedir 제거 → ConfigurationError RED (AC-3)
+#     (iii) half-fix 양갈래 RED: self-check 만 basedir → lint RED / lint 만 basedir → print-config RED (AC-4 / R-3)
+#
+#   RED 판정식 = (exit != 0) AND (stderr =~ /ConfigurationError|Could not find/).
+#   exit 78 값 hard-pin 금지(stylelint 버전 robust + over-loose 차단) — 주석 관측 기록으로만
+#   (관측: stylelint config-load 실패 = exit 78).
+# ═════════════════════════════════════════════════════════════════════════════
+
+# RED 판정 helper (stderr 캡처 필요 — run_stylelint_exit 는 stderr 버리므로 inline).
+#   cwd = $ROOT 에서 격리 bin 직접 호출. exit != 0 AND stderr 에 ConfigurationError/Could not find 시 RED.
+assert_config_red() {
+  local name="$1" desc="$2"; shift 2
+  local out ec=0
+  out=$( ( cd "$ROOT" && timeout 180 "$TC/node_modules/.bin/stylelint" "$@" ) 2>&1 ) || ec=$?
+  if [ "$ec" != "0" ] && echo "$out" | grep -Eq 'ConfigurationError|Could not find'; then
+    echo "✓ PASS: $name (exit=$ec, stderr=ConfigurationError/Could not find 매칭 = RED 봉인) — $desc"
+    PASS=$((PASS+1)); return 0
+  else
+    echo "✗ FAIL: $name — RED 판정 불성립 (exit=$ec, stderr 매칭 실패). 출력: $out"
+    FAIL=$((FAIL+1)); return 1
+  fi
+}
+
+# toolchain dir — 격리 설치 ($TC/node_modules).
+TC=$(mktemp -d); cd "$TC"
+cat > package.json <<EOF
+{"name":"cfp2527-c5-toolchain","version":"1.0.0","devDependencies":{"stylelint":"${STYLELINT_PIN}","stylelint-config-standard":"${STYLELINT_CONFIG_STANDARD_PIN}"}}
+EOF
+TC_OK=1
+if ! ( cd "$TC" && timeout 300 npm install --no-audit --no-fund >/dev/null 2>&1 ); then TC_OK=0; fi
+
+# config + CSS dir — config=repo root 형상 재현(toolchain 과 분리).
+ROOT=$(mktemp -d)
+cat > "$ROOT/.stylelintrc.json" <<'EOF'
+{"extends":"stylelint-config-standard"}
+EOF
+printf '.foo{color:red}\n' > "$ROOT/clean.css"   # clean CSS (lint pass 대상)
+
+# 초기화 (SKIP 시 Summary echo 가 참조).
+C5_GREEN_PC="SKIP"; C5_GREEN_LINT="SKIP"
+
+if [ "$TC_OK" -eq 0 ]; then
+  note "[test-css-lint] C5 toolchain install 실패 — graceful skip. NOT a silent pass."
+  echo "SKIP: C5 consumer-형상 fixture 미실행 (toolchain install 불가). CI 에서 재검증 필요."
+  SKIP=$((SKIP+1))
+else
+  STYLELINT_BIN="$TC/node_modules/.bin/stylelint"
+
+  # ── (i) GREEN: --config + --config-basedir → print-config / lint 둘 다 exit 0 (AC-1) ──
+  C5_GREEN_PC=0
+  ( cd "$ROOT" && timeout 180 "$STYLELINT_BIN" --config "$ROOT/.stylelintrc.json" --config-basedir "$TC/node_modules" --print-config "$ROOT/clean.css" >/dev/null 2>&1 ) || C5_GREEN_PC=$?
+  assert_eq "C5-i-a-green-print-config" "0" "$C5_GREEN_PC" "basedir 부착 → --print-config exit 0 (extends resolve 성공, AC-1)"
+
+  C5_GREEN_LINT=0
+  ( cd "$ROOT" && timeout 180 "$STYLELINT_BIN" --config "$ROOT/.stylelintrc.json" --config-basedir "$TC/node_modules" "$ROOT/clean.css" >/dev/null 2>&1 ) || C5_GREEN_LINT=$?
+  assert_eq "C5-i-b-green-lint" "0" "$C5_GREEN_LINT" "basedir 부착 → clean.css lint exit 0 (extends resolve 성공 + clean pass, AC-1)"
+
+  # ── (ii) RED: --config-basedir 제거 → ConfigurationError RED (AC-3) ──
+  assert_config_red "C5-ii-a-red-no-basedir-print-config" \
+    "basedir 제거(--config 만) → --print-config 가 extends resolve 실패 ConfigurationError (AC-3)" \
+    --config "$ROOT/.stylelintrc.json" --print-config "$ROOT/clean.css"
+  assert_config_red "C5-ii-b-red-no-basedir-lint" \
+    "basedir 제거(--config 만) → lint 가 extends resolve 실패 ConfigurationError (AC-3)" \
+    --config "$ROOT/.stylelintrc.json" "$ROOT/clean.css"
+
+  # ── (iii) half-fix 양갈래 RED (AC-4 / R-3) ──
+  #  (iii-a) self-check(--print-config) 에만 basedir, lint 엔 미부착 → lint 호출이 RED.
+  C5_HALFA_PC=0
+  ( cd "$ROOT" && timeout 180 "$STYLELINT_BIN" --config "$ROOT/.stylelintrc.json" --config-basedir "$TC/node_modules" --print-config "$ROOT/clean.css" >/dev/null 2>&1 ) || C5_HALFA_PC=$?
+  assert_eq "C5-iii-a-selfcheck-green" "0" "$C5_HALFA_PC" "half-fix(iii-a): self-check 에만 basedir → print-config 자체는 exit 0 (lint 가 RED 여야 함)"
+  assert_config_red "C5-iii-a-red-lint-no-basedir" \
+    "half-fix(iii-a): self-check 만 basedir 부착, lint 엔 미부착 → lint 호출이 ConfigurationError RED (AC-4 / R-3)" \
+    --config "$ROOT/.stylelintrc.json" "$ROOT/clean.css"
+
+  #  (iii-b) lint 에만 basedir, self-check(--print-config) 엔 미부착 → print-config 호출이 RED.
+  C5_HALFB_LINT=0
+  ( cd "$ROOT" && timeout 180 "$STYLELINT_BIN" --config "$ROOT/.stylelintrc.json" --config-basedir "$TC/node_modules" "$ROOT/clean.css" >/dev/null 2>&1 ) || C5_HALFB_LINT=$?
+  assert_eq "C5-iii-b-lint-green" "0" "$C5_HALFB_LINT" "half-fix(iii-b): lint 에만 basedir → lint 자체는 exit 0 (print-config 가 RED 여야 함)"
+  assert_config_red "C5-iii-b-red-print-config-no-basedir" \
+    "half-fix(iii-b): lint 만 basedir 부착, self-check 엔 미부착 → --print-config 호출이 ConfigurationError RED (AC-4 / R-3)" \
+    --config "$ROOT/.stylelintrc.json" --print-config "$ROOT/clean.css"
+
+  # ── anti-theater discriminating: (i) GREEN exit 0 ≠ (ii) RED exit (둘이 같으면 hollow) ──
+  C5_RED_EC=0
+  ( cd "$ROOT" && timeout 180 "$STYLELINT_BIN" --config "$ROOT/.stylelintrc.json" --print-config "$ROOT/clean.css" >/dev/null 2>&1 ) || C5_RED_EC=$?
+  if [ "$C5_GREEN_PC" = "$C5_RED_EC" ]; then
+    echo "✗ FAIL: ANTI-THEATER (C5) — GREEN print-config exit($C5_GREEN_PC) == RED no-basedir exit($C5_RED_EC) = non-discriminating hollow"
+    FAIL=$((FAIL+1))
+  else
+    echo "✓ PASS: ANTI-THEATER discriminating (C5) — GREEN(basedir) exit=$C5_GREEN_PC ≠ RED(no-basedir) exit=$C5_RED_EC (관측: RED config-load 실패 = exit 78)"
+    PASS=$((PASS+1))
+  fi
+fi
+cd /; rm -rf "$TC" "$ROOT"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
 # ─────────────────────────────────────────────────────────────────────────────
@@ -232,6 +343,7 @@ echo ""
 echo "Discriminating evidence (anti-theater):"
 echo "  C1 미닫힌 brace exit=$EC1 (non-zero=차단) ≠ C2 clean exit=$EC2 (0=통과)"
 echo "  C4 effective-config: default floor=${FA_DEFAULT:-SKIP} ≠ null-override floor=${FA_NULL:-SKIP}"
+echo "  C5 consumer-형상: GREEN(basedir 부착) print-config=exit${C5_GREEN_PC:-SKIP}/lint=exit${C5_GREEN_LINT:-SKIP} ≠ RED(basedir 제거)=ConfigurationError(관측 exit 78)"
 echo ""
 
 if [ "$FAIL" -eq 0 ]; then
