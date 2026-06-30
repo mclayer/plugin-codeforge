@@ -165,16 +165,28 @@ _URL_SCHEMES = ("http://", "https://", "ftp://", "file://", "ssh://", "git://")
 _SECRET_TOKENS = ("--token", "--password", "--passwd", "--secret", "--apikey", "--api-key",
                   "apikey=", "api_key=", "password=", "token=", "secret=")
 
+# ── F-CR-CL-001 hardening (구현리뷰 P2 — declaration↔enforcement self-gap 해소) ──
+#   runner 뒤 inline-code 실행 플래그 = repo-relative 게이트/테스트 호출 아닌 *임의 코드 실행* vector
+#   (raw shell free-string reproducer anti-pattern, concept fix-ground-truth-replay.md). 거부.
+#   예: `python -c <code>` / `node -e <code>` / `sh -c <code>` / `python -i` / `--command` / `--eval`.
+_INLINE_EXEC_FLAGS = frozenset({"-c", "-e", "-i", "--command", "--eval"})
+
+# repo prefix 화이트리스트 — repo-relative path 는 알려진 top-level dir 로 시작 의무 (path 인자 한정).
+#   `..` traversal 거부 + 본 prefix 미시작 path 거부 (over-block 회피 위해 path-shaped 인자만 검사).
+_REPO_PATH_PREFIXES = ("scripts/", "tests/", "docs/", "archive/", "plugins/", "skills/", "templates/")
+
 
 def _validate_reproducer_command(value: str) -> None:
     """INV-SEC-1: reproducer_command content schema 강제 (THR-E3-2 stored-command injection 차단).
 
     허용 (PASS schema): repo-relative 게이트/테스트 호출 — 알려진 runner 로 시작 +
-      repo-relative path (절대경로/Windows drive 금지). 예: `bash scripts/check-*.sh`,
-      `pytest tests/...`, `python scripts/...`, `node ...`.
+      repo-relative path (알려진 top-level dir 시작, 절대경로/Windows drive/`..` traversal 금지).
+      예: `bash scripts/check-*.sh`, `pytest tests/...`, `python scripts/...`, `node templates/...`.
     거부 (SETUP error → ValueError → CLI exit 2, TC-6 ValueError 동형):
       raw shell 메타문자(명령 연쇄/파이프/리다이렉트/command substitution) / URL /
-      절대경로(POSIX `/` 시작 또는 Windows `C:\\`) / secret-shaped 토큰.
+      절대경로(POSIX `/` 시작 또는 Windows `C:\\`) / secret-shaped 토큰 /
+      **runner 직후 inline-code 실행 플래그(`-c`/`-e`/`-i`/`--command`/`--eval` — 임의 코드 실행 vector,
+      F-CR-CL-001)** / **`..` path traversal** / **알려진 repo prefix 미시작 path**.
 
     regex-free / stdlib only — startswith / substring membership 만 (ReDoS-safe anchored simple).
 
@@ -225,7 +237,23 @@ def _validate_reproducer_command(value: str) -> None:
             f"(허용: {sorted(_ALLOWED_RUNNERS)}) — repo-relative 게이트/테스트 호출만 "
             "(INV-SEC-1 / THR-E3-2)"
         )
+    # ⑤ F-CR-CL-001: runner 직후 inline-code 실행 플래그 거부 (임의 코드 실행 vector 차단).
+    #   `python -c <code>` / `node -e <code>` / `sh -c <code>` = repo-relative 게이트/테스트 호출 아님.
+    #   첫 인자(runner 직후)가 inline-exec 플래그면 reject (게이트/테스트는 path 인자로 시작).
+    if len(tokens) >= 2 and tokens[1] in _INLINE_EXEC_FLAGS:
+        raise ValueError(
+            f"reproducer_command schema 위반: inline-code 실행 플래그 '{tokens[1]}' "
+            "(임의 코드 실행 vector — repo-relative 게이트/테스트 호출만, raw free-string reproducer 금지) "
+            "(INV-SEC-1 / THR-E3-2 / F-CR-CL-001)"
+        )
+
     for arg in tokens[1:]:
+        # F-CR-CL-001: `..` path traversal 거부 (repo 외부 escape vector).
+        if ".." in arg.split("/") or ".." in arg.split("\\"):
+            raise ValueError(
+                f"reproducer_command schema 위반: '..' path traversal '{arg}' (repo escape 금지) — "
+                "repo-relative path 만 (INV-SEC-1 / THR-E3-2 / F-CR-CL-001)"
+            )
         # POSIX 절대경로 (`/` 시작) 또는 Windows drive 절대경로 (`C:\` / `C:/`) 거부
         if arg.startswith("/"):
             raise ValueError(
@@ -237,6 +265,16 @@ def _validate_reproducer_command(value: str) -> None:
                 f"reproducer_command schema 위반: 절대경로 '{arg}' (Windows drive) — "
                 "repo-relative path 만 (INV-SEC-1 / THR-E3-2)"
             )
+        # ⑥ F-CR-CL-001: path-shaped 인자 (separator 포함) 는 알려진 repo prefix 시작 의무.
+        #   over-block 회피: flag(`-`/`--`) 와 separator 없는 단순 토큰(예: pytest node-arg)은 비검사.
+        is_path_shaped = ("/" in arg or "\\" in arg)
+        if is_path_shaped and not arg.startswith("-"):
+            if not arg.startswith(_REPO_PATH_PREFIXES):
+                raise ValueError(
+                    f"reproducer_command schema 위반: repo prefix 미시작 path '{arg}' "
+                    f"(허용 prefix: {list(_REPO_PATH_PREFIXES)}) — repo-relative 게이트/테스트 호출만 "
+                    "(INV-SEC-1 / THR-E3-2 / F-CR-CL-001)"
+                )
 
 
 # ---------------------------------------------------------------------------

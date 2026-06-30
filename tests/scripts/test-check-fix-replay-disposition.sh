@@ -30,6 +30,8 @@
 #                                                       (= silent 면제 누출)
 #   M5 schema-검증-제거 (INV-SEC-1 _validate_reproducer_command 제거 → bad reproducer exit 0 누출) → TC-10/TC-11 FAIL = RED
 #                                                       (= stored-command injection 누출, THR-E3-2)
+#   M6 inline-exec-검증-제거 (F-CR-CL-001 inline-code 플래그 `-c`/`-e` + `..` traversal 검사 제거 → 임의 코드 실행 누출) → TC-13/TC-14 FAIL = RED
+#                                                       (= self anti-pattern 미강제: concept "raw free-string reproducer" 차단 갭, THR-E3-2)
 #
 # Exit code:
 #   0 = all fixtures pass (discriminating test validates disposition logic)
@@ -272,6 +274,33 @@ run_case "TC-12-good-schema-repo-relative" \
   "PASS" \
   "reproducer_command_value repo-relative 게이트 호출 → PASS (INV-SEC-1 정당 명령 통과, over-block 아님)"
 
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-13: reproducer_command_value = inline-code 실행 플래그 (python -c) → SETUP error exit 2
+#   ★ 핵심 discriminating (F-CR-CL-001 hardening): M6 inline-exec-검증-제거 kill —
+#     runner allowlist 만 검사하고 `-c`/`-e`/`-i`/`--command`/`--eval` 미거부 시 임의 코드 실행 누출 = FAIL.
+#     concept fix-ground-truth-replay.md "raw free-string reproducer" anti-pattern self-gap 차단 증명.
+# ═════════════════════════════════════════════════════════════════════════════
+run_setup_error_case "TC-13-bad-schema-inline-code-flag" \
+  '{"findings":[{"id":"F-13","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"python -c import os"}],"codex_available":true}' \
+  "reproducer_command_value inline-code 플래그(python -c) → exit 2 SETUP (INV-SEC-1 임의 코드 실행 차단, THR-E3-2 / F-CR-CL-001)"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-14: reproducer_command_value = `..` path traversal → SETUP error exit 2
+#   ★ discriminating (F-CR-CL-001): repo escape vector 거부 — M6 kill 보강.
+# ═════════════════════════════════════════════════════════════════════════════
+run_setup_error_case "TC-14-bad-schema-path-traversal" \
+  '{"findings":[{"id":"F-14","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"bash ../../../etc/x.sh"}],"codex_available":true}' \
+  "reproducer_command_value '..' traversal(../../../etc) → exit 2 SETUP (INV-SEC-1 repo escape 차단, THR-E3-2 / F-CR-CL-001)"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-15: reproducer_command_value = inline-code flag 없는 정당 repo-relative 명령 (node templates/...) → PASS
+#   ★ F-CR-CL-001 over-block guard: hardening 이 정당 명령을 막지 않음을 증명 (node -e 와 node path 구별).
+# ═════════════════════════════════════════════════════════════════════════════
+run_case "TC-15-good-schema-no-overblock" \
+  '{"findings":[{"id":"F-15","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"pytest tests/scripts/test_foo.py"}],"codex_available":true}' \
+  "PASS" \
+  "reproducer_command_value inline-flag 없는 repo-relative(pytest tests/...) → PASS (F-CR-CL-001 over-block 아님)"
+
 set -e
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -301,6 +330,9 @@ if [ "$FAIL" -eq 0 ]; then
   echo "   → TC-6 FAIL = RED (exit 2 기대인데 exit 0 replay-impossible = silent 면제 누출)"
   echo "M5 schema-검증-제거 (INV-SEC-1 _validate_reproducer_command 제거 → bad reproducer 통과)"
   echo "   → TC-10/TC-11 FAIL = RED (exit 2 기대인데 exit 0 누출 = stored-command injection 누출, THR-E3-2)"
+  echo "M6 hardening-검증-제거 (F-CR-CL-001 inline-code 플래그 + '..' traversal + repo-prefix 화이트리스트 3종 제거)"
+  echo "   → TC-13/TC-14 FAIL = RED (exit 2 기대인데 exit 0 누출 = 임의 코드 실행/repo escape, THR-E3-2 / self anti-pattern 미강제)"
+  echo "     (defense-in-depth: TC-14 '..' traversal 은 traversal-check + repo-prefix-check 양쪽이 막음 — 단일 check 제거로는 TC-13 만 RED, 3종 전부 제거 시 TC-14 도 RED)"
   echo ""
   echo "핵심 discriminating 쌍: TC-1(all-green+falsify→PASS) ↔ TC-2(all-red→falsified)"
   echo "  — 게이트가 'close 자체'가 아니라 'Retest GREEN 만 close 허용'함을 구별."
