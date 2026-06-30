@@ -1,0 +1,9 @@
+# CFP-2506 — rust-cli-minimal example .gitattributes
+# §8.3 경계 조건 완화(권장 tier): build-local.sh 등 shebang 스크립트가 CRLF 로
+# 체크아웃되면 `bash` 가 `#!/usr/bin/env bash\r` 를 파싱 실패할 수 있다. Windows
+# consumer 의 autocrlf 설정과 무관하게 .sh 는 LF 로 고정한다.
+*.sh text eol=lf
+
+# Rust 소스도 LF 통일 (cross-platform diff noise 감소).
+*.rs text eol=lf
+Cargo.toml text eol=lf

@@ -132,3 +132,13 @@ scripts/lib/check_responsibility_marker_drift.py
 #   (100755) — Check 4 exec-bit 의무(.sh/.py 비면제, check-consumer-scripts-manifest.sh L137-148).
 scripts/check-parallel-work-sentinel.sh:templates/github-workflows/parallel-work-sentinel-check.yml
 scripts/lib/check_parallel_work_sentinel.py:templates/github-workflows/parallel-work-sentinel-check.yml
+
+# CFP-2506 (ADR-033 Amendment 1) — Rust consumer 로컬빌드 경로 표준.
+# build-local.{sh,ps1} = consumer 가 자기 Rust repo 루트에서 한 줄 실행하는
+# ad-hoc 개발자 CLI (cargo check 1차 → Docker 마운트 빌드 / native cargo →
+# graceful degrade). CI runtime invoke 아님(workflow 가 호출하지 않음) →
+# dependent-workflow 미부착 (codeforge-upgrade.sh 선례 답습). bootstrap-consumer.sh
+# Stage 7 가 consumer repo 에 1:1 mirror → consumer 가 `templates/scripts/build-local.*`
+# verbatim 경로로 접근. 둘 다 chmod +x(100755) — Check 4 exec-bit 의무(.sh/.ps1 비면제).
+templates/scripts/build-local.sh
+templates/scripts/build-local.ps1

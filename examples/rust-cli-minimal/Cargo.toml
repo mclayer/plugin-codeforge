@@ -1,0 +1,16 @@
+[package]
+name = "rust-cli-minimal"
+version = "0.1.0"
+edition = "2021"
+# CFP-2506 — Rust 로컬빌드 경로 실증용 단일 crate example (cli-tool-minimal shape Rust 화).
+# 가상 도메인 = Log Parser (cli-tool-minimal 답습). production crate 아님.
+description = "codeforge Rust consumer 로컬빌드 경로 실증 example (단일 crate)"
+publish = false
+
+[[bin]]
+name = "rust-cli-minimal"
+path = "src/main.rs"
+
+[dependencies]
+# 의존성 0 — std 만으로 cargo check 실효(E0382 partial-move 실증)를 보인다.
+# consumer 는 자기 stack(clap/serde 등)을 여기 채운다.
