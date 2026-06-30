@@ -1,0 +1,39 @@
+name: adr-reservation-claim-test
+# CFP-2491 / Epic CFP-2481 E3b — ADR-RESERVATION atomic claim primitive mutation-RED 검증.
+#
+# QADev 작성 tests/scripts/test_adr-reservation-atomic-claim.sh 의 CI 구현.
+# scripts/lib/adr-reservation-atomic-claim.py (단일-셀 OCC) discriminating self-test:
+#   - m1: PUT 에서 sha= 제거 (unconditional)             → AC-1 + AC-6 (INV-1)
+#   - m2a: 매 attempt SHA re-fetch 생략 (stale blob sha)  → AC-2 (재-fetch 후 성공 분기)
+#   - m2b: 매 attempt next 재계산 생략 (stale N+1)        → AC-2 (lost-update 차단 분기)
+#   - m3: 409 → success 처리                              → AC-2 + AC-6 (INV-5)
+#   - m4: exhausted 시 exit0 (silent drop)               → AC-2 (INV-3)
+#   - m5: dead-gate .github copy 를 docs/adr/ 로 복귀     → AC-7 (wrapper archive/adr 충돌 미검출)
+#   - m6: claim 번호 N-1 기록 (rewind)                   → AC-8 / §8.5.1 (INV-4)
+#   - AC-6 e2e: 동일 blob SHA 2-client → 1×{200|201}+1×409
+#   - AC-7 양-컨텍스트 fixture: wrapper(archive/adr) ∥ consumer(docs/adr)
+#
+# 신규 workflow (CFP-2491 Phase 2 구현체). wrapper-self 전용 (consumer red 회피 — CFP-2437 선례).
+# non-required (ADR-133 §결정6 mechanical_enforcement_actions: [] 정합, 6-tuple 무변경).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  adr-reservation-claim-test:
+    name: adr-reservation-claim-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run ADR-RESERVATION atomic claim mutation-RED test (pure bash + python mock seam)
+        run: bash tests/scripts/test_adr-reservation-atomic-claim.sh
+      - name: Run ADR-RESERVATION stale-reclaim Python smoke test (test-escape 폐쇄 — 구현리뷰 P0 carry F1)
+        run: bash tests/scripts/test_adr-reservation-stale-reclaim.sh
