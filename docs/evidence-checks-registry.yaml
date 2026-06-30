@@ -3417,3 +3417,35 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard — 3-occurrence 도달 시 별 evidence-gated carrier 평가 (ADR-135 §결정 5)
       promotion_trigger: auto_blocking  # recurrence.count ≥ threshold 시 별 carrier 강제 (warning → blocking 승격 = evidence-gated 별 Story, 본 Story 승격 안 함)
     status: Active                  # CFP-2490 Phase 2 wire COMPLETE — L1 hook 확장 + L2 workflow(byte-identical) + script + discriminating test live (ADR-135 §결정 6 3-종 동반)
+  # ─── CFP-2491 Phase 2 (Epic CFP-2481 E3b) — ADR-RESERVATION atomic claim mutation-RED self-test ───
+  # ADR-133 §결정2 (단일-셀 OCC Contents API PUT sha→409) + §결정6 (mechanical_enforcement_actions: [] —
+  # E3b mutation-RED 게이트). non-required (6-tuple 무변경), wrapper-self 전용 (reconcile-overlay-workflow-channel-test 선례).
+  - name: adr-reservation-claim-test
+    description: |
+      CFP-2491 / Epic CFP-2481 E3b — scripts/lib/adr-reservation-atomic-claim.py (단일-셀 OCC)
+      mutation-RED 검증. tests/scripts/test_adr-reservation-atomic-claim.sh 가 m1-m6 + m2a/m2b
+      (설계리뷰 Claude F2 물리 2-mutant 분리) + AC-6 e2e + AC-7 양-컨텍스트(wrapper archive/adr ∥
+      consumer docs/adr) 를 deterministic mock seam(StubClient — 고정 stale SHA 주입, 타이밍 의존 0)으로
+      kill 한다. INV-1(모든 write sha=) / INV-3(exhausted exit1, silent drop 0) / INV-4(단조 비감소) /
+      INV-5(동일 SHA 2-client → 1 success + 1×409). Pattern A(post-merge-telemetry.sh) 충실 포팅 —
+      신규 알고리즘 발명 0. wrapper-self 전용 (consumer red 회피 — CFP-2437 선례).
+    detect_command: bash tests/scripts/test_adr-reservation-atomic-claim.sh
+    workflow: .github/workflows/adr-reservation-claim-test.yml
+    current_tier: warning            # non-required self-test (ADR-133 §결정6 mechanical_enforcement_actions: [] 정합, 6-tuple 무변경)
+    # bypass_label: omit — non-required self-test, merge 무차단 (의미 부적용)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    introduced_by: CFP-2491
+    introduced_date: 2026-06-30       # KST
+    owner_adr: ADR-133               # OCC atomic claim 프로토콜 SSOT (Amendment 1 = E3b 구현 결정)
+    carrier_adr: ADR-060             # evidence-enforceable framework host
+    recurrence:
+      count: 0
+      threshold: 3                   # ADR-060 §결정 19 standard default
+      promotion_trigger: none
+    status: Active

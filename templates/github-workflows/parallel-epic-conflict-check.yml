@@ -58,7 +58,7 @@ jobs:
           cat /tmp/overlap.txt
 
           # ADR-RESERVATION.md 충돌 여부
-          grep -q "^docs/adr/ADR-RESERVATION.md$" /tmp/overlap.txt \
+          grep -qE "^(docs|archive)/adr/ADR-RESERVATION.md$" /tmp/overlap.txt \
             && echo "adr=true" >> $GITHUB_OUTPUT || echo "adr=false" >> $GITHUB_OUTPUT
 
           # locked 섹션 파일 충돌 여부
