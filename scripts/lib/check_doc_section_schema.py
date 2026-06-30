@@ -36,6 +36,13 @@ REQUIRED_SECTIONS = {
         r"^## 결과",
         r"^## 관련 파일",
     ],
+    "archive/adr": [
+        r"^## 상태",
+        r"^## 컨텍스트",
+        r"^## 결정",
+        r"^## 결과",
+        r"^## 관련 파일",
+    ],
     "docs/domain-knowledge": [
         r"^## 정의",
         r"^## 컨텍스트",

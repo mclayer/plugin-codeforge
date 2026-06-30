@@ -96,12 +96,16 @@ N/A — permanent policy. 본 ADR 은 모델 tier 선택 정책의 상시 기준
 - 옵션 B(minimal pilot 3~4개) **기각** — 채택 범위가 너무 좁아 chief author / 장기 코딩 / 적대적 심판 3 축의 효용을 동시에 검증하기 불충분하다.
 - 옵션 C(surgical 10 에이전트 채택) **채택** — capability 상승이 2배 비용을 정당화하는 역할만 외과적으로 골라 적용. thinking 손실 0(프로파일 동일)이라 교체 부작용 없음. 제외 군은 현행 모델 유지로 비용 중립.
 
-## 영향 / 후속
+## 결과
 
 - **lane PR(별 PR)**: design / develop / review / requirements 4 lane plugin 의 해당 에이전트 frontmatter `model:` 를 `fable` 로 변경 — 각 lane plugin repo 의 별 PR(본 wrapper foundation PR OOS).
 - **marketplace sync**: plugin.json 메타 변경(version) 동반 시 ADR-063 atomic invariant 에 따라 marketplace sync PR 선행(본 Epic 범위).
 - **consumer 호환성**: 2.1.170 미만 consumer 는 해당 lane 에이전트 spawn 실패 — consumer-guide floor 명시로 사전 고지.
 - **Orchestrator Fable 채택**: 별 결정 사안(§결정 5) — 향후 별 ADR/CFP.
+
+## 관련 파일
+
+- `docs/consumer-guide.md`
 
 ## Amendment 1 (2026-06-14) — CFP-2241 — 미 정부 제약에 따른 fable → opus 임시 transitional override
 

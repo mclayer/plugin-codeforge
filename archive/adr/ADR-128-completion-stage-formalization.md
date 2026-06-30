@@ -291,3 +291,23 @@ N/A — `is_transitional: false` (영구 정책, 강화 방향 ratchet).
 - CFP-2377 — 본 ADR carrier Story
 - CFP-2470 — Amendment 1 carrier Story (deferred-recovery self-check, Track W/W2)
 - `docs/domain-knowledge/concept/deferred-item-lifecycle.md` — Amendment 1 4-state lifecycle concept
+
+## 관련 파일
+
+- `archive/adr/ADR-040-worktree-convention.md`
+- `archive/adr/ADR-045-story-retro-mandatory-trigger.md`
+- `scripts/lib/check_deferred_item_recovery.py`
+- `scripts/check-deferred-item-recovery.sh`
+- `.github/workflows/deferred-item-recovery.yml`
+- `hooks/skip-offer-reminder.py`
+- `plugins/codeforge-pmo/templates/retro.md`
+- `docs/domain-knowledge/concept/deferred-item-lifecycle.md`
+- `docs/orchestrator-playbook.md`
+- `skills/worktree-lifecycle/SKILL.md`
+- `skills/post-merge-closure/SKILL.md`
+- `hooks/hooks.json`
+- `templates/scripts/check-worktree-stale.sh`
+- `docs/evidence-checks-registry.yaml`
+- `plugins/codeforge-pmo/agents/GitOpsAgent.md`
+- `templates/github-workflows/post-merge-followup.yml`
+- `templates/github-workflows/retro-mandatory.yml`

@@ -132,6 +132,15 @@ ADR-034 Stage 0(pre-Issue brainstorming) 개념 존속. "조건 불충족 시 su
 - **C — ADR-028 물리 삭제.** 거부: status=Accepted permanent, 이력 보존(supersede 가 정본).
 - **D — ADR-017/064 §결정10/013 동반 supersede.** 거부: 이 3개는 superpowers-agnostic — supersede 시 governance 약화(ADR-058 §결정5 위반). 존속.
 
+## 결과
+
+본 결정의 효과(기존 본문 §consumer 영향 / §회귀 방지 설계 / §해소 기준 요약 — 신규 결정 0):
+
+- **자립성 확보**: superpowers 라이브 호출 89건 → 0(EXEMPT 제외) + brainstorm/writing-plans discipline 을 codeforge native 로 내재화 → "0 core 에이전트 wrapper-only" 정체성과 외부 의존 긴장 해소.
+- **consumer 무손상**: consumer 는 superpowers opt-in(overlay 확장) 유지 — 본 제거는 wrapper dogfood self 한정, bootstrap WARN 은 non-blocking 이라 consumer breaking 0.
+- **회귀 차단(ratchet 강화)**: `check-no-superpowers.sh` warning-first gate + evidence-registry warning entry + recurrence threshold 3 으로 호출 토큰 재유입 차단. discipline 준수는 흡수처 3곳(QADev red-first / writing-plans 0-context plan / root-cause-decision iteration 가설차별화) 명문화 + review judgment.
+- **존속성**: permanent policy(referent 소멸 cleanup 영구) — sunset 대상 아님(§해소 기준).
+
 ## consumer 영향
 
 - consumer 프로젝트는 여전히 superpowers 설치 가능(overlay 확장). 본 제거 = wrapper dogfood self 한정.

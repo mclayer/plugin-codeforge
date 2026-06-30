@@ -283,3 +283,13 @@ N/A — `is_transitional: false` (영구 정책, 강화 방향 ratchet).
 - [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) — 면제·단축 폐지 (본 ADR ratchet 정합 + change-plan 산출)
 - [ADR-120](ADR-120-token-relocation-eligibility-criteria.md) — §결정 3 skill = 절차 split
 - CFP-2392 — 본 ADR carrier Story / CFP-2391 — parent Epic (OMC-adopt)
+
+## 관련 파일
+
+- `archive/adr/ADR-045-story-retro-mandatory-trigger.md`
+- `archive/adr/ADR-071-orchestrator-user-dialog-convergence.md`
+- `skills/knowledge-capture-gate/SKILL.md`
+- `docs/orchestrator-playbook.md`
+- `CLAUDE.md`
+- `docs/evidence-checks-registry.yaml`
+- `docs/domain-knowledge/domain/governance-principle/knowledge-capture-and-memory-governance.md`
