@@ -94,7 +94,7 @@ ADR-036 "Project key atomic reservation"(KEY = `<PREFIX>-<Issue#>`)은 동형 re
 단일-셀 OCC 를 server-side atomic 으로 실현하는 REST 채널은 한정적이며, 이 선택이 설계의 load-bearing 분기다:
 
 - **✅ Contents API `PUT /repos/{owner}/{repo}/contents/{path}` — 채택**: 요청에 기존 파일의 blob `sha` 를 mandatory 전달 → server 가 현재 SHA 와 비교 → **불일치 시 `409 Conflict`**, 일치 시에만 atomic 갱신. **REST-only 로 보장되는 진짜 단일-셀 OCC**(version stamp = blob SHA, validation = server-side SHA 비교).
-- **❌ Git Refs API `PATCH /git/refs/{ref}` — 부적합**: `force` boolean 만 있고 **expected-old-SHA CAS-equality precondition 부재**. 유일한 충돌 거부는 `force=false` 의 fast-forward 거부(HTTP 422)인데 이는 branch HEAD 단위라 *"최고 ADR 번호 = N 일 때만 N+1 점유"* 라는 **단일 카운터값 직렬화**를 실현하지 못한다. 따라서 단일-셀 OCC 는 Contents API `sha`→409 경로가 유일.
+- **❌ Git Refs API `PATCH /git/refs/{ref}` — 부적합**: `force` boolean 만 있고 **expected-old-SHA CAS-equality precondition 이 부재**하다. 즉 *"최고 ADR 번호 = N 일 때만 N+1 점유"* 라는 **단일 카운터값('최고=N일 때만 N+1') 직렬화**를 server-side conditional 로 실현할 수단이 없다(`force=false` 의 fast-forward 거부는 branch HEAD 단위 정합일 뿐, 단일 셀 카운터 직렬화가 아니다 — 공식문서가 거부 코드를 422/409 둘 다 listing 하므로 구체 HTTP 코드는 비단정). 따라서 단일-셀 OCC 는 Contents API `sha`→409 경로가 유일.
 
 **신규 알고리즘 발명 금지 — Pattern A binding (RefactorAgent reusability 축)**: 본 채널은 codeforge 가 이미 `docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md` Pattern A(GitHub Contents API SHA-based optimistic concurrency, **모든 cross-repo jsonl write 의무 패턴**)로 codify 한 것과 동일 primitive 다. **작동 참조구현 = `scripts/post-merge-telemetry.sh`** (Contents API conditional PUT `-f sha=$SHA` + HTTP 409 감지 + re-fetch SHA + jitter retry max 3 + 소진 시 fail). ADR-133 은 신규 알고리즘을 발명하지 않고 **이 Pattern A 를 ADR-RESERVATION.md 에 binding** 한다(E3b 가 재사용·일반화 구현).
 
