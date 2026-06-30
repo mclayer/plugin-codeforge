@@ -509,6 +509,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-2490
     reservation_date: 2026-06-30 KST
     status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-135 force-push pre-flight HEAD-pin 가드, Epic CFP-2481 E2 / #1027 escalation carrier). own-branch push-time pre-flight 축 (spawn-time SHA-anchor / cross-repo state assertion 과 disjoint 3축). ADR-039 §결정 14 (branch-create-time pin) + ADR-073 Amendment 5 (CFP-1103 sibling 명시) sibling — supersede 아님. verified-via `git ls-tree origin/main archive/adr/` latest = ADR-134 + ADR-RESERVATION 135 collision check empty → available, 2026-06-30 KST 기준 origin/main 49efa242. status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). CFP-702 ADR collision 교훈 답습 (max+1 실측 후 점유).
+
+  - adr_number: 136
+    amendment_id: null
+    reserved_by_cfp: CFP-2505
+    reservation_date: 2026-06-30 KST
+    status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-136 frontend 품질게이트 표준, escalation #2502 / mctrader-web WEB-033 carrier). D1 구조적 CSS lint(stylelint) CI 게이트 + D2 UI 실렌더 검증(§8.7) + frontend.applicable CONDITIONAL flag — frontend-bearing consumer 조건부. 신규 메커니즘 0 (전부 기존 ADR 패턴 확장, supersede 0). verified-via worktree `git ls-tree origin/main archive/adr/` latest = ADR-135 (origin/main 55727a8) + ADR-RESERVATION row 135 → max+1 = 136. ⚠ 프롬프트 가정 ADR-132 는 stale (origin/main 에 ADR-132 consumer-branch-protection-auto-wire 가 이미 점유) — firsthand origin/main 실측으로 136 정정 (CFP-702 ADR collision 교훈 답습 — max+1 실측 후 점유). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
 ```
 
 ## 해소 기준
