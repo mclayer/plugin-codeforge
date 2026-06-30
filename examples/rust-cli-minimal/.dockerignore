@@ -1,0 +1,37 @@
+# CFP-2506 / ADR-033 — rust-cli-minimal example .dockerignore
+# build context 축소 + secret leak 방지 + host target/ 캐시 오염 차단
+
+# Rust build artifacts (host target/ — 컨테이너 linux target 과 혼재 금지)
+target
+Cargo.lock
+
+# Git / VCS
+.git
+.gitignore
+.gitattributes
+
+# CI / GitHub
+.github
+
+# Codeforge
+.claude
+.claude-work
+
+# Docs / markdown
+*.md
+docs
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
