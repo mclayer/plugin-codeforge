@@ -2,7 +2,7 @@ name: tier-downgrade guard
 # tier-downgrade guard — evidence-checks-registry.yaml current_tier(강제강도 SSOT) 무단 하향 방지.
 #
 # 레드팀 발견: current_tier 가 검사 강제 강도의 SSOT 인데 어떤 검사도 이 필드를 지키지 않음
-#   (기존 약화방지 가드는 전부 docs/adr/ADR-*.md 경로 scope). 본 가드는 tier 하향/entry 제거를
+#   (기존 약화방지 가드는 전부 (docs|archive)/adr/ADR-*.md 경로 scope). 본 가드는 tier 하향/entry 제거를
 #   감지하고 `tier-downgrade-justification:` 마커가 없으면 run 을 FAIL 시킨다.
 #   이 마커 = 정정/축소 lane(promotion CFP 없이 근거만으로 진행)의 강제 수단.
 #   정책 SSOT: docs/correction-lane.md

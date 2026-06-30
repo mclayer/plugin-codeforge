@@ -196,11 +196,11 @@ jobs:
             //   checkSecurityNonTouch(body, pr, files, github, context): 조건 3 — 양면 SECURITY_PATHS non-match
 
             // SECURITY_PATHS: 조건 3 보안 경로 패턴 (§3.3 verbatim, Change Plan §7.2 STRIDE T1/T2 차단)
-            //   (a) 보안 분류 ADR — docs/adr/ADR-*.md (category:security 또는 title /security/i best-effort)
+            //   (a) 보안 분류 ADR — (docs|archive)/adr/ADR-*.md (category:security 또는 title /security/i best-effort)
             //   (b) docs/security/ — 보안 문서
             //   consumer overlay 가 SECURITY_PATHS 확장 가능 (축소 불가 — ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 Amendment 2 §결정 A (확장-only 패턴))
             const SECURITY_PATHS = [
-              /^docs\/adr\/ADR-.*\.md$/,   // (a) ADR 파일 (보안 분류 frontmatter best-effort — 파일명 패턴 1차 match)
+              /^(docs|archive)\/adr\/ADR-.*\.md$/,   // (a) ADR 파일 (보안 분류 frontmatter best-effort — 파일명 패턴 1차 match)
               /^docs\/security\//           // (b) 보안 문서
             ];
 

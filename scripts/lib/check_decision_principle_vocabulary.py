@@ -32,6 +32,7 @@ FORBID_DICTIONARY = [
 # ─── 5 scope glob (ADR-064 §결정 2 verbatim — broad coverage anchor) ───
 SCOPE_GLOBS = [
     "docs/adr/ADR-*.md",
+    "archive/adr/ADR-*.md",
     "docs/change-plans/**/*.md",
     "CLAUDE.md",
     "docs/orchestrator-playbook.md",

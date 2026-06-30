@@ -848,7 +848,7 @@ jobs:
           참조 SSOT:
           - [docs/consumer-guide.md §1h Action 차단 환경 fallback](../blob/main/docs/consumer-guide.md)
           - [docs/consumer-guide.md §1i Enterprise environment setup](../blob/main/docs/consumer-guide.md)
-          - [ADR-027 Amendment 2 §결정 6](../blob/main/docs/adr/ADR-027-consumer-adoption-protocol.md)
+          - [ADR-027 Amendment 2 §결정 6](../blob/main/archive/adr/ADR-027-consumer-adoption-protocol.md)
           - CFP-658 Phase 2 \`templates/scripts/manual-story-init-fallback.sh\`
           - Branch: \`feat/${KEY}-${SLUG}\` (이미 push 완료 — manual PR open 만 필요)
 

@@ -44,6 +44,7 @@ SCOPE_GLOBS = [
     "CLAUDE.md",
     "docs/orchestrator-playbook.md",
     "docs/adr/ADR-*.md",
+    "archive/adr/ADR-*.md",
     "wrapper/retros/**/*.md",       # internal-docs path (이 repo 에서는 docs/retros/ 매핑)
     "docs/retros/**/*.md",          # wrapper repo 실제 경로 (consumer overlay 정합)
 ]
@@ -109,8 +110,8 @@ def in_scope(p):
     path = Path(norm)
     if norm in {"CLAUDE.md", "docs/orchestrator-playbook.md"}:
         return True
-    # ADR files
-    if path.match("docs/adr/ADR-*.md"):
+    # ADR files (wrapper archive/adr + consumer docs/adr — path-agnostic, CFP-2519)
+    if path.match("docs/adr/ADR-*.md") or path.match("archive/adr/ADR-*.md"):
         return True
     # retros
     if norm.startswith("wrapper/retros/") and norm.endswith(".md"):
