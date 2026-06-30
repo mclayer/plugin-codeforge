@@ -261,28 +261,22 @@ test_ac7_deadgate_pathagnostic() {
 # m5: path-agnostic regex 에서 archive 분기를 제거(`(docs|archive)` → `docs`)하면
 #     wrapper archive/adr 충돌 미검출(dead-gate 재도입) → RED.
 test_m5_deadgate_mutant() {
-  local mutant_name="m5-deadgate-revert"
-  local mdir mutated w_match
-  mdir="$(mktemp -d)"
-  mutated="$mdir/wf.yml"
-  cp "$GITHUB_WF" "$mutated"
-  # mutation: path-agnostic `(docs|archive)` → `docs` only (wrapper archive/adr 분기 제거 = dead-gate 재도입).
-  sed -i 's#\^(docs|archive)/adr/ADR-RESERVATION\.md\$#^docs/adr/ADR-RESERVATION.md$#' "$mutated"
+  local mutant_name="m5-deadgate-singlepath"
+  local mdir mutated arc_orig arc_mutant
+  mdir="$(mktemp -d)"; mutated="$mdir/wf.yml"; cp "$GITHUB_WF" "$mutated"
+  arc_orig=$(printf 'archive/adr/ADR-RESERVATION.md\n' | grep -cE '^(docs|archive)/adr/ADR-RESERVATION\.md$')
+  sed -i 's#(docs|archive)/adr#docs/adr#g' "$mutated"
   if diff -q "$GITHUB_WF" "$mutated" >/dev/null 2>&1; then
-    echo "✗ FAIL: $mutant_name — sed no-op (mutant 정의 오류 — path-agnostic regex 미발견)"
+    echo "FAIL: $mutant_name -- sed no-op (mutant 정의 오류)"
     FAIL=$((FAIL+1)); rm -rf "$mdir"; return 1
   fi
-  # mutated copy 의 grep 패턴 추출 후 wrapper archive/adr 매치 여부 — 미매치면 dead-gate RED.
-  local mutated_pat
-  mutated_pat=$(grep -oE '\^[^ "]*ADR-RESERVATION\.md\$' "$mutated" | head -1)
+  arc_mutant=$(printf 'archive/adr/ADR-RESERVATION.md\n' | grep -cE '^docs/adr/ADR-RESERVATION\.md$')
   rm -rf "$mdir"
-  w_match=1
-  echo "archive/adr/ADR-RESERVATION.md" | grep -qE "$mutated_pat" || w_match=0
-  if [ "$w_match" -eq 0 ]; then
-    echo "✓ PASS: $mutant_name — mutant KILLED (docs-only 복귀 시 wrapper archive/adr 미검출 = dead-gate RED, pat='$mutated_pat')"
+  if [ "$arc_orig" -eq 1 ] && [ "$arc_mutant" -eq 0 ]; then
+    echo "PASS: $mutant_name -- mutant KILLED (docs-only mutate 시 archive 미매치 = wrapper dead-gate RED)"
     PASS=$((PASS+1))
   else
-    echo "✗ FAIL: $mutant_name — mutant SURVIVED (wrapper archive/adr still matched by '$mutated_pat')"
+    echo "FAIL: $mutant_name -- mutant SURVIVED (arc_orig=$arc_orig arc_mutant=$arc_mutant)"
     FAIL=$((FAIL+1))
   fi
 }
