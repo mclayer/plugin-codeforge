@@ -188,21 +188,35 @@ actionable 하면서도 burden 과잉이 아니도록 다음으로 균형을 잡
 - **wrapper self = N/A**: codeforge wrapper 자신은 외부 venue/거래소 stream 을 touch 하지 않는다(plugin-meta / 내부 거버넌스 문서·agent md) → 본 의무 항상 N/A(ADR-005 `plugin-meta-na`).
 - **venue-touching consumer(mctrader 류) = active**: 거래소 L2/tick·WS stream·snapshot 프로토콜·시계열 candle 에 의존하는 consumer Story 에서 발동. consumer overlay 는 보수 방향(추가 venue 별 형상 체크리스트 확장)만 — 의무 축소 불가(overlay 확장-only 정합).
 
-### A1-8 — Phase 2 deferred (기계적 lint)
+### A1-8 — Phase 2 기계적 lint (anchor-presence wire — CFP-2504 Phase 2 COMPLETE)
 
-synthetic-only 자동탐지(예: fixture 가 균일 +1 seq · 고정 interval 인지 정적 판별)는 **본질적으로 fuzzy** — "shape-sensitive 코드인가" 판정과 "fixture 가 실형상인가" 판정 모두 의미 추론을 요구해 단순 정적 grep 으로 안정 검출이 어렵다. 따라서 본 Amendment 는 **Phase 1 선언적 의무**(TestContractArch mandate + 설계리뷰 체크리스트 항목)만 정착하고, 기계적 lint 는 **별도 follow-up(deferred-followup)**으로 미룬다.
+synthetic-only 자동탐지(예: fixture 가 균일 +1 seq · 고정 interval 인지 정적 판별)는 **본질적으로 fuzzy** — "shape-sensitive 코드인가" 판정과 "fixture 가 실형상인가" 판정 모두 의미 추론을 요구해 단순 정적 grep 으로 안정 검출이 어렵다. 따라서 Phase 1 은 **선언적 의무**(TestContractArch mandate + 설계리뷰/code-review 체크리스트 항목, review-의존)만 정착했다.
 
-- evidence-checks-registry 에 placeholder entry `venue-shape-fidelity-presence`(status: deferred-followup, detect_command/workflow omit — `deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴 답습) 추가.
-- Phase 2 carrier 가 실 lint 알고리즘(예: §8 에 "형상 재현/captured-golden/실형상-justified" 또는 "N/A — venue 미접촉" anchor presence 검출) 설계 후 warning 전환.
+**Phase 2 (CFP-2504, 본 wire COMPLETE)** = 그 review-의존 선언을 **review-독립 CI 기계 lint** 로 보강한다. 단, fuzzy 영역("합성인지 자동판정")은 **여전히 scope 외** — Phase 2 lint 는 **anchor-presence** 만 검출한다: venue-applicable consumer 의 §8 Test Contract 에 형상 재현 선언(captured-golden / 실형상-justified fixture) **또는** 명시적 N/A(venue 미접촉 사유) anchor 가 **존재**하는가. 선언도 N/A 도 부재 = 위반(warning). "올바른 형상인가"의 실 검증은 Phase 1 review channel(설계리뷰 P0 + code-review fixture 형상 실재현)이 계속 담당 — 기계 lint 는 §8 선언 누락만 잡는 보강 layer 다(검사연극 금지 — ADR-119).
+
+- evidence-checks-registry entry `venue-shape-fidelity-presence` = **status: Active**(deferred-followup → flip), detect_command/workflow populate(CFP-967/CFP-2490 populate 패턴 답습).
+- 기계 wire = anchor-presence lint(Python SSOT `scripts/lib/check_venue_shape_fidelity_presence.py` + thin wrapper `scripts/check-venue-shape-fidelity-presence.sh`, ADR-061) + workflow(`templates/github-workflows/` + `.github/workflows/` byte-identical, ADR-005) + discriminating self-test(`tests/scripts/test_check-venue-shape-fidelity-presence.sh`, gating + shape/N/A anchor 판별 + mutation 생존 0, CFP-1334).
+- CONDITIONAL 활성 = `project.yaml venue.applicable: true`(안전 방향 default false — `frontend.applicable` ADR-136 2-layer 동형). flag false/미주입(wrapper self 포함) = lint no-op PASS. consumer 전파 = `consumer_applicable_workflows.txt` + `consumer-scripts.manifest` 등재(story-section-schema.yml 답습). warning-tier(continue-on-error, ADR-060 §결정 5 첫 도입) — branch protection 6-tuple 무변경.
 
 ### A1-9 — 해소 기준
 
-N/A — permanent policy (외부 venue/시계열 의존 Story 가 존재하는 한 영구 적용). Phase 2 lint wire 는 별 carrier 추적.
+N/A — permanent policy (외부 venue/시계열 의존 Story 가 존재하는 한 영구 적용). Phase 2 lint wire = CFP-2504 Phase 2 COMPLETE (anchor-presence lint Active). warning→blocking 승격은 recurrence-driven 별 evidence-gated carrier (ADR-060 §결정 19) 추적.
 
 ### A1-10 — 관련 파일 (Amendment 1)
 
+**Phase 1 (선언적 mandate)**:
 - `plugins/codeforge-design/agents/TestContractArchitectAgent.md` (§8.5 인접 신항 — production-venue shape fidelity)
 - `plugins/codeforge-review/templates/review-checklists/design.md` (Test Contract 타당성 섹션 1항 추가 — §8 선언 강제)
 - `plugins/codeforge-review/templates/review-checklists/code.md` (테스트 코드 품질 1항 추가 — 구현 fixture 형상 실재현 검증, loop closure)
 - `docs/evidence-checks-registry.yaml` (`venue-shape-fidelity-presence` deferred-followup placeholder entry)
 - `skills/deputy-mandate/SKILL.md` (§8 row cross-ref 1줄 — 선택)
+
+**Phase 2 (CFP-2504 — anchor-presence 기계 lint wire)**:
+- `scripts/lib/check_venue_shape_fidelity_presence.py` (Python SSOT — venue.applicable gating + §8 anchor-presence 검출, ReDoS-safe)
+- `scripts/check-venue-shape-fidelity-presence.sh` (bash thin wrapper, ADR-061)
+- `templates/github-workflows/venue-shape-fidelity-presence-check.yml` + `.github/workflows/venue-shape-fidelity-presence-check.yml` (byte-identical mirror, ADR-005)
+- `tests/scripts/test_check-venue-shape-fidelity-presence.sh` (discriminating self-test — gating + shape/N/A anchor 판별 + mutation 생존 0, CFP-1334)
+- `docs/evidence-checks-registry.yaml` (entry status deferred-followup → Active, detect_command/workflow populate)
+- `docs/project-config-schema.md` (`venue.applicable` schema field — bool default false, frontend.applicable 동형)
+- `templates/scripts/consumer_applicable_workflows.txt` + `templates/consumer-scripts.manifest` (consumer 전파 등재)
+- `docs/inter-plugin-contracts/label-registry-v2.md` + `docs/inter-plugin-contracts/MANIFEST.yaml` (`hotfix-bypass:venue-shape-fidelity` 라벨 등재)

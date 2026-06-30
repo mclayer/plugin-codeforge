@@ -3333,49 +3333,60 @@ entries:
       promotion_trigger: none
     status: Active                  # 게이트 자체 실존·Active (ADR-037 workflow 운용 중) — entry 는 멤버십 SSOT 부착 carrier
 
-  # ─── CFP-2504 Phase 1 (ADR-006 Amendment 1 — 외부 venue/시계열 데이터 형상 재현 fidelity 의무) ───
+  # ─── CFP-2504 (ADR-006 Amendment 1 — 외부 venue/시계열 데이터 형상 재현 fidelity 의무) ───
   # carrier = mctrader MCT-58: 합성 +1 seq 균일 형상으로 829 green·전 lane PASS 인데 실 venue μs-as-seq
   # snapshot-only 스트림(~78ms 점프) 미재현 → 라이브 직후 GAP-flood. §8 Test Contract 에 형상 재현 fidelity 의무 신설.
-  # Phase 1 = 선언적 mandate(TestContractArch §8.7 + design.md 체크리스트)만. 기계적 lint = 본질적 fuzzy → deferred-followup.
-  # `deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴 답습 — detect_command / workflow omit (Phase 2 mechanical wire carrier 후 populate + warning 전환).
+  # Phase 1 = 선언적 mandate(TestContractArch §8.7 + design.md 체크리스트)만 — review-의존.
+  # Phase 2 (본 wire) = anchor-presence CI 기계 lint 로 review-독립 강제. status deferred-followup → Active,
+  # detect_command / workflow populate (CFP-967 / CFP-2490 populate 패턴 답습 — Phase 2 mechanical wire).
   - name: venue-shape-fidelity-presence
     description: |
-      ADR-006 Amendment 1 §A1-2/A1-8 — 외부 venue/시계열 데이터 의존 Story 의 §8 Test Contract 에
-      실-venue-형상 재현(captured-golden / 실 venue tap / seq 의미론·timestamp granularity·다중성·
-      GAP/rate-spike/disorder 를 실형상 근거로 justify 한 fixture) 방법 명시 또는 N/A(venue 미접촉) 사유
-      anchor presence 검출.
+      ADR-006 Amendment 1 §A1-2/A1-3/A1-8 — 외부 venue/시계열 데이터 의존 Story(project.yaml
+      venue.applicable: true consumer) 의 docs/stories/*.md §8 Test Contract 에 실-venue-형상 재현
+      선언(captured-golden / 실형상-justified fixture — seq 의미론·timestamp granularity·다중성·
+      GAP/rate-spike/disorder anchor) 또는 명시적 N/A(venue 미접촉 사유) anchor presence 검출.
 
-      Wave 1 status (Phase 1 PR, 본 entry registration) = `deferred-followup`:
-        본 entry 등록 자체 = declarative anchor. detect_command / workflow omit (`deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴).
-        synthetic-only 자동탐지("fixture 가 균일 +1 seq·고정 interval 인가" + "shape-sensitive 코드인가")는
-        본질적 fuzzy(의미 추론 요구) — 단순 정적 grep 안정 검출 난망 → Phase 2 carrier 가 실 lint 알고리즘
-        (§8 anchor presence 검출 등) 설계 후 wire.
-
-      Wave 2 status (Phase 2 PR scope, future carrier) = `warning` 전환:
-        - detect_command / workflow populate (anchor presence lint — §8 에 형상 재현 또는 N/A 사유 부재 detect)
-        - bats fixture RED→GREEN stash proof (CFP-1334)
-    # detect_command: omit — `deputy-spawn-count-empirical-grounding`(CFP-1086) omit 패턴 (Phase 2 mechanical wire carrier 후 populate)
-    # workflow: omit — Phase 2 carrier
-    current_tier: warning           # ADR-060 schema required field (deferred-followup status, tier 분류 = warning 의도)
+      Phase 2 mechanical wire (본 entry flip) = `Active`:
+        - review-독립 CI 기계 lint 로 review-의존 Phase 1 선언적 mandate 를 보강.
+        - venue.applicable false/미주입(wrapper self 포함) = no-op PASS (안전 방향 default false,
+          ADR-136 frontend.applicable 동형). venue-touching consumer(mctrader 류) 만 실 검사 대상.
+        - anchor-presence 만 검출 — "합성인지 자동판정"(fixture 가 균일 +1 seq·고정 interval 인가 +
+          shape-sensitive 코드인가)은 본질적 fuzzy(의미 추론 요구) → scope 외 (A1-8 / ADR-119).
+          "올바른 형상인가" 실 검증은 Phase 1 review channel(설계리뷰 P0 + code-review fixture 형상
+          실재현)이 담당 — 본 lint 는 §8 선언 누락만 잡음.
+        - graceful-degradation 2-tier: data-absence(venue.applicable false / docs/stories 부재 /
+          §8 본문 부재)=fail-open(exit 0 honest no-op) / setup-error(project.yaml YAML parse 실패)=
+          fail-closed(exit 2). §8 구조 결손은 story-section-schema.yml 관할(중복 차단).
+        - 본 wire 산출물: scripts/lib/check_venue_shape_fidelity_presence.py (Python SSOT, anchored
+          simple regex + 고정 substring = ReDoS-safe) + scripts/check-venue-shape-fidelity-presence.sh
+          (bash thin wrapper, ADR-061) + templates/github-workflows/venue-shape-fidelity-presence-check.yml
+          + .github/workflows/venue-shape-fidelity-presence-check.yml (byte-identical mirror, ADR-005) +
+          tests/scripts/test_check-venue-shape-fidelity-presence.sh (self-contained discriminating test,
+          gating + shape/N/A anchor 판별 + mutation 생존 0). consumer 전파 = consumer_applicable_workflows.txt
+          + consumer-scripts.manifest 등재 (story-section-schema.yml 답습).
+    detect_command: bash scripts/check-venue-shape-fidelity-presence.sh  # CFP-2504 Phase 2 mechanical wire — script 실존 (Python SSOT check_venue_shape_fidelity_presence.py + thin wrapper, ADR-061)
+    workflow: templates/github-workflows/venue-shape-fidelity-presence-check.yml  # templates+.github byte-identical (ADR-005 정합), consumer-applicable (consumer_applicable_workflows.txt 등재)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error, blocking 승격 = evidence-gated 별 carrier)
     bypass_label: hotfix-bypass:venue-shape-fidelity
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
       pr_cumulative_min: 20
       failure_threshold: 0
-      sibling_dependencies: []      # Phase 2 mechanical wire = 별 sub-CFP carrier
+      sibling_dependencies: []      # 본 entry = Phase 2 mechanical wire 자체 (별 sub-CFP carrier 불요)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
     introduced_by: CFP-2504
+    introduced_date: 2026-06-30     # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-006-Amendment-1  # declaration source — §8 Test Contract 형상 재현 fidelity 의무 SSOT
     carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework carrier
     recurrence:
       count: 1                      # mctrader MCT-58 GAP-flood single occurrence (firsthand carrier evidence)
       threshold: 2                  # ADR-045 §D-9 N=2 standard Mandatory escalation threshold
-      last_occurrence: null         # 첫 도입, lint 발화 0건 (carrier incident 는 consumer 측 MCT-58)
+      last_occurrence: null         # lint 발화 0건 (carrier incident 는 consumer 측 MCT-58)
       promotion_trigger: warning_tier_initial
-    status: deferred-followup       # Wave 1 declarative status — Phase 2 mechanical wire 후 `warning` 전환
+    status: Active                  # CFP-2504 Phase 2 wire COMPLETE — anchor-presence lint + byte-identical workflow + discriminating test live
 
   # CFP-2490 신설 — ADR-135 (Epic CFP-2481 E2) — force-push pre-flight HEAD-pin 가드 L2 CI 사후 detect
   - name: force-push-base-advance-detect

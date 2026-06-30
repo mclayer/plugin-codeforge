@@ -430,6 +430,18 @@ frontend 품질게이트(D1 구조적 CSS lint + D2 UI 실렌더 검증)의 auth
 - **미정의 시 동작**: `frontend` 섹션 자체가 없으면 default `false` 적용 → 게이트 비활성 + §8.7 N/A. codeforge wrapper 강제 안 함 (consumer 자율). 미주입 비차단 → 신규/기존 비-frontend consumer onboarding 마찰 0.
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). D1/D2 게이트 = read-only (consumer overlay value 를 spawn-time 활성 판정 입력으로 수신).
 
+### `venue` 섹션 설명 (CFP-2504 / [ADR-006 Amendment 1](../archive/adr/ADR-006-testcontract-architect.md))
+
+외부 venue/시계열 데이터 형상 재현 fidelity 게이트(§8 Test Contract 에 형상 재현 선언 또는 N/A anchor presence CI lint)의 authoritative 활성 source. `frontend` 섹션과 **완전 동형**(선택필드 + 안전 default false + additive-only + 미주입 비차단 + 2-layer 분리). 1 field — `applicable` (CONDITIONAL 게이트 활성).
+
+- **`venue.applicable`** (선택, bool, **default `false`** — 안전 방향): 외부 venue/시계열 형상 재현 fidelity 게이트 활성 여부. `frontend.applicable`(default `false`) 와 default 방향이 같은 이유 = 대다수 consumer(내부 결정론 / 메모리-only / venue 무관 backend·lib·CLI)가 외부 거래소 venue·tick·WS stream·snapshot·candle 시계열을 touch 하지 않음 → false 가 안전·보편 default (venue-touching 은 mctrader 류 거래 consumer 한정 — ADR-006 Amendment 1 §A1-7 명시).
+  - `true` — venue-touching consumer. `venue-shape-fidelity-presence-check.yml` CI lint 활성 → docs/stories/*.md §8 Test Contract 에 형상 재현 선언(captured-golden / 실형상-justified fixture) 또는 명시적 N/A(venue 미접촉 사유) anchor 부재 시 warning emit (continue-on-error 비차단, ADR-060 첫 도입 warning-tier).
+  - `false` 또는 미주입 — venue 무관 → 게이트 no-op PASS(data-absence fail-open, 비차단). 비-venue consumer 무손상(additive).
+- **2-layer 분리** (RefactorAgent interface separation, ADR-136 동형): `venue.applicable` = **authoritative gate**(lint 런타임 활성 여부) ⊥ whitelist(`consumer_applicable_workflows.txt`) membership = **eligibility**(`venue-shape-fidelity-presence-check.yml` 이 consumer 에 배포될 자격). 두 layer 충돌 시 우선순위 = **flag authoritative** (ADR-130 §결정1 positive whitelist 와 정합 — whitelist 등재가 배포 자격, flag 가 런타임 활성). flag false/미주입 consumer 는 workflow 가 배포돼도 lint 가 내부 no-op PASS.
+- **anchor-presence 한정 (synthetic-detection scope-out)**: 본 lint 는 §8 에 형상 재현 anchor(선언 또는 N/A) 의 **존재** 만 검출한다. "fixture 가 합성인지(균일 +1 seq·고정 interval) 자동판정"은 본질적 fuzzy(의미 추론 요구) → scope 외 (ADR-006 §A1-8 / ADR-119 검사연극 금지). "올바른 형상인가" 실 검증은 Phase 1 review channel(설계리뷰 P0 + code-review fixture 형상 실재현)이 담당 — 본 lint 는 §8 선언 누락만 잡는 review-독립 보강 layer.
+- **미정의 시 동작**: `venue` 섹션 자체가 없으면 default `false` 적용 → 게이트 no-op + §8 anchor 검사 비대상. codeforge wrapper 강제 안 함 (consumer 자율). 미주입 비차단 → 신규/기존 비-venue consumer onboarding 마찰 0. wrapper self = venue 무관(plugin-meta) → 본 섹션 미주입 = 항상 N/A(ADR-005 `plugin-meta-na`, A1-7).
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). lint 게이트 = read-only (consumer overlay value 를 CI-time 활성 판정 입력으로 수신).
+
 ### `story_stakes` 섹션 설명 (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md))
 
 Story-shape 조건부 model tier 의 consumer overlay 영역. 같은 agent role(Amd16 = InfraOperationalArchitectAgent / Amd17 = DomainAgent)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다 — `tier = f(mandate depth, stakes)`. stakes 는 mandate depth 와 orthogonal 축이므로 ADR-042 §결정2 invariant("Sonnet 으로 fully cover 가능 = role 결손 신호")와 양립한다 (low-stakes shape 에서 safety 핵심축이 물리적 dormant → 같은 depth 가 sonnet 으로 cover).
