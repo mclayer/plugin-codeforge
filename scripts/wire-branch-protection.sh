@@ -126,6 +126,21 @@ _candidate_contexts() {
   fi
 }
 
+# ── gh GET fail-closed helper (CFP-2493) ──
+# gh HTTP-error 시 non-zero exit → stdout error JSON 미캡처(빈 출력 + return 1).
+# 성공(exit 0) 시에만 stdout 통과. 404(unprotected)·transient(5xx/network) 모두 fail-closed.
+# 근거: gh 는 HTTP error body 를 stdout 으로 emit + --jq 미적용 (cli/cli#5209) →
+#       2>/dev/null||true 로 못 막음. exit-code 분리가 버전 무관 robust guard.
+_gh_get_or_fail() {
+  # args: gh api 인자 그대로 (--jq 포함). 성공 시 stdout, 실패 시 빈 출력 + return 1.
+  local out
+  if out="$(gh api "$@" 2>/dev/null)"; then
+    printf '%s' "$out"
+    return 0
+  fi
+  return 1
+}
+
 # ── context↔job-name 정합 게이트 (ADR-132 §결정 4, AC-4) ──
 # 실제 배포된 workflow 의 check run 표시명 set 을 GET 해 후보 context 와 교집합.
 # 미정합 context = 배선 제외 + WARN (영구 pending 차단). 게이트 자체는 abort 하지 않음.
@@ -133,17 +148,17 @@ _candidate_contexts() {
 _actual_check_names() {
   local repo="$1" branch="$2"
   local sha
-  sha="$(gh api "repos/${repo}/commits/${branch}" --jq '.sha' 2>/dev/null || true)"
+  sha="$(_gh_get_or_fail "repos/${repo}/commits/${branch}" --jq '.sha')" || return 0
   [ -z "$sha" ] && return 0
-  gh api "repos/${repo}/commits/${sha}/check-runs" --paginate \
-    --jq '.check_runs[].name' 2>/dev/null || true
+  _gh_get_or_fail "repos/${repo}/commits/${sha}/check-runs" --paginate \
+    --jq '.check_runs[].name' || return 0
 }
 
 # ── 현 protection state GET (idempotency GET-merge 의 GET 단계 + --inspect 재사용) ──
 _current_contexts() {
   local repo="$1" branch="$2"
-  gh api "repos/${repo}/branches/${branch}/protection/required_status_checks" \
-    --jq '.contexts[]?' 2>/dev/null || true
+  _gh_get_or_fail "repos/${repo}/branches/${branch}/protection/required_status_checks" \
+    --jq '.contexts[]?' || return 0
 }
 
 _protection_exists() {

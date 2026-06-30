@@ -82,20 +82,26 @@ function Get-CandidateContexts {
     return $DefaultContexts
 }
 
+# ── gh GET fail-closed helper (CFP-2493) — .sh _gh_get_or_fail parity ──
+function Get-GhOrEmpty {
+    param([string[]]$GhArgs)
+    $out = gh api @GhArgs 2>$null
+    if ($LASTEXITCODE -ne 0) { return @() }   # HTTP error → fail-closed 빈 set
+    if (-not $out) { return @() }             # 성공 + 빈 출력 (valid-empty 200) → 빈 set
+    return @($out)
+}
+
 # ── actual check names (정합 게이트 input, ADR-132 §결정 4) ──
 function Get-ActualCheckNames([string]$repo, [string]$branch) {
-    $sha = (gh api "repos/$repo/commits/$branch" --jq '.sha' 2>$null)
-    if (-not $sha) { return @() }
-    $names = gh api "repos/$repo/commits/$sha/check-runs" --paginate --jq '.check_runs[].name' 2>$null
-    if (-not $names) { return @() }
-    return @($names)
+    $shaArr = Get-GhOrEmpty @("repos/$repo/commits/$branch", "--jq", ".sha")
+    if (-not $shaArr) { return @() }
+    $sha = @($shaArr)[0]
+    return Get-GhOrEmpty @("repos/$repo/commits/$sha/check-runs", "--paginate", "--jq", ".check_runs[].name")
 }
 
 # ── 현 protection state GET (GET-merge + -Inspect 재사용) ──
 function Get-CurrentContexts([string]$repo, [string]$branch) {
-    $ctx = gh api "repos/$repo/branches/$branch/protection/required_status_checks" --jq '.contexts[]?' 2>$null
-    if (-not $ctx) { return @() }
-    return @($ctx)
+    return Get-GhOrEmpty @("repos/$repo/branches/$branch/protection/required_status_checks", "--jq", ".contexts[]?")
 }
 
 function Test-ProtectionExists([string]$repo, [string]$branch) {

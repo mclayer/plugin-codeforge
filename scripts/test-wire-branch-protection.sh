@@ -19,6 +19,8 @@
 #  - Mutation-7 (enforce_admins=true → false mutate)        → F7 (payload enforce_admins!=true) PASS 면 RED (REQ-2)
 #  - Mutation-8 (--inspect dead-gate 분기 제거: 0 contexts도 exit0) → F8 (inspect 0-ctx exit!=3) PASS 면 RED (AC-6)
 #  - Mutation-9 (strict=true default 제거)                  → F9 (payload strict!=true) PASS 면 RED (§결정5)
+#  - Mutation-10 (_current_contexts guard 제거: 404 JSON 캡처)  → F11/F13b/F14 (payload error token 포함 / inspect contexts=1) PASS 면 RED (AC-a/AC-e)
+#  - Mutation-11 (_actual_check_names guard 제거: 404 JSON 캡처) → F12a/F12b (actual set 오염) PASS 면 RED (AC-c)
 #
 # Exit code: 0 = all fixtures pass / 1 = any fixture fails
 
@@ -68,15 +70,25 @@ fi
 
 # GET commits/<branch> → sha
 if [[ "$ALL" == *"/commits/"* && "$ALL" == *"check-runs"* ]]; then
+  if [ -f "$FX/check-runs-404" ]; then
+    # 실 gh 404: error JSON 을 stdout 으로 emit + non-zero exit (cli/cli#5209)
+    echo '{"message":"Not Found","documentation_url":"https://docs.github.com/rest","status":"404"}'; exit 1
+  fi
   cat "$FX/check-runs.txt" 2>/dev/null || true
   exit 0
 fi
 if [[ "$ALL" == *"/commits/"* ]]; then
+  if [ -f "$FX/commits-404" ]; then
+    echo '{"message":"No commit found for SHA","status":"404"}'; exit 1
+  fi
   echo "deadbeefsha"; exit 0
 fi
 
 # GET required_status_checks → contexts
 if [[ "$ALL" == *"required_status_checks"* ]]; then
+  if [ -f "$FX/rsc-404" ]; then
+    echo '{"message":"Branch not protected","documentation_url":"https://docs.github.com/rest","status":"404"}'; exit 1
+  fi
   cat "$FX/cur-contexts.txt" 2>/dev/null || true
   exit 0
 fi
@@ -235,6 +247,64 @@ else
   echo "✓ PASS: F10-dry-run-no-put — --dry-run PUT 0 (side-effect 0)"; PASS=$((PASS+1))
 fi
 rm -rf "$R"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CFP-2493 Phase 2 — gh GET 404 error-JSON 오염 guard (_gh_get_or_fail / Get-GhOrEmpty)
+# discriminating fixture. 실 gh 는 HTTP error body 를 stdout 으로 emit + non-zero exit
+# (cli/cli#5209) → `2>/dev/null||true` 로 못 막음. fix = GET 단계 exit-code guard.
+# stub error-mode (check-runs-404 / commits-404 / rsc-404 토글) = stdout error JSON + exit 1.
+# fix 부재(guard 제거 mutation) 시 404 JSON 1줄이 existing/actual set 으로 캡처 → 오염.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── F11: _current_contexts 404 (unprotected branch) — error token 미오염 (AC-a, M10) ──
+# rsc-404 토글 → required_status_checks GET 이 404 JSON + exit 1.
+# guard: _current_contexts 빈 set 반환 → merged = applied candidates only (error token 0).
+# guard 부재(M10): 404 JSON 1줄이 existing 으로 캡처 → merged union → payload contexts 에 'message' 오염 → RED.
+R=$(mktemp -d); build_baseline "$R"
+: > "$R/gh-fixture/cur-contexts.txt"
+touch "$R/gh-fixture/rsc-404"
+run_payload_fixture "F11-current-contexts-404" "unprotected branch (rsc 404) → payload contexts 에 gh-error token 0건" \
+  "$R" absent 'message' --shape solo
+
+# ── F12a: _actual_check_names sha 404 (commits 404) — actual 빈 set, error token 0건 (AC-c, M11) ──
+# commits-404 토글 → sha GET 이 404 JSON + exit 1.
+# guard: _actual_check_names 빈 set → 정합 게이트 "actual 0개" branch → 후보 전체 fallback → PUT(payload 정상).
+# guard 부재(M11): sha 자리에 404 JSON 1줄 캡처 → check-runs GET URL 오염 + actual_raw 오염 → 후보 전체 제외 → PUT 미발생(exit 3) → run_payload "PUT 미캡처" FAIL. (양 regime 차이 = discriminating)
+R=$(mktemp -d); build_baseline "$R"
+touch "$R/gh-fixture/commits-404"
+run_payload_fixture "F12a-actual-sha-404" "sha GET 404 → actual 빈 set + 후보 전체 fallback, payload error token 0건" \
+  "$R" absent 'message' --shape solo
+
+# ── F12b: _actual_check_names check-runs 404 (sha 정상) — actual 빈 set (AC-c, M11) ──
+# check-runs-404 토글 → sha 정상(deadbeefsha) → check-runs GET 이 404 JSON + exit 1.
+# guard: actual_raw 빈 → "actual 0개" branch → 후보 전체 fallback → payload 정상(error token 0).
+# guard 부재(M11): actual_raw = 404 JSON 1줄 → 후보 전체가 grep -qxF 불일치로 제외 → merged 0 → exit 3 → "PUT 미캡처" FAIL.
+R=$(mktemp -d); build_baseline "$R"
+touch "$R/gh-fixture/check-runs-404"
+run_payload_fixture "F12b-actual-checkruns-404" "check-runs GET 404 → actual 빈 set, payload error token 0건" \
+  "$R" absent 'message' --shape solo
+
+# ── F13: valid-empty (200 contexts=[]) vs 404 구분 (AC-h) ──
+# 전자: cur-contexts.txt 빈 (200 정상) → 빈 set 정상 수용 → 후보 union 진행 → payload 에 phase-gate-mergeable present.
+R=$(mktemp -d); build_baseline "$R"
+: > "$R/gh-fixture/cur-contexts.txt"
+run_payload_fixture "F13-valid-empty-200" "200 빈 contexts → 빈 set 정상 수용 + 후보 union (payload 에 phase-gate-mergeable present)" \
+  "$R" present 'phase-gate-mergeable' --shape solo
+# 후자: rsc-404 → 빈 set 정규화 + error token('Branch not protected') 0건 (404 ≠ valid-empty 명시 구분).
+R=$(mktemp -d); build_baseline "$R"
+touch "$R/gh-fixture/rsc-404"
+run_payload_fixture "F13b-unprotected-404" "404 → 빈 set 정규화 + error token 0건 (valid-empty 200 과 구분)" \
+  "$R" absent 'Branch not protected' --shape solo
+
+# ── F14: unprotected rsc --inspect → contexts=0 exit 3 (404 라인을 contexts=1 오인 안 함, AC-e) ──
+# protection object GET 정상(protection.json 존재) → _protection_exists true → _current_contexts 호출.
+# rsc-404 → required_status_checks 404 JSON + exit 1.
+# guard: _current_contexts 빈 set → cur_count=0 → exit 3.
+# guard 부재(M10): 404 JSON 1줄 → grep -c . = 1 → cur_count=1 → exit 0 → RED (expected 3, got 0).
+R=$(mktemp -d); build_baseline "$R"
+echo '{"url":"ok","required_status_checks":{"contexts":[]},"enforce_admins":{"enabled":true}}' > "$R/gh-fixture/protection.json"
+touch "$R/gh-fixture/rsc-404"
+run_fixture "F14-inspect-unprotected-404" 3 "--inspect: rsc 404 → contexts=0 exit 3 (404 라인 contexts=1 오인 차단)" "$R" --inspect
 
 echo ""
 echo "=== Summary: $PASS PASS, $FAIL FAIL ==="
