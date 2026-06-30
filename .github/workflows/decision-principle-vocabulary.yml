@@ -17,6 +17,7 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - 'docs/adr/ADR-*.md'
+      - 'archive/adr/ADR-*.md'
       - 'docs/change-plans/**/*.md'
       - 'CLAUDE.md'
       - 'docs/orchestrator-playbook.md'
@@ -46,7 +47,7 @@ jobs:
           set -euo pipefail
           # 5 scope 영역 grep — EXEMPT_PATHS filter (ADR-064 dictionary SSOT / registry / script self / bats fixture)
           git diff --name-only origin/${{ github.base_ref }}...HEAD \
-            | grep -E '^(docs/adr/ADR-.*\.md|docs/change-plans/.*\.md|CLAUDE\.md|docs/orchestrator-playbook\.md|templates/.*\.(md|yml|yaml|sh))$' \
+            | grep -E '^((docs|archive)/adr/ADR-.*\.md|docs/change-plans/.*\.md|CLAUDE\.md|docs/orchestrator-playbook\.md|templates/.*\.(md|yml|yaml|sh))$' \
             | grep -v 'ADR-RESERVATION.md' \
             | grep -v 'ADR-064-decision-principle-mandate.md' \
             | grep -v 'docs/evidence-checks-registry.yaml' \

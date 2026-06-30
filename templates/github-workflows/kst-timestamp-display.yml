@@ -19,6 +19,7 @@ on:
       - 'CLAUDE.md'
       - 'docs/orchestrator-playbook.md'
       - 'docs/adr/ADR-*.md'
+      - 'archive/adr/ADR-*.md'
       - 'docs/retros/**/*.md'
       - 'wrapper/retros/**/*.md'
 
@@ -43,7 +44,7 @@ jobs:
           set -euo pipefail
           # 5 scope 영역 grep — EXEMPT_PATHS filter (docs/inter-plugin-contracts/ / spawned_at / returned_at / script self)
           git diff --name-only origin/${{ github.base_ref }}...HEAD \
-            | grep -E '^(CLAUDE\.md|docs/orchestrator-playbook\.md|docs/adr/ADR-.*\.md|docs/retros/.*\.md|wrapper/retros/.*\.md)$' \
+            | grep -E '^(CLAUDE\.md|docs/orchestrator-playbook\.md|(docs|archive)/adr/ADR-.*\.md|docs/retros/.*\.md|wrapper/retros/.*\.md)$' \
             | grep -v 'docs/inter-plugin-contracts/' \
             | grep -v 'scripts/check-kst-timestamp.sh' \
             | grep -v 'scripts/lib/check_kst_timestamp.py' \
