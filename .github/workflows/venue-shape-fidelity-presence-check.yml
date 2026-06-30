@@ -1,0 +1,102 @@
+name: venue-shape-fidelity-presence-check
+# CFP-2504 Phase 2 / ADR-006 Amendment 1 §A1-2/A1-8 — 외부 venue/시계열 데이터 형상 재현 fidelity
+#   anchor-presence lint (warning-tier, review-독립 CI 기계 강제).
+#
+# Phase 1 = 선언적 mandate(TestContractArch §8 author input + 설계리뷰/code-review 체크리스트 항목) —
+#   review-의존. 본 Phase 2 = CI 기계 lint 로 review-독립 강제. project.yaml venue.applicable: true
+#   consumer 의 docs/stories/*.md §8 Test Contract 에 형상 재현 선언(captured-golden / 실형상-justified
+#   fixture) 또는 명시적 N/A(venue 미접촉 사유) anchor 존재를 검사. venue.applicable false/미주입
+#   (wrapper self 포함) = no-op PASS (안전 방향 default false — ADR-136 frontend.applicable 동형).
+#
+# 본질 한계 정직 기술 (검사연극 금지 — ADR-006 A1-8 / ADR-119):
+#   "합성인지 자동판정"(fixture 가 균일 +1 seq·고정 interval 인가 + shape-sensitive 코드인가)은
+#   본질적으로 fuzzy(의미 추론 요구) → 단순 정적 lint 로 안정 검출 난망 → scope 외. 본 lint 는
+#   anchor-presence(형상 재현 선언 또는 N/A 의 *존재*)만 검출. "올바른 형상인가"의 실 검증은 Phase 1
+#   review channel(설계리뷰 P0 + code-review fixture 형상 실재현)이 담당 — 본 lint 는 선언 누락만 잡음.
+#
+# Bypass:
+#   - label hotfix-bypass:venue-shape-fidelity (본 workflow 가 detect step skip + audit notice).
+#     bypass 사용 시 ### Bypass reason PR body 섹션 + check-bypass-audit-comment.sh 마커 의무.
+#
+# graceful-degradation (change-plan §7.4 / §7.5 — 2-tier 엄격 분리):
+#   data-absence(A)=fail-open(스크립트 EXIT 0, honest ::notice:: — venue.applicable false·미주입 /
+#   docs/stories 부재 / §8 본문 부재) / setup-error(B)=fail-closed(EXIT 2 — project.yaml YAML parse 실패).
+#   path-filter / on.paths skip 금지 — 핵심 케이스(diff 가 story 안 건드려도 venue.applicable 상태)
+#   놓침 회피. 스크립트가 내부에서 data-absence 를 EXIT 0 처리 (워크플로 if: skip 아님).
+#
+# injection-safe: on: pull_request (NOT pull_request_target) + permissions: contents:read
+#   (write/secret 0). 입력 = 로컬 파일(project.yaml / docs/stories) 만 — 외부 mutable 입력 0
+#   (PR_TITLE 등 shell-interpolate 0, fork-PR injection 차단).
+#
+# byte-identical mirror (ADR-005): templates/github-workflows/ + .github/workflows/ 양쪽 byte-identical
+#   write. invariant-check.yml parity loop 이 templates → .github 단방향 검증 (byte-identical = drift 0).
+#   consumer-applicable (consumer_applicable_workflows.txt 등재) — story-section-schema.yml 답습
+#   (CONSUMER_ONLY exclusion 아님 → wrapper self-app byte-identical 의무, wrapper 는 venue.applicable
+#   false 라 no-op PASS).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier (ADR-060 첫
+#   도입 — continue-on-error 로 위반 검출 시 경고 표시하되 job 성공/비차단). blocking 승격 =
+#   recurrence-driven 별 evidence-gated carrier (ADR-060 §결정 19 — 본 Story 승격 안 함).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  venue-shape-fidelity-presence:
+    name: venue 형상 재현 anchor-presence detect (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet pyyaml
+
+      - name: Bypass note (label present)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:venue-shape-fidelity') }}
+        run: |
+          echo "::notice::hotfix-bypass:venue-shape-fidelity label 감지 — venue 형상 재현 anchor-presence detect skip (audit: check-bypass-audit-comment.sh 마커 패턴 의무, ### Bypass reason PR body 섹션 필수)."
+
+      - name: Run venue-shape-fidelity-presence detect (warning, 비차단)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:venue-shape-fidelity') }}
+        continue-on-error: true
+        run: |
+          if [ ! -f scripts/check-venue-shape-fidelity-presence.sh ]; then
+            echo "::warning::scripts/check-venue-shape-fidelity-presence.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
+            exit 0
+          fi
+          OUT="$(bash scripts/check-venue-shape-fidelity-presence.sh 2>&1 || true)"
+          echo "$OUT"
+          {
+            echo "## venue 형상 재현 fidelity anchor-presence detect (warning-tier, non-blocking — ADR-006 Amd1 Phase 2)"
+            echo '```'
+            echo "$OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # CFP-2504 Phase 2 — discriminating self-test (mutation 생존 0). venue.applicable gating +
+  # shape/N/A anchor 검출이 hollow 가 아님을 보증. wrapper-self 전용 게이트 — consumer repository
+  # 에선 skip (byte-identical 전파돼도 if: github.repository 로 skip, force-push-base-advance-check.yml 답습).
+  venue-shape-fidelity-presence-test:
+    name: venue-shape-fidelity-presence discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet pyyaml
+      - name: Run test_check-venue-shape-fidelity-presence.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-venue-shape-fidelity-presence.sh

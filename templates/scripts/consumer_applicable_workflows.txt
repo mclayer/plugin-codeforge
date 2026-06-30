@@ -75,6 +75,16 @@ responsibility-topology-check.yml
 responsibility-marker-drift-check.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Venue 형상 재현 fidelity (consumer — venue-touching 시 활성)
+# CFP-2504 Phase 2 / ADR-006 Amendment 1 §A1-2/A1-8: 외부 venue/시계열 데이터 형상 재현
+#   anchor-presence lint. positive whitelist 등재 = consumer 배포 eligibility (ADR-130 §결정1).
+#   실 런타임 활성 = project.yaml venue.applicable: true authoritative gate (A1-7 / ADR-136
+#   default-false 2-layer 동형) — flag false/미주입 consumer 는 lint 가 내부 no-op PASS(data-absence
+#   fail-open). warning-tier(continue-on-error) — branch protection 6-tuple 무변경.
+# ─────────────────────────────────────────────────────────────────────────────
+venue-shape-fidelity-presence-check.yml
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Frontend quality gate (consumer — frontend-bearing 시 활성)
 # CFP-2505 / ADR-136 결정3/5/6: D1 구조적 CSS lint(stylelint) 게이트. positive whitelist
 #   등재 = consumer 배포 eligibility(ADR-130 §결정1). 실 런타임 활성 = project.yaml

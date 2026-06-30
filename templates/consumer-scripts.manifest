@@ -133,6 +133,19 @@ scripts/lib/check_responsibility_marker_drift.py
 scripts/check-parallel-work-sentinel.sh:templates/github-workflows/parallel-work-sentinel-check.yml
 scripts/lib/check_parallel_work_sentinel.py:templates/github-workflows/parallel-work-sentinel-check.yml
 
+# CFP-2504 Phase 2 (ADR-006 Amendment 1 §A1-2/A1-8) — venue 형상 재현 fidelity anchor-presence
+# lint 전파 closure. 외부 venue/시계열 형상 재현 의무의 Phase 2 mechanical wire (review-독립 CI lint).
+# warning-tier(continue-on-error) → Tier2(functional, coe:true) 정합. venue-shape-fidelity-presence-
+# check.yml run-block 1-hop = .sh (ADR-061 thin wrapper), .sh→python3 lib/*.py = depth-2 SSOT
+# (project.yaml venue.applicable gating + §8 anchor-presence 검출 본체). whitelist(consumer_applicable_
+# workflows.txt) += venue-shape-fidelity-presence-check.yml 와 atomic 동일 PR (3-way gate 정합).
+# ADR-130 §결정3/5 closure-완전성: 둘 다 등재 의무. .sh = :dep_workflow 부착(신규 whitelist basename,
+# 방향2 membership + degraded suppression). .py = depth-2 closure asset — 동일 workflow run-block 1-hop
+# exec(.sh→python3) 닫힘이라 :dep_workflow 부착(consumer degraded copy 시 .py 누락 hard-block 회피).
+# 둘 다 chmod +x(100755) — Check 4 exec-bit 의무(.sh/.py 비면제). (parallel-work-sentinel CFP-2451 답습.)
+scripts/check-venue-shape-fidelity-presence.sh:templates/github-workflows/venue-shape-fidelity-presence-check.yml
+scripts/lib/check_venue_shape_fidelity_presence.py:templates/github-workflows/venue-shape-fidelity-presence-check.yml
+
 # CFP-2506 (ADR-033 Amendment 1) — Rust consumer 로컬빌드 경로 표준.
 # build-local.{sh,ps1} = consumer 가 자기 Rust repo 루트에서 한 줄 실행하는
 # ad-hoc 개발자 CLI (cargo check 1차 → Docker 마운트 빌드 / native cargo →
