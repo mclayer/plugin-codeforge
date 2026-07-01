@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.19.0 — 2026-07-02
+
+### Changed (CFP-2554 — fable surgical tier 원복, MINOR)
+
+미 정부 제약 해제로 ADR-117 Amendment 1 임시 opus override 를 해제하고 surgical 에이전트를 `model: fable` 로 원복(ADR-117 Amendment 2).
+
+- review lane surgical 5 에이전트 frontmatter `model: opus`(임시 CFP-2241) → `model: fable` 환원 + 임시 표식 코멘트 제거: `ClaudeReviewAgent` · `CodeReviewPLAgent` · `DesignReviewPLAgent` · `SecurityTestPLAgent` · `RequirementsReviewPLAgent`(surgical set 10→11 정식 편입 — 적대적 심판 category).
+
+#### Why
+
+미 정부 제약 해제(사용자 통지 = ADR-117 Amd1 "제약 해제 통지" 트리거). 능력 손실 0(fable/opus thinking 프로파일 동형), 비용 축만 2배 재부담 — ADR-117 결정 1 이 이미 정당화한 surgical 역할 한정. 모델-tier 행동 변경(다음 세션부터 fable) = consumer 영향 → MINOR.
+
 ## 1.18.0 — 2026-07-02
 
 ### Changed (CFP-2549 — background-wait liveness gate cross-ref, MINOR)

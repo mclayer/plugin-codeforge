@@ -83,7 +83,7 @@ bump 포함 PR merge (`mergedAt` 확인) 직후 Orchestrator 가 터미널 CLI `
 사용자 대면·문서 표기 = KST `+09:00` ISO 8601. 외부 timestamp(GitHub/git)는 원본 보존.
 
 ## 비-opus tier → Opus fallback
-> dormant(CFP-2241, 2026-06-14): 현재 wrapper self 의 surgical 10 에이전트가 미 정부 제약으로 `model: opus` override 상태(ADR-117 Amendment 1)라 ② `model: fable` model-unavailable trigger 는 휴면이다. 정책 자체는 보존 — 제약 해제·fable 원복 시 즉시 재유효. ① `model: sonnet` rate-limit trigger 는 영향 없음.
+> 재활성(CFP-2554, 2026-07-02): 미 정부 제약 해제로 wrapper self 의 surgical 11 에이전트가 `model: fable` 로 원복됨(ADR-117 Amendment 2 — CFP-2241 임시 opus override 해소). ② `model: fable` model-unavailable trigger 재유효. ① `model: sonnet` rate-limit trigger 는 상시 유효(영향 없음).
 
 비-opus 서브에이전트 spawn 실패 시 동일 작업을 `model: opus` 로 **fresh re-spawn** 1회(SendMessage resume 금지 — 원본 agent 의 `model` frontmatter 가 resume 시 재해석돼 재실패), 실패 시 사용자 통지 후 대기 (자동 재시도 금지). 2 trigger: ① `model: sonnet` rate-limit ② `model: fable` model-unavailable(`"currently unavailable"` / `"may not exist or you may not have access"` — floor 미달 spawn 실패와 구분, ADR-117 §결정 3). max 1회 = per-spawn-attempt(sonnet/fable 비합산). 상세 = [ADR-057 §결정 4](archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md).
 

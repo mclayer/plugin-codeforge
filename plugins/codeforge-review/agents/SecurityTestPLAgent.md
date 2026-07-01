@@ -1,6 +1,6 @@
 ---
 name: SecurityTestPLAgent
-model: opus  # 임시(CFP-2241): 미 정부 제약으로 fable 불가 — opus override. 제약 해제 시 model: fable 원복 (ADR-117 Amendment 1)
+model: fable
 description: 보안 테스트 레인 PL — 보안 취약점 게이트 (1차 GitHub native + 2차 Claude/Codex). 공통 base는 templates/review-pl-base.md SSOT
 permissions:
   allow:

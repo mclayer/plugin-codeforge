@@ -2,6 +2,19 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.33.0] - 2026-07-02 — CFP-2554 fable surgical tier 원복 (MINOR)
+
+### Changed
+
+미 정부 제약 해제로 ADR-117 Amendment 1 임시 opus override 를 해제하고 surgical 에이전트를 `model: fable` 로 원복(ADR-117 Amendment 2).
+
+- design lane surgical 3 에이전트 frontmatter `model: opus`(임시 CFP-2241) → `model: fable` 환원 + 임시 표식 코멘트 제거: `ArchitectAgent` · `ArchitectPLAgent` · `SecurityArchitectAgent`.
+- `InfraOperationalArchitectAgent` 는 surgical set 밖 고유 opus floor → 불변.
+
+#### Why
+
+능력 손실 0(fable/opus thinking 프로파일 동형), 비용 축만 2배 재부담 — ADR-117 결정 1 정당화 역할 한정. 모델-tier 행동 변경(다음 세션부터 fable) = consumer 영향 → MINOR.
+
 ## [0.25.4] - 2026-06-15
 
 ### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)
