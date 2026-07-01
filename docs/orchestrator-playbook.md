@@ -1548,6 +1548,18 @@ codeforge Orchestrator/lane 이 Codex CLI worker check 를 invoke 할 때 (Codex
 
 dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 
+**companion 브로커 경로 wall-clock ceiling mandate** (CFP-2545 / [ADR-081 Amendment 12](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D14 + [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) liveness 게이트 소유 + [ADR-119](../archive/adr/ADR-119-research-before-claims.md) Amendment 2 fail-open 금지):
+
+§결정 D8 file-redirect(`codex exec ... < <promptfile>`)는 0-byte TTY stall 방어층이지만, 실 리뷰 worker 는 codeforge-owned **companion 브로커 경로**(`node codex-companion.mjs adversarial-review --wait` / `task --write`, `CodexReviewAgent.md:89`, 4 리뷰 lane 공유)로 codex 를 호출한다. companion `request()` 는 deadline 부재라 wall-clock process-level hang 발생 시 node·Bash·worker·Orchestrator 순차 무한 대기 (§D8 이 미포함하는 disjoint sub-failure-mode).
+
+1. **companion 브로커 경로도 wall-clock 상한 + 마커 fallback 대상** — companion dispatch 발화(`adversarial-review --wait` / `task --write`)는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 명령으로 오인 → exit 127 가드 무효; option 은 duration 앞에 필수). exit 124(wall-clock kill) → substitution `fallback_skip_with_marker` + Story §10 marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]`. **fail-mode enum #8 `dispatch_stall_or_stream_timeout` trigger = "codex exec TTY 0-byte" + "companion adversarial-review --wait wall-clock 초과" 양쪽** (신규 enum value 신설 0 — closed-set 크기 무변경, 기존 #8 trigger 의미 확장). fail-open 금지 — exit 124 / verdict 미획득 → verdict=inconclusive (PASS 자동 승격 금지, PASS-only-if-explicit).
+
+2. **Orchestrator liveness 게이트 (보조 2차 관측, ADR-039 소유)** — 호출부 `timeout`(1차 process wall-clock 상한)을 보조하는 liveness 게이트 = worker 진행 마커(output file mtime + content grep) 부재가 max-wait 분 초과 시 stall 판정 → 다음 step 진행. worker 자가-spawn 금지(`plugins/codeforge-review/CLAUDE.md:46` "워커는 직접 다른 subagent 스폰 불가") → 게이트 spawn 주체 = **Orchestrator 고정**.
+
+3. **값 순서 정합 (AC-5)** — `timeout N < liveness max-wait` — 호출부 timeout 이 먼저 터져 marker 를 남기고 liveness 게이트는 그 이후를 관측. 역순 금지 (게이트가 marker 없이 먼저 fail).
+
+companion wall-clock ceiling mandate 본문 SSOT = ADR-081 §결정 D14.
+
 **ProactiveCheckPacket 스키마**:
 
 ```yaml
