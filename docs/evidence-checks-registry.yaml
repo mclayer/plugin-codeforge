@@ -2558,6 +2558,56 @@ entries:
       promotion_trigger: none
     status: deferred-followup
 
+  # ─── CFP-2544 — Orchestrator inline-write gate presence (ADR-115 Amendment 1, 2026-07-02) ───
+  # 5번째 runtime-hook-*-presence family member. hotfix-bypass:runtime-hook-presence 공유.
+  # 기계 배선(scripts/check-runtime-hook-presence.sh + templates/github-workflows/runtime-hook-presence.yml)은
+  # family 4-entry(CFP-1745) 시점부터 declarative-only(스크립트·workflow 파일 origin/main 부재 = 404) —
+  # 본 entry 도 declarative anchor 로 추가하고 기계배선 신설은 follow-up 로 분리한다
+  # (전체 presence-lint framework 신설 = 본 Story scope 초과. DesignReview P2-2 "동일 PR 권장"이나
+  #  presence infra 자체가 부재하므로 declarative + follow-up 허용).
+  - name: runtime-hook-pretooluse-inline-write-presence
+    description: |
+      CFP-2544 / ADR-115 Amendment 1 — hooks/hooks.json PreToolUse[matcher:"Write|Edit|MultiEdit"]
+      entry presence lint (warning tier).
+
+      hooks/hooks.json 안 PreToolUse hook 중 matcher 가 "Write|Edit|MultiEdit" 인 entry 존재
+      여부를 검증한다. PreToolUse:Write|Edit|MultiEdit hook = Orchestrator inline-write gate 채널
+      (pretooluse-inline-write-gate, CFP-2544 carrier). Orchestrator(최상위 세션)의 repo/worktree
+      직접 편집을 caller(agent_id)+file_path 판정으로 검출 (Wave1 warning: stderr block 마커 + exit 0).
+
+      CFP-2544 Phase 2 에서 PreToolUse:Write|Edit|MultiEdit hook 이 실 구현됨 — 본 entry 가
+      verifier 파일(scripts/lib/check_inline_write_gate.py) 존재를 사후 감시하는 evidence gate 역할
+      (§7.6 fail-open exploit 방어 — 드리프트 Orchestrator 가 verifier 삭제 시 presence-lint 검출).
+
+      Detection (follow-up 배선 후): hooks/hooks.json jq 파싱 → .hooks.PreToolUse[] 중
+      matcher=="Write|Edit|MultiEdit" entry presence verify.
+      Warning tier: exit 0 (continue-on-error: true 정합). bypass_label 부착 PR skip.
+      Bypass: `hotfix-bypass:runtime-hook-presence` (5 entry 공유 단일 family).
+
+      axis: ADR-115 Amendment 1 §결정 6 inline-write hook mandate — evidence gate mechanical layer.
+      follow-up: presence-lint 기계 배선(scripts/check-runtime-hook-presence.sh 확장 +
+      templates/github-workflows/runtime-hook-presence.yml 신설)은 family 전체가 declarative-only
+      이므로 별 Story 로 분리 (본 entry = declarative anchor).
+    detect_command: bash scripts/check-runtime-hook-presence.sh pretooluse-inline-write
+    workflow: templates/github-workflows/runtime-hook-presence.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:runtime-hook-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-2544
+    introduced_date: 2026-07-02
+    owner_adr: ADR-115
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-2544, CFP-1745]
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+
 
   # ─── CFP-1764 Story-2 — codename-glossary-lookup (ADR-071 §결정 19 Amendment 8 mechanical wire) ───
   - name: chief-author-crossref-consistency
