@@ -51,19 +51,40 @@ DISPATCH_ADVERSARIAL = re.compile(r'\bnode\b[^\n]*\badversarial-review\b')
 DISPATCH_TASK_WRITE = re.compile(r'\bnode\b[^\n]*\btask\s+--write\b')
 
 # timeout 가드 prefix — 라인의 dispatch node 호출 앞에 위치해야 함.
-# N 값 형태 2종 허용: 리터럴 정수(`timeout 300`) 또는 env-default(`timeout ${VAR:-300}`).
-# env-default 형태는 default 값을 추출해 양수 검증 (design 이 env-override 를 primary 로 규정 — 리터럴만 요구하면 정본 형태를 오탐).
+# ★ runnable-form 강제 (CFP-2545 구현리뷰 FIX iter1): GNU coreutils 는 duration-first
+#   `timeout <N> --kill-after=<K> cmd` 에서 `--kill-after` 를 실행할 명령으로 오인 → exit 127 (가드 무효).
+#   유일 runnable 형태 = option-first `timeout --kill-after=<K> <N> cmd`. lint 는 이 실행 가능 형태만
+#   PASS 로 강제 (문자열 존재 축) + execution-backed 테스트가 런타임 진실에 결박 (실행 축, tests/scripts).
+#   [verified: coreutils 8.32 — timeout 1 --kill-after=1 sleep 5 → exit 127 / timeout --kill-after=1 1 sleep 5 → exit 124]
+# N/K 값 형태 2종 허용: 리터럴 정수(`300`) 또는 env-default(`${VAR:-300}`).
 _INT = r'\d+'
 _ENV_DEFAULT = r'\$\{[A-Za-z_][A-Za-z0-9_]*:-(\d+)\}'  # ${VAR:-<int>} — default 값 capture
-TIMEOUT_PREFIX = re.compile(r'\btimeout\s+(?:(' + _INT + r')|' + _ENV_DEFAULT + r')')
-KILL_AFTER = re.compile(r'--kill-after=(?:(' + _INT + r')|' + _ENV_DEFAULT + r')')
+_VAL = r'(?:(' + _INT + r')|' + _ENV_DEFAULT + r')'    # 정수 or env-default (2 capture group)
+
+# option-first runnable 형태: timeout, 이어서 --kill-after=<K> 옵션(및 추가 -옵션), 그 다음 duration <N>.
+# duration 앞에는 반드시 최소 1개 옵션(--kill-after)이 와야 함. duration-first 는 이 패턴에 unmatch → RED.
+#   group 1/2 = --kill-after=<K> (리터럴/env)  ·  group 3/4 = duration <N> (리터럴/env)
+TIMEOUT_RUNNABLE = re.compile(
+    r'\btimeout\s+'
+    r'(?:--\S+\s+)*'                       # 임의 개수의 앞선 -옵션 (예: --preserve-status)
+    r'--kill-after=' + _VAL + r'\s+'       # --kill-after=<K> (필수, duration 앞)
+    r'(?:--\S+\s+)*'                       # kill-after 뒤 추가 -옵션 허용
+    + _VAL + r'(?=\s|$)'                   # duration <N> (옵션들 뒤) — 뒤에 공백 또는 라인 끝 (env-default `}` 뒤 \b 실패 회피)
+)
+# duration-first 오배열 탐지 (진단 메시지용): timeout 뒤 정수/env 가 먼저 오고 그 뒤 --kill-after.
+TIMEOUT_DURATION_FIRST = re.compile(
+    r'\btimeout\s+' + _VAL + r'\s+(?:--\S+\s+)*--kill-after='
+)
+# 가드 자체 부재 판정용 (timeout 토큰 존재 여부)
+TIMEOUT_TOKEN = re.compile(r'\btimeout\b')
 
 
-def _extract_int(match):
-    """TIMEOUT_PREFIX / KILL_AFTER match 에서 정수값 추출 (리터럴 group1 또는 env-default group2)."""
+def _extract_int_pair(match, base):
+    """TIMEOUT_RUNNABLE match 에서 (kill_after, duration) 정수 추출.
+    base = group index 시작 (kill=1/2, duration=3/4)."""
     if match is None:
         return None
-    lit, envdef = match.group(1), match.group(2)
+    lit, envdef = match.group(base), match.group(base + 1)
     if lit is not None:
         return int(lit)
     if envdef is not None:
@@ -134,23 +155,35 @@ def check_lines(text, filename):
             continue
         dispatch_count += 1
         kind = 'adversarial-review' if m_adv else 'task --write'
-        # timeout prefix 는 dispatch node 호출 *앞* 에 위치해야 함
+        # timeout 가드 prefix 는 dispatch node 호출 *앞* 에 위치해야 함
         node_pos = (m_adv or m_task).start()
         prefix = line[:node_pos]
-        mt = TIMEOUT_PREFIX.search(prefix)
-        if not mt:
-            violations.append(f'{filename}:{i}: dispatch 발화({kind})에 `timeout <N>` prefix 부재 — wall-clock 가드 누락 (ADR-081 §D14)')
-            continue
-        n = _extract_int(mt)
-        if n is not None and n <= 0:
-            violations.append(f'{filename}:{i}: `timeout {n}` — N 은 양의 정수여야 함 (0/음수 = 무한대기 미방지)')
-        mk = KILL_AFTER.search(line)
-        if not mk:
-            violations.append(f'{filename}:{i}: dispatch 발화({kind})에 `--kill-after=<K>` 부재 — detached node 좀비 방지 누락')
-        else:
-            k = _extract_int(mk)
+
+        # ★ runnable-form 강제: option-first `timeout --kill-after=<K> <N>` 만 PASS.
+        mt = TIMEOUT_RUNNABLE.search(prefix)
+        if mt:
+            # option-first runnable — N/K 정수 양수 검증.
+            k = _extract_int_pair(mt, 1)   # --kill-after=<K> (group 1/2)
+            n = _extract_int_pair(mt, 3)   # duration <N>     (group 3/4)
+            if n is not None and n <= 0:
+                violations.append(f'{filename}:{i}: `timeout ... {n}` — N(duration) 은 양의 정수여야 함 (0/음수 = 무한대기 미방지)')
             if k is not None and k < 0:
                 violations.append(f'{filename}:{i}: `--kill-after={k}` — K 는 음수 불가')
+            continue
+
+        # runnable 아님 — 원인 진단.
+        if TIMEOUT_DURATION_FIRST.search(prefix):
+            violations.append(
+                f'{filename}:{i}: dispatch 발화({kind}) `timeout <N> --kill-after=<K>` = **duration-first 오배열** — '
+                f'GNU coreutils 는 `--kill-after` 를 실행 명령으로 오인해 exit 127 (가드 무효). '
+                f'option-first `timeout --kill-after=<K> <N>` 로 재배열 필요 (ADR-081 §D14)')
+        elif TIMEOUT_TOKEN.search(prefix):
+            violations.append(
+                f'{filename}:{i}: dispatch 발화({kind}) `timeout` 은 있으나 `--kill-after=<K>` 부재 또는 형태 불량 — '
+                f'runnable option-first `timeout --kill-after=<K> <N>` 필요 (detached node 좀비 방지 + 가드 유효, ADR-081 §D14)')
+        else:
+            violations.append(
+                f'{filename}:{i}: dispatch 발화({kind})에 `timeout` wall-clock 가드 prefix 부재 — 무한 대기 미방지 (ADR-081 §D14)')
     return violations, dispatch_count
 
 
@@ -198,29 +231,33 @@ def run_scan(paths):
         for v in all_violations:
             print('  ' + v)
         return 1
-    print(f'[codex-companion-timeout-presence] PASS — dispatch 발화 {total_dispatch}건 전부 timeout 가드 존재.')
+    print(f'[codex-companion-timeout-presence] PASS — dispatch 발화 {total_dispatch}건 전부 runnable option-first timeout 가드 존재.')
     return 0
 
 
 # ── self-test (D3 inline fixture, CI step 호출) ────────────────────────────────
 def self_test():
+    # ★ runnable-form 강제 (CFP-2545 구현리뷰 FIX iter1): GREEN = option-first `timeout --kill-after=<K> <N>`,
+    #   RED = duration-first(broken, exit 127) / timeout 부재 / N=0 / kill-after 누락. 실행 축은 tests/scripts 가 결박.
     cases = [
         # (name, text, expect_exit)
-        ('GREEN: timeout+kill-after 가드 존재',
-         'timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=30 node "$CMD" adversarial-review --wait "x"\n', 0),
+        ('GREEN: option-first (env-default) 가드 존재',
+         'timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} node "$CMD" adversarial-review --wait "x"\n', 0),
+        ('GREEN: option-first (리터럴) task --write',
+         'timeout --kill-after=30 300 node "$CMD" task --write "x"\n', 0),
+        ('RED: duration-first 오배열 (broken, exit 127)',
+         'timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=30 node "$CMD" adversarial-review --wait "x"\n', 1),
+        ('RED: duration-first 리터럴 (broken)',
+         'timeout 300 --kill-after=30 node "$CMD" adversarial-review --wait "x"\n', 1),
         ('RED: timeout 가드 제거 (mutation)',
          'node "$CMD" adversarial-review --wait "x"\n', 1),
         ('RED: dispatch 발화 0건 (hollow-gate I-3, 파일 존재)',
          '이 파일에는 dispatch 발화가 없다 — companion 언급만 prose 로.\n', 1),
-        ('RED: N=0 (무한대기 미방지)',
-         'timeout 0 --kill-after=30 node "$CMD" adversarial-review --wait "x"\n', 1),
-        ('RED: N 음수',
-         'timeout -5 --kill-after=30 node "$CMD" adversarial-review --wait "x"\n', 1),
-        ('RED: --kill-after 누락',
+        ('RED: N=0 (무한대기 미방지, option-first)',
+         'timeout --kill-after=30 0 node "$CMD" adversarial-review --wait "x"\n', 1),
+        ('RED: --kill-after 누락 (option 부재)',
          'timeout 300 node "$CMD" adversarial-review --wait "x"\n', 1),
-        ('GREEN: task --write 가드 존재',
-         'timeout 300 --kill-after=30 node "$CMD" task --write "x"\n', 0),
-        ('RED: task --write 가드 누락',
+        ('RED: task --write 가드 제거',
          'node "$CMD" task --write "x"\n', 1),
     ]
     failed = []

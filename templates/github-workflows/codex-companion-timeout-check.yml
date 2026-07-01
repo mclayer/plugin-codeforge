@@ -1,7 +1,7 @@
 name: Codex companion timeout presence lint (warning mode)
 # CFP-2545 / ADR-081 Amendment 12 §결정 D14 — Codex companion 브로커 경로 wall-clock 가드 presence lint.
 # codeforge 소유 codex companion dispatch 발화(node ... adversarial-review | task --write)가 항상
-# `timeout <N> --kill-after=<K>` wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
+# `timeout --kill-after=<K> <N>` (option-first runnable) wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
 # Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D14 Phase 2 wire)
 # Bypass channel: hotfix-bypass:codex-companion-timeout-presence (ADR-024 §결정 6.A per-entry namespace)
 #
@@ -73,7 +73,7 @@ jobs:
               '## Codex companion timeout presence lint — warning',
               '',
               '> ADR-081 Amendment 12 §결정 D14 warning-tier (CFP-2545). PR merge 차단 아님.',
-              '> codex companion dispatch 발화는 `timeout <N> --kill-after=<K>` wall-clock 가드 필수 (무한 대기 근절).',
+              '> codex companion dispatch 발화는 `timeout --kill-after=<K> <N>` (option-first) wall-clock 가드 필수 (무한 대기 근절).',
               '> bypass: `hotfix-bypass:codex-companion-timeout-presence` label 부착.',
               '',
               '```',

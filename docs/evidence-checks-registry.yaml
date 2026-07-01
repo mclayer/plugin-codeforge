@@ -3462,13 +3462,13 @@ entries:
     status: Active
   # ─── CFP-2545 Phase 2 (ADR-081 Amendment 12 §결정 D14) — Codex companion wall-clock 가드 presence lint ───
   # codeforge 소유 codex companion dispatch 발화(node ... adversarial-review | task --write)가 항상
-  # `timeout <N> --kill-after=<K>` wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, I-3).
+  # `timeout --kill-after=<K> <N>` (option-first runnable — duration-first 는 exit 127) wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, I-3).
   # AC-1 mechanical 강제 층 (markdown agent 지시만으로는 self-discipline → hollow-gate). warning tier.
   - name: codex-companion-timeout-presence
     description: |
       CFP-2545 / ADR-081 Amendment 12 §결정 D14 — codeforge 소유 codex companion 브로커 경로
       dispatch 발화(`node ... adversarial-review` / `task --write`) 가 항상 wall-clock 상한
-      (`timeout <N> --kill-after=<K>`) prefix 로 감싸졌는지 정적 검사. companion `request()` deadline
+      (`timeout --kill-after=<K> <N>`, option-first runnable) prefix 로 감싸졌는지 정적 검사. companion `request()` deadline
       부재 → stall 시 node·Bash·worker·Orchestrator 무한 대기(4 리뷰 lane 공유 워커 blast radius).
       검사 (scripts/lib/check_codex_companion_timeout_presence.py SSOT + thin wrapper, ADR-061):
       (1) dispatch 발화 앞 `timeout <N>` prefix 존재 (리터럴 정수 또는 ${VAR:-<int>} env-default 형태 허용) /

@@ -6,7 +6,7 @@
 
 ADR-081 Amendment 12 §결정 D14 (Codex companion 브로커 경로 wall-clock ceiling mandate) 의 lane 반영. 실 리뷰 worker 호출부가 companion `request()` deadline 부재로 stall 시 무한 대기하던 것을 wall-clock 상한으로 근절 (dogfood wrapper-self Phase 2).
 
-- `agents/CodexReviewAgent.md` — 실행 패턴 §의 companion dispatch 발화(`adversarial-review --wait` / `task --write`)에 `timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30}` wall-clock 가드 prefix + exit code 판정 블록(exit 124 → marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` + verdict=inconclusive, fail-open 금지 PASS-only-if-explicit) + POSIX timeout preflight. N=추정값 empirical 미실증 (env-override, lock-in 금지).
+- `agents/CodexReviewAgent.md` — 실행 패턴 §의 companion dispatch 발화(`adversarial-review --wait` / `task --write`)에 **option-first** `timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300}` wall-clock 가드 prefix (GNU coreutils runnable 형태 — duration-first 는 `--kill-after` 를 명령으로 오인해 exit 127 가드 무효) + exit code 판정 블록(exit 124 → marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` + verdict=inconclusive, fail-open 금지 PASS-only-if-explicit) + POSIX timeout preflight. N=추정값 empirical 미실증 (env-override, lock-in 금지).
 - `templates/review-pl-base.md` — companion dispatch wall-clock 상한 cross-ref 1줄 (SSOT = ADR-081 §결정 D14 / CodexReviewAgent.md).
 
 #### Why

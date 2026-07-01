@@ -77,7 +77,7 @@ shell state가 유지되지 않으므로 경로 해결 + `node` 실행을 하나
 
 > **dispatch 명령 — `review --focus` 사용 금지 (죽은 경로)** [verified: codex-companion.mjs `validateNativeReviewRequest`]: `review` subcommand 는 native reviewer 로 custom focus text 를 거부(error throw)한다. 정적 리뷰 + 실행 검증 모두 **`adversarial-review`(read-only 고정 turn, focus 지원) primary** 로 dispatch. 실행 검증이 repo 수정을 요구하는 게이트(fixture/temp/lockfile)는 **`task --write`(workspace-write) 예외** + 명시 marker. ADR-081 §결정 D8 file-redirect + §결정 D13 execution dispatch 정합.
 
-> **companion 브로커 wall-clock 가드 의무 (ADR-081 §결정 D14 / CFP-2545)** — companion `request()` 는 deadline 부재라 stall 시 node·Bash·worker·Orchestrator 순차 무한 대기. 모든 `adversarial-review --wait` / `task --write` dispatch 발화는 `timeout <N> --kill-after=<K>` prefix 로 감싼다. **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap 900s). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL, detached node 좀비 방지). **N 값은 추정값 — empirical 미실증** (codex companion 스트림 완료 시간 1차 실측 출처 없음 — lock-in 금지, env-override 유지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
+> **companion 브로커 wall-clock 가드 의무 (ADR-081 §결정 D14 / CFP-2545)** — companion `request()` 는 deadline 부재라 stall 시 node·Bash·worker·Orchestrator 순차 무한 대기. 모든 `adversarial-review --wait` / `task --write` dispatch 발화는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행 명령으로 오인 → exit 127 가드 무효 [verified: coreutils 8.32 실측]. option 은 duration 앞에 와야 함). **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap 900s). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL, detached node 좀비 방지). **N 값은 추정값 — empirical 미실증** (codex companion 스트림 완료 시간 1차 실측 출처 없음 — lock-in 금지, env-override 유지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
 
 ```bash
 CMD=""
@@ -91,9 +91,9 @@ done
 command -v timeout >/dev/null 2>&1 || { echo "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"; verdict=inconclusive; }
 # 정적 리뷰 + 실행 검증 (read-only sandbox 안 Codex 가 게이트 실행) — focus prompt 에 실행 대상·대조 단정 포함
 # wall-clock ceiling (ADR-081 §결정 D14) — companion 무한 대기 근절. exit 124 = timeout kill.
-timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} node "$CMD" adversarial-review --wait "<lane별 focus prompt + 실행 검증 instruction>"
+timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} node "$CMD" adversarial-review --wait "<lane별 focus prompt + 실행 검증 instruction>"
 # write 필요 게이트(fixture/temp 쓰는 check) 한정 예외 — 동형 wall-clock 가드 + 명시 marker 동반:
-# timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} node "$CMD" task --write "<게이트 실행 instruction>"   # [exec-verify-write-mode: <check>]
+# timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} node "$CMD" task --write "<게이트 실행 instruction>"   # [exec-verify-write-mode: <check>]
 ```
 
 **exit code 판정 — fail-open 금지 (ADR-081 §결정 D14 A3 / Story §7.2.1)**: PASS 자동 승격 채널을 구조적으로 차단한다. `timeout` 은 만료 시 exit **124** 반환 (GNU coreutils).
@@ -253,7 +253,7 @@ location as path:line, CWE/CVE reference where applicable.
 
 - `--base main --scope branch`: main 대비 전체 변경
 - `--background`: 큰 변경에서 세션 블록 방지 (status/result 폴링 필수)
-- `timeout <N> --kill-after=<K> adversarial-review --wait "<focus>"`: 심층 리뷰 (보안 lane 권장) — wall-clock 가드 필수 (ADR-081 §결정 D14, N=`${CODEX_REVIEW_TIMEOUT_SEC:-300}` / K=`${CODEX_REVIEW_KILL_AFTER_SEC:-30}`)
+- `timeout --kill-after=<K> <N> adversarial-review --wait "<focus>"`: 심층 리뷰 (보안 lane 권장) — wall-clock 가드 필수, **option-first** (GNU coreutils runnable 형태, duration-first 는 exit 127 무효) (ADR-081 §결정 D14, K=`${CODEX_REVIEW_KILL_AFTER_SEC:-30}` / N=`${CODEX_REVIEW_TIMEOUT_SEC:-300}`)
 
 ## 정규화 보고 스키마 (ClaudeReviewAgent와 동일)
 
