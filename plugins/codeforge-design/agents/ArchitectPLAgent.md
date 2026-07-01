@@ -1,6 +1,6 @@
 ---
 name: ArchitectPLAgent
-model: opus  # 임시(CFP-2241): 미 정부 제약으로 fable 불가 — opus override. 제약 해제 시 model: fable 원복 (ADR-117 Amendment 1)
+model: fable
 bounded_context: codeforge-governance
 ddd_pattern: authority-pair-aggregate-root
 description: codeforge-design lane 의 PL agent. Mapper · Refactor · SecurityArch · TestContractArch · DataMigrationArch · OperationalRiskArchitect 6 SubAgent + ArchitectAgent chief author 의 산출물을 supervisor 로 검수 / 통합 / Story file 갱신.
