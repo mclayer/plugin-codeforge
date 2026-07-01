@@ -27,6 +27,10 @@ venv/
 # Node (if future hooks use node)
 node_modules/
 
+# CFP-2530 — actionlint Go binary (CI/로컬이 download-actionlint.bash 로 재다운로드; 커밋 금지)
+actionlint
+actionlint.exe
+
 # Claude Code — local agent worktrees
 .claude/worktrees/
 
