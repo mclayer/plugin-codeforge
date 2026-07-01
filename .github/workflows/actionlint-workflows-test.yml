@@ -20,6 +20,14 @@ name: actionlint-workflows-test
 #
 # 자기-정합: 본 workflow 자신도 actionlint-valid. job-level `if: github.repository == ...` 는 valid
 #   (github context 는 job-level available) — 본 결함(job-level hashFiles)을 재현하지 않는다.
+#
+# ⊥ actionlint-check.yml 과 직교 (중복 아님 — 한쪽 삭제 금지):
+#   · actionlint-check.yml = .github/workflows/*.yml 상시 detection lint(warning-tier, PR comment).
+#     매 PR 마다 도는 광역 예방층.
+#   · 본 workflow = mutation-kill discriminating self-test — job-level hashFiles 를 fixture 에 재삽입해
+#     actionlint 가 실제로 exit!=0 로 잡는지(=게이트가 hollow 가 아님)를 증명 + templates/github-workflows/
+#     coverage 담당(재발 봉인 안 B). detection 이 아니라 "detection 이 살아있음"을 검증하는 메타 게이트.
+#   0-context 유지보수자는 둘을 중복으로 오인해 한쪽을 삭제하지 말 것 — 역할이 다르다.
 
 on:
   pull_request:

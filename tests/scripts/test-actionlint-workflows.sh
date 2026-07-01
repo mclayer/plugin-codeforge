@@ -116,8 +116,10 @@ assert_eq "C1-green-all-workflows-valid" "0" "$EC_GREEN" "정정 후 전체 work
 #   mutation 은 temp fixture 사본에만 — repo 실제 파일 무변경.
 #   원본 read → temp copy → temp copy 에 mutation insert → actionlint temp file.
 # ═════════════════════════════════════════════════════════════════════════════
-# EC_RED 미리 초기화 (mutation 실패 시 참조).
-EC_RED=0
+# EC_RED 미리 초기화 — sentinel "NOT_RUN" = mutation 미실행(fixture-missing / sed-failed).
+#   정상 mutation 실행 경로에서만 실제 exit code(0/non-0)로 덮어씀. anti-theater 대조는
+#   NOT_RUN 이면 skip(대조 불가) — false "✓ PASS: ANTI-THEATER" 오보 차단(FIX-3).
+EC_RED="NOT_RUN"
 
 # Mutation 대상 파일 결정 — wrapper css-lint.yml 우선(표본 선택).
 CSS_LINT_WRAPPER="$REPO_ROOT/.github/workflows/css-lint.yml"
@@ -129,7 +131,7 @@ if [ ! -f "$CSS_LINT_WRAPPER" ]; then
   echo "✗ FAIL: C2-red-mutation-fixture-missing"
   echo "  Expected .github/workflows/css-lint.yml 존재, got 파일 부재"
   FAIL=$((FAIL+1))
-  EC_RED=999  # mutation 실패하면 구분 가능한 high value
+  # EC_RED 는 NOT_RUN 유지 — mutation 미실행이므로 anti-theater 대조 skip.
 else
   # temp dir 에 원본 복사 후 mutation 삽입.
   TEMP_FIXTURE=$(mktemp -d)
@@ -154,14 +156,19 @@ else
     echo "✗ FAIL: C2-red-mutation-sed-failed"
     echo "  Mutation insert 가 작동하지 않음 — sed pattern 재검토 필요"
     FAIL=$((FAIL+1))
-    EC_RED=0
+    # EC_RED 는 NOT_RUN 유지 — mutation 미실행이므로 anti-theater 대조 skip.
   fi
 
   rm -rf "$TEMP_FIXTURE"
 fi
 
 # ── anti-theater discriminating 검증: GREEN(0) ≠ RED(non-0) ──
-if [ "$EC_GREEN" = "$EC_RED" ]; then
+#   mutation 미실행(EC_RED=NOT_RUN: fixture-missing / sed-failed)이면 대조 불가 → skip (FIX-3).
+#   이미 위에서 해당 실패는 FAIL++ 되었으므로 게이트 verdict 는 정확히 exit 1. 여기선 로그 정합만 보장:
+#   NOT_RUN 을 GREEN(0)과 비교해 "✓ PASS: ANTI-THEATER" 오보를 내지 않는다.
+if [ "$EC_RED" = "NOT_RUN" ]; then
+  echo "⊘ SKIP: ANTI-THEATER 대조 불가 — RED mutation 미실행(fixture-missing / sed-failed). 대조 skip(위 mutation 실패가 이미 FAIL 처리)."
+elif [ "$EC_GREEN" = "$EC_RED" ]; then
   echo "✗ FAIL: ANTI-THEATER — GREEN(exit=$EC_GREEN) 과 RED mutation(exit=$EC_RED) 결과 동일 = non-discriminating hollow gate"
   FAIL=$((FAIL+1))
 else
