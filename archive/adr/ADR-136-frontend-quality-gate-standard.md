@@ -17,6 +17,10 @@ amendments:
     date: 2026-07-01  # KST +09:00
     cfp: CFP-2530
     summary: "결정13 — 결정3 예시 errata: job-level if: hashFiles(...) 는 context-availability 위반(load-time schema-invalid → 게이트 born-invalid, 신설 이래 0 회 로드/실행) → 삭제. graceful no-op 을 step-level 가드 + in-job fast-exit(exit 0) 단일 채널로 일원화 + templates/ 재유입 봉인(F8: actionlint-check.yml byte-identical parity 파일 무접촉·.github/ 검출 유지, templates/ coverage 는 wrapper-self discriminating test 가 hard-fail 차단)"
+  - amendment: 3
+    date: 2026-07-01  # KST +09:00
+    cfp: CFP-2535
+    summary: "결정14 — execution-liveness(게이트 실행-무결성) 3요건(blocking / full-scope / self-tested)을 cross-cutting standing 원리로 승격(frontend 초과 — 게이트 일반). Amd1(config-resolution)·Amd2(born-invalid)를 후향 일반화한 상위 원리. self-test N-class 일반화 = test-actionlint-workflows.sh 를 1-class(context-availability)→N-class(추가 hollow-gate class 감지). partition-axis 결정 = grep-count-per-class(현행) 유지·정형화(대안 = .github/actionlint.yaml ignore + exit-code-primary). AC actionlint-pin(1.7.12) 반증조건 + error-string literal pin. B(actionlint blocking + 6→7-tuple) = 이번 Story 제외, ADR-060 evidence(PR누적≥20/failure=0/sibling) 충족 시 별 carrier forcing-function. 신규 concept 0(기존 4 concept cross-link 재사용). Phase 1 = narrative only, self-test 실 .sh = Phase 2."
 related_adrs:
   - ADR-130  # applicability ⊥ closure + §결정4 graceful no-op job-level if: (path-filter skip 금지) + §결정6 required 등록 7일+unique job name + §결정1 positive whitelist — D1 직접 상위 토대
   - ADR-127  # overlay 확장-only/축소불가 invariant(§결정6 = 면제-카테고리 채널 폐지로 그 불변식 강화·재확인) — stylelint floor 영역 동형 적용(직접 근거 아닌 동형 선례/invariant 출처) + §결정5 N/A 3축 AND — D1 floor 축소불가 / D2 §8.7 N/A 근거
@@ -28,6 +32,8 @@ related_adrs:
   - ADR-042  # Amd8/10 aggregate_arch.applicable CONDITIONAL applicability flag schema 선례 — frontend.applicable 동형 차용
   - ADR-083  # consumer-applicability-filter (ADR-130 supersede) — conditional-applicability filter 1급 패턴 계보
   - ADR-063  # marketplace atomic sync — 결정12 Phase 2 version+desc mirror 의무
+  - ADR-060  # evidence-enforceable promotion framework — 결정14 B defer forcing-function anchor(actionlint blocking 승격 = PR누적≥20 + failure=0 + sibling merged 3-tuple 충족 시). D1 required 승격도 동일 gate
+  - ADR-026  # actionlint 게이트(§결정 5.G.b) — 결정14 self-test 가 templates/ coverage 를 차단 채널로 봉인하는 대상. Amendment 2(결정13 d) 재확인, 결정14 는 그 봉인의 N-class 확장
 related_files:
   - templates/github-workflows/css-lint.yml
   - plugins/codeforge-develop/presets/webapp/.stylelintrc.json
@@ -241,6 +247,101 @@ ADR-116 은 env value 주입(예: ALLOWED_HUB_REPOS) 선례이나 `.stylelintrc.
 - **관심사 분리 (신규 파일 권장 근거)**: 기존 `tests/scripts/test-css-lint.sh`(CFP-2527 C5)는 stylelint **runtime** 동작(config-resolution/exit-78)을 검증한다. 본 신규 test 는 workflow **parse validity**(load-time schema)를 검증한다 — 두 관심사는 orthogonal(runtime config-resolution ⊥ load-time context-availability)이라 한 스크립트에 섞으면 실패 원인 진단이 흐려진다. 따라서 별도 파일 권장. (Phase 2 가 최종 파일 배치 확정.)
 - **anti-hollow 자기검증**: 신규 test job 이 css-lint-test 처럼 wrapper-self CI 에서 실행되는지(또는 기존 actionlint-check.yml green 이 회귀 채널로 충분한지) Phase 2 가 판정 — 단 self-CI 실행 채널이 skip 되면 test 가 dead 이므로 실행 경로 실측 의무(CFP-2527 self-CI css-lint job 영구 skip → test-css-lint.sh 단일 회귀 채널이 된 선례 답습).
 
+### 결정 14 — execution-liveness(게이트 실행-무결성) standing 원리 3요건 + self-test N-class 일반화 (Amendment 3, CFP-2535)
+
+> **본 Amendment(CFP-2535)는 Amd1(결정12 config-resolution)·Amd2(결정13 born-invalid)가 각각 특정 결함 instance 를 정정한 것을 **후향 일반화(retro-generalize)** 한다 — 두 결함은 "게이트가 존재는 하나 실제로 검증하지 못한다" 는 동일 class 의 두 발현이었다. 그 밑에 깔린 standing 원리를 3요건으로 명문화하고, 그 원리를 자기 검증하는 self-test 를 1-class(context-availability)에서 N-class 로 일반화한다. Amd1/Amd2 본문 무변경 — 그 위에 상위 원리 layer 를 쌓는다(충돌 0, 약화 방향 0, ratchet-UP).**
+>
+> **⚠ cross-cutting 명시 (title 은 frontend 이나 원리는 게이트 일반)**: 본 ADR 의 title/carrier(CFP-2505)는 frontend 품질게이트지만, **결정 14 의 execution-liveness 원리는 frontend 를 초과하는 cross-cutting 원리다** — 어떤 CI 게이트/lint/test 든(actionlint / stylelint / doc-schema / invariant-check / evidence-registry …) 적용된다. frontend ADR 에 landing 하는 이유는 그 원리를 실증한 두 결함(Amd1/Amd2)이 모두 이 ADR 의 D1 게이트(css-lint.yml)에서 발생했기 때문이지, 원리가 frontend 국한이라서가 아니다. 별도 신규 ADR 을 세우지 않는 이유 = 원리의 발생 계보가 본 ADR 이고, 신규 메커니즘 0(전부 기존 concept 합성) + governance-drift 억제(ADR-119 §결정 9 — 발견 ≠ 신규 문서 필요).
+
+#### 14.1 — execution-liveness 3요건 (standing 원리, non-negotiable, ratchet-UP)
+
+게이트는 "존재" 만으로 무결하지 않다 — **실제로 실행돼(alive) 결함을 실제로 차단(effective)** 해야 한다. Amd1(로드는 되나 config 못 찾아 검증 0)·Amd2(로드조차 안 됨)가 각각 이 두 실패를 실증했다. execution-liveness = 게이트가 다음 3요건을 **동시에** 충족해야 유효하다는 standing invariant:
+
+| 요건 | 정의 | 위반 = 결함 class | Amd 계보 | concept anchor |
+|---|---|---|---|---|
+| **(L1) blocking** | 게이트가 실제로 fail-closed 로 차단한다 — 결함 있으면 RED 로 뒤집힌다(hollow/no-op/born-invalid 아님) | reached-but-dead(Amd1) / born-invalid(Amd2) / mutation-생존(hollow) | Amd1·Amd2 | [[github-actions-expression-context-availability]] + [[lane-verification-floor]] R-5(게이트 자기 무결성) + [[mutation-based-hollow-gate-detection]] |
+| **(L2) full-scope** | 배포 전 형상 전체를 검사한다 — wrapper-self 는 `templates/` + `.github/` 양 copy 포괄(byte-identical parity 존중) | 한 copy 만 검사 → 미검사 copy 로 결함 재유입(Amd2 F8 actionlint glob gap) | Amd2 | [[github-actions-expression-context-availability]] R4(재유입 봉인 = 검출 ∪ 차단) |
+| **(L3) self-tested** | 게이트가 결함을 실제로 죽이는지 mutation-kill discriminating fixture 로 증명 — GREEN(정상) ≠ RED(변이 주입) | 게이트가 hollow 인지 검증할 채널 부재 → "돌기만 하고 안 잡음" 방치 | Amd2 부록 | [[mutation-based-hollow-gate-detection]] M-1~M-5 + [[execution-based-review-verification]] X-2(discriminating check 우선) |
+
+- **AND 결합 (any 미충족 = 게이트 무효)**: 3요건은 disjunctive 아닌 conjunctive. L1 만 있고 L3 없으면 hollow 여부 미증명, L1·L3 있고 L2 없으면 미검사 copy 로 재유입(Amd2 실증). 세 요건이 각각 다른 실패 mode 를 막으므로 상보.
+- **ratchet-UP 전용 (ADR-058 §결정5 정합)**: execution-liveness 는 강화 방향 전용 — 게이트 tier 를 낮추거나 scope 를 줄이는 방향으로는 인용 불가. 약화 surface 0.
+- **적용 대상 = 모든 CI 게이트(cross-cutting)**: 이번 Story 의 즉시 wire 대상은 actionlint self-test(N-class) 1건이나(§14.3), 원리 자체는 게이트 일반에 standing. 다른 게이트가 이 원리 위반이면 별 Story 로 정정(본 Story 는 원리 codify + actionlint self-test N-class 만).
+
+#### 14.2 — partition-axis 결정 (P2 material — grep-count-per-class 유지·정형화 [권장 1안], 대안 = actionlint.yaml ignore + exit-code-primary)
+
+self-test 의 N-class 판정 메커니즘은 두 안이 대립한다(요구사항리뷰 carry-forward #1). ArchitectAgent 판정:
+
+**[권장·채택] 안① grep-count-per-class (현행 확장·정형화)**:
+- actionlint 를 전체 workflow 에 실행(overall exit code 무시 — `|| true`)하고, **class 별 error-string 정규식으로 stdout+stderr 를 grep count** 한다. class C 의 count == 0 이면 GREEN, mutation 재삽입 시 count >= 1 이면 RED(class-scoped).
+- **채택 근거 (결정적)**: 본 repo 는 150+ workflow 의 `run:` 블록에 **장기 pre-existing shellcheck 부채**(SC2086/SC2016/SC2034/SC2193/SC2126 다수)를 보유한다(현행 test-actionlint-workflows.sh line 17-29 실측 서술). actionlint 는 `run:` 블록을 shellcheck 로 겸 검사하므로, **overall actionlint exit code 는 이 부채 때문에 항상 non-zero** 다. 따라서 "overall exit == 0" 을 GREEN 판정으로 쓰면 CFP-2530 무관한 shellcheck 부채까지 요구하게 되어 **born-false-RED**(게이트가 무관한 이유로 영구 RED)가 된다. class-scoped grep count 는 판정을 **재유입 class 로 정확히 한정**해 이 부채를 스코프 밖에 둔다.
+- **정형화 (현행 대비 delta)**: 현행은 단일 class(context-availability) 하드코딩. N-class 는 이를 **class registry 로 데이터화** — 각 class 가 `{id, error_string_pattern, mutation_recipe, source_pin}` 4-tuple 로 선언되고, C(green count 0)/mutation(red count ≥1)/anti-theater(green ≠ red) 3-분기를 class 마다 loop 실행. §14.3·§8 명세가 registry 형식 확정.
+
+**[대안·비채택] 안② `.github/actionlint.yaml` ignore + exit-code-primary**:
+- `.github/actionlint.yaml` 의 `ignore:` 규칙으로 shellcheck class(SC####)를 억제하면 actionlint **자체 exit code 가 non-suppressed class 에 authoritative** 해진다(F6 concept doc 의 "exit != 0 primary 선호" 를 회복 — regex string drift 시 false-GREEN 리스크 제거). 이론상 더 robust.
+- **비채택 근거 3가지**:
+  1. **현행 자산 재사용 vs 신규 생성**: 현재 repo 에 `.github/actionlint.yaml` **부재**(요구사항리뷰 firsthand + 본 lane Glob 실측 — `**/actionlint*.yml` = workflow 2건뿐, config 0). 안② 채택 = 신규 config 파일 생성 + shellcheck 억제 규칙 유지보수 부담(어떤 SC 를 언제 억제할지 drift). 안①은 현행 test 의 검증된 grep 메커니즘 확장이라 신규 표면 0.
+  2. **suppression 의 관심사 오염**: `.github/actionlint.yaml ignore` 로 shellcheck 를 억제하면 actionlint-check.yml(warning-tier detection 채널)의 shellcheck 검출까지 함께 억제된다 — 즉 self-test 를 위한 config 가 detection 채널의 scope 를 side-effect 로 축소. 안①은 self-test 스코프만 grep 으로 좁히고 detection 채널은 무손상.
+  3. **exit-code-primary 이득이 안①에서도 부분 확보됨**: F6 이 우려한 false-GREEN(string drift 로 mutation 생존을 GREEN 오판)은 안①의 **mutation-kill 대조**(green count ≠ red count, anti-theater 분기)가 이미 방어한다 — mutation 재삽입 시 red count 가 실제로 증가하는지 매 실행 확인하므로, error-string 이 drift 해도 green/red 대조가 깨지면 FAIL(hollow 검출). 즉 exit-code-primary 의 핵심 이득(mutation 생존 검출)은 안①이 대조 메커니즘으로 대체 확보. 단 이 방어의 전제 = **각 class 의 error_string_pattern 이 실제 actionlint 출력과 매칭됨** → §14.4 의 버전-pin drift-guard 가 이 전제를 감시(pin bump 시 각 class fixture RED/GREEN 재검증).
+- **trade-off 요약**: 안②가 이론적 robustness(exit-code-primary)에서 우위이나, 현행 자산 재사용 + suppression 관심사 오염 회피 + mutation-kill 대조가 false-GREEN 을 이미 방어 → 안① 채택. F6 의 "regex-primary 위험" 은 안①의 primary 판정을 **regex 가 아니라 count 대조(green≠red)**로 둠으로써 해소(현행 line 87 F6 규칙 = regex 는 secondary 진단 라벨, count 대조가 판정).
+
+#### 14.3 — self-test N-class 일반화 (핵심 delta, Phase 2 wire)
+
+현행 `tests/scripts/test-actionlint-workflows.sh`(CFP-2530 Phase 2)는 단일 class(context-availability = job-level `hashFiles`)만 감지한다. 본 Story delta = **class registry 기반 N-class 로 일반화** — 추가 hollow-gate class 를 데이터로 등록해 loop 검증.
+
+- **class registry 형식** (각 class = 4-tuple, §8 명세 상세):
+  - `id`: class 식별자(예: `context-availability` / `continue-on-error-exit0-swallow` / `optional-install-or-true-skip`).
+  - `error_string_pattern`: actionlint(또는 해당 도구) 출력에서 이 class 를 식별하는 tolerant regex(source-pin literal 동반).
+  - `mutation_recipe`: temp fixture 사본에 이 class 결함을 재삽입하는 방법(sed/insert — repo 실파일 무오염).
+  - `source_pin`: error_string 의 출처 + 도구 버전 pin(§14.4 drift-guard 대상).
+- **추가 감지 class 후보 (§3.3 회고 정점 사례 — Phase 2 가 실측 fixture 로 확정)**:
+  - **class B: `continue-on-error` + `exit 0` 삼킴** — step 이 `continue-on-error: true` 또는 명시 `exit 0` 으로 실패를 삼켜 RED 가 안 뜨는 hollow. (주의: `continue-on-error` 자체는 warning-tier 의 정당 용법 — mutation recipe 는 "차단 의도 step 인데 exit 0 으로 삼킴" 만 target, 정당 warning-tier 는 false-positive 제외. Phase 2 가 discriminating 경계 확정.)
+  - **class C: optional-install `|| true` skip** — toolchain 설치가 `|| true` 로 실패를 무시해 도구 부재 시 검사 0 인데 GREEN(silent skip). CFP-2527 C5 toolchain-skip 패턴 동형(단 그건 명시 SKIP 보고로 정당화 — mutation recipe = "SKIP 보고 없이 silent 하게 검사 0 통과" 만 target).
+  - **⚠ 후보는 설계 narrative — Phase 2 가 각 class 마다 discriminating fixture(green count 0 / mutation red count ≥1 / anti-theater green≠red)를 실측 작성해 실효 확정**. 실측으로 discriminating power 미확보 class 는 drop(hollow class 등록 금지 — 등록 자체가 검사연극이면 self-defeating).
+- **동일 3-분기 mandate 상속(class 마다)**: 각 class 는 Amd2 부록의 discriminating 3-분기(GREEN / RED mutation-kill / anti-theater green≠red)를 그대로 상속. class 추가가 이 mandate 를 약화하지 않는다.
+- **full-scope 유지(L2)**: N-class 도 `.github/workflows/*.yml` + `templates/github-workflows/*.yml` 양쪽 실행(Amd2 F8 봉인 무변경).
+
+#### 14.4 — AC: actionlint-pin 반증조건 + error-string literal pin (P2, false-GREEN silent hollow 방지)
+
+N-class 판정이 actionlint error-string 에 의존하므로(§14.2 안①), 다음 AC 를 non-negotiable 로 박는다(요구사항리뷰 carry-forward #2·#3):
+
+- **AC-1 (actionlint pin 반증조건)**: N-class 문자열-판정은 **actionlint pin(현 1.7.12) 고정 하에서만 유효**하다. actionlint 버전 bump PR 은 **각 class fixture 의 RED/GREEN 을 재검증**하는 것을 동반 의무로 한다(error-string 이 버전 간 drift 하면 grep 이 mutation 을 놓쳐 false-GREEN silent hollow 로 샌다). pin 은 actionlint-check.yml / actionlint-workflows-test.yml 의 `download-actionlint.bash 1.7.12` 와 정합(본 lane 실측 — 양 workflow line 55/82 `1.7.12`).
+- **AC-2 (error-string literal pin — source verbatim)**: 각 class 의 error_string 은 **source/실측 literal 로 문서에 pin**한다. class `context-availability` 의 확정 pin(요구사항리뷰 carry-forward #3):
+  - actionlint `ctx-spfunc-availability` (v1.7.12): `calling function "hashFiles" is not allowed here` (요구사항리뷰 Codex 정확-태그 실행 ground-truth) / `function 'hashfiles' is not available in this context` (설계 lane WebFetch checks.md 실측). tolerant regex = `not allowed here|not available in .*context|ctx-spfunc`.
+  - (shellcheck class 는 안①에서 스코프 밖이나 참조 pin: `shellcheck reported issue in this script: SC####:`.)
+  - 신규 class(B/C 등)의 error_string 도 Phase 2 가 source/실측 literal 로 pin(무pin class 등록 금지 — drift-guard 대상 명시).
+- **AC-3 (primary 판정 = count 대조, regex = secondary)**: §14.2 안① 정합 — mutation-kill 판정 primary = green count(0) ≠ red count(≥1) 대조, error-string regex 는 secondary 진단 라벨. regex drift 가 판정을 뒤집지 않되(대조가 판정), drift 자체는 AC-1 재검증에서 포착.
+
+#### 14.5 — B(actionlint blocking + 6→7-tuple) defer forcing-function (evidence-gated, 이번 Story 제외)
+
+원안의 B(actionlint warning-tier → blocking-on-pr 승격 + branch protection 6-tuple → 7-tuple)는 **이번 Story 제외**다(사용자 판정 = over-engineering 축소). evidence-gated follow-up 으로만 남긴다:
+
+> **B forcing-function**: actionlint 게이트의 blocking-on-pr 승격(및 branch protection contexts 6→7-tuple 확장)은 **ADR-060 §결정6 promotion gate 3-tuple**(PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged — ADR-060 line 247/997 실측) 충족을 evidence 로 제출한 **별 carrier Story** 가 담당한다. 본 Story 는 승격하지 않는다(warning-tier·6-tuple 무변경). D1 stylelint required 승격(결정5)도 동일 gate 를 통과하는 별 Story.
+
+- **A(shellcheck class-scoped) 재확인**: 요구사항 (c) — A(shellcheck class-scoped grep)는 **CFP-2530 에서 이미 완료**(현행 test-actionlint-workflows.sh 의 `CTX_AVAIL_PATTERN` class-scoped grep + shellcheck 부채 스코프 밖 처리 = grep-count-per-class 그 자체). 본 Story 신규 0 — §14.2 안① 정형화가 A 의 메커니즘을 N-class 로 확장할 뿐 A 자체 재작업 없음.
+
+### 결정 14 부록 — §8 Test Contract 명세 (TestContractArchitectAgent input, Phase 1 = narrative only)
+
+> **Phase 1 scope 경계 (Amd2 부록과 동일 상속)**: 본 §8 명세는 **narrative(설계)** 다. 실 test 스크립트(`.sh`) N-class 확장 write 는 **Phase 2 구현 lane deliverable**. Phase 1 에 `.sh` write 금지(CFP-2527/CFP-2530 선례: Codex 설계리뷰 false-pos "test missing" 은 Phase 2 deliverable 이라 기각). 설계리뷰가 "N-class test 미구현" 을 P0/P1 로 올리면 Phase 2 deliverable 로 기각.
+
+- **대상 스크립트(Phase 2 확장, wrapper-self only)**: `tests/scripts/test-actionlint-workflows.sh` — 현행 단일 class 하드코딩을 **class registry loop** 로 확장. full-scope(`.github/workflows/*.yml` + `templates/github-workflows/*.yml` 양쪽) 무변경. wrapper-self only(`github.repository` gate / actionlint-workflows-test.yml 하네스 — consumer 미배포).
+- **class registry 형식 (각 class 4-tuple)**:
+  ```
+  CLASSES = [
+    { id, error_string_pattern (tolerant regex), mutation_recipe (temp-fixture insert), source_pin },
+    ...
+  ]
+  ```
+  현행 하드코딩(`CTX_AVAIL_PATTERN` + sed insert)이 첫 entry(`context-availability`)로 데이터화되는 것이 seed. Phase 2 가 class B/C 등을 append.
+- **class 마다 discriminating 3-분기 (CFP-1334 mutation-kill mandate 상속)**:
+  - **GREEN**: 정정 후 전체 workflow(양 copy)에 해당 class error-string count == 0 (class-scoped grep — 무관 shellcheck 부채 스코프 밖). 판정 = `assert_eq count 0`.
+  - **RED (mutation-kill, load-bearing)**: temp fixture 사본에 class 결함 재삽입(mutation_recipe) → 해당 class count >= 1. 판정 = `assert_ge1 count`. repo 실파일 무오염(temp dir only).
+  - **anti-theater (primary 판정)**: 각 class 의 GREEN count(0) ≠ RED count(≥1) 대조. 동일하면 non-discriminating hollow → FAIL. mutation 미실행(fixture-missing/sed-failed) = `NOT_RUN` sentinel → 대조 skip(현행 FIX-3 상속, false "ANTI-THEATER PASS" 오보 차단).
+- **partition-axis (§14.2 안①)**: 판정 = **class-scoped grep count**(overall actionlint exit code 무시 — shellcheck 부채로 non-zero 나와도 무관). class 별 count 0/≥1 대조가 primary, error-string regex 는 secondary 진단 라벨(F6 정합).
+- **버전-pin drift-guard (§14.4 AC-1/AC-2)**: 각 class source_pin 명시 + actionlint 1.7.12 pin 하에서만 유효. pin bump 시 각 class RED/GREEN 재검증 동반 의무(false-GREEN 방지). error_string 무pin class 등록 금지.
+- **graceful skip (NOT silent pass)**: actionlint 미설치 시 `::notice::` + SKIP 카운트 emit 후 non-fail(warning-tier 정합, silent pass 금지 — 현행 line 61-65 상속).
+- **execution-liveness self-application (L3 재귀)**: 본 test 자체가 execution-liveness 원리의 L3(self-tested) 실현체다 — test 가 실제로 mutation 을 죽이는지(green≠red)를 매 실행 대조하므로, test 자신이 hollow 가 되지 않는다. 단 test 의 실행 채널(actionlint-workflows-test.yml)이 skip 되면 test 가 dead 이므로 Phase 2 는 실행 경로 실측 의무(CFP-2527 self-CI css-lint job 영구 skip 선례 답습 — 현행 actionlint-workflows-test.yml `if: github.repository == 'mclayer/plugin-codeforge'` 는 wrapper-self CI 에서 실행됨을 본 lane Read 실측 confirm).
+- **anti-hollow 자기검증**: N-class 확장이 기존 context-availability class 의 discriminating power 를 회귀시키지 않는지(class 추가 후에도 seed class RED/GREEN 유지) Phase 2 회귀 확인.
+
 ## 결과
 
 ### Positive
@@ -250,6 +351,7 @@ ADR-116 은 env value 주입(예: ALLOWED_HUB_REPOS) 선례이나 `.stylelintrc.
 - frontend.applicable CONDITIONAL flag(default false/안전) → 비-frontend consumer 무손상(additive).
 - floor 축소불가를 CI effective-config 검증으로 강제 → ADR-127 의 overlay 확장-only/축소불가 invariant(§결정6 이 면제채널 폐지로 강화·재확인) 를 stylelint 영역에 동형 적용해 실효(config 차원 약화 가능 공백 해소).
 - D1 graceful no-op = ~~job-level `if:`~~ **step-level 가드 + in-job fast-exit**(Amendment 2 CFP-2530 정정 — job-level `if: hashFiles(...)` 는 context-availability 위반이었음), path-filter 금지 유지 → ADR-130 §결정4 permanent-pending 함정 회피.
+- **execution-liveness(게이트 실행-무결성) 3요건(blocking / full-scope / self-tested)을 cross-cutting standing 원리로 승격(Amendment 3 CFP-2535)** — Amd1(config-resolution)·Amd2(born-invalid) 두 결함 instance 를 후향 일반화한 상위 원리. 신규 concept 0(기존 4 concept cross-link: github-actions-expression-context-availability / mutation-based-hollow-gate-detection / lane-verification-floor / execution-based-review-verification). self-test N-class 일반화로 추가 hollow-gate class 감지(class registry loop).
 - 신규 메커니즘 0 — 전부 기존 ADR 패턴 확장(ArchitectAnalyst 검증, 충돌 0).
 
 ### Negative
@@ -267,13 +369,16 @@ ADR-116 은 env value 주입(예: ALLOWED_HUB_REPOS) 선례이나 `.stylelintrc.
 - D1 required 승격 = 별도 follow-up Story(7일+unique job name 충족 후 — wave rollout).
 - **CFP-2530 (Amendment 2) — born-invalid errata**: css-lint.yml 양 copy 의 job-level `if: hashFiles(...)` 는 css-lint.yml 신설(PR #2511, CFP-2505 Phase 2 — commit 7a9b0347, 본 lane firsthand 실측) 이래 workflow 를 load-time schema-invalid 로 만들어 D1 게이트가 0 회 실행됐다. Amendment 2 가 job-level `if:` 삭제(step-level 가드 + in-job fast-exit 로 대체) + templates/ 재유입 봉인(F2/F8: 검출 = actionlint-check.yml `.github/` lint[byte-identical parity 파일 무접촉] ∪ 차단 = wrapper-self discriminating test 가 templates/+.github/ hard-fail). 실 fix = Phase 2.
   - **version bump 근거 (F4 — ADR-037 diff_signal 매핑)**: Phase 2 변경 surface = css-lint.yml 양 copy(wrapper-self workflow) job-level `if:` 삭제 + actionlint-check.yml 양 copy Run glob 확장 + 신규 `tests/scripts/test-actionlint-workflows.sh`(wrapper-self test). 이 셋 모두 **non-mirrored surface**(plugin.json name/version/description/author = marketplace mirrored-field 무변경) → ADR-037 diff_signal surface-table 상 "wrapper-self workflow/test/docs 변경 = non-mirrored → **PATCH**" 귀속(ADR-037 diff_signal 매핑). 단 실 bump 등급 확정은 **Phase 2 가 ADR-037 게이트로** 산정(신규 test 파일 추가·workflow 편집 조합이 PATCH 이상으로 승격될지 Phase 2 판정 — 설계 판정 = PATCH 예상). marketplace mirrored-field 무변경 → **marketplace_sync_required: false** 유지.
+- **CFP-2535 (Amendment 3) — execution-liveness standing 원리 + self-test N-class**: Amd1/Amd2 를 후향 일반화한 상위 원리(§14.1 3요건) codify + self-test 1-class→N-class 일반화(§14.3). partition-axis = grep-count-per-class 유지·정형화(§14.2 안①, 대안 actionlint.yaml ignore 비채택). B(actionlint blocking + 6→7-tuple) 이번 Story 제외 — ADR-060 evidence-gated 별 carrier(§14.5). A(shellcheck class-scoped) = CFP-2530 완료·신규 0.
+  - **version bump 근거 (ADR-037)**: Phase 1 변경 surface = 본 ADR Amendment 3(archive/adr docs) 단독 — non-mirrored, docs-only. Phase 2 변경 surface = `tests/scripts/test-actionlint-workflows.sh` N-class 확장(wrapper-self test, non-mirrored). 양 Phase 모두 marketplace mirrored-field(plugin.json name/version/description/author) 무변경 → ADR-037 diff_signal "wrapper-self test/docs = non-mirrored → **PATCH**" 예상(실 bump 등급 = Phase 2 가 ADR-037 게이트로 산정). **marketplace_sync_required: false** 유지.
+  - **신규 concept 판정 = 재사용(신규 0)**: execution-liveness 3요건은 기존 4 concept 의 합성 — L1 = [[github-actions-expression-context-availability]] + [[lane-verification-floor]] R-5 + [[mutation-based-hollow-gate-detection]], L2 = [[github-actions-expression-context-availability]] R4, L3 = [[mutation-based-hollow-gate-detection]] + [[execution-based-review-verification]] X-2. 신규 concept 생성은 governance-drift(ADR-119 §결정9 — 발견 ≠ 신규 문서 필요) → cross-link only. 판정 근거 = 원리가 기존 concept 위의 standing invariant 층이지 신규 개념 아님(ADR 본문이 올바른 landing).
 
 ## 관련 파일
 
 - `templates/github-workflows/css-lint.yml` — D1 신규 독립 workflow. ~~job-level `if:`~~ → **step-level 가드 + in-job fast-exit**(Amendment 2 CFP-2530 정정), warning-tier first. 결정 3/5/6/13.
 - `.github/workflows/css-lint.yml` — 위 template 의 wrapper-self copy(byte-identical parity). Amendment 2 job-level `if:` 삭제 대상(양 copy). 결정 13.
 - `templates/github-workflows/actionlint-check.yml` + `.github/workflows/actionlint-check.yml` — **F8 결정: byte-identical parity 파일 무변경(무접촉)**. `.github/workflows/*.yml` 검출 유지(consumer·wrapper 공통 정확). templates/ blanket glob 삽입 금지(consumer 에 templates/ 디렉터리 부재 → unmatched glob → spurious warning). templates/ coverage 는 아래 test 가 담당. 결정 13(d) (B).
-- `tests/scripts/test-actionlint-workflows.sh` — Amendment 2 discriminating 회귀 test(§8 명세, Phase 2, wrapper-self only). **F8: templates/github-workflows/ + .github/workflows/ 양쪽 actionlint hard-fail — 봉인의 "차단" 채널 + templates/ coverage 담당**. 결정 13 부록 + 결정 13(d) (B).
+- `tests/scripts/test-actionlint-workflows.sh` — Amendment 2 discriminating 회귀 test(§8 명세, Phase 2, wrapper-self only). **F8: templates/github-workflows/ + .github/workflows/ 양쪽 actionlint hard-fail — 봉인의 "차단" 채널 + templates/ coverage 담당**. 결정 13 부록 + 결정 13(d) (B). **Amendment 3(CFP-2535): 단일 class 하드코딩 → class registry loop N-class 일반화(Phase 2). partition-axis = grep-count-per-class(§14.2 안①), 버전-pin drift-guard(§14.4), execution-liveness L3 self-tested 실현체(§14.1). 결정 14 부록.**
 - `plugins/codeforge-develop/presets/webapp/.stylelintrc.json` — stylelint config preset (Phase 2, config-standard extends + version pin). 결정 7/11.
 - `scripts/check-lint.sh` — CSS 분기 + 언어 함수 추출 보조 채널 (Phase 2). 결정 6.
 - `templates/scripts/consumer_applicable_workflows.txt` — css-lint.yml whitelist 등재 (Phase 2). 결정 5.
@@ -284,3 +389,7 @@ ADR-116 은 env value 주입(예: ALLOWED_HUB_REPOS) 선례이나 `.stylelintrc.
 - `scripts/bootstrap-consumer.sh` — webapp preset stylelint config scaffold (Phase 2). 결정 7.
 - `docs/consumer-guide.md` — stylelint 도입 안내 + D2 branch protection context 추가 경고 (Phase 2). 결정 10.
 - `archive/adr/ADR-RESERVATION.md` — row 136 active (CFP-2505).
+- `docs/domain-knowledge/concept/github-actions-expression-context-availability.md` — execution-liveness L1(born-invalid) + L2(재유입 봉인 R4) cross-link (Amendment 3, 신규 아님 — CFP-2530 자산 재사용). 결정 14.
+- `docs/domain-knowledge/concept/mutation-based-hollow-gate-detection.md` — execution-liveness L1·L3(mutation-kill discriminating) cross-link (Amendment 3, 재사용). 결정 14.
+- `docs/domain-knowledge/concept/lane-verification-floor.md` — execution-liveness L1(R-5 게이트 자기 무결성 / meta-hollow-gate) cross-link (Amendment 3, 재사용). 결정 14.
+- `docs/domain-knowledge/concept/execution-based-review-verification.md` — execution-liveness L3(X-2 discriminating check 우선) cross-link (Amendment 3, 재사용). 결정 14.
