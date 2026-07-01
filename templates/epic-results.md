@@ -19,7 +19,7 @@ related_adrs:
 - **작성자**: PMOAgent (Cross-cutting) self-write — codeforge-pmo lane plugin owner path
 - **mctrader 사용 사례**: `mctrader-hub/docs/retros/EPIC-RESULTS-MCT-*.md` (Amendment 1 — root → docs/retros/ 이동, consumer root clutter 해소)
 
-본 template = 13 섹션 구조. 모든 섹션 의무. N/A 시 "N/A — <사유>" 명시.
+본 template = 14 섹션 + §deferred (no-silent-drop 회수 착지, CFP-2541/ADR-137). 모든 섹션 의무. N/A 시 "N/A — <사유>" 명시.
 
 ---
 
@@ -158,6 +158,18 @@ consumer 첫 cross-repo Epic 시 추가:
 **Epic <EPIC_KEY> = <one-line domain achievement>.**
 
 <2-3 sentences key invariant 충족 + 향후 prerequisite 영향 + deferred items 요약>
+
+## §deferred
+
+<!-- CFP-2541 / ADR-137 — Epic-close triage-defer verdict + retro 서사 deferred 의 no-silent-drop 회수 착지.
+     check-deferred-item-recovery.sh (_scan_retro_file, ## §deferred regex) 스캔 대상.
+     source column enum: retro-narrative (retro §4/§8 서사 발생) | triage-defer (ADR-137 구현-리팩터링 triage defer verdict). -->
+
+| disposition | item | tracking | rationale | source |
+|---|---|---|---|---|
+| <tracked \| observed> | <deferred 항목 서술> | <#NNN tracking Issue \| "관찰-only"> | <이연/관찰 사유> | <retro-narrative \| triage-defer> |
+
+(deferred 항목 없는 Epic = "N/A — no deferred items" 명시. tracked = 추적 Issue 외부화 #NNN / observed = 관찰-only + 사유 명시. triage-defer source = ADR-137 Epic-close 구현-리팩터링 triage defer verdict anchor.)
 ```
 
 ## 작성 의무 사항 (CFP-83 신규)
