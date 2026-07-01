@@ -82,7 +82,7 @@ Proposed (2026-06-26) — Epic CFP-2418 (cross-repo 책임 배치 거버넌스) 
 | 에이전트 | 현 mandate 경계 | "레포 소유 배치" 포함? |
 |---|---|---|
 | ModuleArchitectAgent | module/package boundary + dependency direction (**레포 *내부*** boundary axis) | 아니오 — 레포 내부만 |
-| RefactorAgent | reusability advocacy — repo-분해 *pressure 식별·제안*(escalation-tier), **경계 확정은 disjoint** | 아니오 — 제안만, advisory 보존 (RefactorAgent.md:46) |
+| RefactorAgent | repo-분해 구조 advocacy(escalation-tier) — repo-분해 *pressure 식별·제안*, **경계 확정은 disjoint** | 아니오 — 제안만, advisory 보존 (RefactorAgent.md repo-분해 구조 escalation 축; 측정 축은 구현 리팩터링 Story C 이관 — CFP-2539 / ADR-042 Amendment 18, repo-분해 존치로 무축소 premise TRUE) |
 | ArchitectAgent (chief) | Change Plan §1-§13 + ADR draft author. **"repo-level 분해 경계 확정 = chief authority"** 이미 보유 (ADR-042:876) | 부분 — repo 분해 *경계* 는 chief 권한이나 "토폴로지 SSOT 1급 author" 는 미명시 |
 
 → 본 ADR = 이미 chief authority 에 귀속된 "repo-level 경계 확정" 권한을 **"토폴로지 SSOT 1급 author"로 명시 확장**하는 wording-level 명문화 (신규 영구 deputy 0, 신규 RACI R row 0 — authority pre-exists).

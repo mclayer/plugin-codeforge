@@ -213,6 +213,28 @@ amendment_log:
       - ADR-057 §결정 3 / §결정 4 (Codex 독립 review baseline 선례(F1 measurement) + spawn-time opts.model override fresh-spawn 메커니즘 SSOT(SendMessage resume 금지 상속))
       - ADR-127 §결정 6 (consumer overlay 확장-only — DomainAgent down-tier 공격적 override 불가, max(floor,overlay) clamp 재사용)
       - ADR-056 §결정 3 (요구사항 lane synthesis 순서 §5→§2→§6→PL — catalog 합성 근거) / DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny — catalog = domain/ 만 가능)
+  - amendment_id: 18
+    date: "2026-07-01"
+    status: applied
+    summary: "CFP-2539 (Epic CFP-2533 Story B) — RefactorAgent (d) Reusability *측정* 축을 구현 리팩터링(Story C)으로 소관 이동 + repo-분해 *구조* escalation 축은 RefactorAgent 존치 (Amendment 13/14 partial re-framing, carry-over — Amendment 10 CFP-1126 선례 답습). Amendment 13(CFP-2364)이 (d) Reusability 를 1급 축으로 신설 + Amendment 14(CFP-2369)가 측정 mechanical wire 한 것을, 본 Amendment 18 이 (d)를 **두 sub-part 로 분할**: (i) **중복제거·공통추출·DRY/WET·rule-of-three·duplication-ratio 측정** = 실코드 관측 의존(중복은 코드가 생겨야 관측 — Story §2.1 도메인 근거) → RefactorAgent 설계-lane mandate 에서 out-of-mandate + 구현 리팩터링(Story C, Epic-close Codex↔Claude execute-and-falsify triage) in-scope 로 re-frame. (ii) **repo-level 분해 advocacy**(응집 cluster → 별 deploy/ownership 단위 분리 = macro-structural boundary, 설계-시점 관측 가능) = RefactorAgent 설계-시점 구조 escalation 축으로 **존치**(advocacy/제안만, 경계 확정 = ArchitectAgent chief authority — RefactorAgent.md:33 기 anchor). 순 결과: RefactorAgent = (a)decoupling / (b)pattern / (c)interface separation **구조 3축** + **repo-level 분해 구조 escalation(설계-시점)**. REMOVED = 중복/재사용 *측정* 축(duplication-ratio / clone / rule-of-three / DRY-as-duplication / 공통추출) only. **Amendment 13/14 본문 = frozen audit trail, 0 touch** (event-sourcing — 과거 결정 박제, 무효화 아닌 소관 re-framing). Amendment 13 L50 '(d) in-scope' anchor → '측정 축 out-of-mandate + 구현 리팩터링 in-scope; repo-분해 구조 escalation 존치' 로 carry-over re-frame (Amendment 10 carry-over 답습 — 삭제 아님). **ADR-131 무영향 (Amendment 2 불요)** — ADR-131 L85/L144/L146-150/L230 의 참조 대상 = RefactorAgent 의 *repo-분해 advocacy* 이지 *reusability 측정* 축이 아니며, repo-분해 존치로 L150 '무축소' premise 는 TRUE 유지. Amendment 14 deferred(duplication-ratio blocking 승격 = evidence 누적 후 별 CFP) owner_adr = ADR-060/ADR-042 governed 유지, RefactorAgent-advocacy driver 만 Story C triage context 로 relocate(도구 5파일 존치, warning-tier orphan-safe). ADR-086 explicit scope = 신설/미도입/rename/**축소** (L56 verbatim) → 본 Amendment 18(측정 축 mandate 축소)은 explicit scope 열거 대상이므로 **full self-application** (Amendment 13 mandate 확장 = adjacent-case 였던 것과 대조 — 축소는 열거됨). 5-checklist FULL: #1 axis-disjoint(측정 축 relocation ⊥ 잔여 구조 3축 ⊥ repo-분해 escalation) / #2 cost-token(marginal — output 슬롯 4→3 감소, spawn count 무변경) / #3 consumer carrier(duplication 측정 owner → Story C triage, 도구 존치 warning-tier — 신규 schema key 0) / #4 sibling Epic align(CFP-2533 Story C 수령처 cross-ref) / #5 deferred trigger(Story C mechanical wire — role_assignment/blanket_refactor 실배선). ADR-091 L193 = frozen-⚠ 역주석만(rewrite 금지 — `⚠ CFP-2539` append, `⚠ CFP-2364` 패턴 답습). RefactorAgent 존속(roster 6+3+1+3 sub-tuple 무변경), model tier Sonnet 무변경 — mandate 발화 범위만 축소. SSOT propagation 3원본(RefactorAgent.md + skills/deputy-mandate/SKILL.md + plugins/codeforge-design/CLAUDE.md) sync. bump codeforge-design 0.30.0 → 0.31.0 MINOR(agent surface 축소 — ADR-037). marketplace version sync(ADR-063). **ratchet 약화 방향(측정 축 RefactorAgent 국소 4→3 축소) → sunset_justification(evidence) 의무**(ADR-058 §결정 5 / ADR-064 §결정 7). Phase 1 = 본 Amendment 18 + change-plan + Story mirror; Phase 2 = 14-surface 3축 정합 sweep + plugin bump + marketplace sync."
+    ref: CFP-2539
+    carrier_story: CFP-2539
+    sunset_justification: "RefactorAgent (d) Reusability *측정* 축 소관 이동(설계-lane inline advocacy → 구현 리팩터링 Story C triage) = RefactorAgent 국소로 보면 4축→3축 mandate 축소(약화 방향) → ADR-058 §결정 5 / ADR-064 §결정 7 (is_transitional:false governance ADR 약화 방향 symmetric evidence-gate) evidence requirement 발화. Amendment 10(CFP-1126) partial-rollback+carry-over 선례 답습. evidence-grounded justification 3 axis — (a) **환경 변화 evidence (relocation-강화, flat 능력 감소 아님)**: 측정 축을 강제력 없는 설계-시점 warning 에서 실코드 관측 시점(구현-후)의 execute-and-falsify 로 이동. 그 이동을 net-strengthening 으로 만드는 환경 변화 = CFP-2476 (Epic Codex 실행기반 검증 확장 — 실행형 재리뷰 + 주장→증거 감사 + 정책게이트+FIX replay, CLOSED `[verified: gh issue view 2476 state=CLOSED]`) infrastructure 가 이제 EXISTS. 중복/재사용 측정은 실코드 위에서 Codex 가 실측·반증(execute-and-falsify) 가능한 시점(Epic-close triage)에 배치될 때 강제력이 설계-시점 declarative advocacy 보다 net ↑. Story A(debate-protocol-v1 v1.3, `blanket_refactor` dispatch, merged)가 enabling contract. (b) **eval/directive evidence (강제력 비대칭 + 도메인 관측 한계)**: Epic CFP-2533 problem statement = '설계 시점 advocacy 로는 중복/재사용 관측 한계 (코드가 생겨야 진짜가 보이고 Codex 가 실측 가능)' + 강제력 비대칭 실측 — Amendment 14 check-duplication-ratio.sh 는 always exit 0 (warning-tier, 비차단) 인 반면 impl-manifest-mismatch 등은 P1 blocking. 설계-시점 측정 축이 warning-tier 로 강제력 결여인 채 남아 있는 것보다 구현-후 execute-and-falsify triage 로 이동이 강제력 net 개선. pattern_count 는 별도 catalog 부재 — eval/directive evidence 로 정직 framing(날조 금지). (c) **observation-time sufficiency (측정 축의 올바른 관측 시점 배치 = single-axis 충분 analog)**: 측정 축은 '중복은 실코드 없이 선험적으로 존재 불가'(Story §2.1 도메인 근거)라 설계-시점 falsifiable 계측이 물리 불가 — 올바른 관측 시점(구현-후)으로 배치될 때만 falsifiable. repo-분해 축은 macro-boundary 로 설계 스케치에서 관측 가능 → RefactorAgent 설계-시점 존치가 정합(관측 시점 disjoint). 따라서 국소 4→3(측정 축) 축소 ↔ policy-level elevation(설계-시점 warning → 구현-후 execute-and-falsify) trade-off 의 net 은 강화(Story §4.2 relocation-강화 framing). high-value 구조 3축 + repo-분해 구조 escalation 보존 + 측정 축의 올바른 관측 시점 배치 = 약화 방향의 1급 정당화. is_transitional: false 유지(영구 정책 정제 — 소관 이동은 영구 재배치, transitional pilot 아님. Amendment 10 동형)."
+    affected_agents:
+      - RefactorAgent (codeforge-design — mandate 축소: (d)reusability *측정* 축(중복제거·공통추출·DRY/WET·rule-of-three·duplication-ratio) out-of-mandate → 구현 리팩터링 Story C 이관 anchor; (a)decoupling / (b)pattern / (c)interface separation 구조 3축 유지; repo-level 분해 구조 escalation(설계-시점 advocacy) 존치. model tier Sonnet 무변경, roster 무변경. agent file 14-surface 3축 정합 sweep = Phase 2 codeforge-design sibling PR)
+    cross_ref:
+      - ADR-042 Amendment 13 (CFP-2364 — (d) Reusability 1급 축 신설. 본 Amendment 18 = 그 (d)를 측정 축(→Story C) + repo-분해 구조 escalation(존치)로 분할 re-frame. 본문 0 touch, L50 anchor re-framing only. 무효화 아님)
+      - ADR-042 Amendment 14 (CFP-2369 — (d) 측정 mechanical wire. 도구 5파일 존치(warning-tier, orphan-safe), advocacy driver 만 Story C triage context 로 relocate. deferred blocking-승격 trigger = ADR-060/ADR-042 governed 유지)
+      - ADR-042 Amendment 10 (CFP-1126 — partial retroactive rollback + carry-over + sunset_justification first applied 선례. 본 Amendment 18 = 동형 구조(부분 재편 + carry-over re-framing + 약화 방향 evidence-gate) 답습)
+      - ADR-058 §결정 5 (약화 방향 sunset_justification evidence requirement — RefactorAgent 측정 축 국소 4→3 축소 evidence-gate 발화)
+      - ADR-064 §결정 7 (is_transitional:false governance ADR 약화 방향 symmetric evidence-gate)
+      - ADR-086 (Deputy 신설 결정 framework — explicit scope L56 '신설/미도입/rename/축소' 에 축소 열거 → 본 Amendment 18 = FULL self-application (5-checklist 완주), Amendment 13 mandate 확장 adjacent-case 와 대조)
+      - ADR-091 §결정 1 (RefactorAgent DDD pattern mapping 표 L193 — frozen 보존, `⚠ CFP-2539` 역주석 append only, rewrite 금지. `⚠ CFP-2364` 패턴 답습)
+      - ADR-131 §결정 1/3 (cross-repo 책임 배치 — L85/L144/L146-150/L230 의 RefactorAgent 참조 = *repo-분해 advocacy* 대상. repo-분해 존치로 L150 '무축소' premise TRUE 유지 → **ADR-131 Amendment 2 불요**. 측정 축 relocation ⊥ repo-분해 topology-SSOT chief authority 무영향)
+      - ADR-037 (plugin version bump rule — agent surface 축소 = codeforge-design MINOR bump trigger, 0.30.0 → 0.31.0)
+      - ADR-063 (marketplace atomic version sync — codeforge-design mirrored field version 변경, sync PR 선행 merge)
+      - CFP-2476 (Epic Codex 실행기반 검증 확장 — execute-and-falsify infrastructure EXISTS = 측정 축 relocation net-strengthening 환경 변화 evidence, sunset_justification (a) axis)
+      - CFP-2533 Story A (debate-protocol-v1 v1.3 `blanket_refactor` dispatch — enabling contract) / Story C (측정 축 수령처 — Epic-close triage 실배선)
 related_stories:
   - CFP-448
   - CFP-676
@@ -226,6 +248,7 @@ related_stories:
   - CFP-2401  # Amendment 15 carrier — 비-webapp(backend service) sonnet dev preset 신설 (ServiceDeveloperAgent, §결정 1(b) enumeration 확장, preset 2→3)
   - CFP-2432  # Amendment 16 carrier — Story-shape 조건부 model tier (stakes-gated static-per-context tier). low-stakes 4-AND shape 에서 InfraOperationalArchitectAgent opus→sonnet, high-stakes opus 유지. §결정 2 invariant 충돌 해소(stakes = mandate-orthogonal 축). ChangeImpactAgent sonnet 비준(Amd5 reversal) + DomainAgent v1 제외. ratchet 약화 방향 → sunset_justification(evidence) 의무
   - CFP-2445  # Amendment 17 carrier — DomainAgent financial-invariant-0 조건부 sonnet (CFP-2432 follow-up). Amd16 §결정 3 가 예약한 DomainAgent flip 자리 선결충족(catalog codify + 경계 falsifiable 확정). financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축, DomainAgent 전용 별 predicate. flip 조건 = (4-AND low-stakes) AND (financial-invariant-0 shape). D1 catalog 11 invariant(INV-1~11, F2 storytelling/outliers 편입 INV-10/11) + A/B 분류 + F1 1.4% 정정. mandate 표면 재정의 동반(§결정 2). ratchet 약화 방향 → sunset_justification(evidence) 의무
+  - CFP-2539  # Amendment 18 carrier — RefactorAgent (d) Reusability *측정* 축(중복제거·공통추출·DRY/rule-of-three/duplication-ratio) 구현 리팩터링(Story C) 소관 이동 + repo-분해 구조 escalation(설계-시점) 존치. Amendment 13/14 partial re-framing(carry-over, 본문 0 touch — Amd10 선례). RefactorAgent 국소 4축→3축(측정 축) 축소 = 약화 방향 → sunset_justification(evidence 3 axis: CFP-2476 execute-and-falsify infra EXISTS 환경 변화 / Epic CFP-2533 강제력 비대칭 eval / 측정 축 observation-time 배치 sufficiency) 의무. ADR-131 L150 '무축소' premise TRUE 유지(repo-분해 존치) → ADR-131 Amendment 2 불요. ADR-086 explicit scope 축소 열거 → FULL self-application. Epic CFP-2533 Story B
 related_adrs:
   - ADR-009
   - ADR-013
@@ -1378,3 +1401,121 @@ opus→sonnet tier-flip(DomainAgent, financial-invariant-0 shape 한정) = ratch
 - ADR-056 §결정 3 — 요구사항 lane synthesis 순서(catalog 합성 근거) + DomainAgent write 권한 경로 docs/domain-knowledge/domain/**(concept/** deny)
 - ADR-086 — axis 분석 lens(financial-invariant-0 axis ⊥ stakes axis ⊥ mandate depth axis disjoint 검증 adjacent-case. 본 Amendment = 신설 아닌 tier 분기 → framework 전면 self-application 주장 아님)
 - CFP-2445 change-plan(internal-docs `wrapper/change-plans/`) — financial-invariant-0 gating 설계 SSOT(§3 메커니즘 / §7 trust boundary / §8 Test Contract / §11 N/A)
+
+---
+
+## Amendment 18 — RefactorAgent (d) Reusability 측정 축 소관 이동(구현 리팩터링 Story C) + repo-분해 구조 escalation 존치 (Amendment 13/14 partial re-framing, ADR-058 §결정 5 evidence-gate, CFP-2539 / Epic CFP-2533 Story B)
+
+**날짜**: 2026-07-01
+
+### 동기 (리팩터링 2활동 분리 — Epic CFP-2533 도메인 이분)
+
+Epic CFP-2533 (리팩터링 2활동 분리 — 설계 리팩터링 + 구현 리팩터링) 의 도메인 이분:
+
+| | 설계 리팩터링 | 구현 리팩터링 |
+|---|---|---|
+| 대상 | 결합도·인터페이스·**경계**·패턴 = **구조** | 중복 제거·공통 추출·재사용 = **reusability 측정** |
+| 관측 시점 | 코드 존재 전 (설계 스케치만으로 위반 판단 가능) | 실코드 위 (중복은 코드가 있어야 관측) |
+| RefactorAgent 축 | (a)decoupling / (b)pattern / (c)interface separation **+ repo-분해(구조 escalation)** | (d) reusability **측정** |
+| 발동 메커니즘 | 설계 lane inline advocacy (Claude, Mapper↔Refactor 대립) | Epic-close triage — Codex↔Claude execute-and-falsify (Story C) |
+
+Amendment 13 (CFP-2364) 가 (d) Reusability 를 RefactorAgent 1급 축으로 신설했고 Amendment 14 (CFP-2369) 가 측정을 mechanical wire 했다. 본 Amendment 18 = 그 (d)를 **관측 시점 기준으로 두 sub-part 로 분할**한다:
+
+1. **중복제거·공통추출·DRY/WET·rule-of-three·duplication-ratio 측정** = **실코드 관측 의존** (중복은 실코드 없이 선험적으로 존재 불가 — Story §2.1 도메인 근거) → RefactorAgent 설계-lane mandate 에서 **out-of-mandate + 구현 리팩터링(Story C) in-scope** 로 re-frame. 이것이 Epic 의 핵심 thesis (중복은 코드가 생겨야 관측 + Codex 실측 가능).
+2. **repo-level 분해 advocacy** (응집 cluster → 별 deploy/ownership 단위 분리 = macro-structural boundary) = **설계-시점 관측 가능** (설계 스케치 macro-boundary 에서 판단 — 런타임 중복 관측 불요) → RefactorAgent **설계-시점 구조 escalation 축으로 존치** (advocacy/제안만; 경계 확정 = ArchitectAgent chief authority, RefactorAgent.md:33 기 anchor).
+
+순 결과: **RefactorAgent = (a)decoupling / (b)pattern / (c)interface separation 구조 3축 + repo-level 분해 구조 escalation(설계-시점)**. REMOVED = 중복/재사용 *측정* 축(duplication-ratio / clone / rule-of-three / DRY-as-duplication / 공통추출) only.
+
+### 변경 사항 (mandate 축소 — 측정 축 relocation, repo-분해 존치)
+
+| Agent | 변경 | model tier | §결정 1 매트릭스 row |
+|---|---|---|---|
+| **RefactorAgent** | **mandate 축소** — (d) reusability *측정* 축(중복제거·공통추출·DRY/WET·rule-of-three·duplication-ratio) out-of-mandate → 구현 리팩터링(Story C) 이관. (a)decoupling / (b)pattern / (c)interface separation **구조 3축 유지** + repo-level 분해 **구조 escalation 존치**(advocacy) | **Sonnet 유지** | (a) 무변경 — single-mandate advocacy 패턴 유지 (구조 advocacy 축, multi-source synthesis 는 ArchitectAgent chief Opus) |
+
+roster 6 permanent + 3+1 CONDITIONAL + 3 sub-tuple 카운트 무변경 (RefactorAgent 존속 — mandate 발화 범위만 축소). model tier Sonnet 무변경. spawn 메커니즘 무변경.
+
+### Amendment 13/14 carry-over re-framing (본문 0 touch — Event Sourcing)
+
+**Amendment 13/14 body section (본 ADR L893-1034) = frozen audit trail, 0 touch.** 본 Amendment 18 = 폐지(무효화)가 아니라 소관 **re-framing** (Amendment 10 CFP-1126 partial-rollback + carry-over 선례 답습):
+
+- Amendment 13 L50 anchor "(d) in-scope, 금지 영역 아님" → 본 Amendment 18 에서 "**RefactorAgent 측정 축 out-of-mandate + 구현 리팩터링(Story C) in-scope; repo-분해 구조 escalation 존치**" 로 carry-over re-frame (삭제 아님 — Amendment 10 이 AggregateArch mandate 를 ModuleArch 로 carry-over 한 것과 동형).
+- Amendment 14 mechanical wire 5파일 (`check-duplication-ratio.sh` / `test-...sh` / `duplication-check.yml` / evidence-registry `duplication-ratio-warning` entry / invariant-check.yml `CONSUMER_ONLY_WORKFLOWS`) = **존치** (warning-tier, 항상 exit 0 — advocacy owner 부재 상태로 남아도 orphan-safe, CI 무해). 생애주기 결정(존폐/이동) = Story C. RefactorAgent.md "재사용성 측정 연동" 단락은 "구현 리팩터링(Story C) 이관" anchor 로만 정리.
+- Amendment 14 deferred trigger("duplication-ratio blocking 승격 = evidence 누적 후 별 CFP") = owner_adr ADR-060/ADR-042 governed **유지** — RefactorAgent-advocacy driver 만 Story C triage context 로 relocate (deferred 자체는 orphan 되지 않음).
+
+### ADR-058 §결정 5 evidence-gate (약화 방향 — 측정 축 국소 4→3 축소)
+
+측정 축 소관 이동 = RefactorAgent 국소로 4축→3축 mandate 축소(약화 방향) → ADR-058 §결정 5 / ADR-064 §결정 7 (is_transitional:false governance ADR 약화 방향 symmetric evidence-gate) evidence requirement 발화. frontmatter amendment_id:18 `sunset_justification` 본문 = evidence-grounded 3 axis (요약 아래, verbatim = frontmatter):
+
+**(a) 환경 변화 evidence (relocation-강화, flat 능력 감소 아님)**: 측정 축을 강제력 없는 설계-시점 warning 에서 실코드 관측 시점(구현-후)의 execute-and-falsify 로 이동. net-strengthening 을 만드는 환경 변화 = **CFP-2476 (Epic Codex 실행기반 검증 확장) infrastructure 가 이제 EXISTS** `[verified: gh issue view 2476 --repo mclayer/plugin-codeforge → state=CLOSED, title "[CFP][EPIC] Codex 실행기반 검증 확장 — 실행형 재리뷰 + 주장→증거 감사 + 정책게이트 팩"]`. 중복/재사용 측정이 실코드 위에서 Codex 가 실측·반증(execute-and-falsify) 가능한 시점(Epic-close triage) 에 배치될 때 강제력이 설계-시점 declarative advocacy 보다 net ↑. Story A (debate-protocol-v1 v1.3, `blanket_refactor` dispatch, merged) 가 enabling contract.
+
+**(b) eval/directive evidence (강제력 비대칭 + 도메인 관측 한계)**: Epic CFP-2533 problem statement = "설계 시점 advocacy 로는 중복/재사용 관측 한계 (코드가 생겨야 진짜가 보이고 Codex 가 실측 가능)" + 강제력 비대칭 실측 — Amendment 14 `check-duplication-ratio.sh` 는 always exit 0 (warning-tier, 비차단) 인 반면 impl-manifest-mismatch 등은 P1 blocking `[verified: scripts/check-duplication-ratio.sh 모든 경로 exit 0 — Amendment 14 §warning-tier 불변]`. 설계-시점 측정 축이 warning-tier 로 강제력 결여인 채 남는 것보다 구현-후 execute-and-falsify triage 로 이동이 강제력 net 개선. **pattern_count 는 별도 catalog 부재 — eval/directive evidence 로 정직 framing (pattern_count 날조 금지 — ADR-119 정합).**
+
+**(c) observation-time sufficiency (측정 축의 올바른 관측 시점 배치 = single-axis analog)**: 측정 축은 "중복은 실코드 없이 선험적으로 존재 불가"(Story §2.1) 라 설계-시점 falsifiable 계측 물리 불가 — 올바른 관측 시점(구현-후)으로 배치될 때만 falsifiable. repo-분해 축은 macro-boundary 로 설계 스케치에서 관측 가능 → RefactorAgent 설계-시점 존치가 정합 (관측 시점 disjoint). 국소 4→3(측정 축) 축소 ↔ policy-level elevation(설계-시점 warning → 구현-후 execute-and-falsify) trade-off 의 **net 은 강화** (Story §4.2 relocation-강화 framing).
+
+is_transitional: false 유지 (영구 정책 정제 — 소관 이동은 영구 재배치, transitional pilot 아님. Amendment 10 동형).
+
+### ADR-086 framework 적용 — FULL self-application (축소 = explicit scope 열거)
+
+**Amendment 13 과의 대조 (중요)**: Amendment 13 은 **mandate 확장** — ADR-086 explicit scope(신설/미도입/rename/축소, [L56 verbatim](ADR-086-deputy-creation-decision-framework.md)) 에 확장 미열거 → **adjacent-case** (axis 분석 lens 도구만 차용). 본 Amendment 18 은 **mandate 축소** — ADR-086 explicit scope 에 "**축소**" 명시 열거 → **FULL governance self-application** (5-checklist 완주 의무). 아래 5-checklist = full self-application:
+
+| # | Check | 통과 기준 | CFP-2539 full self-application (측정 축 축소 + repo-분해 존치) |
+|---|---|---|---|
+| 1 | **axis disjoint** | 축소가 잔여 deputy/축과 axis 중복·충돌 0 | **PASS** — 측정 축 relocation(중복/재사용 실코드 관측) ⊥ 잔여 구조 3축(결합/패턴/인터페이스 설계-시점) ⊥ repo-분해 구조 escalation(macro-boundary 설계-시점). 세 축 관측 시점·대상 disjoint. ModuleArch(boundary authority) / DataArch(OLAP de-duplication) 무영향. |
+| 2 | **cost-token budget** | spawn count 변화 시 ADR-068 I-5 empirical grounding | **PASS (marginal 감소)** — roster 무변경(신설/deprecate 0), spawn count 무변경 (평균 26 / full 38 유지, Amendment 10 base `[empirical-source: TBD — local probe 부재]`). 축소 token = RefactorAgent output 슬롯 (d) 측정 축 1개 제거분 (4→3, marginal 감소). |
+| 3 | **consumer carrier** | consumer overlay 필드 / `project.yaml` schema 영향 명시 | **PASS (신규 schema key 0)** — duplication 측정 owner → Story C Epic-close triage context 로 relocate. Amendment 14 mechanical wire 5파일(consumer template `duplication-check.yml` 포함) = 존치(warning-tier, orphan-safe) — consumer 측 삭제/schema 변경 0. 신규 `project.yaml` key 신설 0. |
+| 4 | **sibling Epic align** | 진행 중 sibling Epic 과 RACI 충돌 0 또는 cross-ref | **PASS** — 수령처 = Epic CFP-2533 Story C (측정 축 실배선 — role_assignment / blanket_refactor 실소비 / Epic-close triage). cross-ref 명시. Story A(debate-protocol v1.3, merged) 무의존. RACI 충돌 0. |
+| 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 | **PASS** — Story C = 측정 축 mechanical wire 실배선 carrier (check-duplication-ratio.sh 등 5파일 생애주기 결정 + Epic-close triage 배선). Amendment 14 blocking-승격 deferred(evidence 누적 후 별 CFP) = ADR-060/ADR-042 governed 유지. |
+
+종합: **mandate 축소 — FULL self-application PASS** (5-checklist 1 FAIL 0). ADR-086 explicit scope("축소") 열거 대상이므로 framework 전면 self-application (Amendment 13 adjacent-case 와 대조). verdict packet `deputy_axis_restructure_self_check_passed: true` (ADR-086 §결정 4).
+
+### ADR-131 무영향 — Amendment 2 불요 (repo-분해 존치가 '무축소' premise 보존)
+
+**핵심 blast-radius 판정**: ADR-131 (cross-repo 책임 배치 거버넌스, status: Proposed, is_transitional: false — LIVE governance decision) 은 L85 / L144 / L146-150 / L230 에서 RefactorAgent 를 참조하나, **참조 대상 = RefactorAgent 의 *repo-분해 advocacy*(escalation-tier 제안) 이지 *reusability 측정* 축이 아니다** `[verified: Read ADR-131 L85 "repo-분해 pressure 식별·제안(escalation-tier), 경계 확정은 disjoint" / L146-150 axis-disjoint #2 "RefactorAgent advisory 무축소 (verbatim 박제 — AC-5) ... RefactorAgent.md:46 ... 이 한 줄 없으면 구현리뷰가 mandate 축소로 오판한다"]`.
+
+본 Amendment 18 이 **repo-분해 구조 escalation 축을 RefactorAgent 에 존치**하므로:
+- ADR-131 L150 "RefactorAgent advisory 무축소" premise = **TRUE 유지** (repo-분해 advocacy 무손상).
+- ADR-131 L144 axis-disjoint("repo-level 소유 배치 ⊥ ModuleArch 레포 내부 ⊥ RefactorAgent repo-분해 advocacy") = 3축 그대로 유효.
+- → **ADR-131 Amendment 2 불요** (blast radius 최소, live Proposed ADR falsification 0).
+
+**대안 Option Y (reject)**: (d) 전체(repo-분해 포함) 이관 시 ADR-131 L150 을 re-point 하는 **ADR-131 Amendment 2 필수** — Story §2.1 자체 도메인 기준(repo-분해 = 설계-시점, 런타임 미관측) 위배 + live Proposed ADR 불필요 amend → reject. 상세 = change-plan §2 "설계 fork 판정".
+
+### SSOT propagation (3 원본)
+
+본 Amendment 의 RefactorAgent mandate 서술은 Amendment 13 확립 3 원본에 byte-consistent 의미로 sync (Phase 2 sibling PR):
+
+1. `plugins/codeforge-design/agents/RefactorAgent.md` — agent file SSOT (측정 축 제거 + repo-분해 구조 escalation 존치 + "구현 리팩터링(Story C) 이관" anchor)
+2. `skills/deputy-mandate/SKILL.md` — wrapper canonical SSOT (primary axis matrix / DDD pattern / axis disjoint 단락)
+3. `plugins/codeforge-design/CLAUDE.md` — mirror (sibling sync)
+
+### bump + marketplace sync
+
+- `plugins/codeforge-design/.claude-plugin/plugin.json`: version **0.30.0 → 0.31.0 MINOR** (RefactorAgent agent surface 축소 — ADR-037 plugin version bump rule; `mandate scope 변경` = MINOR trigger). 참고: Story §5 AC-8 의 "0.29.0 → 0.30.0" 은 stale baseline — CFP-2505 (2026-06-30) 가 이미 0.30.0 으로 bump `[verified: gh api .../codeforge-design/.claude-plugin/plugin.json?ref=main → version 0.30.0]`. 정정 target = 0.30.0 → 0.31.0.
+- marketplace version sync (ADR-063 atomic invariant) — `mclayer/marketplace` codeforge-design entry version mirror (현재 main 에서 0.30.0 sync 상태 `[verified: gh api .../marketplace.json?ref=main]` → **fresh sync PR 로 0.31.0**, sync PR 선행 merge → plugin PR merge).
+- plugin.json changelog: CFP-2539 entry **prepend** — 기존 CFP-2505/2369/2364 changelog 항 = frozen (0 touch).
+
+### 외부 지식 인용 (Amendment 13 근거 재인용 — over-claim 무)
+
+Story §2.1 시점-분리 도메인 근거의 외부 실천 근거 (Amendment 13 이 이미 인용한 근거의 재인용 — 신규 1차 출처 발굴 불요, requirements-review 확인: over-claim 무):
+
+- **rule of three / DRY (중복은 실코드 3회 관측 후 추출 = 구현-시점 리팩터링)**: Martin Fowler, *Refactoring* (Extract Method / Extract Class 중복 제거 catalog; "rule of three" — Don Roberts 귀속). source: en.wikipedia.org/wiki/Rule_of_three_(computer_programming). "3회 관측 후 추출, premature abstraction 회피" = 측정 축이 구현-시점 성격이라는 근거.
+- **ISO/IEC 25010 Maintainability sub-characteristics (Modularity ↔ Reusability 별 축)**: Modularity(=decoupling/pattern/interface = 구조 3축) 와 Reusability(=측정 축) 가 별 sub-characteristic. source: ISO/IEC 25010:2023(en) Product quality model (https://www.iso.org/obp/ui/en/#!iso:std:78176:en).
+
+### 기존 정책 변경 0건 (ADR-042 본문 결정 1~6)
+
+본 Amendment 18 = ADR-042 결정 1~6 본문 **변경 0건**. 변경 = (a) frontmatter amendment_log row 18 신설 + related_stories CFP-2539 append (b) 본 `## Amendment 18` body section. tier criteria(결정 1) — RefactorAgent Sonnet 분류 무변경(mandate scope 축소이지 tier 변경 아님). invariant(결정 2) — Sonnet single-mandate advocacy 패턴 유지, mandate 표면 재정의 동반(측정 축 out-of-mandate declare — 순수 축소 아닌 소관 명시). 신규 agent ADR 의무(결정 3) / inheritance(결정 4) / Haiku rollback(결정 5) / 재-audit(결정 6) 모두 변경 0건.
+
+### Cross-ref
+
+- [Amendment 13 (CFP-2364)](#amendment-13) — (d) Reusability 1급 축 신설. 본 Amendment 18 = 측정 축(→Story C) + repo-분해 구조 escalation(존치) 분할 re-frame. 본문 0 touch, L50 anchor re-framing only
+- [Amendment 14 (CFP-2369)](#amendment-14) — (d) 측정 mechanical wire. 도구 5파일 존치(warning-tier orphan-safe), advocacy driver 만 Story C relocate. deferred blocking-승격 = ADR-060/ADR-042 governed 유지
+- [Amendment 10 (CFP-1126)](#amendment-10) — partial retroactive rollback + carry-over + sunset_justification first applied 선례. 본 Amendment 18 동형 구조 답습
+- [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) — 약화 방향 sunset_justification evidence requirement (측정 축 국소 4→3 축소 evidence-gate 발화)
+- [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) — is_transitional:false governance ADR 약화 방향 symmetric evidence-gate
+- [ADR-086 §결정 2 5-checklist](ADR-086-deputy-creation-decision-framework.md) — explicit scope L56 "축소" 열거 → FULL self-application (Amendment 13 adjacent-case 와 대조)
+- [ADR-091 §결정 1 L193](ADR-091-architectlane-ddd-vocabulary-governance.md) — RefactorAgent DDD pattern mapping frozen 보존, `⚠ CFP-2539` 역주석 append only
+- [ADR-131 §결정 1/3](ADR-131-cross-repo-responsibility-placement-governance.md) — L85/L144/L146-150/L230 RefactorAgent 참조 = repo-분해 advocacy 대상. repo-분해 존치 → L150 "무축소" premise TRUE → **Amendment 2 불요**
+- ADR-037 (plugin version bump rule — agent surface 축소 = MINOR bump, 0.30.0 → 0.31.0)
+- ADR-063 (marketplace atomic version sync — codeforge-design mirrored field version 변경)
+- CFP-2476 (Epic Codex 실행기반 검증 확장 — execute-and-falsify infra EXISTS = 측정 축 relocation net-strengthening 환경 변화 evidence)
+- CFP-2533 Story A (debate-protocol-v1 v1.3 enabling contract) / Story C (측정 축 수령처)
+- CFP-2539 change-plan (internal-docs `wrapper/change-plans/CFP-2539-refactoragent-axis-split.md`) — RefactorAgent 축 분할 설계 SSOT

@@ -59,7 +59,7 @@ codeforge core (>= 5.0.0) 의존.
 
 - **ArchitectAgent** (chief author, Opus — multi-source synthesizer) — deputy 산출물 + 나머지 3 sub-tuple 산출물 통합
 - **CodebaseMapperAgent** (Sonnet — existing codebase fact)
-- **RefactorAgent** (Sonnet — decoupling / reusability / pattern / interface advocacy)
+- **RefactorAgent** (Sonnet — decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation. 측정 축(중복/재사용)은 구현 리팩터링 Story C 이관 — CFP-2539)
 - **ArchitectAnalystAgent** (Sonnet) — 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11) 분석 단일 축
 
 **flat spawn 의미**: Orchestrator 가 4 component 모두 평행 spawn. 재귀 spawn 금지 / nested team 금지 / sub-lead 격상 0건. 4-tuple = 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층 (nested) 이 아니다**.
@@ -93,7 +93,7 @@ ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapp
 | Deputy / Component | Spawn 시점 | 산출물 → chief author 통합 위치 |
 |---|---|---|
 | CodebaseMapperAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §2 현재 구조 |
-| RefactorAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §3 도입할 설계 (refactor 시각 — decoupling / reusability / pattern / interface 분리) + §6 (중복제거·공통추출·repo-분해 advocacy, escalation-tier — 경계 확정: module/aggregate-level=ModuleArch authority, repo-level 분해=ArchitectAgent chief authority) |
+| RefactorAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §3 도입할 설계 (refactor 시각 — decoupling / pattern / interface 분리 구조 3축) + §6 (repo-분해 구조 advocacy, escalation-tier — 경계 확정: repo-level 분해=ArchitectAgent chief authority, module/aggregate-level=ModuleArch authority). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) |
 | ArchitectAnalystAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §2 (변경 전 기존 설계 컨텍스트) |
 | SecurityArchitectAgent (deputy) | 설계 lane 진입 즉시 | §7.1-§7.3, §7.5-§7.7 보안 설계 |
 | **DataArchitectAgent** (deputy) | 설계 lane 진입 즉시 | **§3 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) + §11 OLAP schema 진화 / OLAP rollback / OLAP integrity invariant** |
