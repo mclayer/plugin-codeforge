@@ -594,6 +594,8 @@ discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제�
 
 **companion dispatch wall-clock 상한 (CFP-2545 / ADR-081 §결정 D14)**: CodexReviewAgent 의 companion(`adversarial-review --wait`) dispatch 는 wall-clock 상한(**option-first** `timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300}` — GNU coreutils runnable 형태, duration-first 는 exit 127 무효) 대상 — 무한 대기 시 `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` marker + verdict=inconclusive (fail-open 금지, PASS 자동 승격 금지). SSOT = [ADR-081 §결정 D14](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) / [`agents/CodexReviewAgent.md`](../agents/CodexReviewAgent.md) 실행 패턴.
 
+**background-wait liveness gate 일반 cross-ref (CFP-2549 / ADR-139)**: 위 companion 상한은 첫 인스턴스일 뿐 — 모든 codeforge-owned background subagent 대기는 background-wait liveness gate (wall-clock ceiling INV-L1 / fail-open 금지 inconclusive INV-L2 / "0-byte ≠ stall" 3-state INV-L3 / Orchestrator·lead 게이트 소유 INV-L4) 를 따른다. SSOT = [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) + wrapper `docs/orchestrator-playbook.md` §3.10.1.
+
 ---
 
 ## 11. 문서화 표준

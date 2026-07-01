@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.18.0 — 2026-07-02
+
+### Changed (CFP-2549 — background-wait liveness gate cross-ref, MINOR)
+
+ADR-139 (background-wait liveness gate — 모든 codeforge-owned background subagent 대기의 유한성 1급 원리) 의 lane 반영.
+
+- `templates/review-pl-base.md` — general background-wait liveness gate cross-ref 1줄 추가 (SSOT = ADR-139 / orchestrator-playbook.md "background-wait liveness gate" 공통 단락). codeforge 소유 background subagent 대기는 wall-clock 상한 + liveness 관측(3-state) + fail-open 금지(inconclusive) 규약을 상속.
+
+#### Why
+
+CFP-2545 companion wall-clock ceiling 이 codex-특정 first instance 였고, ADR-139 가 이를 모든 background subagent 대기로 일반화. review lane PL 도 이 공통 규약을 상속하므로 review-pl-base 에 1줄 cross-ref. capability 추가(liveness 규약 상속 명시) — MINOR.
+
 ## 1.17.0 — 2026-07-02
 
 ### Changed (CFP-2545 — Codex companion 브로커 경로 wall-clock 가드, MINOR)

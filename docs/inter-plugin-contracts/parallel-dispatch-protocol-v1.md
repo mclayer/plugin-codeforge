@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: parallel-dispatch-protocol
-version: "1.0"
+version: "1.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md
@@ -10,6 +10,7 @@ authors:
   - ArchitectAgent (CFP-609 carrier — ADR-064 Amendment 1 implementation contract)
 version_history:
   - { version: "1.0", date: 2026-05-13, carrier: CFP-609, change: "initial — Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator → PL dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기 + env=0/env=1 동등성 + idempotency invariant 6종 + dispatch packet schema. ADR-064 §결정 4 Trace 4 implementation contract — execution-time enforcement carrier. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합)." }
+  - { version: "1.1", date: 2026-07-02, carrier: CFP-2549, change: "§6.3 worker_outcomes enum +INCONCLUSIVE + timeout/fail-mode protocol 섹션 (ADR-139 background-wait liveness gate 4 불변식 cross-ref) — §6.3 주석 'crash recovery/fail-mode = 별 CFP follow-up' defer 해소. kind:registry sibling_sync_exempt 유지." }
 owner_adr: ADR-064  # Amendment 1 carrier
 carrier_story: CFP-609
 sibling_sync_exempt: true
@@ -27,6 +28,7 @@ related_adrs:
   - ADR-061  # Python script-writing convention (lint shim ≤ 5 lines)
   - ADR-063  # Marketplace atomic invariant — marketplace_sync_ordering enum 정합
   - ADR-064  # carrier (Amendment 1)
+  - ADR-139  # background-wait liveness gate — §6.3 worker_outcomes +INCONCLUSIVE + timeout/fail-mode protocol (v1.1 carrier CFP-2549), fail-open 금지 INV-L2 / re-dispatch I-6.5 정합
 related_files:
   - docs/adr/ADR-064-decision-principle-mandate.md  # carrier
   - docs/inter-plugin-contracts/MANIFEST.yaml  # registries: row
@@ -221,12 +223,20 @@ pl_to_worker_packet:
 ```yaml
 pl_integration_review:
   batch_id: str
-  worker_outcomes: list         # [PASS | FIX-N | CRASH]
+  worker_outcomes: list         # [PASS | FIX-N | CRASH | INCONCLUSIVE]   # INCONCLUSIVE = stall/timeout outcome 미측정 (v1.1, ADR-139 INV-L2 — fail-open 금지)
   merge_strategy: enum          # [pl_local_merge | escalate_to_orchestrator]
-  # crash recovery / fail-mode protocol = 별 CFP follow-up scope (본 registry 영역 외)
+  # timeout/fail-mode protocol = §6.3.1 (v1.1 CFP-2549 — ADR-139 background-wait liveness gate defer 해소)
 ```
 
-`merge_strategy` 2-value enum — fail-mode protocol (crash recovery / atomic batch vs individual recovery / circuit breaker / max retry) 은 본 registry scope 외, 별 CFP follow-up 영역 (OperationalRiskArchitect §11.6 consult 정합).
+`merge_strategy` 2-value enum. `worker_outcomes` enum 에 **INCONCLUSIVE** (v1.1) 추가 — stall/timeout 으로 outcome 을 측정하지 못한 worker 는 CRASH(명시적 실패)와 구분되는 별도 verdict (fail-open 금지, ADR-139 INV-L2).
+
+### §6.3.1 timeout/fail-mode protocol (v1.1 — CFP-2549 / ADR-139)
+
+§6.3 주석의 "crash recovery / fail-mode protocol = 별 CFP follow-up scope" defer 를 ADR-139 (background-wait liveness gate) 가 CFP-2549 로 해소. 본 subsection = **cross-ref (중복 금지)** — 정의·근거 SSOT = [ADR-139](../../archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 1 INV-L1~L4 + wrapper `docs/orchestrator-playbook.md` §3.10.1 background-wait liveness gate 공통 규약.
+
+- **stall/timeout → `worker_outcomes = INCONCLUSIVE`** (PASS 자동승격 금지, fail-open 금지 = ADR-139 INV-L2). 부분 stall (batch 내 일부 worker) → ANY(INCONCLUSIVE) → batch verdict INCONCLUSIVE (완료분 기준 전체 PASS 승격 금지). PASS-only-if-explicit.
+- **4 불변식 (INV-L1~L4)** 상속: wall-clock ceiling 존재(INV-L1) / fail-open 금지 inconclusive(INV-L2) / "0-byte ≠ stall" progress-marker 3-state(INV-L3) / 게이트 소유 = Orchestrator·lead 고정, `timeout N < liveness max-wait`(INV-L4). 본문 = ADR-139 + playbook §3.10.1.
+- **default recovery = re-dispatch that task only** — stall 된 task 만 재 dispatch (I-6.5 crash recovery idempotency 정합), **max-retry cap = 2** (restart-storm 차단). cap 초과 시 INCONCLUSIVE marker 고정 + 다음 step 진행 (blocking recovery 강제 아님 — detection ≠ recovery, ADR-139 §결정 2).
 
 ### §6.4 env_invariants
 
