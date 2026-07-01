@@ -32,6 +32,10 @@ amendment_log:
     date: 2026-05-13
     carrier_story: CFP-582
     summary: "DesignLane blanket trigger 신설 (모든 cross-module Story 자동 발동) + convergence_quality_invariant 신설 (3 marker pattern: [COUNTERARGUMENT] / [ALTERNATIVE_PROPOSED] / [DEBATE_PURPOSE_STATEMENT]) + Touchpoint #2 carry-over 의무. Epic-FIX-ESCALATION-prevention #525 close trigger."
+  - id: 3
+    date: 2026-07-01
+    carrier_story: CFP-2534
+    summary: "refactor lane (구현-리팩터링) consumer 추가 — trigger.lane enum + blanket_refactor dispatch_mode (divergence 감지 없이 자동 발동, cadence 미인코딩=Story C) + role_assignment optional 필드 (default null=대칭; refactor=codex proponent/claude opponent) + divergence_type structural 재사용. 기존 가드(anti-sycophancy 4 + convergence_quality_invariant 3-tuple + anchor-recurrence ≥2 + min3/max5) 전부 상속, 신규 정의 0. debate-protocol-v1 v1.2→v1.3 MINOR bump 동반. Epic CFP-2533 Story A (계약 표면만; producer/consumer 실배선 = Story C)."
 amendments:
   - id: 1
     date: 2026-05-13
@@ -41,10 +45,15 @@ amendments:
     date: 2026-05-13
     carrier_story: CFP-582
     section_ref: "§결정 7~10 — DesignLane blanket + convergence_quality_invariant + Touchpoint #2 carry-over"
+  - id: 3
+    date: 2026-07-01
+    carrier_story: CFP-2534
+    section_ref: "§결정 11 — refactor lane consumer + blanket_refactor + role_assignment"
 related_stories:
   - CFP-391  # carrier (5 결정 원본)
   - CFP-533  # Amendment 1 carrier (dispatch_mode enum 명시화)
   - CFP-582  # Amendment 2 carrier (Epic-FIX-ESCALATION-prevention #525 close)
+  - CFP-2534  # Amendment 3 carrier (refactor lane consumer, Epic CFP-2533 Story A)
 sunset_justification: "N/A — permanent policy + Amendment 1+2 = governance 강화 ratchet 누적 (ADR-058 §결정 5 + ADR-064 active amendment 정합). Amendment 2 가 Epic-FIX-ESCALATION-prevention #525 close trigger."
 mechanical_enforcement_actions:
   - action_name: "debate-convergence-quality-lint"
@@ -224,13 +233,44 @@ debate-protocol-v1 v1.2 schema 갱신은 lane-agnostic 정신 유지 (CFP-391 §
 
 CodeReview / SecurityTest blanket invocation 도입 시 신규 ADR (Amendment X) — 본 §결정 10 의 schema reuse 의무로 별도 v-bump 면제 (additive lane enum 추가는 MINOR, schema 구조 변경 시에만 추가 MINOR — ADR-008 §결정 2 정합).
 
+### 결정 11 — refactor lane (구현-리팩터링) consumer 추가 (Amendment 3, CFP-2534)
+
+debate-protocol-v1 의 lane-agnostic 재사용성(§결정 5·10)을 실제로 소비해 **구현-리팩터링 전용 consumer(refactor lane)** 를 추가한다. 실제 머지된 코드를 대상으로 Codex(찬성·중복/재사용 발굴)와 Claude(반대·필요성 게이트)가 min 3 / max 5 라운드 적대 토론으로 리팩터링 지점을 도출하는 계약 표면을 연다.
+
+**본 결정 = 계약 표면(contract surface)만.** producer/consumer 실 dispatch 배선 · Epic-close triage(now/defer/drop) · RefactorAgent 재편 · anti-recursion 실차단 · deferred-lifecycle 연동은 **Story B/C 소유** — 본 §결정 11 은 그 경계를 명시한다.
+
+**(1) refactor lane enum 추가**: registry `trigger.lane` enum 에 `refactor` 를 additive 추가. v1.2→v1.3 MINOR (ADR-008 §결정 2 additive lane enum = MINOR, §결정 10 정합).
+
+**(2) blanket_refactor dispatch_mode — invocation semantics 만**: `dispatch_mode` enum 에 `blanket_refactor` 를 additive 추가. 이 값은 **발동 방식(activation-manner)만** 인코딩한다 — `divergence_detected` 신호를 계산하지 않고 무조건 debate 를 켠다 (CFP-582 `blanket_cross_module_designlane` 동형: 리팩터는 "찬성↔반대" 대립이 도메인 본질). 
+
+  - **cadence(발동 주기)는 인코딩하지 않는다**: "Epic-close 1회 배치" vs "매 Story" 같은 주기는 producer 가 언제 trigger schema 를 작성하는지의 문제 = **Story C 배선**. dispatch_mode 정의에 cadence 어휘를 넣지 않는다. (경계 forcing function: "매 Story blanket" 이 schema 로 새어들면 안 된다.)
+  - **signal block 불요**: `blanket_cross_module_designlane` 는 `cross_module_signal`(touched_paths/lanes 수치)을 required 로 갖지만, `blanket_refactor` 는 무조건 발동이라 수치 신호가 없다 → 유사 signal block 을 두지 않는다(dead surface 회피).
+  - **우선순위 위치 (SSOT = §결정 7)**: 정본 우선순위 사슬은 §결정 7 이 SSOT. `blanket_refactor` 는 blanket 군에 total-order 로 삽입 = `blanket_cross_module_designlane > blanket_refactor > auto_on_divergence > mechanical_fast_path_inline > user_request_only`. 두 blanket 은 lane-disjoint(설계 lane vs refactor lane)라 실질 충돌 없으나 total-order 결정론 보장.
+
+**(3) role_assignment — 신규 optional 필드 (대칭 슬롯 재해석 금지)**: Codex=proponent(찬성)/Claude=opponent(반대) 방향배정을 **신규 optional 필드** `role_assignment: {claude, codex} | null` (값 enum proponent|opponent, default null=대칭=기존 동작)로 인코딩. 기존 `claude_initial_position`/`codex_initial_position` **대칭 슬롯을 "고정 방향" 으로 재해석하면 기존 필드 의미 변경 = MAJOR (ADR-008 §결정 3)** → 재해석 금지. 신규 optional 필드 = MINOR (ADR-008 §결정 2). 
+
+  - **role_lock 과 orthogonal**: role_lock = "Round 0 입장(position) fixed" = 입장 안정성 / role_assignment = "어느 워커가 찬성·반대 편(direction)" = 초기 편 배정. role_assignment 는 role_lock 을 복제하지 않는다("direction, not position").
+  - refactor lane = `role_assignment: {codex: proponent, claude: opponent}`.
+
+**(4) divergence_type = `structural` 재사용**: refactor lane 은 신규 divergence_type 값을 추가하지 않고 기존 `structural` 을 재사용한다. registry §2.1 "lane-specific divergence_type 정의" list 의 per-lane keying 이 의미를 확정: *"structural (refactor) = 실제 머지 코드의 중복·재사용 divergence, `<file>:<line>` anchor"* (DesignLane structural = 설계 산출물 / Refactor structural = 실코드 중복·재사용, per-lane 구분). 신규 값(`duplication`/`reusability`)도 additive MINOR 이나, schema 최소화 + CFP-582 선례 일치 + per-lane keying 이 이미 disambiguation 제공 → 재사용 채택.
+
+**(5) 가드 상속 — 신규 정의 0**: trigger schema 표면만 확장하고 round(§2.2)/termination(§2.3) schema 를 무변경으로 두어 다음을 **전부 상속**한다 — anti-sycophancy 4종 + convergence_quality_invariant 3-tuple(`counterargument_present` AND `alternative_proposed_count>=1` AND `debate_purpose_statement_present`) + anchor-recurrence ≥2 즉시 escalation + min 3 / max 5 라운드. 이들 중 **어느 것도 refactor 전용으로 재정의하지 않는다**. domain page `convergence-quality-invariant.md` 의 lateral expansion 의무가 refactor lane 을 자동 포섭(신규 domain page write 불요).
+
+**(6) Touchpoint #2 carry-over 상호작용**: Codex=proponent role 은 §결정 9 Touchpoint #2 carry-over(Codex proactive check finding → `codex_initial_position` verbatim forward)와 `codex_initial_position` 슬롯을 공유한다. 두 메커니즘은 **orthogonal** — carry-over 는 finding 원문을 방향과 무관하게 forward 하고, proponent 방향은 별개 role_assignment 필드로 표현된다. 충돌 없음.
+
+**(7) ADR-044 team-spec layer 무변경**: ADR-044 team-spec layer dispatch_mode(default/user_request_only/auto_on_divergence)는 protocol layer 와 의도적으로 분리된 다른 layer(§결정 6). `blanket_refactor` 는 protocol layer 에만 추가 → team-spec layer 무변경. 두 layer 어휘 의미 호환 유지.
+
+**(8) producer/consumer 예약**: registry producers/consumers frontmatter 에 refactor lane entry 를 "Story C 배선 예정" placeholder reservation 으로 추가 — dangling 방지(계약↔결정 양방향 링크)하되 실 dispatch 는 열지 않는다(Story C 소유).
+
+**SemVer**: debate-protocol-v1 v1.2 → v1.3 MINOR bump. 기존 lane 5값·dispatch_mode 4값·divergence_type 4값·position 슬롯 의미 변경 0 (순수 additive strengthening, ADR-008 §결정 2/§결정 10). Story A scope = 계약 표면; Story B(RefactorAgent 재편) / Story C(triage·producer/consumer 실배선·anti-recursion·deferred-lifecycle) 는 별 Story.
+
 ## 해소 기준
 
 N/A — permanent policy
 
 ## 결과
 
-- **편향 축소**: Codex↔Opus 다중 라운드 합의로 단일 모델 편향 축소 (Du et al. 2023 / Liang et al. 2023 선행 연구 정합 — Story §6.1)
+- **편향 축소**: Codex↔Opus 다중 라운드 합의로 단일 모델 편향 축소. 근거 선행연구(Du et al. 2023 = arXiv 2305.14325 / Liang et al. 2023 = arXiv 2305.19118)는 **일반 추론·번역·산술** debate 에서의 편향 축소를 실증한 것으로, **구현 리팩터링(코드 중복·재사용 판단)으로의 전이는 약한 확장 가정**이다 (refactoring 특정 유효성은 별도 실증 미확보). 코드 도메인 debate 는 일관성이 낮다는 보고도 있으며(MAD, arXiv 2503.12029), 코드 도메인 최근접 prior-art anchor = PD³ (arXiv 2505.17492, project/code duplication 에 adapted multi-agent debate 적용 — 단 협력형). — Story §6.1 / requirements-review lane 검증(CFP-2534 §9)
 - **drift 차단**: topic anchor 매 라운드 prepend 로 U-shaped attention bias 완화 (Liu et al. 2023 "Lost in the Middle" 정합 — Story §6.2)
 - **reasoning carryover**: ArchitectAgent re-run 시 양측 reasoning 보존 → FIX 품질 향상
 - **사용자 escalation 경로 명시**: AI 합의 불가능 시그널 (max 5 미합의 + anchor 재발) 처리 형식화
@@ -242,7 +282,7 @@ N/A — permanent policy
 - **(A) Rolling summary 모드 채택**: token 절약은 크나 미묘한 reasoning trail 손실 위험 — full transcript v1 채택. rolling summary 는 deferred CFP-D (5+ 라운드 비용 cap 시도 시점)
 - **(B) Semantic similarity 기반 divergence 정의 (DesignReview scope)**: review-verdict-v4 schema 가 `anchor_id` + `severity` + `recommendation` 으로 충분히 명확 — fuzzy logic 도입 불필요. semantic 은 Requirements scope 만 (Story 2)
 - **(C) PL 외 별도 judge agent 신설**: ChatEval (Chan et al. 2023) 정합 — 기존 PL 책무 강화로 충분. 신규 agent 도입 시 codeforge 의 6 lane plugin 구조 복잡도 증가
-- **(D) min 5 / max 7 라운드 정책**: 선행 연구 (Du / Liang) 모두 5 라운드 이후 saturated → 본 v1 min 3 / max 5 채택
+- **(D) min 5 / max 7 라운드 정책**: min 3 / max 5 채택 (값 유지). 근거 정정(CFP-2534 §9 다출처 검증) — Du et al.(arXiv 2305.14325)은 약 **4 라운드 plateau**를 보고하며, "5 라운드 saturation" 은 Du/Liang 이 아니라 **Ye et al. 2024(MCTS)** 귀속이다. max 5 cap 근거 = over-debating noise(4-5 라운드 diminishing/negative returns, kappa 하락) + 세션 실증 3~4 라운드 합의(2025 literature review = arXiv 2506.00066). min 3 / max 5 수치 자체는 변경하지 않음(pin).
 - **(E) `auto_on_divergence` 를 user opt-in flag 로 노출**: consumer overlay 정책 축소 불허 invariant 정합 — debate 자동 발동은 강제. opt-out 은 별도 CFP carrier 도입 시점에 검토 (Story §5.3 Non-goal)
 
 ## 관련 파일
