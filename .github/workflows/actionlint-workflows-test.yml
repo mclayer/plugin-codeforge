@@ -1,0 +1,52 @@
+name: actionlint-workflows-test
+# CFP-2530 Phase 2 (ADR-136 Amendment 2 결정13) — QADev tests/scripts/test-actionlint-workflows.sh 의 CI 실행 채널.
+#
+# 배경: css-lint.yml 의 job-level `if: hashFiles(...)` 는 GitHub Actions context-availability 위반
+#   (job-level if 에서 hashFiles() 호출 불가: 'calling function "hashFiles" is not allowed here') →
+#   workflow load-time schema-invalid → css-lint-test 게이트가 신설 이래 0회 실행된 dead gate 였다.
+#   그 결함을 정정(결정13)하고, 동형 재발을 상시 차단할 실행형 검증 채널을 본 workflow 로 신설한다.
+#   본 게이트는 .github/workflows/*.yml + templates/github-workflows/*.yml 를 actionlint 로 lint 해
+#   job-level hashFiles 등 context-availability 위반 재발을 CI 에서 실측 차단한다.
+#
+# wrapper-self-only (consumer red 회피 — css-lint-test job / reconcile-overlay-workflow-channel-test 선례):
+#   if: github.repository == 'mclayer/plugin-codeforge' 로 wrapper self-CI 에서만 실행.
+#
+# parity-safe (손 안 대는 안 B 제약 준수):
+#   본 workflow 는 .github/workflows/ 에만 존재하고 templates/github-workflows/ template copy 가 없다.
+#   invariant-check.yml Workflow parity step 은 templates/github-workflows/*.yml → .github/workflows/<base>.yml
+#   단방향(single-direction)만 walk 하므로, template copy 없는 wrapper-self-only workflow 는 자동
+#   parity-safe — CONSUMER_ONLY_WORKFLOWS 등재도 template copy 도 불필요
+#   (선례: reconcile-overlay-workflow-channel-test.yml / adr-reservation-claim-test.yml / bootstrap-whitelist-test.yml).
+#
+# 자기-정합: 본 workflow 자신도 actionlint-valid. job-level `if: github.repository == ...` 는 valid
+#   (github context 는 job-level available) — 본 결함(job-level hashFiles)을 재현하지 않는다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint-workflows-test:
+    name: actionlint-workflows-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint v1.7.12
+        run: |
+          set -euo pipefail
+          # actionlint = Go binary (PyPI 미배포). 공식 download-actionlint.bash (rhysd/actionlint) 로 설치.
+          # Pin: 1.7.12 (actionlint-check.yml 선례 정합). 다운로드한 ./actionlint 를 $GITHUB_PATH 에 등록해
+          #   test 스크립트가 `command -v actionlint` 로 PATH 에서 탐지하도록.
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12
+          echo "$PWD" >> "$GITHUB_PATH"
+          "$PWD/actionlint" --version
+
+      - name: Run test-actionlint-workflows.sh
+        run: bash tests/scripts/test-actionlint-workflows.sh
