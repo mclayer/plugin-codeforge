@@ -1,0 +1,81 @@
+name: Codex companion timeout presence lint (warning mode)
+# CFP-2545 / ADR-081 Amendment 12 §결정 D14 — Codex companion 브로커 경로 wall-clock 가드 presence lint.
+# codeforge 소유 codex companion dispatch 발화(node ... adversarial-review | task --write)가 항상
+# `timeout <N> --kill-after=<K>` wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D14 Phase 2 wire)
+# Bypass channel: hotfix-bypass:codex-companion-timeout-presence (ADR-024 §결정 6.A per-entry namespace)
+#
+# consumer degradation (SSOT = scripts/lib/check_codex_companion_timeout_presence.py header §5):
+#   byte-identical template mirror(ADR-005)를 consumer 가 상속해도, consumer repo 에
+#   `plugins/codeforge-review/` 경로 부재 시 lint 는 honest no-op(exit 0) 로 degrade —
+#   spurious RED 미발생. 따라서 CONSUMER_ONLY_WORKFLOWS 등록 안 함 (byte-identical parity 유지).
+#
+# 승격 path:
+#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
+#     1. 본 workflow 의 continue-on-error: true 제거
+#     2. branch protection required_status_checks.contexts 에 본 workflow job name 추가
+#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry promotion_criteria)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'plugins/codeforge-review/agents/**'
+      - 'plugins/codeforge-review/templates/**'
+      - '**/*.md'
+      - 'scripts/**'
+      - '.github/workflows/**'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  codex-companion-timeout-presence:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Run self-test (D3 — inline fixture, RED→GREEN discriminating)
+        run: bash scripts/check-codex-companion-timeout-presence.sh --self-test
+
+      - name: Run codex companion timeout presence lint
+        id: lint
+        run: |
+          bash scripts/check-codex-companion-timeout-presence.sh . 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Post warning comment (wall-clock 가드 누락)
+        if: steps.lint.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint-output.txt', 'utf8');
+            const body = [
+              '## Codex companion timeout presence lint — warning',
+              '',
+              '> ADR-081 Amendment 12 §결정 D14 warning-tier (CFP-2545). PR merge 차단 아님.',
+              '> codex companion dispatch 발화는 `timeout <N> --kill-after=<K>` wall-clock 가드 필수 (무한 대기 근절).',
+              '> bypass: `hotfix-bypass:codex-companion-timeout-presence` label 부착.',
+              '',
+              '```',
+              output.slice(0, 3000),
+              '```',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.5"
+version: "1.6"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
 date: 2026-05-19
@@ -13,6 +13,7 @@ authors:
   - CFP-963 (MINOR bump v1.2 → v1.3 — neighbor `network_scope_actual` optional schema field 신설 §14 Lane Evidence row 13번째 optional field carrier, ADR-081 Amendment 4 §결정 D1.D 본문 확장의 mechanical enforcement layer + ADR-060 Amendment 14 §결정 28 신설 동반 carrier, Codex TP#4 CX-963-4 P3 finding integration)
   - CFP-2061-S2 (MINOR bump v1.3 → v1.4 — `entries[].tags` optional list field 신설 §3.2 codify, closed-set enum [security, consumer-whitelist] 검사 dead 자동 제외 hard-exclude 가드 carrier. SSOT = docs/check-dead-criteria.yaml. 신규 ADR 0 — doc-only fast-path ADR-054, framework data-substrate 하위 영역 append. CFP-2061-S1 §11 FU-1 tag SSOT 단일화 충족)
   - CFP-2480 (MINOR bump v1.4 → v1.5 — `entries[].policy_pack_member` (bool) + `entries[].policy_pack_scope` (list[enum] wrapper/lane-plugin/consumer) optional field 신설 §3.3 codify, executable policy gate pack 멤버십 단일 SSOT. ADR-037 Amendment 4 진입점 carrier — version-bump 게이트 = 정책팩 첫 멤버. tags 와 분리 (orthogonal concern). changelog scope = ADR-092 §결정 3 wrapper 동결 반영 lane-plugin/consumer 한정. Epic CFP-2476 E3. 신규 ADR 0 — amendment-led, framework data-substrate 하위 append)
+  - CFP-2545 (MINOR bump v1.5 → v1.6 — `codex-companion-timeout-presence` warning-tier evidence-checks-registry entry 신설 동반 versioning tick, ADR-081 Amendment 12 §결정 D14 Phase 2 mechanical wire carrier — Codex companion 브로커 경로 wall-clock ceiling mandate presence-grep lint. mechanical_enforcement_actions[] 3번째 entry [`codex-network-scope-presence` / `codex-origin-main-directive-check` 선례 동형]. schema body 필드 추가 0 — 신규 registry data entry 도입 동반 MANIFEST versioning 추적 tick. MANIFEST `evidence_check_registry` row "1.5" → "1.6" 동반 (sibling sync 면제 kind:registry, MANIFEST versioning 추적만). 신규 ADR 0 — doc-only fast-path ADR-054)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)

@@ -592,6 +592,8 @@ discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제�
 
 워커 상세는 [`agents/ClaudeReviewAgent.md`](../agents/ClaudeReviewAgent.md) · [`agents/CodexReviewAgent.md`](../agents/CodexReviewAgent.md) 참조. degrade marker SSOT = [`review-verdict-v4.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/review-verdict-v4.md) `peer_degrade` block (v4.15).
 
+**companion dispatch wall-clock 상한 (CFP-2545 / ADR-081 §결정 D14)**: CodexReviewAgent 의 companion(`adversarial-review --wait`) dispatch 는 wall-clock 상한(`timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30}`) 대상 — 무한 대기 시 `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` marker + verdict=inconclusive (fail-open 금지, PASS 자동 승격 금지). SSOT = [ADR-081 §결정 D14](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) / [`agents/CodexReviewAgent.md`](../agents/CodexReviewAgent.md) 실행 패턴.
+
 ---
 
 ## 11. 문서화 표준

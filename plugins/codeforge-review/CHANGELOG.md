@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.17.0 — 2026-07-02
+
+### Changed (CFP-2545 — Codex companion 브로커 경로 wall-clock 가드, MINOR)
+
+ADR-081 Amendment 12 §결정 D14 (Codex companion 브로커 경로 wall-clock ceiling mandate) 의 lane 반영. 실 리뷰 worker 호출부가 companion `request()` deadline 부재로 stall 시 무한 대기하던 것을 wall-clock 상한으로 근절 (dogfood wrapper-self Phase 2).
+
+- `agents/CodexReviewAgent.md` — 실행 패턴 §의 companion dispatch 발화(`adversarial-review --wait` / `task --write`)에 `timeout ${CODEX_REVIEW_TIMEOUT_SEC:-300} --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30}` wall-clock 가드 prefix + exit code 판정 블록(exit 124 → marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` + verdict=inconclusive, fail-open 금지 PASS-only-if-explicit) + POSIX timeout preflight. N=추정값 empirical 미실증 (env-override, lock-in 금지).
+- `templates/review-pl-base.md` — companion dispatch wall-clock 상한 cross-ref 1줄 (SSOT = ADR-081 §결정 D14 / CodexReviewAgent.md).
+
+#### Why
+
+companion 브로커(`node codex-companion.mjs adversarial-review --wait`, 4 리뷰 lane 공유 워커)는 §D8 file-redirect(0-byte TTY stall 방어)가 미포함하는 wall-clock process-level hang 위험 보유. wrapper presence-grep lint(`check-codex-companion-timeout-presence`)가 AC-1 mechanical 강제. capability 추가 = companion wall-clock ceiling — MINOR.
+
 ## 1.12.3 — 2026-06-15
 
 ### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)
