@@ -1,7 +1,7 @@
 ---
 title: codeforge-design lane 구조 (설계 레인 — Change Plan + ADR 확정)
 last_captured: 2026-05-20
-last_update_cfp: CFP-2364  # RefactorAgent Reusability(d) 1급 축 — refactor 역할 서술 reusability 추가 (ADR-042 Amendment 13). 이전 = CFP-1086-S4 (chief 통합 mechanism + tie-break ladder body + mctrader 5 repo cross-layer evidence P4)
+last_update_cfp: CFP-2539  # RefactorAgent (d)reusability 측정 축 → 구현 리팩터링(Story C) 이관 + repo-분해 구조 escalation 존치 (ADR-042 Amendment 18, 구조 3축 + repo-분해). 이전 = CFP-2364 (Reusability(d) 1급 축 신설, Amendment 13)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -37,7 +37,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 | 모듈 (agent) | 역할 | 입장 / 책임 | model |
 |---|---|---|---|
 | **CodebaseMapperAgent** | 보수 — as-is 변호자 | 기존 패턴 유지, 변경 영향 최소화 (Change Plan §2 현재 구조 input) | Sonnet |
-| **RefactorAgent** | 혁신 — to-be 옹호자 | 결합도 감소, 인터페이스 분리, 패턴화, 재사용성 (중복제거·공통추출·repo-분해 advocacy, escalation-tier — CFP-2364) (Change Plan §3 + §6 input) | Sonnet |
+| **RefactorAgent** | 혁신 — to-be 옹호자 | 결합도 감소, 인터페이스 분리, 패턴화 (구조 3축) + repo-분해 구조 advocacy (escalation-tier — CFP-2539). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (Change Plan §3 + §6 input) | Sonnet |
 | **ArchitectAnalystAgent** (CFP-1026 S1 신설 — PriorArtAgent conceptual rename) | 변경 전 기존 설계 분석 단일 축 — fact 변호자 | 변경 전 ADR / Change Plan / Story §3/§7/§11 분석 (Change Plan §2 컨텍스트 input) | Sonnet |
 
 **CONDITIONAL deputy (3+1 file)** — Story trigger 충족 시 ArchitectPLAgent 가 추가 spawn (CFP-1086 Amendment 8 정합 — 3 → 3+1):
@@ -77,7 +77,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 | §2 현재 구조 (변경 전 기존 설계 컨텍스트) | CodebaseMapperAgent + ArchitectAnalystAgent (4-tuple sub-tuple) |
 | §3 code (layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction) | CodeArchitectAgent (CFP-1026 S1 신설) |
 | §3 data (entity / aggregate / VO / persistence model / 데이터 흐름) | DataArchitectAgent (CFP-1026 S1 rename + mandate 확장) |
-| §3 도입할 설계 (refactor 시각 — decoupling / reusability / pattern / interface 분리) + §6 리팩토링 선행 (중복제거·공통추출·repo-분해 advocacy, escalation-tier) | RefactorAgent (4-tuple sub-tuple) |
+| §3 도입할 설계 (refactor 시각 — decoupling / pattern / interface 분리 구조 3축) + §6 리팩토링 선행 (repo-분해 구조 advocacy, escalation-tier) — 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) | RefactorAgent (4-tuple sub-tuple) |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent |
 | §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult | InfraOperationalArchitectAgent (CFP-1026 S1 rename) |
 | §8 Test Contract | TestContractArchitectAgent |

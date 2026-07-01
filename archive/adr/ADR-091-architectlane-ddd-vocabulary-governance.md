@@ -240,7 +240,7 @@ ArchitectLane 15 agent 를 3 DDD role 로 매핑한다.
 | ModuleArchitectAgent ⚠ | Domain Service | module boundary / layered / hexagonal / clean / DDD bounded context (module-level) specialized judgment contributor |
 | DataArchitectAgent | Domain Service | 빅데이터 OLAP specialized judgment contributor |
 | CodebaseMapperAgent | Domain Service (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
-| RefactorAgent ⚠ | Domain Service (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 3 카테고리 ⚠ (CFP-2364 / ADR-042 Amendment 13 — + reusability(d) 4 카테고리 확장. 본 표 = 결정-시점 frozen 보존, 현행 SSOT = RefactorAgent.md / deputy-mandate SKILL.md) |
+| RefactorAgent ⚠ | Domain Service (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 3 카테고리 ⚠ (CFP-2364 / ADR-042 Amendment 13 — + reusability(d) 4 카테고리 확장. ⚠ CFP-2539 / ADR-042 Amendment 18 — (d)reusability *측정* 축(중복/공통추출/DRY/duplication-ratio) 구현 리팩터링(Story C) 소관 이동 → 구조 3축 + repo-분해 구조 escalation(설계-시점) 존치; 측정 축 제외 후 유효 축은 재차 구조 3축 계열. 본 표 = 결정-시점 frozen 보존, 현행 SSOT = RefactorAgent.md / deputy-mandate SKILL.md) |
 | ArchitectAnalystAgent | Domain Service (sub-tuple) | prior art / industry pattern analyst |
 | LiveOpsDeputyAgent | Subdomain Specialist | live ops subdomain 활성 시만 spawn — "which subdomain under threat = live ops" |
 | LiveOrderingDeputyAgent | Subdomain Specialist | live ordering subdomain 활성 시만 spawn — "which subdomain under threat = live ordering" |

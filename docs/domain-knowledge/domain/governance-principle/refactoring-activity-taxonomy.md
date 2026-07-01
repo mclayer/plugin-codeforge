@@ -1,0 +1,97 @@
+---
+kind: domain_fact
+type: domain-knowledge
+area: governance-principle
+topic_slug: refactoring-activity-taxonomy
+title: 리팩터링 2활동 분류 — 설계 리팩터링 vs 구현 리팩터링 시점·메커니즘 분리 원리
+status: Active
+tags:
+  - refactoring
+  - design-lane
+  - advocacy-architecture
+  - refactor-agent
+  - activity-taxonomy
+related_adrs:
+  - ADR-042  # Amendment 13 (CFP-2364 — (d)reusability 1급 축 신설) / Amendment 18+ (CFP-2533 Story B — 소관 이동)
+  - ADR-086  # Deputy 신설 결정 framework (axis disjoint)
+  - ADR-091  # ArchitectLane DDD vocabulary governance
+related_stories:
+  - CFP-2364  # Amendment 13 carrier — (d)reusability RefactorAgent 1급 축 신설
+  - CFP-2369  # Amendment 14 carrier — 측정 연동 mechanical wire
+  - CFP-2533  # Epic carrier — 리팩터링 2활동 분리 (Story B = RefactorAgent 축 재편)
+created: 2026-07-01
+updated: 2026-07-01
+---
+
+# 리팩터링 2활동 분류 — 설계 리팩터링 vs 구현 리팩터링
+
+## 정의
+
+codeforge 설계-lane 에이전트 advocacy 아키텍처에서 "리팩터링"은 단일 활동이 아니다. **발동 시점·관측 대상·메커니즘**이 근본적으로 다른 두 활동으로 구분된다.
+
+| 구분 | 설계 리팩터링 | 구현 리팩터링 |
+|---|---|---|
+| **발동 시점** | 설계 단계 — 코드 존재 전·설계 스케치 단계 | 구현 완료 후 — 실코드 위에서 계측 |
+| **관측 대상** | 구조적 결함 (결합도·경계·패턴) | 중복 (clone·DRY 위반) — 코드 블록 반복 계측 |
+| **발화 주체** | RefactorAgent (설계-lane inline, 매 Story) | 구현 리팩터링 triage (Epic-close 1회 배치) |
+| **메커니즘** | 구조 advocacy — 코드 없이도 위반 판단 가능 | 계측 기반 — duplication ratio / rule-of-three 실측 필요 |
+| **속하는 축** | (a) Decoupling / (b) Pattern / (c) Interface separation + repo-분해 구조 escalation | (d) Reusability — 중복 제거·공통 추출·DRY/WET |
+
+## 컨텍스트
+
+Epic CFP-2533 은 "리팩터링"을 관측 시점 기준으로 두 활동으로 분리한다. Amendment 13 (CFP-2364) 이 (d) Reusability 를 RefactorAgent 1급 축으로 신설했고, Amendment 14 (CFP-2369) 가 측정을 mechanical wire 했으나, (d) 축의 *측정* 성격은 실코드 관측 의존이라 설계 단계 inline advocacy 위치와 부정합이었다. Story B (CFP-2539) 가 그 부정합을 소관 이동으로 해소한다.
+
+### 소관 이동 연대기 (ADR-042)
+
+- **Amendment 13 (CFP-2364, 2026-06-19)**: (d) Reusability를 RefactorAgent 1급 축으로 신설. ISO/IEC 25010 Maintainability 5축 중 Reusability gap 충당.
+- **Amendment 14 (CFP-2369, 2026-06-19)**: (d) 측정 연동 Phase-2 mechanical wire — `check-duplication-ratio.sh` warning-tier CI 구동.
+- **CFP-2533 Story B (2026-07-01, ADR-042 Amendment 18)**: (d) Reusability *측정* 축을 설계-lane inline(RefactorAgent)에서 구현 리팩터링 triage(Epic-close 배치)로 소관 이동. repo-분해 구조 escalation 축은 RefactorAgent 설계-시점 존치. **폐지(deprecate) 아님** — 발동 주체·시점·메커니즘의 재배치. 축 자체는 구현 리팩터링 안에서 존속.
+
+## 핵심 규칙
+
+### 설계 리팩터링 (구조 3축 + repo-분해 구조 escalation)
+
+**(a) Decoupling, (b) Pattern, (c) Interface separation** + **repo-분해 구조 escalation**은 코드 없이도 구조적으로 판단할 수 있다.
+
+- God Class 후보: 책임 수 / 의존 방향 설계 스케치에서 식별 가능
+- Hexagonal 패턴 미준수: 레이어 경계 설계에서 확인 가능
+- 포트 없는 직접 타입 의존: 인터페이스 설계 다이어그램에서 확인 가능
+- repo-분해: 응집 cluster → 별 deploy/ownership 단위 분리는 macro-boundary 로 설계 스케치에서 관측 가능
+
+이 축들은 구현 코드가 존재하면 더 정밀해지지만, **설계 단계에서 이미 경고 발화가 가능**하다. 따라서 RefactorAgent가 설계-lane inline에서 매 Story advocacy를 수행하는 것이 도메인 정합이다.
+
+### 구현 리팩터링 ((d) Reusability 측정 축)
+
+**(d) Reusability** — 중복 제거·공통 추출·DRY/WET — 는 실코드 없이 선험적으로 존재할 수 없다.
+
+**핵심 원리**: 중복(clone)은 코드 블록이 3회 이상 반복돼야 rule-of-three가 발동하고, duplication ratio는 코드 라인 대비 수치다. 설계 단계에서는 "공통화 잠재력"을 추론할 수 있을 뿐, falsifiable 계측(duplication ratio 수치)은 구현 후에야 가능하다.
+
+이 시점 의존성이 (d) 축의 소관 이동 근거다:
+- 설계-lane inline에서 발화 → 계측 근거 없이 추론에 의존 (ADR-119 research-before-claims 위반 위험)
+- 구현 완료 후 triage → `check-duplication-ratio.sh` 실측 수치 기반 falsifiable 발화 가능 (Epic-close Codex↔Claude execute-and-falsify triage)
+
+### 관련 용어
+
+- **rule-of-three**: 동일·유사 코드 블록 3회 이상 반복 시 공통화 제안 트리거
+- **duplication ratio**: 중복 라인 비율 (CFP-2369 `check-duplication-ratio.sh` warning-tier 산출)
+- **advocacy**: 설계-lane SubAgent의 압력 식별·제안 역할 (경계 확정 = ModuleArch authority, 불변)
+- **axis disjoint**: RefactorAgent advocacy ↔ ModuleArchitectAgent boundary authority의 orthogonal 분리 (CFP-2364 codify — (d) 이관 후에도 (a)(b)(c) + repo-분해 전체에 상속됨)
+
+## 경계
+
+- **소관 이동 ≠ 폐지**: (d) reusability 개념 자체를 없애는 것이 아니다. "설계 단계 inline advocacy" → "구현 후 triage 배치"로 위치를 바꾸는 것이다.
+- **axis disjoint 불변**: (d) 측정 축 제거 후 RefactorAgent.md의 disjoint 표현에서 reusability 측정을 제거하더라도, "RefactorAgent advocacy ↔ ModuleArch boundary authority" 이분 원칙은 (a)(b)(c) 구조 3축 + repo-분해 전체에 계속 적용된다. (a)(b)(c)에서도 module boundary consult 표식이 필요한 경우가 존재한다 (예: 결합도 해소 시 module boundary 판단이 필요한 경우).
+- **repo-분해는 존치, 측정 축만 이관**: repo-level 분해(macro-structural boundary)는 설계-시점 관측 가능이라 RefactorAgent 존치. 중복/재사용 *측정*(실코드 관측 의존)만 구현 리팩터링(Story C)으로 이동. 두 축은 관측 시점·대상 disjoint.
+- **CodebaseMapper 무영향**: Mapper는 fact source 변호자(file structure / API surface / dependency graph)이며 advocacy axis 재편과 무관하다. Mapper의 역할은 RefactorAgent의 축 구성에 종속되지 않는다.
+
+## 관련 ADR
+
+- ADR-042 §Amendment 13/14/18 — (d) Reusability 신설 · 측정 연동 · 측정 축 소관 이동 결정 SSOT
+- ADR-086 — Deputy 신설 결정 framework (axis disjoint lens; 측정 축 축소 = explicit scope 열거 → FULL self-application)
+- ADR-091 §결정 1 — RefactorAgent DDD pattern mapping (frozen 표 + CFP-2539 역주석)
+- `plugins/codeforge-design/agents/RefactorAgent.md` — 현행 SSOT (구조 3축 + repo-분해 구조 escalation)
+- `plugins/codeforge-design/agents/CodebaseMapperAgent.md` — fact source 변호자 역할 (불변)
+
+## 변경 이력
+
+- 2026-07-01 (CFP-2533 Story B / CFP-2539) — 신규 작성. 리팩터링 2활동 분류(설계 리팩터링 vs 구현 리팩터링) 시점·메커니즘 분리 원리 codify. RefactorAgent (d)reusability 측정 축 → 구현 리팩터링(Story C) 소관 이동 + repo-분해 구조 escalation 존치 (ADR-042 Amendment 18) 도메인 근거 SSOT.
