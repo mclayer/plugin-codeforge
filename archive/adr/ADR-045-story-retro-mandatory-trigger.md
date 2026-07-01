@@ -29,6 +29,7 @@ related_stories:
   - CFP-2392  # Amendment 14 carrier — §D-13 신설 (phase:완료 precondition capture self-check 추가, ADR-129 OMC-adopt 지식캡처 묶음, paired sibling ADR-071 Amendment 12)
 related_adrs:
   - ADR-009
+  - ADR-137  # Epic-close 구현-리팩터링 triage (CFP-2541 Story C) — §D-11 Epic-close sibling, 모집단·enum axis-disjoint (retro follow-up Issue ↔ 실코드 duplication anchor / CLOSE_AS_* ↔ now/defer/drop)
   - ADR-013
   - ADR-022
   - ADR-024
@@ -663,6 +664,8 @@ axis 분리 (paired sibling §D-9 / §D-10 / §D-11 closed-set):
 - **§D-9 sub-decision (b)** (Amendment 8 CFP-1592) = retro batch §6 ADR draft 후보 작성 pre-publish 3-source AND verify gate
 - **§D-10** (Amendment 9 CFP-1623 + Wave 2 mechanical wire Amendment 10 CFP-1632) = retro batch §6 ADR draft pre-publish 8-tuple verify forcing function
 - **§D-11** (Amendment 11 CFP-1680, 본 sub-decision) = retro batch **closure** lifecycle 영역 (post-batch governance status update, pre-publish §D-9/§D-10 forcing function 영역과 disjoint axis)
+
+**ADR-137 cross-ref (Epic-close 구현-리팩터링 triage, CFP-2541 Story C)**: ADR-137 = §D-11 Epic-close **sibling** (같은 발동 시점 Epic-close + 같은 owner PMOAgent). 단 **모집단·enum axis-disjoint (동일시 금지)**: §D-11 = retro follow-up **Issue**(≥3) / enum `CLOSE_AS_OBVIATED·SENTINEL·PROMOTE·DEFER` ↔ ADR-137 = 실코드 **duplication anchor** / enum `now·defer·drop`. §D-11 5-column structured-row 는 ADR-137 이 **패턴 참조 선례로만** 인용(closure enum 값 비재사용). 상세 = ADR-137.
 
 ##### §D-11 (1) Decision enum (closed-set 4-option)
 

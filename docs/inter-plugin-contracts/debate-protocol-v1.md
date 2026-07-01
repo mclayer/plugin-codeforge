@@ -33,7 +33,7 @@ producers:
   - codeforge-review/DesignReviewPLAgent  # Story 1 scope (DesignReview)
   - codeforge-requirements/RequirementsPLAgent  # Story 2 scope (CFP-392, deferred)
   - codeforge-design/ArchitectPLAgent  # CFP-582 Wave 4 — DesignLane blanket trigger producer
-  - "codeforge-pmo/PMOAgent  # blanket_refactor triage verdict judge (Epic CFP-2533 Story C 실배선, ADR-137 §결정5) — 3분기 verdict(now/defer/drop) 판정만. dispatch 주체 아님: 실 debate dispatch = Orchestrator top-level inline(ADR-039 §결정18 merge-time Codex adversarial 전용, 재귀 가드). PMOAgent self-spawn 불가(PMOAgent.md L288)라 producer=verdict judge 의미로 배선."
+  - "codeforge-pmo/PMOAgent  # blanket_refactor triage verdict judge (Epic CFP-2533 Story C 실배선, ADR-137 §결정5) — 3분기 verdict(now/defer/drop) 판정만. dispatch 주체 아님: 실 debate dispatch = Orchestrator top-level inline(ADR-039 §결정18 merge-time Codex adversarial 전용, 재귀 가드). PMOAgent self-spawn 불가(PMOAgent.md `## 제약` 항)라 producer=verdict judge 의미로 배선."
 consumers:
   - codeforge-design/ArchitectPLAgent  # FIX 루프 re-spawn 시 transcript 입력 수신
   - codeforge-design/ArchitectAgent  # re-run reasoning carryover 입력 수신

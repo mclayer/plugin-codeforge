@@ -91,7 +91,7 @@ debate-protocol-v1 v1.3 스키마 완비(blanket_refactor + role_assignment). ca
 
 - 강화 방향(ratchet ↑) — 구현-리팩터링 거버넌스 신설, 약화 0. is_transitional false → sunset_justification N/A.
 - **ADR-086 5-checklist**: #1 axis-disjoint(§D-11 모집단·enum ⊥) / #2 cost(신규 spawn 0, Epic-close 1회 배치) / #3 consumer carrier(defer→deferred-item-lifecycle 재사용) / #4 sibling align(Epic CFP-2533 Story A/B cross-ref) / #5 deferred trigger(Phase 2 실배선).
-- **cross-ref 양방향(ADR-082 §결정9)**: ADR-045 §D-11 ↔ ADR-137 / ADR-059 §결정11 ↔ ADR-137.
+- **cross-ref 양방향** (ADR-137 로컬 convention — 양 sibling ADR 에 back-ref 실배선): ADR-045 §D-11 ↔ ADR-137 (ADR-045 §D-11 axis note + related_adrs) / ADR-059 §결정11 ↔ ADR-137 (ADR-059 §결정11 경계 note). 실배선 완료 (CFP-2541 구현리뷰 FIX iter1 — 역방향 back-ref 착지).
 
 ## 관련 파일
 

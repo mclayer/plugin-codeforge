@@ -15,6 +15,7 @@ related_adrs:
   - ADR-039  # subagent default for codeforge modification work
   - ADR-031  # Lane-spawn evidence trail (§14 row schema 정합)
   - ADR-050  # parallel epic coordination (ADR-RESERVATION 절차 정합)
+  - ADR-137  # blanket_refactor 소비 governance (Epic-close 구현-리팩터링 triage 3분기 + producer/consumer 분리, CFP-2541 Story C 실배선) — §결정11 엔진 계약 표면의 소비처
 related_files:
   - docs/inter-plugin-contracts/debate-protocol-v1.md
   - docs/inter-plugin-contracts/fix-event-v1.md
@@ -238,6 +239,8 @@ CodeReview / SecurityTest blanket invocation 도입 시 신규 ADR (Amendment X)
 debate-protocol-v1 의 lane-agnostic 재사용성(§결정 5·10)을 실제로 소비해 **구현-리팩터링 전용 consumer(refactor lane)** 를 추가한다. 실제 머지된 코드를 대상으로 Codex(찬성·중복/재사용 발굴)와 Claude(반대·필요성 게이트)가 min 3 / max 5 라운드 적대 토론으로 리팩터링 지점을 도출하는 계약 표면을 연다.
 
 **본 결정 = 계약 표면(contract surface)만.** producer/consumer 실 dispatch 배선 · Epic-close triage(now/defer/drop) · RefactorAgent 재편 · anti-recursion 실차단 · deferred-lifecycle 연동은 **Story B/C 소유** — 본 §결정 11 은 그 경계를 명시한다.
+
+**ADR-137 cross-ref (Story C 실배선 종착)**: ADR-137 = 본 §결정 11 blanket_refactor 계약 표면의 **소비 governance** — Epic-close triage 3분기(now/defer/drop) + producer/consumer 실 dispatch 분리(PMOAgent = verdict judge / Orchestrator inline = debate dispatch, ADR-039 §결정18 재귀 가드) + drop-ledger anchor-recurrence(≥2 escalation) + deferred-lifecycle 연동을 CFP-2541 Story C 에서 실배선했다. §결정 11 = 엔진 계약 표면 / ADR-137 = 그 위 소비 governance (decision domain 분리).
 
 **(1) refactor lane enum 추가**: registry `trigger.lane` enum 에 `refactor` 를 additive 추가. v1.2→v1.3 MINOR (ADR-008 §결정 2 additive lane enum = MINOR, §결정 10 정합).
 

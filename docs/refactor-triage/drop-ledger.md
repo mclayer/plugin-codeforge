@@ -28,14 +28,15 @@ Epic-close 구현-리팩터링 triage(ADR-137 §결정2)의 **drop verdict** anc
 
 `anchor_stable` = `<file>::<Sym>.<method>` (symbol-qualified) OR duplication content-hash. line-independent — `<file>:<line>` 은 리팩터 후 line 이동으로 cross-Epic 붕괴하므로 사용 금지.
 
-## Schema (4-column, append-only)
+## Schema (5-column, append-only)
 
-| anchor_stable | epic_key | disposition | timestamp |
-|---|---|---|---|
-| <file::Sym.method \| content-hash> | <CFP-NNNN> | drop | <YYYY-MM-DD KST> |
+| anchor_stable | epic_key | disposition | rationale | timestamp |
+|---|---|---|---|---|
+| <file::Sym.method \| content-hash> | <CFP-NNNN> | drop | <ADR-119 §결정9 3문 결과 — 어느 문이 NO 였는지 (깨졌나·강제요인 / 이득>비용·리스크 / 관찰자 없어도 할 일)> | <YYYY-MM-DD KST> |
 
+- **`rationale` column (Change Plan §3.6 정합)**: drop verdict 근거 = ADR-119 §결정9 3문(깨졌나·강제요인 / 이득>비용·리스크 / 관찰자 없어도 할 일) 중 어느 문이 NO 였는지 audit trail. drop = "발견≠필요 기각"의 검증 가능한 근거 보존 (연극화 방지).
 - **append-only**: 기존 row 수정·삭제 금지 (cross-Epic 재발 추적 무결성).
-- **dedup key**: `anchor_stable` (append 재실행 중복 방지 — 문서 레벨, DB migration 아님).
+- **dedup key**: `anchor_stable` (append 재실행 중복 방지 — 문서 레벨, DB migration 아님). recurrence count 로직(`count(rows WHERE anchor_stable = X) >= 2`)은 `rationale` column 추가와 무관 (anchor_stable keying 무변경).
 
 ## Ledger rows
 
