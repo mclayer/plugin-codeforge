@@ -15,10 +15,12 @@ related_adrs:
   - ADR-042  # Amendment 13 (CFP-2364 — (d)reusability 1급 축 신설) / Amendment 18+ (CFP-2533 Story B — 소관 이동)
   - ADR-086  # Deputy 신설 결정 framework (axis disjoint)
   - ADR-091  # ArchitectLane DDD vocabulary governance
+  - ADR-138  # 설계 리팩터링 결정 방식 debate 격상 (결정 방식 행 GAP fill)
 related_stories:
   - CFP-2364  # Amendment 13 carrier — (d)reusability RefactorAgent 1급 축 신설
   - CFP-2369  # Amendment 14 carrier — 측정 연동 mechanical wire
   - CFP-2533  # Epic carrier — 리팩터링 2활동 분리 (Story B = RefactorAgent 축 재편)
+  - CFP-2543  # 설계 리팩터링 debate 격상 — 결정 방식 행 GAP fill
 created: 2026-07-01
 updated: 2026-07-01
 ---
@@ -34,6 +36,7 @@ codeforge 설계-lane 에이전트 advocacy 아키텍처에서 "리팩터링"은
 | **발동 시점** | 설계 단계 — 코드 존재 전·설계 스케치 단계 | 구현 완료 후 — 실코드 위에서 계측 |
 | **관측 대상** | 구조적 결함 (결합도·경계·패턴) | 중복 (clone·DRY 위반) — 코드 블록 반복 계측 |
 | **발화 주체** | RefactorAgent (설계-lane inline, 매 Story) | 구현 리팩터링 triage (Epic-close 1회 배치) |
+| **결정 방식 (decision mechanism)** | Codex(proponent·발제)↔Claude(opponent·반대) debate — `blanket_designrefactor`, 설계-time per-Story, verdict judge = ArchitectAgent chief, 3분기(now/defer/drop). anchor `<설계 요소>::<구조 축>` per-Story (ADR-138) | Codex(proponent)↔Claude(opponent) Epic-close execute-and-falsify triage — `blanket_refactor`, verdict judge = PMOAgent, 3분기(now/defer/drop). anchor `<file>:<line>` content-hash cross-Epic drop-ledger (ADR-137) |
 | **메커니즘** | 구조 advocacy — 코드 없이도 위반 판단 가능 | 계측 기반 — duplication ratio / rule-of-three 실측 필요 |
 | **속하는 축** | (a) Decoupling / (b) Pattern / (c) Interface separation + repo-분해 구조 escalation | (d) Reusability — 중복 제거·공통 추출·DRY/WET |
 
@@ -91,7 +94,9 @@ Epic CFP-2533 은 "리팩터링"을 관측 시점 기준으로 두 활동으로 
 - ADR-091 §결정 1 — RefactorAgent DDD pattern mapping (frozen 표 + CFP-2539 역주석)
 - `plugins/codeforge-design/agents/RefactorAgent.md` — 현행 SSOT (구조 3축 + repo-분해 구조 escalation)
 - `plugins/codeforge-design/agents/CodebaseMapperAgent.md` — fact source 변호자 역할 (불변)
+- ADR-138 — 설계 리팩터링 결정 방식 Codex↔Claude debate 격상 (결정 방식 = blanket_designrefactor debate, verdict judge = ArchitectAgent chief, anchor per-Story). GAP fill carrier — 결정 방식 행 신설.
 
 ## 변경 이력
 
 - 2026-07-01 (CFP-2533 Story B / CFP-2539) — 신규 작성. 리팩터링 2활동 분류(설계 리팩터링 vs 구현 리팩터링) 시점·메커니즘 분리 원리 codify. RefactorAgent (d)reusability 측정 축 → 구현 리팩터링(Story C) 소관 이동 + repo-분해 구조 escalation 존치 (ADR-042 Amendment 18) 도메인 근거 SSOT.
+- 2026-07-01 (CFP-2543 / ADR-138) — "결정 방식 (decision mechanism)" 행 신설 (GAP fill): 설계 리팩터링 = blanket_designrefactor debate(verdict judge=ArchitectAgent chief, per-Story) / 구현 리팩터링 = blanket_refactor triage(verdict judge=PMOAgent, cross-Epic). 두 활동 결정 방식 대칭화.

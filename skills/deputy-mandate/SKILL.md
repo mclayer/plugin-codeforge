@@ -42,7 +42,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | §3 aggregate (RDB OLTP — aggregate invariant + 트랜잭션 경계 + persistence-bound) | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified, AggregateArch carry-over; CONDITIONAL `aggregate_arch.applicable`) | Sonnet |
 | §3 API contract (transport + versioning + DTO + OpenAPI/GraphQL) | **APIContractArchitectAgent** (CFP-1086 신설, skeleton S1 / body 심화 S2) | Sonnet |
 | §3 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) | **DataArchitectAgent** (CFP-1086 mandate 축소 — RDB OLTP 영역 제거) | Opus |
-| §3 도입할 설계 (refactor 시각 — decoupling + pattern + interface 분리 구조 3축) + §6 리팩토링 선행 (repo-분해 구조 advocacy, escalation-tier) — 측정 축(중복제거/공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) | RefactorAgent (4-tuple sub-tuple) | Sonnet |
+| §3 도입할 설계 (refactor 시각 — decoupling + pattern + interface 분리 구조 3축) + §6 리팩토링 선행 (repo-분해 구조 advocacy, escalation-tier) — 측정 축(중복제거/공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) — **결정 방식 = Codex proponent↔Claude opponent debate (blanket_designrefactor, per-Story, verdict judge=ArchitectAgent chief; RefactorAgent = advocacy input provider) — CFP-2543/ADR-138** | RefactorAgent (4-tuple sub-tuple) | Sonnet |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent | Opus |
 | §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus (high-stakes) / Sonnet (low-stakes 4-AND) ※ |
 | §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334** + **§8.7 production-venue shape fidelity CONDITIONAL — ADR-006 Amendment 1** [외부 venue/시계열 의존 시 captured-golden / 실형상-justified fixture, synthetic-only 불충분; §8.5 push_interval 수치 축과 disjoint]) | TestContractArchitectAgent | Opus |
@@ -109,7 +109,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 | ModuleArchitectAgent (boundary axis unified) | module-level boundary + aggregate-level boundary 통합 (layered / hexagonal / clean / DDD bounded context module placement + module boundary + dependency direction + RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙 — AggregateArch carry-over per CFP-1126) |
 | DataArchitectAgent | 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) |
 | CodebaseMapperAgent (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
-| RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 (구조 3축) + repo-분해 구조 pressure(escalation-tier). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) |
+| RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 (구조 3축) + repo-분해 구조 pressure(escalation-tier). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) **결정 방식 = blanket_designrefactor debate (Codex proponent↔Claude opponent, verdict judge=ArchitectAgent chief) — CFP-2543/ADR-138. advocacy input provider(verdict 주체 아님).** |
 | ArchitectAnalystAgent (sub-tuple) | prior art / industry pattern analyst |
 
 > sub-tuple 3 = Domain Service role 이지만 **deputy column 아님** (4-tuple flat spawn 논리적 그룹핑). `bounded_context: codeforge-governance`, `ddd_pattern: Domain Service` (ADR-091 §결정 5 frontmatter field).

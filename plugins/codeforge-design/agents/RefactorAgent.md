@@ -139,14 +139,19 @@ permissions:
 - 구체 변경 내용: 파일 경로, 라인 범위, 추출 대상 심볼, 새 파일 경로
 ```
 
-## 대립 해소 프로토콜 (병렬 모델, 3-way)
-- Refactor는 Mapper·SecurityArch 산출물을 입력으로 받지 않으며, 원 소스 독해만으로 자기 관점 제출
-- Mapper의 변호 논리·SecurityArch의 위협 식별에 대한 반박·수용 판정은 **ArchitectAgent (chief author) 통합 단계에서 수행** (Refactor 산출물 안에서 다른 SubAgent 반박을 미리 작성하지 않음 — 오염 방지)
-- 단, "잠재 변호 논리 예상" 섹션에서 self-identify한 충돌 지점은 ArchitectAgent가 다른 SubAgent 산출물과 대조할 재료로 활용
-- ArchitectAgent가 3 SubAgent 산출물을 교차 검토해 Change Plan §3·§7에 최종 결정 기록
-- ArchitectPLAgent가 통합 결과를 검수
-- DesignReviewPL이 "ArchitectAgent 통합 판정이 Refactor 제안이 요건 범위를 넘지 않았는가" 감사
-- Clarification 재스폰: ArchitectPLAgent가 추가 설명·대안 분석 필요 시 Orchestrator 경유 재스폰 요청
+## 대립 해소 프로토콜 (설계 리팩터링 debate — Codex proponent ↔ Claude opponent)
+
+> **CFP-2543 / ADR-138 격상**: 본 에이전트의 구조 3축((a)decoupling/(b)pattern/(c)interface-separation) + repo-분해 escalation advocacy 의 **반박·수용 판정(결정 방식)**은 Codex(발제·proponent)↔Claude(반대·opponent) min 3 / max 5 라운드 adversarial debate 로 도출된다 (debate-protocol-v1 `blanket_designrefactor` dispatch, 설계-time per-Story 무조건 발동). AS-IS 의 Claude 단독 inline 통합 판정을 대체한다.
+
+- Refactor 는 Mapper·SecurityArch 산출물을 입력으로 받지 않으며, 원 소스 독해만으로 자기 구조 advocacy 를 제출한다.
+- **RefactorAgent = 구조 advocacy input provider (verdict 주체 아님)**: 본 에이전트는 구조 리팩터 advocacy(구조 3축 + repo-분해 escalation)를 **입력으로 제출**할 뿐, 반박·수용의 **최종 verdict 를 스스로 내리지 않는다**. verdict judge = **ArchitectAgent chief author**(Change Plan §3 착지 author 이자 multi-source synthesizer, transcript 수신·판정). ArchitectPL 아님(supervisor 검수).
+- **debate 매개**: Refactor 구조 advocacy 는 `blanket_designrefactor` debate 로 dispatch 되어 Codex(proponent — 구조 리팩터 발제)↔Claude(opponent — 필요성 게이트) 적대 토론을 거친다. dispatch 주체 = **Orchestrator top-level inline** (ADR-039 §결정18 merge-time Codex adversarial 전용 whitelist + §결정19 lead 위임 per-Story dispatch topology). RefactorAgent·ArchitectPL self-spawn 불가(platform 재귀가드 `subagent_recursion_blocked` silent skip 상속).
+- **3분기 verdict 착지** (verdict judge = ArchitectAgent chief): now → 이번 Story Change Plan §3 반영 / defer → 후속 Story(deferred-item-lifecycle narrative-recorded, 회수 강제) / drop → ADR-119 §결정9 3문 게이트 기각("관찰됨·미조치" 1줄). anchor = `<설계 요소>::<구조 축>`, **scope = per-Story** (anchor-recurrence ≥2 = Story §9 내 escalation; cross-Epic drop-ledger 불요 — ADR-137 Epic-close 실코드 중복 전용).
+- "잠재 변호 논리 예상" 섹션에서 self-identify 한 충돌 지점은 debate Round 0 input + ArchitectAgent chief 통합의 대조 재료로 활용된다.
+- ArchitectAgent chief 가 debate transcript(양측 reasoning trail)를 수신해 Change Plan §3·§7 에 최종 결정 기록. ArchitectPLAgent 가 통합 결과를 검수.
+- DesignReviewPL 이 "ArchitectAgent verdict 가 Refactor advocacy 를 요건 범위 안에서 근거 있게 채택·기각했는가 + RefactorAgent 가 verdict 주체로 오작동하지 않았는가" 감사.
+- Clarification 재스폰: ArchitectPLAgent 가 추가 설명·대안 분석 필요 시 Orchestrator 경유 재스폰 요청.
+- 구현 리팩터링(중복·재사용 측정 축, Epic-close batch, ADR-137)의 결정 방식(blanket_refactor, verdict judge=PMOAgent)과는 **axis-disjoint** — 혼동 금지.
 
 ## 제약 (읽기 전용 분석·제안 역할)
 - **코드 편집 권한 없음** — Edit/Write 전면 금지, 수정은 Dev 경유
