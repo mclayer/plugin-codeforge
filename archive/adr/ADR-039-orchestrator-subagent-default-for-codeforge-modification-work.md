@@ -16,12 +16,14 @@ related_adrs:
 related_stories:
   - CFP-275
   - CFP-2521  # Amendment 8 (2026-06-30) — §결정 9 amend, DevPL self-read advisory detection (D3 enforcement slot)
+  - CFP-2544  # Amendment 9 — §결정 9 inline-write detect hook slot UNIMPLEMENTED→IMPLEMENTED Wave1 (Write/Edit/MultiEdit 축)
 related_cfps:
   - CFP-275
   - CFP-134
   - CFP-46
   - CFP-26
   - CFP-2521
+  - CFP-2544
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -96,6 +98,14 @@ amendment_log:
     direction: strengthening
     sunset_justification: |
       §결정 2 inline whitelist 4-entry closed enumeration 무변경 (disjoint axis — PL read/compute boundary ≠ Orchestrator inline whitelist, 5번째 entry 신설 0) + §결정 1 binary always-spawn invariant 무변경. 본 amendment = §결정 9 Phase 2 enforcement deferred 목록에 DevPL self-read advisory detection 추가 (additive, 기존 inline-detect hook + spawn cost telemetry 와 동일 family). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (thin-PL enforcement deferred slot 예약), 약화 0건. evidence = CFP-2521 §1 비용 측정 (PL context 97% PL 직접 read) + firsthand substrate 확인 (hooks.json PreToolUse matcher Write/Edit 부재 = inline-detect slot 미점유 / spawn-event-v1 SubagentStop wired = delegation-ratio proxy 가용). carrier_story CFP-2521 = ADR-039 Amendment 8 + ADR-044 Amendment 5 paired sibling amendment 2-set (axis disjoint — 본 ADR-039 = D3 enforcement deferred slot / ADR-044 = thin-PL 동작 mandate).
+  - amendment: 9
+    date: 2026-07-02
+    carrier_story: CFP-2544
+    summary: |
+      §결정 9 amend — "Orchestrator inline write detect hook (PreToolUse on Write/Edit/mcp__github__*)" deferred slot 의 **Write/Edit/MultiEdit 축 UNIMPLEMENTED → IMPLEMENTED (Wave1 warning-tier)** 전환. hooks.json PreToolUse 에 Write|Edit|MultiEdit matcher entry 신규 배선 + `hooks/pretooluse-inline-write-gate` polyglot hook + `scripts/lib/check_inline_write_gate.py` verifier (agent_id caller判정: non-empty string=subagent=allow / 부재·null·빈문자열=Orchestrator=block-candidate, F2 fail-safe) + `scripts/check-inline-write-gate.sh` thin wrapper (ADR-061). **"영구 advisory 천장" 은 Read 축 한정** (대안 B L465 근거 — Read-for-Q&A vs Read-as-modification 구별 불가) — Write/Edit/MultiEdit 은 mutation 자체 명백하므로 blockable, advisory 천장 미적용. 단 Wave1 = warning-tier 시작 (exit 0 + stderr, ADR-115 §결정 4/5 graceful degradation + ADR-060 §결정 6 evidence-gate). Wave2 deny (exit 2) 승격 = ADR-060 gate (PR ≥ 20 + bypass 외 failure = 0 + sibling merged) 후 별도 CFP. **§결정 2 inline whitelist 6-entry closed enumeration 무변경** (disjoint axis — D3 예외 = enforce 축(위임강제/BYPASS env/path carve-out for memory·scratch·repo-outside)이지 whitelist 확장 아님, 7번째 entry 신설 0 — Amendment 8 line98 "disjoint axis, 5번째 entry 신설 0" 어법 답습). mcp__github__* 축 + Bash-redirect 파일작성 우회(U2) = 본 Amendment 제외, 후속 CFP. F1: 버전 floor ≥ Claude Code 2.1.119 (agent_id 필드 가용성, #34692 실측). paired sibling = ADR-115 Amendment 1 (axis disjoint — 본 ADR-039 = §결정 9 slot 실현 선언 / ADR-115 = §결정 6 scope-boundary 이관 + hook-frame 재사용).
+    direction: strengthening
+    sunset_justification: |
+      §결정 2 6-entry closed enumeration 무변경 + §결정 1 binary always-spawn 무변경. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (deferred slot 실현, mechanism enforcement 확보), 약화 0건. evidence = Story §1 실측 127건 Orchestrator 직접 repo 편집 (worktree 95 + 직접 32) = doc-only trust(§결정 8) 실패 입증 + agent_id 필드 caller判정 실현성 확정 (code.claude.com/docs/en/hooks verbatim). carrier_story CFP-2544 = ADR-039 Amendment 9 + ADR-115 Amendment 1 paired sibling 2-set (axis disjoint).
 is_transitional: false
 ---
 
@@ -217,12 +227,12 @@ ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern) — Phase 2 
 후속 CFP (현재 미할당) 가 다음 영역 처리:
 
 - **stop-event-v1 ledger** 도입 (ADR-025 §결정 10 deferred). Orchestrator user-stop 발화 시 ledger row append → `reason_class: policy_violation_subdecision` 발생률 측정 → 본 정책 효과 검증.
-- **Orchestrator inline write detect hook** (PreToolUse on Write / Edit / mcp__github__\*). Orchestrator 직접 호출 detect → warning surface (또는 strict mode 시 차단).
+- **Orchestrator inline write detect hook** (PreToolUse on Write / Edit / mcp__github__\*). Orchestrator 직접 호출 detect → warning surface (또는 strict mode 시 차단). **Update (Amendment 9, CFP-2544)**: 이 hook slot 의 **Write/Edit/MultiEdit 축**은 UNIMPLEMENTED → **IMPLEMENTED (Wave1 warning-tier)** 전환 (superseded-for-Write/Edit/MultiEdit). 신규 배선 = hooks.json PreToolUse Write|Edit|MultiEdit matcher entry + `hooks/pretooluse-inline-write-gate` polyglot hook + `scripts/lib/check_inline_write_gate.py` verifier (agent_id caller判정: non-empty string=subagent=allow / 부재·null·빈문자열=Orchestrator=block-candidate) + `scripts/check-inline-write-gate.sh` thin wrapper. Wave1 = exit 0 + stderr (NEVER deny — ADR-115 §결정 4/5 graceful degradation). **mcp__github__\* 축 + Read 축 + Bash-redirect 파일작성 우회 = still-deferred** (별도 CFP). 아래 §결정 9 layer 2 "영구 advisory 천장" 은 **Read 축 한정** — Write/Edit/MultiEdit 은 mutation 자체 명백하므로 blockable (advisory 천장 미적용). paired sibling = ADR-115 Amendment 1.
 - **spawn cost telemetry** (token / latency 정량 측정). Researcher §6.F fact gap (spawn latency 정량 데이터 부재) 충당.
 - **rate-limited error → unwanted user-stop** second-order risk 측정 (OpRiskArch §7.4.4 운영 risk surfacing).
 - **DevPL-side "PL self-read advisory detection"** (Amendment 8, CFP-2521 — ADR-044 Amendment 5 §결정 11 D3 enforcement home). lane-PL(특히 DeveloperPL)이 비-essential 경로(docs/stories 밖 plugin.json/scripts/*.yaml/playbook)를 직접 read 하는 fat self-implementer drift 검출. **advisory/warning-tier ONLY (즉시 blocking FORBIDDEN)** — 두 측정 layer:
   - **layer 1 — delegation-ratio proxy** via spawn-event-v1 (EXISTING wired channel — SubagentStop hook wired, opt-in default-false ADR-043 §결정 1). DevPL 세션당 delegation-worker spawn 수 = coarse "PL 이 위임하고 있나" proxy. 신규 channel/wiring 신설 0 (opt-in enable 만). granularity = 1 spawn=1 row, per-read-path 검출 불가.
-  - **layer 2 — inline-detect hook** = 위 "Orchestrator inline write detect hook(PreToolUse on Write/Edit/mcp__github__*)" slot 과 동일 family. UNIMPLEMENTED (firsthand: hooks.json PreToolUse matcher = Bash/ScheduleWakeup/Agent 3종, Write/Edit/mcp__github__* 부재) AND **영구 advisory 천장** (대안 B L465: hook 은 Read-for-Q&A vs Read-as-modification 구별 불가 → fine per-read 정밀 검출 infeasible).
+  - **layer 2 — inline-detect hook** = 위 "Orchestrator inline write detect hook(PreToolUse on Write/Edit/mcp__github__*)" slot 과 동일 family. UNIMPLEMENTED (firsthand: hooks.json PreToolUse matcher = Bash/ScheduleWakeup/Agent 3종, Write/Edit/mcp__github__* 부재) AND **영구 advisory 천장** (대안 B L465: hook 은 Read-for-Q&A vs Read-as-modification 구별 불가 → fine per-read 정밀 검출 infeasible). **Update (Amendment 9, CFP-2544)**: 이 "UNIMPLEMENTED" 기술은 **Write/Edit/MultiEdit 축에 한해 superseded** — 해당 축은 IMPLEMENTED Wave1 (hooks.json Write|Edit|MultiEdit matcher + `hooks/pretooluse-inline-write-gate` + `scripts/lib/check_inline_write_gate.py`, agent_id caller判정). **"영구 advisory 천장" 은 Read 축 한정으로 재확인** — Read-for-Q&A vs Read-as-modification 구별 불가 논리는 Read 에만 적용되고, Write/Edit/MultiEdit 은 mutation 자체 명백하므로 blockable (Wave2 deny 승격 가능, ADR-060 gate). mcp__github__* 축 + Bash-redirect 우회는 여전히 UNIMPLEMENTED (후속 CFP).
   - 승격 = ADR-060 evidence-gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 후만. **§결정 2 inline whitelist 4-entry closed enumeration 무변경** — PL read/compute boundary = disjoint axis (Orchestrator inline whitelist 과 다른 차원), 5번째 entry 신설 0. D3 lint 실 impl = CFP-2521 Phase 2 OOS.
 
 ROI 평가 후 enforcement 강도 결정. 본 Story scope = Phase 1 doc-only. **Update (Amendment 1, CFP-895)**: Pre-spawn-pin mandate (§결정 14 신설) = Phase 1 doc-only enforcement 의 일부분으로 자연 흡수. Phase 2 hook enforcement layer 가 발효되면 본 §결정 14 mandate 도 hook-level 자동 verify 로 격상.

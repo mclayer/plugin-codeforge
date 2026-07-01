@@ -8,8 +8,22 @@ carrier_story: CFP-1740
 parent_epic: CFP-1740
 supersedes: null
 amends: null
-amendments: []
-amendment_log: []
+amendments: [1]
+amendment_log:
+  - amendment: 1
+    date: 2026-07-02
+    carrier_story: CFP-2544
+    summary: |
+      §결정 6 scope-boundary amend — "inline-write detect hook (본 Epic CFP-1740 제외, 후속 CFP)" 의 **Write/Edit/MultiEdit 축을 CFP-2544 로 이관·이행**. ADR-115 5-part hook-frame (단일 run-hook.cmd dispatcher / extensionless polyglot hook / scripts/lib Python verifier(ADR-061 heredoc 금지) / thin .sh wrapper / evidence-checks-registry warning-tier entry + presence workflow + hotfix-bypass label) **완전 재사용** — structural novelty 0. 신규 hook `hooks/pretooluse-inline-write-gate` 는 §결정 5 graceful degradation 5-layer closed-set (file 부재 / interpreter 부재 / timeout / verifier 실패 / parse error → 전부 fail-open exit 0) 정합. Wave1 warning-tier (§결정 4 답습, pretooluse-agent-spawn-gate 선례). Read 축 + mcp__github__* 축 + Bash-redirect 우회 = 여전히 §결정 6 제외 (후속 CFP). paired sibling = ADR-039 Amendment 9.
+    direction: strengthening
+    sunset_justification: |
+      §결정 6 disjoint sub-domain 판정 유지 (Read 축 advisory 천장 보존) — Write/Edit/MultiEdit 축만 이관·이행 (blockable mutation). §결정 5 graceful degradation closed-set 무변경. ADR-064 §결정 7 정합 강화 방향, 약화 0. carrier_story CFP-2544 = ADR-115 Amendment 1 + ADR-039 Amendment 9 paired sibling.
+related_stories:
+  - CFP-1740  # carrier_story (원안)
+  - CFP-2544  # Amendment 1 — §결정 6 inline-write detect hook Write/Edit/MultiEdit 축 이관·이행 (Wave1)
+related_cfps:
+  - CFP-1740
+  - CFP-2544
 is_transitional: false
 mechanical_enforcement_actions:
   - runtime-hook-presence
@@ -36,6 +50,9 @@ related_files:
   - hooks/subagent-stop                                       # 신규 extensionless polyglot — non-blocking ledger
   - scripts/lib/check_spawn_prompt_format.py                  # ADR-061 Python lib (line-by-line parse, heredoc 금지)
   - scripts/check-runtime-hook-presence.sh                    # thin bash wrapper — evidence-checks-registry warning-tier
+  - hooks/pretooluse-inline-write-gate                        # CFP-2544 Amendment 1 — 신규 extensionless polyglot (Orchestrator inline-write gate Wave1 warning, Phase 2 carrier)
+  - scripts/check-inline-write-gate.sh                        # CFP-2544 Amendment 1 — thin bash wrapper (ADR-061, Phase 2 carrier)
+  - scripts/lib/check_inline_write_gate.py                    # CFP-2544 Amendment 1 — Python verifier (agent_id caller判정, heredoc 금지, Phase 2 carrier)
   - templates/github-workflows/runtime-hook-presence.yml      # workflow 신설
   - docs/inter-plugin-contracts/stop-event-v1.md              # v1.0 → v1.1 MINOR (hook_source / hook_decision field)
   - docs/inter-plugin-contracts/label-registry-v2.md          # `hotfix-bypass:runtime-hook-presence` family member append
@@ -176,6 +193,7 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 
 **제외 영역** (별도 follow-up CFP):
 - **inline-write detect hook** — ADR-039 §결정 9 두번째 bullet 의 Orchestrator inline Read/Write/Edit/Bash 직접 호출 검출 영역. PreToolUse(matcher:"Read"|"Write"|"Edit") 분기 + Orchestrator turn 컨텍스트 차별 검출 (Inline whitelist 4-entry vs 그 외 영역) 의 별도 mechanism 설계 필요. **본 Epic 제외, 후속 CFP**.
+  - **Update (Amendment 1, CFP-2544)**: 이 제외 영역의 **Write/Edit/MultiEdit 축**은 CFP-2544 로 이관·이행 (IMPLEMENTED Wave1 warning-tier) — 신규 `hooks/pretooluse-inline-write-gate` (본 ADR-115 5-part hook-frame 완전 재사용, structural novelty 0) + `scripts/lib/check_inline_write_gate.py` (agent_id caller判정) + `scripts/check-inline-write-gate.sh` thin wrapper. §결정 5 graceful degradation 5-layer closed-set 정합 + §결정 4 warning-tier 답습. **Read 축 + mcp__github__* 축 + Bash-redirect 우회는 여전히 제외** (advisory 천장 = Read 축 한정, blockable mutation ≠ Read). paired sibling = ADR-039 Amendment 9.
 
 **근거 — ADR-064 §결정 1 CFP scope unitary 정합**:
 - 본 ADR scope = "turn-time hook enforcement super-class" 안 **4 일관 영역** (spawn-format / dialog reminder / stop-time / subagent-return). 4 hook 모두 `hooks/hooks.json` 단일 dispatcher 통합 + warning-tier 시작 + graceful degradation 동일 패턴 → 단일 atomic scope.
