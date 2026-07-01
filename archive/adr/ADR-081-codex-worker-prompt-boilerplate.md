@@ -93,6 +93,13 @@ amendments:
     status: applied
     ref: "## Amendment 12 / 본문 ### D14 + 거절된 대안 D14"
     sunset_justification: "ratchet 강화 방향 (Codex companion 브로커 경로 wall-clock ceiling mandate 신설 — §결정 D8 file-redirect 0-byte stall 방어층이 미포함한 companion process-level wall-clock hang 방어 + fail-open 금지 outcome-honesty + Orchestrator liveness 게이트 소유, dispatch-reliability axis 의 companion sub-domain 확장). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D8 file-redirect invocation 무변경, fail-mode enum closed-set 크기 무변경 — trigger 정의 의미 확장만, D1-D13 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 13
+    cfp: CFP-2549
+    date: 2026-07-02
+    scope: "§결정 D14 (Amendment 12, companion 브로커 경로 wall-clock ceiling mandate) → ADR-139 (background-wait liveness gate) cross-ref. companion 경로 = **background-wait liveness gate 의 first instance** 임을 declare — ADR-139 이 §D14 codex-특정 wall-clock ceiling 원리를 '모든 codeforge-owned background subagent 대기' 로 일반화하는 carrier SSOT 이고, §D14 는 그 4 불변식(INV-L1~L4: wall-clock ceiling 존재 / fail-open 금지 inconclusive / '0-byte ≠ stall' 3-state / 게이트 소유 Orchestrator 고정 + timeout N < liveness max-wait)의 codex-companion 인스턴스임을 명시. **§결정 D14 본문 무변경** — 본 Amendment 13 = cross-ref 선언(강화 방향 doc-only)이지 §D14 규정 변경 아님. D1-D14 본문 의미 변경 0건 — 신규 §결정 신설 0 (§D14 → ADR-139 cross-ref 만 append). mechanical_enforcement_actions[] 변경 0건 (Amendment 12 codex-companion-timeout-presence entry retain — §D14 companion 특정 lint 은 ADR-139 2안 general presence lint 와 disjoint layer: §D14 lint = codex-companion dispatch 발화 timeout prefix presence, ADR-139 lint = playbook §3.10.1 general background-wait 규약 발화 presence). is_transitional: false, sunset_justification N/A (강화 방향 — companion=first-instance cross-ref 선언, §D14 무손상, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2549, dogfood wrapper-self). ADR-139 sibling Amendment set (§결정 6): 본 ADR-081 Amendment 13 + ADR-039 Amendment 10 (§결정 20)."
+    status: applied
+    ref: "## Amendment 13 / 본문 ### D14 → ADR-139 cross-ref"
+    sunset_justification: "ratchet 강화 방향 (§결정 D14 companion wall-clock ceiling → ADR-139 background-wait liveness gate first-instance cross-ref 선언 — codex-특정 인스턴스가 일반 원리의 첫 사례임을 명문화, SSOT 분산 방지). 약화 영역 0건 (§결정 D14 본문 무변경, D1-D14 본문 의미 변경 0, mechanical_enforcement_actions[] 무변경, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -111,6 +118,7 @@ related_stories:
   - CFP-2464 # Amendment 10 — 신규 §결정 D11 mutation surviving-mutant severity rubric (hollow-gate 영향 ground truth) + §결정 D12 mutation prompt payload split (codex_truncated 회피, 전수 금지 diff-based). ADR-052 touchpoint #8 sibling. Epic CFP-2457 Story B.
   - CFP-2477 # Amendment 11 — 신규 §결정 D13 Codex worker execution dispatch (adversarial-review/task file-redirect + Codex sandbox 실행) + §결정 D3 3-lane partition execution ground-truth axis 추가. ADR-070 Amendment 11 sibling. Epic CFP-2476 E1.
   - CFP-2545 # Amendment 12 — 신규 §결정 D14 Codex companion 브로커 경로 wall-clock ceiling mandate (adversarial-review --wait 무한 대기 근절 — §D8 file-redirect 0-byte stall 방어층 미포함 companion process wall-clock hang 방어 + fail-open 금지 + Orchestrator liveness 게이트). ADR-052 Amd12 fail-mode #8 재사용 + ADR-039 + ADR-119 Amd2 sibling. dogfood wrapper-self.
+  - CFP-2549 # Amendment 13 — §결정 D14 → ADR-139 background-wait liveness gate cross-ref (companion 경로 = first instance 임을 declare, §D14 본문 무변경). ADR-139 sibling Amendment set (§결정 6) — 본 Amd13 + ADR-039 Amd10 (§결정 20). dogfood wrapper-self.
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref + Amendment 15 (CFP-2458) touchpoint #7 merge-time gate)
   - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic severity hypothesis→verified 확정 절차 reuse)
@@ -125,6 +133,7 @@ related_adrs:
   - ADR-079  # KST timestamp display mandate
   - ADR-039  # default subagent context
   - ADR-054  # doc-only fast-path (§결정 1 신규 ADR full-lane 강제)
+  - ADR-139  # background-wait liveness gate (Amendment 13 — §결정 D14 companion 경로가 first instance 임을 일반화하는 carrier SSOT, sibling Amendment set §결정 6)
 related_files:
   - docs/adr/ADR-052-codex-proactive-check-touchpoints.md
   - docs/adr/ADR-070-codex-verify-before-trust.md
@@ -1226,6 +1235,68 @@ fail-mode enum #8 `dispatch_stall_or_stream_timeout` 은 이미 존재 (Amendmen
 - (Amendment 12-C) **2안 — 리뷰 worker 를 `codex exec < promptfile` file-redirect 경로로 전환해 §D8 일원화** — companion job 관리(background/status/native review 파싱, `runAppServerReview`) 통째 상실 → 4 리뷰 lane blast radius 확대 (§2 D-4 증폭). review 커맨드 재작성 = 큰 변경. 1안 (호출부 wall-clock 가드, 최소 변경 codeforge 소유 표면만) 채택 — companion job 관리 보존.
 - (Amendment 12-D) **companion wall-clock ceiling mandate 를 ADR-052 본문 inline** (ADR-081 §결정 D14 회피) — 영역 type mismatch. ADR-052 = touchpoint behavior SSOT, ADR-081 = Codex worker prompt boilerplate + invocation SSOT. dispatch invocation 형식 (§D8 axis) = ADR-081 SSOT. ADR-081 §결정 D14 SSOT + ADR-052 Amendment 12 fail-mode #8 cross-ref-only 채택 (Amendment 6-D 패턴 정합).
 - (Amendment 12-E) **wall-clock ceiling mechanical lint (dispatch 발화 `timeout <N>` presence-grep) inline 본 Amendment 12** (Wave 1 + Wave 2 단일 통합) — ADR-081 Amd6-E 예고 패턴 정합상 Wave 1 declarative (본 §결정 D14 + playbook + agent md prefix) + Wave 2 mechanical (presence-grep lint script + workflow + bats) 분리. 단 CFP-2545 는 dogfood wrapper-self 라 Wave 1/Wave 2 를 Phase 1 문서 PR + Phase 2 구현 PR 로 분리 (ADR-127 Phase 1/2 PR 분리 무조건) — 별 CFP 분리 아닌 동일 Story Phase 분리 채택 (mechanical lint = Phase 2 carrier).
+
+## Amendment 13 (CFP-2549, 2026-07-02 KST)
+
+**§결정 D14 (Amendment 12, Codex companion 브로커 경로 wall-clock ceiling mandate) → ADR-139 (background-wait liveness gate) cross-ref. companion 브로커 경로 = background-wait liveness gate 의 first instance 임을 declare — §결정 D14 본문 무변경, cross-ref 선언만 append. ADR-139 sibling Amendment set (§결정 6): 본 ADR-081 Amendment 13 + ADR-039 Amendment 10 (§결정 20). dogfood wrapper-self carrier (CFP-2549).**
+
+### Context (Amendment 13)
+
+CFP-2545 (Amendment 12 §결정 D14) 가 codeforge-owned companion 브로커 경로(`node codex-companion.mjs adversarial-review --wait`)의 wall-clock process-level hang 을 wall-clock ceiling + fail-open 금지 + Orchestrator liveness 게이트로 해소했으나, 이는 **한 인스턴스**일 뿐이다. 근본 문제 — wall-clock 상한 + liveness 관측 부재 시 stall 이 무한 대기로 번지는 현상 — 은 **모든 codeforge-owned background subagent 대기**에 존재한다. CFP-2549 (ADR-139) 가 §D14 의 codex-특정 원리를 그 전반으로 일반화하는 carrier SSOT 다.
+
+[verified] ADR-139 §결정 1 (INV-L1~L4) 은 §결정 D14 의 4 요소 (wall-clock ceiling / fail-open 금지 inconclusive / progress-marker 관측 / Orchestrator 소유 + timeout N < liveness max-wait 순서)를 harness-managed subagent 대기 전반으로 확장한다. §D14 (companion `--wait` wall-clock process hang) = 그 4 불변식의 codex-companion 인스턴스이며, ADR-139 §관련 파일 + 거절된 대안 (B) 가 이를 명시한다 (ADR-081 = Codex worker prompt boilerplate + invocation SSOT scope 이라 일반 subagent 로의 확장은 scope mismatch → ADR-139 이 carrier, 본 Amendment 는 cross-ref sibling).
+
+### 결정 (Amendment 13)
+
+**A1. §결정 D14 = background-wait liveness gate 의 first instance (cross-ref 선언)**
+
+§결정 D14 (companion 브로커 경로 wall-clock ceiling) 는 ADR-139 background-wait liveness gate 4 불변식(INV-L1~L4)의 **codex-companion 인스턴스**다:
+
+- **INV-L1 (wall-clock ceiling 존재)** ← §D14 A1 (option-first `timeout --kill-after=<K> <N>` 배선 의무, 암묵 무한 금지)
+- **INV-L2 (fail-open 금지)** ← §D14 A1.3 (exit 124 → verdict=inconclusive, PASS 자동승격 금지, ANY(inconclusive)→전체 inconclusive)
+- **INV-L3 ("0-byte ≠ stall")** ← ADR-139 이 §D14 의 시간 축(wall-clock)에 progress-marker 진행 축(output mtime + content grep + task-notification)을 결합해 일반화
+- **INV-L4 (게이트 소유 = Orchestrator/lead 고정 + `timeout N < liveness max-wait`)** ← §D14 A1.4 (worker 자가-spawn 금지) + §D14 값 순서 정합
+
+일반 원리 SSOT = ADR-139. companion 경로는 그 first instance (codex-특정) 임을 본 Amendment 가 명문화한다 — SSOT 분산 방지 (ADR-064 §결정 1 unitary 정합).
+
+**A2. §결정 D14 본문 무변경 (cross-ref 선언만 append)**
+
+본 Amendment 13 = §결정 D14 → ADR-139 cross-ref 선언이며 **§결정 D14 규정 자체는 변경하지 않는다** (A1-A4 sub-clause + option-first `timeout` 형태 + fail-mode #8 재사용 + Orchestrator 소유 + 값 순서 모두 무변경). D1-D14 본문 의미 변경 0건 — 신규 §결정 신설 0.
+
+**A3. mechanical_enforcement_actions[] 무변경 (2안 lint 은 disjoint layer)**
+
+Amendment 12 의 `codex-companion-timeout-presence` entry retain (변경 0건). §D14 companion 특정 lint (codex-companion dispatch 발화 `timeout <N>` prefix presence) 과 ADR-139 2안 general presence lint (playbook §3.10.1 general background-wait 규약 발화 presence, `scripts/lib/check_subagent_wait_liveness_presence.py`) 은 **disjoint layer** — 전자는 codex-companion 호출부 축, 후자는 general background-wait 규약 문서 축. 본 Amendment 13 은 §D14 lint 를 변경하지 않는다 (ADR-139 lint 는 ADR-139 Phase 2 carrier).
+
+**A4. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+- `is_transitional: false` 유지 (permanent governance — companion=first-instance cross-ref 는 영구 선언)
+- `sunset_justification` = frontmatter entry verbatim (약화 영역 0건: §결정 D14 본문 무변경, D1-D14 본문 의미 변경 0, mechanical_enforcement_actions[] 무변경, scope 축소 0)
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향에만 발효 → 본 Amendment 면제
+
+**A5. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+- Amendment 발의 시점 = CFP-2549 (ADR-139 carrier) 설계 lane PASS 후 sibling Amendment set (§결정 6) 동봉 (active amendment ratchet 강화 방향)
+- 적용 영역 = ADR-081 §결정 D14 companion 브로커 경로 (codex-특정) — ADR-139 이 일반화하는 first instance
+- forbid-list 어휘 사용 0 건 self-attest
+
+**A6. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 13 자체 = ADR-081 본문 patch (Amendment row append + sub-section append + frontmatter 3 list append) — doc-only fast-path 적격. carrier Story CFP-2549 (dogfood wrapper-self) = ADR-081 Amendment 13 + ADR-039 Amendment 10 (§결정 20) + orchestrator-playbook §3.10.1 background-wait liveness gate 공통 규약 + parallel-dispatch-protocol-v1 §6.3 INCONCLUSIVE + (Phase 2) ADR-139 2안 presence lint.
+
+### 결과 (Amendment 13)
+
+- §결정 D14 = background-wait liveness gate 의 first instance (codex-companion 인스턴스) — cross-ref 선언 (INV-L1~L4 ← §D14 mapping) — A1 SSOT
+- §결정 D14 본문 무변경 (cross-ref 선언만 append, D1-D14 본문 의미 변경 0) — A2 SSOT
+- mechanical_enforcement_actions[] 무변경 (§D14 codex-companion lint ⊥ ADR-139 general presence lint disjoint layer) — A3 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, cross-ref 선언) — A4 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 어휘 사용 0 건) — A5 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 13 자체) — A6 SSOT
+- ADR-139 (background-wait liveness gate carrier SSOT) + ADR-039 Amendment 10 (§결정 20, sibling Amendment set) cross-ref
+
+### 거절된 대안 (Amendment 13)
+
+- (Amendment 13-A) **§결정 D14 를 일반 subagent 대기로 직접 확장 (ADR-081 안에서 generalize)** — ADR-081 = Codex worker prompt boilerplate + invocation SSOT scope. 일반 subagent (harness-managed, prompt boilerplate 무관) 확장은 scope mismatch (ADR-139 거절된 대안 (B) 정합). §D14 pattern 일반화는 ADR-139 이 carrier, 본 Amendment 는 first-instance cross-ref 만 채택.
+- (Amendment 13-B) **cross-ref 없이 §D14 를 그대로 두기** — ADR-139 이 §D14 를 일반화 first instance 로 인용하는데 역방향 cross-ref 부재 시 forward-only reference (ADR 허위 자기단언 회피 원칙 — cross-ref forward+reverse 둘 다 필요). 본 Amendment 13 = reverse cross-ref carrier.
 
 ## 해소 기준
 

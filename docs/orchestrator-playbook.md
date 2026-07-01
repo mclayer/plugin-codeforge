@@ -1560,6 +1560,48 @@ dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 
 companion wall-clock ceiling mandate 본문 SSOT = ADR-081 §결정 D14.
 
+> **일반화 cross-ref (CFP-2549 / [ADR-139](../archive/adr/ADR-139-background-wait-liveness-gate.md))**: 위 companion 브로커 경로 wall-clock ceiling 은 **background-wait liveness gate 의 first instance** 일 뿐이다. 동일 원리(wall-clock 상한 + progress-marker 관측 + fail-open 금지 + Orchestrator 소유)가 **모든 codeforge-owned background subagent 대기**에 성립해야 한다 — 공통 규약 = 아래 §3.10.1 "background-wait liveness gate". companion 은 그 규약의 codex-특정 인스턴스.
+
+### §3.10.1 background-wait liveness gate (모든 codeforge-owned subagent 대기)
+
+Orchestrator/lane-PL 이 codeforge-owned background subagent/worker 응답을 `run_in_background` (bg spawn) 로 대기할 때, **§3.10 companion 경로를 일반화**한 4 불변식이 성립해야 한다 (SSOT = [ADR-139](../archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 1 INV-L1~L4 + [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 20 + [ADR-119](../archive/adr/ADR-119-research-before-claims.md) §결정 10). 이는 §3.10 companion(codex-특정)을 넘어 harness-managed subagent 대기 전반으로 확장한 강제층이다.
+
+**4 불변식 (INV-L1~L4)**:
+
+- **INV-L1 (wall-clock ceiling 존재)** — 매 대기 지점에 명시적 max-wait 상한 존재 (하드코딩/env/문서 중 하나로 특정 가능, 암묵 무한 금지). stall 판정 = **outcome ground-truth 기반** — internal proxy (loop-lag / CPU 사용률 등) 로 stall 단정 금지 (ADR-119 §결정 10 ① outcome-honesty 상속). max-wait 값 = 자식 정상 최대 무출력 span 근거 관측 창 (고정 단창 금지).
+- **INV-L2 (fail-open 금지)** — stall ≠ PASS. stall = outcome 미측정 → verdict = **inconclusive** (PASS 자동승격 금지, **PASS-only-if-explicit**: verdict == "PASS" 명시 문자열일 때만 PASS). 부분 stall (다수 자식 중 일부) → **ANY(inconclusive) → 전체 inconclusive** (완료분 기준 전체 PASS 승격 금지). origin SSOT = ADR-119 §결정 10 outcome-honesty (본 게이트가 background-wait 면으로 상속·확장).
+- **INV-L3 ("0-byte ≠ stall" 3-state marker)** — 판정 = wall-clock ceiling(시간 축) + progress-marker(진행 축: output file mtime + content grep + task-notification) 결합. **0-byte stdout 단독으로 stall 단정 금지** — 완주 중에도 0-byte 가능 (DeveloperAgent 0-byte output → stall 오판 firsthand 관찰, ADR-139 §컨텍스트). 3-state = 진행 / 미획득 / stall.
+- **INV-L4 (게이트 소유 = Orchestrator/lead 고정)** — liveness 게이트 개입 주체 = Orchestrator/lead 고정. worker 자가-spawn 금지 (`plugins/codeforge-review/CLAUDE.md:46` "워커는 직접 다른 subagent 스폰 불가") — 대기 주체 ↔ 판정 주체 분리 (worker self-attestation 차단, 신뢰 경계). 값 순서 불변식: **`timeout N < liveness max-wait`** (호출부 timeout 이 먼저 터져 marker 를 남기고 게이트가 그 이후 관측 — 역순 금지).
+
+**max-wait 규약** (구체 수치는 codeforge 도메인 empirical 미실증 — env-override 로 조정 가능하게 두고 default 명시):
+
+| 대상 | env | default (초) |
+|---|---|---|
+| 전역 default | `CODEFORGE_SUBAGENT_MAXWAIT_SEC` | **180** |
+| code-class 자식 (per-child override) | `CODEFORGE_SUBAGENT_MAXWAIT_SEC_CODE` | 30-60 (floor band) |
+| research-class 자식 | `CODEFORGE_SUBAGENT_MAXWAIT_SEC_RESEARCH` | 300-600 (band) |
+| review-class 자식 | `CODEFORGE_SUBAGENT_MAXWAIT_SEC_REVIEW` | 300-600 (band) |
+
+- **re-dispatch max-retry cap = 2** — stall → 해당 task re-dispatch 는 최대 2회 (restart-storm 차단). cap 초과 시 inconclusive marker 고정 + 다음 step 진행.
+- consumer overlay 는 **보수 방향(max-wait 축소)만** 허용 — 무한대 재정의 차단 hardcap 권고.
+
+**bg-dispatch 실행 형태 (option-first 필수)**: background subagent 대기 발화는 wall-clock 상한을 **option-first** runnable 형태로 감싼다 —
+
+```bash
+timeout --kill-after=${CODEFORGE_SUBAGENT_KILL_AFTER_SEC:-30} ${CODEFORGE_SUBAGENT_MAXWAIT_SEC:-180} run_in_background <bg-dispatch-cmd>   # max-wait ceiling
+```
+
+**GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행할 명령으로 오인해 exit 127 (가드 무효) 를 반환하므로, option (`--kill-after=<K>`) 은 반드시 duration (`<N>`) 앞에 와야 한다** [verified: coreutils 8.32 — `timeout 1 --kill-after=1 sleep 5`→exit 127 / `timeout --kill-after=1 1 sleep 5`→exit 124 실측]. `--kill-after=<K>` (TERM 후 KILL) 로 detached 자식 좀비 방지. exit 124 (wall-clock kill) → stall 처리 진입.
+
+**stall 시 대응 (detection ≠ recovery — ADR-139 §결정 2)**: liveness 게이트 = detection layer (stall 판정)뿐이고 recovery 는 별도 layer 다.
+
+- **force-resume** — lead 가 `SendMessage` 로 parent(PL) 를 깨운다 (child 완료 통지가 parent 아닌 lead 로 surface 되는 구조적 마찰 흡수 — ADR-039 §결정 19).
+- **`TaskStop` 유한종료** — 회수(유한 종료). LLM subagent 재시작은 비용·비결정성 보유 (ADR-057 fallback 교차) → **default recovery = 해당 task 만 re-dispatch** (`parallel-dispatch-protocol-v1` I-6.5 정합), stall = inconclusive marker + 다음 step 진행 (blocking recovery 강제 아님).
+
+**mtime 부재 (KU3) fallback**: false-positive 오kill 방지를 위해 total-deadline(대기 시작부터 절대 경과 상한 = max-wait ceiling) + idle-timeout(진행 침묵 상한, progress-marker mtime/notification 갱신 시 idle 창 reset) **2축 병용** (ADR-139 §결정 3). 단 progress-marker mtime 자체가 부재하면(KU3) idle-timeout 축이 무효화되므로 → **total-deadline 단독 fallback** (max-wait ceiling 만으로 종결).
+
+background-wait liveness gate 본문 SSOT = ADR-139 §결정 1/§결정 3 + ADR-039 §결정 20 + ADR-119 §결정 10.
+
 **ProactiveCheckPacket 스키마**:
 
 ```yaml
@@ -2608,7 +2650,7 @@ Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 
 
 1. **배치 (dispatch)** — 적격 Story (§4.5.1 5조건 AND PASS) 들을 per-Story background-Agent (Story-runner, SendMessage-addressable) 로 spawn. 각 teammate 는 자기 Story scope 안에서만 lane PL subagent spawn (2-level bounded 토폴로지 — lead 1 + teammate N, teammate→teammate spawn 불가, ADR-039 §결정 19). dispatch 메커니즘 = background-Agent-as-Story-runner (검증된 경로 — agent-teams teammate 특정 경로 미의존).
 2. **동시 Story cap = 2~4** — quota (Anthropic API rate limit) 선형 소비 주의 (resource-aware scheduling, ADR-109 / ADR-044 cross-ref). 경합 시 cap 축소.
-3. **감독 (supervise) + stall 처리 (의무 — 마찰 은폐 금지, ADR-119 검사연극 금지)** — lead 가 dispatch 한 모든 teammate 진행을 능동 모니터. **stall 마찰**: child (손자 = teammate 가 spawn 한 lane PL 의 SubAgent) 완료 통지가 parent (lane PL) 아닌 lead (main) 로 surface → parent 무한대기 (구조적 한계, ADR-039 §결정 19). lead 가 stall 검출 시 **force-resume (`SendMessage` 로 parent 깨우기) 또는 `TaskStop` (회수)** 책임.
+3. **감독 (supervise) + stall 처리 (의무 — 마찰 은폐 금지, ADR-119 검사연극 금지)** — lead 가 dispatch 한 모든 teammate 진행을 능동 모니터. **stall 마찰**: child (손자 = teammate 가 spawn 한 lane PL 의 SubAgent) 완료 통지가 parent (lane PL) 아닌 lead (main) 로 surface → parent 무한대기 (구조적 한계, ADR-039 §결정 19). lead 가 stall 검출 시 **force-resume (`SendMessage` 로 parent 깨우기) 또는 `TaskStop` (회수)** 책임. 본 stall 처리 = §3.10.1 **background-wait liveness gate** (CFP-2549 / [ADR-139](../archive/adr/ADR-139-background-wait-liveness-gate.md)) 의 한 인스턴스 — wall-clock 상한(INV-L1) / fail-open 금지·inconclusive(INV-L2) / progress-marker 3-state(INV-L3) / Orchestrator 소유(INV-L4) + re-dispatch max-retry cap 2 를 §3.10.1 공통 규약에 따라 적용.
 4. **회수 (reclaim) + 순차화** — teammate return 시 merge-time 2단 재검증 (§4.5.3) → PASS 면 merge, drift 검출 시 충돌 Story 순차화. 실행 중 data-dependency 가 드러나면 (E-1) **재분석 트리거** (ADR-077 dirty-이벤트 6-fan-out 재조사 메커니즘 정합, §4.4.1) → 충돌 Story 회수·순차화.
 
 #### 4.5.3 merge-time 동적 재검증 2단 (정적 판정 stale 차단 — ADR-134 §결정 2)
