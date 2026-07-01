@@ -27,3 +27,9 @@ CLAUDE.md                                     @mccho8865
 
 # Templates SSOT — architect review (consumer 영향 큼)
 templates/**                                  @mccho8865
+
+# Hook 무력화 방어 (U1 — Orchestrator inline-write gate 자기무력화 audit signal, CFP-2544)
+# 주의: Code Owner review 는 1인 환경에서 OFF — 본 매핑은 audit/문서화 (hooks/ = critical 표시).
+# 실 U1 enforcement = evidence-checks-registry presence-lint 사후 감시 (Phase 2 배선).
+hooks/**                                      @mccho8865
+hooks/hooks.json                              @mccho8865

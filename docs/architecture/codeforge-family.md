@@ -1,7 +1,7 @@
 ---
 title: codeforge family 전체 구조 (wrapper + 8 lane plugin)
 last_captured: 2026-05-24
-last_update_cfp: CFP-2469  # Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / ADR-078 boundaries axis. 이전: CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
+last_update_cfp: CFP-2544  # Orchestrator inline-write mechanical block (PreToolUse Write|Edit|MultiEdit, warning-tier, agent_id caller判정) 신설 — ADR-039 Amd9 + ADR-115 Amd1 / ADR-078 boundaries axis. 이전: CFP-2469 Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
 kind: architecture_doc
 ---
 
@@ -339,6 +339,7 @@ graph TB
 **Component 책임 / 인접 관계 핵심 invariant**:
 - **PL synthesis monopoly** = 각 lane PL 만 lane-owned Story section write (sub-agent / worker 는 PL 에 input 만 return, sub ↔ sub 직접 통신 0)
 - **flat spawn invariant** = Orchestrator 가 모든 sub-agent / worker flat spawn (재귀 spawn 금지 ADR-039, nested team 금지 ADR-044). 4-tuple sub-tuple = 논리적 그룹핑일 뿐 spawn 계층 아님
+- **Orchestrator inline-write mechanical block** (PreToolUse Write|Edit|MultiEdit, warning-tier, agent_id caller判정, CFP-2544) = Orchestrator 직접 repo 편집을 PreToolUse hook 이 물리 차단 후보로 검출해 subagent 위임을 강제 (ADR-039 §결정 9 slot 실현 Wave1 + ADR-115 §결정 6 이관). agent_id present-as-non-empty=subagent=ALLOW / absent·null·empty=Orchestrator=block-candidate. Wave1 = exit 0 + stderr (NEVER deny)
 - **worker peer 필수** = review lane 의 Claude + Codex 양 worker 모두 spawn 의무 (단독 fallback 0, ADR-001)
 - **CONDITIONAL deputy** = Live touching / production cutover Story 만 active (Backtest/Paper-only Story = 미spawn)
 - **Cross-cutting boundary** = PMO / GitOps 는 Story lane gate 비개입 (sibling 책임 영역 disjoint)
