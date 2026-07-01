@@ -37,3 +37,12 @@ _sor_spec = importlib.util.spec_from_file_location(
 skip_offer_reminder = importlib.util.module_from_spec(_sor_spec)
 _sor_spec.loader.exec_module(skip_offer_reminder)
 sys.modules["skip_offer_reminder"] = skip_offer_reminder
+
+# check_inline_write_gate.py (scripts/lib/) — CFP-2544 inline-write gate SSOT
+_REPO_ROOT = HOOKS_DIR.parent
+_ciwg_spec = importlib.util.spec_from_file_location(
+    "check_inline_write_gate", _REPO_ROOT / "scripts" / "lib" / "check_inline_write_gate.py"
+)
+check_inline_write_gate = importlib.util.module_from_spec(_ciwg_spec)
+_ciwg_spec.loader.exec_module(check_inline_write_gate)
+sys.modules["check_inline_write_gate"] = check_inline_write_gate
