@@ -80,6 +80,8 @@ ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapp
 
 **충돌 해소**: 관점 충돌 시 ArchitectAgent (chief author) 가 결정 근거와 함께 Change Plan §2 · §3 · §7 · §7.4 · §11 에 명시. **chief tie-break ladder 3 단계**: (1) RACI lookup → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment carrier 발의.
 
+**설계 리팩터링 결정 방식 (CFP-2543 / ADR-138)**: RefactorAgent 구조 advocacy(구조 3축 (a)decoupling/(b)pattern/(c)interface-separation + repo-분해 escalation)의 반박·수용 판정 = Codex(proponent·발제)↔Claude(opponent·반대) `blanket_designrefactor` debate(설계-time per-Story 무조건 발동, min3/max5). dispatch = Orchestrator top-level inline(ADR-039 §결정18/19, self-spawn 불가). verdict judge = ArchitectAgent chief(3분기: now→§3 / defer→후속 Story / drop→ADR-119 §결정9 3문 게이트). RefactorAgent = advocacy input provider(verdict 주체 아님). `blanket_designrefactor` 는 `blanket_cross_module_designlane`(cross-module Story 전면 검증, 대칭)과 **disjoint** — 전자는 설계 리팩터 구조 축 per-Story + role_assignment 방향배정, 후자는 cross-module 산출물 blanket. 구현 리팩터링(blanket_refactor, verdict judge=PMOAgent, ADR-137)과도 axis-disjoint.
+
 **DesignReviewPL 교차 체크**: ArchitectAgent 통합 판정 + ArchitectPLAgent 검수가 각 변호 근거를 근거 있게 일축·수용했는가 / 요건 범위를 넘지 않았는가 / §7 보안 설계와 §7.4 운영 리스크와 §11 데이터 마이그레이션이 충실히 반영되었는가 / ModuleArch (aggregate-level) ↔ DataArch cross-layer boundary 명시했는가.
 
 ## RACI 3-way overlap zone (wrapper SSOT mirror)
@@ -93,7 +95,7 @@ ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapp
 | Deputy / Component | Spawn 시점 | 산출물 → chief author 통합 위치 |
 |---|---|---|
 | CodebaseMapperAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §2 현재 구조 |
-| RefactorAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §3 도입할 설계 (refactor 시각 — decoupling / pattern / interface 분리 구조 3축) + §6 (repo-분해 구조 advocacy, escalation-tier — 경계 확정: repo-level 분해=ArchitectAgent chief authority, module/aggregate-level=ModuleArch authority). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) |
+| RefactorAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §3 도입할 설계 (refactor 시각 — decoupling / pattern / interface 분리 구조 3축) + §6 (repo-분해 구조 advocacy, escalation-tier — 경계 확정: repo-level 분해=ArchitectAgent chief authority, module/aggregate-level=ModuleArch authority). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (CFP-2539) **결정 방식 = Codex proponent↔Claude opponent debate (blanket_designrefactor, per-Story, verdict judge=ArchitectAgent chief) — CFP-2543/ADR-138. RefactorAgent = advocacy input provider (verdict 주체 아님).** |
 | ArchitectAnalystAgent (4-tuple sub-tuple) | 설계 lane 진입 즉시 | §2 (변경 전 기존 설계 컨텍스트) |
 | SecurityArchitectAgent (deputy) | 설계 lane 진입 즉시 | §7.1-§7.3, §7.5-§7.7 보안 설계 |
 | **DataArchitectAgent** (deputy) | 설계 lane 진입 즉시 | **§3 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) + §11 OLAP schema 진화 / OLAP rollback / OLAP integrity invariant** |
