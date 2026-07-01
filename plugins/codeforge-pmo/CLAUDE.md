@@ -26,6 +26,8 @@ PMOAgent 가 다음을 직접 write:
 | GitHub comment `[PMO]` prefix | 모든 trigger | `mcp__github__add_issue_comment` |
 | `pmo_output v1.2.cross_story_pattern_adr_trigger` field 채움 + `adr_proposal` field 동시 채움 (status: Proposed inline ADR draft) | **Cross-Story pattern threshold reach (≥ 2)** — retro write 시점 patterns_observed[] 검출 직후 (CFP-665 / ADR-045 Amendment 5 §D-9, Mandatory framing — PMOAgent self-decide 영역 제거) | inline pmo_output return → Orchestrator forward to ArchitectAgent (codeforge-design lane spawn) |
 
+**Epic-close 구현-리팩터링 triage (ADR-137, §D-11 sibling·axis-disjoint)**: PMOAgent 는 Epic-close 시점에 구현-리팩터링 triage 의 **verdict judge** 로도 발동 — 3분기 verdict(now/defer/drop) 판정 + drop-ledger(`docs/refactor-triage/drop-ledger.md`) read/count(≥2 escalation) + defer verdict → `EPIC-RESULTS-<EPIC_KEY>.md` `## §deferred` 5-column row(source=`triage-defer`) 변환 append. **dispatch 주체 아님**: 실 debate dispatch = Orchestrator inline(ADR-039 §결정18 재귀 가드, self-spawn 불가). §D-11(retro follow-up Issue batch closure)과 대상 모집단·enum axis-disjoint (동일시 금지). 상세 = [`agents/PMOAgent.md §4.3`](agents/PMOAgent.md).
+
 GitOpsAgent (CFP-139 신설 long-running teammate) 가 다음을 직접 write:
 
 | Path | 트리거 | Mechanism |
