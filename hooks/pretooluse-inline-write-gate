@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# PreToolUse(Write|Edit|MultiEdit) hook for codeforge plugin — Orchestrator inline-write gate
+#
+# Carrier: CFP-2544 (ADR-039 Amendment 9 §결정 9 slot 실현 + ADR-115 Amendment 1 §결정 6 이관)
+#
+# 책임 경계 (ADR-039 §결정 9 / ADR-115 §결정 5·6 정합):
+#   - 책임: Write/Edit/MultiEdit 직전 caller(agent_id) + file_path(repo/worktree) 판정.
+#           Wave 1 warning-only — Orchestrator 직접 repo/worktree 편집 시 stderr block
+#           마커 발화 + exit 0 (deny 비활성).
+#           Wave 2 (별 sub-CFP, ADR-060 evidence-gate 후): exit 2 deny 활성.
+#   - 비책임: 편집 내용 변조 금지. subagent 편집(agent_id 존재) 통과. Bash redirect
+#             (U2) / mcp__github__* (U3) 검출 영역 외 (후속 CFP).
+#
+# discriminator (ADR-115 §결정 6 / code.claude.com/docs/en/hooks):
+#   agent_id non-empty 문자열 = subagent = ALLOW (정당 편집 97.5% 보존)
+#   부재 / null / "" = Orchestrator main-thread = block-candidate (F2 fail-safe)
+#
+# path ordering invariant (load-bearing):
+#   ~/.claude/worktrees/  → block-candidate  (반드시 memory carve-out 보다 먼저)
+#   ~/.claude/codeforge-scratch/ → allow
+#   ~/.claude/            → allow (memory carve-out)
+#   repo root (cwd) 접두사 → block-candidate / repo 밖 → allow
+#
+# Wave 1 출력 (warning-only):
+#   subagent 또는 allow 경로  → exit 0 (no warning)
+#   Orchestrator + block 경로  → stderr block 마커 + exit 0 (deny 비활성)
+#   BYPASS env 설정           → stderr audit 마커 + exit 0 (bypass audit trail)
+#
+# 정적 properties (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 Write/Edit block 금지 (Wave 1)
+#   (b) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp (stdin/stderr 만)
+#   (c) network call 0
+#   (d) Python 호출 — ADR-061 thin wrapper → scripts/lib SSOT (heredoc 금지)
+#   (e) timeout 내 exit 0 종료 (PreToolUse 30s 기준, < 500ms 목표 §7.4)
+#
+# Graceful degradation 5층 (ADR-115 §결정 5 closed-set):
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) bash interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (c) Python 부재 / verifier 누락 → wrapper 가 exit 0 fail-open (write 허용)
+#   (d) stdin 읽기 실패 → check_inline_write_gate.py 가 빈 payload fail-open 처리
+#   (e) 어떤 fail 도 Wave 1 write block 금지
+#
+# Bypass:
+#   BYPASS_INLINE_WRITE_GATE=1 → stderr audit echo + exit 0
+#   (scope disjoint — BYPASS_REPO_CONFINEMENT / BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE 등과 별 env)
+#
+# one-channel rule (ADR-115 §결정 3):
+#   block marker: [codeforge-wrapper-inline-write-gate] BLOCK
+#   audit marker: [codeforge-wrapper-inline-write-gate] BYPASS-AUDIT  (distinct sentinel)
+#
+# Sibling hook disjoint axis:
+#   hooks/repo-confinement           = PreToolUse(Bash) 담당 (홈 루트 스크래치 누출)
+#   hooks/pretooluse-agent-spawn-gate = PreToolUse(Agent) 담당 (spawn-format 4-block)
+#   본 hook = PreToolUse(Write|Edit|MultiEdit) 담당 (Orchestrator inline-write gate)
+#   세 hook 은 서로 다른 matcher 에 등록 — 상호 독립 (ADR-115 §결정 3 정합)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — Wave 1 write block 금지 (ADR-115 §결정 4·5)
+trap 'exit 0' ERR
+
+# ── Bypass check (audit trail 의무) ──────────────────────────────────────────
+# thin wrapper(Python SSOT)도 BYPASS 를 처리하나, interpreter 미도달 시에도 audit
+# trail 을 남기기 위해 hook 레벨에서도 short-circuit (repo-confinement 선례 대비
+# 보수적 이중 방어 — Python 도달 실패해도 bypass 는 존중).
+if [ "${BYPASS_INLINE_WRITE_GATE:-0}" = "1" ]; then
+  >&2 printf '[codeforge-wrapper-inline-write-gate] BYPASS-AUDIT BYPASS_INLINE_WRITE_GATE=1 — inline-write gate suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# ── stdin = PreToolUse JSON payload 읽기 ─────────────────────────────────────
+# Claude Code 가 hook stdin 으로 payload JSON 을 전달. payload 를 Python SSOT 로
+# 그대로 pipe (verifier 가 tool_name / agent_id / tool_input.file_path 파싱).
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# payload 가 비어있으면 pass-through (scope 외, fail-open)
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── thin wrapper 위임 (ADR-061 정합) ─────────────────────────────────────────
+# scripts/check-inline-write-gate.sh → scripts/lib/check_inline_write_gate.py SSOT.
+# CLAUDE_PLUGIN_ROOT 환경변수 = Claude Code 가 hook 호출 시 plugin root 로 설정.
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+WRAPPER=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/check-inline-write-gate.sh" ]; then
+  WRAPPER="${PLUGIN_ROOT}/scripts/check-inline-write-gate.sh"
+elif [ -f "scripts/check-inline-write-gate.sh" ]; then
+  # fallback: cwd 기준 (테스트 환경)
+  WRAPPER="scripts/check-inline-write-gate.sh"
+fi
+
+if [ -z "$WRAPPER" ]; then
+  # verifier 미발견 → fail-open (write 허용, Wave 1 graceful degradation)
+  exit 0
+fi
+
+# Python SSOT 실행 — stderr block/audit 마커, exit code 는 Wave 1 = 항상 0.
+# wrapper 자체가 fail-open(exit 0) 이므로 여기서도 exit code 무시.
+printf '%s' "$PAYLOAD" | bash "$WRAPPER" || true
+
+# Wave 1: 항상 exit 0 (deny 비활성, never exit 2)
+exit 0
