@@ -47,6 +47,13 @@ jobs:
       - name: Run self-test (D3 — inline fixture, RED→GREEN discriminating)
         run: bash scripts/check-codex-companion-timeout-presence.sh --self-test
 
+      - name: Run discriminating test suite (QADev — mutation proof + consumer no-op)
+        # tests/scripts/test_check-codex-companion-timeout-presence.sh (9-case: GREEN 3 + RED 6,
+        # 가드 제거 → RED 전환 mutation proof + hollow-gate I-3 + consumer no-op). wrapper-self only
+        # (CI channel = 본 step, ADR-136 Amd2 QADev tests/scripts 실행 채널 선례 동형).
+        if: hashFiles('tests/scripts/test_check-codex-companion-timeout-presence.sh') != ''
+        run: bash tests/scripts/test_check-codex-companion-timeout-presence.sh
+
       - name: Run codex companion timeout presence lint
         id: lint
         run: |
