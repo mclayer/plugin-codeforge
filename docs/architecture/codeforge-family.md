@@ -1,7 +1,7 @@
 ---
 title: codeforge family 전체 구조 (wrapper + 8 lane plugin)
 last_captured: 2026-05-24
-last_update_cfp: CFP-2544  # Orchestrator inline-write mechanical block (PreToolUse Write|Edit|MultiEdit, warning-tier, agent_id caller判정) 신설 — ADR-039 Amd9 + ADR-115 Amd1 / ADR-078 boundaries axis. 이전: CFP-2469 Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
+last_update_cfp: CFP-2560  # 전 에이전트 opus(1M) 단일 tier 정책 (ADR-141) — fable 폐기 + 3-tier 폐지. modules axis (agent composition tier 서술 갱신). 이전: CFP-2544 Orchestrator inline-write mechanical block (PreToolUse Write|Edit|MultiEdit, warning-tier, agent_id caller判정) 신설 — ADR-039 Amd9 + ADR-115 Amd1 / ADR-078 boundaries axis / CFP-2469 Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
 kind: architecture_doc
 ---
 
@@ -32,6 +32,8 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | **codeforge-pmo** | Cross-cutting — Epic 창설 / Story 회고 / Git ops | 2 (PMOAgent + GitOpsAgent) | Active |
 
 > 각 lane plugin agent 역할·동작 = 해당 plugin CLAUDE.md SSOT (lane plugin self-owned architecture_doc 안 `## 모듈` H2 = lane internal 상세). 본 표 = family composition map (plugin 단위, 라인 수준 0건).
+
+> **model tier 정책 (ADR-141, CFP-2560 — 2026-07-03)**: codeforge family 의 **전 에이전트 + Orchestrator 세션 = 단일 tier `opus`(최신 Opus tier, 1M 컨텍스트 native, plain `model: opus` frontmatter)**. Opus/Sonnet/Haiku 3-tier 선택 기준(ADR-042 §결정 1)과 fable surgical tier(ADR-117)는 폐지됐다. 아래 다이어그램·표의 개별 노드 tier 표기(Sonnet/Opus/fable/fallback)는 **역사 서술(dated snapshot)** 이며 현행 tier SSOT 아님 — 현행 = 전 에이전트 opus 단일 tier. consumer overlay 는 opus 미만 down-tier 불허(보수 방향만, ADR-127 §결정 6). tier SSOT = ADR-141.
 
 ## 경계
 
