@@ -264,6 +264,13 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 - role:dev / QADev spawn prompt 작성 시 Change Plan §0-§5 의 외부 지식 단정 + `source:` annotation 을 발췌해 packet 에 포함 — tier B agent 인계 인용의 원천.
 - dev 가 "확인 불가" 로 회부한 외부 지식 질문에 자체 추측 답변 금지 — ArchitectPL 회부 (조사 권한 = 설계 lane 응집).
 
+## 작성-시점 리팩터링 hygiene packet 주입 (ADR-140)
+
+- role:dev spawn prompt 에 hygiene 4항 anchor 를 **md 와 동일 문자열**로 포함: **재사용 탐색 선행 / 신규 중복 유입 금지 / 응집·결합 Change Plan 지침 내 준수 / 임의 구조 재설계 금지**(상한). overlay 커스텀 role:dev 에는 본 packet 이 유일 규범 표면 (agent md 미상속).
+- rule-of-three = 정량 임계 게이트 아님 — reuse-before-write 탐색 습관 + over-DRY 금지 균형 (ADR-140 §결정 4).
+- doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음).
+- dev 반환 보고의 hygiene 이행 declaration(재사용 탐색 수행 여부 1줄)을 수집 — 기존 구현리뷰 dup-local/dup-boundary P1 이 사후 falsify (contract field 신설 아님 — develop-output-v1 무영향, ADR-140 §결정 6).
+
 ## 컨텍스트 경계 규약 (ADR-044 §결정 11 — thin-PL READ/COMPUTE boundary)
 
 본 규약은 ADR-044 §결정 11 의 **prompt-mandate (behavioral)** 실현이다 — permission-enforced Read-deny 가 아니다.

@@ -36,6 +36,13 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 - 계획서 결함·누락 발견 시 즉시 DeveloperPL 경유 Architect 에스컬레이션
 - 외부 라이브러리 추가 필요 시 Architect 에스컬레이션
 
+**작성-시점 리팩터링 hygiene (예방 층 — ADR-140)**:
+- **재사용 탐색 선행** — 신규 작성 전 소유 범위(Change Plan 대상 경로) + 인접 읽기 범위 안에서 동일·유사 기능 존재 여부를 Read/Grep 으로 확인. 존재 시 재사용·확장 우선, 없을 때만 신규 작성
+- **신규 중복 유입 금지** — 동일 로직 복붙 대신 기존 함수 호출. rule-of-three 는 정량 임계 게이트가 아닌 reuse-before-write 탐색 습관 — 성급한 추상화(over-DRY) 금지 균형 유지
+- **응집·결합 Change Plan 지침 내 준수** — 높은 응집·낮은 결합. 레이어 경계·의존성 방향은 Change Plan §3·ADR 레이어 계약이 정한 방향 그대로 (자체 재구조화 아님)
+- **임의 구조 재설계 금지** (상한 clause) — 위 hygiene 을 구실로 한 새 파일·시그니처 변경·구조 재설계 금지. 필요 시 DeveloperPL 경유 Architect 에스컬레이션 (기존 경계 존치)
+- doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음, §5.7 (c) default)
+
 ## 소유 범위
 - 기본값: `src/**` production 코드 전체
 - **여러 `role: dev` 에이전트가 병렬로 실행되는 프로젝트에서는 overlay로 경로 scoping 필수** — 충돌 방지
