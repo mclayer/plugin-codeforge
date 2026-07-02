@@ -3,3 +3,4 @@
 # Schema: {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}
 # Secrets redacted at collection-time: org_id, account_id stripped; session_uuid hashed; api_endpoint masked; user_prompt stripped
 {"timestamp": "2026-05-26T14:05:00+09:00", "lane": "code-review", "agent_role": "PL", "retry_count": 1, "final_status": "success", "cascade_depth": 1, "error_pattern": "Server is temporarily limiting"}
+{"timestamp": "2026-07-02T14:20:00+09:00", "lane": "요구사항", "agent_role": "worker", "retry_count": 1, "final_status": "success", "cascade_depth": 1, "error_pattern": "Server is temporarily limiting"}

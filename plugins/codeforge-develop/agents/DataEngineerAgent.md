@@ -46,6 +46,13 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 - QADev가 본 구현과 **병렬**로 `tests/infra/**` 검증 테스트를 TDD 작성 — Change Plan §8 Test Contract 확인 필수
 - 계획서 범위 밖 결정 금지 — 필요 시 DeveloperPL 경유 Architect 에스컬레이션
 
+**작성-시점 리팩터링 hygiene (예방 층 — ADR-140)**:
+- **재사용 탐색 선행** — 신규 작성 전 담당 경로(adapters/storage·adapters/sources·schemas) 한정 안에서 동일·유사 기능 존재 여부를 Read/Grep 으로 확인. 존재 시 재사용·확장 우선, 없을 때만 신규 작성
+- **신규 중복 유입 금지** — 동일 로직 복붙 대신 기존 함수 호출. rule-of-three 는 정량 임계 게이트가 아닌 reuse-before-write 탐색 습관 — 성급한 추상화(over-DRY) 금지 균형 유지
+- **응집·결합 Change Plan 지침 내 준수** — 높은 응집·낮은 결합. 레이어 경계·의존성 방향은 Change Plan §3·ADR 레이어 계약이 정한 방향 그대로 (자체 재구조화 아님)
+- **임의 구조 재설계 금지** (상한 clause) — 위 hygiene 을 구실로 한 새 파일·시그니처 변경·구조 재설계 금지. 필요 시 DeveloperPL 경유 Architect 에스컬레이션 (기존 경계 존치)
+- doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음, §5.7 (c) default)
+
 ## 활용 플러그인/스킬
 
 discipline = codeforge native (ADR-122 — superpowers 의존 완전 제거). 별도 skill 위임 없이 Change Plan 그대로 구현 + research-before-claims (ADR-119) 검증-후-단언.
