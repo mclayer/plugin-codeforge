@@ -523,6 +523,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-2505
     reservation_date: 2026-06-30 KST
     status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-136 frontend 품질게이트 표준, escalation #2502 / mctrader-web WEB-033 carrier). D1 구조적 CSS lint(stylelint) CI 게이트 + D2 UI 실렌더 검증(§8.7) + frontend.applicable CONDITIONAL flag — frontend-bearing consumer 조건부. 신규 메커니즘 0 (전부 기존 ADR 패턴 확장, supersede 0). verified-via worktree `git ls-tree origin/main archive/adr/` latest = ADR-135 (origin/main 55727a8) + ADR-RESERVATION row 135 → max+1 = 136. ⚠ 프롬프트 가정 ADR-132 는 stale (origin/main 에 ADR-132 consumer-branch-protection-auto-wire 가 이미 점유) — firsthand origin/main 실측으로 136 정정 (CFP-702 ADR collision 교훈 답습 — max+1 실측 후 점유). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
+
+  - adr_number: 140
+    amendment_id: null
+    reserved_by_cfp: CFP-2557
+    reservation_date: 2026-07-02 KST
+    status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-140 구현 lane dev roster 작성-시점 리팩터링 hygiene 예방 층 신설). 검출/판정 3층(설계 debate ADR-138 / 구현리뷰 dup P1 / Epic-close triage ADR-137)과 발동 시점·성격 disjoint 인 예방 층(작성-시점 유입 차단) 정책 SSOT — $DEVSET 6 md hygiene 블록 + DeveloperPL packet 주입 + taxonomy 제3 dimension. ADR-137/138 §비대상 자기 non-goal → amendment 흡수 자기모순 회피, 신규 ADR carrier (ADR-138 §결정 1 선례). verified-via worktree `git fetch origin` 후 `git ls-tree --name-only origin/main archive/adr/` max = ADR-139 + ADR-RESERVATION 점유 max = 136 → 140 available, 2026-07-02 KST 기준 origin/main 40519af5. status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). CFP-702 ADR collision 교훈 답습 (max+1 실측 후 점유). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
 ```
 
 ## 해소 기준
