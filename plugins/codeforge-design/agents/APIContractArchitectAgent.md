@@ -1,6 +1,6 @@
 ---
 name: APIContractArchitectAgent
-model: sonnet
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service
 role: design-deputy

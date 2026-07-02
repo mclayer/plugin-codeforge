@@ -4,6 +4,14 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.4.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
+
+### Changed
+
+[CFP-2560] 전 에이전트 opus 단일 tier (ADR-141) — model frontmatter opus 통일 + Sonnet tier 표/ADR-057 fallback 청산.
+
+- test lane 에이전트(IntegrationTest 외) frontmatter `model: opus` 통일 + CLAUDE.md/docs/architecture Sonnet tier 표 → opus 정정 + ADR-057 fallback 문장 → "ADR-141 단일 opus tier — fallback 대상 없음".
+
 ## [1.3.3] - 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)

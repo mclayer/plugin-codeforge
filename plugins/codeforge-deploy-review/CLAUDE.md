@@ -19,10 +19,10 @@
 | Agent | Model tier | Mandate |
 |---|---|---|
 | **DeployReviewPLAgent** | **Opus** | production-grade 성능 측정 1st-class lead — smoke / 성능 비교 / cutover 사후 검증 verdict 종합. 성능 미충족 시 root cause 1차 진단 + debate-protocol-v1 cross-module trigger + 구현/설계/요구사항 lane FIX dispatch. adversarial debate 자동 발동 영역 (Opus tier mandatory) |
-| **DeployReviewWorkerAgent** | Sonnet | smoke test 실행 (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 비교 baseline 수집 (latency / throughput / error rate / CPU·memory) + cutover 사후 검증 worker |
+| **DeployReviewWorkerAgent** | opus | smoke test 실행 (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 비교 baseline 수집 (latency / throughput / error rate / CPU·memory) + cutover 사후 검증 worker |
 | **ProductionEvidenceDeputyAgent** | (CONDITIONAL deputy) | production cutover evidence quad (functional / security / monitoring / testing 4 source). ADR-72 이관 — codeforge-design CONDITIONAL → 본 lane 정식. production cutover-touching Story 시 spawn |
 
-Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) (DeployReviewPL Opus / DeployReviewWorker Sonnet). DeployReviewPL Opus = 본 lane 이 adversarial debate 자동 발동 영역이므로 mandatory (ADR-042 §결정 1 정합).
+Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) (DeployReviewPL opus / DeployReviewWorker opus). 전 에이전트 opus 단일 tier (ADR-141 — fallback 대상 없음). DeployReviewPL opus = 본 lane 이 adversarial debate 자동 발동 영역이므로 mandatory (ADR-042 §결정 1 정합).
 
 ## 8 lane composition 의 #7 배포 리뷰 lane
 
@@ -76,7 +76,7 @@ codeforge [ADR-064](https://github.com/mclayer/plugin-codeforge/blob/main/docs/a
 
 - [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane 신설 + ProductionEvidenceDeputy 이관 (본 plugin SSOT carrier)
 - [ADR-087](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane (직전 lane)
-- [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — DeployReviewPL Opus + DeployReviewWorker Sonnet
+- [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — DeployReviewPL opus + DeployReviewWorker opus (ADR-141 로 opus 단일 tier 통일)
 - [ADR-72](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy mandate (이관 후 본 lane deputy)
 - [ADR-068](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) — I-5 dimensional empirical grounding (성능 측정 baseline TBD)
 - [ADR-059](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-059-debate-protocol-v1.md) — 성능 미충족 cross-module debate trigger

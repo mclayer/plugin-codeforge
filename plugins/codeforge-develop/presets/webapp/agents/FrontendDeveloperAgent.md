@@ -1,7 +1,7 @@
 ---
 name: FrontendDeveloperAgent
-model: sonnet
-# rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
+model: opus
+# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
 role: dev
 description: 웹 프론트엔드 UI 구현 — 템플릿·정적 자산·클라이언트 측 로직
 permissions:

@@ -56,7 +56,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
-- **Claude Code 버전**: v2.1.170 이상 필수 — codeforge 의 surgical 11 에이전트가 `model: fable`(Claude Fable 5)을 사용하며, 2.1.170 미만에서는 해당 에이전트 spawn 이 실패한다 ([ADR-117](../archive/adr/ADR-117-fable-5-surgical-model-tier.md)). (2026-07-02 CFP-2554: 미 정부 제약 해제로 wrapper self 도 surgical 11 에이전트를 `model: fable` 로 원복 — 본 버전 floor 재유효(ADR-117 Amendment 2, CFP-2241 임시 opus override 해소).)
+- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 전 에이전트가 `model: opus`(Opus 4.8, 1M native context)를 사용하며, v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 pin 한다 (ADR-141 §결정1). wrapper self 및 first-party consumer 는 plain `opus` 로 충분.
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
 - **플러그인 3종**: `codex@openai-codex`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)

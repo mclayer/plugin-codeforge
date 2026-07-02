@@ -1,6 +1,6 @@
 ---
 name: DataEngineerAgent
-model: haiku
+model: opus
 role: dev
 description: 데이터 파이프라인 구현 담당 — 수집·저장·조회 레이어 (어댑터/포트/스키마)
 permissions:

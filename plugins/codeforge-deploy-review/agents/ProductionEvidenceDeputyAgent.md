@@ -3,6 +3,7 @@ name: ProductionEvidenceDeputyAgent
 role: deploy-review-deputy
 parent_pl: DeployReviewPLAgent
 spawn_mode: CONDITIONAL
+model: opus
 spawn_trigger: production cutover Story (Story §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 / ADR-088 §결정 7).
 ownership_transferred_from: codeforge-design (CONDITIONAL deputy) — ADR-088 §결정 4 + ADR-72 Amendment 4 (2026-05-21 KST)
 mandate:

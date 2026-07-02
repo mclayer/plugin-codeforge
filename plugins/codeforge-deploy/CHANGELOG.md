@@ -4,6 +4,14 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.1.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
+
+### Changed
+
+[CFP-2560] 전 에이전트 opus 단일 tier (ADR-141) — model frontmatter opus 통일 + Sonnet tier 표/ADR-057 fallback 청산.
+
+- 배포 lane 에이전트(DeployPL/DeployWorker) frontmatter `model: opus` 통일 + CLAUDE.md/docs/architecture Sonnet tier 표 → opus 정정 + ADR-057 fallback 문장 → "ADR-141 단일 opus tier — fallback 대상 없음". (본 plugin 은 2026-07-13 KST sunset 예정 — ADR-121, deprecation 상태 무변경.)
+
 ## [1.0.4] - 2026-06-15
 
 ### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)

@@ -1,6 +1,6 @@
 ---
 name: ModuleArchitectAgent
-model: sonnet
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service-boundary-axis-unified
 role: design-deputy

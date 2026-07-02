@@ -1,6 +1,6 @@
 # CLAUDE.md (codeforge-test)
 
-> **[REVIVED — CFP-367 / ADR-055 (2026-05-10) · Epic-level 전환 — CFP-371 / ADR-055 Amendment 2]** 통합테스트 전용 lane으로 부활. IntegrationTestAgent(Sonnet) 신규 추가. TestAgent / StatefulTestAgent는 deprecated 유지(ADR-048 §결정 2).
+> **[REVIVED — CFP-367 / ADR-055 (2026-05-10) · Epic-level 전환 — CFP-371 / ADR-055 Amendment 2]** 통합테스트 전용 lane으로 부활. IntegrationTestAgent(opus — ADR-141 로 opus 단일 tier 통일) 신규 추가. TestAgent / StatefulTestAgent는 deprecated 유지(ADR-048 §결정 2).
 
 codeforge 통합테스트 lane plugin. IntegrationTestAgent 전담 — Epic 하위 전체 Story CI gate PASS 이후 1회 실행. Deployability 검증(4-step) + Baseline Suite + Story Suite 자동 생성 + Baseline 자동 승격.
 

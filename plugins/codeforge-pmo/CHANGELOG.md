@@ -4,6 +4,14 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.6.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
+
+### Changed
+
+[CFP-2560] 전 에이전트 opus 단일 tier (ADR-141) — model frontmatter opus 통일 + Sonnet tier 표/ADR-057 fallback 청산.
+
+- pmo lane 에이전트 frontmatter `model: opus` 통일 (ADR-141 — fallback 대상 없음).
+
 ## [0.4.1] - 2026-06-15
 
 ### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)

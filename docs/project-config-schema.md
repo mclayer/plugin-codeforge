@@ -284,6 +284,7 @@ aggregate_arch:
   # Tool layer = consumer 자유 override (default alembic Python stack)
   migration_tool: alembic          # enum: [alembic, prisma-migrate, typeorm, goose, golang-migrate, flyway, liquibase, sqlx-migrate, custom]
 
+# [DEAD — ADR-141] story_stakes 조건부 tier config 는 폐지됨 (전 에이전트 opus 단일 tier — stakes 조건부 tier 소멸). 아래 스키마 는 역사 참고용, 신규 프로젝트 미사용.
 # [선택] Story-shape 조건부 model tier — stakes 분류 + tier override (CFP-2432 / ADR-042 Amendment 16)
 #   + DomainAgent financial-invariant-0 (CFP-2445 / ADR-042 Amendment 17)
 # 같은 agent role 의 model tier 를 Story 의 stakes(결과 위험)로 분기. tier = f(mandate depth, stakes).
@@ -443,6 +444,8 @@ frontend 품질게이트(D1 구조적 CSS lint + D2 UI 실렌더 검증)의 auth
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). lint 게이트 = read-only (consumer overlay value 를 CI-time 활성 판정 입력으로 수신).
 
 ### `story_stakes` 섹션 설명 (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md))
+
+> [DEAD — ADR-141] story_stakes 조건부 tier 는 폐지됨 (전 에이전트 opus 단일 tier). 본 섹션 은 역사 참고용.
 
 Story-shape 조건부 model tier 의 consumer overlay 영역. 같은 agent role(Amd16 = InfraOperationalArchitectAgent / Amd17 = DomainAgent)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다 — `tier = f(mandate depth, stakes)`. stakes 는 mandate depth 와 orthogonal 축이므로 ADR-042 §결정2 invariant("Sonnet 으로 fully cover 가능 = role 결손 신호")와 양립한다 (low-stakes shape 에서 safety 핵심축이 물리적 dormant → 같은 depth 가 sonnet 으로 cover).
 

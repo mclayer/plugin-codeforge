@@ -60,6 +60,7 @@ entries:
       pattern (vs static lint, 첫 entry `adr-sunset-criteria` 와 patterns 대비) — advisory
       dashboard, no PR block. framework 첫 non-sunset application (CFP-388 / ADR-060
       §결정 12 CFP-C carry). sample size sufficient sentinel (월 < 50 spawn 환경 = N/A).
+      [DEAD — ADR-141] 전 에이전트 opus 단일 tier 로 sonnet rate-limit fallback 대상 0 → 본 KPI 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
     detect_command: bash scripts/measure-rate-limit-fallback.sh
     workflow: templates/github-workflows/rate-limit-fallback-kpi.yml
     current_tier: warning  # advisory dashboard, no PR block — semantic = "warning mode 의 runtime metric extension"
@@ -81,7 +82,8 @@ entries:
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
-    status: Active
+    status: dead
+    tier-downgrade-justification: "ADR-141 §결정7 — 전 에이전트 opus 단일 tier. sonnet fallback 대상 0. entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560 carrier."
 
   - name: lane-evidence-trail
     description: |
@@ -3274,6 +3276,7 @@ entries:
       tests/scripts/test-check-stakes-tier-gating.sh 가 truth-table 8행 + trust-boundary 3행 RED→GREEN 변별 강제).
       baseline 측정 protocol = docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md (4-step + 3-임계 OR).
       marker gate 동형 선례 = check-tier-downgrade-guard.sh justification-marker.
+      [DEAD — ADR-141] 전 에이전트 opus 단일 tier 로 opus→sonnet tier-flip 대상 0 → evidence-gate 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
     detect_command: bash tests/scripts/test-check-stakes-tier-gating.sh  # CFP-2432 Phase 2 — gating 판정 SSOT discriminating self-test (RED→GREEN 변별 실증)
     workflow: null                  # warning-tier behavioral evidence-gate — dedicated CI workflow 미운용 (marker = PR review-time 검증, deferred-followup)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
@@ -3294,7 +3297,8 @@ entries:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → evidence 누적 후 별 후속 Story 에서 blocking 승격 검토
-    status: deferred-followup        # warning-tier behavioral evidence-gate — gating script + discriminating test 실존(Phase 2), dedicated CI workflow wire 는 별 후속 (evidence 누적 후)
+    status: dead        # [DEAD — ADR-141] 전 에이전트 opus 단일 tier — tier-flip 대상 0 (구 status: deferred-followup)
+    tier-downgrade-justification: "ADR-141 §결정7 — 전 에이전트 opus 단일 tier. tier-flip 대상 0. entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560 carrier."
 
   - name: deferred-item-recovery
     description: |
