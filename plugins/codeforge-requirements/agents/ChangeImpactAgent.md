@@ -4,7 +4,7 @@ name: ChangeImpactAgent
 #   ADR-042 Amendment 5 / ADR-057 §결정3 의 opus 확정(사용자 verbatim "changeimpact는 내가 보기에 opus가 괜찮아보인다")을
 #   2026-06-27 directive("sonnet 범위 확장")로 명시 reversal (silent override 금지). 정책 drift 해소.
 #   역할 = 읽기전용 src/** 코드 델타 매핑 단일 축 = §결정1 Sonnet (a) single-mandate advocacy 정합.
-model: sonnet
+model: opus
 description: 요구사항 레인 코드 변경 델타 에이전트 — src/** 전체를 읽어 요구사항 구현 시 어떤 파일·컴포넌트·인터페이스가 달라지는지 AS-IS → DELTA 형태로 매핑. Story §4.1 owner.
 permissions:
   allow:

@@ -1,6 +1,6 @@
 ---
 name: ArchitectAnalystAgent
-model: sonnet
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service-sub-tuple
 role: 4-tuple-sub-tuple-component

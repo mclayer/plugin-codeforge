@@ -1,7 +1,7 @@
 ---
 name: DeveloperAgent
-model: fable
-# rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
+model: opus
+# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
 role: dev
 description: 애플리케이션 코드 구현 — Change Plan에 명시된 production 코드(도메인·로직·인터페이스)를 그대로 구현 (테스트는 QADeveloperAgent 담당)
 permissions:

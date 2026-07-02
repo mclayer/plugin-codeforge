@@ -2,6 +2,14 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.34.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
+
+### Changed
+
+[CFP-2560] 전 에이전트 opus 단일 tier (ADR-141) — model frontmatter opus 통일 + Sonnet tier 표/ADR-057 fallback 청산.
+
+- design lane 에이전트 frontmatter `model: opus` 통일 + CLAUDE.md/docs/architecture Sonnet tier 표(ModuleArch/APIContractArch/CodebaseMapper/Refactor/ArchitectAnalyst) → opus 정정 + ADR-057 fallback 문장 → "ADR-141 단일 opus tier — fallback 대상 없음".
+
 ## [0.33.0] - 2026-07-02 — CFP-2554 fable surgical tier 원복 (MINOR)
 
 ### Changed

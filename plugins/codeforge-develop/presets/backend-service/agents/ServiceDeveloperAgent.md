@@ -1,9 +1,9 @@
 ---
 name: ServiceDeveloperAgent
-model: sonnet
-# rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
+model: opus
+# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
 role: dev
-description: 비-webapp backend service shape (frontend-less) 의 sonnet 구현자 — Change Plan §3 명세 production 코드 구현 (Rust/Go/Python service 공통, language-agnostic). 도메인·어댑터·포트·CLI·daemon·worker. 웹 라우트/프론트엔드 제외. 테스트 코드 작성은 QADeveloperAgent 담당. 언어·프레임워크·경로 관습은 consumer overlay 위임
+description: 비-webapp backend service shape (frontend-less) 의 구현자 (opus, ADR-141 단일 tier) — Change Plan §3 명세 production 코드 구현 (Rust/Go/Python service 공통, language-agnostic). 도메인·어댑터·포트·CLI·daemon·worker. 웹 라우트/프론트엔드 제외. 테스트 코드 작성은 QADeveloperAgent 담당. 언어·프레임워크·경로 관습은 consumer overlay 위임
 permissions:
   allow:
     - Read

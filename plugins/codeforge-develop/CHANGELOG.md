@@ -2,6 +2,14 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.16.0 (2026-07-03) — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
+
+### Changed
+
+[CFP-2560] 전 에이전트 opus 단일 tier (ADR-141) — model frontmatter opus 통일 + Sonnet tier 표/ADR-057 fallback 청산.
+
+- develop lane 에이전트 frontmatter `model: opus` 통일 (ADR-141 — fallback 대상 없음).
+
 ## 0.14.0 (2026-07-02) — CFP-2554 fable surgical tier 원복 (MINOR)
 
 ### Changed

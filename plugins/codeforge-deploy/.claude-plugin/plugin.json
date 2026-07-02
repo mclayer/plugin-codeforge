@@ -1,6 +1,6 @@
 {
   "name": "codeforge-deploy",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "[DEPRECATED — sunset 2026-07-13 KST, ADR-121] codeforge 배포 lane plugin (CFP-1059 / ADR-087) — Deploy lane 정식 도입. DeployPLAgent (Sonnet) + DeployWorkerAgent (Sonnet) 2종. consumer application repo 의 Epic 묶음 종료 후 변경 repo 만 배포 — blue-green + atomic swap + 3-시간 보존 + 자동 rollback 매커니즘 실행. 인프라 stack = Docker (다중 호스트) + GitHub Actions (빌드) + Docker Hub (저장) + SSH pull (배포) + 1Password Connect (비밀) + Traefik (traffic 분배). codeforge core 의존. 8 lane composition #6 (요구사항 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트 → 배포 → 배포 리뷰).",
   "author": {
     "name": "Josh"

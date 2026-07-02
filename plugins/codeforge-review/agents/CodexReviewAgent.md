@@ -1,6 +1,6 @@
 ---
 name: CodexReviewAgent
-model: haiku
+model: opus
 description: 외부 Codex(GPT-5) 모델로 lane-agnostic 리뷰 수행 (정적 인용 + 실행 검증) — 요구사항리뷰/설계/구현/보안 4 lane 공유, PL이 packet으로 도메인 주입, ClaudeReviewAgent와 독립 peer. 실행 검증 = Codex 자체 sandbox 안 게이트·체크 스크립트 실행해 단정과 대조 (CFP-2477 / ADR-070 Amd11 / ADR-081 Amd11)
 permissions:
   allow:

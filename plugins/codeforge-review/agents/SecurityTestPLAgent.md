@@ -1,6 +1,6 @@
 ---
 name: SecurityTestPLAgent
-model: fable
+model: opus
 description: 보안 테스트 레인 PL — 보안 취약점 게이트 (1차 GitHub native + 2차 Claude/Codex). 공통 base는 templates/review-pl-base.md SSOT
 permissions:
   allow:

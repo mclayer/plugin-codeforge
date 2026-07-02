@@ -56,7 +56,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
-- **Claude Code 버전**: v2.1.170 이상 필수 — codeforge 의 surgical 11 에이전트가 `model: fable`(Claude Fable 5)을 사용하며, 2.1.170 미만에서는 해당 에이전트 spawn 이 실패한다 ([ADR-117](../archive/adr/ADR-117-fable-5-surgical-model-tier.md)). (2026-07-02 CFP-2554: 미 정부 제약 해제로 wrapper self 도 surgical 11 에이전트를 `model: fable` 로 원복 — 본 버전 floor 재유효(ADR-117 Amendment 2, CFP-2241 임시 opus override 해소).)
+- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 전 에이전트가 `model: opus`(Opus 4.8, 1M native context)를 사용하며, v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 고정한다 (ADR-141 §결정1). wrapper self 및 first-party consumer 는 plain `opus` 로 충분.
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
 - **플러그인 3종**: `codex@openai-codex`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)
@@ -612,6 +612,8 @@ aggregate_arch:
 참조: [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 
 ### 1m-2. Story-shape 조건부 model tier — `story_stakes` (CFP-2432 / [ADR-042 Amendment 16](../archive/adr/ADR-042-agent-model-selection-policy.md) · CFP-2445 / [Amendment 17](../archive/adr/ADR-042-agent-model-selection-policy.md))
+
+> [DEAD — ADR-141] story_stakes 조건부 tier(InfraOperationalArch/DomainAgent opus↔sonnet flip)는 폐지됨 — 전 에이전트 opus 단일 tier(ADR-141 §결정3 + ADR-042 Amendment 16/17 dead). 아래 서술은 이력 참조.
 
 같은 agent role(Amd16 = InfraOperationalArchitectAgent / Amd17 = DomainAgent)의 model tier 를 Story 의 **stakes(결과 위험)** 로 분기한다. low-stakes Story shape(백테스트 엔진 / 데이터 파이프라인 / 웹 UI / 인터페이스 lib 등)에서 wrapper Orchestrator 가 InfraOperationalArchitectAgent 를 opus→sonnet 으로 spawn-time override, high-stakes(실자금 / production cutover / 신규 신뢰경계 / live 외부 API) 는 opus 유지.
 
@@ -2370,7 +2372,7 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/backend-service/agents/*.m
       .claude/_overlay/agents/
 ```
 
-`ServiceDeveloperAgent`(`model: sonnet`, `role: dev`)가 develop lane 의 sonnet 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
+`ServiceDeveloperAgent`(`model: opus`, `role: dev`)가 develop lane 의 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
 
 > **Rust consumer**: 링커/binutils 부재 host 에서 로컬 빌드가 막히면 **§1q. Rust 로컬빌드 경로**(Docker 마운트 빌드 + build-local 스크립트 + MSYS2/MSVC/WSL2 toolchain 가이드) 참조. example = `examples/rust-cli-minimal/`.
 
