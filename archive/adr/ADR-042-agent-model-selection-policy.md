@@ -235,6 +235,25 @@ amendment_log:
       - ADR-063 (marketplace atomic version sync — codeforge-design mirrored field version 변경, sync PR 선행 merge)
       - CFP-2476 (Epic Codex 실행기반 검증 확장 — execute-and-falsify infrastructure EXISTS = 측정 축 relocation net-strengthening 환경 변화 evidence, sunset_justification (a) axis)
       - CFP-2533 Story A (debate-protocol-v1 v1.3 `blanket_refactor` dispatch — enabling contract) / Story C (측정 축 수령처 — Epic-close triage 실배선)
+  - amendment_id: 19
+    date: "2026-07-03"
+    status: applied
+    summary: "CFP-2560 — 전 에이전트 opus 단일 tier 전환에 따른 3-tier 정책 재편 (carrier = ADR-141). ADR-141(전 에이전트 opus 단일 tier + fable 폐기)이 신설되며 본 ADR §결정 1 의 Opus/Sonnet/Haiku 3-tier role-pattern 선택 표를 **superseded 마킹**한다 — 단일 tier = opus 이므로 role 별 tier 판정 불요. §결정 1 tier 표 위 Amendment 19 안내 blockquote + 파일 말미 `## Amendment 19` 섹션 append (기존 본문·Amendment 섹션 rewrite 0). **tier-flip 3종 dead 마킹**: Amd15(ServiceDeveloperAgent sonnet dev preset) / Amd16(InfraOperationalArchitectAgent stakes-gated opus→sonnet) / Amd17(DomainAgent financial-invariant-0 opus→sonnet) 은 대상 tier(sonnet)가 소멸하므로 dead — 전 에이전트 opus 라 flip 대상 0. **잔존 명시**: Amd13(RefactorAgent reusability 축 신설) / Amd14(측정 mechanical wire) / Amd18(RefactorAgent 측정 축 relocation) 은 mandate-축(tier 무관)이라 잔존. **§결정 3 의무 승계**: '신규 agent 도입 / model 변경 시 ADR 의무' → ADR-141 로 승계(신규 agent = opus default, 단일 tier 이탈 = ADR-141 amendment 의무). **§결정 2 invariant 지위 판정**: tier 신호로서는 폐지(sonnet tier 부재), role-정합 원칙('mandate 얕으면 role 재정의')으로는 잔존하되 결론이 model downgrade 아닌 mandate 명확화로만 이어짐. **§결정 5(Haiku rollback) / §결정 6(재-audit) = moot**(대상 haiku/sonnet tier 소멸). dead-path: check-stakes-tier-gating.sh + test = 존치(live-machinery, env-driven, frontmatter 무결합 — 삭제 시 evidence-checks-registry detect_command broken). ADR 텍스트로 dead 판정만, 기계 정리 0. Phase 1 = ADR-141 + 본 Amд19 + ADR-117 Superseded + ADR-057 Amd6 + architecture doc; Phase 2 = 45 frontmatter opus 통일 + SSOT 3 문서 청산 + registry dead 마킹 + plugin bump 9 + marketplace sync."
+    ref: ADR-141
+    carrier_story: CFP-2560
+    sunset_justification: "3-tier 선택 기준 폐지 + tier-flip 3종 dead = 비용 거버넌스(stakes-gated 하향 machinery) 축소 = 약화 방향 → ADR-058 §결정 5 / ADR-064 §결정 7 (is_transitional:false governance 약화 symmetric evidence-gate) evidence requirement 발화. evidence 3축(SSOT = ADR-141 근거 섹션) — (a) 사용자 directive 명확('fable 안쓸거다. 전부 opus with 1M로 돌려라', 2026-07-03 KST) + 환경 변화(fable↔opus 2일 4진동 obsolescence, 진동 부채 청산). (b) 능력 상향 방향(opus ≥ sonnet/haiku reasoning) + 운영 단순화(3-tier machinery·stakes-gating·재-audit 소멸). (c) fable→opus 11종 = 비용 절반(fable $10/$50 = opus $5/$25 의 2배, ADR-117 컨텍스트 실측); sonnet/haiku 21+종 상향 비용 = 사용자 명시 수용. is_transitional:false 유지(영구 정책 재편). §결정 2 role-정합 원칙 잔존 + Amd13/14/18 mandate-축 잔존으로 mandate governance surface 무손상 — forbid-scope 축소 아닌 tier-선택 machinery 단일화."
+    affected_agents:
+      - "전체 tier 표 (§결정 1 3-tier 표 superseded by ADR-141 §결정 1 — 전 에이전트 opus 단일 tier)"
+      - ServiceDeveloperAgent (Amd15 dead — sonnet dev preset → opus 통일, ADR-141 §결정 1)
+      - InfraOperationalArchitectAgent (Amd16 dead — stakes-gated opus→sonnet flip 대상 소멸, opus 유지)
+      - DomainAgent (Amd17 dead — financial-invariant-0 opus→sonnet flip 대상 소멸, opus 유지)
+      - ProductionEvidenceDeputyAgent (model field 부재 → opus 명시 추가, ADR-141 §결정 6. Phase 2)
+    cross_ref:
+      - ADR-141 (전 에이전트 opus 단일 tier — carrier. 본 ADR §결정 1 supersede + §결정 3 승계)
+      - ADR-117 (Amendment 3 sibling — fable surgical tier Superseded by ADR-141, atomic CFP-2560)
+      - ADR-057 (Amendment 6 sibling — Orchestrator opus mandate 흡수 + fallback moot/dead, atomic CFP-2560)
+      - ADR-058 §결정 5 / ADR-064 §결정 7 (약화 방향 sunset_justification evidence-gate)
+      - ADR-063 (marketplace atomic version sync — Phase 2 plugin bump mirrored field)
 related_stories:
   - CFP-448
   - CFP-676
@@ -329,6 +348,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 ## 결정
 
 ### 결정 1: 3-tier 분류 기준 (role pattern × model)
+
+> **Amendment 19 (2026-07-03, CFP-2560) — 본 §결정 1 3-tier 표 Superseded by [ADR-141](ADR-141-all-opus-single-tier.md).** ADR-141 이 전 에이전트 opus 단일 tier 정책을 신설하며 fable 을 영구 폐기(3-tier 폐지)했다. 아래 Opus/Sonnet/Haiku/Opus-pilot 표는 더는 tier 선택 기준으로 유효하지 않다 — **현행 = 전 에이전트 plain `model: opus`(1M native) 단일 tier**(ADR-141 §결정 1). tier-flip 3종(Amd15 ServiceDev sonnet / Amd16 InfraOpArch stakes-gated / Amd17 DomainAgent financial-invariant-0)은 대상 sonnet tier 소멸로 **dead**. Amd13/14/18(RefactorAgent mandate-축)은 tier 무관 잔존. §결정 3(신규 agent ADR 의무)은 ADR-141 로 승계. 아래 표·Amendment 서술은 **frozen audit trail 이력 보존**(rewrite 0). 상세 = ADR-141 + 파일 말미 `## Amendment 19`.
 
 | Tier | Model | Role pattern criteria |
 |------|-------|----------------------|
@@ -1519,3 +1540,44 @@ Story §2.1 시점-분리 도메인 근거의 외부 실천 근거 (Amendment 13
 - CFP-2476 (Epic Codex 실행기반 검증 확장 — execute-and-falsify infra EXISTS = 측정 축 relocation net-strengthening 환경 변화 evidence)
 - CFP-2533 Story A (debate-protocol-v1 v1.3 enabling contract) / Story C (측정 축 수령처)
 - CFP-2539 change-plan (internal-docs `wrapper/change-plans/CFP-2539-refactoragent-axis-split.md`) — RefactorAgent 축 분할 설계 SSOT
+
+## Amendment 19 (2026-07-03) — CFP-2560 — 3-tier 정책 재편 (carrier ADR-141, 전 에이전트 opus 단일 tier)
+
+### 성격
+
+본 Amendment 는 **carrier supersede + dead 마킹**이다 — [ADR-141](ADR-141-all-opus-single-tier.md)(전 에이전트 opus 단일 tier + fable 폐기)이 신설되며 본 ADR §결정 1 3-tier 표를 superseded 로 재편한다. 기존 본문·Amendment 섹션 **rewrite 0**(frozen audit trail) — §결정 1 표 위 안내 blockquote + 본 섹션 append 만. is_transitional: false 유지(영구 정책 재편).
+
+### 변경 사항
+
+1. **§결정 1 3-tier 표 Superseded by ADR-141 §결정 1** — Opus/Sonnet/Haiku/Opus-pilot role-pattern 선택 기준 폐지. 현행 = 전 에이전트 plain `model: opus`(1M native) 단일 tier. tier 별 role 판정 불요.
+2. **tier-flip 3종 dead 마킹**:
+   - **Amd15 (ServiceDeveloperAgent, sonnet dev preset)** dead — 대상 sonnet tier 소멸, opus 통일.
+   - **Amd16 (InfraOperationalArchitectAgent, stakes-gated opus→sonnet)** dead — flip 대상(sonnet) 소멸, opus 유지. stakes 4-AND 판정 무의미.
+   - **Amd17 (DomainAgent, financial-invariant-0 opus→sonnet)** dead — flip 대상(sonnet) 소멸, opus 유지. financial-invariant-0 predicate 무의미.
+3. **mandate-축 Amendment 잔존 (tier 무관)**:
+   - **Amd13 (RefactorAgent (d) Reusability 축 신설)** — mandate scope, tier 무관 잔존.
+   - **Amd14 (RefactorAgent (d) 측정 mechanical wire)** — mandate 측정 연동, tier 무관 잔존.
+   - **Amd18 (RefactorAgent 측정 축 relocation)** — mandate 재편, tier 무관 잔존.
+4. **§결정 3 의무 ADR-141 승계** — "신규 agent 도입 / model 변경 시 ADR 의무" → 신규 agent = opus default, 단일 tier 이탈 = ADR-141 amendment 의무. (ADR-023 + ADR-037 연동 유지.)
+5. **§결정 2 invariant 지위 판정**:
+   - tier 신호로서 **폐지** — sonnet tier 부재로 "Sonnet cover 가능성" 을 tier 선택 신호로 못 씀.
+   - role-정합 원칙으로 **잔존** — "mandate 얕으면 role 재정의" 는 유효하되, 결론이 model downgrade 아닌 mandate 명확화/role 재편으로만 이어짐(tier-선택 함수에서 분리).
+6. **§결정 5(Haiku rollback) / §결정 6(재-audit) moot** — 대상 tier(haiku/sonnet) 소멸.
+
+### dead-path 처리 (실 파일 제거 0 — live-machinery 존치)
+
+- `scripts/check-stakes-tier-gating.sh` (177줄) + `tests/scripts/test-check-stakes-tier-gating.sh` (435줄) = **존치**. env-driven + frontmatter 무결합. 삭제 시 `docs/evidence-checks-registry.yaml` 의 `detect_command` broken → registry 무결성 파괴. 본 Amendment 는 **정책상 dead(전 에이전트 opus 라 flip 대상 0)** 판정만, 기계 정리 0.
+- `docs/evidence-checks-registry.yaml` 2 entry(`stakes-tier-flip-evidence` / `rate-limit-fallback-rate`) = 존치 + dead 마킹(Phase 2 description 주석). entry 제거 시 `check-tier-downgrade-guard.sh` 가 `tier-downgrade-justification:` 마커 요구 exit1 → CI red 회피.
+- `docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md` = 존치(역사 참고).
+
+### sunset_justification (ADR-058 §결정 5 / ADR-064 §결정 7 정합)
+
+3-tier 폐지 + tier-flip 3종 dead = 비용 거버넌스(stakes-gated 하향 machinery) 축소 = 약화 방향. evidence 3축 SSOT = ADR-141 근거 섹션 — (a) 사용자 directive 명확 + fable↔opus 진동 부채(환경 변화) (b) opus ≥ sonnet/haiku(능력 상향) + machinery 소멸(운영 단순화) (c) fable→opus 11종 비용 절반, sonnet/haiku 21+종 상향 = 사용자 수용. §결정 2 role-정합 원칙 + Amd13/14/18 mandate-축 잔존으로 mandate governance surface 무손상.
+
+### Cross-ref
+
+- [ADR-141](ADR-141-all-opus-single-tier.md) — 전 에이전트 opus 단일 tier carrier. §결정 1 supersede + §결정 3 승계.
+- [ADR-117 Amendment 3](ADR-117-fable-5-surgical-model-tier.md) — fable surgical tier Superseded (atomic sibling CFP-2560).
+- [ADR-057 Amendment 6](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — Orchestrator opus mandate 흡수 + fallback moot/dead (atomic sibling CFP-2560).
+- [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) / [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) — 약화 evidence-gate.
+- ADR-063 — marketplace atomic version sync (Phase 2 plugin bump).
