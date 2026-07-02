@@ -502,7 +502,7 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 #### §3.0.12 model tier — 전 에이전트 opus 단일 (ADR-141)
 
-전 에이전트 model tier = 단일 `opus`(1M native, ADR-141 §결정1). 비-opus fallback(sonnet rate-limit / fable model-unavailable) 은 대상 tier(sonnet/fable)가 소멸해 **폐지**됨(ADR-141 §결정2/3, 구 ADR-057 §결정2 moot·§결정4 dead). opus spawn 실패 시 rate-limit(429) 은 [ADR-109](../archive/adr/ADR-109-rate-limit-429-mitigation.md) 소관으로 대응한다(fallback tier 없음). model-unavailable(floor 미달 등) 은 task failure routing(`Reload Window`/버전 업그레이드) — fallback 미발동.
+전 에이전트 model tier = 단일 `opus`(1M native, ADR-141 §결정1). 비-opus fallback(sonnet rate-limit / fable model-unavailable) 은 대상 tier(sonnet/fable)가 소멸해 **폐지**됨(ADR-141 §결정2/3, 구 ADR-057 §결정2 moot·§결정4 dead). opus spawn 실패 시 rate-limit(429) 은 [ADR-109](../archive/adr/ADR-109-in-process-429-mitigation-framework.md) 소관으로 대응한다(fallback tier 없음). model-unavailable(floor 미달 등) 은 task failure routing(`Reload Window`/버전 업그레이드) — fallback 미발동.
 
 #### §3.0.12a Story-shape 조건부 model tier gating — 폐지 (ADR-141)
 
