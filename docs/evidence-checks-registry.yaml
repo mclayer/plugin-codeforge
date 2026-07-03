@@ -3598,3 +3598,42 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 standard default
       promotion_trigger: none
     status: Active                   # CFP-2549 Phase 2 wire COMPLETE — base port + general-adapter + thin wrapper + byte-identical workflow + execution-backed self-test live
+
+  # ─── CFP-2563 Phase 2 (ADR-133 Amendment 2 A2-6) — 3-way ADR 번호 uniqueness lint (facet ③ 사후 안전망) ───
+  # OCC atomic claim(§결정2 sha→409) = 발급-시점 1차 차단 / 본 lint = 사후 2차 검출(defense-in-depth, #2182 흡수).
+  # non-required (6-tuple 무변경), wrapper-self 전용 (reconcile-overlay-workflow-channel-test 선례).
+  - name: adr-uniqueness-check
+    description: |
+      CFP-2563 / ADR-133 Amendment 2 (A2-6) — scripts/lib/check-adr-uniqueness-3way.py 3-way ADR
+      번호 uniqueness lint. facet ③ 사후 안전망: OCC atomic claim(단일-셀 Contents API PUT sha→409,
+      CFP-2491) = 발급-시점 1차 차단 / 본 lint = 사후 2차 검출(defense-in-depth). #2182 흡수.
+      검증 축 = filename 번호 ↔ frontmatter adr_number ↔ ADR-RESERVATION row 3-way 정합:
+      (1) dual-key (filename ∧ frontmatter 양쪽 key + filename↔frontmatter mismatch flag — filename-only
+      lint 은 frontmatter-collision(ADR-045 fm=43 / ADR-062 fm=61) 미검출 → frontmatter-key 필수) /
+      (2) numeric 정규화 (zero-pad ADR-72 vs 073 + quoted "005" → int, 문자열 sort vs 숫자 sort 발산 흡수) /
+      (3) 구조적 파싱 (RESERVATION 첫 열 slot number + 파일 frontmatter YAML parse, 문자열 grep 금지 —
+      row 본문 ADR cross-ref 오탐 회피, EC-6) / (4) file↔row lapse 검출 (현 15행).
+      warning tier / non-required — branch protection 6-tuple 무변경 (ADR-060 warning-tier framework /
+      ADR-133 §결정6 mechanical_enforcement_actions: []). continue-on-error → 발견을 surface 하되
+      required 게이트 무차단. wrapper-self 전용 (consumer red 회피 — reconcile-overlay-workflow-channel-test 선례).
+    detect_command: python3 scripts/lib/check-adr-uniqueness-3way.py
+    workflow: .github/workflows/adr-uniqueness-check.yml
+    current_tier: warning            # non-required lint (ADR-133 §결정6 mechanical_enforcement_actions: [] 정합, 6-tuple 무변경)
+    # bypass_label: omit — non-required warning lint, continue-on-error merge 무차단 (의미 부적용; 신규 label 0 — Change Plan §13 #1)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-2563                   # Phase 2 mechanical wire carrier — lint script(DeveloperAgent) + workflow(InfraEngineer) + evidence entry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    introduced_by: CFP-2563
+    introduced_date: 2026-07-03       # KST
+    owner_adr: ADR-133               # declaration source — Amendment 2 (A2-6) 3-way uniqueness lint warning tier
+    carrier_adr: ADR-060             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0
+      threshold: 3                   # ADR-060 §결정 19 standard default
+      promotion_trigger: none
+    status: Active                   # CFP-2563 Phase 2 wire — lint script + workflow(continue-on-error) + evidence entry live
