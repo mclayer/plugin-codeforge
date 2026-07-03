@@ -48,6 +48,14 @@ TRANSITION_MARKER = "story-transition-autonomy"  # _build_context 마커 substri
 GATE_WARNING_MARKER = "[codeforge-wrapper-pretooluse-agent-gate]"  # 기존 4-block warning 마커
 GATE_SCRIPT = WORKTREE_ROOT / "hooks" / "pretooluse-agent-spawn-gate"
 
+# 채널2 _build_context 정당 멈춤 3종 carve-out — 실측 exact string (production 무수정 lock).
+# 주의: 채널1 _build_reminder 는 ① 을 "요구 자체가 애매" 로 쓰지만, 채널2 _build_context 는
+# 더 짧은 "요구 애매" 를 쓴다(scripts/lib/agent_spawn_transition_reminder.py:83 실측). 각 채널
+# 테스트는 자기 채널 production 이 실제로 방출하는 문자열을 lock 한다(F-CR-CLAUDE-001 P2 대칭).
+CARVEOUT_AMBIGUOUS = "요구 애매"            # 채널2 ① (채널1 = "요구 자체가 애매")
+CARVEOUT_TRADEOFF = "진짜 가치 trade-off"    # 채널2 ② (채널1 동일)
+CARVEOUT_IRREVERSIBLE = "비가역·고비용"       # 채널2 ③ (채널1 동일)
+
 
 def _call_main_rc(mod) -> int:
     """main() 반환값 정규화 — return int 또는 sys.exit(code) 관례 모두 exit-0 invariant 로.
@@ -107,12 +115,21 @@ def test_is_lane_pl(value, expected):
 
 
 def test_build_context_contract_pl():
-    """_build_context(PL): 마커 + ADR-071 + over-halt + over-ask substring 포함."""
+    """_build_context(PL): 마커 + ADR-071 + over-halt + over-ask + 정당 멈춤 3종 개별 lock.
+
+    F-CR-CLAUDE-001 [P2] hardening (구현리뷰 Claude peer): 채널1 INV-6 대칭 — 정당 멈춤
+    3종을 개별 exact-substring assert 로 mutation-lock(묶음 OR 금지). _build_context 에서
+    carve-out 하나 삭제하는 mutation 이 이 테스트를 생존하지 못하도록 한다.
+    """
     ctx = astr._build_context("RequirementsPLAgent")
     assert TRANSITION_MARKER in ctx
     assert "ADR-071" in ctx
     assert "over-halt" in ctx
     assert "over-ask" in ctx
+    # 정당 멈춤 3종 — 각각 개별 exact substring (mutation survival 방지, 채널1 INV-6 대칭)
+    assert CARVEOUT_AMBIGUOUS in ctx, f"carve-out ① '{CARVEOUT_AMBIGUOUS}' 부재"
+    assert CARVEOUT_TRADEOFF in ctx, f"carve-out ② '{CARVEOUT_TRADEOFF}' 부재"
+    assert CARVEOUT_IRREVERSIBLE in ctx, f"carve-out ③ '{CARVEOUT_IRREVERSIBLE}' 부재"
 
 
 @pytest.mark.parametrize("subagent_type", ["RequirementsPLAgent", "DeveloperAgent", ""])
