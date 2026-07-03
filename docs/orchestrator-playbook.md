@@ -2615,12 +2615,12 @@ Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 
 병렬 Story 가 N 개여도 본질적으로 직렬이어야 하는 공유 자원·순서 불변식 (Amdahl `f` — 임계 구역, 적격성 5조건의 speedup 은 `(1−f)` 영역에서만 발생):
 
 1. **sentinel polling** — parallel-work sentinel (CFP-967 / ADR-073 Amd2) 3-mode detection 채널.
-2. **ADR 번호 append** — ADR-RESERVATION sequential-append (GitOpsAgent 전용). E3a 가 atomic 격상.
+2. **ADR 번호 claim → append** — 발급 시점 claim primitive(ADR-133 OCC, `adr-reservation-state` branch)로 다음 번호 atomic 점유 후 RESERVATION row append(audit 채널). CFP-2563 로 실 발급 flow 에 배선 완료(built-but-unwired 해소) — 번호 직렬화가 발급 시점에 확정된다.
 3. **version-bump merge-order** — `plugin.json` bump + marketplace atomic sync (ADR-063). 동시 bump = atomic invariant 깨짐.
 4. **inter-plugin-contract frontmatter** — 계약 version / bumped_at / amendments 3-location.
 5. **FIX-ledger Orchestrator 독점** — Story §10 FIX Ledger row append (fix-event-v1, Orchestrator monopoly, §4.4.0 layer 2).
 
-직렬화 지점을 줄이려는 노력 (예: ADR 번호 append atomic 격상 = E3a) 은 `f` 자체를 줄여 speedup 상한을 끌어올리는 시도다 (단순 문서화 아님 — "병렬화로 줄일 수 없는 영역" 상한 선언).
+직렬화 지점을 줄이려는 노력 (예: ADR 번호 atomic claim 격상 = ADR-133 OCC, CFP-2563 실배선 완료) 은 `f` 자체를 줄여 speedup 상한을 끌어올리는 시도다 (단순 문서화 아님 — "병렬화로 줄일 수 없는 영역" 상한 선언).
 
 ---
 

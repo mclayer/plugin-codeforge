@@ -62,6 +62,24 @@ permissions:
 6. ArchitectPLAgent에 draft 반환 (PL 검수 → PASS or RETURN). RETURN 시 재스폰되어 반영
 ```
 
+### 신규 ADR 번호 발급 배선 — wrapper dogfood claim (ADR-133 §결정 3 / Change Plan §3.1, A2-1)
+**wrapper(plugin-codeforge dogfood) 신규 ADR 발급 시**(위 흐름 step 4) 번호 확정 순서 = **claim → ADR write → RESERVATION append** (세 단계 책무 disjoint, ADR-070 inline append 무손상):
+
+1. **claim** — claim primitive 로 다음 번호 atomic 점유 (발급-시점 lost-update race 차단):
+   `python scripts/lib/adr-reservation-atomic-claim.py --repo mclayer/plugin-codeforge --state-path adr-reservation-claim-state.json --branch adr-reservation-state --claimant "{role}:{story_key}:{run_id}"`
+   claimant identity = `{role}:{story_key}:{run_id}` 주입 (A1-2 — `(adr_number, claimant)` idempotency key, at-least-once replay 시 self-claim 감지).
+2. **ADR 파일 write** — claim 이 **반환한 번호**로 `ADR-NNN-<slug>.md` 작성 (step 4). max+1 자체 재계산 금지 — 반드시 claim 반환 번호를 사용한다.
+3. **RESERVATION row append** — 기존 ArchitectAgent inline append 경로 **그대로** (ADR-070 chief author scope 보존). claim(점유 직렬화) ↔ append(영속 기록)는 disjoint 책무 — claim 도입이 inline append 를 우회·변경하지 않는다.
+
+**I-2 propagation matrix** (ClaimResult.status 로 발급 site 분기):
+
+| status | 발급 site 동작 |
+|--------|----------------|
+| `claimed` / `self_claim` | 반환 번호로 step 2(ADR write) → step 3(row append) 진행 |
+| `exhausted` / `client_error` | **발급 abort** — 파일 write 금지(번호 미확정), `::error::` surface. 재시도는 caller(Orchestrator/PL) 책임 |
+
+**consumer 비대칭 보존 (A1-1)**: consumer(single_repo) 발급은 `Glob(docs/adr/ADR-*.md)` max+1 default 유지 — claim 강제 안 함(claim 채널 = wrapper-local `archive/adr/` 번호 space 전용). template SSOT = [`templates/adr.md`](../templates/adr.md).
+
 ### Phase 1 commit 직전 self-check (5종 — verdict packet 4 bool field로 forward)
 각 항목 PASS / NA / FAIL 분류, 결과를 Change Plan §13에 명시. 1+ FAIL 시 본 에이전트가 보완 후 commit (self-correction 우선); ArchitectPL이 packet에서 false 발견 시 `pl_recommendation: FIX` + 재스폰.
 

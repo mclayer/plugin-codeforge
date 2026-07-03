@@ -124,7 +124,7 @@ lane 간 + lane 내부 계약 surface = `docs/inter-plugin-contracts/` (canonica
 | `review-verdict-v4` | ArchitectPL → DesignReviewPL 핸드오프 carrier field 보유: `mechanical_self_check_passed` (ADR-065) + `boundary_completeness_self_check_passed` (ADR-068 I-1~I-4) + `dimensional_empirical_self_check_passed` (ADR-068 I-5) + `marketplace_sync_declared` (ADR-063 §결정 9) |
 
 **Chief author monopoly**:
-- **ADR-RESERVATION row append** — `docs/adr/ADR-RESERVATION.md` sequential append (ArchitectAgent chief 가 신규 ADR 번호 예약, parallel epic conflict 회피 — ADR-050)
+- **ADR 번호 발급 (claim → append)** — wrapper(dogfood) 발급은 claim primitive(`scripts/lib/adr-reservation-atomic-claim.py`, ADR-133 OCC, `adr-reservation-state` branch)로 다음 번호를 발급-시점 atomic 점유한 뒤 `ADR-RESERVATION.md` row append(audit 채널). claim(점유 직렬화) ↔ append(영속 기록) disjoint — ADR-070 inline append 무손상. CFP-2563 로 실 발급 flow 에 배선(built-but-unwired 해소). consumer default = `Glob(docs/adr/) max+1`(claim 강제 안 함, A1-1 비대칭). parallel epic conflict 사후 re-sort = ADR-050 보존(약화 0, 1차 방어 layer 추가).
 - **신규 ADR draft write** — `docs/adr/ADR-NNN-<slug>.md` (CFP-26 Phase 0a, 본 lane plugin repo 가 아닌 wrapper / lane plugin 의 owner repo 에 따라 분기)
 
 > 계약 schema field-level 상세 + version 값 = 각 contract file SSOT + MANIFEST.yaml. 본 섹션 = surface enumeration (계약 이름 + SSOT pointer, version literal 미박제 — version drift 회피).
@@ -157,7 +157,7 @@ Orchestrator parallel spawn (ADR-039 flat spawn, ArchitectPL re귀 spawn 0):
   ↓ (10-13 산출물 병렬 수신 — CFP-1086 7 permanent + 3 sub-tuple = 10 default, AggregateArch non-applicable 시 9 / CONDITIONAL 모두 활성 시 최대 13)
 ArchitectAgent (chief author) — 산출물 통합 (Opus multi-source synthesis)
   ├─ Change Plan §1-§13 author (docs/change-plans/<slug>.md direct write)
-  ├─ 신규 ADR draft (docs/adr/ADR-NNN-<slug>.md direct write + ADR-RESERVATION row append)
+  ├─ 신규 ADR draft (wrapper: claim primitive OCC 번호 atomic 점유 → ADR-NNN-<slug>.md direct write → ADR-RESERVATION row append — ADR-133 / CFP-2563 실배선; consumer: Glob max+1)
   ├─ Story §3 ADR list mirror
   ├─ Story §7 보안 + §7.4 운영 리스크 mirror
   ├─ Story §11 데이터 마이그레이션 mirror

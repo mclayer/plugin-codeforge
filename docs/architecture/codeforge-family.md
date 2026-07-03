@@ -105,7 +105,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 - Story file (`internal-docs/<plugin>/stories/<KEY>.md`) = lane 간 컨텍스트 SSOT (각 lane self-fetch)
 - Change Plan (`docs/change-plans/<slug>.md`) = Story 단위 변경 델타 (1회, Story key 종속)
 - architecture_doc (`docs/architecture/`) = 누적 현재 상태 (영속, Story key 독립) — Change Plan 과 disjoint 상보 (ADR-078 §결정 3). per-Epic 현행화 mandate (ADR-078 Amd 2 §결정 2)
-- ADR (`docs/adr/`) = 단일 결정 단위 (불변)
+- ADR (`docs/adr/`) = 단일 결정 단위 (불변). **번호 발급 flow**: wrapper(dogfood) 는 claim 채널(claim primitive OCC, `adr-reservation-state` state-branch — ADR-133)로 발급-시점 번호를 atomic 직렬화한 뒤 `ADR-RESERVATION.md` row append(audit 채널) — CFP-2563 실배선(built-but-unwired 해소); consumer 는 `Glob(docs/adr/) max+1` default(A1-1 비대칭)
 - EPIC-RESULTS (`internal-docs/<plugin>/retros/`) = Epic close 1회 evidence aggregate
 
 > 본 흐름 = lane spawn / event / artifact propagation 수준. 함수 호출 trace / 변수 전달 라인 0건 (anti-scope guard 준수).
