@@ -37,3 +37,10 @@ jobs:
         run: bash tests/scripts/test_adr-reservation-atomic-claim.sh
       - name: Run ADR-RESERVATION stale-reclaim Python smoke test (test-escape 폐쇄 — 구현리뷰 P0 carry F1)
         run: bash tests/scripts/test_adr-reservation-stale-reclaim.sh
+      # CFP-2563 Phase 2 — dead-test 방지: 신규 3 test .sh CI 배선 (non-required 유지, 6-tuple 무변경).
+      - name: Run 3-way ADR uniqueness lint self-test (CFP-2563 — born-valid RED→GREEN, mutation-kill mu1~mu3 + INV-12 synthetic lapse)
+        run: bash tests/scripts/test_check-adr-uniqueness-3way.sh
+      - name: Run ADR-RESERVATION 15-row backfill idempotency/integrity test (CFP-2563 — INV-13~16, mutation-kill mu4~mu5)
+        run: bash tests/scripts/test_adr-reservation-backfill.sh
+      - name: Run ADR-RESERVATION claim-wiring test (CFP-2563 — §8.5.2/§8.5.3 self_claim + AC-8 template cross-ref)
+        run: bash tests/scripts/test_adr-reservation-claim-wiring.sh

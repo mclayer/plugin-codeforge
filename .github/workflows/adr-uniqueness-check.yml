@@ -1,0 +1,31 @@
+name: adr-uniqueness-check
+# CFP-2563 / ADR-133 Amendment 2 (A2-6) — 3-way ADR 번호 uniqueness lint (warning tier / non-required).
+#
+# facet ③ 사후 안전망: OCC atomic claim(§결정 2 sha→409) = 발급-시점 1차 차단 /
+# 본 lint = 사후 2차 검출(defense-in-depth). #2182 흡수.
+# 검증 축 = filename 번호 ↔ frontmatter adr_number ↔ ADR-RESERVATION row 3-way 정합
+#   (dual-key filename∧frontmatter + numeric 정규화 zero-pad/quoted 흡수 + 구조적 파싱, EC-6).
+#
+# 게이트 배치(§8.7): warning tier / non-required — branch protection 6-tuple 무변경
+#   (ADR-060 warning-tier framework / ADR-133 §결정 6 mechanical_enforcement_actions: []).
+#   continue-on-error → 발견을 surface 하되 required 게이트 무차단.
+# wrapper-self 전용 (consumer red 회피 — reconcile-overlay-workflow-channel-test 선례).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  adr-uniqueness-check:
+    name: adr-uniqueness-check
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run 3-way ADR uniqueness lint (warning tier — non-blocking)
+        continue-on-error: true   # warning tier: 발견을 surface 하되 required 게이트 무차단 (§8.7 / ADR-060 §결정 5)
+        run: python3 scripts/lib/check-adr-uniqueness-3way.py

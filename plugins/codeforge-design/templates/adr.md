@@ -121,7 +121,10 @@ graph LR
 
 ```
 1. 카테고리 판정 — 결정 성격에 따라 Architecture / Data & Storage / Infrastructure / Team & Process / UX / <domain> 중 선택
-2. 기존 최대 ADR 번호 조회: `Glob(docs/adr/ADR-*.md)` 후 max + 1
+2. 기존 최대 ADR 번호 조회: `Glob(docs/adr/ADR-*.md)` 후 max + 1  (consumer default)
+   ↳ wrapper(plugin-codeforge dogfood) 발급만 claim primitive 경유 — `scripts/lib/adr-reservation-atomic-claim.py`
+     (ADR-133 OCC, `adr-reservation-state` branch)로 번호를 atomic 점유(발급-시점 race 차단). consumer 는 `docs/adr/`
+     Glob max+1 유지 (A1-1 비대칭 — consumer 에 claim 강제 안 함).
 3. slug 결정 (kebab-case, 결정 요약 짧게)
 4. `Write(docs/adr/ADR-NNN-<slug>.md)` 호출, frontmatter + 본문 작성
 5. Phase 1 PR에 commit (architect team CODEOWNERS auto-review)
