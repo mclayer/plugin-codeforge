@@ -40,6 +40,8 @@ tools: Read
 - **Phase N+1 close PR** (hub / owner repo): `EPIC-RESULTS-<KEY>.md` artifact + Epic Issue close
 - Mid-Phase **spec amendment PR** 가능 (Codex push-back 발견 시)
 
+**전환 자율 진행 (한 세션 내 — [ADR-071 §결정 22](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md))**: 한 세션에서 Epic 을 여러 child Story 로 진행할 때, **child Story N→N+1 전환 (및 단일 Story Phase1→Phase2 전환) = 자동 이어서 진행이 default**. 전환 지점에서 무발화로 멈추거나(over-halt) "다음 Story 진행할까요?" 확인 질문(over-ask) 하지 마라 — 둘 다 §결정 15(3-touchpoint)·§결정 20(ask-trigger 3종) 어디에도 미해당인 부당한 멈춤. **정당한 멈춤 3종만 전환 지점에서도 보존**(억제 대상 아님): ① 요구 자체가 애매 / ② 진짜 가치 trade-off(default 비자명) / ③ 비가역·고비용. 이 norm 은 **§결정 18 session-swap("context 가득 → 별 세션") reflex 와 disjoint 축**(session-swap 재codify 아님 — cross-ref only). in-session 전환 한정이며 세션 재개(cold-resume) 확인 경로(playbook §3.12)는 별 경로로 무관.
+
 ## Cross-repo Epic — Centralization mode 의무 결정 (ADR-020 Amendment 1 / CFP-81)
 
 - **Mode A (repo-local, ADR-020 v1 default)**: 각 작업 repo 가 자체 Story

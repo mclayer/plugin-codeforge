@@ -1138,6 +1138,7 @@ mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
 - `hard_block` 위반 detected 시 Epic 차단 (PMOAgent enforce)
 - `design_parallel` / `impl_parallel` = 동시 진행 허용
 - **Joint-phase PR 허용** (ADR-020 Amendment 1 §결정 9): 단일 Story 가 1 phase 안에서 multi-repo joint PR 보유 가능 (예: foundation Story 의 data + engine 동시 변경). 모든 PR 가 동일 Story key reference + dependency graph topological merge.
+- **전환 자율 진행** ([ADR-071 §결정 22](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md)): 한 세션에서 Epic 을 여러 child Story 로 진행할 때 **child Story N→N+1 전환(및 단일 Story Phase1→Phase2 전환) = 자동 이어서 진행이 default**. 전환 지점에서 over-halt(무발화 정지)·over-ask("다음 Story 진행할까요?") 금지 — 정당 멈춤 3종(요구 애매 / 진짜 가치 trade-off / 비가역·고비용)만 예외. **in-session 전환 한정** — 세션 재개 시 §3.12 cold-resume confirm 은 별 경로(session restart ≠ in-session 전환)로 무관. session-swap reflex(§결정 18)와도 disjoint 축.
 
 #### Epic Rollback
 producer merge 후 consumer break 시:

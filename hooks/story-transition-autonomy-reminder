@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: Epic 내 Story 전환 자율 진행 reminder (CFP-2567, ADR-071 §결정 22)
+#
+# 책임: 모든 turn 에 ADR-071 §결정 22 "Epic 내 Story 전환 = 자동 이어서 진행 default, 전환 지점
+#       over-halt/over-ask 금지(정당 멈춤 3종 예외)" 규칙을 additionalContext 로 무조건 inject.
+#
+# 구현: reminder 텍스트 build·JSON emit 은 python core 로. python 없으면 통과(fail-safe).
+#       모든 경로 exit 0 (사용자 prompt erase 권한 미사용).
+# fail-safe: python 부재 / 오류 시 차단하지 않고 통과 (exit 0).
+set -uo pipefail
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-safe, 사용자 입력 차단 안 함)
+fi
+
+exec "$PY" "$DIR/story-transition-autonomy-reminder.py"

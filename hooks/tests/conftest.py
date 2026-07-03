@@ -38,6 +38,15 @@ skip_offer_reminder = importlib.util.module_from_spec(_sor_spec)
 _sor_spec.loader.exec_module(skip_offer_reminder)
 sys.modules["skip_offer_reminder"] = skip_offer_reminder
 
+# story-transition-autonomy-reminder.py 를 story_transition_autonomy_reminder 모듈명으로 로드 (CFP-2567 채널 1)
+_star_spec = importlib.util.spec_from_file_location(
+    "story_transition_autonomy_reminder",
+    HOOKS_DIR / "story-transition-autonomy-reminder.py",
+)
+story_transition_autonomy_reminder = importlib.util.module_from_spec(_star_spec)
+_star_spec.loader.exec_module(story_transition_autonomy_reminder)
+sys.modules["story_transition_autonomy_reminder"] = story_transition_autonomy_reminder
+
 # check_inline_write_gate.py (scripts/lib/) — CFP-2544 inline-write gate SSOT
 _REPO_ROOT = HOOKS_DIR.parent
 _ciwg_spec = importlib.util.spec_from_file_location(
@@ -46,3 +55,12 @@ _ciwg_spec = importlib.util.spec_from_file_location(
 check_inline_write_gate = importlib.util.module_from_spec(_ciwg_spec)
 _ciwg_spec.loader.exec_module(check_inline_write_gate)
 sys.modules["check_inline_write_gate"] = check_inline_write_gate
+
+# agent_spawn_transition_reminder.py (scripts/lib/) — CFP-2567 채널 2 helper (PreToolUse(Agent))
+_astr_spec = importlib.util.spec_from_file_location(
+    "agent_spawn_transition_reminder",
+    _REPO_ROOT / "scripts" / "lib" / "agent_spawn_transition_reminder.py",
+)
+agent_spawn_transition_reminder = importlib.util.module_from_spec(_astr_spec)
+_astr_spec.loader.exec_module(agent_spawn_transition_reminder)
+sys.modules["agent_spawn_transition_reminder"] = agent_spawn_transition_reminder
