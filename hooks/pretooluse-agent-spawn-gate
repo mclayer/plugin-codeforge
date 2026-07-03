@@ -3,6 +3,8 @@
 # PreToolUse(Agent) hook for codeforge plugin — spawn-format 4-block gate
 #
 # Carrier: CFP-1742 (Story-2 of Epic CFP-1740 — ADR-115 §결정 1·4·6)
+# 채널 2 부가 (CFP-2567 / ADR-071 §결정 22): 4-block warning(stderr)과 별개로, spawn 직전
+#   전환-자율 reminder 를 stdout additionalContext 로 non-block inject (NEVER deny — Wave1 무손상).
 #
 # 책임 경계 (ADR-115 §결정 1 / §결정 4 / §결정 6 정합):
 #   - 책임: Agent tool spawn 직전 spawn-prompt 안 필수 4 block presence 검증.
@@ -67,6 +69,24 @@ PAYLOAD="$(cat 2>/dev/null || true)"
 # payload 가 비어있으면 pass-through (scope 외)
 if [ -z "$PAYLOAD" ]; then
   exit 0
+fi
+
+# ── D2 채널 2 (ADR-071 §결정 22 / CFP-2567): 전환 자율 reminder additionalContext non-block inject ──
+# NEVER deny — stdout JSON hookSpecificOutput.additionalContext (permissionDecision 미설정 = allow).
+# 아래 기존 4-block spawn-format warning 로직과 무관(둘 다 계속 진행: 본 emit=stdout, warning=stderr).
+# helper/Python 부재 시 graceful skip (전경로 spawn 허용 — Wave1 무손상).
+REMINDER_HELPER=""
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/scripts/lib/agent_spawn_transition_reminder.py" ]; then
+  REMINDER_HELPER="${CLAUDE_PLUGIN_ROOT}/scripts/lib/agent_spawn_transition_reminder.py"
+elif [ -f "scripts/lib/agent_spawn_transition_reminder.py" ]; then
+  REMINDER_HELPER="scripts/lib/agent_spawn_transition_reminder.py"
+fi
+if [ -n "$REMINDER_HELPER" ]; then
+  REMINDER_PY=""
+  if command -v python3 >/dev/null 2>&1; then REMINDER_PY="python3"; elif command -v python >/dev/null 2>&1; then REMINDER_PY="python"; fi
+  if [ -n "$REMINDER_PY" ]; then
+    printf '%s' "$PAYLOAD" | "$REMINDER_PY" "$REMINDER_HELPER" 2>/dev/null || true
+  fi
 fi
 
 # ── spawn prompt 추출 ─────────────────────────────────────────────────────────
