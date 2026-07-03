@@ -113,6 +113,28 @@ run_lint() {
 
 impl_present() { [ -f "$LINT" ]; }
 
+# ─── 실-script mutation harness (F-CX-002 — reference-detector → 실-script mutation) ──
+# 재구현 reference-detector 증명(mu1~mu3 = fixture-discrimination)만으로는 실 script 를 mutate 해도
+# test 가 못 잡는다(Codex 실측: MU1/MU3 survive). 실 script COPY 를 sed mutate 해 동일 fixture 위에서
+# 돌려 finding 이 사라짐(결과 달라짐)을 직접 assert = 회귀를 CI 가 kill. mutation 은 COPY 에만 —
+# tracked tree/실 script 무터치.
+VARIANT_OUT=""
+run_script() {
+  # $1 = script path, $2 = adr_dir. VARIANT_OUT 에 stdout, return = exit code (primary form 고정).
+  local script="$1" adrdir="$2" res out rc
+  res="$adrdir/ADR-RESERVATION.md"
+  out="$("$PYBIN" "$script" --adr-dir "$adrdir" --reservation-path "$res" --lapse-scope-min 0 2>/dev/null)"; rc=$?
+  VARIANT_OUT="$out"
+  return "$rc"
+}
+mk_mutant() {
+  # $1 = sed expression. $LINT 의 mutated COPY 경로를 echo (tracked tree 무변경, temp 격리).
+  local sed_expr="$1" md cp
+  md="$(mktemp -d)"; cp="$md/mutant-lint.py"
+  sed "$sed_expr" "$LINT" > "$cp"
+  echo "$cp"
+}
+
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo "CFP-2563 §8 — check-adr-uniqueness-3way lint 자기검증 (Q1 self-test + Q2 INV-12)"
 echo "═══════════════════════════════════════════════════════════════════════════"
@@ -164,9 +186,11 @@ mk_adr "$A" 045 43 collider   CFP-2   # filename=45, frontmatter=43 → frontmat
 mk_reservation "$A" "43|CFP-1|active|2026-07-03" "45|CFP-2|active|2026-07-03"
 if impl_present; then
   run_lint "$A"; rc=$?
-  # INV-8(frontmatter-key 충돌) + INV-9(filename↔frontmatter mismatch) — exit 1 + sentinel 43.
-  if [ "$rc" -eq 1 ] && echo "$LINT_OUT" | grep -qE '0*43\b'; then
-    pass "INV-8/9 frontmatter-collision 045(fm=43) 검출 (exit 1 + sentinel 43)"
+  # INV-8(frontmatter-key 충돌) + INV-9(filename↔frontmatter mismatch) — exit 1 + [frontmatter-collision]
+  # finding-type line 존재 + sentinel 43 (MU1 강화: exit+sentinel 단독 아닌 finding 종류 단위 assert —
+  # mismatch finding 만으로도 exit 1/43 이 나므로 finding-type 을 함께 봐야 hollow 아님).
+  if [ "$rc" -eq 1 ] && echo "$LINT_OUT" | grep -qE '^\[frontmatter-collision\]' && echo "$LINT_OUT" | grep -qE '0*43\b'; then
+    pass "INV-8/9 frontmatter-collision 045(fm=43) 검출 (exit 1 + [frontmatter-collision] finding-line + sentinel 43)"
   else
     fail "INV-8/9 frontmatter-collision: exit=$rc out=$LINT_OUT (기대 exit 1 + '43')"
   fi
@@ -346,6 +370,73 @@ if impl_present; then
   fi
 else
   pending "INV-12 clean control"
+fi
+rm -rf "$R"
+
+# ═══ 실-script mutation kill proofs (F-CX-002 — Codex MU1/MU3 survive 봉쇄) ═══════════
+# 위 mu1~mu3 는 재구현 reference-detector 증명(fixture-discrimination)이라 실 script mutate 를 못 잡음.
+# 아래 두 블록은 실 script COPY 를 sed mutate 해 돌려 finding 이 사라짐(결과 달라짐)을 직접 assert.
+
+# ─── MU3-real: exact-basename 제외 → substring 회귀 → reservation-슬러그 ADR 누락 kill ──
+# 실 script 는 `base == "ADR-RESERVATION.md"` 정확 basename 으로만 RESERVATION 을 제외한다.
+# 이를 `"reservation" in base.lower()` substring 으로 회귀시키면 basename 에 'reservation' 을 포함한
+# 실 ADR(예: ADR-133-adr-reservation-*, ADR-036-*-reservation-*)이 스캔에서 누락(firsthand 함정, L49-51).
+# colliding reservation-슬러그 ADR 2개(둘 다 slot 500) fixture 로 그 회귀를 kill.
+echo ""
+echo "── MU3-real 실-script mutation (exact-basename → substring 회귀) → filename-collision 500 소멸 kill ──"
+R="$(new_root)"; A="$(adr_dir_of "$R")"
+mk_adr "$A" 500 500 adr-reservation-thing CFP-1   # basename 에 'reservation' 포함
+mk_adr "$A" 500 500 other                 CFP-2   # 동일 slot 500 → filename-collision
+mk_reservation "$A" "500|CFP-1|active|2026-07-03"
+if impl_present; then
+  # (a) 실 script = 500 filename-collision 검출 (finding-type line 단위).
+  run_lint "$A"; rc=$?
+  real_hit=0
+  if [ "$rc" -eq 1 ] && echo "$LINT_OUT" | grep -qE '^\[filename-collision\]' && echo "$LINT_OUT" | grep -qE '0*500\b'; then real_hit=1; fi
+  # (b) mutant(exact-basename → substring) = reservation-슬러그 ADR 누락 → 파일 1개만 스캔 → 500 collision 소멸.
+  MUT="$(mk_mutant 's/if base == RESERVATION_BASENAME:/if "reservation" in base.lower():/')"
+  run_script "$MUT" "$A"; mrc=$?
+  mut_lost=0
+  if ! { echo "$VARIANT_OUT" | grep -qE '^\[filename-collision\]' && echo "$VARIANT_OUT" | grep -qE '0*500\b'; }; then mut_lost=1; fi
+  rm -rf "$(dirname "$MUT")"
+  if [ "$real_hit" -eq 1 ] && [ "$mut_lost" -eq 1 ]; then
+    pass "MU3-real — 실 script 는 reservation-슬러그 500 collision kill / exact-basename→substring 회귀 mutant 는 소멸 → CI 가 회귀 검출 (real rc=$rc, mutant rc=$mrc)"
+  else
+    fail "MU3-real: real_hit=$real_hit(기대1) mut_lost=$mut_lost(기대1) rc=$rc mrc=$mrc — hollow 의심"
+  fi
+else
+  pending "MU3-real 실-script mutation (exact-basename 회귀)"
+fi
+rm -rf "$R"
+
+# ─── MU1-real: frontmatter-collision 검출 비활성(len>1 → len>99) → finding 소멸 kill ──
+# filename 은 distinct(43,45)라 filename-only 로는 안 잡히는 frontmatter-key 충돌(§3.3 INV-8 dual-key 핵심).
+# 검출을 비활성해도 mismatch finding(ADR-045 45≠43)은 잔존해 exit 1/sentinel 43 은 그대로 → exit·sentinel
+# 단독으로는 killable 아님. finding-type([frontmatter-collision]) 소멸을 직접 assert 해야 kill.
+echo ""
+echo "── MU1-real 실-script mutation (frontmatter-collision 검출 비활성) → [frontmatter-collision] finding 소멸 kill ──"
+R="$(new_root)"; A="$(adr_dir_of "$R")"
+mk_adr "$A" 043 43 realforty3 CFP-1
+mk_adr "$A" 045 43 collider   CFP-2   # filename 45, fm 43 → frontmatter slot 43 충돌
+mk_reservation "$A" "43|CFP-1|active|2026-07-03" "45|CFP-2|active|2026-07-03"
+if impl_present; then
+  # (a) 실 script = [frontmatter-collision] finding-type 출력.
+  run_lint "$A"; rc=$?
+  real_fm=0
+  if [ "$rc" -eq 1 ] && echo "$LINT_OUT" | grep -qE '^\[frontmatter-collision\]'; then real_fm=1; fi
+  # (b) mutant(frontmatter 검출 비활성) = [frontmatter-collision] 소멸(mismatch 는 잔존, exit 여전 1).
+  MUT="$(mk_mutant 's/by_fm.items() if len(v) > 1/by_fm.items() if len(v) > 99/')"
+  run_script "$MUT" "$A"; mrc=$?
+  mut_lost=0
+  if ! echo "$VARIANT_OUT" | grep -qE '^\[frontmatter-collision\]'; then mut_lost=1; fi
+  rm -rf "$(dirname "$MUT")"
+  if [ "$real_fm" -eq 1 ] && [ "$mut_lost" -eq 1 ]; then
+    pass "MU1-real — 실 script 는 [frontmatter-collision] finding 출력 / 검출-비활성 mutant 는 소멸 → CI 가 회귀 검출 (exit 단독 아닌 finding-line 단위, mutant rc=$mrc 유지)"
+  else
+    fail "MU1-real: real_fm=$real_fm(기대1) mut_lost=$mut_lost(기대1) rc=$rc mrc=$mrc — hollow 의심"
+  fi
+else
+  pending "MU1-real 실-script mutation (frontmatter-collision 비활성)"
 fi
 rm -rf "$R"
 

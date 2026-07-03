@@ -182,7 +182,14 @@ def main(argv=None):
         print("\n[--dry-run] 파일 미변경.")
         return 0
 
-    new_text = apply_backfill(text, appended)
+    try:
+        new_text = apply_backfill(text, appended)
+    except ValueError as e:
+        # rowless registry(표 row 0) → 삽입점 부재 raise. OSError 핸들러(위)와 동일 error-surface 로
+        # graceful degrade — raw traceback 대신 ::error:: + exit 1. write 는 반환 이후이므로
+        # fail-closed·no-partial-write 불변식(INV-13) 무손상.
+        print(f"::error::{e}", file=sys.stderr)
+        return 1
     with open(args.reservation_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(new_text)
     print(f"\n✓ {len(appended)} row append 완료 → {args.reservation_path} (INV-13 append-only)")
