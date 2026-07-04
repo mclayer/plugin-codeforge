@@ -6,7 +6,7 @@
 # 형식인지 DETECT (warning-tier, exit 0, rewrite/mutation 0 — SecurityArch §7.1 non-mutation 상속).
 #
 # 모드:
-#   --self-test            : 인라인 discriminating fixtures (1 conformant + 6 nonconformant) 로 detector
+#   --self-test            : 인라인 discriminating fixtures (1 conformant + 7 nonconformant) 로 detector
 #                            검증. detector 가 오분류하면 exit 1 (meta-test). 전부 맞으면 exit 0.
 #   (없음)|--description-stdin : stdin 을 detector 로 passthrough, exit 0.
 # Graceful degrade: Python·detector 부재 → stderr warning + exit 0 (advisory non-blocking).
@@ -73,19 +73,21 @@ run_self_test() {
   local fail=0
   # conformant fixture (expected true)
   check_case "conformant"      "[DeveloperAgent] 07/05 02:13 - x"        "true"  || fail=1
-  # nonconformant fixtures (expected false) — 6 discriminating axes
+  # nonconformant fixtures (expected false) — 7 discriminating axes
   check_case "missing-bracket" "DeveloperAgent 07/05 02:13 - x"         "false" || fail=1
   check_case "missing-time"    "[DeveloperAgent] - x"                   "false" || fail=1
   check_case "date-sep-hyphen" "[DeveloperAgent] 07-05 02:13 - x"       "false" || fail=1
   check_case "offset-present"  "[DeveloperAgent] 07/05 02:13+09:00 - x" "false" || fail=1
   check_case "double-space"    "[DeveloperAgent] 07/05 02:13  - x"      "false" || fail=1
   check_case "wrong-sep-colon" "[DeveloperAgent] 07/05 02:13 : x"       "false" || fail=1
+  # empty-content: 프리픽스는 있으나 `- ` 뒤 내용 빈 (필드 자체 빈 "" 과 다름 — 이건 non-empty 필드) → ADR-143 §결정 2 위반
+  check_case "empty-content"   "[ArchitectAgent] 07/05 14:30 - "        "false" || fail=1
 
   if [ "$fail" -ne 0 ]; then
     echo "$MARKER SELF-TEST FAIL — detector misclassified 1+ fixture (meta-test, exit 1)" >&2
     return 1
   fi
-  echo "$MARKER SELF-TEST PASS — 7 discriminating fixtures (1 conformant + 6 nonconformant)"
+  echo "$MARKER SELF-TEST PASS — 8 discriminating fixtures (1 conformant + 7 nonconformant)"
   return 0
 }
 

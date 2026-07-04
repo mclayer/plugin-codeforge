@@ -19,7 +19,7 @@
 #     stdout JSON {"bypass": true, "description_prefix_conformant": true}, exit 0.
 #
 # 판정 규칙 (ADR-143 §결정 2):
-#   - RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - (anchored, bounded, ReDoS-safe)
+#   - RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S (anchored, bounded, ReDoS-safe)
 #     · re.match() 선두 앵커 / 부정 문자 클래스 [^\]] 비중첩 / open-ended .* 부재 / 양화사 중첩 부재.
 #     · 이 regex 가 자동으로 AC-3(정확히 ` - ` 단일공백-하이픈-공백) · AC-4(offset `+09:00` 있으면 미매칭) ·
 #       AC-15(컴팩트 MM/DD HH:MM) 를 강제.
@@ -55,9 +55,11 @@ CHECKED_PREVIEW_LEN = 80
 #   - 양화사 중첩 금지: (?:...)*? / (.+)+ 등 부재
 #   - open-ended .* 부재 (bounded {1,64})
 #
-# 프리픽스: [<에이전트명 1~64자, ] 미포함>] <MM>/<DD> <HH>:<MM> - <내용...>
-#   `] `(닫는 대괄호+공백) → `\d{2}/\d{2}`(날짜, / 구분자) → ` ` → `\d{2}:\d{2}`(시각) → ` - `(공백-하이픈-공백)
-RE_PREFIX = re.compile(r'^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - ')
+# 프리픽스: [<에이전트명 1~64자, ] 미포함>] <MM>/<DD> <HH>:<MM> - <내용 1자+>
+#   `] `(닫는 대괄호+공백) → `\d{2}/\d{2}`(날짜, / 구분자) → ` ` → `\d{2}:\d{2}`(시각) → ` - `(공백-하이픈-공백) → `\S`(내용 최소 1 non-ws)
+# ADR-143 §결정 2 `- 내용` nonempty 정합 — 끝 `\S` 로 empty-content(`- ` 뒤 빈/trailing space)를 nonconformant 로 tighten.
+#   빈 필드(프리픽스 자체 부재, strip=="")는 check_description 의 별도 empty 분기(regex 미도달)로 conformant 보존.
+RE_PREFIX = re.compile(r'^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S')
 
 
 # ── 핵심 검증 함수 ────────────────────────────────────────────────────────────
