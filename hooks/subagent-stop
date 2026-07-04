@@ -236,5 +236,38 @@ if [ -n "$APPEND_SPAWN_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
     2>/dev/null || true
 fi
 
+# ── self-context append (L7 record-only 계측, opt-in gate) ─────────────────────
+# Carrier: CFP-2572 Phase 2 / ADR-142 §결정 4 / ADR-043 Amendment 3.
+#
+# L7 = [measurement] record-only self-context proxy — 게이트 아님, block 금지.
+# SubagentStop = spawn/dispatch 경계 → cause_category=spawn-dispatch 로 1 row 기록.
+# append_self_context_event.py 가 opt-in(telemetry.enabled AND channels.spawn_event)
+# 자체를 gate 함 (config off → no-op). spawn-event.jsonl 공유 ledger 에 append
+# (record 판별 = schema_version="self-context-v1").
+#
+# turn_index proxy: SubagentStop payload/env 에 live per-turn self-context surface
+# 부재(platform P1 — ADR-142) → turn_index=0 placeholder 전달. record-only proxy 라
+# 정밀 turn 미필수, read-side dedup (session_id, 0) 은 세션당 1 sample 로 proxy replay
+# 팽창을 자연 bound (ADR-043 Amd3 (B) 의도 정합). live turn source 가용 시 후속 배선.
+#
+# fail-VISIBLE (silent-success-on-error 금지): spawn-event 호출과 달리 stderr 를
+# /dev/null 로 버리지 않는다 — script 의 "DROPPED" trace 가 surface 하도록. never-block
+# 은 `|| true` 로 보장 (exit 0 불변 유지 — ADR-115 §결정 2).
+APPEND_SELF_CONTEXT_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_self_context_event.py" ]; then
+  APPEND_SELF_CONTEXT_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_self_context_event.py"
+elif [ -f "scripts/lib/append_self_context_event.py" ]; then
+  APPEND_SELF_CONTEXT_SCRIPT="scripts/lib/append_self_context_event.py"
+fi
+
+if [ -n "$APPEND_SELF_CONTEXT_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
+  "$PYTHON_CMD" "$APPEND_SELF_CONTEXT_SCRIPT" \
+    --session-id "${SESSION_ID}" \
+    --turn-index 0 \
+    --cause-category spawn-dispatch \
+    || true
+fi
+
 # ── 항상 exit 0 (ADR-115 §결정 2 — block 금지) ───────────────────────────────
 exit 0
