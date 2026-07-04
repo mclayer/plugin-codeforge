@@ -13,12 +13,15 @@ related_adrs:
   - ADR-039  # subagent default (Phase 1 trust model precedent)
   - ADR-042  # measurement channel architecture (sibling — privacy concern 분리)
   - ADR-115  # runtime hook enforcement policy (hook_source / hook_decision field origin — Amendment 1 carrier)
+  - ADR-142  # Orchestrator-self context 규율 (Amendment 3 carrier — self-context proxy field set allow-list 확장)
 related_stories:
   - CFP-283
   - CFP-1744
+  - CFP-2572
 related_cfps:
   - CFP-283
   - CFP-1744
+  - CFP-2572
 related_files:
   - docs/inter-plugin-contracts/stop-event-v1.md
   - docs/project-config-schema.md
@@ -34,6 +37,10 @@ amendment_log:
     date: 2026-06-24
     carrier_story: CFP-2393
     summary: "spawn-event-v1 telemetry channel 확정 (Epic CFP-2391 S3). §결정 1 future→current (spawn-event-v1 = current opt-in channel) + §결정 2 Allow-list 에 spawn-event-v1 19-field set 추가 (별 channel Allow-list, enum/numeric/hash only — free-form string 0건) + §결정 3/4/5 inherit 선언 + **T-INFO-5 transcript content/path HARD invariant** (NEW privacy decision — spawn-event 가 transcript content/transcript_path 절대 미저장, numeric only) + **T-INFO-7 sha256 identity** (actor/parent_event_id sha256 hash, raw 금지 — spawn-event 한정. stop-event runtime raw bug 수정은 본 Amendment 미위임, 별 follow-up). MINOR (additive field set + inherit + privacy 강화 방향, ADR-008 SemVer)."
+  - amendment: 3
+    date: 2026-07-05
+    carrier_story: CFP-2572
+    summary: "§결정 2 Allow-list 에 self-context proxy record type 추가 (ADR-142 §결정 4 carrier — Orchestrator lead-self context 규율 L7). record-only proxy field 6종: schema_version(const) / session_id(sha256) / turn_index(int monotonic) / delegation_ratio(float 0.0–1.0 coarse) / pre_tokens(int bucketed, compact_boundary.preTokens 출처) / cause_category(CLOSED enum, domain-agnostic 7-value). numeric/enum/hash only — free-form string 0건 (T-INFO-8 정합) + transcript content/path 미저장 (T-INFO-5 상속) + opt-in default-false 상속 + hook_decision=record-only (Amendment 1 §결정 2 non-blocking). lead-self proxy = ground-truth 아님(ADR-119 verbatim). 정확한 spawn-event-v1 contract field-set 통합·count reconciliation = Phase 2 contract bump 확정. MINOR (additive record type + inherit + privacy 강화 방향, ADR-008 SemVer)."
 mechanical_enforcement_actions: []
 ---
 
@@ -346,3 +353,36 @@ parent_event_id / consumer_scope / event_type / elapsed_seconds
 - §결정 5 isolation 정책 무변경 (적용 확장만).
 - ADR-043 Amendment 1 (hook_source / hook_decision) 무변경.
 - stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임 (별 follow-up).
+
+## Amendment 3 (CFP-2572, 2026-07-05) — self-context proxy record type (ADR-142 §결정 4 carrier)
+
+### 배경
+
+ADR-142 (Orchestrator-self READ/synthesis/verbose-return context 규율) §결정 4 = 장기 세션 Orchestrator self-context 누적을 **record-only proxy telemetry** 로 남긴다. platform 이 live per-turn self-context surface 를 미제공(P1)하므로 **live budget gate 가 아닌** coarse proxy (`compact_boundary.preTokens` + delegation-ratio) 만 가능하다. substrate = 기존 SubagentStop-wired spawn-event-v1 채널 재사용(신규 hook 블록 0). 본 Amendment 가 그 proxy field set 의 §결정 2 allow-list 편입을 codify.
+
+### Amendment 내용
+
+**(A) §결정 2 Allow-list 에 self-context proxy record type 추가** — spawn-event-v1 channel 내 lead-self aggregate record. field 6종 (numeric/enum/hash only):
+```
+schema_version(const "self-context-v1") / session_id(sha256) / turn_index(int, monotonic) /
+delegation_ratio(float 0.0–1.0, coarse-round, proxy) / pre_tokens(int, bucketed, compact_boundary.preTokens 출처) /
+cause_category(CLOSED enum: read-heavy|synthesis-inline|fix-diagnosis|spawn-dispatch|skill-load|env0-mediation|other)
+```
+**FORBIDDEN**: file path / transcript 발췌 / tool_input body / free-form reason string (T-INFO-8 구조적 차단). `cause_category` enum 값은 consumer file-path / BC 명 / prompt text 에서 파생 금지 = **domain-agnostic** 고정 closed-set (SecurityArch 확정).
+
+**(B) inherit 선언** — §결정 1 opt-in default-false 상속(always-on 금지) + §결정 3 Deny-list inherit + T-INFO-5 transcript content/path 미저장 상속(pre_tokens 은 compact_boundary 정수만, transcript raw 미도달) + T-INFO-7 sha256 identity(session_id). `hook_decision=record-only`(Amendment 1 §결정 2 non-blocking) — telemetry 실패가 작업 halt 금지, dropped event 는 stderr/dropped-count trace(silent-success-on-error 금지). idempotency key = turn-id/compact_boundary event-id + read-side dedup(누적 proxy replay 팽창 차단).
+
+**(C) hollow-gate 1순위 verbatim (ADR-119)** — delegation_ratio / pre_tokens = **proxy 이지 lead-self ground-truth 아님**(platform surface 부재). 어떤 self-context 판정도 게이트가 아니다. record-only.
+
+### 근거
+
+- **§결정 1 이 이미 "future: spawn-event-v1 등" named** — 본 Amendment 는 그 channel 의 lead-self variant 추가이지 신규 privacy SSOT 신설 아님(대안 A reject 정합, 신규 ADR 미신설).
+- **MINOR 정합** (ADR-008 §결정 2): additive record type + inherit + privacy 강화(ratchet ↑) = backward-compat.
+- **정확한 field-set 통합/count reconciliation = Phase 2** spawn-event-v1 contract bump 시 확정 (본 Amendment = allow-list POLICY 결정, 실 emission = Phase 2).
+
+### 비-영향
+
+- §결정 2 stop-event-v1 18 field + spawn-event-v1 19 field Allow-list 무변경 (self-context = 별 record type, allow-list 확장만).
+- §결정 3/4/5 정책 무변경 (inherit scope 확장만).
+- ADR-043 Amendment 1/2 무변경.
+- L7 은 record-only proxy — 게이트/블록/deny 언어 적용 0건 (ADR-142 tier 정직 invariant).
