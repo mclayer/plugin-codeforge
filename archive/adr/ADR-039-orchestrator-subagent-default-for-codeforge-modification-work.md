@@ -180,7 +180,7 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 
 "이건 inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 자체 금지 — branch logic 제거가 본 ADR 의 핵심.
 
-### 결정 2 — Inline whitelist (closed 4-entry enumeration)
+### 결정 2 — Inline whitelist (closed enumeration — base 4-entry 표, 현행 effective 6-entry)
 
 | # | Category | 설명 | Mechanism rationale |
 |---|---|---|---|
@@ -189,9 +189,11 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 | 3 | Read-only Q&A 답변 | 사용자 정보 요청에 대한 응답 (state report / option enumeration / 도메인 설명) | 수정 작업 아님 — codeforge orchestration scope 외 |
 | 4 | Status report | Phase 완료 / Story close / final report | 수정 작업 아님 (read-only synthesis) — ADR-025 Amendment 1 §결정 11 의 "1번 final report" |
 
-4 entry **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무. **모호 시 = 수정 작업 측 분류** (안전 방향 — ADR-013 cutoff precedent 정합).
+현행 6-entry(아래 **Count 정합** 참조) **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무. **모호 시 = 수정 작업 측 분류** (안전 방향 — ADR-013 cutoff precedent 정합).
 
-5번째 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future "Skill 호출 / Glob / Grep / Read tool 분류 enum 확장" 압박을 차단 — 모두 4 entry 의 어느 하나로 routing 또는 수정 작업 측 분류.
+다음(7번째) 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future "Skill 호출 / Glob / Grep / Read tool 분류 enum 확장" 압박을 차단 — 모두 현행 6-entry 의 어느 하나로 routing 또는 수정 작업 측 분류.
+
+**Count 정합 (CFP-2572 §결정9 stub + ADR-142 disjoint-axis 정합 — 표기 정합, 결정 내용 무변경)**: 위 표 = §결정2 **base 4-entry**. 이후 **Amd2(§결정15) entry5**(Story-file §9/§10/§14/phase inline write) + **Amd6(§결정18) entry6**(merge-time Codex dispatch) append → **현행 effective inline-whitelist total = 6-entry** (§결정18/§결정19/§결정20 본문 "현 6-entry" 표기와 정합). 본 ADR 여러 amendment 의 "4-entry closed enumeration 무변경" 표현 = **base 표 무변경** 의미(effective 6-entry 와 무모순). **7번째 entry 신설 = amendment 의무**. enumeration 표·routing 규칙 자체 불변.
 
 ### 결정 3 — Ownership ≠ Mechanism 분리
 
