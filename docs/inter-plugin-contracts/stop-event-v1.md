@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: stop-event
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/stop-event-v1.md
@@ -13,6 +13,10 @@ amendment_log:
     date: 2026-05-27
     carrier_story: CFP-1744
     summary: "MINOR bump — hook_source / hook_decision 2 optional field 추가 (ADR-008 SemVer backward-compat). Story-3 (#1743) ledger row schema 정식화 carrier. ADR-043 Allow-list 16 → 18 field amendment 동반."
+  - version: "1.2"
+    date: 2026-07-05
+    carrier_story: CFP-2573
+    summary: "MINOR bump (필드 추가 0, non-breaking) — §5 aggregate slot un-defer + 계약↔구현 정직 정합 (§5.1 신설). ADR-144 §결정 5(L5, GAP-7) realization. 실제 괴리 = field-name + path + backend (계약 = 18-field sqlite@.claude-work/measurement + timestamp UTC / 구현 = 5-field JSONL@.claude/ledger + timestamp_kst KST / stop_reason 는 allow-list 필드 아님). 수렴 = 계약을 record-only 실측 현실로 정직 정합 (18-field sqlite hot-tier = aspirational Phase 2 유지 DEFER, 30+ event ROI 미달 YAGNI; aggregate slot 만 un-defer). reason_class_subclass 필드는 이미 v1.1 allow-list 존재 → 새 필드 0. aggregate = scripts/lib/aggregate_stop_event.py (신규) reads .claude/ledger/stop-event.jsonl → per-reason_class count + 부당/정당 ratio, sidecar classification-map(PMO retro) 有→ratio 無→frequency honest degrade, row-hash dedup(canonical JSON sort_keys→sha256), record-only INV(ledger IN-PLACE EDIT 금지). '측정 ≠ 분류' honesty 서술 emit 의무. Allow-list 18-field enforcement / opt-in default-false / reason_class 4-enum 전부 무변경."
 related_adrs:
   - ADR-025  # stop discipline (§결정 10 deferred slot 채움)
   - ADR-029  # phase execution visibility (sanitize policy cross-ref)
@@ -198,13 +202,38 @@ operational_constraints:
 ### Phase 2 (deferred follow-up CFP)
 
 - Telemetry hook 구현 (Python script `scripts/telemetry-append.py` / sqlite migration script)
-- Aggregate script (raw → §10 FIX Ledger row mirror / dashboard 형식 변환)
+- ~~Aggregate script (raw → §10 FIX Ledger row mirror / dashboard 형식 변환)~~ → **§5.1 로 un-defer (v1.2, CFP-2573)**
 - spawn-event-v1 신설 (§14 dedup script 동반 의무)
 - Cross-host telemetry 통합 (Divvi Up DAP / aggregate report)
 - ADR-029 §결정 2 sanitize SSOT 통합 commit (ADR-043 §결정 4 cross-ref)
 - Rule-based hook (PreToolUse on Write / Edit / mcp__github__* — inline write detect)
 
 ROI gating prerequisite: post-merge-counters.jsonl 30+ run (ADR-026 §결정 3 패턴 / ADR-042 §결정 11).
+
+### 5.1 계약↔구현 정직 정합 + aggregate slot un-defer (v1.2, CFP-2573 — ADR-144 §결정 5 / L5)
+
+**계약↔구현 괴리 (origin/main 실측, CodebaseMapper)**: 본 registry 계약은 aspirational 18-field sqlite hot-tier 를 명세하나 실 구현은 record-only 최소 형상이다. 괴리 축 = **field-name + path + backend** 3면:
+
+| 면 | 계약 (v1.1 명세) | 실 구현 (`scripts/lib/append_stop_event.py`) |
+|---|---|---|
+| field | 18-field Allow-list (event_id / reason_class …) | **5-field** (`timestamp_kst` / `hook_source` / `hook_decision="record-only"` / `session_id` / `stop_reason`) |
+| path | `.claude-work/measurement/stop-event.sqlite` | `.claude/ledger/stop-event.jsonl` |
+| backend | sqlite (WAL) | JSONL append-only |
+| 시각 | `timestamp` (ISO8601 **UTC**) | `timestamp_kst` (**KST**) |
+| 분류 | `reason_class` 4-enum 산출 | **미산출** (`stop_reason` = allow-list 필드 아님, free-form) |
+
+**수렴 방향 = 계약을 record-only 실측 현실로 정직 정합** (역방향 = 구현을 18-field sqlite 로 승격 = 30+ event ROI 미달 YAGNI):
+- 18-field sqlite hot-tier = **aspirational Phase 2 유지 DEFER** (ROI gate 미충족 시 미구현 정합 — §3.5 `wrapper_dogfood_always_on_enforcement` deferred 정합).
+- **aggregate slot 만 un-defer** — 실 구현(5-field JSONL) 위에서 동작하는 off-hot-path aggregate 는 sqlite 없이 즉시 실현 가능(GAP-7 실체 = aggregate 부재).
+- `reason_class_subclass` 필드는 이미 v1.1 Allow-list 존재 → **새 필드 추가 0**(non-breaking, §4 Allow-list ONLY 무위반).
+
+**aggregate 명세 (`scripts/lib/aggregate_stop_event.py` — 신규, Phase 2)**:
+- input = `.claude/ledger/stop-event.jsonl`(실 구현 경로). output = per-`reason_class` count + 부당(`policy_violation*`)/정당(`user_stop_legitimate` · `decider_escalation_required`) ratio.
+- **reason_class 자동분류 = 불가** → 분류 채움 = **PMO retro sidecar mapping**(stop_reason → reason_class 를 별 artifact 로; 원장 **IN-PLACE EDIT 금지** — record-only INV ADR-115 §2 + ADR-072 policy/evidence disjoint). aggregate 는 optional classification-map 지원: map 有 → ratio, map 無 → per-`stop_reason` frequency (honest degrade).
+- **★HONESTY (binding)**: 실 원장 전부 5-field(reason_class 부재) → backfill 전 aggregate = all-unclassified → **"분류 없인 정량 불가 (측정 ≠ 분류)" honesty 서술 emit 의무**. "10:2 실측" / "telemetry 가 stop 을 줄인다" 주장 금지(측정만, tier `[measurement]` strict).
+- **dedup = row-hash** (canonical JSON `sort_keys` → sha256; event_id 부재 → forward-compat + canonicalization). honest under-count caveat — 동일-초 별개 이벤트 병합 불가피 → `rows_total`/`rows_deduped`/`duplicates_collapsed` emit, exact-count 주장 금지.
+- edge: malformed → skip+count / empty → zero-count exit 0 / window → tz-aware ISO parse.
+- runtime Stop hook 은 **5-field 유지**(runtime capture widen 금지 — record-only INV 보존).
 
 ## 6. Cross-references
 
