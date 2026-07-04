@@ -1,4 +1,11 @@
 {
-  "max_adr_number": 141,
-  "claims": []
+  "max_adr_number": 142,
+  "claims": [
+    {
+      "adr_number": 142,
+      "claimant": "ArchitectPLAgent:CFP-2572:run-1783179995",
+      "status": "claimed",
+      "claimed_at": "2026-07-04T15:46:36Z"
+    }
+  ]
 }
