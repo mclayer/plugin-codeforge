@@ -15,9 +15,15 @@ amendment_log:
     carrier_story: CFP-771
     summary: "Phase 2 mechanical enforcement wire — evidence-checks-registry row append (warning-tier) + kst-timestamp-display.yml workflow + scripts/lib/check_kst_timestamp.py SSOT + label-registry-v2 v2.19 hotfix-bypass:kst-timestamp-display 27th family. mechanical_enforcement_actions[0].status deferred-followup → Active (ADR-040 Amendment 3 §결정 7.D self-application — declarative governance ADR 의 deferred-followup mechanical action 이 Phase 2 carrier 에서 Active 전환). §결정 본문 무변경 (status field + amendment_log only). self-app 근거 = established `.github/workflows/` byte-identical convention (CLAUDE.md L313 ADR-060 단락 Amendment 4 auto-phase-label.yml 선례 + decision-principle-vocabulary.yml exemplar 동형 — ADR-005 인용 아님: ADR-005 = Plugin Self-Application N/A 표준화, workflow byte-identical 정책 아님). 강화 방향 (검출 능력 추가) — ADR-058 §결정 5 ratchet 정합."
     direction: strengthen
+  - amendment: 2
+    date: 2026-07-05
+    carrier_story: CFP-2574
+    summary: "Additive — 제3 ephemeral-UI render-line 표시 sub-layer 신설, §결정 2 zoned 의무에서 EXEMPT. VS Code(및 동류 harness) 확장이 Agent 스폰·도구호출을 native 로 렌더하는 줄(파일 미저장 ephemeral, persist gap#3 = zero persist path)의 시각 = 컴팩트 `MM/DD HH:MM`, offset 생략 ≡ KST 고정(§결정 7 wrapper-canonical anchor). 조건부 persist-guard: render line 이 committed artifact 로 persist/export 되면 그 export 는 §결정 2 zoned scope 로 재분류 + layer 재판정. 규약 본문 SSOT = ADR-143(carrier CFP-2574). §결정 2 영역 표에 additive row 1개 추가(zoned scope 0건 축소) + §결정 본문 무변경. §결정 2 명시 'comment prefix'(GitHub Issue surface, comment-prefix-registry 결속)는 render line(VS Code UI surface)과 disjoint — 규칙이 이 신규 표면에 도달한 적 없음 → additive/strengthen(약화 아님). §결정 6 forward-only + §결정 7 consumer tz override 불가 무변경, 오히려 UTC+9 고정 산술(ADR-143 §결정 3)이 §결정 7 강화 인용. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제)."
+    direction: strengthen
 related_stories:
   - CFP-770  # 본 Story carrier — Phase 1 (ADR-079 신설 + RESERVATION row 79 reserved 미경유 직접 active + CLAUDE.md/playbook/template/domain-knowledge)
   - CFP-771  # Phase 2 mechanical lint carrier (blocks-on CFP-770) — Amendment 1 이 mechanical_enforcement_actions[] 채움
+  - CFP-2574  # Amendment 2 carrier — 제3 ephemeral-UI render-line sub-layer EXEMPT (ADR-143 동반 발의)
 related_adrs:
   - ADR-064  # Decision principle mandate — §결정 1 CFP-scope-unitary (Phase 1/Phase 2 독립 CFP), §결정 4 ordering invariant (RESERVATION row sequential append)
   - ADR-058  # ADR sunset criteria mandate — is_transitional:false governance presumption (§결정 7), §해소 기준 N/A permanent policy, §결정 5 sunset_justification ratchet 차단
@@ -30,6 +36,7 @@ related_adrs:
   - ADR-054  # doc-only fast-path — 본 Story = template frontmatter schema 변경 → full-lane 강제 (fast-path 제외)
   - ADR-013  # dogfood-out — Story file = internal-docs wrapper/stories/CFP-770.md
   - ADR-063  # Marketplace atomic invariant — 본 Story doc-only, plugin.json version bump 동반 여부 판단 (§3.6 marketplace_sync_declared)
+  - ADR-143  # Amendment 2 동반 발의 — Agent 액션 render-line 프리픽스 규약 SSOT (제3 ephemeral-UI 표시 sub-layer 본문, carrier CFP-2574)
 related_files:
   - docs/adr/ADR-RESERVATION.md  # row 79 sequential append (carrier_story = CFP-770)
   - CLAUDE.md  # 신규 단락 "시각 표시 정책 (KST, ISO 8601)" — Orchestrator self-censor 표면 (AC-3)
@@ -95,8 +102,11 @@ display layer 영속 artifact 시각 표기 = **ISO 8601 RFC 3339 §5.6 colon-of
 | 영속 artifact (CLAUDE.md / playbook / ADR / retro / EPIC-RESULTS / Story §10·§14·§9 본문 표 / comment prefix) | ISO 8601 zoned `2026-05-16T19:30:00+09:00` |
 | dialog · prose (Orchestrator ↔ 사용자) | prose `2026-05-16 19:30 KST` 허용 (사용자 가시성 우선) |
 | frontmatter `date:` (date-only) | `2026-05-16` = **KST 일자 의미** 명문화 (zoned 형식 강제 아님 — date-only vs zoned 의도적 분리. Korea fixed +9 / DST 영구 부재로 일자 의미 모호성 없음) |
+| **ephemeral harness-UI render line** (Amendment 2, ADR-143) | 컴팩트 `MM/DD HH:MM` (`[에이전트명] MM/DD HH:MM - 내용`) — offset·연도·초·KST 라벨 생략 ≡ **KST 고정**(§결정 7 wrapper-canonical anchor). 파일 미저장 ephemeral(persist gap#3 = zero persist path) → **zoned 의무 EXEMPT**. 규약 SSOT = ADR-143. 조건부 persist-guard: committed artifact 로 persist/export 시 위 zoned row 로 재분류 + layer 재판정 |
 
 KST 약어 단독 표기 회피 — 영속 artifact 는 numeric `+09:00` 의무, prose 는 `KST` 허용 (IANA `Asia/Seoul` ≡ numeric `+09:00`, ResearcherAgent UU#3 KST abbreviation collision 회피).
+
+> **Amendment 2 (2026-07-05 KST, CFP-2574)**: 위 표 3번째 row(ephemeral harness-UI render line)는 **additive** — §결정 2 zoned scope 0건 축소. §결정 2 가 display layer 로 명시 열거한 "comment prefix" = GitHub Issue comment surface(comment-prefix-registry 결속)로, VS Code render line(harness UI surface)과 **disjoint** — §결정 2 규칙이 이 신규 표면에 도달한 적 없으므로 규칙 추가 = additive/strengthen(약화 아님). 컴팩트 offset-less 표기의 정당성은 "ephemeral 화면 전용 + Korea 고정 +9·DST 부재 invariant" 에 한정되며, persist 경로 도입 시 §결정 8(ADR-143) persist-guard 로 zoned 재판정. 상세 규약·강제 상한(advisory ceiling)·주입점 = ADR-143 SSOT.
 
 ### 결정 3 — contract field layer 불변 invariant (0건 변경)
 

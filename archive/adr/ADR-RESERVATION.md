@@ -198,6 +198,7 @@ amendments_reserved:
 | 136 | CFP-2505 | active | 2026-06-30 (CFP-2563 backfill — lapse 소급 기록) |
 | 139 | CFP-2549 | active | 2026-07-02 (CFP-2563 backfill — lapse 소급 기록) |
 | 140 | CFP-2557 | active | 2026-07-02 (CFP-2563 backfill — lapse 소급 기록) |
+| 143 | CFP-2574 | active | 2026-07-05 KST (ArchitectAgent chief author direct write per ADR-070 / CFP-578 chief author precedent — 신규 ADR-143 Agent 수행 액션 렌더 줄 프리픽스 규약(`[에이전트명] MM/DD HH:MM - 내용`, 제3 ephemeral-UI 표시 sub-layer). ADR-079 Amendment 2(제3 ephemeral-UI render-line sub-layer EXEMPT) 동반 발의. 번호 143 = CFP-2563 OCC atomic claim machinery 로 점유(claimant ArchitectPLAgent:CFP-2574) — dual-key 3-leg 정합: filename `ADR-143-agent-action-render-line-prefix.md` ∧ frontmatter `adr_number: 143` ∧ 본 registry row. 실측: origin/main(worktree base 60e3e0f7 계열) archive/adr numeric max = ADR-141(file) + 142 = in-flight CFP-2572 별 branch 선점 → 143 free. claim(점유 직렬화) ↔ 본 append(기록 책무) disjoint (ADR-133 §결정3 / ADR-070 chief author inline append 정합). status `reserved` 미경유 직접 `active` (chief author scope, ADR-140/141 row precedent 정합). ADR file = `ADR-143-agent-action-render-line-prefix.md`. parent_epic null — independent Story. ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.) |
 
 ### 번호 해제 (archived)
 
