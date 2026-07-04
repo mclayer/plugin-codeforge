@@ -192,5 +192,44 @@ except Exception:
   fi
 fi
 
+# ── 범위① description-format DETECT (CFP-2574 / ADR-143 §결정 4) ──────────────
+# tool_input.description 이 렌더-줄 프리픽스 `[<agent_type>] MM/DD HH:MM - <내용>` 형식인지 DETECT.
+# warning-tier · exit-0-always · NO rewrite/mutation/timestamp-injection (SecurityArch §7.1 non-mutation 상속).
+# 기존 4-block prompt 검사와 무관 (둘 다 stderr warning-only, deny 비활성 — Wave1 불변식 보존).
+DESC_TEXT=""
+if [ -n "$PYTHON_CMD" ]; then
+  DESC_TEXT="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    print(data.get('tool_input', {}).get('description', ''), end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+fi
+
+# description 비어있지 않을 때만 프리픽스 형식 DETECT (leaf 빈 description 은 위반 아님 — AC-10)
+if [ -n "$DESC_TEXT" ] && [ -n "$PYTHON_CMD" ]; then
+  DESC_CHECKER=""
+  if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py" ]; then
+    DESC_CHECKER="${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py"
+  elif [ -f "scripts/lib/check_spawn_description_prefix.py" ]; then
+    DESC_CHECKER="scripts/lib/check_spawn_description_prefix.py"
+  fi
+  if [ -n "$DESC_CHECKER" ]; then
+    DESC_OUT="$(printf '%s' "$DESC_TEXT" | "$PYTHON_CMD" "$DESC_CHECKER" --description-stdin 2>/dev/null || true)"
+    DESC_CONFORMANT="$(printf '%s' "$DESC_OUT" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    print('1' if json.loads(sys.stdin.read()).get('description_prefix_conformant', True) else '0')
+except Exception:
+    print('1')
+" 2>/dev/null || true)"
+    if [ "$DESC_CONFORMANT" = "0" ]; then
+      >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn description prefix nonconformant — expected [<agent_type>] MM/DD HH:MM - <내용> (ADR-143, advisory)\n'
+    fi
+  fi
+fi
+
 # Wave 1: 항상 exit 0 (deny 비활성)
 exit 0

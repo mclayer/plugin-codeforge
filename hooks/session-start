@@ -79,6 +79,15 @@ Bypass (audit-trailed): BYPASS_PARALLEL_WORK_SENTINEL=1
 Evidence-checks-registry entry: parallel-work-sentinel-pickup (ADR-073 Amendment 2)
 
 Graceful degradation: gh API failure → local git log fallback (non-blocking, warning tier).
+
+[codeforge render-line-prefix advisory — CFP-2574 / ADR-143]
+
+Agent 스폰·도구호출 렌더 줄에 `[<agent_type>] MM/DD HH:MM - <내용>` 프리픽스를 시도(advisory, 비강제).
+- 범위① Agent spawn description = `[<피스폰 agent_type>] MM/DD HH:MM - <task>` (subject=피스폰자, Orchestrator 이름 미등장).
+- 범위② 서브에이전트 leaf 도구호출 description = `[<self agent_type>] MM/DD HH:MM - <action>`.
+- 시각 = KST (UTC+9 고정 산술), dispatch/작성 시점 근사. helper: bash scripts/kst-render-stamp.sh
+- TodoWrite 행 + Orchestrator inline 4종(대화/TodoWrite/읽기 Q&A/상태보고) 제외.
+- 3요소(에이전트명/시각/내용)에 secret·token·절대경로·자격증명 임베드 금지 — 내용은 액션 요약만.
 EOF
 
 exit 0

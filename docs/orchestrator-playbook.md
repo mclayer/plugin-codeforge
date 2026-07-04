@@ -3740,6 +3740,28 @@ Orchestrator 는 매 agent spawn 시 **Spawn ID 대장**을 `.claude-work/progre
 
 **위치**: `.claude-work/progress/<KEY>.md` 의 `## Spawn ID 대장` 섹션 (14.3 §0 file 포맷 뒤에 append). gitignored — ephemeral cache.
 
+### 14.11a Agent 액션 렌더 줄 프리픽스 규약 (ADR-143 — ephemeral-UI 표시 sub-layer)
+
+harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<agent_type>] MM/DD HH:MM - <내용>` 프리픽스를 붙여 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 규약 SSOT = ADR-143.
+
+**형식**: `[<agent_type>] MM/DD HH:MM - <내용>`
+- **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13 - Change Plan §3 통합`.
+- **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15 - kst helper 작성`.
+- `[<agent_type>]` 값 SSOT = spawn-event-v1 `agent_type`(roster-derived PascalCase + `unknown-agent` fallback) — §14.11 Spawn ID 대장의 agent_type 어휘 재사용(신규 명명체계 0).
+
+**시각**: KST(UTC+9 고정 산술). 컴팩트 — offset·연도·초·`KST` 라벨 미표기(`MM/DD HH:MM`). dispatch/작성 시점 **근사**(exact per-call HH:MM 아님). helper = `bash scripts/kst-render-stamp.sh`(GNU date primary + Python fallback). machine-local `date`·`TZ=Asia/Seoul` 금지 — Korea 고정 +9 invariant 로 UTC+9 고정 산술만.
+
+**제외**: TodoWrite 행(native status 렌더 전용, 이중 표기 금지) + Orchestrator inline 4종(대화 / TodoWrite / 읽기전용 Q&A 답변 / 상태 보고, ADR-039 §결정 2 whitelist). subject = 헤더는 피스폰자 / leaf 는 self — **Orchestrator 이름 자체는 프리픽스에 등장하지 않는다**.
+
+**강제 상한 = advisory** (ADR-143 §결정 4):
+- 범위① = PreToolUse(Agent) hook `hooks/pretooluse-agent-spawn-gate` 의 description-format **warning-tier detect**(exit-0-always, rewrite/mutation 없음, `scripts/lib/check_spawn_description_prefix.py`).
+- 범위② = prompt-mandate + 세션시작 리마인더(`hooks/session-start`) 조합.
+- advisory 조합이 곧 강제 상한(ceiling) — "100% 기계 강제"·"hard-gate" 참칭 금지(ADR-119 검사연극 회피).
+
+**ADR-079 관계**: render line = 제3 **ephemeral-UI 표시 sub-layer** 로, ADR-079 §결정 2 zoned-offset 의무에서 **EXEMPT**(additive — §결정 2 영속 zoned scope 무축소). render line 을 파일·로그·transcript 로 **committed persist/export** 하는 경로가 도입되면 ADR-079 §결정 8 persist-guard 로 zoned scope 재판정.
+
+**cross-ref**: `[에이전트명]`(VS Code 렌더 표면) ↔ comment-prefix `[lane]`(GitHub Issue comment 표면, comment-prefix-registry-v1) = 표면형 동일·의미 disjoint **homonym**(surface 상호 disjoint, 실충돌 없음). §14 Lane Evidence · §14.11 Spawn ID 대장 = 인접 committed layer(다른 surface). 규약 SSOT = ADR-143.
+
 ### 14.12 Spawn-level token telemetry mini-table (Issue #300)
 
 Orchestrator 는 매 spawn 결과 수령 후 **Spawn token telemetry 대장**을 `.claude-work/progress/<KEY>.md` 에 갱신한다. 목적: 레인별·에이전트별 token quota 분석 + §8.2 예산 대비 실적 추적.
