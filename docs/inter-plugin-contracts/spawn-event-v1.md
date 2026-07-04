@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: spawn-event
-version: "1.0"
+version: "1.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/spawn-event-v1.md
@@ -23,7 +23,8 @@ related_files:
   - docs/orchestrator-playbook.md  # §15.1 8-channel boundary table + §15.2 4번째 boundary invariant + §14.12 관계 note
   - docs/project-config-schema.md  # telemetry.channels.spawn_event flag schema
   - docs/domain-knowledge/domain/orchestrator-discipline/measurement-channel.md  # 도메인 정의 cross-ref
-amendment_log: []
+amendment_log:
+  - "Amendment 3 (CFP-2572, 2026-07-05) — self-context-v1 6-field record type 추가 (§2.1 신설, L7 Orchestrator self-context proxy). 동일 spawn-event.jsonl channel 공유 + schema_version discriminator 구분. version 1.0 → 1.1 MINOR (additive record type, ADR-008 §결정 2). SSOT = ADR-043 Amendment 3 / ADR-142 §결정 4. 19-field spawn row schema 무변경 (별 record type)."
 attribution:
   source: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
   scope: "per-agent registry 개념(token_usage/cost_usd/tool_usage field 구조) + replay event 종류(agent_start/agent_stop/tool/file_touch/mode_change) + 경과시간 keyed 패턴 차용. enforcement(COST_LIMIT_USD intervention) / HUD UI / model routing 은 비-차용 (측정·관측만, ADR-042 §결정 10 measurement-vs-fix boundary)."
@@ -99,6 +100,44 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 ```
 
 > Phase 1 = doc-only (실 row 미작성 — §5). 위 numeric 값은 schema 형식 예시이며 **실측 token/cost 가 아니다**. unattributed row 의 token/cost = `null` (추정치 저장 금지).
+
+## 2.1 self-context-v1 record type (ADR-043 Amendment 3 — L7 Orchestrator self-context proxy)
+
+**별개 record type** — 위 §2 의 19-field spawn row 와 **다른** row schema 이며, **동일 `spawn-event.jsonl` channel 을 공유**한다. 두 record type 은 `schema_version` **discriminator** 로 구분된다 (`spawn-event-v1` = 19-field spawn row / `self-context-v1` = 아래 6-field lead-self aggregate row). 본 record 는 장기 세션 Orchestrator(lead-self)의 context 누적을 **record-only proxy telemetry** 로 남긴다. substrate = 기존 SubagentStop-wired 채널 재사용 (신규 hook 블록 0). 실 emission 은 Phase 2 (본 §2.1 = allow-list POLICY 편입 — ADR-043 Amendment 3 §근거 (C)).
+
+### 2.1.1 self-context 6 field (numeric / enum / hash only)
+
+| 필드 | 타입 | 필수 | 설명 | Sanitize |
+|---|---|---|---|---|
+| `schema_version` | const string | required | `self-context-v1` 고정 — 19-field spawn row 와의 **discriminator** | — |
+| `session_id` | sha256 hash | required | top-level Claude session ID **hash** (raw session_id 저장 금지 — T-INFO-7 상속) | hash (raw 부재) |
+| `turn_index` | int | required | monotonic turn 카운터 | non-sensitive (count) |
+| `delegation_ratio` | float 0.0–1.0 | required | inline 대비 spawn 위임 비율 (coarse-round). **proxy** — lead-self ground-truth 아님 | non-sensitive (ratio) |
+| `pre_tokens` | int | required | bucketed 정수. source = `compact_boundary.preTokens` (transcript raw 미도달 — T-INFO-5) | non-sensitive (bucketed count) |
+| `cause_category` | enum (CLOSED) | required | `{read-heavy, synthesis-inline, fix-diagnosis, spawn-dispatch, skill-load, env0-mediation, other}` — **domain-agnostic 고정 closed-set** | non-sensitive |
+
+**FORBIDDEN** (T-INFO-8 구조적 차단): file path / transcript 발췌 / tool_input body / free-form reason string. `cause_category` enum 값은 consumer file-path / BC 명 / prompt text 에서 **파생 금지** — domain-agnostic 고정 closed-set (SecurityArch 확정, 특정 consumer 도메인 노출 surface 0).
+
+### 2.1.2 inherit 선언 (spawn-event-v1 privacy 정책 상속)
+
+- **opt-in default-false** (§3 opt_in_default_false 상속) — always-on 금지. `telemetry.enabled: false` + channel default false.
+- **Deny-list inherit** (§4 defense-in-depth) — self-context 6 field 도 free-form string field 0개이므로 적용 0건, 선언만.
+- **T-INFO-5** transcript content / path 미저장 상속 — `pre_tokens` 는 `compact_boundary` 정수만, transcript raw 는 row 에 도달하지 않는다.
+- **T-INFO-7** sha256 identity — `session_id` 는 hash (raw session_id 미저장).
+
+### 2.1.3 operational posture (never-block + fail-VISIBLE)
+
+- `hook_decision = record-only` (Amendment 1 §결정 2 non-blocking 상속) — **never-block**: telemetry 실패가 작업을 halt 하지 않는다.
+- **fail-VISIBLE**: dropped event 는 stderr / dropped-count 로 **구별 가능한 trace** 를 남긴다. **silent-success-on-error 금지** (조용히 성공 위장 금지 — ADR-119).
+- **idempotency-key** = turn-id / `compact_boundary` event-id + **read-side dedup** — 누적 Σ proxy 의 replay 팽창(중복 집계) 차단.
+
+### 2.1.4 hollow-gate 1순위 (ADR-119 검증-후-단언)
+
+`delegation_ratio` / `pre_tokens` 는 **proxy 이지 lead-self ground-truth 가 아니다** (platform 이 live per-turn self-context surface 미제공 — P1). **어떤 self-context 판정도 게이트가 아니다. record-only.** 본 record 로 gate / block / deny 를 세우지 않는다 (ADR-142 tier 정직 invariant — L7 = record-only proxy).
+
+### 2.1.5 disjoint-axis note
+
+self-context proxy telemetry 는 layer-1 delegation-ratio substrate 를 **재사용**한다. 이는 **record-only measurement 이지 whitelist entry 가 아니다** — ADR-039 §결정 2 inline-whitelist(inline-vs-spawn mechanism 축)와 **disjoint axis** (그 6-entry closed enumeration 무침범).
 
 ## 3. 항목
 
@@ -292,6 +331,7 @@ operational_constraints:
 - **storage backend 변경 (JSONL → sqlite)**: ADR-042 §결정 4 amendment 의무 (BREAKING — 단 spawn-event 는 contract=runtime JSONL 일치가 §3 invariant. stop-event sqlite 계약 理想으로 align 하려면 stop-event runtime 도 동반 migration 필요 = 별 Epic).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 - **timestamp 형식**: UTC Z strict (§3). +00:00 / bare datetime 불허 — clarification 변경 = minor commentary.
+- **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 19-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
 
 ## 5. Phase 1 / Phase 2 scope
 
@@ -316,6 +356,12 @@ operational_constraints:
 
 ROI gating prerequisite: ADR-042 §결정 11 (post-merge-counters.jsonl 30+ run) — **단 본 Story 는 Epic CFP-2391 directive 가 deferral 을 supersede** (ADR-042 Amendment 1 §근거 ROI gate 처리 참조).
 
+### self-context-v1 record type (CFP-2572 / ADR-043 Amendment 3 — Phase 1 doc-only)
+
+- §2.1 self-context-v1 6-field record type = **allow-list POLICY 편입** (ADR-043 Amendment 3). L7 Orchestrator self-context proxy — 동일 spawn-event.jsonl channel 공유, `schema_version` discriminator 로 19-field spawn row 와 분기.
+- **record-only proxy** — `delegation_ratio` / `pre_tokens` 는 lead-self ground-truth 가 아니다 (platform live per-turn self-context surface 부재 P1). 어떤 self-context 판정도 게이트가 아니며 gate/block/deny 를 세우지 않는다 (ADR-142 tier 정직 invariant).
+- 실 emission (append/dedup) = Phase 2 (본 §2.1 = POLICY declare, spawn-event-v1 contract bump 시 field-set count reconciliation 확정 — ADR-043 Amendment 3 §근거).
+
 ## 6. Cross-references
 
 - **ADR-042** (measurement channel architecture) — §결정 1 boundary 표 8th channel(Amendment 1) / §결정 3 보류 해제(Amendment 1) / §결정 13 amendment 의무 이행 / §결정 8 0-API·50ms / §결정 9 isolation
@@ -325,5 +371,7 @@ ROI gating prerequisite: ADR-042 §결정 11 (post-merge-counters.jsonl 30+ run)
 - **playbook §15** — 8-channel observability boundary table + §15.2 4번째 boundary invariant
 - **playbook §14.12** — Spawn-level token telemetry mini-table (Tier-1 quota-only — role separation, §1.1)
 - **ADR-031** — §14 Lane Evidence (lane-coarse) ↔ spawn-event (per-agent) boundary + dedup
-- **ADR-119** — attribution_confidence unattributed default 의 검증-후-단언 근거
+- **ADR-119** — attribution_confidence unattributed default 의 검증-후-단언 근거 + §2.1 self-context proxy hollow-gate 정직 표기
+- **ADR-142** §결정 4 — L7 Orchestrator self-context proxy record type (§2.1 self-context-v1) carrier. return-envelope-v1 (§결정 3) sibling
+- **ADR-043 Amendment 3** — self-context-v1 6-field allow-list 편입 + inherit 선언 (opt-in default-false / Deny-list / T-INFO-5 / T-INFO-7) + record-only posture
 - **oh-my-claudecode (MIT)** — per-agent registry + replay event 종류 + 경과초 keyed 차용 (frontmatter attribution SSOT)

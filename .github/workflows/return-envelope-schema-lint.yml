@@ -1,0 +1,56 @@
+name: return-envelope-schema-lint
+# CFP-2572 Phase 2 / ADR-142 §결정 3 — return-envelope-v1 contract 문서 well-formed lint.
+#
+# Tier: [measurement]. 문서 well-formed 검증 (schema file-lint) — runtime 반환 준수 강제 아님
+#   (fix-event-v1 이 문서 schema 인 것과 동형). block/deny/강제 언어 0. lint GREEN =
+#   "문서가 계약 형식을 갖췄다" 이지 "런타임 반환이 cap 을 지켰다" 가 아니다 (hollow-gate 위장 금지 —
+#   ADR-119). 검증 3 항목:
+#     (M1) envelope.meta cap field (size_bytes / cap_bytes / over_cap)
+#     (M2) raw-exclusion clause (raw 배제/미포함 절)
+#     (M3) MANIFEST.yaml contracts: 아래 return_envelope / return-envelope-v1.md 등록
+#
+# single-root (.github only): governance registry(L-doc/MANIFEST) 정합 검사라 .github-only 정합
+#   (templates/github-workflows mirror 미운용 — spawn-event-schema-lint 동형). ADR-005 byte-parity scope 외.
+#
+# Non-required workflow (branch protection 6-tuple 무변경). warning-tier: lint job = continue-on-error
+#   비차단. discriminating test job = continue-on-error 없음 (회귀 시 exit 1 차단 — ADR-136 execution-liveness).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  return-envelope-schema-lint:
+    name: return-envelope-v1 문서 well-formed lint (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps (pyyaml — MANIFEST yaml parse 의존)
+        run: pip install -r requirements.txt
+      - name: Run check-return-envelope-schema.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-return-envelope-schema.sh check
+
+  return-envelope-schema-test:
+    name: discriminating test (surgical RB1/RB2/RB3 — mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps (pyyaml — MANIFEST yaml parse 의존)
+        run: pip install -r requirements.txt
+      - name: Run test-check-return-envelope-schema.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-return-envelope-schema.sh

@@ -28,7 +28,7 @@ related_stories:
   - CFP-582  # Adversarial 패턴 dispatch_mode 4번째 enum (blanket_cross_module_designlane) 추가 (Wave 4)
   - CFP-1086  # BackendArchEpic Phase 2 — 7+3+1 deputy roster (Parallelization row 정정 carrier W3 S5)
 created: 2026-05-09
-updated: 2026-05-20
+updated: 2026-07-05
 ---
 
 # Claude Code agent teams (experimental) — platform capability + codeforge re-entrancy 제약
@@ -63,7 +63,7 @@ agent teams enabled context 활성화:
 
 ## 컨텍스트
 
-codeforge 는 ADR-009 (wrapper-only decomposition) 이후 wrapper agent 0개 + 6 lane plugin × N agent 구조. 모든 spawn 은 wrapper Orchestrator 가 `Agent` tool 로 lane plugin agent 를 일회성 호출 — sub-agent 간 통신 부재, sub-agent recursive spawn 금지 (platform inherent). 본 invariant 가 `default subagent context 의 codeforge 정책 결정` (ADR-039 §결정 1).
+codeforge 는 ADR-009 (wrapper-only decomposition) 이후 wrapper agent 0개 + 6 lane plugin × N agent 구조. 모든 spawn 은 wrapper Orchestrator 가 `Agent` tool 로 lane plugin agent 를 일회성 호출 — sub-agent 간 통신 부재, sub-agent recursive spawn 회피. **단 이 회피는 ADR-009 wrapper-only 단일-lead 정책 trade-off 이지 platform 강제 제약이 아니다** — platform 은 nested subagent spawn 을 허용한다 (depth ≤ 5, Claude Code v2.1.172~; source: code.claude.com/docs sub-agents). 본 invariant 가 `default subagent context 의 codeforge 정책 결정` (ADR-039 §결정 1).
 
 agent teams 기능 도입 시점 (CFP-134 Epic + CFP-137 carrier) 에 본 invariant 의 **enabled context 분기** 가 필요해진다. enabled context 에서는 Lead 와 teammate 간 + sibling teammate 간 SendMessage 가 가능 — PL ↔ worker continuous dialog, Adversarial debate (Claude vs Codex worker), Cross-layer coordination (TEAM-DEVELOP 의 dev ↔ QA) 패턴이 codeforge orchestration 에 합류.
 
@@ -84,7 +84,7 @@ agent teams 기능 도입 시점 (CFP-134 Epic + CFP-137 carrier) 에 본 invari
 
 agent teams enabled context 에서도 다음 3 제약 유지:
 
-1. **재귀 spawn 금지** (Lead 와 teammate 모두) — platform inherent. teammate 는 추가 teammate 를 spawn 할 수 없음. 본 제약은 default context (Agent tool one-shot) 와 enabled context 양쪽 동일.
+1. **재귀 spawn 회피 = codeforge 정책** (Lead 와 teammate 모두) — **platform inherent 아님**. platform 은 nested subagent spawn 을 허용하나 (depth ≤ 5, v2.1.172~), codeforge 는 ADR-009 wrapper-only 단일-lead trade-off 로 이를 회피한다. 단 **agent-teams enabled context 에서 teammate→teammate spawn (nested TEAMS) 금지는 platform 강제** (agent-teams Limitations — no nested teams). 본 정책은 default context (Agent tool one-shot) 와 enabled context 양쪽 동일 적용.
 2. **Nested team 금지** (no team-of-teams) — codeforge 정책. teammate 가 자기 sub-team 을 만들지 못함.
 3. **One-team-per-lead 강제** — codeforge 정책 (platform 도 동일 강제). Lead 가 동시에 1 team 만 보유 — 다음 lane team 생성 전 현 team `TeamDelete()` 의무.
 
@@ -133,7 +133,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 
 1. **Phase-scoped sequential team** = lane 별 짧은 lifecycle (lane 진입 시 TeamCreate, 완료 시 TeamDelete). Story-long single team 회피 — `/resume` 후 in-process teammate 미복원 risk.
 2. **Lead = Orchestrator** (Story 전 기간 fixed) — ADR-009 wrapper-only invariant 정합. Lead 변경 금지.
-3. **One-team-per-lead 강제** — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. nested team 금지 (no team-of-teams). 재귀 spawn 금지 (Lead 와 teammate 모두 — platform inherent + codeforge 정책).
+3. **One-team-per-lead 강제** — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. nested team 금지 (no team-of-teams — teammate→teammate = **platform 강제 제약**). 재귀 subagent spawn 회피 (Lead 와 teammate 모두 — **codeforge 정책 trade-off, platform inherent 아님**; platform 은 nested subagent spawn depth ≤ 5 허용).
 4. **review lane Codex worker `dispatch_mode`** — default roster = `PL + Claude worker` 2 teammate. Codex worker 는 (a) 사용자 explicit request 시 활성 → 3 teammate (ADR-022 Deprecated / ADR-035 §결정 4 정합 — codeforge 가 Codex 를 1st-class component 로 자동 invoke 하지 않는 정책), (b) DesignReview lane 에서 사용자 explicit Codex request 후 Claude / Codex worker 가 동일 anchor 에 finding 불일치 산출 시 **자동으로 multi-round debate 진입** (`auto_on_divergence` mode, ADR-044 Amendment 1 / CFP-391 / ADR-059). 우선순위 `default > auto_on_divergence > user_request_only`. `auto_on_divergence` 자체는 Codex worker 신규 spawn 권한 부여 안 함 — 이미 활성된 두 worker 사이의 divergence 해소 자동 발동만.
 5. **env-divergent fallback** — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` (default 또는 미설정) 시 ADR-039 default subagent context (one-shot Agent tool spawn) 으로 fallback. SendMessage / TeamCreate / TaskCreate / TeammateIdle hook 모두 미발화. team-spec yaml 미사용.
 6. **SendMessage secret hygiene** — sibling teammate 끼리 system prompt / tool output 공유. consumer 측 secret (API key / DB credential 등) 가 SendMessage body 또는 system prompt 안에 포함되면 sibling teammate 모두 노출. consumer-guide §1f 명시 의무.
@@ -151,7 +151,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 - TeamCreate / TeamDelete / SendMessage / TaskList API 자체 (codeforge 가 호출하되 동작은 platform 영역)
 - Hook trigger timing (idle detection / task lifecycle)
 - one-team-per-lead 강제 (platform + codeforge 양쪽 동일)
-- 재귀 spawn 금지 (platform inherent)
+- nested TEAMS (teammate→teammate spawn) 금지 (platform 강제 — agent-teams Limitations). 재귀 subagent spawn 자체는 platform 이 허용 (depth ≤ 5, v2.1.172~) — 회피는 codeforge ADR-009 정책이지 platform 제약 아님
 - TeammateIdle detection 알고리즘
 - 25 thread 한도 (platform-level)
 
@@ -170,3 +170,4 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 | 2026-05-11 | Adversarial 패턴 확장 (CFP-391 / ADR-059 / ADR-044 Amendment 1) — `dispatch_mode: auto_on_divergence` 추가, debate-protocol-v1 자동 발동 정책 명시, 5 권장 패턴 매핑 + 핵심 규칙 #4 + Adversarial row evidence (Story §9 transcript + §10 debate_artifact_ref) 업데이트. consumer-guide §1f 정합 | CFP-391 |
 | 2026-05-13 | Adversarial 패턴 dispatch_mode 4번째 enum value `blanket_cross_module_designlane` 추가 (DesignLane internal blanket trigger — ArchitectPL + ArchitectAgent + 6 SubAgent). 5 권장 매핑 표 갱신. ADR-059 Amendment 2 carrier. | CFP-582 |
 | 2026-05-20 | 5 권장 패턴 매핑 + Parallelization row "6 SubAgent" → "7+3+1 deputy roster" 정정 (BackendArchEpic Phase 2 — AggregateArch + APIContractArch 신설 + ModuleArch rename + DataArch 축소). ADR-042 Amendment 8 / ADR-068 Amendment 2 / ADR-086 cross-ref. | CFP-1086 (W3 S5) |
+| 2026-07-05 | 재귀 subagent spawn "platform inherent" 오단정 정정 (§컨텍스트·재entrancy 3종·핵심 규칙 3·경계 4곳) — platform 은 nested subagent spawn 허용(depth ≤ 5, Claude Code v2.1.172~), single-lead 재귀 spawn 회피는 ADR-009 wrapper-only 정책 trade-off; platform 강제 제약 = agent-teams teammate→teammate (nested TEAMS) 금지 한정 (source: code.claude.com/docs sub-agents + agent-teams Limitations). | CFP-2572 (ADR-142) |
