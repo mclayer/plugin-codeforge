@@ -1,0 +1,53 @@
+name: disjoint-axis-whitelist-lint
+# CFP-2572 Phase 2 / ADR-142 §결정 3 — ADR-039 inline-whitelist static-integrity lint.
+#
+# Tier: [물리강제 — ADR-integrity 정적, 유일 물리강제]. 본 게이트는 ADR STATIC INTEGRITY 만
+#   단언한다 (behavior/runtime 강제 아님):
+#     (C1) effective inline-whitelist total == 6 (ADR-039 §결정2 Count 정합: base4 + entry5 + entry6)
+#     (C2) return-envelope-v1.md 'disjoint axis' 선언 존재 (ADR-039 §결정2 무침범)
+#     (C3) return-envelope-v1.md self-claim(inline-whitelist entry 자칭) 부재
+#   §결정2 base 표만 세는(=4) 구현은 BORN-BROKEN (CFP-2530/2527/2535 self-defeating lineage) — 회피.
+#
+# single-root (.github only): governance registry(ADR/L-doc) 정합 검사라 .github-only 정합
+#   (templates/github-workflows mirror 미운용 — spawn-event-schema-lint 동형). ADR-005 byte-parity
+#   scope 외. invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일 미검출.
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: lint job 은
+#   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). discriminating test job 은
+#   continue-on-error 없음 (회귀 시 exit 1 차단 — ADR-136 execution-liveness).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  disjoint-axis-whitelist-lint:
+    name: disjoint-axis-whitelist static-integrity lint (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-disjoint-axis-whitelist.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-disjoint-axis-whitelist.sh check
+
+  disjoint-axis-whitelist-test:
+    name: discriminating test (surgical R1/R2/R3 — mutation 생존 0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-disjoint-axis-whitelist.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-disjoint-axis-whitelist.sh

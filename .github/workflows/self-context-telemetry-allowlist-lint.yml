@@ -1,0 +1,56 @@
+name: self-context-telemetry-allowlist-lint
+# CFP-2572 Phase 2 / ADR-142 §결정 4 / ADR-043 Amendment 3 — self-context-v1 allow-list conformance lint.
+#
+# Tier: [measurement]. self-context-v1 record type 의 allow-list conformance + channel liveness 측정 —
+#   L7 게이트/block/deny 언어 0. record-only proxy 이지 runtime 강제 아니다 (delegation_ratio /
+#   pre_tokens = proxy, NOT lead-self ground-truth — ADR-119). spawn-event-v1.md §2.1 검증 항목:
+#     (S1) 6-field allow-list (7번째 field 금지)
+#     (S2) numeric / enum / hash only (free-form string field 0)
+#     (S3) opt-in default-false 선언
+#     (S4) FORBIDDEN list (file path / transcript / tool_input / free-form)
+#     (S5) cause_category CLOSED enum 7값
+#     (S6) proxy != ground-truth verbatim (ADR-119 hollow-gate 정직)
+#   + EMISSION-LIVENESS (test job): 실 emit 경로(append_self_context_event.py) 구동 → 1 record land
+#     execution-backed 검증 (presence-grep false oracle 금지 — ADR-136 execution-liveness).
+#
+# single-root (.github only): governance registry(§2.1 allow-list policy) 정합 검사라 .github-only 정합
+#   (templates/github-workflows mirror 미운용 — spawn-event-schema-lint 동형). ADR-005 byte-parity scope 외.
+#
+# Non-required workflow (branch protection 6-tuple 무변경). warning-tier: lint job = continue-on-error
+#   비차단. discriminating+liveness test job = continue-on-error 없음 (회귀 시 exit 1 차단).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  self-context-telemetry-allowlist-lint:
+    name: self-context-v1 allow-list conformance lint (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-self-context-telemetry-allowlist.sh (warning, 비차단)
+        continue-on-error: true
+        run: bash scripts/check-self-context-telemetry-allowlist.sh check
+
+  self-context-telemetry-allowlist-test:
+    name: discriminating + emission-liveness test (mutation 생존 0 / 실 emit land)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-check-self-context-telemetry-allowlist.sh (회귀 시 exit 1 차단)
+        run: bash scripts/test-check-self-context-telemetry-allowlist.sh
