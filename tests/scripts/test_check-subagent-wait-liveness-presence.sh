@@ -18,6 +18,9 @@
 
 set -euo pipefail
 
+# Windows 로컬 견고성: python helper stdout 를 utf-8 로 고정 (CI=Linux 는 utf-8 기본).
+export PYTHONIOENCODING=utf-8
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WRAPPER="$REPO_ROOT/scripts/check-subagent-wait-liveness-presence.sh"
 
@@ -165,6 +168,88 @@ exec_case "B2: exec duration-first → exit 127 (broken, 가드 무효)" \
 exec_case "B3: exec 원 reproducer (180 --kill-after=30) → exit 127" \
   127 "원 버그 형태 재현 — dispatch 가 원래 duration-first 였으면 가드 무효였음" \
   timeout 180 --kill-after=30 sleep 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CFP-2573 AC-3 확장: delivery-gap detection dimension (기존 timeout-guard 케이스 무손상 추가)
+#   playbook §3.10.1 delivery-gap 규율 anchor(spawn-then-blind-wait 금지 + force-resume + lead-collect)
+#   존재 시 GREEN / anchor 삭제 mutation → exit 1 (RED). L3 detection liveness 실증
+#   (force-resume/규율 delete → presence-lint RED). base(timeout-guard) 축과 격리해 dimension 만 검증.
+# distinct-marker: delivery-gap RED 는 stdout 마커 'delivery-gap' 병행 assert (dimension 발동 확증).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# playbook fixture(임의 content) → wrapper dir 스캔 → exit + delivery-gap 마커 대조
+run_dg_case() {  # run_dg_case <name> <expected_exit> <marker> <playbook_content>
+  local name="$1" expected_exit="$2" marker="$3" content="$4"
+  local exit_code=0 out tmpdir ok_mark=0
+  tmpdir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmpdir'" RETURN
+  mkdir -p "$tmpdir/docs"
+  printf '%s\n' "$content" > "$tmpdir/docs/orchestrator-playbook.md"
+  out=$(bash "$WRAPPER" "$tmpdir" 2>&1) || exit_code=$?
+  case "$out" in *"$marker"*) ok_mark=1;; esac
+  if [ "$exit_code" -eq "$expected_exit" ] && [ "$ok_mark" -eq 1 ]; then
+    echo "✓ PASS: $name (exit $exit_code + marker '$marker')"
+    PASS=$((PASS+1))
+  else
+    echo "✗ FAIL: $name"
+    echo "  Expected exit $expected_exit + marker '$marker', got exit $exit_code mark=$ok_mark"
+    echo "  Output: $out"
+    FAIL=$((FAIL+1))
+  fi
+}
+
+# 실 playbook 복사본(선택 mutation) → wrapper dir 스캔 (실 content 기반 discriminating)
+run_dg_realcopy() {  # run_dg_realcopy <name> <expected_exit> <marker> <strip_token|"">
+  local name="$1" expected_exit="$2" marker="$3" strip_token="${4:-}"
+  local exit_code=0 out tmpdir ok_mark=0
+  tmpdir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmpdir'" RETURN
+  mkdir -p "$tmpdir/docs"
+  cp "$REPO_ROOT/docs/orchestrator-playbook.md" "$tmpdir/docs/orchestrator-playbook.md"
+  if [ -n "$strip_token" ]; then
+    python3 - "$tmpdir/docs/orchestrator-playbook.md" "$strip_token" <<'PY'
+import sys
+f, tok = sys.argv[1], sys.argv[2]
+t = open(f, encoding="utf-8").read()
+open(f, "w", encoding="utf-8").write(t.replace(tok, ""))
+PY
+  fi
+  out=$(bash "$WRAPPER" "$tmpdir" 2>&1) || exit_code=$?
+  case "$out" in *"$marker"*) ok_mark=1;; esac
+  if [ "$exit_code" -eq "$expected_exit" ] && [ "$ok_mark" -eq 1 ]; then
+    echo "✓ PASS: $name (exit $exit_code + marker '$marker')"
+    PASS=$((PASS+1))
+  else
+    echo "✗ FAIL: $name"
+    echo "  Expected exit $expected_exit + marker '$marker', got exit $exit_code mark=$ok_mark"
+    echo "  Output: $out"
+    FAIL=$((FAIL+1))
+  fi
+}
+
+echo
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo " CFP-2573 AC-3 확장: delivery-gap detection dimension (§3.10.1 규율 anchor)"
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo
+
+# DG1: GREEN 합성 — dispatch+guard(base pass) + delivery-gap anchor 3종 존재
+run_dg_case "DG1: GREEN 합성 (delivery-gap anchor 3종 존재)" 0 "PASS" \
+  'timeout --kill-after=30 300 run_in_background worker  # max-wait wall-clock ceiling liveness
+PL 은 spawn-then-blind-wait 금지 — 수집은 lead. stall 시 lead force-resume. named lead-collect routine.'
+
+# DG2: RED 합성 — 동일 base(dispatch+guard, base PASS) 이나 delivery-gap anchor 0건 → exit 1 (dimension 격리)
+run_dg_case "DG2: RED 합성 (anchor 삭제 mutation → delivery-gap RED)" 1 "delivery-gap" \
+  'timeout --kill-after=30 300 run_in_background worker  # max-wait wall-clock ceiling liveness
+이 문단엔 background-wait 규약만 있고 delivery-gap 규율 anchor 가 없다.'
+
+# DG3: GREEN 실 playbook 복사본 (실 content — anchor 존재 + base pass)
+run_dg_realcopy "DG3: GREEN 실 playbook 복사본 (anchor 존재)" 0 "PASS" ""
+
+# DG4: RED 실 playbook 복사본에서 force-resume anchor strip → delivery-gap RED (실 content mutation)
+run_dg_realcopy "DG4: RED 실 playbook — force-resume anchor strip → delivery-gap RED" 1 "delivery-gap" "force-resume"
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo

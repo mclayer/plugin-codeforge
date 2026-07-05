@@ -1560,6 +1560,15 @@ timeout --kill-after=${CODEFORGE_SUBAGENT_KILL_AFTER_SEC:-30} ${CODEFORGE_SUBAGE
 
 background-wait liveness gate 본문 SSOT = ADR-139 §결정 1/§결정 3 + ADR-039 §결정 20 + ADR-119 §결정 10.
 
+**delivery-gap 규율 강화 (P10 = stop taxonomy 축 B liveness, 대화 축 아님 — [ADR-139](../archive/adr/ADR-139-background-wait-liveness-gate.md) Amendment 1 / [ADR-144](../archive/adr/ADR-144-orchestrator-autonomy-stop-taxonomy.md) §결정 4)**: delivery-gap(자식 완료 통지가 parent 아닌 lead 로 surface 되는 idle)은 **축 B(liveness — 비의지적 mechanical stall)**이지 축 A(대화)가 아니다. "묻지 마"류 대화규칙으로 고치면 무효 — 아래 규율(1안 강제층)로만 해소한다. 위 INV-L1~L4 / force-resume 무손상, 본 문단은 그 위 append 강화다.
+
+- **PL 은 spawn-then-blind-wait 금지** — background 자식 spawn 후 수집(collect)은 **auto-wake 되는 LEAD 가 소유하거나 LEAD 로 handoff** 한다(structured-concurrency nursery 정설 — 부모가 소유+수집). observer = **LEAD**(hook 아님).
+- **named lead-collect routine(interface seam)** — PL 이 turn-yield 하는 지점에 "누가 이 background 작업을 collect 하는가"를 명명된 lead-owned 루틴으로 표면화한다(암묵 blind-wait 금지 seam).
+- **PL-background-yield idle detection marker** — PL 이 background-yield 로 idle 진입한 시점을 관측 가능한 marker 로 남긴다(observer = LEAD).
+- **stall 판정 (INV-L1~L3 상속)** — stall = wall-clock ceiling(시간 축) **AND** no-progress-marker(진행 축 = output mtime + content + task-notification). **0-byte 단독 ≠ stall**(INV-L3 재확인). **INV-L2 fail-open 금지** — stall ≠ PASS, verdict == "PASS" 명시일 때만 PASS.
+- **tier 정직** — detection `tier: [measurement]`(output-mtime/marker 관측) + recovery `[advisory]`(lead-owned discretionary). **`[물리강제]` 아님** (SubagentStop record-only [ADR-115](../archive/adr/ADR-115-orchestrator-runtime-hook-enforcement.md) + INV-L4 lead 판정). **force-resume 완전자동화 주장 금지** — force-resume 는 lead-owned discretionary 다. **full auto-wake-parent dispatcher(env=1)는 구현 금지** — substrate 부재(env=1) → DEFER-escalate (recurrence anchor `L3-delivery-gap::(a)`, ≥2 Story 재-제안 시 escalate, 자동 followup 발의 안 함).
+- **정직 앵커(hollow-gate 금지)** — 본 Story(CFP-2573) 실행 세션에서 delivery-gap force-resume 를 **6+회 재현**(falsifiable 실증). ADR-139 기배선에도 parent PL auto-resume 부재가 same-session 재현된다 — 본 규율은 delivery-gap 을 **자동 교정한다고 주장하지 않는다**.
+
 **ProactiveCheckPacket 스키마**:
 
 ```yaml

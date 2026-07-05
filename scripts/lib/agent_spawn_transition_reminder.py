@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""agent_spawn_transition_reminder.py — PreToolUse(Agent) 전환-자율 reminder SSOT helper (채널 2).
+"""agent_spawn_transition_reminder.py — PreToolUse(Agent) 자명-진행 자율 reminder SSOT helper (채널 2).
 
 목적:
   PreToolUse(Agent) hook(pretooluse-agent-spawn-gate)이 매 Agent spawn 직전 호출하는 self-contained
-  stdlib python 모듈. Agent spawn = autonomous 전환 창 priming 이므로, ADR-071 §결정 22 "Epic 내
-  Story 전환 = 자동 이어서 진행 default, over-halt/over-ask 금지(정당 멈춤 3종 예외)" norm 을
-  `hookSpecificOutput.additionalContext` 로 non-block inject 한다.
+  stdlib python 모듈. Agent spawn = autonomous 전환 창 priming 이므로, ADR-071 §결정 22 / ADR-144 §결정 3
+  의 자명-진행 자율 norm ("Story 전환 + lane 경계 + 완료-후 자동 이어서 진행 default, over-halt/over-ask/
+  vague-pause 금지(정당 멈춤 3종 예외)")을 `hookSpecificOutput.additionalContext` 로 non-block inject 한다.
+  scope 는 ADR-144 §결정 3 로 "Story 전환 한정"에서 모든 자명-진행 지점으로 일반화.
+
+  tier: [advisory / priming]
+    (taxonomy 명명·priming; NEVER deny — permissionDecision 키 미emit(= allow). ADR-144 §결정 3/7)
 
 계약 SSOT:
-  ADR-071 §결정 22 (Amendment 13) — 채널 2 = PreToolUse(Agent) additionalContext priming.
+  ADR-071 §결정 22 (Amendment 13/14) — 채널 2 = PreToolUse(Agent) additionalContext priming.
+  ADR-144 §결정 3 — 자명-진행 priming scope 확장 (전환 → 모든 자명-진행 지점).
 
-Phase 2 carrier: CFP-2567.
+Phase 2 carrier: CFP-2567 (scope 확장 carrier: CFP-2573).
 
 불변식:
   - NEVER deny — `permissionDecision` 키를 절대 emit 하지 않는다(미설정 = allow). Wave1 spawn 무손상.
@@ -78,8 +83,10 @@ def _build_context(subagent_type: str) -> str:
     """전환-자율 priming 문자열 반환. SPAWN_MARKER 로 시작. lane-PL 이면 targeting 문장 1개 추가."""
     base = (
         "[codeforge story-transition-autonomy] Agent spawn = autonomous 전환 창 priming "
-        "(ADR-071 §결정 22): Epic 내 Story 전환은 자동 이어서 진행이 default. 전환 지점에서 "
-        "over-halt(무발화 정지)·over-ask(\"다음 Story 진행할까요?\") 금지 — 정당 멈춤 3종"
+        "(ADR-071 §결정 22 / ADR-144 §결정 3): Story 전환·lane 경계·작업 완료-후 어느 자명-진행 지점도 "
+        "자동 이어서 진행이 default. over-halt(무발화 정지)·over-ask(\"다음 진행할까요?\") 금지 + "
+        "vague-pause(\"한 숨 쉬어가자\" = 잔여작업 有 + 결정 payload=0 + volitional 발화) 금지 "
+        "(decision-null pause, ADR-144 §결정 2 / ADR-025 §결정 7 Amendment 3) — 정당 멈춤 3종"
         "(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 만 예외. session-swap 은 "
         "disjoint 축(§결정 18)."
     )
