@@ -1,0 +1,35 @@
+name: phase-gate-localrefs-test
+# CFP-2581 Phase 2 — phase-gate-mergeable localRefs 바인딩 파서(owner/repo#N same-repo 인식 + same-repo 가드)
+#   extract-and-execute harness 의 CI 배선 (ADR-136 execution-liveness — 미배선 = hollow-gate).
+#
+# 두 harness 모두 shipped .github/workflows/phase-gate-mergeable.yml 을 파싱해 inline github-script 블록을
+#   추출·eval → shipped 코드 drift 를 실패로 검출(정규식 하드카피 0):
+#   - phase-gate-localrefs.test.js (CFP-2581): localRefs 파서 블록 + checkLabelMismatchOnly resolver
+#     · AC-1 cross-repo 직독 / AC-2a·2b / AC-3 superset / AC-3-neg foreign skip / AC-3-mix / AC-3-resolver
+#     · replacement-mutation: 구 bare-only 파서 grep=0 (교체 실증)
+#   - phase-gate-cfp2324.test.js (기존 dead test 재배선 — CFP-2581 §8 "교체/재배선"): S2 hard / S6 provenance / S7 throughput
+#     (14 case + 3 mutation-kill). 재배선으로 dead 병존 해소.
+#
+# 신규 workflow (non-required — 6-tuple contexts 무변경, AC-5). wrapper-self 전용(consumer red 회피 — CFP-2437 선례).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  phase-gate-localrefs-test:
+    name: phase-gate-localrefs-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run localRefs binding parser harness (CFP-2581 — extract-and-execute, AC-1/2a/2b/3/3-neg/3-mix/3-resolver + replacement-mutation)
+        run: node .github/workflows/tests/phase-gate-localrefs.test.js
+      - name: Run phase-gate S2/S6/S7 harness (dead-test 재배선 — extract-and-execute, 14 case + 3 mutation-kill)
+        run: node .github/workflows/tests/phase-gate-cfp2324.test.js
