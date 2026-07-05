@@ -547,6 +547,30 @@ amendments_reserved:
     reserved_by_cfp: CFP-2557
     reservation_date: 2026-07-02 KST
     status: active   # ArchitectAgent chief author commit time 점유 (Story Phase 1 PR carrier — 신규 ADR-140 구현 lane dev roster 작성-시점 리팩터링 hygiene 예방 층 신설). 검출/판정 3층(설계 debate ADR-138 / 구현리뷰 dup P1 / Epic-close triage ADR-137)과 발동 시점·성격 disjoint 인 예방 층(작성-시점 유입 차단) 정책 SSOT — $DEVSET 6 md hygiene 블록 + DeveloperPL packet 주입 + taxonomy 제3 dimension. ADR-137/138 §비대상 자기 non-goal → amendment 흡수 자기모순 회피, 신규 ADR carrier (ADR-138 §결정 1 선례). verified-via worktree `git fetch origin` 후 `git ls-tree --name-only origin/main archive/adr/` max = ADR-139 + ADR-RESERVATION 점유 max = 136 → 140 available, 2026-07-02 KST 기준 origin/main 40519af5. status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — CFP-1734 row 패턴). CFP-702 ADR collision 교훈 답습 (max+1 실측 후 점유). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
+
+  - adr_number: 144
+    amendment_id: null
+    reserved_by_cfp: CFP-2573
+    reservation_date: 2026-07-05 KST
+    status: active   # 신규 ADR-144 Orchestrator 자율성 stop taxonomy 3축 모델 + decision-null pause(vague-pause) 신설 + 자율화 정직 상한 (CFP-2573, Epic CFP-2571 요구 #1 scoped 계승). OCC atomic claim 경유 점유 (claimant ArchitectPLAgent:CFP-2573, adr-reservation-state branch state max=144, ADR-133 §결정 4 / A1-2 (adr_number, claimant) idempotency key — at-least-once replay self-claim). dual-key 3-leg: filename ADR-144-orchestrator-autonomy-stop-taxonomy.md ∧ frontmatter adr_number:144 ∧ 본 RESERVATION row. verified-via `git ls-tree --name-only origin/main archive/adr/` (140/141/142/143 존재, 144 collision-free) 2026-07-05 KST origin/main 8de9a2b1. ArchitectAgent chief author write per ADR-070 / CFP-578 precedent. sibling amendment realization: ADR-025 Amd 3 / ADR-071 Amd 14 / ADR-139 Amd 1 (아래 3 row). ADR-058 §결정 5 강화(ratchet) 방향 — sunset_justification N/A.
+
+  - adr_number: 25
+    amendment_id: 3
+    reserved_by_cfp: CFP-2573
+    reservation_date: 2026-07-05 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2573 Phase 1 PR carrier — ADR-144 §결정 2 L1 realization: §결정 7 illegal-stop 표 vague-pause 6번째 행 + §결정 10 subclass policy_violation_vague_pause 등재). verified-via `git show origin/main:archive/adr/ADR-025-stop-discipline-non-whitelist-as-defect.md` frontmatter amendment_log[] max=2 → next=3 2026-07-05 KST origin/main 8de9a2b1. status reserved 미경유 직접 active (ArchitectAgent chief author precedent). ADR-025 single-block (amendment_log[] only, no amendments[]) → CFP-1734 dual-block gate EXEMPT. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
+
+  - adr_number: 71
+    amendment_id: 14
+    reserved_by_cfp: CFP-2573
+    reservation_date: 2026-07-05 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2573 Phase 1 PR carrier — ADR-144 §결정 3(L2)/§결정 6(L6) realization: §결정 22 scope 일반화 transition-only → 모든 자명-진행 지점 + vague-pause 금지 + consumer 전파 (§22.9 신설). hook TEXT+docstring broaden only — 파일명·hooks.json 5번째 entry·§22.7 back-refs stable, closed-enum member 추가 0, carve-out verbatim 보존, NEVER block). fourth strengthen-direction amendment. verified-via `git show origin/main:archive/adr/ADR-071-orchestrator-user-dialog-convergence.md` frontmatter amendments[] max=13 → next=14 2026-07-05 KST origin/main 8de9a2b1. status reserved 미경유 직접 active (ArchitectAgent chief author precedent). sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
+
+  - adr_number: 139
+    amendment_id: 1
+    reserved_by_cfp: CFP-2573
+    reservation_date: 2026-07-05 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2573 Phase 1 PR carrier — ADR-144 §결정 4(L3) realization: §결정 4 delivery-gap 규율 강화 = §결정 7 신설 PL background-yield no-blind-wait discipline + named lead-collect routine(interface seam) + idle detection marker, INV-L1~L4 상속·무변경). tier detection [measurement] + recovery [advisory], [물리강제] 아님. verified-via `git show origin/main:archive/adr/ADR-139-background-wait-liveness-gate.md` frontmatter `amendments: []` → next=1 2026-07-05 KST origin/main 8de9a2b1. status reserved 미경유 직접 active (ArchitectAgent chief author precedent). ADR-139 single-block (amendments[] only, no amendment_log[]) → CFP-1734 dual-block gate EXEMPT. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
 ```
 
 ## 해소 기준
