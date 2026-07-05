@@ -35,10 +35,14 @@ jobs:
             const pr = context.payload.pull_request;
             const body = pr.body || '';
 
-            // 1. Parse linked Story Issue refs from PR body (Related/Closes/Fixes/Resolves: #N)
+            // 1. Parse linked Story Issue refs from PR body (Related/Closes/Fixes/Resolves: [owner/repo]#N)
             //    OR cross-repo URI: story_uri: https://github.com/mclayer/codeforge-internal-docs/blob/main/test/stories/<KEY>.md
-            const localRefs = [...body.matchAll(/(?:Related|Closes|Fixes|Resolves):?\s+#(\d+)/gi)]
-              .map(m => parseInt(m[1], 10));
+            //    CFP-2581 (S-primary): optional owner/repo prefix + same-repo guard — cross-repo 표기 owner/repo#N 직독
+            //    (same-repo 한정); foreign owner/repo#N = skip (context.repo 고정 fetch spoof 차단). bare #N superset 보존.
+            const selfRepo = `${context.repo.owner}/${context.repo.repo}`.toLowerCase();
+            const localRefs = [...body.matchAll(/(?:Related|Closes|Fixes|Resolves):?\s+(?:([\w.-]+\/[\w.-]+))?#(\d+)/gi)]
+              .filter(m => !m[1] || m[1].toLowerCase() === selfRepo)  // bare(m[1] undefined) OR same-repo prefix
+              .map(m => parseInt(m[2], 10));
             const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
 
             let phaseLabel = null;
