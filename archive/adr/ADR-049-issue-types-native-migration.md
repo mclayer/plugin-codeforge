@@ -35,6 +35,11 @@ amendment_log:
     story: CFP-2252
     scope: "Amendment 2 — native Issue Type cutover 완결 (Epic #2244 최후 child S4, story-init.yml owner). ADR-049 §결정 5 (story-init Action 갱신 + graceful fallback) + §결정 8 (bootstrap-labels) + Amendment 1 §A1-3 (라벨 삭제 S4 sequencing) 의 실 실행 완결. 3 결정: (1) type 정정(P0) — story-init.yml `Attach native Issue Type` step 의 `--field type_id=<id>` (REST 미존재 파라미터, silent drop, 6개월 잠복) → `-f type=Story` (이름 기반) + verify-after-write (PATCH 2xx ≠ 실제 부착 → 재read 실측, silent-drop 구조적 차단). (2) native-type 트리거 전환 — `on.issues.types` 에 `typed` 추가 + if-expression OR-bridge (`issue.type.name == 'Story'` OR `type:story` 라벨, phase:요구사항 AND 보존). payload 가용성 = 공식 문서 미명세 (abstention) → 라이브 canary (TC-13) 가 입증 gate. (3) 라벨 물리 삭제 = Orchestrator org-mutating 영역 — 3단계 promotion invariant (merge → production canary green blocking → 삭제), PC-1∧PC-2∧PC-3 충족 시에만. 입증 실패 = 라벨 영구 보존 (안전 종착, native+label 공존). additive ratchet — 기존 §결정 1-12 + Amendment 1 본문 변경 0. DI-1 invariant (native type + type:* label 동시 존재 금지) 완전 충족 = 본 Amendment 라벨삭제 단계 완료 시점. 동반: ADR-013 Amendment 7 (TARGET_REPO → project.yaml github.story_ssot_repo 파라미터화) + ADR-066 §결정 2 cross-ref (PAT scope 사전검증 step — scope 무변경). **Amendment 1 §결정 11 graceful-fallback 오인용 정정 — 실제 위치 = §결정 5** (§결정 11 = ADR-008 amendment / §결정 12 = consumer migration 면제 — 둘 다 graceful fallback 과 무관. Amendment 1 §A1-3 의 '§결정 11 정합' 인용은 §결정 5 의 오인용. 상속 drift 차단, additive 무손상)."
     sunset_justification: "ratchet 강화 (Amendment 1 declared sequencing → S4 actual execution + 라이브 결함 정정). 약화/reversal 방향 아님 — 기존 §결정 1-12 + Amendment 1 본문 변경 0 (graceful-fallback 인용 정정 1줄 = 오인용 교정으로 의미 무변경 additive). DI-1 invariant 강화 (transient dual-state → 완전 충족). sunset/원복 trigger 부재 — cutover 완료 후 영구. ADR-058 §결정 5 self-application 정합."
+  - amendment: 3
+    date: 2026-07-05
+    story: CFP-2581
+    scope: "Amendment 3 — read-side cutover orphan 기록 + 라벨 물리 삭제 (A2-3) 안전 envelope 보강 (documentary, additive). CFP-2581(phase-gate-mergeable 자동 Story-issue 인식) 설계 lane 이 firsthand 로 발견한 A2-2 OR-bridge 의 read-side 미전파 gap 을 A2-3 promotion invariant 의 선결조건으로 기록한다. 3 기록: (1) read-side orphan — A2-2 OR-bridge(`issue.type.name=='Story'` OR `type:story` 라벨)는 story-init.yml 트리거에만 적용됐고 phase-gate-mergeable.yml 의 canonical issue 직독 predicate 2곳(step-3 L113 `labels.includes('type:story')` + deadlock-resolver `isLabelMismatchOnly` L330 동일 검사)은 여전히 `type:story` **라벨** predicate → cutover read-side 후속 미완. (2) A2-3 라벨 삭제 선결조건 추가 — 현 A2-3 의 PC-2 canary(TC-13)는 story-init 발화만 입증하고 phase-gate 직독은 미검. 라벨 삭제 후 L113/L330 이 label-only 인 채로 남으면 native-only Story 를 링크한 bare `#N` PR(현재 직독 성립 부류, #2559/#2580)마저 step-3 직독이 깨져 수동 미러로 회귀 → **PC-4 신설: 라벨 삭제 前 phase-gate read-side(L113+L330) OR-bridge 완료 + 직독 canary green**. (3) native-null blocker — #2563 은 `.type.name`=null(type:story 라벨만 보유, A2-1 silent type_id drop 잔재 추정, RequirementsReviewPL firsthand). native-null issue 는 라벨 삭제 시 label predicate ∧ OR-bridge 양쪽 실패 → **PC-5 신설: 라벨 삭제 前 native-type audit/backfill 로 native-null 집합 0 확인**(DI-1 완전 충족의 실 조건). scope 경계 — CFP-2581 실 변경 = PR body 의 canonical-issue 바인딩 파싱 확장(localRefs 정규식 `owner/repo#N` same-repo 인식)으로 native-type cutover 와 **disjoint**(별 read 경로). read-side OR-bridge(구 후보 b) 자체는 본 Story 미실행 — A2-3 라벨 삭제 carrier 로 defer(선결조건으로만 기록). 본 Amendment 는 mechanism 무변경 documentary."
+    sunset_justification: "additive ratchet — A2-3 promotion invariant 의 안전 envelope 확장(PC-1∧PC-2∧PC-3 → +PC-4 read-side OR-bridge +PC-5 native-null audit). 기존 §결정 1-12 + Amendment 1/2 본문 변경 0(mechanism 무변경, 선결조건 append-only). 약화/reversal 방향 아님 — 오히려 라벨 삭제의 안전 게이트를 강화(입증 없이 삭제 금지 원칙 A2-3 verbatim 답습). DI-1 invariant 강화(native-null 집합을 라벨 삭제 선결로 명문화 → 완전 충족 조건 정밀화). sunset/원복 trigger 부재 — cutover 완료 후 영구. ADR-058 §결정 5 self-application 정합."
 ---
 
 # ADR-049: Issue Types + Sub-issues Native Migration
@@ -44,6 +49,7 @@ amendment_log:
 Proposed (2026-05-09) — CFP-140 carrier.
 Amendment 1 (2026-06-15) — CFP-2251 carrier: type:* → native Issue Type 실 org cutover (additive 재구성). 아래 "## Amendment 1" 참조.
 Amendment 2 (2026-06-15) — CFP-2252 carrier: native Issue Type cutover 완결 (type 정정 P0 + native-type 트리거 전환 + 라벨삭제 sequencing 완결 + §결정 5 graceful-fallback 인용 정정). 아래 "## Amendment 2" 참조.
+Amendment 3 (2026-07-05) — CFP-2581 carrier: read-side cutover orphan 기록 + 라벨 삭제(A2-3) 안전 envelope 보강 (PC-4 phase-gate read-side OR-bridge + PC-5 native-null audit 선결조건 추가, documentary/additive). 아래 "## Amendment 3" 참조.
 
 ## 컨텍스트
 
@@ -216,6 +222,44 @@ Amendment 1 §A1-3 본문이 transient dual-state 허용을 "ADR-049 §결정 11
 - **ADR-013 Amendment 7**: TARGET_REPO 하드코딩 4곳 (existence_check / branch create / PR create / Issue body URL) → project.yaml `github.story_ssot_repo` 파라미터화 (default `mclayer/codeforge-internal-docs`, 확장-only). consumer 분기 무변경.
 - **ADR-066 §결정 2 cross-ref (Amendment 불요)**: existence_check 앞 PAT scope 사전검증 step (토큰 유효 → repo 접근 → `permissions.push` write proxy, codeforge family 한정, fail-closed). 기존 6 scope 무변경 — enforcement mechanism 만 추가 → 독립 Amendment 불요, cross-ref 만. fine-grained scope 정밀 introspection API 부재 → `permissions.push` 가 최선 신호 (abstention 명시).
 - **#1046 / #2147 흡수**: #1046 (Create Phase 1 PR self-repo resolve) = pat_precheck 의 에러 locality + write-readiness probe 보강 (existence_check 가 이미 read probe 수행 — 단독 흡수 아님, sentinel pattern_count=1 보존). #2147 (reconcile 빈 §1 scaffold) = parse step body-치환 guard (`^Story SSOT: \[` 마크다운 링크 prefix + 요구사항 추출 0 → exit 1 fail-safe).
+
+## Amendment 3 (CFP-2581, 2026-07-05) — read-side cutover orphan 기록 + 라벨 삭제 안전 envelope 보강 (documentary/additive)
+
+CFP-2581 (`phase-gate-mergeable` 자동 Story-issue 인식) 설계 lane 이 firsthand 로 확인한 **A2-2 OR-bridge 의 read-side 미전파 gap** 을 A2-3 라벨 삭제 promotion invariant 의 선결조건으로 기록한다. 본 Amendment 는 **mechanism 무변경 documentary** — 기존 §결정 1-12 + Amendment 1/2 본문 변경 0, A2-3 안전 게이트에 PC-4/PC-5 를 append-only 로 강화한다.
+
+### A3-1. read-side cutover orphan (firsthand)
+
+Amendment 2 §A2-2 는 native-type 인식 OR-bridge (`github.event.issue.type.name == 'Story'` OR `contains(labels, 'type:story')`) 를 **story-init.yml 트리거에만** 적용했다. 그러나 canonical Story issue 를 직독하는 **다른** read 경로 — `phase-gate-mergeable.yml` — 의 predicate 2곳은 여전히 `type:story` **라벨** 검사에 머물러 있다:
+
+| 위치 | predicate (현재) | 역할 |
+|---|---|---|
+| step-3 L113 | `issue.labels ... includes('type:story')` | linked issue 직독으로 phase/gate 라벨 채택 |
+| deadlock-resolver `isLabelMismatchOnly` L330 | 동일 `type:story` 라벨 검사 | ADR-127 §K full-flow 증거(Story binding) 판정 |
+
+즉 OR-bridge 는 **write/트리거 경로만** cutover 됐고 **read/게이트 판정 경로는 orphan** 이다. 이는 §A2-2 의 "라벨삭제 후 native-type 으로 발화 보존" 이 story-init 발화에는 성립하나 **phase-gate 직독에는 미보장** 임을 의미한다.
+
+### A3-2. A2-3 라벨 삭제 선결조건 강화 — PC-4 신설 (read-side OR-bridge)
+
+A2-3 는 라벨 물리 삭제를 PC-1(트리거 PR merge) ∧ PC-2(TC-13 story-init canary green) ∧ PC-3(DI-1 직전) 3단계로 게이트한다. 그러나 **PC-2 canary(TC-13)는 story-init 발화만 입증** 하고 phase-gate 직독은 검증 범위 밖이다.
+
+라벨 삭제 후 L113/L330 이 label-only 인 채로 남으면: native type='Story' 이나 `type:story` 라벨이 없는 issue 를 링크한 **bare `#N` PR (현재 step-3 직독이 성립하는 부류 — #2559/#2580)** 마저 L113 predicate 가 false → 직독 실패 → **수동 미러로 회귀** (CFP-2581 이 제거하려는 friction 의 전면 재발).
+
+→ **PC-4 신설**: 라벨 삭제 前, phase-gate read-side predicate 2곳(L113 step-3 + L330 deadlock-resolver)을 §A2-2 와 동일한 OR-bridge (`labels.includes('type:story') || issue.type?.name === 'Story'`, additive superset)로 전환 완료 + native-only issue + bare `#N` PR 직독 canary green 로그 확보. 미충족 시 라벨 삭제 금지 (A2-3 "입증 실패 = 라벨 영구 보존" 원칙 verbatim 답습).
+
+### A3-3. native-null blocker — PC-5 신설 (native-type audit/backfill)
+
+`#2563` 은 native `.type.name`=**null** (`type:story` 라벨만 보유 — A2-1 silent `type_id` drop 잔재 추정, RequirementsReviewPL firsthand `gh api` 실측). native-null issue 는 라벨 삭제 시 **label predicate ∧ OR-bridge 양쪽 실패** → 어느 read 경로로도 Story 로 인식 불가.
+
+→ **PC-5 신설**: 라벨 삭제 前, native-type audit (전 Story issue `.type.name` 실측) 로 native-null 집합 = 0 확인 + backfill (`gh api ... -f type=Story` A2-1 verify-after-write 패턴). 이것이 DI-1(native type + `type:*` label 동시 존재 금지)의 실 완전 충족 조건 — native-null 잔존 상태에서 라벨 삭제 시 해당 issue 는 native type 도 label 도 없는 orphan 이 되어 DI-1 의 "native type 존재" 전제 위반.
+
+### A3-4. CFP-2581 scope 경계 — native-type cutover 와 disjoint
+
+CFP-2581 의 실 변경 = `phase-gate-mergeable.yml` L40 localRefs 정규식을 `owner/repo#N` (same-repo) 형태까지 확장하는 **PR↔canonical-issue 바인딩 파싱** 이다. 이는 "어떤 PR-body ref 형태가 유효 바인딩인가" 축으로, "무엇이 Story 인가" 를 판정하는 native-type predicate (L113/L330) 와 **직교(disjoint)** — 서로 다른 read 단계다. 따라서:
+
+- read-side OR-bridge (Amendment 2 §A2-2 의 phase-gate 전파, 구 CFP-2581 요구사항 후보 (b)) 자체는 **CFP-2581 미실행** — A2-3 라벨 삭제 carrier 로 **defer**. 본 Amendment 는 그 선결조건(PC-4/PC-5)만 기록.
+- CFP-2581 의 바인딩 파싱 확장은 `type:story` 라벨 존속 상태(현재)에서 즉시 실 friction(cross-repo ref PR 직독 skip)을 해소하며, native-type cutover 진행/보류와 무관하게 독립 유효.
+
+**해소 기준**: A3-2/A3-3 의 PC-4/PC-5 는 A2-3 라벨 삭제가 실제 착수될 때 그 carrier 가 이행. 그 전까지는 label+native 공존(A2-3 안전 종착)이 유지되므로 read-side orphan 은 무해(latent) — 라벨이 존속하는 한 L113/L330 label predicate 는 정상 동작.
 
 ## 결과
 
