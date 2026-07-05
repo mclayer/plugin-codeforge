@@ -3,6 +3,11 @@
 # ADR-061 §결정 1 Python-SSOT 패턴 (thin wrapper = scripts/check-subagent-wait-liveness-presence.sh)
 #   + §결정 11 ReDoS-safe (line-by-line, anchored 리터럴 + \d+, per-entry cap)
 # 검사 로직 SSOT = scripts/lib/liveness_check_base.py (본 파일 = general 어휘 주입 Ports&Adapters adapter).
+# tier: [measurement]  (L3 delivery-gap detection lever — CFP-2573 / ADR-144 §결정 7 / ADR-139 Amendment 1)
+#
+# CFP-2573 AC-3 확장 (adapter-local — liveness_check_base.py 무손상): timeout-guard presence 검사에 더해
+#   playbook §3.10.1 의 delivery-gap 규율 anchor(spawn-then-blind-wait 금지 + force-resume + lead-collect)
+#   존재를 assert. playbook 실존하나 anchor 부재면 RED(hollow-gate 확장). ADR-139 Amendment 1 / ADR-144 §결정 4.
 #
 # 목적:
 #   `docs/orchestrator-playbook.md` 의 background-wait liveness gate 공통 규약을 정적 검사.
@@ -63,6 +68,15 @@ MAXWAIT_VOCAB = [
     re.compile(r'\bmax-?wait\b', re.IGNORECASE),
     re.compile(r'wall-?clock'),
     re.compile(r'\bliveness\b', re.IGNORECASE),
+]
+
+# ── CFP-2573 AC-3: delivery-gap 규율 anchor (playbook §3.10.1 강화 문단 presence) ──────────────
+# playbook 이 실존하는데 아래 3 anchor 가 전부 존재하지 않으면 hollow-gate 확장 RED
+#   (force-resume/delivery-gap 규율 삭제 → presence-lint RED). ReDoS-safe (고정 리터럴).
+DELIVERY_GAP_ANCHORS = [
+    ('spawn-then-blind-wait', re.compile(r'spawn-then-blind-wait')),
+    ('force-resume', re.compile(r'force-resume')),
+    ('lead-collect', re.compile(r'lead-collect')),
 ]
 
 # 스캔 대상 파일 확장자 (playbook markdown 우선, 일반 유지).
@@ -149,10 +163,56 @@ def check_lines(text, filename):
                             KIND_LABELS, ADAPTER_NAME, DIAG_MESSAGES)
 
 
+def check_delivery_gap_discipline(text):
+    """playbook 텍스트에 delivery-gap 규율 anchor(spawn-then-blind-wait 금지 + force-resume + lead-collect)
+    전부 존재하는지 검사. 부재 anchor label 리스트 반환 (빈 = PASS). (self-test/외부 테스트 공개 API — AC-3.)"""
+    missing = []
+    for label, pat in DELIVERY_GAP_ANCHORS:
+        if not pat.search(text):
+            missing.append(label)
+    return missing
+
+
+def _find_playbook(paths):
+    """스캔 paths 안 docs/orchestrator-playbook.md 실경로 반환 (없으면 None)."""
+    marker = os.path.normpath(HOME_MARKER)
+    for f in base._iter_files(paths, SCAN_EXTS):
+        if marker in os.path.normpath(f):
+            return f
+    return None
+
+
+def _run_delivery_gap_scan(paths):
+    """playbook 실존 시 delivery-gap 규율 anchor presence 검사 (AC-3 hollow-gate 확장).
+    exit 0 = PASS 또는 playbook 부재 no-op / 1 = anchor 부재 (RED)."""
+    pb = _find_playbook(paths)
+    if pb is None:
+        return 0  # playbook 부재 → consumer no-op (base 가 이미 no-op 처리)
+    try:
+        with open(pb, 'r', encoding='utf-8') as fh:
+            text = fh.read()
+    except (OSError, UnicodeDecodeError):
+        return 0
+    missing = check_delivery_gap_discipline(text)
+    if missing:
+        print('[subagent-wait-liveness-presence] FAIL (AC-3 delivery-gap hollow-gate 확장): '
+              'docs/orchestrator-playbook.md 실존하나 delivery-gap 규율 anchor 부재 — '
+              + ', '.join(missing)
+              + ' (spawn-then-blind-wait 금지 + force-resume + lead-collect 필수, '
+                'ADR-139 Amendment 1 / ADR-144 §결정 4).')
+        return 1
+    return 0
+
+
 def run_scan(paths):
-    return base.check_liveness_presence(
+    base_exit = base.check_liveness_presence(
         paths, DISPATCH_PATTERNS, SCAN_EXTS, HOME_MARKER, ADAPTER_NAME,
         KIND_LABELS, _is_doc_example_line, DIAG_MESSAGES, MESSAGES)
+    # CFP-2573 AC-3 확장: delivery-gap 규율 anchor presence (adapter-local — base 무손상)
+    dg_exit = _run_delivery_gap_scan(paths)
+    if base_exit == 2 or dg_exit == 2:
+        return 2
+    return 1 if (base_exit == 1 or dg_exit == 1) else 0
 
 
 # ── self-test (inline fixture, CI step 호출) ────────────────────────────────────
@@ -194,10 +254,31 @@ def self_test():
         if got != expect:
             failed.append((name, expect, got))
         print(f'  [{status}] {name} (expect exit {expect}, got {got})')
+
+    # CFP-2573 AC-3 확장: delivery-gap 규율 anchor dimension (기존 timeout-guard 케이스 무손상 추가).
+    #   GREEN = spawn-then-blind-wait 금지 + force-resume + lead-collect 3 anchor 존재.
+    #   RED = delivery-gap 규율(force-resume/anchor) 삭제 mutation → RED 전환 (AC-3 mutation proof).
+    dg_cases = [
+        ('GREEN: delivery-gap 규율 anchor 3종 존재',
+         'PL 은 spawn-then-blind-wait 금지 — 수집은 LEAD 소유. stall 시 lead force-resume. '
+         'named lead-collect routine.\n', 0),
+        ('RED: delivery-gap 규율 삭제 (force-resume/anchor delete mutation)',
+         '이 문단엔 background-wait 규약만 있고 delivery-gap 규율(anchor)이 없다.\n', 1),
+    ]
+    for name, text, expect in dg_cases:
+        missing = check_delivery_gap_discipline(text)
+        got = 1 if missing else 0
+        status = 'OK' if got == expect else 'MISMATCH'
+        if got != expect:
+            failed.append((name, expect, got))
+        print(f'  [{status}] {name} (expect exit {expect}, got {got}; missing={missing})')
+
+    total = len(cases) + len(dg_cases)
     if failed:
         print(f'[self-test] FAIL — {len(failed)} case mismatch')
         return 1
-    print(f'[self-test] PASS — {len(cases)}/{len(cases)} case (RED→GREEN discriminating 검증)')
+    print(f'[self-test] PASS — {total}/{total} case (timeout-guard RED→GREEN + AC-3 delivery-gap '
+          'mutation discriminating)')
     return 0
 
 
