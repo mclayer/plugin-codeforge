@@ -33,3 +33,5 @@ jobs:
         run: node .github/workflows/tests/phase-gate-localrefs.test.js
       - name: Run phase-gate S2/S6/S7 harness (dead-test 재배선 — extract-and-execute, 14 case + 3 mutation-kill)
         run: node .github/workflows/tests/phase-gate-cfp2324.test.js
+      - name: Run sibling-parsers harness (CFP-2584 — extract-and-execute, auto-phase-label + phase-gate-auto-cleanup, AC-1~10 + replacement-mutation)
+        run: node .github/workflows/tests/phase-gate-sibling-parsers.test.js
