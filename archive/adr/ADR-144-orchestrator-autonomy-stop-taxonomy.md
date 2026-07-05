@@ -16,7 +16,8 @@ related_adrs:
   - ADR-042  # measurement channel architecture — stop-event schema SSOT (L5 근거)
   - ADR-009  # wrapper-only single-lead — L3 topology 재편 경계
   - ADR-039  # subagent default — §결정 19 lead force-resume (L3 recovery anchor)
-  - ADR-064  # 신규 ADR carrier 기준 — §결정 1 신규-carrier 정당화 (D-A)
+  - ADR-054  # 신규 ADR 도입 = full-lane 강제 — D-A NEW carrier 정당화 실 근거지 (new-vs-amendment 기준)
+  - ADR-064  # §결정 7 evidence-gated ratchet 보조 — 신규-carrier 기준 아님 (§결정 1 = 4-어휘 운영 정의; new-vs-amendment 근거지는 ADR-054)
   - ADR-134  # per-Story dispatch topology — L3 Story-boundary handoff build-on
   - ADR-038  # TodoWrite progress viz — marker≠liveness (재사용 금지)
 related_concepts:
