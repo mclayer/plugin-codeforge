@@ -60,7 +60,12 @@ jobs:
             // EC-2 cross-repo orphan guard: PR body 또는 Issue body 안 Related: #N marker 부재 시 skip.
             // ALLOWED_HUB_REPOS env guard (within-repo wrapper Issue ↔ wrapper PR scope 만).
             const body = (context.payload.pull_request?.body || context.payload.issue?.body || '');
-            const hasRelatedMarker = /(?:Related|Closes|Fixes|Resolves):?\s+#\d+/i.test(body);
+            // CFP-2584 (형제 parity): boolean .test() → matchAll+filter 구조 전환 (same-repo 가드).
+            //   bare `#N` 또는 same-repo `owner/repo#N` → marker=true; foreign `owner/repo#N` → false (spoof 차단).
+            const selfRepo = `${owner}/${repo}`.toLowerCase();
+            const relatedRefs = [...body.matchAll(/(?:Related|Closes|Fixes|Resolves):?\s+(?:([\w.-]+\/[\w.-]+))?#(\d+)/gi)]
+              .filter(m => !m[1] || m[1].toLowerCase() === selfRepo);
+            const hasRelatedMarker = relatedRefs.length > 0;
             const allowedHubRepos = (process.env.ALLOWED_HUB_REPOS || '').split(/[\s,]+/).filter(Boolean);
             const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
             const hasAllowedStoryUri = storyUriMatch

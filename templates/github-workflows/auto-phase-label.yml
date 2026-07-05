@@ -95,20 +95,25 @@ jobs:
             // (ADR-020 Amendment 1 §결정 9 정합 — terminal phase = phase:reservation)
             const isCloseBranch = /^cfp-\d+-close(\b|$)/i.test(branch);
 
-            // ─── 2순위: PR body `Related: #N` 파싱 → linked Issue 의 phase:* label 상속 ───
+            // ─── 2순위: PR body `Related: [owner/repo]#N` 파싱 → linked Issue 의 phase:* label 상속 ───
             // case-insensitive / multi-line / multiple Related lines / GitHub auto-link `#N` vs URL 4종 robust
-            // (a) `Related: #N` 또는 `related: #N`
-            const relatedRegex = /^[ \t]*related[ \t]*:[ \t]*#(\d+)[ \t]*$/gim;
-            // (b) URL 형식: https://github.com/<owner>/<repo>/issues/N
-            const urlRegex = /https?:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/(\d+)/gim;
+            // CFP-2584 (형제 parity): CFP-2581 phase-gate-mergeable 패턴 이식 — optional owner/repo prefix + same-repo 가드.
+            //   same-repo `owner/repo#N` 직독(상속 발동); foreign `owner/repo#N`/full-URL = skip(spoof 차단). bare `#N` superset 보존.
+            const selfRepo = `${context.repo.owner}/${context.repo.repo}`.toLowerCase();
+            // (a) shorthand: `Related: #N` 또는 `Related: owner/repo#N` (owner/repo optional capture, end-anchor 유지)
+            const relatedRegex = /^[ \t]*related[ \t]*:[ \t]*(?:([\w.-]+\/[\w.-]+))?#(\d+)[ \t]*$/gim;
+            // (b) URL 형식: https://github.com/<owner>/<repo>/issues/N (owner/repo capture — fork ① same-repo 가드)
+            const urlRegex = /https?:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/issues\/(\d+)/gim;
 
             const relatedNumbers = [];
             let m;
             while ((m = relatedRegex.exec(body)) !== null) {
-              relatedNumbers.push(parseInt(m[1], 10));
+              if (m[1] && m[1].toLowerCase() !== selfRepo) continue;  // foreign shorthand skip (bare = m[1] undefined → 유지)
+              relatedNumbers.push(parseInt(m[2], 10));                 // 번호 index 이동 m[1]→m[2]
             }
             while ((m = urlRegex.exec(body)) !== null) {
-              relatedNumbers.push(parseInt(m[1], 10));
+              if (m[1].toLowerCase() !== selfRepo) continue;           // foreign full-URL skip (URL 은 항상 owner/repo)
+              relatedNumbers.push(parseInt(m[2], 10));                 // 번호 index 이동 m[1]→m[2]
             }
 
             // dedup + first-match policy (Change Plan §3.1 + §8.2 multiple-related fixture 정합)
