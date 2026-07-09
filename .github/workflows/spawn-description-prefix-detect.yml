@@ -1,12 +1,13 @@
 name: Spawn description prefix detect (warning mode)
-# CFP-2574 / ADR-143 §결정 4 — Agent 수행 액션 렌더 줄 프리픽스 (`[에이전트명] MM/DD HH:MM - 내용`) format DETECT.
-# 범위① (Agent spawn 최상위 헤더 description) format 이 conformant 한지 + KST render-stamp helper 정확성/TZ-invariance
-# + 컴팩트 예시 lint-inert 회귀를 warning-tier 로 검증 (QADev discriminating suite T-1/T-2/T-4).
+# CFP-2574 도입 / CFP-2587 repurpose — Agent 수행 액션 렌더 줄 프리픽스 (`[에이전트명] MM/DD HH:MM - 내용`) 형식 injection regression guard.
+# CFP-2587 (Gate-A/B GO): 범위① (Agent spawn 최상위 헤더 description) 을 PreToolUse(Agent) updatedInput 주입으로 프리픽스 자동 conformant 화
+# — detect helper 를 주입 idempotency guard 로 재사용 (이미 conformant → 재주입 skip, KST render-stamp helper TZ-invariance 보존).
+# 본 workflow = 그 guard 의 self-test 회귀를 warning-tier 로 방어 (QADev discriminating suite). exit-0-always fail-open, in-coverage best-effort.
 # Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-143 §결정 4 declaration-only Wave 1)
 # Bypass channel: hotfix-bypass:spawn-description-prefix-detect (ADR-024 §결정 6.A per-entry namespace)
 #
 # enforcement 상한 (ADR-143 §결정 4 — advisory CEILING, theater 금지):
-#   범위① (spawn 최상위 헤더) = 본 warning-tier detect + PreToolUse(Agent) hook.
+#   범위① (spawn 최상위 헤더) = 본 warning-tier CI guard + PreToolUse(Agent) updatedInput 주입 hook (CFP-2587).
 #   범위② (leaf 도구호출) = prompt-mandate + 세션시작 리마인더 advisory (mechanical 불가 — ephemeral scan target 부재).
 #   "100% 기계 강제" / "hard-gate" 참칭 금지 — advisory 조합이 곧 강제 상한.
 #

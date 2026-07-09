@@ -1,0 +1,19 @@
+{
+  "session_id": "90355306-aac0-4ca1-8983-7908eb55d669",
+  "transcript_path": "C:\\Users\\mccho\\.claude\\projects\\C--workspace-mclayer--wt-cfp-2587-p2-tests-spike-cfp-2587-updatedinput-honor\\90355306-aac0-4ca1-8983-7908eb55d669.jsonl",
+  "cwd": "C:\\workspace\\mclayer\\_wt-cfp-2587-p2\\tests\\spike\\cfp-2587-updatedinput-honor",
+  "prompt_id": "be66a244-489e-49db-97c7-e2815238a18e",
+  "permission_mode": "bypassPermissions",
+  "agent_id": "a6d00afbe573476fa",
+  "agent_type": "general-purpose",
+  "effort": {
+    "level": "xhigh"
+  },
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "echo SPIKE_ORIGINAL_LEAF01",
+    "description": "Echo spike marker string"
+  },
+  "tool_use_id": "toolu_01DvNZPthgRjHuVN2nkN4RL8"
+}

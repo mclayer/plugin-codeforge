@@ -14,7 +14,9 @@
 #   stdout JSON: {"description_prefix_conformant": <bool>, "empty": <bool>, "checked": "<앞 80자>"}
 #   exit 0: ALWAYS (conformant 든 아니든). nonconformant 시 stderr 에 warning 1줄.
 #
-# Bypass:
+# Bypass (surface-specific — F5/CFP-2587 FIX-2): --inject 모드는 `--bypass-env <NAME>` 로 표면별
+#   bypass env 를 수령(Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT;
+#   disjoint — cross-surface bleed 없음). --description-stdin 모드는 아래 유지:
 #   BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1 →
 #     stdout JSON {"bypass": true, "description_prefix_conformant": true}, exit 0.
 #
@@ -61,6 +63,17 @@ CHECKED_PREVIEW_LEN = 80
 #   빈 필드(프리픽스 자체 부재, strip=="")는 check_description 의 별도 empty 분기(regex 미도달)로 conformant 보존.
 RE_PREFIX = re.compile(r'^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S')
 
+# ── --inject 모드 KST stamp 유효성 (CFP-2587 Phase 2) ─────────────────────────
+#   컴팩트 `MM/DD HH:MM` 만 인정 (ADR-143 §결정 2/3). anchored·bounded (ReDoS-safe).
+#   invalid stamp → build_injected_description 이 None 반환(KST-fail skip, degradation rung 4).
+RE_KST_STAMP = re.compile(r'^\d{2}/\d{2} \d{2}:\d{2}$')
+
+# _sanitize_subject '' fallback (G2)
+UNKNOWN_AGENT = "unknown-agent"
+
+# subject 최대 길이 (RE_PREFIX `[^\]]{1,64}` bound 정합)
+SUBJECT_MAX_LEN = 64
+
 
 # ── 핵심 검증 함수 ────────────────────────────────────────────────────────────
 
@@ -93,14 +106,183 @@ def check_description(description: str) -> dict:
     }
 
 
+# ── CFP-2587 Phase 2 — description INJECTION 순수 함수 (mechanical, non-mutation-caller) ──
+
+def _sanitize_subject(raw: str) -> str:
+    """
+    subject(raw agent_type / subagent_type) 를 프리픽스 안전 토큰으로 정규화 (G2).
+
+    규칙 (순서 고정):
+      1. namespace strip: ':' 있으면 마지막 ':' 뒤만 (예: "codeforge-requirements:ResearcherAgent" → "ResearcherAgent")
+      2. '[' , ']' 문자 전부 제거 (RE_PREFIX `[^\\]]` 파괴 방지)
+      3. strip()
+      4. ≤64 자 truncate (RE_PREFIX bound 정합)
+      5. '' → "unknown-agent" fallback
+    """
+    if not isinstance(raw, str):
+        raw = ""
+    if ':' in raw:
+        raw = raw.rsplit(':', 1)[-1]
+    raw = raw.replace('[', '').replace(']', '')
+    # ★ F6 (CFP-2587 FIX-2): 개행·제어문자 → 공백 (단일 라인 라벨 보장 — 프리픽스 렌더 줄 1개 유지).
+    raw = re.sub(r'[\x00-\x1f\x7f]+', ' ', raw)
+    raw = raw.strip()
+    if len(raw) > SUBJECT_MAX_LEN:
+        raw = raw[:SUBJECT_MAX_LEN]
+    if raw == "":
+        return UNKNOWN_AGENT
+    return raw
+
+
+def build_injected_description(subject: str, kst_stamp: str, original: str):
+    """
+    렌더-줄 프리픽스 주입 description 을 생성 — 실패/skip 조건이면 None 반환 (fail-open, non-emit).
+
+    반환:
+      str  — `[<sanitized>] <MM/DD HH:MM> - <내용>` (RE_PREFIX-conformant 보장)
+      None — skip (updatedInput 미emit): 아래 5 조건 중 하나
+        · original 이 공백/빈 문자열 (§7.7-1)
+        · original 이 이미 프리픽스-conformant (idempotent, AC-11/AC-12 — check_description SSOT 재사용)
+        · kst_stamp 형식 오류 (KST-fail skip, degradation rung 4)
+        · 생성 문자열이 RE_PREFIX 미매칭 (안전망 — non-conformant 절대 emit 금지)
+    """
+    if not isinstance(original, str):
+        return None
+    # §7.7-1: 빈/공백 description 은 skip (leaf 빈 description 은 위반 아님)
+    if original.strip() == "":
+        return None
+    # idempotent: 이미 conformant 면 재주입 금지 (check_description 단일 regex SSOT 재사용)
+    # ★ F2 (CFP-2587 FIX-2): 판정 표면을 주입 표면(original.lstrip())과 일치 — leading-ws +
+    #   이미 conformant original 이 가드 통과 후 double-stamp 되던 비대칭 봉합 (§11.6 f(f(x))=f(x)).
+    res = check_description(original.lstrip())
+    if res["description_prefix_conformant"] and not res["empty"]:
+        return None
+    # KST-fail skip: stamp 형식 오류 → None (rung 4 degradation)
+    if not RE_KST_STAMP.match(kst_stamp or ""):
+        return None
+    sanitized = _sanitize_subject(subject)
+    # lstrip 으로 `- ` 직후 `\\S` 보장 → RE_PREFIX-conformant
+    content = original.lstrip()
+    built = "[%s] %s - %s" % (sanitized, kst_stamp, content)
+    # 안전망 post-check: RE_PREFIX 미매칭이면 절대 emit 안 함 (non-conformant 방지)
+    if RE_PREFIX.match(built) is None:
+        return None
+    return built
+
+
+def _inject_arg_value(argv: list, flag: str) -> str:
+    """argv 에서 flag 바로 뒤 값 반환, 없으면 '' (수동 파싱 — argparse 미사용)."""
+    try:
+        idx = argv.index(flag)
+    except ValueError:
+        return ""
+    if idx + 1 < len(argv):
+        return argv[idx + 1]
+    return ""
+
+
+def _load_build_context():
+    """
+    sibling 모듈 agent_spawn_transition_reminder._build_context 를 import (reminder SSOT 재사용).
+    반환: callable | None (ImportError 등 실패 시 None → reminder skip, fail-open).
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from agent_spawn_transition_reminder import _build_context
+        return _build_context
+    except Exception:
+        return None
+
+
+def run_inject(argv: list) -> int:
+    """
+    --inject 모드: stdin=PreToolUse payload JSON → description 프리픽스 updatedInput 주입
+    (+ --transition-reminder 시 additionalContext 병합). exit 0 ALWAYS (fail-open, G5).
+
+    불변식:
+      · G3 whole-echo: updatedInput = tool_input 전체 복사 + description 만 교체 (REPLACE-safe).
+      · G4: permissionDecision 절대 미emit (bare updatedInput).
+      · G1: 출력은 json.dumps (f-string/template JSON 금지).
+      · §7.3 LOAD-BEARING: --transition-reminder 시 additionalContext 는 injected None 이어도 UNCONDITIONAL emit.
+    """
+    reminder_requested = "--transition-reminder" in argv
+    # ★ F3 (CFP-2587 FIX-2): subject FIELD 부재 → injection SKIP (reminder 는 유지). 표면(hook)이
+    #   자기 subject-source 키 presence 를 판정해 이 flag 로 전달 (Bash shell EXCLUDE 와 대칭).
+    #   present-but-empty 는 flag 미전달 → build_injected_description 의 G2 unknown-agent fallback.
+    subject_absent = "--subject-absent" in argv
+    try:
+        subject = _inject_arg_value(argv, "--subject")
+        kst_stamp = _inject_arg_value(argv, "--kst-stamp")
+
+        # ★ F5 (CFP-2587 FIX-2): surface-specific bypass env — 표면이 자기 env 이름 전달
+        #   (Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT).
+        #   default = Agent env (backward-compat). Agent bypass 가 Bash injection 을 억제하던 bleed 봉합.
+        bypass_env = _inject_arg_value(argv, "--bypass-env") or "BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE"
+        # Bypass: updatedInput 주입 skip (no injection); reminder 는 여전히 emit.
+        bypass = os.environ.get(bypass_env, "") == "1"
+
+        injected = None
+        tool_input = {}
+        if not bypass and not subject_absent:
+            try:
+                raw = sys.stdin.read(1 << 20)  # bounded ≤1 MiB
+            except Exception:
+                raw = ""
+            payload = json.loads(raw) if raw else {}
+            if not isinstance(payload, dict):
+                payload = {}
+            tool_input = payload.get("tool_input", {})
+            if not isinstance(tool_input, dict):
+                tool_input = {}
+            original = tool_input.get("description", "")
+            injected = build_injected_description(subject, kst_stamp, original)
+
+        hso = {"hookEventName": "PreToolUse"}
+        if injected is not None:
+            updated = dict(tool_input)         # G3 whole-echo of ENTIRE tool_input
+            updated["description"] = injected
+            hso["updatedInput"] = updated      # G4: NO permissionDecision
+
+        if reminder_requested:
+            ctx = _load_build_context()
+            if ctx is not None:
+                # §7.3 UNCONDITIONAL — injected None 이어도 reminder emit
+                hso["additionalContext"] = ctx(subject)
+
+        if "updatedInput" in hso or "additionalContext" in hso:
+            print(json.dumps({"hookSpecificOutput": hso}, ensure_ascii=False))  # G1
+        return 0
+    except Exception:
+        # fail-open — 어떤 예외도 tool block 안 함. reminder 요청 시 reminder-only emit.
+        if reminder_requested:
+            try:
+                ctx = _load_build_context()
+                if ctx is not None:
+                    print(json.dumps({
+                        "hookSpecificOutput": {
+                            "hookEventName": "PreToolUse",
+                            "additionalContext": ctx(_inject_arg_value(argv, "--subject")),
+                        }
+                    }, ensure_ascii=False))
+            except Exception:
+                pass
+        return 0
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main(argv: list) -> int:
     """
     --description-stdin 모드: stdin 에서 description 읽기 → 프리픽스 형식 DETECT.
     stdout JSON. exit 0 ALWAYS (warning-tier, non-mutation).
+
+    --inject 모드 (CFP-2587 Phase 2): stdin=PreToolUse payload → updatedInput 주입 (run_inject).
     """
-    # Bypass check
+    # --inject 모드 우선 dispatch (자체 bypass·fail-open 규약 — run_inject 참조)
+    if "--inject" in argv:
+        return run_inject(argv)
+
+    # Bypass check (--description-stdin 모드 전용)
     if os.environ.get("BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE", "") == "1":
         print(json.dumps({"bypass": True, "description_prefix_conformant": True}))
         print(

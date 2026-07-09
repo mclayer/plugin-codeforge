@@ -64,3 +64,18 @@ _astr_spec = importlib.util.spec_from_file_location(
 agent_spawn_transition_reminder = importlib.util.module_from_spec(_astr_spec)
 _astr_spec.loader.exec_module(agent_spawn_transition_reminder)
 sys.modules["agent_spawn_transition_reminder"] = agent_spawn_transition_reminder
+
+# scripts/lib 을 sys.path 에 주입 (check_spawn_description_prefix 의 _load_build_context
+# sibling import + 직접 import 를 위해) — CFP-2587 Phase 2
+_SCRIPTS_LIB = _REPO_ROOT / "scripts" / "lib"
+if str(_SCRIPTS_LIB) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_LIB))
+
+# check_spawn_description_prefix.py (scripts/lib/) — CFP-2587 Phase 2 injection constructor SSOT
+_csdp_spec = importlib.util.spec_from_file_location(
+    "check_spawn_description_prefix",
+    _SCRIPTS_LIB / "check_spawn_description_prefix.py",
+)
+check_spawn_description_prefix = importlib.util.module_from_spec(_csdp_spec)
+_csdp_spec.loader.exec_module(check_spawn_description_prefix)
+sys.modules["check_spawn_description_prefix"] = check_spawn_description_prefix
