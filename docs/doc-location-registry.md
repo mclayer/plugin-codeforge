@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-06-11T17:21:27Z  
-**Registered doc types**: 17
+**Last regen**: 2026-07-09T18:17:03Z  
+**Registered doc types**: 19
 
 ## Summary table
 
@@ -29,6 +29,8 @@
 | 15 | `architecture_doc` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
 | 16 | `promotion_criteria_4tuple_artifact` | single_repo | `codeforge-design:ArchitectAgent` | CFP-991 |
 | 17 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
+| 18 | `system_invariants` | single_repo | `codeforge-design:ArchitectAgent` | CFP-2361 |
+| 19 | `runbook` | single_repo | `codeforge-develop:InfraEngineerAgent` | CFP-2591 |
 
 ## Per-doc-type details
 
@@ -379,4 +381,39 @@
   > mirror 대상 closed-enum: [adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook] 완결 (ADR-111 Amendment 2 §결정 1 5-tuple).
   > parallel-edit policy = append-only (playbook = governance narrative, Orchestrator owner).
   > Phase 1 (CFP-1668) = doc type 등록 + ADR-111 Amendment 2 §결정 1 carrier. Sub-B sync = Wave 2 별 carrier.
+
+### `system_invariants`
+
+- **single_repo**: `<owner-repo>/docs/system-invariants.md`
+- **owner_agent**: `codeforge-design:ArchitectAgent`
+- **introduced_by**: CFP-2361
+- **naming_pattern**: `system-invariants\.md`
+- **frontmatter_required**: False
+- **examples**:
+  - <owner-repo>/docs/system-invariants.md (consumer operational Story 운영 불변식 standing surface — CFP-2361 PS4)
+
+  **notes**:
+  > CFP-2361 PS4 (ADR-014 Amendment 7 + ADR-015 Amendment 1 + ADR-068 I-8) carrier — operational Story 의 impl PR 이
+  > 도입하는 장기-수명 mutable 구조(accumulation/lifetime-class) 의 standing 불변식 표 정의 SSOT.
+  > consumer 측 operational Story 각각이 impl PR 확장으로 본 문서를 갱신 (새 row append).
+  > 본 doc type entry = declarative 위치 SSOT (실 operating 불변식 table 내용은 consumer Story 가 관리).
+  > Wrapper-self = N/A (operational Story 0개 governance, declarative-only).
+  > parallel-edit policy = append-only (운영 테스트/모니터링이 다양하므로 consumer Story 별 독립 추가).
+
+### `runbook`
+
+- **single_repo**: `<owner-repo>/docs/runbooks/<slug>.md`
+- **owner_agent**: `codeforge-develop:InfraEngineerAgent`
+- **introduced_by**: CFP-2591
+- **naming_pattern**: `[a-z0-9-]+\.md`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/runbooks/deferred-followup-reconcile-enforce-outage.md (CFP-2591 / ADR-060 Amendment 20 — enforce-tier outage 운영 절차)
+
+  **notes**:
+  > CFP-2591 / ADR-060 Amendment 20 carrier — governance 게이트 enforce-tier outage / self-block 회복
+  > 운영 절차 SSOT 위치. 각 runbook = 외부의존 열거 + outage 처리 원칙 + manual fallback + honest ceiling.
+  > 첫 entry = deferred-followup-reconcile enforce outage runbook (§7.2.3 (iv) 의무 선-충족, Stage 1+2
+  > shadow 시점엔 self-block 불가 — 미래 flip PR 대비 사전 문서화).
+  > owner = InfraEngineerAgent (배포·운영 자산). parallel-edit policy = append-only (게이트별 독립 추가).
 

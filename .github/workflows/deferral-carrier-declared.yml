@@ -1,0 +1,60 @@
+name: deferral-carrier-declared
+# CFP-2591 / ADR-060 Amendment 20 — deferral carrier-mandate no-TBD lint (warning-tier).
+#
+# deferred-followup 선언 시 carrier 를 미해결 placeholder(`deferred_followup_cfp: TBD` / `CFP-TBD` /
+# 미배선 `FU-NNN-N`)로 남기면 forcing function 대상 자체가 소멸(silent debt). 본 (b) lint 가
+# registry 밖 declaration surface 전반에서 그 placeholder 를 grep-기반 검출 + registry cross-check
+# (named carrier level-1 membership) + baseline grandfather(new-only, Clean-as-You-Code).
+# (a) registry FLAG 는 sibling 게이트 deferred-followup-reconcile.yml 소관 — 두 축 disjoint.
+#
+# F4 결정 (§32.H / ADR-060 Amd18 §32.H 답습): .github single-root (deferred-followup-reconcile.yml /
+#   lane-count-ssot.yml 답습). ADR-005 byte-parity scope 외 — template mirror 미운용 (게이트 =
+#   wrapper-self governance declaration-surface 검사라 .github-only 정합, consumer 배포 surface 무관).
+#   invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일은 미검출
+#   (CONSUMER_ONLY_WORKFLOWS 등록 불요 — deferred-followup-reconcile.yml 동형 firsthand 확인).
+#
+# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
+# Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
+# bypass label 미신설 (D9 — attack surface 최소화, advisory 게이트라 escape valve 불요).
+# path-filter on.paths 미사용 (ADR-130 §결정 158 required-pending 회피 선례 일관성).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deferral-carrier-declared:
+    name: deferral carrier no-TBD 검출 (warning-tier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pyyaml
+        run: pip install pyyaml
+      - name: Run check-deferral-carrier-declared.sh (warning, 비차단 — baseline new-only)
+        continue-on-error: true
+        run: bash scripts/check-deferral-carrier-declared.sh check --baseline docs/deferred-followup-baseline.yaml
+
+  deferral-carrier-declared-test:
+    name: discriminating test (5축 allowlist + grandfather 변별)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pyyaml
+        run: pip install pyyaml
+      - name: Run test-check-deferral-carrier-declared.sh (회귀 시 exit 1 차단)
+        # QADev 작성 파일 (cross-ref by path — 병렬 협업). 회귀 시 exit 1 차단 (continue-on-error 미적용).
+        run: bash scripts/test-check-deferral-carrier-declared.sh
