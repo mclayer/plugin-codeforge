@@ -17,10 +17,12 @@
 #              → CB-CHANNEL RED (live TBD silent 면제 = false-negative).
 #  - CB-Mut-4: SELF_EXCLUDE 제거 → CB-SELF RED (self 파일 self-FLAG).
 #
-# documented-limitation (fixture 작성 대상 아님, 주석 기재):
-#  - path-within-line allowlist: 토큰 인접(±40) 파일경로(.sh/.py/...) 참조 시 면제 →
-#    `FU-N-N # scripts/absent.sh (미배선)` 처럼 unwired FU 가 absent script 를 가리켜도 exempt
-#    (silent false-negative 가능). CB-DET-3-note 로 실측 문서화 + ArchitectPL 회부 (발견 사항).
+# F-QA-1 봉합 (CFP-2591 Phase 2 — 구현리뷰): path-within-line allowlist 를 존재-blind → 존재-인지로
+#  좁힘. 인접(±40) 경로가 repo_root 기준 실존 파일로 resolve 될 때만 면제. 부재 경로 지목
+#  (`FU-N-N # scripts/absent.sh`) = FLAG (silent false-negative 봉합). gate(a) _path_exists 대칭.
+#  CB-DET-3-note(부재→FLAG) + CB-DET-3-pos(실존→EXEMPT) 양방향 입증.
+# ReDoS 봉합 (CFP-2591 Phase 2 — 보안): counterfactual 축 sequential `.*` 2연속 quadratic →
+#  bounded `.{0,200}` + line-length cap. CB-REDOS ~1MB pathological 라인 bounded-time 회귀 guard.
 #
 # Exit code:
 #  0 = all tests pass (discriminating test validates lint)
@@ -127,11 +129,18 @@ run_test "CB-DET-3 unwired FU marker" "docs/cb_det3.md" \
   '  - FU-9999-1  (배선 workflow 미발의 — placeholder)' \
   yes 1 "FU-9999-1 unwired 마커 → FLAG (AC-2/5)"
 
-# CB-DET-3-note: packet-literal 변형(인접 .sh 경로 포함)은 path-within-line allowlist 로 EXEMPT.
-#   실측 documented-limitation — path-ref 축이 unwired FU→absent script silent 면제 (발견 사항, ArchitectPL 회부).
-run_test "CB-DET-3-note path-ref exemption (documented-limitation)" "docs/cb_det3n.md" \
-  '  - FU-9999-1  # scripts/check-absent.sh (미배선)' \
-  no 0 "인접 .sh 경로 참조 → path-within-line allowlist 면제 (silent false-negative — ArchitectPL 회부)"
+# CB-DET-3-note (F-QA-1 봉합): unwired FU + 인접 *부재* script 경로 → 존재-인지 path 면제가
+#   부재 경로를 exempt 안 함 → FLAGGED (silent false-negative 봉합, CFP-2591 Phase 2 구현리뷰).
+run_test "CB-DET-3-note absent-script path-ref → FLAGGED (F-QA-1)" "docs/cb_det3n.md" \
+  '  - FU-9999-9  # scripts/check-absent.sh (부재 — 존재-blind 회피 시도)' \
+  yes 1 "인접 경로가 실존 파일 아님 → path 면제 안 됨 → FLAG (F-QA-1 존재-인지, gate(a) 대칭)"
+
+# CB-DET-3-pos (F-QA-1 대칭 positive): unwired FU + 인접 *실존* script 경로 → EXEMPT 유지.
+#   실존 파일(docs/wired.sh 사전 생성) resolve → over-broad 아님을 입증 (면제 축 정탐 보존).
+printf '%s\n' '# real wired script' > "$TMP_REPO/docs/wired.sh"
+run_test "CB-DET-3-pos existing-script path-ref → EXEMPTED (F-QA-1)" "docs/cb_det3p.md" \
+  '  - FU-9999-2  # docs/wired.sh (실존 배선)' \
+  no 0 "인접 경로가 실존 파일로 resolve → path-within-line 면제 유지 (over-broad 아님)"
 
 echo ""
 echo "── Group 2: allowlist 면제 (history / negation / counterfactual) ──"
@@ -291,9 +300,9 @@ mutate_and_check "CB-Mut-1 (검출 정규식 제거)" \
 
 # CB-Mut-2: allowlist_match 항상 None → CB-ALLOW-1 RED (history 과검출).
 mutate_and_check "CB-Mut-2 (allowlist 무력화)" \
-  'def allowlist_match(line, token):
+  'def allowlist_match(line, token, repo_root):
     """' \
-  'def allowlist_match(line, token):
+  'def allowlist_match(line, token, repo_root):
     return None  # CB-MUT-2
     """' \
   "docs/cb_allow1.md" "no" \
@@ -314,6 +323,41 @@ mutate_and_check "CB-Mut-4 (SELF_EXCLUDE 제거)" \
   "docs/deferred-followup-baseline.yaml docs/cb_self_clean.md" "no" \
   "SELF_EXCLUDE 제거 시 self 경로(baseline.yaml) TBD self-FLAG 과검출 = RED (CB-SELF)"
 
+# ─────────────────────── ReDoS 회귀 guard (CFP-2591 Phase 2 보안) ─────────────
+echo ""
+echo "── ReDoS regression guard (counterfactual sequential .* quadratic — CFP-2591 Phase 2) ──"
+
+# pathological 라인: 만약 + 다수 TBD + CFP-TBD + no-terminator → OLD unbounded .* 2연속 quadratic
+#   backtracking (실측 64KB 6.3s). bounded .{0,200} + len(line) cap 봉합 후 상수시간.
+#   ~1MB 단일 라인 → CFP-TBD 검출 유지 + timeout 없이 bounded(<5s). 봉합 revert 시 timeout(RED).
+python3 - "$TMP_REPO/docs/cb_redos.md" <<'PYEOF'
+import io, sys
+# 만약 + TBD×250000 + CFP-TBD (no blind/위험/... terminator → 최악 backtracking) ≈ 1MB single line
+line = "만약 " + ("TBD " * 250000) + "CFP-TBD"
+io.open(sys.argv[1], "w", encoding="utf-8").write(line + "\n")
+PYEOF
+
+redos_start=$(date +%s%N)
+redos_ec=0
+redos_out=$( cd "$TMP_REPO" && timeout 15 bash scripts/check-deferral-carrier-declared.sh check --repo-root . --paths docs/cb_redos.md 2>&1 ) || redos_ec=$?
+redos_end=$(date +%s%N)
+redos_ms=$(( (redos_end - redos_start) / 1000000 ))
+
+if [ "$redos_ec" -eq 124 ]; then
+  echo "✗ FAIL: CB-REDOS (timeout 15s — ReDoS 회귀! sequential .* quadratic backtracking 재유입)"
+  FAIL=$((FAIL+1))
+elif ! echo "$redos_out" | grep -q "::warning::check-deferral-carrier-declared: FLAG"; then
+  echo "✗ FAIL: CB-REDOS (~1MB pathological 라인 CFP-TBD 미검출 — 검출 회귀, ${redos_ms}ms)"
+  echo "  Output: $redos_out"
+  FAIL=$((FAIL+1))
+elif [ "$redos_ms" -gt 5000 ]; then
+  echo "✗ FAIL: CB-REDOS (${redos_ms}ms > 5000ms — bounded time 위반, quadratic 잔존 의심)"
+  FAIL=$((FAIL+1))
+else
+  echo "✓ PASS: CB-REDOS bounded time (${redos_ms}ms, FLAG emit, no-timeout — ReDoS 봉합 회귀 guard)"
+  PASS=$((PASS+1))
+fi
+
 # ─────────────────────── 종합 ───────────────────────────────────────────────
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -324,7 +368,7 @@ if [ "$FAIL" -gt 0 ]; then
   echo "✗ self-test FAILED (lint 결함 또는 mutation 생존 — 회귀 차단)"
   exit 1
 fi
-echo "✓ self-test PASSED (Group 2 detection/allowlist/channel/self/grandfather + 4 mutation kill)"
-echo "  documented-limitation: path-within-line allowlist unwired-FU-→-absent-script exemption"
-echo "    (CB-DET-3-note 실측 — ArchitectPL 회부 대상 발견 사항)"
+echo "✓ self-test PASSED (Group 2 detection/allowlist/channel/self/grandfather + 4 mutation kill"
+echo "  + F-QA-1 존재-인지 path 면제 양방향: CB-DET-3-note(부재→FLAG) / CB-DET-3-pos(실존→EXEMPT)"
+echo "  + CB-REDOS bounded-time 회귀 guard — CFP-2591 Phase 2 보안+구현리뷰 FIX)"
 exit 0

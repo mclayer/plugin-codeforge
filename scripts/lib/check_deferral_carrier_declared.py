@@ -36,7 +36,10 @@ Exit codes (ADR-060 §결정 15 3-tier — warning tier):
 
 ReDoS-safe (ADR-061 Amd3 CodeQL guard):
   - line-by-line scan (multi-line backtracking regex 0).
-  - anchored bounded-quantifier regex (nested quantifier 0).
+  - anchored bounded-quantifier regex. counterfactual 축의 sequential `.*` 2연속
+    (quadratic backtracking) 은 bounded `.{0,200}` + allowlist_match 진입 전 line-length
+    cap (len(line) > _COUNTERFACTUAL_MAX_LINE → 축 skip) 으로 상수/선형 시간 강제
+    (CFP-2591 Phase 2 — before: 64KB 6.3s quadratic / after: 1MB <1ms 상수).
 
 Prior art (worktree 실존 확인 — ADR-119):
   scripts/lib/check_lane_count_ssot.py  (line-by-line scan + git ls-files walk + 5축 allowlist +
@@ -147,22 +150,33 @@ _RE_ALLOW_LAST_UPDATED = re.compile(r"^\s{0,8}last_updated:")
 _RE_ALLOW_COMMENT_LINE = re.compile(r"^\s{0,8}#")
 _RE_ALLOW_DATE = re.compile(r"^\s{0,8}date:")
 _RE_ALLOW_SOURCE_SECTION = re.compile(r"source_section:")
-_RE_ALLOW_COMMENT_QUOTE = re.compile(
-    r'^\s{0,8}#.*"[^"]*(?:CFP-TBD|FU-\d{1,6}-\d{1,3})[^"]*"'
-)
+# (구 _RE_ALLOW_COMMENT_QUOTE 제거 — CFP-2591 Phase 2: _RE_ALLOW_COMMENT_LINE(`^\s{0,8}#`) 이
+#  strict-dominate 하는 unreachable dead regex 였음. comment-line 축이 먼저 `history-comment-line`
+#  면제를 반환 → quote 분지 도달 불가 (커버리지 무손실). 자체 `.*"[^"]*...[^"]*"` 도 ReDoS 소지.)
 
 # 축 negation: 토큰 인접(window) 에 부정 마커 (`TBD 금지` 등).
 _RE_ALLOW_NEGATION = re.compile(r"금지|말 것|아니|하지 마")
 _NEGATION_WINDOW = 12
 
 # 축 counterfactual: 가정 조건절 `만약 ... (TBD|CFP-TBD) ... (blind|된다|위험|무너|silent)`.
+#   ★ReDoS 봉합 (CFP-2591 Phase 2): sequential unbounded `.*` 2연속 → quadratic backtracking
+#   (실측 64KB=6.3s). bounded `.{0,200}` 로 치환 + allowlist_match 진입 전 len(line) cap 이중 방어.
+_COUNTERFACTUAL_MAX_LINE = 512
 _RE_ALLOW_COUNTERFACTUAL = re.compile(
-    r"만약.*(?:TBD|CFP-TBD).*(?:blind|된다|위험|무너|silent)"
+    r"만약.{0,200}(?:TBD|CFP-TBD).{0,200}(?:blind|된다|위험|무너|silent)"
 )
 
 # 축 path/within-line: 토큰 인접(window) 에 `.sh`/`.py`/`.yml`/`.yaml` 파일경로 참조 (over-broad 금지).
+#   ★F-QA-1 봉합 (CFP-2591 Phase 2): 존재-blind → 존재-인지. 인접 경로가 repo_root 기준 실존
+#   파일로 resolve 될 때만 면제 (부재 경로 지목 = FLAG). sibling gate(a) _path_exists 대칭 —
+#   "미배선 FU → 부재 script 인접 지목" self-defeat 봉합.
 _RE_ALLOW_PATH_REF = re.compile(r"[\w./-]+\.(?:sh|py|yml|yaml)\b")
 _PATH_CTX_WINDOW = 40
+
+
+def _path_exists(repo_root, rel_path):
+    """인접 경로가 repo_root 기준 실존 파일/디렉터리로 resolve 되는지 (gate(a) _path_exists 대칭)."""
+    return os.path.exists(os.path.join(repo_root, rel_path))
 
 
 def _adjacent(line, token, window):
@@ -175,10 +189,12 @@ def _adjacent(line, token, window):
     return line[lo:hi]
 
 
-def allowlist_match(line, token):
+def allowlist_match(line, token, repo_root):
     """
-    line 이 5축 allowlist 중 1+ 에 해당하면 면제 사유 문자열 반환, 아니면 None.
+    line 이 allowlist 축 중 1+ 에 해당하면 면제 사유 문자열 반환, 아니면 None.
     (self 축은 collect 단계 SELF_EXCLUDE_PATHS 로 이미 제외.)
+
+    repo_root: path/within-line 축 존재-인지 판정용 (인접 경로 실존 resolve 검사 — F-QA-1).
     """
     # history/changelog
     if _RE_ALLOW_LAST_UPDATED.match(line):
@@ -189,30 +205,31 @@ def allowlist_match(line, token):
         return "history-date"
     if _RE_ALLOW_SOURCE_SECTION.search(line):
         return "history-source_section"
-    if _RE_ALLOW_COMMENT_QUOTE.search(line):
-        return "history-comment-quote"
 
     # negation (토큰 인접)
     if _RE_ALLOW_NEGATION.search(_adjacent(line, token, _NEGATION_WINDOW)):
         return "negation (부정 토큰 인접 — carrier 단언 아님)"
 
-    # counterfactual (가정 조건절)
-    if _RE_ALLOW_COUNTERFACTUAL.search(line):
+    # counterfactual (가정 조건절) — line-length cap 로 sequential `.*` quadratic backtracking 차단.
+    if len(line) <= _COUNTERFACTUAL_MAX_LINE and _RE_ALLOW_COUNTERFACTUAL.search(line):
         return "counterfactual (가정 조건절 '만약 ... TBD ... 위험')"
 
-    # path/within-line (토큰 인접 파일경로 참조 — over-broad 금지 window)
-    if _RE_ALLOW_PATH_REF.search(_adjacent(line, token, _PATH_CTX_WINDOW)):
-        return "path-within-line (인접 파일경로 참조 문맥)"
+    # path/within-line (토큰 인접 파일경로 참조 — 존재-인지: 실존 파일 resolve 시만 면제, F-QA-1).
+    window = _adjacent(line, token, _PATH_CTX_WINDOW)
+    for m in _RE_ALLOW_PATH_REF.finditer(window):
+        if _path_exists(repo_root, m.group(0)):
+            return "path-within-line (인접 실존 파일경로 참조 문맥)"
 
     return None
 
 
 # ─────────────────────── 단일 파일 scan ──────────────────────────────────────────
 
-def scan_file(abs_path, rel_path, registry_text):
+def scan_file(abs_path, rel_path, registry_text, repo_root):
     """
     파일 1개를 line-by-line scan. (flag(line) := detect AND NOT allowlist)
 
+    repo_root: allowlist path/within-line 축 존재-인지 판정용 (F-QA-1).
     Returns: list of (rel_path, line_num, token, context_excerpt)
     Raises: OSError (read 실패 → 호출부가 SETUP exit 2 처리)
     """
@@ -224,7 +241,7 @@ def scan_file(abs_path, rel_path, registry_text):
             if hit is None:
                 continue
             token, _kind = hit
-            if allowlist_match(line, token) is not None:
+            if allowlist_match(line, token, repo_root) is not None:
                 continue  # 면제
             ctx = line.strip()
             if len(ctx) > 100:
@@ -324,7 +341,7 @@ def scan_repo(repo_root, globs=None):
     findings = []
     for rel in files:
         abs_p = os.path.join(repo_root, rel)
-        findings.extend(scan_file(abs_p, rel, registry_text))
+        findings.extend(scan_file(abs_p, rel, registry_text, repo_root))
     return findings
 
 
@@ -389,7 +406,7 @@ def cmd_check(args):
     for rel_path in files:
         abs_path = os.path.join(repo_root, rel_path)
         try:
-            all_findings.extend(scan_file(abs_path, rel_path, registry_text))
+            all_findings.extend(scan_file(abs_path, rel_path, registry_text, repo_root))
         except OSError as exc:
             print(
                 "[codeforge-deferral-carrier-declared-infra-error] check-deferral-carrier-declared: "
