@@ -330,5 +330,166 @@ def test_subprocess_four_block_present_channel2_emit_no_warning():
     )
 
 
+# ════════════════════════════════ (C) CFP-2587 Phase 2 — Agent 표면 --inject 통합 (T-1/T-2a/T-3/T-4)
+#
+# 배경: hooks/pretooluse-agent-spawn-gate 가 CFP-2587 에서 `--inject --subject <subagent_type>
+#   --kst-stamp <stamp> --transition-reminder` 로 재배선 (구 detect-warn + 구 reminder emit 을
+#   단일 inject 로 대체). subject source = tool_input.subagent_type (spike AC-7 / §결정1).
+#
+# 이 블록은 Agent 표면 고유 축(위 (B) 채널2-only 커버리지 空)을 실 hook fork 로 봉인:
+#   · T-2a (AC-7 §결정1 anti-test): subagent_type + stray top-level agent_type=dispatcher 공존 시
+#       subject = subagent_type. dispatcher/Orchestrator 명 절대 미주입. (Bash 표면 대칭은
+#       test_pretooluse_bash_description_inject.py — agent_type wins over stray subagent_type.)
+#   · T-1 whole-echo: prompt/run_in_background verbatim 보존 + description 스탬프.
+#   · T-3 merge: 단일 JSON 에 updatedInput ∧ additionalContext 병존 (bare, NEVER deny).
+#   · T-4 idempotency: 이미 conformant → updatedInput SKIP 但 additionalContext 유지 (§7.3 회귀가드).
+#
+# git-bash 해석(_AGENT_INJECT_BASH): bash-hook 테스트와 동일 패턴 — Windows Git-Bash 에서도 실행
+#   (기존 (B) block 의 win32-skip 보다 넓은 커버리지; Agent hook fork 는 git-bash 안전 실증).
+
+_AGENT_INJECT_BASH = shutil.which("bash") or (
+    r"C:\Program Files\Git\bin\bash.exe"
+    if sys.platform == "win32" and Path(r"C:\Program Files\Git\bin\bash.exe").exists()
+    else None
+)
+_agent_inject = pytest.mark.skipif(_AGENT_INJECT_BASH is None, reason="bash interpreter 부재")
+
+_FIXTURES_DIR = WORKTREE_ROOT / "tests" / "spike" / "cfp-2587-updatedinput-honor" / "fixtures"
+_INJECT_STAMP_SUBSTR = "[codeforge story-transition-autonomy]"  # full marker (TRANSITION_MARKER 는 substring)
+
+
+def _load_agent_fixture():
+    return json.loads((_FIXTURES_DIR / "agent-spawn.json").read_text(encoding="utf-8"))
+
+
+def _fork_agent_gate(payload: dict):
+    """Agent gate hook 을 git-bash 로 fork → (rc, stdout_stripped). UTF-8 capture (한국어 reminder)."""
+    env = dict(os.environ)
+    env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
+    env.pop("BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE", None)
+    proc = subprocess.run(
+        [_AGENT_INJECT_BASH, str(GATE_SCRIPT)],
+        input=json.dumps(payload, ensure_ascii=False),
+        capture_output=True, text=True, encoding="utf-8", errors="replace", env=env,
+    )
+    return proc.returncode, proc.stdout.strip()
+
+
+@_agent_inject
+def test_agent_inject_subagent_type_not_dispatcher():
+    """T-2a (AC-7 §결정1 anti-test): subagent_type + stray top-level agent_type=SomeDispatcher 공존 →
+    subject = subagent_type (ArchitectAgent). dispatcher 명 절대 미주입."""
+    payload = {"tool_name": "Agent", "agent_type": "SomeDispatcher",
+               "tool_input": {"subagent_type": "ArchitectAgent", "prompt": "do x",
+                              "description": "nonconformant header desc"}}
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0, f"exit 0 위반 rc={rc}"
+    hso = json.loads(out)["hookSpecificOutput"]  # 단일 JSON (Extra data → 실패)
+    desc = hso["updatedInput"]["description"]
+    assert desc.startswith("[ArchitectAgent] "), desc
+    assert "SomeDispatcher" not in desc, f"§결정1 위반 — dispatcher 명 주입됨: {desc!r}"
+    assert "permissionDecision" not in hso, "bare 위반 (permissionDecision 존재)"
+
+
+@_agent_inject
+def test_agent_inject_whole_echo_and_reminder_merge():
+    """T-1/T-3 (Agent 표면): nonconformant → whole-echo(prompt/run_in_background/subagent_type verbatim)
+    + description 스탬프 + additionalContext reminder 병합 (단일 JSON, bare)."""
+    payload = _load_agent_fixture()
+    orig = dict(payload["tool_input"])          # {description,prompt,subagent_type,run_in_background}
+    orig["description"] = "raw nonconformant header"
+    payload["tool_input"] = orig
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0
+    hso = json.loads(out)["hookSpecificOutput"]
+    ui = hso["updatedInput"]
+    assert ui["prompt"] == orig["prompt"], "prompt 소실/변조 (whole-echo 위반)"
+    assert ui["run_in_background"] == orig["run_in_background"], "run_in_background 소실/변조"
+    assert ui["subagent_type"] == orig["subagent_type"], "subagent_type 소실/변조"
+    assert ui["description"].startswith("[general-purpose] "), ui["description"]  # subagent_type=general-purpose
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "reminder 마커 부재 (merge 위반)"
+    assert "permissionDecision" not in hso, "bare 위반"
+
+
+@_agent_inject
+def test_agent_inject_idempotent_conformant_keeps_reminder_only():
+    """T-4/§7.3 회귀가드: 이미 conformant description → updatedInput SKIP 但 additionalContext 유지."""
+    payload = {"tool_name": "Agent",
+               "tool_input": {"subagent_type": "ArchitectAgent", "prompt": "p",
+                              "description": "[ArchitectAgent] 07/09 14:30 - already conformant"}}
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0
+    hso = json.loads(out)["hookSpecificOutput"]
+    assert "updatedInput" not in hso, "idempotent 위반 — 이미 conformant 인데 updatedInput 주입"
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "reminder UNCONDITIONAL 위반"
+
+
+# ═══════════════════════ CFP-2587 Phase 2 구현리뷰 FIX-2 (QADev) — F4/F3 회귀 가드 봉인
+#
+# F4 (§7.3 LOAD-BEARING): prompt 키 부재(빈 prompt) 또는 prompt="" 여도 additionalContext(reminder)
+#   무조건 emit. 구 회귀(early-exit)는 빈 prompt 시 stdout 완전 empty → json.loads 실패로 RED.
+# F3 (§7.7-2 field-absent SKIP, Bash 표면 §7.7-3 대칭): subagent_type 키 자체 부재 → injection(updatedInput)
+#   SKIP 하되 additionalContext(reminder)는 여전히 present. present-but-empty("") → injection 발생 +
+#   description 프리픽스 = [unknown-agent] (G2 fallback).
+# distinct-marker 규율 상속: exit code 단독 판정 금지 — json.loads 후 key-path/substring 병행 assert.
+
+
+@_agent_inject
+def test_agent_inject_empty_prompt_still_emits_reminder():
+    """F4/§7.3 회귀가드: prompt 키 부재(빈 prompt) Agent payload → additionalContext(reminder)
+    여전히 present. 구 회귀(early-exit)는 stdout 완전 empty → json.loads 실패로 RED.
+    subagent_type present(+nonconformant desc) → injection 도 발생."""
+    payload = {"tool_name": "Agent",
+               "tool_input": {"subagent_type": "ArchitectAgent",
+                              "description": "raw nonconformant header"}}  # prompt 키 부재
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0, f"exit 0 위반 rc={rc}"
+    hso = json.loads(out)["hookSpecificOutput"]   # 구 회귀면 out=="" → JSONDecodeError = RED
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "§7.3 위반 — 빈 prompt 시 reminder 소실"
+    # subagent_type present → injection 도 발생
+    assert hso["updatedInput"]["description"].startswith("[ArchitectAgent] "), hso["updatedInput"]["description"]
+    assert "permissionDecision" not in hso, "bare 위반 (NEVER deny)"
+
+
+@_agent_inject
+def test_agent_inject_explicit_empty_prompt_string_reminder():
+    """F4/§7.3 회귀가드 variant: prompt=""(명시적 빈 문자열) → additionalContext(reminder) 여전히 present."""
+    payload = {"tool_name": "Agent",
+               "tool_input": {"subagent_type": "ArchitectAgent", "prompt": "",
+                              "description": "raw nonconformant"}}
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0, f"exit 0 위반 rc={rc}"
+    hso = json.loads(out)["hookSpecificOutput"]
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "§7.3 위반 — 명시적 빈 prompt 시 reminder 소실"
+
+
+@_agent_inject
+def test_agent_inject_subagent_type_absent_skips_injection_keeps_reminder():
+    """F3/§7.7-2: subagent_type 키 부재 → updatedInput 부재(injection skip) 但 additionalContext present.
+    field-absent 는 위반 아님(SKIP) — Bash 표면 §7.7-3 대칭."""
+    payload = {"tool_name": "Agent",
+               "tool_input": {"prompt": "p", "description": "raw nonconformant"}}  # subagent_type 키 부재
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0, f"exit 0 위반 rc={rc}"
+    hso = json.loads(out)["hookSpecificOutput"]
+    assert "updatedInput" not in hso, "§7.7-2 위반 — field-absent 인데 injection 발생"
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "reminder 소실"
+    assert "permissionDecision" not in hso, "bare 위반 (NEVER deny)"
+
+
+@_agent_inject
+def test_agent_inject_subagent_type_present_empty_unknown_agent():
+    """F3/G2: subagent_type present-but-empty("") → injection 발생 + [unknown-agent] fallback 프리픽스."""
+    payload = {"tool_name": "Agent",
+               "tool_input": {"subagent_type": "", "prompt": "p",
+                              "description": "raw nonconformant"}}
+    rc, out = _fork_agent_gate(payload)
+    assert rc == 0, f"exit 0 위반 rc={rc}"
+    hso = json.loads(out)["hookSpecificOutput"]
+    assert hso["updatedInput"]["description"].startswith("[unknown-agent] "), hso["updatedInput"]["description"]
+    assert _INJECT_STAMP_SUBSTR in hso["additionalContext"], "reminder 소실"
+    assert "permissionDecision" not in hso, "bare 위반 (NEVER deny)"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

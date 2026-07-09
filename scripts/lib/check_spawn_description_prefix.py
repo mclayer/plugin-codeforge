@@ -14,7 +14,9 @@
 #   stdout JSON: {"description_prefix_conformant": <bool>, "empty": <bool>, "checked": "<앞 80자>"}
 #   exit 0: ALWAYS (conformant 든 아니든). nonconformant 시 stderr 에 warning 1줄.
 #
-# Bypass:
+# Bypass (surface-specific — F5/CFP-2587 FIX-2): --inject 모드는 `--bypass-env <NAME>` 로 표면별
+#   bypass env 를 수령(Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT;
+#   disjoint — cross-surface bleed 없음). --description-stdin 모드는 아래 유지:
 #   BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1 →
 #     stdout JSON {"bypass": true, "description_prefix_conformant": true}, exit 0.
 #
@@ -122,6 +124,8 @@ def _sanitize_subject(raw: str) -> str:
     if ':' in raw:
         raw = raw.rsplit(':', 1)[-1]
     raw = raw.replace('[', '').replace(']', '')
+    # ★ F6 (CFP-2587 FIX-2): 개행·제어문자 → 공백 (단일 라인 라벨 보장 — 프리픽스 렌더 줄 1개 유지).
+    raw = re.sub(r'[\x00-\x1f\x7f]+', ' ', raw)
     raw = raw.strip()
     if len(raw) > SUBJECT_MAX_LEN:
         raw = raw[:SUBJECT_MAX_LEN]
@@ -148,7 +152,9 @@ def build_injected_description(subject: str, kst_stamp: str, original: str):
     if original.strip() == "":
         return None
     # idempotent: 이미 conformant 면 재주입 금지 (check_description 단일 regex SSOT 재사용)
-    res = check_description(original)
+    # ★ F2 (CFP-2587 FIX-2): 판정 표면을 주입 표면(original.lstrip())과 일치 — leading-ws +
+    #   이미 conformant original 이 가드 통과 후 double-stamp 되던 비대칭 봉합 (§11.6 f(f(x))=f(x)).
+    res = check_description(original.lstrip())
     if res["description_prefix_conformant"] and not res["empty"]:
         return None
     # KST-fail skip: stamp 형식 오류 → None (rung 4 degradation)
@@ -200,16 +206,24 @@ def run_inject(argv: list) -> int:
       · §7.3 LOAD-BEARING: --transition-reminder 시 additionalContext 는 injected None 이어도 UNCONDITIONAL emit.
     """
     reminder_requested = "--transition-reminder" in argv
+    # ★ F3 (CFP-2587 FIX-2): subject FIELD 부재 → injection SKIP (reminder 는 유지). 표면(hook)이
+    #   자기 subject-source 키 presence 를 판정해 이 flag 로 전달 (Bash shell EXCLUDE 와 대칭).
+    #   present-but-empty 는 flag 미전달 → build_injected_description 의 G2 unknown-agent fallback.
+    subject_absent = "--subject-absent" in argv
     try:
         subject = _inject_arg_value(argv, "--subject")
         kst_stamp = _inject_arg_value(argv, "--kst-stamp")
 
+        # ★ F5 (CFP-2587 FIX-2): surface-specific bypass env — 표면이 자기 env 이름 전달
+        #   (Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT).
+        #   default = Agent env (backward-compat). Agent bypass 가 Bash injection 을 억제하던 bleed 봉합.
+        bypass_env = _inject_arg_value(argv, "--bypass-env") or "BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE"
         # Bypass: updatedInput 주입 skip (no injection); reminder 는 여전히 emit.
-        bypass = os.environ.get("BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE", "") == "1"
+        bypass = os.environ.get(bypass_env, "") == "1"
 
         injected = None
         tool_input = {}
-        if not bypass:
+        if not bypass and not subject_absent:
             try:
                 raw = sys.stdin.read(1 << 20)  # bounded ≤1 MiB
             except Exception:

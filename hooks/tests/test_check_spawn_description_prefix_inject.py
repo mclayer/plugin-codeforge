@@ -88,6 +88,23 @@ def test_sanitize_subject_result_always_re_prefix_safe():
         assert csdp.RE_PREFIX.match(built) is not None
 
 
+# ── F6 (CFP-2587 Phase 2 FIX-2) — 제어문자 정규화 (단일 라인 라벨) ─────────────
+
+def test_sanitize_subject_normalizes_control_chars():
+    """F6: subject 안 개행/탭/제어문자 → 공백 (단일 라인 라벨 보장). 결과에 \\n,\\t,\\r 부재."""
+    s = csdp._sanitize_subject("Foo\nBar\tBaz")
+    assert "\n" not in s and "\t" not in s and "\r" not in s
+    assert "Foo" in s and "Bar" in s
+
+
+def test_sanitize_subject_bracket_and_control_combo_still_conformant():
+    """F6: 제어문자+대괄호 혼합도 정규화 후 RE_PREFIX 안전 (주입 프리픽스가 렌더 줄 1개)."""
+    built = csdp.build_injected_description("A\nB", KST_STAMP, "raw")
+    assert built is not None
+    assert csdp.RE_PREFIX.match(built) is not None
+    assert "\n" not in built.split(" - ", 1)[0]  # 프리픽스(subject 부분)에 개행 없음
+
+
 # ── build_injected_description ───────────────────────────────────────────────
 
 def test_build_injects_prefix():
@@ -119,6 +136,22 @@ def test_build_leading_space_content_still_conformant():
     got = csdp.build_injected_description("X", KST_STAMP, "   leading spaces")
     assert got == "[X] 07/09 19:30 - leading spaces"
     assert csdp.RE_PREFIX.match(got) is not None
+
+
+# ── F2 (CFP-2587 Phase 2 FIX-2) — leading-ws idempotency (double-stamp 방지) ──
+
+def test_build_injected_leading_ws_already_conformant_skips():
+    """F2/§11.6: leading-ws + 이미 conformant → None (double-stamp 방지, f(f(x))=f(x)).
+    lstrip 후 conformance 판정이므로 선행 공백이 있어도 재주입 SKIP."""
+    out = csdp.build_injected_description("Dev", KST_STAMP, "  [ResearcherAgent] 07/09 19:30 - x")
+    assert out is None
+
+
+def test_build_injected_leading_ws_nonconformant_injects_once():
+    """F2: leading-ws + nonconformant → 1회 주입, 프리픽스 정확히 1개([Dev]) — content 는 lstrip 적용."""
+    out = csdp.build_injected_description("Dev", KST_STAMP, "   raw content")
+    assert out is not None and out.startswith("[Dev] 07/09 19:30 - raw content")
+    assert out.count("[Dev]") == 1
 
 
 def test_build_result_passes_single_regex_ssot():

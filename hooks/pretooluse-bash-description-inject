@@ -113,6 +113,7 @@ fi
 
 # ── SINGLE call — updatedInput ONLY (NO --transition-reminder; Bash = §7.3 reminder 비대상) ──
 # 출력 = updatedInput 병합 JSON (또는 skip 시 no stdout). fail-open: 어떤 실패도 exit 0.
-printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$AGENT_TYPE" --kst-stamp "$STAMP" 2>/dev/null || true
+# ★ F5 (CFP-2587 FIX-2): --bypass-env = Bash 표면 전용 env (Agent env 와 disjoint — bleed 방지).
+printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$AGENT_TYPE" --kst-stamp "$STAMP" --bypass-env BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT 2>/dev/null || true
 
 exit 0

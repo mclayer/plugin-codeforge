@@ -110,7 +110,6 @@ def test_malformed_payload_fail_open():
 
 
 def test_empty_payload_fail_open():
-    rc, out = _run_hook({}) if False else (None, None)  # placeholder to keep parity
     env = dict(os.environ); env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
     proc = subprocess.run([_BASH, str(HOOK)], input="", capture_output=True, text=True, encoding="utf-8", env=env)
     assert proc.returncode == 0 and proc.stdout.strip() == ""
@@ -125,3 +124,19 @@ def test_bypass_env_suppresses(monkeypatch):
                           capture_output=True, text=True, encoding="utf-8", env=env)
     assert proc.returncode == 0
     assert proc.stdout.strip() == ""                    # injection suppressed
+
+
+def test_agent_bypass_env_does_not_suppress_bash_injection(monkeypatch):
+    """F5 (CFP-2587 Phase 2 FIX-2): BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1(Agent 표면 env)은
+    Bash injection 을 억제하지 않는다 (surface-disjoint). Bash 자기 env(BYPASS_CODEFORGE_BASH_
+    DESCRIPTION_INJECT)만 억제 (기존 test_bypass_env_suppresses). bleed-guard."""
+    payload = _load("bash-in-subagent.json")
+    env = dict(os.environ)
+    env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
+    env["BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE"] = "1"     # Agent 표면 env (Bash 표면과 disjoint)
+    env.pop("BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT", None)
+    proc = subprocess.run([_BASH, str(HOOK)], input=json.dumps(payload),
+                          capture_output=True, text=True, encoding="utf-8", env=env)
+    assert proc.returncode == 0
+    hso = json.loads(proc.stdout.strip())["hookSpecificOutput"]
+    assert "updatedInput" in hso, "F5 bleed — Agent bypass 가 Bash injection 을 억제함"

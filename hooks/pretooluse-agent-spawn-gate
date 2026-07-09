@@ -62,8 +62,6 @@ if [ "${BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE:-0}" = "1" ]; then
 fi
 
 # ── stdin = PreToolUse JSON payload 읽기 ─────────────────────────────────────
-# Claude Code 가 hook stdin 으로 tool_input JSON 을 전달.
-# Agent tool 의 경우 tool_input.prompt 에 spawn prompt 본문 포함.
 PAYLOAD="$(cat 2>/dev/null || true)"
 
 # payload 가 비어있으면 pass-through (scope 외)
@@ -76,61 +74,10 @@ fi
 #   `--inject --transition-reminder` 호출로 MERGE 됨 (updatedInput + additionalContext = 단일 stdout JSON).
 #   → hook stdout = 정확히 하나의 JSON (구 reminder emit + 구 detect 통합).
 
-# ── spawn prompt 추출 ─────────────────────────────────────────────────────────
-# jq 비의존 (환경 jq 부재 가능) — tool_input.prompt 필드 추출.
-# Python stdlib json 을 사용해 안전한 추출 (ADR-061 Amendment 3 정합).
-# 추출 실패 시 fail-open (false-negative 가 false-positive 보다 안전 — Wave 1).
-PROMPT_TEXT=""
-if command -v python3 >/dev/null 2>&1; then
-  PROMPT_TEXT="$(printf '%s' "$PAYLOAD" | python3 -c "
-import json, sys
-try:
-    data = json.load(sys.stdin)
-    # tool_input.prompt 또는 tool_input 의 다른 키에서 prompt 추출
-    tool_input = data.get('tool_input', {})
-    prompt = tool_input.get('prompt', '')
-    print(prompt, end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-elif command -v python >/dev/null 2>&1; then
-  PROMPT_TEXT="$(printf '%s' "$PAYLOAD" | python -c "
-import json, sys
-try:
-    data = json.load(sys.stdin)
-    tool_input = data.get('tool_input', {})
-    prompt = tool_input.get('prompt', '')
-    print(prompt, end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-fi
-
-# prompt 추출 실패 (Python 부재 또는 parse 오류) → fail-open
-if [ -z "$PROMPT_TEXT" ]; then
-  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt extraction failed (Python unavailable or JSON parse error) — spawn allowed (Wave 1 graceful degradation)\n'
-  exit 0
-fi
-
-# ── Python verifier 호출 (ADR-061 Amendment 3 정합) ──────────────────────────
-# scripts/lib/check_spawn_prompt_format.py 가 4 block presence 검증.
-# CLAUDE_PLUGIN_ROOT 환경변수 = Claude Code 가 hook 호출 시 plugin root 로 설정.
+# ── 공용 resolve: PLUGIN_ROOT + Python 인터프리터 (verifier + prompt 추출 + inject 공용) ──
+#   ★ CFP-2587 FIX-2 F1: PLUGIN_ROOT / PYTHON_CMD 를 prompt early-exit 상류로 hoist —
+#   빈/부재 prompt 시에도 하단 injection/reminder 블록이 이 변수를 사용 가능하게 함 (§7.3 회복).
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
-VERIFIER_SCRIPT=""
-
-if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py" ]; then
-  VERIFIER_SCRIPT="${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py"
-elif [ -f "scripts/lib/check_spawn_prompt_format.py" ]; then
-  # fallback: cwd 기준 (bats fixture 등 테스트 환경)
-  VERIFIER_SCRIPT="scripts/lib/check_spawn_prompt_format.py"
-fi
-
-if [ -z "$VERIFIER_SCRIPT" ]; then
-  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: check_spawn_prompt_format.py not found — spawn allowed (Wave 1 graceful degradation)\n'
-  exit 0
-fi
-
-# Python verifier 실행 — stdout JSON, stderr warning
 PYTHON_CMD=""
 if command -v python3 >/dev/null 2>&1; then
   PYTHON_CMD="python3"
@@ -138,23 +85,52 @@ elif command -v python >/dev/null 2>&1; then
   PYTHON_CMD="python"
 fi
 
-if [ -z "$PYTHON_CMD" ]; then
-  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: Python interpreter not found — spawn allowed (Wave 1 graceful degradation)\n'
-  exit 0
+# ── spawn prompt 추출 (jq 비의존 — Python stdlib json) ────────────────────────
+#   추출 실패 시 fail-open (false-negative 가 false-positive 보다 안전 — Wave 1).
+PROMPT_TEXT=""
+if [ -n "$PYTHON_CMD" ]; then
+  PROMPT_TEXT="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    tool_input = data.get('tool_input', {})
+    prompt = tool_input.get('prompt', '') if isinstance(tool_input, dict) else ''
+    print(prompt, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
 fi
 
-# verifier 실행 — exit 1 = missing blocks, exit 0 = all present
-VERIFIER_OUT=""
-VERIFIER_EXIT=0
-VERIFIER_OUT="$(printf '%s' "$PROMPT_TEXT" | "$PYTHON_CMD" "$VERIFIER_SCRIPT" --prompt-stdin 2>/dev/null)" || VERIFIER_EXIT=$?
+# ── 4-block presence 검증 (PROMPT_TEXT 존재 시에만) ───────────────────────────
+#   ★ CFP-2587 FIX-2 F1: 구 회귀 = 빈 PROMPT_TEXT 시 여기서 `exit 0` early-exit 가 하단 merged
+#   `--inject --transition-reminder`(§7.3 LOAD-BEARING: additionalContext UNCONDITIONAL emit)를
+#   unreachable 화 → story-transition-autonomy reminder 소실. exit 대신 4-block verifier 만 skip
+#   하고 injection/reminder 블록으로 fall-through — reminder 무조건 emit 회복. fail-open 유지.
+if [ -z "$PROMPT_TEXT" ]; then
+  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt extraction failed or empty (Python unavailable / JSON parse error / prompt 부재) — 4-block warning skipped, spawn allowed (Wave 1 graceful degradation)\n'
+else
+  # ── Python verifier 호출 (ADR-061 Amendment 3 정합) ──
+  # scripts/lib/check_spawn_prompt_format.py 가 4 block presence 검증.
+  VERIFIER_SCRIPT=""
+  if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py" ]; then
+    VERIFIER_SCRIPT="${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py"
+  elif [ -f "scripts/lib/check_spawn_prompt_format.py" ]; then
+    VERIFIER_SCRIPT="scripts/lib/check_spawn_prompt_format.py"
+  fi
 
-# Wave 1: exit code 에 무관하게 exit 0 (warning-only)
-# 누락 block 목록 파싱 후 stderr warning 발화
-if [ "$VERIFIER_EXIT" -ne 0 ]; then
-  # missing block 목록 — JSON 파싱 (Python stdout)
-  MISSING_BLOCKS=""
-  if [ -n "$VERIFIER_OUT" ] && [ -n "$PYTHON_CMD" ]; then
-    MISSING_BLOCKS="$(printf '%s' "$VERIFIER_OUT" | "$PYTHON_CMD" -c "
+  if [ -z "$VERIFIER_SCRIPT" ]; then
+    >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: check_spawn_prompt_format.py not found — spawn allowed (Wave 1 graceful degradation)\n'
+  elif [ -n "$PYTHON_CMD" ]; then
+    # verifier 실행 — exit 1 = missing blocks, exit 0 = all present
+    VERIFIER_OUT=""
+    VERIFIER_EXIT=0
+    VERIFIER_OUT="$(printf '%s' "$PROMPT_TEXT" | "$PYTHON_CMD" "$VERIFIER_SCRIPT" --prompt-stdin 2>/dev/null)" || VERIFIER_EXIT=$?
+
+    # Wave 1: exit code 에 무관하게 exit 0 (warning-only). 누락 block 목록 파싱 후 stderr warning.
+    if [ "$VERIFIER_EXIT" -ne 0 ]; then
+      MISSING_BLOCKS=""
+      if [ -n "$VERIFIER_OUT" ]; then
+        MISSING_BLOCKS="$(printf '%s' "$VERIFIER_OUT" | "$PYTHON_CMD" -c "
 import json, sys
 try:
     data = json.loads(sys.stdin.read())
@@ -163,46 +139,57 @@ try:
 except Exception:
     pass
 " 2>/dev/null || true)"
-  fi
+      fi
 
-  if [ -n "$MISSING_BLOCKS" ]; then
-    >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt missing required blocks: [%s]\n' "$MISSING_BLOCKS"
-    >&2 printf '  ADR-115 §결정 6 / Change Plan §3.3 — 4 block presence 의무:\n'
-    >&2 printf '  1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  (ADR-082 Amendment 15 1-E)\n'
-    >&2 printf '  2. [USER-UTTERANCE-VERBATIM]            (ADR-082 Amendment 5 1-C)\n'
-    >&2 printf '  3. worktree-first directive             (ADR-040 Amendment 6)\n'
-    >&2 printf '  4. parallel-dispatch directive          (ADR-064 Amendment 1)\n'
-    >&2 printf '  Wave 1: warning-only (spawn allowed). Wave 2 deny 활성 = 별 sub-CFP carrier.\n'
-    >&2 printf '  Bypass: BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1\n'
-  else
-    >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt format issue detected — spawn allowed (Wave 1)\n'
+      if [ -n "$MISSING_BLOCKS" ]; then
+        >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt missing required blocks: [%s]\n' "$MISSING_BLOCKS"
+        >&2 printf '  ADR-115 §결정 6 / Change Plan §3.3 — 4 block presence 의무:\n'
+        >&2 printf '  1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  (ADR-082 Amendment 15 1-E)\n'
+        >&2 printf '  2. [USER-UTTERANCE-VERBATIM]            (ADR-082 Amendment 5 1-C)\n'
+        >&2 printf '  3. worktree-first directive             (ADR-040 Amendment 6)\n'
+        >&2 printf '  4. parallel-dispatch directive          (ADR-064 Amendment 1)\n'
+        >&2 printf '  Wave 1: warning-only (spawn allowed). Wave 2 deny 활성 = 별 sub-CFP carrier.\n'
+        >&2 printf '  Bypass: BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1\n'
+      else
+        >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt format issue detected — spawn allowed (Wave 1)\n'
+      fi
+    fi
   fi
 fi
 
 # ── 범위① description INJECTION + 전환-자율 reminder MERGE (CFP-2587 Phase 2) ──
 # tool_input.description 에 렌더-줄 프리픽스 `[<subagent_type>] MM/DD HH:MM - <내용>` 를
 # hookSpecificOutput.updatedInput 으로 주입(mechanical) + 전환-자율 reminder additionalContext 를
-# 동일 JSON 에 병합 → hook stdout = 정확히 하나의 JSON (구 reminder emit + 구 detect 통합).
+# 동일 JSON 에 병합 → hook stdout = 정확히 하나의 JSON. ★ F1 이후 본 블록은 PROMPT_TEXT 유무와
+# 무관하게 UNCONDITIONAL 도달 (§7.3 LOAD-BEARING).
 #
 # 계약 (Change Plan §7.2/§7.3 · spike verdict):
-#   · whole-echo REPLACE-safe (BARE01: 부분 updatedInput=schema HARD-FAIL) — check_spawn_description_prefix.py 담당.
-#   · bare updatedInput (permissionDecision 미emit, G4) — deny 절대 안 함.
-#   · fail-open (G5): helper/python/kst 부재·parse 실패 → skip(no stdout) 또는 reminder-only, spawn 무차단.
-#   · #15897 caveat (ADR-119): worst-case = clean prefix loss = ADR-143 advisory ceiling, never wrong-value.
-#
-# 기존 4-block prompt 검사(상단 stderr warning)와 무관 — 본 블록은 stdout JSON 단독 emit.
+#   · whole-echo REPLACE-safe · bare updatedInput (permissionDecision 미emit, G4) · fail-open (G5).
+#   · #15897 caveat (ADR-119): worst-case = clean prefix loss = advisory ceiling, never wrong-value.
 
-# subagent_type 추출 (header subject source = tool_input.subagent_type, spike AC-7)
+# subagent_type 추출 + FIELD presence 판정 (spike AC-7 / §7.7-2).
+#   ★ F3 (CFP-2587 FIX-2): subagent_type FIELD 부재(키 자체 없음) → injection SKIP (reminder 는 유지) —
+#   Bash 표면 shell EXCLUDE 와 대칭. FIELD present-but-empty → build_injected_description 의 G2
+#   unknown-agent fallback. presence + value 를 1-fork 로 판정(perf; P: 접두=present, A:=absent).
 SUBAGENT_TYPE=""
+SUBAGENT_TYPE_ABSENT="1"
 if [ -n "$PYTHON_CMD" ]; then
-  SUBAGENT_TYPE="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+  _ST="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
 import json, sys
 try:
     ti = json.load(sys.stdin).get('tool_input', {})
-    print(ti.get('subagent_type', '') if isinstance(ti, dict) else '', end='')
+    if isinstance(ti, dict) and 'subagent_type' in ti:
+        v = ti.get('subagent_type')
+        sys.stdout.write('P:' + (v if isinstance(v, str) else ''))
+    else:
+        sys.stdout.write('A:')
 except Exception:
-    pass
+    sys.stdout.write('A:')
 " 2>/dev/null || true)"
+  case "$_ST" in
+    P:*) SUBAGENT_TYPE_ABSENT="0"; SUBAGENT_TYPE="${_ST#P:}" ;;
+    *)   SUBAGENT_TYPE_ABSENT="1"; SUBAGENT_TYPE="" ;;
+  esac
 fi
 
 # KST render stamp (fallback empty — kst-render-stamp.sh 실패 시 build_injected_description 이 skip)
@@ -221,10 +208,15 @@ elif [ -f "scripts/lib/check_spawn_description_prefix.py" ]; then
   DESC_CHECKER="scripts/lib/check_spawn_description_prefix.py"
 fi
 
-# SINGLE call — updatedInput + additionalContext 병합 JSON (구 reminder emit + 구 detect 대체).
-# fail-open: helper/python 부재 시 skip(no stdout). --transition-reminder 로 reminder 병합.
+# SINGLE call — updatedInput + additionalContext 병합 JSON.
+#   ★ F3: subagent_type FIELD 부재 → --subject-absent (injection skip, reminder 유지).
+#   ★ F5: --bypass-env = Agent 표면 전용 env (Bash 표면 env 와 disjoint — cross-surface bleed 방지).
 if [ -n "$DESC_CHECKER" ] && [ -n "$PYTHON_CMD" ]; then
-  printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$SUBAGENT_TYPE" --kst-stamp "$STAMP" --transition-reminder 2>/dev/null || true
+  if [ "$SUBAGENT_TYPE_ABSENT" = "1" ]; then
+    printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$SUBAGENT_TYPE" --kst-stamp "$STAMP" --transition-reminder --bypass-env BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE --subject-absent 2>/dev/null || true
+  else
+    printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$SUBAGENT_TYPE" --kst-stamp "$STAMP" --transition-reminder --bypass-env BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE 2>/dev/null || true
+  fi
 fi
 
 # Wave 1: 항상 exit 0 (deny 비활성)
