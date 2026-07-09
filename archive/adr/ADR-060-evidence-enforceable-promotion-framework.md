@@ -52,6 +52,13 @@ mechanical_enforcement_actions:
     status: warning               # Phase 2 full-lane wire (Python SSOT + bash wrapper + warning workflow + self-contained discriminating test + registry self-entry + plugin.json tagline STALE 정정). warning tier first per §결정 5. self-entry 는 §33.D self-application — 게이트 자체 script/workflow 실파일 동반 신설 + self description 에 count 토큰(N≠10) 미포함 → self-flag 안 됨
     progress_note: "CFP-2426 Amendment 19 carrier — ADR-125 Amd1 이 canonical lane 수=10 을 정본 SSOT 로 박았으나(registration) 분산 governance 문서 사본이 단조 유지되도록 강제하는 mechanical enforcement 부재 → stale N 레인/N번째 lane(N≠10) drift 가 2 Story 연속(CFP-2341 → CFP-2376) leak. 'registration 완료 ≠ enforcement 실효' 전형. 검출 1급 firing = stale_token_match(line) AND NOT allowlist_match(line). 5축 allowlist(within-line 이중토큰 / negation / history / path / counterfactual) channel(line-prefix key) 단위 면제. same-file channel-split: live description:/section: 값=검출 vs date:/source_section:/amendment_log span=면제. amendment_log span = line-local boolean toggle(enter=헤더 key / exit=dedent·sibling list·다음 top-level key), multi-line backtracking regex 0(ReDoS-safe). N-range={5,6,7,8,9} = canonical-10 특정값 detection (미래 lane 증감 ADR-125 Amendment 가 N-range 갱신을 REQUIRED mechanical-sync 항으로 포함). Phase 2 = scripts/lib/check_lane_count_ssot.py + scripts/check-lane-count-ssot.sh + .github/workflows/lane-count-ssot.yml(.github single-root, deferred-followup-reconcile 동형) + scripts/test-check-lane-count-ssot.sh(22 fixture + 4 mutation 생존 0) + registry self-entry append + plugin.json tagline lane-count 8→10 STALE 정정(marketplace-atomic sync ADR-063). prior art 답습: check_issue_body_claim_pre_screen.py(line-by-line in_fence boolean toggle) + check_governance_drift.py(git ls-files path walk + ::warning:: advisory exit) + check-deferred-followup-reconcile.sh(ADR-061 thin wrapper). warning tier first per §결정 5"
     target_section: §결정 33      # 본 Amendment 19 의 mechanical action ↔ §결정 binding
+  # Amendment 20 (CFP-2591, 2026-07-10 KST) — deferred-followup forcing-function 봉합 Stage 1+2
+  #   (baseline + new-only shadow). §결정32.D surfacing tier 도입 + grandfather baseline 메커니즘 신규 §결정
+  #   + (b) carrier-mandate no-TBD lint entry (18번째 warning-tier entry, deferral-carrier-declared).
+  - action: deferral-carrier-declared
+    status: warning               # ★ Stage 1+2 (baseline + new-only shadow) — warning-tier wired, blocking 아님. 실제 continue-on-error 제거(flip → blocking-on-pr surfacing)는 baseline main 착지 후 별 후속 PR (§7.2.2 self-deadlock 회피). self-entry deferred-followup-reconcile current_tier:warning 불변 (NO-FLIP invariant). warning tier first per §결정 5
+    progress_note: "CFP-2591 Amendment 20 carrier — deferred-followup 을 미해결 placeholder(TBD 마커 / 미발급 CFP 번호 / 미배선 FU 마커)로 남기면 forcing function 대상 자체가 소멸(silent debt) → (b) carrier-mandate no-TBD lint 이 registry 밖 declaration surface 전반에서 placeholder 검출 + registry cross-check(named carrier level-1 membership) + baseline grandfather(new-only). (a) registry FLAG 는 sibling deferred-followup-reconcile 소관(두 축 disjoint). grandfather baseline 메커니즘(docs/deferred-followup-baseline.yaml — enumerated-freeze / 2-owner section / single-writer gen tool / content_digest tamper-evident / monotonic shrink) = framework-wide 신규 §결정(new-only SonarQube Clean-as-You-Code + betterer ratchet). §결정32.D surfacing tier(Tier 1 = continue-on-error 제거 + red-X/sticky 표면화, required 6-tuple 미편입) 도입 + §결정3 reconciliation(surfacing qualifier — current_tier:blocking-on-pr 자체가 contexts membership 함의 안 함). self-entry §결정6 carrier 3종(outage runbook / author-verify lint / sticky at-most-once) evidence_artifacts 배선. Stage 1+2 = continue-on-error 유지(flip 미포함) — Tier 2(hard-required) = FUTURE/OOS. honest forcing ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count #4 관측만). Phase 2 = scripts/lib/check_deferral_carrier_declared.py + scripts/check-deferral-carrier-declared.sh + .github/workflows/deferral-carrier-declared.yml + docs/deferred-followup-baseline.yaml + docs/runbooks/deferred-followup-reconcile-enforce-outage.md + registry (b) entry + self-entry evidence_artifacts 3종. prior art 답습: check_lane_count_ssot.py(line-by-line scan + 5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest). ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 이 6-tuple 회피 → §9.1 SSOT 무변경 + §9.4 bypass invariant 미발화). warning tier first per §결정 5"
+    target_section: §결정 32      # 본 Amendment 20 의 mechanical action ↔ §결정 binding (§32.D surfacing tier 개정 + §7.9 carrier trio + no-TBD (b) lint)
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -824,6 +831,63 @@ amendment_log:
       only (ADR-058 §결정 5 sunset_justification 의무 = is_transitional:
       false 영구 framework 이므로 trigger 자체 미해당 — 강화 방향
       amendment).
+  - amendment: 20
+    carrier_story: CFP-2591
+    date: 2026-07-10
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 자체 미해당. 본 Amendment 20 = 강화 방향 (18번째 warning-tier entry deferral-carrier-declared 등록 + grandfather baseline 메커니즘 신규 §결정 + §결정32.D surfacing tier 도입 = framework entry count 17 → 18 ratchet-UP). 약화 영역 0건 (enum 값/tier 제거 없음, surfacing = 신규 sub-mode append).
+    summary: |
+      §결정 32.D 개정 (surfacing tier 도입) + grandfather baseline 메커니즘
+      framework-wide 신규 §결정 + (b) carrier-mandate no-TBD lint entry
+      (18번째 warning-tier entry `deferral-carrier-declared`) 등록 carrier
+      amendment. deferred-followup forcing-function 봉합 Stage 1+2
+      (baseline + new-only shadow).
+
+      ★ NO-FLIP: 본 CFP-2591 PR 은 Stage 1+2 (baseline + new-only shadow)
+      까지만 ship — 실제 continue-on-error 제거(flip → blocking-on-pr
+      surfacing) 및 self-entry tier 승격은 baseline main 착지 후 별 후속
+      PR (§7.2.2 self-deadlock 회피). Tier 2 (hard-required, 6-tuple 편입)
+      = FUTURE/OOS.
+
+      (a) §결정32.D 개정: "warning emit, blocking 아님" → `blocking-on-pr
+      (surfacing)` tier(Tier 1) 도입 — continue-on-error 제거로 red-X +
+      sticky 표면화, required 6-tuple 미편입. 단 본 PR 은 flip 미포함
+      (shadow 까지만).
+
+      §결정3 reconciliation (F-3): §결정3 tier-table 이 `blocking-on-pr`
+      을 "required check·contexts 부착"으로 정의 → surfacing(비-required)
+      의미와 상충. Amendment 20 이 `surfacing` qualifier 도입 —
+      `current_tier: blocking-on-pr` 자체가 6-tuple/contexts membership 을
+      함의하지 않음 (surfacing sub-mode = continue-on-error 제거만·contexts
+      무변경). 실측 drift(worktree-first 3 entry blocking-on-pr ∧ contexts
+      미부착) + Amendment 1 FIND-4 정합.
+
+      §결정6 harmonization: `failure=0` 을 baseline-relative(new-debt
+      failure=0)로 재해석 — Clean-as-You-Code ↔ §결정5 warning-first 조화.
+
+      grandfather baseline 메커니즘 (framework-wide 신규 §결정):
+      `docs/deferred-followup-baseline.yaml` (enumerated-freeze / 2-owner
+      section / single-writer gen tool / content_digest tamper-evident /
+      monotonic shrink). new-only (SonarQube Clean-as-You-Code) + betterer
+      ratchet.
+
+      (b) carrier-mandate entry: deferral 선언 시 carrier CFP + registry
+      등재 필수화, 미해결 placeholder(TBD 마커/미명명 FU 마커) 금지
+      (no-TBD lint). declared→registered 강제 결합 (§2.3). (a) registry
+      FLAG 는 sibling deferred-followup-reconcile 소관 — 두 축 disjoint.
+
+      §결정6 carrier trio (self-entry evidence_artifacts 3종 배선):
+      outage runbook(iv) + author-verify lint(v) + sticky at-most-once(vi).
+
+      ADR-127/ADR-024 amendment 불요: Tier 1 surfacing 이 6-tuple 회피 →
+      §9.1 SSOT 무변경 + §9.4 bypass invariant 미발화. honest forcing
+      ceiling: 게이트는 hard block 미주장 — admin 우회 구조적 가능, AC-20
+      count #4 로 관측만.
+
+      ratchet 위반 0건 — framework 자연스러운 사용 사례 entry 추가 +
+      surfacing sub-mode append (ADR-058 §결정 5 sunset_justification
+      의무 = is_transitional:false 영구 framework trigger 미해당 — 강화
+      방향 amendment).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -842,6 +906,7 @@ related_stories:
   - CFP-2061-S4  # Amendment 17 carrier — 신설 §결정 31 15번째 warning-tier entry governance-drift-detection + 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 (advisory, cron). full-lane (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats 19 TC). prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). de-bloat 재증식 감시 경보 채널.
   - CFP-2381  # Amendment 18 carrier — 신설 §결정 32 16번째 warning-tier entry deferred-followup-reconcile + §결정 19 auto_blocking 강제력 0 라벨 → mechanical forcing function 연결 (carrier-부재 검출 = detect_command/workflow 경로 파일 실존, deterministic + 외부의존 0 + backfill 0). STALE 2건 (bootstrap-labels-precondition + schema-change-7-principles-self-check) status flip + stale TBD 주석 제거. full-lane (Python SSOT + bash wrapper + warning workflow + self-validation test job + registry self-entry). prior art 답습: check_governance_drift.py + increment-justification + operational-outcome-signal-lint test-job (신규 발명 최소).
   - CFP-2426  # Amendment 19 carrier — 신설 §결정 33 17번째 warning-tier entry lane-count-ssot-consistency + canonical 작업레인 수(10, ADR-125 Amd1) SSOT mechanical consistency enforcement. grep-기반 검출(N 레인/N번째 lane/레인 N개, N≠10) + 5축 allowlist(within-line 이중토큰/negation/history/path/counterfactual) channel-split false-positive 차단. 2 Story 연속(CFP-2341→CFP-2376) leak = manual 정정 구조적 한계 입증(pattern_count=2 정당). full-lane (Python SSOT + thin wrapper + .github single-root warning workflow + self-contained discriminating test 22 fixture/4 mutation 생존 0 + registry self-entry + plugin.json tagline 8→10 STALE 정정 + 6.40.0 MINOR marketplace sync). standalone ADR-132 기각(ADR-060 framework 자연스러운 17번째 entry). prior art 답습: check_issue_body_claim_pre_screen.py(in_fence toggle) + check_governance_drift.py(path walk + ::warning::) + check-deferred-followup-reconcile.sh(thin wrapper).
+  - CFP-2591  # Amendment 20 carrier — §결정 32.D 개정(surfacing tier 도입) + grandfather baseline 메커니즘 framework-wide 신설 + 18번째 warning-tier entry deferral-carrier-declared(carrier-mandate no-TBD lint). deferred-followup forcing-function 봉합 Stage 1+2(baseline + new-only shadow) — NO-FLIP: continue-on-error 유지 + self-entry current_tier:warning 불변, 실 flip=별 후속 PR(baseline main 착지 후). §결정3 reconciliation(surfacing qualifier — blocking-on-pr 자체가 contexts membership 미함의) + §결정6 harmonization(baseline-relative new-debt failure=0). self-entry deferred-followup-reconcile §결정6 carrier trio(outage runbook/author-verify/sticky at-most-once) evidence_artifacts 배선. ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 6-tuple 회피). full-lane (baseline yaml + check new-only subtract + (b) Python SSOT/thin wrapper/.github workflow + runbook + registry (b) entry + self-entry evidence_artifacts + plugin.json 6.72.0 MINOR + registry-v1 v1.6). honest ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count 관측만). prior art 답습: check_lane_count_ssot.py(5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest).
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -2429,3 +2494,74 @@ content-anchor fixture (line# 하드코딩 0 — 요구사항리뷰 R1 교훈). 
 - **ADR-037 (d)** — 신규 governance lint runtime 활성화 = governance behavior → MINOR (6.38.0 → 6.40.0; 6.39.0 = CFP-2428 #2430 병렬 세션 선점 → skip). **ADR-063** — plugin.json `description` tagline `8 레인`→`10 레인` = description-touching → marketplace sync PR 선행 merge.
 - **ADR-054 §결정 4** — 신규 ADR 회피 (Amendment host) = change-plan 면제 (ADR-carrier). **ADR-130 §결정 158** — path-filter `on.paths` skip 금지 (선례 일관성, deferred-followup-reconcile 동형 .github single-root).
 - **prior art** (worktree 실존 확인 — ADR-119): `scripts/lib/check_issue_body_claim_pre_screen.py` (line-by-line in_fence boolean toggle masking — span toggle 선례) + `scripts/lib/check_governance_drift.py` (git ls-files path walk + `::warning::` advisory exit) + `scripts/check-deferred-followup-reconcile.sh` (ADR-061 thin wrapper).
+
+## Amendment 20 (CFP-2591, 2026-07-10 KST)
+
+**Carrier**: CFP-2591 (Epic — deferred-followup forcing-function 봉합) / Story file = `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-2591.md` (wrapper-self Story, ADR-013 dogfood-out 정합).
+
+deferred-followup forcing function 의 최종 봉합. §결정 32 (Amendment 18) 가 registry entry 의 carrier-부재를 검출하나, (a) enforce 실효(surfacing) + (b) registry **밖** declaration surface 의 미해결 placeholder carrier(no-TBD) + (iv)~(vi) carrier trio 3 갭이 잔존했다. 본 Amendment 20 이 이를 §7.9 로 봉합한다.
+
+### ★ NO-FLIP 불변식 (Stage 경계 명시)
+
+본 CFP-2591 PR = **Stage 1+2 (baseline + new-only shadow)** 이지 Stage 3(flip) 아님.
+
+- `.github/workflows/deferred-followup-reconcile.yml` 의 lint step `continue-on-error: true` **유지** (제거 = flip 금지).
+- self-entry `deferred-followup-reconcile` + (b) entry `deferral-carrier-declared` 의 `current_tier: warning` **유지** (blocking-on-pr 승격 금지).
+- 실제 continue-on-error 제거(flip → blocking-on-pr surfacing) + tier 승격 = **baseline main 착지 후 별 후속 PR** (§7.2.2 self-deadlock 회피). Tier 2(hard-required, 6-tuple 편입) = FUTURE/OOS.
+
+### §7.9.A — (a) §결정 32.D 개정 (surfacing tier 도입)
+
+§결정 32.D 의 강제 action 은 종전 "warning emit, blocking 아님" 이었다. Amendment 20 이 `blocking-on-pr (surfacing)` tier(**Tier 1**)를 도입 — continue-on-error 제거로 red-X + sticky comment 표면화, 단 required 6-tuple 미편입. **단 본 CFP-2591 PR 은 Stage 1+2 까지만 ship — 실제 continue-on-error 제거(flip)는 baseline main 착지 후 별 후속 PR** (§7.2.2 self-deadlock 회피: baseline 을 도입하는 PR 자신이 blocking 이면 baseline 부재 상태에서 전 PR self-block). Tier 2(hard-required) = FUTURE/OOS.
+
+### §7.9.B — §결정 3 reconciliation (F-3, 필수)
+
+§결정 3 tier-table 이 `blocking-on-pr` 을 "required check·`required_status_checks.contexts` 부착"으로 정의 → surfacing(비-required) 의미와 상충. Amendment 20 이 **`surfacing` qualifier 도입**:
+
+- `current_tier: blocking-on-pr` 자체는 6-tuple/contexts membership 을 **함의하지 않는다**. surfacing sub-mode = **continue-on-error 제거만 · contexts 무변경**.
+- 실측 drift 정합: `worktree-first-pre-checkout` 계열 3 entry 가 `blocking-on-pr` ∧ `required_status_checks.contexts` 미부착 상태로 이미 실재 → surfacing qualifier 가 이 실측을 소급 정합화 (Amendment 1 FIND-4 "manifest 부착 entry 만 blocking 분류" 와 정합 — 부착 없이 blocking-on-pr 표기 가능한 surfacing sub-mode).
+
+### §7.9.C — §결정 6 harmonization (baseline-relative failure=0)
+
+§결정 6 (b) `failure_threshold = 0` 을 **baseline-relative(new-debt failure=0)** 로 재해석 — baseline 에 grandfather 된 pre-existing debt 는 failure 미카운트, baseline 이후 신규 유입만 failure 로 집계. Clean-as-You-Code ↔ §결정 5 warning-first 조화 (기존 debt 로 인한 전면 red 회피 + 신규 debt 즉시 표면화).
+
+### §7.9.D — grandfather baseline 메커니즘 (framework-wide 신규 §결정)
+
+`docs/deferred-followup-baseline.yaml` = enumerated-freeze baseline. 속성:
+
+- **enumerated-freeze**: gate_flags + declaration_surfaces 를 승격 시점 snapshot 으로 열거 동결 (locator + token + reason).
+- **2-owner section**: gate_flags(registry gate 축) + declaration_surfaces((b) lint 축) 두 소유 섹션 분리.
+- **single-writer gen tool**: `scripts/gen-deferred-followup-baseline.sh` 만 write (손 편집 금지 — DO NOT EDIT BY HAND). CI 는 gen 미호출(regen-and-diff-zero 게이트 신설 금지 — provenance drift 회피).
+- **content_digest tamper-evident**: sha256 over canonical `{gate_flags, declaration_surfaces}` (provenance/generated_at 제외) — 손 편집 tamper 검출.
+- **monotonic shrink**: baseline 은 축소만(정리 시 subtract) — 증식 금지 ratchet.
+
+이론적 근거 = SonarQube **Clean-as-You-Code**(new-only) + betterer ratchet. 신규 debt 만 gate, legacy debt 는 별 backward-triage carrier(예: confluence-ia-tree TBD 2건 → #2097).
+
+### §7.9.E — (b) carrier-mandate entry (no-TBD lint)
+
+deferral 선언 시 carrier CFP + registry 등재를 **필수화**. registry **밖** declaration surface(문서/워크플로/스킬 안 placeholder carrier)에서 미해결 placeholder(미확정 TBD 마커 / 미발급 CFP 번호 / 미배선 FU 마커)를 grep-기반 mechanical 검출 + registry cross-check(named carrier level-1 membership) + 5축 allowlist false-positive 차단 + baseline grandfather(new-only). **declared→registered 강제 결합**(§2.3 forced-coupling) — 선언만 하고 미등재/미명명인 silent debt 차단.
+
+- (a) registry FLAG 는 sibling `deferred-followup-reconcile` 소관, (b) 는 registry 밖 surface 소관 — 두 축 **disjoint**.
+- entry = `deferral-carrier-declared` (18번째 warning-tier entry). detect = `scripts/lib/check_deferral_carrier_declared.py` + thin wrapper + `.github/workflows/deferral-carrier-declared.yml` + QADev discriminating test.
+- bypass_label **미신설**(D9 — attack surface 최소화, advisory 게이트라 escape valve 불요).
+
+### §7.9.F — §결정 6 carrier trio (self-entry evidence_artifacts 3종)
+
+self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_artifacts 배선:
+
+- **(iv) outage runbook**: `docs/runbooks/deferred-followup-reconcile-enforce-outage.md` (외부의존 열거 + surfacing outage 처리 + manual fallback 3-step + self-block 회복 sequence + honest ceiling).
+- **(v) author-verify lint**: hotfix-bypass audit comment 이 `github-actions[bot]` authored 인지 검증(`scripts/check-audit-comment-author.sh`) — presence-only spoof gap 봉합. 워크플로 배선 = warning mode(검증 FAIL → echo 경고만·비차단, Stage 1+2).
+- **(vi) sticky comment at-most-once**: hidden marker find-then-upsert(plain append 금지) — ID-2 idempotency.
+
+### §7.9.G — ADR-127/ADR-024 amendment 불요 + honest ceiling
+
+- **ADR-127/ADR-024 amendment 불요**: Tier 1 surfacing 이 required 6-tuple 을 회피 → ADR-127 §9.1 required-check SSOT 무변경 + ADR-024 §9.4 bypass invariant 미발화 (surfacing = required 아님이라 bypass channel 의무 미발동).
+- **honest forcing ceiling**: 게이트는 hard block 을 **미주장**한다 — admin 우회는 구조적으로 가능(surfacing 은 required 아님, admin merge 경로 open). 우회는 감사(audit comment) + AC-20 count(#4)로 **관측만** (mechanical 차단 아님).
+
+### §7.9.H — Cross-ref
+
+- **§결정 32 (Amendment 18)** — 본 Amendment 20 이 개정하는 forcing function 원 정의(§32.D surfacing tier 개정 대상).
+- **§결정 3 / §결정 5 / §결정 6** — surfacing qualifier reconciliation / warning-first / promotion gate(baseline-relative harmonization).
+- **ADR-061** — thin wrapper bash + `scripts/lib/check_deferral_carrier_declared.py` Python SSOT (ReDoS-safe line-by-line). **ADR-127** — required 신설 0 ratchet (Tier 1 surfacing = branch protection 6-tuple 무변경). **ADR-024** — bypass channel(surfacing 미발동).
+- **ADR-063** — plugin.json 6.71.0 → 6.72.0 MINOR (governance behavior — 신규 warning-tier lint runtime 활성화). marketplace.json cross-repo sync = 별 follow-up declare.
+- **ADR-058 §결정 5** — is_transitional:false 영구 framework trigger 미해당 + 강화 방향(18번째 entry ratchet-UP + surfacing sub-mode append).
+- **prior art** (worktree 실존 확인 — ADR-119): `scripts/lib/check_lane_count_ssot.py` (line-by-line scan + git ls-files walk + 5축 allowlist + SELF_EXCLUDE + ReDoS-safe + exit 3-tier — verbatim copy-inherit) + `scripts/lib/check_deferred_followup_reconcile.py` (carrier-resolution triplet + baseline loader/digest) + `worktree-first-pre-checkout.yml` (audit comment scaffold + sticky comment 패턴 — blocking mode 를 surfacing/warning non-blocking 으로 적용).

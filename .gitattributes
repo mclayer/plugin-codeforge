@@ -21,6 +21,7 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+docs/deferred-followup-baseline.yaml text eol=lf
 *.json text eol=lf
 
 # Python — LF.

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.5"
+version: "1.6"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
 date: 2026-05-19
@@ -14,6 +14,7 @@ authors:
   - CFP-2061-S2 (MINOR bump v1.3 → v1.4 — `entries[].tags` optional list field 신설 §3.2 codify, closed-set enum [security, consumer-whitelist] 검사 dead 자동 제외 hard-exclude 가드 carrier. SSOT = docs/check-dead-criteria.yaml. 신규 ADR 0 — doc-only fast-path ADR-054, framework data-substrate 하위 영역 append. CFP-2061-S1 §11 FU-1 tag SSOT 단일화 충족)
   - CFP-2480 (MINOR bump v1.4 → v1.5 — `entries[].policy_pack_member` (bool) + `entries[].policy_pack_scope` (list[enum] wrapper/lane-plugin/consumer) optional field 신설 §3.3 codify, executable policy gate pack 멤버십 단일 SSOT. ADR-037 Amendment 4 진입점 carrier — version-bump 게이트 = 정책팩 첫 멤버. tags 와 분리 (orthogonal concern). changelog scope = ADR-092 §결정 3 wrapper 동결 반영 lane-plugin/consumer 한정. Epic CFP-2476 E3. 신규 ADR 0 — amendment-led, framework data-substrate 하위 append)
   - CFP-2545 (NO bump — v1.5 retain. `codex-companion-timeout-presence` warning-tier evidence-checks-registry **data entry** 신설(docs/evidence-checks-registry.yaml)이나 schema body 필드 추가 0 → registry 자체 룰 = data-only 는 no-bump (CFP-2504 venue-shape-fidelity entry-add no-bump 선례 + §Tier value transition 첫 사례 "MINOR bump 미동반, schema 변경 0" 선례 동형). ADR-081 Amendment 12 §결정 D14 Phase 2 mechanical wire carrier — Codex companion 브로커 경로 wall-clock ceiling mandate presence-grep lint. mechanical_enforcement_actions[] 3번째 entry [`codex-network-scope-presence` / `codex-origin-main-directive-check` 선례 동형]. MANIFEST `evidence_check_registry` row v1.5 retain. 구현리뷰 FIX iter1 P2 — 초기 1.6 bump 철회.)
+  - CFP-2591 (MINOR bump v1.5 → v1.6 — status enum `deferred-followup` append: registry 실사용 17 entry drift 정합화, ADR-060 Amendment 20 §결정 D6 Layer 1, backward-compatible append, 신규 ADR 0 amendment-led)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
@@ -71,7 +72,7 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `introduced_by` | string | 필수 | 본 entry 도입 carrier Story key. 예: `CFP-389`. |
 | `owner_adr` | string | 필수 | 본 entry 가 검증 대상으로 삼는 정책 ADR. 예: `ADR-058`. |
 | `carrier_adr` | string | 필수 | 본 entry 도입의 carrier ADR (framework SSOT 외). 예: `ADR-060`. |
-| `status` | enum | optional (default `Active`) | entry lifecycle. enum = `Active` / `Deprecated` / `Archived`. |
+| `status` | enum | optional (default `Active`) | entry lifecycle. enum = `Active` / `Deprecated` / `Archived` / `deferred-followup` (v1.6, CFP-2591 — registry 실사용 17+ entry 가 이미 사용 중이던 drift 정합화, ADR-060 Amendment 20 §32.G / D6 Layer 1, backward-compatible append). |
 | `recurrence` | object | optional (v1.2, CFP-509 / ADR-060 Amendment 6 — recurrence-driven promotion 정식 도입) | recurrence tracking. 필드: |
 | `recurrence.count` | int | 필수 (recurrence 정의 시) | 본 entry 도입 후 누적 위반 발생 횟수 (machine-usable). 기본 `0`. |
 | `recurrence.last_occurrence` | ISO8601 UTC | optional | 마지막 위반 timestamp (ISO8601 UTC Z suffix). count = 0 시 omit 가능. |

@@ -1,5 +1,11 @@
 name: deferred-followup-reconcile
 # CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트 (warning-tier).
+# CFP-2591 / ADR-060 Amendment 20 §결정 6 — carrier trio scaffold (runbook 참조 + author-verify + sticky at-most-once).
+#
+# ★ Stage 1+2 (baseline + new-only shadow) — Tier flip 아님. continue-on-error: true 유지.
+#   실제 continue-on-error 제거(flip → blocking-on-pr surfacing) = baseline main 착지 후 별 후속 PR
+#   (§7.2.2 self-deadlock 회피). honest ceiling: 본 게이트는 hard block 을 주장하지 않는다 — admin
+#   우회 구조적 가능, AC-20 count 로 관측만.
 #
 # §결정 19 auto_blocking 라벨의 mechanical forcing function — "임계 초과 + auto_blocking +
 # 전용 carrier 부재" evidence-checks-registry entry 를 PR-time 에 자동 검출 + 강제 action 3택.
@@ -8,6 +14,9 @@ name: deferred-followup-reconcile
 #   ADR-005 byte-parity scope 외 — template mirror 미운용 (게이트 = wrapper-self governance
 #   registry 검사라 .github-only 정합). invariant-check.yml parity loop 은 templates → .github
 #   방향이라 .github-only 파일은 미검출 (CONSUMER_ONLY_WORKFLOWS 등록 불요).
+#
+# ⚠️ 본 워크플로는 baseline 을 재생성(regen)하지 않는다 — `check` 만 실행 (gen tool = CI 미호출,
+#   provenance drift 회피). regen-and-diff-zero 게이트 신설 금지.
 #
 # Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
 # Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
@@ -21,6 +30,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write   # CFP-2591 §결정6 vi — sticky comment upsert (at-most-once)
 
 jobs:
   deferred-followup-reconcile:
@@ -34,9 +44,102 @@ jobs:
           python-version: "3.12"
       - name: Install pyyaml
         run: pip install pyyaml
-      - name: Run check-deferred-followup-reconcile.sh (warning, 비차단)
-        continue-on-error: true
-        run: bash scripts/check-deferred-followup-reconcile.sh check
+      - name: Run check-deferred-followup-reconcile.sh (warning, 비차단 — baseline new-only shadow)
+        # baseline default path 자동 resolve (인자 불요). gen tool 미호출 (regen 금지 — provenance drift 회피).
+        continue-on-error: true   # ★ Stage 1+2 유지 — flip(제거)은 별 후속 PR. NO-FLIP invariant.
+        run: bash scripts/check-deferred-followup-reconcile.sh check 2>&1 | tee /tmp/dfr.out
+
+      - name: Sticky comment (find-then-upsert, at-most-once — §결정6 vi)
+        # PR context 에서만 (push/dispatch 는 대상 PR 부재 → skip). if: always() 로 lint FLAG 여부 무관 표면화.
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          MARKER='<!-- deferred-followup-reconcile-sticky -->'
+          LINT_OUT="$(cat /tmp/dfr.out 2>/dev/null || echo '(lint output 부재)')"
+          BODY="$(printf '%s\n## deferred-followup-reconcile — Stage 1+2 (baseline + new-only shadow)\n\n```\n%s\n```\n\n> **warning-tier (continue-on-error)** — 본 게이트는 merge 를 차단하지 않습니다. Tier flip(blocking-on-pr surfacing) = baseline main 착지 후 별 후속 PR. honest ceiling: hard block 미주장 (admin 우회 구조적 가능, AC-20 count 로 관측만). runbook: docs/runbooks/deferred-followup-reconcile-enforce-outage.md' "$MARKER" "$LINT_OUT")"
+          # 기존 sticky comment(marker 포함 + github-actions[bot] authored) id 탐색 → find-then-upsert (plain append 금지)
+          EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("deferred-followup-reconcile-sticky"))] | last | .id' \
+            2>/dev/null || echo "")"
+          if [ -n "$EXISTING_ID" ] && [ "$EXISTING_ID" != "null" ]; then
+            gh api --method PATCH "repos/${REPO}/issues/comments/${EXISTING_ID}" -f body="$BODY" >/dev/null
+            echo "sticky comment upsert: PATCHed id=$EXISTING_ID (at-most-once — ID-2)"
+          else
+            gh pr comment "$PR_NUMBER" --body "$BODY"
+            echo "sticky comment upsert: created (at-most-once — ID-2)"
+          fi
+
+  # §결정6 v — bypass label 부착 시에만 도는 author-verify scaffold (audit comment emit + bot-authored 강제).
+  #   worktree-first-pre-checkout.yml:81-102 audit scaffold 답습 — 단 warning mode (검증 FAIL → echo 경고만, 비차단).
+  #   author lint 이 bot-authored 강제 = presence-only spoof gap 봉합. 본 PR 은 non-blocking (Stage 1+2).
+  deferred-followup-reconcile-bypass-audit:
+    name: bypass audit comment author-verify (warning — §결정6 v)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          labels=$(gh pr view "$PR_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+          echo "labels=$labels"
+          case ",$labels," in
+            *,hotfix-bypass:deferred-followup-reconcile,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+      - name: Emit bypass audit comment (label applied — worktree-first 답습)
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          REASON=$(gh pr view "$PR_NUMBER" --json body --jq '.body' 2>/dev/null \
+            | awk '/^### Bypass reason/{flag=1;next} /^##/{flag=0} flag' \
+            | sed '/^$/d' | head -n 5 | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+          if [ -z "$REASON" ]; then
+            REASON="(PR description '### Bypass reason' 섹션 부재 — 후속 보완 의무)"
+          fi
+          LABEL_USER=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/events" \
+            --jq '[.[] | select(.event == "labeled" and .label.name == "hotfix-bypass:deferred-followup-reconcile")] | last | .actor.login' \
+            2>/dev/null || echo "unknown")
+          TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          AUDIT="[hotfix-bypass-audit] PR=${PR_NUMBER} label_applied_by=${LABEL_USER} reason=${REASON} ADR_files=(ADR-060 §결정6 deferred-followup-reconcile) timestamp=${TS}"
+          gh pr comment "$PR_NUMBER" --body "$AUDIT"
+      - name: Author-verify audit comment (warning — bot-authored 강제, 비차단)
+        # §결정6 v — audit-tagged comment 의 author.login 이 github-actions[bot] 인지 검증.
+        #   FAIL 시 echo 경고만 + exit 0 (Stage 1+2 non-blocking — presence-only spoof gap 표면화만).
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set +e
+          gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '[.[] | {author: {login: .user.login}, body: .body}]' > /tmp/dfr-comments.json 2>/dev/null
+          bash scripts/check-audit-comment-author.sh check --comments-json /tmp/dfr-comments.json
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::deferred-followup-reconcile author-verify FAIL (warning mode — PR merge 미차단, presence-only spoof gap 표면화만)"
+          fi
+          exit 0   # ★ Stage 1+2 non-blocking — flip 후 후속 PR 에서 exit $status 승격
 
   deferred-followup-reconcile-test:
     name: discriminating test (다형 fixture — mutation 생존 0)
@@ -51,3 +154,6 @@ jobs:
         run: pip install pyyaml
       - name: Run test-check-deferred-followup-reconcile.sh (회귀 시 exit 1 차단)
         run: bash scripts/test-check-deferred-followup-reconcile.sh
+      - name: Run check-audit-comment-author selftest (회귀 시 exit 1 차단 — §결정6 v)
+        # test job = non-continue-on-error OK (author 판정 로직 mutation-survivor-0 회귀 방어).
+        run: bash scripts/check-audit-comment-author.sh selftest
