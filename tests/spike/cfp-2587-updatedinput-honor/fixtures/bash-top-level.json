@@ -1,0 +1,17 @@
+{
+  "session_id": "7cee541e-77a7-4fe7-8b28-29b34c401f5b",
+  "transcript_path": "C:\\Users\\mccho\\.claude\\projects\\C--workspace-mclayer--wt-cfp-2587-p2\\7cee541e-77a7-4fe7-8b28-29b34c401f5b.jsonl",
+  "cwd": "C:\\workspace\\mclayer\\_wt-cfp-2587-p2",
+  "prompt_id": "7e867e88-7e2c-4ae7-a262-ba752cb167af",
+  "permission_mode": "bypassPermissions",
+  "effort": {
+    "level": "xhigh"
+  },
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "echo SPIKE_ORIGINAL_GATEA001",
+    "description": "Echo test string"
+  },
+  "tool_use_id": "toolu_01PhcDK4r2zDrNjp9v7uZ81b"
+}

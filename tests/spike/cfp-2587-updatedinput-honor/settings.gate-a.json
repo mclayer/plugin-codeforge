@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"c:/workspace/mclayer/_wt-cfp-2587-p2/tests/spike/cfp-2587-updatedinput-honor/inject.py\"",
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -245,59 +245,57 @@ echo
 
 HOOK="$REPO_ROOT/hooks/pretooluse-agent-spawn-gate"
 
-# run_hook_case: hook 을 JSON stdin payload 로 실 fork. assert 3축 —
-#   (a) INV-1: 항상 exit 0 (Wave1 spawn 무차단, deny 비활성).
-#   (b) nonconformant WARN(정확 문자열 'spawn description prefix nonconformant') 존재 여부가
-#       expect_warn 와 일치 — distinct-marker: exit code 단독 아닌 도메인 고유 stderr sentinel 병행
-#       assert (interpreter/shell 표준 exit 우연일치 silent false-positive 차단).
-#   (c) non-mutation(SecurityArch §7.1 상속): stdout 에 tool_input rewrite 부재 — stdout 은
-#       story-transition additionalContext JSON 만 방출(정상), tool_input 재출력만 금지.
-# CLAUDE_PLUGIN_ROOT="$REPO_ROOT" 주입 → detector/reminder helper 경로가 cwd 무관 resolve.
+# run_hook_case: hook 을 JSON stdin payload 로 실 fork. assert 3축 (CFP-2587 injection-era) —
+#   (a) INV-1: 항상 exit 0 (spawn 무차단, deny 비활성).
+#   (b) injection: stdout `updatedInput` 존재 여부가 expect_inject 와 일치 (nonconformant→주입,
+#       conformant/empty→idempotent skip). 구 detect-only stderr WARN 은 injection 으로 supersede
+#       (ADR-143 Amendment 1) — 더 이상 'nonconformant' WARN 발화 안 함.
+#   (c) §7.3 LOAD-BEARING: stdout `additionalContext`(story-transition-autonomy) 는 injected
+#       skip 여부와 무관하게 항상 present — reminder 회귀 가드(distinct-marker).
+# CLAUDE_PLUGIN_ROOT="$REPO_ROOT" 주입 → inject/reminder helper 경로가 cwd 무관 resolve.
 run_hook_case() {
-  local name="$1" payload="$2" expect_warn="$3" description="$4"
-  local exit_code=0 out errfile err_content warn_present mut_present
+  local name="$1" payload="$2" expect_inject="$3" description="$4"
+  local exit_code=0 out errfile inj_present ctx_present
   errfile="$(mktemp)"
   out="$(printf '%s' "$payload" | CLAUDE_PLUGIN_ROOT="$REPO_ROOT" bash "$HOOK" 2>"$errfile")" || exit_code=$?
-  err_content="$(cat "$errfile")"
   rm -f "$errfile"
-  # (b) distinct-marker: 정확 문자열 grep on stderr (부분/우연일치 차단)
-  if printf '%s' "$err_content" | grep -q 'spawn description prefix nonconformant'; then
-    warn_present="yes"
+  # (b) injection: stdout 에 updatedInput 방출 여부
+  if printf '%s' "$out" | grep -q '"updatedInput"'; then
+    inj_present="yes"
   else
-    warn_present="no"
+    inj_present="no"
   fi
-  # (c) non-mutation: stdout 에 tool_input 재출력(rewrite) 검출
-  if printf '%s' "$out" | grep -q '"tool_input"'; then
-    mut_present="yes"
+  # (c) §7.3 LOAD-BEARING distinct-marker: additionalContext reminder 항상 present
+  if printf '%s' "$out" | grep -q 'story-transition-autonomy'; then
+    ctx_present="yes"
   else
-    mut_present="no"
+    ctx_present="no"
   fi
-  if [ "$exit_code" -eq 0 ] && [ "$warn_present" = "$expect_warn" ] && [ "$mut_present" = "no" ]; then
-    echo "✓ PASS: $name (exit 0, nonconformant-WARN=$warn_present, stdout-tool_input-rewrite=$mut_present) — $description"
+  if [ "$exit_code" -eq 0 ] && [ "$inj_present" = "$expect_inject" ] && [ "$ctx_present" = "yes" ]; then
+    echo "✓ PASS: $name (exit 0, updatedInput=$inj_present, additionalContext=yes) — $description"
     PASS=$((PASS+1))
   else
     echo "✗ FAIL: $name"
-    echo "  Expected exit 0 ∧ nonconformant-WARN=$expect_warn ∧ stdout-tool_input-rewrite=no, got exit=$exit_code WARN=$warn_present rewrite=$mut_present"
-    echo "  stderr: $err_content"
+    echo "  Expected exit 0 ∧ updatedInput=$expect_inject ∧ additionalContext=yes, got exit=$exit_code updatedInput=$inj_present ctx=$ctx_present"
     echo "  stdout: $out"
     FAIL=$((FAIL+1))
   fi
 }
 
-# T3-conformant: 정식 프리픽스 description → exit 0 ∧ nonconformant WARN 부재.
-run_hook_case "T3-conformant: 정식 프리픽스" \
-  '{"tool_input":{"description":"[ArchitectAgent] 07/05 14:30 - Change Plan","prompt":"x"}}' \
-  "no" "conformant description → detector conformant=true → nonconformant WARN 無, exit 0 (INV-1)"
+# T3-conformant: 이미 정식 프리픽스 → idempotent skip(updatedInput 無) ∧ reminder present, exit 0.
+run_hook_case "T3-conformant: 정식 프리픽스 (idempotent skip)" \
+  '{"tool_input":{"subagent_type":"ArchitectAgent","description":"[ArchitectAgent] 07/05 14:30 - Change Plan","prompt":"x"}}' \
+  "no" "conformant description → build_injected_description=None → 재주입 skip(updatedInput 無), reminder 여전히 present, exit 0 (AC-11/§7.3)"
 
-# T3-nonconformant: 프리픽스 위반 description → exit 0 ∧ nonconformant WARN 존재 (distinct-marker).
-run_hook_case "T3-nonconformant: 프리픽스 위반" \
-  '{"tool_input":{"description":"bad desc","prompt":"x"}}' \
-  "yes" "nonconformant description → detector conformant=false → ADR-143 nonconformant WARN 발화, exit 0 (INV-1)"
+# T3-nonconformant: 프리픽스 위반 → mechanical injection(updatedInput 방출) ∧ reminder present, exit 0.
+run_hook_case "T3-nonconformant: 프리픽스 위반 (기계 주입)" \
+  '{"tool_input":{"subagent_type":"ArchitectAgent","description":"bad desc","prompt":"x"}}' \
+  "yes" "nonconformant description → ADR-143 Amendment 1 mechanical injection(updatedInput 프리픽스 주입) + reminder 병합, exit 0 (INV-1)"
 
-# T3-empty: 빈 description → exit 0 ∧ nonconformant WARN 부재 (빈 필드 = 위반 아님, AC-10).
-run_hook_case "T3-empty: 빈 description" \
-  '{"tool_input":{"description":"","prompt":"x"}}' \
-  "no" "빈 description → DETECT 경로 skip(빈 필드는 위반 아님) → nonconformant WARN 無, exit 0 (INV-1)"
+# T3-empty: 빈 description → 주입 skip(빈 필드=위반 아님, AC-10) ∧ reminder present, exit 0.
+run_hook_case "T3-empty: 빈 description (skip)" \
+  '{"tool_input":{"subagent_type":"ArchitectAgent","description":"","prompt":"x"}}' \
+  "no" "빈 description → build_injected_description=None(빈 필드 skip) → updatedInput 無, reminder present, exit 0 (INV-1)"
 
 echo
 echo "═══════════════════════════════════════════════════════════════════════════"

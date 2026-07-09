@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# PreToolUse(Bash) hook for codeforge plugin — self-agent description INJECTION
+#
+# Carrier: CFP-2587 Phase 2 (ADR-143 §결정 4 render-line prefix + ADR-115 §결정 3 sibling disjoint)
+#
+# 책임 경계 (SRP = description injection ONLY):
+#   - 책임: subagent 안 Bash 호출의 tool_input.description 에 렌더-줄 프리픽스
+#           `[<agent_type>] MM/DD HH:MM - <내용>` 를 hookSpecificOutput.updatedInput 으로 주입
+#           (self-agent 관측 — 어느 에이전트가 어느 시각에 무엇을 했는지 렌더 줄에 각인).
+#           whole-echo REPLACE-safe (spike BARE01: 부분 updatedInput=schema HARD-FAIL) ·
+#           bare updatedInput (permissionDecision 미emit, G4) · 전경로 fail-open.
+#   - 비책임 (ADR-115 §결정 3 disjoint — 3 deny-gate sibling 과 축 분리):
+#           cross-repo gh write safety (cross-repo-gh-safety) · repo confinement (repo-confinement) ·
+#           branch delete/merge gate (git-branch-delete-merge-gate). 본 hook 은 deny 안 함 (updatedInput only).
+#           reminder(additionalContext) 미emit — Bash = §7.3 reminder 비대상 (Agent spawn 창만 전환-priming).
+#
+# EXCLUDE (§7.7-3): top-level Bash (payload TOP-LEVEL agent_type 부재) → exit 0.
+#   dispatcher/Orchestrator 이름은 절대 주입 금지. agent_type 은 subagent 안 Bash 호출에만 present
+#   (spike fixtures 실측: bash-in-subagent.json=agent_type present / bash-top-level.json=absent).
+#
+# #15897 caveat (ADR-119 정직): `updatedInput` drop-under-multiple-hooks 는 upstream
+#   closed-as-not-planned (미수정·비버전-bounded) → fail-open 이 load-bearing 안전망.
+#   worst-case (미래 regression 이 updatedInput drop) = clean prefix loss = original description =
+#   ADR-143 advisory ceiling = ratchet-up, never wrong-value substitution. RETAIN fail-open.
+#
+# 정적 properties:
+#   (a) set -uo pipefail + trap 'exit 0' ERR — 어떤 fail 도 Bash tool block 금지
+#   (b) filesystem touch 0 (stdin/stdout/stderr 만 — no >, >>, mkdir, rm, mv, cp)
+#   (c) network call 0
+#   (d) Python 호출 — 외부 .py 파일 (heredoc 금지, ADR-061 Amendment 3)
+#
+# Graceful degradation (전부 exit 0, no stdout):
+#   payload 부재 / Python 부재 / tool_name≠Bash / agent_type 부재 / kst 부재 / helper 부재 / parse 실패.
+#
+# Bypass:
+#   BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT=1 → stderr audit echo + exit 0
+#   (scope disjoint — BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / BYPASS_CROSS_REPO_GH_SAFETY 등과 별 env)
+
+set -uo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — Bash tool block 금지 (fail-open)
+trap 'exit 0' ERR
+
+# ── Bypass check (audit trail 의무) ──────────────────────────────────────────
+if [ "${BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT:-0}" = "1" ]; then
+  >&2 printf '[codeforge-bash-description-inject] BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT=1 — description injection suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# ── stdin = PreToolUse JSON payload ──────────────────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── Python 인터프리터 확인 (부재 → fail-open) ─────────────────────────────────
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+if [ -z "$PYTHON_CMD" ]; then
+  exit 0
+fi
+
+# ── tool_name==Bash guard (아니면 exit 0 — matcher 안전망) ─────────────────────
+TOOL_NAME="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    print(json.load(sys.stdin).get('tool_name', ''), end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+if [ "$TOOL_NAME" != "Bash" ]; then
+  exit 0
+fi
+
+# ── AGENT_TYPE = payload TOP-LEVEL agent_type (NOT tool_input) ────────────────
+# §7.7-3 EXCLUDE: agent_type 부재/빈값 → exit 0 (top-level Bash = dispatcher/Orchestrator, 주입 금지).
+AGENT_TYPE="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    v = json.load(sys.stdin).get('agent_type', '')
+    print(v if isinstance(v, str) else '', end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+if [ -z "$AGENT_TYPE" ]; then
+  exit 0
+fi
+
+# ── KST render stamp (fallback empty — 실패 시 build_injected_description 이 skip) ──
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+STAMP=""
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+elif [ -f "scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+fi
+
+# ── check_spawn_description_prefix.py resolve (PLUGIN_ROOT path with cwd fallback) ──
+DESC_CHECKER=""
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py" ]; then
+  DESC_CHECKER="${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py"
+elif [ -f "scripts/lib/check_spawn_description_prefix.py" ]; then
+  DESC_CHECKER="scripts/lib/check_spawn_description_prefix.py"
+fi
+if [ -z "$DESC_CHECKER" ]; then
+  exit 0
+fi
+
+# ── SINGLE call — updatedInput ONLY (NO --transition-reminder; Bash = §7.3 reminder 비대상) ──
+# 출력 = updatedInput 병합 JSON (또는 skip 시 no stdout). fail-open: 어떤 실패도 exit 0.
+printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$AGENT_TYPE" --kst-stamp "$STAMP" 2>/dev/null || true
+
+exit 0

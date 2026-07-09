@@ -12,13 +12,35 @@ related_adrs:
   - ADR-039  # subagent default / inline whitelist — §결정 1 범위 경계 (Orchestrator inline 4종 제외) 재사용, whitelist 무변경
   - ADR-029  # sub-step stderr narration — bracket-prefix `[<lane>]` 시각 문법 선례 (신규 문법 아님)
   - ADR-119  # research-before-claims — §결정 3 허위 시각 fallback 금지 + §결정 4 검사연극(theater) 회피
+  - ADR-115  # runtime hook enforcement — Amendment 1 injection 확장 base (PreToolUse gate 확장 + graceful degradation 5층 + Wave1 exit-0 불변식 계승, §결정 3 disjoint-matcher)
   - ADR-082  # write-time self-write verification / declaration-only Wave 1 — mechanical_enforcement_actions deferred-followup 동형
   - ADR-063  # marketplace atomic invariant — Phase 2 plugin.json MINOR bump sync
   - ADR-013  # dogfood-out — 본 ADR = Story §7 설계 SSOT, change-plan 면제 (ADR-127 정합)
 related_concepts:
   - render-line-display-sublayer
 is_transitional: false
-amendment_log: []
+amendment_log:
+  - number: 1
+    carrier_story: CFP-2587
+    date: 2026-07-09
+    direction: strengthen
+    target: "§결정 4 (core) · §결정 5 · §결정 3 (leaf-semantics) · 비대상 (feasibility gap #1/#2)"
+    summary: >-
+      advisory ceiling → mechanical injection tier. description-bearing 도구(Agent/Bash)에 한해
+      PreToolUse hook 이 hookSpecificOutput.updatedInput 으로 프리픽스를 기계 치환. 두 사실 전제
+      (CFP-2567 실측 인용) 정정 — 전제① "PreToolUse tool_input rewrite 불가" 반증(hooks.md
+      updatedInput = "replaces a tool's arguments before it runs"); 전제② "PreToolUse(Agent)
+      서브에이전트 내부 미발화" = Agent-scoped 진술로 literal-true 유지, 반증 대상은 'leaf 기계주입
+      불가' 결론(PreToolUse(Bash)+payload agent_type 도달로 supersede). detect-only Phase 2
+      (cfp-2574-phase2-impl) = in-place 개편으로 supersede(helper = idempotency 가드로 재사용).
+      Gate 검증 = feasibility spike Gate-A(Bash·토폴로지-충실) GO + Gate-B(Agent·단일-hook) GO.
+    sunset_justification: >-
+      N/A — 역전(§결정 4 "SecurityArch §7.1 non-mutation invariant 상속" REVERSED)은 약화가
+      아니다. ADR-058 §결정 5 는 WEAKENING(forbid-scope 축소)에만 sunset_justification 의무를
+      부과하나 본 amendment 는 mechanical tier ADD(capability-ADD) + forbid-scope 축소 0. REVERSE
+      근거 = SecurityArch deputy 재판정 = SAFE-with-guardrails (G1 json.dumps 구조적 직렬화 /
+      G2 subject sanitize ≤64·']' strip·namespace strip / G3 description-only whole-echo /
+      G4 bare updatedInput = no allow-override / G5 fail-open). 역전 ≠ 약화 (forbid-scope 정의상).
 related_files:
   - CLAUDE.md  # 범위① Orchestrator spawn-description 규약 directive + 전-agent behavioral note (Phase 2)
   - hooks/pretooluse-agent-spawn-gate  # 범위① description-format detect 확장 (warning-tier, exit-0-always, Phase 2)
@@ -28,10 +50,10 @@ related_files:
   - docs/inter-plugin-contracts/spawn-event-v1.md  # agent_type 어휘 SSOT (cross-ref only, 무편집)
   - docs/inter-plugin-contracts/comment-prefix-registry-v1.md  # `[lane]` GitHub Issue surface — homonym disjoint (§결정 7, cross-ref only)
 mechanical_enforcement_actions:
-  - action: spawn-description-prefix-detect
-    status: declaration-only-Wave-1
-    target_section: §결정 4
-    progress_note: "범위① (Agent spawn 최상위 헤더 description) format DETECT 를 기존 PreToolUse(Agent) hook (hooks/pretooluse-agent-spawn-gate → scripts/lib/check_spawn_prompt_format.py) 의 `tool_input.description` 필드 검사로 확장 (warning-tier, exit 0 always, NO rewrite/mutation — SecurityArch §7.1 non-mutation invariant 상속). Phase 1 시점 registry entry 부재 = valid declaration (ADR-082 §결정 6 / ADR-079 §결정 10 deferred-followup 선례 동형). Phase 2 CFP 후속이 evidence-checks-registry warning-tier row append + hook 확장 wire. 범위② (서브에이전트 leaf 도구호출 description) = PreToolUse(Agent) 미발화 표면 + ephemeral(scan target 부재) → grep-lint 구조적 불가 → advisory (prompt-mandate + 리마인더) 조합이 강제 상한 (mechanical 아님, 본 action 미커버)."
+  - action: spawn-description-prefix-inject  # (Wave-1 `spawn-description-prefix-detect` REPURPOSED — Amendment 1 CFP-2587)
+    status: mechanical-injection-Phase-2  # declaration-only-Wave-1 → 기계 주입 실현 (advisory ceiling REVERSED)
+    target_section: §결정 4 (Amendment 1)
+    progress_note: "Amendment 1 (CFP-2587) REPURPOSE — advisory DETECT → mechanical INJECTION. 범위① (Agent spawn 헤더 `Agent.description`) + 범위② (서브에이전트 leaf `Bash.description`) 를 PreToolUse hook 의 `hookSpecificOutput.updatedInput` 으로 기계 치환 (`[<subject>] MM/DD HH:MM - <원 description>`). detect helper (`scripts/lib/check_spawn_description_prefix.py` RE_PREFIX 판정) = 폐기 아니라 **idempotency 가드로 재사용** (이미-conformant → 재주입 skip, 이중 프리픽스 차단; AC-12 판정 로직 이원화 금지). 표면① = 기존 `hooks/pretooluse-agent-spawn-gate` in-place 개편 (additionalContext(채널2 reminder) + updatedInput 을 단일 `hookSpecificOutput` 병합 — 단일 hook, multi-hook 무관). 표면② = 신규 sibling PreToolUse(Bash) inject hook (ADR-115 §결정 3 disjoint-matcher; `cross-repo-gh-safety` 확장 금지 = SRP·output-channel 붕괴). **top-level Bash (`agent_type` 부재) = EXCLUDE** (§결정 1 Orchestrator 명 절대 부재 정합). `docs/evidence-checks-registry.yaml` L3641 entry = injection 회귀 가드로 재목적 (또는 폐기). FAIL-OPEN 계승 = updatedInput 미emit → 원 description = advisory ceiling = ratchet-up (regression 아님). description 필드 없는 도구 (Read/Edit/Grep/Write) = advisory residual (mechanical 미커버). NO hard-gate — in-coverage best-effort + fail-open."
 ---
 
 # ADR-143 — Agent 수행 액션 렌더 줄 프리픽스 규약 (ephemeral-UI 표시 sub-layer)
@@ -153,6 +175,84 @@ ADR-038 §결정 9 3-tier 모델((a) physical CI/git hook / (b) startup-hook / (
 ## 해소 기준
 
 N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governance presumption). ephemeral-UI 표시 규약은 sunset 대상 아닌 영구 표시 governance. 약화 방향 amendment(sub-layer scope 축소 / KST anchor 제거 / persist-guard 해제)는 ADR-058 §결정 5 `sunset_justification` 의무로 차단(ratchet — 강화 방향만).
+
+## Amendment 1 (CFP-2587) — advisory ceiling → mechanical injection
+
+> Carrier: CFP-2587 (운영자 결정 2026-07-09 = injection 전환·supersede). Direction = **strengthen (ratchet↑)**, `is_transitional` 무변경(false). 본 절은 위 §결정 원문을 **삭제하지 않고 amend** 한다 — 각 §결정의 무변경/정정/전환 상태를 decision-by-decision 으로 기재. 설계 SSOT = Story CFP-2587 §7 (특히 §7.8 ADR-143 Amendment 1 draft). Gate 검증 = feasibility spike **Gate-A(Bash·토폴로지-충실) GO + Gate-B(Agent·단일-hook) GO** [verified: `tests/spike/cfp-2587-updatedinput-honor/RESULTS.md` — CLI 2.1.204/Windows 11, #15897 `updatedInput`-drop 미재현, bare/allow updatedInput 양쪽 honor, BARE01 = partial updatedInput hard-fail → whole-echo mandatory].
+
+### A1.0 핵심 전환 (mechanism)
+
+§결정 4 의 **advisory ceiling** 을 description-bearing 도구(`Agent.description` + `Bash.description`)에 한해 **mechanical injection tier** 로 상향한다. PreToolUse hook 이 dispatch 시점 로컬 wall-clock 으로 KST `MM/DD HH:MM` 를 생성(`kst_render_stamp.py`, UTC+9 고정 산술 — §결정 3 재사용)하고 `hookSpecificOutput.updatedInput` 으로 `[<subject>] MM/DD HH:MM - <원 description>` 를 기계 치환한다. `updatedInput` = "replaces a tool's arguments before it runs" [source: https://code.claude.com/docs/en/hooks.md].
+
+- **표면① `Agent.description` 스폰 헤더** — subject = `tool_input.subagent_type`(피스폰 에이전트). 기존 `pretooluse-agent-spawn-gate` in-place 개편(단일 hook — multi-hook 무관).
+- **표면② `Bash.description` 서브에이전트 leaf** — subject = payload `agent_type`(self, 서브에이전트 내부 호출에 present). 신규 sibling PreToolUse(Bash) inject hook(ADR-115 §결정 3 disjoint-matcher).
+- **소스-분기(SOURCE-BRANCHING)가 급소**: 헤더 = `subagent_type`, leaf = payload `agent_type`. 혼용 시 §결정 1 "Orchestrator/dispatcher 명 절대 부재" 불변식 붕괴.
+
+### A1.1 정직한 전제 정정 (3-stage — history rewrite 아님, ADR-119)
+
+§결정 4 가 근거로 인용한 두 사실 전제(CFP-2567 실측)를 다음 **3-stage** 로 정정한다. **retro-blame 아님** — measurement-time-valid → 그 사이 플랫폼 능력 추가 → 현행 공식 문서 supersede:
+
+1. **measurement-time-valid**: CFP-2567 실측("detect-only, 입력 rewrite 불가")은 측정 시점 관측으로 valid 였다.
+2. **capability-added (전제② 한정 실증)**: `agent_id`/`agent_type` = v2.1.69 신설 [best-evidence 2차 source: https://claudefa.st/blog/guide/changelog — "Added agent_id and agent_type to hook events for subagents and --agent"]. 측정 시점 < v2.1.69 였다면 "subagent 정체 불가" 관측이 자연.
+3. **superseded (현행 공식 문서 = PRIMARY)**: 현행 hooks.md 가 `PreToolUse.updatedInput` rewrite + 서브에이전트 내부 `agent_type` payload 를 명문화 [source: https://code.claude.com/docs/en/hooks.md]. 구현 시점 Claude Code 버전 재검증 통과(spike CLI 2.1.204).
+
+- **`updatedInput` 정밀 도입 버전 = abstain (문서 silent)** [verification-out-of-scope: hooks.md 버전주석 부재]. best-evidence(현행 hooks.md 명문화 + changelog v2.1.85 `updatedInput` AskUserQuestion 경로)로 현 CLI 이전부터 live 확립. **capability-added 메커니즘은 전제②(agent_type)에만 실증 — FACT1(`updatedInput`)로 전이 금지**(과일반화 방지).
+
+**전제② framing (flat "반증" 금지 — ADR-119 정직성)**: 원문 §결정 4 "PreToolUse(Agent) 서브에이전트 내부 미발화" = **Agent-scoped 진술로 literal-true 유지**. 반증 대상은 그것이 아니라 **"leaf 기계주입 불가"라는 결론** — Bash leaf 호출은 PreToolUse(**Bash**)를 트리거하고 서브에이전트 내부에 `agent_type` 이 present 하므로 [verified: spike `fixtures/bash-in-subagent.json` — `agent_type="general-purpose"`, `agent_id` present] **PreToolUse(Bash)+payload `agent_type` 도달로 supersede**. 즉 PreToolUse(Agent) 미발화 진술은 참이되, leaf 주입 불가 결론이 틀렸다.
+
+**#15897 (capability ≠ defect-free)**: `updatedInput` 능력이 무결은 아니다 — multi-hook PreToolUse 동시 실행 시 `updatedInput` drop [source: https://github.com/anthropics/claude-code/issues/15897 — title "…does not work when **multiple PreToolUse hooks are executed**", status **closed-as-not-planned**]. **트리거 = multi-hook(버전 아님), status = closed-as-not-planned → 구조적·영구 제약**(upstream fix 대기 금지, 설계로 우회). Bash matcher 는 이미 3 sibling deny-gate 상존 → injection 추가 시 multi-hook 조건 구조적 상시. **완화 = fail-open**(updatedInput drop = 프리픽스 소실 = 원 description = advisory ceiling = ratchet-up, wrong-value 아님)이지 upstream fix 아님. spike 가 프로덕션 4-hook 토폴로지에서 drop 미재현 확인(GO), 단 fail-open 이 safety net 으로 잔존하는 조건.
+
+### A1.2 decision-by-decision
+
+- **§결정 1 (scope/subject)** — **UNCHANGED (LOAD-BEARING)**. subject 분기(헤더=피스폰, leaf=self, Orchestrator 명 절대 부재)가 injection 정확성의 급소이므로 원문 그대로 구속.
+- **§결정 2 (format)** — **UNCHANGED**. `RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S` 를 injection 의 **idempotency 판정**으로 재사용(이미-conformant → 재주입 skip → 이중 프리픽스 미발생). 주입 문자열 포맷 동일.
+- **§결정 3 (clock)** — SOURCE **UNCHANGED**(UTC+9 고정 산술, `kst_render_stamp.py`, machine-local `date`/`TZ=Asia/Seoul` FORBID) / **leaf-SEMANTICS CORRECTED**: "coarse turn-anchor" → **"per-dispatch stamp"**(AC-15). hook 이 dispatch 마다 실시각 stamp 하므로 **서브에이전트가 `date` 를 호출할 필요 없음** → turn-anchor down-grade 전제 자체가 dissolve. per-dispatch stamp 는 zero-persist-path 와 정합(turn-anchor 캐시 = 신규 persist path = ephemeral 정체성 붕괴 → 채택 불가).
+- **§결정 4 (advisory ceiling)** — **AMENDED (core)**. description-bearing 도구(Agent/Bash)에 대해 mechanical injection tier(PreToolUse `hookSpecificOutput.updatedInput`). "**SecurityArch §7.1 non-mutation invariant 상속**" 조항 = **REVERSED**(SecurityArch deputy 재판정 → SAFE-with-guardrails G1-G5, §A1.3). **theater-ban 조항(ADR-119 §결정 6)은 보존** — §A1.4.
+- **§결정 5 (injection point)** — **AMENDED**. primary reach = CLAUDE.md directive → **PreToolUse hook `updatedInput`**. CLAUDE.md directive 는 **삭제 아님** — 재문안(범위①/② mechanical injection 반영) + description-less 도구(Read/Edit/Grep/Write) advisory residual 을 carry(§A1.4).
+- **§결정 6 / §결정 7 / §결정 8** — **UNCHANGED**. mechanical injection = **저작 주체 변경(model→hook)일 뿐 신규 persist/export 경로 0** → §결정 8 persist-guard 미발동 → render line 은 여전히 순수 ephemeral → **ADR-079 Amendment 2 정정 UNNEEDED**(ADR-079 over-amend 는 error). §결정 7 homonym 관계 불변(두 표면 disjoint).
+- **Ratchet 방향** — **STRENGTHEN**. `sunset_justification` = **N/A**(ADR-058 §결정 5 는 WEAKENING 만 justification 의무 — mechanical tier 는 capability-ADD, forbid-scope 축소 0; amendment_log entry 에 REVERSED 정당화 기록). mechanical tier = ADR-038 §결정 9 3-tier 모델 안의 **사전 선언된 tier 상승**(신규 axis 아님) — 정밀 표기는 §A1.5. `is_transitional: false` 유지.
+
+### A1.3 mutation 안전 계약 — STRIDE-LITE (SecurityArch 재판정: SAFE-with-guardrails)
+
+§결정 4 "non-mutation invariant 상속" REVERSE 의 근거 = 5 guardrail(G1-G5)로 injection hook 의 trust boundary 를 bound. **역전 ≠ 약화**(forbid-scope 정의상 — capability-ADD, §A1.5).
+
+- **G1** JSON 구조적 직렬화(`json.dumps(dict)`, f-string/template 금지) — 적대적 agent_type 자동 escape.
+- **G2** subject sanitize: namespace-strip(`my-plugin:reviewer`→마지막 `:` 뒤) → `[`/`]` strip → ≤64 truncate → empty→`unknown-agent`.
+- **G3** description-only mutation(원 tool_input **whole-echo** + description 키만 prepend; 필드 add/rename/delete 0).
+- **G4** bare `updatedInput`(`permissionDecision` 무 → sibling deny allow-override 불가, AC-20).
+- **G5** fail-open(mutation = stdout JSON; 실패 시 updatedInput 미emit + exit 0 = 원 description).
+
+| STRIDE 범주 | 위협 시나리오 (이 hook) | 완화 guardrail | 판정 |
+|---|---|---|---|
+| **S**poofing | 적대적 `agent_type` 값이 타 에이전트 사칭 | G2 (subject sanitize) | **N/A** — bounded enum(agent_type semi-open) + timestamp, no new trust boundary. subject = 표시 라벨이지 인증 주체 아님 |
+| **T**ampering | `updatedInput` 이 원 tool_input 인자 변조·파손 | G1 + G3 | **완화됨** — description 키만 prepend, 나머지 whole-echo 보존. spike BARE01 = partial updatedInput hard-fail → whole-echo mandatory (T-1) |
+| **R**epudiation | 감사·로그 위조 | — | **N/A** — bounded enum + timestamp, no new trust boundary; ephemeral display sub-layer, zero persist path, 감사 artifact 미생성 (§11 N/A) |
+| **I**nfo disclosure | 프리픽스에 secret/token/절대경로 임베드 | G3 | **N/A** — hook 저자 바이트 = bounded enum + timestamp (secret-incapable); `<내용>` free-text = model-authored pre-existing surface(위협 NEUTRAL). 신규 기계적 secret-scan 미추가(ADR-119 theater 회피) |
+| **D**oS | hook 실패가 tool 실행 차단(self-DoS) | G5 (fail-open) | **N/A** — bounded enum + timestamp, no new trust boundary; fail-open 이 self-DoS 원천 배제; 프리픽스 = cosmetic, security control 아님 |
+| **E**levation | `updatedInput` 이 sibling deny-gate allow-override | G4 (bare updatedInput) | **N/A** — no `permissionDecision` → denied call 승격 불가 (AC-20). spike ALLOW01 = allow 도 honor 하나 설계는 bare 채택 |
+
+- **deny-scan applicability**: 이 hook 에 신규 기계적 secret-scan **미추가**(hook 저자 = secret-incapable). ADR-143 advisory deny-scan hardening 은 **model-authored content advisory 로 잔존**하되 hook 바이트로 확장 안 함(확장 = ADR-119 theater). **VERDICT = flip 은 SAFE-with-guardrails.**
+- **§6 fact1 over-claim 정정**: `{permissionDecision:"allow", updatedInput:{…}}` 형태 JSON 예시는 **reconstructed/illustrative (문서 미제시)** — "PreToolUse allow+updatedInput 조합 = doc-silent, #15897 참조". **설계는 이에 무의존**(G4 = bare updatedInput). spike 는 bare(GATEA001)·allow(ALLOW01) **양쪽 honor** 확인 → 설계 채택 = bare.
+
+```
+# reconstructed/illustrative — 공식 문서 미제시 (PreToolUse allow+updatedInput 조합 = doc-silent, #15897 참조):
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","updatedInput":{"command":"…","description":"[DeveloperAgent] 07/09 18:30 - build injected description"}}}
+# ↑ 설계는 permissionDecision 무(bare) 채택 (G4). 이 예시는 능력 설명용이지 설계 의존 아님.
+```
+
+### A1.4 theater-ban 보존 (ADR-119 §결정 6) + §결정 5 재문안 잔여
+
+- **cover = description-bearing 도구 한정**(Agent/Bash). **description-less 도구(Read/Edit/Grep/Write) = 정직한 advisory-residual**(기존 prompt-mandate 잔존) / OOS — mechanical 미커버.
+- **top-level Bash(Orchestrator 직속, `agent_type` 부재) = EXCLUDED** [verified: spike `fixtures/bash-top-level.json` — agent_type absent] → §결정 1 "Orchestrator 명 절대 부재" 정합.
+- **fail-open 보존**: mechanical = in-coverage best-effort + fail-open 이지 hard-gate 아님.
+- **"100% 기계강제" / "hard-gate" 서술 FORBID** 유지 — 실 강제력 = in-coverage injection + fail-open + description-less advisory residual 조합. 그 이상 참칭 금지.
+- **§결정 5 CLAUDE.md directive**: 삭제 아님 — 재문안(범위① advisory→mechanical, 범위② Bash mechanical + top-level Bash caveat) + description-less advisory residual carry. 매턴 self-check note = mechanical injection 의 backstop 으로 잔존(hook 이 주된 강제).
+
+### A1.5 ADR-038 tier 정밀화 · §11 N/A · supersede
+
+- **ADR-038 tier framing (정밀)**: 본 mechanical tier = **runtime-mechanical enforcement**(기존 (c) runtime-advisory 대비 **강화**; CI/git physical (a)와 **별개**). **"(a) physical 실현"으로 표기 금지** — mechanical injection 은 런타임 hook 강제이지 CI/git physical 게이트가 아니다. ADR-038 §결정 9 3-tier 모델 안의 사전 선언된 tier 상승(c 대비 강화)이며 신규 axis 아님.
+- **§11 데이터 마이그레이션 = N/A** (영속 0 · 스키마 0 · 순수 ephemeral display sub-layer; §11.6 idempotency = §7.4 ACTIVE — RE_PREFIX 재주입 가드 `f(f(x))=f(x)` + 빈/whitespace skip).
+- **supersede**: detect-only Phase 2(`cfp-2574-phase2-impl`)는 **in-place 개편으로 대체**(브랜치 머지 아님 — content 는 이미 origin/main 착지, squash #2578; 브랜치 = stale leftover 폐기). detect helper(RE_PREFIX 판정) = 폐기 아니라 idempotency 가드로 재사용. plugin.json MINOR bump + 6 sub-plugin marketplace atomic(ADR-063). 비대상 §"per-tool-call hook 주입 신뢰성(gap #1/#2)" = spike Gate-A/B GO 로 해소.
 
 ## 관련 파일
 

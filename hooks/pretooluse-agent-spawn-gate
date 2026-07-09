@@ -71,23 +71,10 @@ if [ -z "$PAYLOAD" ]; then
   exit 0
 fi
 
-# ── D2 채널 2 (ADR-071 §결정 22 / CFP-2567): 전환 자율 reminder additionalContext non-block inject ──
-# NEVER deny — stdout JSON hookSpecificOutput.additionalContext (permissionDecision 미설정 = allow).
-# 아래 기존 4-block spawn-format warning 로직과 무관(둘 다 계속 진행: 본 emit=stdout, warning=stderr).
-# helper/Python 부재 시 graceful skip (전경로 spawn 허용 — Wave1 무손상).
-REMINDER_HELPER=""
-if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/scripts/lib/agent_spawn_transition_reminder.py" ]; then
-  REMINDER_HELPER="${CLAUDE_PLUGIN_ROOT}/scripts/lib/agent_spawn_transition_reminder.py"
-elif [ -f "scripts/lib/agent_spawn_transition_reminder.py" ]; then
-  REMINDER_HELPER="scripts/lib/agent_spawn_transition_reminder.py"
-fi
-if [ -n "$REMINDER_HELPER" ]; then
-  REMINDER_PY=""
-  if command -v python3 >/dev/null 2>&1; then REMINDER_PY="python3"; elif command -v python >/dev/null 2>&1; then REMINDER_PY="python"; fi
-  if [ -n "$REMINDER_PY" ]; then
-    printf '%s' "$PAYLOAD" | "$REMINDER_PY" "$REMINDER_HELPER" 2>/dev/null || true
-  fi
-fi
+# NOTE (CFP-2587 Phase 2): 구 채널 2 standalone reminder 호출 블록은 제거됨.
+#   전환-자율 reminder(additionalContext)는 이제 하단 description INJECTION 블록의 단일
+#   `--inject --transition-reminder` 호출로 MERGE 됨 (updatedInput + additionalContext = 단일 stdout JSON).
+#   → hook stdout = 정확히 하나의 JSON (구 reminder emit + 구 detect 통합).
 
 # ── spawn prompt 추출 ─────────────────────────────────────────────────────────
 # jq 비의존 (환경 jq 부재 가능) — tool_input.prompt 필드 추출.
@@ -192,43 +179,52 @@ except Exception:
   fi
 fi
 
-# ── 범위① description-format DETECT (CFP-2574 / ADR-143 §결정 4) ──────────────
-# tool_input.description 이 렌더-줄 프리픽스 `[<agent_type>] MM/DD HH:MM - <내용>` 형식인지 DETECT.
-# warning-tier · exit-0-always · NO rewrite/mutation/timestamp-injection (SecurityArch §7.1 non-mutation 상속).
-# 기존 4-block prompt 검사와 무관 (둘 다 stderr warning-only, deny 비활성 — Wave1 불변식 보존).
-DESC_TEXT=""
+# ── 범위① description INJECTION + 전환-자율 reminder MERGE (CFP-2587 Phase 2) ──
+# tool_input.description 에 렌더-줄 프리픽스 `[<subagent_type>] MM/DD HH:MM - <내용>` 를
+# hookSpecificOutput.updatedInput 으로 주입(mechanical) + 전환-자율 reminder additionalContext 를
+# 동일 JSON 에 병합 → hook stdout = 정확히 하나의 JSON (구 reminder emit + 구 detect 통합).
+#
+# 계약 (Change Plan §7.2/§7.3 · spike verdict):
+#   · whole-echo REPLACE-safe (BARE01: 부분 updatedInput=schema HARD-FAIL) — check_spawn_description_prefix.py 담당.
+#   · bare updatedInput (permissionDecision 미emit, G4) — deny 절대 안 함.
+#   · fail-open (G5): helper/python/kst 부재·parse 실패 → skip(no stdout) 또는 reminder-only, spawn 무차단.
+#   · #15897 caveat (ADR-119): worst-case = clean prefix loss = ADR-143 advisory ceiling, never wrong-value.
+#
+# 기존 4-block prompt 검사(상단 stderr warning)와 무관 — 본 블록은 stdout JSON 단독 emit.
+
+# subagent_type 추출 (header subject source = tool_input.subagent_type, spike AC-7)
+SUBAGENT_TYPE=""
 if [ -n "$PYTHON_CMD" ]; then
-  DESC_TEXT="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+  SUBAGENT_TYPE="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
 import json, sys
 try:
-    data = json.load(sys.stdin)
-    print(data.get('tool_input', {}).get('description', ''), end='')
+    ti = json.load(sys.stdin).get('tool_input', {})
+    print(ti.get('subagent_type', '') if isinstance(ti, dict) else '', end='')
 except Exception:
     pass
 " 2>/dev/null || true)"
 fi
 
-# description 비어있지 않을 때만 프리픽스 형식 DETECT (leaf 빈 description 은 위반 아님 — AC-10)
-if [ -n "$DESC_TEXT" ] && [ -n "$PYTHON_CMD" ]; then
-  DESC_CHECKER=""
-  if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py" ]; then
-    DESC_CHECKER="${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py"
-  elif [ -f "scripts/lib/check_spawn_description_prefix.py" ]; then
-    DESC_CHECKER="scripts/lib/check_spawn_description_prefix.py"
-  fi
-  if [ -n "$DESC_CHECKER" ]; then
-    DESC_OUT="$(printf '%s' "$DESC_TEXT" | "$PYTHON_CMD" "$DESC_CHECKER" --description-stdin 2>/dev/null || true)"
-    DESC_CONFORMANT="$(printf '%s' "$DESC_OUT" | "$PYTHON_CMD" -c "
-import json, sys
-try:
-    print('1' if json.loads(sys.stdin.read()).get('description_prefix_conformant', True) else '0')
-except Exception:
-    print('1')
-" 2>/dev/null || true)"
-    if [ "$DESC_CONFORMANT" = "0" ]; then
-      >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn description prefix nonconformant — expected [<agent_type>] MM/DD HH:MM - <내용> (ADR-143, advisory)\n'
-    fi
-  fi
+# KST render stamp (fallback empty — kst-render-stamp.sh 실패 시 build_injected_description 이 skip)
+STAMP=""
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+elif [ -f "scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+fi
+
+# check_spawn_description_prefix.py resolve (PLUGIN_ROOT path with cwd fallback)
+DESC_CHECKER=""
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py" ]; then
+  DESC_CHECKER="${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py"
+elif [ -f "scripts/lib/check_spawn_description_prefix.py" ]; then
+  DESC_CHECKER="scripts/lib/check_spawn_description_prefix.py"
+fi
+
+# SINGLE call — updatedInput + additionalContext 병합 JSON (구 reminder emit + 구 detect 대체).
+# fail-open: helper/python 부재 시 skip(no stdout). --transition-reminder 로 reminder 병합.
+if [ -n "$DESC_CHECKER" ] && [ -n "$PYTHON_CMD" ]; then
+  printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$SUBAGENT_TYPE" --kst-stamp "$STAMP" --transition-reminder 2>/dev/null || true
 fi
 
 # Wave 1: 항상 exit 0 (deny 비활성)
