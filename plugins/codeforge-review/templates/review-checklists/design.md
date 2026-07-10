@@ -70,6 +70,7 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 - Change Plan 범위 대비 커버리지 공백 식별
 - 성능 baseline §8.3 프로토콜 (mean 10% 악화 기준 측정 절차) 명시 여부
 - 외부 venue/시계열 데이터 의존 시(거래소 L2/tick·WS stream·snapshot·candle 시계열·seq ordering): 실-venue-형상 재현(captured-golden / 실 venue tap / seq 의미론·timestamp granularity·다중성·GAP/rate-spike/disorder 를 실형상 근거로 justify 한 fixture) 방법이 §8 에 명시됐는가 + **synthetic-only(균일 +1 seq·고정 interval) 불충분 인식** + N/A(venue 미접촉) 사유 명시 — ADR-006 Amendment 1 / §8.7 (수치 근거 축인 §8.5 push_interval empirical 확인과 disjoint)
+- **엣지 케이스 도출 기법 walk 선언 (anchor-presence)**: 실행 가능 코드 있는 Story §8 에 엣지 도출 기법 walk 흔적 — tier A(EP/BVA/enum/collection) 기법별 Story 실입력축 결속 대표 케이스 실값 + tier B(Decision Table/State Transition/Pairwise/Property-based/Metamorphic) 트리거 시 적용 or 부재한 structural trigger 명시한 N/A 사유(≥30자) — 또는 §8.4 N/A(코드 0줄) 가 명시됐는가. 고정 5-mnemonic 만 나열(체계적 도출 흔적 부재)이면 지적·차단 근거. **presence-only**: anchor 는 "체계적 도출 선언의 존재"만 판별하고 "완결성 적절성"은 판별하지 않는다(완결성 실판정 = review 채널 correctness 책임 + mutation gate OOS — 완결성 강제 아님, ADR-119 검사연극 금지). ADR-006 Amendment 2 / §8.2 축 (케이스 집합 *완결성* 축 — venue-shape §8.7 의 *형상 정확성* 축과 disjoint)
 
 ## 외부 기술선택 검증 (`external-tech-selection`, CFP-2327 / ADR-124 Amendment 1 — 좁은 예외)
 

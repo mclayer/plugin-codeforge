@@ -2,6 +2,29 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.36.0] - 2026-07-10 — CFP-2586 §8 엣지 케이스 도출 forcing function (MINOR)
+
+### Added
+
+[CFP-2586] §8 Test Contract 에 엣지 케이스 체계적 도출 기법 forcing function 신설 (ADR-006 Amendment 2).
+
+- `agents/TestContractArchitectAgent.md`: §8.2 축 "엣지 케이스 체계적 도출 기법" subsection 신설 — tier A(Equivalence Partitioning / Boundary Value Analysis / enum·categorical / collection·string size, 항상 적용) + tier B(Decision Table / State Transition / Pairwise / Property-based / Metamorphic, 입력 구조 트리거 조건부). 기법별 Story 실입력축 결속 대표 케이스 실값 강제(기법 이름만 나열 불충분 — 검사연극 차단) + 적극적 이의 제기 의무 7번 항.
+- `templates/change-plan.md`: §8.2 고정 5-mnemonic(null/empty/최대·최소/타임아웃/동시성)을 도출 기법 walk 의 *출력*으로 재정렬 (additive, §8.7 UI render 미교란).
+- `archive/adr/ADR-006-testcontract-architect.md`: Amendment 2 (A2-0~A2-10) append — always-active(실행 가능 코드 있는 Story, wrapper-self 포함; §8.7 venue-shape 의 좁은 CONDITIONAL/항상 N/A 와 반대 방향 = 갭#3 해소) + completeness 천장 정직 자인(mutation gate·자동 lint = OOS deferred, ADR-119 검사연극 금지).
+- `skills/deputy-mandate/SKILL.md`: §8 Test Contract row 에 Amendment 2 cross-ref 1줄 (Amendment 1 선례 답습).
+
+#### Why
+
+엣지 케이스를 체계적으로 도출하는 기법 부재(고정 5-mnemonic 즉흥 상기 의존) 갭 해소. agent mandate 확장 = 다음 설계 lane 부터 §8 도출 기법 walk 강제(consumer 영향) → MINOR (ADR-037). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
+## [0.35.0] - 2026-07-03 — CFP-2563 ADR 번호 OCC claim 실배선 (MINOR)
+
+### Changed
+
+[CFP-2563] ADR 번호 발급 충돌 근본해소 — dead OCC claim machinery 실배선 + adr-reservation-state 브랜치 부트스트랩 + registry 15행 backfill + dual-key 3-way uniqueness lint.
+
+> 본 0.35.0 항목은 CFP-2586(#2586) 에서 backfill — CFP-2563(#2565, commit 3bdf1f8a) 이 plugin.json 을 0.34.0→0.35.0 bump 하면서 CHANGELOG 항목을 누락(plugin.json description 에는 기재됨). CHANGELOG↔plugin.json 정합 복원 목적.
+
 ## [0.34.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
 
 ### Changed

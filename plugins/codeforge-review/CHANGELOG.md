@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.21.0 — 2026-07-10
+
+### Added (CFP-2586 — 엣지 케이스 도출 기법 리뷰 anchor, MINOR)
+
+[CFP-2586] 엣지 케이스 체계적 도출 기법 forcing function 의 리뷰 anchor 배선 (ADR-006 Amendment 2).
+
+- `templates/review-checklists/design.md` §5 Test Contract 타당성: anchor-presence 1행 추가 — 실행 가능 코드 있는 Story §8 에 엣지 도출 기법 walk 선언(tier A 기법별 대표 케이스 실값 + tier B 트리거 시 적용/부재 structural trigger 명시 N/A) 또는 §8.4 N/A 부재 시 지적·차단 근거. category `test-contract` 재사용(신규 literal 0). presence-only — 완결성 격상 아님(ADR-119 검사연극 금지, 완결성 실판정은 review correctness + mutation gate OOS).
+- `templates/review-checklists/code.md` §5 테스트 코드 품질: loop closure 1행 추가 — §8 선언 기법 ↔ 실제 엣지 테스트(선언된 기법별 대표 케이스 1+)가 `tests/**` 에 실존하는가 교차검증. category `test-quality` 재사용.
+
+#### Why
+
+설계리뷰 anchor-presence(선언 강제) + 구현리뷰 loop closure(실물 교차검증) 분업으로 §8 엣지 도출 forcing function 의 3-anchor 를 완성. §8.7 venue-shape(Amendment 1) anchor 와 mechanism 동형·disjoint(완결성 축 vs 형상 정확성 축). checklist additive(신규 category literal 0) → MINOR (ADR-037 / ADR-008). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## 1.20.0 — 2026-07-03
 
 ### Changed (CFP-2560 — 전 에이전트 opus 단일 tier, MINOR)
