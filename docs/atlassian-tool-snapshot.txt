@@ -2,11 +2,20 @@
 # ADR-103 §결정 3 Option B per-tool deny decomposition — verified snapshot
 #
 # prefix = mcp__plugin_atlassian_atlassian__ (본 설치 실 callable tool 의 effective prefix)
-# 본 파일 = atlassian-tool-drift check 의 deny-target SSOT (23 tool).
-# un-denied 8 tool (read 5 + write 3) 은 의도적으로 본 snapshot 에서 제외 — settings.json allow 에 개별 열거.
-# narrow-allow (Orchestrator preset) 분류: addCommentToJiraIssue = ADR-099 Amd1 narrow-allow (Orchestrator preset)
+# 본 파일 = atlassian-tool-drift check 의 deny-target **discipline SSOT** (14 tool).
+# ★ ADR-099 Amd2 §A2-0 정직 disclosure: 실 harness = defaultMode:bypassPermissions + Atlassian prefix-allow →
+#   본 deny 목록은 런타임 미강제(discipline 기준일 뿐). 토큰 org-wide accepted-risk(운영자 결정) →
+#   기계 blast-radius 경계 없음; compensating = app-level MCT 타깃팅(S2/S3) + Orchestrator-only + audit.
+# un-denied 17 tool (read 11 + write 6) 은 의도적으로 본 snapshot 에서 제외 — narrow-allow(Amd1 1 + Amd2 9) 포함.
+# narrow-allow (Orchestrator preset) 분류:
+#   - addCommentToJiraIssue = ADR-099 Amd1 narrow-allow (Orchestrator preset, 단일 control 이슈)
+#   - ADR-099 Amd2 (CFP-2598 / consumer Epic MTD-168 S1) narrow-allow (consumer MCT project 한정, write 3 + read 6):
+#       createJiraIssue / createIssueLink / transitionJiraIssue (write)
+#       getJiraIssue / searchJiraIssuesUsingJql / getTransitionsForJiraIssue /
+#       getJiraProjectIssueTypesMetadata / getJiraIssueTypeMetaWithFields / lookupJiraAccountId (read)
+#     → 위 9종은 deny-target 에서 제외(23→14). MCT 외 프로젝트 write = deny-scan hard-block.
 #
-# drift check: 본 snapshot 23 tool ⊆ .claude/settings.json permissions.deny → PASS
+# drift check: 본 snapshot 14 tool ⊆ .claude/settings.json permissions.deny → PASS
 # 형식: 한 줄 1 tool, 빈 줄 / # 주석 무시
 #
 # ── Confluence-side deny (9) ──
@@ -19,18 +28,9 @@ mcp__plugin_atlassian_atlassian__createConfluenceInlineComment
 mcp__plugin_atlassian_atlassian__getConfluenceCommentChildren
 mcp__plugin_atlassian_atlassian__getConfluencePageFooterComments
 mcp__plugin_atlassian_atlassian__getConfluencePageInlineComments
-# ── Jira-side deny (14) ──
+# ── Jira-side deny (5) — ADR-099 Amd2 로 9종 narrow-allow 이동(위 주석) ──
 mcp__plugin_atlassian_atlassian__addWorklogToJiraIssue
-mcp__plugin_atlassian_atlassian__createIssueLink
-mcp__plugin_atlassian_atlassian__createJiraIssue
 mcp__plugin_atlassian_atlassian__editJiraIssue
 mcp__plugin_atlassian_atlassian__getIssueLinkTypes
-mcp__plugin_atlassian_atlassian__getJiraIssue
 mcp__plugin_atlassian_atlassian__getJiraIssueRemoteIssueLinks
-mcp__plugin_atlassian_atlassian__getJiraIssueTypeMetaWithFields
-mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata
-mcp__plugin_atlassian_atlassian__getTransitionsForJiraIssue
 mcp__plugin_atlassian_atlassian__getVisibleJiraProjects
-mcp__plugin_atlassian_atlassian__lookupJiraAccountId
-mcp__plugin_atlassian_atlassian__searchJiraIssuesUsingJql
-mcp__plugin_atlassian_atlassian__transitionJiraIssue
