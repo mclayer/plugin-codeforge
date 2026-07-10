@@ -17,6 +17,8 @@
 #        peer_count: 0) → peer_verdicts[] ≥1 entry 의 target 이 check 시점 FS 실재 + non-empty 여야 통과.
 #        자기단언 verify_status 불신·게이트 독립 stat (forged peer_count 구멍 봉합). non-version-gated
 #        (anti-evasion). 미충족 → 차단 (ADR-044 Amd 6 §결정 12 falsifiability, warning-tier).
+#        ※ 단 위조방지 게이트 아님 — 특정 zero-artifact 위조만 봉합, 임의 실재/stale 파일 pointing 은
+#        warning-tier 수용 잔여 리스크 (§3.4: PL claim+proof 동시저작 → full falsifiability 원리상 불가).
 #
 # enforcement layer (PreToolUse Agent matcher deny) 는 본 Story 미구현 — 관측 baseline (verdict packet lint)
 # 만. PreToolUse matcher P2 정확 토큰 + CLI 런타임 발동 empirical 미확정 ([empirical-source: TBD],
@@ -81,12 +83,6 @@ extract_scalar() {
         | sed -E 's/[[:space:]]*#.*$//' \
         | sed -E 's/^["'\'']//; s/["'\'']$//' \
         | sed -E 's/[[:space:]]*$//'
-}
-
-# peer_degrade block 존재 여부 (key line presence — 주석 라인 제외)
-has_peer_degrade_block() {
-    local body="$1"
-    printf '%s\n' "$body" | grep -Eq '^[[:space:]]*peer_degrade:[[:space:]]*$'
 }
 
 # degrade_acknowledged 가 true 로 명시됐는지 (presence + true 동시)

@@ -249,12 +249,49 @@ review_verdict:
       worker: claude
 EOF
 
+# TC-4h: peer_verdicts[] 뒤 top-level key(worker_dialog_rounds 등) trailing — awk block-종료 후 마지막 entry drop 안 함 (실 packet layout, CFP-2597 구현리뷰 Codex 보강-3 lock-in).
+write_fixture "tc4h-peer-midblock" <<'EOF'
+review_verdict:
+  contract_version: "4.16"
+  lane: code
+  story_key: CFP-TEST
+  pl_recommendation: PASS
+  peer_verdicts:
+    - form: file-path-reference
+      target: tc4h-peer1.txt
+      worker: claude
+      worker_recommendation: PASS
+  worker_dialog_rounds: 2
+  writes_completed: true
+EOF
+
+# TC-4i: 2-entry(claude 실재 + codex 미실재) → all-must-resolve → 축③-unresolved RED (실 2-peer verdict shape, CFP-2597 구현리뷰 Codex lock-in).
+write_fixture "tc4i-multi-one-missing" <<'EOF'
+review_verdict:
+  contract_version: "4.16"
+  lane: code
+  story_key: CFP-TEST
+  pl_recommendation: PASS
+  peer_verdicts:
+    - form: file-path-reference
+      target: tc4i-peer-claude.txt
+      worker: claude
+      worker_recommendation: PASS
+    - form: file-path-reference
+      target: tc4i-peer-codex.txt
+      worker: codex
+      worker_recommendation: PASS
+EOF
+
 # ── 축③ peer_verdict 실 artifact 생성 (target = dirname(verdict)=$WORK 기준 상대 resolve) ──
 printf 'peer verdict artifact — claude review PASS\n' > "$WORK/tc4a-peer1.txt"
 # tc4c-peer1.txt 는 의도적으로 미생성 (TC-4c load-bearing: 자기단언 verify_status 불신, 독립 stat 으로 RED 강제)
 : > "$WORK/tc4d-peer1.txt"   # 0 bytes (빈 파일 — 축③-empty 유도)
 printf 'peer verdict artifact — bare PASS backed\n' > "$WORK/tc4f-peer1.txt"
 printf 'peer verdict artifact — no worker_recommendation\n' > "$WORK/tc4g-peer1.txt"
+printf 'peer verdict artifact — midblock trailing key\n' > "$WORK/tc4h-peer1.txt"
+printf 'peer verdict artifact — claude entry (codex entry 미생성=missing)\n' > "$WORK/tc4i-peer-claude.txt"
+# tc4i-peer-codex.txt 의도적 미생성 (2-entry 中 1 missing → all-must-resolve RED)
 
 echo "=== check-verification-floor.sh discriminating test (CFP-2471 / W3 · CFP-2597 P2 축③) ==="
 
@@ -275,6 +312,8 @@ run_case "TC-4d peer target 빈 파일(0 bytes) → 차단"                     
 run_case "TC-4e honest single-peer degrade stand-down → 통과(AC-A3 무회귀)"       "tc2b-honest-degrade"        0 '\[OK 축③\]'
 run_case "TC-4f bare PASS + peer_verdicts 실재 → 통과"                           "tc4f-peer-backed-nodegrade" 0 '\[OK 축③\]'
 run_case "TC-4g peer target 실재하나 worker_recommendation 부재 → 차단"           "tc4g-peer-nocontent"        1 '\[FAIL 축③-content\]'
+run_case "TC-4h peer_verdicts 뒤 top-level key trailing + target 실재 → 통과(mid-block)" "tc4h-peer-midblock"     0 '\[OK 축③\]'
+run_case "TC-4i 2-entry(1 실재+1 미실재) → 차단(all-must-resolve)"                "tc4i-multi-one-missing"     1 '\[FAIL 축③-unresolved\]'
 
 # ── MUT-1 (hollow-gate 차단): 축① peer_count==0 검사를 무력화 ──
 # `[ "$peer_count" -eq 0 ]` → `[ "$peer_count" -lt 0 ]` (항상 false) 로 mutate.
