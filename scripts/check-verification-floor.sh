@@ -13,10 +13,17 @@
 #        차단 (ADR-094 (a) silent harm 거부). peer_count: 1 + degrade_acknowledged: true + degrade_reason
 #        (honest degrade, ADR-094 (c)) → 통과 (single-peer honest degrade 가 정식 floor 충족).
 #
+#   축③ (peer-completion falsifiability): pl_recommendation: PASS (NOT honest single-peer degrade, NOT
+#        peer_count: 0) → peer_verdicts[] ≥1 entry 의 target 이 check 시점 FS 실재 + non-empty 여야 통과.
+#        자기단언 verify_status 불신·게이트 독립 stat (forged peer_count 구멍 봉합). non-version-gated
+#        (anti-evasion). 미충족 → 차단 (ADR-044 Amd 6 §결정 12 falsifiability, warning-tier).
+#        ※ 단 위조방지 게이트 아님 — 특정 zero-artifact 위조만 봉합, 임의 실재/stale 파일 pointing 은
+#        warning-tier 수용 잔여 리스크 (§3.4: PL claim+proof 동시저작 → full falsifiability 원리상 불가).
+#
 # enforcement layer (PreToolUse Agent matcher deny) 는 본 Story 미구현 — 관측 baseline (verdict packet lint)
 # 만. PreToolUse matcher P2 정확 토큰 + CLI 런타임 발동 empirical 미확정 ([empirical-source: TBD],
 # 설계 §결정10d 보류). 보안 lane floor 차등 (≥1 peer + 1차 native layer + dependency manifest) = D2 — 본
-# script 는 peer floor (축①②) 만 검사, native-layer presence 는 ClaudeReviewAgent ESCALATE_PACKET_INCOMPLETE
+# script 는 peer floor (축①②③) 만 검사, native-layer presence 는 ClaudeReviewAgent ESCALATE_PACKET_INCOMPLETE
 # 영역 (별 검사면).
 #
 # Usage:
@@ -26,7 +33,7 @@
 #
 # Exit code:
 #   Default mode: 0 always (advisory — stderr 출력, ADR-027 §결정 2 LLM-trust / ADR-128 warning-tier 정합)
-#   Strict mode (--strict): 0 (floor 충족) / 1 (floor 위반: 축① 또는 축②)
+#   Strict mode (--strict): 0 (floor 충족) / 1 (floor 위반: 축①/②/③)
 #
 # Tier: warning-tier (local-only, ADR-128 상속). branch protection 6-tuple 무변경.
 
@@ -78,18 +85,50 @@ extract_scalar() {
         | sed -E 's/[[:space:]]*$//'
 }
 
-# peer_degrade block 존재 여부 (key line presence — 주석 라인 제외)
-has_peer_degrade_block() {
-    local body="$1"
-    printf '%s\n' "$body" | grep -Eq '^[[:space:]]*peer_degrade:[[:space:]]*$'
-}
-
 # degrade_acknowledged 가 true 로 명시됐는지 (presence + true 동시)
 ack_is_true() {
     local body="$1"
     local val
     val="$(extract_scalar "$body" "degrade_acknowledged")"
     [ "$val" = "true" ]
+}
+
+# peer_verdicts[] 파싱 — block walk 로 entry별 target + worker_recommendation 추출 (pure awk, hermetic; yq/python 미사용).
+#   출력: entry 당 1 line "<target><US 0x1f><worker_recommendation>" (빈 field 는 빈 문자열). entry 0 (block 부재/빈) → 빈 출력.
+#   self-asserted verify_status 는 미추출 — gate 가 독립 stat 으로 판별 (자기단언 불신, ADR-044 Amd 6 §결정 12).
+extract_peer_verdicts() {
+    local body="$1"
+    printf '%s\n' "$body" | awk '
+        function indent(s,   n) { n = 0; while (substr(s, n + 1, 1) == " ") n++; return n }
+        function clean(v) {
+            sub(/[ \t]*#.*$/, "", v)
+            sub(/[ \t]+$/, "", v)
+            sub(/^["\047]/, "", v)
+            sub(/["\047]$/, "", v)
+            return v
+        }
+        { line = $0; sub(/\r$/, "", line); ind = indent(line); rest = substr(line, ind + 1) }
+        !in_block {
+            if (rest ~ /^peer_verdicts:[ \t]*$/) { in_block = 1; block_indent = ind }
+            next
+        }
+        {
+            if (rest ~ /^[ \t]*$/) next
+            if (ind <= block_indent) {
+                if (have_entry) { print t "\037" w; have_entry = 0 }
+                in_block = 0
+                next
+            }
+            if (rest ~ /^-[ \t]/ || rest == "-") {
+                if (have_entry) print t "\037" w
+                have_entry = 1; t = ""; w = ""
+                sub(/^-[ \t]*/, "", rest)
+            }
+            if (rest ~ /^target:[ \t]*/) { v = rest; sub(/^target:[ \t]*/, "", v); t = clean(v) }
+            if (rest ~ /^worker_recommendation:[ \t]*/) { v = rest; sub(/^worker_recommendation:[ \t]*/, "", v); w = clean(v) }
+        }
+        END { if (have_entry) print t "\037" w }
+    '
 }
 
 run_check() {
@@ -142,6 +181,63 @@ run_check() {
         else
             log_err "[FAIL 축②] silent degrade 차단 — peer_count: 1 (single-peer degrade) 인데 degrade_acknowledged true 명시 부재 (silent 2→1 degrade). ADR-094 (a) silent harm 거부 → 차단. degrade 시 peer_degrade block (degrade_acknowledged: true + degrade_reason) 명시 의무"
             violations=$((violations + 1))
+        fi
+    fi
+
+    # ── 축③ peer-completion falsifiability ────────────────────────────────────
+    # pl_recommendation: PASS 는 falsifiable peer 완료 증거 (peer_verdicts[] artifact) 로 뒷받침돼야.
+    # 발동: pl_rec==PASS AND NOT honest-single-peer-degrade (축② 소관) AND NOT peer_count==0 (축① 선차단).
+    # ★non-version-gated: contract_version 게이트 없음 (anti-evasion — version-gating 시 4.15+peer_count:2 우회).
+    # ★독립 stat 검증 — entry 자기단언 verify_status 필드 불신 (forged peer_count 구멍 봉합, ADR-044 Amd 6 §결정 12).
+    if [ "$pl_rec" = "PASS" ]; then
+        # honest single-peer degrade stand-down (축② 소관 = AC-A3 무회귀) — MUT-5 anchor (단일 조건)
+        if [ "$peer_count" = "1" ] && ack_is_true "$body" && [ -n "$(extract_scalar "$body" "degrade_reason")" ]; then
+            log "[OK 축③] honest single-peer degrade (peer_count: 1 + ack: true + degrade_reason) — 축② 소관, 축③ stand-down (skip)"
+        elif [ "$peer_count" = "0" ]; then
+            log "[OK 축③] peer_count: 0 — 축① 선차단 영역, 축③ 미도달 (skip)"
+        else
+            local pv_entries base_dir target wrec resolved_target
+            local entry_bad=0
+            pv_entries="$(extract_peer_verdicts "$body")"
+            if [ -z "$pv_entries" ]; then
+                # Violation A (missing): bare PASS / claimed-multi 조기종합 (non-version-gated 조임)
+                log_err "[FAIL 축③-missing] peer-completion 미증명 — pl_recommendation: PASS 인데 peer_verdicts[] 부재/0 entry (bare PASS 또는 claimed-multi 조기종합). ≥1 peer verdict artifact 참조 의무 (ADR-044 Amd 6 §결정 12 falsifiability)"
+                violations=$((violations + 1))
+            else
+                if [ -n "$VERDICT_PATH" ]; then base_dir="$(dirname "$VERDICT_PATH")"; else base_dir="."; fi
+                while IFS=$'\037' read -r target wrec; do
+                    # empty target string → 빈≠증거
+                    if [ -z "$target" ]; then
+                        log_err "[FAIL 축③-empty] peer_verdict entry 의 target 부재/빈 문자열 — 빈 target 은 증거 아님 (falsifiable artifact 참조 의무)"
+                        violations=$((violations + 1)); entry_bad=1; continue
+                    fi
+                    # target resolution: absolute → as-is, 상대 → dirname(VERDICT_PATH) 기준 (stdin → cwd). Win/Linux portable.
+                    case "$target" in
+                        /*) resolved_target="$target" ;;
+                        [A-Za-z]:/*) resolved_target="$target" ;;
+                        [A-Za-z]:\\*) resolved_target="$target" ;;
+                        *) resolved_target="$base_dir/$target" ;;
+                    esac
+                    # 축③-unresolved (MUT-3 anchor): 독립 stat 존재검사 = -unresolved 유일 게이트 (self-asserted verify_status 불신)
+                    if [ ! -e "$resolved_target" ]; then
+                        log_err "[FAIL 축③-unresolved] peer_verdict target 미실재 — '$resolved_target' (self-asserted verify_status 불신, gate 독립 stat 판별). forged peer_count 구멍 봉합 (ADR-044 Amd 6)"
+                        violations=$((violations + 1)); entry_bad=1; continue
+                    fi
+                    # 축③-empty (MUT-4 anchor): resolved target 실재하나 빈 파일 (0 bytes) = non-empty 유일 게이트
+                    if [ -e "$resolved_target" ] && [ ! -s "$resolved_target" ]; then
+                        log_err "[FAIL 축③-empty] peer_verdict target 빈 파일 (0 bytes) — '$resolved_target' (빈≠증거, non-empty 판별)"
+                        violations=$((violations + 1)); entry_bad=1; continue
+                    fi
+                    # 축③-content (2차 advisory, existence-verify=P0 대비 P1): worker_recommendation (peer verdict token) 존재
+                    if [ -z "$wrec" ]; then
+                        log_err "[FAIL 축③-content] peer_verdict entry ('$target') worker_recommendation 부재/빈 — peer 판정 token (PASS/FIX 등) 미기재 (content-binding)"
+                        violations=$((violations + 1)); entry_bad=1
+                    fi
+                done <<< "$pv_entries"
+                if [ "$entry_bad" -eq 0 ]; then
+                    log "[OK 축③] peer-completion falsifiable — 전 peer_verdict entry target 실재+non-empty AND worker_recommendation 존재 (독립 stat, 위조 불가)"
+                fi
+            fi
         fi
     fi
 
