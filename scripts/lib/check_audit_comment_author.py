@@ -19,7 +19,7 @@ honest forcing ceiling: exit 1 = advisory 표식 — 실 차단은 워크플로 
 
 Usage:
   python3 check_audit_comment_author.py check [--comments-json <path>]   # 없으면 stdin
-  python3 check_audit_comment_author.py selftest                          # 3 embedded case
+  python3 check_audit_comment_author.py selftest                          # 5 embedded case (bot/human/absent + flat-login/user.login spoof)
 
 Input JSON (gh shape 둘 다 수용):
   [{"author": {"login": "..."}, "body": "..."}, ...]
@@ -49,17 +49,19 @@ BOT_LOGIN = "github-actions[bot]"
 
 
 def _comment_author(comment):
-    """comment dict 에서 author.login 추출 (gh shape). 부재 시 빈 문자열."""
+    """comment dict 에서 author.login 전용 추출 (gh author-shape). 부재/타 shape → 빈 문자열.
+
+    CFP-2594 Phase 2 (Stage 3 flip P3) — flat `login` + `user.login` fallback 제거.
+    author-verify 는 gh `{author: {login}}` shape 만 신뢰한다 (PASS-set 축소, 0-regression,
+    fail-open 불가): 타 shape(flat `login` / `user.login`) 는 "" 반환 → spoof 판정 → FAIL.
+    상위 워크플로가 `--jq '{author: {login: .user.login}}'` 로 author-shape 정규화 후 넘긴다.
+    ADR-060 §결정 6."""
     if not isinstance(comment, dict):
         return ""
     author = comment.get("author")
     if isinstance(author, dict):
         return str(author.get("login") or "")
-    # flat shape fallback (user.login / login)
-    user = comment.get("user")
-    if isinstance(user, dict):
-        return str(user.get("login") or "")
-    return str(comment.get("login") or "")
+    return ""
 
 
 def _comment_body(comment):
@@ -162,6 +164,19 @@ _SELFTEST_CASES = [
         [{"author": {"login": BOT_LOGIN}, "body": "just a normal comment, no audit tag"}],
         False,
     ),
+    # CFP-2594 Phase 2 (Stage 3 flip P3) — ADDED-1/2: fallback 제거 lockstep.
+    #   bot login 이 author-shape 밖(flat login / user.login)이면 이제 PASS 하지 않는다
+    #   (PASS-set 축소 — _comment_author 가 author.login 전용, 타 shape → "" → spoof → FAIL).
+    (
+        "flat login spoof → FAIL (P3 fallback 제거 — author-shape 전용)",
+        [{"login": BOT_LOGIN, "body": "[hotfix-bypass-audit] PR=1 reason=x"}],
+        False,
+    ),
+    (
+        "user.login spoof → FAIL (P3 fallback 제거 — author-shape 전용)",
+        [{"user": {"login": BOT_LOGIN}, "body": "[hotfix-bypass-audit] PR=1 reason=x"}],
+        False,
+    ),
 ]
 
 
@@ -176,8 +191,10 @@ def cmd_selftest(_args):
         if not ok:
             all_ok = False
 
+    n = len(_SELFTEST_CASES)
     if all_ok:
-        print("check-audit-comment-author selftest: 3/3 PASS (bot→PASS / human→FAIL / absent→FAIL)")
+        print("check-audit-comment-author selftest: %d/%d PASS "
+              "(bot→PASS / human→FAIL / absent→FAIL / flat-login·user.login spoof→FAIL)" % (n, n))
         return 0
     print("check-audit-comment-author selftest: FAIL — 판정 로직 불일치 (anti-theater breach)")
     return 1
@@ -197,7 +214,10 @@ def main(argv):
         help="comment JSON 파일 경로 (없으면 stdin)",
     )
 
-    subparsers.add_parser("selftest", help="3 embedded case 실행 (bot/human/absent)")
+    subparsers.add_parser(
+        "selftest",
+        help="5 embedded case 실행 (bot/human/absent + flat-login/user.login spoof)",
+    )
 
     args = parser.parse_args(argv[1:])
 
