@@ -45,14 +45,14 @@ amendment_log:
     carrier_story: CFP-2598   # S1 (cross-repo) — consumer Epic mctrader/MTD-168 driven (Jira 작업보드 SSOT)
     parent_epic: MTD-168      # consumer(mctrader) Epic — 본 wrapper amendment 가 그 hard-first child(S1)
     date: 2026-07-10  # KST per ADR-079 §결정 2
-    decisions_touched: ["§결정 1", "Amendment 1 §A1-1", "§결정 5"]
-    nature: ratchet-weakening   # Layer 1 deny 에서 Jira write 3 + read 6 = 9종 narrow-allow 이동 (Amd1 1종보다 큰 약화 — 강화된 evidence-gate 정당화 동반)
+    decisions_touched: ["§결정 1", "Amendment 1 §A1-1", "Amendment 1 §A1-2", "Amendment 1 §A1-4", "§결정 5", "§해소 기준"]
+    nature: ratchet-weakening   # Layer 1 discipline-SSOT 에서 Jira write 3 + read 6 = 9종 narrow-allow 이동 (Amd1 1종보다 큰 약화). ★실 enforcement=토큰 스코프(권한 deny 는 bypassPermissions 로 미강제 — §A2-0 정직 disclosure)
     sunset_justification:
-      metric: "incident_count(무단/scope-외 Jira write) AND payload-leak_count(secret/path/transcript Jira 송신) AND scope_creep_count(MCT 외 프로젝트 write 시도) 3-source closed-set. baseline = 단일 사용자 비공개 MCT project 신뢰 경계 불변 AND 세 metric 0 유지 시 작업보드 authoring 효용 lossless. (Amd1 2-source + scope_creep_count 추가 — write 대상이 단일 control 이슈 → MCT project 전체로 확장되므로 project-boundary metric 신설.)"
-      who: "DesignReviewPL(설계리뷰 MUST flag) + SecurityTestPL(보안테스트 lane — 9종 확대라 Amd1보다 강한 심사) + Orchestrator(wrapper-side audit SSOT). scope 확장 재평가 = SecurityArch."
-      how: "wrapper-side 세션 transcript audit log(Jira write tool + 대상 issue/project key + payload 요약) SSOT 로 incident/leak/scope-creep 0 검증. 1-step revert = narrow-allow 에서 9종 제거 → deny 원복(governance state 무손상). MCT project 밖 write 시도 = deny-scan hard-block."
+      metric: "incident_count(무단/scope-외 Jira write) AND payload-leak_count(secret/path/transcript Jira 송신) 2-source closed-set (wrapper-side audit log mining). ★scope_creep 은 metric 이 아니라 **preventive control = Atlassian API 토큰 프로젝트 스코프**(MCT 한정 토큰이면 MCT 외 write 물리 불가)로 차단 — 사후 count 아닌 사전 경계. baseline = MCT-scoped 토큰 + 단일 사용자 비공개 + 두 metric 0."
+      who: "SecurityTestPL(9종·multi-agent 확대라 Amd1보다 강한 심사) + DesignReviewPL + Orchestrator(audit SSOT). 토큰 스코프 준수 확인 = 운영자/SecurityArch."
+      how: "★preventive: Jira-write-enabled 세션의 Atlassian API 토큰은 consumer Jira 프로젝트(MCT)로 스코프 한정 의무(org-wide 토큰=비준수) — 이것이 유일한 기계 강제 blast-radius 경계. detective: wrapper-side audit log(tool + 대상 issue/project key + payload 요약). deny-scan(payload secret/path) = best-effort discipline(기계 강제 아님, bypassPermissions). 1-step revert = narrow-allow 9종 제거(discipline SSOT 원복); 단 이미 생성된 Jira 카드는 Jira=SSOT 의 의도 산출물로 잔존(토큰 스코프가 MCT 로 봉쇄)."
     summary: |
-      Jira 작업보드 SSOT (consumer mctrader Epic MTD-168 hard-first child S1, cross-repo). Amd1 이 결정 채널용 `addCommentToJiraIssue` 1종을 열었는데, consumer(mctrader)가 GitHub Epic/Story 를 Jira MCT project 에 실제 작업 카드로 authoring(Jira=SSOT)하려면 write 3종(`createJiraIssue`/`createIssueLink`/`transitionJiraIssue`) + read 6종(`getJiraIssue`/`searchJiraIssuesUsingJql`/`getTransitionsForJiraIssue`/`getJiraProjectIssueTypesMetadata`/`getJiraIssueTypeMetaWithFields`/`lookupJiraAccountId`)이 필요. read 는 멱등(중복 카드 방지=생성 전 Jira 조회) + 이슈타입/전이 메타 해석에 필수. 본 Amd 가 §결정 1 Layer 1 deny 에서 이 9종을 narrow-allow(Orchestrator preset, consumer MCT project 한정)로 이동(deny 23→14). write 대상=MCT project 한정(임의 프로젝트 write=deny-scan hard-block). Amd1 A1-2(payload deny-scan)·A1-4(audit/1-step revert) 계승, A1-3 first-valid-immutable 은 authoring 맥락에서 "GitHub#↔Jira key 매핑 1회 확정 불변(재생성 금지)"으로 특화. Amd1 대비 9종(vs 1)·write scope MCT project(vs 단일 이슈)로 커진 약화라 evidence-gate 를 scope_creep_count metric 추가로 강화. consumer git 저장소엔 작업추적 데이터 비보존(Jira=SSOT). Phase 2 wire = snapshot 9종 deny 제거(23→14) + 사용자레벨 settings.json narrow-allow 열거 + drift-check + plugin.json MINOR bump + marketplace atomic sync(6.71.0 lag 해소).
+      Jira 작업보드 SSOT (consumer mctrader Epic MTD-168 hard-first child S1, cross-repo). Amd1 이 결정 채널용 `addCommentToJiraIssue` 1종을 열었는데, consumer(mctrader)가 GitHub Epic/Story 를 Jira MCT project 에 실제 작업 카드로 authoring(Jira=SSOT)하려면 write 3종(`createJiraIssue`/`createIssueLink`/`transitionJiraIssue`) + read 6종(`getJiraIssue`/`searchJiraIssuesUsingJql`/`getTransitionsForJiraIssue`/`getJiraProjectIssueTypesMetadata`/`getJiraIssueTypeMetaWithFields`/`lookupJiraAccountId`)이 필요. read 는 멱등(중복 카드 방지=생성 전 Jira 조회) + 이슈타입/전이 메타 해석에 필수. 본 Amd 가 §결정 1 Layer 1 deny 에서 이 9종을 narrow-allow(Orchestrator preset, consumer MCT project 한정)로 이동(deny 23→14). write 대상=MCT project 한정(임의 프로젝트 write=deny-scan hard-block). Amd1 A1-2(payload deny-scan)·A1-4(audit/1-step revert) 계승, A1-3 first-valid-immutable 은 authoring 맥락에서 "GitHub#↔Jira key 매핑 1회 확정 불변(재생성 금지)"으로 특화. Amd1 대비 9종(vs 1)·write scope MCT project(vs 단일 이슈)로 커진 약화라 evidence-gate 를 scope_creep_count metric 추가로 강화. consumer git 저장소엔 작업추적 데이터 비보존(Jira=SSOT). ★실 통제=Atlassian 토큰 MCT 스코프(권한 deny 는 bypassPermissions 로 미강제 — §A2-0 정직 disclosure). Phase 2 wire = snapshot 9종 deny 제거(23→14, discipline SSOT) + 헤더 un-denied 카운트 갱신 + 사용자레벨 settings 정합 + plugin.json MINOR bump/marketplace atomic sync(버전 merge 시점 재계산).
 ---
 
 # ADR-099 — check-no-atlassian.sh 역전 + Atlassian-allow 재정의
@@ -345,17 +345,28 @@ read 완화 근거: Jira=SSOT + git 비보존 모델에서 멱등(중복 방지)
 
 ### §결정 (Amendment 2)
 
+#### A2-0. 정직 disclosure — Layer 1 permission 은 operative 환경에서 미강제, 실 통제 = 토큰 스코프 (P0 시정)
+
+보안 리뷰(CFP-2598) 실행 검증으로 확정된 사실을 본 Amd 가 명시 disclosure 한다(§결정 1 의 "permission = 보안 보장" 프레이밍을 operative bypass mode 에 대해 정정):
+
+- 실 harness 설정(사용자레벨 `~/.claude/settings.json`)은 `permissions.deny` 블록 **부재** + Atlassian `mcp__atlassian*` **prefix-allow** + `defaultMode: bypassPermissions`. → ADR-099 Layer 1(snapshot deny)은 런타임에서 **조회되지 않으며 기계 강제 0**. snapshot/narrow-allow 구분은 **discipline SSOT**(Orchestrator 가 "써도 되는" 도구의 규율 기준)일 뿐 gate 아님.
+- 따라서 **유일한 기계 강제 blast-radius 경계 = Atlassian API 토큰의 프로젝트 스코프**. 본 Amd 의 안전성은 이 토큰이 consumer 프로젝트(MCT)로 한정됨에 의존한다.
+- **preventive precondition (MUST)**: Jira write 를 쓰는 consumer 세션의 Atlassian API 토큰은 **MCT 프로젝트로 스코프 한정**되어야 한다. org-wide 토큰 = **비준수**(그 경우 본 narrow-allow 활성 금지). caller-scope(Orchestrator preset)·project-boundary 는 permission layer 로 강제 불가(tool-name 단위) → discipline + 토큰 스코프로만 성립.
+
+이 disclosure 로 §A2-1~A2-4 의 모든 "제약"은 **(a) 토큰 스코프(기계 강제) + (b) Orchestrator 규율 + (c) audit** 의 3-층으로 재해석된다. permission deny 를 강제 근거로 인용하지 않는다.
+
 #### A2-1. Layer 1 scope 확장 (Amd1 §A1-1 확대)
 
-- narrow-allow 집합 = Amd1 의 `addCommentToJiraIssue` + **본 Amd 의 write 3 + read 6 = 총 10종**. 나머지 Jira write(`editJiraIssue`/`addWorklogToJiraIssue`/`getJiraIssueRemoteIssueLinks`/`getIssueLinkTypes`/`getVisibleJiraProjects`)는 **deny 유지**.
+- narrow-allow 집합 = Amd1 의 `addCommentToJiraIssue`(write) + **본 Amd 의 write 3 + read 6 = 총 10종(write 4 + read 6)**. 나머지 Jira 도구(write: `editJiraIssue`·`addWorklogToJiraIssue` / read: `getJiraIssueRemoteIssueLinks`·`getIssueLinkTypes`·`getVisibleJiraProjects`)는 **deny 유지**.
 - write 대상 = **consumer 의 단일 MCT project** 한정(Amd1 의 "단일 control 이슈" → "MCT project 전체"로 확장). **MCT 외 프로젝트 write = deny-scan hard-block**.
 - caller scope = **Orchestrator preset 한정**(임의 SubAgent deny) — Amd1 정합.
 - 적용 = **consumer opt-in**(mctrader `.claude/_overlay` narrow-allow 열거). wrapper-self 세션엔 미적용(Amd1 결정채널만) — Amd1 §scope "consumer opt-in 후속 carrier" 의 실현체.
 
-#### A2-2. payload deny-scan + project-boundary hard-block (Amd1 §A1-2 계승·확장)
+#### A2-2. payload deny-scan (discipline) + project-boundary (토큰 스코프로 강제)
 
-- Amd1 §A1-2 deny-scan(secret/credential/token/절대경로/full transcript 차단)을 **모든 write payload(create/link/transition)에 그대로 적용**.
-- **신규**: write target 의 project key ≠ `MCT` 이면 hard-block(scope_creep 차단). 임의 프로젝트 확산 방지.
+- Amd1 §A1-2 deny-scan(secret/credential/token/절대경로/full transcript 차단)을 모든 write payload(create/link/transition)에 적용 — 단 §A2-0 대로 **best-effort discipline(기계 강제 아님)**. Orchestrator self-check + audit.
+- **project-boundary 는 deny-scan(argument 검사)이 아니라 Atlassian 토큰 스코프로 강제**(§A2-0 precondition). tool-name 단위 permission 은 projectKey argument 를 못 묶으므로, "MCT 외 write 불가"는 오직 MCT-scoped 토큰으로만 물리 보장된다. deny-scan 의 project 확인은 discipline 보조(잘못된 project 인자 조기 발견)일 뿐 보안 경계 아님.
+- read(searchJiraIssuesUsingJql/getJiraIssue)도 동일 — JQL/issueKey scope 는 permission 으로 못 묶으므로 **토큰 스코프가 read 격리의 실 경계**(MCT-scoped 토큰이면 cross-project read 물리 불가). Amd1 read-isolation 불변식은 authoring 맥락에서 "토큰 스코프 = MCT" 로 계승.
 
 #### A2-3. 멱등 authorization — first-valid-immutable 특화 (Amd1 §A1-3 특화)
 
@@ -365,7 +376,7 @@ read 완화 근거: Jira=SSOT + git 비보존 모델에서 멱등(중복 방지)
 #### A2-4. audit / 1-step revert (Amd1 §A1-4 계승)
 
 - wrapper-side audit = SSOT: 모든 Jira write 를 (tool + 대상 issue/project key + payload 요약)으로 세션 transcript 기록.
-- **1-step revert**: narrow-allow 에서 본 9종 제거 → deny 원복. governance state(Amd1 addComment / Layer 2 / 다른 ADR) 무손상. = 약화 evidence 3-tuple 의 `how`.
+- **1-step revert (control-plane 한정)**: narrow-allow 에서 본 9종 제거 → discipline SSOT 원복. governance state(Amd1 addComment / Layer 2 / 다른 ADR) 무손상. ⚠️ revert 는 **권한 규율만** 원복하고 이미 생성된 Jira 카드/링크/전이는 되돌리지 않는다 — 단 Jira=SSOT 모델에서 그 카드는 **의도된 산출물**(작업 보드 자체)이므로 잔존이 정상이다. 우발/주입 생성의 blast 는 **토큰 스코프(MCT)**가 봉쇄(다른 프로젝트 오염 물리 불가). transition 부작용(알림/automation)은 MCT 내로 국한.
 
 ### §scope 제약
 
