@@ -316,3 +316,95 @@ def test_backcompat_description_stdin_unchanged():
     assert proc.returncode == 0
     res = json.loads(proc.stdout.strip())
     assert res["description_prefix_conformant"] is False and res["empty"] is False
+
+
+# ── CFP-2599 P2×2 하드닝 mutation-lock (§8 Test Contract TC1-5) ────────────────
+#   D1: _sanitize_subject Unicode 개행(U+0085 NEL/U+2028 LS/U+2029 PS) 접힘 (정규식 클래스 확장).
+#   D2: run_inject positional-safe argv 스캐너 (first-match value-shadow + position-blind 멤버십 봉합).
+#   mutation-lock = fix 원복 시 RED (각 docstring 에 RED 조건 명시).
+#   NOTE: 개행류는 escape 표기(\x85/\u2028/\u2029)로만 기술 — 소스에 raw line separator 미주입.
+
+# subject 중간(미들 배치) — trailing 개행류는 .strip() 이 접어 mutation 없이도 라벨 1줄(hollow).
+# 미들 배치라야 D1 delta 를 discriminate (설계 §9.2 ④ 실증).
+UNICODE_NL_MIDDLE = ["\x85", "\u2028", "\u2029"]
+
+
+@pytest.mark.parametrize("c", UNICODE_NL_MIDDLE)
+def test_tc1_sanitize_unicode_newline_folds_to_single_line(c):
+    """TC1/AC-1/AC-3 (D1 mutation-lock): 미들 배치 Unicode 개행 → 단일 공백, splitlines len 1.
+    mutation(클래스에서 \\x85\\u2028\\u2029 제거 원복) → c 잔존 → splitlines 2 → FAIL."""
+    s = csdp._sanitize_subject("A" + c + "B")
+    assert c not in s
+    assert len(s.splitlines()) == 1
+    assert s == "A B"          # 개행 → 단일 공백 (정규식 확장: 내부공백 collapse 부수효과 부재)
+
+
+@pytest.mark.parametrize("c", UNICODE_NL_MIDDLE)
+def test_tc1_build_label_single_render_line(c):
+    """TC1/AC-2 (D1 mutation-lock): 라벨 프리픽스가 미들 Unicode 개행에도 정확히 1 렌더 줄.
+    mutation 원복 시 built.splitlines() == 2 → FAIL."""
+    built = csdp.build_injected_description("A" + c + "B", KST_STAMP, "raw action")
+    assert built is not None
+    assert len(built.splitlines()) == 1
+    assert built == "[A B] 07/09 19:30 - raw action"
+    assert csdp.RE_PREFIX.match(built) is not None
+
+
+def _bash_payload(desc: str = "raw action") -> dict:
+    """Bash surface payload — 실제 --transition-reminder/--subject-absent flag 미전달 표면."""
+    return {"tool_name": "Bash", "agent_type": "x",
+            "tool_input": {"command": "ls", "description": desc}}
+
+
+def test_tc2a_reminder_value_shadow_no_excess_reminder():
+    """TC2a/AC-5 (D2 mutation-lock): Bash surface(실제 --transition-reminder flag 미전달) +
+    subject 값 == '--transition-reminder' 리터럴 → additionalContext 부재(잉여 reminder 0),
+    description 은 sanitized subject 로 정상 주입.
+    mutation('--transition-reminder' in argv 멤버십 원복) → 잉여 reminder emit → FAIL."""
+    obj = _run_inject(_bash_payload(), "--transition-reminder", KST_STAMP)  # reminder=False
+    assert obj is not None
+    hso = obj["hookSpecificOutput"]
+    assert "additionalContext" not in hso          # 값-위치 리터럴이 flag 로 오인 안 됨
+    assert hso["updatedInput"]["description"] == "[--transition-reminder] 07/09 19:30 - raw action"
+    assert hso["updatedInput"]["command"] == "ls"  # whole-echo 보존 (I2)
+
+
+def test_tc2b_subject_absent_value_shadow_still_injects():
+    """TC2b/AC-6 (D2 mutation-lock, 최악 fail-open): subject 값 == '--subject-absent' 리터럴이고
+    실제 --subject-absent flag 미전달 → injection SKIP 되지 않음(정상 주입).
+    mutation('--subject-absent' in argv 멤버십 원복) → subject_absent 오판 → injection SKIP
+    (updatedInput 부재 = 프리픽스 미주입) → FAIL."""
+    obj = _run_inject(_bash_payload(), "--subject-absent", KST_STAMP)
+    assert obj is not None                         # skip 안 됨
+    assert obj["hookSpecificOutput"]["updatedInput"]["description"] == \
+        "[--subject-absent] 07/09 19:30 - raw action"
+
+
+def test_tc2c_kst_stamp_value_shadow_first_match_reads_valid_stamp():
+    """TC2c (D2 mutation-lock): subject 값 == '--kst-stamp' 리터럴 + 실제 --kst-stamp <valid> →
+    positional 소비로 valid stamp 읽힘(정상 주입).
+    mutation(argv.index first-match 원복) → subject-값 위치의 '--kst-stamp' 를 stamp 로 오독 →
+    stamp='--kst-stamp' invalid → KST-fail skip(updatedInput 부재) → FAIL."""
+    obj = _run_inject(_bash_payload(), "--kst-stamp", KST_STAMP)
+    assert obj is not None                         # KST-fail skip 아님
+    assert obj["hookSpecificOutput"]["updatedInput"]["description"] == \
+        "[--kst-stamp] 07/09 19:30 - raw action"
+
+
+def test_tc4_empty_subject_unknown_agent_fallback_single_line():
+    """TC4 (N2 empty-string 문서 lock — F4 정직 표기: D1/D2 delta mutation-lock 아님;
+    D1/D2 delta lock 은 TC1/TC2a-c). empty subject → UNKNOWN_AGENT fallback, splitlines len 1.
+    fallback 제거 mutation 시 출력 empty → splitlines len 0 → FAIL (AC-3 정밀화: non-empty 후 len 1)."""
+    assert csdp._sanitize_subject("") == csdp.UNKNOWN_AGENT
+    assert csdp._sanitize_subject("").splitlines() == ["unknown-agent"]
+    assert len(csdp.UNKNOWN_AGENT.splitlines()) == 1
+
+
+def test_tc5_ec2_mixed_ascii_and_unicode_newline_single_line():
+    """TC5/EC-2 (무회귀): ASCII '\\n' + Unicode U+2028 혼합 개행 동시 → 모두 공백, 라벨 1 렌더 줄.
+    (정상 경로 whole-echo/idempotent/fail-open/KST-invalid/back-compat 무회귀는 파일 전체 스위트 담보.)"""
+    built = csdp.build_injected_description("A\nB\u2028C", KST_STAMP, "raw action")
+    assert built is not None
+    assert len(built.splitlines()) == 1
+    assert built == "[A B C] 07/09 19:30 - raw action"
+    assert csdp.RE_PREFIX.match(built) is not None
