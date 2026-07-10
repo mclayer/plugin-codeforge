@@ -22,6 +22,12 @@
 
 set -euo pipefail
 
+# CFP-2594 보안리뷰 FIX (Iter 2, 수렴 hygiene): mktemp -d 실패경로 temp-dir leak 방지 —
+# set -e 하 mktemp↔rm 사이 heredoc 비정상종료 시 block-말미 rm 미도달. EXIT-trap 으로 전량 회수.
+_TMPDIRS=()
+_cleanup_tmpdirs() { local d; for d in "${_TMPDIRS[@]:-}"; do [ -n "$d" ] && rm -rf "$d"; done; }
+trap _cleanup_tmpdirs EXIT
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WF_RECONCILE="$REPO_ROOT/.github/workflows/deferred-followup-reconcile.yml"
 WF_CARRIER="$REPO_ROOT/.github/workflows/deferral-carrier-declared.yml"
@@ -142,7 +148,7 @@ for wf in "$WF_RECONCILE" "$WF_CARRIER"; do
   fi
 
   # mutation fixture: active continue-on-error: true 재삽입 → 검출기 검출(exit 0) 해야 함.
-  tmp=$(mktemp -d)
+  tmp=$(mktemp -d); _TMPDIRS+=("$tmp")
   mut="$tmp/mutated.yml"
   python3 - "$wf" "$mut" <<'PY'
 import sys
@@ -179,7 +185,7 @@ else
     fi
 
     # mutation fixture: tier 를 warning 으로 되돌린 복사본 → 검출기 FAIL(1) 해야 함.
-    tmp=$(mktemp -d)
+    tmp=$(mktemp -d); _TMPDIRS+=("$tmp")
     if python3 - "$REGISTRY" "$tmp/mut.yaml" "$name" <<'PY'
 import sys
 try:
@@ -232,7 +238,7 @@ else
   fi
 
   # mutation fixture: exit $status → exit 0 회귀 복사본 → 검출기 FAIL(1) 해야 함.
-  tmp=$(mktemp -d)
+  tmp=$(mktemp -d); _TMPDIRS+=("$tmp")
   mut="$tmp/mut.yml"
   python3 - "$WF_RECONCILE" "$mut" <<'PY'
 import re, sys
