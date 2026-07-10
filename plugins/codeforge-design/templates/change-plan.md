@@ -190,7 +190,8 @@ production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <
 - 인프라 테스트 범위 (배포·config 로딩·smoke)
 
 #### §8.2 경계 조건·엣지·invariant
-- 경계 조건 목록 (null, empty, 최대·최소값, 타임아웃, 동시성)
+- 엣지 케이스 도출 기법 walk (실행 가능 코드 있는 Story always-active) — tier A 항상(Equivalence Partitioning / Boundary Value Analysis / enum·categorical / collection·string size) + tier B 조건부(Decision Table / State Transition / Pairwise / Property-based / Metamorphic). 기법별 Story 실입력축 결속 대표 케이스 실값 or N/A+사유(≥30자). 소유·차단 = TestContractArchitectAgent mandate (ADR-006 Amendment 2)
+- 경계 조건 목록 (null, empty, 최대·최소값, 타임아웃, 동시성 — 위 도출 기법의 *출력*으로 재정렬: null/empty⊂EP invalid+collection 하한 / max·min⊂BVA / timeout·concurrency 는 입력-도메인 기법 밖 → §8.5 stateful·§7.4 operational 재귀속)
 - invariant 목록 (반드시 유지되어야 할 속성)
 - 테스트 계획 ↔ §1-6 항목 매핑 요건
 

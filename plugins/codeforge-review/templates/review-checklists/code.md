@@ -56,6 +56,7 @@ CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입
 - mock 경계 적절성 (외부 의존성만 mock, 내부 로직 mock 금지)
 - assertion 강도 (단순 not None vs 도메인 의미 검증)
 - (§8.7 active Story) 구현된 venue 형상 fixture가 §8에 선언된 형상(seq 의미론/timestamp granularity·다중성/GAP·rate-spike/disorder)을 **실제로 재현하는가** — §8 선언만으로 불충분, fixture 코드가 균일 +1 seq·고정 interval 합성이면 §8 contract 미이행 (ADR-006 Amendment 1 / §8.7)
+- (엣지 도출 active Story) §8 에 선언된 엣지 도출 기법(tier A/B) ↔ 실제 엣지 테스트가 `tests/**` 에 실존하는가 (loop closure) — **선언된 기법별 대표 케이스 1+** 가 테스트 코드에 실재해야 한다. §8 선언만 있고 대응 대표 케이스 테스트 부재 = §8 contract 미이행. 판정 문구는 "선언된 기법별 대표 케이스 1+ 실존" 수준(막연한 "완전 커버" 요구 아님 — 완결성 격상 금지, 완결성 실판정은 correctness review + mutation gate OOS) (ADR-006 Amendment 2 / §8.2 축)
 
 ### 6. Dead code · 미완성 (`dead-code`)
 
