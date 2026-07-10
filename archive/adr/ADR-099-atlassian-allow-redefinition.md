@@ -386,7 +386,7 @@ read 완화 근거: Jira=SSOT + git 비보존 모델에서 멱등(중복 방지)
 1. `docs/atlassian-tool-snapshot.txt` — Jira-side deny 에서 9종 제거(`createJiraIssue`·`createIssueLink`·`transitionJiraIssue`·`getJiraIssue`·`searchJiraIssuesUsingJql`·`getTransitionsForJiraIssue`·`getJiraProjectIssueTypesMetadata`·`getJiraIssueTypeMetaWithFields`·`lookupJiraAccountId`) → deny 23→14. 헤더 카운트·narrow-allow 주석 갱신.
 2. `.claude/settings.json`(**사용자레벨** — repo settings 금지) — deny 에서 9종 제거 + Orchestrator preset narrow-allow 개별 열거(consumer 적용).
 3. `scripts/check-atlassian-tool-drift.sh` — snapshot ⊆ deny 검증이므로 1·2 동시 반영 시 PASS 유지(로직 변경 불요).
-4. `.claude-plugin/plugin.json` — MINOR bump(6.72.0 → 6.73.0) + **marketplace atomic sync**(marketplace codeforge 6.71.0 → 6.73.0, 기존 1 MINOR lag 동반 해소, ADR-063 원자성).
+4. `.claude-plugin/plugin.json` — MINOR bump + **marketplace atomic sync**(ADR-063 3-way pin: plugin.json == marketplace == consumer). ⚠️ 버전 하드코딩 금지 — wrapper 는 병렬 세션으로 자주 이동(본 작업 중 6.72.0→6.73.0 CFP-2594 관측). 정확한 bump 타깃·marketplace lag 은 **merge 시점 현재 origin/main 기준 재계산**해 동반 해소.
 
 > **owner 경계**: 위 1~4 = S1 Phase 2(거버넌스 mechanical). §A2-2 deny-scan/project-boundary **enforce 구현** + §A2-3 멱등 엔진의 **운영 reliability** 는 S1 비대상 — consumer **MTD-169(S2)·MTD-170(S3)** 설계 lane 소유. 본 Amd 는 정책 형상만 결정.
 > **보안 심사 강도**: Amd1(1종)보다 큰 약화(9종·project scope)이므로 SecurityTestPL 이 Amd1 대비 강한 심사 수행(§sunset_justification who 명시). 설계리뷰 dual-peer 필수.
