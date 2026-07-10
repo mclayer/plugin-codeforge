@@ -124,8 +124,11 @@ def _sanitize_subject(raw: str) -> str:
     if ':' in raw:
         raw = raw.rsplit(':', 1)[-1]
     raw = raw.replace('[', '').replace(']', '')
-    # ★ F6 (CFP-2587 FIX-2): 개행·제어문자 → 공백 (단일 라인 라벨 보장 — 프리픽스 렌더 줄 1개 유지).
-    raw = re.sub(r'[\x00-\x1f\x7f]+', ' ', raw)
+    # ★ F6 (CFP-2587 FIX-2 / CFP-2599 P2-1): 개행·제어문자 → 공백. str.splitlines() 경계 전체
+    #   (ASCII C0 개행 \n\v\f\r\x1c-\x1e + Unicode NL U+0085 NEL/U+2028 LS/U+2029 PS) 를 커버해
+    #   단일 라인 라벨 보장 (splitlines 경계 과소 0). 클래스는 splitlines 경계가 아닌 C0 나머지 +
+    #   DEL(0x7f) 도 접는 pre-existing 무해 superset (제어문자는 라벨 부적합 — 표시 위생상 바람직).
+    raw = re.sub(r'[\x00-\x1f\x7f\x85\u2028\u2029]+', ' ', raw)
     raw = raw.strip()
     if len(raw) > SUBJECT_MAX_LEN:
         raw = raw[:SUBJECT_MAX_LEN]
@@ -170,15 +173,50 @@ def build_injected_description(subject: str, kst_stamp: str, original: str):
     return built
 
 
+# ── argv 파싱 (positional-safe single-pass 스캐너 — CFP-2599 P2-2) ─────────────
+#   VALUE_FLAGS 는 바로 다음 토큰을 값으로 소비(그 값 토큰은 flag 로 재해석 안 함);
+#   BOOL_FLAGS 는 flag-위치에서만 present 마킹. subject 값이 sibling flag 리터럴과
+#   문자열이 같아도 값-위치로 소비돼 flag 오인 부재 — first-match value-shadow +
+#   position-blind 멤버십 2 shadowing 클래스 동시 봉합. argparse 기각(flag-like 값에
+#   sys.exit(2) → G5 exit-0-always 위반). scope = run_inject argv 파싱 한정 (main() dispatch
+#   모드 selector 는 caller-고정 leading flag → subject 미도달, non-realizable — §7.2 F3).
+VALUE_FLAGS = ("--subject", "--kst-stamp", "--bypass-env")
+BOOL_FLAGS = ("--inject", "--transition-reminder", "--subject-absent", "--description-stdin")
+
+
+def _scan_argv(argv: list):
+    """argv 를 좌→우 1회 스캔 → (values dict, bools set). positional-safe.
+
+    VALUE_FLAGS: 바로 다음 토큰을 값으로 소비(재해석 금지, first-match 우선 = argv.index 동형).
+    BOOL_FLAGS: flag-위치에서만 present 마킹.
+    값-위치 리터럴(예 subject 값 '--transition-reminder')이 flag 로 오인되지 않음.
+    """
+    values: dict = {}
+    bools: set = set()
+    i = 0
+    n = len(argv)
+    while i < n:
+        tok = argv[i]
+        if tok in VALUE_FLAGS:
+            if i + 1 < n:
+                if tok not in values:          # first-match 우선 (argv.index 동형)
+                    values[tok] = argv[i + 1]
+                i += 2                          # 값 토큰 소비 — flag 재해석 금지
+            else:
+                values.setdefault(tok, "")      # flag 가 argv 끝 → 값 '' (현행 보존)
+                i += 1
+        elif tok in BOOL_FLAGS:
+            bools.add(tok)
+            i += 1
+        else:
+            i += 1                              # 소비된 값 토큰 / 미지 positional → skip
+    return values, bools
+
+
 def _inject_arg_value(argv: list, flag: str) -> str:
-    """argv 에서 flag 바로 뒤 값 반환, 없으면 '' (수동 파싱 — argparse 미사용)."""
-    try:
-        idx = argv.index(flag)
-    except ValueError:
-        return ""
-    if idx + 1 < len(argv):
-        return argv[idx + 1]
-    return ""
+    """argv 에서 flag 값 반환, 없으면 '' — positional-safe(_scan_argv SSOT 위임, CFP-2599).
+    값-위치 리터럴이 flag 로 오인되지 않음(first-match value-shadow 봉합). VALUE_FLAGS 용."""
+    return _scan_argv(argv)[0].get(flag, "")
 
 
 def _load_build_context():
@@ -205,19 +243,22 @@ def run_inject(argv: list) -> int:
       · G1: 출력은 json.dumps (f-string/template JSON 금지).
       · §7.3 LOAD-BEARING: --transition-reminder 시 additionalContext 는 injected None 이어도 UNCONDITIONAL emit.
     """
-    reminder_requested = "--transition-reminder" in argv
+    # ★ CFP-2599 (P2-2): positional-safe single-pass 스캐너 단일 SSOT — argv.index first-match +
+    #   position-blind 멤버십(--transition-reminder / --subject-absent) 2 shadowing 클래스 봉합.
+    values, bools = _scan_argv(argv)
+    reminder_requested = "--transition-reminder" in bools
     # ★ F3 (CFP-2587 FIX-2): subject FIELD 부재 → injection SKIP (reminder 는 유지). 표면(hook)이
     #   자기 subject-source 키 presence 를 판정해 이 flag 로 전달 (Bash shell EXCLUDE 와 대칭).
     #   present-but-empty 는 flag 미전달 → build_injected_description 의 G2 unknown-agent fallback.
-    subject_absent = "--subject-absent" in argv
+    subject_absent = "--subject-absent" in bools
     try:
-        subject = _inject_arg_value(argv, "--subject")
-        kst_stamp = _inject_arg_value(argv, "--kst-stamp")
+        subject = values.get("--subject", "")
+        kst_stamp = values.get("--kst-stamp", "")
 
         # ★ F5 (CFP-2587 FIX-2): surface-specific bypass env — 표면이 자기 env 이름 전달
         #   (Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT).
         #   default = Agent env (backward-compat). Agent bypass 가 Bash injection 을 억제하던 bleed 봉합.
-        bypass_env = _inject_arg_value(argv, "--bypass-env") or "BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE"
+        bypass_env = values.get("--bypass-env", "") or "BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE"
         # Bypass: updatedInput 주입 skip (no injection); reminder 는 여전히 emit.
         bypass = os.environ.get(bypass_env, "") == "1"
 
@@ -261,7 +302,7 @@ def run_inject(argv: list) -> int:
                     print(json.dumps({
                         "hookSpecificOutput": {
                             "hookEventName": "PreToolUse",
-                            "additionalContext": ctx(_inject_arg_value(argv, "--subject")),
+                            "additionalContext": ctx(values.get("--subject", "")),
                         }
                     }, ensure_ascii=False))
             except Exception:
