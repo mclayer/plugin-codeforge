@@ -363,7 +363,7 @@ read 완화 근거: Jira=SSOT + git 비보존 모델에서 멱등(중복 방지)
 - caller scope = **Orchestrator preset 한정**(임의 SubAgent deny) — Amd1 정합.
 - 적용 = **consumer opt-in**(mctrader `.claude/_overlay` narrow-allow 열거). wrapper-self 세션엔 미적용(Amd1 결정채널만) — Amd1 §scope "consumer opt-in 후속 carrier" 의 실현체.
 
-#### A2-2. payload deny-scan (discipline) + project-boundary (토큰 스코프로 강제)
+#### A2-2. payload deny-scan (discipline) + project-boundary (app-level MCT 타깃팅 — 토큰 org-wide accepted-risk, 기계 강제 없음)
 
 - Amd1 §A1-2 deny-scan(secret/credential/token/절대경로/full transcript 차단)을 모든 write payload(create/link/transition)에 적용 — 단 §A2-0 대로 **best-effort discipline(기계 강제 아님)**. Orchestrator self-check + audit.
 - **project-boundary 물리 경계 부재**(§A2-0 org-wide 토큰 accepted-risk). tool-name 단위 permission 도, org-wide 토큰도 projectKey 를 못 묶으므로 "MCT 외 write 불가" 의 기계 보장은 없다. 대신 **application-level 강제(S2/S3 구현 MUST)**: sync 도구가 project key 를 `MCT` 로 하드-타깃하고 그 외 key 는 거부 → 정상 운용 경로에서 cross-project write 차단(단 tooling 우회하는 완전 주입은 못 막음 = accepted-risk). audit 이 cross-project write 사후 탐지.
