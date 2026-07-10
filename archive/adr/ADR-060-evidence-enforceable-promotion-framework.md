@@ -59,6 +59,12 @@ mechanical_enforcement_actions:
     status: warning               # ★ Stage 1+2 (baseline + new-only shadow) — warning-tier wired, blocking 아님. 실제 continue-on-error 제거(flip → blocking-on-pr surfacing)는 baseline main 착지 후 별 후속 PR (§7.2.2 self-deadlock 회피). self-entry deferred-followup-reconcile current_tier:warning 불변 (NO-FLIP invariant). warning tier first per §결정 5
     progress_note: "CFP-2591 Amendment 20 carrier — deferred-followup 을 미해결 placeholder(TBD 마커 / 미발급 CFP 번호 / 미배선 FU 마커)로 남기면 forcing function 대상 자체가 소멸(silent debt) → (b) carrier-mandate no-TBD lint 이 registry 밖 declaration surface 전반에서 placeholder 검출 + registry cross-check(named carrier level-1 membership) + baseline grandfather(new-only). (a) registry FLAG 는 sibling deferred-followup-reconcile 소관(두 축 disjoint). grandfather baseline 메커니즘(docs/deferred-followup-baseline.yaml — enumerated-freeze / 2-owner section / single-writer gen tool / content_digest tamper-evident / monotonic shrink) = framework-wide 신규 §결정(new-only SonarQube Clean-as-You-Code + betterer ratchet). §결정32.D surfacing tier(Tier 1 = continue-on-error 제거 + red-X/sticky 표면화, required 6-tuple 미편입) 도입 + §결정3 reconciliation(surfacing qualifier — current_tier:blocking-on-pr 자체가 contexts membership 함의 안 함). self-entry §결정6 carrier 3종(outage runbook / author-verify lint / sticky at-most-once) evidence_artifacts 배선. Stage 1+2 = continue-on-error 유지(flip 미포함) — Tier 2(hard-required) = FUTURE/OOS. honest forcing ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count #4 관측만). Phase 2 = scripts/lib/check_deferral_carrier_declared.py + scripts/check-deferral-carrier-declared.sh + .github/workflows/deferral-carrier-declared.yml + docs/deferred-followup-baseline.yaml + docs/runbooks/deferred-followup-reconcile-enforce-outage.md + registry (b) entry + self-entry evidence_artifacts 3종. prior art 답습: check_lane_count_ssot.py(line-by-line scan + 5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest). ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 이 6-tuple 회피 → §9.1 SSOT 무변경 + §9.4 bypass invariant 미발화). warning tier first per §결정 5"
     target_section: §결정 32      # 본 Amendment 20 의 mechanical action ↔ §결정 binding (§32.D surfacing tier 개정 + §7.9 carrier trio + no-TBD (b) lint)
+  # Amendment 21 (CFP-2597, 2026-07-10 KST) — 19번째 warning-tier entry 등록 (peer-completion-falsifiability,
+  #   ADR-044 Amendment 6 §결정 12 verification-floor 축③ carrier). 신규 §결정 0 — §결정 5 warning-tier 등록 절차 상속.
+  - action: peer-completion-falsifiability
+    status: warning               # ADR-060 §결정 5 첫 도입 = warning mode (continue-on-error). ADR-044 §3.4 정직 상한 (full falsifiability 불가 → blocking 승격 = false assurance). warning tier first per §결정 5
+    progress_note: "CFP-2597 Amendment 21 carrier — ADR-044 Amendment 6 §결정 12 (check-verification-floor.sh 축③ peer-completion falsifiability) 의 warning-tier check 등록. owner_adr = ADR-044 (축③ 결정 SSOT), carrier_adr = ADR-060 (framework host). evidence-checks-registry.yaml peer-completion-falsifiability entry mirror. PASS verdict 이 review-verdict-v4 §19 peer_verdicts[] artifact-backed 완료 증거를 동반하도록 강제 (target FS 실재+non-empty 독립 stat, 자기단언 verify_status 불신). ★ check-lane-evidence.sh 축③ (deputy/role:dev fan-out, ADR-044 §결정 10 (d)) 와 별개 (이름만 동일, script·axis disjoint). 신규 §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate (pr_cumulative_min 20 / failure 0 / sibling merged) 상속. non-version-gated (anti-evasion). 실 script (scripts/check-verification-floor.sh 축③ logic) + workflow + discriminating test = sibling worker Phase 2 deliverable. Phase 1 governance-doc = ADR-044 Amendment 6 + review-verdict-v4 v4.16 + MANIFEST mirror + review-pl-base §3/§10 + orchestrator-playbook §3.10.1 + evidence-checks-registry entry. warning tier first per §결정 5"
+    target_section: §결정 5       # 본 Amendment 21 = 신규 §결정 0 (framework 자연스러운 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속, owner_adr = ADR-044 Amendment 6
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -888,6 +894,48 @@ amendment_log:
       surfacing sub-mode append (ADR-058 §결정 5 sunset_justification
       의무 = is_transitional:false 영구 framework trigger 미해당 — 강화
       방향 amendment).
+  - amendment: 21
+    carrier_story: CFP-2597
+    date: 2026-07-10
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 미해당. 본 Amendment 21 = 강화 방향 (19번째 warning-tier entry peer-completion-falsifiability 등록, framework entry count 18 → 19 ratchet-UP). 약화 영역 0건 (enum 값/tier 제거 없음, 신규 §결정 0 = §결정 5/6 절차 상속).
+    summary: |
+      19번째 warning-tier entry `peer-completion-falsifiability` 등록 carrier
+      amendment — ADR-044 Amendment 6 §결정 12 (check-verification-floor.sh
+      축③ peer-completion falsifiability) 의 warning-tier check 등록. 신규
+      §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate
+      (pr_cumulative_min 20 / failure_threshold 0 / sibling merged) 상속.
+
+      owner_adr = ADR-044 (축③ 결정 SSOT), carrier_adr = ADR-060 (framework
+      host). evidence-checks-registry.yaml `peer-completion-falsifiability`
+      entry mirror (registry yaml row append, Phase 2 PR scope — schema 변경
+      0건, current_tier: warning + bypass_label omit 선례 tier-honesty /
+      spawn-description-prefix-detect / deferral-carrier-declared 답습).
+
+      게이트 의미: PASS verdict 이 review-verdict-v4 §19 peer_verdicts[]
+      artifact-backed 완료 증거를 동반하도록 강제 — 각 target(dirname(verdict_path)
+      기준 상대) FS 실재+non-empty 를 게이트가 독립 stat (자기단언 verify_status
+      불신, ADR-119 §결정 10 outcome-honesty). peer_count:0+PASS = 축① 선차단 /
+      honest-single-peer-degrade = 축② 위임 (축③ stand-down, AC-A3 무회귀).
+      non-version-gated (anti-evasion). ★ check-lane-evidence.sh 축③
+      (deputy/role:dev fan-out, ADR-044 §결정 10 (d)) 와 별개 — 이름만 동일,
+      script·axis disjoint.
+
+      정직 상한 (ADR-044 §3.4): 축③ = 위조비용 상향 + audit trail 이지
+      위조방지 게이트 아님 (PL claim+proof 동시저작 → full falsifiability 불가).
+      warning-tier = 정직 상한, blocking 승격 = false assurance. full
+      falsifiability = Epic trapdoor (stop-event 강화 / spawn-event-v1 선행).
+      Phase 1 governance-doc = ADR-044 Amendment 6 + review-verdict-v4 v4.16
+      (peer_verdicts[] additive MINOR) + MANIFEST mirror + review-pl-base §3/§10
+      + orchestrator-playbook §3.10.1 active-resume/I-6.6 이식 + evidence-checks-registry
+      entry. 실 script + workflow + discriminating test = sibling worker Phase 2
+      deliverable. plugin.json 6.73.1 → 6.74.0 MINOR + codeforge-review 1.21.0 →
+      1.22.0 MINOR + marketplace sync.
+
+      ratchet 위반 0건 — framework 자연스러운 사용 사례 entry 추가 only
+      (ADR-058 §결정 5 sunset_justification 의무 = is_transitional:false 영구
+      framework trigger 미해당 — 강화 방향 amendment). 기존 §결정 5/6 본문
+      의미 변경 0건.
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -906,6 +954,7 @@ related_stories:
   - CFP-2061-S4  # Amendment 17 carrier — 신설 §결정 31 15번째 warning-tier entry governance-drift-detection + 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 (advisory, cron). full-lane (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats 19 TC). prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). de-bloat 재증식 감시 경보 채널.
   - CFP-2381  # Amendment 18 carrier — 신설 §결정 32 16번째 warning-tier entry deferred-followup-reconcile + §결정 19 auto_blocking 강제력 0 라벨 → mechanical forcing function 연결 (carrier-부재 검출 = detect_command/workflow 경로 파일 실존, deterministic + 외부의존 0 + backfill 0). STALE 2건 (bootstrap-labels-precondition + schema-change-7-principles-self-check) status flip + stale TBD 주석 제거. full-lane (Python SSOT + bash wrapper + warning workflow + self-validation test job + registry self-entry). prior art 답습: check_governance_drift.py + increment-justification + operational-outcome-signal-lint test-job (신규 발명 최소).
   - CFP-2426  # Amendment 19 carrier — 신설 §결정 33 17번째 warning-tier entry lane-count-ssot-consistency + canonical 작업레인 수(10, ADR-125 Amd1) SSOT mechanical consistency enforcement. grep-기반 검출(N 레인/N번째 lane/레인 N개, N≠10) + 5축 allowlist(within-line 이중토큰/negation/history/path/counterfactual) channel-split false-positive 차단. 2 Story 연속(CFP-2341→CFP-2376) leak = manual 정정 구조적 한계 입증(pattern_count=2 정당). full-lane (Python SSOT + thin wrapper + .github single-root warning workflow + self-contained discriminating test 22 fixture/4 mutation 생존 0 + registry self-entry + plugin.json tagline 8→10 STALE 정정 + 6.40.0 MINOR marketplace sync). standalone ADR-132 기각(ADR-060 framework 자연스러운 17번째 entry). prior art 답습: check_issue_body_claim_pre_screen.py(in_fence toggle) + check_governance_drift.py(path walk + ::warning::) + check-deferred-followup-reconcile.sh(thin wrapper).
+  - CFP-2597  # Amendment 21 carrier — 19번째 warning-tier entry peer-completion-falsifiability 등록 (ADR-044 Amendment 6 §결정 12 verification-floor 축③ carrier). 신규 §결정 0 — §결정 5 등록 절차 + §결정 6 promotion gate 상속. owner_adr ADR-044 / carrier_adr ADR-060. evidence-checks-registry entry mirror + review-verdict-v4 v4.16 (peer_verdicts[] additive). ★ check-lane-evidence.sh 축③(fan-out) 와 별개 (이름만 동일). 실 script+workflow+test = sibling worker Phase 2 deliverable.
   - CFP-2591  # Amendment 20 carrier — §결정 32.D 개정(surfacing tier 도입) + grandfather baseline 메커니즘 framework-wide 신설 + 18번째 warning-tier entry deferral-carrier-declared(carrier-mandate no-TBD lint). deferred-followup forcing-function 봉합 Stage 1+2(baseline + new-only shadow) — NO-FLIP: continue-on-error 유지 + self-entry current_tier:warning 불변, 실 flip=별 후속 PR(baseline main 착지 후). §결정3 reconciliation(surfacing qualifier — blocking-on-pr 자체가 contexts membership 미함의) + §결정6 harmonization(baseline-relative new-debt failure=0). self-entry deferred-followup-reconcile §결정6 carrier trio(outage runbook/author-verify/sticky at-most-once) evidence_artifacts 배선. ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 6-tuple 회피). full-lane (baseline yaml + check new-only subtract + (b) Python SSOT/thin wrapper/.github workflow + runbook + registry (b) entry + self-entry evidence_artifacts + plugin.json 6.72.0 MINOR + registry-v1 v1.6). honest ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count 관측만). prior art 답습: check_lane_count_ssot.py(5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest).
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
@@ -920,6 +969,7 @@ related_adrs:
   - ADR-054   # doc-only fast-path (본 Story 는 full-lane)
   - ADR-057   # 첫 amendment 후보 (별도 carrier)
   - ADR-058   # 직접 동인 — sunset criteria mandate
+  - ADR-044   # Amendment 21 — 축③ (peer-completion falsifiability) 결정 SSOT (owner_adr), ADR-060 = warning-tier check 등록 framework host (carrier_adr)
 related_files:
   - docs/inter-plugin-contracts/evidence-check-registry-v1.md
   - docs/inter-plugin-contracts/MANIFEST.yaml

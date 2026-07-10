@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.22.0 — 2026-07-10
+
+### Added (CFP-2597 — peer-completion falsifiability (verification-floor 축③) + review-verdict-v4 v4.16, MINOR)
+
+[CFP-2597] codeforge review-PL delivery-gap 기계화 Phase 2 — PASS verdict 이 peer 완료 증거를 동반하도록 강제하는 peer-completion falsifiability (ADR-044 Amendment 6 §결정 12 / ADR-060 Amendment 21).
+
+- `docs/inter-plugin-contracts/review-verdict-v4.md` v4.15 → v4.16 MINOR (canonical sibling sync): `peer_verdicts[]` verdict-level optional array 신설 — `peer_degrade.peer_count` (int 자기단언) 보강(대체 아님). 각 entry 5-key = ADR-068 I-6 existence-verify-annotation 3-key (`form: file-path-reference` / `target`: peer transcript·verdict artifact 상대경로(verdict file dir 기준) / `verify_status`) + `worker` (claude|codex) + `worker_recommendation` (그 peer 의 verdict token — content-binding). §19 신설 + amendment_log/authors + MANIFEST review_verdict row mirror. additive only backward-compat (기존 v4.15 consumer 가 array 부재 = augmentation 없음으로 해석, ADR-008 §결정 2 MINOR).
+- `templates/review-pl-base.md` §3 "종합 발화 precondition" 신설 — PL verdict 종합 발화 = **양 worker_outcomes 도달(or honest INCONCLUSIVE/degrade)** 후. spawn-then-blind-wait 금지, collect = LEAD 소유 (C1 / ADR-139 INV-L4). §10 collect=LEAD·env=1 auto-wake dispatcher 재제안 금지 (ADR-139 §결정 7(ii) substrate DEFER) + blocking 요구 = ADR-115 C2 위반 → record-only(stop-event.jsonl) 문단 추가. 신규 mechanism 0 — ADR-139 §결정 7 / INV-L2·L4 명문화만.
+
+#### Why
+
+review-PL 이 peer worker 를 spawn 후 blind-wait 로 결과 미도달 상태에서 self-audit PASS 를 내는 delivery-gap 을 게이트가 stat 로 반증 가능하게 한다. 축③ = check-verification-floor.sh 의 peer-completion falsifiability — **check-lane-evidence.sh 축③(deputy/role:dev fan-out, ADR-044 §결정 10 (d)) 와 별개**(이름만 동일, script·axis disjoint). pl_recommendation:PASS ∧ NOT honest-single-peer-degrade 시 peer_verdicts[] ≥1 entry ∧ target FS 실재+non-empty 독립 stat(자기단언 verify_status 불신). peer_count:0+PASS=축① 선차단 / honest-degrade=축② 위임(축③ stand-down, AC-A3 무회귀). warning-tier(advisory exit0 / --strict exit1), non-version-gated(anti-evasion). 정직한 한계: 축③=위조비용 상향+audit trail 이지 위조방지 게이트 아님(PL claim+proof 동시저작 → full falsifiability 불가), warning-tier=정직 상한, blocking 승격=false assurance. 실 script(scripts/check-verification-floor.sh 축③)+workflow+test = sibling worker Phase 2 deliverable. schema sibling sync + review-pl-base codify additive → MINOR (ADR-037 / ADR-008). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## 1.21.0 — 2026-07-10
 
 ### Added (CFP-2586 — 엣지 케이스 도출 기법 리뷰 anchor, MINOR)

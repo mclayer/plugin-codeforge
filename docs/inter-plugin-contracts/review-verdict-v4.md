@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "4.15"
+contract_version: "4.16"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write)
@@ -43,9 +43,15 @@ authors:
   - CFP-1565 (2026-06-01) — v4.11 → v4.12 MINOR bump (7번째 verdict-level optional bool field chief_author_crossref_consistency_self_check_passed 신설 + findings[].type enum 11번째 literal "chief-author-crossref-inconsistency" 추가 — ADR-068 Amendment 5 §결정 1 I-7 chief-author cross-ADR scope/fact claim consistency invariant carrier. chief author 가 §3/§7/§10/§11 작성 시 다른 ADR 의 SSOT 값 (scope list / count / enum / 권한 범위) 인용·단언 시 대상 ADR direct Read-verify 후 cross-adr-claim-verify-annotation 3-key (cited_adr+§결정 / cited_value / verify_status) 보유 + verify_status=verified (또는 Justification 면제) 시 true. false 시 ArchitectAgent re-spawn (FIX 의무) + findings[].type "chief-author-crossref-inconsistency" 동반 emit. mechanical_self_check_passed (ADR-065) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + marketplace_sync_declared (ADR-063 Amendment 1) + audit_gate_pointer_self_check_passed (Amendment 3 I-6) + deputy_axis_restructure_self_check_passed (Amendment 2 conditional CFP-1086) + living_architecture_updated_self_check_passed (ADR-112) 와 disjoint — 동일 verdict packet 7번째 별도 boolean field. I-4 wording SSOT (identifier 표기) 와 disjoint axis (I-7 = cross-ADR factual/scope 값 SSOT 정합). DesignReviewPL + CodeReviewPL dual cross-validate. ADR-008 §결정 2 '새 선택 필드 추가' + 'enum literal 추가' MINOR bump 정합 (closed-enum 10 → 11 ratchet, additive only). Runtime impact 없음 (기존 v4.11 consumer 가 본 7번째 field + 11번째 literal 무시 가능 = backward-compat invariant). CFP-1426 v4.11 (verdict-level bool field + findings type literal) pattern verbatim 답습. CFP-1522 retro F-003 P1 evidence (ADR-113 §결정 6 admin:repo scope claim ↔ ADR-066 §결정 2 6-scope SSOT mismatch). Wave 1 declaration-only (mechanical wire = 별 sub-CFP carrier). 6 sibling (requirements/design/develop/test/pmo/wrapper) pre-existing drift = 본 scope 외 (cross-repo sibling sync PR codeforge-review canonical + 별 sweep CFP carrier).)
   - CFP-1426 (2026-05-24) — v4.10 → v4.11 MINOR bump (6번째 verdict-level optional bool field living_architecture_updated_self_check_passed 신설 + findings[].type enum 10번째 literal "living-architecture-not-updated" 추가 — ADR-112 Living Architecture per-Epic mandatory update gate carrier. ArchitectAgent Epic close 직전 5-anchor section (arc42 §3 Context & Scope + arc42 §5 Building Block View + C4 Container + C4 Component + Open Decisions Pending) 최소 1개 update OR `[living-arch-no-impact: <rationale>]` explicit declare 통과 시 true. DesignReviewPL false + no-op declare 부재 detect 시 "living-architecture-not-updated" finding emit (severity P1, design lane only — CodeReviewPL 영역 외 governance write-time anchor). mechanical_self_check_passed (ADR-065 syntactic 7-item) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + marketplace_sync_declared (ADR-063 Amendment 1) + audit_gate_pointer_self_check_passed (Amendment 3 I-6) + deputy_axis_restructure_self_check_passed (Amendment 2 conditional CFP-1086) 와 disjoint — 동일 verdict packet 6번째 별도 boolean field (Living Architecture governance write-time invariant). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + 'enum literal 추가' MINOR bump 정합 (closed-enum 9 → 10 ratchet, additive only). Runtime impact 없음 (기존 v4.10 consumer 가 본 6번째 field + 10번째 literal 무시 가능 = backward-compat invariant). CFP-1424 v4.9 → v4.10 (enum literal 추가) + CFP-1086/1087 cascade (verdict-level bool field 신설) pattern verbatim 답습. Mega-Epic CFP-1415 Sub-C S3.2 wrapper-side carrier — AC-3 (본 MINOR bump). sibling Story #1425 (S3.1) = ADR-078 Amendment 2 5-anchor section closed-set codify base. mechanical wire = Sub-C S3.5 / CFP-1429 carrier scripts/check-living-architecture-update.sh + templates/github-workflows/living-architecture-update.yml + label-registry-v2 family member `hotfix-bypass:living-architecture-update`. 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S3.2 scope 외.)
   - CFP-2358 (2026-06-19) — v4.13 → v4.14 MINOR bump (findings[].type enum 에 2 literal 추가 — "invariant-violation" 12번째 (runtime-failure falsification 에서 file:line 으로 짚힌 위반 invariant — ADR-064 §결정 13 재진입 규율 3 비대칭 결정규칙의 verdict-level finding) + "invariant-surface-not-extended" 13번째 (ADR-068 I-8 Amendment 6 — impl PR 이 새 long-lived mutable structure 추가 + docs/system-invariants.md 미확장) (closed-enum 11 → 13 additive). + 8번째 verdict-level optional bool field invariant_surface_extension_self_check_passed 신설 (ADR-068 I-8 Amendment 6 — CFP-2351 declare → S4 #2350 위임분, 본 CFP-2358 Phase 2 carrier — 기존 7 field 와 disjoint). + runtime-failure 변종 falsification 비대칭 규칙 본문 명시 (요구사항리뷰 internal-invariant 변종, ADR-125 Amendment 2 — file:line invariant-violation finding 1개 > N attestation, Popper). lane enum 무변경 (requirements-review 재사용). ADR-064 §결정 13 Amendment 결정 2 + ADR-125 Amendment 2 §4 + ADR-068 Amendment 6 가 review-verdict-v4 binding 을 Phase 2 별 carrier ("S4 #2350 위임") 로 defer — 본 PS1 (#2358) = 그 Phase 2 single-owner carrier. CFP-1565 (verdict-level bool field + findings type literal 동시 신설) pattern verbatim 답습. ADR-008 §결정 2 'enum literal 추가' + '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.13 consumer 가 2 신규 literal + 8번째 field 무시 가능).)
+  - CFP-2597 (2026-07-10) — v4.15 → v4.16 MINOR bump (peer_verdicts[] verdict-level optional array 신설 — dual-peer 완료 falsifiability marker, ADR-044 Amendment 6 §결정 12 / Epic CFP-2597 review-PL delivery-gap 기계화 Phase 2. peer_degrade 의 peer_count (int 자기단언) 를 **보강** (대체 아님) — 각 peer 발화의 artifact-backed 완료 증거. 각 entry 5-key — ADR-068 I-6 existence-verify-annotation 3-key (form=file-path-reference / target=peer transcript·verdict artifact 상대경로 (verdict file dir 기준) / verify_status) + worker (claude|codex) + worker_recommendation (그 peer 의 verdict token — content-binding). check-verification-floor.sh 축③ (peer-completion falsifiability, ADR-044 Amendment 6) 가 pl_recommendation==PASS ∧ NOT honest-single-peer-degrade 시 peer_verdicts[] ≥1 entry ∧ target check시점 FS 실재+non-empty 를 게이트 독립 stat (자기단언 verify_status 불신). peer_count:0+PASS = 축① 선차단 (축③ 미도달), honest-degrade = 축② 위임 (축③ stand-down, AC-A3 무회귀). warning-tier (advisory exit0 / --strict exit1), non-version-gated (anti-evasion). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.15 consumer 가 array 부재 = augmentation 없음으로 해석). canonical 단일 원본 (ADR-118 D5) + MANIFEST mirror.)
   - CFP-2471 (2026-06-30) — v4.14 → v4.15 MINOR bump (peer_degrade verdict-level optional object 신설 — dual-peer 2→1 honest degrade marker, ADR-044 Amendment 4 §결정 10 / Epic CFP-2468 Track W (W3). 3-key block: peer_count (int) + degrade_reason (string) + degrade_acknowledged (bool). 검증 floor = ≥1 independent peer (SoD) — Codex = floor 아닌 ceiling. silent 2→1 degrade 차단 (degrade_acknowledged 부재 = silent harm, ADR-094 (a) 거부 / honest degrade = (c) 동형). check-verification-floor.sh 가 축①(self-audit peer_count 0 verdict 무효) + 축②(silent degrade 차단) mechanical 검출. enforcement(PreToolUse Agent matcher deny)는 미구현 (matcher P2 empirical 미확정 — empirical-source TBD 보류). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.14 consumer 가 block 부재 = degrade 없음으로 해석). 적용 lane = 전 review lane. canonical 단일 원본 (ADR-118 D5) + MANIFEST mirror.)
   - CFP-2326 (2026-06-17) — v4.12 → v4.13 MINOR bump (lane enum 에 "requirements-review" 4번째 literal 추가 — CFP-2326 / ADR-125 결정 5, 9번째 lane 신설. 리뷰 lane 식별자 (작성 lane requirements 아님 — 본 lane 은 요구사항 외부사실 의존성 검증 producer, ADR-125 결정 4 disjoint axis). RequirementsReviewPLAgent = ADR-001 lane-agnostic base 재사용 (신규 worker 신설 0). ClaudeReviewAgent / CodexReviewAgent lane-conditional hard-check 에 requirements-review branch 추가. review-pl-base.md §2 lane enum + 매트릭스 + §5.5 Lane→gate 매핑 row 동반. ADR-008 §결정 2 'enum literal 추가' MINOR bump 정합 (lane enum 3 → 4, additive only). Runtime impact 없음 (기존 v4.12 consumer 가 신규 lane 값 무시 가능 = backward-compat invariant).)
 amendment_log:
+  - version: "4.16"
+    date: 2026-07-10
+    cfp: CFP-2597
+    type: MINOR
+    summary: "peer_verdicts[] verdict-level optional array 신설 (dual-peer 완료 falsifiability marker) — ADR-044 Amendment 6 §결정 12 / Epic CFP-2597 (codeforge review-PL delivery-gap 기계화, Phase 2). v4.15 peer_degrade 의 peer_count (int, PL 자기단언) 를 **보강** (대체 아님) — 각 independent peer 발화가 실제 완료됐다는 artifact-backed 증거 array. 각 entry = 5-key: (1) form (string) — ADR-068 I-6 existence-verify-annotation 의 form 값, 항상 file-path-reference. (2) target (string) — peer transcript / verdict artifact 상대경로 (verdict file 이 위치한 dir 기준 상대). (3) verify_status (enum) — existence verify 결과 (verified / pending, ADR-068 I-6 3-key). (4) worker (enum claude|codex) — 그 peer 의 identity. (5) worker_recommendation (string) — 그 peer 의 verdict token (PASS/ISSUES/NO_SHIP/ESCALATE_PACKET_INCOMPLETE — content-binding, target artifact 내용과 결속). 게이트 정합 = check-verification-floor.sh 축③ (peer-completion falsifiability, ADR-044 Amendment 6 — check-lane-evidence.sh 축③ deputy/role:dev fan-out 와 별개): precondition = pl_recommendation==PASS AND NOT honest-single-peer-degrade (peer_count:1 ∧ degrade_acknowledged:true ∧ degrade_reason). 발동 시 peer_verdicts[] ≥1 entry ∧ target 이 check시점 FS 실재+non-empty 임을 게이트가 독립 stat (자기단언 verify_status 불신). peer_count:0+PASS = 축① 선차단 (축③ 미도달), honest-degrade = 축② 위임 (축③ stand-down — AC-A3 무회귀). 미충족 = 위반 (warning: advisory exit0 / --strict exit1). non-version-gated (anti-evasion). bare-PASS (peer_verdicts 부재) 및 peer_count:2-위조 재분류 = RED. 적용 lane: 전 review lane (design/code/security/requirements-review). 기존 8 verdict-level bool field + worker_dialog_rounds (int) + peer_degrade (object) 와 disjoint — verdict-level array field 신설. ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.15 consumer 가 peer_verdicts[] 부재 = augmentation 없음으로 해석). 정직한 한계: 축③ = 위조비용 상향 + audit trail 이지 위조방지 게이트 아님 (PL 이 claim+proof 동시저작하는 한 full falsifiability 불가 — peer_verdicts omit 시 잔존). warning-tier = 정직 상한, blocking 승격 = false assurance (ADR-044 Amendment 6 §3.4). branch protection 6-tuple 무변경 (warning-tier, ADR-128 상속). canonical 단일 원본 (ADR-118 D5, sibling sync 폐지) + MANIFEST.yaml review_verdict version mirror 동반. plugin.json 6.73.1 → 6.74.0 MINOR (review governance) + codeforge-review 1.21.0 → 1.22.0 MINOR + marketplace sync."
   - version: "4.15"
     date: 2026-06-30
     cfp: CFP-2471
@@ -153,7 +159,7 @@ amendment_log:
 
 ```yaml
 review_verdict:
-  contract_version: "4.15"           # current version (MINOR bump series from 4.0 BREAKING)
+  contract_version: "4.16"           # current version (MINOR bump series from 4.0 BREAKING)
   lane: design | code | security | requirements-review   # requirements-review: CFP-2326 / ADR-125 결정 5 — 9번째 lane (additive enum 확장, backward-compat). 리뷰 lane 식별자 (작성 lane requirements 아님)
   story_key: <STORY_KEY>
   iteration: <int>
@@ -345,6 +351,22 @@ review_verdict:
                                          # 적용 lane: 전 review lane (design / code / security / requirements-review).
                                          # 미제공 시 (v4.14 이전 producer) → Orchestrator 는 무시 (backward-compat — block 부재 = degrade 없음으로 해석).
                                          # ADR-044 Amendment 4 §결정 10 SSOT (2026-06-30 KST, CFP-2471). floor(≥1 peer) ⊥ ceiling(Codex ad-hoc) disjoint axis.
+
+  peer_verdicts:                         # NEW v4.16 (optional, array) — ADR-044 Amendment 6 §결정 12 / CFP-2597 (Epic CFP-2597 review-PL delivery-gap 기계화 Phase 2)
+                                         # dual-peer 완료 falsifiability marker. peer_degrade.peer_count (int, PL 자기단언) 를 **보강** (대체 아님) —
+                                         #   각 independent peer 발화가 실제 완료됐다는 artifact-backed 증거 array (PASS verdict 이 peer 완료증거 동반 강제).
+                                         # array 부재 = augmentation 없음 (backward-compat — v4.15 이전 consumer 정합). ≥1 entry = artifact-backed 완료 증거 보유.
+                                         # 게이트 = check-verification-floor.sh 축③ (peer-completion falsifiability, ADR-044 Amendment 6):
+                                         #   pl_recommendation==PASS ∧ NOT honest-single-peer-degrade (peer_count:1 ∧ degrade_acknowledged:true ∧ degrade_reason) 시,
+                                         #   peer_verdicts[] ≥1 entry ∧ target 이 check시점 FS 실재+non-empty 임을 게이트가 독립 stat (자기단언 verify_status 불신).
+                                         #   peer_count:0+PASS = 축① 선차단 (축③ 미도달) / honest-degrade = 축② 위임 (축③ stand-down, AC-A3 무회귀).
+                                         # 적용 lane: 전 review lane (design / code / security / requirements-review).
+    - form: file-path-reference          # ADR-068 I-6 existence-verify-annotation 3-key (1/3) — 항상 file-path-reference (peer artifact = 파일)
+      target: <string>                   #   (2/3) peer transcript / verdict artifact 상대경로 — verdict file 이 위치한 dir 기준 상대 (예: "peer-verdicts/claude-code.md")
+      verify_status: verified | pending  #   (3/3) existence verify 결과. 게이트는 이 자기단언을 불신 — target 을 독립 stat (FS 실재+non-empty) 로 재판정
+      worker: claude | codex             # 그 peer 의 identity (floor 충족자 claude / ceiling codex — §10 floor⊥ceiling axis 정합)
+      worker_recommendation: <string>    # 그 peer 의 verdict token (PASS | ISSUES | NO_SHIP | ESCALATE_PACKET_INCOMPLETE) — content-binding (target artifact 내용과 결속)
+                                         # 미제공 시 (v4.15 이전 producer) → Orchestrator 는 무시 (backward-compat — augmentation 없음으로 해석)
 
   worker_dialog_rounds: <int>        # NEW — Adversarial debate SendMessage round count
                                      # 0 = no Codex worker (default subagent context 또는 user_request_only 미요청)
@@ -776,3 +798,45 @@ runtime-failure lane (요구사항리뷰 internal-invariant 변종, ADR-125 Amen
 ### 18.5 Changelog
 
 - v4.14 (2026-06-19, CFP-2358): `findings[].type` enum 에 `invariant-violation` (12번째) + `invariant-surface-not-extended` (13번째) literal 신설 (closed-enum 11 → 13 ratchet, additive only) + `invariant_surface_extension_self_check_passed` 8번째 verdict-level optional bool field 신설 + runtime-failure 변종 verdict 비대칭 규칙 §18.3 본문 명시. ADR-064 §결정 13 (root-cause 3rd rung) + ADR-125 Amendment 2 (runtime-failure 변종 internal-invariant 축) + ADR-068 I-8 Amendment 6 (standing invariant-surface) 의 Phase 2 mechanical wire carrier — Phase 1 ADR 3종이 "Phase 2 별 carrier defer" / "S4 #2350 위임" 으로 명시한 binding. lane enum 무변경 (requirements-review 재사용). CFP-1565 (verdict-level bool field + findings type literal 동시 신설) pattern verbatim 답습. ADR-008 §결정 2 'enum literal 추가' + '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.13 consumer 가 2 신규 literal + 8번째 field 무시 가능). RequirementsReviewPLAgent / ClaudeReviewAgent / CodexReviewAgent runtime-failure branch 배선 = Epic #2357 Phase 2 checklist carrier (별 Story).
+
+## 19. Peer-completion falsifiability — peer_verdicts[] (v4.16 — ADR-044 Amendment 6 §결정 12 / CFP-2597)
+
+`peer_verdicts` optional array field 가 PASS verdict 의 **dual-peer 완료 falsifiability marker** — v4.15 `peer_degrade.peer_count` (int, PL 자기단언) 를 **보강** (대체 아님). peer_count 는 "몇 peer 발화했다" 는 자기단언 정수이나, `peer_verdicts[]` 는 각 peer 발화가 실제 완료됐다는 **artifact-backed** 증거를 array 로 담아 PASS verdict 이 완료 증거를 동반하도록 강제한다. Epic CFP-2597 (codeforge review-PL delivery-gap 기계화) Phase 2 carrier — spawn-then-blind-wait 로 self-audit PASS 가 새는 delivery-gap 을 게이트가 stat 로 반증 가능하게 한다.
+
+### 19.1 entry 5-key (ADR-068 I-6 existence-verify-annotation + content-binding)
+
+| # | key | 값 | 의미 |
+|---|---|---|---|
+| 1 | `form` | `file-path-reference` (constant) | ADR-068 I-6 existence-verify-annotation 3-key (1/3) — peer artifact 는 항상 파일 참조 |
+| 2 | `target` | 상대경로 string | (2/3) peer transcript / verdict artifact 상대경로 — verdict file 이 위치한 dir 기준 상대 |
+| 3 | `verify_status` | `verified` \| `pending` | (3/3) existence verify 결과 (자기단언 — 게이트는 불신, target 독립 stat 로 재판정) |
+| 4 | `worker` | `claude` \| `codex` | 그 peer 의 identity (floor 충족자 claude / ceiling codex — §10 floor⊥ceiling axis 정합) |
+| 5 | `worker_recommendation` | verdict token string | 그 peer 의 verdict token (PASS/ISSUES/NO_SHIP/ESCALATE_PACKET_INCOMPLETE) — **content-binding** (target artifact 내용과 결속) |
+
+### 19.2 게이트 정합 — check-verification-floor.sh 축③ (peer-completion falsifiability)
+
+본 field 의 mechanical 게이트 = `check-verification-floor.sh` **축③** (ADR-044 Amendment 6 §결정 12). **check-lane-evidence.sh 의 축③ (deputy/role:dev fan-out enforcement, ADR-044 §결정 10 (d)) 와 별개** — 이름만 같고 대상·스크립트 disjoint (본 축③ = verification-floor script 의 peer-completion, 그쪽 축③ = lane-evidence script 의 fan-out).
+
+- **precondition**: `pl_recommendation == PASS` **AND** NOT honest-single-peer-degrade (`peer_degrade.peer_count:1` ∧ `degrade_acknowledged:true` ∧ `degrade_reason` 3-조건 AND).
+- **발동 시 판정**: `peer_verdicts[]` ≥1 entry **AND** 각 entry 의 `target` 이 check시점 FS 에 실재 + non-empty (게이트가 독립 stat — 자기단언 `verify_status` 불신).
+- **축 분담 (무회귀)**: `peer_count:0`+PASS = 축① (self-audit verdict 무효) 선차단 → 축③ 미도달. honest-single-peer-degrade = 축② (silent degrade 차단) 위임 → 축③ **stand-down** (AC-A3 — honest degrade 경로 무회귀).
+- **위반 처리**: 미충족 → 위반. warning-tier = advisory (exit 0) / `--strict` = exit 1. bare-PASS (`peer_verdicts` 부재) 및 `peer_count:2`-위조 (2 주장인데 artifact 미동반) 재분류 = **RED**.
+- **non-version-gated** (anti-evasion): 게이트는 contract_version 조건 없이 발동 — 구 버전 선언으로 회피 차단.
+
+### 19.3 Producer / Consumer 책무
+
+**Producer 책무 (review lane PL)**:
+- PASS verdict 산출 시 각 independent peer 발화의 완료 artifact (transcript / verdict) 경로를 `peer_verdicts[]` 각 entry `target` 으로 채움 (verdict file dir 기준 상대) + `worker` + `worker_recommendation` (content-binding) 기록.
+- honest-single-peer-degrade 경로는 `peer_degrade` block (§v4.15) 로 이미 표식 — 이 경우 축③ stand-down (peer_verdicts[] 강제 아님).
+
+**Consumer 책무 (Orchestrator)**:
+- field 수신 시: Story §9 verdict append 시 verbatim 보존. 축③ 게이트는 CI (`check-verification-floor.sh`) 가 독립 실행 (Orchestrator inline 판정 아님).
+- field 미수신 시 (v4.15 이전 producer): 무시 — backward-compat (augmentation 없음으로 해석).
+
+### 19.4 정직한 한계 (hollow-gate 금지 — ADR-044 Amendment 6 §3.4)
+
+축③ = **위조비용 상향 + audit trail** 이지 위조방지 게이트가 아니다. PL 이 claim(verdict) 과 proof(peer_verdicts) 를 **동시 저작**하는 한 full falsifiability 는 불가 — `peer_verdicts` omit 시 (bare-PASS RED 로 잡히나 peer_count 자기단언만으로 우회 가능성) 잔존한다. warning-tier = **정직 상한** (독립 3rd-party attestation 부재 인정), blocking 승격 = false assurance (peer artifact 자체가 PL 저작이므로). full falsifiability 는 Epic trapdoor (stop-event 강화 or spawn-event-v1 선행 — independent-observer attestation substrate) 로 defer.
+
+### 19.5 Changelog
+
+- v4.16 (2026-07-10, CFP-2597): `peer_verdicts` verdict-level optional array field 신설 (dual-peer 완료 falsifiability marker). ADR-044 Amendment 6 §결정 12 carrier. v4.15 `peer_degrade.peer_count` (int 자기단언) 보강 (대체 아님) — 각 entry 5-key (form: file-path-reference / target / verify_status = ADR-068 I-6 3-key + worker + worker_recommendation content-binding). check-verification-floor.sh 축③ (peer-completion falsifiability, check-lane-evidence.sh 축③ 와 별개) 가 pl_recommendation:PASS ∧ NOT honest-single-peer-degrade 시 peer_verdicts[] ≥1 entry ∧ target FS 실재+non-empty 독립 stat. 8 verdict-level bool + worker_dialog_rounds (int) + peer_degrade (object) 와 disjoint — verdict-level array field. non-version-gated (anti-evasion). CFP-2471 (peer_degrade object) pattern 답습. ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.15 consumer 가 array 부재 = augmentation 없음으로 해석). 정직한 한계 = 위조비용 상향+audit trail (위조방지 게이트 아님), warning-tier=정직 상한.
