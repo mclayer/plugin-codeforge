@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 scripts/lib/check_deferred_followup_reconcile.py
-CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트 (warning tier)
+CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트 (CFP-2594 flip: blocking-on-pr surfacing)
 CFP-2591 Phase 2 — baseline new-only (Clean-as-You-Code) grandfather 확장 (ADR-060 §결정6)
 
 §결정 19 (Amendment 6) 가 `recurrence.promotion_trigger: auto_blocking` 을 "별도 carrier 가
@@ -21,10 +21,9 @@ Usage:
   python3 check_deferred_followup_reconcile.py resolve --command "<detect_command 값>"
     → 닫힌집합 resolve 결과 진단 출력 (test/디버그용)
 
-Exit codes (ADR-060 §결정 15 3-tier — warning tier):
+Exit codes (ADR-060 §결정 15 3-tier — blocking-on-pr surfacing, CFP-2594):
   0 = PASS (NEW-debt 0 — grandfathered/INFO/UNRESOLVED 만 있어도 advisory)
-  1 = NEW-debt 1+ (baseline 대비 신규/악화 FLAG) OR baseline tamper (warning emit — continue-on-error
-       로 비차단, advisory only). legacy 모드(baseline 부재)에서는 FLAG 1+ 면 exit 1 (하위호환 보존).
+  1 = NEW-debt 1+ (baseline 대비 신규/악화 FLAG) OR baseline tamper (red-X surface — continue-on-error 제거 → job red-X, CFP-2594). legacy 모드(baseline 부재)에서는 FLAG 1+ 면 exit 1 (하위호환 보존).
   2 = SETUP error (registry 부재 / yaml parse 실패 / --baseline 명시인데 missing·malformed)
 
 baseline 모드 분기 (CFP-2591):
@@ -467,7 +466,7 @@ def _emit_unresolved(item):
 
 
 _ACTION_GUIDE = (
-    "[deferred-followup-reconcile] 강제 action 3택 (warning mode — merge 비차단, advisory):\n"
+    "[deferred-followup-reconcile] 강제 action 3택 (CFP-2594 flip: blocking-on-pr surfacing — merge red-X):\n"
     "  ① 배선 carrier (script + workflow) 발의 — #1602 5-element 템플릿 사용\n"
     "  ② tier-downgrade-justification: 근거 강등 — check-tier-downgrade-guard.sh 마커 패턴\n"
     "     (auto_blocking → none/advisory 의도적 강등 + 근거 명시)\n"
@@ -475,7 +474,7 @@ _ACTION_GUIDE = (
     "  ※ new-only 모드: baseline(승격 시점 동결) 대비 신규/악화 FLAG 만 NEW-debt (기존 debt 는\n"
     "     grandfathered — Clean-as-You-Code, ADR-060 §결정 6). baseline 신규 FLAG 유입 차단이 목적.\n"
     "honest forcing ceiling: 본 게이트는 hard block 을 주장하지 않는다 — exit 1 = 의도 표식일 뿐,\n"
-    "  실 차단은 워크플로 continue-on-error / registry tier flip 소관 (admin 우회 가능, AC-20 count 관측만).\n"
+    "  실 차단화 = continue-on-error 제거 + registry tier=blocking-on-pr flip 활성 (CFP-2594; required 6-tuple 미편입 = admin 우회 가능, AC-20 count 관측).\n"
     "근거: ADR-060 Amendment 18 §결정 32 — §결정 19 auto_blocking 라벨의 mechanical forcing function."
 )
 
@@ -519,14 +518,14 @@ def _run_legacy_mode(flags, infos, unresolveds, entries):
         print("")
         print(
             "check-deferred-followup-reconcile: FLAG %d / INFO %d / UNRESOLVED %d "
-            "(legacy mode — warning tier — continue-on-error 로 비차단, advisory only)"
+            "(legacy mode — blocking-on-pr surfacing — continue-on-error 제거, CFP-2594)"
             % (len(flags), len(infos), len(unresolveds))
         )
         sys.exit(1)
 
     print(
         "check-deferred-followup-reconcile: PASS — FLAG 0 (INFO %d / UNRESOLVED %d) "
-        "across %d entries (legacy mode — warning tier)"
+        "across %d entries (legacy mode — blocking-on-pr surfacing)"
         % (len(infos), len(unresolveds), len(entries))
     )
     sys.exit(0)
@@ -546,7 +545,7 @@ def _run_new_only_mode(flags, infos, unresolveds, baseline):
         )
         print(
             "check-deferred-followup-reconcile: NEW-DEBT %d / GRANDFATHERED 0 / DETECTED %d "
-            "/ INFO %d / UNRESOLVED %d (baseline TAMPERED — grandfather void; warning tier)"
+            "/ INFO %d / UNRESOLVED %d (baseline TAMPERED — grandfather void; blocking-on-pr surfacing)"
             % (len(flags), len(flags), len(infos), len(unresolveds))
         )
         sys.exit(1)
@@ -584,7 +583,7 @@ def _run_new_only_mode(flags, infos, unresolveds, baseline):
     # 5. AC-20 요약 line (기계 파싱 가능)
     print(
         "check-deferred-followup-reconcile: NEW-DEBT %d / GRANDFATHERED %d / DETECTED %d "
-        "/ INFO %d / UNRESOLVED %d (baseline new-only; warning tier)"
+        "/ INFO %d / UNRESOLVED %d (baseline new-only; blocking-on-pr surfacing)"
         % (len(new_debt), len(grandfathered), len(flags), len(infos), len(unresolveds))
     )
 

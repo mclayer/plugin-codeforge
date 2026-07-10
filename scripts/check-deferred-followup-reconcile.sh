@@ -2,16 +2,16 @@
 # scripts/check-deferred-followup-reconcile.sh — deferred-followup reconcile 게이트 thin bash wrapper
 #
 # CFP-2381 / ADR-060 Amendment 18 §결정 32 — "임계 초과 + auto_blocking + 전용 carrier 부재"
-#   evidence-checks-registry entry 자동 검출 + 강제 action 3택 (warning tier, advisory).
+#   evidence-checks-registry entry 자동 검출 + 강제 action 3택 (CFP-2594 flip: blocking-on-pr surfacing).
 # ADR-061: Python entry-point + thin bash wrapper convention (exec python3 — NO heredoc, NO logic).
 #
 # Usage:
 #   bash scripts/check-deferred-followup-reconcile.sh check [--registry <path>] [--repo-root <path>]
 #   bash scripts/check-deferred-followup-reconcile.sh resolve --command "<detect_command 값>"
 #
-# Exit codes (ADR-060 §결정 15 3-tier — warning tier):
+# Exit codes (ADR-060 §결정 15 3-tier — blocking-on-pr surfacing, CFP-2594):
 #   0 = PASS (FLAG 0)
-#   1 = FLAG 1+ (warning emit — workflow 의 continue-on-error 로 비차단, advisory only)
+#   1 = FLAG 1+ (red-X surface — workflow continue-on-error 제거, CFP-2594)
 #   2 = SETUP error (registry 부재 / yaml parse 실패 / python3 미설치)
 #
 # Prior art: scripts/check-governance-drift.sh / scripts/check-increment-justification.sh (ADR-061 thin wrapper).

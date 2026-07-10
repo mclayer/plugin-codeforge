@@ -1,11 +1,13 @@
 name: deferred-followup-reconcile
-# CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트 (warning-tier).
+# CFP-2381 / ADR-060 Amendment 18 §결정 32 — deferred-followup reconcile 게이트.
 # CFP-2591 / ADR-060 Amendment 20 §결정 6 — carrier trio scaffold (runbook 참조 + author-verify + sticky at-most-once).
+# CFP-2594 / ADR-060 Amendment 20 §결정 6 (Stage 3 flip) — Tier flip 활성: continue-on-error 제거 +
+#   registry current_tier warning→blocking-on-pr + author-verify exit $status forcing.
 #
-# ★ Stage 1+2 (baseline + new-only shadow) — Tier flip 아님. continue-on-error: true 유지.
-#   실제 continue-on-error 제거(flip → blocking-on-pr surfacing) = baseline main 착지 후 별 후속 PR
-#   (§7.2.2 self-deadlock 회피). honest ceiling: 본 게이트는 hard block 을 주장하지 않는다 — admin
-#   우회 구조적 가능, AC-20 count 로 관측만.
+# ★ Stage 3 (Tier flip 활성) — 게이트 NEW-DEBT FLAG 가 PR red-X 로 surface. grandfather(baseline
+#   new-only)로 기존 debt 무마비 — 신규/악화 FLAG 만 red-X (§7.2.2 self-deadlock 회피). honest ceiling:
+#   본 게이트는 hard block 을 주장하지 않는다 — non-required context 라 admin 우회 구조적 가능,
+#   AC-20 count 로 관측만 (surfacing 이지 required 편입 아님).
 #
 # §결정 19 auto_blocking 라벨의 mechanical forcing function — "임계 초과 + auto_blocking +
 # 전용 carrier 부재" evidence-checks-registry entry 를 PR-time 에 자동 검출 + 강제 action 3택.
@@ -18,8 +20,9 @@ name: deferred-followup-reconcile
 # ⚠️ 본 워크플로는 baseline 을 재생성(regen)하지 않는다 — `check` 만 실행 (gen tool = CI 미호출,
 #   provenance drift 회피). regen-and-diff-zero 게이트 신설 금지.
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
-# Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
+# Non-required workflow (branch protection 6-tuple 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
+# CFP-2594 Stage 3 flip: lint job 은 NEW-DEBT FLAG 검출 시 job fail(red-X) 로 surface (continue-on-error 제거).
+#   non-required context 라 admin/enforce_admins 우회 구조적 가능 (honest ceiling — hard block 미주장).
 
 on:
   pull_request:
@@ -34,7 +37,7 @@ permissions:
 
 jobs:
   deferred-followup-reconcile:
-    name: deferred-followup carrier-부재 검출 (warning-tier)
+    name: deferred-followup carrier-부재 검출 (blocking-on-pr surfacing — CFP-2594)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,9 +47,10 @@ jobs:
           python-version: "3.12"
       - name: Install pyyaml
         run: pip install pyyaml
-      - name: Run check-deferred-followup-reconcile.sh (warning, 비차단 — baseline new-only shadow)
+      - name: Run check-deferred-followup-reconcile.sh (blocking-on-pr surfacing — baseline new-only)
         # baseline default path 자동 resolve (인자 불요). gen tool 미호출 (regen 금지 — provenance drift 회피).
-        continue-on-error: true   # ★ Stage 1+2 유지 — flip(제거)은 별 후속 PR. NO-FLIP invariant.
+        # CFP-2594 Phase 2 (Stage 3 flip): continue-on-error 제거 → NEW-DEBT exit 1 이 job red-X 로 surface.
+        #   GitHub Actions bash 기본 `-o pipefail` 로 tee 파이프가 check 스크립트 exit code 를 전파.
         run: bash scripts/check-deferred-followup-reconcile.sh check 2>&1 | tee /tmp/dfr.out
 
       - name: Sticky comment (find-then-upsert, at-most-once — §결정6 vi)
@@ -60,7 +64,7 @@ jobs:
           set -euo pipefail
           MARKER='<!-- deferred-followup-reconcile-sticky -->'
           LINT_OUT="$(cat /tmp/dfr.out 2>/dev/null || echo '(lint output 부재)')"
-          BODY="$(printf '%s\n## deferred-followup-reconcile — Stage 1+2 (baseline + new-only shadow)\n\n```\n%s\n```\n\n> **warning-tier (continue-on-error)** — 본 게이트는 merge 를 차단하지 않습니다. Tier flip(blocking-on-pr surfacing) = baseline main 착지 후 별 후속 PR. honest ceiling: hard block 미주장 (admin 우회 구조적 가능, AC-20 count 로 관측만). runbook: docs/runbooks/deferred-followup-reconcile-enforce-outage.md' "$MARKER" "$LINT_OUT")"
+          BODY="$(printf '%s\n## deferred-followup-reconcile — Stage 3 (Tier flip 활성: blocking-on-pr surfacing)\n\n```\n%s\n```\n\n> **blocking-on-pr surfacing (continue-on-error 제거 — CFP-2594)** — NEW-DEBT FLAG 는 이 PR 에서 red-X 로 surface 됩니다 (grandfather: baseline 기존 debt 무마비, 신규/악화 FLAG 만 red-X). honest ceiling: hard block 미주장 (non-required context — admin/enforce_admins 우회 구조적 가능, AC-20 count 로 관측만). runbook: docs/runbooks/deferred-followup-reconcile-enforce-outage.md' "$MARKER" "$LINT_OUT")"
           # 기존 sticky comment(marker 포함 + github-actions[bot] authored) id 탐색 → find-then-upsert (plain append 금지)
           EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
             --jq '[.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("deferred-followup-reconcile-sticky"))] | last | .id' \
@@ -74,10 +78,10 @@ jobs:
           fi
 
   # §결정6 v — bypass label 부착 시에만 도는 author-verify scaffold (audit comment emit + bot-authored 강제).
-  #   worktree-first-pre-checkout.yml:81-102 audit scaffold 답습 — 단 warning mode (검증 FAIL → echo 경고만, 비차단).
-  #   author lint 이 bot-authored 강제 = presence-only spoof gap 봉합. 본 PR 은 non-blocking (Stage 1+2).
+  #   worktree-first-pre-checkout.yml:81-102 audit scaffold 답습 — 단 Stage 3 flip 활성 (검증 FAIL → exit $status → job red-X, bypass-label PR; CFP-2594).
+  #   author lint 이 bot-authored 강제 = presence-only spoof gap 봉합. Stage 3 flip 활성 (CFP-2594 — blocking-on-pr surfacing).
   deferred-followup-reconcile-bypass-audit:
-    name: bypass audit comment author-verify (warning — §결정6 v)
+    name: bypass audit comment author-verify (blocking-on-pr surfacing — §결정6 v)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -122,9 +126,10 @@ jobs:
           TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           AUDIT="[hotfix-bypass-audit] PR=${PR_NUMBER} label_applied_by=${LABEL_USER} reason=${REASON} ADR_files=(ADR-060 §결정6 deferred-followup-reconcile) timestamp=${TS}"
           gh pr comment "$PR_NUMBER" --body "$AUDIT"
-      - name: Author-verify audit comment (warning — bot-authored 강제, 비차단)
+      - name: Author-verify audit comment (blocking-on-pr — bot-authored 강제, red-X surfacing)
         # §결정6 v — audit-tagged comment 의 author.login 이 github-actions[bot] 인지 검증.
-        #   FAIL 시 echo 경고만 + exit 0 (Stage 1+2 non-blocking — presence-only spoof gap 표면화만).
+        #   CFP-2594 Phase 2 (Stage 3 D-5): FAIL 시 exit $status 로 job red-X surface — job2 는
+        #   continue-on-error 부재라 본 exit 이 유일 forcing 기제 (presence-only spoof gap 실 차단화).
         if: steps.bypass.outputs.bypass == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -137,9 +142,9 @@ jobs:
           status=$?
           set -e
           if [ "$status" -ne 0 ]; then
-            echo "::warning::deferred-followup-reconcile author-verify FAIL (warning mode — PR merge 미차단, presence-only spoof gap 표면화만)"
+            echo "::warning::deferred-followup-reconcile author-verify FAIL (Stage 3 — bypass-label PR 에서 job red-X surface)"
           fi
-          exit 0   # ★ Stage 1+2 non-blocking — flip 후 후속 PR 에서 exit $status 승격
+          exit $status   # ★ CFP-2594 Phase 2 (Stage 3 flip) — job2 continue-on-error 부재 = 본 exit 이 유일 forcing 기제
 
   deferred-followup-reconcile-test:
     name: discriminating test (다형 fixture — mutation 생존 0)
@@ -157,3 +162,7 @@ jobs:
       - name: Run check-audit-comment-author selftest (회귀 시 exit 1 차단 — §결정6 v)
         # test job = non-continue-on-error OK (author 판정 로직 mutation-survivor-0 회귀 방어).
         run: bash scripts/check-audit-comment-author.sh selftest
+      - name: Run test-flip-blocking-on-pr-structural.sh (CFP-2594 Stage 3 flip mutation-killer)
+        # flip 구조(config) 회귀 방어 — continue-on-error 재삽입 / tier→warning / exit 0 회귀 → RED.
+        #   test job = non-continue-on-error (flip 회귀 시 job red-X 로 차단).
+        run: bash scripts/test-flip-blocking-on-pr-structural.sh

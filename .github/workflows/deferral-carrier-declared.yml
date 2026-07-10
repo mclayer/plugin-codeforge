@@ -1,5 +1,7 @@
 name: deferral-carrier-declared
-# CFP-2591 / ADR-060 Amendment 20 — deferral carrier-mandate no-TBD lint (warning-tier).
+# CFP-2591 / ADR-060 Amendment 20 — deferral carrier-mandate no-TBD lint.
+# CFP-2594 / ADR-060 Amendment 20 (Stage 3 flip) — Tier flip 활성: continue-on-error 제거 +
+#   registry current_tier warning→blocking-on-pr (NEW red-X surfacing, honest ceiling — non-required).
 #
 # deferred-followup 선언 시 carrier 를 미해결 placeholder(`deferred_followup_cfp: TBD` / `CFP-TBD` /
 # 미배선 `FU-NNN-N`)로 남기면 forcing function 대상 자체가 소멸(silent debt). 본 (b) lint 가
@@ -13,8 +15,9 @@ name: deferral-carrier-declared
 #   invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일은 미검출
 #   (CONSUMER_ONLY_WORKFLOWS 등록 불요 — deferred-followup-reconcile.yml 동형 firsthand 확인).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
-# Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
+# Non-required workflow (branch protection 6-tuple 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
+# CFP-2594 Stage 3 flip: lint job 은 NEW 검출 시 job fail(red-X) 로 surface (continue-on-error 제거).
+#   non-required context 라 admin 우회 구조적 가능 (honest ceiling — hard block 미주장).
 # bypass label 미신설 (D9 — attack surface 최소화, advisory 게이트라 escape valve 불요).
 # path-filter on.paths 미사용 (ADR-130 §결정 158 required-pending 회피 선례 일관성).
 
@@ -30,7 +33,7 @@ permissions:
 
 jobs:
   deferral-carrier-declared:
-    name: deferral carrier no-TBD 검출 (warning-tier)
+    name: deferral carrier no-TBD 검출 (blocking-on-pr surfacing — CFP-2594)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,8 +43,9 @@ jobs:
           python-version: "3.12"
       - name: Install pyyaml
         run: pip install pyyaml
-      - name: Run check-deferral-carrier-declared.sh (warning, 비차단 — baseline new-only)
-        continue-on-error: true
+      - name: Run check-deferral-carrier-declared.sh (blocking-on-pr surfacing — baseline new-only)
+        # CFP-2594 Phase 2 (Stage 3 flip): continue-on-error 제거 → NEW exit 1 이 job red-X 로 surface.
+        #   grandfather(baseline new-only)로 기존 debt 무마비 — 신규/악화 placeholder 만 red-X.
         run: bash scripts/check-deferral-carrier-declared.sh check --baseline docs/deferred-followup-baseline.yaml
 
   deferral-carrier-declared-test:
