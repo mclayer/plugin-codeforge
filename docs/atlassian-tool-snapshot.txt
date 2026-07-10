@@ -4,7 +4,8 @@
 # prefix = mcp__plugin_atlassian_atlassian__ (본 설치 실 callable tool 의 effective prefix)
 # 본 파일 = atlassian-tool-drift check 의 deny-target **discipline SSOT** (14 tool).
 # ★ ADR-099 Amd2 §A2-0 정직 disclosure: 실 harness = defaultMode:bypassPermissions + Atlassian prefix-allow →
-#   본 deny 목록은 런타임 미강제(discipline 기준일 뿐). 실 blast-radius 경계 = Atlassian API 토큰 프로젝트 스코프.
+#   본 deny 목록은 런타임 미강제(discipline 기준일 뿐). 토큰 org-wide accepted-risk(운영자 결정) →
+#   기계 blast-radius 경계 없음; compensating = app-level MCT 타깃팅(S2/S3) + Orchestrator-only + audit.
 # un-denied 17 tool (read 11 + write 6) 은 의도적으로 본 snapshot 에서 제외 — narrow-allow(Amd1 1 + Amd2 9) 포함.
 # narrow-allow (Orchestrator preset) 분류:
 #   - addCommentToJiraIssue = ADR-099 Amd1 narrow-allow (Orchestrator preset, 단일 control 이슈)
