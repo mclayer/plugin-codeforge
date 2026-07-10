@@ -37,7 +37,7 @@ permissions:
 
 jobs:
   deferred-followup-reconcile:
-    name: deferred-followup carrier-부재 검출 (warning-tier)
+    name: deferred-followup carrier-부재 검출 (blocking-on-pr surfacing — CFP-2594)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,10 +78,10 @@ jobs:
           fi
 
   # §결정6 v — bypass label 부착 시에만 도는 author-verify scaffold (audit comment emit + bot-authored 강제).
-  #   worktree-first-pre-checkout.yml:81-102 audit scaffold 답습 — 단 warning mode (검증 FAIL → echo 경고만, 비차단).
-  #   author lint 이 bot-authored 강제 = presence-only spoof gap 봉합. 본 PR 은 non-blocking (Stage 1+2).
+  #   worktree-first-pre-checkout.yml:81-102 audit scaffold 답습 — 단 Stage 3 flip 활성 (검증 FAIL → exit $status → job red-X, bypass-label PR; CFP-2594).
+  #   author lint 이 bot-authored 강제 = presence-only spoof gap 봉합. Stage 3 flip 활성 (CFP-2594 — blocking-on-pr surfacing).
   deferred-followup-reconcile-bypass-audit:
-    name: bypass audit comment author-verify (warning — §결정6 v)
+    name: bypass audit comment author-verify (blocking-on-pr surfacing — §결정6 v)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:

@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   deferral-carrier-declared:
-    name: deferral carrier no-TBD 검출 (warning-tier)
+    name: deferral carrier no-TBD 검출 (blocking-on-pr surfacing — CFP-2594)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

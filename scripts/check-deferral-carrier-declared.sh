@@ -9,9 +9,9 @@
 # Usage:
 #   bash scripts/check-deferral-carrier-declared.sh check [--repo-root <p>] [--paths <glob> ...] [--baseline <p>]
 #
-# Exit codes (ADR-060 §결정 15 3-tier — warning tier):
+# Exit codes (ADR-060 §결정 15 3-tier — blocking-on-pr surfacing, CFP-2594):
 #   0 = PASS (NEW 0)
-#   1 = NEW 1+ (warning emit — workflow 의 continue-on-error 로 비차단, advisory only)
+#   1 = NEW 1+ (red-X surface — workflow continue-on-error 제거, CFP-2594)
 #   2 = SETUP error (검사 경로 부재 / --baseline missing·malformed / python3 미설치)
 #
 # Prior art: scripts/check-lane-count-ssot.sh / scripts/check-deferred-followup-reconcile.sh (ADR-061 thin wrapper).

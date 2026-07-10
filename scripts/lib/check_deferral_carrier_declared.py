@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_deferral_carrier_declared.py
-CFP-2591 Phase 2 / ADR-060 §결정 6 — deferral carrier declared (no-TBD) lint (warning tier)
+CFP-2591 Phase 2 / ADR-060 §결정 6 — deferral carrier declared (no-TBD) lint (CFP-2594 flip: blocking-on-pr surfacing)
 
 deferred-followup 을 남길 때 carrier 를 미해결 placeholder (`deferred_followup_cfp: TBD` /
 `CFP-TBD` / unwired `FU-N-N` 마커) 로 남기면 forcing function 이 걸릴 대상 자체가 사라진다
@@ -24,9 +24,9 @@ Usage:
                                                    [--baseline <path>]
     → in-scope 경로 전수 scan, NEW 1+ 면 exit 1 (warning), NEW 0 면 exit 0
 
-Exit codes (ADR-060 §결정 15 3-tier — warning tier):
+Exit codes (ADR-060 §결정 15 3-tier — blocking-on-pr surfacing, CFP-2594):
   0 = PASS (NEW 0)
-  1 = NEW 1+ (`::warning::check-deferral-carrier-declared: FLAG ...` emit — continue-on-error 로 비차단)
+  1 = NEW 1+ (`::warning::check-deferral-carrier-declared: FLAG ...` emit — continue-on-error 제거 → job red-X, CFP-2594)
   2 = SETUP error (검사 경로 부재 / --baseline 명시인데 missing·malformed / 파일 read 실패)
 
 검출 1급 firing 조건:
@@ -377,11 +377,11 @@ def _emit_flag(finding):
 
 _ACTION_GUIDE = (
     "[deferral-carrier-declared] deferred-followup 을 미해결 placeholder(TBD/CFP-TBD/unwired FU-N-N)\n"
-    "로 남기면 forcing function 대상이 소멸 (silent debt). (warning mode — merge 비차단, advisory):\n"
+    "로 남기면 forcing function 대상이 소멸 (silent debt). (CFP-2594 flip: blocking-on-pr surfacing — merge red-X):\n"
     "  ① 실 carrier CFP/FU 를 발급해 placeholder 를 확정 번호로 치환 (deferred_followup_cfp: CFP-<n>)\n"
     "  ② named-carrier 는 evidence-checks-registry.yaml 에 carrier/sibling 로 등장시켜 membership 충족\n"
     "  ③ 미결 항목 자체를 폐기 (de-bloat)\n"
-    "honest forcing ceiling: exit 1 = advisory 표식 — 실 차단은 워크플로 continue-on-error 소관.\n"
+    "honest forcing ceiling: exit 1 = job red-X surface (continue-on-error 제거 — CFP-2594); hard block 미주장 — required 6-tuple 미편입, admin 우회 가능.\n"
     "근거: ADR-060 §결정 6 (deferred-followup no-TBD lint) — placeholder carrier 유입 차단."
 )
 
@@ -452,7 +452,7 @@ def cmd_check(args):
 
     print(
         "check-deferral-carrier-declared: NEW %d / GRANDFATHERED %d / DETECTED %d "
-        "(warning tier — continue-on-error 로 비차단, advisory)"
+        "(blocking-on-pr surfacing — continue-on-error 제거, CFP-2594; admin 우회 가능)"
         % (len(new_findings), grandfathered_n, len(all_findings))
     )
     return 1 if new_findings else 0

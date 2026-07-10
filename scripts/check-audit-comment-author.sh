@@ -7,10 +7,10 @@
 #
 # Usage:
 #   bash scripts/check-audit-comment-author.sh check [--comments-json <path>]   # 없으면 stdin
-#   bash scripts/check-audit-comment-author.sh selftest                          # 3 embedded case
+#   bash scripts/check-audit-comment-author.sh selftest                          # 5 embedded case
 #
 # Exit codes:
-#   0 = PASS (tagged ≥1 AND 전부 bot) / selftest 3/3
+#   0 = PASS (tagged ≥1 AND 전부 bot) / selftest 5/5
 #   1 = FAIL (absent / human-spoof) / selftest 불일치
 #   2 = SETUP error (JSON parse 실패 / python3 미설치)
 #

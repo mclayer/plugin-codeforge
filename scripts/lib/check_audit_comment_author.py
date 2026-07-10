@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 scripts/lib/check_audit_comment_author.py
-CFP-2591 Phase 2 / ADR-060 §결정 6 — hotfix-bypass audit comment author-verify lint (warning tier)
+CFP-2591 Phase 2 / ADR-060 §결정 6 — hotfix-bypass audit comment author-verify lint (CFP-2594 flip: blocking-on-pr surfacing)
 
 hotfix-bypass audit comment (`[hotfix-bypass-audit] ...`) 는 GitHub Actions bot 이 발의해야
 tamper-evident 하다 (사람이 손으로 audit comment 를 위조하면 bypass 감사 무력화). 본 lint 가
@@ -15,7 +15,7 @@ audit-tagged comment 의 author.login 이 `github-actions[bot]` 인지 검증한
   · tagged ≥1 AND 전부 github-actions[bot]  → PASS exit 0
   (bot → PASS / human → FAIL / absent → FAIL)
 
-honest forcing ceiling: exit 1 = advisory 표식 — 실 차단은 워크플로 continue-on-error 소관.
+honest forcing ceiling: exit 1 = job red-X surface (author-verify exit $status forcing — CFP-2594); bypass-label PR 한정, admin 우회 가능.
 
 Usage:
   python3 check_audit_comment_author.py check [--comments-json <path>]   # 없으면 stdin
@@ -139,7 +139,7 @@ def cmd_check(args):
 
     print("::warning::check-audit-comment-author: FAIL — %s" % reason)
     print(
-        "check-audit-comment-author: FAIL (tagged=%d — bot→PASS / human→FAIL / absent→FAIL; warning tier)"
+        "check-audit-comment-author: FAIL (tagged=%d — bot→PASS / human→FAIL / absent→FAIL; blocking-on-pr surfacing)"
         % tagged_count
     )
     return 1
