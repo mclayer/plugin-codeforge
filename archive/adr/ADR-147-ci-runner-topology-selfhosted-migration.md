@@ -54,12 +54,12 @@ mclayer org 의 CI 실행을 GitHub-hosted runner(`ubuntu-latest`)에서 org 소
 모든 in-scope workflow 의 `runs-on: ubuntu-latest` 를 아래 단일 표현식으로 대체한다:
 
 ```yaml
-runs-on: ${{ fromJSON(vars.CI_RUNS_ON_JSON || '["ubuntu-latest"]') }}
+runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
 ```
 
-- **단일 key `CI_RUNS_ON_JSON`** (JSON array 문자열) 하나로 scalar(단일 라벨)과 다중 라벨을 interface 1개로 통일한다. 2-key / 2-template-fork 방식은 SSOT 파괴·byte-parity 붕괴로 **기각**한다(RefactorAgent 권고 채택).
+- **단일 key `CI_RUNS_ON_LINUX_JSON`** (JSON array 문자열) 하나로 scalar(단일 라벨)과 다중 라벨을 interface 1개로 통일한다. 2-key / 2-template-fork 방식은 SSOT 파괴·byte-parity 붕괴로 **기각**한다(RefactorAgent 권고 채택).
 - **적용 범위 = uniform single-leg job (P1-2)** — Surface A 거버넌스 템플릿(전부 ubuntu 단일 leg) + Surface B 의 non-matrix job. **matrix os-leg job(Surface B 4 rust-ci + container job)은 §결정 11** — 단일 key 로 모든 leg 가 같은 값으로 resolve 되면 Windows leg 가 group5 라우팅을 상실(붕괴)하므로 leg-keyed 변수로 분기한다.
-- **변수명 SSOT (P2-c)** — 요구사항 lane 표기 `CI_RUNNER`(scalar) = 본 설계 lock `CI_RUNS_ON_JSON`(array). scalar→array 확장(다중 라벨 지원). matrix Surface B 는 leg-keyed `CI_RUNS_ON_LINUX_JSON` / `CI_RUNS_ON_WINDOWS_JSON`(§결정 11). Story §5.2/§5.3/§6.2 의 구 `CI_RUNNER` 표기는 이 매핑으로 해석한다.
+- **변수명 SSOT (P2-c)** — 요구사항 lane 표기 `CI_RUNNER`(scalar) = 본 설계 lock `CI_RUNS_ON_LINUX_JSON`(array). scalar→array 확장(다중 라벨 지원). matrix Surface B 는 leg-keyed `CI_RUNS_ON_LINUX_JSON` / `CI_RUNS_ON_WINDOWS_JSON`(§결정 11). Story §5.2/§5.3/§6.2 의 구 `CI_RUNNER` 표기는 이 매핑으로 해석한다.
 - **in-file default = `["ubuntu-latest"]` (불변)** — §결정 4 참조. 이 default 는 §제약 3(public wrapper 가 같은 파일 배포)에 의해 self-hosted 로 flip 할 수 없다.
 - **Ports & Adapters**: workflow 파일 = port(실행 의도), repository variable = adapter(물리 runner 배선). runner 물리 선택은 파일이 아닌 variable 값으로만 표현된다.
 
@@ -67,14 +67,14 @@ runs-on: ${{ fromJSON(vars.CI_RUNS_ON_JSON || '["ubuntu-latest"]') }}
 
 ### §결정 2 — public=GitHub-hosted / private·internal=self-hosted 분기
 
-- **분기 규칙**: repository visibility 로 분기한다. public repository(`plugin-codeforge`, `marketplace`)는 `CI_RUNS_ON_JSON` **미설정** → §결정 1 coalesce 로 `["ubuntu-latest"]`(hosted) 유지. private/internal repository(대상 18개)는 `CI_RUNS_ON_JSON` 을 self-hosted 라벨 배열로 설정한다.
+- **분기 규칙**: repository visibility 로 분기한다. public repository(`plugin-codeforge`, `marketplace`)는 `CI_RUNS_ON_LINUX_JSON` **미설정** → §결정 1 coalesce 로 `["ubuntu-latest"]`(hosted) 유지. private/internal repository(대상 18개)는 `CI_RUNS_ON_LINUX_JSON` 을 self-hosted 라벨 배열로 설정한다.
 - **public 봉쇄 근거**: runner group 2개 모두 `allows_public_repositories=false` 이므로, 설사 public repo 가 self-hosted 라벨을 요청해도 GitHub 이 fail-safe 로 거부한다(올바른 실패 모드 — source: docs.github.com "Managing access to self-hosted runners using groups"). 이는 §결정 4 provisioning invariant 와 defense-in-depth 를 이룬다.
 - **container job 배선**: `container:`/DooD 를 쓰는 job 은 group6(Linux, docker 장착)로 강제한다. group5(Windows, docker 미장착)는 container job 물리 불가.
 
 ### §결정 3 — byte-parity blocking 정합 (templates ↔ .github lockstep)
 
 - template `runs-on` 을 §결정 1 표현식으로 수정할 때, 비-`CONSUMER_ONLY_WORKFLOWS` workflow 의 self-app 사본(`.github/workflows/<base>.yml`)도 **동일한 표현식으로** 수정해 `invariant-check.yml` byte-parity 를 통과시킨다.
-- **public wrapper 기능 불변**: `plugin-codeforge`(public)에서 `CI_RUNS_ON_JSON` 은 미설정이므로 표현식이 `["ubuntu-latest"]` 로 coalesce → CI 는 hosted 에서 그대로 실행된다. 즉 "파일은 바뀌되(byte-identical vars 표현식 양쪽) 동작은 불변(unset var → hosted coalesce)". Story §4.1 의 ".github delta 0" 가정은 **오류** — 사본은 template 과 같은 vars 편집을 받아 byte-identical 을 유지해야 한다(delta = 동일 vars 표현식, 기능 inert).
+- **public wrapper 기능 불변**: `plugin-codeforge`(public)에서 `CI_RUNS_ON_LINUX_JSON` 은 미설정이므로 표현식이 `["ubuntu-latest"]` 로 coalesce → CI 는 hosted 에서 그대로 실행된다. 즉 "파일은 바뀌되(byte-identical vars 표현식 양쪽) 동작은 불변(unset var → hosted coalesce)". Story §4.1 의 ".github delta 0" 가정은 **오류** — 사본은 template 과 같은 vars 편집을 받아 byte-identical 을 유지해야 한다(delta = 동일 vars 표현식, 기능 inert).
 
 ### §결정 4 — provisioning invariant + fail-loud unset 감지 lint (private 안전은 default-flip 이 아니다)
 
@@ -82,8 +82,8 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 
 - **ADR-068 invariant + §제약 3 지배**: public wrapper 가 같은 파일을 배포하므로 in-file coalesce default 는 **반드시 `["ubuntu-latest"]`** (public 은 self-hosted 물리 불가). default-flip 은 기각.
 - **private 안전 = 2-layer 배선**으로 확보한다:
-  - **(i) provisioning invariant** — 모든 in-scope private/internal repo 는 bootstrap Stage 5b(=`scripts/bootstrap-consumer.sh` L340-371 `wire-branch-protection.sh` 동형 hook 후보)에서 `CI_RUNS_ON_JSON` variable 을 **SET** 한다.
-  - **(ii) unset 감지 lint(fail-loud) — 실행면은 billing-독립 (P1-1)** — in-scope private repo 에 required 변수(§결정 11 matrix repo = `CI_RUNS_ON_LINUX_JSON` ∧ `CI_RUNS_ON_WINDOWS_JSON` 둘 다, 그 외 = `CI_RUNS_ON_JSON`)가 미설정이면 fail-loud 로 감지한다. unset 은 hosted billing hard-block → 2-3초 FAIL → deadlock(AC-11)을 유발하며, 이는 조용한 pending 보다 나쁘다(InfraOp R-5 근거). **이 lint 를 hosted-CI 워크플로로 구현하면 안 된다** — 감지 대상인 billing 소진에 co-blocked 되어 발화 불가(**born-dead-gate** — Story §2.2/§2.7 이 확립한 hosted required check 2-3초 startup FAIL 과 동일 원인 class: css-lint born-invalid / execution-liveness 반복 재발). **실행면 = billing-독립 3택 조합**: ① **provisioning-time 스크립트(primary)** — bootstrap Stage 5b 에서 `gh api repos/{r}/actions/variables/{name}` 메타데이터 스캔(CI job 아님, operator/hub context = hosted 분 0)으로 변수 존재·값 검증, 미설정 시 provisioning 완료 차단 (**CI 실행 前이라 co-block 물리 불가**) ② **self-hosted runner 실행** — W0 착지 후 ongoing drift(변수 삭제) 검사를 self-hosted 에서(billing-free) ③ **org-level hub gh-api 주기 스캔**. **부트스트랩 순서 배선**: Stage 5b provisioning 검증(변수 present, fail-loud) → W0 runner 등록 → self-hosted ongoing drift 검사. "언제 lint 가 살아나는가" = provisioning-time(CI 이전) + self-hosted(W0 이후) — hosted-CI 아님.
+  - **(i) provisioning invariant** — 모든 in-scope private/internal repo 는 bootstrap Stage 5b(=`scripts/bootstrap-consumer.sh` L340-371 `wire-branch-protection.sh` 동형 hook 후보)에서 `CI_RUNS_ON_LINUX_JSON` variable 을 **SET** 한다.
+  - **(ii) unset 감지 lint(fail-loud) — 실행면은 billing-독립 (P1-1)** — in-scope private repo 에 required 변수(§결정 11 matrix repo = `CI_RUNS_ON_LINUX_JSON` ∧ `CI_RUNS_ON_WINDOWS_JSON` 둘 다, 그 외 = `CI_RUNS_ON_LINUX_JSON`)가 미설정이면 fail-loud 로 감지한다. unset 은 hosted billing hard-block → 2-3초 FAIL → deadlock(AC-11)을 유발하며, 이는 조용한 pending 보다 나쁘다(InfraOp R-5 근거). **이 lint 를 hosted-CI 워크플로로 구현하면 안 된다** — 감지 대상인 billing 소진에 co-blocked 되어 발화 불가(**born-dead-gate** — Story §2.2/§2.7 이 확립한 hosted required check 2-3초 startup FAIL 과 동일 원인 class: css-lint born-invalid / execution-liveness 반복 재발). **실행면 = billing-독립 3택 조합**: ① **provisioning-time 스크립트(primary)** — bootstrap Stage 5b 에서 `gh api repos/{r}/actions/variables/{name}` 메타데이터 스캔(CI job 아님, operator/hub context = hosted 분 0)으로 변수 존재·값 검증, 미설정 시 provisioning 완료 차단 (**CI 실행 前이라 co-block 물리 불가**) ② **self-hosted runner 실행** — W0 착지 후 ongoing drift(변수 삭제) 검사를 self-hosted 에서(billing-free) ③ **org-level hub gh-api 주기 스캔**. **부트스트랩 순서 배선**: Stage 5b provisioning 검증(변수 present, fail-loud) → W0 runner 등록 → self-hosted ongoing drift 검사. "언제 lint 가 살아나는가" = provisioning-time(CI 이전) + self-hosted(W0 이후) — hosted-CI 아님.
   - **(iii) provisioning scope 제약 (P2-d)** — 변수는 **repo-scoped** 로 provisioning 한다. **org-level variable 금지**(또는 visibility-scoped private-only). org-level `CI_RUNS_ON_*_JSON` 은 public `plugin-codeforge`/`marketplace` 까지 override 해 §결정 2/3 의 delta-0(hosted 유지)을 파손한다.
 - default-flip 을 provisioning invariant + fail-loud detection 으로 대체하는 이 판정은 Change Plan §7.4/§9 에 명문화한다.
 
