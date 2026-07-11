@@ -1,12 +1,17 @@
 name: operational-outcome-signal-lint
-# CFP-2361 PS4 — Operational outcome-signal schema enforcement (warning-tier).
+# CFP-2361 PS4 (신설) / CFP-2613 G2 (blocking 승격) — 표면 A operational outcome-signal +
+# 지속-liveness 선언 fail-closed lint (ADR-148 §결정4/6).
 #
-# ADR-014 Amendment 7 §7.4.7 + ADR-015 Amendment 1 §8.5.1 compliance:
-# - Story §7.4.7 outcome-signal 3요소 (terminal sink / metric / 발현조건) 선언 검증
-# - Story §8.5.1 soak 도출 (manifestation-derived / duration floor) 검증
+# ADR-014 Amendment 7 §7.4.7 + ADR-015 Amendment 1 §8.5.1 + ADR-148 (G2 표면 A):
+# - operational:true Story daemon_type 선언 필수 (누락=FAIL, silent default 금지 — §결정6 ①)
+# - daemon_type == long_running_daemon → outcome-signal 3요소 + sink_probes[] + fake-source 금지
+#   + 정직 천장 presence blocking(exit 1, ADR-148 §결정4 L1)
+# - daemon_type ∈ {request_response_service, batch_job, cli, none} → 기존 warning-tier 유지
+#   (비-데몬 HTTP 서비스 mass-breakage 회피, §결정6)
 #
-# Non-required workflow (branch protection 무변경, merge 미차단).
-# Warning-tier: GitHub Actions UI 에 경고 표시 하지만 job 성공(exit 0).
+# **shadow-first (ADR-148 §결정10)**: 본 workflow 는 blocking-tier(exit 1) 이나
+#   branch-protection required contexts 미등록. bounded window 실 PR 신호 관측 후 required
+#   편입은 사용자 결정 하류 후속 CFP (G1 등록순서 의존).
 
 on:
   pull_request:
@@ -20,7 +25,7 @@ permissions:
 
 jobs:
   operational-outcome-signal-lint:
-    name: operational outcome-signal schema presence (warning-tier)
+    name: operational outcome-signal 선언 fail-closed (blocking, shadow-first)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,3 +47,19 @@ jobs:
           python-version: "3.12"
       - name: Run test-check-operational-outcome-signal.sh
         run: bash scripts/test-check-operational-outcome-signal.sh
+
+  soak-verdict-kernel-test:
+    # CFP-2613 (ADR-148 §결정3/§결정4 L3) — verdict-kernel(evaluate_soak_sample) 순수 함수 self-test.
+    #   fixture 판정(생존/역행/freeze/threshold/floor)·reason-code enum·mutation-kill 실증
+    #   (execution-liveness L3, 표면 B 판정 seam 의 wrapper-side dogfood 채널).
+    #   scripts/test-soak-verdict-kernel.sh = QADev(wave 2) 산출물 — 동일 PR 동반 land (frozen path 참조).
+    name: soak verdict-kernel self-test (execution-liveness L3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run test-soak-verdict-kernel.sh
+        run: bash scripts/test-soak-verdict-kernel.sh
