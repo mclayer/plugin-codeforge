@@ -109,11 +109,28 @@ jobs:
       THROUGHPUT_TARGET: ${{ inputs.throughput_target }}
       RSS_CEILING_MB: ${{ inputs.rss_ceiling_mb }}
     steps:
+      # verdict-kernel(scripts/lib/soak-verdict-kernel.sh) source 를 위해 repo checkout.
+      #   kernel = consumer-scripts.manifest co-distribution (CFP-97) 로 consumer repo 에 mirror
+      #   → 이 workflow 가 consumer CI 에서 $GITHUB_WORKSPACE/scripts/lib/ 로 source (CFP-2613/ADR-148 §결정3).
+      - uses: actions/checkout@v4
+
       - name: 'outcome-signal soak — terminal downstream sink monotone 진행 assert (①②③)'
         run: |
           set -euo pipefail
           echo "=== outcome-signal soak: sink=$SINK_LABEL ==="
           echo "    ① terminal downstream sink = $SINK_LABEL (ingest-boundary 아님 — outcome ground-truth)"
+
+          # soak 판정 = verdict-kernel single-source (CFP-2613 / ADR-148 §결정3).
+          #   inline if/else 를 evaluate_soak_sample 순수 함수 호출로 대체 (동작-불변 리팩터, §6).
+          #   kernel = consumer checkout 의 scripts/lib/soak-verdict-kernel.sh (consumer-scripts.manifest
+          #   co-distribution — CFP-97). 부재 시 fail-closed(exit 1): soak 판정 불가 = FAIL (silent-pass 금지).
+          KERNEL="${GITHUB_WORKSPACE:-.}/scripts/lib/soak-verdict-kernel.sh"
+          if [ ! -f "$KERNEL" ]; then
+            echo "::error::soak verdict-kernel 부재 ($KERNEL) — consumer-scripts.manifest co-distribution 누락 (CFP-2613/ADR-148). soak 판정 불가 → fail-closed (exit 1)"
+            exit 1
+          fi
+          # shellcheck source=/dev/null
+          . "$KERNEL"
 
           # soak 종점 결정 (ADR-015 Amendment 1 — 고정 단창 금지):
           #   manifestation_threshold > 0 -> 임계 도달까지 (manifestation-derived)
@@ -143,38 +160,51 @@ jobs:
             [ "$first" -lt 0 ] && first=$cur
             echo "    ② monotone metric: $cur (prev=$prev, $(( deadline - now ))s 남음)"
 
-            # ② sink metric 역행 ($cur < $prev) = outcome 후퇴 신호 -> 즉시 FAIL
-            # (동결 $cur == $prev 은 임계/floor 미도달 시 계속 구동 — 종점에서 net 순증으로 freeze 판정)
-            if [ "$prev" -ge 0 ] && [ "$cur" -lt "$prev" ]; then
-              echo "::error::② sink metric 역행 ($prev -> $cur) — outcome 후퇴 (monotone 위반), benchmark FAIL (exit 1)"
-              exit 1
-            fi
+            # deadline 도달 여부 (kernel 전달용 — now>=deadline ? 1 : 0)
+            deadline_reached=0
+            [ "$now" -ge "$deadline" ] && deadline_reached=1
 
-            # ③ 발현조건 임계 도달 = manifestation-derived 종점 (PASS)
-            if [ "$MANIFESTATION_THRESHOLD" -gt 0 ] && [ "$cur" -ge "$MANIFESTATION_THRESHOLD" ]; then
-              echo "    ③ 발현조건 임계 도달 ($cur ≥ $MANIFESTATION_THRESHOLD) — soak PASS"
-              break
-            fi
-
-            # duration floor 도달 (임계 미제공 fallback 경로의 종점)
-            if [ "$now" -ge "$deadline" ]; then
-              if [ "$MANIFESTATION_THRESHOLD" -gt 0 ]; then
+            # soak 판정 = verdict-kernel (역행/임계도달/deadline-miss/deadline-freeze/deadline-pass/continue).
+            #   kernel = 순수 판정(reason-code echo, exit/부수효과 0) — 본 step 이 reason-code 로 행동.
+            #   판정 우선순위·경계 = 기존 inline if/else 와 동일 (동작-불변): 역행 -> 임계도달 -> deadline -> 계속.
+            reason=$(evaluate_soak_sample "$prev" "$cur" "$first" "$MANIFESTATION_THRESHOLD" "$DURATION_FLOOR_SECONDS" "$deadline_reached")
+            case "$reason" in
+              FAIL_REGRESSION)
+                # ② sink metric 역행 ($cur < $prev) = outcome 후퇴 신호 -> 즉시 FAIL
+                echo "::error::② sink metric 역행 ($prev -> $cur) — outcome 후퇴 (monotone 위반), benchmark FAIL (exit 1)"
+                exit 1
+                ;;
+              PASS_THRESHOLD)
+                # ③ 발현조건 임계 도달 = manifestation-derived 종점 (PASS)
+                echo "    ③ 발현조건 임계 도달 ($cur ≥ $MANIFESTATION_THRESHOLD) — soak PASS"
+                break
+                ;;
+              FAIL_THRESHOLD_MISS)
+                # duration_floor 경과했으나 발현조건 임계 미도달 (manifestation 경로 미달) -> FAIL
                 echo "::error::③ duration_floor (${DURATION_FLOOR_SECONDS}s) 경과했으나 발현조건 임계 미도달 ($cur < $MANIFESTATION_THRESHOLD) — soak FAIL (exit 1)"
                 exit 1
-              fi
-              # 임계 미제공(fallback): floor window 동안 sink 가 net 순증(freeze-safe) 해야 PASS.
-              # freeze (양수 도달 후 동결) = $cur == $first 도 outcome 정지 -> FAIL.
-              # (이 Epic 핵심: 'non-zero proxy 는 freeze 못 잡음' — 순증 기준으로 freeze 검출)
-              if [ "$cur" -le "$first" ]; then
+                ;;
+              FAIL_FREEZE)
+                # 임계 미제공(fallback) floor window net 순증 없음 = freeze ($cur == $first 포함) -> FAIL.
+                # (이 Epic 핵심: 'non-zero proxy 는 freeze 못 잡음' — 순증 기준으로 freeze 검출)
                 echo "::error::② duration_floor (${DURATION_FLOOR_SECONDS}s) 동안 sink net 순증 없음 (start=$first end=$cur) — terminal sink 동결, benchmark FAIL (exit 1) [placeholder sink_metric 미교체 또는 적재 freeze]"
                 exit 1
-              fi
-              echo "    duration_floor 경과 + sink net 순증 확인 (start=$first end=$cur) — soak PASS (fallback 경로)"
-              break
-            fi
-
-            prev=$cur
-            sleep "$POLL_INTERVAL_SECONDS"
+                ;;
+              PASS_FLOOR)
+                # 임계 미제공(fallback): floor window 동안 sink net 순증(freeze-safe) 확인 -> PASS.
+                echo "    duration_floor 경과 + sink net 순증 확인 (start=$first end=$cur) — soak PASS (fallback 경로)"
+                break
+                ;;
+              CONTINUE)
+                # 동결($cur == $prev)/임계·floor 미도달 = 계속 구동 (종점에서 net 순증으로 freeze 판정)
+                prev=$cur
+                sleep "$POLL_INTERVAL_SECONDS"
+                ;;
+              *)
+                echo "::error::soak verdict-kernel 미지 reason-code ($reason) — 계약 위반, fail-closed (exit 1)"
+                exit 1
+                ;;
+            esac
           done
 
       - name: '§7.4.7 (A) throughput AC assert (consumer fixture)'
