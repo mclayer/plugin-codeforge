@@ -58,7 +58,7 @@ jobs:
   css-lint:
     # (i) unique job name (ADR-130 §결정6 — required 승격 전제, ambiguous required 회피).
     name: css structural lint (stylelint, warning-tier)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     # (h) timeout-minutes 명시 (ADR-136 §7.4.6 container 운영 리스크).
     timeout-minutes: 10
     # (c) warning-tier 첫 도입 — day-1 required 금지(ADR-130 §결정6).
