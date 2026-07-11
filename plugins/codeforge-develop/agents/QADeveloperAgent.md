@@ -122,6 +122,16 @@ cross-layer TDD (QADev RED ∥ DeveloperAgent GREEN, 별도 세션) 에서 GREEN
 - 반드시 Change Plan §8을 입력으로 받아 수행
 - §8에 없는 테스트 추가 필요 시: **Orchestrator 경유 ArchitectPLAgent**에 §8 갱신 요청 (자체 추가 금지)
 
+### §8.8 동적 테스트 로스터 실행 배선 (fuzz / property / load / concurrency — ADR-146)
+
+Change Plan §8.8 에 **DO** 로 판정된 동적 기법(fuzz/property/load/concurrency)의 실 실행을 **consumer `test.yml` 에 배선**한다 (ADR-048 CI-native 정합 — 신규 codeforge 동적 러너 부활 금지, §8.5 StatefulTest deprecated hollow-contract 재발 차단). §8.8 은 "무엇을 동적 검증할지"의 계약이고, 본 에이전트는 그 계약을 `tests/**` + consumer test.yml job 배선으로 이행한다("계약만 있고 미실행" 방지).
+
+- **산출물 계약 필드 이행**: §8.8 DO 기법의 산출물 계약 필드를 그대로 실현 — fuzz(target/input_surface/oracle/seed_or_corpus/execution_budget/pass_condition) · property(property_definition/input_generator/sample_budget/pass_condition) · load(load_profile/metrics/threshold_or_baseline_ref/duration) · concurrency(shared_state/execution_model/worker_count/oracle/duration). 선언만 있고 실행 배선 부재 = §8.8 contract 미이행.
+- **RTM 매핑(AC↔test)에 §8.8 normative AC 포함**: 매핑표에 §8.8 DO 기법별 실행 배선 위치(`tests/**` + test.yml job)를 §8 항목으로 매핑 — §8.8 normative AC 가 매핑 대상에서 누락되지 않게.
+- **burden-flip 준수**: §8.8 이 DO 인데 실행 배선 누락 = §8 계약 위반 — 자체 판단 skip 금지, 배선 불가 시 Orchestrator 경유 ArchitectPLAgent 에 §8.8 infeasibility_reason 회부(자체 N/A 판정 금지).
+- **wrapper-self 거버넌스 Story**: 4기법 대개 자연 N/A(declarative) — §8.8 레코드 schema 존재 + 정당화만 확인, 실 동적 구동 배선 면제(ADR-146 §결정 6). 실측 정량 파라미터는 consumer test.yml Phase 2 defer.
+- **정직 천장**: §8.8 검출력(결함을 실제로 잡는가) 강제 = G3 소관(미강제). 본 에이전트는 산출물 계약 필드대로 실행이 배선됐는지까지 이행하고 검출력 봉인은 주장하지 않는다(ADR-146 §결정 8 / ADR-119). "test liveness" 어휘 금지(adequacy 표준).
+
 ## 매핑표 산출 의무 (ArchitectPLAgent 감사 입력)
 
 구현 레인 종료 시 아래 형식의 매핑표를 DevPL이 수집해 Orchestrator 경유 ArchitectPLAgent에게 전달.

@@ -109,6 +109,39 @@ APPLICABILITY_8_7_ROW_RE = re.compile(
     re.MULTILINE,
 )
 
+# ── CFP-2605 / ADR-146 §결정 5 — §8.8 동적 테스트 로스터(fuzz/property/load/concurrency) doc-section lint.
+#    check_section_8_5 / check_section_8_7 verbatim 동형(I/O (md_path, body)->list, NA_85_SUBSTANTIVE_RE 재사용).
+#    burden-flip 표준(do-it-unless-proven-infeasible)의 §8.8 4기법 좌표 presence/구조 fail-closed.
+#    ★ §8.6 gap 무관: §8.8 헤딩 존재만 트리거(§8.6/§8.7 존재 전제 안 함).
+#    ★ 정직 천장(ADR-146 결정8): 게이트는 applicability 표·산출물 계약 필드 presence/구조까지만 —
+#      검출력(discriminating=G3)/열거 완결성/사유 타당성은 review·advisory·G3 로 defense-in-depth(강제 금지).
+SECTION_8_8_HEADER_RE = re.compile(r"^####? §8\.8\b", re.MULTILINE)
+SECTION_8_8_0_HEADER_RE = re.compile(r"^#####? §8\.8\.0\b", re.MULTILINE)
+SECTION_8_8_X_HEADER_RE = re.compile(r"^#####? §8\.8\.x\b", re.MULTILINE)
+APPLICABILITY_8_8_ROW_RE = re.compile(
+    r"\|\s*(fuzz|property|load|concurrency)\s*\|\s*(DO|N/A)\s*\|",
+    re.MULTILINE,
+)
+# 기법별 §8.8.N sub-section 번호 + DO 시 필수 산출물 계약 필드(change-plan §3.2 / Story §5.2)
+TECHNIQUE_8_8_META = {
+    "fuzz": ("8.8.1", ["target", "input_surface", "oracle", "seed_or_corpus", "execution_budget", "pass_condition"]),
+    "property": ("8.8.2", ["property_definition", "input_generator", "sample_budget", "pass_condition"]),
+    "load": ("8.8.3", ["load_profile", "metrics", "threshold_or_baseline_ref", "duration"]),
+    "concurrency": ("8.8.4", ["shared_state", "execution_model", "worker_count", "oracle", "duration"]),
+}
+
+
+def _slice_8_8_subsection(body: str, sub: str) -> str:
+    hdr_re = re.compile(r"^#####? §" + re.escape(sub) + r"\b", re.MULTILINE)
+    m = hdr_re.search(body)
+    if not m:
+        return ""
+    start = m.end()
+    nxt = re.search(r"^#{4,6}\s+\S", body[start:], re.MULTILINE)
+    end = start + (nxt.start() if nxt else len(body) - start)
+    return body[start:end]
+
+
 DEBATE_TRANSCRIPT_HEADER_RE = re.compile(
     r"^###\s+Debate transcript:\s*(?P<anchor>.*)$",
     re.MULTILINE,
@@ -305,12 +338,77 @@ def check_section_8_7(md_path: Path, body: str) -> list:
     return fails
 
 
+def check_section_8_8(md_path: Path, body: str) -> list:
+    # CFP-2605 / ADR-146 §결정 5 — §8.8 동적 로스터 lint(§8.5/§8.7 동형). §8.8 헤딩 부재 → 무검사.
+    fails = []
+    if not SECTION_8_8_HEADER_RE.search(body):
+        return []
+
+    if not SECTION_8_8_0_HEADER_RE.search(body):
+        fails.append(f"{md_path}: §8.8 본문 존재하나 §8.8.0 Applicability decision 헤딩 부재")
+        return fails
+
+    # §8.8 region slice(§8.8 헤딩 ~ 다음 ### 헤딩) — g2 token 검사 scope 격리.
+    m88 = SECTION_8_8_HEADER_RE.search(body)
+    nxt3 = re.search(r"^###\s+\S", body[m88.end():], re.MULTILINE)
+    region_end = m88.end() + (nxt3.start() if nxt3 else len(body) - m88.end())
+    section_88 = body[m88.start():region_end]
+
+    rows = APPLICABILITY_8_8_ROW_RE.findall(body)
+    found_rows = {row[0]: row[1] for row in rows}
+    expected = {"fuzz", "property", "load", "concurrency"}
+    missing = expected - set(found_rows.keys())
+    if missing:
+        fails.append(f"{md_path}: §8.8.0 표 의 4 기법 행 누락 (DO/N/A 미파싱) — {sorted(missing)}")
+        return fails
+
+    do_count = sum(1 for v in found_rows.values() if v == "DO")
+    na_count = sum(1 for v in found_rows.values() if v == "N/A")
+
+    # AC-7 — g2_boundary_check token presence(Epic G2 경계 soak/restart/replay 무침범 확인, fail-closed).
+    if "g2_boundary_check" not in section_88:
+        fails.append(f"{md_path}: §8.8 g2_boundary_check token 부재 — Epic G2 경계(soak/restart/replay) 확인 누락 (AC-7)")  # MUT-B-G2-TOKEN
+
+    if do_count >= 1:
+        for tech in ("fuzz", "property", "load", "concurrency"):
+            status = found_rows[tech]
+            sub, req_fields = TECHNIQUE_8_8_META[tech]
+            sub_body = _slice_8_8_subsection(body, sub)
+            if status == "DO":
+                if not sub_body:
+                    fails.append(f"{md_path}: §8.8.0 {tech}=DO 이나 §{sub} 산출물 계약 본문 부재 (AC-3)")
+                    continue
+                missing_fields = [f for f in req_fields if f not in sub_body]
+                if missing_fields:
+                    fails.append(f"{md_path}: §{sub} {tech} DO 필수 산출물 필드 누락 — {missing_fields} (AC-3/4)")  # MUT-A-DO-FIELDS
+                if tech == "load" and "§8.3" not in sub_body:
+                    fails.append(f"{md_path}: §{sub} load DO 이나 §8.3 Perf Baseline(saturation!=regression) 관계 token 부재 (AC-6)")  # AC-6-LOAD-PERF
+            else:  # status == "N/A" (mixed-case since do_count>=1)
+                if not NA_85_SUBSTANTIVE_RE.search(sub_body.strip()):
+                    fails.append(f"{md_path}: §{sub} {tech}=N/A(mixed) 이나 per-technique substantive infeasibility_reason(30자 minimum) 부재 (AC-2 hollow-gap)")  # MUT-C-MIXED-NA
+
+    if na_count == 4:
+        if not SECTION_8_8_X_HEADER_RE.search(body):
+            fails.append(f"{md_path}: §8.8.0 4 N/A 인데 §8.8.x N/A 명시 헤딩 부재")
+        else:
+            m88x = SECTION_8_8_X_HEADER_RE.search(body)
+            start = m88x.end()
+            next_header = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+            end = start + (next_header.start() if next_header else len(body) - start)
+            section_body = body[start:end].strip()
+            if not NA_85_SUBSTANTIVE_RE.search(section_body):
+                fails.append(f"{md_path}: §8.8.x N/A reason 가 substantive 30자 minimum 미충족 — vague reason 차단 (CFP-2605 / ADR-146 결정5)")
+
+    return fails
+
+
 def main():
     warns = []
     section_7_4_warns = []
     conditional_warns = []
     section_8_5_warns = []
     section_8_7_warns = []
+    section_8_8_warns = []
     debate_transcript_warns = []
     for prefix, patterns in REQUIRED_SECTIONS.items():
         path = Path(prefix)
@@ -352,6 +450,8 @@ def main():
                 section_8_5_warns.extend(s85_fails)
                 s87_fails = check_section_8_7(md, text)
                 section_8_7_warns.extend(s87_fails)
+                s88_fails = check_section_8_8(md, text)
+                section_8_8_warns.extend(s88_fails)
 
     for extra_prefix in ["docs/stories"]:
         extra_path = Path(extra_prefix)
@@ -370,7 +470,7 @@ def main():
             debate_fails = check_debate_transcript(md, text)
             debate_transcript_warns.extend(debate_fails)
 
-    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(debate_transcript_warns)
+    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(section_8_8_warns) + len(debate_transcript_warns)
     if total_fails:
         print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
         if warns:
@@ -392,6 +492,10 @@ def main():
         if section_8_7_warns:
             print(f"  [CFP-2505 §8.7 UI 실렌더 applicability] {len(section_8_7_warns)} 건")
             for w in section_8_7_warns:
+                print(f"  - {w}")
+        if section_8_8_warns:
+            print(f"  [CFP-2605 §8.8 동적 로스터 applicability] {len(section_8_8_warns)} 건")
+            for w in section_8_8_warns:
                 print(f"  - {w}")
         if debate_transcript_warns:
             print(f"  [CFP-391 §9 debate transcript schema] {len(debate_transcript_warns)} 건")
