@@ -112,6 +112,8 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 **동적 테스트 최대화 게이트 (burden-flip) (ADR-146 / CFP-2605, Epic CFP-2602 G4)**: feasible 한 동적 검증(fuzz/property/load/concurrency)이 침묵 누락되면 §8.8 로스터 게이트가 구조적으로 차단하는 adequacy 강화(opt-in → do-it-unless-proven-infeasible burden-flip). 게이트 = `check_section_8_8` = 기존 `check_doc_section_schema.py` 확장(신규 module/workflow 0), 기존 strict required context `doc section schema (CFP-28 — strict)` 편승 → **신규 required context 0**(baseline branch-protection tuple 무관 — G1 6→7-tuple 등록 선착 시에도 G4 추가 0, EXTEND-path. G1 의 6→7 등록과 대조). fail-closed 범위 = 4기법 §8.8 applicability(DO|N/A) presence + 산출물 계약 필드 구조까지만(검출력 = G3 미강제 / soak·restart·replay = G2 disjoint — 정직 천장, ADR-119 정합). Phase 1 = 설계(본 doc data_flow + Open Decisions), 실 lint 함수 + self-test + template §8.8 + agent-md mandate = 동일 Story Phase 2.
 
+**CI runner topology / self-hosted 이관 (ADR-147 / CFP-2607)**: mclayer org CI 실행 위치를 GitHub-hosted(`ubuntu-latest`)에서 org 소유 self-hosted runner 로 이관하는 boundary 변경. 배선 = repository variable `CI_RUNS_ON_JSON`(JSON array) → `runs-on: ${{ fromJSON(vars.CI_RUNS_ON_JSON || '["ubuntu-latest"]') }}` 단일 SSOT 표현식. public(plugin-codeforge/marketplace)은 var 미설정 → hosted coalesce(기능 불변), private/internal 18 repo 는 var SET → self-hosted(group6 Linux / group5 Windows). runner group `allows_public_repositories=false` fail-safe + byte-parity lockstep(`invariant-check.yml` templates↔.github blocking, `phase-gate-mergeable.yml` 포함) + provisioning invariant/unset fail-loud lint(billing-deadlock 차단). 6-tuple 필수 컨텍스트 문자열은 job id/name 이 `runs-on` 과 orthogonal 이라 **불변**. 제외 = public 2 + mctrader/deploy-k8s 3 ARC job. Phase 1 = 설계(본 Story), 실 배선 = Phase 2 child Story(카나리→웨이브, W0 부트스트랩).
+
 > 본 흐름 = lane spawn / event / artifact propagation 수준. 함수 호출 trace / 변수 전달 라인 0건 (anti-scope guard 준수).
 
 ---
@@ -156,7 +158,7 @@ graph LR
     Family -- "git→Confluence one-way sync<br/>(ADR-103, ADR-111 closed-enum 4 mirror 대상)" --> Confluence
 ```
 
-**Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function).
+**Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API / **self-hosted runner host — private/internal repo CI 코드 실행 표면**). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function). self-hosted runner host(ADR-147)는 fork PR 임의 코드 실행 표면이나 `allow_forking=false` ∧ `allows_public_repositories=false` ∧ fork PR self-hosted 미실행(ADR-147 §결정 8)으로 CLOSED — DooD(host root 등가) / persistent runner cross-job 오염은 non-privileged container·ephemeral/JIT·secret CLI-arg 금지로 완화.
 
 **in-scope vs out-of-scope**:
 - in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 10 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설)
@@ -232,7 +234,7 @@ graph TB
 
     subgraph "Cloud Services"
         GHAPI[GitHub API<br/>Issue/PR/comment/label/milestone]
-        GHActions[GitHub Actions<br/>CI workflow runner]
+        GHActions[GitHub Actions CI runner<br/>public: GitHub-hosted ubuntu-latest<br/>private/internal: self-hosted<br/>group6 Linux×4 / group5 Windows×1 — ADR-147]
         ConfluenceAPI[Confluence Cloud API<br/>readable mirror sync]
     end
 
