@@ -322,6 +322,42 @@ function Stage-5b-BranchProtection {
     return $true
 }
 
+# Stage 5c — CI runner topology provisioning check (CFP-2607 / ADR-147 §결정 4(ii), .sh stage_5c 동형)
+# self-hosted 이관 private/internal repo 의 required runner 변수(CI_RUNS_ON_LINUX_JSON) SET 여부를
+# fail-loud 로 검증. 단일 SSOT = bash scripts/ci-runner-provisioning-check.sh (gh-api 로직 중복 방지) —
+# bash 부재 시 hub/operator 수동 실행 안내(graceful). 실 변수 SET 은 operator 단계(비-abort).
+function Stage-5c-CiRunnerProvisioning {
+    Log "Stage 5c: CI runner provisioning check (CFP-2607 / ADR-147 — self-hosted 변수 fail-loud)"
+    $check = Join-Path $PluginRoot "scripts/ci-runner-provisioning-check.sh"
+    if (-not (Test-Path $check)) {
+        Log "  WARN: ci-runner-provisioning-check.sh 부재 — skip (plugin 설치 확인)"
+        Mark-Step "stage_5c_ci_runner_provisioning"
+        return $true
+    }
+    if ($DryRun) {
+        Log "  (dry-run) bash $check --repo $script:Org/$script:Repo"
+        Mark-Step "stage_5c_ci_runner_provisioning"
+        return $true
+    }
+    $bash = Get-Command bash -ErrorAction SilentlyContinue
+    if (-not $bash) {
+        Log "  WARN: bash 부재 — provisioning 검증 delegate 불가. self-hosted cutover 전 hub/operator 에서 'bash scripts/ci-runner-provisioning-check.sh --repo $script:Org/$script:Repo' 수동 실행 필수. graceful (비-abort)"
+        Mark-Step "stage_5c_ci_runner_provisioning"
+        return $true
+    }
+    $checkOut = (& bash $check --repo "$script:Org/$script:Repo" 2>&1)
+    $prc = $LASTEXITCODE
+    foreach ($l in $checkOut) { Log "  $l" }
+    switch ($prc) {
+        0 { Log "  ✓ CI runner 변수 provisioning 확인 (또는 public hosted 유지)" }
+        1 { Log "  WARN: CI_RUNS_ON_LINUX_JSON 미설정 — self-hosted cutover 전 operator SET 필수 (merge deadlock 위험, AC-11). graceful (비-abort)" }
+        3 { Log "  WARN: 변수 검증 403 (권한 부족) — graceful degrade (비-abort)" }
+        default { Log "  WARN: ci-runner-provisioning-check.sh exit $prc — graceful (비-abort)" }
+    }
+    Mark-Step "stage_5c_ci_runner_provisioning"
+    return $true
+}
+
 # Stage 6 — CFP-2250 결함1: 3-tier fallback (bash → PowerShell-native → ERROR). silent skip 제거.
 function Stage-6-Labels {
     Log "Stage 6: labels bootstrap"
@@ -415,6 +451,7 @@ $stages = @(
     @{name = "stage_4_settings_json"; fn = { Stage-4-SettingsJson }},
     @{name = "stage_5_github_setup"; fn = { Stage-5-GithubSetup }},
     @{name = "stage_5b_branch_protection"; fn = { Stage-5b-BranchProtection }},
+    @{name = "stage_5c_ci_runner_provisioning"; fn = { Stage-5c-CiRunnerProvisioning }},
     @{name = "stage_6_labels"; fn = { Stage-6-Labels }},
     @{name = "stage_7_consumer_scripts"; fn = { Stage-7-ConsumerScripts }}
 )

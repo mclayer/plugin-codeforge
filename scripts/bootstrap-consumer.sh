@@ -370,6 +370,36 @@ stage_5b_branch_protection() {
     mark_step "stage_5b_branch_protection"
 }
 
+# Stage 5c — CI runner topology provisioning check (CFP-2607 / ADR-147 §결정 4(ii))
+# Stage 5b(branch protection) 이후 — self-hosted 이관 private/internal repo 의 required
+# runner 변수(CI_RUNS_ON_LINUX_JSON) SET 여부를 fail-loud 로 검증(billing-독립 provisioning-time,
+# hosted-CI 워크플로 아님 — born-dead-gate 회피). 실 변수 SET 은 operator 단계이므로 unset 은
+# 시끄럽게 안내하되 bootstrap 비-abort(graceful). self-hosted cutover 전 hard-gate = 본 스크립트
+# standalone/hub 실행(exit 1 = provisioning gap).
+stage_5c_ci_runner_provisioning() {
+    log "Stage 5c: CI runner provisioning check (CFP-2607 / ADR-147 — self-hosted 변수 fail-loud)"
+    local check="$PLUGIN_ROOT/scripts/ci-runner-provisioning-check.sh"
+    if [ ! -f "$check" ]; then
+        log "  WARN: ci-runner-provisioning-check.sh 부재 — skip (plugin 설치 확인)"
+        mark_step "stage_5c_ci_runner_provisioning"
+        return 0
+    fi
+    if [ $DRY_RUN -eq 1 ]; then
+        log "  (dry-run) bash $check --repo $ORG/$REPO"
+        mark_step "stage_5c_ci_runner_provisioning"
+        return 0
+    fi
+    bash "$check" --repo "$ORG/$REPO" 2>&1 | sed 's/^/  /' >&2
+    local prc=${PIPESTATUS[0]}
+    case "$prc" in
+        0) log "  ✓ CI runner 변수 provisioning 확인 (또는 public hosted 유지)" ;;
+        1) log "  WARN: CI_RUNS_ON_LINUX_JSON 미설정 — self-hosted cutover 전 operator SET 필수 (merge deadlock 위험, AC-11). graceful (bootstrap 비-abort)" ;;
+        3) log "  WARN: 변수 검증 403 (권한 부족) — graceful degrade (비-abort)" ;;
+        *) log "  WARN: ci-runner-provisioning-check.sh exit $prc — graceful (bootstrap 비-abort)" ;;
+    esac
+    mark_step "stage_5c_ci_runner_provisioning"
+}
+
 # Stage 6 — Labels bootstrap (delegate)
 stage_6_labels() {
     log "Stage 6: labels bootstrap (delegate to bootstrap-labels.sh)"
@@ -439,6 +469,7 @@ main() {
         "stage_4_settings_json"
         "stage_5_github_setup"
         "stage_5b_branch_protection"
+        "stage_5c_ci_runner_provisioning"
         "stage_6_labels"
         "stage_7_consumer_scripts"
     )
