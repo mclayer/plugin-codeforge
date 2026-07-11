@@ -128,6 +128,22 @@ review_packet:
 
 **enforcement note**: ADR-064 §결정 13 root-cause 사다리 측 wire (skill body) 와 sibling carrier (disjoint axis 두 짝). review-verdict-v4 §18 (v4.14, PS1 merged) = packet 레벨 realization SSOT — 본 lane 은 그 `invariant-violation` finding 을 emit·종합.
 
+## AC 분해 완결성 게이트 (RO-1 — 3번째 disjoint 축, CFP-2603 / ADR-145)
+
+> 위 외부사실 의존성 게이트 (§워커 packet 작성 + §검증 스코프) · runtime-failure internal-invariant 변종과 **disjoint 공존** (기존 2축 무손상·무재정의). 본 축은 요구사항리뷰 lane 의 **3번째 disjoint 축** (external-fact / internal-invariant / **AC-decomposition-completeness**, ADR-125 Amendment 2 방식 — additive disjoint). checklist SSOT = [`templates/review-checklists/requirements.md`](../templates/review-checklists/requirements.md) "AC 분해 완결성 게이트" 절.
+
+첫 hop (사용자 산문 → AC 민팅) 은 대조할 요건 인벤토리 부재로 기계 fail-closed 불가하다 (ADR-145 Hop0 / AC-1b `declared` tier). 본 lane 이 이 hop 을 human/review-verified obligation 으로 방어한다.
+
+### 의무 (non-skippable)
+
+- **§1 verbatim 사용자 원문 ↔ §5 AC 목록 diff**: "구별되는 각 사용자 요건이 ≥1 AC 에 매핑됨" (AC-1b 완결성) 대조. 미매핑 사용자 요건 = **review FIX** (`ac-decomposition-completeness`, 설계 진입 차단). skip 불가 — 요건이 애초에 AC 로 민팅되지 않으면 AC↔§8↔실파일 사슬이 전부 green 이어도 drop (사용자 원 compactor 사례).
+- **tier 배정 review-gate (Risk5, non-skippable)**: 각 AC 의 `tier` (normative/declared/advisory) 배정 타당성 검증. user-sourced AC 를 advisory/declared 로 오분류 = fail-closed 강제 약화 → review FIX. RO-1 이 tier 배정 자체를 gate 한다.
+
+### 성격 (hollow-gate 금지)
+
+- 대조 대상 (§1 산문) 비정형 → 기계 강제 불가한 human-verified obligation. 게이트가 AC-1b 를 fail-closed 로 강제하는 **척 금지** (ADR-145 §결정 1(b) 천장 정직 공개 — user→AC 분해완결성 미강제). defense-in-depth 3층 중 (a) — (a) 본 §1↔§5 diff + (b) AC-10 advisory 반복주장 신호 + (c) ADR-052 divergence (Codex proactive).
+- **워커 web 미발동**: 본 축은 Story 내부 (§1↔§5) 구조 diff 라 외부조사 불요 — 외부사실 게이트 (WebSearch/WebFetch) 와 tool-disjoint (검사연극 금지 정합).
+
 ## FIX 카운터 정책
 
 - **최대 3회** — 초과 시 ESCALATE (사용자 지시 대기)

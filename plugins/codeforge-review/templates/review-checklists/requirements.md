@@ -13,7 +13,7 @@ CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archi
 
 ## Category enum (출력 분류)
 
-`external-standard-missing | prior-art-gap | ac-external-verifiability | market-vendor-claim-unsourced | external-fact-dependency | requirements-completeness | section-missing`
+`external-standard-missing | prior-art-gap | ac-external-verifiability | market-vendor-claim-unsourced | external-fact-dependency | requirements-completeness | section-missing | ac-decomposition-completeness`
 
 ## Severity 자동 룰
 
@@ -23,6 +23,8 @@ CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archi
 - **시장·벤더 사실 단정에 출처 부재** → P1 (`market-vendor-claim-unsourced`) — 경계(?) 준-외부 출처는 ADR-125 결정 6 운영 판정 (단계② 우선 + 리뷰어 재량 escalation)
 - **요구사항 명세 핵심 섹션 누락** (§1 목적 / §2 use case / AC) → P0 강제 (`section-missing`)
 - **도메인 선행사례 조사 부재** (외부사실 의존 요구사항인데 established practice 미조사) → P1 (`prior-art-gap`)
+- **미매핑 사용자 요건** (§1 원문 ↔ §5 AC diff 결과 unmapped) → P1 강제 (`ac-decomposition-completeness`) — review FIX, 설계 진입 차단 (RO-1, CFP-2603 / ADR-145 AC-1b 완결성)
+- **AC tier 오분류** (user-sourced AC 를 advisory/declared 로 부당 강등 = fail-closed 강제 약화) → P1 (`ac-decomposition-completeness`) — RO-1 tier 배정 review-gate (Risk5)
 
 ### 검사연극 금지 (필수 — finding 발의 차단 룰)
 
@@ -66,6 +68,27 @@ CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archi
 | 경계 (?) | 시장정보 / 벤치마크 / StackOverflow 등 준-외부 출처 | 단계② 우선 (ADR-125 결정 6 운영 판정) + 리뷰어 재량 escalation |
 
 - **abstention escape 정합**: 출처 확보 불가 시 ADR-119 §결정 3.2 "확인 불가/추정" 명시 후 진행 (데드락 회피). 출처 부재 자체보다 "출처 부재인데 확정 단정" 이 finding 대상.
+
+## AC 분해 완결성 게이트 (RO-1 — 요구사항리뷰 3번째 disjoint 축, CFP-2603 / ADR-145)
+
+> **additive disjoint 축** — 위 외부사실 의존 축 (체크리스트 5축) · runtime-failure internal-invariant 축 (`requirements-runtime-failure.md` 변종) 과 **disjoint 공존** (기존 2축 무손상·무재정의). 본 축은 외부조사를 요구하지 않는 **구조적 §1↔§5 diff** 이므로 위 검사연극 금지 룰 (내부근거-only 결론에 외부조사 강제 금지) 과 무충돌 — 대조 대상이 Story 내부 (§1 원문 ↔ §5 AC) 라 web 검증 미발동.
+
+첫 hop (사용자 산문 → AC 민팅) 은 대조할 요건 인벤토리가 없어 기계 fail-closed 불가하다 (ADR-145 Hop0 / AC-1b `declared` tier). 요구사항리뷰 lane 이 이 hop 을 **human/review-verified obligation** 으로 방어한다.
+
+### 의무 (non-skippable)
+
+- **§1 verbatim 사용자 원문 ↔ §5 AC 목록 diff**: "구별되는 각 사용자 요건이 ≥1 AC 에 매핑됨" (AC-1b 완결성) 을 대조 검증한다.
+- **미매핑 사용자 요건 발견 = review FIX** (`ac-decomposition-completeness`) — 설계 진입 차단. 사용자 원 요건이 애초에 AC 로 민팅되지 않으면 AC↔§8↔실파일 사슬이 전부 green 이어도 요건이 drop 되므로 (사용자 원 "5분/1시간 compactor" 사례가 정확히 이 hop 에 착지), 이 첫 hop 을 review 로 봉인한다.
+
+### tier 배정 검증 (Risk5 — non-skippable)
+
+- 각 AC 의 `tier` (normative / declared / advisory) 배정이 타당한지 검증한다. **user-sourced AC 를 advisory / declared 로 오분류하면 fail-closed 강제가 약화**되므로, RO-1 이 tier 배정 자체를 review-gate 한다.
+- user 요건에서 유래한 AC 가 부당하게 advisory 로 강등된 정황 = review FIX (tier 오분류 = 강제 약화 = tampering).
+
+### 성격 (기계 게이트 아님 — hollow-gate 금지)
+
+- 대조 대상 (§1 산문) 이 비정형이라 기계 강제 불가. 게이트가 AC-1b 를 fail-closed 로 강제하는 **척하지 않는다** (ADR-145 §결정 1(b) 천장 정직 공개 — user→AC 분해완결성 미강제).
+- defense-in-depth 3층 중 (a): (a) 본 RO-1 §1↔§5 diff + (b) AC-10 advisory 반복주장 신호 + (c) ADR-052 divergence (Codex proactive).
 
 ## 다음 게이트 (PASS 시)
 

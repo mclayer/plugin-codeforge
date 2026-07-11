@@ -1,0 +1,55 @@
+name: ac-traceability-self-test
+# CFP-2603 (Epic CFP-2602 G1) / ADR-145 §8.9 L1 + §결정3 ordering-invariant —
+#   AC-ID zero-drop 게이트(scripts/lib/ac_id.py·check_ac_traceability_matrix.py + thin wrapper)의
+#   discriminating self-test 를 실 CI red/green 으로 산출한다(born-dead 방지).
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가 (ADR-145 §결정3 A 채택 born-broken 안전 전제):
+#   즉시-required(6→7-tuple) 게이트의 false-green(hollow) 실패 모드는 §8 self-test 가
+#   merge-precondition 일 때만 구조적 차단된다. 본 workflow 가 그 self-test 를 CI 로 실행해
+#   "hollow 린터 = self-test RED = merge 불가" 를 성립시킨다. ordering-invariant:
+#   workflow 착륙 → **self-test suite green 확인**(본 채널) → own-PR green → THEN required 등록.
+#
+# 검사 대상:
+#   - tests/scripts/test_check-ac-traceability-matrix.sh — F-fixture 다수(change-plan §8.2) +
+#     mutation A/B/C kill(§8.4/§8.8 linter self-test) + L2 byte-identical.
+#   - tests/scripts/test_ac_traceability_matrix.py — §8.1 RTM authoritative 명명 테스트
+#     (AC-1a·AC-2..AC-9 가 실 def 로 실재 → Hop3 통과). _ac_matrix_fixtures 가 scripts/lib 를
+#     sys.path 주입하므로 PYTHONPATH 불요(REPO_ROOT 에서 pytest 실행).
+#
+# **day-1 hard-fail** (continue-on-error 금지) — self-test 실패 = job red = ordering-invariant 미충족 신호.
+# **non-required** (branch-protection 7-tuple 무변경 — required context 는 `ac-traceability-matrix` 만).
+#   실행·visible green 이면 ordering-invariant 충족(required 등록 = Orchestrator post-merge).
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). dedicated self-test 워크플로 관례상
+#   templates/github-workflows/ copy 없음(.github-only — adr-reservation-claim-test.yml 선례).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  ac-traceability-self-test:
+    name: ac-traceability-self-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run .sh discriminating self-test (F-fixtures + mutation A/B/C + L2, day-1 hard-fail)
+        run: bash tests/scripts/test_check-ac-traceability-matrix.sh
+
+      - name: Run pytest named-test suite (§8.1 RTM authoritative — Hop3 실 def resolve)
+        run: python3 -m pytest tests/scripts/test_ac_traceability_matrix.py -q

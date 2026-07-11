@@ -1,0 +1,143 @@
+name: ac-traceability-matrix
+# CFP-2603 (Epic CFP-2602 G1) / ADR-145 — 요건 traceability zero-drop **fail-closed** 게이트.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 사용자 요건("5분/1시간 compactor" 반복 주장)이 요구사항→설계→§8→구현 사슬에서 조용히 증발하는
+#   Gap A(요건-현실 갭)를, AC 에 lane 경계 넘는 안정 식별자(AC-ID)를 부여하고
+#   `AC-N ↔ §8 명명 테스트 ↔ 실 테스트파일(symbol)` zero-drop 을 강제해 구조적으로 불가능하게 만든다.
+#   presence/mapping 만 fail-closed 강제 — semantic 완전성 미강제(AC-8 CEILING, 검사연극 금지).
+#
+# day-1 hard-fail (continue-on-error 금지, warning-tier 금지). job-id = context name
+#   `ac-traceability-matrix` (double-context 회피 — checks.create 별도 name 미사용).
+#   branch-protection required_status_checks contexts 에 `ac-traceability-matrix` 등록(6→7-tuple, ADR-145 §결정3).
+#
+# wrapper-self-only (F1 — consumer born-broken 방지): repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`.
+#   templates/github-workflows/ byte-identical copy(execution-liveness L2)도 guard 상속 →
+#   consumer 배포 시 inert(job skip). consumer 전파(ALLOWED_HUB_REPOS venue 파라미터화 +
+#   project.yaml applicability)는 별도 follow-up Story(§12.1) — 지금 consumer 활성 배포 금지.
+#
+# cross-repo fetch = phase-gate-mergeable.yml 패턴 재사용 (같은 PAT secret 이름 CODEFORGE_CROSS_REPO_PAT,
+#   helper fail-closed `if(!token) return`, whitelist strict match, resp.ok 403/404 가드).
+#   **main-path degrade(PR-label fallback) 재사용 금지** — degraded(fetch 실패/token 부재/403/404/
+#   non-resp.ok) 전부 FAIL (AC-7 no-optout, §7.6 5-state). PAT 취급: Authorization header-only,
+#   응답 본문/토큰 로그 출력 금지(secret masking) — fail() 메시지엔 사유만.
+#
+# phase 신호 = EXPLICIT (Story frontmatter `phase:` / `status: phase:X`) — diff 추론 금지.
+#   문서 lane(요구사항·설계·리뷰) → Phase 1(Hop1+Hop2) / 구현 lane → Phase 2(+Hop3 born-missing).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  # cross-repo Story/Change Plan fetch venue 화이트리스트 (zero-trust anchor, strict match — 미일치=FAIL).
+  ALLOWED_HUB_REPOS: "mclayer/codeforge-internal-docs"
+
+jobs:
+  ac-traceability-matrix:
+    name: ac-traceability-matrix
+    # wrapper-self-only (F1) — consumer repo 에선 job skip(inert). required context 는 wrapper 만 등록.
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Resolve cross-repo AC source + RTM + phase (fail-closed)
+        id: resolve
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          # cross-repo PAT (read-only). 부재/degraded = FAIL (main-path degrade 재사용 금지).
+          CROSS_REPO_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          ALLOWED_HUB_REPOS: ${{ env.ALLOWED_HUB_REPOS }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            // fail-closed 하드 실패 — 로그엔 사유만(토큰/응답 본문 미출력, secret masking).
+            const fail = (reason) => { core.setFailed(`ac-traceability-matrix fail-closed: ${reason}`); };
+
+            // 1) marker 파싱 — story_uri(§5 AC source) + rtm_uri(§8 RTM).
+            //    rtm_uri 부재 시 story_uri fallback = consumer Story §8 mirror (ADR-145 §결정6 P1).
+            //    wrapper-self dogfood 는 rtm_uri = Change Plan(§8 authoritative RTM) 를 명시한다.
+            const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
+            if (!storyUriMatch) { fail('story_uri marker 부재 (PR body)'); return; }
+            const rtmUriMatch = body.match(/rtm_uri:\s*(\S+)/);
+            const storyUri = storyUriMatch[1];
+            const rtmUri = rtmUriMatch ? rtmUriMatch[1] : storyUri;
+
+            const allowedHubs = (process.env.ALLOWED_HUB_REPOS || '')
+              .split(',').map(h => h.trim()).filter(Boolean);
+            const token = process.env.CROSS_REPO_TOKEN;
+            // helper fail-closed (phase-gate L232 형) — token 부재 = degraded = FAIL (main-path degrade 금지).
+            if (!token) { fail('CODEFORGE_CROSS_REPO_PAT secret 부재 (degraded=FAIL, §7.6 5-state)'); return; }
+
+            async function fetchDoc(uri, label) {
+              const m = uri.match(/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/);
+              if (!m) { fail(`${label} URI 파싱 실패`); return null; }
+              const [, owner, repo, ref, path] = m;
+              const hubKey = `${owner}/${repo}`;
+              // whitelist strict match (phase-gate L229 형) — 미일치 = FAIL (fetch spoof 차단).
+              if (!allowedHubs.some(h => h === hubKey)) { fail(`${label} venue '${hubKey}' 화이트리스트 미일치`); return null; }
+              const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`;
+              let resp;
+              try {
+                resp = await fetch(url, {
+                  headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'ac-traceability-matrix-action'
+                  }
+                });
+              } catch (e) { fail(`${label} fetch 네트워크 실패`); return null; }
+              // resp.ok 가드 (403/404 conflation 차단) — "읽을 수 없음"을 "존재 안 함"으로 해석 금지, 전부 FAIL.
+              if (!resp.ok) { fail(`${label} fetch HTTP ${resp.status} (403/404/5xx 판정불가=FAIL)`); return null; }
+              const file = await resp.json();
+              return Buffer.from(file.content, 'base64').toString('utf-8');
+            }
+
+            const storyText = await fetchDoc(storyUri, 'story_uri');
+            if (storyText === null) return;
+            const rtmText = (rtmUri === storyUri) ? storyText : await fetchDoc(rtmUri, 'rtm_uri');
+            if (rtmText === null) return;
+
+            // 2) phase = EXPLICIT (Story frontmatter). diff 추론 금지.
+            const fmMatch = storyText.match(/^---\n([\s\S]*?)\n---/);
+            if (!fmMatch) { fail('Story frontmatter 부재 — phase 판정불가'); return; }
+            const fm = fmMatch[1];
+            // `phase: X` 또는 `status: phase:X` 양식 수용.
+            const phaseM = fm.match(/^phase:\s*(\S+)/m) || fm.match(/^status:\s*phase:\s*(\S+)/m);
+            if (!phaseM) { fail('Story frontmatter phase 신호 부재 (phase: / status: phase:)'); return; }
+            const phaseRaw = phaseM[1].replace(/["']/g, '').replace(/^phase:/, '');
+            // lane label → Phase 1|2 매핑 (ADR-127 Phase 1 문서 / Phase 2 구현 PR 분리).
+            const p2 = ['구현', 'phase:구현', '구현-리뷰', 'phase:구현-리뷰', '구현-테스트', '보안-테스트', '2'];
+            const p1 = ['요구사항', 'phase:요구사항', '요구사항-리뷰', 'phase:요구사항-리뷰',
+                        '설계', 'phase:설계', '설계-리뷰', 'phase:설계-리뷰', '1'];
+            let phaseNum = null;
+            if (p2.includes(phaseRaw)) phaseNum = 2;
+            else if (p1.includes(phaseRaw)) phaseNum = 1;
+            if (phaseNum === null) { fail(`phase '${phaseRaw}' → Phase 1/2 매핑 불가 (EXPLICIT 신호 오류)`); return; }
+
+            // 3) 로컬 파일 write (문서 본문만 — secret 미포함).
+            fs.writeFileSync('ac-gate-source.md', storyText);
+            fs.writeFileSync('ac-gate-rtm.md', rtmText);
+            core.setOutput('phase', String(phaseNum));
+
+      - name: Run AC-traceability matrix gate (day-1 hard-fail, exit passthrough)
+        run: |
+          bash scripts/check-ac-traceability-matrix.sh \
+            --phase "${{ steps.resolve.outputs.phase }}" \
+            --ac-source ac-gate-source.md \
+            --rtm ac-gate-rtm.md \
+            --tests-root tests

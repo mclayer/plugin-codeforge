@@ -255,7 +255,7 @@ graph TB
     MCP_Atlassian <-- "REST" --> ConfluenceAPI
     GHCli <-- "REST/GraphQL" --> GHAPI
     Git <-- "fetch/push/PR" --> GHAPI
-    GHActions -- "PR check / branch protection<br/>6 required check" --> GHAPI
+    GHActions -- "PR check / branch protection<br/>7 required check" --> GHAPI
     Worktrees -.->|state local only| WorkProgress
     Worktrees -.->|permissions| SettingsLocal
 ```

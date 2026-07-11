@@ -86,11 +86,11 @@ plugin.json 의 `name`·`version`·`description`·`author` 변경 시 `mclayer/m
 bump 포함 PR merge (`mergedAt` 확인) 직후 Orchestrator 가 터미널 CLI `claude plugin update <plugin>@mclayer` 를 직접 실행하고 cache 반영을 실측한다 (`/plugins update` 슬래시 명령은 미지원) — 사용자에게 업데이트 액션 요구 금지, 보고 1줄만 (적용 = 다음 세션. ADR-063 Amendment 12).
 
 ## 브랜치 보호
-**branch protection contexts SSOT (wrapper 단일)**: `phase-gate-mergeable.yml` workflow job ID = `check-gate` — contexts 에 `check-gate` 포함 의무. CFP-1850-S2 wrapper 6-tuple 정합 확정 (상세 이력 = audit doc 보존).
+**branch protection contexts SSOT (wrapper 단일)**: `phase-gate-mergeable.yml` workflow job ID = `check-gate` — contexts 에 `check-gate` 포함 의무. CFP-1850-S2 wrapper 6-tuple 정합 확정 → CFP-2603 (Epic CFP-2602 G1) 7-tuple 로 narrowing (신규 required context `ac-traceability-matrix` 추가 — AC-ID zero-drop fail-closed 게이트, [ADR-145](archive/adr/ADR-145-ac-traceability-zero-drop-gate.md) §결정 3: 6→7 narrowing = fail-closed 비호환 override 근거, ADR-125 "6-tuple 불변" 선례와의 divergence 추적). 상세 이력 = audit doc 보존.
 
 | repo | required_status_checks contexts | 비고 |
 |------|--------------------------------|------|
-| wrapper (plugin-codeforge) | `["phase-gate-mergeable","invariant-check","doc frontmatter schema (CFP-28 — strict)","doc section schema (CFP-28 — strict)","check-gate","Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)"]` | 6-tuple (CFP-1808 Amendment 2). lane 8 repo = archived (CFP-2178 S6) — 보호 규칙 잔존+동결 (실측: deploy 1-repo smoke), 활성 관리 = wrapper 단일. audit: [docs/security/branch-protection-audit.md](docs/security/branch-protection-audit.md) |
+| wrapper (plugin-codeforge) | `["phase-gate-mergeable","invariant-check","doc frontmatter schema (CFP-28 — strict)","doc section schema (CFP-28 — strict)","check-gate","Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)","ac-traceability-matrix"]` | 7-tuple (CFP-2603 — 신규 required context `ac-traceability-matrix` 추가, ADR-145 §결정 3 fail-closed 비호환 override; CFP-1808 Amendment 2 6-tuple 선행). lane 8 repo = archived (CFP-2178 S6) — 보호 규칙 잔존+동결 (실측: deploy 1-repo smoke), 활성 관리 = wrapper 단일. audit: [docs/security/branch-protection-audit.md](docs/security/branch-protection-audit.md) |
 
 ## 시각 표기
 사용자 대면·문서 표기 = KST `+09:00` ISO 8601. 외부 timestamp(GitHub/git)는 원본 보존.

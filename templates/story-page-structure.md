@@ -188,6 +188,24 @@ glossary_ref: docs/glossary.md          # Published Language SSOT (content dupli
 - 유스케이스 / AC / 엣지 케이스 / 제외 범위 / 암묵 가정
 - §5.5 "사용자 확인 필요" (blocking wait 항목)
 
+#### §5.2 AC 항목화 목록 형식 (CFP-2603 / ADR-145 — AC-ID zero-drop)
+
+AC 는 **산문·정수 count 로 붕괴 금지** — 각 AC 에 안정 ID `AC-N` (문법 `^AC-(\d+)([a-z])?$`, sub-letter `AC-1a`/`AC-1b` 수용) 부여 + 아래 7-필드 항목화. identity 보존이 lane 경계 zero-drop 의 전제 (도메인 불변식 I-AC). requirements-output-v1 v1.2 `acceptance_criteria[]` 계약과 정합.
+
+| 필드 | 등급 | 뜻 |
+|---|---|---|
+| `id` | **required** | `AC-N` — Story 범위 안 안정 식별자 (cross-Story 참조 = `<KEY>:AC-N`) — Hop1 machine-enforced |
+| `statement` | **required** | 검증 가능한 서술 (given-when-then 권장, non-empty) |
+| `source` | **required** | `user` (사용자 원 요건) \| `derived` (파생) — enum |
+| `verification` | derived (파생) | 어떻게 검증되는가 (테스트 종류·관측점) — tier+Hop2·review 파생, present 시 format-only |
+| `coverage_required` | derived (파생) | 커버 의무 대상: `design` ∧ `§8_test` — tier+Hop2 파생 |
+| `phase` | derived (파생) | `1` (문서·명명) \| `2` (실 테스트파일) — run-phase+tier 파생 |
+| `tier` | **required** | `normative` (fail-closed 기계 강제) \| `declared` (대조 인벤토리 부재 human/review-verified) \| `advisory` (경보만) — enum |
+
+> **등급 (ADR-145 §결정1(i)/§결정6)**: required 4(id/statement/source/tier) = 게이트 Hop1 `validate_ac_record` machine-enforced (본 Story §5.3 4-컬럼 표가 이 required-set 과 정확히 일치 — dogfood exemplar) / derived 3(verification/coverage_required/phase) = 계약·Hop2·review 층에서 파생·강제, 게이트 §5-parse 미재검증(강제 지점 이동, AC-8 "2 잔여" count 미포함).
+
+- **완결성 (AC-1b)**: 구별되는 각 사용자 요건이 ≥1 AC 에 매핑 — 요구사항리뷰 RO-1 이 §1↔§5 diff 로 검증 (미매핑=review FIX, 설계 진입 차단). user-sourced AC 의 tier 임의 강등 = 강제 약화 → RO-1 tier review-gate.
+
 ### §6. 외부 지식 배경 (Researcher)
 - Researcher 자체 도출 키워드 커버리지 + 출처 URL
 - ADR 정합성 점검 결과
@@ -216,6 +234,13 @@ glossary_ref: docs/glossary.md          # Published Language SSOT (content dupli
 - **§7.4.4/§7.4.2 policy 공백 ↔ FIX root-cause decision table = disjoint axis** (측정 대상이지 실패 원인 아님). DesignReviewPL audit gate = §8.6 cross-ref pointer **존재만 mandatory** (policy 값 공백 자체 PASS — pointer 누락만 FIX). 상세 schema = §8.6.
 
 ### §8. 개발 서사 (DeveloperPL + role:dev roster)
+
+> **AC↔§8 명명 테스트 RTM 앵커 형식 (CFP-2603 / ADR-145 — AC-ID zero-drop 게이트 입력)**: §8 Test Contract 는 각 normative AC-N 을 **≥1 명명 테스트** (안정 테스트 함수/클래스 이름) 로 매핑하는 RTM (요건 추적 매트릭스) 표를 authoritative 하게 보유한다. `ac-traceability-matrix` 게이트가 이 RTM 을 파싱해 (Phase 1) AC↔§8 명명 매핑 · (Phase 2) §8 명명↔실 symbol born-missing (ast resolve) 을 fail-closed 검증한다. **authoritative location = 문서유형별 resolve** — wrapper-self dogfood Story 는 Change Plan §8 (Story §8=개발 서사 placeholder), consumer Story 는 본 Story §8 mirror ("Story §8" 하드코딩 시 wrapper-self Phase 2 PR 을 false-FAIL 하므로 금지). AC-1b(`declared`)·advisory AC 는 명명 테스트 대신 RO-1 review / 경보로 routed (**forged machine test 금지**).
+>
+> | AC | tier | 명명 테스트 | 검증 관측점 |
+> |---|---|---|---|
+> | AC-N | normative | `test_<...>` (Phase 2 = 실 파일 ∧ 실 symbol) | <fail-closed 조건> |
+> | AC-Nb | declared | (명명 테스트 없음) → RO-1 review-verified | 요건 인벤토리 부재로 기계 강제 불가 |
 
 #### §8.1 Backend 산출물
 #### §8.2 Frontend 산출물
