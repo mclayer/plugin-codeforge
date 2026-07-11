@@ -29,6 +29,8 @@ tools: Read
 | §8 Test Contract 타당성 | — | ✅ | — | — | — |
 | **§8.5 Stateful / restart invariant 정의** | ✅ TestContractArch | ✅ DesignReview (감사) | — | StatefulTestAgent (검증) | — |
 | **§8.5 누락 / vague N/A 사유** | — | ✅ **P0 차단** | — | — | — |
+| **§8.8 동적 로스터 applicability·산출물 계약** | ✅ TestContractArch | ✅ DesignReview (감사) | ✅ CodeReview (실행 배선 재현) | — | — |
+| **§8.8 누락 / DO 산출물 계약 필드 부재 / N/A per-technique 사유 부재** | — | ✅ **P0 차단** | — | — | — |
 | 성능 baseline §8.3 프로토콜 타당성 | — | ✅ | — | — | — |
 | **§7 Trust boundary 정의** | ✅ | (감사) | — | (검증) | — |
 | **§7 Threat model (STRIDE-LITE)** | ✅ | (감사) | — | — | — |

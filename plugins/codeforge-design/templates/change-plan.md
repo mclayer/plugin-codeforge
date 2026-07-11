@@ -184,6 +184,8 @@ production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <
 
 ### §8. Test Contract (TestContractArchitectAgent 입력 통합 + chief author author — QADev TDD 입력 — 누락 시 DesignReview P0 차단)
 
+> **§8 burden-flip 표준 (do-it-unless-proven-infeasible — CFP-2605 / ADR-146 §결정 1)**: feasible 한 동적 검증은 **default 로 수행(DO)** 한다 — 미수행은 침묵이 아니라 정당화(`infeasibility_reason`, 자연 N/A 3축 AND = 산출물 target 부재 ∧ downstream 무변경 ∧ 미래의무 무선결)를 요구한다. 적용 범위 = **§8 전 동적 테스트 로스터 전반**(opt-in → burden-flip 반전, ADR-127 §결정5 강화). 기계 강제 천장(정직): fail-closed 는 §8.8 4기법 좌표 applicability 레코드 presence/구조까지만(AC-1a normative); §8-wide 표준의 *완결성*(전 동적 항목이 do-unless-infeasible 준수)은 대조 인벤토리 부재로 review-tier(AC-1b declared). 표준(altitude)은 넓고 게이트(§8.8 기계 slice)는 좁다.
+
 #### §8.1 커버리지 계획
 - 단위 테스트 범위 (신규·변경된 함수·클래스)
 - 통합 테스트 범위 (레이어 경계 · API-서비스 흐름)
@@ -325,6 +327,71 @@ TestContractArchitectAgent input contributor, ArchitectAgent(chief) author (§7 
   - "본 Story 는 agent md / template / docs 만 수정 — 실행 가능 frontend 코드 0줄 (plugin-meta-na)"
 - 단순 "not applicable" / "해당 없음" / 길이 <30자 차단
 - check-doc-section-schema.sh §8.7 lint 강제 (CFP-2505 / ADR-136 결정10)
+
+#### §8.8 동적 테스트 로스터 (fuzz / property / load / concurrency — CONDITIONAL — CFP-2605 / ADR-146 burden-flip)
+
+TestContractArchitectAgent input contributor, ArchitectAgent(chief) author (§8.7 동형 — ADR-006 §결정2). §8 burden-flip 표준의 4기법 구체 instantiation(Layer2 per-change do-unless-infeasible). 각 기법 DO 시 산출물 계약 필드 전부 기재, N/A 시 `infeasibility_reason`. `g2_boundary_check` = 본 로스터가 soak/restart/replay(=G2 단일소유, ADR-015 disjoint)로 넘어가지 않았음을 확인(Epic 경계). load(saturation 축) ⊥ soak(endurance=G2 참조) ⊥ concurrency(interleaving 축) ⊥ §8.3 Perf(regression 축) — 4축 disjoint. Layer1(툴체인·대상 표면 존재 = default-FALSE, ADR-136:168) 부재 시 자연 N/A — burden-flip(Layer2)이 툴체인 없는 consumer 에 강제하지 않는다.
+
+##### §8.8.0 Applicability decision (필수)
+
+| technique | applicability_status (DO\|N/A) | g2_boundary_check |
+|---|:-:|---|
+| fuzz | □ | <soak/restart/replay 미신설 확인 — g2_boundary_check: 근거> |
+| property | □ | <g2_boundary_check: 근거> |
+| load | □ | <g2_boundary_check: 근거> |
+| concurrency | □ | <g2_boundary_check: 근거> |
+
+→ status 셀 = `DO` 또는 `N/A` 만 기재 (사유·basis 는 §8.8.N 본문 — 표 안 raw `|` pipe-break 회피)
+→ DO: 해당 §8.8.N 산출물 계약 필드 전부 기재 필수
+→ N/A(mixed — 일부만 N/A): §8.8.N 본문에 per-technique `infeasibility_reason` = "N/A — <substantive ≥30자>" 명시 (§8.5/§8.7 aggregate-only 대비 signature 검사 — AC-2 hollow-gap 마감)
+→ 4기법 전부 N/A: §8.8.x aggregate N/A + substantive reason
+→ `g2_boundary_check` token 부재 시 차단 (AC-7 — Epic G2 경계 침범)
+
+##### §8.8.1 fuzz (DO 시 6 필드 — 미적용 시 "N/A — <사유≥30자>")
+
+- **target**: {fuzz 대상 함수/파서/디코더}
+- **input_surface**: {입력 표면 — byte stream / structured input / API param}
+- **oracle**: {crash / panic / assertion / invariant 위반 — 무엇을 결함으로 보는가}
+- **seed_or_corpus**: {seed corpus 경로 / 생성 전략}
+- **execution_budget**: {실행 예산 — N iterations / T seconds / coverage plateau `[empirical-source: consumer test.yml, Phase 2]`}
+- **pass_condition**: {통과 조건 — 예산 내 0 crash 등}
+
+##### §8.8.2 property (DO 시 4 필드 — 미적용 시 "N/A — <사유≥30자>")
+
+- **property_definition**: {유지돼야 할 property — round-trip / idempotence / invariant}
+- **input_generator**: {입력 생성기 — Hypothesis / fast-check / quickcheck strategy}
+- **sample_budget**: {샘플 수 `[empirical-source: consumer test.yml, Phase 2]`}
+- **pass_condition**: {반례 0 + shrinking 최소 반례 보고}
+
+##### §8.8.3 load (DO 시 4 필드 — 미적용 시 "N/A — <사유≥30자>")
+
+- **load_profile**: {부하 프로파일 — ramp / sustained / spike (saturation 축; soak=endurance 아님 — Grafana 6-way taxonomy, load≠stress≠soak≠spike≠breakpoint)}
+- **metrics**: {p50 / p95 / p99 latency · throughput · error-rate}
+- **threshold_or_baseline_ref**: {임계 or §8.3 Perf Baseline 참조 — **saturation ≠ regression** 관계 명시(§8.3 축과 disjoint)}
+- **duration**: {지속 `[empirical-source: consumer test.yml, Phase 2]`}
+
+##### §8.8.4 concurrency (DO 시 5 필드 — 미적용 시 "N/A — <사유≥30자>")
+
+- **shared_state**: {경합 공유 상태}
+- **execution_model**: {interleaving / stress — 실행 순서 축(§8.5 temporal·재시작 축 아님)}
+- **worker_count**: {동시 worker 수 `[empirical-source: consumer test.yml, Phase 2]`}
+- **oracle**: {race / deadlock / atomicity 위반 — linearizability 검증 = NP-complete(Gibbons & Korach, SIAM J. Comput. 1997), best-effort}
+- **duration**: {지속 `[empirical-source: consumer test.yml, Phase 2]`}
+
+##### §8.8.5 정직 천장 (AC-8 — no-hollow, 4 잔여 공개)
+
+게이트는 applicability 표·산출물 계약 필드 presence/구조까지만 fail-closed. 아래 4 잔여는 강제하지 않는다(강제하는 척 = 검사연극, ADR-119):
+- (i) **검출력(discriminating)** — 테스트가 결함을 켠 채 잡는가 = **G3 미강제**
+- (ii) **열거 완결성** — feasible 기법 최대 열거 = AC-1b review 미강제
+- (iii) **infeasibility 사유 타당성** — 형식 회피 아닌 실질 = AC-5 review 미강제
+- (iv) **`g2_boundary_check` presence ≠ boundary 실준수** — token 존재가 경계 실준수 보장 아님
+- ∴ "완전 봉인" hard-claim 금지 — "구조 fail-closed + 형식누락 저감 + 잔여 정직 공개"로 재약속.
+
+##### §8.8.x N/A 명시 (4기법 전부 N/A 시 — runtime code 0 Story)
+
+- 표기: "N/A — <substantive reason ≥30자>. 검증 채널: check_section_8_8 self-test + DesignReview. 면제 분류: plugin-meta-na | runtime-inert" (ADR-005 + ADR-127 §결정5 N/A 3축)
+- substantive reason 예시: "본 Story 는 문서/lint/agent-md 만 수정 — 실행 가능 런타임 코드 0줄, 4기법 대상 표면·실행 러너·oracle 부재 (plugin-meta-na)"
+- 단순 "not applicable" / "해당 없음" / 길이 <30자 차단 (check_section_8_8 강제 — CFP-2605 / ADR-146)
 
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)

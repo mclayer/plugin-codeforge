@@ -306,6 +306,10 @@ evidence_driven_pointers:
 
 change-plan §8.7 미러 cross-ref (본문 상세 SSOT = change-plan.md §8.7). UI/CSS 변경 동반 Story 는 §8.7.0 applicability 표(CSS·컴포넌트·토큰·layout-affecting 4 행 Y/N)로 적용 판정 후 1+ Y 시 실 layout 엔진(Playwright 권장) render-truth 검증을 §8 개발 서사에 포함한다 — lint·jsdom 과 도구 독립인 직교 게이트. frontend 무관 / UI·CSS 변경 0 시 N/A (substantive 30자 이상 reason).
 
+#### §8.8 동적 테스트 로스터 (fuzz / property / load / concurrency — CONDITIONAL — CFP-2605 / ADR-146)
+
+change-plan §8.8 미러 cross-ref (본문 상세 SSOT = change-plan.md §8.8). §8 burden-flip 표준(feasible 동적 검증 default 수행 — do-it-unless-proven-infeasible)의 4기법 1급 로스터. 실행 가능 런타임 코드 있는 Story 는 §8.8.0 applicability 표(fuzz·property·load·concurrency 4 행 `DO|N/A` + `g2_boundary_check`)로 판정 후 DO 기법의 산출물 계약 필드(fuzz 6 / property 4 / load 4 / concurrency 5)를 §8 개발 서사에 포함하고, 실 실행은 consumer `test.yml`(QADeveloperAgent, ADR-048 CI-native)로 배선한다. 4기법 전부 N/A(runtime code 0) 시 §8.8.x aggregate N/A (substantive 30자 이상 reason). soak/restart/replay = G2 단일소유(§8.5 disjoint) — `g2_boundary_check` 로 경계 무침범 확인. 정직 천장(§8.8.5): 게이트는 presence/구조까지만 — 검출력(=G3)/완결성/사유타당성은 review·advisory·G3 로 defense-in-depth.
+
 ### §9. 품질 게이트 이력
 
 #### §9.0 Clarification 재스폰 이력 (FIX 아님)
