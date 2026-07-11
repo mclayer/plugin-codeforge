@@ -57,7 +57,9 @@ mclayer org 의 CI 실행을 GitHub-hosted runner(`ubuntu-latest`)에서 org 소
 runs-on: ${{ fromJSON(vars.CI_RUNS_ON_JSON || '["ubuntu-latest"]') }}
 ```
 
-- **단일 key `CI_RUNS_ON_JSON`** (JSON array 문자열) 하나로 scalar(단일 라벨) / 다중 라벨 / matrix·non-matrix leg 를 interface 1개로 통일한다. 2-key / 2-template-fork 방식은 SSOT 파괴·byte-parity 붕괴로 **기각**한다(RefactorAgent 권고 채택).
+- **단일 key `CI_RUNS_ON_JSON`** (JSON array 문자열) 하나로 scalar(단일 라벨)과 다중 라벨을 interface 1개로 통일한다. 2-key / 2-template-fork 방식은 SSOT 파괴·byte-parity 붕괴로 **기각**한다(RefactorAgent 권고 채택).
+- **적용 범위 = uniform single-leg job (P1-2)** — Surface A 거버넌스 템플릿(전부 ubuntu 단일 leg) + Surface B 의 non-matrix job. **matrix os-leg job(Surface B 4 rust-ci + container job)은 §결정 11** — 단일 key 로 모든 leg 가 같은 값으로 resolve 되면 Windows leg 가 group5 라우팅을 상실(붕괴)하므로 leg-keyed 변수로 분기한다.
+- **변수명 SSOT (P2-c)** — 요구사항 lane 표기 `CI_RUNNER`(scalar) = 본 설계 lock `CI_RUNS_ON_JSON`(array). scalar→array 확장(다중 라벨 지원). matrix Surface B 는 leg-keyed `CI_RUNS_ON_LINUX_JSON` / `CI_RUNS_ON_WINDOWS_JSON`(§결정 11). Story §5.2/§5.3/§6.2 의 구 `CI_RUNNER` 표기는 이 매핑으로 해석한다.
 - **in-file default = `["ubuntu-latest"]` (불변)** — §결정 4 참조. 이 default 는 §제약 3(public wrapper 가 같은 파일 배포)에 의해 self-hosted 로 flip 할 수 없다.
 - **Ports & Adapters**: workflow 파일 = port(실행 의도), repository variable = adapter(물리 runner 배선). runner 물리 선택은 파일이 아닌 variable 값으로만 표현된다.
 
@@ -81,7 +83,8 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 - **ADR-068 invariant + §제약 3 지배**: public wrapper 가 같은 파일을 배포하므로 in-file coalesce default 는 **반드시 `["ubuntu-latest"]`** (public 은 self-hosted 물리 불가). default-flip 은 기각.
 - **private 안전 = 2-layer 배선**으로 확보한다:
   - **(i) provisioning invariant** — 모든 in-scope private/internal repo 는 bootstrap Stage 5b(=`scripts/bootstrap-consumer.sh` L340-371 `wire-branch-protection.sh` 동형 hook 후보)에서 `CI_RUNS_ON_JSON` variable 을 **SET** 한다.
-  - **(ii) unset 감지 lint(fail-loud)** — in-scope private repo 에 `CI_RUNS_ON_JSON` 이 미설정이면 fail-loud 로 감지한다. unset 은 hosted billing hard-block → 2-3초 FAIL → deadlock(AC-11)을 유발하며, 이는 조용한 pending 보다 나쁘다(InfraOp R-5 근거). 조용한 billable/deadlock 을 차단한다.
+  - **(ii) unset 감지 lint(fail-loud) — 실행면은 billing-독립 (P1-1)** — in-scope private repo 에 required 변수(§결정 11 matrix repo = `CI_RUNS_ON_LINUX_JSON` ∧ `CI_RUNS_ON_WINDOWS_JSON` 둘 다, 그 외 = `CI_RUNS_ON_JSON`)가 미설정이면 fail-loud 로 감지한다. unset 은 hosted billing hard-block → 2-3초 FAIL → deadlock(AC-11)을 유발하며, 이는 조용한 pending 보다 나쁘다(InfraOp R-5 근거). **이 lint 를 hosted-CI 워크플로로 구현하면 안 된다** — 감지 대상인 billing 소진에 co-blocked 되어 발화 불가(**born-dead-gate** — Story §2.2/§2.7 이 확립한 hosted required check 2-3초 startup FAIL 과 동일 원인 class: css-lint born-invalid / execution-liveness 반복 재발). **실행면 = billing-독립 3택 조합**: ① **provisioning-time 스크립트(primary)** — bootstrap Stage 5b 에서 `gh api repos/{r}/actions/variables/{name}` 메타데이터 스캔(CI job 아님, operator/hub context = hosted 분 0)으로 변수 존재·값 검증, 미설정 시 provisioning 완료 차단 (**CI 실행 前이라 co-block 물리 불가**) ② **self-hosted runner 실행** — W0 착지 후 ongoing drift(변수 삭제) 검사를 self-hosted 에서(billing-free) ③ **org-level hub gh-api 주기 스캔**. **부트스트랩 순서 배선**: Stage 5b provisioning 검증(변수 present, fail-loud) → W0 runner 등록 → self-hosted ongoing drift 검사. "언제 lint 가 살아나는가" = provisioning-time(CI 이전) + self-hosted(W0 이후) — hosted-CI 아님.
+  - **(iii) provisioning scope 제약 (P2-d)** — 변수는 **repo-scoped** 로 provisioning 한다. **org-level variable 금지**(또는 visibility-scoped private-only). org-level `CI_RUNS_ON_*_JSON` 은 public `plugin-codeforge`/`marketplace` 까지 override 해 §결정 2/3 의 delta-0(hosted 유지)을 파손한다.
 - default-flip 을 provisioning invariant + fail-loud detection 으로 대체하는 이 판정은 Change Plan §7.4/§9 에 명문화한다.
 
 ### §결정 5 — preinstall baseline 계약
@@ -92,7 +95,7 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 
 ### §결정 6 — 카나리 + 웨이브 롤아웃 (W0 부트스트랩 포함)
 
-- **W0 (부트스트랩·1회성)**: SecurityArch P0 완화 순서 준수 — (1) 부트스트랩 PR 을 **runner 미등록 상태에서** 먼저 merge → (2) workflow diff 를 사람이 verbatim 리뷰 → (3) **그 후** runner 를 등록(코드 실행 전 검증). admin-merge 감사기록에 workflow diff 해시를 남기고, 부트스트랩 한정성을 1회성 물리 게이트로 강제한다. 이는 billing hard-block 하에서 거버넌스 required check(check-gate/phase-gate-mergeable)가 dead 인 순환 merge-gate(Story §2.7 C-BOOTSTRAP)를 의도적·수동 admin-merge 1회로 돌파하는 조치이며, ADR-048 Amd2 의 *자동* admin-merge(5분 stuck fallback)와 구분된다.
+- **W0 (부트스트랩·1회성)**: SecurityArch P0 완화 순서 준수 — (1) 부트스트랩 PR 을 **runner 미등록 상태에서** 먼저 merge → (2) workflow diff 를 사람이 verbatim 리뷰 → (3) **그 후** runner 를 등록(코드 실행 전 검증). admin-merge 감사기록에 workflow diff 해시를 남긴다. **TOCTOU 가드(P2-a)**: runner 등록 직전 `main HEAD SHA == 검토된 workflow diff 의 base SHA` 를 재확인하는 게이트를 둔다 — 리뷰↔등록 사이 main 이 전진했으면 재리뷰(등록 차단). 부트스트랩 한정성은 "물리 게이트"가 아니라 **감사 convention**(1회성 라벨 + admin-merge 감사기록 + registration-time HEAD 재확인 게이트)으로 실태에 맞춰 bound 한다. 이는 billing hard-block 하에서 거버넌스 required check(check-gate/phase-gate-mergeable)가 dead 인 순환 merge-gate(Story §2.7 C-BOOTSTRAP)를 의도적·수동 admin-merge 1회로 돌파하는 조치이며, ADR-048 Amd2 의 *자동* admin-merge(5분 stuck fallback)와 구분된다.
 - **카나리**: 1개 저부담 repo 에서 §결정 1 계약을 실측한다. 성공기준 = Change Plan §8 의 5-AND(실 runner metadata=self-hosted / pickup bounded / required context 전부 green / mergeStateStatus=CLEAN / preinstall baseline 실측).
 - **웨이브**: 카나리 PASS 후 나머지 private/internal repo 를 웨이브로 순차 이관. Windows leg(단일 runner group5)는 직렬화 병목이므로 각 웨이브 내 최후순위. `--scale` 은 웨이브 최대 병렬 이상으로 설정한다(값 = 카나리 실측).
 
@@ -112,12 +115,42 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 
 - `ADR-048-ci-native-test-execution` Amendment 2 의 5분 stuck-classifier 는 self-hosted 의 정상 queue-time 대기(특히 group5 Windows 단일 runner 의 matrix leg 직렬화)를 stuck 으로 오판해 premature admin-merge(게이트 무력화)를 유발할 수 있다.
 - **carve-out**: stuck 판정을 pickup-기반으로 정련한다 — job 이 runner 에 **assigned + started** 인가(정상 실행 → 임계 상향: self-hosted 20~30분, Windows leg 별도) vs 단순 pending·미배정(진짜 stuck → DR: 사용자 통지, admin-merge 아님). 임계 상향값은 `[empirical-source: canary 실측 대상]` (추정 lock-in 금지).
-- 본 ADR 이 carve-out 을 선언하되, 실 정련은 **`ADR-048-ci-native-test-execution` Amendment 3 동반**을 요구한다(Change Plan §10 amendment 후보).
+- **본 §결정 9 가 carve-out 의 normative 정의다**: (a) stuck 판정 입력 = job 이 online·label-match runner 에 **assigned+started** 되었는가(`gh api .../runs/{id}/jobs` 의 `runner_name` non-null ∧ `status=in_progress`) (b) assigned+started = 정상 → self-hosted 라벨 job 은 stuck 임계 상향(카나리 실측값, 잠정 20~30분; Windows group5 leg 별도 상향) (c) **미배정(no matching online runner) = 진짜 stuck → DR 경로(사용자 통지, admin-merge 아님)** — self-hosted queue-time 을 hosted 초 단위 가정으로 오판해 premature admin-merge 하는 게이트 무력화를 차단한다.
+- `ADR-048-ci-native-test-execution` **Amendment 3** 은 본 §결정 9 를 cross-ref 로 채택한다(Phase 2 prerequisite — Change Plan §10). 실 ADR-048 파일 amendment(amendment slot claim 포함)는 구현 lane follow-up.
 
 ### §결정 10 — ADR-RESERVATION 인용 slug 의무 + ADR-005 mirror 오귀속 정정
 
 - ADR-048 번호는 dual-occupancy 이다: `ADR-048-ci-native-test-execution`(Accepted, canonical) + `ADR-048-ghec-governance-as-code`(Proposed, orphan). 본 ADR 이 ADR-048 을 인용할 때는 **slug 를 명시**한다(번호만 인용 금지 — ambiguous). related_adrs 에서 `ADR-048-ci-native-test-execution` slug 명시로 이 의무를 이행한다.
 - ADR-005 mirror 오귀속 정정: workflow byte-identical mirror invariant 의 SSOT 는 ADR-005 가 아니라 ADR-027 Amd3(marker) + ADR-063(marketplace) + 실 enforcement=`invariant-check.yml` 이다. 본 ADR 은 mirror 를 ADR-005 에 귀속하지 않는다(ADR-005 = N/A 표준화만).
+
+### §결정 11 — matrix os-leg / container-job per-runner 차등 (Surface B, P1-2)
+
+**gap**: `runs-on: ${{ matrix.os }}` 로 `matrix.os:[ubuntu-latest,windows-latest]` 를 도는 job(firsthand 확인: `mctrader-engine/.github/workflows/rust-ci.yml`; 4 matrix rust-ci repo = mctrader/-engine/-market/-data-collector)에 §결정 1 단일 key 를 적용하면 두 leg 가 같은 변수 값으로 resolve → Windows leg 가 group5 라우팅을 상실(붕괴). §결정 5 의 `setup-*` step 은 도구 설치이지 runner **선택**이 아니라 gap 미해소.
+
+**mechanism = leg-keyed 변수 + include-based hosted default**:
+
+```yaml
+strategy:
+  matrix:
+    include:
+      - leg: linux
+        runner_default: '["ubuntu-latest"]'
+      - leg: windows
+        runner_default: '["windows-latest"]'
+runs-on: ${{ fromJSON(vars[format('CI_RUNS_ON_{0}_JSON', matrix.leg)] || matrix.runner_default) }}
+```
+
+- **leg 별 라우팅 보존**: linux leg → `CI_RUNS_ON_LINUX_JSON`(private=`["self-hosted","X64","Linux","docker"]` → **group6**, public/unset=`["ubuntu-latest"]`); windows leg → `CI_RUNS_ON_WINDOWS_JSON`(private=`["self-hosted","Windows","X64"]` → **group5**, public/unset=`["windows-latest"]`).
+- **byte-identical**: `matrix.include` 블록 + `runs-on` 표현식이 repo 간 uniform → §결정 3 byte-parity 무붕괴. 분기는 leg-keyed 변수 **값**에서만.
+- **container job**: DooD/`container:` job 은 항상 linux leg key(group6, Windows docker 부재 §결정 2)로 pin.
+- **provisioning invariant(§결정 4)**: matrix repo 는 `CI_RUNS_ON_LINUX_JSON` ∧ `CI_RUNS_ON_WINDOWS_JSON` 둘 다 SET; unset 감지 lint 는 둘 다 검사.
+- **범위 구분**: Surface A(거버넌스 템플릿 = uniform ubuntu 단일 leg)는 §결정 1 단일 key 로 충분. 본 §결정 11 은 Surface B 4 matrix rust-ci + container job 한정.
+- **확인불가 defer**: `vars[format(...)]` 동적 변수 lookup + `matrix.include` 의 `runner_default` 참조 조합은 fromJSON-array(§결정 1)와 동일하게 GitHub 공식문서 명시 예시 부재 → **KU-2 dry-run 에 windows-leg 확장 실증 추가**(Change Plan §8). 기존 `matrix.os` step 참조(setup-*/cargo target 등)는 `matrix.leg` rename 시 Phase 2 InfraEng 가 동반 갱신(또는 `os` 필드 병기 보존).
+
+### §결정 12 — 관측성 (P2-e)
+
+- **app-level runtime metric = N/A** (앱 런타임 0 — CI 배선 governance).
+- **runner-level 관측성 (신규 boundary)**: self-hosted runner host 는 신규 실행 경계이므로 (a) runner online status(GitHub runner API `status:online`, §결정 6/7 DR) (b) queue-depth / pickup-latency(§결정 7 queue-starvation 24h 가드 + §8 카나리 5-AND(2) pickup bounded) (c) restart 자동복구(§결정 6 restart-aware) 를 관측한다. 상세 = Change Plan §7.4/§8 cross-ref.
 
 ## 결과
 
