@@ -107,6 +107,15 @@ trivy / hadolint 는 **`infra_strategy: docker_first` consumer 만 active**. pro
 - **검사연극 차단**: web 조사는 CVE·공급망·표준 등 외부사실 의존 지점 한정. injection·credential 등 내부 코드 사실 축 결함에는 깊은 web 조사 강제 금지 ([ADR-119](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-119-research-before-claims.md) §결정 6 — 문구 SSOT, 복붙 금지).
 - **packet 주입**: 본 심화 directive 는 `checklist_path` (`templates/review-checklists/security.md` §7.1-§7.3) 로 워커에 전달. PL 은 별도 inline 복제 없이 checklist pointer 로 위임 (drift 회피).
 
+## DAST 런타임 동적 축 결과 fetch/종합 (§8.9 — ADR-150 §결정 9)
+
+보안 lane 은 전면 정적(1차 자동도구 + 2차 web CVE + 9축 정적 리뷰)이나, **실행 중에만 발동하는 취약점**(런타임 injection·인증 우회·민감데이터 노출·설정 취약)을 잡는 **DAST(동적 보안 검증) 결과**를 종합한다. 본 절은 결과 **fetch + 종합**만 다룬다 — 실 DAST 스캔 구동은 **QADeveloperAgent 가 consumer `test.yml`/`dast.yml` 에 배선**(ADR-048 CI-native), SecurityTestPL 은 그 산출물(SARIF)을 fetch·종합할 뿐이다.
+
+- **SARIF fetch = trivy/hadolint 패턴 재사용** ([ADR-033](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-033-infra-strategy.md)): DAST(OWASP ZAP) 결과는 GitHub Security tab 에 SARIF 로 업로드 → `gh api repos/<owner>/<repo>/code-scanning/alerts?tool_name=zap` 로 fetch (trivy/hadolint 와 동일 endpoint, `tool_name=zap` filter). SARIF severity → finding severity 매핑도 동일.
+- **opt-in (`security_ai: true`)**: DAST 결과 AI-synthesis 는 `security_ai: true` consumer 만 발동. `security_ai` 미설정·false 인 경우 본 절 skip — 단 **§8.9 presence 게이트 자체는 design-lane doc-section 으로 opt-in 과 무관**(3-lane decouple, ADR-150 §결정 5).
+- **additive to first_layer_findings**: DAST finding 은 별도 계약 필드가 아니라 기존 `first_layer_findings` 에 `zap` 키로 additive 첨부(신규 contract 필드 0 — packet schema 확장 0, ADR-001 cross-ref). 워커는 SARIF pointer 입력으로 받아 high-level 분석에 집중.
+- **category_enum 무변경**: DAST 는 신규 보안 category 를 만들지 않는다 — 기존 9축 category_enum(injection/auth/config/pii = 런타임 거울면 YES / trust-boundary·credential·crypto = wire-subset PARTIAL / dependency-cve·race = NO)의 **런타임 거울면**으로 심각도 승격. **DAST 축 계약 SSOT = §8.9 Test Contract**(`templates/change-plan.md`) — 본 절은 fetch/종합 배선만, 필드 계약 중복 기재 금지(drift 회피).
+
 ## 워커 packet 작성 (lane=security)
 
 ```yaml
@@ -149,6 +158,7 @@ review_packet:
     push_protection: <fetched bypass events>      # optional
     trivy: <fetched container CVE/misconfig findings>           # CFP-128 / ADR-033 — docker_first consumer 만
     hadolint: <fetched Dockerfile lint findings>                # CFP-128 / ADR-033 — docker_first consumer 만
+    zap: <fetched DAST/ZAP SARIF findings>                      # ADR-150 §결정 9 — additive, security_ai:true consumer 만 (tool_name=zap)
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```

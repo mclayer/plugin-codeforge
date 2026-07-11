@@ -31,6 +31,7 @@ tools: Read
 | **§8.5 누락 / vague N/A 사유** | — | ✅ **P0 차단** | — | — | — |
 | **§8.8 동적 로스터 applicability·산출물 계약** | ✅ TestContractArch | ✅ DesignReview (감사) | ✅ CodeReview (실행 배선 재현) | — | — |
 | **§8.8 누락 / DO 산출물 계약 필드 부재 / N/A per-technique 사유 부재** | — | ✅ **P0 차단** | — | — | — |
+| **§8.9 DAST 런타임 동적 축** (presence=design-lane doc-section gate ⊥ security_ai opt-in synthesis — ADR-150) | ✅ TestContractArch + SecurityArch | ✅ **P0 차단** (§8.9 presence, security_ai 무관) | — | ✅ 결과 fetch/종합 (SARIF `tool_name=zap`, opt-in) | — |
 | 성능 baseline §8.3 프로토콜 타당성 | — | ✅ | — | — | — |
 | **§7 Trust boundary 정의** | ✅ | (감사) | — | (검증) | — |
 | **§7 Threat model (STRIDE-LITE)** | ✅ | (감사) | — | — | — |

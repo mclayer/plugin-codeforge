@@ -144,6 +144,34 @@ def _slice_8_8_subsection(body: str, sub: str) -> str:
     return body[start:end]
 
 
+# ── CFP-2612 / ADR-150 §결정 10 — §8.9 런타임 DAST 보안 동적 축 doc-section lint.
+#    check_section_8_8 verbatim 동형(single `dast` axis — 4기법 loop 미복제). NA_85_SUBSTANTIVE_RE 재사용.
+#    정직 천장(ADR-150 §결정3): applicability 레코드 + 12 산출물 필드 + status enum + infeasible⟹reason
+#    + 2 cross-field 선언-정합(§결정4)까지만 fail-closed. 검출력/완결성/사유타당성/g_boundary_check 준수는 강제 안 함.
+#    ★ §8.6 gap 무관: §8.9 헤딩 존재만 트리거.
+SECTION_8_9_HEADER_RE = re.compile(r"^####? §8\.9\b", re.MULTILINE)
+SECTION_8_9_0_HEADER_RE = re.compile(r"^#####? §8\.9\.0\b", re.MULTILINE)
+SECTION_8_9_1_HEADER_RE = re.compile(r"^#####? §8\.9\.1\b", re.MULTILINE)
+SECTION_8_9_X_HEADER_RE = re.compile(r"^#####? §8\.9\.x\b", re.MULTILINE)
+APPLICABILITY_8_9_ROW_RE = re.compile(r"\|\s*dast\s*\|\s*(DO|N/A)\s*\|", re.MULTILINE)
+# §8.9.1 dast DO 시 12 unconditional 산출물 계약 필드 (change-plan §3.2). infeasibility_reason=conditional, g_boundary_check=region-token(별도).
+DAST_8_9_FIELDS = ["target", "attack_surface", "scanner_or_harness", "payload_class", "oracle", "repro_seed", "execution_budget", "pass_condition", "status", "auth_mode", "environment_ref", "observed_result"]
+DAST_STATUS_ENUM = {"executed", "infeasible", "natural_na"}
+DAST_PAYLOAD_ACTIVE = {"active", "destructive"}
+NONPROD_MARKER_RE = re.compile(r"(?i)(non-prod|nonprod|ephemeral|staging|sandbox|local|throwaway|disposable)")
+
+
+def _slice_8_9_subsection(body: str, sub: str) -> str:
+    hdr_re = re.compile(r"^#####? §" + re.escape(sub) + r"\b", re.MULTILINE)
+    m = hdr_re.search(body)
+    if not m:
+        return ""
+    start = m.end()
+    nxt = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+    end = start + (nxt.start() if nxt else len(body) - start)
+    return body[start:end]
+
+
 DEBATE_TRANSCRIPT_HEADER_RE = re.compile(
     r"^###\s+Debate transcript:\s*(?P<anchor>.*)$",
     re.MULTILINE,
@@ -352,7 +380,7 @@ def check_section_8_8(md_path: Path, body: str) -> list:
 
     # §8.8 region slice(§8.8 헤딩 ~ 다음 ### 헤딩) — g2 token 검사 scope 격리.
     m88 = SECTION_8_8_HEADER_RE.search(body)
-    nxt3 = re.search(r"^###\s+\S", body[m88.end():], re.MULTILINE)
+    nxt3 = re.search(r"^#{1,4}\s+\S", body[m88.end():], re.MULTILINE)
     region_end = m88.end() + (nxt3.start() if nxt3 else len(body) - m88.end())
     section_88 = body[m88.start():region_end]
 
@@ -404,6 +432,79 @@ def check_section_8_8(md_path: Path, body: str) -> list:
     return fails
 
 
+def check_section_8_9(md_path: Path, body: str) -> list:
+    # CFP-2612 / ADR-150 §결정 10 — §8.9 런타임 DAST 로스터 lint(§8.8 동형, single dast). §8.9 헤딩 부재 → 무검사.
+    fails = []
+    if not SECTION_8_9_HEADER_RE.search(body):
+        return []
+
+    if not SECTION_8_9_0_HEADER_RE.search(body):
+        fails.append(f"{md_path}: §8.9 본문 존재하나 §8.9.0 Applicability decision 헤딩 부재")
+        return fails
+
+    # §8.9 region slice(§8.9 헤딩 ~ 다음 #{1,4} 헤딩) — g_boundary_check token 검사 scope 격리.
+    m89 = SECTION_8_9_HEADER_RE.search(body)
+    nxt = re.search(r"^#{1,4}\s+\S", body[m89.end():], re.MULTILINE)
+    region_end = m89.end() + (nxt.start() if nxt else len(body) - m89.end())
+    section_89 = body[m89.start():region_end]
+
+    m = APPLICABILITY_8_9_ROW_RE.search(body)
+    if not m:
+        fails.append(f"{md_path}: §8.9.0 표 의 dast 행 누락 (DO/N/A 미파싱)")
+        return fails
+    status_cell = m.group(1)
+
+    # AC-2c — g_boundary_check token presence(Epic G2 soak/restart/replay ∧ G4 fuzz 경계 무침범, fail-closed).
+    if "g_boundary_check" not in section_89:
+        fails.append(f"{md_path}: §8.9 g_boundary_check token 부재 — Epic G2(soak/restart/replay)·G4(fuzz) 경계 확인 누락 (AC-2c)")  # MUT-B-G-TOKEN
+
+    if status_cell == "DO":
+        sub_body = _slice_8_9_subsection(body, "8.9.1")
+        if not sub_body:
+            fails.append(f"{md_path}: §8.9.0 dast=DO 이나 §8.9.1 산출물 계약 본문 부재 (AC-2a)")
+            return fails
+        missing_fields = [f for f in DAST_8_9_FIELDS if f not in sub_body]
+        if missing_fields:
+            fails.append(f"{md_path}: §8.9.1 dast DO 필수 산출물 필드 누락 — {missing_fields} (AC-2a)")  # MUT-A-DO-FIELDS
+        # AC-2b — status enum(3-value{executed/infeasible/natural_na}) + infeasible⟹infeasibility_reason(30자 minimum).
+        sm = re.search(r"^\s*[-*]?\s*status:\s*(\S+)", sub_body, re.MULTILINE)
+        status_val = sm.group(1) if sm else None
+        if status_val is not None and status_val not in DAST_STATUS_ENUM:
+            fails.append(f"{md_path}: §8.9.1 status enum 위반 '{status_val}' — {sorted(DAST_STATUS_ENUM)} 중 하나 (AC-2b)")  # MUT-D-STATUS-ENUM
+        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:\s*(.+)", sub_body, re.MULTILINE)
+        reason_ok = bool(rm) and len(rm.group(1).strip()) >= 30
+        if status_val == "infeasible" and not reason_ok:
+            fails.append(f"{md_path}: §8.9.1 status=infeasible 이나 infeasibility_reason(30자 minimum) 부재 (AC-2b)")  # MUT-E-INFEAS-REASON
+        # AC-6a — blast-radius(§3.4a): payload_class ∈ {active,destructive} ⟹ environment_ref non-prod/ephemeral marker.
+        pm = re.search(r"^\s*[-*]?\s*payload_class:\s*(\S+)", sub_body, re.MULTILINE)
+        payload_val = pm.group(1) if pm else None
+        if payload_val in DAST_PAYLOAD_ACTIVE:
+            em = re.search(r"^\s*[-*]?\s*environment_ref:\s*(.+)", sub_body, re.MULTILINE)
+            env_val = em.group(1) if em else ""
+            if not NONPROD_MARKER_RE.search(env_val):
+                fails.append(f"{md_path}: §8.9.1 payload_class={payload_val} 이나 environment_ref non-prod/ephemeral marker 부재 — blast-radius 미격리 (AC-6a)")  # MUT-F-ACTIVE-PROD
+        # AC-6b — authenticated 정합(§3.4b): attack_surface authenticated ∧ auth_mode=unauthenticated ⟹ infeasibility_reason present.
+        asm = re.search(r"^\s*[-*]?\s*attack_surface:\s*(.+)", sub_body, re.MULTILINE)
+        surface_val = asm.group(1).lower() if asm else ""
+        am = re.search(r"^\s*[-*]?\s*auth_mode:\s*(\S+)", sub_body, re.MULTILINE)
+        auth_val = am.group(1) if am else None
+        if re.search(r"(?<!un)authenticated", surface_val) and auth_val == "unauthenticated" and not reason_ok:
+            fails.append(f"{md_path}: §8.9.1 attack_surface authenticated ∧ auth_mode=unauthenticated 이나 infeasibility_reason 부재 — silent false-negative (AC-6b)")  # MUT-G-AUTH-UNAUTH
+    else:  # status_cell == "N/A" (aggregate)
+        if not SECTION_8_9_X_HEADER_RE.search(body):
+            fails.append(f"{md_path}: §8.9.0 dast=N/A 인데 §8.9.x N/A 명시 헤딩 부재")
+        else:
+            m89x = SECTION_8_9_X_HEADER_RE.search(body)
+            start = m89x.end()
+            next_header = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+            end = start + (next_header.start() if next_header else len(body) - start)
+            section_body = body[start:end].strip()
+            if not NA_85_SUBSTANTIVE_RE.search(section_body):
+                fails.append(f"{md_path}: §8.9.x N/A reason 가 substantive 30자 minimum 미충족 — vague reason 차단 (CFP-2612 / ADR-150 결정10)")
+
+    return fails
+
+
 def main():
     warns = []
     section_7_4_warns = []
@@ -411,6 +512,7 @@ def main():
     section_8_5_warns = []
     section_8_7_warns = []
     section_8_8_warns = []
+    section_8_9_warns = []
     debate_transcript_warns = []
     for prefix, patterns in REQUIRED_SECTIONS.items():
         path = Path(prefix)
@@ -454,6 +556,8 @@ def main():
                 section_8_7_warns.extend(s87_fails)
                 s88_fails = check_section_8_8(md, text)
                 section_8_8_warns.extend(s88_fails)
+                s89_fails = check_section_8_9(md, text)
+                section_8_9_warns.extend(s89_fails)
 
     for extra_prefix in ["docs/stories"]:
         extra_path = Path(extra_prefix)
@@ -472,7 +576,7 @@ def main():
             debate_fails = check_debate_transcript(md, text)
             debate_transcript_warns.extend(debate_fails)
 
-    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(section_8_8_warns) + len(debate_transcript_warns)
+    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(section_8_8_warns) + len(section_8_9_warns) + len(debate_transcript_warns)
     if total_fails:
         print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
         if warns:
@@ -498,6 +602,10 @@ def main():
         if section_8_8_warns:
             print(f"  [CFP-2605 §8.8 동적 로스터 applicability] {len(section_8_8_warns)} 건")
             for w in section_8_8_warns:
+                print(f"  - {w}")
+        if section_8_9_warns:
+            print(f"  [CFP-2612 §8.9 DAST 로스터 applicability] {len(section_8_9_warns)} 건")
+            for w in section_8_9_warns:
                 print(f"  - {w}")
         if debate_transcript_warns:
             print(f"  [CFP-391 §9 debate transcript schema] {len(debate_transcript_warns)} 건")

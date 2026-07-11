@@ -132,6 +132,20 @@ Change Plan §8.8 에 **DO** 로 판정된 동적 기법(fuzz/property/load/conc
 - **wrapper-self 거버넌스 Story**: 4기법 대개 자연 N/A(declarative) — §8.8 레코드 schema 존재 + 정당화만 확인, 실 동적 구동 배선 면제(ADR-146 §결정 6). 실측 정량 파라미터는 consumer test.yml Phase 2 defer.
 - **정직 천장**: §8.8 검출력(결함을 실제로 잡는가) 강제 = G3 소관(미강제). 본 에이전트는 산출물 계약 필드대로 실행이 배선됐는지까지 이행하고 검출력 봉인은 주장하지 않는다(ADR-146 §결정 8 / ADR-119). "test liveness" 어휘 금지(adequacy 표준).
 
+### §8.9 DAST 산출물 실행 배선 (consumer test.yml/dast.yml — ADR-150 §결정 5)
+
+Change Plan §8.9 에 **DO** 로 판정된 DAST(런타임 동적 보안 검증) 산출물의 실 실행을 **consumer `test.yml`(또는 전용 `dast.yml`)에 배선**한다 (ADR-048 CI-native 정합). §8.9 는 "무엇을 런타임에서 능동 재현할지"의 계약이고, 본 에이전트는 그 계약을 CI job 배선으로 이행한다("계약만 있고 미실행" 방지). §8.9 는 §8.8(기능 동적 로스터)와 oracle 로 축이 갈리는 독립 축 — DAST oracle = 보안 취약 재현(attack). 3-step 배선:
+
+- **(a) 앱 CI 기동** — `docker compose up` 또는 로컬 바이너리로 대상 앱을 ephemeral/non-prod 환경에 기동(§8.9 `environment_ref` 격리 근거).
+- **(b) 스캐너 실행** — OWASP ZAP baseline/full/api-scan(§8.9 `scanner_or_harness`·`payload_class` 계약대로)을 CI job 으로 실행.
+- **(c) 결과 파싱·SARIF publish** — 스캔 결과를 SARIF 로 GitHub Security tab 에 업로드(SecurityTestPL 이 `tool_name=zap` 로 fetch·종합 — 3-lane decouple).
+
+- **신규 codeforge 러너 부활 금지**: DAST 실 구동은 consumer test.yml/dast.yml 만 — 신규 codeforge 동적 러너 부활 금지(ADR-048, §8.5 StatefulTest deprecated hollow-contract 재발 차단).
+- **scan credential = Secret**: authenticated 스캔 세션·토큰은 **consumer secret store** 에서 조달(real-user credential 재사용 금지). scan credential 은 로그·SARIF 로 유출 금지(§8.9 `auth_mode` 축, ADR-150 §결정 5).
+- **burden-flip 준수**: §8.9 가 DO 인데 실행 배선 누락 = §8 계약 위반 — 자체 판단 skip 금지, 배선 불가 시 Orchestrator 경유 ArchitectPLAgent 에 §8.9 infeasibility_reason 회부(자체 N/A 판정 금지).
+- **wrapper-self 거버넌스 Story**: DAST 대개 자연 N/A(runtime-inert — deployable service 0) — §8.9 레코드 schema 존재 + 정당화만 확인, 실 스캔 구동 배선 면제. 실측 정량 파라미터(scan budget/duration)는 consumer test.yml Phase 2 defer.
+- **정직 천장**: 본 에이전트는 §8.9 산출물 계약 필드대로 스캔이 배선됐는지까지 이행하고, 취약점 실 검출(검출력) 봉인은 주장하지 않는다(ADR-150 §결정 3 / ADR-119 검사연극 금지). SSOT for §8.9 필드 계약 = Change Plan §8.9(중복 기재 금지). adequacy 어휘 고정 — 검출력 강제는 review·advisory·G3 로 분업.
+
 ## 매핑표 산출 의무 (ArchitectPLAgent 감사 입력)
 
 구현 레인 종료 시 아래 형식의 매핑표를 DevPL이 수집해 Orchestrator 경유 ArchitectPLAgent에게 전달.
