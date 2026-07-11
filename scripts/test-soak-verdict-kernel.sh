@@ -118,18 +118,33 @@ fi
 echo ""
 echo "── 축 2b: mutation-kill (가드 load-bearing 실증) ──"
 # mutant 에서 특정 위반 fixture 가 통과(soak_verified=true or exit 0)하면 mutation 생존 = hollow.
-mut_runner() { sed -E "$1" "$RUNNER" > "$2"; }
+# ★ mutant 은 temp dir 에 놓이므로 $SCRIPT_DIR/lib/... 상대 resolve 가 깨진다 → KERNEL_PATH 배정 라인
+#   전체를 절대경로로 치환(그 위에 mutation $1 적용). `^KERNEL_PATH=.*` 로 라인 통째 치환 —
+#   `\$SCRIPT_DIR/...` 매칭은 sed 가 `$` 를 anchor 로 오해 partial-match(=kernel 부재 exit2 no-op 오판).
+#   미치환 시 SETUP_ERROR(exit2)=mutation no-op → positive-leak 단정이 이를 정확히 검출(F-CR-004).
+mut_runner() { sed -E "s#^KERNEL_PATH=.*#KERNEL_PATH=\"$KERNEL\"#; $1" "$RUNNER" > "$2"; }
 mut_kernel() { sed -E "$1" "$KERNEL" > "$2"; }
+
+# assert_leak <runner> <name> <grace>: mutant 이 실제로 새는지 POSITIVE 단정 (verified=true ∧ exit=0).
+#   반환 0 = leak 확인(mutation killed) / 1 = leak 안 함(mutation 생존 or no-op). exit=2(SETUP_ERROR) 오수용 방지.
+assert_leak() {
+  local res v e
+  res="$(run_one "$1" "$2" "$3")"
+  v="$(sed -nE 's/.*soak_verified=([a-z]+).*/\1/p' <<<"$res")"
+  e="$(sed -nE 's/.*EXIT=([0-9]+).*/\1/p' <<<"$res")"
+  [ "$v" = "true" ] && [ "$e" = "0" ]
+}
 
 # Mut-A: 생존축 무력화 (post-grace death_count 증가 제거) → restart(CARRIER) fixture 가
 #        survival=true 로 새어 soak_verified=true → assertion(verified=false) 깨짐 → killed. (F1 핵심)
 MUT="$(mktemp)"
 mut_runner 's/death_count=\$\(\( death_count \+ 1 \)\)/death_count=$(( death_count + 0 ))/' "$MUT"
 chmod +x "$MUT"
-if assert_fixture "$MUT" restart "$GRACE" false 1 MUTANT; then
-  bad "mutation SURVIVED: 생존축(death_count) 무력화" "restart(CARRIER) 가 mutant 에서도 FAIL 유지 — 생존축이 load-bearing 아님"
+# F-CR-004: POSITIVE leak 단정 (verified=true ∧ exit=0) — no-op/SETUP_ERROR(exit2) 를 killed 로 오수용 금지.
+if assert_leak "$MUT" restart "$GRACE"; then
+  ok "mutation killed: 생존축(death_count) 무력화 — restart(CARRIER) 가 mutant 에서 verified=true∧exit=0 실제 leak (F1 생존축 load-bearing 실증)"
 else
-  ok "mutation killed: 생존축(death_count) 무력화 — restart(CARRIER) 가 mutant 에서 verified=true 로 새어나감 (F1 생존축 load-bearing 실증)"
+  bad "mutation NOT positively leaking: 생존축(death_count)" "restart 가 mutant 에서 verified=true∧exit=0 로 새지 않음 (no-op/미격리) — 생존축 load-bearing 미실증"
 fi
 rm -f "$MUT"
 
@@ -137,39 +152,49 @@ rm -f "$MUT"
 #        survival=true 와 결합해 soak_verified=true → assertion 깨짐 → killed.
 MUTK="$(mktemp)"; MUTR="$(mktemp)"
 mut_kernel 's/printf '"'"'%s\\n'"'"' "FAIL_FREEZE"/printf '"'"'%s\\n'"'"' "PASS_FLOOR"/; s/printf '"'"'%s\\n'"'"' "FAIL_REGRESSION"/printf '"'"'%s\\n'"'"' "PASS_FLOOR"/' "$MUTK"
-# runner 가 MUTK 를 source 하도록 KERNEL_PATH 치환한 임시 runner.
-sed -E "s#\$SCRIPT_DIR/lib/soak-verdict-kernel.sh#$MUTK#g" "$RUNNER" > "$MUTR"; chmod +x "$MUTR"
-flat_killed=0; rev_killed=0
-assert_fixture "$MUTR" flat    "$GRACE" false 1 MUTANT || flat_killed=1
-assert_fixture "$MUTR" reverse "$GRACE" false 1 MUTANT || rev_killed=1
-if [ "$flat_killed" = "1" ] && [ "$rev_killed" = "1" ]; then
-  ok "mutation killed: sink 축(kernel FAIL_FREEZE/FAIL_REGRESSION→PASS_FLOOR) 무력화 — flat/reverse 가 mutant 에서 통과 (sink 축 load-bearing 실증)"
+# runner 가 MUTK(변이 kernel)를 source 하도록 KERNEL_PATH 라인 통째 치환 (partial-match 회피).
+sed -E "s#^KERNEL_PATH=.*#KERNEL_PATH=\"$MUTK\"#" "$RUNNER" > "$MUTR"; chmod +x "$MUTR"
+# F-CR-004: flat/reverse 가 변이 kernel 에서 POSITIVE leak(verified=true∧exit=0)하는지 단정.
+if assert_leak "$MUTR" flat "$GRACE" && assert_leak "$MUTR" reverse "$GRACE"; then
+  ok "mutation killed: sink 축(kernel FAIL_FREEZE/FAIL_REGRESSION→PASS_FLOOR) 무력화 — flat/reverse 가 verified=true∧exit=0 실제 leak (sink 축 load-bearing 실증)"
 else
-  bad "mutation SURVIVED: sink 축 무력화" "flat_killed=$flat_killed rev_killed=$rev_killed (mutant 에서 여전히 FAIL — kernel 재사용 배선 확인 필요)"
+  bad "mutation NOT positively leaking: sink 축 무력화" "flat/reverse 가 변이 kernel 에서 verified=true∧exit=0 로 새지 않음 (kernel 재사용 배선/no-op 확인)"
 fi
 rm -f "$MUTK" "$MUTR"
 
-# Mut-C: boot-grace 가드(grace>=floor 차단) 무력화 → restart(CARRIER) fixture 를 grace=WINDOW 로 구동.
+# Mut-C: boot-grace 상한 가드(2*grace≥floor 차단, §결정7 ≤soak/2) 무력화 → restart(CARRIER) 를 grace=WINDOW 로.
 #        restart = 생존축만 실패(sink 는 전진). grace=∞ 로 post-grace death 가 "grace 내"로 은폐 →
-#        survival=true ∧ sink_prog=true → soak_verified 오PASS → assertion(verified=false) 깨짐 → killed.
+#        survival=true ∧ sink_prog=true → soak_verified 오PASS. mutation = 2*grace 를 0*grace 로 만들어
+#        (0 ≥ floor 항상 false) 가드 무력화 (guard 표현식 정확 매치 불요 — unique substring 'BOOT_GRACE_S * 2').
 #        (crash fixture 는 sink 도 frozen 이라 sink 축이 여전히 잡음 → grace 가드 격리 불가 → restart 사용.)
 MUTC="$(mktemp)"
-mut_runner 's/if \[ "\$BOOT_GRACE_S" -ge "\$DURATION_FLOOR_S" \]; then/if false; then/' "$MUTC"
+mut_runner 's/BOOT_GRACE_S \* 2/BOOT_GRACE_S \* 0/' "$MUTC"
 chmod +x "$MUTC"
-# grace=WINDOW → 정상 runner 라면 cfg_error(exit2); mutant 은 통과시켜 death 은폐 → verified=true 오PASS.
-if assert_fixture "$MUTC" restart "$WINDOW" false 1 MUTANT; then
-  bad "mutation SURVIVED: boot-grace 가드 무력화" "restart(CARRIER) 가 grace=∞ 로 은폐되지 않음 — grace 하한 가드가 load-bearing 아님"
+# F-CR-004: mutant 이 실제로 새는지 POSITIVE 단정 (verified=true ∧ exit=0). exit=2(SETUP_ERROR = mutation
+#   unapplied/no-op) 를 killed 로 오수용 금지 — no-op 이면 원본 가드가 grace=WINDOW 를 cfg_error(exit2) 차단.
+if assert_leak "$MUTC" restart "$WINDOW"; then
+  ok "mutation killed: boot-grace 상한 가드 무력화 — restart(CARRIER) 가 grace=∞ 로 death 은폐되어 verified=true∧exit=0 실제 leak (positive 단정, F-CR-004)"
 else
-  ok "mutation killed: boot-grace 가드(grace>=floor 차단) 무력화 — restart(CARRIER) 가 grace=∞ 로 death 은폐되어 통과 (boot-grace 하한 load-bearing 실증)"
+  bad "mutation NOT positively leaking: boot-grace 가드" "restart 가 mutant 에서 verified=true∧exit=0 로 새지 않음 (exit=2 면 mutation no-op/가드 격리 실패)"
 fi
 rm -f "$MUTC"
 
-# grace=∞ 가드 자체 GREEN 확인: 정상 runner 는 grace>=window 를 cfg_error(exit2)로 차단.
+# grace 상한 가드 GREEN #1: grace=WINDOW → 2*WINDOW≥WINDOW cfg_error(exit2) 차단.
 gi_res="$(run_one "$RUNNER" normal "$WINDOW")"
 if grep -q "reason=SETUP_ERROR" <<<"$gi_res" && grep -q "EXIT=2" <<<"$gi_res"; then
-  ok "boot-grace=∞ 가드 GREEN: grace(>=window) → cfg_error(exit2) fail-closed 차단 (§결정7 크래시 은폐 방어)"
+  ok "boot-grace 상한 가드 GREEN(grace=window): 2*grace≥floor → cfg_error(exit2) fail-closed (§결정7)"
 else
-  bad "boot-grace=∞ 가드 미작동" "grace>=window 가 차단되지 않음 (RESULT=[$gi_res])"
+  bad "boot-grace 상한 가드 미작동(grace=window)" "차단되지 않음 (RESULT=[$gi_res])"
+fi
+
+# grace 상한 가드 GREEN #2 (F-CR-001 강화 load-bearing): grace=3, window=5 (floor/2 < grace < floor).
+#   구 약한 가드(grace≥floor: 3≥5 false)라면 통과했을 값이나, 정본 강화 가드(2*3=6≥5 true)는 cfg_error 로 차단.
+#   → 이 assertion 이 GREEN 이면 가드가 ≤soak/2 정본대로 강화됨을 실증(구 가드로 회귀 시 RED).
+b_res="$(run_one "$RUNNER" normal 3)"   # grace=3, WINDOW=5
+if grep -q "reason=SETUP_ERROR" <<<"$b_res" && grep -q "EXIT=2" <<<"$b_res"; then
+  ok "boot-grace ≤soak/2 강화 GREEN(grace=3,window=5): 2*grace≥floor 로 차단 (구 grace≥floor 약한 가드면 통과 = 회귀 검출, F-CR-001)"
+else
+  bad "boot-grace 강화 가드 미작동(grace=3,window=5)" "정본 ≤soak/2(2*grace≥floor) 미적용 — 구 약한 가드 잔존 의심 (RESULT=[$b_res])"
 fi
 
 echo ""

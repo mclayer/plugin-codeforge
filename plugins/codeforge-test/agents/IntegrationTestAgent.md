@@ -97,7 +97,7 @@ soak 판정 = **프로세스 생존 ∧ terminal-sink monotone 전진** (HTTP-20
    ```
 3. **terminal-sink monotone 전진 관측**: `sink_probes[]` 각 probe 의 `metric_command` 를 `poll_interval_seconds` 주기로 폴링해 2-sample 마다 **verdict kernel** 을 호출한다 — `scripts/lib/soak-verdict-kernel.sh` 의 순수 판정 함수 `evaluate_soak_sample prev cur first threshold floor deadline_reached` → reason-code `{CONTINUE|FAIL_REGRESSION|FAIL_FREEZE|PASS_THRESHOLD|PASS_FLOOR|FAIL_THRESHOLD_MISS}`. 역행(net 감소)=`FAIL_REGRESSION`, floor 창 net 순증 0(생존하나 flat)=`FAIL_FREEZE` — **프로세스가 살아 있어도 FAIL** (AC-7, ingest green ≠ sink 전진).
    - **필드 참조 SSOT (F-4)**: `sink_probes[]` 필드 정의는 `docs/project-config-schema.md` `integration_test.sink_probes[]` 가 canonical — 본 agent 는 참조만 사용하고 필드 목록을 재인코딩하지 않는다.
-4. **soak duration**: `threshold`(manifestation-derived PRIMARY — 발현조건 임계 도달까지 구동) 우선, 정량 임계 미도출 시 `duration_floor_seconds`(floor fallback) 로 hard fallback. blanket 고정 창(예: pre-merge 1800s) 금지 (§결정7).
+4. **soak duration**: `duration_floor_seconds` 가 soak 창 max horizon / deadline ceiling 로 **항상 필수**(> 0 — timeout·무한 CONTINUE hang 방지, ADR-139 축2 정합). `threshold`(manifestation-derived)는 그 위 **선택적 조기 PASS** — floor 만료 전 임계 도달 시 조기 종료(상호배타 아님). threshold 미설정(null) 이면 floor 만료 시점 net 순증(freeze) 판정. blanket 고정 창(예: pre-merge 1800s) 금지 = duration 을 발현조건에 맞춰 도출하라는 의미지 floor 자체 생략이 아님 (§결정7).
 
 **실사-mock 경계 (INV-D5)**: 외부 의존성만 testcontainers 실 컨테이너(etcd lease / minio / WAL volume 등 precondition-bearing stateful deps) + 합성 고volume 피드(hermetic, 실 venue egress 0). **대상 데몬 = 실 프로덕션 이미지·실 코드경로** (`MCTRADER_SOURCE=fake` 등 fake-source 금지 — AC-5), prod `mem_limit` 적용(OOMKill class pre-merge 로 당김).
 

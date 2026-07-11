@@ -75,7 +75,7 @@ test_verdict:
                                 # definite: STORY_KEY 메타데이터 or §8.6 related_components 직접 매핑
                                 # inferred: static import 분석으로 추론
                                 # unknown: blame 불가 (story_keys=[])
-      failure_type: "regression" | "new_test" | "infra_setup" | "env_missing"
+      failure_type: "regression" | "new_test" | "infra_setup" | "env_missing" | "soak_liveness"
       error_summary: string     # 500자 이내
 
   responsible_stories: list     # FIX 대상 Story key 목록 e.g. ["CFP-NNN-S1"] (failures story_keys 합집합)
@@ -109,6 +109,7 @@ test_verdict:
 | `new_test` | 구현 원인 (신규 시나리오 미구현) | DeveloperPL → ArchitectPL 판정 |
 | `infra_setup` | 인프라 원인 (docker-compose 누락/오류) | InfraEngineerAgent 직접 수정 |
 | `env_missing` | 환경 설정 누락 (.env 키 / 컨테이너 설정) | InfraEngineerAgent or 사용자 action |
+| `soak_liveness` | 데몬 지속-liveness 실패 (지연 크래시 / terminal-sink 동결 — soak step, ADR-148 §결정5) | DeveloperPL → ArchitectPL 판정 |
 
 ### Baseline 실패 시 story_keys blame 절차
 

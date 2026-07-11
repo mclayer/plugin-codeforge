@@ -38,9 +38,10 @@
 #   (RESULT 라인은 exit 이전 항상 1회 출력 — self-test 는 RESULT 필드 ∧ exit code 로 assert)
 # ──────────────────────────────────────────────────────────────────────────────
 #
-# grace=∞(크래시 은폐) 방어 = self-test mutation 표적 (ADR-148 §결정7): boot_grace >=
-#   duration_floor 이면 deadline horizon 전체가 grace → post-grace 관측창 0 → 크래시 은폐.
-#   → config error(exit 2)로 fail-closed 차단 (grace 를 무한대로 밀어 FAIL 은폐 불가).
+# boot-grace 상한 방어 = self-test mutation 표적 (ADR-148 §결정7 SSOT: ceiling ≤ soak/2):
+#   grace 가 soak 창의 절반을 넘으면 post-grace 관측창 < 절반 → 크래시 은폐 소지.
+#   정본 규칙 = grace ≤ duration_floor/2 (관측창 ≥ 절반 보장). 위반 = 2*grace ≥ duration_floor.
+#   → config error(exit 2)로 fail-closed 차단 (grace 를 밀어 관측창을 좁혀 FAIL 은폐 불가).
 
 set -uo pipefail  # -e 미사용 의도: 프로세스 감독은 non-zero exit 을 정상 관측하므로.
 
@@ -85,9 +86,9 @@ case "$BOOT_GRACE_S$THRESHOLD$DURATION_FLOOR_S" in
 esac
 [ "$DURATION_FLOOR_S" -gt 0 ] || cfg_error "duration_floor_s > 0 필요 (deadline horizon)"
 
-# grace=∞(크래시 은폐) 방어 (ADR-148 §결정7): boot_grace >= soak 창 = fail-closed 차단.
-if [ "$BOOT_GRACE_S" -ge "$DURATION_FLOOR_S" ]; then
-  cfg_error "boot_grace_s($BOOT_GRACE_S) >= duration_floor_s($DURATION_FLOOR_S) — grace 가 soak 창 전체를 덮음(크래시 은폐). ceiling <= soak/2 (ADR-148 §결정7)"
+# boot-grace 상한 방어 (ADR-148 §결정7 SSOT: ceiling ≤ soak/2). 위반 = 2*grace ≥ floor.
+if [ $(( BOOT_GRACE_S * 2 )) -ge "$DURATION_FLOOR_S" ]; then
+  cfg_error "boot_grace_s($BOOT_GRACE_S) > duration_floor_s($DURATION_FLOOR_S)/2 — 관측창 < 절반(크래시 은폐 소지). ceiling ≤ soak/2 (ADR-148 §결정7)"
 fi
 
 soak_basis() {
