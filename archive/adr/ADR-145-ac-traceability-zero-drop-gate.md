@@ -43,7 +43,7 @@ Accepted (2026-07-11 KST) — CFP-2603 (Epic CFP-2602 G1) carrier. 사용자 요
 
 도메인 불변식 **I-AC**: "AC 는 사용자 의도의 안정적 참조자이며 lane 경계를 넘어 보존돼야 한다." 현재 계약은 identity(AC-N)를 정수 count 로 붕괴시켜 이를 깬다.
 
-외부 근거(Story §6 재인용 — 신규 외부 단정 없음): RTM + bidirectional traceability 는 확립된 관행이다 (ISO/IEC/IEEE 29148 traceability mechanism / DO-178C §5.4·§6.4 상위요건↔하위요건↔검증자산 양방향 필수 / NASA SWE-052·SWE-059 bidirectional). 동시에 RTM 은 드롭을 **줄이지만 없애지 못한다** — traceability rot / 유지비용 / rubber-stamping (Jama Software). ∴ 자동화로 rot·수동오류는 저감하나 semantic 완전성 봉인은 불가(§결정 5 근거).
+외부 근거(Story §6 재인용 — 신규 외부 단정 없음): RTM + bidirectional traceability 는 확립된 관행이다 (ISO/IEC/IEEE 29148 traceability mechanism / DO-178C §5.5(Software Development Process Traceability)·§6.4 상위요건↔하위요건↔검증자산 양방향 필수 / NASA SWE-052·SWE-059 bidirectional). 동시에 RTM 은 드롭을 **줄이지만 없애지 못한다** — traceability rot / 유지비용 / rubber-stamping (Jama Software). ∴ 자동화로 rot·수동오류는 저감하나 semantic 완전성 봉인은 불가(§결정 5 근거).
 
 ## 결정
 
@@ -75,14 +75,19 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 
 - **phase-gate-mergeable.yml 확장 기각 (Feasibility Barrier 1)**: check-gate 에 in-line matrix 를 얹으면 두 실패 모드 — (a) anchor 계층과 동형인 warning-tier(merge 미차단, ratchet 0) 또는 (b) fast-pass OR-gate(L359→L414-423) 로 Epic/sibling PR bypass. 양쪽 다 fail-closed 요건(AC-7)과 비호환. [verified: phase-gate-mergeable.yml L369/L581/L648 warning-tier + L359 fast-pass bypass, origin/main]
 - **신규 dedicated workflow `.github/workflows/ac-traceability-matrix.yml`** (job-id = context name `ac-traceability-matrix`, double-context 회피) 를 **day-1 hard-fail** 로 배선한다 — fail-closed 로직 즉시 활성(실 red/green + PR red X).
+- **wrapper-self-only 확정 (F1 — consumer born-broken 방지)**: 신규 workflow 는 `ALLOWED_HUB_REPOS: mclayer/codeforge-internal-docs` 하드코딩 + fail-closed no-optout 이라 consumer repo 에 배포되면 consumer venue≠whitelist → return false → 전 consumer PR born-broken hard-block. venue-shape self-test job wrapper-guard 선례를 따라 workflow 에 **repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`** 를 명시한다(`templates/github-workflows/` byte-identical copy 도 동일 guard 상속 → consumer 배포 시 inert job skip). consumer 전파(ALLOWED_HUB_REPOS venue 파라미터화 + `project.yaml` applicability 게이트)는 **별도 follow-up Story** — 지금 consumer 활성 배포 금지(§대안·Change Plan §12.1).
 - **CONFLICT-C divergence 정당화**: ADR-125 §결정2 "branch-protection 6-tuple 불변" 선례는 phase-gate **INTERNAL 흡수**(요구사항리뷰 gate 를 기존 check-gate 로 매핑)를 전제했다. 본 게이트는 그 흡수 경로가 **fail-closed 비호환**(anchor=warning-tier + fast-pass bypass 실측)이므로 선례가 성립하지 않는다 → 신규 required job 이 정당하다. ADR-125 선례 override 는 **비호환 근거에 한정**되며 6-tuple 불변 원칙 자체를 폐기하지 않는다.
 - **branch-protection required_contexts 등록(6→7-tuple) = 사용자 결정 → 채택 = (A) 즉시 required 등록** (2026-07-11 사용자 결정): G1 게이트를 도입하는 Phase 2 PR 머지 시점에 `required_status_checks.contexts[]` 에 신규 context `ac-traceability-matrix` 를 즉시 추가(6→7-tuple). CLAUDE.md "브랜치 보호" 표 + arch-doc C4 갱신은 Phase 2 PR 동반.
-- **A 채택의 born-broken 안전 전제 (핵심 정당화)**: 즉시 required 의 born-broken/false-red 위험은 **게이트 자신의 self-test 가 merge-precondition** 이라 구조적으로 차단된다 — G1 게이트를 착륙시키는 Phase 2 PR 자체가 게이트의 §8 self-test(execution-liveness L3 mutation-kill A/B/C + F-fixture 12종 RED→GREEN)를 통과해야 merge 되므로, born-broken 린터는 애초에 required 로 등재될 수 없다. ∴ **즉시 required 등록의 안전 전제 = 린터 self-test suite green**(born-broken gate class 대비 — CFP-2530 css-lint born-invalid / CFP-2535 execution-liveness 계보). false-red 재발 시 revert = trivial(§결과·Rollback).
+- **A 채택의 born-broken 안전 전제 (핵심 정당화 — 2 guard 구분)**: 즉시 required 의 실패 모드는 둘이며 각각 별 guard 로 차단된다 —
+  - **(i) false-green (permissive/hollow)** = 게이트가 결함을 놓쳐 무의미하게 통과 → **§8 self-test(mutation-kill A/B/C + F-fixture 12종 RED→GREEN)가 merge-precondition** 으로 차단(hollow 린터는 self-test RED 로 merge 불가).
+  - **(ii) false-red / born-dead** = 게이트가 정상 PR 을 오차단하거나 아예 실행되지 않음 → **workflow-runs-on-own-PR**(G1 도입 Phase 2 PR 자체가 신규 게이트의 실 red/green 을 산출)로 검출.
+  - **∴ ordering invariant (등록 순서 강제)**: `workflow 착륙 → self-test suite green 확인 → 게이트가 자기 PR 에 실 green 산출 확인 → THEN required_contexts 등록`. 이 순서를 지키면 born-broken 린터는 required 로 등재 불가. 안전 전제 = **self-test green ∧ own-PR green**(born-broken gate class 대비 — CFP-2530 css-lint born-invalid / CFP-2535 execution-liveness 계보). false-red 재발 시 revert = trivial(§결과·Rollback).
 - (참고: ModuleArch digest 의 "ADR-130 §결정6 7-day-green" 은 오citation — ADR-130 = applicability⊥closure 분류. shadow-required 승격 evidence-gate SSOT = ADR-060 §결정 6/19. 본 결정에서 shadow-required(B)는 §대안 참조 — 고려됐으나 미채택.)
 
 ### 결정 4 — fail-closed no-optout + AC-ID namespace + sub-letter grammar
 
 - **fail-closed no-optout (AC-7)**: skip-PASS / opt-out / default-green 경로 부재. 판정 불가(cross-repo fetch 실패 / token 부재 / 403·404)는 **helper fail-closed 패턴**(phase-gate-mergeable.yml `if(!token) return false` L232 형)을 재사용 — main-path degrade(L69-70 PR-label fallback)는 재사용 금지. **403/404 conflation 가드**: born-missing verdict 는 `resp.ok` 확인 후에만 — "읽을 수 없음"을 "존재하지 않음→verdict 없음"으로 해석 금지.
+- **fetch 물리 재구현 회피 (F2 — Phase 2 carryover)**: adapter-층 cross-repo fetch(PAT/whitelist/token/`resp.ok` 403-404 가드)를 phase-gate 로부터 물리 복제하면 2 divergent copy = drift 위험. 본 결정은 "개념 재사용" 선언에 그치지 않고, Phase 2 에서 cross-repo fetch 를 **shared reusable-workflow / composite-action 으로 추출**해 단일 소유·재사용할 의도를 명시한다(비차단, ADR-042 Amd13 reusability 정합).
 - **4 bypass vector 차단(F-AC7-a..d)**: 빈 AC 목록 / 미선언 §8 / stub 명명 회피 / phase 오선언.
 - **transition = forward-only + grandfather** (Story date/KEY 기준). **skip-toggle 신설 금지** — toggle 은 ADR-127/AC-7 opt-out 이 된다.
 - **AC-ID namespace = Story-local** (`AC-N`); cross-Story 참조 = `<KEY>:AC-N`.
@@ -96,7 +101,8 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 ### 결정 6 — 계약 2 additive MINOR (CONFLICT-A 회피)
 
 - **`requirements-output-v1` v1.1 → v1.2 (additive MINOR)**: 기존 `sub_agent_results.analyst.acceptance_criteria_count: <int>` **보존**(제거 = MAJOR = CONFLICT-A). 신규 top-level `acceptance_criteria[]`(optional, `sub_agent_results`/`writes_completed` 와 peer) 추가 — 각 item = §5.2 스키마{id/statement/source/verification/coverage_required/phase/tier}. **게이트가 list 실재를 강제**(AC-3 항목화 전달)하되 **계약 field 는 영구 optional 유지**(ADR-008 §결정2 backward-compat MINOR).
-- **`design-output-v2` v2.4 → v2.5 (additive MINOR, Model A)**: `chief_author_artifact.ac_coverage_self_check_passed: bool` marker 추가 (기존 self-check disjoint 축 group `architecture_doc_updated` 등과 peer, default false). **Story §8 doc = authoritative RTM** — packet 에 RTM 중복 금지(marker 만).
+- **`design-output-v2` v2.4 → v2.5 (additive MINOR, Model A)**: `chief_author_artifact.ac_coverage_self_check_passed: bool` marker 추가 (기존 self-check disjoint 축 group `architecture_doc_updated` 등과 peer, default false). marker 텍스트 = "**authoritative Test Contract location** 에서 AC↔§8 coverage self-check 통과"(문서유형별 — "Story §8" 단정 금지). packet 에 RTM 중복 금지(marker bool 만).
+- **RTM location-resolution 규칙 (P1 — 게이트가 Test Contract 를 resolve 하는 위치)**: 게이트는 §8 Test Contract(RTM)를 **그것이 authoritative 하게 존재하는 위치**에서 resolve 한다 — **wrapper-self dogfood Story = Change Plan §8**(Story §8=개발서사 placeholder 일 때) / **consumer Story = Story §8 mirror**. 이 규칙이 없으면 Phase 2 구현자가 wrapper-self 의 Story §8(placeholder)을 파싱 → 본 Story 자신의 Phase 2 PR 을 false-FAIL(게이트가 막으려는 바로 그 silent location-mismatch). 게이트 입력은 문서유형 판별 후 authoritative location 을 선택한다.
 - **MANIFEST 3-point parity** (Phase 2 mechanical sync): 각 계약의 (i) frontmatter contract_version, (ii) 본문 version, (iii) `docs/inter-plugin-contracts/MANIFEST.yaml` entry 를 동시 이동(v1.2 / v2.5). atomic.
 
 ### 결정 7 — 모듈 경계 (Ports & Adapters — network-0 pure core)
