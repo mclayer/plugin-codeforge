@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   kst-timestamp-display:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
     # required_status_checks.contexts 부착 X.
     continue-on-error: true

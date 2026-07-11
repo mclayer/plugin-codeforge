@@ -69,7 +69,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -376,7 +376,7 @@ jobs:
   close-blocking:
     # Issue close event 처리 — gate:retro-complete 부재 시 자동 reopen (UC-2 정합)
     if: github.event_name == 'issues' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
@@ -463,7 +463,7 @@ jobs:
     # State machine: attempt_n 1→2: 5min wait, 2→3: 10min wait, 3→4: 15min wait.
     # After attempt_n=4 fail: ESCALATE comment + status=escalated.
     if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - name: PAT presence check (CFP-645 fix — secrets context job-if 제거)
         id: pat_check

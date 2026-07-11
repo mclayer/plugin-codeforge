@@ -15,7 +15,7 @@ permissions:
   pull-requests: write
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     continue-on-error: true  # warning tier — branch protection 차단 안 함 (ADR-060 §결정 5)
     steps:
       - uses: actions/checkout@v4
