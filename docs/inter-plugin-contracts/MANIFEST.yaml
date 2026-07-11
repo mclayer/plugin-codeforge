@@ -41,7 +41,7 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: test-verdict-v1.md, contract_version: "1.1", status: Archived }  # CFP-317 / ADR-048: TestAgent deprecated
-      - { file: test-verdict-v2.md, contract_version: "2.2", status: Active }   # CFP-373: v2.2 story_keys[]+attribution_confidence (v2.0 CFP-367, v2.1 CFP-371, v2.2 CFP-373)
+      - { file: test-verdict-v2.md, contract_version: "2.3", status: Active }   # CFP-2613 (Epic CFP-2602 G2): v2.2 → v2.3 MINOR bump (soak_liveness_results 독립 top-level optional object — 지속-liveness soak verdict, ADR-148 §결정9 / ADR-008 §결정 2 backward-compat, 기존 필드 무변경). CFP-373: v2.2 story_keys[]+attribution_confidence (v2.0 CFP-367, v2.1 CFP-371, v2.2 CFP-373)
 
   - name: pmo_output
     canonical_repo: mclayer/plugin-codeforge

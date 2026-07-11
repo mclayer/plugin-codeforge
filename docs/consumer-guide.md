@@ -2523,6 +2523,38 @@ tests/integration/
 
 각 Story마다 `tests/integration/<story-key>/` 디렉터리 아래 테스트 추가. IntegrationTestAgent 가 매 Story마다 전체 suite 실행 (regression 검증). 정책 SSOT: [ADR-055](../archive/adr/ADR-055-integration-test-lane-policy.md).
 
+#### 3z.6 long_running_daemon 지속-liveness soak 주입 (CFP-2613 / [ADR-148](../archive/adr/ADR-148-persistent-liveness-soak-gate.md) G2)
+
+상주 데몬(백그라운드 loop — data collector / stream aggregator 등)을 배포했을 때 **CrashLoopBackOff / terminal-sink 동결**(프로세스는 살아있으나 실제 일 안 함)을 pre-merge 로 잡기 위한 지속-liveness soak 게이트. `daemon_type: long_running_daemon` 선언 시 IntegrationTest Deployability 가 4-step boot 검증 후 **N분 soak**(프로세스 생존 ∧ terminal-sink monotone 전진, HTTP-200 아님)을 추가 실행한다.
+
+**주입 방법**: `.claude/_overlay/project.yaml` 의 `integration_test` block 에 `daemon_type` + `sink_probes[]` 선언. **필드 스키마 SSOT = [`project-config-schema.md` `integration_test` 섹션](project-config-schema.md)** (본 가이드는 참조만 — 필드 목록 재인코딩 아님):
+
+```yaml
+# .claude/_overlay/project.yaml — long_running_daemon collector 예시
+integration_test:
+  daemon_type: long_running_daemon          # 상주 데몬 = soak 게이트 scope (operational:true Story 필수, silent default 금지)
+  docker_compose_test_path: infra/docker-compose.collector-test.yml
+  sink_probes:                              # presence 필수 (부재 = fail-closed)
+    - name: committed_ticks
+      probe_type: sink-advance              # 적재 종점 단조 전진 (non-HTTP sink-advance = G2 신설 개념)
+      metric_command: "psql $DATABASE_URL -tAc 'SELECT count(*) FROM ticks'"
+      boot_grace_seconds: 30
+      threshold: 1000                       # manifestation-derived (배타)
+      duration_floor_seconds: null          # 또는 floor fallback (배타)
+      manifestation_trigger_type: volume
+      poll_interval_seconds: 5
+```
+
+- **daemon_type discriminator**: `long_running_daemon` = soak 대상. `request_response_service`(HTTP API) = 기존 health_checks HTTP-200 default 유지(soak 미대상, breaking 0). `operational:true` Story 는 daemon_type 선언 필수(누락 = FAIL).
+- **soak duration (manifestation-derived vs floor)**:
+  - **manifestation-derived** (권장): `threshold` = 실패-class 가 드러나는 최소 누적량(예: `≥1000 ticks` / `≥ 8 MiB flush`) — 그 임계 도달까지 구동. [§1o Operational Story](#1o-operational-story--운영-가능성-검증-및-시스템-불변식-선언-cfp-2361-ps4--adr-014-amendment-7--adr-015-amendment-1--adr-068-i-8) §7.4.7 ③ 발현조건 임계와 동일.
+  - **duration_floor** (fallback): 임계 정량화 불가 시 `duration_floor_seconds`(예 `≥1800`) 로 hard fallback. threshold ↔ duration_floor 는 **배타**(하나만 지정).
+- **판정 축**: 프로세스 생존(`exit==0 ∧ RestartCount==0`, boot-grace 경과 후) ∧ terminal-sink monotone 전진(역행/flat = FAIL — 프로세스 살아있어도). 결과 = test-verdict-v2 v2.3 `soak_liveness_results`.
+- **실사-mock 경계**: 외부 의존성만 testcontainers 실 컨테이너 + 합성 고volume 피드, **대상 데몬 = 실 프로덕션 이미지·실 코드경로**(fake-source 금지). prod `mem_limit` 적용(OOMKill class).
+- **정직 천장**: soak PASS = N분 관측 증명일 뿐 완전 봉인 아님 — 잔여는 post-deploy 실-의존성 smoke(2단 예방체인).
+
+**wrapper-self declarative 면제**: wrapper 자체 governance repo 는 운영 부하 0 → 실 soak 구동 면제(fixture-daemon self-test 로 게이트 메커니즘만 dogfood). consumer 데몬 프로젝트는 실 soak 책임. 정책 SSOT: [ADR-148](../archive/adr/ADR-148-persistent-liveness-soak-gate.md).
+
 ## 4. 첫 실행 검증
 
 ### 4a. Claude Code 세션 시작
