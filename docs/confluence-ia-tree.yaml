@@ -56,7 +56,7 @@ lane_mapping_rule:
   open_extension: false  # 신규 enum 출현 시 별 ADR Amendment 의무 (sunset_justification 3-tuple)
   carrier_story: CFP-1523
   case_normalization: lowercase_canonical  # ADR-068 I-4 wording SSOT — case-insensitive 16 normalized enum
-  case_fold_during_check: true  # F-DR-004 — FU-1523-1 lint algorithm: lowercase normalize input frontmatter value before closed_enum membership check (Architecture→architecture / Process→process collision merge)
+  case_fold_during_check: true  # F-DR-004 — CFP-2615 lint algorithm: lowercase normalize input frontmatter value before closed_enum membership check (Architecture→architecture / Process→process collision merge)
   closed_enum:
     # 16 normalized enum (18 unique ADR corpus value, 2 쌍 case-collision normalized:
     # Architecture/architecture + Process/process)
@@ -79,13 +79,13 @@ lane_mapping_rule:
     - plugin distribution & consumer onboarding  # canonical lowercase, legacy retain
     - infrastructure  # canonical lowercase, "Infrastructure" legacy retain
   deferred_followup_lint:
-    cfp: FU-1523-1
+    cfp: CFP-2615
     script: scripts/check-adr-category-lane-coverage.sh
     workflow: templates/github-workflows/adr-category-lane-coverage.yml
     tier: warning
     hotfix_bypass_label: hotfix-bypass:adr-category-lane-coverage
     rationale: |
-      declarative_layer 본 carrier (CFP-1523) — mechanical wire 별 sub-CFP (FU-1523-1).
+      declarative_layer 본 carrier (CFP-1523) — mechanical wire 별 sub-CFP (CFP-2615).
       ADR-060 framework Wave 1 → Wave 2 wire pattern 답습.
 
 # CFP-1523 Phase 2 PR 안 cascade execution plan (Story §3.0 D-5 dry-run gate mandate codify)
@@ -1404,18 +1404,20 @@ top_level_pages:
 s2_4_minimal_complete:
   cfp: CFP-1494
   bucket_only: true
-  real_backfill_deferred: true
+  real_backfill_deferred: false  # RESOLVED (CFP-2590 정산): 아래 real_backfill_carrier 로 완결
   deferred_reason: |
     Orchestrator Playbook full body (256KB+) = MCP createConfluencePage body size limit
     영역 + section split decision burden. 36 domain-knowledge page batch move + 8 lane
     plugin Living Architecture real 5-anchor body = S2.3 동일 token cost realistic check.
     별 sub-CFP carrier (real backfill).
-  deferred_followup_cfp: TBD (section split + 36 page move + 8 Living Arch real body)
+  # RESOLVED (CFP-2590 정산): real backfill carrier = Epic CFP-1524 (#1524, CLOSED) — 자식 #1584(Playbook §-level split) + #1585(36 domain-knowledge page move) + 8 lane Living Architecture body 포함, 3건 전부 CLOSED · 추적 완결. 구 미발급 placeholder 를 named-carrier back-ref 로 대체 (carrier 발급 규약 준수, ADR-060 §결정6).
+  real_backfill_carrier: CFP-1524
+  real_backfill_status: complete
 
 s2_3_partial_complete:
   cfp: CFP-1493
   stage_1_complete: true  # 3 cross-cutting bucket page created
-  stage_2_3_deferred: true  # 142 legacy page batch move (Confluence S2.3 시점 measurement)
+  stage_2_3_deferred: false  # RESOLVED (CFP-2590 정산): 아래 real_backfill_carrier 로 완결 (142 legacy page batch move, Confluence S2.3 시점 measurement)
   # ─────────────────────────────────────────────────────────────────────────────
   # METRIC DISAMBIGUATION (F-DR-008, CFP-1588 — historical vs ground-truth split)
   #
@@ -1446,7 +1448,9 @@ s2_3_partial_complete:
 
     Note: 142 (S2.3 historical) vs 117 (current ground truth ADR count) — 위 METRIC
     DISAMBIGUATION block 참조. 두 값 모두 정당 (시점 차이, 한 쪽 stale 아님).
-  deferred_followup_cfp: TBD (lane filter brainstorm + 148 page actual batch move — current ground truth)
+  # RESOLVED (CFP-2590 정산): real backfill carrier = CFP-1523 (#1523, CLOSED) — lane filter brainstorm + 142 page batch move (S2.3 historical measurement, carrier canonical scope; RR-2 148→142 정정). 추적 완결. 구 미발급 placeholder 를 named-carrier back-ref 로 대체 (carrier 발급 규약 준수).
+  real_backfill_carrier: CFP-1523
+  real_backfill_status: complete
 
 legacy_pages:
   # CFP-1146 W5-S17 #1310 cutover 산출 — Sub-B S2.3/S2.4 migration source

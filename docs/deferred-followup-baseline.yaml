@@ -3,10 +3,10 @@
 # content_digest = sha256 over canonical {gate_flags, declaration_surfaces} (provenance/generated_at 제외).
 schema_version: '1.0'
 generated_by: CFP-2591
-generated_at: '2026-07-09T21:24:33+09:00'
-generated_from_commit: d030eaeece17c10b32035573dd40177f5425e126
+generated_at: '2026-07-12T02:42:15+09:00'
+generated_from_commit: e589318204e1ba91f01a709c47c0760fe7d94001
 basis: ADR-060 §결정6 승격 시점 registry+declaration FLAG 집합 동결 (Clean-as-You-Code new-only, CFP-2591)
-content_digest: 1b5a2655e90077afe1c1c177b409b9ecd1813181f0b7cf96bcd23c88fc3f788d
+content_digest: 42abe157d2b007bc743fc13e47a81344f73e1e53c5b9d8a4496b193e7dc4a490
 gate_flags:
 - name: stale-local-main-checkout-divergence-check
   frozen_count: 8
@@ -14,47 +14,20 @@ gate_flags:
   absent_axes:
   - workflow:templates/github-workflows/stale-local-main-checkout-divergence-check.yml,.github/workflows/stale-local-main-checkout-divergence-check.yml
 declaration_surfaces:
-- locator: docs/confluence-ia-tree.yaml:1413
-  token: 'deferred_followup_cfp: TBD'
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/confluence-ia-tree.yaml:1449
-  token: 'deferred_followup_cfp: TBD'
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/confluence-ia-tree.yaml:59
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/confluence-ia-tree.yaml:82
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/confluence-ia-tree.yaml:88
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/doc-location-registry.md:161
+- locator: docs/doc-location-registry.md:163
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/doc-locations.yaml:187
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:101
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:155
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:196
-  token: FU-1523-1
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:226
-  token: FU-1523-1
+  token: FU-1523-2
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:232
-  token: FU-1523-1
+  token: FU-1523-2
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:235
   token: FU-1523-2
-  reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:39
-  token: FU-1523-1
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:40
   token: FU-1523-2
