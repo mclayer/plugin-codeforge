@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   line-cap:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     continue-on-error: true  # warning tier — PR-block 회피 (ADR-060 §결정 5)
     steps:
       - uses: actions/checkout@v4

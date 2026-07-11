@@ -14,7 +14,7 @@ permissions:
 jobs:
   enforce-single-active:
     if: github.event.action == 'labeled'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - name: Strip other phase labels
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
@@ -46,7 +46,7 @@ jobs:
   # 또는 early-close:* 형식. 무가드 phase:완료 (gate 2종 미보유) 는 여전히 경고 — 엄격성 비축소.
   enforce-terminal-on-close:
     if: github.event.action == 'closed' && github.event.issue != null
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - name: Validate terminal phase on Issue close
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0

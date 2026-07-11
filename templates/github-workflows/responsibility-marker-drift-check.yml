@@ -44,7 +44,7 @@ permissions:
 jobs:
   responsibility-marker-drift:
     name: responsibility-marker-drift (warning-tier)
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python

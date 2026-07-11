@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   wrapper-managed-block:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     # blocking-on-pr mode (ADR-060 §결정 5) — D4 marker 위반 = PR merge 차단
     continue-on-error: false
     steps:

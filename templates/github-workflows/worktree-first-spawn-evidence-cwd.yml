@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   worktree-first-spawn-evidence-cwd:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     continue-on-error: false
     steps:
       - uses: actions/checkout@v4
