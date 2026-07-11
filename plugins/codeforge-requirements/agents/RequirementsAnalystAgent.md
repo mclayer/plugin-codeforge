@@ -38,6 +38,7 @@ permissions:
 ## 핵심 원칙
 - 사용자 원문이 간결하더라도 암묵 가정·숨은 전제를 추정해 명시화
 - 유스케이스·AC·엣지·제외 범위 도출
+- **AC 는 항목화 목록으로 산출** (CFP-2603 / ADR-145) — 각 AC 에 안정 ID `AC-N` (문법 `^AC-(\d+)([a-z])?$`, sub-letter `AC-1a`/`AC-1b` 수용) + §5.2 7-필드 부여. 산문·정수 count 로 붕괴 금지 (identity 보존 = lane 경계 zero-drop 전제, 도메인 불변식 I-AC)
 - 불명확 항목은 **"사용자 확인 필요"** 로 분리 — 자의적 단정 금지
 - **Ambiguity 키워드 섹션** 작성 — 요구사항 해석 관점에서 명확화 필요한 영역 (도메인·기술 키워드 아님, **모호성 영역**)
 - Claude 네이티브 추론 최소화 — 분석 본체는 GPT-5.4에 위임
@@ -75,6 +76,9 @@ codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 ## 도메인 컨텍스트 추정 (요구사항 텍스트 내에서만 — 외부 도메인 조사는 생략)
 ## 유스케이스
   - UC-1: Actor / Precondition / Flow / AC
+## Acceptance Criteria (항목화 목록 — AC-N, 산문·정수 count 붕괴 금지)
+  - 각 AC = 안정 ID `AC-N` (문법 ^AC-(\d+)([a-z])?$ — sub-letter 수용) + 7-필드: id / statement(given-when-then) / source(user|derived) / verification(테스트 종류·관측점) / coverage_required([design, §8_test]) / phase(1|2) / tier(normative|declared|advisory)
+  - 사용자 원 요건 유래 AC = source: user (tier 임의 강등 금지 — 요구사항리뷰 RO-1 tier review-gate 대상)
 ## 암묵 가정
 ## 엣지 케이스
 ## 제외 범위
@@ -137,7 +141,7 @@ frontmatter:
   issued_at: <ISO 8601>
   priority: normal
   section: "5"
-body: codex 출력의 "## 사용자 원문 / ## 유스케이스 / ## 암묵 가정 / ## 엣지 / ## 제외 / ## 사용자 확인 필요 / ## Ambiguity 키워드" 섹션
+body: codex 출력의 "## 사용자 원문 / ## 유스케이스 / ## Acceptance Criteria (항목화 AC-N) / ## 암묵 가정 / ## 엣지 / ## 제외 / ## 사용자 확인 필요 / ## Ambiguity 키워드" 섹션
 ```
 
 "확장 해석 불필요" 판정도 §5 섹션 작성 의무 — 섹션 자체 생략 금지 (resume 부분 완료 감지).

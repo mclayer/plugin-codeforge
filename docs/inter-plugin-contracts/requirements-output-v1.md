@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "1.1"
+contract_version: "1.2"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -9,8 +9,10 @@ related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
   - ADR-077 (Clarification 강제 재조사 정책 — §결정 5 carrier: recheck_counter typed surface = 4-layer disjoint 3번째 cross-declare 위치)
+  - ADR-145 (요건 traceability zero-drop 게이트 — §결정 6 v1.2 acceptance_criteria[] additive MINOR carrier)
 authors:
   - CFP-42 sibling backfill (2026-04-29) — wrapper sibling 첫 작성, canonical 본문 verbatim mirror
+  - CFP-2603 (2026-07-11) — v1.1 → v1.2 MINOR: acceptance_criteria[] top-level optional 추가 (AC-ID zero-drop, ADR-145 §결정 6 / ADR-008 §결정 2 backward-compat)
 ---
 
 # requirements_output v1 — Inter-plugin Contract
@@ -74,7 +76,7 @@ requirements_packet:
 
 ```yaml
 requirements_output:
-  contract_version: "1.1"           # CFP-834: 1.0 → 1.1 MINOR (optional 필드 추가)
+  contract_version: "1.2"           # CFP-2603: 1.1 → 1.2 MINOR (acceptance_criteria[] top-level 추가). CFP-834: 1.0 → 1.1 (reinvestigation_tracking)
   story_key: <STORY_KEY>
 
   status: PASS | ESCALATE_USER_CLARIFICATION | ESCALATE_PACKET_INCOMPLETE  # 필수
@@ -93,6 +95,23 @@ requirements_output:
       external_refs_count: <int>     # 인용 외부 자료 수
       libraries_evaluated: [<list>]
       null_result: <bool>            # 조사 불필요
+
+  # AC-ID 항목화 목록 (CFP-2603 / ADR-145 §결정 6 — v1.2 additive MINOR)
+  acceptance_criteria:              # OPTIONAL top-level — sub_agent_results / writes_completed 와 peer (.analyst 하위 아님).
+                                    #   부재 시 게이트가 list 실재 강제(ADR-145 AC-3). 계약 field 는 영구 optional (v1.1 consumer 무영향).
+                                    #   analyst.acceptance_criteria_count 는 보존(제거 = MAJOR) — 정수 요약 ↔ 항목 identity 병존.
+                                    #   §5.2 스키마 2-등급 (ADR-145 §결정1(i)/§결정6):
+                                    #     REQUIRED (machine-enforced — Hop1 validate_ac_record fail-closed) = id / statement / source / tier
+                                    #     DERIVED  (파생 — present 시 format-only, 완결성=계약/Hop2/review 층, 게이트 §5-parse 미재검증)
+                                    #              = verification / coverage_required / phase
+                                    #              (coverage_required←tier+Hop2 / phase←run-phase+tier / verification←tier+Hop2·review)
+    - id: AC-1a                     # [required] ^AC-(\d+)([a-z])?$ (sub-letter 수용 — AC_ID_RE SSOT, naive AC-\d+ drop 금지)
+      statement: <given-when-then>  # [required] 검증 가능한 분기 행동 (non-empty)
+      source: user | derived        # [required] enum
+      verification: <테스트 종류·관측점>   # [derived] 파생 (present 시 format-only)
+      coverage_required: [design, §8_test]  # [derived] 파생
+      phase: 1 | 2                  # [derived] 파생 (1=문서·명명 / 2=실 테스트파일)
+      tier: normative | declared | advisory   # [required] enum — normative=fail-closed 기계 / declared=review-verified / advisory=경보만
 
   # PL self-write 결과 audit
   writes_completed:
@@ -154,8 +173,8 @@ epic_dependencies:                    # OPTIONAL — empty list if independent
 
 ```yaml
 requirements_output:
-  contract_version: "1.1"           # CFP-834: 1.0 → 1.1 MINOR (optional 필드 추가)
-  # ... (기존 §3 필드 불변: status / sub_agent_results / writes_completed / user_clarification_needed)
+  contract_version: "1.2"           # CFP-2603: 1.1 → 1.2 MINOR (acceptance_criteria[] top-level 추가). CFP-834: 1.0 → 1.1 (reinvestigation_tracking)
+  # ... (기존 §3 필드 불변: status / sub_agent_results / acceptance_criteria / writes_completed / user_clarification_needed)
 
   reinvestigation_tracking:         # OPTIONAL — clarification-driven 재조사 누적 forward 신호
     optional: true                  # ADR-008 §결정 2 MINOR — consumer v1.0 채 못 받아도 no-op
@@ -194,6 +213,7 @@ requirements_output:
 - 새 ESCALATE enum 추가 — minor
 - writes_completed 필드 schema 확장 — minor
 - reinvestigation_tracking 확장 (recheck_counter 파생 필드 추가) — minor (CFP-834: v1.0 → v1.1 기존 진화 경로 정합)
+- acceptance_criteria[] top-level 항목화 목록 추가 — additive MINOR (CFP-2603 / ADR-145 §결정 6: v1.1 → v1.2, acceptance_criteria_count 보존 = MAJOR 회피, ADR-008 §결정 2 backward-compat)
 
 ## 6. 본 contract 시점 동결 ATTRIBUTION
 

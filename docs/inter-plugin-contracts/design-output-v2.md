@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "2.4"
+contract_version: "2.5"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -11,6 +11,7 @@ related_adrs:
   - ADR-010
   - ADR-014
   - ADR-033
+  - ADR-145  # v2.5 carrier — ac_coverage_self_check_passed marker (요건 traceability zero-drop 게이트 §결정 6)
 breaking_changes:
   - "deputies_results 에 op_risk_arch 추가 (5 SubAgent → 6 SubAgent) — OperationalRiskArchitectAgent neutral peer"
   - "chief_author_artifact.sections_authored 에 §7.4 운영 리스크 5 sub-item 명시 (DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation)"
@@ -82,7 +83,7 @@ codeforge core (Orchestrator)
 
 ```yaml
 design_packet:
-  contract_version: "2.4"
+  contract_version: "2.5"
   story_key: <STORY_KEY>
   story_sections_1_to_7: <markdown>     # 필수
   related_adr_paths:                    # 필수 — Story §3 fetch
@@ -97,7 +98,7 @@ design_packet:
 
 ```yaml
 design_output:
-  contract_version: "2.4"
+  contract_version: "2.5"
   story_key: <STORY_KEY>
 
   status: PASS | FIX_CHIEF_AUTHOR_REVISION | ESCALATE_PACKET_INCOMPLETE
@@ -164,6 +165,8 @@ design_output:
       - "§8.5 Stateful / restart invariant tests (CONDITIONAL — CFP-47 / ADR-015)"  # NEW v2.1 — additive
 
     spec_invariant_measurement_required: <bool>  # NEW v2.3 — CFP-662. chief author artifact 가 spec invariant measurement 의무를 명시했는지 marker. default false. 후속 carrier 가 의무화 / 검증 로직 추가 예정.
+
+    ac_coverage_self_check_passed: <bool>  # NEW v2.5 — CFP-2603 / ADR-145 §결정 6. chief author 가 authoritative Test Contract location 에서 AC↔§8 coverage self-check (모든 normative AC-N → ≥1 §8 명명 테스트 매핑) 통과 보고 marker. default false. self-check disjoint 축 group (architecture_doc_updated / mechanical_self_check_passed 등) 과 peer. location 은 문서유형별 resolve (wrapper-self dogfood = Change Plan §8 / consumer = Story §8 mirror — "Story §8" 하드코딩/단정 금지). packet 에 RTM 중복 금지 (marker bool 만).
 
   # PL self-write 결과 audit
   writes_completed:
@@ -315,6 +318,7 @@ ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 se
 - `dimensional_empirical_self_check_passed` (ADR-068 Amendment 1) — I-5 dimensional empirical
 - **`architecture_doc_updated` (ADR-078, v2.4 신설)** — design-lane self-write verification (scope (b))
 - `marketplace_sync_declared` (ADR-063 Amendment 1) — atomic invariant declare
+- **`ac_coverage_self_check_passed` (ADR-145, v2.5 신설)** — AC↔§8 coverage self-check (authoritative Test Contract location, 문서유형별 resolve)
 
 ### Cross-references
 
@@ -322,4 +326,30 @@ ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 se
 - [ADR-082 write-time self-write verification](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) scope (b)
 - [ADR-008 inter-plugin contract versioning](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
 - [ADR-010 sibling sync ordering](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) §결정 1 (canonical first → sibling follow)
+
+---
+
+## v2.5 MINOR — `ac_coverage_self_check_passed` marker (CFP-2603)
+
+**Carrier**: CFP-2603 (Epic CFP-2602 G1) — [ADR-145](../../archive/adr/ADR-145-ac-traceability-zero-drop-gate.md) 요건 traceability zero-drop 게이트.
+
+### 신설 field
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `chief_author_artifact.ac_coverage_self_check_passed` | bool | optional | `false` | ADR-145 §결정 6 marker. `true` = ArchitectAgent (chief author) 가 **authoritative Test Contract location** 에서 AC↔§8 coverage self-check (모든 normative AC-N → ≥1 §8 명명 테스트 매핑, 미커버=0) 통과 보고. location 은 **문서유형별 resolve** — wrapper-self dogfood = Change Plan §8 / consumer Story = Story §8 mirror (게이트가 self 의 Story §8 placeholder 를 파싱해 false-FAIL 하는 함정 회피, "Story §8" 하드코딩/단정 금지). self-check disjoint 축 group (`architecture_doc_updated` / `mechanical_self_check_passed` / `boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed` / `marketplace_sync_declared`) 과 peer. **packet 에 RTM 중복 금지** — verbose RTM 이중 소유 회피, marker bool 만 전달. |
+
+### Migration (v2.4 → v2.5)
+
+- **Backward-compat MINOR** (ADR-008 §결정 2 — optional field default false)
+- 기존 v2.4 producer → field omit 시 default `false` 적용
+- 신규 v2.5 producer (post-CFP-2603 ArchitectPL) → coverage self-check 수행 후 marker emit
+- Validator → field 부재 = `false` 가정 (backward-compat)
+- Effective date: 2026-07-11 KST 이후 신규 design lane verdict packet (forward-only, ADR-079 §결정 6 동형)
+
+### Cross-references
+
+- [ADR-145 요건 traceability zero-drop 게이트](../../archive/adr/ADR-145-ac-traceability-zero-drop-gate.md) §결정 6 (계약 2 additive MINOR — design-output v2.5 marker)
+- [ADR-006 §8 Test Contract](../../archive/adr/ADR-006-testcontract-architect.md) — AC↔§8 coverage self-check 의 authoritative location (§8 Test Contract authoring mechanism owner)
+- [ADR-008 inter-plugin contract versioning](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
 

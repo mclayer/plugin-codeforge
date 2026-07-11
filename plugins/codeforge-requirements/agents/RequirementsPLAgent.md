@@ -103,6 +103,14 @@ permissions:
 | 상충·정합 분석 | §5 또는 §6 말미 |
 | Architect 전달 사항 | §7 "설계 서사" 초안 |
 
+## AC 항목화 목록 산출 (requirements_output v1.2 — CFP-2603 / ADR-145)
+
+PL 이 §5 AC 를 최종 synthesis 할 때 (실행 흐름 3(d) "요구사항·AC·Non-goal 작성") + requirements_output 반환 시:
+
+- **항목화 목록 유지 (산문·정수 count 붕괴 금지)**: 각 AC 는 안정 ID `AC-N` (문법 `^AC-(\d+)([a-z])?$`, sub-letter `AC-1a`/`AC-1b` 수용) + §5.2 7-필드 (id / statement(given-when-then) / source / verification / coverage_required / phase / tier) 를 보유. identity 보존이 lane 경계 zero-drop 의 전제 (도메인 불변식 I-AC).
+- **requirements_output 계약 반환 (v1.2)**: 기존 `sub_agent_results.analyst.acceptance_criteria_count` (정수 요약) 는 **보존**하되, top-level `acceptance_criteria[]` (항목화 목록) 도 동반 emit — 하류 설계 lane 이 "사용자가 요구한 것의 체크리스트" 를 항목 단위로 수신 (requirements-output-v1 v1.2, ADR-145 AC-3). 계약 field 는 optional 이나 게이트가 list 실재를 강제.
+- **tier 배정 정직**: 사용자 원 요건 유래 AC = `source: user` + 타당한 tier — user AC 를 advisory/declared 로 임의 강등 금지 (fail-closed 강제 약화). 요구사항리뷰 RO-1 이 tier 배정을 review-gate 한다 (§5.6 / ADR-145 Risk5).
+
 ## 컨텍스트 수집 책임 (하위 에이전트 스폰 전 — 공통 입력 구성)
 
 외부 모델(GPT-5.4) 및 외부 웹 자료에 의존하는 Analyst·Researcher는 레포를 자율 탐색하면 지연·토큰 증가. **세 에이전트가 공유하는 공통 입력 패키지**를 선제적으로 프롬프트에 포함.

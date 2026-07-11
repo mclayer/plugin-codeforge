@@ -79,10 +79,11 @@ tools: Read
 | **요구사항 외부지식 단정 검증** (외부사실 의존 결론 다출처 검증, 검사연극 금지 — ADR-124 결정 2 / ADR-125 결정 6, checklist `requirements.md` §2-5) | — | — | — | — | ✅ RequirementsReviewPL |
 | **외부 표준/규제 누락 (RFC·법규·산업표준)** | — | — | — | — | ✅ (규제 위험 동반 시 P0) |
 | **AC 외부검증가능성 / 시장·벤더 단정 출처** | — | — | — | — | ✅ (외부사실 의존 시 P1) |
+| **AC 분해 완결성 (RO-1 — §1 원문 ↔ §5 AC diff + tier 배정 검증)** (구별되는 각 사용자 요건이 ≥1 AC 매핑 — 미매핑=review FIX 설계 진입 차단 + user-sourced AC tier 오분류 review-gate. 요구사항리뷰 3번째 disjoint 축, external-fact/internal-invariant 와 additive disjoint — CFP-2603 / ADR-145, checklist `requirements.md` "AC 분해 완결성 게이트") | — | — | — | — | ✅ RequirementsReviewPL |
 
 ## Lane 역할 요약 (CFP-2326 / ADR-125 후 — 5 → 6 review lane, RequirementsReview 신설)
 
-- **RequirementsReview (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md))**: 요구사항 산출물 (Story §1-7 + 사용자 원문 + 도메인 지식) 의 **외부사실 의존성** 게이트. Phase 1 내부 sub-gate (요구사항 → 요구사항리뷰 → 설계). 외부지식 충당 3-단계 (ADR-124) 중 단계③ 주 발동 lane. 작성측 ADR-052 touchpoint #4 self-check (단계②) 와 disjoint axis (리뷰측 producer 게이트, 단계③). RequirementsReviewPL → Claude/Codex dual-peer (WebSearch/WebFetch 허용 — 외부사실 검증). 검사연극 금지 (내부근거-only 결론에 외부조사 강제 금지). PASS → gate:requirements-review-pass → phase:설계
+- **RequirementsReview (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md))**: 요구사항 산출물 (Story §1-7 + 사용자 원문 + 도메인 지식) 의 **외부사실 의존성** 게이트. Phase 1 내부 sub-gate (요구사항 → 요구사항리뷰 → 설계). 외부지식 충당 3-단계 (ADR-124) 중 단계③ 주 발동 lane. 작성측 ADR-052 touchpoint #4 self-check (단계②) 와 disjoint axis (리뷰측 producer 게이트, 단계③). RequirementsReviewPL → Claude/Codex dual-peer (WebSearch/WebFetch 허용 — 외부사실 검증). 검사연극 금지 (내부근거-only 결론에 외부조사 강제 금지). **3 disjoint 축** (external-fact 외부사실 / internal-invariant runtime-failure 변종 / **AC-decomposition-completeness** RO-1 §1↔§5 diff + user AC tier 배정 review-gate — CFP-2603 / ADR-145 additive, 기존 2축 무손상). PASS → gate:requirements-review-pass → phase:설계
 - **DesignLane**: 설계 결정 (trust boundary·threat model·auth model·민감 데이터 흐름). SecurityArch 산출물 → ArchitectAgent §7 반영
 - **DesignReview**: 문서(Change Plan + ADR) 감사. 실구현 코드 미검토. §7 완결성 감사
 - **CodeReview**: 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심

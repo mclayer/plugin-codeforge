@@ -51,9 +51,10 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 
 ### 결정 1 — presence/mapping 천장 + no-hollow 정직 (ADR-006 Amd2 L266 isomorphic)
 
-- **기계 게이트는 presence/mapping 까지만 fail-closed 로 강제한다**: (i) AC-N well-formed + §5.2 스키마 필드 존재, (ii) 모든 AC-N → ≥1 §8 명명 테스트 매핑, (iii) 명명 테스트의 실 파일 ∧ 실 symbol 존재(born-missing 차단).
+- **기계 게이트는 presence/mapping 까지만 fail-closed 로 강제한다**: (i) AC-N well-formed + §5.2 **machine-enforced 필수 4필드(id/statement/source/tier)** 존재·well-formed (derived 필드 verification/coverage_required/phase = §결정6 파생, Hop1 미재검증), (ii) 모든 AC-N → ≥1 §8 명명 테스트 매핑, (iii) 명명 테스트의 실 파일 ∧ 실 symbol 존재(born-missing 차단).
 - **"테스트가 요건을 의미상 올바르게·완전히 검증하는가"(semantic correctness/completeness)를 강제하는 척 = 검사연극** — ADR-006 Amd2 L266("presence-anchor completeness 를 real 인 양 강제 = 검사연극")의 **isomorphic 선례**를 직접 적용한다 (ADR-119 §결정 4 정합).
 - **두 잔여 정직 공개 (no-hollow honesty)**: (a) test-semantic 완전성 미강제, (b) **user→AC 분해-완결성**(AC 집합이 사용자 의도에 완전한지) 미강제. 둘 다 fail-closed 아니며 §결정 2 review obligation + advisory 로 mitigate. **"완전 봉인" hard-claim 금지** — "구조적 born-missing fail-closed + semantic 저감 + 잔여 정직 공개"로 재약속.
+- **(c) layer-separation clarification (잔여 아님 — count 는 2 유지)**: §5.2 derived 필드(verification/coverage_required/phase) 완결성은 **미강제 잔여가 아니다** — 계약(requirements-output-v1)·Hop2·review 층에서 실제 강제되며, 게이트의 §5-parse Hop1 만 재검증하지 않는다(강제 지점 이동, 미강제 아님). ∴ 잔여 count = **2 로 유지**(`CEILING_DISCLOSURE`·Change Plan §3.2(e)/§8.1 정합). required 4필드(id/statement/source/tier)는 Hop1 `validate_ac_record` fail-closed 로 강제(AC-2 non-hollow).
 
 ### 결정 2 — phase-aware 2-tier + 3-tier AC model + user→AC review obligation
 
@@ -100,7 +101,7 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 
 ### 결정 6 — 계약 2 additive MINOR (CONFLICT-A 회피)
 
-- **`requirements-output-v1` v1.1 → v1.2 (additive MINOR)**: 기존 `sub_agent_results.analyst.acceptance_criteria_count: <int>` **보존**(제거 = MAJOR = CONFLICT-A). 신규 top-level `acceptance_criteria[]`(optional, `sub_agent_results`/`writes_completed` 와 peer) 추가 — 각 item = §5.2 스키마{id/statement/source/verification/coverage_required/phase/tier}. **게이트가 list 실재를 강제**(AC-3 항목화 전달)하되 **계약 field 는 영구 optional 유지**(ADR-008 §결정2 backward-compat MINOR).
+- **`requirements-output-v1` v1.1 → v1.2 (additive MINOR)**: 기존 `sub_agent_results.analyst.acceptance_criteria_count: <int>` **보존**(제거 = MAJOR = CONFLICT-A). 신규 top-level `acceptance_criteria[]`(optional, `sub_agent_results`/`writes_completed` 와 peer) 추가 — 각 item = §5.2 스키마 **2-등급**: **required(id/statement/source/tier) = machine-enforced (Hop1 `validate_ac_record` fail-closed, AC-2 non-hollow)** + **derived(verification/coverage_required/phase) = 파생(`coverage_required←tier+Hop2` / `phase←run-phase+tier` / `verification←tier+Hop2·review`), present 시 format-only, 완결성 = 계약·Hop2·review 층(게이트 §5-parse 미재검증)**. **게이트가 list 실재를 강제**(AC-3 항목화 전달)하되 **계약 field 는 영구 optional 유지**(ADR-008 §결정2 backward-compat MINOR).
 - **`design-output-v2` v2.4 → v2.5 (additive MINOR, Model A)**: `chief_author_artifact.ac_coverage_self_check_passed: bool` marker 추가 (기존 self-check disjoint 축 group `architecture_doc_updated` 등과 peer, default false). marker 텍스트 = "**authoritative Test Contract location** 에서 AC↔§8 coverage self-check 통과"(문서유형별 — "Story §8" 단정 금지). packet 에 RTM 중복 금지(marker bool 만).
 - **RTM location-resolution 규칙 (P1 — 게이트가 Test Contract 를 resolve 하는 위치)**: 게이트는 §8 Test Contract(RTM)를 **그것이 authoritative 하게 존재하는 위치**에서 resolve 한다 — **wrapper-self dogfood Story = Change Plan §8**(Story §8=개발서사 placeholder 일 때) / **consumer Story = Story §8 mirror**. 이 규칙이 없으면 Phase 2 구현자가 wrapper-self 의 Story §8(placeholder)을 파싱 → 본 Story 자신의 Phase 2 PR 을 false-FAIL(게이트가 막으려는 바로 그 silent location-mismatch). 게이트 입력은 문서유형 판별 후 authoritative location 을 선택한다.
 - **MANIFEST 3-point parity** (Phase 2 mechanical sync): 각 계약의 (i) frontmatter contract_version, (ii) 본문 version, (iii) `docs/inter-plugin-contracts/MANIFEST.yaml` entry 를 동시 이동(v1.2 / v2.5). atomic.

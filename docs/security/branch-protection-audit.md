@@ -219,3 +219,12 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
 - 사후 검증: 8/8 isArchived true + 8/8 ls-remote fetch OK (AC-1/AC-2) + close 선행 7 issue (AC-3, §D-11 CLOSE_AS_OBVIATED)
 - GAP-1 smoke 실측: archived repo protection rule **잔존+inert** (deploy GET 정상 — contexts 2-tuple/rpr 0/enforce_admins true verbatim, 변경 불가·발효 무대상). §after 표 (2026-06-10 parity) = archive 시점 동결 상태로 보존
 - 활성 관리 표면 = wrapper 단일 (6-tuple). SSOT = wrapper CLAUDE.md 표 1행 + 본 doc. registry v1.2 Archived (#2179)
+
+## 2026-07-11 — CFP-2603 (Epic CFP-2602 G1): wrapper 6→7-tuple `ac-traceability-matrix` 추가 예정 (pending)
+
+- **상태 = pending (실등록 전)**: 신규 required context `ac-traceability-matrix` (요건 traceability zero-drop fail-closed 게이트, ADR-145) 를 wrapper `required_status_checks.contexts[]` 에 추가(6→7-tuple)할 **예정**. 본 엔트리 기록 시점 = 실 branch-protection API 등록 **전** — 현행 활성 표면은 아직 6-tuple.
+- **실등록 시점 = Orchestrator post-merge** (ADR-145 §결정3 ordering-invariant): `workflow 착륙 → self-test suite green 확인(ac-traceability-self-test.yml) → own-PR green(게이트가 자기 Phase 2 PR 에 실 green 산출) → THEN required_contexts 등록`. 이 순서가 born-broken/false-red 린터의 required 등재를 구조적 차단(CFP-2530/CFP-2535 계보).
+- **선례 divergence 근거 (추적 가능성)**: 6→7 narrowing 은 ADR-125 §결정2 "branch-protection 6-tuple 불변" 선례를 override 한다. override 는 **fail-closed 비호환 근거에 한정** — phase-gate INTERNAL 흡수 경로가 anchor 계층 warning-tier + fast-pass OR-gate bypass 로 fail-closed 불가(실측)이므로 신규 required job 이 정당(ADR-145 §결정3). 6-tuple 불변 원칙 자체는 폐기 아님.
+- **등록 후 7-tuple (예정)**: 기존 6 context + `ac-traceability-matrix`. CLAUDE.md "브랜치 보호" 표 + arch-doc C4(6→7) 갱신 = Phase 2 PR 동반.
+- **rollback**: required_contexts 에서 `ac-traceability-matrix` 제거(7→6) + 신규 workflow 삭제 (ADR-145 §12 trivial revert).
+- 기록 시각: 2026-07-11T21:38:25+09:00 (KST).
