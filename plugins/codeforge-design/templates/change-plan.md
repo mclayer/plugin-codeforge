@@ -167,6 +167,19 @@ production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <
 - **③ 발현조건 임계 ↔ §8.5.1 soak 연결**: 본 ③ 임계 = §8.5.1 long-running invariant test 의 soak 구동 종점 (manifestation-derived, ADR-015 Amendment 1). cross-ref 의무.
 - **consumer 실측 위임**: 위 2축 + outcome-signal 의 실 측정 = consumer GitHub CI post-deploy benchmark job ([`post-deploy-benchmark.yml`](https://github.com/mclayer/plugin-codeforge/blob/main/templates/github-workflows/post-deploy-benchmark.yml) seed, ADR-121 §결정 3 완전 위임). deploy-review lane 부활 아님 — 설계-시점 선언 schema 만.
 
+##### (C) daemon liveness 판정 유형 선언 (CFP-2613 / ADR-148 §결정6 — long_running_daemon Story)
+
+> 지속-liveness soak 게이트(G2) 대상 = `daemon_type: long_running_daemon` ∧ `operational:true` Story. HTTP 요청/응답 서비스(`request_response_service`)는 기존 health_checks HTTP-200 default 유지(soak 미대상, mass-breakage 회피).
+
+| 선언 | 정의 | 설계 시점 (hard) | 본 Story 값 |
+|---|---|---|---|
+| `daemon_type` | 서비스 실행 형태 discriminator (5-enum) | operational:true Story 필수 선언 (누락=FAIL, silent default 금지) | `<long_running_daemon \| request_response_service \| batch_job \| cli \| none>` |
+| `sink_probes[]` | terminal-sink monotone 전진 probe 목록 (non-HTTP sink-advance = G2 신설 개념, K8s native handler 아님) | long_running_daemon 시 presence 필수(부재=fail-closed). **필드명 = `docs/project-config-schema.md` `integration_test.sink_probes[]` SSOT 참조만** — 목록 재인코딩 금지 (F-4, ADR-068 I-4 wording-SSOT) | `<선언 여부>` |
+| `manifestation-trigger-type` | soak 구동 종점 도출 축 (time ∨ volume) | 발현조건 축 확정 (§7.4.7 ③ ↔ §8.5.1 cross-ref) | `<time \| volume>` |
+
+- **boot-grace + soak 실행 계약**: exit/restart 카운트는 선언된 `boot_grace_seconds`(ceiling ≤ soak/2) 경과 후 시작 (K8s startup-probe 근거 — 느린-부팅 데몬 false-FAIL 방지). soak 실 실행(프로세스 생존 ∧ terminal-sink monotone 전진 관측) = **표면 B IntegrationTest Deployability soak step** 소유(`plugins/codeforge-test/agents/IntegrationTestAgent.md`, verdict kernel 호출). 판정 결과 = test-verdict-v2 v2.3 `soak_liveness_results`.
+- **wrapper-self declarative**: runtime 0 governance Story 는 daemon_type/sink_probes 선언 schema 존재만 의무, 실 soak 구동 면제(ADR-015 Amendment 1 declarative 면제 상속).
+
 #### §7.5 민감 데이터 분류 + 흐름
 - 데이터 분류표 (Public / Internal / PII / Secret)
 - 데이터 흐름 (발생 → 흐름 → 저장 → 마스킹·암호화 지점)
@@ -242,6 +255,7 @@ TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitect
     2. **duration floor fallback (정량 임계 미도출 시)**: 발현조건 임계를 정량 도출 불가 (비결정·환경의존) 시 **duration floor** (설계가 정한 최소 지속, 예 `≥ 30 분`) 로 hard fallback + "발현조건 미상" 리스크를 본문에 명시. floor 미충족 고정 단창 금지.
   - **accumulation/lifetime-class 해당 여부 명시**: 어떤 long-lived mutable 구조가 monotone/lifetime 리스크인가를 본문에 명시 — §8.5.0 applicability 1+ Y 사유 cross-ref. 비-accumulation 구조 (예: per-request stateless) 는 본 도출 규칙 면제 (기존 자유 지속 시간 유지).
   - **wrapper-self declarative**: runtime 0 governance Story 는 soak-derivation 규칙 (manifestation-derived 임계 OR duration floor) 의 schema 존재만 의무, 실 soak 구동 면제 (실측 임계 숫자만 `[empirical-source: TBD]` defer).
+  - **daemon_type: long_running_daemon Story 의 soak 실행 판정 (CFP-2613 / ADR-148)**: §7.4.7 (C) daemon liveness 선언(daemon_type + sink_probes[] + manifestation-trigger-type) → 표면 B IntegrationTest Deployability soak step 이 프로세스 생존(exit==0 ∧ RestartCount==0) ∧ terminal-sink monotone 전진을 실측(verdict kernel 호출, 결과 = test-verdict-v2 v2.3 `soak_liveness_results`). soak duration 도출 = 본 §8.5.1 manifestation-derived/floor 규칙 재사용. sink_probes[] 필드명 SSOT = `docs/project-config-schema.md` `integration_test.sink_probes[]`(재인코딩 금지, F-4).
 - **invariant assertion 주기** (예: 매 N분 / 매 M update / 매 K 이벤트)
 - **expected baseline + tolerance** (drift 허용 범위)
 - **테스트 fixture / framework** (consumer 환경 — pytest-anyio / asyncio long-running fixture / load generator 등)

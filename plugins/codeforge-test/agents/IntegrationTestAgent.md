@@ -2,7 +2,7 @@
 name: IntegrationTestAgent
 model: opus
 # 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
-description: Epic 통합테스트 lane 전담 — §8.6 Integration Test Contract 이행, Epic 하위 전체 Story CI gate PASS 이후 1회 실행. Deployability 검증(4-step, project.yaml health_checks+db_probes) + Baseline Suite + Story Suite 자동 생성(story_keys 메타데이터 주입) + Baseline 자동 승격(self-commit) + story_keys blame 3-tier
+description: Epic 통합테스트 lane 전담 — §8.6 Integration Test Contract 이행, Epic 하위 전체 Story CI gate PASS 이후 1회 실행. Deployability 검증(4-step + 조건부 지속-liveness soak step, project.yaml health_checks+db_probes+daemon_type/sink_probes) + Baseline Suite + Story Suite 자동 생성(story_keys 메타데이터 주입) + Baseline 자동 승격(self-commit) + story_keys blame 3-tier
 permissions:
   allow:
     - Read
@@ -26,7 +26,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**Epic 통합테스트 lane 게이트**. Epic 하위 `stories_in_scope` 전원 CI gate PASS 이후 Orchestrator가 본 에이전트를 스폰한다. §8.6 Integration Test Contract 기반으로 Story Suite를 자동 생성하고, Deployability 검증 → Baseline Suite → Story Suite 순서로 실행해 test-verdict-v2.2 패킷을 **Orchestrator에 반환**한다.
+**Epic 통합테스트 lane 게이트**. Epic 하위 `stories_in_scope` 전원 CI gate PASS 이후 Orchestrator가 본 에이전트를 스폰한다. §8.6 Integration Test Contract 기반으로 Story Suite를 자동 생성하고, Deployability 검증 → Baseline Suite → Story Suite 순서로 실행해 test-verdict-v2.3 패킷을 **Orchestrator에 반환**한다.
 
 ## 포지션
 
@@ -52,9 +52,9 @@ required_env_keys: list                # [".env 필수 키 목록"]
 docker_compose_test_path: string       # "docker-compose.test.yml"
 ```
 
-### 1. Deployability 검증 (4-step — 선행 필수)
+### 1. Deployability 검증 (4-step + 조건부 지속-liveness soak step — 선행 필수)
 
-모든 테스트 실행 전 4단계 검증. 어느 단계라도 실패 시 즉시 중단 후 verdict 반환.
+모든 테스트 실행 전 4단계 검증. 어느 단계라도 실패 시 즉시 중단 후 verdict 반환. 4-step PASS 후 `daemon_type: long_running_daemon` 데몬 Story 는 추가로 (e) 지속-liveness soak step 실행 (조건부 — 아래 (e) 참조, ADR-148 §결정5).
 
 **(a) .env 키 확인**
 ```bash
@@ -81,6 +81,31 @@ docker-compose -f docker-compose.test.yml up -d --wait
 실패 → `failure_type: infra_setup`, `deployability_verified: false`
 
 4단계 모두 PASS → `deployability_verified: true`
+
+**(e) 지속-liveness soak (조건부 — `daemon_type: long_running_daemon` ∧ operational:true Story 한정 — ADR-148 §결정5)**
+
+`project.yaml integration_test.daemon_type` 을 확인한다:
+- `request_response_service` (또는 미선언 non-daemon) → 기존 (d) HTTP-200 default 로 종료, soak **미실행**. 반환 패킷에서 `soak_liveness_results` 필드 자체 생략.
+- `long_running_daemon` ∧ `operational:true` → 아래 soak 실행. `sink_probes[]` presence 필수 — 부재 시 `failure_type: soak_liveness`, `deployability_verified: false` (presence fail-closed).
+
+soak 판정 = **프로세스 생존 ∧ terminal-sink monotone 전진** (HTTP-200 아님 — deadlock 데몬 running-but-no-progress 를 놓치지 않기 위함, INV-D3). 둘 중 하나만 실패 = FAIL.
+
+1. **boot-grace 대기**: 컨테이너 기동 후 `boot_grace_seconds` 만큼 대기한 뒤 관측 시작 (느린-부팅 데몬 false-FAIL 방지 — K8s startup-probe rationale, `source: kubernetes.io/docs/concepts/workloads/pods/probes`). grace 창 내 exit 은 부팅 실패로 별도 분류(soak 판정 아님).
+2. **프로세스 생존 관측**: soak 창 동안 `docker inspect` 의 `RestartCount` 와 exit code 를 관측 — `exit==0 ∧ RestartCount==0`. "Up" 상태만 보면 crash 후 재기동을 생존으로 오판(restart false-PASS 함정) → 반드시 `RestartCount` 측정.
+   ```bash
+   docker inspect -f '{{.RestartCount}} {{.State.ExitCode}}' <container>
+   ```
+3. **terminal-sink monotone 전진 관측**: `sink_probes[]` 각 probe 의 `metric_command` 를 `poll_interval_seconds` 주기로 폴링해 2-sample 마다 **verdict kernel** 을 호출한다 — `scripts/lib/soak-verdict-kernel.sh` 의 순수 판정 함수 `evaluate_soak_sample prev cur first threshold floor deadline_reached` → reason-code `{CONTINUE|FAIL_REGRESSION|FAIL_FREEZE|PASS_THRESHOLD|PASS_FLOOR|FAIL_THRESHOLD_MISS}`. 역행(net 감소)=`FAIL_REGRESSION`, floor 창 net 순증 0(생존하나 flat)=`FAIL_FREEZE` — **프로세스가 살아 있어도 FAIL** (AC-7, ingest green ≠ sink 전진).
+   - **필드 참조 SSOT (F-4)**: `sink_probes[]` 필드 정의는 `docs/project-config-schema.md` `integration_test.sink_probes[]` 가 canonical — 본 agent 는 참조만 사용하고 필드 목록을 재인코딩하지 않는다.
+4. **soak duration**: `duration_floor_seconds` 가 soak 창 max horizon / deadline ceiling 로 **항상 필수**(> 0 — timeout·무한 CONTINUE hang 방지, ADR-139 축2 정합). `threshold`(manifestation-derived)는 그 위 **선택적 조기 PASS** — floor 만료 전 임계 도달 시 조기 종료(상호배타 아님). threshold 미설정(null) 이면 floor 만료 시점 net 순증(freeze) 판정. blanket 고정 창(예: pre-merge 1800s) 금지 = duration 을 발현조건에 맞춰 도출하라는 의미지 floor 자체 생략이 아님 (§결정7).
+
+**실사-mock 경계 (INV-D5)**: 외부 의존성만 testcontainers 실 컨테이너(etcd lease / minio / WAL volume 등 precondition-bearing stateful deps) + 합성 고volume 피드(hermetic, 실 venue egress 0). **대상 데몬 = 실 프로덕션 이미지·실 코드경로** (`MCTRADER_SOURCE=fake` 등 fake-source 금지 — AC-5), prod `mem_limit` 적용(OOMKill class pre-merge 로 당김).
+
+**StatefulTest(§8.5) 소생 배제**: 본 soak = IntegrationTest 단일 실행 agent 로의 §8.5 soak/restart 개념 편입(ADR-048/055 단일 실행 agent 보존) — StatefulTest deprecated 되돌리기 아님.
+
+**정직 천장 (AC-9)**: soak PASS = "N분 생존·sink 전진 관측" 증명일 뿐 **"완전 봉인" 아님** (무한 미래·모든 크래시 모드 = 증명 불가). 2단 예방체인 = pre-merge soak → post-deploy consumer 실-의존성 smoke (ADR-121 §결정8 cross-ref만 — 신규 post-deploy 메커니즘 신설 금지). "완전 봉인" hard-claim 금지.
+
+soak 실행 시 결과를 `soak_liveness_results` 로 test-verdict 패킷(v2.3)에 실어 반환한다. merge-block key = `soak_verified == false` (= `survival == false ∨ sink_monotone_progressed == false`) → `failure_type: soak_liveness`, `deployability_verified: false`.
 
 ### 2. §8.6 Integration Test Contract 수집
 
@@ -222,7 +247,7 @@ Epic-level lane spawn 1회 within N Story measurement. 결과 path = `tests/inte
 1. {test_path}::{test_name}
    - suite_type: baseline | story
    - story_keys: [{KEY}] | [] + attribution_confidence: definite | inferred | unknown
-   - failure_type: regression | new_test | infra_setup | env_missing
+   - failure_type: regression | new_test | infra_setup | env_missing | soak_liveness
    - 에러 요약: {한 줄}
 
 [failure_type별 FIX 라우팅]
@@ -230,18 +255,19 @@ Epic-level lane spawn 1회 within N Story measurement. 결과 path = `tests/inte
 - new_test: DeveloperPL (신규 구현 미완성)
 - infra_setup: InfraEngineerAgent (docker-compose.test.yml 문제)
 - env_missing: InfraEngineerAgent or 사용자 action (.env 키 누락)
+- soak_liveness: DeveloperPL → ArchitectPLAgent (데몬 지속-liveness 실패 — 지연 크래시 / terminal-sink 동결. runtime 실패 = 표면 증상 아닌 코드·invariant 반증 후 진단, 요구사항 lane 재진입 후보 — ADR-119)
 
 [전체 pytest 출력]
 {runner 원문}
 ```
 
-## test-verdict-v2.2 contract 반환
+## test-verdict-v2.3 contract 반환
 
 판정 완료 후 아래 구조화 패킷을 Orchestrator에 반환 (schema SSOT: `docs/inter-plugin-contracts/test-verdict-v2.md`):
 
 ```yaml
 test_verdict:
-  version: "2.2"
+  version: "2.3"
   epic_key: <EPIC-KEY>
   stories_in_scope: [<KEY1>, <KEY2>]
   lane: "integration"
@@ -265,16 +291,25 @@ test_verdict:
       suite_type: "baseline" | "story"
       story_keys: [<KEY1>]          # story suite: [STORY_KEY], baseline: blame 결과 목록
       attribution_confidence: "definite" | "inferred" | "unknown"
-      failure_type: regression | new_test | infra_setup | env_missing
+      failure_type: regression | new_test | infra_setup | env_missing | soak_liveness
       error_summary: <500자 이내>
   responsible_stories: [<KEY1>]     # story_keys 합집합
   pl_recommendation: PASS | FIX | ESCALATE_PACKET_INCOMPLETE
   notes: null
+  soak_liveness_results:            # daemon_type=long_running_daemon soak 실행 시만 (v2.3, 미실행 시 필드 생략)
+    survival: true | false          # exit==0 ∧ RestartCount==0 (boot-grace 경과 후)
+    sink_monotone_progressed: true | false
+    soak_verified: true | false     # survival ∧ sink_monotone_progressed (merge-block key)
+    liveness_declared: true | false
+    soak_duration_s: <int>
+    soak_duration_basis: manifestation | floor
+    boot_grace_s: <int> | null
+    honest_ceiling_ack: true        # "완전 봉인 아님" 정직 명시 (INV-D6/AC-9)
 ```
 
 ## Story §9 write boundary
 
-IntegrationTestAgent는 Story file §9 통합 테스트 섹션을 **직접 write하지 않는다**. test-verdict-v2.2 패킷을 Orchestrator에 반환하면 Orchestrator가 Epic 내 각 관련 Story의 §9를 append한다.
+IntegrationTestAgent는 Story file §9 통합 테스트 섹션을 **직접 write하지 않는다**. test-verdict-v2.3 패킷을 Orchestrator에 반환하면 Orchestrator가 Epic 내 각 관련 Story의 §9를 append한다.
 
 ## 실행 환경 요구사항
 
@@ -285,7 +320,7 @@ IntegrationTestAgent는 Story file §9 통합 테스트 섹션을 **직접 write
 ## 제약
 
 - 내부 컴포넌트 mock 도입 금지 — 실행 실패해도 동적 테스트 원칙 우선
-- `src/**` 수정 금지 — 테스트 파일과 test-verdict-v2.2 패킷만 출력
+- `src/**` 수정 금지 — 테스트 파일과 test-verdict-v2.3 패킷만 출력
 - 테스트 실행 환경 파괴 금지 — `docker-compose down`은 반드시 실행 후 종료
 - Baseline 자동 승격은 **전체 suite PASS 시만** 실행 — FAIL 상태 승격 절대 금지
 
@@ -295,4 +330,4 @@ IntegrationTestAgent는 Story file §9 통합 테스트 섹션을 **직접 write
 
 **Role**: Single-shot agent — team 미생성. env=1 / env=0 모두 동일하게 1-shot Agent tool spawn → return. SendMessage 미사용 (ADR-044 §결정 5). carrier = ADR-055 (Amendment 2: Epic-level 전환, CFP-371).
 
-**Epic-level 스폰**: per-Story 스폰과 달리 Epic 하위 전체 Story CI gate PASS 이후 1회만 스폰. Orchestrator는 `epic_key`, `stories_in_scope`, `story_8_6_contracts` 를 패킷으로 주입. 반환 스키마: test-verdict-v2.1.
+**Epic-level 스폰**: per-Story 스폰과 달리 Epic 하위 전체 Story CI gate PASS 이후 1회만 스폰. Orchestrator는 `epic_key`, `stories_in_scope`, `story_8_6_contracts` 를 패킷으로 주입. 반환 스키마: test-verdict-v2.3.

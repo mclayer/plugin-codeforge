@@ -155,3 +155,13 @@ scripts/lib/check_venue_shape_fidelity_presence.py:templates/github-workflows/ve
 # verbatim 경로로 접근. 둘 다 chmod +x(100755) — Check 4 exec-bit 의무(.sh/.ps1 비면제).
 templates/scripts/build-local.sh
 templates/scripts/build-local.ps1
+
+# CFP-2613 (Epic CFP-2602 G2, ADR-148 §결정3) — 지속-liveness soak verdict-kernel co-distribution.
+# soak-verdict-kernel.sh = evaluate_soak_sample 순수 판정 함수(생존∧sink-monotone) single-source.
+# consumer-distributed post-deploy-benchmark.yml(CONSUMER_ONLY_WORKFLOWS)이 CI runtime 에
+# $GITHUB_WORKSPACE/scripts/lib/soak-verdict-kernel.sh 로 source → 부재 시 fail-closed(exit 1,
+# "verdict-kernel 부재" 가드). ∴ workflow 옆에 kernel 을 반드시 co-distribute (born-not-broken).
+# :dep_workflow = templates/github-workflows/post-deploy-benchmark.yml (degraded-mode 누락 suppression).
+# .sh = 100755 (Check 4 exec-bit 의무). soak-runner.sh(표면 B pre-merge)는 consumer post-deploy
+# 미배선 → 본 manifest 대상 아님 (kernel 만 consumer co-distribution).
+scripts/lib/soak-verdict-kernel.sh:templates/github-workflows/post-deploy-benchmark.yml
