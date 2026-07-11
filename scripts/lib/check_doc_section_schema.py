@@ -137,7 +137,9 @@ def _slice_8_8_subsection(body: str, sub: str) -> str:
     if not m:
         return ""
     start = m.end()
-    nxt = re.search(r"^#{4,6}\s+\S", body[start:], re.MULTILINE)
+    # CFP-2605 FIX(F-CR-002): slice 종료 경계 ^#{1,6} — §8.5.4/§8.7.x homolog 정합
+    #   (§8.8.N 이 ≤3# 헤딩 직전 마지막 sub 일 때 over-slice 로 인한 이론적 field-masking 봉인).
+    nxt = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
     end = start + (nxt.start() if nxt else len(body) - start)
     return body[start:end]
 

@@ -406,32 +406,36 @@ tc9_body() {
 }
 EC_TC9=$(run_case tc9_body 0 "TC9-ceiling-overreach-PASS" "4 DO 유효 + g2 + §8.8.5 천장 → exit 0 (게이트 fail-close 안 함)" | tail -1)
 
-# ── test_ceiling_honesty_disclosed (doc-presence) ──
-#   change-plan.md 템플릿 우선(다른 worker 삽입). 부재 시 skip-with-note + fixture §8.8.5 로 검증.
-#   4 잔여(검출력/완결성/사유타당성/g2_boundary_check) 존재 + "완전 봉인" hard-claim 부재 grep assert.
+# ── test_ceiling_honesty_disclosed (doc-presence — LIVE 회귀가드) ──
+#   CFP-2605 FIX(F-CR-001): 실 템플릿(plugins/codeforge-design/templates/change-plan.md) §8.8.5 를 직접 검증한다.
+#   (base=8394bdd0 버그: preferred 분기가 부재 경로 $REPO_ROOT/templates/change-plan.md 를 검사 → 항상 fixture
+#    fallback → 자기가 emit 한 토큰을 자기 grep = tautological forged-green. hollow fallback 폐지 —
+#    실 템플릿 부재/§8.8.5 미존재 = FAIL(회귀 표면화, 절대 skip-with-note 로 mask 금지).)
+#   4 잔여(검출력 / 완결성 / 타당성["사유 타당성" 공백 정합] / g2_boundary_check) 존재 +
+#   "완전 봉인" hard-claim 부재(honest disclaimer '"완전 봉인" ... 금지' 는 over-claim 아님 — 금지 문맥 제외) grep assert.
 ceiling_honesty_check() {
-  local target="" src=""
-  if [ -f "$REPO_ROOT/templates/change-plan.md" ] && grep -q '§8\.8\.5' "$REPO_ROOT/templates/change-plan.md" 2>/dev/null; then
-    target="$REPO_ROOT/templates/change-plan.md"; src="change-plan.md 템플릿"
-  else
-    echo "  (note) change-plan.md 템플릿 §8.8.5 미삽입 — fixture §8.8.5 로 검증(skip-with-note)" >&2
-    target=$(mktemp); tc9_body > "$target"; src="fixture §8.8.5"
+  local target="$REPO_ROOT/plugins/codeforge-design/templates/change-plan.md" src="change-plan.md 실 템플릿"
+  if [ ! -f "$target" ] || ! grep -q '§8\.8\.5' "$target"; then
+    echo "✗ FAIL: test_ceiling_honesty_disclosed — 실 템플릿($target) 부재 또는 §8.8.5 미존재 (LIVE 회귀가드 — hollow fixture fallback 폐지)" >&2
+    tally_fail
+    return
   fi
   local ok=1
-  for tok in "검출력" "완결성" "사유타당성" "g2_boundary_check"; do
+  for tok in "검출력" "완결성" "타당성" "g2_boundary_check"; do
     grep -q "$tok" "$target" || { echo "  ceiling honesty: '$tok' 부재 ($src)" >&2; ok=0; }
   done
-  if grep -q "완전 봉인" "$target"; then
-    echo "  ceiling honesty: '완전 봉인' hard-claim 존재 = over-claim ($src)" >&2; ok=0
+  # over-claim 검출: "완전 봉인" 을 hard-claim 하면 FAIL. 단 "완전 봉인 ... 금지"(honest disclaimer)는 허용
+  #   → "완전 봉인" 이 있는데 그 줄에 "금지" 가 없으면 over-claim.
+  if grep "완전 봉인" "$target" | grep -qv "금지"; then
+    echo "  ceiling honesty: '완전 봉인' hard-claim(금지 문맥 아님) 존재 = over-claim ($src)" >&2; ok=0
   fi
   if [ "$ok" = "1" ]; then
-    echo "✓ PASS: test_ceiling_honesty_disclosed — 4 잔여 개시 + '완전 봉인' 부재 ($src)" >&2
+    echo "✓ PASS: test_ceiling_honesty_disclosed — 실 템플릿 §8.8.5 4 잔여 개시 + '완전 봉인' hard-claim 부재 ($src)" >&2
     tally_pass
   else
     echo "✗ FAIL: test_ceiling_honesty_disclosed — ceiling honesty 개시 미충족 ($src)" >&2
     tally_fail
   fi
-  [ "$src" = "fixture §8.8.5" ] && rm -f "$target"
 }
 ceiling_honesty_check
 
