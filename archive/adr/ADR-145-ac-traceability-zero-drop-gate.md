@@ -16,7 +16,7 @@ related_adrs:
   - ADR-052  # 요구사항 single-shot / divergence debate — user→AC hop defense-in-depth 3층 중 (c) Codex proactive check divergence
   - ADR-136  # frontend 품질게이트 표준 — Amd3 L1/L2/L3 execution-liveness 3요건 + L3 "linter 자체 mutation-self-test" (born-missing linter file∧function grep-only = CFP-2545 false-oracle → §8 linter self-test, CONFLICT-B 해소). frontend.applicable default-false 2-layer 동형(consumer-applicability)
   - ADR-133  # ADR-RESERVATION atomic claim — 본 ADR 번호(145) claim→write→row-append 3-step 발급 (claimant ArchitectAgent:CFP-2603)
-  - ADR-060  # warning-tier evidence framework + 승격 evidence-gate — shadow-required → required_contexts 승격 evidence-gate 선례(§결정 6/19). ModuleArch digest 의 "ADR-130 §결정6 7-day-green" 오citation 정정 (ADR-130 = applicability⊥closure, 무관)
+  - ADR-060  # shadow-required 승격 evidence-gate 선례(§결정 6/19) — 본 ADR 에서 (B) shadow-required = 미채택 대안(§대안); 채택 = (A) 즉시 required. ModuleArch digest 의 "ADR-130 §결정6 7-day-green" 오citation 정정 (ADR-130 = applicability⊥closure, 무관)
   - ADR-005  # N/A 명시 패턴 — §11 데이터 마이그레이션 N/A (wrapper-self governance, schema/data 무변경) 근거
   - ADR-068  # boundary invariant I-1~I-5 — deputy mandate boundary (chief tie-break ladder 2단계) + I-3 guard placement(unconditional 우선) + I-4 wording SSOT
   - ADR-013  # dogfood-out — 본 ADR = Story §7 설계 SSOT, Change Plan 병존(internal-docs). ADR-127 :115 정합
@@ -76,7 +76,9 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - **phase-gate-mergeable.yml 확장 기각 (Feasibility Barrier 1)**: check-gate 에 in-line matrix 를 얹으면 두 실패 모드 — (a) anchor 계층과 동형인 warning-tier(merge 미차단, ratchet 0) 또는 (b) fast-pass OR-gate(L359→L414-423) 로 Epic/sibling PR bypass. 양쪽 다 fail-closed 요건(AC-7)과 비호환. [verified: phase-gate-mergeable.yml L369/L581/L648 warning-tier + L359 fast-pass bypass, origin/main]
 - **신규 dedicated workflow `.github/workflows/ac-traceability-matrix.yml`** (job-id = context name `ac-traceability-matrix`, double-context 회피) 를 **day-1 hard-fail** 로 배선한다 — fail-closed 로직 즉시 활성(실 red/green + PR red X).
 - **CONFLICT-C divergence 정당화**: ADR-125 §결정2 "branch-protection 6-tuple 불변" 선례는 phase-gate **INTERNAL 흡수**(요구사항리뷰 gate 를 기존 check-gate 로 매핑)를 전제했다. 본 게이트는 그 흡수 경로가 **fail-closed 비호환**(anchor=warning-tier + fast-pass bypass 실측)이므로 선례가 성립하지 않는다 → 신규 required job 이 정당하다. ADR-125 선례 override 는 **비호환 근거에 한정**되며 6-tuple 불변 원칙 자체를 폐기하지 않는다.
-- **branch-protection required_contexts 등록(6→7-tuple) = 사용자 결정** (비가역·거버넌스 tuple 변경): 두 옵션 — (A) 즉시 등록(day-1 merge blocker) vs (B) **shadow-required 하이브리드**(workflow 는 day-1 hard-fail 로 실 red/green, required_contexts 등록은 지속 green + born-broken-clear 확인 후 승격 — ADR-060 §결정 6/19 승격 evidence-gate 선례). 설계 권고 = **(B) shadow-required**. 설계리뷰 lane 으로 escalate. (참고: ModuleArch digest 의 "ADR-130 §결정6 7-day-green" 은 오citation — ADR-130 = applicability⊥closure 분류. 승격 근거 SSOT = ADR-060.)
+- **branch-protection required_contexts 등록(6→7-tuple) = 사용자 결정 → 채택 = (A) 즉시 required 등록** (2026-07-11 사용자 결정): G1 게이트를 도입하는 Phase 2 PR 머지 시점에 `required_status_checks.contexts[]` 에 신규 context `ac-traceability-matrix` 를 즉시 추가(6→7-tuple). CLAUDE.md "브랜치 보호" 표 + arch-doc C4 갱신은 Phase 2 PR 동반.
+- **A 채택의 born-broken 안전 전제 (핵심 정당화)**: 즉시 required 의 born-broken/false-red 위험은 **게이트 자신의 self-test 가 merge-precondition** 이라 구조적으로 차단된다 — G1 게이트를 착륙시키는 Phase 2 PR 자체가 게이트의 §8 self-test(execution-liveness L3 mutation-kill A/B/C + F-fixture 12종 RED→GREEN)를 통과해야 merge 되므로, born-broken 린터는 애초에 required 로 등재될 수 없다. ∴ **즉시 required 등록의 안전 전제 = 린터 self-test suite green**(born-broken gate class 대비 — CFP-2530 css-lint born-invalid / CFP-2535 execution-liveness 계보). false-red 재발 시 revert = trivial(§결과·Rollback).
+- (참고: ModuleArch digest 의 "ADR-130 §결정6 7-day-green" 은 오citation — ADR-130 = applicability⊥closure 분류. shadow-required 승격 evidence-gate SSOT = ADR-060 §결정 6/19. 본 결정에서 shadow-required(B)는 §대안 참조 — 고려됐으나 미채택.)
 
 ### 결정 4 — fail-closed no-optout + AC-ID namespace + sub-letter grammar
 
@@ -109,6 +111,7 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - **phase-gate-mergeable.yml in-line 흡수**: warning-tier 또는 fast-pass bypass 로 fail-closed 불가(§결정 3 실측). → 기각, 신규 required job.
 - **born-missing = file∧function grep**: CFP-2545 false-oracle(§결정 5). → 기각, ast symbol resolve.
 - **skip-toggle 신설**: ADR-127/AC-7 opt-out. → 기각(§결정 4).
+- **branch-protection 등록 = (B) shadow-required 하이브리드**(workflow day-1 hard-fail 로 실 red/green + PR red X, `required_contexts` 등록은 지속 green + born-broken-clear 확인 후 ADR-060 §결정6/19 evidence-gate 로 승격): **고려됐으나 미채택** — 사용자가 (A) 즉시 required 를 선택(2026-07-11). 채택 근거 = A 의 born-broken 위험이 게이트 self-test merge-precondition 으로 이미 구조적 차단되어(§결정 3) shadow 유예의 이득이 낮고, 즉시 fail-closed 가 요건-현실 갭 차단(Story 목적)에 직결. B 는 양안 보존 기록으로만 잔존.
 
 ## 결과
 
