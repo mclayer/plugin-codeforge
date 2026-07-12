@@ -36,7 +36,7 @@ is_transitional: false
 
 ## 상태
 
-Accepted (2026-07-12 KST) — CFP-2622 (Epic CFP-2602 G6) carrier. "wrapper-self 산출물은 이미 대규모 discriminating self-test corpus 를 보유하나(정직 인정 — 35 self-test 중 26 이 mutation-kill 키워드 보유), 그중 12 는 **어느 workflow 에도 배선 안 돼(DEAD) L3 fixture 는 작성됐으나 실행 안 되는(선언→실행 미승격)** 상태로 남는다"는 병(게이트-실행 adequacy 갭)을 도메인 불변식 위반으로 재정의하고, `tests/scripts/*.sh` self-test corpus 전수에 대해 **실행 채널의 존재·alive·discriminating fixture 형식 presence 를 구조 fail-closed 로 강제하는 execution-liveness 인벤토리/메타-게이트**를 신설하는 governance SSOT. ADR-136 결정14 execution-liveness 3요건(L1/L2/L3)의 wrapper-self self-test corpus-wide 자기적용 — 강화(ratchet↑) 방향, 약화 surface 0(신규 required context 0, branch-protection 6-tuple 무변경, inter-plugin 계약 무변경). ADR-136 을 **cross-ref**하되 amend 하지 않는다(G6 = 신규 corpus-wide 강제 mechanism = 신규 ADR, §결정 1).
+Accepted (2026-07-12 KST) — CFP-2622 (Epic CFP-2602 G6) carrier. "wrapper-self 산출물은 이미 대규모 discriminating self-test corpus 를 보유하나(정직 인정 — 35 self-test 중 26 이 mutation-kill 키워드 보유), 그중 12 는 **어느 workflow 에도 배선 안 돼(DEAD) L3 fixture 는 작성됐으나 실행 안 되는(선언→실행 미승격)** 상태로 남는다"는 병(게이트-실행 adequacy 갭)을 도메인 불변식 위반으로 재정의하고, `tests/scripts/*.sh` self-test corpus 전수에 대해 **실행 채널의 존재·alive·discriminating fixture 형식 presence 를 구조 fail-closed 로 강제하는 execution-liveness 인벤토리/메타-게이트**를 신설하는 governance SSOT. ADR-136 결정14 execution-liveness 3요건(L1/L2/L3)의 wrapper-self self-test corpus-wide 자기적용 — 강화(ratchet↑) 방향, 약화 surface 0(신규 required context 0, branch-protection **7-tuple(문서 SSOT, ADR-145 §결정3) 무변경** — 현행 live=6-tuple[`ac-traceability-matrix` 미등록, G1 doc-vs-live divergence, CFP-2609 reconcile 대기], inter-plugin 계약 무변경). ADR-136 을 **cross-ref**하되 amend 하지 않는다(G6 = 신규 corpus-wide 강제 mechanism = 신규 ADR, §결정 1).
 
 ## 컨텍스트
 
@@ -46,9 +46,9 @@ Accepted (2026-07-12 KST) — CFP-2622 (Epic CFP-2602 G6) carrier. "wrapper-self
 
 1. **wrapper-self = 0-core 거버넌스 모노레포 — 런타임 앱 부재.** 자기 산출물(agent-md / skill / template / workflow / lint 스크립트 / ADR)은 문서·거버넌스 아티팩트. 따라서 wrapper-self 에서 "동적 테스트"의 도메인 의미 = **CI self-test corpus 가 결함을 실제로 죽이는지 실행하는 것**(= wrapper 의 "런타임"). consumer 형 soak/real-render/DAST 를 억지 이식 = over-forcing 검사연극(ADR-119 §결정9 위반).
 
-2. **self-test corpus census (execution-backed)**: `tests/scripts/*.sh` = **35** 파일 `[verified: git ls-tree origin/main tests/scripts + basename count]`. 이 중 **13 이 어느 workflow 에서도 basename-미참조**, 그중 1(`test_check-adr-cross-ref-consistency.sh`)은 `adr-cross-ref-consistency.yml:51` 의 inline `--self-test` 로 대체 실행 → **12 truly-DEAD** `[verified: workflow blob(173 파일) full-scan basename cross-ref]`.
+2. **self-test corpus census (execution-backed)**: `tests/scripts/*.sh` = **35** 파일 `[verified: git ls-tree origin/main tests/scripts + basename count]`. 이 중 **13 이 어느 workflow 에서도 basename-미참조**, 그중 1(`test_check-adr-cross-ref-consistency.sh`)은 `adr-cross-ref-consistency.yml:51` 의 inline `--self-test` 로 대체 실행 → **12 truly-DEAD** `[verified: workflow blob(173 files = 172 .yml + 1 .yaml) full-scan basename cross-ref]`.
 
-3. **진성 hollow-gate 실증**: required 6-tuple context `doc section schema (CFP-28 — strict)`(lint.yml `doc-section-schema` job → `bash scripts/check-doc-section-schema.sh`)의 mutation-kill self-test `test-check-doc-section-8-7.sh` / `-8-8.sh` / `-8-9.sh` 는 **완전히 build 된 discriminating fixture**(`assert_discriminating` exit-code 대조 + Mutation A/B/C 실 RED)이나 **어느 workflow 에도 배선 안 됨** `[verified: check-doc-section-schema.sh self-test token = 0 / 세 test 파일 workflow 미참조]`. 즉 required 게이트가 hollow 화(§8.7/8.8/8.9 검사 무력화)돼도 잡을 채널 부재 = 현존 hollow-gate 위험.
+3. **진성 hollow-gate 실증**: required context `doc section schema (CFP-28 — strict)`(lint.yml `doc-section-schema` job → `bash scripts/check-doc-section-schema.sh`)의 mutation-kill self-test `test-check-doc-section-8-7.sh` / `-8-8.sh` / `-8-9.sh` 는 **완전히 build 된 discriminating fixture**(`assert_discriminating` exit-code 대조 + Mutation A/B/C 실 RED)이나 **어느 workflow 에도 배선 안 됨** `[verified: check-doc-section-schema.sh self-test token = 0 / 세 test 파일 workflow 미참조]`. 즉 required 게이트가 hollow 화(§8.7/8.8/8.9 검사 무력화)돼도 잡을 채널 부재 = 현존 hollow-gate 위험.
 
 4. **auto-discovery 부재**: self-test 배선 = 1-script-당-1-explicit-`run:`-line. bulk-runner/auto-discovery 부재 → 신규 `.sh` 가 침묵 un-run 되는 root cause(silent-un-run).
 
@@ -116,7 +116,7 @@ Accepted (2026-07-12 KST) — CFP-2622 (Epic CFP-2602 G6) carrier. "wrapper-self
 
 ### 결정 5 — 신규 required context 0 (배선 정책) + L1 blocking 승격 defer
 
-- **배선 = 신규 non-required wrapper-self-only workflow** — exemplar 답습: `actionlint-workflows-test.yml`(wrapper-self-only `if: github.repository == 'mclayer/plugin-codeforge'`, template-copy 없음 → 단방향 parity walk 상 자동 parity-safe, day-1 hard-fail "meta gate that verifies detection is alive") + `ac-traceability-self-test.yml`(day-1 hard-fail, dedicated self-test workflow). 메타-게이트 + bucket A 3 self-test 를 이 패턴으로 wire. **branch-protection 6-tuple 무변경**(G4 결정5 / G5 동형).
+- **배선 = 신규 non-required wrapper-self-only workflow** — exemplar 답습: `actionlint-workflows-test.yml`(wrapper-self-only `if: github.repository == 'mclayer/plugin-codeforge'`, template-copy 없음 → 단방향 parity walk 상 자동 parity-safe, day-1 hard-fail "meta gate that verifies detection is alive") + `ac-traceability-self-test.yml`(day-1 hard-fail, dedicated self-test workflow). 메타-게이트 + bucket A 3 self-test 를 이 패턴으로 wire. **branch-protection 7-tuple(문서 SSOT, ADR-145 §결정3) 무변경 — 신규 required context 0**(G4 결정5 / G5 동형). 정직 병기: 현행 live branch-protection = 6-tuple(`ac-traceability-matrix` 미등록 = G1 doc-vs-live divergence, CFP-2609 reconcile 대기) — G6 은 어느 쪽에도 추가 0.
 - **L1 blocking 승격 = defer**(ADR-060 evidence-gate 별 carrier Story) — PR누적≥20 + failure=0 + sibling 3-tuple 충족 시. G6 은 non_required/warning-tier 유지(day-1 blocking 강제 아님, ADR-060 warning-first 정합). 만약 미래 required 승격 시 born-broken 안전전제 = **self-test suite green ∧ own-PR green THEN required 등록**(ac-traceability-self-test.yml ordering-invariant 상속) + 사용자 결정 필요.
 
 ### 결정 6 — wrapper-self runtime 축 자연 N/A 3축 AND
@@ -143,7 +143,7 @@ G6 축 명칭 = **execution-liveness(게이트 실행-무결성)** 또는 **adeq
 
 ### 강화 방향 (ratchet↑, 약화 surface 0)
 
-- 신규 required context **0**(branch-protection 6-tuple 무변경) / inter-plugin 계약 **무변경** / 신규 category **0**. ADR-058 §결정5 강화 방향 — `sunset_justification` N/A.
+- 신규 required context **0**(branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 현행 live=6-tuple[`ac-traceability-matrix` 미등록 doc-vs-live divergence, CFP-2609 reconcile 대기]) / inter-plugin 계약 **무변경** / 신규 category **0**. ADR-058 §결정5 강화 방향 — `sunset_justification` N/A.
 - 신규 산출물(Phase 2): `docs/selftest-execution-liveness-inventory.yaml`(인벤토리 SSOT, 35 레코드) + `scripts/lib/check_selftest_execution_liveness.py` + `scripts/check-selftest-execution-liveness.sh` + `tests/scripts/test_check-selftest-execution-liveness.sh`(재귀 L3) + `.github/workflows/selftest-execution-liveness-test.yml`(메타-게이트 + bucket A 3 self-test 배선, wrapper-self-only non-required).
 - Phase 1(본 ADR + Change Plan) = narrative only. 실 `.sh`/`.py`/`.yaml`/`.yml` write = **Phase 2 구현 lane deliverable**(ADR-136 결정14 부록 Phase-1 no-`.sh`-write 상속 — 설계리뷰가 "메타-게이트 미구현"을 P0 로 올리면 Phase 2 deliverable 로 기각).
 
