@@ -294,6 +294,14 @@ Epic-close 수렴 시점(playbook §9.7.2 — Epic 하위 전 Story merged, §D-
 
 **(c) defer verdict → `EPIC-RESULTS-<EPIC_KEY>.md` §deferred 5-column row 변환 append**: defer anchor 를 deferred-item-lifecycle **narrative-recorded** state 로 착지시켜 `check-deferred-item-recovery.sh` 회수 강제 (dead-path 방지 — verdict 만 내고 서사 착지 안 하면 게이트가 못 봄). 착지 파일 = `EPIC-RESULTS-<EPIC_KEY>.md` 의 `## §deferred` 섹션(PMOAgent self-write Epic-close artifact, 같은 owner·시점). 5-column = `disposition | item | tracking | rationale | source`, **source column 값 = `triage-defer`** (retro 서사 deferred 의 `retro-narrative` 와 변별, 경계혼합 방지 — column 신규 추가 아님, 값 도메인 확장). 그 파일이 playbook §9.7.2 recovery self-check 인자 목록에 등록돼 `_scan_retro_file` 도달 보장.
 
+#### 4.4 Epic-close 요구-슬라이스 생존 매핑 감사 (G3(b) — ADR-152 §결정 5)
+
+Epic-close 수렴 시점(playbook §9.7.2 — §D-11 / ADR-137 sibling 시점)에 **Epic 의 각 요구 슬라이스가 실행 Story 또는 명시적 deferral 로 착지했는지**를 감사해 조용한 드롭(silent drop — "코드가 default-off flag 뒤에 숨어 landing ≠ done" 의 요구-측 재정의, 예: compactor S4/S5 증발)을 차단한다. §D-11(retro follow-up Issue ≥3) ⊥ ADR-137(실머지 코드 duplication anchor) ⊥ **G3(b)(Epic 요구 슬라이스)** — **같은 trigger·owner(PMO) 지만 모집단 disjoint(AC-7 유지, 동일시 금지)**.
+
+- **산출물 = `EPIC-RESULTS-<EPIC_KEY>.md` §requirement-slice-mapping 섹션**(PMOAgent self-write Epic-close artifact): Epic 의 각 요구 슬라이스를 열거하고 각 행을 `slice | disposition{story|defer} | tracking-ref` 로 판정. `check_epic_results_slice_mapping`(파일명 `EPIC-RESULTS-*.md` gate) 이 섹션 presence ∧ (≥1 well-formed row ∨ N/A-substantive) ∧ 천장 문구('완결성') present 를 fail-closed 강제(AC-6b normative).
+- **AC-6a declared = 완결성(모든 슬라이스 열거)**: Epic 요구-슬라이스 인벤토리 SSOT 부재 → 기계 강제 불가 = **본 감사 obligation**(정직 divergence). PMO 가 Epic 문서·child Story 서사에서 요구 슬라이스를 성실히 열거한다. 게이트는 섹션 존재만 강제.
+- **defer disposition → §deferred `source: req-slice-defer` 착지**: "deferral" 판정 슬라이스는 위 (c) 와 동형으로 `## §deferred` 5-column row(source 값 = `req-slice-defer`)로도 착지시켜 `check-deferred-item-recovery.sh` 회수 게이트(warning-tier, no-silent-drop) 도달. **신규 deferral 메커니즘 신설 금지(단일-carrier, ADR-152 §결정6)** — scanner 는 disposition enum{tracked,observed}만 검증(source 미검증) = scanner 무변경.
+
 ### 5. 세션 회고 synthesize
 
 Orchestrator가 세션 종료 직전 스폰 가능. 입력: 세션 내 토큰 사용량 + 레인별 실제 시간 + FIX iteration 수.

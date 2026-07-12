@@ -464,6 +464,57 @@ SecurityArchitectAgent(위협 모델·공격 표면) + TestContractArchitectAgen
 - substantive reason 예시: "본 Story 는 문서·플러그인 정의만 수정(runtime-inert) — deployable service 0, 상주 실행 공격 표면 부재. 실 DAST 구동 = consumer test.yml(QADev) 위임"
 - 단순 "not applicable" / "해당 없음" / 길이 <30자 차단 (check_section_8_9 강제 — CFP-2612 / ADR-150 §결정10)
 
+#### §8.10 dark-path 로스터 (default-off flag 활성화 — oracle=activation ⊥ G4 robustness ⊥ G5 attack — CONDITIONAL — CFP-2624 / ADR-152)
+
+TestContractArchitectAgent(계약 필드) input contributor, ArchitectAgent(chief) author (§8.9 동형 — ADR-006 §결정2 / ADR-152 §결정1). §8 burden-flip 표준(do-it-unless-proven-infeasible — ADR-146)의 **dark-path 활성화 축 instantiation** — "코드가 default-off flag(예: mctrader `COMPACT_TIERED=0`) 뒤에 숨어 landing(repo 착지)했다는 사실만으로 done(요구 충족)으로 인정"하는 병을 차단한다: **landing ≠ done**. default-off flag 뒤 도달 가능한 product 코드는 그 flag 를 실제 ON 으로 켜서 행사하는 **discriminating test(discriminating-B)** + ON-state 관측 assertion 을 §8.10 에 선언해야 done. flag-OFF 로만 통과하는 테스트(=기능을 한 번도 안 켜는 테스트)는 dark-path 미행사. **oracle 로 축이 갈린다**: dark-path oracle = 활성화(flag ON 행사) ⊥ G4-fuzz oracle = 기능 crash/robustness ⊥ G5-DAST oracle = 보안 취약 재현(attack). discriminating-**B**(product 활성화 축, 본 로스터) ⊥ discriminating-**A**(게이트 self-test mutation-kill 축, G6 ADR-151 소유) — 섞으면 중복 게이트(ADR-152 §결정1). §8.9(DAST 점유) → 다음 자유 번호 **§8.10**(single `dark_path` axis — §8.8 의 4기법 multi-key `TECHNIQUE_8_8_META` 구조 복제 금지, ADR-152 §결정2). 실 활성화 test 구동 = consumer `test.yml`(QADeveloperAgent, ADR-048 CI-native) — 신규 codeforge 러너 부활 금지. `g_boundary_check` = 본 로스터가 soak/restart/replay(=G2 단일소유)·기능 fuzz(=G4)·DAST attack(=G5)로 넘어가지 않았음을 확인(Epic 경계). default-off flag 뒤 도달 가능한 product 코드 부재 시 자연 N/A — burden-flip 이 flag 없는 wrapper-self/consumer 에 강제하지 않는다.
+
+##### §8.10.0 Applicability decision (필수)
+
+| axis | applicability_status (DO/N/A) | g_boundary_check |
+|---|:-:|---|
+| dark_path | <DO 또는 N/A> | g_boundary_check: soak/restart/replay(G2)·fuzz(G4)·DAST(G5) 경계 미침범 확인 |
+
+→ applicability cell = `DO` 또는 `N/A` 만 기재 (**2-value**). `natural_na` 는 cell 값이 아님 — §8.10.1 `status` 필드값 전용 (3-value)
+→ DO: §8.10.1 6 산출물 계약 필드 전부 기재 필수
+→ N/A(aggregate — default-off product flag 도입 0): §8.10.x aggregate N/A + substantive reason
+→ `g_boundary_check` token 부재 시 차단 (AC-1a — Epic G2(soak/restart/replay)·G4(fuzz)·G5(DAST) 경계 침범)
+
+##### §8.10.1 dark_path (DO — 산출물 계약)
+
+(§8.10.0 dark_path=DO 일 때 6 unconditional 필드 전부 본문 필수 — 미적용 시 §8.10.x aggregate N/A)
+
+- **flag_identifier**: {default-off flag/게이트 식별자 — 예: `COMPACT_TIERED` env var}
+- **default_state**: {default-off/gated 근거 — dark 성립 이유 (기본 비활성이라 코드가 숨음)}
+- **activation_test_ref**: {flag 를 실제 ON 으로 켜는 discriminating test 참조 — 파일::테스트명}
+- **on_state_assertion**: {ON-state 관측 assertion — flag-ON 시 기대 동작을 실제 assert (flag-OFF-only 아님)}
+- **discriminating_basis**: {flag OFF 시 test 가 fail/skip 하는 근거 — crucial-experiment 성격 (켜야만 통과)}
+- **status**: {∈ `{activated, infeasible, natural_na}`}
+
+**조건부 필드**:
+- **infeasibility_reason**: {≥30자 — `status = infeasible` 일 때만 required}
+
+**2 cross-field 선언-정합 (ADR-152 §결정4 — declared-consistency 만 강제, detection 강제 아님)**:
+- **(a) activation-honesty**: `status = activated` ⟹ `activation_test_ref` non-empty ∧ `on_state_assertion` substantive(≥15자) (빈 stub 로 "켰다" 위장 차단 — AC-2 §3.5a)
+- **(b) infeasible-reason**: `status = infeasible` ⟹ `infeasibility_reason` ≥30자 (§8.9 MUT-E 동형 — AC-1a §3.5b)
+
+> §8.10.2 / §8.10.3 / §8.10.4 = **의도적 gap** (§8.8 이 4기법용 §8.8.1-4 를 갖는 것의 positional homolog — dark-path single-axis 라 2-4 비어 있음. renumber 금지 — ADR-152 §결정2).
+
+##### §8.10.5 정직 천장 (no-hollow — 4 잔여 공개, ADR-152 §결정3)
+
+게이트는 applicability 레코드·6 산출물 계약 필드·status enum·2 cross-field 선언-정합 presence/구조까지만 fail-closed. 아래 4 잔여는 강제하지 않는다(강제하는 척 = 검사연극, ADR-119):
+- (i) **검출력**(discriminating-B 실행사 — flag 를 진짜 켜서 관측이 진짜 걸렸는가) = **G3-review 위임**(미강제 — equivalent-mutant/Duhem underdetermination)
+- (ii) 모든 default-off flag 열거 **완결성**(flag-naming SSOT 부재) = AC-1b review 보강(미강제)
+- (iii) infeasibility 사유 **타당성**(형식 회피 아닌 실질) = review 판정(미강제)
+- (iv) **`g_boundary_check` presence ≠ 실준수** — token 존재가 경계 실준수 보장 아님(게이트 강제 아님)
+- ∴ `"완전 봉인" hard-claim 금지` — "구조 fail-closed + 형식누락 저감 + 잔여 정직 공개"로 재약속(G4 §8.8.5 / G5 §8.9.5 4잔여 공개 동형).
+
+##### §8.10.x N/A 명시 (dark_path 미적용 시 — default-off product flag 도입 0)
+
+- 표기: "N/A — <substantive reason ≥30자>. 검증 채널: check_section_8_10 self-test + DesignReview. 면제 분류: plugin-meta-na | runtime-inert" (ADR-005 + ADR-127 §결정5 자연 N/A 3축 AND)
+- 자연 N/A **3축 AND** = default-off flag 뒤 도달 가능 product 코드 부재 ∧ downstream 무변경 ∧ 미래의무 무선결
+- substantive reason 예시: "본 Story 는 문서·플러그인 정의만 수정(runtime-inert) — default-off flag 뒤 도달 가능한 product 코드 0. 실 dark-path activation manifest = consumer §8"
+- 단순 "not applicable" / "해당 없음" / 길이 <30자 차단 (check_section_8_10 강제 — CFP-2624 / ADR-152 §결정7)
+
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
 - 의존성 있으면 순서 명시 (예: DataEngineerAgent 스키마 → BackendDeveloperAgent 어댑터)

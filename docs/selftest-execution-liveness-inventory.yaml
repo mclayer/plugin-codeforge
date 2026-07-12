@@ -28,9 +28,10 @@
 # l2_full_scope: 각 self-test 는 tests/scripts/ 단일 아티팩트(template copy 없음)로 1회 실행 → 실행 scope
 #   자연 N/A. workflow byte-identical parity 는 invariant-check.yml(Workflow parity step) 소관 = disjoint 축.
 #
-# census (execution-backed, origin/main 트리 실측 2026-07-12): 기존 35 `tests/scripts/*.sh` + 신규 1
-#   (test_check-selftest-execution-liveness.sh, AC-9 재귀 self-test) = 36 레코드. dead 레코드 0
+# census (execution-backed, origin/main 트리 실측 2026-07-12): 36 기존 + 신규 1
+#   (test-check-doc-section-8-10.sh, CFP-2624 G3 §8.10 dark-path self-test) = 37 레코드. dead 레코드 0
 #   (silent-un-run 봉인 — bucket A backfill / bucket B agent_runtime / bucket C·D manual_registered 로 전수 enroll).
+#   ★ 메타-게이트는 count 상수를 강제하지 않음 — tests/scripts/*.sh ↔ 레코드 bijection(AC-1a)으로 전수 enroll 검증.
 
 self_tests:
 
@@ -270,6 +271,15 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "required 'doc section schema (CFP-28 — strict)' 게이트 §8.9 G5-DAST case mutation-kill fixture — 정적 doc lint, soak=G2·DAST(§8.9 검사대상 자체)·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test-check-doc-section-8-10.sh"
+    execution_channel: "workflow:selftest-execution-liveness-test.yml:selftest-execution-liveness"
+    channel_status: "alive"
+    blocking_tier: "required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "required 'doc section schema (CFP-28 — strict)' 게이트 §8.10 G3(a) dark-path activation manifest + G3(b) 요구-슬라이스 매핑 case mutation-kill fixture(discriminating-A self-test) — 정적 doc lint, soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (activation oracle=검사대상 자체)."
 
   # ── 메타-게이트 재귀 L3 self-test (ADR-151 §결정9 / AC-9, alive) ──────────────
   - self_test: "tests/scripts/test_check-selftest-execution-liveness.sh"

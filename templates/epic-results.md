@@ -19,7 +19,7 @@ related_adrs:
 - **작성자**: PMOAgent (Cross-cutting) self-write — codeforge-pmo lane plugin owner path
 - **mctrader 사용 사례**: `mctrader-hub/docs/retros/EPIC-RESULTS-MCT-*.md` (Amendment 1 — root → docs/retros/ 이동, consumer root clutter 해소)
 
-본 template = 14 섹션 + §deferred (no-silent-drop 회수 착지, CFP-2541/ADR-137). 모든 섹션 의무. N/A 시 "N/A — <사유>" 명시.
+본 template = 14 섹션 + §requirement-slice-mapping (G3(b) 요구 슬라이스 생존, CFP-2624/ADR-152) + §deferred (no-silent-drop 회수 착지, CFP-2541/ADR-137). 모든 섹션 의무. N/A 시 "N/A — <사유>" 명시.
 
 ---
 
@@ -159,17 +159,35 @@ consumer 첫 cross-repo Epic 시 추가:
 
 <2-3 sentences key invariant 충족 + 향후 prerequisite 영향 + deferred items 요약>
 
+## §requirement-slice-mapping
+
+<!-- CFP-2624 / ADR-152 §결정 5 — G3(b) Epic-close 요구-슬라이스 생존 매핑. Epic 의 각 요구 슬라이스를
+     {실행 Story 매핑 | 명시적 deferral} 로 매핑해 조용한 드롭(silent drop — 예: compactor S4/S5 증발)을 차단.
+     check_epic_results_slice_mapping (파일명 EPIC-RESULTS-*.md gate) 스캔 대상 — 섹션 present ∧ (≥1 well-formed
+     row `slice|{story|defer}|tracking-ref` ∨ N/A-substantive) ∧ 천장 문구('완결성') present 를 fail-closed 강제.
+     ★ 완결성(모든 슬라이스 열거)은 기계 강제 아님 = PMO Epic-close 감사 obligation(AC-6a declared).
+     ★ disposition=defer 슬라이스는 아래 §deferred 5-column row(source: req-slice-defer)로도 착지 = 회수 게이트 도달. -->
+
+| slice | disposition | tracking-ref |
+|---|---|---|
+| <요구 슬라이스 서술> | <story \| defer> | <실행 Story KEY (story) \| #NNN 또는 §deferred 착지 (defer)> |
+
+정직 천장: 위 매핑은 각 슬라이스의 disposition 산출물 존재만 강제한다. **모든 슬라이스 열거 완결성**은 기계 강제 아님 — Epic 요구-슬라이스 인벤토리 SSOT 부재로 PMO Epic-close 감사 obligation(정직 divergence, ADR-152 §결정5).
+
+(요구 슬라이스 분해 불가 Epic = "N/A — <사유 30자 이상, 완결성 정직 공개>" 명시. defer disposition 은 §deferred `source: req-slice-defer` row 로 착지시켜 회수 게이트 도달.)
+
 ## §deferred
 
 <!-- CFP-2541 / ADR-137 — Epic-close triage-defer verdict + retro 서사 deferred 의 no-silent-drop 회수 착지.
      check-deferred-item-recovery.sh (_scan_retro_file, ## §deferred regex) 스캔 대상.
-     source column enum: retro-narrative (retro §4/§8 서사 발생) | triage-defer (ADR-137 구현-리팩터링 triage defer verdict). -->
+     source column enum: retro-narrative (retro §4/§8 서사 발생) | triage-defer (ADR-137 구현-리팩터링 triage defer verdict)
+     | req-slice-defer (ADR-152 §결정6 G3(b) 요구-슬라이스 defer disposition 착지 — column 신설 아님, 값 도메인 확장). -->
 
 | disposition | item | tracking | rationale | source |
 |---|---|---|---|---|
-| <tracked \| observed> | <deferred 항목 서술> | <#NNN tracking Issue \| "관찰-only"> | <이연/관찰 사유> | <retro-narrative \| triage-defer> |
+| <tracked \| observed> | <deferred 항목 서술> | <#NNN tracking Issue \| "관찰-only"> | <이연/관찰 사유> | <retro-narrative \| triage-defer \| req-slice-defer> |
 
-(deferred 항목 없는 Epic = "N/A — no deferred items" 명시. tracked = 추적 Issue 외부화 #NNN / observed = 관찰-only + 사유 명시. triage-defer source = ADR-137 Epic-close 구현-리팩터링 triage defer verdict anchor.)
+(deferred 항목 없는 Epic = "N/A — no deferred items" 명시. tracked = 추적 Issue 외부화 #NNN / observed = 관찰-only + 사유 명시. triage-defer source = ADR-137 Epic-close 구현-리팩터링 triage defer verdict anchor. req-slice-defer source = ADR-152 §결정6 G3(b) 요구-슬라이스 defer disposition anchor — scanner disposition enum{tracked,observed}만 검증, source 미검증 = scanner 무변경.)
 ```
 
 ## 작성 의무 사항 (CFP-83 신규)
