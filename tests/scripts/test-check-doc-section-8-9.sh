@@ -613,6 +613,142 @@ CMUT_REASON=$(run_capture_line_mutation  "infeasibility_reason" fhollow_reason_b
 CMUT_ENV=$(run_capture_line_mutation     "environment_ref"      fhollow_env_body     "CaptureMut-environment_ref")       # born-hollow = fhollow_env_body
 CMUT_SURFACE=$(run_capture_line_mutation "attack_surface"       fhollow_surface_body "CaptureMut-attack_surface")        # born-hollow = fhollow_surface_body (역-polarity)
 
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2636 (Epic CFP-2602 enum-field 값-존재 gap 봉인 / ADR-150 §결정4) — payload_class/auth_mode/status
+#   value-존재(present-but-blank/absent → fail-closed) + enum-validity(∉ enum → fail).
+#   ★ 핵심 보안 FN: payload_class blank → 이전 `\s*(\S+)` 개행 흡수 → '-'(다음 줄 marker) 캡처 → ∉ ACTIVE →
+#     blast-radius 검사 SKIP → active/destructive 를 production 격리 없이 통과(exit 0). fix = _capture_field
+#     same-line 앵커 + value-존재 fail-closed. RED(unfixed): 아래 F-PAYLOAD-BLANK 는 exit 0(=FAIL RED). fix 후 exit 1.
+#   discriminating: F-PAYLOAD-BLANK(exit1) ⊥ TC-PASSIVE-CLEAN(valid passive exit0, 정직천장 INV-G5-4 무침범).
+# ═════════════════════════════════════════════════════════════════════════════
+
+# emit_89_do_blank_payload — payload_class BLANK(콜론 뒤 same-line 무값) + env=production(marker 부재) + 12필드 present.
+#   unfixed: payload_val 이 개행 넘어 '-'(다음 줄 marker) 흡수 → ∉ ACTIVE → blast-radius skip → exit 0(보안 FN, RED).
+#   fixed:   payload_val=None → MUT-H fire → exit 1(값-존재 봉인). 단일 원인 격리(그 외 12필드 valid).
+emit_89_do_blank_payload() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface: public unauthenticated endpoint"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class:"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status: executed"
+  echo "- auth_mode: unauthenticated"
+  echo "- environment_ref: production cluster"
+  echo "- observed_result: 0 alerts / no vuln detected"
+}
+# emit_89_do_blank_auth — auth_mode BLANK + 그 외 valid. fixed → auth_val=None → MUT-J fire → exit 1.
+emit_89_do_blank_auth() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface: public unauthenticated endpoint"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class: passive"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status: executed"
+  echo "- auth_mode:"
+  echo "- environment_ref: local sandbox"
+  echo "- observed_result: 0 alerts / no vuln detected"
+}
+# emit_89_do_blank_status — status BLANK + 그 외 valid. fixed → status_val=None → MUT-K fire → exit 1.
+emit_89_do_blank_status() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface: public unauthenticated endpoint"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class: passive"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status:"
+  echo "- auth_mode: unauthenticated"
+  echo "- environment_ref: local sandbox"
+  echo "- observed_result: 0 alerts / no vuln detected"
+}
+
+# ── TC-PASSIVE-CLEAN (정직 천장, INV-G5-4) — valid passive + auth_mode=session(valid enum) + 0검출 → exit 0 ──
+tc_passive_clean_body() {
+  emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g
+  emit_89_do "" passive executed "local sandbox" "public unauthenticated endpoint" session no
+  emit_89_5_ceiling; emit_skeleton_tail
+}
+EC_PASSIVE_CLEAN=$(run_case tc_passive_clean_body 0 "TC-PASSIVE-CLEAN(CFP-2636)" "valid passive + auth_mode=session + 0검출 → exit 0 (정직천장 INV-G5-4 — value-존재가 detection-forcing 으로 안 번짐)" | tail -1)
+
+# ── F-PAYLOAD-BLANK — payload_class blank + env=production → exit 1 (이전 exit 0 보안 FN) ⊥ TC-PASSIVE-CLEAN ──
+fpayload_blank_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_blank_payload; emit_skeleton_tail; }
+EC_PAYLOAD_BLANK=$(run_case fpayload_blank_body 1 "F-PAYLOAD-BLANK(CFP-2636)" "payload_class blank + env=production → exit 1 (AC-1 blast-radius 우회 봉인, 이전 exit 0 보안 FN)" | tail -1)
+assert_discriminating "$EC_PAYLOAD_BLANK" "$EC_PASSIVE_CLEAN" "F-PAYLOAD-BLANK blank=$EC_PAYLOAD_BLANK vs passive-clean (FN 봉인 ⊥ FP 무유발 INV-1)"
+
+# ── F-PAYLOAD-ENUM — payload_class=banana(오타) → exit 1 (이전 silent pass) ⊥ TC-PASSIVE-CLEAN ──
+fpayload_enum_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do "" banana executed "local sandbox" "public unauthenticated endpoint" unauthenticated no; emit_skeleton_tail; }
+EC_PAYLOAD_ENUM=$(run_case fpayload_enum_body 1 "F-PAYLOAD-ENUM(CFP-2636)" "payload_class=banana(enum 외) → exit 1 (AC-2 enum-validity, 이전 silent pass)" | tail -1)
+assert_discriminating "$EC_PAYLOAD_ENUM" "$EC_PASSIVE_CLEAN" "F-PAYLOAD-ENUM banana=$EC_PAYLOAD_ENUM vs passive-clean"
+
+# ── F-AUTH-BLANK — auth_mode blank → exit 1 (숨은 FN 봉인) ──
+fauth_blank_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_blank_auth; emit_skeleton_tail; }
+EC_AUTH_BLANK=$(run_case fauth_blank_body 1 "F-AUTH-BLANK(CFP-2636)" "auth_mode blank → exit 1 (AC-4 값-존재, 이전 숨은 FN)" | tail -1)
+assert_discriminating "$EC_AUTH_BLANK" "$EC_PASSIVE_CLEAN" "F-AUTH-BLANK blank=$EC_AUTH_BLANK vs passive-clean"
+
+# ── F-AUTH-ENUM — auth_mode=cookie(무효) → exit 1 ──
+fauth_enum_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do "" passive executed "local sandbox" "public unauthenticated endpoint" cookie no; emit_skeleton_tail; }
+EC_AUTH_ENUM=$(run_case fauth_enum_body 1 "F-AUTH-ENUM(CFP-2636)" "auth_mode=cookie(enum 외) → exit 1 (AC-4 enum-validity)" | tail -1)
+assert_discriminating "$EC_AUTH_ENUM" "$EC_PASSIVE_CLEAN" "F-AUTH-ENUM cookie=$EC_AUTH_ENUM vs passive-clean"
+
+# ── F-STATUS-BLANK-89 — §8.9.1 status blank → exit 1 (값-존재 강제) ──
+fstatus_blank_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_blank_status; emit_skeleton_tail; }
+EC_STATUS_BLANK_89=$(run_case fstatus_blank_body 1 "F-STATUS-BLANK-89(CFP-2636)" "§8.9.1 status blank → exit 1 (AC-5 값-존재)" | tail -1)
+assert_discriminating "$EC_STATUS_BLANK_89" "$EC_PASSIVE_CLEAN" "F-STATUS-BLANK-89 blank=$EC_STATUS_BLANK_89 vs passive-clean"
+
+# ── AC-6b-PRESERVE — attack_surface authenticated + auth_mode=session → exit 0 (session=실 auth → AC-6b 미발동, FN 아님) ⊥ F-AUTH-UNAUTH-SILENT ──
+ac6b_preserve_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do "" passive executed "local sandbox" "authenticated admin endpoint" session no; emit_skeleton_tail; }
+EC_AC6B_PRESERVE=$(run_case ac6b_preserve_body 0 "AC-6b-PRESERVE(CFP-2636)" "attack_surface authenticated + auth_mode=session → exit 0 (session=실 auth, AC-6b 미발동 — §3.7 의미 보존)" | tail -1)
+assert_discriminating "$EC_AC6B_PRESERVE" "$EC_FAUTH" "AC-6b-PRESERVE session=$EC_AC6B_PRESERVE vs unauthenticated-silent(EC_FAUTH — INV-4 AC-6b 보존)"
+
+# ── F-ANCHOR-NOSWALLOW — payload blank fail 메시지가 blank 지목('-' 아님, same-line 앵커 개행 미흡수 실증, AC-3) ──
+anchor_noswallow_check() {
+  local T; T=$(mktemp -d); mkdir -p "$T/docs/change-plans"
+  fpayload_blank_body > "$T/docs/change-plans/cfp-9999-fixture.md"
+  local out; out=$( cd "$T" && "$PY" "$LINT_PY" 2>&1 ); rm -rf "$T"
+  # 정탐: present-but-blank 메시지 존재 AND 개행 흡수한 "enum 위반 '-'" phantom 부재.
+  if echo "$out" | grep -q "payload_class present-but-blank" && ! echo "$out" | grep -qF "enum 위반 '-'"; then
+    echo "✓ PASS: F-ANCHOR-NOSWALLOW(CFP-2636) — fail 메시지가 blank(present-but-blank) 지목, 개행 흡수 '-' phantom 부재 (AC-3 same-line 앵커)" >&2
+    tally_pass
+  else
+    echo "✗ FAIL: F-ANCHOR-NOSWALLOW(CFP-2636) — 개행 흡수 phantom 또는 present-but-blank 메시지 부재. out: $out" >&2
+    tally_fail
+  fi
+}
+anchor_noswallow_check
+
+# ── free-text 6-site 무회귀 (F-INFEAS-NR / F-ACTIVE-PROD / F-AUTH-SILENT 코드 diff 0 — CFP-2628 idiom verbatim) ──
+#   위 EC_FINF(=1)/EC_FACT(=1)/EC_FAUTH(=1) 은 free-text 소비 TC — helper 배선 밖. enum 4-site fix 후에도 무변경 통과 확인.
+if [ "$EC_FINF" = "1" ] && [ "$EC_FACT" = "1" ] && [ "$EC_FAUTH" = "1" ]; then
+  echo "✓ PASS: FREE-TEXT-NO-REGRESSION(CFP-2636) — F-INFEAS-NR/F-ACTIVE-PROD/F-AUTH-SILENT 무회귀(exit 1 유지, AC-7 zero-touch)" >&2
+  tally_pass
+else
+  echo "✗ FAIL: FREE-TEXT-NO-REGRESSION(CFP-2636) — free-text 소비 TC 회귀 (F-INFEAS=$EC_FINF F-ACTIVE=$EC_FACT F-AUTH=$EC_FAUTH)" >&2
+  tally_fail
+fi
+
+# ── Mutation H/I/J/J2/K 실 RED kill (execution-liveness L3, 캡처-라인 지향 value-존재 분기 무력화) ──
+MUT_H=$(run_mutation_kill  "MUT-H-PAYLOAD-PRESENCE" fpayload_blank_body "Mutation-H(payload-presence)")  # kill-fixture = F-PAYLOAD-BLANK
+MUT_I=$(run_mutation_kill  "MUT-I-PAYLOAD-ENUM"     fpayload_enum_body  "Mutation-I(payload-enum)")      # kill-fixture = F-PAYLOAD-ENUM
+MUT_J=$(run_mutation_kill  "MUT-J-AUTH-PRESENCE"    fauth_blank_body    "Mutation-J(auth-presence)")     # kill-fixture = F-AUTH-BLANK
+MUT_J2=$(run_mutation_kill "MUT-J2-AUTH-ENUM"       fauth_enum_body     "Mutation-J2(auth-enum)")        # kill-fixture = F-AUTH-ENUM
+MUT_K=$(run_mutation_kill  "MUT-K-STATUS-PRESENCE"  fstatus_blank_body  "Mutation-K(status-presence)")   # kill-fixture = F-STATUS-BLANK-89
+
+echo ""
+echo "── CFP-2636 enum-field 값-존재 gap 봉인 결과 ──"
+echo "TC-PASSIVE-CLEAN=$EC_PASSIVE_CLEAN F-PAYLOAD(blank/enum)=$EC_PAYLOAD_BLANK/$EC_PAYLOAD_ENUM F-AUTH(blank/enum)=$EC_AUTH_BLANK/$EC_AUTH_ENUM F-STATUS-BLANK-89=$EC_STATUS_BLANK_89 AC-6b-PRESERVE=$EC_AC6B_PRESERVE"
+echo "Mutation kill (orig mut): H=[$MUT_H] I=[$MUT_I] J=[$MUT_J] J2=[$MUT_J2] K=[$MUT_K]  (KILLED = 1 0)"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
 # ─────────────────────────────────────────────────────────────────────────────
