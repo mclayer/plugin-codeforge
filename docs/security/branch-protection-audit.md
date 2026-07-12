@@ -241,3 +241,4 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
 - 기록 시각: 2026-07-12T09:00:00+09:00 (KST).
 
 <!-- canary: CFP-2634 6→7 등록 前 non-applicable 경로 verify (2026-07-12, 추적 AC 없음, 병합 대상 아님) -->
+<!-- canary sync 2 -->
