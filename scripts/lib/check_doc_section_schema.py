@@ -172,6 +172,46 @@ def _slice_8_9_subsection(body: str, sub: str) -> str:
     return body[start:end]
 
 
+# ── CFP-2624 / ADR-152 §결정 7 — §8.10 dark-path activation manifest doc-section lint.
+#    check_section_8_9 verbatim 동형(single `dark_path` axis — 4기법 loop 미복제). NA_85_SUBSTANTIVE_RE 재사용.
+#    정직 천장(ADR-152 §결정3): applicability 레코드 + 6 산출물 필드 + status enum + 2 cross-field 선언-정합
+#    (activation-honesty / infeasible⟹reason)까지만 fail-closed. 검출력(discriminating-B 실행사)/열거 완결성/
+#    사유타당성/g_boundary_check 준수는 강제 안 함 — G3-review·advisory defense-in-depth.
+#    ★ §8.8/§8.9 zero-touch: §8.9 region-slice 종료 정규식이 이미 `^#{1,4}\s+\S`(L447) — 4-hash `#### §8.10`
+#      형제에서 정확히 종료(§8.9 region 이 §8.10 으로 bleed 안 함). G5 L355 예외 불요.
+#    ★ §8.6 gap 무관: §8.10 헤딩 존재만 트리거.
+SECTION_8_10_HEADER_RE = re.compile(r"^####? §8\.10\b", re.MULTILINE)
+SECTION_8_10_0_HEADER_RE = re.compile(r"^#####? §8\.10\.0\b", re.MULTILINE)
+SECTION_8_10_1_HEADER_RE = re.compile(r"^#####? §8\.10\.1\b", re.MULTILINE)
+SECTION_8_10_X_HEADER_RE = re.compile(r"^#####? §8\.10\.x\b", re.MULTILINE)
+APPLICABILITY_8_10_ROW_RE = re.compile(r"\|\s*dark_path\s*\|\s*(DO|N/A)\s*\|", re.MULTILINE)
+# §8.10.1 dark_path DO 시 6 unconditional 산출물 계약 필드 (change-plan §3.3). infeasibility_reason=conditional, g_boundary_check=region-token(별도).
+DARK_PATH_8_10_FIELDS = ["flag_identifier", "default_state", "activation_test_ref", "on_state_assertion", "discriminating_basis", "status"]
+DARK_PATH_STATUS_ENUM = {"activated", "infeasible", "natural_na"}
+ON_STATE_ASSERTION_MIN = 15  # activation-honesty(§3.5a) — substantive ON-state assertion 최소 길이.
+
+
+def _slice_8_10_subsection(body: str, sub: str) -> str:
+    hdr_re = re.compile(r"^#####? §" + re.escape(sub) + r"\b", re.MULTILINE)
+    m = hdr_re.search(body)
+    if not m:
+        return ""
+    start = m.end()
+    nxt = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+    end = start + (nxt.start() if nxt else len(body) - start)
+    return body[start:end]
+
+
+# ── CFP-2624 / ADR-152 §결정 5 — G3(b) EPIC-RESULTS 요구-슬라이스 매핑 섹션 presence lint.
+#    파일명 `EPIC-RESULTS-*.md` gate(기존 retro false-positive 0). 섹션 present ∧ (≥1 well-formed row
+#    `slice|{story|defer}|tracking-ref` ∨ N/A-substantive) ∧ 천장 문구 present(AC-8). 완결성이 아닌
+#    산출물 존재만 강제 — 모든 슬라이스 열거(AC-6a) = PMO Epic-close 감사 obligation(declared).
+EPIC_RESULTS_NAME_RE = re.compile(r"^EPIC-RESULTS-.+\.md$")
+SLICE_MAPPING_HEADER_RE = re.compile(r"^##\s+§requirement-slice-mapping\b", re.MULTILINE)
+SLICE_ROW_RE = re.compile(r"^\|\s*[^|]+\|\s*(story|defer)\s*\|\s*[^|]+\|", re.MULTILINE)
+SLICE_CEILING_TOKEN = "완결성"  # 천장 문구 anchor — 슬라이스 열거 완결성 미강제 정직 공개(AC-8).
+
+
 DEBATE_TRANSCRIPT_HEADER_RE = re.compile(
     r"^###\s+Debate transcript:\s*(?P<anchor>.*)$",
     re.MULTILINE,
@@ -505,6 +545,101 @@ def check_section_8_9(md_path: Path, body: str) -> list:
     return fails
 
 
+def check_section_8_10(md_path: Path, body: str) -> list:
+    # CFP-2624 / ADR-152 §결정 7 — §8.10 dark-path activation manifest lint(§8.9 동형, single dark_path). §8.10 헤딩 부재 → 무검사.
+    fails = []
+    if not SECTION_8_10_HEADER_RE.search(body):
+        return []
+
+    if not SECTION_8_10_0_HEADER_RE.search(body):
+        fails.append(f"{md_path}: §8.10 본문 존재하나 §8.10.0 Applicability decision 헤딩 부재")
+        return fails
+
+    # §8.10 region slice(§8.10 헤딩 ~ 다음 #{1,4} 헤딩) — g_boundary_check token 검사 scope 격리.
+    m810 = SECTION_8_10_HEADER_RE.search(body)
+    nxt = re.search(r"^#{1,4}\s+\S", body[m810.end():], re.MULTILINE)
+    region_end = m810.end() + (nxt.start() if nxt else len(body) - m810.end())
+    section_810 = body[m810.start():region_end]
+
+    m = APPLICABILITY_8_10_ROW_RE.search(body)
+    if not m:
+        fails.append(f"{md_path}: §8.10.0 표 의 dark_path 행 누락 (DO/N/A 미파싱)")
+        return fails
+    status_cell = m.group(1)
+
+    # AC-1a — g_boundary_check token presence(Epic G2 soak/restart/replay ∧ G4 fuzz ∧ G5 attack 경계 무침범, fail-closed).
+    if "g_boundary_check" not in section_810:
+        fails.append(f"{md_path}: §8.10 g_boundary_check token 부재 — Epic G2(soak/restart/replay)·G4(fuzz)·G5(DAST) 경계 확인 누락 (AC-1a)")  # MUT-DARK-B-G-TOKEN
+
+    if status_cell == "DO":
+        sub_body = _slice_8_10_subsection(body, "8.10.1")
+        if not sub_body:
+            fails.append(f"{md_path}: §8.10.0 dark_path=DO 이나 §8.10.1 산출물 계약 본문 부재 (AC-1a)")
+            return fails
+        missing_fields = [f for f in DARK_PATH_8_10_FIELDS if f not in sub_body]
+        if missing_fields:
+            fails.append(f"{md_path}: §8.10.1 dark_path DO 필수 산출물 필드 누락 — {missing_fields} (AC-1a)")  # MUT-DARK-A-DO-FIELDS
+        # status enum(3-value{activated/infeasible/natural_na}).
+        sm = re.search(r"^\s*[-*]?\s*status:\s*(\S+)", sub_body, re.MULTILINE)
+        status_val = sm.group(1) if sm else None
+        if status_val is not None and status_val not in DARK_PATH_STATUS_ENUM:
+            fails.append(f"{md_path}: §8.10.1 status enum 위반 '{status_val}' — {sorted(DARK_PATH_STATUS_ENUM)} 중 하나 (AC-1a)")  # MUT-DARK-C-STATUS-ENUM
+        # conditional infeasibility_reason(30자 minimum).
+        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:\s*(.+)", sub_body, re.MULTILINE)
+        reason_ok = bool(rm) and len(rm.group(1).strip()) >= 30
+        # cross-field (a) activation-honesty(§3.5a): status=activated ⟹ activation_test_ref non-empty ∧ on_state_assertion substantive(≥15자).
+        #   ★ 값 캡처 = `[ \t]*(.*)$` (same-line only) — `\s*` 는 개행을 삼켜 빈 값이 다음 줄 내용을 흡수함(false-fill 방지).
+        atm = re.search(r"^\s*[-*]?\s*activation_test_ref:[ \t]*(.*)$", sub_body, re.MULTILINE)
+        atref = atm.group(1).strip() if atm else ""
+        osm = re.search(r"^\s*[-*]?\s*on_state_assertion:[ \t]*(.*)$", sub_body, re.MULTILINE)
+        osassert = osm.group(1).strip() if osm else ""
+        if status_val == "activated" and not (atref and len(osassert) >= ON_STATE_ASSERTION_MIN):
+            fails.append(f"{md_path}: §8.10.1 status=activated 이나 activation_test_ref 공백 또는 on_state_assertion(15자 minimum) 부재 — 빈 stub 활성화 위장 차단 (AC-2 activation-honesty §3.5a)")  # MUT-DARK-D-ACTIVATION
+        # cross-field (b) infeasible-reason(§3.5b).
+        if status_val == "infeasible" and not reason_ok:
+            fails.append(f"{md_path}: §8.10.1 status=infeasible 이나 infeasibility_reason(30자 minimum) 부재 (AC-1a §3.5b)")  # MUT-DARK-E-INFEAS-REASON
+    else:  # status_cell == "N/A" (aggregate)
+        if not SECTION_8_10_X_HEADER_RE.search(body):
+            fails.append(f"{md_path}: §8.10.0 dark_path=N/A 인데 §8.10.x N/A 명시 헤딩 부재")
+        else:
+            m810x = SECTION_8_10_X_HEADER_RE.search(body)
+            start = m810x.end()
+            next_header = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+            end = start + (next_header.start() if next_header else len(body) - start)
+            section_body = body[start:end].strip()
+            if not NA_85_SUBSTANTIVE_RE.search(section_body):
+                fails.append(f"{md_path}: §8.10.x N/A reason 가 substantive 30자 minimum 미충족 — vague reason 차단 (CFP-2624 / ADR-152 결정7)")
+
+    return fails
+
+
+def check_epic_results_slice_mapping(md_path: Path, body: str) -> list:
+    # CFP-2624 / ADR-152 §결정 5 — G3(b) EPIC-RESULTS 요구-슬라이스 매핑 섹션 presence lint(AC-6b).
+    #   파일명 EPIC-RESULTS-*.md gate → 섹션 present ∧ (≥1 well-formed row ∨ N/A-substantive) ∧ 천장 문구 present.
+    #   완결성(모든 슬라이스 열거, AC-6a)은 강제 안 함 — PMO Epic-close 감사 obligation(declared).
+    fails = []
+    if not EPIC_RESULTS_NAME_RE.match(md_path.name):
+        return []
+    m = SLICE_MAPPING_HEADER_RE.search(body)
+    if not m:
+        fails.append(f"{md_path}: EPIC-RESULTS §requirement-slice-mapping 섹션 부재 — 요구 슬라이스 silent drop 차단 (AC-6b)")  # MUT-SLICE-PRESENCE
+        return fails
+    # 섹션 region slice(## §requirement-slice-mapping ~ 다음 ## 헤딩).
+    start = m.end()
+    nxt = re.search(r"^##\s+\S", body[start:], re.MULTILINE)
+    end = start + (nxt.start() if nxt else len(body) - start)
+    section = body[start:end]
+    # ≥1 well-formed row(slice|{story|defer}|tracking-ref) OR N/A-substantive(30자 minimum).
+    has_row = bool(SLICE_ROW_RE.search(section))
+    has_na = bool(NA_85_SUBSTANTIVE_RE.search(section.strip()))
+    if not (has_row or has_na):
+        fails.append(f"{md_path}: §requirement-slice-mapping 섹션 present 이나 well-formed row(slice|(story|defer)|tracking-ref) 또는 N/A(30자 minimum) 부재 (AC-6b)")  # MUT-SLICE-ROW
+    # 천장 문구 present(AC-8 no-hollow — 슬라이스 열거 완결성 미강제 정직 공개).
+    if SLICE_CEILING_TOKEN not in section:
+        fails.append(f"{md_path}: §requirement-slice-mapping 정직 천장 문구('{SLICE_CEILING_TOKEN}') 부재 — 슬라이스 열거 완결성 미강제 공개 누락 (AC-8)")  # MUT-SLICE-CEILING
+    return fails
+
+
 def main():
     warns = []
     section_7_4_warns = []
@@ -513,6 +648,8 @@ def main():
     section_8_7_warns = []
     section_8_8_warns = []
     section_8_9_warns = []
+    section_8_10_warns = []
+    slice_mapping_warns = []
     debate_transcript_warns = []
     for prefix, patterns in REQUIRED_SECTIONS.items():
         path = Path(prefix)
@@ -558,6 +695,11 @@ def main():
                 section_8_8_warns.extend(s88_fails)
                 s89_fails = check_section_8_9(md, text)
                 section_8_9_warns.extend(s89_fails)
+                s810_fails = check_section_8_10(md, text)
+                section_8_10_warns.extend(s810_fails)
+            if prefix == "docs/retros":
+                slice_fails = check_epic_results_slice_mapping(md, text)
+                slice_mapping_warns.extend(slice_fails)
 
     for extra_prefix in ["docs/stories"]:
         extra_path = Path(extra_prefix)
@@ -576,7 +718,7 @@ def main():
             debate_fails = check_debate_transcript(md, text)
             debate_transcript_warns.extend(debate_fails)
 
-    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(section_8_8_warns) + len(section_8_9_warns) + len(debate_transcript_warns)
+    total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(section_8_7_warns) + len(section_8_8_warns) + len(section_8_9_warns) + len(section_8_10_warns) + len(slice_mapping_warns) + len(debate_transcript_warns)
     if total_fails:
         print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
         if warns:
@@ -606,6 +748,14 @@ def main():
         if section_8_9_warns:
             print(f"  [CFP-2612 §8.9 DAST 로스터 applicability] {len(section_8_9_warns)} 건")
             for w in section_8_9_warns:
+                print(f"  - {w}")
+        if section_8_10_warns:
+            print(f"  [CFP-2624 §8.10 dark-path 로스터 applicability] {len(section_8_10_warns)} 건")
+            for w in section_8_10_warns:
+                print(f"  - {w}")
+        if slice_mapping_warns:
+            print(f"  [CFP-2624 EPIC-RESULTS §requirement-slice-mapping] {len(slice_mapping_warns)} 건")
+            for w in slice_mapping_warns:
                 print(f"  - {w}")
         if debate_transcript_warns:
             print(f"  [CFP-391 §9 debate transcript schema] {len(debate_transcript_warns)} 건")

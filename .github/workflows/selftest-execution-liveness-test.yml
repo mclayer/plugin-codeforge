@@ -68,3 +68,6 @@ jobs:
 
       - name: Run bucket A backfill — §8.9 doc-section self-test (dead → alive)
         run: bash tests/scripts/test-check-doc-section-8-9.sh
+
+      - name: Run bucket A backfill — §8.10 dark-path doc-section self-test (CFP-2624 G3)
+        run: bash tests/scripts/test-check-doc-section-8-10.sh
