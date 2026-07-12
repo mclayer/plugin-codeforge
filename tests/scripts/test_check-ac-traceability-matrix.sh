@@ -30,6 +30,9 @@
 #     Mutation A: Hop2 coverage 무력화 → F-AC4-RED kill
 #     Mutation B: Hop3 born-missing ast→grep 변조 → F-ORACLE-GUARD kill (§8.8)
 #     Mutation C: fail-closed(빈 AC)→fail-open 변조 → F-AC7-a kill
+#     Mutation E: anti-degradation skip-absorb 변조(degraded→비적용 PASS) → F-APPLIC-DEGRADED kill (CFP-2609)
+#     Mutation F: empty-AC(F-AC7-a)→비적용 PASS 오라우팅 변조 → F-AC7-a kill (CFP-2609)
+#     Mutation NOTOKEN: structural-signature keying 무력화(has_sig 무시=token-only) → F-APPLIC-DEGRADED-NOTOKEN kill (CFP-2609 Codex P2)
 #
 # Exit: 0 = all fixtures/mutations pass    1 = any fail (or core 미착륙 RED-first)
 
@@ -94,6 +97,12 @@ tr_with_def()     { mkdir -p "$1"; printf 'def %s():\n    assert True\n' "$2" > 
 tr_comment_only() { mkdir -p "$1"; printf '# planned: %s (아직 실 def 아님)\n"""%s appears only in a docstring"""\n_n = "%s"\ndef test_unrelated():\n    pass\n' "$2" "$2" "$2" > "$1/test_gen.py"; }
 tr_unrelated()    { mkdir -p "$1"; printf 'def test_unrelated():\n    pass\n' > "$1/test_gen.py"; }
 tr_stub()         { mkdir -p "$1"; printf 'def %s(): pass\n' "$2" > "$1/test_gen.py"; }
+
+# ── 적용성(applicability) AC-source builders (CFP-2609 §8.2 — ADR-145 §결정8) ────
+mk_ac_source_noac()     { printf '## §5. Acceptance Criteria\n\n(추적할 AC 없음 — marketplace sync / Epic close / sibling parity)\n' > "$1"; }  # 표 signature 부재 ∧ AC-ID 토큰 부재 → 비적용 positive
+mk_ac_source_degtoken() { printf '## §5. Acceptance Criteria\n\n산문으로 AC-1a 를 언급하나 항목화 표(id/source/tier signature) 부재(degradation).\n' > "$1"; }  # 산문 토큰 present ∧ 표 부재
+mk_ac_source_notoken()  { printf '## §5. Acceptance Criteria\n\n| ID | source | tier | statement |\n|---|---|---|---|\n| XX-1 | derived | normative | given-when-then |\n' > "$1"; }  # 표 signature present ∧ ID 손상(AC-ID 토큰 부재)
+mk_ac_source_advonly()  { printf '## §5. Acceptance Criteria\n\n| ID | source | tier | statement |\n|---|---|---|---|\n| AC-1 | user | advisory | given-when-then |\n| AC-2 | user | declared | given-when-then |\n' > "$1"; }  # records present ∧ 0 normative
 
 # ── gate runner + distinct-marker asserts ─────────────────────────────────────
 GATE_EC=0; GATE_OUT=""
@@ -279,6 +288,53 @@ mk_rtm       "$f/rtm.md" AC-1 normative test_one_mapped
 case_fail F-SUBLETTER "$CORE" "AC-1(mapped)+AC-1a(unmapped) → AC-1a distinct orphan FAIL (sub-letter drop 반증)" -- \
   --phase 1 --ac-source "$f/ac.md" --rtm "$f/rtm.md"
 
+# ── 적용성(applicability) discriminating fixtures (CFP-2609 §8.2 — 3경로 + anti-degradation) ──
+echo ""
+echo "════════════════════════════════════════════════════════════════════"
+echo "Applicability (CFP-2609 §8.2) — 비적용→PASS / 판정불가·미추적→FAIL discriminate"
+echo "════════════════════════════════════════════════════════════════════"
+
+# F-APPLIC-NONAPPLICABLE (PASS) — §5 AC 표 부재 ∧ AC-ID 토큰 부재(resolved) → exit 0 (비적용 positive, AC-1a)
+#   skip 이 REACHABLE 함(over-strict 아님) 입증.
+f=$TMP/f_applic_none; mkdir -p "$f"
+mk_ac_source_noac "$f/ac.md"
+case_pass F-APPLIC-NONAPPLICABLE "$CORE" "§5 AC 표·AC-ID 토큰 부재 → 비적용 in-job PASS (skip REACHABLE)" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm-not-yet
+
+# F-APPLIC-DEGRADED (FAIL) — §5 산문 AC-ID 토큰 present ∧ parseable 표 부재 → exit 1 (anti-degradation, AC-2)  [Mutation E 타겟]
+f=$TMP/f_applic_deg; mkdir -p "$f"
+mk_ac_source_degtoken "$f/ac.md"
+case_fail F-APPLIC-DEGRADED "$CORE" "산문 AC-ID 토큰 present + 표 파손(degradation) → 판정불가 FAIL (degraded→skip 흡수 금지)" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm-not-yet
+
+# F-APPLIC-DEGRADED-NOTOKEN (FAIL) — 표 signature present ∧ ID 손상(XX-1, AC-ID 토큰 부재) → exit 1  [Mutation NOTOKEN 타겟]
+#   ★ Codex P2: structural-signature keying — table 구조 present 면 token 부재라도 NO_AC_SURFACE 아님(Hop1 malformed 경유 FAIL).
+#   token-only keying 이면 XX-1 손상표가 비적용 PASS 로 샘(anti-degradation 붕괴) → 봉인 입증.
+f=$TMP/f_applic_notok; mkdir -p "$f"
+mk_ac_source_notoken "$f/ac.md"
+case_fail F-APPLIC-DEGRADED-NOTOKEN "$CORE" "표 signature present + ID=XX-1(토큰 부재) → SURFACE_PRESENT→Hop1 malformed FAIL (token-only keying 봉인)" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm-not-yet
+
+# F-APPLIC-0NORMATIVE (PASS) — §5 표 present + records well-formed + 0 normative(전부 declared/advisory) → exit 0 (비적용-유사, e7)
+f=$TMP/f_applic_0n; mkdir -p "$f"
+mk_ac_source_advonly "$f/ac.md"
+case_pass F-APPLIC-0NORMATIVE "$CORE" "records present·0 normative(전부 declared/advisory) → 비적용-유사 PASS" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm-not-yet
+
+# F-APPLIC-SUPPRESS (FAIL) — resolved §5 ≥1 normative unmapped → exit 1 (위장 불가, AC-3; = F-AC4-RED 강화)
+f=$TMP/f_applic_sup; mkdir -p "$f"
+mk_ac_source "$f/ac.md" AC-1a derived normative
+mk_rtm       "$f/rtm.md" AC-1a normative -
+case_fail F-APPLIC-SUPPRESS "$CORE" "적용(§5 normative present) + §8 미추적 → FAIL 도달 (신호 non-suppressible)" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm "$f/rtm.md"
+
+# F-PHASE1-RTM-NOTYET (PASS) — phase 1 + rtm not-yet EXPLICIT 신호 + ≥1 normative → exit 0 (Hop1 only, AC-4)
+#   placeholder fallback(§8 "작성 예정" FAIL, F-AC7-b2)과 구분 — EXPLICIT --rtm-not-yet.
+f=$TMP/f_applic_notyet; mkdir -p "$f"
+mk_ac_source "$f/ac.md" AC-1a derived normative
+case_pass F-PHASE1-RTM-NOTYET "$CORE" "phase1 + --rtm-not-yet + normative → Hop1 only PASS (placeholder fallback 아님)" -- \
+  --phase 1 --ac-source "$f/ac.md" --rtm-not-yet
+
 # ── L2 execution-liveness (§8.9): .github/ ↔ templates/ workflow byte-identical ──
 echo ""
 echo "════════════════════════════════════════════════════════════════════"
@@ -371,6 +427,44 @@ if mutate 's/for v in validate_ac_record\(rec\):/for v in []:  # MUTATED-D/' "$M
     --phase 1 --ac-source "$fd/ac.md" --rtm "$fd/rtm.md"
 else
   echo "○ SKIP: Mutation-D — hop1 'for v in validate_ac_record(rec):' 미검출 (인터페이스 형태 상이) — 착륙 시 유효, F-AC2-MALFORMED discriminator 로 충분(S4 omittable)"
+fi
+
+# ── 적용성 Mutation E/F/NOTOKEN (CFP-2609 §8.4 — born-hollow 봉인 실증) ──────────
+echo ""
+echo "════════════════════════════════════════════════════════════════════"
+echo "Applicability mutation kill (CFP-2609 §8.4) — 적용성 born-hollow 봉인 실증"
+echo "════════════════════════════════════════════════════════════════════"
+
+# Mutation E — anti-degradation guard 무력화 (산문 AC-ID 토큰 present UNDECIDABLE → NO_AC_SURFACE PASS 로 흡수)
+ME=$TMP/mutE
+if mutate 's/if has_ac_surface_claim:/if False:  # MUTATED-E/' "$ME"; then
+  fe=$TMP/f_applic_deg
+  run_mut_kill Mutation-E "$ME" "anti-degradation skip-absorb 변조(degraded→비적용 PASS) → F-APPLIC-DEGRADED kill" -- \
+    --phase 1 --ac-source "$fe/ac.md" --rtm-not-yet
+else
+  echo "✗ INCONCLUSIVE: Mutation-E — anti-degradation 결정라인(if has_ac_surface_claim:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
+fi
+
+# Mutation F — empty-AC(F-AC7-a) → 비적용 PASS 오라우팅 변조 (SURFACE_EMPTY return → NO_AC_SURFACE)
+#   NB: 3-tuple return 이므로 inline 주석 삽입 금지(tuple 절단 → unpack crash). enum 토큰만 치환.
+MF=$TMP/mutF
+if mutate 's/return APPLIC_SURFACE_EMPTY,/return APPLIC_NO_AC_SURFACE,/' "$MF"; then
+  ff=$TMP/f_ac7a
+  run_mut_kill Mutation-F "$MF" "empty-AC(F-AC7-a)→비적용 오흡수 변조 → F-AC7-a kill (표 부재 vs 표 present·0 rows 구분)" -- \
+    --phase 1 --ac-source "$ff/ac.md" --rtm "$ff/rtm.md"
+else
+  echo "✗ INCONCLUSIVE: Mutation-F — empty-AC 결정라인(return APPLIC_SURFACE_EMPTY,) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
+fi
+
+# Mutation NOTOKEN — structural-signature keying 무력화 (has_sig 분기 skip → token-only keying leak)
+#   ★ Codex P2: 표 signature present(has_sig)를 무시하면 XX-1 손상 표가 비적용 PASS 로 샌다.
+MN=$TMP/mutN
+if mutate 's/if has_sig:/if False:  # MUTATED-NOTOKEN/' "$MN"; then
+  fn=$TMP/f_applic_notok
+  run_mut_kill Mutation-NOTOKEN "$MN" "structural-signature keying 무력화(has_sig 무시=token-only) → F-APPLIC-DEGRADED-NOTOKEN kill" -- \
+    --phase 1 --ac-source "$fn/ac.md" --rtm-not-yet
+else
+  echo "✗ INCONCLUSIVE: Mutation-NOTOKEN — structural-signature 결정라인(if has_sig:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
 fi
 
 # ── summary ───────────────────────────────────────────────────────────────────

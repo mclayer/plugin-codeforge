@@ -28,11 +28,20 @@ phase 신호 = EXPLICIT (`--phase 1|2`) — diff 추론 금지(ADR-145 §결정 
   검사 invariant set = AC↔§8 명명 테스트↔실 symbol(파일∧함수/클래스 node) 로 한정.
   runtime liveness(G2)·discriminating 행사(G3)는 검사하지 않는다 — 게이트 영역 disjoint.
 
+━━ per-PR applicability (ADR-145 Amendment 1 §결정 8, CFP-2609) ━━
+  적용성 verdict = **core 단일 소유**(classify_ac_source, adapter 재파싱 = drift 금지). 비적용 PR
+  (추적할 normative AC 부재) = in-job genuine PASS(정의역 밖). 비적용 skip 은 오직 "비적용 positive
+  확정"(resolve-success ∧ 0 normative AC)에서만 도달 — 판정불가(degraded: fetch/403/404/frontmatter/
+  malformed-table/count-only)·적용-미추적 은 FAIL(anti-degradation, born-hollow 봉인). "opt-out ≠
+  applicability-scoping"(§결정4 정의역 명확화). structural-signature keying — table 구조 present 면
+  AC-ID 토큰 부재라도 NO_AC_SURFACE 아님(Hop1 malformed 경유 FAIL).
+
 offline (네트워크 0 — 입력 전부 로컬 파일; cross-repo fetch·fs I/O 는 workflow adapter 층 전담).
 read-only (verifier — write 0). 표준 라이브러리(ast/re/argparse/pathlib)만.
 
 Usage:
   python3 check_ac_traceability_matrix.py --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]
+  python3 check_ac_traceability_matrix.py --phase 1 --ac-source <FILE> --rtm-not-yet   # Phase-1 RTM not-yet
 
 Exit codes (fail-closed):
   0 = PASS only (유일 success — 전 hop 통과).
@@ -77,6 +86,26 @@ EXIT_PASS = 0  # 전 hop 통과
 EXIT_FAIL = 1  # 위반 OR 판정불가 (fail-closed — skip/opt-out/default-green 부재)
 
 # ─────────────────────────────────────────────────────────────────────────────
+# per-PR applicability verdict (ADR-145 Amendment 1 §결정 8 — 적용성 3 축 중 (c) per-PR).
+#   적용성 verdict = **core 단일 소유**(adapter 재파싱 = drift 금지). classify_ac_source 가 4-way.
+#   비적용 skip 은 오직 "비적용 positive 확정"(resolve-success ∧ 0 normative AC)에서만 도달 —
+#   판정불가(degraded)·적용-미추적 은 FAIL(anti-degradation, born-hollow 봉인).
+# ─────────────────────────────────────────────────────────────────────────────
+APPLIC_NO_AC_SURFACE = "NO_AC_SURFACE"      # 비적용 positive: AC 표 signature 부재 ∧ AC 선언 claim 부재 → PASS(정의역 밖)
+APPLIC_SURFACE_EMPTY = "AC_SURFACE_EMPTY"   # AC 표 signature present + 0 rows = 빈-AC bypass(F-AC7-a) → FAIL
+APPLIC_SURFACE_PRESENT = "AC_SURFACE_PRESENT"  # AC 표 present + ≥1 record → Hop1/normative 분기
+APPLIC_UNDECIDABLE = "UNDECIDABLE"          # degradation: AC 선언 claim present 이나 parseable 표 부재 → FAIL(anti-degradation)
+
+# ★ structural-signature keying (Codex P2 carry-forward): 비적용(NO_AC_SURFACE) 도달 = AC-table
+#   구조 signature 부재 ∧ AC 선언 claim 부재 **둘 다**. AC 선언 claim = 산문 `AC-\d+` 토큰 OR
+#   `acceptance_criteria_count: N`(N≥1, count-only). table 구조 present(header id/source/tier)면
+#   claim 부재라도 NO_AC_SURFACE 아님(rows→SURFACE_PRESENT/EMPTY, Hop1 malformed 경유 FAIL).
+#   token-only keying 금지 — 표 구조 손상(ID 컬럼 `XX-1` 등, AC-ID 토큰 부재)이 비적용 PASS 로
+#   새면 anti-degradation 붕괴(F-APPLIC-DEGRADED-NOTOKEN 이 이를 self-test 로 봉인).
+_AC_ID_TOKEN_RE = re.compile(r"\bAC-\d+[a-z]?\b")
+_AC_COUNT_CLAIM_RE = re.compile(r"acceptance_criteria_count:\s*([1-9]\d*)")
+
+# ─────────────────────────────────────────────────────────────────────────────
 # CEILING/SCOPE 정직 공개 텍스트 — 코드 SSOT (AC-8/AC-9 테스트 anchor).
 #   게이트가 semantic 완전성을 강제하지 않음 + 2 잔여를 기계 판독 가능하게 박제한다.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -90,6 +119,11 @@ CEILING_DISCLOSURE = (
 SCOPE_DISCLOSURE = (
     "G1 검사 invariant set = AC↔§8 명명 테스트↔실 symbol(파일∧함수/클래스 node) 로 한정. "
     "runtime liveness(G2)·discriminating 행사(G3)는 검사하지 않음 — Epic CFP-2602 게이트 disjoint."
+)
+APPLICABILITY_DISCLOSURE = (
+    "per-PR applicability(ADR-145 §결정8): 비적용 = resolve-success ∧ 0 normative AC(정의역 밖, "
+    "in-job genuine PASS — skip-as-job 아님). 판정불가(degraded)·적용-미추적 은 FAIL — anti-degradation "
+    "(어떤 degraded 경로도 비적용 skip 흡수 금지). 신호 = presence-based(semantic 판단 금지, §결정1 천장 상속)."
 )
 
 # §5 이 개발서사 placeholder(Story §8 형)일 때 authoritative RTM 아님을 감지하는 marker.
@@ -205,16 +239,17 @@ def _extract_named_tests(cell):
 _ID_HEADER_NAMES = ("id", "ac", "ac id", "ac-id")
 
 
-def parse_ac_source(ac_text):
-    """AC 소스 문서의 §5 안 AC 표(§5.3: id/source/tier/statement) 파싱.
+def _scan_ac_table(section):
+    """§5 섹션에서 AC 표(id/source/tier 컬럼 structural signature) 1개 탐색 + records 추출.
+
+    적용성 verdict 의 **structural-signature 원천**(Codex P2): signature 존재(header id/source/tier)는
+    rows 파싱 가능 여부와 독립. classify_ac_source 와 parse_ac_source 가 공유(재파싱 drift 봉인, ADR-140).
 
     Returns:
-      (records: list[dict{id, source, tier}], note: str)  — 성공.
-      (None, reason: str)                                   — §5 부재 / AC 표 미발견 (판정불가).
+      (records: list[dict{id, source, tier[, statement]}], has_signature: bool)
+        has_signature=True  — id/source/tier signature 표 발견. records = 파싱된 행(0 rows 가능).
+        has_signature=False — signature 표 미발견. records=[].
     """
-    section = _extract_section_n(ac_text, 5)
-    if section is None:
-        return None, "§5 섹션 부재 — AC source 파싱 불가"
     for headers, rows in _iter_markdown_tables(section):
         norm = [_strip_md(h).lower() for h in headers]
         id_idx = _find_col_exact(norm, _ID_HEADER_NAMES)
@@ -237,8 +272,66 @@ def parse_ac_source(ac_text):
                 # statement 는 prose(given-when-then) — non-empty 만 필요, strip 만(내용 보존).
                 rec["statement"] = row[stmt_idx].strip()
             records.append(rec)
-        return records, "§5.3 AC 표 파싱"
-    return None, "§5 안 AC 표(id/source/tier 컬럼) 미발견 — AC source 미해결"
+        return records, True
+    return [], False
+
+
+def parse_ac_source(ac_text):
+    """AC 소스 문서의 §5 안 AC 표(§5.3: id/source/tier/statement) 파싱 (2-way 호환 seam).
+
+    Returns:
+      (records: list[dict{id, source, tier}], note: str)  — 성공(0 rows 가능).
+      (None, reason: str)                                   — §5 부재 / AC 표 미발견 (판정불가).
+    """
+    section = _extract_section_n(ac_text, 5)
+    if section is None:
+        return None, "§5 섹션 부재 — AC source 파싱 불가"
+    records, has_sig = _scan_ac_table(section)
+    if not has_sig:
+        return None, "§5 안 AC 표(id/source/tier 컬럼) 미발견 — AC source 미해결"
+    return records, "§5.3 AC 표 파싱"
+
+
+def classify_ac_source(ac_text):
+    """per-PR applicability 4-way 분류 — 적용성 verdict **core 단일 소유**(ADR-145 §결정8 D).
+
+    Returns (verdict, records, note):
+      APPLIC_NO_AC_SURFACE   — 비적용 positive: AC 표 signature 부재 ∧ AC 선언 claim 부재 (둘 다). records=[].
+      APPLIC_SURFACE_EMPTY   — AC 표 signature present + 0 well-formed rows (빈-AC bypass, F-AC7-a). records=[].
+      APPLIC_SURFACE_PRESENT — AC 표 present + ≥1 record. records 채움.
+      APPLIC_UNDECIDABLE     — degradation: AC 선언 claim(산문 AC-N 토큰 / count-only) present 이나
+                               parseable AC 표 부재 (산문 선언 + 표 파손). records=[].
+
+    ★ structural-signature keying (Codex P2): NO_AC_SURFACE(비적용 PASS) 도달 = AC-table structural
+      signature 부재 ∧ AC 선언 claim 부재 **둘 다**. table signature present 면 claim 부재라도
+      NO_AC_SURFACE 아님(has_sig 분기가 선행 — records→SURFACE_PRESENT/EMPTY, Hop1 malformed FAIL 경유).
+      token-only keying(표 구조 무시) 금지 — F-APPLIC-DEGRADED-NOTOKEN 이 self-test 로 봉인.
+    """
+    section = _extract_section_n(ac_text, 5)
+    if section is None:
+        # §5 섹션 자체 부재 = AC 표 signature 부재 ∧ AC 선언 claim 부재 → 비적용 positive.
+        return APPLIC_NO_AC_SURFACE, [], "§5 섹션 부재 — AC 선언 표면 부재(비적용 positive)"
+
+    records, has_sig = _scan_ac_table(section)
+    # AC 선언 claim = 산문 `AC-\d+` 토큰 OR count-only(`acceptance_criteria_count: N`, N≥1).
+    #   anti-degradation 보조 signal — 표 없이 AC surface 를 *주장*했으나 itemize 안 됨.
+    has_ac_surface_claim = bool(_AC_ID_TOKEN_RE.search(section)) or bool(_AC_COUNT_CLAIM_RE.search(section))
+
+    if has_sig:
+        if not records:
+            # AC 표 signature present + 0 well-formed rows = 빈-AC bypass(F-AC7-a) — 비적용 아님.
+            return APPLIC_SURFACE_EMPTY, [], "§5 AC 표 present + 0 rows — 빈-AC bypass(F-AC7-a)"
+        return APPLIC_SURFACE_PRESENT, records, "§5.3 AC 표 파싱"
+
+    if has_ac_surface_claim:
+        # ★ AC 선언 claim present + parseable AC 표 부재 = degradation → 판정불가 FAIL(anti-degradation).
+        return APPLIC_UNDECIDABLE, [], (
+            "§5 에 AC 선언 claim(산문 AC-N 토큰 또는 acceptance_criteria_count) present 이나 parseable "
+            "AC 표(id/source/tier signature) 부재 — 산문 선언 + 표 파손(degradation), 판정불가 fail-closed "
+            "FAIL(anti-degradation, degraded→skip 흡수 금지)"
+        )
+    # table signature 부재 ∧ AC 선언 claim 부재 (둘 다) → 비적용 positive.
+    return APPLIC_NO_AC_SURFACE, [], "§5 존재하나 AC 표 signature·AC 선언 claim 모두 부재 — AC 선언 표면 부재(비적용 positive)"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -429,49 +522,104 @@ def _read_file(path):
         return None
 
 
-def run(phase, ac_source_path, rtm_path, tests_root=None):
-    """게이트 실행. Decision Table R1-R8 (change-plan §8.10) 을 그대로 구현.
+def run(phase, ac_source_path, rtm_path, tests_root=None, rtm_not_yet=False):
+    """게이트 실행 — phase × resolve-outcome 매트릭스 (ADR-145 §결정8 D) 를 그대로 구현.
 
-    phase 1 = Hop1 + Hop2 (실파일 미검사). phase 2 = Hop1 + Hop2 + Hop3.
-    fail-closed: 위반·판정불가 전부 EXIT_FAIL. PASS 는 전 hop 통과 시에만 EXIT_PASS.
+    적용성 verdict = classify_ac_source 단일 소유(adapter 재파싱 금지). 매트릭스:
+      판정불가(UNDECIDABLE)                 → FAIL(phase 1·2) — anti-degradation, skip 흡수 금지
+      비적용(NO_AC_SURFACE / records·0 nrm) → PASS(exit 0, phase 1·2) — 정의역 밖(추적할 normative AC 부재)
+      empty-AC(SURFACE_EMPTY)               → FAIL(F-AC7-a)
+      적용 + rtm not-yet(EXPLICIT)          → phase1=Hop1 only / phase2=FAIL(RTM 필수)
+      적용 + rtm placeholder/absent         → FAIL(F-AC7-b/b2)
+      적용 + rtm resolved                   → Hop1+Hop2 / +Hop3(phase2)
+    fail-closed: 위반·판정불가 전부 EXIT_FAIL. PASS 는 전 hop 통과 OR 비적용 positive 확정 시에만.
+    rtm_not_yet = adapter EXPLICIT 신호(rtm_uri 마커 부재 ∧ phase 1) — placeholder fallback 흡수 아님.
     """
     if phase not in (1, 2):
         _error(f"--phase 는 1|2 만 허용 (받음: {phase!r}) — fail-closed.")
         return EXIT_FAIL
 
-    # 입력 파일 read (부재·unreadable → 판정불가 fail-closed; R7 계열)
+    # 입력 파일 read (부재·unreadable → 판정불가 fail-closed)
     ac_text = _read_file(ac_source_path)
     if ac_text is None:
         _error(f"--ac-source 읽기 실패/부재: {ac_source_path} (판정불가, fail-closed).")
+        return EXIT_FAIL
+
+    # ── per-PR applicability verdict (core 단일 소유, ADR-145 §결정8 D) ──
+    verdict, records, ac_note = classify_ac_source(ac_text)
+    if verdict == APPLIC_UNDECIDABLE:
+        _error(f"AC source 판정불가: {ac_note} — anti-degradation(skip 흡수 금지), fail-closed FAIL.")
+        return EXIT_FAIL
+    if verdict == APPLIC_SURFACE_EMPTY:
+        # 빈 AC 목록 = bypass vector F-AC7-a → FAIL (AC-7 no-optout, 재개방 금지)
+        _error(f"빈 AC 목록(§5 표 present, 0 rows) — 빈 AC bypass(F-AC7-a) 차단, fail-closed FAIL. ({ac_note})")
+        return EXIT_FAIL
+    if verdict == APPLIC_NO_AC_SURFACE:
+        # 비적용 positive 확정(§5 AC 선언 표면 부재) → in-job genuine PASS(skip-as-job 아님, §결정8 A/E).
+        _notice(
+            f"AC-traceability 게이트 비적용 PASS — {ac_note} (phase={phase}, 추적할 normative AC 0). "
+            f"{APPLICABILITY_DISCLOSURE}"
+        )
+        return EXIT_PASS
+
+    # ── verdict == APPLIC_SURFACE_PRESENT (records 실재) ──
+    # Hop1 well-formedness 는 records 존재 시 항상 검증 (malformed = degraded → FAIL; F-AC2-MALFORMED 보존).
+    hop1_violations = hop1_ac_wellformed(records)           # R2 (malformed → FAIL)
+
+    # 비적용-유사: records present 이나 0 normative(전부 declared/advisory) = 추적할 normative AC 부재
+    #   → PASS(§결정8 B(ii)). 단 malformed(Hop1 위반) 은 degraded → FAIL(well-formed 전제).
+    normative_count = sum(1 for r in records if r.get("tier") == "normative")
+    if normative_count == 0:
+        if hop1_violations:
+            for v in hop1_violations:
+                _error(v)
+            _error(f"AC 표 malformed(0 normative 이나 well-formed 아님) — degraded fail-closed FAIL. {CEILING_DISCLOSURE}")
+            return EXIT_FAIL
+        _notice(
+            f"AC-traceability 게이트 비적용 PASS — records={len(records)} 전부 declared/advisory(0 normative). "
+            f"{APPLICABILITY_DISCLOSURE}"
+        )
+        return EXIT_PASS
+
+    # ── 적용 (≥1 normative) — RTM 필요 ──
+    # RTM not-yet EXPLICIT 신호(Phase-1 §8 RTM = not-yet-applicable). placeholder fallback 흡수 아님.
+    if rtm_not_yet:
+        if phase == 2:
+            _error("--phase 2 인데 --rtm-not-yet — RTM 은 Phase-2 필수 산출물(fail-closed FAIL).")
+            return EXIT_FAIL
+        # phase 1: Hop1 only (Hop2 skip — rtm 미해결). placeholder false-fail 제거.
+        if hop1_violations:
+            for v in hop1_violations:
+                _error(v)
+            _error(f"Phase-1 Hop1 위반 (fail-closed). {CEILING_DISCLOSURE}")
+            return EXIT_FAIL
+        _notice(
+            f"AC-traceability 게이트 PASS — phase=1, AC={len(records)}, RTM not-yet-applicable "
+            f"(rtm_uri EXPLICIT 부재 → Hop1 only, placeholder fallback 아님). {APPLICABILITY_DISCLOSURE} {CEILING_DISCLOSURE}"
+        )
+        return EXIT_PASS
+
+    # rtm 필요 — read + resolve.
+    if rtm_path is None:
+        _error("--rtm 미지정(또한 --rtm-not-yet 아님) — RTM 판정불가 (fail-closed).")
         return EXIT_FAIL
     rtm_text = _read_file(rtm_path)
     if rtm_text is None:
         _error(f"--rtm 읽기 실패/부재: {rtm_path} (판정불가, fail-closed).")
         return EXIT_FAIL
 
-    # AC source 파싱 (Hop1/Hop2 입력)
-    records, ac_note = parse_ac_source(ac_text)
-    if records is None:
-        _error(f"AC source(§5) 파싱 실패: {ac_note} (판정불가, fail-closed).")
-        return EXIT_FAIL
-    if not records:
-        # 빈 AC 목록 = bypass vector F-AC7-a → FAIL (AC-7 no-optout)
-        _error("AC 목록 비어있음(0 records) — 빈 AC bypass(F-AC7-a) 차단, fail-closed FAIL.")
-        return EXIT_FAIL
-
     # RTM 위치 resolve (개발서사 placeholder 함정 방지 — ADR-145 §결정6 P1)
     rtm_section, rtm_note = resolve_rtm_location(rtm_text)
     if rtm_section is None:
-        # 미선언 §8 = bypass vector F-AC7-b → FAIL
-        _error(f"RTM 미해결: {rtm_note} (판정불가/미선언 §8 F-AC7-b, fail-closed).")
+        # 미선언 §8 / placeholder = bypass vector F-AC7-b/b2 → FAIL
+        _error(f"RTM 미해결: {rtm_note} (판정불가/미선언 §8 F-AC7-b/b2, fail-closed).")
         return EXIT_FAIL
     rtm_mapping, _tier_map = parse_rtm_table(rtm_section)
     if rtm_mapping is None:
         _error("RTM(§8.1) 표 파싱 실패 — AC↔명명 테스트 매핑 미발견 (판정불가, fail-closed).")
         return EXIT_FAIL
 
-    violations = []
-    violations.extend(hop1_ac_wellformed(records))       # R2 (malformed → FAIL)
+    violations = list(hop1_violations)
     violations.extend(hop2_coverage(records, rtm_mapping))  # R3 / R8 (미매핑 → FAIL)
 
     if phase == 2:
@@ -512,8 +660,12 @@ def main(argv=None):
                         help="EXPLICIT phase 신호 (1=문서·명명 / 2=구현·born-missing). diff 추론 금지.")
     parser.add_argument("--ac-source", required=True,
                         help="AC 목록 문서(§5 AC 표 포함) 경로.")
-    parser.add_argument("--rtm", required=True,
-                        help="RTM 문서(§8 Test Contract) 경로. wrapper-self=Change Plan §8 / consumer=Story §8.")
+    parser.add_argument("--rtm", default=None,
+                        help="RTM 문서(§8 Test Contract) 경로. wrapper-self=Change Plan §8 / consumer=Story §8. "
+                             "적용 PR 필수 (단 --rtm-not-yet 시 생략 가능).")
+    parser.add_argument("--rtm-not-yet", dest="rtm_not_yet", action="store_true",
+                        help="Phase-1 RTM not-yet-applicable EXPLICIT 신호 (rtm_uri 마커 부재 ∧ phase 1). "
+                             "적용 PR 이면 Hop1 only(Hop2 skip). placeholder fallback 흡수 아님. phase 2 = FAIL.")
     parser.add_argument("--tests-root", default=None,
                         help="born-missing 해석 루트(phase 2 필수). 명명 테스트 실 symbol ast resolve.")
     args = parser.parse_args(argv)
@@ -522,6 +674,7 @@ def main(argv=None):
         ac_source_path=args.ac_source,
         rtm_path=args.rtm,
         tests_root=args.tests_root,
+        rtm_not_yet=args.rtm_not_yet,
     )
 
 

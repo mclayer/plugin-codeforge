@@ -10,6 +10,8 @@ underscore prefix = pytest 미수집(테스트 아님). 게이트 collect_test_s
 `test_` 아니어서 AC 매핑 대상 아님(무해).
 """
 import os
+import re
+import shutil
 import subprocess
 import sys
 
@@ -42,6 +44,38 @@ def write_ac_source_empty(path):
 
 def write_ac_source_countonly(path):
     _write(path, "## §5. Acceptance Criteria\n\nacceptance_criteria_count: 3 (항목화 목록 없음 — 산문만)\n")
+
+
+# ── 적용성(applicability) AC-source writers (CFP-2609 §8.2 — ADR-145 §결정8) ──────
+def write_ac_source_noac(path):
+    """§5 present, AC 표 signature 부재 ∧ AC-ID 토큰 부재 → 비적용 positive(NO_AC_SURFACE)."""
+    _write(path, "## §5. Acceptance Criteria\n\n(추적할 AC 없음 — marketplace sync / Epic close / sibling parity)\n")
+
+
+def write_ac_source_degraded_token(path):
+    """§5 에 산문 AC-ID 토큰 present ∧ parseable 표 부재 → degradation(UNDECIDABLE, anti-degradation)."""
+    _write(path, "## §5. Acceptance Criteria\n\n산문으로 AC-1a 를 언급하나 항목화 표(id/source/tier signature) 부재.\n")
+
+
+def write_ac_source_notoken_table(path):
+    """§5 표 signature present ∧ ID 손상(XX-1, AC-ID 토큰 부재) → SURFACE_PRESENT→Hop1 malformed FAIL.
+
+    ★ structural-signature keying(Codex P2): token-only keying 이면 비적용 PASS 로 새는 함정 fixture.
+    """
+    _write(
+        path,
+        "## §5. Acceptance Criteria\n\n| ID | source | tier | statement |\n|---|---|---|---|\n"
+        "| XX-1 | derived | normative | given-when-then |\n",
+    )
+
+
+def write_ac_source_advonly(path):
+    """§5 표 present + records well-formed + 0 normative(전부 declared/advisory) → 비적용-유사 PASS."""
+    _write(
+        path,
+        "## §5. Acceptance Criteria\n\n| ID | source | tier | statement |\n|---|---|---|---|\n"
+        "| AC-1 | user | advisory | given-when-then |\n| AC-2 | user | declared | given-when-then |\n",
+    )
 
 
 def write_rtm(path, rows):
@@ -95,9 +129,16 @@ def _write(path, text):
 
 
 # ── CLI runner + distinct-marker asserts ─────────────────────────────────────
-def run_gate(phase, ac_source, rtm, tests_root=None):
-    """게이트 CLI 구동. 반환 (returncode:int, output:str[stdout+stderr])."""
-    argv = [sys.executable, AC_TRACE_PY, "--phase", str(phase), "--ac-source", ac_source, "--rtm", rtm]
+def run_gate(phase, ac_source, rtm=None, tests_root=None, rtm_not_yet=False):
+    """게이트 CLI 구동. 반환 (returncode:int, output:str[stdout+stderr]).
+
+    rtm_not_yet=True → --rtm-not-yet EXPLICIT 신호(Phase-1 RTM not-yet, rtm 생략). rtm 은 None 가능.
+    """
+    argv = [sys.executable, AC_TRACE_PY, "--phase", str(phase), "--ac-source", ac_source]
+    if rtm_not_yet:
+        argv += ["--rtm-not-yet"]
+    elif rtm is not None:
+        argv += ["--rtm", rtm]
     if tests_root is not None:
         argv += ["--tests-root", tests_root]
     proc = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8")
@@ -118,3 +159,33 @@ def assert_gate_fail(rc, out):
 def assert_gate_nonzero(rc, out):
     """non-PASS(fail-closed) — 정확한 코드 무관(argparse choices=exit2 등 수용)."""
     assert rc != 0, f"expected non-zero fail-closed, got {rc}\n{out}"
+
+
+def run_gate_core(core_py, phase, ac_source, rtm=None, tests_root=None, rtm_not_yet=False):
+    """run_gate 와 동일하나 임의 core .py 경로 지정(mutation-kill 용). 반환 (returncode, output)."""
+    argv = [sys.executable, core_py, "--phase", str(phase), "--ac-source", ac_source]
+    if rtm_not_yet:
+        argv += ["--rtm-not-yet"]
+    elif rtm is not None:
+        argv += ["--rtm", rtm]
+    if tests_root is not None:
+        argv += ["--tests-root", tests_root]
+    proc = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8")
+    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def mutate_core(dst_dir, pattern, repl):
+    """실 core + ac_id.py 를 dst_dir 로 복사하며 core 결정라인에 regex 치환 적용(portable in-process mutation).
+
+    반환 (mutant_core_path:str, applied:bool). applied=False → diff 0(변조 미적용, INCONCLUSIVE 방지용).
+    shell self-test 의 `mutate`/`run_mut_kill` 을 bash-비의존 python 으로 실현(Windows WSL-bash 부재 대응).
+    """
+    os.makedirs(dst_dir, exist_ok=True)
+    shutil.copy(os.path.join(AC_TRACE_LIB, "ac_id.py"), os.path.join(dst_dir, "ac_id.py"))
+    with open(AC_TRACE_PY, encoding="utf-8") as fh:
+        src = fh.read()
+    mutated = re.sub(pattern, repl, src)
+    dst = os.path.join(dst_dir, os.path.basename(AC_TRACE_PY))
+    with open(dst, "w", encoding="utf-8") as fh:
+        fh.write(mutated)
+    return dst, (mutated != src)
