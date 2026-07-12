@@ -43,6 +43,11 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 - **임의 구조 재설계 금지** (상한 clause) — 위 hygiene 을 구실로 한 새 파일·시그니처 변경·구조 재설계 금지. 필요 시 DeveloperPL 경유 Architect 에스컬레이션 (기존 경계 존치)
 - doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음, §5.7 (c) default)
 
+**resource-safety claim 정직 (write-time 강제 — ADR-082 §결정 16, Layer 1)**:
+- governance/보안 tooling(evidence-check 게이트·보안 script·워크플로 YAML)의 **docstring·inline 주석·워크플로 YAML 주석**에 resource-safety/복잡도/DoS-guard 안전성-claim(`catastrophic backtracking 0` / `ReDoS-safe` / `DoS 가드` / `nested quantifier 0` / `scan cap = 총 작업량 bound` 류)을 쓸 때:
+- **(a) paired proof-reference 동반** — reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크(`tests/scripts/...`), **또는 (b) honest-ceiling 로 downgrade** — "bounded degradation, 임의 입력 무해 아님"(ADR-151 §결정7 상속)
+- **무증거 안전성 단정 금지** — 이 행위는 정적 계측 불가이므로 write-time declaration + 리뷰(설계/구현/보안) falsify (ADR-140 §결정3 hybrid). Layer 2 lint(`resource-safety-claim-proof-presence`, warning-tier)이 proof-ref/ceiling **presence** 만 검사 — presence ≠ truth(참됨 반증은 보안테스트 lane). 원천 = CFP-2635/CFP-2591 자기참조 정직 갭(over-claim 잡는 tool 이 자기 코드에서 동종 over-claim)
+
 ## 소유 범위
 - 기본값: `src/**` production 코드 전체
 - **여러 `role: dev` 에이전트가 병렬로 실행되는 프로젝트에서는 overlay로 경로 scoping 필수** — 충돌 방지

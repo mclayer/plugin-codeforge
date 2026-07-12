@@ -218,6 +218,12 @@ Change Plan §8 안 invariant N개 중 M (M<N) 만 measurable 시 매핑표 안 
 
 src/** 또는 인프라 결함 발견 시 **수정하지 말고** 매핑표 하단 "발견 사항" 섹션에 기록. 실제 변경은 Orchestrator 경유 ArchitectPLAgent → ArchitectAgent (chief author) + RefactorAgent 계획서 갱신.
 
+## resource-safety claim 정직 (write-time 강제 — ADR-082 §결정 16, Layer 1)
+
+self-test·게이트 script(governance/보안 tooling)의 **docstring·inline 주석·워크플로 YAML 주석**에 resource-safety/복잡도/DoS-guard 안전성-claim(`catastrophic backtracking 0` / `ReDoS-safe` / `DoS 가드` / `nested quantifier 0` / `scan cap = 총 작업량 bound` 류)을 쓸 때:
+- **(a) paired proof-reference 동반** — reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크(`tests/scripts/...`), **또는 (b) honest-ceiling 로 downgrade** — "bounded degradation, 임의 입력 무해 아님"(ADR-151 §결정7 상속)
+- **무증거 안전성 단정 금지** — 이 행위는 정적 계측 불가이므로 write-time declaration + 리뷰(설계/구현/보안) falsify (ADR-140 §결정3 hybrid). Layer 2 lint(`resource-safety-claim-proof-presence`, warning-tier)이 proof-ref/ceiling **presence** 만 검사 — presence ≠ truth(참됨 반증은 보안테스트 lane). 원천 = CFP-2635/CFP-2591 자기참조 정직 갭. self-test 의 DoS 회귀가드(PERF fixture bounded-time)가 대표 proof-reference
+
 ## 제약
 
 - **품질 단계 관여 금지** — 구현 레인 한정, 리뷰·테스트 게이트 불참
