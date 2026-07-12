@@ -22,14 +22,17 @@ CFP-2646 / ADR-082 Amendment 38 §결정 16 — resource-safety claim ↔ proof-
   본 설계는 그 두 축을 명시 enumerate 하고 4-axis 를 처음부터 bound 한다. 완화는 CPU/메모리 총 작업량
   bound 이지 "임의 입력 무해" 가 아님 (bounded degradation — 정직 천장).
     (T-1) regex backtracking : claim/proof/ceiling 은 리터럴 substring 매칭(regex 최소화). 사용 regex 는
-                               anchored + bounded quantifier(`{0,N}`/`\d+`), nested quantifier 0.
-                               proof-ref = `tests/scripts/test_*` 회귀가드 경로(self-test PERF-2 실측).
+                               anchored + bounded quantifier(`{0,N}`/`\d+`), nested/인접-무제한 quantifier 0
+                               (baseline 파서 `_BASELINE_*_RE` 포함 — `\s{0,80}` bound, 인접 `\s*` 제거 CFP-2646).
+                               proof-ref = `tests/scripts/test_*` 회귀가드 경로(self-test PERF-2/PERF-3 실측).
     (T-2) tokenize 복잡도    : claim 검출 = substring `in`(C-level, O(n)) — slice-in-loop 0. index-advance
                                tokenize 는 `check_shell_test_masking.py:235-252` 답습(회귀가드 self-test PERF-2).
-    (T-3) 물리라인 length    : MAX_PHYSICAL_LINE_LEN per-physical-line truncate-scan — PER_FILE_SCAN_CAP
-                               count-cap 과 별개 축. CFP-2635 SF-1 이 정확히 이 축 부재로 O(n²)(회귀가드 PERF-1).
-    (T-4) read-path         : itertools.islice(f, PER_FILE_SCAN_CAP) 로 라인 count bound + per-line truncate.
-                               결과 = 총 작업량 <= PER_FILE_SCAN_CAP × MAX_PHYSICAL_LINE_LEN 로 유한 bound.
+    (T-3) 물리라인 length    : MAX_PHYSICAL_LINE_LEN per-physical-line truncate-scan — count-cap 과 별개 축.
+                               모든 read-path 대칭 적용(scan_file + load_baseline — CFP-2646 baseline path 봉인).
+                               CFP-2635 SF-1 이 정확히 이 축 부재로 O(n²)(회귀가드 PERF-1 / baseline path PERF-3).
+    (T-4) read-path         : itertools.islice(f, count-cap) 로 라인 count bound + per-line truncate(T-3).
+                               결과 = 총 작업량 <= count-cap × MAX_PHYSICAL_LINE_LEN 로 유한 bound
+                               (scan_file: PER_FILE_SCAN_CAP=5000 / load_baseline: 100000 — 둘 다 유한 bound).
   이 docstring 자체가 자기 lint 을 통과한다(AC-3 self-application) — 안전성 서술 옆에 proof-reference
   (self-test 회귀가드 경로) + honest-ceiling(bounded degradation, presence ≠ truth) 동반. injection-safe.
 
@@ -337,8 +340,11 @@ def scan_corpus(repo_root, explicit_files=None):
 
 # ─────────────────────── grandfather baseline (new-only subtract) ────────────────
 
-_BASELINE_FILE_RE = re.compile(r"^\s*-?\s*file:\s*[\"']?([^\"'\n]+?)[\"']?\s*$")
-_BASELINE_TOKEN_RE = re.compile(r"^\s*claim_token:\s*[\"']?(.+?)[\"']?\s*$")
+# CFP-2646 ReDoS 봉인: 인접 무제한 `\s*` (구판 `^\s*-?\s*file:`) = pure-whitespace 라인에서 O(n²)
+#   catastrophic backtracking (firsthand: 64k ws=~11.5s). leading/dash whitespace 를 bounded quantifier
+#   (`\s{0,80}`/`\s{0,4}`)로 고정 → quadratic KILL (firsthand: 256k ws=0.003ms). 기존 baseline 파싱 결과 불변.
+_BASELINE_FILE_RE = re.compile(r"^\s{0,80}(?:-\s{0,4})?file:\s*[\"']?([^\"'\n]+?)[\"']?\s*$")
+_BASELINE_TOKEN_RE = re.compile(r"^\s{0,80}claim_token:\s*[\"']?(.+?)[\"']?\s*$")
 
 
 def load_baseline(path):
@@ -352,7 +358,12 @@ def load_baseline(path):
     cur_file = None
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
+            # read-path bound (T-3/T-4 대칭 — scan_file:282-284): islice 로 라인 count bound +
+            #   per-physical-line truncate. T-3 축은 모든 read-path 커버 mandate — raw baseline 라인이
+            #   무제한 length 로 regex 도달(=poisoned baseline O(n²) DoS)하지 않도록 truncate (CFP-2646).
             for raw in itertools.islice(f, 100000):
+                if len(raw) > MAX_PHYSICAL_LINE_LEN:
+                    raw = raw[:MAX_PHYSICAL_LINE_LEN]
                 m = _BASELINE_FILE_RE.match(raw)
                 if m:
                     cur_file = m.group(1).strip()

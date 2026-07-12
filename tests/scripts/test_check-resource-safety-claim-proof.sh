@@ -271,6 +271,45 @@ else
   FAIL=$((FAIL+1))
 fi
 
+# PERF-3 (baseline read-path DoS): poisoned pure-whitespace baseline(256KB 단일 공백 물리라인) → load_baseline
+#   bounded (timeout-guarded, fail-fast). 구판(load_baseline T-3 미적용 + _BASELINE_FILE_RE 인접 무제한 `\s*`)은
+#   동일 입력 O(n²) >30s (baseline path DoS — PERF-1/2 는 scan_file path 만 커버, baseline path green-while-vuln).
+#   born-safe = T-3 truncate 대칭 적용 + regex bounded-quantifier. + baseline 파싱 semantics 무회귀 assert.
+perf_baseline=$(python3 - "$SSOT_PY" <<'PYEOF'
+import subprocess, sys, time, tempfile, os
+py = sys.argv[1]
+fd, poison = tempfile.mkstemp(suffix=".yaml"); os.close(fd)
+with open(poison, "w", encoding="utf-8", newline="\n") as f:
+    f.write("grandfathered_claims:\n- file: scripts/foo.py\n  claim_token: ReDoS-safe\n")
+    f.write(" " * 262144 + "\n")  # 256KB pure-whitespace physical line = poisoned baseline DoS payload
+code = (
+    "import importlib.util,sys;"
+    "s=importlib.util.spec_from_file_location('m',sys.argv[1]);"
+    "m=importlib.util.module_from_spec(s);s.loader.exec_module(m);"
+    "k=m.load_baseline(sys.argv[2]);"
+    "assert ('scripts/foo.py','ReDoS-safe') in k, 'baseline parse semantics broke: %r' % sorted(k);"
+    "print('OK')"
+)
+t0 = time.perf_counter()
+try:
+    r = subprocess.run([sys.executable, "-c", code, py, poison],
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15)
+    dt = time.perf_counter() - t0
+    print("%.3f" % dt if r.returncode == 0 else "998.0")  # 998 = semantics broke / crash
+except subprocess.TimeoutExpired:
+    print("999.0")  # 999 = O(n²) 회귀 (timeout)
+finally:
+    os.remove(poison)
+PYEOF
+)
+if awk "BEGIN{exit !($perf_baseline < 5.0)}"; then
+  echo "OK PASS: PERF-3 load_baseline(256KB pure-ws poisoned baseline) wall=${perf_baseline}s (<5s — T-3/regex bound, baseline-path O(n²) 회귀 차단)"
+  PASS=$((PASS+1))
+else
+  echo "X FAIL: PERF-3 load_baseline wall=${perf_baseline}s (>=5s — baseline read-path length-cap/regex bound 제거 O(n²) 회귀 의심)"
+  FAIL=$((FAIL+1))
+fi
+
 echo
 echo "── ★ AC-3 self-application (본 Story 실 산출물 lint self-PASS — self-referential 결함 3rd 재발 차단) ──"
 # wrapper-resident 산출물 3종을 lint --files 로 통과시켜 exit 0 확인 (over-claim 방지 Story 가 자기 over-claim
