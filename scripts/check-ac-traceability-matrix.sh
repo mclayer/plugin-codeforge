@@ -10,9 +10,14 @@
 # CLI 계약 (고정 — QADev 가 이 시그니처를 소비; 임의 변경 금지):
 #   scripts/check-ac-traceability-matrix.sh --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]
 #     --phase       (required) EXPLICIT phase 신호 (1=문서·명명 / 2=구현·born-missing). diff 추론 금지.
-#     --ac-source   (required) AC 목록 문서(§5 AC 표 포함) 경로.
+#     --ac-source   (optional) AC 목록 문서(§5 AC 표 포함) 경로. story_uri present PR 필수 —
+#                   story_uri-absent 비적용 선언(--ac-applicability-none) 시 생략(ADR-145 §결정9).
 #     --rtm         (required) RTM 문서(§8 Test Contract). wrapper-self=Change Plan §8 / consumer=Story §8.
 #     --tests-root  (optional) born-missing 해석 루트 (phase 2 필수).
+#     --ac-applicability-none (optional) story_uri-absent 비적용 선언(ac_applicability: none 마커) EXPLICIT
+#                   신호 (ADR-145 §결정9). adapter-routed INPUT — verdict=core 단일소유.
+#     --none-reason (optional) 비적용 선언 사유(free-text). 빈/공백 = FAIL(AC-2 auditability). injection
+#                   가드: adapter 는 env-var 로만 전달(${{ }}→run: 보간 금지).
 #
 # Usage:
 #   bash scripts/check-ac-traceability-matrix.sh --phase 1 --ac-source STORY.md --rtm CHANGEPLAN.md

@@ -467,6 +467,95 @@ else
   echo "✗ INCONCLUSIVE: Mutation-NOTOKEN — structural-signature 결정라인(if has_sig:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
 fi
 
+# ── story_uri-absent 비적용 선언(F-NONE-*, CFP-2634 §결정9 — ADR-145 §결정9) ──────
+echo ""
+echo "════════════════════════════════════════════════════════════════════"
+echo "F-NONE-* (CFP-2634 §결정9) — story_uri-absent ac_applicability:none 선언"
+echo "════════════════════════════════════════════════════════════════════"
+
+# run_gate_none <core> <reason> [extra args...] — source 없이 none-flag 로 구동(§결정9).
+run_gate_none() { local core="$1" reason="$2"; shift 2; GATE_EC=0; GATE_OUT="$(python3 "$core" --phase 1 --ac-applicability-none --none-reason "$reason" --rtm-not-yet --tests-root tests "$@" 2>&1)" || GATE_EC=$?; }
+
+# F-NONE-PASS — story_uri 부재 + none 선언(비-공백 사유) → exit 0 ∧ 출력 "비적용" 포함
+run_gate_none "$CORE" "marketplace-sync — 추적 AC 없음"
+if [ "$GATE_EC" -eq 0 ] && printf '%s' "$GATE_OUT" | grep -q "비적용"; then
+  echo "✓ PASS: F-NONE-PASS (exit 0 + '비적용' 공개) — story_uri 부재 + none 선언(비-공백 사유) → 비적용 PASS"; PASS=$((PASS+1))
+else
+  echo "✗ FAIL: F-NONE-PASS — expected exit 0 ∧ '비적용' 포함, got exit=$GATE_EC"; echo "    out: $GATE_OUT"; FAIL=$((FAIL+1))
+fi
+
+# F-NONE-NOREASON — --none-reason "" 또는 공백 → exit 1 ∧ sentinel ∧ no-Traceback  [M-NONE-REASON 타겟]
+for reason in "" "   "; do
+  run_gate_none "$CORE" "$reason"
+  if [ "$GATE_EC" -eq 1 ] && printf '%s' "$GATE_OUT" | grep -q "$SENTINEL" && ! printf '%s' "$GATE_OUT" | grep -q "Traceback (most recent call last)"; then
+    echo "✓ PASS: F-NONE-NOREASON (reason='$reason', exit 1 + sentinel) — none-무사유 fail-closed(AC-2)"; PASS=$((PASS+1))
+  else
+    echo "✗ FAIL: F-NONE-NOREASON (reason='$reason') — expected exit 1 ∧ sentinel ∧ no-Traceback, got exit=$GATE_EC"; echo "    out: $GATE_OUT"; FAIL=$((FAIL+1))
+  fi
+done
+
+# F-BOTH-ABSENT — --ac-source 도 --ac-applicability-none 도 부재 → exit 1 ∧ sentinel ∧ no-Traceback  [M-BOTHABSENT 타겟]
+run_gate "$CORE" --phase 1 --rtm-not-yet --tests-root tests
+if [ "$GATE_EC" -eq 1 ] && printf '%s' "$GATE_OUT" | grep -q "$SENTINEL" && ! printf '%s' "$GATE_OUT" | grep -q "Traceback (most recent call last)"; then
+  echo "✓ PASS: F-BOTH-ABSENT (exit 1 + sentinel) — 둘다부재 distinct default guard fail-closed(AC-1c)"; PASS=$((PASS+1))
+else
+  echo "✗ FAIL: F-BOTH-ABSENT — expected exit 1 ∧ sentinel ∧ no-Traceback, got exit=$GATE_EC"; echo "    out: $GATE_OUT"; FAIL=$((FAIL+1))
+fi
+
+# F-NONE-SPOOF — --ac-source(normative≥1) + none 선언(사유 존재) → exit 1(위장 불가, surface overrides none)  [M-SPOOF 타겟]
+f=$TMP/f_none_spoof; mkdir -p "$f"
+mk_ac_source "$f/ac.md" AC-1a derived normative
+run_gate "$CORE" --phase 1 --ac-source "$f/ac.md" --ac-applicability-none --none-reason "위장" --rtm-not-yet --tests-root tests
+if [ "$GATE_EC" -eq 1 ] && printf '%s' "$GATE_OUT" | grep -q "$SENTINEL" && ! printf '%s' "$GATE_OUT" | grep -q "Traceback (most recent call last)"; then
+  echo "✓ PASS: F-NONE-SPOOF (exit 1 + sentinel) — normative+none 위장 → FAIL(AC-3, surface overrides none)"; PASS=$((PASS+1))
+else
+  echo "✗ FAIL: F-NONE-SPOOF — expected exit 1 ∧ sentinel ∧ no-Traceback, got exit=$GATE_EC"; echo "    out: $GATE_OUT"; FAIL=$((FAIL+1))
+fi
+
+# F-NONE-COEXIST-0N — NO_AC_SURFACE(§5 AC 표·토큰 부재) + none 선언 → exit 0(병존-무해)
+f=$TMP/f_none_coexist; mkdir -p "$f"
+mk_ac_source_noac "$f/ac.md"
+run_gate "$CORE" --phase 1 --ac-source "$f/ac.md" --ac-applicability-none --none-reason "병존" --rtm-not-yet --tests-root tests
+if [ "$GATE_EC" -eq 0 ]; then
+  echo "✓ PASS: F-NONE-COEXIST-0N (exit 0) — NO_AC_SURFACE + none 선언 → 병존-무해 PASS"; PASS=$((PASS+1))
+else
+  echo "✗ FAIL: F-NONE-COEXIST-0N — expected exit 0, got exit=$GATE_EC"; echo "    out: $GATE_OUT"; FAIL=$((FAIL+1))
+fi
+
+# ── Mutation M-NONE-REASON / M-SPOOF / M-BOTHABSENT (CFP-2634 §결정9 — none-declaration 3 결정라인) ──
+echo ""
+echo "════════════════════════════════════════════════════════════════════"
+echo "Mutation kill (CFP-2634 §결정9) — none-declaration 3 결정라인 봉인 실증"
+echo "════════════════════════════════════════════════════════════════════"
+
+# Mutation M-NONE-REASON — reason-guard 무력화(if not (none_reason and none_reason.strip()): → if False)
+MG=$TMP/mutG
+if mutate 's/if not \(none_reason and none_reason\.strip\(\)\):/if False:  # MUTATED-NONE-REASON/' "$MG"; then
+  run_mut_kill M-NONE-REASON "$MG" "reason-guard 무력화(none+빈사유) → F-NONE-NOREASON kill" -- \
+    --phase 1 --ac-applicability-none --none-reason "" --rtm-not-yet --tests-root tests
+else
+  echo "✗ INCONCLUSIVE: M-NONE-REASON — reason-guard 결정라인(if not (none_reason and none_reason.strip()):) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
+fi
+
+# Mutation M-SPOOF — spoof-guard 무력화(if none_declaration and ac_source_path is None: → if none_declaration:)
+MH=$TMP/mutH
+if mutate 's/if none_declaration and ac_source_path is None:/if none_declaration:  # MUTATED-SPOOF/' "$MH"; then
+  fh=$TMP/f_none_spoof
+  run_mut_kill M-SPOOF "$MH" "spoof-guard 무력화(normative+none 위장) → F-NONE-SPOOF kill" -- \
+    --phase 1 --ac-source "$fh/ac.md" --ac-applicability-none --none-reason "위장" --rtm-not-yet --tests-root tests
+else
+  echo "✗ INCONCLUSIVE: M-SPOOF — spoof-guard 결정라인(if none_declaration and ac_source_path is None:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
+fi
+
+# Mutation M-BOTHABSENT — both-absent-guard 무력화(if ac_source_path is None and not none_declaration: → if False)
+MI=$TMP/mutI
+if mutate 's/if ac_source_path is None and not none_declaration:/if False:  # MUTATED-BOTHABSENT/' "$MI"; then
+  run_mut_kill M-BOTHABSENT "$MI" "both-absent-guard 무력화(둘다부재) → F-BOTH-ABSENT kill" -- \
+    --phase 1 --rtm-not-yet --tests-root tests
+else
+  echo "✗ INCONCLUSIVE: M-BOTHABSENT — both-absent-guard 결정라인(if ac_source_path is None and not none_declaration:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
+fi
+
 # ── summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════════════════════════════════"
