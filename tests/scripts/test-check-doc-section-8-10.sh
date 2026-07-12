@@ -479,6 +479,31 @@ MUT_E=$(run_mutation_kill "MUT-DARK-E-INFEAS-REASON" "setup_cp b_infeas_nr"  "Mu
 MUT_SLICE=$(run_mutation_kill "MUT-SLICE-PRESENCE"   "setup_epic absent"     "Mutation-SLICE(mapping-presence)") # kill = F-SLICE-MAPPING-ABSENT
 
 # ═════════════════════════════════════════════════════════════════════════════
+# CFP-2636 (Epic CFP-2602 enum-field 값-존재 gap 봉인 / ADR-150 §결정4) — §8.10.1 status value-존재.
+#   §8.9.1 status 와 대칭(AC-10): status present-but-blank/absent → fail-closed. _capture_field same-line 앵커.
+#   unfixed: status blank → `\s*(\S+)` 개행 넘어 다음 줄 marker 흡수 → ∉ DARK_PATH_STATUS_ENUM → MUT-DARK-C 우연
+#            mis-flag(exit 1) 또는 skip. fixed: status_val=None → MUT-DARK-F fire → 정확 메시지(present-but-blank).
+# ═════════════════════════════════════════════════════════════════════════════
+# emit_810_do_blank_status — status BLANK + 6필드 present + 그 외 valid(activation-honesty/infeasible 미트리거).
+emit_810_do_blank_status() {
+  echo "##### §8.10.1 dark_path (DO — 산출물 계약)"
+  echo "- flag_identifier: COMPACT_TIERED env var gate"
+  echo "- default_state: default-off (COMPACT_TIERED=0 baseline)"
+  echo "- activation_test_ref: tests/test_compact.py::test_tiered_serving_on"
+  echo "- on_state_assertion: asserts warm-tier rows served when gate enabled"
+  echo "- status:"
+  echo "- discriminating_basis: gate OFF makes the test skip so it fails closed"
+}
+b_status_blank() { echo "$SEC810_HEADER"; emit_810_table DO g; emit_810_do_blank_status; }
+# F-STATUS-BLANK-810 — §8.10.1 status blank → exit 1 (AC-10 값-존재 대칭) ⊥ dark clean(EC_CLEAN=0)
+EC_STATUS_BLANK_810=$(run_case "setup_cp b_status_blank" 1 "F-STATUS-BLANK-810(CFP-2636)" "§8.10.1 status blank → exit 1 (AC-10 값-존재 대칭, 이전 우연 mis-flag/skip)" | tail -1)
+assert_discriminating "$EC_STATUS_BLANK_810" "$EC_CLEAN" "F-STATUS-BLANK-810 blank=$EC_STATUS_BLANK_810 vs dark-clean(EC_CLEAN)"
+# Mutation DARK-F 실 RED kill (execution-liveness L3 — value-존재 분기 무력화)
+MUT_DARK_F=$(run_mutation_kill "MUT-DARK-F-STATUS-PRESENCE" "setup_cp b_status_blank" "Mutation-DARK-F(status-presence)")  # kill = F-STATUS-BLANK-810
+echo ""
+echo "── CFP-2636 §8.10.1 status value-존재 결과 ── F-STATUS-BLANK-810=$EC_STATUS_BLANK_810  Mutation DARK-F(orig mut)=[$MUT_DARK_F] (KILLED = 1 0)"
+
+# ═════════════════════════════════════════════════════════════════════════════
 # CFP-2628 capture-line mutation (ADR-136 L3 — capture 라인 자체를 target)
 #   기존 MUT-DARK-E 는 `fails.append` 소비 라인만 sed → `\s*(.+)`↔`[ \t]*(.*)$` 를 미구별(그래서 born-hollow 가
 #   self-test 통과해 landed). 신규 = capture 라인 `infeasibility_reason:[ \t]*(.*)$` 를 buggy `\s*(.+)` 로

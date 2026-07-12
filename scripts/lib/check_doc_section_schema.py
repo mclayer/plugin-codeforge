@@ -158,6 +158,10 @@ APPLICABILITY_8_9_ROW_RE = re.compile(r"\|\s*dast\s*\|\s*(DO|N/A)\s*\|", re.MULT
 DAST_8_9_FIELDS = ["target", "attack_surface", "scanner_or_harness", "payload_class", "oracle", "repro_seed", "execution_budget", "pass_condition", "status", "auth_mode", "environment_ref", "observed_result"]
 DAST_STATUS_ENUM = {"executed", "infeasible", "natural_na"}
 DAST_PAYLOAD_ACTIVE = {"active", "destructive"}
+# CFP-2636 (Epic CFP-2602 enum-field 값-존재 gap 봉인 / ADR-150 §결정4 realize) — 전체 유효 enum(선언-미구현 gap).
+#   DAST_PAYLOAD_ACTIVE ⊂ DAST_PAYLOAD_ENUM 불변(passive 는 유효하나 비트리거 — blast-radius 서브셋만 트리거).
+DAST_PAYLOAD_ENUM = {"passive", "active", "destructive"}          # ADR-150 §결정4 전체 유효 payload_class enum
+DAST_AUTH_MODE_ENUM = {"unauthenticated", "session", "token"}     # ADR-150 §결정4 전체 유효 auth_mode enum
 NONPROD_MARKER_RE = re.compile(r"(?i)(non-prod|nonprod|ephemeral|staging|sandbox|local|throwaway|disposable)")
 
 
@@ -170,6 +174,16 @@ def _slice_8_9_subsection(body: str, sub: str) -> str:
     nxt = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
     end = start + (nxt.start() if nxt else len(body) - start)
     return body[start:end]
+
+
+def _capture_field(body: str, field: str):
+    """`field:` 뒤 same-line 첫 non-space 토큰 캡처 (enum 필드 전용 — CFP-2636).
+    개행을 절대 흡수하지 않음(`[ \\t]*(\\S+)` same-line 앵커 = blast-radius FN 봉인의 구조적 보증 — enum 4-site
+    same-line invariant 단일 강제점). 값-부재(blank)면 None → call-site 가 fail-closed.
+    ★ enum 4-site(§8.9.1 status/payload_class/auth_mode + §8.10.1 status) 전용 — free-text 6-site 는
+      CFP-2628 봉인 `[ \\t]*(.*)$` idiom 을 verbatim 유지(본 helper 미경유)."""
+    m = re.search(rf"^\s*[-*]?\s*{re.escape(field)}:[ \t]*(\S+)", body, re.MULTILINE)
+    return m.group(1) if m else None
 
 
 # ── CFP-2624 / ADR-152 §결정 7 — §8.10 dark-path activation manifest doc-section lint.
@@ -506,28 +520,37 @@ def check_section_8_9(md_path: Path, body: str) -> list:
         missing_fields = [f for f in DAST_8_9_FIELDS if f not in sub_body]
         if missing_fields:
             fails.append(f"{md_path}: §8.9.1 dast DO 필수 산출물 필드 누락 — {missing_fields} (AC-2a)")  # MUT-A-DO-FIELDS
-        # AC-2b — status enum(3-value{executed/infeasible/natural_na}) + infeasible⟹infeasibility_reason(30자 minimum).
-        sm = re.search(r"^\s*[-*]?\s*status:\s*(\S+)", sub_body, re.MULTILINE)
-        status_val = sm.group(1) if sm else None
-        if status_val is not None and status_val not in DAST_STATUS_ENUM:
+        # AC-5 status value-존재 + AC-2b enum(3-value{executed/infeasible/natural_na}) — enum helper(same-line, 개행 미흡수 — CFP-2636).
+        status_val = _capture_field(sub_body, "status")
+        if status_val is None:
+            fails.append(f"{md_path}: §8.9.1 status present-but-blank/absent — 값-존재 강제 (AC-5)")  # MUT-K-STATUS-PRESENCE
+        elif status_val not in DAST_STATUS_ENUM:
             fails.append(f"{md_path}: §8.9.1 status enum 위반 '{status_val}' — {sorted(DAST_STATUS_ENUM)} 중 하나 (AC-2b)")  # MUT-D-STATUS-ENUM
         rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:[ \t]*(.*)$", sub_body, re.MULTILINE)
         reason_ok = bool(rm) and len(rm.group(1).strip()) >= 30
         if status_val == "infeasible" and not reason_ok:
             fails.append(f"{md_path}: §8.9.1 status=infeasible 이나 infeasibility_reason(30자 minimum) 부재 (AC-2b)")  # MUT-E-INFEAS-REASON
-        # AC-6a — blast-radius(§3.4a): payload_class ∈ {active,destructive} ⟹ environment_ref non-prod/ephemeral marker.
-        pm = re.search(r"^\s*[-*]?\s*payload_class:\s*(\S+)", sub_body, re.MULTILINE)
-        payload_val = pm.group(1) if pm else None
-        if payload_val in DAST_PAYLOAD_ACTIVE:
-            em = re.search(r"^\s*[-*]?\s*environment_ref:[ \t]*(.*)$", sub_body, re.MULTILINE)
+        # AC-1 payload_class value-존재 + AC-2 enum-validity + AC-6a blast-radius — enum helper(CFP-2636).
+        #   blank(None) → fail-closed(blast-radius 우회 봉인, 보안 FN 차단). 값 ∉ {passive,active,destructive} → fail. active/destructive → blast-radius.
+        payload_val = _capture_field(sub_body, "payload_class")
+        if payload_val is None:
+            fails.append(f"{md_path}: §8.9.1 payload_class present-but-blank/absent — blast-radius 우회 봉인 (AC-1)")  # MUT-H-PAYLOAD-PRESENCE
+        elif payload_val not in DAST_PAYLOAD_ENUM:
+            fails.append(f"{md_path}: §8.9.1 payload_class enum 위반 '{payload_val}' — {sorted(DAST_PAYLOAD_ENUM)} 중 하나 (AC-2)")  # MUT-I-PAYLOAD-ENUM
+        elif payload_val in DAST_PAYLOAD_ACTIVE:
+            em = re.search(r"^\s*[-*]?\s*environment_ref:[ \t]*(.*)$", sub_body, re.MULTILINE)  # free-text 미접촉 (CFP-2628 idiom verbatim)
             env_val = em.group(1) if em else ""
             if not NONPROD_MARKER_RE.search(env_val):
                 fails.append(f"{md_path}: §8.9.1 payload_class={payload_val} 이나 environment_ref non-prod/ephemeral marker 부재 — blast-radius 미격리 (AC-6a)")  # MUT-F-ACTIVE-PROD
         # AC-6b — authenticated 정합(§3.4b): attack_surface authenticated ∧ auth_mode=unauthenticated ⟹ infeasibility_reason present.
-        asm = re.search(r"^\s*[-*]?\s*attack_surface:[ \t]*(.*)$", sub_body, re.MULTILINE)
+        asm = re.search(r"^\s*[-*]?\s*attack_surface:[ \t]*(.*)$", sub_body, re.MULTILINE)  # free-text 미접촉 (CFP-2628 idiom verbatim)
         surface_val = asm.group(1).lower() if asm else ""
-        am = re.search(r"^\s*[-*]?\s*auth_mode:\s*(\S+)", sub_body, re.MULTILINE)
-        auth_val = am.group(1) if am else None
+        # AC-4 auth_mode value-존재 + enum-validity — enum helper(CFP-2636). AC-6b 의미 보존(§3.7): trigger `== "unauthenticated"` verbatim.
+        auth_val = _capture_field(sub_body, "auth_mode")
+        if auth_val is None:
+            fails.append(f"{md_path}: §8.9.1 auth_mode present-but-blank/absent — 값-존재 강제 (AC-4)")  # MUT-J-AUTH-PRESENCE
+        elif auth_val not in DAST_AUTH_MODE_ENUM:
+            fails.append(f"{md_path}: §8.9.1 auth_mode enum 위반 '{auth_val}' — {sorted(DAST_AUTH_MODE_ENUM)} 중 하나 (AC-4)")  # MUT-J2-AUTH-ENUM
         if re.search(r"(?<!un)authenticated", surface_val) and auth_val == "unauthenticated" and not reason_ok:
             fails.append(f"{md_path}: §8.9.1 attack_surface authenticated ∧ auth_mode=unauthenticated 이나 infeasibility_reason 부재 — silent false-negative (AC-6b)")  # MUT-G-AUTH-UNAUTH
     else:  # status_cell == "N/A" (aggregate)
@@ -579,10 +602,11 @@ def check_section_8_10(md_path: Path, body: str) -> list:
         missing_fields = [f for f in DARK_PATH_8_10_FIELDS if f not in sub_body]
         if missing_fields:
             fails.append(f"{md_path}: §8.10.1 dark_path DO 필수 산출물 필드 누락 — {missing_fields} (AC-1a)")  # MUT-DARK-A-DO-FIELDS
-        # status enum(3-value{activated/infeasible/natural_na}).
-        sm = re.search(r"^\s*[-*]?\s*status:\s*(\S+)", sub_body, re.MULTILINE)
-        status_val = sm.group(1) if sm else None
-        if status_val is not None and status_val not in DARK_PATH_STATUS_ENUM:
+        # status value-존재(대칭, AC-10 — §8.9.1 status 와 대칭) + enum(3-value{activated/infeasible/natural_na}) — enum helper(same-line, CFP-2636).
+        status_val = _capture_field(sub_body, "status")
+        if status_val is None:
+            fails.append(f"{md_path}: §8.10.1 status present-but-blank/absent — 값-존재 강제 (AC-10)")  # MUT-DARK-F-STATUS-PRESENCE
+        elif status_val not in DARK_PATH_STATUS_ENUM:
             fails.append(f"{md_path}: §8.10.1 status enum 위반 '{status_val}' — {sorted(DARK_PATH_STATUS_ENUM)} 중 하나 (AC-1a)")  # MUT-DARK-C-STATUS-ENUM
         # conditional infeasibility_reason(30자 minimum).
         rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:[ \t]*(.*)$", sub_body, re.MULTILINE)
