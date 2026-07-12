@@ -326,7 +326,7 @@ self_tests:
     blocking_tier: "manual"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "near-namesake orphan — subject check-lint-css.sh 부재. 실 CSS lint 게이트 = css-lint.yml + test-css-lint.sh(WIRED, 별 레코드). 본 test 는 잔재로 존치, CI 재배선 대상 아님(AC-10 advisory 권고). 제거는 별 cleanup Story(회귀 리스크)로 분리."
+    manual_reason: "near-namesake orphan — subject check-lint-css.sh 부재. 실 CSS lint 게이트 = css-lint.yml + test-css-lint.sh(WIRED, 별도 레코드). 본 test 는 잔재로 존치, CI 재배선 대상 아님(AC-10 advisory 권고). 제거는 별도 cleanup Story(회귀 리스크)로 분리."
     g_boundary_check: "near-namesake orphan self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A). AC-10 advisory."
 
   - self_test: "tests/scripts/test-check-story-stakes-overlay.sh"
@@ -335,7 +335,7 @@ self_tests:
     blocking_tier: "manual"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "orphan — subject check-story-stakes-overlay.sh 광역 tree 실측 부재(stakes-tier 계열 잔재). CI 배선할 live subject 없음 → manual 등록. 제거는 별 cleanup Story(회귀 리스크)로 분리."
+    manual_reason: "orphan — subject check-story-stakes-overlay.sh 광역 tree 실측 부재(stakes-tier 계열 잔재). CI 배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story(회귀 리스크)로 분리."
     g_boundary_check: "orphan self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
 
   - self_test: "tests/scripts/test_adr-path-dead-path-sweep.sh"
@@ -344,7 +344,7 @@ self_tests:
     blocking_tier: "manual"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "CFP-2519 one-shot dead-path sweep 잔재 — subject adr-path-dead-path-sweep.sh 부재(1-shot 마이그레이션 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별 cleanup Story로 분리."
+    manual_reason: "CFP-2519 one-shot dead-path sweep 잔재 — subject adr-path-dead-path-sweep.sh 부재(1-shot 마이그레이션 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
     g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
 
   - self_test: "tests/scripts/test_adr-sunset-criteria-pathagnostic.sh"
@@ -362,5 +362,5 @@ self_tests:
     blocking_tier: "manual"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "CFP-2523 one-shot schema-lib archive-adr activation 잔재 — subject schema-lib-archive-adr-activation.sh 부재(1-shot 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별 cleanup Story로 분리."
+    manual_reason: "CFP-2523 one-shot schema-lib archive-adr activation 잔재 — subject schema-lib-archive-adr-activation.sh 부재(1-shot 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
     g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
