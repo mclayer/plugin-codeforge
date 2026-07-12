@@ -407,6 +407,63 @@ TestContractArchitectAgent input contributor, ArchitectAgent(chief) author (§8.
 - substantive reason 예시: "본 Story 는 문서/lint/agent-md 만 수정 — 실행 가능 런타임 코드 0줄, 4기법 대상 표면·실행 러너·oracle 부재 (plugin-meta-na)"
 - 단순 "not applicable" / "해당 없음" / 길이 <30자 차단 (check_section_8_8 강제 — CFP-2605 / ADR-146)
 
+#### §8.9 DAST 로스터 (런타임 동적 보안 — oracle=attack ⊥ G4 robustness — CONDITIONAL — CFP-2612 / ADR-150)
+
+SecurityArchitectAgent(위협 모델·공격 표면) + TestContractArchitectAgent(계약 필드) 공동 input, ArchitectAgent(chief) author (§8.8 동형 — ADR-006 §결정2 / ADR-150 §결정1). §8 burden-flip 표준(do-it-unless-proven-infeasible — ADR-146)의 **보안 축 instantiation** — G4-fuzz 와 G5-DAST 는 둘 다 fuzzing/능동 입력을 쓸 수 있으나 결함으로 보는 대상(oracle)이 다르다: **G4-fuzz oracle = 기능 crash/invariant(robustness)** ⊥ **G5-DAST oracle = 보안 취약 재현(attack — injection 실행·인증 우회·민감데이터 노출·설정 취약, ADR-150 §결정1)**. §8.8(4기법 점유) → 다음 자유 번호 **§8.9**(single `dast` axis — §8.8 의 4기법 multi-key `TECHNIQUE_8_8_META` 구조 복제 금지, ADR-150 §결정2). 실 DAST 구동 = consumer `test.yml`/`dast.yml`(QADeveloperAgent, ADR-048 CI-native) — 신규 codeforge 러너 부활 금지. `g_boundary_check` = 본 로스터가 soak/restart/replay(=G2 단일소유, ADR-146/ADR-015 disjoint)·기능 fuzz(=G4)로 넘어가지 않았음을 확인(Epic 경계). SAST(정적 코드 층) ⊥ DAST(동적 실행 층) 상보 union — 대체 아님(ADR-150 §결정1 INV-G5-2). Layer1(상주 실행 서비스·공격 표면 존재 = default-FALSE) 부재 시 자연 N/A — burden-flip(Layer2)이 서비스 없는 consumer 에 강제하지 않는다.
+
+##### §8.9.0 Applicability decision (필수)
+
+| axis | applicability_status (DO/N/A) | g_boundary_check |
+|---|:-:|---|
+| dast | <DO 또는 N/A> | g_boundary_check: soak/restart/replay(G2)·fuzz(G4) 경계 미침범 확인 |
+
+→ applicability cell = `DO` 또는 `N/A` 만 기재 (**2-value**). `natural_na` 는 cell 값이 아님 — §8.9.1 `status` 필드값 전용 (3-value)
+→ DO: §8.9.1 12 산출물 계약 필드 전부 기재 필수
+→ N/A(aggregate — dast 미적용): §8.9.x aggregate N/A + substantive reason
+→ `g_boundary_check` token 부재 시 차단 (AC-2c — Epic G2(soak/restart/replay)·G4(fuzz) 경계 침범)
+
+##### §8.9.1 dast (DO — 산출물 계약)
+
+(§8.9.0 dast=DO 일 때 12 unconditional 필드 전부 본문 필수 — 미적용 시 §8.9.x aggregate N/A)
+
+- **target**: {DAST 대상 — 배포/기동 앱·엔드포인트·서비스}
+- **attack_surface**: {공격 표면 — 외부 HTTP 경계 / API 라우트 / authenticated vs unauthenticated 영역}
+- **scanner_or_harness**: {스캐너/하네스 — ZAP baseline(passive, CI 안전) / full(active+passive, staging 전용) / api-scan}
+- **payload_class**: {∈ `{passive, active, destructive}` — passive=관측만 / active=실 공격 요청 / destructive=파괴적}
+- **oracle**: {취약 재현 판정 기준 — injection 실행·인증 우회·민감데이터 노출·설정 취약 중 무엇을 결함으로 보는가}
+- **repro_seed**: {재현 가능한 공격 벡터 — 비결정 완화(audit 축)}
+- **execution_budget**: {실행 예산 — N requests / T seconds / scan depth `[empirical-source: consumer test.yml, Phase 2]`}
+- **pass_condition**: {통과 조건 — severity threshold 내 0 confirmed alert 등}
+- **status**: {∈ `{executed, infeasible, natural_na}`}
+- **auth_mode**: {∈ `{unauthenticated, session, token}` — scan credential = Secret, consumer secret store 조달, real-user credential 재사용 금지, 로그·SARIF leak 금지}
+- **environment_ref**: {실행 환경 — **non-prod/ephemeral marker 보유 의무** (active/destructive payload 시 blast-radius 격리 근거)}
+- **observed_result**: {관측 결과 — SARIF 참조 / alert 수·severity}
+
+**조건부 필드**:
+- **infeasibility_reason**: {≥30자 — `status = infeasible` 일 때만 required}
+
+**2 cross-field 선언-정합 (ADR-150 §결정4 — declared-consistency 만 강제, detection 강제 아님)**:
+- **(a) blast-radius**: `payload_class ∈ {active, destructive}` ⟹ `environment_ref` 가 non-prod/ephemeral marker 보유 (실 active 공격을 production 대상으로 조용히 돌리는 것 차단 — AC-6a)
+- **(b) authenticated 정합**: `attack_surface` authenticated ∧ `auth_mode = unauthenticated` ⟹ `infeasibility_reason` present (인증 표면을 미인증 스캔으로 조용히 skip 해 false-negative 를 숨기는 것 차단 — AC-6b)
+
+> §8.9.2 / §8.9.3 / §8.9.4 = **의도적 gap** (§8.8 이 4기법용 §8.8.1-4 를 갖는 것의 positional homolog — DAST single-axis 라 2-4 비어 있음. renumber 금지 — ADR-150 §결정2).
+
+##### §8.9.5 정직 천장 (no-hollow — 4 잔여 공개, ADR-150 §결정3)
+
+게이트는 applicability 레코드·12 산출물 계약 필드·status enum·infeasible⟹reason + 2 cross-field 선언-정합 presence/구조까지만 fail-closed. 아래 4 잔여는 강제하지 않는다(강제하는 척 = 검사연극, ADR-119):
+- (i) **검출력**(discriminating — 테스트가 취약을 켠 채 실제 검출) = **G3 위임**(미강제)
+- (ii) 공격 표면 열거 **완결성**(feasible 표면 최대 열거) = AC-1c review 보강(미강제)
+- (iii) infeasibility 사유 **타당성**(형식 회피 아닌 실질) = AC-2d review 판정(미강제)
+- (iv) **`g_boundary_check` presence ≠ 실준수** — token 존재가 경계 실준수 보장 아님(게이트 강제 아님)
+- ∴ `"완전 봉인" hard-claim 금지` — "구조 fail-closed + 형식누락 저감 + 잔여 정직 공개"로 재약속(G4 §8.8.5 4잔여 공개 동형).
+
+##### §8.9.x N/A 명시 (dast 미적용 시 — runtime-inert / deployable service 0)
+
+- 표기: "N/A — <substantive reason ≥30자>. 검증 채널: check_section_8_9 self-test + DesignReview. 면제 분류: plugin-meta-na | runtime-inert" (ADR-005 + ADR-127 §결정5 자연 N/A 3축 AND)
+- 자연 N/A **3축 AND** = 공격 표면 부재(상주 실행 ∧ 비신뢰 입력 수신 ∧ CI/로컬 기동 3-요건 중 결여) ∧ downstream 무변경 ∧ 미래의무 무선결
+- substantive reason 예시: "본 Story 는 문서·플러그인 정의만 수정(runtime-inert) — deployable service 0, 상주 실행 공격 표면 부재. 실 DAST 구동 = consumer test.yml(QADev) 위임"
+- 단순 "not applicable" / "해당 없음" / 길이 <30자 차단 (check_section_8_9 강제 — CFP-2612 / ADR-150 §결정10)
+
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
 - 의존성 있으면 순서 명시 (예: DataEngineerAgent 스키마 → BackendDeveloperAgent 어댑터)
