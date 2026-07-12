@@ -24,6 +24,12 @@ name: ac-traceability-matrix
 #
 # phase 신호 = EXPLICIT (Story frontmatter `phase:` / `status: phase:X`) — diff 추론 금지.
 #   문서 lane(요구사항·설계·리뷰) → Phase 1(Hop1+Hop2) / 구현 lane → Phase 2(+Hop3 born-missing).
+#
+# per-PR applicability (ADR-145 Amendment 1 §결정8, CFP-2609): 비적용 PR(추적할 normative AC 부재 —
+#   marketplace sync / Epic close / sibling / §5 AC 미선언 governance) = **항상 실행 in-job exit 0**
+#   (job-skip/on.paths 필터 금지 — required+workflow-skip=영구 Pending, F-1/F-2/F-3). 적용성 verdict =
+#   core 단일 소유(classify_ac_source). 비적용 skip 은 resolve-success ∧ 0 normative AC positive 확정에서만
+#   도달 — 판정불가(fetch/403/404/frontmatter/malformed-table)·적용-미추적 은 FAIL(anti-degradation).
 
 on:
   pull_request:
@@ -68,14 +74,15 @@ jobs:
             // fail-closed 하드 실패 — 로그엔 사유만(토큰/응답 본문 미출력, secret masking).
             const fail = (reason) => { core.setFailed(`ac-traceability-matrix fail-closed: ${reason}`); };
 
-            // 1) marker 파싱 — story_uri(§5 AC source) + rtm_uri(§8 RTM).
-            //    rtm_uri 부재 시 story_uri fallback = consumer Story §8 mirror (ADR-145 §결정6 P1).
-            //    wrapper-self dogfood 는 rtm_uri = Change Plan(§8 authoritative RTM) 를 명시한다.
+            // 1) marker 파싱 — story_uri(§5 AC source, **영구 ref 의무**) + rtm_uri(§8 RTM, optional).
+            //    story_uri = 영구 ref(internal-docs main / immutable commit SHA). transient feature 브랜치 ref
+            //      금지 — gate 시점에 미존재/사후삭제 = Class A 404(ADR-145 §결정8 F). 영구-ref convention 이 예방.
+            //    rtm_uri 부재 ∧ phase 1 = RTM not-yet(Hop1 only) — placeholder(§8 "작성 예정") fallback 금지,
+            //      EXPLICIT --rtm-not-yet 신호로 core 전달(§결정8 D). story-as-rtm fallback 재사용 금지.
             const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
-            if (!storyUriMatch) { fail('story_uri marker 부재 (PR body)'); return; }
+            if (!storyUriMatch) { fail('story_uri marker 부재 (PR body) — non-suppressible(적용 PR 위장 불가)'); return; }
             const rtmUriMatch = body.match(/rtm_uri:\s*(\S+)/);
             const storyUri = storyUriMatch[1];
-            const rtmUri = rtmUriMatch ? rtmUriMatch[1] : storyUri;
 
             const allowedHubs = (process.env.ALLOWED_HUB_REPOS || '')
               .split(',').map(h => h.trim()).filter(Boolean);
@@ -101,20 +108,20 @@ jobs:
                   }
                 });
               } catch (e) { fail(`${label} fetch 네트워크 실패`); return null; }
-              // resp.ok 가드 (403/404 conflation 차단) — "읽을 수 없음"을 "존재 안 함"으로 해석 금지, 전부 FAIL.
-              if (!resp.ok) { fail(`${label} fetch HTTP ${resp.status} (403/404/5xx 판정불가=FAIL)`); return null; }
+              // resp.ok 가드 (404 3-class 단일원인 처리 금지, ADR-145 §결정8 F) — auth-masking(403→404, F-5)
+              //   vs genuine ref-missing vs 5xx 모두 "판정불가=FAIL"(비적용 skip 흡수 금지). 영구-ref 로 false-fail 예방.
+              if (!resp.ok) { fail(`${label} fetch HTTP ${resp.status} (403/404/5xx 판정불가=FAIL — 영구 ref 확인, auth vs ref-missing 무관 전부 차단)`); return null; }
               const file = await resp.json();
               return Buffer.from(file.content, 'base64').toString('utf-8');
             }
 
+            // 2) story(§5 AC source) 영구 ref 실 fetch·내용 검증 (마커 존재 ≠ 형식통과).
             const storyText = await fetchDoc(storyUri, 'story_uri');
             if (storyText === null) return;
-            const rtmText = (rtmUri === storyUri) ? storyText : await fetchDoc(rtmUri, 'rtm_uri');
-            if (rtmText === null) return;
 
-            // 2) phase = EXPLICIT (Story frontmatter). diff 추론 금지.
+            // 3) phase = EXPLICIT (Story frontmatter). diff 추론 금지. (rtm not-yet 판정에 선행 필요.)
             const fmMatch = storyText.match(/^---\n([\s\S]*?)\n---/);
-            if (!fmMatch) { fail('Story frontmatter 부재 — phase 판정불가'); return; }
+            if (!fmMatch) { fail('Story frontmatter 부재 — phase 판정불가 (post-fetch, Class B 판정불가 FAIL)'); return; }
             const fm = fmMatch[1];
             // `phase: X` 또는 `status: phase:X` 양식 수용.
             const phaseM = fm.match(/^phase:\s*(\S+)/m) || fm.match(/^status:\s*phase:\s*(\S+)/m);
@@ -129,15 +136,38 @@ jobs:
             else if (p1.includes(phaseRaw)) phaseNum = 1;
             if (phaseNum === null) { fail(`phase '${phaseRaw}' → Phase 1/2 매핑 불가 (EXPLICIT 신호 오류)`); return; }
 
-            // 3) 로컬 파일 write (문서 본문만 — secret 미포함).
+            // 4) 로컬 파일 write (문서 본문만 — secret 미포함) + rtm 결정.
             fs.writeFileSync('ac-gate-source.md', storyText);
-            fs.writeFileSync('ac-gate-rtm.md', rtmText);
             core.setOutput('phase', String(phaseNum));
+            if (!rtmUriMatch) {
+              // rtm_uri 마커 부재 = RTM not-yet EXPLICIT 신호. core: phase1=Hop1 only / phase2=FAIL(RTM 필수).
+              //   placeholder(story §8 "작성 예정") fallback 흡수 아님 — 표면 자체를 전달하지 않음.
+              core.setOutput('rtm_not_yet', 'true');
+              return;
+            }
+            const rtmUri = rtmUriMatch[1];
+            const rtmText = (rtmUri === storyUri) ? storyText : await fetchDoc(rtmUri, 'rtm_uri');
+            if (rtmText === null) return;
+            fs.writeFileSync('ac-gate-rtm.md', rtmText);
+            core.setOutput('rtm_not_yet', 'false');
 
       - name: Run AC-traceability matrix gate (day-1 hard-fail, exit passthrough)
+        env:
+          PHASE: ${{ steps.resolve.outputs.phase }}
+          RTM_NOT_YET: ${{ steps.resolve.outputs.rtm_not_yet }}
         run: |
-          bash scripts/check-ac-traceability-matrix.sh \
-            --phase "${{ steps.resolve.outputs.phase }}" \
-            --ac-source ac-gate-source.md \
-            --rtm ac-gate-rtm.md \
-            --tests-root tests
+          # per-PR applicability: 비적용(§5 AC 선언 표면 부재) = core 가 in-job exit 0(genuine step pass) 판정.
+          #   rtm_not_yet(rtm_uri 마커 부재 ∧ phase 1) = --rtm-not-yet EXPLICIT 신호(placeholder fallback 아님).
+          if [ "$RTM_NOT_YET" = "true" ]; then
+            bash scripts/check-ac-traceability-matrix.sh \
+              --phase "$PHASE" \
+              --ac-source ac-gate-source.md \
+              --rtm-not-yet \
+              --tests-root tests
+          else
+            bash scripts/check-ac-traceability-matrix.sh \
+              --phase "$PHASE" \
+              --ac-source ac-gate-source.md \
+              --rtm ac-gate-rtm.md \
+              --tests-root tests
+          fi
