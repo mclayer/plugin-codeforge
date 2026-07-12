@@ -1,0 +1,91 @@
+name: Resource-safety claim proof-link presence lint (warning mode)
+# CFP-2646 / ADR-082 Amendment 38 §결정 16 — governance/보안 tooling(evidence-check 게이트·보안 script·
+# 워크플로 YAML)의 docstring·inline 주석·워크플로 YAML 주석에 resource-safety/복잡도/DoS-guard 안전성-claim
+# 을 쓸 때 paired proof-reference OR honest-ceiling 문구 presence 를 정적 검사. claim 의 참됨(truth)은
+# 강제하지 않음 (presence ≠ truth, honesty ceiling ADR-151 §결정7 상속). anti-hollow-gate 1급 요건 =
+# 정직한 부정 서술·정의부·proof-linked·ceiling-downgrade 오탐 0 (affirmative-context closed-set 매칭 +
+# grandfather new-only subtract). ADR-119 정합.
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 default). PR merge 미차단.
+# Bypass channel: hotfix-bypass:resource-safety-claim-proof-presence (ADR-024 §결정 6.A per-entry namespace)
+# honesty ceiling(ADR-151 §결정7): claim↔proof presence 만 검사 — 참됨·불완전 proof 미강제(보안테스트 lane 소관).
+#
+# consumer degradation: byte-identical template mirror(ADR-005)를 consumer 가 상속해도 코퍼스 부재 시
+#   lint 는 honest no-op(exit 0) 로 degrade — spurious RED 미발생 (byte-identical parity 유지).
+#
+# 승격 path (warning → blocking-on-pr 시 CFP-NNN carrier PR 동반 의무):
+#   1. 본 workflow 의 continue-on-error: true 제거
+#   2. branch protection required_status_checks.contexts 에 본 job name 추가
+#   3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry promotion_criteria)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'scripts/*.py'
+      - 'scripts/lib/*.py'
+      - 'scripts/check-*.sh'
+      - '.github/workflows/*.yml'
+      - 'templates/github-workflows/*.yml'
+      - 'docs/resource-safety-claim-baseline.yaml'
+      - 'tests/scripts/test_check-resource-safety-claim-proof.sh'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  resource-safety-claim-proof-presence:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Run discriminating self-test (QADev — over-claim 검출 / 정직 미검출 / mutation-kill / DoS-bound / self-application)
+        # tests/scripts/test_check-resource-safety-claim-proof.sh: TC-OC1/OC2 검출 + TC-HD1/PL1/CD1/EX1/HD2
+        # 미검출 + MK-1/2/3 mutation-kill(검출/denial-EXEMPT/evidence-presence load-bearing) + 실 코퍼스
+        # precision proof(grandfather 후 오탐 0) + PERF-1/2 DoS 회귀가드 + AC-3 self-application.
+        # wrapper-self only (ADR-136 Amd2 QADev tests/scripts 실행 채널 선례 동형).
+        if: hashFiles('tests/scripts/test_check-resource-safety-claim-proof.sh') != ''
+        run: bash tests/scripts/test_check-resource-safety-claim-proof.sh
+
+      - name: Run resource-safety claim proof-link presence lint
+        id: lint
+        run: |
+          bash scripts/check-resource-safety-claim-proof.sh --repo-root . 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Post warning comment (resource-safety over-claim 검출)
+        if: steps.lint.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint-output.txt', 'utf8');
+            const body = [
+              '## Resource-safety claim proof-link presence lint — warning',
+              '',
+              '> ADR-082 Amendment 38 §결정 16 warning-tier (CFP-2646). PR merge 차단 아님.',
+              '> governance/보안 tooling 의 resource-safety/DoS-guard 안전성-claim 이 동일 파일에 proof-reference(reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크) 도 honest-ceiling(bounded degradation, 임의 입력 무해 아님) 도 동반하지 않음.',
+              '> presence ≠ truth (honesty ceiling ADR-151 §결정7): lint 은 증거 존재만 검사 — 참됨은 보안테스트 lane 소관.',
+              '> remediation: proof-reference 부착 / honest-ceiling 로 downgrade / 부인문(denial) 정직 재서술.',
+              '> bypass: `hotfix-bypass:resource-safety-claim-proof-presence` label 부착.',
+              '',
+              '```',
+              output.slice(0, 3000),
+              '```',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

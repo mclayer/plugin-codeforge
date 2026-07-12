@@ -70,6 +70,11 @@ Consumer overlay가 실제 배포 방식·설정 포맷·타겟 플랫폼을 구
 - **임의 구조 재설계 금지** (상한 clause) — 위 hygiene 을 구실로 한 새 파일·시그니처 변경·구조 재설계 금지. 필요 시 DeveloperPL 경유 Architect 에스컬레이션 (기존 경계 존치)
 - doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음, §5.7 (c) default)
 
+**resource-safety claim 정직 (write-time 강제 — ADR-082 §결정 16, Layer 1)**:
+- governance/보안 tooling(보안 script·워크플로 YAML·운영 스크립트)의 **docstring·inline 주석·워크플로 YAML 주석**에 resource-safety/복잡도/DoS-guard 안전성-claim(`catastrophic backtracking 0` / `ReDoS-safe` / `DoS 가드` / `nested quantifier 0` / `scan cap = 총 작업량 bound` 류)을 쓸 때:
+- **(a) paired proof-reference 동반** — reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크(`tests/scripts/...`), **또는 (b) honest-ceiling 로 downgrade** — "bounded degradation, 임의 입력 무해 아님"(ADR-151 §결정7 상속)
+- **무증거 안전성 단정 금지** — 이 행위는 정적 계측 불가이므로 write-time declaration + 리뷰(설계/구현/보안) falsify (ADR-140 §결정3 hybrid). Layer 2 lint(`resource-safety-claim-proof-presence`, warning-tier)이 proof-ref/ceiling **presence** 만 검사 — presence ≠ truth(참됨 반증은 보안테스트 lane). 원천 = CFP-2635/CFP-2591 자기참조 정직 갭
+
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLAgent 담당.
 
