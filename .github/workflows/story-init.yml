@@ -582,6 +582,7 @@ jobs:
           echo "content_b64=$CONTENT_B64" >> "$GITHUB_OUTPUT"
 
       - name: Create branch + Story file (codeforge family — cross-repo write)
+        id: story_file
         if: >
           steps.existence_check.outputs.skip != 'true' &&
           steps.project_config.outputs.is_codeforge_family == 'true' &&
@@ -632,14 +633,16 @@ jobs:
           fi
 
           # PUT contents — create Story file on branch
-          if ! gh api -X PUT "repos/${TARGET_REPO}/contents/${STORY_PATH}" \
+          PUT_RESP=$(gh api -X PUT "repos/${TARGET_REPO}/contents/${STORY_PATH}" \
             -f "branch=${BRANCH}" \
             -f "message=${COMMIT_MSG}" \
-            -f "content=${CONTENT_B64}"; then
+            -f "content=${CONTENT_B64}") || {
             echo "::error::Story file PUT 실패 (${STORY_PATH} on ${BRANCH}) — PAT scope 또는 conflict"
             exit 1
-          fi
-          echo "::notice::Story file created: ${TARGET_REPO}/${STORY_PATH} on ${BRANCH}"
+          }
+          COMMIT_SHA=$(printf '%s' "$PUT_RESP" | jq -r '.commit.sha // empty')
+          echo "commit_sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Story file created: ${TARGET_REPO}/${STORY_PATH} on ${BRANCH} (commit ${COMMIT_SHA})"
 
       - name: Create Phase 1 PR (codeforge family — internal-docs PR)
         if: >
@@ -655,6 +658,7 @@ jobs:
           STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
           COMPONENT_ROUTED_TARGET_REPO: ${{ steps.component_routing.outputs.component_routed_target_repo }}
           AUTO_RECOVERED: ${{ steps.existence_check.outputs.auto_recovered }}
+          COMMIT_SHA: ${{ steps.story_file.outputs.commit_sha }}
         run: |
           set -euo pipefail
           # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
@@ -683,8 +687,10 @@ jobs:
             exit 0
           fi
 
-          BODY=$(printf 'Story SSOT: `%s/stories/%s.md`\n\nThis is the Phase 1 PR (요구사항+설계+설계리뷰 lane).\n\nRelated: %s#%s\n' \
-            "$DOGFOOD_FOLDER" "$KEY" "$GITHUB_REPOSITORY" "$ISSUE_NUMBER")
+          # story_uri 영구-ref = immutable commit SHA (ADR-145 §결정8 F — transient feature-branch ref 금지,
+          #   main-ref Phase1 Class A 404 회피). SHA = Story-file PUT 응답 .commit.sha.
+          BODY=$(printf 'Story SSOT: `%s/stories/%s.md`\n\nstory_uri: https://github.com/%s/blob/%s/%s/stories/%s.md\n\nThis is the Phase 1 PR (요구사항+설계+설계리뷰 lane).\n\nRelated: %s#%s\n' \
+            "$DOGFOOD_FOLDER" "$KEY" "$STORY_SSOT_REPO" "$COMMIT_SHA" "$DOGFOOD_FOLDER" "$KEY" "$GITHUB_REPOSITORY" "$ISSUE_NUMBER")
 
           # CFP-2252 #1046 흡수 — PR create 실패 시 명확 에러 + locality (set -euo silent exit 회피).
           # CFP-2252 §3.6 (F4) — --label type:story 제거 (라벨 cutover 정합, DI-1 방향). --label 인자 자체 제거:

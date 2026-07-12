@@ -129,12 +129,21 @@ def _write(path, text):
 
 
 # ── CLI runner + distinct-marker asserts ─────────────────────────────────────
-def run_gate(phase, ac_source, rtm=None, tests_root=None, rtm_not_yet=False):
-    """게이트 CLI 구동. 반환 (returncode:int, output:str[stdout+stderr]).
+def _invoke(core, phase, ac_source=None, rtm=None, tests_root=None, rtm_not_yet=False,
+            none_declaration=False, none_reason=None):
+    """공유 저수준 invoker(run_gate/run_gate_core 공통) — CFP-2634 §결정9 none-flag 지원 포함.
 
-    rtm_not_yet=True → --rtm-not-yet EXPLICIT 신호(Phase-1 RTM not-yet, rtm 생략). rtm 은 None 가능.
+    ac_source=None → --ac-source 생략(신규 optional 계약). none_declaration=True → --ac-applicability-none.
+    none_reason 이 None 아니면(빈 문자열 포함) --none-reason 을 명시 전달(빈 사유도 신호로 전달 — AC-2 검증은
+    core 담당). 반환 (returncode:int, output:str[stdout+stderr]).
     """
-    argv = [sys.executable, AC_TRACE_PY, "--phase", str(phase), "--ac-source", ac_source]
+    argv = [sys.executable, core, "--phase", str(phase)]
+    if ac_source is not None:
+        argv += ["--ac-source", ac_source]
+    if none_declaration:
+        argv += ["--ac-applicability-none"]
+    if none_reason is not None:
+        argv += ["--none-reason", none_reason]
     if rtm_not_yet:
         argv += ["--rtm-not-yet"]
     elif rtm is not None:
@@ -143,6 +152,32 @@ def run_gate(phase, ac_source, rtm=None, tests_root=None, rtm_not_yet=False):
         argv += ["--tests-root", tests_root]
     proc = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8")
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+
+
+def run_gate(phase, ac_source=None, rtm=None, tests_root=None, rtm_not_yet=False,
+             none_declaration=False, none_reason=None):
+    """게이트 CLI 구동. 반환 (returncode:int, output:str[stdout+stderr]).
+
+    rtm_not_yet=True → --rtm-not-yet EXPLICIT 신호(Phase-1 RTM not-yet, rtm 생략). rtm 은 None 가능.
+    ac_source=None → --ac-source 생략(신규 optional — CFP-2634 §결정9). none_declaration/none_reason =
+    story_uri-absent 비적용 선언 플래그(CFP-2634 §결정9).
+    """
+    return _invoke(AC_TRACE_PY, phase, ac_source, rtm, tests_root, rtm_not_yet, none_declaration, none_reason)
+
+
+def run_gate_core(core_py, phase, ac_source=None, rtm=None, tests_root=None, rtm_not_yet=False,
+                   none_declaration=False, none_reason=None):
+    """run_gate 와 동일하나 임의 core .py 경로 지정(mutation-kill 용). 반환 (returncode, output)."""
+    return _invoke(core_py, phase, ac_source, rtm, tests_root, rtm_not_yet, none_declaration, none_reason)
+
+
+def run_gate_none(reason=None, phase=1, ac_source=None, none_declaration=True, tests_root=None):
+    """CFP-2634 §결정9 none-declaration 편의 래퍼(story_uri-absent 비적용 선언).
+
+    both-absent 시뮬레이션 = none_declaration=False ∧ ac_source=None(둘 다 생략 — AC-1c).
+    """
+    return run_gate(phase, ac_source=ac_source, tests_root=tests_root, rtm_not_yet=True,
+                     none_declaration=none_declaration, none_reason=reason)
 
 
 def assert_gate_pass(rc, out):
@@ -159,19 +194,6 @@ def assert_gate_fail(rc, out):
 def assert_gate_nonzero(rc, out):
     """non-PASS(fail-closed) — 정확한 코드 무관(argparse choices=exit2 등 수용)."""
     assert rc != 0, f"expected non-zero fail-closed, got {rc}\n{out}"
-
-
-def run_gate_core(core_py, phase, ac_source, rtm=None, tests_root=None, rtm_not_yet=False):
-    """run_gate 와 동일하나 임의 core .py 경로 지정(mutation-kill 용). 반환 (returncode, output)."""
-    argv = [sys.executable, core_py, "--phase", str(phase), "--ac-source", ac_source]
-    if rtm_not_yet:
-        argv += ["--rtm-not-yet"]
-    elif rtm is not None:
-        argv += ["--rtm", rtm]
-    if tests_root is not None:
-        argv += ["--tests-root", tests_root]
-    proc = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8")
-    return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 
 
 def mutate_core(dst_dir, pattern, repl):

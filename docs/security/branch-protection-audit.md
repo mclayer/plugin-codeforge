@@ -228,3 +228,14 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
 - **등록 후 7-tuple (예정)**: 기존 6 context + `ac-traceability-matrix`. CLAUDE.md "브랜치 보호" 표 + arch-doc C4(6→7) 갱신 = Phase 2 PR 동반.
 - **rollback**: required_contexts 에서 `ac-traceability-matrix` 제거(7→6) + 신규 workflow 삭제 (ADR-145 §12 trivial revert).
 - 기록 시각: 2026-07-11T21:38:25+09:00 (KST).
+
+## 2026-07-12T09:00:00+09:00 — CFP-2634 (ADR-145 §결정9): 6→7 등록 protocol — 현행 = doc-ahead, live 미등록
+
+- **현재 live = 6-tuple (HELD)**: CFP-2609 canary 가 결함(adapter no-story_uri hard-fail)을 등록 직전 포착 → 6→7 등록 자체는 롤백/보류(#2632 deferred carrier). wrapper 실 branch-protection API 표면은 여전히 6-tuple.
+- **doc = 7-tuple (doc-ahead)**: 본 문서 §2026-07-11 엔트리 및 CLAUDE.md 표는 `ac-traceability-matrix` 를 7번째 context 로 서술 — 이는 **의도/설계 기록**이며 live API 상태의 실측 반영이 아니다. doc-ahead 상태를 여기 명시적으로 기록해 "문서=현실" 오독을 차단한다.
+- **등록 precondition (재확정, CFP-2634 §결정9 non-negotiable 3종)**:
+  1. **genuine 비적용 no-story_uri canary** — synthetic fixture 대체 금지. 실 PR(실 story_uri 부재 상태)로 어댑터·core 4-조합 라우팅을 실제로 행사해야 한다.
+  2. **actual in-job PASS 실측** — 위 canary PR 의 `ac-traceability-matrix` job 이 실제로 실행되어 exit 0(genuine PASS) 을 실측 확인해야 한다(로그 인용 필수, self-report 불가).
+  3. **rollback-ready** — 등록 직전 현재 6-tuple contexts 배열을 캡처(스냅샷)해두어, 등록 후 결함 발견 시 즉시 7→6 원복 가능해야 한다.
+- **등록 행위자 = post-merge Orchestrator gh-api act**: live 6→7 등록은 이 PR(코드/workflow 착륙)이 아니라, merge 후 Orchestrator 가 `gh api` 로 별도 실행하는 행위다. **forged machine-test 금지 = self-register 금지** — 게이트 자신의 워크플로 실행 결과만으로 자기 자신을 required 로 등재하는 self-attestation 경로는 차단(third-party canary PR 관찰이 선행 조건).
+- 기록 시각: 2026-07-12T09:00:00+09:00 (KST).

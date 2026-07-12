@@ -80,7 +80,35 @@ jobs:
             //    rtm_uri 부재 ∧ phase 1 = RTM not-yet(Hop1 only) — placeholder(§8 "작성 예정") fallback 금지,
             //      EXPLICIT --rtm-not-yet 신호로 core 전달(§결정8 D). story-as-rtm fallback 재사용 금지.
             const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
-            if (!storyUriMatch) { fail('story_uri marker 부재 (PR body) — non-suppressible(적용 PR 위장 불가)'); return; }
+            // ac_applicability: none — <사유> 마커 (ADR-145 §결정9 — story_uri-absent applicability-scoping).
+            //   INPUT(저자선언). thin router — verdict 는 core 단일소유(Option B). story_uri present 시 이 마커는
+            //   병존-forward(precedence 는 core arbitrate — surface overrides none). 값이 'none' 외(skip/n/a/false)면
+            //   미인식 → both-absent 경로(FAIL) — 'none'만 정의(AC-10).
+            const noneMatch = body.match(/ac_applicability:\s*none\b\s*[—–-]?\s*(.*)/);
+            const noneDeclared = !!noneMatch;
+            const noneReason = noneMatch ? (noneMatch[1] || '').trim() : '';
+            if (!storyUriMatch) {
+              // story_uri 부재 = applicability-scoping 정의역(신호 C 정의상 부재). thin router forward(verdict=core).
+              if (noneDeclared) {
+                core.setOutput('applicability_none', 'true');
+                core.setOutput('none_reason', noneReason);   // 빈 사유도 그대로 forward — 검증은 core(AC-2).
+                core.setOutput('both_absent', 'false');
+                core.setOutput('phase', '1');
+                core.setOutput('rtm_not_yet', 'false');
+                return;
+              }
+              // 둘 다 부재 = fail-closed no-optout — core distinct default guard(두 flag 모두 미전달).
+              core.setOutput('applicability_none', 'false');
+              core.setOutput('none_reason', '');
+              core.setOutput('both_absent', 'true');
+              core.setOutput('phase', '1');
+              core.setOutput('rtm_not_yet', 'false');
+              return;
+            }
+            // story_uri present — 기존 fetch 경로(신호 C, non-suppressible). none 마커 병존 시 forward(core arbitrate).
+            core.setOutput('applicability_none', noneDeclared ? 'true' : 'false');
+            core.setOutput('none_reason', noneReason);
+            core.setOutput('both_absent', 'false');
             const rtmUriMatch = body.match(/rtm_uri:\s*(\S+)/);
             const storyUri = storyUriMatch[1];
 
@@ -155,19 +183,30 @@ jobs:
         env:
           PHASE: ${{ steps.resolve.outputs.phase }}
           RTM_NOT_YET: ${{ steps.resolve.outputs.rtm_not_yet }}
+          APPLICABILITY_NONE: ${{ steps.resolve.outputs.applicability_none }}
+          NONE_REASON: ${{ steps.resolve.outputs.none_reason }}
+          BOTH_ABSENT: ${{ steps.resolve.outputs.both_absent }}
         run: |
-          # per-PR applicability: 비적용(§5 AC 선언 표면 부재) = core 가 in-job exit 0(genuine step pass) 판정.
-          #   rtm_not_yet(rtm_uri 마커 부재 ∧ phase 1) = --rtm-not-yet EXPLICIT 신호(placeholder fallback 아님).
-          if [ "$RTM_NOT_YET" = "true" ]; then
-            bash scripts/check-ac-traceability-matrix.sh \
-              --phase "$PHASE" \
-              --ac-source ac-gate-source.md \
-              --rtm-not-yet \
-              --tests-root tests
+          # per-PR applicability (ADR-145 §결정8/§결정9): 적용성 verdict = core 단일소유(어댑터 thin router).
+          #   비적용(§5 AC 표면 부재 / ac_applicability:none 선언) → core in-job exit 0. 둘다부재 → core FAIL.
+          #   injection 가드(§결정9 G): 사유는 env-var "$NONE_REASON" 로만 참조 — ${{ }}→run: 보간 금지.
+          if [ "$BOTH_ABSENT" = "true" ]; then
+            # 둘 다 부재(story_uri·ac_applicability:none 마커 0개) — 두 flag 모두 미전달(core distinct default guard).
+            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --tests-root tests
+          elif [ -f ac-gate-source.md ]; then
+            # story_uri present(source fetched, 신호 C). none 마커 병존 시 함께 forward(precedence=core arbitrate).
+            if [ "$APPLICABILITY_NONE" = "true" ] && [ "$RTM_NOT_YET" = "true" ]; then
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
+            elif [ "$APPLICABILITY_NONE" = "true" ]; then
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
+            elif [ "$RTM_NOT_YET" = "true" ]; then
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --tests-root tests
+            else
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --tests-root tests
+            fi
+          elif [ "$APPLICABILITY_NONE" = "true" ]; then
+            # story_uri 부재 + 비적용 선언 — source 없이 none forward(reason=env-var, injection 가드).
+            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
           else
-            bash scripts/check-ac-traceability-matrix.sh \
-              --phase "$PHASE" \
-              --ac-source ac-gate-source.md \
-              --rtm ac-gate-rtm.md \
-              --tests-root tests
+            echo "::error::check-ac-traceability-matrix: 예상외 라우팅(source 부재 ∧ none 미선언 ∧ 둘다부재 아님) — fail-closed"; exit 1
           fi

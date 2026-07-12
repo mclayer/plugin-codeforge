@@ -515,6 +515,12 @@ def hop3_born_missing(records, rtm_mapping, symbols):
 # 오케스트레이션
 # ─────────────────────────────────────────────────────────────────────────────
 def _read_file(path):
+    if path is None:
+        # None 경로 = 상위 4-조합 applicability guard 가 이미 판정(both-absent FAIL / none-path
+        #   PASS/FAIL)했어야 하는 자리. 정상흐름 도달 불가 — 도달 = both-absent guard 무력화 시나리오.
+        #   빈 문서로 취급(classify → NO_AC_SURFACE)하여, both-absent guard 가 vacuous NO_AC_SURFACE
+        #   PASS 를 막는 load-bearing 임이 mutation-kill(M-BOTHABSENT: orig FAIL → mut PASS)로 실증된다.
+        return ""
     try:
         with open(path, encoding="utf-8") as fh:
             return fh.read()
@@ -522,7 +528,8 @@ def _read_file(path):
         return None
 
 
-def run(phase, ac_source_path, rtm_path, tests_root=None, rtm_not_yet=False):
+def run(phase, ac_source_path, rtm_path, tests_root=None, rtm_not_yet=False,
+        none_declaration=False, none_reason=""):
     """게이트 실행 — phase × resolve-outcome 매트릭스 (ADR-145 §결정8 D) 를 그대로 구현.
 
     적용성 verdict = classify_ac_source 단일 소유(adapter 재파싱 금지). 매트릭스:
@@ -539,13 +546,64 @@ def run(phase, ac_source_path, rtm_path, tests_root=None, rtm_not_yet=False):
         _error(f"--phase 는 1|2 만 허용 (받음: {phase!r}) — fail-closed.")
         return EXIT_FAIL
 
-    # 입력 파일 read (부재·unreadable → 판정불가 fail-closed)
+    # ── story_uri-absent applicability-scoping (ADR-145 §결정9 C — Option B core-소화) ──
+    #   run() 이 {none_declaration, ac_source_path 유무} 4-조합을 전수 explicit 커버.
+    #   --ac-source optional 완화의 실패모드(None-source silent default-PASS) 방어 = 아래 3 guard 가
+    #   read 이전 배치(carryover #1: _read_file(None) TypeError 방지 + both-absent distinct default).
+    #
+    #   조합 3 (NOT none ∧ source None) = 둘다부재 → distinct fail-closed default guard.
+    #     reason-guard 와 distinct — adapter 는 마커 0개 시 두 flag 모두 미전달(--none-reason "" 합성 금지).
+    if ac_source_path is None and not none_declaration:
+        _error(
+            "story_uri(--ac-source) 마커·ac_applicability:none 마커 둘 다 부재 — fail-closed "
+            "no-optout(AC-1c, distinct default guard). 억제 불가 — 적용 PR 비적용 위장 방지."
+        )
+        return EXIT_FAIL
+
+    #   조합 1 (none ∧ source None) = story_uri-absent 비적용 선언 → reason-gated PASS.
+    #     `and ac_source_path is None` = surface-override 보호(story_uri present 시 이 branch 미진입 →
+    #     core 가 신호 C 로 arbitrate = 마커 inert). reason 빈/공백 = FAIL(AC-2 auditability).
+    if none_declaration and ac_source_path is None:
+        if not (none_reason and none_reason.strip()):
+            _error(
+                "ac_applicability:none 비적용 선언인데 사유(--none-reason) 부재/공백 — silent bypass "
+                "차단, 사유 auditability 의무 FAIL(AC-2)."
+            )
+            return EXIT_FAIL
+        _notice(
+            "AC-traceability 게이트 비적용 PASS — ac_applicability:none 선언(story_uri 부재, "
+            f"applicability-scoping 정의역 밖). 사유: {none_reason.strip()}. {APPLICABILITY_DISCLOSURE}"
+        )
+        return EXIT_PASS
+
+    # ── source read (이 지점 ac_source_path 는 not None 보장 — 위 두 guard 가 None 전수 처리) ──
     ac_text = _read_file(ac_source_path)
     if ac_text is None:
         _error(f"--ac-source 읽기 실패/부재: {ac_source_path} (판정불가, fail-closed).")
         return EXIT_FAIL
 
-    # ── per-PR applicability verdict (core 단일 소유, ADR-145 §결정8 D) ──
+    #   조합 2 (none ∧ source present) = story_uri+none 병존 → core precedence arbitrate.
+    #     신호 C(resolved §5 normative-AC)가 none 마커를 이긴다(surface overrides none):
+    #       ≥1 normative → none-위장 FAIL(AC-3) / 0 normative → 병존-무해 PASS(none 과 일관).
+    #     UNDECIDABLE/SURFACE_EMPTY 는 정상경로로 낙하(anti-degradation FAIL 재사용).
+    if none_declaration and ac_source_path is not None:
+        v_none, r_none, _n_none = classify_ac_source(ac_text)
+        norm_none = sum(1 for r in r_none if r.get("tier") == "normative")
+        if v_none == APPLIC_SURFACE_PRESENT and norm_none >= 1:
+            _error(
+                "ac_applicability:none 선언 PR 이 story_uri resolved §5 에 normative-AC 보유 — "
+                "none-위장(surface overrides none, 신호 C 승), 판정불가 FAIL(AC-3)."
+            )
+            return EXIT_FAIL
+        if v_none == APPLIC_NO_AC_SURFACE or (v_none == APPLIC_SURFACE_PRESENT and norm_none == 0):
+            _notice(
+                "AC-traceability 게이트 비적용 PASS — none 선언 + 0 normative(병존-무해, none 과 일관). "
+                f"{APPLICABILITY_DISCLOSURE}"
+            )
+            return EXIT_PASS
+        # else: UNDECIDABLE / SURFACE_EMPTY → 정상경로 낙하(anti-degradation FAIL)
+
+    # ── per-PR applicability verdict (core 단일 소유, ADR-145 §결정8 D — 기존 경로 무변경) ──
     verdict, records, ac_note = classify_ac_source(ac_text)
     if verdict == APPLIC_UNDECIDABLE:
         _error(f"AC source 판정불가: {ac_note} — anti-degradation(skip 흡수 금지), fail-closed FAIL.")
@@ -658,8 +716,9 @@ def main(argv=None):
     )
     parser.add_argument("--phase", required=True, type=int, choices=(1, 2),
                         help="EXPLICIT phase 신호 (1=문서·명명 / 2=구현·born-missing). diff 추론 금지.")
-    parser.add_argument("--ac-source", required=True,
-                        help="AC 목록 문서(§5 AC 표 포함) 경로.")
+    parser.add_argument("--ac-source", default=None,
+                        help="AC 목록 문서(§5 AC 표 포함) 경로. story_uri present PR 필수. "
+                             "story_uri-absent 비적용 선언(--ac-applicability-none) 시 생략(§결정9).")
     parser.add_argument("--rtm", default=None,
                         help="RTM 문서(§8 Test Contract) 경로. wrapper-self=Change Plan §8 / consumer=Story §8. "
                              "적용 PR 필수 (단 --rtm-not-yet 시 생략 가능).")
@@ -668,6 +727,12 @@ def main(argv=None):
                              "적용 PR 이면 Hop1 only(Hop2 skip). placeholder fallback 흡수 아님. phase 2 = FAIL.")
     parser.add_argument("--tests-root", default=None,
                         help="born-missing 해석 루트(phase 2 필수). 명명 테스트 실 symbol ast resolve.")
+    parser.add_argument("--ac-applicability-none", dest="ac_applicability_none", action="store_true",
+                        help="story_uri-absent 비적용 선언(ac_applicability: none 마커) EXPLICIT 신호 "
+                             "(ADR-145 §결정9). adapter-routed INPUT. verdict=core 단일소유.")
+    parser.add_argument("--none-reason", dest="none_reason", default="",
+                        help="비적용 선언 사유(free-text). 빈/공백 = FAIL(AC-2 auditability). "
+                             "injection 가드: adapter 가 env-var 로만 전달(${{ }}→run: 보간 금지).")
     args = parser.parse_args(argv)
     return run(
         phase=args.phase,
@@ -675,6 +740,8 @@ def main(argv=None):
         rtm_path=args.rtm,
         tests_root=args.tests_root,
         rtm_not_yet=args.rtm_not_yet,
+        none_declaration=args.ac_applicability_none,
+        none_reason=args.none_reason,
     )
 
 

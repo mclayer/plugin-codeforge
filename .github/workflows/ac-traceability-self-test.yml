@@ -56,3 +56,6 @@ jobs:
 
       - name: Run pytest applicability named-test suite (CFP-2609 §8.1 — 적용성 가드 Hop3 실 def)
         run: python3 -m pytest tests/scripts/test_ac_applicability_guard.py -q
+
+      - name: Run pytest non-applicable declaration named-test suite (CFP-2634 §8.1 — Hop3 실 def)
+        run: python3 -m pytest tests/scripts/test_ac_nonapplicable_declaration.py -q
