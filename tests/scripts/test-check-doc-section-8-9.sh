@@ -189,6 +189,70 @@ emit_89_x_na() {
   fi
 }
 
+# ── CFP-2628 born-hollow fixtures (present-but-blank field: 콜론 뒤 same-line 공백 + 다음 줄 내용) ──
+#   버그: 값-캡처 `<field>:\s*(.+)` 가 re.MULTILINE 에서 `\s*` 로 개행을 삼켜 다음 줄을 값으로 흡수(false-fill).
+#   fix: same-line `<field>:[ \t]*(.*)$` (형제 §8.10 activation_test_ref/on_state_assertion 이미 안전 idiom).
+#   각 emit = blank field 직후 줄에 흡수-대상 내용 배치. 12 필드 전부 present + 단일 원인 격리 → born-hollow 거동만 차이.
+
+# emit_89_do_hollow_reason — status=infeasible + blank infeasibility_reason + 다음 줄 ≥30자 사유.
+#   fixed → reason_ok=False → MUT-E fire → exit 1(정탐).  buggy → 다음 줄 흡수 → reason_ok=True → exit 0(hollow).
+emit_89_do_hollow_reason() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface: public unauthenticated endpoint"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class: passive"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status: infeasible"
+  echo "- auth_mode: unauthenticated"
+  echo "- environment_ref: local sandbox"
+  echo "- observed_result: 0 alerts / no vuln detected"
+  echo "- infeasibility_reason:"
+  echo "인증 세션 토큰 조달 불가로 해당 인증 표면 능동 스캔을 이번 주기에는 수행 불가함으로 판단됨"
+}
+
+# emit_89_do_hollow_env — payload=active + blank environment_ref + 다음 줄 nonprod marker(ephemeral/staging/sandbox...).
+#   fixed → env_val='' → NONPROD 미매치 → AC-6a blast-radius fire → exit 1(정탐).  buggy → 다음 줄 흡수 → NONPROD 매치 → exit 0(hollow, 보안 FN).
+emit_89_do_hollow_env() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface: public unauthenticated endpoint"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class: active"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status: executed"
+  echo "- auth_mode: unauthenticated"
+  echo "- observed_result: 0 alerts / no vuln detected"
+  echo "- environment_ref:"
+  echo "ephemeral staging cluster throwaway sandbox used only for this scan run"
+}
+
+# emit_89_do_hollow_surface (★역-polarity) — blank attack_surface + 다음 줄 authenticated(not 'un') + auth_mode=unauthenticated.
+#   buggy → surface_val 이 다음 줄 'authenticated' 흡수 → MUT-G phantom fire → exit 1.
+#   fixed → surface_val='' → 미fire → exit 0(다른 fail 0 = clean). infeasibility_reason/environment_ref 와 polarity 반대.
+emit_89_do_hollow_surface() {
+  echo "##### §8.9.1 dast (DO — 산출물 계약)"
+  echo "- target: order-api deployed service"
+  echo "- attack_surface:"
+  echo "authenticated admin console reachable behind the login boundary only"
+  echo "- scanner_or_harness: ZAP baseline passive scan"
+  echo "- payload_class: passive"
+  echo "- oracle: SQL injection execution as defect"
+  echo "- repro_seed: fixed request vector corpus"
+  echo "- execution_budget: 500 requests"
+  echo "- pass_condition: 0 confirmed high severity"
+  echo "- status: executed"
+  echo "- auth_mode: unauthenticated"
+  echo "- environment_ref: local sandbox"
+  echo "- observed_result: 0 alerts / no vuln detected"
+}
+
 # run_case <body_fn> <expected_exit> <name> <desc> [lint_py]
 run_case() {
   local body_fn="$1" expected="$2" name="$3" desc="$4"
@@ -394,6 +458,30 @@ EOF
 }
 EC_86GAP=$(run_case f86gap_body 0 "F-8.6-GAP" "§8.5.4 → §8.9 gap(§8.6 부재) → §8.9 외 사유 fail 0 → exit 0" | tail -1)
 
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2628 born-hollow (present-but-blank field false-fill 봉인) — 3 field
+#   ★ RED-first: unfixed(buggy) checker 로 돌리면 아래 run_case/assert 는 FAIL(RED) 이 정상 —
+#     born-hollow 이 다음 줄을 흡수해 정탐 못 함(reason/env exit 0, surface exit 1 phantom).
+#     Dev 가 4 site 를 `[ \t]*(.*)$` idiom 으로 fix 하면 GREEN. 테스트 약화 금지.
+#   각 케이스 = born-hollow(다음 줄 흡수) vs same-line 정상 anchor(EC_*) 로 discriminating.
+# ═════════════════════════════════════════════════════════════════════════════
+fhollow_reason_body()  { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_hollow_reason;  emit_skeleton_tail; }
+fhollow_env_body()     { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_hollow_env;     emit_skeleton_tail; }
+fhollow_surface_body() { emit_skeleton_head; echo "$SEC89_HEADER"; emit_89_table DO g; emit_89_do_hollow_surface; emit_skeleton_tail; }
+
+# (AC-1a→AC-2a) infeasibility_reason born-hollow → fixed exit 1(정탐) ↔ same-line reason(EC_FINF_OK=0)
+EC_HOLLOW_REASON=$(run_case fhollow_reason_body 1 "F-HOLLOW-REASON(CFP-2628)" "blank infeasibility_reason + 다음 줄 ≥30자 흡수 → fixed exit 1(정탐)" | tail -1)
+assert_discriminating "$EC_HOLLOW_REASON" "$EC_FINF_OK" "F-HOLLOW-REASON hollow=$EC_HOLLOW_REASON vs same-line reason(EC_FINF_OK)"
+
+# (AC-1c→AC-2c, 보안 FN 봉인) environment_ref born-hollow → fixed exit 1(blast-radius 미격리 정탐) ↔ same-line env(EC_CLEAN=0)
+EC_HOLLOW_ENV=$(run_case fhollow_env_body 1 "F-HOLLOW-ENV(CFP-2628)" "payload=active + blank environment_ref + 다음 줄 nonprod marker 흡수 → fixed exit 1(AC-6a 정탐)" | tail -1)
+assert_discriminating "$EC_HOLLOW_ENV" "$EC_CLEAN" "F-HOLLOW-ENV hollow=$EC_HOLLOW_ENV vs same-line env(EC_CLEAN)"
+
+# (AC-1d→AC-2d, ★역-polarity) attack_surface born-hollow → fixed exit 0(미fire 정탐) ↔ same-line authenticated(EC_FAUTH=1)
+#   polarity-agnostic: fixed=0 ↔ anchor=1 이 discriminating(두 exit 상이). buggy 였다면 hollow=1(phantom)=anchor → 비-discriminating(RED).
+EC_HOLLOW_SURFACE=$(run_case fhollow_surface_body 0 "F-HOLLOW-SURFACE(CFP-2628)" "blank attack_surface + 다음 줄 authenticated → fixed exit 0(미fire 정탐)" | tail -1)
+assert_discriminating "$EC_HOLLOW_SURFACE" "$EC_FAUTH" "F-HOLLOW-SURFACE hollow=$EC_HOLLOW_SURFACE vs same-line authenticated(EC_FAUTH)"
+
 # ── test_ceiling_honesty_disclosed (doc-presence — LIVE 회귀가드, NO fixture-fallback) ──
 #   §8.8 self-test 의 ceiling_honesty_check 을 §8.9.5 대상으로 verbatim mirror.
 #   실 template(plugins/codeforge-design/templates/change-plan.md) §8.9.5 를 직접 검증한다.
@@ -466,6 +554,65 @@ MUT_E=$(run_mutation_kill "MUT-E-INFEAS-REASON" finfeas_body  "Mutation-E(infeas
 MUT_F=$(run_mutation_kill "MUT-F-ACTIVE-PROD"   factive_body  "Mutation-F(active-prod)")    # kill-fixture = F-ACTIVE-PROD
 MUT_G=$(run_mutation_kill "MUT-G-AUTH-UNAUTH"   fauth_body    "Mutation-G(auth-unauth)")    # kill-fixture = F-AUTH-UNAUTH-SILENT
 
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2628 capture-line mutation (ADR-136 L3 — capture 라인 자체를 target)
+#   기존 MUT-E/G 는 `fails.append` 소비 라인만 sed → `\s*(.+)`↔`[ \t]*(.*)$` 를 미구별(그래서 born-hollow 가
+#   self-test 통과해 landed). 신규 = capture 라인 `<field>:[ \t]*(.*)$` 를 buggy `<field>:\s*(.+)` 로
+#   python 정확 치환(sed 백슬래시 함정 회피) 후 born-hollow fixture 재실행 → orig(fixed) ≠ mutated(buggy) = KILLED.
+#   sentinel = capture 라인(소비 라인 아님). polarity-agnostic(orig≠mut). fixed idiom 부재(Dev 미수정/born-hollow
+#   잔존) → python exit 3 → 명시 FAIL(=RED).
+# ═════════════════════════════════════════════════════════════════════════════
+exec_fixture() {  # <body_fn> <lint_py> → exit code echo(no tally). polarity-agnostic 비교용 raw runner.
+  local body_fn="$1" lint="$2"
+  local T; T=$(mktemp -d)
+  mkdir -p "$T/docs/change-plans"
+  "$body_fn" > "$T/docs/change-plans/cfp-9999-fixture.md"
+  local ec=0
+  ( cd "$T" && "$PY" "$lint" >/dev/null 2>&1 ) || ec=$?
+  rm -rf "$T"
+  echo "$ec"
+}
+run_capture_line_mutation() {  # <field> <body_fn> <mut_name>
+  local field="$1" body_fn="$2" mut_name="$3"
+  local MUT_DIR; MUT_DIR=$(mktemp -d)
+  local MUT_PY="$MUT_DIR/check_doc_section_schema.py"
+  local rc=0
+  "$PY" - "$LINT_PY" "$field" "$MUT_PY" <<'PYEOF' || rc=$?
+import sys
+lint_py, field, out = sys.argv[1], sys.argv[2], sys.argv[3]
+src = open(lint_py, encoding="utf-8").read()
+old = field + r":[ \t]*(.*)$"   # fixed idiom (same-line only)
+new = field + r":\s*(.+)"        # buggy idiom (개행 흡수)
+if old not in src:
+    sys.exit(3)                  # fixed idiom 부재 → mutation 적용 불가 (Dev 미수정/born-hollow 잔존)
+open(out, "w", encoding="utf-8").write(src.replace(old, new))
+sys.exit(0)
+PYEOF
+  if [ "$rc" != "0" ]; then
+    echo "✗ FAIL: $mut_name — capture-line fixed idiom '$field:[ \\t]*(.*)\$' 부재 (Dev 미수정/born-hollow 잔존 — mutation 적용 불가, RED)" >&2
+    tally_fail; rm -rf "$MUT_DIR"; echo "NA NA"; return
+  fi
+  if ! "$PY" -c "import py_compile,sys; py_compile.compile(sys.argv[1], doraise=True)" "$MUT_PY" >/dev/null 2>&1; then
+    echo "✗ FAIL: $mut_name — mutated lint 문법 오류" >&2
+    tally_fail; rm -rf "$MUT_DIR"; echo "NA NA"; return
+  fi
+  local ec_orig ec_mut
+  ec_orig=$(exec_fixture "$body_fn" "$LINT_PY")
+  ec_mut=$(exec_fixture "$body_fn" "$MUT_PY")
+  if [ "$ec_orig" != "$ec_mut" ]; then
+    echo "✓ PASS: $mut_name KILLED (capture-line) — orig(exit=$ec_orig) ≠ mutated(exit=$ec_mut) polarity-agnostic (born-hollow 구별)" >&2
+    tally_pass
+  else
+    echo "✗ FAIL: $mut_name SURVIVED (capture-line) — orig(exit=$ec_orig) == mutated(exit=$ec_mut) = born-hollow 미구별(hollow)" >&2
+    tally_fail
+  fi
+  rm -rf "$MUT_DIR"
+  echo "$ec_orig $ec_mut"
+}
+CMUT_REASON=$(run_capture_line_mutation  "infeasibility_reason" fhollow_reason_body  "CaptureMut-infeasibility_reason")  # born-hollow = fhollow_reason_body
+CMUT_ENV=$(run_capture_line_mutation     "environment_ref"      fhollow_env_body     "CaptureMut-environment_ref")       # born-hollow = fhollow_env_body
+CMUT_SURFACE=$(run_capture_line_mutation "attack_surface"       fhollow_surface_body "CaptureMut-attack_surface")        # born-hollow = fhollow_surface_body (역-polarity)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
 # ─────────────────────────────────────────────────────────────────────────────
@@ -480,11 +627,13 @@ echo "PASS: $PASS / FAIL: $FAIL / TOTAL: $((PASS+FAIL))"
 echo "CLEAN=$EC_CLEAN F-DO(miss/ok)=$EC_FDO_MISS/$EC_FDO_OK F-NO-G=$EC_FNOG F-STATUS=$EC_FSTATUS"
 echo "F-INFEAS(nr/ok)=$EC_FINF/$EC_FINF_OK F-ACTIVE-PROD=$EC_FACT F-AUTH(silent/ok)=$EC_FAUTH/$EC_FAUTH_OK"
 echo "F-NA(vague/sub)=$EC_FNA_V/$EC_FNA_S F-8.6-GAP=$EC_86GAP"
+echo "CFP-2628 born-hollow: reason=$EC_HOLLOW_REASON env=$EC_HOLLOW_ENV surface=$EC_HOLLOW_SURFACE (fixed 기대 1/1/0)"
 echo "Mutation kill (orig mut): A=[$MUT_A] B=[$MUT_B] D=[$MUT_D] E=[$MUT_E] F=[$MUT_F] G=[$MUT_G]  (KILLED = 1 0)"
+echo "CFP-2628 capture-line MUT (orig mut): reason=[$CMUT_REASON] env=[$CMUT_ENV] surface=[$CMUT_SURFACE]  (KILLED = orig≠mut, polarity-agnostic)"
 echo ""
 
 if [ "$FAIL" -eq 0 ]; then
-  echo "✓ All discriminating cases passed (matrix ⊇ §8.2 fixtures + mutation A/B/D/E/F/G KILLED)"
+  echo "✓ All discriminating cases passed (matrix ⊇ §8.2 fixtures + mutation A/B/D/E/F/G + CFP-2628 born-hollow/capture-line KILLED)"
   exit 0
 else
   echo "✗ Some cases failed"

@@ -184,6 +184,24 @@ emit_810_do() {
   fi
 }
 
+# ── CFP-2628 born-hollow (§8.10 infeasibility_reason false-fill 봉인, §8.9 verbatim-homolog) ──
+#   버그: 값-캡처 `infeasibility_reason:\s*(.+)` 가 re.MULTILINE 에서 개행을 삼켜 다음 줄을 값으로 흡수(false-fill).
+#   fix: same-line `infeasibility_reason:[ \t]*(.*)$` (형제 activation_test_ref/on_state_assertion 이미 안전 idiom).
+# emit_810_do_hollow_reason — dark_path DO + status=infeasible + blank infeasibility_reason + 다음 줄 ≥30자.
+#   fixed → reason_ok=False → MUT-DARK-E fire → exit 1(정탐).  buggy → 다음 줄 흡수 → reason_ok=True → exit 0(hollow).
+#   status=infeasible 라 activation-honesty(MUT-DARK-D, status==activated) 미트리거 → 단일 원인 격리.
+emit_810_do_hollow_reason() {
+  echo "##### §8.10.1 dark_path (DO — 산출물 계약)"
+  echo "- flag_identifier: COMPACT_TIERED env var gate"
+  echo "- default_state: default-off (COMPACT_TIERED=0 baseline)"
+  echo "- activation_test_ref: tests/test_compact.py::test_tiered_serving_on"
+  echo "- on_state_assertion: asserts warm-tier rows served when gate enabled"
+  echo "- discriminating_basis: gate OFF makes the test skip so it fails closed"
+  echo "- status: infeasible"
+  echo "- infeasibility_reason:"
+  echo "대상 flag 뒤 도달 코드가 이번 주기에는 실행 러너 부재로 활성화 불가함을 정당화하는 사유"
+}
+
 # emit_810_5_ceiling — 정직 천장(§8.10.5). fixture fidelity 용(lint 미검사, TC-CLEAN-PASS 에만 포함).
 emit_810_5_ceiling() {
   echo "##### §8.10.5 정직 천장"
@@ -308,6 +326,7 @@ b_infeas_nr()   { echo "$SEC810_HEADER"; emit_810_table DO g;   emit_810_do "" i
 b_infeas_ok()   { echo "$SEC810_HEADER"; emit_810_table DO g;   emit_810_do "" infeasible yes full yes; }
 b_na_vague()    { echo "$SEC810_HEADER"; emit_810_table N/A g;  emit_810_x_na vague; }
 b_na_sub()      { echo "$SEC810_HEADER"; emit_810_table N/A g;  emit_810_x_na substantive; }
+b_infeas_hollow() { echo "$SEC810_HEADER"; emit_810_table DO g; emit_810_do_hollow_reason; }  # CFP-2628 born-hollow
 b_86gap() {
   cat <<'EOF'
 #### §8.5 Stateful / restart invariant tests (CONDITIONAL)
@@ -361,6 +380,15 @@ assert_discriminating "$EC_NA_V" "$EC_NA_S" "F-NA vague=$EC_NA_V vs substantive"
 
 # F-8.6-GAP — §8.5.4 → §8.10 gap(§8.6 부재) → §8.10 외 사유 fail 0 → exit 0 (false-positive 0)
 EC_86GAP=$(run_case "setup_cp b_86gap" 0 "F-8.6-GAP" "§8.5.4 → §8.10 gap(§8.6 부재) → §8.10 외 사유 fail 0 → exit 0" | tail -1)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2628 born-hollow (§8.10 infeasibility_reason present-but-blank false-fill 봉인) — §8.9 verbatim-homolog
+#   ★ RED-first: unfixed(buggy) checker 로 돌리면 아래 run_case/assert 는 FAIL(RED) 이 정상 —
+#     born-hollow 이 다음 줄 ≥30자 를 흡수 → reason_ok=True → MUT-DARK-E 미fire → exit 0.
+#     Dev 가 L588 capture 라인을 `[ \t]*(.*)$` idiom 으로 fix 하면 GREEN. 테스트 약화 금지.
+# ═════════════════════════════════════════════════════════════════════════════
+EC_DARK_HOLLOW=$(run_case "setup_cp b_infeas_hollow" 1 "F-HOLLOW-REASON(CFP-2628)" "dark DO + status=infeasible + blank infeasibility_reason + 다음 줄 ≥30자 흡수 → fixed exit 1(정탐)" | tail -1)
+assert_discriminating "$EC_DARK_HOLLOW" "$EC_INF_OK" "F-HOLLOW-REASON hollow=$EC_DARK_HOLLOW vs same-line reason(EC_INF_OK)"
 
 # ═════════════════════════════════════════════════════════════════════════════
 # G3(b) EPIC-RESULTS §requirement-slice-mapping
@@ -450,6 +478,61 @@ MUT_D=$(run_mutation_kill "MUT-DARK-D-ACTIVATION"    "setup_cp b_stub"       "Mu
 MUT_E=$(run_mutation_kill "MUT-DARK-E-INFEAS-REASON" "setup_cp b_infeas_nr"  "Mutation-E(infeas-reason)")   # kill = F-INFEASIBLE-NO-REASON
 MUT_SLICE=$(run_mutation_kill "MUT-SLICE-PRESENCE"   "setup_epic absent"     "Mutation-SLICE(mapping-presence)") # kill = F-SLICE-MAPPING-ABSENT
 
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2628 capture-line mutation (ADR-136 L3 — capture 라인 자체를 target)
+#   기존 MUT-DARK-E 는 `fails.append` 소비 라인만 sed → `\s*(.+)`↔`[ \t]*(.*)$` 를 미구별(그래서 born-hollow 가
+#   self-test 통과해 landed). 신규 = capture 라인 `infeasibility_reason:[ \t]*(.*)$` 를 buggy `\s*(.+)` 로
+#   python 정확 치환(sed 백슬래시 함정 회피) 후 born-hollow fixture 재실행 → orig(fixed) ≠ mutated(buggy) = KILLED.
+#   polarity-agnostic. fixed idiom 부재(Dev 미수정/born-hollow 잔존) → python exit 3 → 명시 FAIL(=RED).
+# ═════════════════════════════════════════════════════════════════════════════
+exec_fixture() {  # <setup_cmd> <lint_py> → exit code echo(no tally). polarity-agnostic 비교용 raw runner.
+  local setup_cmd="$1" lint="$2"
+  local T; T=$(mktemp -d); CASE_T="$T"
+  eval "$setup_cmd"
+  local ec=0
+  ( cd "$T" && "$PY" "$lint" >/dev/null 2>&1 ) || ec=$?
+  rm -rf "$T"
+  echo "$ec"
+}
+run_capture_line_mutation() {  # <field> <setup_cmd> <mut_name>
+  local field="$1" setup_cmd="$2" mut_name="$3"
+  local MUT_DIR; MUT_DIR=$(mktemp -d)
+  local MUT_PY="$MUT_DIR/check_doc_section_schema.py"
+  local rc=0
+  "$PY" - "$LINT_PY" "$field" "$MUT_PY" <<'PYEOF' || rc=$?
+import sys
+lint_py, field, out = sys.argv[1], sys.argv[2], sys.argv[3]
+src = open(lint_py, encoding="utf-8").read()
+old = field + r":[ \t]*(.*)$"   # fixed idiom (same-line only)
+new = field + r":\s*(.+)"        # buggy idiom (개행 흡수)
+if old not in src:
+    sys.exit(3)                  # fixed idiom 부재 → mutation 적용 불가 (Dev 미수정/born-hollow 잔존)
+open(out, "w", encoding="utf-8").write(src.replace(old, new))
+sys.exit(0)
+PYEOF
+  if [ "$rc" != "0" ]; then
+    echo "✗ FAIL: $mut_name — capture-line fixed idiom '$field:[ \\t]*(.*)\$' 부재 (Dev 미수정/born-hollow 잔존 — mutation 적용 불가, RED)" >&2
+    tally_fail; rm -rf "$MUT_DIR"; echo "NA NA"; return
+  fi
+  if ! "$PY" -c "import py_compile,sys; py_compile.compile(sys.argv[1], doraise=True)" "$MUT_PY" >/dev/null 2>&1; then
+    echo "✗ FAIL: $mut_name — mutated lint 문법 오류" >&2
+    tally_fail; rm -rf "$MUT_DIR"; echo "NA NA"; return
+  fi
+  local ec_orig ec_mut
+  ec_orig=$(exec_fixture "$setup_cmd" "$LINT_PY")
+  ec_mut=$(exec_fixture "$setup_cmd" "$MUT_PY")
+  if [ "$ec_orig" != "$ec_mut" ]; then
+    echo "✓ PASS: $mut_name KILLED (capture-line) — orig(exit=$ec_orig) ≠ mutated(exit=$ec_mut) polarity-agnostic (born-hollow 구별)" >&2
+    tally_pass
+  else
+    echo "✗ FAIL: $mut_name SURVIVED (capture-line) — orig(exit=$ec_orig) == mutated(exit=$ec_mut) = born-hollow 미구별(hollow)" >&2
+    tally_fail
+  fi
+  rm -rf "$MUT_DIR"
+  echo "$ec_orig $ec_mut"
+}
+CMUT_DARK_REASON=$(run_capture_line_mutation "infeasibility_reason" "setup_cp b_infeas_hollow" "CaptureMut-dark-infeasibility_reason") # born-hollow = b_infeas_hollow
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary
 # ─────────────────────────────────────────────────────────────────────────────
@@ -464,11 +547,13 @@ echo "PASS: $PASS / FAIL: $FAIL / TOTAL: $((PASS+FAIL))"
 echo "CLEAN=$EC_CLEAN F-MISS(miss/complete)=$EC_MISS/$EC_COMPLETE F-NO-G=$EC_NOG F-STATUS=$EC_STATUS"
 echo "F-STUB(stub/ok)=$EC_STUB/$EC_STUB_OK F-INFEAS(nr/ok)=$EC_INF/$EC_INF_OK F-NA(vague/sub)=$EC_NA_V/$EC_NA_S F-8.6-GAP=$EC_86GAP"
 echo "SLICE(absent/present)=$EC_SLICE_ABS/$EC_SLICE_OK malform=$EC_SLICE_MAL ceiling=$EC_SLICE_CEIL na=$EC_SLICE_NA non-epic=$EC_NONEPIC"
+echo "CFP-2628 born-hollow: dark-reason=$EC_DARK_HOLLOW (fixed 기대 1)"
 echo "Mutation kill (orig mut): A=[$MUT_A] B=[$MUT_B] C=[$MUT_C] D=[$MUT_D] E=[$MUT_E] SLICE=[$MUT_SLICE]  (KILLED = 1 0)"
+echo "CFP-2628 capture-line MUT (orig mut): dark-reason=[$CMUT_DARK_REASON]  (KILLED = orig≠mut, polarity-agnostic)"
 echo ""
 
 if [ "$FAIL" -eq 0 ]; then
-  echo "✓ All discriminating cases passed (matrix ⊇ §8.2 fixtures + mutation A/B/C/D/E/SLICE KILLED, born-hollow 아님)"
+  echo "✓ All discriminating cases passed (matrix ⊇ §8.2 fixtures + mutation A/B/C/D/E/SLICE + CFP-2628 born-hollow/capture-line KILLED, born-hollow 아님)"
   exit 0
 else
   echo "✗ Some cases failed"
