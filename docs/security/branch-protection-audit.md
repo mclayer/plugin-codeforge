@@ -239,3 +239,4 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
   3. **rollback-ready** — 등록 직전 현재 6-tuple contexts 배열을 캡처(스냅샷)해두어, 등록 후 결함 발견 시 즉시 7→6 원복 가능해야 한다.
 - **등록 행위자 = post-merge Orchestrator gh-api act**: live 6→7 등록은 이 PR(코드/workflow 착륙)이 아니라, merge 후 Orchestrator 가 `gh api` 로 별도 실행하는 행위다. **forged machine-test 금지 = self-register 금지** — 게이트 자신의 워크플로 실행 결과만으로 자기 자신을 required 로 등재하는 self-attestation 경로는 차단(third-party canary PR 관찰이 선행 조건).
 - 기록 시각: 2026-07-12T09:00:00+09:00 (KST).
+<!-- canary CFP-2644 post-fix trigger+비적용 verify 2026-07-13 (병합 대상 아님) -->
