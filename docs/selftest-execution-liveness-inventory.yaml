@@ -28,8 +28,9 @@
 # l2_full_scope: 각 self-test 는 tests/scripts/ 단일 아티팩트(template copy 없음)로 1회 실행 → 실행 scope
 #   자연 N/A. workflow byte-identical parity 는 invariant-check.yml(Workflow parity step) 소관 = disjoint 축.
 #
-# census (execution-backed, origin/main 트리 실측 2026-07-12): 36 기존 + 신규 1
-#   (test-check-doc-section-8-10.sh, CFP-2624 G3 §8.10 dark-path self-test) = 37 레코드. dead 레코드 0
+# census (execution-backed, origin/main 트리 실측 2026-07-12): 37 기존 + 신규 1
+#   (CFP-2635 test_check-shell-test-masking.sh, ADR-060 Amendment 22 shell-test masking self-test,
+#   workflow:shell-test-exit-masking-detect.yml dedicated step alive) = 38 레코드. dead 레코드 0
 #   (silent-un-run 봉인 — bucket A backfill / bucket B agent_runtime / bucket C·D manual_registered 로 전수 enroll).
 #   ★ 메타-게이트는 count 상수를 강제하지 않음 — tests/scripts/*.sh ↔ 레코드 bijection(AC-1a)으로 전수 enroll 검증.
 
@@ -374,3 +375,13 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: "CFP-2523 one-shot schema-lib archive-adr activation 잔재 — subject schema-lib-archive-adr-activation.sh 부재(1-shot 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
     g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
+
+  # ── CFP-2635 (ADR-060 Amendment 22) — shell-test-exit-masking-detect self-test (dedicated workflow step, alive) ──
+  - self_test: "tests/scripts/test_check-shell-test-masking.sh"
+    execution_channel: "workflow:shell-test-exit-masking-detect.yml:shell-test-exit-masking-detect"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "정적 shell-test exit-masking/mock-seam lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 lint 판별력 결박)."

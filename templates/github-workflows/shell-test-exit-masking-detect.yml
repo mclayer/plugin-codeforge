@@ -1,0 +1,85 @@
+name: Shell test exit-masking + mock-seam lint (warning mode)
+# CFP-2635 / ADR-060 Amendment 22 (20번째 warning-tier entry) — codeforge 거버넌스 shell self-test
+# 코퍼스(scripts/test-*.sh + tests/scripts/*.sh)의 raw `cmd || true` exit-masking + mock-seam env
+# export 후 동반 assertion 부재(false-coverage) 정적 lint. 정당 `|| true`(counter-backup/arithmetic/
+# redirect-capture/branch-guard) + heredoc/comment 오탐 0 (anti-hollow-gate 1급 요건). ADR-119 정합.
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 default). PR merge 미차단.
+# Bypass channel: hotfix-bypass:shell-test-exit-masking-detect (ADR-024 §결정 6.A per-entry namespace)
+# honesty ceiling(ADR-151 §결정7): naive/구조적 패턴만 검출 — 검출력(G3)·먼 assert masking 미강제.
+#
+# consumer degradation: byte-identical template mirror(ADR-005)를 consumer 가 상속해도 코퍼스 부재 시
+#   lint 는 honest no-op(exit 0) 로 degrade — spurious RED 미발생 (byte-identical parity 유지).
+#
+# 승격 path (warning → blocking-on-pr 시 CFP-NNN carrier PR 동반 의무):
+#   1. 본 workflow 의 continue-on-error: true 제거
+#   2. branch protection required_status_checks.contexts 에 본 job name 추가
+#   3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry promotion_criteria)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'scripts/test-*.sh'
+      - 'tests/scripts/**'
+      - 'scripts/lib/check_shell_test_masking.py'
+      - 'scripts/check-shell-test-masking.sh'
+      - '.github/workflows/shell-test-exit-masking-detect.yml'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  shell-test-exit-masking-detect:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Run discriminating self-test (QADev — masking 검출 / 정당 미검출 / mock-seam / mutation-kill / precision)
+        # tests/scripts/test_check-shell-test-masking.sh: TC-M1/M2 검출 + TC-L1~L6 미검출(TC-L2 keystone)
+        # + TC-S1 RED/TC-S2 GREEN + MK-1/2/3 mutation-kill(제외/검출/재구성 로직 load-bearing) + 실 코퍼스
+        # precision proof(오탐 0). wrapper-self only (ADR-136 Amd2 QADev tests/scripts 실행 채널 선례 동형).
+        if: hashFiles('tests/scripts/test_check-shell-test-masking.sh') != ''
+        run: bash tests/scripts/test_check-shell-test-masking.sh
+
+      - name: Run shell-test exit-masking + mock-seam lint
+        id: lint
+        run: |
+          bash scripts/check-shell-test-masking.sh --repo-root . 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Post warning comment (exit-masking / mock-seam 검출)
+        if: steps.lint.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint-output.txt', 'utf8');
+            const body = [
+              '## Shell test exit-masking + mock-seam lint — warning',
+              '',
+              '> ADR-060 Amendment 22 warning-tier (CFP-2635). PR merge 차단 아님.',
+              '> raw `cmd || true` 로 exit 를 가려 항상 PASS 하거나, mock env export 후 동반 assertion 부재 = false-coverage.',
+              '> remediation: assert-family 명명(assert_/test_/run_ 접두 또는 파일-정의 function)+FAIL 카운터 / redirect·capture / 근접 assertion.',
+              '> bypass: `hotfix-bypass:shell-test-exit-masking-detect` label 부착.',
+              '',
+              '```',
+              output.slice(0, 3000),
+              '```',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
