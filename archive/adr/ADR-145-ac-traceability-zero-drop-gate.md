@@ -20,9 +20,13 @@ related_adrs:
   - ADR-005  # N/A 명시 패턴 — §11 데이터 마이그레이션 N/A (wrapper-self governance, schema/data 무변경) 근거
   - ADR-068  # boundary invariant I-1~I-5 — deputy mandate boundary (chief tie-break ladder 2단계) + I-3 guard placement(unconditional 우선) + I-4 wording SSOT
   - ADR-013  # dogfood-out — 본 ADR = Story §7 설계 SSOT, Change Plan 병존(internal-docs). ADR-127 :115 정합
+  - ADR-151  # (Amendment 1) G6 형제 — live=6-tuple ↔ doc=7-tuple divergence 를 "CFP-2609 reconcile 대기"로 명문 기록(ground-truth). §결정 8 이 그 reconcile carrier. self-test execution-liveness = 등록 ordering invariant 의 self-test green 채널 근거
+  - ADR-152  # (Amendment 1) G3 형제 — Epic CFP-2602 "게이트 G당 1 신규 ADR" 패턴이 신규 게이트에만 적용됨(152=G3 dark-path 점유)을 A2-5 판정에서 인용. CFP-2609=G1 완결 carrier(신규 게이트 아님) → Amendment 채택 근거
+  - ADR-130  # (Amendment 1) applicability⊥closure positive-whitelist — per-PR applicability(축 c) 가 consumer-배포 applicability(축 a)·repo-guard(축 b)와 disjoint 함의 selector. positive detection·non-suppressible 성질 차용(§결정 8 B)
 related_concepts:
   - ac-traceability-zero-drop
   - presence-mapping-ceiling-honesty
+  - per-pr-applicability-scoping
 is_transitional: false
 ---
 
@@ -31,6 +35,8 @@ is_transitional: false
 ## 상태
 
 Accepted (2026-07-11 KST) — CFP-2603 (Epic CFP-2602 G1) carrier. 사용자 요건이 요구사항→설계→§8 테스트→구현 사슬을 지나며 조용히 증발하는 병(Gap A, 요건-현실 갭)을 도메인 불변식 위반으로 재정의하고 기계 게이트로 강제하는 governance SSOT. 강화(ratchet↑) 방향 — 기존 게이트 무변경 위에 신규 fail-closed 게이트 1개 + 계약 2 additive MINOR + review obligation 1축 추가. 약화 surface 0.
+
+**Amendment 1** (2026-07-12 KST, CFP-2609 — Epic CFP-2602 G1 완결 carrier): **§결정 8** 신설 — (1) per-PR applicability 가드(신호 C = resolved authoritative §5 ≥1 normative AC presence, 3번째 applicability 축) (2) §결정4 no-optout 정의역 명확화("opt-out(적용 PR escape) ≠ applicability-scoping(비대상 판정)", exception-through-interpretation 봉인) (3) I-APPLIC 불변식(objective ∧ non-suppressible ∧ 판정불가≠비적용 anti-degradation ∧ forward-only) (4) 단일 판별 모델(phase × resolve-outcome 매트릭스) (5) §결정3 이 선언한 6→7 required 등록의 미완결 reconcile 완결(live=6-tuple → doc=7-tuple 로 승격, ADR-151 이 명문한 divergence 해소). ratchet↑ 방향 — scope 정정(false-red 제거)이지 검출력 약화 아님. 약화 surface 0. **§결정1-7 무supersede·무rewrite**(append-only).
 
 ## 컨텍스트
 
@@ -112,6 +118,57 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - **adapter I/O layer (경계 confined)**: `scripts/check-ac-traceability-matrix.sh`(thin wrapper — ADR-061 §결정1 convention, `check-venue-shape-fidelity-presence.sh` 동형) + `.github/workflows/ac-traceability-matrix.yml`(fetch/cross-repo I/O 전담).
 - 3 seam(parse / Phase1-map / Phase2-born-missing)이 phase-aware 2-tier 의 구조적 불변식. cross-repo fetch·fs I/O 는 workflow layer 에만.
 
+### 결정 8 — per-PR applicability 가드 + "opt-out ≠ applicability-scoping" 정의역 명확화 + 6→7 required 등록 reconcile 완결 (Amendment 1, CFP-2609)
+
+**배경**: §결정3 이 (A) 즉시 required 등록(6→7-tuple)을 선언했으나, 등록의 born-broken 안전 전제("self-test green ∧ own-PR green")가 CFP-2603 시점에 미충족 — 게이트가 story_uri 부재/transient-ref PR · Phase-1 rtm_uri 부재 · §5-AC 없는 governance PR 을 무조건 fail-closed 처리하여 **자기 PR 을 포함한 정상 PR 전부 오차단**(false-red). 즉시 등록 시 repo 파괴 → 등록 HELD(merge 경계 verify-before-trust, ADR-119). live=6-tuple ↔ doc(CLAUDE.md 브랜치 보호 표 + branch-protection-audit)=7-tuple divergence 로 잔존(ADR-151 이 "CFP-2609 reconcile 대기"로 명문 기록). 본 Amendment = 그 reconcile carrier — §결정3 의 미완결 등록을 **적용성(applicability) 가드 선수정 후** 안전 완결한다.
+
+**A2-5 판정 (Amendment vs 신규 ADR — ADR-146 §결정11 / ADR-151 §결정1 verbatim 구조; 양 prong 반증)**:
+- **Amendment prong (ADR-145 로 착륙) = 채택**: CFP-2609 은 (i) §결정4 no-optout 의 **정의역 명확화**("opt-out ≠ applicability-scoping") + (ii) §결정3 이 이미 선언한 6→7 등록의 **미완결 실행** 뿐이다. 신규 mechanism 도입 0 — 신규 workflow 0(기존 `ac-traceability-matrix.yml`/core 수정), 신규 required context 0(§결정3 이 이미 선언한 6→7), 신규 스키마 0(§5.2 AC schema·`AC_ID_RE` 재사용), 신규 게이트/카테고리 0. per-PR applicability 는 기존 게이트의 self-scoping 정련이지 standalone governance mechanism 아님 → 별 context/결정/결과 블록이 ADR-145 중복.
+- **신규 ADR prong (왜 신규 아닌가) = 기각**: Epic CFP-2602 "게이트 G당 1 신규 ADR" 패턴은 *신규 게이트 G*(G1=145 / G2=148 / G3=152 / G4=146 / G5=150 / G6=151)에 적용된다. CFP-2609 은 신규 게이트를 추가하지 않고 **G1(ADR-145) 자신의 applicability 정련 + 등록 완결** carrier 이므로 새 G 슬롯이 아니다. per-PR applicability("세 번째 적용성 축")는 개념적으로 신규이나 ac-traceability 게이트 작동 *내부*에 confined — ADR-133 atomic-claim 신규 번호 소요 0.
+- **판정 = Amendment 1 (ADR-145 무supersede)** — diff-proven: 본 Amendment 는 §결정4·§결정3 을 rewrite/삭제하지 않고(append-only) 문언의 해석-정의역만 정련 + 등록 완결. 어느 것도 신규 결정/mechanism 아님.
+
+**(A) "opt-out ≠ applicability-scoping" — §결정4 no-optout 정의역 명확화**:
+- §결정4 "skip-PASS / opt-out / default-green 경로 부재 + skip-toggle 신설 금지"의 정의역 = **적용 대상 PR 의 escape**(§5 에 AC 를 선언한 PR 이 검사를 회피). 무손상 유지.
+- **applicability-scoping** = 그 이전 단계에서 "이 PR 이 애초 검사 대상이냐"를 objective 하게 가르는 직교(orthogonal) 선행 판정. 검사 대상 부재(추적할 AC 자체가 없음) PR 은 **불변식 I-AC 의 정의역 밖** — skip-PASS/opt-out 이 아니라 자연 N/A(ADR-127 §결정5 3축 AND 동형).
+- ∴ "비적용 PR → in-job exit 0" 은 §결정4 위반이 아니다. **exception-through-interpretation 봉인**: 두 판정은 순차 직교이며 서로 약화하지 않는다.
+
+**(B) per-PR applicability 축 = 신호 C (기존 2 축과 disjoint)**:
+- 본 프로젝트 applicability 3 축: (a) consumer-배포 applicability(ADR-130 positive-whitelist) · (b) repo-level applicability(§결정3 F1 repo-guard `if: github.repository ==`) · **(c) per-PR applicability = 본 Amendment 신설**.
+- **신호 C = resolved authoritative §5 에 ≥1 normative AC presence**. positive detection(선언 표면 *있음* 탐지 — self-declared opt-out 플래그·label 토글·diff-touch 금지, 신호 A/D/E/F 기각) + presence-based(semantic 판단 금지, §결정1 천장 상속).
+- **비적용 positive 확정 = resolve-success ∧ 0 normative AC**(authoritative 소스 clean-parse 후 normative AC 0). 두 clean 경로: (i) §5 AC 선언 표면 구조적 부재(§5 없음 또는 §5 에 AC 표 없음) (ii) §5 AC 표 present + records well-formed + 0 normative(전부 declared/advisory).
+
+**(C) I-APPLIC 불변식 codify (신규 — §2.4 Story)** — applicability 신호 = objective ∧ non-suppressible ∧ 판정불가≠비적용 ∧ forward-only/grandfather:
+- **판정불가 ≠ 비적용 (최중요, anti-degradation)**: cross-repo fetch 실패 / 403 / 404 / frontmatter-parse 실패 / local-unreadable / §5 malformed-table = **판정불가 → FAIL**(§결정4 helper fail-closed 재사용). 어떤 degraded 경로도 "비적용 skip"으로 흡수 금지(born-hollow 봉인). **anti-degradation guard**: §5 에 AC-ID 형 토큰(`AC-\d+`)이 present 인데 parseable AC 표 부재 = 산문 AC 선언 + 표 파손 = degradation → FAIL(skip 금지). 비적용 skip 은 (AC 표 부재 ∧ AC-ID 토큰 부재)의 positive 부재에서만 도달.
+- **non-suppressible**: 적용 PR 이 억제가능 신호(story_uri 마커 삭제·label)로 비적용 위장 불가 — story_uri 마커 삭제 = 판정불가 FAIL(adapter `if(!storyUri) fail`). resolved §5 를 비게 하려면 authoritative Story §5 물리삭제 필요(고가시 + RO-1 §1↔§5 완결성 포착 + tier 배정 RO-1 gate).
+- **empty-AC bypass 무손상**: §5 AC 표 present + 0 rows = F-AC7-a bypass(선언 표면 구축 후 비움) → FAIL 절대 재개방 금지. "AC 표 부재(비적용)" vs "AC 표 present + 0 rows(bypass)" 구조적 구분.
+- **forward-only + grandfather**: 등록은 향후 PR 강제 — G3~G6 기머지 PR 소급 재검증 아님(Story date/KEY 기준).
+
+**(D) 단일 판별 모델 = phase × resolve-outcome 매트릭스** (§1.1 §5-absence + §1.2 Phase-1 rtm_uri + §1.3 story_uri verify 를 개별 패치 금지 — 단일 모델로 통합). 적용성 verdict = **core 단일 소유**(adapter 재파싱 = drift 금지):
+
+| resolve outcome | phase 1 | phase 2 |
+|---|---|---|
+| 판정불가(fetch/403/404/frontmatter/unreadable/malformed-table) | FAIL | FAIL |
+| 비적용(AC 표 부재 ∧ AC-ID 토큰 부재; 또는 records present·0 normative) | PASS(exit 0) | PASS(exit 0) |
+| empty-AC(표 present, 0 rows) | FAIL(F-AC7-a) | FAIL(F-AC7-a) |
+| 적용, rtm_uri 부재(RTM not-yet) | Hop1 only(Hop2 skip) | FAIL(RTM 필수) |
+| 적용, rtm=placeholder/absent | FAIL(F-AC7-b/b2) | FAIL |
+| 적용, rtm resolved | Hop1+Hop2 | Hop1+Hop2+Hop3 |
+
+- **rtm_uri Phase-1 not-yet (§1.2)**: Phase-1 PR(§1-7)은 §8 RTM 이 아직 산출물 아님 — rtm_uri 마커 부재 = not-yet-applicable → Hop1 only(placeholder fallback false-fail 제거). placeholder(§8 "작성 예정")로의 *fallback* 은 금지(F-AC7-b2 = FAIL). not-yet 은 adapter 의 EXPLICIT 신호(rtm_uri 마커 부재 ∧ phase 1)이지 placeholder 흡수 아님.
+
+**(E) in-job 판정 (F-1/F-2/F-3 GitHub 플랫폼 제약)**: required + workflow-skip = 영구 Pending → merge 차단(GitHub Docs verified). ∴ 적용성 가드 = **항상 실행 in-job 판정 + exit code**. job-level `if:` skip(runner 배정 前 server 평가 = disk 부재, hashFiles/steps context 부적격) / `on.pull_request.paths` 필터(required-pending 함정) **금지**. trigger 는 `pull_request`(paths 필터 없음) 유지, 분기는 in-job. 비적용 PR 도 checkout + in-job exit 0(job-skip 아님).
+
+**(F) story_uri 영구 ref (§1.3 — 404 3-class)**: story_uri = **영구 ref(internal-docs main / immutable commit SHA)**, transient feature 브랜치 ref 금지(Class A 404 회피). 404 는 단일원인 처리 금지 — auth-masking(403→404 masking, F-5 GitHub Docs) vs genuine ref-missing 구분, **둘 다 판정불가 FAIL**(skip 흡수 금지). false-fail 은 영구-ref *convention* 으로 예방(404 흡수 아님). frontmatter-parse 실패(Class B)=post-fetch 판정불가 FAIL(root-cause = 영구 ref 실 frontmatter resolve).
+
+**(G) 6→7 required 등록 reconcile 완결 (§결정3 HELD 해제)**:
+- **ground-truth**: doc SSOT(CLAUDE.md 브랜치 보호 표 + branch-protection-audit)=7-tuple(`ac-traceability-matrix` 포함, doc-ahead) ↔ live(gh api)=6-tuple. reconcile = **live 를 doc 로 승격**(6→7 live 등록) — doc 표 무변경.
+- **ordering invariant (§결정3 상속)**: workflow 착륙 → self-test suite green(`ac-traceability-self-test.yml`) → CFP-2609 own-PR green(적용성 가드 실 red/green 산출) → THEN 등록. own-PR green 미달 시 등록 보류 후 통보.
+- **등록 실행 = Orchestrator post-merge gh api**: POST `/branches/main/protection/required_status_checks/contexts` append(권장, F-4 저위험) 또는 GET→full-PUT 6-보존 replace. 사후 GET `/protection` 로 정확히 7개(기존 6 전부 잔존 + `ac-traceability-matrix`) 실측(AC-9). 등록 *act* = human/Orchestrator gate(forged machine test 금지, AC-8) / doc↔live parity = 기계검증 outcome(AC-9 `test_seven_tuple_preserves_six`).
+
+**(H) 정직 천장 (disclosed ceiling 상속)**: 적용성 신호 = presence-based. 게이트가 "이 PR 이 마땅히 AC 를 가졌어야 하는가"(semantic)를 판정하지 않는다 — non-gameability 는 신호 C + RO-1(§1↔§5 완결성·tier 배정) + AC-10 advisory + Codex divergence defense-in-depth 로 저감(gate-internal semantic 강제 = 검사연극 §결정1 금지). AC-0 under-minting gaming = §결정1(b) Hop0 기인정 disclosed ceiling — CFP-2609 신규 확대 아님. "완전 봉인" hard-claim 금지.
+
+**불변 무손상**: fail-closed 핵심(적용-미추적 = FAIL, §결정4 AC-7) + F1 wrapper-self repo-guard(consumer 오탐 0) + F-AC7-a 빈-AC FAIL + presence/mapping 천장(§결정1) + `AC_ID_RE` sub-letter(§결정4) 전부 무손상. 본 Amendment = scope 정정(false-red 제거)이지 검출력 약화 아님(evidence-gated ratchet ↑ 방향, ADR-064/058/102).
+
 ## 대안 (기각 근거)
 
 - **계약 count 제거 → AC-list (MAJOR v2.0)**: 새 ADR + 양-plugin bump + migration 필요 = double-ADR + 파괴적. → 기각, additive MINOR(count 보존, §결정 6) 채택.
@@ -119,6 +176,9 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - **born-missing = file∧function grep**: CFP-2545 false-oracle(§결정 5). → 기각, ast symbol resolve.
 - **skip-toggle 신설**: ADR-127/AC-7 opt-out. → 기각(§결정 4).
 - **branch-protection 등록 = (B) shadow-required 하이브리드**(workflow day-1 hard-fail 로 실 red/green + PR red X, `required_contexts` 등록은 지속 green + born-broken-clear 확인 후 ADR-060 §결정6/19 evidence-gate 로 승격): **고려됐으나 미채택** — 사용자가 (A) 즉시 required 를 선택(2026-07-11). 채택 근거 = A 의 born-broken 위험이 게이트 self-test merge-precondition 으로 이미 구조적 차단되어(§결정 3) shadow 유예의 이득이 낮고, 즉시 fail-closed 가 요건-현실 갭 차단(Story 목적)에 직결. B 는 양안 보존 기록으로만 잔존.
+- **(Amendment 1) CFP-2609 = 신규 ADR(per-PR applicability 축 신설)**: per-PR applicability 가 "어디에도 정의 없는 세 번째 축"이므로 신규 ADR 도 고려됐으나 **기각** — A2-5 양 prong(§결정 8) 반증: 신규 mechanism(workflow/스키마/게이트/context) 0 + Epic "게이트 G당 1 ADR" 패턴은 신규 게이트에만 적용(CFP-2609=G1 완결 carrier, ADR-152 가 G3 로 152 점유하므로 신규 게이트 slot 아님). → ADR-145 Amendment(§결정4 정의역 명확화 + §결정3 등록 완결) 채택.
+- **(Amendment 1) 적용성 = job-level `if:` / `on.paths` skip**: required + workflow-skip = 영구 Pending → merge 차단(F-1 GitHub Docs) + job-level `if:` = disk 부재로 계산 불가(F-2). → 기각, in-job exit-code 판정(§결정 8 E).
+- **(Amendment 1) 적용성 신호 = story_uri 마커(A) / Epic·sibling label(E) / diff src touch(D)**: A/E = 억제가능 opt-out 벡터(§결정3 fast-pass bypass 재유입), D = §결정2 diff-추론 금지 위반. → 기각, 신호 C(resolved §5 normative-AC presence, non-suppressible, §결정 8 B).
 
 ## 결과
 
@@ -126,11 +186,19 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - traceability rot·수동오류 저감 + semantic 잔여 2건 정직 공개 = ADR-119/ADR-006 Amd2 정합(검사연극 회피).
 - Epic CFP-2602 게이트 disjoint: G1(AC↔명명 §8 테스트 ∧ diff 실재) ⊥ G2(runtime liveness) ⊥ G3(discriminating 행사). 공유 = 원리(선언→실행, Epic #2346 계보)뿐.
 
+### Amendment 1 결과 (CFP-2609)
+
+- **적용성 3 축 확립**: (a) consumer-배포(ADR-130) ⊥ (b) repo-level(F1 repo-guard) ⊥ (c) per-PR(신호 C) — 게이트가 정의역 밖 PR(추적할 AC 부재)을 false-red 로 오차단하지 않으면서 fail-closed 핵심(적용-미추적=FAIL)을 무손상 보존. false-red 제거(scope 정정)이지 검출력 약화 아님.
+- **doc-vs-live divergence 해소**: §결정3 이 선언한 6→7 등록의 미완결분이 CFP-2609 로 완결(ordering invariant 준수 post-merge Orchestrator gh api). ADR-151 이 기록한 "CFP-2609 reconcile 대기" 항목 해소 — reconcile 후 live=doc=7-tuple.
+- **born-hollow 봉인 강화**: I-APPLIC anti-degradation(판정불가·degraded 경로의 skip 흡수 금지) + self-test 3경로 discriminating mutant(비적용→PASS / 적용-미추적→FAIL / empty-AC→FAIL)로 게이트가 빈 껍데기화하지 않음을 merge-precondition 으로 강제(CFP-2530/2535 계보).
+
 ## 관련 파일
 
-- Story: `<internal-docs>/wrapper/stories/CFP-2603.md` (§7 설계 서사)
-- Change Plan: `<internal-docs>/wrapper/change-plans/cfp-2603-g1-ac-traceability-matrix.md`
+- Story: `<internal-docs>/wrapper/stories/CFP-2603.md` (§7 설계 서사) · **(Amd1)** `<internal-docs>/wrapper/stories/CFP-2609.md` (§7 적용성 가드 설계 서사)
+- Change Plan: `<internal-docs>/wrapper/change-plans/cfp-2603-g1-ac-traceability-matrix.md` · **(Amd1)** `<internal-docs>/wrapper/change-plans/cfp-2609-g1-applicability-guard-required-registration.md`
 - 신규(Phase 2): `scripts/lib/ac_id.py` · `scripts/lib/check_ac_traceability_matrix.py` · `scripts/check-ac-traceability-matrix.sh` · `.github/workflows/ac-traceability-matrix.yml`
+- **(Amd1) 수정(Phase 2)**: `scripts/lib/check_ac_traceability_matrix.py`(적용성 verdict core 단일 소유 — `run()` phase×resolve-outcome 매트릭스) · `.github/workflows/ac-traceability-matrix.yml`(story_uri 영구 ref + rtm_uri not-yet + 404 3-class) · `tests/scripts/test_check-ac-traceability-matrix.sh`(적용성 3경로 discriminating mutant) · `templates/github-workflows/ac-traceability-matrix.yml`(L2 byte-identical)
+- **(Amd1) 코드-외 조치(Phase 2 post-merge)**: branch-protection `required_status_checks` 6→7-tuple 등록(Orchestrator gh api, ordering invariant 준수 + 사후 GET 7-tuple 실측)
 - 계약(Phase 2): `docs/inter-plugin-contracts/requirements-output-v1.md`(v1.2) · `design-output-v2.md`(v2.5) · `MANIFEST.yaml`
 - review binding(Phase 2): `plugins/codeforge-review/templates/review-checklists/requirements.md` · `plugins/codeforge-review/agents/RequirementsReviewPLAgent.md` · `codeforge:review-responsibility` matrix
 - 선례: `scripts/lib/check_venue_shape_fidelity_presence.py`(near-exact 구조 선례, warning-tier → 본 게이트는 fail-closed 상향)
