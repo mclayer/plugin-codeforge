@@ -11,11 +11,24 @@
 # 각 class = 4-tuple { id, error_string_pattern, mutation_recipe, source_pin }.
 # class 마다 discriminating 3-분기(C1 GREEN / C2 RED mutation-kill / anti-theater)를 loop.
 #
-# ── 등록 class (N=2) ─────────────────────────────────────────────────────────
+# ── 등록 class (N=3) ─────────────────────────────────────────────────────────
 # 1. context-availability — job-level hashFiles() 호출: context-availability 위반.
 #    seed class(CFP-2530) 그대로 보존. regression 0.
 # 2. undefined-context — 미정의 context 참조: steps.ghost.outputs.x 류.
 #    actionlint 1.7.12 [expression] rule. 실측 ground-truth 확인.
+# 3. empty-run-expression — `run:` 블록 안 빈/malformed `${{ }}` 표현식: born-invalid workflow.
+#    CFP-2644 신규 (ADR-145 Amendment 3 (2)). GHA 는 run: 문자열을 러너 전송 *이전에* 보간하므로
+#    빈 표현식 = load-time syntax error → workflow 트리거 자체가 미등록(born-invalid, silent dead gate).
+#    기존 CI 어느 채널도 이를 못 잡았다 — 본 self-test 는 actionlint OVERALL EXIT 를 무시(`|| true`)하고
+#    등록 class pattern 만 grep count 하는데, 등록 class N=2 로는 빈-표현식 error string 이
+#    어느 pattern 에도 매치되지 않아 count 0 → false-GREEN 통과했다(근본 사각).
+#    → 3번째 class 등록으로 봉인(ADR-136 결정14 N-class registry 의 authorized 확장, 신규 mechanism 0).
+#
+# ── [주의] class 3 의 actionlint 보고 위치 = `run:` 블록 시작 줄 ─────────────
+# actionlint 는 빈 표현식을 run: 블록 **시작 줄**(스칼라 노드 시작)에서 보고한다 — 실제 결함이
+# 박힌 줄이 아니다. 실측(CFP-2644): 결함은 ac-traceability-matrix.yml L192 에 있었으나
+# actionlint 는 `189:339` 로 보고(L189 = `run: |` 헤더). column 은 블록 시작 기준 offset.
+# → 보고 좌표를 결함 줄로 오인하지 말 것(grep count 판정에는 무영향).
 #
 # ── 후보 B/C DROP 이유 (comment-only, 등록 금지) ─────────────────────────────
 # class B (`continue-on-error` + `exit 0` 삼킴) 및 class C (optional-install `|| true` skip)는
@@ -285,8 +298,53 @@ MUTATION_EOF
   fi
 }
 
+# ── mutation_empty_run_expression ─────────────────────────────────────────────
+# class: empty-run-expression (CFP-2644 신규 — ADR-145 Amd3 (2))
+# source_pin: actionlint v1.7.12, rule [expression]
+#   literal ground-truth (docker rhysd/actionlint:1.7.12 실측 verbatim):
+#     `unexpected end of input while parsing variable access, function call, null, bool,
+#      int, float or string. expecting "IDENT", "(", "INTEGER", "FLOAT", "STRING" [expression]`
+#   tolerant regex: `unexpected end of input while parsing`
+#   (주의: [expression] 을 regex 에 넣지 않음 — class 2/seed 에러도 [expression] 을 포함하므로
+#    cross-contamination 발생. 위 pattern 은 class 1 `not allowed here|not available in .*context`
+#    및 class 2 `is not defined in object type` 와 완전히 disjoint. 3x3 양방향 count 격리 실측 확인:
+#    m1→(1,0,0) / m2→(0,1,0) / m3→(0,0,1) 대각 identity.)
+#   whitespace BVA 실측: `${{}}`(0) / `${{ }}`(1) / `${{   }}`(multi) 전 변이 동일 error string 방출.
+# mutation_recipe: css-lint.yml 을 temp copy 후, run: 블록 **내부 주석**에 빈 `${{ }}` 를 담은 신규 job append.
+#   append 방식 = source file 형태에 무관하게 deterministic (sed anchor 의존 불필요 — class 2 관례 준수).
+#   원 결함(ac-traceability-matrix.yml L192)의 형상을 그대로 재현: injection 가드 주석이 빈 표현식을 품음.
+mutation_empty_run_expression() {
+  local temp_dir="$1"
+  local source_file="$2"
+  local mutated="$temp_dir/mutated.yml"
+
+  cp "$source_file" "$mutated"
+
+  # run: 블록 내부 주석에 빈 `${{ }}` 를 담은 신규 job 을 파일 끝에 append.
+  # GHA 는 run: 문자열을 러너 전송 전에 보간하므로, 주석이라도 빈 표현식은 load-time syntax error.
+  cat >> "$mutated" <<'MUTATION_EOF'
+
+  __mutation_empty_run_expression__:
+    runs-on: ubuntu-latest
+    env:
+      NONE_REASON: mutation-probe
+    steps:
+      - run: |
+          # injection 가드: 사유는 env-var "$NONE_REASON" 로만 참조 — ${{ }}→run: 보간 금지.
+          echo "$NONE_REASON"
+MUTATION_EOF
+
+  # mutation 적용 확인 (append 한 job 이 실제로 들어갔는지).
+  if grep -q "__mutation_empty_run_expression__" "$mutated" 2>/dev/null; then
+    return 0
+  else
+    echo "    empty-run-expression mutation append 실패 — temp fixture 점검 필요"
+    return 1
+  fi
+}
+
 # ═════════════════════════════════════════════════════════════════════════════
-# CLASS REGISTRY (N=2)
+# CLASS REGISTRY (N=3)
 # 형식: run_class_discriminating <id> <error_pattern> <source_file> <mutation_fn>
 #
 # 버전 pin (AC-1 drift-guard, ADR-136 §14.4):
@@ -302,7 +360,7 @@ echo ""
 echo "============================================================"
 echo "test-actionlint-workflows.sh — N-class registry loop"
 echo "actionlint pin: 1.7.12 (AC-1 drift-guard, ADR-136 §14.4)"
-echo "N=2 classes, L2 full-scope (.github/ + templates/)"
+echo "N=3 classes, L2 full-scope (.github/ + templates/)"
 echo "============================================================"
 
 # ── Class 1: context-availability (seed, CFP-2530 — regression 보존) ─────────
@@ -327,12 +385,92 @@ run_class_discriminating \
   "$REPO_ROOT/.github/workflows/css-lint.yml" \
   "mutation_undefined_context"
 
+# ── Class 3: empty-run-expression (CFP-2644 신규 — ADR-145 Amd3 (2)) ─────────
+# source_pin: actionlint v1.7.12, rule [expression]
+#   literal: `unexpected end of input while parsing variable access, function call, ... [expression]`
+#   tolerant regex: `unexpected end of input while parsing`
+#   (disjoint from class 1/2 pattern — 3x3 대각 identity 실측, cross-contamination 0)
+EMPTY_RUN_EXPR_PATTERN='unexpected end of input while parsing'
+run_class_discriminating \
+  "empty-run-expression" \
+  "$EMPTY_RUN_EXPR_PATTERN" \
+  "$REPO_ROOT/.github/workflows/css-lint.yml" \
+  "mutation_empty_run_expression"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Class 3 보강 fixture — F2w (whitespace BVA) + F3 (anti-vacuous negative)
+#
+# run_class_discriminating 4-tuple(C1/C2/ANTI-THEATER)은 class 3 에도 그대로 적용됐다.
+# 아래는 class 3 고유의 2가지 추가 요건(Change Plan §8.2)이며 기존 helper 만 재사용한다
+# (violation_count_for_pattern / assert_ge1 / assert_eq — 신규 helper 발명 0).
+# ═════════════════════════════════════════════════════════════════════════════
+
+echo ""
+echo "══════════════════════════════════════════════════════════════════════"
+echo "CLASS 3 보강: F2w (whitespace BVA) / F3 (anti-vacuous negative)"
+echo "══════════════════════════════════════════════════════════════════════"
+
+# ── F2w: whitespace BVA — `${{}}` / `${{ }}` / `${{   }}` 전 변이 RED ─────────
+# 빈 표현식의 공백 개수는 결함 성립에 무관하다(전부 born-invalid). pin 이 0-space 변이를
+# 놓치면 우회 구멍이 된다 → 경계값 3종 모두 count >= 1 을 요구.
+echo "  [F2w] whitespace BVA — 0-space / 1-space / multi-space 빈 표현식 전 변이 RED"
+bva_dir="$(mktemp -d)"
+for bva in "zero:\${{}}" "one:\${{ }}" "multi:\${{   }}"; do
+  bva_name="${bva%%:*}"
+  bva_expr="${bva#*:}"
+  bva_file="$bva_dir/bva-$bva_name.yml"
+  cat > "$bva_file" <<EOF
+name: bva-$bva_name
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          # injection 가드: $bva_expr →run: 보간 금지.
+          echo hi
+EOF
+  bva_count=$(violation_count_for_pattern "$EMPTY_RUN_EXPR_PATTERN" "$bva_file")
+  assert_ge1 "F2w-empty-run-expression-${bva_name}" "$bva_count" \
+    "빈 표현식 whitespace 변이 '${bva_name}' 검출(count >= 1) — 공백 개수 무관 RED 보장"
+done
+rm -rf "$bva_dir"
+
+# ── F3: anti-vacuous negative — top-level 주석의 빈 `${{ }}` 는 flag 금지 ─────
+# discriminating power 는 2-sided 여야 한다: run: 블록 안 = RED, run: 밖(top-level 주석) = NOT flag.
+# F3 없으면 over-broad lint 가 자연실험 FP 를 재발시켜 hollow class 가 된다(검사연극).
+#
+# [precondition assert — 비협상] F3 의 discriminating power 는 negative fixture 가 실제로
+# 빈 `${{ }}` 를 top-level 주석에 **계속 보유**할 때만 성립한다. 그 줄이 지워지면 F3 는
+# "없는 것을 flag 안 함" = vacuous PASS(검사연극)로 전락한다. → 보유 여부를 먼저 assert.
+F3_NEGATIVE_FIXTURE="$REPO_ROOT/.github/workflows/spawn-prompt-fact-verify.yml"
+echo "  [F3] anti-vacuous negative — top-level 주석 빈 표현식 NOT flag (2-sided discrimination)"
+echo "    negative fixture: $F3_NEGATIVE_FIXTURE"
+
+if [ ! -f "$F3_NEGATIVE_FIXTURE" ]; then
+  echo "  ✗ FAIL: F3-precondition-fixture-missing"
+  echo "    negative fixture 파일 부재: $F3_NEGATIVE_FIXTURE"
+  echo "    → AC-3 discriminator 가 더는 load-bearing 아님. F3 vacuous PASS 차단(명시 FAIL)."
+  FAIL=$((FAIL+1))
+elif ! grep -Eq '\$\{\{[[:space:]]*\}\}' "$F3_NEGATIVE_FIXTURE"; then
+  echo "  ✗ FAIL: F3-precondition-empty-expr-absent"
+  echo "    negative fixture 에 빈 \${{ }} 부재 — 누군가 그 줄을 제거했다."
+  echo "    → AC-3 discriminator 가 더는 load-bearing 아님(F3 는 '없는 것을 flag 안 함' = vacuous PASS)."
+  echo "    → 명시 FAIL. 빈 표현식 줄 복구 또는 대체 negative fixture 지정 필요."
+  FAIL=$((FAIL+1))
+else
+  echo "    ✓ precondition: negative fixture 가 빈 \${{ }} 를 여전히 보유(top-level 주석) — load-bearing 확인"
+  f3_count=$(violation_count_for_pattern "$EMPTY_RUN_EXPR_PATTERN" "$F3_NEGATIVE_FIXTURE")
+  assert_eq "F3-anti-vacuous-negative" "0" "$f3_count" \
+    "top-level 주석의 빈 \${{ }} 는 born-invalid 아님 → NOT flag(count 0). over-broad lint FP 차단."
+fi
+
 # ═════════════════════════════════════════════════════════════════════════════
 # Summary
 # ═════════════════════════════════════════════════════════════════════════════
 echo ""
 echo "============================================================"
-echo "Test Summary (CFP-2530 Phase 2 + CFP-2535 N-class — actionlint workflow validation)"
+echo "Test Summary (CFP-2530 + CFP-2535 + CFP-2644 N=3 class — actionlint workflow validation)"
 echo "============================================================"
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
@@ -342,6 +480,8 @@ echo ""
 echo "Discriminating evidence (anti-theater) — 판정 = class-scoped count (shellcheck 부채 스코프 밖):"
 echo "  actionlint pin: 1.7.12 (AC-1 drift-guard)"
 echo "  L2 full-scope: .github/workflows/*.yml + templates/github-workflows/*.yml"
+echo "  N=3 classes: context-availability / undefined-context / empty-run-expression"
+echo "  class 3 보강: F2w whitespace BVA(3변이) + F3 anti-vacuous negative(2-sided, precondition-asserted)"
 echo ""
 
 if [ "$FAIL" -eq 0 ]; then

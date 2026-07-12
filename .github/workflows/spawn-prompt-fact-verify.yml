@@ -16,6 +16,10 @@ name: spawn-prompt-fact-verify
 #   - on: pull_request (NOT pull_request_target) — fork PR 도 base repo secret 미노출 컨텍스트.
 #   - permissions: contents:read, pull-requests:read (write/secret 0).
 #   - env-injection only: PR body 를 env 로 주입 후 run 에서 env 경유만 — run inline ${{ }} 보간 금지.
+#     ↑ [AC-3 discriminator — load-bearing, 절대 삭제 금지] 위 줄의 top-level(주석) 빈 표현식은
+#       tests/scripts/test-actionlint-workflows.sh 의 F3 anti-vacuous negative fixture 다.
+#       run: 블록 밖 빈 표현식이 born-invalid 가 아님을 실증하는 2-sided discrimination 의 negative 축.
+#       삭제 시 self-test 의 F3-precondition-empty-expr-absent 가 명시 FAIL 한다(CFP-2644 / ADR-145 Amd3).
 #   - paths filter 미사용 — PR body 검사라 변경 파일 경로 무관 (S2 동형).
 #
 # Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
