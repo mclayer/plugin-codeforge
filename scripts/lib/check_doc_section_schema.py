@@ -511,7 +511,7 @@ def check_section_8_9(md_path: Path, body: str) -> list:
         status_val = sm.group(1) if sm else None
         if status_val is not None and status_val not in DAST_STATUS_ENUM:
             fails.append(f"{md_path}: §8.9.1 status enum 위반 '{status_val}' — {sorted(DAST_STATUS_ENUM)} 중 하나 (AC-2b)")  # MUT-D-STATUS-ENUM
-        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:\s*(.+)", sub_body, re.MULTILINE)
+        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:[ \t]*(.*)$", sub_body, re.MULTILINE)
         reason_ok = bool(rm) and len(rm.group(1).strip()) >= 30
         if status_val == "infeasible" and not reason_ok:
             fails.append(f"{md_path}: §8.9.1 status=infeasible 이나 infeasibility_reason(30자 minimum) 부재 (AC-2b)")  # MUT-E-INFEAS-REASON
@@ -519,12 +519,12 @@ def check_section_8_9(md_path: Path, body: str) -> list:
         pm = re.search(r"^\s*[-*]?\s*payload_class:\s*(\S+)", sub_body, re.MULTILINE)
         payload_val = pm.group(1) if pm else None
         if payload_val in DAST_PAYLOAD_ACTIVE:
-            em = re.search(r"^\s*[-*]?\s*environment_ref:\s*(.+)", sub_body, re.MULTILINE)
+            em = re.search(r"^\s*[-*]?\s*environment_ref:[ \t]*(.*)$", sub_body, re.MULTILINE)
             env_val = em.group(1) if em else ""
             if not NONPROD_MARKER_RE.search(env_val):
                 fails.append(f"{md_path}: §8.9.1 payload_class={payload_val} 이나 environment_ref non-prod/ephemeral marker 부재 — blast-radius 미격리 (AC-6a)")  # MUT-F-ACTIVE-PROD
         # AC-6b — authenticated 정합(§3.4b): attack_surface authenticated ∧ auth_mode=unauthenticated ⟹ infeasibility_reason present.
-        asm = re.search(r"^\s*[-*]?\s*attack_surface:\s*(.+)", sub_body, re.MULTILINE)
+        asm = re.search(r"^\s*[-*]?\s*attack_surface:[ \t]*(.*)$", sub_body, re.MULTILINE)
         surface_val = asm.group(1).lower() if asm else ""
         am = re.search(r"^\s*[-*]?\s*auth_mode:\s*(\S+)", sub_body, re.MULTILINE)
         auth_val = am.group(1) if am else None
@@ -585,7 +585,7 @@ def check_section_8_10(md_path: Path, body: str) -> list:
         if status_val is not None and status_val not in DARK_PATH_STATUS_ENUM:
             fails.append(f"{md_path}: §8.10.1 status enum 위반 '{status_val}' — {sorted(DARK_PATH_STATUS_ENUM)} 중 하나 (AC-1a)")  # MUT-DARK-C-STATUS-ENUM
         # conditional infeasibility_reason(30자 minimum).
-        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:\s*(.+)", sub_body, re.MULTILINE)
+        rm = re.search(r"^\s*[-*]?\s*infeasibility_reason:[ \t]*(.*)$", sub_body, re.MULTILINE)
         reason_ok = bool(rm) and len(rm.group(1).strip()) >= 30
         # cross-field (a) activation-honesty(§3.5a): status=activated ⟹ activation_test_ref non-empty ∧ on_state_assertion substantive(≥15자).
         #   ★ 값 캡처 = `[ \t]*(.*)$` (same-line only) — `\s*` 는 개행을 삼켜 빈 값이 다음 줄 내용을 흡수함(false-fill 방지).
