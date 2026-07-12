@@ -254,6 +254,62 @@ else
 fi
 
 echo
+echo "── input-driven exhaustion 회귀 가드 (CFP-2635 FIX SF-1/DR-2635-1 — execution-backed) ──"
+
+# PERF-1 (end-to-end): 400k env-prefix 단일라인(1.5MB) 코퍼스 → tool wall < 5s.
+#   per-physical-line length cap(Fix1) + read islice(Fix3) 결합 가드 — 구판(per-line 미bound) O(n²)
+#   는 동일 입력에 >60s(timeout). exit 무관(truncate 후 || true 미도달) → 시간만 판정. firsthand ≈ 0.23s.
+perf_tmp=$(mktemp -d)
+mkdir -p "$perf_tmp/scripts"
+python3 - "$perf_tmp/scripts/test-perf-dos.sh" <<'PYEOF'
+import sys
+# 단일 물리라인 = FAIL 카운터 헤더(file_has_fail_counter=True 유도) + 400k env-prefix + `|| true`.
+open(sys.argv[1], "w", encoding="utf-8").write("FAIL=$((FAIL+1))\n" + "A=b " * 400000 + "cmd || true\n")
+PYEOF
+perf_e2e=$(python3 - "$SSOT_PY" "$perf_tmp" <<'PYEOF'
+import subprocess, sys, time
+py, root = sys.argv[1], sys.argv[2]
+t0 = time.perf_counter()
+try:
+    subprocess.run([sys.executable, py, "--repo-root", root],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+    print("%.3f" % (time.perf_counter() - t0))
+except subprocess.TimeoutExpired:
+    print("999.0")
+PYEOF
+)
+rm -rf "$perf_tmp"
+if awk "BEGIN{exit !($perf_e2e < 5.0)}"; then
+  echo "OK PASS: PERF-1 end-to-end 400k-line wall=${perf_e2e}s (<5s — O(n²) 회귀 차단)"
+  PASS=$((PASS+1))
+else
+  echo "X FAIL: PERF-1 end-to-end 400k-line wall=${perf_e2e}s (>=5s — length-cap 제거/O(n²) 회귀 의심)"
+  FAIL=$((FAIL+1))
+fi
+
+# PERF-2 (micro): _leading_token 직접 400k env-prefix 문자열 → O(n) 가드 (truncation 우회 = Fix2 독립 검증).
+#   offset-advance(index 전진) 회귀→slice-in-loop 시 1.6MB 입력 O(n²) ≈ 40s. firsthand O(n) ≈ 0.18s.
+perf_micro=$(python3 - "$SSOT_PY" <<'PYEOF'
+import importlib.util, sys, time
+spec = importlib.util.spec_from_file_location("m", sys.argv[1])
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+s = "A=b " * 400000 + "cmd"
+t0 = time.perf_counter()
+tok = m._leading_token(s)
+el = time.perf_counter() - t0
+assert tok == "cmd", "leading_token semantics broke: %r" % tok
+print("%.3f" % el)
+PYEOF
+)
+if awk "BEGIN{exit !($perf_micro < 2.0)}"; then
+  echo "OK PASS: PERF-2 _leading_token(400k-prefix) wall=${perf_micro}s (<2s — offset-advance O(n) 확증)"
+  PASS=$((PASS+1))
+else
+  echo "X FAIL: PERF-2 _leading_token wall=${perf_micro}s (>=2s — slice-in-loop O(n²) 회귀 의심)"
+  FAIL=$((FAIL+1))
+fi
+
+echo
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo " Test Summary"
 echo "═══════════════════════════════════════════════════════════════════════════"

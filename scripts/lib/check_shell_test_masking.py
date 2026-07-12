@@ -24,11 +24,19 @@ honesty ceiling (ADR-151 §결정7 상속 — Story §7.5):
   (G3/review/QADev discriminating-case 소관). "false-coverage 완전 봉인" hard-claim 금지 —
   presence/형식 천장. false-negative(먼 assert 를 둔 masking) = 라인-블록-국소 스캔 한계 (정직 인정).
 
-ReDoS-safety (SecurityArch — Story §7 / Change Plan §3.3):
+input-driven resource exhaustion safety (SecurityArch — Story §7 / Change Plan §3.3; CFP-2635 FIX SF-1):
   유일 보안-인접 vector = input-driven resource exhaustion (ReDoS = 한 subtype, DR-2635-1 명명 확장).
-  전 regex anchored + bounded quantifier(`\d+` 등, nested quantifier 0) + line-by-line(재구성 후)
-  + per-file scan cap. catastrophic backtracking 0 (scripts/lib/check_spawn_prompt_fact_verify.py
-  ReDoS-safe 답습 — DR-2635-3: 정확 파일명 = check_spawn_prompt_fact_verify.py, `orchestrator_` 접두 없음).
+  완화는 아래 4 축을 모두 bound 한다. (SF-1 이전 판은 regex-backtracking 축만 커버했고 algorithmic/
+  length 축은 미bound 여서 O(n²) DoS 가 실재했다 — 1.5MB 단일라인 >60s, firsthand 반증 후 정정.)
+    (1) regex backtracking : 전 regex anchored + bounded quantifier(`\d+`/`{0,N}`, nested quantifier 0).
+    (2) 물리라인 length    : MAX_PHYSICAL_LINE_LEN(8192) per-line truncate-scan — 라인-길이 의존
+                             경로(tokenize/regex)의 총 작업량을 bound (정당 shell 코드는 미도달).
+    (3) tokenize 복잡도    : _leading_token = offset-advance(index 전진, slice 재복사 0) = O(n)
+                             — slice-in-loop O(n²) 제거 (prior-art check_spawn_prompt_fact_verify.py
+                             index-advance 답습, DR-2635-3: `orchestrator_` 접두 없음).
+    (4) read-path         : itertools.islice(f, PER_FILE_SCAN_CAP) 로 라인 count bound + per-line truncate.
+  결과 = 총 작업량 <= PER_FILE_SCAN_CAP × MAX_PHYSICAL_LINE_LEN 로 유한 bound. catastrophic backtracking 0.
+  정직 천장: 본 완화는 CPU/메모리 총 작업량 bound 이지 "임의 입력 무해" 가 아님 (bounded degradation).
 
 CLI 계약 (ADR-061 house style — 고정, self-test + workflow 소비):
   bash scripts/check-shell-test-masking.sh [--repo-root DIR]
@@ -52,6 +60,7 @@ ADR refs: ADR-060 Amendment 22 (carrier, warning tier) / ADR-151 §결정7 (hone
 
 import argparse
 import glob
+import itertools
 import os
 import re
 import sys
@@ -62,10 +71,14 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-# ─────────────────────── ReDoS-safe bounded 상수 ────────────────────────────────
-# per-file 물리 라인 스캔 cap (unbounded scan 차단 — input-driven exhaustion 보호).
+# ─────────────────────── input-driven exhaustion bounded 상수 ───────────────────
+# per-file 물리 라인 스캔 cap (라인 count bound — unbounded 다행 scan 차단).
 # 코퍼스 최대 파일 ~600행 실측 → 5000 = 넉넉한 상한 (의도적 truncation 아님, DoS 가드).
 PER_FILE_SCAN_CAP = 5000
+# per-physical-line 길이 cap (라인 length bound — count cap 과 별개 축, CFP-2635 FIX SF-1/DR-2635-1).
+# 단일 물리라인이 arbitrary 길이일 때 라인-길이 의존 경로(tokenize/regex)의 총 작업량을 bound.
+# 코퍼스 실측 라인 최대 수백 자 → 8192 = 넉넉한 상한 (초과분 truncate-scan, 정당 코드는 미도달).
+MAX_PHYSICAL_LINE_LEN = 8192
 # 논리 라인 backslash-continuation join 상한 (병리적 continuation chain 방어).
 MAX_CONTINUATION_JOIN = 40
 # masking candidate → block-scope companion 전방 탐색 window (논리 라인 수, bounded).
@@ -214,17 +227,29 @@ def build_logical_lines(physical_lines):
 
 # ─────────────────────── 분류 predicate (named helper — §3.0 ModuleArch testability) ──
 
+# 선두 env-var 대입 prefix (`VAR=val `) — leading token 탐색 시 offset-advance 로 skip.
+_ENV_ASSIGN_PREFIX = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,60}=\S{0,80}\s+(?=\S)")
+_FIRST_TOKEN = re.compile(r"\S+")
+
+
 def _leading_token(text):
-    """논리 라인 선두 command token (env-prefix 대입 skip 후 첫 실 command)."""
+    """논리 라인 선두 command token (env-prefix 대입 skip 후 첫 실 command).
+
+    offset-advance(인덱스 전진)로 선두 env-var 대입(`VAR=val cmd`)을 skip — 문자열 재slice 0 → O(n).
+    (구판 slice-in-loop `t = t[m.end():]` = O(n²) input-driven DoS, CFP-2635 SF-1/DR-2635-1 —
+    prior-art check_spawn_prompt_fact_verify.py 의 index-advance 답습으로 제거. .match(t, pos) 는
+    pos 위치에 anchored 매치라 slice 와 semantically 동일하되 재복사 없음.)
+    """
     t = text.strip()
-    # 선두 env-var 대입 prefix (`VAR=val cmd`) 건너뛰고 실 command 토큰을 취함.
-    while True:
-        m = re.match(r"^[A-Za-z_][A-Za-z0-9_]{0,60}=\S{0,80}\s+(?=\S)", t)
+    pos = 0
+    n = len(t)
+    while pos < n:
+        m = _ENV_ASSIGN_PREFIX.match(t, pos)
         if not m:
             break
-        t = t[m.end():]
-    m = re.match(r"(\S+)", t)
-    return m.group(1) if m else ""
+        pos = m.end()
+    m = _FIRST_TOKEN.match(t, pos)
+    return m.group(0) if m else ""
 
 
 def _is_comment_line(text):
@@ -326,7 +351,16 @@ def scan_file(path, rel):
     """단일 파일 스캔 → (masking_findings, mockseam_findings). findings = (lineno, category, snippet)."""
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
-            physical = f.readlines()
+            # read-path bound (CFP-2635 SF-1/DR-2635-1 — input-driven exhaustion 완화):
+            #   라인 count = islice(PER_FILE_SCAN_CAP) → 병리적 다행 파일의 read/CPU 를 bound
+            #     (구판 readlines() 는 전체 로드 후 slice — cap 前 unbounded read).
+            #   라인 length = MAX_PHYSICAL_LINE_LEN truncate-scan → 단일 장문라인 총 작업량 bound.
+            #     초과분 truncate 후 라인경계 보존 위해 "\n" 재부착 (full_text join / logical-line 정합).
+            physical = []
+            for raw in itertools.islice(f, PER_FILE_SCAN_CAP):
+                if len(raw) > MAX_PHYSICAL_LINE_LEN:
+                    raw = raw[:MAX_PHYSICAL_LINE_LEN] + "\n"
+                physical.append(raw)
     except OSError:
         return [], []
 
