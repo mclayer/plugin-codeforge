@@ -157,3 +157,19 @@ G6 축 명칭 = **execution-liveness(게이트 실행-무결성)** 또는 **adeq
 ### Living Architecture 영향
 
 `architecture_doc_impact` = **governance CI 층 추가**(self-test execution-liveness 강제 채널). 상세 = Change Plan §10.A.
+
+## 관련 파일
+
+- **Story**: `<internal-docs>/wrapper/stories/CFP-2622.md` (§7 설계 서사 / §3 ADR-151 carrier 확정)
+- **Change Plan**: `<internal-docs>/wrapper/change-plans/cfp-2622-g6-selftest-execution-liveness-inventory.md` (파일 단위 배선 + 인벤토리 스키마 + §8 Test Contract full text)
+- **신규(Phase 2 구현 lane deliverable)**:
+  - `docs/selftest-execution-liveness-inventory.yaml` — 인벤토리 SSOT(35 레코드, 8-field 스키마 §결정 2)
+  - `scripts/lib/check_selftest_execution_liveness.py` — 메타-게이트 본체(정적 lint, fail-closed AC-1a/2/3/5/8/9)
+  - `scripts/check-selftest-execution-liveness.sh` — wrapper 진입점
+  - `tests/scripts/test_check-selftest-execution-liveness.sh` — 메타-게이트 재귀 L3 discriminating self-test(AC-9, green≠red mutation-kill)
+  - `.github/workflows/selftest-execution-liveness-test.yml` — 배선(wrapper-self-only `if: github.repository == 'mclayer/plugin-codeforge'`, non-required, day-1 hard-fail)
+- **backfill(Phase 2, bucket A 진성 hollow-gate)**: `tests/scripts/test-check-doc-section-8-7.sh` · `test-check-doc-section-8-8.sh` · `test-check-doc-section-8-9.sh` — required 게이트 `check-doc-section-schema.sh` 의 mutation-kill fixture, workflow 배선으로 `channel_status: dead → alive` 승격
+- **감사 대상(census, 무수정)**: `tests/scripts/*.sh`(35 self-test corpus) · `scripts/check-doc-section-schema.sh`(required context `doc section schema (CFP-28 — strict)` 진입점, self-test 번들 0 token)
+- **Phase 1(본 ADR 동반)**: `docs/architecture/codeforge-family.md`(data_flow + modules axis 1-node + Open Decisions G6 row) · `archive/adr/ADR-RESERVATION.md`(151 row)
+- **선례(exemplar 답습)**: `.github/workflows/actionlint-workflows-test.yml`(wrapper-self-only day-1 hard-fail "meta gate that verifies detection is alive") · `.github/workflows/ac-traceability-self-test.yml`(dedicated self-test workflow, ordering-invariant) · `tests/scripts/test-actionlint-workflows.sh`(N-class self-test 선례)
+- **형제 cross-ref**: ADR-136(execution-liveness 3요건 = 핵심 렌즈, 무수정) · ADR-146(G4 burden-flip) · ADR-148(G2 soak) · ADR-150(G5 DAST) · ADR-145(G1 AC traceability) · ADR-147(러너 인프라 disjoint 경계)
