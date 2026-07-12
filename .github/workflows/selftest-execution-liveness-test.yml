@@ -1,0 +1,70 @@
+name: selftest-execution-liveness-test
+# CFP-2622 (Epic CFP-2602 G6) / ADR-151 §결정5·§결정9 — self-test execution-liveness 메타-게이트 +
+#   bucket A(진성 hollow-gate) backfill 의 CI 실행 채널. wrapper-self 의 self-test corpus 를
+#   "선언(declared L3 fixture)"에서 "실제 CI 실행(channel alive)"으로 승격하는 forcing-function.
+#
+# 배경(ADR-151 컨텍스트): wrapper-self = 0-core 거버넌스 모노레포(런타임 앱 부재) — 여기서 "동적 테스트"의
+#   도메인 의미 = CI self-test corpus 가 결함을 실제로 죽이는지 실행하는 것. 35 self-test 중 12 가 어느
+#   workflow 에도 배선 안 돼(DEAD) L3 fixture 는 작성됐으나 실행 안 되는 상태였고, 그중 bucket A 3건
+#   (test-check-doc-section-8-7/-8-8/-8-9.sh)은 required 게이트 `doc section schema (CFP-28 — strict)`
+#   (check-doc-section-schema.sh)의 mutation-kill fixture 이면서 채널이 죽어 현존 hollow-gate 위험이었다.
+#   본 workflow 가 (1) 인벤토리 메타-게이트 (2) 메타-게이트 재귀 L3 self-test(AC-9) (3) bucket A 3 self-test
+#   를 실 CI 로 배선해 dead→alive 로 승격한다.
+#
+# wrapper-self-only (consumer red 회피 — actionlint-workflows-test.yml / ac-traceability-self-test.yml 선례):
+#   job-level `if: github.repository == 'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행
+#   (consumer 는 인벤토리/스크립트 부재 → job skip = inert). ADR-130 job-level `if:` graceful no-op 정합.
+#   NO path-filter(required permanent-pending 함정 회피) / NO job-level hashFiles(css-lint born-invalid 재발 금지).
+#
+# parity-safe (단방향 parity walk):
+#   본 workflow 는 .github/workflows/ 에만 존재하고 templates/github-workflows/ template copy 가 없다.
+#   invariant-check.yml Workflow parity step 은 templates/github-workflows/*.yml → .github/workflows/<base>.yml
+#   단방향만 walk 하므로 template copy 없는 wrapper-self-only workflow 는 자동 parity-safe
+#   (선례: actionlint-workflows-test.yml / ac-traceability-self-test.yml — 둘 다 template copy 없음).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-151 §결정5): 메타-게이트/self-test 실패 = job red.
+#   "detection 이 살아있음을 검증하는 메타 게이트" — hollow 로 새지 않도록 실패를 삼키지 않는다.
+# non-required (branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 신규 required context 0).
+#   실행·visible green 이면 execution-liveness 충족. L1 blocking 승격 = ADR-060 evidence-gate 별 carrier(defer).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  selftest-execution-liveness:
+    name: selftest-execution-liveness
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pyyaml (meta-gate imports yaml)
+        run: pip install pyyaml
+
+      - name: Run execution-liveness meta-gate (AC-1a/2/3/5/8/9 fail-closed lint)
+        run: bash scripts/check-selftest-execution-liveness.sh
+
+      - name: Run meta-gate recursive L3 self-test (AC-9 — discriminating, day-1 hard-fail)
+        run: bash tests/scripts/test_check-selftest-execution-liveness.sh
+
+      - name: Run bucket A backfill — §8.7 doc-section self-test (dead → alive)
+        run: bash tests/scripts/test-check-doc-section-8-7.sh
+
+      - name: Run bucket A backfill — §8.8 doc-section self-test (dead → alive)
+        run: bash tests/scripts/test-check-doc-section-8-8.sh
+
+      - name: Run bucket A backfill — §8.9 doc-section self-test (dead → alive)
+        run: bash tests/scripts/test-check-doc-section-8-9.sh

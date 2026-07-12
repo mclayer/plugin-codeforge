@@ -1,0 +1,366 @@
+# docs/selftest-execution-liveness-inventory.yaml
+# self-test execution-liveness 인벤토리 — single SSOT (per `tests/scripts/*.sh` 1 레코드)
+# Carrier: CFP-2622 (Epic CFP-2602 G6) / ADR-151
+# Meta-gate: scripts/check-selftest-execution-liveness.sh (→ scripts/lib/check_selftest_execution_liveness.py)
+# Wiring:    .github/workflows/selftest-execution-liveness-test.yml (wrapper-self-only, non-required, day-1 hard-fail)
+#
+# 목적: wrapper-self 의 self-test corpus 를 "선언(declared L3 fixture)"에서 "실제 CI 실행(channel alive)"으로
+#   승격한다. 전 `tests/scripts/*.sh` 를 enroll 해 신규 self-test 가 무레코드로 침묵 un-run 되는 root(silent-un-run)
+#   을 fail-closed 로 차단한다.
+#
+# 스키마 (ADR-151 §결정2 — 8-field/레코드):
+#   self_test              : 스크립트 경로(tests/scripts/*.sh, repo-root 상대).            [AC-1a]
+#   execution_channel      : workflow:<file>.yml:<job-id> | inline_self_test_flag:<file>.yml:<job-id>
+#                            | agent_runtime | manual_registered.                          [AC-2]
+#   channel_status         : alive | dead | permanently_skipped.                           [AC-3]
+#   blocking_tier          : required | non_required | warning_tier | manual (정직 기록만).
+#   discriminating_fixture : present | smoke_only | N/A (형식 presence 까지만 — 검출력=G3). [AC-4 미강제]
+#   l2_full_scope          : both_copies | single | N/A.                                    [AC-5]
+#   manual_reason          : ≥30자 substantive (agent_runtime/manual_registered 시 필수, else "").  [AC-2]
+#   g_boundary_check       : runtime 축(soak=G2 / DAST=G5 / real-render=§8.7) 무침범 확인 note.       [AC-8]
+#
+# 정직 천장 (ADR-151 §결정7): 메타-게이트는 presence/alive/형식/L2-presence/manual_reason substantive 까지만
+#   fail-closed. discriminating 검출력(G3)·열거 완결성(review)·L1 blocking 승격(ADR-060)은 미강제.
+#   "wrapper 동적검증 완전 봉인" hard-claim 금지 — 실행-채널 fail-closed + 선언→실행 갭 저감 + 잔여 정직 공개.
+#
+# 자연 N/A 3축 (ADR-151 §결정6): wrapper-self runtime 축 soak(G2)/real-render(§8.7)/DAST(G5) = plugin-meta-na
+#   (런타임 데몬/frontend/공격표면 산출물 부재). 억지 이식 = over-forcing → g_boundary_check 로 형제 축 참조.
+# l2_full_scope: 각 self-test 는 tests/scripts/ 단일 아티팩트(template copy 없음)로 1회 실행 → 실행 scope
+#   자연 N/A. workflow byte-identical parity 는 invariant-check.yml(Workflow parity step) 소관 = disjoint 축.
+#
+# census (execution-backed, origin/main 트리 실측 2026-07-12): 기존 35 `tests/scripts/*.sh` + 신규 1
+#   (test_check-selftest-execution-liveness.sh, AC-9 재귀 self-test) = 36 레코드. dead 레코드 0
+#   (silent-un-run 봉인 — bucket A backfill / bucket B agent_runtime / bucket C·D manual_registered 로 전수 enroll).
+
+self_tests:
+
+  # ── CI workflow 채널 (dedicated self-test/gate workflow, alive) ──────────────
+  - self_test: "tests/scripts/test-actionlint-workflows.sh"
+    execution_channel: "workflow:actionlint-workflows-test.yml:actionlint-workflows-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "정적 거버넌스 lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na)."
+
+  - self_test: "tests/scripts/test-css-lint.sh"
+    execution_channel: "workflow:css-lint.yml:css-lint-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "CSS stylelint 게이트 self-test — real-render(§8.7)/soak(G2)/DAST(G5) runtime 축 disjoint (정적 lint 계약 검증)."
+
+  - self_test: "tests/scripts/test_adr-reservation-atomic-claim.sh"
+    execution_channel: "workflow:adr-reservation-claim-test.yml:adr-reservation-claim-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "ADR-RESERVATION OCC claim self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 primitive 검증)."
+
+  - self_test: "tests/scripts/test_adr-reservation-backfill.sh"
+    execution_channel: "workflow:adr-reservation-claim-test.yml:adr-reservation-claim-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "reservation backfill self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 row 검증)."
+
+  - self_test: "tests/scripts/test_adr-reservation-claim-wiring.sh"
+    execution_channel: "workflow:adr-reservation-claim-test.yml:adr-reservation-claim-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "smoke_only"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "claim-wiring 배선 presence self-test(RED-PENDING scaffold) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test_adr-reservation-stale-reclaim.sh"
+    execution_channel: "workflow:adr-reservation-claim-test.yml:adr-reservation-claim-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "smoke_only"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "stale-reclaim SMOKE self-test(값 대조) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 primitive)."
+
+  - self_test: "tests/scripts/test_check-adr-uniqueness-3way.sh"
+    execution_channel: "workflow:adr-reservation-claim-test.yml:adr-reservation-claim-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "ADR dual-key 3-way uniqueness self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 lint)."
+
+  - self_test: "tests/scripts/test_aggregate-stop-event.sh"
+    execution_channel: "workflow:orchestrator-autonomy-stop-taxonomy-check.yml:orchestrator-autonomy-stop-taxonomy"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "stop-event 집계 self-test(distinct-marker JSON oracle) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test_check-tier-honesty.sh"
+    execution_channel: "workflow:orchestrator-autonomy-stop-taxonomy-check.yml:orchestrator-autonomy-stop-taxonomy"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "tier-honesty meta-lint self-test(RED/GREEN mutation oracle) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test_check-vague-pause-taxonomy-presence.sh"
+    execution_channel: "workflow:orchestrator-autonomy-stop-taxonomy-check.yml:orchestrator-autonomy-stop-taxonomy"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "vague-pause taxonomy presence self-test(RED=토큰 삭제) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test_check-subagent-wait-liveness-presence.sh"
+    execution_channel: "workflow:subagent-wait-liveness-check.yml:subagent-wait-liveness-presence"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "background-wait liveness presence lint self-test — 여기 liveness=orchestration-stall 축(ADR-139), soak=G2·DAST=G5·real-render=§8.7 disjoint."
+
+  - self_test: "tests/scripts/test_bootstrap-consumer-whitelist.sh"
+    execution_channel: "workflow:bootstrap-whitelist-test.yml:bootstrap-whitelist-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "bootstrap whitelist self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 copy-whitelist 검증)."
+
+  - self_test: "tests/scripts/test_check-ac-traceability-matrix.sh"
+    execution_channel: "workflow:ac-traceability-self-test.yml:ac-traceability-self-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "G1 AC-traceability 게이트 self-test — G1(요건 traceability) ⊥ G6(실행-liveness) disjoint, soak=G2·DAST=G5·real-render=§8.7 축도 disjoint."
+
+  - self_test: "tests/scripts/test_check-codex-companion-timeout-presence.sh"
+    execution_channel: "workflow:codex-companion-timeout-check.yml:codex-companion-timeout-presence"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "codex-companion wall-clock 가드 presence lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test_check-force-push-base-advance.sh"
+    execution_channel: "workflow:force-push-base-advance-check.yml:force-push-base-advance-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "force-push base-advance lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 git 상태 검증)."
+
+  - self_test: "tests/scripts/test_check-lexicon-drift.sh"
+    execution_channel: "workflow:lexicon-drift-check.yml:lexicon-drift-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "lexicon-drift lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 어휘 검증)."
+
+  - self_test: "tests/scripts/test_check-parallel-work-sentinel.sh"
+    execution_channel: "workflow:parallel-work-sentinel-check.yml:parallel-work-sentinel-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "parallel-work sentinel lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 sentinel 검증)."
+
+  - self_test: "tests/scripts/test_check-responsibility-marker-drift.sh"
+    execution_channel: "workflow:responsibility-marker-drift-check.yml:responsibility-marker-drift-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "responsibility-marker drift lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 marker 검증)."
+
+  - self_test: "tests/scripts/test_check-responsibility-topology.sh"
+    execution_channel: "workflow:responsibility-topology-check.yml:responsibility-topology-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "responsibility-topology lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 topology 검증)."
+
+  - self_test: "tests/scripts/test_check-venue-shape-fidelity-presence.sh"
+    execution_channel: "workflow:venue-shape-fidelity-presence-check.yml:venue-shape-fidelity-presence-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "venue-shape fidelity presence lint self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 §8 presence)."
+
+  - self_test: "tests/scripts/test_reconcile-overlay-workflow-channel.sh"
+    execution_channel: "workflow:reconcile-overlay-workflow-channel-test.yml:reconcile-workflow-channel-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "reconcile-overlay workflow channel self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 sync 채널 검증)."
+
+  - self_test: "tests/scripts/test_spawn_description_prefix.sh"
+    execution_channel: "workflow:spawn-description-prefix-detect.yml:spawn-description-prefix-detect"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "spawn description prefix self-test(distinct-marker JSON oracle) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  # ── inline_self_test_flag 채널 (subject 가 --self-test 로 inline 실행, alive) ──
+  - self_test: "tests/scripts/test_check-adr-cross-ref-consistency.sh"
+    execution_channel: "inline_self_test_flag:adr-cross-ref-consistency.yml:adr-cross-ref-consistency"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "ADR cross-ref consistency — subject check-adr-cross-ref-consistency.sh 가 workflow 에서 --self-test inline 실행. soak=G2·DAST=G5·real-render=§8.7 disjoint."
+
+  # ── bucket A 진성 hollow-gate backfill (신규 workflow 배선 → dead→alive 승격) ──
+  - self_test: "tests/scripts/test-check-doc-section-8-7.sh"
+    execution_channel: "workflow:selftest-execution-liveness-test.yml:selftest-execution-liveness"
+    channel_status: "alive"
+    blocking_tier: "required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "required 'doc section schema (CFP-28 — strict)' 게이트 §8.7 UI-render case mutation-kill fixture — 정적 doc lint, soak=G2·DAST=G5·real-render(§8.7 검사대상 자체) runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test-check-doc-section-8-8.sh"
+    execution_channel: "workflow:selftest-execution-liveness-test.yml:selftest-execution-liveness"
+    channel_status: "alive"
+    blocking_tier: "required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "required 'doc section schema (CFP-28 — strict)' 게이트 §8.8 G4-dynamic case mutation-kill fixture — 정적 doc lint, soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint."
+
+  - self_test: "tests/scripts/test-check-doc-section-8-9.sh"
+    execution_channel: "workflow:selftest-execution-liveness-test.yml:selftest-execution-liveness"
+    channel_status: "alive"
+    blocking_tier: "required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "required 'doc section schema (CFP-28 — strict)' 게이트 §8.9 G5-DAST case mutation-kill fixture — 정적 doc lint, soak=G2·DAST(§8.9 검사대상 자체)·real-render=§8.7 runtime 축 disjoint."
+
+  # ── 메타-게이트 재귀 L3 self-test (ADR-151 §결정9 / AC-9, alive) ──────────────
+  - self_test: "tests/scripts/test_check-selftest-execution-liveness.sh"
+    execution_channel: "workflow:selftest-execution-liveness-test.yml:selftest-execution-liveness"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "메타-게이트 재귀 L3 self-test(AC-9, self-exclude 금지) — 정적 lint, soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, template copy 없음)."
+
+  # ── bucket B agent_runtime (FIX/merge/review 시점 runtime 호출, CI 게이트 아님) ─
+  - self_test: "tests/scripts/test-check-fix-replay-disposition.sh"
+    execution_channel: "agent_runtime"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "check-fix-replay-disposition.sh 는 FIX loop 시점 agent/Orchestrator runtime 에서 fix-event-v1 contract(FIX ledger append) 경로로 호출되는 disposition helper — CI 게이트 아닌 runtime 검증. self-test 는 그 disposition 판정의 mutation-kill fixture."
+    g_boundary_check: "runtime disposition helper self-test — 지속-soak=G2·DAST=G5·real-render=§8.7 runtime 축 무침범 (agent-runtime 축이지 CI-soak 아님)."
+
+  - self_test: "tests/scripts/test-check-merge-gate-disposition.sh"
+    execution_channel: "agent_runtime"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "check-merge-gate-disposition.sh 는 PR merge 판정 시점 Orchestrator runtime(orchestrator-playbook merge 게이트 경로)에서 호출되는 disposition helper — CI 배선 아닌 runtime 축. self-test 는 merge disposition 판정의 discriminating fixture."
+    g_boundary_check: "runtime disposition helper self-test — 지속-soak=G2·DAST=G5·real-render=§8.7 runtime 축 무침범 (agent-runtime 축, CI-soak 아님)."
+
+  - self_test: "tests/scripts/test-check-mutation-disposition.sh"
+    execution_channel: "agent_runtime"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "check-mutation-disposition.sh 는 리뷰 시점 root-cause-decision·fix-ledger 스킬 경유 agent runtime 에서 호출되는 mutation-peer disposition helper — CI 게이트 아님. self-test 는 그 판정의 mutation-kill fixture."
+    g_boundary_check: "runtime mutation-peer disposition self-test — 지속-soak=G2·DAST=G5·real-render=§8.7 runtime 축 무침범 (agent-runtime 축, CI-soak 아님)."
+
+  # ── bucket C dead-path 존치 (live-machinery, ADR-141 dormant) ─────────────────
+  - self_test: "tests/scripts/test-check-stakes-tier-gating.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "check-stakes-tier-gating.sh = ADR-141(전 에이전트 opus 단일 tier) 이 명시한 dead-path 존치(live-machinery) — stakes-tier 머신은 보존되나 all-opus 하 dormant. self-test 는 dormant machinery 회귀 fixture 로 manual 등록(CI 재배선 대상 아님)."
+    g_boundary_check: "dormant live-machinery self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (stakes-tier machinery dormant, 정적 검증)."
+
+  # ── bucket D orphan / one-shot 잔재 / near-namesake (manual_registered) ───────
+  - self_test: "tests/scripts/test-check-lint-css.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "near-namesake orphan — subject check-lint-css.sh 부재. 실 CSS lint 게이트 = css-lint.yml + test-css-lint.sh(WIRED, 별도 레코드). 본 test 는 잔재로 존치, CI 재배선 대상 아님(AC-10 advisory 권고). 제거는 별도 cleanup Story(회귀 리스크)로 분리."
+    g_boundary_check: "near-namesake orphan self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A). AC-10 advisory."
+
+  - self_test: "tests/scripts/test-check-story-stakes-overlay.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "orphan — subject check-story-stakes-overlay.sh 광역 tree 실측 부재(stakes-tier 계열 잔재). CI 배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story(회귀 리스크)로 분리."
+    g_boundary_check: "orphan self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
+
+  - self_test: "tests/scripts/test_adr-path-dead-path-sweep.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "CFP-2519 one-shot dead-path sweep 잔재 — subject adr-path-dead-path-sweep.sh 부재(1-shot 마이그레이션 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
+    g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
+
+  - self_test: "tests/scripts/test_adr-sunset-criteria-pathagnostic.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "workflow-regression self-test — subject check-adr-sunset-criteria.sh 는 EXISTS(adr-sunset-criteria.yml 8-ref live)이나 어느 workflow 도 --self-test/inline self-test 로 배선하지 않음(실측). 본 test unwired → manual 등록(inline-cover 아님)."
+    g_boundary_check: "workflow-parity regression self-test(unwired) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (parity=invariant-check 소관, disjoint)."
+
+  - self_test: "tests/scripts/test_schema-lib-archive-adr-activation.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "CFP-2523 one-shot schema-lib archive-adr activation 잔재 — subject schema-lib-archive-adr-activation.sh 부재(1-shot 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
+    g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
