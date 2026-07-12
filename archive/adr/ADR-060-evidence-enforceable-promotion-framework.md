@@ -65,6 +65,13 @@ mechanical_enforcement_actions:
     status: warning               # ADR-060 §결정 5 첫 도입 = warning mode (continue-on-error). ADR-044 §3.4 정직 상한 (full falsifiability 불가 → blocking 승격 = false assurance). warning tier first per §결정 5
     progress_note: "CFP-2597 Amendment 21 carrier — ADR-044 Amendment 6 §결정 12 (check-verification-floor.sh 축③ peer-completion falsifiability) 의 warning-tier check 등록. owner_adr = ADR-044 (축③ 결정 SSOT), carrier_adr = ADR-060 (framework host). evidence-checks-registry.yaml peer-completion-falsifiability entry mirror. PASS verdict 이 review-verdict-v4 §19 peer_verdicts[] artifact-backed 완료 증거를 동반하도록 강제 (target FS 실재+non-empty 독립 stat, 자기단언 verify_status 불신). ★ check-lane-evidence.sh 축③ (deputy/role:dev fan-out, ADR-044 §결정 10 (d)) 와 별개 (이름만 동일, script·axis disjoint). 신규 §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate (pr_cumulative_min 20 / failure 0 / sibling merged) 상속. non-version-gated (anti-evasion). 실 script (scripts/check-verification-floor.sh 축③ logic) + workflow + discriminating test = sibling worker Phase 2 deliverable. Phase 1 governance-doc = ADR-044 Amendment 6 + review-verdict-v4 v4.16 + MANIFEST mirror + review-pl-base §3/§10 + orchestrator-playbook §3.10.1 + evidence-checks-registry entry. warning tier first per §결정 5"
     target_section: §결정 5       # 본 Amendment 21 = 신규 §결정 0 (framework 자연스러운 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속, owner_adr = ADR-044 Amendment 6
+  # Amendment 22 (CFP-2635, 2026-07-12 KST) — 20번째 warning-tier entry 등록 (shell-test-exit-masking-detect,
+  #   codeforge shell self-test 코퍼스의 `|| true` exit-masking + mock-seam-무assert false-coverage 정적 검출).
+  #   신규 §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속 (framework 자연 사용 사례, 신규 mechanism 0).
+  - action: shell-test-exit-masking-detect
+    status: warning               # ADR-060 §결정 5 첫 도입 = warning mode (continue-on-error). ADR-151 honesty ceiling 상속 (naive-masking 패턴 presence/형식 까지만 — 검출력 미강제, blocking 승격 = false assurance). warning tier first per §결정 5
+    progress_note: "CFP-2635 Amendment 22 carrier (원천 backlog #960) — codeforge 거버넌스 shell self-test 코퍼스(scripts/test-*.sh 33 + tests/scripts/*.sh 37 = 70 file [verified])의 (a) raw `cmd || true` exit-masking(cmd exit 이 유일 pass/fail 신호이고 하류 FAIL 카운터/assertion 부재 = 항상 PASS) + (b) mock-seam env export 후 동반 assertion 부재 = false-coverage 를 정적 lint 로 검출. ★ 정당 3종(§2.4)은 오탐 0 제외: (i) counter-backup `assert_* || true`(assert helper 가 FAIL 카운터 증가, set -e 중도종료 가드) / (ii) `((c++)) || true` 산술 idiom / (iii) production `cmd 2>/dev/null || true` best-effort 캡처. 핵심 정밀도 keystone = **logical-line 재구성**(backslash-continuation join) 후 leading-command-token 분류 — 다중행 `assert_grep_all ... \\ \"p1\" \\ \"p2\" || true`(test-cfp-2521-presence.sh:92-95 [verified])의 `|| true` 가 continuation 행에 위치해도 logical head token=`assert_grep_all` 로 정당 판정(naive line-grep 오탐 폭발 회피, ADR-119 자기모순 차단). bats 아님 — 원 #960 의 bats 프레이밍은 codeforge 오칭, 대상 재지정(shell 코퍼스). scope 밖: plugins/codeforge-test/**/*.bats 2 fixture(통합테스트 example-story, 거버넌스 코퍼스와 disjoint — RR-2635-1) + tests/scripts/ Python/JS. Phase 2 = scripts/lib/check_shell_test_masking.py (Python SSOT, ADR-061 §결정 1 offline/read-only/argparse/pathlib, ReDoS-safe anchored 리터럴+\\d+ line-by-line) + scripts/check-shell-test-masking.sh (thin wrapper) + .github+templates/github-workflows/shell-test-exit-masking-detect.yml (byte-identical pair ADR-005, pull_request NOT pull_request_target + permissions contents:read) + tests/scripts/test_check-shell-test-masking.sh (discriminating fixture — masking TC RED→검출 / 정당 3종 GREEN→미검출, mutation-kill: 제외 로직 제거 시 정당 RED / 검출 로직 제거 시 masking RED) + docs/selftest-execution-liveness-inventory.yaml 레코드 append(ADR-151 AC-1a bijection 강제, discriminating_fixture:present) + registry row append + hotfix-bypass:shell-test-exit-masking-detect label(label-registry-v2). owner_adr = ADR-060 (framework host = enforcement source) / honesty ceiling source = ADR-151 §결정7. prior art 답습: check_selftest_execution_liveness.py(house style + helper decomposition) + check_spawn_prompt_fact_verify.py(ReDoS-safe line-by-line) + subagent-wait-liveness-presence(byte-identical workflow + execution-backed self-test + spec_invariant_measurement_required:false). 신규 발명 0. removed orphan bats-red-green-proof-presence(2026-06-10 de-bloat, workflow 부재 dead gate) 재발 차단 = 대상 실코퍼스 + live workflow pair + inventory enroll + self-test 발화 실증. warning tier first per §결정 5"
+    target_section: §결정 5       # 본 Amendment 22 = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속, owner_adr = ADR-060, honesty-ceiling source = ADR-151 §결정7
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -936,6 +943,81 @@ amendment_log:
       (ADR-058 §결정 5 sunset_justification 의무 = is_transitional:false 영구
       framework trigger 미해당 — 강화 방향 amendment). 기존 §결정 5/6 본문
       의미 변경 0건.
+  - amendment: 22
+    carrier_story: CFP-2635
+    date: 2026-07-12
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 미해당. 본 Amendment 22 = 강화 방향 (20번째 warning-tier entry shell-test-exit-masking-detect 등록, framework entry count 19 → 20 ratchet-UP). 약화 영역 0건 (enum 값/tier 제거 없음, 신규 §결정 0 = §결정 5/6 절차 상속, 기존 본문 의미 변경 0).
+    summary: |
+      20번째 warning-tier entry `shell-test-exit-masking-detect` 등록 carrier
+      amendment (원천 backlog #960) — codeforge 거버넌스 shell self-test 코퍼스
+      (`scripts/test-*.sh` 33 + `tests/scripts/*.sh` 37 = 70 file [verified])의
+      false-coverage 2종을 정적 lint 로 검출: (a) raw `cmd || true` exit-masking
+      (cmd exit 이 유일 pass/fail 신호이고 하류 FAIL 카운터/assertion 부재 = 항상
+      PASS) + (b) mock-seam env export 후 동반 assertion 부재. 신규 §결정 0 —
+      §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate (pr_cumulative_min 20
+      / failure_threshold 0 / sibling merged) 상속. 신규 mechanism 0 (기존 5-piece
+      chain 재사용) → A2-5 판정: Amendment prong 채택 / 신규-ADR prong 기각
+      (ADR-151 §결정1 verbatim 구조 역적용 — 신규 ADR 은 corpus-wide 인벤토리
+      메타-게이트라는 신규 mechanism 도입 시, 본 건은 framework 자연 사용 사례
+      entry 추가라 신규 mechanism 0 → Amendment). ADR 번호 충돌 회피
+      (병렬 세션 CFP-2602/2628 ADR 활발 신설, max=152) 부수 효과.
+
+      owner_adr = ADR-060 (framework host = enforcement source). honesty-ceiling
+      source = ADR-151 §결정7 상속 — 본 게이트는 **naive/구조적 masking 패턴만**
+      검출 (bare `|| true` on raw command + mock-seam-export-무-in-scope-companion-assert).
+      검출력(surviving test 가 실제 mutation 을 죽이는가)은 **미강제**(G3/review/QADev
+      discriminating-case 소관). "false-coverage 완전 봉인" hard-claim 금지 — presence/형식
+      천장. ADR-151 selftest-execution-liveness 인벤토리 등재(discriminating_fixture:
+      present / blocking_tier: warning_tier 정직 기록).
+
+      ★ 1급 정밀도 요건 (anti-hollow-gate) — 정당 `|| true` 3종(§2.4) 오탐 0 제외:
+      (i) counter-backup `assert_* || true`(assert helper 가 `FAIL=$((FAIL+1))` 증가,
+      `set -euo pipefail` 중도종료 가드, 종료 `[ $FAIL -eq 0 ]`) / (ii) `((c++)) || true`
+      산술 idiom / (iii) production `cmd 2>/dev/null || true` best-effort 값 캡처
+      (enforcement 신호 아님). 정밀도 keystone = **logical-line 재구성**(backslash
+      continuation join) 후 leading-command-token 분류 — 다중행
+      `assert_grep_all "$F" "name" \ "p1" \ "p2" || true`
+      (test-cfp-2521-presence.sh:92-95 [verified])의 `|| true` 가 continuation 행에
+      있어도 logical head token=`assert_grep_all`(assert-family) 로 정당 판정.
+      naive line-grep 은 `"direction: strengthening" || true` 를 masking 오탐 →
+      코퍼스 149행 `|| true` 대부분 오탐 폭발 → lint 자체가 hollow/noisy gate
+      (자기모순, ADR-119 위반). 재구성이 이를 원천 차단. + branch-guard
+      (`if cmd || true; then`) / heredoc·comment literal 제외.
+
+      대상 재지정 (원 #960 오칭 정정): codeforge 는 bats 미사용 — 원 제안의
+      "bats masking lint"를 문자대로 구현 시 대상 프레임워크 부재 dead gate
+      (removed orphan `bats-red-green-proof-presence` 2026-06-10 de-bloat 재발).
+      대상 = codeforge 실 shell 코퍼스. scope 밖: `plugins/codeforge-test/**/*.bats`
+      2 fixture(통합테스트 example-story baseline, 거버넌스 코퍼스와 disjoint —
+      RR-2635-1) + tests/scripts/ Python/JS.
+
+      Phase 1 (본 PR) = ADR-060 Amendment 22 + Change Plan
+      (internal-docs `wrapper/change-plans/cfp-2635-shell-test-exit-masking-detect.md`)
+      + Story §3/§7. Phase 2 = scripts/lib/check_shell_test_masking.py (Python SSOT,
+      ADR-061 §결정 1 offline/read-only/argparse/pathlib, ReDoS-safe anchored
+      리터럴+\d+ line-by-line) + scripts/check-shell-test-masking.sh (thin wrapper)
+      + .github+templates/github-workflows/shell-test-exit-masking-detect.yml
+      (byte-identical pair ADR-005, injection-safe pull_request + permissions
+      contents:read) + tests/scripts/test_check-shell-test-masking.sh (discriminating
+      fixture RED→GREEN — masking TC 검출 / 정당 3종 미검출 / mutation-kill) +
+      docs/selftest-execution-liveness-inventory.yaml 레코드 append(ADR-151 AC-1a
+      bijection) + registry row append + hotfix-bypass:shell-test-exit-masking-detect
+      label(label-registry-v2 MINOR). Layer 1(thin) = DeveloperPLAgent packet mandate
+      (raw `|| true` 금지 + mock-seam export 시 동반 assertion 의무). Layer 3 =
+      QADeveloperAgent discriminating-case 이미 존재(obviated).
+
+      prior art 답습: check_selftest_execution_liveness.py(house style + helper
+      decomposition) + check_spawn_prompt_fact_verify.py(ReDoS-safe
+      line-by-line scan) + subagent-wait-liveness-presence(byte-identical workflow
+      + execution-backed self-test + spec_invariant_measurement_required:false).
+      신규 발명 0.
+
+      ratchet 위반 0건 — framework 자연스러운 사용 사례 entry 추가 only
+      (ADR-058 §결정 5 sunset_justification 의무 = is_transitional:false 영구
+      framework trigger 미해당 — 강화 방향 amendment). 기존 §결정 5/6 본문
+      의미 변경 0건. plugin.json bump + marketplace sync = Phase 2 PR scope
+      (ArchitectAgent Phase 2 판단, ADR-063).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)

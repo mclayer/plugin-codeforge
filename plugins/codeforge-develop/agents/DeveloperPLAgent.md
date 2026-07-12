@@ -271,6 +271,14 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 - doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음).
 - dev 반환 보고의 hygiene 이행 declaration(재사용 탐색 수행 여부 1줄)을 수집 — 기존 구현리뷰 dup-local/dup-boundary P1 이 사후 falsify (contract field 신설 아님 — develop-output-v1 무영향, ADR-140 §결정 6).
 
+## 테스트 작성-시점 exit-masking / mock-seam 금지 packet 주입 (ADR-060 Amendment 22 / CFP-2635)
+
+Layer 1 (thin) — role:dev / QADev spawn prompt 에 아래 2항 anchor 를 포함. shell self-test 작성 시점에 false-coverage 를 애초에 유입하지 않게 하는 예방층 (Layer 2 = `shell-test-exit-masking-detect` warning-tier 정적 lint 이 사후 검출).
+
+- **raw `cmd || true` exit-masking 금지**: shell test 라인에서 cmd exit 가 유일 pass/fail 신호이고 하류 카운터/assertion 이 없는 bare `raw_cmd || true` = 항상 PASS false-coverage. 정당 예외 = counter-backup(`assert_*`/`test_*`/`run_*` 접두 또는 파일-정의 helper + `FAIL=$((FAIL+1))` 카운터) / arithmetic `((..)) || true` / redirect-capture(`2>/dev/null`·`VAR=$(...)`) / branch-guard(`if cmd || true; then`). 그 외는 근접 assertion 을 동반한다.
+- **mock-seam env export 시 동반 assertion 의무**: mock seam env(`_*MOCK*=`) 를 export 한 뒤 동일 block scope 에 동반 assertion(assert helper / FAIL-gating `grep -q` / stdout sentinel)이 없으면 enforcement 0 false-coverage — seam 주입 후 반드시 그 mock 경로 동작을 검증하는 assertion 을 동반한다.
+- honesty ceiling(ADR-151 §결정7): Layer 2 lint 은 naive/구조적 패턴만 검출하고 검출력(먼 assert masking)은 미강제 — Layer 1 예방 + 구현리뷰 discriminating-case 가 함께 봉인. bypass = `hotfix-bypass:shell-test-exit-masking-detect` + audit comment (warning tier, PR 미차단).
+
 ## 컨텍스트 경계 규약 (ADR-044 §결정 11 — thin-PL READ/COMPUTE boundary)
 
 본 규약은 ADR-044 §결정 11 의 **prompt-mandate (behavioral)** 실현이다 — permission-enforced Read-deny 가 아니다.
