@@ -49,6 +49,8 @@ Accepted (2026-07-11 KST) — CFP-2603 (Epic CFP-2602 G1) carrier. 사용자 요
 > (3) **6→7 등록 재정산 (ground-truth 정직)** — 등록 대상 workflow 자신이 born-invalid 였으므로 §결정3/§결정9(H) ordering invariant("workflow valid ∧ self-test green ∧ own-PR green ∧ genuine 비적용 canary surfacing+PASS THEN 등록")가 **구조적으로 미충족 상태**였다(own-PR green = born-invalid 상 불가). Amd3 은 born-validity 복구 + ordering invariant **재진입**만 declare 하며 **live=7-tuple 완결을 선언하지 않는다** — 6→7 완결은 Phase 2 정정 merge 후 genuine 비적용 canary(no story_uri + `ac_applicability: none — <사유>`) 실 PR surfacing+PASS 실측 이후로 gated(HELD 유지, ADR-119 verify-before-trust — Amendment 1/2 premature-declaration 교훈 재범 금지). canary 미충족 시 등록 계속 defer(#2632 트랙 계승).
 > **A2-5 판정 (Amendment vs 신규 ADR) = Amendment 3 (ADR-145 무supersede)**: new-ADR prong 기각 — Epic CFP-2602 "게이트 G당 1 신규 ADR"은 신규 게이트 G(G1=145/…/G6=151)에만 적용, CFP-2644 는 신규 G 0(기존 G1 regression fix + ADR-136 결정14 N-class 실행). prevention 은 결정14 authorized-execution 이라 ADR-136 amend 조차 불요(§결정8/§결정9 A2-5 구조 답습). ratchet↑ 방향(born-validity 복구 + prevention 추가), 약화 surface 0. **§결정1-9 무supersede·무rewrite**(append-only — 상태전이 declare + prevention cross-ref 만).
 
+**Amendment 4** (2026-07-13 KST, CFP-2653 — #2649 carrier, CFP-2644 follow-up): **§결정 10** 신설 — (1) **§5 AC-표 authoring forcing function**: 게이트 core(`classify_ac_source`)가 §5 에서 `id`/`source`/`tier` header signature 표를 요구하나 요구사항 lane authoring 이 불균일 생성(최근 9 story 표본 6 present / 4 missing ~40% — 산문 `AC-\d+` 만 기재 시 `has_ac_surface_claim ∧ ¬has_sig` → `APPLIC_UNDECIDABLE` → FAIL) → **3-layer forcing** 확정: (i) **prevention** = 요구사항 lane authoring 표준(RequirementsAnalyst/RequirementsPL instruction 이 gate-parseable `| id | source | tier | statement |` 표 emit + `templates/story-page-structure.md` §5.3 copy-ready empty-row scaffold, poka-yoke) (ii) **enforcement** = 기존 ac-traceability 게이트(§5 표 부재→FAIL 이 곧 §5-compliance 강제, required 등록이 그 teeth) (iii) **discrimination** = 기존 self-test(`ac-traceability-self-test.yml` — F-APPLIC-DEGRADED/F-AC7-a/F-APPLIC-DEGRADED-NOTOKEN + Mutation E/F/NOTOKEN + pytest `test_requirements_output_itemized_not_count`)가 이미 표-부재→FAIL/표-present→PASS 를 mutation-kill 실증. **신규 standalone lint 0**(§4.2 중복 회피 — 기존 게이트가 이미 §5 표 검사). (2) **6→7 등록 ordering invariant 확장**: §결정8(G)/§결정9(H)/Amd3 의 4-conjunct("workflow valid ∧ self-test green ∧ own-PR green ∧ genuine 비적용 canary PASS")에 **(5) applicable+§5-표-present canary PASS** + **(6) 4번째 hidden blocker 표본 점검**(최근 merged §5-present real story 를 full-gate(Hop1+2+3) 실행해 §5-authoring 아닌 다른 축(Hop2 AC↔§8 coverage 등)이 FAIL 하는지) + **(7) no-open-both-absent PR 실측** append. 근거 = 비적용 canary PASS ≠ 등록 안전(CFP-2609 story_uri / CFP-2642 born-invalid / CFP-2644 §5-parseability 3연속 defer 교훈). **live=7-tuple 완결 미선언**(premature-declaration 재범 금지, ADR-119). ratchet↑ 방향(authoring 예방 추가 + 등록 안전 conjunct 추가), 약화 surface 0. **§결정1-9 무supersede·무rewrite**(append-only).
+
 ## 컨텍스트
 
 사용자 원문(Story §1 verbatim): mctrader 개발 중 "5분/1시간 compactor" 요건을 세 번 주장했으나 반영되지 못함. 3-angle forensic 실측 결과 = 요건이 lane 경계를 넘으며 증발(Gap A). 실측된 증발 지점:
@@ -230,6 +232,55 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 
 **불변 무손상**: fail-closed 핵심(적용-미추적=FAIL, §결정4 AC-7) + F1 wrapper-self repo-guard + F-AC7-a 빈-AC FAIL + presence/mapping 천장(§결정1) + `AC_ID_RE` sub-letter(§결정4) + 적용성 verdict core 단일소유(§결정8 D) + I-APPLIC anti-degradation(판정불가≠비적용, §결정8 C/F) 전부 무손상. 본 Amendment = story_uri-absent scope 정정(false-red 제거) + 신설 residual 명시 disclose 이지 검출력 silent 약화 아님(evidence-gated ratchet↑).
 
+### 결정 10 — §5 AC-표 authoring forcing function (prevention 예방층) + 6→7 등록 ordering invariant 확장 (Amendment 4, CFP-2653)
+
+**배경 (firsthand origin/main 5b61e43d 실측 + 게이트 core + self-test)**: §결정6 이 §5.2 `id/statement/source/tier` signature 를 정의하고 core `_scan_ac_table`/`classify_ac_source` 가 header `id`(or `ac`/`ac-id`) + `source` + `tier` 표를 요구한다. 그러나 이 요구는 **게이트 검출(verification-time) 단**에만 존재했다 — 요구사항 lane §5 authoring 이 표를 생성할 **작성-시점(authoring-time) 예방**은 부재. 실측: 최근 9 story 표본 PARSEABLE 6(CFP-2646/2636/2609/2634/2624/2603) / MISSING 4(CFP-2635/2590/2599/**2644**), ~40% 미준수. 핵심 = **파서 strictness 아님**(`ac-id` 등 수용) — authoring 이 산문 `AC-\d+` 만 쓰고 signature 표를 안 만들면 `has_ac_surface_claim=True ∧ has_sig=False` → `APPLIC_UNDECIDABLE` → FAIL(anti-degradation). CFP-2644 자기 §5 가 이 MISSING class → #2647 matrix FAIL → 등록 3번째 defer 사유. [verified: `check_ac_traceability_matrix.py` L295-334 classify_ac_source / L242-276 _scan_ac_table, origin/main 5b61e43d]
+
+**A2-5 판정 (Amendment vs 신규 ADR — §결정8/9 A2-5 구조 답습, 양 prong 반증) = Amendment 4 (ADR-145 무supersede)**:
+- **Amendment prong = 채택**: 신규 mechanism 0 — 신규 workflow 0(기존 `ac-traceability-matrix.yml` enforcement + `ac-traceability-self-test.yml` discrimination 재사용), 신규 required context 0(§결정3/8/9 이 이미 선언한 동일 6→7), 신규 게이트/카테고리 0, 신규 계약 schema 0(§5.2 AC signature·`AC_ID_RE`·requirements-output-v1 v1.2 재사용 — authoring 표준은 agent instruction/template 표면, 계약 필드 아님), 신규 lint 0(§4.2 중복 회피 — 기존 게이트가 이미 §5 표 부재 차단). forcing function = 기존 G1 authoring 규약(§5.2)의 **작성-시점 예방 정련** + 기존 등록 완결.
+- **신규 ADR prong = 기각**: Epic CFP-2602 "게이트 G당 1 신규 ADR"은 신규 게이트 G(G1=145/…/G6=151)에만 적용. CFP-2653 = G1(ADR-145) 자신의 authoring-side 정련 + 등록 완결 carrier, 신규 게이트 0 → 새 G 슬롯 아님. ADR-133 atomic-claim 신규 번호 소요 0.
+
+**(A) forcing function = 3-layer (요구리뷰 tension 해소 — testable-lint 압력 ⋂ §4.2 중복-lint-지양)**:
+- **tension**: AC-3(discriminating mutation-kill) + 등록 own-PR Hop3-green 이 메커니즘을 testable lint 쪽으로 밀고, §4.2 는 "standalone lint 지양"(ac-traceability 게이트가 이미 §5 표 검사 → 중복)을 요구. 해소 = **역할 분리**:
+  - **(i) prevention(예방, authoring-time)** = soft·non-blocking authoring 표준. 강제력 한계 인정(agent 무시 가능 = necessary-but-insufficient) — 표를 만들게 유도하나 봉인하지 않는다.
+  - **(ii) enforcement(기계 teeth, verification-time)** = **기존 ac-traceability 게이트**. §5 표 부재→FAIL 이 곧 §5-compliance 강제이며, **required 등록(6→7)이 그 teeth 를 활성화**. 신규 lint = 기존 게이트와 2 divergent mechanism drift → 기각(§4.2).
+  - **(iii) discrimination(born-hollow 봉인)** = **기존 self-test 재사용**. AC-3 의 4 비준수 변이 + 준수 대조 = 이미 존재하는 fixture 로 mutation-kill 실증:
+
+    | AC-3 변이 | 기존 fixture | 봉인 mutation |
+    |---|---|---|
+    | 표 부재(산문 AC only) | F-APPLIC-DEGRADED (`mk_ac_source_degtoken`) | Mutation E(`if has_ac_surface_claim:`→`if False`) |
+    | 헤더 파손(source/tier 컬럼 rename) | F-APPLIC-DEGRADED 경유(has_sig=False→UNDECIDABLE) | Mutation E |
+    | 헤더-only 빈 표(0 rows) | F-AC7-a (`mk_ac_source_empty`) | Mutation C/F |
+    | 헤더 present + ID 손상(AC-ID 토큰 부재) | F-APPLIC-DEGRADED-NOTOKEN (`mk_ac_source_notoken`) | Mutation NOTOKEN(`if has_sig:`→`if False`) |
+    | 준수 대조군(표 present) | F-AC4-GREEN / F-PHASE1-RTM-NOTYET / pytest `test_requirements_output_itemized_not_count` GREEN 절 | — |
+
+  - [verified: `tests/scripts/test_check-ac-traceability-matrix.sh` L304-316/L193-197 + Mutation E/F/NOTOKEN L438-468 + `test_ac_traceability_matrix.py` L125-134, origin/main]
+- ∴ **신규 discriminating machinery 0** — forcing function 의 discriminating 성질 = ac-traceability 게이트 자신의 discriminating 성질(이미 mutation-kill 실증). AC-3 "testable" 는 **test(기존 self-test)** 로 충족되지 standalone **lint** 신설로가 아니다 — tension 해소.
+
+**(B) prevention 착지점 (authoring 표준, Phase 2 구현)**:
+- `plugins/codeforge-requirements/agents/RequirementsAnalystAgent.md`: 산문 `AC-N` bullet 출력형식(현 L79-80)을 gate-parseable `| id | source | tier | statement |` header 표 exemplar 로 격상 강제.
+- `plugins/codeforge-requirements/agents/RequirementsPLAgent.md`: §5 synthesis 규약에 "Story §5.3 에 게이트 header signature 표 직접 write" 추가(구조화 계약 field ≠ §5 markdown 표 갭 해소).
+- `templates/story-page-structure.md` §5.3: copy-ready empty-row 표 skeleton(header + separator + 빈 row) 선주입(scaffold poka-yoke — §6 C6 "섹션이 노려보면 빠뜨릴 수 없다"). authoring 축은 lint 아닌 지시/템플릿이라 **repo-agnostic** — wrapper-self coverage 공백(wrapper-local `docs/stories` 부재, 게이트는 cross-repo internal-docs §5 fetch) 없음(축 B lint 의 wrapper-self 사각을 회피하는 결정적 이유).
+
+**(C) born-hollow 정직 천장 상속 (ADR-006 Amd2 L266 isomorphic + §결정1 천장)**:
+- forcing function 은 **§5 표 structural presence** 까지만 강제한다. 각 row 의 AC 실질 완전성(사용자 의도 충실 분해)·tier 배정 정직성은 강제하지 않는다 — RO-1(§1↔§5 완결성 + tier 배정, §결정2/§5.6) + 설계리뷰 인적 판단 잔여. "표를 만들면 AC 가 완전하다" hard-claim 금지(Goodhart/rubber-stamping 회피, §6 C7). no-optout(§결정4 AC-7) 상속 — §5 표 skip-toggle 신설 금지.
+
+**(D) 6→7 등록 ordering invariant 확장 (§결정8(G)/§결정9(H)/Amd3 4-conjunct → 7-condition)**:
+- 3연속 defer 교훈(CFP-2609 story_uri / CFP-2642 born-invalid / CFP-2644 §5-parseability) = **매번 "3 review lane PASS + self-test green + 비적용 canary" 뒤에도 실 PR canary/실측이 새 결함 포착**. 비적용 canary PASS **≠** 등록 안전. ∴ 등록 前 전수 충족:
+  1. workflow valid (Amd3 born-validity 복구 — 등록 시점 재실측)
+  2. self-test suite green (`ac-traceability-self-test.yml` — .sh + pytest×3)
+  3. own-PR green (등록 carrier Story Phase-2 PR 이 게이트 Hop1+Hop2+Hop3 통과)
+  4. **genuine 비적용 canary** (no story_uri + `ac_applicability: none — <사유>`) 실 PR surfacing + PASS
+  5. **(신규) applicable + §5-표-present canary** 실 PR surfacing + PASS — 비적용 canary 로 대체 불가(정의역 안 경로 별도 실증, AC-5/AC-10)
+  6. **(신규) 4번째 hidden blocker 표본 점검** — 최근 merged §5-present real story N개를 authoritative RTM(wrapper=Change Plan §8 / consumer=Story §8) + tests-root 로 `--phase 2` full-gate 실행 → §5-authoring 아닌 다른 축(Hop2 AC↔§8 coverage / Hop3 born-missing)이 FAIL 하면 등록 시 legit PR churn → 그 blocker 로 defer(AC-9). 표본(비-exhaustive, disclosed) + forward-only/grandfather(§결정8 C — 기머지 PR 소급 재검증 아님)라 무한소급 아님.
+  7. **(신규) no-open-both-absent 실측** — required 후 story_uri 도 none 마커도 없는 열린 PR 은 both_absent FAIL → merge 불가. 등록 前 repo 전체 열린 PR 이 최소 1 마커 보유 실측(AC-6). 미보유 열린 PR 존재 시 등록 defer 또는 마커 backfill 선행.
+- 등록 실행 = human/Orchestrator gh api POST `/branches/main/protection/required_status_checks/contexts` append(6 무손상) → 즉시 GET == 정확히 7-tuple(AC-8). forged machine-test/self-register 금지(§결정9(H) 상속, AC-7). rollback-ready 6-tuple 스냅샷 선캡처.
+
+**(E) premature-declaration 금지 (ADR-119 verify-before-trust, 3연속 교훈)**:
+- 본 Amendment(설계)는 **live=7-tuple 완결을 선언하지 않는다**. 등록은 Phase 2 post-merge, 위 7-condition 전수 실측 gated. 1+ 미충족 시 등록 계속 defer(#2649/#2632 트랙 계승). doc(CLAUDE.md 7-tuple doc-ahead) 유지 — live 승격 시점에 parity.
+
+**불변 무손상**: fail-closed 핵심(적용-미추적=FAIL, §결정4 AC-7) + F1 repo-guard + F-AC7-a 빈-AC FAIL + presence/mapping 천장(§결정1) + `AC_ID_RE` sub-letter + 적용성 verdict core 단일소유(§결정8 D) + I-APPLIC anti-degradation + non-suppressible conditional(§결정9 D) + **게이트 parser/core 무변경** 전부 무손상. gate parser 완화(산문 AC 수용) = **명시 배제**(OOS — signature 표 요구 = G1 traceability 본질, 완화 = born-hollow 재개). 본 Amendment = authoring 예방층 추가 + 등록 안전 conjunct 추가이지 검출력 약화 0(evidence-gated ratchet↑).
+
 ## 대안 (기각 근거)
 
 - **계약 count 제거 → AC-list (MAJOR v2.0)**: 새 ADR + 양-plugin bump + migration 필요 = double-ADR + 파괴적. → 기각, additive MINOR(count 보존, §결정 6) 채택.
@@ -263,12 +314,22 @@ AC 에 lane 경계를 넘어 안정적인 식별자(AC-ID)를 부여하고, `AC-
 - **신규 injection 가드**: 저자 free-text 사유 → env-var 전달(JS-confined 파싱), `${{ }}`→`run:` 보간 금지(shell script injection 봉인).
 - **born-hollow 봉인 유지**: none-경로 verdict = core Python 결정라인(Option B) → mutation-kill 3종(none-무사유→FAIL / none-위장→FAIL / 둘다부재→FAIL, 각 distinct guard) + 비적용→PASS reachability + genuine canary 로 merge-precondition 강제(CFP-2530/2535 계보).
 
+### Amendment 4 결과 (CFP-2653)
+
+- **§5 authoring-time 예방 확립**: 게이트 검출(verification-time)에만 있던 §5 표 요구를 요구사항 lane 작성-시점 예방(authoring 표준 + 템플릿 scaffold)으로 shift-left — ~40% §5 MISSING(prose-only→UNDECIDABLE FAIL) class 저감. 3-layer(prevention soft / enforcement 기존 게이트 / discrimination 기존 self-test) = 신규 lint/게이트/스키마/계약 0.
+- **요구리뷰 tension 해소**: AC-3 discriminating + own-PR Hop3-green 이 밀던 testable-lint 압력을 **기존 self-test(test) 재사용**으로 흡수 — standalone lint 중복(§4.2) 회피. forcing 의 discriminating 성질 = ac-traceability 게이트 자신의 mutation-kill 실증(F-APPLIC-DEGRADED/F-AC7-a/F-APPLIC-DEGRADED-NOTOKEN + Mutation E/F/NOTOKEN) 재사용.
+- **등록 ordering invariant 확장(4→7 condition)**: 비적용 canary PASS ≠ 등록 안전(3연속 defer 교훈)을 **applicable-§5 canary + 4번째 blocker 표본 + no-open-both-absent** conjunct 로 codify. live=7-tuple 완결 미선언 — 7-condition gated Phase-2 post-merge, 미충족 시 defer(#2649/#2632 계승, premature-declaration 재범 금지).
+- **born-hollow 봉인 유지**: forcing = 표 structural presence 강제까지만(semantic 완전성 = RO-1/설계리뷰 잔여, "표=완전" hard-claim 금지). no-optout(§결정4 AC-7) + gate-parser-완화-금지(OOS) 상속.
+
 ## 관련 파일
 
 - Story: `<internal-docs>/wrapper/stories/CFP-2603.md` (§7 설계 서사) · **(Amd1)** `<internal-docs>/wrapper/stories/CFP-2609.md` (§7 적용성 가드 설계 서사) · **(Amd2)** `<internal-docs>/wrapper/stories/CFP-2634.md` (§7 non-applicable 선언 경로 설계 서사)
 - Change Plan: `<internal-docs>/wrapper/change-plans/cfp-2603-g1-ac-traceability-matrix.md` · **(Amd1)** `<internal-docs>/wrapper/change-plans/cfp-2609-g1-applicability-guard-required-registration.md` · **(Amd2)** `<internal-docs>/wrapper/change-plans/cfp-2634-ac-traceability-nonapplicable.md`
 - **(Amd2) 수정(Phase 2)**: `scripts/lib/check_ac_traceability_matrix.py`(신규 `--ac-applicability-none`/`--none-reason` flag + none-declaration 경로 + story_uri-present precedence(surface overrides none) + `--ac-source` optional 완화 + 둘다부재 distinct fail-closed default guard, verdict 전부 core-owned) · `.github/workflows/ac-traceability-matrix.yml`(어댑터 = thin router: story_uri-absent 시 premature hard-fail 제거 + `ac_applicability: none` 마커 추출·forward + reason env-var 전달(injection 가드)) · `templates/github-workflows/ac-traceability-matrix.yml`(L2 byte-identical) · `.github/workflows/story-init.yml`(Phase-1 PR body story_uri 영구-ref(immutable commit SHA) emit, AC-4) · `tests/scripts/test_ac_nonapplicable_declaration.py`(신규 CFP-2634 AC-1a..AC-12 named-test — 기존 CFP-2609 named-test 파일 미확장) · `tests/scripts/test_check-ac-traceability-matrix.sh`+`_ac_matrix_fixtures.py`(F-NONE-* fixture + Mutation-{NONE-REASON,SPOOF,BOTHABSENT} 3종 append + `run_gate_none` helper)
 - **(Amd2) 코드-외 조치(Phase 2 post-merge)**: 6→7 등록(POST append 권장) — (a)(b) merge + genuine 비적용 no-story_uri canary 실증 후 Orchestrator gh api, 즉시 GET 7-tuple 실측 + rollback-ready
+- **(Amd4) Story**: `<internal-docs>/wrapper/stories/CFP-2653.md` (§7 §5-authoring forcing 설계 서사) · Change Plan: `<internal-docs>/wrapper/change-plans/cfp-2653-section5-ac-forcing-registration.md`
+- **(Amd4) 수정(Phase 2)**: `plugins/codeforge-requirements/agents/RequirementsAnalystAgent.md`(§5 gate-parseable `id/source/tier` 표 exemplar 격상) · `plugins/codeforge-requirements/agents/RequirementsPLAgent.md`(§5.3 signature 표 직접 write 규약) · `templates/story-page-structure.md`(§5.3 copy-ready empty-row scaffold) · `tests/scripts/test_ac_traceability_matrix.py`(dogfood named-test: AC-3 4-변이 discriminator + AC-11 본 Story §5 SURFACE_PRESENT — 기존 self-test fixture/Mutation E/F/NOTOKEN 재사용, 신규 lint 0)
+- **(Amd4) 코드-외 조치(Phase 2 post-merge)**: 6→7 등록 — 확장 7-condition ordering invariant(비적용 canary + applicable-§5 canary + 4번째 blocker 표본 + no-open-both-absent) 전수 실측 후 Orchestrator gh api POST append + 즉시 GET==7 + rollback-ready. 미충족 시 defer(#2649/#2632)
 - 신규(Phase 2): `scripts/lib/ac_id.py` · `scripts/lib/check_ac_traceability_matrix.py` · `scripts/check-ac-traceability-matrix.sh` · `.github/workflows/ac-traceability-matrix.yml`
 - **(Amd1) 수정(Phase 2)**: `scripts/lib/check_ac_traceability_matrix.py`(적용성 verdict core 단일 소유 — `run()` phase×resolve-outcome 매트릭스) · `.github/workflows/ac-traceability-matrix.yml`(story_uri 영구 ref + rtm_uri not-yet + 404 3-class) · `tests/scripts/test_check-ac-traceability-matrix.sh`(적용성 3경로 discriminating mutant) · `templates/github-workflows/ac-traceability-matrix.yml`(L2 byte-identical)
 - **(Amd1) 코드-외 조치(Phase 2 post-merge)**: branch-protection `required_status_checks` 6→7-tuple 등록(Orchestrator gh api, ordering invariant 준수 + 사후 GET 7-tuple 실측)
