@@ -338,6 +338,29 @@ def test_prose_mention_not_matched():
     d3 = parse_pr_body(_body("설명: ac_applicability: none 이라는 마커를 쓰면 된다는 안내 문장"))
     assert d3["none_declared"] is False, "산문 안 none 언급을 선언으로 오인식 (false 비적용 = 게이트 우회)"
 
+    # ── list-prefixed 산문 (F1 이 list 장식을 tolerant 하게 만들며 새로 생긴 인접 위험면) ──
+    # 불변 명제: list-marker(`-`/`*`)와 bold(`**`)는 strip 하되, **strip 후 마커 키가 라인 선두일 때만**
+    #   인식한다. strip 후 선두가 산문이면 미매치 — list-marker 를 벗겨낸 뒤 `.*` 를 허용하면(느슨한 anchor)
+    #   list 안 산문이 false-green 으로 샌다. 아래 assert 가 그 회귀를 고정한다.
+    d4 = parse_pr_body(_body(f"- 여기서 story_uri: {STORY_URL} 필드가 필요합니다"))
+    assert d4["story_uri"] is None, f"list 안 산문을 마커로 오인식: {d4['story_uri']!r}"
+    assert d4["both_absent"] is True
+
+    d5 = parse_pr_body(_body(f"* 이 항목은 rtm_uri: {RTM_URL} 를 설명합니다"))
+    assert d5["rtm_uri"] is None, f"list 안 산문 rtm_uri 오인식: {d5['rtm_uri']!r}"
+
+    # list + bold 장식 + 산문 = 가장 헷갈리는 형태 (bold strip 후에도 선두가 산문 `주의:`)
+    d6 = parse_pr_body(_body(f"- **주의**: story_uri: {STORY_URL} 는 예시입니다"))
+    assert d6["story_uri"] is None, f"list+bold 산문을 마커로 오인식: {d6['story_uri']!r}"
+    assert d6["both_absent"] is True
+
+    d7 = parse_pr_body(_body("- 설명: ac_applicability: none 이라는 안내"))
+    assert d7["none_declared"] is False, "list 안 none 언급을 선언으로 오인식 (게이트 우회)"
+
+    # 대조군(타겟성) — 같은 list 문맥이라도 키가 선두면 정상 인식 (guard 가 list 전체를 죽이지 않음)
+    d8 = parse_pr_body(_body(f"- story_uri: {STORY_URL}"))
+    assert d8["story_uri"] == STORY_URL, "list 선두 마커까지 미인식 = 과잉 차단(false-red 재발)"
+
 
 @pytest.mark.timeout(10)
 def test_redos_bounded_timing():
