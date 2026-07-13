@@ -43,6 +43,15 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Iterable
 
+# CFP-2661 F-CR-3: Windows cp949 인코딩 crash 회피 — stdout/stderr UTF-8 강제 (신규 lint
+#   check_path_relocation_consistency.py 와 portability parity). D2 union 이 게이트를 non-vacuous 화
+#   → 한국어 findings(em-dash `—` 등) emit → cp949 console(self-hosted Windows runner)에서
+#   UnicodeEncodeError crash 위험(0-findings PASS 라인 포함). errors="replace" = fail-safe.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # ---------------------------------------------------------------------------
 # Constants (SSOT)
 # ---------------------------------------------------------------------------

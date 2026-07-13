@@ -205,6 +205,29 @@ lint_case "TC-C1 empty scope → born-hollow FAIL (exit 3)" 3 "FAIL-CLOSED" "scr
 echo "no relocation-relevant construct here"
 X=(1 2 3)'
 
+# TC-C2 [F-CR-2]: all-inert (candidates==0 ∧ inert>0) = 게이트가 relevant construct 를 찾아 predicate-gated
+#   한 non-vacuous 상태 → born-hollow 아님 PASS(exit 0). ★ PASS 메시지가 "candidate ≥ 1" overstate 안 함을
+#   명시 pin — candidate=0 인데 ≥1 주장 = anti-hollow 게이트 자기 honesty-ceiling 위반(self-referential).
+#   TC-C1 은 `∧ inert==0`(FAIL) 만 커버 → 이 pass-through branch 를 incidental 아니라 명시 assertion.
+c2_tmp=$(mktemp -d)
+mkdir -p "$c2_tmp/docs" "$c2_tmp/docs/parallel-work"
+printf '%s\n' "$FIXTURE_LEDGER" > "$c2_tmp/docs/path-relocation-ledger.yaml"
+printf 'owned_sections:\n  - file: docs/adr/ADR-076-x.md\n    parallel_edit: append-only\n' > "$c2_tmp/docs/parallel-work/inert.yaml"
+c2_out=$(bash "$WRAPPER" --repo-root "$c2_tmp" 2>&1); c2_exit=$?
+c2_ok=1
+[ "$c2_exit" -eq 0 ] || c2_ok=0
+case "$c2_out" in *"candidates_scanned=0 inert_skipped="*) : ;; *) c2_ok=0;; esac   # all-inert census 관측
+case "$c2_out" in *"candidate ≥ 1"*) c2_ok=0;; esac                                # overstate 재도입 금지
+rm -rf "$c2_tmp"
+if [ "$c2_ok" -eq 1 ]; then
+  echo "OK PASS: TC-C2 all-inert non-vacuous (candidates=0 ∧ inert>0 → PASS exit 0, 'candidate ≥ 1' overstate 0)"
+  PASS=$((PASS+1))
+else
+  echo "X FAIL: TC-C2 all-inert non-vacuous — exit=$c2_exit ok=$c2_ok"
+  echo "  output: $c2_out"
+  FAIL=$((FAIL+1))
+fi
+
 echo
 echo "── (d) construct-vs-file-level FN (AC-14 — file dual, construct dead) ──"
 

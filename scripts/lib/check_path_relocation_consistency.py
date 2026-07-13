@@ -30,7 +30,9 @@ CFP-2661 / ADR-136 Amendment 4 §결정 15 — path-relocation-consistency lint
   candidate = relocation-relevant construct (OLD `docs/adr` 지목 construct). "scanned 0" ≠ "violations 0".
   **verdict fail-open** (모호/unbounded construct → NEW-missing violation suppress, warning-tier OK) but
   **census fail-closed** (parser 가 candidate count 를 못 세우면 hard failure, else born-hollow).
-  born-hollow guard: candidate 0 입력(빈 corpus) → PASS 아니라 FAIL (exit 3).
+  born-hollow guard: candidates==0 ∧ inert==0(빈 corpus/empty-scope — relocation-relevant construct 를
+  active·inert 어느 것으로도 0) → PASS 아니라 FAIL (exit 3). all-inert(candidates==0 ∧ inert>0)는 게이트가
+  relevant construct 를 찾아 predicate-gated 한 non-vacuous 상태 → PASS(census 로 관측, F-CR-2).
 
 ★ 정직 천장 (I-6 / AC-20 — "재유입 완전 차단" hard-claim 금지):
   (I-6.1) static-literal ceiling — 동적 조립(`base + "/adr"`)·간접 참조 미검출.
@@ -773,9 +775,14 @@ def main(argv):
         )
         return 1
 
+    # PASS 메시지는 실 census count 만 사실 서술 — unconditional "candidate ≥ 1" literal 금지.
+    #   실제 pass 조건 = NOT(candidates==0 ∧ inert==0) 이라 candidates==0 ∧ inert>0(all-inert) 도 PASS.
+    #   그 경우 candidate=0 인데 "candidate ≥ 1" 로 overstate 하면 anti-hollow 게이트가 자기 출력에서
+    #   honesty-ceiling 미세 위반(self-referential) — census 사실만 emit (F-CR-2 정정).
     print(
         "check-path-relocation-consistency: PASS — new violation 0 (candidates_scanned=%d inert_skipped=%d "
-        "grandfathered=%d over %d file, born-hollow guard: candidate ≥ 1, warning tier)"
+        "grandfathered=%d over %d file — empty-scope oracle: relocation-relevant construct 존재 "
+        "(candidates==0 ∧ inert==0 아님), warning tier)"
         % (candidates, inert, grandfathered, scanned_files)
     )
     return 0

@@ -143,8 +143,12 @@ fi
 #     자체를 폐기 → 검사 대상 = 0. 구경로를 archive/adr 로 수리하면 죽은 정책 위의 검사가 부활한다.
 #   ∴ 경로 수리(union) 대신 블록 제거 = honest sunset (ADR-141 정합). ADR-145 §결정 8/9 non-applicable
 #     경로로 명시 선언 + evidence-checks-registry `rate-limit-fallback-rate` workflow:null + tier 정직 하향
-#     (D14 coupled). SONNET_AGENTS array 는 하류 window 측정 loop(SPAWN_MAP 집계)이 여전히 소비하므로
-#     보존(제거 시 script 파손 — 실측 firsthand: :330 for-loop 의존). exit 4 는 이제 미도달 dead code.
+#     (D14 coupled). SONNET_AGENTS array 는 하류 window 측정 loop(분모 = sonnet spawn 집계)이 여전히
+#     소비하므로 보존 필수 — firsthand 실측(bash 5.2, set -euo pipefail): array 제거 시 crash 아니라
+#     silent-vacuous all-zero 측정(unset array 의 `"${SONNET_AGENTS[@]}"` = 빈 순회 → win_spawn 2→0,
+#     exit 0 무크래시). ★ self-referential: 본 Story 가 잡는 병(게이트가 조용히 아무것도 안 봄)과 정확히
+#     동형 — 그래서 보존이 crash-회피 아니라 silent-vacuous 회피의 load-bearing 근거. 실 소비 = `:294`
+#     for-loop(분모 집계); `:330` 대 awk rate calc(분자÷분모)는 별개. exit 4 는 이제 미도달 dead code.
 # non-applicable 선언 (ADR-145 §결정 8/9): sonnet-tier enum-drift 검사 = ADR-141 폐기로 적용 대상 0.
 
 # --- 시계 결정 ---
