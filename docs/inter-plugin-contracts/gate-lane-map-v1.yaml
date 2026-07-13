@@ -1,0 +1,26 @@
+# gate-lane-map-v1 — gate label ↔ 한글 lane 매핑 단일 SSOT (CFP-2652 gap c / kind:registry)
+#
+# 목적: `gate:<lane-en>-pass` 라벨과 lane 한글명 사이의 canonical 매핑 SSOT.
+#   이전까지 이 매핑은 phase-gate-mergeable.yml:493 JS object `lanePrefixForGate`(bracketed
+#   comment-prefix 값) 에만 존재 → bash check-lane-evidence.sh 가 재사용 불가(JS object·값 형식 상이).
+#   본 SSOT 로 externalize 해 JS + bash 양측이 동일 canonical datum(plain 한글 lane) 소비 → drift 0.
+#   (병렬 table 신설 아님 — 현행 3-entry 를 단일 SSOT 로 승격.)
+#
+# Consumers (drift 0 — 하드코딩 병렬 table 금지):
+#   - scripts/check-lane-evidence.sh  Check 7 (bash: load_gate_lane_map → 첫 ': ' delimiter line-split
+#                                       → declare -A GATE_LANE_MAP)
+#   - .github/workflows/phase-gate-mergeable.yml  lanePrefixForGate (JS: getContent → flat parse →
+#                                       prefix = '[' + map[gate] + ']' 도출, bracket 은 파생 presentation)
+#
+# Schema: flat top-level `gate:<lane-en>-pass: <한글 lane>`. canonical datum = plain 한글 lane
+#   (bracketed comment-prefix 는 JS 측 파생). nested-YAML parse 불요 — 첫 ': ' delimiter line-split robust.
+# Versioning: ADR-008. MINOR = entry append (backward-compat), MAJOR = key rename/remove.
+#   MANIFEST.yaml registries row(gate_lane_map) + kind:registry sibling sync 면제(ADR-010 §결정 2) 동반.
+kind: registry
+registry: gate-lane-map
+version: "1.0"
+status: Active
+
+gate:requirements-review-pass: 요구사항-리뷰
+gate:design-review-pass: 설계-리뷰
+gate:security-test-pass: 보안-테스트
