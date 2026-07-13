@@ -59,8 +59,11 @@ declare -A WORD_TARGETS=(
   ["못 박기"]="docs CLAUDE.md templates"
   ["pin"]="docs CLAUDE.md templates"
   ["freezing"]="docs CLAUDE.md templates"
-  ["별"]="docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates"
+  ["별"]="docs/adr archive/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates"
 )
+# CFP-2661 D1: `별` scope union-ADD `archive/adr` (ADR 실 위치 = archive/adr, PR #1973 이동; 구경로 docs/adr
+#   단독 = dead-path → scope=∅ vacuous-PASS 였음). docs/adr 는 consumer 정답 경로라 union 보존(치환 아님, I-2).
+#   D1-c 원자결합: EXEMPT_FILES 도 archive/adr/ADR-064 union (분리 시 ADR-064 어휘 정의 본문 self-red).
 
 # ─── Amendment 3 (CFP-1060) — `별 + carrier-noun` hand-off vocabulary exemption ──
 # docs/wording-dictionary.md Amendment 3 §규칙 선언 regex 의 verbatim wire (Wave 2
@@ -93,6 +96,7 @@ DEFINITION_REQUIRED_SCOPE="docs CLAUDE.md templates"
 EXEMPT_FILES=(
   "docs/wording-dictionary.md"
   "docs/adr/ADR-064-decision-principle-mandate.md"
+  "archive/adr/ADR-064-decision-principle-mandate.md"  # CFP-2661 D1-c: ADR-064 실 위치 union (archive/adr; scope union 과 원자)
   # ADR-108 append-only frozen 이력 — 과거 entry description 의 어휘는 audit trail
   # verbatim 보존 의무 (rewrite 금지) → file 단위 EXEMPT (CFP-2154).
   "docs/inter-plugin-contracts/label-registry-v2.md"
@@ -114,6 +118,19 @@ else
 fi
 
 EXIT_CODE=0
+
+# ─── CFP-2661 D1: scanned-count census + 침묵-skip 봉인 (AC-1 — scanned≥156 emit / 침묵 skip 0) ──
+# 게이트가 "아무것도 안 봤다"(scope=∅ vacuous-PASS)를 관측 가능하게: 실 스캔 ADR 파일 수 + 부재 scope
+# skip 을 가시화한다. 부재 scope 는 조용히 continue(침묵) 하지 않고 announce 후 counter 증가.
+WD_ADR_DISCOVERED=0   # adr/ADR-*.md 실 진입 수 (union archive/adr → ≥156; scope=∅ 이면 0 = vacuous 노출).
+WD_FILE_SCANNED=0     # 전 .md×word 실 스캔 수.
+WD_MISSING_SKIP=0     # 부재 scope path 가시화 skip 수 (침묵 아님 — announce 됨).
+
+# 부재 scope path 가시화 helper (CFP-2661 D1 — `[ ! -e ] && continue` 침묵 skip 봉인).
+announce_missing_scope() {
+  echo "wording-dictionary: [skip:missing-scope] '$1' 부재 — dead-path 가시화 (침묵 skip 아님, warning tier)"
+  WD_MISSING_SKIP=$((WD_MISSING_SKIP+1))
+}
 
 # ─── 헬퍼: EXEMPT 파일 여부 확인 ─────────────────────────────────────────────
 is_exempt_file() {
@@ -181,8 +198,11 @@ scan_file_for_word() {
   [ ! -f "$file" ] && return
   # .md 파일만 처리 (코드 file = self-referential / test fixture 보호, §3.5)
   [[ "$file" != *.md ]] && return
+  # CFP-2661 D1 census: ADR 파일(adr/ADR-*.md) 진입 수 집계 (exempt 前 = anti-vacuity discovered floor).
+  case "${file//\\//}" in *adr/ADR-*) WD_ADR_DISCOVERED=$((WD_ADR_DISCOVERED+1));; esac
   # EXEMPT 파일 건너뜀
   is_exempt_file "$file" && return
+  WD_FILE_SCANNED=$((WD_FILE_SCANNED+1))
 
   local sf
   sf="$(get_stripped_file "$file")"
@@ -266,7 +286,7 @@ scan_scope() {
   local scopes=("$@")
   local target
   for target in "${scopes[@]}"; do
-    [ ! -e "$target" ] && continue
+    if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
     if [ -f "$target" ]; then
       "$callback" "$target"
     elif [ -d "$target" ]; then
@@ -327,7 +347,7 @@ if [ ${#OVERRIDE_TARGETS[@]} -eq 0 ]; then
     # shellcheck disable=SC2206  # 공백 split = 의도 (scope path list)
     scope_paths=(${WORD_TARGETS[$word]})
     for target in "${scope_paths[@]}"; do
-      [ ! -e "$target" ] && continue
+      if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
       if [ -f "$target" ]; then
         scan_file_for_word "$target" "$word"
       elif [ -d "$target" ]; then
@@ -345,7 +365,7 @@ else
   # uniform override mode — 지정 대상에만 모든 어휘 + 카테고리 (b) 적용
   for word in "${!WORD_TARGETS[@]}"; do
     for target in "${OVERRIDE_TARGETS[@]}"; do
-      [ ! -e "$target" ] && continue
+      if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
       if [ -f "$target" ]; then
         scan_file_for_word "$target" "$word"
       elif [ -d "$target" ]; then
@@ -357,6 +377,9 @@ else
   done
   scan_scope scan_file_definitions "${OVERRIDE_TARGETS[@]}"
 fi
+
+# CFP-2661 D1 census (AC-1 — scanned-count emit / 침묵 skip 0). scope=∅ 이면 adr_files_scanned=0 노출.
+echo "wording-dictionary: census adr_files_scanned=$WD_ADR_DISCOVERED total_md_word_scans=$WD_FILE_SCANNED missing_scope_skip=$WD_MISSING_SKIP (침묵 skip 0 — 부재 scope 전량 가시화)"
 
 if [ "$EXIT_CODE" -eq 0 ]; then
   echo "wording-dictionary PASS — 카테고리 (a) forbid 어휘 발견 없음"

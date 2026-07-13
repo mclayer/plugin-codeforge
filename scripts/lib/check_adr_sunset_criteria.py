@@ -34,19 +34,30 @@ SUNSET_SECTION_RE = re.compile(r"^##\s+해소\s*기준\s*$", re.MULTILINE)
 THREE_TUPLE_TERMS = ["metric", "who", "how"]
 
 # ADR-RESERVATION.md 는 ADR governance 레지스트리 (real ADR 아님) — 면제
-EXEMPT_PATHS = {"docs/adr/ADR-RESERVATION.md"}
+# CFP-2661 D9: EXEMPT union — ADR 실 위치 archive/adr (PR #1973 이동). 구경로 docs/adr 형은 consumer 정답
+#   경로라 union 보존(치환 아님). archive/adr RESERVATION 도 registry → 면제 union (scope union 과 원자).
+EXEMPT_PATHS = {"docs/adr/ADR-RESERVATION.md", "archive/adr/ADR-RESERVATION.md"}
 
 violations = []
 files_checked = 0
+adr_candidates = 0  # CFP-2661 D9 census: no-arg default 의 ADR 후보 수 (exempt 前, anti-vacuity floor).
 
 paths = sys.argv[1:]
 if not paths:
-    paths = sorted(str(p) for p in Path("docs/adr").glob("ADR-*.md"))
+    # CFP-2661 D9: no-arg fallback union docs/adr ∪ archive/adr. docs/adr dead → 구판 0건 = vacuous-PASS
+    #   ("0 ADR files 검증" / exit 0). registry detect_command(무인자)가 이 dead executor. CI argv 경로는 alive.
+    paths = sorted(
+        str(p) for d in ("docs/adr", "archive/adr") for p in Path(d).glob("ADR-*.md")
+    )
 
 for p in paths:
-    if p in EXEMPT_PATHS:
-        continue
     path = Path(p)
+    # census: exempt 前 ADR 후보 집계 (실재 ADR-*.md 만; anti-vacuity discovered floor — AC-5).
+    if path.name.startswith("ADR-") and path.exists():
+        adr_candidates += 1
+    # CFP-2661 D9: separator 정규화 (Windows backslash → forward slash) 후 exempt 매치 — cross-platform.
+    if p.replace("\\", "/") in EXEMPT_PATHS:
+        continue
     if not path.exists():
         violations.append(f"{p}: file 부재")
         continue
@@ -116,6 +127,11 @@ for p in paths:
                     f"(ADR-058 §결정 3 + ADR-060 §결정 9 — modal_anti_pattern_dictionary v1.0)"
                 )
 
+# CFP-2661 D9 census (AC-5 — anti-vacuity floor). adr_candidates = 실 스캔 surface 크기 (scope=∅ 이면 0 노출).
+print(
+    f"check-adr-sunset-criteria: census adr_candidates={adr_candidates} files_checked={files_checked} "
+    f"(candidates = discovered ADR surface, anti-vacuity floor; 구판 no-arg = 0 = vacuous-PASS)"
+)
 print(f"check-adr-sunset-criteria: {files_checked} ADR files 검증")
 if violations:
     print(f"\n⚠ violation {len(violations)}건:", file=sys.stderr)

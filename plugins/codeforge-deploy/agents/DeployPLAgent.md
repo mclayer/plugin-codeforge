@@ -24,7 +24,9 @@ permissions:
     - Edit(tests/**)
     - Write(tests/**)
     - Edit(docs/adr/**)
+    - Edit(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Write(docs/adr/**)
+    - Write(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Edit(docs/change-plans/**)
     - Write(docs/change-plans/**)
 ---

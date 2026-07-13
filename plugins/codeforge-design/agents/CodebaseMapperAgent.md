@@ -40,7 +40,8 @@ permissions:
 - **API surface 사실 인용** — `Grep` 으로 확인한 public function / class / interface 시그니처 (verbatim)
 - **의존성 그래프 사실 인용** — `Grep -r "import"` / `Grep -r "from"` 등으로 확인한 모듈 간 호출·의존 관계
 - **git blame / log 사실 인용** — `git log` / `git blame` 으로 확인한 변경 이력 패턴 (최근 수정자 / 변경 빈도)
-- **기존 ADR 인용** — `Read docs/adr/**` 로 확인한 ADR 결정 verbatim (해석 없이 reference 만)
+- **기존 ADR 인용** — `Read docs/adr/**` + `Read archive/adr/**` 로 확인한 ADR 결정 verbatim (해석 없이 reference 만)  <!-- CFP-2661 D13: ADR 실 위치 archive/adr union (wrapper dogfood) -->
+
 - **현재 패턴 사실 기록** — Hexagonal layer / DI 방식 / 에러 전파 방식 등 코드에서 직접 관찰 가능한 패턴
 
 ### 금지 영역 (chief author / 타 SubAgent 영역)

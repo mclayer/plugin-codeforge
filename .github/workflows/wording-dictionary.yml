@@ -7,6 +7,9 @@ on:
       # CHANGELOG.md path 제거 (CFP-2154) — main 에 CHANGELOG.md 부재 dead reference 정리
       # (정책 선언은 docs/wording-dictionary.md 유지 — 파일 재생성 시 path 재추가).
       - 'docs/**'
+      # CFP-2661 D1-b: archive/adr/** ADD — ADR 실 위치(archive/adr, PR #1973 이동)는 docs/** 밖이라
+      # archive/adr/ADR-*.md 만 수정한 PR 이 워크플로 미트리거(job skip) 였다 (paths 2차 dead-path). warning-tier 라 안전.
+      - 'archive/adr/**'
       - 'CLAUDE.md'
       - 'templates/**'
       - '.github/workflows/wording-dictionary.yml'

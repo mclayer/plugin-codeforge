@@ -61,6 +61,11 @@ ALLOWLIST_GOVERNANCE_PREFIXES=(
 ALLOWLIST_EXTRA_FILES=(
   "docs/adr/ADR-RESERVATION.md"
   "docs/adr/ADR-060-evidence-enforceable-promotion-framework.md"
+  # CFP-2661 D4: ADR 실 위치 archive/adr union (PR #1973 이동). 구 docs/adr allowlist 는 dead → 실 파일
+  #   archive/adr/ADR-RESERVATION·ADR-060 의 Jira/Confluence 참조가 allowlist 미매치 → false-RED 였음.
+  #   docs/adr 형은 consumer 정답 경로라 union 보존(치환 아님). exact-string 매치라 denylist 약화 0 (SAFE).
+  "archive/adr/ADR-RESERVATION.md"
+  "archive/adr/ADR-060-evidence-enforceable-promotion-framework.md"
   "docs/evidence-checks-registry.yaml"
   ".claude/settings.json"
   "docs/project-config-schema.md"

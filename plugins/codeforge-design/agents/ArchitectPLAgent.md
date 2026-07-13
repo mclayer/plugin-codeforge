@@ -115,7 +115,8 @@ ArchitectAgent self-lint 결격 RETURN 수령 시 → 본 PL이 해당 SubAgent 
 [본 PL → ArchitectAgent (chief author)]
   with input: 6 deputy outputs + Story §1-7 + 관련 ADR
   → output: Change Plan §1-§11 draft + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션
-  → ArchitectAgent direct write — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`. Story §7 미러링은 ArchitectAgent가 직접 write
+  → ArchitectAgent direct write — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`(consumer) / `archive/adr/ADR-NNN-<slug>.md`(wrapper). Story §7 미러링은 ArchitectAgent가 직접 write  <!-- CFP-2661 D13: archive/adr union -->
+
 ```
 
 ### Phase 3: PL 검수 + 판정

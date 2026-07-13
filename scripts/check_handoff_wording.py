@@ -616,10 +616,25 @@ def _collect_identifiers(cfg: LintConfig, scope_dir: str) -> dict[str, list[tupl
     return seen
 
 
+def _collect_adr_identifiers(cfg: LintConfig) -> dict[str, list[tuple[str, int]]]:
+    """CFP-2661 D2: union docs/adr ∪ archive/adr.
+
+    ADR 실 위치 = archive/adr (PR #1973). docs/adr 단독은 dead-path → _collect_identifiers 가
+    target.exists()==False 조기 return(빈 dict) → detect_forward/backward 가 `if not adr_idents: return`
+    로 vacuous(항상 findings 0). archive/adr union 으로 실 collection(≥1269 identifier) 복구.
+    consumer 정답 경로 docs/adr 는 union 보존(치환·삭제 아님).
+    """
+    merged: dict[str, list[tuple[str, int]]] = {}
+    for scope_dir in ("docs/adr", "archive/adr"):
+        for ident, locs in _collect_identifiers(cfg, scope_dir).items():
+            merged.setdefault(ident, []).extend(locs)
+    return merged
+
+
 def detect_forward(cfg: LintConfig) -> list[Finding]:
     """Forward (설계 → 구현): ADR identifiers must appear in scripts/tests."""
     findings: list[Finding] = []
-    adr_idents = _collect_identifiers(cfg, "docs/adr")
+    adr_idents = _collect_adr_identifiers(cfg)
     if not adr_idents:
         return findings
     # Collect impl identifiers
@@ -670,7 +685,7 @@ def detect_backward(cfg: LintConfig) -> list[Finding]:
     Code identifier without ADR/contract def = Amendment trigger (ratchet self-application).
     """
     findings: list[Finding] = []
-    adr_idents = _collect_identifiers(cfg, "docs/adr")
+    adr_idents = _collect_adr_identifiers(cfg)  # CFP-2661 D2: union docs/adr ∪ archive/adr
     contract_idents = _collect_identifiers(cfg, "docs/inter-plugin-contracts")
     design_corpus = set(adr_idents) | set(contract_idents)
     # Note: empty design_corpus is itself a backward drift signal (impl-only
