@@ -206,6 +206,13 @@ AC 는 **산문·정수 count 로 붕괴 금지** — 각 AC 에 안정 ID `AC-N
 
 - **완결성 (AC-1b)**: 구별되는 각 사용자 요건이 ≥1 AC 에 매핑 — 요구사항리뷰 RO-1 이 §1↔§5 diff 로 검증 (미매핑=review FIX, 설계 진입 차단). user-sourced AC 의 tier 임의 강등 = 강제 약화 → RO-1 tier review-gate.
 
+#### §5.3 Acceptance Criteria (게이트-parseable AC 표 — ADR-145 §결정10)
+
+> **적용 Story**(§5 에 normative AC 존재): 아래 copy-ready header 한 줄을 표 header 로 복사 → 바로 아래 `|---|---|---|---|---|---|---|` separator 행 추가 → AC 1개당 1행 채움. 컬럼명 `id`/`source`/`tier`(+`statement`) 무손상, 최소 1 normative AC. 게이트 core `classify_ac_source` 가 이 표를 파싱한다(header signature = `id`+`source`+`tier`).
+> **비적용 Story**(§5 AC 표면 없음 — governance / marketplace sync / Epic close 등): 본 §5.3 표를 **작성하지 않는다**. 빈 표·예시 행·헤더-only 잔존은 게이트 false-red(`SURFACE_EMPTY`/판정불가)를 유발한다. 대신 PR body 에 `ac_applicability: none — <사유>` 를 선언한다.
+>
+> copy-ready header (적용 시 이 한 줄을 표 header 로 복사): `| id | statement | source | verification | coverage_required | phase | tier |`
+
 ### §6. 외부 지식 배경 (Researcher)
 - Researcher 자체 도출 키워드 커버리지 + 출처 URL
 - ADR 정합성 점검 결과

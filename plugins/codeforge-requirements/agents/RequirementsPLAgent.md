@@ -110,6 +110,7 @@ PL 이 §5 AC 를 최종 synthesis 할 때 (실행 흐름 3(d) "요구사항·AC
 - **항목화 목록 유지 (산문·정수 count 붕괴 금지)**: 각 AC 는 안정 ID `AC-N` (문법 `^AC-(\d+)([a-z])?$`, sub-letter `AC-1a`/`AC-1b` 수용) + §5.2 7-필드 (id / statement(given-when-then) / source / verification / coverage_required / phase / tier) 를 보유. identity 보존이 lane 경계 zero-drop 의 전제 (도메인 불변식 I-AC).
 - **requirements_output 계약 반환 (v1.2)**: 기존 `sub_agent_results.analyst.acceptance_criteria_count` (정수 요약) 는 **보존**하되, top-level `acceptance_criteria[]` (항목화 목록) 도 동반 emit — 하류 설계 lane 이 "사용자가 요구한 것의 체크리스트" 를 항목 단위로 수신 (requirements-output-v1 v1.2, ADR-145 AC-3). 계약 field 는 optional 이나 게이트가 list 실재를 강제.
 - **tier 배정 정직**: 사용자 원 요건 유래 AC = `source: user` + 타당한 tier — user AC 를 advisory/declared 로 임의 강등 금지 (fail-closed 강제 약화). 요구사항리뷰 RO-1 이 tier 배정을 review-gate 한다 (§5.6 / ADR-145 Risk5).
+- **§5.3 게이트-parseable 표 직접 write (ADR-145 §결정10)**: PL 이 Story §5 를 self-write 할 때 §5.3 에 게이트 core `classify_ac_source` 가 파싱하는 header signature 표(`| id | statement | source | verification | coverage_required | phase | tier |`, 컬럼명 무손상)를 **직접 작성**한다. 구조화 계약 field(`acceptance_criteria[]`)는 하류 설계 lane 수신용이고 §5.3 markdown 표는 게이트 검출용 — 둘은 별개 표면이라 계약 field 만으로는 게이트가 §5 를 못 본다(갭 해소). 추적할 AC 가 없는 비적용 Story 면 §5.3 표를 만들지 않고 PR body 에 `ac_applicability: none — <사유>` 를 선언한다(빈 표·헤더-only 잔존 = 게이트 false-red).
 
 ## 컨텍스트 수집 책임 (하위 에이전트 스폰 전 — 공통 입력 구성)
 
