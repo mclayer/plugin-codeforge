@@ -19,6 +19,11 @@
 #     --none-reason (optional) 비적용 선언 사유(free-text). 빈/공백 = FAIL(AC-2 auditability). injection
 #                   가드: adapter 는 env-var 로만 전달(${{ }}→run: 보간 금지).
 #
+#   scripts/check-ac-traceability-matrix.sh --parse-pr-body <FILE>   (CFP-2659 / ADR-145 §결정11 Amd 5)
+#     PR body 마커(story_uri / ac_applicability:none / rtm_uri) 추출 → JSON 1 object stdout.
+#     별 leaf(lib/ac_pr_markers.py) 로 route — 게이트 판정 아님(추출 사실만, verdict=core 단일소유).
+#     위 게이트 경로(2-value exit)와 disjoint — 무침범.
+#
 # Usage:
 #   bash scripts/check-ac-traceability-matrix.sh --phase 1 --ac-source STORY.md --rtm CHANGEPLAN.md
 #   bash scripts/check-ac-traceability-matrix.sh --phase 2 --ac-source STORY.md --rtm CHANGEPLAN.md --tests-root tests
@@ -41,6 +46,12 @@ command -v python3 >/dev/null 2>&1 || {
   echo "::error::check-ac-traceability-matrix: python3 not installed (판정불가, fail-closed exit 1)" >&2
   exit 1
 }
+
+# --parse-pr-body (CFP-2659) — additive route: PR body 마커 파싱 pure leaf 로 forward (exec = exit passthrough).
+#   첫 인자 정확 일치 시에만 분기 → 기존 게이트 경로(2-value exit 계약) 무침범. 로직 0(ADR-061 thin wrapper).
+if [ "${1:-}" = "--parse-pr-body" ]; then
+  exec python3 "${_SCRIPT_DIR}/lib/ac_pr_markers.py" "$@"
+fi
 
 # ADR-061 §결정 1 thin wrapper — python 직접 실행 + exit code passthrough (인자 그대로 forward).
 python3 "${_SCRIPT_DIR}/lib/check_ac_traceability_matrix.py" "$@"

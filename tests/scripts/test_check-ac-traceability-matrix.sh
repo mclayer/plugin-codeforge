@@ -556,6 +556,158 @@ else
   echo "✗ INCONCLUSIVE: M-BOTHABSENT — both-absent-guard 결정라인(if ac_source_path is None and not none_declaration:) 미검출 → synthesis 재배선 필요"; FAIL=$((FAIL+1))
 fi
 
+# ── F-MARKER-* (CFP-2659 F1 / ADR-145 Amd5) — PR-body 마커 파싱 pure 모듈 discriminating ──
+echo ""
+echo "════════════════════════════════════════════════════════════════════"
+echo "F-MARKER-* (CFP-2659 F1) — marker-format 장식 tolerance / clean capture / anchor"
+echo "════════════════════════════════════════════════════════════════════"
+
+TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${AC_MARKERS_PY:=$AC_TRACE_LIB/ac_pr_markers.py}"
+MARK_MUT="$TESTS_DIR/_ac_marker_mutations.py"
+SURL="https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-2659.md"
+RURL="https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/change-plans/cfp-2659.md"
+
+if [ ! -f "$AC_MARKERS_PY" ]; then
+  echo "✗ RED (implementation-not-landed): 마커 파싱 pure 모듈 부재 — $AC_MARKERS_PY"
+  echo "   병렬 Phase 2 — Dev F1 모듈 착륙 시 GREEN. (F-MARKER-* / Mutation G-* 전체 미실행)"
+  FAIL=$((FAIL+1))
+else
+  # 마커 fixture body 작성기 (%b = \n 해석; `*` 는 printf 비특수)
+  mk_body() { printf '%b' "$2" > "$1"; }
+
+  # --parse-pr-body 구동 (기본 = bash thin wrapper — additive routing 실 구동 검증)
+  PB_OUT=""; PB_EC=0
+  parse_body() { # <core(.sh|.py)> <bodyfile>
+    PB_EC=0
+    case "$1" in
+      *.sh) PB_OUT="$(bash "$1" --parse-pr-body "$2" 2>/dev/null)" || PB_EC=$? ;;
+      *)    PB_OUT="$(python3 "$1" --parse-pr-body "$2" 2>/dev/null)" || PB_EC=$? ;;
+    esac
+  }
+  # JSON assert (grep 취약성 회피 — 실 json.load 후 표현식 평가; S/R = story/rtm URL)
+  json_check() { # <json> <python-expr(d, S, R 사용)>
+    printf '%s' "$1" | S="$SURL" R="$RURL" python3 -c \
+      "import json,os,sys; d=json.load(sys.stdin); S=os.environ['S']; R=os.environ['R']; sys.exit(0 if ($2) else 1)"
+  }
+  mcase() { # <name> <bodyfile> <expr> <desc>   [core=$MARK_CORE]
+    local name="$1" bf="$2" expr="$3" desc="$4"
+    parse_body "$MARK_CORE" "$bf"
+    if [ "$PB_EC" -ne 0 ]; then
+      echo "✗ FAIL: $name — --parse-pr-body 구동 실패 (exit=$PB_EC) — $desc"; FAIL=$((FAIL+1)); return
+    fi
+    if json_check "$PB_OUT" "$expr"; then
+      echo "✓ PASS: $name — $desc"; PASS=$((PASS+1))
+    else
+      echo "✗ FAIL: $name — 기대 불충족 [$expr] — $desc"; echo "    out: $PB_OUT"; FAIL=$((FAIL+1))
+    fi
+  }
+
+  # thin wrapper 가 --parse-pr-body 를 라우팅하면 wrapper 로, 아니면 RED (additive routing 계약)
+  MARK_CORE="$AC_TRACE_SH"
+  [ -f "$AC_TRACE_SH" ] || MARK_CORE="$AC_MARKERS_PY"
+
+  MB=$TMP/mk; mkdir -p "$MB"
+
+  mk_body "$MB/plain.md"    "## 요약\n\nstory_uri: $SURL\n\n본문\n"
+  mcase F-MARKER-PLAIN "$MB/plain.md" 'd["story_uri"] == S and d["both_absent"] is False' \
+    "plain 마커 인식"
+
+  mk_body "$MB/keybold.md"  "## 요약\n\n**story_uri**: $SURL\n\n본문\n"
+  mcase F-MARKER-KEYBOLD "$MB/keybold.md" 'd["story_uri"] == S' \
+    "키-bold(**story_uri**:) 인식"
+
+  mk_body "$MB/listbold.md" "## 요약\n\n- **story_uri**: $SURL\n- **rtm_uri**: $RURL\n\n본문\n"
+  mcase F-MARKER-LISTBOLD "$MB/listbold.md" 'd["story_uri"] == S and d["rtm_uri"] == R' \
+    "list+bold(- **story_uri**:) 인식 — ★실측 false-red 벡터"
+
+  mk_body "$MB/valbold.md"  "## 요약\n\n**story_uri: $SURL**\n\n본문\n"
+  mcase F-MARKER-VALBOLD-CLEAN "$MB/valbold.md" \
+    'd["story_uri"] == S and not d["story_uri"].endswith("*")' \
+    "값-bold clean capture (trailing ** 미혼입)"
+
+  mk_body "$MB/prose.md"    "## 요약\n\n여기서 story_uri: $SURL 필드가 필요합니다\n"
+  mcase F-MARKER-PROSE "$MB/prose.md" 'd["story_uri"] is None and d["both_absent"] is True' \
+    "산문 중간 언급 미매치 (line-start anchor — false-green 차단)"
+
+  mk_body "$MB/absent.md"   "## 요약\n\n마커 없는 평범한 PR 본문.\n"
+  mcase F-MARKER-BOTHABSENT "$MB/absent.md" \
+    'd["both_absent"] is True and d["story_uri"] is None and d["none_declared"] is False' \
+    "마커 0개 → both_absent (fail-closed 추출 사실)"
+
+  mk_body "$MB/nonedec.md"  "## 요약\n\n- **ac_applicability**: none — marketplace sync\n"
+  mcase F-MARKER-NONE-DECOR "$MB/nonedec.md" \
+    'd["none_declared"] is True and "marketplace sync" in d["none_reason"] and d["both_absent"] is False' \
+    "list+bold none 마커 + 사유 캡처"
+
+  mk_body "$MB/unbal.md"    "## 요약\n\nstory_uri**:\n"
+  mcase F-MARKER-UNBALANCED "$MB/unbal.md" 'd["story_uri"] is None and d["both_absent"] is True' \
+    "unbalanced 토큰(값 부재) 미인식 → both_absent (PASS 아님)"
+
+  # wrapper ↔ 모듈 routing parity (additive routing 이 동일 JSON 을 반환하는지 — 우회 아님 실증)
+  if [ -f "$AC_TRACE_SH" ]; then
+    parse_body "$AC_TRACE_SH" "$MB/listbold.md";   sh_out="$PB_OUT"; sh_ec="$PB_EC"
+    parse_body "$AC_MARKERS_PY" "$MB/listbold.md"; py_out="$PB_OUT"; py_ec="$PB_EC"
+    if [ "$sh_ec" -eq 0 ] && [ "$py_ec" -eq 0 ] && [ "$sh_out" = "$py_out" ]; then
+      echo "✓ PASS: F-MARKER-ROUTE-PARITY — bash wrapper ↔ python 모듈 JSON 동일 (additive routing)"; PASS=$((PASS+1))
+    else
+      echo "✗ FAIL: F-MARKER-ROUTE-PARITY — wrapper(ec=$sh_ec) ↔ module(ec=$py_ec) JSON 불일치"
+      echo "    sh: $sh_out"; echo "    py: $py_out"; FAIL=$((FAIL+1))
+    fi
+  else
+    echo "✗ FAIL: F-MARKER-ROUTE-PARITY — $AC_TRACE_SH 미착륙 (RED-first)"; FAIL=$((FAIL+1))
+  fi
+
+  # ── Mutation G-DECOR / G-CLEANCAP (born-hollow 봉인 실증) ────────────────────
+  echo ""
+  echo "════════════════════════════════════════════════════════════════════"
+  echo "Mutation kill (CFP-2659 F1 §8.4) — 마커 파서 born-hollow 봉인 실증"
+  echo "════════════════════════════════════════════════════════════════════"
+
+  # run_marker_mut_kill <name> <kind> <bodyfile> <base-expr> <mut-expr> <desc>
+  #   base-expr = 원본이 만족해야 하는 조건(GREEN 대조) / mut-expr = 변조본이 뒤집혀 만족하는 조건(RED)
+  #   변조 미적용(diff 0 / broken mutant only) = INCONCLUSIVE → FAIL (born-broken 방지)
+  run_marker_mut_kill() {
+    local name="$1" kind="$2" bf="$3" base_expr="$4" mut_expr="$5" desc="$6"
+    local mdir="$TMP/mut_$kind" listing killed=0 tried=0
+    if ! listing="$(python3 "$MARK_MUT" --kind "$kind" --out "$mdir" 2>/dev/null)"; then
+      echo "✗ INCONCLUSIVE: $name — 변조 미적용(diff 0 / broken mutant only) → _ac_marker_mutations.CANDIDATES['$kind'] 재배선 필요"
+      FAIL=$((FAIL+1)); return
+    fi
+    parse_body "$AC_MARKERS_PY" "$bf"
+    if [ "$PB_EC" -ne 0 ] || ! json_check "$PB_OUT" "$base_expr"; then
+      echo "✗ FAIL: $name — 원본 GREEN 대조 실패 (ec=$PB_EC) [$base_expr]"; echo "    out: $PB_OUT"; FAIL=$((FAIL+1)); return
+    fi
+    local base_out="$PB_OUT"
+    while IFS=$'\t' read -r mpath mdesc; do
+      [ -n "$mpath" ] || continue
+      tried=$((tried+1))
+      parse_body "$mpath" "$bf"
+      if [ "$PB_EC" -eq 0 ] && json_check "$PB_OUT" "$mut_expr"; then
+        killed=$((killed+1))
+        echo "    · KILL by [$mdesc]"
+        echo "      원본: $base_out"
+        echo "      변조: $PB_OUT"
+      fi
+    done <<< "$listing"
+    if [ "$killed" -ge 1 ]; then
+      echo "✓ PASS: $name — 원본 GREEN ∧ 변조 RED (mutant KILL $killed/$tried) — $desc"; PASS=$((PASS+1))
+    else
+      echo "✗ FAIL: $name — kill 미입증 (변조 $tried 건 모두 동작 불변 = hollow 의심) — $desc"; FAIL=$((FAIL+1))
+    fi
+  }
+
+  run_marker_mut_kill Mutation-G-DECOR decor "$MB/listbold.md" \
+    'd["story_uri"] == S' \
+    'd["story_uri"] is None' \
+    "장식 tolerance(bounded \\*{0,2}) 무력화 → '- **story_uri**:' 미인식(RED) 뒤집힘"
+
+  run_marker_mut_kill Mutation-G-CLEANCAP cleancap "$MB/valbold.md" \
+    'd["story_uri"] == S and not d["story_uri"].endswith("*")' \
+    'd["story_uri"] != S' \
+    "clean capture(trailing * strip) 무력화 → '**story_uri: url**' 캡처 dirty 뒤집힘"
+fi
+
 # ── summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════════════════════════════════"

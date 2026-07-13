@@ -68,31 +68,54 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const { execFileSync } = require('child_process');
             const pr = context.payload.pull_request;
             const body = pr.body || '';
 
             // fail-closed 하드 실패 — 로그엔 사유만(토큰/응답 본문 미출력, secret masking).
             const fail = (reason) => { core.setFailed(`ac-traceability-matrix fail-closed: ${reason}`); };
 
-            // 1) marker 파싱 — story_uri(§5 AC source, **영구 ref 의무**) + rtm_uri(§8 RTM, optional).
+            // 1) marker 파싱 = pure leaf 모듈 단일 위임 (CFP-2659 / ADR-145 §결정11 Amendment 5).
+            //    구 inline-JS 정규식 3개 제거 — markdown 장식 마커(`**story_uri**:` 키bold /
+            //      `- **story_uri**:` list+bold)를 놓쳐 정상 PR 을 both-absent 로 오분류하던
+            //      marker-format false-red(F1, 실측 2/7 PR) 정정. 파싱이 pure 모듈로 추출돼
+            //      self-test 가 실 구동한다(born-hollow 봉인 — 장식/clean-capture mutation-kill 가능).
+            //    injection 가드(§7.6 S7-3): PR body = attacker-controlled → **파일로 전달**(argv 금지) +
+            //      execFileSync **arg-array**(셸 미경유, shell:true 금지).
+            //    ReDoS(§7.6 S7-5): fork PR body 는 토큰 확인 이전 도달(pre-auth) → 모듈 측 bounded
+            //      수량자(`\*{0,2}`) + per-line `^` anchor 로 차단. 산문 언급은 line-start anchor 로 미매치
+            //      (false-green 금지).
             //    story_uri = 영구 ref(internal-docs main / immutable commit SHA). transient feature 브랜치 ref
             //      금지 — gate 시점에 미존재/사후삭제 = Class A 404(ADR-145 §결정8 F). 영구-ref convention 이 예방.
             //    rtm_uri 부재 ∧ phase 1 = RTM not-yet(Hop1 only) — placeholder(§8 "작성 예정") fallback 금지,
             //      EXPLICIT --rtm-not-yet 신호로 core 전달(§결정8 D). story-as-rtm fallback 재사용 금지.
-            const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
-            // ac_applicability: none — <사유> 마커 (ADR-145 §결정9 — story_uri-absent applicability-scoping).
-            //   INPUT(저자선언). thin router — verdict 는 core 단일소유(Option B). story_uri present 시 이 마커는
-            //   병존-forward(precedence 는 core arbitrate — surface overrides none). 값이 'none' 외(skip/n/a/false)면
-            //   미인식 → both-absent 경로(FAIL) — 'none'만 정의(AC-10).
-            const noneMatch = body.match(/ac_applicability:\s*none\b\s*[—–-]?\s*(.*)/);
-            const noneDeclared = !!noneMatch;
-            const noneReason = noneMatch ? (noneMatch[1] || '').trim() : '';
-            if (!storyUriMatch) {
+            //    ac_applicability: none — <사유> = INPUT(저자선언, ADR-145 §결정9). thin router — verdict 는
+            //      core 단일소유(Option B). story_uri present 시 병존-forward(precedence 는 core arbitrate —
+            //      surface overrides none). 값이 'none' 외(skip/n/a/false)면 미인식 → both-absent 경로(AC-10).
+            fs.writeFileSync('pr-body.md', body);
+            let markers;
+            try {
+              const rawMarkers = execFileSync('python3',
+                ['scripts/lib/ac_pr_markers.py', '--parse-pr-body', 'pr-body.md'],
+                { encoding: 'utf-8' });
+              markers = JSON.parse(rawMarkers);
+            } catch (e) {
+              fail('PR body 마커 파싱 실패 (scripts/lib/ac_pr_markers.py — 판정불가=FAIL, no-optout)');
+              return;
+            }
+            const storyUri = markers.story_uri;                 // 장식 strip 후 clean URI | null
+            const rtmUri = markers.rtm_uri;                     // 장식 strip 후 clean URI | null
+            const noneDeclared = !!markers.none_declared;
+            const noneReason = markers.none_reason || '';
+            // 기계적 추출 사실(마커 0개) — verdict 아님. 적용성 판정은 core(classify_ac_source) 단일소유.
+            const bothAbsent = !!markers.both_absent;
+
+            if (!storyUri) {
               // story_uri 부재 = applicability-scoping 정의역(신호 C 정의상 부재). thin router forward(verdict=core).
               if (noneDeclared) {
                 core.setOutput('applicability_none', 'true');
                 core.setOutput('none_reason', noneReason);   // 빈 사유도 그대로 forward — 검증은 core(AC-2).
-                core.setOutput('both_absent', 'false');
+                core.setOutput('both_absent', bothAbsent ? 'true' : 'false');
                 core.setOutput('phase', '1');
                 core.setOutput('rtm_not_yet', 'false');
                 return;
@@ -100,7 +123,7 @@ jobs:
               // 둘 다 부재 = fail-closed no-optout — core distinct default guard(두 flag 모두 미전달).
               core.setOutput('applicability_none', 'false');
               core.setOutput('none_reason', '');
-              core.setOutput('both_absent', 'true');
+              core.setOutput('both_absent', bothAbsent ? 'true' : 'false');
               core.setOutput('phase', '1');
               core.setOutput('rtm_not_yet', 'false');
               return;
@@ -108,9 +131,7 @@ jobs:
             // story_uri present — 기존 fetch 경로(신호 C, non-suppressible). none 마커 병존 시 forward(core arbitrate).
             core.setOutput('applicability_none', noneDeclared ? 'true' : 'false');
             core.setOutput('none_reason', noneReason);
-            core.setOutput('both_absent', 'false');
-            const rtmUriMatch = body.match(/rtm_uri:\s*(\S+)/);
-            const storyUri = storyUriMatch[1];
+            core.setOutput('both_absent', bothAbsent ? 'true' : 'false');
 
             const allowedHubs = (process.env.ALLOWED_HUB_REPOS || '')
               .split(',').map(h => h.trim()).filter(Boolean);
@@ -167,13 +188,12 @@ jobs:
             // 4) 로컬 파일 write (문서 본문만 — secret 미포함) + rtm 결정.
             fs.writeFileSync('ac-gate-source.md', storyText);
             core.setOutput('phase', String(phaseNum));
-            if (!rtmUriMatch) {
+            if (!rtmUri) {
               // rtm_uri 마커 부재 = RTM not-yet EXPLICIT 신호. core: phase1=Hop1 only / phase2=FAIL(RTM 필수).
               //   placeholder(story §8 "작성 예정") fallback 흡수 아님 — 표면 자체를 전달하지 않음.
               core.setOutput('rtm_not_yet', 'true');
               return;
             }
-            const rtmUri = rtmUriMatch[1];
             const rtmText = (rtmUri === storyUri) ? storyText : await fetchDoc(rtmUri, 'rtm_uri');
             if (rtmText === null) return;
             fs.writeFileSync('ac-gate-rtm.md', rtmText);
