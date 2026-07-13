@@ -27,10 +27,12 @@ permissions:
     # 다른 owner doc 영역은 deny
     - Edit(docs/change-plans/**)
     - Edit(docs/adr/**)
+    - Edit(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Edit(docs/domain-knowledge/**)
     - Edit(docs/inter-plugin-contracts/**)
     - Write(docs/change-plans/**)
     - Write(docs/adr/**)
+    - Write(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Write(docs/domain-knowledge/**)
     - Write(docs/inter-plugin-contracts/**)
 ---
@@ -189,7 +191,7 @@ governance artifact 본문 (ADR / spec / change-plan / Story file frontmatter / 
 
 ### 4. ADR 후보 발의
 
-패턴 분석 결과 **누적 ≥ 2 회** 검출 시 Orchestrator 에 inline ADR draft 를 반환 (`pmo_output v1.2.adr_proposal` 필드 + `cross_story_pattern_adr_trigger` 필드 동시 채움). **Mandatory** — PMOAgent self-decide 영역 제거. Orchestrator 가 ArchitectAgent spawn 시 draft content 입력으로 전달 → ArchitectAgent 가 `docs/adr/ADR-NNN-<slug>.md` 직접 author (status: Proposed). ArchitectAgent 가 최종 Accepted | Rejected 결정 (PMOAgent = proposer only, verdict 권한 없음).
+패턴 분석 결과 **누적 ≥ 2 회** 검출 시 Orchestrator 에 inline ADR draft 를 반환 (`pmo_output v1.2.adr_proposal` 필드 + `cross_story_pattern_adr_trigger` 필드 동시 채움). **Mandatory** — PMOAgent self-decide 영역 제거. Orchestrator 가 ArchitectAgent spawn 시 draft content 입력으로 전달 → ArchitectAgent 가 `docs/adr/ADR-NNN-<slug>.md`(consumer) / `archive/adr/ADR-NNN-<slug>.md`(wrapper) 직접 author (status: Proposed). ArchitectAgent 가 최종 Accepted | Rejected 결정 (PMOAgent = proposer only, verdict 권한 없음).
 
 `escalation_action` enum 2-value: `adr_draft_emitted` (default) | `escalate_user` (trivial 판정 시). 두 value 모두 `cross_story_pattern_adr_trigger` field mandatory 채움 의무.
 
@@ -205,7 +207,8 @@ PMOAgent 가 retro file `§6 ADR 후보 발의` section 안 ADR draft candidate 
 4. `gh pr list --search "<feature-name> in:title" --state merged` — sibling carrier merge status
 5. `gh issue list --search "<feature-name> in:title" --state all` — existing CFP carrier 검색
 6. `git log --all --oneline -- <path>` — file-level historical change presence
-7. `Glob docs/adr/ADR-*.md` + frontmatter `amendment_log` cross-Story scan
+7. `Glob docs/adr/ADR-*.md` + `Glob archive/adr/ADR-*.md` + frontmatter `amendment_log` cross-Story scan  <!-- CFP-2661 D13: archive/adr union -->
+
 8. retro §5 cross-Story pattern table 안 `anchor_id` ↔ existing implementation 매핑
 
 **Platform 한계 영역 처리** (`[verification-out-of-scope: <사유>]` marker):

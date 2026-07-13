@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-07-09T18:17:03Z  
-**Registered doc types**: 19
+**Last regen**: 2026-07-13T14:16:15Z  
+**Registered doc types**: 20
 
 ## Summary table
 
@@ -23,14 +23,15 @@
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
 | 10 | `inter_plugin_contract` | confluence / single_repo | `each_lane_plugin` | CFP-29 |
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
-| 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
-| 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
-| 14 | `integration_test_baseline` | single_repo | `codeforge-test:IntegrationTestAgent` | CFP-954 |
-| 15 | `architecture_doc` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
-| 16 | `promotion_criteria_4tuple_artifact` | single_repo | `codeforge-design:ArchitectAgent` | CFP-991 |
-| 17 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
-| 18 | `system_invariants` | single_repo | `codeforge-design:ArchitectAgent` | CFP-2361 |
-| 19 | `runbook` | single_repo | `codeforge-develop:InfraEngineerAgent` | CFP-2591 |
+| 12 | `path_relocation_ledger` | single_repo | `orchestrator` | CFP-2661 |
+| 13 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
+| 14 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
+| 15 | `integration_test_baseline` | single_repo | `codeforge-test:IntegrationTestAgent` | CFP-954 |
+| 16 | `architecture_doc` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
+| 17 | `promotion_criteria_4tuple_artifact` | single_repo | `codeforge-design:ArchitectAgent` | CFP-991 |
+| 18 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
+| 19 | `system_invariants` | single_repo | `codeforge-design:ArchitectAgent` | CFP-2361 |
+| 20 | `runbook` | single_repo | `codeforge-develop:InfraEngineerAgent` | CFP-2591 |
 
 ## Per-doc-type details
 
@@ -234,6 +235,22 @@
   > MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
   > parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
   > Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
+
+### `path_relocation_ledger`
+
+- **single_repo**: `<owner-repo>/docs/path-relocation-ledger.yaml`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-2661
+- **naming_pattern**: `path-relocation-ledger\.yaml`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/path-relocation-ledger.yaml
+
+  **notes**:
+  > CFP-2661 / ADR-136 Amendment 4 §결정 15 — path-relocation-consistency lint 의 relocation (old→new)
+  > pair 원장 SSOT. 게이트 execution-surface construct 가 OLD 경로 단독 지목(dead-path 재유입)을 검출하는
+  > lint(scripts/lib/check_path_relocation_consistency.py)의 입력. named-carrier CFP-2661 (naive TBD 치환 금지).
+  > Write owner = carrier Story InfraEngineer (wrapper governance). paired baseline = docs/path-relocation-baseline.yaml.
 
 ### `upgrade_events`
 

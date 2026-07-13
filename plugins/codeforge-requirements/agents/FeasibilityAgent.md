@@ -37,7 +37,8 @@ permissions:
    · 현재 패턴 (레이어드 아키텍처 / 헥사고날 / 모놀리식 등) 식별
 
 2. ADR 제약 검토
-   · docs/adr/ADR-*.md Glob → 요구사항 관련 ADR 필터 (Grep keywords)
+   · docs/adr/ADR-*.md + archive/adr/ADR-*.md Glob → 요구사항 관련 ADR 필터 (Grep keywords)  <!-- CFP-2661 D13: archive/adr union (wrapper dogfood) -->
+
    · 직접 제약 ADR: verbatim Read
    · 아키텍처 결정 ADR: 현재 요구사항과 충돌 여부 판단
 

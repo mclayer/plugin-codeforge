@@ -62,7 +62,7 @@ entries:
       §결정 12 CFP-C carry). sample size sufficient sentinel (월 < 50 spawn 환경 = N/A).
       [DEAD — ADR-141] 전 에이전트 opus 단일 tier 로 sonnet rate-limit fallback 대상 0 → 본 KPI 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
     detect_command: bash scripts/measure-rate-limit-fallback.sh
-    workflow: templates/github-workflows/rate-limit-fallback-kpi.yml
+    workflow: null  # CFP-2661 D14: rate-limit-fallback-kpi.yml 은 양 dir(.github/ + templates/) 실재 부재 = theater. status:dead(ADR-141) 이나 workflow 필드가 죽은 파일 지목 = 자동집행 착시. null 로 정직 declare (선례 동 registry `workflow: null  # CI 미wire`). D3(measure-rate-limit-fallback.sh exit-4 sunset) coupled.
     current_tier: warning  # advisory dashboard, no PR block — semantic = "warning mode 의 runtime metric extension"
     # bypass_label: omit — runtime metric pattern 에서 의미 부적용
     # bypass_audit_lint: omit — bypass_label 미정의
@@ -3924,3 +3924,57 @@ entries:
       threshold: 2                  # ADR-045 §D-9 escalate_user Mandatory
       promotion_trigger: none       # 본 Story = escalate_user 응답 (write-time 좌향 forcing 신설, preventive) — live 결함 아님, blocking 승격은 별 named carrier CFP-2650
     status: Active                   # CFP-2646 Phase 2 wire COMPLETE — Python SSOT + thin wrapper + byte-identical workflow + grandfather baseline + discriminating self-test live
+
+  - name: path-relocation-consistency
+    description: |
+      CFP-2661 / ADR-136 Amendment 4 §결정 15 (22번째 warning-tier entry) — relocation-ledger 구동
+      construct-scoped dead-path 재유입 차단 lint (census-floor / empty-scope oracle). ADR 실 위치가
+      archive/adr/ 로 relocation(PR #1973)된 뒤, 게이트 execution-surface construct(shell array / python
+      literal / yaml sequence)가 구경로 docs/adr 만 단독 지목하면 dead-path vacuous-PASS(scope=∅) / false-RED
+      을 일으키는 재유입을 정적 검출. Rule: 원장(docs/path-relocation-ledger.yaml) 등록 (old→new) pair 에
+      대해, 비-주석 construct 가 OLD 지목 시 NEW 를 **동일 construct** 안에 동반해야 함(co-occurrence).
+      ★ construct-scoped (file-level FN factory 회피, AC-14): file 은 dual 인데 특정 array/set/sequence 는
+      docs/adr 단독(dead)인 경우 실재(ALLOWLIST_EXTRA_FILES / EXEMPT_PATHS / frontmatter allow·deny sequence)
+      → file-level 이면 FN. construct span 안에서만 co-occurrence 판정.
+      ★ active_when field-predicate selector (least-powerful): construct 활성이 co-located sibling scalar 에
+      의존 시 `active_when:{field:parallel_edit,equals:locked}` 가 gate parallel-epic-conflict-check.yml:69
+      소비 predicate 를 mirror — sibling 매치 시에만 co-occurrence 적용. section-ownership.yaml locked=must-flag
+      / append-only(14 entry)=inert must-NOT-flag. field==literal equality only.
+      ★ census 3-count + fallback 비대칭 (anti-hollow): candidates_scanned / inert_skipped / violations emit.
+      verdict fail-open (모호 construct → suppress) but census fail-closed (candidate 0 = born-hollow guard →
+      exit 3, "scanned 0" ≠ "violations 0" AC-15). grandfather baseline new-only subtract(D-scope 외 pre-existing).
+      ★ 정직 천장 (I-6 / AC-20, "재유입 완전 차단" hard-claim 없음): static-literal / ledger-ceiling /
+      predicate-ceiling / coupling residual FN(gate:69 predicate 변경 미검출) / body-prose FN(markdown 산문
+      지시문 신규 유입 미검출) 정직 공시. presence ≠ truth, bounded degradation.
+      ★ born-safe (SecurityArch non-negotiable, CFP-2635 SF-1 선례): bounded regex nested-quantifier 0 /
+      MAX_PHYSICAL_LINE_LEN per-line truncate / O(n) index-depth advance / islice read cap / eval·exec 0
+      (순수 substring/regex, ast.literal_eval 미사용). DoS fixture <5s (self-test PERF). No path-traversal.
+      discriminating self-test 동반 (positive anchor D1/D4/D5/D9/D10/D11/D13-frontmatter/D15 must-flag +
+      mutation-kill / negative 0-FP(dual-path workflow·doc-locations variants·union·consumer template·append-only
+      14) / born-hollow guard(candidate 0→FAIL) / construct-vs-file FN 3종 / field-predicate locked↔append-only).
+      warning tier (ADR-060 §결정 5 default — required 미등록, `continue-on-error` + `paths` unconditional:
+      6→7 required 등록 4연속 실패 이력 회피, paths skip Pending 영구고착 회피, 설계 I-4 비협상).
+    detect_command: bash scripts/check-path-relocation-consistency.sh
+    workflow: .github/workflows/path-relocation-consistency.yml  # templates+.github byte-identical (ADR-005, sha256 대조)
+    current_tier: warning            # ADR-060 §결정 5 / ADR-136 Amd4 §결정15 — 첫 도입 = warning mode, required 미등록
+    bypass_label: hotfix-bypass:path-relocation-consistency
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2661                   # Phase 2 mechanical wire carrier — ledger + Python SSOT + thin wrapper + 2-file byte-identical workflow + discriminating self-test + grandfather baseline + inventory 레코드 + bypass label
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}  # relocation-consistency lint, modal 어휘 무관
+    introduced_by: CFP-2661
+    introduced_date: 2026-07-13      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-136              # declaration source — Amendment 4 §결정 15 (census-floor / empty-scope oracle)
+    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + 인벤토리 등재 의무
+    spec_invariant_measurement_required: false  # 정적 구조 construct-scoped lint (co-occurrence presence + census-floor) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf = DoS bound self-test 로 커버). 판별력 = discriminating self-test + born-hollow guard 결박
+    recurrence:
+      count: 0                      # relocation dead-path 재유입 preventive — live 결함 아닌 재유입 차단층
+      promotion_trigger: none       # ADR-060 §결정 19 schema v1.2 default
+    status: Active                   # CFP-2661 Phase 2 wire COMPLETE — ledger + Python SSOT + thin wrapper + byte-identical workflow + grandfather baseline + discriminating self-test live

@@ -44,7 +44,8 @@ permissions:
    · 사용자 원문 verbatim (Story §1)
    · Story file 경로 (`docs/stories/<KEY>.md`)
    · Project Config Packet slice (github.org / github.repo / story_key_prefix 등)
-   · 관련 ADR 목록 (`docs/adr/ADR-NNN-<slug>.md` 경로 + 1줄 요약)
+   · 관련 ADR 목록 (`docs/adr/ADR-NNN-<slug>.md`(consumer) + `archive/adr/ADR-NNN-<slug>.md`(wrapper) 경로 + 1줄 요약)  <!-- CFP-2661 D13: archive/adr union -->
+
    · 이전 스레드 합의 (있을 경우)
 
 2. 여섯 에이전트 병렬 스폰 의뢰 (Orchestrator에 "동시 스폰" 요청)
@@ -120,7 +121,8 @@ PL 이 §5 AC 를 최종 synthesis 할 때 (실행 흐름 3(d) "요구사항·AC
 1. 사용자 원문 verbatim (Story file §1)
 2. Story file 경로 (`docs/stories/<KEY>.md`)
 3. **관련 ADR** (공통 제공 — 한쪽이 선행 분석한 해석은 전달 금지):
-   - **강한 관련**(직접 제약): `Read(docs/adr/ADR-NNN-<slug>.md)`로 fetch 후 "## 상태/컨텍스트/결정/결과" verbatim 포함
+   - **강한 관련**(직접 제약): `Read(docs/adr/ADR-NNN-<slug>.md)` 또는 `Read(archive/adr/ADR-NNN-<slug>.md)`(wrapper)로 fetch 후 "## 상태/컨텍스트/결정/결과" verbatim 포함  <!-- CFP-2661 D13: archive/adr union -->
+
    - **약한 관련**(배경): ADR 번호 + 1줄 요약
 4. 관련 코드 경로 + 현재 책임 요약 (Mapper 수준 심층 분석 아님 — 지도 수준)
 5. Project Config Packet slice (`github.org` / `github.repo` / `github.story_key_prefix` / `github.discussions.domain_kb_category` 등)

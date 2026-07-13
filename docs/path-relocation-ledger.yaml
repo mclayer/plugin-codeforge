@@ -1,0 +1,42 @@
+# docs/path-relocation-ledger.yaml
+# CFP-2661 / ADR-136 Amendment 4 §결정 15 — path-relocation-consistency lint 의 relocation 원장 (SSOT).
+# Carrier: CFP-2661 (named-carrier invariant — TBD naive 치환 금지, CFP-2590 선례).
+#
+# 목적: repo 안 경로 relocation(old → new)이 발생했을 때, 게이트 스크립트·config 의 "실행표면 construct"
+#   (shell array / python literal / yaml sequence)가 OLD 경로만 단독 지목해 dead-path vacuous-PASS /
+#   false-RED 를 일으키는 재유입을 검출한다. Rule: 등록된 (old, new) pair 에 대해, 비-주석
+#   execution-surface construct 가 OLD 를 지목하면 NEW 가 **동일 construct** 안에 함께 있어야 한다
+#   (co-occurrence within construct). union 정정(old ∪ new) 시 통과, dead-path 단독 지목 시 flag.
+#
+# 정직 천장 (ADR-151 §결정7 / ADR-136 Amd4 상속 — 산출물 docstring/registry-description 과 동일):
+#   (I-6.1) static-literal ceiling — 동적 경로 조립(`base + "/adr"`)·간접 참조 미검출.
+#   (I-6.2) ledger-ceiling — 본 원장에 없는 relocation 은 미검출 (일반 lint 아닌 원장-구동 lint).
+#   (I-6.3) predicate-ceiling — active_when 은 `field == literal` equality 만 (least-powerful).
+#   (I-6.4) coupling residual FN — active_when 은 gate parallel-epic-conflict-check.yml:69 predicate 를
+#           설계-시점 mirror; gate:69-side predicate 변경 검출은 self-test fixture 범위 밖 = declared FN.
+#   (I-6.5) body-prose FN — markdown 산문 Read/Glob/Write 지시문 신규 유입은 3 construct parser scope 밖.
+#   "재유입 완전 차단" hard-claim 없음 — construct-scoped presence 천장 (bounded degradation).
+#
+# 스키마 계약 (Change Plan §4):
+#   relocations[].old        : 구경로 리터럴 (dead 경로).                       [필수]
+#   relocations[].new        : 신경로 리터럴 (동일 construct 안 동반 의무 대상). [필수]
+#   relocations[].carrier    : named-carrier CFP (naive TBD 치환 금지).          [필수]
+#   relocations[].surfaces   : 검사 대상 construct 종류 (shell_array/python_literal/yaml_sequence). [필수]
+#   relocations[].active_when: (선택) construct 활성 판정이 co-located sibling scalar 에 의존할 때
+#                              {field: <키>, equals: <리터럴>}. 부재 ⇒ 그 surface_kind 전 construct active.
+#                              field == literal equality only (least-powerful — expression language 아님).
+
+relocations:
+  - old: docs/adr
+    new: archive/adr
+    carrier: CFP-2661
+    surfaces:
+      - shell_array
+      - python_literal
+      - yaml_sequence
+    # section-ownership.yaml 의 owned_sections[].file 은 sibling `parallel_edit: locked` 일 때만
+    # gate(parallel-epic-conflict-check.yml:69)가 read → 그 predicate 를 정확히 mirror. append-only /
+    # 그 외 값 = gate 미read = inert (verbatim PRESERVE, I-1). field==literal equality (least-powerful).
+    active_when:
+      field: parallel_edit
+      equals: locked

@@ -21,8 +21,9 @@
 #
 # SSOT:
 #   docs/inter-plugin-contracts/imperative-walker-protocol-v1.md §2.A
-#   docs/adr/ADR-093-completion-report-4field-schema.md §결정 1
-#   docs/adr/ADR-038-progress-visualization-todowrite.md §결정 2/3
+#   docs/adr/ADR-093-completion-report-4field-schema.md (wrapper: archive/adr/) §결정 1
+#   docs/adr/ADR-038-progress-visualization-todowrite.md (wrapper: archive/adr/) §결정 2/3
+#   (CFP-2661 #2223/AC-21: ADR 실 위치 = archive/adr, PR #1973. docs/adr = consumer 관례. 주석 union-normalize)
 #
 # closed_enum open_extension: false (ADR-093 §결정 2 정합)
 #   - walk_result enum: 4-value closed-set (walk_plan.WalkResult 공유)

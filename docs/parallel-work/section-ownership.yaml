@@ -495,7 +495,7 @@ owned_sections:
     # dependency-order-enforce). 모두 declaration-only Wave 1 (deferred-followup status).
     # ADR-076 / ADR-082 / ADR-086 precedent 답습. ADR-060 §결정 6 row append 정합.
 
-  - file: docs/adr/ADR-083-consumer-applicability-filter.md
+  - file: archive/adr/ADR-083-consumer-applicability-filter.md  # CFP-2661 D15: per-copy REPLACE docs/adr→archive/adr (ADR 실 위치, PR #1973). gate parallel-epic-conflict-check.yml:69 이 parallel_edit==locked 일 때만 이 file: 을 read → dead docs/adr 는 lock 이 조용히 절대 안 걸림(conflict-detection false-negative). wrapper-only(consumer 미러 부재) → union 아닌 치환.
     section: "Amendment 3 (CFP-1293) — §결정 5 wire location expand"
     owner_adr: ADR-083
     parallel_edit: locked

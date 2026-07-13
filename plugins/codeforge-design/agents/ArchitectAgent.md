@@ -16,7 +16,9 @@ permissions:
     - Edit(docs/change-plans/**)
     - Write(docs/change-plans/**)
     - Edit(docs/adr/**)
+    - Edit(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Write(docs/adr/**)
+    - Write(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Edit(docs/stories/**)
     - Edit(docs/project-config-schema.md)   # 토폴로지 SSOT 1급 author write surface (CFP-2419 / ADR-131 §결정1 — repo-level 책임 배치 SSOT 스키마 authoring)
     - Write(docs/project-config-schema.md)  # 토폴로지 SSOT 스키마 신규 섹션 author (write-surface 갭 해소, ADR-131 AC-4)
@@ -57,7 +59,8 @@ permissions:
    §1 목적 · §2 현재 구조(Mapper) · §3 도입 설계(Refactor+Module+API+Data) · §4 API 계약 · §5 변경 파일 단위 ·
    §6 리팩토링 선행 · §7 보안(SecurityArch §7.1-3/5-6 + InfraOp §7.4) · §8 Test Contract(TestContractArch) ·
    §9 분기 선택 · §10 ADR 정합성+신규 필요 판단 · §11 데이터 마이그레이션(DataArch + Module aggregate + InfraOp §11.6 idempotency)
-4. 신규 ADR draft (필요 시): docs/adr/ADR-NNN-<slug>.md 직접 write (status: Proposed)
+4. 신규 ADR draft (필요 시): docs/adr/ADR-NNN-<slug>.md(consumer) / archive/adr/ADR-NNN-<slug>.md(wrapper dogfood) 직접 write (status: Proposed)  <!-- CFP-2661 D13: archive/adr union -->
+
 5. 저장 + Story 미러: docs/change-plans/<slug>.md 직접 write + Story §3/§7/§11 직접 Edit
 6. ArchitectPLAgent에 draft 반환 (PL 검수 → PASS or RETURN). RETURN 시 재스폰되어 반영
 ```
@@ -127,7 +130,8 @@ ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_pass
 - **PMO inline ADR draft**: PMOAgent가 ADR 후보 발의 시 Orchestrator가 inline draft를 입력 전달 → 본 에이전트가 관련 ADR+코드 통합 분석 → ADR file write(Proposed) → Change Plan §3/§7/§11 영향 시 갱신.
 
 ## Cache invalidation
-`docs/stories/<KEY>.md`(§3/§7/§11) / `docs/change-plans/<slug>.md` / `docs/adr/*.md` 중 하나라도 write 시 Orchestrator 반환에 `cache_invalidate: [<path>...]` 포함.
+`docs/stories/<KEY>.md`(§3/§7/§11) / `docs/change-plans/<slug>.md` / `docs/adr/*.md` + `archive/adr/*.md` 중 하나라도 write 시 Orchestrator 반환에 `cache_invalidate: [<path>...]` 포함.  <!-- CFP-2661 D13: archive/adr union -->
+
 
 ## Architecture doc lane gate (ADR-078)
 매 Change Plan merge 시 architecture doc 4 영역 갱신 의무: **modules**(module 도입/제거/책임 재분배) · **boundaries**(trust/lane/plugin boundary 변경) · **interfaces**(API/inter-plugin contract/agent prompt schema 변경) · **data_flow**(데이터 흐름/event/handoff 변경). Change Plan §3/§5/§11 변경이 1+ 영역에 mapping되면 갱신; 불가 시 §10.A `architecture_doc_impact: none_rationale` declare(skip 차단). packet `architecture_doc_updated: bool`. **anti-scope**: 클래스/함수/변수 라인 단위 / import graph / src 1:1 mirror 금지 — 모듈/경계/계약/흐름 서술만.

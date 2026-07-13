@@ -86,7 +86,7 @@ permissions:
 | # | 소스 | 역할 | 접근 수단 |
 |---|------|------|-----------|
 | 1 | **`docs/domain-knowledge/domain/<area>/<topic>.md` 트리** (area는 consumer overlay 자유 정의) | 도메인 사실 SSOT | `Glob` + `Grep`, `Read(docs/domain-knowledge/domain/**)` |
-| 2 | **ADR 도메인 카테고리** (`docs/adr/ADR-*.md`, frontmatter `category:` 필드로 분류) | 설계 결정의 도메인 근거 | `Glob(docs/adr/ADR-*.md)` + `Grep` (frontmatter category) |
+| 2 | **ADR 도메인 카테고리** (`docs/adr/ADR-*.md` + `archive/adr/ADR-*.md`, frontmatter `category:` 필드로 분류) | 설계 결정의 도메인 근거 | `Glob(docs/adr/ADR-*.md)` + `Glob(archive/adr/ADR-*.md)` + `Grep` (frontmatter category) |
 | 3 | **도메인 코드 경로** (consumer overlay가 `src/<domain-paths>/**` 지정) | 현재 구현된 도메인 모델 (Entity/VO/Invariant) | `Read`, `Grep` |
 | 4 | **사용자 요구사항 verbatim** | 해석 대상 | Story file §1 |
 
@@ -102,7 +102,8 @@ permissions:
    · 상위 적합 파일 `Read`로 verbatim 수령
 
 3. ADR 도메인 카테고리 검색
-   · `Glob(docs/adr/ADR-*.md)` + `Grep` frontmatter `category:` 필드로 도메인 관련 ADR 필터
+   · `Glob(docs/adr/ADR-*.md)` + `Glob(archive/adr/ADR-*.md)` + `Grep` frontmatter `category:` 필드로 도메인 관련 ADR 필터  <!-- CFP-2661 D13: archive/adr union -->
+
    · 직접 제약 ADR verbatim, 배경 ADR 요약만
 
 4. 도메인 코드 Read

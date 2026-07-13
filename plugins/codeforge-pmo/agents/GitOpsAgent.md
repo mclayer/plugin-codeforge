@@ -37,11 +37,13 @@ permissions:
     # 다른 owner doc 영역은 deny
     - Edit(docs/change-plans/**)
     - Edit(docs/adr/**)
+    - Edit(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Edit(docs/domain-knowledge/**)
     - Edit(docs/inter-plugin-contracts/**)
     - Edit(docs/retros/**)
     - Write(docs/change-plans/**)
     - Write(docs/adr/**)
+    - Write(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Write(docs/domain-knowledge/**)
     - Write(docs/inter-plugin-contracts/**)
     - Write(docs/retros/**)

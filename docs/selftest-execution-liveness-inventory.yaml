@@ -351,13 +351,17 @@ self_tests:
     g_boundary_check: "orphan self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
 
   - self_test: "tests/scripts/test_adr-path-dead-path-sweep.sh"
-    execution_channel: "manual_registered"
+    execution_channel: "workflow:path-relocation-consistency.yml:path-relocation-consistency"
     channel_status: "alive"
-    blocking_tier: "manual"
+    blocking_tier: "non_required"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "CFP-2519 one-shot dead-path sweep 잔재 — subject adr-path-dead-path-sweep.sh 부재(1-shot 마이그레이션 후 소멸). 재배선할 live subject 없음 → manual 등록. 제거는 별도 cleanup Story로 분리."
-    g_boundary_check: "one-shot 잔재 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (subject 부재로 실행축 자연 N/A)."
+    manual_reason: ""
+    # CFP-2661 D7 (AC-17): manual_reason 사실오류 정정 — 본 self-test 는 ALIVE(firsthand: 13 passed / 0 failed,
+    #   5 mutant-kill). 구 manual_reason("subject adr-path-dead-path-sweep.sh 부재 / 재배선할 live subject
+    #   없음")은 FALSE 였다. 신규 path-relocation-consistency lint 이 dead-path 검출을 흡수/확장 → 본 회귀
+    #   test 를 그 workflow 실행 채널로 CI 승격(manual→non_required, execution_channel workflow 배선).
+    g_boundary_check: "dead-path 회귀 self-test (CI 승격) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 dead-path 검출 판별력 결박, wrapper-self plugin-meta-na)."
 
   - self_test: "tests/scripts/test_adr-sunset-criteria-pathagnostic.sh"
     execution_channel: "manual_registered"
@@ -396,3 +400,14 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "정적 resource-safety claim↔proof presence lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, presence≠truth 정적 lint 판별력 결박: TC-OC 검출/TC-HD·PL·CD·EX 미검출/MK mutation-kill/PERF DoS-bound/AC-3 self-application)."
+
+  # ── CFP-2661 (ADR-136 Amendment 4 §결정 15) — path-relocation-consistency self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 39 → 40 (신규 self-test enroll). born-invalid enroll 회피 위해 정확히 39→40.
+  - self_test: "tests/scripts/test_check-path-relocation-consistency.sh"
+    execution_channel: "workflow:path-relocation-consistency.yml:path-relocation-consistency"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "relocation-ledger 구동 construct-scoped dead-path 재유입 lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, construct-scoped 판별력 결박: positive anchor 검출/negative 0-FP/born-hollow guard candidate0→FAIL/construct-vs-file FN/field-predicate locked↔append-only/mutation-kill/PERF DoS-bound<5s)."

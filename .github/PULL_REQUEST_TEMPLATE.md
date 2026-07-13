@@ -2,7 +2,7 @@
 <!--
   CodeForge PR Template — 다음 두 형식 중 하나를 사용하세요.
 
-  Phase 1 PR (요구사항·설계·설계리뷰 lane): docs/stories/**/§1-7 + docs/change-plans/**/+ docs/adr/**
+  Phase 1 PR (요구사항·설계·설계리뷰 lane): docs/stories/**/§1-7 + docs/change-plans/**/+ archive/adr/** (CFP-2661 D6: wrapper ADR 실 위치 archive/adr, PR #1973)
   Phase 2 PR (구현·구현리뷰·구현테스트·보안테스트 lane): src/** + tests/** + docs/stories/**/§8-11 append
 
   사용하지 않는 phase 섹션은 통째로 삭제하세요.
@@ -23,7 +23,8 @@
 
 ### 핵심 설계 결정
 <!-- ADR 신규/갱신 여부, 핵심 결정 근거 -->
-- ADR: `docs/adr/ADR-NNN-<slug>.md`
+- ADR: `archive/adr/ADR-NNN-<slug>.md`  <!-- CFP-2661 D6: wrapper ADR 실 위치 = archive/adr (PR #1973). consumer 사본(templates/.github/)은 docs/adr 유지 — per-copy 치환 -->
+
 - 결정 근거: ...
 
 ### 설계 리뷰 PASS 증거

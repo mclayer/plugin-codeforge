@@ -59,8 +59,11 @@ declare -A WORD_TARGETS=(
   ["못 박기"]="docs CLAUDE.md templates"
   ["pin"]="docs CLAUDE.md templates"
   ["freezing"]="docs CLAUDE.md templates"
-  ["별"]="docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates"
+  ["별"]="docs/adr archive/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates"
 )
+# CFP-2661 D1: `별` scope union-ADD `archive/adr` (ADR 실 위치 = archive/adr, PR #1973 이동; 구경로 docs/adr
+#   단독 = dead-path → scope=∅ vacuous-PASS 였음). docs/adr 는 consumer 정답 경로라 union 보존(치환 아님, I-2).
+#   D1-c 원자결합: EXEMPT_FILES 도 archive/adr/ADR-064 union (분리 시 ADR-064 어휘 정의 본문 self-red).
 
 # ─── Amendment 3 (CFP-1060) — `별 + carrier-noun` hand-off vocabulary exemption ──
 # docs/wording-dictionary.md Amendment 3 §규칙 선언 regex 의 verbatim wire (Wave 2
@@ -93,10 +96,39 @@ DEFINITION_REQUIRED_SCOPE="docs CLAUDE.md templates"
 EXEMPT_FILES=(
   "docs/wording-dictionary.md"
   "docs/adr/ADR-064-decision-principle-mandate.md"
+  "archive/adr/ADR-064-decision-principle-mandate.md"  # CFP-2661 D1-c: ADR-064 실 위치 union (archive/adr; scope union 과 원자)
   # ADR-108 append-only frozen 이력 — 과거 entry description 의 어휘는 audit trail
   # verbatim 보존 의무 (rewrite 금지) → file 단위 EXEMPT (CFP-2154).
   "docs/inter-plugin-contracts/label-registry-v2.md"
 )
+
+# ─── CFP-2661 D1 grandfather baseline (AC-4 — 노출 debt 동결 + new-only subtract) ──
+# D1 union(archive/adr) 이 노출한 기존 ADR 본문 위반(실측 83 파일 / 85 별 hit)을 (file|word|content) 로
+# 동결 → new-only 만 flag (선례 docs/resource-safety-claim-baseline.yaml / deferred-followup-baseline.yaml).
+# 기존 debt 는 warning-tier 라도 소음이므로 freeze; 신규 위반 1줄 주입 시 exit≠0 (mutation-kill AC-4).
+# (플래그 파싱 前 정의 필수 — --write-baseline 이 아래 vars/함수 소비.)
+WD_BASELINE_FILE="${WD_BASELINE_FILE:-docs/wording-dictionary-baseline.yaml}"
+WD_WRITE_BASELINE=0
+declare -A WD_BASELINE
+WD_GRANDFATHERED=0
+WD_NEW_VIOL=0
+WD_BASELINE_TMP=""
+
+wd_normalize_content() {
+  printf '%s' "$1" | tr -s '[:space:]' ' ' | sed 's/^ *//;s/ *$//'
+}
+
+load_wd_baseline() {
+  [ -f "$WD_BASELINE_FILE" ] || return 0
+  local f="" w="" c
+  while IFS= read -r line; do
+    case "$line" in
+      "- file: "*) f="${line#- file: }" ;;
+      "  word: "*) w="${line#  word: }" ;;
+      "  content: "*) c="${line#  content: }"; WD_BASELINE["${f}|${w}|${c}"]=1 ;;
+    esac
+  done < "$WD_BASELINE_FILE"
+}
 
 # ─── 인자 model (§3.2.1 — backward-compat zero migration cost) ────────────────
 # 인자 없음 ($# -eq 0)  = per-word lookup mode — WORD_TARGETS map lookup 활성 (어휘별 독립 scope)
@@ -107,13 +139,37 @@ if [ "${1:-}" = "--self-test" ]; then
   SELF_TEST=1
   shift
 fi
+# CFP-2661 D1: --write-baseline 모드 (현 카테고리 (a) 위반 전건 동결). single writer, 수기 편집 금지.
+if [ "${1:-}" = "--write-baseline" ]; then
+  WD_WRITE_BASELINE=1
+  shift
+  WD_BASELINE_TMP="$(mktemp)"
+fi
 if [ $# -eq 0 ]; then
   OVERRIDE_TARGETS=()
 else
   OVERRIDE_TARGETS=("$@")
 fi
 
+# CFP-2661 D1: baseline load (write 모드 아닐 때만 subtract 활성).
+if [ "$WD_WRITE_BASELINE" -eq 0 ]; then
+  load_wd_baseline
+fi
+
 EXIT_CODE=0
+
+# ─── CFP-2661 D1: scanned-count census + 침묵-skip 봉인 (AC-1 — scanned≥156 emit / 침묵 skip 0) ──
+# 게이트가 "아무것도 안 봤다"(scope=∅ vacuous-PASS)를 관측 가능하게: 실 스캔 ADR 파일 수 + 부재 scope
+# skip 을 가시화한다. 부재 scope 는 조용히 continue(침묵) 하지 않고 announce 후 counter 증가.
+WD_ADR_DISCOVERED=0   # adr/ADR-*.md 실 진입 수 (union archive/adr → ≥156; scope=∅ 이면 0 = vacuous 노출).
+WD_FILE_SCANNED=0     # 전 .md×word 실 스캔 수.
+WD_MISSING_SKIP=0     # 부재 scope path 가시화 skip 수 (침묵 아님 — announce 됨).
+
+# 부재 scope path 가시화 helper (CFP-2661 D1 — `[ ! -e ] && continue` 침묵 skip 봉인).
+announce_missing_scope() {
+  echo "wording-dictionary: [skip:missing-scope] '$1' 부재 — dead-path 가시화 (침묵 skip 아님, warning tier)"
+  WD_MISSING_SKIP=$((WD_MISSING_SKIP+1))
+}
 
 # ─── 헬퍼: EXEMPT 파일 여부 확인 ─────────────────────────────────────────────
 is_exempt_file() {
@@ -181,8 +237,11 @@ scan_file_for_word() {
   [ ! -f "$file" ] && return
   # .md 파일만 처리 (코드 file = self-referential / test fixture 보호, §3.5)
   [[ "$file" != *.md ]] && return
+  # CFP-2661 D1 census: ADR 파일(adr/ADR-*.md) 진입 수 집계 (exempt 前 = anti-vacuity discovered floor).
+  case "${file//\\//}" in *adr/ADR-*) WD_ADR_DISCOVERED=$((WD_ADR_DISCOVERED+1));; esac
   # EXEMPT 파일 건너뜀
   is_exempt_file "$file" && return
+  WD_FILE_SCANNED=$((WD_FILE_SCANNED+1))
 
   local sf
   sf="$(get_stripped_file "$file")"
@@ -221,13 +280,31 @@ scan_file_for_word() {
     hits="$(grep -ni -- "$word" "$sf" || true)"
   fi
   if [ -n "$hits" ]; then
-    echo "WARNING [wording-dictionary 카테고리 (a) forbid]: '$word' 발견 — $file"
-    echo "$hits" | while IFS= read -r hit; do
+    # CFP-2661 D1: grandfather baseline subtract (new-only) + --write-baseline collect.
+    local emitted_header=0 content norm key
+    while IFS= read -r hit; do
+      [ -z "$hit" ] && continue
+      content="${hit#*:}"                       # strip leading "<lineno>:"
+      norm="$(wd_normalize_content "$content")"
+      key="${file}|${word}|${norm}"
+      if [ "$WD_WRITE_BASELINE" -eq 1 ]; then
+        printf -- '- file: %s\n  word: %s\n  content: %s\n' "$file" "$word" "$norm" >> "$WD_BASELINE_TMP"
+        continue
+      fi
+      if [ -n "${WD_BASELINE[$key]:-}" ]; then
+        WD_GRANDFATHERED=$((WD_GRANDFATHERED+1))
+        continue
+      fi
+      if [ "$emitted_header" -eq 0 ]; then
+        echo "WARNING [wording-dictionary 카테고리 (a) forbid — NEW]: '$word' 발견 — $file"
+        emitted_header=1
+      fi
       echo "  $hit"
-    done
-    # Mode invariant: STRICT mode (CFP-1345 header SSOT) — 카테고리 (a) emission point.
-    # ADR-064 §결정 1 wording-dictionary lint policy + ADR-060 warning-tier framework.
-    EXIT_CODE=1
+      WD_NEW_VIOL=$((WD_NEW_VIOL+1))
+      # Mode invariant: STRICT mode (CFP-1345 header SSOT) — 카테고리 (a) emission point.
+      # ADR-064 §결정 1 wording-dictionary lint policy + ADR-060 warning-tier framework. new-only (D1 baseline).
+      EXIT_CODE=1
+    done <<< "$hits"
   fi
 }
 
@@ -266,7 +343,7 @@ scan_scope() {
   local scopes=("$@")
   local target
   for target in "${scopes[@]}"; do
-    [ ! -e "$target" ] && continue
+    if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
     if [ -f "$target" ]; then
       "$callback" "$target"
     elif [ -d "$target" ]; then
@@ -311,12 +388,21 @@ if [ "$SELF_TEST" -eq 1 ]; then
   st_case "pin compound: workspace pin (CFP-2154 신규)" "Cargo.lock workspace pin 답습." 0
   st_case "pin compound: SHA-pin (기존 유지)" "action SHA-pin 정책 유지." 0
   st_case "blockquote exempt 유지" "> 박제 금지 인용문." 0
+  # ── CFP-2661 D1 grandfather baseline (AC-4 — test_d1_grandfather_new_only: freeze → exit 0, new → exit 1) ──
+  ST_BL="$ST_DIR/wd-baseline.yaml"
+  printf '별 컴퓨터 에서 실행한다.\n' > "$ST_DIR/case.md"
+  WD_BASELINE_FILE="$ST_BL" bash "$0" --write-baseline "$ST_DIR/case.md" > /dev/null 2>&1
+  WD_BASELINE_FILE="$ST_BL" bash "$0" "$ST_DIR/case.md" > /dev/null 2>&1
+  if [ $? -eq 0 ]; then echo "SELF-TEST PASS: D1 baseline grandfather (existing 위반 freeze → exit 0)"; else echo "SELF-TEST FAIL: D1 baseline grandfather"; ST_FAIL=1; fi
+  printf '별 컴퓨터 에서 실행한다.\n또 별 도리 없다.\n' > "$ST_DIR/case.md"
+  WD_BASELINE_FILE="$ST_BL" bash "$0" "$ST_DIR/case.md" > /dev/null 2>&1
+  if [ $? -eq 1 ]; then echo "SELF-TEST PASS: D1 baseline new-only (신규 위반 주입 → exit 1, mutation-kill AC-4)"; else echo "SELF-TEST FAIL: D1 baseline new-only"; ST_FAIL=1; fi
   rm -rf "$ST_DIR"
   if [ "$ST_FAIL" -eq 1 ]; then
     echo "wording-dictionary self-test FAIL"
     exit 1
   fi
-  echo "wording-dictionary self-test PASS (12 case)"
+  echo "wording-dictionary self-test PASS (14 case — 12 + D1 baseline grandfather/new-only AC-4)"
   exit 0
 fi
 
@@ -327,7 +413,7 @@ if [ ${#OVERRIDE_TARGETS[@]} -eq 0 ]; then
     # shellcheck disable=SC2206  # 공백 split = 의도 (scope path list)
     scope_paths=(${WORD_TARGETS[$word]})
     for target in "${scope_paths[@]}"; do
-      [ ! -e "$target" ] && continue
+      if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
       if [ -f "$target" ]; then
         scan_file_for_word "$target" "$word"
       elif [ -d "$target" ]; then
@@ -345,7 +431,7 @@ else
   # uniform override mode — 지정 대상에만 모든 어휘 + 카테고리 (b) 적용
   for word in "${!WORD_TARGETS[@]}"; do
     for target in "${OVERRIDE_TARGETS[@]}"; do
-      [ ! -e "$target" ] && continue
+      if [ ! -e "$target" ]; then announce_missing_scope "$target"; continue; fi
       if [ -f "$target" ]; then
         scan_file_for_word "$target" "$word"
       elif [ -d "$target" ]; then
@@ -358,8 +444,32 @@ else
   scan_scope scan_file_definitions "${OVERRIDE_TARGETS[@]}"
 fi
 
+# CFP-2661 D1: --write-baseline 마무리 (수집 위반 dedup 후 baseline yaml write).
+if [ "$WD_WRITE_BASELINE" -eq 1 ]; then
+  {
+    echo "# docs/wording-dictionary-baseline.yaml — GENERATED by scripts/check-wording-dictionary.sh --write-baseline (CFP-2661 D1)"
+    echo "# DO NOT EDIT BY HAND. Regenerate: bash scripts/check-wording-dictionary.sh --write-baseline"
+    echo "# grandfather = D1 union(archive/adr) 노출 시점 기존 카테고리 (a) 위반(file|word|content) 동결 → new-only subtract (ADR-060 §결정6 Clean-as-You-Code)."
+    echo "schema_version: '1.0'"
+    echo "generated_by: CFP-2661"
+    echo "grandfathered_violations:"
+    if [ -s "$WD_BASELINE_TMP" ]; then
+      # 3-line record 단위 dedup (paste 로 record 합치기 → sort -u → 재분해).
+      paste -d '\t' - - - < "$WD_BASELINE_TMP" | sort -u | tr '\t' '\n'
+    else
+      echo "# (none)"
+    fi
+  } > "$WD_BASELINE_FILE"
+  rm -f "$WD_BASELINE_TMP"
+  echo "wording-dictionary: baseline written $WD_BASELINE_FILE"
+  exit 0
+fi
+
+# CFP-2661 D1 census (AC-1 — scanned-count emit / 침묵 skip 0). scope=∅ 이면 adr_files_scanned=0 노출.
+echo "wording-dictionary: census adr_files_scanned=$WD_ADR_DISCOVERED total_md_word_scans=$WD_FILE_SCANNED missing_scope_skip=$WD_MISSING_SKIP grandfathered=$WD_GRANDFATHERED new_violations=$WD_NEW_VIOL (침묵 skip 0 — 부재 scope 전량 가시화)"
+
 if [ "$EXIT_CODE" -eq 0 ]; then
-  echo "wording-dictionary PASS — 카테고리 (a) forbid 어휘 발견 없음"
+  echo "wording-dictionary PASS — 카테고리 (a) forbid 신규 위반 없음 (grandfathered=$WD_GRANDFATHERED)"
 fi
 
 exit "$EXIT_CODE"

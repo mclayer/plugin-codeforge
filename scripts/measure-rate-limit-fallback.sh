@@ -45,7 +45,8 @@
 #   1 = 입력 검증 실패 (script error)
 #   2 = write 실패 (--out 지정 시)
 #   3 = internal-docs scan failure (CFP-451 — --internal-docs-path 지정됐으나 wrapper/stories/ 부재 또는 .md glob 0건)
-#   4 = SONNET_AGENTS enum drift (CFP-451 — ADR-057 §결정 3 / ADR-042 Amendment 4 SSOT 와 mismatch detect)
+#   4 = [SUNSET, CFP-2661 D3] SONNET_AGENTS enum-drift 검사 제거 — ADR-141 전 에이전트 opus 단일 tier 폐기
+#       (dead-policy) + docs/adr dead-path. exit 4 미도달 dead code. ADR-145 non-applicable 선언 (registry workflow:null).
 #
 # CLI:
 #   bash scripts/measure-rate-limit-fallback.sh \
@@ -135,53 +136,20 @@ if [[ -n "$INTERNAL_DOCS_PATH" ]]; then
   fi
 fi
 
-# CFP-451 exit 4 — SONNET_AGENTS enum drift detection.
-# ADR-057 §결정 3 / ADR-042 Amendment 4 본문에서 agent 이름 추출 후 SONNET_AGENTS array 와 set diff.
-# ADR file 미존재 시 silent skip (다른 repo 에서 실행 등 — exit 0 정상 path).
-ADR_057_FILE="$WRAPPER_PATH/docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md"
-ADR_042_FILE="$WRAPPER_PATH/docs/adr/ADR-042-agent-model-selection-policy.md"
-if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
-  # ADR 본문의 ## §결정 N block scope 안에서만 agent 이름 (CapitalizedAgent 패턴) 추출.
-  # CFP-492 — awk state machine: 전체 file grep 대신 §결정 section 안으로 scope 한정.
-  # false-positive 회피: deprecated section / 거절 대안 / §배경 등 다른 영역의 agent 언급 SKIP.
-  # state 정의:
-  #   in_decision=0: §결정 block 외부 (기본)
-  #   in_decision=1: ## §결정 line 이후 ~ 다음 ## heading 전까지
-  ADR_DETECTED_AGENTS=()
-  for adr_f in "$ADR_057_FILE" "$ADR_042_FILE"; do
-    [[ -f "$adr_f" ]] || continue
-    while IFS= read -r name; do
-      [[ -z "$name" ]] && continue
-      # dedup
-      already=0
-      for existing in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do
-        if [[ "$existing" == "$name" ]]; then already=1; break; fi
-      done
-      [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(awk '
-      /^## (§?결정|결정)$/ { in_decision=1; next }
-      /^### (결정|§결정)/ { in_decision=1; next }
-      /^## / && !/^## (§?결정|결정)$/ { in_decision=0 }
-      in_decision { print }
-    ' "$adr_f" 2>/dev/null | grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" 2>/dev/null | sort -u)
-  done
-
-  # SONNET_AGENTS (8종 hardcode, CFP-448 Amendment 3 후) vs ADR detected — strict equal set 검증.
-  # SSOT 가 8종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent.
-  # ChangeImpactAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외.
-  # ADR 가 본문에 다른 agent 도 언급할 수 있으나, enum drift detection 의 정확한 의미 =
-  # SONNET_AGENTS 8종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
-  for sa in "${SONNET_AGENTS[@]}"; do
-    found=0
-    for det in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do
-      if [[ "$det" == "$sa" ]]; then found=1; break; fi
-    done
-    if [[ $found -eq 0 ]]; then
-      echo "[measure-rate-limit-fallback] ERROR: SONNET_AGENTS enum drift — '$sa' 가 ADR-057 / ADR-042 본문에 부재. SSOT mismatch (별도 CFP follow-up 권고)." >&2
-      exit 4
-    fi
-  done
-fi
+# CFP-2661 D3 (OQ-2) — exit-4 SONNET_AGENTS enum-drift 블록 SUNSET (dead-policy, honest 제거).
+#   원 블록은 sonnet tier(8종)를 ADR-057/ADR-042 `docs/adr/...` 본문에 대조해 enum-drift 를 exit 4 로 검출.
+#   [dead-path] docs/adr 는 archive/adr 로 이동(PR #1973)해 ADR file 조건이 항상 false → 블록 통째 침묵
+#     skip(vacuous)였다. [dead-policy] 더 본질적으로 ADR-141(전 에이전트 opus 단일 tier)이 sonnet tier
+#     자체를 폐기 → 검사 대상 = 0. 구경로를 archive/adr 로 수리하면 죽은 정책 위의 검사가 부활한다.
+#   ∴ 경로 수리(union) 대신 블록 제거 = honest sunset (ADR-141 정합). ADR-145 §결정 8/9 non-applicable
+#     경로로 명시 선언 + evidence-checks-registry `rate-limit-fallback-rate` workflow:null + tier 정직 하향
+#     (D14 coupled). SONNET_AGENTS array 는 하류 window 측정 loop(분모 = sonnet spawn 집계)이 여전히
+#     소비하므로 보존 필수 — firsthand 실측(bash 5.2, set -euo pipefail): array 제거 시 crash 아니라
+#     silent-vacuous all-zero 측정(unset array 의 `"${SONNET_AGENTS[@]}"` = 빈 순회 → win_spawn 2→0,
+#     exit 0 무크래시). ★ self-referential: 본 Story 가 잡는 병(게이트가 조용히 아무것도 안 봄)과 정확히
+#     동형 — 그래서 보존이 crash-회피 아니라 silent-vacuous 회피의 load-bearing 근거. 실 소비 = `:294`
+#     for-loop(분모 집계); `:330` 대 awk rate calc(분자÷분모)는 별개. exit 4 는 이제 미도달 dead code.
+# non-applicable 선언 (ADR-145 §결정 8/9): sonnet-tier enum-drift 검사 = ADR-141 폐기로 적용 대상 0.
 
 # --- 시계 결정 ---
 # AS_OF override 우선, 없으면 "now" UTC.

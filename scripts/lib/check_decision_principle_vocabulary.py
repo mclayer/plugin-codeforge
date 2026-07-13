@@ -43,9 +43,14 @@ SCOPE_GLOBS = [
 ]
 
 # ─── Exempt 영역 ───
+# CFP-2661 D11: ADR 실 위치 archive/adr union (PR #1973 이동). SCOPE_GLOBS 는 이미 dual(docs/adr ∪
+#   archive/adr)이라 archive/adr/ADR-064(어휘 정의 본문)·ADR-RESERVATION 가 스캔되는데 EXEMPT 는 구
+#   docs/adr 형만 → 미매치 → false-RED(ADR-064 29건). docs/adr 형은 consumer 정답 경로라 union 보존.
 EXEMPT_PATHS = {
     "docs/adr/ADR-RESERVATION.md",
     "docs/adr/ADR-064-decision-principle-mandate.md",
+    "archive/adr/ADR-RESERVATION.md",
+    "archive/adr/ADR-064-decision-principle-mandate.md",
     "docs/evidence-checks-registry.yaml",
     "scripts/check-decision-principle-vocabulary.sh",
     "tests/scripts/test-check-decision-principle-vocabulary.bats",
@@ -58,17 +63,23 @@ def normalize_path(p):
 
 
 def collect_scope_files():
-    """5 scope glob 으로 wrapper repo file 수집. EXEMPT_PATHS filter."""
+    """5 scope glob 으로 wrapper repo file 수집. EXEMPT_PATHS filter.
+
+    CFP-2661 D11: (files, scope_considered) 반환 — scope_considered = glob 매치 in-scope 파일 수
+    (exempt 前, anti-vacuity floor). 구경로 docs/adr 만이면 archive/adr scope 는 dead → considered 낮음.
+    """
     out = []
+    considered = set()
     for pattern in SCOPE_GLOBS:
         for path in Path(".").glob(pattern):
             if not path.is_file():
                 continue
             norm = normalize_path(path)
+            considered.add(norm)
             if norm in EXEMPT_PATHS:
                 continue
             out.append(norm)
-    return sorted(set(out))
+    return sorted(set(out)), len(considered)
 
 
 def in_scope(p):
@@ -121,12 +132,17 @@ def scan_file(p):
 
 def main(argv):
     paths = argv[1:]
+    # CFP-2661 D11 census: scope_considered = in-scope 파일 수 (exempt 前, anti-vacuity floor — AC-11).
+    #   exempt 파일(ADR-064)을 argv 로 줘도 in-scope 로 집계 → "scope 살아있음" 관측 (dead-scope vs exempt 구별).
+    scope_considered = 0
     if not paths:
-        paths = collect_scope_files()
+        paths, scope_considered = collect_scope_files()
     else:
         filtered = []
         for p in paths:
             norm = normalize_path(p)
+            if in_scope(norm):
+                scope_considered += 1
             if norm in EXEMPT_PATHS:
                 continue
             if not in_scope(norm):
@@ -153,6 +169,11 @@ def main(argv):
             file_violations.append((p, findings))
             total_findings += len(findings)
 
+    # CFP-2661 D11 census (AC-11 — anti-vacuity floor). scope_considered = in-scope surface (exempt 포함).
+    print(
+        f"check-decision-principle-vocabulary: census scope_considered={scope_considered} "
+        f"files_checked={files_checked} exempt_skipped={max(0, scope_considered - files_checked)}"
+    )
     print(f"check-decision-principle-vocabulary: {files_checked} files 검증 (5 scope, ADR-064 §결정 2 dictionary mirror)")
 
     if total_findings == 0:

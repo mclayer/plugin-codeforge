@@ -42,8 +42,8 @@ permissions:
    · Glob(docs/change-plans/**/*.md) + Grep
    · 관련 Change-plan의 §3(도입할 설계) 중심 Read
 
-4. docs/adr/ADR-*.md 탐색
-   · Glob(docs/adr/ADR-*.md) + Grep frontmatter category + keywords
+4. docs/adr/ADR-*.md + archive/adr/ADR-*.md 탐색  <!-- CFP-2661 D13: ADR 실 위치 archive/adr union (wrapper dogfood; docs/adr = consumer 정답 경로 보존) -->
+   · Glob(docs/adr/ADR-*.md) + Glob(archive/adr/ADR-*.md) + Grep frontmatter category + keywords
    · 이번 요구사항과 충돌 가능한 ADR 식별
 
 5. 분류

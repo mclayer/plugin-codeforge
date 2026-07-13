@@ -255,6 +255,21 @@ doc_types:
       parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
       Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
 
+  - name: path_relocation_ledger
+    variants:
+      single_repo: "<owner-repo>/docs/path-relocation-ledger.yaml"
+    owner_agent: orchestrator
+    introduced_by: CFP-2661
+    naming_pattern: "path-relocation-ledger\\.yaml"
+    frontmatter_required: false
+    examples:
+      - "mclayer/plugin-codeforge/docs/path-relocation-ledger.yaml"
+    notes: |
+      CFP-2661 / ADR-136 Amendment 4 §결정 15 — path-relocation-consistency lint 의 relocation (old→new)
+      pair 원장 SSOT. 게이트 execution-surface construct 가 OLD 경로 단독 지목(dead-path 재유입)을 검출하는
+      lint(scripts/lib/check_path_relocation_consistency.py)의 입력. named-carrier CFP-2661 (naive TBD 치환 금지).
+      Write owner = carrier Story InfraEngineer (wrapper governance). paired baseline = docs/path-relocation-baseline.yaml.
+
   - name: upgrade_events
     variants:
       single_repo: "<owner-repo>/docs/upgrade-events/<version>.md"

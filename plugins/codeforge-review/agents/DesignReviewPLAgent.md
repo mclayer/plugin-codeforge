@@ -21,11 +21,13 @@ permissions:
     # CFP-35 v2 — docs/stories/** 만 self-write 허용, 다른 owner 영역은 deny
     - Edit(docs/change-plans/**)
     - Edit(docs/adr/**)
+    - Edit(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Edit(docs/domain-knowledge/**)
     - Edit(docs/retros/**)
     - Edit(docs/inter-plugin-contracts/**)
     - Write(docs/change-plans/**)
     - Write(docs/adr/**)
+    - Write(archive/adr/**)  # CFP-2661 D13: ADR 실 위치 archive/adr union (PR #1973; docs/adr 삭제 아님 — consumer 정답 경로 보존)
     - Write(docs/domain-knowledge/**)
     - Write(docs/retros/**)
     - Write(docs/inter-plugin-contracts/**)
@@ -74,6 +76,7 @@ review_packet:
     - docs/change-plans/<slug>.md
     - docs/stories/<STORY_KEY>.md     # §1-7
     - docs/adr/ADR-*.md                # §3 관련 ADR
+    - archive/adr/ADR-*.md             # CFP-2661 D13: ADR 실 위치 archive/adr union (wrapper dogfood)
   category_enum:
     - adr-mismatch
     - design-completeness
