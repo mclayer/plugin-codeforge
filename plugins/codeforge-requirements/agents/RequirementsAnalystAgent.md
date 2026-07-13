@@ -76,9 +76,16 @@ codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 ## 도메인 컨텍스트 추정 (요구사항 텍스트 내에서만 — 외부 도메인 조사는 생략)
 ## 유스케이스
   - UC-1: Actor / Precondition / Flow / AC
-## Acceptance Criteria (항목화 목록 — AC-N, 산문·정수 count 붕괴 금지)
-  - 각 AC = 안정 ID `AC-N` (문법 ^AC-(\d+)([a-z])?$ — sub-letter 수용) + 7-필드: id / statement(given-when-then) / source(user|derived) / verification(테스트 종류·관측점) / coverage_required([design, §8_test]) / phase(1|2) / tier(normative|declared|advisory)
-  - 사용자 원 요건 유래 AC = source: user (tier 임의 강등 금지 — 요구사항리뷰 RO-1 tier review-gate 대상)
+## Acceptance Criteria (게이트-parseable 표 형식 — 산문·정수 count 붕괴 금지)
+  - 각 AC 를 아래 **markdown 표**로 출력한다. 산문 bullet 만으로는 안 된다 — 게이트 core `classify_ac_source` 가 §5 에서 `id`/`source`/`tier` header signature 표를 요구하므로, 산문 `AC-N` 만 쓰면 `APPLIC_UNDECIDABLE` FAIL 이다. 컬럼명(`id`/`source`/`tier` + `statement`) 무손상 exemplar:
+
+    | id | statement | source | verification | coverage_required | phase | tier |
+    |---|---|---|---|---|---|---|
+    | AC-1 | Given … When … Then … | user | 테스트 종류·관측점 | [design, §8_test] | 2 | normative |
+
+  - 각 AC = 안정 ID `AC-N` (문법 ^AC-(\d+)([a-z])?$ — sub-letter 수용) + 7-필드 (id / statement(given-when-then) / source(user|derived) / verification / coverage_required / phase / tier).
+  - 사용자 원 요건 유래 AC = source: user (tier 임의 강등 금지 — 요구사항리뷰 RO-1 tier review-gate 대상).
+  - 추적할 AC 가 없는 변경(governance / marketplace sync 등)이면 이 표를 만들지 않는다 — 빈 표/헤더-only 잔존은 게이트 false-red 를 유발한다.
 ## 암묵 가정
 ## 엣지 케이스
 ## 제외 범위
