@@ -19,9 +19,21 @@
 #   enforcement (spawn 강제) 는 본 Story 미구현 — PR-time 관측 baseline 만 (PreToolUse Agent matcher P2
 #   empirical 미확정, [empirical-source: TBD], 설계 §결정10d 보류). warning-tier 유지 (ADR-128 상속).
 #
+# CFP-2652 (Epic CFP-2468 W3 follow-up) 정확성 갭 3건 정정:
+#   gap (a) env-absence vs evidence-absence re-key — check_parallelization 에 design-row 카운터 신설
+#     (`- lane: 설계$` 행 수) 후 4-분기 re-key: (i) design_rows==0 → env-absence env=0 SKIP /
+#     (ii) design_rows≥1 ∧ spawned_at_count<design_rows → evidence-absence honest WARN(★partial 포함,
+#     env=0 아님) / (iii) ==design_rows ∧ <6 → 진짜 fan-out 미달 WARN / (iv) ==design_rows ∧ ≥6 →
+#     기존 timing diff. 구 로직은 spawned_at '값 개수'만 카운트해 evidence-absence 를 env=0 로 오표기.
+#   gap (c) Check 7 — PR label `gate:<lane>-pass` ↔ `## Lane evidence` 블록 lane PASS 행 forward 정합
+#     (좁은 class, §14 면제와 독립, shape-aware). gate→lane 매핑 = 단일 SSOT
+#     docs/inter-plugin-contracts/gate-lane-map-v1.yaml 소비 (병렬 table 금지 — phase-gate-mergeable.yml
+#     lanePrefixForGate 와 동일 canonical datum). warning-tier (Check 1-5 패턴 fail-counted, local-only).
+#
 # Usage:
 #   bash scripts/check-lane-evidence.sh [--story <path>] [--pr <number>] [--strict] [--quiet]
 #                                        [--check-parallelization]
+#                                        [--pr-labels-file <f>] [--pr-block-file <f>]  # CFP-2652 gap c self-test seam
 #
 # Defaults:
 #   --story: docs/stories/<KEY>.md (auto-detect from git branch `cfp-N-...`)
@@ -41,6 +53,10 @@ STORY_PATH=""
 PR_NUMBER=""
 CHECK_PARALLELIZATION=0
 EXEMPT_SECTION_14=0   # ADR-031 Amendment 2 (CFP-2270): wrapper-self dogfood §14 면제 플래그
+# CFP-2652 gap (c): test-injection seam — gh fetch 대신 파일에서 PR labels/block 주입 (self-test 용).
+#   미설정 시 gh CLI 경로(production) 사용. label↔block write-back Check 7 의 discriminating self-test 지원.
+PR_LABELS_FILE=""
+PR_BLOCK_FILE=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -49,6 +65,8 @@ while [ $# -gt 0 ]; do
         --story) STORY_PATH="$2"; shift 2 ;;
         --pr) PR_NUMBER="$2"; shift 2 ;;
         --check-parallelization) CHECK_PARALLELIZATION=1; shift ;;
+        --pr-labels-file) PR_LABELS_FILE="$2"; shift 2 ;;   # CFP-2652 gap c self-test seam
+        --pr-block-file) PR_BLOCK_FILE="$2"; shift 2 ;;     # CFP-2652 gap c self-test seam
         -h|--help)
             sed -n '/^# check-lane-evidence/,/^# Effective date/p' "$0" | sed 's/^# \?//'
             exit 0
@@ -168,15 +186,20 @@ parse_story_section_14() {
 }
 
 # Parse Phase 2 PR description `## Lane evidence` block (from gh pr view)
+#   CFP-2652 gap (c): PR_BLOCK_FILE 주입 시 gh 대신 파일 body 사용 (self-test seam).
 fetch_pr_lane_evidence() {
     local pr_num="$1"
-    if [ -z "$pr_num" ]; then return 1; fi
-    if ! command -v gh >/dev/null 2>&1; then
-        log_err "gh CLI 미설치 — PR description fetch 불가"
-        return 1
-    fi
     local body
-    body="$(gh pr view "$pr_num" --json body --jq '.body' 2>/dev/null || true)"
+    if [ -n "$PR_BLOCK_FILE" ]; then
+        body="$(cat "$PR_BLOCK_FILE" 2>/dev/null || true)"
+    else
+        if [ -z "$pr_num" ]; then return 1; fi
+        if ! command -v gh >/dev/null 2>&1; then
+            log_err "gh CLI 미설치 — PR description fetch 불가"
+            return 1
+        fi
+        body="$(gh pr view "$pr_num" --json body --jq '.body' 2>/dev/null || true)"
+    fi
     if [ -z "$body" ]; then
         log_err "PR #$pr_num description 빈 또는 fetch 실패"
         return 1
@@ -187,6 +210,56 @@ fetch_pr_lane_evidence() {
         inblock && /^## / { inblock=0 }
         inblock { print }
     '
+}
+
+# CFP-2652 gap (c): PR label 목록 fetch (gate:<lane>-pass 라벨 파싱 source).
+#   PR_LABELS_FILE 주입 시 gh 대신 파일(개행 구분 label 목록) 사용 (self-test seam).
+fetch_pr_labels() {
+    local pr_num="$1"
+    if [ -n "$PR_LABELS_FILE" ]; then
+        cat "$PR_LABELS_FILE" 2>/dev/null || true
+        return 0
+    fi
+    if [ -z "$pr_num" ]; then return 0; fi
+    command -v gh >/dev/null 2>&1 || return 0
+    gh pr view "$pr_num" --json labels --jq '.labels[].name' 2>/dev/null || true
+}
+
+# CFP-2652 gap (c) §3.2.1: gate→lane 매핑 SSOT 소비 (단일 SSOT — 병렬 table 하드코딩 금지).
+#   SSOT = docs/inter-plugin-contracts/gate-lane-map-v1.yaml, flat top-level `gate:<lane-en>-pass: <한글 lane>`.
+#   nested-YAML parse 불요 — 첫 ': ' delimiter line-split robust 추출 → declare -A GATE_LANE_MAP.
+#   canonical datum = plain 한글 lane (JS phase-gate-mergeable.yml lanePrefixForGate 와 동일 datum, drift 0).
+# 반환: 0 = 1+ entry 로드 성공 / 1 = 파일 부재 또는 entry 0.
+load_gate_lane_map() {
+    local map_file="$1"
+    GATE_LANE_MAP=()
+    [ -f "$map_file" ] || return 1
+    local line key val
+    while IFS= read -r line; do
+        line="${line%$'\r'}"
+        # gate:<lane-en>-pass: <한글 lane> 행만 (metadata/comment 무시 — flat top-level 필터)
+        case "$line" in
+            gate:*-pass:\ *) : ;;
+            *) continue ;;
+        esac
+        key="${line%%: *}"        # 첫 ': ' 앞 = gate:<lane-en>-pass
+        val="${line#*: }"         # 첫 ': ' 뒤 = 한글 lane (+ trailing comment 가능)
+        val="${val%%#*}"          # inline comment 제거
+        val="$(printf '%s' "$val" | sed -E 's/[[:space:]]+$//')"  # trailing ws strip
+        [ -n "$key" ] && [ -n "$val" ] && GATE_LANE_MAP["$key"]="$val"
+    done < "$map_file"
+    [ "${#GATE_LANE_MAP[@]}" -gt 0 ]
+}
+
+# CFP-2652 gap (c): `## Lane evidence` 블록에서 한글 lane 행이 PASS outcome 인지 검사.
+#   행 형식 = `- <lane>: <OUTCOME>` (extract_pr_lanes 파싱 형식 정합). shape-aware — 정확 lane-name 매칭.
+# 반환: 0 = 해당 lane 행 존재 ∧ outcome=PASS / 1 = 행 부재 OR non-PASS(SKIPPED 등).
+block_lane_is_pass() {
+    local block="$1" lane="$2"
+    local row
+    row="$(printf '%s\n' "$block" | grep -E "^-[[:space:]]+${lane}:" || true)"
+    [ -z "$row" ] && return 1   # 행 부재 = write-back 불일치
+    printf '%s' "$row" | grep -qiE ':[[:space:]]*PASS([[:space:]]|$)'
 }
 
 # Extract lane names from Story §14 yaml block
@@ -219,58 +292,65 @@ check_parallelization() {
         return 0
     fi
 
-    # Extract 설계 lane rows block
-    # strategy: parse all rows where lane: 설계 and extract spawned_at timestamps
+    # ── CFP-2652 gap (a): design-row 카운터 신설 (env-absence vs evidence-absence 오분류 진원 정정) ──
+    # design_rows = `- lane: 설계$` 행 자체의 수 (spawned_at 유무 무관, awk unconditional).
+    #   구 로직은 spawned_at '값 개수'만 카운트 → env-absence(설계 행 0)와 evidence-absence
+    #   (설계 행 有 ∧ spawned_at 無/malformed)를 구조적으로 구별 불가, 무조건 "env=0" 오표기.
+    #   design-row 카운터를 spawned_at 카운트와 분리해 4-분기 re-key (§3.1 H1).
     local design_rows
-    # BSD-compat awk: use sub() + substr()/split() instead of 3-arg match (gawk-only)
-    design_rows="$(printf '%s' "$yaml" | awk '
-        /- lane: 설계$/ { inrow=1; ts="" }
+    design_rows="$(printf '%s' "$yaml" | awk '/- lane: 설계$/ { drows++ } END { print drows+0 }')"
+
+    # 설계 행 한정 spawned_at '값' 목록 추출 (기존 awk 재사용 — BSD-compat sub()/substr()).
+    local spawned_ts
+    spawned_ts="$(printf '%s' "$yaml" | awk '
+        /- lane: 설계$/ { inrow=1 }
         inrow && /spawned_at:/ {
             line=$0
             sub(/.*spawned_at:[[:space:]]*/, "", line)
             sub(/[[:space:]#].*/, "", line)
-            ts=line
-            print ts
+            print line
         }
         /- lane: / && !/- lane: 설계$/ { if (inrow) inrow=0 }
     ')"
 
-    local row_count
-    row_count=$(printf '%s\n' "$design_rows" | grep -c '[0-9]' || true)
-
-    if [ "$row_count" -eq 0 ]; then
-        # env=0 (agent teams 미활성 — one-shot Agent tool spawn) → deputy row 구조적 부재.
-        # CFP-2471 (W3): silent SKIP 대신 honest SKIP 사유 명시 (meta-hollow-gate 차단 — concept R-5).
-        # 관측 불가를 은폐하지 않고 명시 표식. fan-out 미spawn 검출은 env=1 context 한정.
-        log "[PARALLELIZATION SKIP] 설계 lane deputy row 0개 — agent teams env=0 (one-shot Agent spawn, deputy row 구조적 부재). honest SKIP 사유: env=0 fan-out 관측 불가 (ADR-039 default, ADR-044 §결정 5 N/A in env=0)"
-        return 0
-    elif [ "$row_count" -lt 6 ]; then
-        # 1~5 row = deputy fan-out 미달 의심 (env=1 인데 6 permanent 미spawn). CFP-2471 (W3):
-        # silent SKIP (구 동작) 대신 honest WARN — 관측 baseline (fan-out 미spawn 의심 가시화).
-        # warning-tier 유지 (FAIL 아님 — enforcement 미구현, PreToolUse Agent matcher P2 [empirical-source: TBD]).
-        log_err "[PARALLELIZATION WARN] 설계 lane deputy row $row_count 개 (< 6 permanent) — fan-out 미spawn 의심 (CFP-2471 / Epic CFP-2468 W3). 현 6 permanent deputy = SecurityArchitectAgent / InfraOperationalArchitectAgent / TestContractArchitectAgent / DataArchitectAgent / ModuleArchitectAgent / APIContractArchitectAgent"
-        log_err "  (CONDITIONAL/N/A deputy (LiveOps/LiveOrdering/ProductionEvidence + aggregate_arch.applicable:false ModuleArch) 정당 skip 은 shape-aware 기대 roster 로 false-positive 차단 — 본 관측은 WARN 만, enforcement 미구현)"
-        return 0
-    fi
-
-    # Parse ISO8601 → epoch seconds via date (GNU date or BSD date)
+    # ISO8601 → epoch (GNU date or BSD date). 파싱 성공분만 유효 timing 으로 카운트.
+    #   EC-1 (malformed spawned_at): 파싱 실패 → timestamps 미포함 → spawned_at_count < design_rows
+    #   → (ii) evidence-absence (env=0 절대 아님, design_rows≥1 이므로 env-absence 분기 구조적 미도달).
     local timestamps=()
     while IFS= read -r ts; do
         [ -z "$ts" ] && continue
         local epoch
-        # GNU date
         epoch="$(date -d "$ts" +%s 2>/dev/null || date -jf '%Y-%m-%dT%H:%M:%SZ' "$ts" +%s 2>/dev/null || true)"
         if [ -n "$epoch" ] && [[ "$epoch" =~ ^[0-9]+$ ]]; then
             timestamps+=("$epoch")
         fi
-    done <<< "$design_rows"
+    done <<< "$spawned_ts"
+    local spawned_at_count="${#timestamps[@]}"   # 유효 timing 개수 (spawned_at_count ≤ design_rows 불변)
 
-    if [ "${#timestamps[@]}" -lt 6 ]; then
-        log "[PARALLELIZATION SKIP] spawned_at epoch 파싱 성공 row < 6 (${#timestamps[@]} 개, date 미지원 또는 null ts) — skip"
+    # ── 4-분기 re-key (design_rows / spawned_at_count 2-축 deterministic) ──
+    #   correctness = (iii)/(iv) `spawned_at_count == design_rows` equality 가드의 상호배타성
+    #   ((ii) `< design_rows` ⊥ ==) — 평가 순서와 무관. (ii)-먼저 배치 = 가독성 목적 secondary clarity.
+    if [ "$design_rows" -eq 0 ]; then
+        # (i) env-absence: `- lane: 설계` 행 자체 부재 = env=0 (one-shot Agent spawn, deputy row 구조적 부재).
+        #   CFP-2471 (W3): silent SKIP 대신 honest SKIP 사유 명시 (meta-hollow-gate 차단 — concept R-5).
+        log "[PARALLELIZATION SKIP] 설계 lane deputy row 0개 — agent teams env=0 (one-shot Agent spawn, deputy row 구조적 부재). honest SKIP 사유: env=0 fan-out 관측 불가 (ADR-039 default, ADR-044 §결정 5 N/A in env=0)"
+        return 0
+    elif [ "$spawned_at_count" -lt "$design_rows" ]; then
+        # (ii) evidence-absence (★partial 포함): 설계 행 실재하나 유효 spawned_at 이 부족 (M<N).
+        #   CFP-2652 gap (a) — 이 케이스를 env=0 로 오표기하던 결함 정정. 설계 행이 실재하므로
+        #   환경 부재(env-absence) 아님 — timing evidence 만 결손. env=0/fan-out 미달 표기 금지.
+        log_err "[PARALLELIZATION WARN] 설계 lane evidence-absence — 설계 행 ${design_rows}개 중 유효 spawned_at ${spawned_at_count}개 (${spawned_at_count}<${design_rows}, timing 증거 누락). 설계 행이 실재하므로 환경 부재(env-absence) 아님 — timing evidence 만 결손 (CFP-2652 gap a re-key). honest WARN — 관측 baseline (warning-tier, enforcement 미구현)"
+        return 0
+    elif [ "$spawned_at_count" -eq "$design_rows" ] && [ "$design_rows" -lt 6 ]; then
+        # (iii) 진짜 fan-out 미달: 설계 행 各 spawned_at 완비(== design_rows)이나 6 permanent 미달.
+        #   CFP-2471 (W3): silent SKIP 대신 honest WARN — fan-out 미spawn 의심 가시화 (warning-tier).
+        log_err "[PARALLELIZATION WARN] 설계 lane deputy row ${design_rows}개 (${design_rows}<6 permanent) 各 spawned_at 완비 — deputy row < 6 = fan-out 미spawn 의심 (CFP-2471 / Epic CFP-2468 W3). 현 6 permanent deputy = SecurityArchitectAgent / InfraOperationalArchitectAgent / TestContractArchitectAgent / DataArchitectAgent / ModuleArchitectAgent / APIContractArchitectAgent"
+        log_err "  (CONDITIONAL/N/A deputy (LiveOps/LiveOrdering/ProductionEvidence + aggregate_arch.applicable:false ModuleArch) 정당 skip 은 shape-aware 기대 roster 로 false-positive 차단 — 본 관측은 WARN 만, enforcement 미구현)"
         return 0
     fi
 
-    # Find min and max
+    # (iv) design_rows >= 6 AND spawned_at_count == design_rows → 기존 timing diff (<60s) 검사.
+    #   (spawned_at_count == design_rows >= 6 보장 → timestamps 6+ 개, min/max index-0 안전)
     local min_ts max_ts
     min_ts="${timestamps[0]}"
     max_ts="${timestamps[0]}"
@@ -329,8 +409,9 @@ run_check() {
     fi
 
     # Check 3: PR description `## Lane evidence` presence
+    #   CFP-2652 gap (c): PR_BLOCK_FILE 주입 시 PR_NUMBER 없이도 block 소스 취득 (self-test seam).
     local pr_block=""
-    if [ -n "$PR_NUMBER" ]; then
+    if [ -n "$PR_NUMBER" ] || [ -n "$PR_BLOCK_FILE" ]; then
         pr_block="$(fetch_pr_lane_evidence "$PR_NUMBER")"
         if [ -z "$pr_block" ]; then
             log_err "[FAIL] PR #$PR_NUMBER 의 ## Lane evidence 블록 부재"
@@ -374,6 +455,43 @@ run_check() {
     # CFP-137 Phase 2 / ADR-044 §결정 5 Parallelization measurable verification
     if [ $CHECK_PARALLELIZATION -eq 1 ]; then
         check_parallelization "$story_yaml"
+    fi
+
+    # Check 7 (CFP-2652 gap c): PR label `gate:<lane>-pass` ↔ `## Lane evidence` 블록 lane PASS 행 정합.
+    #   forward-only (label→block, 좁은 class — 전 write-back 정합 보장 아님). §14 면제와 독립 실행
+    #   (label 기반이라 story_yaml gate 무관 — Check 4 와 disjoint, dogfood PR 도 검사). shape-aware
+    #   (정확 lane-name — 요구사항 ≠ 요구사항-리뷰). warning-tier (Check 1-5 패턴 fail-counted, local-only).
+    #   블록 전체 부재(EC-4)면 pr_block 비어 미발동 (Check 3 소관).
+    if [ -n "$pr_block" ]; then
+        local map_file
+        if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+            map_file="${CLAUDE_PLUGIN_ROOT}/docs/inter-plugin-contracts/gate-lane-map-v1.yaml"
+        else
+            map_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/docs/inter-plugin-contracts/gate-lane-map-v1.yaml"
+        fi
+        declare -A GATE_LANE_MAP=()
+        if ! load_gate_lane_map "$map_file"; then
+            # SSOT 부재/공백 = FAIL (게이트 자기무결성 — SSOT 없이 검사 silent-skip 은 meta-hollow-gate).
+            log_err "[FAIL] Check 7 gate-lane-map SSOT 로드 실패: $map_file — gap c label↔block 검사 불가"
+            fail=$((fail + 1))
+        else
+            local pr_labels gate lane_kr wb_mismatch=0
+            pr_labels="$(fetch_pr_labels "$PR_NUMBER")"
+            while IFS= read -r gate; do
+                [ -n "$gate" ] || continue
+                lane_kr="${GATE_LANE_MAP[$gate]:-}"
+                [ -z "$lane_kr" ] && continue   # 매핑 없는 gate label = 좁은 class 대상 아님 (forward-only)
+                if ! block_lane_is_pass "$pr_block" "$lane_kr"; then
+                    log_err "[FAIL] Check 7 write-back 불일치 — label '$gate' 존재 ∧ '## Lane evidence' 블록 '$lane_kr' PASS 행 부재/non-PASS (CFP-2652 gap c). label↔block outcome mismatch — forward write-back 결손 (특정 class, 전 write-back 정합 주장 아님)"
+                    wb_mismatch=$((wb_mismatch + 1))
+                fi
+            done <<< "$(printf '%s\n' "$pr_labels" | grep -E '^gate:.*-pass$' || true)"
+            if [ "$wb_mismatch" -gt 0 ]; then
+                fail=$((fail + wb_mismatch))
+            else
+                log "[OK] Check 7 label↔block write-back 정합 (gate:*-pass ↔ 블록 lane PASS, shape-aware)"
+            fi
+        fi
     fi
 
     log ""

@@ -106,6 +106,13 @@ registries:
       - { file: parallel-dispatch-protocol-v1.md, version: "1.1", status: Active }  # CFP-609 / ADR-064 Amendment 1: Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기. | CFP-2549 / ADR-139: §6.3 worker_outcomes enum +INCONCLUSIVE + timeout/fail-mode protocol 섹션 (background-wait liveness gate 4 불변식 cross-ref) — "1.0" → "1.1" MINOR ratchet. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합).
     description: "Lane PL 병렬 dispatch 행동 registry — Plan task DAG schema + 6 enum + Orchestrator prompt 4 항목 + PL 4-분기 결정 tree (ADR-064 Amendment 1 implementation contract)"
 
+  - name: gate_lane_map
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/gate-lane-map-v1.yaml
+    files:
+      - { file: gate-lane-map-v1.yaml, version: "1.0", status: Active }  # CFP-2652 gap c v1.0: gate label(`gate:<lane-en>-pass`) ↔ 한글 lane 매핑 단일 SSOT (kind:registry). phase-gate-mergeable.yml:493 lanePrefixForGate(JS object, bracketed comment-prefix 값) 를 language-neutral flat data file 로 externalize → bash check-lane-evidence.sh Check 7(label↔block write-back 검출) + JS lanePrefixForGate 양측이 동일 canonical datum(plain 한글 lane) 소비, drift 0. 병렬 table 신설 아님(현행 3-entry 를 단일 SSOT 로 승격 — bash 미실현 모순 P1-1 정정). flat top-level `gate:<X>-pass: <한글 lane>` schema (nested-YAML parse 불요). kind:registry sibling sync 면제 (ADR-008 §결정 2 + ADR-010 §결정 2), plugin.json version bump 동반하나 gate-lane-map 자체는 mirrored field 무관 = marketplace_sync 대상 아님.
+    description: "gate label ↔ 한글 lane 매핑 단일 SSOT (CFP-2652 gap c) — bash Check 7 + JS lanePrefixForGate 양측 소비, 병렬 table 금지 drift-0 guard"
+
   - name: defense_in_depth_sublayer_registry
     canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/defense-in-depth-sublayer-registry-v1.md

@@ -489,17 +489,33 @@ jobs:
                   issue_number: pr.number,
                   per_page: 100
                 });
-                // Lane → gate prefix mapping (CFP-1302: 배열 순회 대응)
-                const lanePrefixForGate = {
-                  'gate:requirements-review-pass': '[요구사항-리뷰]',
-                  'gate:design-review-pass': '[설계-리뷰]',
-                  'gate:security-test-pass': '[보안-테스트]'
-                };
+                // CFP-2652 gap (c): gate→lane 매핑 SSOT 소비 (docs/inter-plugin-contracts/gate-lane-map-v1.yaml).
+                //   병렬 table 하드코딩(구 lanePrefixForGate object) 폐지 — bash check-lane-evidence.sh Check 7 과
+                //   동일 canonical datum(plain 한글 lane) 소비, drift 0. comment-prefix = '[' + lane + ']' 파생(regex 무변경).
+                //   base ref 에서 읽어 non-spoofable (PR 이 map 위조로 자기 gate 통과 차단). 읽기 실패 = graceful
+                //   (gateLaneMap 빈 채 진행 → 해당 gate evidence 미도출, 기존 label-only fallback 과 정합).
+                const gateLaneMap = {};
+                try {
+                  const { data: mapFile } = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: 'docs/inter-plugin-contracts/gate-lane-map-v1.yaml',
+                    ref: pr.base.ref
+                  });
+                  const mapText = Buffer.from(mapFile.content, 'base64').toString('utf8');
+                  for (const ln of mapText.split('\n')) {
+                    const mm = ln.match(/^(gate:[a-z-]+-pass):\s+(\S+)\s*$/);
+                    if (mm) gateLaneMap[mm[1]] = mm[2];
+                  }
+                } catch (e) {
+                  // SSOT 읽기 실패 → gateLaneMap 빈 채 진행 (label-only fallback 과 정합)
+                }
                 // CFP-1302: required.gates[] 각 gate 별 comment evidence 수집 (AND invariant)
                 const evidenceForGate = {};
                 for (const g of required.gates) {
-                  const prefix = lanePrefixForGate[g];
-                  if (!prefix) continue;
+                  const lane = gateLaneMap[g];
+                  if (!lane) continue;
+                  const prefix = '[' + lane + ']';   // SSOT plain 한글 lane → bracketed comment-prefix 파생
                   const passRegex = new RegExp(
                     `^\\s*##?\\s*\\${prefix}\\s.*\\b(PASS|N/A)\\b`,
                     'm'
