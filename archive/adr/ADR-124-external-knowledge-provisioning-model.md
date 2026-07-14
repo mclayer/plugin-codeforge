@@ -48,7 +48,7 @@ amendment_log:
       context7 "1차 도구 선호(source-of-first-resort)" 를 instantiate. 신규 규범 0 — 새 단계·새 원칙 신설 아님.
       ① fail-open advisory prompt-mandate: canonical 문장이 "context7 노출 시 1차 시도 / 부재·비활성·미인덱스·오류 시 WebFetch·공식문서 floor 로 자동 degrade" 를 한 쌍으로 강제. hook 강제 배제(부재 시 hook 이 작업 차단 = D2 위반).
       ② 권장 tier 유지: 필수 의존성 미승격(CLAUDE.md 필수 의존성·playbook §0/§0c 미추가, §0e 권장 "blocking 아님" 유지). ADR-122 자립 방향 정합.
-      ③ A1-3 무손상 (두 축 분리 — enum conflation 정정): 축 A = web 허용 lane(A1-3 review-worker enumeration, verbatim) = security 전면 + requirements-review 전면 + design 좁은 예외(외부 기술선택) — 본 Amendment 미변경(불변). 축 B = context7 tool-preference 능동배선 lane = 요구사항 + 요구사항리뷰 + 설계 authoring + 설계리뷰 좁은 예외 + develop authoring, code review 제외("web" 라벨 미사용). develop authoring(DeveloperAgent/DataEngineerAgent 등)은 WebSearch/WebFetch 미보유(firsthand) → web 미허용, context7 MCP allowlist 만 신설. context7 은 code-review 워커에 미배선(대칭 보존). code lane 우회로 금지(ADR-126 §결정4).
+      ③ A1-3 무손상 (두 축 분리 — enum conflation 정정): 축 A = web 허용 lane(A1-3 review-worker enumeration, verbatim) = security 전면 + requirements-review 전면 + design 좁은 예외(외부 기술선택) — 본 Amendment 미변경(불변). 축 B = context7 tool-preference 능동배선 lane = 요구사항리뷰 + 설계 authoring + 설계리뷰 좁은 예외 + develop authoring, code review 제외("web" 라벨 미사용). develop authoring(DeveloperAgent/DataEngineerAgent 등)은 WebSearch/WebFetch 미보유(firsthand) → web 미허용, context7 MCP allowlist 만 신설. context7 은 code-review 워커에 미배선(대칭 보존). code lane 우회로 금지(ADR-126 §결정4).
       ④ firsthand 검증 상속(ADR-119): context7 출력 = 외부 워커 산출물 → 검증 후 단언 + 출처 인용.
     direction: strengthen  # 도구 선호 capability 추가 (약화 0건). 단계②③ 무변경 instantiate, A1-3 보존.
     sunset_justification: null  # strengthen 방향 — 신규 규범 0, 기존 결정 instantiate 만. ADR-058 §결정 5 약화 evidence-gate 무관. is_transitional: false 유지.
@@ -137,7 +137,8 @@ context7 은 권장 플러그인 tier(playbook §0e "blocking 아님", consumer-
 
 **두 축을 명시 분리한다 (리뷰어 지적 — "web 허용 lane" vs "context7 허용" enum conflation 정정):**
 - **축 A — web 허용 lane (A1-3 review-worker enumeration, verbatim)** = {security 전면, requirements-review 전면, design 좁은 예외(외부 기술선택)}. **A1-3 원문 그대로 불변** — 본 Amendment 는 이 enumeration 을 건드리지 않는다.
-- **축 B — context7 tool-preference 능동배선 lane** = {요구사항, 요구사항리뷰, 설계 authoring, 설계리뷰 좁은 예외, develop authoring}. code review **제외**. 이 축은 "web" 라벨을 쓰지 않는다 — context7 도구 선호(라이브러리-docs 조회)일 뿐 web 조사 허용의 확장이 아니다.
+- **축 B — context7 tool-preference 능동배선 lane** = {요구사항리뷰, 설계 authoring, 설계리뷰 좁은 예외, develop authoring}. code review **제외**. 이 축은 "web" 라벨을 쓰지 않는다 — context7 도구 선호(라이브러리-docs 조회)일 뿐 web 조사 허용의 확장이 아니다.
+  - **요구사항(authoring) lane 제외 근거**: 요구사항(authoring) lane 은 stage-① 개념·도메인·문제정의 축이라 라이브러리-docs 선호 대상 아님 — 외부사실 검증은 요구사항리뷰 lane 이 담당(축B 포함). ResearcherAgent 배선은 저-적합 optional(필요 시 follow-up).
 - **develop authoring 사실 정정** = DeveloperAgent/DataEngineerAgent(및 Infra/QA authoring)는 WebSearch/WebFetch 를 **미보유**(firsthand 실측). 따라서 develop authoring 은 web 미허용이며, 본 Amendment 는 context7 MCP allowlist 만 신설한다(web 허용 확장 아님). context7≠web 재정의로 code-review 를 열려면 본 Amendment 를 넘는 명시적 근거가 필요하다(암묵 확산 금지, ADR-126 §결정4 우회로 금지 정합).
 
 ### A2-5 — firsthand 검증 상속 (ADR-119)
