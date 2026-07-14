@@ -10,6 +10,7 @@ is_transitional: false
 related_stories:
   - CFP-2325  # 본 ADR 신설 carrier (Epic CFP-2324 S1)
   - CFP-2327  # Amendment 1 carrier — 차등 실구현 + 양면 휴리스틱 instantiate (Epic CFP-2324 S3)
+  - CFP-2672  # Amendment 2 carrier — context7 라이브러리-docs 1차 도구 선호 (단계②③ instantiate, fail-open). standalone Story (parent_epic 없음)
 related_adrs:
   - ADR-046  # §결정 1·4 — Researcher 3 mandate 의 요구사항 lane 시점이 단계① 묶음. 본 ADR 은 적극 탐색 default skew 에 demand-anchored frame 을 더한 정밀화/강화 (약화 아님)
   - ADR-119  # §결정 5·6 — 원칙(보편) ↔ 실행(전담) 분리를 단계②③ lane-disjoint 정합으로 명문화. §결정 6 "조사했으므로 옳다 단정 금지" = 검사연극 금지 SSOT
@@ -18,12 +19,14 @@ related_adrs:
   - ADR-121  # §결정 1 — 배포·배포리뷰 2 lane 폐지 결정. 단계③ 배포리뷰 미적용 사유 (폐지 결정·deprecation 진행 중 + production 경험적 측정 무의존)
   - ADR-058  # §결정 5 — 약화 evidence-gate. 본 ADR 의 단계① 정밀화가 ratchet 강화 방향임을 보증
   - ADR-126  # 단계③ on-demand 경로 carrier (§결정 5 위임 이행). ADR-126 Amendment 1 (CFP-2459) 이 단계③ 방법론의 "다출처 교차"(Amendment 1 A1-1) + "시의성(recency)"(A1-1) 를 모델(학습분포) 축 + source-weighting 으로 확장 — Codex 2차 출처 corroboration. 본 ADR 무변경 (cross-ref only)
+  - ADR-122  # D3 자립·탈의존 근거 — context7 필수 미승격(권장 tier 유지)이 superpowers 제거로 확립한 자립 방향과 정합. Amendment 2 신규 cross-ref
 related_files:
   - archive/adr/ADR-124-external-knowledge-provisioning-model.md
   - skills/review-responsibility/SKILL.md  # 단계③ 매트릭스 요약 mirror (SSOT = 본 ADR)
   - CLAUDE.md  # 핵심 흐름 요구사항리뷰 lane 도입 근거 서술
 amendments:
   - Amendment 1  # CFP-2327 S3 — 단계③ 차등 실구현 (mechanical) + "외부 기술선택" 양면(positive∩negative) 휴리스틱 instantiate + 검사연극 금지 재확인 + ADR-058 §결정 5 강화 방향 명시
+  - Amendment 2  # CFP-2672 — context7 라이브러리-docs 1차 도구 선호(단계②③ instantiate) + fail-open advisory prompt-mandate(hook 배제) + 권장 tier 유지(필수 미승격) + A1-3 무손상
 amendment_log:
   - amendment: Amendment 1
     date: 2026-06-17
@@ -35,6 +38,19 @@ amendment_log:
       ② 설계리뷰: "외부 기술선택" 좁은 예외만 단계③ 적용 — 양면 정의 (positive-list ∩ negative-list) 로 검사연극 drift 차단. code 행 web 금지 전면 보존 (설계리뷰만 좁은 예외, 대칭 붕괴 차단).
       ③ "외부 기술선택" 양면 휴리스틱 신설 — positive-list (라이브러리·프로토콜·알고리즘·성능모델) ∩ negative-list (ADR 위반·boundary·계약·§8·섹션 존재 = internal-only 보존). 진입 질문: "결론이 외부 기술의 진위에 좌우되는가? YES→예외 / NO→internal-only 금지".
     direction: strengthen  # 단계③ 적용 지점 mechanical 정착 = 적용 capability 추가 (약화 0건). 보안테스트 "심화", 설계리뷰 "예외 추가", code 전면금지 "보존". ADR-058 §결정 5 약화 차단 정합.
+    sunset_justification: null  # strengthen 방향 — 신규 규범 0, 기존 결정 instantiate 만. ADR-058 §결정 5 약화 evidence-gate 무관. is_transitional: false 유지.
+  - amendment: Amendment 2
+    date: 2026-07-14
+    carrier_story: CFP-2672
+    parent_epic: null  # standalone Story — Epic 없음
+    summary: |
+      단계②(각 lane 얕은 자가조사)·단계③(리뷰 깊은 검증) 안에 "라이브러리 API·버전·시그니처" 외부사실에 한한
+      context7 "1차 도구 선호(source-of-first-resort)" 를 instantiate. 신규 규범 0 — 새 단계·새 원칙 신설 아님.
+      ① fail-open advisory prompt-mandate: canonical 문장이 "context7 노출 시 1차 시도 / 부재·비활성·미인덱스·오류 시 WebFetch·공식문서 floor 로 자동 degrade" 를 한 쌍으로 강제. hook 강제 배제(부재 시 hook 이 작업 차단 = D2 위반).
+      ② 권장 tier 유지: 필수 의존성 미승격(CLAUDE.md 필수 의존성·playbook §0/§0c 미추가, §0e 권장 "blocking 아님" 유지). ADR-122 자립 방향 정합.
+      ③ A1-3 무손상 (두 축 분리 — enum conflation 정정): 축 A = web 허용 lane(A1-3 review-worker enumeration, verbatim) = security 전면 + requirements-review 전면 + design 좁은 예외(외부 기술선택) — 본 Amendment 미변경(불변). 축 B = context7 tool-preference 능동배선 lane = 요구사항 + 요구사항리뷰 + 설계 authoring + 설계리뷰 좁은 예외 + develop authoring, code review 제외("web" 라벨 미사용). develop authoring(DeveloperAgent/DataEngineerAgent 등)은 WebSearch/WebFetch 미보유(firsthand) → web 미허용, context7 MCP allowlist 만 신설. context7 은 code-review 워커에 미배선(대칭 보존). code lane 우회로 금지(ADR-126 §결정4).
+      ④ firsthand 검증 상속(ADR-119): context7 출력 = 외부 워커 산출물 → 검증 후 단언 + 출처 인용.
+    direction: strengthen  # 도구 선호 capability 추가 (약화 0건). 단계②③ 무변경 instantiate, A1-3 보존.
     sunset_justification: null  # strengthen 방향 — 신규 규범 0, 기존 결정 instantiate 만. ADR-058 §결정 5 약화 evidence-gate 무관. is_transitional: false 유지.
 ---
 
@@ -102,6 +118,40 @@ S1 §결정 3 표 "설계리뷰 = 부분 (외부 기술선택만)" 을 mechanica
 - **설계리뷰** = 외부 기술선택 좁은 예외 *추가* (internal-only 경계 negative-list 로 보존, 기존 정합성 검증 축소 0).
 - **구현리뷰** = web 금지 *전면 보존* (변경 0).
 - S1 의 어느 결정도 흡수·약화하지 않으며, ADR-046/119 의 어느 mandate 도 손대지 않는다. 따라서 ADR-058 §결정 5 의 sunset_justification 의무는 strengthen 방향이므로 `null` (약화 evidence-gate 무관). is_transitional: false 유지.
+
+## Amendment 2 (CFP-2672) — context7 라이브러리-docs 1차 도구 선호 (단계②③ instantiate, fail-open)
+
+> **신규 규범 0건.** 본 amendment 는 S1 §결정 1 의 단계②(각 lane 결정 직전 얕은 자가조사) · 단계③(리뷰 시점 다출처 깊은 검증) 안에, "라이브러리 API·버전·시그니처" 라는 특정 외부사실 종류에 한한 **1차 도구 선호(source-of-first-resort)** 로 context7(Upstash MCP, 버전 고정 라이브러리-docs 조회)을 instantiate 한다. 새 단계·새 원칙을 신설하지 않으며 3-단계의 시점·주체 구조는 무변경이다. 방향은 강화(strengthen) — 도구 선호 capability 추가일 뿐 어느 기존 결정도 약화하지 않는다(A2-4/A2-6, ADR-058 §결정 5 약화 차단 정합).
+
+### A2-1 — 단계②③ 도구 선호 instantiate (새 단계 아님)
+context7 은 단계②(각 lane 얕은 자가조사)·단계③(리뷰 깊은 검증)에서 "라이브러리 API·버전·시그니처" 외부사실을 집을 때의 **1차 시도 도구**로 선호된다. CVE·시장정보·표준(RFC) 등 다른 외부사실 종류는 context7 대상 아님(기존 web 조사/security lane 소관). 시점·주체 구조 무변경 — context7 은 그 안에서 특정 사실종류를 더 빠르고 버전-정확하게 집는 가속기.
+
+### A2-2 — fail-open advisory prompt-mandate (hook 배제)
+배선은 각 lane 지시문의 **advisory prompt-mandate** 다. canonical 문장이 "노출 시 1차 시도 / 부재·비활성·미인덱스·오류 시 WebFetch·공식문서 floor 로 자동 degrade, 작업 절대 미차단" 을 한 쌍으로 강제한다. **hook 으로 mechanical 강제하지 않는다** — hook 이 context7 부재 시 작업을 차단하면 fail-open(D2) 정면 위반. 어떤 required CI 게이트도 context7 런타임을 검사하지 않아 fail-open 은 CI-invisible.
+
+### A2-3 — 권장 tier 유지·필수 미승격 (ADR-122 정합)
+context7 은 권장 플러그인 tier(playbook §0e "blocking 아님", consumer-guide §1c 권장(선택)) 를 유지한다. 필수 의존성(CLAUDE.md 필수 의존성 = github MCP + gh/codex CLI / playbook §0·§0c) 에 **미추가**하며, family closed-enum scope(branch-protection-context-registry §5) 밖 유지. 미설치가 세션 개시 blocking 요건이 되지 않는다. ADR-122 superpowers 제거로 확립한 자립·탈의존 방향 보존.
+
+### A2-4 — A1-3 무손상 (code-review 제외, 대칭 보존, [P0])
+설계리뷰의 "외부 기술선택" 좁은 예외(A1-2)에 context7 이 얹히더라도 **구현리뷰(code review) web 전면금지(A1-3)는 무손상**이다. context7 은 code-review 워커 지시문(ClaudeReviewAgent.md/CodexReviewAgent.md)에 미배선하며 codeforge-review/CLAUDE.md 의 lane=code 전면금지 line(실 텍스트 백틱+bold 장식 → 장식-tolerant `lane=code.*전면 금지` 검증)을 유지한다.
+
+**두 축을 명시 분리한다 (리뷰어 지적 — "web 허용 lane" vs "context7 허용" enum conflation 정정):**
+- **축 A — web 허용 lane (A1-3 review-worker enumeration, verbatim)** = {security 전면, requirements-review 전면, design 좁은 예외(외부 기술선택)}. **A1-3 원문 그대로 불변** — 본 Amendment 는 이 enumeration 을 건드리지 않는다.
+- **축 B — context7 tool-preference 능동배선 lane** = {요구사항, 요구사항리뷰, 설계 authoring, 설계리뷰 좁은 예외, develop authoring}. code review **제외**. 이 축은 "web" 라벨을 쓰지 않는다 — context7 도구 선호(라이브러리-docs 조회)일 뿐 web 조사 허용의 확장이 아니다.
+- **develop authoring 사실 정정** = DeveloperAgent/DataEngineerAgent(및 Infra/QA authoring)는 WebSearch/WebFetch 를 **미보유**(firsthand 실측). 따라서 develop authoring 은 web 미허용이며, 본 Amendment 는 context7 MCP allowlist 만 신설한다(web 허용 확장 아님). context7≠web 재정의로 code-review 를 열려면 본 Amendment 를 넘는 명시적 근거가 필요하다(암묵 확산 금지, ADR-126 §결정4 우회로 금지 정합).
+
+### A2-5 — firsthand 검증 상속 (ADR-119)
+context7 출력은 외부 워커 산출물이다. ADR-119 §결정1 matrix "외부지식 주장" row + §결정6 검사연극 금지가 그대로 적용된다 — context7 을 썼다는 이유로 검증이 면제되지 않으며, 출처 인용 + firsthand 검증 후 단언 의무를 진다.
+
+### A2-6 — 강화 방향 명시 (약화 0)
+본 amendment 는 `direction: strengthen`(frontmatter `amendment_log` 정합). 단계①②③ 구조·A1-1/A1-2/A1-3 무손상, 도구 선호 capability 만 추가. ADR-046/119/122 의 어느 mandate 도 약화하지 않는다. sunset_justification = null(strengthen — 약화 evidence-gate 무관), is_transitional: false 유지.
+
+**mechanical_enforcement_actions (Amendment 2)**: Phase 2 anchor —
+- `codeforge-design/agents/ArchitectAgent.md` (+ 10 sibling architect agents) "능동 탐색 자세" 줄에 canonical 문장 co-locate + `codeforge-design/.claude/settings.json` 신설(context7 allowlist 2종만 + 필요 최소 도구, **`defaultMode: bypassPermissions` 미포함** = least-privilege; rename-tolerant 도구명).
+- `codeforge-review/agents/RequirementsReviewPLAgent.md` "워커 외부사실 검증" 절 + `templates/review-checklists/design.md` "외부 기술선택 검증" sub-section 에 context7 우선(settings.json 무변경).
+- `codeforge-develop/agents/DeveloperAgent.md` + `DataEngineerAgent.md` + `InfraEngineerAgent.md` + `QADeveloperAgent.md`(4 authoring agent — `DeveloperPLAgent` 제외) discipline 절에 canonical 문장 + `codeforge-develop/.claude/settings.json` 신설(context7 allowlist 2종만 + 필요 최소 도구, **`defaultMode: bypassPermissions` 미포함** = least-privilege; rename-tolerant 도구명).
+- (keep-invariant) `codeforge-review/CLAUDE.md` lane=code 전면금지 line + code-review 워커 미배선 + `CLAUDE.md` 필수 의존성 context7 미추가.
+- `docs/orchestrator-playbook.md` §0e / `docs/consumer-guide.md` §1c 에 fail-open + 필수 미승격 cross-ref.
 
 ## 어휘 충돌 회피 (필수 선언)
 

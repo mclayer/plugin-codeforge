@@ -63,6 +63,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 ### 1c. 권장 플러그인 (선택)
 - `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
+- **context7 (라이브러리-docs 조회) 능동 배선 — ADR-124 Amendment 2 cross-ref**: 설계/구현/요구사항리뷰/설계리뷰 lane 이 라이브러리 API·버전 사실을 집을 때 context7 이 노출돼 있으면 1차로 시도한다. 단 **권장 tier(선택) 유지 — 필수 의존성 아님**: 미설치·비활성 시 WebFetch/공식문서로 자동 degrade(fail-open, 세션 blocking 0). consumer 프로젝트의 context7 설치는 선택이며 미설치가 정상 동작을 막지 않는다(context7 강제 사용은 별도 follow-up — 본 배선 범위 밖). context7 출력도 ADR-119 firsthand 검증 의무 상속
 
 ### 1d. Plugin install 의무 — `enabledPlugins` ↔ `installed_plugins.json` (CFP-132 / Issue #238)
 

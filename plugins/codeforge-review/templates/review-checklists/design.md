@@ -77,6 +77,8 @@ CFP-46 / [ADR-014](https://github.com/mclayer/plugin-codeforge/blob/main/archive
 
 설계리뷰는 **원칙적으로 repo 내부 근거만** 사용한다 (외부 검색 금지). 단 **"외부 기술선택" 결론에 한해** 외부지식 충당 3-단계 ([ADR-124](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-124-external-knowledge-provisioning-model.md)) 단계③ 의 **좁은 예외** 로 WebSearch/WebFetch 를 허용한다. 보안·요구사항리뷰 lane 의 전면 허용과 달리 설계리뷰는 이 좁은 예외만 — 그 외 설계 결론은 내부근거-only 다.
 
+- **라이브러리-docs 검증 시 context7 1차 (ADR-124 Amendment 2)**: 위 "외부 기술선택" 좁은 예외 안에서 라이브러리·프레임워크 채택 결론(positive-list)을 외부검증할 때, context7 MCP(버전 고정 라이브러리-docs 조회)가 노출돼 있으면 1차로 시도한다(도구명은 설치본이 노출하는 이름을 따르며 하드코딩하지 않는다). context7 이 부재·비활성·미인덱스·오류이면 작업을 멈추지 말고 기존 WebSearch/WebFetch·공식문서 경로(floor)로 자동 degrade 한다(작업 차단 0). context7 출력도 외부 워커 산출물이므로 ADR-119 firsthand 검증 + 출처 인용 의무를 그대로 진다(context7 을 썼다는 이유로 검증이 면제되지 않는다). 이 우선은 positive-list 라이브러리 채택 결론에 한정 — negative-list(ADR·boundary·계약·§8·섹션)는 여전히 internal-only 이며 구현리뷰(`lane=code`)는 대상이 아니다(A1-3 무손상, ADR-126 §결정4 우회로 금지).
+
 ### "외부 기술선택" 판정 = 양면 정의 (positive-list ∩ negative-list 동시)
 
 > **진입 질문 (1줄 게이트)**: **"이 설계 결론이 외부 기술의 진위에 좌우되는가? YES → 외부 검증 예외 / NO → internal-only, 외부조사 금지."**

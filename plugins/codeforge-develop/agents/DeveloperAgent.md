@@ -69,6 +69,7 @@ GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLA
 ## 외부 지식 인용 규약 (ADR-119 — 조사 도구 미보유)
 
 - **Gate**: 외부 지식 단정 = Change Plan / spawn packet 인용 출처 (`source:`) 인계 인용만 — training 지식 단독 단정 금지. 출처 부재 시 추측 금지, "확인 불가" 명시 후 DeveloperPL 경유 Architect 에스컬레이션. repo 사실 = 대상 외 (Read/Grep 직접 실측). 상세 = ADR-119.
+- **라이브러리-docs 1차 도구 선호 (context7 — ADR-124 Amendment 2)**: 라이브러리 API·버전·시그니처 등 외부 라이브러리 사실이 필요할 때, context7 MCP(버전 고정 라이브러리-docs 조회)가 노출돼 있으면 1차로 시도한다(라이브러리명 → library-id resolve → docs 조회; 도구명은 설치본이 노출하는 이름을 따르며 하드코딩하지 않는다). 본 agent 는 WebSearch/WebFetch 미보유 — context7 이 부재·비활성·미인덱스·오류이면 작업을 멈추지 말고 기존 floor(위 Gate: '확인 불가' 명시 후 DeveloperPL 경유 Architect 에스컬레이션)로 자동 degrade 한다(작업 차단 0). context7 은 가속기이지 필수 의존이 아니며, 그 출력도 외부 워커 산출물이므로 ADR-119 firsthand 검증 + 출처 인용 의무를 그대로 진다(context7 을 썼다는 이유로 검증이 면제되지 않는다).
 
 ## Operating environment (ADR-044)
 

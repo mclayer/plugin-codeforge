@@ -171,6 +171,7 @@ review_packet:
 결론이 **내부 코드·내부 규칙·팀 암묵지식만으로 닫히는 곳** 에서 깊은 외부조사를 강제하면 검사연극이다 — finding 발의 금지. ADR-119 §결정 6 "'조사했으므로 옳다' 단정 금지" SSOT. 조사 = traceability + 정직성 수단이지 결론의 정당성 보증 아님. **매 Story 강제 발동 아님** (declarative-only, ADR-124 결정 3 적합도 표 = 발동 잠재력이지 강제 아님 — 실 발동 = 외부사실 의존 게이트).
 
 > **워커 외부사실 검증 (WebSearch/WebFetch)**: 본 lane 워커 (Claude/Codex) 는 외부사실 의존 결론 검증을 위해 WebSearch/WebFetch 사용이 허용된다 (codeforge-review CLAUDE.md "Worker 호출 규약" — security + requirements-review 허용). 단, 외부사실 의존 지점에만 사용 (검사연극 차단).
+> **라이브러리 사실 검증 시 context7 1차 (ADR-124 Amendment 2)**: 라이브러리 API·버전·시그니처 등 외부 라이브러리 사실을 검증할 때 context7 MCP(버전 고정 라이브러리-docs 조회)가 노출돼 있으면 1차로 시도하고(도구명은 설치본이 노출하는 이름을 따르며 하드코딩하지 않는다), context7 이 부재·비활성·미인덱스·오류이면 작업을 멈추지 말고 기존 WebSearch/WebFetch·공식문서 경로(floor)로 자동 degrade 한다(작업 차단 0). context7 은 가속기이지 필수 의존이 아니며, 그 출력도 외부 워커 산출물이므로 ADR-119 firsthand 검증 + 출처 인용 의무를 그대로 진다(context7 을 썼다는 이유로 검증이 면제되지 않는다).
 
 ## 다음 게이트
 
