@@ -80,13 +80,22 @@ lane_mapping_rule:
     - infrastructure  # canonical lowercase, "Infrastructure" legacy retain
   deferred_followup_lint:
     cfp: CFP-2615
-    script: scripts/check-adr-category-lane-coverage.sh
-    workflow: templates/github-workflows/adr-category-lane-coverage.yml
-    tier: warning
-    hotfix_bypass_label: hotfix-bypass:adr-category-lane-coverage
+    status: superseded  # CFP-2680 (ADR-153) — membership-scoped supersede
+    superseded_by: CFP-2680  # required-surface fail-closed membership (기존 doc-frontmatter surface 편승)
+    realized_form: scripts/lib/check_doc_frontmatter.py CATEGORY_VALID  # 신규 standalone script/workflow 0, 7-tuple 무변경
+    original_plan_not_built:  # CFP-2615 declared 원안 — 미빌드 (CFP-2591 §2.4 warning 강제피로 회피 → required 편승 대체)
+      script: scripts/check-adr-category-lane-coverage.sh
+      workflow: templates/github-workflows/adr-category-lane-coverage.yml
+      tier: warning
+      hotfix_bypass_label: hotfix-bypass:adr-category-lane-coverage
+    scope_note: membership-scoped  # membership enforcement 만 실현. coverage/mapping-accuracy 축 OOS 유지 (over-claim 금지, ADR-119)
+    shrink_carrier: CFP-2682  # FROZEN_BASELINE_3 (ADR-131/132/133) 정규화 → allowlist shrink
     rationale: |
       declarative_layer 본 carrier (CFP-1523) — mechanical wire 별 sub-CFP (CFP-2615).
-      ADR-060 framework Wave 1 → Wave 2 wire pattern 답습.
+      CFP-2680 (ADR-153) 이 CFP-2615 membership-enforcement intent 를 기존 required
+      doc-frontmatter surface (check_doc_frontmatter.py CATEGORY_VALID) 위 fail-closed 로
+      실현 — standalone warning-tier script/workflow 미빌드 (membership-scoped supersede).
+      coverage/mapping-accuracy 축은 OOS 유지.
 
 # CFP-1523 Phase 2 PR 안 cascade execution plan (Story §3.0 D-5 dry-run gate mandate codify)
 cascade_execution_plan:
