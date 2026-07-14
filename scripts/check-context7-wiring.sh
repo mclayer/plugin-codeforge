@@ -2,8 +2,9 @@
 # check-context7-wiring.sh — CFP-2672 / ADR-124 Amendment 2 presence-lint.
 #
 # Execution-backed AC verification for context7 능동 배선 (fail-open, 권장 tier 유지).
-# presence + negative-presence + keep-invariant. Exit 1 on any FAIL (no false-oracle:
-# every assertion runs a real grep against the tree and checks a concrete count).
+# presence + negative-presence + keep-invariant. Exit 1 on any FAIL. positive checks +
+# fail-closed keep-invariant; negative-presence checks are presence-scoped and guarded
+# by target-existence assertions (대상 부재 = FAIL, not spurious 0-hit PASS).
 #
 # NOTE: This is a standalone verification script, NOT a required CI gate — wiring it
 # into .github/workflows/ would itself violate AC-3 (context7 must be CI-invisible).
@@ -52,6 +53,10 @@ done
 
 # ---------- AC-6: code-review 대칭 (negative + keep-invariant) ----------
 # (i) code-review workers must have NO context7 active wiring
+#     target-existence guard first (fail-closed, AC-6ii 패턴 미러): 파일 부재 = FAIL
+for f in plugins/codeforge-review/agents/ClaudeReviewAgent.md plugins/codeforge-review/agents/CodexReviewAgent.md; do
+  [ -f "$f" ] || bad "AC-6 target missing (fail-closed): $f"
+done
 n_cr=$(lines_with 'context7' plugins/codeforge-review/agents/ClaudeReviewAgent.md plugins/codeforge-review/agents/CodexReviewAgent.md)
 [ "$n_cr" = "0" ] && pass "AC-6 code-review workers NOT wired (context7 hits=0)" \
   || bad "AC-6 code-review workers unexpectedly mention context7 (hits=$n_cr)"
@@ -66,11 +71,17 @@ n_dep=$(grep -cE 'context7' CLAUDE.md)
   || bad "AC-4 root CLAUDE.md unexpectedly mentions context7 (hits=$n_dep)"
 
 # ---------- AC-3: CI-invisible (no context7 check in any workflow) ----------
+# target-existence guard first (fail-closed): 디렉터리 부재 = FAIL, not spurious 0-hit PASS
+[ -d .github/workflows ] || bad "AC-3 scan target missing (fail-closed): .github/workflows/"
 n_wf=$(lines_with 'context7' .github/workflows)
 [ "$n_wf" = "0" ] && pass "AC-3 .github/workflows/ context7 부재 (CI-invisible, hits=0)" \
   || bad "AC-3 .github/workflows/ unexpectedly references context7 (hits=$n_wf)"
 
 # ---------- AC-7: rename-tolerant (no hardcoded old tool name) ----------
+# target-existence guard first (fail-closed): 스캔 대상 경로 부재 = FAIL, not spurious 0-hit PASS
+for d in plugins docs archive; do
+  [ -d "$d" ] || bad "AC-7 scan target missing (fail-closed): $d/"
+done
 n_old=$(lines_with 'get-library-docs' plugins docs archive)
 [ "$n_old" = "0" ] && pass "AC-7 rename-tolerant: 구명 'get-library-docs' 하드코딩 부재 (hits=0)" \
   || bad "AC-7 old tool name 'get-library-docs' hardcoded (hits=$n_old)"
