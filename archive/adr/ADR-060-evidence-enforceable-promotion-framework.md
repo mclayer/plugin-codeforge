@@ -1477,7 +1477,7 @@ sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정
 - `check-debut-audit-signals` / `check-debut-readiness` — consumer-specific (ADR-021 mctrader debut audit, wrapper governance scope 외)
 - `check-doc-links` — `markdown-internal-links` (lint.yml inline) 와 중복
 - bootstrap-*.sh / test-*.sh (30+) / audit-trail-fetch.sh / next-phase.sh / migrate-*.sh / post-merge-*.sh / sync-*.sh / retro-retry-helper.sh / check-lint.sh — not lint / helper / migration
-- consumer-only workflow: live-test-guard.yml / live-deploy-approval.yml / live-secret-policy.yml / kill-switch-integration-test.yml / story-init.yml / story-section-1-immutable.yml / fix-ledger-sync.yml / subissue-from-impl-manifest.yml / reservation-cleanup.yml / check-plugin-version-bump.yml / container-image-scan.yml / retro-mandatory.yml / test.yml (CONSUMER_ONLY_WORKFLOWS 명시, invariant-check.yml SSOT)
+- consumer-only workflow (self-app parity 제외): 전체 목록의 authoritative SSOT = `.github/workflows/invariant-check.yml` 의 `CONSUMER_ONLY_WORKFLOWS` bash 배열. 본 ADR 은 dual-maintenance drift 원천 제거(CFP-2678 / Amendment 21 §결정 34)를 위해 사본 enumeration 을 두지 않고 SSOT 를 참조한다 — 이 bullet 에 개별 workflow 명 목록을 재추가하지 말 것(재추가 = drift 재유입).
 
 본 그룹 A **18 entry** (FIX iter 1 정정 후 — owner_adr 정합 ADR/contract 명확 entry 만, 8 entry 그룹 B 강등) 의 registry yaml row append 는 **CFP-390 Phase 2 PR scope** (본 Amendment 1 = Phase 1 ADR 갱신 + 후속 carrier 정정 + 인벤토리 SSOT 확정). Phase 2 PR 진행 여부 = doc-only fast-path 가능성 ArchitectAgent / DeveloperPL 판단 (ADR-054 모호 시 full-lane).
 
@@ -2697,3 +2697,19 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 - **ADR-063** — plugin.json 6.71.0 → 6.72.0 MINOR (governance behavior — 신규 warning-tier lint runtime 활성화). marketplace.json cross-repo sync = 별 follow-up declare.
 - **ADR-058 §결정 5** — is_transitional:false 영구 framework trigger 미해당 + 강화 방향(18번째 entry ratchet-UP + surfacing sub-mode append).
 - **prior art** (worktree 실존 확인 — ADR-119): `scripts/lib/check_lane_count_ssot.py` (line-by-line scan + git ls-files walk + 5축 allowlist + SELF_EXCLUDE + ReDoS-safe + exit 3-tier — verbatim copy-inherit) + `scripts/lib/check_deferred_followup_reconcile.py` (carrier-resolution triplet + baseline loader/digest) + `worktree-first-pre-checkout.yml` (audit comment scaffold + sticky comment 패턴 — blocking mode 를 surfacing/warning non-blocking 으로 적용).
+
+## Amendment 21 (CFP-2678, 2026-07-14 KST)
+
+**Carrier**: CFP-2678 (wrapper-self Story) / Story file = `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-2678.md`.
+
+### §결정 34 (신설) — 그룹 C consumer-only bullet: 사본 enumeration → SSOT 참조 단일화 (dual-maintenance drift 원천 제거)
+
+**배경**: 그룹 C(§Amendment 1-결정 13, L1473~) 의 `consumer-only workflow:` bullet 은 `CONSUMER_ONLY_WORKFLOWS`(SSOT, `.github/workflows/invariant-check.yml`)의 **사본 산문 enumeration** 을 보유했다. 이 산문 mirror 는 **CFP-390 Amendment 1 시점의 point-in-time snapshot(13-entry)** 이라 이후 SSOT 확장분을 미반영한 채 historical(고정 snapshot)↔live(SSOT) lag 를 축적했다 — SSOT 확장 4회(CFP-2227 consumer-deploy-seed/post-deploy-smoke · CFP-2360 post-deploy-benchmark · CFP-2369 duplication-check · CFP-2521 pl-delegation-ratio-check)마다 이 산문 mirror 가 미동기화 → drift 4회 반복 (SSOT 18 vs mirror 13, 누락 5).
+
+**결정**: 그룹 C 의 consumer-only bullet 에서 **사본 enumeration 을 제거**하고 SSOT 를 **참조**로 대체한다. 둘째 사본이 없으면 drift 가 구조적으로 불가능 (prevention-by-design).
+- authoritative 목록 = `.github/workflows/invariant-check.yml` 의 `CONSUMER_ONLY_WORKFLOWS` bash 배열 (안정 심볼 참조 — brittle 한 line-number 하드코딩 금지).
+- ADR 본문은 개별 workflow 명 목록을 **재보유하지 않는다**. 재추가 = drift 재유입 → 금지 (self-defending 명시).
+
+**재발방지 parity lint 미채택 근거 (ADR-119 §결정9)**: 사본 제거(§결정 34) 후 "SSOT↔산문 사본 parity 강제 lint"는 지킬 대상이 소멸해 vacuous. 산문 파싱 lint 는 fragile(CFP-2653) → 이득 0 · 비용 高 로 3문 게이트 FAIL. detection(lint) 대신 elimination(참조 단일화)이 근본책.
+
+**scope**: doc-only. 신규 게이트/required-context/evidence-registry entry 0. branch protection 7-tuple 무변경 (ADR-127 required 신설 0 ratchet 정합).
