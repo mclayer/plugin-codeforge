@@ -6,7 +6,7 @@ topic_slug: adr-category-lane-mapping
 title: ADR Category → Lane Bucket Mapping Rule — Diátaxis quadrant secondary axis (DD-4)
 status: Active
 date: 2026-05-25
-updated: 2026-05-25
+updated: 2026-07-14
 carrier_story: CFP-1523
 parent_carrier: CFP-1493 (Sub-B S2.3 partial complete, PR #1520 MERGED — 잔여 real backfill 영역)
 tags:
@@ -36,7 +36,7 @@ related_stories:
   - CFP-1086   # 4-way RACI matrix → 3-way (S5 deputy-mandate scope)
   - CFP-1126   # AggregateArch + ModuleArch 통합 (Amendment 10) — ModuleArch unified mandate primary advocate
 deferred_followup_cfps:
-  - CFP-2615  # scripts/check-adr-category-lane-coverage.sh warning tier lint 실 wire + evidence-checks-registry yaml row append (declarative_layer → mechanical wire)
+  - CFP-2615  # SUPERSEDED by CFP-2680 (ADR-153) — membership-enforcement 를 기존 required doc-frontmatter surface(check_doc_frontmatter.py CATEGORY_VALID) 위 fail-closed 로 실현. standalone warning-tier lint 미빌드(membership-scoped supersede, coverage/mapping-accuracy 축 OOS). shrink carrier=CFP-2682
   - FU-1523-2  # Confluence IA tree drift detection lint (scripts/check-confluence-ia-drift.sh + 24h cron + Issue auto-create, S2.5 lineage)
 ddd_layer:
   bounded_context: codeforge-governance
@@ -187,13 +187,15 @@ Phase 2 PR 안 6 MCP call atomic execution:
 
 ### 규칙 8 — Deferred-followup CFP (CFP-2615 / FU-1523-2 declare)
 
-#### CFP-2615 — CI lint mechanism mechanical wire
+#### CFP-2615 — CI lint mechanism mechanical wire — **SUPERSEDED by CFP-2680 (ADR-153)**
 
-**Scope**: `scripts/check-adr-category-lane-coverage.sh` warning tier lint + `templates/github-workflows/adr-category-lane-coverage.yml` workflow + `docs/evidence-checks-registry.yaml` row append + `hotfix-bypass:adr-category-lane-coverage` family member append.
+> **Superseded (2026-07-14, membership-scoped)**: CFP-2680 (ADR-153) 이 본 CFP-2615 membership-enforcement intent 를 **기존 required doc-frontmatter surface** (`scripts/lib/check_doc_frontmatter.py` `CATEGORY_VALID` block) 위 **fail-closed** 로 실배선했다. 아래 원안(standalone warning-tier `scripts/check-adr-category-lane-coverage.sh` + 전용 workflow)은 **미빌드** — CFP-2591 §2.4 "warning 강제피로" 회피 위해 required 표면 편승으로 대체. supersede 는 **membership-scoped**: category→lane *coverage/mapping-accuracy* 축은 OOS 유지(본 게이트 미강제, over-claim 금지 — ADR-119 / ADR-153 §결정 3). 선재 compound 3건(ADR-131/132/133)은 `FROZEN_BASELINE_3` grandfather(shrink-only); 정규화 = 별 named carrier **CFP-2682**(allowlist shrink 경로).
 
-**Mechanism**: frontmatter `^category:` 값 (case-normalized lowercase) 이 본 file 규칙 2 `closed_enum` 안에 존재 여부 verify. 미존재 시 warning 발화 + 별 ADR Amendment 의무 안내.
+**원안 Scope (미빌드)**: `scripts/check-adr-category-lane-coverage.sh` warning tier lint + `templates/github-workflows/adr-category-lane-coverage.yml` workflow + `docs/evidence-checks-registry.yaml` row append + `hotfix-bypass:adr-category-lane-coverage` family member append.
 
-**ADR-060 framework Wave 1 → Wave 2 wire pattern 답습**: declarative_layer 본 carrier (CFP-1523) → mechanical wire 별 sub-CFP (CFP-2615).
+**실현 Mechanism (CFP-2680)**: frontmatter `category:` 값(case-fold)이 `docs/confluence-ia-tree.yaml lane_mapping_rule.closed_enum`(동적 read) 안에 존재 여부를 기존 required 게이트 `doc frontmatter schema (CFP-28 — strict)` 표면에서 fail-closed verify. 미존재 시 exit 1 + 검출값 + `ADR Amendment` + `sunset_justification` 안내.
+
+**ADR-060 framework Wave 1 → Wave 2 wire pattern**: declarative_layer 본 carrier (CFP-1523) → mechanical wire 별 sub-CFP (CFP-2615) → **required-surface fail-closed 실배선 (CFP-2680 / ADR-153, warning→required 강화)**.
 
 #### FU-1523-2 — Confluence IA tree drift detection lint
 
@@ -244,6 +246,7 @@ Phase 2 PR 안 6 MCP call atomic execution:
 | 일자 (KST) | 변경 | Carrier | 비고 |
 |---|---|---|---|
 | 2026-05-25 | 신설 (DD-4 SSOT body — 18 unique enum × 16 effective canonical buckets × 8 lane bucket mapping + cross-cutting fallback + case-fold normalize + closed-set invariant + Diátaxis quadrant alignment) | CFP-1523 | parent_carrier CFP-1493 Sub-B S2.3 partial complete (PR #1520 MERGED) 잔여 real backfill carrier. ground truth verified `git ls-files docs/adr/ADR-*.md = 117` (2026-05-25T13:30:00+09:00 KST). FIX iter 2 — frontmatter `kind: domain_fact` + `area: governance-principle` + `topic_slug: adr-category-lane-mapping` + `updated: 2026-05-25` schema 정합 + 6 section schema (정의 / 컨텍스트 / 핵심 규칙 / 경계 / 관련 ADR / 변경 이력) 재배치 (정보 손실 0, 기존 mapping body 전부 보존). |
+| 2026-07-14 | 규칙 8 CFP-2615 sub-section supersede 반영(CFP-2680/ADR-153 이 membership-enforcement 를 기존 required doc-frontmatter surface CATEGORY_VALID 위 fail-closed 로 실현, standalone warning-tier lint 미빌드 = membership-scoped supersede) + frontmatter deferred_followup_cfps CFP-2615 항목 정합 | CFP-2680 | 3-surface 정합(confluence-ia-tree.yaml deferred_followup_lint + 본 file 규칙 8 + frontmatter) — one-place-only=SSOT drift 회피(census-floor). coverage/mapping-accuracy 축 OOS 유지. shrink carrier CFP-2682. |
 
 ## Cross-ref summary
 

@@ -1,0 +1,39 @@
+name: doc-frontmatter-category-test
+# CFP-2680 / ADR-153 §결정 6 — CATEGORY_VALID(check_doc_frontmatter.py) 의 execution-backed
+#   self-test(tests/scripts/test_check_doc_frontmatter_category.py) 를 실 CI red/green 으로 산출(born-dead 방지).
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가: CATEGORY_VALID 는 기존 required 게이트 `doc frontmatter schema (CFP-28 — strict)` 에
+#   편승하나(신규 required context 0, 7-tuple 무변경), self-test 자신의 liveness 는 전용 pytest
+#   workflow 로 보장한다(ADR-151 메타-게이트는 tests/scripts/*.sh glob → .py 미등재 = born-red 0, N/A).
+#
+# **day-1 hard-fail** (continue-on-error 금지). **non-required** (branch-protection 7-tuple 무변경).
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). adr-reservation-claim-test.yml 선례.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  doc-frontmatter-category-test:
+    name: doc-frontmatter-category-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest + pyyaml)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run pytest CATEGORY_VALID self-test (§8 RTM AC-1..8 — day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_check_doc_frontmatter_category.py -q
