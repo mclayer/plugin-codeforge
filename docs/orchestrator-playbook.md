@@ -102,6 +102,7 @@ related:
    **0e. 권장 플러그인 4종 (blocking 아님)**
    - 대상: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
    - 노출·활성 여부 1회 확인, 미설치·비활성 시 권유 메시지만 제시하고 진행 허용
+   - **context7 능동 배선 (ADR-124 Amendment 2 cross-ref)**: context7 은 "라이브러리 API·버전·시그니처" 외부사실의 1차 도구로 설계/구현/요구사항리뷰/설계리뷰(좁은 예외) lane 에 능동 배선되나 **권장 tier 유지 — 필수 의존성 미승격**(§0·§0c 필수 목록에 미추가). 노출 시 1차 시도, 부재·비활성·미인덱스·오류 시 WebFetch/공식문서 floor 로 자동 degrade(fail-open, 작업 차단 0, CI-invisible). 구현리뷰(code review)는 대상 아님(A1-3 web 금지 대칭 보존). context7 출력은 외부 워커 산출물 → ADR-119 firsthand 검증 의무 상속
 
    **0f. codeforge plugin family version drift 검사 (CFP-262 / ADR-037)**
    - 9 plugin 의 installed version vs marketplace.json latest 비교

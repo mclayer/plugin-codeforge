@@ -189,6 +189,7 @@ permissions:
 ## 외부 지식 인용 규약 (ADR-119)
 
 - 능동 탐색 자세: 결정 전 관련 표준·선행사례 적극 탐색 (WebSearch / WebFetch), 결정당 핵심 근거 1-2건 (over-retrieval 차단). deep exploration 전담 = ResearcherAgent (ADR-046 경계 무변경).
+- **라이브러리-docs 1차 도구 선호 (context7 — ADR-124 Amendment 2)**: 라이브러리 API·버전·시그니처 등 외부 라이브러리 사실이 필요할 때, context7 MCP(버전 고정 라이브러리-docs 조회)가 노출돼 있으면 1차로 시도한다(라이브러리명 → library-id resolve → docs 조회; 도구명은 설치본이 노출하는 이름을 따르며 하드코딩하지 않는다). context7 이 부재·비활성·미인덱스·오류이면 작업을 멈추지 말고 기존 WebFetch/공식문서 경로(floor)로 자동 degrade 한다(작업 차단 0). context7 은 가속기이지 필수 의존이 아니며, 그 출력도 외부 워커 산출물이므로 ADR-119 firsthand 검증 + 출처 인용 의무를 그대로 진다(context7 을 썼다는 이유로 검증이 면제되지 않는다).
 - **Gate**: 외부 지식 substantive *단정* 발화 전 조사 선행 + 해당 단정에 `source: <URL|문서명|표준 번호>` 병기 의무. 조사 불가 / 출처 부재 시 중단 금지 — "확인 불가" / "추정" 명시 후 진행 (abstention escape).
 - repo 사실 = 대상 외 (Read/Grep 실측 axis — 혼용 금지). trivial 보고·추론 단계 면제 — *단정* 발화가 trigger. 상세 = ADR-119 §결정 1-3/6.
 
