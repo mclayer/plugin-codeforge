@@ -411,3 +411,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "relocation-ledger 구동 construct-scoped dead-path 재유입 lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, construct-scoped 판별력 결박: positive anchor 검출/negative 0-FP/born-hollow guard candidate0→FAIL/construct-vs-file FN/field-predicate locked↔append-only/mutation-kill/PERF DoS-bound<5s)."
+
+  # ── CFP-2684 (ADR-154) — hard-gate-self-verification 메타-게이트 재귀 self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 40 → 41 (신규 self-test enroll). 이 self-test 파일은 QADev Phase 2
+  #   deliverable — enroll 은 선행하되 파일 생성 전까지 selftest-execution-liveness 게이트가 record→missing-file 로
+  #   AC-1a FAIL(정상, DevPL 이 QADev 합류 후 최종 검증). two-meta-gate mutual cross-seal(§7.7(2) meta-hollow 차단).
+  - self_test: "tests/scripts/test_check-hard-gate-self-verification.sh"
+    execution_channel: "workflow:hard-gate-self-verification-test.yml:hard-gate-self-verification"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "hard-gate self-verification presence/shape 메타-게이트 재귀 self-test(AC-7 self-application, TC-CLEAN-PASS + M1-M6 positive-leak + LIVE ceiling-honesty) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, presence/shape 판별력 결박: positive-control/2-exit-shape/empty-target honest-degrade/unknown-input fail-closed/identity-probe/3-way taxonomy/honest-ceiling presence + M1-M6 mutation-kill + DoS 회귀가드; 검출 sufficiency=undecidable review-tier 미강제, presence ≠ truth)."
