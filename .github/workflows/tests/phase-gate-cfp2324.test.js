@@ -80,6 +80,7 @@ class StubContext {
         number: prNumber,
         body: config.prBody || '',
         head: {sha: 'deadbeef'},
+        base: {ref: config.baseRef || 'main'},   // CFP-2673 D1: real PR base.ref mirror (workflow L503)
         html_url: `https://github.com/${this.repo.owner}/${this.repo.repo}/pull/${prNumber}`
       }
     };
@@ -131,6 +132,15 @@ class StubGitHub {
             summary: opts.output.summary
           });
           return {data: {}};
+        }
+      },
+      repos: {
+        // CFP-2673 D2 (Q1 candidate A): read REAL gate-lane-map-v1.yaml from disk → base64 → {data:{content}}.
+        //   ref(pr.base.ref) accepted-but-ignored — candidate A sources from disk → drift-0 (AC-5).
+        getContent: async (opts) => {
+          const mapPath = path.join(__dirname, '../../../docs/inter-plugin-contracts/gate-lane-map-v1.yaml');
+          const raw = fs.readFileSync(mapPath, 'utf-8');
+          return { data: { content: Buffer.from(raw, 'utf-8').toString('base64') } };
         }
       }
     };
@@ -659,17 +669,54 @@ async function testMutationSurvival() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AC-5 DRIFT-ZERO SOURCING NAMED CHECK (verifyDriftZeroSourcing) — 2축(행위+구조)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function verifyDriftZeroSourcing() {
+  const src = fs.readFileSync(__filename, 'utf-8');
+  const ssotPath = path.join(__dirname, '../../../docs/inter-plugin-contracts/gate-lane-map-v1.yaml');
+
+  // (1) 행위 축 (primary): D2 getContent mock 을 실제 호출 → 반환 base64 디코드 → on-disk SSOT 와 내용 동치 assert.
+  //     check 자기소스가 아니라 mock 을 exercise — mock 이 틀린/파생 content 반환(p6a) 시 여기서 FAIL.
+  let behavioralOk = false;
+  try {
+    const gh = new StubGitHub({});
+    const res = await gh.rest.repos.getContent({ path: 'docs/inter-plugin-contracts/gate-lane-map-v1.yaml' });
+    const decoded = Buffer.from(res.data.content, 'base64').toString('utf-8');
+    behavioralOk = decoded === fs.readFileSync(ssotPath, 'utf-8');
+  } catch (e) {
+    behavioralOk = false;
+  }
+
+  // (2) 구조 축 (secondary, region-scoped): StubGitHub 클래스 span(`class StubGitHub`→다음 class) 만 scan —
+  //     이 함수 자기본문 제외(= self-referential tautology 근절, __filename 전역 scan 금지). mock 이 SSOT 를
+  //     fs.readFileSync 로 소싱하는지 확인 → 행위 축이 못 가르는 byte-faithful verbatim-copy(p6b)까지 봉인.
+  const ghStart = src.indexOf('class StubGitHub');
+  let ghEnd = src.indexOf('\nclass ', ghStart + 1);
+  if (ghEnd === -1) ghEnd = src.length;
+  const ghSpan = ghStart === -1 ? '' : src.slice(ghStart, ghEnd);
+  const structuralOk = ghSpan.includes('gate-lane-map-v1.yaml') &&
+    /gate-lane-map-v1\.yaml[\s\S]{0,300}readFileSync|readFileSync[\s\S]{0,300}gate-lane-map-v1\.yaml/.test(ghSpan);
+
+  const ok = behavioralOk && structuralOk;
+  console.log(ok ? '✓ AC-5 drift-zero sourcing: PASS'
+                 : `✗ AC-5 drift-zero sourcing: FAIL (behavioral=${behavioralOk}, structural=${structuralOk})`);
+  return ok;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN RUNNER
 // ─────────────────────────────────────────────────────────────────────────────
 
 (async () => {
   const success = await runAllTests();
   const killedCount = await testMutationSurvival();
+  const ac5Ok = await verifyDriftZeroSourcing();
 
   console.log('\n' + '='.repeat(80));
   const totalCases = passCount + failCount;
-  if (success && killedCount === 3) {
-    console.log(`✓ ALL PASS (${totalCases} cases, ${killedCount} mutations killed) — S2 hard / S6 provenance / S7 throughput AC all VERIFIED`);
+  if (success && killedCount === 3 && ac5Ok) {
+    console.log(`✓ ALL PASS (${totalCases} cases, ${killedCount} mutations killed, AC-5 drift-zero VERIFIED) — S2 hard / S6 provenance / S7 throughput AC all VERIFIED`);
     console.log('Exit code: 0');
     process.exit(0);
   } else if (!success) {
@@ -678,6 +725,10 @@ async function testMutationSurvival() {
     process.exit(1);
   } else if (killedCount < 3) {
     console.log(`✗ MUTATION SURVIVAL FAILURE (${killedCount}/3 mutations killed)`);
+    console.log('Exit code: 1');
+    process.exit(1);
+  } else if (!ac5Ok) {
+    console.log(`✗ AC-5 DRIFT-ZERO SOURCING FAILURE`);
     console.log('Exit code: 1');
     process.exit(1);
   }
