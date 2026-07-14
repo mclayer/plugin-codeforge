@@ -239,3 +239,14 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
   3. **rollback-ready** — 등록 직전 현재 6-tuple contexts 배열을 캡처(스냅샷)해두어, 등록 후 결함 발견 시 즉시 7→6 원복 가능해야 한다.
 - **등록 행위자 = post-merge Orchestrator gh-api act**: live 6→7 등록은 이 PR(코드/workflow 착륙)이 아니라, merge 후 Orchestrator 가 `gh api` 로 별도 실행하는 행위다. **forged machine-test 금지 = self-register 금지** — 게이트 자신의 워크플로 실행 결과만으로 자기 자신을 required 로 등재하는 self-attestation 경로는 차단(third-party canary PR 관찰이 선행 조건).
 - 기록 시각: 2026-07-12T09:00:00+09:00 (KST).
+
+## 2026-07-14 — CFP-2674: ac-traceability 6→7 등록 실행 완료 (live=7-tuple parity)
+
+- **상태 전이 = HELD(2026-07-12) → registered(2026-07-14)**: 위 2026-07-11 entry(추가 예정/pending) 및 2026-07-12 entry(현재 live=6-tuple HELD / doc-ahead)의 current-state 서술은 각 기록 시점 기준 정확한 이력이며 본 entry 로 supersede 된다(hold→registered). 과거 entry 문구는 무변경(이력 보존).
+- **등록 주 증거(load-bearing) = live GET contexts == 7-tuple(firsthand, SHA-무관)** `[verified 2026-07-14]`: `gh api repos/mclayer/plugin-codeforge/branches/main/protection/required_status_checks/contexts` = `["phase-gate-mergeable","invariant-check","doc frontmatter schema (CFP-28 — strict)","doc section schema (CFP-28 — strict)","check-gate","Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)","ac-traceability-matrix"]`(7개). 기존 6 전부 잔존 + `ac-traceability-matrix` 신규 = drop 0.
+- **등록 절차 = rollback-ready live-ops POST**: 등록 직전 6-tuple 배열 capture → `POST .../required_status_checks/contexts` append → 즉시 GET==7-tuple 실측 → drop 0 → rollback 불요. 등록 *act* = Orchestrator post-merge gh api(forged machine-test=self-register 금지, ADR-145 §결정3).
+- **cond7 해소 = 열린 non-compliant PR 0**: #2663(merged 2026-07-13T13:09:42Z, CFP-2661 Phase1) / #2668(merged 2026-07-13T15:42:45Z, CFP-2661 Phase2) `[verified]`.
+- **보조 provenance(SHA/topology 정밀)**: `ac-traceability-matrix` = `success` @ **PR #2668 head `d8633b6a`**(completed 2026-07-13T15:34:54Z) `[verified]`. #2668 → main 에 **squash-merge** commit `c17a19b9`(parent `87e3573b` = merge 직전 main HEAD; **현 main HEAD = c17a19b9 자신**)로 착지. PR head `d8633b6a` ↔ squash `c17a19b9` = diverged(ancestor 아님). matrix workflow = **pull_request-only** → merge commit `c17a19b9` 엔 matrix check-run **ABSENT(0 실측, 정상)** `[verified]`. ∴ 등록 결정 증거 = live GET==7-tuple(위), matrix 는 main *내용* green 보조 서사. (**"matrix pass @ main c17a19b9" 류 금지** — merge commit 엔 matrix run 없음.)
+- **doc = live = 7-tuple parity**: CLAUDE.md L93 브랜치보호 표(이미 7-tuple, SSOT) ↔ 본 audit doc ↔ live(gh api 7-tuple) 3자 정합. 이전 doc-ahead divergence 해소.
+- **carrier / mandate**: 등록 terminal carrier #2670 = CLOSED/COMPLETED `[verified]`. 본 record 정합 근거 = ADR-145 Amendment 5(line 380) 코드-외 조치("`docs/security/branch-protection-audit.md` HELD→완결 갱신"). CLAUDE.md L93 표 = 무변경(이미 7-tuple).
+- 기록 시각: 2026-07-14T01:08:52+09:00 (KST).
