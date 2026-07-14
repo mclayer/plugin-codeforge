@@ -268,6 +268,17 @@ def test_edge_blank_category_fails(tmp_path):
     assert "blank" in r.stdout
 
 
+def test_edge_present_null_category_fails(tmp_path):
+    # category: (bare, YAML null) → 키 존재·값 null(present-null) → fail-closed (F-CR-2680-1).
+    # blank("")·absent(키 부재)와 disjoint — present-null 별도 커버. 값 표기 `(null)`.
+    write_ia(tmp_path)
+    write_adr(tmp_path, "ADR-931-present-null.md", "")
+    r = run_checker(tmp_path)
+    assert r.returncode != 0, r.stdout
+    assert "category" in r.stdout
+    assert "(null)" in r.stdout
+
+
 def test_edge_nonstr_category_no_crash_fails(tmp_path):
     # category [foo, bar] (list) → non-str guard → fail-closed, crash 없음 (D4-esc-2).
     write_ia(tmp_path)

@@ -172,9 +172,14 @@ else:
                 continue  # REQUIRED 가 이미 parse 실패 보고
             if not isinstance(fm, dict):
                 continue
-            cat = fm.get("category")
+            if "category" not in fm:
+                continue  # 진짜 absent(키 부재) — REQUIRED 가 필수 필드 누락 단독 보고 (이중 경고 회피)
+            cat = fm["category"]
             if cat is None:
-                continue  # REQUIRED 가 이미 필수 필드 누락 보고 (이중 경고 회피)
+                # present-null(`category:` bare 또는 `category: null`) — 키 존재·값 null (F-CR-2680-1).
+                # absent 아님(키 존재) → REQUIRED 미보고 → blank 와 동일 fail-closed 경로 (D4-esc-1).
+                warns.append(f"{md}: category (null) ∉ closed_enum — {_cat_guidance}")  # CAT-MEMBERSHIP-FAIL
+                continue
             if not isinstance(cat, str):
                 # non-str guard (D4-esc-2 / INV-9) — .casefold() AttributeError 로 gate 붕괴 방지
                 warns.append(f"{md}: category (non-str {type(cat).__name__}) ∉ closed_enum — {_cat_guidance}")  # CAT-MEMBERSHIP-FAIL
