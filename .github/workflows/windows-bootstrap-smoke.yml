@@ -58,3 +58,61 @@ jobs:
       # TC2 — .sh <-> .ps1 label parity (windows runner = Git Bash 동봉 → bash 경로 정상 resolve)
       - name: label parity .sh <-> .ps1 (TC2)
         run: pwsh -File scripts/test-bootstrap-labels-parity.ps1
+
+      # AC-4 (CFP-2702) — CRLF 배포본 run-hook.cmd 를 cmd.exe 로 실행 → @REM 배너 유래 스퓨리어스
+      #   stderr == 0 (도메인 불변식 I-HOOK-NOISE 회귀 봉인). ★cmd.exe 파싱 경로 검증 = windows-latest
+      #   전용 (Linux 러너엔 cmd.exe 부재). windows runner = Git Bash 동봉 → run-hook.cmd 배치 본문이
+      #   bash 를 정상 resolve. symbol: test_run_hook_cmd_crlf_banner_zero.
+      #   discriminating(anti-theater): 같은 파일 LF 변환본은 배너 stderr > 0 (cmd 바이트 드리프트로
+      #   @echo off/배너 줄이 명령 실행) — 테스트가 결함을 실검출함을 대조 증명(vacuity 차단).
+      - name: run-hook.cmd cmd.exe banner-zero (AC-4)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tmp = Join-Path $env:RUNNER_TEMP ("ac4_" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+          # 체크아웃본을 LF 로 정규화한 뒤 CRLF(배포본) + LF(결함 fixture) 두 변종 파생 (checkout eol 무관 robust).
+          $src  = [System.IO.File]::ReadAllText((Join-Path $env:GITHUB_WORKSPACE 'hooks/run-hook.cmd'))
+          $lf   = ($src -replace "`r`n","`n") -replace "`r","`n"
+          $crlf = $lf -replace "`n","`r`n"
+          [System.IO.File]::WriteAllText("$tmp\run-hook.cmd", $crlf)
+          [System.IO.File]::WriteAllText("$tmp\run-hook-lf.cmd", $lf)
+          # probe = run-hook.cmd 자기 디렉터리 기준 dispatch 대상 (extensionless, bash 페이로드).
+          $probe = "#!/usr/bin/env bash`necho AC4_PAYLOAD_SENTINEL`nprintf '[%s]' `"`$@`"`necho`n"
+          [System.IO.File]::WriteAllText("$tmp\probe", $probe)
+
+          $fail = 0
+          function Assert($cond, $msg) {
+            if ($cond) { Write-Host "OK PASS: $msg" }
+            else { Write-Host "X FAIL: $msg"; $script:fail = 1 }
+          }
+          function RunCmd($cmdfile, $tag, $cmdargs) {
+            $out = "$tmp\$tag.out"; $err = "$tmp\$tag.err"
+            cmd /c "`"$cmdfile`" $cmdargs 1>`"$out`" 2>`"$err`""
+            $ec = $LASTEXITCODE
+            $o = if (Test-Path $out) { [string](Get-Content -Raw $out) } else { "" }
+            $e = if (Test-Path $err) { [string](Get-Content -Raw $err) } else { "" }
+            if ($null -eq $o) { $o = "" }; if ($null -eq $e) { $e = "" }
+            return [pscustomobject]@{ ec = $ec; out = $o; err = $e;
+              banner = ([regex]::Matches($e, "is not recognized")).Count }
+          }
+
+          # 주 케이스: CRLF 배포본 → 배너 0 + 페이로드 방출 + 인자 정확 + exit 0.
+          $c = RunCmd "$tmp\run-hook.cmd" "crlf" "probe alpha beta"
+          Assert ($c.banner -eq 0) "AC-4 CRLF: @REM/배너 유래 스퓨리어스 stderr == 0 (I-HOOK-NOISE)"
+          Assert ($c.out -match 'AC4_PAYLOAD_SENTINEL') "AC-4 CRLF: 의도된 페이로드만 방출"
+          Assert ($c.out -match '\[alpha\]\[beta\]') "AC-4 CRLF: 인자 정확 전달 (CR 누출 0)"
+          Assert ($c.ec -eq 0) "AC-4 CRLF: exit 0"
+
+          # discriminating: 동일 파일 LF 변환본 → 배너 > 0 (결함 재현, 테스트 비-vacuity 증명).
+          $l = RunCmd "$tmp\run-hook-lf.cmd" "lf" "probe alpha beta"
+          Assert ($l.banner -gt 0) "AC-4 discriminating: LF 변환본 배너 stderr > 0 (결함 실검출 = anti-theater)"
+
+          # no-arg missing-name guard → exit 1 + 메시지.
+          $n = RunCmd "$tmp\run-hook.cmd" "noarg" ""
+          Assert ($n.ec -eq 1) "AC-4 no-arg: missing-name guard exit 1"
+          Assert ($n.err -match 'missing script name') "AC-4 no-arg: missing-name stderr 메시지"
+
+          if ($fail -ne 0) { Write-Host "AC-4 FAIL"; exit 1 }
+          Write-Host "AC-4 PASS (CRLF banner 0 / LF banner>0 대조 / no-arg guard)"
+          exit 0
