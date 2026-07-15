@@ -27,7 +27,7 @@ CONTRACT = REPO_ROOT / "docs" / "inter-plugin-contracts" / "dev-process-event-v1
 
 
 def _parse_contract_section2_fields(md_text: str):
-    """계약 §2 index-schema table 의 backtick 필드명을 순서대로 추출.
+    r"""계약 §2 index-schema table 의 backtick 필드명을 순서대로 추출.
 
     §2 시작(`## 2. Schema`) ~ §2.1(`### 2.1`) 사이에서, `| <num> | \`field\` |` 행의
     2번째 열 backtick 토큰을 순서대로 모은다."""
