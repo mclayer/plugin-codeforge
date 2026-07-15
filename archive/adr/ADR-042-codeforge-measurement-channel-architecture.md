@@ -36,6 +36,10 @@ amendment_log:
     date: 2026-06-24
     carrier_story: CFP-2393
     summary: "§결정 3 spawn-event-v1 보류 해제 (supersede) + §결정 1 4-channel boundary 표 8번째 channel (spawn-event-v1) 추가 + Out-of-scope token attribution deferral 해제 + §결정 13 amendment 의무 이행 (§14↔spawn-event dedup script Phase 2 commitment). Epic CFP-2391 S3 directive 가 §결정 3 보류근거 #3 (30+ run ROI gate) 를 supersede — OMC-adopt per-agent replay/cost observability. Phase 1 = doc-only (stop-event 선례 §결정 12). 신규 ADR 미신설 (§결정 1 self-amendment 의무 + §결정 13 'Amendment N 신설' 명시 정합)."
+  - amendment: 2
+    date: 2026-07-15
+    carrier_story: CFP-2687
+    summary: "dev-process-event-v1 = 9번째 Tier-3 persistent channel 확정 (Epic #2686 Story A, 신규 ADR-155 sibling). (A) §결정 1 8→9 channel boundary 표 dev-process-event-v1 row 추가 + playbook §15.1 8→9 row Phase 2 co-land(계약 파일과 동반, dangling 회피) + §15.2 5th boundary invariant(dev-process = semantic-evidence-aggregation, 상관ID JOIN 허용 / accounting payload re-record 금지 — SoT 이중화 차단). (B) warm-tier 추가 — §결정 4 hot+cold 2-tier 를 dev-process-channel-scoped 3-tier(hot→warm→cold strict)로 확장 (stop-event 자체 무변경, dev-process channel 한정). (C) §결정 11 ROI-gate supersede 명문화 — Epic #2686 directive 가 30+ run ROI evidence deferral 을 supersede. 30+ run ROI evidence 미확보(firsthand 미검증) 정직 명기, silent-skip 금지 (Amd1 CFP-2393 byte-동형 template [verified: ADR-042:455]). Phase 1 = doc-only (신규 ADR-155 설계 SSOT + 본 amendment). MINOR (additive channel row + tier 확장 + directive supersede 명문화, ADR-008 SemVer)."
 ---
 
 # ADR-042: Codeforge measurement channel architecture
@@ -458,3 +462,45 @@ playbook §15.1 8-channel boundary table SSOT 동반 갱신 (§결정 1 land 위
 - §결정 5/6/7/8/9/10/11 (Allow-list / opt-in / 2-layer flag / 0-API·50ms / isolation / measurement-vs-fix / ROI) = spawn-event-v1 inherit (변경 없음, 적용 확장만).
 - 6 lane plugin / inter-plugin contract 6 변경 0건 (§결정 12 비-Phase 1 scope 정합).
 - stop-event-v1 contract 무변경 (spawn-event 가 sibling 로 추가될 뿐).
+
+## Amendment 2 (CFP-2687, 2026-07-15) — dev-process-event-v1 9th Tier-3 channel + warm-tier + ROI-gate supersede 명문화
+
+### 배경
+
+Epic #2686 Story A (CFP-2687, 선행) 가 codeforge 자기-개선 관측의 **기반 증거층 + 계약(observability substrate + evidence contract)** 을 신설한다. 신규 통합 계약 `dev-process-event-v1`(lane 전이·프롬프트·tool-call·diff·verdict·findings·FIX 전이·최종산출물 8종을 하나의 typed append-only stream 으로 통합) = codeforge observability stack 의 **9번째 Tier-3 persistent channel**. 설계 SSOT = 신규 [ADR-155](ADR-155-dev-process-observability-substrate.md). 본 Amendment 는 §결정 1 channel boundary 표 갱신(§결정 13 amendment 의무 정합) + §결정 4 warm-tier 확장 + §결정 11 ROI-gate supersede 명문화 3건을 codify. Phase 1 = doc-only(§결정 12 stop-event 선례 — 실 계약 파일·capture 배선 = Phase 2).
+
+### Amendment 내용
+
+**(A) §결정 1 8→9 channel boundary 표 dev-process-event-v1 row 추가** — 8-channel boundary 표(playbook §15.1 SSOT)에 9번째 row:
+
+| Channel | Tier | Granularity | Storage | Owner | Lifecycle |
+|---|---|---|---|---|---|
+| **dev-process-event-v1 ledger** (본 Amendment 2 / ADR-155) | 3 persistent | typed dev-process event (8 type: lane전이/prompt/tool-call/diff/verdict/findings/FIX전이/최종산출물) | 2계층 — hot JSONL index (`.claude/ledger/dev-process-event.jsonl`) + evidence-blob-store (content-addressed redacted blob) | Orchestrator-owned delegate (Port B agent-emit) + hook-adapter (Port A) | 3-tier hot/warm/cold / wrapper always-on · consumer opt-in default false |
+
+- **playbook §15.1 8→9 row + §15.2 5th invariant = Phase 2 co-land**(신규 `dev-process-event-v1.md` 계약 파일과 동반 — Phase 1 에 playbook row 추가 시 Phase 2 계약 파일 참조 = dangling link, mechanical self-check 2d 회피). 본 Amendment 는 결정(9th channel 편입)을 codify, 물리 row 는 계약 파일 co-land.
+- **§15.2 5th boundary invariant (신규)**: **dev-process-event = semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) **허용** / accounting payload re-record **금지**. stop/spawn/fix/output 계약의 accounting 을 dev-process 가 복제하면 SoT 이중화(ADR-155 §5.4). dev-process 는 "무엇이 있었나(어떤 stop/spawn/verdict 가 났나)"를 상관 ID 로 참조(JOIN)하되 그 payload 를 재기록하지 않는다.
+- **관측 사실(정직)**: §결정 1 body 표 제목은 현재 "4-channel"(원 land 시점 명칭) + 7 row 이고, 8번째(spawn-event Amd1)·9번째(본 Amd2)는 amendment 절에 각각 1-row 로 추가돼 있다 — body 표 제목/row 통합 정합은 playbook §15.1(channel count SSOT)이 권위이며, 본 Amendment 가 body 표 제목 drift 를 자동 정정한다고 주장하지 않는다(별 정합 작업 영역).
+
+**(B) warm-tier 추가 — dev-process-channel-scoped 3-tier** — §결정 4 는 stop-event hot(sqlite/JSONL)+cold(§10 FIX Ledger proxy) 2-tier. 본 Amendment 는 **dev-process-event-v1 channel 에 한해** hot→warm→cold 3-tier 로 확장(ADR-155 §결정 6):
+- hot = 구조화 JSONL index + loose blob (ms, 7-30d proposal)
+- warm = 압축 pack + gz, index 무압축 유지 (10s–100s ms, ~90d proposal)
+- cold = 아카이브 (s, policy-bound → evict + tombstone)
+- 방향 strict hot→warm→cold(역방향/skip 금지). **stop-event/spawn-event 자체 tier 무변경** — warm 확장은 dev-process channel 한정(다른 channel 로 전파 안 함). 수치(7-30d/90d/cap)는 **proposal**(empirical Phase 2 defer, lock-in 금지 — ADR-119).
+
+**(C) §결정 11 ROI-gate supersede 명문화** — §결정 11(post-merge-counters.jsonl 30+ run ROI gate prerequisite)를 Epic #2686 directive 가 supersede(Amd1 CFP-2393 §근거 byte-동형 template [verified: ADR-042:455] — "Epic directive 가 ROI deferral 을 supersede 한 선례"):
+- **정직 명기(silent-skip 금지)**: 본 Story 시점에 post-merge-counters.jsonl 30+ run 누적 ROI evidence 는 **본 lane 에서 firsthand 미확보**(미검증). 그러나 Epic #2686 directive("자기측정이 Story 목적" + dormant substrate 활성화)가 ROI gate 의 subjective threshold(ADR-022 §결정 11 패턴)를 override 하는 상위 결정. ROI gate 는 "ROI 미확정 시 보류"의 *default* 였고 Epic directive 가 그 default 를 명시 override.
+- Story A 동기(self-referential dogfood 결점 7연속 + content-blind ledger 7,122 rows firsthand)가 곧 ROI 정당화. ROI gate 미평가 사실을 숨기지 않고 directive supersede 로 명문화(ArchitectAnalyst FLAG 정합).
+
+### 근거
+
+- **§결정 13 자체가 amendment 경로 지정** — "spawn-event-v1 신설 시 §결정 1 boundary 표 갱신" 의 dev-process-event(9th channel) 확장 동형. 신규 개념(dev-process substrate)의 architectural 근거 = 신규 ADR-155(§결정 1 self-amendment vs 신규 ADR — 신규 substrate 는 신규 ADR 이 타당, boundary 표 갱신만 본 Amendment).
+- **MINOR 영역 정합**(ADR-008 SemVer): additive channel row + tier 확장(channel-scoped) + directive supersede 명문화 = backward-compat. 기존 8 channel / stop·spawn tier 무변경.
+- **ROI supersede = Amd1 선례 답습** — 정직 명기(미확보 firsthand) + directive override 명문화. silent-skip 금지.
+
+### 비-영향
+
+- §결정 2~10 (stop-event schema / hot tier sqlite / Allow-list / opt-in / 2-layer flag / 0-API·50ms / isolation / measurement-vs-fix) 무변경 — dev-process-event 는 별 channel(ADR-155 SSOT).
+- stop-event-v1 / spawn-event-v1 contract 무변경 (dev-process 가 new-sibling 로 추가, ADR-155 §결정 2 관계 매트릭스).
+- 8 channel 기존 row 무변경 (9번째 additive).
+- 6 lane plugin / inter-plugin contract 변경 0건 (Phase 1 doc-only).
+- warm-tier = dev-process channel 한정 — 다른 Tier-3 channel(stop/spawn/post-merge) tier 정책 무전파.
