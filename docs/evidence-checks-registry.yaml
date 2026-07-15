@@ -1972,10 +1972,15 @@ entries:
       ≥ threshold default 1) 감지 시 warning notify + 권장 fresh worktree
       (EnterWorktree) 재진입 guidance.
 
-      Wave 1 declaration anchor only (ADR-064 §결정 1 CFP scope unitary 정합 —
+      Wave 1 declaration anchor 로 도입 (ADR-064 §결정 1 CFP scope unitary 정합 —
       본 entry status: Active Wave 2 mechanical wire 자체이므로 deferred-followup
-      단계 도입 0) — actual SessionStart hook + script chain + PR-time workflow
-      + bats fixture pair + label = Phase 2 별 sub-CFP carrier 후 정식 enforce.
+      단계 도입 0). 현 실상태 (CFP-2692 reconcile 시점): SessionStart hook
+      (hooks/stale-local-main-checkout, hooks.json 등록) + script chain
+      (scripts/check-stale-local-main-checkout.sh +
+      scripts/lib/check_stale_local_main_checkout.py) 은 LIVE landed (mechanical
+      wire 착륙 완료). PR-time CI workflow 는 미복원 (workflow:null — EC-5 가
+      PR-time CI 검출대상 구조적 부재로 판정). 정식 CI enforce 는 미실현 —
+      hook-delivered warning-tier 가 실 enforcement 표면.
 
       sentinel pattern_count 8+ reach Mandatory (ADR-045 §D-9 정합):
       - CFP-1146 W5-S14 init
@@ -1999,8 +2004,8 @@ entries:
       worktree-self-ownership-verify + subagent-sibling-story-polling-evidence
       + mcp-token-freshness-precheck L3823 6-instance established pattern)
       답습 — 신규 unique drift value 회피.
-    detect_command: bash scripts/check-stale-local-main-checkout.sh  # Phase 2 별 sub-CFP carrier — scripts/check-stale-local-main-checkout.sh (bash thin wrapper, ADR-061) + scripts/lib/check_stale_local_main_checkout.py (Python SSOT — git fetch origin + rev-parse divergence detect + threshold compare) 실 file 신설
-    workflow: templates/github-workflows/stale-local-main-checkout-divergence-check.yml  # Phase 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/stale-local-main-checkout-divergence-check.yml (ADR-005 parity)
+    detect_command: bash scripts/check-stale-local-main-checkout.sh  # scripts/check-stale-local-main-checkout.sh (bash thin wrapper, ADR-061) + scripts/lib/check_stale_local_main_checkout.py (Python SSOT — git fetch origin + rev-parse divergence detect + threshold compare) 실재 (landed). detect_command 축 carrier EXISTS.
+    workflow: null  # CFP-2692 reconcile: dangling→null (hook-delivered/EC-5 로 PR-time CI 검출대상 구조적 부재). ADR-073 Amd20 정정 — Amd9 workflow-축 주장 SUPERSEDED. resolve_workflow_field(None)={"kind":"skip"} → carrier_absent workflow 축 입력 아님.
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode default 새 entry pattern
     bypass_label: hotfix-bypass:stale-local-main-checkout-divergence-check  # hotfix-bypass:* family member (CFP-1384 Phase 1 — label-registry-v2 v2.53 → v2.54 MINOR bump). 절대값 count 명시 제거 (drift 재발 차단 invariant, CFP-1434 doc-only fast-path cleanup) — actual count = label-registry-v2 frozen-baseline parity lint 영역.
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2021,10 +2026,11 @@ entries:
     carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (4-tier framework, default 새 entry pattern)
     recurrence:
       count: 8                      # CFP-1146 W5-S14/S16 (2) + CFP-1318 (1) + CFP-1333 (3) + CFP-1384 iter 1 (1) + ArchitectPL iter 2 본 spawn (1) = 8 sentinel reach
-      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 8 >> 3 reach 충족, auto_blocking firing 정합
+      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 8 >> 3 reach 충족 (CFP-2692 reconcile: promotion_trigger:advisory 정정 — auto-firing 아닌 advisory 신호, ADR-119 정직)
       last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1384 iter 1 RequirementsPL spawn baseline 6eb8112 stale → ArchitectPL iter 2 in-flight 본 spawn KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
-      promotion_trigger: auto_blocking  # recurrence.count = 8 >> threshold = 3 → auto-firing 영역 (Mandatory escalation 완료, Phase 2 mechanical wire 후 정식 enforce)
-    status: Active  # Wave 2 mechanical wire activation 자체이므로 deferred-followup 단계 도입 0 (ADR-064 §결정 1 CFP scope unitary 정합, Phase 2 별 sub-CFP carrier 후 정식 enforce 까지 declarative anchor)
+      promotion_trigger: advisory  # CFP-2692 reconcile: auto_blocking→advisory. auto_blocking 은 미실현 aspirational 라벨(PR-time CI workflow 미복원=null, hook-delivered warning-tier 가 실 enforcement 표면). INV-REG-1 overclaim 제거 (workflow:null 단독은 게이트만 재우고 registry auto_blocking overclaim 잔존).
+    status: Active  # Wave 2 mechanical wire activation (hook + script chain LIVE landed) 자체이므로 deferred-followup 단계 도입 0 (ADR-064 §결정 1 CFP scope unitary 정합). CFP-2692 reconcile: PR-time CI workflow:null + promotion_trigger:advisory 정산 — hook-delivered warning-tier 가 실 enforcement, 정식 CI enforce 미실현/미계획
+    tier-downgrade-justification: "CFP-2692 reconcile — promotion_trigger auto_blocking→advisory truth-correction (ADR-119 정직). workflow:null 로 PR-time CI 표면 미claim; hook-delivered warning-tier 가 실 enforcement. current_tier warning 불변 (guard 미발동). ADR-073 Amd20 carrier. 하류 removal pre-arm."
 
   - name: confluence-drift-detection
     description: |

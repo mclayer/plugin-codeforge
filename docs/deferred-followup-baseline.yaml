@@ -3,30 +3,25 @@
 # content_digest = sha256 over canonical {gate_flags, declaration_surfaces} (provenance/generated_at 제외).
 schema_version: '1.0'
 generated_by: CFP-2591
-generated_at: '2026-07-12T02:42:15+09:00'
-generated_from_commit: e589318204e1ba91f01a709c47c0760fe7d94001
+generated_at: '2026-07-15T19:07:29+09:00'
+generated_from_commit: f5cd56a6ddd1c0127c80a5253fcb7b24a84b15e6
 basis: ADR-060 §결정6 승격 시점 registry+declaration FLAG 집합 동결 (Clean-as-You-Code new-only, CFP-2591)
-content_digest: 42abe157d2b007bc743fc13e47a81344f73e1e53c5b9d8a4496b193e7dc4a490
-gate_flags:
-- name: stale-local-main-checkout-divergence-check
-  frozen_count: 8
-  frozen_threshold: 3
-  absent_axes:
-  - workflow:templates/github-workflows/stale-local-main-checkout-divergence-check.yml,.github/workflows/stale-local-main-checkout-divergence-check.yml
+content_digest: 5513e4343cb79dbdb76d4e55ddeb51722fe3cc9fd42e65277cc268796d9439a0
+gate_flags: []
 declaration_surfaces:
-- locator: docs/doc-location-registry.md:163
+- locator: docs/doc-location-registry.md:164
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/doc-locations.yaml:187
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:226
+- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:228
   token: FU-1523-2
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:232
+- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:234
   token: FU-1523-2
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:235
+- locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:237
   token: FU-1523-2
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:40
@@ -35,7 +30,7 @@ declaration_surfaces:
 - locator: docs/domain-knowledge/domain/governance-principle/rebase-staleness-sentinel.md:27
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/evidence-checks-registry.yaml:2233
+- locator: docs/evidence-checks-registry.yaml:2239
   token: CFP-TBD
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: templates/github-workflows/post-merge-followup.yml:262
