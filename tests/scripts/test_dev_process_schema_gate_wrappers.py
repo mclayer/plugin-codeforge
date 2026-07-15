@@ -34,32 +34,33 @@ def _contract_body() -> str:
     return ces._split_frontmatter(CONTRACT.read_text(encoding="utf-8"))
 
 
-# ─── AC-11 관계 매트릭스(§10) 검증 함수 — doc-lint self-test 미보유 seam(로컬 검증) ───
-# check_dev_process_event_schema.py 는 §3.2/§4.1/§11 만 검증(관계 매트릭스 §10 파서 부재).
-# 따라서 AC-11 은 §10 을 로컬 parser 로 검증 — 단일 함수를 positive/negative 양쪽에서 재사용해
+# ─── AC-11 관계 매트릭스(§11) 검증 함수 — doc-lint self-test 미보유 seam(로컬 검증) ───
+# check_dev_process_event_schema.py 는 §3.2/§5.1/§12 만 검증(관계 매트릭스 §11 파서 부재).
+# 따라서 AC-11 은 §11 을 로컬 parser 로 검증 — 단일 함수를 positive/negative 양쪽에서 재사용해
 # discriminating 판별성을 확보(hollow 금지).
+# (renumber: 구 §10 관계매트릭스→§11 / §4.1→§5.1 / §11 정직성→§12, CFP-2687 §4=변경규칙 FIX)
 _EXISTING_SIBLINGS = ("stop-event-v1", "spawn-event-v1", "fix-event-v1", "review-verdict-v4")
 
 
 def _check_relationship_matrix(section10: str, violations: list) -> None:
-    """§10 관계 매트릭스 = new-sibling ∧ normative non-overlap ∧ 4 기존 계약 행 존재 검증.
+    """§11 관계 매트릭스 = new-sibling ∧ normative non-overlap ∧ 4 기존 계약 행 존재 검증.
 
     AC-11 invariant: 기존 stop/spawn/fix/lane-output 계약과의 관계를 계약별 명시(default=new-sibling).
     """
     if not section10:
-        violations.append("(AC-11) §10 관계 매트릭스 섹션 부재")
+        violations.append("(AC-11) §11 관계 매트릭스 섹션 부재")
         return
     if "new-sibling" not in section10:
-        violations.append("(AC-11) §10 new-sibling 관계 표기 부재 (supersede-drift 의심)")
+        violations.append("(AC-11) §11 new-sibling 관계 표기 부재 (supersede-drift 의심)")
     if "normative" not in section10:
-        violations.append("(AC-11) §10 normative non-overlap 표기 부재")
+        violations.append("(AC-11) §11 normative non-overlap 표기 부재")
     for existing in _EXISTING_SIBLINGS:
         if existing not in section10:
-            violations.append(f"(AC-11) §10 관계 매트릭스에 {existing} 행 부재")
+            violations.append(f"(AC-11) §11 관계 매트릭스에 {existing} 행 부재")
 
 
-def _extract_section10(body: str) -> str:
-    return ces._extract_section(body, r"(?m)^##\s*10\.\s", r"(?m)^##\s*11\.\s") or ""
+def _extract_relationship_matrix_section(body: str) -> str:
+    return ces._extract_section(body, r"(?m)^##\s*11\.\s", r"(?m)^##\s*12\.\s") or ""
 
 
 # ══════════════════════════════ AC-3 — noise-discard closed-list = 5 (§3.2) ════════════════════════
@@ -90,16 +91,16 @@ def test_noise_sixth_item_triggers_closed_red():
     assert violations, "noise 6번째 추가에도 RED 미발화 — vacuous/hollow test"
 
 
-# ══════════════════════════════ AC-5 — 4 상관 ID freeze 표기 (§4.1) ══════════════════════════════
+# ══════════════════════════════ AC-5 — 4 상관 ID freeze 표기 (§5.1) ══════════════════════════════
 
 def test_four_correlation_ids_frozen_and_marked():
-    """[AC-5 GREEN] 실 계약 §4.1 4 상관 ID(story/lane/defect/fix) present ∧ FREEZE 표기.
+    """[AC-5 GREEN] 실 계약 §5.1 4 상관 ID(story/lane/defect/fix) present ∧ FREEZE 표기.
 
-    RTM proxy-anchor 해소: doc-lint self-test §4.1 (d) 의 check_freeze 를 실 계약에 대해 호출.
+    RTM proxy-anchor 해소: doc-lint self-test §5.1 (d) 의 check_freeze 를 실 계약에 대해 호출.
     """
     body = _contract_body()
     ids, freeze_marked = ces.parse_correlation_ids(body)
-    assert freeze_marked, "§4.1 FREEZE 표기 부재 — freeze 계약 미선언"
+    assert freeze_marked, "§5.1 FREEZE 표기 부재 — freeze 계약 미선언"
     violations: list = []
     ces.check_freeze(ids, freeze_marked, violations)
     assert violations == [], f"실 계약 4-ID freeze 위반: {violations}"
@@ -121,16 +122,16 @@ def test_removing_correlation_id_triggers_freeze_red():
 # ══════════════════════════════ AC-11 — 관계 매트릭스 new-sibling (§10) ════════════════════════════
 
 def test_relationship_matrix_is_new_sibling_normative():
-    """[AC-11 GREEN] 실 계약 §10 관계 매트릭스 = new-sibling ∧ normative ∧ 4 기존 계약 행.
+    """[AC-11 GREEN] 실 계약 §11 관계 매트릭스 = new-sibling ∧ normative ∧ 4 기존 계약 행.
 
-    RTM proxy-anchor 해소: §10 관계 매트릭스(new-sibling normative non-overlap)를 tests-root
+    RTM proxy-anchor 해소: §11 관계 매트릭스(new-sibling normative non-overlap)를 tests-root
     행위 test 로 직접 assert(doc-lint self-test 미보유 seam → 로컬 parser).
     """
     body = _contract_body()
-    section10 = _extract_section10(body)
+    section10 = _extract_relationship_matrix_section(body)
     violations: list = []
     _check_relationship_matrix(section10, violations)
-    assert violations == [], f"실 계약 §10 관계 매트릭스 위반: {violations}"
+    assert violations == [], f"실 계약 §11 관계 매트릭스 위반: {violations}"
     # new-sibling 관계 행이 4 기존 계약 각각에 대해 최소 1회 이상 명시
     assert len(re.findall(r"new-sibling", section10)) >= 4, (
         f"new-sibling 관계 행 {len(re.findall(r'new-sibling', section10))} < 4"
@@ -140,7 +141,7 @@ def test_relationship_matrix_is_new_sibling_normative():
 def test_relationship_matrix_supersede_downgrade_triggers_red():
     """[AC-11 discriminating] new-sibling → supersede drift 시뮬 → RED (hollow 아님 증명)."""
     body = _contract_body()
-    section10 = _extract_section10(body)
+    section10 = _extract_relationship_matrix_section(body)
     mutated = section10.replace("new-sibling", "supersede")
     violations: list = []
     _check_relationship_matrix(mutated, violations)
@@ -150,31 +151,32 @@ def test_relationship_matrix_supersede_downgrade_triggers_red():
 def test_relationship_matrix_missing_sibling_triggers_red():
     """[AC-11 discriminating] 기존 계약 행 제거(stop-event-v1) → RED (판별성 실증)."""
     body = _contract_body()
-    section10 = _extract_section10(body)
+    section10 = _extract_relationship_matrix_section(body)
     mutated = section10.replace("stop-event-v1", "XXX")
     violations: list = []
     _check_relationship_matrix(mutated, violations)
     assert violations, "stop-event-v1 행 제거에도 RED 미발화 — vacuous/hollow test"
 
 
-# ══════════════════════════════ AC-24 — gap motivation-only / honesty (§11) ══════════════════════
+# ══════════════════════════════ AC-24 — gap motivation-only / honesty (§12) ══════════════════════
 
 def test_section11_gap_honesty_and_no_auto_resolve():
-    """[AC-24 GREEN] 실 계약 §11 정직성 — AC-23/24 anchor + drift FACT + '자동 해소 주장 안 함'
+    """[AC-24 GREEN] 실 계약 §12 정직성 — AC-23/24 anchor + drift FACT + '자동 해소 주장 안 함'
     + landing≠activation(gap motivation-only).
 
-    RTM proxy-anchor 해소: doc-lint self-test §11 (d) 의 check_honesty 를 실 계약에 대해 호출.
+    RTM proxy-anchor 해소: doc-lint self-test §12 (d) 의 check_honesty 를 실 계약에 대해 호출.
+    (test 함수명은 RTM/게이트 anchor 안정성 위해 유지 — renumber 구 §11 정직성→§12.)
     """
     body = _contract_body()
     section11 = ces.extract_ac23_narrative(body)
-    assert section11, "§11 정직성 섹션 파싱 실패"
+    assert section11, "§12 정직성 섹션 파싱 실패"
     violations: list = []
     ces.check_honesty(section11, violations)
-    assert violations == [], f"실 계약 §11 honesty 위반: {violations}"
+    assert violations == [], f"실 계약 §12 honesty 위반: {violations}"
     # AC-24 전용 anchor: gap motivation-only + landing≠activation 정직 서술 present
-    assert "AC-24" in section11, "§11 AC-24 gap-honesty anchor 부재"
+    assert "AC-24" in section11, "§12 AC-24 gap-honesty anchor 부재"
     assert "landing" in section11 and "activation" in section11, (
-        "§11 landing≠activation 정직 서술 부재 (gap motivation-only over-claim 방지)"
+        "§12 landing≠activation 정직 서술 부재 (gap motivation-only over-claim 방지)"
     )
 
 

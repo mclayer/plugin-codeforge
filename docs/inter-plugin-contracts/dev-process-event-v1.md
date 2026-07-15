@@ -43,7 +43,7 @@ attribution:
 >
 > **설계 SSOT = [ADR-155](../../archive/adr/ADR-155-dev-process-observability-substrate.md)** (9 결정) + change-plan `2026-07-15-cfp-2687-dev-process-observability-substrate.md`. 본 파일 = 그 설계의 Phase 2 실 계약 파일.
 >
-> **structural model**: kind:registry (`## 1. 목적` / `## 2. Schema` / `## 3. 항목` / `## 4. 변경 규칙`). stop/spawn-event 선례. **stop-event runtime 은 모델로 삼지 않는다** — stop-event 의 contract↔runtime 3-way drift(18↔5 field / sqlite↔jsonl / UTC↔KST)를 복사하지 않기 위함(§11 AC-23 honesty).
+> **structural model**: kind:registry (`## 1. 목적` / `## 2. Schema` / `## 3. 항목` / `## 4. 변경 규칙`). stop/spawn-event 선례. **stop-event runtime 은 모델로 삼지 않는다** — stop-event 의 contract↔runtime 3-way drift(18↔5 field / sqlite↔jsonl / UTC↔KST)를 복사하지 않기 위함(§12 AC-23 honesty).
 
 ## 1. 목적
 
@@ -58,13 +58,13 @@ attribution:
 | tier | 표면 | 저장 원칙 |
 |---|---|---|
 | **index tier**(본 §2 이벤트 행) | allow-list-clean | enum / numeric / hash / 상관 ID / blob-ref / emit_source **only**. free-form content 본문 직접 저장 **0**. 기존 anti-content invariant(T-INFO-5/8) **무손상**. |
-| **evidence-blob-store**(§7) | redacted content-addressed blob | capture-time redaction **후** content-addressed blob 저장. index 는 blob 의 hash(`blob_ref`) **참조만** 보유. free-form content 저장은 이 redacted-blob 표면으로만 허용(AC-15). |
+| **evidence-blob-store**(§6) | redacted content-addressed blob | capture-time redaction **후** content-addressed blob 저장. index 는 blob 의 hash(`blob_ref`) **참조만** 보유. free-form content 저장은 이 redacted-blob 표면으로만 허용(AC-15). |
 
 **상충 지점 명시(AC-18)**: index=content-free ↔ Story 가 요구하는 rich content(프롬프트·diff·findings·산출물)는 index row 스키마로는 수용 불가 — 이 긴장을 2계층으로 화해한다(index 는 여전히 content-free, blob 은 redaction-후 산물 → no-conflict).
 
 ## 2. Schema (index tier — 18 필드 Allow-list ONLY)
 
-각 index-tier row = **18 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §7 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
+각 index-tier row = **18 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §6 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
 
 | # | 필드 | 타입 | nullable | 적용 event_type | 설명 |
 |---|---|---|---|---|---|
@@ -81,7 +81,7 @@ attribution:
 | 11 | `blob_ref` | sha256 string \| null | nullable | rich payload 보유 event | evidence-blob-store 참조 = `sha256(REDACTED bytes)` **NEVER raw**(INV-8a). bare 64-hex. blob 부재 = null |
 | 12 | `redaction_applied` | bool | required | 전체 | audit — capture-time redaction 발동 여부. default false |
 | 13 | `redaction_count` | int | required | 전체 | audit — 마스킹 발동 횟수. default 0 |
-| 14 | `redaction_rules_fired` | enum array (CLOSED — §7.2) | required | 전체 | audit — 발동 규칙명 array. 값 어휘 SSOT = `redact_dev_process_content.RULE_NAMES`(§7.2). **매칭 secret 원문/hash 절대 미기록**(T-DPE-8). default `[]` |
+| 14 | `redaction_rules_fired` | enum array (CLOSED — §8.2) | required | 전체 | audit — 발동 규칙명 array. 값 어휘 SSOT = `redact_dev_process_content.RULE_NAMES`(§8.2). **매칭 secret 원문/hash 절대 미기록**(T-DPE-8). default `[]` |
 | 15 | `defect_family` | enum (CLOSED 7) \| null | nullable | defect_finding / fix_transition | taxonomy — §5 CLOSED-7. 그 외 = null |
 | 16 | `defect_type` | string (SEMI-OPEN) \| null | nullable | defect_finding / fix_transition | taxonomy — review-verdict-v4 type-derived ∪ `unknown-type`(fallback). 그 외 = null |
 | 17 | `time_to_detection` | number \| `"unattributed"` \| null | nullable | defect_finding | taxonomy — **DERIVED measure**(ordinal lane-distance ∨ ts-delta). 도입점 불명 = `unattributed`. 그 외 = null |
@@ -157,9 +157,20 @@ noise_discard:
 - **single-stream JOIN 보존**: `emit_source` enum discriminator 로 capture path 를 정직 구분하되 stream 은 하나(2-channel 물리 분리 기각 — INV-3 JOIN 파괴 회피).
 - **hook NON-ambient**: hook 은 lane ambient 를 알 수 없다 — `agent_type→lane` map(semi-open, 미등재 → `없음` fallback) 또는 agent-emit 직접 주입. Stop hook 에 lane ambient 기대 금지(dependency direction: hook→env only). 둘 다 부재 → lane=`없음` + vacuous status(consistent 위장 금지).
 
-## 4. 상관 ID freeze + 결점 taxonomy (B·C 공유 — AC-4/5)
+## 4. 변경 규칙
 
-### 4.1 4 상관 ID freeze 표 (FREEZE — 변경 = 계약 amendment 의무)
+- **Allow-list ONLY (v1.x)**: §2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING).
+- **free-form string content field 도입 금지 (v1.x invariant)**: T-DPE-3/T-INFO-8 구조적 mitigation 보존. rich content 는 §6 redacted-blob 표면으로만.
+- **event_type enum(8) / noise-discard(5) 변경**: additive = MINOR(Amendment 동반) / 값 제거 = MAJOR.
+- **4 상관 ID freeze 변경**: 이름·scope·생성시점·안정성 규칙 변경 = **계약 amendment 의무**(B·C 병렬 전제 — freeze).
+- **defect taxonomy 축 종류(closed/semi-open/derived) 변경**: family/lane closed-set 확장 = MINOR / type semi-open→closed 승격 = MAJOR / ttd derived→enum 승격 = MAJOR.
+- **`_ROW_KEYS` parity**: §2 필드 순서·멤버는 `append_dev_process_event._ROW_KEYS` 와 항상 일치(born-drift = FAIL). 한쪽 변경 = 양쪽 동반 + amendment.
+- **opt-in / always-on 정책 변경**: α 비대칭(wrapper always-on / consumer opt-in-false) 약화 = ADR-043/ADR-064 amendment 의무(BREAKING — privacy invariant 위반).
+- **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-042 §결정 4 amendment.
+
+## 5. 상관 ID freeze + 결점 taxonomy (B·C 공유 — AC-4/5)
+
+### 5.1 4 상관 ID freeze 표 (FREEZE — 변경 = 계약 amendment 의무)
 
 **B(집계 #2688)·C(판정 #2689) 병렬 전제** — 4종 ID 의 이름·scope·생성시점·안정성을 Phase 1 에서 freeze. **변경 시 본 계약 amendment 의무**(미확정 병렬 = 백필 부채):
 
@@ -172,7 +183,7 @@ noise_discard:
 
 `finding_id` = subordinate(anchor_id = verdict-scope 재사용). `defect_id ← finding_id` = N:1. D4 재발 = 동일 `defect_id` 에 distinct 검출.
 
-### 4.2 결점 taxonomy 4-tuple (★정직 — 전부 closed enum 아님, over-claim 금지)
+### 5.2 결점 taxonomy 4-tuple (★정직 — 전부 closed enum 아님, over-claim 금지)
 
 | 축 | 종류 | 값 |
 |---|---|---|
@@ -183,11 +194,11 @@ noise_discard:
 
 > **정직 천장(AC-4/5)**: "4-tuple 전부 closed enum" 은 **over-claim** — freeze 표기는 **family/lane = closed, type = semi-open, ttd = derived measure** 로 정확히 구분한다. `defect_type` 는 semi-open(미등재 값을 reject 하지 않고 `unknown-type` 로 흡수), `time_to_detection` 은 enum 이 아닌 파생 측정치. `defect_id` 가 summary 를 제외하는 이유 = 동일 결점의 wording drift 가 identity 를 흔들지 않게 하기 위함(결정론 over-claim 방지).
 
-## 5. evidence-blob-store — content-addressed + redaction-선행 (AC-8/9)
+## 6. evidence-blob-store — content-addressed + redaction-선행 (AC-8/9)
 
-큰 payload = content-addressed blob 참조. index 는 blob 의 hash(`blob_ref`)만 보유. blob store = 기존 계약에 없던 **신규 비밀 표면** → 자체 redaction·보존·참조 규약(§6/§7).
+큰 payload = content-addressed blob 참조. index 는 blob 의 hash(`blob_ref`)만 보유. blob store = 기존 계약에 없던 **신규 비밀 표면** → 자체 redaction·보존·참조 규약(§7/§8).
 
-### 5.1 blob 규칙 (정량 — 수치 PROPOSAL, empirical Phase 2 defer)
+### 6.1 blob 규칙 (정량 — 수치 PROPOSAL, empirical Phase 2 defer)
 
 | 항목 | 값 | 확정도 |
 |---|---|---|
@@ -195,16 +206,16 @@ noise_discard:
 | `blob_ref` 형식 | bare 64-hex lowercase sha256(REDACTED bytes) | 확정 |
 | 크기 캡 임계 | index row inline 금지 임계 = **4 KB (proposal)** — 초과 payload 는 blob 로 spill | **PROPOSAL** |
 | blob byte-cap | 단일 blob 상한 = **1 MB (proposal)**, 초과 = truncate + audit marker | **PROPOSAL** |
-| spill 목적지 | index inline → evidence-blob-store loose blob(hot) → warm pack → cold(§6 tier→tier) | 방향 확정 / 수치 PROPOSAL |
+| spill 목적지 | index inline → evidence-blob-store loose blob(hot) → warm pack → cold(§7 tier→tier) | 방향 확정 / 수치 PROPOSAL |
 
 > **수치 정직(ADR-119)**: 4 KB / 1 MB 등은 **proposal** — lock-in 금지, empirical 조정 = Phase 2 defer. "이 임계가 최적" 주장 안 함.
 
-### 5.2 INV-8a / INV-8b (P0, 비협상 — AC-12 normative)
+### 6.2 INV-8a / INV-8b (P0, 비협상 — AC-12 normative)
 
 - **INV-8a (hash-over-redacted)**: `redact(in-memory, 원본 disk 미접촉)` → `blob_ref = sha256(REDACTED bytes)` **NEVER raw** → blob write(redacted, single). hash-over-unredacted 는 index 가 content-free 여도 `blob_ref` 가 **secret confirmation oracle**(후보 secret 를 sha256 해 blob_ref 대조 — T-DPE-2 P0) → hash-over-redacted 가 봉인.
 - **INV-8b (blob-before-index)**: blob write → **THEN** index row(blob_ref 참조). 역순 = dangling evidence chain(T-DPE-5 P0 / AC-22).
 
-## 6. retention 3-tier + AC-10∧AC-25 화해 (AC-25)
+## 7. retention 3-tier + AC-10∧AC-25 화해 (AC-25)
 
 dev-process-channel-scoped 3-tier(ADR-042 §결정 4 hot+cold 2-tier 를 본 channel 에 한해 3-tier 확장 — Amendment 2):
 
@@ -216,7 +227,7 @@ dev-process-channel-scoped 3-tier(ADR-042 §결정 4 hot+cold 2-tier 를 본 cha
 
 **spill 방향 = strict `hot → warm → cold`** (역방향/skip 금지). 수치(7–30d/90d/latency) = **PROPOSAL**(empirical Phase 2 defer, lock-in 금지 — ADR-119).
 
-### 6.1 AC-10(append-only) ∧ AC-25(cold GC/압축) 화해 (latent contradiction 해소)
+### 7.1 AC-10(append-only) ∧ AC-25(cold GC/압축) 화해 (latent contradiction 해소)
 
 naive 구현 시 cold blob 삭제 → index `blob_ref` dangling. 화해 2축:
 
@@ -225,16 +236,16 @@ naive 구현 시 cold blob 삭제 → index `blob_ref` dangling. 화해 2축:
 
 > "in-place edit 금지"(AC-10) 는 **논리 스트림**(index row + blob_ref 불변)에 적용 — 물리 압축/eviction 은 hash-verified transform + tombstone 으로 append-only invariant 를 보존한다. 정정 방식 = 새 이벤트/sidecar 추가(overwrite 아님).
 
-## 7. redaction + audit (write-time ONLY — AC-12/13/14)
+## 8. redaction + audit (write-time ONLY — AC-12/13/14)
 
-### 7.1 redaction 경로 (write-time, 원본 비저장 — AC-12)
+### 8.1 redaction 경로 (write-time, 원본 비저장 — AC-12)
 
 - **write-time(capture-time) ONLY** — **read-time redaction 은 계약 책임 아님**(reader 는 이미 redacted blob 만 본다).
 - **원본 NOT stored** — redaction 이 blob write 에 **선행**(redaction precedes blob write). 원본 disk 미접촉(in-memory redact → hash → write, INV-8a).
-- capture-time redaction 은 **wrapper always-on / consumer opt-in 두 scope 모두 선행**(§9 α 비대칭 — always-on 이 redaction 을 우회하지 못한다, INV-8).
+- capture-time redaction 은 **wrapper always-on / consumer opt-in 두 scope 모두 선행**(§10 α 비대칭 — always-on 이 redaction 을 우회하지 못한다, INV-8).
 - redaction 실 함수 = sibling `redact_dev_process_content.redact(raw) -> (redacted, audit)`(BlobDev 소유). 본 계약은 정책·형식만 정의.
 
-### 7.2 deny-list + patterns (AC-13 — ADR-043 6→7 inherit)
+### 8.2 deny-list + patterns (AC-13 — ADR-043 6→7 inherit)
 
 토큰·키·쿠키·Authorization + **절대/home-prefixed 파일 경로** 를 마스킹, env dump·자격증명 subprocess 출력을 **기본 제외**:
 
@@ -255,26 +266,26 @@ naive 구현 시 cold blob 삭제 → index `blob_ref` dangling. 화해 2축:
 | `env_dump_excluded` | env dump 통째 제외 (capture-exclusion) | Amd4 §D |
 | `credential_subprocess_excluded` | 자격증명 subprocess 출력 통째 제외 (capture-exclusion) | Amd4 §D |
 
-> **SSOT (audit rule 어휘)**: `redaction_rules_fired` 값 어휘 = **`scripts/lib/redact_dev_process_content.RULE_NAMES`** — audit dict 를 emit 하는 redaction 모듈(producer)이 rule 어휘를 단일 소유한다. append primitive(`append_dev_process_event._REDACTION_RULES`)는 이 producer 어휘를 **import 로 gate**(복붙 drift 차단 — ADR-140; 미등재 이름은 index 유입 전 drop = allow-list-clean). 앞 6종 = ADR-043 §결정 3 상속 / 7번째 경로 + 후속 net-new(header·cloud·private-key·session·capture-exclusion) = Amendment 4 §D·§7.2 표면.
+> **SSOT (audit rule 어휘)**: `redaction_rules_fired` 값 어휘 = **`scripts/lib/redact_dev_process_content.RULE_NAMES`** — audit dict 를 emit 하는 redaction 모듈(producer)이 rule 어휘를 단일 소유한다. append primitive(`append_dev_process_event._REDACTION_RULES`)는 이 producer 어휘를 **import 로 gate**(복붙 drift 차단 — ADR-140; 미등재 이름은 index 유입 전 drop = allow-list-clean). 앞 6종 = ADR-043 §결정 3 상속 / 7번째 경로 + 후속 net-new(header·cloud·private-key·session·capture-exclusion) = Amendment 4 §D·§8.2 표면.
 > **honest-ceiling(T-DPE-4)**: deny-list = **완전커버 아님**. 미커버 novel secret(신규 API key·비정형 자격증명)이 통과할 수 있다 — allow-list-clean index + per-event tier(prompt=최고) + entropy 임계(gitleaks) 심층방어이나 **residual 존재**를 명시(완전차단 over-claim 금지).
 
-### 7.3 audit (AC-14 — mandatory-on-fire)
+### 8.3 audit (AC-14 — mandatory-on-fire)
 
 | 필드 | 타입 | 규칙 |
 |---|---|---|
 | `redaction_applied` | bool | redaction 발동 여부 |
 | `redaction_count` | int | 마스킹 발동 횟수 |
-| `redaction_rules_fired` | enum array (CLOSED — §7.2 SSOT) | 발동 규칙명만 — 값 어휘 = `redact_dev_process_content.RULE_NAMES`(§7.2 14종) |
+| `redaction_rules_fired` | enum array (CLOSED — §8.2 SSOT) | 발동 규칙명만 — 값 어휘 = `redact_dev_process_content.RULE_NAMES`(§8.2 14종) |
 
-> **T-DPE-8 (oracle 역전 차단, 비협상)**: audit 는 **규칙명 + 횟수만**. **매칭 secret 원문/hash 절대 미기록** — audit log 가 secret confirmation oracle 로 역전되는 것을 차단. `redaction_rules_fired` 는 §7.2 SSOT closed enum 밖 값을 drop(allow-list-clean).
+> **T-DPE-8 (oracle 역전 차단, 비협상)**: audit 는 **규칙명 + 횟수만**. **매칭 secret 원문/hash 절대 미기록** — audit log 가 secret confirmation oracle 로 역전되는 것을 차단. `redaction_rules_fired` 는 §8.2 SSOT closed enum 밖 값을 drop(allow-list-clean).
 
-### 7.4 resource-safety HONEST-CEILING (★ CFP-2646/2635 선례 — 무증거 단정 금지)
+### 8.4 resource-safety HONEST-CEILING (★ CFP-2646/2635 선례 — 무증거 단정 금지)
 
 - redaction/capture hot-path 에 대해 **"ReDoS-safe / catastrophic-backtracking 0 / DoS-proof" 단정 금지**.
 - 명시 가능한 것 = **born-safe bound 만**: byte-cap + line-cap + parse-timeout. capture 실패 = non-blocking exit 0(ADR-115). backpressure = size-cap + spill + disable.
 - 정직 천장: **"bounded degradation, 임의입력 무해 아님"**. **proof = Phase 2 SecurityTest**(execution-backed). 무증거 안전 주장은 리뷰 반증 대상(self-ref 재발 방지).
 
-## 8. mining/query 진입점 (AC-16/17)
+## 9. mining/query 진입점 (AC-16/17)
 
 | 항목 | 값 |
 |---|---|
@@ -286,9 +297,9 @@ naive 구현 시 cold blob 삭제 → index `blob_ref` dangling. 화해 2축:
 - **AC-17 범위 배제**: 반환은 **집계 metric(B) 도 verdict 판정(C) 도 아니다** — raw typed rows 만. "지표 집계 방식"·"게이트 판정 규칙"을 포함하지 않는다. B(지표)·C(verdict)는 disjoint consumer(port 하류 무의존, storage 포맷 계약 표면 비노출 — reader port 뒤 격리).
 - **mining honest-degrade(ADR-119)**: exact-count 주장 금지 — `rows_total`/`rows_deduped`/`duplicates_collapsed` 를 **관측치**로 emit(guaranteed-unique 아님). JSONL append-only 는 write-time UNIQUE 부재.
 
-## 9. writer 권한 + telemetry 활성 정책
+## 10. writer 권한 + telemetry 활성 정책
 
-### 9.1 writer 권한 정합 표 (신규 ↔ 기존 — AC-20)
+### 10.1 writer 권한 정합 표 (신규 ↔ 기존 — AC-20)
 
 | 축 | 기존 (stop/spawn-event) | dev-process-event (신규) | 정합 |
 |---|---|---|---|
@@ -299,14 +310,14 @@ naive 구현 시 cold blob 삭제 → index `blob_ref` dangling. 화해 2축:
 | graceful degradation | 5층 (ADR-115 §결정 5) | 상속 + capture-parse 6번째 domain | **상속·확장** |
 | 0 API call | local I/O only | 동일 (blob=host-local, cross-host leak 금지) | **상속** |
 
-### 9.2 telemetry 활성 비대칭 (α — AC-19)
+### 10.2 telemetry 활성 비대칭 (α — AC-19)
 
 - **wrapper-self dogfood scope = always-on** — codeforge family 자기 개발 계측이 Story 목적. always-on = **checkout-identity 파생**(user-settable bool 아님, T-DPE-9).
 - **consumer 배포 scope = opt-in default-false** — consumer overlay extend-only(ADR-064 §결정 7), privacy invariant **무약화**. consumer floor 하방 override 불가.
-- **두 scope 모두 capture-time redaction 선행**(§7.1 INV-8) — always-on 이더라도 redaction 우회 불가.
+- **두 scope 모두 capture-time redaction 선행**(§8.1 INV-8) — always-on 이더라도 redaction 우회 불가.
 - **활성 gate 위치**: 활성 판정 + redact→capture_blob→append_event(INV-8b) orchestration 은 **HOOK/emit 계층**(HookDev, wave 2) 소관. index append primitive 는 gate-free mechanism(계약과 emit 계층이 정책을 강제).
 
-## 10. 관계 매트릭스 (new-sibling — AC-11, normative non-overlap)
+## 11. 관계 매트릭스 (new-sibling — AC-11, normative non-overlap)
 
 dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. event-ownership 경계 = **normative**(SoT 이중화 §5.4 차단):
 
@@ -319,32 +330,21 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 
 > **5th boundary invariant (ADR-042 §15.2 amendment)**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) **허용** / accounting payload re-record **금지**. 동일 의미를 두 channel 이 각자 기록하는 SoT 이중화를 구조적으로 차단.
 
-## 11. 정직성 (honesty — AC-23/24)
+## 12. 정직성 (honesty — AC-23/24)
 
-### 11.1 기존 계약↔구현 드리프트 = FACT (AC-23)
+### 12.1 기존 계약↔구현 드리프트 = FACT (AC-23)
 
 - **stop-event-v1 drift 사실 기록**: 계약 **18-field sqlite@`.claude-work/measurement` / UTC** ↔ 실 구현 **5-field JSONL@`.claude/ledger` / KST** 드리프트가 **실재**한다(FACT).
 - 본 신규 계약은 이 드리프트를 **자동 해소한다고 주장하지 않는다** — new-sibling 은 현실 위에 얹힌다. 기존 5-field 런타임을 즉시 승격하지 않는다.
 
-### 11.2 D3/D4/D5 gap = motivation only (AC-24)
+### 12.2 D3/D4/D5 gap = motivation only (AC-24)
 
 - D3(통합 계약 부재)·D4(cross-lane 결점 identity 부재)·D5(상관 ID freeze 부재) gap 은 **"왜 이 계약이 필요한가"의 근거로만** 사용.
 - Phase 1(설계)·본 계약(Phase 2 landing) **만으로 gap 이 운영상 닫힌다고 선언하지 않는다** — **활성화 + 통합 + freeze** 로만 서술. landing ≠ activation(계약이 존재해도 실 capture 배선·활성은 별 wave).
 
-### 11.3 scope-guard ⊥ ADR-104 (dev-process ⊥ operational-phase)
+### 12.3 scope-guard ⊥ ADR-104 (dev-process ⊥ operational-phase)
 
 본 substrate 는 ADR-104 §결정 4 wrapper-N/A 를 건드리지도 약화하지도 않는다 — wrapper-N/A 는 **운영(production) phase 측정** 한정, dev-process observability(개발 과정 관측)는 **disjoint axis**. homonym 주의: `measurement-channel.md` 2 파일(operational-phase vs orchestrator-discipline)은 별개 도메인.
-
-## 12. 변경 규칙
-
-- **Allow-list ONLY (v1.x)**: §2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING).
-- **free-form string content field 도입 금지 (v1.x invariant)**: T-DPE-3/T-INFO-8 구조적 mitigation 보존. rich content 는 §5 redacted-blob 표면으로만.
-- **event_type enum(8) / noise-discard(5) 변경**: additive = MINOR(Amendment 동반) / 값 제거 = MAJOR.
-- **4 상관 ID freeze 변경**: 이름·scope·생성시점·안정성 규칙 변경 = **계약 amendment 의무**(B·C 병렬 전제 — freeze).
-- **defect taxonomy 축 종류(closed/semi-open/derived) 변경**: family/lane closed-set 확장 = MINOR / type semi-open→closed 승격 = MAJOR / ttd derived→enum 승격 = MAJOR.
-- **`_ROW_KEYS` parity**: §2 필드 순서·멤버는 `append_dev_process_event._ROW_KEYS` 와 항상 일치(born-drift = FAIL). 한쪽 변경 = 양쪽 동반 + amendment.
-- **opt-in / always-on 정책 변경**: α 비대칭(wrapper always-on / consumer opt-in-false) 약화 = ADR-043/ADR-064 amendment 의무(BREAKING — privacy invariant 위반).
-- **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-042 §결정 4 amendment.
 
 ## 13. Phase 1 / Phase 2 scope
 
@@ -366,19 +366,19 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 
 | AC | 계약 섹션 | AC | 계약 섹션 |
 |---|---|---|---|
-| AC-1 (A scope only) | §1 정체 / §13 OOS | AC-14 (audit 필드·enum) | §7.3 |
-| AC-2 (8 event append-only) | §3.1 | AC-15 (blob=redacted, no-conflict) | §1.1 / §5 |
-| AC-3 (noise 5 closed) | §3.2 | AC-16 (mining 진입점) | §8 |
-| AC-4 (4 상관 ID 정의) | §4.1 / §2 | AC-17 (no 집계·verdict) | §8 |
-| AC-5 (freeze 표기) | §4.1 / §12 | AC-18 (allow-list↔rich 화해) | §1.1 |
-| AC-6 (closed enum + 6-point) | §3.1 | AC-19 (활성 비대칭) | §9.2 |
-| AC-7 (index allow-list clean) | §2 / §2.1 | AC-20 (writer 정합 표) | §9.1 |
-| AC-8 (blob-ref 규칙) | §5.1 | AC-23 (drift FACT, no auto-resolve) | §11.1 |
-| AC-9 (blob 정량) | §5.1 | AC-24 (gap motivation only) | §11.2 |
-| AC-10 (append-only 정정) | §6.1 | AC-25 (retention 3-tier) | §6 |
-| AC-11 (관계 매트릭스) | §10 | AC-21 (exit-0 non-blocking) | §9.1 (Phase 2 declared) |
-| AC-12 (redaction write-time) | §7.1 / §5.2 | AC-22 (부분기록 식별) | §5.2 / §6.1 (Phase 2 declared) |
-| AC-13 (deny-list 경로) | §7.2 | | |
+| AC-1 (A scope only) | §1 정체 / §13 OOS | AC-14 (audit 필드·enum) | §8.3 |
+| AC-2 (8 event append-only) | §3.1 | AC-15 (blob=redacted, no-conflict) | §1.1 / §6 |
+| AC-3 (noise 5 closed) | §3.2 | AC-16 (mining 진입점) | §9 |
+| AC-4 (4 상관 ID 정의) | §5.1 / §2 | AC-17 (no 집계·verdict) | §9 |
+| AC-5 (freeze 표기) | §5.1 / §4 | AC-18 (allow-list↔rich 화해) | §1.1 |
+| AC-6 (closed enum + 6-point) | §3.1 | AC-19 (활성 비대칭) | §10.2 |
+| AC-7 (index allow-list clean) | §2 / §2.1 | AC-20 (writer 정합 표) | §10.1 |
+| AC-8 (blob-ref 규칙) | §6.1 | AC-23 (drift FACT, no auto-resolve) | §12.1 |
+| AC-9 (blob 정량) | §6.1 | AC-24 (gap motivation only) | §12.2 |
+| AC-10 (append-only 정정) | §7.1 | AC-25 (retention 3-tier) | §7 |
+| AC-11 (관계 매트릭스) | §11 | AC-21 (exit-0 non-blocking) | §10.1 (Phase 2 declared) |
+| AC-12 (redaction write-time) | §8.1 / §6.2 | AC-22 (부분기록 식별) | §6.2 / §7.1 (Phase 2 declared) |
+| AC-13 (deny-list 경로) | §8.2 | | |
 
 ## 15. Cross-references
 
@@ -390,5 +390,5 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 - **ADR-064** — consumer opt-in-false 무약화(α 비대칭).
 - **ADR-031/038/039** — lane evidence boundary / lane_transition 6-point / writer monopoly.
 - **ADR-119** — 정직 천장(resource-safety 무증거 단정 금지 / mining exact-count 주장 금지).
-- **stop-event-v1 / spawn-event-v1 / fix-event-v1 / review-verdict-v4** — new-sibling(§10).
+- **stop-event-v1 / spawn-event-v1 / fix-event-v1 / review-verdict-v4** — new-sibling(§11).
 - **oh-my-claudecode (MIT)** — spawn-event 계보의 append/replay 패턴(간접 lineage).

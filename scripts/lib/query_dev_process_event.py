@@ -4,7 +4,7 @@
 # query_dev_process_event.py — dev-process-event-v1 mining/query port (raw typed rows, B/C disjoint)
 #
 # Carrier: CFP-2687 Phase 2 (구현) / Epic #2686 Story A (선행 substrate)
-# SSOT: docs/inter-plugin-contracts/dev-process-event-v1.md §8 (mining/query 진입점) — ADR-155 §결정 7
+# SSOT: docs/inter-plugin-contracts/dev-process-event-v1.md §9 (mining/query 진입점) — ADR-155 §결정 7
 #
 # 책임:
 #   - index 원장 `.claude/ledger/dev-process-event.jsonl` (append_dev_process_event.py 가 씀)
@@ -13,7 +13,7 @@
 #   - B(지표 집계 #2688) / C(verdict 판정 #2689) = **disjoint consumer** — port 하류 무의존.
 #     storage 포맷 계약 표면 비노출 (reader port 뒤 격리, drift 봉쇄).
 #
-# 불변식 (계약 §8 / AC-17 — 절대 위반 금지):
+# 불변식 (계약 §9 / AC-17 — 절대 위반 금지):
 #   - **NO aggregation / NO verdict** — 반환은 raw typed rows 만. "지표 집계 방식"(B)·"게이트
 #     판정 규칙"(C) 를 포함하지 않는다 (집계 metric·PASS/FAIL 미산출).
 #   - 원장 read-only — IN-PLACE EDIT 절대 금지 (record-only INV, ADR-115 §2).
@@ -60,7 +60,7 @@ except Exception:  # pragma: no cover — sibling 미착지 시 graceful
 
 _DEFAULT_LEDGER_REL = Path(".claude") / "ledger" / "dev-process-event.jsonl"
 
-# filter 대상 상관/분류 필드 (계약 §8 입력 단위 — exact-match)
+# filter 대상 상관/분류 필드 (계약 §9 입력 단위 — exact-match)
 _EXACT_FILTER_KEYS = ("story_key", "lane_label", "event_type", "defect_id", "fix_id")
 
 
@@ -229,7 +229,7 @@ def query_file(ledger_path=None, filters=None, since=None, until=None, include_b
     return query_lines(lines, filters=filters, since=since, until=until, include_blob=include_blob)
 
 
-# ─────────────────────── public port API (계약 §8) ────────────────────────────────────
+# ─────────────────────── public port API (계약 §9) ────────────────────────────────────
 
 def query(ledger_path=None, since=None, until=None, include_blob=False, **filters):
     """mining/query port — filter 통과 **raw typed event rows** 반환 (list[dict]).

@@ -3,7 +3,7 @@
 # check_dev_process_event_schema.py — dev-process-event-v1 계약==구현 honesty self-test
 #
 # Carrier: CFP-2687 Phase 2 (구현) / Epic #2686 Story A / ADR-155 검증 채널
-# SSOT: docs/inter-plugin-contracts/dev-process-event-v1.md §2 / §2.1 / §3.2 / §4.1 / §11.1
+# SSOT: docs/inter-plugin-contracts/dev-process-event-v1.md §2 / §2.1 / §3.2 / §5.1 / §12.1
 #       + change-plan §8.2 (계약==구현 honesty self-test) + ADR-155 「검증 채널」 절
 #
 # 책임 (각 검증 = execution-backed set-compare / 구조 파싱 — presence-grep-as-oracle 금지):
@@ -17,8 +17,8 @@
 #       (check_spawn_event_schema.py:217-224 동형). impl-present skip 변형 미도입.
 #   (c) allow-list lint: 계약 선언 allow-list(§2.1) + §2 필드 → §2 ⊆ allow-list
 #       (본 계약 self-apply → born-GREEN 의무). set-compare, grep 아님.
-#   (d) freeze / closed-list / honesty: 4 상관 ID(§4.1) present + freeze-marked /
-#       noise closed-list(§3.2) == 정확히 5 / AC-23 drift-honesty 서술(§11.1) present.
+#   (d) freeze / closed-list / honesty: 4 상관 ID(§5.1) present + freeze-marked /
+#       noise closed-list(§3.2) == 정확히 5 / AC-23 drift-honesty 서술(§12.1) present.
 #
 # ★HONESTY CEILING (over-claim 금지 — 본 Story 9연속 self-ref 재발 trap):
 #   본 self-test 는 impl-ABSENT born-drift hole(append impl 부재 → parity 자체가 skip)를
@@ -51,7 +51,7 @@ _DEFAULT_CONTRACT_REL = os.path.join(
 )
 _APPEND_MODULE = "append_dev_process_event"
 
-# ── 스펙 anchor (ADR-155 §결정 3 / 계약 §3.2·§4.1) — 파싱 대상이 아닌 요구 상수 ──
+# ── 스펙 anchor (ADR-155 §결정 3 / 계약 §3.2·§5.1) — 파싱 대상이 아닌 요구 상수 ──
 # 이것들은 parity 의 oracle 이 아니다(parity 는 순수 doc-parse vs code-import). 아래는
 # (d) freeze/closed 검증의 "요구 멤버" spec constant (self-context S1 _ALLOWLIST_6 선례).
 _REQUIRED_CORRELATION_IDS = {"story_key", "lane_label", "defect_id", "fix_id"}
@@ -121,12 +121,13 @@ def parse_declared_allowlist(body):
 
 
 def parse_correlation_ids(body):
-    """§4.1 4 상관 ID freeze 표에서 backticked ID set + freeze-marked bool.
+    """§5.1 4 상관 ID freeze 표에서 backticked ID set + freeze-marked bool.
 
-    `### 4.1` ~ `### 4.2` 사이 표 각 row 첫 셀 (파이프+백틱ID)의 backticked ID 추출.
+    `### 5.1` ~ `### 5.2` 사이 표 각 row 첫 셀 (파이프+백틱ID)의 backticked ID 추출.
     freeze-marked = 섹션 heading/셀에 FREEZE/freeze 문구 존재.
+    (renumber: 구 §4.1→§5.1 / §4.2→§5.2, CFP-2687 doc-section-schema §4=변경규칙 FIX)
     """
-    section41 = _extract_section(body, r"(?m)^###\s*4\.1", r"(?m)^###\s*4\.2")
+    section41 = _extract_section(body, r"(?m)^###\s*5\.1", r"(?m)^###\s*5\.2")
     if section41 is None:
         return set(), False
     ids = set()
@@ -163,8 +164,11 @@ def parse_noise_list(body):
 
 
 def extract_ac23_narrative(body):
-    """§11(정직성) 섹션 텍스트 (AC-23 drift-honesty 서술 검증용 doc-parse)."""
-    section11 = _extract_section(body, r"(?m)^##\s*11\.\s", r"(?m)^##\s*12\.\s")
+    """§12(정직성) 섹션 텍스트 (AC-23 drift-honesty 서술 검증용 doc-parse).
+
+    (renumber: 구 §11 정직성→§12, CFP-2687 doc-section-schema §4=변경규칙 FIX)
+    """
+    section11 = _extract_section(body, r"(?m)^##\s*12\.\s", r"(?m)^##\s*13\.\s")
     return section11 or ""
 
 
@@ -268,9 +272,9 @@ def check_allowlist(index_fields, declared_allowlist, violations):
 
 
 def check_freeze(correlation_ids, freeze_marked, violations):
-    """(d) 4 상관 ID present + freeze-marked (§4.1)."""
+    """(d) 4 상관 ID present + freeze-marked (§5.1)."""
     if not freeze_marked:
-        violations.append("(d/freeze) §4.1 freeze 표기(FREEZE) 부재 — 상관 ID freeze 미선언")
+        violations.append("(d/freeze) §5.1 freeze 표기(FREEZE) 부재 — 상관 ID freeze 미선언")
     missing = sorted(_REQUIRED_CORRELATION_IDS - set(correlation_ids))
     if missing:
         violations.append(
@@ -296,20 +300,20 @@ def check_noise_closed(noise_list, violations):
 
 
 def check_honesty(section11_text, violations):
-    """(d) AC-23 drift-honesty 서술 (§11.1) present.
+    """(d) AC-23 drift-honesty 서술 (§12.1) present.
 
     요구 = AC-23 + drift(드리프트) + "자동 해소 안 함" 정직 서술. presence-grep 이 아니라
     honesty 서술의 필수 3요소(AC-23 anchor / drift fact / no-auto-resolve 정직)를 검사.
     """
     txt = section11_text or ""
     if "AC-23" not in txt:
-        violations.append("(d/honesty) §11 AC-23 anchor 부재")
+        violations.append("(d/honesty) §12 AC-23 anchor 부재")
     if not re.search(r"드리프트|drift", txt, re.IGNORECASE):
-        violations.append("(d/honesty) §11 계약↔구현 드리프트(FACT) 서술 부재")
+        violations.append("(d/honesty) §12 계약↔구현 드리프트(FACT) 서술 부재")
     # "자동 해소한다고 주장하지 않는다" 정직 (drift auto-resolve over-claim 금지)
     if not (re.search(r"자동\s*해소", txt) and re.search(r"주장.*않|않는다|안\s*함", txt)):
         violations.append(
-            "(d/honesty) §11 'drift 자동 해소 주장 안 함' 정직 서술 부재 (AC-23 honesty over-claim 방지)"
+            "(d/honesty) §12 'drift 자동 해소 주장 안 함' 정직 서술 부재 (AC-23 honesty over-claim 방지)"
         )
 
 
@@ -373,7 +377,7 @@ def cmd_check(args):
         print("")
         print(
             "check-dev-process-event-schema: %d violation — dev-process-event-v1.md "
-            "§2/§2.1/§3.2/§4.1/§11.1 정합 검토 요 (계약==구현 honesty self-test)."
+            "§2/§2.1/§3.2/§5.1/§12.1 정합 검토 요 (계약==구현 honesty self-test)."
             % len(violations)
         )
         sys.exit(1)

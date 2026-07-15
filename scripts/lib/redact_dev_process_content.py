@@ -32,7 +32,7 @@
 #   본 모듈은 임의·적대적 입력에 대한 무해성을 단정하지 않는다. nested quantifier 를
 #   실무상 회피하나(선형 성향 regex 선호), 보장하는 것은 byte/line/timeout cap 을 통한
 #   bounded degradation 뿐이며 임의 입력에 대해 immune 하지 않다. 실증 = Phase 2 SecurityTest.
-#   (∴ "immune"·"proof-by-construction" 류 단정 없음 — 계약 §7.5 honest-ceiling 정합.)
+#   (∴ "immune"·"proof-by-construction" 류 단정 없음 — 계약 §8.4 honest-ceiling 정합.)
 #
 # 계약 property: redact(redact(x)) == redact(x) (idempotent).
 # 사용: from redact_dev_process_content import redact ; redacted, audit = redact(raw)

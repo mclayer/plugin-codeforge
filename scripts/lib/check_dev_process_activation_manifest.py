@@ -107,9 +107,10 @@ def find_dev_process_posttool_hook(hooks_json_obj):
 
 
 def parse_always_on_declared(contract_body):
-    """계약 §9.2 wrapper always-on 활성 정책 선언 present bool (always-on gate 정책 anchor)."""
-    # §9(writer 권한 + telemetry 활성) 또는 §9.2 구간에 always-on + wrapper 동시 선언
-    m = re.search(r"(?m)^##\s*9\.\s.*?(?=^##\s*10\.\s|\Z)", contract_body, re.S)
+    """계약 §10.2 wrapper always-on 활성 정책 선언 present bool (always-on gate 정책 anchor)."""
+    # §10(writer 권한 + telemetry 활성) 또는 §10.2 구간에 always-on + wrapper 동시 선언
+    # (renumber: 구 §9 writer+telemetry→§10, CFP-2687 doc-section-schema §4=변경규칙 FIX)
+    m = re.search(r"(?m)^##\s*10\.\s.*?(?=^##\s*11\.\s|\Z)", contract_body, re.S)
     section9 = m.group(0) if m else contract_body
     has_always_on = bool(re.search(r"always[-\s]?on", section9, re.IGNORECASE))
     has_wrapper = "wrapper" in section9
@@ -153,10 +154,10 @@ def evaluate(contract_present, contract_body, row_keys, importable,
             "landed 이나 NOT activated (§8.10 landing≠activation). hook 배선 부재 = RED"
         )
 
-    # ── ACT-2: always-on gate 정책 선언 (§9.2 wrapper always-on) ──
+    # ── ACT-2: always-on gate 정책 선언 (§10.2 wrapper always-on) ──
     if not always_on_declared:
         violations.append(
-            "(ACT-2) 계약 §9.2 wrapper always-on 활성 정책 선언 부재 — always-on gate anchor 없음 = RED"
+            "(ACT-2) 계약 §10.2 wrapper always-on 활성 정책 선언 부재 — always-on gate anchor 없음 = RED"
         )
 
     landed = contract_present and importable and bool(row_keys)
