@@ -248,29 +248,34 @@ def test_ac19_guard_delete_conjunction():
 
 
 def test_ac11_mirror_byte_parity():
-    """AC11 — mirror-pair byte-parity: 동일 바이트면 parity True, 1바이트 diff 를 주면 parity False.
+    """AC11 — mirror-pair byte-parity (positive-control, divergence-kill):
+    실제 templates/github-workflows ↔ .github/workflows 미러 쌍으로 검증한다.
+    동일 바이트 → parity True, 미러 한쪽 1바이트 변조 → parity False (진짜 divergence 검출).
 
-    ※ guard 는 mirror root(templates ↔ .github)를 basename 으로 pairing 한다. 단, guard 의 walk 가
-      `rel.startswith('.git')` 로 `.git`* 를 배제하는데 이는 `.github` 도 함께 배제한다(read-only 모듈의
-      latent quirk — 매핑표 '발견 사항' 기록). 따라서 함수가 실제로 도달하는 mirror root(templates/
-      하위 2 위치)로 pair 를 구성해 byte-parity gate 를 실증한다."""
-    basename = "mirror.yml"
+    ※ FIX-1: 이전 판(templates/a↔templates/b)은 guard 의 `.git` prefix 버그(`.github` 를 삼킴)를
+      *우회*하는 hollow 테스트였다. 가드가 `.github/` 를 정확히 포함하도록 정정된 뒤, 본 테스트는
+      실제 미러 root(.github/workflows ↔ templates/github-workflows)에서 divergence 를 검출한다."""
+    basename = "mirror-parity-probe.yml"
     body = "jobs:\n  x:\n    steps:\n      - run: echo hi\n"
     root = _build_repo({
-        "templates/a/%s" % basename: body,
-        "templates/b/%s" % basename: body,
+        ".github/workflows/%s" % basename: body,
+        "templates/github-workflows/%s" % basename: body,
     })
     try:
-        # 동일 바이트 → parity True (2 매치 pairing).
+        # 동일 바이트 → parity True. 미러 쌍(.github ↔ templates)이 실제로 pairing 되어야 한다.
         res_eq = g.mirror_pair_byte_parity(basename, root)
-        assert res_eq["parity"] is True
-        assert len(res_eq["pairs"]) == 2
+        assert res_eq["parity"] is True, res_eq
+        pairs = [p for p in res_eq["pairs"]]
+        assert len(pairs) == 2, pairs
+        # 미러가 정말 .github 와 templates 양쪽을 잡았는지 확인 (버그였으면 .github 누락).
+        assert any(".github/workflows/" in p for p in pairs), pairs
+        assert any("templates/github-workflows/" in p for p in pairs), pairs
 
-        # 1바이트 diff 주입 → parity False.
-        with open(os.path.join(root, "templates", "b", basename), "a", encoding="utf-8", newline="\n") as fh:
-            fh.write("#")  # 1바이트 추가
+        # .github 쪽 1바이트 변조 주입 → 진짜 divergence → parity False.
+        with open(os.path.join(root, ".github", "workflows", basename), "a", encoding="utf-8", newline="\n") as fh:
+            fh.write("#")  # 1바이트 추가 (미러 divergence)
         res_ne = g.mirror_pair_byte_parity(basename, root)
-        assert res_ne["parity"] is False
+        assert res_ne["parity"] is False, res_ne
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

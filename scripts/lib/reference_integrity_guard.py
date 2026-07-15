@@ -355,7 +355,9 @@ def mirror_pair_byte_parity(basename, repo_root):
     matches = []
     for root, _dirs, files in os.walk(repo_root):
         rel = os.path.relpath(root, repo_root).replace("\\", "/")
-        if rel.startswith(".git"):
+        # .git VCS 디렉터리만 제외 — `.github/` 는 미러 대상이므로 삼키지 않는다
+        # (FIX-1: `rel.startswith(".git")` 가 `.github` 도 매칭해 mirror-pair vacuous-pass 유발).
+        if rel == ".git" or rel.startswith(".git/"):
             continue
         in_templates = rel == "templates" or rel.startswith("templates/") or "/templates" in ("/" + rel)
         in_github = rel == ".github" or rel.startswith(".github/")
