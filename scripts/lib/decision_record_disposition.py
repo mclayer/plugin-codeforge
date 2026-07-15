@@ -133,6 +133,10 @@ _PERMANENCE_TOKENS = (
 )
 
 # 현재-normative 토큰 — 값이 갱신 대상인 present 규범(불변 주장 아님).
+#   ★ FIX(F3): `"required"` 제거 — bp-도메인 명명어(이미 `_BP_DOMAIN_TOKENS` 의
+#     "required contexts" 등에 속함)이지 present-normative 화행 동사가 아니다. 이 dual-membership 이
+#     bp-context 서술 라인(대부분 "required" 포함)을 `cardinal_bound` vacuously True 로 만들어
+#     false-green(과잉 `correct`)을 유발했다. 진성 규범 신호는 무변경/불변/무손상/must/유지/remain 이 진다.
 _NORMATIVE_TOKENS = (
     "must",
     "금지",
@@ -142,7 +146,6 @@ _NORMATIVE_TOKENS = (
     "준수",
     "정합",
     "확정",
-    "required",
     "불가",
     "무조건",
 )
@@ -703,4 +706,10 @@ def _main(argv=None):
 
 
 if __name__ == "__main__":
+    # FIX(F5): Windows cp949 콘솔에서 한글/em-dash 출력 시 UnicodeEncodeError 방지 (CI ubuntu 무영향).
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     sys.exit(_main())

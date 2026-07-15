@@ -64,8 +64,12 @@ FIX = {
     #   그래야 referent/tense 축 ablation 이 verdict 를 flip(축 load-bearing 실증 가능).
     "N-1": "branch protection 로그의 latency metric 3-tuple 은 불변 baseline",           # homonym (metric tuple)
     "N-2": "2026-07-12 당시 required contexts 6-tuple 불변 확정 (live=6-tuple, HELD)",    # dated history
+    # D-1 (FIX F2 loosen-discriminator): 서술형 bp(도메인토큰+cardinal, 진성 규범 토큰 부재) → no_action.
+    #   cardinal_bound 축 하나가 correct 밖으로 막는다 → axis_cardinal_bound→True(loosen)면 correct 로 flip.
+    #   (F3 regression 겸: "required" 단독으로 normative-side 충족 못 함을 실증.)
+    "D-1": "phase-gate-mergeable 의 required contexts 는 현재 7-tuple 로 구성된다",
 }
-EXP = {"P-1": "correct", "P-2": "correct", "P-3": "correct", "N-1": "no_action", "N-2": "no_action"}
+EXP = {"P-1": "correct", "P-2": "correct", "P-3": "correct", "N-1": "no_action", "N-2": "no_action", "D-1": "no_action"}
 
 # M4 perturbation: 부수 토큰만 교체(장르 feature 보존) → verdict 불변 = 일반화(암기 아님).
 PERT = {
@@ -193,6 +197,26 @@ for k in ks:
 print("  M3 verdict: %s" % ("KILLED — cardinal 축 load-bearing across P-1/2/3"
                             if ok else "SURVIVED — cardinal 축 decorative(FAIL)"))
 sys.exit(0 if ok else 1)
+PY
+
+# M3b MUTANT-D cardinal-loosen — axis_cardinal_bound 를 상시 True(과잉허용)로 ablate.
+#   (FIX F2: mutation battery 대칭 — M3 은 →False(과잉거부)만, 이 case 는 →True(loosen)를 KILL.)
+#   서술형 bp 라인 D-1 이 이제 no_action → correct 로 MISCLASSIFY 되어야 함. 안 flip = self-test hollow.
+run_py "B/M3b: cardinal-loosen (MUTANT-D, D-1)" <<'PY'
+import sys
+LIB, WORK = sys.argv[1], sys.argv[2]
+sys.path.insert(0, WORK); sys.path.insert(0, LIB)
+import decision_record_disposition as m
+import cfp2697_fixtures as F
+d1 = F.FIX["D-1"]
+before = m.classify(d1)["disposition"]                                   # 실 axis_cardinal_bound → no_action
+m.axis_cardinal_bound = lambda *a, **k: True                             # MUTANT-D: 과잉허용(loosen)
+after = m.classify(d1)["disposition"]
+killed = (before == "no_action") and (after == "correct")
+print("  M3b cardinal-loosen: D-1 before=%s after=%s (flip=%s)" % (before, after, before != after))
+print("  M3b verdict: %s" % ("KILLED — loosen-mutant 이 correct 로 flip(cardinal 축 대칭 load-bearing)"
+                            if killed else "SURVIVED — loosen-mutant 생존(self-test hollow, FAIL)"))
+sys.exit(0 if killed else 1)
 PY
 
 # ═════════════════════════════════════════════════════════════════════════════

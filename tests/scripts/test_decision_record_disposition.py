@@ -156,6 +156,38 @@ def test_m3_cardinal_blind_kill():
     assert _disp(P1) == "correct" and _disp(P2) == "correct" and _disp(P3) == "correct"
 
 
+# FIX(F2): mutation battery 대칭 — loosen 방향(MUTANT-D)도 KILL 되어야 한다.
+#   서술형 bp 라인(도메인토큰+cardinal, 비-규범)은 cardinal-bound 축 하나 때문에 correct 밖(no_action).
+#   이 fixture 가 있어야 axis_cardinal_bound→True(과잉허용) mutant 가 correct 로 flip 하며 잡힌다.
+DESCRIPTIVE_BP_LINE = "phase-gate-mergeable 의 required contexts 는 현재 7-tuple 로 구성된다"
+
+
+def test_m3b_cardinal_loosen_kill():
+    """M3b(MUTANT-D) — axis_cardinal_bound 를 상시 True(loosen)로 ablate 하면 서술형 bp 라인이
+    no_action → correct 로 flip(과잉허용). loosen 방향 mutant 도 KILL(이 Epic 이 사냥하는 false-green
+    class 를 self-test 자신이 재범하지 않도록)."""
+    baseline = _disp(DESCRIPTIVE_BP_LINE)
+    assert baseline == "no_action", "서술형 bp 라인은 cardinal-bound 부재로 no_action 이어야: %s" % baseline
+    orig = m.axis_cardinal_bound
+    try:
+        m.axis_cardinal_bound = lambda *a, **k: True  # MUTANT-D: 과잉허용(loosen)
+        mutated = _disp(DESCRIPTIVE_BP_LINE)
+    finally:
+        m.axis_cardinal_bound = orig
+    assert mutated == "correct", "MUTANT-D(cardinal→True) 는 correct 로 flip 해 KILL 되어야: %s" % mutated
+    assert _disp(DESCRIPTIVE_BP_LINE) == "no_action"  # 원복
+
+
+def test_f3_required_token_insufficient():
+    """F3 regression — `"required"` 단독으로는 cardinal-bound 의 normative-side 를 충족하지 못한다.
+    서술형 bp 라인("required contexts ... 로 구성된다")은 진성 규범 토큰(무변경/불변/must ...) 부재 →
+    cardinal_bound=False → no_action. `"required"` dual-membership 이 살아있으면 correct 로 오검됐다."""
+    assert "required" in DESCRIPTIVE_BP_LINE
+    assert m.axis_referent(DESCRIPTIVE_BP_LINE) == m.REFERENT_BP_CONTEXT_COUNT  # bp referent 는 성립
+    assert m.axis_cardinal_bound(DESCRIPTIVE_BP_LINE) is False  # 그러나 cardinal-bound 는 불성립
+    assert _disp(DESCRIPTIVE_BP_LINE) == "no_action"
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # guard — reference-integrity 4-check (§8.1 Part C 대응, RTM AC15/AC19/AC11/AC20)
 #   전부 hermetic tempfile 위에서 구동(live repo tree 비의존).
