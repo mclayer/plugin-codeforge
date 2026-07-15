@@ -464,7 +464,7 @@ self_tests:
     g_boundary_check: "dev-process 지표 aggregate self-test(aggregator embedded --self-test AC-4~23 + honest-degrade lint --selftest NC1~NC10 discriminating negative-control + lint check real query_with_stats round-trip, mock-seam 금지) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, record-only batch 집계 판별력 결박: measured-0≠dormant/over-claim 부재/honest-null/no-blob-deref/idempotency +0/order-preserving negative_duration; 검출력=G3 미강제, presence ≠ truth)."
 
   # ── CFP-2697 (Epic #2696 canary artifact D6, Change Plan §8.4/AC-20) — decision-record disposition oracle + reference-integrity guard self-test (dedicated workflow step, alive) ──
-  # 인벤토리 bijection: tests/scripts/*.sh 43 → 44 (신규 self-test enroll). self-test + born-alive smoke 실행 채널 =
+  # 인벤토리 bijection: tests/scripts/*.sh 44 → 45 (신규 self-test enroll). self-test + born-alive smoke 실행 채널 =
   #   .github/workflows/decision-record-disposition-test.yml (byte-identical template pair, wrapper-self-only, non-required day-1 hard-fail).
   - self_test: "tests/scripts/test_check-decision-record-disposition.sh"
     execution_channel: "workflow:decision-record-disposition-test.yml:decision-record-disposition"
@@ -474,3 +474,18 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "정적 disposition oracle(3-축 ablation load-bearing) + reference-integrity guard(4-check conjunction) mutation-kill self-test — soak(G2)·DAST(G5)·real-render(§8.7) runtime 축 disjoint. 판별력 = 5-fixture replay + M1/M2/M3 축 flip + M4 perturbation + M5 conjunction."
+
+  # ── CFP-2689 (Epic #2686 Story C / ADR-158) — author-time self-gate runner self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 45 → 46 (신규 self-test enroll). C lane QADev Phase 2 deliverable —
+  #   runner embedded --self-test(독립 oracle + 대칭 fail-closed 양방향 + R1 path-aware N/A + 측정≠emit 구분) +
+  #   pytest tests/unit/test_authoring_self_gate.py(AC-1~18)을 execution-backed 로 CI 구동. dedicated .github-only
+  #   workflow(authoring-self-gate-test.yml, non-required, day-1 hard-fail) — branch-protection 7-tuple 무변경.
+  #   pytest fork 는 QADev 파일 미착지 시 record→missing-file 로 RED(정상, DevPL 이 QADev 합류 후 최종 통합 검증).
+  - self_test: "tests/scripts/test_authoring-self-gate.sh"
+    execution_channel: "workflow:authoring-self-gate-test.yml:authoring-self-gate-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "author-time self-gate runner self-test(runner --self-test 독립 oracle + 대칭 fail-closed 양방향[known-good→PASS ∧ known-bad(RTM row 누락/§4 위치 오배치/AC header 손상/invalid category)→FAIL] + 실 게이트 invoke[ac-traceability CLI subprocess / doc-section·doc-frontmatter 격리 subprocess / rtm-format 실 파서 재사용] + R1 path-aware N/A + 측정≠emit 구분 + mutation-revert negative-control + pytest AC-1~18) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 저작시점 구조/위치 conformance 판별력 결박: 검출 완비=review-tier semantic 축 미강제, presence ≠ truth honest-ceiling)."

@@ -1,0 +1,50 @@
+name: authoring-self-gate-test
+# CFP-2689 Phase 2 / Epic #2686 Story C / ADR-158 — author-time self-gate runner self-test 의 CI 실행 채널.
+#   저작시점 shift-left self-gate(대상 기계 게이트를 리뷰 lane 진입 前 자기 산출물에 선실행 + 검출 결점
+#   A ledger emit)의 판별력을 execution-backed 로 강제: runner embedded --self-test(독립 oracle + 대칭
+#   fail-closed 양방향) + pytest tests/unit/test_authoring_self_gate.py(AC-1~18) 를
+#   tests/scripts/test_authoring-self-gate.sh 가 exit-code gated + distinct-marker 로 구동한다.
+#
+# 정직 천장 (ADR-119 / ADR-158 결정 6): 본 채널은 저작시점 self-gate 의 구조/위치 conformance 검출
+#   (독립 oracle + 대칭 fail-closed + 실 게이트 invoke)을 execution-backed 로 검사한다. semantic
+#   claim-accuracy 검출 완비는 주장하지 않는다(review-tier 잔여, presence ≠ truth).
+#
+# wrapper-self-only (consumer red 회피 — dev-process-metrics-test.yml / selftest-execution-liveness-test.yml
+#   / ac-traceability-self-test.yml 선례): job-level `if: github.repository == 'mclayer/plugin-codeforge'`
+#   — wrapper self-CI 에서만 실행(consumer 는 scripts/lib self-gate runner 부재 → job skip = inert).
+#   ADR-130 job-level `if:` graceful no-op 정합. NO path-filter(required permanent-pending 함정 회피) /
+#   NO job-level hashFiles(born-invalid 재발 금지 — CFP-2644).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-151 §결정5 모델): self-test/pytest 실패 = job red
+#   ("self-gate 판별력이 살아있음"을 검증하는 채널이 hollow 로 새지 않도록 실패를 삼키지 않는다).
+# non-required (branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 신규 required context 0).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  authoring-self-gate-test:
+    name: authoring-self-gate-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest = QADev test fork / pyyaml = doc-frontmatter category 실검사)
+        run: python -m pip install --quiet pytest pyyaml
+
+      - name: Run author-time self-gate self-test wrapper (runner --self-test + pytest AC-1~18, day-1 hard-fail)
+        run: bash tests/scripts/test_authoring-self-gate.sh
