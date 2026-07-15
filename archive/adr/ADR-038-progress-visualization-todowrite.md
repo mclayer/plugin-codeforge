@@ -31,6 +31,11 @@ amendments:
     date: 2026-06-13
     title: content 이모지 4-marker 폐지 (TodoWrite channel) → Claude Code 네이티브 status 렌더 채택 + §결정 15 신설 (CLAUDE.md 진행 시각화 리마인더 복원)
     sunset_justification: "TodoWrite channel 표현 layer 약화 아님 — 이중 표기 제거 (네이티브 패널이 status field 로 자체 렌더: pending = 빈 체크박스 / in_progress = ✱ / completed = ✓ + 취소선 — content 이모지 prefix 는 중복 glyph). evidence: 사용자 directive 2026-06-13 (첨부 그림 = 네이티브 패널 렌더) + ADR-038 도입 (2026-05-08) 이래 TodoWrite 진행 시각화가 한 번도 실제 렌더되지 않음 실증 (root cause ① = de-bloat 9f80f0bc/#1912 의 CLAUDE.md 리마인더 제거 → 6시점 갱신 의무 anchor 소실, §결정 15 가 복원). §0 file channel (CFP-20) 은 자체 렌더 없는 plain markdown — file 채널 한정 4-marker glyph 유지 (변경 폭 최소: progress-examples 템플릿 7종 + §14.3 포맷 전면 개편 회피, native status 와 의미 매핑 1:1 보존). 'file / TodoWrite 두 channel 동일 어휘' invariant 는 본 Amendment 로 해소 (channel 별 표현 분리). 기존 결정 폐기 0건 — §결정 2/3/6 표현 layer annotation + §결정 15 신설."
+  - id: 6
+    carrier_story: CFP-2702
+    date: 2026-07-16
+    title: §결정 11 polyglot pattern 정련 — "superpowers 5.1.0 verbatim·0 changes" → CRLF-discipline exec-first 재구조 (verbatim 이탈, 근거 파일내 주석 기록)
+    sunset_justification: "약화 아님 — §결정 11 정련. run-hook.cmd 의 'superpowers 5.1.0 verbatim copy-adapt·변경 0건' stance 1건만 'CRLF-discipline exec-first 재구조(verbatim 이탈, 근거 파일내 주석 기록)'로 정련. 정련 동인 = verbatim heredoc 폴리글롯(`: << 'CMDBLOCK'`)이 `.gitattributes` 전역 `* text=auto eol=lf`(CFP-120) 하에서 LF-only 배포 → cmd.exe LF-오파싱 → `@REM` 배너를 명령 실행 → 도메인 불변식 I-HOOK-NOISE(훅 노이즈 0) 위반(배너 787/1259자, CFP-2702 firsthand). §결정 11 부수 제약(polyglot single-file SSOT / extensionless naming(`session-start`) / MIT attribution / fail-open `exit /b 0`)은 전건 보존 — 정련 scope = 'verbatim' 원칙 1건 한정. is_transitional: false 무변경(polyglot pattern 자체는 영구 정책). 기각 대안 ②(heredoc 유지 CRLF 강제)는 POSIX bash silent-fail + msys Git Bash false-GREEN 마스킹으로 기각(Story CFP-2702 §7.3). Measurement = CFP-2702 §8 회귀 테스트(AC-4 cmd 배너 0 / AC-5 Linux CI bash exec / AC-6 배포 채널 CRLF) merge 후 regression 0 유지. ADR-058 §결정 5 강화 방향 정합(forbid scope 축소 0건)."
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.D self-application 두 번째 사례 (CFP-475 carrier).
   # CFP-426 self-application 첫 사례 (ADR-040 frontmatter 자체) 와 동등 패턴.
@@ -259,6 +264,27 @@ amendment_log:
         - **how**: CFP-2215 merge 후 3개월 retrospective. PASS 시 Amendment 5 retain. FAIL (렌더 0회 지속) 시 hook tier mechanical 강제 격상 CFP 발의.
       Measurement mechanism 한계 = consumer telemetry 부재 → manual sampling (Amendment 1-4 cycle 과 동일).
 
+  - by: "CFP-2702"
+    date: "2026-07-16"
+    scope: |
+      Amendment 6 — §결정 11 polyglot wrapper pattern 정련: `hooks/run-hook.cmd` 의 "superpowers 5.1.0 verbatim copy-adapt (변경 0건)" stance → "CRLF-discipline exec-first 재구조 (verbatim 이탈, 근거 기록)".
+        - 구조: heredoc 폴리글롯 (line 1 `: << 'CMDBLOCK'`) → exec-first 폴리글롯 (line 1 `:; f="$1"; shift; exec bash "$(dirname "$0")/$f" "$@" #`). Unix 측이 line 1 즉시 exec (이후 배치줄 미파싱 → heredoc 불요) + 후행 `#` 이 CRLF 의 `\r` 을 주석 흡수 → CRLF 무해. cmd 측은 `:` 라벨 스킵 후 CRLF-native 파싱 (배너 0).
+        - 배포: `.gitattributes` 에 `*.cmd`/`*.bat text eol=crlf` override 추가 (전역 `* text=auto eol=lf` 아래, checkout/clone/archive 전 채널 CRLF).
+        - §결정 11 부수 제약 (polyglot single-file SSOT / extensionless naming `session-start` / MIT attribution / fail-open `exit /b 0`) 전건 보존 — 정련 scope = "verbatim·0 changes" 원칙 1건 한정.
+      §결정 1-10·12-15 retain unchanged. §결정 11 = "verbatim" 원칙 정련 (polyglot 패턴 SSOT·부수 제약은 보존, 재구조 근거 파일내 주석 기록).
+    sunset_justification: |
+      약화 아님 — §결정 11 "verbatim heredoc 폴리글롯" → "exec-first CRLF-safe 폴리글롯" 정련. correctness fix 방향 (도메인 불변식 I-HOOK-NOISE 위반 봉합), polyglot pattern SSOT 자체는 강화.
+
+      **Amendment 6 정당화 evidence (CFP-2702 firsthand)**:
+        - verbatim heredoc 폴리글롯이 `.gitattributes` 전역 `* eol=lf` (CFP-120) 하에서 LF-only 배포 → cmd.exe LF-오파싱 → `@REM` 배너를 명령 실행 → 매 SessionStart(3)/UserPromptSubmit(5) 훅마다 스퓨리어스 stderr (1회 출력 1259자 중 배너 787자 = 62%, 동일 파일 CRLF 본은 배너 0).
+        - 대안 ② (heredoc 유지 + CRLF 강제) = POSIX/Linux bash 에서 종료 구분자 `CMDBLOCK\r` 불일치 → heredoc 미종료 → 본문 흡수 → silent no-op. msys2 Git Bash 는 CR 관대 처리로 마스킹 → false-GREEN 함정 (Windows-dev 통과·Linux CI/Unix 만 실패). → 폴리글롯 구조 재구조 불가피 (Story CFP-2702 §7.3 3-대안 비교).
+
+      **Measurement mechanism (ADR-058 §결정 5 + metric/who/how 3-tuple)**:
+        - **metric**: CFP-2702 §8 회귀 테스트 (AC-4 cmd 배너 stderr 0 / AC-5 Linux CI bash exec 정상 / AC-6 배포 채널 CRLF) merge 후 regression 발생 횟수. ≥ 1 → 재검토 trigger.
+        - **who**: PMOAgent (Story 완료 retro 집계) + CI (windows-bootstrap-smoke.yml AC-4 + run-hook-crlf-test.yml AC-5/6 채널 상시).
+        - **how**: CFP-2702 merge 후 CI 상시 감시. PASS 시 Amendment 6 retain. FAIL (배너 재발 또는 Unix exec silent-fail) 시 폴리글롯 구조 재평가 CFP 발의.
+      is_transitional: false 무변경 (polyglot pattern 영구 정책). ADR-058 §결정 5 강화 방향 (forbid scope 축소 0건).
+
 ### 결정 10 — Hook 등록 위치 SSOT 정정 (plugin-root `hooks/hooks.json` first-class, Amendment 3)
 
 §결정 9 의 Mechanism 부분은 consumer `.claude/settings.json` `hooks.SessionStart[]` 에 sample 등록을 명시했다. **이 명시가 CFP-500 in-vivo verify #471 FAIL 의 implementation bug root cause** — `${CLAUDE_PLUGIN_ROOT}` interpolation 이 plugin context 에서만 resolve 되는데, settings.json 안 `command` 가 `${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh` 잉여 `codeforge/` segment 를 포함 → bash 실행 실패 → stdout empty → harness capture 0 → injection 0. 본 §결정 10 가 등록 위치 SSOT 를 **plugin-root `hooks/hooks.json` first-class** 로 정정.
@@ -306,6 +332,8 @@ Amendment 날짜: 2026-05-12
 
 carrier_story: CFP-475
 Amendment 날짜: 2026-05-12
+
+> **CFP-2702 Amendment 6 — polyglot pattern 정련 (CRLF-discipline exec-first, 2026-07-16)**: §결정 11 은 `hooks/run-hook.cmd` 를 "superpowers 5.1.0 verbatim copy-adapt·변경 0건" (line 1 `: << 'CMDBLOCK'` heredoc) 으로 규정했다. 그러나 verbatim heredoc 폴리글롯은 `.gitattributes` 전역 `* text=auto eol=lf` (CFP-120) 하에서 LF-only 배포 → cmd.exe LF-오파싱 → `@REM` 배너를 명령 실행 → 매 훅 스퓨리어스 stderr (1회 출력 1259자 중 배너 787자 = 62%, CFP-2702 firsthand) → 도메인 불변식 **I-HOOK-NOISE(훅 노이즈 0) 위반**. Amendment 6 이 이를 **exec-first CRLF-safe 폴리글롯**으로 정련: (1) `.gitattributes` 에 `*.cmd`/`*.bat text eol=crlf` override → 배포 채널(checkout/clone/archive) CRLF 보장, (2) run-hook.cmd line 1 = `:; f="$1"; shift; exec bash "$(dirname "$0")/$f" "$@" #` — Unix 측이 line 1 즉시 exec (이후 배치줄 미파싱, heredoc 불요) + 후행 `#` 이 CRLF 의 `\r` 을 주석 흡수 → CRLF 무해 / cmd 측은 `:` 라벨 스킵 후 CRLF-native 파싱(배너 0). **정련 scope = "verbatim·0 changes" 원칙 1건 한정** — polyglot single-file SSOT / extensionless naming(`session-start`) / MIT attribution / fail-open(`exit /b 0`, ADR-115) 부수 제약은 전건 보존, 파일내 재구조 근거 주석 + attribution 주석 유지. 기각 대안 ②(heredoc 유지 CRLF 강제 = POSIX bash silent-fail + msys Git Bash false-GREEN 마스킹)은 CFP-2702 §7.3 기록. carrier = CFP-2702 (plugin-codeforge#2702). 회귀 커버: CFP-2702 §8 AC-4(cmd 배너 0) / AC-5(Linux CI bash exec) / AC-6(배포 채널 CRLF).
 
 ### 결정 12 — One-channel rule (plain stdout SSOT + JSON form 은 `suppressOutput` 동반 시에만)
 
