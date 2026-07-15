@@ -14,6 +14,7 @@ related_adrs:
   - ADR-042  # measurement channel architecture (sibling — privacy concern 분리)
   - ADR-115  # runtime hook enforcement policy (hook_source / hook_decision field origin — Amendment 1 carrier)
   - ADR-142  # Orchestrator-self context 규율 (Amendment 3 carrier — self-context proxy field set allow-list 확장)
+  - ADR-155  # dev-process observability substrate (Amendment 4 carrier — dev-process-event redaction 표면 상속·확장)
 related_stories:
   - CFP-283
   - CFP-1744
@@ -41,6 +42,10 @@ amendment_log:
     date: 2026-07-05
     carrier_story: CFP-2572
     summary: "§결정 2 Allow-list 에 self-context proxy record type 추가 (ADR-142 §결정 4 carrier — Orchestrator lead-self context 규율 L7). record-only proxy field 6종: schema_version(const) / session_id(sha256) / turn_index(int monotonic) / delegation_ratio(float 0.0–1.0 coarse) / pre_tokens(int bucketed, compact_boundary.preTokens 출처) / cause_category(CLOSED enum, domain-agnostic 7-value). numeric/enum/hash only — free-form string 0건 (T-INFO-8 정합) + transcript content/path 미저장 (T-INFO-5 상속) + opt-in default-false 상속 + hook_decision=record-only (Amendment 1 §결정 2 non-blocking). lead-self proxy = ground-truth 아님(ADR-119 verbatim). 정확한 spawn-event-v1 contract field-set 통합·count reconciliation = Phase 2 contract bump 확정. MINOR (additive record type + inherit + privacy 강화 방향, ADR-008 SemVer)."
+  - amendment: 4
+    date: 2026-07-15
+    carrier_story: CFP-2687
+    summary: "dev-process-event-v1 telemetry channel privacy 확정 (Epic #2686 Story A, ADR-155 sibling). dev-process-event 는 stop/spawn 이 마주한 적 없는 rich-content(프롬프트/diff/tool-call/findings/산출물) 를 evidence-blob-store 에 저장하는 net-new leak surface 를 마주한다. (A) §결정 1 always-on 비대칭 codify — wrapper-self dogfood scope=always-on(checkout-identity 파생, user-settable bool 아님) / consumer scope=opt-in default-false 무약화(ADR-064 §결정7 extend-only, T-DPE-9 consumer floor 하방 override 불가) + INV-8 redaction-precedes-always-on(always-on 이 redaction 우회 불가). (B) §결정 2 dev-process-event index tier 별도 channel allow-list — enum/numeric/hash/상관ID/blob-ref only, free-form content 0(T-INFO-8), emit_source discriminator. (C) §결정 3 deny-regex 6→7종 — 절대/home-prefixed 경로 pattern 신규(repo-relative 경로는 보존 — diff 진단 신호 public) + Authorization/Cookie 헤더 + cloud-key(gitleaks 차용) + env dump·자격증명 subprocess = capture 제외. (D) Amd2 §D 확장 — redacted-blob tier = T-INFO-5 no-conflict 신규 표면(INV-8a hash-over-redacted / INV-8b blob-before-index / T-DPE-2 hash-oracle 봉인 / audit enum redaction_applied·count·rules_fired, 매칭 secret 원문/hash 절대 미기록 T-DPE-8). resource-safety honest-ceiling — 무증거 ReDoS-safe 단정 금지, born-safe bound(byte/line cap+timeout)만, proof=Phase 2 SecurityTest. MINOR (additive channel allow-list + deny-regex 확장 + privacy 강화 방향, ADR-008 SemVer)."
 mechanical_enforcement_actions: []
 ---
 
@@ -386,3 +391,53 @@ cause_category(CLOSED enum: read-heavy|synthesis-inline|fix-diagnosis|spawn-disp
 - §결정 3/4/5 정책 무변경 (inherit scope 확장만).
 - ADR-043 Amendment 1/2 무변경.
 - L7 은 record-only proxy — 게이트/블록/deny 언어 적용 0건 (ADR-142 tier 정직 invariant).
+
+## Amendment 4 (CFP-2687, 2026-07-15) — dev-process-event-v1 telemetry privacy (always-on 비대칭 + blob deny-pattern + redacted-blob T-INFO-5)
+
+### 배경
+
+Epic #2686 Story A (CFP-2687) 가 `dev-process-event-v1`(신규 ADR-155 sibling) telemetry channel 을 신설한다. stop-event(numeric/enum/hash) · spawn-event(numeric aggregate) 는 rich content 를 마주한 적 없으나 dev-process-event 는 **프롬프트/diff/tool-call/findings/최종산출물 rich content** 를 evidence-blob-store 에 저장한다 = **net-new leak surface**(blob store). 본 Amendment 는 그 privacy 규약을 §결정 1/2/3 + Amd2 §D 에 attach 해 codify. 실 redaction fn/blob store = Phase 2(본 Story §8-§11), 본 Amendment = 정책 결정.
+
+### Amendment 내용
+
+**(A) §결정 1 always-on 비대칭 codify** — dev-process-event 는 §결정 1 opt-in default-false 를 **비대칭**으로 확정:
+- **wrapper-self dogfood scope = always-on** — codeforge family 자기 개발 계측이 Story 목적. always-on = **checkout-identity 파생**(consumer overlay 의 user-settable bool 아님). ADR-042 §결정 6 "wrapper dogfood always-on = Phase 2 follow-up" 를 CFP-2687 이 carrier.
+- **consumer 배포 scope = opt-in default-false 무약화** — ADR-064 §결정 7 extend-only. `telemetry.channels.dev_process_event: false` default. global `telemetry.enabled: false` 시 disabled(global gate inherit). **T-DPE-9**: consumer floor 하방 override 불가(always-on 이 consumer 로 전파 금지).
+- **INV-8 redaction-precedes-always-on(비협상 floor)**: always-on 이더라도 capture-time redaction 이 항상 선행 — always-on 이 redaction 을 **우회하지 못한다**.
+- **always-on 4중 bound**: (1) wrapper-self 한정(consumer opt-in-false) (2) capture ≠ exfiltration — blob host-local + 0-API + cross-host leak 금지 = **host 절대 미이탈**(VS Code/GitHub CLI telemetry 논쟁 본질 = 전송; host-local 미전송은 다른 위험 프로파일) (3) redaction-precedes-always-on floor (4) transparency notice 권고(기여자 대상 NOTICE).
+
+**(B) §결정 2 dev-process-event index tier 별도 channel allow-list** — dev-process-event 는 stop-event(18)·spawn-event(19)·self-context(6)와 **별도 channel allow-list**(SSOT = dev-process-event-v1.md §2, Phase 2). index tier = **enum / numeric / hash / 상관 ID(story/lane/defect/fix) / blob-ref / `emit_source`(enum {hook,agent}) only** — free-form content 본문 **0건**(T-INFO-8 구조적 차단, Deny-list no-op 되도록). rich content 는 evidence-blob-store 표면(redacted blob)으로만 도달. field 추가 = 본 §결정 2 Amendment 의무.
+
+**(C) §결정 3 Deny-list regex 6 → 7종 (경로 pattern 신규)** — dev-process rich content 는 로컬 파일 경로를 자주 포함(diff/tool-call) → 신규 7번째 pattern + 헤더/cloud-key 보강:
+
+| Pattern | 대상 | 비고 |
+|---|---|---|
+| (기존 6종) | API key/credential · GitHub PAT · fine-grained PAT · 주민번호 · Email · Hex≥32 | ADR-043 §결정 3 상속 |
+| **절대/home-prefixed 경로 (신규 7번째)** | `/home` · `/Users` · `/root` · Windows `C:\` · git-bash `/c/` prefix 경로만 redact | **repo-relative 경로는 보존**(diff 진단 신호 = public; 무차별 redact 시 §5.4 noise false-negative — 실패 원인 소실) |
+| Authorization / Cookie 헤더 | tool-call HTTP 헤더 dump | dev-process net-new |
+| cloud-key (gitleaks 차용) | AWS/GCP/Azure key pattern + entropy 임계 보강 | `source: github.com/gitleaks/gitleaks` |
+
+- **env dump · 자격증명 subprocess 출력 = capture 제외**(기본, blob 미도달).
+- **per-event-type redaction tier(SecurityArch D-2)**: prompt = 최고 tier(최고 compliance 위험) / diff·tool-call = 표준 / verdict·findings = 대체로 enum blob 불요(dissent 반영 — 계약 §redaction 서술).
+
+**(D) Amendment 2 §D 확장 — redacted-blob tier T-INFO-5 no-conflict 신규 표면** — 기존 Amd2 §D(spawn-event transcript content/path HARD invariant)와 no-conflict 인 **redacted-blob 표면** codify:
+- **INV-8a (hash-over-redacted, P0)**: redact(in-memory, 원본 disk 미접촉) → `blob_ref = sha256(REDACTED bytes)` **NEVER raw** → blob write(redacted). **T-DPE-2 hash-oracle(P0)**: hash-over-unredacted 는 index content-free 여도 `blob_ref` 가 secret confirmation oracle → hash-over-redacted 가 봉인.
+- **INV-8b (blob-before-index, P0)**: blob write → THEN index row(blob_ref). 역순 = dangling evidence chain.
+- **audit enum(AC-14)**: `redaction_applied`(bool) / `redaction_count`(int) / `redaction_rules_fired`(closed enum array). **T-DPE-8(P1)**: audit 에 매칭 secret **원문/hash 절대 미기록**(규칙명+횟수만 — audit 이 oracle 로 역전 방지). mandatory-on-fire.
+- **session_id = sha256만**(raw 금지 — append_stop_event.py:73 runtime raw session_id bug 미복사, spawn-event T-INFO-7 sha256 선례 답습).
+- **no-conflict 논증**: 기존 T-INFO-5(index content/path 미저장) 무손상 — index 는 여전히 content-free(blob-ref hash only), blob 은 redaction-후 산물. 2계층 분리로 anti-content invariant 와 rich-capture 화해(ADR-155 §결정 1).
+- **resource-safety honest-ceiling(★self-ref 8연속 방지 — CFP-2635/2646 재발)**: 계약 redaction 섹션에 "ReDoS-safe / DoS-guard / catastrophic-backtracking 0" **무증거 단정 금지**(리뷰 반증). born-safe bound(byte-cap + line-cap + parse-timeout)만 명시, "bounded degradation, 임의입력 무해 아님" 정직 천장. proof = Phase 2 SecurityTest execution-backed.
+
+### 근거
+
+- **§결정 1 이 이미 "future ledger 자동 inherit" 명문** — dev-process-event 는 그 named-future channel 의 확정(신규 privacy SSOT 신설 아님 — 대안 A reject 정합, 신규 privacy ADR 미신설. architectural SSOT = ADR-155, privacy 는 본 ADR-043 확장).
+- **MINOR 정합**(ADR-008 SemVer): additive channel allow-list + deny-regex 확장(6→7) + privacy invariant 강화(ratchet ↑) = backward-compat.
+- **net-new blob surface 의 정직 codify** — rich-content blob 은 stop/spawn 이 마주한 적 없는 leak surface. redaction-선행 + hash-over-redacted + blob-before-index 를 schema-level hard invariant 로 박제(ADR-119 정직 천장 — 무증거 안전 단정 금지).
+
+### 비-영향
+
+- §결정 1 opt-in default-false 기본 정책 무변경 — dev-process 는 **비대칭 확정**(wrapper always-on 추가, consumer default-false 무약화).
+- §결정 2 stop-event 18 / spawn-event 19 / self-context 6 field allow-list 무변경 (dev-process = 별도 channel allow-list).
+- §결정 3 기존 6 deny-regex pattern 무변경 (7번째 경로 pattern additive).
+- §결정 4/5 (sanitize SSOT / isolation) inherit — dev-process 자동 적용, 정책 자체 무변경.
+- Amendment 1/2/3 무변경. stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임(별도 follow-up).
