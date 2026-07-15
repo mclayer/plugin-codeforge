@@ -1,0 +1,115 @@
+{
+  "consumer_scope_partition": {
+    "consumer": {
+      "by_group": {},
+      "clock_anomaly_count": 0,
+      "closed_interval_count": 0,
+      "end_anchor_kind_counts": {
+        "final_artifact": 0,
+        "next_different_lane": 0,
+        "verdict": 0
+      },
+      "honesty_note": "lane residency = coarse(transition_point 부재 → 진입/PASS/재진입 6-point 미구분). wall-clock best-effort — host clock-adjust 시 negative/inflated 가능(negative → EXCLUDE + count). time-to-PASS 아님. forward-scan = per-story bounded degradation(임의 입력 무해 보장 아님).",
+      "interval_count": 0,
+      "label": "lane residency",
+      "metric": "cycletime",
+      "negative_duration_count": 0,
+      "open_interval_count": 0,
+      "residency_seconds": {
+        "count": 0,
+        "max_seconds": null,
+        "mean_seconds": null,
+        "min_seconds": null,
+        "sum_seconds": null
+      },
+      "unparseable_ts_entry_count": 0
+    },
+    "scope_unknown": {
+      "by_group": {},
+      "clock_anomaly_count": 0,
+      "closed_interval_count": 0,
+      "end_anchor_kind_counts": {
+        "final_artifact": 0,
+        "next_different_lane": 0,
+        "verdict": 0
+      },
+      "honesty_note": "lane residency = coarse(transition_point 부재 → 진입/PASS/재진입 6-point 미구분). wall-clock best-effort — host clock-adjust 시 negative/inflated 가능(negative → EXCLUDE + count). time-to-PASS 아님. forward-scan = per-story bounded degradation(임의 입력 무해 보장 아님).",
+      "interval_count": 0,
+      "label": "lane residency",
+      "metric": "cycletime",
+      "negative_duration_count": 0,
+      "open_interval_count": 0,
+      "residency_seconds": {
+        "count": 0,
+        "max_seconds": null,
+        "mean_seconds": null,
+        "min_seconds": null,
+        "sum_seconds": null
+      },
+      "unparseable_ts_entry_count": 0
+    },
+    "wrapper": {
+      "by_group": {},
+      "clock_anomaly_count": 0,
+      "closed_interval_count": 0,
+      "end_anchor_kind_counts": {
+        "final_artifact": 0,
+        "next_different_lane": 0,
+        "verdict": 0
+      },
+      "honesty_note": "lane residency = coarse(transition_point 부재 → 진입/PASS/재진입 6-point 미구분). wall-clock best-effort — host clock-adjust 시 negative/inflated 가능(negative → EXCLUDE + count). time-to-PASS 아님. forward-scan = per-story bounded degradation(임의 입력 무해 보장 아님).",
+      "interval_count": 0,
+      "label": "lane residency",
+      "metric": "cycletime",
+      "negative_duration_count": 0,
+      "open_interval_count": 0,
+      "residency_seconds": {
+        "count": 0,
+        "max_seconds": null,
+        "mean_seconds": null,
+        "min_seconds": null,
+        "sum_seconds": null
+      },
+      "unparseable_ts_entry_count": 0
+    }
+  },
+  "generated_at_kst": "2026-07-16T02:32:01+09:00",
+  "measured_at": null,
+  "metric": "cycletime",
+  "overall": {
+    "by_group": {},
+    "clock_anomaly_count": 0,
+    "closed_interval_count": 0,
+    "end_anchor_kind_counts": {
+      "final_artifact": 0,
+      "next_different_lane": 0,
+      "verdict": 0
+    },
+    "honesty_note": "lane residency = coarse(transition_point 부재 → 진입/PASS/재진입 6-point 미구분). wall-clock best-effort — host clock-adjust 시 negative/inflated 가능(negative → EXCLUDE + count). time-to-PASS 아님. forward-scan = per-story bounded degradation(임의 입력 무해 보장 아님).",
+    "interval_count": 0,
+    "label": "lane residency",
+    "metric": "cycletime",
+    "negative_duration_count": 0,
+    "open_interval_count": 0,
+    "residency_seconds": {
+      "count": 0,
+      "max_seconds": null,
+      "mean_seconds": null,
+      "min_seconds": null,
+      "sum_seconds": null
+    },
+    "unparseable_ts_entry_count": 0
+  },
+  "schema_note": "dev-process-cycletime-v1 (de-facto local KPI schema, NOT inter-plugin contract)",
+  "stats": {
+    "duplicates_collapsed": 0,
+    "honesty_note": "read-time dedup 은 event_id 우선(부재 시 row-hash) best-effort — JSONL write-time UNIQUE 부재. rows_total/rows_deduped/duplicates_collapsed = 관측치, exact-count/guaranteed-unique 아님. 본 port 는 raw rows 만 — 집계(B)/verdict(C) 미산출.",
+    "rows_deduped": 0,
+    "rows_total": 0
+  },
+  "status": "pending",
+  "tier_honesty": [
+    "[measurement] tier STRICT — dev-process 지표는 관측치일 뿐 인과/verdict 아님. measured-0 ≠ dormant(미측정). exact-count/guaranteed-unique 주장 금지(port 관측치 상속).",
+    "substrate gap → honest-degrade: transition_point/anchor_id/root_cause_class/origin-lane 부재. cycletime=coarse residency, should-have-caught=advisory heuristic, pattern_count=uncomputable(default), token-cost=honest-null(3-gap). null+uncomputable_reason 로 표기, fabricated 0 금지."
+  ]
+}
