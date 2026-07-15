@@ -21,7 +21,7 @@ name: run-hook-crlf-test
 #   단방향만 walk 하므로 wrapper-self-only workflow 는 자동 parity-safe (CONSUMER_ONLY_WORKFLOWS
 #   등재·template copy 모두 불요). selftest-execution-liveness enroll: l2_full_scope=N/A.
 #
-# non-required tier: branch protection required contexts(wrapper 6-tuple) 미등재 (advisory).
+# non-required tier: branch protection required contexts 미등재 (advisory).
 #   ADR-060 evidence-gate (PR >= 20 + failure 0) 후 승격 후보.
 
 on:

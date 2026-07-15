@@ -9,7 +9,7 @@
 # dry-run 전용 (gh 미호출) → token secret 불요, side-effect 0 (보안 경계 안전).
 # windows-latest 기본 shell = pwsh (PowerShell Core 7) — bash 명시 불요.
 #
-# non-required tier: branch protection required contexts (wrapper 6-tuple) 미등재 (advisory).
+# non-required tier: branch protection required contexts 미등재 (advisory).
 #   ADR-060 evidence-gate (PR >= 20 + failure 0) 후 승격 후보.
 
 name: windows bootstrap smoke

@@ -6,7 +6,7 @@ name: adr-uniqueness-check
 # 검증 축 = filename 번호 ↔ frontmatter adr_number ↔ ADR-RESERVATION row 3-way 정합
 #   (dual-key filename∧frontmatter + numeric 정규화 zero-pad/quoted 흡수 + 구조적 파싱, EC-6).
 #
-# 게이트 배치(§8.7): warning tier / non-required — branch protection 6-tuple 무변경
+# 게이트 배치(§8.7): warning tier / non-required — branch protection required contexts 무변경
 #   (ADR-060 warning-tier framework / ADR-133 §결정 6 mechanical_enforcement_actions: []).
 #   continue-on-error → 발견을 surface 하되 required 게이트 무차단.
 # wrapper-self 전용 (consumer red 회피 — reconcile-overlay-workflow-channel-test 선례).

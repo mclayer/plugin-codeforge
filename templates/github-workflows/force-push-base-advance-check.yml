@@ -30,7 +30,7 @@ name: force-push-base-advance-check
 #   write (Story §1 verbatim + Change Plan §5 row 4 양쪽 명시, responsibility-topology-check.yml 답습).
 #   invariant-check.yml parity loop 이 templates → .github 단방향 검증 (byte-identical = drift 0).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: detect job 은
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단). warning-tier: detect job 은
 #   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). blocking 승격 = recurrence-driven
 #   별 evidence-gated carrier (ADR-060 §결정 19 / ADR-135 §결정 5 — 본 Story 승격 안 함).
 

@@ -33,7 +33,7 @@ name: css-lint
 #   런타임 활성 authoritative, whitelist 는 배포 eligibility (ADR-136 결정2 2-layer 분리).
 #
 # warning-tier 첫 도입(ADR-130 §결정6): continue-on-error: true. day-1 required 금지.
-#   branch protection 6-tuple 무변경. repo 7일 green + unique job name 충족 후 required 승격은
+#   branch protection required contexts 무변경. repo 7일 green + unique job name 충족 후 required 승격은
 #   별 follow-up Story(wave rollout, ADR-136 결정5).
 #
 # supply-chain 비협상(ADR-136 결정11 SecurityArch M1 — P0 dissent): stylelint /

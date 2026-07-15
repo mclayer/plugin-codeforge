@@ -462,3 +462,15 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "dev-process 지표 aggregate self-test(aggregator embedded --self-test AC-4~23 + honest-degrade lint --selftest NC1~NC10 discriminating negative-control + lint check real query_with_stats round-trip, mock-seam 금지) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, record-only batch 집계 판별력 결박: measured-0≠dormant/over-claim 부재/honest-null/no-blob-deref/idempotency +0/order-preserving negative_duration; 검출력=G3 미강제, presence ≠ truth)."
+
+  # ── CFP-2697 (Epic #2696 canary artifact D6, Change Plan §8.4/AC-20) — decision-record disposition oracle + reference-integrity guard self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 43 → 44 (신규 self-test enroll). self-test + born-alive smoke 실행 채널 =
+  #   .github/workflows/decision-record-disposition-test.yml (byte-identical template pair, wrapper-self-only, non-required day-1 hard-fail).
+  - self_test: "tests/scripts/test_check-decision-record-disposition.sh"
+    execution_channel: "workflow:decision-record-disposition-test.yml:decision-record-disposition"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "정적 disposition oracle(3-축 ablation load-bearing) + reference-integrity guard(4-check conjunction) mutation-kill self-test — soak(G2)·DAST(G5)·real-render(§8.7) runtime 축 disjoint. 판별력 = 5-fixture replay + M1/M2/M3 축 flip + M4 perturbation + M5 conjunction."

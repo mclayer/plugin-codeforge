@@ -14,7 +14,7 @@ name: adr-reservation-claim-test
 #   - AC-7 양-컨텍스트 fixture: wrapper(archive/adr) ∥ consumer(docs/adr)
 #
 # 신규 workflow (CFP-2491 Phase 2 구현체). wrapper-self 전용 (consumer red 회피 — CFP-2437 선례).
-# non-required (ADR-133 §결정6 mechanical_enforcement_actions: [] 정합, 6-tuple 무변경).
+# non-required (ADR-133 §결정6 mechanical_enforcement_actions: [] 정합, required contexts 무변경).
 
 on:
   pull_request:
@@ -37,7 +37,7 @@ jobs:
         run: bash tests/scripts/test_adr-reservation-atomic-claim.sh
       - name: Run ADR-RESERVATION stale-reclaim Python smoke test (test-escape 폐쇄 — 구현리뷰 P0 carry F1)
         run: bash tests/scripts/test_adr-reservation-stale-reclaim.sh
-      # CFP-2563 Phase 2 — dead-test 방지: 신규 3 test .sh CI 배선 (non-required 유지, 6-tuple 무변경).
+      # CFP-2563 Phase 2 — dead-test 방지: 신규 3 test .sh CI 배선 (non-required 유지, required contexts 무변경).
       - name: Run 3-way ADR uniqueness lint self-test (CFP-2563 — born-valid RED→GREEN, mutation-kill mu1~mu3 + INV-12 synthetic lapse)
         run: bash tests/scripts/test_check-adr-uniqueness-3way.sh
       - name: Run ADR-RESERVATION 15-row backfill idempotency/integrity test (CFP-2563 — INV-13~16, mutation-kill mu4~mu5)

@@ -15,7 +15,7 @@ name: deferral-carrier-declared
 #   invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일은 미검출
 #   (CONSUMER_ONLY_WORKFLOWS 등록 불요 — deferred-followup-reconcile.yml 동형 firsthand 확인).
 #
-# Non-required workflow (branch protection 6-tuple 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
+# Non-required workflow (branch protection required contexts 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
 # CFP-2594 Stage 3 flip: lint job 은 NEW 검출 시 job fail(red-X) 로 surface (continue-on-error 제거).
 #   non-required context 라 admin 우회 구조적 가능 (honest ceiling — hard block 미주장).
 # bypass label 미신설 (D9 — attack surface 최소화, advisory 게이트라 escape valve 불요).

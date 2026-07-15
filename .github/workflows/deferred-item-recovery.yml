@@ -7,7 +7,7 @@ name: deferred-item-recovery
 #
 # 구조:
 #   - warning-tier: lint job 검출 시 경고만 (continue-on-error, merge 비차단).
-#   - branch protection 6-tuple 무변경 (required check 신설 0 — ADR-127 ratchet).
+#   - branch protection required contexts 무변경 (required check 신설 0 — ADR-127 ratchet).
 #   - cross-repo PAT (CODEFORGE_CROSS_REPO_PAT) graceful skip: PAT 부재 시 스크립트가
 #     exit 0 fail-safe 하므로 별도 if-conditional 불요 (패턴: retro-mandatory.yml L289-292).
 #   - retro 파일 후보 부재 시 graceful (스크립트가 SETUP exit 2 안 나게, 후보 0개면 skip).

@@ -16,7 +16,7 @@ name: self-context-telemetry-allowlist-lint
 # single-root (.github only): governance registry(§2.1 allow-list policy) 정합 검사라 .github-only 정합
 #   (templates/github-workflows mirror 미운용 — spawn-event-schema-lint 동형). ADR-005 byte-parity scope 외.
 #
-# Non-required workflow (branch protection 6-tuple 무변경). warning-tier: lint job = continue-on-error
+# Non-required workflow (branch protection required contexts 무변경). warning-tier: lint job = continue-on-error
 #   비차단. discriminating+liveness test job = continue-on-error 없음 (회귀 시 exit 1 차단).
 
 on:
