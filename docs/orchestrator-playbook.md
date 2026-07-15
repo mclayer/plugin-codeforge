@@ -3840,11 +3840,11 @@ Phase 2 PR merged (14:23, 이 단계 37분 / 세션 시작부터 1h 12m)
 
 ---
 
-## 15. Observability channel boundary (ADR-042 §결정 1 + Amendment 1, CFP-283 / CFP-2393)
+## 15. Observability channel boundary (ADR-042 §결정 1 + Amendment 1 + Amendment 2, CFP-283 / CFP-2393 / CFP-2687)
 
 Codeforge observability stack 의 channel 별도 책임 분리 normative SSOT. Tier 1 (ephemeral) / Tier 2 (committed lane-coarse) / Tier 3 (persistent measurement) 으로 stratify, 각 channel 의 Granularity / Storage / Owner / Lifecycle 명시 — boundary race + double-count 차단 invariant.
 
-### 15.1 8-channel boundary table
+### 15.1 9-channel boundary table
 
 | Channel | Tier | Granularity | Storage | Owner | Lifecycle |
 |---|---|---|---|---|---|
@@ -3856,19 +3856,21 @@ Codeforge observability stack 의 channel 별도 책임 분리 normative SSOT. T
 | **post-merge-counters.jsonl** ([ADR-026](../archive/adr/ADR-026-post-merge-automation.md)) | 3 persistent | post-merge action outcome | git commit | post-merge-followup.yml | persistent (append-only, opt-in) |
 | **stop-event-v1 ledger** ([ADR-042 §결정 2](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md), [stop-event-v1](inter-plugin-contracts/stop-event-v1.md)) | 3 persistent | discrete stop event | hot tier (sqlite/JSONL) + cold tier (markdown) | Orchestrator-owned delegate subagent | hot 7-30d / cold persistent / opt-in default false |
 | **spawn-event-v1 ledger** ([ADR-042 Amendment 1](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md), [spawn-event-v1](inter-plugin-contracts/spawn-event-v1.md)) | 3 persistent | per-agent spawn (subagent 1개 = row 1개) | hot tier JSONL (`.claude/ledger/spawn-event.jsonl`) | Orchestrator-owned delegate subagent | persistent append-only / opt-in default false |
+| **dev-process-event-v1 ledger** ([ADR-042 Amendment 2](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md) / [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md), [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md)) | 3 persistent | typed dev-process event (8 type: lane전이/prompt/tool-call/diff/verdict/findings/FIX전이/최종산출물) | 2계층 — hot JSONL index (`.claude/ledger/dev-process-event.jsonl`) + evidence-blob-store (content-addressed redacted blob) | Orchestrator-owned delegate (Port B agent-emit) + hook-adapter (Port A) | 3-tier hot/warm/cold / wrapper always-on · consumer opt-in default false |
 
-> 위 표 = 8 channel (ADR-042 §결정 1 + Amendment 1 — spawn-event-v1 8번째). channel 추가 시 §15.3 invariant.
+> 위 표 = 9 channel (ADR-042 §결정 1 + Amendment 1 — spawn-event-v1 8번째 + Amendment 2 / ADR-155 — dev-process-event-v1 9번째). channel 추가 시 §15.3 invariant.
 
-### 15.2 Boundary 차단 invariant (4)
+### 15.2 Boundary 차단 invariant (5)
 
 - **TodoWrite ↔ stop-event-v1 boundary**: TodoWrite 호출은 stop-event-v1 ledger record 대상 아님 ([ADR-038](../archive/adr/ADR-038-progress-visualization-todowrite.md) standalone 정당화 — meta-cognitive scratchpad, file system / GitHub state mutation 미발화). boundary 차단.
 - **§14 ↔ spawn-event-v1 boundary**: spawn-event-v1 신설 land ([ADR-042 Amendment 1](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md), CFP-2393 — 구 §결정 3 보류 supersede). §14 Lane Evidence(lane-coarse) 와 spawn-event(per-agent fine) 는 disjoint granularity. **§14↔spawn-event dedup script 신설 의무** (§14 row count 와 spawn-event row count 정합 검증 — read-time/aggregate 책임, append-time 아님) = Phase 2 precondition AC.
 - **§10 ↔ stop-event-v1 boundary**: stop-event-v1 의 `reason_class: policy_violation` row 가 §10 FIX Ledger row append 의 proxy. dedup 책임 = aggregate script (Phase 2). cold tier 별도 file 신설 안 함 — §10 가 cold tier proxy.
 - **§14.12 ↔ spawn-event-v1 boundary (4번째 — CFP-2393)**: playbook §14.12 "Spawn-level token telemetry mini-table"(Tier-1 ephemeral, `.claude-work/progress/<KEY>.md`, gitignored, quota 분석) 와 spawn-event-v1(Tier-3 persistent, per-agent accounting + replay) 는 **역할 분리(role separation)이지 double-count 아님**. §14.12 = quota-only(예산 대비 실적), spawn-event = 회계+replay(persistent). spawn-event land 이후에도 §14.12 는 Tier-1 quota-only 로 잔존(deprecate 안 함). **cross-write 금지** — 한쪽이 다른 쪽 read/mirror 금지 (50ms ceiling + cross-channel coupling 회피). SSOT = [spawn-event-v1 §1.1](inter-plugin-contracts/spawn-event-v1.md).
+- **dev-process-event-v1 ↔ 기존 accounting channel boundary (5번째 — CFP-2687 / [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md) / [ADR-042 Amendment 2](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md))**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) **허용** / accounting payload re-record **금지**. stop-event / spawn-event / §10 FIX Ledger / *-output 계약의 accounting 을 dev-process 가 복제하면 SoT 이중화(ADR-155 §결정 2 / §5.4). dev-process 는 "무엇이 있었나(어떤 stop / spawn / verdict / FIX 가 났나)"를 `event_id` / `fix_id` 상관 ID 로 참조(JOIN)하되 그 payload 를 **재기록하지 않는다**(1 §10 row ↔ 1..N `fix_id` 상관만). SSOT = [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md).
 
 ### 15.3 채널 추가 invariant (Tier 3 measurement channel)
 
-신규 measurement channel (Tier 3) 추가 = [ADR-042](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md) amendment 의무 (spawn-event-v1 = Amendment 1 선례). 본 closed enumeration 이 future "X tool 호출도 ledger record" 류 압박을 차단 — 모두 8-channel 의 어느 하나로 routing 또는 ADR amendment 발의.
+신규 measurement channel (Tier 3) 추가 = [ADR-042](../archive/adr/ADR-042-codeforge-measurement-channel-architecture.md) amendment 의무 (spawn-event-v1 = Amendment 1 선례 / dev-process-event-v1 = Amendment 2 + [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md) 선례). 본 closed enumeration 이 future "X tool 호출도 ledger record" 류 압박을 차단 — 모두 9-channel 의 어느 하나로 routing 또는 ADR amendment 발의.
 
 ### 15.4 Privacy / opt-in 정책 SSOT
 
