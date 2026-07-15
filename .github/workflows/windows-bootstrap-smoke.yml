@@ -115,3 +115,4 @@ jobs:
 
           if ($fail -ne 0) { Write-Host "AC-4 FAIL"; exit 1 }
           Write-Host "AC-4 PASS (CRLF banner 0 / LF banner>0 대조 / no-arg guard)"
+          exit 0
