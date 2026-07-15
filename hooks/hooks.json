@@ -77,6 +77,28 @@
             "async": false
           }
         ]
+      },
+      {
+        "matcher": "Agent|Bash|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pretooluse-dev-process-capture",
+            "async": false
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" posttooluse-dev-process-capture",
+            "async": false
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# codeforge — PostToolUse hook (NET-NEW surface): dev-process-event-v1 capture (Port A) — CFP-2687 Phase 2 D3
+#
+# 책임: tool_call 결과 / diff(편집)를 dev-process-event-v1 로 record-only capture(5 noise-discard 적용).
+#       thin wrapper — 실 로직 = 동거 posttooluse-dev-process-capture.py → scripts/lib SSOT.
+#       ★이 plugin 최초의 PostToolUse hook(이전 PostToolUse 등록 0).
+#
+# 정적 properties (ADR-115 §결정 5 record-only / non-blocking):
+#   (a) set -uo pipefail + trap 'exit 0' ERR — 어떤 fail 도 block 금지(PostToolUse 는 tool 완료 후이나 정합 유지)
+#   (b) filesystem touch 0 (capture 는 .py 안 primitive 가)
+#   (c) network call 0
+#   (d) stdout 미방출(>/dev/null) — hook 결정 protocol 무오염
+#   (e) 모든 경로 exit 0
+#
+# NON-user-settable(T-DPE-9): 활성 판정 = D4 gate 소관. 본 wrapper 에 bypass env 없음.
+# Graceful degradation: python/lib 부재 · parse 실패 → 조용히 exit 0.
+
+set -uo pipefail
+trap 'exit 0' ERR
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0
+fi
+
+"$PY" "$DIR/posttooluse-dev-process-capture.py" >/dev/null 2>&1 || true
+
+exit 0

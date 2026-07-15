@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# codeforge — PreToolUse hook: dev-process-event-v1 capture (Port A) — CFP-2687 Phase 2 D2
+#
+# 책임: prompt_input(Agent spawn) / tool_call(그 외) 을 dev-process-event-v1 로 record-only capture.
+#       thin wrapper — 실 로직 = 동거 pretooluse-dev-process-capture.py → scripts/lib SSOT.
+#
+# 정적 properties (ADR-115 §결정 5 record-only / non-blocking):
+#   (a) set -uo pipefail + trap 'exit 0' ERR — 어떤 fail 도 tool call block 금지
+#   (b) filesystem touch 0 (capture 는 .py 안 append primitive 가; 본 wrapper 는 stdin→python 만)
+#   (c) network call 0
+#   (d) stdout 미방출(>/dev/null) — PreToolUse 결정 protocol(updatedInput/permissionDecision) 무오염
+#   (e) 모든 경로 exit 0 (python 부재/오류/crash 포함 — always-on 이 tool call 을 절대 차단 안 함)
+#
+# NON-user-settable(T-DPE-9): 활성 판정은 scripts/lib/dev_process_capture_activation.py(D4) 소관 —
+#   본 wrapper 에 bypass env 없음(wrapper always-on 은 user-settable 아님). consumer opt-in 도 D4 gate.
+#
+# Graceful degradation: python 부재 / lib 부재 / parse 실패 → 조용히 exit 0(record 없음, block 없음).
+
+set -uo pipefail
+trap 'exit 0' ERR
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → fail-open(record-only, tool call 차단 안 함)
+fi
+
+# stdin(PreToolUse JSON) → python. stdout/stderr 억제(hot-path 무소음 + 결정 protocol 무오염).
+"$PY" "$DIR/pretooluse-dev-process-capture.py" >/dev/null 2>&1 || true
+
+exit 0
