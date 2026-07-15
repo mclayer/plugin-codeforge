@@ -424,3 +424,26 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "hard-gate self-verification presence/shape 메타-게이트 재귀 self-test(AC-7 self-application, TC-CLEAN-PASS + M1-M6 positive-leak + LIVE ceiling-honesty) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, presence/shape 판별력 결박: positive-control/2-exit-shape/empty-target honest-degrade/unknown-input fail-closed/identity-probe/3-way taxonomy/honest-ceiling presence + M1-M6 mutation-kill + DoS 회귀가드; 검출 sufficiency=undecidable review-tier 미강제, presence ≠ truth)."
+
+  # ?????? CFP-2702 (ADR-038 Amendment 6) ??? run-hook.cmd CRLF exec-first ?뤃由ш??濡? ?쉶洹? self-test 2醫? (dedicated workflow, ubuntu-latest, alive) ??????
+  # ?씤踰ㅽ넗由? bijection: tests/scripts/*.sh 41 ?넂 43 (?떊洹? self-test 2 enroll). AC-5/AC-6 ?쉶洹?.
+  # ?쁾execution_channel = ubuntu-latest Linux ?떆?뒪?뀥 bash (msys/Git Bash 湲덉?? ??? CR-愿???? 留덉뒪?궧?쑝濡?
+  #   AC-5 discriminating(援? heredoc-CRLF ?넂 silent no-op) false-GREEN ?쉶?뵾, Story 짠2.2 / 짠6 Fact 2).
+  #   AC-4(cmd.exe 諛곕꼫 梨꾨꼸)?뒗 windows-bootstrap-smoke.yml ?떞?떦 = Linux self-test corpus 諛? (disjoint).
+  - self_test: "tests/scripts/test-run-hook-cmd-unix-exec.sh"
+    execution_channel: "workflow:run-hook-crlf-test.yml:run-hook-crlf-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "run-hook.cmd exec-first ?뤃由ш??濡? CRLF-safe Unix dispatch ?쉶洹? self-test (CR-誘쇨컧 Linux ?떆?뒪?뀥 bash) ??? soak=G2쨌real-render=짠8.7쨌DAST=G5 runtime 異? disjoint (wrapper-self plugin-meta-na, hook wrapper ?젙?쟻 dispatch 諛곗꽑 ?쉶洹?; discriminating: exec ?꽦怨? happy + CR-leak-0 + 援? heredoc-CRLF silent-fail RED[CR-誘쇨컧 gated] + #-媛??뱶 ?젣嫄? ?씤?옄 ?늻異? RED[CR-誘쇨컧 gated] + ?씤?옄 ?젙?솗 ?쟾?떖 ?젙諛??룄)."
+
+  - self_test: "tests/scripts/test-gitattributes-cmd-crlf.sh"
+    execution_channel: "workflow:run-hook-crlf-test.yml:run-hook-crlf-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "git eol=crlf 諛고룷 梨꾨꼸(checkout/archive) CRLF ?궛異? override ?쉶洹? self-test ??? soak=G2쨌real-render=짠8.7쨌DAST=G5 runtime 異? disjoint (wrapper-self plugin-meta-na, git attr 諛고룷 怨꾩빟 ?젙?쟻 寃?利?; discriminating: override ?쐣 梨꾨꼸 CR>0 vs override ?꽒 ???議? 梨꾨꼸 CR==0 load-bearing + blob CR=0 梨꾨꼸-vs-blob ?젙諛??룄 + .bat override ?늻?씫 ?쉶洹?媛??뱶)."
