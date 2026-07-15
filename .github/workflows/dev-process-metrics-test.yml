@@ -1,0 +1,51 @@
+name: dev-process-metrics-test
+# CFP-2688 Phase 2 / Epic #2686 Story B / ADR-156 — dev-process 지표 aggregate self-test 의 CI 실행 채널.
+#   B(집계) 산출의 honest-degrade/산식-parity 불변식을 execution-backed 로 강제:
+#   aggregator embedded --self-test(AC-4~23 fixtures) + honest-degrade lint --selftest(discriminating
+#   negative-control NC1~NC10) + lint check(real query_with_stats round-trip, mock-seam 금지)를
+#   tests/scripts/test_aggregate-dev-process-event.sh 가 exit-code gated 로 구동한다.
+#
+# 정직 천장 (ADR-119 / Change Plan §8.6): 본 채널은 산출 관측치의 honest-degrade 불변식(measured-0≠
+#   dormant / over-claim 부재 / honest-null / no-blob-deref / idempotency)을 execution-backed 로 검사한다.
+#   검출력(결함을 실제로 잡는가)의 완전 봉인은 주장하지 않는다(review-tier · G3 disjoint).
+#
+# wrapper-self-only (consumer red 회피 — selftest-execution-liveness-test.yml / ac-traceability-self-test.yml
+#   / resource-safety-claim-proof-presence.yml 선례): job-level `if: github.repository ==
+#   'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행(consumer 는 scripts/lib dev-process 부재 →
+#   job skip = inert). ADR-130 job-level `if:` graceful no-op 정합. NO path-filter(required
+#   permanent-pending 함정 회피) / NO job-level hashFiles(born-invalid 재발 금지).
+#
+# .github-only (templates/github-workflows copy 미운용 — wrapper-self-only self-test 채널). invariant-check
+#   Workflow parity step 은 templates/*.yml → .github copy 만 강제(역방향 무강제) → .github-only 무플래그.
+#   inventory l2_full_scope=N/A(실행 scope 자연 N/A, workflow byte-identical parity 는 invariant-check 소관).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-151 §결정5 모델): self-test/lint 실패 = job red
+#   ("측정이 살아있음"을 검증하는 채널이 hollow 로 새지 않도록 실패를 삼키지 않는다).
+# non-required (branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 신규 required context 0).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  dev-process-metrics-test:
+    name: dev-process-metrics-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run dev-process aggregate self-test wrapper (aggregator --self-test + lint --selftest + real e2e, day-1 hard-fail)
+        run: bash tests/scripts/test_aggregate-dev-process-event.sh

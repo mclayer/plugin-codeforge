@@ -1,0 +1,95 @@
+{
+  "consumer_scope_partition": {
+    "consumer": {
+      "attribution_counts": {},
+      "capture_subject_counts": {
+        "gate": 0,
+        "lane": 0,
+        "undetermined": 0
+      },
+      "defect_finding_rows": 0,
+      "honesty_note": "capture_subject = review-responsibility lane↔mechanism 근사(capture-mechanism field 부재) — 미매핑 detecting_lane → undetermined(honest-degrade). should-have-caught = advisory heuristic (origin/expected-lane substrate 부재 → 기대 lane ground-truth 단정 금지). time_to_detection=unattributed → uncomputable. 외부 매핑(DRE/PCE)은 origin_lane fallible estimate.",
+      "metric": "defect-attribution",
+      "non_ambient_defect_rows": 0,
+      "review_lane_denominator": 0,
+      "should_have_caught": {
+        "by_detecting_lane": {},
+        "computable_count": 0,
+        "label": "advisory heuristic — NOT ground-truth expected-lane",
+        "unattributed_uncomputable_count": 0
+      }
+    },
+    "scope_unknown": {
+      "attribution_counts": {},
+      "capture_subject_counts": {
+        "gate": 0,
+        "lane": 0,
+        "undetermined": 0
+      },
+      "defect_finding_rows": 0,
+      "honesty_note": "capture_subject = review-responsibility lane↔mechanism 근사(capture-mechanism field 부재) — 미매핑 detecting_lane → undetermined(honest-degrade). should-have-caught = advisory heuristic (origin/expected-lane substrate 부재 → 기대 lane ground-truth 단정 금지). time_to_detection=unattributed → uncomputable. 외부 매핑(DRE/PCE)은 origin_lane fallible estimate.",
+      "metric": "defect-attribution",
+      "non_ambient_defect_rows": 0,
+      "review_lane_denominator": 0,
+      "should_have_caught": {
+        "by_detecting_lane": {},
+        "computable_count": 0,
+        "label": "advisory heuristic — NOT ground-truth expected-lane",
+        "unattributed_uncomputable_count": 0
+      }
+    },
+    "wrapper": {
+      "attribution_counts": {},
+      "capture_subject_counts": {
+        "gate": 0,
+        "lane": 0,
+        "undetermined": 0
+      },
+      "defect_finding_rows": 0,
+      "honesty_note": "capture_subject = review-responsibility lane↔mechanism 근사(capture-mechanism field 부재) — 미매핑 detecting_lane → undetermined(honest-degrade). should-have-caught = advisory heuristic (origin/expected-lane substrate 부재 → 기대 lane ground-truth 단정 금지). time_to_detection=unattributed → uncomputable. 외부 매핑(DRE/PCE)은 origin_lane fallible estimate.",
+      "metric": "defect-attribution",
+      "non_ambient_defect_rows": 0,
+      "review_lane_denominator": 0,
+      "should_have_caught": {
+        "by_detecting_lane": {},
+        "computable_count": 0,
+        "label": "advisory heuristic — NOT ground-truth expected-lane",
+        "unattributed_uncomputable_count": 0
+      }
+    }
+  },
+  "generated_at_kst": "2026-07-16T02:32:01+09:00",
+  "measured_at": null,
+  "metric": "defect-attribution",
+  "overall": {
+    "attribution_counts": {},
+    "capture_subject_counts": {
+      "gate": 0,
+      "lane": 0,
+      "undetermined": 0
+    },
+    "defect_finding_rows": 0,
+    "honesty_note": "capture_subject = review-responsibility lane↔mechanism 근사(capture-mechanism field 부재) — 미매핑 detecting_lane → undetermined(honest-degrade). should-have-caught = advisory heuristic (origin/expected-lane substrate 부재 → 기대 lane ground-truth 단정 금지). time_to_detection=unattributed → uncomputable. 외부 매핑(DRE/PCE)은 origin_lane fallible estimate.",
+    "metric": "defect-attribution",
+    "non_ambient_defect_rows": 0,
+    "review_lane_denominator": 0,
+    "should_have_caught": {
+      "by_detecting_lane": {},
+      "computable_count": 0,
+      "label": "advisory heuristic — NOT ground-truth expected-lane",
+      "unattributed_uncomputable_count": 0
+    }
+  },
+  "schema_note": "dev-process-defect-attribution-v1 (de-facto local KPI schema, NOT inter-plugin contract)",
+  "stats": {
+    "duplicates_collapsed": 0,
+    "honesty_note": "read-time dedup 은 event_id 우선(부재 시 row-hash) best-effort — JSONL write-time UNIQUE 부재. rows_total/rows_deduped/duplicates_collapsed = 관측치, exact-count/guaranteed-unique 아님. 본 port 는 raw rows 만 — 집계(B)/verdict(C) 미산출.",
+    "rows_deduped": 0,
+    "rows_total": 0
+  },
+  "status": "pending",
+  "tier_honesty": [
+    "[measurement] tier STRICT — dev-process 지표는 관측치일 뿐 인과/verdict 아님. measured-0 ≠ dormant(미측정). exact-count/guaranteed-unique 주장 금지(port 관측치 상속).",
+    "substrate gap → honest-degrade: transition_point/anchor_id/root_cause_class/origin-lane 부재. cycletime=coarse residency, should-have-caught=advisory heuristic, pattern_count=uncomputable(default), token-cost=honest-null(3-gap). null+uncomputable_reason 로 표기, fabricated 0 금지."
+  ]
+}

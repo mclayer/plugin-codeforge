@@ -1,0 +1,63 @@
+{
+  "anchor_id": null,
+  "consumer_scope_partition": {
+    "consumer": {
+      "anchor_id": null,
+      "bucket_unit": "date_utc",
+      "honesty_note": "observational time-series only — forecast/prediction/projection 필드 부재(negative control). pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, edge 아님). §D-9 feed = producer-defined, currently uncomputable-by-substrate. escalation ACTION 미산출(B=producer, PMOAgent=decider — INV-B3). within-scope only(cross-scope union 금지).",
+      "metric": "trend",
+      "pattern_count": null,
+      "pattern_status": "uncomputable_missing_key",
+      "root_cause_class": null,
+      "time_series": {}
+    },
+    "scope_unknown": {
+      "anchor_id": null,
+      "bucket_unit": "date_utc",
+      "honesty_note": "observational time-series only — forecast/prediction/projection 필드 부재(negative control). pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, edge 아님). §D-9 feed = producer-defined, currently uncomputable-by-substrate. escalation ACTION 미산출(B=producer, PMOAgent=decider — INV-B3). within-scope only(cross-scope union 금지).",
+      "metric": "trend",
+      "pattern_count": null,
+      "pattern_status": "uncomputable_missing_key",
+      "root_cause_class": null,
+      "time_series": {}
+    },
+    "wrapper": {
+      "anchor_id": null,
+      "bucket_unit": "date_utc",
+      "honesty_note": "observational time-series only — forecast/prediction/projection 필드 부재(negative control). pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, edge 아님). §D-9 feed = producer-defined, currently uncomputable-by-substrate. escalation ACTION 미산출(B=producer, PMOAgent=decider — INV-B3). within-scope only(cross-scope union 금지).",
+      "metric": "trend",
+      "pattern_count": null,
+      "pattern_status": "uncomputable_missing_key",
+      "root_cause_class": null,
+      "time_series": {}
+    }
+  },
+  "generated_at_kst": "2026-07-16T02:32:01+09:00",
+  "measured_at": null,
+  "metric": "trend",
+  "overall": {
+    "anchor_id": null,
+    "bucket_unit": "date_utc",
+    "honesty_note": "observational time-series only — forecast/prediction/projection 필드 부재(negative control). pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, edge 아님). §D-9 feed = producer-defined, currently uncomputable-by-substrate. escalation ACTION 미산출(B=producer, PMOAgent=decider — INV-B3). within-scope only(cross-scope union 금지).",
+    "metric": "trend",
+    "pattern_count": null,
+    "pattern_status": "uncomputable_missing_key",
+    "root_cause_class": null,
+    "time_series": {}
+  },
+  "pattern_count": null,
+  "pattern_status": "uncomputable_missing_key",
+  "root_cause_class": null,
+  "schema_note": "dev-process-trend-v1 (de-facto local KPI schema, NOT inter-plugin contract)",
+  "stats": {
+    "duplicates_collapsed": 0,
+    "honesty_note": "read-time dedup 은 event_id 우선(부재 시 row-hash) best-effort — JSONL write-time UNIQUE 부재. rows_total/rows_deduped/duplicates_collapsed = 관측치, exact-count/guaranteed-unique 아님. 본 port 는 raw rows 만 — 집계(B)/verdict(C) 미산출.",
+    "rows_deduped": 0,
+    "rows_total": 0
+  },
+  "status": "pending",
+  "tier_honesty": [
+    "[measurement] tier STRICT — dev-process 지표는 관측치일 뿐 인과/verdict 아님. measured-0 ≠ dormant(미측정). exact-count/guaranteed-unique 주장 금지(port 관측치 상속).",
+    "substrate gap → honest-degrade: transition_point/anchor_id/root_cause_class/origin-lane 부재. cycletime=coarse residency, should-have-caught=advisory heuristic, pattern_count=uncomputable(default), token-cost=honest-null(3-gap). null+uncomputable_reason 로 표기, fabricated 0 금지."
+  ]
+}

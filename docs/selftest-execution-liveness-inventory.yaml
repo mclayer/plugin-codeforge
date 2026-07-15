@@ -448,3 +448,17 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "git eol=crlf 배포 채널(checkout/archive) CRLF 산출 override 회귀 self-test. soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, git attr 배포 계약 정적 검증). discriminating: override 有 채널 CR>0 vs override 無 대조 채널 CR==0 load-bearing + blob CR=0 채널-vs-blob 정밀도 + .bat override 누락 회귀가드."
+
+  # ── CFP-2688 (Epic #2686 Story B / ADR-156) — dev-process 지표 aggregate self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 43 → 44 (신규 self-test enroll). B lane QADev Phase 2 deliverable —
+  #   aggregator embedded --self-test + honest-degrade lint --selftest(discriminating NC1~NC10) + lint check
+  #   (real query_with_stats round-trip, mock-seam 금지)을 execution-backed 로 CI 구동. dedicated .github-only
+  #   workflow(dev-process-metrics-test.yml, non-required, day-1 hard-fail) — branch-protection 7-tuple 무변경.
+  - self_test: "tests/scripts/test_aggregate-dev-process-event.sh"
+    execution_channel: "workflow:dev-process-metrics-test.yml:dev-process-metrics-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "dev-process 지표 aggregate self-test(aggregator embedded --self-test AC-4~23 + honest-degrade lint --selftest NC1~NC10 discriminating negative-control + lint check real query_with_stats round-trip, mock-seam 금지) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, record-only batch 집계 판별력 결박: measured-0≠dormant/over-claim 부재/honest-null/no-blob-deref/idempotency +0/order-preserving negative_duration; 검출력=G3 미강제, presence ≠ truth)."
