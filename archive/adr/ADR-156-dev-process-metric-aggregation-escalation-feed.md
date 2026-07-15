@@ -2,7 +2,6 @@
 adr_number: 156
 title: dev-process metric aggregation + §D-9 dev-domain escalation feed circuit — A substrate(ADR-155) 위 downstream 집계 정책 (6 지표 산식·경계 + producer↔decider 분리 + honest-degrade 천장 + 3-domain disjoint feed EXTEND, closure machinery 미복제)
 status: Active
-is_transitional: false
 category: governance
 date: 2026-07-15
 carrier_story: CFP-2688
