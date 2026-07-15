@@ -588,6 +588,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-2573
     reservation_date: 2026-07-05 KST
     status: active   # ArchitectAgent commit time 점유 (CFP-2573 Phase 1 PR carrier — ADR-144 §결정 4(L3) realization: §결정 4 delivery-gap 규율 강화 = §결정 7 신설 PL background-yield no-blind-wait discipline + named lead-collect routine(interface seam) + idle detection marker, INV-L1~L4 상속·무변경). tier detection [measurement] + recovery [advisory], [물리강제] 아님. verified-via `git show origin/main:archive/adr/ADR-139-background-wait-liveness-gate.md` frontmatter `amendments: []` → next=1 2026-07-05 KST origin/main 8de9a2b1. status reserved 미경유 직접 active (ArchitectAgent chief author precedent). ADR-139 single-block (amendments[] only, no amendment_log[]) → CFP-1734 dual-block gate EXEMPT. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제).
+
+  - adr_number: 73
+    amendment_id: 20
+    reserved_by_cfp: CFP-2692
+    reservation_date: 2026-07-15 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2692 Phase 1 PR carrier — ADR-073 Amendment 20 truth-correction: Amendment 9 `stale-local-main-checkout-divergence-check` PR-time workflow 축 active 주장을 evidence-backed 현실(#1972 삭제 후 미복원 + EC-5 fresh-checkout near-vacuous)로 정정, ② reconcile-정정 채택). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님, ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-073-orchestrator-verify-before-assert.md frontmatter amendments[] max=19 (Amd 19 CFP-822) → next=20 + amendments_reserved[] ADR-073 max=16 (CFP-1581, Amd 17/18/19 은 pre-reservation 면제 직접 write) → amendment_id 20 collision 0. 병렬 #2687 = ADR-042/043 amendment 영역 (disjoint — ADR-073 Amd20 미점유 firsthand 재확인, OCC PASS). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — ADR-073 Amendment 16 row (CFP-1581) 패턴 정합). sunset_justification N/A (truth-correction, strengthen/weaken 축 무관, ADR-058 §결정 5 판정 대상 아님).
 ```
 
 ## 해소 기준
