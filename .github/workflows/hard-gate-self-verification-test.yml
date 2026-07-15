@@ -1,0 +1,58 @@
+name: hard-gate-self-verification-test
+# CFP-2684 / ADR-154 §결정7·§결정8 — hard-gate self-verification 메타-게이트 + 재귀 self-test 의 CI 실행 채널.
+#   super-class "게이트 green ≠ 검출 보증"을 강제: 신규 hard gate 가 self-verification 번들(positive-control
+#   self-test + empty-target/unknown-input fail-closed + execution-trace + internal-control identity-probe +
+#   honest-ceiling 선언 + silent-green≠silent-fallback≠honest-degrade 3-way taxonomy)을 갖췄는지 presence/shape
+#   로 정적 fail-closed 검사한다.
+#
+# 정직 천장 (ADR-154 §결정4 / INV-5): presence/shape/format/fail-closed 까지만 — 검출 sufficiency(L3)는
+#   undecidable → review-tier honest-ceiling (presence ≠ truth, "universal detection 완전 봉인" hard-claim 부재).
+#
+# wrapper-self-only (consumer red 회피 — selftest-execution-liveness-test.yml / ac-traceability-self-test.yml 선례):
+#   job-level `if: github.repository == 'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행
+#   (consumer 는 스크립트/concept-doc 부재 → job skip = inert). ADR-130 job-level `if:` graceful no-op 정합.
+#   NO path-filter(required permanent-pending 함정 회피) / NO job-level hashFiles(born-invalid 재발 금지).
+#
+# byte-identical parity: templates/github-workflows/hard-gate-self-verification-test.yml ↔
+#   .github/workflows/hard-gate-self-verification-test.yml 는 byte-identical(ADR-005, invariant-check parity).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-154 §결정8 / ADR-151 §결정5 모델): 메타-게이트/self-test 실패
+#   = job red. "detection 이 살아있음을 검증하는 메타 게이트"는 hollow 로 새지 않도록 실패를 삼키지 않는다.
+# non-required (branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 신규 required context 0).
+#   required 승격 = ADR-060 evidence-gate 별 carrier(defer).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  hard-gate-self-verification:
+    name: hard-gate-self-verification
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pyyaml + pytest)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run hard-gate self-verification meta-gate (AC-1/2/3/4/5/6/8/12/13 presence/shape fail-closed lint)
+        run: bash scripts/check-hard-gate-self-verification.sh
+
+      - name: Run meta-gate recursive self-test (.sh — AC-7 discriminating M1-M6 positive-leak, day-1 hard-fail)
+        run: bash tests/scripts/test_check-hard-gate-self-verification.sh
+
+      - name: Run meta-gate RTM pytest self-test (.py — §8 RTM AC-1/2/3/4/5/6/7/8/12/13 execution-backed born-missing resolve, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_check_hard_gate_self_verification.py -q

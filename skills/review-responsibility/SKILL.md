@@ -83,6 +83,7 @@ tools: Read
 | **외부 표준/규제 누락 (RFC·법규·산업표준)** | — | — | — | — | ✅ (규제 위험 동반 시 P0) |
 | **AC 외부검증가능성 / 시장·벤더 단정 출처** | — | — | — | — | ✅ (외부사실 의존 시 P1) |
 | **AC 분해 완결성 (RO-1 — §1 원문 ↔ §5 AC diff + tier 배정 검증)** (구별되는 각 사용자 요건이 ≥1 AC 매핑 — 미매핑=review FIX 설계 진입 차단 + user-sourced AC tier 오분류 review-gate. 요구사항리뷰 3번째 disjoint 축, external-fact/internal-invariant 와 additive disjoint — CFP-2603 / ADR-145, checklist `requirements.md` "AC 분해 완결성 게이트") | — | — | — | — | ✅ RequirementsReviewPL |
+| **hard-gate self-verification 검출 sufficiency (AC-9 — 신규 hard gate/required job)** (신규 게이트가 self-verification 번들을 갖췄을 때, 그 positive-control/self-test 가 **대표 결함류를 실제 kill 하는지**(검출 sufficiency) 판정 + AC-2 tautological same-path 잔여(inline hand-copy 위장) + AC-13 `identity_bearing` self-declaration **열거 완결성**(미선언 게이트 누락) 정직 공개 여부 판정. 기계강제 아님 — presence/shape/fail-closed 는 `hard-gate-self-verification` 메타-게이트가, **sufficiency 는 undecidable → review-tier honest-ceiling**. ADR-154 §결정3/§결정4 / INV-5(L3 미격상) 불가침. "universal detection 완전 봉인" framing 발견 시 P0 차단) | — | ✅ DesignReview (검출 sufficiency + residual 정직 공개 review-tier) | — | — | — |
 
 ## Lane 역할 요약 (CFP-2326 / ADR-125 후 — 5 → 6 review lane, RequirementsReview 신설)
 
