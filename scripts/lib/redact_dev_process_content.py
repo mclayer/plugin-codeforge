@@ -118,11 +118,16 @@ _RE_HEX = re.compile(r"[a-f0-9]{32,}")
 # 7번째 (Amd4) — 절대/home-prefixed 경로만. repo-relative(선행 `/`·drive 없음)는 보존.
 #   · Windows drive:      X:\... (단일 negated-class star, nested quantifier 없음)
 #   · POSIX home:         /home /Users /root ...
-#   · git-bash mount:     /c/... (단일 letter drive mount)
+#   · git-bash mount:     /c/Users... (단일 letter drive + 디렉터리 세그먼트)
+#     ★F-CR-002 tighten: URL host 뒤 경로(https://h/a/b/c)·HTTP 요청경로(/v/1/users)는
+#       진단 신호(secret 아님)이므로 보존 — 2개 판별축으로 실제 mount 만 좁게 매칭:
+#       (1) 선행 host-char(영숫자·`.`) 부재 negative lookbehind → URL host 뒤 경로 배제
+#       (2) 2nd-level 세그먼트가 letter 로 시작 → `/v/1/...`(digit 2nd-level) 요청경로 배제
+#       (/c/Users·/c/workspace 등 실 mount 는 무손상 redact 유지.)
 _RE_ABS_PATH = re.compile(
     r"[A-Za-z]:\\[^\s'\"]*"
     r"|/(?:home|Users|root)[^\s'\"]*"
-    r"|/[a-zA-Z]/[^\s'\"]*"
+    r"|(?<![A-Za-z0-9.])/[a-zA-Z]/[A-Za-z][^\s'\"]*"
 )
 
 # Authorization 헤더 — scheme + 단일 토큰만(라인 전체 greedy 소비 회피 → 병기된 다른

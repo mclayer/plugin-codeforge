@@ -30,7 +30,7 @@
 #       [--include-blob] [--json]
 #   python3 query_dev_process_event.py --self-test
 #
-# stdlib only (json / hashlib / datetime / argparse / pathlib / sys). ReDoS-safe (regex 미사용).
+# stdlib only (json / hashlib / datetime / argparse / pathlib / sys) — 정규식 미사용 (regex 파싱 경로 부재; ReDoS backtracking 표면 자체가 없음, 별도 반증 대상 아님).
 
 import argparse
 import datetime

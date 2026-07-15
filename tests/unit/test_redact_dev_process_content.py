@@ -86,6 +86,17 @@ class TestDenyPatterns:
         red, _ = rd.redact("scripts/lib/foo.py")
         assert "scripts/lib/foo.py" in red  # 보존 (redact 되면 이 라인이 실패)
 
+    def test_url_and_http_request_path_PRESERVED(self):
+        """[F-CR-002] URL host 뒤 경로 / HTTP 요청경로는 secret 아닌 진단 신호 → 보존.
+
+        git-bash mount 대안 `/[a-z]/...` 이 URL/HTTP path 를 over-redact 하던 회귀 방지.
+        수정 전 RED(over-redact) → 수정 후 GREEN(보존)."""
+        raw = "fetched https://example.com/a/b/c via GET /v/1/users ok"
+        red, audit = rd.redact(raw)
+        assert "https://example.com/a/b/c" in red, f"URL 경로 over-redact: {red!r}"
+        assert "/v/1/users" in red, f"HTTP 요청경로 over-redact: {red!r}"
+        assert rd.RULE_ABS_PATH not in audit["redaction_rules_fired"]
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # § whole-content 제외
