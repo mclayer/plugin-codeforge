@@ -1,0 +1,60 @@
+name: run-hook-crlf-test
+# CFP-2702 Phase 2 (구현 lane, ADR-038 Amendment 6) — run-hook.cmd CRLF exec-first 폴리글롯 회귀 게이트.
+#
+# 배경: hooks/run-hook.cmd 는 codeforge 전 훅 단일 폴리글롯 dispatcher. AS-IS(origin/main)는
+#   LF-only heredoc 폴리글롯(`: << 'CMDBLOCK'`)이라 cmd.exe 가 @REM 배너를 명령 실행 → 스퓨리어스
+#   stderr(도메인 불변식 I-HOOK-NOISE 위반). 해법 = (1) `.gitattributes *.cmd/*.bat text eol=crlf`
+#   override, (2) exec-first 폴리글롯 재구조(1번째 줄 즉시 exec + 후행 `#` 로 CR 흡수). 본 게이트는
+#   그 회귀 2종(AC-5 Unix exec dispatch / AC-6 git eol=crlf 배포 채널)을 CI 에서 실측 봉인한다.
+#
+# ★ ubuntu-latest 필수 (msys/Git Bash 금지): AC-5 discriminating 분기(구 heredoc-CRLF 는 CR-민감
+#   bash 에서 loud CR-오염 실패 = `$'\r': command not found`(exit 127) + exec 경로 CR-오염; silent
+#   no-op 아님)는 CR-민감 POSIX 시스템 bash 에서만 kill 된다. Windows Git Bash(msys)는 입력줄 CR 을
+#   관대 처리(strip)해 결함을 마스킹(false-GREEN, Story §2.2 / §6 Fact 2) → Linux 시스템 bash 채널이
+#   유일 유의미 실행 채널. (AC-4 cmd.exe 배너 채널은 windows-bootstrap-smoke.yml 이 담당 — disjoint.)
+#
+# wrapper-self-only (consumer red 회피 — actionlint-workflows-test.yml / reconcile-overlay-workflow-
+#   channel-test.yml 선례): if: github.repository == 'mclayer/plugin-codeforge'.
+#
+# parity-safe (안 B 제약 준수): 본 workflow 는 .github/workflows/ 에만 존재하고 templates/github-
+#   workflows/ template copy 가 없다. invariant-check.yml Workflow parity step 은 template→.github
+#   단방향만 walk 하므로 wrapper-self-only workflow 는 자동 parity-safe (CONSUMER_ONLY_WORKFLOWS
+#   등재·template copy 모두 불요). selftest-execution-liveness enroll: l2_full_scope=N/A.
+#
+# non-required tier: branch protection required contexts(wrapper 6-tuple) 미등재 (advisory).
+#   ADR-060 evidence-gate (PR >= 20 + failure 0) 후 승격 후보.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'hooks/run-hook.cmd'
+      - '.gitattributes'
+      - 'tests/scripts/test-run-hook-cmd-unix-exec.sh'
+      - 'tests/scripts/test-gitattributes-cmd-crlf.sh'
+      - '.github/workflows/run-hook-crlf-test.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  run-hook-crlf-test:
+    name: run-hook-crlf-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest      # ★ Linux 시스템 bash (CR-민감) — msys/Git Bash 금지
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # AC-5 — CRLF 재구조 폴리글롯을 CR-민감 POSIX bash 로 `run-hook.cmd <script>` dispatch →
+      #   대상 스크립트 정상 exec·기대 출력, 후행 `#` CR-흡수(인자 누출 0).
+      #   discriminating: 구 heredoc-CRLF 변종 = loud CR-오염 실패(exit 127, RED) / `#`-가드 제거 = CR 누출(RED).
+      - name: AC-5 run-hook.cmd Unix exec dispatch (test_run_hook_cmd_unix_exec_dispatch)
+        run: bash tests/scripts/test-run-hook-cmd-unix-exec.sh
+
+      # AC-6 — `.gitattributes *.cmd/*.bat text eol=crlf` override → 배포 채널(checkout/archive)
+      #   CRLF 산출. real-repo check-attr = eol:crlf + `.bat` override 존재 + 임시-repo 채널 CR>0.
+      #   discriminating: override 없는 대조 repo 는 채널 CR==0 (override load-bearing).
+      - name: AC-6 gitattributes cmd eol=crlf channels (test_gitattributes_cmd_eol_crlf_channels)
+        run: bash tests/scripts/test-gitattributes-cmd-crlf.sh

@@ -1,25 +1,30 @@
-: << 'CMDBLOCK'
-@REM Polyglot wrapper adapted from superpowers 5.1.0 (MIT License)
-@REM Original: https://github.com/obra/superpowers/blob/main/hooks/run-hook.cmd
-@REM Copyright (c) Anthropic + superpowers contributors
-@REM CFP-475 / ADR-038 Amendment 3 §결정 11 (codeforge polyglot pattern)
+:; f="$1"; shift; exec bash "$(dirname "$0")/$f" "$@" #
 @echo off
-REM Cross-platform polyglot wrapper for hook scripts.
-REM On Windows: cmd.exe runs the batch portion, which finds and calls bash.
-REM On Unix: the shell interprets this as a script (: is a no-op in bash).
+REM Polyglot wrapper adapted from superpowers 5.1.0 (MIT License)
+REM Original: https://github.com/obra/superpowers/blob/main/hooks/run-hook.cmd
+REM Copyright (c) Anthropic + superpowers contributors
+REM CFP-475 / ADR-038 Amendment 3 §결정 11 (codeforge polyglot pattern)
 REM
-REM Hook scripts use extensionless filenames (e.g. "session-start" not
-REM "session-start.sh") so Claude Code's Windows auto-detection -- which
-REM prepends "bash" to any command containing .sh -- doesn't interfere.
+REM Cross-platform polyglot hook wrapper.
+REM   Windows: cmd.exe runs the batch body below (finds Git-Bash and calls it).
+REM   Unix:    line 1 execs bash on the target script and never reads the batch.
+REM
+REM This file MUST be CRLF (.gitattributes pins *.cmd text eol=crlf). cmd.exe
+REM mis-parses LF-only batch files -- byte drift makes it echo these comment
+REM lines as commands (spurious stderr). The Unix side execs on line 1 before
+REM any later line is parsed, so CRLF is harmless there. Do not convert to LF.
+REM
+REM Hook scripts use extensionless names (e.g. "session-start", not ".sh") so Claude
+REM Code's Windows auto-detect -- which prepends "bash" to any .sh command -- won't interfere.
 REM
 REM Usage: run-hook.cmd <script-name> [args...]
+setlocal
+set "HOOK_DIR=%~dp0"
 
 if "%~1"=="" (
-    echo run-hook.cmd: missing script name >&2
+    echo run-hook.cmd: missing script name 1>&2
     exit /b 1
 )
-
-set "HOOK_DIR=%~dp0"
 
 REM Try Git for Windows bash in standard locations
 if exist "C:\Program Files\Git\bin\bash.exe" (
@@ -39,12 +44,4 @@ if %ERRORLEVEL% equ 0 (
 )
 
 REM No bash found - exit silently rather than error
-REM (plugin still works, just without SessionStart context injection)
 exit /b 0
-CMDBLOCK
-
-# Unix: run the named script directly
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCRIPT_NAME="$1"
-shift
-exec bash "${SCRIPT_DIR}/${SCRIPT_NAME}" "$@"

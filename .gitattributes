@@ -12,6 +12,14 @@
 
 # Bash scripts — must be LF + executable.
 *.sh text eol=lf
+
+# Windows batch / cmd wrappers — MUST be CRLF. cmd.exe mis-parses LF-only batch
+# files (byte drift → @REM banner lines executed as commands → spurious stderr
+# noise on every hook invocation). The global `* eol=lf` above would force LF, so
+# this override restores CRLF for cmd/bat. hooks/run-hook.cmd is a cmd+sh polyglot
+# that execs bash on its first line, so CRLF is harmless on the Unix side.
+*.cmd text eol=crlf
+*.bat text eol=crlf
 # (git's internal exec-bit is set per-file via `git update-index --chmod=+x`,
 # not via .gitattributes. .gitattributes only handles line endings + identification.
 # Contributors should add new shell scripts with: `git update-index --chmod=+x <file>`
