@@ -7,7 +7,7 @@ name: worktree-completion-gate
 # - backstop 로직 무변경 회귀 + close lifecycle disjoint (TC-5/TC-7)
 # - evidence-checks-registry worktree-clean-completion-gate entry (warning + workflow:null)
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — AC-12 / ADR-024 Amd19 §B).
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단 — AC-12 / ADR-024 Amd19 §B).
 # Warning-tier: continue-on-error: true 로 job 실패가 PR merge 를 차단하지 않음.
 # (선례 = operational-outcome-signal-lint.yml header pattern — wrapper-self only,
 #  templates/github-workflows/ 미배치 → invariant-check workflow-parity 비대상.)

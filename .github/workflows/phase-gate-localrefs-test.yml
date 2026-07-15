@@ -10,7 +10,7 @@ name: phase-gate-localrefs-test
 #   - phase-gate-cfp2324.test.js (기존 dead test 재배선 — CFP-2581 §8 "교체/재배선"): S2 hard / S6 provenance / S7 throughput
 #     (14 case + 3 mutation-kill). 재배선으로 dead 병존 해소.
 #
-# 신규 workflow (non-required — 6-tuple contexts 무변경, AC-5). wrapper-self 전용(consumer red 회피 — CFP-2437 선례).
+# 신규 workflow (non-required — required contexts 무변경, AC-5). wrapper-self 전용(consumer red 회피 — CFP-2437 선례).
 
 on:
   pull_request:

@@ -15,7 +15,7 @@ name: verification-floor-check
 #   .github-only 정합). invariant-check.yml parity loop 은 templates → .github 방향이라 .github-only 파일은
 #   미검출 (CONSUMER_ONLY_WORKFLOWS 등록 불요).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet / ADR-128 warning-tier).
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단 — ADR-127 ratchet / ADR-128 warning-tier).
 
 on:
   pull_request:

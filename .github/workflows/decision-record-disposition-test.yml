@@ -1,0 +1,69 @@
+name: decision-record-disposition-test
+# CFP-2697 / Epic #2696 (canary artifact D6, Change Plan §8.4 / AC-20) — decision-record cardinal
+#   disposition oracle + reference-integrity guard 의 TDD self-test + born-alive smoke 의 CI 실행 채널.
+#   self-test(tests/scripts/test_check-decision-record-disposition.sh) + smoke
+#   (scripts/check-decision-record-disposition.sh --smoke)를 실 CI 에서 구동해 "선언(declared L3
+#   fixture)"을 "실제 CI 실행(channel alive)"으로 승격한다(silent-un-run 봉인, ADR-151 인벤토리 cross-seal).
+#
+# 두 pure 모듈(python3 stdlib only)의 축-완전(axis-complete) 판별력을 CI 로 결박:
+#   oracle = scripts/lib/decision_record_disposition.py (classify + 3 ablatable axis fn)
+#   guard  = scripts/lib/reference_integrity_guard.py   (run_guard 4-check conjunction)
+#
+# wrapper-self-only (consumer red 회피 — selftest-execution-liveness-test.yml /
+#   hard-gate-self-verification-test.yml 선례): job-level
+#   `if: github.repository == 'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행
+#   (consumer 는 모듈/스크립트 부재 → job skip = inert). ADR-130 job-level `if:` graceful no-op 정합.
+#
+# byte-identical parity: templates/github-workflows/decision-record-disposition-test.yml ↔
+#   .github/workflows/decision-record-disposition-test.yml 는 byte-identical (ADR-005,
+#   invariant-check.yml Workflow parity step). consumer 상속 시 job-level if: 로 inert.
+#
+# path-filter (non-required 이므로 permanent-pending 함정 무해 — required context 아님):
+#   두 pure 모듈 / CLI / self-test / 본 workflow 변경 시에만 트리거.
+#
+# day-1 hard-fail (continue-on-error 금지): self-test/smoke 실패 = job red(visible).
+#   "판별력이 살아있음을 검증하는 채널"은 hollow 로 새지 않도록 실패를 삼키지 않는다.
+# non-required (branch-protection 7-tuple[문서 SSOT, ADR-145 §결정3] 무변경 — 신규 required context 0).
+#   required 승격 = ADR-060 evidence-gate 별 carrier(defer). evidence-checks-registry warning-tier 등록.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/lib/decision_record_disposition.py'
+      - 'scripts/lib/reference_integrity_guard.py'
+      - 'scripts/check-decision-record-disposition.sh'
+      - 'tests/scripts/test_check-decision-record-disposition.sh'
+      - '.github/workflows/decision-record-disposition-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/lib/decision_record_disposition.py'
+      - 'scripts/lib/reference_integrity_guard.py'
+      - 'scripts/check-decision-record-disposition.sh'
+      - 'tests/scripts/test_check-decision-record-disposition.sh'
+      - '.github/workflows/decision-record-disposition-test.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  decision-record-disposition:
+    name: decision-record-disposition
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run decision-record disposition self-test (.sh — Part A 5-fixture replay + Part B M1/M2/M3 mutation-kill + Part C M4/M5, day-1 hard-fail)
+        run: bash tests/scripts/test_check-decision-record-disposition.sh
+
+      - name: Run born-alive smoke (5 canonical verdicts — P-1/2/3 correct / N-1 homonym / N-2 dated no_action)
+        run: bash scripts/check-decision-record-disposition.sh --smoke

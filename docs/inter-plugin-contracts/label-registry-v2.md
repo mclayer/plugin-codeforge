@@ -623,7 +623,7 @@ labels:
   - name: gate:requirements-review-pass
     category: gate
     color: "0e8a16"
-    description: "Requirements review PASS (CFP-2326 / ADR-125 — 9번째 lane, 요구사항 결론의 외부사실 의존성 게이트). phase:요구사항-리뷰 → phase:설계 transition 직전 부착. phase-gate-mergeable.yml required.gates 내부 매핑 (branch protection 6-tuple contexts 무변경 — ADR-125 결정 2). comment evidence prefix = [요구사항-리뷰] (lanePrefixForGate, CFP-133 일관성)."
+    description: "Requirements review PASS (CFP-2326 / ADR-125 — 9번째 lane, 요구사항 결론의 외부사실 의존성 게이트). phase:요구사항-리뷰 → phase:설계 transition 직전 부착. phase-gate-mergeable.yml required.gates 내부 매핑 (branch protection required contexts 무변경 — ADR-125 결정 2). comment evidence prefix = [요구사항-리뷰] (lanePrefixForGate, CFP-133 일관성)."
     single_active: false
     attach_owner_plugin: "codeforge-review (RequirementsReviewPLAgent synthesis) / Orchestrator post-Sonnet (final 부착, CFP-61 / ADR-022 §결정 4)"
 

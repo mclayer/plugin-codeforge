@@ -5,7 +5,7 @@ name: Orchestrator autonomy stop taxonomy lint (warning mode)
 #   (L3) subagent-wait liveness + delivery-gap discipline presence (self-test 확장 자기검증).
 #   (AC-6) tier 정직 meta-gate — measurement/advisory lever 가 자기 tier 만 주장하는지(긍정 enforcement 언어 0) 검사.
 # Tier: warning (non-required, ADR-060 §결정 5) — advisory/measurement, blocking 승격 = ADR-060 evidence-gate.
-#   branch protection 6-tuple 미추가 (순수 warning, PR merge 무차단).
+#   branch protection required contexts 미추가 (순수 warning, PR merge 무차단).
 # byte-identical template mirror (ADR-005): templates/github-workflows/ ↔ .github/workflows/ 동일 바이트.
 
 on:

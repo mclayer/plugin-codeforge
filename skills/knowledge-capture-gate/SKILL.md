@@ -75,7 +75,7 @@ split 근거 = ADR-120 §결정 3 (skill = 절차 / domain-knowledge = 지식). 
 ### §1.4 게이트 tier / fail-safe (로컬-only warning-tier)
 
 - tier = **warning + `workflow: null`** (로컬-only). `phase:완료` transition = Orchestrator self-write + 완료 marker = working-tree 검출이라 required CI check 불가 (ADR-099/ADR-122/ADR-128 선례 동형).
-- required check 신설 0 → branch protection 6-tuple 무변경 (ADR-024 Amd19 §B 정합).
+- required check 신설 0 → branch protection required contexts 무변경 (ADR-024 Amd19 §B 정합).
 - fail-safe = git/gh 미인증 시 exit 0 보존 (data-loss 가드). 완료 marker 부재(진행 중) 시 exit 0 no-op.
 - Phase 2 wire = `scripts/check-capture-gate-completion.sh` + evidence-checks-registry `knowledge-capture-completion-gate` entry active 전환.
 

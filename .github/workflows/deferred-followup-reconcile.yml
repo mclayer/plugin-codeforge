@@ -20,7 +20,7 @@ name: deferred-followup-reconcile
 # ⚠️ 본 워크플로는 baseline 을 재생성(regen)하지 않는다 — `check` 만 실행 (gen tool = CI 미호출,
 #   provenance drift 회피). regen-and-diff-zero 게이트 신설 금지.
 #
-# Non-required workflow (branch protection 6-tuple 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
+# Non-required workflow (branch protection required contexts 무변경 — surfacing 이지 required 편입 아님, ADR-127 ratchet).
 # CFP-2594 Stage 3 flip: lint job 은 NEW-DEBT FLAG 검출 시 job fail(red-X) 로 surface (continue-on-error 제거).
 #   non-required context 라 admin/enforce_admins 우회 구조적 가능 (honest ceiling — hard block 미주장).
 

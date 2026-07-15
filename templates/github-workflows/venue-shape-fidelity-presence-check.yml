@@ -34,7 +34,7 @@ name: venue-shape-fidelity-presence-check
 #   (CONSUMER_ONLY exclusion 아님 → wrapper self-app byte-identical 의무, wrapper 는 venue.applicable
 #   false 라 no-op PASS).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier (ADR-060 첫
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단). warning-tier (ADR-060 첫
 #   도입 — continue-on-error 로 위반 검출 시 경고 표시하되 job 성공/비차단). blocking 승격 =
 #   recurrence-driven 별 evidence-gated carrier (ADR-060 §결정 19 — 본 Story 승격 안 함).
 

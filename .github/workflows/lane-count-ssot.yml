@@ -11,7 +11,7 @@ name: lane-count-ssot
 #   parity loop 은 templates → .github 방향이라 .github-only 파일은 미검출 (CONSUMER_ONLY_WORKFLOWS
 #   등록 불요 — deferred-followup-reconcile.yml 동형 firsthand 확인).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단 — ADR-127 ratchet).
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단 — ADR-127 ratchet).
 # Warning-tier: lint job 은 FLAG 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단).
 # path-filter on.paths 미사용 (ADR-130 §결정 158 required-pending 회피 선례 일관성 — 비-required 라
 #   직접 영향 적으나 선례 정합).

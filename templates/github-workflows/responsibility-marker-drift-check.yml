@@ -29,7 +29,7 @@ name: responsibility-marker-drift-check
 #
 # offline-first: drift 검사 입력 = repo 내 overlay yaml + fs-stat, gh api 호출 0 (§7.4.4 N/A 전제).
 #
-# Non-required workflow (branch protection 6-tuple 무변경, merge 미차단). warning-tier: lint job 은
+# Non-required workflow (branch protection required contexts 무변경, merge 미차단). warning-tier: lint job 은
 #   위반 검출 시 경고 표시하되 continue-on-error 로 job 성공(비차단). main 7일 green → required 등록은
 #   별 후속 Story (transition Story = continue-on-error 1줄 제거 + contexts 1개 추가 최소 surface).
 

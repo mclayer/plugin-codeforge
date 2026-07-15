@@ -4041,3 +4041,48 @@ entries:
       threshold: 2                  # ADR-154 컨텍스트 — threshold N=2 초과
       promotion_trigger: none       # preventive ratchet (super-class 미명명 재발 차단) — live 결함 아님, blocking 승격은 별 named carrier(ADR-060 evidence-gate defer)
     status: Active                   # CFP-2684 Phase 2 wire COMPLETE — Python SSOT + thin wrapper + byte-identical workflow + discriminating self-test(QADev) live
+
+  # ── CFP-2697 / Epic #2696 (canary artifact D6, Change Plan §8.4 / AC-20) — decision-record disposition oracle + reference-integrity guard self-test 실행 채널 (24번째 warning-tier entry, non-required) ──
+  - name: decision-record-disposition-test
+    description: |
+      CFP-2697 / Epic #2696 canary artifact D6 (Change Plan §8.4 / AC-20) — decision-record
+      cardinal disposition oracle + reference-integrity guard 의 TDD self-test + born-alive smoke
+      의 CI 실행 채널(canary liveness). 두 pure 모듈(python3 stdlib only)의 축-완전(axis-complete)
+      판별력을 CI 로 결박: oracle=scripts/lib/decision_record_disposition.py (classify + 3 ablatable
+      axis fn) + guard=scripts/lib/reference_integrity_guard.py (run_guard 4-check conjunction).
+      판별력 = 5-fixture replay(P-1/2/3 correct / N-1 homonym / N-2 dated no_action) + M1/M2/M3 축
+      ablation flip(referent/tense/cardinal load-bearing) + M4 perturbation(anti-overfit) + M5
+      conjunction(rubber-stamp 아님) + born-alive smoke(5 canonical verdict classify). "선언(declared
+      L3 fixture)"을 "실제 CI 실행(channel alive)"으로 승격 — ADR-151 인벤토리 레코드 cross-seal
+      (silent-un-run 봉인). ★ 정직 천장(ADR-119): 축 load-bearing(mutation-kill) + 계약 verdict 일치
+      까지 실증 — "oracle 이 모든 실세계 decision-record 를 완전 분류한다" hard-claim 부재(검출력 봉인 주장 X).
+      wrapper-self-only(consumer red 회피 — selftest-execution-liveness-test.yml / hard-gate-self-
+      verification-test.yml 선례): job-level `if: github.repository ==`. byte-identical workflow pair
+      (templates+.github, ADR-005). day-1 hard-fail(continue-on-error 금지) · non-required(branch-
+      protection 7-tuple[ADR-145 §결정3] 무변경 — 신규 required context 0, required 승격 = ADR-060
+      evidence-gate 별 carrier defer). injection-safe(pull_request NOT pull_request_target /
+      permissions contents:read / path-filter non-required = permanent-pending 함정 무해).
+    detect_command: bash scripts/check-decision-record-disposition.sh --smoke
+    workflow: .github/workflows/decision-record-disposition-test.yml  # templates+.github byte-identical (ADR-005, sha256 9ebeb641)
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode, required 미등록 (non-required, 7-tuple 무변경)
+    # bypass_label: omit — warning-tier canary self-test 실행 채널 (merge 무차단, bypass 의미 부적용; spawn-description-prefix-detect / orchestrator-autonomy-stop-taxonomy 선례 동형)
+    # bypass_audit_lint: omit — bypass_label 미정의 (§3 bypass_label 정의 시 의무)
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2697                   # Phase 2 mechanical wire carrier — 두 pure 모듈 + CLI + self-test + byte-identical workflow + ADR-151 인벤토리 레코드
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}  # canary self-test 실행 채널, modal 어휘 무관
+    introduced_by: CFP-2697
+    introduced_date: 2026-07-16      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-151             # declaration source — self-test execution-liveness(선언→실행 승격) 정책; 본 채널이 canary self-test 를 alive 로 결박 (인벤토리 레코드 cross-seal). Epic #2696 전용 ADR = dogfood story repo(codeforge-internal-docs) 소재로 본 repo 부재 → PL 확인 시 정정 가능
+    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    spec_invariant_measurement_required: false  # canary self-test 실행 채널 (정적 disposition oracle 3-축 ablation + guard 4-check conjunction 판별력 presence) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A). 판별력 = self-test discriminating fixture(5-replay + M1-M5)
+    recurrence:
+      count: 0                      # preventive canary 채널 — live 결함 계보 아님 (Epic #2696 D6 산출물 liveness)
+      threshold: 3                  # schema default (v1.2)
+      promotion_trigger: none       # preventive canary — blocking 승격은 별 named carrier(ADR-060 evidence-gate defer)
+    status: Active                   # CFP-2697 Phase 2 wire — 두 모듈 + CLI + self-test + byte-identical workflow live
