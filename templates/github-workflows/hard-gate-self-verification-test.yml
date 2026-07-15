@@ -45,11 +45,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pyyaml
-        run: pip install pyyaml
+      - name: Install test deps (pyyaml + pytest)
+        run: pip install --quiet -r requirements.txt
 
       - name: Run hard-gate self-verification meta-gate (AC-1/2/3/4/5/6/8/12/13 presence/shape fail-closed lint)
         run: bash scripts/check-hard-gate-self-verification.sh
 
-      - name: Run meta-gate recursive self-test (AC-7 — discriminating M1-M6 positive-leak, day-1 hard-fail)
+      - name: Run meta-gate recursive self-test (.sh — AC-7 discriminating M1-M6 positive-leak, day-1 hard-fail)
         run: bash tests/scripts/test_check-hard-gate-self-verification.sh
+
+      - name: Run meta-gate RTM pytest self-test (.py — §8 RTM AC-1/2/3/4/5/6/7/8/12/13 execution-backed born-missing resolve, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_check_hard_gate_self_verification.py -q
