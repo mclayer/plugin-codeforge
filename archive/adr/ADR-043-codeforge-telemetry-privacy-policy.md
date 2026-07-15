@@ -406,7 +406,7 @@ Epic #2686 Story A (CFP-2687) 가 `dev-process-event-v1`(신규 ADR-155 sibling)
 - **INV-8 redaction-precedes-always-on(비협상 floor)**: always-on 이더라도 capture-time redaction 이 항상 선행 — always-on 이 redaction 을 **우회하지 못한다**.
 - **always-on 4중 bound**: (1) wrapper-self 한정(consumer opt-in-false) (2) capture ≠ exfiltration — blob host-local + 0-API + cross-host leak 금지 = **host 절대 미이탈**(VS Code/GitHub CLI telemetry 논쟁 본질 = 전송; host-local 미전송은 다른 위험 프로파일) (3) redaction-precedes-always-on floor (4) transparency notice 권고(기여자 대상 NOTICE).
 
-**(B) §결정 2 dev-process-event index tier 별도 channel allow-list** — dev-process-event 는 stop-event(18)·spawn-event(19)·self-context(6)와 **별 channel allow-list**(SSOT = dev-process-event-v1.md §2, Phase 2). index tier = **enum / numeric / hash / 상관 ID(story/lane/defect/fix) / blob-ref / `emit_source`(enum {hook,agent}) only** — free-form content 본문 **0건**(T-INFO-8 구조적 차단, Deny-list no-op 되도록). rich content 는 evidence-blob-store 표면(redacted blob)으로만 도달. field 추가 = 본 §결정 2 Amendment 의무.
+**(B) §결정 2 dev-process-event index tier 별도 channel allow-list** — dev-process-event 는 stop-event(18)·spawn-event(19)·self-context(6)와 **별도 channel allow-list**(SSOT = dev-process-event-v1.md §2, Phase 2). index tier = **enum / numeric / hash / 상관 ID(story/lane/defect/fix) / blob-ref / `emit_source`(enum {hook,agent}) only** — free-form content 본문 **0건**(T-INFO-8 구조적 차단, Deny-list no-op 되도록). rich content 는 evidence-blob-store 표면(redacted blob)으로만 도달. field 추가 = 본 §결정 2 Amendment 의무.
 
 **(C) §결정 3 Deny-list regex 6 → 7종 (경로 pattern 신규)** — dev-process rich content 는 로컬 파일 경로를 자주 포함(diff/tool-call) → 신규 7번째 pattern + 헤더/cloud-key 보강:
 
@@ -437,7 +437,7 @@ Epic #2686 Story A (CFP-2687) 가 `dev-process-event-v1`(신규 ADR-155 sibling)
 ### 비-영향
 
 - §결정 1 opt-in default-false 기본 정책 무변경 — dev-process 는 **비대칭 확정**(wrapper always-on 추가, consumer default-false 무약화).
-- §결정 2 stop-event 18 / spawn-event 19 / self-context 6 field allow-list 무변경 (dev-process = 별 channel allow-list).
+- §결정 2 stop-event 18 / spawn-event 19 / self-context 6 field allow-list 무변경 (dev-process = 별도 channel allow-list).
 - §결정 3 기존 6 deny-regex pattern 무변경 (7번째 경로 pattern additive).
 - §결정 4/5 (sanitize SSOT / isolation) inherit — dev-process 자동 적용, 정책 자체 무변경.
-- Amendment 1/2/3 무변경. stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임(별 follow-up).
+- Amendment 1/2/3 무변경. stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임(별도 follow-up).
