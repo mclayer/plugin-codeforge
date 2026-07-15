@@ -428,7 +428,8 @@ self_tests:
   # ── CFP-2702 (ADR-038 Amendment 6) — run-hook.cmd CRLF exec-first 폴리글롯 회귀 self-test 2종 (dedicated workflow, ubuntu-latest, alive) ──
   # 인벤토리 bijection: tests/scripts/*.sh 41 → 43 (신규 self-test 2 enroll). AC-5/AC-6 회귀.
   # execution_channel = ubuntu-latest Linux 시스템 bash (msys/Git Bash 금지 — CR-관대 마스킹으로
-  #   AC-5 discriminating(구 heredoc-CRLF → silent no-op) false-GREEN 회피, Story §2.2 / §6 Fact 2).
+  #   AC-5 discriminating(구 heredoc-CRLF → CR-민감 bash 에서 loud CR-오염 실패(exit 127), silent
+  #   no-op 아님) false-GREEN 회피, Story §2.2 / §6 Fact 2).
   #   AC-4(cmd.exe 배너 채널)는 windows-bootstrap-smoke.yml 담당 = Linux self-test corpus 밖 (disjoint).
   - self_test: "tests/scripts/test-run-hook-cmd-unix-exec.sh"
     execution_channel: "workflow:run-hook-crlf-test.yml:run-hook-crlf-test"
@@ -437,7 +438,7 @@ self_tests:
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
     manual_reason: ""
-    g_boundary_check: "run-hook.cmd exec-first 폴리글롯 CRLF-safe Unix dispatch 회귀 self-test (CR-민감 Linux 시스템 bash). soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, hook wrapper 정적 dispatch 배선 회귀). discriminating: exec 성공 happy + CR-leak-0 + 구 heredoc-CRLF silent-fail RED[CR-민감 gated] + #-가드 제거 인자 누출 RED[CR-민감 gated] + 인자 정확 전달 정밀도."
+    g_boundary_check: "run-hook.cmd exec-first 폴리글롯 CRLF-safe Unix dispatch 회귀 self-test (CR-민감 Linux 시스템 bash). soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, hook wrapper 정적 dispatch 배선 회귀). discriminating: exec 성공 happy + CR-leak-0 + 구 heredoc-CRLF loud CR-오염 실패(exit 127) RED[CR-민감 gated] + #-가드 제거 인자 누출 RED[CR-민감 gated] + 인자 정확 전달 정밀도."
 
   - self_test: "tests/scripts/test-gitattributes-cmd-crlf.sh"
     execution_channel: "workflow:run-hook-crlf-test.yml:run-hook-crlf-test"

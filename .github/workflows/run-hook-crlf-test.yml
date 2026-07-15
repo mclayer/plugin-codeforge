@@ -7,8 +7,9 @@ name: run-hook-crlf-test
 #   override, (2) exec-first 폴리글롯 재구조(1번째 줄 즉시 exec + 후행 `#` 로 CR 흡수). 본 게이트는
 #   그 회귀 2종(AC-5 Unix exec dispatch / AC-6 git eol=crlf 배포 채널)을 CI 에서 실측 봉인한다.
 #
-# ★ ubuntu-latest 필수 (msys/Git Bash 금지): AC-5 discriminating 분기(구 heredoc-CRLF → silent
-#   no-op)는 CR-민감 POSIX 시스템 bash 에서만 kill 된다. Windows Git Bash(msys)는 입력줄 CR 을
+# ★ ubuntu-latest 필수 (msys/Git Bash 금지): AC-5 discriminating 분기(구 heredoc-CRLF 는 CR-민감
+#   bash 에서 loud CR-오염 실패 = `$'\r': command not found`(exit 127) + exec 경로 CR-오염; silent
+#   no-op 아님)는 CR-민감 POSIX 시스템 bash 에서만 kill 된다. Windows Git Bash(msys)는 입력줄 CR 을
 #   관대 처리(strip)해 결함을 마스킹(false-GREEN, Story §2.2 / §6 Fact 2) → Linux 시스템 bash 채널이
 #   유일 유의미 실행 채널. (AC-4 cmd.exe 배너 채널은 windows-bootstrap-smoke.yml 이 담당 — disjoint.)
 #
@@ -47,8 +48,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # AC-5 — CRLF 재구조 폴리글롯을 CR-민감 POSIX bash 로 `run-hook.cmd <script>` dispatch →
-      #   대상 스크립트 정상 exec·기대 출력, 후행 `#` CR-흡수(인자 누출 0), heredoc silent-fail 0.
-      #   discriminating: 구 heredoc-CRLF 변종 = silent no-op(RED) / `#`-가드 제거 = CR 누출(RED).
+      #   대상 스크립트 정상 exec·기대 출력, 후행 `#` CR-흡수(인자 누출 0).
+      #   discriminating: 구 heredoc-CRLF 변종 = loud CR-오염 실패(exit 127, RED) / `#`-가드 제거 = CR 누출(RED).
       - name: AC-5 run-hook.cmd Unix exec dispatch (test_run_hook_cmd_unix_exec_dispatch)
         run: bash tests/scripts/test-run-hook-cmd-unix-exec.sh
 
