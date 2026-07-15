@@ -72,6 +72,17 @@ mechanical_enforcement_actions:
     status: warning               # ADR-060 §결정 5 첫 도입 = warning mode (continue-on-error). ADR-151 honesty ceiling 상속 (naive-masking 패턴 presence/형식 까지만 — 검출력 미강제, blocking 승격 = false assurance). warning tier first per §결정 5
     progress_note: "CFP-2635 Amendment 22 carrier (원천 backlog #960) — codeforge 거버넌스 shell self-test 코퍼스(scripts/test-*.sh 33 + tests/scripts/*.sh 37 = 70 file [verified])의 (a) raw `cmd || true` exit-masking(cmd exit 이 유일 pass/fail 신호이고 하류 FAIL 카운터/assertion 부재 = 항상 PASS) + (b) mock-seam env export 후 동반 assertion 부재 = false-coverage 를 정적 lint 로 검출. ★ 정당 3종(§2.4)은 오탐 0 제외: (i) counter-backup `assert_* || true`(assert helper 가 FAIL 카운터 증가, set -e 중도종료 가드) / (ii) `((c++)) || true` 산술 idiom / (iii) production `cmd 2>/dev/null || true` best-effort 캡처. 핵심 정밀도 keystone = **logical-line 재구성**(backslash-continuation join) 후 leading-command-token 분류 — 다중행 `assert_grep_all ... \\ \"p1\" \\ \"p2\" || true`(test-cfp-2521-presence.sh:92-95 [verified])의 `|| true` 가 continuation 행에 위치해도 logical head token=`assert_grep_all` 로 정당 판정(naive line-grep 오탐 폭발 회피, ADR-119 자기모순 차단). bats 아님 — 원 #960 의 bats 프레이밍은 codeforge 오칭, 대상 재지정(shell 코퍼스). scope 밖: plugins/codeforge-test/**/*.bats 2 fixture(통합테스트 example-story, 거버넌스 코퍼스와 disjoint — RR-2635-1) + tests/scripts/ Python/JS. Phase 2 = scripts/lib/check_shell_test_masking.py (Python SSOT, ADR-061 §결정 1 offline/read-only/argparse/pathlib, ReDoS-safe anchored 리터럴+\\d+ line-by-line) + scripts/check-shell-test-masking.sh (thin wrapper) + .github+templates/github-workflows/shell-test-exit-masking-detect.yml (byte-identical pair ADR-005, pull_request NOT pull_request_target + permissions contents:read) + tests/scripts/test_check-shell-test-masking.sh (discriminating fixture — masking TC RED→검출 / 정당 3종 GREEN→미검출, mutation-kill: 제외 로직 제거 시 정당 RED / 검출 로직 제거 시 masking RED) + docs/selftest-execution-liveness-inventory.yaml 레코드 append(ADR-151 AC-1a bijection 강제, discriminating_fixture:present) + registry row append + hotfix-bypass:shell-test-exit-masking-detect label(label-registry-v2). owner_adr = ADR-060 (framework host = enforcement source) / honesty ceiling source = ADR-151 §결정7. prior art 답습: check_selftest_execution_liveness.py(house style + helper decomposition) + check_spawn_prompt_fact_verify.py(ReDoS-safe line-by-line) + subagent-wait-liveness-presence(byte-identical workflow + execution-backed self-test + spec_invariant_measurement_required:false). 신규 발명 0. removed orphan bats-red-green-proof-presence(2026-06-10 de-bloat, workflow 부재 dead gate) 재발 차단 = 대상 실코퍼스 + live workflow pair + inventory enroll + self-test 발화 실증. warning tier first per §결정 5"
     target_section: §결정 5       # 본 Amendment 22 = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속, owner_adr = ADR-060, honesty-ceiling source = ADR-151 §결정7
+  # Amendment 23 (CFP-2700, 2026-07-16 KST) — 21+22번째 warning-tier entry 등록 (infra-resource-undeclared-surface + infra-resource-orphan-reconcile,
+  #   인프라 자원 선언 manifest(project.yaml infra_resources) vs 코드/compose/env 템플릿 스캔 CI drift 게이트 — CFP-2700 D3). 2 entry 분리 근거 = §결정 3 current_tier per-entry(entry 당 1개) → D3 2축(미선언 표면명 surfacing-bound / orphan warning→승격) 비대칭 표현 불가라 분리.
+  #   신규 §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate + Amendment 20 grandfather baseline(new-only) + §결정 32.D surfacing 상속 (신규 승격/baseline mechanism 발명 0, CFP-2700 AC-16). owner_adr = ADR-157 (D1~D5 결정 SSOT), carrier_adr = ADR-060 (framework host).
+  - action: infra-resource-undeclared-surface
+    status: warning               # ★ Phase 2 = warning + baseline 동시 착지, blocking 아님. 미선언축(코드/compose/env 스캔 표면명이 manifest 미선언·미분류) = new-only ratchet(Amd20 grandfather baseline) + §결정 32.D surfacing. 실제 continue-on-error 제거(flip → blocking-on-pr surfacing)는 baseline main 착지 후 별 후속 PR (§7.2.2 NO-FLIP self-deadlock 회피 — baseline 도입 PR 자신이 surfacing 이면 baseline 부재 상태 전 PR self-block). warning tier first per §결정 5
+    progress_note: "CFP-2700 Amendment 23 carrier (미선언축) — 인프라 자원 manifest(consumer/wrapper-self .claude/_overlay/project.yaml infra_resources) vs 코드·compose·env 템플릿 스캔 표면명 대조. alias→canonical 정규화 적용 후에도 미분류 표면명 = drift(env 키 난립 차단). Phase 2 = scripts/lib/check_infra_resource_drift.py(Python SSOT, ADR-061 offline/read-only/argparse/pathlib, ReDoS-safe line-by-line) + scripts/check-infra-resource-drift.sh(thin wrapper) + .github+templates/github-workflows/infra-resource-manifest-drift.yml(byte-identical pair ADR-005, pull_request + permissions contents:read, always-run job + repo-guard if: — on.paths 필터 day-1 금지=vacuous-pass 규범⑤) + docs/infra-resource-baseline.yaml(Amd20 grandfather baseline 재사용 — enumerated-freeze/2-owner/single-writer gen/content_digest/monotonic shrink) + discriminating self-test dual(.sh ADR-151 inventory enroll + .py ac-traceability Hop3 AST) + census fail-closed(candidates==0∧inert==0 → born-hollow exit 3, examples/**+presets/** scan scope 포함 필수 — inert>0 성립) + registry row + hotfix-bypass:infra-resource-undeclared-surface label. cross-repo 축(CODEFORGE_CROSS_REPO_PAT fetch + <ns>/<id> 네임스페이스 + failure-mode 분리[content-mismatch=fail-closed / token부재=degraded-FAIL / foreign transient=fail-open+Issue] + ref-pin) = ADR-157 §결정 4 SSOT. §32.D surfacing(required 7→8 미편입, DEC-5 정합 — narrowing override 불요, ADR-060 이 fail-closed 비호환 아님). 死因 3-mode 봉인: FM1-false-positive=surgical scope+allowlist+SELF_EXCLUDE / FM2=Phase1+2 동시착지 / FM3=cross-repo subject durability(live consumer 자원선언). prior art 답습: check_path_relocation_consistency.py(원장 yaml + 로컬 코퍼스 census + active_when self-report selector) + check_deferral_carrier_declared.py(baseline loader/digest). owner_adr = ADR-157. warning tier first per §결정 5"
+    target_section: §결정 5       # 본 Amendment 23(미선언축) = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 32.D surfacing(NO-FLIP) 상속, owner_adr = ADR-157
+  - action: infra-resource-orphan-reconcile
+    status: warning               # orphan축(manifest 선언됐으나 어떤 참조면에서도 미참조 = dead declaration) = §결정 5 warning first → §결정 6 3-AND(PR 누적≥20 ∧ bypass 외 failure=0 ∧ sibling merged) + evidence 6 산출물로 승격. born-red 비대칭 보존(orphan day-1=0 이라 warning 시작 안전). warning tier first per §결정 5
+    progress_note: "CFP-2700 Amendment 23 carrier (orphan축) — manifest 에 선언됐으나 코드/compose/env 어떤 참조면에서도 미참조인 자원 = orphan(stale declaration, I-2 dead declaration = 결함). §1 D3 정의('orphan = warning → 안정화 후 fail')가 정확히 ADR-060 §결정 5(첫 도입 warning) → §결정 6(3-AND 승격) 모델이라 승격 로직 발명 없이 상속(AC-16). 미선언축(sibling entry infra-resource-undeclared-surface)과 §결정 3 current_tier per-entry 분리. Phase 2 = 동일 scanner(check_infra_resource_drift.py) 의 orphan 판정 분기 + registry row + hotfix-bypass:infra-resource-orphan-reconcile label. 역색인(D4) = 비커밋 ephemeral CI artifact(ADR-157 §결정 6, ADR-107 Path B 정합 — mirror-SSOT 아님 / CFP-2673 tautology 소멸). 승격 sibling merged 조건 = 미선언축 entry. owner_adr = ADR-157. warning tier first per §결정 5"
+    target_section: §결정 5       # 본 Amendment 23(orphan축) = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate(3-AND) 상속, owner_adr = ADR-157
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -1018,6 +1029,75 @@ amendment_log:
       framework trigger 미해당 — 강화 방향 amendment). 기존 §결정 5/6 본문
       의미 변경 0건. plugin.json bump + marketplace sync = Phase 2 PR scope
       (ArchitectAgent Phase 2 판단, ADR-063).
+  - amendment: 23
+    carrier_story: CFP-2700
+    date: 2026-07-16
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 미해당. 본 Amendment 23 = 강화 방향 (21+22번째 warning-tier entry infra-resource-undeclared-surface + infra-resource-orphan-reconcile 등록, framework entry count 20 → 22 ratchet-UP 2건). 약화 영역 0건 (enum 값/tier 제거 없음, 신규 §결정 0 = §결정 5/6/32.D/Amd20 절차·기제 상속, 기존 본문 의미 변경 0).
+    summary: |
+      21+22번째 warning-tier entry `infra-resource-undeclared-surface` +
+      `infra-resource-orphan-reconcile` 등록 carrier amendment (CFP-2700 D3) —
+      인프라 자원 선언 manifest(consumer/wrapper-self `.claude/_overlay/project.yaml`
+      `infra_resources:` block) vs 코드·compose·env 템플릿 스캔 표면명 대조 CI
+      drift 게이트. owner_adr = ADR-157 (D1~D5 결정 SSOT — 인프라 자원 manifest +
+      startup fail-closed + drift scan), carrier_adr = ADR-060 (framework host).
+
+      **2 entry 분리 근거** (§결정 3 current_tier = entry 당 1개): D3 는 2축이
+      비대칭 tier 라 단일 entry 로 표현 불가 →
+      (1) `infra-resource-undeclared-surface`(미선언 표면명 = 코드/compose/env
+      스캔 표면이 alias→canonical 정규화 후에도 manifest 미선언·미분류, env 키
+      난립 차단) = new-only ratchet(Amendment 20 grandfather baseline 재사용) +
+      §결정 32.D surfacing tier. NO-FLIP(§7.2.2): Phase 2 = warning + baseline
+      동시 착지, 실제 continue-on-error 제거(flip → blocking-on-pr surfacing)는
+      baseline main 착지 후 별 후속 PR (baseline 도입 PR 자신이 surfacing 이면
+      self-deadlock). required 7→8 미편입(§결정 32.D surfacing = contexts membership
+      미함의) → ADR-145 §결정 3 narrowing override 불요 (ADR-060 이 fail-closed
+      비호환 아님, 반대로 native 지원).
+      (2) `infra-resource-orphan-reconcile`(선언됐으나 어떤 참조면에서도 미참조
+      = dead declaration, I-2) = §결정 5 warning first → §결정 6 3-AND
+      (pr_cumulative_min 20 / failure_threshold 0 / sibling merged[=미선언축
+      entry]) 승격. born-red 비대칭 보존(orphan day-1=0 이라 warning 시작 안전).
+
+      신규 §결정 0 — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate +
+      Amendment 20 grandfather baseline(new-only) + §결정 32.D surfacing 상속.
+      신규 승격/baseline mechanism 발명 0 (CFP-2700 AC-16 — 기존 기제 재사용).
+
+      **死因 3-mode 봉인** (이 repo 에서 drift 게이트가 죽는 패턴 — ADR-011
+      Proposed 영구 미배선 / ADR-107 Active 선언 wire 죽음 / ADR-096 Wave 2
+      미도달): FM1-false-positive = surgical scope + inline allowlist(사유·만료
+      필수) + SELF_EXCLUDE(스캐너 자기 코드/fixture/생성 역색인 제외) / FM2 =
+      Phase 1(ADR) + Phase 2(script/workflow/registry/self-test) 동시 착지 +
+      ADR-151 inventory enroll / FM3(최중요) = cross-repo subject durability —
+      D3 subject = live consumer 자원선언(durable), 모노레포 consolidatable mirror
+      아님 (ADR-011/107 死因 직접 반박).
+
+      census fail-closed(candidates==0 ∧ inert==0 → born-hollow exit 3,
+      check_path_relocation_consistency.py:752 동형): scan corpus 에 examples/** +
+      presets/** 포함 필수(inert>0 성립 — inert 는 construct 가 자원명 텍스트 지목
+      시에만 증가, :576 verified). anti-hollow self-test dual: .sh(ADR-151 enroll)
+      + .py(ac-traceability Hop3 AST).
+
+      Phase 2 = scripts/lib/check_infra_resource_drift.py (Python SSOT, ADR-061
+      §결정 1 offline/read-only/argparse/pathlib, ReDoS-safe line-by-line) +
+      scripts/check-infra-resource-drift.sh (thin wrapper) +
+      .github+templates/github-workflows/infra-resource-manifest-drift.yml
+      (byte-identical pair ADR-005, always-run job + repo-guard if: — on.paths
+      필터 day-1 금지=vacuous-pass 규범⑤) + docs/infra-resource-baseline.yaml
+      (Amendment 20 grandfather baseline 재사용) + discriminating self-test dual +
+      docs/selftest-execution-liveness-inventory.yaml 레코드 + registry 2 row +
+      hotfix-bypass:{infra-resource-undeclared-surface,infra-resource-orphan-reconcile}
+      label. cross-repo 축(CODEFORGE_CROSS_REPO_PAT fetch + <ns>/<id> 네임스페이스
+      + failure-mode 분리 + ref-pin) = ADR-157 §결정 4 SSOT.
+
+      prior art 답습: check_path_relocation_consistency.py(원장 yaml + 로컬 코퍼스
+      census + active_when self-report selector, 최근접 구조 선례 CFP-2661) +
+      check_deferral_carrier_declared.py(baseline loader/digest, Amd20). 신규
+      발명 0 아님(정직) — fail class 의 no-optout 자세는 5-piece 가 안 주므로
+      "구조 5/5 답습 + 비대칭 1건 신규(§32.D surfacing 채택)".
+
+      ratchet 위반 0건 — framework 자연스러운 사용 사례 entry 추가 only. 기존
+      §결정 5/6/32.D 본문 의미 변경 0건. plugin.json bump(6.94.0 tentative,
+      origin fetch 후 확정) + marketplace sync = Phase 2 PR scope (ADR-063).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -1038,6 +1118,7 @@ related_stories:
   - CFP-2426  # Amendment 19 carrier — 신설 §결정 33 17번째 warning-tier entry lane-count-ssot-consistency + canonical 작업레인 수(10, ADR-125 Amd1) SSOT mechanical consistency enforcement. grep-기반 검출(N 레인/N번째 lane/레인 N개, N≠10) + 5축 allowlist(within-line 이중토큰/negation/history/path/counterfactual) channel-split false-positive 차단. 2 Story 연속(CFP-2341→CFP-2376) leak = manual 정정 구조적 한계 입증(pattern_count=2 정당). full-lane (Python SSOT + thin wrapper + .github single-root warning workflow + self-contained discriminating test 22 fixture/4 mutation 생존 0 + registry self-entry + plugin.json tagline 8→10 STALE 정정 + 6.40.0 MINOR marketplace sync). standalone ADR-132 기각(ADR-060 framework 자연스러운 17번째 entry). prior art 답습: check_issue_body_claim_pre_screen.py(in_fence toggle) + check_governance_drift.py(path walk + ::warning::) + check-deferred-followup-reconcile.sh(thin wrapper).
   - CFP-2597  # Amendment 21 carrier — 19번째 warning-tier entry peer-completion-falsifiability 등록 (ADR-044 Amendment 6 §결정 12 verification-floor 축③ carrier). 신규 §결정 0 — §결정 5 등록 절차 + §결정 6 promotion gate 상속. owner_adr ADR-044 / carrier_adr ADR-060. evidence-checks-registry entry mirror + review-verdict-v4 v4.16 (peer_verdicts[] additive). ★ check-lane-evidence.sh 축③(fan-out) 와 별개 (이름만 동일). 실 script+workflow+test = sibling worker Phase 2 deliverable.
   - CFP-2591  # Amendment 20 carrier — §결정 32.D 개정(surfacing tier 도입) + grandfather baseline 메커니즘 framework-wide 신설 + 18번째 warning-tier entry deferral-carrier-declared(carrier-mandate no-TBD lint). deferred-followup forcing-function 봉합 Stage 1+2(baseline + new-only shadow) — NO-FLIP: continue-on-error 유지 + self-entry current_tier:warning 불변, 실 flip=별 후속 PR(baseline main 착지 후). §결정3 reconciliation(surfacing qualifier — blocking-on-pr 자체가 contexts membership 미함의) + §결정6 harmonization(baseline-relative new-debt failure=0). self-entry deferred-followup-reconcile §결정6 carrier trio(outage runbook/author-verify/sticky at-most-once) evidence_artifacts 배선. ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 6-tuple 회피). full-lane (baseline yaml + check new-only subtract + (b) Python SSOT/thin wrapper/.github workflow + runbook + registry (b) entry + self-entry evidence_artifacts + plugin.json 6.72.0 MINOR + registry-v1 v1.6). honest ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count 관측만). prior art 답습: check_lane_count_ssot.py(5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest).
+  - CFP-2700  # Amendment 23 carrier — 21+22번째 warning-tier entry infra-resource-undeclared-surface + infra-resource-orphan-reconcile (D3 인프라 자원 manifest drift 게이트). owner_adr ADR-157 / carrier_adr ADR-060. 2 entry 분리(§결정3 current_tier per-entry, 미선언축 surfacing-bound / orphan축 warning→§결정6 승격 비대칭). Amd20 grandfather baseline + §32.D surfacing(NO-FLIP) 상속, 신규 mechanism 0(AC-16). 死因 3-mode 봉인(FM1/FM2/FM3). 실 script+workflow+dual self-test = Phase 2 deliverable.
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)

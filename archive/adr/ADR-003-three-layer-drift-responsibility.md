@@ -20,7 +20,13 @@ related_stories:
   - CFP-11
   - CFP-12
   - CFP-13
+  - CFP-2700
 is_transitional: false
+amendments:
+  - by: "CFP-2700"
+    date: "2026-07-16"
+    scope: "정의역 경계 boundary-note — 3-layer 정의역 = codeforge self-SSOT drift 로 명문화. consumer 제품 런타임/startup boot fail-closed invariant 는 정의역 밖(ADR-157 소관). Q4 branch·4th layer 신설 없음(경량 note only)."
+    sunset_justification: "null — ADR-003 = is_transitional:false permanent policy → ADR-058 §결정 5 sunset trigger 미해당. 본 Amendment = 강화/중립 방향(정의역 경계 명시 = 오귀속 차단, 기존 3-layer 책임·강도 무축소). §대안 D self-invitation(모호 case 추가) + L154 self-invitation(supersede 또는 amendment) 정합."
 ---
 
 # ADR-003: SSOT drift 검출·회복 책임을 3 layer로 분리 (CI invariant / SessionStart 부트스트랩 / 사용자 가이드)
@@ -214,3 +220,27 @@ N/A — permanent policy
   - `docs/consumer-guide.md` §2a-2h (Layer 3: 사용자 가이드)
 - CFP-11이 발견·입증한 3 layer 필요성: [`docs/stories/CFP-11.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-11.md)
 - CFP-12가 layer 2 정합화: [`docs/stories/CFP-12.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-12.md)
+
+## Amendment 1 (CFP-2700, 2026-07-16 KST) — 정의역 경계 boundary-note (오귀속 방지)
+
+### 배경
+
+CFP-2700 이 "consumer 제품 런타임의 부팅 fail-closed 대조"(D2 — 실행단위가 선언한 required 인프라 자원 미설정 시 첫 business 동작 이전 부팅 거부)를 도입하며, 이 D2 의 ADR 귀속을 두고 두 관점이 갈렸다: (a) ADR-003 §대안 D 가 "4번째 layer 가 필요한 시점에 본 ADR supersede 또는 amend" 로 경로를 지정했으니 ADR-003 Amendment / (b) ADR-003 의 3 layer 는 전부 codeforge 가 실행하는 self-SSOT drift 검출이고 D2 는 consumer 제품이 실행하니 정의역 밖.
+
+설계 lane 이 §결정 2 Q1-Q3 decision tree 에 D2 를 실제로 태워 판정했다: (Q1) 발생 지점 = plugin repo 내부도, consumer *환경*(GitHub settings/label/org-perm)도, 1회 setup 절차도 아닌 **consumer 제품 런타임의 부팅 순간** → 3-bucket 어디에도 안 듦. 대표 산출물 행(`invariant-check.yml` / `check-bootstrap.sh` / `consumer-guide.md`)이 전부 codeforge 실행물이라는 점이 정의역 = codeforge self-SSOT 임을 방증. → **D2 = ADR-003 정의역 밖**.
+
+> 정정 기록: §결정 1 "Layer 책임 매트릭스" 행은 대상 / 검증 시점 / 회복 메커니즘 / 실패 비용 / auto-fix / 대표 산출물이며 **"실행 주체" 기준 행은 없다**. 초기 요구사항 lane 이 이 판정을 `[verified] §결정 1 (실행 주체 기준)` 으로 마킹했으나, 명시 기준이 아닌 추론이었다(합리적 추론이나 verified 승격 불가). 본 Amendment 는 그 추론을 boundary-note 형식으로 확정한다.
+
+### 결정 (boundary-note only — Q4 branch·4th layer 신설 없음)
+
+ADR-003 3-layer 의 **정의역 = codeforge 자신의 self-SSOT drift 검출·회복**(대상 = 코드·문서·환경·부트스트랩 정합, 실행 주체 = codeforge CI / SessionStart / 가이드)로 명문화한다. 다음은 정의역 밖이며 별 ADR 소관이다:
+
+- **consumer 제품 런타임 / startup boot fail-closed invariant** = **ADR-157 소관**(인프라 자원 선언 manifest + startup fail-closed 계약 + CI drift scan). 실행 주체 = consumer 제품 바이너리(wrapper 는 plugin 이라 강제 불가 — 채택-bounded, I-5).
+
+§결정 2 Q1-Q3 tree 는 **codeforge self-SSOT drift 종류의 layer 선택**에만 적용된다(신규 drift 종류가 이 정의역 안일 때). consumer 제품 런타임 invariant 는 이 tree 에 태우지 않는다. §대안 D("layer 4개 이상 — 4번째 layer 가 필요한 시점에 본 ADR supersede 또는 amend")는 **동일 self-SSOT 도메인의 4th layer** 를 위한 것이지 다른 정의역의 consumer 런타임 계약을 위한 것이 아니다 — 따라서 D2 는 4th layer 신설이 아니라 ADR-157 신규가 옳다.
+
+### 결과
+
+- **오귀속 차단**: 향후 "consumer 제품 런타임 fail-closed" 류 요건이 ADR-003 에 잘못 흡수돼 self-SSOT 정의역이 흐려지는 것을 방지.
+- ADR-003 의 3-layer 책임·강도 무변경(경량 note only) — 기존 Q1-Q3 tree·중복 회피 원칙·매트릭스 전부 그대로.
+- 축 disjoint: ADR-003(codeforge self-SSOT) ⊥ ADR-157(consumer 제품 런타임 boot).
