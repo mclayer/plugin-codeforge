@@ -142,6 +142,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 19 + §결정 1-A transition trigger 표 17번째 row"
     sunset_justification: null
+  - amendment_id: 20
+    cfp: CFP-2692
+    date: 2026-07-15
+    scope: "truth-correction — Amendment 9 (CFP-1384) 의 `stale-local-main-checkout-divergence-check` mechanical wire active 주장 중 **PR-time workflow 축**(§결정 표의 PR-time workflow 행 + §동기의 mechanical-wire-active 서술 + §결정 표의 evidence-checks-registry entry 신설 행[status:Active·auto_blocking]; drift-proof section anchor — raw-line 미사용) 을 evidence-backed 현실로 정정. #1972 (017926df de-bloat, 'wrapper 자기검증 전용 CI 93개 blanket 삭제') 가 workflow YAML 2-root 를 삭제해 PR-time workflow 축이 실존하지 않으며, EC-5 (`scripts/lib/check_stale_local_main_checkout.py` L152-156 feature-branch silent-skip) + actions/checkout fresh-checkout 불변 (fetch-depth:1 / clean:true) 로 인해 PR-time CI 는 로컬 main staleness 의 유효 검출 표면이 **구조적으로 부재**(near-vacuous). 따라서 workflow 복원(①)은 anti-hollow (ADR-119) 저촉. 3택(복원/reconcile-정정/폐기) 중 **② reconcile-정정** 채택: registry entry 를 `workflow: null`(dangling→null) + `promotion_trigger: auto_blocking→advisory`(INV-REG-1 강제력↔표면 정합 — hook/local 단일 live 표면 반영) + desc de-stale + `tier-downgrade-justification:` 마커 로 정산. LIVE SessionStart hook (로컬 staleness 검출 유효 표면) 은 무손상 유지 → 검사 자체는 폐기 아님. 본 Amendment 는 Amendment 9 record 의 workflow-축 주장만 정정(hook/script/registry-declarative 축 무변경) — 강화/약화 아닌 truth-correction (aspirational auto_blocking 라벨 → 실 tier advisory 로 정직화, ratchet 방향성 무관 record 정합). dangling 참조 3곳 정산: (a) evidence-checks-registry.yaml L2003 workflow 필드 → null (Phase 2 구현 lane) / (b) deferred-followup-baseline.yaml L14-15 absent_axes → regen drop (Phase 2) / (c) 본 ADR §결정 표 PR-time workflow 행 inline SUPERSEDED 마커 (Phase 1 본 carrier). ADR-060 carrier = registry-edit 인라인 provenance (별 ADR 불요). hollow-carrier gap (② 하 workflow 미복원으로 vacuous-path 구조적 불가) = 관찰됨·미조치 (3문 게이트 #1 실패 — DEFER, follow-up 미발의)."
+    status: applied
+    ref: "## Amendment 20 (2026-07-15 KST, CFP-2692) + Amendment 9 §결정 표 PR-time workflow 행 SUPERSEDED 마커"
+    sunset_justification: "N/A — truth-correction (strengthen/weaken 축 무관). Amendment 9 workflow-축 aspirational 주장을 evidence-backed 현실로 정정하는 record reconciliation. transition trigger enum / behavioral directive / forbid scope 무변경 (약화 0건, is_transitional:false 보존). ADR-058 §결정 5 sunset ratchet 판정 대상 아님 (enum 축소·면제 신설 0)."
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -995,7 +1002,7 @@ Amendment 7 (CFP-1319, 2026-05-23 merged) 가 `stale_local_main_checkout` transi
 | evidence-check-registry-v1.md 변경 0 (이미 v1.3 CFP-963 / ADR-060 Amendment 14 merged 2026-05-19, 본 carrier schema field 추가 0 → version bump 불필요 — iter 2 F-003 absorb stale design assumption 정정) | N/A | N/A |
 | SessionStart hook (`hooks/stale-local-main-checkout` polyglot extensionless + `hooks/hooks.json` matcher 2nd command append, async: false sequential 정합) | CFP-1384 Phase 2 | Phase 2 |
 | script chain (`scripts/check-stale-local-main-checkout.sh` thin wrapper + `scripts/lib/check_stale_local_main_checkout.py` Python SSOT per ADR-061 + `scripts/check-baseline-pin-verify.sh` lane spawn lint) | CFP-1384 Phase 2 | Phase 2 |
-| PR-time workflow (`templates/github-workflows/stale-local-main-checkout-divergence-check.yml` dual trigger pull_request + workflow_dispatch per production-cutover-evidence.yml D2 consensus 답습 + `.github/workflows/...yml` self-app byte-identical per ADR-005) | CFP-1384 Phase 2 | Phase 2 |
+| PR-time workflow (`templates/github-workflows/stale-local-main-checkout-divergence-check.yml` dual trigger pull_request + workflow_dispatch per production-cutover-evidence.yml D2 consensus 답습 + `.github/workflows/...yml` self-app byte-identical per ADR-005) **⚠ SUPERSEDED by Amendment 20 (CFP-2692)** — #1972 (017926df) de-bloat 가 workflow 2-root 삭제 후 미복원, PR-time active 미달성. EC-5 (fresh-checkout) 로 로컬 main staleness 검출 표면 구조적 부재 → workflow 축 reconcile: `workflow: null` + advisory. | CFP-1384 Phase 2 (**deleted #1972 / not restored — Amd 20**) | Phase 2 |
 | bats fixture pair (`tests/scripts/test_check-stale-local-main-checkout.sh` ≥ 6 assertion T-1~T-6 + `tests/scripts/test_check-baseline-pin-verify.sh` ≥ 4 assertion T-7~T-8, RED→GREEN stash proof pattern per CFP-1334 §8.4) | CFP-1384 Phase 2 | Phase 2 |
 
 #### Amendment 9 — Amendment 7 §결정 1-I primitive mechanical 실 enforcement
@@ -1670,3 +1677,65 @@ is_transitional: false 보존. Amd 19 = 강화 방향 only (transition trigger 1
 - 본 carrier scope = wrapper-actionable §2 only:
   - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별 upstream PR)
   - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
+
+## Amendment 20 (2026-07-15 KST, CFP-2692) — Amendment 9 `stale-local-main-checkout-divergence-check` PR-time workflow 축 active 주장 truth-correction (reconcile-정정)
+
+**날짜**: 2026-07-15
+
+### §A. 동기 — Amendment 9 record ↔ filesystem drift
+
+Amendment 9 (CFP-1384, 2026-05-24) 는 `stale-local-main-checkout-divergence-check` 를 **Wave 2 mechanical wire active** 로 선언하며 그 구성 표면에 **PR-time workflow** (§결정 표의 PR-time workflow 행 — `templates/github-workflows/stale-local-main-checkout-divergence-check.yml` dual trigger + `.github/workflows/...` byte-identical) 를 포함했다. §동기의 mechanical-wire-active 서술은 "mechanical wire ... active evidence-grounded essential", §결정 표의 evidence-checks-registry entry 신설 행은 그 entry 를 `status: Active` / `promotion_trigger: auto_blocking` 로 등록한다고 기록했다. (raw-line 참조 미사용 — frontmatter 삽입 line-drift 방지 안정 anchor, CFP-1434 절대값 제거 선례.)
+
+이후 **#1972 (`017926df`, "wrapper 자기검증 전용 CI 93개 blanket 삭제")** de-bloat 가 **workflow YAML 2-root 만** 삭제(script/py/hook/registry 잔존). 결과 = registry 는 여전히 workflow 축·auto_blocking 강제력을 claim 하나 그 workflow 는 실존하지 않는 **반쪽(partial) carrier orphan** — Amendment 9 record 가 단언한 "PR-time workflow active" 가 fs 와 drift.
+
+이 drift 는 ADR-060 Amendment 18 §결정 32 deferred-followup-reconcile 게이트의 **첫 실전 dogfood FLAG** 로 표면화 (`count=8/3 promotion_trigger=auto_blocking absent=[workflow 양 경로]`) → 본 Story CFP-2692 carrier.
+
+### §B. §결정 — Amendment 9 workflow-축 주장 정정 (verify-before-assert 자기적용)
+
+본 Amendment = Amendment 9 의 **workflow(PR-time CI) 축 주장만** evidence-backed 현실로 정정한다. hook/script/registry-declarative 축은 무변경(그 축들은 실존·LIVE). 정정 근거 (firsthand + external, ADR-119 정합):
+
+| 근거 | 내용 | 출처 |
+|---|---|---|
+| **EC-5 (코드 사실)** `[verified]` | `scripts/lib/check_stale_local_main_checkout.py` L152-156: `if current_branch is not None and current_branch != "main": sys.exit(0)`. divergence 로직(L158+)은 이 skip **이후**만 실행. PR-time CI checkout = detached HEAD (`rev-parse --abbrev-ref HEAD` = `"HEAD"`) → `"HEAD" != "main"` True → 검출 도달 전 무조건 silent-skip. | Read L152-156 (worktree HEAD) |
+| **fresh-checkout 불변** | `actions/checkout` default `fetch-depth: 1` + `clean: true` (`git clean -ffdx && git reset --hard`) → self-hosted persistent runner 라도 매 실행 triggering ref 를 fresh checkout. "오래된 로컬 main" 개념 CI 층 부재. | actions/checkout README (Story §6 EF-1, RequirementsReview 1차 corroborate) |
+| **표면 disjointness** | SessionStart hook (로컬층) = 유효 검출 표면 / PR-time CI (서버 merge-ref) = 검출대상 원천 부재. hook LIVE + workflow ABSENT = 모순 아닌 표면정합 가능. | Story §6 Fact 3 (code.claude.com/docs hooks) |
+
+**함의**: workflow 복원(①택)은 유효 검출대상 없는 near-vacuous CI = anti-hollow (ADR-119 검사연극) 저촉. 따라서 workflow 축은 복원 아닌 **정직 정산**이 옳다.
+
+### §C. 3택 판정 — ② reconcile-정정 (①/③ adversarial 반증)
+
+설계 lane 3 deputy 만장일치 수렴 (본 record = 판정 근거 서술):
+
+- **① 복원 반증**: workflow 복원은 EC-5 fresh-checkout 로 near-vacuous — 또 다른 "라벨만·실작동 없음" (non-hollow self-test 구조적 불가, Story §4.2 vacuity 경고). anti-hollow 저촉.
+- **③ 폐기 반증**: LIVE SessionStart hook (본 세션 실발화 확인) = 개발자 stale-main 경고 실효 기능 → 폐기 시 net 손실 + entry 제거 후 hook orphan (ADR-136 census-floor / CFP-2661 dead-path 저촉).
+- **② reconcile-정정 채택**: registry 를 실 표면(hook/local 단일 live)에 정합시키는 truth-correction. anti-hollow 회피 + working hook 보존 + INV-REG-1(강제력 라벨 ↔ 실행표면 정합) 회복.
+
+### §D. reconcile shape (Phase 2 실배선 명세 — 실편집은 구현 lane)
+
+| 정산 대상 | 변경 | Phase |
+|---|---|---|
+| `docs/evidence-checks-registry.yaml` L2003 `workflow:` | `templates/github-workflows/...yml` → **`null`** + 정직 주석 (hook-delivered/EC-5 로 CI 검출대상 구조적 부재 → dangling→null) | Phase 2 |
+| 동 entry `promotion_trigger` (L2026) | `auto_blocking` → **`advisory`** (INV-REG-1 — workflow null 단독은 게이트만 재우고 registry 는 여전히 auto_blocking overclaim; AC-8 = overclaim 제거 동반 필수) | Phase 2 |
+| 동 entry `current_tier` (L2004) | **`warning` 유지** (tier-downgrade-guard 는 current_tier 만 감시 → promotion_trigger 변경은 guard 미발동) | Phase 2 |
+| 동 entry `tier-downgrade-justification:` 마커 | **자발 부착** (guard 기계강제 밖이나 ADR-119 정직 + 하류 removal pre-arm — rate-limit-fallback / stakes-tier-flip 선례) | Phase 2 |
+| 동 entry desc (L1975-1978 / L2002-2003) | 미래시제 "Phase 2 별 sub-CFP carrier 후 정식 enforce" prose de-stale | Phase 2 |
+| `docs/deferred-followup-baseline.yaml` L11-15 gate_flag | reconcile 후 미검출 → **`gen_deferred_followup_baseline` regen 하여 drop** (hand-edit 금지, content_digest 무결 유지) | Phase 2 |
+| 본 ADR §결정 표 PR-time workflow 행 | inline **SUPERSEDED 마커** (dangling 참조 (c) 정산) | **Phase 1 (본 carrier)** |
+
+ADR-060 carrier = 위 registry-edit 의 inline provenance 주석 (`# CFP-2692 reconcile ...`) 으로 충분 — 별 ADR-060 Amendment 불요 (registry 는 ADR-060 framework 의 데이터, 정책 변경 0).
+
+### §E. hollow-carrier gap — 관찰됨·미조치 (DEFER)
+
+② 하 workflow 미복원으로 게이트가 검사할 workflow 실행표면이 구조적으로 부재 → "workflow 축을 파일 존재로만 보는 게이트가 vacuous workflow 도 green 통과" 하는 hollow-carrier gap 은 본 정산에서 **재현 불가**(vacuous-path 자체가 구조적으로 생성되지 않음). 제안 필요성 3문 게이트 #1(깨졌나·강제 요인) 실패 → follow-up Issue 미발의, 본 note 1줄 기록만 (ADR-119 §결정 9).
+
+### §F. sunset_justification N/A 정당
+
+truth-correction (strengthen/weaken 축 무관) — Amendment 9 workflow-축 aspirational 주장을 evidence-backed 현실로 정정하는 record reconciliation. transition trigger enum(17개) / behavioral directive / forbid scope 무변경, is_transitional:false 보존. ADR-058 §결정 5 sunset ratchet 판정 대상 아님 (enum 축소·면제 신설 0건).
+
+### §G. Related
+
+- **carrier Story**: CFP-2692 (`<internal-docs>/wrapper/stories/CFP-2692.md`), source FU #2386
+- **정정 대상**: 본 ADR Amendment 9 (CFP-1384) — §결정 표의 PR-time workflow 행 + §동기 mechanical-wire-active 서술·§결정 표 evidence-checks-registry entry 신설 행의 active 주장
+- **진원 게이트**: ADR-060 Amendment 18 §결정 32 (CFP-2381, Epic #2380 CLOSED — 본 Story 독립)
+- **collateral 원인**: #1972 (`017926df` de-bloat, workflow 2-root 삭제) / #2103 (`991f7e3b`, self-test 삭제)
+- **Change Plan §8 Test Contract SSOT**: `<internal-docs>/wrapper/change-plans/2026-07-15-cfp-2692-stale-local-main-checkout-workflow-orphan.md` (closure oracle O1/O2 + X1 금지)
