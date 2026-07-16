@@ -149,7 +149,9 @@ def test_cfp2699_self_gate_cardinal_delta_zero():
     #   hardcoded mutant tuple 주입이 _range_is_anchored 가 상수-True 아님을 실증(negative-control
     #   test data — O3 positive-control 과 대칭). degenerate ∧ mislocated 전부 reject → 판별력 = 이 loop.
     #   절대 span 리터럴 아님(입력 data). AC-4 mutant-kill 계약.
-    for _mut in [(1, 1), (99, 99), (50, 60), (40, 70), (97, 148)]:
+    #   + (-71,-20) = 하한 guard witness (F-CLA-001) — 하한(1 <=) 제거 mutant 하에서 음수 index alias
+    #     (lines[-72]==PREVENTIVE ∧ lines[-21]==NEXT, 170L 기준 L99/L150)로 anchored=True 위장을 kill.
+    for _mut in [(1, 1), (99, 99), (50, 60), (40, 70), (97, 148), (-71, -20)]:
         assert not _range_is_anchored(lines, *_mut), (
             f"mutant range {_mut} 가 앵커 통과 — anti-mislocation 판별력 상실(mislocation 생존)"
         )
