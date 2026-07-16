@@ -8,8 +8,15 @@ carrier_story: CFP-2249
 supersedes: [ADR-028]
 amends: [ADR-034, ADR-064]
 is_transitional: false
+amendments:
+  - id: 1
+    carrier_story: CFP-2704
+    date: 2026-07-16
+    title: check-no-superpowers 게이트 EXEMPT 판정축 정련 — `archive/adr/**` wholesale → status-aware (retired EXEMPT / live·unknown scanned + 13-signature (file,token) occurrence-blind grandfather baseline)
+    sunset_justification: "N/A — 약화 아님 (§회귀 방지 설계 EXEMPT 판정축 강화·ratchet-up). Amendment 1 = `check-no-superpowers.sh` 의 `archive/adr/**` wholesale EXEMPT 를 ADR frontmatter status 기반 2-tier 로 정련: retired(Superseded/Deprecated)→EXEMPT 유지 / live(Accepted/Proposed/Active/Adopted)·부재·미지→scan 진행 + 현 21 역사서술 hit(9파일, 13 distinct (file,token) signature — ADR-122 charter 자신 2 signature 포함)을 occurrence-blind frozenset baseline 으로 grandfather 동결(shrink-only). 강화 3축: (1) 판정축 강화 — 라이브 ADR 안 superpowers 호출 재유입을 archive/adr 안에서도 검출(현행 wholesale = archive/adr 내 0% 검출 사각 봉인) (2) grandfather shrink-only ratchet 보존(append=약화 차단, ADR-102 정합) (3) 기존 효용 무손실 — 현 archive/adr 위반 0 불변(도입 델타 0, born-red 방지) + warning tier 무변경 + 2축 분리(콜론 호출축 ⊥ 슬래시 경로축) 무접촉. ADR-058 §결정 5 약화 evidence-gate 미해당(forbid scope 축소 0건, 검출 범위 확대만). is_transitional: false 무변경(permanent policy). honest ceiling(ADR-119): 정규식은 역사서술 vs 실호출 semantic 구분 불가 → 게이트 coverage = grandfather-밖 신규 signature 검출까지, residual FP 는 warning tier 수용(over-claim 금지). Measurement = Phase 2 self-test(`test-check-no-superpowers.sh`) status-aware 회귀 스위트 + AC-3 full-corpus DELTA-0 실증. carrier = CFP-2704 (F-2 follow-up from CFP-2249 회고, 추적 #2259)."
 related_stories:
   - CFP-2249
+  - CFP-2704
 related_adrs:
   - ADR-028 (superseded — superpowers integration policy)
   - ADR-017 (존속 — skill override path enforcement, skill-agnostic literal 경로)
@@ -165,11 +172,13 @@ ADR-034 Stage 0(pre-Issue brainstorming) 개념 존속. "조건 불충족 시 su
 | 요소 | 설계 |
 |---|---|
 | 정규식 | `superpowers:[a-z][a-z0-9-]+` (literal `docs/superpowers/**` 경로 미매칭 — 두 축 분리) |
-| grep-gate EXEMPT | `archive/adr/**` + `archive/CHANGELOG-legacy.md` + `archive/prune-2026-06/**` (역사 보존) |
+| grep-gate EXEMPT | **`archive/adr/**` = status-aware** (CFP-2704 Amd 1): retired(`Superseded`/`Superseded by ADR-NNN`/`Deprecated`) → EXEMPT(file-level) / live(`Accepted`/`Proposed`/`Active`/`Adopted`)·부재·미지 → scanned + **13-signature (file,token) occurrence-blind grandfather baseline**(shrink-only, ADR-122 charter 자신 2 signature 포함). 판정 순서 = scan-decision → baseline-filter(born-red 방지). ─── `archive/CHANGELOG-legacy.md` + `archive/prune-2026-06/**` + self-script = **wholesale EXEMPT**(status 미파싱, 역사 보존 — 무변경) |
 | EXEMPT 아님 (경고) | `docs/orchestrator-playbook.md`(9 호출) + `docs/superpowers-integration.md`(31, sunset 대상) — 라이브 호출, allowlist 금지 |
 | tier | warning-first (전환 중간 PR 자기차단 deadlock 회피, ADR-060 framework). blocking 승격 = 별 follow-up |
 | 재유입 차단 | `docs/evidence-checks-registry.yaml` warning entry (`check-atlassian-allow` 형식 모델) + recurrence threshold 3 |
-| self-test | `scripts/test-check-no-superpowers.sh` 신규 author (`test-check-no-atlassian.sh` 부재 — 복제 원본 없음): (a) positive `superpowers:brainstorming` → exit 1 (b) negative `docs/superpowers/specs/x.md` literal → exit 0 (c) negative archive/adr/ → exit 0 (d) positive playbook 동형 → exit 1 |
+| self-test | `scripts/test-check-no-superpowers.sh`. CFP-2249 baseline 4-case: (a) positive `superpowers:brainstorming` → exit 1 (b) negative `docs/superpowers/specs/x.md` literal → exit 0 (c) negative archive/adr/ → exit 0 (d) positive playbook 동형 → exit 1. **CFP-2704 Amd 1 status-aware 확장(설계 기술 — 실 코드 Phase 2)**: (c) 재정의 = live·baseline hit → EXEMPT(grandfather) / (e) live(Accepted/Active/Adopted) baseline-밖 신규토큰 → exit 1 / (f) retired 합성 fixture → exit 0 / (g) status 부재 → fail-closed scan + 진단로그 / (h) swap(count 불변) → 신규 signature 검출 / (i) baseline append → shrink-only self-test FAIL. false-oracle 회피 = 특정 메시지 assert("EXEMPT 영역에만"↔"호출 없음", `grep -q "OK"` 금지) / tautology 회피 = 분리 `REFERENCE_MAX` 대비 `⊆`(NOT `==`) + 음성대조 2겹. baseline-interaction fixture = 실 `archive/adr/<실명>.md` 상대경로 sandbox mirror 필수 |
+
+> **CFP-2704 Amendment 1 — EXEMPT 판정축 path→path+status 정련** (라이브 ADR 회귀 검출 사각 봉인). 위 grep-gate EXEMPT 행의 `archive/adr/**` 는 CFP-2249 도입 시 status 무구분 wholesale EXEMPT 였으나, archive/adr 는 실제로 라이브(Accepted/Proposed/Active/Adopted) governance ADR 이 실거주하는 곳이라 라이브 ADR 안 `superpowers:<skill>` 호출 재유입을 archive/adr 안에서 0% 검출하는 사각이 있었다(S9 구현리뷰 FIX-4 evidence). Amendment 1 이 EXEMPT 판정축을 `path` → `path + status` 로 정련: retired→EXEMPT 유지 / live·부재·미지→scan + 13-signature (file,token) occurrence-blind grandfather baseline(shrink-only). ★self-referential: 본 charter(ADR-122, status:Accepted, 호출토큰 5 라인·2 distinct 토큰 brainstorming·writing-plans)가 baseline 에 반드시 포함되어 status-aware scan 시 self-flag/born-red 0(AC-8). 상세 = `wrapper/change-plans/…cfp-2704-…md`(codeforge-internal-docs) + Story CFP-2704 §7/§8. warning tier·2축 분리 무변경.
 
 ## 인프라 sunset 순서 (leaf-first teardown — dangling 방지)
 
@@ -187,6 +196,24 @@ S9 (sunset, 모든 호출 제거 후):
 ```
 
 dangling 방지 invariant: ② SSOT 제거 전 ① 4 fragment(SSOT §4 link 보유) + SKILL.md reference 선제거. post-LAND repo-wide grep 0줄.
+
+## Amendment 이력
+
+amendment_log:
+  - by: "CFP-2704"
+    date: "2026-07-16"
+    scope: |
+      Amendment 1 — check-no-superpowers 게이트 §회귀 방지 설계 EXEMPT 판정축 정련 (`archive/adr/**` wholesale → status-aware). 본체 §결정 1-8 retain unchanged (superpowers 호출 제거 정책 자체 무변경) — 본 Amendment 는 회귀 방지 게이트의 EXEMPT 입도만 정련:
+        - §회귀 방지 설계 EXEMPT 표 (grep-gate EXEMPT 행) 개정: `archive/adr/**` = status-aware (retired[Superseded/`Superseded by ADR-NNN`/Deprecated] → EXEMPT file-level / live[Accepted/Proposed/Active/Adopted]·부재·미지 → scan + 13-signature (file,token) occurrence-blind grandfather baseline, shrink-only). CHANGELOG-legacy/prune/self = wholesale EXEMPT 무변경.
+        - self-test 표 행: CFP-2249 4-case + CFP-2704 status-aware 확장 case 기술 (실 코드 = Phase 2 구현 lane).
+        - 판정 순서 = scan-decision → baseline-filter (frontmatter 깨진 실 ADR 도 기존 grandfather hit 로 born-red 안 되게 baseline 필터 후행).
+        - 실효 메커니즘 = grandfather(오늘 — 9파일 21 hit 전부 live status) + status 분기(미래 Accepted→Superseded flip 자동 EXEMPT 대비). retired 분기는 현재 vacuous(호출토큰 보유 retired ADR 0건), self-test 합성 fixture 로만 검증.
+      정규식(콜론 호출축 ⊥ 슬래시 경로축 2축 분리) 무변경. tier warning-first 무변경. self-referential dogfood 방어 4항(charter grandfather 필수 포함 / false-oracle 양방향 execution / grandfather-SSOT tautology 회피 `REFERENCE_MAX` `⊆` / over-claim honest ceiling) = Story CFP-2704 §7/§8 + Change Plan 인코딩.
+    sunset_justification: |
+      본 amendment 는 ADR 본체 frontmatter `is_transitional: false` (permanent policy — referent 소멸 cleanup 영구) 변경 안 함 — Amendment 1 = §회귀 방지 설계 EXEMPT 판정축 강화(ratchet-up), 기존 결정 폐기/축소 0건.
+      강화 3축: (1) 판정축 강화 — 라이브 ADR 안 superpowers 호출 재유입을 archive/adr 안에서도 검출(현행 wholesale = archive/adr 내 0% 검출 사각 봉인) (2) grandfather shrink-only ratchet 보존(baseline append = 약화 차단, ADR-102 정합) (3) 기존 효용 무손실 — 현 archive/adr 위반 0 불변(도입 델타 0) + warning tier 무변경 + 2축 분리 무접촉.
+      ADR-058 §결정 5 약화 evidence-gate 미해당 (forbid scope 축소 0건, 검출 범위 확대만 — sunset_justification metric/who/how 3-tuple 정량 측정 대상 아님). honest ceiling(ADR-119): 게이트 coverage = grandfather-밖 신규 (file,token) signature 검출까지, 라이브 ADR 정당 역사서술 residual FP 는 warning tier 수용(over-claim 금지).
+      Measurement = Phase 2 self-test(`test-check-no-superpowers.sh`) status-aware 회귀 스위트(live재유입→exit1 / retired→exit0 / grandfather→exit0 / swap→검출 / baseline append→shrink-only FAIL) merge 후 regression 0 유지 + AC-3 full-corpus archive/adr-귀속 위반 count==0 실증. carrier = CFP-2704 (F-2 follow-up from CFP-2249 회고, 추적 #2259).
 
 ## 해소 기준
 
