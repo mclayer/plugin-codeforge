@@ -13,13 +13,20 @@
 #   AC-8  역색인(D4) verdict-invariant (역색인 변조/제거해도 exit 불변, side-output) + MK revindex-noop
 #   AC-10 none-disguise fail (infra_resources 부재 + 사유부재 + 표면 → exit1 + NONE-DISGUISE) + MK none-off
 #   AC-11 none-disguise pass (resources:none + reason + 표면0 → exit0)  [AC-10 대칭 negative]
-#   AC-17 wrapper 실 secret 9종 dogfood 스캔 (실 repo → exit0, candidates≥floor, inert>0, grandfathered≥3)
-#     + MK no-secrets(실 repo candidates 급감 = secrets 스캔 load-bearing)
+#   AC-17 wrapper 실 secret 9종 dogfood 스캔 (실 repo → exit0, candidates≥floor, inert>0,
+#     grandfathered≥baseline pair 수) + MK no-secrets(실 repo candidates 급감 = secrets 스캔 load-bearing)
 #   + born-hollow guard(candidates==0 ∧ inert==0 → exit3) + PERF DoS bound.
 #
-# ★ baseline 판별력(F-CR-005): AC-17 의 `grandfathered≥3` 은 실 repo debt count 결박 floor 라 baseline
-#   shrink 시 조정 대상이다. baseline subtract 를 실 debt 와 무관하게 결박하는 hermetic 케이스는
-#   `.py` 채널(test_baseline_grandfather_hermetic)이 보유 — 본 채널 미중복(disjoint 보완, 과잉설계 회피).
+# ★ P1-A shell env-passthrough carve-in (§결정8(vi)) — dual pin (본 채널 = 스캔 표면 축 관할):
+#   PIN-POSITIVE `VAR="${VAR}" <cmd>` → 검출 + MK passthrough_off.
+#   PIN-NEGATIVE 변수 '읽기' 일반형 → **미검출이 계약** + MK naive_shell_form(재도입 시 FP 오검출 = RED).
+#     장래 "shell 도 전부 스캔" 확대가 실측 정밀도 18-20% 회귀를 부르면 이 케이스가 즉시 RED 로 잡는다
+#     = 정직 천장이 산문 아닌 **집행 계약**.
+#
+# ★ baseline 판별력(F-CR-005) + P1-B(monotonic shrink / content_digest) = `.py` 채널 관할:
+#   AC-17 의 grandfathered floor 는 baseline 실파일에서 runtime 도출한다(F-CR-007 — 구 `≥3` 하드코딩은
+#   스캐너 주석·.py·.sh 3-site drift 원천이었다). baseline 로직 hermetic 케이스(subtract / shrink-refuse /
+#   shrink-allow / digest-tamper)는 `.py` 채널이 보유 — 본 채널 미중복(disjoint 보완, 과잉설계 회피).
 #
 # self-contained bash (tests/scripts 관례 — ADR-151 인벤토리 enroll 채널). Exit 0 = 전 케이스 PASS.
 
@@ -32,7 +39,8 @@ SSOT_PY="$REPO_ROOT/scripts/lib/check_infra_resource_drift.py"
 PASS=0
 FAIL=0
 
-# 실 wrapper census floor (AC-17 non-vacuity — 현 실측 candidates_scanned=129, 안정 하한 pin).
+# 실 wrapper census 안정 하한 pin (AC-17 non-vacuity). 실측 candidates 는 스캔 범위 확장 시 변동하므로
+#   **정확한 현재치를 여기 박지 않는다** (F-CR-007 수치 drift 근절 — 수치 SSOT = 스캐너 실행 출력).
 FLOOR=50
 
 # ── manifest fixture (2-plane: resources[] alias + execution_units) ──
@@ -113,27 +121,44 @@ atlassian:
     api_token_env:     "PAD5_TOKEN"
     other_token_env: "PAD1_TOKEN"'
 
+# ── P1-A carve-in (§결정8(vi)): env-passthrough 자기참조형 = 키 리터럴 position 등가 → 검출 대상.
+SH_PASSTHROUGH='#!/usr/bin/env bash
+set -euo pipefail
+AUDIT_PII_KEY="${AUDIT_PII_KEY}" python3 "$SCRIPT_DIR/lib/redact.py"'
+
+# ── PIN-NEGATIVE (정직 천장 (vi) 의 실행화): shell 변수 "읽기" 일반형 = 미검출이 계약.
+#    STORY_KEY(_KEY suffix 라 infra-signal 매치하나 실제론 parse-token — 실측 11 hit 중 6건이 이 계열) /
+#    GH_TOKEN 존재검사 / PAGE_TOKEN 자기대입(뒤 명령 없음 = passthrough 아님).
+SH_READ_ONLY='#!/usr/bin/env bash
+STORY_KEY="${STORY_KEY:-}"
+if [ -z "${GH_TOKEN:-}" ]; then
+  echo "no token" >&2
+fi
+PAGE_TOKEN="${PAGE_TOKEN}"
+echo "${STORY_KEY}"'
+
 # ─────────────────────────────────────────────────────────────────────────────
-# _mkcorpus <tmpdir> <project.yaml> [wf.yml] [compose.yml] [decompose.yaml]
+# _mkcorpus <tmpdir> <project.yaml> [wf.yml] [compose.yml] [decompose.yaml] [scripts/pt.sh]
 # ─────────────────────────────────────────────────────────────────────────────
 _mkcorpus() {
-  local tmp="$1" proj="$2" wf="${3:-}" comp="${4:-}" deco="${5:-}"
-  mkdir -p "$tmp/.claude/_overlay" "$tmp/.github/workflows" "$tmp/examples/svc" "$tmp/docs"
+  local tmp="$1" proj="$2" wf="${3:-}" comp="${4:-}" deco="${5:-}" shs="${6:-}"
+  mkdir -p "$tmp/.claude/_overlay" "$tmp/.github/workflows" "$tmp/examples/svc" "$tmp/docs" "$tmp/scripts"
   printf '%s\n' "$proj" > "$tmp/.claude/_overlay/project.yaml"
   [ -n "$wf" ]   && printf '%s\n' "$wf"   > "$tmp/.github/workflows/wf.yml"
   [ -n "$comp" ] && printf '%s\n' "$comp" > "$tmp/examples/svc/compose.yml"
   [ -n "$deco" ] && printf '%s\n' "$deco" > "$tmp/examples/svc/team-spec-decompose.yaml"
+  [ -n "$shs" ]  && printf '%s\n' "$shs"  > "$tmp/scripts/pt.sh"
   return 0
 }
 
 # lint_case <name> <expected_exit> <expect_token|""> <forbid_token|""> <extra_args> \
-#           <project.yaml> [wf] [compose] [decompose]
+#           <project.yaml> [wf] [compose] [decompose] [scripts/pt.sh]
 lint_case() {
   local name="$1" eexit="$2" etok="$3" ftok="$4" xargs="$5"
-  local proj="$6" wf="${7:-}" comp="${8:-}" deco="${9:-}"
+  local proj="$6" wf="${7:-}" comp="${8:-}" deco="${9:-}" shs="${10:-}"
   local tmp exit_code=0 out ok=1
   tmp=$(mktemp -d)
-  _mkcorpus "$tmp" "$proj" "$wf" "$comp" "$deco"
+  _mkcorpus "$tmp" "$proj" "$wf" "$comp" "$deco" "$shs"
   # shellcheck disable=SC2086
   out=$(python3 "$SSOT_PY" --repo-root "$tmp" $xargs 2>&1) || exit_code=$?
   [ "$exit_code" -eq "$eexit" ] || ok=0
@@ -151,14 +176,14 @@ lint_case() {
 }
 
 # mutant_case <name> <mutation_kind> <expected_exit> <expect_token|""> <forbid_token|""> <extra_args> \
-#             <project.yaml> [wf] [compose] [decompose]
+#             <project.yaml> [wf] [compose] [decompose] [scripts/pt.sh]
 #   SSOT 를 python 문자열치환으로 mutate → fixture 실행 → 오분류/verdict 변화 확증 (mutation-kill).
 mutant_case() {
   local name="$1" kind="$2" eexit="$3" etok="$4" ftok="$5" xargs="$6"
-  local proj="$7" wf="${8:-}" comp="${9:-}" deco="${10:-}"
+  local proj="$7" wf="${8:-}" comp="${9:-}" deco="${10:-}" shs="${11:-}"
   local tmp exit_code=0 out mutant ok=1
   tmp=$(mktemp -d)
-  _mkcorpus "$tmp" "$proj" "$wf" "$comp" "$deco"
+  _mkcorpus "$tmp" "$proj" "$wf" "$comp" "$deco" "$shs"
   mutant="$tmp/mutant.py"
   python3 - "$SSOT_PY" "$mutant" "$kind" <<'PY'
 import sys
@@ -186,6 +211,14 @@ elif kind == "deprecated_unclassified":
                    "            pass  # MUTANT-deprecated-unclassified", 1)
 elif kind == "env_pad_narrow":
     s2 = s.replace(r"_env:\s{0,40}", r"_env:\s{0,4}", 1)
+elif kind == "passthrough_off":
+    s2 = s.replace("            mm = _RE_SHELL_ENV_PASSTHROUGH.match(code)",
+                   "            mm = None  # MUTANT-passthrough-off", 1)
+elif kind == "naive_shell_form":
+    # §결정7(b) FM1 봉인 위반(naive `${VAR}` 읽기 스캔, 실측 정밀도 18-20%)의 재도입 시뮬레이션.
+    s2 = s.replace("            mm = _RE_SHELL_ENV_PASSTHROUGH.match(code)",
+                   "            mm = re.search(r'\\$\\{([A-Z][A-Z0-9_]{2,64})', code)"
+                   "  # MUTANT-naive-shell-form", 1)
 else:
     s2 = s
 assert s2 != s, "mutation did not apply — anchor drift (kind=%s)" % kind
@@ -242,6 +275,31 @@ lint_case 'F-CR-003 pad≥5 _env: → UNDECLARED FLAG(exit 1)' 1 \
 mutant_case "F-CR-003 MK env_pad_narrow → PAD5 침묵 미탐 재현(RED)" env_pad_narrow 1 \
   "env-key=PAD1_TOKEN" "PAD5_TOKEN" "" \
   "$PROJ_PAD5" "" "$COMPOSE"
+echo
+
+echo "── P1-A PIN-POSITIVE: shell env-passthrough \`VAR=\"\${VAR}\" <cmd>\` 검출 (§결정8(vi) carve-in) ──"
+lint_case "P1-A passthrough AUDIT_PII_KEY → UNDECLARED FLAG(exit 1)" 1 \
+  "env-key=AUDIT_PII_KEY" "" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_PASSTHROUGH"
+lint_case "P1-A passthrough form=passthrough 표기" 1 \
+  "form=passthrough" "" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_PASSTHROUGH"
+mutant_case "P1-A MK passthrough_off → 미탐(RED, exit 0 PASS)" passthrough_off 0 \
+  "PASS" "AUDIT_PII_KEY" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_PASSTHROUGH"
+echo
+
+echo "── P1-A PIN-NEGATIVE: shell 변수 '읽기' 일반형 = **미검출이 계약** (정직 천장 (vi) 집행) ──"
+# 이 케이스가 RED 면 = naive form/bare 스캔이 재도입된 것(실측 정밀도 18-20% 회귀) → 천장이 산문 아닌 계약.
+lint_case "PIN-NEG STORY_KEY/GH_TOKEN/PAGE_TOKEN 읽기 → 미검출(exit 0)" 0 \
+  "PASS" "STORY_KEY" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_READ_ONLY"
+lint_case "PIN-NEG candidates 로도 미계수 (천장 (vi))" 0 \
+  "candidates_scanned=0" "GH_TOKEN" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_READ_ONLY"
+mutant_case "PIN-NEG MK naive_shell_form → STORY_KEY FP 오검출(RED-flip = tripwire 발동)" naive_shell_form 1 \
+  "env-key=STORY_KEY" "" "" \
+  "$MANIFEST" "" "$COMPOSE" "" "$SH_READ_ONLY"
 echo
 
 echo "── AC-6 orphan 정산 (선언·미참조 자원) ──"
@@ -353,7 +411,10 @@ else
 fi
 echo
 
-echo "── AC-17 wrapper 실 secret dogfood 스캔 (실 repo → exit0, candidates≥$FLOOR, inert>0, grandfathered≥3) ──"
+echo "── AC-17 wrapper 실 secret dogfood 스캔 (실 repo → exit0, candidates≥$FLOOR, inert>0, gf≥baseline pair) ──"
+# F-CR-007: 구 `-ge 3` 은 실 debt count 하드코딩(스캐너 주석·.py·.sh 3-site drift 원천) → baseline 실파일에서
+#   runtime 도출. `-ge` 인 이유 = 한 pair 가 여러 라인에 등장하면 gf 가 pair 수를 초과할 수 있어서(정상).
+_bl_pairs=$(grep -cE '^  env_key:' "$REPO_ROOT/docs/infra-resource-baseline.yaml" || echo 0)
 _ac17_out=$(python3 "$SSOT_PY" --repo-root "$REPO_ROOT" 2>&1); _ac17_exit=$?
 _ac17_cand=$(_census_count "$_ac17_out" "candidates_scanned")
 _ac17_inert=$(_census_count "$_ac17_out" "inert_skipped")
@@ -364,12 +425,13 @@ _ac17_ok=1
 [ "${_ac17_cand:-0}" -ge "$FLOOR" ] || _ac17_ok=0
 [ "${_ac17_inert:-0}" -ge 1 ] || _ac17_ok=0        # born-red 아님 (examples compose inert>0)
 [ "${_ac17_undecl:-9}" -eq 0 ] || _ac17_ok=0       # 실 wrapper new undeclared 0 (baseline grandfather)
-[ "${_ac17_gf:-0}" -ge 3 ] || _ac17_ok=0
+[ "${_bl_pairs:-0}" -ge 1 ] || _ac17_ok=0          # non-vacuity: baseline 이 비면 subtract 결박 무의미
+[ "${_ac17_gf:-0}" -ge "${_bl_pairs:-1}" ] || _ac17_ok=0   # baseline liveness: 동결 pair 전건 관측
 if [ "$_ac17_ok" -eq 1 ]; then
-  echo "OK PASS: AC-17 wrapper dogfood (exit 0, candidates=$_ac17_cand≥$FLOOR, inert=$_ac17_inert>0, undeclared=$_ac17_undecl, grandfathered=$_ac17_gf)"
+  echo "OK PASS: AC-17 wrapper dogfood (exit 0, candidates=$_ac17_cand≥$FLOOR, inert=$_ac17_inert>0, undeclared=$_ac17_undecl, grandfathered=$_ac17_gf≥baseline pair=$_bl_pairs)"
   PASS=$((PASS+1))
 else
-  echo "X FAIL: AC-17 — exit=$_ac17_exit candidates=$_ac17_cand inert=$_ac17_inert undeclared=$_ac17_undecl gf=$_ac17_gf"
+  echo "X FAIL: AC-17 — exit=$_ac17_exit candidates=$_ac17_cand inert=$_ac17_inert undeclared=$_ac17_undecl gf=$_ac17_gf baseline_pairs=$_bl_pairs"
   echo "  output: $_ac17_out"
   FAIL=$((FAIL+1))
 fi

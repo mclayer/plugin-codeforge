@@ -11,9 +11,11 @@
 #
 # Usage / exit code / semantics 상세: scripts/lib/check_infra_resource_drift.py header.
 #   bash scripts/check-infra-resource-drift.sh [--repo-root DIR] [--manifest PATH] [--baseline PATH]
-#     [--promote-orphan] [--write-baseline] [--emit-reverse-index]
-#     0 = PASS (new undeclared 0) / 1 = FLAG (undeclared / none-disguise / orphan+promote — warning)
-#     / 2 = usage·manifest 오류 / 3 = census fail-closed (candidates==0 ∧ inert==0 = born-hollow).
+#     [--promote-orphan] [--write-baseline] [--allow-baseline-growth --reason TEXT] [--emit-reverse-index]
+#     0 = PASS (new undeclared 0) / 1 = FLAG (undeclared / none-disguise / orphan+promote — warning;
+#         + --write-baseline monotonic shrink 위반 거부) / 2 = usage·manifest 오류
+#     / 3 = fail-closed: census born-hollow (candidates==0 ∧ inert==0) 또는 baseline substrate-failure
+#         (content_digest 불일치·필드부재 = 손상 baseline).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

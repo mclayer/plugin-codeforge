@@ -17,10 +17,23 @@ CFP-2700 (Epic) G2 Phase 2 (구현 lane) — Discriminating self-test (.py chann
     AC-8  역색인(D4) verdict-invariant (변조/제거해도 verdict 불변, side-output I-1) + MK revindex_noop
     AC-10 none-disguise fail (infra_resources 부재 + 사유부재 + 표면 → exit1 + NONE-DISGUISE) + MK none_off
     AC-11 none-disguise pass (resources:none + reason + 표면0 → exit0)
-    AC-17 wrapper 실 secret 9종 dogfood (실 repo → exit0, candidates≥floor, inert>0, grandfathered≥3)
-      + MK no_secrets(실 repo candidates 급감 = secrets 스캔 load-bearing)
+    AC-17 wrapper 실 secret 9종 dogfood (실 repo → exit0, candidates≥floor, inert>0,
+      grandfathered≥baseline pair 수 = runtime 도출) + MK no_secrets(candidates 급감 = secrets load-bearing)
   + grandfather baseline hermetic(tmp corpus) + MK baseline_subtract_off
   + born-hollow guard(candidates==0 ∧ inert==0 → exit3) + argparse 오류(exit 2).
+
+★ P1-A shell env-passthrough carve-in (§결정8(vi)) — dual pin:
+  PIN-POSITIVE `VAR="${VAR}" <cmd>` → 검출 + MK passthrough_off(제거 시 미탐 RED).
+  PIN-NEGATIVE 변수 '읽기' 일반형(STORY_KEY/GH_TOKEN/PAGE_TOKEN) → **미검출이 계약**
+    + MK naive_shell_form(naive `${VAR}` 스캔 재도입 → FP 오검출로 RED-flip).
+    ※ 이 negative 가 본 FIX 의 핵심 — 정직 천장을 **산문에서 집행 계약으로** 승격시킨다. 장래 누군가
+      "shell 도 전부 스캔하자"고 넓히면 실측 정밀도 18-20% 회귀가 test RED 로 즉시 드러난다.
+
+★ P1-B monotonic shrink + content_digest (선언 이행 — 선언만 있고 미구현이던 로직의 실배선):
+  ① shrink-refuse(신규 pair 추가 시 --write-baseline exit 1 + pair 열거 + 부분 write 0) + MK growth_check_off
+  ② shrink-allow(축소 방향은 재생성 성공) + escape hatch(--allow-baseline-growth --reason: 무사유 exit 2,
+     사유 동반 통과 + growth_reason 각인)
+  ③ digest-tamper(수기 행 추가 → exit 3) + digest 필드부재(exit 3) + MK digest_verify_off
 
 ★ baseline 판별력 분산 (F-CR-005): 본 정정 전 baseline 로직 mutant(subtract_off / gf_counter_off /
   load_baseline_empty) 3종이 **모두 test_ac17_wrapper_dogfood_scan 단 하나로만** 죽었다(실측). AC-17 의
@@ -48,7 +61,10 @@ if hasattr(sys.stderr, "reconfigure"):
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SSOT_PY = os.path.join(REPO_ROOT, "scripts", "lib", "check_infra_resource_drift.py")
-FLOOR = 50  # 실 wrapper census 안정 하한 (현 실측 candidates_scanned=129).
+REAL_BASELINE = os.path.join(REPO_ROOT, "docs", "infra-resource-baseline.yaml")
+# 실 wrapper census 안정 하한(non-vacuity floor). 실측 candidates 는 스캔 범위 확장 시 변동하므로 **정확한
+#   현재치를 여기 박지 않는다** (F-CR-007 수치 3-site drift 근절 — 수치 SSOT = 스캐너 실행 출력).
+FLOOR = 50
 
 # ─────────────────────── fixtures ───────────────────────────────────────────────
 MANIFEST = """infra_resources:
@@ -139,10 +155,33 @@ atlassian:
 
 # ── hermetic grandfather baseline (F-CR-005: baseline 로직 killer 가 실 repo AC-17 단 하나 —
 #    `grandfathered>=3` 이 실 debt count 에 결박돼 baseline shrink 시 false-RED. tmp corpus 로 분리).
-BASELINE_FIXTURE = """grandfathered_undeclared_surfaces:
+#    content_digest = compute_content_digest({(".github/workflows/wf.yml","ROGUE_TOKEN")}) 실측 각인.
+#    하드코딩 근거: 이 hex 는 canonical form **pin** 이다 — canonicalization 이 바뀌면 본 fixture 가 RED 로
+#    떠서 generate/verify byte-stability(선례 ID-1 동형) 파손을 즉시 알린다(의도된 결박, 갱신은 수동 의식).
+BASELINE_FIXTURE = """content_digest: 1a5fe7d1f00d8516308cc89cd123623e7e709e1b7aa728c7e812aac89d9053ac
+grandfathered_undeclared_surfaces:
 - file: .github/workflows/wf.yml
   env_key: ROGUE_TOKEN
   reason: hermetic fixture — 승격 시점 pre-existing 로 가정
+"""
+
+# ── P1-A carve-in (§결정8(vi)): shell env-passthrough 자기참조형 = 키 리터럴 position 등가 → 검출 대상.
+SH_PASSTHROUGH = """#!/usr/bin/env bash
+set -euo pipefail
+AUDIT_PII_KEY="${AUDIT_PII_KEY}" python3 "$SCRIPT_DIR/lib/redact.py"
+"""
+
+# ── PIN-NEGATIVE fixture (정직 천장 (vi) 의 **실행화**): shell 변수 '읽기' 일반형 = 미검출이 계약.
+#    전건이 실측 FP 계열 재현 — STORY_KEY(`_KEY` suffix 라 infra-signal 매치하나 실제론 parse-token,
+#    실측 11 hit 중 6건) / GH_TOKEN 존재검사 / PAGE_TOKEN 자기대입(뒤 명령 없음 = passthrough 아님).
+#    이 3형태가 검출되면 = naive form 스캔이 재도입된 것 = 실측 정밀도 18-20% 로의 회귀 → 본 test RED.
+SH_READ_ONLY = """#!/usr/bin/env bash
+STORY_KEY="${STORY_KEY:-}"
+if [ -z "${GH_TOKEN:-}" ]; then
+  echo "no token" >&2
+fi
+PAGE_TOKEN="${PAGE_TOKEN}"
+echo "${STORY_KEY}"
 """
 
 # 소스 문자열-치환 mutation (anchor → replacement). 미적용 시 AssertionError(anchor drift 검출).
@@ -186,6 +225,28 @@ MUTATIONS = {
         "        if (s.rel, s.key) in baseline_keys:",
         "        if False:  # MUTANT-baseline-subtract-off",
     ),
+    # P1-A: passthrough 검출 제거 → PIN-POSITIVE 미탐.
+    "passthrough_off": (
+        "            mm = _RE_SHELL_ENV_PASSTHROUGH.match(code)",
+        "            mm = None  # MUTANT-passthrough-off",
+    ),
+    # P1-A PIN-NEGATIVE killer: `.sh` 를 **naive `${VAR}` 읽기 일반형**으로 스캔하도록 되돌린다 =
+    #   §결정7(b) FM1 봉인 위반(실측 정밀도 18-20%)의 재도입 시뮬레이션. PIN-NEGATIVE 가 RED 로 트립해야
+    #   천장이 산문 아닌 **집행 계약**임이 증명된다.
+    "naive_shell_form": (
+        "            mm = _RE_SHELL_ENV_PASSTHROUGH.match(code)",
+        "            mm = re.search(r'\\$\\{([A-Z][A-Z0-9_]{2,64})', code)  # MUTANT-naive-shell-form",
+    ),
+    # P1-B: monotonic shrink 의 growth 거부 제거 → baseline 무단 확장 통과.
+    "growth_check_off": (
+        "        if added:",
+        "        if False:  # MUTANT-growth-check-off",
+    ),
+    # P1-B: baseline digest 검증 생략 → 손상 baseline 이 verdict 를 내버림(vacuous).
+    "digest_verify_off": (
+        "    if digest_reasons:",
+        "    if False:  # MUTANT-digest-verify-off",
+    ),
 }
 
 
@@ -197,7 +258,7 @@ def _write(path, content):
         f.write(content)
 
 
-def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseline=None):
+def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseline=None, scripts=None):
     _write(os.path.join(tmp, ".claude", "_overlay", "project.yaml"), project_yaml)
     if wf is not None:
         _write(os.path.join(tmp, ".github", "workflows", "wf.yml"), wf)
@@ -208,6 +269,26 @@ def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseli
     if baseline is not None:
         # scanner DEFAULT_BASELINE_REL 과 동일 경로 — CLI override 없이 기본 탐색 경로를 실제로 태운다.
         _write(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"), baseline)
+    if scripts:
+        # {relpath-under-scripts/: content} — LIVE_SCRIPT_GLOBS(`scripts/**`) 재귀 corpus 를 실제로 태운다.
+        for name, content in scripts.items():
+            _write(os.path.join(tmp, "scripts", *name.split("/")), content)
+
+
+def read_baseline_pairs(path):
+    """baseline 파일 → [(file, env_key)] (수치 하드코딩 0 — F-CR-007 runtime 도출)."""
+    pairs = []
+    cur = None
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            mm = re.match(r"^-\s+file:\s*(\S+)\s*$", line)
+            if mm:
+                cur = mm.group(1)
+                continue
+            mm = re.match(r"^\s+env_key:\s*(\S+)\s*$", line)
+            if mm and cur is not None:
+                pairs.append((cur, mm.group(1)))
+    return pairs
 
 
 def run_scanner(scanner_py, repo_root, *args):
@@ -329,6 +410,161 @@ def test_baseline_mutation_subtract_off():
         # RED-flip: subtract 무력화 → baseline 이 있어도 flag(exit 1) + grandfathered 0.
         assert rc == 1, "F-CR-005 MK: subtract_off → exit 1, got %d\n%s" % (rc, out)
         assert census(out, "grandfathered") == 0, "F-CR-005 MK: grandfathered 0(억제 소멸)"
+
+
+# ─────────────────────── P1-A shell env-passthrough carve-in (§결정8(vi)) ────────
+
+def test_p1a_pin_positive_passthrough_detected():
+    """PIN-POSITIVE: `VAR="${VAR}" <cmd>` = 키 리터럴 position 등가 → 검출."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, compose=COMPOSE, scripts={"pt.sh": SH_PASSTHROUGH})
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 1, "P1-A: passthrough 미선언 → exit 1, got %d\n%s" % (rc, out)
+        assert "env-key=AUDIT_PII_KEY" in out, "P1-A: passthrough 키 검출 누락\n%s" % out
+        assert "form=passthrough" in out, "P1-A: form=passthrough 표기\n%s" % out
+        assert census(out, "candidates_scanned") == 1, \
+            "P1-A: passthrough 1건만 candidate, got %d" % census(out, "candidates_scanned")
+
+
+def test_p1a_mutation_passthrough_off():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, compose=COMPOSE, scripts={"pt.sh": SH_PASSTHROUGH})
+        mut = make_mutant(tmp, "passthrough_off")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: passthrough 검출 제거 → 미탐(candidates 0, PASS).
+        assert "AUDIT_PII_KEY" not in out, "P1-A MK: passthrough_off → 미탐(RED)\n%s" % out
+        assert census(out, "candidates_scanned") == 0, \
+            "P1-A MK: candidates 0(미탐), got %d" % census(out, "candidates_scanned")
+
+
+def test_p1a_pin_negative_ceiling_enforced():
+    """PIN-NEGATIVE: shell 변수 '읽기' 일반형 = **미검출이 계약**(정직 천장 (vi) 의 집행).
+
+    naive form/bare 스캔이 재도입되면 이 단정이 깨져 RED → 천장이 산문 아닌 집행 계약이 된다.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, compose=COMPOSE, scripts={"ro.sh": SH_READ_ONLY})
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "PIN-NEG: 변수읽기 일반형 → 미검출 PASS(exit 0), got %d\n%s" % (rc, out)
+        assert census(out, "candidates_scanned") == 0, \
+            "PIN-NEG: 변수읽기는 candidate 로도 계수 안 됨(천장 (vi)), got %d\n%s" \
+            % (census(out, "candidates_scanned"), out)
+        for tok in ("STORY_KEY", "GH_TOKEN", "PAGE_TOKEN"):
+            assert tok not in out, \
+                "PIN-NEG: %s 검출 = naive form 스캔 재도입(실측 정밀도 18-20% 회귀)\n%s" % (tok, out)
+
+
+def test_p1a_mutation_naive_shell_form():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, compose=COMPOSE, scripts={"ro.sh": SH_READ_ONLY})
+        mut = make_mutant(tmp, "naive_shell_form")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: naive `${VAR}` 읽기 스캔 재도입 → STORY_KEY(실측 FP 대표) 오검출 = 천장 tripwire 발동.
+        assert census(out, "candidates_scanned") > 0, \
+            "PIN-NEG MK: naive_shell_form → FP 검출로 candidates>0(RED-flip), got %d\n%s" \
+            % (census(out, "candidates_scanned"), out)
+        assert "STORY_KEY" in out, \
+            "PIN-NEG MK: STORY_KEY = 미채택 naive form 의 대표 FP — 오검출돼야 tripwire 성립\n%s" % out
+
+
+# ─────────────────────── P1-B monotonic shrink + content_digest ─────────────────
+
+def test_p1b_shrink_refuse_growth():
+    """① baseline 1 pair + corpus 2 undeclared → --write-baseline 거부(exit 1) + 추가 pair 열거."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE,
+                    baseline=BASELINE_FIXTURE, scripts={"pt.sh": SH_PASSTHROUGH})
+        rc, out = run_scanner(SSOT_PY, tmp, "--write-baseline")
+        assert rc == 1, "P1-B①: baseline growth → exit 1(거부), got %d\n%s" % (rc, out)
+        assert "BASELINE GROWTH REFUSED" in out, "P1-B①: 거부 토큰\n%s" % out
+        assert "scripts/pt.sh :: AUDIT_PII_KEY" in out, \
+            "P1-B①: 추가될 pair 를 명시 열거해야 조치 가능\n%s" % out
+        # 거부 시 baseline 파일은 불변이어야 한다(부분 write 0).
+        pairs = read_baseline_pairs(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"))
+        assert pairs == [(".github/workflows/wf.yml", "ROGUE_TOKEN")], \
+            "P1-B①: 거부인데 baseline 이 변경됨 = 부분 write, got %s" % pairs
+
+
+def test_p1b_mutation_growth_check_off():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE,
+                    baseline=BASELINE_FIXTURE, scripts={"pt.sh": SH_PASSTHROUGH})
+        mut = make_mutant(tmp, "growth_check_off")
+        rc, out = run_scanner(mut, tmp, "--write-baseline")
+        # RED-flip: growth 체크 제거 → 무단 확장이 조용히 통과(exit 0) + baseline 2 pair 로 증가.
+        assert rc == 0, "P1-B① MK: growth_check_off → 무단 확장 통과(exit 0), got %d\n%s" % (rc, out)
+        pairs = read_baseline_pairs(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"))
+        assert len(pairs) == 2, "P1-B① MK: baseline 이 2 pair 로 무단 확장돼야 kill 성립, got %s" % pairs
+
+
+def test_p1b_shrink_allow_and_growth_hatch():
+    """② corpus 0 undeclared → 재생성 성공(shrink 1→0) + escape hatch 경로."""
+    with tempfile.TemporaryDirectory() as tmp:
+        # WF_DECLARED(RAW_NAS_URL = manifest 선언) → undeclared 0 → new_pairs ⊂ old_pairs = shrink.
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        rc, out = run_scanner(SSOT_PY, tmp, "--write-baseline")
+        assert rc == 0, "P1-B②: shrink(확장 아님) → 재생성 성공(exit 0), got %d\n%s" % (rc, out)
+        pairs = read_baseline_pairs(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"))
+        assert pairs == [], "P1-B②: baseline 이 0 pair 로 shrink 돼야 함, got %s" % pairs
+        # 재생성 후 CHECK 가 digest 검증을 통과해야 한다(generate↔verify byte-stable, 선례 ID-1 동형).
+        rc2, out2 = run_scanner(SSOT_PY, tmp)
+        assert rc2 == 0, "P1-B②: 재생성 baseline 이 verify 통과해야 함(exit 0), got %d\n%s" % (rc2, out2)
+
+
+def test_p1b_growth_hatch_requires_reason():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE,
+                    baseline=BASELINE_FIXTURE, scripts={"pt.sh": SH_PASSTHROUGH})
+        # 사유 없는 override = 감사 불가 → usage 오류(exit 2).
+        rc, out = run_scanner(SSOT_PY, tmp, "--write-baseline", "--allow-baseline-growth")
+        assert rc == 2, "P1-B: --allow-baseline-growth 는 --reason 필수(exit 2), got %d\n%s" % (rc, out)
+        # 사유 동반 → 통과 + growth_reason 각인.
+        rc2, out2 = run_scanner(SSOT_PY, tmp, "--write-baseline",
+                                "--allow-baseline-growth", "--reason", "정당한 corpus 확장 (hermetic test)")
+        assert rc2 == 0, "P1-B: escape hatch → 통과(exit 0), got %d\n%s" % (rc2, out2)
+        body = open(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"), encoding="utf-8").read()
+        assert "growth_reason: 정당한 corpus 확장 (hermetic test)" in body, \
+            "P1-B: 사유가 baseline 에 각인돼야 감사 표면 성립\n%s" % body
+        assert "GROWTH ALLOWED" in out2, "P1-B: 로그 surface\n%s" % out2
+
+
+def test_p1b_digest_tamper_exit3():
+    """③ baseline 수기 행 추가 → content_digest 불일치 → exit 3(substrate-failure)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        bl = os.path.join(tmp, "docs", "infra-resource-baseline.yaml")
+        rc_ok, _ = run_scanner(SSOT_PY, tmp)
+        assert rc_ok == 0, "P1-B③ 전제: 무결 baseline 은 exit 0"
+        # 수기 tamper — 없는 debt 를 baseline 에 밀어넣어 undeclared 를 부당 억제하려는 시도.
+        with open(bl, "a", encoding="utf-8", newline="\n") as f:
+            f.write("- file: .github/workflows/wf.yml\n  env_key: SNEAKY_TOKEN\n  reason: hand-added\n")
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 3, "P1-B③: digest 불일치 → exit 3(substrate-failure), got %d\n%s" % (rc, out)
+        assert "content_digest 불일치" in out, "P1-B③: 불일치 사유 표면\n%s" % out
+
+
+def test_p1b_digest_field_missing_exit3():
+    with tempfile.TemporaryDirectory() as tmp:
+        # digest 필드 자체를 제거(구 포맷/수기 삭제) → 검증 불가 = 신뢰 불가 → exit 3.
+        no_digest = "\n".join(l for l in BASELINE_FIXTURE.splitlines()
+                              if not l.startswith("content_digest:")) + "\n"
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=no_digest)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 3, "P1-B: digest 필드부재 → exit 3, got %d\n%s" % (rc, out)
+        assert "content_digest 필드 부재" in out, "P1-B: 필드부재 사유 표면\n%s" % out
+
+
+def test_p1b_mutation_digest_verify_off():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        bl = os.path.join(tmp, "docs", "infra-resource-baseline.yaml")
+        with open(bl, "a", encoding="utf-8", newline="\n") as f:
+            f.write("- file: .github/workflows/wf.yml\n  env_key: SNEAKY_TOKEN\n  reason: hand-added\n")
+        mut = make_mutant(tmp, "digest_verify_off")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: verify 생략 → 손상 baseline 이 그대로 verdict 를 냄(exit 3 아님) = tamper 무검출.
+        assert rc != 3, "P1-B MK: digest_verify_off → tamper 미검출(exit 3 아님), got %d\n%s" % (rc, out)
+        assert "content_digest 불일치" not in out, "P1-B MK: 불일치 표면 소멸(RED)\n%s" % out
 
 
 # ─────────────────────── AC-6 orphan ─────────────────────────────────────────────
@@ -456,7 +692,16 @@ def test_ac17_wrapper_dogfood_scan():
         "AC-17: candidates≥%d (non-vacuous), got %d" % (FLOOR, census(out, "candidates_scanned"))
     assert census(out, "inert_skipped") >= 1, "AC-17: inert>0 (born-red 아님, examples compose)"
     assert census(out, "undeclared") == 0, "AC-17: 실 wrapper new undeclared 0 (baseline grandfather)"
-    assert census(out, "grandfathered") >= 3, "AC-17: grandfathered≥3 (ATLASSIAN_USER_EMAIL/AUDIT_PII_KEY/GH_TOKEN)"
+    # F-CR-007: 구 `>= 3` 은 실 debt count 를 test 에 하드코딩한 3-site drift 원천이었다(스캐너 주석·.py·.sh).
+    #   → baseline 파일에서 runtime 도출. 두 단정의 역할이 다르다:
+    #     (a) n_baseline >= 1  : non-vacuity (baseline 이 비면 subtract 가 무의미).
+    #     (b) gf >= n_baseline : 동결된 pair 가 전부 실제로 관측됨 = baseline liveness(dead 항목 검출).
+    #        `==` 아닌 `>=` 인 이유 — 한 pair 가 여러 라인에 등장하면 gf 가 pair 수를 초과할 수 있다(정상).
+    n_baseline = len(read_baseline_pairs(REAL_BASELINE))
+    assert n_baseline >= 1, "AC-17: 실 baseline 이 비어있지 않아야 subtract 결박이 non-vacuous"
+    assert census(out, "grandfathered") >= n_baseline, \
+        "AC-17: grandfathered(%d) ≥ baseline pair(%d) — 동결 pair 가 미관측 = baseline stale(재생성 필요)" \
+        % (census(out, "grandfathered"), n_baseline)
 
 
 def test_ac17_nine_secret_reverse_index():
