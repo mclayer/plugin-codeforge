@@ -95,3 +95,80 @@ atlassian:
       # current_activity = "현재 무엇 하는중" 1줄 갱신 방식. pinned-comment-update = 단일 "현재활동"
       #   코멘트를 commentId 로 update(addCommentToJiraIssue 1종 — issue-field write 안 함). SKILL.md §3.
       current_activity: "pinned-comment-update"
+
+# ── 인프라 자원 선언 manifest (CFP-2700 / ADR-157 §결정1, wrapper-self dogfood) ──
+# wrapper 실 secret 9종(grep -rhoE "secrets\.[A-Z_]+" .github/workflows/ | sort -u = 9, verified)을
+#   기계판독 manifest 로 선언 — 게이트가 자기 자신에게 먼저 작동(none 위장 anti-hollow dogfood).
+# Schema SSOT: docs/project-config-schema.md `infra_resources` 섹션.
+# infra_strategy (ADR-033) 와 직교 — 본 block 은 자원 내용, infra_strategy 는 적용 여부 스위치.
+# G1 범위 = manifest 선언까지 (런타임 스캐너=G2 / startup validator=G3 / Confluence 2계열 라이브 수렴=G6).
+infra_resources:
+  # ── plane A: 자원 카탈로그 (census 9종 → 9 논리 자원) ──
+  resources:
+    - id: anthropic-api
+      canonical_env: ANTHROPIC_API_KEY          # Claude API 자격증명
+    - id: cross-repo-pat
+      canonical_env: CODEFORGE_CROSS_REPO_PAT   # cross-repo GitHub PAT (read-write 토큰, D3 는 read-only 로 사용 — ADR-157 §결정4/§결정8 정직)
+    # Confluence 자격증명 — 2계열 alias 수렴 (DEC-3 / ADR-157 §결정5). G1 = 선언만, 라이브 수렴 정정 = G6.
+    #   canonical = ATLASSIAN_API_TOKEN (선언면, atlassian.confluence.api_token_env)
+    #   accepted alias = CONFLUENCE_API_TOKEN (소비면, .github/workflows 의 secrets.CONFLUENCE_API_TOKEN)
+    #   canonical 이 ATLASSIAN 인 근거 = Atlassian-account-scoped blast-radius 정직 명명 (§결정5).
+    - id: confluence-credential
+      canonical_env: ATLASSIAN_API_TOKEN
+      aliases:
+        accepted: [CONFLUENCE_API_TOKEN]
+    - id: confluence-base-url
+      canonical_env: CONFLUENCE_BASE_URL
+    - id: confluence-space
+      canonical_env: CONFLUENCE_SPACE_ID
+    - id: confluence-user-email
+      canonical_env: CONFLUENCE_USER_EMAIL
+    - id: docker-hub-token
+      canonical_env: DOCKER_HUB_TOKEN
+    - id: github-token
+      canonical_env: GITHUB_TOKEN                # GitHub Actions 기본 주입 토큰 (항상 존재)
+    - id: ssh-key-passphrase
+      canonical_env: SSH_KEY_PASSPHRASE
+  # ── plane B: 실행단위 → required 자원 (ID-only 참조) ──
+  execution_units:
+    # Claude orchestration/리뷰 워크플로 (claude-* / codex 리뷰 등)
+    claude-orchestration:
+      required: [anthropic-api]
+      resource_modes:
+        anthropic-api: required
+    # cross-repo drift scan (ac-traceability-matrix / infra-resource-drift 등 foreign-repo fetch)
+    cross-repo-drift-scan:
+      required: [cross-repo-pat]
+      resource_modes:
+        cross-repo-pat: required
+    # Confluence forward-sync (git→Confluence push, 실 sync)
+    confluence-forward-sync:
+      required: [confluence-credential, confluence-base-url, confluence-space, confluence-user-email]
+      resource_modes:
+        confluence-credential: required
+        confluence-base-url: required
+        confluence-space: required
+        confluence-user-email: required
+    # Confluence dry-run (ADR-103 dry-run — 실 push 없이 의도 diff 만 로그). AC-18 EDGE 구분 실증:
+    #   동일 confluence-credential 자원이 forward-sync 서 required, 여기선 optional_degradable (unit×resource 간선 속성).
+    confluence-sync-dry-run:
+      required: [confluence-credential, confluence-base-url]
+      resource_modes:
+        confluence-credential: optional_degradable
+        confluence-credential_degraded_behavior: "dry-run: 실 Confluence push skip, 의도 diff 만 stdout 로그"
+        confluence-base-url: required
+    # Docker 이미지 publish
+    docker-publish:
+      required: [docker-hub-token]
+      resource_modes:
+        docker-hub-token: required
+    # GitHub Actions core (checkout/PR/label 등 기본 토큰 소비)
+    github-actions-core:
+      required: [github-token]
+      resource_modes:
+        github-token: required
+    # 배포 SSH (deploy target 접속 key passphrase)
+    deploy-ssh:
+      required: [ssh-key-passphrase]
+      resource_modes:
+        ssh-key-passphrase: required
