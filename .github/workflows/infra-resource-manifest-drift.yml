@@ -1,0 +1,66 @@
+name: infra-resource-manifest-drift
+# CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource manifest drift scan 의
+#   TDD self-test + dogfood drift lint 의 CI 실행 채널. manifest(.claude/_overlay/project.yaml
+#   infra_resources:)가 선언한 인프라 자원과 실 참조면(workflow secrets. / project.yaml _env: /
+#   scripts 정적 리터럴)을 대조해 미선언 표면(drift 원천)·orphan(dead 선언)을 census-floor oracle 로
+#   검출한다. wrapper 실 secret 9종을 자기 자신에게 먼저 스캔(none 위장 anti-hollow dogfood).
+#
+# scanner SSOT = scripts/lib/check_infra_resource_drift.py (python3 stdlib only, born-safe 라인 파서).
+#   thin wrapper = scripts/check-infra-resource-drift.sh (ADR-061 python3 exec forward).
+#
+# wrapper-self-only (consumer red 회피 — decision-record-disposition-test.yml /
+#   selftest-execution-liveness-test.yml 선례): job-level
+#   `if: github.repository == 'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행.
+#   consumer 상속 시 byte-identical template(job-level if:)로 inert(job skip). ADR-130 graceful no-op 정합.
+#
+# byte-identical parity: templates/github-workflows/infra-resource-manifest-drift.yml ↔
+#   .github/workflows/infra-resource-manifest-drift.yml 는 byte-identical (ADR-005,
+#   invariant-check.yml Workflow parity step).
+#
+# ★ NO on.paths filter (vacuous-pass 방지 규범⑤): scanner/manifest 파일 미변경 PR 이라도, 워크플로에
+#   미선언 secret 을 추가하는 PR 은 반드시 스캔돼야 하므로 path-filter 를 두지 않는다(전 PR 스캔).
+#
+# day-1 hard-fail (continue-on-error 금지): self-test 실패 = job red(visible). 판별력 채널은 hollow 로
+#   새지 않도록 실패를 삼키지 않는다. self-test 파일 부재 시(QADev 착지 전)만 hashFiles 가드로 skip.
+# dogfood drift lint = warning-tier(continue-on-error:true) — advisory, PR 미차단.
+# non-required (branch-protection 7-tuple[ADR-145 §결정3] 무변경 — 신규 required context 0).
+#   required 승격 = ADR-060 evidence-gate promotion 별도 carrier(defer).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  infra-resource-manifest-drift:
+    name: infra-resource-manifest-drift
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run infra-resource-drift self-test (.sh — day-1 hard-fail, QADev 착지 전 hashFiles 가드)
+        if: hashFiles('tests/scripts/test_check-infra-resource-drift.sh') != ''
+        run: bash tests/scripts/test_check-infra-resource-drift.sh
+
+      - name: Run infra-resource-drift self-test (.py — day-1 hard-fail, QADev 착지 전 hashFiles 가드)
+        if: hashFiles('tests/scripts/test_check-infra-resource-drift.py') != ''
+        run: python3 tests/scripts/test_check-infra-resource-drift.py
+
+      - name: Run dogfood infra-resource drift lint (warning-tier — advisory, PR 미차단)
+        id: lint
+        continue-on-error: true
+        run: |
+          bash scripts/check-infra-resource-drift.sh --repo-root . 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
