@@ -261,20 +261,25 @@ def test_ac19_guard_delete_conjunction():
     finally:
         shutil.rmtree(root2, ignore_errors=True)
 
-    # (b) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact → pass True.
+    # (b) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact ∧ has_semantic
+    #     (DBM-1 migration: ANCHORLESS body 는 이제 has_semantic=False 로 delete 가 막히므로,
+    #     positive-control 유지를 위해 §결정 42 semantic anchor 를 body 에 주입한다).
     root3 = _build_repo({
         "docs/keep.md": "unrelated content\n",
     })
+    clean_target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 §결정 42 branch protection 6-tuple 무변경 서술, 외부 인용 없음",
+        "row": None,
+    }
     try:
-        r = g.run_guard(
-            {"file": "docs/clean.md",
-             "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
-             "row": None},
-            "delete", repo_root=root3,
-        )
+        r = g.run_guard(clean_target, "delete", repo_root=root3)
         assert r["pass"] is True
         # conjunction 네 갈래 전부 참임을 명시 확인.
         assert r["disposition"] == "delete"
+        # has_semantic True 경로 명시 확인(DBM-1) — pass=True 시 delete_conjunction 키는
+        # result 에 없으므로(성공 경로는 미기재) 내부 helper 를 직접 호출해 확인한다.
+        assert g._has_semantic_anchor(clean_target, root3) is True
     finally:
         shutil.rmtree(root3, ignore_errors=True)
 
@@ -321,15 +326,262 @@ def test_ac20_two_branch_replay():
     assert d1 == d2 == "correct"
 
     # delete branch — hermetic clean delete, 2회 호출 verdict 동일(deterministic).
+    # (DBM-1 migration: has_semantic 충족을 위해 §결정 42 anchor 주입 — inbound 는 여전히 0.)
     root = _build_repo({"docs/keep.md": "unrelated\n"})
     try:
         target = {"file": "docs/clean.md",
-                  "body": "branch protection 6-tuple 무변경 서술만, 외부 id 없음",
+                  "body": "§결정 42 branch protection 6-tuple 무변경 서술만, 외부 id 없음",
                   "row": None}
         r1 = g.run_guard(target, "delete", repo_root=root)
         r2 = g.run_guard(target, "delete", repo_root=root)
         assert r1["pass"] == r2["pass"] == True  # noqa: E712 (verdict 동일 + 참임 동시 명시)
     finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TG-1~3/5 mutation-kill — DBM-1/DBM-1b/DBM-4 신규 하드닝 축 (Story CFP-2698 §8 Test Contract)
+#   각 TG 는 (양성 실제 동작 확인) + (해당 축을 실제로 ablate 하면 RED 로 flip) 을 함께 실증한다.
+#   guard(g) 는 hermetic tempfile 위에서만 구동(live repo tree 비의존).
+# ═════════════════════════════════════════════════════════════════════════════
+def test_tg1_guard_dbm1_delete_conjunct_anchorless():
+    """TG-1 — DBM-1 delete conjunct: anchorless normative body(§결정/#anchor 없음) → delete pass=False
+    (strip_normativity 강등). Mutation proof: g._has_semantic_anchor 를 상시 True 로 ablate 하면
+    anchorless body 가 delete pass=True 로 flip(RED) — has_semantic conjunct 가 load-bearing 함을 실증."""
+    root = _build_repo({"docs/keep.md": "unrelated\n"})
+    target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
+        "row": None,
+    }
+    try:
+        before = g.run_guard(target, "delete", repo_root=root)
+        assert before["pass"] is False
+        assert before.get("recommend") == "strip_normativity"
+        assert before["delete_conjunction"]["has_semantic"] is False
+
+        orig = g._has_semantic_anchor
+        try:
+            g._has_semantic_anchor = lambda *a, **k: True  # ablate: 항상 semantic anchor 있음
+            after = g.run_guard(target, "delete", repo_root=root)
+        finally:
+            g._has_semantic_anchor = orig
+        assert after["pass"] is True, (
+            "has_semantic-always-True ablation 은 anchorless delete 를 pass=True 로 flip 해야: %s" % after
+        )
+
+        # 원복 확인.
+        restored = g.run_guard(target, "delete", repo_root=root)
+        assert restored["pass"] is False
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg2_guard_dbm1_delete_conjunct_positive_control():
+    """TG-2 — DBM-1 delete 양성 control: §결정 N anchor 보유 body, inbound 0, hermetic → delete pass=True.
+    Mutation proof: g._has_semantic_anchor 를 상시 False 로 ablate 하면 양성 케이스가 pass=False 로
+    flip(RED) — has_semantic conjunct 가 진짜로 통과를 gate 함(rubber-stamp 아님)을 실증."""
+    root = _build_repo({"docs/keep.md": "unrelated\n"})
+    target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 §결정 42 branch protection 6-tuple 무변경 서술, 외부 인용 없음",
+        "row": None,
+    }
+    try:
+        before = g.run_guard(target, "delete", repo_root=root)
+        assert before["pass"] is True
+
+        orig = g._has_semantic_anchor
+        try:
+            g._has_semantic_anchor = lambda *a, **k: False  # ablate: 항상 semantic anchor 없음
+            after = g.run_guard(target, "delete", repo_root=root)
+        finally:
+            g._has_semantic_anchor = orig
+        assert after["pass"] is False, (
+            "has_semantic-always-False ablation 은 positive-control 을 pass=False 로 flip 해야: %s" % after
+        )
+        assert after["delete_conjunction"]["has_semantic"] is False
+
+        # 원복 확인.
+        restored = g.run_guard(target, "delete", repo_root=root)
+        assert restored["pass"] is True
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg3_guard_dbm1b_whitespace_anchor_matching():
+    """TG-3 — DBM-1b whitespace-flexible `§결정` anchor 매칭: 인바운드 참조가 다중공백(`§결정  7`)/
+    무공백(`§결정7`) 변형으로 존재해도 inbound_count 에 잡힌다. Mutation proof: g._anchor_matches 를
+    리터럴 substring 매칭으로 ablate 하면 두 변형 모두 undercount(inbound 감소) 로 flip(RED)."""
+    root = _build_repo({
+        "docs/inbound.md": "참조1: §결정  7 (다중공백)\n참조2: §결정7 (공백없음)\n",
+    })
+    target = {"file": "docs/clean.md", "body": "이 라인은 §결정 7 을 다룬다", "row": None}
+    try:
+        before = g.check_inbound_scan(target, root)
+        assert before["inbound_count"] > 0, (
+            "whitespace-flexible anchor 매칭은 다중공백/무공백 변형 라인을 잡아야: %s" % before
+        )
+
+        orig = g._anchor_matches
+        try:
+            g._anchor_matches = lambda anchor, raw: anchor in raw  # ablate: 리터럴 substring 만
+            after = g.check_inbound_scan(target, root)
+        finally:
+            g._anchor_matches = orig
+        assert after["inbound_count"] < before["inbound_count"], (
+            "literal-substring ablation 은 변형 anchor 를 undercount 해야(RED): before=%s after=%s"
+            % (before["inbound_count"], after["inbound_count"])
+        )
+
+        # 원복 확인.
+        restored = g.check_inbound_scan(target, root)
+        assert restored["inbound_count"] == before["inbound_count"]
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg5_oracle_census_live_context_threading():
+    """TG-5 — DBM-4 census 층 `live_required_contexts` threading: 이 값이 classify() 까지 threading
+    되어야만 permanence-falsify(strip_normativity) 가 도출된다. Mutation proof: threading 없이
+    (live_required_contexts=None) 호출하면 같은 라인이 strip 에 도달하지 못하고 분포가 달라짐
+    (threading 이 load-bearing 함을 실증 — 별도 monkeypatch 없이 실 파라미터 유/무 대조로 증명)."""
+    root = _build_repo({
+        "docs/permanence.md": (
+            "wrapper 의 required_status_checks contexts 는 6-tuple 로 불변 유지\n"
+            "일반 서술 라인(무관)\n"
+        ),
+    })
+    try:
+        path = os.path.join(root, "docs", "permanence.md")
+        fake_live = {"a", "b", "c", "d", "e", "f", "g"}  # 실 SSOT 아님 — 7-count 대조용(threading 검증)
+        assert len(fake_live) == 7
+
+        with_live = m._census_over_files([path], live_required_contexts=fake_live)
+        assert with_live["by_disposition"].get("strip_normativity", 0) >= 1, (
+            "live_required_contexts(7) threading 시 6-tuple 불변 주장이 strip_normativity 로 도달해야: %s"
+            % with_live["by_disposition"]
+        )
+
+        without_live = m._census_over_files([path], live_required_contexts=None)
+        assert without_live["by_disposition"].get("strip_normativity", 0) == 0, (
+            "threading 부재(None) 시 같은 라인이 strip 에 도달하면 안 됨(RED): %s" % without_live["by_disposition"]
+        )
+        assert with_live["by_disposition"] != without_live["by_disposition"]
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TG-5b — CLI `--census --dated-map` **상대경로 end-to-end 통합** (FIX-1 test-blind-spot 봉합)
+#   기존 TG-5 / test_dated_block_mapper 는 make_dated_provider/census 를 **직접** 호출해 CLI 배선
+#   (`_main` 의 `--dated-map` 분기 = provider root 조립)을 우회했다 → born-false-green. 정상 invocation
+#   `oracle --census --dated-map <상대경로>` 는 provider root double-join 버그로 per-block dated 가
+#   silent no-op 였다(구 `_common_ancestor(args.files)` 가 절대 상위 디렉터리를 반환 → provider 가
+#   census 의 상대경로를 `os.path.join(<abs>, "archive/adr/…")` 로 double-join → 부재 경로 → None).
+#   본 test 는 그 배선을 `_main` 을 통해 **끝까지** 타서, per-block dated 가 실제로 작동함을 실증한다.
+#
+#   ★ 반드시 **subdirectory 를 가진 상대경로**(archive/adr/…)를 써야 한다 — bare basename 은
+#     `_common_ancestor([basename])` 이 우연히 CWD 로 resolve 되어 fixed/buggy 를 구분 못 한다
+#     (firsthand 검증: basename 은 double-join 미발생 → 대조 불가). 버그는 상대경로에 디렉터리
+#     성분이 있을 때만 재현된다(fix 주석의 예시 `archive/adr/…` 와 동일).
+# ═════════════════════════════════════════════════════════════════════════════
+# ADR fixture — frontmatter amendments[].date + `## Amendment 1` region 안의 present-normative
+#   permanence cardinal(6-tuple 무변경). 이 라인은:
+#     - dated 아니면 → strip_normativity (permanence-invariant '무변경' ∧ embed 6 ≠ live 7)
+#     - dated 이면   → historical_falsehood (dated 블록 안 거짓 present-normative, 과거-scope 부재)
+#   ★ Korean 리터럴은 반드시 이 UTF-8 .py 파일 안에 직접 임베드(셸 heredoc 경유 시 cp949 로
+#     '무변경'/'불변' 이 깨져 cardinal_bound 매칭이 false 가 됨 — firsthand 확인한 회귀 방지).
+_TG5B_ADR_FIXTURE = (
+    "---\n"
+    "title: ADR-9001 sample\n"
+    "amendments:\n"
+    "  - number: 1\n"
+    "    date: 2026-05-01\n"
+    "    summary: sample amendment\n"
+    "---\n"
+    "\n"
+    "# ADR-9001 sample\n"
+    "\n"
+    "## 결정 1\n"
+    "\n"
+    "일반 내용\n"
+    "\n"
+    "## Amendment 1\n"
+    "\n"
+    "- branch protection 6-tuple 무변경 (required 신설 0)\n"
+)
+
+
+def test_tg5b_cli_dated_map_relative_path_integration():
+    """TG-5b — `oracle --census --dated-map <상대경로>` 정상 invocation 이 per-block dated 를
+    **끝까지 배선**해 작동함을 실증(CLI `_main` 을 relative path 로 태움).
+
+    (main) 상대경로(subdir 포함)로 `m._main(["--census","--dated-map",...])` 를 chdir(temp) 하에
+      호출 → stdout(JSON) 파싱 → 그 cardinal 라인이 `historical_falsehood`(=dated 배선 작동) 이고
+      `strip_normativity`(=dated 무시) 가 아님을 assert.
+    (positive-control / 버그 복원 → RED) 같은 fixture·상대경로로, provider root 를 **버그처럼**
+      절대 상위 디렉터리(`os.path.abspath(os.path.dirname(relpath))`)로 준 provider 를
+      `_census_over_files` 에 직접 넣으면 상대 basename 이 double-join → provider None → 그 라인이
+      다시 `strip_normativity`(dated 무시) 로 나옴을 assert. fixed(`historical_falsehood`) ↔
+      buggy(`strip_normativity`) 대조가 배선의 load-bearing 성을 실증한다.
+    """
+    import io
+    import json
+    import contextlib
+    import dated_block_mapper as dbm  # scripts/lib (모듈 상단 sys.path 삽입으로 resolvable)
+
+    root = tempfile.mkdtemp(prefix="cfp2698_tg5b_")
+    rel = "archive/adr/ADR-9001-sample.md"  # ★ subdir 포함 상대경로 (basename 아님 — 버그 재현 조건)
+    abs_fixture = os.path.join(root, *rel.split("/"))
+    os.makedirs(os.path.dirname(abs_fixture), exist_ok=True)
+    with open(abs_fixture, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(_TG5B_ADR_FIXTURE)
+
+    live_arg = "a,b,c,d,e,f,g"  # 7 contexts — embed 6 ≠ 7 이라야 permanence-falsify(strip) 경로 성립
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(root)
+
+        # ── (main) 정상 CLI invocation: relative path 로 `_main` 을 끝까지 태움 ──
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = m._main(["--census", "--dated-map", "--live-contexts", live_arg, rel])
+        assert rc == 0, "census CLI 는 non-strict 에서 exit 0 이어야: rc=%s" % rc
+        report = json.loads(buf.getvalue())
+        fixed_dist = report["by_disposition"]
+        # dated 가 배선을 통해 실제로 작동 → historical_falsehood, strip_normativity 미출현.
+        assert fixed_dist.get("historical_falsehood", 0) >= 1, (
+            "CLI --dated-map(상대경로)가 per-block dated 를 배선하면 cardinal 라인이 "
+            "historical_falsehood 여야(=dated 작동): %s" % fixed_dist
+        )
+        assert fixed_dist.get("strip_normativity", 0) == 0, (
+            "dated 배선이 작동하면 strip_normativity 로 새면 안 됨(dated silent no-op RED 징후): %s" % fixed_dist
+        )
+
+        # ── (positive-control) 버그 복원: provider root = 절대 상위 디렉터리 → double-join → None ──
+        buggy_root = os.path.abspath(os.path.dirname(rel))  # 구 _common_ancestor 가 내던 형태
+        buggy_provider = dbm.make_dated_provider(buggy_root)
+        buggy_report = m._census_over_files(
+            [rel],
+            live_required_contexts=set(live_arg.split(",")),
+            dated_provider=buggy_provider,
+        )
+        buggy_dist = buggy_report["by_disposition"]
+        assert buggy_dist.get("strip_normativity", 0) >= 1, (
+            "buggy root(double-join → provider None) 이면 dated 무시 → strip_normativity 여야: %s" % buggy_dist
+        )
+        assert buggy_dist.get("historical_falsehood", 0) == 0, (
+            "buggy root 에서는 dated 가 배선되지 않으므로 historical_falsehood 로 가면 안 됨: %s" % buggy_dist
+        )
+
+        # 대조 — fixed(배선 O) 와 buggy(배선 X)의 분포가 실제로 다름 = 배선이 load-bearing.
+        assert fixed_dist != buggy_dist, (
+            "fixed(dated 배선) 와 buggy(double-join) 분포가 같으면 배선이 decorative(FAIL): fixed=%s buggy=%s"
+            % (fixed_dist, buggy_dist)
+        )
+    finally:
+        os.chdir(old_cwd)
         shutil.rmtree(root, ignore_errors=True)
 
 

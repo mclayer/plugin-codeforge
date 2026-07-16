@@ -61,6 +61,7 @@ pure: 네트워크 0, import side-effect 0. 파일 I/O 는 하단 `if __name__ =
 
 import argparse
 import json
+import os
 import re
 import sys
 
@@ -611,8 +612,28 @@ def smoke_report():
 # ─────────────────────────────────────────────────────────────────────────────
 # CLI 층 (파일 I/O 는 여기서만 — importable 함수는 순수 유지)
 # ─────────────────────────────────────────────────────────────────────────────
-def _census_over_files(paths, dated_context=None):
+def _census_over_files(paths, *, live_required_contexts=None, dated_provider=None, dated_context=None):
     """파일들을 읽어 `\\d+-tuple` 포함 라인을 classify, 조치-필요 항목(correct/strip/historical)만 수집.
+
+    (DBM-4) 구 시그니처 `_census_over_files(paths, dated_context=None)` 를 keyword-only
+    `live_required_contexts` + `dated_provider` 로 확장(census 층 threading — classify() 자체는
+    불변).
+
+    Parameters
+    ----------
+    paths : list[str]
+        census 대상 파일 경로 목록.
+    live_required_contexts : set[str] | None
+        classify() 로 그대로 전달되는 현행 branch-protection required-context 집합(사실).
+        phantom-enforcement / permanence-falsify / membership-expiry 축의 근거.
+    dated_provider : callable(path, lineno) -> Optional[bool] | None
+        `dated_block_mapper.make_dated_provider` 산출물 — per-block(라인별) dated 판정.
+        제공되면 라인마다 우선 조회하되, provider 가 None(판정 불가/미해당) 을 반환하면
+        아래 `dated_context`(있으면) 또는 classify() 자체의 line-level 추론으로 fall back한다
+        (per-block dated 는 ADDITIVE 커버리지 — line-level 감지를 억제하지 않음).
+    dated_context : bool | None
+        구 `--dated`(global override) 하위호환 — `dated_provider` 가 없거나 그 판정이 None 일 때
+        사용되는 global fallback.
 
     반환: {"scanned": int, "cardinal_lines": int, "needs_disposition": [ {...} ], "by_disposition": {...}}
     """
@@ -639,7 +660,13 @@ def _census_over_files(paths, dated_context=None):
             if not _TUPLE_RE.search(_low(line)):
                 continue
             cardinal_lines += 1
-            res = classify(line, dated_context=dated_context)
+            if dated_provider is not None:
+                dated = dated_provider(path, idx)
+                if dated is None:
+                    dated = dated_context
+            else:
+                dated = dated_context
+            res = classify(line, live_required_contexts=live_required_contexts, dated_context=dated)
             disp = res["disposition"]
             by_disp[disp] = by_disp.get(disp, 0) + 1
             if disp in action_dispositions:
@@ -660,6 +687,25 @@ def _census_over_files(paths, dated_context=None):
     }
 
 
+def _parse_live_contexts_arg(value):
+    """`--live-contexts VALUE` 파싱 — comma-separated 목록 또는 파일 경로(줄당 1개 또는 JSON
+    리스트)를 `set[str]` 로. value 가 None 이면 None(판정 불가 그대로 유지, fail-closed 상속)."""
+    if value is None:
+        return None
+    if os.path.isfile(value):
+        with open(value, "r", encoding="utf-8") as fh:
+            content = fh.read()
+        stripped = content.strip()
+        if stripped.startswith("["):
+            try:
+                data = json.loads(stripped)
+                return set(str(x).strip() for x in data if str(x).strip())
+            except (ValueError, TypeError):
+                pass
+        return set(line.strip() for line in content.splitlines() if line.strip())
+    return set(part.strip() for part in value.split(",") if part.strip())
+
+
 def _main(argv=None):
     ap = argparse.ArgumentParser(
         description="decision-record cardinal disposition oracle (feature-based)."
@@ -667,7 +713,21 @@ def _main(argv=None):
     ap.add_argument("--smoke", action="store_true", help="5 표준 예제 verdict 출력")
     ap.add_argument("--line", help="단일 라인 텍스트를 classify 하고 JSON 출력")
     ap.add_argument("--census", action="store_true", help="파일 census (cardinal 라인 분류 리포트)")
-    ap.add_argument("--dated", action="store_true", help="census: 대상 라인을 dated 블록으로 간주")
+    ap.add_argument(
+        "--dated",
+        action="store_true",
+        help="census: 대상 라인을 dated 블록으로 간주(global override — 하위호환)",
+    )
+    ap.add_argument(
+        "--live-contexts",
+        help="census: 현행 required-context 집합 — comma-separated 목록 또는 파일 경로"
+        "(줄당 1개 또는 JSON 리스트)",
+    )
+    ap.add_argument(
+        "--dated-map",
+        action="store_true",
+        help="census: dated_block_mapper.make_dated_provider 로 파일별/블록별 dated 판정(DBM-4)",
+    )
     ap.add_argument(
         "--strict",
         action="store_true",
@@ -687,8 +747,25 @@ def _main(argv=None):
         return 0
 
     if args.census or args.files:
+        live_required_contexts = _parse_live_contexts_arg(args.live_contexts)
+        dated_provider = None
+        if args.dated_map:
+            lib_dir = os.path.dirname(os.path.abspath(__file__))
+            if lib_dir not in sys.path:
+                sys.path.insert(0, lib_dir)
+            import dated_block_mapper  # lazy import — 같은 scripts/lib 디렉터리(DBM-4)
+
+            # FIX-1(P1 runtime): provider root 를 CWD(".") 로 고정 — census(`_census_over_files`)가
+            # 파일을 여는 root(=CWD 상대) 와 반드시 동일해야 한다. 구 `_common_ancestor(args.files)`
+            # 는 **절대** 상위 디렉터리를 반환해, provider 가 census 의 상대 경로를
+            # `os.path.join(<abs>, "archive/adr/…")` 로 double-join → 부재 경로 → None → per-block
+            # dated 가 조용히 무력화(절대경로 입력에서만 우연히 동작)됐다.
+            dated_provider = dated_block_mapper.make_dated_provider(".")
         report = _census_over_files(
-            args.files, dated_context=(True if args.dated else None)
+            args.files,
+            live_required_contexts=live_required_contexts,
+            dated_provider=dated_provider,
+            dated_context=(True if args.dated else None),
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))
         needs = [n for n in report["needs_disposition"] if "disposition" in n]

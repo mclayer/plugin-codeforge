@@ -41,6 +41,7 @@ I/O 경계:
 """
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -187,8 +188,14 @@ def check_parser_scan(target, repo_root):
 # ─────────────────────────────────────────────────────────────────────────────
 # ② inbound-scan (row/anchor 단위)
 # ─────────────────────────────────────────────────────────────────────────────
-def _target_row_anchors(target, repo_root):
-    """대상 row 를 가리키는 anchor 문자열 후보 집합 산출 (row/anchor 단위 — 파일 단위 아님)."""
+def _semantic_anchors(target, repo_root):
+    """대상 row 의 **semantic** anchor 집합 — `§결정 N`(ADR 파일이면 `ADR-NNN §결정 N` 로 qualify)
+    과 `#anchor`. positional(file:line/basename:line) 은 제외 — `_positional_anchors` 참조.
+
+    (DBM-1) delete 자격 판정(`_has_semantic_anchor`)의 기반 — measured-inbound=0 이라도
+    semantic anchor 가 0 이면 그 측정 자체가 신뢰 불가(참조가 오직 위치로만 존재 = 텍스트가
+    옮겨지면 인바운드 스캔이 못 따라감) → delete 비자격.
+    """
     body = _resolve_body(target, repo_root)
     file_rel = (target.get("file") or "").replace("\\", "/")
     anchors = set()
@@ -204,12 +211,66 @@ def _target_row_anchors(target, repo_root):
             anchors.add("§결정 %s" % dm.group(1))
     for am in _ANCHOR_RE.finditer(body):
         anchors.add("#" + am.group(1))
-    # file:line 형태(row 가 정수일 때)
+    return anchors
+
+
+def _positional_anchors(target, repo_root):
+    """대상 row 의 **positional** anchor 집합 — `basename:line` / `file:line`(row 가 정수일 때만)."""
+    file_rel = (target.get("file") or "").replace("\\", "/")
+    anchors = set()
     row = target.get("row")
     if row is not None and str(row).isdigit():
         anchors.add("%s:%s" % (os.path.basename(file_rel), row))
         anchors.add("%s:%s" % (file_rel, row))
     return anchors
+
+
+def _target_row_anchors(target, repo_root):
+    """대상 row 를 가리키는 anchor 문자열 후보 집합 산출 (row/anchor 단위 — 파일 단위 아님).
+
+    (DBM-1) semantic ∪ positional — byte-identical 기존 동작 보존(inbound-scan 은 여전히
+    합집합 전체를 스캔). 두 축을 분리한 이유는 `_has_semantic_anchor`(delete 자격)가 오직
+    semantic 부분집합만 봐야 하기 때문(positional-only 참조는 신뢰 불가 측정).
+    """
+    return _semantic_anchors(target, repo_root) | _positional_anchors(target, repo_root)
+
+
+def _has_semantic_anchor(target, repo_root):
+    """대상 row 가 semantic anchor(§결정/#anchor) 를 하나라도 갖는지 — (DBM-1) delete 자격 조건.
+
+    semantic anchor 가 없으면(오직 file:line 위치로만 존재) inbound-scan 의 "인바운드 0" 측정이
+    신뢰 불가 — 텍스트가 파일 내에서 옮겨지거나 재작성되면 anchor 없는 참조는 애초에 추적
+    불가능하기 때문. 이 경우 delete 는 비자격 → strip_normativity 로 강등.
+    """
+    return len(_semantic_anchors(target, repo_root)) > 0
+
+
+_WS_RE = re.compile(r"\s+")
+
+
+@functools.lru_cache(maxsize=None)
+def _compiled_anchor_pattern(anchor):
+    """`§결정` anchor 를 whitespace-flexible 정규식으로 compile(lazily, lru_cache 로 재사용).
+
+    anchor 의 공백-run 을 전부 `\\s*` 로 치환(리터럴 조각은 `re.escape`) — `§결정  6`(다중 공백)
+    과 `§결정6`(공백 없음) 둘 다 매치. ReDoS-safe: escaped 리터럴 사이에 `\\s*` 만 삽입
+    (중첩 수량자 0, bounded) — 본 주석은 "임의 입력 무해"를 단정하지 않는다(ADR-082 §결정 16
+    honest-ceiling), anchor 자체가 bounded 길이 토큰이라는 전제 하의 bounded degradation 만 주장.
+    """
+    parts = [p for p in _WS_RE.split(anchor) if p]
+    pattern = r"\s*".join(re.escape(p) for p in parts)
+    return re.compile(pattern)
+
+
+def _anchor_matches(anchor, raw):
+    """anchor 가 raw 라인에 존재하는지 — (DBM-1b) `§결정` anchor 는 whitespace-flexible 매칭,
+    그 외(`ADR-NNN`/`#anchor`/`file:line`/`basename:line`) 는 기존 그대로 substring 매칭.
+
+    단일-공백 통상 케이스는 정규식 매칭도 그대로 True 를 내므로 회귀-안전.
+    """
+    if "§결정" in anchor:
+        return _compiled_anchor_pattern(anchor).search(raw) is not None
+    return anchor in raw
 
 
 def check_inbound_scan(target, repo_root):
@@ -228,7 +289,7 @@ def check_inbound_scan(target, repo_root):
             continue
         for lineno, raw in enumerate(text.splitlines(), start=1):
             for anchor in anchors:
-                if anchor in raw:
+                if _anchor_matches(anchor, raw):
                     refs.append(
                         {"file": os.path.relpath(scan_path, repo_root).replace("\\", "/"),
                          "line": lineno, "anchor": anchor}
@@ -490,7 +551,14 @@ def run_guard(target, disposition, *, repo_root):
     result = {"disposition": disp, "checks": checks}
 
     if disp == "delete":
-        ok = (not body_parsed) and (inbound_count == 0) and (not external_cited) and structure_intact
+        has_semantic = _has_semantic_anchor(target, repo_root)
+        ok = (
+            (not body_parsed)
+            and (inbound_count == 0)
+            and (not external_cited)
+            and structure_intact
+            and has_semantic
+        )
         result["pass"] = ok
         if not ok:
             result["recommend"] = "strip_normativity"
@@ -502,6 +570,7 @@ def run_guard(target, disposition, *, repo_root):
                 "no_inbound": inbound_count == 0,
                 "external_id_safe": not external_cited,
                 "structure_intact": structure_intact,
+                "has_semantic": has_semantic,
             }
     else:
         # correct / strip = edit: ③ invariant(참조 orphan 0) ∧ ④ byte-parity(structure_intact)
