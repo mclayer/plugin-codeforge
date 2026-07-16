@@ -489,3 +489,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "author-time self-gate runner self-test(runner --self-test 독립 oracle + 대칭 fail-closed 양방향[known-good→PASS ∧ known-bad(RTM row 누락/§4 위치 오배치/AC header 손상/invalid category)→FAIL] + 실 게이트 invoke[ac-traceability CLI subprocess / doc-section·doc-frontmatter 격리 subprocess / rtm-format 실 파서 재사용] + R1 path-aware N/A + 측정≠emit 구분 + mutation-revert negative-control + pytest AC-1~18) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 저작시점 구조/위치 conformance 판별력 결박: 검출 완비=review-tier semantic 축 미강제, presence ≠ truth honest-ceiling)."
+
+  # ── CFP-2700 (Epic #2700 D3 / ADR-157 + ADR-060 Amendment 23) — infra-resource drift scanner discriminating self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 46 → 47 (신규 self-test enroll). G2 QADev Phase 2 deliverable —
+  #   .sh 만 enroll (meta-gate 는 tests/scripts/*.sh 만 glob — 동반 .py 는 workflow 의 .py step 으로 실행, ac-traceability Hop3 AST 스타일, 인벤토리 대상 아님).
+  #   실행 채널 = .github/workflows/infra-resource-manifest-drift.yml (byte-identical template pair, non-required day-1 hard-fail).
+  - self_test: "tests/scripts/test_check-infra-resource-drift.sh"
+    execution_channel: "workflow:infra-resource-manifest-drift.yml:infra-resource-manifest-drift"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "D3 infra-resource drift scanner discriminating self-test (미선언 표면 검출 AC-5 + orphan AC-6 + substring 오분류 제외 AC-7 + 역색인 verdict-invariant AC-8 + none-disguise anti-hollow AC-10/11 + wrapper 9-secret 실 스캔 AC-17 + census born-hollow guard candidates==0∧inert==0→exit3 + baseline grandfather) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 선언-대조 판별력 결박; cross-repo=G5·startup=G3 별도 슬라이스; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-157 §결정8)."

@@ -1,0 +1,820 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+r"""
+scripts/lib/check_infra_resource_drift.py
+CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource manifest drift scan
+  (인프라 자원 선언 manifest ↔ 실 참조면 대조, census-floor oracle, warning tier / ADR-060 §결정5 3-tier).
+
+대상 = wrapper-self(및 consumer 상속) 인프라 env-key 소비면. manifest(`.claude/_overlay/project.yaml`
+  `infra_resources:` block)가 선언한 자원 카탈로그(canonical_env + accepted/deprecated alias)와, repo 안
+  실 참조면(workflow `secrets.<KEY>` + project.yaml `<lower>_env: <KEY>` + scripts 정적 env-key 리터럴)을
+  대조한다. 미선언 표면(참조되나 manifest 未등재 = drift 원천)을 각 참조면에서 loud 검출하고, 선언되었으나
+  어디서도 참조되지 않는 자원(orphan = dead 선언)을 별도 tier 로 표면화한다. base scan 한정 —
+  cross-repo 대조(G5) · startup fail-closed(D2/G3)는 본 스캐너 정의역 밖(ADR-157 §결정4/§결정7(e)).
+
+★ live violation 대상 vs census inert (ADR-157 §결정9.1 / §결정9.2 — corpus 완전 열거):
+  - LIVE(candidate, undeclared 판정 대상):
+    · `.github/workflows/*.yml|*.yaml` — `secrets.<KEY>`(form=signal) + `<lower>_env: <KEY>`(form=signal).
+    · `.claude/_overlay/project.yaml` — `<lower>_env: <KEY>`(form=signal). 단 `infra_resources:` block 은
+      manifest 자체(소비면 아님)라 SELF_EXCLUDE(canonical_env: 선언을 소비로 오판 차단).
+    · `scripts/*.py|*.sh` + `scripts/lib/*.py` — QUOTED uppercase 리터럴 중 infra-signal 매치(§결정7(b) 참조).
+  - CENSUS inert(관측만, violation 아님 — §결정9.2 predicate): `examples/**` + `presets/**` 의 env-position
+    infra-signal 토큰. 데모/템플릿 경로는 execution_unit 이 아니므로 required 대조 대상 아님 → inert 로 흡수
+    (born-hollow(candidates==0 ∧ inert==0) 회피의 필요조건 ④⊃②). presets/ 부재 시 glob 0 매치 = 정상.
+
+★ infra-signal surgical scope (ADR-157 §결정7(b) FM1-false-positive seal operationalization — 리뷰 대상):
+  scripts/examples/presets 의 bare uppercase 토큰을 전부 flag 하면 ADR-011 path-prefix 오판형 born-red
+  (STORY_KEY 85회 등 parse-token 오탐)을 재현한다. 따라서 리터럴 참조 후보를 다음으로 surgical narrow:
+    (1) QUOTED string literal 만 후보 (bare 식별자 `STORY_KEY=""` 제외 — 변수명 ≠ env-key 리터럴).
+        `SECRET_ENV_VARS = ["CONFLUENCE_API_TOKEN"]`(ADR §결정9.1 예시)는 quoted → 후보.
+    (2) infra-signal 매치: suffix ∈ {_TOKEN,_SECRET,_KEY,_PASSPHRASE,_PASSWORD,_PAT,_CREDENTIAL,_URL,
+        _DSN,_ACCESS_KEY} OR infix `_API_`.
+    (3) `MOCK` 부분문자열 제외 — 테스트 mock fixture(CFP1495_API_MOCK_429 / MOCK_API_401 류)는 인프라
+        자격증명 아님. (2)의 `_API_` infix 가 mock 을 오탐하므로 (3)으로 정정. 이 3-piece 는 §결정7(b)
+        "surgical scope + allowlist" 의 operationalization 이며 ArchitectPL 리뷰 대상(write-time declaration).
+  form-based(secrets. / _env:)는 (2)(3) 미적용 — FORM 이 signal 이라 suffix 무관 infra(예 ATLASSIAN_USER_EMAIL
+  은 _EMAIL suffix 라 infra-signal 미매치이나 `user_email_env:` form 으로 infra 확정).
+
+★ AC-7 substring 오분류 제외 (structural, NOT filename-substring):
+  파일이 env-surface 인지 판정은 STRUCTURAL(실 yaml `secrets.`/`_env:`/env-mapping 위치 / quoted 리터럴)로만.
+  파일명에 "compose" 부분문자열(예 team-spec-decompose.yaml — "decompose")이 있어도 실 env-key 0 이면 0 flag.
+  본 스캐너는 파일명을 corpus glob 멤버십에만 쓰고, 추출은 라인 구조로만 판정한다(name-based 분류 0).
+
+★ none-disguise anti-hollow (ADR-157 §결정8 / AC-10·AC-11):
+  manifest `infra_resources:` block 부재, 또는 present-but-empty(resources 0) 이면서 `reason`(사유) 필드
+  부재인데 LIVE 스캔이 infra 표면 ≥1 을 찾으면 = hollow "none" 위장 → exit 1(baseline 로 억제 불가).
+
+★ census 3-count + born-hollow guard (anti-hollow observability — CFP-2661 §결정15.b 동형):
+  candidates_scanned(live judged) / inert_skipped(examples·presets 관측) / undeclared(new, baseline subtract 후)
+  / orphan / grandfathered emit. verdict warning-tier(fail-open, PR 미차단) but census fail-closed —
+  candidates==0 ∧ inert==0(빈 corpus/empty-scope) → PASS 아니라 FAIL(exit 3, born-hollow). all-inert
+  (candidates==0 ∧ inert>0)는 non-vacuous PASS(census 로 관측, over-state "candidate≥1" 금지 — F-CR-2).
+
+★ D4 역색인 (ADR-157 §결정6 — 비커밋 ephemeral CI artifact, I-1):
+  `--emit-reverse-index` 는 resource-id → [참조 표면] 을 stdout 으로만 방출(커밋 0). VERDICT(census +
+  undeclared + orphan + exit code)는 manifest + fresh scan 에서만 도출하며 어떤 커밋/on-disk 역색인도
+  read-back 하지 않는다 → 역색인 변조로 판정 불변(I-1). freshness 결박 불요(매 실행 재생성).
+
+★ grandfather baseline (ADR-060 §결정6 Amd20 monotonic shrink — CFP-2661 mirror):
+  `docs/infra-resource-baseline.yaml` 가 승격 시점 pre-existing 미선언 `(file, env-key)` pair 를 동결 →
+  new-only subtract. baseline 은 candidate/inert census 를 감소시키지 않음(anti-hollow). `--write-baseline`
+  은 GENERATED 헤더로 재생성(수기 편집 금지). 실 wrapper 잔존 = ATLASSIAN_USER_EMAIL(alias-gap) +
+  AUDIT_PII_KEY(manifest 미등재 HMAC key) — 진성 undeclared(오탐 아님), 추후 manifest 등재로 shrink 가능.
+
+★ 정직 천장 (ADR-157 §결정8 — "완전 봉인" hard-claim 금지):
+  (i) 프록시 위장(socat) 미검출 (ii) 자기신고 누락(실행단위 미신고 required) census-floor 부분검출만
+  (iii) 동적 구성 env 키(런타임 문자열 조립) out-of-scope — 정적 리터럴만 결정가능·in-scope
+  (iv) 스캔 밖 표면(secret manager / 외부 deploy / 수동 운영 스크립트) (v) 기동 후 런타임 변조.
+  presence ≠ truth (bounded degradation) — 정적 선언-대조 class 의 구조적 상한.
+
+★ input-driven resource exhaustion safety (SecurityArch non-negotiable — ADR-157 §7.2, CFP-2661 SF-1 선례):
+  유일 위협 축 = adversarial 입력 파일(초장문 라인 / 폭발적 리터럴)의 파서 자원 고갈(DoS). 완화 bound:
+    (1) regex : 전 regex anchored + bounded quantifier(`{0,N}`/`{2,64}`), nested quantifier 0.
+    (2) 물리라인 length : MAX_PHYSICAL_LINE_LEN per-line truncate-scan (정당 코드 미도달).
+    (3) 복잡도 : O(n) 라인 단위 스캔 — slice-in-loop O(n²) 금지. 토큰 추출은 bounded 토큰에 O(1) 판정.
+    (4) read-path : itertools.islice(f, PER_FILE_SCAN_CAP) 로 라인 count bound.
+  No eval/exec/yaml.safe_load(순수 substring/regex 라인 파서) — injection 0. No path-traversal:
+  스캔 대상 = repo-relative glob, 임의 경로 open 0. bounded degradation — "임의 입력 무해" 가 아님(정직 천장).
+
+CLI 계약 (ADR-061 house style — 고정, self-test + workflow 소비):
+  bash scripts/check-infra-resource-drift.sh [--repo-root DIR] [--manifest PATH] [--baseline PATH]
+    [--promote-orphan] [--write-baseline] [--emit-reverse-index]
+
+Exit codes (ADR-060 §결정5 3-tier — verdict warning / census fail-closed):
+  0 = PASS (new undeclared 0; orphan warning-only unless --promote-orphan; census non-vacuous).
+  1 = FLAG (≥1 NEW undeclared surface OR none-disguise hollow OR orphan present WITH --promote-orphan) — warning.
+  2 = usage/parse 오류 (argparse) / manifest 파일 부재·malformed.
+  3 = census fail-closed / born-hollow (candidates==0 ∧ inert==0).
+
+ADR refs: ADR-157 §결정3/§결정6/§결정7/§결정8/§결정9 (carrier) / ADR-060 §결정5 (warning tier) /
+  ADR-061 §결정1 (Python SSOT + thin wrapper) / ADR-005 (byte-identical workflow pair) /
+  ADR-119 (게이트=ground-truth, 오탐 저감) / ADR-127 (1 Story = 2 PR).
+"""
+
+import argparse
+import glob
+import itertools
+import os
+import re
+import sys
+
+# Windows cp949 인코딩 문제 회피: stdout/stderr 를 UTF-8 강제 (ADR-061 portability 답습).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# ─────────────────────── input-driven exhaustion bounded 상수 ───────────────────
+PER_FILE_SCAN_CAP = 6000        # per-file 물리 라인 count bound (read-path).
+MAX_PHYSICAL_LINE_LEN = 8192    # per-physical-line 길이 bound (정당 코드 미도달, 초과분 truncate).
+MAX_BLOCK_SPAN = 4000           # infra_resources block 누적 라인 상한 (병리 방어).
+
+# ─────────────────────── corpus glob (ADR-157 §결정9.1 완전 열거) ────────────────
+# LIVE violation 대상 (candidates 기여):
+LIVE_WORKFLOW_GLOBS = (".github/workflows/*.yml", ".github/workflows/*.yaml")
+LIVE_PROJECT_YAML_REL = ".claude/_overlay/project.yaml"
+LIVE_SCRIPT_GLOBS = ("scripts/*.py", "scripts/*.sh", "scripts/lib/*.py")
+# CENSUS inert (§결정9.2 — 관측만, violation 아님). presets/ 부재 시 glob 0 매치 = 정상.
+INERT_GLOBS = (
+    "examples/**/*.yml", "examples/**/*.yaml", "examples/**/*.env", "examples/**/Dockerfile",
+    "presets/**/*.yml", "presets/**/*.yaml", "presets/**/*.env", "presets/**/Dockerfile",
+)
+
+# self-source EXEMPT (FM1 seal — 스캐너 소스·wrapper·baseline·생성 역색인 제외).
+_SELF_SOURCE_TOKENS = (
+    "check_infra_resource_drift",
+    "check-infra-resource-drift",
+    "infra-resource-baseline",
+)
+
+DEFAULT_MANIFEST_REL = ".claude/_overlay/project.yaml"
+DEFAULT_BASELINE_REL = "docs/infra-resource-baseline.yaml"
+
+# ─────────────────────── infra-signal surgical scope (§결정7(b) operationalization) ──
+# bounded 토큰(추출 시 이미 [A-Z][A-Z0-9_]{2,64} 로 길이 제한)에 anchored suffix 판정 — nested quantifier 0.
+_INFRA_SUFFIX_RE = re.compile(
+    r"(_TOKEN|_SECRET|_KEY|_PASSPHRASE|_PASSWORD|_PAT|_CREDENTIAL|_URL|_DSN|_ACCESS_KEY)$"
+)
+
+
+def _is_infra_signal(token):
+    """리터럴 후보(scripts/examples/presets) infra-signal 판정 — suffix OR `_API_` infix, MOCK 제외.
+
+    form-based(secrets./_env:)에는 미적용(FORM 이 signal). MOCK 부분문자열 = 테스트 fixture(§결정7(b) (3)).
+    """
+    if "MOCK" in token:
+        return False
+    if _INFRA_SUFFIX_RE.search(token):
+        return True
+    if "_API_" in token:
+        return True
+    return False
+
+
+# ─────────────────────── bounded 추출 regex (anchored, nested-quantifier 0) ──────
+_RE_SECRETS = re.compile(r"secrets\.([A-Z][A-Z0-9_]{2,64})")
+_RE_ENV_VALUE = re.compile(r"\b[a-z][a-z0-9_]{0,40}_env:\s{0,4}[\"']?([A-Z][A-Z0-9_]{2,64})")
+_RE_QUOTED_TOKEN = re.compile(r"[\"']([A-Z][A-Z0-9_]{2,64})[\"']")
+# examples/presets env-position: yaml mapping key / env `KEY=` / list `- KEY=` (bare) + quoted.
+_RE_ENV_POSITION = re.compile(r"^\s{0,80}-?\s{0,4}([A-Z][A-Z0-9_]{2,64})\s{0,4}[:=]")
+
+
+# ─────────────────────── 공통 read (born-safe read-path) ────────────────────────
+
+def _read_physical(path):
+    """islice read cap + per-physical-line truncate. 실패 → None."""
+    try:
+        physical = []
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for raw in itertools.islice(f, PER_FILE_SCAN_CAP):
+                line = raw.rstrip("\n").rstrip("\r")
+                if len(line) > MAX_PHYSICAL_LINE_LEN:
+                    line = line[:MAX_PHYSICAL_LINE_LEN]
+                physical.append(line)
+        return physical
+    except OSError:
+        return None
+
+
+def _indent_of(line):
+    return len(line) - len(line.lstrip(" "))
+
+
+def _strip_hash_comment(text):
+    """따옴표 밖 첫 `#` 이후 제거 (yaml/python/shell inline 주석). FP-안전(불확실=절단)."""
+    in_s = in_d = False
+    i = 0
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "'" and not in_d:
+            in_s = not in_s
+        elif c == '"' and not in_s:
+            in_d = not in_d
+        elif c == "#" and not in_s and not in_d:
+            return text[:i]
+        i += 1
+    return text
+
+
+# ─────────────────────── manifest 파서 (dependency-free — born-safe, no yaml import) ──
+
+class Manifest:
+    __slots__ = ("present", "resources", "units", "none_sentinel", "has_reason",
+                 "classified", "alias_to_canonical", "all_keys_by_resource")
+
+    def __init__(self):
+        self.present = False
+        self.resources = []      # [{id, canonical_env, namespace, accepted[], deprecated[]}]
+        self.units = {}          # {name: {required[], modes{id: mode}}}
+        self.none_sentinel = False
+        self.has_reason = False
+        self.classified = set()           # {canonical ∪ accepted ∪ deprecated names}
+        self.alias_to_canonical = {}      # {alias-or-canonical: canonical}
+        self.all_keys_by_resource = {}    # {resource-id: {keys}}
+
+
+def _parse_inline_list(value):
+    """`[A, B, C]` inline yaml list → [A,B,C]. bracket 없으면 단일 스칼라 1-list."""
+    v = value.strip()
+    if v.startswith("[") and v.endswith("]"):
+        inner = v[1:-1]
+        return [x.strip().strip('"').strip("'") for x in inner.split(",") if x.strip()]
+    if not v:
+        return []
+    return [v.strip('"').strip("'")]
+
+
+def _find_infra_block(physical):
+    """`infra_resources:` block 의 (start_idx, end_idx) 반환 (0-based, end exclusive). 부재 → None.
+
+    block = infra_resources: 라인 다음부터, indent 0 non-blank/non-comment(새 top-level key) 또는 EOF 까지.
+    """
+    start = None
+    for idx, line in enumerate(physical):
+        if re.match(r"^infra_resources:\s*(#.*)?$", line) or re.match(r"^infra_resources:\s*\S", line):
+            start = idx
+            break
+    if start is None:
+        return None
+    end = len(physical)
+    for idx in range(start + 1, min(len(physical), start + 1 + MAX_BLOCK_SPAN)):
+        line = physical[idx]
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if _indent_of(line) == 0:
+            end = idx
+            break
+    return (start, end)
+
+
+def parse_manifest(path):
+    """manifest 파일 → Manifest. 파일 부재/unreadable → None (exit 2 유발)."""
+    physical = _read_physical(path)
+    if physical is None:
+        return None
+    m = Manifest()
+    span = _find_infra_block(physical)
+    if span is None:
+        # infra_resources block 부재 — present=False (none-disguise 판정 대상).
+        m.present = False
+        return m
+    m.present = True
+    start, end = span
+    block = physical[start:end]
+
+    # none-sentinel / reason 감지 (present-but-empty 위장).
+    header = _strip_hash_comment(block[0]).strip()
+    if re.match(r"^infra_resources:\s*none\s*$", header):
+        m.none_sentinel = True
+    for line in block:
+        code = _strip_hash_comment(line)
+        s = code.strip()
+        if re.match(r"^resources:\s*none\s*$", s) or re.match(r"^resources:\s*\[\s*\]\s*$", s):
+            m.none_sentinel = True
+        if re.match(r"^reason(_none)?:\s*\S", s):
+            m.has_reason = True
+
+    # resources / execution_units 서브블록 파싱 (indentation 라인 파서).
+    section = None            # 'resources' | 'units'
+    cur_res = None
+    in_accepted = False
+    in_deprecated = False
+    cur_unit = None
+    in_required = False
+    in_modes = False
+
+    for line in block[1:]:
+        code = _strip_hash_comment(line)
+        stripped = code.strip()
+        if not stripped:
+            continue
+        indent = _indent_of(code)
+
+        # 최상위 서브섹션 전환 (indent 2 기준).
+        if re.match(r"^resources:\s*$", stripped) and indent <= 2:
+            section = "resources"
+            cur_res = None
+            in_accepted = in_deprecated = False
+            continue
+        if re.match(r"^execution_units:\s*$", stripped) and indent <= 2:
+            if cur_res is not None:
+                m.resources.append(cur_res)
+                cur_res = None
+            section = "units"
+            cur_unit = None
+            in_required = in_modes = False
+            continue
+
+        if section == "resources":
+            mm = re.match(r"^-\s+id:\s*(.+?)\s*$", stripped)
+            if mm:
+                if cur_res is not None:
+                    m.resources.append(cur_res)
+                cur_res = {"id": mm.group(1).strip().strip('"').strip("'"),
+                           "canonical_env": None, "namespace": None,
+                           "accepted": [], "deprecated": []}
+                in_accepted = in_deprecated = False
+                continue
+            if cur_res is None:
+                continue
+            mm = re.match(r"^canonical_env:\s*(.+?)\s*$", stripped)
+            if mm:
+                cur_res["canonical_env"] = mm.group(1).strip().strip('"').strip("'")
+                in_accepted = in_deprecated = False
+                continue
+            mm = re.match(r"^namespace:\s*(.+?)\s*$", stripped)
+            if mm:
+                cur_res["namespace"] = mm.group(1).strip().strip('"').strip("'")
+                continue
+            if re.match(r"^aliases:\s*$", stripped):
+                in_accepted = in_deprecated = False
+                continue
+            mm = re.match(r"^accepted:\s*(.*)$", stripped)
+            if mm:
+                rest = mm.group(1).strip()
+                if rest:
+                    cur_res["accepted"].extend(_parse_inline_list(rest))
+                    in_accepted = False
+                else:
+                    in_accepted = True
+                in_deprecated = False
+                continue
+            if re.match(r"^deprecated:\s*$", stripped):
+                in_deprecated = True
+                in_accepted = False
+                continue
+            if in_accepted:
+                mm = re.match(r"^-\s+(.+?)\s*$", stripped)
+                if mm:
+                    cur_res["accepted"].append(mm.group(1).strip().strip('"').strip("'"))
+                    continue
+            if in_deprecated:
+                mm = re.match(r"^-\s+name:\s*(.+?)\s*$", stripped)
+                if mm:
+                    cur_res["deprecated"].append(mm.group(1).strip().strip('"').strip("'"))
+                    continue
+            continue
+
+        if section == "units":
+            # unit header: `<name>:` (empty value) at indent 4.
+            mm = re.match(r"^([A-Za-z_][\w-]{0,80}):\s*$", stripped)
+            if mm and indent <= 4 and mm.group(1) not in ("required", "resource_modes"):
+                cur_unit = mm.group(1)
+                m.units[cur_unit] = {"required": [], "modes": {}}
+                in_required = in_modes = False
+                continue
+            if cur_unit is None:
+                continue
+            mm = re.match(r"^required:\s*(.*)$", stripped)
+            if mm:
+                rest = mm.group(1).strip()
+                if rest:
+                    m.units[cur_unit]["required"].extend(_parse_inline_list(rest))
+                    in_required = False
+                else:
+                    in_required = True
+                in_modes = False
+                continue
+            if re.match(r"^resource_modes:\s*$", stripped):
+                in_modes = True
+                in_required = False
+                continue
+            if in_required:
+                mm = re.match(r"^-\s+(.+?)\s*$", stripped)
+                if mm:
+                    m.units[cur_unit]["required"].append(mm.group(1).strip().strip('"').strip("'"))
+                    continue
+            if in_modes:
+                mm = re.match(r"^([A-Za-z_][\w-]{0,80}):\s*(.+?)\s*$", stripped)
+                if mm:
+                    key = mm.group(1).strip()
+                    # F-CLA-004: `_degraded_behavior` suffix 키 = metadata, mode enum 아님 → strip 후 제외.
+                    if key.endswith("_degraded_behavior"):
+                        continue
+                    m.units[cur_unit]["modes"][key] = mm.group(2).strip().strip('"').strip("'")
+                    continue
+            continue
+
+    if cur_res is not None:
+        m.resources.append(cur_res)
+
+    # classified-key set + alias→canonical + resource별 key 집합.
+    for r in m.resources:
+        keys = set()
+        canon = r.get("canonical_env")
+        if canon:
+            keys.add(canon)
+            m.classified.add(canon)
+            m.alias_to_canonical[canon] = canon
+        for a in r.get("accepted", []):
+            keys.add(a)
+            m.classified.add(a)
+            m.alias_to_canonical[a] = canon
+        for d in r.get("deprecated", []):
+            keys.add(d)
+            m.classified.add(d)
+            m.alias_to_canonical[d] = canon
+        m.all_keys_by_resource[r.get("id")] = keys
+    return m
+
+
+# ─────────────────────── surface 추출 (structural, born-safe) ────────────────────
+
+class Surface:
+    __slots__ = ("rel", "lineno", "key", "form")
+
+    def __init__(self, rel, lineno, key, form):
+        self.rel = rel          # repo-relative path
+        self.lineno = lineno    # 1-based
+        self.key = key          # env-key token
+        self.form = form        # 'secrets' | '_env' | 'literal' | 'inert'
+
+
+def _scan_workflow(physical, rel):
+    """workflow: `secrets.<KEY>`(form) + `<lower>_env: <KEY>`(form). 둘 다 form=signal(infra-signal 무관)."""
+    out = []
+    for idx, raw in enumerate(physical):
+        code = _strip_hash_comment(raw)
+        for mm in _RE_SECRETS.finditer(code):
+            out.append(Surface(rel, idx + 1, mm.group(1), "secrets"))
+        for mm in _RE_ENV_VALUE.finditer(code):
+            out.append(Surface(rel, idx + 1, mm.group(1), "_env"))
+    return out
+
+
+def _scan_project_yaml(physical, rel):
+    """project.yaml: `<lower>_env: <KEY>`(form). SELF_EXCLUDE `infra_resources:` block(manifest 자체)."""
+    out = []
+    span = _find_infra_block(physical)
+    skip_lo, skip_hi = (-1, -1)
+    if span is not None:
+        skip_lo, skip_hi = span
+    for idx, raw in enumerate(physical):
+        if skip_lo <= idx < skip_hi:
+            continue  # infra_resources block = manifest 선언면, 소비면 아님 (SELF_EXCLUDE).
+        code = _strip_hash_comment(raw)
+        for mm in _RE_ENV_VALUE.finditer(code):
+            out.append(Surface(rel, idx + 1, mm.group(1), "_env"))
+    return out
+
+
+def _scan_script(physical, rel):
+    """scripts: QUOTED uppercase 리터럴 중 infra-signal(§결정7(b)) 매치. surgical narrow (bare 식별자 제외)."""
+    out = []
+    for idx, raw in enumerate(physical):
+        code = _strip_hash_comment(raw)
+        for mm in _RE_QUOTED_TOKEN.finditer(code):
+            token = mm.group(1)
+            if _is_infra_signal(token):
+                out.append(Surface(rel, idx + 1, token, "literal"))
+    return out
+
+
+def _scan_inert(physical, rel):
+    """examples/presets: env-position(mapping key / KEY=) + quoted 중 infra-signal → inert(census only)."""
+    out = []
+    for idx, raw in enumerate(physical):
+        code = _strip_hash_comment(raw)
+        seen_on_line = set()
+        mm = _RE_ENV_POSITION.match(code)
+        if mm:
+            token = mm.group(1)
+            if _is_infra_signal(token):
+                seen_on_line.add(token)
+        for mm in _RE_QUOTED_TOKEN.finditer(code):
+            token = mm.group(1)
+            if _is_infra_signal(token):
+                seen_on_line.add(token)
+        for token in seen_on_line:
+            out.append(Surface(rel, idx + 1, token, "inert"))
+    return out
+
+
+def _rel(path, repo_root):
+    return os.path.relpath(path, repo_root).replace(os.sep, "/")
+
+
+def _self_exempt(rel):
+    return any(tok in rel for tok in _SELF_SOURCE_TOKENS)
+
+
+def scan_corpus(repo_root):
+    """corpus 스캔 → (live_surfaces[], inert_surfaces[], scanned_files)."""
+    live = []
+    inert = []
+    scanned = set()
+
+    # LIVE — workflows.
+    for pattern in LIVE_WORKFLOW_GLOBS:
+        for path in glob.glob(os.path.join(repo_root, *pattern.split("/"))):
+            if not os.path.isfile(path):
+                continue
+            rel = _rel(path, repo_root)
+            if _self_exempt(rel):
+                continue
+            physical = _read_physical(path)
+            if physical is None:
+                continue
+            scanned.add(rel)
+            live.extend(_scan_workflow(physical, rel))
+
+    # LIVE — project.yaml (root manifest carrier; SELF_EXCLUDE block 내부).
+    pj = os.path.join(repo_root, *LIVE_PROJECT_YAML_REL.split("/"))
+    if os.path.isfile(pj):
+        rel = _rel(pj, repo_root)
+        physical = _read_physical(pj)
+        if physical is not None:
+            scanned.add(rel)
+            live.extend(_scan_project_yaml(physical, rel))
+
+    # LIVE — scripts.
+    for pattern in LIVE_SCRIPT_GLOBS:
+        for path in glob.glob(os.path.join(repo_root, *pattern.split("/"))):
+            if not os.path.isfile(path):
+                continue
+            rel = _rel(path, repo_root)
+            if _self_exempt(rel):
+                continue
+            physical = _read_physical(path)
+            if physical is None:
+                continue
+            scanned.add(rel)
+            live.extend(_scan_script(physical, rel))
+
+    # CENSUS inert — examples/presets (recursive glob).
+    for pattern in INERT_GLOBS:
+        for path in glob.glob(os.path.join(repo_root, *pattern.split("/")), recursive=True):
+            if not os.path.isfile(path):
+                continue
+            rel = _rel(path, repo_root)
+            if _self_exempt(rel):
+                continue
+            physical = _read_physical(path)
+            if physical is None:
+                continue
+            scanned.add(rel)
+            inert.extend(_scan_inert(physical, rel))
+
+    return live, inert, len(scanned)
+
+
+# ─────────────────────── grandfather baseline (new-only subtract — CFP-2661 mirror) ──
+
+_BASELINE_FILE_RE = re.compile(r"^\s{0,80}(?:-\s{0,4})?file:\s*[\"']?([^\"'\n]+?)[\"']?\s*$")
+_BASELINE_KEY_RE = re.compile(r"^\s{0,80}env_key:\s*[\"']?([^\"'\n]+?)[\"']?\s*$")
+
+
+def load_baseline(path):
+    """grandfather baseline 을 (file, env-key) 집합으로 로드 (dependency-free 라인 파서, born-safe).
+
+    부재/malformed → 빈 집합 (subtract 0, honest).
+    """
+    keys = set()
+    if not os.path.isfile(path):
+        return keys
+    cur_file = None
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for raw in itertools.islice(f, 100000):
+                if len(raw) > MAX_PHYSICAL_LINE_LEN:
+                    raw = raw[:MAX_PHYSICAL_LINE_LEN]
+                mm = _BASELINE_FILE_RE.match(raw)
+                if mm:
+                    cur_file = mm.group(1).strip()
+                    continue
+                mm = _BASELINE_KEY_RE.match(raw)
+                if mm and cur_file is not None:
+                    keys.add((cur_file, mm.group(1).strip()))
+    except OSError:
+        return set()
+    return keys
+
+
+def subtract_baseline(undeclared, baseline_keys):
+    """undeclared surface 가 baseline 에 있으면 억제 (new-only). → (new[], grandfathered_count)."""
+    new = []
+    gf = 0
+    for s in undeclared:
+        if (s.rel, s.key) in baseline_keys:
+            gf += 1
+        else:
+            new.append(s)
+    return new, gf
+
+
+def write_baseline(path, undeclared):
+    """현 corpus undeclared 전건을 (file, env-key) baseline 으로 동결 write (single writer, canonical LF)."""
+    pairs = sorted({(s.rel, s.key) for s in undeclared})
+    lines = [
+        "# docs/infra-resource-baseline.yaml — GENERATED by "
+        "scripts/lib/check_infra_resource_drift.py --write-baseline (CFP-2700 / ADR-157)",
+        "# DO NOT EDIT BY HAND. Regenerate: bash scripts/check-infra-resource-drift.sh "
+        "--repo-root . --write-baseline",
+        "# grandfather = 승격 시점 pre-existing 미선언 infra 표면(file, env-key) 동결 → new-only subtract "
+        "(ADR-060 §결정6 monotonic shrink). 신규 미선언 유입만 flag. candidate/inert census 무영향.",
+        "schema_version: '1.0'",
+        "generated_by: CFP-2700",
+        "basis: ADR-157 §결정7(a) FM1-debt 승격 시점 pre-existing undeclared infra surface(file, env-key) 동결",
+        "grandfathered_undeclared_surfaces:",
+    ]
+    if not pairs:
+        body = "\n".join(lines[:-1]) + "\ngrandfathered_undeclared_surfaces: []\n"
+    else:
+        for (rel, key) in pairs:
+            lines.append("- file: %s" % rel)
+            lines.append("  env_key: %s" % key)
+            lines.append("  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — "
+                         "추후 manifest 등재로 shrink)")
+        body = "\n".join(lines) + "\n"
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(body)
+    return len(pairs)
+
+
+# ─────────────────────── 출력 (warning surface) ─────────────────────────────────
+
+_ACTION_GUIDE = (
+    "[infra-resource-drift] warning-tier (ADR-157 §결정3 / ADR-060 §결정5 — PR merge 미차단, advisory):\n"
+    "  검출 = manifest(.claude/_overlay/project.yaml infra_resources:) 未선언 env-key 가 실 참조면\n"
+    "    (workflow secrets. / project.yaml _env: / scripts 정적 리터럴)에 등장 = drift 원천.\n"
+    "  remediation 3택: ① manifest resources[] 에 canonical_env 신규 자원으로 등재.\n"
+    "    ② 기존 자원의 accepted alias 로 편입(동일 자원 별칭이면). ③ 정당 sunset 이면 참조면 제거.\n"
+    "  orphan(선언되나 미참조): manifest 에서 dead 자원 제거 또는 실 참조 배선.\n"
+    "  honesty ceiling(ADR-157 §결정8): 정적 리터럴 천장 — 동적 구성 키/프록시 위장/자기신고 누락/\n"
+    "    스캔 밖 표면 미검출(declared ceiling). presence ≠ truth. '완전 봉인' 아님."
+)
+
+
+def _emit_reverse_index(live_surfaces, manifest):
+    """D4 역색인 (ADR-157 §결정6 — 비커밋 ephemeral CI artifact). resource-id → [참조 표면]. stdout only."""
+    print("")
+    print("check-infra-resource-drift: reverse-index (D4 — 비커밋 ephemeral CI artifact, 권위 원천 아님, "
+          "커밋 0, ADR-157 §결정6; VERDICT 는 이 역색인을 read-back 하지 않음 = 변조 불변 I-1)")
+    # key → 참조 표면 map.
+    by_key = {}
+    for s in live_surfaces:
+        by_key.setdefault(s.key, []).append("%s:%d" % (s.rel, s.lineno))
+    for r in manifest.resources:
+        rid = r.get("id")
+        keys = manifest.all_keys_by_resource.get(rid, set())
+        refs = []
+        for k in sorted(keys):
+            refs.extend(by_key.get(k, []))
+        canon = r.get("canonical_env") or "(none)"
+        refs_sorted = sorted(set(refs))
+        print("  resource-id=%s canonical_env=%s referenced_by=[%s]"
+              % (rid, canon, ", ".join(refs_sorted) if refs_sorted else ""))
+    # 미선언(어느 자원에도 매핑 안 된) live key 도 가시화.
+    unmapped = sorted({s.key for s in live_surfaces if s.key not in manifest.classified})
+    if unmapped:
+        print("  unmapped-undeclared-keys=[%s]" % ", ".join(unmapped))
+    print("  coverage: scanned = .github/workflows/** + .claude/_overlay/project.yaml(_env) + "
+          "scripts/**(quoted literal); NOT scanned = secret-manager / 동적구성키 / out-of-repo 수동 스크립트 "
+          "/ cross-repo(G5) — honest-ceiling (ADR-157 §결정8)")
+
+
+def main(argv):
+    parser = argparse.ArgumentParser(
+        prog="check_infra_resource_drift.py",
+        description="infra-resource manifest ↔ 실 참조면 drift scan (D3) + 역색인(D4) — warning tier.",
+    )
+    parser.add_argument("--repo-root", default=None, help="스캔 루트 (기본 = scripts/lib 기준 자동 탐지).")
+    parser.add_argument("--manifest", default=None, help="manifest(project.yaml) 경로 override.")
+    parser.add_argument("--baseline", default=None, help="grandfather baseline 경로 override.")
+    parser.add_argument("--promote-orphan", action="store_true",
+                        help="orphan → non-zero (AC-6 tier flip). 기본 OFF = orphan warning + exit 0.")
+    parser.add_argument("--write-baseline", action="store_true",
+                        help="현 corpus undeclared 를 baseline 으로 동결.")
+    parser.add_argument("--emit-reverse-index", action="store_true",
+                        help="D4 역색인을 stdout 으로 추가 방출 (비커밋 ephemeral).")
+    parser.add_argument("repo_root_pos", nargs="?", default=None, help=argparse.SUPPRESS)
+    try:
+        args = parser.parse_args(argv[1:])
+    except SystemExit:
+        return 2
+
+    repo_root = args.repo_root or args.repo_root_pos
+    if repo_root is None:
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    repo_root = os.path.abspath(repo_root)
+    manifest_path = args.manifest or os.path.join(repo_root, DEFAULT_MANIFEST_REL)
+    baseline_path = args.baseline or os.path.join(repo_root, DEFAULT_BASELINE_REL)
+
+    manifest = parse_manifest(manifest_path)
+    if manifest is None:
+        print("::error::check-infra-resource-drift: manifest 파일 부재/unreadable — %s" % manifest_path)
+        return 2
+
+    live_surfaces, inert_surfaces, scanned_files = scan_corpus(repo_root)
+    candidates = len(live_surfaces)
+    inert = len(inert_surfaces)
+
+    # undeclared = live surface 중 key ∉ classified set.
+    undeclared_all = [s for s in live_surfaces if s.key not in manifest.classified]
+    # orphan = 선언 자원 중 canonical/alias 가 어느 live 표면에도 미참조.
+    seen_keys = {s.key for s in live_surfaces}
+    orphans = []
+    for r in manifest.resources:
+        keys = manifest.all_keys_by_resource.get(r.get("id"), set())
+        if keys and not (keys & seen_keys):
+            orphans.append(r)
+
+    # ── --write-baseline: 현 corpus undeclared 전건 동결 (subtract 없이) ──
+    if args.write_baseline:
+        n = write_baseline(baseline_path, undeclared_all)
+        print(
+            "check-infra-resource-drift: baseline written %s — %d (file, env-key) frozen "
+            "(candidates_scanned=%d inert_skipped=%d)" % (baseline_path, n, candidates, inert)
+        )
+        return 0
+
+    baseline_keys = load_baseline(baseline_path)
+    new_undeclared, grandfathered = subtract_baseline(undeclared_all, baseline_keys)
+
+    # census emit (anti-hollow observability — always; candidate/inert 은 baseline 무영향).
+    print(
+        "check-infra-resource-drift: census candidates_scanned=%d inert_skipped=%d undeclared=%d "
+        "orphan=%d (grandfathered=%d) over %d file"
+        % (candidates, inert, len(new_undeclared), len(orphans), grandfathered, scanned_files)
+    )
+
+    # census fail-closed — born-hollow guard. candidates==0 ∧ inert==0 = 진짜 vacuous/dead-scope.
+    if candidates == 0 and inert == 0:
+        print(
+            "::error::check-infra-resource-drift: FAIL-CLOSED — candidates_scanned=0 ∧ inert_skipped=0 "
+            "(born-hollow guard 발동: infra 표면을 live·inert 어느 것으로도 0 = empty-scope oracle, "
+            "ADR-157 §결정9). corpus glob 또는 manifest 조정 없이는 통과 불가."
+        )
+        return 3
+
+    # none-disguise anti-hollow (AC-10/11) — hollow "none" 위장 + live 표면 존재.
+    hollow_none = (not manifest.present) or (manifest.none_sentinel and not manifest.has_reason) \
+        or (manifest.present and not manifest.resources and not manifest.has_reason)
+    if hollow_none and candidates >= 1:
+        print(
+            "::warning::check-infra-resource-drift: NONE-DISGUISE — manifest infra_resources: block "
+            "부재/empty-no-reason 인데 LIVE infra 표면 %d 검출 (hollow 'none' 위장, ADR-157 §결정8/AC-10·11). "
+            "manifest 에 실 자원을 선언하거나 사유(reason) 명시 필요." % candidates
+        )
+        print(
+            "check-infra-resource-drift: FLAG none-disguise — candidates_scanned=%d inert_skipped=%d "
+            "over %d file — warning tier (continue-on-error 로 비차단)"
+            % (candidates, inert, scanned_files)
+        )
+        if args.emit_reverse_index:
+            _emit_reverse_index(live_surfaces, manifest)
+        return 1
+
+    # undeclared warning surface (per violation).
+    for s in new_undeclared:
+        print(
+            "::warning::check-infra-resource-drift: UNDECLARED — %s:%d env-key=%s (form=%s, manifest 未선언)"
+            % (s.rel, s.lineno, s.key, s.form)
+        )
+    # orphan warning surface (per orphan).
+    for r in orphans:
+        print(
+            "::warning::check-infra-resource-drift: ORPHAN — resource-id=%s canonical_env=%s "
+            "(선언되나 어느 참조면에서도 미참조 = dead 선언)" % (r.get("id"), r.get("canonical_env"))
+        )
+
+    flag = False
+    reasons = []
+    if new_undeclared:
+        flag = True
+        reasons.append("undeclared=%d" % len(new_undeclared))
+    if orphans and args.promote_orphan:
+        flag = True
+        reasons.append("orphan=%d(promoted)" % len(orphans))
+
+    if args.emit_reverse_index:
+        _emit_reverse_index(live_surfaces, manifest)
+
+    if flag:
+        print("")
+        print(_ACTION_GUIDE)
+        print("")
+        print(
+            "check-infra-resource-drift: FLAG %s over %d file (candidates_scanned=%d inert_skipped=%d "
+            "orphan=%d grandfathered=%d) — warning tier (continue-on-error 로 비차단, advisory only)"
+            % (", ".join(reasons), scanned_files, candidates, inert, len(orphans), grandfathered)
+        )
+        return 1
+
+    # PASS — 실 census count 만 사실 서술 (all-inert 시 candidate=0 을 "candidate≥1" 로 overstate 금지, F-CR-2).
+    orphan_note = ""
+    if orphans:
+        orphan_note = " (orphan=%d = warning-only, --promote-orphan 미지정)" % len(orphans)
+    print(
+        "check-infra-resource-drift: PASS — new undeclared 0%s (candidates_scanned=%d inert_skipped=%d "
+        "grandfathered=%d over %d file — empty-scope oracle: candidates==0 ∧ inert==0 아님, warning tier)"
+        % (orphan_note, candidates, inert, grandfathered, scanned_files)
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
