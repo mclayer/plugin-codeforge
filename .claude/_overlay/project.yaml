@@ -95,3 +95,84 @@ atlassian:
       # current_activity = "현재 무엇 하는중" 1줄 갱신 방식. pinned-comment-update = 단일 "현재활동"
       #   코멘트를 commentId 로 update(addCommentToJiraIssue 1종 — issue-field write 안 함). SKILL.md §3.
       current_activity: "pinned-comment-update"
+
+# ── 인프라 자원 선언 manifest (CFP-2700 / ADR-157 §결정1, wrapper-self dogfood) ──
+# wrapper 실 secret 9종(grep -rhoE "secrets\.[A-Z_]+" .github/workflows/ | sort -u = 9, verified)을
+#   기계판독 manifest 로 선언 — 게이트가 자기 자신에게 먼저 작동(none 위장 anti-hollow dogfood).
+# Schema SSOT: docs/project-config-schema.md `infra_resources` 섹션.
+# infra_strategy (ADR-033) 와 직교 — 본 block 은 자원 내용, infra_strategy 는 적용 여부 스위치.
+# G1 범위 = manifest 선언까지 (런타임 스캐너=G2 / startup validator=G3 / Confluence 2계열 라이브 수렴=G6).
+#
+# ★ FIX iter1(구현): execution_unit = 실 .github/workflows/*.yml 워크플로만(phantom 0, D3 스캐너 실 스캔 대상).
+#   각 mode = 해당 워크플로 degrade 동작 firsthand 판정 (required=부재 시 실행불가 / optional_degradable=부재 시 degrade+exit0).
+infra_resources:
+  # ── plane A: 자원 카탈로그 (census 9종 → 9 논리 자원) ──
+  resources:
+    - id: anthropic-api
+      canonical_env: ANTHROPIC_API_KEY          # Claude API 자격증명 (confluence-forward-sync 무인 CI 경로만 소비 = 1 워크플로)
+    - id: cross-repo-pat
+      canonical_env: CODEFORGE_CROSS_REPO_PAT   # cross-repo GitHub PAT (read-write 토큰, D3 는 read-only 로 사용 — ADR-157 §결정4/§결정8 정직)
+    # Confluence 자격증명 — 2계열 alias 수렴 (DEC-3 / ADR-157 §결정5). G1 = 선언만, 라이브 수렴 정정 = G6.
+    #   canonical = ATLASSIAN_API_TOKEN (선언면, atlassian.confluence.api_token_env)
+    #   accepted alias = CONFLUENCE_API_TOKEN (소비면, confluence-forward-sync.yml:64 secrets.CONFLUENCE_API_TOKEN)
+    #   canonical 이 ATLASSIAN 인 근거 = Atlassian-account-scoped blast-radius 정직 명명 (§결정5).
+    - id: confluence-credential
+      canonical_env: ATLASSIAN_API_TOKEN
+      aliases:
+        accepted: [CONFLUENCE_API_TOKEN]
+    - id: confluence-base-url
+      canonical_env: CONFLUENCE_BASE_URL
+    - id: confluence-space
+      canonical_env: CONFLUENCE_SPACE_ID
+    - id: confluence-user-email
+      canonical_env: CONFLUENCE_USER_EMAIL
+    - id: docker-hub-token
+      canonical_env: DOCKER_HUB_TOKEN
+    - id: github-token
+      canonical_env: GITHUB_TOKEN                # GitHub Actions 기본 주입 토큰 (항상 존재)
+    - id: ssh-key-passphrase
+      canonical_env: SSH_KEY_PASSPHRASE
+  # ── plane B: 실행단위 → required 자원 (실 .github/workflows/*.yml 만, ID-only 참조) ──
+  execution_units:
+    # confluence-forward-sync.yml — git→Confluence 무인 fallback. continue-on-error:true(:38) +
+    #   secret 하나라도 부재 시 dry-run(:14/:59; confluence_forward_sync.py secrets_present() → dry-run, exit 0).
+    #   ∴ 5 자원 전부 optional_degradable (부재 = 부팅거부 아님, dry-run 으로 degrade).
+    confluence-forward-sync:
+      required: [anthropic-api, confluence-credential, confluence-base-url, confluence-space, confluence-user-email]
+      resource_modes:
+        anthropic-api: optional_degradable
+        confluence-credential: optional_degradable
+        confluence-base-url: optional_degradable
+        confluence-space: optional_degradable
+        confluence-user-email: optional_degradable
+        anthropic-api_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0; confluence-forward-sync.yml:38 continue-on-error)"
+        confluence-credential_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
+        confluence-base-url_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
+        confluence-space_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
+        confluence-user-email_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
+    # auto-deploy.yml — Epic close→배포 signal (declarative seed, warning-tier). continue-on-error:true(:44) +
+    #   mask step 이 `if [[ -n "${secret:-}" ]]` graceful(:53-58) → 부재 시 masking skip + signal-only 진행(실 배포 미수행).
+    auto-deploy:
+      required: [docker-hub-token, ssh-key-passphrase]
+      resource_modes:
+        docker-hub-token: optional_degradable
+        ssh-key-passphrase: optional_degradable
+        docker-hub-token_degraded_behavior: "부재 시 secret masking skip + signal-only 진행 (declarative seed, continue-on-error — 실 배포 미수행)"
+        ssh-key-passphrase_degraded_behavior: "부재 시 secret masking skip + signal-only 진행 (declarative seed, continue-on-error — 실 배포 미수행)"
+    # ac-traceability-matrix.yml — cross-repo AC 추적 (required check, continue-on-error 없음).
+    #   cross-repo-pat 부재 = fail-closed(:64 "부재/degraded = FAIL"; :140 `if(!token){fail(...);return}`) → required.
+    #   github-token = Actions 기본 주입(:68) 항상 존재 → required.
+    ac-traceability-matrix:
+      required: [cross-repo-pat, github-token]
+      resource_modes:
+        cross-repo-pat: required
+        github-token: required
+    # deferred-item-recovery.yml — cross-repo-pat 부재 시 graceful skip(:47-51 `if [ -z "${GH_TOKEN:-}" ]; ... exit 0`).
+    #   ∴ 동일 cross-repo-pat 이 ac-traceability-matrix 서 required, 여기선 optional_degradable
+    #   = AC-18 진성 same-resource cross-unit EDGE (wrapper reality 실보유 — firsthand, fabricate 아님).
+    #   EDGE 의 런타임 falsification(부재-시-실동작 대조)은 D2 startup fixture = G3 carrier.
+    deferred-item-recovery:
+      required: [cross-repo-pat]
+      resource_modes:
+        cross-repo-pat: optional_degradable
+        cross-repo-pat_degraded_behavior: "PAT 부재 시 exit 0 graceful skip (deferred-item-recovery.yml:47-51, retro-mandatory.yml 패턴 답습)"
