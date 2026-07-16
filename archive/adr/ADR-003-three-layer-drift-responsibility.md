@@ -233,7 +233,7 @@ CFP-2700 이 "consumer 제품 런타임의 부팅 fail-closed 대조"(D2 — 실
 
 ### 결정 (boundary-note only — Q4 branch·4th layer 신설 없음)
 
-ADR-003 3-layer 의 **정의역 = codeforge 자신의 self-SSOT drift 검출·회복**(대상 = 코드·문서·환경·부트스트랩 정합, 실행 주체 = codeforge CI / SessionStart / 가이드)로 명문화한다. 다음은 정의역 밖이며 별 ADR 소관이다:
+ADR-003 3-layer 의 **정의역 = codeforge 자신의 self-SSOT drift 검출·회복**(대상 = 코드·문서·환경·부트스트랩 정합, 실행 주체 = codeforge CI / SessionStart / 가이드)로 명문화한다. 다음은 정의역 밖이며 별도 ADR 소관이다:
 
 - **consumer 제품 런타임 / startup boot fail-closed invariant** = **ADR-157 소관**(인프라 자원 선언 manifest + startup fail-closed 계약 + CI drift scan). 실행 주체 = consumer 제품 바이너리(wrapper 는 plugin 이라 강제 불가 — 채택-bounded, I-5).
 
