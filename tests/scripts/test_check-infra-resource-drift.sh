@@ -6,14 +6,20 @@
 # ★ hollow-gate 아님의 증명 (ADR-157 §결정3/6/7/8/9 / ADR-119 execution-backed) — presence-only 금지,
 #   실 exit code + FIXED 출력 토큰 결박 + 대표 mutation RED-flip(스캐너 소스 변형 시 test RED = 생존 0):
 #   AC-5  미선언 표면 검출 (workflow secrets.<undeclared> → exit 1 + UNDECLARED) + MK undeclared-off
+#     · deprecated alias = allow_set 편입(참조돼도 undeclared 아님) + MK deprecated_unclassified
+#     · `_env:` 값 앞 pad≥5 검출 (F-CR-003 회귀 봉인 — 구 {0,4} bound 는 침묵 미탐) + MK env_pad_narrow
 #   AC-6  orphan 정산 (선언·미참조 → warning+exit0 / --promote-orphan → exit1) + MK orphan-promote-off
 #   AC-7  substring 오분류 제외 (team-spec-decompose.yaml 구조판정 = env-key 0 → inert 무증가) + MK signal-always
 #   AC-8  역색인(D4) verdict-invariant (역색인 변조/제거해도 exit 불변, side-output) + MK revindex-noop
 #   AC-10 none-disguise fail (infra_resources 부재 + 사유부재 + 표면 → exit1 + NONE-DISGUISE) + MK none-off
 #   AC-11 none-disguise pass (resources:none + reason + 표면0 → exit0)  [AC-10 대칭 negative]
-#   AC-17 wrapper 실 secret 9종 dogfood 스캔 (실 repo → exit0, candidates≥floor, inert>0, grandfathered=4)
+#   AC-17 wrapper 실 secret 9종 dogfood 스캔 (실 repo → exit0, candidates≥floor, inert>0, grandfathered≥3)
 #     + MK no-secrets(실 repo candidates 급감 = secrets 스캔 load-bearing)
 #   + born-hollow guard(candidates==0 ∧ inert==0 → exit3) + PERF DoS bound.
+#
+# ★ baseline 판별력(F-CR-005): AC-17 의 `grandfathered≥3` 은 실 repo debt count 결박 floor 라 baseline
+#   shrink 시 조정 대상이다. baseline subtract 를 실 debt 와 무관하게 결박하는 hermetic 케이스는
+#   `.py` 채널(test_baseline_grandfather_hermetic)이 보유 — 본 채널 미중복(disjoint 보완, 과잉설계 회피).
 #
 # self-contained bash (tests/scripts 관례 — ADR-151 인벤토리 enroll 채널). Exit 0 = 전 케이스 PASS.
 
@@ -77,6 +83,35 @@ atlassian:
 NONEOK_YAML='infra_resources:
   resources: none
   reason: this project has no infra resource dependencies'
+
+# ── deprecated alias 계열 (F-CR-004: classified.add(d) mutant 가 전건 생존 = kill 0 이었음).
+#    deprecated = 선언 자원의 sunset 별칭 → 참조돼도 undeclared 아님(allow_set 편입)이 계약.
+MANIFEST_DEPRECATED='infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: [MINIO_URL]
+        deprecated:
+          - name: LEGACY_NAS_URL'
+
+WF_DEPRECATED='name: wf
+on: {push: {}}
+jobs:
+  j:
+    steps:
+      - run: echo ${{ secrets.LEGACY_NAS_URL }}'
+
+# ── `_env:` pad≥5 (F-CR-003: 구 \s{0,4} bound 는 candidate 로도 미계수 = 침묵 미탐).
+#    infra_resources block 밖에 둬야 SELF_EXCLUDE 를 타지 않음(block = 선언면).
+PROJ_PAD5='infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+atlassian:
+  confluence:
+    api_token_env:     "PAD5_TOKEN"
+    other_token_env: "PAD1_TOKEN"'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # _mkcorpus <tmpdir> <project.yaml> [wf.yml] [compose.yml] [decompose.yaml]
@@ -146,6 +181,11 @@ elif kind == "none_off":
 elif kind == "no_secrets":
     s2 = s.replace("def _scan_workflow(physical, rel):",
                    "def _scan_workflow(physical, rel):\n    return []  # MUTANT-no-secrets", 1)
+elif kind == "deprecated_unclassified":
+    s2 = s.replace("            m.classified.add(d)",
+                   "            pass  # MUTANT-deprecated-unclassified", 1)
+elif kind == "env_pad_narrow":
+    s2 = s.replace(r"_env:\s{0,40}", r"_env:\s{0,4}", 1)
 else:
     s2 = s
 assert s2 != s, "mutation did not apply — anchor drift (kind=%s)" % kind
@@ -184,6 +224,24 @@ lint_case "AC-5 undeclared secret ROGUE_TOKEN → FLAG" 1 \
 mutant_case "AC-5 MK undeclared_off → 미검출(RED, exit 0 PASS)" undeclared_off 0 \
   "PASS" "UNDECLARED" "" \
   "$MANIFEST" "$WF_UNDECLARED" "$COMPOSE"
+echo
+
+echo "── AC-5 deprecated alias = allow_set 편입 (F-CR-004 mutant kill 확보) ──"
+lint_case "AC-5 deprecated alias 참조 → undeclared 아님(exit 0)" 0 \
+  "PASS" "LEGACY_NAS_URL" "" \
+  "$MANIFEST_DEPRECATED" "$WF_DEPRECATED" "$COMPOSE"
+mutant_case "AC-5 MK deprecated_unclassified → 정당 sunset 별칭 오검출(RED, exit 1)" deprecated_unclassified 1 \
+  "env-key=LEGACY_NAS_URL" "" "" \
+  "$MANIFEST_DEPRECATED" "$WF_DEPRECATED" "$COMPOSE"
+echo
+
+echo "── AC-5 \`_env:\` pad≥5 검출 (F-CR-003 회귀 봉인 — 구 bound 는 침묵 미탐) ──"
+lint_case 'F-CR-003 pad≥5 _env: → UNDECLARED FLAG(exit 1)' 1 \
+  "env-key=PAD5_TOKEN" "" "" \
+  "$PROJ_PAD5" "" "$COMPOSE"
+mutant_case "F-CR-003 MK env_pad_narrow → PAD5 침묵 미탐 재현(RED)" env_pad_narrow 1 \
+  "env-key=PAD1_TOKEN" "PAD5_TOKEN" "" \
+  "$PROJ_PAD5" "" "$COMPOSE"
 echo
 
 echo "── AC-6 orphan 정산 (선언·미참조 자원) ──"
@@ -295,7 +353,7 @@ else
 fi
 echo
 
-echo "── AC-17 wrapper 실 secret dogfood 스캔 (실 repo → exit0, candidates≥$FLOOR, inert>0, grandfathered=4) ──"
+echo "── AC-17 wrapper 실 secret dogfood 스캔 (실 repo → exit0, candidates≥$FLOOR, inert>0, grandfathered≥3) ──"
 _ac17_out=$(python3 "$SSOT_PY" --repo-root "$REPO_ROOT" 2>&1); _ac17_exit=$?
 _ac17_cand=$(_census_count "$_ac17_out" "candidates_scanned")
 _ac17_inert=$(_census_count "$_ac17_out" "inert_skipped")

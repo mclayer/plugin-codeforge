@@ -9,14 +9,26 @@ CFP-2700 (Epic) G2 Phase 2 (구현 lane) — Discriminating self-test (.py chann
   AC set 을 subprocess 실 실행 + 소스 문자열-치환 mutation 으로 discriminating 검증 — presence-only 금지,
   실 exit code + FIXED 출력 토큰 결박 + 대표 mutation RED-flip(스캐너 소스 변형 시 test RED = 생존 0):
     AC-5  미선언 표면 검출 (secrets.<undeclared> → exit 1 + UNDECLARED) + MK undeclared_off
+      · deprecated alias = allow_set 편입(참조돼도 undeclared 아님) + MK deprecated_unclassified
+      · `_env:` 값 앞 pad≥5 검출(F-CR-003 회귀 봉인 — 구 {0,4} bound 는 candidate 로도 미계수인
+        침묵 미탐이었음) + MK env_pad_narrow
     AC-6  orphan (선언·미참조 → warning+exit0 / --promote-orphan → exit1) + MK orphan_promote_off
     AC-7  substring 오분류 제외 (team-spec-decompose 구조판정 = env-key 0 → inert 무증가) + MK signal_always
     AC-8  역색인(D4) verdict-invariant (변조/제거해도 verdict 불변, side-output I-1) + MK revindex_noop
     AC-10 none-disguise fail (infra_resources 부재 + 사유부재 + 표면 → exit1 + NONE-DISGUISE) + MK none_off
     AC-11 none-disguise pass (resources:none + reason + 표면0 → exit0)
-    AC-17 wrapper 실 secret 9종 dogfood (실 repo → exit0, candidates≥floor, inert>0, grandfathered=4)
+    AC-17 wrapper 실 secret 9종 dogfood (실 repo → exit0, candidates≥floor, inert>0, grandfathered≥3)
       + MK no_secrets(실 repo candidates 급감 = secrets 스캔 load-bearing)
+  + grandfather baseline hermetic(tmp corpus) + MK baseline_subtract_off
   + born-hollow guard(candidates==0 ∧ inert==0 → exit3) + argparse 오류(exit 2).
+
+★ baseline 판별력 분산 (F-CR-005): 본 정정 전 baseline 로직 mutant(subtract_off / gf_counter_off /
+  load_baseline_empty) 3종이 **모두 test_ac17_wrapper_dogfood_scan 단 하나로만** 죽었다(실측). AC-17 의
+  killer 는 실 repo debt count 에 결박된 `grandfathered≥3`(현 baseline 4 pair — 여유 1)이라, manifest
+  등재로 baseline 이 shrink 하면 정상 코드가 false-RED 로 깨진다. → tmp corpus hermetic 케이스를 신설해
+  baseline subtract 를 실 debt count 와 무관하게 결박(위 3 mutant 전건 hermetic kill 확보, 실측).
+  AC-17 의 `grandfathered≥3` 은 non-vacuity floor 로 존치하되 **유일 killer 가 아니게** 됐다 —
+  baseline shrink 시 조정 대상은 AC-17 뿐이며 hermetic 케이스는 무영향(의도된 결합 분리).
 
 standalone: `python3 tests/scripts/test_check-infra-resource-drift.py` → 전 test_* 실행, exit 0=PASS / 1=FAIL.
   pytest 하위호환(함수명 test_*) — CI 워크플로는 python3 직접 실행(byte-identical template step).
@@ -92,6 +104,47 @@ NONEOK_YAML = """infra_resources:
   reason: this project has no infra resource dependencies
 """
 
+# ── deprecated alias 계열 (F-CR-004: `m.classified.add(d)` mutant 가 17/17 전건 생존 = kill 0 이었음).
+#    deprecated = "선언된 자원의 sunset 별칭" → 참조돼도 undeclared 아님(allow_set 편입)이 계약.
+MANIFEST_DEPRECATED = """infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: [MINIO_URL]
+        deprecated:
+          - name: LEGACY_NAS_URL
+"""
+
+WF_DEPRECATED = """name: wf
+on: {push: {}}
+jobs:
+  j:
+    steps:
+      - run: echo ${{ secrets.LEGACY_NAS_URL }}
+"""
+
+# ── `_env:` 값 앞 공백 pad≥5 (F-CR-003: 구 `\\s{0,4}` bound 는 candidate 로도 미계수 = 침묵 미탐).
+#    PAD1(정렬 없음) = 회귀 대조군, PAD5(yaml 정렬 padding) = 본 subject. 둘 다 infra_resources block
+#    밖에 둬야 SELF_EXCLUDE 를 타지 않는다(block = 선언면, 소비면 아님).
+PROJ_PAD5 = """infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+atlassian:
+  confluence:
+    api_token_env:     "PAD5_TOKEN"
+    other_token_env: "PAD1_TOKEN"
+"""
+
+# ── hermetic grandfather baseline (F-CR-005: baseline 로직 killer 가 실 repo AC-17 단 하나 —
+#    `grandfathered>=3` 이 실 debt count 에 결박돼 baseline shrink 시 false-RED. tmp corpus 로 분리).
+BASELINE_FIXTURE = """grandfathered_undeclared_surfaces:
+- file: .github/workflows/wf.yml
+  env_key: ROGUE_TOKEN
+  reason: hermetic fixture — 승격 시점 pre-existing 로 가정
+"""
+
 # 소스 문자열-치환 mutation (anchor → replacement). 미적용 시 AssertionError(anchor drift 검출).
 MUTATIONS = {
     "undeclared_off": (
@@ -118,6 +171,21 @@ MUTATIONS = {
         "def _scan_workflow(physical, rel):",
         "def _scan_workflow(physical, rel):\n    return []  # MUTANT-no-secrets",
     ),
+    # F-CR-004: deprecated alias 를 allow_set 에 미편입 → 참조 시 undeclared 오검출.
+    "deprecated_unclassified": (
+        "            m.classified.add(d)",
+        "            pass  # MUTANT-deprecated-unclassified",
+    ),
+    # F-CR-003: `_env:` pad bound 를 구 {0,4} 로 되돌림 → pad≥5 침묵 미탐 재현.
+    "env_pad_narrow": (
+        r"_env:\s{0,40}",
+        r"_env:\s{0,4}",
+    ),
+    # F-CR-005: baseline subtract 무력화 → grandfather 억제 소멸.
+    "baseline_subtract_off": (
+        "        if (s.rel, s.key) in baseline_keys:",
+        "        if False:  # MUTANT-baseline-subtract-off",
+    ),
 }
 
 
@@ -129,7 +197,7 @@ def _write(path, content):
         f.write(content)
 
 
-def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None):
+def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseline=None):
     _write(os.path.join(tmp, ".claude", "_overlay", "project.yaml"), project_yaml)
     if wf is not None:
         _write(os.path.join(tmp, ".github", "workflows", "wf.yml"), wf)
@@ -137,6 +205,9 @@ def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None):
         _write(os.path.join(tmp, "examples", "svc", "compose.yml"), compose)
     if decompose is not None:
         _write(os.path.join(tmp, "examples", "svc", "team-spec-decompose.yaml"), decompose)
+    if baseline is not None:
+        # scanner DEFAULT_BASELINE_REL 과 동일 경로 — CLI override 없이 기본 탐색 경로를 실제로 태운다.
+        _write(os.path.join(tmp, "docs", "infra-resource-baseline.yaml"), baseline)
 
 
 def run_scanner(scanner_py, repo_root, *args):
@@ -185,6 +256,79 @@ def test_ac5_mutation_undeclared_off():
         # RED-flip: undeclared 계산 무력화 → 미검출(PASS exit 0), UNDECLARED 토큰 소멸.
         assert rc == 0, "AC-5 MK: mutant → exit 0 (미검출), got %d\n%s" % (rc, out)
         assert "UNDECLARED" not in out
+
+
+# ── AC-5 deprecated alias = allow_set 편입 (F-CR-004 mutant kill 확보) ──
+
+def test_ac5_deprecated_alias_classified():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST_DEPRECATED, wf=WF_DEPRECATED, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "AC-5: deprecated alias 참조 → undeclared 아님(exit 0), got %d\n%s" % (rc, out)
+        assert "LEGACY_NAS_URL" not in out, "AC-5: deprecated alias 를 UNDECLARED 로 오검출\n%s" % out
+
+
+def test_ac5_mutation_deprecated_unclassified():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST_DEPRECATED, wf=WF_DEPRECATED, compose=COMPOSE)
+        mut = make_mutant(tmp, "deprecated_unclassified")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: deprecated 를 allow_set 미편입 → 정당 sunset 별칭이 undeclared 오검출(exit 1).
+        assert rc == 1, "AC-5 MK: deprecated_unclassified → exit 1(오검출), got %d\n%s" % (rc, out)
+        assert "env-key=LEGACY_NAS_URL" in out, \
+            "AC-5 MK: deprecated alias 가 UNDECLARED 로 표면화돼야 kill 성립\n%s" % out
+
+
+# ── AC-5 `_env:` pad≥5 검출 (F-CR-003 회귀 봉인) ──
+
+def test_ac5_env_padding_ge5_detected():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, PROJ_PAD5, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 1, "F-CR-003: pad≥5 `_env:` → undeclared FLAG(exit 1), got %d\n%s" % (rc, out)
+        assert "env-key=PAD5_TOKEN" in out, "F-CR-003: pad≥5 검출 누락(침묵 미탐 회귀)\n%s" % out
+        assert "env-key=PAD1_TOKEN" in out, "F-CR-003: pad=1 대조군도 검출돼야 함\n%s" % out
+        # candidate 로도 계수돼야 함 — 구 bound 는 census 에서조차 누락(silent drop)이었다.
+        assert census(out, "candidates_scanned") == 2, \
+            "F-CR-003: pad1+pad5 = candidates 2, got %d" % census(out, "candidates_scanned")
+
+
+def test_ac5_mutation_env_pad_narrow():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, PROJ_PAD5, compose=COMPOSE)
+        mut = make_mutant(tmp, "env_pad_narrow")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: bound 를 구 {0,4} 로 되돌리면 PAD5 는 candidate 로도 안 잡힘 = 침묵 미탐 재현.
+        assert "PAD5_TOKEN" not in out, "F-CR-003 MK: env_pad_narrow → PAD5 미탐(RED)\n%s" % out
+        assert census(out, "candidates_scanned") == 1, \
+            "F-CR-003 MK: 구 bound → candidates 1(PAD5 silent drop), got %d" % census(out, "candidates_scanned")
+
+
+# ── grandfather baseline hermetic (F-CR-005 판별력 분산 — 실 repo debt count 비결박) ──
+
+def test_baseline_grandfather_hermetic():
+    with tempfile.TemporaryDirectory() as tmp:
+        # ROGUE_TOKEN = 미선언이나 baseline 이 동결 → new-only subtract 로 억제(exit 0).
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "F-CR-005: baseline 동결 표면 → 억제(exit 0), got %d\n%s" % (rc, out)
+        assert census(out, "undeclared") == 0, "F-CR-005: new undeclared 0(baseline subtract)"
+        assert census(out, "grandfathered") == 1, \
+            "F-CR-005: grandfathered=1, got %d" % census(out, "grandfathered")
+        # anti-hollow: baseline 은 candidate census 를 깎지 않는다(억제는 verdict 면 한정).
+        assert census(out, "candidates_scanned") == 1, \
+            "F-CR-005: baseline 이 candidate census 를 감소시키면 anti-hollow 위반, got %d" \
+            % census(out, "candidates_scanned")
+
+
+def test_baseline_mutation_subtract_off():
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        mut = make_mutant(tmp, "baseline_subtract_off")
+        rc, out = run_scanner(mut, tmp)
+        # RED-flip: subtract 무력화 → baseline 이 있어도 flag(exit 1) + grandfathered 0.
+        assert rc == 1, "F-CR-005 MK: subtract_off → exit 1, got %d\n%s" % (rc, out)
+        assert census(out, "grandfathered") == 0, "F-CR-005 MK: grandfathered 0(억제 소멸)"
 
 
 # ─────────────────────── AC-6 orphan ─────────────────────────────────────────────

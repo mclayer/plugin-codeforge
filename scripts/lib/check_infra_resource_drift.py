@@ -35,10 +35,12 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
   form-based(secrets. / _env:)는 (2)(3) 미적용 — FORM 이 signal 이라 suffix 무관 infra(예 ATLASSIAN_USER_EMAIL
   은 _EMAIL suffix 라 infra-signal 미매치이나 `user_email_env:` form 으로 infra 확정).
 
-★ AC-7 substring 오분류 제외 (structural, NOT filename-substring):
+★ AC-7 substring 오분류 제외 (structural extraction, NOT filename-substring classification):
   파일이 env-surface 인지 판정은 STRUCTURAL(실 yaml `secrets.`/`_env:`/env-mapping 위치 / quoted 리터럴)로만.
   파일명에 "compose" 부분문자열(예 team-spec-decompose.yaml — "decompose")이 있어도 실 env-key 0 이면 0 flag.
-  본 스캐너는 파일명을 corpus glob 멤버십에만 쓰고, 추출은 라인 구조로만 판정한다(name-based 분류 0).
+  파일명이 쓰이는 곳은 corpus 편입 판정 2곳뿐 — (a) glob 멤버십 (b) `_self_exempt` self-source 제외
+  (`_SELF_SOURCE_TOKENS` 부분문자열 매치, FM1 seal). 즉 "어떤 파일을 열지"는 이름 기반이나, "그 안에서
+  무엇을 env-key 로 추출·분류할지"는 라인 구조로만 판정한다 — 추출면 name-based 분류 0(= AC-7 subject).
 
 ★ none-disguise anti-hollow (ADR-157 §결정8 / AC-10·AC-11):
   manifest `infra_resources:` block 부재, 또는 present-but-empty(resources 0) 이면서 `reason`(사유) 필드
@@ -58,8 +60,13 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
 ★ grandfather baseline (ADR-060 §결정6 Amd20 monotonic shrink — CFP-2661 mirror):
   `docs/infra-resource-baseline.yaml` 가 승격 시점 pre-existing 미선언 `(file, env-key)` pair 를 동결 →
   new-only subtract. baseline 은 candidate/inert census 를 감소시키지 않음(anti-hollow). `--write-baseline`
-  은 GENERATED 헤더로 재생성(수기 편집 금지). 실 wrapper 잔존 = ATLASSIAN_USER_EMAIL(alias-gap) +
-  AUDIT_PII_KEY(manifest 미등재 HMAC key) — 진성 undeclared(오탐 아님), 추후 manifest 등재로 shrink 가능.
+  은 GENERATED 헤더로 재생성(수기 편집 금지). 실 wrapper 잔존 = 4 pair / 3 distinct key —
+  ATLASSIAN_USER_EMAIL(`.claude/_overlay/project.yaml`, alias-gap) / AUDIT_PII_KEY
+  (`scripts/lib/audit_trail_pii_redact.py`, manifest 미등재 HMAC key) / GH_TOKEN
+  (`scripts/canary_auto_promote.py` + `scripts/lib/check_deferred_item_recovery.py` = 2 pair).
+  전건 진성 undeclared(오탐 아님), 추후 manifest 등재로 shrink 가능. 수치 SSOT =
+  `docs/infra-resource-baseline.yaml` 실파일(본 주석은 서술 미러 — 인용 전 파일 재확인 의무, CFP-2697
+  citation-drift 선례: 주석 수치가 baseline shrink 를 따라가지 못해 stale 화하는 실패 모드).
 
 ★ 정직 천장 (ADR-157 §결정8 — "완전 봉인" hard-claim 금지):
   (i) 프록시 위장(socat) 미검출 (ii) 자기신고 누락(실행단위 미신고 required) census-floor 부분검출만
@@ -83,7 +90,11 @@ CLI 계약 (ADR-061 house style — 고정, self-test + workflow 소비):
 Exit codes (ADR-060 §결정5 3-tier — verdict warning / census fail-closed):
   0 = PASS (new undeclared 0; orphan warning-only unless --promote-orphan; census non-vacuous).
   1 = FLAG (≥1 NEW undeclared surface OR none-disguise hollow OR orphan present WITH --promote-orphan) — warning.
-  2 = usage/parse 오류 (argparse) / manifest 파일 부재·malformed.
+  2 = usage 오류(argparse) / manifest 파일 부재·unreadable(OSError).
+      ※ malformed manifest 는 exit 2 아님 — 본 스캐너는 라인 파서(no yaml.safe_load)라 "malformed" 를
+        구조적으로 판정할 수단이 없다. 깨진 manifest 는 부분 파싱되어 resources 0 으로 귀결되고,
+        LIVE 표면이 있으면 none-disguise 경로(exit 1)로 표면화된다. "malformed → exit 2" 보장 없음
+        (정직 천장 — dependency-free 파서의 구조적 상한이며, 오탐 0 을 위해 감수한 trade-off).
   3 = census fail-closed / born-hollow (candidates==0 ∧ inert==0).
 
 ADR refs: ADR-157 §결정3/§결정6/§결정7/§결정8/§결정9 (carrier) / ADR-060 §결정5 (warning tier) /
@@ -153,7 +164,11 @@ def _is_infra_signal(token):
 
 # ─────────────────────── bounded 추출 regex (anchored, nested-quantifier 0) ──────
 _RE_SECRETS = re.compile(r"secrets\.([A-Z][A-Z0-9_]{2,64})")
-_RE_ENV_VALUE = re.compile(r"\b[a-z][a-z0-9_]{0,40}_env:\s{0,4}[\"']?([A-Z][A-Z0-9_]{2,64})")
+# `_env:` 값 앞 공백 bound = {0,40} — yaml 정렬 padding 흡수. 구 {0,4} 는 pad≥5 를 침묵 미탐(F-CR-003:
+#   candidate 로도 미계수 = silent drop). `secrets.<KEY>` 는 문법상 pad 면이 없어(구분자 `.`) 애초 무영향 —
+#   {0,40} 확장이 그 비대칭을 해소한다. anchored + bounded 유지(nested quantifier 0), DoS bound 는
+#   MAX_PHYSICAL_LINE_LEN 소관이라 본 확장과 disjoint.
+_RE_ENV_VALUE = re.compile(r"\b[a-z][a-z0-9_]{0,40}_env:\s{0,40}[\"']?([A-Z][A-Z0-9_]{2,64})")
 _RE_QUOTED_TOKEN = re.compile(r"[\"']([A-Z][A-Z0-9_]{2,64})[\"']")
 # examples/presets env-position: yaml mapping key / env `KEY=` / list `- KEY=` (bare) + quoted.
 _RE_ENV_POSITION = re.compile(r"^\s{0,80}-?\s{0,4}([A-Z][A-Z0-9_]{2,64})\s{0,4}[:=]")
@@ -200,18 +215,20 @@ def _strip_hash_comment(text):
 # ─────────────────────── manifest 파서 (dependency-free — born-safe, no yaml import) ──
 
 class Manifest:
-    __slots__ = ("present", "resources", "units", "none_sentinel", "has_reason",
-                 "classified", "alias_to_canonical", "all_keys_by_resource")
+    # plane B(`execution_units{}`)는 본 스캐너가 보관하지 않는다 — G3/D2(startup fail-closed) 소관이며
+    #   ADR-157 §결정4 상 본 스캐너 정의역 밖(header 참조). G2 AC set(AC-5,6,7,8,10,11,17)이 소비하지
+    #   않는 필드를 미리 파싱해 두면 test 0 인 dead path 로 부패한다(CFP-2661 dead-path 선례). block
+    #   경계만 인식해 resources 파싱을 종료시킨다(경계는 load-bearing — 아래 section == "units" 참조).
+    __slots__ = ("present", "resources", "none_sentinel", "has_reason",
+                 "classified", "all_keys_by_resource")
 
     def __init__(self):
         self.present = False
         self.resources = []      # [{id, canonical_env, namespace, accepted[], deprecated[]}]
-        self.units = {}          # {name: {required[], modes{id: mode}}}
         self.none_sentinel = False
         self.has_reason = False
-        self.classified = set()           # {canonical ∪ accepted ∪ deprecated names}
-        self.alias_to_canonical = {}      # {alias-or-canonical: canonical}
-        self.all_keys_by_resource = {}    # {resource-id: {keys}}
+        self.classified = set()           # {canonical ∪ accepted ∪ deprecated names} = AC-9 allow_set
+        self.all_keys_by_resource = {}    # {resource-id: {keys}} — orphan 판정 + 역색인 소비.
 
 
 def _parse_inline_list(value):
@@ -277,13 +294,10 @@ def parse_manifest(path):
             m.has_reason = True
 
     # resources / execution_units 서브블록 파싱 (indentation 라인 파서).
-    section = None            # 'resources' | 'units'
+    section = None            # 'resources' | 'units'(경계 인식 후 skip — plane B 는 G3 소관)
     cur_res = None
     in_accepted = False
     in_deprecated = False
-    cur_unit = None
-    in_required = False
-    in_modes = False
 
     for line in block[1:]:
         code = _strip_hash_comment(line)
@@ -299,12 +313,12 @@ def parse_manifest(path):
             in_accepted = in_deprecated = False
             continue
         if re.match(r"^execution_units:\s*$", stripped) and indent <= 2:
+            # 경계 인식 = load-bearing (resources 파싱 종료 + 마지막 자원 flush). 내용은 미파싱 —
+            #   plane B 는 G3/D2 startup 소관(ADR-157 §결정4), G2 verdict 무소비.
             if cur_res is not None:
                 m.resources.append(cur_res)
                 cur_res = None
             section = "units"
-            cur_unit = None
-            in_required = in_modes = False
             continue
 
         if section == "resources":
@@ -358,64 +372,27 @@ def parse_manifest(path):
             continue
 
         if section == "units":
-            # unit header: `<name>:` (empty value) at indent 4.
-            mm = re.match(r"^([A-Za-z_][\w-]{0,80}):\s*$", stripped)
-            if mm and indent <= 4 and mm.group(1) not in ("required", "resource_modes"):
-                cur_unit = mm.group(1)
-                m.units[cur_unit] = {"required": [], "modes": {}}
-                in_required = in_modes = False
-                continue
-            if cur_unit is None:
-                continue
-            mm = re.match(r"^required:\s*(.*)$", stripped)
-            if mm:
-                rest = mm.group(1).strip()
-                if rest:
-                    m.units[cur_unit]["required"].extend(_parse_inline_list(rest))
-                    in_required = False
-                else:
-                    in_required = True
-                in_modes = False
-                continue
-            if re.match(r"^resource_modes:\s*$", stripped):
-                in_modes = True
-                in_required = False
-                continue
-            if in_required:
-                mm = re.match(r"^-\s+(.+?)\s*$", stripped)
-                if mm:
-                    m.units[cur_unit]["required"].append(mm.group(1).strip().strip('"').strip("'"))
-                    continue
-            if in_modes:
-                mm = re.match(r"^([A-Za-z_][\w-]{0,80}):\s*(.+?)\s*$", stripped)
-                if mm:
-                    key = mm.group(1).strip()
-                    # F-CLA-004: `_degraded_behavior` suffix 키 = metadata, mode enum 아님 → strip 후 제외.
-                    if key.endswith("_degraded_behavior"):
-                        continue
-                    m.units[cur_unit]["modes"][key] = mm.group(2).strip().strip('"').strip("'")
-                    continue
-            continue
+            continue  # plane B 내용 미파싱 (G3/D2 소관 — 위 경계 주석 참조).
 
     if cur_res is not None:
         m.resources.append(cur_res)
 
-    # classified-key set + alias→canonical + resource별 key 집합.
+    # classified-key set(= AC-9 allow_set) + resource별 key 집합.
+    #   canonical / accepted alias / deprecated alias 3계열 전부 allow_set 에 편입 — deprecated 도
+    #   "선언된 자원의 별칭"이라 참조 시 undeclared 아님(sunset 유예). alias→canonical 역방향 map 은
+    #   소비처가 없어 보관하지 않는다(F-CR-006 dead-write 제거 — 필요해지면 그 때 test 와 함께 추가).
     for r in m.resources:
         keys = set()
         canon = r.get("canonical_env")
         if canon:
             keys.add(canon)
             m.classified.add(canon)
-            m.alias_to_canonical[canon] = canon
         for a in r.get("accepted", []):
             keys.add(a)
             m.classified.add(a)
-            m.alias_to_canonical[a] = canon
         for d in r.get("deprecated", []):
             keys.add(d)
             m.classified.add(d)
-            m.alias_to_canonical[d] = canon
         m.all_keys_by_resource[r.get("id")] = keys
     return m
 
