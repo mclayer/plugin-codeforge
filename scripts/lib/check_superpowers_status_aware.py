@@ -50,8 +50,15 @@ LIVE_STATUSES = {"accepted", "proposed", "active", "adopted"}
 
 
 def parse_status(md_path):
-    # frontmatter-fence scoped status 추출. CRLF tolerant. 부재/미설치/parse실패/비-str → None.
-    text = Path(md_path).read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    # frontmatter-fence scoped status 추출. CRLF tolerant. 부재/미설치/read실패/parse실패/비-str → None.
+    # file-read(read_text) 를 try 로 감싸 비-UTF8 바이트(UnicodeDecodeError)·I/O 오류(OSError 등)
+    # 모든 예외 → None. 미가드 시 __main__ 이 예외로 non-zero exit → 모듈 "항상 exit 0"(L9) 계약
+    # 위반 → wrapper set-e 아래 archive/adr 위반 침묵 드롭(fail-open) 위험. None → classify unknown →
+    # DT-6 fail-closed scan 경로로 유입(침묵 드롭 대신 검출). yaml.safe_load fail-open(L61) 대칭.
+    try:
+        text = Path(md_path).read_text(encoding="utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    except Exception:
+        return None
     if not text.startswith("---\n"):
         return None
     if yaml is None:

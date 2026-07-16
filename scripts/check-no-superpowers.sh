@@ -57,10 +57,19 @@ while IFS= read -r line; do
   fi
 done <<< "$HITS"
 
-# ── archive/adr grep-hit → status-aware lib 위임 (python 항상 exit 0 → set -e 안전) ──
+# ── archive/adr grep-hit → status-aware lib 위임 ──────────────────────────────
+#   정상 경로: lib 은 항상 exit 0 (parse_status 가 read/parse 실패 → None; F-CLA-001 정정).
+#   비정상 경로(python3 부재·lib genuine crash): exit code 를 명시 포착 → loud stderr 진단 +
+#   fail-closed (침묵 드롭 금지 — archive/adr grep-hit 을 미검증 위반으로 surface → exit 1).
+#   set-e 의 assignment-command-substitution 전파 semantics 의존을 제거(bash 버전 무관 결정적).
 ADR_VIOLATIONS=""
 if [[ -n "$ADR_HITS" ]]; then
-  ADR_VIOLATIONS=$(printf '%s\n' "$ADR_HITS" | python3 "$LIB")
+  PY_EC=0
+  ADR_VIOLATIONS=$(printf '%s\n' "$ADR_HITS" | python3 "$LIB") || PY_EC=$?
+  if [[ "$PY_EC" -ne 0 ]]; then
+    echo "⚠ superpowers-allow FAIL-CLOSED: status-aware lib(python3) 위임 비정상 종료 (exit=$PY_EC) — archive/adr grep-hit 미검증, fail-closed surface" >&2
+    ADR_VIOLATIONS="$ADR_HITS"
+  fi
 fi
 
 # ── RESIDUAL = NON_ARCHIVE_VIOLATIONS + ADR_VIOLATIONS (개행 join, 빈 값 제거) ──

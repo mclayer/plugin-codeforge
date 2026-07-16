@@ -17,6 +17,7 @@
 #   AC-8 : test_charter_adr122_no_self_flag(neg) / test_charter_new_token_detected(pos)
 #   P2   : test_active_status_positive_pin(pos) / test_warning_tier_exit_one_pin(pos)
 #   음성대조 2겹(§8.3 c) : test_negcontrol_knownbad_caught(pos)
+#   F-CLA-001 회귀 : test_nonutf8_adr_read_failclosed_not_silent_drop(pos, 비-UTF8 read-guard)
 #
 # ── false-oracle 회피(§8.3 b) ────────────────────────────────────────────────
 #   두 "OK" 메시지를 특정 문구로 구분한다. `grep -q "OK"` 절대 금지:
@@ -438,6 +439,36 @@ ADREOF
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# F-CLA-001 회귀(구현리뷰 dual-peer) — 비-UTF8 바이트 archive/adr 파일의 read 예외가
+#   침묵 드롭 아닌 fail-closed 검출로 유입되는지 (parse_status file-read 무가드 봉합 실증).
+#   RED(정정 전): read_text UnicodeDecodeError → __main__ crash → python non-zero exit →
+#     위반 미surface(traceback 누출, 토큰·진단 부재). GREEN(정정 후): read 예외 → None →
+#     unknown → DT-6 fail-closed scan → 토큰 검출 + 진단, python exit 0(모듈 계약 복원).
+#   비-UTF8 바이트(\xff\xfe)는 토큰과 다른 라인에 배치 → grep 은 clean 토큰 라인만 emit
+#   (python stdin decode 무접촉); parse_status 의 전체 파일 read 만 예외 유발(F-CLA-001 정확 타겟).
+# ─────────────────────────────────────────────────────────────────────────────
+test_nonutf8_adr_read_failclosed_not_silent_drop() {   # pos (F-CLA-001 봉합)
+  local root; root=$(mkfix_dir fcla001)
+  {
+    printf -- '---\n'
+    printf 'adr_number: 999\n'
+    printf 'status: Accepted\n'
+    printf -- '---\n'
+    printf 'invalid utf8 byte here: \xff\xfe end-of-line\n'
+    printf 'live reintro token: %s\n' "$NEW_TOKEN"
+  } > "$root/archive/adr/ADR-999-nonutf8.md"
+  run_gate "$root"
+  local ok=true
+  [[ "$GATE_EC" -ne 0 ]] || ok=false                        # 침묵 드롭 아님 → 비-0 exit
+  has "$NEW_TOKEN" || ok=false                               # 토큰 검출(정정 전=traceback, 토큰 부재)
+  has "[status-unknown fail-closed scan]" || ok=false        # read실패 → unknown → DT-6 fail-closed 경로
+  nhas "Traceback" || ok=false                               # python crash 누출 없음(graceful)
+  nhas "UnicodeDecodeError" || ok=false                      # 동
+  mark_pos "$GATE_EC"
+  record_result "test_nonutf8_adr_read_failclosed_not_silent_drop (pos, F-CLA-001, exit=$GATE_EC)" "$ok"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # AC-7 — 스위트 양방향(meta): 각 pos→위반검출 ∧ 각 neg→정상 (집계 후행)
 # ─────────────────────────────────────────────────────────────────────────────
 test_selftest_suite_bidirectional() {           # meta (모든 gate 케이스 실행 후 마지막)
@@ -467,6 +498,7 @@ test_charter_new_token_detected
 test_active_status_positive_pin
 test_warning_tier_exit_one_pin
 test_negcontrol_knownbad_caught
+test_nonutf8_adr_read_failclosed_not_silent_drop
 test_selftest_suite_bidirectional   # meta — 집계 후행
 
 # ── 종합 ─────────────────────────────────────────────────────────────────────
