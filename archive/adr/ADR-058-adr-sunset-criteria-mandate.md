@@ -29,10 +29,18 @@ amendment_log:
       doc-only fast-path (ADR-054) — 신규 ADR 0 / 신규 워크플로 0 / 신규 스크립트 0. 역참조 점검 mechanical lint = 후속 carrier (Wave 1 declarative-only, ADR-082 §결정 6 retain pattern).
     direction: strengthen  # 능동 sunset 실행 절차 신설 = governance 표현력 확장 (집행 capability 추가, 약화 0건)
     sunset_justification: null  # strengthen 방향 — §결정 5 약화 evidence-gate 무관 (절차 추가 = 강화). is_transitional: false 유지 (§결정 6 self false 보존)
+  - amendment: 3
+    carrier_story: CFP-2699
+    date: 2026-07-16
+    summary: |
+      §결정 5 에 hygiene-vs-weakening 저작시점 판별 SSOT cross-ref pointer 1줄 추가 (Epic #2696 child C — 저작시점 예방 forcing function). §결정 5 약화 evidence requirement 본문 무변경 — pointer 만(재서술 금지). 위생(효력 변화 0)은 ADR-064 §결정 7 symmetric ratchet 상 이미 weakening 이 아니므로 §결정 5 본문 재서술 = 중복 normative = 자기역설 → pointer 로만 참조한다. 판별 SSOT = docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md 저작시점 예방(PREVENTIVE) 절.
+    direction: strengthen  # cross-ref pointer 추가 = governance 표현력 확장 (약화 0건)
+    sunset_justification: null  # strengthen 방향 — §결정 5 약화 evidence-gate 무관 (pointer 추가 = 강화). is_transitional: false 유지 (§결정 6 self false 보존)
 related_stories:
   - CFP-387
   - CFP-1149  # Amendment 1 carrier — §결정 5 차단 → 약화 evidence-gate 재정의 (ADR-064 §결정 7 symmetric sibling)
   - CFP-2061-S3  # Amendment 2 carrier — §결정 9 능동 일몰 실행 절차 anchor (de-bloat 거버넌스 영속화 Epic CFP-2061)
+  - CFP-2699  # Amendment 3 carrier — §결정 5 hygiene-vs-weakening 판별 SSOT cross-ref pointer (Epic #2696 child C 저작시점 예방)
 related_adrs:
   - ADR-010
   - ADR-013
@@ -47,6 +55,7 @@ related_files:
   - templates/adr.md
   - docs/adr/ADR-058-adr-sunset-criteria-mandate.md
   - docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md  # Amendment 2 — §결정 9 능동 일몰 실행 절차 SSOT
+  - docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md  # Amendment 3 — §결정 5 hygiene-vs-weakening 저작시점 판별 SSOT (저작시점 예방 절)
   - CLAUDE.md
 ---
 
@@ -106,6 +115,8 @@ CFP-B CI lint enforce 모드에서 missing field → warning. 작성자에게 ex
 > **CFP-1149 (2026-05-21 KST)**: ADR-064 §결정 7 evidence-gated symmetric ratchet 재정의 (top-down ratchet 비대칭 제거) 에 따라, 본 §결정 5 의 sunset_justification 은 **"약화 차단 logic" 이 아니라 "약화 방향 evidence requirement"** 로 재정의됐다 — 강화 방향이 pattern_count / incident evidence 를 요구하듯, 약화 방향은 metric / 평가 / 환경 변화 / pattern obsolescence evidence 를 요구한다 (강화와 동등 1급 절차). **차단(block)이 아니라 evidence-gate**: evidence 있으면 약화 1급 허용. sibling carrier = ADR-064 Amendment 8.
 
 `is_transitional: true` ADR amendment 시 amendment_log entry 에 sunset_justification (약화 evidence) 본문 명시 의무. count cap 미적용. (ADR-064 §결정 7 가 `is_transitional: false` governance ADR 의 약화 방향에도 동일 evidence-gate 적용 — symmetric scope.)
+
+> **저작시점 판별 cross-ref (CFP-2699, Amendment 3)**: 위생(효력 변화 0) vs 약화(효력 변화)의 **저작시점 판별 SSOT** = [`decision-record-genre-layers.md`](../../docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md) 저작시점 예방(PREVENTIVE) 절 (hygiene = §결정 7 evidence-gate 비대상, 약화 = 대칭 evidence-gate 유지). 본 pointer 는 §결정 5 약화 evidence requirement 본문을 재서술하지 않는다 — 재서술 = split-brain(리터럴 복제) 자기생산이기 때문이다(재서술 금지, pointer only).
 
 amendment_log entry schema:
 ```yaml
