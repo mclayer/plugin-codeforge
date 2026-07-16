@@ -706,21 +706,6 @@ def _parse_live_contexts_arg(value):
     return set(part.strip() for part in value.split(",") if part.strip())
 
 
-def _common_ancestor(paths, fallback="."):
-    """census 대상 파일들의 공통 상위 디렉터리(repo_root 추정) — 산출 불가 시 fallback(CWD)."""
-    if not paths:
-        return fallback
-    try:
-        abspaths = [os.path.abspath(p) for p in paths]
-        common = os.path.commonpath(abspaths)
-        if os.path.isdir(common):
-            return common
-        parent = os.path.dirname(common)
-        return parent or fallback
-    except (ValueError, OSError):
-        return fallback
-
-
 def _main(argv=None):
     ap = argparse.ArgumentParser(
         description="decision-record cardinal disposition oracle (feature-based)."
@@ -770,8 +755,12 @@ def _main(argv=None):
                 sys.path.insert(0, lib_dir)
             import dated_block_mapper  # lazy import — 같은 scripts/lib 디렉터리(DBM-4)
 
-            repo_root = _common_ancestor(args.files)
-            dated_provider = dated_block_mapper.make_dated_provider(repo_root)
+            # FIX-1(P1 runtime): provider root 를 CWD(".") 로 고정 — census(`_census_over_files`)가
+            # 파일을 여는 root(=CWD 상대) 와 반드시 동일해야 한다. 구 `_common_ancestor(args.files)`
+            # 는 **절대** 상위 디렉터리를 반환해, provider 가 census 의 상대 경로를
+            # `os.path.join(<abs>, "archive/adr/…")` 로 double-join → 부재 경로 → None → per-block
+            # dated 가 조용히 무력화(절대경로 입력에서만 우연히 동작)됐다.
+            dated_provider = dated_block_mapper.make_dated_provider(".")
         report = _census_over_files(
             args.files,
             live_required_contexts=live_required_contexts,

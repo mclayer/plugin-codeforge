@@ -472,6 +472,119 @@ def test_tg5_oracle_census_live_context_threading():
         shutil.rmtree(root, ignore_errors=True)
 
 
+# ═════════════════════════════════════════════════════════════════════════════
+# TG-5b — CLI `--census --dated-map` **상대경로 end-to-end 통합** (FIX-1 test-blind-spot 봉합)
+#   기존 TG-5 / test_dated_block_mapper 는 make_dated_provider/census 를 **직접** 호출해 CLI 배선
+#   (`_main` 의 `--dated-map` 분기 = provider root 조립)을 우회했다 → born-false-green. 정상 invocation
+#   `oracle --census --dated-map <상대경로>` 는 provider root double-join 버그로 per-block dated 가
+#   silent no-op 였다(구 `_common_ancestor(args.files)` 가 절대 상위 디렉터리를 반환 → provider 가
+#   census 의 상대경로를 `os.path.join(<abs>, "archive/adr/…")` 로 double-join → 부재 경로 → None).
+#   본 test 는 그 배선을 `_main` 을 통해 **끝까지** 타서, per-block dated 가 실제로 작동함을 실증한다.
+#
+#   ★ 반드시 **subdirectory 를 가진 상대경로**(archive/adr/…)를 써야 한다 — bare basename 은
+#     `_common_ancestor([basename])` 이 우연히 CWD 로 resolve 되어 fixed/buggy 를 구분 못 한다
+#     (firsthand 검증: basename 은 double-join 미발생 → 대조 불가). 버그는 상대경로에 디렉터리
+#     성분이 있을 때만 재현된다(fix 주석의 예시 `archive/adr/…` 와 동일).
+# ═════════════════════════════════════════════════════════════════════════════
+# ADR fixture — frontmatter amendments[].date + `## Amendment 1` region 안의 present-normative
+#   permanence cardinal(6-tuple 무변경). 이 라인은:
+#     - dated 아니면 → strip_normativity (permanence-invariant '무변경' ∧ embed 6 ≠ live 7)
+#     - dated 이면   → historical_falsehood (dated 블록 안 거짓 present-normative, 과거-scope 부재)
+#   ★ Korean 리터럴은 반드시 이 UTF-8 .py 파일 안에 직접 임베드(셸 heredoc 경유 시 cp949 로
+#     '무변경'/'불변' 이 깨져 cardinal_bound 매칭이 false 가 됨 — firsthand 확인한 회귀 방지).
+_TG5B_ADR_FIXTURE = (
+    "---\n"
+    "title: ADR-9001 sample\n"
+    "amendments:\n"
+    "  - number: 1\n"
+    "    date: 2026-05-01\n"
+    "    summary: sample amendment\n"
+    "---\n"
+    "\n"
+    "# ADR-9001 sample\n"
+    "\n"
+    "## 결정 1\n"
+    "\n"
+    "일반 내용\n"
+    "\n"
+    "## Amendment 1\n"
+    "\n"
+    "- branch protection 6-tuple 무변경 (required 신설 0)\n"
+)
+
+
+def test_tg5b_cli_dated_map_relative_path_integration():
+    """TG-5b — `oracle --census --dated-map <상대경로>` 정상 invocation 이 per-block dated 를
+    **끝까지 배선**해 작동함을 실증(CLI `_main` 을 relative path 로 태움).
+
+    (main) 상대경로(subdir 포함)로 `m._main(["--census","--dated-map",...])` 를 chdir(temp) 하에
+      호출 → stdout(JSON) 파싱 → 그 cardinal 라인이 `historical_falsehood`(=dated 배선 작동) 이고
+      `strip_normativity`(=dated 무시) 가 아님을 assert.
+    (positive-control / 버그 복원 → RED) 같은 fixture·상대경로로, provider root 를 **버그처럼**
+      절대 상위 디렉터리(`os.path.abspath(os.path.dirname(relpath))`)로 준 provider 를
+      `_census_over_files` 에 직접 넣으면 상대 basename 이 double-join → provider None → 그 라인이
+      다시 `strip_normativity`(dated 무시) 로 나옴을 assert. fixed(`historical_falsehood`) ↔
+      buggy(`strip_normativity`) 대조가 배선의 load-bearing 성을 실증한다.
+    """
+    import io
+    import json
+    import contextlib
+    import dated_block_mapper as dbm  # scripts/lib (모듈 상단 sys.path 삽입으로 resolvable)
+
+    root = tempfile.mkdtemp(prefix="cfp2698_tg5b_")
+    rel = "archive/adr/ADR-9001-sample.md"  # ★ subdir 포함 상대경로 (basename 아님 — 버그 재현 조건)
+    abs_fixture = os.path.join(root, *rel.split("/"))
+    os.makedirs(os.path.dirname(abs_fixture), exist_ok=True)
+    with open(abs_fixture, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(_TG5B_ADR_FIXTURE)
+
+    live_arg = "a,b,c,d,e,f,g"  # 7 contexts — embed 6 ≠ 7 이라야 permanence-falsify(strip) 경로 성립
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(root)
+
+        # ── (main) 정상 CLI invocation: relative path 로 `_main` 을 끝까지 태움 ──
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = m._main(["--census", "--dated-map", "--live-contexts", live_arg, rel])
+        assert rc == 0, "census CLI 는 non-strict 에서 exit 0 이어야: rc=%s" % rc
+        report = json.loads(buf.getvalue())
+        fixed_dist = report["by_disposition"]
+        # dated 가 배선을 통해 실제로 작동 → historical_falsehood, strip_normativity 미출현.
+        assert fixed_dist.get("historical_falsehood", 0) >= 1, (
+            "CLI --dated-map(상대경로)가 per-block dated 를 배선하면 cardinal 라인이 "
+            "historical_falsehood 여야(=dated 작동): %s" % fixed_dist
+        )
+        assert fixed_dist.get("strip_normativity", 0) == 0, (
+            "dated 배선이 작동하면 strip_normativity 로 새면 안 됨(dated silent no-op RED 징후): %s" % fixed_dist
+        )
+
+        # ── (positive-control) 버그 복원: provider root = 절대 상위 디렉터리 → double-join → None ──
+        buggy_root = os.path.abspath(os.path.dirname(rel))  # 구 _common_ancestor 가 내던 형태
+        buggy_provider = dbm.make_dated_provider(buggy_root)
+        buggy_report = m._census_over_files(
+            [rel],
+            live_required_contexts=set(live_arg.split(",")),
+            dated_provider=buggy_provider,
+        )
+        buggy_dist = buggy_report["by_disposition"]
+        assert buggy_dist.get("strip_normativity", 0) >= 1, (
+            "buggy root(double-join → provider None) 이면 dated 무시 → strip_normativity 여야: %s" % buggy_dist
+        )
+        assert buggy_dist.get("historical_falsehood", 0) == 0, (
+            "buggy root 에서는 dated 가 배선되지 않으므로 historical_falsehood 로 가면 안 됨: %s" % buggy_dist
+        )
+
+        # 대조 — fixed(배선 O) 와 buggy(배선 X)의 분포가 실제로 다름 = 배선이 load-bearing.
+        assert fixed_dist != buggy_dist, (
+            "fixed(dated 배선) 와 buggy(double-join) 분포가 같으면 배선이 decorative(FAIL): fixed=%s buggy=%s"
+            % (fixed_dist, buggy_dist)
+        )
+    finally:
+        os.chdir(old_cwd)
+        shutil.rmtree(root, ignore_errors=True)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 직접 python 실행 경로(pytest 부재 시) — 전 test_ 함수 구동 + 요약.
 # ─────────────────────────────────────────────────────────────────────────────
