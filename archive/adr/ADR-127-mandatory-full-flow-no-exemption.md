@@ -216,7 +216,7 @@ required 6-tuple 의 5 workflow 를 전수 grep 한 결과 **어느 것도 hotfi
 - **blocking-tier(required-6-tuple-skip) hotfix-bypass = 0건** → 폐지할 대상이 **물리적으로 없음**. required 6-tuple 은 애초에 hotfix-bypass escape valve 를 두지 않은 설계(invariant-check / phase-gate-mergeable = bypass channel 0). 즉 "차단형 우회 폐지" 의 목표 상태(required check 우회 0)는 **이미 달성돼 있다**.
 - **warning-tier(+ 6-tuple 미등록 blocking-on-pr) = 제외** (사용자 결정 + §9.3 no-op 분석). 폐지해도 merge 무차단이라 효과 0, escape valve 만 소멸(역설). 검사연극 회피.
 - **본 Story 처리** = ① 본 §결정 9 실측 분류를 ADR 본문에 명문화 ② label-registry-v2 + ADR-024 §결정 6.A 에 "required-6-tuple-skip blocking-tier hotfix-bypass = 0건 실측 (required check 는 bypass channel 미설계 — 이미 무우회), warning-tier 제외(merge 무차단 no-op)" Amendment cross-ref(§M) ③ 대량 label 제거 0 (폐지 대상 0건이므로 — 검사연극 회피).
-- **invariant 명문화 (강화 ratchet)**: "required 6-tuple check 에는 hotfix-bypass escape valve 신설 금지" 를 ADR-024 §결정 6.A 에 명문화 — 현 상태(bypass 0)를 영구 invariant 로 고정(미래에 누가 required check 에 bypass channel 추가하는 것 차단). 이게 "차단형 우회 0" directive 의 실질 이행 (대상 0건이나 미래 재발 차단으로 강화).
+- **invariant 명문화 (강화 ratchet)**: "현행 `required_status_checks` 전체(현재 tuple 이 몇 개든 — SSOT = CLAUDE.md 브랜치 보호 §)에는 hotfix-bypass escape valve 신설 금지" 를 ADR-024 §결정 6.A 에 명문화 — 현 상태(bypass 0)를 영구 invariant 로 고정(미래에 누가 required check 에 bypass channel 추가하는 것 차단). 이게 "차단형 우회 0" directive 의 실질 이행 (대상 0건이나 미래 재발 차단으로 강화). [cardinality-agnostic pointer화 — 리터럴 tuple-count 리터럴 제거해 7번째·미래 context 자동 커버; CFP-2698 N1]
 
 **9.5 escape-valve 대체 / 비용 (정직 고지, §비용 반영)**: required 6-tuple 은 이미 escape valve(hotfix-bypass)가 없으므로 — required check 실패 시 정식 처리 = (i) 실패가 본 PR 책임이면 근본 수정 in-scope (ii) 검사 자체가 버그면 검사 수정 (iii) 무관 pre-existing 이면 그 검사를 별도 정식 Story 로 수정. **우회 label 0** (이미 그러함). 운영 비용 = 무관 pre-existing required check 실패도 PR 을 막는다 — 단 required 6-tuple 은 phase/schema/invariant 정합 검사라 pre-existing 실패가 드물고, 발생 시 (iii) 정식 수정 경로. **이 영역은 deadlock-resolver(§K)와 disjoint** — §K 는 phase-label mismatch 만 푸는 것이고(라벨 정합), §결정 9 는 required check 자체 실패(schema/invariant)를 다룬다. 혼동 금지.
 
@@ -348,7 +348,7 @@ async function checkLabelMismatchOnly(body, localRefs, phaseLabel, prGateLabels,
 - **`docs/inter-plugin-contracts/label-registry-v2.md`** — label 제거 0 (blocking-tier 폐지 대상 0건). frontmatter changelog 에 "ADR-127 §결정 9 — required-6-tuple-skip blocking-tier hotfix-bypass 0건 실측 확인 (required check 는 bypass channel 미설계), warning-tier 제외(merge 무차단)" 1줄 NOTE 추가만. label entry 본문 무변경.
 - **`docs/evidence-checks-registry.yaml`** — entry 제거 0. required 6-tuple 짝(invariant-check / phase-gate-mergeable)은 이미 bypass 필드 없음(실측). 변경 0.
 - **check 스크립트(`scripts/check-*.sh`) / workflow** — 분기 제거 0 (required check 가 hotfix-bypass 읽는 곳 0건 — 제거할 분기 없음).
-- **`ADR-024 §결정 6.A`** (Amendment 19 §B 에 반영) — **required 6-tuple check 에 hotfix-bypass escape valve 신설 금지 invariant 명문화** (현 상태 bypass 0 을 영구 고정 — 미래 재발 차단, 강화 ratchet). 본문 §결정 6.A 무변경, Amendment 19 §B 에 invariant declare.
+- **`ADR-024 §결정 6.A`** (Amendment 19 §B 에 반영) — **현행 `required_status_checks` 전체(현재 tuple 이 몇 개든 — SSOT = CLAUDE.md 브랜치 보호 §)에 hotfix-bypass escape valve 신설 금지 invariant 명문화** (현 상태 bypass 0 을 영구 고정 — 미래 재발 차단, 강화 ratchet). 본문 §결정 6.A 무변경, Amendment 19 §B 에 invariant declare. [cardinality-agnostic pointer화 — 리터럴 tuple-count 리터럴 제거해 7번째·미래 context 자동 커버; CFP-2698 N1]
 - **8-repo mirror** — 불요 (lane 8 repo archived, wrapper 단일 — §결정 9.0 실측).
 
 ## ADR Amendment 동반 (영향 ADR 무력화 — 본문 byte 보존, status/Amendment 방식)

@@ -261,20 +261,25 @@ def test_ac19_guard_delete_conjunction():
     finally:
         shutil.rmtree(root2, ignore_errors=True)
 
-    # (b) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact → pass True.
+    # (b) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact ∧ has_semantic
+    #     (DBM-1 migration: ANCHORLESS body 는 이제 has_semantic=False 로 delete 가 막히므로,
+    #     positive-control 유지를 위해 §결정 42 semantic anchor 를 body 에 주입한다).
     root3 = _build_repo({
         "docs/keep.md": "unrelated content\n",
     })
+    clean_target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 §결정 42 branch protection 6-tuple 무변경 서술, 외부 인용 없음",
+        "row": None,
+    }
     try:
-        r = g.run_guard(
-            {"file": "docs/clean.md",
-             "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
-             "row": None},
-            "delete", repo_root=root3,
-        )
+        r = g.run_guard(clean_target, "delete", repo_root=root3)
         assert r["pass"] is True
         # conjunction 네 갈래 전부 참임을 명시 확인.
         assert r["disposition"] == "delete"
+        # has_semantic True 경로 명시 확인(DBM-1) — pass=True 시 delete_conjunction 키는
+        # result 에 없으므로(성공 경로는 미기재) 내부 helper 를 직접 호출해 확인한다.
+        assert g._has_semantic_anchor(clean_target, root3) is True
     finally:
         shutil.rmtree(root3, ignore_errors=True)
 
@@ -321,14 +326,148 @@ def test_ac20_two_branch_replay():
     assert d1 == d2 == "correct"
 
     # delete branch — hermetic clean delete, 2회 호출 verdict 동일(deterministic).
+    # (DBM-1 migration: has_semantic 충족을 위해 §결정 42 anchor 주입 — inbound 는 여전히 0.)
     root = _build_repo({"docs/keep.md": "unrelated\n"})
     try:
         target = {"file": "docs/clean.md",
-                  "body": "branch protection 6-tuple 무변경 서술만, 외부 id 없음",
+                  "body": "§결정 42 branch protection 6-tuple 무변경 서술만, 외부 id 없음",
                   "row": None}
         r1 = g.run_guard(target, "delete", repo_root=root)
         r2 = g.run_guard(target, "delete", repo_root=root)
         assert r1["pass"] == r2["pass"] == True  # noqa: E712 (verdict 동일 + 참임 동시 명시)
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TG-1~3/5 mutation-kill — DBM-1/DBM-1b/DBM-4 신규 하드닝 축 (Story CFP-2698 §8 Test Contract)
+#   각 TG 는 (양성 실제 동작 확인) + (해당 축을 실제로 ablate 하면 RED 로 flip) 을 함께 실증한다.
+#   guard(g) 는 hermetic tempfile 위에서만 구동(live repo tree 비의존).
+# ═════════════════════════════════════════════════════════════════════════════
+def test_tg1_guard_dbm1_delete_conjunct_anchorless():
+    """TG-1 — DBM-1 delete conjunct: anchorless normative body(§결정/#anchor 없음) → delete pass=False
+    (strip_normativity 강등). Mutation proof: g._has_semantic_anchor 를 상시 True 로 ablate 하면
+    anchorless body 가 delete pass=True 로 flip(RED) — has_semantic conjunct 가 load-bearing 함을 실증."""
+    root = _build_repo({"docs/keep.md": "unrelated\n"})
+    target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
+        "row": None,
+    }
+    try:
+        before = g.run_guard(target, "delete", repo_root=root)
+        assert before["pass"] is False
+        assert before.get("recommend") == "strip_normativity"
+        assert before["delete_conjunction"]["has_semantic"] is False
+
+        orig = g._has_semantic_anchor
+        try:
+            g._has_semantic_anchor = lambda *a, **k: True  # ablate: 항상 semantic anchor 있음
+            after = g.run_guard(target, "delete", repo_root=root)
+        finally:
+            g._has_semantic_anchor = orig
+        assert after["pass"] is True, (
+            "has_semantic-always-True ablation 은 anchorless delete 를 pass=True 로 flip 해야: %s" % after
+        )
+
+        # 원복 확인.
+        restored = g.run_guard(target, "delete", repo_root=root)
+        assert restored["pass"] is False
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg2_guard_dbm1_delete_conjunct_positive_control():
+    """TG-2 — DBM-1 delete 양성 control: §결정 N anchor 보유 body, inbound 0, hermetic → delete pass=True.
+    Mutation proof: g._has_semantic_anchor 를 상시 False 로 ablate 하면 양성 케이스가 pass=False 로
+    flip(RED) — has_semantic conjunct 가 진짜로 통과를 gate 함(rubber-stamp 아님)을 실증."""
+    root = _build_repo({"docs/keep.md": "unrelated\n"})
+    target = {
+        "file": "docs/clean.md",
+        "body": "이 라인은 §결정 42 branch protection 6-tuple 무변경 서술, 외부 인용 없음",
+        "row": None,
+    }
+    try:
+        before = g.run_guard(target, "delete", repo_root=root)
+        assert before["pass"] is True
+
+        orig = g._has_semantic_anchor
+        try:
+            g._has_semantic_anchor = lambda *a, **k: False  # ablate: 항상 semantic anchor 없음
+            after = g.run_guard(target, "delete", repo_root=root)
+        finally:
+            g._has_semantic_anchor = orig
+        assert after["pass"] is False, (
+            "has_semantic-always-False ablation 은 positive-control 을 pass=False 로 flip 해야: %s" % after
+        )
+        assert after["delete_conjunction"]["has_semantic"] is False
+
+        # 원복 확인.
+        restored = g.run_guard(target, "delete", repo_root=root)
+        assert restored["pass"] is True
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg3_guard_dbm1b_whitespace_anchor_matching():
+    """TG-3 — DBM-1b whitespace-flexible `§결정` anchor 매칭: 인바운드 참조가 다중공백(`§결정  7`)/
+    무공백(`§결정7`) 변형으로 존재해도 inbound_count 에 잡힌다. Mutation proof: g._anchor_matches 를
+    리터럴 substring 매칭으로 ablate 하면 두 변형 모두 undercount(inbound 감소) 로 flip(RED)."""
+    root = _build_repo({
+        "docs/inbound.md": "참조1: §결정  7 (다중공백)\n참조2: §결정7 (공백없음)\n",
+    })
+    target = {"file": "docs/clean.md", "body": "이 라인은 §결정 7 을 다룬다", "row": None}
+    try:
+        before = g.check_inbound_scan(target, root)
+        assert before["inbound_count"] > 0, (
+            "whitespace-flexible anchor 매칭은 다중공백/무공백 변형 라인을 잡아야: %s" % before
+        )
+
+        orig = g._anchor_matches
+        try:
+            g._anchor_matches = lambda anchor, raw: anchor in raw  # ablate: 리터럴 substring 만
+            after = g.check_inbound_scan(target, root)
+        finally:
+            g._anchor_matches = orig
+        assert after["inbound_count"] < before["inbound_count"], (
+            "literal-substring ablation 은 변형 anchor 를 undercount 해야(RED): before=%s after=%s"
+            % (before["inbound_count"], after["inbound_count"])
+        )
+
+        # 원복 확인.
+        restored = g.check_inbound_scan(target, root)
+        assert restored["inbound_count"] == before["inbound_count"]
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_tg5_oracle_census_live_context_threading():
+    """TG-5 — DBM-4 census 층 `live_required_contexts` threading: 이 값이 classify() 까지 threading
+    되어야만 permanence-falsify(strip_normativity) 가 도출된다. Mutation proof: threading 없이
+    (live_required_contexts=None) 호출하면 같은 라인이 strip 에 도달하지 못하고 분포가 달라짐
+    (threading 이 load-bearing 함을 실증 — 별도 monkeypatch 없이 실 파라미터 유/무 대조로 증명)."""
+    root = _build_repo({
+        "docs/permanence.md": (
+            "wrapper 의 required_status_checks contexts 는 6-tuple 로 불변 유지\n"
+            "일반 서술 라인(무관)\n"
+        ),
+    })
+    try:
+        path = os.path.join(root, "docs", "permanence.md")
+        fake_live = {"a", "b", "c", "d", "e", "f", "g"}  # 실 SSOT 아님 — 7-count 대조용(threading 검증)
+        assert len(fake_live) == 7
+
+        with_live = m._census_over_files([path], live_required_contexts=fake_live)
+        assert with_live["by_disposition"].get("strip_normativity", 0) >= 1, (
+            "live_required_contexts(7) threading 시 6-tuple 불변 주장이 strip_normativity 로 도달해야: %s"
+            % with_live["by_disposition"]
+        )
+
+        without_live = m._census_over_files([path], live_required_contexts=None)
+        assert without_live["by_disposition"].get("strip_normativity", 0) == 0, (
+            "threading 부재(None) 시 같은 라인이 strip 에 도달하면 안 됨(RED): %s" % without_live["by_disposition"]
+        )
+        assert with_live["by_disposition"] != without_live["by_disposition"]
     finally:
         shutil.rmtree(root, ignore_errors=True)
 

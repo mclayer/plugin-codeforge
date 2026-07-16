@@ -1864,7 +1864,7 @@ ADR-058 §결정 5 + ADR-064 §self-application evidence-gated symmetric ratchet
 - **warning-tier 제외**: hotfix-bypass 를 읽는 ~35 workflow 는 전부 required 6-tuple 외부 — 대다수 `continue-on-error: true`(advisory), 일부 `blocking-on-pr` tier(worktree-first-* / wrapper-managed-block)는 `continue-on-error: false` 지만 branch protection 6-tuple 미등록 = enforce_admins 로 실제 merge 차단 안 함. 폐지해도 merge 무차단 = no-op(검사연극). 제외 확정.
 - **wrapper 단일**: lane 8 repo archived(CFP-2178 S6 — 활성 관리 wrapper 단일). 8-repo mirror 불요.
 
-**§결정 6.A 처리 (invariant 신설)**: per-entry namespace 본문 무변경(anti-drift). 본 Amendment 가 **"required 6-tuple check 에는 hotfix-bypass escape valve 신설 금지" invariant 를 명문화**한다 — 현 상태(required check bypass 0)를 영구 고정(미래에 누가 required check 에 bypass channel 추가하는 것 차단, 강화 ratchet). 폐지할 label 0건이나 invariant 로 directive("차단형 우회 0")의 실질·영구 이행. SSOT = ADR-127 §결정 9/§M.
+**§결정 6.A 처리 (invariant 신설)**: per-entry namespace 본문 무변경(anti-drift). 본 Amendment 가 **"현행 `required_status_checks` 전체(현재 tuple 이 몇 개든 — SSOT = CLAUDE.md 브랜치 보호 §)에는 hotfix-bypass escape valve 신설 금지" invariant 를 명문화**한다 — 현 상태(required check bypass 0)를 영구 고정(미래에 누가 required check 에 bypass channel 추가하는 것 차단, 강화 ratchet). 폐지할 label 0건이나 invariant 로 directive("차단형 우회 0")의 실질·영구 이행. SSOT = ADR-127 §결정 9/§M. [cardinality-agnostic pointer화 — 리터럴 tuple-count 리터럴 제거해 7번째(ac-traceability-matrix)·미래 context 자동 커버, invariant-STRENGTHENING; CFP-2698 N1]
 
 본 Amendment 는 §결정 6.A / 6.A.10 본문 무변경 (anti-drift, historic-preserving) — A(fast-pass 재설계) + B(hotfix-bypass blocking-tier 0건 실측 + invariant) declare. A 실 코드 변경 = ADR-127 §K (본 Story Phase 2).
 

@@ -242,8 +242,9 @@ PY
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Part C / M5 — structural-guard conjunction gates (rubber-stamp 아님 실증)
-#   delete 는 4-check(¬parse ∧ inbound=0 ∧ external-id-safe ∧ structure-intact) 전부여야 pass.
-#   각 conjunct 를 독립 위반시켜 pass=false + strip_normativity 강등을 assert(hermetic temp repo).
+#   delete 는 5-check(¬parse ∧ inbound=0 ∧ external-id-safe ∧ structure-intact ∧ has_semantic[DBM-1])
+#   전부여야 pass. 각 conjunct 를 독립 위반시켜 pass=false + strip_normativity 강등을 assert
+#   (hermetic temp repo). M5.4 = DBM-1 has_semantic conjunct 전용 negative-control.
 # ═════════════════════════════════════════════════════════════════════════════
 run_py "C/M5: guard conjunction gates" <<'PY'
 import sys, os, tempfile
@@ -280,14 +281,29 @@ print("  M5.2 delete + inbound>0: pass=%s recommend=%s no_inbound=%s -> %s"
       % (r["pass"], r.get("recommend"), r["delete_conjunction"]["no_inbound"], "OK" if c2 else "FAIL"))
 ok = ok and c2
 
-# (3) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact → pass=true.
+# (3) clean delete — parse 0 ∧ inbound 0 ∧ external-id 0 ∧ structure intact ∧ has_semantic → pass=true.
+#     (DBM-1 migration: ANCHORLESS body 는 has_semantic=False 로 delete 가 막히므로, positive-control
+#     유지를 위해 §결정 42 semantic anchor 를 body 에 주입한다 — inbound 는 여전히 0.)
 root = build({"docs/keep.md": "unrelated"})
 r = g.run_guard({"file": "docs/clean.md",
-                 "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
+                 "body": "이 라인은 §결정 42 branch protection 6-tuple 무변경 서술만 있고 외부 인용 없음",
                  "row": None}, "delete", repo_root=root)
 c3 = (r["pass"] is True)
-print("  M5.3 clean delete: pass=%s -> %s" % (r["pass"], "OK" if c3 else "FAIL"))
+print("  M5.3 clean delete (semantic-anchored): pass=%s -> %s" % (r["pass"], "OK" if c3 else "FAIL"))
 ok = ok and c3
+
+# (4) DBM-1 negative control — ANCHORLESS clean body(§결정/ADR/#anchor 전무) → delete 는 has_semantic=False
+#     conjunct 하나만으로도 pass=False + strip_normativity 강등이어야 한다(위 M5.3 migration 이 필요했던 이유
+#     자체를 실증 — anchor 없이는 여전히 delete 불가함을 별도 검증).
+root = build({"docs/keep2.md": "unrelated"})
+r = g.run_guard({"file": "docs/clean2.md",
+                 "body": "이 라인은 branch protection 6-tuple 무변경 서술만 있고 외부 id 없음",
+                 "row": None}, "delete", repo_root=root)
+c4 = (r["pass"] is False) and (r.get("recommend") == "strip_normativity") \
+     and (r["delete_conjunction"]["has_semantic"] is False)
+print("  M5.4 anchorless clean delete (DBM-1 negative control): pass=%s recommend=%s has_semantic=%s -> %s"
+      % (r["pass"], r.get("recommend"), r["delete_conjunction"]["has_semantic"], "OK" if c4 else "FAIL"))
+ok = ok and c4
 
 print("  M5 verdict: %s (4-check conjunction 이 실제로 gate — rubber-stamp 아님)" % ("PASS" if ok else "FAIL"))
 sys.exit(0 if ok else 1)
