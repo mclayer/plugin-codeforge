@@ -22,6 +22,9 @@ presence-grep 금지(false-oracle) — 실 census 함수를 import·구동한다
   · O3 (positive-control) : 알려진 flag 라인을 PREVENTIVE 블록 안에 주입 → census 가 그 라인을
                             블록 범위 안에서 검출 → O1 의 0-flag 이 "블록 미scan / oracle dead" 로
                             인한 vacuous PASS(항상-0 tautology) 가 아님을 반증.
+  · O4 (range-anchor guard): _range_is_anchored 로 (start,end) 앵커 재확인 (F-CR-001, CFP-2718 AC-4)
+                            — live assert 는 구성상 tautological(narrow regression guard 로만 존치),
+                            anti-mislocation 판별력은 mutant-kill loop 이 전량 담지.
 
 tier (execution-falsified, §8.2): **V2(가변값 cardinal-embed) = execution-tier**(본 test 가 실증).
   V1(phantom-semantic)·V3(false-tombstone) = review-tier — census line-scanner 가 자연어 semantic·
@@ -66,6 +69,15 @@ def _preventive_block_range(lines):
     assert start is not None, "PREVENTIVE 절 헤더 부재 — C 增分 미landed?"
     assert end is not None and end > start, "PREVENTIVE 절 종료(## 경계) 부재"
     return start, end
+
+
+def _range_is_anchored(lines, start, end):
+    """(iii) 앵커 재확인 — range 가 실제 PREVENTIVE/NEXT 헤더에 앵커됐는지 content-based 판별.
+    절대 span 리터럴 미사용(genre-doc 성장 robust). bounds-guard 로 degenerate/OOB IndexError 회피."""
+    if not (1 <= start <= len(lines) and 1 <= end <= len(lines)):
+        return False
+    return (lines[start - 1].rstrip("\n") == PREVENTIVE_HEADER
+            and lines[end - 1].rstrip("\n") == NEXT_HEADER)
 
 
 def _census_flags(paths):
@@ -122,6 +134,29 @@ def test_cfp2699_self_gate_cardinal_delta_zero():
         )
     finally:
         os.unlink(poisoned_path)
+
+    # ── O4 (F-CR-001) — range 축 regression guard + mutant-kill 실증 (anti-mislocation) ──
+    # live assert: _preventive_block_range 산출 (start,end) 는 정의상 lines[start-1]==PREVENTIVE_HEADER
+    #   ∧ lines[end-1]==NEXT_HEADER 로 골라졌으므로 _range_is_anchored(lines,start,end) 는
+    #   **구성상 always-True(tautological — O3-(ii)≡(i) 동class)**. ∴ 이 assert 의 실질 값 =
+    #   미래 _preventive_block_range 가 return-arithmetic / header-constant 발산으로 refactor 될 때만
+    #   잡는 **협소한 regression guard** (현행 로직 "독립 재결속" 아님 — Change Plan §12 (e) 정직 공개).
+    assert _range_is_anchored(lines, start, end), (
+        f"live range ({start},{end}) 가 PREVENTIVE/NEXT 헤더에 앵커되지 않음 — "
+        f"_preventive_block_range refactor 발산(regression)"
+    )
+    # ★anti-mislocation 판별력 담지 = mutant-kill loop (유일 discriminating 축):
+    #   hardcoded mutant tuple 주입이 _range_is_anchored 가 상수-True 아님을 실증(negative-control
+    #   test data — O3 positive-control 과 대칭). degenerate ∧ mislocated 전부 reject → 판별력 = 이 loop.
+    #   절대 span 리터럴 아님(입력 data). AC-4 mutant-kill 계약.
+    for _mut in [(1, 1), (99, 99), (50, 60), (40, 70), (97, 148)]:
+        assert not _range_is_anchored(lines, *_mut), (
+            f"mutant range {_mut} 가 앵커 통과 — anti-mislocation 판별력 상실(mislocation 생존)"
+        )
+    # bounds-guard 검증 (Change Plan §8.8 g2) — OOB range 는 IndexError 없이 not-anchored 로 reject:
+    assert not _range_is_anchored(lines, 200, 250), (
+        "OOB range (200,250) 가 앵커 통과/IndexError — bounds-guard 실패"
+    )
 
 
 if __name__ == "__main__":
