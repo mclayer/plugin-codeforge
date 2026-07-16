@@ -2780,7 +2780,8 @@ entries:
       ADR-122 회귀 방지 gate — superpowers 의존 완전 제거 후 토큰 재유입 차단.
       라이브 `superpowers:<skill>` 호출 감지 (warning tier, 토큰 정규식 매칭).
       정규식: superpowers:[a-z][a-z0-9-]* (literal `docs/superpowers/**` 경로와 분리).
-      EXEMPT (이력 보존): archive/adr/** + archive/CHANGELOG-legacy.md + archive/prune-2026-06/**
+      EXEMPT: archive/adr/** 는 status-aware (retired[superseded/deprecated] = EXEMPT / live·unknown = scanned + 13-signature grandfather);
+      wholesale EXEMPT = archive/CHANGELOG-legacy.md + archive/prune-2026-06/**
       + 스크립트 자신 (self-reference allowlist).
       wrapper dogfood 자립성 강화 (외부 plugin 강결합 제거) — discipline 3건
       (red-first TDD / 0-context plan / iteration 가설차별화) codeforge native 흡수.
