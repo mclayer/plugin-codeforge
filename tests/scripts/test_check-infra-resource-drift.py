@@ -1081,6 +1081,103 @@ def test_ac22_baseline_override_cli_load_bearing():
             % (census(out_bl, "candidates_scanned"), census(out_ns, "candidates_scanned"))
 
 
+# ─────────────────────── CFP-2732 §8.1 D5: example-path project.yaml live-scan 불참 ──
+# Story CFP-2732(Epic CFP-2700 G4 — D5 consumer 전파)의 유일 실행-falsifiable AC(§8.1):
+#   "examples 의 `.claude/_overlay/project.yaml` 에 infra_resources 를 승격해도 D3 scanner 의 live
+#    verdict 는 불변(undeclared(new) 증가 0 / live violation 0 / exit 0)."
+# ★ firsthand 정정(§8.1 서술 대비): 승격된 example project.yaml 은 hidden `.claude/` dir 아래라
+#   `glob(examples/**/*.yaml, recursive=True)`(scanner 는 include_hidden 미사용)가 도달하지 못한다 →
+#   **census inert 로 분류되는 게 아니라 스캔 corpus 에서 아예 invisible**. §8.1 이 서술한 "census
+#   inert 로 분류" 기전은 hidden-path project.yaml 엔 성립하지 않는다(비-hidden example yaml 엔 성립 —
+#   아래 C2 가 그 경계를 실측 결박). 안전 결론(undeclared 0)은 유지되나 기전이 다르다. (Change Plan §8.1
+#   기전 서술 부정확 = ArchitectPL 회부 대상 — 본 test 는 as-built 실측을 SSOT 로 잠근다.)
+# ★ 판별력(non-vacuous, tautology 아님): 동일 probe `<lower>_env: "D5_CONSUMER_PROBE_TOKEN"` 를
+#   live carrier(repo-root project.yaml)에 두면 UNDECLARED(exit 1)로 표면화된다(C3). 즉 probe 는
+#   진성 live 신호이며, example-path 에서 안 잡히는 것은 토큰이 무해해서가 아니라 **경로 dispatch**
+#   때문임을 A/B 대조로 증명(AC-22 fixture-pair 판별 idiom 답습 — 소스 mutation 불요, 위치 대조가 killer).
+
+D5_EXAMPLE_PROMO = """project: webapp-example-fixture
+infra_strategy: docker_first
+infra_resources:
+  resources:
+    - id: app-db
+      canonical_env: DATABASE_URL
+    - id: app-cache
+      canonical_env: REDIS_URL
+  execution_units:
+    web:
+      required:
+        - app-db
+        - app-cache
+atlassian:
+  confluence:
+    database_url_env: "D5_CONSUMER_PROBE_TOKEN"
+"""
+
+# live carrier(repo-root project.yaml)에 붙일 probe tail — MANIFEST 뒤 indent-0 `atlassian:` 이
+#   infra_resources block 을 닫으므로 probe `_env:` 는 block 밖(SELF_EXCLUDE 비대상) = 진성 소비면.
+D5_LIVE_PROBE_TAIL = """atlassian:
+  confluence:
+    database_url_env: "D5_CONSUMER_PROBE_TOKEN"
+"""
+
+
+def test_cfp2732_d5_example_project_yaml_not_live_scanned():
+    """§8.1: example-path project.yaml 에 infra_resources 승격 → live verdict 불변 (A/B 판별).
+
+    C1 hidden-example(실 D5 위치 `examples/*/.claude/_overlay/project.yaml`) = invisible →
+       exit 0 / undeclared 0 / inert 2(compose 만) / probe 미출현. 승격 블록도 probe 도 live 무기여.
+    C2 non-hidden example(`examples/svc/project.yaml`) = inert corpus → probe 가 inert census 로
+       흡수(inert 2→3) but undeclared 아님 → exit 0. §8.1 "census inert" 기전은 여기서만 성립.
+       C1 vs C2 의 inert 2↔3 delta = "hidden invisible / non-hidden inert" 정정 기전의 실측 결박.
+    C3 control(live carrier repo-root project.yaml) = 동일 probe → UNDECLARED(form=_env) exit 1.
+       probe 가 진성 live 신호임을 증명 → C1/C2 의 무-flag 이 경로 dispatch(tautology 아님) 판별.
+    """
+    # C1 — hidden example (real D5 location): live-scan 불참(invisible).
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE)
+        _write(os.path.join(tmp, "examples", "webapp-minimal", ".claude", "_overlay", "project.yaml"),
+               D5_EXAMPLE_PROMO)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "§8.1 C1: hidden example 승격 → live verdict 불변 exit 0, got %d\n%s" % (rc, out)
+        assert census(out, "undeclared") == 0, "§8.1 C1: undeclared(new) 증가 0\n%s" % out
+        assert "D5_CONSUMER_PROBE_TOKEN" not in out, \
+            "§8.1 C1: hidden example probe 가 live 표면으로 출현 = live-scan 참여(불변 위반)\n%s" % out
+        # hidden dir → glob 미도달: example 파일은 candidate 로도 inert 로도 계수되지 않는다(invisible).
+        assert census(out, "inert_skipped") == 2, \
+            "§8.1 C1: hidden example 는 inert census 무기여(compose 2 만) — got inert=%d\n%s" \
+            % (census(out, "inert_skipped"), out)
+        assert census(out, "candidates_scanned") == 1, \
+            "§8.1 C1: hidden example 는 candidate 무기여(wf RAW_NAS_URL 1 만) — got %d\n%s" \
+            % (census(out, "candidates_scanned"), out)
+
+    # C2 — non-hidden example: inert corpus 로 흡수(census inert), undeclared 아님.
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE)
+        _write(os.path.join(tmp, "examples", "svc", "project.yaml"), D5_EXAMPLE_PROMO)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "§8.1 C2: non-hidden example → exit 0, got %d\n%s" % (rc, out)
+        assert census(out, "undeclared") == 0, \
+            "§8.1 C2: non-hidden example probe 는 inert(census)이지 undeclared 아님\n%s" % out
+        # inert 2→3: probe quoted 토큰이 inert census 로 흡수됨을 실측(C1 대비 +1 = 정정 기전 결박).
+        assert census(out, "inert_skipped") == 3, \
+            "§8.1 C2: non-hidden example probe 는 inert census 로 흡수(2→3) — got inert=%d\n%s" \
+            % (census(out, "inert_skipped"), out)
+        assert "D5_CONSUMER_PROBE_TOKEN" not in out, \
+            "§8.1 C2: inert census 는 토큰명을 UNDECLARED 로 방출하지 않음(undeclared 오분류 아님)\n%s" % out
+
+    # C3 — control: 동일 probe 를 live carrier 에 두면 UNDECLARED(exit 1) → probe 가 진성 live 신호.
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST + D5_LIVE_PROBE_TAIL, wf=WF_DECLARED, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 1, \
+            "§8.1 C3(control): 동일 probe 가 live carrier 에선 UNDECLARED exit 1 — 판별 성립 조건, got %d\n%s" \
+            % (rc, out)
+        assert census(out, "undeclared") == 1, "§8.1 C3: live carrier probe → undeclared 1\n%s" % out
+        assert "env-key=D5_CONSUMER_PROBE_TOKEN" in out and "form=_env" in out, \
+            "§8.1 C3: probe 가 live carrier 에서 form=_env UNDECLARED 로 표면화해야 A/B 판별 성립\n%s" % out
+
+
 # ─────────────────────── §8.8.1 fuzz (CFP-2719 — seed=2719 고정 결정론) ──────────
 # target = parse_manifest(dependency-free 라인 파서 — yaml.safe_load 아님) + _scan_* corpus 추출기.
 # oracle = uncaught exception 0(Traceback 부재) ∧ hang 0(timeout=30 bound) ∧ exit ∈ {0,1,2,3}
