@@ -30,3 +30,36 @@ labels:
 infra_strategy: docker_first
 infra_strategy_extras:
   k8s_preset_enabled: false  # single-host docker compose 충분 (default)
+
+# ── 인프라 자원 선언 manifest (CFP-2700 / ADR-157 §결정1) — consumer 선언 예시 ──
+# compose.yml 의 DATABASE_URL / REDIS_URL 를 기계판독 자원으로 승격(2-plane 시연).
+#   plane A resources[] = 자원 카탈로그(id 단위 — env 키 아님).
+#   plane B execution_units{} = 실행단위 web → required 자원(compose `web` 의 depends_on service_healthy 반영 = required mode).
+# 스키마 SSOT = docs/project-config-schema.md `infra_resources` 섹션(wrapper 소유 SCHEMA / 본 값 맵 = consumer author, write boundary §4b).
+# infra_strategy(위 docker_first) 와 직교 — 본 block 은 자원 내용, infra_strategy 는 적용 여부 스위치.
+# `aliases: accepted: []` = "별칭 없음"의 명시 선언(4 필수 필드 표현 — ADR-157 §결정1 / AC-2, 누락 ≠ 빈 집합).
+infra_resources:
+  # plane A — 자원 카탈로그
+  resources:
+    - id: app-database
+      canonical_env: DATABASE_URL          # compose `web` 서비스가 소비하는 Postgres 연결(compose.yml environment)
+      aliases:
+        accepted: []
+    - id: app-redis
+      canonical_env: REDIS_URL             # compose `web` 서비스가 소비하는 Redis 연결(compose.yml environment)
+      aliases:
+        accepted: []
+  # plane B — 실행단위 → required 자원(resource-id 만 참조, env 키 재기재 금지 = drift 원천 차단)
+  execution_units:
+    web:                                   # compose `web` 서비스(db·redis 에 depends_on service_healthy)
+      required: [app-database, app-redis]
+      resource_modes:
+        app-database: required             # 미설정 시 부팅 거부(fail-closed) — DB 없이 web 무동작
+        app-redis: required
+  # D2 startup fail-closed 채택 선언(AC-15 / ADR-157 §결정2 I-5 채택-bounded)
+  #   실 consumer 는 web 프로세스 startup 에 reference impl(scripts/lib/infra_startup_validator.py, 4계약)
+  #   을 채택해 adopted: true 로 두면 미설정 required 자원이 첫 business 동작 이전 부팅 거부된다.
+  #   본 예시 repo 는 데모 템플릿(실 배포 런타임 없음)이라 미채택 + 사유 경로(silent 미채택 금지).
+  startup_validation:
+    adopted: false
+    reason: "webapp-minimal = 데모 템플릿(실 배포 런타임 부재) — 실 consumer 는 web startup 에 reference impl 채택 후 adopted: true"
