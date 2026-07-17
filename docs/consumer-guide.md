@@ -2556,6 +2556,43 @@ integration_test:
 
 **wrapper-self declarative 면제**: wrapper 자체 governance repo 는 운영 부하 0 → 실 soak 구동 면제(fixture-daemon self-test 로 게이트 메커니즘만 dogfood). consumer 데몬 프로젝트는 실 soak 책임. 정책 SSOT: [ADR-148](../archive/adr/ADR-148-persistent-liveness-soak-gate.md).
 
+#### 3z.7 인프라 자원 선언 manifest — `infra_resources` (CFP-2700 / [ADR-157](../archive/adr/ADR-157-infra-resource-manifest-drift-gate.md))
+
+인프라 자원(secret·env·외부 저장소 credential)의 추가/이동/제거가 참조면(하드코드·설정·**타 저장소 코드**)으로 전파되지 못해 생기는 **지연 크래시**를 각 참조면에서 loud 하게 검출하기 위한 **기계판독 자원 선언 manifest**. 선언 위치(주입점) = consumer `.claude/_overlay/project.yaml` 의 신규 `infra_resources:` block.
+
+**주입 방법**: consumer 가 자기 인프라 자원을 2-plane 으로 선언한다. **필드 스키마 SSOT = [`project-config-schema.md` `infra_resources` 섹션](project-config-schema.md)** (본 가이드는 참조만 — 필드 목록 재인코딩 아님). 동작 예시 = [`examples/webapp-minimal/.claude/_overlay/project.yaml`](../examples/webapp-minimal/.claude/_overlay/project.yaml) (compose 의 `DATABASE_URL`/`REDIS_URL` 를 자원으로 승격한 시연):
+
+```yaml
+# .claude/_overlay/project.yaml — webapp 예시(발췌 — 실 파일과 정합, examples/webapp-minimal 정본)
+infra_resources:
+  resources:                              # plane A — 자원 카탈로그(id 단위, env 키 아님)
+    - id: app-database
+      canonical_env: DATABASE_URL         # 자원당 정확히 1개(INV-4)
+      aliases:
+        accepted: []                      # 별칭 없으면 빈 집합 명시(4 필수 필드 표현 — 누락 ≠ 빈 집합)
+    - id: app-redis
+      canonical_env: REDIS_URL            # compose `web` 이 소비하는 Redis 연결
+      aliases:
+        accepted: []
+  execution_units:                        # plane B — 실행단위 → required 자원(resource-id 만 참조)
+    web:
+      required: [app-database, app-redis]
+      resource_modes:
+        app-database: required            # required=미설정 시 부팅 거부 / optional_degradable=degrade+WARN
+        app-redis: required
+  startup_validation:                     # D2 채택 선언(AC-15)
+    adopted: false                        # 데모 템플릿(실 배포 런타임 부재) — adopted:false 시 reason 필수
+    reason: "webapp-minimal = 데모 템플릿(실 배포 런타임 부재) — 실 consumer 는 web startup 에 reference impl 채택 후 adopted: true"
+```
+
+- **`startup_validation.adopted`** (D2 채택): `true` = 실행단위가 부팅 시 reference impl(`scripts/lib/infra_startup_validator.py`, 4계약)로 required 자원 대조 — 미설정 required = 첫 business 동작 이전 부팅 거부(fail-closed, exit 78). `adopted: false` 는 **`reason` 필수**(미채택 + 사유부재 = FAIL — silent 미채택 금지). 미채택 consumer 미강제(I-5 채택-bound)는 honest-ceiling 로 정직 공개된다.
+- **write boundary (§4b 정합)**: SCHEMA(문서) = wrapper 소유 / VALUES(실 자원 맵) = **consumer-authored only**. 모든 codeforge agent 는 `infra_resources` 값 write 금지 — consumer 가 자기 자원의 author.
+- **`infra_strategy`(§3z.1) 와 직교**: `infra_strategy` = 적용 여부 스위치(docker_first/…) / `infra_resources` = 자원 내용. 겹치지 않는다.
+
+**D3 CI drift scan tier + 등록 판정 (AC-20)**: `infra-resource-manifest-drift.yml` workflow 가 manifest ↔ 실 참조면 대조를 수행하나 **warning-tier(surfacing)** 다 — branch-protection **required context 로 등록되지 않았다**(PR 미차단, red 로 표면화만). required 승격은 비가역이라 **canary 선결**(non-applicable canary 실증 — "self-test PASS ≠ 등록 안전", CFP-2602/2609 선례) 미충족이므로 **범위 밖**이며, 승격은 ADR-060 §결정 6 evidence-gate promotion 별도 carrier 소관(ADR-157 §결정 32.D surfacing 경로 채택). 이 canary 선결은 협상 대상이 아니다.
+
+**wrapper-self declarative 면제**: wrapper 자체(plugin)는 부팅하는 consumer 제품 런타임이 없어 `startup_validation.adopted: false` + 사유 경로(declarative-only). reference impl 은 fixture 로만 falsify. 정책 SSOT: [ADR-157](../archive/adr/ADR-157-infra-resource-manifest-drift-gate.md).
+
 ## 4. 첫 실행 검증
 
 ### 4a. Claude Code 세션 시작

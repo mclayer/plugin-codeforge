@@ -438,6 +438,132 @@ class TestDocumentedOptionalBlocks:
 
 
 # -----------------------------------------------------------------------------
+# CFP-2700 / ADR-157 §결정1 — infra_resources 2-plane manifest 런타임 배선 (G4 FIX)
+# 문서 스키마(project-config-schema.md §infra_resources)를 validate_config 에 배선한다.
+# 선언 plane(resources / execution_units / startup_validation)은 판별 — 오타 키 reject;
+# execution_units 아래 동적 unit 키만 OPEN_MAPPING 으로 허용(blanket open-map 아님).
+# Schema SSOT: docs/project-config-schema.md §infra_resources.
+# -----------------------------------------------------------------------------
+
+
+class TestInfraResourcesManifest:
+    """infra_resources 2-plane manifest (CFP-2700 D5 consumer 전파) shape 검증."""
+
+    def _valid_infra_resources(self) -> dict:
+        # webapp-minimal 형태 — plane A resources[] + plane B execution_units{} + startup_validation.
+        return {
+            "resources": [
+                {"id": "app-database", "canonical_env": "DATABASE_URL",
+                 "aliases": {"accepted": []}},
+                {"id": "app-redis", "canonical_env": "REDIS_URL",
+                 "aliases": {"accepted": []}},
+            ],
+            "execution_units": {
+                "web": {
+                    "required": ["app-database", "app-redis"],
+                    "resource_modes": {"app-database": "required", "app-redis": "required"},
+                },
+            },
+            "startup_validation": {
+                "adopted": False,
+                "reason": "데모 템플릿 — 실 consumer 는 web startup 에 reference impl 채택 후 adopted: true",
+            },
+        }
+
+    def test_infra_resources_two_plane_valid(self):
+        """유효 2-plane block 이 validate clean(exit 0 경로) — positive."""
+        data = _minimal_valid_data()
+        data["infra_resources"] = self._valid_infra_resources()
+        assert vc.validate(data) == []
+
+    def test_infra_resources_dynamic_execution_unit_key_allowed(self):
+        """execution_units 아래 동적 unit 키(임의 이름)는 OPEN_MAPPING 으로 허용."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["execution_units"]["customworker"] = {
+            "required": ["app-database"],
+            "resource_modes": {"app-database": "required"},
+        }
+        data["infra_resources"] = infra
+        assert vc.validate(data) == []
+
+    def test_infra_resources_declared_plane_typo_rejected(self):
+        """선언 plane 오타 키는 reject — blanket open-map 아니라 declared plane 은 판별함 (negative).
+
+        (a) resources 형제 위치의 오타 plane 키 → unknown key
+        (b) startup_validation 고정키 오타 → unknown key
+        """
+        # (a) 선언 plane 레벨 오타
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resourcezz"] = []
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resourcezz" in e for e in errs), errs
+
+        # (b) startup_validation 고정키 오타
+        data2 = _minimal_valid_data()
+        infra2 = self._valid_infra_resources()
+        infra2["startup_validation"] = {"adoptedd": True}
+        data2["infra_resources"] = infra2
+        errs2 = vc.validate(data2)
+        assert any("infra_resources.startup_validation.adoptedd" in e for e in errs2), errs2
+
+    # -------------------------------------------------------------------------
+    # 값-타입 축 회귀잠금 (G4 FIX iter2 — Codex F2)
+    # bare builtin `list` type_check 는 validate() 에서 predicate 가 아닌 생성자로 호출돼:
+    #   scalar/None → list(v) uncaught TypeError 크래시 (exit 1 traceback, 정상 exit 4 아님)
+    #   str        → list("x") truthy → silent pass (shape gate 무력화, fail-open)
+    #   []         → list([]) falsy → false-positive 거부 (유효 빈 list 를 오거부)
+    # → isinstance predicate 로 정정. 아래는 세 클래스 전부 크래시 없이 정상 error/valid path.
+    # -------------------------------------------------------------------------
+
+    def test_infra_resources_resources_scalar_int_rejected_no_crash(self):
+        """resources: 5 (int) → 크래시 없이 error (이전 bare list: list(5) TypeError 크래시)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = 5
+        data["infra_resources"] = infra
+        errs = vc.validate(data)  # 크래시 시 여기서 raise → 테스트 error 로 표면화
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_none_rejected_no_crash(self):
+        """resources: None (빈 `resources:`) → 크래시 없이 error (이전 list(None) TypeError 크래시)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = None
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_string_rejected_no_silent_pass(self):
+        """resources: "notalist" (str) → error (이전 list("notalist") truthy → silent pass = 회귀 방지 핵심)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = "notalist"
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_empty_list_accepted(self):
+        """resources: [] (빈 list) → error 없음 (유효 — 이전 list([]) falsy → false-reject 였음)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = []
+        data["infra_resources"] = infra
+        assert vc.validate(data) == []
+
+    def test_infra_resources_execution_unit_non_mapping_value_rejected(self):
+        """execution_units 값이 mapping 아니면(예: str) reject — 값-형태 강제(동일 silent-pass 클래스 폐쇄)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["execution_units"] = {"web": "notadict"}
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.execution_units" in e for e in errs), errs
+
+
+# -----------------------------------------------------------------------------
 # CFP-2419 Phase 2 — repo_topology 책임 배치 토폴로지 검증
 # ADR-131 §결정2 (4 메타불변식 + layer 분리) / Story §5.2 AC-3, §5.3 EC-1/EC-2
 # Schema SSOT: docs/project-config-schema.md §repo_topology
