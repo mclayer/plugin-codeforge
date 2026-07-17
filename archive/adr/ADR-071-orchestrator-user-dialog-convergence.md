@@ -150,6 +150,26 @@ amendments:
       (c) **design-entry 확정 gate = 발화 touchpoint + §결정 22 정당 멈춤 carve-out** — 요구사항리뷰 PASS 후·설계 진입 직전 사용자 최종 확정 요청 = 기존 §결정 15 touchpoint (a) 결과-명세 확인 성격(사용자 선언 결과 자체 확인) + ask-trigger ①(요구 애매)/③(비가역·고비용). 확정 대기 stop = ask-trigger 정당 stop(payload>0, ADR-144 A1)이라 §결정 22 정당 멈춤 3종 carve-out 에 명시적 귀속 — transition-autonomy hook(§22.1 D2)이 설계 진입 지점을 over-halt 오탐하지 않도록 명문화. §결정 22 정당 멈춤 3종(ask-trigger ①②③) carve-out verbatim 무변경.
       무손상 invariant (전부 보존): frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness / 3 touchpoint frequency-richness 본체(§결정 15 §15.1 how·what 경계) / ask-trigger 3종 본체(§결정 20) / skip-offer 금지(§결정 21) / §결정 22 D1·D2 2-channel 구조·carve-out / 5번째 cognitive layer 신설 금지 invariant. 4번째 touchpoint 추가 = §15.5 확장 규약 준수(요구사항 lane-scoped, 사용자 explicit 승인) — closed-enum 우회 아님. fifth strengthen-direction amendment(Amendment 11/12/13/14 에 이음). ADR-159 SSOT / ADR-077 Amendment 1(terminal event·counter) / ADR-125 Amendment 3(확정 위치·내부적합) 짝.
     sunset_justification: null   # 강화 방향 (§15.5 확장 규약 준수 4번째 touchpoint 추가 = 발화 frequency 증가 강화 ratchet, 요구사항 lane-scoped) — ADR-058 §결정 5 약화 evidence-gate 비대상. 무손상 — frame mode(§결정 1) / Layer 1-4(§결정 3) / sub-mechanism(§결정 4) / §결정 2(c) richness / 3 touchpoint 본체(§결정 15) / ask-trigger 3종 본체(§결정 20) / skip-offer(§결정 21) / §결정 22 carve-out / 5번째 cognitive layer 신설 금지 invariant 전부 보존. DECLARE≠ASK — mandatory ASK 신설 아님.
+  - amendment_id: 16
+    date: "2026-07-18"
+    carrier_story: CFP-2742
+    issue: https://github.com/mclayer/plugin-codeforge/issues/2742
+    summary: |
+      §결정 24 신설 — Session-swap controlled-path: 자족 handoff 프롬프트 동반 시 세션 전환 권유 허용 (§결정 18 조건부 완화, first weaken for §결정 18). 7부(a~g + sunset):
+      (a) controlled-path 정의 = 전환 권유 前 자족 handoff 프롬프트 선제 생성·동반 시 허용, bare reflex 전환 = §결정 18 anti-pattern 7종 그대로 차단(handoff 미동반 케이스 무손상 — carve-out 은 handoff-present 케이스 한정).
+      (b) handoff 6 필수요소(① 진행 Story/PR·Epic 번호 ② 완료 vs 남은 lane·단계 ③ worktree·브랜치 경로 ④ 기결정=재논의 금지 목록 ⑤ 이번 세션 gotcha ⑥ 다음 세션 첫 액션 1문) + 자족성 2축(현세션 참조 0 / 복붙 1회) = ADR-085 §결정 9 4-rule specialization(재발명 금지 cross-ref).
+      (c) Q1 = 모든 전환 권유(정당 2-trigger ADR-053/057 포함)에 handoff 의무 — 재도출 비용은 전환 이유(WHY)와 무관하게 발생. trigger SET 무변경(anti-pattern 7종·정당 2종 member 추가/삭제 0), handoff = 직교 cross-cutting 의무(AC-4 정합).
+      (d) forced-continuation(§결정 24 scope = 동일 sequential stream 을 fresh 세션이 이어감) vs planned-lane-split(ADR-085 §결정 9 rule 1 이 금지 = 한 Story lane 을 병렬/단계 인위 분할) disjoint 경계 — controlled-path 는 planned-division 미허가(rule 1 여전히 금지).
+      (e) consumer 전파 vehicle = Phase 2 설계 명세: 신규 sibling hook session-swap-handoff-reminder(.py, self-contained stdlib, ADR-115 5층, 全경로 exit0 fail-open, UserPromptSubmit additionalContext STATIC no-PII) + hooks.json 6th UserPromptSubmit entry + ADR-144 §결정 6 L6 자동전파(overlay 변경 0, CFP-2456/CFP-2573 선례) + TestContractArch objection#1(first-class self-test + §7.3 co-fire marker).
+      (f) advisory ceiling 정직 — GAP-1(pre-utterance hard-block)/GAP-2(over-halt 실시간 검출) hard-block 불가(ADR-144 §결정 7, #15872/#10412/#55754), priming/PRIMING 채널 only(배선됨 ≠ 규범 준수 증명), "100% 기계강제" over-claim = 산출물 결함.
+      (g) axis disjoint — §결정 22(line 1285 무손상, transition-autonomy cross-ref only 재codify 0) / §결정 18 anti-pattern 7종 enum 텍스트 무변경(본문 immutability, §18.1 상단 1-line cross-ref pointer만 additive) / §결정 23 disjoint.
+
+      **WEAKEN-direction (부분 약화, §결정 18 첫 weaken)** — anti-pattern 7종의 "무조건 발화 차단" → "handoff 동반 시 조건부 허용" = prohibition scope 축소. Amendment 9/10 에 이은 third weaken-direction amendment. ADR-058 §결정 5 약화 evidence-gate 적용 → sunset_justification = null 아닌 4-key evidence object 충족(1급 허용, 차단 아님). Phase 1(본 PR) = ADR-071 §결정 24 + §18.1 cross-ref pointer + CLAUDE.md L65 정합 + consumer-guide §7.6(정책 prose only). Phase 2(별 PR, 본 PR 미포함) = hook 파일 + hooks.json 6th entry + §2h.6 + self-test(§8). 무손상 — frame mode(§결정 1) / Layer 1-4(§결정 3) / sub-mechanism(§결정 4) / §결정 2(c) richness / 3 touchpoint(§결정 15) / ask-trigger 3종(§결정 20) / skip-offer(§결정 21) / §결정 22 D1·D2 구조·carve-out / §결정 23 / 5번째 cognitive layer 신설 금지 invariant 전부 보존(정당 trigger 2종 + anti-pattern 7종 enum member 추가·삭제 0 — controlled-path gate 만 신설).
+    sunset_justification:
+      dead_mandate: "§결정 18 anti-pattern 7종의 '무조건 차단' 이 우려한 실체 = session swap 시 in-session cached state(진행 맥락/결정 이력/worktree·branch 위치/gotcha) 소실 → 새 세션 처음부터 재도출(§18.1/§18.3). 자족 handoff 프롬프트가 이 손실 대상을 전량 이월하면(6 필수요소) '재도출 비용' 근거가 handoff-present 케이스에서 소멸 → '무조건 차단' 의 정당 근거가 그 케이스에 한해 dead. 사용자 directive 2건(2026-07-17~18: '세션 전환 추천 시 다음 세션 프롬프트 일단 생성' + 'memory 아닌 consumer 전파') = behavioral evidence."
+      verification_ground_redundancy: "§결정 18 이 지키려던 것(무준비 전환 방지)은 controlled-path 가 handoff 6요소 의무로 오히려 강화 — bare reflex 전환은 여전히 anti-pattern 차단(handoff 미동반 케이스 무손상), 정당 2-trigger(ADR-053/057)도 handoff 의무 부착. /compact·MEMORY.md 슬림화 대체 path(§18.3) 무손상 보존 — controlled-path 는 전환을 장려하지 않고 '전환이 발생하면 handoff 의무화' 하는 직교 forcing function."
+      cost_vs_effect_zero: "'무조건 차단' 을 handoff-present 케이스까지 유지하는 효과(전환 억제) < 비용(handoff 로 재도출 비용 0 인데도 정당한 인계형 전환까지 금지 → context/memory 포화 mid-work 에서 정주행 불가). handoff 동반 controlled-path 는 재도출 비용을 제거하므로 '무조건 차단' 의 보호 효과가 handoff-present 케이스에서 0 으로 수렴."
+      meta_policy_alignment: "ADR-058 §결정 5 (약화 evidence-gate, sunset_justification = 약화 evidence requirement) + ADR-064 §결정 7 (evidence-gated symmetric ratchet, 강화/약화 양방향 1급) — §결정 18 첫 weaken-direction amendment, evidence-grounded 1급 허용. 사용자 §1 요구 #3 verbatim('anti-pattern 을 gated 경로로 격상') = 완화 프레이밍 정합."
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -176,6 +196,7 @@ related_stories:
   - CFP-2567 # Amendment 13 carrier (§결정 22 신설 — Epic 내 Story 전환 자율 진행, 전환 지점 over-halt/over-ask 방지. D1 doc 국소 명시 + D2 2-channel(UserPromptSubmit 예방 reminder hook skip-offer 동형, user-turn 창 + PreToolUse(Agent) additionalContext non-block inject pretooluse-agent-spawn-gate 확장, autonomous 전환 창), §결정 15/20 전환 지점 적용 강화 = enum member 추가 0, §결정 18 disjoint cross-ref, third strengthen-direction, Stop/SubagentStop force-continue/개입 REJECT ADR-115 §결정 2)
   - CFP-2573 # Amendment 14 carrier (§결정 22 scope 일반화 transition-only → 모든 자명-진행 지점 + vague-pause 금지 + consumer 전파, ADR-144 §결정 3(L2)/§결정 6(L6) realization. hook TEXT+docstring broaden only — 파일명·hooks.json entry·§22.7 back-refs stable, closed-enum member 추가 0, carve-out verbatim 보존, NEVER block, fourth strengthen-direction)
   - CFP-2725 # Amendment 15 carrier (§결정 23 신설 — 요구사항 lane intake 항상 declare 4번째 touchpoint §15.5 확장 + §결정 20 lane-scoped carve-out + design-entry 확정 gate §결정 22 정당 멈춤 carve-out. mandatory DECLARE≠ASK, fifth strengthen-direction. ADR-159 SSOT 짝)
+  - CFP-2742 # Amendment 16 carrier (§결정 24 신설 — session-swap controlled-path: 자족 handoff 프롬프트 동반 시 전환 권유 허용, §결정 18 첫 weaken-direction. handoff 6 필수요소 = ADR-085 §결정 9 4-rule specialization, Q1 모든 전환에 handoff 의무 trigger SET 무변경, forced-continuation≠planned-lane-split disjoint, consumer 전파 Phase 2 hook 설계 명세, advisory ceiling ADR-144 §결정 7 GAP, §결정 18 본문 immutability + §18.1 cross-ref pointer만, sunset_justification 4-key evidence object)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -207,6 +228,11 @@ related_adrs:
   - ADR-077  # Amendment 15 — 짝 (terminal event + counter disjoint, ADR-077 Amendment 1). 확정 발화 event taxonomy
   - ADR-125  # Amendment 15 — 짝 (사용자 확정 = 리뷰 PASS 후·설계 진입 전 위치, ADR-125 Amendment 3). design-entry gate 시퀀스 전제
   - ADR-144  # Amendment 15 — 확정 대기 stop = payload>0 정당 멈춤(A1), §결정 22 정당 멈춤 carve-out anchor
+  - ADR-085  # Amendment 16 — §결정 9 multi-session prompt design 4-rule prior art (handoff 6 필수요소 = specialization, 재발명 금지 cross-ref) + §결정 9 rule 1 planned-lane-split 금지 = forced-continuation disjoint 경계 SSOT
+  - ADR-058  # Amendment 16 — §결정 5 약화 evidence-gate 적용 (§결정 18 첫 weaken-direction, sunset_justification 4-key evidence object)
+  - ADR-144  # Amendment 16 — §결정 6 L6 consumer 전파 vehicle(hook 자동전파, overlay 변경 0) + §결정 7 advisory ceiling GAP-1/GAP-2 (runtime hard-block 불가 정직)
+  - ADR-053  # Amendment 16 — controlled-path 무변경 보존 대상: 정당 trigger #1(구조 변경 재구동) — handoff 의무만 부착
+  - ADR-057  # Amendment 16 — controlled-path 무변경 보존 대상: 정당 trigger #2(모델 fallback) — handoff 의무만 부착
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -224,6 +250,9 @@ related_files:
   - hooks/story-transition-autonomy-reminder  # Amendment 13 — D2 신규 sibling hook (bash dispatcher, skip-offer-reminder 동형)
   - hooks/story-transition-autonomy-reminder.py  # Amendment 13 — D2 hook body (self-contained stdlib, UserPromptSubmit 예방 reminder)
   - hooks/pretooluse-agent-spawn-gate  # Amendment 13 — D2 PreToolUse(Agent) additionalContext 전환 reminder inject (autonomous 창)
+  - docs/consumer-guide.md  # Amendment 16 — §7.6 consumer 전파 cross-ref anchor (session-swap controlled-path 상속, 확장-only)
+  - hooks/session-swap-handoff-reminder  # Amendment 16 — Phase 2 forward-ref: 신규 sibling hook bash dispatcher (story-transition-autonomy-reminder 동형, 본 Phase 1 미생성)
+  - hooks/session-swap-handoff-reminder.py  # Amendment 16 — Phase 2 forward-ref: hook body self-contained stdlib (UserPromptSubmit 예방 reminder, STATIC no-PII, 본 Phase 1 미생성)
 is_transitional: false
 mechanical_enforcement_actions:
   - action: dialog-fidelity-effect
@@ -1020,6 +1049,8 @@ Wave 2/3 = deferred-followup. 본 Amendment 6 frontmatter `mechanical_enforcemen
 
 ### 18.1 결정 요약
 
+> **[Amendment 16 / §결정 24, CFP-2742]** 자족 handoff 프롬프트 동반 시 전환 권유를 허용하는 **controlled-path carve-out 은 §결정 24 신설** — 본 anti-pattern 7종 enum·정당 2-trigger 표는 **무변경**(handoff 미동반 = 여전히 차단). 조건부 허용 gate 는 §결정 24 소관 (본문 immutability, 본 pointer 1줄만 additive).
+
 Orchestrator 가 사용자에게 **session swap 권유 발화** ("새 세션 만들어 주세요" / "세션 교체해 주세요" / "처음부터 다시 시작해 주세요" / "다음 작업은 새 세션에서") 는 **closed 2-trigger** 만 정당:
 
 | trigger | 정의 | 정당 사유 |
@@ -1424,6 +1455,86 @@ touchpoint (d) 는 **mandatory DECLARE 이지 mandatory ASK 가 아니다.** 이
 
 본 Amendment 15 = **additive 강화** (§15.5 확장 규약 준수 4번째 touchpoint 추가 = 발화 frequency 증가 강화 ratchet, 요구사항 lane-scoped + §결정 20 carve-out 명문 + design-entry gate §결정 22 carve-out 명시). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 evidence-gate 미적용. Amendment 11/12/13/14 에 이은 fifth strengthen-direction amendment(`sunset_justification: null` family). mandatory DECLARE — mandatory ASK 신설 아님(사용자 burden 은 declare 최소형으로 완화). ADR-159 SSOT / ADR-077 Amendment 1(terminal event·counter) / ADR-125 Amendment 3(확정 위치·내부적합) 짝.
 
+## §결정 24. Session-swap controlled-path — 자족 handoff 프롬프트 동반 시 전환 권유 허용 (Amendment 16, CFP-2742)
+
+> **[Amendment 16 / CFP-2742, 2026-07-18 KST]** context/메모리 포화 등으로 세션 전환을 권유하려는 순간, Orchestrator 가 **자족(self-contained) handoff 프롬프트를 선제 생성·동반**하면 전환 권유를 **조건부 허용**한다. handoff 프롬프트가 §결정 18 이 우려한 **맥락 손실·재도출 비용을 제거**하므로, "무조건 anti-pattern" 을 handoff-present 케이스에 한해 controlled-path gate 로 격상한다. 본 §결정 = **§결정 18 의 첫 weaken-direction amendment**(prohibition scope 축소, ADR-058 §결정 5 evidence-gate 충족). §결정 18 anti-pattern 7종 enum·정당 2-trigger 표는 **무변경**(본문 immutability — §18.1 상단 1-line cross-ref pointer만 additive). carrier CFP-2742, issue https://github.com/mclayer/plugin-codeforge/issues/2742.
+
+### 24.1 결정 요약 (controlled-path 정의)
+
+- **controlled-path 정의**: 전환 권유 발화 **前** 자족 handoff 프롬프트(§24.2 6 필수요소) 생성·동반 = 전환 권유 **허용**. 생성 주체 = 전환을 권유하려는 Orchestrator 본인(선제·先制 생성 — 사용자 요청 대기 아님, §1 요구 #1 "일단 생성" verbatim).
+- **bare reflex 전환 = 여전히 차단**: handoff 프롬프트 **미동반** 전환 권유("context 가득 → 새 세션에서" 류 reflex)는 §결정 18 anti-pattern 7종 그대로 발화 차단. carve-out 은 **handoff-present 케이스 한정** — anti-pattern 자체 무력화 아님.
+- **격상 근거**: handoff 프롬프트가 §18.1/§18.3 우려의 실체(cached state 소실 → 새 세션 재도출 비용)를 제거하면, 그 케이스에서 "무조건 차단" 의 정당 근거가 소멸(§24.8 sunset_justification `dead_mandate`). 근거가 남아 있는 handoff 미동반 케이스는 차단 유지 → **부분 약화(handoff-present 만 허용)**.
+
+### 24.2 handoff 6 필수요소 + 자족성 2축 (ADR-085 §결정 9 specialization)
+
+전환 권유 동반 handoff 프롬프트가 담아야 하는 **6 필수요소** (§2.2 손실 대상의 operationalization — 이 전량 이월이 "재도출 비용 0" 성립 조건):
+
+| # | 요소 | 무엇 |
+|---|---|---|
+| ① | 진행 Story/PR·Epic 번호 | 어떤 작업 단위인지 — Story key + 활성 PR + (해당 시) Epic 번호 |
+| ② | 완료 vs 남은 lane·단계 | 어느 lane·Phase 까지 끝났고 어디서 이어받는지 |
+| ③ | worktree·브랜치 경로 | 작업 중 worktree 절대경로 + feature 브랜치명 |
+| ④ | 기결정 = 재논의 금지 목록 | 이미 확정된 결정(재열지 말 것) — 새 세션 re-litigation 차단 |
+| ⑤ | 이번 세션 gotcha | 이 세션에서 부딪힌 함정·주의점(반복 회피) |
+| ⑥ | 다음 세션 첫 액션 1문 | 붙여넣은 직후 할 첫 행동 한 문장 |
+
+**자족성 2축**: (i) **현세션 참조 0** — 다음 세션 Orchestrator 가 현재 세션을 전혀 참조하지 않고(0-context) 재개 가능 (ii) **복붙 1회** — 사용자가 그대로 붙여넣기만 하면 완결.
+
+**ADR-085 §결정 9 4-rule specialization (재발명 금지 cross-ref)**: 위 6요소 + 2축 = [ADR-085](ADR-085-multi-session-collaboration-protocol.md) §결정 9 multi-session prompt design 4-rule(① self-contained end-to-end ② session 사이 axis-disjoint ③ sequential dependency → 한 session ④ copy-paste 준비 = context+scope+preflight+done+reference)의 **구체화(specialization)** 이며 새 원칙 창설 아님. 본 §결정은 §결정 9 rule 4(copy-paste 자족)를 session-swap 축에 적용한다.
+
+### 24.3 Q1 — 모든 전환 권유에 handoff 의무 (trigger SET 무변경)
+
+- **Q1 = YES**: handoff 의무는 **모든** 전환 권유에 적용된다 — 정당 2-trigger([ADR-053](ADR-053-structural-change-restart-prerequisite.md) 구조 변경 재구동 / [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) 모델 fallback) 발화까지 포함. **근거**: 맥락 손실·재도출 비용은 전환 이유(WHY)와 무관하게 발생한다 — 정당 전환이라도 handoff 없이 넘어가면 새 세션이 재도출한다.
+- **trigger SET 무변경 (AC-4 정합)**: 정당 2-trigger·anti-pattern 7종 **enum member 추가·삭제 0**. handoff 는 기존 trigger 집합에 얹히는 **직교(orthogonal) cross-cutting 의무** — 정당 trigger 는 "handoff 동반 + 전환 허용", anti-pattern 은 "handoff 동반 시 controlled-path 허용 / 미동반 시 차단" 으로 각 trigger 의 처리에 handoff 요건만 부착. 새 trigger 종류를 만들지 않는다.
+- **/compact·MEMORY.md 슬림화 대체 path 무손상**: §18.3 정당 path(`/compact` + 인덱스 슬림화 + harness auto-compress) 는 controlled-path 신설과 무관하게 보존 — controlled-path 는 전환을 **장려하지 않는다**, "전환이 발생하면 handoff 의무화" 할 뿐(skip-offer §결정 21 정신 정합 — 전환 장려 아님).
+
+### 24.4 forced-continuation vs planned-lane-split disjoint 경계 (P2-1)
+
+controlled-path 의 scope 를 인접 개념과 명확히 분리한다:
+
+| 축 | 정의 | §결정 24 관계 |
+|---|---|---|
+| **forced-continuation** (§결정 24 scope) | context/memory 포화로 mid-work 에서 **동일 sequential stream** 을 fresh 세션이 이어감 (세션 A 소진 → B 가 A 멈춘 지점 continue, 같은 Story·같은 in-progress lane) | **controlled-path 적용 대상** |
+| **planned-lane-split** (§결정 24 scope 밖) | 한 Story 의 lane 을 병렬/단계로 **인위 분할**해 여러 세션에 pre-assign ("Session 1 = step1-3, Session 2 = step4" 류) | **ADR-085 §결정 9 rule 1 이 금지** — controlled-path 미허가 |
+
+- **disjoint**: 하나의 stream 을 이어받는 것(continuation) ≠ 분할된 lane 을 사전 배정하는 것(pre-division). ADR-085 §결정 9 rule 1("각 session = self-contained end-to-end, artificial lane split reject")은 **후자**를 금지하지 전자를 금지하지 않는다.
+- handoff 프롬프트는 rule 4(copy-paste 자족)를 충족하고 rule 1 의 정신(fresh 세션이 **남은 작업 전체**에 대해 self-contained)도 만족한다. **controlled-path 는 planned-division 을 허가하지 않는다** — rule 1 은 여전히 유효하며, 본 §결정은 lane 을 나눠 병렬 세션에 뿌리는 것을 허용하지 않는다.
+
+### 24.5 consumer 전파 vehicle — Phase 2 설계 명세 (본 Phase 1 미구현)
+
+요구 #2("memory 아닌 consumer 전파")의 자동 도달 vehicle. **본 Phase 1 = 설계 명세만**(hook 파일·hooks.json 미생성) — 실배선 = Phase 2 별 PR.
+
+- **신규 sibling hook** `hooks/session-swap-handoff-reminder`(bash dispatcher) + `.py`(body): `story-transition-autonomy-reminder`(§22.1 D2 채널 1) 동형 hook-frame — [ADR-115](ADR-115-runtime-hook-enforcement.md) 5층 graceful degradation, self-contained stdlib(zero cross-import), **全경로 exit 0 fail-open**, `UserPromptSubmit` `additionalContext` emit, TEXT = **STATIC**(runtime value interpolation 금지, no PII).
+- **hooks.json 6th UserPromptSubmit entry**: 기존 5 entry(korean-english-recovery / bootstrap-first-gate / skip-offer-reminder / deferred-recovery-reminder / story-transition-autonomy-reminder) 무손상 co-fire + 6번째 append.
+- **신규 hook 근거 (별도 sibling 정당)**: §결정 18(session lifecycle reflex) ⊥ §결정 22(transition autonomy) **disjoint** (§22.2 line "§결정 18 disjoint, cross-ref only, 재codify 금지" 무손상) + one-concern-per-hook(§22.7) — session-swap-handoff priming 은 transition-autonomy 와 별도 concern 이므로 기존 hook TEXT 확장 아닌 신규 sibling 이 정합.
+- **consumer 자동전파**: reminder TEXT 를 `hooks/hooks.json` 배선으로 두면 plugin 설치만으로 consumer Orchestrator 세션 자동전파([ADR-144](ADR-144-orchestrator-autonomy-stop-taxonomy.md) §결정 6 L6, overlay 변경 0, CFP-2456/CFP-2573 선례 동형). CLAUDE.md 단독은 consumer 미도달(ADR-039 §결정 7 — wrapper 루트 CLAUDE.md consumer 세션 자동 로드 안 됨) → hook 배선 필수.
+- **TestContractArch objection#1 (Phase 2 요건)**: sibling reminder hook(skip-offer / story-transition-autonomy)은 현재 dedicated self-test 0(§7.3 co-fire guard 로만 간접 cover). 신규 hook 은 이 under-coverage 를 상속하지 않는다 → Phase 2 는 **first-class dedicated self-test** `tests/scripts/test_session_swap_handoff_reminder.sh` 신설 + 신규 marker 를 기존 `tests/scripts/test_spawn_description_prefix.sh` §7.3 co-fire guard 에 추가.
+
+### 24.6 advisory ceiling (정직 — hollow-gate 금지)
+
+- **runtime hard-block 불가**: controlled-path 의 "handoff 프롬프트 동반" 요건은 runtime 발화 시점에 기계 강제되지 않는다 — GAP-1(pre-utterance hard-block: PreToolUse(AskUserQuestion) 미지원 #15872) / GAP-2(over-halt 실시간 검출) 는 platform 한계로 닫히지 않음([ADR-144](ADR-144-orchestrator-autonomy-stop-taxonomy.md) §결정 7, #15872/#10412/#55754).
+- **priming/PRIMING 채널 only**: hook 은 `additionalContext` **priming** 이지 enforcement 아니다 — **배선됨 ≠ 규범 준수 증명**. Orchestrator 가 실제로 6요소 handoff 를 생성했는지는 runtime untestable.
+- **over-claim 금지**: "100% 기계강제 / hard-gate / 닫았다" 주장 = 산출물 결함(ADR-119 검사연극 금지). 본 §결정은 예방(prevention)·surface 이지 감지 gate 아님(§23.5 / §22.6 advisory ceiling 선례 정합).
+
+### 24.7 axis disjoint declare (§18.5 형식)
+
+본 §결정 24 = **session lifecycle controlled-path** 축. axis disjoint / cross-ref:
+
+- **§결정 22 (transition autonomy)** — **disjoint 축, cross-ref only, 재codify 0**. line 1285("§결정 18 disjoint, cross-ref only, 재codify 금지") **무손상**. §결정 22 = in-session Story 전환 자율 진행(전환 지점 over-halt/over-ask 방지), 본 §결정 24 = 세션 교체(swap) 시 handoff 인계 — 목적·대상 세션 disjoint. 두 "경계에서 상태 포착" 산출물의 요소 재사용(남은 lane·기결정)은 최적화이지 축 병합 아님.
+- **§결정 18 (session-swap reflex)** — anti-pattern 7종 enum 텍스트·정당 2-trigger 표 **무변경(본문 immutability)**. 본 §결정은 §18.1 상단에 1-line cross-ref pointer만 additive(§결정 5 → §결정 20 redirect pointer 선례 동형) — enum 재정의·member 추가·삭제 0.
+- **§결정 23 (요구사항 lane touchpoint)** — disjoint(요구사항 lane dialog frequency 축 ↔ session lifecycle 축). §결정 23 은 §결정 18 을 touch 하지 않고(§4.3 firsthand 확인), 본 §결정도 §결정 23 을 touch 하지 않음.
+
+### 24.8 sunset_justification 4-key (ADR-058 §결정 5, WEAKEN, §결정 18 첫 weaken)
+
+본 Amendment 16 = **weaken-direction (부분 약화)** — anti-pattern 7종의 "무조건 발화 차단" → "handoff 동반 시 조건부 허용" = prohibition scope 축소. §결정 18 의 **첫 weaken-direction amendment**(Amendment 7 = 강화 `null` 이었음). Amendment 9/10 에 이은 third weaken-direction amendment. ADR-058 §결정 5 약화 evidence-gate 적용 → `sunset_justification` = **null 아닌 4-key evidence object** (frontmatter Amendment 16 SSOT와 동일):
+
+- **dead_mandate**: "무조건 차단" 이 우려한 재도출 비용은 handoff 6요소 전량 이월 시 handoff-present 케이스에서 소멸 → 그 케이스에 한해 "무조건 차단" 의 정당 근거 dead. 사용자 directive 2건(§1 요구 #1/#2) = behavioral evidence.
+- **verification_ground_redundancy**: 무준비 전환 방지는 controlled-path 가 handoff 의무로 오히려 강화 — bare reflex(handoff 미동반)는 여전히 차단, 정당 2-trigger 도 handoff 부착. /compact·슬림화 대체 path 무손상.
+- **cost_vs_effect_zero**: "무조건 차단" 을 handoff-present 케이스까지 유지하는 효과(전환 억제) < 비용(재도출 비용 0 인데 정당 인계형 전환까지 금지 → mid-work 정주행 불가). 보호 효과가 handoff-present 케이스에서 0 수렴.
+- **meta_policy_alignment**: ADR-058 §결정 5(약화 evidence requirement) + ADR-064 §결정 7(evidence-gated symmetric ratchet, 강화/약화 양방향 1급) — §결정 18 첫 weaken, evidence-grounded 1급 허용(차단 아님). 사용자 §1 요구 #3 verbatim("anti-pattern 을 gated 경로로 격상") = 완화 프레이밍 정합.
+
+**무손상 invariant**: frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness / 3 touchpoint(§결정 15) / ask-trigger 3종(§결정 20) / skip-offer(§결정 21) / §결정 22 D1·D2 2-channel 구조·정당 멈춤 carve-out / §결정 23 / 5번째 cognitive layer 신설 금지 invariant — 전부 보존. 정당 trigger 2종 + anti-pattern 7종 enum member 추가·삭제 0(controlled-path gate 만 신설).
+
 ## self-application top-down ratchet
 
 본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 18 session swap reflex anti-pattern 7종 enum 축소 — Amendment 7** / **§결정 19 mid-turn glossary lookup 의무 회수 또는 codename 15-batch 축소 — Amendment 8** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 **차단** (evidence 없을 때). 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6/7/8 = `sunset_justification: null` family pattern.
@@ -1433,6 +1544,8 @@ touchpoint (d) 는 **mandatory DECLARE 이지 mandatory ASK 가 아니다.** 이
 **Amendment 10 (CFP-2371) = second weaken-direction amendment**: §결정 5 결정 트리의 `AMBIGUOUS → 가치 측 분류(safe direction) → AskUserQuestion` 룰 redirect (§결정 20 — ask-trigger 3종 한정, 모호 포함 ask-trigger 미해당 전부 진행). over-asking 안전편향 제거 = 묻기 절제 (약화 방향). `sunset_justification` = 3축 evidence object (사용자 반복 directive 3회 = behavioral evidence) 충족 → evidence-gated symmetric ratchet 1급 허용. 무손상 — frame mode (§결정 1) / Layer 1-4 (§결정 3) / sub-mechanism (§결정 4) / §결정 2(c) richness / 3 touchpoint (§결정 15) 골격 보존, 5번째 cognitive layer 신설 아님 (§결정 5 분류 규칙 변경, layer count 불변).
 
 **Amendment 11 (CFP-2374) / Amendment 12 (CFP-2392) / Amendment 13 (CFP-2567) / Amendment 14 (CFP-2573) / Amendment 15 (CFP-2725) = 강화 방향 `sunset_justification: null` family** — skip-offer PATH 폐지 (§결정 21) / MEMORY.md 슬림화 mechanism deferred 해제 resolve (§18.7 resolved_carrier ADR-129) / Epic 내 Story 전환 autonomy surface + 예방 reminder (§결정 22) / §결정 22 scope 일반화(transition-only → 모든 자명-진행 지점 + vague-pause 금지) + consumer 전파 (§22.9, ADR-144 §결정 3/6 realization) / **요구사항 lane intake 항상 declare 4번째 touchpoint(§15.5 확장 규약 첫 실사용) + §결정 20 lane-scoped carve-out + design-entry 확정 gate §결정 22 정당 멈춤 carve-out (§결정 23, ADR-159 SSOT 짝)**. Amendment 9/10 의 weaken-direction 과 달리 다섯 다 정식성·자율 진행·요구 disambiguation 강화 방향 → ADR-058 §결정 5 약화 evidence-gate 비대상. §결정 22 / §22.9 = §결정 15/20 enum member 추가 0. **§결정 23 = §결정 15 에 요구사항 lane-scoped 4번째 touchpoint 추가(§15.5 확장 규약 준수 — 별도 CFP + Story §1 사용자 explicit 승인 충족)이나 §결정 20 ask-trigger enum member 추가 0(mandatory DECLARE≠ASK)** — cognitive layer count 불변 (touchpoint = mechanism 추가, cognitive layer 추가 아님).
+
+**Amendment 16 (CFP-2742) = third weaken-direction amendment (§결정 18 첫 weaken)**: §결정 24 신설 — session-swap controlled-path(자족 handoff 프롬프트 동반 시 전환 권유 허용). §결정 18 anti-pattern 7종의 "무조건 발화 차단" → "handoff 동반 시 조건부 허용" = prohibition scope 축소(부분 약화). Amendment 9(DialogFidelityAgent sunset) / Amendment 10(§결정 5 redirect over-asking 절제) 에 이은 third weaken-direction amendment이며 **§결정 18 의 첫 weaken**(Amendment 7 = 강화 `null` 이었음). `sunset_justification` = null 아닌 4-key evidence object(dead_mandate / verification_ground_redundancy / cost_vs_effect_zero / meta_policy_alignment) 충족 → ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 1급 허용(차단 아님). 무손상 — 정당 trigger 2종(ADR-053/057) + anti-pattern 7종 enum member 추가·삭제 0(controlled-path gate 만 신설), 본문 immutability(§18.1 상단 1-line cross-ref pointer만 additive), §결정 22 line 1285 무손상, §결정 23 disjoint, frame mode/Layer 1-4/sub-mechanism/3 touchpoint/ask-trigger 3종/skip-offer/5번째 cognitive layer 신설 금지 invariant 전부 보존.
 
 ## 해소 기준
 
@@ -1479,3 +1592,7 @@ N/A — permanent policy (ADR 전체).
 - [hooks/hooks.json](../../hooks/hooks.json) — Amendment 13 UserPromptSubmit 배열 5번째 entry (D2)
 - hooks/story-transition-autonomy-reminder(.py) — Amendment 13 D2 채널 1 신규 sibling hook (skip-offer-reminder 동형 UserPromptSubmit 예방 reminder)
 - [hooks/pretooluse-agent-spawn-gate](../../hooks/pretooluse-agent-spawn-gate) — Amendment 13 D2 채널 2 (PreToolUse(Agent) additionalContext 전환 reminder inject, 기존 배선 gate 확장, autonomous 전환 창)
+- [CFP-2742](https://github.com/mclayer/plugin-codeforge/issues/2742) — Amendment 16 carrier Issue (§결정 24 session-swap controlled-path — 자족 handoff 프롬프트 동반 시 전환 권유 허용, §결정 18 첫 weaken-direction, handoff 6 필수요소 = ADR-085 §결정 9 4-rule specialization)
+- [ADR-085](ADR-085-multi-session-collaboration-protocol.md) — Amendment 16 §결정 9 multi-session prompt design 4-rule prior art (handoff 6요소 = specialization, 재발명 금지) + rule 1 planned-lane-split 금지 = forced-continuation disjoint 경계
+- [docs/consumer-guide.md](../consumer-guide.md) — Amendment 16 §7.6 consumer 전파 cross-ref anchor (session-swap controlled-path 상속, 확장-only)
+- hooks/session-swap-handoff-reminder(.py) — Amendment 16 Phase 2 forward-ref 신규 sibling hook (story-transition-autonomy-reminder 동형 UserPromptSubmit 예방 reminder, 본 Phase 1 미생성)
