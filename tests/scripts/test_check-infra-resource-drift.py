@@ -52,11 +52,41 @@ CFP-2700 (Epic) G2 Phase 2 (구현 lane) — Discriminating self-test (.py chann
   · wrapper-live: 실 repo 를 **baseline 제거 상태**로 스캔해도 exit 0 + undeclared=0 + grandfathered=0
     (non-zero→zero 확증의 "zero" 면) + 2계열/alias-gap/audit-pii-key 의 역색인 매핑 결박.
 
+★ CFP-2719 §3.8 per-class census floor + §8.8 동적 로스터 (Phase 2 增分):
+  AC-17a per-class census floor: 선언 class(workflow/script/inert)의 glob 열거 파일 수 0 → exit 3
+    + `per-class census floor` 토큰 + `class=<name> glob=<CONST> enumerated=0` 결박 (죽은 class 별
+    negative 3종 — 전역 born-hollow guard 아님 판별 포함) + MK script_globs_empty(LIVE_SCRIPT_GLOBS
+    공동화 → 완전 corpus 에서 floor 가 exit 3 으로 kill — pre-floor merged 코드에서는 exit 0 침묵
+    생존하는 discriminating 변이, PL 별도 RED-flip 실증). make_corpus 가 keepalive 3종을 무조건
+    주입(signal-free, census 필드 기여 0)해 기존 fixture corpus 의 floor 간섭을 봉합 —
+    omit_keepalive kwarg 는 AC-17a negative fixture 전용. honest-ceiling: 열거≥1 인데 추출만
+    사망 = floor 맹점이며 AC-17 count-assert(candidates≥FLOOR)가 그 축을 흡수한다("모든 hollow
+    봉인" 아님).
+  D4-COV coverage 방출: --emit-reverse-index → `coverage: scanned = ` ∧ `NOT scanned = ` 양 토큰
+    결박 + MK cov_not_scanned_off(NOT-scanned 절 제거 → fixture oracle 이 load-bearing 임을 증명).
+  §8.8.1 fuzz (DO — seed=2719 고정 결정론): target = parse_manifest(라인 파서 — yaml.safe_load 아님)
+    12 변종 + _scan_* corpus 추출기 8 변종. oracle = uncaught exception 0 ∧ hang 0(timeout bound)
+    ∧ exit ∈ {0,1,2,3} 계약 내 결정적 종료 — malformed manifest 는 exit 0/1 허용("exit 2 보장
+    없음"이 as-built 계약, 파일 부재/unreadable 만 exit 2).
+  §8.8.2 property (DO): canonical determinism(동일 corpus 2-run stdout byte-identical ∧ exit 동일 /
+    --write-baseline 2-run baseline byte-identical / 파일 생성 순서 shuffle 순열 3 → stdout
+    byte-identical) + normalize 멱등(alias 순열 20 샘플 — parse 2회 결정론 ∧ quote-strip
+    normalize f(f(x))==f(x) ∧ 순열 무관 classified set 불변). pass_condition = 반례 0.
+
+hard-gate-self-verification: enrolled
+identity_bearing: true
+  internal-control identity probe = per-class census floor(AC-17a): 선언 class 는 상시 열거>0 이
+  known-answer 이고, 0 열거 = 계기 사망(glob 오타/경로 이동 silent-green)을 즉시 검출한다.
+  (선언적 marker — meta-gate check_hard_gate_self_verification.py 의 실 스캔 subject 는
+   tests/scripts/*.sh 채널 한정(:355 glob 실측). 본 .py marker 는 dual-channel 선언 일치용.)
+
 standalone: `python3 tests/scripts/test_check-infra-resource-drift.py` → 전 test_* 실행, exit 0=PASS / 1=FAIL.
   pytest 하위호환(함수명 test_*) — CI 워크플로는 python3 직접 실행(byte-identical template step).
 """
 
+import importlib.util
 import os
+import random
 import re
 import subprocess
 import sys
@@ -193,6 +223,11 @@ PAGE_TOKEN="${PAGE_TOKEN}"
 echo "${STORY_KEY}"
 """
 
+# ── CFP-2719 AC-17a 판별 보조: 선언된 키(SERVICE_API_TOKEN = MANIFEST canonical)의 quoted 리터럴.
+#    dead_workflow negative 에서 candidates≥1 을 확보해 전역 born-hollow guard(candidates==0 ∧
+#    inert==0)가 아니라 **per-class floor** 가 발동함을 판별하는 signal-bearing 파일 (undeclared 0).
+SCRIPT_SIGNAL_PY = 'SECRET_ENV_VARS = ["SERVICE_API_TOKEN"]\n'
+
 # ── AC-22 2계열 canonical 수렴 discriminating pair (G6 — DEC-3 / ADR-157 §결정5).
 #    동일 소비면 2곳: 선언면 project.yaml `user_email_env:`(ATLASSIAN_USER_EMAIL, block 밖 = SELF_EXCLUDE
 #    비대상) + 소비면 workflow `secrets.CONFLUENCE_USER_EMAIL`. manifest 만 다르다 — canonical 1 +
@@ -290,6 +325,19 @@ MUTATIONS = {
         "    if digest_reasons:",
         "    if False:  # MUTANT-digest-verify-off",
     ),
+    # CFP-2719 MK-17a: script class glob 상수 공동화 → per-class census floor 가 exit 3 으로 kill.
+    #   ★ pre-floor merged 코드에서는 이 변이가 exit 0 침묵 생존(영구 GREEN) — floor 의
+    #   discriminating 근거 (PL 별도 RED-flip 실증).
+    "script_globs_empty": (
+        'LIVE_SCRIPT_GLOBS = ("scripts/**/*.py", "scripts/**/*.sh")',
+        "LIVE_SCRIPT_GLOBS = ()  # MUTANT-script-globs-empty",
+    ),
+    # CFP-2719 MK-COV: coverage 방출의 NOT-scanned 절 앵커 치환 → D4-COV fixture oracle 이
+    #   load-bearing 임을 증명 (토큰 소실 시 fixture RED).
+    "cov_not_scanned_off": (
+        '"NOT scanned = ',
+        '"MUTANT-cov-off = ',
+    ),
 }
 
 
@@ -301,8 +349,30 @@ def _write(path, content):
         f.write(content)
 
 
-def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseline=None, scripts=None):
+# ── per-class census floor keepalive (CFP-2719 §3.8 NEW-2 봉합) ──
+#    선언 3 class(workflow/script/inert) 각각에 signal-free 무해 파일 1개 상시 주입 — floor(열거 축)를
+#    살리되 census 필드(candidates/inert/undeclared/orphan/grandfathered)에는 0 기여 = 기존 케이스의
+#    census 수치 assert 무영향. 내용은 주석 1행(secret 참조/env 매핑/quoted 리터럴/passthrough 전부 부재).
+KEEPALIVE_CONTENT = (
+    "# per-class census floor keepalive (CFP-2719 §3.8) — signal-free 무해 파일.\n"
+    "# 목적 = 선언 scan class 의 glob 열거 >=1 유지. census 필드 기여 0.\n"
+)
+_KEEPALIVE_FILES = {
+    "workflow": (".github", "workflows", "_floor_keepalive.yml"),
+    "script": ("scripts", "_floor_keepalive.py"),
+    "inert": ("examples", "_floor-keepalive", "keepalive.yml"),
+}
+
+
+def make_corpus(tmp, project_yaml, wf=None, compose=None, decompose=None, baseline=None, scripts=None,
+                omit_keepalive=()):
     _write(os.path.join(tmp, ".claude", "_overlay", "project.yaml"), project_yaml)
+    # keepalive 3종 무조건 주입 (CFP-2719 §3.8) — omit_keepalive({"workflow","script","inert"} 부분집합)는
+    #   AC-17a negative fixture 전용(해당 class 열거 0 을 의도적으로 재현).
+    for cls, parts in _KEEPALIVE_FILES.items():
+        if cls in omit_keepalive:
+            continue
+        _write(os.path.join(tmp, *parts), KEEPALIVE_CONTENT)
     if wf is not None:
         _write(os.path.join(tmp, ".github", "workflows", "wf.yml"), wf)
     if compose is not None:
@@ -334,14 +404,39 @@ def read_baseline_pairs(path):
     return pairs
 
 
-def run_scanner(scanner_py, repo_root, *args):
-    """scanner subprocess 실행 → (exit_code, combined_output)."""
+def run_scanner(scanner_py, repo_root, *args, timeout=60):
+    """scanner subprocess 실행 → (exit_code, combined_output). timeout kwarg = fuzz hang-bound 용."""
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     proc = subprocess.run(
         [sys.executable, scanner_py, "--repo-root", repo_root, *args],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, timeout=60,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, timeout=timeout,
     )
     return proc.returncode, proc.stdout.decode("utf-8", "replace")
+
+
+def _run_scanner_raw(scanner_py, repo_root, *args, timeout=60):
+    """raw stdout **bytes** 반환 (decode 없이) — §8.8.2 byte-identical determinism 비교 전용."""
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    proc = subprocess.run(
+        [sys.executable, scanner_py, "--repo-root", repo_root, *args],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, timeout=timeout,
+    )
+    return proc.returncode, proc.stdout
+
+
+def _write_bytes(path, data):
+    """binary write (fuzz 변종 — 비UTF8/null byte 페이로드 전용)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(data)
+
+
+def _load_scanner_module():
+    """scanner 모듈 importlib 로드 (§8.8.2 normalize 멱등 — parse_manifest in-process 호출용)."""
+    spec = importlib.util.spec_from_file_location("infra_drift_scanner_under_test", SSOT_PY)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def make_mutant(tmp, kind):
@@ -726,6 +821,96 @@ def test_argparse_error_exit2():
     assert proc.returncode == 2, "argparse 오류 → exit 2, got %d" % proc.returncode
 
 
+# ─────────────────────── AC-17a per-class census floor (CFP-2719 §3.8) ───────────
+
+def test_ac17a_class_floor_dead_script():
+    """선언 class(script) glob 열거 0 → exit 3 + floor 토큰 + 표적 상수명 결박."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE, omit_keepalive=("script",))
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 3, "AC-17a: script class 열거 0 → exit 3, got %d\n%s" % (rc, out)
+        assert "per-class census floor" in out, "AC-17a: floor 발동 토큰 부재\n%s" % out
+        assert "class=script glob=LIVE_SCRIPT_GLOBS enumerated=0" in out, \
+            "AC-17a: 죽은 class 의 mutation-kill 표적 상수 명시 필요\n%s" % out
+        # 판별: candidates≥1(wf 선언 키) ∧ inert≥1(compose) → 전역 born-hollow guard 조건 아님 —
+        #   floor 가 (전역 guard 가 아니라) 발동했음을 증명.
+        assert census(out, "candidates_scanned") >= 1 and census(out, "inert_skipped") >= 1, \
+            "AC-17a: 판별 전제(candidates≥1 ∧ inert≥1) 파손 — 전역 guard 와 혼동 위험\n%s" % out
+        assert "born-hollow guard" not in out, \
+            "AC-17a: 전역 guard 가 아니라 per-class floor 가 발동해야 함\n%s" % out
+
+
+def test_ac17a_class_floor_dead_workflow():
+    """선언 class(workflow) glob 열거 0 → exit 3 (scripts 의 선언 키 리터럴로 candidates≥1 판별)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, compose=COMPOSE, scripts={"sig.py": SCRIPT_SIGNAL_PY},
+                    omit_keepalive=("workflow",))
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 3, "AC-17a: workflow class 열거 0 → exit 3, got %d\n%s" % (rc, out)
+        assert "per-class census floor" in out, "AC-17a: floor 발동 토큰 부재\n%s" % out
+        assert "class=workflow glob=LIVE_WORKFLOW_GLOBS enumerated=0" in out, \
+            "AC-17a: 표적 상수명(LIVE_WORKFLOW_GLOBS) 결박 부재\n%s" % out
+        assert census(out, "candidates_scanned") >= 1, \
+            "AC-17a: 판별 전제(candidates≥1) 파손\n%s" % out
+        assert "born-hollow guard" not in out
+
+
+def test_ac17a_class_floor_dead_inert():
+    """선언 class(inert) glob 열거 0 → exit 3 (wf 선언 키로 candidates≥1 판별)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, omit_keepalive=("inert",))
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 3, "AC-17a: inert class 열거 0 → exit 3, got %d\n%s" % (rc, out)
+        assert "per-class census floor" in out, "AC-17a: floor 발동 토큰 부재\n%s" % out
+        assert "class=inert glob=INERT_GLOBS enumerated=0" in out, \
+            "AC-17a: 표적 상수명(INERT_GLOBS) 결박 부재\n%s" % out
+        assert census(out, "candidates_scanned") >= 1, \
+            "AC-17a: 판별 전제(candidates≥1) 파손\n%s" % out
+        assert "born-hollow guard" not in out
+
+
+def test_ac17a_mutation_script_globs_empty():
+    """MK-17a: LIVE_SCRIPT_GLOBS 공동화 → 완전 corpus(전 class keepalive + signal 파일)에서도 exit 3.
+
+    ★ pre-floor merged 코드에서는 이 변이가 exit 0 침묵 생존(영구 GREEN) — floor 의 discriminating
+    증거(PL 별도 RED-flip 실증). honest-ceiling: 열거≥1 인데 추출만 사망은 floor 맹점 — 그 축은
+    AC-17 count-assert(candidates≥FLOOR)가 흡수한다("모든 hollow 봉인" 아님).
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE,
+                    scripts={"sig.py": SCRIPT_SIGNAL_PY})
+        mut = make_mutant(tmp, "script_globs_empty")
+        rc, out = run_scanner(mut, tmp)
+        assert rc == 3, "MK-17a: script glob 공동화 → floor exit 3 필수, got %d\n%s" % (rc, out)
+        assert "per-class census floor" in out, "MK-17a: floor 발동 토큰 부재\n%s" % out
+        assert "class=script glob=LIVE_SCRIPT_GLOBS enumerated=0" in out, \
+            "MK-17a: 죽은 class 표적 상수 명시 부재\n%s" % out
+
+
+# ─────────────────────── D4-COV coverage 방출 (CFP-2719 §8.1 D4-COV) ─────────────
+
+def test_d4cov_coverage_emit():
+    """--emit-reverse-index → coverage 라인의 scanned/NOT-scanned 양 토큰 결박 (as-built 토큰 기준)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp, "--emit-reverse-index")
+        assert rc == 0, "D4-COV: 정상 corpus + --emit-reverse-index → exit 0, got %d\n%s" % (rc, out)
+        assert "coverage: scanned = " in out, "D4-COV: scanned 절 부재\n%s" % out
+        assert "NOT scanned = " in out, "D4-COV: NOT-scanned(honest-ceiling) 절 부재\n%s" % out
+
+
+def test_d4cov_mutation_not_scanned_off():
+    """MK-COV: NOT-scanned 절 앵커 치환 mutant → 토큰 부재 = fixture oracle 이 load-bearing 임을 증명."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_DECLARED, compose=COMPOSE)
+        mut = make_mutant(tmp, "cov_not_scanned_off")
+        rc, out = run_scanner(mut, tmp, "--emit-reverse-index")
+        assert "NOT scanned" not in out, "MK-COV: mutant 에서 NOT scanned 토큰이 소멸해야 kill 성립\n%s" % out
+        assert "coverage: scanned = " in out, \
+            "MK-COV: 변이는 NOT-scanned 절만 죽인다 — scanned 절은 잔존해야 판별 정밀\n%s" % out
+        assert rc == 0, "MK-COV: coverage 는 D4 side-output — verdict exit 불변(I-1), got %d\n%s" % (rc, out)
+
+
 # ─────────────────────── AC-17 wrapper dogfood ───────────────────────────────────
 
 def test_ac17_wrapper_dogfood_scan():
@@ -833,6 +1018,201 @@ def test_ac22_wrapper_live_convergence_zero_without_baseline():
         "AC-22: unmapped-undeclared-keys 방출 = 미해소 잔존 non-zero\n%s" % out
 
 
+# ─────────────────────── §8.8.1 fuzz (CFP-2719 — seed=2719 고정 결정론) ──────────
+# target = parse_manifest(dependency-free 라인 파서 — yaml.safe_load 아님) + _scan_* corpus 추출기.
+# oracle = uncaught exception 0(Traceback 부재) ∧ hang 0(timeout=30 bound) ∧ exit ∈ {0,1,2,3}
+#   계약 내 결정적 종료. malformed manifest = exit 0/1 허용("exit 2 보장 없음"이 as-built 계약 —
+#   라인 파서는 malformed 를 구조적으로 판정 못 함; 파일 부재/unreadable 만 exit 2).
+# [empirical-source: Phase 2 self-test] seed=2719, manifest 변종 12 + corpus 변종 8.
+
+def _fuzz_manifest_variants():
+    """결정론 fuzz manifest 페이로드 (bytes) — seed=2719, 12 변종."""
+    rng = random.Random(2719)
+    base = MANIFEST.encode("utf-8")
+    variants = []
+    # 1 들여쓰기 붕괴 (seed 결정론 교란).
+    variants.append(("indent-collapse", "\n".join(
+        (" " * rng.randint(0, 12)) + l.lstrip() for l in MANIFEST.splitlines()).encode("utf-8")))
+    # 2 중복 키 (block 2회 연속).
+    variants.append(("dup-keys", (MANIFEST + MANIFEST).encode("utf-8")))
+    # 3 비UTF8 바이트.
+    variants.append(("non-utf8", b"infra_resources:\n  resources:\n\xff\xfe\x80\x81    - id: x\n"))
+    # 4 null byte 삽입.
+    variants.append(("null-byte", base.replace(b"raw-nas", b"raw\x00nas")))
+    # 5 초장문 단일 라인 (>=100KB — MAX_PHYSICAL_LINE_LEN truncate 경로).
+    variants.append(("long-line", b"infra_resources: " + b"A" * 120000 + b"\n"))
+    # 6 빈 파일.
+    variants.append(("empty", b""))
+    # 7 주석만.
+    variants.append(("comments-only", b"# only comments\n# nothing else\n"))
+    # 8 절단된 block (mid-byte truncation).
+    variants.append(("truncated", base[: len(base) // 2]))
+    # 9 tab 혼입 (indent 파서 교란).
+    variants.append(("tab-mixed", MANIFEST.replace("  ", "\t").encode("utf-8")))
+    # 10 CRLF.
+    variants.append(("crlf", MANIFEST.replace("\n", "\r\n").encode("utf-8")))
+    # 11 깊은 중첩 (60 depth).
+    deep = "infra_resources:\n" + "".join((" " * (2 * i)) + "k%d:\n" % i for i in range(1, 60))
+    variants.append(("deep-nest", deep.encode("utf-8")))
+    # 12 제어문자 (seed 결정론 0x01-0x1f).
+    ctrl = "".join(chr(rng.randint(1, 31)) for _ in range(200))
+    variants.append(("control-chars", ("infra_resources:\n  resources:\n" + ctrl).encode("utf-8")))
+    return variants
+
+
+def test_fuzz_parse_manifest_robustness():
+    """§8.8.1 fuzz — parse_manifest 병리 입력 12 변종: 계약 내 결정적 종료(oracle 위 참조)."""
+    variants = _fuzz_manifest_variants()
+    assert len(variants) >= 12, "fuzz: 변종 12 미달 (%d)" % len(variants)
+    for name, payload in variants:
+        with tempfile.TemporaryDirectory() as tmp:
+            make_corpus(tmp, "# overwritten below\n", compose=COMPOSE)
+            _write_bytes(os.path.join(tmp, ".claude", "_overlay", "project.yaml"), payload)
+            rc, out = run_scanner(SSOT_PY, tmp, timeout=30)
+            assert rc in (0, 1, 2, 3), "fuzz[%s]: exit %d 계약({0,1,2,3}) 밖\n%s" % (name, rc, out)
+            assert "Traceback" not in out, "fuzz[%s]: uncaught exception 검출\n%s" % (name, out)
+
+
+def _fuzz_content_variants():
+    """결정론 fuzz corpus 파일 페이로드 — seed=2719, 8 변종 (workflow/script 추출기 경로)."""
+    rng = random.Random(2719)
+    variants = []
+    variants.append(("wf-binary", ".github/workflows/fz.yml",
+                     b"\x00\xff\xfe" + bytes(rng.randrange(256) for _ in range(4096))))
+    variants.append(("wf-long-line", ".github/workflows/fz.yml",
+                     b"run: echo ${{ secrets.LONG_TOKEN }} " + b"x" * (1 << 20) + b"\n"))
+    # 유니코드 병리 = RTL override(U+202E) + combining acute(U+0301) 반복 — chr() 산술 표기
+    #   (소스 내 invisible bidi 실문자 embed 금지 + escape 모호성 원천 제거).
+    variants.append(("wf-unicode-pathology", ".github/workflows/fz.yml",
+                     ("run: " + (chr(0x202E) + chr(0x0301)) * 2000 + "\n").encode("utf-8")))
+    variants.append(("py-null-bytes", "scripts/fz.py", b'X = "A\x00_TOKEN"\n' * 100))
+    # quoted 토큰 길이 경계(>64 = _RE_QUOTED_TOKEN bound 밖) — 미매치가 정상, 종료 결정성만 oracle.
+    variants.append(("py-token-boundary", "scripts/fz.py",
+                     ('X = "%s"\n' % ("A" * 70 + "_TOKEN")).encode("utf-8")))
+    variants.append(("sh-nested-braces", "scripts/fz.sh", ("${" * 5000 + "\n").encode("utf-8")))
+    variants.append(("sh-crlf-tabs", "scripts/fz.sh", b"\tA_TOKEN=\"${A_TOKEN}\"\tls\r\n" * 200))
+    variants.append(("py-many-tokens", "scripts/fz.py",
+                     "".join('Y%d = "FZ%03d_API_X"\n' % (i, i) for i in range(500)).encode("utf-8")))
+    return variants
+
+
+def test_fuzz_scan_corpus_robustness():
+    """§8.8.1 fuzz — _scan_*(workflow/script 추출기) 병리 파일 8 변종: 계약 내 결정적 종료.
+
+    corpus 에 keepalive 3종 포함(make_corpus 무조건 주입)으로 floor 간섭 배제 — exit 3 도 계약
+    내이므로 oracle 은 결정적 종료({0,1,2,3} + Traceback 0 + hang 0)만 결박.
+    """
+    variants = _fuzz_content_variants()
+    assert len(variants) >= 8, "fuzz: 변종 8 미달 (%d)" % len(variants)
+    for name, rel, payload in variants:
+        with tempfile.TemporaryDirectory() as tmp:
+            make_corpus(tmp, MANIFEST, compose=COMPOSE)
+            _write_bytes(os.path.join(tmp, *rel.split("/")), payload)
+            rc, out = run_scanner(SSOT_PY, tmp, timeout=30)
+            assert rc in (0, 1, 2, 3), "fuzz[%s]: exit %d 계약({0,1,2,3}) 밖\n%s" % (name, rc, out)
+            assert "Traceback" not in out, "fuzz[%s]: uncaught exception 검출\n%s" % (name, out)
+
+
+# ─────────────────────── §8.8.2 property (CFP-2719 — 반례 0 = pass) ───────────────
+
+def test_property_canonical_determinism():
+    """§8.8.2 property — canonical determinism 3축. [empirical-source: Phase 2 self-test]
+    seed=2719, 생성순서 순열 3. pass_condition = 반례 0.
+
+    (a) 동일 corpus 2-run → stdout byte-identical ∧ exit 동일.
+    (b) --write-baseline 2-run(동일 상태 재생성) → baseline 파일 byte-identical.
+    (c) 파일 생성 순서 shuffle(고정 seed 순열 3) → stdout byte-identical (열거 순서 비의존).
+    """
+    # (a) 동일 corpus 2-run.
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE,
+                    scripts={"pt.sh": SH_PASSTHROUGH})
+        rc1, out1 = _run_scanner_raw(SSOT_PY, tmp)
+        rc2, out2 = _run_scanner_raw(SSOT_PY, tmp)
+        assert rc1 == rc2, "property(a): exit 비결정 (%d vs %d)" % (rc1, rc2)
+        assert out1 == out2, "property(a): stdout byte-identical 위반"
+    # (b) --write-baseline 2-run — new_pairs == old_pairs(ROGUE_TOKEN 동결) → 양 run 재생성 성공.
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE, baseline=BASELINE_FIXTURE)
+        bl = os.path.join(tmp, "docs", "infra-resource-baseline.yaml")
+        rc1, _ = _run_scanner_raw(SSOT_PY, tmp, "--write-baseline")
+        assert rc1 == 0, "property(b): 1차 --write-baseline (동일 pair 재생성) → exit 0, got %d" % rc1
+        b1 = open(bl, "rb").read()
+        rc2, _ = _run_scanner_raw(SSOT_PY, tmp, "--write-baseline")
+        assert rc2 == 0, "property(b): 2차 --write-baseline → exit 0, got %d" % rc2
+        b2 = open(bl, "rb").read()
+        assert b1 == b2, "property(b): baseline byte-identical 위반 (generate↔verify byte-stable 파손)"
+    # (c) 파일 생성 순서 shuffle — 순열 3 (seed=2719).
+    rng = random.Random(2719)
+    files = [
+        (".claude/_overlay/project.yaml", MANIFEST),
+        (".github/workflows/wf.yml", WF_UNDECLARED),
+        ("examples/svc/compose.yml", COMPOSE),
+        ("scripts/pt.sh", SH_PASSTHROUGH),
+        (".github/workflows/_floor_keepalive.yml", KEEPALIVE_CONTENT),
+        ("scripts/_floor_keepalive.py", KEEPALIVE_CONTENT),
+        ("examples/_floor-keepalive/keepalive.yml", KEEPALIVE_CONTENT),
+    ]
+    outs = set()
+    for i in range(3):
+        order = files[:]
+        rng.shuffle(order)
+        with tempfile.TemporaryDirectory() as tmp:
+            for rel, content in order:
+                _write(os.path.join(tmp, *rel.split("/")), content)
+            rc, out = _run_scanner_raw(SSOT_PY, tmp)
+            assert rc == 1, "property(c) perm %d: undeclared 2건 → exit 1, got %d" % (i, rc)
+            outs.add(out)
+    assert len(outs) == 1, "property(c): 생성 순서에 따라 stdout 변동 = 결정론 위반 (%d distinct)" % len(outs)
+
+
+def test_property_normalize_idempotent():
+    """§8.8.2 property — normalize 멱등(f(f(x))==f(x)) + alias 순열 결정론.
+    [empirical-source: Phase 2 self-test] seed=2719, alias 순열 20 샘플. pass_condition = 반례 0.
+
+    실측 구조: parse_manifest → Manifest(classified set / all_keys_by_resource) — 키 normalize =
+    quote-strip(strip('\"').strip(\"'\")). 멱등 assert 3축:
+    (a) 동일 파일 2회 parse → classified ∧ all_keys_by_resource 동일 (parse 결정론).
+    (b) 파서가 canonical 화한 키에 normalize 재적용 = identity — canonical 의 canonical == canonical.
+        (정직 한정: 중첩 인용 병리 입력('\"A\"' 류)은 도메인 밖 — fixture 도메인(plain/단일 인용)의
+        f(f(x))==f(x) 를 결박, "임의 입력 멱등" over-claim 아님.)
+    (c) alias 선언 순서 무관 classified set 불변 (순열 20 — canonical 수렴 결정론).
+    """
+    mod = _load_scanner_module()
+    rng = random.Random(2719)
+    aliases = ["FZA_ONE_URL", "FZA_TWO_TOKEN", "FZA_THREE_KEY", "FZA_FOUR_DSN", "FZA_FIVE_PAT"]
+    expected = {"FZP_CANON_URL", "FZP_OLD_URL"} | set(aliases)
+    with tempfile.TemporaryDirectory() as tmp:
+        for i in range(20):
+            perm = aliases[:]
+            rng.shuffle(perm)
+            body = (
+                "infra_resources:\n"
+                "  resources:\n"
+                "    - id: fz-res\n"
+                "      canonical_env: \"FZP_CANON_URL\"\n"
+                "      aliases:\n"
+                "        accepted: [%s]\n"
+                "        deprecated:\n"
+                "          - name: 'FZP_OLD_URL'\n" % ", ".join(perm)
+            )
+            path = os.path.join(tmp, "m%02d.yaml" % i)
+            _write(path, body)
+            m1 = mod.parse_manifest(path)
+            m2 = mod.parse_manifest(path)
+            # (a) parse 결정론.
+            assert m1.classified == m2.classified, "property perm %d: 2회 parse classified drift" % i
+            assert m1.all_keys_by_resource == m2.all_keys_by_resource, \
+                "property perm %d: 2회 parse 키집합 drift" % i
+            # (b) normalize 멱등 — quote-strip 재적용이 identity (인용부 저작 fixture 에서 실증).
+            for k in m1.classified:
+                assert k.strip('"').strip("'") == k, \
+                    "property perm %d: normalize 비멱등 키 잔존 %r" % (i, k)
+            # (c) 순열 무관 classified set 불변.
+            assert m1.classified == expected, \
+                "property perm %d: classified drift — got %s" % (i, sorted(m1.classified))
+
+
 # ─────────────────────── standalone runner ──────────────────────────────────────
 
 def _main():
@@ -857,7 +1237,8 @@ def _main():
     print("-" * 75)
     print("PASS: %d  FAIL: %d" % (npass, nfail))
     if nfail == 0:
-        print("OK All %d cases pass — AC-5/6/7/8/10/11/17/22 discriminating + mutation-kill + born-hollow" % npass)
+        print("OK All %d cases pass — AC-5/6/7/8/10/11/17/17a/22 + D4-COV + §8.8 fuzz/property "
+              "discriminating + mutation-kill + born-hollow" % npass)
         return 0
     print("X %d case(s) failed" % nfail)
     return 1

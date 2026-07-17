@@ -65,6 +65,22 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
   candidates==0 ∧ inert==0(빈 corpus/empty-scope) → PASS 아니라 FAIL(exit 3, born-hollow). all-inert
   (candidates==0 ∧ inert>0)는 non-vacuous PASS(census 로 관측, over-state "candidate≥1" 금지 — F-CR-2).
 
+★ per-class census floor (CFP-2719 §3.8 — 설계리뷰 P0-1 봉합):
+  hard-gate-self-verification: enrolled
+  identity_bearing: true
+  전역 guard(candidates==0 ∧ inert==0)만으로는 live/inert 가 disjoint 별도 glob 루프라 inert>0 이
+  guard 를 꺼서 glob 오타/경로 이동 시 live 열거가 침묵 사망 = 영구 GREEN. 봉합 = 게이트가 자기 스캔
+  class 기대치(EXPECTED_NONEMPTY_SCAN_CLASSES = workflow/script/inert)를 선언하고 매 실행 열거 실적과
+  대조 — 선언 class 의 glob 열거 파일 수(enumerated file count) == 0 → exit 3. 기준 = candidates
+  (추출 결과)가 아니라 glob 열거 파일 수(파일 내용/추출 결과 무관) — mutation-kill 표적이 glob 상수
+  (LIVE_WORKFLOW_GLOBS/LIVE_SCRIPT_GLOBS/INERT_GLOBS)이기 때문. 기존 전역 guard 와 OR 결합(전역 guard
+  유지). per-class census floor = internal-control identity probe — known-present class(wrapper-self
+  기준 3 class 전부 상시 열거>0)의 0 열거 = 계기 사망을 known-answer 로 검출한다. 무조건 활성 —
+  opt-in flag 금지(default-off flag = dark-path 재생산, §3.8 명시 기각). compose/overlay 는 미선언
+  (wrapper compose=0 정당 / overlay=manifest 부재 exit 2 기커버 — 추가 금지). F-CR-2(all-inert
+  non-vacuous PASS)와 무충돌 — floor 는 candidates 축이 아니라 선언-기반 열거 축(all-inert 시나리오는
+  열거>0 이므로 무손상).
+
 ★ D4 역색인 (ADR-157 §결정6 — 비커밋 ephemeral CI artifact, I-1):
   `--emit-reverse-index` 는 resource-id → [참조 표면] 을 stdout 으로만 방출(커밋 0). VERDICT(census +
   undeclared + orphan + exit code)는 manifest + fresh scan 에서만 도출하며 어떤 커밋/on-disk 역색인도
@@ -132,8 +148,10 @@ Exit codes (ADR-060 §결정5 3-tier — verdict warning / census·substrate fai
         구조적으로 판정할 수단이 없다. 깨진 manifest 는 부분 파싱되어 resources 0 으로 귀결되고,
         LIVE 표면이 있으면 none-disguise 경로(exit 1)로 표면화된다. "malformed → exit 2" 보장 없음
         (정직 천장 — dependency-free 파서의 구조적 상한이며, 오탐 0 을 위해 감수한 trade-off).
-  3 = census fail-closed / born-hollow (candidates==0 ∧ inert==0) — OR baseline substrate-failure
-      (content_digest 불일치·필드부재 = 손상 baseline → verdict 전제조건 파손, 위 grandfather 블록 참조).
+  3 = census fail-closed / born-hollow (전역 candidates==0 ∧ inert==0 — OR per-class census floor:
+      EXPECTED_NONEMPTY_SCAN_CLASSES 선언 class 의 glob 열거 파일 수 0, CFP-2719 §3.8) — OR baseline
+      substrate-failure (content_digest 불일치·필드부재 = 손상 baseline → verdict 전제조건 파손,
+      위 grandfather 블록 참조).
       ※ 현 workflow 는 `continue-on-error: true` 라 오늘은 exit 3 도 PR 을 차단하지 못하고 surfacing 만
         된다(정직 표기 — "fail-closed" 는 스캐너 exit 계약 면의 사실이며, CI 차단력은 별개 축이다).
 
@@ -175,6 +193,17 @@ INERT_GLOBS = (
     "examples/**/*.yml", "examples/**/*.yaml", "examples/**/*.env", "examples/**/Dockerfile",
     "presets/**/*.yml", "presets/**/*.yaml", "presets/**/*.env", "presets/**/Dockerfile",
 )
+
+# per-class census floor 선언 (CFP-2719 §3.8 — wrapper-self 기준): 선언 class 는 매 실행 glob 열거
+#   파일 수 ≥1 이어야 한다 (0 = 계기 사망 → exit 3). 무조건 활성 — opt-in flag 금지(§3.8 명시 기각).
+#   compose/overlay 는 미선언(추가 금지 — wrapper compose=0 정당 / overlay=manifest 부재 exit 2 기커버).
+EXPECTED_NONEMPTY_SCAN_CLASSES = ("workflow", "script", "inert")
+# class ↔ glob 상수명 (floor 발동 메시지용 — 죽은 class 의 mutation-kill 표적 상수를 명시).
+_SCAN_CLASS_GLOB_CONST = {
+    "workflow": "LIVE_WORKFLOW_GLOBS",
+    "script": "LIVE_SCRIPT_GLOBS",
+    "inert": "INERT_GLOBS",
+}
 
 # self-source EXEMPT (FM1 seal — 스캐너 소스·wrapper·baseline·생성 역색인 제외).
 _SELF_SOURCE_TOKENS = (
@@ -618,16 +647,23 @@ def _self_exempt(rel):
 
 
 def scan_corpus(repo_root):
-    """corpus 스캔 → (live_surfaces[], inert_surfaces[], scanned_files)."""
+    """corpus 스캔 → (live_surfaces[], inert_surfaces[], scanned_files, class_enumerated{}).
+
+    class_enumerated = per-class glob 열거 파일 수 (CFP-2719 §3.8 census floor 소비 축) —
+      glob 이 yield 한 regular file 수. 파일 내용/추출 결과/self-exempt 무관(열거 축 = glob 상수의
+      liveness 계측이 목적이므로 isfile 통과 직후 count).
+    """
     live = []
     inert = []
     scanned = set()
+    class_enumerated = {c: 0 for c in EXPECTED_NONEMPTY_SCAN_CLASSES}
 
     # LIVE — workflows.
     for pattern in LIVE_WORKFLOW_GLOBS:
         for path in glob.glob(os.path.join(repo_root, *pattern.split("/"))):
             if not os.path.isfile(path):
                 continue
+            class_enumerated["workflow"] += 1
             rel = _rel(path, repo_root)
             if _self_exempt(rel):
                 continue
@@ -651,6 +687,7 @@ def scan_corpus(repo_root):
         for path in glob.glob(os.path.join(repo_root, *pattern.split("/")), recursive=True):
             if not os.path.isfile(path):
                 continue
+            class_enumerated["script"] += 1
             rel = _rel(path, repo_root)
             if _self_exempt(rel):
                 continue
@@ -665,6 +702,7 @@ def scan_corpus(repo_root):
         for path in glob.glob(os.path.join(repo_root, *pattern.split("/")), recursive=True):
             if not os.path.isfile(path):
                 continue
+            class_enumerated["inert"] += 1
             rel = _rel(path, repo_root)
             if _self_exempt(rel):
                 continue
@@ -674,7 +712,7 @@ def scan_corpus(repo_root):
             scanned.add(rel)
             inert.extend(_scan_inert(physical, rel))
 
-    return live, inert, len(scanned)
+    return live, inert, len(scanned), class_enumerated
 
 
 # ─────────────────────── grandfather baseline (new-only subtract — CFP-2661 mirror) ──
@@ -927,7 +965,7 @@ def main(argv):
         print("::error::check-infra-resource-drift: manifest 파일 부재/unreadable — %s" % manifest_path)
         return 2
 
-    live_surfaces, inert_surfaces, scanned_files = scan_corpus(repo_root)
+    live_surfaces, inert_surfaces, scanned_files, class_enumerated = scan_corpus(repo_root)
     candidates = len(live_surfaces)
     inert = len(inert_surfaces)
 
@@ -1002,6 +1040,24 @@ def main(argv):
             "::error::check-infra-resource-drift: FAIL-CLOSED — candidates_scanned=0 ∧ inert_skipped=0 "
             "(born-hollow guard 발동: infra 표면을 live·inert 어느 것으로도 0 = empty-scope oracle, "
             "ADR-157 §결정9). corpus glob 또는 manifest 조정 없이는 통과 불가."
+        )
+        return 3
+
+    # per-class census floor (CFP-2719 §3.8 — 전역 guard 와 OR 결합, 무조건 활성/opt-in flag 금지).
+    #   live/inert 가 disjoint 별도 glob 루프라 inert>0 이 전역 guard 를 꺼서 glob 오타/경로 이동 시
+    #   live 열거가 침묵 사망(영구 GREEN)할 수 있다 — 선언 class(EXPECTED_NONEMPTY_SCAN_CLASSES)의
+    #   glob 열거 파일 수 0 을 class 단위로 fail-closed. 기준 = 열거 축(추출 결과 무관 —
+    #   mutation-kill 표적 = glob 상수). 발동 메시지 = 죽은 class 명 + 해당 glob 상수명 명시.
+    dead_classes = [c for c in EXPECTED_NONEMPTY_SCAN_CLASSES if class_enumerated.get(c, 0) == 0]
+    if dead_classes:
+        print(
+            "::error::check-infra-resource-drift: FAIL-CLOSED — per-class census floor 발동: "
+            "선언 scan class 의 glob 열거 파일 수 0 — %s. EXPECTED_NONEMPTY_SCAN_CLASSES 선언 class 는 "
+            "매 실행 열거 ≥1 이어야 한다 (glob 오타/경로 이동에 의한 열거 침묵 사망 = 계기 사망 검출, "
+            "CFP-2719 §3.8 / ADR-157 §결정9 born-hollow 확장)."
+            % "; ".join(
+                "class=%s glob=%s enumerated=0" % (c, _SCAN_CLASS_GLOB_CONST[c]) for c in dead_classes
+            )
         )
         return 3
 
