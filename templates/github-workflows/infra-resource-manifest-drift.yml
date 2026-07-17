@@ -24,6 +24,10 @@ name: infra-resource-manifest-drift
 # day-1 hard-fail (continue-on-error 금지): self-test 실패 = job red(visible). 판별력 채널은 hollow 로
 #   새지 않도록 실패를 삼키지 않는다. self-test 파일 부재 시(QADev 착지 전)만 hashFiles 가드로 skip.
 # dogfood drift lint = warning-tier(continue-on-error:true) — advisory, PR 미차단.
+# G5 (ADR-157 §결정4): cross-repo drift 대조 self-test(.sh+.py, 실 네트워크 0 — fetch·Issue seam 은
+#   mock-repo fixture 로 stub) + dogfood `--cross-repo` step(CODEFORGE_CROSS_REPO_PAT 주입, read-WRITE
+#   PAT 를 read-only 로 사용 — ac-traceability-matrix.yml 선례). wrapper-self 는 namespace 자원 0 =
+#   vacuous PASS. cross-repo failure-mode(content-mismatch/403·404/token 부재)는 fail-closed. base/G3 step 무손상.
 # non-required (branch-protection 7-tuple[ADR-145 §결정3] 무변경 — 신규 required context 0).
 #   required 승격 = ADR-060 evidence-gate promotion 별도 carrier(defer).
 
@@ -70,6 +74,18 @@ jobs:
         if: hashFiles('tests/scripts/test_infra-startup-failclosed.py') != ''
         run: python3 tests/scripts/test_infra-startup-failclosed.py
 
+      # ── G5 (CFP-2700 / ADR-157 §결정4): cross-repo drift 대조 self-test (.sh + .py). 실 네트워크 0 —
+      #    fetch·Issue-발행 seam(INFRA_CROSS_REPO_FETCH_ROOT / INFRA_CROSS_REPO_ISSUE_SINK)을 mock-repo
+      #    fixture 로 stub. 별도 step 으로 G2/G3 self-test 와 분리(실패 지점 즉시 판독). day-1 hard-fail.
+      #    .sh = ADR-151 인벤토리 enroll 채널 / .py = 보완 채널(disjoint).
+      - name: Run infra-cross-repo-drift self-test (.sh — G5, day-1 hard-fail, hashFiles 가드)
+        if: hashFiles('tests/scripts/test_infra-cross-repo-drift.sh') != ''
+        run: bash tests/scripts/test_infra-cross-repo-drift.sh
+
+      - name: Run infra-cross-repo-drift self-test (.py — G5, day-1 hard-fail, hashFiles 가드)
+        if: hashFiles('tests/scripts/test_infra-cross-repo-drift.py') != ''
+        run: python3 tests/scripts/test_infra-cross-repo-drift.py
+
       # G3 dogfood: wrapper-self manifest 의 4 필수 필드 schema (AC-2) + D2 채택 선언 (AC-15 —
       #   wrapper = declarative-only 라 adopted:false + reason 비적용 PASS 경로). day-1 hard-fail
       #   (결정적 검증 — 자기 manifest 가 자기 게이트를 못 넘으면 born-red 자기부정).
@@ -84,3 +100,15 @@ jobs:
         run: |
           bash scripts/check-infra-resource-drift.sh --repo-root . 2>&1 | tee lint-output.txt
           exit ${PIPESTATUS[0]}
+
+      # ── G5 dogfood cross-repo drift 대조 (CFP-2700 / ADR-157 §결정4) — 실 gh api 경로.
+      #    CODEFORGE_CROSS_REPO_PAT 주입(ac-traceability-matrix.yml 선례 — read-WRITE PAT 를 read-only 로
+      #    contents fetch 에만 사용). wrapper-self 는 namespace 선언 자원 0 = vacuous PASS(exit 0).
+      #    failure-mode(content-mismatch / 403·404 / token 부재)는 fail-closed 라 continue-on-error 없음
+      #    (non-required 7-tuple 무변경 = PR 미차단, red 로 surfacing). foreign transient 만 fail-open+Issue.
+      #    static-parse-only(fetch 콘텐츠 실행/eval 0) + secret-masking(PAT 값 로그 미출력). 3rd-party
+      #    action 무추가(pure bash + gh preinstalled) — 신규 action pin 불요(base scan step 무손상).
+      - name: Run dogfood cross-repo drift check (G5 — fail-closed, non-required)
+        env:
+          CODEFORGE_CROSS_REPO_PAT: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: bash scripts/check-infra-resource-drift.sh --repo-root . --cross-repo

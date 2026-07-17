@@ -12,10 +12,15 @@
 # Usage / exit code / semantics 상세: scripts/lib/check_infra_resource_drift.py header.
 #   bash scripts/check-infra-resource-drift.sh [--repo-root DIR] [--manifest PATH] [--baseline PATH]
 #     [--promote-orphan] [--write-baseline] [--allow-baseline-growth --reason TEXT] [--emit-reverse-index]
+#     [--cross-repo]
 #     0 = PASS (new undeclared 0) / 1 = FLAG (undeclared / none-disguise / orphan+promote — warning;
 #         + --write-baseline monotonic shrink 위반 거부) / 2 = usage·manifest 오류
 #     / 3 = fail-closed: census born-hollow (candidates==0 ∧ inert==0) 또는 baseline substrate-failure
 #         (content_digest 불일치·필드부재 = 손상 baseline).
+#   --cross-repo (G5 — ADR-157 §결정4): base scan 과 disjoint 별도 모드. namespace 선언 자원의 foreign
+#     repo 참조면을 pinned ref 로 static-parse 대조. 0=PASS(전파확인/vacuous/transient-failopen) /
+#     1=fail-closed(content-mismatch/403·404/ref-pin·traversal·spoof) / 3=degraded-FAIL(PAT 부재).
+#     seam(테스트): env INFRA_CROSS_REPO_FETCH_ROOT(mock-repo) / INFRA_CROSS_REPO_ISSUE_SINK(Issue sink).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
