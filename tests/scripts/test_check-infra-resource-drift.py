@@ -17,8 +17,8 @@ CFP-2700 (Epic) G2 Phase 2 (구현 lane) — Discriminating self-test (.py chann
     AC-8  역색인(D4) verdict-invariant (변조/제거해도 verdict 불변, side-output I-1) + MK revindex_noop
     AC-10 none-disguise fail (infra_resources 부재 + 사유부재 + 표면 → exit1 + NONE-DISGUISE) + MK none_off
     AC-11 none-disguise pass (resources:none + reason + 표면0 → exit0)
-    AC-17 wrapper 실 secret 9종 dogfood (실 repo → exit0, candidates≥floor, inert>0,
-      grandfathered≥baseline pair 수 = runtime 도출) + MK no_secrets(candidates 급감 = secrets load-bearing)
+    AC-17 wrapper 실 secret dogfood (실 repo → exit0, candidates≥floor, inert>0,
+      G6 수렴 ratchet: baseline 0 pair + grandfathered==0) + MK no_secrets(candidates 급감 = secrets load-bearing)
   + grandfather baseline hermetic(tmp corpus) + MK baseline_subtract_off
   + born-hollow guard(candidates==0 ∧ inert==0 → exit3) + argparse 오류(exit 2).
 
@@ -42,6 +42,15 @@ CFP-2700 (Epic) G2 Phase 2 (구현 lane) — Discriminating self-test (.py chann
   baseline subtract 를 실 debt count 와 무관하게 결박(위 3 mutant 전건 hermetic kill 확보, 실측).
   AC-17 의 `grandfathered≥3` 은 non-vacuity floor 로 존치하되 **유일 killer 가 아니게** 됐다 —
   baseline shrink 시 조정 대상은 AC-17 뿐이며 hermetic 케이스는 무영향(의도된 결합 분리).
+  ▸ G6 (AC-22 수렴): 5 pair 전건 manifest 등재로 baseline 5→0 shrink 완료 — AC-17 결박은 예고대로
+    `grandfathered==0 ∧ baseline 0 pair`(수렴 유지 ratchet)로 갱신, hermetic 케이스 무변경.
+
+★ AC-22 DEC-3 라이브 2계열 canonical 수렴 (G6 — ADR-157 §결정5):
+  · fixture discriminating pair: 동일 소비면(선언면 `_env:` ATLASSIAN_USER_EMAIL + 소비면 workflow
+    `secrets.CONFLUENCE_USER_EMAIL`)에 대해 manifest 가 canonical 1 + accepted alias 로 양키를 선언하면
+    exit 0(수렴) / alias 누락 manifest 면 exit 1 + UNDECLARED(미수렴) — alias 선언이 load-bearing.
+  · wrapper-live: 실 repo 를 **baseline 제거 상태**로 스캔해도 exit 0 + undeclared=0 + grandfathered=0
+    (non-zero→zero 확증의 "zero" 면) + 2계열/alias-gap/audit-pii-key 의 역색인 매핑 결박.
 
 standalone: `python3 tests/scripts/test_check-infra-resource-drift.py` → 전 test_* 실행, exit 0=PASS / 1=FAIL.
   pytest 하위호환(함수명 test_*) — CI 워크플로는 python3 직접 실행(byte-identical template step).
@@ -182,6 +191,40 @@ if [ -z "${GH_TOKEN:-}" ]; then
 fi
 PAGE_TOKEN="${PAGE_TOKEN}"
 echo "${STORY_KEY}"
+"""
+
+# ── AC-22 2계열 canonical 수렴 discriminating pair (G6 — DEC-3 / ADR-157 §결정5).
+#    동일 소비면 2곳: 선언면 project.yaml `user_email_env:`(ATLASSIAN_USER_EMAIL, block 밖 = SELF_EXCLUDE
+#    비대상) + 소비면 workflow `secrets.CONFLUENCE_USER_EMAIL`. manifest 만 다르다 — canonical 1 +
+#    accepted alias 로 양키 선언(수렴) vs alias 누락(미수렴). rename 0 이 계약(라이브 secret 무중단).
+PROJ_TWO_SERIES_CONVERGED = """infra_resources:
+  resources:
+    - id: confluence-user-email
+      canonical_env: ATLASSIAN_USER_EMAIL
+      aliases:
+        accepted: [CONFLUENCE_USER_EMAIL]
+atlassian:
+  confluence:
+    user_email_env: "ATLASSIAN_USER_EMAIL"
+"""
+
+PROJ_TWO_SERIES_UNCONVERGED = """infra_resources:
+  resources:
+    - id: confluence-user-email
+      canonical_env: ATLASSIAN_USER_EMAIL
+      aliases:
+        accepted: []
+atlassian:
+  confluence:
+    user_email_env: "ATLASSIAN_USER_EMAIL"
+"""
+
+WF_ALIAS_CONSUME = """name: wf
+on: {push: {}}
+jobs:
+  j:
+    steps:
+      - run: echo ${{ secrets.CONFLUENCE_USER_EMAIL }}
 """
 
 # 소스 문자열-치환 mutation (anchor → replacement). 미적용 시 AssertionError(anchor drift 검출).
@@ -691,26 +734,30 @@ def test_ac17_wrapper_dogfood_scan():
     assert census(out, "candidates_scanned") >= FLOOR, \
         "AC-17: candidates≥%d (non-vacuous), got %d" % (FLOOR, census(out, "candidates_scanned"))
     assert census(out, "inert_skipped") >= 1, "AC-17: inert>0 (born-red 아님, examples compose)"
-    assert census(out, "undeclared") == 0, "AC-17: 실 wrapper new undeclared 0 (baseline grandfather)"
-    # F-CR-007: 구 `>= 3` 은 실 debt count 를 test 에 하드코딩한 3-site drift 원천이었다(스캐너 주석·.py·.sh).
-    #   → baseline 파일에서 runtime 도출. 두 단정의 역할이 다르다:
-    #     (a) n_baseline >= 1  : non-vacuity (baseline 이 비면 subtract 가 무의미).
-    #     (b) gf >= n_baseline : 동결된 pair 가 전부 실제로 관측됨 = baseline liveness(dead 항목 검출).
-    #        `==` 아닌 `>=` 인 이유 — 한 pair 가 여러 라인에 등장하면 gf 가 pair 수를 초과할 수 있다(정상).
+    assert census(out, "undeclared") == 0, "AC-17: 실 wrapper new undeclared 0"
+    # G6 (AC-22 수렴 ratchet): 5 pair 전건 manifest 등재 완료 → baseline 0 pair + grandfathered==0 이
+    #   유지돼야 한다. baseline 로직 자체의 subtract non-vacuity 는 hermetic 케이스
+    #   (test_baseline_grandfather_hermetic — F-CR-005 의도된 결합 분리)가 결박하므로 여기선 무의미하지
+    #   않다. 신규 debt 는 baseline 재확장이 아니라 manifest 등재로 해소하는 것이 정석 경로(ADR-157).
+    assert os.path.isfile(REAL_BASELINE), "AC-17: baseline 파일 자체는 존재(digest tamper-evident 대상)"
     n_baseline = len(read_baseline_pairs(REAL_BASELINE))
-    assert n_baseline >= 1, "AC-17: 실 baseline 이 비어있지 않아야 subtract 결박이 non-vacuous"
-    assert census(out, "grandfathered") >= n_baseline, \
-        "AC-17: grandfathered(%d) ≥ baseline pair(%d) — 동결 pair 가 미관측 = baseline stale(재생성 필요)" \
-        % (census(out, "grandfathered"), n_baseline)
+    assert n_baseline == 0, \
+        "AC-17(G6): baseline 은 0 pair 여야 함(AC-22 수렴 후 ratchet) — got %d pair" % n_baseline
+    assert census(out, "grandfathered") == 0, \
+        "AC-17(G6): grandfathered==0 (수렴 유지), got %d" % census(out, "grandfathered")
 
 
-def test_ac17_nine_secret_reverse_index():
+def test_ac17_canonical_secret_reverse_index():
+    # G6 갱신: confluence-user-email canonical = ATLASSIAN_USER_EMAIL (2계열 수렴 — 구 CONFLUENCE_USER_EMAIL
+    #   은 accepted alias 로 강등, canonical 아님) + audit-pii-key(AUDIT_PII_KEY) 신규 등재.
     rc, out = run_scanner(SSOT_PY, REPO_ROOT, "--emit-reverse-index")
-    nine = ["ANTHROPIC_API_KEY", "CODEFORGE_CROSS_REPO_PAT", "ATLASSIAN_API_TOKEN",
-            "CONFLUENCE_BASE_URL", "CONFLUENCE_SPACE_ID", "CONFLUENCE_USER_EMAIL",
-            "DOCKER_HUB_TOKEN", "GITHUB_TOKEN", "SSH_KEY_PASSPHRASE"]
-    missing = [k for k in nine if ("canonical_env=" + k) not in out]
-    assert not missing, "AC-17: 9종 canonical secret 역색인 방출 누락 = %s" % missing
+    canonical = ["ANTHROPIC_API_KEY", "AUDIT_PII_KEY", "CODEFORGE_CROSS_REPO_PAT", "ATLASSIAN_API_TOKEN",
+                 "ATLASSIAN_USER_EMAIL", "CONFLUENCE_BASE_URL", "CONFLUENCE_SPACE_ID",
+                 "DOCKER_HUB_TOKEN", "GITHUB_TOKEN", "SSH_KEY_PASSPHRASE"]
+    missing = [k for k in canonical if ("canonical_env=" + k) not in out]
+    assert not missing, "AC-17: canonical secret 역색인 방출 누락 = %s" % missing
+    assert "canonical_env=CONFLUENCE_USER_EMAIL" not in out, \
+        "AC-17(G6): CONFLUENCE_USER_EMAIL 은 canonical 이 아니라 accepted alias 여야 함(2계열 수렴)"
 
 
 def test_ac17_mutation_no_secrets():
@@ -723,6 +770,67 @@ def test_ac17_mutation_no_secrets():
         # RED-flip: workflow secrets 스캔 제거 → 실 repo candidates 급감(<floor, <실측) = secrets load-bearing.
         assert mut_c < FLOOR and mut_c < base_c, \
             "AC-17 MK: no_secrets → candidates<%d & <%d, got %d" % (FLOOR, base_c, mut_c)
+
+
+# ─────────────────────── AC-22 DEC-3 2계열 canonical 수렴 (G6) ────────────────────
+
+def test_ac22_two_series_convergence_fixture_pair():
+    """discriminating pair: canonical 1 + accepted alias 선언 = 수렴(exit 0) / alias 누락 = 미수렴(exit 1).
+
+    동일 소비면(선언면 `_env:` ATLASSIAN_USER_EMAIL + 소비면 secrets.CONFLUENCE_USER_EMAIL)에 manifest 만
+    바꿔 대조 — alias 선언이 load-bearing 임을 fixture 로 증명(rename 0 = ADR-157 §결정5 무중단 조건).
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, PROJ_TWO_SERIES_CONVERGED, wf=WF_ALIAS_CONSUME, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 0, "AC-22: 2계열 양키 선언(canonical+alias) → 수렴 PASS(exit 0), got %d\n%s" % (rc, out)
+        assert census(out, "undeclared") == 0, "AC-22: 수렴 시 undeclared 0\n%s" % out
+        assert census(out, "candidates_scanned") == 2, \
+            "AC-22: 선언면+소비면 2 candidate (수렴이 census 를 깎지 않음), got %d" \
+            % census(out, "candidates_scanned")
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, PROJ_TWO_SERIES_UNCONVERGED, wf=WF_ALIAS_CONSUME, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 1, "AC-22: alias 누락 manifest → 미수렴 FLAG(exit 1), got %d\n%s" % (rc, out)
+        assert "env-key=CONFLUENCE_USER_EMAIL" in out, \
+            "AC-22: 미수렴 시 소비면 alias 가 UNDECLARED 로 표면화\n%s" % out
+        assert "env-key=ATLASSIAN_USER_EMAIL" not in out, \
+            "AC-22: canonical 자체는 선언돼 있어 undeclared 아님(판별 정밀)\n%s" % out
+
+
+def test_ac22_wrapper_live_convergence_zero_without_baseline():
+    """wrapper-live AC-22: baseline 제거 상태 스캔 = exit 0 + undeclared 0 + grandfathered 0.
+
+    "non-zero→zero 확증"의 zero 면 — 정정 전(舊 manifest)에는 같은 조건에서 undeclared=5(비영)였다
+    (G6 착수 시 firsthand 재현, PR 기록). 이제 5 pair 전건이 선언으로 분류돼 baseline subtract 없이도 0.
+    + 2계열/alias-gap/audit-pii-key 의 자원 매핑을 역색인으로 결박(양키 분류 확인).
+    """
+    rc, out = run_scanner(SSOT_PY, REPO_ROOT,
+                          "--baseline", os.path.join(REPO_ROOT, "docs", "__no-such-baseline__.yaml"),
+                          "--emit-reverse-index")
+    assert rc == 0, "AC-22: baseline 없이 실 wrapper → exit 0, got %d\n%s" % (rc, out)
+    assert census(out, "undeclared") == 0, "AC-22: undeclared 0 (선언 수렴)\n%s" % out
+    assert census(out, "grandfathered") == 0, "AC-22: grandfathered 0 (baseline subtract 미개입)\n%s" % out
+    # 2계열 양키 분류: confluence-user-email 자원 한 줄에 선언면(project.yaml)과 소비면(workflow) 동시 매핑.
+    mm = re.search(r"resource-id=confluence-user-email canonical_env=ATLASSIAN_USER_EMAIL "
+                   r"referenced_by=\[([^\]]*)\]", out)
+    assert mm, "AC-22: confluence-user-email 역색인 라인 부재(canonical=ATLASSIAN_USER_EMAIL)\n%s" % out
+    refs = mm.group(1)
+    assert ".claude/_overlay/project.yaml" in refs and ".github/workflows/confluence-forward-sync.yml" in refs, \
+        "AC-22: 2계열 참조면(선언면+소비면) 동일 자원 매핑 실패 — refs=%s" % refs
+    # alias-gap 해소: GH_TOKEN 스크립트 소비면이 github-token 자원으로 흡수.
+    mm = re.search(r"resource-id=github-token canonical_env=GITHUB_TOKEN referenced_by=\[([^\]]*)\]", out)
+    assert mm and "scripts/canary_auto_promote.py" in mm.group(1) \
+        and "scripts/lib/check_deferred_item_recovery.py" in mm.group(1), \
+        "AC-22: GH_TOKEN alias 소비면의 github-token 매핑 실패\n%s" % out
+    # audit-pii-key 신규 자원: .py 리터럴 + .sh passthrough 양 소비면 매핑.
+    mm = re.search(r"resource-id=audit-pii-key canonical_env=AUDIT_PII_KEY referenced_by=\[([^\]]*)\]", out)
+    assert mm and "scripts/lib/audit_trail_pii_redact.py" in mm.group(1) \
+        and "scripts/audit-trail-fetch.sh" in mm.group(1), \
+        "AC-22: AUDIT_PII_KEY 소비면(py+sh)의 audit-pii-key 매핑 실패\n%s" % out
+    # 미선언 잔존 0 의 역색인 대응면: unmapped 키 목록 자체가 방출되지 않아야 한다.
+    assert "unmapped-undeclared-keys" not in out, \
+        "AC-22: unmapped-undeclared-keys 방출 = 미해소 잔존 non-zero\n%s" % out
 
 
 # ─────────────────────── standalone runner ──────────────────────────────────────
@@ -749,7 +857,7 @@ def _main():
     print("-" * 75)
     print("PASS: %d  FAIL: %d" % (npass, nfail))
     if nfail == 0:
-        print("OK All %d cases pass — AC-5/6/7/8/10/11/17 discriminating + mutation-kill + born-hollow" % npass)
+        print("OK All %d cases pass — AC-5/6/7/8/10/11/17/22 discriminating + mutation-kill + born-hollow" % npass)
         return 0
     print("X %d case(s) failed" % nfail)
     return 1
