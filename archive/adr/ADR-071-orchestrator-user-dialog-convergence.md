@@ -1524,7 +1524,7 @@ controlled-path 의 scope 를 인접 개념과 명확히 분리한다:
 - **§결정 18 (session-swap reflex)** — anti-pattern 7종 enum 텍스트·정당 2-trigger 표 **무변경(본문 immutability)**. 본 §결정은 §18.1 상단에 1-line cross-ref pointer만 additive(§결정 5 → §결정 20 redirect pointer 선례 동형) — enum 재정의·member 추가·삭제 0.
 - **§결정 23 (요구사항 lane touchpoint)** — disjoint(요구사항 lane dialog frequency 축 ↔ session lifecycle 축). §결정 23 은 §결정 18 을 touch 하지 않고(§4.3 firsthand 확인), 본 §결정도 §결정 23 을 touch 하지 않음.
 
-### 24.8 sunset_justification 3축 (ADR-058 §결정 5, WEAKEN, §결정 18 첫 weaken)
+### 24.8 sunset_justification 4-key (ADR-058 §결정 5, WEAKEN, §결정 18 첫 weaken)
 
 본 Amendment 16 = **weaken-direction (부분 약화)** — anti-pattern 7종의 "무조건 발화 차단" → "handoff 동반 시 조건부 허용" = prohibition scope 축소. §결정 18 의 **첫 weaken-direction amendment**(Amendment 7 = 강화 `null` 이었음). Amendment 9/10 에 이은 third weaken-direction amendment. ADR-058 §결정 5 약화 evidence-gate 적용 → `sunset_justification` = **null 아닌 4-key evidence object** (frontmatter Amendment 16 SSOT와 동일):
 
