@@ -1533,6 +1533,16 @@ Stop / SubagentStop hook 이 plugin-deploy 후 간헐적으로 발화 중단될 
 
 ---
 
+### §2h.6 세션 전환 handoff reminder hook 자동 전파 (CFP-2742 Phase 2 / ADR-071 §결정 24)
+
+`hooks/session-swap-handoff-reminder` → `session-swap-handoff-reminder.py` — `/plugins install codeforge@mclayer` 만 하면 plugin-root `hooks/hooks.json` 의 `UserPromptSubmit` 6번째 entry 로 자동 활성 (별도 `.claude/settings.json` 등록·overlay 변경 불필요).
+
+- **동작**: 매 turn `additionalContext` 로 세션 전환(별도 세션 인계) 권유 시 자족(self-contained) handoff 프롬프트를 먼저 생성·동반하라는 controlled-path norm 을 무조건(unconditional) 주입 — handoff 6 필수요소(① 진행 Story/PR·Epic 번호 ② 완료 vs 남은 lane·단계 ③ worktree·브랜치 경로 ④ 기결정=재논의 금지 목록 ⑤ 이번 세션 gotcha ⑥ 다음 세션 첫 액션 1문) 요약 포함.
+- **tier**: advisory/priming — 절대 차단(block/deny) 안 함. python 부재 / 파싱 오류 / 예외 시 통과 (fail-safe, 사용자 입력 차단 0).
+- **정책 SSOT**: 본 hook 은 vehicle 일 뿐 — controlled-path 규범 원문·범위·advisory ceiling 한계는 [§7.6](#76-session-swap-controlled-path-상속-adr-071-결정-24) cross-ref anchor 참조 (재서술 금지).
+
+---
+
 ### §2i. 3-way version atomic 고정 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
 
 Consumer repo 에서 **codeforge version 을 고정** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.

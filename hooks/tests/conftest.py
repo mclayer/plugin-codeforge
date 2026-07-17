@@ -47,6 +47,15 @@ story_transition_autonomy_reminder = importlib.util.module_from_spec(_star_spec)
 _star_spec.loader.exec_module(story_transition_autonomy_reminder)
 sys.modules["story_transition_autonomy_reminder"] = story_transition_autonomy_reminder
 
+# session-swap-handoff-reminder.py 를 session_swap_handoff_reminder 모듈명으로 로드 (CFP-2742 Phase 2)
+_sshr_spec = importlib.util.spec_from_file_location(
+    "session_swap_handoff_reminder",
+    HOOKS_DIR / "session-swap-handoff-reminder.py",
+)
+session_swap_handoff_reminder = importlib.util.module_from_spec(_sshr_spec)
+_sshr_spec.loader.exec_module(session_swap_handoff_reminder)
+sys.modules["session_swap_handoff_reminder"] = session_swap_handoff_reminder
+
 # check_inline_write_gate.py (scripts/lib/) — CFP-2544 inline-write gate SSOT
 _REPO_ROOT = HOOKS_DIR.parent
 _ciwg_spec = importlib.util.spec_from_file_location(
