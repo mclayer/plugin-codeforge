@@ -9,8 +9,16 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
   `infra_resources:` block)가 선언한 자원 카탈로그(canonical_env + accepted/deprecated alias)와, repo 안
   실 참조면(workflow `secrets.<KEY>` + project.yaml `<lower>_env: <KEY>` + scripts 정적 env-key 리터럴)을
   대조한다. 미선언 표면(참조되나 manifest 미등재 = drift 원천)을 각 참조면에서 loud 검출하고, 선언되었으나
-  어디서도 참조되지 않는 자원(orphan = dead 선언)을 별도 tier 로 표면화한다. base scan 한정 —
-  cross-repo 대조(G5) · startup fail-closed(D2/G3)는 본 스캐너 정의역 밖(ADR-157 §결정4/§결정7(e)).
+  어디서도 참조되지 않는 자원(orphan = dead 선언)을 별도 tier 로 표면화한다. 이 base scan 은 repo-local 한정.
+  startup fail-closed(D2/G3)는 본 스캐너 정의역 밖(별도 슬라이스).
+
+★ cross-repo 대조 모드 (G5 — ADR-157 §결정4, `--cross-repo`): base scan 과 **disjoint 별도 모드**.
+  namespace 선언 자원(cross-repo 참조)의 foreign repo 참조면을 **pinned ref** 로 fetch 해 canonical_env
+  전파를 static-parse-only 대조한다. failure-mode 분리 — content-mismatch=fail-closed / token 부재=
+  degraded-FAIL / foreign transient(503/network/timeout)=fail-open+WARN+Issue / 403·404=resp.ok 후
+  fail-closed. 보안 1급(untrusted foreign content + read-WRITE PAT) — 상세 = run_cross_repo docstring.
+  주입가능 seam(테스트 stub, 실 네트워크 금지): env INFRA_CROSS_REPO_FETCH_ROOT(mock-repo fixture) /
+  INFRA_CROSS_REPO_ISSUE_SINK(Issue 발행 sink). base scan 은 여전히 repo-local(cross-repo 무소비).
 
 ★ live violation 대상 vs census inert (ADR-157 §결정9.1 / §결정9.2 — corpus 완전 열거):
   - LIVE(candidate, undeclared 판정 대상):
@@ -138,8 +146,9 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
 CLI 계약 (ADR-061 house style — 고정, self-test + workflow 소비):
   bash scripts/check-infra-resource-drift.sh [--repo-root DIR] [--manifest PATH] [--baseline PATH]
     [--promote-orphan] [--write-baseline] [--allow-baseline-growth --reason TEXT] [--emit-reverse-index]
+    [--cross-repo]
 
-Exit codes (ADR-060 §결정5 3-tier — verdict warning / census·substrate fail-closed):
+Exit codes — base scan (ADR-060 §결정5 3-tier — verdict warning / census·substrate fail-closed):
   0 = PASS (new undeclared 0; orphan warning-only unless --promote-orphan; census non-vacuous).
   1 = FLAG (≥1 NEW undeclared surface OR none-disguise hollow OR orphan present WITH --promote-orphan) — warning.
       + baseline growth 거부(--write-baseline 이 monotonic shrink 위반을 검출 = 작성자 조치 필요 finding).
@@ -155,18 +164,26 @@ Exit codes (ADR-060 §결정5 3-tier — verdict warning / census·substrate fai
       ※ 현 workflow 는 `continue-on-error: true` 라 오늘은 exit 3 도 PR 을 차단하지 못하고 surfacing 만
         된다(정직 표기 — "fail-closed" 는 스캐너 exit 계약 면의 사실이며, CI 차단력은 별개 축이다).
 
-ADR refs: ADR-157 §결정3/§결정6/§결정7/§결정8/§결정9 (carrier) / ADR-060 §결정5 (warning tier) /
+Exit codes — `--cross-repo` 모드 (G5 — ADR-157 §결정4 failure-mode 분리, base scan 과 disjoint):
+  0 = PASS (전파 확인 / vacuous(namespace 자원 0 = wrapper-self 정상) / transient-fail-open[Issue 발행]).
+  1 = fail-closed (content-mismatch drift = 타저장소 미전파 검출 / 403·404 hard-unavailable / ref-pin·
+      traversal·namespace-spoof 위반). foreign transient 은 여기 아님(fail-open).
+  3 = degraded-FAIL (CODEFORGE_CROSS_REPO_PAT 부재 = 우리측 misconfig — fail-open degrade 재사용 금지).
+
+ADR refs: ADR-157 §결정3/§결정4/§결정6/§결정7/§결정8/§결정9 (carrier) / ADR-060 §결정5 (warning tier) /
   ADR-061 §결정1 (Python SSOT + thin wrapper) / ADR-005 (byte-identical workflow pair) /
   ADR-119 (게이트=ground-truth, 오탐 저감) / ADR-127 (1 Story = 2 PR).
 """
 
 import argparse
+import base64
 import glob
 import hashlib
 import itertools
 import json
 import os
 import re
+import subprocess
 import sys
 
 # Windows cp949 인코딩 문제 회피: stdout/stderr 를 UTF-8 강제 (ADR-061 portability 답습).
@@ -214,6 +231,30 @@ _SELF_SOURCE_TOKENS = (
 
 DEFAULT_MANIFEST_REL = ".claude/_overlay/project.yaml"
 DEFAULT_BASELINE_REL = "docs/infra-resource-baseline.yaml"
+
+# ─────────────────────── cross-repo 대조 (G5 — ADR-157 §결정4) ───────────────────
+# read-WRITE PAT (실토큰 = classic repo+workflow, ADR-066 Amd5). D3 는 read-only 로 *사용*할 뿐
+#   (contents fetch only) — "read-only 토큰"이 아니다(ADR-157 §결정8 정직). Authorization = env-only.
+CROSS_REPO_TOKEN_ENV = "CODEFORGE_CROSS_REPO_PAT"
+# 주입가능 seam (테스트 stub — 실 네트워크 금지):
+#   INFRA_CROSS_REPO_FETCH_ROOT = local mock-repo fixture 디렉터리(가짜 저장소 트리). 미설정 = 실 gh api.
+#   INFRA_CROSS_REPO_ISSUE_SINK = transient fail-open 시 Issue 를 append 할 파일. 미설정 = 실 gh issue create.
+CROSS_REPO_FETCH_ROOT_ENV = "INFRA_CROSS_REPO_FETCH_ROOT"
+CROSS_REPO_ISSUE_SINK_ENV = "INFRA_CROSS_REPO_ISSUE_SINK"
+CROSS_REPO_FETCH_TIMEOUT = 30           # gh 호출 wall-clock bound (hang→transient fail-open, ADR-011 회피).
+CROSS_REPO_SCAN_CAP = 8000              # foreign content 라인 count bound (adversarial 입력 DoS 방어).
+# ref-pin: moving HEAD 금지 (idempotency + moving-target-red 방지, §결정4). 아래 심볼릭 ref 는 거부.
+_MOVING_REFS = frozenset(("main", "master", "head", "trunk", "develop", "default", "latest"))
+# namespace = fetch 대상 foreign owner/repo. allowlist(선언된 ns) + 형식 검증 = spoof/traversal 차단.
+_NS_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,64}/[A-Za-z0-9][A-Za-z0-9._-]{0,100}$")
+_CROSS_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,120}$")       # tag/SHA/branch-name shape
+_CROSS_PATH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$")      # foreign 파일 경로 (traversal 차단)
+_HTTP_CODE_RE = re.compile(r"HTTP[ /](\d{3})")                            # gh 오류 stderr 의 HTTP 코드 추출
+# self-redaction (§7.3) — GHA auto-mask 불충분 가정, PAT·자격증명이 로그에 새지 않게 선봉쇄.
+_GH_TOKEN_RE = re.compile(r"\bgh[pousr]_[A-Za-z0-9]{16,}\b")
+_KV_SECRET_RE = re.compile(r"(?i)\b(token|secret|password|passwd|pat|api[_-]?key|authorization|bearer)\b"
+                           r"(\s*[:=]\s*|\s+)\S+")
+_USERPASS_RE = re.compile(r"://[^/\s:@]+:[^/\s@]+@")
 
 # ─────────────────────── infra-signal surgical scope (§결정7(b) operationalization) ──
 # bounded 토큰(추출 시 이미 [A-Z][A-Z0-9_]{2,64} 로 길이 제한)에 anchored suffix 판정 — nested quantifier 0.
@@ -309,9 +350,12 @@ class Manifest:
 
     def __init__(self):
         self.present = False
-        # [{id, canonical_env, accepted[], deprecated[]}] — F-CR-003: `namespace` 는 파싱만 되고 어떤
-        #   verdict/출력도 읽지 않는 write-only dead field 였다(선언≠배선) → 파싱 제거. 소비처가 생기면
-        #   그 때 test 와 함께 추가한다(alias_to_canonical 을 같은 근거로 제거한 F-CR-006 선례 답습).
+        # [{id, canonical_env, accepted[], deprecated[], namespace, cross_repo_ref, cross_repo_path}] —
+        #   F-CR-003 이 `namespace` 를 write-only dead field 라 제거하며 "소비처가 생기면 그 때 test 와 함께
+        #   추가한다"고 명시했다. G5(cross-repo 대조, ADR-157 §결정4)가 그 소비처다 → namespace +
+        #   fetch 좌표(cross_repo_ref/cross_repo_path)를 **test 동반**(tests/scripts/test_infra-cross-repo-drift.*)
+        #   으로 재도입. base scan verdict 는 여전히 이 필드들을 무소비(scan_corpus/undeclared/orphan 는
+        #   canonical/alias 만 읽음) → base scan parity by construction (namespace 추가가 base 결과 무변).
         self.resources = []
         self.none_sentinel = False
         self.has_reason = False
@@ -439,7 +483,8 @@ def parse_manifest(path):
                     m.resources.append(cur_res)
                 cur_res = {"id": mm.group(1).strip().strip('"').strip("'"),
                            "canonical_env": None,
-                           "accepted": [], "deprecated": []}
+                           "accepted": [], "deprecated": [],
+                           "namespace": None, "cross_repo_ref": None, "cross_repo_path": None}
                 in_accepted = in_deprecated = False
                 continue
             if cur_res is None:
@@ -447,6 +492,22 @@ def parse_manifest(path):
             mm = re.match(r"^canonical_env:\s*(.+?)\s*$", stripped)
             if mm:
                 cur_res["canonical_env"] = mm.group(1).strip().strip('"').strip("'")
+                in_accepted = in_deprecated = False
+                continue
+            # cross-repo 좌표 (G5 소비처 — ADR-157 §결정4). base scan 무소비, run_cross_repo 만 읽음.
+            mm = re.match(r"^namespace:\s*(.+?)\s*$", stripped)
+            if mm:
+                cur_res["namespace"] = mm.group(1).strip().strip('"').strip("'")
+                in_accepted = in_deprecated = False
+                continue
+            mm = re.match(r"^cross_repo_ref:\s*(.+?)\s*$", stripped)
+            if mm:
+                cur_res["cross_repo_ref"] = mm.group(1).strip().strip('"').strip("'")
+                in_accepted = in_deprecated = False
+                continue
+            mm = re.match(r"^cross_repo_path:\s*(.+?)\s*$", stripped)
+            if mm:
+                cur_res["cross_repo_path"] = mm.group(1).strip().strip('"').strip("'")
                 in_accepted = in_deprecated = False
                 continue
             if re.match(r"^aliases:\s*$", stripped):
@@ -936,6 +997,269 @@ def _emit_reverse_index(live_surfaces, manifest):
           "스크립트 / cross-repo(G5) — honest-ceiling (ADR-157 §결정8)")
 
 
+# ─────────────────────── cross-repo drift 대조 (G5 — ADR-157 §결정4) ─────────────
+#   base scan(repo-local) 과 disjoint 별도 모드 — `--cross-repo` 진입 시 base scan 코드경로 미실행.
+#   미전파를 *수행*하지 않고 각 참조면에서 loud *검출*만 한다(green ≠ 전파 완료, §결정4).
+#   보안 1급 (untrusted foreign content ingest + read-WRITE PAT) — static-parse-only(fetch 콘텐츠
+#   실행/eval 절대 0) + secret self-redaction + fail-closed default + namespace allowlist(spoof 차단).
+
+def _redact(text):
+    """secret self-redaction (§7.3) — PAT·값·자격증명·`token=`·`://user:pass@` 마스킹.
+
+    GHA auto-mask 불충분 가정 하 선봉쇄. sha256 hex 등 정상 출력은 보존(gh 토큰 prefix / kv-secret /
+    userinfo 형태만 표적). Issue body·경고 메시지에 최종 통과.
+    """
+    if not text:
+        return text
+    text = _GH_TOKEN_RE.sub("<redacted-token>", text)
+    text = _KV_SECRET_RE.sub(r"\1=<redacted>", text)
+    text = _USERPASS_RE.sub("://<redacted>@", text)
+    return text
+
+
+def _fetch_mock(fetch_root, ns, path, ref):
+    """local mock-repo fixture(디렉터리 트리) fetch — 실 네트워크 0 (테스트 seam).
+
+    트리 구조: <fetch_root>/<ns>/<ref>/<path>  (ref 를 경로에 반영 = ref-pin 시연 — 다른 ref = 다른 트리).
+      sidecar <...>/<path>.status 존재 시 그 directive 로 status 위장(transient/forbidden/not_found).
+    return (status, content). status ∈ {'ok','transient','not_found','forbidden'}.
+    """
+    base = os.path.join(fetch_root, *ns.split("/"), *ref.split("/"))
+    content_path = os.path.join(base, *path.split("/"))
+    status_path = content_path + ".status"
+    if os.path.isfile(status_path):
+        try:
+            directive = open(status_path, encoding="utf-8", errors="replace").read().strip().lower()
+        except OSError:
+            return ("transient", None)
+        if directive in ("transient", "timeout", "network", "429", "500", "502", "503", "504"):
+            return ("transient", None)
+        if directive in ("forbidden", "401", "403"):
+            return ("forbidden", None)
+        return ("not_found", None)          # not_found/404/unknown = fail-closed 방향
+    if os.path.isfile(content_path):
+        physical = _read_physical(content_path)
+        return ("ok", "\n".join(physical) if physical is not None else "")
+    return ("not_found", None)
+
+
+def _fetch_gh(ns, path, ref, token):
+    """실 gh api fetch (consumer 채택-bound — wrapper-self 는 0 cross-repo 자원이라 dormant, honest-ceiling).
+
+    `gh api repos/<ns>/contents/<path>?ref=<ref>` static-parse-only. 토큰 = **env 전달**(argv 금지 —
+    process list 노출 회피). resp.ok 확인 후 판정(403/404 를 transient 와 구분 — §결정4). stderr/응답 본문
+    로그 미출력(secret masking). status classification: 5xx/429/network/timeout = transient(fail-open),
+    401/403 = forbidden, 404 = not_found, 나머지 = transient(보수적 fail-open).
+    """
+    endpoint = "repos/%s/contents/%s?ref=%s" % (ns, path, ref)
+    env = dict(os.environ)
+    env["GH_TOKEN"] = token                 # argv 금지 (§7.3) — 자격증명은 env-only
+    env.pop("GITHUB_TOKEN", None)           # ambient 토큰 override 방지 (선언 ns 만 fetch)
+    try:
+        proc = subprocess.run(
+            ["gh", "api", "-H", "Accept: application/vnd.github+json", endpoint],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+            timeout=CROSS_REPO_FETCH_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return ("transient", None)
+    except (OSError, ValueError):
+        # gh 미설치/실행불가 = transient(fail-open — 본 repo CI 상시 red 회피). honest-ceiling.
+        return ("transient", None)
+    if proc.returncode == 0:
+        try:
+            obj = json.loads(proc.stdout.decode("utf-8", "replace"))
+            raw = base64.b64decode(obj.get("content", "") or "").decode("utf-8", "replace")
+            return ("ok", raw)
+        except (ValueError, TypeError, json.JSONDecodeError):
+            return ("ok", "")               # resp.ok 이나 파싱 실패 = 빈 콘텐츠(미참조 = drift 방향)
+    code = None
+    mm = _HTTP_CODE_RE.search(proc.stderr.decode("utf-8", "replace"))
+    if mm:
+        code = int(mm.group(1))
+    if code == 404:
+        return ("not_found", None)
+    if code in (401, 403):
+        return ("forbidden", None)
+    # 5xx/429/네트워크(코드 미검출) = transient (fail-open). §결정4: 오직 transient 만 fail-open.
+    return ("transient", None)
+
+
+def _fetch_foreign(ns, path, ref, token, fetch_root):
+    """foreign repo content fetch dispatch — fetch_root(mock seam) 설정 시 local, 미설정 시 실 gh api."""
+    if fetch_root:
+        return _fetch_mock(fetch_root, ns, path, ref)
+    return _fetch_gh(ns, path, ref, token)
+
+
+def _foreign_references(content, resource):
+    """foreign content 가 자원의 canonical_env(또는 accepted/deprecated alias)를 토큰으로 참조하는가.
+
+    static-parse-only — bounded word-boundary 토큰 매치(실행/eval 0). foreign = untrusted 이므로 라인
+    count·length bound(DoS 방어). 미참조 = 미전파 = content-mismatch drift.
+    """
+    keys = set()
+    canon = resource.get("canonical_env")
+    if canon:
+        keys.add(canon)
+    keys.update(k for k in resource.get("accepted", []) if k)
+    keys.update(k for k in resource.get("deprecated", []) if k)
+    keys = {k for k in keys if k}
+    if not keys:
+        return False
+    pats = [re.compile(r"(?<![A-Za-z0-9_])" + re.escape(k) + r"(?![A-Za-z0-9_])") for k in keys]
+    for raw in itertools.islice(iter((content or "").split("\n")), CROSS_REPO_SCAN_CAP):
+        line = raw[:MAX_PHYSICAL_LINE_LEN]
+        for pat in pats:
+            if pat.search(line):
+                return True
+    return False
+
+
+def _publish_issue(issue_sink, title, body, token):
+    """transient fail-open 의 유일 audit trail (§결정4) — Issue 발행 seam.
+
+    issue_sink(테스트) 설정 시 JSON 레코드 append(실 네트워크 0). 미설정 시 실 gh issue create.
+    title/body = _redact 최종 통과(secret 미포함 보증). → published(bool).
+    """
+    title = _redact(title)
+    body = _redact(body)
+    if issue_sink:
+        try:
+            with open(issue_sink, "a", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps({"title": title, "body": body}, ensure_ascii=False) + "\n")
+            return True
+        except OSError:
+            return False
+    env = dict(os.environ)
+    if token:
+        env["GH_TOKEN"] = token
+    try:
+        proc = subprocess.run(
+            ["gh", "issue", "create", "--title", title, "--body", body,
+             "--label", "infra-cross-repo-transient"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+            timeout=CROSS_REPO_FETCH_TIMEOUT,
+        )
+        return proc.returncode == 0
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        return False
+
+
+def run_cross_repo(manifest):
+    """--cross-repo 모드 (ADR-157 §결정4) — base scan 과 disjoint 별도 exit 계약.
+
+    exit: 0 = PASS (전파확인 / vacuous(cross-repo 자원 0) / transient-fail-open)
+          1 = fail-closed (content-mismatch drift OR 403/404 hard-unavailable OR ref-pin/traversal/spoof 위반)
+          3 = degraded-FAIL (token 부재 = 우리측 misconfig — fail-open degrade 금지, main-path).
+    """
+    token = os.environ.get(CROSS_REPO_TOKEN_ENV, "").strip()
+    fetch_root = os.environ.get(CROSS_REPO_FETCH_ROOT_ENV, "").strip()
+    issue_sink = os.environ.get(CROSS_REPO_ISSUE_SINK_ENV, "").strip()
+
+    cross = [r for r in manifest.resources if (r.get("namespace") or "").strip()]
+
+    # vacuous — cross-repo 자원 0 (wrapper-self 정상 상태 — I-5 consumer 채택-bound, §결정7(e)).
+    #   base scan 의 born-hollow(계기 사망)와 다르다: cross-repo 미보유는 기대된 wrapper-self 상태다.
+    if not cross:
+        print("check-infra-resource-drift: CROSS-REPO PASS (vacuous) — namespace 선언 자원 0 "
+              "(cross-repo 대조 대상 부재 = consumer 채택-bound, ADR-157 §결정7(e) I-5). "
+              "wrapper-self 는 cross-repo 자원 미보유가 정상.")
+        return 0
+
+    # allowlist = 선언된 namespace 집합 (임의 repo fetch 금지 — spoof 차단, §결정4).
+    allowlist = {(r.get("namespace") or "").strip() for r in cross}
+
+    # token 부재 = degraded-FAIL (fail-open degrade 재사용 금지 — main-path, §결정4).
+    if not token:
+        print("::error::check-infra-resource-drift: CROSS-REPO DEGRADED-FAIL — %s secret 부재 "
+              "(cross-repo 대조 대상 %d — 우리측 misconfig; fail-open degrade 금지 §결정4). "
+              "token 설정 또는 cross-repo 자원 선언 제거 필요." % (CROSS_REPO_TOKEN_ENV, len(cross)))
+        return 3
+
+    drift = []        # content-mismatch → fail-closed
+    hard = []         # 403/404/ref-pin/traversal/spoof → fail-closed
+    transient = []    # 503/network/timeout → fail-open + WARN + Issue
+    propagated = []
+
+    for r in cross:
+        rid = r.get("id")
+        ns = (r.get("namespace") or "").strip()
+        ref = (r.get("cross_repo_ref") or "").strip()
+        path = (r.get("cross_repo_path") or "").strip()
+        canon = r.get("canonical_env") or "(none)"
+
+        # namespace 형식 + allowlist (spoof/traversal 차단 — 선언된 ns 만 fetch).
+        if ns not in allowlist or not _NS_RE.match(ns):
+            hard.append((rid, ns, "namespace 형식 위반/allowlist 미등재 (spoof)"))
+            print("::error::check-infra-resource-drift: CROSS-REPO HARD-FAIL — resource-id=%s "
+                  "namespace 형식 위반/미등재 → fetch 차단 (spoof, §결정4 allowlist)." % rid)
+            continue
+        # ref-pin: moving HEAD 금지 (idempotency + moving-target-red 방지, §결정4).
+        if not ref or ref.lower() in _MOVING_REFS or not _CROSS_REF_RE.match(ref):
+            hard.append((rid, ns, "cross_repo_ref 부재/moving-HEAD/형식위반 (ref-pin)"))
+            print("::error::check-infra-resource-drift: CROSS-REPO HARD-FAIL — resource-id=%s "
+                  "cross_repo_ref 미pin (moving HEAD 금지 — tag/SHA 필수, §결정4 ref-pin)." % rid)
+            continue
+        # path traversal 차단.
+        if not path or ".." in path or path.startswith("/") or not _CROSS_PATH_RE.match(path):
+            hard.append((rid, ns, "cross_repo_path 부재/traversal (경로 위반)"))
+            print("::error::check-infra-resource-drift: CROSS-REPO HARD-FAIL — resource-id=%s "
+                  "cross_repo_path 부재/traversal 위반 → fetch 차단." % rid)
+            continue
+
+        status, content = _fetch_foreign(ns, path, ref, token, fetch_root)
+        if status == "ok":
+            if _foreign_references(content, r):
+                propagated.append((rid, ns, canon))
+                print("check-infra-resource-drift: CROSS-REPO OK — resource-id=%s ns=%s ref=%s path=%s "
+                      "canonical_env=%s 전파 확인(참조 존재)." % (rid, ns, ref, path, canon))
+            else:
+                # content-mismatch = 타저장소 미전파 표면 검출 → fail-closed (transient 아님 — §결정4).
+                drift.append((rid, ns, canon, ref, path))
+                print("::error::check-infra-resource-drift: CROSS-REPO DRIFT (content-mismatch) — "
+                      "resource-id=%s ns=%s ref=%s path=%s canonical_env=%s 미참조 = 타저장소 미전파 "
+                      "(fail-closed, transient 로 분류 안 됨 §결정4)." % (rid, ns, ref, path, canon))
+        elif status == "transient":
+            # foreign transient(503/network/timeout) = fail-open + WARN + Issue (ADR-011 death 재현 방지 —
+            #   flaky 타repo 가 본 repo CI 상시 red 회피). Issue = fail-open 의 유일 audit trail (§결정4).
+            transient.append((rid, ns, canon))
+            title = "[infra-cross-repo] transient unavailable — %s (resource %s)" % (ns, rid)
+            body = ("cross-repo drift 대조 중 foreign repo transient unavailable "
+                    "(503/network/timeout) — fail-open 처리(본 repo CI 상시 red 회피, ADR-011 death 재현 "
+                    "방지). 수동 확인 필요.\nresource-id=%s namespace=%s ref=%s path=%s canonical_env=%s\n"
+                    "(이 Issue = fail-open 의 유일 audit trail — ADR-157 §결정4)."
+                    % (rid, ns, ref, path, canon))
+            published = _publish_issue(issue_sink, title, body, token)
+            print("::warning::check-infra-resource-drift: CROSS-REPO TRANSIENT (fail-open) — "
+                  "resource-id=%s ns=%s (foreign transient — WARN + Issue %s, §결정4)."
+                  % (rid, ns, "발행" if published else "발행실패(로그 잔존)"))
+        else:
+            # not_found(404)/forbidden(403/401) — resp.ok 확인 후 판정 → transient 와 구분해 fail-closed
+            #   (ref-disappear/auth 로 bypass 금지 — deterministic 이라 fail-open 아님, §결정4).
+            label = "404 not-found" if status == "not_found" else "403/401 forbidden"
+            hard.append((rid, ns, "foreign %s (deterministic — transient 아님)" % label))
+            print("::error::check-infra-resource-drift: CROSS-REPO HARD-FAIL — resource-id=%s ns=%s "
+                  "ref=%s path=%s foreign %s (deterministic — transient 와 구분, ref-disappear/auth "
+                  "bypass 금지 §결정4)." % (rid, ns, ref, path, label))
+
+    # census (anti-hollow observability — 관측 항상 방출).
+    print("check-infra-resource-drift: cross-repo census cross_resources=%d propagated=%d "
+          "content_mismatch=%d hard_unavailable=%d transient_failopen=%d (allowlist_ns=%d)"
+          % (len(cross), len(propagated), len(drift), len(hard), len(transient), len(allowlist)))
+
+    if drift or hard:
+        print("check-infra-resource-drift: CROSS-REPO FAIL-CLOSED — content_mismatch=%d hard=%d "
+              "(타저장소 미전파/판정불가 검출). honest-ceiling: 동적 키 구성 / 프록시 위장(socat) / "
+              "스캔 밖 표면(secret manager·수동 배포) 미검출 (ADR-157 §결정8, presence ≠ truth)."
+              % (len(drift), len(hard)))
+        return 1
+    print("check-infra-resource-drift: CROSS-REPO PASS — 전파 확인 %d, transient fail-open %d "
+          "(Issue audit trail). honest-ceiling: 동적 키 / 프록시 위장 / 스캔 밖 표면 미검출 "
+          "(ADR-157 §결정8, presence ≠ truth)." % (len(propagated), len(transient)))
+    return 0
+
+
 def main(argv):
     parser = argparse.ArgumentParser(
         prog="check_infra_resource_drift.py",
@@ -955,6 +1279,10 @@ def main(argv):
                         help="--allow-baseline-growth 사유 (baseline growth_reason 에 각인).")
     parser.add_argument("--emit-reverse-index", action="store_true",
                         help="D4 역색인을 stdout 으로 추가 방출 (비커밋 ephemeral).")
+    parser.add_argument("--cross-repo", action="store_true",
+                        help="cross-repo drift 대조 모드 (G5 — ADR-157 §결정4). base scan 과 disjoint — "
+                             "namespace 선언 자원의 foreign repo 참조면을 pinned ref 로 static-parse 대조. "
+                             "seam: env INFRA_CROSS_REPO_FETCH_ROOT(mock) / INFRA_CROSS_REPO_ISSUE_SINK(mock).")
     parser.add_argument("repo_root_pos", nargs="?", default=None, help=argparse.SUPPRESS)
     try:
         args = parser.parse_args(argv[1:])
@@ -978,6 +1306,10 @@ def main(argv):
     if manifest is None:
         print("::error::check-infra-resource-drift: manifest 파일 부재/unreadable — %s" % manifest_path)
         return 2
+
+    # ── G5 cross-repo 모드 (ADR-157 §결정4) — base scan 코드경로와 disjoint (아래 scan_corpus 미실행) ──
+    if args.cross_repo:
+        return run_cross_repo(manifest)
 
     live_surfaces, inert_surfaces, scanned_files, class_enumerated = scan_corpus(repo_root)
     candidates = len(live_surfaces)

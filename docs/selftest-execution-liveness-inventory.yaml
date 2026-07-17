@@ -517,3 +517,18 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "D2 startup fail-closed reference-impl + manifest schema validator self-test (AC-2 4-필수-필드 필드별 negative + AC-3 4계약[프로세스 env/exit-masking 금지/빈 값 reject/fail-closed default, exit 78 EX_CONFIG] + AC-9 allow-set parity[공유 파서 mutation → PARITY-BROKEN 트립] + AC-15 채택 3-way + AC-19 refimpl-enforced/unenforced 센티넬 판별[env -i, BUSINESS_OP_REACHED] + mutation RED-flip) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (consumer 제품 런타임 강제 = 채택-bounded I-5, wrapper-self 는 declarative-only 라 fixture falsify 만 — AC-4 honest-ceiling; cross-repo=G5 별도 슬라이스)."
+
+  # ── CFP-2700 (Epic #2700 G5 / ADR-157 §결정4) — cross-repo drift 대조(--cross-repo) discriminating self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 48 → 49 (신규 self-test enroll). G5 Phase 2 deliverable —
+  #   .sh 만 enroll (meta-gate 는 tests/scripts/*.sh 만 glob — 동반 .py 인 test_infra-cross-repo-drift.py
+  #   는 workflow 의 .py step 으로 실행, ac-traceability Hop3 AST 스타일, 인벤토리 대상 아님).
+  #   실행 채널 = .github/workflows/infra-resource-manifest-drift.yml 의 G5 전용 step (G2/G3 self-test 와
+  #   같은 workflow 의 별도 step — byte-identical template pair, non-required day-1 hard-fail).
+  - self_test: "tests/scripts/test_infra-cross-repo-drift.sh"
+    execution_channel: "workflow:infra-resource-manifest-drift.yml:infra-resource-manifest-drift"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "G5 cross-repo drift 대조(--cross-repo) self-test — fetch·Issue-발행 seam(INFRA_CROSS_REPO_FETCH_ROOT / INFRA_CROSS_REPO_ISSUE_SINK)을 local mock-repo fixture 로 stub(실 네트워크 0, hermetic). 지속-soak(G2 consumer)·DAST·real-render(§8.7) runtime 축 disjoint — 본 self-test 는 정적/mock 판별력 결박: 3-way(content-mismatch fail-closed/전파 PASS/token 부재 degraded-FAIL) + t1(transient fail-open+WARN+Issue 발행, 미발행 mutant=RED) + t2(content-mismatch ≠ transient 오분류 mutant=최중요 RED) + ref-pin(moving HEAD 거부/idempotent) + 403·404 fail-closed + namespace spoof + secret-masking(§7.3 PAT 값 미출력) + mutation RED-flip. ※ 인벤토리 관용 'DAST=G5'(ADR-136 §8.9 G5-DAST doc-lint)와 명칭 우연 일치이나 무관 — 여기 G5 = ADR-157 §결정4 cross-repo 슬라이스. 실 cross-repo 활성 = consumer 채택-bound(I-5), wrapper-self vacuous(namespace 자원 0). honest-ceiling: 동적 키 구성 / 프록시 위장(socat) / 스캔 밖 표면 미검출(§결정8), presence ≠ truth."
