@@ -124,23 +124,39 @@ tools: Read
 
 ## Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851)
 
-> normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only**.
+> normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) (+ 4번째 touchpoint·design-entry gate = [ADR-071 §결정 23](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) / [ADR-159](../../archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md)). 본 sub-section = **lookup mirror only**.
 
 **frequency vs richness 분리 invariant**: 좁히는 것은 말 거는 횟수·시점 (frequency / timing) 만 — **말할 때의 풍부함은 §결정 2(c) (3 줄 제약 거부 · 길이 자유 · 배경 포함) 그대로 보존** (ADR-058 §결정 5 약화 차단 근거).
 
-### 3 touchpoint closed enumeration
+### 4 touchpoint closed enumeration (3 공통 + 1 요구사항 lane-scoped — ADR-071 §결정 23)
 
 | touchpoint | 발화 사유 | scope |
 |---|---|---|
 | **(a) 결과-명세 확인** | 사용자 선언 결과 자체 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판) | `AskUserQuestion` 발화 (§결정 5 ask-trigger ① 요구 모호 + ③ rollback 비쌈 해당) |
 | **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가 | ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 |
 | **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 | ADR-039 inline whitelist 4번 entry (Status report) scope 안 |
+| **(d) 요구사항 intake declare 왕복** (요구사항 lane 한정 — ADR-071 §23.1 / [ADR-159](../../archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) 결정 2) | 매 요구사항 접수 시 이해한 배경·의도를 먼저 재진술 **제시** + 확인 왕복 시작 (자명해 보여도 생략 없음 — 에이전트 자기평가 제거) | **mandatory DECLARE ≠ mandatory ASK** (§23.2 STRENGTHEN frame). ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안. **요구사항 lane 한정 carve-out — 타 lane 일반화 금지** (§23.3) |
+
+**touchpoint (d) 운용 (ADR-071 §23.2 — 아래 3항이 §결정 20 ask-trigger 3종 한정과의 충돌을 원천 해소)**:
+
+- **DECLARE 패턴**: 이해한 배경·의도의 derived-default 재진술 + "이의 없으면 진행" 고지. trivial 최소형 = 재진술 1~3줄 + 열린 질문 0~1개 → **명시 답변 대기 없이 진행 가능**(사용자가 정정하면 반영). §결정 16 no-dialog-reflex derived-default 와 동형 — 발화하되 멈춰 묻지 않는다.
+- **ASK escalate 는 모호할 때만**: 요구가 모호(ask-trigger ① 해당)하면 그때 실제 `AskUserQuestion` 으로 escalate. 즉 (d) = "항상 declare + 모호할 때만 ask" 이지 "항상 ask" 아님. **ask-trigger enum member 추가 0** — §결정 20 본체 무변경.
+- **타 lane 무적용**: 설계·구현 등 타 lane 은 기존 3-touchpoint(a/b/c) + ask-trigger 3종 그대로.
+- **단일 예외 = 사용자 본인의 명시 skip 지시** (ADR-159 결정 2): 사용자가 "이번엔 확인 왕복 생략" 을 직접 지시하면 해당 1회 한정 우선하되 지시 verbatim 을 확정 기록에 남긴다. 판정 주체가 사용자이므로 "에이전트 자기평가 제거" 명제 무손상 — 에이전트 측 skip-offer 는 여전히 금지 (§결정 21 / ADR-127 §결정 4).
+
+**design-entry gate 확정 요청 = touchpoint (a) 성격 (ADR-071 §23.4 — 신규 touchpoint 신설 아님)**:
+
+- 요구사항리뷰 PASS 후·설계 진입 직전의 사용자 최종 확정 요청([ADR-159](../../archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) 결정 3, informed sign-off) = 기존 touchpoint **(a) 결과-명세 확인** 의 frequency 영역(설계 진입 경계) 적용. ask-trigger ①(요구 애매 잔량 해소) + ③(비가역·고비용 — 설계 = 첫 비가역 지점) 해당.
+- **§결정 22 정당 멈춤 carve-out (over-halt 오탐 차단)**: 사용자 최종 확정 대기 stop = ask-trigger 정당 stop (payload>0, [ADR-144](../../archive/adr/ADR-144-orchestrator-autonomy-stop-taxonomy.md) A1) → §결정 22 정당 멈춤 3종 carve-out 에 **명시 귀속**. §22.1 D2 transition-autonomy hook 이 "요구사항 → 설계 진입 지점" 을 over-halt(자명-진행 위반)로 **오탐하지 않는다**. in-session 전환 자율 진행(§결정 22)과 확정 대기는 disjoint — 확정 대기는 §결정 22 예외 carve-out 안. 정당 멈춤 3종 carve-out **verbatim 무변경**.
+- **advisory ceiling (정직 — ADR-159 결정 6)**: 확정 gate 의 기계 검증 = **확정 기록·규칙의 presence 까지**. 발화 touchpoint 명문화 = behavioral directive — turn-final hook 부재 platform 한계로 runtime 발화 시점 hard-block 불가(§20.5 / §22.6). **"기계 강제 100%" over-claim 금지** — rule/record presence 는 testable, user actually confirmed 는 NOT testable.
 
 그 외 진행·중간 결정·근거·중간 결과 = 산출물 channel (대화 turn 아님): Story file / change-plan / ADR / PR description / Issue comment / TodoWrite panel.
 
-**무약화 invariant** — 3 touchpoint 발화 turn 에도 모두 그대로 적용: Layer 1 preamble + Layer 2 declare (turn-shape edge 무변경) / §결정 2(c) richness. (DialogFidelityAgent 3-anchor spawn + §결정 14 incident append-rate measurement = CFP-2236 sunset — ADR-071 Amendment 9.)
+**무약화 invariant** — 4 touchpoint 발화 turn 에도 모두 그대로 적용: Layer 1 preamble + Layer 2 declare (turn-shape edge 무변경) / §결정 2(c) richness. (DialogFidelityAgent 3-anchor spawn + §결정 14 incident append-rate measurement = CFP-2236 sunset — ADR-071 Amendment 9.)
 
-4번째 touchpoint 신설 = **별도 CFP 의무** (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (§결정 15 = behavioral directive only).
+touchpoint 신설 = **별도 CFP 의무** (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (§결정 15 = behavioral directive only).
+
+> **ratchet 첫 정규 실사용 기록 (CFP-2725 / ADR-071 Amendment 15 §결정 23)**: 위 4번째 touchpoint **(d) 요구사항 intake declare 왕복** 은 이 확장 규약을 **우회하지 않고 정규 충족**해 등재됐다 — (1) ADR-064 §결정 7 top-down ratchet **강화 방향**(touchpoint 추가 = 발화 frequency 증가) (2) 별도 CFP 신설 = **CFP-2725** (3) Story §1 사용자 explicit 승인 = CFP-2725 §1 사용자 확정 선호 4항("발동 기준 = 항상" verbatim). ADR-071 §15.5 가 사전에 마련해 둔 정규 확장 경로의 **첫 실사용**이며 closed-enum 우회가 아니다. 5번째 touchpoint 신설 시에도 본 3조건 그대로 재적용 (규약 무손상). ADR-058 §결정 5 정합 = `sunset_justification: null` (강화 방향 additive — 약화 evidence-gate 비대상).
 
 > **완료보고 정직성 + 제안 필요성 게이트 (ADR-119 §결정 9 cross-ref)**: touchpoint (c) 최종 완료 보고 = 작업 상태("완료"/"잔여") 실측(Read/Grep) 후에만 단언, 추측성 backlog 패딩 금지. 보고 중 follow-up 제안 발의 = 필요성 3문 게이트 선통과 의무 (발견 ≠ 필요).
 

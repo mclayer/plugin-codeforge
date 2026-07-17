@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "4.16"
+contract_version: "4.17"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write)
@@ -27,6 +27,8 @@ related_adrs:
   - ADR-064  # 결정 13 root-cause 사다리 3rd rung (문제정의 오류 → 요구사항 lane 재진입) SSOT (CFP-2350 Amendment 13). CFP-2358 v4.13 → v4.14 MINOR bump — runtime-failure 변종 falsification verdict 의 비대칭 규칙 (file:line invariant-violation finding 1개 > N attestation, Popper) 가 본 §결정 13 재진입 규율 3 (비대칭 결정규칙) 의 verdict-level realization. verify_status: verified — worktree Read ADR-064 "결정 13 — 문제정의 오류 rung (Trace 9, 3rd rung)". ADR-064 본문 0건 변경 (본 PS1 = Phase 2 mechanical wire carrier — §결정 13 Amendment 결정 2 가 review-verdict-v4 runtime-failure verdict enum 을 Phase 2 별 carrier defer 로 명시)
   - ADR-125  # 요구사항리뷰 lane Amendment 2 runtime-failure 변종 (internal-invariant ground-truth falsification 축, CFP-2350) SSOT. CFP-2358 v4.13 → v4.14 MINOR bump — lane enum 무변경 (requirements-review 재사용) + runtime-failure 변종의 비대칭 verdict 규칙 본문 명시. verify_status: verified — worktree Read ADR-125 "Amendment 2 (2026-06-19) — CFP-2350 — runtime-failure 변종 신설". ADR-125 본문 0건 변경 (Amendment 2 §4 enforcement = review-verdict-v4 enum 을 Phase 2 별 carrier defer 로 명시 — 본 PS1 = 그 Phase 2 carrier)
   - ADR-068  # I-8 standing invariant-surface invariant (Amendment 6 — CFP-2351) SSOT. CFP-2358 v4.13 → v4.14 MINOR bump — findings[].type 13번째 literal "invariant-surface-not-extended" (impl PR 이 새 long-lived mutable structure 추가 + docs/system-invariants.md 미확장 detect) + 8번째 verdict-level optional bool field invariant_surface_extension_self_check_passed carrier. ADR-068 Amendment 6 가 I-8 verdict-level field + finding type literal binding 을 "S4 (#2350) 위임" 으로 명시 defer — 본 PS1 (#2358) = 그 S4 single-owner carrier. verify_status: verified — worktree Read ADR-068 "Amendment 6 — CFP-2351 I-8 standing invariant-surface invariant 신설" + "review-verdict-v4 binding = S4 위임". ADR-068 본문 0건 변경
+  - ADR-125  # Amendment 3 (CFP-2725) — 요구사항리뷰 lane 내부 시스템 적합성 disjoint 축 (결정 B). v4.16 → v4.17 MINOR — findings[].type 14번째 literal "internal-fitness" (요구사항 산출물 ↔ 현 아키텍처 구현가능성·과거 ADR·Story 결정 충돌·중복, repo-내부 문서 Read 대조·WebSearch 강제 아님·declarative-only null-valid). RequirementsReviewPL primary emit. severity_overrides = Phase 2 defer (P-tier 미규정 — base 룰 위임). ADR-125 Amendment 3 §4 가 review-verdict category literal 을 "Phase 2 defer" 로 명시 — 본 §20 = 그 Phase 2 carrier. ADR-125 본문 0건 변경
+  - ADR-159  # Amendment 3 짝 (CFP-2725) — 요구사항 lane enrichment + design-entry 확정 gate SSOT. internal-fitness 축 = 요구사항리뷰 내부적합 검증 (외부사실 축과 disjoint 공존, ADR-124 §결정 6 무약화)
 authors:
   - CFP-137 (2026-05-09) — review-verdict v3 → v4 MAJOR bump (Sonnet decider 영역 정식 제거 + worker_dialog_rounds 추가)
   - CFP-391 (2026-05-11) — findings[].anchor_id optional field 추가 (debate-protocol-v1 stable identifier SSOT 정합, FIX-1)
@@ -168,7 +170,7 @@ review_verdict:
     - severity: P0 | P1 | P2
       category: <packet category_enum 중 하나>
       type: <finding_type_enum>      # NEW v4.3 (optional) — finding 유형 literal
-                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift" | "confluence-mirror-link-missing" | "living-architecture-not-updated" | "chief-author-crossref-inconsistency" | "invariant-violation" | "invariant-surface-not-extended"
+                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift" | "confluence-mirror-link-missing" | "living-architecture-not-updated" | "chief-author-crossref-inconsistency" | "invariant-violation" | "invariant-surface-not-extended" | "internal-fitness"
                                      # "boundary-completeness": ADR-068 §결정 2 dual-binding — I-1~I-4 위반
                                      # "mechanical_sync_required": ADR-065 mechanical 7-item 위반 (v4.2)
                                      # "dimensional-empirical-gap": ADR-068 Amendment 1 §결정 1 I-5 위반 — quantitative parameter empirical-source annotation 누락 (v4.4)
@@ -181,6 +183,7 @@ review_verdict:
                                      # "chief-author-crossref-inconsistency": ADR-068 Amendment 5 §결정 1 I-7 위반 — chief author 가 §3/§7/§10/§11 작성 시 다른 ADR 의 SSOT 값 (scope list / count / enum / 권한 범위) 인용·단언 시 대상 ADR direct Read-verify 누락 또는 인용 값 ↔ 대상 ADR 실제 SSOT mismatch detect (v4.12). I-4 wording SSOT (identifier 표기) 와 disjoint axis (별 verdict field boolean chief_author_crossref_consistency_self_check_passed). evidence = cross-adr-claim-verify-annotation 3-key (cited_adr+§결정 / cited_value / verify_status) + 대상 ADR direct Read 대조 결과. DesignReviewPL + CodeReviewPL emit
                                      # "invariant-violation": ADR-064 §결정 13 재진입 규율 3 (비대칭 결정규칙) — runtime-failure lane (요구사항리뷰 internal-invariant 변종, ADR-125 Amendment 2) falsification 에서 file:line 으로 짚힌 위반 invariant (증상을 설명하는 bound/lifetime/ordering invariant 위반) (v4.14). evidence = file:line + 위반 invariant 명세 (실패 경로 long-lived mutable 구조의 bound/lifetime/ordering ground-truth). 비대칭 규칙 적용 — 본 finding 1개가 N개 'verified OK' attestation 을 이긴다 (Popper, §18 참조). RequirementsReviewPL primary emit (runtime-failure 변종), DesignReviewPL + CodeReviewPL cross-validate
                                      # "invariant-surface-not-extended": ADR-068 I-8 Amendment 6 위반 — impl PR 이 새 long-lived mutable structure 추가 (또는 기존 구조 bound/lifetime/ordering invariant 변경) 하고 docs/system-invariants.md 색인 row 부재/미갱신 detect (v4.14). 별 verdict field boolean invariant_surface_extension_self_check_passed (CFP-2351 declare → S4 #2350 위임분, 본 CFP-2358 Phase 2 carrier). evidence = 신규/변경 long-lived mutable structure 7-key (name+location / kind / bound / lifetime / ordering / 코드 보존 지점 / accumulation·lifetime-class? Y/N) + docs/system-invariants.md 색인 부재 ground truth. CodeReviewPL primary emit (impl PR), DesignReviewPL cross-validate (Change Plan §3/§5/§11 ↔ standing surface 정합)
+                                     # "internal-fitness": ADR-125 Amendment 3 결정 B 위반 — 요구사항 산출물이 현 아키텍처 구현가능성·과거 ADR·Story 결정과 충돌·중복 (repo-내부 문서 Read 대조, WebSearch 강제 아님 — 외부사실 축과 tool-disjoint) (v4.17). 요구사항리뷰 4번째 disjoint 축 (외부사실 / internal-invariant Amd2 / 일반 내부적합). declarative-only null-valid — 대조 설계문서·과거결정 없는 신규 영역 = 자연 N/A, 적합 이슈 0건 = 정상 PASS (억지 결함 조작 금지, born-red 방지). RequirementsReviewPL primary emit. severity = base 룰 위임 (ADR-125 Amd3 severity_overrides Phase 2 defer — P-tier 미규정)
                                      # "general": 일반 finding (default, 미제공 시 동일 의미)
       file: <path>
       line: <int>
@@ -840,3 +843,33 @@ runtime-failure lane (요구사항리뷰 internal-invariant 변종, ADR-125 Amen
 ### 19.5 Changelog
 
 - v4.16 (2026-07-10, CFP-2597): `peer_verdicts` verdict-level optional array field 신설 (dual-peer 완료 falsifiability marker). ADR-044 Amendment 6 §결정 12 carrier. v4.15 `peer_degrade.peer_count` (int 자기단언) 보강 (대체 아님) — 각 entry 5-key (form: file-path-reference / target / verify_status = ADR-068 I-6 3-key + worker + worker_recommendation content-binding). check-verification-floor.sh 축③ (peer-completion falsifiability, check-lane-evidence.sh 축③ 와 별개) 가 pl_recommendation:PASS ∧ NOT honest-single-peer-degrade 시 peer_verdicts[] ≥1 entry ∧ target FS 실재+non-empty 독립 stat. 8 verdict-level bool + worker_dialog_rounds (int) + peer_degrade (object) 와 disjoint — verdict-level array field. non-version-gated (anti-evasion). CFP-2471 (peer_degrade object) pattern 답습. ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.15 consumer 가 array 부재 = augmentation 없음으로 해석). 정직한 한계 = 위조비용 상향+audit trail (위조방지 게이트 아님), warning-tier=정직 상한.
+
+## 20. internal-fitness finding type (v4.17 — ADR-125 Amendment 3 결정 B / ADR-159 / CFP-2725)
+
+본 v4.17 = CFP-2725 Phase 2 wrapper wire — ADR-125 Amendment 3 §4 가 `review-verdict-v4.md` 의 internal-fitness category literal 을 "Phase 2 defer" 로 명시한 mechanical carrier (Phase 1 = declarative only). 요구사항리뷰 lane 의 **내부 시스템 적합성 축**(외부사실 축과 disjoint 공존, ADR-124 §결정 6 무약화)을 findings[].type 에 배선한다. (verify_status: verified — worktree Read ADR-125 "Amendment 3 결정 B — §결정 6 scope 확장: 외부사실 only → 외부사실 + 내부 시스템 적합성 (4번째 disjoint 축)" + "review-verdict category literal ... Phase 2 defer" / ADR-159 "결정 4 terminal confirm act". ADR-125 / ADR-159 본문 0건 변경.)
+
+### 20.1 findings[].type 1 신규 literal (closed-enum 13 → 14, additive only)
+
+| literal | 영역 | 위반 정의 | primary emit lane | severity |
+|---|---|---|---|---|
+| `internal-fitness` | internal-fitness (요구사항리뷰 4번째 disjoint 축) | 요구사항 산출물이 현 아키텍처 구현가능성·과거 ADR·Story 결정과 충돌·중복 (repo-내부 문서 Read 대조, **WebSearch 강제 아님** — 외부사실 축과 tool-disjoint). **declarative-only null-valid** — 대조 설계문서·과거결정 없는 신규 영역 = 자연 N/A, 적합 이슈 0건 = 정상 PASS (억지 결함 조작 금지, born-red 방지). ADR-125 Amendment 3 결정 B | RequirementsReviewPL (ADR-125 Amendment 3) | base 룰 위임 (Amd3 severity_overrides Phase 2 defer — P-tier 미규정) |
+
+### 20.2 검사연극 비충돌 / disjoint (born-broken 방지)
+
+- **repo-내부 문서 Read 기반 (WebSearch 강제 아님)**: internal-fitness = 설계문서(ADR·Change Plan)·과거 Story·ADR 의 실제 Read 대조. 외부사실 축 도구(WebSearch)와 **tool-disjoint** (ADR-125 Amendment 3 §2). ADR-124/125 검사연극 금지 원문 = "내부-only 결론에 외부 웹조사 강제" 만 금지 — 내부문서 Read 로 내부정합 검증은 그 대상 아님.
+- **declarative-only null-valid**: 적합 이슈 0건 = 정상 PASS — 강제 발굴·억지 결함 조작 금지 (ADR-125 Amendment 3 §2 / ADR-119 §결정 8 동형).
+- **disjoint 2차 (generator ≠ verifier)**: 작성측 Feasibility(§4.2)/Continuity(§4.3) 자가분석(단계②)과 disjoint 한 리뷰측 dual-peer 독립 재검증(단계③). 외부사실 축 + internal-invariant 축(Amd2, `invariant-violation`) 과 공존 disjoint — lane enum 무변경 (`requirements-review` 재사용).
+
+### 20.3 Producer / Consumer 책무
+
+**Producer 책무 (RequirementsReviewPL)**:
+- 요구사항 산출물 ↔ 현 아키텍처·과거 ADR·Story 대조 시 충돌·중복 detect 시 `findings[].type: "internal-fitness"` emit (repo-내부 문서 Read 근거).
+- 적합 이슈 0건 = null-valid → finding 미emit (정상 PASS — 억지 발굴 금지).
+
+**Consumer 책무 (Orchestrator)**:
+- `internal-fitness` finding 수신 시: Story §10 FIX Ledger row append → 요구사항 lane 재진입 또는 산출물 정정 의뢰.
+- 미제공 (v4.16 이전 producer) 수신 시: 무시 — backward-compat.
+
+### 20.4 Changelog
+
+- v4.17 (2026-07-18, CFP-2725): `findings[].type` enum 에 `internal-fitness` (14번째) literal 신설 (closed-enum 13 → 14 ratchet, additive only). ADR-125 Amendment 3 결정 B (요구사항리뷰 내부 시스템 적합성 4번째 disjoint 축) + ADR-159 (design-entry 확정 gate SSOT) 의 Phase 2 mechanical wire carrier — ADR-125 Amendment 3 §4 가 "review-verdict category literal ... Phase 2 defer" 로 명시한 binding. lane enum 무변경 (requirements-review 재사용, 외부사실 축과 disjoint 공존, ADR-124 §결정 6 무약화). severity_overrides = Phase 2 defer (P-tier 미규정 — base 룰 위임, 임의 P-tier 발명 금지). declarative-only null-valid (적합 이슈 0건 = 정상 PASS, born-red 방지). ADR-008 §결정 2 'enum literal 추가' MINOR bump 정합. additive only backward-compat invariant (기존 v4.16 consumer 가 신규 literal 무시 가능). §18.1 (v4.14 "closed-enum 11 → 13") 은 frozen 역사 기록 — 본 §20 이 새 소절로 13 → 14 를 기록 (파일 §18/§19 소절-per-change 관례 답습, §18.1 표 무수정).

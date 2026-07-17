@@ -81,6 +81,37 @@ anchor: <Story KEY / commit / PR 번호 — 식별자만, 절대경로 금지>
 - 내부 식별자(ADR/CFP/계약명)는 평문 한 줄 풀이 동반(CLAUDE.md 대화 원칙).
 - anchor = **식별자만**(절대경로·transcript dump 금지 → deny-scan 차단).
 
+### 1.1 최종 확정 payload (요구사항 design-entry gate — [ADR-159](../../archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) 결정 3/4)
+
+요구사항리뷰 PASS 후·설계 진입 직전의 **사용자 최종 확정**(design-entry gate)을 원격으로 물을 때의 payload 형태. **closed-option(확정/정정) 으로 표현**하므로 §8 `parse-answer.sh` 기존 파서를 그대로 재사용한다(파서 개조 0 — 신규 단계 없음, §1 compose 의 한 형태).
+
+```
+결정 fork: <fork-id>-signoff        # 예: CFP-2725-signoff (audit 키)
+질문: 아래 요구 명세로 설계에 진입해도 될지 최종 확정 요청.
+확정 대상 요약:
+  why(의도): <확정된 배경·의도 1~2줄>
+  scope: <무엇을 하고 무엇을 안 하는지 1~2줄>
+  재편 요구: <능동 발굴·확장된 요건 포함 요약 — 원문 그대로 vs 확장분 구분>
+미해결 질문 잔량: <0건 | 명시 defer 목록 N건: (1) … (2) …>
+옵션:
+  1) 최종 확정
+  2) 정정 (요건 수정 후 재확정)
+영향도: 설계 = 첫 비가역 지점 — 확정 후 §1-7 실질 변경은 delta 재확정 필요.
+anchor: <Story KEY — 식별자만, 절대경로 금지>
+```
+
+- **informed sign-off packet 필수 2요소 (Story AC-12 / ADR-159 결정 3)**: (a) **확정 대상 요약**(why + scope + **능동 발굴·확장된 요건 포함** 재편 요구 요약) + (b) **미해결 질문 잔량**(0건 또는 명시 defer 목록). **잔량 은폐 상태의 확정 = 무효** — trivial 최소형에서도 "0건" 명시 생략 불가(vacuous confirm 회피).
+- **routing 규율**:
+  - **열린 질문은 세션 전용** — Jira 채널은 **closed-option 전용**(§8 파서 한계). 확정 packet 의 미해결 질문 잔량은 *목록 고지*까지만 Jira 로 나가고, 그 질문 자체의 해소 왕복은 세션에서 한다.
+  - **확정 자체는 Jira 원격 허용** — 사용자 세션 부재 + `decision_channel` 활성 시 **Jira 원격 확정 = 세션 확정과 동등 유효**(ADR-159 결정 4 / Story AC-17).
+  - **무응답 = 단계형 재알림만, 자동확정 절대 금지** — 상세 = **§11 타임아웃 재알림** 그대로 적용(cross-ref only, 본 절 재선언 없음). timeout = 재알림 trigger 일 뿐.
+- **terminal event 표시 (ADR-077 Amendment 1 — trigger origin taxonomy 확장)**:
+  - **옵션 1(최종 확정) 채택** = 순수 확정(내용 무변경) → 신규 trigger origin **`user-final-confirmation-driven`** = **terminal event → 재조사 fan-out 미발동**(요구사항리뷰 통과분 유효 유지, 설계 진입).
+  - **옵션 2(정정) 채택** = 내용 있는 clarification → `user-answer-driven` origin = **재조사 경로**(무조건 fan-out + 요구사항리뷰 rewind 후 재확정). 모호 시 default = 수정 동반 측(안전 방향).
+  - 채택 origin 을 §9 audit 에 함께 기록한다(`origin=user-final-confirmation-driven | user-answer-driven`).
+- **양채널 mirror (SSOT 서열 — ADR-159 결정 4)**: 확정 발화 verbatim 은 **Story file §5.5 = primary**, **Jira mirror = best-effort 보조**(Jira 결손 ≠ 확정 무효). 세션에서 확정을 받았으면 §6 mirror 절차를 그대로 탄다(cross-ref — 중복 절차 없음). 원격(Jira) 확정이면 §7 poll 채택분을 Story file §5.5 에 verbatim 기록한다.
+- **advisory ceiling (정직 라벨 — ADR-159 결정 6)**: 본 절이 보장하는 것은 **확정 기록·규칙의 presence** 까지다. §7 poll(d) author 비신뢰(§A1-3)와 동일 근거로 단일 사용자 환경에서 "사용자 발화 vs Orchestrator 기록" 을 채널이 구분하지 못하므로, **"기계 강제 100%" over-claim 금지** — rule/record presence 는 testable, user actually confirmed 는 NOT testable.
+
 ---
 
 ## 2. deny-scan — 송신 전 hard-block (MUST, A1-2)
