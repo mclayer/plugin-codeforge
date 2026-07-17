@@ -148,8 +148,13 @@ MUTATIONS = {
     ),
     # ref-pin: moving HEAD 거부 무력화 → moving-target 수용(idempotency 파손, moving-red 유발 가능).
     "refpin_off": (
-        "        if not ref or ref.lower() in _MOVING_REFS or not _CROSS_REF_RE.match(ref):",
+        "        if not ref or ref.lower() in _MOVING_REFS or \"..\" in ref or not _CROSS_REF_RE.match(ref):",
         "        if not ref:  # MUTANT-refpin-off",
+    ),
+    # non-SHA WARN emit 무력화 → non-SHA ref 인데 WARN 미방출 + nonsha_warn=0 (mutation-kill anchor).
+    "nonsha_warn_off": (
+        "        if not _SHA_REF_RE.match(ref):",
+        "        if False:  # MUTANT-nonsha-warn-off",
     ),
 }
 
@@ -309,6 +314,50 @@ def test_refpin_idempotent():
         assert out1 == out2, "ref-pin idempotent: pinned ref 2-run stdout byte-identical 아님"
 
 
+# ─────────────────────── non-SHA ref = WARN (§결정8 (viii), F-CR-003) ─────────────
+
+# 40-hex SHA (non-moving, _SHA_REF_RE 매치) — WARN 미방출 discrimination 축.
+SHA_REF = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+
+
+def test_refpin_nonsha_warn():
+    """non-SHA·non-moving ref(staging) → 수용(exit 0) + NON-SHA WARN + census nonsha_warn=1."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_repo(tmp, _manifest(ref="staging"))          # non-SHA, non-moving branch
+        froot = os.path.join(tmp, "_mock")
+        make_mock_repo(froot, ref="staging", content=FOREIGN_PROPAGATED)
+        rc, out = run_cross(SSOT_PY, tmp, token="tkn", fetch_root=froot)
+        assert rc == 0, "non-SHA ref(staging) → 수용(WARN) exit 0, got %d\n%s" % (rc, out)
+        assert "CROSS-REPO NON-SHA REF" in out and "비-SHA ref" in out, out
+        assert "nonsha_warn=1" in out, out
+        assert "propagated=1" in out, "non-SHA 여도 대조는 진행돼 전파 확인\n%s" % out
+
+
+def test_refpin_sha_no_warn():
+    """40-hex SHA-pin ref → propagated PASS(exit 0) + WARN 미방출 (discrimination)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_repo(tmp, _manifest(ref=SHA_REF))
+        froot = os.path.join(tmp, "_mock")
+        make_mock_repo(froot, ref=SHA_REF, content=FOREIGN_PROPAGATED)
+        rc, out = run_cross(SSOT_PY, tmp, token="tkn", fetch_root=froot)
+        assert rc == 0, "SHA-pin ref → PASS exit 0, got %d\n%s" % (rc, out)
+        assert "propagated=1" in out, out
+        assert "NON-SHA REF" not in out and "nonsha_warn=0" in out, \
+            "SHA-pin 은 WARN 미방출이어야 함(discrimination)\n%s" % out
+
+
+def test_refpin_mutation_nonsha_warn_off():
+    """MK nonsha_warn_off: WARN emit 무력화 → non-SHA ref 인데 WARN 소실 + nonsha_warn=0 (RED-flip)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        make_repo(tmp, _manifest(ref="staging"))
+        froot = os.path.join(tmp, "_mock")
+        make_mock_repo(froot, ref="staging", content=FOREIGN_PROPAGATED)
+        mut = make_mutant(tmp, "nonsha_warn_off")
+        rc, out = run_cross(mut, tmp, token="tkn", fetch_root=froot)
+        assert "CROSS-REPO NON-SHA REF" not in out and "nonsha_warn=0" in out, \
+            "(nonsha_warn_off) → WARN 소실 + nonsha_warn=0 이어야 kill 성립\n%s" % out
+
+
 # ─────────────────────── 403/404 = fail-closed (transient 아님) ──────────────────
 
 def test_404_hardfail_not_transient():
@@ -338,7 +387,8 @@ def test_403_hardfail_not_transient():
 
 def test_namespace_spoof_hardfail():
     with tempfile.TemporaryDirectory() as tmp:
-        # namespace 가 owner/repo shape 아님 (스킴/traversal 류) → allowlist·형식 위반 hard-fail.
+        # namespace 가 owner/repo shape 아님(../evil = traversal) → _NS_RE anchored 첫 문자에서 hard-fail.
+        #   (F-CR-002: dead allowlist 제거 후 실 차단은 _NS_RE shape/traversal — substring "namespace 형식 위반" 유지).
         make_repo(tmp, _manifest(ns="../evil"))
         froot = os.path.join(tmp, "_mock")
         make_mock_repo(froot, ns="../evil", content=FOREIGN_PROPAGATED)
@@ -379,6 +429,38 @@ def test_secret_masking_no_pat_leak():
         make_mock_repo(froot, status=None, content=FOREIGN_MISMATCH)
         rc2, out2 = run_cross(SSOT_PY, tmp, token=SENTINEL_TOKEN, fetch_root=froot)
         assert SENTINEL_TOKEN not in out2, "§7.3: drift 경로 stdout PAT 누출\n%s" % out2
+
+
+# ─────────────────────── redact 새 form (§7.3 보강 — fine-grained PAT / Bearer) ───
+
+def _load_ssot_module():
+    """SSOT 모듈을 직접 import — `_redact` 를 unit 수준으로 구동(subprocess 경로는 값 미출력이라 무구동)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_infra_resource_drift", SSOT_PY)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_redact_new_forms_masked():
+    """fine-grained PAT(github_pat_…) + Authorization: Bearer <t> + classic + userpass = 값 미출력(§7.3)."""
+    mod = _load_ssot_module()
+    fg_pat = "github_pat_11ABCDEFG0abcdefghij1234567890"
+    bearer_secret = "s3cr3tBearerTokenValue0123456789xyz"
+    classic = SENTINEL_TOKEN
+    userpass_secret = "p4ssw0rdInUserInfo123"
+    samples = {
+        "fine-grained": ("config token=%s trailing" % fg_pat, fg_pat),
+        "bearer": ("Authorization: Bearer %s" % bearer_secret, bearer_secret),
+        "classic": ("using %s here" % classic, classic),
+        "userpass": ("https://user:%s@host/x" % userpass_secret, userpass_secret),
+    }
+    for name, (raw, secret) in samples.items():
+        red = mod._redact(raw)
+        assert secret not in red, "redact(%s): 값 누출 → %r" % (name, red)
+    # over-redaction 회귀 방지 — 비-secret hex digest(키워드 아님)는 보존.
+    benign = "digest=" + "a" * 64
+    assert ("a" * 64) in mod._redact(benign), "정상 hex digest 과도 redact: %r" % mod._redact(benign)
 
 
 # ─────────────────────── standalone runner ──────────────────────────────────────

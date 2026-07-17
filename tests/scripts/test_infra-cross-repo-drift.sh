@@ -102,8 +102,11 @@ elif kind == "issue_publish_off":
 elif kind == "token_check_off":
     s2 = s.replace("    if not token:", "    if False:  # MUTANT", 1)
 elif kind == "refpin_off":
-    s2 = s.replace("        if not ref or ref.lower() in _MOVING_REFS or not _CROSS_REF_RE.match(ref):",
+    s2 = s.replace("        if not ref or ref.lower() in _MOVING_REFS or \"..\" in ref or not _CROSS_REF_RE.match(ref):",
                    "        if not ref:  # MUTANT", 1)
+elif kind == "nonsha_warn_off":
+    s2 = s.replace("        if not _SHA_REF_RE.match(ref):",
+                   "        if False:  # MUTANT", 1)
 else:
     s2 = s
 assert s2 != s, "anchor drift kind=%s" % kind
@@ -222,6 +225,31 @@ fi
 rm -rf "$_t"
 echo
 
+# ── non-SHA ref = WARN (§결정8 (viii), F-CR-003) ──
+echo "── non-SHA ref: staging → 수용(exit 0)+WARN+nonsha_warn=1 / SHA → WARN 미방출 / MK nonsha_warn_off ──"
+SHA_REF="a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"
+_t=$(mktemp -d); _mk_repo "$_t" "staging"; _mk_mock "$_t/_mock" "staging" content "$FOREIGN_PROPAGATED"
+_o=$(_run "$SSOT_PY" "$_t" tkn "$_t/_mock" -); _e=$?
+_ok=1
+[ "$_e" -eq 0 ] || _ok=0
+case "$_o" in *"CROSS-REPO NON-SHA REF"*) : ;; *) _ok=0;; esac
+case "$_o" in *"nonsha_warn=1"*) : ;; *) _ok=0;; esac
+case "$_o" in *"propagated=1"*) : ;; *) _ok=0;; esac
+if [ "$_ok" -eq 1 ]; then echo "OK PASS: non-SHA(staging) → 수용 exit 0 + WARN + nonsha_warn=1"; PASS=$((PASS+1));
+else echo "X FAIL: non-SHA(staging) — exit=$_e"; echo "  $_o"; FAIL=$((FAIL+1)); fi
+_mkmutant nonsha_warn_off "$_t/mutant.py"
+_o=$(_run "$_t/mutant.py" "$_t" tkn "$_t/_mock" -); _e=$?
+# RED-flip: WARN emit 무력화 → non-SHA ref 인데 WARN 소실 + nonsha_warn=0.
+_assert "MK nonsha_warn_off → WARN 소실 + nonsha_warn=0 (RED-flip)" "$_e" 0 "$_o" "nonsha_warn=0" "CROSS-REPO NON-SHA REF"
+rm -rf "$_t"
+
+_t=$(mktemp -d); _mk_repo "$_t" "$SHA_REF"; _mk_mock "$_t/_mock" "$SHA_REF" content "$FOREIGN_PROPAGATED"
+_o=$(_run "$SSOT_PY" "$_t" tkn "$_t/_mock" -); _e=$?
+# SHA-pin discrimination: WARN 미방출 + nonsha_warn=0.
+_assert "SHA-pin ref → PASS exit 0 + WARN 미방출 (discrimination)" "$_e" 0 "$_o" "nonsha_warn=0" "CROSS-REPO NON-SHA REF"
+rm -rf "$_t"
+echo
+
 # ── 403/404 = resp.ok 후 fail-closed (transient 아님) + namespace spoof ──
 echo "── 403/404 fail-closed (transient 아님) + namespace spoof hard-fail ──"
 _t=$(mktemp -d); _mk_repo "$_t" "$REF"; _mk_mock "$_t/_mock" "$REF" status "not_found"; _sink="$_t/issues.jsonl"
@@ -272,6 +300,27 @@ else echo "X FAIL: secret-masking — sentinel 누출 (out 또는 sink)"; echo "
 rm -rf "$_t"
 echo
 
+# ── redact 새 form (§7.3 보강 — fine-grained PAT / Bearer / classic) unit 구동 ──
+echo "── redact 새 form: github_pat_… / Authorization: Bearer … / classic ghp_… 값 미출력 ──"
+_redact_out=$(python3 - "$SSOT_PY" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("cird", sys.argv[1])
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+samples = {
+    "fine-grained": ("config token=github_pat_11ABCDEFG0abcdefghij1234567890 x", "github_pat_11ABCDEFG0abcdefghij1234567890"),
+    "bearer": ("Authorization: Bearer s3cr3tBearerTokenValue0123456789xyz", "s3cr3tBearerTokenValue0123456789xyz"),
+    "classic": ("using ghp_SEKRETsentinelVALUE0123456789abcd here", "ghp_SEKRETsentinelVALUE0123456789abcd"),
+}
+leak = [n for n, (raw, sec) in samples.items() if sec in mod._redact(raw)]
+print("LEAK" if leak else "CLEAN", ",".join(leak))
+PY
+)
+case "$_redact_out" in
+  CLEAN*) echo "OK PASS: redact 새 form (github_pat/Bearer/classic) 값 미출력(§7.3)"; PASS=$((PASS+1));;
+  *) echo "X FAIL: redact 새 form 누출 — $_redact_out"; FAIL=$((FAIL+1));;
+esac
+echo
+
 # ── vacuous (namespace 자원 0 = wrapper-self 정상) ──
 echo "── vacuous: namespace 자원 0 → PASS exit 0 (I-5 consumer 채택-bound) ──"
 _t=$(mktemp -d); _mk_repo "$_t" "$REF" 0
@@ -286,7 +335,7 @@ echo "════════════════════════�
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
 if [ "$FAIL" -eq 0 ]; then
-  echo "OK All $PASS cases pass — 3-way(AC-21) + t1/t2 normative + ref-pin(idempotent/moving-HEAD) + 403/404 + spoof + secret-masking + vacuous, mutation-kill 결박"
+  echo "OK All $PASS cases pass — 3-way(AC-21) + t1/t2 normative + ref-pin(idempotent/moving-HEAD/non-SHA WARN) + 403/404 + spoof(_NS_RE) + secret-masking(+새 form) + vacuous, mutation-kill 결박"
   exit 0
 else
   echo "X $FAIL case(s) failed"
