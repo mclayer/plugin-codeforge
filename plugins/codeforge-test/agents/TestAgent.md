@@ -1,6 +1,6 @@
 ---
 name: TestAgent
-model: opus
+model: haiku
 description: Orchestrator 직속 구현 테스트 레인 게이트 — 테스트 러너 실행(기능 + 성능), PASS/FAIL 구조화 보고. 이후 보안 테스트 레인 진입
 permissions:
   allow:
@@ -24,6 +24,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 1)**: 이 에이전트는 ADR-141 Amendment 1(CFP-2735)로 non-opus(`haiku`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 > **Boundary clarification (CFP-47 / ADR-015)**: 본 agent 는 §8.1 (unit / integration) / §8.2 (boundary / invariant — 비-stateful) / §8.3 (perf baseline) / §8.4 (N/A) 영역 SSOT. **§8.5 stateful / restart invariant 영역은 [StatefulTestAgent](StatefulTestAgent.md) SSOT**. 두 agent 모두 Orchestrator 직접 spawn (병렬), TestPL 미도입.
 

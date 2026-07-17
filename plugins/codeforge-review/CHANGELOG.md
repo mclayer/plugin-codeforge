@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.28.0 — 2026-07-18
+
+### Added (CFP-2735 — ADR-141 Amendment 1: CodexReviewAgent opus→haiku carve-out + self-refusal guard, MINOR)
+
+[CFP-2735] ADR-141 Amendment 1 — 외부위임·기계 워커 7종 opus→haiku carve-out. 본 plugin 의 **CodexReviewAgent** frontmatter `model: opus`→`model: haiku` + subagent self-refusal guard(#846) 1줄 배치(A1-3 canonical subagent-facing). agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## 1.22.0 — 2026-07-10
 
 ### Added (CFP-2597 — peer-completion falsifiability (verification-floor 축③) + review-verdict-v4 v4.16, MINOR)

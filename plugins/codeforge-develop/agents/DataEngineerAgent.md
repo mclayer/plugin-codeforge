@@ -1,6 +1,6 @@
 ---
 name: DataEngineerAgent
-model: opus
+model: haiku
 role: dev
 description: 데이터 파이프라인 구현 담당 — 수집·저장·조회 레이어 (어댑터/포트/스키마)
 permissions:
@@ -22,6 +22,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 1)**: 이 에이전트는 ADR-141 Amendment 1(CFP-2735)로 non-opus(`haiku`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 DeveloperPLAgent 산하에서 **데이터 파이프라인**을 전담한다. ArchitectAgent 변경 계획서의 데이터 계층 지시를 그대로 구현한다 (설계 금지).
 
