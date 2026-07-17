@@ -2563,20 +2563,26 @@ integration_test:
 **주입 방법**: consumer 가 자기 인프라 자원을 2-plane 으로 선언한다. **필드 스키마 SSOT = [`project-config-schema.md` `infra_resources` 섹션](project-config-schema.md)** (본 가이드는 참조만 — 필드 목록 재인코딩 아님). 동작 예시 = [`examples/webapp-minimal/.claude/_overlay/project.yaml`](../examples/webapp-minimal/.claude/_overlay/project.yaml) (compose 의 `DATABASE_URL`/`REDIS_URL` 를 자원으로 승격한 시연):
 
 ```yaml
-# .claude/_overlay/project.yaml — webapp 예시(발췌)
+# .claude/_overlay/project.yaml — webapp 예시(발췌 — 실 파일과 정합, examples/webapp-minimal 정본)
 infra_resources:
   resources:                              # plane A — 자원 카탈로그(id 단위, env 키 아님)
     - id: app-database
       canonical_env: DATABASE_URL         # 자원당 정확히 1개(INV-4)
       aliases:
         accepted: []                      # 별칭 없으면 빈 집합 명시(4 필수 필드 표현 — 누락 ≠ 빈 집합)
+    - id: app-redis
+      canonical_env: REDIS_URL            # compose `web` 이 소비하는 Redis 연결
+      aliases:
+        accepted: []
   execution_units:                        # plane B — 실행단위 → required 자원(resource-id 만 참조)
     web:
-      required: [app-database]
+      required: [app-database, app-redis]
       resource_modes:
         app-database: required            # required=미설정 시 부팅 거부 / optional_degradable=degrade+WARN
+        app-redis: required
   startup_validation:                     # D2 채택 선언(AC-15)
-    adopted: true                         # web 프로세스 startup 에 reference impl 채택 여부(false 시 reason 필수)
+    adopted: false                        # 데모 템플릿(실 배포 런타임 부재) — adopted:false 시 reason 필수
+    reason: "webapp-minimal = 데모 템플릿(실 배포 런타임 부재) — 실 consumer 는 web startup 에 reference impl 채택 후 adopted: true"
 ```
 
 - **`startup_validation.adopted`** (D2 채택): `true` = 실행단위가 부팅 시 reference impl(`scripts/lib/infra_startup_validator.py`, 4계약)로 required 자원 대조 — 미설정 required = 첫 business 동작 이전 부팅 거부(fail-closed, exit 78). `adopted: false` 는 **`reason` 필수**(미채택 + 사유부재 = FAIL — silent 미채택 금지). 미채택 consumer 미강제(I-5 채택-bound)는 honest-ceiling 로 정직 공개된다.

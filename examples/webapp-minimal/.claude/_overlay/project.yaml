@@ -51,7 +51,7 @@ infra_resources:
         accepted: []
   # plane B — 실행단위 → required 자원(resource-id 만 참조, env 키 재기재 금지 = drift 원천 차단)
   execution_units:
-    web:                                   # compose `web` 서비스(db·redis 에 depends_on service_healthy)
+    web:                                   # compose `web` 서비스(depends_on: db=service_healthy / redis=service_started; redis required mode 근거 = web 이 REDIS_URL 를 부팅 필수 소비)
       required: [app-database, app-redis]
       resource_modes:
         app-database: required             # 미설정 시 부팅 거부(fail-closed) — DB 없이 web 무동작

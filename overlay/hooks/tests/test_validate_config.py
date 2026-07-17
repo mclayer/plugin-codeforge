@@ -509,6 +509,59 @@ class TestInfraResourcesManifest:
         errs2 = vc.validate(data2)
         assert any("infra_resources.startup_validation.adoptedd" in e for e in errs2), errs2
 
+    # -------------------------------------------------------------------------
+    # 값-타입 축 회귀잠금 (G4 FIX iter2 — Codex F2)
+    # bare builtin `list` type_check 는 validate() 에서 predicate 가 아닌 생성자로 호출돼:
+    #   scalar/None → list(v) uncaught TypeError 크래시 (exit 1 traceback, 정상 exit 4 아님)
+    #   str        → list("x") truthy → silent pass (shape gate 무력화, fail-open)
+    #   []         → list([]) falsy → false-positive 거부 (유효 빈 list 를 오거부)
+    # → isinstance predicate 로 정정. 아래는 세 클래스 전부 크래시 없이 정상 error/valid path.
+    # -------------------------------------------------------------------------
+
+    def test_infra_resources_resources_scalar_int_rejected_no_crash(self):
+        """resources: 5 (int) → 크래시 없이 error (이전 bare list: list(5) TypeError 크래시)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = 5
+        data["infra_resources"] = infra
+        errs = vc.validate(data)  # 크래시 시 여기서 raise → 테스트 error 로 표면화
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_none_rejected_no_crash(self):
+        """resources: None (빈 `resources:`) → 크래시 없이 error (이전 list(None) TypeError 크래시)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = None
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_string_rejected_no_silent_pass(self):
+        """resources: "notalist" (str) → error (이전 list("notalist") truthy → silent pass = 회귀 방지 핵심)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = "notalist"
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resources" in e for e in errs), errs
+
+    def test_infra_resources_resources_empty_list_accepted(self):
+        """resources: [] (빈 list) → error 없음 (유효 — 이전 list([]) falsy → false-reject 였음)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resources"] = []
+        data["infra_resources"] = infra
+        assert vc.validate(data) == []
+
+    def test_infra_resources_execution_unit_non_mapping_value_rejected(self):
+        """execution_units 값이 mapping 아니면(예: str) reject — 값-형태 강제(동일 silent-pass 클래스 폐쇄)."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["execution_units"] = {"web": "notadict"}
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.execution_units" in e for e in errs), errs
+
 
 # -----------------------------------------------------------------------------
 # CFP-2419 Phase 2 — repo_topology 책임 배치 토폴로지 검증

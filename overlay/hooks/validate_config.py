@@ -103,6 +103,19 @@ def _is_list_of_str_or_empty(v: Any) -> bool:
     return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
 
 
+def _is_mapping_of_mappings(v: Any) -> bool:
+    """dict whose every value is also a dict — 자식키는 자유(OPEN_MAPPING)이나 값은 mapping 형태.
+
+    infra_resources.execution_units 용 — 동적 unit *이름*은 OPEN_MAPPING 으로 자유 허용하되,
+    각 unit 값의 *형태*(required[]/resource_modes{})는 mapping 이어야 함을 강제한다.
+    unit 값이 str/scalar/list 면 malformed (silent-pass 클래스 폐쇄 — bare `dict` type_check 시
+    isinstance(v, dict) 만 봐 자식 값 형태를 안 봄).
+    깊은 semantic(required[] 원소 존재·resource-id 유효성 등)은 D1 소관
+    (scripts/lib/check_infra_manifest_schema.py) — 여기선 값 mapping-ness 만.
+    """
+    return isinstance(v, dict) and all(isinstance(u, dict) for u in v.values())
+
+
 def _is_per_doc_type_override(v: Any) -> bool:
     """atlassian.confluence.per_doc_type_override — OPEN MAPPING.
 
@@ -300,8 +313,11 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # 깊은 의미검증(id/canonical_env 필수·자원 커버리지)은 dedicated validator 소관
     # (scripts/lib/check_infra_manifest_schema.py D1 + D3 scanner) — 여기선 2-plane 구조 shape 만.
     ("infra_resources", False, dict, "infra_resources section (mapping), optional — CFP-2700/ADR-157 2-plane manifest"),
-    ("infra_resources.resources", False, list, "infra_resources.resources (list of resource dicts: id/canonical_env/aliases), optional"),
-    ("infra_resources.execution_units", False, dict, "infra_resources.execution_units (mapping: unit-name → required[]/resource_modes{}), optional — 동적 unit 키 (OPEN_MAPPING)"),
+    # resources = list predicate (bare builtin `list` 은 validate() 에서 predicate 가 아닌 생성자
+    # 로 호출돼 scalar/None 크래시·str silent-pass·[] false-reject 를 유발 — G4 FIX iter2).
+    ("infra_resources.resources", False, lambda v: isinstance(v, list), "infra_resources.resources (list of resource dicts: id/canonical_env/aliases), optional"),
+    # execution_units = OPEN_MAPPING(동적 unit 이름 자유) + 값-형태(각 unit 값이 mapping) 강제.
+    ("infra_resources.execution_units", False, _is_mapping_of_mappings, "infra_resources.execution_units (mapping: unit-name → required[]/resource_modes{} mapping), optional — 동적 unit 키 (OPEN_MAPPING), 각 unit 값은 mapping"),
     ("infra_resources.startup_validation", False, dict, "infra_resources.startup_validation section (mapping), optional — D2 채택 선언"),
     ("infra_resources.startup_validation.adopted", False, lambda v: isinstance(v, bool), "infra_resources.startup_validation.adopted (boolean), optional"),
     ("infra_resources.startup_validation.reason", False, _is_str, "infra_resources.startup_validation.reason (string, adopted=false 시 사유), optional"),
