@@ -422,5 +422,101 @@ def test_inv6_build_reminder_unit_six_elements_and_self_containment():
     _assert_all_six_elements_and_self_containment(msg, label="build-unit")
 
 
+# ============================================================ FX-⑨ non-dict/oversized raw fallback (F-CR-2742-2)
+
+
+@pytest.mark.parametrize(
+    "label,stdin_text",
+    [
+        ("json-list", "[1,2]"),
+        ("json-int", "42"),
+    ],
+)
+def test_read_input_valid_nondict_json_raw_fallback(label, stdin_text, monkeypatch):
+    """F-CR-2742-2 (discriminating): 유효하지만 non-dict JSON(list/int) → raw fallback.
+
+    isinstance(data, dict) 가드 제거 mutant 는 data.get(...) 에서 AttributeError 로
+    falsify (list/int 은 .get 미보유) → 가드 제거 mutant kill. 기존 TC(malformed-only)는
+    이 경로를 못 밟아 mutant 생존했음.
+    """
+    _set_stdin(monkeypatch, stdin_text)
+    assert sshr._read_input() == stdin_text, (
+        f"{label}: non-dict JSON 이 raw fallback 되지 않음 (isinstance 가드 회귀)"
+    )
+
+
+def test_read_input_oversized_bounded_raw_fallback(monkeypatch):
+    """F-CR-2742-2 (discriminating): >1 MiB 입력 → read(1<<20) bounded + raw fallback.
+
+    non-JSON oversized 는 JSONDecodeError → raw 반환. raw 는 정확히 1 MiB 로 bounded
+    (read(1 << 20)) — read-bound 제거/확대 mutant 는 len != 1 MiB 로 falsify.
+    """
+    big = "x" * ((1 << 20) + 5000)  # >1 MiB
+    _set_stdin(monkeypatch, big)
+    result = sshr._read_input()
+    assert len(result) == (1 << 20), f"read bound 위반: len={len(result)}"
+    assert result == big[: (1 << 20)], "bounded raw fallback 내용 불일치"
+
+
+@pytest.mark.parametrize(
+    "label,stdin_text",
+    [
+        ("json-list", "[1,2]"),
+        ("json-int", "42"),
+    ],
+)
+def test_nondict_main_emits_exit0(label, stdin_text, monkeypatch, capsys):
+    """F-CR-2742-2: non-dict 입력도 main() unconditional emit + exit0 (fail-open).
+
+    _read_input 이 raw fallback 해도 main 은 정상 JSON emit + exit 0 (INV-1/INV-2 확장 커버).
+    """
+    _set_stdin(monkeypatch, stdin_text)
+    rc = sshr.main()
+    captured = capsys.readouterr()
+    assert rc == 0, f"{label}: exit0 위반"
+    obj = json.loads(captured.out)
+    assert obj["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit", (
+        f"{label}: hookEventName 오기"
+    )
+
+
+def test_oversized_main_emits_exit0(monkeypatch, capsys):
+    """F-CR-2742-2: >1 MiB 입력도 main() unconditional emit + exit0 (bounded read, fail-open).
+
+    big 문자열은 함수 내부 생성 — parametrize 값으로 두면 Windows PYTEST_CURRENT_TEST
+    env var 32767 char 한계 위반(nodeid 팽창) 회피.
+    """
+    big = "x" * ((1 << 20) + 5000)  # >1 MiB
+    _set_stdin(monkeypatch, big)
+    rc = sshr.main()
+    captured = capsys.readouterr()
+    assert rc == 0, "oversized: exit0 위반"
+    obj = json.loads(captured.out)
+    assert obj["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit", (
+        "oversized: hookEventName 오기"
+    )
+
+
+# ============================================================ FX-⑩ ensure_ascii=False 한글 리터럴 (F-CX-2742C-2)
+
+
+def test_emit_ensure_ascii_false_korean_literal_in_raw_stdout(monkeypatch, capsys):
+    r"""F-CX-2742C-2 (discriminating): raw stdout(json.loads 전)에 한글이 escape 안 된 리터럴로 present.
+
+    기존 TC 는 전부 json.loads 후 검사(decode-agnostic)라 ensure_ascii=False→True mutant 을
+    못 잡는다(56 TC 전부 생존). raw stdout 에 한글 리터럴 present + \uXXXX escape 부재를 직접
+    assert → ensure_ascii=True mutant(한글→세...) 를 실제 kill. (_emit line ensure_ascii=False 앵커)
+    """
+    _set_stdin(monkeypatch, '{"prompt":"무엇이든"}')
+    sshr.main()
+    raw_out = capsys.readouterr().out
+    assert "세션 전환" in raw_out, (
+        "raw stdout 에 한글 리터럴 '세션 전환' 부재 (ensure_ascii=True escape 회귀)"
+    )
+    assert "\\uc138" not in raw_out, (
+        "한글이 \\uXXXX 로 escape 됨 (ensure_ascii=True mutant 생존)"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
