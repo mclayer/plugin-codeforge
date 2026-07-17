@@ -1322,7 +1322,7 @@ closed enum — 4번째 trigger 추가 = ADR-073 Amendment 강화 방향만 (ADR
 # Step 1 — title-based search 의무 (memory rule 6, CFP-953) — label-based search 만 = 위반
 gh issue list --search "<keyword>" --state all --json number,title,labels,closedAt
 # Step 2 — Epic state poll (memory rule 7, CFP-946) — 5+ min 경과 session state cache 무조건 stale 가정
-gh issue view <epic_number> --json state,closedAt,closedBy,labels
+gh issue view <epic_number> --json state,body
 # Step 3 — HEAD compare (mid-flight race 차단) — CURRENT_HEAD direct verify 재고정
 CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)
 gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commits[].sha'
