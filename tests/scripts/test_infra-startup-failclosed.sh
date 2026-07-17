@@ -84,7 +84,23 @@ schema_case() {
   _judge "$name" "$eexit" "$etok" "$ftok"
 }
 
+# env -i hermetic 실행 helper (자원 키 RAW_NAS_URL 등 ambient 상속 0 보증 — F-CDX-003 + AC-19 동형).
+#   python 구동 필수 키만 재주입: Linux CI 는 PATH 로 충분, Windows(Git Bash)는 python 런처가
+#   SYSTEMROOT/LOCALAPPDATA 등을 요구해 존재 시만 승계(자원 키가 아니므로 self-containment 무손상).
+_envi() {
+  local keep=(PATH="$PATH" PYTHONIOENCODING=utf-8)
+  local k
+  for k in SYSTEMROOT SystemRoot LOCALAPPDATA APPDATA USERPROFILE PATHEXT TEMP TMP TMPDIR; do
+    if [ -n "$(eval "printf '%s' \"\${$k:-}\"")" ]; then
+      keep+=("$k=$(eval "printf '%s' \"\${$k}\"")")
+    fi
+  done
+  env -i "${keep[@]}" "$@"
+}
+
 # validator_case <name> <expected_exit> <expect> <forbid> <extra-env KEY=V ...> -- <args...>
+#   ★ env -i hermetic (F-CDX-003): 헤더 "env -i 실행 표면" 계약 이행 — 자원 키 ambient 유입 0.
+#   case-specific env(KEY=V)는 keep-list 뒤에 붙어 후행 assignment 우선으로 override 된다.
 validator_case() {
   local name="$1" eexit="$2" etok="$3" ftok="$4"
   shift 4
@@ -92,7 +108,7 @@ validator_case() {
   while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do envs+=("$1"); shift; done
   shift  # --
   CASE_EXIT=0
-  CASE_OUT=$(env "${envs[@]}" python3 "$VALIDATOR_PY" "$@" 2>&1) || CASE_EXIT=$?
+  CASE_OUT=$(_envi "${envs[@]}" python3 "$VALIDATOR_PY" "$@" 2>&1) || CASE_EXIT=$?
   _judge "$name" "$eexit" "$etok" "$ftok"
 }
 
@@ -259,19 +275,7 @@ rm -rf "$_a15_tmp"
 echo
 
 echo "── AC-19 discriminating fixture pair (env -i self-contained, 센티넬 판별) ──"
-# env -i: 자원 키(RAW_NAS_URL 등) 상속 0 보증. python 구동 필수 키만 재주입 — Linux CI 는 PATH 만으로
-#   충분, Windows(Git Bash) 는 python 런처가 SYSTEMROOT/LOCALAPPDATA 등을 요구해 존재 시만 승계
-#   (자원 키가 아니므로 self-containment 무손상).
-_envi() {
-  local keep=(PATH="$PATH" PYTHONIOENCODING=utf-8)
-  local k
-  for k in SYSTEMROOT SystemRoot LOCALAPPDATA APPDATA USERPROFILE PATHEXT TEMP TMP; do
-    if [ -n "$(eval "printf '%s' \"\${$k:-}\"")" ]; then
-      keep+=("$k=$(eval "printf '%s' \"\${$k}\"")")
-    fi
-  done
-  env -i "${keep[@]}" "$@"
-}
+# env -i hermetic helper `_envi` = 상단 정의 재사용 (validator_case 와 공유 — F-CDX-003 동형).
 _e_exit=0
 _e_out=$(_envi python3 "$FIXTURE_DIR/refimpl_enforced.py" 2>&1) || _e_exit=$?
 if [ "$_e_exit" -eq 78 ] && ! printf '%s' "$_e_out" | grep -q "$SENTINEL" \

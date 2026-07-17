@@ -254,6 +254,23 @@ atlassian:
     user_email_env: "ATLASSIAN_USER_EMAIL"
 """
 
+# ── F-CDX-2726-1: 진짜 구(舊) 원형 — 마이그레이션 **전** 상태. manifest 가 아직 구 canonical
+#    (CONFLUENCE_USER_EMAIL)에 머물고 alias 도 없다. UNCONVERGED(hybrid: canonical 은 신규
+#    ATLASSIAN_USER_EMAIL 인데 alias 만 누락)와 병렬 — 구 원형은 **선언면** project.yaml 의 신규 키
+#    ATLASSIAN_USER_EMAIL 이 미선언으로 표면화(canonical 미갱신)하고, hybrid 는 **소비면** workflow 의
+#    구 키 CONFLUENCE_USER_EMAIL 이 미선언으로 표면화한다. 둘 다 FAIL(exit 1)이나 표면화 키가 달라
+#    "canonical 신규화 ∧ accepted alias" 양쪽이 수렴 필요조건임을 이중으로 결박한다(hybrid 단독 = 편향).
+PROJ_TWO_SERIES_OLD_ARCHETYPE = """infra_resources:
+  resources:
+    - id: confluence-user-email
+      canonical_env: CONFLUENCE_USER_EMAIL
+      aliases:
+        accepted: []
+atlassian:
+  confluence:
+    user_email_env: "ATLASSIAN_USER_EMAIL"
+"""
+
 WF_ALIAS_CONSUME = """name: wf
 on: {push: {}}
 jobs:
@@ -981,6 +998,18 @@ def test_ac22_two_series_convergence_fixture_pair():
             "AC-22: 미수렴 시 소비면 alias 가 UNDECLARED 로 표면화\n%s" % out
         assert "env-key=ATLASSIAN_USER_EMAIL" not in out, \
             "AC-22: canonical 자체는 선언돼 있어 undeclared 아님(판별 정밀)\n%s" % out
+    # F-CDX-2726-1: 진짜 구 원형(구 canonical=CONFLUENCE_USER_EMAIL, accepted:[]) 병렬 대조 —
+    #   hybrid 와 달리 **선언면** 신규 키 ATLASSIAN_USER_EMAIL 이 미선언으로 표면화(canonical 미갱신).
+    #   FAIL(exit 1) 단정 + 표면화 키가 hybrid 와 반대임을 확인(수렴 필요조건 2축 이중 결박).
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, PROJ_TWO_SERIES_OLD_ARCHETYPE, wf=WF_ALIAS_CONSUME, compose=COMPOSE)
+        rc, out = run_scanner(SSOT_PY, tmp)
+        assert rc == 1, \
+            "AC-22(F-CDX-2726-1): 구 원형(구 canonical + alias 부재) → 미수렴 FLAG(exit 1), got %d\n%s" % (rc, out)
+        assert "env-key=ATLASSIAN_USER_EMAIL" in out, \
+            "AC-22(F-CDX-2726-1): 구 원형은 선언면 신규 키 ATLASSIAN_USER_EMAIL 이 미선언으로 표면화\n%s" % out
+        assert "env-key=CONFLUENCE_USER_EMAIL" not in out, \
+            "AC-22(F-CDX-2726-1): 구 canonical 은 선언돼 있어 undeclared 아님(hybrid 와 판별 대비)\n%s" % out
 
 
 def test_ac22_wrapper_live_convergence_zero_without_baseline():
@@ -995,7 +1024,10 @@ def test_ac22_wrapper_live_convergence_zero_without_baseline():
                           "--emit-reverse-index")
     assert rc == 0, "AC-22: baseline 없이 실 wrapper → exit 0, got %d\n%s" % (rc, out)
     assert census(out, "undeclared") == 0, "AC-22: undeclared 0 (선언 수렴)\n%s" % out
-    assert census(out, "grandfathered") == 0, "AC-22: grandfathered 0 (baseline subtract 미개입)\n%s" % out
+    # grandfathered 0 은 undeclared=0(grandfather 할 대상 부재)의 귀결 — 이 0-pair 상태에선 `--baseline
+    #   __no-such__` 이 실존 baseline 과 동일 결과라 baseline override 자체를 판별하지 못한다(vacuous).
+    #   --baseline override 의 load-bearing 판별은 test_ac22_baseline_override_cli_load_bearing 담당.
+    assert census(out, "grandfathered") == 0, "AC-22: grandfathered 0 (undeclared 0 → grandfather 대상 부재)\n%s" % out
     # 2계열 양키 분류: confluence-user-email 자원 한 줄에 선언면(project.yaml)과 소비면(workflow) 동시 매핑.
     mm = re.search(r"resource-id=confluence-user-email canonical_env=ATLASSIAN_USER_EMAIL "
                    r"referenced_by=\[([^\]]*)\]", out)
@@ -1016,6 +1048,37 @@ def test_ac22_wrapper_live_convergence_zero_without_baseline():
     # 미선언 잔존 0 의 역색인 대응면: unmapped 키 목록 자체가 방출되지 않아야 한다.
     assert "unmapped-undeclared-keys" not in out, \
         "AC-22: unmapped-undeclared-keys 방출 = 미해소 잔존 non-zero\n%s" % out
+
+
+def test_ac22_baseline_override_cli_load_bearing():
+    """F-CDX-2726-2: `--baseline` override 가 실판별력(load-bearing)임을 증명.
+
+    위 wrapper-live `--baseline __no-such__` 케이스는 실 repo 가 0-pair(undeclared 0)라 baseline
+    유무가 결과를 안 바꿔 vacuous 하다. undeclared 표면(ROGUE_TOKEN)이 있는 hermetic corpus 에
+    **비공백 임시 baseline** 을 `--baseline` 으로 주입하면 그 가짜 pair 1 이 grandfather 로 억제되고
+    (grandfathered=1 / undeclared=0 / exit 0), no-such baseline 이면 억제 없이 undeclared=1 + exit 1
+    로 표면화된다 — 두 경로의 차이가 `--baseline` override 의 집행력(vacuous 아님)을 실측한다.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        make_corpus(tmp, MANIFEST, wf=WF_UNDECLARED, compose=COMPOSE)
+        # 비공백 임시 baseline(ROGUE_TOKEN pair 동결) — corpus 밖 경로에 두고 --baseline 으로만 주입.
+        ext_baseline = os.path.join(tmp, "ext-baseline.yaml")
+        _write(ext_baseline, BASELINE_FIXTURE)
+        no_such = os.path.join(tmp, "__no-such-baseline__.yaml")
+        rc_bl, out_bl = run_scanner(SSOT_PY, tmp, "--baseline", ext_baseline)
+        rc_ns, out_ns = run_scanner(SSOT_PY, tmp, "--baseline", no_such)
+        assert rc_bl == 0 and census(out_bl, "grandfathered") == 1 and census(out_bl, "undeclared") == 0, \
+            "F-CDX-2726-2: 비공백 --baseline 주입 → grandfathered=1 undeclared=0 exit 0, " \
+            "got exit=%d gf=%d und=%d\n%s" \
+            % (rc_bl, census(out_bl, "grandfathered"), census(out_bl, "undeclared"), out_bl)
+        assert rc_ns == 1 and census(out_ns, "grandfathered") == 0 and census(out_ns, "undeclared") == 1, \
+            "F-CDX-2726-2: no-such --baseline → grandfathered=0 undeclared=1 exit 1, " \
+            "got exit=%d gf=%d und=%d\n%s" \
+            % (rc_ns, census(out_ns, "grandfathered"), census(out_ns, "undeclared"), out_ns)
+        # anti-hollow: baseline 억제는 verdict 면만 — candidate census 는 두 경로 불변.
+        assert census(out_bl, "candidates_scanned") == census(out_ns, "candidates_scanned"), \
+            "F-CDX-2726-2: baseline 억제가 candidate census 를 바꾸면 anti-hollow 위반 (bl=%d ns=%d)" \
+            % (census(out_bl, "candidates_scanned"), census(out_ns, "candidates_scanned"))
 
 
 # ─────────────────────── §8.8.1 fuzz (CFP-2719 — seed=2719 고정 결정론) ──────────

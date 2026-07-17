@@ -522,22 +522,27 @@ fi
 #   ATLASSIAN_USER_EMAIL (구 CONFLUENCE_USER_EMAIL 은 accepted alias 로 강등) + AUDIT_PII_KEY 신규.
 _ac17_ri=$(python3 "$SSOT_PY" --repo-root "$REPO_ROOT" --emit-reverse-index 2>&1) || true
 _canon_ok=1
-for k in ANTHROPIC_API_KEY AUDIT_PII_KEY CODEFORGE_CROSS_REPO_PAT ATLASSIAN_API_TOKEN \
-         ATLASSIAN_USER_EMAIL CONFLUENCE_BASE_URL CONFLUENCE_SPACE_ID \
-         DOCKER_HUB_TOKEN GITHUB_TOKEN SSH_KEY_PASSPHRASE; do
+# F-CLA-2726-2: 하드카운트("10종") 금지 — 검사 키 목록을 배열로 두고 개수는 `${#arr[@]}` 로 도출.
+_canon_keys=(ANTHROPIC_API_KEY AUDIT_PII_KEY CODEFORGE_CROSS_REPO_PAT ATLASSIAN_API_TOKEN
+             ATLASSIAN_USER_EMAIL CONFLUENCE_BASE_URL CONFLUENCE_SPACE_ID
+             DOCKER_HUB_TOKEN GITHUB_TOKEN SSH_KEY_PASSPHRASE)
+for k in "${_canon_keys[@]}"; do
   case "$_ac17_ri" in *"canonical_env=$k"*) : ;; *) _canon_ok=0; echo "  missing canonical_env=$k";; esac
 done
 # 2계열 수렴 negative: 구 canonical 이 canonical 로 재등장하면 수렴 회귀.
 case "$_ac17_ri" in *"canonical_env=CONFLUENCE_USER_EMAIL"*) _canon_ok=0; echo "  CONFLUENCE_USER_EMAIL 이 canonical 로 잔존 (accepted alias 여야 함 — AC-22 회귀)";; esac
 if [ "$_canon_ok" -eq 1 ]; then
-  echo "OK PASS: AC-17 canonical secret 역색인 방출 (10종 + 구 canonical 강등 확인)"
+  echo "OK PASS: AC-17 canonical secret 역색인 방출 (${#_canon_keys[@]}종 + 구 canonical 강등 확인)"
   PASS=$((PASS+1))
 else
   echo "X FAIL: AC-17 canonical secret 방출 누락/수렴 회귀"
   FAIL=$((FAIL+1))
 fi
 # AC-22 wrapper-live 수렴 (G6): baseline 제거 상태에서도 exit 0 + undeclared 0 + grandfathered 0
-#   ("non-zero→zero" 의 zero 면 — baseline subtract 개입 0 을 --baseline 비존재 경로로 보증).
+#   ("non-zero→zero" 의 zero 면). F-CDX-2726-2 정직화: grandfathered 0 은 undeclared 0(억제 대상 부재)의
+#   귀결 — 실 repo 0-pair 상태에선 `--baseline __no-such__` 이 실존 baseline 과 동일 결과라 이 케이스는
+#   baseline override 자체를 판별하지 못한다(수렴 zero 면 재확인만; override load-bearing 판별은 `.py`
+#   채널 test_ac22_baseline_override_cli_load_bearing + hermetic grandfather 케이스가 관할 — 결합 분리).
 _ac22_out=$(python3 "$SSOT_PY" --repo-root "$REPO_ROOT" --baseline "$REPO_ROOT/docs/__no-such-baseline__.yaml" 2>&1); _ac22_exit=$?
 _ac22_undecl=$(_census_count "$_ac22_out" "undeclared")
 _ac22_gf=$(_census_count "$_ac22_out" "grandfathered")
@@ -550,7 +555,14 @@ else
   FAIL=$((FAIL+1))
 fi
 # MK no_secrets: 실 repo secrets 스캔 제거 → candidates 급감(<floor) = secrets 스캔 load-bearing.
-_ns_mut=$(mktemp -d)/mutant.py; mkdir -p "$(dirname "$_ns_mut")"
+# F-CDX-2726-3: mktemp -d 성공 확인 후 사용 — 실패 시 빈 문자열이면 `$(mktemp -d)/mutant.py`=`/mutant.py`
+#   → `dirname`=`/` → `rm -rf /` 파괴 위험. 디렉터리 변수를 직접 검증하고 cleanup 도 그 변수로 경계한다.
+_ns_dir=$(mktemp -d)
+if [ -z "$_ns_dir" ] || [ ! -d "$_ns_dir" ]; then
+  echo "X FAIL: AC-17 MK no_secrets — mktemp -d 실패 (임시 디렉터리 생성 불가 = fail-closed, 스킵 금지)"
+  FAIL=$((FAIL+1))
+else
+_ns_mut="$_ns_dir/mutant.py"
 python3 - "$SSOT_PY" "$_ns_mut" <<'PY'
 import sys
 s = open(sys.argv[1], encoding="utf-8").read()
@@ -561,13 +573,14 @@ open(sys.argv[2], "w", encoding="utf-8").write(s2)
 PY
 _ns_out=$(python3 "$_ns_mut" --repo-root "$REPO_ROOT" 2>&1) || true
 _ns_cand=$(_census_count "$_ns_out" "candidates_scanned")
-rm -rf "$(dirname "$_ns_mut")"
+rm -rf "$_ns_dir"
 if [ "${_ns_cand:-999}" -lt "$FLOOR" ] && [ "${_ns_cand:-999}" -lt "${_ac17_cand:-0}" ]; then
   echo "OK PASS: AC-17 MK no_secrets → candidates=$_ns_cand < floor $FLOOR (< 실측 $_ac17_cand — secrets 스캔 load-bearing, RED-flip)"
   PASS=$((PASS+1))
 else
   echo "X FAIL: AC-17 MK no_secrets — candidates=$_ns_cand (expected < $FLOOR and < $_ac17_cand)"
   FAIL=$((FAIL+1))
+fi
 fi
 echo
 
