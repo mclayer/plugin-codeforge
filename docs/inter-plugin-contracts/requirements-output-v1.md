@@ -8,7 +8,7 @@ related_plugins:
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
-  - ADR-077 (Clarification 강제 재조사 정책 — §결정 5 carrier: recheck_counter typed surface = 4-layer disjoint 3번째 cross-declare 위치 / Amendment 1 carrier: why_roundtrip_counter typed surface = 5번째 disjoint measurement channel, CFP-2725)
+  - "ADR-077 (Clarification 강제 재조사 정책 — §결정 5 carrier: recheck_counter typed surface = 4-layer disjoint 3번째 cross-declare 위치 / Amendment 1 carrier: why_roundtrip_counter typed surface = 5번째 disjoint measurement channel, CFP-2725)"
   - ADR-145 (요건 traceability zero-drop 게이트 — §결정 6 v1.2 acceptance_criteria[] additive MINOR carrier)
   - ADR-159 (요구사항 lane enrichment + design-entry 사용자 확정 gate SSOT — 결정 4 terminal event·확정 발화 verbatim primary Story §5.5, CFP-2725 v1.3 why_roundtrip counter 짝)
 authors:
