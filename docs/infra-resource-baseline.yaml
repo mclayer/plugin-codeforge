@@ -5,21 +5,5 @@
 schema_version: '1.0'
 generated_by: CFP-2700
 basis: ADR-157 §결정7(a) FM1-debt 승격 시점 pre-existing undeclared infra surface(file, env-key) 동결
-growth_reason: P1-A corpus 확장(shell env-passthrough carve-in, ADR-157 §결정8(vi)) pre-existing 흡수 + content_digest 최초 각인 (CFP-2700 G2 FIX iter1)
-content_digest: 64a5bc7d518ffc0f36b6e78fab37dbc47d8158f54effa50580ed602880935e44
-grandfathered_undeclared_surfaces:
-- file: .claude/_overlay/project.yaml
-  env_key: ATLASSIAN_USER_EMAIL
-  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — 추후 manifest 등재로 shrink)
-- file: scripts/audit-trail-fetch.sh
-  env_key: AUDIT_PII_KEY
-  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — 추후 manifest 등재로 shrink)
-- file: scripts/canary_auto_promote.py
-  env_key: GH_TOKEN
-  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — 추후 manifest 등재로 shrink)
-- file: scripts/lib/audit_trail_pii_redact.py
-  env_key: AUDIT_PII_KEY
-  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — 추후 manifest 등재로 shrink)
-- file: scripts/lib/check_deferred_item_recovery.py
-  env_key: GH_TOKEN
-  reason: pre-existing 미선언 (CFP-2700 baseline snapshot grandfather — 추후 manifest 등재로 shrink)
+content_digest: edef9ff7cc69585d1e9442e32a125ebe0cb1ab92c4f52dcf842ea663cb991df1
+grandfathered_undeclared_surfaces: []

@@ -97,8 +97,10 @@ atlassian:
       current_activity: "pinned-comment-update"
 
 # ── 인프라 자원 선언 manifest (CFP-2700 / ADR-157 §결정1, wrapper-self dogfood) ──
-# wrapper 실 secret 9종(grep -rhoE "secrets\.[A-Z_]+" .github/workflows/ | sort -u = 9, verified)을
-#   기계판독 manifest 로 선언 — 게이트가 자기 자신에게 먼저 작동(none 위장 anti-hollow dogfood).
+# G1: wrapper 워크플로 실 secret census(grep -rhoE "secrets\.[A-Z_]+" .github/workflows/ | sort -u = 9종,
+#   G1 시점 실측)를 기계판독 manifest 로 선언 — 게이트가 자기 자신에게 먼저 작동(none 위장 anti-hollow dogfood).
+# G6 (AC-22 / DEC-3): 스크립트·선언면 소비 자원 편입(audit-pii-key) + 2계열 canonical 수렴
+#   (ATLASSIAN_USER_EMAIL / GH_TOKEN alias) — 현행 목록·수 SSOT = 아래 resources[] 실내용(주석 수치 열거 금지).
 # Schema SSOT: docs/project-config-schema.md `infra_resources` 섹션.
 # infra_strategy (ADR-033) 와 직교 — 본 block 은 자원 내용, infra_strategy 는 적용 여부 스위치.
 # G1 범위 = manifest 선언까지 (런타임 스캐너=G2 / startup validator=G3 / Confluence 2계열 라이브 수렴=G6).
@@ -106,12 +108,19 @@ atlassian:
 # ★ FIX iter1(구현): execution_unit = 실 .github/workflows/*.yml 워크플로만(phantom 0, D3 스캐너 실 스캔 대상).
 #   각 mode = 해당 워크플로 degrade 동작 firsthand 판정 (required=부재 시 실행불가 / optional_degradable=부재 시 degrade+exit0).
 infra_resources:
-  # ── plane A: 자원 카탈로그 (census 9종 → 9 논리 자원) ──
+  # ── plane A: 자원 카탈로그 (G1 워크플로 census 9종 + G6 스크립트/선언면 소비 자원 편입 — 목록·수 SSOT = 본 block 실내용) ──
   #   `aliases: accepted: []` = "별칭 없음"의 명시 선언 (4 필수 필드 표현 의무 — ADR-157 §결정1 / AC-2,
   #   G3 schema validator `check_infra_manifest_schema.py` 대상: 누락 ≠ 빈 집합).
   resources:
     - id: anthropic-api
       canonical_env: ANTHROPIC_API_KEY          # Claude API 자격증명 (confluence-forward-sync 무인 CI 경로만 소비 = 1 워크플로)
+      aliases:
+        accepted: []
+    # audit-trail PII redact HMAC 키 — 스크립트 소비면 전용 자원 (G6 신규 등재: 미선언 실 infra secret 해소).
+    #   소비면 = scripts/audit-trail-fetch.sh:71(env-passthrough) + scripts/lib/audit_trail_pii_redact.py:33.
+    #   plane B 실행단위 없음 — 실 워크플로 소비 0 (스크립트 소비 = D3 분류 대상이지 실행단위 아님, phantom unit 금지 — G1 FIX 교훈).
+    - id: audit-pii-key
+      canonical_env: AUDIT_PII_KEY
       aliases:
         accepted: []
     - id: cross-repo-pat
@@ -134,10 +143,15 @@ infra_resources:
       canonical_env: CONFLUENCE_SPACE_ID
       aliases:
         accepted: []
+    # Atlassian 계정 이메일 — 2번째 2계열 alias 수렴 (DEC-3 / ADR-157 §결정5, G6 라이브 수렴 정정).
+    #   canonical = ATLASSIAN_USER_EMAIL (선언면, atlassian.confluence.user_email_env — api_token 과 동일
+    #   Atlassian-account-scoped 정직 명명 패턴, §결정5)
+    #   accepted alias = CONFLUENCE_USER_EMAIL (소비면, confluence-forward-sync.yml:63 secrets.CONFLUENCE_USER_EMAIL)
+    #   라이브 secret rename 0 — canonical 1 + alias N 선언 수렴만 (AC-22 무중단 조건).
     - id: confluence-user-email
-      canonical_env: CONFLUENCE_USER_EMAIL
+      canonical_env: ATLASSIAN_USER_EMAIL
       aliases:
-        accepted: []
+        accepted: [CONFLUENCE_USER_EMAIL]
     - id: docker-hub-token
       canonical_env: DOCKER_HUB_TOKEN
       aliases:
@@ -145,7 +159,9 @@ infra_resources:
     - id: github-token
       canonical_env: GITHUB_TOKEN                # GitHub Actions 기본 주입 토큰 (항상 존재)
       aliases:
-        accepted: []
+        # gh CLI 관례 env 명 — 동일 GitHub 토큰 자원의 별칭 (G6 alias-gap 해소, rename 0).
+        #   소비면 = scripts/canary_auto_promote.py:200 + scripts/lib/check_deferred_item_recovery.py:248.
+        accepted: [GH_TOKEN]
     - id: ssh-key-passphrase
       canonical_env: SSH_KEY_PASSPHRASE
       aliases:

@@ -3,7 +3,8 @@ name: infra-resource-manifest-drift
 #   TDD self-test + dogfood drift lint 의 CI 실행 채널. manifest(.claude/_overlay/project.yaml
 #   infra_resources:)가 선언한 인프라 자원과 실 참조면(workflow secrets. / project.yaml _env: /
 #   scripts 정적 리터럴)을 대조해 미선언 표면(drift 원천)·orphan(dead 선언)을 census-floor oracle 로
-#   검출한다. wrapper 실 secret 9종을 자기 자신에게 먼저 스캔(none 위장 anti-hollow dogfood).
+#   검출한다. wrapper 실 secret 전체를 자기 자신에게 먼저 스캔(none 위장 anti-hollow dogfood — 목록·수
+#   SSOT = manifest resources[] 실내용, 주석 수치 열거 금지: CFP-2697 citation-drift 선례).
 #
 # scanner SSOT = scripts/lib/check_infra_resource_drift.py (python3 stdlib only, born-safe 라인 파서).
 #   thin wrapper = scripts/check-infra-resource-drift.sh (ADR-061 python3 exec forward).
