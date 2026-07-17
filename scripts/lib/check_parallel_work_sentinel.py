@@ -363,7 +363,7 @@ def mode_epic_state_poll(epic_id: str) -> None:
         return
 
     epic_state = payload.get("state", "UNKNOWN")
-    body = payload.get("body", "")
+    body = payload.get("body") or ""  # present-null 정규화 (F-CR-2723-1): "body": null → None → "" (findall(None) TypeError 봉인, INV-4)
 
     # Parse scope_manifest from Epic body (<!-- scope_manifest --> block)
     siblings = _parse_siblings_from_body(body)

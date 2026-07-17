@@ -263,6 +263,7 @@ field_in_pinned() {
 F_EPIC_OPEN2="$CFP2723_TMP/epic_open2.json"       # OPEN + siblings dedup 2 (CFP-100, CFP-101)
 F_EPIC_CLOSED0="$CFP2723_TMP/epic_closed0.json"   # CLOSED + siblings 0
 F_EPIC_BODYABN="$CFP2723_TMP/epic_bodyabn.json"   # state present + body 부재 (엣지 ⑫)
+F_EPIC_BODYNULL="$CFP2723_TMP/epic_bodynull.json" # state present + body JSON null (present-null, F-CR-2723-1)
 F_TITLE_OK="$CFP2723_TMP/title_ok.json"           # title-search 정상 list
 F_MALFORMED="$CFP2723_TMP/malformed.json"         # 비-JSON
 F_EMPTY="$CFP2723_TMP/empty.json"                 # 빈 문자열
@@ -272,6 +273,7 @@ F_GITLOGMOCK="$CFP2723_TMP/gitlog_mock.txt"       # 무관 CFP-9999 (epic degrad
 printf '%s' '{"state":"OPEN","body":"Epic body CFP-100 CFP-101 CFP-100 tracked"}' > "$F_EPIC_OPEN2"
 printf '%s' '{"state":"CLOSED","body":"no refs here"}' > "$F_EPIC_CLOSED0"
 printf '%s' '{"state":"CLOSED"}' > "$F_EPIC_BODYABN"
+printf '%s' '{"state":"OPEN","body":null}' > "$F_EPIC_BODYNULL"
 printf '%s' '[{"number":123,"title":"[CFP-1] consumer title","labels":[{"name":"phase:x"}],"closedAt":null}]' > "$F_TITLE_OK"
 printf '%s' 'this is not json <<<' > "$F_MALFORMED"
 printf '%s' '' > "$F_EMPTY"
@@ -321,6 +323,19 @@ echo "$OUT" | grep -qF '"CLOSED"' || ok=0
 echo "$OUT" | grep -qF '"siblings": []' || ok=0
 if echo "$OUT" | grep -qF '"degradation"'; then ok=0; fi
 report "N1var-b-T-EPIC-body-abnormal" "$ok" "state present + body 비정상 → state 만으로 성공 (엣지 ⑫)" "$OUT"
+
+# N1var-c T-EPIC-body-null — body: JSON null (present-null) → siblings [] + exit 0 (F-CR-2723-1 회귀).
+#   RED(수정 전): payload.get("body","") 가 present-null 에 None 반환 → _parse_siblings_from_body(None)
+#   → KEY_PATTERN.findall(None) TypeError → exit 1 (INV-4 위반). FIX: body = payload.get("body") or ""
+#   (null·부재 공히 "" 정규화). 부재({"state":"OPEN"}) 는 N1var-b 대조로 이미 exit 0 (default 적용).
+OUT=$(CFP967_GH_MOCK_RESPONSE="$F_EPIC_BODYNULL" bash "$WRAPPER" --mode=epic-state-poll --epic-id=100 2>/dev/null); EC=$?
+ok=1
+[ "$EC" -eq 0 ] || ok=0
+echo "$OUT" | grep -qF '"OPEN"' || ok=0
+echo "$OUT" | grep -qF '"siblings": []' || ok=0
+if echo "$OUT" | grep -qF '"degradation"'; then ok=0; fi
+if echo "$OUT" | grep -qF '"matches"'; then ok=0; fi
+report "N1var-c-T-EPIC-body-null" "$ok" "body:null present-null → siblings [] + exit 0 (F-CR-2723-1, INV-4)" "$OUT"
 
 # ═════════════════════════════════════════════════════════════════════════════
 # N2 T-FIELD-allowlist-floor — 양 모드 요청 필드 ⊆ pinned (§8.0 floor, 상시).
