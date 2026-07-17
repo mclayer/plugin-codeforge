@@ -1098,6 +1098,71 @@ amendment_log:
       ratchet 위반 0건 — framework 자연스러운 사용 사례 entry 추가 only. 기존
       §결정 5/6/32.D 본문 의미 변경 0건. plugin.json bump(6.94.0 tentative,
       origin fetch 후 확정) + marketplace sync = Phase 2 PR scope (ADR-063).
+  - amendment: 24
+    carrier_story: CFP-2719
+    date: 2026-07-17
+    direction: clarify
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 미해당. 본 Amendment 24 = fact-correction(clarify) — 결정 내용 무변경(tier·승격 gate·surfacing 경계·registry 절차 전부 불변), Amendment 23 carrier prose 의 정정된 facts 만 SSOT-정합. 약화 0건 (인용처/구현 유무/증거 의무 = 사실 축 정정이며 invariant 강도 무변경) → ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상. 선례 = ADR-037 Amendment 3 (fact-correction, "결정 내용 무변경 ... carrier prose 의 정정된 facts 만 SSOT-정합").
+    summary: |
+      Amendment 23 (CFP-2700 D3, 2 warning-tier entry 등록) carrier prose 의
+      **사실 3건 정정** — fact-correction(clarify), 결정 내용 무변경.
+      G2 실배선(CFP-2719) 설계 lane 이 Amd23 prose 를 firsthand 재검증하는
+      과정에서 검출. 세 진술 모두 Amd23 `infra-resource-undeclared-surface`
+      entry `progress_note` 에 verbatim 실재 (phantom fact-correction 0 —
+      Amd23 에 없는 주장을 정정하지 않는다). 정정 없이 배선하면 hollow
+      claim 이 코드로 상속된다 (실증 — 아래 (2)).
+
+      (1) **prior art 오인용**: Amd23 이 baseline digest 선례로 인용한
+      `check_deferral_carrier_declared.py(baseline loader/digest, Amd20)` 는
+      digest 구현이 **0** 이다 (해당 파일 :47 은 타 파일을 지목하는 주석일 뿐).
+      정정 → 실 Amd20 준수 구현 = **`check_deferred_followup_reconcile.py`**
+      (compute_content_digest :356 / sha256 :362,:381 / stored↔recomputed
+      불일치 :395-399 / grandfathered_ok NOT-worse 술어 :404) +
+      **`gen_deferred_followup_baseline.py`** (single-writer gen, cmd_prune
+      :187 = monotonic shrink only). 참고: Amendment 20 본문(:60)은 이미
+      `check_deferred_followup_reconcile.py(baseline loader/digest)` 로 정확히
+      인용 → 오인용은 Amd23 국소 결함이며 framework 기제 자체는 무결.
+
+      (2) **"Amd20 grandfather baseline 재사용" = hollow**: 재사용할 구현이
+      존재하지 않는다. Amd23 이 나란히 인용한
+      `check_path_relocation_consistency.py` 는 hashlib|sha256|digest|
+      monotonic|shrink hit **0** = Amd20 **비준수 인스턴스**(모범 아님).
+      정정 → D3 baseline = **implemented-new Amd20-compliant**
+      (**코드 상속-재사용 아님** — 단 Epic AC-16 "기존 기제 재사용"은 무손상:
+      "재사용" = 기제/패턴 축[Amd20 5요소 형판 + check_deferred_followup_
+      reconcile.py prior-art]에서 참 ⊥ 본 정정 = 코드 상속 축[path-relocation
+      digest 0 → 상속할 구현 없음], 두 축 disjoint). Amd20 이 framework-wide
+      로 규정한 5요소(enumerated-freeze / 2-owner section / single-writer gen
+      tool / content_digest tamper-evident / monotonic shrink) **형판이 기준**
+      이며, as-built 처분(digest+shrink 실배선 / gen tool·2-owner 미채택·이연)
+      = change-plan §9.2 SSOT.
+      ★ 실증: 선행 구현 초기 커밋(cfp-2700-g2 `7715657e`)의 scanner 는
+      sha256|hashlib|content_digest **0** 이면서 주석은 "monotonic shrink" 를
+      주장하고, write_baseline() 은 전량 재작성이라 재생성이 baseline 을
+      조용히 **키울 수** 있었다(ratchet 무력화). = hollow claim 이 코드로
+      상속된 실증. 이후 merge-전 FIX 가 digest(set-결박, 손상 = exit 3
+      substrate-failure) + shrink-only(`--allow-baseline-growth --reason`
+      명시 escape) 실배선으로 정정해 main 착지(PR #2720 `8e60a53d`).
+      본 정정이 문서 위생이 아니라 **결함 예방**인 근거.
+
+      (3) **"ReDoS-safe" claim 의 증거 의무**: Amd23 prose 의 "(Python SSOT …
+      ReDoS-safe line-by-line)" 는 ADR-082 Amendment 38 §결정 16(21번째
+      warning-tier entry `resource-safety-claim-proof-presence`) 의 대상
+      closed-set 에 속하는 **resource-safety claim** 이다 → **paired
+      proof-reference 또는 honest-ceiling 동반 의무**(file-scoped presence).
+      정정 → D3 는 claim 유지 시 DoS-bound 회귀 fixture(wall-clock 실측)를
+      proof-ref 로 동반하고 honest-ceiling 을 함께 싣거나, claim 자체를
+      제거한다. 자기 게이트에 born-red 로 태어나지 않기 위한 의무.
+
+      **범위·비대상**: 신규 §결정 0 / 신규 entry 0 / tier·bypass·승격 gate
+      무변경 / Amendment 23 의 2 mechanical action(infra-resource-
+      undeclared-surface + infra-resource-orphan-reconcile) 존치.
+      required contexts 7-tuple 무변경 (surfacing ≠ membership,
+      §결정 32.D — ADR-145 §결정 3 override 비적용). ADR-157 §결정 6(D4
+      비커밋 ephemeral) 정합 유지. doc-only — plugin.json bump 0
+      (`archive/**` = ADR-037 결정 A2-3 비귀속 + A2-6 no-surface-touch 면제,
+      게이트 실측 check-plugin-version-bump-self.sh:145 `archive/*` → exempt)
+      → marketplace sync 불요 (ADR-063 §결정 1 mirrored field 변경 0).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -2794,3 +2859,30 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 **재발방지 parity lint 미채택 근거 (ADR-119 §결정9)**: 사본 제거(§결정 34) 후 "SSOT↔산문 사본 parity 강제 lint"는 지킬 대상이 소멸해 vacuous. 산문 파싱 lint 는 fragile(CFP-2653) → 이득 0 · 비용 高 로 3문 게이트 FAIL. detection(lint) 대신 elimination(참조 단일화)이 근본책.
 
 **scope**: doc-only. 신규 게이트/required-context/evidence-registry entry 0. branch protection 7-tuple 무변경 (ADR-127 required 신설 0 ratchet 정합).
+
+## Amendment 24 (CFP-2719, 2026-07-17 KST) — Amendment 23 carrier prose fact-correction
+
+**Carrier**: CFP-2719 (Epic CFP-2700 G2 — D3 drift scan + D4 ephemeral 역색인 실배선) / Story file = `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-2719.md`.
+
+**class**: **fact-correction (clarify)** — **결정 내용 무변경, 약화 0**. 선례 = **ADR-037 Amendment 3** ("결정 내용 무변경 … carrier prose 의 정정된 facts 만 SSOT-정합"). 신규 §결정 0 · 신규 entry 0 · tier/bypass/승격 gate 무변경 · Amendment 23 의 2 mechanical action 존치.
+
+**배경**: G2 실배선 설계 lane(CFP-2719)이 Amendment 23 의 carrier prose 를 firsthand 재검증한 결과 **사실 3건** 이 실제와 어긋남을 확인했다. 세 진술 모두 Amd23 `infra-resource-undeclared-surface` entry `progress_note` 에 **verbatim 실재**한다 — Amd23 에 없는 주장은 정정하지 않는다(phantom fact-correction 0). 이 정정은 문서 위생이 아니라 **결함 예방**이다 — 정정 전 상태에서 만들어진 선행 구현 초기 커밋(`cfp-2700-g2` `7715657e`)이 아래 (2)의 hollow claim 을 **코드로 그대로 상속**한 것이 실증이다(주석은 monotonic shrink 를 주장하고 구현은 부재; 이후 merge-전 FIX 로 실배선 정정 → PR #2720 `8e60a53d` main 착지).
+
+### 정정 3건 (Amendment 23 prose ↔ 실측)
+
+| # | Amd23 진술 | 실측 정정 (firsthand) |
+|---|---|---|
+| **1** | prior art = `check_deferral_carrier_declared.py`(baseline loader/digest, Amd20) | **오인용** — 해당 파일 digest 구현 **0**(`:47` = 타 파일 지목 주석). 실 구현 = **`check_deferred_followup_reconcile.py`**(`compute_content_digest:356` / `sha256:362,381` / stored↔recomputed 불일치 `:395-399` / `grandfathered_ok:404`) + **`gen_deferred_followup_baseline.py`**(single-writer gen, `cmd_prune:187` monotonic shrink only). Amendment 20 본문(`:60`)은 이미 정확히 인용 → **Amd23 국소 결함**, framework 기제는 무결 |
+| **2** | baseline = "Amd20 grandfather baseline **재사용**" | **hollow (코드 상속 축)** — 상속-재사용할 구현 부재. 나란히 인용된 `check_path_relocation_consistency.py` = `hashlib\|sha256\|digest\|monotonic\|shrink` hit **0** = Amd20 **비준수 인스턴스**. 정정 → **implemented-new Amd20-compliant**. ★ Epic AC-16 "기존 기제 재사용"은 **무손상** — "재사용" = 기제/패턴 축(Amd20 5요소 형판 + `check_deferred_followup_reconcile.py` prior-art)에서 참 ⊥ 본 정정 = 코드 상속 축, 두 축 disjoint |
+| **3** | "(Python SSOT … **ReDoS-safe** line-by-line)" | ADR-082 Amd38 §결정 16 대상 closed-set 의 safety-claim → **paired proof-reference 또는 honest-ceiling 동반 의무**. claim 유지 시 DoS-bound 회귀 fixture(wall-clock)를 proof-ref 로 동반, 아니면 claim 제거 |
+
+### 약화 0 논증 (ADR-058 §결정 5 비대상)
+
+정정 3건 전부 **사실 축**(인용처 · 구현 유무 · 증거 의무)이며, tier · 승격 gate(§결정 6 3-AND) · surfacing 경계(§결정 32.D) · registry 등록 절차(§결정 5) 등 **결정 내용은 무변경**이다. invariant 강도 불변 → ADR-058 §결정 5 약화 방향 발의 차단 logic **비대상**. required contexts 7-tuple 무변경 (**surfacing ≠ membership** — ADR-145 §결정 3 override 비적용).
+
+### 인접 SSOT 정정 (cross-ref, 본 ADR 결정 무영향)
+
+- **tier 권한 귀속**: "ADR-157 §결정 9(tier)" = **오귀속**. §결정 9 = *census born-red 해소 + D3 base scan corpus 완전 열거*. tier·승격 권한 = **본 ADR Amendment 23** 이며 ADR-157 `:52` 이 자기 위임한다 — "tier·승격은 ADR-060 Amendment 소관, 본 ADR 은 승격 로직을 발명하지 않는다."
+- **label registry 실경로** = **`docs/inter-plugin-contracts/label-registry-v2.md`**(v2.107). Epic change-plan 의 `docs/label-registry-v2.md` = **dead path**(파일 부재).
+
+**scope**: doc-only (`archive/adr/**` 단일). 신규 게이트/required-context/evidence-registry entry 0. branch protection 7-tuple 무변경. plugin.json bump **0** — `archive/**` = ADR-037 결정 A2-3 **비귀속** + A2-6 **no-surface-touch 면제**(게이트 실측: `scripts/check-plugin-version-bump-self.sh:145` `archive/*` → `exempt`; ADR-037 `:432` 가 자기 Amendment PR 로 동일 경로 시연) → **marketplace sync 불요**(ADR-063 §결정 1 mirrored field 변경 0). D3 실배선 본체(5-piece + registry row + label + 6.97.0 MINOR + marketplace sync #364)는 **PR #2720 으로 이미 main 착지**(`8e60a53d`) — 잔여 갭 작업(per-class census floor + ADR-154 enrollment)은 CFP-2719 **Phase 2 PR scope**(6.98.0 MINOR + marketplace sync, change-plan §5.2/§5.3 SSOT).
