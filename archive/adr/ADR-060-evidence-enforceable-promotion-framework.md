@@ -1133,8 +1133,9 @@ amendment_log:
       reconcile.py prior-art]에서 참 ⊥ 본 정정 = 코드 상속 축[path-relocation
       digest 0 → 상속할 구현 없음], 두 축 disjoint). Amd20 이 framework-wide
       로 규정한 5요소(enumerated-freeze / 2-owner section / single-writer gen
-      tool / content_digest tamper-evident / monotonic shrink)가 신규 구현
-      대상이 된다.
+      tool / content_digest tamper-evident / monotonic shrink) **형판이 기준**
+      이며, as-built 처분(digest+shrink 실배선 / gen tool·2-owner 미채택·이연)
+      = change-plan §9.2 SSOT.
       ★ 실증: 선행 구현 초기 커밋(cfp-2700-g2 `7715657e`)의 scanner 는
       sha256|hashlib|content_digest **0** 이면서 주석은 "monotonic shrink" 를
       주장하고, write_baseline() 은 전량 재작성이라 재생성이 baseline 을
