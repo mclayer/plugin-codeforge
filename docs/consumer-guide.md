@@ -1533,6 +1533,16 @@ Stop / SubagentStop hook 이 plugin-deploy 후 간헐적으로 발화 중단될 
 
 ---
 
+### §2h.6 세션 전환 handoff reminder hook 자동 전파 (CFP-2742 Phase 2 / ADR-071 §결정 24)
+
+`hooks/session-swap-handoff-reminder` → `session-swap-handoff-reminder.py` — `/plugins install codeforge@mclayer` 만 하면 plugin-root `hooks/hooks.json` 의 `UserPromptSubmit` 6번째 entry 로 자동 활성 (별도 `.claude/settings.json` 등록·overlay 변경 불필요).
+
+- **동작**: 매 turn `additionalContext` 로 세션 전환(별도 세션 인계) 권유 시 자족(self-contained) handoff 프롬프트를 먼저 생성·동반하라는 controlled-path norm 을 무조건(unconditional) 주입 — handoff 6 필수요소(① 진행 Story/PR·Epic 번호 ② 완료 vs 남은 lane·단계 ③ worktree·브랜치 경로 ④ 기결정=재논의 금지 목록 ⑤ 이번 세션 gotcha ⑥ 다음 세션 첫 액션 1문) 요약 포함.
+- **tier**: advisory/priming — 절대 차단(block/deny) 안 함. python 부재 / 파싱 오류 / 예외 시 통과 (fail-safe, 사용자 입력 차단 0).
+- **정책 SSOT**: 본 hook 은 vehicle 일 뿐 — controlled-path 규범 원문·범위·advisory ceiling 한계는 [§7.6](#76-session-swap-controlled-path-상속-adr-071-결정-24) cross-ref anchor 참조 (재서술 금지).
+
+---
+
 ### §2i. 3-way version atomic 고정 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
 
 Consumer repo 에서 **codeforge version 을 고정** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.
@@ -3165,7 +3175,7 @@ wrapper [ADR-071 §결정 24](../archive/adr/ADR-071-orchestrator-user-dialog-co
 - **handoff 6 필수요소** = ① 진행 Story/PR·Epic 번호 ② 완료 vs 남은 lane·단계 ③ worktree·브랜치 경로 ④ 기결정=재논의 금지 목록 ⑤ 이번 세션 gotcha ⑥ 다음 세션 첫 액션 1문 — 다음 세션이 현세션 참조 0(0-context)으로 복붙 1회 재개 가능해야 함 (ADR-085 §결정 9 4-rule specialization).
 - consumer overlay 로 본 controlled-path 를 **축소 불가 — 확장만 가능**(consumer 도메인 특수요소는 6요소 골격 위에 overlay 확장). 약화 = wrapper ADR-071 amendment 경로만(evidence-gated, ADR-058 §결정 5 / ADR-064 §결정 7).
 - **advisory ceiling(정직)** — runtime 발화 시점 hard-block 불가(turn-final hook 부재 platform 한계, ADR-144 §결정 7 GAP-1/GAP-2). priming/advisory only — "기계 강제 100%" over-claim 부재. Phase 1 trust model — consumer Orchestrator 자체 인지가 1차 안전망(§7.0.4 패턴).
-- **자동전파 vehicle (Phase 2 forward-note)** — reminder-hook(`hooks/session-swap-handoff-reminder`) 자동전파는 **Phase 2** 에 land 한다(plugin 설치만으로 도달, overlay 변경 0, ADR-144 §결정 6 L6 — §7.0.6 Phase 2 instrumentation 패턴 정합). Phase 1 = 정책 prose 상속만.
+- **자동전파 vehicle (Phase 2 landed — CFP-2742)** — reminder-hook(`hooks/session-swap-handoff-reminder` → `session-swap-handoff-reminder.py`)이 Phase 2 로 land 되어, `/plugins install codeforge@mclayer` 만으로 plugin-root `hooks/hooks.json` 의 `UserPromptSubmit` 6번째 entry 로 자동 활성된다(overlay 변경 0, ADR-144 §결정 6 L6 — §7.0.6 Phase 2 instrumentation 패턴 정합). 본 절(§7.6) = controlled-path 규범 anchor, 설치·동작 vehicle 상세 = §2h.6 SSOT(전파 vehicle anchor).
 
 ## 8. 트러블슈팅
 
