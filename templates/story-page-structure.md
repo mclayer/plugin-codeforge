@@ -186,7 +186,7 @@ glossary_ref: docs/glossary.md          # Published Language SSOT (content dupli
 
 ### §5. 요구사항 확장 해석 (RequirementsAnalyst)
 - 유스케이스 / AC / 엣지 케이스 / 제외 범위 / 암묵 가정
-- §5.5 "사용자 확인 필요" (blocking wait 항목)
+- §5.5 "사용자 확인 필요" (blocking wait 항목) + 사용자 최종 확정 기록 (확정 발화 verbatim — 아래 §5.5 schema, ADR-159 결정 4)
 
 #### §5.2 AC 항목화 목록 형식 (CFP-2603 / ADR-145 — AC-ID zero-drop)
 
@@ -212,6 +212,24 @@ AC 는 **산문·정수 count 로 붕괴 금지** — 각 AC 에 안정 ID `AC-N
 > **비적용 Story**(§5 AC 표면 없음 — governance / marketplace sync / Epic close 등): 본 §5.3 표를 **작성하지 않는다**. 빈 표·예시 행·헤더-only 잔존은 게이트 false-red(`SURFACE_EMPTY`/판정불가)를 유발한다. 대신 PR body 에 `ac_applicability: none — <사유>` 를 선언한다.
 >
 > copy-ready header (적용 시 이 한 줄을 표 header 로 복사): `| id | statement | source | verification | coverage_required | phase | tier |`
+
+#### §5.5 사용자 최종 확정 기록 schema (ADR-159 결정 4 / ADR-077 Amendment 1 / ADR-125 Amendment 3)
+
+요구사항리뷰 PASS 후·설계 진입 직전 **사용자 최종 확정**(design-entry sign-off)을 기록하는 절. **명시 확정 발화 필수** — 무이의·침묵 진행 = 확정 **아님**(ADR-159 결정 4). §5.5 는 §5 blocking wait 항목(미해소 질문)과 최종 확정 기록을 함께 담는다. 확정 기록의 **SSOT 서열 = Story §5.5 `확정 발화 verbatim` primary / Jira mirror best-effort**(fail-open — Jira 결손 ≠ 확정 무효, ADR-159 결정 4).
+
+| 필드 | 등급 | 뜻 |
+|---|---|---|
+| `확정 발화 verbatim` | **required** | 사용자 최종 확정 발화 원문 그대로 (primary SSOT — 세션 재개 복원 원천, ADR-159 결정 4 / AC-7) |
+| 확정 대상 요약 | **required** | why + scope + 능동 발굴·확장 요건 포함 재편 요구 **요약** (전문 동결 아님 — informed sign-off packet, ADR-159 결정 3 / AC-12) |
+| 미해소 질문 잔량 | **required** | `0건` 또는 명시 defer 목록 (잔량 은폐 확정 = 무효, vacuous confirm 회피 — ADR-159 결정 3). `0` 포함 생략 불가 |
+| 확정 분류 | **required** | `순수 확정`(내용 무변경 = terminal event `user-final-confirmation-driven` — 재조사 fan-out 미발동) \| `내용 수정 동반`(수정분 = clarification origin 재조사 후 재확정) — ADR-159 결정 4 / ADR-077 Amendment 1 |
+| `양채널 mirror` | **required** | 세션·Jira 양채널 확정 상태 mirror 기록 (SSOT 서열 = §5.5 verbatim primary / Jira best-effort — ADR-159 결정 4) |
+| 확정 시각 | **required** | KST `+09:00` ISO 8601 (async 원격 확정 시 Jira 확정 timestamp 병기 — ADR-159 결정 4 / AC-17) |
+
+> **§1 immutable 과의 양립**: 확정 기록은 **§1 밖**(§5.5)에 둔다 — §1 사용자 요구사항은 verbatim immutable(`story-section-1-immutable.yml` 변경 차단, 도메인 제약 D-2)이므로 확정 발화·확정 상태는 §1 을 수정하지 않고 §5.5 에 append 한다.
+> **세션 재개 복원**: 복원 범위 = (a) 확정 여부 + (b) 미해소 질문 목록 — 복원 원천 = §5.5 `확정 발화 verbatim` 기록 (ADR-159 결정 4 / AC-7).
+> **why-왕복 counter disjoint**: 확정 왕복 measurement 는 §9.0 recheck 이력과 **disjoint** 한 5번째 measurement channel(ADR-077 Amendment 1 §2)로 §9.0 과 혼입하지 않는다. measurement channel ≠ cognitive layer(ADR-071 §결정 3 무관 — cross-namespace disambiguation).
+> **advisory ceiling 정직 라벨 (ADR-159 결정 6 / AC-14)**: 본 §5.5 는 **advisory** 기록 절차다 — 신규 기계 강제 게이트 0. 기계 검증 커버 = **확정 기록·규칙의 presence 까지**. "rule/record presence 는 testable, **user actually confirmed 는 NOT testable**" — 기계 강제 100% over-claim 금지.
 
 ### §6. 외부 지식 배경 (Researcher)
 - Researcher 자체 도출 키워드 커버리지 + 출처 URL

@@ -45,6 +45,22 @@ PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Sto
 
 상세는 [codeforge wrapper CLAUDE.md](https://github.com/mclayer/plugin-codeforge/blob/main/CLAUDE.md) "스폰 시퀀스" 절 참조.
 
+## 사용자 확인 왕복 규율 (ADR-159 — lane plugin 층 요약)
+
+본 lane 의 일급 목적 = 전사(transcription)가 아니라 **능동 요건 발굴(elicitation/enrichment)**. why 확정은 전제(1단계)이고, 확정 why 를 발판으로 미명시(unstated/tacit) 요건까지 발굴해 **본질 요구**를 충족시키는 것이 종착 (ADR-159 §본질 선언 / 결정 1). RequirementsPLAgent 역할 = synthesizer **+ elicitor/enricher** (대체 아닌 확장).
+
+| 규율 | 내용 | 근거 |
+|---|---|---|
+| intake 항상 declare 왕복 | 매 접수마다 이해한 배경·의도 재진술 제시 + 확인 왕복 개시 (에이전트 자기평가로 발동 판정 안 함). **mandatory DECLARE ≠ mandatory ASK** — trivial 최소형 = 재진술 1~3줄 + "이의 없으면 진행" + 열린 질문 0~1개(왕복 1회당 cap). 단일 예외 = 사용자 본인 명시 skip 지시(verbatim 기록) — 에이전트 측 skip-offer 는 금지 | ADR-159 결정 2 |
+| enrichment 일급 | 확장 산출(미명시 요건 후보 + 원문 대비 delta)이 왕복의 명시 output. **why-anchored** — scope 팽창·gold-plating·edge-case 폭주 배제. **null 결과 valid** (발굴 0건 = 정상) | ADR-159 결정 1/5 |
+| 발화 = Orchestrator relay | lane 에이전트는 사용자와 직접 대화 불가 — 질문·재진술 생성 + Orchestrator 경유 relay 만 (발화 monopoly 무변경) | ADR-039 |
+| why-왕복 counter disjoint | 기존 `recheck_counter` 와 별도 **measurement channel**(5번째), cap 비소모. 순수 확정(내용 무변경) = terminal event → 재조사 fan-out 미발동 | ADR-077 Amendment 1 |
+| **advisory ceiling** | 본 규율 = advisory 절차 — 신규 기계 강제 게이트 0. "rule/record presence 는 testable, user actually confirmed 는 NOT testable". "기계 강제 100%" over-claim 금지 | ADR-159 결정 6 |
+
+상세 본문 SSOT = [ADR-159](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) + [`agents/RequirementsPLAgent.md`](agents/RequirementsPLAgent.md) `## 일급 목적` 절 + counter 경계 = [`templates/recheck-receiver-base.md`](templates/recheck-receiver-base.md) §3. 본 절 = lane plugin 층 요약 (중복 본문 금지).
+
+> **축 구분**: 본 절 = **사용자 축** 확인 왕복. 아래 `## Clarification 재스폰 패턴` = **agent ↔ sub-agent 축** 재스폰 — 별개 채널.
+
 ## Clarification 재스폰 패턴
 
 서브에이전트 (DomainAgent · RequirementsAnalyst · Researcher) 는 one-shot 이라 PL ↔ 서브 continuous dialog 불가. PL 이 통합 중 추가 질의가 필요하면:

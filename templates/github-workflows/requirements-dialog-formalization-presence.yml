@@ -1,0 +1,96 @@
+name: requirements-dialog-formalization-presence
+# CFP-2725 Phase 2 / Change Plan §8 RTM (AC-5/AC-6/AC-7/AC-21) — 요구사항 대화 형식화
+#   (design-entry 사용자 최종 확정 gate) 확정 배선 presence lint (advisory/warning tier, wrapper-self 전용).
+#
+# 배경: Phase 1 이 요구사항 → 요구사항리뷰 → 사용자 최종 확정 → 설계 시퀀스 + design-entry 확정 gate 를
+#   governance 문서(orchestrator-playbook / jira-decision-channel / story-page-structure /
+#   session-recovery / ADR-159)에 landed. 본 워크플로 = 그 확정 배선 anchor 가 회귀/드리프트하지
+#   않았는지 검사하는 4 presence lint 를 CI 로 표면화 (review-독립).
+#
+# ★ advisory ceiling (AC-14 — over-claim 금지):
+#   presence(문서 anchor 존재)는 testable — 그러나 "사용자가 실제로 확정했는지"는 NOT testable.
+#   presence job = warning tier (continue-on-error, ::warning:: 표면화, merge 미차단).
+#   신규 required context 0 — branch protection 7-tuple 무접촉. "기계 강제 100%" 아님.
+#
+# ★ wrapper-self 전용 (target-existence guard):
+#   4 lint 은 target 부재 시 exit 1 (vacuous PASS 금지) — target = wrapper 소유 governance 문서.
+#   consumer repo 에선 부재가 정상이므로 전 job `if: github.repository == 'mclayer/plugin-codeforge'`
+#   로 guard (consumer 배포 시 no-op skip). 4 lint script 는 consumer-scripts.manifest 미등재.
+#
+# byte-identical mirror (ADR-005 / invariant-check.yml parity):
+#   templates/github-workflows/ + .github/workflows/ 양쪽 byte-identical. invariant-check.yml
+#   parity loop 이 templates → .github 단방향 byte-identical 검증 (drift 0). CONSUMER_ONLY 제외 아님.
+#
+# injection-safe: on: pull_request (NOT pull_request_target) + permissions: contents:read (write/secret 0).
+#   입력 = 로컬 governance 문서 만 (외부 mutable 입력 0 — shell-interpolate 0).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  requirements-dialog-formalization-presence:
+    name: design-entry 확정 배선 anchor-presence detect (warning-tier)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Run design-entry formalization presence detect (warning, 비차단)
+        continue-on-error: true
+        run: |
+          set +e
+          for s in \
+            check-design-entry-signoff-predicate \
+            check-decision-channel-confirm-routing \
+            check-confirmation-record-schema-resume \
+            check-lane-sequence-review-before-confirm; do
+            echo "=== ${s} ==="
+            OUT="$(bash "scripts/${s}.sh" 2>&1)"
+            RC=$?
+            echo "$OUT"
+            {
+              echo "### ${s} (exit ${RC})"
+              echo '```'
+              echo "$OUT"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$RC" -ne 0 ]; then
+              echo "::warning::${s} presence 위반/오류 (exit ${RC}) — 확정 배선 anchor 결손·드리프트 가능 (advisory, merge 미차단)."
+            fi
+          done
+          echo "::notice::design-entry 확정 배선 presence = advisory/warning tier. presence(문서 anchor 존재)는 testable — 사용자가 '실제로 확정했는지'는 NOT testable (over-claim 금지). 신규 required context 0."
+          # advisory ceiling: 위반 검출해도 job 성공(exit 0) — merge 미차단.
+          exit 0
+
+  # 구현 회귀 방어 — discriminating self-test (mutation 생존 0). presence lint 이 hollow 가 아님을
+  # (anchor 결손·target 부재 둘 다 exit 1) 보증. wrapper-self 전용 (consumer skip). 이 job 은 hard —
+  # 내 lint 코드 회귀 시 fail = 정상(governance gate 아님, branch protection required context 0).
+  requirements-dialog-formalization-presence-test:
+    name: presence lint discriminating self-test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install pytest (test 파일 존재 시)
+        if: hashFiles('tests/scripts/test_requirements_dialog_formalization_presence.py') != ''
+        run: python3 -m pip install --quiet pytest
+      - name: Run discriminating self-test (test 파일 존재 시)
+        if: hashFiles('tests/scripts/test_requirements_dialog_formalization_presence.py') != ''
+        run: python3 -m pytest tests/scripts/test_requirements_dialog_formalization_presence.py -q
+      - name: Notice (test 파일 부재 시 — QADev 작성 대기)
+        if: hashFiles('tests/scripts/test_requirements_dialog_formalization_presence.py') == ''
+        run: echo "::notice::tests/scripts/test_requirements_dialog_formalization_presence.py 부재 — QADev 작성 대기 (hashFiles guard skip, 회귀 방어 미가동)."

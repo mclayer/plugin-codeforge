@@ -13,7 +13,7 @@ CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archi
 
 ## Category enum (출력 분류)
 
-`external-standard-missing | prior-art-gap | ac-external-verifiability | market-vendor-claim-unsourced | external-fact-dependency | requirements-completeness | section-missing | ac-decomposition-completeness`
+`external-standard-missing | prior-art-gap | ac-external-verifiability | market-vendor-claim-unsourced | external-fact-dependency | requirements-completeness | section-missing | ac-decomposition-completeness | internal-fitness`
 
 ## Severity 자동 룰
 
@@ -90,10 +90,29 @@ CFP-2326 / [ADR-125](https://github.com/mclayer/plugin-codeforge/blob/main/archi
 - 대조 대상 (§1 산문) 이 비정형이라 기계 강제 불가. 게이트가 AC-1b 를 fail-closed 로 강제하는 **척하지 않는다** (ADR-145 §결정 1(b) 천장 정직 공개 — user→AC 분해완결성 미강제).
 - defense-in-depth 3층 중 (a): (a) 본 RO-1 §1↔§5 diff + (b) AC-10 advisory 반복주장 신호 + (c) ADR-052 divergence (Codex proactive).
 
+## 내부 시스템 적합성 게이트 (결정 B — 요구사항리뷰 4번째 disjoint 축, CFP-2725 / ADR-125 Amendment 3)
+
+> **additive disjoint 축** — 위 외부사실 의존 축 (체크리스트 5축) · runtime-failure internal-invariant 축 (`requirements-runtime-failure.md` 변종) · AC 분해 완결성 축 (RO-1) 과 **disjoint 공존** (기존 3축 무손상·무재정의). 본 축은 외부조사를 요구하지 않는 **repo 내부 문서 Read 대조** 이므로 위 검사연극 금지 룰 (내부근거-only 결론에 외부조사 강제 금지) 과 무충돌 — 대조 대상이 repo 내부 문서 (ADR · Change Plan · 과거 Story) 라 web 검증 미발동 (`WebSearch 강제 아님` — 외부사실 축 도구와 tool-disjoint).
+
+"이 시스템에 적합한가" (현 아키텍처에서 구현 가능한가 / 과거 ADR·Story 결정과 충돌하는가 / 이미 있는 것의 중복인가) 는 지금까지 **작성측 자가분석만** 이었다 — Story §4.2 FeasibilityAgent / §4.3 ContinuityAgent. generator ≠ verifier 미분리 = 확증편향 갭. 본 축이 그 갭을 **dual-peer 독립 2차 검증** 으로 메운다 (ADR-125 Amendment 2 internal-invariant 축의 scope 일반화 — runtime-failure 한정 아닌 일반 내부적합).
+
+### 의무 (non-skippable)
+
+- **아키텍처 구현가능성**: 요구사항이 현 아키텍처 (ADR 레이어 계약 · 기존 경계 · Change Plan) 에서 자연스럽게 구현 가능한가. 무리한 우회·경계 침범을 전제해야만 성립하는 요건인가 → `internal-fitness`.
+- **과거 결정 충돌**: 요구사항이 과거 ADR·Story 결정과 충돌하는가 (이미 명시적으로 기각·대체된 방향인가, sunset·약화 방향인가). 근거 = 해당 ADR·Story **실제 Read** (추정 인용 금지).
+- **중복**: 이미 결정·구현된 것을 다시 요구하는가 (기존 축·게이트·문서와 동일 기능). 재사용·확장 가능한 기존 자산이 있는가.
+- **작성측과 disjoint (generator ≠ verifier)**: 작성측 §4.2/§4.3 자가분석 = 단계② (자가분석) / 본 축 = 단계③ (독립 재검증) — ADR-125 §결정 4 disjoint axis 동형. 작성측 결론은 **재확인 대상이 아니라 반증 대상**이다. packet 은 작성측 진단을 숨긴다 (hypothesis-withheld — Amendment 2 규율 상속).
+
+### 성격 (기계 게이트 아님 — hollow-gate 금지)
+
+- **declarative-only null-valid (필수)**: 적합 이슈 0건 = **정상 PASS**. 대조할 설계문서·과거 결정이 없는 신규 영역 = 자연 N/A. **억지 결함 조작 금지** — 발굴 강제는 검사연극이다 (매 Story non-null 산출 mandate 아님, ADR-125 Amendment 3 결정 B §2).
+- 판정 대상 (아키텍처 적합성·결정 충돌·중복) 이 비정형이라 **기계 강제 불가**. 게이트가 내부적합을 fail-closed 로 강제하는 **척하지 않는다** (advisory ceiling 정직 공개 — human/review-verified obligation).
+- **severity 자동 룰 없음**: 본 축은 위 "Severity 자동 룰" 에 전용 행을 두지 않는다 — ADR-125 Amendment 3 §4 가 `severity_overrides` 형식을 설계 결정 + Phase 2 로 defer 했고, RO-1 식 P1 자동강제 답습은 null-valid 축을 상시 RED (born-red) 로 만든다. severity = 워커 판단 (base 룰).
+
 ## 다음 게이트 (PASS 시)
 
 - Orchestrator post-Sonnet이 `gate:requirements-review-pass` 라벨 부착
-- phase:요구사항-리뷰 → **phase:설계** 전환 → 설계 lane (ArchitectPLAgent) 스폰
+- **design-entry gate 경유** (ADR-125 Amendment 3 결정 A / ADR-159 결정 3): 리뷰 PASS 는 설계 직결이 아니다 — PASS 후 **사용자 최종 확정** (predicate `user-final-sign-off-resolved`, playbook §3B.1 advisory sibling) 해소 후 phase:요구사항-리뷰 → **phase:설계** 전환 → 설계 lane (ArchitectPLAgent) 스폰. 리뷰 PASS = 확정의 **precondition** (BABOK 입력-의존성), 설계 진입 직전 확정이 **유일한 sign-off** (이중확정 아님). **advisory ceiling**: 확정 기록의 presence 는 testable / user actually confirmed 는 NOT testable — "기계 강제 100%" over-claim 금지. 확정 소관 = Orchestrator (본 lane 워커·PL 비관여).
 - Story file §9 "요구사항 리뷰 Iteration N" 누적
 
 ## Consumer overlay 확장

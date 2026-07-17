@@ -1,6 +1,6 @@
 ---
 name: session-recovery
-description: 세션 재개(resume) 복원 절차 + 운영 트러블슈팅 lookup (활성 Story resume / 에이전트 스폰 실패 / GitHub MCP 장애 / Codex CLI 미설치 / Story file·Mapper stale). 세션 개시 시 활성 Story 존재 또는 위 장애 발생 시 호출. gate 명제 (§7.4 FIX 카운터 복원 / §9.6-§9.7.1 label 매핑) 는 playbook 잔류 — 본 skill 은 guide 절차만.
+description: 세션 재개(resume) 복원 절차 + 운영 트러블슈팅 lookup (활성 Story resume / 사용자 최종 확정 상태 복원 / 에이전트 스폰 실패 / GitHub MCP 장애 / Codex CLI 미설치 / Story file·Mapper stale). 세션 개시 시 활성 Story 존재 또는 위 장애 발생 시 호출. gate 명제 (§7.4 FIX 카운터 복원 / §9.6-§9.7.1 label 매핑) 는 playbook 잔류 — 본 skill 은 guide 절차만.
 tools: Read
 ---
 
@@ -34,7 +34,9 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 |-----------|-----|-----------------|
 | phase:요구사항 | §1만 채움 | RequirementsPLAgent 재스폰 → Domain·Analyst·Researcher **병렬 재스폰** (Never-skippable 3종 전원) |
 | phase:요구사항 | §2·§5·§6 **일부만** 채움 (부분 완료 resume) | 비어있는 섹션의 에이전트만 **선택 재스폰** + 이미 채워진 섹션은 PL 통합 단계에서 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
-| phase:요구사항 | §2·§5·§6 모두 채움 | RequirementsPLAgent 통합 명세서 재확정 단계 재진입 ("사용자 확인 필요" 해소 여부 체크). 일부 관점 재보강 필요 시 clarification 재스폰 |
+| phase:요구사항 | §2·§5·§6 모두 채움 | RequirementsPLAgent 통합 명세서 재확정 단계 재진입 ("사용자 확인 필요" 해소 여부 체크 + **확정 상태 복원** 체크 — §7.3.1 sibling). 일부 관점 재보강 필요 시 clarification 재스폰 |
+| phase:요구사항-리뷰 | §1-7 채움 + §9 요구사항리뷰 블록 유무 무관 | RequirementsReviewPLAgent 재진입 판정 전 **확정 상태 복원** 수행 (§7.3.1) — 확정 gate = 리뷰 PASS 후·설계 진입 직전이므로 이 phase 에서는 정상적으로 `미확정` 또는 `왕복중` |
+| phase:설계 | (설계 진입 직후 resume) | ArchitectPLAgent 재스폰 **전** §7.3.1 **확정 상태 복원** 수행 — `미확정`/`왕복중` 이면 설계 진입 preflight 의 `user-final-sign-off-resolved` 미해소(advisory) → 설계 스폰 전 design-entry gate 확정 왕복 재개 |
 | phase:설계 | §7 + §11 초안만 | ArchitectPLAgent — Mapper·Refactor·SecurityArchitect·TestContractArchitect·ModuleArchitect **병렬 재스폰** + ArchitectAgent (chief author) 통합 의뢰 (이전 산출물 세션 외 유지 불가, §7/§11 Change Plan 초안만 복원됨) |
 | phase:설계 | §7/§11에 6 SubAgent 일부만 반영 (부분 완료 resume) | 미반영 쪽 SubAgent만 **선택 재스폰** + 반영된 쪽은 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
 | phase:설계 | §7 완료 | ArchitectAgent 가 Change Plan 저장 완료 보고 + Story §3/§7/§11 self-write 완료 확인 → 설계 리뷰 진입 |
@@ -51,6 +53,28 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 | phase:보안-테스트 | §9.4 블록 없음 | SecurityTestPLAgent 재스폰 (Claude/Codex 병렬, lanes.security_ai: true 시만) |
 | phase:보안-테스트 | §9.4 블록 FIX | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
 
+### 7.3.1 확정 상태 복원 (design-entry gate — ADR-159 결정 4 / Story AC-7)
+
+세션 재개 시 사용자 최종 확정(design-entry gate — 요구사항리뷰 PASS 후·설계 진입 직전) 관련 상태를 복원한다. **복원 범위 = 2종뿐**:
+
+| 복원 항목 | 내용 | 원천 |
+|---|---|---|
+| **(a) 확정 여부** | 3값 enum — `확정됨` / `왕복중` / `미확정` | Story file 의 **확정 발화 verbatim 기록** (§5.5) |
+| **(b) 미해소 질문 목록** | 확정 packet 의 미해결 질문 잔량 (0건이면 "0건" 명시 — 잔량 은폐 금지) | 동일 (Story file §5.5 primary) |
+
+**확정 여부 3값 판정 (Story file 판독 = §7.2 Read 의 부속 단계, 별도 도구·harness 없음)**:
+
+| 값 | 판정 |
+|---|---|
+| `확정됨` | 사용자 최종 확정 발화 verbatim 이 Story file 에 기록돼 있음 (presence) |
+| `왕복중` | 확정 요청(informed sign-off packet) 은 기록됐으나 확정 발화 verbatim 미기록 — 미해소 질문 잔량 존재 가능 |
+| `미확정` | 확정 요청 자체가 미기록 (확정 gate 미도달 — 리뷰 전/중 정상 상태 포함) |
+
+- **복원 원천 서열 (SSOT — ADR-159 결정 4)**: **Story file §5.5 확정 발화 verbatim = primary**. Jira mirror = **best-effort 보조** — Jira 결손 ≠ 확정 무효(fail-open). 양채널 상충 시 Story file 우선, 판정 불가면 §7.6 fallback(사용자 판단 요청).
+- **Jira 미해결 결정 fork 복원과의 관계**: `decision_channel` 활성 시 세션 재개는 [`codeforge:jira-decision-channel`](../jira-decision-channel/SKILL.md) §10 rehydrate 를 1회 호출한다(기존 연계, 무변경) — 원격 확정 fork 가 미해결이면 그 복원분이 위 (b) 미해소 질문 목록에 합류한다.
+- **자동확정 절대 금지**: 복원 결과가 `왕복중`/`미확정` 이어도 Orchestrator 가 확정을 대신 판정하지 않는다 — 확정 왕복 재개만 (ADR-159 결정 4 / ADR-099·ADR-100 `auto_decide_on_timeout: false` 정합). 확정 대기 stop = 정당 멈춤 (ADR-144 A1 / ADR-071 §23.4 carve-out) — over-halt 아님.
+- **advisory ceiling (정직 라벨 — ADR-159 결정 6)**: 본 절차가 복원하는 것은 **확정 기록의 presence** 다. 단일 사용자 환경에서 author 로 "사용자 발화 vs Orchestrator 자체 기록" 을 구분할 수 없으므로(ADR-119 §결정 10 ④), 본 복원은 **"user actually confirmed" 의 기계 증명이 아니다** — 기록·규칙의 presence 는 testable, user actually confirmed 는 NOT testable. 본 §7.3.1 = **advisory 복원 규칙**(behavioral directive)이며 신규 기계 게이트가 아니다.
+
 > **§7.4 FIX 카운터 복원 = gate, playbook 잔류** — 세션 개시/압축 재개 시 의무 절차는 `docs/orchestrator-playbook.md` §7.4 원문 수행 (본 skill 미수록).
 
 ### 7.5 사용자 통보
@@ -63,6 +87,7 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 - phase: {현재 라벨}
 - 재진입 지점: {에이전트 이름} 스폰
 - FIX 카운터: 설계 리뷰 {n}/3, 구현 리뷰 {m}/3, 구현 테스트 {k}, 보안 테스트 {s}
+- 사용자 최종 확정: {확정됨 | 왕복중 | 미확정} — 미해소 질문 {q}건   ← §7.3.1 (기록 presence 기준)
 - Story file 마지막 갱신 섹션: §{X}
 
 [이어서 진행합니다. 문제 있으면 알려주세요.]
