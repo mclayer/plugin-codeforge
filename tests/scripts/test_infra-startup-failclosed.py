@@ -15,8 +15,9 @@ CFP-2700 (Epic) G3 Phase 2 (구현 lane) — Discriminating self-test (.py chann
         + MK schema_id_off / schema_required_off (검사 무력화 → negative 가 PASS = RED-flip).
   AC-3  D2 startup fail-closed 4계약: (1) 프로세스 env 검사(.env red-herring 무시) (2) exit-masking
         금지(78 전파) (3) 빈 값 reject (4) fail-closed default(mode 엔트리 부재 = required /
-        block 부재·unit 미선언 = 거부) + optional_degradable degrade+WARN 계속
-        + MK empty_value_ok / mode_default_open / missing_masked.
+        block 부재·unit 미선언 = 거부 / dangling rid × optional_degradable = manifest 무결성 실패,
+        mode 무관 78 — F-CR-2724-1) + optional_degradable degrade+WARN 계속
+        + MK empty_value_ok / mode_default_open / missing_masked / dangling_degrade_leak.
   AC-9  allow-set parity: --emit-allow-set union == D3 스캐너 parse_manifest classified (diff 0,
         같은 파서 산출 실측) + 공유 파서 mutation(deprecated_unclassified — G2 동일 anchor) 주입 시
         PARITY-BROKEN(exit 78) 트립 = parity 가 산문 아닌 집행 계약임의 증명.
@@ -88,6 +89,23 @@ NOT_ADOPTED_NO_REASON = VALID_MANIFEST + """  startup_validation:
     adopted: false
 """
 
+# F-CR-2724-1 reproducer: dangling rid(ghost-res, plane A 미정의)를 optional_degradable 로 선언 —
+#   dangling = manifest 무결성 실패이므로 degrade 의미론 부적용, mode 무관 exit 78 이어야 한다.
+DANGLING_OPTIONAL_MANIFEST = """infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: []
+  execution_units:
+    collector:
+      required: [raw-nas, ghost-res]
+      resource_modes:
+        raw-nas: required
+        ghost-res: optional_degradable
+        ghost-res_degraded_behavior: "ghost skip"
+"""
+
 # 소스 문자열-치환 mutation (anchor → replacement). 대상 모듈별 분리.
 SCHEMA_MUTATIONS = {
     "schema_id_off": (
@@ -119,6 +137,12 @@ VALIDATOR_MUTATIONS = {
     "adoption_failopen": (
         "    if adopted is False and reason:",
         "    if adopted is False:  # MUTANT-adoption-failopen",
+    ),
+    # F-CR-2724-1 수정 분기 원복: dangling 의 missing 합류 제거 → optional 분기 semantics 로 새어
+    #   ::error:: 발화에도 STARTUP-OK exit 0 (fail-open 재현) — 봉합 분기가 load-bearing 임의 증명.
+    "dangling_degrade_leak": (
+        "                missing.append(rid)  # dangling = mode 무관 fail-closed (F-CR-2724-1)",
+        "                pass  # MUTANT-dangling-degrade-leak (F-CR-2724-1 원복)",
     ),
 }
 # 공유 파서 mutation — G2 self-test 와 동일 anchor (deprecated alias allow-set 미편입).
@@ -334,6 +358,40 @@ def test_ac3_declaration_absent_failclosed():
         rc2, out2 = run_py([VALIDATOR_PY, "--unit", "ghost", "--manifest", FIXTURE_MANIFEST])
         assert rc2 == EX_CONFIG and "실행단위 미선언" in out2, \
             "AC-3: unit 미선언 → exit %d, got %d\n%s" % (EX_CONFIG, rc2, out2)
+
+
+def test_ac3_dangling_optional_degradable_failclosed():
+    """F-CR-2724-1: dangling rid × optional_degradable → mode 무관 exit 78 (manifest 무결성 실패).
+
+    dangling = "자원 미설정(degrade 가능)" 아님 — ::error:: fail-closed 발화가 동작과 일치해야 한다
+    (발화 후 DEGRADED→STARTUP-OK exit 0 = fail-open 금지).
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        p = write_manifest(tmp, DANGLING_OPTIONAL_MANIFEST)
+        rc, out = run_py([VALIDATOR_PY, "--unit", "collector", "--manifest", p],
+                         env=clean_env({"RAW_NAS_URL": "http://nas"}))
+        assert rc == EX_CONFIG, \
+            "F-CR-2724-1: dangling×optional → exit %d, got %d\n%s" % (EX_CONFIG, rc, out)
+        assert "plane A 미정의" in out and "ghost-res" in out, \
+            "F-CR-2724-1: dangling 자원 ID loud 로그\n%s" % out
+        assert "STARTUP-OK" not in out, \
+            "F-CR-2724-1: STARTUP-OK 출력 = fail-open 잔존\n%s" % out
+        assert "BOOT-REFUSED" in out, "F-CR-2724-1: BOOT-REFUSED 라인 부재\n%s" % out
+
+
+def test_ac3_mutation_dangling_degrade_leak():
+    """MK(F-CR-2724-1 원복): dangling missing 합류 제거 → fail-open(STARTUP-OK exit 0) 재현.
+
+    = 위 positive 케이스가 원복 시 RED 로 뒤집힘 (봉합 분기 load-bearing 증명 — RED-flip).
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        libdir = make_mutant_lib(tmp, VALIDATOR_PY, VALIDATOR_MUTATIONS, "dangling_degrade_leak")
+        p = write_manifest(tmp, DANGLING_OPTIONAL_MANIFEST)
+        rc, out = run_py([os.path.join(libdir, "infra_startup_validator.py"),
+                          "--unit", "collector", "--manifest", p],
+                         env=clean_env({"RAW_NAS_URL": "http://nas"}))
+        assert rc == 0 and "STARTUP-OK" in out, \
+            "F-CR-2724-1 MK: 원복 → STARTUP-OK exit 0 (RED-flip), got %d\n%s" % (rc, out)
 
 
 def test_ac3_mutation_empty_value_ok():

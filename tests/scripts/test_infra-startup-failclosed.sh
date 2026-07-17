@@ -9,7 +9,8 @@
 #   AC-2  4 필수 필드(id/canonical_env/aliases/required) 필드별 negative → exit 1 + 누락 필드명
 #         + positive control + MK schema_required_off.
 #   AC-3  D2 4계약 — required 미설정 → exit 78(EX_CONFIG, 구성오류 distinct code) + 자원 ID loud /
-#         빈 값 reject / optional_degradable degrade 계속 / block·unit 미선언 fail-closed
+#         빈 값 reject / optional_degradable degrade 계속 / block·unit 미선언 fail-closed /
+#         dangling rid × optional_degradable = manifest 무결성 실패 → mode 무관 78 (F-CR-2724-1)
 #         + MK missing_masked (missing 삼킴 → BOOT-REFUSED 소멸 = RED-flip).
 #   AC-9  allow-set parity — --emit-allow-set union == 스캐너 parse_manifest classified (diff 0 실측)
 #         + MK deprecated_unclassified(공유 파서 G2 동일 anchor) → PARITY-BROKEN exit 78 트립.
@@ -154,6 +155,25 @@ validator_case "AC-3 계약(4) mode 엔트리 부재 = required 취급(writer, e
   "STARTUP-FAILCLOSED" "" PYTHONIOENCODING=utf-8 -- --unit writer --manifest "$FIXTURE_MANIFEST"
 validator_case "AC-3 unit 미선언 → fail-closed(78, '감지 비활성' 금지)" 78 \
   "실행단위 미선언" "" PYTHONIOENCODING=utf-8 -- --unit ghost --manifest "$FIXTURE_MANIFEST"
+# F-CR-2724-1: dangling rid(plane A 미정의) × optional_degradable → manifest 무결성 실패 =
+#   mode 무관 exit 78 + STARTUP-OK 부재 (::error:: 발화 후 DEGRADED→exit 0 fail-open 금지).
+_dg_tmp=$(mktemp -d)
+printf '%s\n' 'infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: []
+  execution_units:
+    collector:
+      required: [raw-nas, ghost-res]
+      resource_modes:
+        raw-nas: required
+        ghost-res: optional_degradable
+        ghost-res_degraded_behavior: "ghost skip"' > "$_dg_tmp/m.yaml"
+validator_case "AC-3 dangling×optional_degradable → mode 무관 exit 78 + STARTUP-OK 부재 (F-CR-2724-1)" 78 \
+  "plane A 미정의" "STARTUP-OK" RAW_NAS_URL=http://nas PYTHONIOENCODING=utf-8 -- --unit collector --manifest "$_dg_tmp/m.yaml"
+rm -rf "$_dg_tmp"
 # MK missing_masked: missing 판정 삼킴 → BOOT-REFUSED 소멸 + exit 0 (RED-flip).
 _mm_tmp=$(mktemp -d)
 mkdir -p "$_mm_tmp/mutlib"

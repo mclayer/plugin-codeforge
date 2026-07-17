@@ -153,9 +153,12 @@ def validate_startup(manifest_path, unit_name, environ=None):
                 break
         if satisfied_key is None:
             if not keys:
+                # dangling rid = "자원 미설정(degrade 가능)" 아닌 **manifest 무결성 실패** — degrade
+                # 의미론 부적용, mode 무관 즉시 missing 합류 = exit 78 경로 (F-CR-2724-1 봉합).
                 lines.append("::error::infra-startup-validator: 자원 %s = manifest plane A 미정의 "
                              "(dangling ID 참조) — 충족 불능, fail-closed." % rid)
-            if mode == "optional_degradable":
+                missing.append(rid)  # dangling = mode 무관 fail-closed (F-CR-2724-1)
+            elif mode == "optional_degradable":
                 behavior = unit["degraded_behavior"].get(rid, "(degraded_behavior 선언 부재)")
                 degraded.append(rid)
                 lines.append("::warning::infra-startup-validator: DEGRADED — unit=%s 자원 %s 미설정 "
