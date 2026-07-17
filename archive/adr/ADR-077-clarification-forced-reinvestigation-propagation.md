@@ -261,7 +261,7 @@ clarification 강제 재조사 trigger 와 다른 재실행 trigger 는 **trigge
 
 ### 성격
 
-본 Amendment 는 **additive 확장** 이다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **terminal event·counter 축 짝 wiring**. §결정 1~10 의미 불변. ADR 본체 status = **Active 유지**. direction: strengthen, sunset_justification: null (강화 방향 — counter disjoint layer 추가 = §결정 9 ratchet 강화 명시 대상).
+본 Amendment 는 **additive 확장** 이다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **terminal event·counter 축 짝 wiring**. §결정 1~10 의미 불변. ADR 본체 status = **Active 유지**. direction: strengthen; sunset_justification = frontmatter amendment_log 근거 문자열(non-null — 약화 아닌 additive 확장이라 sunset 대상 아님을 명시하는 근거; counter disjoint layer 4→5 추가 = §결정 9 ratchet 강화 방향, ADR-125 Amd2 strengthen+non-null 선례 정합).
 
 본 Amendment 는 [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) Amendment 15 (발화 frequency 축 — intake declare touchpoint + design-entry gate 발화 touchpoint) + [ADR-125](ADR-125-requirements-review-lane.md) Amendment 3 (사용자 확정 위치 = 리뷰 PASS 후 + 내부적합 검증축) 의 **sibling** 이다 (3축 복합의 terminal event·counter 축 짝).
 

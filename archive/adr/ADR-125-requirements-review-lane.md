@@ -297,7 +297,7 @@ N/A — permanent (additive 축 신설). 본 Amendment 이후 요구사항리뷰
 
 ### 성격
 
-본 Amendment 는 **additive 축 신설 + 위치 정밀화** 다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **lane 시퀀스·확정 위치·내부적합 검증축 짝**. §결정 1~6 + Amendment 1/2 의미 불변. ADR 본체 status = **Proposed 유지**. direction: strengthen, sunset_justification: null.
+본 Amendment 는 **additive 축 신설 + 위치 정밀화** 다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **lane 시퀀스·확정 위치·내부적합 검증축 짝**. §결정 1~6 + Amendment 1/2 의미 불변. ADR 본체 status = **Proposed 유지**. direction: strengthen; sunset_justification = frontmatter amendment_log 근거 문자열(non-null — additive 축 신설 + 위치 정밀화라 sunset 대상 아님을 명시, Amendment 1/2 동일 non-null 패턴).
 
 본 Amendment 는 **Amendment 2 (CFP-2350 — internal-invariant ground-truth falsification 축) 의 additive-disjoint-axis 패턴을 답습**한다 (그 패턴의 결정적 선례). 신규 [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) Amendment 15 (발화 frequency 축) + [ADR-077](ADR-077-clarification-forced-reinvestigation-propagation.md) Amendment 1 (terminal event·counter·리뷰-후 rewind) 의 **sibling** 이다.
 
