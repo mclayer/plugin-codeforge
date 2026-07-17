@@ -224,14 +224,29 @@ class TestE2E:
         assert "Usage" in res.stderr
 
     def test_bundled_examples_validate(self):
-        """All example project.yaml files must pass the validator."""
+        """All example project.yaml files must pass the validator.
+
+        Enumerated via glob so newly added examples are auto-covered - no
+        hardcoded per-example path list. The old hardcoded list silently
+        dropped new examples (e.g. rust-cli-minimal) from schema-regression
+        coverage, letting a top-level `reason` re-introduction slip past
+        (CFP-2739 F1 root-cause fix).
+        """
         repo_root = HOOKS_DIR.parent.parent
-        for yaml_path in [
-            repo_root / "examples/webapp-minimal/.claude/_overlay/project.yaml",
-            repo_root / "examples/cli-tool-minimal/.claude/_overlay/project.yaml",
-            repo_root / "examples/library-minimal/.claude/_overlay/project.yaml",
+        example_yamls = sorted(
+            repo_root.glob("examples/*/.claude/_overlay/project.yaml")
+        )
+        # Vacuous-guard: an empty glob must fail the test, never pass silently.
+        assert example_yamls, (
+            "no example project.yaml matched "
+            "examples/*/.claude/_overlay/project.yaml (glob went vacuous)"
+        )
+        # overlay/_overlay/project.yaml.example lives outside examples/, so the
+        # glob does not reach it - keep it explicitly (no coverage regression).
+        yaml_paths = example_yamls + [
             repo_root / "overlay/_overlay/project.yaml.example",
-        ]:
+        ]
+        for yaml_path in yaml_paths:
             assert yaml_path.exists(), f"fixture missing: {yaml_path}"
             res = _run(str(yaml_path))
             # Examples have <REPLACE — ...> placeholders, which are non-empty strings,
