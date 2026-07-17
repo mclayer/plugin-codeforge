@@ -62,7 +62,7 @@ gh issue list --search "<keyword>" --state all --json number,title,labels,closed
 # Note: label-based search 만 (rule 6 위반) → CFP-953 incident reproduction risk
 
 # Step 2 — Epic state poll (memory rule 7 의무, CFP-946 incident carrier)
-gh issue view <epic_number> --json state,closedAt,closedBy,labels
+gh issue view <epic_number> --json state,body
 # Note: polling 직전 5+ min 경과 session state cache 무조건 stale 가정
 
 # Step 3 — HEAD compare sibling commits (verify-before-trust 4-layer governance Layer 1)
