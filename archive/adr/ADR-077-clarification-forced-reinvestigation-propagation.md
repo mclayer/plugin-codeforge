@@ -9,10 +9,26 @@ carrier_story: CFP-759
 parent_epic: CFP-755
 supersedes: []
 amends: []
-amendment_log: []
+amendments:
+  - number: 1
+    by: "CFP-2725"
+    date: "2026-07-17"
+    title: "순수 확정 = terminal event (신규 trigger origin user-final-confirmation-driven, §결정 7 taxonomy 확장) + why-왕복 counter = §결정 5 5번째 disjoint measurement channel + 리뷰-후 확정 rewind"
+amendment_log:
+  - by: "CFP-2725"
+    date: "2026-07-17"
+    scope: |
+      Amendment 1 — 요구사항 lane 사용자 최종 확정 프로세스 정식화 (신규 ADR-159 의 terminal event·counter 축 짝). 3부:
+      (1) **순수 확정 = terminal event (§결정 7 trigger origin taxonomy 확장 — 예외 신설 아님)**: 사용자 최종 확정 발화(내용 무변경 = 순수 확정)를 §결정 7 의 trigger origin disjoint taxonomy 에 **신규 3번째 origin `user-final-confirmation-driven`** 으로 추가. 이 origin 은 요구 입력 변경 0 → §결정 1 value-equality skip 비차용 invariant 의 보호 대상 밖(clarification 답변 class 밖)이므로 재조사 fan-out 미발동(terminal). "trigger origin 분류 추가" frame — §결정 1(value-equality skip 비차용) 약화도 §결정 9 ratchet 약화도 아님. **내용 수정 동반 확정만** 기존 user-answer-driven origin(clarification)으로 분류되어 재조사 후 재확정. 확정→fan-out→재확정 livelock 봉인.
+      (2) **why-왕복 counter = §결정 5 5번째 disjoint measurement channel**: 요구사항 lane intake 왕복 카운터를 §결정 5 재조사 카운터 disjoint(현행 4-layer: 재조사 카운터 / §10 FIX Ledger / playbook §4.4 2회 재스폰 / debate round)의 **5번째 disjoint measurement channel** 로 추가. cross-pollinate 금지 invariant 상속 — 기존 recheck_counter_cap(§결정 4 P-2 = 5) 비소모, terminal event 비소모. counter cap SSOT = §결정 4 정량 표(신규 ADR 아님) — why-왕복 counter cap 값 = 설계 결정(질문 cap = 왕복 1회당 1~2개). **cross-namespace disambiguation(필수)**: 본 counter channel 은 ADR-071 §결정 3 cognitive Layer 1-4 와 **무관**(measurement channel ≠ cognitive layer). "5번째 measurement channel/layer" 이지 "5번째 cognitive layer" 아님(ADR-071 §결정 3 5th-cognitive-layer 신설 금지 invariant 와 무충돌).
+      (3) **리뷰-후 확정 rewind (dirty 전파 리뷰까지 확대)**: 사용자 최종 확정이 요구사항리뷰 PASS 뒤(ADR-125 Amendment 3 결정 A 위치)로 이동함에 따라, 리뷰-후 확정 시점에서 **내용 수정 동반 확정** = 요구사항 lane 뿐 아니라 **요구사항리뷰도 rewind 재실행**(리뷰 통과분 무효화). value-equality skip 비차용 invariant 상속 — dirty 전파 범위가 리뷰까지 확대. 순수 확정(내용 무변경)은 rewind 미발동(terminal).
+      §결정 1~10 무수정(additive only) — value-equality skip 비차용 invariant(§결정 1) 본체 보존, 4-layer disjoint(§결정 5) 본체 보존(5번째 추가). ratchet 강화 방향(§결정 9 — counter disjoint layer 추가 = layer 합치 불가 강화). enforcement = Phase 1 declarative(why-왕복 counter 실 wiring = requirements-output contract / recheck-receiver-base = Phase 2 defer, 본 Amendment = 선언만). 신규 ADR-159 SSOT / ADR-071 Amendment 15(발화 frequency) / ADR-125 Amendment 3(확정 위치) 짝.
+    direction: strengthen
+    sunset_justification: "본 Amendment 는 약화가 아니라 additive 확장이다 — §결정 7 trigger origin taxonomy 에 3번째 origin(user-final-confirmation-driven) 추가 + §결정 5 disjoint measurement channel 4→5 추가. 기존 §결정 1 value-equality skip 비차용 invariant(clarification 답변 class 내부 규율)를 대체·약화하지 않으며 — 순수 확정은 그 class 밖(요구 입력 변경 0)이라 보호 대상 밖, 예외 신설이 아닌 origin 분류 추가. §결정 5 4-layer disjoint 본체 무손상(5번째 layer 추가, cross-pollinate 금지 상속). §결정 1~10 + counter cap 정량 표(§결정 4) 의미 불변. additive 강화 방향(counter disjoint layer 추가 = §결정 9 ratchet 강화 명시 대상)이므로 sunset 대상 아니다. ADR-058 §결정 5 self-application + ADR-064 §결정 7 evidence-gated symmetric ratchet 강화 방향 정합. 원복은 별 Story 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
 related_stories:
   - CFP-759  # 본 Story carrier — Story-1 (ADR-077 신설 + RESERVATION row 77 reserved→active)
   - CFP-755  # Epic A anchor (요구사항 clarification 강제 재조사 전파)
+  - CFP-2725 # Amendment 1 carrier — 순수 확정 terminal event(§결정 7 3번째 origin) + why-왕복 counter 5번째 channel(§결정 5) + 리뷰-후 rewind. ADR-159 SSOT 짝
 related_adrs:
   - ADR-039  # Orchestrator subagent default — env=0 재조사 fan-out 은 Orchestrator round-trip (재귀 spawn 금지). §결정 9 deferred spawn cost risk 부분 충당 (inherit-not-resolve)
   - ADR-044  # Phase-scoped sequential team — env=1 시 SendMessage fan-out, §결정 8 env-equality protocol invariant 무손상 (envelope env-invariant 단일값)
@@ -27,6 +43,9 @@ related_adrs:
   - ADR-031  # Lane-spawn evidence — 재조사 fan-out 도 §14 Lane Evidence row 대상 (§결정 10 cross-ref)
   - ADR-013  # dogfood-out — Story file = internal-docs wrapper/stories/CFP-759.md
   - ADR-054  # doc-only fast-path — Story-1 = 신규 ADR 도입 → full-lane 강제 (fast-path 제외)
+  - ADR-159  # Amendment 1 — 요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT (본 Amendment = terminal event·counter 축 짝 wiring)
+  - ADR-071  # Amendment 1 — 짝 (§결정 15 발화 frequency 축 + §결정 23 intake declare touchpoint, ADR-071 Amendment 15). 확정 발화 = touchpoint
+  - ADR-125  # Amendment 1 — 짝 (사용자 확정 = 리뷰 PASS 후 위치, ADR-125 Amendment 3). 리뷰-후 rewind 의 리뷰 lane 대상
 related_files:
   - docs/adr/ADR-RESERVATION.md  # row 77 reserved→active 전환 (본 Story-1 Phase 1 PR)
   - docs/orchestrator-playbook.md  # §2.2/§4.4 amend 방향 선언만 (본문 amend = Story-2)
@@ -237,6 +256,80 @@ clarification 강제 재조사 trigger 와 다른 재실행 trigger 는 **trigge
 - **ADR-039 §결정 1 binary always-spawn invariant 정합**: 무조건 재조사 = always-spawn (binary, §결정 9 deferred spawn cost 는 inherit-not-resolve, over-claim 0 — 결정 4).
 - **ADR-052 Amendment 1/3 Touchpoint #4 debate 메커니즘 무변경**: 본 ADR 은 재조사 ↔ Touchpoint #4 boundary 만 declare (결정 7), 메커니즘 미변경. fact-check marker 4종 verbatim 보존 invariant (결정 7) 가 ADR-052 Amendment 3 무손상 보장.
 - **ADR-067 cross-lane 합산 금지 정합**: 재조사 카운터 = §10 FIX Ledger disjoint (결정 5) — cross-lane 합산 0.
+
+## Amendment 1 (2026-07-17) — CFP-2725 — 순수 확정 = terminal event + why-왕복 counter 5번째 channel + 리뷰-후 확정 rewind
+
+### 성격
+
+본 Amendment 는 **additive 확장** 이다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **terminal event·counter 축 짝 wiring**. §결정 1~10 의미 불변. ADR 본체 status = **Active 유지**. direction: strengthen; sunset_justification = frontmatter amendment_log 근거 문자열(non-null — 약화 아닌 additive 확장이라 sunset 대상 아님을 명시하는 근거; counter disjoint layer 4→5 추가 = §결정 9 ratchet 강화 방향, ADR-125 Amd2 strengthen+non-null 선례 정합).
+
+본 Amendment 는 [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) Amendment 15 (발화 frequency 축 — intake declare touchpoint + design-entry gate 발화 touchpoint) + [ADR-125](ADR-125-requirements-review-lane.md) Amendment 3 (사용자 확정 위치 = 리뷰 PASS 후 + 내부적합 검증축) 의 **sibling** 이다 (3축 복합의 terminal event·counter 축 짝).
+
+### 컨텍스트
+
+ADR-159 이 요구사항 lane 에 사용자 최종 확정(design-entry gate)을 도입하면서, 확정 발화가 기존 clarification 답변 event 와 어떻게 구분되는가라는 event taxonomy 공백이 드러났다:
+
+1. **livelock 위험**: §결정 1 은 clarification 답변을 무조건 dirty 이벤트로 분류해 재조사 fan-out 을 발동한다 (value-equality skip 비차용). 사용자 최종 확정 발화가 이 clarification 답변 class 로 분류되는 순간 무조건 fan-out → 확정→fan-out→재확정 livelock (Story §2 D-3).
+2. **counter 공백**: 요구사항 lane intake 왕복 카운터가 기존 4-layer disjoint(§결정 5) 어디에도 없어, why-왕복이 recheck_counter_cap 을 소모하면 조기 circuit-open.
+3. **리뷰-후 확정의 dirty 전파 범위**: ADR-125 Amendment 3(결정 A) 이 확정을 요구사항리뷰 PASS 뒤로 옮기면서, 리뷰-후 내용 수정 동반 확정 시 리뷰 통과분의 무효화(rewind) 범위가 미정의.
+
+### 결정
+
+#### 1. 순수 확정 = terminal event (§결정 7 trigger origin taxonomy 확장 — 예외 신설 아님)
+
+§결정 7 의 trigger origin disjoint taxonomy 에 **신규 3번째 origin `user-final-confirmation-driven`** 을 추가한다:
+
+| trigger origin | 진입 | 재조사 fan-out |
+|---|---|---|
+| `user-answer-driven` (§결정 1, 기존) | 사용자 clarification 답변 (요구 입력 변경) | 무조건 발동 (value-equality skip 비차용) |
+| `Codex-divergence-driven` (§결정 7, 기존) | ADR-052 Amendment 1 A4 Touchpoint #4 divergence | ADR-052 메커니즘 (별 축) |
+| **`user-final-confirmation-driven` (본 Amendment, 신규)** | 사용자 최종 확정 발화 (design-entry gate, ADR-159 결정 4) | **순수 확정(내용 무변경) = terminal event — 미발동** |
+
+- **"trigger origin 분류 추가" frame (핵심 — 약화 오독 차단)**: 순수 확정(내용 무변경)은 **요구 입력 변경 0** 이므로 §결정 1 value-equality skip 비차용 invariant 의 보호 대상 밖(clarification 답변 class 밖)이다 (`verified — §결정 1 "요구 입력의 정의상 변경" 정의 + 컨텍스트 절 "답변이 들어왔다는 사실 자체가 입력 변경"`). 따라서 본 Amendment 는 §결정 1(value-equality skip 비차용) 을 **약화하지 않는다** — value-equality skip 을 도입하는 것이 아니라, 애초에 clarification 답변이 아닌 event(순수 확정)를 별 origin 으로 분류하는 것이다. §결정 9 ratchet 도 약화하지 않는다(무조건 트리거는 clarification 답변 origin 에서 그대로 유지). **예외 신설이 아니라 origin taxonomy 확장** — 이 frame 이 아니면 value-equality skip 도입(§결정 1 약화)이나 게이트 재도입(§결정 9 약화)으로 오독될 수 있으므로 명문화한다.
+- **내용 수정 동반 확정 = 기존 경로**: 확정 발화가 내용 수정을 동반하면 그 부분은 `user-answer-driven`(clarification) origin 으로 분류되어 §결정 1 무조건 재조사 후 재확정. 모호 시 default = 수정 동반 측(fan-out — 안전 방향).
+
+#### 2. why-왕복 counter = §결정 5 5번째 disjoint measurement channel
+
+§결정 5 의 재조사 카운터 disjoint(N-layer 확장 패턴)에 **5번째 disjoint measurement channel** 을 추가한다:
+
+1. 재조사 카운터 (scope 정교화 layer) — recheck_counter_cap = 5 (§결정 4)
+2. §10 FIX Ledger (품질 게이트 layer) — lane별 max 3 (ADR-067)
+3. playbook §4.4 2회 재스폰 한도 (PL재량 재스폰 layer)
+4. debate round counter (adversarial 합의 layer) — min 3 / max 5 (ADR-059)
+5. **why-왕복 counter (요구사항 lane intake 왕복 layer) — 본 Amendment 신규**
+
+- **disjoint 상속**: 5번째 channel 은 기존 4-layer 와 cross-pollinate 금지 invariant 를 상속한다. 기존 recheck_counter_cap(§결정 4 P-2 = 5) 비소모, terminal event(순수 확정) 비소모. §10 FIX Ledger 합산 금지.
+- **counter cap SSOT = §결정 4 정량 표(신규 ADR 아님)**: why-왕복 counter cap 값은 §결정 4 의 정량 표(recheck cap 과 동거)에 귀속된다. 구체 cap 값 = 설계 결정 (질문 cap = 왕복 1회당 1~2개). empirical-source annotation 규율(§결정 4 표 하단 I-5) 상속 — 실측 전 값은 `[empirical-source: TBD]` 박제.
+- **cross-namespace disambiguation (필수 — 오독 차단)**: 본 counter channel 은 [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) §결정 3 cognitive Layer 1-4 와 **무관**하다 (measurement channel ≠ cognitive layer). "5번째 measurement channel/layer" 이지 "5번째 cognitive layer" 가 아니다 — ADR-071 §결정 3 의 "5번째 cognitive layer 신설 금지 invariant" 와 **무충돌**(다른 namespace). 설계 문서에서도 본 counter 를 "counter/mechanism" 으로 명명하고 cognitive "layer" 명명을 피한다.
+
+#### 3. 리뷰-후 확정 rewind (dirty 전파 리뷰까지 확대)
+
+사용자 최종 확정이 요구사항리뷰 PASS 뒤(ADR-125 Amendment 3 결정 A)로 이동함에 따라, 리뷰-후 확정 시점의 dirty 전파 범위를 확대한다:
+
+- **내용 수정 동반 확정 = 요구사항 lane + 요구사항리뷰 rewind**: 리뷰-후 확정 시점에서 내용 수정을 동반한 확정은 요구사항 lane 재조사(§결정 1 무조건 fan-out)뿐 아니라 **요구사항리뷰도 rewind 재실행**(리뷰 통과분 무효화 — 리뷰가 stale 요구를 검증했으므로). value-equality skip 비차용 invariant 상속 — dirty 전파 범위가 리뷰 lane 까지 확대.
+- **순수 확정 = rewind 미발동**: 순수 확정(내용 무변경, terminal event)은 rewind 를 발동하지 않는다 — 리뷰 통과분 유효 유지, 설계 진입.
+
+#### 4. enforcement = Phase 1 declarative (실 wiring = Phase 2 defer)
+
+본 Amendment = declarative 선언만이다. mechanical wire 는 별 carrier Phase 2 defer:
+
+- **why-왕복 counter schema**: `requirements-output-v1.md` typed counter field(v1.3 후보) + `recheck-receiver-base.md §3` counter boundary cross-declare = **Phase 2 defer** (본 Story 무수정 — 병렬 충돌 회피).
+- **event 분류 규칙 배선**: `RequirementsPLAgent.md`(답변 분기 + counter 운용) + playbook §4.4 재조사 수신부 = **Phase 2 defer**.
+
+declaration-only Wave 1 retain 패턴 답습 (ADR-125 Amendment 2 §4 / ADR-070 §D5 정합).
+
+### cross-ref (Amendment 1)
+
+| ADR | 인용 지점 | 관계 |
+|---|---|---|
+| ADR-159 | 결정 1·2·3 | **SSOT 짝** — 요구사항 lane enrichment 일급 + design-entry 확정 gate 본체. 본 Amendment = terminal event·counter 축 wiring. |
+| ADR-071 Amendment 15 (§결정 23) | 결정 1 | **sibling** — 발화 frequency 축(intake declare touchpoint + design-entry gate 발화 touchpoint). 확정 발화 = 발화 touchpoint / 본 Amendment = 그 발화의 event taxonomy. disjoint axis. |
+| ADR-125 Amendment 3 (결정 A) | 결정 3 | **sibling** — 사용자 확정 = 리뷰 PASS 후 위치. 본 Amendment 리뷰-후 rewind 의 리뷰 lane 대상. |
+| ADR-071 §결정 3 (cognitive Layer 1-4) | 결정 2 | **cross-namespace disambiguation** — why-왕복 counter(measurement channel) ≠ cognitive layer. 5th-cognitive-layer 신설 금지 invariant 무충돌. ADR-071 본문 무수정. |
+
+### 해소 기준
+
+N/A — permanent (additive 축 확장). 본 Amendment 이후 §결정 7 trigger origin = 3종(user-answer-driven / Codex-divergence-driven / user-final-confirmation-driven), §결정 5 disjoint channel = 5개. mechanical wire (why-왕복 counter schema / event 분류 배선) 추적 = CFP-2725 Phase 2 carrier.
 
 ## 해소 기준
 

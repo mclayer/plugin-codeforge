@@ -139,6 +139,17 @@ amendments:
 
       무손상 invariant — frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness / 3 touchpoint(§결정 15) / ask-trigger 3종(§결정 20) / skip-offer(§결정 21) / §결정 22 D1·D2 2-channel 구조 / 5번째 cognitive layer 신설 금지 invariant 전부 보존 (§결정 22 의 TEXT scope broaden + consumer 전파만 = mechanism 확장, cognitive layer·touchpoint·trigger enum count 전부 불변). fourth strengthen-direction amendment(Amendment 11/12/13 에 이음).
     sunset_justification: null   # 강화 방향 (자명-진행 priming scope 확장 + consumer 전파 = forcing function 강화 ratchet) — ADR-058 §결정 5 약화 evidence-gate 비대상. 무손상 — §결정 22 D1/D2 구조 + closed-enum(§결정 15/20 member 추가 0) + carve-out verbatim 전부 보존.
+  - amendment_id: 15
+    date: "2026-07-17"
+    carrier_story: CFP-2725
+    issue: https://github.com/mclayer/plugin-codeforge/issues/2725
+    summary: |
+      §결정 23 신설 — 요구사항 lane intake 항상 declare touchpoint (4번째, §15.5 확장) + §결정 20 lane-scoped carve-out 명문 + design-entry 확정 gate = §결정 22 정당 멈춤 carve-out. 신규 ADR-159 (요구사항 lane enrichment 일급 + design-entry 확정 gate) 의 발화 frequency 축 짝 wiring. 3부:
+      (a) **intake 항상 declare = 4번째 touchpoint (§15.5 closed-enum 확장 규약 첫 실사용)** — §결정 15 3-touchpoint closed enum 에 요구사항 lane-scoped 4번째 touchpoint "intake 배경·의도 재진술 declare" 를 §15.5 확장 규약(별도 CFP 신설 의무 + Story §1 사용자 explicit 승인 의무 + 강화 ratchet)으로 추가. CFP-2725 + §1 사용자 확정 선호 4항이 §15.5 forcing function 요건 충족(발동 항상 = 사용자 explicit 승인). **STRENGTHEN frame — mandatory DECLARE ≠ mandatory ASK**: intake 왕복 = derived-default 재진술 declare 패턴(§결정 16 natural-language trigger no-dialog-reflex derived-default 동형)이지 매 접수마다 사용자를 멈춰 세우는 ASK 아님. trivial 최소형 = 재진술 1~3줄 + "이의 없으면 진행" + 열린 질문 0~1개(명시 답변 대기 없이 진행 가능), 모호(ask-trigger ① 해당) 시만 ASK escalate. 이 DECLARE≠ASK 구분이 §결정 20 (ask-trigger 3종 한정) 과의 충돌을 원천 해소.
+      (b) **§결정 20 lane-scoped carve-out 명문** — 요구사항 lane 한정 "항상 declare" carve-out 을 §결정 20 에 명시하되 **타 lane 일반화 명시 금지** (§결정 20 본체 = ask-trigger 3종 한정 보존). 요구사항 lane 의 what(요구 명세) disambiguation 은 §15.1 "how/what 경계 — what disambiguation 은 억제 비대상" 의 lane-scoped 강화 (frequency 축소 ≠ richness 축소 invariant 정합).
+      (c) **design-entry 확정 gate = 발화 touchpoint + §결정 22 정당 멈춤 carve-out** — 요구사항리뷰 PASS 후·설계 진입 직전 사용자 최종 확정 요청 = 기존 §결정 15 touchpoint (a) 결과-명세 확인 성격(사용자 선언 결과 자체 확인) + ask-trigger ①(요구 애매)/③(비가역·고비용). 확정 대기 stop = ask-trigger 정당 stop(payload>0, ADR-144 A1)이라 §결정 22 정당 멈춤 3종 carve-out 에 명시적 귀속 — transition-autonomy hook(§22.1 D2)이 설계 진입 지점을 over-halt 오탐하지 않도록 명문화. §결정 22 정당 멈춤 3종(ask-trigger ①②③) carve-out verbatim 무변경.
+      무손상 invariant (전부 보존): frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness / 3 touchpoint frequency-richness 본체(§결정 15 §15.1 how·what 경계) / ask-trigger 3종 본체(§결정 20) / skip-offer 금지(§결정 21) / §결정 22 D1·D2 2-channel 구조·carve-out / 5번째 cognitive layer 신설 금지 invariant. 4번째 touchpoint 추가 = §15.5 확장 규약 준수(요구사항 lane-scoped, 사용자 explicit 승인) — closed-enum 우회 아님. fifth strengthen-direction amendment(Amendment 11/12/13/14 에 이음). ADR-159 SSOT / ADR-077 Amendment 1(terminal event·counter) / ADR-125 Amendment 3(확정 위치·내부적합) 짝.
+    sunset_justification: null   # 강화 방향 (§15.5 확장 규약 준수 4번째 touchpoint 추가 = 발화 frequency 증가 강화 ratchet, 요구사항 lane-scoped) — ADR-058 §결정 5 약화 evidence-gate 비대상. 무손상 — frame mode(§결정 1) / Layer 1-4(§결정 3) / sub-mechanism(§결정 4) / §결정 2(c) richness / 3 touchpoint 본체(§결정 15) / ask-trigger 3종 본체(§결정 20) / skip-offer(§결정 21) / §결정 22 carve-out / 5번째 cognitive layer 신설 금지 invariant 전부 보존. DECLARE≠ASK — mandatory ASK 신설 아님.
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -164,6 +175,7 @@ related_stories:
   - CFP-2392 # Amendment 12 carrier (§18.7 MEMORY.md 슬림화 mechanism deferred 해제 resolved_carrier: ADR-129, OMC-adopt 지식캡처+메모리다이어트 묶음, paired sibling ADR-045 Amendment 14)
   - CFP-2567 # Amendment 13 carrier (§결정 22 신설 — Epic 내 Story 전환 자율 진행, 전환 지점 over-halt/over-ask 방지. D1 doc 국소 명시 + D2 2-channel(UserPromptSubmit 예방 reminder hook skip-offer 동형, user-turn 창 + PreToolUse(Agent) additionalContext non-block inject pretooluse-agent-spawn-gate 확장, autonomous 전환 창), §결정 15/20 전환 지점 적용 강화 = enum member 추가 0, §결정 18 disjoint cross-ref, third strengthen-direction, Stop/SubagentStop force-continue/개입 REJECT ADR-115 §결정 2)
   - CFP-2573 # Amendment 14 carrier (§결정 22 scope 일반화 transition-only → 모든 자명-진행 지점 + vague-pause 금지 + consumer 전파, ADR-144 §결정 3(L2)/§결정 6(L6) realization. hook TEXT+docstring broaden only — 파일명·hooks.json entry·§22.7 back-refs stable, closed-enum member 추가 0, carve-out verbatim 보존, NEVER block, fourth strengthen-direction)
+  - CFP-2725 # Amendment 15 carrier (§결정 23 신설 — 요구사항 lane intake 항상 declare 4번째 touchpoint §15.5 확장 + §결정 20 lane-scoped carve-out + design-entry 확정 gate §결정 22 정당 멈춤 carve-out. mandatory DECLARE≠ASK, fifth strengthen-direction. ADR-159 SSOT 짝)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -191,6 +203,10 @@ related_adrs:
   - ADR-127  # Amendment 13 — 정식 풀 플로우 비협상 (자동 진행 ≠ 게이트 skip ≠ lane 생략 ASM-1, skip-offer §결정 21 SSOT)
   - ADR-144  # Amendment 14 — anchor SSOT (stop taxonomy 3축 + decision-null pause 신설, §결정 3 L2 = 본 §결정 22 scope 일반화 realization / §결정 6 L6 = consumer 전파)
   - ADR-043  # Amendment 14 — telemetry privacy (consumer telemetry sharing opt-in default-false 보존, L6 정직 nuance)
+  - ADR-159  # Amendment 15 — 요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT (본 Amendment = 발화 frequency 축 짝 wiring)
+  - ADR-077  # Amendment 15 — 짝 (terminal event + counter disjoint, ADR-077 Amendment 1). 확정 발화 event taxonomy
+  - ADR-125  # Amendment 15 — 짝 (사용자 확정 = 리뷰 PASS 후·설계 진입 전 위치, ADR-125 Amendment 3). design-entry gate 시퀀스 전제
+  - ADR-144  # Amendment 15 — 확정 대기 stop = payload>0 정당 멈춤(A1), §결정 22 정당 멈춤 carve-out anchor
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -1360,6 +1376,54 @@ D2 2채널의 reminder **TEXT** 를 아래 자명-진행 지점 전부를 salien
 - reminder TEXT 는 **STATIC**(runtime value interpolation 금지, no PII).
 - consumer **telemetry sharing** = opt-in default-false 보존(ADR-043 §결정 1). **정직 nuance**: 로컬 ledger append 는 wrapper+consumer 양쪽에서 이미 ungated(기존 CFP-1743 behavior) — 새 flip 아님. wrapper always-on ≠ global default flip(ADR-144 §결정 6).
 
+## §결정 23. 요구사항 lane intake 항상 declare touchpoint (4번째) + §결정 20 lane-scoped carve-out + design-entry 확정 gate 발화 touchpoint (Amendment 15, CFP-2725)
+
+> **[Amendment 15 / CFP-2725, 2026-07-17 KST]** 요구사항 lane 사용자 대화 프로세스 정식화 — 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 목적 + design-entry 확정 gate SSOT) 의 **발화 frequency 축 짝 wiring**. 본 §결정 = ADR-071 이 소유하는 dialog frequency 축(§결정 15/20/22)에 요구사항 lane-scoped 강화를 3부(a/b/c)로 적용한다. terminal event·counter 축 = ADR-077 Amendment 1 / lane 시퀀스·확정 위치·내부적합 검증축 = ADR-125 Amendment 3 (짝, 본 §결정 밖). carrier CFP-2725, issue https://github.com/mclayer/plugin-codeforge/issues/2725.
+
+### 23.1 (a) intake 항상 declare = 4번째 touchpoint (§15.5 closed-enum 확장 규약 첫 실사용)
+
+§결정 15 의 3-touchpoint closed enumeration(§15.2)에 **요구사항 lane-scoped 4번째 touchpoint** 를 추가한다:
+
+| touchpoint | 발화 사유 | 분류 |
+|---|---|---|
+| **(d) 요구사항 intake 배경·의도 재진술 declare** (요구사항 lane 한정) | 새 요구사항 접수 시 이해한 배경·의도를 먼저 제시·재진술하고 확인 왕복을 시작 (자명해 보여도 생략 없음) | **mandatory DECLARE** (derived-default 재진술 — §결정 16 no-dialog-reflex derived-default 동형). ADR-039 inline whitelist 1번 entry(사용자 dialog) scope 안 작동 |
+
+**§15.5 확장 규약 준수 (첫 실사용)**: 본 4번째 touchpoint 추가는 §15.5 closed-enum 확장 규약을 정확히 발동한다 — (1) ADR-064 §결정 7 top-down ratchet 강화 방향(touchpoint 추가 = 발화 frequency 증가) (2) 별도 CFP 신설 의무 = CFP-2725 (3) Story §1 사용자 explicit 승인 의무 = CFP-2725 §1 사용자 확정 선호 4항("발동 기준 = 항상" verbatim). §15.5 가 사전에 마련해 둔 정규 확장 경로의 **첫 실사용**이며 closed-enum 우회가 아니다.
+
+**scope = 요구사항 lane 한정**: 본 touchpoint (d)는 요구사항 lane intake 에만 적용된다. 타 lane 일반화 명시 금지 — 다른 lane 은 기존 3-touchpoint(a/b/c) + §결정 20 ask-trigger 3종 그대로.
+
+### 23.2 STRENGTHEN frame — mandatory DECLARE ≠ mandatory ASK (핵심 명제, 원천 회피)
+
+touchpoint (d) 는 **mandatory DECLARE 이지 mandatory ASK 가 아니다.** 이 구분이 §결정 20(ask-trigger 3종 한정)과의 충돌을 원천에서 해소한다:
+
+- **DECLARE 패턴**: intake 왕복 = 이해한 배경·의도의 derived-default 재진술 + "이의 없으면 진행" 고지. trivial 최소형 = 재진술 1~3줄 + 열린 질문 0~1개 — **명시 답변 대기 없이 진행 가능**(사용자가 정정하면 반영). §결정 16 natural-language action trigger 의 no-dialog-reflex derived-default 와 동형(발화하되 멈춰 묻지 않음).
+- **ASK 로 escalate 하는 경우**: 요구가 모호(ask-trigger ① 해당)하면 그때 실제 `AskUserQuestion` 으로 escalate. 즉 touchpoint (d) 는 "항상 declare + 모호할 때만 ask" 이지 "항상 ask" 아님.
+- **§결정 20 충돌 해소**: §결정 20 이 폐기한 것은 "safe-direction default-to-ask(모호하니 일단 물어)" 다. touchpoint (d) 는 ask 를 늘리지 않고 declare 를 강제하므로 §결정 20 본체(ask-trigger 3종 한정)와 직교·정합. 5번째 cognitive layer 신설 아님(§결정 3 Layer 1-4 enum count 불변) — touchpoint(mechanism) 추가이지 cognitive layer 추가 아님(§12.3 re-home / §15.3 family pattern 정합).
+
+### 23.3 (b) §결정 20 lane-scoped carve-out 명문 (요구사항 lane 한정, 타 lane 일반화 금지)
+
+§결정 20 에 요구사항 lane 한정 carve-out 을 **명문**한다:
+
+- **carve-out**: 요구사항 lane intake 는 "항상 declare"(touchpoint (d)) — §결정 20 ask-trigger 3종 한정의 요구사항 lane-scoped 강화.
+- **§결정 20 본체 보존 + 타 lane 일반화 금지**: 본 carve-out 은 요구사항 lane 에만 적용되며 타 lane(설계·구현 등)으로 일반화 명시 금지. §결정 20 본체(전역 ask-trigger 3종 한정 — over-asking 안전편향 제거)는 무변경. 이념적 기반 = §15.1 "how(구현 과정) 중간 보고는 억제, what(요구 명세) disambiguation 은 억제 비대상" — 요구사항 lane intake = what disambiguation 의 lane-scoped frequency 강화(richness 무감소, frequency-richness 분리 invariant 정합).
+
+### 23.4 (c) design-entry 확정 gate = 발화 touchpoint + §결정 22 정당 멈춤 carve-out
+
+요구사항리뷰 PASS 후·설계 진입 직전 사용자 최종 확정 요청(ADR-159 결정 3, informed sign-off)을 발화 touchpoint 로 명문화한다:
+
+- **성격 = touchpoint (a) 결과-명세 확인**: 확정 요청 = 사용자가 선언한 결과(요구 명세)의 최종 확인 + ask-trigger ①(요구 애매 잔량 해소)/③(비가역·고비용 — 설계 = 첫 비가역 지점). 신규 touchpoint 신설 아님 — 기존 touchpoint (a) 의 frequency 영역(설계 진입 경계) 적용.
+- **§결정 22 정당 멈춤 carve-out 명시(over-halt 오탐 차단)**: 사용자 최종 확정 대기 stop = ask-trigger 정당 stop(payload>0, [ADR-144](ADR-144-orchestrator-autonomy-stop-taxonomy.md) A1). §결정 22 정당 멈춤 3종(ask-trigger ①②③) carve-out 에 **명시적 귀속** — §22.1 D2 transition-autonomy hook 이 "요구사항 → 설계 진입 지점" 을 over-halt(자명-진행 위반)로 오탐하지 않도록 명문화. §결정 22 정당 멈춤 3종 carve-out **verbatim 무변경**(EDGE-1 over-suppression 차단 상속). in-session 전환 자율 진행(§결정 22) 과 design-entry 확정 대기(정당 멈춤)는 disjoint — 확정 대기는 §결정 22 예외 carve-out 안.
+
+### 23.5 무손상 invariant (전부 보존) + advisory ceiling
+
+무손상 invariant: frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness / 3 touchpoint frequency-richness 본체(§결정 15 §15.1 how·what 경계) / ask-trigger 3종 본체(§결정 20) / skip-offer 금지(§결정 21) / §결정 22 D1·D2 2-channel 구조·정당 멈춤 3종 carve-out / 5번째 cognitive layer 신설 금지 invariant — 전부 보존. touchpoint 추가 = 4번째(요구사항 lane-scoped, §15.5 규약 준수), ask-trigger enum member 추가 0.
+
+**advisory ceiling(정직)**: design-entry 확정 gate 의 기계 검증 = "확정 기록·규칙의 presence 까지"(ADR-159 결정 6). 발화 touchpoint 명문화 = behavioral directive — turn-final hook 부재 platform 한계로 runtime 발화 시점 hard-block 불가(§20.5 / §22.6 재확인). "기계 강제 100%" over-claim 금지.
+
+### 23.6 sunset_justification: null (ADR-058 §결정 5 정합, fifth strengthen-direction)
+
+본 Amendment 15 = **additive 강화** (§15.5 확장 규약 준수 4번째 touchpoint 추가 = 발화 frequency 증가 강화 ratchet, 요구사항 lane-scoped + §결정 20 carve-out 명문 + design-entry gate §결정 22 carve-out 명시). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 evidence-gate 미적용. Amendment 11/12/13/14 에 이은 fifth strengthen-direction amendment(`sunset_justification: null` family). mandatory DECLARE — mandatory ASK 신설 아님(사용자 burden 은 declare 최소형으로 완화). ADR-159 SSOT / ADR-077 Amendment 1(terminal event·counter) / ADR-125 Amendment 3(확정 위치·내부적합) 짝.
+
 ## self-application top-down ratchet
 
 본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 18 session swap reflex anti-pattern 7종 enum 축소 — Amendment 7** / **§결정 19 mid-turn glossary lookup 의무 회수 또는 codename 15-batch 축소 — Amendment 8** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 **차단** (evidence 없을 때). 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6/7/8 = `sunset_justification: null` family pattern.
@@ -1368,7 +1432,7 @@ D2 2채널의 reminder **TEXT** 를 아래 자명-진행 지점 전부를 salien
 
 **Amendment 10 (CFP-2371) = second weaken-direction amendment**: §결정 5 결정 트리의 `AMBIGUOUS → 가치 측 분류(safe direction) → AskUserQuestion` 룰 redirect (§결정 20 — ask-trigger 3종 한정, 모호 포함 ask-trigger 미해당 전부 진행). over-asking 안전편향 제거 = 묻기 절제 (약화 방향). `sunset_justification` = 3축 evidence object (사용자 반복 directive 3회 = behavioral evidence) 충족 → evidence-gated symmetric ratchet 1급 허용. 무손상 — frame mode (§결정 1) / Layer 1-4 (§결정 3) / sub-mechanism (§결정 4) / §결정 2(c) richness / 3 touchpoint (§결정 15) 골격 보존, 5번째 cognitive layer 신설 아님 (§결정 5 분류 규칙 변경, layer count 불변).
 
-**Amendment 11 (CFP-2374) / Amendment 12 (CFP-2392) / Amendment 13 (CFP-2567) / Amendment 14 (CFP-2573) = 강화 방향 `sunset_justification: null` family** — skip-offer PATH 폐지 (§결정 21) / MEMORY.md 슬림화 mechanism deferred 해제 resolve (§18.7 resolved_carrier ADR-129) / Epic 내 Story 전환 autonomy surface + 예방 reminder (§결정 22) / **§결정 22 scope 일반화(transition-only → 모든 자명-진행 지점 + vague-pause 금지) + consumer 전파 (§22.9, ADR-144 §결정 3/6 realization)**. Amendment 9/10 의 weaken-direction 과 달리 넷 다 정식성·자율 진행 강화 방향 → ADR-058 §결정 5 약화 evidence-gate 비대상. §결정 22 / §22.9 = §결정 15/20 enum member 추가 0 (지점 적용 확장·surface 강화만, closed-enum 무손상) — cognitive layer count 불변 (D2 hook = mechanism 확장, TEXT broaden = concern 무증가).
+**Amendment 11 (CFP-2374) / Amendment 12 (CFP-2392) / Amendment 13 (CFP-2567) / Amendment 14 (CFP-2573) / Amendment 15 (CFP-2725) = 강화 방향 `sunset_justification: null` family** — skip-offer PATH 폐지 (§결정 21) / MEMORY.md 슬림화 mechanism deferred 해제 resolve (§18.7 resolved_carrier ADR-129) / Epic 내 Story 전환 autonomy surface + 예방 reminder (§결정 22) / §결정 22 scope 일반화(transition-only → 모든 자명-진행 지점 + vague-pause 금지) + consumer 전파 (§22.9, ADR-144 §결정 3/6 realization) / **요구사항 lane intake 항상 declare 4번째 touchpoint(§15.5 확장 규약 첫 실사용) + §결정 20 lane-scoped carve-out + design-entry 확정 gate §결정 22 정당 멈춤 carve-out (§결정 23, ADR-159 SSOT 짝)**. Amendment 9/10 의 weaken-direction 과 달리 다섯 다 정식성·자율 진행·요구 disambiguation 강화 방향 → ADR-058 §결정 5 약화 evidence-gate 비대상. §결정 22 / §22.9 = §결정 15/20 enum member 추가 0. **§결정 23 = §결정 15 에 요구사항 lane-scoped 4번째 touchpoint 추가(§15.5 확장 규약 준수 — 별도 CFP + Story §1 사용자 explicit 승인 충족)이나 §결정 20 ask-trigger enum member 추가 0(mandatory DECLARE≠ASK)** — cognitive layer count 불변 (touchpoint = mechanism 추가, cognitive layer 추가 아님).
 
 ## 해소 기준
 

@@ -10,6 +10,7 @@ is_transitional: false
 related_stories:
   - CFP-2326  # 본 ADR 신설 carrier (Epic CFP-2324 S2)
   - CFP-2350  # Amendment 2 carrier — runtime-failure internal-invariant falsification 변종 (Epic #2346 진단축 C, ADR-064 Amd 13 sibling)
+  - CFP-2725  # Amendment 3 carrier — 결정 A(확정 위치 = 리뷰 PASS 후·설계 진입 전 정밀화) + 결정 B(내부 시스템 적합성 4번째 disjoint 축). ADR-159 SSOT 짝
 related_adrs:
   - ADR-124  # S1 anchor — 외부지식 충당 3-단계 모델. 본 ADR 은 그 §결정 5 S2 row (요구사항리뷰 lane 실 wiring + 8→9 hard-commit) 의 이행 carrier. ②(작성측 self-check)↔③(리뷰측 producer 게이트) 깊이축 disjoint
   - ADR-052  # disjoint cross-ref (Amendment 아님) — touchpoint #4 작성측 synthesis self-check (단계②) ↔ 요구사항리뷰 lane producer 게이트 (단계③) 의 disjoint axis. "Requirements lane = synthesis not producer" 와 정합 (리뷰 lane 은 별개 producer)
@@ -22,7 +23,10 @@ related_adrs:
   - ADR-049  # native Issue Type cutover — phase:* 라벨 single-active invariant 정합 (phase:요구사항-리뷰 추가)
   - ADR-119  # Amendment 2 — §결정 10 ② 실패 진단 판정면 umbrella anchor. runtime-failure 변종이 그 진단면을 요구사항리뷰 lane 측 falsification 게이트로 instantiate (외부사실 축과 disjoint 한 internal-invariant 축)
   - ADR-068  # Amendment 2 — I-8 standing invariant-surface. falsification packet 의 invariant-surface 입력 = I-8 surface (generative invariant sweep enumeration 완전성 보강)
-  # ADR-064 (Amendment 2 — §결정 13 root-cause 3rd rung sibling carrier) + ADR-124 (Amendment 2 — §결정 6 외부사실 휴리스틱 무약화, internal-invariant 축 = 외부지식 3-단계 모델 internal 아날로그) = 이미 위 related_adrs 등재
+  - ADR-159  # Amendment 3 — 요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT (본 Amendment = lane 시퀀스·확정 위치·내부적합 검증축 짝)
+  - ADR-071  # Amendment 3 — 짝 (발화 frequency 축 §결정 15/23, ADR-071 Amendment 15). 확정 발화 touchpoint
+  - ADR-077  # Amendment 3 — 짝 (terminal event + counter + 리뷰-후 rewind, ADR-077 Amendment 1). 리뷰-후 rewind 의 리뷰 lane 대상
+  # ADR-064 (Amendment 2 — §결정 13 root-cause 3rd rung sibling carrier) + ADR-124 (Amendment 2/3 — §결정 6 외부사실 휴리스틱 무약화, internal-invariant·내부적합 축 = 외부지식 3-단계 모델 internal 아날로그, cross-ref only) = 이미 위 related_adrs 등재
 related_files:
   - archive/adr/ADR-125-requirements-review-lane.md
   - plugins/codeforge-review/agents/RequirementsReviewPLAgent.md
@@ -44,6 +48,10 @@ amendments:
     by: "CFP-2350"
     date: "2026-06-19"
     title: "runtime-failure 변종 신설 — internal-invariant ground-truth falsification 축 (외부사실 mandate 와 disjoint)"
+  - number: 3
+    by: "CFP-2725"
+    date: "2026-07-17"
+    title: "결정 A(사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전 위치 정밀화) + 결정 B(내부 시스템 적합성 4번째 disjoint 검증 축 — Amd2 internal-invariant 선례 답습)"
 amendment_log:
   - by: "CFP-2341"
     date: "2026-06-18"
@@ -58,6 +66,15 @@ amendment_log:
       §결정 1~6 + Amendment 1 무수정(additive only). ratchet 강화 방향(축 추가 = 검증 표현력 확장, scope 약화 0).
     direction: strengthen
     sunset_justification: "본 Amendment 는 약화가 아니라 additive 축 신설이다 — 기존 외부사실 의존 검증 축(§결정 6, ADR-124 단계③)을 대체·약화하지 않고 internal-invariant ground-truth falsification 축을 별개 axis 로 추가(공존). §결정 1~6 + Amendment 1 의미 불변, 기존 dual-peer/debate-protocol 재사용(신규 worker 0). review-verdict-v4 / checklist 배선 = Phase 2 defer(본 Story 무수정). additive 강화 방향이므로 sunset 대상이 아니다. ADR-058 §결정 5 self-application(Amendment 시 sunset_justification 의무) + ADR-064 §결정 7 evidence-gated symmetric ratchet 강화 방향 정합. 원복은 별 Story 의 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
+  - by: "CFP-2725"
+    date: "2026-07-17"
+    scope: |
+      Amendment 3 — 요구사항 lane 사용자 대화 프로세스 정식화 (신규 ADR-159 의 lane 시퀀스·확정 위치·내부적합 검증축 짝). Amendment 2 의 additive-disjoint-axis 패턴 답습. 2부:
+      (결정 A) **§결정 1 위치 정밀화 — 사용자 최종 확정 checkpoint = 요구사항리뷰 PASS 후·설계 진입 전**: 요구사항리뷰 lane 신설(§결정 1) 위 = Phase 1 내부 sub-gate. 본 Amendment 는 그 시퀀스에 사용자 최종 확정 checkpoint 의 정밀 위치(요구사항리뷰 PASS 후·설계 진입 직전)를 명문화한다 — `요구사항(why대화+enrichment) → 요구사항리뷰(외부사실+내부적합) → 사용자 최종 확정 → 설계`. **lane count 10 무변경 · required contexts 무변경 invariant 상속**(Amendment 1 lane 카운트 정본 10 + §결정 2 required contexts 무변경). 확정 gate = sub-gate 순서 정밀화이지 lane 추가 아님. BABOK approve-after-verify+validate 입력-의존성 정합. 배선 = Phase 1 playbook preflight advisory(ADR-159 결정 3), 신규 phase 라벨/required context = Phase 1 채택 금지(advisory ceiling).
+      (결정 B) **§결정 6 scope 확장 — 외부사실 only → 외부사실 + 내부 시스템 적합성 (4번째 disjoint 축)**: 요구사항리뷰 lane 의 검증 scope 에 "내부 시스템 적합성" 독립 검증 축을 추가한다 — dual-peer(Claude/Codex)가 설계문서(ADR·Change Plan)·과거 Story·ADR 을 Read 대조로 아키텍처 구현가능성·과거 결정 충돌·중복을 검증. 이는 Amendment 2 (internal-invariant ground-truth falsification 축, runtime-failure 한정)의 **scope 일반화** — 그 additive-disjoint-axis 패턴의 3번째 disjoint 축(일반 내부적합, runtime-failure 한정 아님). **검사연극 비충돌(born-broken 방지, 명세 필수)**: 내부적합 축 = repo-내부 문서 Read 기반(WebSearch 강제 아님 — 외부사실 축 도구 WebSearch 와 tool-disjoint), declarative-only null-valid(적합 이슈 0건 = 정상 PASS, 억지 결함 조작 금지), 작성측 Feasibility(§4.2)/Continuity(§4.3) 자가분석과 disjoint 2차(generator≠verifier, §결정 4 disjoint 동형), hypothesis-withheld packet(작성측 진단 숨김 — Amd2 packet 규율 상속). ADR-125:142 검사연극 금지 원문 = "내부-only 결론에 외부조사 강제" 만 금지 — 내부문서 Read 정합검증은 대상 아님.
+      §결정 1~6 + Amendment 1/2 무수정(additive only). ratchet 강화 방향(축 추가 = 검증 표현력 확장 + 확정 위치 정밀화, scope 약화 0). review-verdict category literal(`internal-fitness-*`) 신설 + RequirementsReviewPLAgent/requirements.md checklist 배선 + phase 라벨 wiring = **Phase 2 defer**(review-verdict-v4.md / checklist 무수정 — 본 Story 미접촉, 병렬 충돌 회피). 본 Amendment = declarative 선언만. 신규 ADR-159 SSOT / ADR-071 Amendment 15(발화 frequency) / ADR-077 Amendment 1(terminal event·counter·리뷰-후 rewind) 짝. ADR-124 amendment 불요 — Amd2 도 ADR-124 cross-ref 만 처리(내부적합 = 외부지식 3-단계 internal 아날로그).
+    direction: strengthen
+    sunset_justification: "본 Amendment 는 약화가 아니라 additive 축 신설 + 위치 정밀화다 — 결정 A(확정 checkpoint 위치 정밀화)는 §결정 1 lane 신설·§결정 2 required contexts 무변경 invariant 를 상속(lane count 10 무변경, sub-gate 순서 정밀화이지 lane 추가 아님). 결정 B(내부 시스템 적합성 축)는 기존 외부사실 의존 검증 축(§결정 6)을 대체·약화하지 않고 disjoint axis 로 추가(공존) — Amendment 2 internal-invariant 축의 scope 일반화. §결정 1~6 + Amendment 1/2 의미 불변, 기존 dual-peer/debate-protocol 재사용(신규 worker 0), 검사연극 비충돌(repo Read 기반·WebSearch 비강제·declarative-only null-valid). review-verdict-v4/checklist/phase 라벨 배선 = Phase 2 defer(본 Story 무수정). additive 강화 방향이므로 sunset 대상 아니다. ADR-058 §결정 5 self-application + ADR-064 §결정 7 evidence-gated symmetric ratchet 강화 방향 정합. 원복은 별 Story 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
 ---
 
 # ADR-125: 요구사항리뷰 lane 신설 (9번째 lane)
@@ -275,6 +292,79 @@ declaration-only Wave 1 retain 패턴 답습 (ADR-082 §결정 6 / ADR-070 §D5 
 ### 해소 기준
 
 N/A — permanent (additive 축 신설). 본 Amendment 이후 요구사항리뷰 lane = 외부사실 축 + internal-invariant 축 2-mode 공존. mechanical wire (review-verdict-v4 enum / checklist 배선) 추적 = Epic [#2346](https://github.com/mclayer/plugin-codeforge/issues/2346) Phase 2 carrier.
+
+## Amendment 3 (2026-07-17) — CFP-2725 — 결정 A(사용자 확정 위치 정밀화) + 결정 B(내부 시스템 적합성 4번째 disjoint 검증 축)
+
+### 성격
+
+본 Amendment 는 **additive 축 신설 + 위치 정밀화** 다 (약화 아님). 신규 [ADR-159](ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md) (요구사항 lane enrichment 일급 + design-entry 확정 gate SSOT) 의 **lane 시퀀스·확정 위치·내부적합 검증축 짝**. §결정 1~6 + Amendment 1/2 의미 불변. ADR 본체 status = **Proposed 유지**. direction: strengthen; sunset_justification = frontmatter amendment_log 근거 문자열(non-null — additive 축 신설 + 위치 정밀화라 sunset 대상 아님을 명시, Amendment 1/2 동일 non-null 패턴).
+
+본 Amendment 는 **Amendment 2 (CFP-2350 — internal-invariant ground-truth falsification 축) 의 additive-disjoint-axis 패턴을 답습**한다 (그 패턴의 결정적 선례). 신규 [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) Amendment 15 (발화 frequency 축) + [ADR-077](ADR-077-clarification-forced-reinvestigation-propagation.md) Amendment 1 (terminal event·counter·리뷰-후 rewind) 의 **sibling** 이다.
+
+### 컨텍스트
+
+ADR-159 이 요구사항 lane 에 사용자 최종 확정(design-entry gate)을 도입하면서 두 공백이 드러났다:
+
+1. **확정 checkpoint 위치의 순서 역설**: 사용자 최종 확정을 요구사항 lane 끝(리뷰 전)에 두면 "확정 후 리뷰가 내용 변경 → 확정 무효화" 순서 역설이 발생한다 (BABOK approve 가 미검증 요건 위에서 작동하는 입력-의존성 위배). §결정 1 의 lane 시퀀스에 확정 checkpoint 의 정밀 위치가 미명시.
+2. **내부적합 검증 주체 부재 (확증편향 갭)**: 요구사항리뷰 lane 은 §결정 6 에서 외부사실 의존성만 검증한다. "이 시스템에 적합한가"(현 아키텍처 구현가능성·과거 ADR/Story 충돌·중복) = 작성측 Feasibility(§4.2)/Continuity(§4.3) 자가분석만 = generator≠verifier 미분리 확증편향 갭. Amendment 2 가 이미 disjoint 내부 축(internal-invariant, runtime-failure 한정)을 신설했으므로, 일반 내부적합은 그 패턴의 3번째 disjoint 축으로 자연 확장 가능.
+
+### 결정
+
+#### 결정 A — §결정 1 위치 정밀화: 사용자 최종 확정 = 요구사항리뷰 PASS 후·설계 진입 전
+
+§결정 1 의 lane 시퀀스에 사용자 최종 확정 checkpoint 의 정밀 위치를 명문화한다:
+
+- **위치**: `요구사항(why대화+enrichment+§1-7) → 요구사항리뷰(외부사실+내부적합) → **사용자 최종 확정** → 설계`. 확정 = 요구사항리뷰 PASS 후·설계 진입 직전 (요구사항 lane exit 아님 — design-entry gate).
+- **lane count 10 무변경 · required contexts 무변경 invariant 상속**: 확정 checkpoint = sub-gate 순서 정밀화이지 lane 추가 아님. Amendment 1(lane 카운트 정본 10) + §결정 2(branch protection required contexts 무변경) invariant 그대로 상속. 배선 = phase:요구사항-리뷰 → phase:설계 전이 경계 (기존 gate 뒤 anchoring).
+- **BABOK 입력-의존성 정합**: 요구사항리뷰(verify+validate) 산출을 사용자 최종 확정(approve)이 입력으로 받는다 (`source: iiba.org BABOK 7.2/7.3/5.5` — approve 는 verified+validated 요건 위에서만 작동). 순서 역설 원천 해소(확정 후 리뷰 변경 → 확정 무효 제거).
+- **배선 tier**: Phase 1 = playbook 설계 진입 preflight advisory(predicate `user-final-sign-off-resolved`, ADR-159 결정 3). 신규 phase 라벨/gate AND/required context = Phase 1 채택 금지(advisory ceiling — ADR-159 결정 6). 단일 sign-off(요구사항 → 요구사항리뷰 전이는 별도 확정 gate 무요구, 설계 진입 직전 확정이 유일).
+
+#### 결정 B — §결정 6 scope 확장: 외부사실 only → 외부사실 + 내부 시스템 적합성 (4번째 disjoint 축)
+
+요구사항리뷰 lane 의 검증 scope 에 **내부 시스템 적합성 독립 검증 축** 을 추가한다 (Amendment 2 internal-invariant 축의 scope 일반화).
+
+##### 1. 내부적합 축 instantiate (기존 자산 재사용, 신규 worker 0)
+
+- **기존 dual-peer 재사용**: Claude + Codex (ClaudeReviewAgent ∥ CodexReviewAgent) dual-peer 가 설계문서(ADR·Change Plan)·과거 Story·ADR 을 Read 대조로 검증한다 — 아키텍처 구현가능성·과거 결정 충돌·중복. [ADR-001](ADR-001-review-agent-unification.md) lane-agnostic — **신규 worker 신설 0건**(§결정 5 / Amendment 2 재사용 원칙 답습).
+- **debate-protocol 재사용**: [ADR-059](ADR-059-debate-protocol-v1.md) lane-agnostic (trigger.lane = `requirements-review`). protocol 무변경.
+- **hypothesis-withheld packet**: 작성측 진단(Feasibility/Continuity 자가분석 결론)을 packet 에서 숨긴다 — 리뷰 lane 이 작성측 결론을 반증 대상으로 다룬다 (확증편향 차단, Amendment 2 packet 규율 상속).
+
+##### 2. 검사연극 비충돌 (born-broken 방지 — 명세 필수)
+
+내부적합 축은 "검사연극 금지"(§결정 6 / ADR-119 §결정 6)와 **비충돌**해야 한다:
+
+- **repo-내부 문서 Read 기반 (WebSearch 강제 아님)**: 내부적합 = 설계문서·과거 Story·ADR 의 실제 Read 대조. 외부사실 축의 도구(WebSearch)와 **tool-disjoint**. ADR-124/125 검사연극 금지 원문(`ADR-125:142`) = "내부-only 결론에 외부 웹조사 강제" 만 금지 — 내부문서 Read 로 내부정합 검증은 그 금지 대상 아님.
+- **declarative-only null-valid**: 대조할 설계문서·과거결정 없는 신규 영역 = 자연 N/A(null-valid). 적합 이슈 0건 = 정상 PASS — 억지 결함 조작 금지(강제 발굴 금지).
+- **disjoint 2차 (generator ≠ verifier)**: 작성측 Feasibility(§4.2)/Continuity(§4.3) 자가분석과 disjoint 한 2차 독립 검증 (§결정 4 disjoint axis 동형). 작성측 = 단계②(자가분석), 리뷰측 dual-peer = 단계③(독립 재검증).
+
+##### 3. 외부사실 축과 disjoint (ADR-124 §결정 6 무약화)
+
+내부적합 축은 §결정 6 외부사실 축과 **disjoint** 하게 공존한다 — 외부사실 검증(표준/CVE/벤더)과 내부적합 검증(아키텍처 구현가능성·과거 결정 정합)은 별개 axis, 외부사실 mandate 대체·약화 0. ADR-124 §결정 6 의미 변경 0 → 본 Amendment 가 ADR-124 를 **cross-ref 만** 한다 (Amendment 불요 — Amd2 도 ADR-124 cross-ref 만 처리, 내부적합 = 외부지식 3-단계 모델 internal 아날로그).
+
+##### 4. enforcement = Phase 1 declarative (배선 = Phase 2 defer)
+
+본 결정 = declarative 선언만이다. mechanical wire 는 별 carrier Phase 2 defer:
+
+- **review-verdict category literal**: `review-verdict-v4.md` 의 `internal-fitness-*` verdict enum(필요 시) + severity_overrides = **Phase 2 defer**. `review-verdict-v4.md` **무수정**(본 Story 미접촉 — 병렬 force-push 충돌 회피). literal 신설 형식 = 설계 결정(Amd2 선례 확인 후).
+- **checklist·agent 배선**: `RequirementsReviewPLAgent.md`(내부적합 축 owner 절 + category_enum) / `requirements.md` checklist(내부 시스템 적합성 게이트 절) 배선 = **Phase 2 defer**. axis 분리 명시 필수(작성측 §4.1/§4.2 단계② ↔ 리뷰측 internal-fitness 단계③ 독립 재검증 — §결정 4 disjoint 동형).
+- **phase 라벨 wiring**: 결정 A 의 확정 checkpoint phase 라벨/gate 배선 = Phase 2 defer (Phase 1 = playbook preflight advisory).
+
+declaration-only Wave 1 retain 패턴 답습 (Amendment 2 §4 / ADR-082 §결정 6 / ADR-070 §D5 정합).
+
+### cross-ref (Amendment 3)
+
+| ADR | 인용 지점 | 관계 |
+|---|---|---|
+| ADR-159 | 결정 A·B | **SSOT 짝** — 요구사항 lane enrichment 일급 + design-entry 확정 gate 본체. 본 Amendment = lane 시퀀스·확정 위치·내부적합 검증축 wiring. |
+| ADR-125 Amendment 2 (internal-invariant 축) | 결정 B | **결정적 선례** — additive-disjoint-axis 패턴(runtime-failure 한정 internal-invariant). 결정 B = 그 패턴의 scope 일반화(3번째 disjoint 축, 일반 내부적합). |
+| ADR-071 Amendment 15 (§결정 23) | 결정 A | **sibling** — 발화 frequency 축(design-entry gate 발화 touchpoint). disjoint axis. |
+| ADR-077 Amendment 1 | 결정 A | **sibling** — 리뷰-후 확정 rewind 의 리뷰 lane 대상(내용 수정 동반 확정 시 요구사항리뷰 rewind). |
+| ADR-124 §결정 6 (외부사실 휴리스틱) | 결정 B | **disjoint 무약화** — 외부사실 축과 내부적합 축 disjoint 공존. ADR-124 의미 변경 0 → cross-ref 만 (Amendment 불요). |
+| ADR-119 §결정 6 (검사연극 금지) | 결정 B | **정합** — 내부적합 축 = repo Read 기반·declarative-only null-valid, 검사연극 비충돌. |
+
+### 해소 기준
+
+N/A — permanent (additive 축 신설 + 위치 정밀화). 본 Amendment 이후 요구사항리뷰 lane = 외부사실 축 + internal-invariant 축(Amd2) + 일반 내부적합 축(본 Amendment) 공존, 사용자 최종 확정 = 요구사항리뷰 PASS 후·설계 진입 전. mechanical wire (review-verdict-v4 `internal-fitness-*` / checklist 배선 / phase 라벨) 추적 = CFP-2725 Phase 2 carrier.
 
 ## sunset_justification (ADR-058 §결정 5 — 약화 차단)
 
