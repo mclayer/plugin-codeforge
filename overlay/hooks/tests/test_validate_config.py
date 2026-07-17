@@ -438,6 +438,79 @@ class TestDocumentedOptionalBlocks:
 
 
 # -----------------------------------------------------------------------------
+# CFP-2700 / ADR-157 §결정1 — infra_resources 2-plane manifest 런타임 배선 (G4 FIX)
+# 문서 스키마(project-config-schema.md §infra_resources)를 validate_config 에 배선한다.
+# 선언 plane(resources / execution_units / startup_validation)은 판별 — 오타 키 reject;
+# execution_units 아래 동적 unit 키만 OPEN_MAPPING 으로 허용(blanket open-map 아님).
+# Schema SSOT: docs/project-config-schema.md §infra_resources.
+# -----------------------------------------------------------------------------
+
+
+class TestInfraResourcesManifest:
+    """infra_resources 2-plane manifest (CFP-2700 D5 consumer 전파) shape 검증."""
+
+    def _valid_infra_resources(self) -> dict:
+        # webapp-minimal 형태 — plane A resources[] + plane B execution_units{} + startup_validation.
+        return {
+            "resources": [
+                {"id": "app-database", "canonical_env": "DATABASE_URL",
+                 "aliases": {"accepted": []}},
+                {"id": "app-redis", "canonical_env": "REDIS_URL",
+                 "aliases": {"accepted": []}},
+            ],
+            "execution_units": {
+                "web": {
+                    "required": ["app-database", "app-redis"],
+                    "resource_modes": {"app-database": "required", "app-redis": "required"},
+                },
+            },
+            "startup_validation": {
+                "adopted": False,
+                "reason": "데모 템플릿 — 실 consumer 는 web startup 에 reference impl 채택 후 adopted: true",
+            },
+        }
+
+    def test_infra_resources_two_plane_valid(self):
+        """유효 2-plane block 이 validate clean(exit 0 경로) — positive."""
+        data = _minimal_valid_data()
+        data["infra_resources"] = self._valid_infra_resources()
+        assert vc.validate(data) == []
+
+    def test_infra_resources_dynamic_execution_unit_key_allowed(self):
+        """execution_units 아래 동적 unit 키(임의 이름)는 OPEN_MAPPING 으로 허용."""
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["execution_units"]["customworker"] = {
+            "required": ["app-database"],
+            "resource_modes": {"app-database": "required"},
+        }
+        data["infra_resources"] = infra
+        assert vc.validate(data) == []
+
+    def test_infra_resources_declared_plane_typo_rejected(self):
+        """선언 plane 오타 키는 reject — blanket open-map 아니라 declared plane 은 판별함 (negative).
+
+        (a) resources 형제 위치의 오타 plane 키 → unknown key
+        (b) startup_validation 고정키 오타 → unknown key
+        """
+        # (a) 선언 plane 레벨 오타
+        data = _minimal_valid_data()
+        infra = self._valid_infra_resources()
+        infra["resourcezz"] = []
+        data["infra_resources"] = infra
+        errs = vc.validate(data)
+        assert any("infra_resources.resourcezz" in e for e in errs), errs
+
+        # (b) startup_validation 고정키 오타
+        data2 = _minimal_valid_data()
+        infra2 = self._valid_infra_resources()
+        infra2["startup_validation"] = {"adoptedd": True}
+        data2["infra_resources"] = infra2
+        errs2 = vc.validate(data2)
+        assert any("infra_resources.startup_validation.adoptedd" in e for e in errs2), errs2
+
+
+# -----------------------------------------------------------------------------
 # CFP-2419 Phase 2 — repo_topology 책임 배치 토폴로지 검증
 # ADR-131 §결정2 (4 메타불변식 + layer 분리) / Story §5.2 AC-3, §5.3 EC-1/EC-2
 # Schema SSOT: docs/project-config-schema.md §repo_topology

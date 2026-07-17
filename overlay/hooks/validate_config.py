@@ -295,6 +295,16 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("infra_strategy_extras", False, dict, "infra_strategy_extras section (mapping), optional"),
     ("infra_strategy_extras.k8s_preset_enabled", False, lambda v: isinstance(v, bool),
      "infra_strategy_extras.k8s_preset_enabled (boolean, default false), optional"),
+    # CFP-2700 / ADR-157 §결정1 — 인프라 자원 선언 manifest (2-plane, D5 consumer 전파).
+    # 문서 스키마(project-config-schema.md §infra_resources)를 런타임 검증기에 배선(선언≠배선 갭 정정).
+    # 깊은 의미검증(id/canonical_env 필수·자원 커버리지)은 dedicated validator 소관
+    # (scripts/lib/check_infra_manifest_schema.py D1 + D3 scanner) — 여기선 2-plane 구조 shape 만.
+    ("infra_resources", False, dict, "infra_resources section (mapping), optional — CFP-2700/ADR-157 2-plane manifest"),
+    ("infra_resources.resources", False, list, "infra_resources.resources (list of resource dicts: id/canonical_env/aliases), optional"),
+    ("infra_resources.execution_units", False, dict, "infra_resources.execution_units (mapping: unit-name → required[]/resource_modes{}), optional — 동적 unit 키 (OPEN_MAPPING)"),
+    ("infra_resources.startup_validation", False, dict, "infra_resources.startup_validation section (mapping), optional — D2 채택 선언"),
+    ("infra_resources.startup_validation.adopted", False, lambda v: isinstance(v, bool), "infra_resources.startup_validation.adopted (boolean), optional"),
+    ("infra_resources.startup_validation.reason", False, _is_str, "infra_resources.startup_validation.reason (string, adopted=false 시 사유), optional"),
     # CFP-342 / ADR-050 — Multi-repo story key system (opt-in only)
     # codeforge.stories 블록 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
     # 활성화 = codeforge.stories.repos[] 에 1+ entry 선언 시.
@@ -511,6 +521,7 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
 # 신규 open mapping 추가 시 여기에 dotted-path 등록 + SCHEMA_RULES 에 shape type_check 등록.
 OPEN_MAPPING_PATHS: set[str] = {
     "atlassian.confluence.per_doc_type_override",
+    "infra_resources.execution_units",
 }
 
 
