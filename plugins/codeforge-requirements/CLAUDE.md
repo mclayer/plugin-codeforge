@@ -24,7 +24,7 @@ codeforge ζ arc Requirements lane plugin. 7 agent 병렬 (PL + 6 sub: Domain·A
 | `docs/stories/<KEY>.md §4.3` (이전 작업 연속성) | ContinuityAgent (write queue drain) | `.claude-work/doc-queue/` |
 | `docs/domain-knowledge/<area>/<topic>.md` | DomainAgent direct (CFP-26 Phase 0a 보존) | `Edit(docs/domain-knowledge/**)` |
 | GitHub comment `[요구사항]` prefix | RequirementsPLAgent | `mcp__github__add_issue_comment` |
-| `phase:요구사항` → `phase:설계` transition | RequirementsPLAgent | `mcp__github__issue_write` |
+| `phase:요구사항` → `phase:요구사항-리뷰` transition 신호 (lane exit — verdict PASS) | RequirementsPLAgent (PASS 신호 산출) | `mcp__github__issue_write` |
 | Discussions Q&A category routing | DomainAgent (선택) | `Bash(gh api repos/*/discussions*)` |
 
 ## Sub-agent 7-way 병렬 패턴 (6 sub + PL)

@@ -611,6 +611,29 @@ amendments_reserved:
     reserved_by_cfp: CFP-2704
     reservation_date: 2026-07-16 KST
     status: active   # ArchitectAgent commit time 점유 (CFP-2704 Phase 1 설계 PR carrier — ADR-122 Amendment 1 check-no-superpowers 게이트 §회귀 방지 설계 EXEMPT 판정축 정련: `archive/adr/**` wholesale → status-aware(retired[Superseded/Deprecated]→EXEMPT / live[Accepted/Proposed/Active/Adopted]·부재·미지→scan + 13-signature (file,token) occurrence-blind grandfather baseline, shrink-only)). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via `git show origin/main:archive/adr/ADR-122-superpowers-dependency-removal.md` frontmatter `amendments:` 부재(firsthand grep -qE '^amendments:' → NONE) → next slot = 1 collision 0 + dual-block sync(frontmatter amendments[] id=1 신설 + body amendment_log[] block 신설, CFP-1734 dual-block 정합 — ADR-122 pre-Amendment single-block(amendment 이력 0)에서 첫 amendment 도입). ADR-RESERVATION amendments_reserved[] ADR-122 기존 row 부재(firsthand `grep -nE 'adr_number: 122'` → NONE) → collision 0. worktree base SHA = aeca105b (branch cfp-2704-adr-status-aware, `git rev-parse --short HEAD` verified 2026-07-16 KST). carrier_story CFP-2704 (plugin-codeforge#2704). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — ADR-038 Amendment 6 row (CFP-2702) 직전 패턴 정합). sunset_justification N/A weakening (§회귀 방지 설계 EXEMPT 판정축 강화·ratchet-up 3축: 판정축 강화 / grandfather shrink-only ratchet 보존 / 기존 효용 무손실. polyglot 부수제약 무 — 정련 scope = EXEMPT 판정축 1건. is_transitional: false 무변경. ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 159
+    reserved_by_cfp: CFP-2725
+    reservation_date: 2026-07-17 KST
+    status: active   # ArchitectAgent chief author commit time 점유 (CFP-2725 Phase 1 설계 PR carrier — 요구사항 lane enrichment 일급 목적 + intent-confirmation-loop + design-entry 사용자 확정 gate SSOT 신설). adr_number claim (신규 ADR — ADR-133 §결정 4 fallback: GH_TOKEN 부재 → OCC primitive 미실행). verified-via `git fetch origin main` + `git ls-tree --name-only origin/main archive/adr/` numeric max = ADR-158 (ADR-149 = orphan gap) → next = 159. 병렬 branch (cfp-2700-g1~g6/fix2/infra-resource-manifest/cfp-632-adr-reservation-activate) archive/adr ADR-159/160 부재 firsthand 확인 + adr-reservation-state ledger claims 159 부재 (max_adr_number 155 stale, 159 claim 부재) → collision-free. dual-key 3-leg: filename `ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md` ∧ frontmatter `adr_number: 159` ∧ 본 row 159. status reserved 미경유 직접 active (ArchitectAgent chief author precedent — ADR-158 row (CFP-2689) 패턴 정합). sunset_justification N/A (permanent governance anchor, is_transitional: false, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 71
+    amendment_id: 15
+    reserved_by_cfp: CFP-2725
+    reservation_date: 2026-07-17 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2725 Phase 1 설계 PR carrier — ADR-071 Amendment 15 §결정 23 신설: 요구사항 lane intake 항상 declare 4번째 touchpoint(§15.5 closed-enum 확장 규약 첫 실사용) + §결정 20 lane-scoped carve-out + design-entry 확정 gate §결정 22 정당 멈춤 carve-out). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-071-orchestrator-user-dialog-convergence.md frontmatter amendments[] max id=14 (Amendment 14 CFP-2573) → next slot = 15 collision 0 (single-block amendments[] only — dual-block gate EXEMPT, ADR-139 선례). 병렬 branch (cfp-2700-*/cfp-632) ADR-071 amendment 미점유 firsthand. status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — §15.5 확장 규약 준수 4번째 touchpoint 추가, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 77
+    amendment_id: 1
+    reserved_by_cfp: CFP-2725
+    reservation_date: 2026-07-17 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2725 Phase 1 설계 PR carrier — ADR-077 Amendment 1: 순수 확정 = terminal event(§결정 7 3번째 trigger origin `user-final-confirmation-driven`) + why-왕복 counter = §결정 5 5번째 disjoint measurement channel + 리뷰-후 확정 rewind). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님). verified-via Read worktree archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md frontmatter `amends: []` / `amendment_log: []` (amendment 이력 0) → 첫 amendment, next slot = 1 collision 0 (dual-block 신설 — frontmatter amendments[] number:1 + amendment_log[] block, CFP-1734 dual-block 정합). status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — counter disjoint layer 4→5 추가 = §결정 9 ratchet 강화, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 125
+    amendment_id: 3
+    reserved_by_cfp: CFP-2725
+    reservation_date: 2026-07-17 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2725 Phase 1 설계 PR carrier — ADR-125 Amendment 3: 결정 A(사용자 확정 = 리뷰 PASS 후·설계 진입 전 위치 정밀화, lane count 10·required contexts 무변경 상속) + 결정 B(내부 시스템 적합성 4번째 disjoint 검증 축 — Amendment 2 internal-invariant 선례 scope 일반화)). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님). verified-via Read worktree archive/adr/ADR-125-requirements-review-lane.md frontmatter amendments[] max number=2 (Amendment 2 CFP-2350) + amendment_log[] max CFP-2350 → next slot = 3 collision 0 (dual-block sync append). status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — additive disjoint 축 신설 + 위치 정밀화, ADR-058 §결정 5 강화 방향).
 ```
 
 ## 해소 기준
