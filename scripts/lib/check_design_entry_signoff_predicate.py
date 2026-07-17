@@ -40,7 +40,7 @@ Exit code:
   1 = 위반 (target 부재[existence guard] 또는 anchor 부재[hollow/드리프트])
   2 = setup error (root 부재 / 읽기 실패 등 예외)
 
-?젙洹쒖떇 誘몄궗?슜: 리터럴 `in` substring 검사 (정규식 backtracking 부재), 문서 단위 스캔.
+정규식 미사용: 리터럴 `in` substring 검사 (정규식 backtracking 부재), 문서 단위 스캔.
 """
 
 import argparse
@@ -86,7 +86,7 @@ def scan(root):
         with open(path, "r", encoding="utf-8") as fh:
             text = fh.read()
         for anchor in anchors:
-            if anchor not in text:  # 리터럴 substring — ?젙洹쒖떇 誘몄궗?슜 (backtracking 부재)
+            if anchor not in text:  # 리터럴 substring — 정규식 미사용 (backtracking 부재)
                 failures.append(f"FAIL: anchor 부재: {anchor} in {rel}")
     return failures
 

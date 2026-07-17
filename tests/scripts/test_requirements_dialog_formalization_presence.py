@@ -10,7 +10,8 @@
 
 각 테스트 함수 = 완결 paired self-test (POS + NEG-hollow + TARGET-GUARD 를 1함수 안에 전부):
   POS          전 target + 전 anchor 를 독립 tmp fixture 에 실 상대경로로 배치 → lint --root <tmp> exit 0
-  NEG(hollow)  첫 anchor 1개 제거 → exit != 0 + 부재 anchor 리터럴이 stdout (원인 결박, false-oracle 방지)
+  NEG(hollow)  target 마다 그 첫 anchor 제거 → exit != 0 + 부재 anchor 리터럴이 stdout (원인 결박, false-oracle 방지)
+               2-target lint 은 target[1] anchor-drop 경로도 discriminating 검증(F2 정정 — hollow-gate 갭 봉인)
   TARGET-GUARD 빈 트리(target 전 부재) → exit != 0 + 'target 부재' 도메인 sentinel stdout
 
 oracle = 실 lint subprocess exit code + 도메인 stdout substring (하드코딩 기대 금지 — false-oracle 0).
@@ -59,7 +60,13 @@ def _fixture_body(anchors):
 
 
 def _assert_paired(script, targets, tmp_path):
-    """POS + NEG(hollow) + TARGET-GUARD 3종 assertion — 도메인 stdout sentinel 병행(distinct-marker)."""
+    """POS + NEG(hollow) per-target + TARGET-GUARD assertion — 도메인 stdout sentinel 병행(distinct-marker).
+
+    NEG(hollow): 각 target index 별로 그 target 의 첫 anchor 를 drop 한 fixture → exit != 0 +
+      부재 anchor stdout 결박. drop_idx=0 = 기존 target[0] NEG(무손상 계승). 2-target lint 은
+      drop_idx=1 로 target[1] anchor-drop 경로도 discriminating 검증(F2 정정 — target[1]
+      hollow-gate 경로 미행사 갭 봉인).
+    """
     # ── POS: 전 target + 전 anchor → exit 0 ──
     pos = tmp_path / "pos"
     for rel, anchors in targets:
@@ -71,19 +78,23 @@ def _assert_paired(script, targets, tmp_path):
     # distinct-marker: PASS 도메인 sentinel 병행(미fork 시 빈 stdout → 실패).
     assert "PASS" in r.stdout, f"POS stdout 에 PASS sentinel 미검출\nstdout={r.stdout}"
 
-    # ── NEG(hollow-gate): 첫 target 의 첫 anchor 제거 → exit != 0 + 부재 anchor stdout 결박 ──
-    neg = tmp_path / "neg"
-    dropped_rel, dropped_anchors = targets[0]
-    dropped_anchor = dropped_anchors[0]
-    for rel, anchors in targets:
-        keep = [a for a in anchors if not (rel == dropped_rel and a == dropped_anchor)]
-        _write(neg, rel, _fixture_body(keep))
-    r = _run_lint(script, neg)
-    assert r.returncode != 0, f"NEG expect nonzero, got 0\nstdout={r.stdout}"
-    # distinct-marker: 부재 anchor 리터럴이 stdout 에(원인 결박 — exit-code-only false-positive 차단).
-    assert dropped_anchor in r.stdout, (
-        f"NEG stdout 에 부재 anchor '{dropped_anchor}' 미검출(원인 미결박)\nstdout={r.stdout}"
-    )
+    # ── NEG(hollow-gate): target 마다 그 target 의 첫 anchor 제거 → exit != 0 + 부재 anchor stdout 결박 ──
+    for drop_idx in range(len(targets)):
+        dropped_rel, dropped_anchors = targets[drop_idx]
+        dropped_anchor = dropped_anchors[0]
+        neg = tmp_path / f"neg{drop_idx}"
+        for i, (rel, anchors) in enumerate(targets):
+            keep = [a for a in anchors if not (i == drop_idx and a == dropped_anchor)]
+            _write(neg, rel, _fixture_body(keep))
+        r = _run_lint(script, neg)
+        assert r.returncode != 0, (
+            f"NEG[target{drop_idx}:{dropped_rel}] expect nonzero, got 0\nstdout={r.stdout}"
+        )
+        # distinct-marker: 부재 anchor 리터럴이 stdout 에(원인 결박 — exit-code-only false-positive 차단).
+        assert dropped_anchor in r.stdout, (
+            f"NEG[target{drop_idx}:{dropped_rel}] stdout 에 부재 anchor '{dropped_anchor}' "
+            f"미검출(원인 미결박)\nstdout={r.stdout}"
+        )
 
     # ── TARGET-GUARD: 빈 트리(target 전 부재) → exit != 0 + 'target 부재' 도메인 sentinel ──
     guard = tmp_path / "guard"
