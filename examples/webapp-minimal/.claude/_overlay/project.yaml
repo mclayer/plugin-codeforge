@@ -30,3 +30,20 @@ labels:
 infra_strategy: docker_first
 infra_strategy_extras:
   k8s_preset_enabled: false  # single-host docker compose 충분 (default)
+
+# CFP-2700 / ADR-157 D5 — infra_resources 승격(populated 2-plane). compose.yml web.environment 참조면과 self-consistent.
+infra_resources:
+  resources:
+    - id: app-db
+      canonical_env: DATABASE_URL          # compose.yml web.environment.DATABASE_URL 과 self-consistent
+    - id: app-cache
+      canonical_env: REDIS_URL             # compose.yml web.environment.REDIS_URL 과 self-consistent
+  execution_units:
+    web:
+      required:
+        - app-db
+        - app-cache
+      resource_modes:
+        app-db: required                   # 미설정 시 부팅 거부
+        app-cache: optional_degradable     # 미설정 시 degrade + WARN (부팅 거부 아님)
+        app-cache_degraded_behavior: "캐시 miss 시 DB 직조회 — 성능 저하만 (raw 조회 지속)"

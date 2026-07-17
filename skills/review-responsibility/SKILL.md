@@ -78,6 +78,8 @@ tools: Read
 | **Container network mode / port exposure** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) | — |
 | **Container secret / env mount 전략** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) | — |
 | **§7.4 Container restart policy / volume DR** | ✅ InfraOperationalArch | (감사) | — | (검증) | — |
+| **인프라 자원 선언(D1 manifest) ↔ 참조면 전파 완결성** — 자원 추가/이동/제거 Story 시 `.claude/_overlay/project.yaml infra_resources` manifest 갱신 + 코드/compose/env/cross-repo 참조면 전파. **D3 scanner honest-ceiling 의 self-신고 누락 리뷰 backstop** (ADR-157 §결정8) | ✅ InfraOperationalArch | ✅ (감사) | — | — | — |
+| **인프라 자원 선언 누락 / 참조면 미전파 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — | — |
 | **요구사항 외부사실 의존성 식별** (외부 개념·시장·표준 의존 요구사항 표면화 — CFP-2326 / ADR-125, checklist `requirements.md` §1·5) | — | — | — | — | ✅ RequirementsReviewPL |
 | **요구사항 외부지식 단정 검증** (외부사실 의존 결론 다출처 검증, 검사연극 금지 — ADR-124 결정 2 / ADR-125 결정 6, checklist `requirements.md` §2-5) | — | — | — | — | ✅ RequirementsReviewPL |
 | **외부 표준/규제 누락 (RFC·법규·산업표준)** | — | — | — | — | ✅ (규제 위험 동반 시 P0) |
