@@ -78,7 +78,9 @@ tools: Read
 | **Container network mode / port exposure** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) | — |
 | **Container secret / env mount 전략** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) | — |
 | **§7.4 Container restart policy / volume DR** | ✅ InfraOperationalArch | (감사) | — | (검증) | — |
-| **infra_resources manifest 완결성** (CFP-2700 / [ADR-157](../../archive/adr/ADR-157-infra-resource-manifest-drift-gate.md)): consumer 가 인프라 자원(secret·env·cross-repo credential)을 `infra_resources:` manifest 로 **선언했는가** / D3 drift scan(`infra-resource-manifest-drift.yml`) **배선됐는가** / D2 `startup_validation.adopted` **채택 여부가 명시됐는가**(미채택+사유부재=FAIL, silent 미채택 금지). 기계 presence 게이트(`check_infra_manifest_schema.py` + `infra_startup_validator.py --adoption-check`) **위** semantic 완결성 backstop — 선언↔실 참조면 정합·자원 커버리지 판정(honest-ceiling: "완전 봉인" 금지) | — | — | ✅ CodeReview (실 배선 재현) | — | — |
+| **인프라 자원 선언(D1 manifest) ↔ 참조면 전파 완결성 (설계 emit)** — 자원 추가/이동/제거 Story 시 `.claude/_overlay/project.yaml infra_resources` manifest 선언 + 코드/compose/env/cross-repo 참조면 **전파 계획** emit. D3 scanner honest-ceiling 의 self-신고 누락 리뷰 backstop (ADR-157 §결정8) | ✅ InfraOperationalArch | ✅ (감사) | — | — | — |
+| **인프라 자원 선언 누락 / 전파-계획(plan) 부재 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — | — |
+| **infra_resources 기계 게이트 실배선 재현** (CFP-2700 / [ADR-157](../../archive/adr/ADR-157-infra-resource-manifest-drift-gate.md)) — consumer 가 `infra_resources:` manifest 로 **선언했는가** / D3 drift scan(`infra-resource-manifest-drift.yml`) **배선됐는가** / D2 `startup_validation.adopted` **채택 여부가 명시됐는가**(미채택+사유부재=FAIL). 기계 presence 게이트(`check_infra_manifest_schema.py` + `infra_startup_validator.py --adoption-check`) **위** 실배선 재현 — "기계는 자기 부재를 검출 못 한다" | — | — | ✅ CodeReview (실 배선 재현) | — | — |
 | **요구사항 외부사실 의존성 식별** (외부 개념·시장·표준 의존 요구사항 표면화 — CFP-2326 / ADR-125, checklist `requirements.md` §1·5) | — | — | — | — | ✅ RequirementsReviewPL |
 | **요구사항 외부지식 단정 검증** (외부사실 의존 결론 다출처 검증, 검사연극 금지 — ADR-124 결정 2 / ADR-125 결정 6, checklist `requirements.md` §2-5) | — | — | — | — | ✅ RequirementsReviewPL |
 | **외부 표준/규제 누락 (RFC·법규·산업표준)** | — | — | — | — | ✅ (규제 위험 동반 시 P0) |

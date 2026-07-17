@@ -29,3 +29,8 @@ labels:
 # CFP-128 / ADR-033 — library 는 Docker artifact 미적용 (deployable runtime 부재)
 # `none` enum value = library / config-only repo 의 default
 infra_strategy: none
+
+# CFP-2700 / ADR-157 D5 — infra_resources honest-empty(runtime 부재).
+infra_resources:
+  resources: []
+  reason: "library / config-only — deployable runtime 부재, 인프라 자원 없음(ADR-157 §결정1 applicability⊥content)."
