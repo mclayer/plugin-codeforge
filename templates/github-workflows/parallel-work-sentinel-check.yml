@@ -19,9 +19,10 @@ name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)
 #   - env BYPASS_PARALLEL_WORK_SENTINEL=1 (스크립트 내부 무조건 skip, exit 0)
 #   - label hotfix-bypass:parallel-work-sentinel-pickup (본 workflow 가 sentinel run step skip)
 #
-# Graceful degradation: sentinel 스크립트 자체가 gh 403/429 → local git log fallback (exit 0)
-#   처리하므로 CI 환경 gh 인증 부재여도 비차단. python3 부재(exit 2) 도 `|| true` +
-#   continue-on-error 로 비차단 보장.
+# Graceful degradation (CFP-2723 정직화): sentinel 스크립트가 gh 실패를 stderr 증거 기반으로
+#   분류(honest-degrade) — quota(앵커드 rate-limit) / gh_command_failed / gh_payload_invalid 3종을
+#   degradation 필드로 표기 후 exit 0 (비차단). gh 미설치·미인증 = exit 2 (SETUP, error_kind) 이며
+#   아래 run step 의 `|| true` + continue-on-error 로 흡수돼 비차단 보장 (python3 부재 exit 2 동일).
 #
 # Consumer distribution: 본 workflow + scripts/check-parallel-work-sentinel.sh +
 #   scripts/lib/check_parallel_work_sentinel.py 모두 copy 의무 (CFP-97 manifest entry —

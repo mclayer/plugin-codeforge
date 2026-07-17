@@ -89,7 +89,7 @@ sunset_criteria: |
 | Source | Mechanism | Detection signal |
 |---|---|---|
 | `title-search` | `gh pr list --search "head:<branch>"` + Story title text grep | 동일 Story scope 의 별 session PR 발견 시 = race window 진입 |
-| `epic-state-poll` | `gh issue view <epic-id> --json state,subIssues` | Epic state transition (open → closed) 또는 sub-issue 추가/closed 감지 시 = scope drift |
+| `epic-state-poll` | `gh issue view <epic-id> --json state,body` (siblings = Epic body scope_manifest CFP ref 파싱) | Epic state transition (open → closed) 또는 body 내 sibling CFP ref 감지 시 = scope drift |
 | `head-compare-sibling-commits` | `git -C <worktree> fetch origin main && git log HEAD..origin/main --oneline` | sibling commit 누적 N >= 1 시 = rebase staleness 진입 |
 | `active_sessions_check` (ADR-085) | Story Issue body `active_sessions[]` field traverse | 같은 branch 안 다른 git_identity entry 발견 시 = collaboration channel 활성 |
 
