@@ -58,6 +58,25 @@ jobs:
         if: hashFiles('tests/scripts/test_check-infra-resource-drift.py') != ''
         run: python3 tests/scripts/test_check-infra-resource-drift.py
 
+      # ── G3 (CFP-2700 / ADR-157 §결정1+§결정2): manifest schema validator(AC-2) +
+      #    D2 startup fail-closed reference-impl(AC-3/9/15) + refimpl fixture pair(AC-19) self-test.
+      #    별도 step 으로 G2 스캐너 self-test 와 분리 (실패 지점 즉시 판독). day-1 hard-fail.
+      - name: Run infra-startup-failclosed self-test (.sh — G3, day-1 hard-fail, hashFiles 가드)
+        if: hashFiles('tests/scripts/test_infra-startup-failclosed.sh') != ''
+        run: bash tests/scripts/test_infra-startup-failclosed.sh
+
+      - name: Run infra-startup-failclosed self-test (.py — G3, day-1 hard-fail, hashFiles 가드)
+        if: hashFiles('tests/scripts/test_infra-startup-failclosed.py') != ''
+        run: python3 tests/scripts/test_infra-startup-failclosed.py
+
+      # G3 dogfood: wrapper-self manifest 의 4 필수 필드 schema (AC-2) + D2 채택 선언 (AC-15 —
+      #   wrapper = declarative-only 라 adopted:false + reason 비적용 PASS 경로). day-1 hard-fail
+      #   (결정적 검증 — 자기 manifest 가 자기 게이트를 못 넘으면 born-red 자기부정).
+      - name: Validate wrapper-self manifest schema + adoption declaration (G3 dogfood — hard-fail)
+        run: |
+          python3 scripts/lib/check_infra_manifest_schema.py --manifest .claude/_overlay/project.yaml
+          python3 scripts/lib/infra_startup_validator.py --adoption-check --manifest .claude/_overlay/project.yaml
+
       - name: Run dogfood infra-resource drift lint (warning-tier — advisory, PR 미차단)
         id: lint
         continue-on-error: true

@@ -48,7 +48,7 @@ epic_key: string                       # e.g. "CFP-371"
 stories_in_scope: list                 # ["CFP-371-S1", "CFP-371-S2"]
 story_8_6_contracts: map               # story_key → §8.6 내용 (Orchestrator pre-fetch)
 baseline_suite_path: string            # "tests/integration/baseline/"
-required_env_keys: list                # [".env 필수 키 목록"]
+required_env_keys: list                # ["프로세스 env 필수 키 목록"] (legacy — infra_resources manifest 채택 시 execution_units 선언이 정본, ADR-157 §결정2)
 docker_compose_test_path: string       # "docker-compose.test.yml"
 ```
 
@@ -56,11 +56,22 @@ docker_compose_test_path: string       # "docker-compose.test.yml"
 
 모든 테스트 실행 전 4단계 검증. 어느 단계라도 실패 시 즉시 중단 후 verdict 반환. 4-step PASS 후 `daemon_type: long_running_daemon` 데몬 Story 는 추가로 (e) 지속-liveness soak step 실행 (조건부 — 아래 (e) 참조, ADR-148 §결정5).
 
-**(a) .env 키 확인**
+**(a) 실행환경 env 키 확인 — D2 startup fail-closed 4계약 (ADR-157 §결정2)**
+
+> 구 proto(`grep -q "^${key}=" .env || echo "MISSING: ..."`)는 4중 결함 — ⓐ `|| echo` exit-masking(키가 빠져도 exit 0) ⓑ `.env` 파일 grep ≠ **프로세스 env** ⓒ 빈 값(`KEY=`) 통과 ⓓ fail-open 기본 — 으로 **폐기**됐다. 올바른 형 = 4계약: ① 프로세스 env 검사(`.env` 파싱 아님) ② exit-masking 금지(누락 = non-zero 전파) ③ 빈 값 reject(set-but-empty = 미설정) ④ fail-closed default(required → 부팅거부 / optional_degradable → degrade + WARN 계속). **reference impl = `scripts/lib/infra_startup_validator.py`** (검증 fixture = `tests/fixtures/infra-refimpl/`).
+
 ```bash
+# infra_resources manifest 채택 프로젝트 (권장) — reference impl 직접 사용:
+python3 scripts/lib/infra_startup_validator.py --unit <execution-unit> \
+  --manifest .claude/_overlay/project.yaml   # 미설정 required = exit 78 (EX_CONFIG, 구성 오류)
+
+# legacy required_env_keys 목록만 있는 프로젝트 — 4계약 준수 최소형:
+missing=0
 for key in ${required_env_keys}; do
-  grep -q "^${key}=" .env || echo "MISSING: ${key}"
+  [ -n "$(printenv "${key}" | tr -d '[:space:]')" ] \
+    || { echo "MISSING: ${key}"; missing=1; }   # 계약 ①(프로세스 env) + ③(빈 값 = 미설정)
 done
+[ "${missing}" -eq 0 ]                          # 계약 ②: 누락 = non-zero 전파 (`|| echo` masking 금지)
 ```
 실패 → `failure_type: env_missing`, `deployability_verified: false`
 
@@ -254,7 +265,7 @@ Epic-level lane spawn 1회 within N Story measurement. 결과 path = `tests/inte
 - regression: DeveloperPL → ArchitectPLAgent (기존 기능 파손)
 - new_test: DeveloperPL (신규 구현 미완성)
 - infra_setup: InfraEngineerAgent (docker-compose.test.yml 문제)
-- env_missing: InfraEngineerAgent or 사용자 action (.env 키 누락)
+- env_missing: InfraEngineerAgent or 사용자 action (프로세스 env 키 누락 — D2 4계약 대조, ADR-157 §결정2)
 - soak_liveness: DeveloperPL → ArchitectPLAgent (데몬 지속-liveness 실패 — 지연 크래시 / terminal-sink 동결. runtime 실패 = 표면 증상 아닌 코드·invariant 반증 후 진단, 요구사항 lane 재진입 후보 — ADR-119)
 
 [전체 pytest 출력]

@@ -267,12 +267,16 @@ def _strip_hash_comment(text):
 # ─────────────────────── manifest 파서 (dependency-free — born-safe, no yaml import) ──
 
 class Manifest:
-    # plane B(`execution_units{}`)는 본 스캐너가 보관하지 않는다 — G3/D2(startup fail-closed) 소관이며
-    #   ADR-157 §결정4 상 본 스캐너 정의역 밖(header 참조). G2 AC set(AC-5,6,7,8,10,11,17)이 소비하지
-    #   않는 필드를 미리 파싱해 두면 test 0 인 dead path 로 부패한다(CFP-2661 dead-path 선례). block
-    #   경계만 인식해 resources 파싱을 종료시킨다(경계는 load-bearing — 아래 section == "units" 참조).
+    # plane B(`execution_units{}`)는 G2 시점엔 미보관이었으나(당시 소비처 0 = dead path 회피,
+    #   CFP-2661 선례), G3/D2 가 실 소비처(check_infra_manifest_schema.py 스키마 검증 +
+    #   infra_startup_validator.py startup fail-closed)로 착지하며 **test 동반 추가**됐다(CFP-2700 G3 —
+    #   "소비처가 생기면 그 때 test 와 함께 추가" 원칙 이행). 파서를 여기 단일 SSOT 로 유지하는 근거 =
+    #   AC-9 allow-set parity by construction — D3 스캐너와 D2 startup validator 가 같은 파서를 소비하면
+    #   허용집합 재구현 불일치가 구조적으로 불가능하다. 스캐너 *verdict* 는 여전히 plane B 무소비
+    #   (ADR-157 §결정4 — startup fail-closed 는 본 스캐너 정의역 밖, header 참조).
     __slots__ = ("present", "resources", "none_sentinel", "has_reason",
-                 "classified", "all_keys_by_resource")
+                 "classified", "all_keys_by_resource", "execution_units",
+                 "startup_validation")
 
     def __init__(self):
         self.present = False
@@ -284,6 +288,12 @@ class Manifest:
         self.has_reason = False
         self.classified = set()           # {canonical ∪ accepted ∪ deprecated names} = AC-9 allow_set
         self.all_keys_by_resource = {}    # {resource-id: {keys}} — orphan 판정 + 역색인 소비.
+        # plane B (G3 소비처 전용 — 스캐너 verdict 무소비): {unit: {"required": [rid],
+        #   "modes": {rid: mode}, "degraded_behavior": {rid: text}}}. `_degraded_behavior` suffix 키는
+        #   mode 엔트리가 아니라 metadata (F-CLA-004 파서 계약 — strip 후 별도 보관).
+        self.execution_units = {}
+        # D2 채택 선언 (AC-15 — ADR-157 §결정2 I-5 채택-bounded): {"adopted": bool|None, "reason": str|None}.
+        self.startup_validation = {"adopted": None, "reason": None}
 
 
 def _parse_inline_list(value):
@@ -348,11 +358,14 @@ def parse_manifest(path):
         if re.match(r"^reason(_none)?:\s*\S", s):
             m.has_reason = True
 
-    # resources / execution_units 서브블록 파싱 (indentation 라인 파서).
-    section = None            # 'resources' | 'units'(경계 인식 후 skip — plane B 는 G3 소관)
+    # resources / execution_units / startup_validation 서브블록 파싱 (indentation 라인 파서).
+    section = None            # 'resources' | 'units'(plane B — G3 소비처) | 'sv'(startup_validation)
     cur_res = None
     in_accepted = False
     in_deprecated = False
+    cur_unit = None
+    in_unit_required = False
+    in_unit_modes = False
 
     for line in block[1:]:
         code = _strip_hash_comment(line)
@@ -368,12 +381,23 @@ def parse_manifest(path):
             in_accepted = in_deprecated = False
             continue
         if re.match(r"^execution_units:\s*$", stripped) and indent <= 2:
-            # 경계 인식 = load-bearing (resources 파싱 종료 + 마지막 자원 flush). 내용은 미파싱 —
-            #   plane B 는 G3/D2 startup 소관(ADR-157 §결정4), G2 verdict 무소비.
+            # 경계 인식 (resources 파싱 종료 + 마지막 자원 flush) 후 plane B 파싱 진입 —
+            #   소비처 = G3(check_infra_manifest_schema / infra_startup_validator), 스캐너 verdict 무소비.
             if cur_res is not None:
                 m.resources.append(cur_res)
                 cur_res = None
             section = "units"
+            cur_unit = None
+            in_unit_required = in_unit_modes = False
+            continue
+        if re.match(r"^startup_validation:\s*$", stripped) and indent <= 2:
+            # D2 채택 선언 sub-block (AC-15) — adopted/reason 2 필드만.
+            if cur_res is not None:
+                m.resources.append(cur_res)
+                cur_res = None
+            section = "sv"
+            cur_unit = None
+            in_unit_required = in_unit_modes = False
             continue
 
         if section == "resources":
@@ -421,9 +445,62 @@ def parse_manifest(path):
                     cur_res["deprecated"].append(mm.group(1).strip().strip('"').strip("'"))
                     continue
             continue
-        # section == "units" → 아래 어떤 분기에도 걸리지 않고 자연 skip (plane B 내용 미파싱, G3/D2 소관).
-        #   F-CR-003: 구 `if section == "units": continue` 는 루프 말미의 no-op 였다 → 제거.
-        #   경계 인식(`section = "units"` 대입)은 존치 — resources 파싱 종료가 load-bearing.
+        if section == "units":
+            # plane B 파싱 (CFP-2700 G3 — 소비처: 스키마 validator + startup validator, test 동반).
+            mm = re.match(r"^required:\s*(.*)$", stripped)
+            if mm and cur_unit is not None:
+                rest = mm.group(1).strip()
+                if rest:
+                    cur_unit["required"].extend(_parse_inline_list(rest))
+                    in_unit_required = False
+                else:
+                    in_unit_required = True
+                in_unit_modes = False
+                continue
+            if re.match(r"^resource_modes:\s*$", stripped) and cur_unit is not None:
+                in_unit_modes = True
+                in_unit_required = False
+                continue
+            if in_unit_required and cur_unit is not None:
+                mm = re.match(r"^-\s+(.+?)\s*$", stripped)
+                if mm:
+                    cur_unit["required"].append(mm.group(1).strip().strip('"').strip("'"))
+                    continue
+            if in_unit_modes and cur_unit is not None:
+                mm = re.match(r"^([A-Za-z0-9._-]{1,128}):\s*(.+?)\s*$", stripped)
+                if mm:
+                    key = mm.group(1)
+                    val = mm.group(2).strip().strip('"').strip("'")
+                    if key.endswith("_degraded_behavior"):
+                        # F-CLA-004 파서 계약: `_degraded_behavior` suffix 키 = mode 엔트리 아닌
+                        #   metadata — suffix strip 후 별도 보관 (mode enum 값으로 오해 금지).
+                        rid = key[: -len("_degraded_behavior")]
+                        cur_unit["degraded_behavior"][rid] = val
+                    else:
+                        cur_unit["modes"][key] = val
+                    continue
+            # 새 실행단위 경계: `<name>:` 값 없는 라인 (required/resource_modes 키는 위에서 이미 소비).
+            mm = re.match(r"^([A-Za-z0-9._-]{1,128}):\s*$", stripped)
+            if mm:
+                cur_unit = {"required": [], "modes": {}, "degraded_behavior": {}}
+                m.execution_units[mm.group(1)] = cur_unit
+                in_unit_required = in_unit_modes = False
+            continue
+        if section == "sv":
+            mm = re.match(r"^adopted:\s*(\S+)\s*$", stripped)
+            if mm:
+                raw = mm.group(1).strip().strip('"').strip("'").lower()
+                # true/false 외 값 = None 유지 (미선언 취급 — 소비처가 fail-closed 로 처리).
+                if raw in ("true", "yes"):
+                    m.startup_validation["adopted"] = True
+                elif raw in ("false", "no"):
+                    m.startup_validation["adopted"] = False
+                continue
+            mm = re.match(r"^reason:\s*(.+?)\s*$", stripped)
+            if mm:
+                m.startup_validation["reason"] = mm.group(1).strip().strip('"').strip("'")
+                continue
+            continue
 
     if cur_res is not None:
         m.resources.append(cur_res)
