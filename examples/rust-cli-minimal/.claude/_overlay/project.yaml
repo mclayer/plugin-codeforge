@@ -38,4 +38,6 @@ infra_strategy_extras:
 # CFP-2700 / ADR-157 D5 — infra_resources honest-empty(backing service 부재, firsthand: compose.yml 없음·Dockerfile 은 binary 빌드 전용). schema 형판 시연.
 infra_resources:
   resources: []
-  reason: "Rust CLI 로그 파서 — backing service 부재(compose.yml 없음, Dockerfile binary 빌드 전용). schema 형판 시연 + additive 채택 예시용 empty 선언(none-disguise 아님 — reason 명시)."
+  startup_validation:
+    adopted: false
+    reason: "Rust CLI 로그 파서 — backing service 부재(compose.yml 없음, Dockerfile binary 빌드 전용). schema 형판 시연 + additive 채택 예시용 empty 선언(none-disguise 아님 — reason 명시)."
