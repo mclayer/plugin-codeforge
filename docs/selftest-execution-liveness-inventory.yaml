@@ -502,3 +502,18 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "D3 infra-resource drift scanner discriminating self-test (미선언 표면 검출 AC-5 + orphan AC-6 + substring 오분류 제외 AC-7 + 역색인 verdict-invariant AC-8 + none-disguise anti-hollow AC-10/11 + wrapper 9-secret 실 스캔 AC-17 + census born-hollow guard candidates==0∧inert==0→exit3 + baseline grandfather) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 선언-대조 판별력 결박; cross-repo=G5·startup=G3 별도 슬라이스; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-157 §결정8)."
+
+  # ── CFP-2700 (Epic #2700 G3 / ADR-157 §결정1+§결정2) — D2 startup fail-closed reference-impl + manifest schema validator discriminating self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 47 → 48 (신규 self-test enroll). G3 Phase 2 deliverable —
+  #   .sh 만 enroll (meta-gate 는 tests/scripts/*.sh 만 glob — 동반 .py 인 test_infra-startup-failclosed.py
+  #   는 workflow 의 .py step 으로 실행, 인벤토리 대상 아님).
+  #   실행 채널 = .github/workflows/infra-resource-manifest-drift.yml 의 G3 전용 step (G2 스캐너 self-test
+  #   와 같은 workflow 의 별도 step — byte-identical template pair, non-required day-1 hard-fail).
+  - self_test: "tests/scripts/test_infra-startup-failclosed.sh"
+    execution_channel: "workflow:infra-resource-manifest-drift.yml:infra-resource-manifest-drift"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "D2 startup fail-closed reference-impl + manifest schema validator self-test (AC-2 4-필수-필드 필드별 negative + AC-3 4계약[프로세스 env/exit-masking 금지/빈 값 reject/fail-closed default, exit 78 EX_CONFIG] + AC-9 allow-set parity[공유 파서 mutation → PARITY-BROKEN 트립] + AC-15 채택 3-way + AC-19 refimpl-enforced/unenforced 센티넬 판별[env -i, BUSINESS_OP_REACHED] + mutation RED-flip) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (consumer 제품 런타임 강제 = 채택-bounded I-5, wrapper-self 는 declarative-only 라 fixture falsify 만 — AC-4 honest-ceiling; cross-repo=G5 별도 슬라이스)."

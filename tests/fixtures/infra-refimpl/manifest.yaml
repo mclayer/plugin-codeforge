@@ -1,0 +1,34 @@
+# tests/fixtures/infra-refimpl/manifest.yaml — AC-19 discriminating fixture manifest
+# CFP-2700 G3 / ADR-157 §결정2 — refimpl-enforced/unenforced pair 가 소비하는 project.yaml 형상
+#   fixture. D2 startup fail-closed 를 **채택한** consumer(adopted: true)를 모사한다 — wrapper-self 는
+#   declarative-only(런타임 0)라 D2 reference-impl 은 이 fixture 로만 falsify 한다 (AC-4 honest-ceiling).
+# 스캔 corpus 밖 (tests/** — D3 스캐너 LIVE/INERT glob 비대상) — census 무영향 의도 배치.
+infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: [MINIO_URL]
+        deprecated:
+          - name: LEGACY_NAS_URL
+            status: deprecated
+            deprecated_since: 2026-07-16
+            remove_after: 2026-10-01
+    - id: derived-nas
+      canonical_env: DERIVED_NAS_URL
+      aliases:
+        accepted: []
+  execution_units:
+    # collector — 원 사고(mctrader-data MinIO 이전 미전파) 동형: raw 필수 + derived 는 degrade 가능.
+    collector:
+      required: [raw-nas, derived-nas]
+      resource_modes:
+        raw-nas: required
+        derived-nas: optional_degradable
+        derived-nas_degraded_behavior: "파생 write skip + WARN, raw ingest 지속"
+    # writer — resource_modes 엔트리 부재 unit: mode 미선언 = required 취급(fail-closed default,
+    #   ADR-157 §결정2 계약 (4))의 검증 subject.
+    writer:
+      required: [raw-nas]
+  startup_validation:
+    adopted: true
