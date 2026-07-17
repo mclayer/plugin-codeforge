@@ -106,6 +106,22 @@ DANGLING_OPTIONAL_MANIFEST = """infra_resources:
         ghost-res_degraded_behavior: "ghost skip"
 """
 
+# F-CDX-002 reproducer: resource_modes 안 값-없는 bare mode 라인(`raw-nas:`)이 예전엔 ghost 실행단위로
+#   파싱돼 `--unit raw-nas` 가 `STARTUP-OK unit=raw-nas required=0` false-pass 를 냈다. indent-aware
+#   가드 후엔 skip(실 실행단위 collector 만 남음). raw-nas 자원은 mode 부재→required(fail-closed).
+GHOST_MODE_MANIFEST = """infra_resources:
+  resources:
+    - id: raw-nas
+      canonical_env: RAW_NAS_URL
+      aliases:
+        accepted: []
+  execution_units:
+    collector:
+      required: [raw-nas]
+      resource_modes:
+        raw-nas:
+"""
+
 # 소스 문자열-치환 mutation (anchor → replacement). 대상 모듈별 분리.
 SCHEMA_MUTATIONS = {
     "schema_id_off": (
@@ -150,6 +166,11 @@ PARSER_MUTATIONS = {
     "deprecated_unclassified": (
         "            m.classified.add(d)",
         "            pass  # MUTANT-deprecated-unclassified",
+    ),
+    # F-CDX-002: indent-aware ghost-unit 가드 무력화 → 값-없는 bare mode 라인이 ghost 실행단위로 부활.
+    "ghost_unit_guard_off": (
+        "                if cur_unit is not None and cur_unit_indent is not None and indent > cur_unit_indent:",
+        "                if False:  # MUTANT-ghost-unit-guard-off",
     ),
 }
 
@@ -541,6 +562,43 @@ def test_ac19_mutation_missing_masked_degrades_enforced():
             "AC-19 MK: missing_masked → 센티넬 출력(business 도달 = RED-flip)\n%s" % out
         assert rc not in (0, EX_CONFIG), \
             "AC-19 MK: late-crash(uncaught) 형상 — got %d\n%s" % (rc, out)
+
+
+# ─────────────────────── F-CDX-002 ghost-unit 파서 가드 (plane-B) ────────────────
+
+def test_fcdx002_ghost_mode_line_no_phantom_unit():
+    """resource_modes 내부 값-없는 bare mode 라인이 ghost 실행단위를 만들지 않는다.
+
+    수정 전: `--unit raw-nas` → `STARTUP-OK unit=raw-nas required=0` (false-pass, 대조 대상 0).
+    수정 후: raw-nas 는 실행단위가 아니므로 미선언 fail-closed(exit 78) — 실 unit collector 만 유효.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        p = write_manifest(tmp, GHOST_MODE_MANIFEST)
+        rc, out = run_py([VALIDATOR_PY, "--unit", "raw-nas", "--manifest", p])
+        assert rc == EX_CONFIG, \
+            "F-CDX-002: ghost 이름 대조 → 미선언 exit %d, got %d\n%s" % (EX_CONFIG, rc, out)
+        assert "STARTUP-OK" not in out, \
+            "F-CDX-002: ghost unit STARTUP-OK false-pass 재발\n%s" % out
+        assert "미선언" in out, "F-CDX-002: 실행단위 미선언 사유 출력\n%s" % out
+        # 실 실행단위는 정상 파싱 (required=[raw-nas] 대조 성립).
+        rc2, out2 = run_py([VALIDATOR_PY, "--unit", "collector", "--manifest", p],
+                           env=clean_env({"RAW_NAS_URL": "http://nas"}))
+        assert rc2 == 0 and "STARTUP-OK unit=collector required=1" in out2, \
+            "F-CDX-002: 실 unit collector 정상 STARTUP-OK required=1, got %d\n%s" % (rc2, out2)
+
+
+def test_fcdx002_mutation_ghost_guard_off():
+    """MK: indent-aware ghost 가드 무력화 → 값-없는 bare mode 라인이 ghost 실행단위로 부활 →
+    `--unit raw-nas` 가 `STARTUP-OK unit=raw-nas required=0` (false-pass) = RED-flip.
+    (가드가 산문 아닌 집행 계약임의 증명 — anchor drift 시 make_mutant_lib 이 assert 실패.)
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        libdir = make_mutant_lib(tmp, PARSER_PY, PARSER_MUTATIONS, "ghost_unit_guard_off")
+        p = write_manifest(tmp, GHOST_MODE_MANIFEST)
+        rc, out = run_py([os.path.join(libdir, "infra_startup_validator.py"),
+                          "--unit", "raw-nas", "--manifest", p])
+        assert rc == 0 and "STARTUP-OK unit=raw-nas required=0" in out, \
+            "F-CDX-002 MK: 가드 무력화 → ghost unit false-pass 부활(RED-flip), got %d\n%s" % (rc, out)
 
 
 # ─────────────────────── standalone runner ──────────────────────────────────────

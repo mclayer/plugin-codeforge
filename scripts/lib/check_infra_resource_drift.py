@@ -8,7 +8,7 @@ CFP-2700 (Epic) G2 / ADR-157 §결정3(D3) + §결정6(D4) — infra-resource ma
 대상 = wrapper-self(및 consumer 상속) 인프라 env-key 소비면. manifest(`.claude/_overlay/project.yaml`
   `infra_resources:` block)가 선언한 자원 카탈로그(canonical_env + accepted/deprecated alias)와, repo 안
   실 참조면(workflow `secrets.<KEY>` + project.yaml `<lower>_env: <KEY>` + scripts 정적 env-key 리터럴)을
-  대조한다. 미선언 표면(참조되나 manifest 未등재 = drift 원천)을 각 참조면에서 loud 검출하고, 선언되었으나
+  대조한다. 미선언 표면(참조되나 manifest 미등재 = drift 원천)을 각 참조면에서 loud 검출하고, 선언되었으나
   어디서도 참조되지 않는 자원(orphan = dead 선언)을 별도 tier 로 표면화한다. base scan 한정 —
   cross-repo 대조(G5) · startup fail-closed(D2/G3)는 본 스캐너 정의역 밖(ADR-157 §결정4/§결정7(e)).
 
@@ -393,6 +393,7 @@ def parse_manifest(path):
     in_accepted = False
     in_deprecated = False
     cur_unit = None
+    cur_unit_indent = None       # F-CDX-002: 현재 unit 의 boundary indent (ghost-unit 가드 기준선).
     in_unit_required = False
     in_unit_modes = False
 
@@ -417,6 +418,7 @@ def parse_manifest(path):
                 cur_res = None
             section = "units"
             cur_unit = None
+            cur_unit_indent = None
             in_unit_required = in_unit_modes = False
             continue
         if re.match(r"^startup_validation:\s*$", stripped) and indent <= 2:
@@ -426,6 +428,7 @@ def parse_manifest(path):
                 cur_res = None
             section = "sv"
             cur_unit = None
+            cur_unit_indent = None
             in_unit_required = in_unit_modes = False
             continue
 
@@ -509,9 +512,20 @@ def parse_manifest(path):
                         cur_unit["modes"][key] = val
                     continue
             # 새 실행단위 경계: `<name>:` 값 없는 라인 (required/resource_modes 키는 위에서 이미 소비).
+            #   F-CDX-002 indent-aware 가드: resource_modes/required 서브블록 내부의 값-없는 bare
+            #   `name:`(예: mode 값 누락 `raw-nas:`)은 malformed 엔트리이지 새 실행단위 경계가 아니다.
+            #   실행단위는 execution_units 직속(동일 unit-indent)에만 나타나므로, 현재 unit 보다 깊은
+            #   indent 의 bare `name:` 은 ghost unit(가짜 실행단위 → false STARTUP-OK required=0)을
+            #   만들지 않고 skip 한다. skip 된 value-less mode 라인은 modes 맵에 안 들어가므로, 그 자원이
+            #   required[] 에 있으면 D2 startup 이 mode 부재→`required`(fail-closed default, 계약(4))로
+            #   처리한다(안전 방향). ※값이 있으나 enum 밖인 mode(`x: bogus`)는 schema validator S5 가
+            #   잡지만, value-less mode 는 관용 파서가 drop 하므로 S5 미도달(fail-closed default 로 흡수).
             mm = re.match(r"^([A-Za-z0-9._-]{1,128}):\s*$", stripped)
             if mm:
+                if cur_unit is not None and cur_unit_indent is not None and indent > cur_unit_indent:
+                    continue
                 cur_unit = {"required": [], "modes": {}, "degraded_behavior": {}}
+                cur_unit_indent = indent
                 m.execution_units[mm.group(1)] = cur_unit
                 in_unit_required = in_unit_modes = False
             continue
@@ -882,7 +896,7 @@ def write_baseline(path, undeclared, allow_growth=False, reason=None):
 
 _ACTION_GUIDE = (
     "[infra-resource-drift] warning-tier (ADR-157 §결정3 / ADR-060 §결정5 — PR merge 미차단, advisory):\n"
-    "  검출 = manifest(.claude/_overlay/project.yaml infra_resources:) 未선언 env-key 가 실 참조면\n"
+    "  검출 = manifest(.claude/_overlay/project.yaml infra_resources:) 미선언 env-key 가 실 참조면\n"
     "    (workflow secrets. / project.yaml _env: / scripts 정적 리터럴)에 등장 = drift 원천.\n"
     "  remediation 3택: ① manifest resources[] 에 canonical_env 신규 자원으로 등재.\n"
     "    ② 기존 자원의 accepted alias 로 편입(동일 자원 별칭이면). ③ 정당 sunset 이면 참조면 제거.\n"
@@ -1082,7 +1096,7 @@ def main(argv):
     # undeclared warning surface (per violation).
     for s in new_undeclared:
         print(
-            "::warning::check-infra-resource-drift: UNDECLARED — %s:%d env-key=%s (form=%s, manifest 未선언)"
+            "::warning::check-infra-resource-drift: UNDECLARED — %s:%d env-key=%s (form=%s, manifest 미선언)"
             % (s.rel, s.lineno, s.key, s.form)
         )
     # orphan warning surface (per orphan).

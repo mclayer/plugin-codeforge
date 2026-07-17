@@ -501,7 +501,7 @@ self_tests:
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
     manual_reason: ""
-    g_boundary_check: "D3 infra-resource drift scanner discriminating self-test (미선언 표면 검출 AC-5 + orphan AC-6 + substring 오분류 제외 AC-7 + 역색인 verdict-invariant AC-8 + none-disguise anti-hollow AC-10/11 + wrapper 9-secret 실 스캔 AC-17 + census born-hollow guard candidates==0∧inert==0→exit3 + baseline grandfather) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 선언-대조 판별력 결박; cross-repo=G5·startup=G3 별도 슬라이스; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-157 §결정8)."
+    g_boundary_check: "D3 infra-resource drift scanner discriminating self-test (미선언 표면 검출 AC-5 + orphan AC-6 + substring 오분류 제외 AC-7 + 역색인 verdict-invariant AC-8 + none-disguise anti-hollow AC-10/11 + wrapper 실 secret 실 스캔 AC-17(G6 ratchet: baseline 0 pair·grandfathered==0, 하드카운트 없음) + per-class census floor AC-17a + 2계열 canonical 수렴 AC-22 + census born-hollow guard candidates==0∧inert==0→exit3 + baseline grandfather) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 선언-대조 판별력 결박; cross-repo=G5·startup=G3 별도 슬라이스; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-157 §결정8)."
 
   # ── CFP-2700 (Epic #2700 G3 / ADR-157 §결정1+§결정2) — D2 startup fail-closed reference-impl + manifest schema validator discriminating self-test (dedicated workflow step, alive) ──
   # 인벤토리 bijection: tests/scripts/*.sh 47 → 48 (신규 self-test enroll). G3 Phase 2 deliverable —
