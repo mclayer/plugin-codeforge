@@ -21,6 +21,8 @@
 #  - Mutation-9 (case-exact 매칭 제거)           → F9 PASS 면 RED (case-mismatch 미검출)
 #  - Mutation-10 (방향3 whitelist→manifest coverage 제거) → F10 PASS 면 RED (closure-asset 미검출)
 #  - Mutation-11a/b/c (data-absence→silent FAIL exit 1/2 mutate) → F11a/b/c FAIL 면 RED (fail-open 退化)
+#  - [CFP-2751 D2] M-D2a (scripts/lib/*.py shape 제거) / M-D2b (char-class underscore 탈락) → CFP2751-C1 exit 1→0 면 RED
+#  - [CFP-2751 D2] M-D2c (주석 strip 제거) → CFP2751-C2/C5 exit 0→1 / M-D2d (whitelist scoping 제거) → CFP2751-C3 exit 0→1 면 RED
 #
 # Exit code:
 #  0 = all fixtures pass (discriminating test validates lint)
@@ -322,6 +324,134 @@ jobs:
 EOF
 run_fixture "F13-with-sibling-not-extracted" "0" "list-item run: 의 with: sibling script 토큰 = closure 아님 (오추출 0)" "$R"
 
+# =============================================================================
+# CFP-2751 D2 — scripts/lib/*.py 1-hop 직접호출 shape-coverage (change-plan §8 5-case RTM)
+#   _DEP_PATTERNS append: re.compile(r"\bscripts/lib/[a-z0-9_-]+\.py\b") (underscore load-bearing).
+#   방향3 이 "yml→scripts/lib/*.py(1-hop 직접)" 미모델링 shape 를 검출하게 됐음을 discriminate.
+#   fixture 파일명 underscore 강제 = M-D2b(char-class 에서 `_` 탈락 시 미매칭) discriminate.
+#   Case4(d1-repos-executable / AC-1) = check-consumer-scripts-manifest.sh Check4 harness 소유
+#     (CFP-2408 축) → 본 3way self-test 에 중복 fixture 금지(change-plan §8.1). live CI 검증.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CFP2751-C1 libpy-runblock-unregistered ★ [AC-3]: whitelist wf run:블록이 미등재
+#   scripts/lib/d2_phantom_dep.py(underscore名) 직접호출 → FAIL(1). 등재 scripts/check-a.sh 공존.
+#   kill M-D2a(_DEP_PATTERNS scripts/lib shape 제거) / M-D2b(char-class underscore 탈락).
+#   ★ 정규식 load-bearing 반증: check_whitelist_manifest_3way.py 의 scripts/lib 정규식 제거 시
+#     이 케이스 exit 1→0 flip = self-test FAIL (정규식이 검출을 실제로 수행함을 반증적 증명).
+# -----------------------------------------------------------------------------
+R=$(mktemp -d); build_baseline "$R"
+echo "d2-libpy.yml" >> "$R/templates/scripts/consumer_applicable_workflows.txt"
+cat > "$R/templates/github-workflows/d2-libpy.yml" <<'EOF'
+name: d2-libpy
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          bash scripts/check-a.sh
+          python3 scripts/lib/d2_phantom_dep.py
+EOF
+run_fixture "CFP2751-C1-libpy-runblock-unregistered" "1" "whitelist wf run:블록 미등재 scripts/lib/d2_phantom_dep.py(underscore) 직접호출 검출 (방향3 shape-coverage, AC-3)" "$R"
+
+# -----------------------------------------------------------------------------
+# CFP2751-C2 libpy-comment-only-pass ★ [AC-4]: run:블록 안 `#` 주석줄에서만 언급한
+#   scripts/lib/d2_comment_only.py(미등재) → 무검출 PASS(0). 등재 scripts/check-a.sh 실호출.
+#   kill M-D2c(_YAML_COMMENT_LINE strip 제거 → 주석 phantom 추출 → exit 0→1 flip = RED).
+# -----------------------------------------------------------------------------
+R=$(mktemp -d); build_baseline "$R"
+echo "d2-comment.yml" >> "$R/templates/scripts/consumer_applicable_workflows.txt"
+cat > "$R/templates/github-workflows/d2-comment.yml" <<'EOF'
+name: d2-comment
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  c:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          bash scripts/check-a.sh
+          # helper ref only (not invoked): scripts/lib/d2_comment_only.py
+EOF
+run_fixture "CFP2751-C2-libpy-comment-only-pass" "0" "run:블록 주석줄 scripts/lib/d2_comment_only.py 언급 = closure 아님 (주석 strip, AC-4)" "$R"
+
+# -----------------------------------------------------------------------------
+# CFP2751-C3 libpy-plugin-only-pass ★ [AC-5]: 비-whitelist(plugin-only) wf 가 미등재
+#   scripts/lib/d2_plugin_scoped.py 직접호출 → 무검출 PASS(0) (whitelist scoping auto-exclude).
+#   kill M-D2d(whitelist scoping 제거 → 전 template scan → plugin-only helper 검출 → exit 0→1 = RED).
+# -----------------------------------------------------------------------------
+R=$(mktemp -d); build_baseline "$R"
+# d2-plugin.yml = whitelist 미등재(plugin-only). manifest 도 미참조 = 순수 orphan template.
+cat > "$R/templates/github-workflows/d2-plugin.yml" <<'EOF'
+name: d2-plugin
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python3 scripts/lib/d2_plugin_scoped.py
+EOF
+run_fixture "CFP2751-C3-libpy-plugin-only-pass" "0" "비-whitelist plugin-only wf 의 미등재 scripts/lib/d2_plugin_scoped.py = whitelist scoping auto-exclude (AC-5)" "$R"
+
+# -----------------------------------------------------------------------------
+# CFP2751-C5 born-green-corpus-shape ★ [AC-6]: whitelist wf run:블록이 scripts/lib/*.py
+#   6개(underscore, 전부 등재) 직접호출 → 위반 0 PASS(0). 별 whitelist wf 는 comment-only
+#   미등재 helper → 여전히 무검출(vacuity 반증: 게이트가 실제로 보되 등재라 통과).
+#   kill: comment-strip 제거 시 comment-only wf 의 미등재 helper 검출 → exit 0→1 flip = RED
+#         (born-green 이 "아무것도 안 봐서 pass" 가 아님을 반증).
+# -----------------------------------------------------------------------------
+R=$(mktemp -d); build_baseline "$R"
+{
+  echo "d2-corpus.yml"
+  echo "d2-corpus-comment.yml"
+} >> "$R/templates/scripts/consumer_applicable_workflows.txt"
+# 6종 lib py 를 manifest 에 등재 (script-only, dep_workflow 미부착 = 방향2 비대상)
+{
+  echo "scripts/lib/d2_corpus_1.py"
+  echo "scripts/lib/d2_corpus_2.py"
+  echo "scripts/lib/d2_corpus_3.py"
+  echo "scripts/lib/d2_corpus_4.py"
+  echo "scripts/lib/d2_corpus_5.py"
+  echo "scripts/lib/d2_corpus_6.py"
+} >> "$R/templates/consumer-scripts.manifest"
+cat > "$R/templates/github-workflows/d2-corpus.yml" <<'EOF'
+name: d2-corpus
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  cc:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 scripts/lib/d2_corpus_1.py
+          python3 scripts/lib/d2_corpus_2.py
+          python3 scripts/lib/d2_corpus_3.py
+          python3 scripts/lib/d2_corpus_4.py
+          python3 scripts/lib/d2_corpus_5.py
+          python3 scripts/lib/d2_corpus_6.py
+EOF
+cat > "$R/templates/github-workflows/d2-corpus-comment.yml" <<'EOF'
+name: d2-corpus-comment
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  cm:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          bash scripts/check-a.sh
+          # doc ref (not invoked): scripts/lib/d2_corpus_unregistered.py
+EOF
+run_fixture "CFP2751-C5-born-green-corpus-shape" "0" "whitelist wf run:블록 scripts/lib/*.py 6종(전부 등재) + comment-only 미등재 helper = 위반 0 born-green non-vacuous (AC-6)" "$R"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # F11a data-absence-whitelist ★: whitelist txt 파일 자체 부재 → PASS(exit 0, honest no-op)
 #   kill Mutation-11a (data-absence→silent FAIL exit 1/2 mutate → fail-open 退化 시 RED).
@@ -377,6 +507,10 @@ if [ "$FAIL" -eq 0 ]; then
   echo "Mutation-11a/b/c (data-absence→silent FAIL exit 1/2) → F11a/b/c FAIL 면 RED (fail-open 退化)"
   echo "Mutation-12/13 (run_indent=len(prefix) → len(whitespace-only) 버그 복원) → F12/F13 FAIL 면 RED"
   echo "            (list-item run: 의 env:/with: sibling 컬럼 오판 → script 토큰 오추출)"
+  echo "[CFP-2751 D2] M-D2a (_DEP_PATTERNS scripts/lib/*.py shape 제거)   → CFP2751-C1 exit 1→0 면 RED"
+  echo "[CFP-2751 D2] M-D2b (char-class [a-z0-9_-] underscore 탈락)       → CFP2751-C1 exit 1→0 면 RED (underscore名 미매칭)"
+  echo "[CFP-2751 D2] M-D2c (_YAML_COMMENT_LINE 주석 strip 제거)          → CFP2751-C2/C5 exit 0→1 면 RED"
+  echo "[CFP-2751 D2] M-D2d (whitelist scoping 제거 → 전 template scan)   → CFP2751-C3 exit 0→1 면 RED"
   echo ""
   exit 0
 else
