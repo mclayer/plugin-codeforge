@@ -56,7 +56,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
-- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 대다수 에이전트가 `model: opus`(Opus 4.8, 1M native context)를 사용하며(ADR-141 Amendment 1 carve-out 7종만 `model: haiku`), v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 고정한다 (ADR-141 §결정1). **haiku 고정 (ADR-141 Amendment 1)**: Amendment 1 carve-out 7종은 haiku 이므로 동일 provider 는 `ANTHROPIC_DEFAULT_HAIKU_MODEL='claude-haiku-4-5'`(dated alias `claude-haiku-4-5-20251001` 도 가능)도 함께 고정한다. haiku 에는 `[1m]` suffix 를 붙이지 않는다 — Haiku 4.5 는 200K 전용이라 `[1m]` 부착 형태는 invalid model id(opus 고정과 비대칭). wrapper self 및 first-party consumer 는 plain `opus`/`haiku` 로 충분.
+- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 에이전트 대다수가 `model: opus`(Opus 4.8, 1M native context)를 사용하며(ADR-141 carve-out — Amendment 1 7종 `model: haiku` / Amendment 2 14종 `model: sonnet`), v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 고정한다 (ADR-141 §결정1). **haiku 고정 (ADR-141 Amendment 1)**: Amendment 1 carve-out 7종은 haiku 이므로 동일 provider 는 `ANTHROPIC_DEFAULT_HAIKU_MODEL='claude-haiku-4-5'`(dated alias `claude-haiku-4-5-20251001` 도 가능)도 함께 고정한다. haiku 에는 `[1m]` suffix 를 붙이지 않는다 — Haiku 4.5 는 200K 전용이라 `[1m]` 부착 형태는 invalid model id(opus 고정과 비대칭). **sonnet 고정 (ADR-141 Amendment 2)**: Amendment 2 carve-out 14종은 sonnet 이므로 동일 provider 는 `ANTHROPIC_DEFAULT_SONNET_MODEL='claude-sonnet-5'`(현세대 alias — dated 형태도 가능)도 함께 고정한다. sonnet 은 1M-capable 이라 opus 와 symmetric — wrapper frontmatter 는 plain `model: sonnet`(haiku 의 `[1m]` 금지 비대칭과 다름). wrapper self 및 first-party consumer 는 plain `opus`/`haiku`/`sonnet` 로 충분.
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
 - **플러그인 3종**: `codex@openai-codex`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)
@@ -2383,7 +2383,7 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/backend-service/agents/*.m
       .claude/_overlay/agents/
 ```
 
-`ServiceDeveloperAgent`(`model: opus`, `role: dev`)가 develop lane 의 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
+`ServiceDeveloperAgent`(`model: sonnet` — ADR-141 Amendment 2 carve-out, `role: dev`)가 develop lane 의 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
 
 > **Rust consumer**: 링커/binutils 부재 host 에서 로컬 빌드가 막히면 **§1q. Rust 로컬빌드 경로**(Docker 마운트 빌드 + build-local 스크립트 + MSYS2/MSVC/WSL2 toolchain 가이드) 참조. example = `examples/rust-cli-minimal/`.
 

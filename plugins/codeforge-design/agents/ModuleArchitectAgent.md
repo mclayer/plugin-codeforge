@@ -1,6 +1,6 @@
 ---
 name: ModuleArchitectAgent
-model: opus
+model: sonnet
 bounded_context: codeforge-governance
 ddd_pattern: domain-service-boundary-axis-unified
 role: design-deputy
@@ -68,6 +68,8 @@ permissions:
 ---
 
 # ModuleArchitectAgent
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 **boundary axis 통합 advocate**. ArchitectPLAgent 직속 permanent SubAgent (6 permanent 중 하나). Sonnet single-mandate advocacy.
 

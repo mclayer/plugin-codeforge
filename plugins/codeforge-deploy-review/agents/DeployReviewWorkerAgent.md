@@ -1,7 +1,7 @@
 ---
 name: DeployReviewWorkerAgent
-model: opus
-# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
+model: sonnet
+# ADR-141 Amendment 2(CFP-2748) non-opus(sonnet) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
 description: 배포 리뷰 worker — smoke test 실행 (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 비교 baseline 수집 (latency p50/p95/p99 / throughput / error rate / CPU·memory) + cutover 사후 검증 worker. DeployReviewPLAgent 에 측정 결과 반환. ADR-088 §결정 2/6 mandate.
 permissions:
   allow:
@@ -21,6 +21,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 **배포 리뷰 worker**. DeployReviewPLAgent 가 검증 3종 (smoke / 성능 비교 / cutover 사후 검증) 실 측정을 위해 스폰. green 컨테이너 대상 smoke test 실행 + 성능 baseline 수집 + cutover 사후 트래픽 측정 → **DeployReviewPLAgent 에 반환**.
 
