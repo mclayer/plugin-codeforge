@@ -1,7 +1,7 @@
 ---
 name: FrontendDeveloperAgent
-model: opus
-# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
+model: sonnet
+# ADR-141 Amendment 2(CFP-2748) non-opus(sonnet) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
 role: dev
 description: 웹 프론트엔드 UI 구현 — 템플릿·정적 자산·클라이언트 측 로직
 permissions:
@@ -33,6 +33,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 DeveloperPLAgent 산하에서 프론트엔드 UI를 구현한다. 템플릿 엔진·컴포넌트 라이브러리·반응형 레이아웃은 consumer overlay가 구체화 (Jinja2/React/Vue/Svelte 등).
 

@@ -3408,7 +3408,7 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 | 4-tuple component | spawn 주체 | deputy 영역 packet | model tier |
 |---|---|---|---|
 | ArchitectAgent (chief author) | Orchestrator (flat) | 전 deputy + 3 sub-tuple 산출물 multi-source synthesis | Opus |
-| CodebaseMapper | Orchestrator (flat) | existing codebase fact (as-is) | Sonnet |
+| CodebaseMapper | Orchestrator (flat) | existing codebase fact (as-is) | haiku (ADR-141 Amd1) |
 | RefactorAgent | Orchestrator (flat) | decoupling / pattern / interface 분리 advocacy (구조 3축, to-be) + repo-분해 구조 escalation | Sonnet |
 | ArchitectAnalyst (PriorArtAgent rename) | Orchestrator (flat) | 변경 전 기존 설계 (ADR / Change Plan / Story) 분석 단일 축 | Sonnet |
 

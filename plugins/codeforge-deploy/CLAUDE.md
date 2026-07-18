@@ -18,10 +18,10 @@ deploy lane scope = **consumer 의 application repo 배포 영역** (codeforge p
 
 | Agent | Model tier | Mandate |
 |---|---|---|
-| **DeployPLAgent** | opus | 배포 매커니즘 실행 lead — Epic 묶음 단위 발동, 변경 repo enumeration, blue-green sequence orchestration, healthcheck 검증, atomic swap trigger, 3-시간 보존 timer, 자동 rollback 결정. DeployWorkerAgent spawn + verdict 종합 |
-| **DeployWorkerAgent** | opus | 각 repo 배포 worker — 9-step 마이그레이션 sequence 실 실행. idempotent script + graceful shutdown + healthcheck poll + secret provider lookup (1Password Connect 또는 fallback) + reverse proxy label 갱신 (Traefik primary) |
+| **DeployPLAgent** | sonnet | 배포 매커니즘 실행 lead — Epic 묶음 단위 발동, 변경 repo enumeration, blue-green sequence orchestration, healthcheck 검증, atomic swap trigger, 3-시간 보존 timer, 자동 rollback 결정. DeployWorkerAgent spawn + verdict 종합 |
+| **DeployWorkerAgent** | sonnet | 각 repo 배포 worker — 9-step 마이그레이션 sequence 실 실행. idempotent script + graceful shutdown + healthcheck poll + secret provider lookup (1Password Connect 또는 fallback) + reverse proxy label 갱신 (Traefik primary) |
 
-Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) (DeployPL opus / DeployWorker opus). 전 에이전트 opus 단일 tier (ADR-141 — fallback 대상 없음).
+Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) (DeployPL sonnet / DeployWorker sonnet — ADR-141 Amendment 2 carve-out). opus default + carve-out (ADR-141 — fallback 대상 없음, sonnet 부활 ≠ fallback machinery 부활).
 
 ## 8 lane composition 의 #6 배포 lane
 
@@ -76,7 +76,7 @@ governance display layer 의 모든 시각 표기 = KST `+09:00` ISO 8601 zoned 
 
 - [ADR-087](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane 신설 + lane lifecycle 6→8 (본 plugin SSOT carrier)
 - [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane (다음 lane)
-- [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — DeployPL/Worker opus tier (ADR-141 로 opus 단일 tier 통일)
+- [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — DeployPL/Worker sonnet tier (ADR-141 Amendment 2 carve-out)
 - [ADR-023](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-023-lane-plugin-lifecycle.md) — lane plugin lifecycle
 - [ADR-026](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-026-post-merge-automation.md) — Epic close → Deploy trigger
 - [ADR-027](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-027-consumer-adoption-protocol.md) — project.yaml deploy.* schema

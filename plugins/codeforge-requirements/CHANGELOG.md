@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.18.0] - 2026-07-18 — CFP-2748 ADR-141 Amendment 2 ChangeImpact opus→sonnet carve-out (MINOR)
+
+### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)
+
+[CFP-2748] ADR-141 Amendment 2 — 중간추론 역할 14종 opus→sonnet carve-out. 본 plugin 의 **ChangeImpactAgent** frontmatter `model: opus`→`model: sonnet` + frontmatter comment block(CFP-2432 sonnet 비준 이력 → Amendment 2 반영) 정정 + subagent self-refusal guard(#846) 1줄 배치(A2-3 canonical). agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## [0.17.0] - 2026-07-18 — CFP-2735 ADR-141 Amendment 1 RequirementsAnalyst opus→haiku carve-out (MINOR)
 
 ### Added (CFP-2735 — ADR-141 Amendment 1, MINOR)
