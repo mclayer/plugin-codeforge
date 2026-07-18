@@ -169,6 +169,7 @@ A1-1 정규화로 `FROZEN_BASELINE_3` allowlist 3-tuple 이 전량 drain(빈 집
   - (i) **ast-구조 부재 assert** — source 에 `FROZEN_BASELINE_3` 정의 + grandfather branch 부재를 ast 로 assert(naive substring 금지 — rename/alias gameable).
   - (ii) **behavioral fixture(HOW-agnostic, strictly stronger)** — 옛 grandfather triple(예: 파일명 `ADR-131-…` + category `orchestration/governance`)을 fixture ADR 로 써서 이제 **membership FAIL** 함을 assert. machinery 명칭·구조 무관하게 "그 bypass 가 진짜 사라졌다"를 증명. 기존 `test_ac7_new_compound_fails_live` 형제.
   - guard 는 re-widening(grandfather 재도입) 벡터를 empty-`⊆`-test 와 **동등 이상** mechanical 차단(terminal state 에서 "empty" ≡ "absent" equivalence class).
+  - **residual 정직공개(ADR-119 honest-ceiling)**: guard 는 옛 3-triple(경로-키 매칭) + `FROZEN_BASELINE_3` 명 재도입을 봉인한다. 단 **다른 이름의 allowlist 재도입 / 신규 mechanism 을 통한 new-compound 도입은 guard escape** — code review + membership-loop-edit 가시성으로 완화(machine-sealed 아님, honest ceiling). "동등 이상 empty-`⊆`-test" claim 은 봉인 대상(옛 triple + `FROZEN_BASELINE_3` 명 재도입) 한정 정확.
 - **strengthen 판정(약화 아님)**: (a) 실제 category fail-closed membership 강제 무변경 (b) allowlist 완전 drain = shrink-only ratchet 종착(ultimate shrink) (c) 재도입이 guard 로 오히려 harder. **Alt-A(빈 `set()` 허용)는 §결정 2 "call-wrap 금지" 문구를 textually relax = 약화(ADR-058 §결정 5 evidence-gate 대상)이므로 기각** — opponent 도 Round 1 에서 Alt-A 철회. sunset_justification = N/A(강화 방향, ADR-058 §결정 5).
 
 ### A1-3 — §결정 3 명명 carrier 실현 + 3-surface 정합 (Phase 2)
