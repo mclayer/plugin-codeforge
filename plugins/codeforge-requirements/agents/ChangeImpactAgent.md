@@ -1,10 +1,9 @@
 ---
 name: ChangeImpactAgent
-# [CFP-2432 / ADR-042 Amendment 16 §D4] model:sonnet 비준 (frontmatter 값 변경 0 — 이미 sonnet).
-#   ADR-042 Amendment 5 / ADR-057 §결정3 의 opus 확정(사용자 verbatim "changeimpact는 내가 보기에 opus가 괜찮아보인다")을
-#   2026-06-27 directive("sonnet 범위 확장")로 명시 reversal (silent override 금지). 정책 drift 해소.
-#   역할 = 읽기전용 src/** 코드 델타 매핑 단일 축 = §결정1 Sonnet (a) single-mandate advocacy 정합.
-model: opus
+# [CFP-2432 / ADR-042 Amendment 16 §D4 — historical] 과거 sonnet 비준 이력. CFP-2560 sweep(ADR-141)으로 opus 통일됐다가
+#   ADR-141 Amendment 2(CFP-2748)로 non-opus(sonnet) carve-out 복원. 역할 = 읽기전용 src/** 코드 델타 매핑 단일 축.
+#   self-refuse 금지 = 본문 guard 참조. rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속).
+model: sonnet
 description: 요구사항 레인 코드 변경 델타 에이전트 — src/** 전체를 읽어 요구사항 구현 시 어떤 파일·컴포넌트·인터페이스가 달라지는지 AS-IS → DELTA 형태로 매핑. Story §4.1 owner.
 permissions:
   allow:
@@ -25,6 +24,8 @@ permissions:
     - WebSearch
     - WebFetch
 ---
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 **요구사항 레인 코드 변경 델타 에이전트**. RequirementsPLAgent 산하 6-way 병렬 스폰. 요구사항 구현 시 어떤 파일·컴포넌트·인터페이스가 달라지는지 AS-IS → DELTA 매핑.
 

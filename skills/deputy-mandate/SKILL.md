@@ -16,7 +16,7 @@ tools: Read
 
 ## 4-tuple sub-tuple spawn 가이드 (CFP-681 / ADR-044 CFP-676 reaffirm)
 
-> **deputy column 아님 — flat spawn 논리적 그룹핑** (물리적 spawn 계층(nested) 아님 — "4-level nested spawn" 오해 차단). 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation; 측정 축은 구현 리팩터링 Story C 이관 — CFP-2539) + **ArchitectAnalyst** (Sonnet, 기존 설계 분석 단일 축).
+> **deputy column 아님 — flat spawn 논리적 그룹핑** (물리적 spawn 계층(nested) 아님 — "4-level nested spawn" 오해 차단). 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (haiku, existing codebase fact — ADR-141 Amendment 1) + Refactor (Sonnet, decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation; 측정 축은 구현 리팩터링 Story C 이관 — CFP-2539) + **ArchitectAnalyst** (Sonnet, 기존 설계 분석 단일 축).
 
 - **spawn gate**: 4 component 모두 Orchestrator 가 **flat spawn** — 재귀 spawn 금지 (platform inherent) / nested team 금지 / sub-lead 격상 0건 (ADR-044 + ADR-009 §결정 1 + ADR-039 정합).
 - ArchitectPLAgent = PL synthesizer — 산출물 통합 검수만, sub-agent 재귀 spawn 금지 (env=0 fallback = Orchestrator 직접 spawn one-shot).
@@ -37,7 +37,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 
 | Change Plan sub-section | owner deputy (primary R) | model |
 |---|---|---|
-| §2 현재 구조 (변경 전 기존 설계 컨텍스트) | CodebaseMapperAgent + ArchitectAnalystAgent (4-tuple sub-tuple) | Sonnet |
+| §2 현재 구조 (변경 전 기존 설계 컨텍스트) | CodebaseMapperAgent + ArchitectAnalystAgent (4-tuple sub-tuple) | haiku (Mapper — Amd1) / sonnet (Analyst — Amd2) |
 | §3 code module-level (module boundary + dependency direction + layered/hexagonal/clean module-level + DDD bounded context module placement) | **ModuleArchitectAgent** (CFP-1086 — CodeArch rename + mandate 정정) | Sonnet |
 | §3 aggregate (RDB OLTP — aggregate invariant + 트랜잭션 경계 + persistence-bound) | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified, AggregateArch carry-over; CONDITIONAL `aggregate_arch.applicable`) | Sonnet |
 | §3 API contract (transport + versioning + DTO + OpenAPI/GraphQL) | **APIContractArchitectAgent** (CFP-1086 신설, skeleton S1 / body 심화 S2) | Sonnet |

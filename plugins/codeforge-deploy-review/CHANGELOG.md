@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.2.0] - 2026-07-18 — CFP-2748 ADR-141 Amendment 2 DeployReviewWorker opus→sonnet carve-out (MINOR)
+
+### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)
+
+[CFP-2748] ADR-141 Amendment 2 — 중간추론 역할 14종 opus→sonnet carve-out. 본 plugin 의 **DeployReviewWorkerAgent** frontmatter `model: opus`→`model: sonnet` + frontmatter comment 정정 + subagent self-refusal guard(#846) 1줄 배치(A2-3 canonical) + CLAUDE.md tier 표 + docs/architecture mirror opus→sonnet. **DeployReviewPLAgent 은 OOS(opus 유지 — adversarial debate 자동 발동 backstop, AC-12)**. agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## [1.1.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
 
 ### Changed

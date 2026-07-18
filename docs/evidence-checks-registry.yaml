@@ -60,7 +60,7 @@ entries:
       pattern (vs static lint, 첫 entry `adr-sunset-criteria` 와 patterns 대비) — advisory
       dashboard, no PR block. framework 첫 non-sunset application (CFP-388 / ADR-060
       §결정 12 CFP-C carry). sample size sufficient sentinel (월 < 50 spawn 환경 = N/A).
-      [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) 로 sonnet rate-limit fallback 대상 0 → 본 KPI 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
+      [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) + Amendment 2 carve-out(14종 sonnet) 로 sonnet rate-limit fallback 대상 0(sonnet 부활 ≠ fallback machinery 부활) → 본 KPI 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
     detect_command: bash scripts/measure-rate-limit-fallback.sh
     workflow: null  # CFP-2661 D14: rate-limit-fallback-kpi.yml 은 양 dir(.github/ + templates/) 실재 부재 = theater. status:dead(ADR-141) 이나 workflow 필드가 죽은 파일 지목 = 자동집행 착시. null 로 정직 declare (선례 동 registry `workflow: null  # CI 미wire`). D3(measure-rate-limit-fallback.sh exit-4 sunset) coupled.
     current_tier: warning  # advisory dashboard, no PR block — semantic = "warning mode 의 runtime metric extension"
@@ -83,7 +83,7 @@ entries:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: dead
-    tier-downgrade-justification: "ADR-141 §결정7 — opus default + Amendment 1 carve-out(7종 haiku). sonnet fallback 대상 0. entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560 carrier."
+    tier-downgrade-justification: "ADR-141 §결정7 — opus default + Amendment 1 carve-out(7종 haiku) + Amendment 2 carve-out(14종 sonnet). sonnet fallback 대상 0(sonnet 부활 ≠ fallback machinery 부활). entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560/CFP-2748 carrier."
 
   - name: lane-evidence-trail
     description: |
@@ -3289,7 +3289,7 @@ entries:
       tests/scripts/test-check-stakes-tier-gating.sh 가 truth-table 8행 + trust-boundary 3행 RED→GREEN 변별 강제).
       baseline 측정 protocol = docs/domain-knowledge/concept/stakes-gated-model-tier-baseline.md (4-step + 3-임계 OR).
       marker gate 동형 선례 = check-tier-downgrade-guard.sh justification-marker.
-      [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) 로 opus→sonnet tier-flip 대상 0 → evidence-gate 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
+      [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) + Amendment 2 carve-out(14종 sonnet) 로 stakes-gated opus→sonnet tier-flip 대상 0(role-based carve-out ≠ stakes-based tier-flip 부활) → evidence-gate 측정 대상 소멸. entry 존치(삭제 시 tier-downgrade-guard red).
     detect_command: bash tests/scripts/test-check-stakes-tier-gating.sh  # CFP-2432 Phase 2 — gating 판정 SSOT discriminating self-test (RED→GREEN 변별 실증)
     workflow: null                  # warning-tier behavioral evidence-gate — dedicated CI workflow 미운용 (marker = PR review-time 검증, deferred-followup)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
@@ -3310,8 +3310,8 @@ entries:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # warning ship → evidence 누적 후 별 후속 Story 에서 blocking 승격 검토
-    status: dead        # [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) — tier-flip 대상 0 (구 status: deferred-followup)
-    tier-downgrade-justification: "ADR-141 §결정7 — opus default + Amendment 1 carve-out(7종 haiku). tier-flip 대상 0. entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560 carrier."
+    status: dead        # [DEAD — ADR-141] opus default + Amendment 1 carve-out(7종 haiku) + Amendment 2 carve-out(14종 sonnet) — stakes-gated tier-flip 대상 0 (구 status: deferred-followup)
+    tier-downgrade-justification: "ADR-141 §결정7 — opus default + Amendment 1 carve-out(7종 haiku) + Amendment 2 carve-out(14종 sonnet). stakes-gated tier-flip 대상 0(role-based carve-out ≠ stakes-based 부활). entry 존치(존치 근거=tier-downgrade-guard red 회피). CFP-2560/CFP-2748 carrier."
 
   - name: deferred-item-recovery
     description: |

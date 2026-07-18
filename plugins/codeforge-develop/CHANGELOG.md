@@ -2,6 +2,12 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.21.0 (2026-07-18) — CFP-2748 ADR-141 Amendment 2 preset codegen 3종 opus→sonnet carve-out (MINOR)
+
+### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)
+
+[CFP-2748] ADR-141 Amendment 2 — 중간추론 역할 14종 opus→sonnet carve-out. 본 plugin 의 preset codegen 3종 **ServiceDeveloperAgent(backend-service) · BackendDeveloperAgent · FrontendDeveloperAgent(webapp)** frontmatter `model: opus`→`model: sonnet` + frontmatter comment 정정 + ServiceDeveloper description tier 잔재 정정 + 각 subagent self-refusal guard(#846) 1줄 배치(A2-3 canonical). core **DeveloperAgent 은 OOS(opus 유지 — 범용 production 코드)**. agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## 0.20.0 (2026-07-18) — CFP-2735 ADR-141 Amendment 1 QA/Data/Infra opus→haiku carve-out (MINOR)
 
 ### Added (CFP-2735 — ADR-141 Amendment 1, MINOR)

@@ -41,8 +41,8 @@ codeforge core (>= 5.0.0) 의존.
 | **InfraOperationalArchitectAgent** | 운영 리스크 + infra — production-readiness 변호자 | "끊겼을 때·실패했을 때·과부하일 때 어떻게 되는가, 스테이징/프로덕션 누설 차단되는가" | Opus |
 | **TestContractArchitectAgent** | QA perspective contributor | §8 커버리지 후보·경계·invariant — 대립 비참여. **Epic 소속 Story 시 §8.6에 `story_key: <KEY>` + `suite: "story"` 필수** (IntegrationTestAgent Story Suite 자동 생성 연동) | Opus |
 | **DataArchitectAgent** | 빅데이터 OLAP 영역 변호자 (RDB OLTP 영역 제외) | "Parquet schema 가 어떻게 진화하는가, 객체저장소 / DuckDB / streaming pipeline 정합인가, OLAP rollback (re-derivation strategy) 가능한가" | Opus |
-| **ModuleArchitectAgent** | §3 code boundary axis (module-level + aggregate-level) advocate — single-mandate | "module / package boundary + dependency direction + layered/hexagonal/clean module-level 정합인가 + (CONDITIONAL aggregate_arch.applicable) aggregate boundary 어디인가, 트랜잭션 경계 어디까지 atomic 인가, Alembic 정책 7 원칙 (양방향 호환 / 확장-정리 분리 / reverse / smoke / cross-repo / 백업 / hard limit) 정합인가" | opus |
-| **APIContractArchitectAgent** | API transport contract advocate — single-mandate | "REST/GraphQL/gRPC/WebSocket 어떤 transport, API versioning 정책 (semver/URI/header), DTO contract / OpenAPI 또는 GraphQL schema / contract testing (Pact 등)" | opus |
+| **ModuleArchitectAgent** | §3 code boundary axis (module-level + aggregate-level) advocate — single-mandate | "module / package boundary + dependency direction + layered/hexagonal/clean module-level 정합인가 + (CONDITIONAL aggregate_arch.applicable) aggregate boundary 어디인가, 트랜잭션 경계 어디까지 atomic 인가, Alembic 정책 7 원칙 (양방향 호환 / 확장-정리 분리 / reverse / smoke / cross-repo / 백업 / hard limit) 정합인가" | sonnet |
+| **APIContractArchitectAgent** | API transport contract advocate — single-mandate | "REST/GraphQL/gRPC/WebSocket 어떤 transport, API versioning 정책 (semver/URI/header), DTO contract / OpenAPI 또는 GraphQL schema / contract testing (Pact 등)" | sonnet |
 
 **3+1 CONDITIONAL deputy** (Story trigger 충족 시 추가 spawn):
 
@@ -59,8 +59,8 @@ codeforge core (>= 5.0.0) 의존.
 
 - **ArchitectAgent** (chief author, Opus — multi-source synthesizer) — deputy 산출물 + 나머지 3 sub-tuple 산출물 통합
 - **CodebaseMapperAgent** (haiku — existing codebase fact; ADR-141 Amendment 1 carve-out)
-- **RefactorAgent** (opus — decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation. 측정 축(중복/재사용)은 구현 리팩터링 Story C 이관 — CFP-2539)
-- **ArchitectAnalystAgent** (opus) — 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11) 분석 단일 축
+- **RefactorAgent** (sonnet — ADR-141 Amendment 2 carve-out — decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation. 측정 축(중복/재사용)은 구현 리팩터링 Story C 이관 — CFP-2539)
+- **ArchitectAnalystAgent** (sonnet — ADR-141 Amendment 2 carve-out) — 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11) 분석 단일 축
 
 **flat spawn 의미**: Orchestrator 가 4 component 모두 평행 spawn. 재귀 spawn 금지 / nested team 금지 / sub-lead 격상 0건. 4-tuple = 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층 (nested) 이 아니다**.
 

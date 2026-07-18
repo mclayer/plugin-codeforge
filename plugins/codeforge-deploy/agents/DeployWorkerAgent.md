@@ -1,7 +1,7 @@
 ---
 name: DeployWorkerAgent
-model: opus
-# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
+model: sonnet
+# ADR-141 Amendment 2(CFP-2748) non-opus(sonnet) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
 description: 배포 worker — 각 변경 repo 배포 실행. 9-step 마이그레이션 sequence (빌드 → expand migration → green start → 건강 확인 → 검증 → atomic swap → blue drain → 3-시간 보존 → 정리). idempotent script 실행 + graceful shutdown 신호 + healthcheck endpoint poll + secret provider lookup (1Password Connect 또는 fallback) + reverse proxy label 갱신 (Traefik primary). ADR-087 §결정 2 mandate.
 permissions:
   allow:
@@ -24,6 +24,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 **배포 worker**. DeployPLAgent 가 변경 repo 별 본 에이전트를 스폰한다. blue-green 9-step sequence 의 실 실행 (build push / migration apply / green start / healthcheck poll / atomic swap label / blue drain / 정리) 을 담당하고 결과를 **DeployPLAgent 에 반환**한다.
 

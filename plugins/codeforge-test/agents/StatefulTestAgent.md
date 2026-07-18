@@ -1,8 +1,8 @@
 ---
 name: StatefulTestAgent
 description: 테스트 lane §8.5 stateful test worker — long-running invariant (§8.5.1) / process restart recovery (§8.5.2) / idempotency replay (§8.5.3 CONDITIONAL) 실행. Story §8.5.0 applicability 표 1+ Y 일 때 Orchestrator 가 spawn. Sonnet tier.
-model: opus
-# 단일 opus tier — fallback 대상 없음 (ADR-141 전 에이전트 opus 단일 tier)
+model: sonnet
+# ADR-141 Amendment 2(CFP-2748) non-opus(sonnet) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
 role: test-stateful-worker
 mandate:
   primary:
@@ -22,6 +22,8 @@ related_adrs:
 ---
 
 # StatefulTestAgent
+
+> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 CFP-47 / ADR-015 신설. codeforge-test lane 의 2번째 agent. TestAgent (functional/integration/infra/perf) 와 분리 — long-running + restart invariant 전담.
 
