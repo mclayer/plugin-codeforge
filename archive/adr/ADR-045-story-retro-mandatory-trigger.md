@@ -1,5 +1,5 @@
 ---
-adr_number: 43
+adr_number: 45
 title: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger + gate:retro-complete close-blocking
 status: Proposed
 category: Team & Process

@@ -1,5 +1,5 @@
 ---
-adr_number: 61
+adr_number: 62
 title: Carrier Story bootstrap dependency 룰 — frontmatter 선언 + warning mode lint
 status: Accepted
 category: governance
