@@ -5,6 +5,14 @@ status: Accepted
 category: governance
 date: 2026-07-14
 carrier_story: CFP-2680
+amendments: [1]
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2753
+    date: 2026-07-18  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 2", "§결정 3"]
+    nature: ratchet-up  # allowlist 완전 drain(shrink 완성) + grandfather machinery 은퇴 + anti-regression guard. fail-closed membership 강제 무변경(약화 아님, ADR-058 §결정 5 강화 방향 면제)
+    note: "CFP-2753(§결정 3 named carrier CFP-2682 실현) — ADR-131/132/133 compound-slash category 를 규칙 4(단일 primary + 본문 cross-ref)로 정규화(ADR-131→governance / ADR-132→security / ADR-133→orchestration) → FROZEN_BASELINE_3 전량 drain 후 grandfather machinery 은퇴. (A1-1) category 3값 확정 = §결정 2 근거(2)가 named carrier 로 deferred 한 OOS mapping-accuracy 축 실현. (A1-2) grandfather machinery 전량 은퇴(blanket_designrefactor debate verdict=now, ADR-138): fail-closed CATEGORY_VALID membership 이 durable defense, 빈-set 표현 제약(set()=Call §결정 2 위반 / {}=dict) moot, shrink-only ratchet terminal state. anti-regression guard(ast-구조 부재 assert + 옛 triple now-FAILS behavioral fixture)로 재도입(re-widening) 봉인 — INV-2 mechanical teeth 를 empty-machinery 대신 positive assertion 으로 보존. Alt-A(빈 set() 허용)는 §결정 2 call-wrap 금지 relax=약화라 기각. (A1-3) shrink-only self-test 은퇴 + 3-surface 정합. strengthen direction(약화 surface 0). canonical = Story CFP-2753 §7/§8."
 supersedes: []
 related_adrs:
   - ADR-102  # 강 의존 — ratchet 약화 evidence-gate governance anchor(formal-ADR-없는 spec-level predecessor reversal 의 sunset_justification mechanism). 본 ADR 이 CFP-2615 규칙 8 "warning-tier standalone" declared plan 을 required-surface fail-closed 로 뒤집는 traceable-reversal. 강화 방향(warning→required)이라 sunset_justification 불요(약화 아님)
@@ -129,3 +137,50 @@ ADR `category` closed_enum membership 강제를 **기존 required doc-frontmatte
 - grandfather 대상: `archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md` · `archive/adr/ADR-132-consumer-branch-protection-auto-wire.md` · `archive/adr/ADR-133-adr-reservation-atomic-claim.md`
 - 번호 claim: `archive/adr/ADR-RESERVATION.md`(row 153 dual-key 3-leg) — origin/main max=152 fresh 실측(git ls-tree, 149 orphan gap), GH_TOKEN 부재로 OCC primitive 대신 RESERVATION row(ADR-133 §결정4 fallback)
 - 선례: `scripts/lib/check_doc_frontmatter.py` `KIND_VALID`(값-검증 동형) · ADR-150(§8.9 fail-closed lint + 기존 required strict context 편승 형판) · ADR-152(§8.10 dark-path — 최근접 구조 twin) · ADR-151(self-test execution-liveness 인벤토리 — `.py` N/A 근거) · ADR-145(ac-traceability RTM location-resolution) · ADR-102(traceable-reversal) · ADR-058(§결정 3 sunset 3-tuple / §결정 5 약화 evidence-gate) · ADR-091(§결정 4 단일 owner location) · ADR-127(full 10-lane, doc-only fast-path 폐지)
+
+## Amendment 1 — grandfather machinery 은퇴 + category 3값 정규화 확정 (CFP-2753, 2026-07-18 KST)
+
+> §결정 2 가 named carrier(CFP-2682, 실현 Story CFP-2753)로 deferred 한 "ADR-131/132/133 규칙 4 정규화 → allowlist shrink" 를 실행하고, allowlist 전량 drain 후 grandfather machinery 를 **은퇴**한다. blanket_designrefactor debate(ADR-138, Codex proponent ↔ Claude opponent, verdict judge = ArchitectAgent chief) verdict = **now**. strengthen direction(약화 surface 0 — 실제 category fail-closed membership 강제 무변경). canonical SSOT = Story CFP-2753 §7(설계 서사)/§8(Test Contract). 모든 사실 firsthand(worktree Read + origin/main gh api + py 3.14/3.12 실행). 추정값 lock-in 0.
+
+### A1-1 — category 3값 확정 (규칙 4 단일 primary + 본문 cross-ref, OOS mapping-accuracy 축 실현)
+
+§결정 2 근거(2)가 "3건 정규화 = category→lane 매핑 정확성 재검토 = 명시적 OOS(CFP-2680 Story §1)" 로 named carrier 에 위임한 그 축을 본 Amendment 가 처음 정식 확정한다. 각 ADR 의 실 결정 성격(firsthand)에 근거:
+
+| ADR | AS-IS (compound) | 확정 primary | secondary → 본문 cross-ref | 근거 (결정 성격, firsthand) |
+|---|---|---|---|---|
+| ADR-131 | `orchestration/governance` | **`governance`** | `orchestration` (cross-repo topology / Orchestrator-level 발급 자동화) | 거버넌스 모델 — 토폴로지 SSOT 1급화 + 4 메타불변식 게이트 + 기계/사람 판정 분리 + ADR-119 검사연극 금지 정합. 자기 §해소기준 "영구 강화 ratchet". 규칙 2 row1 `governance` = cross-cutting fallback D-3 의 자연 primary |
+| ADR-132 | `governance/security` | **`security`** | `governance` (SDLC governance auto-wire 정책) | 접근통제/merge 차단력 — enforce_admins admin-bypass 차단 · ADR-066 PAT scope invariant · operator-token authz(옵션 A) · dead-gate = SDLC trust-boundary hole. 자기 sunset_justification "ADR-058 §결정 7 security ADR default presumption 정합". 규칙 2 row2 `security` → review bucket + design cross-ref(SecurityArch primary deputy) |
+| ADR-133 | `orchestration/governance` | **`orchestration`** | `governance` (ADR-RESERVATION registry governance) | 병렬 Orchestrator/Architect 세션 lost-update race 의 단일-셀 OCC atomic claim = Orchestrator-level concurrency-control mechanism. §결정 8 3-layer disjoint(PR/session/artifact-slot) 중 artifact-slot layer. 규칙 2 row3 `orchestration` = "Orchestrator-level mechanism = design lane primary" |
+
+- 3값 모두 closed_enum(18) 원소(`governance`/`security`/`orchestration`) — case-fold membership 통과.
+- secondary 축은 각 ADR 본문 cross-ref note 로 보존 → **정보 손실 0**(compound 표현의 나머지 축 회수 가능). 규칙 4 "단일 primary owner + 필요 시 본문 cross-ref note" 정합.
+- INV-4 정직 천장 유지: 본 확정은 mapping-accuracy(어느 primary 가 옳은가) 축 = **설계 lane 판단**(기계강제 불가). 게이트는 여전히 membership presence 까지만 fail-closed(attestation 은 설계리뷰).
+
+### A1-2 — FROZEN_BASELINE_3 grandfather machinery 전량 은퇴 (§결정 2 amendment, debate verdict = now)
+
+A1-1 정규화로 `FROZEN_BASELINE_3` allowlist 3-tuple 이 전량 drain(빈 집합)된다. §결정 2 의 grandfather machinery 는 선재 compound 3건을 격리하는 **transitional isolation** 이었으므로 전량 drain 시 은퇴한다:
+
+- **은퇴 대상**: `scripts/lib/check_doc_frontmatter.py` 의 `FROZEN_BASELINE_3` 상수 + grandfather continue-branch(`if (md.as_posix(), folded) in FROZEN_BASELINE_3: continue`) / `tests/scripts/test_check_doc_frontmatter_category.py` 의 `_EXPECTED_BASELINE_3` + `extract_frozen_baseline_3()` + shrink-only self-test(`⊆`, `test_grandfather_*`).
+- **debate verdict 근거(ADR-138 blanket_designrefactor, chief judge, firsthand 종합)**:
+  1. **dead-machinery**: drain 후 grandfather branch 는 어떤 파일도 매치 안 함(빈 집합). 존재 이유(3건 격리) 소멸.
+  2. **durable defense = fail-closed CATEGORY_VALID membership**(§결정 1, 7-tuple required 무변경) — 신규 compound/out-of-enum 은 grandfather 무관 exit 1. 은퇴가 실제 category 강제를 약화하지 **않음**.
+  3. **빈-set 표현 딜레마 소거**: Python 빈 set 리터럴 부재 — `set()`=Call(§결정 2 "call-wrap 금지" 위반), `{}`=dict("순수 set 리터럴" intent 오도). `ast.literal_eval('set()')` 은 py3.9+(3.12·3.14 firsthand 실행) 정상 동작(런타임 crash 아님 — 요구사항리뷰 F1 정정, Codex "py3.12 likely ValueError" speculation 은 Claude py3.12.10 실측으로 반증)이나 §결정 2 governance 제약은 그대로. 은퇴는 machinery 자체를 제거해 이 딜레마를 소거.
+- **INV-2(shrink-only ratchet) 보존 = anti-regression guard**: opponent(Claude) 지적(machinery 은퇴 시 INV-2 mechanical teeth 가 prose-only 로 강등 + allowlist re-widening 벡터 방치)을 수용해 **anti-regression guard** 를 신설한다. Round 1 concede 시 opponent 가 기여한 refinement 반영:
+  - (i) **ast-구조 부재 assert** — source 에 `FROZEN_BASELINE_3` 정의 + grandfather branch 부재를 ast 로 assert(naive substring 금지 — rename/alias gameable).
+  - (ii) **behavioral fixture(HOW-agnostic, strictly stronger)** — 옛 grandfather triple(예: 파일명 `ADR-131-…` + category `orchestration/governance`)을 fixture ADR 로 써서 이제 **membership FAIL** 함을 assert. machinery 명칭·구조 무관하게 "그 bypass 가 진짜 사라졌다"를 증명. 기존 `test_ac7_new_compound_fails_live` 형제.
+  - guard 는 re-widening(grandfather 재도입) 벡터를 empty-`⊆`-test 와 **동등 이상** mechanical 차단(terminal state 에서 "empty" ≡ "absent" equivalence class).
+  - **residual 정직공개(ADR-119 honest-ceiling)**: guard 는 옛 3-triple(경로-키 매칭) + `FROZEN_BASELINE_3` 명 재도입을 봉인한다. 단 **다른 이름의 allowlist 재도입 / 신규 mechanism 을 통한 new-compound 도입은 guard escape** — code review + membership-loop-edit 가시성으로 완화(machine-sealed 아님, honest ceiling). "동등 이상 empty-`⊆`-test" claim 은 봉인 대상(옛 triple + `FROZEN_BASELINE_3` 명 재도입) 한정 정확.
+- **strengthen 판정(약화 아님)**: (a) 실제 category fail-closed membership 강제 무변경 (b) allowlist 완전 drain = shrink-only ratchet 종착(ultimate shrink) (c) 재도입이 guard 로 오히려 harder. **Alt-A(빈 `set()` 허용)는 §결정 2 "call-wrap 금지" 문구를 textually relax = 약화(ADR-058 §결정 5 evidence-gate 대상)이므로 기각** — opponent 도 Round 1 에서 Alt-A 철회. sunset_justification = N/A(강화 방향, ADR-058 §결정 5).
+
+### A1-3 — §결정 3 명명 carrier 실현 + 3-surface 정합 (Phase 2)
+
+- §결정 3 shrink named carrier(CFP-2682)가 Story CFP-2753 으로 실현. shrink 실행 후 3-surface(census-floor, CFP-2661) 정합 갱신 Phase 2 대상: (1) `docs/confluence-ia-tree.yaml lane_mapping_rule.deferred_followup_lint.shrink_carrier`(CFP-2682 실현 반영) (2) `adr-category-lane-mapping.md` 규칙 8 + 변경 이력(shrink 완료 + machinery 은퇴 반영) (3) 본 ADR §결정 2 / §관련파일("FROZEN_BASELINE_3 순수 set 리터럴" 표현 = 은퇴로 supersede). 한 곳만 = drift.
+- **Phase 분리(ADR-127)**: CFP-2753 Phase 1 = 본 Amendment(선언·확정) + Story §7/§8. Phase 2(구현) = 3 ADR frontmatter 정규화 + secondary cross-ref note + machinery 은퇴(source+test) + 3-surface 정합 + anti-regression guard. **R3 원자성**: 정규화 ↔ drain ↔ 은퇴 = 동일 Phase 2 PR 원자(순서 역전 시 born-red — compound ∉ enum + grandfather 부재). branch-protection 7-tuple 무변경.
+
+### A1-4 — debate transcript 요지 (ADR-138 verdict record)
+
+- dispatch = `blanket_designrefactor`(role_assignment={codex:proponent, claude:opponent}), verdict judge = ArchitectAgent chief, anchor = `check_doc_frontmatter.py::FROZEN_BASELINE_3-grandfather::dead-machinery-removal`(per-Story).
+- **proponent(Codex)**: 전량 은퇴(dead-machinery). alternative = anti-regression test. py3.12 speculation → verify-before-trust 로 철회(수용).
+- **opponent(Claude)**: Round 0 = 빈 machinery 존치(Alt-A `set()` 허용 Amendment) — 근거 empty-`⊆`-test 는 append 검출 non-vacuous + re-widening 은 membership 이 못 잡는 disjoint vector. Round 1 = 양 점 CONCEDE + behavioral-fixture refinement 기여 + Alt-A 철회.
+- **chief verdict = now(retire + anti-regression guard: ast-구조 + behavioral fixture)** — opponent re-widening 우려를 guard 로 수용하되 Alt-A §결정 2 relax(약화) 회피 synthesis.
+- convergence_quality_invariant 충족: counterargument 양측·양 라운드 present / alternative ≥1(Codex anti-regression, Claude Alt-A/B + behavioral fixture) / purpose statement round0 present → consensus_reached(genuine, opponent 자발 concede).
