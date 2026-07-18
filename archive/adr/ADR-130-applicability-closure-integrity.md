@@ -8,7 +8,7 @@ carrier_story: CFP-2395
 parent_epic: CFP-2394
 supersedes: [ADR-083]
 amends: null
-amendments: [1]
+amendments: [1, 2]
 amendment_log:
   - amendment: 1
     carrier_story: CFP-2398
@@ -24,9 +24,29 @@ amendment_log:
       consumer-guide.md:630/875 (templates = consumer-distributable, `.github`/confluence-* = wrapper-self dogfood 전용).
       Story D(3-way 일관성 CI gate) 설계 입력 = templates 채널 anchor 고정 (`.github` 부재 자산을 영구 FAIL 로 오판 차단).
       is_transitional:false 강화 방향 유지 (채널 정확화 — 약화 0). 8 invariant·다른 §결정 무변경 (§결정 5 채널 표기만 정정).
+  - amendment: 2
+    carrier_story: CFP-2751
+    date: 2026-07-18
+    summary: |
+      §결정 3 closure-완전성 shape-coverage 확장 (P-A 재발 N=3 근절 carrier — mechanical_enforcement_actions
+      "pattern_count >= 2 재발 시 follow-up CFP MUST promote" 발동). direction3 런타임 gate 의
+      dependency shape 모델을 확장. 기존 closure 모델(§결정 3)은 "yml→scripts/check-*.sh(1-hop)→*.py
+      (depth-2)" 를 가정했으나, story-init.yml 은 run-block 이 `python3 scripts/lib/workflow_story_init_*.py`
+      를 1-hop 직접 호출하는 미모델링 shape 를 갖는다 (story-init.yml:86/87/115/150/197/579 6종).
+      check_whitelist_manifest_3way.py 의 _DEP_PATTERNS(L85-88: 2 shape scripts/check-*.sh /
+      templates/scripts/*.py + char-class [a-z0-9-] underscore 없음)가 이 shape 를 구조적으로 못 봐
+      방향3 이 story-init helper 6종을 미검출(structural blindness live — 현 HEAD 방향3 PASS/exit0).
+      _DEP_PATTERNS 에 shape `scripts/lib/[a-z0-9_-]+\.py` 1개 append 로 coverage 완성 (underscore =
+      load-bearing — story-init lib 전부 underscore名, char-class 넓히면 blind 동시 해소; hyphen = 미래
+      robust). 기존 2패턴 무변경(append-only, over-match 회귀 0). born-red 회피 ordering = D1(helper
+      선등재: repos.py manifest 등재 + chmod 100755)→D2(패턴 활성) reusable pattern. tier 무변경
+      (warning-tier, branch-protection 7-tuple 무변경 — required 승격은 별 rollout Story, §결정6). ReDoS-safe
+      (단일 bounded quantifier + nested 0 + \b 경계). is_transitional:false 강화 방향 유지 (coverage 확장 —
+      약화 0). 8 invariant·다른 §결정 무변경 (§결정 3 shape 모델만 확장 — §결정 3-A).
 related_stories:
   - CFP-2395  # 본 ADR 신설 carrier (Epic CFP-2394 Story A — gating Story)
   - CFP-2394  # parent Epic — consumer-applicability whitelist↔manifest closure 정합 복원
+  - CFP-2751  # Amendment 2 carrier — direction3 shape-coverage 확장 (yml→scripts/lib/*.py 1-hop, P-A 재발 N=3 근절)
 related_adrs:
   - ADR-083   # consumer-applicability-filter (Sunsetted) — 본 ADR 이 supersede. 8 invariant verbatim carry. 분류규칙 재확정 base layer.
   - ADR-076   # §결정 2 declarative reconciliation upgrade — 11 영역 wrapper SSOT desired state. closure 의 desired-state anchor.
@@ -141,6 +161,26 @@ closure 는 **3종 종속 묶음**의 의존 폐포다:
 **명시적 trade-off 기록**: codeforge 의 closure 규칙은 "런타임 gate 가 잡는 범위" 와 "manifest 가 등재해야 할 실제 범위" 를 구분 정의한다. **데이터(tsv) / 정책doc / depth-2 자산은 manifest 직접 등록으로만 커버**된다 (런타임 gate 우회). 이는 패키지 매니저가 full transitive closure 를 lockfile 로 닫는 것과 대비되는 codeforge 의 알려진 한계이며, Bazel 형 **declare-or-forbid**(선언 안 된 의존은 사용 금지)의 manifest-직접-등록 대용이다. [source: 요구사항리뷰 lane §9.1 #3 confirmed — phantom dependency 누락 위험]
 
 **closure-완전성 mechanical 강제 방식 결정 = Story D 로 위임**: depth-2/데이터 dep 을 강제하는 방식은 (옵션 A) `mirror-dependency-closure.py` 확장 + AM-3 v2 bump vs (옵션 B) 신규 check 분리 — 본 ADR 은 *규칙·범위*만 정의하고, 강제 메커니즘 구현은 Story D 의 설계 결정으로 명시 위임한다.
+
+#### shape-coverage 확장 (§결정 3-A — Amendment 2, CFP-2751 — P-A 재발 N=3 근절)
+
+[verified-via: PL/ArchitectAgent firsthand — `check_whitelist_manifest_3way.py` L85-88 `_DEP_PATTERNS` (2 shape) / `story-init.yml` L86/87/115/150/197/579 (yml→scripts/lib/*.py 1-hop 직접호출 6종) / 현 HEAD 방향3 = PASS/exit 0 (structural blindness live) / `consumer-scripts.manifest` L95-99 (story-init lib 5종 등재, repos.py 미등재)]
+
+**미모델링 shape 발견**: 위 §결정 3 depth-1 trade-off 표는 방향3 런타임 gate 의 dependency shape 를 두 가지("yml→`scripts/check-*.sh`", "yml→`templates/scripts/*.py`")로 모델링했다. 그러나 `story-init.yml` 은 run-block 이 `python3 scripts/lib/workflow_story_init_*.py` 를 **1-hop 직접 호출**하는 **세 번째 shape**("yml→`scripts/lib/*.py` 1-hop 직접")를 갖는다. 이 shape 는:
+
+- **CFP-2412 방향3 게이트(`check_whitelist_manifest_3way.py`)의 `_DEP_PATTERNS`(L85-88)가 인식하지 못한다** — 등재 패턴 2종(`scripts/check-[a-z0-9-]+\.sh` / `templates/scripts/[a-z0-9-]+\.py`)은 `scripts/lib/` 접두를 커버하지 않고, char-class `[a-z0-9-]` 는 underscore 를 포함하지 않아 underscore名(`workflow_story_init_*.py`) 자체가 미매칭. **이중 blind**.
+- 결과: 방향3 이 whitelist workflow(`story-init.yml`)의 hard-block closure 자산(story-init helper 6종)을 **구조적으로 못 본다** — 현 HEAD 방향3 = PASS/exit 0 이지만 이는 검증이 아니라 blindness. 이 갭이 P-A 재발(N=3: MKT-001 / MKT-002 / MSM-001)의 도메인 뿌리다.
+
+**결정 (Amendment 2)**:
+
+1. **shape 추가** — `_DEP_PATTERNS` 에 shape `re.compile(r"\bscripts/lib/[a-z0-9_-]+\.py\b")` **1개를 append** 하여 "yml→`scripts/lib/*.py` 1-hop 직접" shape 의 closure-완전성 coverage 를 완성한다. §결정 3 의 3종 종속 묶음 규칙(scripts + 데이터 + 정책doc)은 무변경 — 본 확장은 그 규칙의 *shape 인식 표면*을 넓히는 것이다.
+2. **char-class underscore 확장 근거** — `[a-z0-9_-]`(underscore + hyphen union). underscore 는 **load-bearing**: Python module 파일명 규약(PEP 8 snake_case)상 `scripts/lib/*.py` helper 는 underscore名이 지배적(story-init lib 6종 전부 underscore名)이므로, 형제 2패턴의 `[a-z0-9-]`(underscore 없음)을 그대로 복사하면 신규 shape 가 inert 가 된다. hyphen 은 미래 robustness(현 corpus 무영향).
+3. **append-only(회귀 0)** — 기존 2패턴의 char-class·경로 접두는 넓히지 않는다(over-match 회귀 회피). 신규 shape 는 별 리스트 원소로만 추가 → 방향1/2/3 기존 판정 불변.
+4. **born-red 회피 ordering (reusable pattern)** — coverage 를 넓히면 기존 미등재 closure 자산이 즉시 위반으로 켜진다(born-red = self-block). 따라서 **선등재(gap 해소) → 패턴 활성** 순서를 강제한다: (D1) 미등재 helper(`workflow_story_init_project_config_repos.py`)를 manifest 에 선등재 + `chmod +x`(100755) → (D2) `_DEP_PATTERNS` 확장. firsthand 실측: whitelist-scoped `scripts/lib/*.py` run-block 직접호출 중 현 미등재 = repos.py 1종뿐 → D1 후 born-green. 이 "선등재→패턴활성" 은 coverage 확장 게이트의 재사용 가능 패턴이다.
+5. **scan surface·함정 무변경** — whitelist scoping(방향3 L321 `for name in whitelist`) + 주석 strip(`_YAML_COMMENT_LINE`) 재사용으로 두 false-RED 함정(① 주석-언급 helper / ② plugin-only workflow helper)이 자동 중화된다. 신규 로직 0.
+6. **tier 무변경(warning)** — 본 확장은 warning-tier(continue-on-error) 유지 — branch-protection 7-tuple 무변경. §결정 6 의 warning→required 7일-green 승격 절차는 별 rollout Story 소관(본 Amendment 대상 아님). §1 요구의 "fail-closed" 는 logic-level 결정성(silent-pass 금지)으로 해석 — 검출 로직이 미등재를 결정적으로 보고.
+
+**정합**: 본 확장은 §결정 3 closure-완전성 규칙의 **coverage 확장(강화 방향, ratchet)** 이므로 ADR-058 §결정 5 sunset_justification 비대상 + 8 invariant·다른 §결정 무변경. carrier = CFP-2751 (mechanical_enforcement_actions 의 "pattern_count >= 2 재발 시 follow-up CFP MUST promote" 발동 이행). repos.py 출처 = ADR-069 Amendment 1(multi-repo component routing, yq fallback helper).
 
 ### 결정 4 — graceful no-op = job-conditional skip (path-filter skip 금지) [load-bearing 외부 invariant]
 
