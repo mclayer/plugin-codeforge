@@ -7,12 +7,12 @@ CFP-2680 / ADR-153 — CATEGORY_VALID(check_doc_frontmatter.py) execution-backed
   - enum = docs/confluence-ia-tree.yaml lane_mapping_rule.closed_enum CWD-relative 동적 read,
     casefold whole-string membership.
   - scope = docs/adr + archive/adr. category None→skip / non-str·blank·미지값→fail-closed.
-  - grandfather = FROZEN_BASELINE_3 (file-keyed 3 tuple, shrink-only).
+  - grandfather machinery 은퇴 (CFP-2753) — FROZEN_BASELINE_3 제거, membership-only 검증.
   - enum-source 부재/unparseable → fail-OPEN(skip) + stderr 경고.
 
-RTM: AC-1..8 (Change Plan §8.2) 각 pos+neg discriminating + §8.3 edge / shrink-only / mutation-kill.
+RTM: AC-1..8 (Change Plan §8.2) 각 pos+neg discriminating + §8.3 edge / anti-regression / mutation-kill.
 oracle = 실 checker subprocess exit code + stdout/stderr substring 결박 (false-oracle 0; ADR-145 §결정 5).
-structural test(sentinel presence / ast-extract grandfather)만 source 읽음.
+structural test(sentinel presence / ast-structure grandfather-retirement)만 source 읽음.
 
 정적 lint 이므로 runtime numeric invariant N/A — discriminating pos/neg + mutation-kill 로 대체.
 """
@@ -28,15 +28,8 @@ SCRIPT = REPO_ROOT / "scripts" / "lib" / "check_doc_frontmatter.py"
 REAL_IA = REPO_ROOT / "docs" / "confluence-ia-tree.yaml"
 
 # 대부분 테스트는 minimal 합성 enum 사용 (실 SSOT 미read — SSOT-coupling 회피).
-MINIMAL_ENUM = ["governance", "architecture", "security", "agent-tier", "team & process", "process"]
-
-# grandfather baseline (test-local 독립 하드코딩 — source 자기비교 금지; ⊆ shrink-only 대비용).
-# source FROZEN_BASELINE_3 과 별개 객체로 유지해 tautology 봉인.
-_EXPECTED_BASELINE_3 = {
-    ("archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md", "orchestration/governance"),
-    ("archive/adr/ADR-132-consumer-branch-protection-auto-wire.md", "governance/security"),
-    ("archive/adr/ADR-133-adr-reservation-atomic-claim.md", "orchestration/governance"),
-}
+# 확정값 3종: governance, security, orchestration (AC-1 新확정, 신규 enum 추가 가능).
+MINIMAL_ENUM = ["governance", "architecture", "security", "agent-tier", "team & process", "process", "orchestration"]
 
 # CFP-2603 branch-protection required contexts (7-tuple, 하드코딩 상수).
 SEVEN_TUPLE = [
@@ -60,6 +53,20 @@ def run_checker(cwd):
         text=True,
         encoding="utf-8",
     )
+
+
+def _frozen_baseline_3_assign_absent(source):
+    """AST 구조 검사: FROZEN_BASELINE_3 변수 할당(Assign/AnnAssign) 노드 부재 확인."""
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "FROZEN_BASELINE_3":
+                    return False
+        if isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id == "FROZEN_BASELINE_3":
+                return False
+    return True
 
 
 def write_adr(fixture, name, category_line, subdir="archive/adr", body=""):
@@ -97,17 +104,6 @@ def write_change_plan(fixture, name):
     )
 
 
-def extract_frozen_baseline_3():
-    """SCRIPT source 를 ast.parse → FROZEN_BASELINE_3 Assign 노드 literal_eval → set."""
-    tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "FROZEN_BASELINE_3" for t in node.targets
-        ):
-            return set(ast.literal_eval(node.value))
-    raise AssertionError("FROZEN_BASELINE_3 not found")
-
-
 # ─────────────────────────── AC-1 ───────────────────────────
 def test_ac1_capitalized_architecture_passes(tmp_path):
     # category `Architecture` → casefold → `architecture` ∈ enum → exit 0 (case-fold membership).
@@ -124,6 +120,30 @@ def test_ac1_bogus_not_in_enum_fails(tmp_path):
     assert r.returncode != 0, r.stdout
     assert "category" in r.stdout
     assert "bogus-not-in-enum" in r.stdout
+
+
+def test_ac1_adr131_governance_passes(tmp_path):
+    # CFP-2753 새 확정값 governance — fixture enum 에 포함(MINIMAL_ENUM 이미 포함) → exit 0.
+    write_ia(tmp_path)
+    write_adr(tmp_path, "ADR-131-test.md", " governance")
+    r = run_checker(tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_ac1_adr132_security_passes(tmp_path):
+    # CFP-2753 새 확정값 security — fixture enum 에 포함 → exit 0.
+    write_ia(tmp_path)
+    write_adr(tmp_path, "ADR-132-test.md", " security")
+    r = run_checker(tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_ac1_adr133_orchestration_passes(tmp_path):
+    # CFP-2753 새 확정값 orchestration — fixture enum 에 포함(MINIMAL_ENUM 추가) → exit 0.
+    write_ia(tmp_path)
+    write_adr(tmp_path, "ADR-133-test.md", " orchestration")
+    r = run_checker(tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
 
 
 # ─────────────────────────── AC-2 ───────────────────────────
@@ -167,6 +187,33 @@ def test_ac3_yaml_mutation_added_enum_passes(tmp_path):
     write_adr(tmp_path, "ADR-906-novel.md", " zzz-novel-enum")
     r = run_checker(tmp_path)
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_ac3_secondary_crossref_present():
+    # CFP-2753 AC-3: 실 repo 3 ADR 본문에서 secondary 축 cross-ref marker 존재.
+    # DeveloperAgent 가 삽입한 marker(계약 고정): "category cross-ref (CFP-2753"
+    # 각 파일별 secondary 축 cross-ref note 존재 확인.
+
+    # ADR-131: orchestration
+    adr131_files = list((REPO_ROOT / "archive" / "adr").glob("ADR-131-*.md"))
+    assert len(adr131_files) == 1, f"ADR-131-*.md 파일 개수 부정 {len(adr131_files)}"
+    adr131_text = adr131_files[0].read_text(encoding="utf-8")
+    assert "category cross-ref (CFP-2753" in adr131_text, f"ADR-131 marker 부재: {adr131_files[0]}"
+    assert "secondary 축 `orchestration`" in adr131_text, f"ADR-131 secondary 축 부재: {adr131_files[0]}"
+
+    # ADR-132: governance
+    adr132_files = list((REPO_ROOT / "archive" / "adr").glob("ADR-132-*.md"))
+    assert len(adr132_files) == 1, f"ADR-132-*.md 파일 개수 부정 {len(adr132_files)}"
+    adr132_text = adr132_files[0].read_text(encoding="utf-8")
+    assert "category cross-ref (CFP-2753" in adr132_text, f"ADR-132 marker 부재: {adr132_files[0]}"
+    assert "secondary 축 `governance`" in adr132_text, f"ADR-132 secondary 축 부재: {adr132_files[0]}"
+
+    # ADR-133: governance
+    adr133_files = list((REPO_ROOT / "archive" / "adr").glob("ADR-133-*.md"))
+    assert len(adr133_files) == 1, f"ADR-133-*.md 파일 개수 부정 {len(adr133_files)}"
+    adr133_text = adr133_files[0].read_text(encoding="utf-8")
+    assert "category cross-ref (CFP-2753" in adr133_text, f"ADR-133 marker 부재: {adr133_files[0]}"
+    assert "secondary 축 `governance`" in adr133_text, f"ADR-133 secondary 축 부재: {adr133_files[0]}"
 
 
 # ─────────────────────────── AC-4 ───────────────────────────
@@ -222,11 +269,71 @@ def test_ac6_no_new_required_context_no_standalone_workflow():
     assert "doc-frontmatter-category-test" not in SEVEN_TUPLE
 
 
+def test_grandfather_machinery_retired():
+    # CFP-2753 anti-regression guard: FROZEN_BASELINE_3 machinery 은퇴 확인.
+    # ast-구조 검사만 (naive substring 금지 — §7.9.2, 은퇴 주석에 이름 잔존 정당).
+    # (1) ast-structure: FROZEN_BASELINE_3 Assign 노드 부재.
+    # (2) ast-structure: `in FROZEN_BASELINE_3` membership 표현 부재.
+    source = SCRIPT.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    # Assign node 검사 — FROZEN_BASELINE_3 변수 할당 부재.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "FROZEN_BASELINE_3":
+                    raise AssertionError("FROZEN_BASELINE_3 Assign node 존재 — machinery 은퇴 불완")
+        if isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id == "FROZEN_BASELINE_3":
+                raise AssertionError("FROZEN_BASELINE_3 AnnAssign node 존재 — machinery 은퇴 불완")
+
+    # membership 표현 검사 — `in FROZEN_BASELINE_3` compare 부재.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Compare):
+            for op in node.ops:
+                if isinstance(op, ast.In) or isinstance(op, ast.NotIn):
+                    for comparator in node.comparators:
+                        if isinstance(comparator, ast.Name) and comparator.id == "FROZEN_BASELINE_3":
+                            raise AssertionError("FROZEN_BASELINE_3 membership compare 존재 — machinery 은퇴 불완")
+
+
+def test_ac6_old_grandfather_triples_now_fail_membership(tmp_path):
+    # CFP-2753 anti-regression: 옛 grandfather 3-triple을 tmp fixture에 배치하면 실패.
+    # (behavioral — machinery 명칭 무관. 옛 파일명+compound 값 재도입 시도 감지.)
+    write_ia(tmp_path)  # enum 설정 (governance/orchestration/security 확정값 미포함 compound 상태)
+
+    # 옛 3-tuple 배치:
+    # (1) ADR-131: orchestration/governance
+    write_adr(tmp_path, "ADR-131-cross-repo-responsibility-placement-governance.md",
+              " orchestration/governance")
+    # (2) ADR-132: governance/security
+    write_adr(tmp_path, "ADR-132-consumer-branch-protection-auto-wire.md",
+              " governance/security")
+    # (3) ADR-133: orchestration/governance
+    write_adr(tmp_path, "ADR-133-adr-reservation-atomic-claim.md",
+              " orchestration/governance")
+
+    r = run_checker(tmp_path)
+    # machinery 은퇴 후 → 옛 compound 값들은 enum membership 검사만 → 실패.
+    assert r.returncode != 0, r.stdout
+    assert "orchestration/governance" in r.stdout
+    assert "governance/security" in r.stdout
+
+    # 정직공개 주석: 본 guard 는 옛 3-triple(파일명 + compound category) + FROZEN_BASELINE_3
+    # 명시적 재도입을 봉인한다. 다른 이름의 allowlist나 신규 mechanism 을 통한
+    # new-compound 재도입은 guard escape — review + membership oracle 소관.
+
+
+
 # ─────────────────────────── AC-7 ───────────────────────────
-def test_ac7_current_corpus_green_with_grandfather():
-    # 실 repo 코퍼스 — ADR-131/132/133 grandfather 통과 실증 (born-red 가드).
+def test_ac7_current_corpus_green_via_membership():
+    # 실 repo 코퍼스 — membership 경유 GREEN (grandfather machinery 은퇴 후).
+    # (CFP-2753) FROZEN_BASELINE_3 부재하고, 모든 ADR 이 membership 만으로 통과.
     r = run_checker(REPO_ROOT)
     assert r.returncode == 0, r.stdout + r.stderr
+    # structural: FROZEN_BASELINE_3 변수 할당 노드 부재(machinery 은퇴 증명).
+    source = SCRIPT.read_text(encoding="utf-8")
+    assert _frozen_baseline_3_assign_absent(source), "FROZEN_BASELINE_3 Assign/AnnAssign 노드 존재 — machinery 은퇴 불완"
 
 
 def test_ac7_new_compound_fails_live(tmp_path):
@@ -333,32 +440,6 @@ def test_security_log_injection_value_sanitized(tmp_path):
     assert any("evil" in ln and "second" in ln for ln in lines), r.stdout
     # 값에서 유래한 standalone 주입 라인(log-injection) 부재.
     assert not any(ln.strip() == "second" for ln in lines), r.stdout
-
-
-# ─────────────────────── shrink-only / grandfather (structural) ───────────────────────
-def test_grandfather_source_subset_of_expected_local():
-    # ast-extract 한 source FROZEN_BASELINE_3 ⊆ test-local _EXPECTED_BASELINE_3 (source 자기비교 금지, ⊆ only).
-    extracted = extract_frozen_baseline_3()
-    assert extracted <= _EXPECTED_BASELINE_3, (
-        f"grandfather 가 예상 baseline 초과(append=ratchet 약화): {extracted - _EXPECTED_BASELINE_3}"
-    )
-
-
-def test_grandfather_values_not_in_closed_enum():
-    # 실 REAL_IA closed_enum casefold set 로드 → 각 grandfather 값 ∉ enum (grandfather 필요성 실증).
-    data = yaml.safe_load(REAL_IA.read_text(encoding="utf-8"))
-    enum_folded = {str(e).strip().casefold() for e in data["lane_mapping_rule"]["closed_enum"]}
-    for _path, val in _EXPECTED_BASELINE_3:
-        assert val not in enum_folded, f"grandfather 값 '{val}' 이 enum 에 존재 — grandfather 불필요"
-
-
-def test_grandfather_files_exist():
-    for path, _val in _EXPECTED_BASELINE_3:
-        assert (REPO_ROOT / path).exists(), f"grandfather 파일 부재: {path}"
-
-
-def test_grandfather_count_le_3():
-    assert len(extract_frozen_baseline_3()) <= 3
 
 
 def test_sentinel_cat_membership_fail_present():

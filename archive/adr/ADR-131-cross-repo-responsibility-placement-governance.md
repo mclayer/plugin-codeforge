@@ -2,7 +2,7 @@
 adr_number: 131
 title: "cross-repo 책임 배치 거버넌스 모델 — 토폴로지 SSOT 1급화 + 메타불변식 게이트 계약 + 기계/사람 판정 분리 (Epic CFP-2418 Story 1)"
 status: Proposed
-category: orchestration/governance
+category: governance
 date: 2026-06-26
 carrier_story: CFP-2419
 parent_epic: CFP-2418
@@ -58,6 +58,8 @@ is_transitional: false
 ## 상태
 
 Proposed (2026-06-26) — Epic CFP-2418 (cross-repo 책임 배치 거버넌스) Story 1 (선행) carrier. wrapper-self 거버넌스 codify (실 도메인 설계결정 0). Phase 1 = 선언만 (검사 스크립트·required check 0 신설 — Story 2/3 carrier).
+
+> **category cross-ref (CFP-2753 정규화)**: primary `governance` — 본 결정 성격(거버넌스 모델, 규칙4 단일 primary). 구 compound `orchestration/governance` 의 secondary 축 `orchestration`(cross-repo topology / Orchestrator-level 발급 자동화)은 정보 손실 방지 위해 본문 cross-ref 로 보존. [verified: ADR-153 Amendment 1 A1-1]
 
 ## 본질 선언
 
