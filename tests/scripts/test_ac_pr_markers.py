@@ -22,6 +22,7 @@ import tempfile
 import time
 
 import pytest
+import yaml  # AC-1 — self-test workflow 배선 present 구조 검증(pyyaml, requirements.txt)
 
 from _ac_marker_mutations import iter_mutants, load_module  # 공통 mutation helper (ADR-140)
 from _ac_matrix_fixtures import AC_TRACE_LIB, REPO_ROOT  # sys.path 에 scripts/lib 주입(import 부수효과)
@@ -372,6 +373,8 @@ def test_redos_bounded_timing():
         "\n".join(["- " + "*" * 500 + "story_uri**: " + STORY_URL for _ in range(200)]),
         "\n".join(["*" * 300 + "ac_applicability" + "*" * 300 + ": none" for _ in range(200)]),
         ("**" * 5000) + "story_uri: " + STORY_URL + ("**" * 5000),
+        # C2 양방향 strip 경로 자극 — value-only-bold `*` 폭주(캡처 앞뒤 asterisk flood, 방향당 bounded strip).
+        "story_uri: " + "*" * 10000 + "x" * 100 + "*" * 10000,
     ]
     for i, body in enumerate(adversarial):
         t0 = time.perf_counter()
@@ -379,3 +382,132 @@ def test_redos_bounded_timing():
         elapsed = time.perf_counter() - t0
         assert isinstance(d, dict) and "both_absent" in d, f"adversarial[{i}] 반환 계약 위반: {d!r}"
         assert elapsed < 1.0, f"adversarial[{i}] 파싱 {elapsed:.3f}s — ReDoS 의심(bounded 아님)"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2671 — value-only-bold 양방향 strip (`_strip_bold_decor` leading+trailing 대칭, C2)
+#   함수명 = Change Plan §8.1 RTM 과 1:1 고정 (Hop3 ast resolve — rename/오타 시 게이트 FAIL).
+# ═════════════════════════════════════════════════════════════════════════════
+def test_self_test_workflow_wires_pr_markers():
+    """AC-1 — self-test workflow 가 `test_ac_pr_markers.py` 를 day-1 hard-fail 스텝으로 배선.
+
+    본 pytest 는 **배선 present 의 구조적 앵커**다: self-test workflow YAML 안에 이 파일을 실행하는
+    스텝이 실재하고, 그 스텝(및 선행 스텝)에 `continue-on-error` 가 없어 실패가 곧 job red 로 전파됨을
+    검증한다.
+
+    정직 천장 (ADR-119 검사연극 금지): total de-wiring(워크플로에서 스텝/파일 자체가 삭제되는 경우)은 이
+    구조 테스트가 **자기 탐지하지 못하는 bootstrap 한계**다 — YAML 부재/키 부재 시엔 assert 가 실패하나,
+    "실제 CI 에서 N passed 로 green 이 났는가"라는 런타임 liveness 는 CI 로그 관측이 유일한 ground-truth 다.
+    본 테스트는 그 관측을 대체하지 않는다 (구조 present ≠ 런타임 green).
+    """
+    wf = os.path.join(REPO_ROOT, ".github", "workflows", "ac-traceability-self-test.yml")
+    assert os.path.isfile(wf), f"self-test workflow 부재: {wf}"
+    with open(wf, encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+
+    # `test_ac_pr_markers.py` 를 실행하는 스텝을 담은 job 의 steps 리스트 + 스텝 index 를 찾는다.
+    target_steps = None
+    target_idx = None
+    for job in (data.get("jobs") or {}).values():
+        steps = job.get("steps") or []
+        for i, s in enumerate(steps):
+            if "test_ac_pr_markers.py" in (s.get("run") or ""):
+                target_steps, target_idx = steps, i
+                break
+        if target_steps is not None:
+            break
+
+    assert target_steps is not None, (
+        "self-test workflow 에 test_ac_pr_markers.py 실행 스텝 부재 (de-wiring)"
+    )
+    # day-1 hard-fail: 타겟 스텝 + 모든 선행 스텝에 continue-on-error 부재(실패가 job red 로 전파돼야 함).
+    for s in target_steps[: target_idx + 1]:
+        assert not s.get("continue-on-error"), (
+            f"continue-on-error 스텝 존재 → self-test 실패가 job red 로 전파 안 됨: {s.get('name')!r}"
+        )
+
+
+def test_marker_value_only_bold_clean_capture():
+    """AC-2 — value-only-bold(`story_uri: **url**`) 캡처가 양방향 strip 후 clean(leading·trailing 모두).
+
+    C2 이전엔 trailing 만 strip 해 `**url**` → 캡처 `**url**` → `**url` 로 dirty-leading 이 샜다.
+    """
+    for line in (f"story_uri: **{STORY_URL}**", f"- story_uri: **{STORY_URL}**"):  # 값-bold / list+값-bold
+        d = parse_pr_body(_body(line))
+        assert d["story_uri"] == STORY_URL, f"value-only-bold 미-clean: {line!r} → {d['story_uri']!r}"
+        assert not d["story_uri"].endswith("*"), f"dirty trailing: {d['story_uri']!r}"
+        assert not d["story_uri"].startswith("*"), f"dirty leading: {d['story_uri']!r}"
+
+    # 대조군 비회귀 — whole-marker-bold / plain 도 여전히 clean (양방향 strip 이 기존 경로 무회귀)
+    dw = parse_pr_body(_body(f"**story_uri: {STORY_URL}**"))
+    assert dw["story_uri"] == STORY_URL and not dw["story_uri"].endswith("*")
+    dp = parse_pr_body(_body(f"story_uri: {STORY_URL}"))
+    assert dp["story_uri"] == STORY_URL
+
+
+def test_rtm_uri_value_only_bold_isomorphic():
+    """AC-2 — rtm_uri value-only-bold 가 story_uri 와 **동형** clean (한쪽만 고치면 false-red 잔존)."""
+    d = parse_pr_body(_body(f"rtm_uri: **{RTM_URL}**"))
+    assert d["rtm_uri"] == RTM_URL, f"rtm_uri value-only-bold 미-clean: {d['rtm_uri']!r}"
+    assert not d["rtm_uri"].endswith("*") and not d["rtm_uri"].startswith("*"), f"rtm_uri dirty: {d['rtm_uri']!r}"
+
+    # story_uri value-only-bold 와 rtm_uri value-only-bold 병기 → 둘 다 clean(동형 확인)
+    d2 = parse_pr_body(_body(f"story_uri: **{STORY_URL}**", f"rtm_uri: **{RTM_URL}**"))
+    assert d2["story_uri"] == STORY_URL
+    assert not d2["story_uri"].startswith("*") and not d2["story_uri"].endswith("*")
+    assert d2["rtm_uri"] == RTM_URL
+    assert not d2["rtm_uri"].startswith("*") and not d2["rtm_uri"].endswith("*")
+
+
+def test_mutation_g_leadstrip_dirty_uri():
+    """G-LEADSTRIP: leading `*` strip(양방향 clean capture 의 leading 절반) 무력화 →
+    value-only-bold(`story_uri: **url**`) 캡처가 dirty-leading(`**url`)으로 뒤집혀야 kill.
+
+    격리(타겟성): 동일 mutant 하에서 whole-marker-bold(`**story_uri: url**`, 캡처 `url**` = trailing-only)
+      대조군은 **여전히 clean** — leading mutation 이 trailing 경로에 무영향임을 같은 테스트 안에서 입증.
+    변조 미적용(diff 0)/로드 가능 변조본 0 → INCONCLUSIVE → 명시적 fail (born-broken 방지,
+      test_mutation_g_cleancap_dirty_uri 패턴 답습).
+    """
+    value_only = _body(f"story_uri: **{STORY_URL}**")   # 캡처 `**url**` — leading+trailing 혼입
+    whole_bold = _body(f"**story_uri: {STORY_URL}**")    # 캡처 `url**` — trailing-only(격리 대조)
+
+    orig = load_module(AC_MARKERS_PY, "_orig_leadstrip")
+    assert orig.parse_pr_body(value_only)["story_uri"] == STORY_URL, "원본 value-only-bold clean 실패 (GREEN 대조)"
+
+    with tempfile.TemporaryDirectory() as td:
+        mutants = list(iter_mutants("leadstrip", td, AC_MARKERS_PY))
+        if not mutants:
+            pytest.fail(
+                "INCONCLUSIVE: G-LEADSTRIP 변조 미적용(diff 0 또는 broken mutant only) — "
+                f"_ac_marker_mutations.CANDIDATES['leadstrip'] 를 실 구현({AC_MARKERS_PY}) 에 재배선 필요"
+            )
+        killed = []
+        for desc, path, mod in mutants:
+            got = mod.parse_pr_body(value_only)["story_uri"]
+            if got is not None and got != STORY_URL and got.startswith("*"):  # dirty-leading 으로 뒤집힘
+                # 격리 확인: trailing-only 대조군은 여전히 clean (leading mutation 이 trailing 무영향)
+                assert mod.parse_pr_body(whole_bold)["story_uri"] == STORY_URL, (
+                    f"변조본이 whole-marker-bold(trailing 경로)까지 파손 — 타겟 변조 아님 ({desc})"
+                )
+                killed.append((desc, path, got))
+        assert killed, (
+            "G-LEADSTRIP mutant 미-kill: leading strip 을 무력화해도 value-only-bold 캡처가 여전히 clean "
+            f"→ leading strip 이 결과에 기여하지 않음(hollow 의심). 시도한 변조: {[m[0] for m in mutants]}"
+        )
+
+
+def test_value_only_decoration_empty_fail_closed():
+    """AC-4 — 양방향 strip 이 빈값/과잉장식을 clean URI 로 흘려 false-green 을 열지 않음(fail-closed).
+
+    ① 값 없는 장식-only(`story_uri: **`) → strip 후 빈 문자열 → None → both_absent(fail-closed).
+    ② bounded=2 상한 초과 장식(`***url***`) → 상한 초과분 잔존 → clean URI 아님(`*url*`) → 하류 fetch fail-closed.
+    """
+    # ① 장식-only, 값 부재 → None ∧ both_absent
+    d1 = parse_pr_body(_body("story_uri: **"))
+    assert d1["story_uri"] is None, f"빈-값 장식이 URI 로 샘: {d1['story_uri']!r}"
+    assert d1["both_absent"] is True, "장식-only(값 없음)인데 both_absent 미설정 = fail-closed 붕괴"
+
+    # ② 3+ asterisk — bounded=2 상한 초과분 잔존 → clean URL 아님(하류 fail-closed, false-green 미개방)
+    d2 = parse_pr_body(_body(f"story_uri: ***{STORY_URL}***"))
+    assert d2["story_uri"] != STORY_URL, f"과잉장식이 clean URL 로 통과 = false-green 개방: {d2['story_uri']!r}"
+    assert "*" in d2["story_uri"], f"상한 초과 asterisk 미잔존(예상 `*url*`): {d2['story_uri']!r}"

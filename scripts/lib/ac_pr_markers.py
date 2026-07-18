@@ -48,8 +48,8 @@ import sys
 #   <key>              마커 키 리터럴.
 #   \*{0,2}            키-bold 닫는 마커 (`**story_uri**:` 형).
 #   [ \t]*:[ \t]*      콜론 주변 공백 변이 수용.
-#   (\S+)              값 캡처. 값-bold(`**story_uri: url**`) 형은 trailing `**` 가 캡처에 섞이므로
-#                      _strip_trailing_decor() 로 clean-strip (dirty `**` 혼입 0).
+#   (\S+)              값 캡처. 값-bold 두 형(`**story_uri: url**` = trailing `**` 혼입 / `story_uri: **url**`
+#                      = leading+trailing `**` 혼입)을 _strip_bold_decor() 로 양방향 clean-strip (dirty `**` 혼입 0).
 #
 # 수용 형태: plain / 키bold / 값bold / list / list+bold / 공백 변이.
 # 미수용(의도적): 산문 중간 언급(line-start 아님) / 값 부재(`story_uri**:`) → 미인식 → both_absent 경로.
@@ -69,23 +69,30 @@ _NONE_RE = re.compile(
     re.MULTILINE,
 )
 
-# 값-bold clean-strip 상한 — markdown strong 마커 `**` = 최대 2 asterisk.
-#   무제한 strip(`rstrip("*")`) 대신 bounded loop 로 정규식 `\*{0,2}` tolerance 와 대칭을 유지한다.
+# 값-bold clean-strip 상한 — markdown strong 마커 `**` = 최대 2 asterisk (방향당).
+#   무제한 strip 대신 양방향 bounded loop(leading+trailing, 방향당 ≤2)로 정규식 `\*{0,2}` tolerance 와 대칭을 유지한다.
 _MAX_BOLD_ASTERISKS = 2
 
 
-def _strip_trailing_decor(value):
-    """캡처값 꼬리의 markdown bold 마커 제거 (값-bold 형 clean capture).
+def _strip_bold_decor(value):
+    r"""캡처값 앞뒤의 markdown bold 마커 제거 (값-bold clean capture, 양방향 대칭).
 
-    `**story_uri: https://x/y**` → `(\\S+)` 캡처 = `https://x/y**` → 반환 `https://x/y`.
-    bounded — 최대 _MAX_BOLD_ASTERISKS(2) 개만 제거(정규식 `\\*{0,2}` 와 대칭).
+    whole-marker-bold(`**story_uri: url**`) → 캡처 `url**` → trailing strip → `url`.
+    value-only-bold(`story_uri: **url**`)   → 캡처 `**url**` → trailing+leading strip → `url`.
+    bounded — 방향당 최대 _MAX_BOLD_ASTERISKS(2) (정규식 `\*{0,2}` tolerance 와 대칭).
+    순수 슬라이스(방향당 ≤2회 char 검사) — 상수시간, regex 무변경(ReDoS 무관).
     """
     if not value:
         return value
     out = value
-    for _ in range(_MAX_BOLD_ASTERISKS):
+    for _ in range(_MAX_BOLD_ASTERISKS):   # trailing (기존)
         if out.endswith("*"):
             out = out[:-1]
+        else:
+            break
+    for _ in range(_MAX_BOLD_ASTERISKS):   # leading (신규 대칭)
+        if out.startswith("*"):
+            out = out[1:]
         else:
             break
     return out
@@ -100,7 +107,7 @@ def _extract_uri(pattern, body):
     m = pattern.search(body)
     if not m:
         return None
-    uri = _strip_trailing_decor(m.group(1))
+    uri = _strip_bold_decor(m.group(1))
     return uri if uri else None
 
 
@@ -133,7 +140,7 @@ def parse_pr_body(body):
     none_reason = ""
     if none_m:
         # 값-bold(`**ac_applicability: none — 사유**`) 꼬리 `**` 제거 후 공백 정리.
-        none_reason = _strip_trailing_decor((none_m.group(1) or "").strip()).strip()
+        none_reason = _strip_bold_decor((none_m.group(1) or "").strip()).strip()
 
     return {
         "story_uri": story_uri,

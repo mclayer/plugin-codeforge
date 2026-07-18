@@ -6,11 +6,15 @@ r"""tests/scripts/_ac_marker_mutations.py — `scripts/lib/ac_pr_markers.py` mut
 pytest(`test_ac_pr_markers.py`) 와 shell self-test(`test_check-ac-traceability-matrix.sh`) 가
 **동일 변조 후보 목록**을 공유한다 (ADR-140 hygiene — 이중 정의 drift 봉인).
 
-변조 semantic 2 축:
-  decor    — 장식 tolerance(bounded `\*{0,2}`) 무력화 → `- **story_uri**: <url>` 이 **미인식(RED)** 으로
-             뒤집혀야 kill. 원본은 인식(GREEN) — 대조로 vacuous 아님 입증.
-  cleancap — 값-bold clean capture(lazy 캡처 / trailing `*` strip) 무력화 → `**story_uri: <url>**` 캡처가
-             **dirty**(`endswith("*")`) 로 뒤집혀야 kill. 원본은 clean.
+변조 semantic 3 축:
+  decor     — 장식 tolerance(bounded `\*{0,2}`) 무력화 → `- **story_uri**: <url>` 이 **미인식(RED)** 으로
+              뒤집혀야 kill. 원본은 인식(GREEN) — 대조로 vacuous 아님 입증.
+  cleancap  — 값-bold trailing clean capture(trailing `*` strip) 무력화 → `**story_uri: <url>**` 캡처가
+              **dirty-trailing**(`endswith("*")`) 로 뒤집혀야 kill. 원본은 clean.
+  leadstrip — 값-bold leading clean capture(leading `*` strip) 무력화 → `story_uri: **<url>**`
+              (value-only-bold) 캡처가 **dirty-leading**(`startswith("*")`) 로 뒤집혀야 kill. whole-marker-bold
+              (`**story_uri: <url>**` = trailing-only) 대조군은 clean 유지 — leading mutation 이 trailing
+              경로에 무영향(격리). 원본은 clean.
 
 honesty 계약 (born-broken 방지 — CFP-2530/2535 계보):
   · 변조가 실제로 적용되지 않으면(diff 0) 그 후보는 yield 되지 않는다. 하나도 적용 안 되면
@@ -51,11 +55,17 @@ CANDIDATES = {
          "regex", r"_MAX_BOLD_ASTERISKS\s*=\s*2", "_MAX_BOLD_ASTERISKS = 0"),
         (r'strip loop 조건 `if out.endswith("*"):` → `if False:` (실 결정라인)',
          "literal", 'if out.endswith("*"):', "if False:  # MUTATED-CLEANCAP"),
-        (r"URI 경로 strip 호출 제거 `_strip_trailing_decor(m.group(1))` → `m.group(1)`",
-         "regex", r"_strip_trailing_decor\(\s*m\.group\(1\)\s*\)", "m.group(1)"),
+        (r"URI 경로 strip 호출 제거 `_strip_bold_decor(m.group(1))` → `m.group(1)`",
+         "regex", r"_strip_bold_decor\(\s*m\.group\(1\)\s*\)", "m.group(1)"),
         (r"lazy 값 캡처 `\S+?` → greedy `\S+` (인코딩 drift fallback)", "literal", r"\S+?", r"\S+"),
         (r'`.rstrip("*")` 무력화 (인코딩 drift fallback)', "regex",
          r"""\.rstrip\(\s*['"][^'"]*\*[^'"]*['"]\s*\)""", ""),
+    ],
+    # 값-bold leading-strip 삭제 — `story_uri: **url**`(value-only-bold) 캡처가 dirty-leading(`**url`)
+    #   로 뒤집혀야 kill. whole-marker-bold(`**story_uri: url**` = trailing-only) 대조군은 clean 유지(격리).
+    "leadstrip": [
+        (r'leading strip loop 조건 `if out.startswith("*"):` → `if False:` (실 결정라인)',
+         "literal", 'if out.startswith("*"):', "if False:  # MUTATED-LEADSTRIP"),
     ],
 }
 
