@@ -6,6 +6,23 @@ is_transitional: false
 category: Infrastructure
 date: 2026-07-11
 carrier_story: CFP-2607
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2743
+    date: 2026-07-18
+    summary: |
+      §결정 8 Amendment 1 — persistent self-hosted 러너에서 org-wide cross-repo PAT(`CODEFORGE_CROSS_REPO_PAT`) 소비 job 의 sanctioned mitigation path 에 "runtime secret-manager JIT sourcing (1Password service-account)" 을 제3의 경로로 추가한다. 기존 2 경로(hosted 유지 / OIDC 전환)에 더해 1Password JIT(load-secrets-action full-SHA + read-only single-purpose-vault SA token + env-only JIT injection, no-CLI-arg auto-mask)를 private ∧ allow_forking=false ∧ env-only-binding 조건에서 허용한다. carrier = CFP-2743(internal-docs self-hosted CI 이관) — group6 persistent 확정으로 §결정 8 ephemerality gate 발동.
+      ★양방향 정직(순수 ratchet-up 아님 — 설계리뷰 F-a 정정): (강화·storage 축) org-wide-write PAT 정적 GH-secret store 제거 = standing 노출 축소. (약화 limb) (i) standing-credential 축 — 신규 정적 SA token 1 도입(§결정 8 sanctioned OIDC path 의 standing-0 대비 하향) (ii) runtime 축 — 실 org-wide-write PAT 가 persistent job env 에 JIT materialize(OIDC 는 short-lived narrow token 만, hosted 는 ephemeral VM 으로 cross-job residue 회피). 즉 기존 2 sanctioned path 대비 security floor 하향(더 약한 credential model 을 sanctioned set 에 추가).
+      residual — R-a(신규 정적 SA token: read-only single-vault 로 blast-radius 축소, standing 0 아님) / R-b(persistent 러너 cross-job residue = OIDC 포함 all-model-common limb, ephemeral runner 만 봉인) / OIDC-등가 명시 부인(standing SA token 1 잔존). AC-12 천장 = 정적 store residency 소거만 증명(persistent runtime 잔존 미증명, cross-ref internal-docs Change Plan §8). is_transitional:false 유지(ADR-058 §결정 6 — amendment 는 sunset 아님). family C4/trust-boundary(codeforge-family.md L179) 갱신은 본 PR ADR-078 lane gate 동반(별 편집 없음). §해소 기준 "약화 supersede 없이 금지" ↔ ADR-058 §결정 5 evidence-gate tension = 본 PR 자체 gate(설계리뷰/보안/ADR-078) 명시 위임(판정 강제 아닌 evidence 제시 + 질문 flag).
+    direction: weaken  # security floor 하향 limb 존재(신규 정적 SA token 1 + 실 PAT runtime materialize) → §결정 8 sanctioned set 에 더 약한 credential model 추가 = 약화 방향(ADR-058 §결정 5 evidence-gate)
+    sunset_justification: |
+      본 amendment = weakening limb 존재(위 direction) → ADR-058 §결정 5 약화 evidence requirement(강화 evidence 와 동등 1급 절차, ADR-064 §결정 7 symmetric ratchet) 의무 동반. evidence:
+      (1) hosted 유지 = self-hosted 이관(Story 목표)과 정면 상충 = born-red 재도입 → 배제.
+      (2) OIDC = load-secrets-action 이 GitHub-OIDC → 1Password federation 미지원(현재 불가) [source: github.com/1Password/load-secrets-action issues/53].
+      (3) org 1Password 기채택 precedent — deploy lane 이 이미 1Password 로 secret provider lookup 운용(ADR-087 DeployWorkerAgent Connect+fallback) → 신규 vendor 도입 아닌 기존 채택 확장.
+      (4) residual bounded — SA token read-only single-vault / 실 PAT transient(standing 아님, JIT env-only) / persistent-residue all-model-common(1Password 특유 신규 아님).
+      (5) net vs Option C(정적 org-PAT 전량 이관) = strictly stronger(정적 org-wide-write PAT store 제거).
+      carrier_story=CFP-2743. cross-ref = internal-docs Change Plan/Story §10.1. is_transitional:false 유지(ADR-058 §결정 6 self false — recursive sunset 회피).
 related_adrs:
   - ADR-048-ci-native-test-execution
   - ADR-027
@@ -17,6 +34,9 @@ related_adrs:
   - ADR-125
   - ADR-078
   - ADR-112
+  - ADR-058  # Amendment 1 — §결정 5 약화 evidence-gate (weaken direction sunset_justification 근거)
+  - ADR-064  # Amendment 1 — §결정 7 evidence-gated symmetric ratchet (약화도 evidence 동반 1급)
+  - ADR-087  # Amendment 1 — deploy lane 1Password Connect 기채택 precedent (org 1Password adoption evidence)
 related_files:
   - templates/github-workflows/
   - .github/workflows/invariant-check.yml
@@ -26,6 +46,7 @@ related_files:
   - docs/architecture/codeforge-family.md
 related_stories:
   - CFP-2607
+  - CFP-2743  # Amendment 1 carrier — §결정 8 3rd sanctioned path (1Password JIT), internal-docs self-hosted CI 이관 prerequisite
 ---
 
 # ADR-147: CI runner topology — mclayer org self-hosted 이관 표준 (vars 기반 조건부 runs-on)
@@ -110,6 +131,34 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 - **org allow_forking 실측(PL firsthand)**: `mctrader`(internal) `allow_forking=false`, org `default_workflow_permissions=read`, `can_approve_pull_request_reviews=false` → fork-PR 공격 표면은 대체로 CLOSED. 단 18 repo 전수 `allow_forking` 확인은 구현/리뷰 lane prerequisite 로 명시한다.
 - **DooD 완화**: DooD job 은 host root 등가(`docker.sock` → escape) 이므로 non-privileged container / trusted 화이트리스트로 제한한다.
 - **persistent runner 완화**: cross-job 오염(secret / tool-cache) 차단을 위해 ephemeral/JIT 를 권고하고, job 후 purge + secret 을 CLI-arg 로 전달 금지한다. org-wide PAT(`CODEFORGE_CROSS_REPO_PAT`) 사용 job 은 hosted 유지 또는 OIDC 로 전환한다.
+
+### §결정 8 Amendment 1 (CFP-2743) — runtime secret-manager JIT sourcing = 3rd sanctioned mitigation path
+
+> **first amendment (선행 amendment 0).** carrier = CFP-2743 (internal-docs self-hosted CI 이관). `direction: weaken` (frontmatter `amendment_log[1]` — sunset_justification 동반).
+
+**컨텍스트**: CFP-2743 에서 group6 러너가 **persistent 확정**(InfraOp/PL firsthand)으로 §결정 8 persistent-runner 완화의 enforced ephemerality gate 가 발동했다. org-wide PAT(`CODEFORGE_CROSS_REPO_PAT`) 소비 job 이 §결정 8 이 명시한 2 sanctioned path("hosted 유지 또는 OIDC 로 전환") 중 어느 쪽도 아닌 **1Password service-account JIT sourcing** 을 채택(user directive "PAT는 1password") → §결정 8 의 bounded enumeration 에 제3의 sanctioned path 를 codify 한다.
+
+**추가 sanctioned path**: org-wide PAT 를 정적 GH-secret store 에서 **제거**하고 runtime 에 secret-manager 로 **JIT env-only fetch** 한다. 메커니즘 = `1password/load-secrets-action@<full-SHA>`(op CLI version-pin) + **read-only single-purpose-vault narrow-scope service-account token**(`OP_SERVICE_ACCOUNT_TOKEN`) → env-only injection(no-CLI-arg, auto-mask). **적용 조건 3-AND**: private repo ∧ `allow_forking=false` ∧ env-only binding(CLI-arg 0). 미충족 시 본 path 미적용(기존 2 path 로 회귀).
+
+**★양방향 변경 정직 — 순수 ratchet-up 아님 (설계리뷰 F-a 정정)**: 본 amendment 는 강화·약화 limb 를 동시에 가진다.
+- **(강화 — storage 축)**: org-wide-write PAT 의 정적 GH-secret store 제거 → standing 노출 표면 축소.
+- **(약화 limb — 정직 admit)**:
+  - **(i) standing-credential 축**: 신규 정적 SA token 1 도입. §결정 8 이 sanctioned 로 명시한 OIDC path 는 **standing secret 0**(federation)인데, 본 path 는 standing SA token 1 을 상주시킨다 → OIDC 대비 하향.
+  - **(ii) runtime 축**: 실 org-wide-write PAT 가 persistent self-hosted job env 에 **JIT materialize** 된다. OIDC 는 short-lived narrow-scope token 만 materialize 하고 hosted 는 ephemeral VM 으로 cross-job residue 를 회피한다. 즉 본 path 는 §결정 8 기존 2 sanctioned path 대비 **security floor 하향** — 더 약한 credential model 을 sanctioned set 에 추가한다.
+
+**★약화 방향 판정 (ADR-058 §결정 5 evidence-gate)**: 위 약화 limb 존재로 본 amendment = `direction: weaken`. ADR-058 §결정 5(약화는 차단이 아닌 **evidence-gate** — 강화 evidence 와 동등 1급 절차, ADR-064 §결정 7 symmetric ratchet)에 따라 `sunset_justification` 을 의무 동반한다(frontmatter `amendment_log[1]`). evidence 요지 = (1) hosted 유지 = self-hosted 이관 목표와 정면 상충(born-red 재도입, 배제) (2) OIDC = load-secrets-action 이 GitHub-OIDC → 1Password federation 미지원 `[source: github.com/1Password/load-secrets-action issues/53]` (3) org 1Password 기채택 precedent(deploy lane 1Password Connect 운용, ADR-087) (4) residual bounded (5) net vs Option C(정적 org-PAT 전량 이관) = strictly stronger.
+
+**★amendment vs supersede tension (판정 위임)**: 본 ADR §해소 기준은 "약화 방향은 supersede ADR 없이 금지"라 명시하나, ADR-058 §결정 5 는 약화를 **evidence 동반 amendment 1급** 으로 허용한다(supersede 강제 아님). 두 규칙의 tension(amendment 로 충분한가 vs supersede 필요인가)의 **최종 판정은 본 PR 자체 gate(설계리뷰 / 보안테스트 / ADR-078)에 명시 위임**한다 — 본 amendment 는 판정을 강제하지 않고 evidence 제시 + 질문 flag 만 담는다.
+
+**잔여 위험 (residual codify)**:
+- **R-a**: SA token(`OP_SERVICE_ACCOUNT_TOKEN`) 신규 정적 GH-secret 상주 — read-only single-purpose-vault 로 blast-radius 축소(org-write → single-vault-read)이나 **standing credential 0 아님**. mis-scope 시 高가치 역전 → SecurityTest lane scope 실측 검증 booking(presence-only = false-oracle).
+- **R-b**: persistent 러너 cross-job residue — **모든 credential 모델(JIT / OIDC / hosted) 공통 limb**. ephemeral/JIT-*runner* 전환으로만 완전봉인(별도 backlog). 본 amendment 는 credential storage 축만 다루고 runtime residue 축은 미봉인.
+- **OIDC-등가 명시 부인**: 본 path 는 standing-credential-**0**(OIDC 등가) 아님 — standing SA token 1 잔존. "standing-credential 0" over-claim 금지.
+- **AC-12 천장**: 본 amendment 의 discharge 관측은 **정적 store residency 소거**(AC-12 `oracle_static_pat_absent_dual`)만 증명하며 persistent 러너 runtime 잔존(R-b)은 미증명 — cross-ref internal-docs Change Plan §8(AC-12 정직 천장).
+
+**family doc gate flag**: `docs/architecture/codeforge-family.md` L179 trust-boundary 문장(persistent runner 완화 = "non-privileged container·ephemeral/JIT·secret CLI-arg 금지")에 "runtime secret-manager JIT sourcing(1Password)" 을 sanctioned 완화로 추가하는 갱신은 **본 PR 의 ADR-078 lane gate 소관** — 여기서는 언급만 하고 별도 편집은 하지 않는다(over-scope 회피).
+
+**is_transitional 무붕괴**: 본 amendment 는 ADR-147 을 sunset 하지 않고 §결정 8 완화-tier 를 확장하며 ADR-058 §결정 5 evidence-gate 를 통과한 1급 amendment 다 → is_transitional:false 유지(ADR-058 §결정 6 — is_transitional 은 대상 ADR self-sunset 에 적용, amendment ≠ sunset).
 
 ### §결정 9 — ADR-048(ci-native) Amendment 필요성 (stuck 판정 pickup-기반)
 
