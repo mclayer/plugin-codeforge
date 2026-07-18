@@ -338,7 +338,7 @@ graph TB
     end
 
     subgraph "codeforge-test (Test lane)"
-        IntegTest[IntegrationTestAgent<br/>Epic-level single-shot<br/>Sonnet → Opus fallback]
+        IntegTest[IntegrationTestAgent<br/>Epic-level single-shot<br/>Sonnet]
     end
 
     subgraph "codeforge-deploy (Deploy lane — Phase 1 declarative)"

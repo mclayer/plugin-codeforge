@@ -2383,7 +2383,7 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/backend-service/agents/*.m
       .claude/_overlay/agents/
 ```
 
-`ServiceDeveloperAgent`(`model: opus`, `role: dev`)가 develop lane 의 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
+`ServiceDeveloperAgent`(`model: sonnet` — ADR-141 Amendment 2 carve-out, `role: dev`)가 develop lane 의 구현자로 DevPL roster discovery에 자동 포함된다. 언어·프레임워크·경로 관습은 복사 후 overlay에서 구체화.
 
 > **Rust consumer**: 링커/binutils 부재 host 에서 로컬 빌드가 막히면 **§1q. Rust 로컬빌드 경로**(Docker 마운트 빌드 + build-local 스크립트 + MSYS2/MSVC/WSL2 toolchain 가이드) 참조. example = `examples/rust-cli-minimal/`.
 
