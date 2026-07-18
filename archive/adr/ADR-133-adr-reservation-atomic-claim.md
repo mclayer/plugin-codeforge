@@ -2,7 +2,7 @@
 adr_number: 133
 title: "ADR-RESERVATION atomic claim 프로토콜 — 단일-셀 OCC(GitHub Contents API sha→409) artifact-slot-level 1차 방어 layer (#724 흡수, Epic CFP-2481 E3a)"
 status: Accepted   # CFP-2563 (Amendment 2) 로 Proposed→Accepted 승격 — 실배선 authorize (R1 해소)
-category: orchestration/governance
+category: orchestration
 date: 2026-06-30
 carrier_story: CFP-2489
 parent_epic: CFP-2481
@@ -45,6 +45,8 @@ is_transitional: false
 **Accepted** (2026-07-03 KST, Amendment 2 / CFP-2563 로 Proposed→Accepted 승격 — 실배선 authorize, R1 해소). 최초 발의 = Proposed (2026-06-30 KST) — Epic CFP-2481 (Epic 병렬 실행 정형화) Phase A, E3a carrier (CFP-2489). **발의·설계만** — 구현(claim primitive script + race-guard 게이트 + mutation-RED)은 E3b carrier(CFP-2491). `Closes #724`. **실 발급 flow 배선(built-but-unwired 해소) = Amendment 2 (CFP-2563) 설계 + Phase 2 배선 carrier.**
 
 본 ADR 는 ADR-050 §결정 1(사후 re-sort)을 **폐기하지 않고** 그 위에 사전 차단 1차 방어 layer 를 추가하는 **강화 ratchet** 이다(약화 surface 0). `is_transitional: false` — 영구 강화 방향.
+
+> **category cross-ref (CFP-2753 정규화)**: primary `orchestration` — 본 결정 성격(병렬 세션 단일-셀 OCC = Orchestrator-level concurrency mechanism, 규칙4 단일 primary). 구 compound `orchestration/governance` 의 secondary 축 `governance`(ADR-RESERVATION registry governance)은 정보 손실 방지 위해 본문 cross-ref 로 보존. [verified: ADR-153 Amendment 1 A1-1]
 
 ## 컨텍스트
 

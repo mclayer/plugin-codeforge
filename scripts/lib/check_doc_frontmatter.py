@@ -106,13 +106,7 @@ for prefix, valid_kinds in KIND_VALID.items():
 #   하드코딩 금지 — ADR-091 §결정 4 / INV-3). scope = docs/adr + archive/adr (ADR 전용 필드).
 # ─────────────────────────────────────────────────────────────────────────────
 
-# shrink-only 동결 — append 금지(4번째 = ratchet 약화, INV-2). 순수 module-level set 리터럴
-# (ast.literal_eval-able; frozenset(...) call-wrap 금지, 동적 생성 금지 — self-test ast-extract).
-FROZEN_BASELINE_3 = {
-    ("archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md", "orchestration/governance"),
-    ("archive/adr/ADR-132-consumer-branch-protection-auto-wire.md", "governance/security"),
-    ("archive/adr/ADR-133-adr-reservation-atomic-claim.md", "orchestration/governance"),
-}
+# CFP-2753 / ADR-153 Amendment 1 — FROZEN_BASELINE_3 grandfather machinery 은퇴. allowlist 전량 shrink 종착(ADR-131→governance/132→security/133→orchestration 정규화 후 membership 으로 GREEN, grandfather 무경유). durable defense = fail-closed CATEGORY_VALID membership 무변경. anti-regression = tests/scripts/test_check_doc_frontmatter_category.py (test_grandfather_machinery_retired + test_ac6_old_grandfather_triples_now_fail_membership).
 
 CATEGORY_SCOPE = ("docs/adr", "archive/adr")
 
@@ -189,8 +183,6 @@ else:
                 # blank/empty-after-strip → fail-closed (D4-esc-1)
                 warns.append(f"{md}: category (blank) ∉ closed_enum — {_cat_guidance}")  # CAT-MEMBERSHIP-FAIL
                 continue
-            if (md.as_posix(), folded) in FROZEN_BASELINE_3:
-                continue  # grandfather (shrink-only, FROZEN_BASELINE_3)
             if folded not in _cat_enum_folded:
                 warns.append(f"{md}: category '{_cat_sanitize_echo(cat)}' ∉ closed_enum — {_cat_guidance}")  # CAT-MEMBERSHIP-FAIL
 

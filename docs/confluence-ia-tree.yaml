@@ -89,7 +89,7 @@ lane_mapping_rule:
       tier: warning
       hotfix_bypass_label: hotfix-bypass:adr-category-lane-coverage
     scope_note: membership-scoped  # membership enforcement 만 실현. coverage/mapping-accuracy 축 OOS 유지 (over-claim 금지, ADR-119)
-    shrink_carrier: CFP-2682  # FROZEN_BASELINE_3 (ADR-131/132/133) 정규화 → allowlist shrink
+    shrink_carrier: CFP-2682  # → 실현 CFP-2753 (2026-07-18): FROZEN_BASELINE_3 (ADR-131→governance / 132→security / 133→orchestration) 규칙4 정규화 + secondary 축 본문 cross-ref 보존 후 allowlist 전량 shrink 완료 → grandfather machinery 은퇴 (anti-regression guard 대체, durable defense = fail-closed CATEGORY_VALID membership 무변경)
     rationale: |
       declarative_layer 본 carrier (CFP-1523) — mechanical wire 별 sub-CFP (CFP-2615).
       CFP-2680 (ADR-153) 이 CFP-2615 membership-enforcement intent 를 기존 required
