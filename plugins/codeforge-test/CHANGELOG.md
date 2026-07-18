@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.5.0] - 2026-07-18 — CFP-2735 ADR-141 Amendment 1 TestAgent opus→haiku carve-out (MINOR)
+
+### Added (CFP-2735 — ADR-141 Amendment 1, MINOR)
+
+[CFP-2735] ADR-141 Amendment 1 — 외부위임·기계 워커 7종 opus→haiku carve-out. 본 plugin 의 **TestAgent** frontmatter `model: opus`→`model: haiku` + subagent self-refusal guard(#846 정확 carrier) 1줄 배치(A1-3 canonical). agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## [1.4.0] - 2026-07-03 — CFP-2560 전 에이전트 opus 단일 tier (MINOR)
 
 ### Changed

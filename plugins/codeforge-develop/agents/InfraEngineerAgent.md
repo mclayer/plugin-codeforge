@@ -1,6 +1,6 @@
 ---
 name: InfraEngineerAgent
-model: opus
+model: haiku
 role: dev
 description: 인프라·배포·설정·운영 스크립트 엔지니어링 — Docker-first (Dockerfile + compose.yml + .dockerignore primary). K8s = presets/k8s/ opt-in. systemd/launchd/PaaS = legacy (consumer overlay opt-in only — ADR-033 §결정 3).
 permissions:
@@ -32,6 +32,8 @@ permissions:
     - Edit(docs/**)
     - Write(docs/**)
 ---
+
+> **model tier (ADR-141 Amendment 1)**: 이 에이전트는 ADR-141 Amendment 1(CFP-2735)로 non-opus(`haiku`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 DeveloperPLAgent 산하에서 **인프라·배포·설정·운영 자산**을 구현한다 (CFP-128 / ADR-033 Docker-first):
 

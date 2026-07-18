@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.42.0] - 2026-07-18 — CFP-2735 ADR-141 Amendment 1 CodebaseMapper opus→haiku carve-out (MINOR)
+
+### Added (CFP-2735 — ADR-141 Amendment 1, MINOR)
+
+[CFP-2735] ADR-141 Amendment 1 — 외부위임·기계 워커 7종 opus→haiku carve-out. 본 plugin 의 **CodebaseMapperAgent** frontmatter `model: opus`→`model: haiku`(sonnet 대비 한 칸 추가 하향) + guard 1줄 + 본문 tier 잔재 재정합(L33/L35) + mirror drift 정정(CLAUDE.md L61 + architecture doc L39 Sonnet→haiku, ADR-078 gate). agent tier 변경 = additive behavior (ADR-037/ADR-008 MINOR). marketplace version sync(ADR-063, sync PR 선행 merge).
+
 ## [0.36.0] - 2026-07-10 — CFP-2586 §8 엣지 케이스 도출 forcing function (MINOR)
 
 ### Added

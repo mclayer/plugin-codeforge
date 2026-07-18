@@ -56,7 +56,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
-- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 전 에이전트가 `model: opus`(Opus 4.8, 1M native context)를 사용하며, v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 고정한다 (ADR-141 §결정1). wrapper self 및 first-party consumer 는 plain `opus` 로 충분.
+- **Claude Code 버전**: v2.1.154 이상 필수 — codeforge 대다수 에이전트가 `model: opus`(Opus 4.8, 1M native context)를 사용하며(ADR-141 Amendment 1 carve-out 7종만 `model: haiku`), v2.1.154 가 Opus 4.8 인식 최소 버전이다 (source: anthropics/claude-code CHANGELOG v2.1.154 — Opus 4.8 최초 릴리스, ADR-141 §결정6). **3rd-party provider(Bedrock/Vertex) overlay**: Anthropic first-party 가 아닌 provider 를 쓰는 consumer 는 overlay 에 `ANTHROPIC_DEFAULT_OPUS_MODEL='claude-opus-4-8[1m]'` 를 고정한다 (ADR-141 §결정1). **haiku 고정 (ADR-141 Amendment 1)**: Amendment 1 carve-out 7종은 haiku 이므로 동일 provider 는 `ANTHROPIC_DEFAULT_HAIKU_MODEL='claude-haiku-4-5'`(dated alias `claude-haiku-4-5-20251001` 도 가능)도 함께 고정한다. haiku 에는 `[1m]` suffix 를 붙이지 않는다 — Haiku 4.5 는 200K 전용이라 `[1m]` 부착 형태는 invalid model id(opus 고정과 비대칭). wrapper self 및 first-party consumer 는 plain `opus`/`haiku` 로 충분.
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
 - **플러그인 3종**: `codex@openai-codex`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)

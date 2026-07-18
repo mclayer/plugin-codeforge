@@ -33,7 +33,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 > 각 lane plugin agent 역할·동작 = 해당 plugin CLAUDE.md SSOT (lane plugin self-owned architecture_doc 안 `## 모듈` H2 = lane internal 상세). 본 표 = family composition map (plugin 단위, 라인 수준 0건).
 
-> **model tier 정책 (ADR-141, CFP-2560 — 2026-07-03)**: codeforge family 의 **전 에이전트 + Orchestrator 세션 = 단일 tier `opus`(최신 Opus tier, 1M 컨텍스트 native, plain `model: opus` frontmatter)**. Opus/Sonnet/Haiku 3-tier 선택 기준(ADR-042 §결정 1)과 fable surgical tier(ADR-117)는 폐지됐다. 아래 다이어그램·표의 개별 노드 tier 표기(Sonnet/Opus/fable/fallback)는 **역사 서술(dated snapshot)** 이며 현행 tier SSOT 아님 — 현행 = 전 에이전트 opus 단일 tier. consumer overlay 는 opus 미만 down-tier 불허(보수 방향만, ADR-127 §결정 6). tier SSOT = ADR-141.
+> **model tier 정책 (ADR-141 + Amendment 1, CFP-2735 — 2026-07-17)**: codeforge family 의 **model tier = `opus` default + ADR-141 Amendment 1 carve-out(외부위임·기계 워커 7종 = `model: haiku` 의도 배정; 1M native 는 opus 기준)**. Opus/Sonnet/Haiku 3-tier 선택 기준(ADR-042 §결정 1)·fable surgical tier(ADR-117)·rate-limit fallback 은 폐지됐다(ADR-141 §결정1/2/3) — haiku 는 Amendment 1 carve-out 로 7종에 의도 배정된 정상 tier 이다. **'전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션 중단' 규범은 Orchestrator 세션·거버넌스 default scope 이며, carve-out non-opus(haiku) subagent 는 정상 상태이다**(ADR-141 §A1-3, #846 정산). 아래 다이어그램·표의 개별 노드 tier 표기(Sonnet/Opus/fable/fallback)는 **역사 서술(dated snapshot)** 이며 현행 tier SSOT 아님 — 현행 = opus default + Amendment 1 carve-out(7종 haiku). consumer overlay 는 **각 에이전트 ADR-정의 tier(7 carve-out=haiku, 그 외=opus) 미만 down-tier 불허**(보수 방향만, ADR-141 §A1-6 재해석 / ADR-127 §결정 6). tier SSOT = ADR-141(+Amendment 1).
 
 ## 경계
 

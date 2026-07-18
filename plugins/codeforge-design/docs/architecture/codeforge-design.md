@@ -36,7 +36,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 
 | 모듈 (agent) | 역할 | 입장 / 책임 | model |
 |---|---|---|---|
-| **CodebaseMapperAgent** | 보수 — as-is 변호자 | 기존 패턴 유지, 변경 영향 최소화 (Change Plan §2 현재 구조 input) | Sonnet |
+| **CodebaseMapperAgent** | 보수 — as-is 변호자 | 기존 패턴 유지, 변경 영향 최소화 (Change Plan §2 현재 구조 input) | haiku |
 | **RefactorAgent** | 혁신 — to-be 옹호자 | 결합도 감소, 인터페이스 분리, 패턴화 (구조 3축) + repo-분해 구조 advocacy (escalation-tier — CFP-2539). 측정 축(중복제거·공통추출)은 구현 리팩터링 Story C 이관 (Change Plan §3 + §6 input) | Sonnet |
 | **ArchitectAnalystAgent** (CFP-1026 S1 신설 — PriorArtAgent conceptual rename) | 변경 전 기존 설계 분석 단일 축 — fact 변호자 | 변경 전 ADR / Change Plan / Story §3/§7/§11 분석 (Change Plan §2 컨텍스트 input) | Sonnet |
 
