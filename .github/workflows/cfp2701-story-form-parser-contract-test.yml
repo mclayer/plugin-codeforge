@@ -1,0 +1,47 @@
+name: cfp2701-story-form-parser-contract-test
+# CFP-2701 Phase 2 / Change Plan §8.1 RTM (AC-1/AC-2 normative) — story.yml 폼(F1/F2) ↔
+#   story-init.yml §1 파서 헤더 정합 execution-backed self-test 를 실 CI red/green 으로 산출.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가: 정합 self-test(tests/scripts/test_cfp2701_story_form_parser_contract.py) 는
+#   normative AC-1/AC-2 의 RTM 명명 테스트(ac-traceability-matrix Hop3 가 ast-resolve 하는
+#   tests-root=tests 하위 실 symbol). 그 self-test 자신의 liveness(실행 red/green)를 전용
+#   pytest workflow 로 보장한다 — born-dead(present-but-never-run) 방지. doc-frontmatter-category-test.yml
+#   선례 답습.
+#
+# **day-1 hard-fail** (continue-on-error 금지). **non-required** (branch-protection 7-tuple 무변경 —
+#   신규 required context 0). ac-traceability-matrix 가 이 self-test 의 symbol 존재를 별도 강제한다.
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). doc-frontmatter-category-test.yml 선례.
+# **unmirrored** (templates/github-workflows/ 미배치): invariant-check parity 는 templates→.github
+#   단방향이라 template counterpart 부재 워크플로는 검사 대상 밖 (doc-frontmatter-category-test.yml /
+#   ac-traceability-self-test.yml 선례 동일).
+# bash/awk 의존: self-test 는 실 story-init awk 파서를 subprocess 로 실행(presence-grep 아님).
+#   ubuntu-latest 는 bash/awk/sed native — round-trip 검증 통과 bash 로 결정적 실행.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  cfp2701-story-form-parser-contract-test:
+    name: cfp2701-story-form-parser-contract-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest + pyyaml)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run pytest 폼↔파서 정합 self-test (§8.1 RTM AC-1/AC-2 — execution-backed, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_cfp2701_story_form_parser_contract.py -q
