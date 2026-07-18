@@ -85,6 +85,7 @@ TEMPLATES_DIR_REL = "templates/github-workflows"
 _DEP_PATTERNS = [
     re.compile(r"\bscripts/check-[a-z0-9-]+\.sh\b"),
     re.compile(r"\btemplates/scripts/[a-z0-9-]+\.py\b"),
+    re.compile(r"\bscripts/lib/[a-z0-9_-]+\.py\b"),  # CFP-2751 — yml→scripts/lib/*.py 1-hop 직접호출 shape (story-init lib, underscore load-bearing)
 ]
 
 # YAML comment line (선두 whitespace 후 #) — dep 추출 제외 (mirror closure.py _YAML_COMMENT_LINE 동형)
