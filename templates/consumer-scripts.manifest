@@ -90,13 +90,14 @@ scripts/check-workflow-yaml-parse.sh:templates/github-workflows/workflow-yaml-pa
 scripts/check-write-target-membership.sh:templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
 scripts/check-write-target-membership.py
 
-# Tier3 — async (SHOULD, 11): background workflow(on:issues/closed/schedule)
-# dep. story-init lib .py 5종 = script-only(workflow 가 호출하는 진입 셸의 1-hop lib).
+# Tier3 — async (SHOULD, 12): background workflow(on:issues/closed/schedule)
+# dep. story-init lib .py 6종 = script-only(workflow 가 호출하는 진입 셸의 1-hop lib).
 scripts/lib/workflow_story_init_compute_key.py
 scripts/lib/workflow_story_init_render_story.py
 scripts/lib/workflow_story_init_project_config_key_prefix.py
 scripts/lib/workflow_story_init_project_config_name.py
 scripts/lib/workflow_story_init_project_config_story_ssot_repo.py
+scripts/lib/workflow_story_init_project_config_repos.py
 scripts/next-phase.sh:templates/github-workflows/post-merge-followup.yml
 scripts/post-merge-story-writer.sh:templates/github-workflows/post-merge-followup.yml
 scripts/extract-security-ai.sh:templates/github-workflows/post-merge-followup.yml
