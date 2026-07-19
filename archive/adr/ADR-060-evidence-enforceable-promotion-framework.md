@@ -2936,4 +2936,4 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 
 tier flip = additive ratchet↑ (warning → blocking-on-pr surfacing). invariant 강도 상향, 약화 방향 0건 → ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상. required contexts 7-tuple 무변경 (surfacing ≠ membership — ADR-145 §결정 3 override 비적용). sunset_justification = N/A.
 
-**scope**: workflow pair(continue-on-error 제거) + registry(current_tier flip + provenance) + lint docstring(granularity-carrier pointer 정정) + 정책문서 sweep(ADR-045:107 · ADR-061:454-455 3-line) + 신규 flip self-test(`tests/scripts/test_resource_safety_flip.py`) + plugin.json 6.108.0 MINOR + marketplace sync. 본 ADR 변경(`archive/**`)은 그 자체로 plugin.json bump 비귀속(ADR-037 A2-3/A2-6 면제); bump 는 workflow/registry/script 변경이 driver.
+**scope**: workflow pair(continue-on-error 제거) + registry(current_tier flip + provenance) + lint docstring(granularity-carrier pointer 정정) + 정책문서 sweep(ADR-045:107 · ADR-061:454-455 3-line) + 신규 flip self-test(`tests/scripts/test_resource_safety_flip.py`) + plugin.json 6.109.0 MINOR + marketplace sync. 본 ADR 변경(`archive/**`)은 그 자체로 plugin.json bump 비귀속(ADR-037 A2-3/A2-6 면제); bump 는 workflow/registry/script 변경이 driver.
