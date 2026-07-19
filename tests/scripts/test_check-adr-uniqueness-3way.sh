@@ -440,26 +440,39 @@ else
 fi
 rm -rf "$R"
 
-# ─── born-valid smoke: real repo 의 firsthand 결함을 신설 lint 가 즉시 red 로 잡나 ──
-# §3.3 "self-test 즉시 fixture" — filename-collision 042/047/048/056 + frontmatter 045(fm=43)/062(fm=61)
-# 은 non-goal(정정 안 함, §5)이라 real repo 에 잔존 → lint 신설 즉시 exit 1 + 해당 번호 sentinel.
+# ─── born-valid smoke → SYNTHETIC fixture 이관 (§8.T-1, CFP-2566 C0 shared-infra) ──────────
+# (구) real-repo 결함 의존(hits>=4 + fm_hit>=1)은 hollow: (a) fm_hit 이 CFP-2759 의 043/061
+# frontmatter-collision 정정 후 lapse noise 우연매칭(검출력 0) (b) 42/47/48/56 renumber(CFP-2566
+# C1~C4) 시 hits 붕괴. → self-contained SYNTHETIC fixture(mktemp)로 이관 — real archive/adr 무터치,
+# real-pair count 독립(이후 per-pair child 가 smoke 를 재차 RED 로 만들지 않음).
+# 주입: filename-collision(ADR-042 ×2, fm=42) + frontmatter-collision(fm=43 pair, distinct filename).
+# assert = count-agnostic per-finding-type + sentinel (NO hits>=N, NO global total — CFP-2759 F-D1).
 echo ""
-echo "── born-valid smoke (real repo firsthand 결함 → lint exit 1 + sentinel) ──"
+echo "── born-valid smoke (SYNTHETIC: filename-collision 42 + frontmatter-collision 43 → 검출) ──"
+R="$(new_root)"; A="$(adr_dir_of "$R")"
+mk_adr "$A" 042 42 policy-fixture  CFP-1   # 동일 slot 42 두 파일 A (filename-key 충돌)
+mk_adr "$A" 042 42 channel-fixture CFP-2   # 동일 slot 42 두 파일 B → filename-collision 42
+mk_adr "$A" 043 43 realforty3      CFP-3   # filename 43, fm 43
+mk_adr "$A" 045 43 collider        CFP-4   # filename 45, fm 43 → frontmatter slot 43 충돌 (distinct filename)
+mk_reservation "$A" \
+  "42|CFP-1|active|2026-07-19" \
+  "43|CFP-3|active|2026-07-19" \
+  "45|CFP-4|active|2026-07-19"
 if impl_present; then
-  run_lint "$REPO_ROOT/archive/adr"; rc=$?
-  hits=0
-  for n in 42 47 48 56; do echo "$LINT_OUT" | grep -qE "0*$n\b" && hits=$((hits+1)); done
-  fm_hit=0
-  echo "$LINT_OUT" | grep -qE '0*4[35]\b' && fm_hit=$((fm_hit+1))   # 045(fm=43) frontmatter-collision
-  echo "$LINT_OUT" | grep -qE '0*6[12]\b' && fm_hit=$((fm_hit+1))   # 062(fm=61) frontmatter-collision
-  if [ "$rc" -ne 0 ] && [ "$hits" -ge 4 ] && [ "$fm_hit" -ge 1 ]; then
-    pass "born-valid smoke — real repo 결함 검출 (exit $rc, filename hits=$hits, fm hits=$fm_hit)"
+  run_lint "$A"; rc=$?
+  # count-agnostic per-finding-type + sentinel: exit 1 ∧ [filename-collision]∧42 ∧ [frontmatter-collision]∧43.
+  fnc=0; fmc=0
+  { echo "$LINT_OUT" | grep -qE '^\[filename-collision\]' && echo "$LINT_OUT" | grep -qE '0*42\b'; } && fnc=1
+  { echo "$LINT_OUT" | grep -qE '^\[frontmatter-collision\]' && echo "$LINT_OUT" | grep -qE '0*43\b'; } && fmc=1
+  if [ "$rc" -eq 1 ] && [ "$fnc" -eq 1 ] && [ "$fmc" -eq 1 ]; then
+    pass "born-valid smoke (synthetic) — filename-collision 42 + frontmatter-collision 43 검출 (exit 1, per-finding-type sentinel)"
   else
-    fail "born-valid smoke: exit=$rc filename_hits=$hits fm_hits=$fm_hit (기대 exit≠0 + filename≥4 + fm≥1) — hollow 의심"
+    fail "born-valid smoke (synthetic): exit=$rc filename-collision+42=$fnc frontmatter-collision+43=$fmc (기대 exit 1 + 둘 다 1) — hollow 의심"
   fi
 else
-  pending "born-valid smoke (real repo firsthand 결함)"
+  pending "born-valid smoke (synthetic fixture)"
 fi
+rm -rf "$R"
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════════════════"
