@@ -1,0 +1,20 @@
+{
+  "_comment": "CFP-2761 / ADR-085 Amendment 2 §결정10 + ADR-073 Amendment 21 — worktree-self-ownership-verify PreToolUse hook sample.",
+  "_surface": "workflow:null hook-only 체크의 live surface. fresh-checkout PR runner 는 로컬 worktree 소유 상태를 관측 불가(= hollow) → workflow YAML 미생성. local-state probe 는 이 hook 이 유일 채널 (anti-hollow CFP-2692 / ADR-073 Amд20).",
+  "_severity": "warning-tier ADVISORY only — 명령 말미 `|| true` 로 exit 0 강제, tool 실행 차단 0건. mid-flight 산출물 write 직전 현재 worktree 소유(owner ↔ active_sessions git_identity)를 자기-대조해 불일치 시 warning echo (block 아님).",
+  "_matcher": "git/write 도구(Bash = git 명령 / Write·Edit·MultiEdit = 파일 write) — mid-flight 산출물 저작 직전 자기-소유 대조.",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.PreToolUse[]` array. 또는 overlay/hooks/merge.py 로 병합. plugin-root hooks/hooks.json first-class (ADR-038 Amd 3 §결정 10) — 본 sample 은 consumer overlay opt-in.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-worktree-self-ownership.sh\" 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

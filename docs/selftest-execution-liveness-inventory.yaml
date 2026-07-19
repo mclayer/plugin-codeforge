@@ -532,3 +532,47 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "G5 cross-repo drift 대조(--cross-repo) self-test — fetch·Issue-발행 seam(INFRA_CROSS_REPO_FETCH_ROOT / INFRA_CROSS_REPO_ISSUE_SINK)을 local mock-repo fixture 로 stub(실 네트워크 0, hermetic). 지속-soak(G2 consumer)·DAST·real-render(§8.7) runtime 축 disjoint — 본 self-test 는 정적/mock 판별력 결박: 3-way(content-mismatch fail-closed/전파 PASS/token 부재 degraded-FAIL) + t1(transient fail-open+WARN+Issue 발행, 미발행 mutant=RED) + t2(content-mismatch ≠ transient 오분류 mutant=최중요 RED) + ref-pin(moving HEAD 거부/idempotent) + 403·404 fail-closed + namespace spoof + secret-masking(§7.3 PAT 값 미출력) + mutation RED-flip. ※ 인벤토리 관용 'DAST=G5'(ADR-136 §8.9 G5-DAST doc-lint)와 명칭 우연 일치이나 무관 — 여기 G5 = ADR-157 §결정4 cross-repo 슬라이스. 실 cross-repo 활성 = consumer 채택-bound(I-5), wrapper-self vacuous(namespace 자원 0). honest-ceiling: 동적 키 구성 / 프록시 위장(socat) / 스캔 밖 표면 미검출(§결정8), presence ≠ truth."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 10 + ADR-073 Amendment 21) — mid-flight artifact-level provenance marker stale lint discriminating self-test (PR-time workflow, alive) ──
+  # bijection: tests/scripts/*.sh 49 → 50. 실행 채널 = mid-flight-marker-check.yml (byte-identical .github + templates pair, warning-mode continue-on-error non-required). run-line: `bash tests/scripts/test_check-mid-flight-marker.sh`.
+  - self_test: "tests/scripts/test_check-mid-flight-marker.sh"
+    execution_channel: "workflow:mid-flight-marker-check.yml:mid-flight-marker-check"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "mid-flight artifact-level provenance marker 5유형 discriminating self-test (tracked content 마커 1-3 검출 + tracked anchor 마커 5[ADR-RESERVATION 예약 row status+age proxy] 검출 + 정직 marker[status=final·fresh] 미검출 오탐 0 + MK-T3/T5 per-유형 mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 마커 presence 스캔, 런타임 상태 무). honest-ceiling(ADR-151/154/157): presence ≠ truth (마커 presence ≠ 실제 확정여부), 유형5 예약 row age proxy narrow(owner/kst 미주장) + 예약-전 window 미커버, 유형4 미머지 worktree 는 hook-only 별 record. 검출력=G3 미강제, ADR-157 §결정8."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — active-sessions presence lint discriminating self-test (PR-time workflow, alive) ──
+  # bijection: tests/scripts/*.sh 50 → 51. 실행 채널 = active-sessions-presence-check.yml (byte-identical .github + templates pair, warning-mode continue-on-error non-required). run-line: `bash tests/scripts/test_check-active-sessions-presence.sh`.
+  - self_test: "tests/scripts/test_check-active-sessions-presence.sh"
+    execution_channel: "workflow:active-sessions-presence-check.yml:active-sessions-presence-check"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "active_sessions 참조-대상 presence discriminating self-test (Story Issue body/frontmatter active_sessions[] presence 검출 + 정직 presence[레지스트리 실재] 미검출 오탐 0 + mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 presence-grep, 런타임 상태 무). honest-ceiling: presence ≠ truth (field 존재 ≠ 실제 ownership 정합). 검출력=G3 미강제, ADR-151 §결정7."
+
+  # ── CFP-2761 (ADR-073 Amendment 21 / Amendment 3 Wave 2 activation) — worktree-self-ownership path-based 3-tuple discriminating self-test (결정적 fixture self-test = CI 채널; LIVE check 은 workflow:null hook-only 존치) ──
+  # bijection: tests/scripts/*.sh 51 → 52. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test 는 live worktree·세션 상태 무의존이라 fresh-checkout 에서 정상 실행 → workflow:hook-selftest-execution.yml:hook-selftest-execution CI 승격. LIVE check 자체는 fresh-checkout PR runner 가 로컬 worktree·branch 미관측(hollow 회피, CFP-2692 / ADR-073 Amendment 20)이라 evidence-checks-registry 에서 workflow:null hook-only 존치(무변경) — self-test 실행-liveness ⊥ LIVE check anti-hollow disjoint. run-line: `bash tests/scripts/test_check-worktree-self-ownership.sh`.
+  - self_test: "tests/scripts/test_check-worktree-self-ownership.sh"
+    execution_channel: "workflow:hook-selftest-execution.yml:hook-selftest-execution"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "worktree-self-ownership path-based 3-tuple discriminating self-test (ownership-mismatch RED → verified GREEN + subagent parallel_session_conflict 오판 re-verify + MK mutation-kill, 9/9 결정적 fixture-injection GREEN) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--toplevel/--worktree-list-file/--reflog-file 주입, live worktree·세션 상태 무의존)는 CI(hook-selftest-execution.yml, warning-tier continue-on-error) 실행 — LIVE check 자체는 workflow:null hook-only 존치(anti-hollow: fresh-checkout 이 로컬 worktree·branch 미관측). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — lane-entry ownership discriminating self-test (결정적 fixture self-test = CI 채널; LIVE check 은 workflow:null hook-only 존치) ──
+  # bijection: tests/scripts/*.sh 52 → 53. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--sessions-file 주입)는 live session-time 상태 무의존이라 fresh-checkout 에서 정상 실행 → workflow:hook-selftest-execution.yml:hook-selftest-execution CI 승격. LIVE check 자체는 session-time lane-entry polling(PR content 아님)이라 evidence-checks-registry 에서 workflow:null hook-only 존치(무변경) — self-test 실행-liveness ⊥ LIVE check anti-hollow disjoint. run-line: `bash tests/scripts/test_check-lane-entry-ownership.sh`.
+  - self_test: "tests/scripts/test_check-lane-entry-ownership.sh"
+    execution_channel: "workflow:hook-selftest-execution.yml:hook-selftest-execution"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "lane-entry ownership discriminating self-test (owner-absent RED / conflict RED / GREEN / MK mutation-kill, 4/4 결정적 fixture-injection GREEN) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--lane/--git-identity/--sessions-file 주입, live session-time lane-entry 상태 무의존)는 CI(hook-selftest-execution.yml, warning-tier continue-on-error) 실행 — LIVE check 자체는 workflow:null hook-only 존치(anti-hollow: fresh-checkout 이 session-time lane-entry 상태 미관측). honest-ceiling: presence ≠ truth, ADR-151 §결정7."

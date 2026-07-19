@@ -1,0 +1,59 @@
+name: Hook-only check self-test execution (deterministic fixture self-tests)
+# CFP-2761 F5(b) (구현-리뷰 FIX) — 2개 hook-only check(worktree-self-ownership-verify /
+#   lane-entry-ownership-verify)의 **결정적 fixture-injection self-test 만** CI 로 실행하는 채널.
+#   이 workflow 는 오직 결정적(fixture-injection) self-test = 두 check 의 logic 검증만 실행한다.
+#   LIVE check 자체는 실행하지 않는다.
+#
+# ★ 범위 경계 (anti-hollow 무손상): LIVE check 는 로컬 worktree·branch / session-time lane-entry
+#   상태를 관측해야 하는데 fresh-checkout PR runner 는 그 로컬·세션 상태를 관측 못 함(near-vacuous)
+#   → LIVE check 는 workflow:null hook-only 로 존치한다(CFP-2692 / ADR-073 Amendment 20 anti-hollow;
+#   evidence-checks-registry worktree-self-ownership-verify / lane-entry-ownership-verify 의 workflow:null
+#   무변경). 반면 self-test 는 fixture 주입(--worktree-list-file/--reflog-file/--sessions-file)으로 live
+#   worktree·세션 상태에 전혀 의존하지 않는 결정적 logic 검증(9/9 + 4/4 GREEN)이므로 fresh-checkout
+#   에서 정상 실행 가능 → 여기서 CI 로 구동한다. (self-test 실행-liveness = ADR-151 G6 인벤토리 축;
+#   LIVE check 의 anti-hollow workflow:null 과 disjoint — 본 workflow 는 self-test 만, LIVE check 은 미실행.)
+#
+# Tier: warning (continue-on-error, non-required — ADR-060 §결정 5). PR merge 미차단.
+#   branch-protection 7-tuple 무변경 (required_status_checks.contexts 부착 X).
+# consumer degradation: byte-identical template mirror(ADR-005) 상속 시 self-test 파일 부재하면
+#   hashFiles 가드로 step honest-skip(no-op) — spurious RED 미발생 (byte-identical parity 유지).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'scripts/lib/check_worktree_self_ownership.py'
+      - 'scripts/check-worktree-self-ownership.sh'
+      - 'scripts/lib/check_lane_entry_ownership.py'
+      - 'scripts/check-lane-entry-ownership.sh'
+      - 'tests/scripts/test_check-worktree-self-ownership.sh'
+      - 'tests/scripts/test_check-lane-entry-ownership.sh'
+      - 'templates/github-workflows/hook-selftest-execution.yml'
+      - '.github/workflows/hook-selftest-execution.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  hook-selftest-execution:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    # warning mode (ADR-060 §결정 5) — 결정적 self-test fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X (branch-protection 7-tuple 무변경).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: worktree-self-ownership-verify 결정적 self-test (fixture-injection 3-tuple, 9/9)
+        # tests/scripts/test_check-worktree-self-ownership.sh — path-based 3-tuple(cwd↔worktree path /
+        #   HEAD↔reflog membership / worktree-list+reflog 2-source AND) RED/GREEN/GC-fallback/re-verify
+        #   + MK mutation-kill. --worktree-list-file/--reflog-file 주입 = live worktree 상태 무의존(결정적).
+        #   consumer 상속 시 self-test 부재하면 honest-skip(no-op).
+        if: hashFiles('tests/scripts/test_check-worktree-self-ownership.sh') != ''
+        run: bash tests/scripts/test_check-worktree-self-ownership.sh
+
+      - name: lane-entry-ownership-verify 결정적 self-test (fixture-injection owner-lookup, 4/4)
+        # tests/scripts/test_check-lane-entry-ownership.sh — owner-absent RED / conflict RED / GREEN /
+        #   MK mutation-kill. --sessions-file 주입 = live session-time lane-entry 상태 무의존(결정적).
+        #   consumer 상속 시 self-test 부재하면 honest-skip(no-op).
+        if: hashFiles('tests/scripts/test_check-lane-entry-ownership.sh') != ''
+        run: bash tests/scripts/test_check-lane-entry-ownership.sh
