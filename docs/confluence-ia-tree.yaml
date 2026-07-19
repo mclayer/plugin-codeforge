@@ -510,7 +510,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 42
     - page_id: 2130162
-      title: "ADR-047 (alt): GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin (CFP-139 / CFP-134 Wave 3)"
+      title: "ADR-160: GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin (CFP-139 / CFP-134 Wave 3)"
       source_file: "docs/adr/"
       category: "agent-design"
       previous_parent_id: 2097153

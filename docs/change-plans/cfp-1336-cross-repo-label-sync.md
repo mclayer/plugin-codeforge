@@ -394,7 +394,7 @@ declaration source ADR-073 Amendment 9 / enforcement source ADR-060 dual-binding
 
 **Wave 1 = schema declare only** — Wave 2 carrier 가 (a) `peter-evans/repository-dispatch@<SHA pin>` action 호출 + (b) impl repo listener workflow seed + (c) bats fixture pair (cross-org reject / 4-pattern guard / idempotent diff) 실 wire.
 
-**axis disjoint with `git_ops_event` contract** (CFP-139 / ADR-047): git_ops_event = GitOps lane internal event (branch / commit / PR open). cross-repo label sync = cross-repo label state mutation event. 양 disjoint.
+**axis disjoint with `git_ops_event` contract** (CFP-139 / ADR-160): git_ops_event = GitOps lane internal event (branch / commit / PR open). cross-repo label sync = cross-repo label state mutation event. 양 disjoint.
 
 ### §4.2 Wave 2 carrier ratchet 의무
 
