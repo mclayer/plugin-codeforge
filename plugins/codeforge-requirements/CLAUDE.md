@@ -73,7 +73,7 @@ PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Sto
 
 **적용 lane**: 요구사항 (3 sub-agent) · 설계 (5 deputy) 양쪽 동일 패턴 — wrapper Orchestrator 가 routing.
 
-## Domain Knowledge page schema (ADR-056 기준)
+## Domain Knowledge page schema (ADR-161 기준)
 
 `docs/domain-knowledge/` 하위 두 서브디렉터리로 소유 경계가 물리 분리됨:
 
@@ -88,9 +88,9 @@ PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Sto
 ### concept/ (ResearcherAgent 전용)
 
 - **위치**: `docs/domain-knowledge/concept/<slug>.md` (kebab-case slug)
-- **owner write**: ResearcherAgent 직접 (ADR-056 신설)
+- **owner write**: ResearcherAgent 직접 (ADR-161 신설)
 - **CODEOWNERS**: `docs/domain-knowledge/concept/**` → `@org/researchers` 자동 review
-- **template**: [`templates/concept-knowledge.md`](templates/concept-knowledge.md) (ADR-056 신설)
+- **template**: [`templates/concept-knowledge.md`](templates/concept-knowledge.md) (ADR-161 신설)
 - **frontmatter kind**: `kind: concept_definition` (필수)
 
 **Schema (domain/ 파일 — DomainAgent)**:
@@ -136,7 +136,7 @@ updated: YYYY-MM-DD
 - `## 관련 ADR`
 - `## 변경 이력`
 
-**검증**: wrapper repo (mclayer/plugin-codeforge) 의 `scripts/check-doc-frontmatter.sh` — `domain/` 필드(kind·title·area·topic_slug·status·updated)와 `concept/` 필드(kind·title·slug·status·updated) 경로별 분기 검증 (ADR-056, warning 모드 — CFP-28 strict 전환 후 fail). `scripts/check-doc-section-schema.sh` 병행.
+**검증**: wrapper repo (mclayer/plugin-codeforge) 의 `scripts/check-doc-frontmatter.sh` — `domain/` 필드(kind·title·area·topic_slug·status·updated)와 `concept/` 필드(kind·title·slug·status·updated) 경로별 분기 검증 (ADR-161, warning 모드 — CFP-28 strict 전환 후 fail). `scripts/check-doc-section-schema.sh` 병행.
 
 ## Dogfood policy (CFP-45)
 

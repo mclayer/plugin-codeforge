@@ -3,7 +3,7 @@
 # CFP-27 Phase 0b — 도입 (warning 모드)
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
 # CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
-# ADR-056 — docs/domain-knowledge/domain + concept 경로 분기, kind 필드 검증 추가 (CFP-376)
+# ADR-161 — docs/domain-knowledge/domain + concept 경로 분기, kind 필드 검증 추가 (CFP-376)
 # CFP-391 — registry kind 필수 필드에 canonical_repo / canonical_path / date 추가 (debate-protocol-v1)
 # CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — heredoc Python 외부 .py split
 # 검사: 5 owner doc path 의 frontmatter 필수 필드
@@ -69,7 +69,7 @@ for prefix, fields in REQUIRED.items():
         if missing:
             warns.append(f"{md}: 필수 필드 누락 — {sorted(missing)}")
 
-# ADR-056 — kind 유효값 검증
+# ADR-161 — kind 유효값 검증
 # CFP-2453 / ADR-091 Amd3 — lexicon_relation kind 등록 (consumer application-BC lexicon.md schema).
 #   domain/<area>/lexicon.md 는 domain_fact 와 동일 REQUIRED 필드 set(kind/title/area/topic_slug/
 #   status/updated) 공유 — KIND_VALID 만 확장 (REQUIRED 무변경). concept-dictionary 는 기존

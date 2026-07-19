@@ -212,7 +212,7 @@ amendment_log:
       - ADR-117 §결정 2 (Domain '단기 구조적' fable 상향 제외 = 상향 축. 본 Amendment = 하향(sonnet) 축 disjoint — 직접 모순 아님. Amd16 §결정 3 cross-ref 의무 실행, ADR-117 본체 미수정(Amd17 내 언급 충족). silent override 금지)
       - ADR-057 §결정 3 / §결정 4 (Codex 독립 review baseline 선례(F1 measurement) + spawn-time opts.model override fresh-spawn 메커니즘 SSOT(SendMessage resume 금지 상속))
       - ADR-127 §결정 6 (consumer overlay 확장-only — DomainAgent down-tier 공격적 override 불가, max(floor,overlay) clamp 재사용)
-      - ADR-056 §결정 3 (요구사항 lane synthesis 순서 §5→§2→§6→PL — catalog 합성 근거) / DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny — catalog = domain/ 만 가능)
+      - ADR-161 §결정 3 (요구사항 lane synthesis 순서 §5→§2→§6→PL — catalog 합성 근거) / DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny — catalog = domain/ 만 가능)
   - amendment_id: 18
     date: "2026-07-01"
     status: applied
@@ -291,7 +291,7 @@ related_adrs:
   - ADR-058  # Amendment 16 cross-ref (CFP-2432 — §결정 5 약화 방향 sunset_justification evidence requirement; tier-flip opus→sonnet 하향 evidence-gate)
   - ADR-064  # Amendment 16 cross-ref (CFP-2432 — §결정 7 is_transitional:false governance ADR 약화 symmetric evidence-gate)
   - ADR-127  # Amendment 16 cross-ref (CFP-2432 — §결정 6 consumer overlay 확장-only; down-tier 공격적 override 불가 근거)
-  - ADR-056  # Amendment 17 cross-ref (CFP-2445 — 요구사항 lane synthesis 순서 §5→§2→§6→PL catalog 합성 근거 + DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny))
+  - ADR-161  # Amendment 17 cross-ref (CFP-2445 — 요구사항 lane synthesis 순서 §5→§2→§6→PL catalog 합성 근거 + DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny))
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -1391,12 +1391,12 @@ tier-flip = **provisional**. CFP-2432 F1 protocol(`docs/domain-knowledge/concept
 
 ### OQ-7 / OQ-8 — catalog 위치 + ADR-117 cross-ref
 
-- **OQ-7 (catalog 위치)**: `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md`. area 명 = `backtesting-discipline`(invariant 이 백테스트 방법론 규율이라는 본질 반영, `financial-correctness` 후보보다 도메인 적합). DomainAgent write 권한 = `docs/domain-knowledge/domain/**` 만(concept/** = ResearcherAgent deny, ADR-056) → domain/ 만 가능.
+- **OQ-7 (catalog 위치)**: `docs/domain-knowledge/domain/backtesting-discipline/financial-correctness-invariant-catalog.md`. area 명 = `backtesting-discipline`(invariant 이 백테스트 방법론 규율이라는 본질 반영, `financial-correctness` 후보보다 도메인 적합). DomainAgent write 권한 = `docs/domain-knowledge/domain/**` 만(concept/** = ResearcherAgent deny, ADR-161) → domain/ 만 가능.
 - **OQ-8 (ADR-117 cross-ref)**: **ADR-042 Amd17 내 언급으로 충족, ADR-117 본체 미수정**. ADR-117 §결정 2 가 "Domain = 단기 구조적 역할" 로 **fable 상향**에서 명시 제외했으나, 그 단정 대상은 fable 적격성(상향 축)뿐 — opus floor 적정성(하향 sonnet 축)을 단정한 적 없음(ADR-117 전문 sonnet 하향 논의 0건). 두 ADR 이 같은 agent(DomainAgent)를 분류하므로 본 Amendment 가 **판정 축 disjoint(상향 fable vs 하향 sonnet) + "Domain opus 유지" 문구가 stakes-conditional(financial-invariant-0) 로 정제됨** 을 명시(Amd16 §결정 3 cross-ref 의무 실행). silent override 금지. ADR-117 본체에 현재 DomainAgent·financial 언급 0 → 별 amendment row 불요.
 
 ### 기존 정책 변경 0건 (ADR-042 본문 결정 1~6)
 
-본 Amendment 17 = ADR-042 결정 1~6 본문 **변경 0건**. 변경 = (a) §결정 1 Sonnet 표 후 inline marker(Amendment 17 발화) + Amendment 16 §결정 3 body 후 fulfillment marker (b) 본 `## Amendment 17` body section (c) frontmatter amendment_log row 17 + related_stories CFP-2445 + related_adrs ADR-056 append. tier criteria(결정 1) — DomainAgent 의 (c)high-stakes domain 기준의 *financial-invariant-0 shape 조건부 발화 명시*이지 기준 자체 변경 아님. invariant(결정 2) — financial-invariant-0 = mandate-orthogonal 축 논증으로 양립 확인 + mandate 표면 재정의 동반 의무, invariant 텍스트 변경 0. 신규 agent ADR 의무(결정 3) / inheritance(결정 4) / Haiku rollback(결정 5) / 재-audit(결정 6) 모두 변경 0건. **§결정 6 미발동** — DomainAgent mandate 를 "패턴 실행" 방향으로 재정의하지 않음(financial-invariant-0 shape 표면 축소는 single-axis advocacy 정합이지 mechanical pattern 전환 아님).
+본 Amendment 17 = ADR-042 결정 1~6 본문 **변경 0건**. 변경 = (a) §결정 1 Sonnet 표 후 inline marker(Amendment 17 발화) + Amendment 16 §결정 3 body 후 fulfillment marker (b) 본 `## Amendment 17` body section (c) frontmatter amendment_log row 17 + related_stories CFP-2445 + related_adrs ADR-161 append. tier criteria(결정 1) — DomainAgent 의 (c)high-stakes domain 기준의 *financial-invariant-0 shape 조건부 발화 명시*이지 기준 자체 변경 아님. invariant(결정 2) — financial-invariant-0 = mandate-orthogonal 축 논증으로 양립 확인 + mandate 표면 재정의 동반 의무, invariant 텍스트 변경 0. 신규 agent ADR 의무(결정 3) / inheritance(결정 4) / Haiku rollback(결정 5) / 재-audit(결정 6) 모두 변경 0건. **§결정 6 미발동** — DomainAgent mandate 를 "패턴 실행" 방향으로 재정의하지 않음(financial-invariant-0 shape 표면 축소는 single-axis advocacy 정합이지 mechanical pattern 전환 아님).
 
 ### ratchet 방향 — 약화(evidence-gate)
 
@@ -1419,7 +1419,7 @@ opus→sonnet tier-flip(DomainAgent, financial-invariant-0 shape 한정) = ratch
 - ADR-117 §결정 2 — Domain "단기 구조적" fable 상향 제외 = 상향 축. 본 Amendment = 하향(sonnet) 축 disjoint, silent override 금지(Amd16 §결정 3 cross-ref 의무 실행, ADR-117 본체 미수정 — Amd17 내 언급 충족)
 - ADR-057 §결정 3(Codex 독립 review baseline 선례 — F1 measurement) / §결정 4(spawn-time opts.model override fresh-spawn 메커니즘, SendMessage resume 금지 상속)
 - ADR-127 §결정 6 — consumer overlay 확장-only(DomainAgent down-tier 공격적 override 불가)
-- ADR-056 §결정 3 — 요구사항 lane synthesis 순서(catalog 합성 근거) + DomainAgent write 권한 경로 docs/domain-knowledge/domain/**(concept/** deny)
+- ADR-161 §결정 3 — 요구사항 lane synthesis 순서(catalog 합성 근거) + DomainAgent write 권한 경로 docs/domain-knowledge/domain/**(concept/** deny)
 - ADR-086 — axis 분석 lens(financial-invariant-0 axis ⊥ stakes axis ⊥ mandate depth axis disjoint 검증 adjacent-case. 본 Amendment = 신설 아닌 tier 분기 → framework 전면 self-application 주장 아님)
 - CFP-2445 change-plan(internal-docs `wrapper/change-plans/`) — financial-invariant-0 gating 설계 SSOT(§3 메커니즘 / §7 trust boundary / §8 Test Contract / §11 N/A)
 

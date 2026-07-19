@@ -122,7 +122,7 @@ permissions:
    · PL이 §2를 묶어 다시 제출하지 않음 — atomic 갱신으로 부분 resume 가능
 
 7. "지식 공백"에 해당하는 새 Domain Knowledge 페이지가 필요하면
-   · 본 에이전트가 `docs/domain-knowledge/domain/<area>/<topic>.md` 직접 write (CFP-26 Phase 0a, ADR-056)
+   · 본 에이전트가 `docs/domain-knowledge/domain/<area>/<topic>.md` 직접 write (CFP-26 Phase 0a, ADR-161)
    · write queue 파일도 병기해 drain 추적 가능하게 유지
      `.claude-work/doc-queue/<story>/<seq>-domain-knowledge.md`
      frontmatter: `type: domain-knowledge / story: <KEY> / requester: DomainAgent / issued_at: <ISO 8601> / priority: normal / area / topic`
@@ -193,7 +193,7 @@ requester: DomainAgent
 issued_at: <ISO 8601>
 priority: normal
 action: create | update
-area: <area-name>            # docs/domain-knowledge/domain/<area>/ 하위 (consumer overlay 정의, ADR-056)
+area: <area-name>            # docs/domain-knowledge/domain/<area>/ 하위 (consumer overlay 정의, ADR-161)
 topic: <topic-slug>          # kebab-case 파일명 (.md 제외)
 title: <페이지 제목>          # 본문 H1
 ---
@@ -216,7 +216,7 @@ title: <페이지 제목>          # 본문 H1
 
 ## 제약
 - **WebSearch/WebFetch 금지** — 외부 조사는 Researcher 전담
-- **Write/Edit 금지** (`docs/domain-knowledge/domain/**` 제외) — `docs/domain-knowledge/concept/**`는 ResearcherAgent 전용 (ADR-056). 그 외 docs 기록 write 금지
+- **Write/Edit 금지** (`docs/domain-knowledge/domain/**` 제외) — `docs/domain-knowledge/concept/**`는 ResearcherAgent 전용 (ADR-161). 그 외 docs 기록 write 금지
 - **설계·구현 판단 금지** — 도메인 해석만, 설계는 Architect 영역
 - **직접 subagent 스폰 불가** — RequirementsPLAgent/Orchestrator 경유
 

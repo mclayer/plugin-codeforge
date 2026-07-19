@@ -36,7 +36,7 @@ codeforge-requirements lane = **사용자 요구 접수 → 통합 요구사항 
 | RequirementsPLAgent | Story §2 (도메인 분석) · §5 (확장 해석) · §6 (개념·외부 지식) · `[요구사항]` GitHub comment · `phase:요구사항 → phase:설계` label 전환 | `Edit(docs/stories/**)` + `mcp__github__add_issue_comment` + `mcp__github__issue_write` |
 | ChangeImpactAgent · FeasibilityAgent · ContinuityAgent | Story §4.1 / §4.2 / §4.3 (code-context 3-row) | `.claude-work/doc-queue/` (write queue drain — PL 통합 시점) |
 | DomainAgent | `docs/domain-knowledge/domain/<area>/<topic>.md` (CFP-26 Phase 0a — owner direct write) | `Edit(docs/domain-knowledge/domain/**)` |
-| ResearcherAgent | `docs/domain-knowledge/concept/<slug>.md` (ADR-056) | `Edit(docs/domain-knowledge/concept/**)` |
+| ResearcherAgent | `docs/domain-knowledge/concept/<slug>.md` (ADR-161) | `Edit(docs/domain-knowledge/concept/**)` |
 
 **scope partition** (lane 책임 경계):
 
@@ -68,7 +68,7 @@ lane 의 외부 surface — kind:contract producer / kind:registry consumer / go
 - **ADR-077** (clarification 강제 재조사 — recheck_counter cap=5) — RequirementsPLAgent 가 lane 진입 후 clarification 답변이 §2/§5/§6 의미 변경 도달 시 재spawn 의무 (§9.0 Clarification 재스폰 이력 §10 FIX Ledger 와 disjoint 제3 채널, fix:* 미부착).
 - **ADR-052 Amendment 1 Touchpoint #4** (mandatory) — RequirementsPLAgent §1-§6 완료 직후 Codex Proactive Check 자동 dispatch + divergence 감지 시 `debate-protocol-v1` 발동. divergence 영역 4 criteria (AC 의미 / Edge Case 누락 / Why 해석 mismatch / fact-check drift). PL synthesis fact claim 영역 marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + reverse-explicit `[verification-out-of-scope: <사유>]` 의무.
 - **ADR-046** (ResearcherAgent role redefinition) — Opus tier rationale + 3 mandate (Concept formulation + Deep exploration + Requirement reshape) anchor. Amendment 2 (CFP-2328) = Mandate 2 demand-anchored 재초점 + concept/ silo close-loop read (독자 = 미래 Story 의 Researcher 자신) + 외부지식 하류 도달 주 채널 = §6 Section 5 reshape (모듈/경계/dimension 구조 무변경, governance 정밀화).
-- **ADR-056** (concept-knowledge schema) — `docs/domain-knowledge/concept/**` ResearcherAgent direct write + `kind: concept_definition` schema.
+- **ADR-161** (concept-knowledge schema) — `docs/domain-knowledge/concept/**` ResearcherAgent direct write + `kind: concept_definition` schema.
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer). 계약 schema field-level 상세 = 해당 contract file + `MANIFEST.yaml` SSOT.
 
