@@ -1,0 +1,85 @@
+name: evidence-registry-check (CFP-881 / ADR-060 Amendment 26 — warning mode)
+# CFP-881 / ADR-060 Amendment 26 — evidence-checks-registry.yaml 구조 무결성 게이트 (warning-tier).
+# grep/awk 가 아니라 Python yaml.safe_load 로 governance enforcement tier SSOT 를 파싱해 구조 무결성
+# (최상위 allowlist / entries=list / entry=name-nonempty-dict / current_tier enum(case-sensitive) /
+# name 전역 unique / collecting UniqueKeyLoader duplicate-key surface)을 검증한다.
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 default). PR merge 미차단.
+# Bypass channel: omit (warning tier §결정 16 — bypass_label 미채택).
+# honesty ceiling(ADR-151 §결정7): 구조만·exact-key 중복만 검증 — presence ≠ truth.
+#   duplicate-key locus 는 warning 으로 표면화(surface)만 하고 차단하지 않는다 (2 pre-existing locus
+#   canary-compatibility-check / deployment-schema-check = remediation forcing-function).
+#   regression fence = 전용 hard-fail self-test workflow evidence-registry-check-test.yml (별개 채널).
+# self-test step 미포함 — CFP-2635 shell-test 처럼 self-test 를 warning job 안에 두면 RED 가 swallowed
+#   되므로 evidence-registry-check-test.yml (continue-on-error 부재) 로 분리 (F-B).
+#
+# 승격 path (warning → blocking-on-pr 시 CFP-NNN carrier PR 동반 의무):
+#   1. 본 workflow 의 continue-on-error: true 제거
+#   2. branch protection required_status_checks.contexts 에 본 job name 추가
+#   3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry promotion_criteria)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'docs/evidence-checks-registry.yaml'
+      - 'scripts/check-evidence-registry.sh'
+      - 'scripts/lib/check_evidence_registry.py'
+      - '.github/workflows/evidence-registry-check.yml'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  evidence-registry-check:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run evidence-registry structure verify (live registry)
+        id: lint
+        run: |
+          bash scripts/check-evidence-registry.sh 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Post warning comment (structure violation / duplicate-key surface)
+        if: steps.lint.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint-output.txt', 'utf8');
+            const body = [
+              '## evidence-registry-check — warning',
+              '',
+              '> ADR-060 Amendment 26 warning-tier (CFP-881). PR merge 차단 아님.',
+              '> evidence-checks-registry.yaml 구조 무결성(최상위 allowlist / entries=list /',
+              '> entry=name-nonempty-dict / current_tier enum / name 전역 unique / duplicate-key)을',
+              '> yaml.safe_load strict-verify 로 검증. col-0 orphan·중복키 등 grep 소비자가 조용히',
+              '> 오독할 구조 결함을 상류에서 표면화합니다.',
+              '> known 2 pre-existing duplicate-key locus(canary-compatibility-check /',
+              '> deployment-schema-check)는 warning 으로 표면화만 — remediation 은 별 governance CFP.',
+              '',
+              '```',
+              output.slice(0, 3000),
+              '```',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
