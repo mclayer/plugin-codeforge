@@ -3,7 +3,7 @@
 r"""
 scripts/lib/check_resource_safety_claim_proof.py
 CFP-2646 / ADR-082 Amendment 38 §결정 16 — resource-safety claim ↔ proof-link write-time 정직 presence lint
-  (write-time self-write verify super-class 의 3번째 presence-lint carrier, warning tier / Layer 2).
+  (write-time self-write verify super-class 의 3번째 presence-lint carrier, blocking-on-pr tier / Layer 2 — CFP-2650 승격).
 
 대상 = wrapper-self governance/보안 tooling 의 docstring·inline 주석·워크플로 YAML 주석
   (`scripts/**/*.py` + `scripts/check-*.sh` + `.github/workflows/*.yml` + `templates/github-workflows/*.yml`).
@@ -14,7 +14,7 @@ CFP-2646 / ADR-082 Amendment 38 §결정 16 — resource-safety claim ↔ proof-
   본 lint 은 claim-without-any-proof-link 를 **작성 시점에 좌향 노출**할 뿐이다. over-claim 을
   "봉인/완전방지" 하지 않는다(그런 hard-claim 부재). 참됨의 execution-backed 반증은 보안테스트 lane 소관.
   granularity = **file-scoped presence**(파일 단위 proof/ceiling 존재) — per-claim proof 아님.
-  granularity 상향(claim-adjacent windowed)은 별 named carrier(CFP-2650) 이연. 불완전 proof 는 PASS(상한).
+  granularity 상향(claim-adjacent windowed)은 CFP-2650 scope 밖(out-of-scope) — CFP-2650 = promotion+sweep carrier이며 granularity windowing 미실행. 불완전 proof 는 PASS(상한).
 
 ★ 자기참조 DoS 회피 (메타-재귀 — CFP-2635 SF-1 교훈 필수 반영, born-safe 4-axis bound):
   본 lint 도 파일 내용을 스캔한다 = CFP-2635 masking-detect 와 동일 표면. CFP-2635 는 위협 축 enumeration
@@ -56,14 +56,14 @@ CLI 계약 (ADR-061 house style — 고정, self-test + workflow 소비):
   bash scripts/check-resource-safety-claim-proof.sh --repo-root DIR --write-baseline
     → 현 코퍼스 FLAG 전건을 baseline 으로 동결 write (single writer, 수기 편집 금지).
 
-Exit codes (ADR-060 §결정 5 3-tier — warning tier, fail-open):
+Exit codes (ADR-060 §결정 5 3-tier — blocking-on-pr tier, CFP-2650 승격; 스크립트 exit-code 자체는 fail-open(exit 1 surface), PR 차단은 workflow continue-on-error 제거로 실현):
   0 = PASS (grandfather 후 new-over-claim 0, 또는 대상 파일 부재 = honest no-op).
-  1 = >=1 new-over-claim (warning — workflow continue-on-error 로 PR 미차단, `::warning::` surface).
+  1 = >=1 new-over-claim (blocking-on-pr — workflow continue-on-error 제거로 job 실패=체크 red, `::warning::` GHA annotation surface).
   2 = usage/parse 오류 (argparse).
 
 ADR refs: ADR-082 Amendment 38 §결정 16 (carrier) / ADR-151 §결정7 (honesty ceiling 상속) /
   ADR-061 §결정1 (Python SSOT + thin wrapper) / ADR-005 (byte-identical workflow pair) /
-  ADR-060 §결정5 (warning tier) / ADR-119 (게이트=ground-truth, 오탐 0) / ADR-127 (1 Story = 2 PR).
+  ADR-060 §결정5 (도입 tier) + Amendment 25 (CFP-2650 blocking-on-pr 승격) / ADR-119 (게이트=ground-truth, 오탐 0) / ADR-127 (1 Story = 2 PR).
 """
 
 import argparse
@@ -418,11 +418,11 @@ def write_baseline(path, findings):
     return len(pairs)
 
 
-# ─────────────────────── 출력 (warning surface) ─────────────────────────────────
+# ─────────────────────── 출력 (surface) ──────────────────────────────────────────
 
 _ACTION_GUIDE = (
-    "[resource-safety-claim-proof-presence] warning-tier (ADR-082 Amendment 38 §결정 16 — "
-    "PR merge 미차단, advisory):\n"
+    "[resource-safety-claim-proof-presence] blocking-on-pr (ADR-082 Amendment 38 §결정 16 · CFP-2650 승격 — "
+    "continue-on-error 제거로 체크 red surfacing; branch-protection 무변경이면 required merge 차단은 아님):\n"
     "  검출 = 안전성-claim(catastrophic backtracking 0 / ReDoS-safe / DoS 가드 / nested quantifier 0 / "
     "scan cap = bound 류)이\n"
     "    동일 파일에 proof-reference(reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크 "
@@ -440,7 +440,7 @@ _ACTION_GUIDE = (
 def main(argv):
     parser = argparse.ArgumentParser(
         prog="check_resource_safety_claim_proof.py",
-        description="governance/보안 tooling resource-safety claim ↔ proof-link presence lint (warning tier).",
+        description="governance/보안 tooling resource-safety claim ↔ proof-link presence lint (blocking-on-pr tier, CFP-2650 승격).",
     )
     parser.add_argument("--repo-root", default=None, help="스캔 루트 (기본 = scripts/lib 기준 자동 탐지).")
     parser.add_argument("--baseline", default=None, help="grandfather baseline 경로 override.")
@@ -471,7 +471,7 @@ def main(argv):
     scanned, raw_findings = scan_corpus(repo_root, explicit_files=args.files)
 
     if scanned == 0:
-        print("check-resource-safety-claim-proof: PASS — 대상 코퍼스 부재 (honest no-op, warning tier)")
+        print("check-resource-safety-claim-proof: PASS — 대상 코퍼스 부재 (honest no-op, blocking-on-pr tier)")
         return 0
 
     baseline_keys = load_baseline(baseline_path)
@@ -489,14 +489,14 @@ def main(argv):
         print("")
         print(
             "check-resource-safety-claim-proof: FLAG %d new-over-claim over %d file "
-            "(grandfathered=%d) — warning tier (continue-on-error 로 비차단, advisory only)"
+            "(grandfathered=%d) — blocking-on-pr tier (continue-on-error 제거 — 체크 red surfacing)"
             % (len(findings), scanned, grandfathered)
         )
         return 1
 
     print(
         "check-resource-safety-claim-proof: PASS — FLAG 0 new-over-claim over %d file "
-        "(grandfathered=%d, presence proof 위반 0, warning tier)" % (scanned, grandfathered)
+        "(grandfathered=%d, presence proof 위반 0, blocking-on-pr tier)" % (scanned, grandfathered)
     )
     return 0
 
