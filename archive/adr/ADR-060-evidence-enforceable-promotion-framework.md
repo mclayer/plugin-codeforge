@@ -2926,7 +2926,7 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 
 - 양 workflow(`.github/workflows/` + `templates/github-workflows/` byte-identical pair, ADR-005) job+step `continue-on-error` 제거 = blocking-on-pr surfacing (lint 실패 = job 실패 = 체크 red).
 - registry `current_tier: warning → blocking-on-pr` + `promoted_by: CFP-2650` + `promoted_date: 2026-07-19` provenance.
-- **branch-protection 7-tuple 무변경** — surfacing ≠ required-context 편입 (ADR-125 required contexts 무변경 선호 + CFP-2594 "surfacing ≠ required" 선례). required 편입(7→8 fail-closed narrowing)은 §1 미요청 별 escalation(ADR-145 선례), 본 Story 미채택. workflow header 승격노트의 stale 2-정의(surfacing = required 편입) 봉합.
+- **branch-protection 7-tuple 무변경** — surfacing ≠ required-context 편입 (ADR-125 required contexts 무변경 선호 + CFP-2594 "surfacing ≠ required" 선례). required 편입(7→8 fail-closed narrowing)은 §1 미요청 별개 escalation(ADR-145 선례), 본 Story 미채택. workflow header 승격노트의 stale 2-정의(surfacing = required 편입) 봉합.
 
 ### honesty-ceiling 불변 (ADR-151 §결정7 상속)
 
