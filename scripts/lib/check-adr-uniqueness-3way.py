@@ -19,12 +19,15 @@
 #       WORKFLOW(adr-uniqueness-check.yml) 은 non-required(InfraEngineer 배선)이나, 스크립트 자체는
 #       finding 시 exit 1 (테스트가 RED→GREEN 관측 가능). merge 차단은 워크플로 tier 가 결정.
 #
-# firsthand 기존 결함(born-valid — 본 Story 는 정정하지 않음, non-goal §5. lint 는 검출만):
-#   - filename-collision : ADR-042 / ADR-047 / ADR-048 / ADR-056 (각 2 파일)
-#   - frontmatter-collision : ADR-043+ADR-045(fm=43) / ADR-061+ADR-062(fm=61) — filename-only lint 누락
-#   - filename↔frontmatter mismatch : ADR-045(45≠43) / ADR-062(62≠61)
-#   - zero-pad drift : ADR-72 (2-digit token, 관례 3-digit)
+# firsthand 기존 결함 (lint 은 검출만 — 정정은 별 Story 소관):
+#   - filename-collision : ADR-042 / ADR-047 / ADR-048 / ADR-056 (각 2 파일) —
+#         **CFP-2566 renumber 진행 대상**. C0 shared-infra 는 C1~C4 renumber 보다 먼저 merge 되므로
+#         본 merge 시점엔 real archive/adr 에 4쌍 잔존(이후 per-pair child 가 해소).
+#   - zero-pad drift : ADR-72 (2-digit token, 관례 3-digit) — OOS(CFP-676 이 2-digit canonical 확정, 사용자 결정 대기)
+#   - file-row-lapse : ADR-144/156/157/158/159 (RESERVATION row 부재) — OOS(별 finding class, 중복쌍 무관)
 #   - quoted-string : ADR-005 fm=`"005"` → 정규화 5 (mismatch 아님 — 정규화가 false-positive 차단)
+# NOTE: 구 frontmatter-collision(ADR-043+ADR-045 fm=43 / ADR-061+ADR-062 fm=61) + filename↔frontmatter
+#       mismatch(ADR-045 45≠43 / ADR-062 62≠61) = CFP-2759(2026-07-19 merged)로 정정 완료 → 잔여 finding 아님.
 #
 # Usage:
 #   python3 scripts/lib/check-adr-uniqueness-3way.py \
