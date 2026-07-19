@@ -166,7 +166,7 @@ ADR-038 §결정 9 3-tier 모델((a) physical CI/git hook / (b) startup-hook / (
 
 ## 비대상 (out-of-scope)
 
-- **ADR-038 / ADR-039 / ADR-042 §15 observability boundary 무변경** — 본 요구는 measurement(Tier-3 회계) 아닌 표시-only → ADR-042 amendment 불요. TodoWrite 제외 경계 유지 의무.
+- **ADR-038 / ADR-039 / ADR-163 §15 observability boundary 무변경** — 본 요구는 measurement(Tier-3 회계) 아닌 표시-only → ADR-163 amendment 불요. TodoWrite 제외 경계 유지 의무.
 - **VS Code 확장 렌더 실동작·per-tool-call hook 주입 신뢰성** — 설계 feasibility 후보(gap #1/#2), 필요 시 on-demand deep-research. 본 ADR 은 규약·layer·강제 상한만 codify.
 - **미/유럽 consumer tz override / locale 변환** — 별도 CFP (ADR-079 §결정 7 정합).
 - **application-BC lexicon homonym entry 실 write** — deferred (개념 정착 후 DomainAgent).

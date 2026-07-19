@@ -14,7 +14,7 @@ related_adrs:
   - ADR-155      # 직접 제약 (substrate SSOT) — dev-process observability substrate + dev-process-event-v1. B = downstream consumer, mining port read-only. §15.2 5th boundary invariant(semantic-evidence-aggregation) 상속
   - ADR-106      # 직접 제약 (circuit template) — operational-signal → PMOAgent circuit. NEW ADR precedent(§D-9 amendment 아닌 신규 ADR 로 disjoint feed 추가, ADR-045 본문 무변경). B = 동형이되 dev-process 축 disjoint. ★closure machinery(dedup/max-depth/escalate_user) 미복제 — B = passive read-time feeder
   - ADR-045      # 직접 제약 — §D-9 cross-Story pattern_count ≥ 2 → ADR escalation forcing function + escalation_action 2-value enum. B = EXTEND(신규 disjoint feed), 산문 corpus supersede 금지, 본문 무변경 invariant
-  - ADR-042      # 직접 제약 — measurement channel. dev-process-event = 9th channel. 0-API-call 상속 / measure≠classify tier / token-cost upstream = spawn-event-v1
+  - ADR-163      # 직접 제약 — measurement channel. dev-process-event = 9th channel. 0-API-call 상속 / measure≠classify tier / token-cost upstream = spawn-event-v1
   - ADR-104      # 직접 제약 (경계) — operational-phase 정의. dev-process ⊥ operational-phase disjoint axis, wrapper-N/A false-block 방지
   - ADR-119      # 직접 제약 — research-before-claims / honest-degrade 천장(인과 주장 금지, 재발률=측정치, exact-count 금지). self-referential dogfood 7연속 이력 대응
   - ADR-140      # 배경 — write-time hygiene(Path B reject 근거, port-isolation break + DRY 위반)
@@ -101,7 +101,7 @@ B 는 A `dev-process-event-v1` substrate 를 **read-only 소비**만 한다.
 
 - **신규 inter-plugin 계약(dev-process-metric-v1) 미신설** — kpi = LOCAL FILE 표면(transport 아님) → APIContractArch N/A, YAGNI(Story R2/G3 defer). 대신 **KPI snapshot/history schema 를 de-facto stable schema 로 Change Plan §4.7 에 pin**(§D-9 feed 필드 pattern_count/pattern_status/anchor_id/root_cause_class 포함). **신규 kind:registry doc 미생성 → doc-section §4-change-rules obligation 미발동 + MANIFEST registries 갱신 불요.**
 - **KPI dual-file** — `docs/kpi/dev-process-<metric>-{history.jsonl,snapshot.json}` 6 지표. history = append-only(기존 row byte 불변) + snapshot = overwrite-idempotent. dual-file PATTERN = operational-signal-history.jsonl + operational-signal-rate.json 선례 `[verified: ls docs/kpi/]`(단 `-snapshot.json` literal 선례 부재 — new-but-consistent variant 채택, AC-6 wording 준수).
-- **0-API-call / measurement-tier 상속(ADR-042)** — Path A local I/O only, record-only non-blocking(exit 0), measure≠classify(aggregate_stop_event tier 상속 `[verified: aggregate_stop_event.py:17-21]`). token-cost 원천 = spawn-event-v1(dev-process-event 아님, re-record 금지).
+- **0-API-call / measurement-tier 상속(ADR-163)** — Path A local I/O only, record-only non-blocking(exit 0), measure≠classify(aggregate_stop_event tier 상속 `[verified: aggregate_stop_event.py:17-21]`). token-cost 원천 = spawn-event-v1(dev-process-event 아님, re-record 금지).
 - **scope-guard ⊥ ADR-104** — dev-process 축 ⊥ operational-phase, wrapper-N/A 무저촉(설계리뷰 "wrapper runtime 0 → 측정 불가" false-block 방지) `[verified: dev-process-event-v1.md:345-347]`.
 
 ## 결과
@@ -175,7 +175,7 @@ N/A — permanent policy
 - **ADR-155 (A substrate)** — dev-process observability substrate + dev-process-event-v1. B = downstream consumer, mining port read-only, 5th boundary invariant 상속
 - **ADR-106 (circuit template)** — operational-signal → PMO circuit. NEW ADR precedent(disjoint feed 추가, ADR-045 본문 무변경) + closure machinery 미복제 divergence
 - **ADR-045 §D-9** — cross-Story pattern → ADR escalation forcing function + escalation_action enum (EXTEND source, 본문 무변경 invariant)
-- **ADR-042** — measurement channel. 9th channel 소비, 0-API-call / measure≠classify 상속
+- **ADR-163** — measurement channel. 9th channel 소비, 0-API-call / measure≠classify 상속
 - **ADR-104** — operational-phase 경계. dev-process ⊥ operational-phase disjoint axis(false-block 방지)
 - **ADR-119** — research-before-claims / honest-degrade 천장
 - **ADR-140** — write-time hygiene(Path B reject 근거)

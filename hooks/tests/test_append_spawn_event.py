@@ -724,7 +724,7 @@ class TestLaneLabelClosedEnum:
 
 
 class TestConsumerScope:
-    """consumer_scope ∈ {wrapper, consumer} (ADR-042 §결정 9 isolation marker)"""
+    """consumer_scope ∈ {wrapper, consumer} (ADR-163 §결정 9 isolation marker)"""
 
     def test_consumer_scope_wrapper_explicit(self, tmp_path):
         """

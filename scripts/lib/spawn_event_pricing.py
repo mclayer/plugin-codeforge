@@ -5,7 +5,7 @@
 # Carrier: CFP-2393 Phase 2 (구현) / Epic CFP-2391 S3
 # 출처: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
 #       — per-agent token_usage/cost_usd field 구조 차용. enforcement(COST_LIMIT
-#       intervention)는 비-차용 (codeforge 는 측정·관측만 — ADR-042 §결정 10).
+#       intervention)는 비-차용 (codeforge 는 측정·관측만 — ADR-163 §결정 10).
 #
 # 책임:
 #   - model name → per-token USD pricing constant dict (로컬 상수, 0 API call — T-TAMP-1).

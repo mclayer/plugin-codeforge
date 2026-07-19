@@ -8,7 +8,7 @@ carrier_story: CFP-2687
 supersedes: null
 amends: null  # new-sibling — 기존 stop-event-v1 / spawn-event-v1 / fix-event-v1 무변경 (관계 매트릭스 §결정 2)
 related_adrs:
-  - ADR-042  # measurement channel architecture — 9th Tier-3 channel (Amendment 2 동반 carrier)
+  - ADR-163  # measurement channel architecture — 9th Tier-3 channel (Amendment 2 동반 carrier)
   - ADR-043  # telemetry privacy policy — redaction 계약 상속 (Amendment 4 동반 carrier)
   - ADR-104  # operational-phase definition — wrapper-N/A ⊥ dev-process disjoint axis (§결정 9 scope-guard)
   - ADR-115  # runtime hook enforcement — record-only·non-blocking·exit0 상속
@@ -26,7 +26,7 @@ related_files:
   - docs/inter-plugin-contracts/dev-process-event-v1.md  # 신규 통합 계약 (Phase 2 실 파일 — 본 ADR 이 설계 SSOT)
   - docs/inter-plugin-contracts/MANIFEST.yaml  # kind:registry comment 갱신 (Phase 2)
   - docs/orchestrator-playbook.md  # §15.1 8→9 channel boundary table (Phase 2 co-land — 계약 파일과 동반)
-  - archive/adr/ADR-042-codeforge-measurement-channel-architecture.md  # Amendment 2 sibling
+  - archive/adr/ADR-163-codeforge-measurement-channel-architecture.md  # Amendment 2 sibling
   - archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md  # Amendment 4 sibling
   - docs/architecture/codeforge-family.md  # interfaces + data_flow + Open Decisions 갱신
 is_transitional: false
@@ -45,7 +45,7 @@ mechanical_enforcement_actions: []  # Phase 1 = 설계 SSOT (계약 스키마 li
 
 ### 동기 — dormant substrate + content-blind ledger
 
-Epic #2686 = codeforge 가 **자기 자신의 10-lane 개발 과정을 계측**(dev-process self-observability)하려는 자기-개선 arc. 근본 결함 = 관측 substrate 는 설계됐으나(ADR-042/043 + stop-event-v1 v1.2 + spawn-event-v1) **활성화되지 않았고**(Phase-1-doc-only + ROI-gate 뒤 deferred), 실 런타임 ledger 는 **5-field content-blind**(lane/defect/fix/story 상관 0, rich-capture 미활성 — 실 활성 `.claude/ledger/stop-event.jsonl` 7,122 rows firsthand). 최근 self-referential dogfood 결점 7연속 재발이 곧 ROI 정당화 — 계측 부재로 "무엇이 왜 반복되나"를 재구성할 증거층이 없다.
+Epic #2686 = codeforge 가 **자기 자신의 10-lane 개발 과정을 계측**(dev-process self-observability)하려는 자기-개선 arc. 근본 결함 = 관측 substrate 는 설계됐으나(ADR-163/043 + stop-event-v1 v1.2 + spawn-event-v1) **활성화되지 않았고**(Phase-1-doc-only + ROI-gate 뒤 deferred), 실 런타임 ledger 는 **5-field content-blind**(lane/defect/fix/story 상관 0, rich-capture 미활성 — 실 활성 `.claude/ledger/stop-event.jsonl` 7,122 rows firsthand). 최근 self-referential dogfood 결점 7연속 재발이 곧 ROI 정당화 — 계측 부재로 "무엇이 왜 반복되나"를 재구성할 증거층이 없다.
 
 ### Gap (Story A 가 메우는 것)
 
@@ -53,7 +53,7 @@ Epic #2686 = codeforge 가 **자기 자신의 10-lane 개발 과정을 계측**(
 2. **cross-lane 결점 identity 부재** — anchor_id(review-verdict)는 verdict-scope, cross-lane 결점 추적 ID(defect_id) 아님. 결점 재발 집계(B의 D4 축)의 identity 축 부재.
 3. **상관 ID freeze 부재** — B(집계)·C(판정)가 병렬 전제로 공유할 story/lane/defect/fix 4종 ID 의 이름·scope·생성시점·안정성 규칙이 미확정. 미확정 병렬 = 백필 부채.
 4. **rich-content vs allow-list 긴장** — 기존 stop/spawn-event 는 allow-list-ONLY + anti-content(numeric/enum/hash-only, transcript content·path 미저장 = T-INFO-5/8). rich content 를 기존 row 에 필드 추가로 수용하면 v2.0 breaking + T-INFO-5 위반.
-5. **보존등급 부재** — hot/cold 2-tier 만 존재(ADR-042 §결정 4), 압축 아티팩트 warm tier 부재. 큰 payload content-addressed blob 저장 표면 부재.
+5. **보존등급 부재** — hot/cold 2-tier 만 존재(ADR-163 §결정 4), 압축 아티팩트 warm tier 부재. 큰 payload content-addressed blob 저장 표면 부재.
 
 ### 근본 긴장 3개 — 요구사항 lead 결정(INV-4/α) 상속
 
@@ -65,7 +65,7 @@ Epic #2686 = codeforge 가 **자기 자신의 10-lane 개발 과정을 계측**(
 
 ### 결정 1 — dev-process-event-v1 신규 통합 계약 (kind:registry, new-sibling, 9th Tier-3 channel)
 
-`docs/inter-plugin-contracts/dev-process-event-v1.md` 신규 file (kind:registry — kind:contract 회피, sibling sync overhead 0, stop/spawn-event 선례). codeforge observability stack 의 **9번째 Tier-3 persistent channel**(ADR-042 §결정 1, Amendment 2 동반). 기존 8 channel(stop/spawn 포함)은 전부 content-blind — rich semantic content 를 흡수할 경로가 0 이므로 **통합 재해석 불가, 신설 필요**(INV-4). 2계층 구조:
+`docs/inter-plugin-contracts/dev-process-event-v1.md` 신규 file (kind:registry — kind:contract 회피, sibling sync overhead 0, stop/spawn-event 선례). codeforge observability stack 의 **9번째 Tier-3 persistent channel**(ADR-163 §결정 1, Amendment 2 동반). 기존 8 channel(stop/spawn 포함)은 전부 content-blind — rich semantic content 를 흡수할 경로가 0 이므로 **통합 재해석 불가, 신설 필요**(INV-4). 2계층 구조:
 
 1. **index tier (이벤트 행)** — allow-list clean. enum / numeric / hash / 상관 ID / blob-ref only. free-form content 본문 직접 저장 **0**. 기존 anti-content invariant(T-INFO-5/8) **무손상**.
 2. **evidence-blob-store (rich content 표면)** — capture-time redaction 후 content-addressed blob 저장. 이벤트 행은 blob 의 hash 참조(`blob_ref`)만 보유. blob store = 기존 계약에 없던 **신규 비밀 표면** → 자체 redaction·보존·참조 규약을 계약이 정의(§결정 5, ADR-043 Amendment 4).
@@ -83,7 +83,7 @@ dev-process-event-v1 ↔ 기존 계약 관계 = **supersede 아님, new-sibling*
 | fix-event-v1 (§10 FIX Ledger) | new-sibling | §10 FIX row append = Orchestrator monopoly 불변. dev-process 의 `fix_id` FIX-전이 이벤트는 §10 accounting 을 **재기록하지 않음** — 1 §10 row ↔ 1..N `fix_id` 상관만 |
 | review-verdict-v4 / *-output-v1 | new-sibling | verdict/산출물 요약 accounting = 각 output 계약 소유. dev-process verdict 이벤트는 semantic-evidence-aggregation(어떤 verdict 가 났나 참조)이지 verdict 의미론 정의(C scope) 아님 |
 
-**5th boundary invariant (ADR-042 §15.2 amendment)**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) 허용 / accounting payload re-record 금지. 동일 의미를 두 channel 이 각자 기록하는 SoT 이중화(§5.4)를 구조적으로 차단.
+**5th boundary invariant (ADR-163 §15.2 amendment)**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) 허용 / accounting payload re-record 금지. 동일 의미를 두 channel 이 각자 기록하는 SoT 이중화(§5.4)를 구조적으로 차단.
 
 ### 결정 3 — 4 상관 ID freeze + 결점 taxonomy 4-tuple (B·C 공유, 정직 천장)
 
@@ -138,7 +138,7 @@ capture 는 두 Port 로 이원화하되 **single event stream**(JOIN 보존):
 
 ### 결정 6 — retention 3-tier (hot/warm/cold) + AC-10∧AC-25 화해 (append-only ∧ GC 모순 해소)
 
-dev-process-channel-scoped 3-tier(ADR-042 §결정 4 hot+cold 2-tier 를 본 channel 에 한해 3-tier 확장 — Amendment 2 (b)):
+dev-process-channel-scoped 3-tier(ADR-163 §결정 4 hot+cold 2-tier 를 본 channel 에 한해 3-tier 확장 — Amendment 2 (b)):
 
 | tier | 저장형태 | latency | 보존 | spill 전이 |
 |---|---|---|---|---|
@@ -159,7 +159,7 @@ dev-process-channel-scoped 3-tier(ADR-042 §결정 4 hot+cold 2-tier 를 본 cha
 
 ### 결정 8 — always-on 비대칭 (α) + Phase 1 doc-only / Phase 2 실배선
 
-- **wrapper-self dogfood scope = always-on** — codeforge family 자기 개발 계측이 Story 목적. always-on = checkout-identity 파생(user-settable bool 아님). ADR-042 §결정 6 "wrapper dogfood always-on = Phase 2 follow-up" 를 본 Story 가 carrier.
+- **wrapper-self dogfood scope = always-on** — codeforge family 자기 개발 계측이 Story 목적. always-on = checkout-identity 파생(user-settable bool 아님). ADR-163 §결정 6 "wrapper dogfood always-on = Phase 2 follow-up" 를 본 Story 가 carrier.
 - **consumer 배포 scope = opt-in default-false** — consumer overlay extend-only(ADR-064 §결정 7), privacy invariant **무약화**. consumer floor 하방 override 불가(T-DPE-9).
 - **always-on 4중 bound + redaction-선행 floor + resource-safety honest-ceiling** = ADR-043 Amendment 4 SSOT.
 - Phase 1 = 계약 설계(정책 anchor). Phase 2 = 실 capture 배선(PostToolUse hook + append primitive + blob store + redaction fn).
@@ -221,7 +221,7 @@ Phase 2 carrier(본 ADR = 설계 SSOT, `mechanical_enforcement_actions: []` — 
 ### 영향 (Phase 1 — 본 Story)
 
 - `archive/adr/ADR-155-dev-process-observability-substrate.md` (본 file)
-- `archive/adr/ADR-042-*.md` Amendment 2 (9th channel + warm-tier + ROI supersede)
+- `archive/adr/ADR-163-*.md` Amendment 2 (9th channel + warm-tier + ROI supersede)
 - `archive/adr/ADR-043-*.md` Amendment 4 (always-on 비대칭 + blob deny-pattern + redacted-blob T-INFO-5)
 - `archive/adr/ADR-RESERVATION.md` row 155
 - change-plan + Story §3/§7 + `docs/architecture/codeforge-family.md`(interfaces/data_flow/Open Decisions)
@@ -257,7 +257,7 @@ N/A — permanent substrate policy (약화 방향 차단 ratchet, is_transitiona
 
 ## 관련 ADR
 
-- **ADR-042** (measurement channel architecture) — 9th Tier-3 channel. Amendment 2 sibling(§결정 1 8→9 + warm-tier + ROI supersede). §15.2 5th boundary invariant.
+- **ADR-163** (measurement channel architecture) — 9th Tier-3 channel. Amendment 2 sibling(§결정 1 8→9 + warm-tier + ROI supersede). §15.2 5th boundary invariant.
 - **ADR-043** (telemetry privacy policy) — Amendment 4 sibling. redaction 계약(INV-8a/b deny-pattern·audit·always-on bound·redacted-blob T-INFO-5) SSOT.
 - **ADR-104** (operational-phase definition) — §결정 9 scope-guard. wrapper-N/A(운영 phase) ⊥ dev-process(개발 과정) disjoint axis.
 - **ADR-115** (runtime hook enforcement) — capture 실패 = record-only·non-blocking·exit 0 상속(AC-21/22).
@@ -271,7 +271,7 @@ N/A — permanent substrate policy (약화 방향 차단 ratchet, is_transitiona
 - `docs/inter-plugin-contracts/dev-process-event-v1.md` (신규 — Phase 2 실 파일, 본 ADR 이 설계 SSOT)
 - `docs/inter-plugin-contracts/MANIFEST.yaml` (kind:registry comment — Phase 2)
 - `docs/orchestrator-playbook.md` §15.1 (8→9 channel boundary table — Phase 2 co-land)
-- `archive/adr/ADR-042-codeforge-measurement-channel-architecture.md` (Amendment 2)
+- `archive/adr/ADR-163-codeforge-measurement-channel-architecture.md` (Amendment 2)
 - `archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md` (Amendment 4)
 - `docs/architecture/codeforge-family.md` (interfaces/data_flow/Open Decisions)
 - `mclayer/codeforge-internal-docs:wrapper/stories/CFP-2687.md`

@@ -7,7 +7,7 @@
 #       — per-agent registry 차용 (본 reconciliation 은 codeforge 측 §14↔spawn-event boundary
 #       검증으로, OMC 차용은 spawn-event row 모델 한정). enforcement 비-차용.
 #
-# 책임 (ADR-042 §결정 13 precondition AC):
+# 책임 (ADR-163 §결정 13 precondition AC):
 #   - §14 Lane Evidence(lane-coarse) row 의 lane set ↔ spawn-event ledger(per-agent fine)
 #     의 lane_label set 정합 검증. §14 = lane 단위, spawn-event = agent 단위 (1 lane N agent).
 #   - 정합 규칙: spawn-event 에 존재하는 lane_label 이 §14 에도 표현됐는지 (모순 없음).
@@ -312,7 +312,7 @@ def cmd_check(args):
             )
         )
         print(
-            "  advisory (ADR-042 §결정 13 AC — warning tier, 비차단). "
+            "  advisory (ADR-163 §결정 13 AC — warning tier, 비차단). "
             "§14 에 누락 lane evidence 추가 또는 spawn-event lane_label 정정 검토."
         )
         sys.exit(1)
@@ -350,7 +350,7 @@ def cmd_check(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="§14 Lane Evidence ↔ spawn-event 정합 reconcile (CFP-2393 / ADR-042 §결정 13)"
+        description="§14 Lane Evidence ↔ spawn-event 정합 reconcile (CFP-2393 / ADR-163 §결정 13)"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

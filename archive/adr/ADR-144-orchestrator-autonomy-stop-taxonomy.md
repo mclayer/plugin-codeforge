@@ -13,7 +13,7 @@ related_adrs:
   - ADR-142  # Orchestrator-self context discipline — 정직성 헌장 tier 모델 상속 (§결정 7)
   - ADR-115  # runtime hook enforcement — Stop/SubagentStop record-only, block 금지 하드 제약
   - ADR-043  # telemetry privacy — opt-in default-false (L5/L6 제약)
-  - ADR-042  # measurement channel architecture — stop-event schema SSOT (L5 근거)
+  - ADR-163  # measurement channel architecture — stop-event schema SSOT (L5 근거)
   - ADR-009  # wrapper-only single-lead — L3 topology 재편 경계
   - ADR-039  # subagent default — §결정 19 lead force-resume (L3 recovery anchor)
   - ADR-054  # 신규 ADR 도입 = full-lane 강제 — D-A NEW carrier 정당화 실 근거지 (new-vs-amendment 기준)

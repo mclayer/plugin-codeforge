@@ -3029,7 +3029,7 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
-  # CFP-2393 Phase 2 (ADR-042 §결정 13 / ADR-043 Amendment 2 / Epic CFP-2391 S3) — spawn-event-v1 schema lint.
+  # CFP-2393 Phase 2 (ADR-163 §결정 13 / ADR-043 Amendment 2 / Epic CFP-2391 S3) — spawn-event-v1 schema lint.
   - name: spawn-event-schema
     description: |
       spawn-event-v1.md kind:registry schema lint — 19-field Allow-list +
@@ -3040,7 +3040,7 @@ entries:
       + SubagentStop hook + spawn-event-v1 ledger struct validation).
       OMC MIT 차용 (oh-my-claudecode).
 
-      ADR-042 §결정 13 spawn-event ledger v1 + ADR-043 Amendment 2 spawn
+      ADR-163 §결정 13 spawn-event ledger v1 + ADR-043 Amendment 2 spawn
       contract v1.0 정식화 근거 검증. warning-tier (continue-on-error) —
       branch protection 6-tuple 무변경 (ADR-127 ratchet).
     detect_command: bash scripts/check-spawn-event-schema.sh check
@@ -3059,7 +3059,7 @@ entries:
     modal_anti_pattern_dictionary: {}  # 본 lint = registry static scan + schema validation, modal 어휘 검사 미포함
     introduced_by: CFP-2393
     introduced_date: 2026-06-25      # KST (Phase 2 infrastructure delivery)
-    owner_adr: ADR-042 / ADR-043     # spawn-event 계약 owner ADR
+    owner_adr: ADR-163 / ADR-043     # spawn-event 계약 owner ADR
     carrier_adr: ADR-060             # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural classification 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:

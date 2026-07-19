@@ -6,7 +6,7 @@
 # 출처: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
 #       — per-agent registry(token_usage/cost_usd/tool_usage) + replay event 종류
 #       + 경과초 keyed 패턴 차용. enforcement(COST_LIMIT intervention)는 비-차용
-#       (codeforge 는 측정·관측만 — ADR-042 §결정 10).
+#       (codeforge 는 측정·관측만 — ADR-163 §결정 10).
 #
 # 책임:
 #   - spawn-event-v1.md §2 19-field Allow-list + §3 append_rules 를 byte-faithful 구현.

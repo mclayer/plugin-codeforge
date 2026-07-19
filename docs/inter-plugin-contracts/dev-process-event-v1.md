@@ -8,10 +8,10 @@ canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/dev-process-event-v1.md
 date: 2026-07-15
 authors:
-  - DataEngineerAgent (CFP-2687 Phase 2 — Epic #2686 Story A. dev-process-event-v1 신설 carrier. ADR-155 설계 SSOT 구현. ADR-042 Amendment 2 + ADR-043 Amendment 4 동반)
+  - DataEngineerAgent (CFP-2687 Phase 2 — Epic #2686 Story A. dev-process-event-v1 신설 carrier. ADR-155 설계 SSOT 구현. ADR-163 Amendment 2 + ADR-043 Amendment 4 동반)
 related_adrs:
   - ADR-155  # dev-process observability substrate — 본 계약의 설계 SSOT (9 결정)
-  - ADR-042  # measurement channel architecture — 9th Tier-3 channel (Amendment 2) + warm-tier + 5th boundary invariant
+  - ADR-163  # measurement channel architecture — 9th Tier-3 channel (Amendment 2) + warm-tier + 5th boundary invariant
   - ADR-043  # telemetry privacy policy — redaction 계약 상속·확장 (Amendment 4: always-on 비대칭 + deny 6→7 + redacted-blob T-INFO-5)
   - ADR-104  # operational-phase definition — dev-process ⊥ operational-phase disjoint axis (scope-guard)
   - ADR-115  # runtime hook enforcement — record-only·non-blocking·exit0 상속
@@ -47,7 +47,7 @@ attribution:
 
 ## 1. 목적
 
-`docs/inter-plugin-contracts/dev-process-event-v1.md` = codeforge 관측성 스택 **Tier-3(persistent measurement) 의 9번째 channel**(ADR-042 §결정 1, Amendment 2 동반). lane 전이·프롬프트/입력·도구호출·verdict·diff·결점 findings·FIX 루프 전이·최종 산출물을 **하나의 typed append-only stream** 으로 통합한 evidence 계약이다.
+`docs/inter-plugin-contracts/dev-process-event-v1.md` = codeforge 관측성 스택 **Tier-3(persistent measurement) 의 9번째 channel**(ADR-163 §결정 1, Amendment 2 동반). lane 전이·프롬프트/입력·도구호출·verdict·diff·결점 findings·FIX 루프 전이·최종 산출물을 **하나의 typed append-only stream** 으로 통합한 evidence 계약이다.
 
 기존 8 channel(stop/spawn 포함)은 전부 **content-blind**(numeric/enum/hash-only) — rich semantic content 를 흡수할 경로가 0 이므로 **통합 재해석 불가, 신설**(INV-4, ADR-155 §결정 1). new-sibling — 기존 계약 supersede 0.
 
@@ -75,7 +75,7 @@ attribution:
 | 5 | `timestamp_utc` | ISO8601 UTC Z (ms) | required | 전체 | **UTC Z strict 저장, millisecond precision**(`2026-07-15T14:22:33.481Z`, `%Y-%m-%dT%H:%M:%S.%fZ` 3-digit). +00:00 / bare datetime 불허. KST 표시(ADR-079). monotonic 필요 시 **MAX(prev+1ms)**(change-plan §7.4 clock / Story §7.3 design literal). timezone 축(UTC 저장)은 stop=KST vs spawn=UTC 괴리 봉인, precision 축(ms)은 monotonic +1ms directive 지원 — 별개 축 |
 | 6 | `story_key` | string | required | 전체 | 상관 ID **freeze** — e.g. `CFP-2687`. Public non-sensitive. SubagentStop source 부재 시 `""`(§edge) |
 | 7 | `lane_label` | enum | required | 전체 | 상관 ID **freeze** — 11값(10 lane + `없음`, label-registry-v2 정합). closed-set. 미매칭 → `없음` |
-| 8 | `consumer_scope` | enum (CLOSED 2) | required | 전체 | `{wrapper, consumer}` — α 비대칭 isolation marker(ADR-042 §결정 9) |
+| 8 | `consumer_scope` | enum (CLOSED 2) | required | 전체 | `{wrapper, consumer}` — α 비대칭 isolation marker(ADR-163 §결정 9) |
 | 9 | `defect_id` | sha256 string \| null | nullable | defect_finding / fix_transition | 상관 ID **freeze** — `sha256(family‖type‖normalized-location)`, summary **제외**(wording-drift caveat). 그 외 event = null |
 | 10 | `fix_id` | string \| null | nullable | fix_transition | 상관 ID **freeze** — per-defect 대응 **시도** 단위(lane 재진입 단위 아님). 1 §10 FIX row ↔ 1..N `fix_id`. 그 외 = null |
 | 11 | `blob_ref` | sha256 string \| null | nullable | rich payload 보유 event | evidence-blob-store 참조 = `sha256(REDACTED bytes)` **NEVER raw**(INV-8a). bare 64-hex. blob 부재 = null |
@@ -110,7 +110,7 @@ defect_family · defect_type · time_to_detection · detecting_lane
 event_type:
   type: enum
   required: true
-  closed: true      # 8 확정 — 9번째 추가 = §4 amendment 의무 (ADR-042 §결정 2)
+  closed: true      # 8 확정 — 9번째 추가 = §4 amendment 의무 (ADR-163 §결정 2)
   values:
     - lane_transition   # lane 전이 (agent-emit)
     - prompt_input      # 프롬프트/입력 (hook)
@@ -166,7 +166,7 @@ noise_discard:
 - **defect taxonomy 축 종류(closed/semi-open/derived) 변경**: family/lane closed-set 확장 = MINOR / type semi-open→closed 승격 = MAJOR / ttd derived→enum 승격 = MAJOR.
 - **`_ROW_KEYS` parity**: §2 필드 순서·멤버는 `append_dev_process_event._ROW_KEYS` 와 항상 일치(born-drift = FAIL). 한쪽 변경 = 양쪽 동반 + amendment.
 - **opt-in / always-on 정책 변경**: α 비대칭(wrapper always-on / consumer opt-in-false) 약화 = ADR-043/ADR-064 amendment 의무(BREAKING — privacy invariant 위반).
-- **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-042 §결정 4 amendment.
+- **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-163 §결정 4 amendment.
 
 ## 5. 상관 ID freeze + 결점 taxonomy (B·C 공유 — AC-4/5)
 
@@ -217,7 +217,7 @@ noise_discard:
 
 ## 7. retention 3-tier + AC-10∧AC-25 화해 (AC-25)
 
-dev-process-channel-scoped 3-tier(ADR-042 §결정 4 hot+cold 2-tier 를 본 channel 에 한해 3-tier 확장 — Amendment 2):
+dev-process-channel-scoped 3-tier(ADR-163 §결정 4 hot+cold 2-tier 를 본 channel 에 한해 3-tier 확장 — Amendment 2):
 
 | tier | 저장형태 | 조회 latency (expectation) | 보존 (expectation) | spill 전이 |
 |---|---|---|---|---|
@@ -328,7 +328,7 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 | **fix-event-v1 (§10 FIX Ledger)** | new-sibling | §10 FIX row append = Orchestrator monopoly 불변. dev-process `fix_id` FIX-전이 이벤트는 §10 accounting **재기록 안 함** — 1 §10 row ↔ 1..N `fix_id` 상관만 |
 | **review-verdict-v4 / *-output-v1** | new-sibling | verdict/산출물 요약 accounting = 각 output 계약 소유. dev-process verdict 이벤트는 **semantic-evidence-aggregation**(어떤 verdict 가 났나 참조)이지 verdict 의미론 정의(C scope) 아님 |
 
-> **5th boundary invariant (ADR-042 §15.2 amendment)**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) **허용** / accounting payload re-record **금지**. 동일 의미를 두 channel 이 각자 기록하는 SoT 이중화를 구조적으로 차단.
+> **5th boundary invariant (ADR-163 §15.2 amendment)**: dev-process-event = **semantic-evidence-aggregation** — 상관 ID cross-read(JOIN) **허용** / accounting payload re-record **금지**. 동일 의미를 두 channel 이 각자 기록하는 SoT 이중화를 구조적으로 차단.
 
 ## 12. 정직성 (honesty — AC-23/24)
 
@@ -349,7 +349,7 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 ## 13. Phase 1 / Phase 2 scope
 
 ### Phase 1 (설계 — CFP-2687 Phase 1 PR, 완료)
-- ADR-155 + change-plan + Story §3/§7 + `docs/architecture/codeforge-family.md` + ADR-042 Amd2 + ADR-043 Amd4.
+- ADR-155 + change-plan + Story §3/§7 + `docs/architecture/codeforge-family.md` + ADR-163 Amd2 + ADR-043 Amd4.
 
 ### Phase 2 (본 계약 파일 + 실배선 — CFP-2687 Phase 2 PR)
 - 본 `dev-process-event-v1.md` 계약 파일(kind:registry) + MANIFEST.yaml kind:registry comment(entry 미추가 — stop/spawn 선례) + playbook §15.1 8→9 row + §15.2 5th invariant(co-land).
@@ -383,7 +383,7 @@ dev-process-event-v1 ↔ 기존 계약 = **supersede 아님, new-sibling**. even
 ## 15. Cross-references
 
 - **ADR-155** — 본 계약 설계 SSOT(9 결정).
-- **ADR-042** (measurement channel) — 9th channel(Amendment 2) + warm-tier + §15.2 5th boundary invariant.
+- **ADR-163** (measurement channel) — 9th channel(Amendment 2) + warm-tier + §15.2 5th boundary invariant.
 - **ADR-043** (telemetry privacy) — redaction 상속·확장(Amendment 4: always-on 비대칭 + deny 6→7 + redacted-blob T-INFO-5 + audit).
 - **ADR-104** — scope-guard(dev-process ⊥ operational-phase disjoint axis).
 - **ADR-115** — record-only·non-blocking·exit0·graceful degradation 상속.

@@ -7,7 +7,7 @@ canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/stop-event-v1.md
 date: 2026-04-22
 authors:
-  - Claude (CFP-283 carrier — ADR-042 §결정 2 schema codification)
+  - Claude (CFP-283 carrier — ADR-163 §결정 2 schema codification)
 amendment_log:
   - version: "1.1"
     date: 2026-05-27
@@ -21,7 +21,7 @@ related_adrs:
   - ADR-025  # stop discipline (§결정 10 deferred slot 채움)
   - ADR-029  # phase execution visibility (sanitize policy cross-ref)
   - ADR-039  # subagent default (§결정 9 deferred carrier)
-  - ADR-042  # measurement channel architecture (본 schema SSOT)
+  - ADR-163  # measurement channel architecture (본 schema SSOT)
   - ADR-043  # telemetry privacy policy (Allow-list ONLY + Deny-list regex) — v1.1 Amendment: Allow-list 18 field
   - ADR-115  # runtime hook enforcement policy (hook_source / hook_decision field 정의 origin)
 related_files:
@@ -61,7 +61,7 @@ ADR-039 effective enforcement 측정을 위한 stop event ledger schema machine-
 | `override_marker` | bool (optional) | decider override 발생 여부 (PL pl_recommendation ≠ Sonnet pick) | non-sensitive |
 | `recovery_action` | enum | retry / escalate / abort | non-sensitive |
 | `outcome` | enum | success / failure / partial | non-sensitive |
-| `consumer_scope` | enum | `wrapper` / `consumer` (ADR-042 §결정 9 isolation marker) | non-sensitive |
+| `consumer_scope` | enum | `wrapper` / `consumer` (ADR-163 §결정 9 isolation marker) | non-sensitive |
 | `parent_event_id` | sha256 reference (optional) | nested spawn attribution chain (Researcher §6.3 dedup) — Phase 2 spawn-event-v1 land 시 cross-ref | hash (raw 부재) |
 | `hook_source` | enum (optional) | `"stop"` / `"subagent-stop"` — emit 한 hook 종류 명시 (ADR-115 §결정 2 non-blocking 2종 분기 정합). 부재 시 `"stop"` 해석 (backward-compat default). | non-sensitive |
 | `hook_decision` | enum (optional) | `"record-only"` — non-blocking marker (ADR-115 §결정 2 block 금지 binding constraint). closed-set 1-value, 확장 시 별 CFP + ADR-043 Amendment 의무. | non-sensitive |
@@ -72,7 +72,7 @@ ADR-039 effective enforcement 측정을 위한 stop event ledger schema machine-
 
 ### 3.1 Allow-list ONLY enforcement (ADR-043 §결정 2 — v1.1 Amendment: 18 field)
 
-**18 field 외 capture 금지** (v1.1 MINOR bump: `hook_source` / `hook_decision` 2 optional field 추가, ADR-043 §결정 2 Amendment 동반). 추가 field capture = BREAKING change → ADR-042 §결정 2 + ADR-043 §결정 2 amendment 의무.
+**18 field 외 capture 금지** (v1.1 MINOR bump: `hook_source` / `hook_decision` 2 optional field 추가, ADR-043 §결정 2 Amendment 동반). 추가 field capture = BREAKING change → ADR-163 §결정 2 + ADR-043 §결정 2 amendment 의무.
 
 근거:
 - Allow-list = future expansion 시 explicit ADR review 강제 (silent expansion 차단)
@@ -108,7 +108,7 @@ def event_id(packet_id: str, actor: str, event_type: str, timestamp_iso8601: str
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 ```
 
-`UNIQUE INDEX (event_id)` sqlite hardware-level enforcement (ADR-042 §결정 4) — duplicate row insert reject.
+`UNIQUE INDEX (event_id)` sqlite hardware-level enforcement (ADR-163 §결정 4) — duplicate row insert reject.
 
 `packet_id` = 본 stop event 가 발생한 context 의 packet ID (e.g. decision-packet-v2.1 packet_id, sub-step packet ID, FIX iteration packet ID). 부재 시 `packet_id = "no-packet"` fallback (capture 가능 — schema validation 통과).
 
@@ -121,7 +121,7 @@ def event_id(packet_id: str, actor: str, event_type: str, timestamp_iso8601: str
 | `policy_violation` | 정책 위반 (defect — ADR-025 / ADR-039) | sub-decision stop ("inline 으로 충분한가" 류) / Epic level continuity 위반 / Phase boundary 사이 stop |
 | `policy_violation_rate_limit_induced` | rate-limit cascade 강제 stop (ADR-039 §결정 9 second-order risk — DomainAgent §2.4 4번째 후보) | Anthropic API rate-limit 으로 강제 stop. ADR-039 enforcement 가 token burn 증가 → rate-limit 빈도 증가 cascade detection |
 
-5번째 enum 추가 = ADR-042 §결정 2 amendment 의무 (BREAKING change).
+5번째 enum 추가 = ADR-163 §결정 2 amendment 의무 (BREAKING change).
 
 ### 3.5 Append rules
 
@@ -166,7 +166,7 @@ append_rules:
 
 operational_constraints:
   zero_api_call:
-    rule: "0 API call constraint (ADR-042 §결정 8 / OperationalRiskArchitect §7.4.4 P0)"
+    rule: "0 API call constraint (ADR-163 §결정 8 / OperationalRiskArchitect §7.4.4 P0)"
     rationale: "measurement = measure 대상 amplify 금지. local I/O only. Anthropic API / GitHub API / external service 호출 금지."
     violation: "policy_violation + immediate hot-fix"
 
@@ -182,11 +182,11 @@ operational_constraints:
 
 ## 4. 변경 규칙
 
-- **Append-only for v1.x**: 18 field 외 새 필드 추가 = ADR-042 §결정 2 + ADR-043 §결정 2 amendment 의무 (BREAKING change → v2.0). Allow-list ONLY enforcement 위반.
-- **reason_class enum 추가**: 5번째 enum 도입 시 = ADR-042 §결정 2 amendment 의무 (BREAKING).
+- **Append-only for v1.x**: 18 field 외 새 필드 추가 = ADR-163 §결정 2 + ADR-043 §결정 2 amendment 의무 (BREAKING change → v2.0). Allow-list ONLY enforcement 위반.
+- **reason_class enum 추가**: 5번째 enum 도입 시 = ADR-163 §결정 2 amendment 의무 (BREAKING).
 - **hook_decision enum 확장**: 2번째 value 도입 시 = ADR-043 §결정 2 amendment 의무 (MINOR — closed-set 1-value, 확장 시 별 CFP 의무).
 - **Deny-list regex 6 pattern 변경**: 추가 / 삭제 = minor (v1.0 → v1.1, BREAKING 아님 — sanitize 강화 / 약화 방향만 다름).
-- **storage backend 변경 (sqlite → 다른 DB)**: ADR-042 §결정 4 amendment 의무 (BREAKING — JSONL 회피 사유 + DataMigrationArch substantive 권고 재평가).
+- **storage backend 변경 (sqlite → 다른 DB)**: ADR-163 §결정 4 amendment 의무 (BREAKING — JSONL 회피 사유 + DataMigrationArch substantive 권고 재평가).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 
 ## 5. Phase 1 / Phase 2 scope
@@ -197,7 +197,7 @@ operational_constraints:
 - MANIFEST.yaml comment line 5 갱신 (`stop-event-v1` 추가 명시)
 - 4-channel boundary table @ playbook §15 (Reserved 해제)
 - consumer overlay telemetry block schema
-- ADR-042 + ADR-043 신설
+- ADR-163 + ADR-043 신설
 
 ### Phase 2 (deferred follow-up CFP)
 
@@ -208,7 +208,7 @@ operational_constraints:
 - ADR-029 §결정 2 sanitize SSOT 통합 commit (ADR-043 §결정 4 cross-ref)
 - Rule-based hook (PreToolUse on Write / Edit / mcp__github__* — inline write detect)
 
-ROI gating prerequisite: post-merge-counters.jsonl 30+ run (ADR-026 §결정 3 패턴 / ADR-042 §결정 11).
+ROI gating prerequisite: post-merge-counters.jsonl 30+ run (ADR-026 §결정 3 패턴 / ADR-163 §결정 11).
 
 ### 5.1 계약↔구현 정직 정합 + aggregate slot un-defer (v1.2, CFP-2573 — ADR-144 §결정 5 / L5)
 
@@ -237,7 +237,7 @@ ROI gating prerequisite: post-merge-counters.jsonl 30+ run (ADR-026 §결정 3 �
 
 ## 6. Cross-references
 
-- **ADR-042** (codeforge measurement channel architecture) — 본 schema SSOT (§결정 2 18-field schema (v1.0 origin 16 field + v1.1 Amendment 1 2 optional field))
+- **ADR-163** (codeforge measurement channel architecture) — 본 schema SSOT (§결정 2 18-field schema (v1.0 origin 16 field + v1.1 Amendment 1 2 optional field))
 - **ADR-043** (codeforge telemetry privacy policy) — Allow-list ONLY (§결정 2) + Deny-list regex (§결정 3) + opt-in default false (§결정 1)
 - **ADR-025** (stop discipline) — §결정 10 deferred slot 채움 (Amendment)
 - **ADR-029** (phase execution visibility) — narration vs ledger boundary (4-channel @ playbook §15)
