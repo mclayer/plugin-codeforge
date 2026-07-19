@@ -1,5 +1,5 @@
 ---
-adr_number: 47
+adr_number: 160
 title: GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin (CFP-139 / CFP-134 Wave 3)
 status: Proposed
 category: agent-design
@@ -36,7 +36,7 @@ amends:
 is_transitional: false
 ---
 
-# ADR-047: GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin
+# ADR-160: GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin
 
 ## 상태
 
@@ -258,7 +258,7 @@ worktree_manifest:                # NEW in v1.1, optional (required: false)
 **거절된 대안**:
 - (b) wrapper-only PR — codeforge-pmo plugin 정합 부재 시 GitOpsAgent agent file invalid (mandate amendment 미반영, agent 가 자기 역할 trigger 모름). 기각.
 
-**근거**: ADR-010 cross-plugin sibling sync 정합. Wrapper Phase 1 PR #265 = contract / template / wrapper CLAUDE.md sync + ADR-047. codeforge-pmo Phase 2 PR pair = agent file 신설 + plugin CLAUDE.md amendment + canonical contract sync + ADR-040 Amendment 1 finalize.
+**근거**: ADR-010 cross-plugin sibling sync 정합. Wrapper Phase 1 PR #265 = contract / template / wrapper CLAUDE.md sync + ADR-160. codeforge-pmo Phase 2 PR pair = agent file 신설 + plugin CLAUDE.md amendment + canonical contract sync + ADR-040 Amendment 1 finalize.
 
 ## 대안 검토
 
@@ -321,7 +321,7 @@ Yes. Rollback 경로 (Change Plan §5.2 verbatim):
    - wrapper `docs/inter-plugin-contracts/comment-prefix-registry-v1.md` v1.1 → v1.0 revert (`[GitOps]` prefix 삭제)
    - wrapper `CLAUDE.md` "Development Agent Team" 표 revert (agent count 2 → 1)
    - wrapper `templates/story-page-structure.md` §10.5 section 삭제
-   - 본 ADR-047 status: Accepted → Deprecated
+   - 본 ADR-160 status: Accepted → Deprecated
 3. 이미 작성된 Story §10.5 row 보존 (audit trail 유지 — append-only invariant 정합)
 4. 이미 생성된 worktree (`.claude/worktrees/**`) leave as-is — SessionStart hook (CFP-136 stale GC) 가 7일+ origin absent 검출 후 자연 cleanup
 
