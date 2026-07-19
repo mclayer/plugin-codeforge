@@ -6,7 +6,7 @@ name: spawn-event-schema-lint
 # verification, NOT enum reject) + event_type closed enum + idempotency deterministic event_id
 # + opt-in default false.
 #
-# ADR-042 §결정 13 / ADR-043 Amendment 2 / Epic CFP-2391 S3. OMC MIT 차용.
+# ADR-163 §결정 13 / ADR-043 Amendment 2 / Epic CFP-2391 S3. OMC MIT 차용.
 #
 # F4 결정: .github/ single-root (deferred-followup-reconcile.yml 답습).
 #   ADR-005 byte-parity scope 외 — template mirror 미운용 (게이트 = wrapper-self governance

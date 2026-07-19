@@ -420,7 +420,7 @@ def test_ac20_token_cost_source_spawn_not_rerecord():
         body = json.dumps(dp_snaps[name]["overall"], ensure_ascii=False).lower()
         for token_key in ("token", "cache_read", "cache_creation", "cost_usd"):
             assert token_key not in body, "%s 에 token accounting re-record (INV-B2 위반): %s" % (name, token_key)
-    # (c) capture-fix 미생성 (spawn-event capture-fix = spawn-event-v1/ADR-042·043 소관)
+    # (c) capture-fix 미생성 (spawn-event capture-fix = spawn-event-v1/ADR-163·043 소관)
     tc = agg.compute_token_cost([], _ZERO_STATS)
     assert tc["no_capture_fix"] is True
     # 원천 표기 = spawn-event replay reader (INV-B4)

@@ -7,9 +7,9 @@ canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/spawn-event-v1.md
 date: 2026-06-24
 authors:
-  - ArchitectAgent (CFP-2393 — Epic CFP-2391 S3, OMC-adopt per-agent replay/cost. spawn-event-v1 신설 carrier. ADR-042 (measurement) Amendment 1 + ADR-043 Amendment 2 동반)
+  - ArchitectAgent (CFP-2393 — Epic CFP-2391 S3, OMC-adopt per-agent replay/cost. spawn-event-v1 신설 carrier. ADR-163 (measurement) Amendment 1 + ADR-043 Amendment 2 동반)
 related_adrs:
-  - ADR-042  # codeforge measurement channel architecture — §결정 1 boundary 표 (8th channel) + §결정 3 보류 해제 (Amendment 1) + §결정 13 amendment 의무 이행 + §결정 8 0-API/50ms + §결정 9 isolation
+  - ADR-163  # codeforge measurement channel architecture — §결정 1 boundary 표 (8th channel) + §결정 3 보류 해제 (Amendment 1) + §결정 13 amendment 의무 이행 + §결정 8 0-API/50ms + §결정 9 isolation
   - ADR-043  # codeforge telemetry privacy policy — §결정 1 opt-in default false + §결정 2 Allow-list ONLY + §결정 3 Deny-list regex (Amendment 2: spawn-event field 추가 + T-INFO-5 transcript hard invariant + T-INFO-7 sha256 identity)
   - ADR-031  # lane-spawn evidence — §14 Lane Evidence (lane-coarse) ↔ spawn-event-v1 (per-agent fine) boundary
   - ADR-038  # progress visualization TodoWrite — boundary 차단 (meta-cognitive scratchpad ≠ accounting)
@@ -27,12 +27,12 @@ amendment_log:
   - "Amendment 3 (CFP-2572, 2026-07-05) — self-context-v1 6-field record type 추가 (§2.1 신설, L7 Orchestrator self-context proxy). 동일 spawn-event.jsonl channel 공유 + schema_version discriminator 구분. version 1.0 → 1.1 MINOR (additive record type, ADR-008 §결정 2). SSOT = ADR-043 Amendment 3 / ADR-142 §결정 4. 19-field spawn row schema 무변경 (별 record type)."
 attribution:
   source: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
-  scope: "per-agent registry 개념(token_usage/cost_usd/tool_usage field 구조) + replay event 종류(agent_start/agent_stop/tool/file_touch/mode_change) + 경과시간 keyed 패턴 차용. enforcement(COST_LIMIT_USD intervention) / HUD UI / model routing 은 비-차용 (측정·관측만, ADR-042 §결정 10 measurement-vs-fix boundary)."
+  scope: "per-agent registry 개념(token_usage/cost_usd/tool_usage field 구조) + replay event 종류(agent_start/agent_stop/tool/file_touch/mode_change) + 경과시간 keyed 패턴 차용. enforcement(COST_LIMIT_USD intervention) / HUD UI / model routing 은 비-차용 (측정·관측만, ADR-163 §결정 10 measurement-vs-fix boundary)."
 ---
 
 # spawn-event v1
 
-> **출처 표기 (Epic CFP-2391 공통 제약)**: 본 contract 의 per-agent registry 개념 + replay 모델 = **oh-my-claudecode(MIT) 차용** (https://github.com/Yeachan-Heo/oh-my-claudecode). 차용 경계 = frontmatter `attribution.scope` SSOT. enforcement(COST_LIMIT intervention)는 차용 제외 — codeforge 는 측정·관측만 (ADR-042 §결정 10).
+> **출처 표기 (Epic CFP-2391 공통 제약)**: 본 contract 의 per-agent registry 개념 + replay 모델 = **oh-my-claudecode(MIT) 차용** (https://github.com/Yeachan-Heo/oh-my-claudecode). 차용 경계 = frontmatter `attribution.scope` SSOT. enforcement(COST_LIMIT intervention)는 차용 제외 — codeforge 는 측정·관측만 (ADR-163 §결정 10).
 >
 > **structural model pin**: 본 contract 는 **`fix-event-v1.md` 동형** (kind:registry §1목적/§2Schema/§3항목/§4변경규칙) 으로 author 됐다. **`stop-event-v1` runtime (`scripts/lib/append_stop_event.py`) 은 모델로 삼지 않는다** — stop-event 의 contract↔runtime 3-way drift (계약 18 field vs runtime 5 field, 계약 sqlite vs runtime JSONL, 계약 sha256 actor vs runtime raw session_id; Change Plan §2.4 / §7) 를 복사하지 않기 위함. spawn-event 는 contract 가 곧 runtime spec 의 SSOT 이며, Phase 2 구현은 본 §3 append_rules 를 byte-faithful 하게 따른다.
 
@@ -43,10 +43,10 @@ attribution:
 attribution 단위 = **Agent tool spawn 1회 = subagent 1개 = spawn-event row 1개**. §14 Lane Evidence(lane-coarse) 보다 fine, TodoWrite(meta-cognitive) 와 disjoint.
 
 본 channel 은 codeforge 설계 공간에서 **이미 예약된(named) future channel** 의 보류 해제다 — 진공의 신개념이 아니다:
-- ADR-042(measurement) §결정 3 = spawn-event-v1 신설 보류 → 본 contract 가 **Amendment 1** 로 해제.
-- ADR-042(measurement) §결정 13 = "spawn-event-v1 신설 시 §결정 1 boundary 표 갱신 + §결정 3 supersede(Amendment N) + §14↔spawn-event dedup script 신설 의무" → 본 contract 가 amendment 의무 이행.
+- ADR-163(measurement) §결정 3 = spawn-event-v1 신설 보류 → 본 contract 가 **Amendment 1** 로 해제.
+- ADR-163(measurement) §결정 13 = "spawn-event-v1 신설 시 §결정 1 boundary 표 갱신 + §결정 3 supersede(Amendment N) + §14↔spawn-event dedup script 신설 의무" → 본 contract 가 amendment 의무 이행.
 - ADR-043 §결정 1 = "future: spawn-event-v1 등 = opt-in default false" → inherit 확정 (ADR-043 **Amendment 2**).
-- ADR-042(measurement) Out-of-scope = "Token attribution model = spawn-event-v1 deferred 와 동반 deferred" → 본 contract 가 해제.
+- ADR-163(measurement) Out-of-scope = "Token attribution model = spawn-event-v1 deferred 와 동반 deferred" → 본 contract 가 해제.
 
 ### 1.1 §14.12 ↔ spawn-event-v1 역할 분리 (boundary declaration — double-count 아님)
 
@@ -84,7 +84,7 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `tool_call_count` | int \| null | optional | subagent 의 tool 호출 횟수 (OMC tool_usage array length 차용). numeric only | non-sensitive |
 | `actor` | sha256 hash | required | top-level Claude session ID **hash** (raw 금지 — T-INFO-7 SecurityArch P1). **stop-event runtime 의 raw session_id 패턴 복사 금지** (append_stop_event.py line 73 bug). | hash (raw 부재) |
 | `parent_event_id` | sha256 reference \| null | optional | nested spawn attribution chain (subagent 가 또 spawn 시 이중계산 방지 — F4 / claude-code#5904). read-time chain dedup key. raw 부재 | hash (raw 부재) |
-| `consumer_scope` | enum | required | `{wrapper, consumer}` (ADR-042 §결정 9 isolation marker) | non-sensitive |
+| `consumer_scope` | enum | required | `{wrapper, consumer}` (ADR-163 §결정 9 isolation marker) | non-sensitive |
 | `event_type` | enum | required | replay event 종류 (OMC session-replay 차용) — `{agent_start, agent_stop, tool, file_touch, mode_change}`. closed-set. attribution row = `agent_stop` 가 primary (token/cost 확정 시점) | non-sensitive |
 | `elapsed_seconds` | number \| null | optional | replay 경과초 keyed (OMC `agent-replay-*.jsonl` 차용) — Story/세션 시작 기준 상대 시각. replay 재구성 정렬 key. numeric only | non-sensitive |
 
@@ -264,7 +264,7 @@ append_rules:
           - spawn-event default parent = `.claude/ledger/` (storage_path 미지정 시).
           - stop-event(sqlite) default parent = `.claude-work/measurement/` (basename = `stop-event.sqlite`). storage_path 미지정 시 이 default.
           - **per-channel 별 default 가 다름** — `telemetry.storage_path` 는 양 channel 에 동일 적용된다 (지정 시 두 channel 의 parent dir 을 함께 대체, 각자 자기 basename 유지). 미지정 시 각 channel 의 위 default parent 사용.
-          - escape 금지: override 값이 wrapper checkout dir 로 escape 금지 (InfraOpArch §7.4.5 / ADR-042 §결정 9 isolation). project-config-schema.md telemetry.storage_path comment 정합.
+          - escape 금지: override 값이 wrapper checkout dir 로 escape 금지 (InfraOpArch §7.4.5 / ADR-163 §결정 9 isolation). project-config-schema.md telemetry.storage_path comment 정합.
       note: "JSONL 채택 사유 = (1) DB UNIQUE 부재여도 deterministic event_id + read-time dedup 로 idempotency 충분 (InfraOpArch §11.6) (2) stop-event runtime 와 동형 = 운영 패턴 검증됨. sqlite 는 stop-event 계약 理想이나 runtime 미구현 = drift — spawn-event 는 contract=runtime 일치 우선"
       pattern_a_disclaimer: "**host-local ledger ≠ Pattern A 대상**. race-condition-handling-pattern.md 의 Pattern A(SHA-based optimistic concurrency) 는 cross-repo Contents API write(post-merge-counters.jsonl) 전용 — host-local O_APPEND per-row(spawn-event/stop-event)에는 적용하지 않는다. Tier-3 ledger 라고 전부 Pattern A 가 아니다 (write 토폴로지로 갈림: cross-repo=Pattern A 의무, host-local=O_APPEND kernel-atomic 로 충분). measurement-channel.md Tier-3 분기 note 정합."
     append_io:
@@ -274,7 +274,7 @@ append_rules:
   idempotency:
     rule: "deterministic event_id (random UUID 금지) + read-time dedup (aggregate/replay 시점, append-time 아님)"
     nested_spawn_dedup: "parent_event_id chain — nested spawn 이중계산 방지 (read-time)"
-    section14_dedup: "**§14 Lane Evidence ↔ spawn-event dedup script = ADR-042 §결정 13 precondition AC (Phase 2 의무)**. §14 row count(lane spawn coarse) 와 spawn-event row count(per-agent) 정합 검증. dedup = aggregate/read-time script 책임 (append-time 아님 — cross-channel coupling + 50ms 위반 회피, Refactor MED)"
+    section14_dedup: "**§14 Lane Evidence ↔ spawn-event dedup script = ADR-163 §결정 13 precondition AC (Phase 2 의무)**. §14 row count(lane spawn coarse) 와 spawn-event row count(per-agent) 정합 검증. dedup = aggregate/read-time script 책임 (append-time 아님 — cross-channel coupling + 50ms 위반 회피, Refactor MED)"
     lane_context_limitation: |
       **SubagentStop trigger 에 story_key / lane_label source 부재 (플랫폼 한계 — F-CR-002)**:
       SubagentStop hook 가용 source = CLAUDE_SESSION_ID / CLAUDE_PROJECT_DIR / CLAUDE_PLUGIN_ROOT env
@@ -294,11 +294,11 @@ append_rules:
 
 operational_constraints:
   zero_api_call:
-    rule: "0 API call (ADR-042 §결정 8) — Anthropic/GitHub/external API 호출 금지. token source = transcript_path 파싱 또는 SDK total_cost_usd (Phase 2 실측 후 택일), pricing = 로컬 상수. local I/O only"
+    rule: "0 API call (ADR-163 §결정 8) — Anthropic/GitHub/external API 호출 금지. token source = transcript_path 파싱 또는 SDK total_cost_usd (Phase 2 실측 후 택일), pricing = 로컬 상수. local I/O only"
     rationale: "measurement = measure 대상 amplify 금지 (CRITICAL)"
 
   best_effort_50ms_ceiling_plus_transcript_overflow:
-    rule: "append latency p99 ≤50ms (ADR-042 §결정 8). **단 50ms ceiling 은 free-inherit 아님** — transcript parse 는 stop-event 가 없던 net-new unbounded I/O (TestContractArch §8.3 / InfraOpArch H2)"
+    rule: "append latency p99 ≤50ms (ADR-163 §결정 8). **단 50ms ceiling 은 free-inherit 아님** — transcript parse 는 stop-event 가 없던 net-new unbounded I/O (TestContractArch §8.3 / InfraOpArch H2)"
     overflow_contract:  # MANDATORY (InfraOpArch H2)
       - "bounded read (byte cap / line cap) + parse timeout"
       - "overflow / timeout 시 → attribution_confidence: unattributed (block 아님, token/cost = null)"
@@ -312,7 +312,7 @@ operational_constraints:
       derivation fn 은 numeric only 반환 (구조적 mitigation — content/path 가 row 에 도달하는 경로 자체 부재).
       stop-event 는 이 surface 를 마주한 적 없음 (subagent-stop 이 transcript 미read) — spawn-event net-new P0.
 
-  isolation:  # ADR-042 §결정 9 / InfraOpArch §7.4.5
+  isolation:  # ADR-163 §결정 9 / InfraOpArch §7.4.5
     wrapper_path: "mclayer/plugin-codeforge checkout 의 .claude/ledger/spawn-event.jsonl"
     consumer_path: "각 consumer repo 의 .claude/ledger/spawn-event.jsonl"
     cross_host_leak: "금지 (T-INFO-4 P0). storage_path override 가 wrapper dir 로 escape 금지. cross-host DAP 통합 = ADR-043 §결정 5 Phase 2 deferred"
@@ -328,14 +328,14 @@ operational_constraints:
 - **Allow-list ONLY (v1.x)**: §2 의 19 field 외 새 field 추가 = ADR-043 §결정 2 Amendment 의무 + 본 contract version bump. optional field 추가 = MINOR (ADR-008 §결정 2 — backward-compat, v1.0 reader skip 가능). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR (v2.0 BREAKING).
 - **free-form string field 도입 금지 (v1.x invariant)**: T-INFO-8 구조적 mitigation 보존. 만약 free-form string field 가 불가피하면 = ADR-043 §결정 3 Deny-list regex 6 pattern 적용 의무 + Amendment. (현 v1.0 = free-form 0건 → Deny-list no-op, 단 **inherit 선언** — defense in depth: 향후 string field 도입 시 자동 적용 대상).
 - **enum 값 추가**: `lane_label` / `agent_type` / `event_type` / `attribution_confidence` enum 확장 = additive 면 MINOR (ADR-043 §결정 2 Amendment 동반). enum 값 제거 = MAJOR.
-- **storage backend 변경 (JSONL → sqlite)**: ADR-042 §결정 4 amendment 의무 (BREAKING — 단 spawn-event 는 contract=runtime JSONL 일치가 §3 invariant. stop-event sqlite 계약 理想으로 align 하려면 stop-event runtime 도 동반 migration 필요 = 별 Epic).
+- **storage backend 변경 (JSONL → sqlite)**: ADR-163 §결정 4 amendment 의무 (BREAKING — 단 spawn-event 는 contract=runtime JSONL 일치가 §3 invariant. stop-event sqlite 계약 理想으로 align 하려면 stop-event runtime 도 동반 migration 필요 = 별 Epic).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 - **timestamp 형식**: UTC Z strict (§3). +00:00 / bare datetime 불허 — clarification 변경 = minor commentary.
 - **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 19-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
 
 ## 5. Phase 1 / Phase 2 scope
 
-### Phase 1 (CFP-2393 본 PR — doc-only, stop-event 선례 ADR-042 §결정 12)
+### Phase 1 (CFP-2393 본 PR — doc-only, stop-event 선례 ADR-163 §결정 12)
 
 - 본 schema file 신설 (kind:registry)
 - MANIFEST.yaml kind:registry comment line 갱신 (spawn-event 명시 — **entry 미추가**, stop-event 선례)
@@ -343,18 +343,18 @@ operational_constraints:
 - project-config-schema.md `channels.spawn_event: false` 활성 (comment → 정식 schema)
 - measurement-channel.md 도메인 doc 갱신 (Phase 2 deferred → landed Tier-3 8th channel)
 - codeforge-family.md Open Decisions Pending 갱신 (ADR-112 per-Epic gate)
-- ADR-042(measurement) Amendment 1 + ADR-043 Amendment 2
+- ADR-163(measurement) Amendment 1 + ADR-043 Amendment 2
 
 ### Phase 2 (별 후속 PR — append/replay/dedup/lint)
 
 - `append_spawn_event.py` 신설 — **O_APPEND per-row** (stop-event runtime read-modify-write 패턴 미복사, H1) + token source 실측·택일 (transcript_path 파싱 vs SDK total_cost_usd) + overflow contract (bounded read + timeout + unattributed) + sha256 actor + transcript content/path 미저장 (T-INFO-5)
 - SubagentStop hook 확장 — agent_id/agent_type capture (현 subagent-stop = stop_reason 만 추출, net-new wiring) + lazy attribution(pointer only) 권고
 - replay 재구성 script — 기존 JSONL ledger + §14 + §10 read + 시간순(elapsed_seconds keyed) merge. **새 저장계층 미신설**
-- **§14 ↔ spawn-event dedup script** (ADR-042 §결정 13 precondition AC)
+- **§14 ↔ spawn-event dedup script** (ADR-163 §결정 13 precondition AC)
 - lint — kind:registry frontmatter / §1-§4 schema / Allow-list ONLY / attribution_confidence invariant / contract↔runtime parity(§2.4 drift 해소 후 reference pin) / idempotency
 - pricing constant table (로컬, 0 API)
 
-ROI gating prerequisite: ADR-042 §결정 11 (post-merge-counters.jsonl 30+ run) — **단 본 Story 는 Epic CFP-2391 directive 가 deferral 을 supersede** (ADR-042 Amendment 1 §근거 ROI gate 처리 참조).
+ROI gating prerequisite: ADR-163 §결정 11 (post-merge-counters.jsonl 30+ run) — **단 본 Story 는 Epic CFP-2391 directive 가 deferral 을 supersede** (ADR-163 Amendment 1 §근거 ROI gate 처리 참조).
 
 ### self-context-v1 record type (CFP-2572 / ADR-043 Amendment 3 — Phase 1 doc-only)
 
@@ -364,7 +364,7 @@ ROI gating prerequisite: ADR-042 §결정 11 (post-merge-counters.jsonl 30+ run)
 
 ## 6. Cross-references
 
-- **ADR-042** (measurement channel architecture) — §결정 1 boundary 표 8th channel(Amendment 1) / §결정 3 보류 해제(Amendment 1) / §결정 13 amendment 의무 이행 / §결정 8 0-API·50ms / §결정 9 isolation
+- **ADR-163** (measurement channel architecture) — §결정 1 boundary 표 8th channel(Amendment 1) / §결정 3 보류 해제(Amendment 1) / §결정 13 amendment 의무 이행 / §결정 8 0-API·50ms / §결정 9 isolation
 - **ADR-043** (telemetry privacy policy) — §결정 1 opt-in default false / §결정 2 Allow-list(Amendment 2) / §결정 3 Deny-list inherit / T-INFO-5 transcript hard invariant + T-INFO-7 sha256 (Amendment 2)
 - **stop-event-v1** — sibling Tier-3 ledger. **단 structural model 아님** (contract↔runtime drift 회피 — Change Plan §2.4 / §7). spawn-event 는 fix-event-v1 동형
 - **fix-event-v1** — structural model (kind:registry §1/§2/§3/§4 skeleton)

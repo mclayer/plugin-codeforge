@@ -586,7 +586,7 @@ def compute_token_cost(spawn_rows, stats):
     ★3-gap 미해소 → honest-null + upstream_gap_flags REGARDLESS (per_call_missing 구조 /
       cache_ttl_split_missing 구조 / actuals_missing 데이터). raw class count 저장 + read-time 가중
       (flat-sum 금지). cache_write_1h(2×) = cost_usd 단일 1.25× 배수로 유도 불가 → honest-null.
-      B 내부 spawn-event capture-fix row 생성 금지(spawn-event-v1/ADR-042·043 소관).
+      B 내부 spawn-event capture-fix row 생성 금지(spawn-event-v1/ADR-163·043 소관).
     """
     # raw class count 누적 (spawn row = per-agent replay event; token actuals 대개 null=unattributed)
     class_sums = {"uncached_input": 0, "cache_read": 0, "cache_write_5m": 0}  # 1h class = 유도 불가

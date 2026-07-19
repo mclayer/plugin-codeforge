@@ -454,7 +454,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 35
     - page_id: 2064745
-      title: "ADR-042 (alt): Codeforge measurement channel architecture"
+      title: "ADR-163: Codeforge measurement channel architecture"
       source_file: "docs/adr/"
       category: "orchestration-discipline"
       previous_parent_id: 2097153
@@ -1845,7 +1845,7 @@ playbook_split_pages:
   - id: "2131073"
     parent: 2130966
     title: "§15 — 4-channel observability boundary"
-    source_section: "## 15. 4-channel observability boundary (ADR-042 §결정 1, CFP-283)"
+    source_section: "## 15. 4-channel observability boundary (ADR-163 §결정 1, CFP-283)"
     source_line_range: [3479, 3529]
     source_line_count: 50
     estimated_byte_size: 3000

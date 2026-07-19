@@ -12,7 +12,7 @@ amendment_log:
     section: "§결정 2"
     summary: "Sanitize policy 적용 범위 확장 — narration (stderr) → narration + telemetry ledger unified SSOT (ADR-043 §결정 4 SSOT 분담 narrative + §결정 3 Deny-list regex specifics 정합)"
 related_adrs:
-  - ADR-042  # measurement channel architecture (sibling — sanitize scope expansion trigger)
+  - ADR-163  # measurement channel architecture (sibling — sanitize scope expansion trigger)
   - ADR-043  # telemetry privacy policy (unified sanitize SSOT — §결정 4 SSOT 분담 narrative + §결정 3 Deny-list regex specifics)
 is_transitional: false
 ---

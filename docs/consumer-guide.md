@@ -2930,7 +2930,7 @@ consumer 측 사용자 활성 directive 권장 (wrapper directive 패턴 mirror 
 
 stop-event-v1 ledger / inline write detect hook / spawn cost telemetry — wrapper [ADR-039 §결정 9](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) deferred follow-up CFP. consumer-side 측정도 wrapper 와 동시 도입.
 
-### 7.0.7 Telemetry opt-in (CFP-283 / ADR-042 / ADR-043)
+### 7.0.7 Telemetry opt-in (CFP-283 / ADR-163 / ADR-043)
 
 **Phase 1 wrapper-only doc + schema land** — measurement channel 도입 (stop-event-v1 ledger schema 신설). 모든 telemetry channel = **opt-in default false** invariant. Phase 1 = doc-only — telemetry hook 구현 / enforcement mechanism 모두 Phase 2 follow-up CFP.
 
@@ -2952,7 +2952,7 @@ telemetry:
 
 global `enabled: false` 시 모든 channel disabled (override 불가능 — global gate). per-channel granular flag (`channels.stop_event`) = 부분 활성 가능.
 
-#### Wrapper-vs-consumer ledger isolation (ADR-042 §결정 9 / ADR-043 §결정 5)
+#### Wrapper-vs-consumer ledger isolation (ADR-163 §결정 9 / ADR-043 §결정 5)
 
 ledger storage path 분리 invariant:
 
@@ -2970,7 +2970,7 @@ ledger storage path 분리 invariant:
   - 한국 주민번호
   - email
   - hex≥32 (hash / private key)
-- **0 API call constraint** — telemetry instrumentation = local I/O only. Anthropic API / GitHub API / external service 호출 금지 (measurement = measure 대상 amplify 금지, ADR-042 §결정 8).
+- **0 API call constraint** — telemetry instrumentation = local I/O only. Anthropic API / GitHub API / external service 호출 금지 (measurement = measure 대상 amplify 금지, ADR-163 §결정 8).
 - **best-effort 50ms ceiling** — append latency p99 ≤50ms (overflow 시 graceful degradation).
 
 상세 SSOT = [ADR-043 (codeforge telemetry privacy policy)](../archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md).
@@ -2984,7 +2984,7 @@ ledger storage path 분리 invariant:
 - Rule-based hook (PreToolUse on Write / Edit / mcp__github__* — inline write detect)
 - **Wrapper dogfood always-on enforcement mechanism** — Phase 1 doc-only invariant 유지 (env flag / hook / runtime validation 모두 Phase 2). 적용 범위 (wrapper repo `mclayer/plugin-codeforge` checkout 만) 는 Phase 2 enforcement CFP 시 별도 정의.
 
-ROI gating prerequisite = post-merge-counters.jsonl 30+ run 누적 (ADR-026 §결정 3 패턴 / ADR-042 §결정 11).
+ROI gating prerequisite = post-merge-counters.jsonl 30+ run 누적 (ADR-026 §결정 3 패턴 / ADR-163 §결정 11).
 
 ## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1 + Amendment 2)
 

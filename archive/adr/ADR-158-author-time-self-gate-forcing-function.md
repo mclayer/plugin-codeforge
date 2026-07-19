@@ -20,7 +20,7 @@ related_adrs:
   - ADR-154      # 강 인접 (disjoint 경계 명시 의무) — hard-gate-self-verification(#2684 silent-green meta-gate). C(저작시점 self-적용) ⊥ #2684(게이트 자기검증) — false-conflation 방지
   - ADR-119      # 강 의존 (정직 천장 + 2 판정면) — self-gate PASS=outcome ground-truth(proxy 아님) / "결점 주입 완전 방지" over-claim 금지 / self-ref dogfood 8-11연속 이력 대응 / self-test 독립 oracle(CFP-2673 X⊆X tautology 금지)
   - ADR-115      # 강 의존 (record-only non-blocking exit-0) — C emit 실패 = graceful None, self-gate 흐름 무차단
-  - ADR-042      # 배경 (measurement channel) — dev-process = 9th channel / 0-API-call / always-on α 비대칭 상속
+  - ADR-163      # 배경 (measurement channel) — dev-process = 9th channel / 0-API-call / always-on α 비대칭 상속
   - ADR-060      # 배경 (test-contract lint 선례) — 신규 lint non-required day-1 + 대칭 fail-closed self-test 선례
   - ADR-151      # 배경 (selftest-execution-liveness inventory) — C self-test enroll(channel alive, bijection +1)
 related_files:

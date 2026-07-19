@@ -16,7 +16,7 @@
 # 불변식 (binding):
 #   - tier = [measurement] STRICT record-only — "측정 ≠ 분류". 인과 주장 금지
 #     ("10:2 실측" / "telemetry 가 stop 을 줄인다" 절대 금지 — 빈도 측정만).
-#   - 0 API call (ADR-042 §결정 8) — local I/O only. external service 호출 절대 금지.
+#   - 0 API call (ADR-163 §결정 8) — local I/O only. external service 호출 절대 금지.
 #   - 원장 read-only — IN-PLACE EDIT 절대 금지 (record-only INV, ADR-115 §2 / ADR-072 disjoint).
 #   - non-blocking — malformed / empty / 부재 로도 crash 금지, aggregate exit 0.
 #

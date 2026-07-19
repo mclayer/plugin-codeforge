@@ -100,7 +100,7 @@ _DEFECT_TYPE_FALLBACK = "unknown-type"
 # time_to_detection DERIVED measure — 도입점 불명 sentinel
 _TTD_UNATTRIBUTED = "unattributed"
 
-# consumer_scope closed enum (ADR-042 §결정 9 isolation marker)
+# consumer_scope closed enum (ADR-163 §결정 9 isolation marker)
 _CONSUMER_SCOPES = {"wrapper", "consumer"}
 
 # redaction_rules_fired closed enum (audit — 규칙명만, 매칭 secret 원문/hash 절대 미기록 T-DPE-8)
