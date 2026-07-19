@@ -57,6 +57,11 @@ ADR 본문 안 `amendments[]` array 의 `amendment_id` slot 도 multi-session ra
 
 ```yaml
 amendments_reserved:
+  - adr_number: 60
+    amendment_id: 25
+    reserved_by_cfp: CFP-2650
+    reserved_at: 2026-07-19
+    status: active   # Phase 2 PR 에서 Amendment 25 실 적용 (reserved → active)
 # 형식:
 # - adr_number: NNN              # 기존 ADR number (active)
 #   amendment_id: M              # 예약 Amendment id slot (sequential within ADR)

@@ -1163,6 +1163,25 @@ amendment_log:
       (`archive/**` = ADR-037 결정 A2-3 비귀속 + A2-6 no-surface-touch 면제,
       게이트 실측 check-plugin-version-bump-self.sh:145 `archive/*` → exempt)
       → marketplace sync 불요 (ADR-063 §결정 1 mirrored field 변경 0).
+  - amendment: 25
+    carrier_story: CFP-2650
+    date: 2026-07-19
+    direction: clarify
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework → ADR-058 §결정 5 trigger 미해당. Amendment 25 = clarify/promotion-provenance — tier flip 은 additive ratchet↑(warning → blocking-on-pr surfacing), invariant 강도 상향이며 약화 0건. required contexts 7-tuple 무변경 (surfacing ≠ membership, ADR-145 §결정3 override 비적용). 선례 = Amendment 20 (CFP-2594 flip provenance) + Amendment 24 (clarify).
+    summary: |
+      resource-safety-claim-proof-presence 게이트 warning → blocking-on-pr 승격
+      provenance (CFP-2650, CFP-2646 Wave 2 named carrier). CFP-2594 flip model
+      동형 — surfacing ≠ required-context 편입. 신규 §결정 0 · 신규 entry 0 ·
+      tier flip 만 (게이트 semantic 무변경, ADR-082 §결정16 owner Amendment 불요).
+      (1) 승격 provenance: promoted_by CFP-2650 / evidence-gate 3/3 MET
+      (pr_cumulative 56≥20 / failure_threshold 0 / sibling CFP-2646 #2651 MERGED).
+      (2) CFP-2594 "surfacing ≠ required-context 편입" model 을 본 게이트에 재확인 —
+      workflow header 승격노트의 stale 2-정의(surfacing = required 편입) 봉합.
+      (3) branch-protection 7-tuple 무변경 (required contexts 신설 0, ADR-125 선호).
+      honesty-ceiling(ADR-151 §결정7) 불변 — blocking 게이트도 presence 만 검사,
+      truth 미강제. scope = 양 workflow continue-on-error 제거(byte-identical pair) +
+      registry current_tier flip + lint docstring granularity-carrier pointer 정정 +
+      정책문서 file-scoped over-claim sweep(ADR-045/ADR-061 3-line) + plugin.json MINOR.
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -2886,3 +2905,35 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 - **label registry 실경로** = **`docs/inter-plugin-contracts/label-registry-v2.md`**(v2.107). Epic change-plan 의 `docs/label-registry-v2.md` = **dead path**(파일 부재).
 
 **scope**: doc-only (`archive/adr/**` 단일). 신규 게이트/required-context/evidence-registry entry 0. branch protection 7-tuple 무변경. plugin.json bump **0** — `archive/**` = ADR-037 결정 A2-3 **비귀속** + A2-6 **no-surface-touch 면제**(게이트 실측: `scripts/check-plugin-version-bump-self.sh:145` `archive/*` → `exempt`; ADR-037 `:432` 가 자기 Amendment PR 로 동일 경로 시연) → **marketplace sync 불요**(ADR-063 §결정 1 mirrored field 변경 0). D3 실배선 본체(5-piece + registry row + label + 6.97.0 MINOR + marketplace sync #364)는 **PR #2720 으로 이미 main 착지**(`8e60a53d`) — 잔여 갭 작업(per-class census floor + ADR-154 enrollment)은 CFP-2719 **Phase 2 PR scope**(6.98.0 MINOR + marketplace sync, change-plan §5.2/§5.3 SSOT).
+
+## Amendment 25 (CFP-2650, 2026-07-19 KST) — resource-safety-claim-proof-presence warning→blocking-on-pr 승격 provenance
+
+**Carrier**: CFP-2650 (CFP-2646 Wave 2 — resource-safety-claim-proof-presence 게이트 승격 + 정책문서 over-claim sweep + consumer 전파) / Story file = `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-2650.md`.
+
+**class**: **clarify / promotion-provenance** — 결정 내용 무변경, 약화 0. 신규 §결정 0 · 신규 entry 0 · 게이트 semantic 불변(tier flip 만). 선례 = Amendment 20(CFP-2594 flip provenance) + Amendment 24(clarify). ADR-082 §결정16(게이트 owner) semantic 불변 → ADR-082 Amendment 불요.
+
+**배경**: CFP-2646 이 warning-tier(continue-on-error, merge 무차단)로 착지시킨 `resource-safety-claim-proof-presence` 게이트를, ADR-060 §결정 6 evidence-gate 실측 통과 후 blocking-on-pr 로 승격한다. registry `named_promotion_carrier: CFP-2650` 의 실집행.
+
+### 승격 provenance (evidence-gate 3/3 MET, firsthand)
+
+| 조건 | 기준 | 실측치 | 판정 |
+|---|---|---|---|
+| pr_cumulative_min | ≥ 20 | 56 merged PR (introduced_date 2026-07-13 이후) | MET |
+| failure_threshold | = 0 | warning comment 0건 + 현 main HEAD lint PASS(0 new over-claim) + baseline 1회 생성 후 미변경 삼각검증 | MET |
+| sibling_dependencies | CFP-2646 merged | PR #2651 MERGED 2026-07-12 | MET |
+
+### 승격 mechanism (CFP-2594 flip model 동형)
+
+- 양 workflow(`.github/workflows/` + `templates/github-workflows/` byte-identical pair, ADR-005) job+step `continue-on-error` 제거 = blocking-on-pr surfacing (lint 실패 = job 실패 = 체크 red).
+- registry `current_tier: warning → blocking-on-pr` + `promoted_by: CFP-2650` + `promoted_date: 2026-07-19` provenance.
+- **branch-protection 7-tuple 무변경** — surfacing ≠ required-context 편입 (ADR-125 required contexts 무변경 선호 + CFP-2594 "surfacing ≠ required" 선례). required 편입(7→8 fail-closed narrowing)은 §1 미요청 별개 escalation(ADR-145 선례), 본 Story 미채택. workflow header 승격노트의 stale 2-정의(surfacing = required 편입) 봉합.
+
+### honesty-ceiling 불변 (ADR-151 §결정7 상속)
+
+승격은 게이트의 강제 속성을 presence → truth 로 올리지 않는다. blocking-on-pr 은 좌향 노출의 가시성만 warning → PR-red 로 상향하고, presence ≠ truth 상한은 tier 와 독립적으로 불변이다. detection(보안테스트 lane) 존치. 본 Amendment 및 산출물에 "완전 봉인"·"완전 방지"·"truth 강제" 류 hard-claim 부재.
+
+### 약화 0 논증 (ADR-058 §결정 5 비대상)
+
+tier flip = additive ratchet↑ (warning → blocking-on-pr surfacing). invariant 강도 상향, 약화 방향 0건 → ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상. required contexts 7-tuple 무변경 (surfacing ≠ membership — ADR-145 §결정 3 override 비적용). sunset_justification = N/A.
+
+**scope**: workflow pair(continue-on-error 제거) + registry(current_tier flip + provenance) + lint docstring(granularity-carrier pointer 정정) + 정책문서 sweep(ADR-045:107 · ADR-061:454-455 3-line) + 신규 flip self-test(`tests/scripts/test_resource_safety_flip.py`) + plugin.json 6.109.0 MINOR + marketplace sync. 본 ADR 변경(`archive/**`)은 그 자체로 plugin.json bump 비귀속(ADR-037 A2-3/A2-6 면제); bump 는 workflow/registry/script 변경이 driver.
