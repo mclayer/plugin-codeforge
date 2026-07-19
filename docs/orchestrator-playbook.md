@@ -2580,7 +2580,7 @@ Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 
 3. 6 sub-agent **parallel always-executable** fan-out (ADR-077 §결정 10 / ADR-064 §결정 4 parallel default — sequential 3 사유 [state dependency / shared resource / ordering invariant] 부재 시 default parallel): DomainAgent(§2) + RequirementsAnalyst(§5) + Researcher(§6) + FeasibilityAgent(§4.2) + ContinuityAgent(§4.3) + ChangeImpactAgent(§4.1).
 4. **조건부 PMO 가산**: 답변 영향이 Epic/Story 구조 도달 시 PMOAgent 합류 (재분해). contrapositive invariant "PMO 합류 미발동 = Epic 구조 무변경" (ADR-077 §결정 2 P-5 closed enum SSOT). ADR-045 retro trigger와 origin disjoint.
 5. **정보 무결성 invariant (ADR-077 §결정 7 — SecurityArch P1)**: 재조사 sub-agent는 `prior_output_ref` 의 fact-check marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + reverse-explicit `[verification-out-of-scope: <사유>]` 를 **verbatim 보존**. `[hypothesis]` / `[fact-check-pending]` → `[verified]` **무검증 승격 금지** (ADR-052 Amendment 3 무손상). marker 부재 = 암묵 `[hypothesis]` default 유지.
-6. PL 재종합 (ADR-056 합성 순서: §5 Analyst → §2 Domain → §6 Researcher → PL) + 재조사 카운터 §9.0 기록 (§10 FIX Ledger 합산 금지 — §4.4.0 layer 1).
+6. PL 재종합 (ADR-161 합성 순서: §5 Analyst → §2 Domain → §6 Researcher → PL) + 재조사 카운터 §9.0 기록 (§10 FIX Ledger 합산 금지 — §4.4.0 layer 1).
 
 #### 4.4.2 PL 재량 재스폰 절차 (layer 3 — §4.4.1 clarification-driven fan-out과 trigger origin disjoint)
 

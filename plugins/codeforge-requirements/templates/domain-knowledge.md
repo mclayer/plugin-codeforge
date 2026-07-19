@@ -8,7 +8,7 @@ DomainAgent가 `docs/domain-knowledge/<area>/<topic>.md` 직접 write 시 따르
 
 ## 파일 위치
 
-- **위치**: `docs/domain-knowledge/domain/<area>/<topic>.md`. `<area>`는 consumer overlay가 정의 (예: `policies/`, `accounting/`, `auth/`) — ADR-056 domain/ 서브디렉터리
+- **위치**: `docs/domain-knowledge/domain/<area>/<topic>.md`. `<area>`는 consumer overlay가 정의 (예: `policies/`, `accounting/`, `auth/`) — ADR-161 domain/ 서브디렉터리
 - **계층**: 디렉토리 1-2단계 권장 (area / topic)
 - **CODEOWNERS**: `docs/domain-knowledge/domain/**` → `@org/domain-experts` 자동 review (consumer overlay가 매핑)
 
@@ -69,7 +69,7 @@ updated: YYYY-MM-DD                 # 마지막 수정일 (DomainAgent가 갱신
 ```
 1. consumer overlay에서 area 목록 확인 (`.claude/_overlay/project.yaml` 또는 docs/domain-knowledge 기존 디렉토리)
 2. 적절한 area 선택, topic-slug 결정 (kebab-case)
-3. `Write(docs/domain-knowledge/domain/<area>/<topic>.md)` 호출 (ADR-056 — domain/ 서브디렉터리), frontmatter `kind: domain_fact` + 본문 작성
+3. `Write(docs/domain-knowledge/domain/<area>/<topic>.md)` 호출 (ADR-161 — domain/ 서브디렉터리), frontmatter `kind: domain_fact` + 본문 작성
 4. Story file §3 "관련 ADR" 또는 별도 §5 "도메인 지식" 섹션에 링크 추가 — Orchestrator 경유 DocsAgent에 의뢰 (Story file은 multi-writer)
 5. 기존 page 갱신 시 frontmatter `updated` 필드 + "변경 이력" 섹션 append
 ```

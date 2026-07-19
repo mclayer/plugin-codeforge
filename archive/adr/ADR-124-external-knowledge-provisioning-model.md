@@ -14,7 +14,7 @@ related_stories:
 related_adrs:
   - ADR-046  # §결정 1·4 — Researcher 3 mandate 의 요구사항 lane 시점이 단계① 묶음. 본 ADR 은 적극 탐색 default skew 에 demand-anchored frame 을 더한 정밀화/강화 (약화 아님)
   - ADR-119  # §결정 5·6 — 원칙(보편) ↔ 실행(전담) 분리를 단계②③ lane-disjoint 정합으로 명문화. §결정 6 "조사했으므로 옳다 단정 금지" = 검사연극 금지 SSOT
-  - ADR-056  # §결정 1·4·5 — concept/ 디렉터리 silo = by-design indirection (§6 compact summary single read surface). 결함 재규정 비대상
+  - ADR-161  # §결정 1·4·5 — concept/ 디렉터리 silo = by-design indirection (§6 compact summary single read surface). 결함 재규정 비대상
   - ADR-039  # §결정 1·2 — spawn = Orchestrator 전용 binary always-spawn + closed 4-entry whitelist. lane 개수 axis 와 disjoint (spawn mechanism 무변), amendment 불요
   - ADR-121  # §결정 1 — 배포·배포리뷰 2 lane 폐지 결정. 단계③ 배포리뷰 미적용 사유 (폐지 결정·deprecation 진행 중 + production 경험적 측정 무의존)
   - ADR-058  # §결정 5 — 약화 evidence-gate. 본 ADR 의 단계① 정밀화가 ratchet 강화 방향임을 보증
@@ -236,7 +236,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 |---|---|---|
 | ADR-046 §결정 1·4 | 단계① | **scope 정밀화(강화)** — ADR-046 3 mandate (Concept formulation / Deep exploration / Requirement reshape) 의 요구사항-lane 시점을 단계① 으로 묶는다. §결정 4 의 "적극 탐색 default skew" 에 demand-anchored frame 을 더하는 것은 정밀화이며, Never-skippable invariant 무손상 (ADR-058 §결정 5 ratchet 강화 방향 정합). **"약화" frame 이 아니다.** |
 | ADR-119 §결정 5·6 | 단계②③ + 검사연극 게이트 | §결정 5 의 "원칙(보편) ↔ 실행(전담)" 분리를 단계②③ 의 lane-disjoint 정합으로 명문화한다. "실행 전담 = 요구사항 lane 내 deep exploration (ResearcherAgent 전담)" 한정은 그대로 보존하며, 타 lane 은 인용으로 의무 이행 (단계②). §결정 5 표 자체는 흡수하지 않고 인용만 한다. §결정 6 "조사했으므로 옳다 단정 금지" = 검사연극 금지 SSOT (결정 2). |
-| ADR-056 (`ADR-056-domain-concept-knowledge-dir-separation.md`) | 단계① 산출 경로 | `concept/` 디렉터리의 "직접 독자 없음" 구조는 **by-design** 이다 — §결정 4 의 §6 compact summary 가 단일 read surface 로 작동하는 indirection 이며 (PLAgent 가 매번 직접 Glob+Read 하는 부담을 제거), §결정 5 의 4중 강제로 소유 경계가 집행된다. **결함으로 재규정하지 않는다.** |
+| ADR-161 (`ADR-161-domain-concept-knowledge-dir-separation.md`) | 단계① 산출 경로 | `concept/` 디렉터리의 "직접 독자 없음" 구조는 **by-design** 이다 — §결정 4 의 §6 compact summary 가 단일 read surface 로 작동하는 indirection 이며 (PLAgent 가 매번 직접 Glob+Read 하는 부담을 제거), §결정 5 의 4중 강제로 소유 경계가 집행된다. **결함으로 재규정하지 않는다.** |
 | ADR-039 §결정 1·2 | spawn mechanism | spawn = Orchestrator 전용 binary always-spawn (§결정 1) + closed 4-entry whitelist (§결정 2). 9번째 lane 추가는 spawn *대상의 enumeration 확장* 일 뿐 spawn *mechanism·whitelist* 변경이 아니므로 **disjoint axis** (lane 개수 ≠ spawn mechanism). ADR-039 영향 0 — amendment 불요. |
 | ADR-121 §결정 1 | 단계③ 배포리뷰 | 배포·배포리뷰 2 lane 폐지. 단계③ 의 배포리뷰 "미적용" 사유 (결정 3). |
 
@@ -270,7 +270,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 - **충당 모델 단일화**: 외부지식 충당 책임을 시점·주체 기준 3-단계로 박제해, 단계마다 암묵적이던 "누가 언제 충당하는가" 를 명문화한다. 기존 ADR (046/119) 을 합성할 뿐 새 규범을 신설하지 않는다.
 - **검사연극 차단**: 깊은 검증을 외부사실 의존 지점에만 적용해, 조사 행위가 정당성의 가면이 되는 anti-pattern (ADR-119 §결정 6) 을 차단한다.
 - **약화 0 (ratchet 강화)**: 단계① 의 demand-anchored frame 은 ADR-046 §결정 4 의 적극 탐색 default skew 를 정밀화하는 강화 방향이며, Never-skippable invariant 무손상 (ADR-058 §결정 5 / ADR-064 §결정 7 정합).
-- **disjoint 보존**: ADR-039 spawn mechanism, ADR-056 concept silo, ADR-121 배포 폐지 어느 것도 본 ADR 이 침범하지 않는다 (각 disjoint axis 명시).
+- **disjoint 보존**: ADR-039 spawn mechanism, ADR-161 concept silo, ADR-121 배포 폐지 어느 것도 본 ADR 이 침범하지 않는다 (각 disjoint axis 명시).
 
 ## 결과
 
@@ -292,7 +292,7 @@ N/A — permanent policy. 후속 이행 추적 = Epic [#2324](https://github.com
 - 본 ADR — 외부지식 충당 3-단계 + 깊은 검증 적합도 매트릭스 SSOT
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — Researcher 3 mandate (단계① 묶음, 정밀화 대상)
 - [ADR-119](ADR-119-research-before-claims.md) — research-before-claims (§결정 5 원칙↔실행 분리 / §결정 6 검사연극 금지)
-- [ADR-056](ADR-056-domain-concept-knowledge-dir-separation.md) — concept/ 디렉터리 by-design indirection
+- [ADR-161](ADR-161-domain-concept-knowledge-dir-separation.md) — concept/ 디렉터리 by-design indirection
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — spawn mechanism (disjoint axis)
 - [ADR-121](ADR-121-deprecate-deploy-lanes.md) — 배포·배포리뷰 lane 폐지 (단계③ 배포리뷰 미적용 사유)
 - `skills/review-responsibility/SKILL.md` — 단계③ 매트릭스 요약 mirror

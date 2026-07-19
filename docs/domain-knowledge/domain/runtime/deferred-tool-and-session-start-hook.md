@@ -18,7 +18,7 @@ related_adrs:
   - ADR-038  # progress visualization (Amendment 2 §결정 9 = 본 entry 의 carrier ADR)
   - ADR-040  # worktree-gc SessionStart hook (선례 #2)
   - ADR-041  # doc location registry (domain_knowledge variants path cover)
-  - ADR-056  # domain-knowledge dir separation (path = domain/<area>/<topic>.md)
+  - ADR-161  # domain-knowledge dir separation (path = domain/<area>/<topic>.md)
   - ADR-058  # 해소 기준 의무 (Amendment 2 sunset_justification 3-tuple)
 carrier_story: CFP-500
 date: 2026-05-12
@@ -201,7 +201,7 @@ ADR-058 metric 추적 대상 (Story §6 위험 #1) — manual sampling 으로 �
 
 - **ADR-038 Amendment 2 §결정 9** — 본 entry 의 carrier ADR. SessionStart hook tier escalation (CFP-500). `prereq_tools[]` + `prereq_checks[]` declarative array schema.
 - **ADR-052 Amendment 1** — Codex proactive check touchpoint #4 multi-round adversarial debate 격상. 본 entry 의 deferred tool 메커니즘 영역 cross-ref.
-- **ADR-056 §결정 1** — domain-knowledge dir separation. 본 entry path = `domain/<area>/<topic>.md` 정합.
+- **ADR-161 §결정 1** — domain-knowledge dir separation. 본 entry path = `domain/<area>/<topic>.md` 정합.
 - **ADR-058 §결정 5** — 안전망 ADR 해소 기준 의무. Amendment 2 amendment_log `sunset_justification` 3-tuple metric/who/how.
 - **ADR-040 / CFP-136** — worktree-gc SessionStart hook (선례 #2). install path = consumer-installed.
 - **ADR-037 / CFP-262** — plugin version drift SessionStart hook (선례 #1). install path = plugin-installed.

@@ -1,5 +1,5 @@
 ---
-adr_number: 56
+adr_number: 161
 title: Domain-Concept knowledge directory separation — domain/ vs concept/ 물리 분리
 date: 2026-05-11
 status: Accepted
@@ -22,7 +22,7 @@ related_files:
 is_transitional: false
 ---
 
-# ADR-056: Domain-Concept knowledge directory separation
+# ADR-161: Domain-Concept knowledge directory separation
 
 ## 상태
 

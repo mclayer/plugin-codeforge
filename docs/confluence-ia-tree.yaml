@@ -654,7 +654,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 60
     - page_id: 2130272
-      title: "ADR-056: Domain-Concept knowledge directory separation"
+      title: "ADR-161: Domain-Concept knowledge directory separation"
       source_file: "docs/adr/"
       category: "agent-design"
       previous_parent_id: 2097153
@@ -670,7 +670,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 62
     - page_id: 2130293
-      title: "ADR-056 (alt): 요구사항 레인 코드 컨텍스트 3 에이전트 추가"
+      title: "ADR-056: 요구사항 레인 코드 컨텍스트 3 에이전트 추가"
       source_file: "docs/adr/"
       category: "agent-design"
       previous_parent_id: 2097153

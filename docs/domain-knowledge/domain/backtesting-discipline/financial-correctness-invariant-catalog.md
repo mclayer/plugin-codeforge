@@ -17,7 +17,7 @@ tags:
   - adr-042-amendment-17
 related_adrs:
   - ADR-042  # Amendment 17 — DomainAgent financial-invariant-0 조건부 sonnet 정책 SSOT (본 catalog = D1 산출)
-  - ADR-056  # DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny)
+  - ADR-161  # DomainAgent write 권한 경로 docs/domain-knowledge/domain/** (concept/** deny)
   - ADR-058  # 약화 방향 sunset_justification evidence requirement (tier-flip 하향 evidence-gate)
   - ADR-057  # Codex 독립 review baseline 선례 (F1 measurement)
 related_files:
@@ -122,13 +122,13 @@ ADR-042 Amd17 §결정1 의 5-AND 신호 각각이 차단하는 invariant(본 ca
 - **wrapper-self 비대상**: 본 catalog 는 *정책 carrier* 인 wrapper repo 에 codify 되나, financial-invariant-0 tier-flip 의 실 적용 대상은 **consumer 백테스트 프로젝트**(예: mctrader)다. wrapper-self Story 는 financial 결과 비접촉이지만 tier-flip 적용 roster 가 아니다.
 - **advisory ≠ blocking gate**: A-side 정적 falsifiability 의 mechanical gate(blocking) 승격은 본 catalog 범위 밖 — 별 CFP(evidence 누적 후)다. 본 catalog 는 invariant 식별·분류 advisory 만 정의한다.
 - **catalog ≠ 판정 엔진**: 실제 financial-invariant-0 5-AND 판정은 `scripts/check-stakes-tier-gating.sh` 의 `STAKES_FINANCIAL_INVARIANT_ZERO` predicate 책임(결정론 SSOT). 본 catalog 는 그 predicate 가 차단하는 invariant 의 정의·분류 입력만 제공 — 두 영역 disjoint.
-- **DomainAgent write 권한 경로**: 본 파일은 `docs/domain-knowledge/domain/**` 하위(area=`backtesting-discipline`)다. `docs/domain-knowledge/concept/**`(ResearcherAgent 전용, ADR-056 deny)가 아닌 domain/ 만 DomainAgent 가 write 가능(OQ-7).
+- **DomainAgent write 권한 경로**: 본 파일은 `docs/domain-knowledge/domain/**` 하위(area=`backtesting-discipline`)다. `docs/domain-knowledge/concept/**`(ResearcherAgent 전용, ADR-161 deny)가 아닌 domain/ 만 DomainAgent 가 write 가능(OQ-7).
 
 ## 관련 ADR
 
 - **ADR-042 Amendment 17** (CFP-2445) — DomainAgent financial-invariant-0 조건부 sonnet 정책 SSOT. 본 catalog = D1 산출물(11 invariant + A/B 분류 + shape 매핑). financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축.
 - **ADR-042 Amendment 16** (CFP-2432) — Story-shape 조건부 model tier v1(InfraOpArch). §결정3 가 본 catalog codify 를 DomainAgent flip 의 선결조건으로 예약.
-- **ADR-056** — DomainAgent write 권한 경로 `docs/domain-knowledge/domain/**`(concept/** deny). 본 catalog 위치 근거.
+- **ADR-161** — DomainAgent write 권한 경로 `docs/domain-knowledge/domain/**`(concept/** deny). 본 catalog 위치 근거.
 - **ADR-058 §결정5 / ADR-064 §결정7** — 약화 방향 sunset_justification evidence requirement(DomainAgent tier-flip 하향 evidence-gate). 본 catalog cross-ref 누락 = F1 미달 임계 ①.
 - **ADR-057 §결정3** — Codex 독립 review baseline 선례(F1 measurement). 본 catalog = sonnet 산출물의 catalog cross-ref 완결성 측정 입력.
 

@@ -175,7 +175,7 @@ hook 등록 누락 / hook 실행 실패 → §결정 8 의 runtime ToolSearch �
 
 - `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` (신규)
 - `scripts/check-codeforge-prereq.sh` (신규)
-- `docs/domain-knowledge/domain/runtime/deferred-tool-and-session-start-hook.md` (신규 — ADR-056 §결정 1 path)
+- `docs/domain-knowledge/domain/runtime/deferred-tool-and-session-start-hook.md` (신규 — ADR-161 §결정 1 path)
 - `docs/orchestrator-playbook.md` §1.1 0i (supersede)
 - `CLAUDE.md` "세션 개시 의무" (supersede)
 - `.claude/settings.json` (wrapper dogfooding 등록)

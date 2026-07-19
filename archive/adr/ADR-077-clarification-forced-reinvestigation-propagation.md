@@ -34,7 +34,7 @@ related_adrs:
   - ADR-044  # Phase-scoped sequential team — env=1 시 SendMessage fan-out, §결정 8 env-equality protocol invariant 무손상 (envelope env-invariant 단일값)
   - ADR-045  # PMO retro mandatory trigger — 조건부 PMO 합류 trigger 와 retro trigger origin disjoint
   - ADR-052  # Codex proactive Touchpoint — Amendment 1/3 (Touchpoint #4 RequirementsPL multi-round debate + fact-check marker 4종). trigger origin disjoint (Codex divergence vs 사용자 답변)
-  - ADR-056  # 합성 순서 (§5 Analyst → §2 Domain → §6 Researcher → PL) — 재조사 후 PL 재종합 정합
+  - ADR-161  # 합성 순서 (§5 Analyst → §2 Domain → §6 Researcher → PL) — 재조사 후 PL 재종합 정합
   - ADR-058  # ADR sunset criteria mandate — is_transitional:false 정합 (§해소 기준 N/A permanent), §결정 5 sunset_justification ratchet 차단
   - ADR-059  # debate-protocol-v1 — 재조사 카운터 ↔ debate round counter disjoint, max-round 5 선례 (재조사 카운터 cap 정합)
   - ADR-064  # Decision principle mandate — §결정 4 parallel default + sequential 3 사유, §결정 1 forbid-list (모달 어휘 금지)
@@ -352,7 +352,7 @@ N/A — permanent (additive 축 확장). 본 Amendment 이후 §결정 7 trigger
 - `docs/adr/ADR-044-phase-scoped-sequential-team.md` — §결정 8 env-equality protocol invariant 무손상 (결정 4/10)
 - `docs/adr/ADR-045-story-retro-mandatory-trigger.md` — 조건부 PMO 합류 trigger ↔ retro trigger origin disjoint (결정 2)
 - `docs/adr/ADR-052-codex-proactive-check-touchpoints.md` — Amendment 1/3 Touchpoint #4 boundary (결정 7)
-- `docs/adr/ADR-056-requirements-synthesis-order.md` — 합성 순서 (재조사 후 PL 재종합 정합)
+- `docs/adr/ADR-161-domain-concept-knowledge-dir-separation.md` — 합성 순서 (재조사 후 PL 재종합 정합)
 - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — is_transitional:false 정합 (§해소 기준 N/A), §결정 5 ratchet 차단 (결정 9)
 - `docs/adr/ADR-059-debate-protocol-v1.md` — 재조사 카운터 ↔ debate round counter disjoint + max-round 5 선례 (결정 4/5)
 - `docs/adr/ADR-064-decision-principle-mandate.md` — §결정 4 parallel default (결정 10) + §결정 1 forbid-list 모달 어휘 금지 (결정 4)
