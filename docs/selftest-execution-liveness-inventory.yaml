@@ -532,3 +532,47 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "G5 cross-repo drift 대조(--cross-repo) self-test — fetch·Issue-발행 seam(INFRA_CROSS_REPO_FETCH_ROOT / INFRA_CROSS_REPO_ISSUE_SINK)을 local mock-repo fixture 로 stub(실 네트워크 0, hermetic). 지속-soak(G2 consumer)·DAST·real-render(§8.7) runtime 축 disjoint — 본 self-test 는 정적/mock 판별력 결박: 3-way(content-mismatch fail-closed/전파 PASS/token 부재 degraded-FAIL) + t1(transient fail-open+WARN+Issue 발행, 미발행 mutant=RED) + t2(content-mismatch ≠ transient 오분류 mutant=최중요 RED) + ref-pin(moving HEAD 거부/idempotent) + 403·404 fail-closed + namespace spoof + secret-masking(§7.3 PAT 값 미출력) + mutation RED-flip. ※ 인벤토리 관용 'DAST=G5'(ADR-136 §8.9 G5-DAST doc-lint)와 명칭 우연 일치이나 무관 — 여기 G5 = ADR-157 §결정4 cross-repo 슬라이스. 실 cross-repo 활성 = consumer 채택-bound(I-5), wrapper-self vacuous(namespace 자원 0). honest-ceiling: 동적 키 구성 / 프록시 위장(socat) / 스캔 밖 표면 미검출(§결정8), presence ≠ truth."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 10 + ADR-073 Amendment 21) — mid-flight artifact-level provenance marker stale lint discriminating self-test (PR-time workflow, alive) ──
+  # bijection: tests/scripts/*.sh 49 → 50. 실행 채널 = mid-flight-marker-check.yml (byte-identical .github + templates pair, warning-mode continue-on-error non-required). run-line: `bash tests/scripts/test_check-mid-flight-marker.sh`.
+  - self_test: "tests/scripts/test_check-mid-flight-marker.sh"
+    execution_channel: "workflow:mid-flight-marker-check.yml:mid-flight-marker-check"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "mid-flight artifact-level provenance marker 5유형 discriminating self-test (tracked content 마커 1-3 검출 + tracked anchor 마커 5[ADR-RESERVATION 예약 row status+age proxy] 검출 + 정직 marker[status=final·fresh] 미검출 오탐 0 + MK-T3/T5 per-유형 mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 마커 presence 스캔, 런타임 상태 무). honest-ceiling(ADR-151/154/157): presence ≠ truth (마커 presence ≠ 실제 확정여부), 유형5 예약 row age proxy narrow(owner/kst 미주장) + 예약-전 window 미커버, 유형4 미머지 worktree 는 hook-only 별 record. 검출력=G3 미강제, ADR-157 §결정8."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — active-sessions presence lint discriminating self-test (PR-time workflow, alive) ──
+  # bijection: tests/scripts/*.sh 50 → 51. 실행 채널 = active-sessions-presence-check.yml (byte-identical .github + templates pair, warning-mode continue-on-error non-required). run-line: `bash tests/scripts/test_check-active-sessions-presence.sh`.
+  - self_test: "tests/scripts/test_check-active-sessions-presence.sh"
+    execution_channel: "workflow:active-sessions-presence-check.yml:active-sessions-presence-check"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "active_sessions 참조-대상 presence discriminating self-test (Story Issue body/frontmatter active_sessions[] presence 검출 + 정직 presence[레지스트리 실재] 미검출 오탐 0 + mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 presence-grep, 런타임 상태 무). honest-ceiling: presence ≠ truth (field 존재 ≠ 실제 ownership 정합). 검출력=G3 미강제, ADR-151 §결정7."
+
+  # ── CFP-2761 (ADR-073 Amendment 21 / Amendment 3 Wave 2 activation) — worktree-self-ownership path-based 3-tuple discriminating self-test (hook-only, workflow:null anti-hollow → manual_registered 채널) ──
+  # bijection: tests/scripts/*.sh 51 → 52. workflow:null(anti-hollow) — fresh-checkout PR runner 로컬 worktree 미관측 = hollow 회피(CFP-2692 / ADR-073 Amendment 20), PR workflow 미생성 → 실행 채널 = manual_registered (hook 표면 배선 self-test).
+  - self_test: "tests/scripts/test_check-worktree-self-ownership.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "hook-only local-state probe — fresh-checkout PR runner 가 로컬 worktree·branch 를 미관측(PR-CI near-vacuous) = byte-identical PR workflow 생성 시 always-green hollow → workflow:null(CFP-2692 / ADR-073 Amendment 20 anti-hollow reconciled end-state mirror). self-test 는 path-based 3-tuple(cwd↔worktree / HEAD↔reflog / worktree-list+reflog AND) + subagent parallel_session_conflict 오판 re-verify 판별력을 PR-time CI 밖 manual/hook(PreToolUse json sample) 표면에서 검증 → workflow 배선 대신 manual_registered 채널로 정직 기록."
+    g_boundary_check: "worktree-self-ownership path-based 3-tuple discriminating self-test (ownership-mismatch RED → verified GREEN + subagent parallel_session_conflict 오판 re-verify) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. hook-only(workflow:null) = PR-CI 표면 부재(anti-hollow), hook-delivered 가 실 표면. honest-ceiling: presence ≠ truth, PR-CI near-vacuous, ADR-151 §결정7."
+
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — lane-entry 4-step ownership polling discriminating self-test (hook-only session-time, workflow:null anti-hollow → manual_registered 채널) ──
+  # bijection: tests/scripts/*.sh 52 → 53. workflow:null(anti-hollow) — session-time lane-entry polling 은 PR content 아님, fresh-checkout PR runner 미관측 → PR workflow 미생성 → 실행 채널 = manual_registered.
+  - self_test: "tests/scripts/test_check-lane-entry-ownership.sh"
+    execution_channel: "manual_registered"
+    channel_status: "alive"
+    blocking_tier: "manual"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: "hook-only session-time lane-entry 4-step polling — PR content 아님(session-time 상태), fresh-checkout PR runner 미관측 = workflow:null(CFP-2692 / ADR-073 Amendment 20 anti-hollow). self-test 는 4-step polling(memory rule6 title-search / rule7 Epic state / active_sessions[] dual carrier / lane-entry sentinel gh pr list) 판별력을 PR-time CI 밖 manual/hook 표면에서 검증 → workflow 배선 대신 manual_registered 채널로 정직 기록."
+    g_boundary_check: "lane-entry 4-step ownership polling discriminating self-test (polling subprocess invoke RED→GREEN + 오판 차단) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. hook-only(workflow:null) session-time polling = PR-CI 표면 부재(anti-hollow). honest-ceiling: presence ≠ truth, session-time polling PR-CI near-vacuous, ADR-151 §결정7."

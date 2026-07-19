@@ -1,0 +1,20 @@
+{
+  "_comment": "CFP-2761 / ADR-085 Amendment 2 §결정10 + ADR-073 Amendment 21 — lane-entry-ownership-verify PreToolUse hook sample.",
+  "_surface": "workflow:null hook-only 체크의 live surface. lane 진입(= 레인 PL 을 Agent 도구로 spawn)은 session-time local-state 이벤트 → fresh-checkout PR runner 관측 불가(= hollow), workflow YAML 미생성. lane-entry probe 는 이 hook 이 유일 채널 (anti-hollow CFP-2692 / ADR-073 Amд20).",
+  "_severity": "warning-tier ADVISORY only — 명령 말미 `|| true` 로 exit 0 강제, spawn 차단 0건. lane 진입 시점에 mid-flight 산출물 owner marker ↔ active_sessions git_identity 정합을 자기-poll 해 불일치 시 warning echo (block 아님).",
+  "_matcher": "Agent — lane 진입 = 레인 PL SubAgent spawn 시점(pretooluse-agent-spawn-gate 선례 동형 matcher). SessionStart 대안 대비 lane-entry 세맨틱에 정확.",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.PreToolUse[]` array. 또는 overlay/hooks/merge.py 로 병합. plugin-root hooks/hooks.json first-class (ADR-038 Amd 3 §결정 10) — 본 sample 은 consumer overlay opt-in.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-lane-entry-ownership.sh\" 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

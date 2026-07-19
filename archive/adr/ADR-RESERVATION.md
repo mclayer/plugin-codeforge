@@ -646,6 +646,18 @@ amendments_reserved:
     reserved_by_cfp: CFP-2725
     reservation_date: 2026-07-17 KST
     status: active   # ArchitectAgent commit time 점유 (CFP-2725 Phase 1 설계 PR carrier — ADR-125 Amendment 3: 결정 A(사용자 확정 = 리뷰 PASS 후·설계 진입 전 위치 정밀화, lane count 10·required contexts 무변경 상속) + 결정 B(내부 시스템 적합성 4번째 disjoint 검증 축 — Amendment 2 internal-invariant 선례 scope 일반화)). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님). verified-via Read worktree archive/adr/ADR-125-requirements-review-lane.md frontmatter amendments[] max number=2 (Amendment 2 CFP-2350) + amendment_log[] max CFP-2350 → next slot = 3 collision 0 (dual-block sync append). status reserved 미경유 직접 active. sunset_justification = frontmatter amendment_log 근거 문자열(non-null, 강화 방향 — additive disjoint 축 신설 + 위치 정밀화, ADR-058 §결정 5 강화 방향; Amendment 1/2 non-null 패턴).
+
+  - adr_number: 85
+    amendment_id: 2
+    reserved_by_cfp: CFP-2761
+    reservation_date: 2026-07-19 KST
+    status: active   # InfraEngineerAgent commit time 점유 (CFP-2761 Phase 2 구현 PR carrier — ADR-085 Amendment 2 §결정 10 신설: mid-flight artifact-level provenance marker convention, coordination artifact-level 축). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-085-multi-session-collaboration-protocol.md frontmatter amendments[] max id=1 (Amendment 1 CFP-1693) → next slot = 2 collision 0 + amendments_reserved[] ADR-085 max=1 (row adr_number:85 amendment_id:1) → amendment_id 2 collision 0. status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — coordination scope session-level → artifact-level 확장, ADR-058 §결정 5 강화 방향). paired sibling ADR-073 Amendment 21.
+
+  - adr_number: 73
+    amendment_id: 21
+    reserved_by_cfp: CFP-2761
+    reservation_date: 2026-07-19 KST
+    status: active   # InfraEngineerAgent commit time 점유 (CFP-2761 Phase 2 구현 PR carrier — ADR-073 Amendment 21: worktree-self-ownership-verify Wave 2 mechanical activation, Amendment 3 declaration-only → mechanical wire, workflow: null hook-only anti-hollow). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-073-orchestrator-verify-before-assert.md frontmatter amendments[] max id=20 (Amendment 20 CFP-2692) → next slot = 21 collision 0 + amendments_reserved[] ADR-073 max=20 (row adr_number:73 amendment_id:20 CFP-2692) → amendment_id 21 collision 0. status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — declaration-only → mechanical wire 활성화, ADR-058 §결정 5 강화 방향). paired sibling ADR-085 Amendment 2 §결정 10.
 ```
 
 ## 해소 기준

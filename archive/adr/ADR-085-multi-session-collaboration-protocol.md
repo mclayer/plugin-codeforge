@@ -16,12 +16,25 @@ amendments:
     status: applied
     ref: "### §결정 9 — Multi-session prompt design normative (Amendment 1, CFP-1693)"
     sunset_justification: null
+  - amendment_id: 2
+    cfp: CFP-2761
+    date: 2026-07-19
+    scope: "§결정 10 신설 — Mid-flight artifact-level provenance marker convention. 세션-레벨(§결정 2 active_sessions[] / §결정 5 handoff baton / §결정 6 heartbeat / §결정 7 subagent self-confusion)과 disjoint 한 **artifact-level 축** 신설 — mid-flight 산출물 5유형(작업초안 / lane N/A 선언 / dispatch placeholder / 미머지 worktree / untracked ADR draft)에 owner(↔§결정 2 git_identity 정합) + KST-ts(ADR-079) + status∈closed-set{draft,provisional,final} 마커 부착 관례. why=advisory provenance(기계 자동-skip 아님, 전량 warning-tier). **CI-visibility boundary 3분류**(F1 req-review borders P1 해소): tracked content(유형1-3, 직접 스캔) / local-state probe(유형4, ADR-073 Amд3 worktree 3-tuple, hook 표면·PR-CI near-vacuous) / tracked anchor narrow(유형5, ADR-RESERVATION 예약 row = `status` + `reserved_at`-age staleness proxy 만 — owner/kst provenance 미주장[스키마 홈 부재], invariant→convention-dependent[ADR-050 reserve-before-create, 예약-전 window 미커버], untracked 초안 파일 인라인 마커 CI-검출 불가 honest-ceiling). type#4 worktree-self-ownership = `workflow: null` hook-only(fresh-checkout PR-CI near-vacuous anti-hollow, CFP-2692/Amd20 정합). E1 legacy=provisional default(§결정 2 [] 답습). Wave1 declarative(convention codify) + Wave2 = CFP-2761 Phase 2(stale-marker lint 5유형 + §결정 8 mechanical_enforcement_actions[] active-sessions-presence + lane-entry-ownership-verify deferred→warning promotion). 본 Amendment 는 §결정 1-9 본문 + Amendment 1 scope 강화 only(ADR-058 §결정 5 ratchet 강화 방향 — coordination scope 를 session-level → artifact-level 확장) — 약화/scope 축소/면제 0건. is_transitional:false 유지. paired sibling ADR-073 Amendment 21(유형#4 worktree-self-ownership-verify Wave2 activation, axis disjoint — coordination artifact-level ↔ verify local-state). 동인 = root_cause_class N=3(CFP-777 + CFP-991 + CFP-2190) ADR-045 §D-9 threshold N=2 초과."
+    status: applied
+    ref: "### §결정 10 — Mid-flight artifact-level provenance marker convention (Amendment 2, CFP-2761)"
+    sunset_justification: null
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-1693
     date: 2026-05-26
     direction: strengthen
     summary: "§결정 9 신설 multi-session prompt design normative — memory `feedback_next_session_prompt_design` normative 승격 carrier. 4-rule mandate (self-contained end-to-end / axis-disjoint / sequential dependency 한 session / copy-paste 준비) + 확인 단계 의무. axis disjoint vs §결정 1-8 (pre-session start prompt design phase, §1-8 = post-session start coordination). doc-only fast-path. ratchet 강화 방향, sunset_justification N/A."
+    sunset_justification: null
+  - amendment_id: 2
+    carrier_story: CFP-2761
+    date: 2026-07-19
+    direction: strengthen
+    summary: "§결정 10 신설 Mid-flight artifact-level provenance marker convention — 세션-레벨(§결정 2/5/6/7)과 disjoint artifact-level 축 (mid-flight 산출물 5유형에 owner/KST-ts/status∈closed-set{draft,provisional,final} 마커) + CI-visibility boundary 3분류(F1 해소: tracked content 1-3 직접 스캔 / local-state probe 4 workflow:null hook-only / tracked anchor narrow 5 예약 row status+age proxy) + honest-ceiling(presence≠truth, 예약-전 window 미커버). 동반 §결정 8 mechanical_enforcement_actions[] Wave2 promotion (active-sessions-presence + lane-entry-ownership-verify deferred-followup→warning) + 신규 mid-flight-marker-stale entry. ratchet 강화 방향 (coordination scope session-level→artifact-level 확장), sunset_justification: null."
     sunset_justification: null
 related_stories:
   - CFP-1041  # carrier (3-pillar anchor — active_sessions[] + lane-entry sentinel + rebase merge 우선)
@@ -34,6 +47,7 @@ related_stories:
   - CFP-991   # parallel race incident corpus #6 (5+ parallel race single thread + 2 ancestry corruption)
   - CFP-967   # parallel race incident corpus #7 (parallel-work-sentinel-check.yml carrier)
   - CFP-1014  # parallel race incident corpus #8 (7th ratchet collision)
+  - CFP-2761  # Amendment 2 — mid-flight artifact-level provenance marker convention (§결정 10) + §결정 8 Wave2 promotion (active-sessions-presence / lane-entry-ownership-verify / mid-flight-marker-stale)
 related_adrs:
   - ADR-073  # Orchestrator verify-before-assert (verify axis disjoint complement — Orchestrator 행위 한정, 본 ADR-085 = coordination axis pre-hoc)
   - ADR-082  # Write-time self-write verification mandate (verify axis disjoint complement — internal lane agent self-write 한정, §결정 1 4-layer 표 anchor verbatim 답습 + 5번째 row 신설)
@@ -46,6 +60,10 @@ related_adrs:
   - ADR-024  # hotfix-bypass family member (label-registry-v2 v2.40 — active-sessions-presence / lane-entry-ownership-verify 2 신규 family member)
   - ADR-060  # evidence-checks-registry 2 entry warning tier (active-sessions-presence / lane-entry-ownership-verify, deferred-followup)
   - ADR-008  # inter-plugin contract MINOR versioning (label-registry-v2 v2.39→v2.40 신규 entry append)
+  - ADR-079  # Amendment 2 — KST +09:00 ISO 8601 zoned strict (마커 kst 필드 source)
+  - ADR-151  # Amendment 2 — honest-ceiling presence ≠ truth 상속 (마커 정적 presence ≠ 실제 확정)
+  - ADR-154  # Amendment 2 — silent-green ≠ silent-fallback ≠ honest-degrade 3-way taxonomy 상속
+  - ADR-157  # Amendment 2 — honest-ceiling (정적 리터럴 결정가능 · 동적 out-of-scope) 상속
 related_files:
   - docs/adr/ADR-073-orchestrator-verify-before-assert.md  # Amendment 4 cross-ref-only append (본문 0건 변경)
   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md  # Amendment 3 cross-ref-only append (본문 0건 변경)
@@ -66,11 +84,14 @@ is_transitional: false
 # Amendment 발의 (강화 방향만 — ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet 정합).
 mechanical_enforcement_actions:
   - action: active-sessions-presence
-    status: deferred-followup     # Phase 1 declare / Phase 2 actual wire (별 sub-CFP carrier)
+    status: warning               # CFP-2761 Phase 2 — Wave 2 mechanical wire (deferred-followup → warning, ADR-058 §결정 5 강화). PR-time workflow presence-grep. warning tier, branch-protection 7-tuple 무변경.
     target_section: §결정 2       # active_sessions[] field presence-grep (Story Issue body OR Story file frontmatter) lint
   - action: lane-entry-ownership-verify
-    status: deferred-followup     # Phase 1 declare / Phase 2 actual wire (별 sub-CFP carrier)
+    status: warning               # CFP-2761 Phase 2 — Wave 2 mechanical wire (deferred-followup → warning, ADR-058 §결정 5 강화). workflow: null hook-only (session-time lane-entry 4-step polling, PR content 아님). warning tier.
     target_section: §결정 3       # lane-entry sentinel `gh pr list --search "head:<branch>"` 4번째 polling source ADR-073 Amd 2 cross-ref
+  - action: mid-flight-marker-stale
+    status: warning               # CFP-2761 Phase 2 — 신규 artifact-level marker lint (tracked content 1-3 + tracked anchor 5). declare-without-wire gap 회피 (본 PR 배선). warning tier.
+    target_section: §결정 10      # mid-flight artifact-level provenance marker 5유형 stale/provenance lint (§결정 10 Amendment 2)
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — coordination scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). 8+ parallel race incidents single session evidence (CFP-953/946/949/932/954/991/967/1014 lineage) 가 8 occurrences sentinel ≥ ADR-045 §D-9 threshold 2 escalation_action adr_draft_emitted forcing function 산물."
 pre_lookup_evidence:
   verified_files:
@@ -295,6 +316,59 @@ frontmatter `mechanical_enforcement_actions: [active-sessions-presence, lane-ent
 #### Sunset criteria
 
 N/A — permanent governance (ratchet 강화 방향, ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합).
+
+### Amendment 2 — §결정 10 신설 Mid-flight artifact-level provenance marker convention (CFP-2761, 2026-07-19 KST)
+
+**결정**: §결정 10 신설 — mid-flight(미완) 산출물에 **artifact-level provenance marker**(owner / KST-ts / status∈closed-set{draft,provisional,final}) 부착 관례 codify. 세션-레벨(§결정 2 active_sessions[] / §결정 5 handoff baton / §결정 6 heartbeat / §결정 7 subagent self-confusion)과 **disjoint 한 artifact-level 축** 신설. 대상 5유형(작업초안 / lane N/A 선언 / dispatch placeholder / 미머지 worktree / untracked ADR draft) + **CI-visibility boundary 3분류**(tracked content 1-3 / local-state probe 4 / tracked anchor narrow 5). 동반 = §결정 8 mechanical_enforcement_actions[] 2-entry(active-sessions-presence / lane-entry-ownership-verify) deferred-followup → **warning** Wave 2 promotion + 신규 3번째 entry mid-flight-marker-stale(warning).
+
+**근거**: root_cause_class N=3(CFP-777 세션 handoff 재구동 금지 + CFP-991 병렬 race + CFP-2190 mid-flight 산출물 stale) ≥ ADR-045 §D-9 threshold N=2. 세션 순차 교대/병렬 인계 시 이전 세션의 미완 산출물에 "어느 세션 / 언제 / 확정(final) vs 잠정(provisional)" 표식 부재로 후속 세션이 매번 재판정하는 도메인 공백 — 세션-레벨 machinery(§결정 2/5/6/7)는 세션은 표식하나 산출물-레벨은 공백.
+
+**영향**: ratchet 강화 방향 (coordination scope 를 session-level → artifact-level 확장 — governance 표현력 확장). 전량 warning-tier + advisory(기계 자동-skip 아님) → branch-protection 7-tuple 무변경. `is_transitional: false` 유지. sunset_justification: null (permanent governance policy, ADR-058 §결정 5 약화 방향 발의 차단 통과). 약화/scope 축소/면제 0건.
+
+**Cross-ref**: §결정 10 (본문 즉시 하단 — 마커 3-tuple + CI-visibility 3분류 표 + honest-ceiling) / paired sibling **ADR-073 Amendment 21**(유형#4 worktree-self-ownership-verify Wave 2 activation, axis disjoint — coordination artifact-level ↔ verify local-state) / ADR-079(KST +09:00) / ADR-050(reserve-before-create convention — 유형#5 예약 row anchor) / ADR-151·154·157(honest-ceiling presence ≠ truth 상속) / ADR-058 §결정 5 (sunset ratchet 강화 방향).
+
+### §결정 10 — Mid-flight artifact-level provenance marker convention (Amendment 2, CFP-2761)
+
+세션이 순차 교대(중단→재개) 또는 병렬 인계될 때, 이전 세션의 **미완(mid-flight) 산출물**에 ownership·freshness 표식을 부여해 후속 세션 재판정 비용을 제거하는 **artifact-level provenance marker** 관례. §결정 2/5/6/7(세션-레벨)과 **disjoint** 한 산출물-레벨 축.
+
+#### 마커 3-tuple (closed-set)
+
+```
+<!-- mid-flight: owner=<git_identity>[|worktree=<path>]; kst=<YYYY-MM-DDTHH:MM:SS+09:00>; status=<draft|provisional|final> -->
+```
+
+- `owner` = §결정 2 `active_sessions[].git_identity` 와 **정합**(별도 identity 체계 신설 금지). solo-dev 식별력 보강 위해 `worktree` 조합 권장(ADR-073 Amendment 3 path-based 선례 상속).
+- `kst` = ADR-079 KST +09:00 ISO 8601 zoned strict.
+- `status` ∈ **closed-set {draft, provisional, final}** — E1 legacy(마커 부재) = `provisional` 간주(§결정 2 `[]` default 답습).
+- 마커 = **advisory provenance** (기계 gate 아님). `status ≠ final` = 후속 세션에 "재판정 후보" 신호. 자동 skip/차단 **없음**.
+
+#### CI-visibility boundary — 유형별 3분류
+
+마커 관례는 관측면별로 검출 경로가 다르다 (단일 "grep 산출물" 가정 폐기). mid-flight 산출물 5유형의 CI 관측면:
+
+| 관측면 class | 유형 | CI 검출 경로 | honest-ceiling |
+|---|---|---|---|
+| **tracked content** (PR-time workflow) | 1 작업초안 / 2 lane N/A 선언 / 3 dispatch placeholder | committed 파일 인라인 마커 직접 스캔 (fresh-checkout observable) | presence ≠ truth (정적 마커 ≠ 실제 확정여부) |
+| **local-state probe** (`workflow: null` hook-only) | 4 미머지 worktree·branch | `git worktree list --porcelain` + reflog path-based 3-tuple (ADR-073 Amendment 3) — SessionStart/PreToolUse hook 표면, **PR-time workflow 미생성** | fresh-checkout PR runner 는 로컬 worktree 미관측 = always-green hollow → hook-only anti-hollow (CFP-2692 / ADR-073 Amendment 20 reconciled end-state mirror, byte-identical PR workflow 미생성) |
+| **tracked anchor (staleness proxy — narrow)** | 5 untracked ADR draft | **ADR-RESERVATION 예약 row** `status` + `reserved_at`/`reservation_date` age proxy 만 스캔 — **owner/kst provenance 미주장**(스키마 홈 부재) | ① 인라인 마커 = convention-only(CI 불가) ② 예약-전 window(row 부재) = 미커버 ③ age ≠ 실제 stale (weak proxy) |
+
+#### 유형#5 narrow (F1 schema-honest)
+
+- ADR-RESERVATION 실 스키마 = `reservations[]`{adr_number, epic, status, reserved_at} / `amendments_reserved[]`{adr_number, amendment_id, reserved_by_cfp, reservation_date, status} — **owner(git_identity)·heartbeat(kst) 필드 부재** → 마커 3-tuple(owner/kst)의 tracked 홈 없음. ∴ 예약 row 가 담을 수 있는 것만 정직히 주장 = **`status` + age(staleness proxy)**. 스키마 확장(owner/heartbeat 필드 추가) = over-engineering(다른 consumer coupling + `schema_version` bump) → 기각.
+- **invariant → convention-dependent**: "모든 untracked 초안 ↔ 예약 row" 는 **invariant 아님** — ADR-050 reserve-before-create convention(GitOpsAgent 예약 → ArchitectAgent 생성) 의존, 기계강제 아님. ledger race 선례(CFP-1041 vs CFP-689)가 위반 실증.
+- **예약-전 window 미커버**: 예약 row 부재 초안(convention 위반 / 예약 전 생성) = **미커버 — 인라인 마커와 동 ceiling**(CI-invisible, convention-only advisory 만).
+
+#### honest-ceiling (ADR-151/154/157 상속)
+
+- **presence ≠ truth**: 정적 마커 presence 검출 ≠ 산출물 실제 확정여부 truth (거짓-final 가능).
+- 유형#5 = 예약 row `status`+age proxy 만(owner/kst 미주장), untracked 초안 파일 인라인 마커 CI-검출 **불가** + 예약-전 window 미커버. "lint 가 untracked ADR 마커 전량 검출" hard-claim **부재**.
+- 유형#4 = local-state probe(hook 표면, `workflow: null`), PR-time CI near-vacuous(CFP-2692 상속) — fresh-checkout PR runner 는 로컬 worktree 미관측 → hollow workflow 미생성.
+- silent-green ≠ silent-fallback ≠ honest-degrade 3-way(ADR-154): empty-target → honest-degrade exit(silent-green 금지), unknown-input → fail-closed.
+
+#### Wave 1 / Wave 2
+
+- **Wave 1 (declarative)** = convention codify (본 §결정 10 + `templates/story-page-structure.md` 마커 필드 + `docs/domain-knowledge/domain/orchestrator-discipline/mid-flight-marker-provenance.md` narrative SSOT).
+- **Wave 2 = CFP-2761 Phase 2** = stale-marker lint 5유형(discriminating fixture) + §결정 8 mechanical_enforcement_actions[] 2-check(active-sessions-presence + lane-entry-ownership-verify) deferred-followup → warning promotion + 신규 mid-flight-marker-stale entry. 전량 warning-tier(branch-protection 7-tuple 무변경).
 
 ### §결정 N+ — Out-of-scope declarations (본 carrier scope 외 영역)
 

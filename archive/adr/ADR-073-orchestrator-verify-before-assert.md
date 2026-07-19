@@ -149,6 +149,13 @@ amendments:
     status: applied
     ref: "## Amendment 20 (2026-07-15 KST, CFP-2692) + Amendment 9 §결정 표 PR-time workflow 행 SUPERSEDED 마커"
     sunset_justification: "N/A — truth-correction (strengthen/weaken 축 무관). Amendment 9 workflow-축 aspirational 주장을 evidence-backed 현실로 정정하는 record reconciliation. transition trigger enum / behavioral directive / forbid scope 무변경 (약화 0건, is_transitional:false 보존). ADR-058 §결정 5 sunset ratchet 판정 대상 아님 (enum 축소·면제 신설 0)."
+  - amendment_id: 21
+    cfp: CFP-2761
+    date: 2026-07-19
+    scope: "Wave 2 mechanical wire activation — Amendment 3(CFP-689) `worktree-self-ownership-verify` declaration(deferred-followup) → mechanical wire. `mechanical_enforcement_actions[]` entry status 갱신 + evidence-checks-registry warning-tier(status Active 전환) + script chain(scripts/check-worktree-self-ownership.{sh,py} — Amд 3 §결정 1-D path-based 3-tuple: (a) cwd↔worktree path / (b) HEAD lineage↔reflog / (c) worktree-list+reflog 2-source AND + §결정 1-E subagent verdict re-verify) + **workflow: null(hook-only live 표면 — fresh-checkout PR-CI near-vacuous, CFP-2692/ADR-073 Amд 20 anti-hollow reconciled end-state mirror; PreToolUse/SessionStart hook json sample 표면, byte-identical PR workflow 미생성)** + promotion_trigger: advisory(↔ branch-protection 7-tuple 무변경 reconcile) + bats fixture(test_worktree_self_ownership.bats RED→GREEN) + label-registry-v2 MINOR(hotfix-bypass:worktree-self-ownership-verify family member). paired sibling ADR-085 Amendment 2 §결정 10(mid-flight artifact-level marker home) — 본 check = 유형#4(미머지 worktree) 의 CI-visible(hook-surface) 표면(coordination artifact-level ↔ verify local-state axis disjoint). Pattern_count 3 reach(CFP-689 §결정 1-E 3-occurrence 상속 + CFP-2761 root_cause_class N=3). Wave1→Wave2 split precedent(CFP-967/1384/1581 등) 답습. 본 Amendment 는 §결정 1-P + Amendment 1-20 scope 강화 only(ADR-058 §결정 5 ratchet — declaration-only → mechanical wire 활성화, 약화/scope 축소 0건). is_transitional:false."
+    status: applied
+    ref: "## Amendments / Amendment 21 + worktree-self-ownership-verify Wave 2 mechanical activation"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -184,6 +191,7 @@ related_stories:
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
   - CFP-635  # sister Epic over-questioning (super-class shared, scope disjoint)
+  - CFP-2761 # Amendment 21 — worktree-self-ownership-verify Wave 2 mechanical activation (Amendment 3 declaration-only → mechanical wire, workflow: null hook-only anti-hollow). paired sibling ADR-085 Amendment 2 §결정 10 (mid-flight artifact-level marker home, axis disjoint — verify local-state ↔ coordination artifact-level)
 related_adrs:
   - ADR-070  # 자매 ADR (external worker output verify ↔ self-assertion verify)
   - ADR-071  # sister governance (dialog convergence layer)
@@ -1739,3 +1747,47 @@ truth-correction (strengthen/weaken 축 무관) — Amendment 9 workflow-축 asp
 - **진원 게이트**: ADR-060 Amendment 18 §결정 32 (CFP-2381, Epic #2380 CLOSED — 본 Story 독립)
 - **collateral 원인**: #1972 (`017926df` de-bloat, workflow 2-root 삭제) / #2103 (`991f7e3b`, self-test 삭제)
 - **Change Plan §8 Test Contract SSOT**: `<internal-docs>/wrapper/change-plans/2026-07-15-cfp-2692-stale-local-main-checkout-workflow-orphan.md` (closure oracle O1/O2 + X1 금지)
+
+## Amendment 21 (2026-07-19 KST, CFP-2761) — worktree-self-ownership-verify Wave 2 mechanical activation
+
+**날짜**: 2026-07-19
+
+### §A. 동기 — Amendment 3 declaration-only → mechanical wire
+
+Amendment 3 (CFP-689, 2026-05-20 KST) 은 `worktree-self-ownership-verify` 를 **declarative anchor(deferred-followup)** 로 도입했다 — path-based 3-tuple(§결정 1-D) + subagent verdict re-verify(§결정 1-E) 관례만 선언, 실 lint script/hook/registry/label 미배선(Wave 1). CFP-2761(mid-flight 산출물 provenance) Phase 2 가 이 Wave 1 을 **Wave 2 mechanical wire 로 활성화**한다. 유형#4(미머지 worktree·branch) 의 CI-visible(hook-surface) 표면 = 본 check.
+
+### §B. §결정 — Wave 2 mechanical wire activation
+
+Amendment 3 §결정 1-D path-based 3-tuple RED→GREEN 검증:
+- **(a)** cwd ↔ worktree path 일치 (`git rev-parse --show-toplevel` vs `git worktree list --porcelain`, forward-slash + lowercase drive normalize).
+- **(b)** HEAD lineage ↔ session reflog membership (reflog 90d GC 시 (a)+(c) 2-source AND fallback).
+- **(c)** `git worktree list --porcelain | grep <branch>` + reflog 2-source AND.
+- **§결정 1-E** subagent `parallel_session_conflict` 오판 re-verify (subagent verdict "parallel conflict" 무신뢰 → active_sessions[] + worktree/reflog ownership 재확인).
+
+`mechanical_enforcement_actions[]` entry `worktree-self-ownership-verify` status: deferred-followup → mechanical wire active + evidence-checks-registry warning-tier(status Active 전환).
+
+### §C. carriers (Phase 2 실배선)
+
+- `scripts/check-worktree-self-ownership.{sh,py}` (thin wrapper + Python SSOT, ADR-061).
+- `templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample` (hook 표면 sample).
+- `tests/scripts/test_check-worktree-self-ownership.sh` (bats fixture RED→GREEN).
+- `docs/evidence-checks-registry.yaml` warning-tier entry (`workflow: null`, promotion_trigger: advisory).
+- `docs/inter-plugin-contracts/label-registry-v2.md` `hotfix-bypass:worktree-self-ownership-verify` family member (MINOR).
+
+### §D. CI-surface — workflow: null hook-only (anti-hollow)
+
+**workflow: null(hook-only live 표면)** — fresh-checkout PR runner 는 로컬 worktree·branch 를 미관측(PR-CI near-vacuous) → byte-identical PR workflow 를 생성하면 always-green hollow. CFP-2692 / ADR-073 Amendment 20 reconciled end-state mirror(`stale-local-main-checkout` 와 동형: hook LIVE + workflow ABSENT = 모순 아닌 표면정합) 답습 — **byte-identical PR workflow 미생성**. promotion_trigger: advisory (↔ branch-protection 7-tuple 무변경 reconcile).
+
+### §E. paired sibling — ADR-085 Amendment 2 §결정 10
+
+본 check = 유형#4(미머지 worktree) 의 CI-visible(hook-surface) 표면 (coordination artifact-level ↔ verify local-state axis disjoint). paired sibling = ADR-085 Amendment 2 §결정 10 (mid-flight artifact-level provenance marker home). Wave 1→Wave 2 split precedent (CFP-967/1384/1581) 답습.
+
+### §F. sunset_justification N/A 정당
+
+ratchet 강화 방향 (declaration-only → mechanical wire 활성화 — §결정 1-P + Amendment 1-20 scope 강화 only). 약화/scope 축소 0건. is_transitional: false 보존. ADR-058 §결정 5 강화 방향. sunset_justification: null.
+
+### §G. Related
+
+- **carrier Story**: CFP-2761 (mclayer/plugin-codeforge#2761)
+- **활성화 대상**: 본 ADR Amendment 3 (CFP-689) — `worktree-self-ownership-verify` declaration(deferred-followup)
+- **paired sibling**: ADR-085 Amendment 2 §결정 10 (mid-flight artifact-level marker convention)

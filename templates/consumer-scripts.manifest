@@ -166,3 +166,27 @@ templates/scripts/build-local.ps1
 # .sh = 100755 (Check 4 exec-bit 의무). soak-runner.sh(표면 B pre-merge)는 consumer post-deploy
 # 미배선 → 본 manifest 대상 아님 (kernel 만 consumer co-distribution).
 scripts/lib/soak-verdict-kernel.sh:templates/github-workflows/post-deploy-benchmark.yml
+
+# CFP-2761 (ADR-085 Amendment 2 §결정10 + ADR-073 Amendment 21) — 세션 handoff mid-flight 산출물
+# ownership·freshness 표식 evidence-check 배선 closure. 전량 advisory/warning-tier(continue-on-error) →
+# Tier2(functional) 정합. 2 종류로 분리:
+#   (1) PR-workflow 표면 2종 (tracked content / tracked anchor) — thin wrapper .sh 를 워크플로 run-block 이
+#       직접 invoke, .sh→python3 lib/*.py = depth-2 SSOT(ADR-061 thin wrapper). 각 .sh·.py 쌍은 동일
+#       workflow run-block 1-hop exec 닫힘이라 둘 다 :dep_workflow 부착(consumer degraded copy 시 누락
+#       hard-block 회피 + degraded-mode suppression). dep_workflow template 실존 → 3-way 방향2 plugin-only
+#       분류(방향2 phantom 회피). 단, 두 workflow 는 consumer-applicability whitelist 미등재(wrapper-self
+#       warning-tier)라 3-way 방향3 강제 대상 아님 — full-closure 철학으로 선제 등재(CFP-2451 답습).
+#   (2) hook-only 표면 2종 (worktree-self-ownership / lane-entry-ownership) — workflow:null (fresh-checkout
+#       PR runner 가 로컬 worktree·세션 상태 관측 불가 = hollow, anti-hollow CFP-2692 / ADR-073 Amд20).
+#       dependent-workflow 부재 → :dep_workflow 미부착(script-only entry, codeforge-upgrade.sh 선례 답습).
+# 4 asset 쌍(총 8) 모두 DeveloperAgent 가 병렬 저작 — chmod +x(100755)는 DeveloperAgent 소관(본 등록은
+#   경로 참조만; 파일 on-disk 실존은 collection 시점 DevPL 이 manifest-lint 로 검증). .sh/.py 비면제
+#   (Check 4 exec-bit 의무, check-consumer-scripts-manifest.sh L137-148).
+scripts/lib/check_mid_flight_marker.py:templates/github-workflows/mid-flight-marker-check.yml
+scripts/check-mid-flight-marker.sh:templates/github-workflows/mid-flight-marker-check.yml
+scripts/lib/check_active_sessions_presence.py:templates/github-workflows/active-sessions-presence-check.yml
+scripts/check-active-sessions-presence.sh:templates/github-workflows/active-sessions-presence-check.yml
+scripts/lib/check_worktree_self_ownership.py
+scripts/check-worktree-self-ownership.sh
+scripts/lib/check_lane_entry_ownership.py
+scripts/check-lane-entry-ownership.sh
