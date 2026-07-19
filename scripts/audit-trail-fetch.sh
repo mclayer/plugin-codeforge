@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# audit-trail-fetch.sh — CFP-140 / ADR-048
+# audit-trail-fetch.sh — CFP-140 / ADR-162
 # CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — pii_redact() Python heredoc 외부 .py 분리
 # (scripts/lib/audit_trail_pii_redact.py SSOT). 나머지 bash 로직 보존.
 # Fetch GitHub audit log events for codeforge governance trace.

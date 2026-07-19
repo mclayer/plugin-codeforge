@@ -60,7 +60,7 @@ codeforge 의 Issue 분류 = label hack `type:epic / type:story / type:bug` (3 e
 3. **Projects v2 Hierarchy view GA** (2026-01) — roll-up + group by parent.
 4. label `type:*` 와 native Issue Types 공존 가능하나 → drift / inconsistency 유발 (수동 label 부착 누락 / native type 부재 시 ambiguous). 이론적으로 cutover 가 자연스러운 evolution.
 
-본 결정 = label hack → native Issue Types + sub-issues cutover. label-registry-v1 → v2 MAJOR bump. ADR-048 (governance-as-code) 와 별개 axis — Issue Types 의 schema 변경 + migration mechanism + label-registry contract version bump 가 core 결정.
+본 결정 = label hack → native Issue Types + sub-issues cutover. label-registry-v1 → v2 MAJOR bump. ADR-162 (governance-as-code) 와 별개 axis — Issue Types 의 schema 변경 + migration mechanism + label-registry contract version bump 가 core 결정.
 
 **CFP 운영 의도** (Story §5.5 Q-3 사용자 확인 resolved): CFP 는 Story sub-category 로 유지 — 별도 native Issue Type 으로 분리하지 않음. label `type:cfp` 는 본 Story 시점 부재 (label-registry-v1 type 4 entry: epic/story/bug + impl-manifest sub-issue axis). CFP Issue 는 Story Issue Type 의 sub-category 로 운영 (Issue title prefix `[CFP-NNN]` + Story Issue Type 부착).
 
@@ -303,8 +303,8 @@ CFP-2581 의 실 변경 = `phase-gate-mergeable.yml` L40 localRefs 정규식을 
 
 - **DI-1**: 변환 후 Issue Type + label `type:*` 동시 존재 금지 (cutover invariant)
 - **DI-2**: Sub-issue parent 1개 only (GitHub native enforcement)
-- **DI-3**: Custom Properties allowed_values change 시 schema breaking — migration script + warning + validation period 의무 (ADR-048 정합)
-- **DI-4**: ruleset name uniqueness (ADR-048 정합)
+- **DI-3**: Custom Properties allowed_values change 시 schema breaking — migration script + warning + validation period 의무 (ADR-162 정합)
+- **DI-4**: ruleset name uniqueness (ADR-162 정합)
 
 ## 해소 기준
 
@@ -332,6 +332,6 @@ graph TD
 
 - `docs/stories/CFP-140.md` (Story file SSOT — internal-docs `wrapper/stories/CFP-140.md`)
 - `docs/change-plans/cfp-140-ghec-governance.md` (Change Plan, internal-docs `wrapper/change-plans/cfp-140-ghec-governance.md`)
-- `docs/adr/ADR-048-ghec-governance-as-code.md` (sibling — Rulesets / Required Workflows / Audit log)
+- `docs/adr/ADR-162-ghec-governance-as-code.md` (sibling — Rulesets / Required Workflows / Audit log)
 - `docs/adr/ADR-008-inter-plugin-contract-versioning.md` (amended by 본 ADR — contract version bump 의 plugin SemVer 와 분리 명시)
 - `docs/inter-plugin-contracts/label-registry-v1.md` → `label-registry-v2.md`

@@ -120,7 +120,7 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 
 ### §결정 10 — ADR-RESERVATION 인용 slug 의무 + ADR-005 mirror 오귀속 정정
 
-- ADR-048 번호는 dual-occupancy 이다: `ADR-048-ci-native-test-execution`(Accepted, canonical) + `ADR-048-ghec-governance-as-code`(Proposed, orphan). 본 ADR 이 ADR-048 을 인용할 때는 **slug 를 명시**한다(번호만 인용 금지 — ambiguous). related_adrs 에서 `ADR-048-ci-native-test-execution` slug 명시로 이 의무를 이행한다.
+- ADR-048 번호는 (CFP-2566 renumber 이전) dual-occupancy 였다: `ADR-048-ci-native-test-execution`(Accepted, canonical) + ghec-governance-as-code(Proposed, orphan — CFP-2566 에서 `ADR-162-ghec-governance-as-code` 로 renumber 해소). 본 ADR 이 ADR-048 을 인용할 때는 **slug 를 명시**한다(과거 ambiguous 이력 — 번호만 인용 금지 관례 유지). related_adrs 에서 `ADR-048-ci-native-test-execution` slug 명시로 이 의무를 이행한다.
 - ADR-005 mirror 오귀속 정정: workflow byte-identical mirror invariant 의 SSOT 는 ADR-005 가 아니라 ADR-027 Amd3(marker) + ADR-063(marketplace) + 실 enforcement=`invariant-check.yml` 이다. 본 ADR 은 mirror 를 ADR-005 에 귀속하지 않는다(ADR-005 = N/A 표준화만).
 
 ### §결정 11 — matrix os-leg / container-job per-runner 차등 (Surface B, P1-2)

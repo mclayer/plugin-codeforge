@@ -141,7 +141,7 @@ amendments:
 
 ### 결정 7 — 보안 ADR default = classification presumption (`is_transitional: false`)
 
-보안 ADR (예: ADR-024 Story-scoped branch policy, ADR-030 Live Epic lane-entry policy, ADR-048 GHEC governance-as-code) 은 sunset criteria 적용 시 **classification presumption** = `is_transitional: false` (permanent). 보안 안전망의 우발적 expire 차단 우선.
+보안 ADR (예: ADR-024 Story-scoped branch policy, ADR-030 Live Epic lane-entry policy, ADR-162 GHEC governance-as-code) 은 sunset criteria 적용 시 **classification presumption** = `is_transitional: false` (permanent). 보안 안전망의 우발적 expire 차단 우선.
 
 > Security ADRs SHOULD default to `is_transitional: false` unless the ADR explicitly declares a temporary control, external dependency, or replacement condition (예: incident workaround / vendor risk mitigation / compensating control).
 

@@ -20,9 +20,9 @@
 #       finding 시 exit 1 (테스트가 RED→GREEN 관측 가능). merge 차단은 워크플로 tier 가 결정.
 #
 # firsthand 기존 결함 (lint 은 검출만 — 정정은 별 Story 소관):
-#   - filename-collision : ADR-042 / ADR-048 (각 2 파일) —
-#         **CFP-2566 renumber 진행 대상**(잔여 2쌍 — C1 이 ADR-047 gitops-agent → ADR-160, C2 가 ADR-056 domain-concept → ADR-161 이동으로 해소).
-#         C0 shared-infra + C1(047) + C2(056) merge 후 real archive/adr 에 2쌍 잔존(이후 C3~C4 per-pair child 가 042·048 해소).
+#   - filename-collision : ADR-042 (2 파일) —
+#         **CFP-2566 renumber 진행 대상**(잔여 1쌍 — C1 이 ADR-047 gitops-agent → ADR-160, C2 가 ADR-056 domain-concept → ADR-161, C3 가 ADR-048 ghec-governance → ADR-162 이동으로 해소).
+#         C0 shared-infra + C1(047) + C2(056) + C3(048) merge 후 real archive/adr 에 1쌍 잔존(이후 C4 per-pair child 가 042 해소).
 #   - zero-pad drift : ADR-72 (2-digit token, 관례 3-digit) — OOS(CFP-676 이 2-digit canonical 확정, 사용자 결정 대기)
 #   - file-row-lapse : ADR-144/156/157/158/159 (RESERVATION row 부재) — OOS(별 finding class, 중복쌍 무관)
 #   - quoted-string : ADR-005 fm=`"005"` → 정규화 5 (mismatch 아님 — 정규화가 false-positive 차단)

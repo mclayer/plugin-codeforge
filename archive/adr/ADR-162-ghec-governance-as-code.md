@@ -1,5 +1,5 @@
 ---
-adr_number: 48
+adr_number: 162
 title: GitHub Enterprise Cloud Governance-as-Code (rulesets / required workflows / audit log)
 status: Proposed
 category: Infrastructure
@@ -25,7 +25,7 @@ supersedes: null
 is_transitional: false
 ---
 
-# ADR-048: GitHub Enterprise Cloud Governance-as-Code
+# ADR-162: GitHub Enterprise Cloud Governance-as-Code
 
 ## 상태
 

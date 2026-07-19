@@ -4,13 +4,13 @@ version: "1.0"
 category: Governance
 status: Active
 related_adrs:
-  - ADR-048
+  - ADR-162
   - ADR-031
 related_stories:
   - CFP-140
 ---
 
-# Audit Log Events Spec (CFP-140 / ADR-048)
+# Audit Log Events Spec (CFP-140 / ADR-162)
 
 codeforge governance trace 에 사용되는 GitHub Enterprise Audit Log event 분류 SSOT.
 `scripts/audit-trail-fetch.sh` 가 이 spec 에 따라 event 를 필터링한다.

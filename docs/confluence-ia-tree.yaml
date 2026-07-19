@@ -526,7 +526,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 44
     - page_id: 2162816
-      title: "ADR-048 (alt): GitHub Enterprise Cloud Governance-as-Code (rulesets / required workflows / audit log)"
+      title: "ADR-162: GitHub Enterprise Cloud Governance-as-Code (rulesets / required workflows / audit log)"
       source_file: "docs/adr/"
       category: "infrastructure"
       previous_parent_id: 2097153
