@@ -3906,7 +3906,7 @@ entries:
       (CFP-2650 승격 — ADR-060 §결정 6 evidence-gate 3/3 MET; continue-on-error 제거 = surfacing, branch-protection 무변경). injection-safe
       (pull_request NOT pull_request_target / permissions contents:read).
     detect_command: bash scripts/check-resource-safety-claim-proof.sh
-    workflow: .github/workflows/resource-safety-claim-proof-presence.yml  # templates+.github byte-identical (ADR-005, sha256 35fa84ce)
+    workflow: .github/workflows/resource-safety-claim-proof-presence.yml  # templates+.github byte-identical (ADR-005, sha256 4e46a9fd)
     current_tier: blocking-on-pr     # CFP-2650 승격 — ADR-060 §결정 6 evidence-gate 3/3 MET (pr_cumulative≥20 / failure 0 / sibling CFP-2646 merged). CFP-2594 flip model 동형 (surfacing ≠ required-context 편입).
     promoted_by: CFP-2650            # warning → blocking-on-pr 승격 carrier (CFP-2594 promoted_by 필드 동형)
     promoted_date: 2026-07-19        # KST — Phase 2 착지일 (evidence-gate 3/3 MET 후)

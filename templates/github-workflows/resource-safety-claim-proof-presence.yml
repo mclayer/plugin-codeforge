@@ -29,6 +29,9 @@ on:
       - 'templates/github-workflows/*.yml'
       - 'docs/resource-safety-claim-baseline.yaml'
       - 'tests/scripts/test_check-resource-safety-claim-proof.sh'
+      - 'tests/scripts/test_resource_safety_flip.py'
+      - 'docs/evidence-checks-registry.yaml'
+      - 'docs/security/branch-protection-audit.md'
 
 permissions:
   pull-requests: write
@@ -54,6 +57,19 @@ jobs:
         # wrapper-self only (ADR-136 Amd2 QADev tests/scripts 실행 채널 선례 동형).
         if: hashFiles('tests/scripts/test_check-resource-safety-claim-proof.sh') != ''
         run: bash tests/scripts/test_check-resource-safety-claim-proof.sh
+
+      - name: Install flip self-test 의존성 (pyyaml/pytest — flip pytest step 선행 provisioning)
+        # requirements.txt = pyyaml / pytest / pytest-timeout (3-line). flip self-test 는 import yaml +
+        # pytest 러너 의존 → setup-python 뒤·pytest 앞 선행 설치(부재 시 ModuleNotFoundError born-red 회피).
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run flip self-test (CFP-2650 — blocking-on-pr flip 상태 회귀 결박, day-1 hard-fail)
+        # tests/scripts/test_resource_safety_flip.py: 6 normative + 1 declared def test_* —
+        # continue-on-error 제거(양 workflow) / registry tier+provenance / byte-parity / 7-tuple 불변 /
+        # honesty-ceiling presence 회귀를 pytest 로 검증. wrapper-self only (flip test 파일 wrapper 전용,
+        # consumer 미상속 → hashFiles 가드로 graceful skip). step continue-on-error 부재 = day-1 hard-fail.
+        if: hashFiles('tests/scripts/test_resource_safety_flip.py') != ''
+        run: python3 -m pytest tests/scripts/test_resource_safety_flip.py -q
 
       - name: Run resource-safety claim proof-link presence lint
         id: lint
