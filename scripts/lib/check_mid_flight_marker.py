@@ -6,17 +6,25 @@ CFP-2761 §5.2 / ADR-085 §결정10 — mid-flight marker ownership/freshness PR
 
 작업 중(mid-flight) 산출물에 남는 소유/신선도 마커의 stale 상태를 PR 시점에 좌향 노출한다.
 검사 대상 = tracked content 타입 1/2/3 (마커·N/A 선언·dispatch placeholder) + tracked anchor 타입 5
-  (ADR-RESERVATION 예약 row proxy). 타입 4(hook 검사)는 본 PR-time 게이트 대상 아님.
+  (ADR-RESERVATION 예약 테이블 row proxy). 타입 4(hook 검사)는 본 PR-time 게이트 대상 아님.
+
+타입 scoping (CFP-2761 구현리뷰 FIX B): 타입 1/2/3 은 Story 산출물 전용, 타입 5 는 ADR-RESERVATION
+  전용 — 파일 basename 으로 상호배타 분기(scan_file). ADR-RESERVATION 예약 registry 는 Story lane
+  산출물이 아니므로 타입 1/2/3 미적용(§<digit>…면제 governance prose 가 타입 2 false-positive 유발
+  하던 회귀 근절). ADR-RESERVATION 아닌 파일에는 타입 5 미적용.
 
 검사 타입 (CFP-2761 §5.2 / ADR-085 §결정10):
   타입 1 (작업초안): tracked .md/.sh/.py 안 mid-flight 마커 status ∈ {draft, provisional} AND
     kst 가 staleness threshold(기본 14일, --stale-days N) 초과 → warn.
   타입 2 (lane N/A 선언): N/A-token 존재 AND 동일 파일에 status=final 마커 부재 → warn.
   타입 3 (dispatch placeholder): placeholder-token(verdict 미기록 / dispatch pending) 존재 → warn.
-  타입 5 (untracked ADR draft — NARROW proxy): archive/adr/ADR-RESERVATION.md 의
-    amendments_reserved[] / reservations[] row 중 status: reserved AND reserved_at/
-    reservation_date age > threshold → warn. owner/kst 는 schema 에 없으므로 status+age proxy 만
-    사용 (untracked ADR draft 파일 직접 grep 금지 — coverage 위조 금지, pre-reservation window 미커버).
+  타입 5 (ADR-RESERVATION 예약 테이블 — NARROW proxy): archive/adr/ADR-RESERVATION.md 의
+    "현재 예약 목록" markdown 테이블(컬럼 헤더 `| adr_number | epic | status | reserved_at |` 앵커)
+    data row 중 status == reserved(대소문자 무시) AND reserved_at 선두 YYYY-MM-DD age > threshold
+    → warn. reservation SSOT = md-table (YAML amendments_reserved[] 아님 — 후자는 전건 active 라
+    vacuous false-negative 원천, CFP-2761 구현리뷰 F3 재구현). owner/kst 는 schema 에 없으므로
+    status+age proxy 만 사용 (타입 5 narrow 보존). malformed row(bad date / missing status) →
+    skip (non-fatal, TC-UNKNOWN 아님).
 
 마커 문법 (SSOT — closed-set):
   <!-- mid-flight: owner=<git_identity>[|worktree=<path>]; kst=<YYYY-MM-DDTHH:MM:SS+09:00>;
@@ -26,7 +34,8 @@ CFP-2761 §5.2 / ADR-085 §결정10 — mid-flight marker ownership/freshness PR
 
 토큰 문법 (§8.2):
   N/A-token (타입 2): markdown heading `§\s*\d+.*N/?A` OR registry line `applicable:\s*false`
-    OR 리터럴 `면제`.
+    OR `면제` (구조적 앵커 한정 — heading line 안 OR `§\d+…면제` 절-scoped 선언; bare prose
+    `면제` 는 미검출 — F4 false-positive flood 근절, CFP-2761 구현리뷰 FIX).
   placeholder-token (타입 3): `<!--\s*dispatch:\s*\S+\s+pending\s*-->` OR verdict slot value ∈
     {pending, TBD, —, placeholder}.
 
@@ -37,7 +46,12 @@ DoS guard (§8.6, ADR-082 Amendment 38 resource-safety): anchored bounded regex 
 
 CLI 계약 (ADR-061 house style — 고정, self-test + hook 소비):
   bash scripts/check-mid-flight-marker.sh --repo-root DIR [--files F1 F2 ...] [--stale-days N]
-    → DIR 하 tracked .md/.sh/.py (default) 또는 명시 --files 만 스캔. --stale-days 기본 14.
+    → default = DIR 하 SCAN_SCOPE(docs/stories/** + archive/adr/ADR-RESERVATION.md) 내 tracked
+      .md/.sh/.py 만 스캔 (tests/ 배제 — 자기/fixture never-scan). 명시 --files 는 그 파일만 정확 스캔
+      (scope 미적용). --stale-days 기본 14.
+    F1/F4-fix (CFP-2761 구현리뷰): 구 default = 전 tracked .md/.sh/.py 스캔 → 자기 test fixture
+      (status=bogus → TC-UNKNOWN self-poison, F1) + prose .md 의 `면제` bare-substring flood(F4) 유입.
+      default 열거를 Story 산출물 dir + ADR-RESERVATION anchor 로 국한해 근절 (--files 명시 경로 무변경).
 
 Exit codes (ADR-060 §결정5 tri-tier — warning tier, advisory NEVER blocks):
   0 = clean (finding 0) OR warning finding 방출 OR zero-target honest no-op.
@@ -85,6 +99,14 @@ STATUS_INPROGRESS = ("draft", "provisional")
 CANDIDATE_EXTS = (".md", ".sh", ".py")
 ADR_RESERVATION_BASENAME = "ADR-RESERVATION.md"
 
+# ── default 스캔 범위 (F1/F4-fix — CFP-2761 구현리뷰) ──
+# 전 tracked 파일 스캔이 자기 test fixture(status=bogus → TC-UNKNOWN self-poison, F1) +
+# prose .md 의 `면제` bare-substring flood(F4) 를 삼키던 회귀 근절. default 열거를 Story
+# 산출물 dir(타입 1/2/3 마커·N/A·placeholder) + ADR-RESERVATION anchor(타입 5) 로 국한.
+# --files 명시 경로는 본 scope 미적용 (self-test explicit 스캔 계약 보존).
+SCAN_SCOPE_DIRS = ("docs/stories",)
+SCAN_SCOPE_FILES = ("archive/adr/ADR-RESERVATION.md",)
+
 # ─────────────────────── anchored bounded regex (nested quantifier 0) ────────────
 # mid-flight 마커 — `<!-- mid-flight:` 리터럴에 anchor, 모든 quantifier bounded.
 _MARKER_RE = re.compile(
@@ -94,10 +116,14 @@ _MARKER_RE = re.compile(
     r"status=([A-Za-z]{1,32})\s{0,8}-->"
 )
 
-# 타입 2 N/A-token: (a) heading `§<digits>...N/A` / (b) `applicable: false` / (c) 리터럴 `면제`.
+# 타입 2 N/A-token: (a) heading `§<digits>...N/A` / (b) `applicable: false` /
+#   (c) `면제` — 구조적 앵커 한정(heading line 안 OR `§\d+…면제` 절-scoped 선언). bare prose
+#   `면제` 는 미검출 (F4 false-positive flood 근절, CFP-2761 구현리뷰 FIX).
 _NA_HEADING_RE = re.compile(r"§\s{0,8}\d{1,6}[^\n]{0,300}?N/?A")
 _NA_APPLICABLE_FALSE_RE = re.compile(r"applicable:\s{0,8}false", re.IGNORECASE)
 _NA_LITERAL = "면제"
+# `면제` 절-scoped 선언 앵커 — `§ N ... 면제` (anchored bounded, nested quantifier 0 — §8.6 DoS).
+_NA_MYEONJE_RE = re.compile(r"§\s{0,8}\d{1,6}[^\n]{0,300}?면제")
 
 # 타입 3 placeholder-token: (a) dispatch pending 주석 / (b) verdict slot value ∈ closed-set.
 _PLACEHOLDER_DISPATCH_RE = re.compile(r"<!--\s{0,8}dispatch:\s{0,8}\S{1,200}\s{1,8}pending\s{0,8}-->")
@@ -106,10 +132,16 @@ _VERDICT_SLOT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# 타입 5 ADR-RESERVATION row 파서 (YAML list row — dependency-free 라인 파서).
-_RES_ROW_START_RE = re.compile(r"^(\s{0,80})-\s{1,8}adr_number:\s{0,8}(\d{1,7})\s{0,8}$")
-_RES_KEY_RE = re.compile(r"^(\s{0,80})([A-Za-z_]{1,40}):\s{0,8}(.{0,4096})$")
-# reserved_at / reservation_date 값에서 선두 YYYY-MM-DD 추출 (ISO8601 또는 `2026-05-24 KST` 형식).
+# 타입 5 ADR-RESERVATION 예약 테이블(md-table) 파서 앵커 (F3 재구현 — YAML 파서 폐기).
+# 컬럼-헤더 시그니처 `| adr_number | epic | status | reserved_at |` (섹션 heading text 는 가변 →
+#   컬럼 헤더에만 anchor). surrounding whitespace 허용, anchored bounded(nested quantifier 0 — §8.6).
+_RES_TABLE_HEADER_RE = re.compile(
+    r"^\s{0,8}\|\s{0,8}adr_number\s{0,8}\|\s{0,8}epic\s{0,8}\|\s{0,8}"
+    r"status\s{0,8}\|\s{0,8}reserved_at\s{0,8}\|\s{0,8}$"
+)
+# adr_number cell = plain integer (구분선 `---` row / 비-정수 cell 배제).
+_RES_ADR_NUM_RE = re.compile(r"^\d{1,7}$")
+# reserved_at 값에서 선두 YYYY-MM-DD 추출 (ISO8601 또는 `2026-05-24 KST`/parenthetical 형식).
 _RES_DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
 
@@ -171,14 +203,21 @@ def _parse_kst(kst_raw):
 # ─────────────────────── 타입 2/3 토큰 검출 ──────────────────────────────────────
 
 def _has_na_token(lines):
-    """타입 2 N/A-token 존재 여부 (heading §N...N/A / applicable: false / 리터럴 면제)."""
+    """타입 2 N/A-token 존재 여부.
+
+    - heading §N…N/A (heading line)
+    - applicable: false (registry line)
+    - `면제` = 구조적 앵커 한정 — heading line(선두 `#`) 안 `면제` OR `§\\d+…면제` 절-scoped
+      선언(_NA_MYEONJE_RE). bare prose `면제` 는 미검출 (F4 false-positive flood 근절).
+    """
     for line in lines:
         stripped = line.lstrip()
         if stripped.startswith("#") and _NA_HEADING_RE.search(line):
             return True
         if _NA_APPLICABLE_FALSE_RE.search(line):
             return True
-        if _NA_LITERAL in line:
+        # `면제` 는 구조적 선언 context(heading OR §N-scoped)에서만 — bare substring 아님.
+        if _NA_LITERAL in line and (stripped.startswith("#") or _NA_MYEONJE_RE.search(line)):
             return True
     return False
 
@@ -193,66 +232,72 @@ def _has_placeholder_token(lines):
     return False
 
 
-# ─────────────────────── 타입 5 ADR-RESERVATION row 파서 ─────────────────────────
+# ─────────────────────── 타입 5 ADR-RESERVATION 예약 테이블(md-table) 파서 ───────────
 
-def _parse_reservation_rows(lines):
-    """ADR-RESERVATION YAML list row 파싱 → [dict(adr_number, [amendment_id], status, date)].
+def _parse_reservation_table(lines):
+    """ADR-RESERVATION "현재 예약 목록" md-table 파싱 → [dict(adr_number, epic, status, reserved_at)].
 
-    `- adr_number: N` (uncommented list item) 이 row 시작. 주석(`# - adr_number:`)은 미매칭
-    (선두 `#` 로 `^\\s*-` anchor 실패). 뒤따르는 dedent 초과 key: value 라인을 row 로 수집.
-    reservations[] 는 reserved_at, amendments_reserved[] 는 reservation_date 필드 사용.
+    reservation SSOT = markdown 테이블 (YAML amendments_reserved[] 아님 — 후자는 전건 active 라
+    vacuous false-negative 원천, CFP-2761 구현리뷰 F3). 컬럼-헤더 시그니처
+    `| adr_number | epic | status | reserved_at |` 로 앵커(섹션 heading text 는 가변). 앵커 후
+    뒤따르는 data row 수집:
+      - blank line = 테이블 내 허용 (본 doc style — row 간 공백 줄) → continue
+      - 비-`|` 비-blank line (다음 `### 번호 해제` heading 등) = 테이블 종료 → break
+        (YAML amendments_reserved[] 블록은 heading 으로 분리되어 도달 전 종료 → 미침습)
+      - 구분선 `|---|---|` row / adr_number 비-정수 cell → skip (non-fatal)
+    reserved_at cell 내부 escaped `|` 포함 가능 → cell[3:] 를 `|` 로 복원(선두 date 보존).
+    O(n) index-advance, per-line 은 이미 _read_lines_bounded 로 truncate (§8.6 bounded).
     """
     rows = []
     n = len(lines)
-    i = 0
-    while i < n:
-        m = _RES_ROW_START_RE.match(lines[i])
-        if not m:
-            i += 1
+    header_idx = -1
+    for i in range(n):
+        if _RES_TABLE_HEADER_RE.match(lines[i]):
+            header_idx = i
+            break
+    if header_idx < 0:
+        return rows  # 헤더 부재 → 빈 결과 (파일 shape 변화 honest degrade)
+    for j in range(header_idx + 1, n):
+        stripped = lines[j].strip()
+        if stripped == "":
             continue
-        dash_indent = len(m.group(1))
-        row = {"adr_number": m.group(2)}
-        j = i + 1
-        while j < n:
-            line = lines[j]
-            if _RES_ROW_START_RE.match(line):
-                break
-            km = _RES_KEY_RE.match(line)
-            if km is None:
-                stripped = line.strip()
-                # blank / fenced-block 경계 / dash-indent 이하 dedent = row 종료.
-                indent = len(line) - len(line.lstrip())
-                if stripped == "" or stripped.startswith("```") or indent <= dash_indent:
-                    break
-                j += 1
-                continue
-            key_indent = len(km.group(1))
-            if key_indent <= dash_indent:
-                break  # dedent — row 종료
-            key = km.group(2)
-            val = km.group(3).split("#", 1)[0].strip().strip('"').strip("'")
-            if key not in row:
-                row[key] = val
-            j += 1
-        rows.append(row)
-        i = j if j > i else i + 1
+        if not stripped.startswith("|"):
+            break  # 테이블 종료 (다음 heading/prose)
+        cells = [c.strip() for c in stripped.split("|")]
+        # 감싸는 `|` 의 선두/후미 empty cell 제거.
+        if cells and cells[0] == "":
+            cells = cells[1:]
+        if cells and cells[-1] == "":
+            cells = cells[:-1]
+        if len(cells) < 4:
+            continue  # 구분선/malformed → skip
+        adr = cells[0]
+        if not _RES_ADR_NUM_RE.match(adr):
+            continue  # 구분선 `---` 또는 비-정수 adr_number → skip
+        rows.append({
+            "adr_number": adr,
+            "epic": cells[1],
+            "status": cells[2],
+            "reserved_at": "|".join(cells[3:]),
+        })
     return rows
 
 
-def _reservation_findings(rel, lines, stale_days, now_dt):
-    """타입 5 stale reserved row → findings=[(rel, detail)]."""
+def _reservation_table_findings(rel, lines, stale_days, now_dt):
+    """타입 5 stale reserved row → findings=[(rel, detail)].
+
+    status == reserved (대소문자 무시) AND reserved_at 선두 YYYY-MM-DD age > threshold → warn.
+    malformed row (bad date / missing status) → skip (non-fatal, TC-UNKNOWN 아님).
+    """
     findings = []
     today = now_dt.date()
-    for row in _parse_reservation_rows(lines):
+    for row in _parse_reservation_table(lines):
         status = (row.get("status") or "").lower()
         if status != "reserved":
             continue
-        date_raw = row.get("reserved_at") or row.get("reservation_date")
-        if not date_raw:
-            continue
-        dm = _RES_DATE_RE.search(date_raw)
+        dm = _RES_DATE_RE.search(row.get("reserved_at") or "")
         if not dm:
-            continue
+            continue  # 날짜 결측/불량 → skip (non-fatal)
         try:
             res_date = datetime(int(dm.group(1)), int(dm.group(2)), int(dm.group(3))).date()
         except ValueError:
@@ -260,12 +305,11 @@ def _reservation_findings(rel, lines, stale_days, now_dt):
         age_days = (today - res_date).days
         if age_days > stale_days:
             adr = row.get("adr_number", "?")
-            amd = row.get("amendment_id")
-            label = "%s/%s" % (adr, amd) if amd else str(adr)
+            epic = row.get("epic") or "?"
             findings.append((
                 rel,
-                "ADR-RESERVATION %s: reserved %d days, status=reserved (stale reservation)"
-                % (label, age_days),
+                "ADR-RESERVATION ADR-%s (%s): reserved %d days, status=reserved (stale reservation)"
+                % (adr, epic, age_days),
             ))
     return findings
 
@@ -273,11 +317,23 @@ def _reservation_findings(rel, lines, stale_days, now_dt):
 # ─────────────────────── 단일 파일 스캔 ──────────────────────────────────────────
 
 def scan_file(path, rel, stale_days, now_dt):
-    """단일 파일 → (findings, unknown_status_hits). findings=[(rel, detail)]."""
+    """단일 파일 → (findings, unknown_status_hits). findings=[(rel, detail)].
+
+    타입 scoping (CFP-2761 구현리뷰 FIX B — 상호배타 분기):
+      - ADR-RESERVATION.md = 예약 registry → 타입 5(md-table) 전용. 타입 1/2/3 미적용
+        (Story lane 산출물이 아님 — §<digit>…면제 governance prose 가 타입 2 false-positive
+        유발하던 회귀 근절). 마커 추출 안 함 → unknown_status_hits 없음.
+      - 그 외 파일 = Story 산출물 → 타입 1/2/3 전용. 타입 5 미적용.
+    """
     lines = _read_lines_bounded(path)
     if lines is None:
         return [], []
 
+    # 타입 5 전용 경로 — ADR-RESERVATION 예약 테이블 (narrow proxy).
+    if os.path.basename(rel) == ADR_RESERVATION_BASENAME:
+        return _reservation_table_findings(rel, lines, stale_days, now_dt), []
+
+    # 타입 1/2/3 — Story 산출물 전용.
     findings = []
     markers, unknown = _extract_markers(lines)
     has_final = any(status == "final" for (_ln, _kst, status) in markers)
@@ -304,20 +360,25 @@ def scan_file(path, rel, stale_days, now_dt):
     if _has_placeholder_token(lines):
         findings.append((rel, "%s: dispatch placeholder not promoted (provisional)" % rel))
 
-    # 타입 5 — ADR-RESERVATION anchor (narrow proxy).
-    if os.path.basename(rel) == ADR_RESERVATION_BASENAME:
-        findings.extend(_reservation_findings(rel, lines, stale_days, now_dt))
-
     return findings, unknown
 
 
 # ─────────────────────── candidate 열거 ──────────────────────────────────────────
 
 def _git_tracked_candidates(repo_root):
-    """git ls-files 로 tracked .md/.sh/.py 열거. git 부재/비-repo → [] (honest no-op degrade)."""
+    """git ls-files 로 SCAN_SCOPE(docs/stories/** + ADR-RESERVATION) 내 tracked .md/.sh/.py
+    열거. git 부재/비-repo → [] (honest no-op degrade).
+
+    F1/F4-fix (CFP-2761 구현리뷰): pathspec 를 SCAN_SCOPE_DIRS + SCAN_SCOPE_FILES 로 국한해,
+    전 tracked 파일 스캔이 자기 test fixture(status=bogus → TC-UNKNOWN self-poison, F1) +
+    prose .md 의 `면제` bare-substring flood(F4) 를 삼키던 회귀를 근절한다. 추가로 tests/
+    경로는 defense-in-depth 로 배제(자기/test-fixture 절대 스캔 금지 — F1 root).
+    (git ls-files 출력 경로 = forward-slash 고정 → startswith/포함 검사 안전.)
+    """
+    pathspec = list(SCAN_SCOPE_DIRS) + list(SCAN_SCOPE_FILES)
     try:
         result = subprocess.run(
-            ["git", "-C", repo_root, "ls-files", "--", "*.md", "*.sh", "*.py"],
+            ["git", "-C", repo_root, "ls-files", "--"] + pathspec,
             capture_output=True, text=True, timeout=30,
         )
     except (OSError, subprocess.SubprocessError):
@@ -327,8 +388,14 @@ def _git_tracked_candidates(repo_root):
     out = []
     for line in result.stdout.splitlines():
         line = line.strip()
-        if line:
-            out.append(os.path.join(repo_root, line.replace("/", os.sep)))
+        if not line:
+            continue
+        # tests/ defense-in-depth — 자기/test-fixture never-scan (F1 root).
+        if line.startswith("tests/") or "/tests/" in line:
+            continue
+        if os.path.splitext(line)[1] not in CANDIDATE_EXTS:
+            continue
+        out.append(os.path.join(repo_root, line.replace("/", os.sep)))
     return out
 
 

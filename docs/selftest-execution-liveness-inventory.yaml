@@ -555,24 +555,24 @@ self_tests:
     manual_reason: ""
     g_boundary_check: "active_sessions 참조-대상 presence discriminating self-test (Story Issue body/frontmatter active_sessions[] presence 검출 + 정직 presence[레지스트리 실재] 미검출 오탐 0 + mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 presence-grep, 런타임 상태 무). honest-ceiling: presence ≠ truth (field 존재 ≠ 실제 ownership 정합). 검출력=G3 미강제, ADR-151 §결정7."
 
-  # ── CFP-2761 (ADR-073 Amendment 21 / Amendment 3 Wave 2 activation) — worktree-self-ownership path-based 3-tuple discriminating self-test (hook-only, workflow:null anti-hollow → manual_registered 채널) ──
-  # bijection: tests/scripts/*.sh 51 → 52. workflow:null(anti-hollow) — fresh-checkout PR runner 로컬 worktree 미관측 = hollow 회피(CFP-2692 / ADR-073 Amendment 20), PR workflow 미생성 → 실행 채널 = manual_registered (hook 표면 배선 self-test).
+  # ── CFP-2761 (ADR-073 Amendment 21 / Amendment 3 Wave 2 activation) — worktree-self-ownership path-based 3-tuple discriminating self-test (결정적 fixture self-test = CI 채널; LIVE check 은 workflow:null hook-only 존치) ──
+  # bijection: tests/scripts/*.sh 51 → 52. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test 는 live worktree·세션 상태 무의존이라 fresh-checkout 에서 정상 실행 → workflow:hook-selftest-execution.yml:hook-selftest-execution CI 승격. LIVE check 자체는 fresh-checkout PR runner 가 로컬 worktree·branch 미관측(hollow 회피, CFP-2692 / ADR-073 Amendment 20)이라 evidence-checks-registry 에서 workflow:null hook-only 존치(무변경) — self-test 실행-liveness ⊥ LIVE check anti-hollow disjoint. run-line: `bash tests/scripts/test_check-worktree-self-ownership.sh`.
   - self_test: "tests/scripts/test_check-worktree-self-ownership.sh"
-    execution_channel: "manual_registered"
+    execution_channel: "workflow:hook-selftest-execution.yml:hook-selftest-execution"
     channel_status: "alive"
-    blocking_tier: "manual"
+    blocking_tier: "warning_tier"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "hook-only local-state probe — fresh-checkout PR runner 가 로컬 worktree·branch 를 미관측(PR-CI near-vacuous) = byte-identical PR workflow 생성 시 always-green hollow → workflow:null(CFP-2692 / ADR-073 Amendment 20 anti-hollow reconciled end-state mirror). self-test 는 path-based 3-tuple(cwd↔worktree / HEAD↔reflog / worktree-list+reflog AND) + subagent parallel_session_conflict 오판 re-verify 판별력을 PR-time CI 밖 manual/hook(PreToolUse json sample) 표면에서 검증 → workflow 배선 대신 manual_registered 채널로 정직 기록."
-    g_boundary_check: "worktree-self-ownership path-based 3-tuple discriminating self-test (ownership-mismatch RED → verified GREEN + subagent parallel_session_conflict 오판 re-verify) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. hook-only(workflow:null) = PR-CI 표면 부재(anti-hollow), hook-delivered 가 실 표면. honest-ceiling: presence ≠ truth, PR-CI near-vacuous, ADR-151 §결정7."
+    manual_reason: ""
+    g_boundary_check: "worktree-self-ownership path-based 3-tuple discriminating self-test (ownership-mismatch RED → verified GREEN + subagent parallel_session_conflict 오판 re-verify + MK mutation-kill, 9/9 결정적 fixture-injection GREEN) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--toplevel/--worktree-list-file/--reflog-file 주입, live worktree·세션 상태 무의존)는 CI(hook-selftest-execution.yml, warning-tier continue-on-error) 실행 — LIVE check 자체는 workflow:null hook-only 존치(anti-hollow: fresh-checkout 이 로컬 worktree·branch 미관측). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
 
-  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — lane-entry 4-step ownership polling discriminating self-test (hook-only session-time, workflow:null anti-hollow → manual_registered 채널) ──
-  # bijection: tests/scripts/*.sh 52 → 53. workflow:null(anti-hollow) — session-time lane-entry polling 은 PR content 아님, fresh-checkout PR runner 미관측 → PR workflow 미생성 → 실행 채널 = manual_registered.
+  # ── CFP-2761 (ADR-085 Amendment 2 §결정 8 Wave 2 promotion) — lane-entry ownership discriminating self-test (결정적 fixture self-test = CI 채널; LIVE check 은 workflow:null hook-only 존치) ──
+  # bijection: tests/scripts/*.sh 52 → 53. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--sessions-file 주입)는 live session-time 상태 무의존이라 fresh-checkout 에서 정상 실행 → workflow:hook-selftest-execution.yml:hook-selftest-execution CI 승격. LIVE check 자체는 session-time lane-entry polling(PR content 아님)이라 evidence-checks-registry 에서 workflow:null hook-only 존치(무변경) — self-test 실행-liveness ⊥ LIVE check anti-hollow disjoint. run-line: `bash tests/scripts/test_check-lane-entry-ownership.sh`.
   - self_test: "tests/scripts/test_check-lane-entry-ownership.sh"
-    execution_channel: "manual_registered"
+    execution_channel: "workflow:hook-selftest-execution.yml:hook-selftest-execution"
     channel_status: "alive"
-    blocking_tier: "manual"
+    blocking_tier: "warning_tier"
     discriminating_fixture: "present"
     l2_full_scope: "N/A"
-    manual_reason: "hook-only session-time lane-entry 4-step polling — PR content 아님(session-time 상태), fresh-checkout PR runner 미관측 = workflow:null(CFP-2692 / ADR-073 Amendment 20 anti-hollow). self-test 는 4-step polling(memory rule6 title-search / rule7 Epic state / active_sessions[] dual carrier / lane-entry sentinel gh pr list) 판별력을 PR-time CI 밖 manual/hook 표면에서 검증 → workflow 배선 대신 manual_registered 채널로 정직 기록."
-    g_boundary_check: "lane-entry 4-step ownership polling discriminating self-test (polling subprocess invoke RED→GREEN + 오판 차단) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. hook-only(workflow:null) session-time polling = PR-CI 표면 부재(anti-hollow). honest-ceiling: presence ≠ truth, session-time polling PR-CI near-vacuous, ADR-151 §결정7."
+    manual_reason: ""
+    g_boundary_check: "lane-entry ownership discriminating self-test (owner-absent RED / conflict RED / GREEN / MK mutation-kill, 4/4 결정적 fixture-injection GREEN) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--lane/--git-identity/--sessions-file 주입, live session-time lane-entry 상태 무의존)는 CI(hook-selftest-execution.yml, warning-tier continue-on-error) 실행 — LIVE check 자체는 workflow:null hook-only 존치(anti-hollow: fresh-checkout 이 session-time lane-entry 상태 미관측). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
