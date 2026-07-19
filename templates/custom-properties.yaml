@@ -1,4 +1,4 @@
-# Custom Properties for ABAC targeting (CFP-140 / ADR-048 §결정 2)
+# Custom Properties for ABAC targeting (CFP-140 / ADR-162 §결정 2)
 # org: mclayer (replace with actual org)
 # Apply via: gh api /orgs/{org}/properties/schema --method PUT (GitHub API)
 # Docs: https://docs.github.com/en/rest/orgs/properties
@@ -10,7 +10,7 @@ properties:
     value_type: single_select
     required: false
     default_value: medium
-    description: "Ruleset cascade tier: high repos get stricter rules (CFP-140 / ADR-048 §결정 2)"
+    description: "Ruleset cascade tier: high repos get stricter rules (CFP-140 / ADR-162 §결정 2)"
     allowed_values:
       - high
       - medium

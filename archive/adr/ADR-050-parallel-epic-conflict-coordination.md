@@ -52,7 +52,7 @@ Accepted (2026-05-09) — CFP-344 carrier.
 
 두 세션은 직접 통신이 불가능하므로 **GitHub가 유일한 공유 조율 채널**이다.
 
-현재 ADR-048이 두 개 (`ADR-048-ci-native-test-execution.md`, `ADR-048-ghec-governance-as-code.md`) 공존하는 사고가 실제 발생했음 — 본 ADR 도입 동기.
+ADR-048 번호가 두 파일에 동시 발급되는 사고가 실제 발생했음 (`ADR-048-ci-native-test-execution.md` + ghec-governance-as-code — 후자는 CFP-2566 에서 `ADR-162-ghec-governance-as-code.md` 로 renumber 해소) — 본 ADR 도입 동기.
 
 ## 결정
 

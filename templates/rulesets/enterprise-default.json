@@ -1,6 +1,6 @@
 {
   "_schema_version": "1.0",
-  "_description": "codeforge enterprise-level ruleset skeleton (CFP-140 / ADR-048). Cascades to all org repos. Replace ENTERPRISE_SLUG_PLACEHOLDER before applying.",
+  "_description": "codeforge enterprise-level ruleset skeleton (CFP-140 / ADR-162). Cascades to all org repos. Replace ENTERPRISE_SLUG_PLACEHOLDER before applying.",
   "_enterprise": "ENTERPRISE_SLUG_PLACEHOLDER",
   "name": "codeforge-enterprise-default",
   "target": "branch",

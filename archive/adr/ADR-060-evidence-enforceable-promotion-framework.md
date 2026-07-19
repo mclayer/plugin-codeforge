@@ -1591,8 +1591,8 @@ sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정
 | 13 | ~~`superpowers-schema-drift`~~ (retired — dead file, ADR-122) | ~~`bash scripts/check-superpowers-schema-drift.sh`~~ | ~~`.github/workflows/superpowers-schema-drift.yml`~~ | ~~ADR-028 / CFP-121~~ | ~~`warning` (scheduled quarterly + PR:paths)~~ |
 | 14 | `parallel-epic-conflict` | (workflow inline — PR file 교집합) | `.github/workflows/parallel-epic-conflict-check.yml` | ADR-050 | `warning` (continue-on-error prior art) |
 | 15 | `branch-protection-drift` | (workflow inline — gh api + manifest diff) | `.github/workflows/branch-protection-drift-check.yml` | ADR-024 Amendment 2 | `warning` (weekly Mon 09:00 UTC cron) |
-| 16 | `required-workflow-drift` | (workflow inline + `check-enterprise-admin.sh`) | `.github/workflows/required-workflow-drift-check.yml` | ADR-048 §결정 3 | `warning` (weekly Mon 10:00 UTC cron) |
-| 17 | `rulesets-drift` | (workflow inline + `check-enterprise-admin.sh`) | `.github/workflows/rulesets-drift-check.yml` | ADR-048 §결정 1 | `warning` (daily 09:00 UTC cron) |
+| 16 | `required-workflow-drift` | (workflow inline + `check-enterprise-admin.sh`) | `.github/workflows/required-workflow-drift-check.yml` | ADR-162 §결정 3 | `warning` (weekly Mon 10:00 UTC cron) |
+| 17 | `rulesets-drift` | (workflow inline + `check-enterprise-admin.sh`) | `.github/workflows/rulesets-drift-check.yml` | ADR-162 §결정 1 | `warning` (daily 09:00 UTC cron) |
 | 18 | `write-permission-redistribution` | `bash scripts/check-write-permission-redistribution.sh` | `.github/workflows/lint.yml` job:`write-permission-redistribution` | CFP-26 / ADR-009 (write 권한 invariant) | `warning` |
 
 **tier 최종 분포**: `blocking-on-merge` 1 (phase-gate-mergeable) + `blocking-on-pr` 1 (invariant-check) + `warning` 16. manifest 부착 entry 만 blocking 분류.

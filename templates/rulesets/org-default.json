@@ -1,6 +1,6 @@
 {
   "_schema_version": "1.0",
-  "_description": "codeforge org-level ruleset skeleton (CFP-140 / ADR-048). Targets repos with criticality=high Custom Property. Replace placeholder values before applying.",
+  "_description": "codeforge org-level ruleset skeleton (CFP-140 / ADR-162). Targets repos with criticality=high Custom Property. Replace placeholder values before applying.",
   "name": "codeforge-org-default",
   "target": "branch",
   "enforcement": "active",
