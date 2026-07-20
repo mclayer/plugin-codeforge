@@ -134,7 +134,17 @@ def read_durable_seq(seq_path: Path):
     - 파일 부재 → (0, True): 최초 emit(seq=1).
     - 파일 존재·정수 → (n, True).
     - 파일 존재·손상/판독불능/비정수 → (None, False): F-6 — seq=0 reset 금지, emit 억제(false-fresh 방지)."""
-    if not seq_path.exists():
+    # ledger 디렉터리 접근 불가(예: 권한 0o444 no-exec → os.stat EACCES; Path.exists() 는 EACCES 를
+    # _ignore_error 하지 않고 re-raise) 는 "최초 emit(부재)" 로 degrade — body 는 내보내되(AC-8 non-blocking
+    # 우선) seq=1 best-effort. false-fresh 아님: durable write 도 실패해 다음 emit 이 seq 재산정하고,
+    # 실제 prior seq 가 있었다면 watchdog 이 seq-regress → unknown 으로 흡수(§결정 5). 크로스플랫폼:
+    # Windows 는 dir chmod 무시라 이 경로 미도달(로컬 false-GREEN), Linux/CI 에서 발현 → 방어 필수.
+    try:
+        exists = seq_path.exists()
+    except OSError as exc:
+        _warn(f"seq 경로 접근 불가 {seq_path}: {exc} — 최초 emit 취급(seq=1), body 내보냄(non-blocking)")
+        return 0, True
+    if not exists:
         return 0, True
     try:
         raw = seq_path.read_text(encoding="utf-8").strip()
