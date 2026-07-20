@@ -1,0 +1,216 @@
+name: branch-liveness-watchdog (CFP-2772 Phase 2 / ADR-164)
+
+# 병렬 에이전트/브랜치 stale 감지 — 외부 watchdog cron poller (D2).
+# Jira per-branch heartbeat relay 코멘트를 read-only 로 주기 폴링해
+# monotonic seq + watchdog-own-clock 기반 3-state 판정(fresh/stalled/unknown).
+#
+# ★ ADR-164 §결정 2: ubuntu-latest HOSTED ONLY (self-hosted 금지, co-death F-1).
+#   본 watchdog 는 session-무관 fault-independent 수집기 역할. self-hosted runner
+#   session 부착 시 둘이 동시사망(co-death) → detection 무력화 ∴ HARD 제약.
+#
+# tier = warning-first (advisory, 차단 권한 0):
+#   cron 실패 ≠ merge 저지. durable verdict 표면(GitHub native GITHUB_STEP_SUMMARY).
+#   워크플로 자신은 required check context 에 미등장.
+#
+# cron cadence: 15분 poll (GH cron 5분 floor + 최대 jitter 30분 → 실제 간격 5~35분)
+#   — 임계 floor(30~60분) 보다 촘촘히 poller.cadence 구성해 false-negative 최소화.
+#
+# credential (secret-absent = dry-run):
+#   JIRA_READ_TOKEN = Jira read-only 토큰 (org-wide-read accepted-risk, ADR-157 §결정 8).
+#   ATLASSIAN_USER_EMAIL = Jira 계정 이메일 (required for read-only auth, not write).
+#   부재 → graceful dry-run(fetch 0, empty comments feed, verdict=all unknown, exit 0).
+#
+# meta-observer (Tier 2, §결정 7): watchdog 는 자기 last-run marker 기록 → 부재(>2× cron)=alarm.
+#   marker-file 은 durable(workflow artifacts or tree-commit 여지, Phase 2 residual).
+
+on:
+  schedule:
+    # 15분 폴링. 참조: GH Actions cron 최소 5분 + 최대 20분 jitter(실제론 최대 30분).
+    #   따라서 실제 폴링 간격 = 5~35분. 임계(30~60분 floor) 보다 촘촘하지만
+    #   quota(GitHub 5000/hr) 정도(~3.5 req/min 여유)는 안전.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # GITHUB_STEP_SUMMARY = CI-native durable verdict surface (requires actions:write 없음, default OK).
+
+jobs:
+  watchdog:
+    name: branch-liveness-watchdog
+    runs-on: ubuntu-latest
+    # 비차단: cron 실패가 merge 저지 못함. workflow artifact 또는 STEP_SUMMARY 기록.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --quiet pyyaml
+
+      - name: Fetch per-branch heartbeat relay comments from Jira
+        id: fetch-comments
+        env:
+          JIRA_READ_TOKEN: ${{ secrets.JIRA_READ_TOKEN }}
+          ATLASSIAN_USER_EMAIL: ${{ secrets.ATLASSIAN_USER_EMAIL }}
+        run: |
+          set +e  # 실패 처리 후속 단계로 위임
+
+          # secret-absent = dry-run (fetch 0, empty feed, exit 0 확보)
+          if [[ -z "${JIRA_READ_TOKEN:-}" ]] || [[ -z "${ATLASSIAN_USER_EMAIL:-}" ]]; then
+            echo "[branch-liveness-watchdog] WARNING: JIRA_READ_TOKEN 또는 ATLASSIAN_USER_EMAIL 부재 — dry-run mode (fetch 0)" >&2
+            echo "[]" > comments.json  # empty feed
+            echo "comments_file=comments.json" >> "$GITHUB_OUTPUT"
+            echo "fetch_status=dry-run" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Jira REST API v3 getComments on control issue (progress_mirror.mirror_issue_key from project.yaml)
+          # 실 Jira cloud_id/issue_key 는 프로젝트 config 에서 읽음.
+          CONTROL_ISSUE_KEY="KAN-2"  # project.yaml atlassian.jira.progress_mirror.mirror_issue_key
+          CLOUD_ID="0729a627-5f0e-4e17-b8d1-0365ba887d41"  # project.yaml atlassian.jira.cloud_id
+
+          # Jira REST API v3 getComments endpoint
+          JIRA_URL="https://api.atlassian.com/ex/jira/${CLOUD_ID}/rest/api/3/issue/${CONTROL_ISSUE_KEY}/comments"
+
+          echo "[branch-liveness-watchdog] fetching heartbeat comments from ${CONTROL_ISSUE_KEY}..." >&2
+          curl -s -X GET \
+            -H "Authorization: Basic $(printf '%s:%s' "${ATLASSIAN_USER_EMAIL}" "${JIRA_READ_TOKEN}" | base64 -w0)" \
+            -H "Accept: application/json" \
+            "${JIRA_URL}" \
+            -o comments_raw.json 2>/dev/null || {
+            echo "[branch-liveness-watchdog] ERROR: Jira fetch failed (check connectivity/token scope)" >&2
+            echo "[]" > comments.json
+            echo "fetch_status=fetch-failed" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          # comments_raw.json → {comments: [...]} → body 필드만 추출 → JSON array
+          python3 -c "
+          import json, sys
+          try:
+            data = json.load(open('comments_raw.json'))
+            if isinstance(data, dict) and 'comments' in data:
+              comments = data['comments']
+            elif isinstance(data, list):
+              comments = data
+            else:
+              comments = []
+            bodies = [c.get('body', '') for c in comments if isinstance(c, dict)]
+            json.dump(bodies, sys.stdout)
+          except:
+            json.dump([], sys.stdout)
+          " > comments.json 2>/dev/null || echo "[]" > comments.json
+
+          echo "comments_file=comments.json" >> "$GITHUB_OUTPUT"
+          echo "fetch_status=ok" >> "$GITHUB_OUTPUT"
+          set -e
+
+      - name: Restore watchdog state cache (durable cursor, cross-run persistence)
+        uses: actions/cache/restore@v4
+        with:
+          path: .watchdog-state
+          key: branch-liveness-cursor-${{ github.run_id }}
+          restore-keys: |
+            branch-liveness-cursor-
+
+      - name: Run branch liveness watchdog
+        id: watchdog
+        run: |
+          set +e
+
+          # Durable cursor (cross-run persistence via actions/cache)
+          # actions/cache = ~7day eviction + branch-scoped restore. ≫ INV-L1 total-deadline(24h).
+          # honest-ceiling: best-effort persistence. cache miss → fresh cursor (false-fresh 아님, 재추적 시작).
+          mkdir -p .watchdog-state
+          CURSOR_FILE=".watchdog-state/cursor.json"
+          MARKER_FILE=".watchdog-state/marker.json"
+          COMMENTS_FILE="${{ steps.fetch-comments.outputs.comments_file }}"
+
+          # watchdog 실행
+          bash scripts/check-branch-liveness.sh \
+            --comments "${COMMENTS_FILE}" \
+            --cursor "${CURSOR_FILE}" \
+            --marker-out "${MARKER_FILE}" \
+            --json \
+            > verdict.json 2>&1 || true
+
+          # verdict 파싱 (exit 0 이므로 always success)
+          if [[ -f verdict.json ]]; then
+            python3 -c "
+          import json, sys
+          try:
+            with open('verdict.json') as f:
+              v = json.load(f)
+            print(json.dumps(v, indent=2))
+          except:
+            print('::error::watchdog verdict 파싱 실패')
+            " >> verdict-formatted.txt 2>&1
+          else
+            echo "{}(watchdog 결과 없음)" > verdict-formatted.txt
+          fi
+
+          set -e
+
+      - name: Surface verdict to GitHub STEP_SUMMARY
+        if: always()
+        run: |
+          set +e
+
+          echo "## Branch Liveness Watchdog" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Fetch status:** ${{ steps.fetch-comments.outputs.fetch_status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f verdict.json ]]; then
+            python3 -c "
+          import json
+          try:
+            with open('verdict.json') as f:
+              v = json.load(f)
+            print(f\"Verdict: **{v.get('verdict', '?')}**\")
+            summary = v.get('summary', {})
+            print(f\"  - Fresh: {summary.get('fresh', 0)}\")
+            print(f\"  - Stalled: {summary.get('stalled', 0)}\")
+            print(f\"  - Unknown: {summary.get('unknown', 0)}\")
+            branches = v.get('branches', {})
+            if branches:
+              print(\"\")
+              print(\"### Per-branch Status\")
+              for br in sorted(branches.keys()):
+                b = branches[br]
+                print(f\"- **{br}**: {b.get('verdict', '?')} ({b.get('reason', '?')})\")
+          except Exception as e:
+            print(f\"Parse error: {e}\")
+            " >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "Parse error" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ No verdict generated (check logs)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Note:** Watchdog runs every 15 minutes (GH cron 5min floor + jitter)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Meta-observer (Tier 2) marker file absence >2× cron = alarm signal." >> "$GITHUB_STEP_SUMMARY"
+
+          set -e
+
+      - name: Save watchdog state cache (durable cursor persistence for next run)
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .watchdog-state
+          key: branch-liveness-cursor-${{ github.run_id }}
+
+      - name: Check honest-degrade on fetch failure
+        if: steps.fetch-comments.outputs.fetch_status == 'fetch-failed' || steps.fetch-comments.outputs.fetch_status == 'dry-run'
+        run: |
+          echo "[branch-liveness-watchdog] watchdog running in dry-run / degraded mode (non-blocking)" >&2
+          echo "::notice::Jira fetch failed or secrets absent — watchdog is in dry-run. Verdict surfaced to STEP_SUMMARY." >&2
