@@ -71,7 +71,7 @@ jobs:
               '> yaml.safe_load strict-verify 로 검증. col-0 orphan·중복키 등 grep 소비자가 조용히',
               '> 오독할 구조 결함을 상류에서 표면화합니다.',
               '> known 2 pre-existing duplicate-key locus(canary-compatibility-check /',
-              '> deployment-schema-check)는 warning 으로 표면화만 — remediation 은 별 governance CFP.',
+              '> deployment-schema-check)는 warning 으로 표면화만 — remediation 은 별도 governance CFP.',
               '',
               '```',
               output.slice(0, 3000),

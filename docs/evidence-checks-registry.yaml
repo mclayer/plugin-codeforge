@@ -4373,7 +4373,7 @@ entries:
       NOT pull_request_target / permissions contents:read + pull-requests:write).
     detect_command: bash scripts/check-evidence-registry.sh
     workflow: templates/github-workflows/evidence-registry-check.yml  # templates+.github byte-identical (ADR-005, sha256 c60b046b)
-    current_tier: warning            # ADR-060 §결정 5 / Amendment 26 — 첫 도입 = warning mode (blocking 승격 = evidence-gated 별 carrier)
+    current_tier: warning            # ADR-060 §결정 5 / Amendment 26 — 첫 도입 = warning mode (blocking 승격 = evidence-gated 별도 carrier)
     promotion_criteria:
       pr_cumulative_min: 20          # ADR-060 §결정 6 (a) velocity-normalized STANDARD
       failure_threshold: 0           # ADR-060 §결정 6 (b)
