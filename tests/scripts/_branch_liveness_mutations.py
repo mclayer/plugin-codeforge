@@ -38,18 +38,21 @@ CANDIDATES = {
     ],
     "seq-advance-relaxation": [
         (
-            "strict-advance relaxation: 'seq_new > last_seq' → 'seq_new >= last_seq'",
+            "strict-advance relaxation: 'seq_new > last_seq:' → 'seq_new >= last_seq:'",
             "literal",
-            "seq_new > _as_int(prev_last_seq)",
-            "seq_new >= _as_int(prev_last_seq)  # MUTATED-SEQ-RELAX",
+            # ★ 트레일링 콜론 포함 — 콜론 미포함 시 append 되는 '# MUTATED' 주석이 if 문 콜론을
+            #   삼켜 SyntaxError(mutant import 실패→미방출→hollow) 를 유발한다(F-CR-002 정합).
+            "seq_new > _as_int(prev_last_seq):",
+            "seq_new >= _as_int(prev_last_seq):  # MUTATED-SEQ-RELAX",
         ),
     ],
     "threshold-bypass": [
         (
-            "stalled condition bypass: 'elapsed > thr' → 'elapsed >= thr' (minor) → 'elapsed > thr * 2' (bypass)",
+            "stalled condition bypass: 'elapsed > thr:' → 'elapsed > thr * 2:' (bypass)",
             "literal",
-            "elapsed > thr",
-            "elapsed > thr * 2  # MUTATED-THRESHOLD-BYPASS",
+            # ★ 트레일링 콜론 포함 (위 seq-advance 와 동일 사유).
+            "elapsed > thr:",
+            "elapsed > thr * 2:  # MUTATED-THRESHOLD-BYPASS",
         ),
     ],
     "idle-relaxation-disable": [

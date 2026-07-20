@@ -116,7 +116,7 @@ class TestWatchdogThreshold:
         thresholds, _ = load_thresholds(None)
 
         latest_t0 = {
-            "ceiling-br": _mk_hb("ceiling-br", 1, lane="구現", state="waiting-external:slow-backend")
+            "ceiling-br": _mk_hb("ceiling-br", 1, lane="구현", state="waiting-external:slow-backend")
         }
         cursor_t0 = {}
         results_t0, cursor_t1 = evaluate(latest_t0, cursor_t0, now, thresholds)
@@ -137,7 +137,7 @@ class TestWatchdogThreshold:
         now = datetime(2026, 7, 20, 12, 0, 0, tzinfo=timezone.utc)
 
         # Unknown lane (not in proposal)
-        latest = {"unknown-lane-br": _mk_hb("unknown-lane-br", 1, lane="未知レーン")}
+        latest = {"unknown-lane-br": _mk_hb("unknown-lane-br", 1, lane="미등록레인")}
         cursor = {}
         results, _ = evaluate(latest, cursor, now, thresholds)
 

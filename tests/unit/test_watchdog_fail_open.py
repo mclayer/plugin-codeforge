@@ -7,6 +7,7 @@ AC-9: fail-open is FORBIDDEN: unknown ≠ fresh, unknown ≠ PASS
 """
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 
@@ -111,6 +112,93 @@ class TestFailOpenForbidden:
         # Summary has unknown > 0
         assert results["alive"]["verdict"] == "fresh"
         assert results["unknown-branch"]["verdict"] == "unknown"
+
+    def test_cli_unknown_promotes_inconclusive(self, tmp_path):
+        """★ F-CR-001: AC-9 top-level fail-open killing assert via CLI.
+
+        check_branch_liveness.py main() must set verdict='inconclusive' when
+        unknown>0, NOT auto-promote to 'ok'. This test invokes the CLI and
+        verifies the JSON verdict field (live integration test, not unit).
+        """
+        import json
+        import tempfile
+        from tests.conftest import run_cli_check_liveness
+
+        REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+        WATCH_SCRIPT = REPO_ROOT / "scripts" / "lib" / "check_branch_liveness.py"
+
+        # Scenario A: unknown present (branch in cursor, absent from comments)
+        comments_file = tmp_path / "comments.json"
+        comments_file.write_text(
+            json.dumps([
+                {
+                    "body": "⟦cf-orch⟧ HEARTBEAT branch=alive seq=1 story=CFP-2772 lane=구현 ts=2026-07-20T12:00:00Z — alive"
+                }
+            ]),
+            encoding="utf-8"
+        )
+
+        cursor_file = tmp_path / "cursor.json"
+        cursor_file.write_text(
+            json.dumps({
+                "alive": {
+                    "last_seq": 0,
+                    "observed_at": "2026-07-20T12:00:00Z",
+                    "unchanged_polls": 0,
+                    "lane": "구현",
+                    "story": "CFP-2772",
+                    "state": "active"
+                },
+                "unknown-branch": {
+                    "last_seq": 5,
+                    "observed_at": "2026-07-20T12:00:00Z",
+                    "unchanged_polls": 0,
+                    "lane": "구현",
+                    "story": "CFP-2772",
+                    "state": "active"
+                }
+            }),
+            encoding="utf-8"
+        )
+
+        rc, output = run_cli_check_liveness(
+            WATCH_SCRIPT, comments_file, cursor_file, "2026-07-20T12:00:00Z"
+        )
+
+        assert rc == 0, "CLI must exit 0 (record-only)"
+        assert output is not None, "JSON parsing failed"
+
+        # ★ AC-9: unknown present → verdict MUST be inconclusive (NOT ok)
+        assert output["verdict"] == "inconclusive", (
+            f"Expected inconclusive when unknown>0, got {output['verdict']}"
+        )
+        assert output["summary"]["unknown"] > 0
+
+        # Scenario B: all-fresh (control: no unknown → verdict ok)
+        comments_file.write_text(
+            json.dumps([
+                {
+                    "body": "⟦cf-orch⟧ HEARTBEAT branch=alive seq=1 story=CFP-2772 lane=구현 ts=2026-07-20T12:00:00Z — alive"
+                },
+                {
+                    "body": "⟦cf-orch⟧ HEARTBEAT branch=known seq=1 story=CFP-2772 lane=구현 ts=2026-07-20T12:00:00Z — alive"
+                }
+            ]),
+            encoding="utf-8"
+        )
+
+        cursor_file.write_text("{}", encoding="utf-8")
+
+        rc, output = run_cli_check_liveness(
+            WATCH_SCRIPT, comments_file, cursor_file, "2026-07-20T12:00:00Z"
+        )
+
+        assert rc == 0
+        assert output is not None
+
+        # AC-9: no unknown → verdict ok (fresh all)
+        assert output["verdict"] == "ok"
+        assert output["summary"]["unknown"] == 0
 
         # ★ AC-9 CRITICAL: check_branch_liveness.main() would see this
         # and compute verdict_top = "inconclusive" (not "ok")

@@ -85,11 +85,23 @@ jobs:
 
       - name: Run full branch-liveness test suite
         run: |
-          python -m pytest tests/ -k "heartbeat or watchdog or branch_liveness or liveness" -v --tb=short
+          python -m pytest tests/unit tests/integration -k "heartbeat or watchdog or branch_liveness or liveness" -v --tb=short
+
+      - name: Run watchdog mutation-kill driver (§8.4)
+        run: |
+          python -m pytest tests/integration/test_watchdog_mutation_driver.py -v
+
+      - name: Run watchdog cursor cross-run persistence tests (§8.5.2)
+        run: |
+          python -m pytest tests/integration/test_watchdog_cursor_persistence.py -v
+
+      - name: Run sentinel byte-identity self-test (F-CR-005)
+        run: |
+          python -m pytest tests/unit/test_watchdog_sentinel_byte_identity.py -v
 
       - name: Generate coverage report
         run: |
-          python -m pytest tests/ -k "heartbeat or watchdog or branch_liveness or liveness" \
+          python -m pytest tests/unit tests/integration -k "heartbeat or watchdog or branch_liveness or liveness" \
             --cov=scripts/lib --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov (optional)

@@ -114,16 +114,25 @@ jobs:
           echo "fetch_status=ok" >> "$GITHUB_OUTPUT"
           set -e
 
+      - name: Restore watchdog state cache (durable cursor, cross-run persistence)
+        uses: actions/cache/restore@v4
+        with:
+          path: .watchdog-state
+          key: branch-liveness-cursor-${{ github.run_id }}
+          restore-keys: |
+            branch-liveness-cursor-
+
       - name: Run branch liveness watchdog
         id: watchdog
         run: |
           set +e
 
-          # Durable cursor (workflow 간 persistence 가정 — Phase 2 residual)
-          # 현재는 각 run이 stateless 이므로 cursor 는 매번 fresh (새 파일)
-          # TODO: artifact cache 또는 tree-commit 으로 cross-run persistence 구현 (Phase 2 residual)
-          CURSOR_FILE="/tmp/branch-liveness-cursor.json"
-          MARKER_FILE="/tmp/branch-liveness-marker.json"
+          # Durable cursor (cross-run persistence via actions/cache)
+          # actions/cache = ~7day eviction + branch-scoped restore. ≫ INV-L1 total-deadline(24h).
+          # honest-ceiling: best-effort persistence. cache miss → fresh cursor (false-fresh 아님, 재추적 시작).
+          mkdir -p .watchdog-state
+          CURSOR_FILE=".watchdog-state/cursor.json"
+          MARKER_FILE=".watchdog-state/marker.json"
           COMMENTS_FILE="${{ steps.fetch-comments.outputs.comments_file }}"
 
           # watchdog 실행
@@ -192,6 +201,13 @@ jobs:
           echo "Meta-observer (Tier 2) marker file absence >2× cron = alarm signal." >> "$GITHUB_STEP_SUMMARY"
 
           set -e
+
+      - name: Save watchdog state cache (durable cursor persistence for next run)
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .watchdog-state
+          key: branch-liveness-cursor-${{ github.run_id }}
 
       - name: Check honest-degrade on fetch failure
         if: steps.fetch-comments.outputs.fetch_status == 'fetch-failed' || steps.fetch-comments.outputs.fetch_status == 'dry-run'
