@@ -4350,3 +4350,47 @@ entries:
       threshold: 3                  # schema default (v1.2)
       promotion_trigger: advisory   # CFP-2761: hook-only 표면(workflow:null, session-time polling) — auto_blocking 미실현. advisory 신호. INV-REG-1 강제력↔표면 정합 (7-tuple 무변경)
     status: Active                   # CFP-2761 Phase 2 wire — ADR-085 §결정 8 Wave 2 mechanical wire active (deferred-followup → warning, workflow: null hook-only)
+
+  # ─── CFP-881 Phase 2 (ADR-060 Amendment 26 — warning-tier entry) — evidence-checks-registry.yaml 구조 무결성 게이트 (yaml.safe_load strict-verify) ───
+  - name: evidence-registry-structure-verify
+    description: |
+      CFP-881 / ADR-060 Amendment 26 — evidence-checks-registry.yaml (governance enforcement tier
+      SSOT) 를 grep/awk 가 아니라 Python yaml.safe_load 로 파싱해 구조 무결성을 검증하는 게이트.
+      3계층: A 문법(safe_load — tab/문법 결함 ScannerError) / B 스키마 단정(최상위 allowlist 4종
+      exact + entries=list + 각 entry=name(non-empty str)-dict + current_tier enum(case-sensitive)
+      + name 전역 unique) / C 중복키(collecting UniqueKeyLoader — (entry-name,key) dup locus 열거).
+      col-0 orphan(CFP-699 Wave 3 F-CR-821-6)·duplicate-key 등 grep 소비자(check-tier-downgrade-guard
+      등)가 조용히 오독할 구조 결함을 상류에서 표면화한다. CFP-455 built-then-pruned revival =
+      live workflow 실배선(계약 evidence-check-registry-v1 phantom-ref auto-heal).
+      ★ known 2 pre-existing duplicate-key locus(canary-compatibility-check 7키 / deployment-schema-check
+      6키 = (entry,key) 13-tuple)는 warning 으로 표면화(surface)만 — grandfather baseline 미도입,
+      remediation forcing-function. regression fence = 전용 hard-fail self-test workflow
+      evidence-registry-check-test.yml (identity-oracle: live dup-key set == known 13-tuple).
+      ★ honesty ceiling(ADR-151 §결정7 상속): 구조만·exact-key 중복만 검증 — presence ≠ truth.
+      alias-bomb = bounded degradation(면역 아님, ADR-082 Amд38 — "DoS-safe" hard-claim 부재).
+      anomaly(§결정25)↔schema disjoint. loader-safety(base=SafeLoader / add_constructor 0 / key=
+      construct_object 경유) → 임의객체 tag ConstructorError BLOCKED. injection-safe(pull_request
+      NOT pull_request_target / permissions contents:read + pull-requests:write).
+    detect_command: bash scripts/check-evidence-registry.sh
+    workflow: templates/github-workflows/evidence-registry-check.yml  # templates+.github byte-identical (ADR-005, sha256 27e21976)
+    current_tier: warning            # ADR-060 §결정 5 / Amendment 26 — 첫 도입 = warning mode (blocking 승격 = evidence-gated 별도 carrier)
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-881                    # Phase 2 mechanical wire carrier — Python SSOT + thin wrapper + 2-file byte-identical gate workflow + hard-fail self-test workflow + discriminating pytest + registry self-entry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}  # 구조 무결성 lint, modal 어휘 무관
+    introduced_by: CFP-881
+    introduced_date: 2026-07-20      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-060             # declaration source — Amendment 26 (warning-tier entry 등록)
+    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 — presence ≠ truth, self-test execution-liveness
+    spec_invariant_measurement_required: false  # 정적 구조 무결성 lint (safe_load strict-verify + dup-key surface) — 측정 가능한 runtime spec invariant 0. 판별력 = discriminating pytest(AC-1~14) + identity-oracle
+    recurrence:
+      count: 1                      # CFP-699 Wave 3 Story-7 F-CR-821-6 col-0 orphan 1회 실측
+      threshold: 3                  # ADR-060 §결정 19 standard default
+      promotion_trigger: none       # sentinel-driven 아닌 preventive ratchet 도입 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active                   # CFP-881 Phase 2 wire COMPLETE — Python SSOT + thin wrapper + byte-identical gate workflow + hard-fail self-test workflow + discriminating pytest live

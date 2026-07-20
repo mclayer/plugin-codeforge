@@ -83,6 +83,12 @@ mechanical_enforcement_actions:
     status: warning               # orphan축(manifest 선언됐으나 어떤 참조면에서도 미참조 = dead declaration) = §결정 5 warning first → §결정 6 3-AND(PR 누적≥20 ∧ bypass 외 failure=0 ∧ sibling merged) + evidence 6 산출물로 승격. born-red 비대칭 보존(orphan day-1=0 이라 warning 시작 안전). warning tier first per §결정 5
     progress_note: "CFP-2700 Amendment 23 carrier (orphan축) — manifest 에 선언됐으나 코드/compose/env 어떤 참조면에서도 미참조인 자원 = orphan(stale declaration, I-2 dead declaration = 결함). §1 D3 정의('orphan = warning → 안정화 후 fail')가 정확히 ADR-060 §결정 5(첫 도입 warning) → §결정 6(3-AND 승격) 모델이라 승격 로직 발명 없이 상속(AC-16). 미선언축(sibling entry infra-resource-undeclared-surface)과 §결정 3 current_tier per-entry 분리. Phase 2 = 동일 scanner(check_infra_resource_drift.py) 의 orphan 판정 분기 + registry row + hotfix-bypass:infra-resource-orphan-reconcile label. 역색인(D4) = 비커밋 ephemeral CI artifact(ADR-157 §결정 6, ADR-107 Path B 정합 — mirror-SSOT 아님 / CFP-2673 tautology 소멸). 승격 sibling merged 조건 = 미선언축 entry. owner_adr = ADR-157. warning tier first per §결정 5"
     target_section: §결정 5       # 본 Amendment 23(orphan축) = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate(3-AND) 상속, owner_adr = ADR-157
+  # Amendment 26 (CFP-881, 2026-07-20 KST) — evidence-registry-structure-verify (evidence-checks-registry.yaml
+  #   구조 무결성 게이트, warning-tier). framework self-application — CFP-583 workflow-yaml-parse 동형.
+  - action: evidence-registry-structure-verify
+    status: warning               # ADR-060 §결정 5 첫 도입 = warning (continue-on-error, non-required). blocking 승격 = evidence-gated 별도 후속 CFP. self-entry 는 §32.E self-application — 게이트 자체 script/workflow 실존 → carrier_absent==false, self-flag 안 됨
+    progress_note: "CFP-881 Amendment 26 carrier — evidence-checks-registry.yaml(governance enforcement tier SSOT)를 grep/awk 가 아니라 Python yaml.safe_load 로 파싱해 구조 무결성 검증. 3계층: A 문법(safe_load ScannerError) / B 스키마 단정(최상위 allowlist 4종 exact + entries=list + entry=name(non-empty str)-dict + current_tier enum(case-sensitive) + name 전역 unique) / C 중복키(collecting UniqueKeyLoader — (entry-name,key) dup locus 열거). col-0 orphan(CFP-699 Wave 3 F-CR-821-6)·duplicate-key 등 grep 소비자 조용한 오독 상류 표면화. CFP-455 built-then-pruned revival = live workflow 실배선(계약 evidence-check-registry-v1 phantom-ref auto-heal). known 2 pre-existing dup-key locus(canary-compatibility-check 7키 + deployment-schema-check 6키 = 13-tuple)는 warning surface 만 — grandfather baseline 미도입(CFP-2753 machinery-retire 학습 정합), regression fence = 전용 hard-fail self-test workflow identity-oracle. honesty ceiling(ADR-151 §결정7 상속): 구조만·exact-key 중복만·presence≠truth; alias-bomb bounded-degradation-not-immunity(ADR-082 Amд38). anomaly(§결정25)↔schema disjoint. loader-safety(base=SafeLoader/add_constructor 0/key=construct_object 경유) → 임의객체 tag ConstructorError BLOCKED. Phase 2 = scripts/lib/check_evidence_registry.py(Python SSOT, load_registry_entries reuse) + scripts/check-evidence-registry.sh(thin wrapper) + .github+templates/github-workflows/evidence-registry-check.yml(byte-identical pair ADR-005) + .github/workflows/evidence-registry-check-test.yml(전용 hard-fail self-test, continue-on-error 부재) + tests/scripts/test_check_evidence_registry.py(discriminating pytest AC-1~14 mutation-verified + identity-oracle + adversarial code-exec) + registry self-entry + plugin.json MINOR. owner_adr = ADR-060 / paired_owner_adr = ADR-151. prior art 답습: check-workflow-yaml-parse.sh(CFP-583 exit 3-tier + byte-identical pair) + check_deferred_followup_reconcile.py(load_registry_entries loader) + ac-traceability-self-test.yml(전용 hard-fail pytest workflow). warning tier first per §결정 5"
+    target_section: §결정 5       # 본 Amendment 26 = 신규 §결정 0 (framework 자연 사용 사례 entry 추가 only) — §결정 5 warning-tier 등록 절차 + §결정 6 promotion gate 상속, owner_adr = ADR-060, honesty-ceiling source = ADR-151 §결정7
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -1182,6 +1188,31 @@ amendment_log:
       truth 미강제. scope = 양 workflow continue-on-error 제거(byte-identical pair) +
       registry current_tier flip + lint docstring granularity-carrier pointer 정정 +
       정책문서 file-scoped over-claim sweep(ADR-045/ADR-061 3-line) + plugin.json MINOR.
+  - amendment: 26
+    carrier_story: CFP-881
+    date: 2026-07-20
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework (§결정 11 permanent SSOT host) → ADR-058 §결정 5 trigger 미해당. 본 Amendment 26 = 강화 방향 (warning-tier entry evidence-registry-structure-verify 등록, framework entry count ratchet-UP). 약화 영역 0건 (enum 값/tier 제거 없음, 신규 §결정 0 = §결정 5/6 절차 상속, 기존 본문 의미 변경 0).
+    summary: |
+      evidence-checks-registry.yaml (governance enforcement tier SSOT) 구조 무결성 게이트
+      evidence-registry-structure-verify 신설 (warning tier, CFP-881). grep/awk → Python
+      yaml.safe_load strict-verify. 신규 §결정 0 (framework 자연 사용 사례 entry — CFP-583
+      Amendment 9 / CFP-2635 Amendment 22 선례). 3계층: A 문법(safe_load ScannerError) /
+      B 스키마 단정(최상위 allowlist 4종 exact + entries=list + entry=name(non-empty str)-dict
+      + current_tier enum case-sensitive + name 전역 unique) / C 중복키(collecting
+      UniqueKeyLoader — (entry-name,key) dup locus 열거). col-0 orphan(CFP-699 Wave 3
+      F-CR-821-6)·duplicate-key 등 grep 소비자 조용한 오독 상류 표면화. CFP-455
+      built-then-pruned revival = live workflow 실배선(phantom-ref auto-heal).
+      known 2 pre-existing dup-key locus(canary 7키 + deployment 6키 = 13-tuple) =
+      warning surface 만 — grandfather baseline 미도입(CFP-2753 machinery-retire 학습),
+      regression fence = 전용 hard-fail self-test workflow identity-oracle(live dup set ==
+      known 13-tuple). honesty ceiling(ADR-151 §결정7): 구조만·exact-key 중복만·presence≠truth;
+      alias-bomb bounded-degradation-not-immunity(ADR-082 Amд38); "DoS-safe" hard-claim 부재.
+      anomaly(§결정25)↔schema disjoint. loader-safety(base=SafeLoader/add_constructor 0/key=
+      construct_object) → 임의객체 tag ConstructorError BLOCKED. owner_adr ADR-060 +
+      paired_owner_adr ADR-151. scope = Python SSOT + thin wrapper + byte-identical gate
+      workflow pair + 전용 hard-fail self-test workflow + discriminating pytest(AC-1~14) +
+      registry self-entry + plugin.json 6.111.0 MINOR + marketplace sync.
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -1202,6 +1233,7 @@ related_stories:
   - CFP-2426  # Amendment 19 carrier — 신설 §결정 33 17번째 warning-tier entry lane-count-ssot-consistency + canonical 작업레인 수(10, ADR-125 Amd1) SSOT mechanical consistency enforcement. grep-기반 검출(N 레인/N번째 lane/레인 N개, N≠10) + 5축 allowlist(within-line 이중토큰/negation/history/path/counterfactual) channel-split false-positive 차단. 2 Story 연속(CFP-2341→CFP-2376) leak = manual 정정 구조적 한계 입증(pattern_count=2 정당). full-lane (Python SSOT + thin wrapper + .github single-root warning workflow + self-contained discriminating test 22 fixture/4 mutation 생존 0 + registry self-entry + plugin.json tagline 8→10 STALE 정정 + 6.40.0 MINOR marketplace sync). standalone ADR-132 기각(ADR-060 framework 자연스러운 17번째 entry). prior art 답습: check_issue_body_claim_pre_screen.py(in_fence toggle) + check_governance_drift.py(path walk + ::warning::) + check-deferred-followup-reconcile.sh(thin wrapper).
   - CFP-2597  # Amendment 21 carrier — 19번째 warning-tier entry peer-completion-falsifiability 등록 (ADR-044 Amendment 6 §결정 12 verification-floor 축③ carrier). 신규 §결정 0 — §결정 5 등록 절차 + §결정 6 promotion gate 상속. owner_adr ADR-044 / carrier_adr ADR-060. evidence-checks-registry entry mirror + review-verdict-v4 v4.16 (peer_verdicts[] additive). ★ check-lane-evidence.sh 축③(fan-out) 와 별개 (이름만 동일). 실 script+workflow+test = sibling worker Phase 2 deliverable.
   - CFP-2591  # Amendment 20 carrier — §결정 32.D 개정(surfacing tier 도입) + grandfather baseline 메커니즘 framework-wide 신설 + 18번째 warning-tier entry deferral-carrier-declared(carrier-mandate no-TBD lint). deferred-followup forcing-function 봉합 Stage 1+2(baseline + new-only shadow) — NO-FLIP: continue-on-error 유지 + self-entry current_tier:warning 불변, 실 flip=별 후속 PR(baseline main 착지 후). §결정3 reconciliation(surfacing qualifier — blocking-on-pr 자체가 contexts membership 미함의) + §결정6 harmonization(baseline-relative new-debt failure=0). self-entry deferred-followup-reconcile §결정6 carrier trio(outage runbook/author-verify/sticky at-most-once) evidence_artifacts 배선. ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 6-tuple 회피). full-lane (baseline yaml + check new-only subtract + (b) Python SSOT/thin wrapper/.github workflow + runbook + registry (b) entry + self-entry evidence_artifacts + plugin.json 6.72.0 MINOR + registry-v1 v1.6). honest ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count 관측만). prior art 답습: check_lane_count_ssot.py(5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest).
+  - CFP-881   # Amendment 26 carrier — warning-tier entry evidence-registry-structure-verify 등록 (evidence-checks-registry.yaml 구조 무결성 게이트, grep/awk → yaml.safe_load strict-verify). 신규 §결정 0 (framework 자연 사용 사례 entry — CFP-583/CFP-2635 선례). 3계층(문법/스키마 단정/collecting UniqueKeyLoader 중복키 surface) + name 전역 unique. CFP-455 built-then-pruned revival = live workflow 실배선(phantom-ref auto-heal). known 13-tuple dup-key locus warning surface(grandfather 미도입, identity-oracle self-test regression fence). owner_adr ADR-060 / paired_owner_adr ADR-151(honesty ceiling). full-lane (Python SSOT + thin wrapper + byte-identical gate workflow pair + 전용 hard-fail self-test workflow + discriminating pytest AC-1~14 + registry self-entry + plugin.json 6.111.0 MINOR). prior art 답습: check-workflow-yaml-parse.sh(CFP-583) + check_deferred_followup_reconcile.py(load_registry_entries loader) + ac-traceability-self-test.yml(전용 hard-fail pytest workflow).
   - CFP-2700  # Amendment 23 carrier — 21+22번째 warning-tier entry infra-resource-undeclared-surface + infra-resource-orphan-reconcile (D3 인프라 자원 manifest drift 게이트). owner_adr ADR-157 / carrier_adr ADR-060. 2 entry 분리(§결정3 current_tier per-entry, 미선언축 surfacing-bound / orphan축 warning→§결정6 승격 비대칭). Amd20 grandfather baseline + §32.D surfacing(NO-FLIP) 상속, 신규 mechanism 0(AC-16). 死因 3-mode 봉인(FM1/FM2/FM3). 실 script+workflow+dual self-test = Phase 2 deliverable.
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
@@ -2937,3 +2969,39 @@ self-entry `deferred-followup-reconcile` 에 §결정 6 carrier 3종 evidence_ar
 tier flip = additive ratchet↑ (warning → blocking-on-pr surfacing). invariant 강도 상향, 약화 방향 0건 → ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상. required contexts 7-tuple 무변경 (surfacing ≠ membership — ADR-145 §결정 3 override 비적용). sunset_justification = N/A.
 
 **scope**: workflow pair(continue-on-error 제거) + registry(current_tier flip + provenance) + lint docstring(granularity-carrier pointer 정정) + 정책문서 sweep(ADR-045:107 · ADR-061:454-455 3-line) + 신규 flip self-test(`tests/scripts/test_resource_safety_flip.py`) + plugin.json 6.109.0 MINOR + marketplace sync. 본 ADR 변경(`archive/**`)은 그 자체로 plugin.json bump 비귀속(ADR-037 A2-3/A2-6 면제); bump 는 workflow/registry/script 변경이 driver.
+
+## Amendment 26 (CFP-881, 2026-07-20 KST) — evidence-registry-structure-verify (evidence-checks-registry.yaml 구조 무결성 게이트, warning-tier)
+
+**Carrier**: CFP-881 (wrapper-self Story, 원천 CFP-699 Wave 3 retro) / Story file = `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-881.md`.
+
+**class**: **framework self-application (강화 방향)** — 신규 warning-tier entry 등록. 신규 §결정 0 · 신규 ADR 0 (CFP-583 Amendment 9 / CFP-2635 Amendment 22 / CFP-2700 Amendment 23 선례). owner_adr = ADR-060 (framework host = enforcement source) + paired_owner_adr = ADR-151 (honesty ceiling §결정7). 약화 0.
+
+**배경**: `docs/evidence-checks-registry.yaml` (governance enforcement tier SSOT, 108 entry)는 다수 게이트·워크플로가 개별 entry 를 grep/awk 로 scrape 해 소비하는 load-bearing 산출물이나 **전용 whole-registry 구조 검증기가 없었다**. grep/awk 는 들여쓰기 nesting 을 모르므로 col-0 orphan(entry 내부여야 할 키가 최상위로 어긋남)이면 소비자가 조용히 잘못된 값을 읽거나 항목을 놓친다 — 어느 쪽도 에러를 내지 않는다(CFP-699 Wave 3 Story-7 F-CR-821-6 1회 실측). CFP-455 Phase 2 가 동명 게이트를 실제 생성했다가 de-bloat 물결(#2105/#2110)에서 "workflow 부재 theater"로 prune → 본 Amendment = live workflow 실배선 revival(계약 evidence-check-registry-v1 phantom-ref auto-heal).
+
+### §10.1 draft 반영 (설계 감사 SSOT)
+
+evidence-registry-structure-verify entry 신설(warning tier). yaml.safe_load strict-verify(grep→parser) + top-level allowlist/entries-list/name-nonempty-dict/current_tier-enum(case-sensitive) 스키마 단정 + name 전역 unique + collecting UniqueKeyLoader duplicate-key **surface**(grandfather 미도입 — identity-oracle self-test(전용 hard-fail workflow)가 regression fence, CFP-2753 machinery-retire 학습 정합). CFP-455 built-then-pruned revival = live workflow 실배선(phantom-ref auto-heal). honest-ceiling(본 설계 declaration): exact-key 중복만·구조만·presence≠truth; alias-bomb bounded-degradation-not-immunity(ADR-082 Amд38); self-test execution-liveness(ADR-151 §결정7)=전용 hard-fail workflow. anomaly(§결정25)↔schema disjoint. tier·승격 = 본 프레임 소관. owner_adr ADR-060 + paired_owner_adr ADR-151.
+
+### 3계층 검증 모델 (파싱 성공 ≠ 구조 정상)
+
+| 계층 | 검증 | 잡는 결함 |
+|---|---|---|
+| A 문법 | `yaml.safe_load` 파싱 성공 | tab 들여쓰기 / 문법 결함 → ScannerError |
+| B 스키마 단정 | 최상위 allowlist 4종 exact + entries=list + 각 entry=name(non-empty str)-dict + current_tier enum(case-sensitive) + name 전역 unique | col-0 orphan / entries=dict / name-less·empty-name / 오타·대소문자 tier / 중복 name |
+| C 중복키 | collecting `_UniqueKeyLoader`(SafeLoader 상속, construct_mapping override) — (entry-name, key) dup locus 열거 | duplicate-key (safe_load silent last-wins, B로 미검출) |
+
+계층 독립성: 상위가 하위를 대체 못 함 — A는 orphan 흡수, B는 중복키 놓침(dict 이미 붕괴), C는 collecting loader 로만 열거. 세 계층 모두 필요.
+
+### duplicate-key = surface + identity-oracle (grandfather 기각)
+
+known 2 pre-existing dup-key locus(`canary-compatibility-check` 7키 = CFP-963/991 병렬 collision + `deployment-schema-check` 6키 = CFP-1117/CFP-1059-S5 collision, (entry,key) **13-tuple**)는 warning 으로 **표면화(surface)만** 하고 차단하지 않는다(remediation forcing-function). grandfather baseline 은 기각 — (i) warning tier `continue-on-error` 로 exit-green cosmetic (ii) CFP-2753 grandfather machinery 은퇴 학습 역행 (iii) baseline = 미검증 load-bearing YAML 미니재귀 (iv) stale-record 실패모드(CFP-2718/2697). regression fence = **전용 hard-fail self-test workflow**(`evidence-registry-check-test.yml`, continue-on-error 부재) 의 identity-oracle(live (entry,key) dup set == known 13-tuple, 신규 유입 시 RED). 2 locus data-fix 는 governance provenance 판단(design-lane 밖, §결정25 + ADR-119 §결정9) → 본 Story 미포함.
+
+### honesty ceiling (ADR-151 §결정7 상속)
+
+본 게이트는 **구조(structure)만·exact-key 중복만** 검증한다 — presence ≠ truth. tier 값의 정책 적절성(policy-correctness)이나 anomaly/inventory drift(§결정25 직교)는 미검증. `safe_load` 는 alias 를 materialize 하므로 alias-bomb 은 **bounded degradation(면역 아님, ADR-082 Amд38)** — 최악 = CI job wall-clock timeout(warning tier `continue-on-error` merge 무차단, residual accepted-low). 산출물에 "완전 봉인"·"DoS-safe"·"모든 구조 결함 차단 보장" 류 hard-claim 부재. loader-safety(base=SafeLoader / add_constructor 0 / key=construct_object 경유) → `!!python/object/apply` 등 임의객체 tag = ConstructorError BLOCKED(stock SafeLoader 동일, adversarial self-test fixture AC-14 로 CI-guard).
+
+### 약화 0 논증 (ADR-058 §결정 5 비대상)
+
+Amendment 26 = 강화 방향(warning-tier entry 등록 = framework entry count ratchet-UP). invariant 강도 상향, 약화 방향 0건(enum 값/tier 제거 없음, 신규 §결정 0 = §결정 5/6 절차 상속, 기존 본문 의미 변경 0) → ADR-058 §결정 5 약화 방향 발의 차단 logic 비대상. warning tier = required contexts 미부착 → **branch protection 7-tuple 무변경**(INV-1). sunset_justification = N/A.
+
+**scope**: Python SSOT(`scripts/lib/check_evidence_registry.py`, `load_registry_entries` reuse) + thin wrapper(`scripts/check-evidence-registry.sh`) + byte-identical gate workflow pair(`.github/` + `templates/github-workflows/evidence-registry-check.yml`, ADR-005 sha256 27e21976) + 전용 hard-fail self-test workflow(`.github/workflows/evidence-registry-check-test.yml`, continue-on-error 부재, wrapper-self 단일) + discriminating pytest(`tests/scripts/test_check_evidence_registry.py`, AC-1~14 mutation-verified + identity-oracle + adversarial code-exec) + registry self-entry(`evidence-registry-structure-verify`) + plugin.json 6.110.0 → 6.111.0 MINOR + marketplace sync. 본 ADR 변경(`archive/**`)은 plugin.json bump 비귀속(ADR-037 A2-3/A2-6 면제); bump 는 workflow/registry/script 변경이 driver.
