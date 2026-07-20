@@ -659,6 +659,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-2761
     reservation_date: 2026-07-19 KST
     status: active   # InfraEngineerAgent commit time 점유 (CFP-2761 Phase 2 구현 PR carrier — ADR-073 Amendment 21: worktree-self-ownership-verify Wave 2 mechanical activation, Amendment 3 declaration-only → mechanical wire, workflow: null hook-only anti-hollow). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-073-orchestrator-verify-before-assert.md frontmatter amendments[] max id=20 (Amendment 20 CFP-2692) → next slot = 21 collision 0 + amendments_reserved[] ADR-073 max=20 (row adr_number:73 amendment_id:20 CFP-2692) → amendment_id 21 collision 0. status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — declaration-only → mechanical wire 활성화, ADR-058 §결정 5 강화 방향). paired sibling ADR-085 Amendment 2 §결정 10.
+
+  - adr_number: 158
+    amendment_id: 1
+    reserved_by_cfp: CFP-2776
+    reservation_date: 2026-07-20 KST
+    status: active   # DeveloperPLAgent commit time 점유 (CFP-2776 Phase 2 구현 PR carrier — ADR-158 Amendment 1: author-time self-gate advisory→mechanical 승격 정본화(internal-docs Hop1 well-formedness blocking gate `ac-schema-authoring-gate.yml`). `mechanical_enforcement_actions: []` → populate + `## Amendment 1` 절. amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via firsthand `grep -qE '^amendments:' archive/adr/ADR-158-...md` → NONE → next slot = 1 collision 0 + 기존 amendments_reserved[] ADR-158 row(adr_number:158 CFP-2689)는 신규-ADR 번호 claim(amendment_id 부재) → amendment_id:1 collision 0. dual-block sync(frontmatter amendments[] id=1 신설 + body `## Amendment 1` 절). worktree base SHA = 790da84a (origin/main firsthand). status reserved 미경유 직접 active (ADR-158 결정 3 pre-authorized 승격 — pattern_count≥2 사전인가 clause 실현). sunset_justification: null (강화 방향 — advisory→mechanical 승격 + dogfood 자기적용 강화, is_transitional:false ratchet 정합, ADR-058 §결정 5 강화 방향).
 ```
 
 ## 해소 기준
