@@ -152,6 +152,15 @@ infra_resources:
       canonical_env: ATLASSIAN_USER_EMAIL
       aliases:
         accepted: [CONFLUENCE_USER_EMAIL]
+    # Jira read-only 토큰 — branch-liveness-watchdog 외부 poller 용 (CFP-2772 Phase 2 / ADR-164).
+    #   scope = org-wide-read (per-branch heartbeat relay 코멘트 read-only), 별도 token 이름.
+    #   secret-absent = dry-run (fetch 0, graceful degrade — branch-liveness-watchdog.yml:45-52).
+    #   ADR-157 §결정 8: read-only accepted-risk + disclosure 명시(implicit 위임 금지).
+    #   사용처: .github/workflows/branch-liveness-watchdog.yml (Jira REST API getComments auth).
+    - id: jira-watchdog-read
+      canonical_env: JIRA_READ_TOKEN
+      aliases:
+        accepted: []
     - id: docker-hub-token
       canonical_env: DOCKER_HUB_TOKEN
       aliases:
@@ -210,6 +219,17 @@ infra_resources:
       resource_modes:
         cross-repo-pat: optional_degradable
         cross-repo-pat_degraded_behavior: "PAT 부재 시 exit 0 graceful skip (deferred-item-recovery.yml:47-51, retro-mandatory.yml 패턴 답습)"
+    # branch-liveness-watchdog.yml — 병렬 에이전트 stale 감지 외부 watchdog (CFP-2772 Phase 2 / ADR-164).
+    #   Jira per-branch heartbeat relay 코멘트 read-only 폴링. continue-on-error:true(:35) +
+    #   secret 부재 시 fetch 0, empty comments feed, dry-run exit 0(:51-52) → 2개 자원 전부 optional_degradable.
+    #   github-token = Actions 기본 주입(GITHUB_STEP_SUMMARY 기록) 항상 존재 — required 명시 불요(암묵적).
+    branch-liveness-watchdog:
+      required: [jira-watchdog-read, confluence-user-email]
+      resource_modes:
+        jira-watchdog-read: optional_degradable
+        confluence-user-email: optional_degradable
+        jira-watchdog-read_degraded_behavior: "부재 시 Jira fetch 0, empty comments feed, dry-run (branch-liveness-watchdog.yml:51-52, continue-on-error)"
+        confluence-user-email_degraded_behavior: "부재 시 Jira auth 실패, dry-run (branch-liveness-watchdog.yml:51-52, continue-on-error)"
   # ── D2 startup fail-closed 채택 선언 (AC-15 / ADR-157 §결정2 I-5 채택-bounded — G3) ──
   #   wrapper-self = declarative-only: plugin 이라 부팅하는 consumer 제품 바이너리가 없다(런타임 0).
   #   ∴ 미채택 + 사유 명시 = 비적용 PASS 경로 (사유부재 미채택 = FAIL — silent 미채택 금지).
