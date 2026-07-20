@@ -1,6 +1,6 @@
 ---
 name: jira-progress-mirror
-description: Orchestrator 의 Story/lane 진행을 코드와 분리된 평문 채널(Jira control project)로 **단방향 미러**하는 절차(Arc B). codeforge Story 진행이 Jira 에 보이게 하고 싶을 때 호출. ADR-038 6-point lane 전이(진입/PASS/FIX 검출/원인 판정/재진입/완료)에서 — 운영자 사전 지정 mirror 이슈에 진행 코멘트 post(sentinel 선두 + deny-scan MUST) + "현재 무엇 하는중" 1줄을 단일 코멘트 update 로 갱신. **comment-only**: 사용 도구 = `addCommentToJiraIssue` 1종만(이슈 생성·status 전이 없음). poll/dedup/echo-guard/rehydrate/timeout/stale 은 Arc A(jira-decision-channel) 전용 — Arc B 비대상. sentinel·deny-scan 만 Arc A 와 공유(같은 control project 안전). ADR-099 Amendment 1 §A1-1(narrow-allow addComment 1종) / ADR-100 §결정 3 정합.
+description: Orchestrator 의 Story/lane 진행을 코드와 분리된 평문 채널(Jira control project)로 **단방향 미러**하는 절차(Arc B). codeforge Story 진행이 Jira 에 보이게 하고 싶을 때 호출. ADR-038 6-point lane 전이(진입/PASS/FIX 검출/원인 판정/재진입/완료)에서 — 운영자 사전 지정 mirror 이슈에 진행 코멘트 post(sentinel 선두 + deny-scan MUST) + "현재 무엇 하는중" 1줄을 단일 코멘트 update 로 갱신. **comment-only**: 사용 도구 = `addCommentToJiraIssue` 1종만(이슈 생성·status 전이 없음). poll/dedup/echo-guard/rehydrate/timeout/stale 은 Arc A(jira-decision-channel) 전용 — Arc B 비대상. sentinel·deny-scan 만 Arc A 와 공유(같은 control project 안전). ADR-099 Amendment 1 §A1-1(narrow-allow addComment 1종) / ADR-100 §결정 3 정합. **Arc B-2**(신규): 병렬 브랜치별 coarse 생존 heartbeat 를 같은 mirror 이슈의 branch→commentId map(N개 pinned 코멘트, commentId 재사용 update)으로 relay — 같은 `addCommentToJiraIssue` 1종(createJiraIssue 없음), `HEARTBEAT` 토큰(MIRROR 와 분별), sentinel·deny-scan 재사용, 여전히 write-only(읽기=외부 watchdog 별도). ADR-164 §결정 3.
 tools: Read, Bash
 ---
 
@@ -13,6 +13,22 @@ tools: Read, Bash
 > 정책 SSOT = [ADR-099 Amendment 1](../../archive/adr/ADR-099-atlassian-allow-redefinition.md) §A1-1~A1-4(narrow-allow `addCommentToJiraIssue` 1종 + deny-scan) + [ADR-100](../../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) §결정 3. 입도·전이점 SSOT = [ADR-038](../../archive/adr/ADR-038-progress-visualization-todowrite.md) 6-point lane 전이.
 >
 > **caller scope (A1-1)**: 본 절차도 **Orchestrator preset 한정**(Arc A 와 동일). 임의 SubAgent 는 `addCommentToJiraIssue` narrow-allow 비대상(deny).
+
+---
+
+## Arc B 두 하위 갈래 — Arc B-1(마일스톤 미러) / Arc B-2(per-branch heartbeat relay)
+
+본 skill 은 같은 mirror 이슈(§0/§1 공유 좌표) 위에서 두 하위 갈래를 운용한다. **둘 다 write-only · comment-only(`addCommentToJiraIssue` 1종) · sentinel `⟦cf-orch⟧` 선두 · deny-scan MUST** 를 공유하고, 이슈 생성·status 전이·issue-field write 는 **양쪽 다 deny**.
+
+| 갈래 | 무엇 | 코멘트 토큰 | 코멘트 topology | 입도 |
+|---|---|---|---|---|
+| **Arc B-1** (기존 §2·§3) | ADR-038 6-point lane 마일스톤 + "현재 무엇 하는중" 1줄 | `MIRROR` (progress-format.sh) | 마일스톤 = append 로그 · 현재활동 = **단일** pinned 코멘트(`ACTIVITY_COMMENT_ID`) update | lane 마일스톤 |
+| **Arc B-2** (신규 — 아래 별도 섹션) | 병렬 브랜치별 coarse 생존(liveness) heartbeat | `HEARTBEAT` (heartbeat-format.sh) | **branch→commentId map** — 브랜치마다 pinned 코멘트 1개(commentId 재사용 update), N 브랜치 → N 코멘트 | 브랜치 tick |
+
+- **§0(config)·§1(mirror resolve) 는 두 갈래 공유** — 같은 `mirror_issue_key`, 같은 opt-in(블록 부재/`enabled:false`/`mirror_issue_key` 빈값 → **양쪽 no-op**). Arc B-2 는 별도 이슈를 만들지 않는다(같은 이슈 위 per-branch 코멘트).
+- **토큰 분별(MIRROR vs HEARTBEAT)**: 같은 control project 에 두 토큰 코멘트가 공존해도, 외부 watchdog 파서는 `HEARTBEAT` 만 골라 읽는다(Change Plan §4.2 / ADR-164 §결정 3). Arc B-1 진행 미러(`MIRROR`)와 섞이지 않는다.
+- **write-only 불변 유지**: Arc B-2 도 Orchestrator → Jira 단방향 출력이다. per-branch 코멘트를 **읽어** staleness 를 판정하는 것은 **외부 watchdog**(별도 GitHub Actions cron — 본 skill 아님, Arc B-2 (f) read-path 교차참조). 본 skill 은 poll/read 하지 않는다.
+- SSOT: [ADR-164](../../archive/adr/ADR-164-parallel-branch-liveness-heartbeat-watchdog.md) §결정 3(per-branch pinned 코멘트 = branch→commentId map) / §결정 5(monotonic seq 3-state) + Change Plan §3.1·§4.2·§11.6.
 
 ---
 
@@ -36,7 +52,7 @@ tools: Read, Bash
 
 ## sentinel 공유 — Arc A 정합 (같은 control project 안전)
 
-본 절차가 쓰는 **모든** 미러 코멘트(6-point 진행 미러 / 현재활동 pinned 코멘트)는 본문 **선두**에 sentinel `⟦cf-orch⟧` 를 박는다.
+본 절차가 쓰는 **모든** 미러 코멘트(Arc B-1 6-point 진행 미러 / 현재활동 pinned 코멘트 / **Arc B-2 브랜치별 heartbeat 코멘트**)는 본문 **선두**에 sentinel `⟦cf-orch⟧` 를 박는다.
 
 - **왜 박는가**: Arc B 진행 미러 코멘트가 같은 Jira control project 에 쌓이면, Arc A 폴러가 그 진행 코멘트를 결정 fork 의 "사용자 답" 으로 **재섭취할 위험**이 있다. sentinel 을 박으면 Arc A 의 `echo-guard.sh` 가 exit 0(skip)으로 걸러 진행 미러를 답 후보에서 제외한다 → **decision_channel 과 progress_mirror 가 같은 project 를 공유해도 안전**(self-echo·cross-echo 차단).
 - **sentinel SSOT = `scripts/jira-channel/echo-guard.sh` 의 `CF_ORCH_SENTINEL` 상수 + `scripts/jira-channel/progress-format.sh` 의 동명 상수**. 두 상수 + 본 문서 표기 `⟦cf-orch⟧` 는 **byte-동일**해야 한다(불일치 시 echo-guard 가 진행 미러를 못 걸러 cross-echo 발생).
@@ -95,7 +111,7 @@ Arc A SKILL.md 의 channel-agnostic 추상과 정합 — 절차 본체는 채널
 
 ---
 
-## 2. 6-point 전이 미러 (`format` → `deny_scan` → `mirror_comment`)
+## 2. (Arc B-1) 6-point 전이 미러 (`format` → `deny_scan` → `mirror_comment`)
 
 ADR-038 의 **6 전이점**(진입 / PASS / FIX 검출 / 원인 판정 / 재진입 / 완료) 각각에서 미러한다. **라이브 turn-단위가 아니라 lane 마일스톤 입도**(6 전이점 + 현재활동 1줄). 6-point 마일스톤은 **코멘트 텍스트로만** 표현하고 **Jira status 전이는 일절 하지 않는다**(`transitionJiraIssue`/`getTransitionsForJiraIssue` = deny).
 
@@ -150,7 +166,7 @@ mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
 
 ---
 
-## 3. 현재활동 1줄 갱신 (`mirror_activity`) — 단일 코멘트 update
+## 3. (Arc B-1) 현재활동 1줄 갱신 (`mirror_activity`) — 단일 코멘트 update
 
 "현재 무엇 하는중" 을 **단일 라인**으로 갱신한다(매 6-point 에서). 입도 = lane 마일스톤 + 현재활동 1줄(라이브 turn-단위 아님). issue-field write(summary 변경 등 `editJiraIssue`)는 **deny 이므로 하지 않는다**.
 
@@ -177,21 +193,99 @@ mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
 
 ---
 
-## 4. audit (A1-4)
+## Arc B-2 — per-branch heartbeat relay (신규 · `HEARTBEAT` 토큰 · branch→commentId map)
 
-모든 Orchestrator Jira write(comment post / activity update)와 미러 결과를 **세션 transcript** 에 기록한다 — wrapper-side audit 가 SSOT(Jira author 추적 비신뢰).
+병렬·백그라운드 브랜치의 **coarse 생존 신호(liveness heartbeat)** 를 같은 mirror 이슈(§0/§1 공유 좌표) 위의 **브랜치별 pinned 코멘트**로 relay 한다. Arc B-1 §3 의 **단일** `ACTIVITY_COMMENT_ID`(pinned-comment-update)를 **`{branch_key → commentId}` map** 으로 일반화한 것 — 같은 `mirror_issue_key`, 같은 `addCommentToJiraIssue` 1종, 브랜치마다 pinned 코멘트 1개(commentId 재사용 update).
+
+> SSOT = [ADR-164](../../archive/adr/ADR-164-parallel-branch-liveness-heartbeat-watchdog.md) §결정 3(per-branch pinned COMMENTS = branch→commentId map, **NOT** per-branch issue) / §결정 5(monotonic seq 3-state) · Change Plan §3.1·§4.2·§11.6. **opt-in 상속**: §0 블록 부재 / `enabled:false` / `mirror_issue_key` 빈값 → **no-op(skip)** — Arc B-1 과 완전히 동일(기본 off). 별도 이슈를 만들지 않는다(같은 이슈 위 per-branch 코멘트).
+
+### (a) 왜 per-branch 인가 (AC-7 — partial-hang 은폐 해소)
+
+- **근원 결함**: 단일 mirror 이슈 위 **단일** pinned 코멘트에 N 브랜치가 heartbeat 를 쓰면, 이슈 `updated`(및 그 단일 코멘트) = **최근 writer**(살아있는 브랜치)로 fresh 하게 보인다 → **N 중 1개만 hung(partial-hang)** 되어도 그 정체가 최근 writer 에 가려 **은폐**된다.
+- **해소**: 브랜치마다 **독립 pinned 코멘트**를 두면 외부 watchdog 가 브랜치별 코멘트 본문(seq·ts)을 각각 읽어 **정체된 그 브랜치를 특정**한다(이슈 `updated` 집계값이 아니라 per-branch 본문 기준). = ADR-164 §결정 3 / Change Plan §8.2 discriminating fixture 의 GREEN 경로.
+
+### (b) branch→commentId map — 단일 `ACTIVITY_COMMENT_ID` 의 일반화
+
+- Arc B-1 §3 은 "현재활동" 코멘트 **1개**를 `ACTIVITY_COMMENT_ID` 로 추적해 commentId update 했다. Arc B-2 는 이를 **브랜치별**로 확장 — 세션 내 `{branch_key → commentId}` map 을 추적한다.
+- **N 브랜치 → N pinned 코멘트**, 각각 **자기 commentId 로 in-place update**(commentId 재사용). Arc B-1 의 "신규 코멘트 양산 없이 1개를 최신화" 규율을 브랜치 수만큼 병렬화한 것(브랜치당 1 코멘트 수렴).
+- **`branch_key` = git short-name slug `[a-z0-9-]`** — `git rev-parse --abbrev-ref HEAD` 산출을 기계 도출한 slug 만 쓴다. **caller free-text override 미수용**(임의 문자열로 브랜치 키 지정 불가 → 경로·PII 인코딩 구조적 차단, ADR-164 §7.2 T-HB-1).
+- **도구 불변 = `addCommentToJiraIssue` 1종만**: 최초 브랜치 tick = commentId 미지정 post(브랜치별 pinned 코멘트 신규 생성) → 반환 commentId 를 map 에 기록. 이후 tick = 그 commentId 로 update. **`createJiraIssue` 없음** — per-branch **이슈**는 ADR-099 §A1-1 **P0-deny**(SecurityArch, ADR-164 §결정 3). per-branch granularity 는 per-branch **코멘트**로 addComment 범위 내 달성한다. `editJiraIssue`/`transitionJiraIssue`/`getTransitionsForJiraIssue`/`addWorklogToJiraIssue` = 여전히 deny.
+
+### (c) heartbeat 본문 포맷 (신규 `heartbeat-format.sh` — progress-format.sh 형제)
+
+comment body 는 신규 `scripts/jira-channel/heartbeat-format.sh`(progress-format.sh 형제 — 실행가능 SSOT, ADR-140 reuse-before-write)가 결정론적으로 만든다. **본 skill 은 포맷을 소유하지 않는다** — 스크립트 stdout 을 그대로 코멘트로 post/update 한다(Arc B-1 이 progress-format.sh stdout 을 쓰는 것과 동형). **정확한 인자·순서 계약 = heartbeat-format.sh SSOT**(DevCore 병렬 작성).
+
+```bash
+bash scripts/jira-channel/heartbeat-format.sh <branch_key> <seq> <story> <lane> [<ts>] [<state_tag>]   # 인자 계약 SSOT=스크립트
+#   stdout(마이크로포맷 = heartbeat-format.sh 실행가능 SSOT §11.7; ADR-164 §결정 3 예시 + §결정 5/6 state_tag):
+#     "⟦cf-orch⟧ HEARTBEAT branch=<branch_key> seq=<N> story=<KEY> lane=<lane> ts=<UTC ISO8601> state=<state_tag> — alive"
+#   선두 sentinel ⟦cf-orch⟧ = echo-guard.sh CF_ORCH_SENTINEL byte-동일(Arc A cross-echo 차단)
+```
+
+- **`HEARTBEAT` 토큰 = `MIRROR`(Arc B-1)와 분별**: 같은 control project 에 두 토큰 코멘트가 공존해도 외부 watchdog 파서가 **HEARTBEAT 만** 골라 읽는다(Change Plan §4.2 / ADR-164 §결정 3 · §7.6 T-HB-8).
+- `seq` = per-branch strictly-monotonic 정수(**1차 진행 신호**), `ts` = **표시 전용(advisory)** — staleness 판정 clock 기준은 외부 watchdog **자기 수신 시각**이지 발신 `ts` 가 아니다(ADR-164 §결정 5 F-5). `state=<state_tag>` = emitter advisory self-state(`active`|`waiting-external[:<reason>]`|`idle-yield`, ADR-164 §결정 5/6) — watchdog D4 idle-relaxation 이 소비(§결정 6, 단 total-deadline ceiling 은 무력화 못 함 INV-L1); 말미 리터럴 `— alive` = 고정 liveness 어써션 tail. fresh/stalled/unknown **3-state 판정은 emitter 가 아니라 외부 watchdog** 가 seq 진행·수신시각으로 한다.
+  - **정직 note (§4.2 예시 vs §결정 5/6)**: Change Plan §4.2 / ADR-164 §결정 3 의 **예시** 마이크로포맷은 `state=` 필드를 생략(`… ts=<…> — alive`)했으나, §결정 5/6 이 state_tag 를 heartbeat record 필드로 명시하고 D4 idle-relaxation 이 이를 요구하므로 실행가능 SSOT(heartbeat-format.sh, §11.7)는 `state=<state_tag>` 를 **additive** 로 실은다(§4.2 tail `— alive` 보존). §4.2 예시의 state_tag 누락 = ArchitectPL 회부 대상 §4.2 완전성 gap(비차단).
+- 본 skill 은 per-branch **seq durable state 를 소유하지 않는다** — seq durable read-back+1(restart 생존)은 emit 모듈 `scripts/lib/emit_branch_heartbeat.py` 소관(Change Plan §5, ADR-164 §결정 5).
+
+### (d) deny-scan MUST (송신 전 backstop) + sentinel (echo-guard skip) — Arc B-1 §2(b) 재사용
+
+Arc B-1 §2(b) 와 **동일 규율**을 heartbeat 코멘트에도 적용한다(신규 로직 복붙 아님 — 같은 스크립트 재사용):
+
+- **deny-scan MUST**: heartbeat 본문(heartbeat-format.sh 산출)을 post/update **전** `scripts/jira-channel/deny-scan.sh` 로 검사 — exit 2(BLOCKED) → **post 중단**(warning 아님). branch_key 가 slug `[a-z0-9-]` 라 경로·PII 인코딩이 이미 불능이나 deny-scan 을 **backstop** 으로 그대로 통과시킨다.
+  - ★ deny-scan 은 email·RRN **미커버** → AC-8 의 14-rule redaction floor 가 1차 방어(ADR-043 상속), deny-scan 단독 아님(ADR-164 §7.6 T-HB-3). heartbeat payload = **bounded 3-tuple**(branch_key slug + numeric seq + enum lane) → free-form content 0.
+- **sentinel `⟦cf-orch⟧` 선두**: heartbeat-format.sh 산출물은 이미 sentinel 선두 → Arc A `echo-guard.sh` 가 exit 0(skip)으로 걸러 결정폴러 재섭취(cross-echo)를 막는다(Arc B-1 과 같은 control project 안전).
+
+```bash
+# Arc B-1 §2(b)·sentinel 섹션과 같은 검사 (예시)
+printf '%s' "$HEARTBEAT_BODY" | bash scripts/jira-channel/deny-scan.sh    # exit 0=clean · 2=BLOCKED(중단)
+printf '%s' "$HEARTBEAT_BODY" | bash scripts/jira-channel/echo-guard.sh   # exit 0=skip(안전) · 1=sentinel 누락 결함
+```
+
+### (e) per-branch 코멘트 post/update (`addCommentToJiraIssue` 1종) + idempotency
+
+```
+# 최초 브랜치 tick — commentId 미지정 post(브랜치별 pinned 코멘트 신규 생성). 산출 commentId 를 map 기록.
+mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
+  cloudId      = <config.cloud_id>,
+  issueIdOrKey = <config.mirror_issue_key>,          # Arc B-1 과 같은 단일 mirror 이슈
+  commentBody  = <heartbeat-format.sh 산출 본문>)      # 선두 sentinel ⟦cf-orch⟧ + HEARTBEAT 토큰
+# → 반환 commentId 를 {branch_key → commentId} map 에 기록.
+
+# 이후 tick — 그 branch_key 의 commentId 로 update(브랜치별 코멘트 1개를 최신화 — 신규 양산 없음).
+mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
+  cloudId      = <config.cloud_id>,
+  issueIdOrKey = <config.mirror_issue_key>,
+  commentId    = <map[branch_key]>,
+  commentBody  = <heartbeat-format.sh 산출 본문>)
+```
+
+- **idempotency (§11.6)**: 각 브랜치 heartbeat 코멘트는 **결정론적 marker `⟦cf-orch⟧ HEARTBEAT branch=<slug>`** 로 유일 식별된다. 그 브랜치의 **단일 코멘트를 update-in-place**(commentId 재사용)하고 **blind create 는 금지**(브랜치당 코멘트 1개 수렴 → **flood 방지**). marker 는 ① 외부 watchdog 가 per-branch 로 read·attribute 하는 앵커이자 ② update-in-place 의 결정론적 키다. 본 skill 은 세션 `{branch_key → commentId}` map 으로 commentId 를 잡아 write 하며 **Jira 를 read/poll 하지 않는다**(write-only).
+- **write = `addCommentToJiraIssue` 1종만**(A1-1 narrow-allow, post + commentId update). status 전이·이슈 생성·issue-field write 없음.
+
+### (f) read-path = 외부 watchdog (본 skill 아님 — 교차참조만)
+
+- Arc B-2 의 **읽기 경로(dual)** = per-branch 코멘트를 **읽어** now−last_tick·seq 진행으로 staleness 를 판정하는 **외부 watchdog**다 — 별도 **GitHub Actions cron**(`.github/workflows/branch-liveness-watchdog.yml`, read-only Jira token; Change Plan §3.3/§5, ADR-164 §결정 4). **본 skill 이 아니다.**
+- 본 skill 은 **write-only 불변**을 유지한다 — poll/read/dedup/rehydrate/timeout 은 Arc A(jira-decision-channel) 전용이자 watchdog 소관이며, Arc B(1·2) 어느 쪽도 하지 않는다. watchdog 3-state·fail-open 금지(unknown≠PASS) = ADR-164 §결정 5 — **본 skill 은 판정하지 않는다. heartbeat 를 내보내기만 한다.**
+
+---
+
+## 4. audit (A1-4) — Arc B-1·B-2 공통
+
+모든 Orchestrator Jira write(Arc B-1 comment post / activity update, Arc B-2 heartbeat post/update)와 미러 결과를 **세션 transcript** 에 기록한다 — wrapper-side audit 가 SSOT(Jira author 추적 비신뢰).
 
 ```
 [jira-progress audit] story=<KEY> mirror-issue=<config.mirror_issue_key>
   6-point: <전이종류> lane=<lane> — <요약 1줄>
   comment: addCommentToJiraIssue ok (sentinel=⟦cf-orch⟧, echo-guard skip 확인)
   활동: addCommentToJiraIssue update ok (commentId=<ACTIVITY_COMMENT_ID>) — <현재 무엇 하는중 1줄>
+  heartbeat(Arc B-2): addCommentToJiraIssue {post|update} ok (branch=<slug>, seq=<N>, commentId=<map[branch_key]>, token=HEARTBEAT) — per-branch liveness tick
 ```
 
 - status 전이 기록 항목 없음 — comment-only 라 transition 미발생.
 
 - secret/절대경로 = audit 에도 기록 금지(요약만 — deny-scan 차단 항목과 동일 원칙).
 - **write-only 명시**: 본 audit 는 출력 기록만 — Arc A 의 poll/parse/dedup/PROCESSED 기록은 Arc B 에 없다(write-only, 답 미수신).
+- **Arc B-2 heartbeat 도 write-only 감사**: 위 heartbeat 줄도 출력(post/update) 기록만이다 — staleness 3-state 판정·per-branch read 는 **외부 watchdog** 소관(자기 GitHub durable verdict 로 기록, ADR-164 §결정 4·5)이라 본 audit 에 없다.
 
 ---
 
@@ -205,5 +299,7 @@ mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
 | sentinel·deny-scan 공유 | **Arc A(S2/S3) 재사용** | **공유** | echo-guard.sh sentinel SSOT + deny-scan.sh — 같은 control project 안전(cross-echo 차단) |
 | 이슈 생성 / status 전이 / issue-field write | **deny** | **비대상** | createJiraIssue/transitionJiraIssue/getTransitionsForJiraIssue/editJiraIssue = ADR-099 §A1-1 deny — 본 절차 미사용 |
 | poll/dedup/echo-guard 폴러/rehydrate/timeout/stale | **Arc A 전용** | **비대상** | comment-only 라 답 수신 없음 → 무의미. Arc B 가 import 안 함(방향 섹션) |
+| **Arc B-2** per-branch heartbeat relay(branch→commentId map) | **CFP-2772 (본 Story Phase 2)** | **구현됨** | 같은 mirror 이슈 위 브랜치별 pinned 코멘트. `HEARTBEAT` 토큰 · `heartbeat-format.sh`(progress-format.sh 형제) · `addCommentToJiraIssue` 1종 post+commentId update · **createJiraIssue 없음** · sentinel+deny-scan 재사용 (Arc B-2 섹션, ADR-164 §결정 3) |
+| Arc B-2 read-path(staleness 3-state 판정) | **외부 watchdog(별도)** | **비대상** | GitHub Actions cron(`branch-liveness-watchdog.yml`) read-only Jira. 본 skill 은 write-only — 읽지 않음(ADR-164 §결정 4·5) |
 
-> Arc B = comment-only 진행 미러. 사용 도구 = `addCommentToJiraIssue` 1종(post + commentId update). ADR-038 6-point lane 전이 + 현재활동 1줄 입도로 codeforge 진행을 Jira 로 단방향 출력하되, **이슈 생성·status 전이·issue-field write 는 전부 deny 라 호출하지 않는다**(ADR-099 §A1-1 정합). Arc A 의 결정-루프 robustness(poll/dedup/rehydrate/timeout/stale)는 전부 비대상이고, sentinel·deny-scan 만 공유해 같은 control project 를 안전하게 함께 쓴다.
+> Arc B = comment-only 진행 미러. 사용 도구 = `addCommentToJiraIssue` 1종(post + commentId update). ADR-038 6-point lane 전이 + 현재활동 1줄 입도로 codeforge 진행을 Jira 로 단방향 출력하되, **이슈 생성·status 전이·issue-field write 는 전부 deny 라 호출하지 않는다**(ADR-099 §A1-1 정합). Arc A 의 결정-루프 robustness(poll/dedup/rehydrate/timeout/stale)는 전부 비대상이고, sentinel·deny-scan 만 공유해 같은 control project 를 안전하게 함께 쓴다. **Arc B-2**(CFP-2772 / ADR-164)는 같은 comment-only 불변(같은 `addCommentToJiraIssue` 1종, createJiraIssue 없음, sentinel·deny-scan 재사용) 위에서 단일 `ACTIVITY_COMMENT_ID` 를 **branch→commentId map** 으로 일반화해 병렬 브랜치별 coarse 생존 heartbeat(`HEARTBEAT` 토큰)를 relay 한다 — partial-hang(1/N) 특정용(AC-7). per-branch 코멘트 read·3-state 판정은 별도 외부 watchdog 소관이고, 본 skill 은 여전히 write-only 다.

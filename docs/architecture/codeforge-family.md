@@ -102,6 +102,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 - PMOAgent — Epic 창설 / Story 완료 retro (Phase 2 PR merge 후 5분 grace 자동 trigger, ADR-045)
 - GitOpsAgent — parallel epic conflict 검사 + scope_manifest intersection
 - (DialogFidelityAgent — Orchestrator ↔ 사용자 dialog 3-anchor read-only verify = CFP-2236 sunset, ADR-071 Amendment 9. 검증 ground = Codex TP#2/TP#3 + ADR-064 Q-3check 보존.)
+- **branch-liveness watchdog** (ADR-164 / CFP-2772 — Phase 2 배선) — 병렬 브랜치가 coarse per-branch heartbeat(seq) emit → jira-progress-mirror Arc B-2 relay(per-branch pinned 코멘트, addComment 1종) → 외부 watchdog(GitHub Actions cron, ubuntu-latest hosted, session/host fault-independent) read-only poll → 3-state(신선/정체/미상, monotonic seq clock-무관, fail-open 금지) → verdict = GitHub durable(CI-native). observer-death(Orchestrator 자기사망) 외부 감지 = dead-man's-switch(meta-observer 자기 last-run marker). **경계 신규**: watchdog read-only Jira credential = infra-resource-baseline.yaml 선언 의무(ADR-157 drift gate). dev-process-event-v1 무접촉(new-sibling, liveness ⊥ granularity).
 
 **artifact propagation**:
 - Story file (`internal-docs/<plugin>/stories/<KEY>.md`) = lane 간 컨텍스트 SSOT (각 lane self-fetch)
