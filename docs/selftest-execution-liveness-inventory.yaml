@@ -589,3 +589,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "ADR digit-width 3-digit zero-pad 통일 self-test (post-state invariant I-A~I-E + discriminating fixture pre-RED→post-GREEN + no-op stub 이빨 + EP/BVA 경계 negative-lookahead 불변) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 정규화 정합). hard-fail 채널(continue-on-error 없음, non_required — branch protection 7-tuple 무변경). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
+
+  # ── CFP-2784 (FU-1588-R Phase 2 wire) — rebase-staleness sentinel discriminating self-test enroll ──
+  # bijection: tests/scripts/*.sh 54 → 55 (신규 self-test enroll). 실행 채널 = rebase-staleness-detection.yml:rebase-staleness-detection-test
+  #   (wrapper-self only — templates copy 로 consumer 전파). warning-tier(continue-on-error 불요 hard-fail, AC-2 job_id bijection 정합).
+  #   run-line: `bash tests/scripts/test_check-rebase-staleness-sentinel.sh`.
+  - self_test: "tests/scripts/test_check-rebase-staleness-sentinel.sh"
+    execution_channel: "workflow:rebase-staleness-detection.yml:rebase-staleness-detection-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "rebase-staleness sentinel lint self-test — commit-count-behind 감지 + 4-tier mitigation 권고(tier 1/2 advisory self-service) discriminating fixture(--rebase-check-mode head-compare + mock upstream commit 격차 inject + rebase-need RED→rebase-ok GREEN + MK mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 commit-count 검증). warning-tier hard-fail 채널(continue-on-error 없음 = exit 1 FAIL branch, non_required — branch protection 7-tuple 무변경). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
