@@ -120,10 +120,10 @@ owned_sections:
     # NOTE (CFP-612): wrapper repo 4번째 cross-Story append-only file (FIX Ledger / Git Ops Log
     # / ADR-RESERVATION 패턴 정합). M=5 lifetime counter, manual reset only.
 
-  # ADR-72 (CFP-632 Story-1) — ProductionEvidenceDeputy mandate ground + EPIC CLOSED gate evidence quad
+  # ADR-072 (CFP-632 Story-1) — ProductionEvidenceDeputy mandate ground + EPIC CLOSED gate evidence quad
   - file: CLAUDE.md
     section: "production-evidence-deputy"
-    owner_adr: ADR-72  # CFP-632 carrier — ProductionEvidenceDeputy 9th deputy mandate ground
+    owner_adr: ADR-072  # CFP-632 carrier — ProductionEvidenceDeputy 9th deputy mandate ground
     carrier_story: CFP-632
     parallel_edit: append-only
     # NOTE (CFP-632): ProductionEvidenceDeputy mandate (production evidence quad owner +
@@ -305,10 +305,10 @@ owned_sections:
     # boundary / dimensional / architecture_doc + marketplace_sync_declared).
     # ADR-008 §결정 2 MINOR additive optional field (default false backward-compat).
 
-  # CFP-991 (ArchitectAgent Phase 1 — §4.14 canary_compatibility_check_binding lock + ADR-72 Amendment 3 lock)
+  # CFP-991 (ArchitectAgent Phase 1 — §4.14 canary_compatibility_check_binding lock + ADR-072 Amendment 3 lock)
   - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
     section: "§4.14 canary_compatibility_check_binding block"
-    owner_adr: ADR-72  # Amendment 3 carrier (sibling ADR-076 §결정 9.2/9.6 + ADR-070 §결정 D6 cross-ref)
+    owner_adr: ADR-072  # Amendment 3 carrier (sibling ADR-076 §결정 9.2/9.6 + ADR-070 §결정 D6 cross-ref)
     carrier_story: CFP-991  # Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
     parallel_edit: append-only
     arbitrator: codeforge-design:ArchitectAgent
@@ -327,14 +327,14 @@ owned_sections:
     # §4.10 channel state binding + CFP-898 §4.11/§4.12/§4.13 SSOT 재사용 +
     # canary promotion criteria enforcement layer 1 추가).
 
-  # CFP-991 (ArchitectAgent Phase 1 — ADR-72 Amendment 3 lock — production-evidence-deputy section append)
-  - file: docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md
+  # CFP-991 (ArchitectAgent Phase 1 — ADR-072 Amendment 3 lock — production-evidence-deputy section append)
+  - file: docs/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md
     section: "amendment_log Amendment 3 + §결정 3 trigger axis 표 wrapper governance row append + §결정 5 evidence quad 표 row append (Amendment 3)"
-    owner_adr: ADR-72
+    owner_adr: ADR-072
     carrier_story: CFP-991  # Wave 4 sub-Epic #1 Story-4 carrier
     parallel_edit: append-only
     arbitrator: codeforge-design:ArchitectAgent
-    # NOTE (CFP-991): ADR-72 Amendment lock — amendment_log[] append (Amendment 3
+    # NOTE (CFP-991): ADR-072 Amendment lock — amendment_log[] append (Amendment 3
     # entry, Amendment 1 CFP-651 → Amendment 2 CFP-954 → Amendment 3 CFP-991 monotone)
     # + §결정 3 trigger axis 표 wrapper governance row append (Story-4 carrier entry)
     # + §결정 5 evidence quad 표 row append (5번째 row — canary promotion criteria
@@ -346,7 +346,7 @@ owned_sections:
   # CFP-991 (ArchitectAgent Phase 1 — canary_compatibility_check section lock — RefactorAgent A-2 + B-3 + C-4 패턴 답습)
   - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
     section: "canary_compatibility_check (§4.14 binding block — axis disjoint from §4.10 multi_version_channel_pin)"
-    owner_adr: ADR-72  # Amendment 3 + ADR-076 §결정 9.6
+    owner_adr: ADR-072  # Amendment 3 + ADR-076 §결정 9.6
     carrier_story: CFP-991
     parallel_edit: serialized
     arbitrator: codeforge-design:ArchitectPLAgent
@@ -358,12 +358,12 @@ owned_sections:
     # (DataMigrationArch §11.7 load-bearing dissent verbatim 채택). precedent =
     # production-evidence-deputy section (CFP-632, line 125) byte-copy 금지 +
     # structural pattern only. wrapper-self-app Tier-1 exemption invariant 보존
-    # (ADR-72 §결정 6). serialized parallel_edit — 동시 수정 시 merge-order 의무.
+    # (ADR-072 §결정 6). serialized parallel_edit — 동시 수정 시 merge-order 의무.
 
   # CFP-1014 (ArchitectAgent Phase 1 — §4.14 downgrade_asymmetry_marker status flip wired lock + §4.3 (m) trigger lock + §4.4 row 7 ratchet lock)
   - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
     section: "§4.14 downgrade_asymmetry_marker (status: placeholder_reserve → wired 단독 promotion field, carrier_story carrier→realized 정정, closed_enum open_extension:false 명시, activation_protocol tense 갱신, sunset_justification 본문 무변경, out_of_scope.downgrade_path_runtime comment 갱신, §4.4 row 7 역방향 약화 차단 row append)"
-    owner_adr: ADR-72  # Amendment 3 carrier (sibling ADR-076 §결정 9.6 declarative SSOT cross-ref)
+    owner_adr: ADR-072  # Amendment 3 carrier (sibling ADR-076 §결정 9.6 declarative SSOT cross-ref)
     carrier_story: CFP-1014  # Wave 4 sub-Epic #1 Story-5 마지막 (5/5 Story complete final 고정) downgrade asymmetry invariant 활성
     parallel_edit: serialized
     arbitrator: codeforge-design:ArchitectAgent
@@ -384,7 +384,7 @@ owned_sections:
     # CFP-1014 v1.12 downgrade asymmetry final). serialized parallel_edit — §4.14
     # 안 sub-field 동시 수정 시 merge-order 의무. production_cutover_touching:
     # FALSE (Story-3 CFP-954 carrier 완료 disjoint, declare-only disjoint
-    # declarative SSOT only — ADR-72 §결정 6 wrapper-self-app N/A invariant 정합).
+    # declarative SSOT only — ADR-072 §결정 6 wrapper-self-app N/A invariant 정합).
     # Live touching: FALSE (runtime downgrade execution path = 별 future carrier
     # OOS) / marketplace_publish_touching: FALSE (channels[] populate carrier =
     # Story-4 CFP-991 realize point).

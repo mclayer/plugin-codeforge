@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.2.1] - 2026-07-21 — CFP-2762 ADR 파일명 자릿수 3-digit 통일 정규화 (PATCH)
+
+### Changed (CFP-2762 — ADR digit-width 3-digit zero-pad 통일, PATCH)
+
+[CFP-2762] ADR corpus 유일 2-digit 파일명 이상치(번호 72) → 3-digit `ADR-072` rename + 전 참조 정규화의 lane 반영. 본 plugin `.claude-plugin/plugin.json` description 내 2-digit ADR 참조 1건(`ProductionEvidenceDeputy (ADR-072 이관)`) → `ADR-072` 정규화(description 내용 무변경, notation-only). (본 plugin 은 2026-07-13 KST sunset — ADR-121, deprecation 상태 무변경.) semantically-identical notation 정규화 → PATCH (ADR-037 §결정1 row (l) typo tier). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## [1.2.0] - 2026-07-18 — CFP-2748 ADR-141 Amendment 2 DeployReviewWorker opus→sonnet carve-out (MINOR)
 
 ### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)
@@ -74,10 +80,10 @@ codeforge family 6 → 8 lane 확장의 #7 배포 리뷰 lane plugin 신설 ([AD
   - Opus tier = adversarial debate 자동 발동 영역 mandatory (ADR-042 §결정 1)
 - `agents/DeployReviewWorkerAgent.md` — 배포 리뷰 worker (Sonnet tier):
   - smoke test (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 baseline 수집 (latency p50/p95/p99 / throughput / error rate / CPU·memory) + cutover 사후 검증
-- `agents/ProductionEvidenceDeputyAgent.md` — **ProductionEvidenceDeputy ownership 이관** (ADR-088 §결정 4 + ADR-72 Amendment 4):
+- `agents/ProductionEvidenceDeputyAgent.md` — **ProductionEvidenceDeputy ownership 이관** (ADR-088 §결정 4 + ADR-072 Amendment 4):
   - codeforge-design CONDITIONAL deputy → codeforge-deploy-review 정식 deputy
   - parent_pl: ArchitectPLAgent → DeployReviewPLAgent / ssot_position: codeforge-design → codeforge-deploy-review
-  - mandate body = ADR-72 §결정 1-7 verbatim 유지 (production evidence quad 4 source / EPIC CLOSED gate / Family atomic canary pin)
+  - mandate body = ADR-072 §결정 1-7 verbatim 유지 (production evidence quad 4 source / EPIC CLOSED gate / Family atomic canary pin)
   - codeforge-design repo 의 기존 file 은 deprecate marker 부착 (별 sibling 갱신)
 - `CLAUDE.md` — 배포 리뷰 lane plugin identity + 검증 3종 + 기존 review lane disjoint axis + ProductionEvidenceDeputy 이관 + ADR-088 cross-ref.
 - `templates/` — 배포 리뷰 매커니즘 (production-grade 성능 측정 + cutover evidence 4-quad).

@@ -2,7 +2,7 @@
 # scripts/check-canary-compatibility.sh — canary promotion criteria 4-tuple verification (thin orchestrator)
 #
 # CFP-991 (Wave 4 sub-Epic #1 Story-4 — canary promotion criteria enforcement layer)
-# Carrier ADR: ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+# Carrier ADR: ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
 # Sibling: ADR-070 §결정 D6 (CFP-988 Amendment 4 mandatory-real-execution-evidence STANDING cross-ref T-4.1)
 #
 # RefactorAgent A-3 + B-3 (thin orchestrator + helper lib extraction) — CFP-954 gh-api-helpers.sh 선례 답습:
@@ -38,7 +38,7 @@ source "$_CFP991_HELPER_LIB"
 # ----------------------------------------------------------------------
 # Step 1: wrapper-self-app Tier-1 exemption fast-PASS check
 # triple-AND: production_cutover_touching=true AND repo=wrapper AND code_change=0
-# ADR-72 §결정 6 wrapper-self-app N/A invariant 정합 (영구 fast-PASS scope)
+# ADR-072 §결정 6 wrapper-self-app N/A invariant 정합 (영구 fast-PASS scope)
 # ----------------------------------------------------------------------
 _step_1_tier1_exemption_check() {
   local production_cutover_touching="${PRODUCTION_CUTOVER_TOUCHING:-false}"
@@ -56,7 +56,7 @@ _step_1_tier1_exemption_check() {
 
   # Tier-1 exemption triple-AND
   if [[ "$production_cutover_touching" == "true" && "$repo_kind" == "wrapper" && "$code_change" == "0" ]]; then
-    echo "[canary-compat] PASS: Tier-1 wrapper-self-app exemption (triple-AND fast-PASS, ADR-72 §결정 6 invariant 정합)"
+    echo "[canary-compat] PASS: Tier-1 wrapper-self-app exemption (triple-AND fast-PASS, ADR-072 §결정 6 invariant 정합)"
     return 0  # exit 0 PASS
   fi
 

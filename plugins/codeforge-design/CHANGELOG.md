@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.43.1] - 2026-07-21 — CFP-2762 ADR 파일명 자릿수 3-digit 통일 정규화 (PATCH)
+
+### Changed (CFP-2762 — ADR digit-width 3-digit zero-pad 통일, PATCH)
+
+[CFP-2762] ADR corpus 유일 2-digit 파일명 이상치(번호 72) → 3-digit `ADR-072` rename + 전 참조 word-boundary 정규화의 lane 반영. 본 plugin `.claude-plugin/plugin.json` description 내 2-digit ADR 참조 2건 → `ADR-072` 정규화(description 내용 무변경, notation-only). digit-width canonical = ADR-133 Amendment 3 codify. semantically-identical notation 정규화 → PATCH (ADR-037 §결정1 row (l) typo tier, β under-bump-FAIL 회피). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## [0.43.0] - 2026-07-18 — CFP-2748 ADR-141 Amendment 2 설계 advocate 4종 opus→sonnet carve-out (MINOR)
 
 ### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)
@@ -94,7 +100,7 @@ CFP-2184 — ADR-119 agent-level 실현: tier A 3 (ArchitectAgent/Refactor/TestC
 ### Removed (CFP-2170 — ProductionEvidenceDeputyAgent design 본 물리 삭제)
 
 - `agents/ProductionEvidenceDeputyAgent.md` 삭제 — ADR-088 §결정 4 ownership 이관 (canonical = `plugins/codeforge-deploy-review/agents/ProductionEvidenceDeputyAgent.md`) 의 lifecycle 완결. deprecated 부착 (2026-05-21) 후 0.21.2 / 0.21.3 — 2 release 경과로 "1 release grace" 만료 실측 (Change Plan cfp-2170 §2.3). consumer blast radius 0 — S5 전 marketplace `codeforge-design` source = 구 lane repo (monorepo `plugins/codeforge-design/**` 와 물리 disjoint).
-- `CLAUDE.md` PE roster 기재 4곳 → 이관 사실 1줄 축약 (Sub-agent fan-out 표 PE row + 12-산출물 서사 PE 분기 제거, ADR-72 관련-ADR 줄 이관 註).
+- `CLAUDE.md` PE roster 기재 4곳 → 이관 사실 1줄 축약 (Sub-agent fan-out 표 PE row + 12-산출물 서사 PE 분기 제거, ADR-072 관련-ADR 줄 이관 註).
 
 추가 (CFP-2174 S5): `CLAUDE.md` L11-12 inter-plugin contract dangling 상대링크 2건 정정 — markdown 링크 제거 + 평문 경로 + canonical 위치 명시 (설치 캐시 self-contained 기준 끊김 해소, 0.23.0 첫 출하분 dangling 0 — Change Plan cfp-2174 §2 P1-3).
 
@@ -188,14 +194,14 @@ wrapper sibling PR #1151 (Story template §ubiquitous_language + 3 lint + eviden
 
 ### Changed (CFP-1059 Story-3 — ProductionEvidenceDeputy ownership 이관 deprecate marker)
 
-본 release = ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL deputy → codeforge-deploy-review 정식 deputy) 의 codeforge-design 측 deprecate marker 부착 (ADR-088 §결정 4 / ADR-72 Amendment N). doc-only fast-path (ADR-054 Category 2 — agent file deprecate annotation, ADR / src / tests 변경 0).
+본 release = ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL deputy → codeforge-deploy-review 정식 deputy) 의 codeforge-design 측 deprecate marker 부착 (ADR-088 §결정 4 / ADR-072 Amendment N). doc-only fast-path (ADR-054 Category 2 — agent file deprecate annotation, ADR / src / tests 변경 0).
 
 #### Changed
 
 - **`agents/ProductionEvidenceDeputyAgent.md`** — deprecate marker 부착:
   - frontmatter `status: deprecated` + `deprecated_by: CFP-1059 Story-3` + `superseded_by: mclayer/plugin-codeforge-deploy-review:agents/ProductionEvidenceDeputyAgent.md` + `ssot_position` 갱신
   - body 상단 ⚠️ DEPRECATED marker (ownership 이관 동인 + 정식 SSOT URL + 1 release grace 후 삭제 명시)
-  - mandate body (ADR-72 §결정 1-7) 는 변경 없이 유지 — 이관은 ownership / parent_pl / ssot_position 만
+  - mandate body (ADR-072 §결정 1-7) 는 변경 없이 유지 — 이관은 ownership / parent_pl / ssot_position 만
 - codeforge-design lane 은 본 deputy 를 더 이상 spawn 하지 않음 (production cutover evidence = DeployReviewPLAgent spawn). 1 release grace 후 file 삭제 (ADR-023 lane plugin lifecycle deprecate 절차)
 
 #### Cross-ref
@@ -348,10 +354,10 @@ wrapper sibling PR #1151 (Story template §ubiquitous_language + 3 lint + eviden
 #### agent file 5종 (rename 2 + 신설 3)
 
 - **`agents/DataArchitectAgent.md`** (신설) — DataMigrationArchitectAgent rename + mandate 확장 (§3 data + §11 전체 데이터 구조: entity / aggregate / value object / DB schema / event schema / DTO / API contract data / persistence model / 데이터 흐름 + schema 진화 + migration + rollback + integrity invariant). Opus 유지 (ADR-042 Amd7 §결정 1 (d) + 결정 4 inheritance).
-- **`agents/InfraOperationalArchitectAgent.md`** (신설) — OperationalRiskArchitectAgent rename. mandate scope **무변경** invariant (§7.4 DR / Cancel-on-disconnect / Clock sync / Rate limit / Env isolation / Container considerations — ADR-014 Amd4 verbatim). ADR-72 ProductionEvidence ↔ InfraOperational disjoint axis (policy SSOT axis vs evidence SSOT axis) 명시. Opus inherit.
+- **`agents/InfraOperationalArchitectAgent.md`** (신설) — OperationalRiskArchitectAgent rename. mandate scope **무변경** invariant (§7.4 DR / Cancel-on-disconnect / Clock sync / Rate limit / Env isolation / Container considerations — ADR-014 Amd4 verbatim). ADR-072 ProductionEvidence ↔ InfraOperational disjoint axis (policy SSOT axis vs evidence SSOT axis) 명시. Opus inherit.
 - **`agents/CodeArchitectAgent.md`** (신설) — 5번째 permanent deputy. §3 code single-mandate advocacy (layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction). Sonnet (`claude-sonnet-4-6` explicit, ADR-042 Amd7 §결정 1 (a) single-mandate advocacy).
 - **`agents/ArchitectAnalystAgent.md`** (신설) — 4-tuple sub-tuple component (chief author 포함, deputy 아님). 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11) 분석 단일 축. Sonnet. PriorArtAgent **conceptual rename only** (실제 file move 0, `PriorArtAgent.md` 부재 verified — gh api direct list).
-- **`agents/ProductionEvidenceDeputyAgent.md`** (신설) — 5번째 deputy 영역 file (CONDITIONAL production cutover Story 만, ADR-72). production evidence quad (functional / security / monitoring / testing 4 source) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin. wrapper-self-app N/A (ADR-72 §결정 6). Opus inherit.
+- **`agents/ProductionEvidenceDeputyAgent.md`** (신설) — 5번째 deputy 영역 file (CONDITIONAL production cutover Story 만, ADR-072). production evidence quad (functional / security / monitoring / testing 4 source) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin. wrapper-self-app N/A (ADR-072 §결정 6). Opus inherit.
 
 #### agent file deletion (rename source)
 
@@ -368,7 +374,7 @@ wrapper sibling PR #1151 (Story template §ubiquitous_language + 3 lint + eviden
 
 - **ADR-042 Amendment 7** (CFP-676 / S1 — design lane agent model tier SSOT) — DataMigrationArch → DataArch rename + Opus 유지 / OperationalRiskArch → InfraOperationalArch rename + Opus 유지 / CodeArchitect + ArchitectAnalyst Sonnet 신설 / InfraArchitect 신설 철회.
 - **ADR-014 Amendment 4** (CFP-676 / S1 — OperationalRiskArch → InfraOperationalArch rename + §7.4 primary/shell 분류 + ProductionEvidence dual-spawn disjoint axis).
-- **ADR-72** (ProductionEvidenceDeputy + Epic cutover gate) — CONDITIONAL deputy 3번째 (production cutover Story 만, wrapper-self-app N/A).
+- **ADR-072** (ProductionEvidenceDeputy + Epic cutover gate) — CONDITIONAL deputy 3번째 (production cutover Story 만, wrapper-self-app N/A).
 - **ADR-044** (Phase-scoped sequential team SSOT) — 4-tuple sub-tuple flat spawn / nested team 금지 / 재귀 spawn 금지 / sub-lead 격상 0건 (CFP-676 reaffirm 단락).
 - **ADR-054** (doc-only Story fast-path 분류 표) — 본 Story 4 조건 명확 satisfy carrier.
 - **ADR-037** (plugin version bump rule) — agent 신설/rename = MINOR bump.

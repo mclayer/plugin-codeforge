@@ -6,7 +6,7 @@ name: Deploy Review lane spawn evidence
 # S6 actual job body (declarative seed -> actual wire):
 #   Story §14 Lane Evidence row append 검증
 #   + ProductionEvidenceDeputy ownership 이관 cross-validation
-#   + ADR-72 Amendment N production-cutover-evidence cross-ref
+#   + ADR-072 Amendment N production-cutover-evidence cross-ref
 #   (deploy-lane-spawn-evidence.yml 패턴 답습)
 #
 # ADR-088 spawn evidence binding:
@@ -91,5 +91,5 @@ jobs:
           fi
 
           echo "[INFO] cascade trigger chain: Epic close -> auto-deploy -> DeployAgent -> 배포 lane -> 배포 리뷰 lane"
-          echo "[INFO] ADR-72 production-cutover-evidence cross-ref (ADR-072 Amendment N)"
+          echo "[INFO] ADR-072 production-cutover-evidence cross-ref (ADR-072 Amendment N)"
           echo "[INFO] warning tier (ADR-060 §결정 5)"

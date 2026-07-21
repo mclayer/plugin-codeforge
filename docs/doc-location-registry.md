@@ -303,7 +303,7 @@
   - mclayer/plugin-codeforge/tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml (Wave 4 sub-Epic #882 first Epic-level baseline, declarative-only)
 
   **notes**:
-  > CFP-954 (Wave 4 sub-Epic #882 Story-3) carrier — ADR-055 Amendment 3 (Epic-level baseline first activation) + ADR-72 §결정 1 (ProductionEvidenceDeputy mandate first activation) 동반.
+  > CFP-954 (Wave 4 sub-Epic #882 Story-3) carrier — ADR-055 Amendment 3 (Epic-level baseline first activation) + ADR-072 §결정 1 (ProductionEvidenceDeputy mandate first activation) 동반.
   > Epic-level integration test baseline 자동 승격 SSOT (Story-level vs Epic-level disjoint axis).
   > Story-level integration test (`tests/integration/<story-key>/`) ≠ Epic-level baseline (`tests/integration/stories/<EPIC_KEY>/`) — 양 layer 동시 존재 가능.
   > Naming convention: `baseline-v<N>-<carrier-key>.yaml` immutable append-only (DataMigrationArch §G.5 정합 — v1/v2/v3 incremental promotion + 기존 v1 file 보존, history immutable).
@@ -368,15 +368,15 @@
   - mclayer/plugin-codeforge/docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md (CFP-991 Wave 4 sub-Epic #1 Story-4 canary promotion criteria 4-tuple SSOT — 4 industry exemplar primary Chrome 3-channel Stable/Beta/Canary + npm dist-tag + Rust 3-channel + K8s 3-stage 보조)
 
   **notes**:
-  > CFP-991 (Wave 4 sub-Epic #1 Story-4) carrier — ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding sibling carrier.
+  > CFP-991 (Wave 4 sub-Epic #1 Story-4) carrier — ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding sibling carrier.
   > promotion criteria 4-tuple SSOT artifact = functional + security + monitoring + testing 4 measurement source 의 codeforge 도메인 mapping (canary → beta promotion gate evaluation 기준).
   > 4 industry exemplar verbatim cite (ADR-076 §결정 9.6 SSOT): Chrome 3-channel Stable/Beta/Canary primary (Chrome 4-channel 변종 도입 0건 invariant) + npm dist-tag latest/next/canary 보조 + Rust 3-channel stable/beta/nightly 보조 + K8s 3-stage GA/Beta/Alpha 보조.
   > 추가 reference (sub-bullet): K8s KEP-5241 (Implementing User Friendly Production Readiness, 2024-12) + AWS CodeDeploy Blue-Green Linear/Canary deployment + Helm release lifecycle.
   > Write owner = ArchitectAgent (codeforge-design lane chief author).
-  > Phase 1 (CFP-991) = doc type 등록 + ADR-72 Amendment 3 + ADR-076 §결정 9.6 anchor.
+  > Phase 1 (CFP-991) = doc type 등록 + ADR-072 Amendment 3 + ADR-076 §결정 9.6 anchor.
   > Story-4 = enforcement layer carrier (declare-only) — Story-5 (별 CFP) = downgrade asymmetry invariant declarative carrier (canary → beta → stable demotion path).
   > parallel-edit policy = serialized (canary_compatibility_check section-ownership.yaml + ArchitectAgent monopoly).
-  > family_7_atomic × channel × promotion gate 3-axis cross-product = wrapper Tier-1 declare-time exemption (ADR-72 §결정 6 invariant 정합) + consumer Tier-2 admin-tier 권장 (boundary 2-tier disjoint).
+  > family_7_atomic × channel × promotion gate 3-axis cross-product = wrapper Tier-1 declare-time exemption (ADR-072 §결정 6 invariant 정합) + consumer Tier-2 admin-tier 권장 (boundary 2-tier disjoint).
 
 ### `orchestrator_playbook`
 

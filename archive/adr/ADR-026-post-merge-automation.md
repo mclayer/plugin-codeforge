@@ -771,7 +771,7 @@ source_5_epic_close:
 
 - **wrapper-self-app exemption** — wrapper repo (`mclayer/plugin-codeforge`) = mixed repo 분류 → DeployPL spawn skip (self-loop bug 차단, ADR-083 §결정 4 정합)
 - **consumer repo only** — `.claude-plugin/plugin.json` 부재 + `.claude/_overlay/project.yaml` 존재 시 (consumer repo) DeployPL spawn fire
-- **production cutover-touching Epic 한정** — Epic Issue body 안 `<!-- scope_manifest -->` block `production_cutover_touching: true` 명시 시만 trigger (ADR-72 §결정 5 epic-cutover-gate-evidence-quad-check 정합)
+- **production cutover-touching Epic 한정** — Epic Issue body 안 `<!-- scope_manifest -->` block `production_cutover_touching: true` 명시 시만 trigger (ADR-072 §결정 5 epic-cutover-gate-evidence-quad-check 정합)
 
 ### 결정 9 (신설) — declaration-only Wave 1 mechanical_enforcement_actions[] entry
 
@@ -794,7 +794,7 @@ mechanical_enforcement_actions:
 - ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane + ProductionEvidence transfer)
 - ADR-042 Amendment 9 (CFP-1059 / Story-1 sibling — 4 신설 agent tier DeployPL / DeployWorker / DeployReviewPL / DeployReviewWorker)
 - ADR-083 §결정 1 (consumer-applicability filter 4-way enum, consumer-self-app gating layer)
-- ADR-72 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic 한정 trigger scope 정합)
+- ADR-072 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic 한정 trigger scope 정합)
 - ADR-082 §결정 6 + ADR-070 §D5 (declaration-only Wave 1 retain pattern)
 - ADR-005 (self-application byte-identical mirror — `templates/github-workflows/epic-close-deploy-trigger.yml` ↔ `.github/workflows/` Phase 2 PR 의무)
 - ADR-064 §self-application top-down ratchet (강화 방향 only, 약화 0)

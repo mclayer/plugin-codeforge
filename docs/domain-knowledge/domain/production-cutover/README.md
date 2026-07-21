@@ -12,7 +12,7 @@ tags:
   - release-lifecycle
   - cfp-954
 related_adrs:
-  - ADR-72   # ProductionEvidenceDeputy mandate SSOT (§결정 1-7)
+  - ADR-072   # ProductionEvidenceDeputy mandate SSOT (§결정 1-7)
   - ADR-076  # §결정 9.4 canary tier production-impact authority advisory
   - ADR-055  # Integration Test lane Amendment 3 Epic-level reactivation
   - ADR-014  # CONDITIONAL SubAgent base pattern (LiveOps + LiveOrdering + ProductionEvidence 3 CONDITIONAL)
@@ -31,11 +31,11 @@ updated: 2026-05-18
 
 # Production Cutover — narrative SSOT hub
 
-본 페이지 = codeforge wrapper 의 **production cutover surface 운영 narrative SSOT** (CFP-954 carrier, Wave 4 sub-Epic #882 Story-3 — ProductionEvidenceDeputy mandate first activation 영역). ADR-72 / ADR-076 / ADR-055 3 ADR 의 cross-ref hub.
+본 페이지 = codeforge wrapper 의 **production cutover surface 운영 narrative SSOT** (CFP-954 carrier, Wave 4 sub-Epic #882 Story-3 — ProductionEvidenceDeputy mandate first activation 영역). ADR-072 / ADR-076 / ADR-055 3 ADR 의 cross-ref hub.
 
 ## 1. 도메인 개념
 
-**Production cutover** = software 가 backtest/paper-only 환경에서 **real funds + live exchange API + production credential + live order placement** 영역으로 전환되는 시점. real-world failure mode 의 first emergence point — 사용자 explicit go-ahead 의무 + production-grounding 단일 owner 축 (ProductionEvidenceDeputy, ADR-72 §결정 1) 의무.
+**Production cutover** = software 가 backtest/paper-only 환경에서 **real funds + live exchange API + production credential + live order placement** 영역으로 전환되는 시점. real-world failure mode 의 first emergence point — 사용자 explicit go-ahead 의무 + production-grounding 단일 owner 축 (ProductionEvidenceDeputy, ADR-072 §결정 1) 의무.
 
 5-stage release lifecycle taxonomy (codeforge family plugin distribution):
 
@@ -62,16 +62,16 @@ Additional 5th anchor: **Google SRE workbook "Postmortem culture"** chapter — 
 
 ## 3. ProductionEvidenceDeputy mandate cross-ref
 
-ADR-72 §결정 1-7 SSOT mandate scope 3 책임:
+ADR-072 §결정 1-7 SSOT mandate scope 3 책임:
 1. **Production evidence quad owner** — production state 실측 evidence 4중 (bucket prefix listing / WAL sample / L1 backlog drainage rate / L2/L3 cadence trigger)
 2. **EPIC CLOSED gate 검증** — Epic close PR merge 직전 production evidence quad 충족 검증 (§결정 5)
 3. **Post-cutover wiring inspection** — production cutover 후 compose.yml env / production deploy state / collector emit schema 실측 ↔ 가설 mismatch surface
 
-Trigger axis (ADR-72 §결정 3, Live touching ↔ production cutover disjoint):
+Trigger axis (ADR-072 §결정 3, Live touching ↔ production cutover disjoint):
 - Backtest/Paper-only: 6 permanent SubAgent
 - Live touching pre-cutover: 8 SubAgent (6 + LiveOps + LiveOrdering)
 - **Production cutover**: 9 SubAgent (6 + LiveOps + LiveOrdering + ProductionEvidence) — both spawn 의무
-- wrapper governance: 6 SubAgent (ProductionEvidence wrapper-self-app N/A, ADR-72 §결정 6)
+- wrapper governance: 6 SubAgent (ProductionEvidence wrapper-self-app N/A, ADR-072 §결정 6)
 
 ## 4. 4 prerequisite measurement source mechanical anchor 4-tuple (CFP-954 carrier)
 
@@ -86,7 +86,7 @@ Trigger axis (ADR-72 §결정 3, Live touching ↔ production cutover disjoint):
 
 - `cutover-evidence-collection.md` — 4-evidence-quad 수집 절차 + sample method
 - `rollback-protocol.md` — 7-step incident response (Helm rollback + AWS CodeDeploy 답습)
-- ADR-72 §결정 1-7 SSOT
+- ADR-072 §결정 1-7 SSOT
 - consumer-guide.md §2j (production cutover 사용법)
 - `tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml` (Epic-level baseline first)
 - `templates/github-workflows/production-cutover-evidence.yml` + `scripts/check-production-cutover-evidence.sh`

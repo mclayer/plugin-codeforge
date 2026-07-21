@@ -14,7 +14,7 @@ related_adrs:
   - ADR-088      # Deploy Review lane 신설 ("한 번 끝나는 검증" — 운영 phase 와 disjoint, §결정 3 + L81 "운영 phase 8 후보 = 별 Epic carrier" 가 본 Epic origin)
   - ADR-083      # 직접 제약 — filesystem-only signal invariant (network call 0 / gh api 0) — 0 API call constraint 의 동형 source
   - ADR-045      # §D-9 cross-Story pattern_count ≥ 2 → ADR escalation forcing function — self-improving loop narrative 답습 source
-  - ADR-72       # ProductionEvidenceDeputy + wrapper-self-app Tier-1 declare-time exemption — wrapper-N/A invariant 패턴 source (file명 = ADR-72 2-digit form, ADR-088 precedent 정합)
+  - ADR-072       # ProductionEvidenceDeputy + wrapper-self-app Tier-1 declare-time exemption — wrapper-N/A invariant 패턴 source (file명 = ADR-072 2-digit form, ADR-088 precedent 정합)
   - ADR-023      # lane plugin lifecycle — lane count invariant (운영 phase = 9번째 lane 아님 정합)
   - ADR-054      # doc-only fast-path — 본 Story 는 신규 정의 ADR 포함 → fast-path 비대상 (full-lane)
   - ADR-064      # 모달 어휘 forbid-list — 운영 신호 정량 (숫자 임계) 원칙 정합
@@ -91,12 +91,12 @@ network-heavy 측정(실시간 metric API 등)은 0 API call constraint 위반�
 
 ### §결정 4 — wrapper-self-app N/A invariant
 
-wrapper (codeforge 자체) 는 production 배포 환경이 없다 (plugin = code 0 + runtime behavior 0 + production deploy state 부재, ADR-72 L172 정합). 따라서:
+wrapper (codeforge 자체) 는 production 배포 환경이 없다 (plugin = code 0 + runtime behavior 0 + production deploy state 부재, ADR-072 L172 정합). 따라서:
 
 - **wrapper = declarative SSOT only** — wrapper repo 는 운영 phase 의 정의 / 정책 (본 ADR + domain-knowledge 4 파일) 만 보유한다. 실측 0.
 - **consumer = 실측 Tier-2** — 운영 phase mechanism 의 실제 신호 회수는 consumer (mctrader 등 실 배포 환경) 대상이다.
 
-이는 ADR-72 §결정 6 wrapper-self-app N/A invariant + production-cutover-evidence.yml Tier-1 declare-time exemption 패턴 (`production_cutover_touching=true AND repo=wrapper AND code_change=0` triple-AND fast-PASS) 의 도메인 일반화다. 운영 phase workflow 가 wrapper repo 에 trigger 되면 Tier-1 declare-time exemption 으로 fast-pass / skip 한다 (실 mechanism 신설 = S4~S7 carrier 영역).
+이는 ADR-072 §결정 6 wrapper-self-app N/A invariant + production-cutover-evidence.yml Tier-1 declare-time exemption 패턴 (`production_cutover_touching=true AND repo=wrapper AND code_change=0` triple-AND fast-PASS) 의 도메인 일반화다. 운영 phase workflow 가 wrapper repo 에 trigger 되면 Tier-1 declare-time exemption 으로 fast-pass / skip 한다 (실 mechanism 신설 = S4~S7 carrier 영역).
 
 **consumer overlay 축소 차단** — 0 API call constraint + wrapper-N/A invariant 는 wrapper-canonical invariant 다. consumer overlay (`.claude/_overlay/`) 는 정책 확장만 가능하고 축소 불가 (consumer-guide §2556 + ADR-064 §결정 7 정합).
 
@@ -172,7 +172,7 @@ N/A — permanent policy
 - [ADR-088](ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane (§결정 3 "한 번 끝나는" + L81 운영 phase 8 후보 = 본 Epic origin)
 - [ADR-083](ADR-083-consumer-applicability-filter.md) — filesystem-only signal invariant (0 API call source)
 - [ADR-045](ADR-045-story-retro-mandatory-trigger.md) — §D-9 pattern → ADR escalation forcing function (self-improving loop source)
-- [ADR-72](ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — wrapper-self-app N/A + Tier-1 declare-time exemption (wrapper-N/A source)
+- [ADR-072](ADR-072-production-evidence-deputy-and-epic-cutover-gate.md) — wrapper-self-app N/A + Tier-1 declare-time exemption (wrapper-N/A source)
 - [ADR-023](ADR-023-lane-plugin-lifecycle.md) — lane count invariant (9번째 lane 아님 정합)
 - `docs/domain-knowledge/domain/operational-phase/` — narrative SSOT 4 파일 (Phase 2 carrier)
 - `docs/domain-knowledge/domain/production-cutover/README.md` — channel distribution 5-stage taxonomy (disambiguation 대상)

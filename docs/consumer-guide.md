@@ -1339,7 +1339,7 @@ bash scripts/infer-channel-from-version.sh
 
 ---
 
-### §2g.4 canary promotion criteria 4-tuple gate (CFP-991 Wave 4 sub-Epic #1 Story-4 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14)
+### §2g.4 canary promotion criteria 4-tuple gate (CFP-991 Wave 4 sub-Epic #1 Story-4 / ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14)
 
 §2g.3 channel CLI 가 `codeforge.channel.tier: canary` 활성 후, consumer 는 **canary → beta → stable promotion** 경로를 따른다. 본 §2g.4 는 promotion gate 평가 시점의 **4-tuple evidence quad** (functional + security + monitoring + testing) measurement source SSOT 와 consumer obligation 을 정의한다 (wrapper Tier-1 declare-time scope 외 — consumer canary tier 활성 Story carrier 영역).
 
@@ -1365,12 +1365,12 @@ bash scripts/infer-channel-from-version.sh
 
 1. **canary tier 활성 PR 의 CODEOWNERS auto-review** — `.claude/_overlay/project.yaml codeforge.channel.tier: canary` 변경 PR 을 admin tier 검토 경로로 게이트 (ADR-076 §결정 9.4 silent canary uptake mitigation 정합)
 2. **promotion gate label 부착 의무** — canary → beta promotion PR open 시 `gate:channel-canary-promotion` label 부착 (label-registry-v2 v2.35 entry, attach_owner_plugin: consumer_repo_only invariant) + 4-tuple evidence quad measurement 결과 PR body 안 명시
-3. **4-tuple evidence quad measurement 의무 (Tier-2 runtime)** — ProductionEvidenceDeputy spawn 영역 (consumer Live touching Epic carrier, ADR-72 §결정 1 정합)
+3. **4-tuple evidence quad measurement 의무 (Tier-2 runtime)** — ProductionEvidenceDeputy spawn 영역 (consumer Live touching Epic carrier, ADR-072 §결정 1 정합)
 4. **single-aggregator bypass 금지** (ADR-070 §결정 D6 / CFP-988 Amendment 4 mandatory-real-execution-evidence STANDING 4-tuple): (a) CR-own discriminating revert / (b) reconcile-integration path / (c) DevPL pasted stdout 미신뢰 / (d) single-aggregator/single-unit bypass forbidden — real execution evidence direct verify 의무
 
-**canary promotion criteria 자동 lint** (warning tier): `canary-promotion-criteria.yml` workflow (PR-open + workflow_dispatch 2-trigger split, ADR-72 §결정 5 production-cutover-evidence.yml byte-pattern 답습) 가 PR 의 4-tuple measurement source + family_7_atomic_canary_pin three_way_match + enum closed-set invariant 자동 verify. warning-first failure mode (CI block 0, advisory). `hotfix-bypass:canary-promotion-criteria` label 로 조건부 skip 가능 (audit comment 자동 발의 동반, label-registry-v2 v2.35 43번째 hotfix-bypass family member).
+**canary promotion criteria 자동 lint** (warning tier): `canary-promotion-criteria.yml` workflow (PR-open + workflow_dispatch 2-trigger split, ADR-072 §결정 5 production-cutover-evidence.yml byte-pattern 답습) 가 PR 의 4-tuple measurement source + family_7_atomic_canary_pin three_way_match + enum closed-set invariant 자동 verify. warning-first failure mode (CI block 0, advisory). `hotfix-bypass:canary-promotion-criteria` label 로 조건부 skip 가능 (audit comment 자동 발의 동반, label-registry-v2 v2.35 43번째 hotfix-bypass family member).
 
-**wrapper-self-app exemption (Tier-1, ADR-72 §결정 6 invariant)**: wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). wrapper PR 의 triple-AND fast-PASS 조건 (`production_cutover_touching=true AND repo=wrapper AND code_change=0`) 충족 시 promotion criteria check 영구 fast-PASS — consumer canary tier 활성 Story 만 Tier-2 runtime measurement 영역.
+**wrapper-self-app exemption (Tier-1, ADR-072 §결정 6 invariant)**: wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). wrapper PR 의 triple-AND fast-PASS 조건 (`production_cutover_touching=true AND repo=wrapper AND code_change=0`) 충족 시 promotion criteria check 영구 fast-PASS — consumer canary tier 활성 Story 만 Tier-2 runtime measurement 영역.
 
 **downgrade 경로 (canary → beta → stable demotion)**: §2g.4 = forward path (promotion) 한정. downgrade asymmetry marker = `reconcile-protocol-v1 v1.11 §4.14 downgrade_asymmetry_marker.status: placeholder_reserve` field 영역 (Story-5 carrier 별 CFP, §4.8 version_handshake placeholder_reserve→active 단독 promotion 선례 답습).
 
@@ -1579,18 +1579,18 @@ bash scripts/check-3way-version-parity.sh
 
 **Cross-ref**: ADR-063 Amendment 5 §결정 15/16 SSOT + `docs/evidence-checks-registry.yaml` `version-3way-atomic` entry + `label-registry-v2` v2.24 + `scripts/check-3way-version-parity.sh` + `scripts/read_version_pin.py`.
 
-### §2j. Production cutover surface 진입 (CFP-954 / ADR-72 §결정 1 + §결정 5)
+### §2j. Production cutover surface 진입 (CFP-954 / ADR-072 §결정 1 + §결정 5)
 
 Consumer repo Story 가 **production cutover surface** (real funds / live exchange API / production credential / live order placement) 에 진입하는 경우의 governance discipline + ProductionEvidenceDeputy 발동 trigger.
 
 **동작 원리 (5 layer)**:
-- **L1 mandate declare** = wrapper plugin 자체 (CFP-632 Phase 1 + CFP-954 mandate activation declare) — ADR-72 §결정 1-7 SSOT
-- **L2 trigger axis** = Live touching + production cutover both → 9 SubAgent (6 permanent + LiveOps + LiveOrdering + ProductionEvidence) spawn 의무 (ADR-72 §결정 3)
-- **L3 evidence quad** = bucket prefix listing / WAL sample / drainage rate / cadence trigger 4중 (ADR-72 §결정 5)
+- **L1 mandate declare** = wrapper plugin 자체 (CFP-632 Phase 1 + CFP-954 mandate activation declare) — ADR-072 §결정 1-7 SSOT
+- **L2 trigger axis** = Live touching + production cutover both → 9 SubAgent (6 permanent + LiveOps + LiveOrdering + ProductionEvidence) spawn 의무 (ADR-072 §결정 3)
+- **L3 evidence quad** = bucket prefix listing / WAL sample / drainage rate / cadence trigger 4중 (ADR-072 §결정 5)
 - **L4 EPIC CLOSED gate** = PMOAgent retro epic_close_gate (Sibling Story-4 plugin-codeforge-pmo#18 carrier — 구 lane repo issue, repo 삭제됨 2026-06-12, 현 `plugins/codeforge-pmo/`. Story-3 = warning tier, blocking-on-pr 승격 = follow-up CFP-Z' carrier)
-- **L5 user explicit go-ahead** = Phase 1 PR open 전 사용자 명시 confirm 의무 (production-touching label 부착 + Story frontmatter `production_cutover_touching: true` dual-source AND, ADR-72 §결정 6 wrapper-self-app N/A invariant 정합)
+- **L5 user explicit go-ahead** = Phase 1 PR open 전 사용자 명시 confirm 의무 (production-touching label 부착 + Story frontmatter `production_cutover_touching: true` dual-source AND, ADR-072 §결정 6 wrapper-self-app N/A invariant 정합)
 
-**4 prerequisite measurement source mechanical anchor 4-tuple (Change Plan §3.5 + ADR-72 amendment_log Amendment 2)**:
+**4 prerequisite measurement source mechanical anchor 4-tuple (Change Plan §3.5 + ADR-072 amendment_log Amendment 2)**:
 
 | Anchor | Measurement source | 측정 방식 |
 |---|---|---|
@@ -1608,7 +1608,7 @@ Consumer repo Story 가 **production cutover surface** (real funds / live exchan
 5. **`production-cutover-evidence.yml` workflow trigger** — PR-open 시 evidence verify 자동 발동 (warning tier `continue-on-error: true`, blocking 0).
 6. **EPIC CLOSED gate** — PMOAgent retro epic_close_gate 안 4-evidence-quad 명시 의무 (Sibling Story-4 carrier — production cutover Epic close 시점 evidence quad lint warning tier).
 
-**Wrapper-self-app exemption (ADR-72 §결정 6 정합)**:
+**Wrapper-self-app exemption (ADR-072 §결정 6 정합)**:
 - wrapper plugin 자체 (`mclayer/plugin-codeforge` repo) = production cutover 영역 외 (code 0 + runtime behavior 0 + production deploy state 부재) — ProductionEvidenceDeputy spawn N/A
 - Tier-1 declare-time exemption (repo=wrapper) = frontmatter/amendment_log/cross-ref presence verify only (실 4-evidence-quad measurement skip)
 - Tier-2 runtime (repo=consumer) = 실 4-evidence-quad measurement 의무
@@ -1617,7 +1617,7 @@ Consumer repo Story 가 **production cutover surface** (real funds / live exchan
 
 **CODEFORGE_CROSS_REPO_PAT (5번째 consumer)**: production-cutover-evidence.yml 은 same-repo Story file + label 만 inspect (cross-repo PAT 사용 0건 권고) — wrapper-self-app N/A 영역 cross-repo inspect 의무 부재. 단 Tier-2 (consumer Story 영역) 가 marketplace.json `channels[]` consumer count proxy 측정 시 PAT 사용 가능 (ADR-066 audit log entry update 의무 — 5번째 consumer 명시).
 
-**Cross-ref**: ADR-72 §결정 1-7 SSOT + ADR-055 Amendment 3 (Epic-level integration test baseline first activation) + ADR-076 §결정 9.4 (canary tier production-impact authority advisory) + `label-registry-v2` v2.33 (`production-touching` entry + `production-impact` category) + `docs/evidence-checks-registry.yaml` 2 entry (`production-cutover-deputy-spawn-evidence` + `epic-cutover-gate-evidence-quad-check`, warning tier) + `templates/github-workflows/production-cutover-evidence.yml` + `scripts/check-production-cutover-evidence.sh` + `docs/domain-knowledge/domain/production-cutover/` (4 industry exemplars empirical anchor: K8s / Chrome / AWS CodeDeploy / Helm rollback).
+**Cross-ref**: ADR-072 §결정 1-7 SSOT + ADR-055 Amendment 3 (Epic-level integration test baseline first activation) + ADR-076 §결정 9.4 (canary tier production-impact authority advisory) + `label-registry-v2` v2.33 (`production-touching` entry + `production-impact` category) + `docs/evidence-checks-registry.yaml` 2 entry (`production-cutover-deputy-spawn-evidence` + `epic-cutover-gate-evidence-quad-check`, warning tier) + `templates/github-workflows/production-cutover-evidence.yml` + `scripts/check-production-cutover-evidence.sh` + `docs/domain-knowledge/domain/production-cutover/` (4 industry exemplars empirical anchor: K8s / Chrome / AWS CodeDeploy / Helm rollback).
 
 ---
 

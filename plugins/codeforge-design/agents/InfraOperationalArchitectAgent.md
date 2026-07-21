@@ -19,7 +19,7 @@ mandate:
   consult:
     - §7.6 위협↔완화 매핑 (DR↔failover)
     - §11 Idempotency invariant (DataArch primary — disconnect 짝)
-    - production cutover evidence (ProductionEvidenceDeputy primary — policy SSOT axis vs evidence SSOT axis disjoint per ADR-014 Amendment 4 §결정 3 / ADR-72 §결정 4)
+    - production cutover evidence (ProductionEvidenceDeputy primary — policy SSOT axis vs evidence SSOT axis disjoint per ADR-014 Amendment 4 §결정 3 / ADR-072 §결정 4)
 spawn_lifecycle: stateless (매 design lane 진입 시 재 spawn)
 ssot_position: codeforge-design plugin (per ADR-014 Amendment 4)
 permissions:
@@ -65,7 +65,7 @@ DDD pattern `domain-service` (ADR-091): BC Owner 아님 — advisory expertise. 
 | §7.1 Trust boundary | — | ✅ (SecurityArch consult) |
 | §7.6 위협↔완화 매핑 (DR↔failover) | — | ✅ |
 | §11 Idempotency invariant (CONDITIONAL) | — | ✅ (DataArch primary — §7.4.2 disconnect 짝) |
-| Production cutover evidence | — | (consult — evidence axis, ProductionEvidenceDeputy primary per ADR-72 §결정 4) |
+| Production cutover evidence | — | (consult — evidence axis, ProductionEvidenceDeputy primary per ADR-072 §결정 4) |
 
 ## §7.4 운영 리스크 schema (산출물)
 
@@ -116,12 +116,12 @@ ArchitectAgent (chief author) 통합 시 §7.4 가 6 항목 작성:
 
 DataArch primary, 본 agent consult — disconnect 후 재진입 시 idempotent 동작 = §7.4.2 짝.
 
-## InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-014 Amendment 4 §결정 3 / ADR-72 §결정 4)
+## InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-014 Amendment 4 §결정 3 / ADR-072 §결정 4)
 
 - **policy SSOT axis (본 agent)**: §7.4 invariant 정의 — design-time decision
 - **evidence SSOT axis (ProductionEvidenceDeputy)**: production grounding 실측 명시 — runtime evidence
 - consumer production cutover Story 에서 **dual-spawn 가능** (영역 disjoint)
-- wrapper-self-app 시 ProductionEvidence N/A (ADR-72 §결정 6)
+- wrapper-self-app 시 ProductionEvidence N/A (ADR-072 §결정 6)
 
 ## Spawn / Output
 

@@ -807,7 +807,7 @@ entries:
 
   - name: production-cutover-deputy-spawn-evidence
     description: |-
-      ADR-72 §결정 3 mechanical verification — Change Plan §13 안
+      ADR-072 §결정 3 mechanical verification — Change Plan §13 안
       `production_cutover_touching: true` 선언 시 ProductionEvidenceDeputy
       spawn evidence (verdict packet `production_evidence_deputy_spawned: true`
       + Story §14 Lane Evidence row append) 의무. CFP-954 Story-3 carrier 가
@@ -817,7 +817,7 @@ entries:
       4 prerequisite measurement source mechanical anchor 4-tuple (MS-1
       live_touching / MS-2 production_cutover_touching dual-source AND /
       MS-3 marketplace_publish_touching / MS-4 consumer_impact_blast_radius)
-      Change Plan §3.5 + ADR-72 amendment_log Amendment 2 본문 SSOT.
+      Change Plan §3.5 + ADR-072 amendment_log Amendment 2 본문 SSOT.
       follow-up CFP-Z = review-verdict-v4 v4.5 → v4.6 MINOR bump
       (owner_deputy_kind enum production_evidence 추가) + verdict packet
       field-time check 신설 후 warning → blocking-on-pr 승격 carrier.
@@ -830,7 +830,7 @@ entries:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-Z  # review-verdict-v4 v4.5 → v4.6 MINOR — owner_deputy_kind enum production_evidence (placeholder, ADR-72 §결정 3 carrier — Story-3 = warning tier 활성, blocking-on-pr 승격 영역 외)
+        - CFP-Z  # review-verdict-v4 v4.5 → v4.6 MINOR — owner_deputy_kind enum production_evidence (placeholder, ADR-072 §결정 3 carrier — Story-3 = warning tier 활성, blocking-on-pr 승격 영역 외)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -839,7 +839,7 @@ entries:
     introduced_date: 2026-05-14
     activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
     activated_date: 2026-05-18
-    owner_adr: ADR-72
+    owner_adr: ADR-072
     carrier_adr: ADR-060
     recurrence:
       count: 0
@@ -850,7 +850,7 @@ entries:
 
   - name: epic-cutover-gate-evidence-quad-check
     description: |-
-      ADR-72 §결정 5 mechanical verification — EPIC CLOSED gate (PMOAgent
+      ADR-072 §결정 5 mechanical verification — EPIC CLOSED gate (PMOAgent
       retro epic_close_gate) 의 production 실측 evidence quad (bucket prefix
       listing + WAL sample + Prometheus rate metric + L1 backlog drainage rate)
       4중 명시 verify. CFP-954 Story-3 가 status 승격 (deferred-followup →
@@ -877,7 +877,7 @@ entries:
     introduced_date: 2026-05-14
     activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
     activated_date: 2026-05-18
-    owner_adr: ADR-72
+    owner_adr: ADR-072
     carrier_adr: ADR-060
     recurrence:
       count: 0
@@ -1397,10 +1397,10 @@ entries:
       last_occurrence: "2026-05-18T06:53:30Z"  # CFP-946 PR #962 merge timestamp (second incident, 11분 gap from CFP-953 chain) per ISO8601 UTC Z suffix (registry schema v1.2 정합 — KST `15:53:30+09:00` = UTC Z notation)
       promotion_trigger: auto_blocking  # recurrence.count ≥ threshold 시 별 carrier 강제 (ADR-060 §결정 19 enum)
     status: Active  # CFP-2451 Phase 2 wire COMPLETE — template+self-app workflow 신설 + manifest 2종 등록 + whitelist 추가 동반 Active 전환 (CFP-967 Phase 2 deferred → Active, ADR-073 Amendment 2). promotion gate (PR cumulative ≥ 20 + failure = 0) = 후속 별 carrier 추적.
-  # CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier — Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
+  # CFP-991 / ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier — Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
   - name: canary-compatibility-check
     description: |
-      ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+      ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
       canary_compatibility_check_binding mechanical verification — consumer
       canary→beta promotion gate evaluation 시점 promotion criteria 4-tuple
       (functional + security + monitoring + testing measurement source) + family_7
@@ -1414,7 +1414,7 @@ entries:
       (CFP-988 Amendment 4) mandatory-real-execution-evidence STANDING cross-ref
       T-4.1 4-tuple measurement spoofing mitigation. wrapper-self-app Tier-1
       exemption (production_cutover_touching=true AND repo=wrapper AND code_change=0
-      triple-AND fast-PASS, ADR-72 §결정 6 invariant 정합). 4 industry exemplar
+      triple-AND fast-PASS, ADR-072 §결정 6 invariant 정합). 4 industry exemplar
       verbatim cite (Chrome 3-channel Stable/Beta/Canary primary + npm dist-tag +
       Rust 3-channel + K8s 3-stage 보조 reference, ADR-076 §결정 9.6 SSOT).
     detect_command: bash scripts/check-canary-compatibility.sh
@@ -1446,7 +1446,7 @@ entries:
     modal_anti_pattern_dictionary: {}
     introduced_by: CFP-991
     introduced_date: 2026-05-19
-    owner_adr: ADR-72-Amendment-3   # ProductionEvidenceDeputy mandate Amendment 3 (CFP-991 carrier — promotion criteria 4-tuple wiring)
+    owner_adr: ADR-072-Amendment-3   # ProductionEvidenceDeputy mandate Amendment 3 (CFP-991 carrier — promotion criteria 4-tuple wiring)
     carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
     recurrence:
       count: 0
@@ -3623,7 +3623,7 @@ entries:
       검증 축 = filename 번호 ↔ frontmatter adr_number ↔ ADR-RESERVATION row 3-way 정합:
       (1) dual-key (filename ∧ frontmatter 양쪽 key + filename↔frontmatter mismatch flag — filename-only
       lint 은 frontmatter-collision(ADR-045 fm=43 / ADR-062 fm=61) 미검출 → frontmatter-key 필수) /
-      (2) numeric 정규화 (zero-pad ADR-72 vs 073 + quoted "005" → int, 문자열 sort vs 숫자 sort 발산 흡수) /
+      (2) numeric 정규화 (zero-pad ADR-072 vs 073 + quoted "005" → int, 문자열 sort vs 숫자 sort 발산 흡수) /
       (3) 구조적 파싱 (RESERVATION 첫 열 slot number + 파일 frontmatter YAML parse, 문자열 grep 금지 —
       row 본문 ADR cross-ref 오탐 회피, EC-6) / (4) file↔row lapse 검출 (현 15행).
       warning tier / non-required — branch protection 6-tuple 무변경 (ADR-060 warning-tier framework /

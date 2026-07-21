@@ -73,7 +73,7 @@ Story-4 carrier script (Phase 2 carrier 영역) = v2 generation 시점 v1 conten
 baseline-v1-cfp-954.yaml 의 declarative-only check 3 entry (mandate activation scope only, 실 verify = Story-4 promotion script):
 
 - **CSC-1: label-registry-v2 sequential MINOR bump** — v2.30 (CFP-906) → v2.31 (CFP-932) → v2.32 (CFP-923, parallel sibling 영역 외 Wave 4) → v2.33 (CFP-954). sequential MINOR sequence integrity + 4 bump rows in amendment_log.
-- **CSC-2: ADR-72 amendment_log monotonic increment** — Amendment 1 (CFP-651, 2026-05-14) → Amendment 2 (CFP-954, 2026-05-18). carrier_story field monotonic invariant + amendment_number monotonic.
+- **CSC-2: ADR-072 amendment_log monotonic increment** — Amendment 1 (CFP-651, 2026-05-14) → Amendment 2 (CFP-954, 2026-05-18). carrier_story field monotonic invariant + amendment_number monotonic.
 - **CSC-3: reconcile-protocol-v1 schema version cross-Story consistency** — v1.7 (CFP-906 + CFP-898 dual-carrier) → v1.8 (CFP-932) → 본 Story-3 = v1.8 cross-ref only (변경 0건). Story-3 = production cutover layer disjoint axis (declare scope, runtime UpgradeAgent multi-channel dispatch = Story-2 영역).
 
 ## 경계
