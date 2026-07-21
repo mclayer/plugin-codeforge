@@ -158,6 +158,11 @@ except Exception:
 fi
 
 # ── 범위① description INJECTION + 전환-자율 reminder MERGE (CFP-2587 Phase 2) ──
+# ★ BACKUP tier (ADR-143 Amendment 2 / CFP-2770): 이 updatedInput 주입 = render-glanceability
+#   PRIMARY 아닌 fail-open BACKUP. render 화면 도달 유일 통로 = model-authored prose (model 이
+#   Agent.description 에 직접 저작). updatedInput 은 도구 실행 입력 계층만 치환하고 harness UI 렌더
+#   줄(model-emitted 원본)에 미도달 → 본 주입 목적 = 실행-계층 정확성(backup). 로직·G1-G5 무변경
+#   (강등 = 서술/주석, 코드 삭제 0).
 # tool_input.description 에 렌더-줄 프리픽스 `[<subagent_type>] MM/DD HH:MM - <내용>` 를
 # hookSpecificOutput.updatedInput 으로 주입(mechanical) + 전환-자율 reminder additionalContext 를
 # 동일 JSON 에 병합 → hook stdout = 정확히 하나의 JSON. ★ F1 이후 본 블록은 PROMPT_TEXT 유무와

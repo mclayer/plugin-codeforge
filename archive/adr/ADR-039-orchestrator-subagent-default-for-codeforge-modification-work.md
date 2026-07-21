@@ -117,6 +117,29 @@ amendment_log:
     direction: strengthening
     sunset_justification: |
       §결정 2 inline whitelist 6-entry closed enumeration 무변경 (disjoint axis — spawn liveness ≠ inline-mechanism, 7번째 entry 신설 0) + §결정 1 binary always-spawn 무변경 + §결정 9 slot 미침범 (inline-write-detect 축 ≠ background-wait liveness 완료-감지 축, ADR-139 거절된 대안 E) + §결정 19 body 무변경. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (§결정 19 lead-intervention 축의 정량 liveness 게이트화 cross-ref 신설), 약화 0건. evidence = ADR-139 §컨텍스트 firsthand (lane PL background-yield 무한 정지 / DeveloperAgent 0-byte stall 오판 / 본 CFP-2549 설계 lane 6 deputy fan-out stall 재현). carrier_story CFP-2549 = ADR-039 Amendment 10 (§결정 20) + ADR-081 Amendment 13 paired sibling 2-set (axis disjoint — 본 ADR-039 = spawn-권한 기반 liveness 게이트 소유 / ADR-081 = §D14 companion first-instance cross-ref), 둘 다 ADR-139 §결정 6 sibling Amendment set.
+  - amendment: 11
+    date: 2026-07-21
+    carrier_story: CFP-2770
+    summary: |
+      §결정 2 inline whitelist 에 disjoint-axis 명료화 note 추가(enumeration 무변경) — entry #4
+      "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축: inline vs spawn). 이는
+      ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축, harness 진행 줄)과 **별
+      표면**이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에
+      self-subject `[Orchestrator]` 프리픽스를 허용(INV-2 subset 완화)하되, 이는 §결정 2 whitelist
+      "상태 보고" prose(prefix-exempt 유지)를 건드리지 않는다 — mechanism 축 ≠ display 축 disjoint.
+      inline whitelist 6-entry closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게
+      신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1
+      binary always-spawn 무변경. ADR-039 Amendment 6/7/8/9/10 의 "disjoint axis, 7번째 entry 신설
+      0" house-style 답습. doc-only(ADR-039 in-place note, src/tests 무변경). paired = ADR-143
+      Amendment 2.
+    direction: strengthening
+    sunset_justification: |
+      §결정 2 inline whitelist 6-entry closed enumeration 무변경(disjoint axis — mechanism(inline
+      vs spawn) ≠ display(렌더 LINE 프리픽스), 7번째 entry 신설 0) + §결정 1 binary always-spawn
+      무변경. 본 amendment = display-축 disjoint 경계 명료화 note 추가(additive, whitelist forbid-scope
+      무축소). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향(경계 명료화), 약화
+      0건. carrier_story CFP-2770 = ADR-143 Amendment 2 paired sibling(axis disjoint — ADR-143 =
+      display-surface render 규약 / ADR-039 = mechanism-축 whitelist 경계 note).
 is_transitional: false
 ---
 
@@ -194,6 +217,8 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 다음(7번째) 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future "Skill 호출 / Glob / Grep / Read tool 분류 enum 확장" 압박을 차단 — 모두 현행 6-entry 의 어느 하나로 routing 또는 수정 작업 측 분류.
 
 **Count 정합 (CFP-2572 §결정9 stub + ADR-142 disjoint-axis 정합 — 표기 정합, 결정 내용 무변경)**: 위 표 = §결정2 **base 4-entry**. 이후 **Amd2(§결정15) entry5**(Story-file §9/§10/§14/phase inline write) + **Amd6(§결정18) entry6**(merge-time Codex dispatch) append → **현행 effective inline-whitelist total = 6-entry** (§결정18/§결정19/§결정20 본문 "현 6-entry" 표기와 정합). 본 ADR 여러 amendment 의 "4-entry closed enumeration 무변경" 표현 = **base 표 무변경** 의미(effective 6-entry 와 무모순). **7번째 entry 신설 = amendment 의무**. enumeration 표·routing 규칙 자체 불변.
+
+**disjoint-axis note (Amendment 11, CFP-2770 — display 축 경계 명료화, enumeration 무변경)**: 위 whitelist entry #4 "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축 — inline vs spawn). 이는 ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축 — harness 진행 줄)과 **별 표면(disjoint axis)** 이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에 self-subject `[Orchestrator]` 프리픽스를 허용(INV-2 subset 완화)하되, 이는 본 §결정 2 whitelist "상태 보고" prose(prefix-exempt 유지)를 **건드리지 않는다** — mechanism 축 ≠ display 축. inline whitelist closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1 binary always-spawn 무변경. paired = ADR-143 Amendment 2.
 
 ### 결정 3 — Ownership ≠ Mechanism 분리
 

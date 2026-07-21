@@ -41,6 +41,43 @@ amendment_log:
       근거 = SecurityArch deputy 재판정 = SAFE-with-guardrails (G1 json.dumps 구조적 직렬화 /
       G2 subject sanitize ≤64·']' strip·namespace strip / G3 description-only whole-echo /
       G4 bare updatedInput = no allow-override / G5 fail-open). 역전 ≠ 약화 (forbid-scope 정의상).
+  - number: 2
+    carrier_story: CFP-2770
+    date: 2026-07-21
+    direction: weaken
+    target: "§결정 1 (INV-2 self-subject subset 완화) · §결정 4 (render-glanceability primary → fail-open backup 강등) · §결정 5 (주입점 재프레이밍) · Amendment 1 §A1.1 (#15897 render-loss 오프레이밍 정정)"
+    summary: >-
+      render-glanceability 목적의 유일 render 통로 = model-authored prose(에이전트/Orchestrator 가
+      description·prose 에 `[주체명] MM/DD HH:MM - 내용` 직접 저작). hook `updatedInput` 기계주입
+      (Amendment 1/CFP-2587) 은 도구 실행 입력 계층만 치환하고 harness UI 렌더 줄(model-emitted 원본
+      표시)에 미도달 → render-glanceability PRIMARY 지위를 fail-open backup 으로 강등(코드·G1-G5
+      guardrail 삭제 0, 실행-계층 정확성 목적에서 유효 잔존). §결정 1 INV-2("Orchestrator 이름 절대
+      부재") 를 self-subject subset 완화 — Orchestrator 자기 렌더 action/상태 LINE 에 한해
+      `[Orchestrator]` 허용(INV-1 actor≠subject leak-방지 판별은 spawned 줄에서 무손상). Amendment 1
+      §A1.1 의 #15897 기술(multi-hook·closed-not-planned·v2.0.76·실재 버그)은 정확하므로 보존하되,
+      render-loss 근본원인을 #15897 이 아닌 §2.3 계층 어긋남(실행 입력 ≠ 화면 표시)으로 재지정.
+      Gate = 설계 lane firsthand render probe(기계게이트 불가 — ephemeral + upstream #61152).
+    sunset_justification: >-
+      본 amendment = 약화 방향(forbid-scope 축소 + primary→backup 강등) → ADR-058 §결정 5
+      (+ ADR-064 §결정 7 is_transitional:false governance ADR 대칭 evidence-gate, ADR-058:117)
+      sunset_justification 의무. Amendment 1 의 "N/A(REVERSE=capability-ADD, forbid-scope 축소 0)"
+      논거는 재사용 불가 — 본 변경은 forbid-scope 를 실제로 축소한다.
+      evidence(§결정 1 INV-2 완화): (1) 원문 1·2 사용자 demand — "진행상황에 시간+에이전트명"이 두
+      세션(이번+mctrader)에서 화면에 한 번도 안 뜸 → Orchestrator 자기 진행 LINE 의 시각+주체명 렌더
+      요구(환경 요구 변화 evidence). (2) glanceability("화면만 훑어 즉시 식별")은 Orchestrator 자기
+      가시적 액션 LINE(§결정 1 제외2 기존 미적용 표면)에서 달성 불가였음. (3) scope-split —
+      INV-1(actor≠subject 판별: 스폰헤더=피스폰/leaf=self, dispatcher 명 leak 금지)은 완전 보존,
+      subject=Orchestrator 자기 자신인 렌더 LINE 에 한해서만 self-naming 허용(carrier-preserved
+      scope split, ADR-039 Amendment 2 패턴).
+      evidence(§결정 4/5 강등 — 3-stage 정직 정정, retro-blame 아님): (1) measurement-time-valid —
+      Amendment 1 spike Gate-A/B GO 는 실행 계층 tool_input 변조 확인으로 그 시점 유효. (2) axis-gap —
+      spike 측정 axis = child session 실행 ground-truth 뿐, harness UI 렌더 축은 애초에 미측정.
+      Amendment 1 §결정 4 가 axis 구분 미명시 → "mechanical injection = render 강제 상한" 과잉 추론
+      유발. (3) superseded — mechanical injection 은 실행-계층 정확성 목적 유효(fail-open backup),
+      render-glanceability 목적은 model-authored 채널 primary 복귀. Amendment 1 verified 사실(실행
+      변조 성공)은 무손상 — render 목적 자동 달성 함의만 정정.
+      §결정 6/7/8 UNCHANGED 재확인 — 저작 주체 model 회귀에도 신규 persist/export 경로 0(ephemeral
+      유지) → §결정 8 persist-guard 미발동. is_transitional: false 유지.
 related_files:
   - CLAUDE.md  # 범위① Orchestrator spawn-description 규약 directive + 전-agent behavioral note (Phase 2)
   - hooks/pretooluse-agent-spawn-gate  # 범위① description-format detect 확장 (warning-tier, exit-0-always, Phase 2)
@@ -253,6 +290,44 @@ N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governanc
 - **ADR-038 tier framing (정밀)**: 본 mechanical tier = **runtime-mechanical enforcement**(기존 (c) runtime-advisory 대비 **강화**; CI/git physical (a)와 **별개**). **"(a) physical 실현"으로 표기 금지** — mechanical injection 은 런타임 hook 강제이지 CI/git physical 게이트가 아니다. ADR-038 §결정 9 3-tier 모델 안의 사전 선언된 tier 상승(c 대비 강화)이며 신규 axis 아님.
 - **§11 데이터 마이그레이션 = N/A** (영속 0 · 스키마 0 · 순수 ephemeral display sub-layer; §11.6 idempotency = §7.4 ACTIVE — RE_PREFIX 재주입 가드 `f(f(x))=f(x)` + 빈/whitespace skip).
 - **supersede**: detect-only Phase 2(`cfp-2574-phase2-impl`)는 **in-place 개편으로 대체**(브랜치 머지 아님 — content 는 이미 origin/main 착지, squash #2578; 브랜치 = stale leftover 폐기). detect helper(RE_PREFIX 판정) = 폐기 아니라 idempotency 가드로 재사용. plugin.json MINOR bump + 6 sub-plugin marketplace atomic(ADR-063). 비대상 §"per-tool-call hook 주입 신뢰성(gap #1/#2)" = spike Gate-A/B GO 로 해소.
+
+## Amendment 2 (CFP-2770) — render-glanceability primary → model-authored / hook backup 강등
+
+> Carrier: CFP-2770 (사용자 결정 2026-07-19 = Option A "가능한 것부터 확실히"). Direction = **weaken (forbid-scope 축소 + primary→backup 강등)**, `is_transitional` 무변경(false). 본 절은 §결정 원문 + Amendment 1 을 **삭제하지 않고 amend** — decision-by-decision 상태 기재. 설계 SSOT = Change Plan `2026-07-20-cfp-2770-agent-render-prefix.md`. Gate = 설계 lane firsthand render probe(기계게이트 불가 — ephemeral display + upstream #61152 render-transform hook 부재).
+
+#### A2.0 핵심 전환 (render-loss 근본원인 재지정)
+
+render-loss(프리픽스 미표시)의 근본원인을 **#15897(실재 hook 버그)이 아니라 계층 어긋남**(실행 입력 계층 ≠ 화면 표시 계층)으로 재지정한다. hook `updatedInput` = "replaces a tool's arguments before it runs" [source: https://code.claude.com/docs/en/hooks.md] → **실행(execution) 입력 계층**에만 작용하고, harness UI 렌더 줄은 **model-emitted 원본 description** 을 표시한다. ∴ hook 이 **완전 성공**해 `updatedInput` 을 정상 emit 해도 화면엔 원본만 렌더되어 프리픽스가 미도달한다. **render-glanceability 목적의 유일 render 통로 = model-authored prose** — 에이전트/Orchestrator 가 description·prose 에 `[주체명] MM/DD HH:MM - 내용` 을 직접 저작. hook 기계주입(Amendment 1) = render 목적에서 **fail-open backup 으로 강등**(실행-계층 정확성 목적 유효 잔존, 코드·G1-G5 삭제 0).
+
+#### A2.1 #15897 프레이밍 정정 (A1.1 편입 — born-inconsistency 방지)
+
+- **#15897 자체 기술 = 정확·보존**: 제목 "[BUG] updatedInput PreToolUse response does not work when multiple PreToolUse hooks are executed #15897", status = closed-as-not-planned, 버전 = v2.0.76, 버그(updatedInput 무시·원본 input 실행) = 실재 [source: https://github.com/anthropics/claude-code/issues/15897]. Amendment 1 §A1.1 의 #15897 문단(multi-hook 트리거, closed-as-not-planned → 구조적·영구 제약, fail-open 완화)은 **무손상 유지**.
+- **정정 = render-loss 근본원인 오프레이밍만**: hook 이 완전 성공(updatedInput 정상 emit)해도 화면은 model-emitted 원본을 렌더 → 프리픽스 미도달이므로 render-loss 원인 = 계층 어긋남이지 #15897 아님. #15897(실재 hook 버그)을 render-loss 근본원인으로 프레이밍하지 말 것.
+- **SSOT 정합 (양쪽 동일 프레이밍)**: CLAUDE.md directive 블록과 본 ADR-143 이 #15897 을 상반 기술하는 born-inconsistency 를 방지한다 — CLAUDE.md 의 #15897 문장(정확)은 보존하되 render-loss 원인으로 오프레이밍한 부분만 양쪽 동일하게 정정.
+
+#### A2.2 decision-by-decision
+
+- **§결정 1 (scope/subject)** — **AMENDED (INV-2 서브조항만)**. A1.2 가 §결정 1 전체를 "UNCHANGED (LOAD-BEARING)" 선언했으나, 본 amendment 는 그 중 **INV-2**("Orchestrator 이름 자체는 프리픽스에 절대 등장하지 않는다" blanket 금지)만 self-subject subset 완화한다 — Orchestrator 자기 렌더 action/상태 LINE 에 `[Orchestrator]` 허용. **INV-1**(subject 판별 discriminator: 헤더=피스폰/leaf=self, dispatcher/actor 명이 spawned 줄 subject 로 leak 금지) = **LOAD-BEARING 그대로 유지**(injection 정확성 급소 무손상). "렌더 UI 액션/상태 LINE(진행 UI 줄) ≠ 대화 prose 상태보고(ADR-039 §결정 2 whitelist entry #4)" disjoint — 전자 self-subject 프리픽스 허용, 후자 prefix-exempt 유지.
+- **§결정 2 (format)** — **UNCHANGED**. `RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S` idempotency 재사용(model 저작 + hook backup 이중주입 시 재주입 skip → 이중 프리픽스 미발생).
+- **§결정 3 (clock)** — **UNCHANGED**(UTC+9 고정 산술, `kst_render_stamp.py` / `scripts/kst-render-stamp.sh` — machine-local `date`/`TZ=Asia/Seoul` FORBID). model 저작 시각도 동일 규약·근사(작성 시각 ≈ 시작 시각).
+- **§결정 4 (advisory ceiling → mechanical → render primary/backup)** — **AMENDED (core)**. render-glanceability primary = model-authored prose. mechanical injection(Amd1) = **fail-open backup**(실행-계층 정확성 유효, render 목적 강등). theater-ban(ADR-119 §결정 6) 보존 — "100% 기계강제/hard-gate" 참칭 금지.
+- **§결정 5 (injection point)** — **AMENDED**. primary reach = model-authored(CLAUDE.md directive + 매턴 self-check backstop + agent .md + SessionStart `render-line-prefix` advisory) → 유일 render 통로. hook `updatedInput` = backup 명시. render-loss ≠ #15897(계층 어긋남).
+- **§결정 6 / §결정 7 / §결정 8** — **UNCHANGED (명시 재확인)**. 저작 주체 model 회귀에도 신규 persist/export 경로 0(ephemeral 유지) → §결정 8 persist-guard 미발동, §결정 6 ADR-079 관계·§결정 7 homonym 불변.
+- **Ratchet 방향 = WEAKEN**. `sunset_justification` = frontmatter(의무).
+
+#### A2.3 계층 disjoint 명문 (급소)
+
+hook injection 은 여전히 **top-level Bash(`agent_type` 부재) EXCLUDE**(기계 layer leak-safety pin 유지 — hook 은 subject 가 genuine Orchestrator 인지 판별 불가). model 은 **self-subject `[Orchestrator]` 저작 가능**(authoring layer — model 은 자기가 Orchestrator 임을 앎, subject-genuine). 두 layer disjoint — AC-2(top-level Bash EXCLUDE test pin 유지)와 AC-5(`[Orchestrator]` self-subject)는 무충돌.
+
+#### A2.4 ADR-039 §결정 2 disjoint
+
+inline whitelist(mechanism 축: inline vs spawn) 무변경 — render UI action/상태 LINE(display 축)은 별 표면. INV-2 완화는 Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 에 라벨만). 상세 disjoint note = ADR-039 Amendment 11(paired sibling).
+
+#### A2.5 OOS 재확인
+
+- **todo-line** (ADR-038 §결정 2 Amd5 native status 전용·이중표기 금지) = OOS.
+- **description-less 도구**(Read/Grep/Edit/Write — 저작 표면 부재) = OOS(advisory residual 조차 불가).
+- **hook 기반 render 자동각인**(upstream #61152 render-transform hook 부재) = OOS(upstream-blocked). 해소 시 E-5 경로로 재승격 재판정.
 
 ## 관련 파일
 

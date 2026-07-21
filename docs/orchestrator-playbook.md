@@ -3771,23 +3771,25 @@ Orchestrator 는 매 agent spawn 시 **Spawn ID 대장**을 `.claude-work/progre
 
 **위치**: `.claude-work/progress/<KEY>.md` 의 `## Spawn ID 대장` 섹션 (14.3 §0 file 포맷 뒤에 append). gitignored — ephemeral cache.
 
-### 14.11a Agent 액션 렌더 줄 프리픽스 규약 (ADR-143 — ephemeral-UI 표시 sub-layer)
+### 14.11a Agent 액션 렌더 줄 프리픽스 규약 (ADR-143 Amendment 2 / CFP-2770 — ephemeral-UI 표시 sub-layer)
 
-harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<agent_type>] MM/DD HH:MM - <내용>` 프리픽스를 붙여 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 규약 SSOT = ADR-143.
+harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<주체명>] MM/DD HH:MM - <내용>` 프리픽스가 뜨게 해 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 화면 렌더에 실제 도달하는 **유일 통로 = model-authored 프리픽스** — 에이전트/Orchestrator 가 description·prose 에 **직접 저작(primary)**. harness UI 는 model-emitted 원본 description 을 렌더하므로, PreToolUse hook `updatedInput` 기계 주입(CFP-2587)은 실행 입력 계층만 치환하고 화면 렌더 줄에 미도달 → render 목적에서 **fail-open backup 으로 강등**(실행-계층 정확성 목적 유효 잔존). 규약 SSOT = ADR-143 (Amendment 2).
 
-**형식**: `[<agent_type>] MM/DD HH:MM - <내용>`
+**형식**: `[<주체명>] MM/DD HH:MM - <내용>`
 - **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13 - Change Plan §3 통합`.
 - **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15 - kst helper 작성`.
-- `[<agent_type>]` 값 SSOT = spawn-event-v1 `agent_type`(roster-derived PascalCase + `unknown-agent` fallback) — §14.11 Spawn ID 대장의 agent_type 어휘 재사용(신규 명명체계 0).
+- **범위③** Orchestrator 상태·액션 줄 — subject = `[Orchestrator]` self-subject(렌더 UI 진행 줄 한정, INV-2 완화). 예: `[Orchestrator] 07/21 14:05 - 설계리뷰 PASS → 구현 lane 진입`.
+- `[<주체명>]` 값 SSOT = spawn-event-v1 `agent_type`(roster-derived PascalCase + `unknown-agent` fallback) + Orchestrator self-subject `[Orchestrator]` — §14.11 Spawn ID 대장의 agent_type 어휘 재사용(신규 명명체계 0).
 
 **시각**: KST(UTC+9 고정 산술). 컴팩트 — offset·연도·초·`KST` 라벨 미표기(`MM/DD HH:MM`). dispatch/작성 시점 **근사**(exact per-call HH:MM 아님). helper = `bash scripts/kst-render-stamp.sh`(GNU date primary + Python fallback). machine-local `date`·`TZ=Asia/Seoul` 금지 — Korea 고정 +9 invariant 로 UTC+9 고정 산술만.
 
-**제외**: TodoWrite 행(native status 렌더 전용, 이중 표기 금지) + Orchestrator inline 4종(대화 / TodoWrite / 읽기전용 Q&A 답변 / 상태 보고, ADR-039 §결정 2 whitelist). subject = 헤더는 피스폰자 / leaf 는 self — **Orchestrator 이름 자체는 프리픽스에 등장하지 않는다**.
+**제외**: TodoWrite 행(native status 렌더 전용, 이중 표기 금지) + prose 상태보고(사용자 대상 대화 텍스트 — ADR-039 §결정 2 whitelist entry #4, prefix-exempt 유지). subject discriminator(INV-1 유지) = 헤더는 피스폰자 / leaf 는 self — **dispatcher/Orchestrator 명이 spawned 줄 subject 로 leak 금지**. 단 Orchestrator **자기 렌더 action/상태 LINE**(display 축, 범위③)은 self-subject `[Orchestrator]` 허용(INV-2 완화) — prose 상태보고(mechanism 축)와 disjoint.
 
-**강제 상한 = advisory** (ADR-143 §결정 4):
-- 범위① = PreToolUse(Agent) hook `hooks/pretooluse-agent-spawn-gate` 의 description-format **warning-tier detect**(exit-0-always, rewrite/mutation 없음, `scripts/lib/check_spawn_description_prefix.py`).
-- 범위② = prompt-mandate + 세션시작 리마인더(`hooks/session-start`) 조합.
-- advisory 조합이 곧 강제 상한(ceiling) — "100% 기계 강제"·"hard-gate" 참칭 금지(ADR-119 검사연극 회피).
+**render 통로 = model-authored primary + hook fail-open backup** (ADR-143 Amendment 2):
+- **primary** = model 이 description·prose 에 프리픽스 직접 저작(CLAUDE.md directive + 매턴 self-check backstop + agent .md + `hooks/session-start` render-line-prefix advisory). render 화면 도달 유일 통로.
+- **backup** = PreToolUse hook `updatedInput` 기계 주입(`hooks/pretooluse-agent-spawn-gate` 범위① / `hooks/pretooluse-bash-description-inject` 범위②) — 실행 입력 계층 정확성 목적, 화면 렌더 미도달(fail-open, 프리픽스 소실 = 원 description, never wrong-value). 코드·G1-G5 무손상.
+- render 도달은 기계게이트 불가(ephemeral + upstream #61152 render-transform hook 부재) → normative 0, advisory ceiling — "100% 기계 강제"·"hard-gate" 참칭 금지(ADR-119 검사연극 회피).
+- render-loss 근본원인 = **계층 어긋남**(실행 입력 ≠ 화면 표시)이지 #15897 아님 — hook 이 완전 성공(`updatedInput` 정상 emit)해도 화면은 model-emitted 원본을 렌더.
 
 **ADR-079 관계**: render line = 제3 **ephemeral-UI 표시 sub-layer** 로, ADR-079 §결정 2 zoned-offset 의무에서 **EXEMPT**(additive — §결정 2 영속 zoned scope 무축소). render line 을 파일·로그·transcript 로 **committed persist/export** 하는 경로가 도입되면 ADR-079 §결정 8 persist-guard 로 zoned scope 재판정.
 

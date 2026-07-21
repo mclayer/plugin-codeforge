@@ -80,14 +80,17 @@ Evidence-checks-registry entry: parallel-work-sentinel-pickup (ADR-073 Amendment
 
 Graceful degradation: gh API failure → local git log fallback (non-blocking, warning tier).
 
-[codeforge render-line-prefix advisory — CFP-2574 / ADR-143]
+[codeforge render-line-prefix advisory — CFP-2574 / ADR-143 Amendment 2 (CFP-2770)]
 
-Agent 스폰·도구호출 렌더 줄에 `[<agent_type>] MM/DD HH:MM - <내용>` 프리픽스를 시도(advisory, 비강제).
-- 범위① Agent spawn description = `[<피스폰 agent_type>] MM/DD HH:MM - <task>` (subject=피스폰자, Orchestrator 이름 미등장).
-- 범위② 서브에이전트 leaf 도구호출 description = `[<self agent_type>] MM/DD HH:MM - <action>`.
+Agent 스폰·도구호출·Orchestrator 상태 줄 렌더에 `[<주체명>] MM/DD HH:MM - <내용>` 프리픽스를 직접 저작(advisory, 비강제).
+화면 렌더 도달 유일 통로 = model-authored 프리픽스(에이전트/Orchestrator 가 description·prose 에 직접 저작 — primary).
+PreToolUse hook updatedInput 기계 주입 = 실행 입력 계층만 치환·화면 렌더 미도달 → fail-open backup.
+- 범위① Agent spawn description = `[<피스폰 agent_type>] MM/DD HH:MM - <task>` (subject=피스폰자, dispatcher/Orchestrator 명 미등장 — INV-1).
+- 범위② 서브에이전트 leaf 도구호출 description = `[<self agent_type>] MM/DD HH:MM - <action>` (subject=self).
+- 범위③ Orchestrator 상태·액션 줄 = `[Orchestrator] MM/DD HH:MM - <내용>` self-subject 직접 저작 (렌더 UI 진행 줄 한정, INV-2 완화).
 - 시각 = KST (UTC+9 고정 산술), dispatch/작성 시점 근사. helper: bash scripts/kst-render-stamp.sh
-- TodoWrite 행 + Orchestrator inline 4종(대화/TodoWrite/읽기 Q&A/상태보고) 제외.
-- 3요소(에이전트명/시각/내용)에 secret·token·절대경로·자격증명 임베드 금지 — 내용은 액션 요약만.
+- TodoWrite 행 + prose 상태보고(사용자 대상 대화 텍스트, prefix-exempt) 제외.
+- 3요소(주체명/시각/내용)에 secret·token·절대경로·자격증명 임베드 금지 — 내용은 액션 요약만.
 EOF
 
 exit 0
