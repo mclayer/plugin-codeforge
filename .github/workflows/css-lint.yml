@@ -32,9 +32,12 @@ name: css-lint
 #   in-job fast-exit graceful 로 frontend 무관 repo 에서 no-op(CSS 자산 0 → exit 0 genuine pass) — flag 는
 #   런타임 활성 authoritative, whitelist 는 배포 eligibility (ADR-136 결정2 2-layer 분리).
 #
-# warning-tier 첫 도입(ADR-130 §결정6): continue-on-error: true. day-1 required 금지.
-#   branch protection required contexts 무변경. repo 7일 green + unique job name 충족 후 required 승격은
-#   별 follow-up Story(wave rollout, ADR-136 결정5).
+# required 승격 완료(CFP-2780 / ADR-136 Amendment 5 §결정16): 초기 warning-tier(continue-on-error: true) →
+#   required. continue-on-error 제거로 job 결론이 check status 로 정직 전달. 승격 전제 = repo 7일 green +
+#   unique job name(ADR-130 §결정6) 충족. branch protection required contexts = 메인 css structural lint +
+#   css-lint discriminating test 둘 다 등재(7→9-tuple, hollow-gate 회피 — 메인 job 은 wrapper CSS 0 이라 구조적
+#   always-green, 실 discriminating teeth 는 css-lint-test). job name "warning-tier" literal 은 cosmetic 부채로
+#   유지(rename = chicken-egg 함정 → deferred, ADR-136 §결정16 결정 A).
 #
 # supply-chain 비협상(ADR-136 결정11 SecurityArch M1 — P0 dissent): stylelint /
 #   stylelint-config-standard version-pin + lockfile + npm ci. npx <pkg>@latest 즉석 설치 금지.
@@ -61,8 +64,6 @@ jobs:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
     # (h) timeout-minutes 명시 (ADR-136 §7.4.6 container 운영 리스크).
     timeout-minutes: 10
-    # (c) warning-tier 첫 도입 — day-1 required 금지(ADR-130 §결정6).
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
