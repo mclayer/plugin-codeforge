@@ -69,11 +69,22 @@ tests/scripts/test_check-adr-uniqueness-3way.sh
 archive/adr/ADR-065-architect-phase1-mechanical-self-check.md
 tests/scripts/test_adr-digit-width-unification.sh"
 RESID=$(git grep -lE "$WB" -- . || true)
-EXTRA=$(comm -23 <(printf '%s\n' "$RESID" | sort -u | grep -v '^$') <(printf '%s\n' "$ALLOW" | sort -u))
+RESID_SORTED=$(printf '%s\n' "$RESID" | sort -u | grep -v '^$')
+ALLOW_SORTED=$(printf '%s\n' "$ALLOW" | sort -u)
+# (a) 확대 검출: residual 에 있으나 allowlist 에 없는 파일 (unsanctioned stray).
+EXTRA=$(comm -23 <(printf '%s\n' "$RESID_SORTED") <(printf '%s\n' "$ALLOW_SORTED"))
 if [ -z "$EXTRA" ]; then
-  pass "allowlist 외 stray 0"
+  pass "allowlist 외 stray 0 (확대 없음)"
 else
   fail "allowlist 외 stray ADR-72: $(echo "$EXTRA" | tr '\n' ' ')"
+fi
+# (b) 축소 검출(F4/F-CL-2762-C1): allowlist 에 있으나 residual 에 없는 파일 (stale/dead allowlist entry).
+#     Change Plan §8 I-D "정확 일치"(축소·확대 둘 다 FAIL) — comm -13 reverse check.
+MISSING=$(comm -13 <(printf '%s\n' "$RESID_SORTED") <(printf '%s\n' "$ALLOW_SORTED"))
+if [ -z "$MISSING" ]; then
+  pass "allowlist stale entry 0 (축소 없음 — allowlist ⊆ residual)"
+else
+  fail "allowlist stale entry(residual 부재 = 축소): $(echo "$MISSING" | tr '\n' ' ')"
 fi
 
 echo "== I-E: plugin.json 내 ADR-72 stray = 0 =="
