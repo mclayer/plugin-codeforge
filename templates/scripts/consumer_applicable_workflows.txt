@@ -29,6 +29,8 @@ post-merge-followup.yml
 retro-mandatory.yml
 parallel-epic-conflict-check.yml
 parallel-work-sentinel-check.yml
+# CFP-2784 / FU-1588-R — rebase-staleness sentinel (in-flight feature branch commit-count-behind PR-time 감지)
+rebase-staleness-detection.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Doc quality / invariant (consumer 필수)

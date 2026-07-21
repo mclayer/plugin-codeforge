@@ -4394,3 +4394,29 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 standard default
       promotion_trigger: none       # sentinel-driven 아닌 preventive ratchet 도입 (carrier 실존 → deferred-followup-reconcile 미발화)
     status: Active                   # CFP-881 Phase 2 wire COMPLETE — Python SSOT + thin wrapper + byte-identical gate workflow + hard-fail self-test workflow + discriminating pytest live
+
+  # CFP-2784 신설 — FU-1588-R deferred-followup realization (ADR-060 Amendment 24 — warning-tier entry)
+  # rebase-staleness sentinel mechanical wire Phase 2 carrier — commit-count-behind detection + 4-tier mitigation recommendation (tier 1/2 advisory self-service, tier 3/4 별 carrier)
+  # ordinal (ADR-108 §결정 2(B) canonical = append-time raw-grep post-append count, NOT monotonic-ratchet): firsthand `grep -c '^  - name: .*-sentinel:' docs/evidence-checks-registry.yaml` post-append = 24 (sentinel entries N=24)
+  - name: rebase-staleness-sentinel
+    description: |
+      FU-1588-R mechanical wire — in-flight feature branch 가 lane->merge window 동안
+      main advance 로 뒤처짐(commit-count-behind)을 PR-time 감지 + 4-tier mitigation 중
+      recommendable tier(1/2) 추천(자동 적용 0). SSOT = governance-principle/
+      rebase-staleness-sentinel.md (CFP-1588). super-class 6 occurrence
+      (CFP-953/946/949/1014/1334/1403).
+    detect_command: bash scripts/check-rebase-staleness-sentinel.sh
+    workflow: templates/github-workflows/rebase-staleness-detection.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:rebase-staleness-sentinel
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    introduced_by: CFP-2784
+    introduced_date: 2026-07-22
+    owner_adr: ADR-085
+    carrier_adr: ADR-060
+    recurrence:
+      count: 6
+      threshold: 3
+      last_occurrence: "2026-05-25T02:16:46Z"
+      promotion_trigger: advisory
+    status: Active

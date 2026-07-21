@@ -1,0 +1,103 @@
+name: Rebase Staleness Detection (CFP-2784 / FU-1588-R)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+
+# Warning-tier (non-blocking) rebase-staleness 탐지 — PR open 시점에 feature branch 의
+# commit-count-behind 상태(main 대비)를 감지하고 4-tier mitigation 권고. "뒤쳐짐" 감지는
+# 차단이 아니라 경고이므로 비차단(continue-on-error). registry entry `rebase-staleness-sentinel`
+# (docs/evidence-checks-registry.yaml) 의 mechanical wire — FU-1588-R deferred-followup
+# realization 이자 CFP-953/946/949/1014/1334/1403 6 recurrence super-class sentinel.
+#
+# 4-tier mitigation:
+#   tier 1 (warning-only, advisory): PR 본문 comment + GitHub UI notice, rebase 강제 금지.
+#   tier 2 (recommendable-rebase, advisory): tier 1 + rebase-now label suggestion.
+#   tier 3 (mandatory-rebase, advisory-escalating): tier 2 + auto-comment mandatory 권고.
+#   tier 4 (blocking-rebase, required): PR merge 차단 (별 carrier, blocked=branch-protection required context 등록).
+#
+# 본 구현(CFP-2784 Phase 2 wire) = tier 1/2 추천, 자동 적용 0 — 사용자는 조회만 가능.
+# Orchestrator inline polling(시점별: cold-start + lane spawn + merge transition) 과
+# 비대칭 이중 coverage — CFP-1588 declarative governance layer 위 본 mechanical wire.
+#
+# Bypass 2종:
+#   - env BYPASS_REBASE_STALENESS_SENTINEL=1 (스크립트 내부 무조건 skip, exit 0)
+#   - label hotfix-bypass:rebase-staleness-sentinel (본 workflow 가 sentinel run step skip)
+#
+# Graceful degradation (CFP-2723 정직화): sentinel 스크립트가 git 실패를 stderr 증거 기반으로
+#   분류(honest-degrade) — shallow-clone(fetch-depth truncate) / git_command_failed / git_payload_invalid 3종을
+#   degradation 필드로 표기 후 exit 0 (비차단). git 미설치·repo 아님 = exit 2 (SETUP, error_kind) 이며
+#   아래 run step 의 `|| true` + continue-on-error 로 흡수돼 비차단 보장 (python3 부재 exit 2 동일).
+#
+# Consumer distribution: 본 workflow + scripts/check-rebase-staleness-sentinel.sh +
+#   scripts/lib/check_rebase_staleness_sentinel.py 모두 copy 의무 (CFP-97 manifest entry —
+#   consumer-guide §2c manifest-driven loop 가 처리).
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch: {}
+
+permissions:
+  issues: read
+  pull-requests: read
+  contents: read
+
+# FU-1588-R Phase 2 wire — tier 단일 축 (blockable-capable wire, warning 유지).
+#   continue-on-error 는 본 1개 지점에서만 derive (산재 금지). flip 1축만으로 blocking 전환됨을
+#   보장하되 default = warning 고정 (continue-on-error=true). blocking 전환은 본 값 flip + branch
+#   protection required context 등록 2-step — 본 Story 둘 다 무변경 (AC-1/AC-2).
+env:
+  SENTINEL_TIER: warning  # {warning, blocking} — default warning. blocking 승격 = 별 evidence-gated carrier (ADR-060 §결정 19).
+
+jobs:
+  rebase-staleness-detection:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # A-2 — shallow 금지. HEAD..origin/main 정확성 의존
+
+      - name: git fetch origin main
+        run: |
+          git fetch origin main
+
+      - name: Bypass note (label present)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:rebase-staleness-sentinel') }}
+        run: |
+          echo "::notice::hotfix-bypass:rebase-staleness-sentinel label 감지 — rebase-staleness sentinel skip (audit: check-bypass-audit-comment.sh 마커 패턴 의무)."
+
+      - name: Run rebase-staleness sentinel (warning-tier, 비차단)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:rebase-staleness-sentinel') }}
+        continue-on-error: ${{ env.SENTINEL_TIER != 'blocking' }}  # FU-1588-R — tier 단일 축 derive (warning→true 비차단 / blocking→false 차단). flip 1축 = blockable-capable.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f scripts/check-rebase-staleness-sentinel.sh ]; then
+            echo "::warning::scripts/check-rebase-staleness-sentinel.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
+            exit 0
+          fi
+          OUT="$(bash scripts/check-rebase-staleness-sentinel.sh --mode head-compare 2>&1 || true)"
+          echo "$OUT"
+          echo "## Rebase Staleness Detection (warning-tier, non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**관측 범위 = tier 1/2** (tier 3/4 = Orchestrator inline polling 소관)" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::Rebase staleness detection complete (advisory tier, non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+
+  # FU-1588-R — discriminating self-test (mutation 생존 0). commit-count-behind 가 hollow 가
+  # 아님을 보증: feature branch 뒤처짐은 감지하고 rebase 필요시만 권고 + 불필요 rebase 제시 없음.
+  # wrapper-self 전용 게이트 — `if: github.repository == 'mclayer/plugin-codeforge'` 라 consumer 로
+  # byte-identical 전파돼도 consumer repository 에선 skip (responsibility-marker-drift-check.yml 답습).
+  # sentinel 본체는 stdlib(json/re/os)만 사용 → PyYAML 불요, gh 미사용 → gh 인증 불요.
+  rebase-staleness-detection-test:
+    name: rebase-staleness-detection discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Run test_check-rebase-staleness-sentinel.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-rebase-staleness-sentinel.sh

@@ -33,7 +33,7 @@ related_stories:
   - CFP-1334      # CFP-1334 parallel race 2회 19+ commits sentinel
   - CFP-1403      # mid-flight sibling conflict — force-rebase clean pattern
 deferred_followup_cfps:
-  - FU-1588-R     # mechanical wire (rebase staleness lint script — Wave 2 별 sub-CFP carrier, declarative_layer 본 file 만)
+  - FU-1588-R     # REALIZED by CFP-2784 (2026-07-22) — script+workflow+registry-row+label 동시 배선 (§규칙4 scope 실현)
 is_transitional: false
 sunset_criteria: |
   N/A — permanent governance sentinel (ADR-058 §결정 5 정합).
@@ -82,9 +82,9 @@ sunset_criteria: |
 
 ## 핵심 규칙
 
-### 규칙 1 — sentinel detection 3-source (ADR-073 Amendment 4 폴링 enum 정합)
+### 규칙 1 — sentinel detection 4-source (ADR-073 Amendment 4 폴링 enum 정합)
 
-매 lane flow transition 직전 (lane spawn / PR open / admin merge) Orchestrator 의무 3-source polling:
+매 lane flow transition 직전 (lane spawn / PR open / admin merge) Orchestrator 의무 4-source polling:
 
 | Source | Mechanism | Detection signal |
 |---|---|---|
@@ -93,7 +93,7 @@ sunset_criteria: |
 | `head-compare-sibling-commits` | `git -C <worktree> fetch origin main && git log HEAD..origin/main --oneline` | sibling commit 누적 N >= 1 시 = rebase staleness 진입 |
 | `active_sessions_check` (ADR-085) | Story Issue body `active_sessions[]` field traverse | 같은 branch 안 다른 git_identity entry 발견 시 = collaboration channel 활성 |
 
-3-source AND 검증 (1+ source signal 발생 = race window 진입, defensive 측 분류).
+4-source AND 검증 (1+ source signal 발생 = race window 진입, defensive 측 분류).
 
 ### 규칙 2 — Mitigation 4-tier closed-enum
 
@@ -123,7 +123,7 @@ race window 진입 직후 다음 actions 차단:
 
 mechanical wire 후보 SSOT:
 
-- `scripts/check-rebase-staleness-sentinel.sh` (warning tier — lane spawn 직전 3-source polling 실행 + sibling commit count)
+- `scripts/check-rebase-staleness-sentinel.sh` (warning tier — lane spawn 직전 4-source polling 실행 + sibling commit count)
 - `templates/github-workflows/rebase-staleness-detection.yml` (PR-open + workflow_dispatch trigger)
 - `docs/evidence-checks-registry.yaml` row append (`rebase-staleness-sentinel` entry status: deferred-followup → warning)
 - `hotfix-bypass:rebase-staleness-sentinel` label family member append (label-registry-v2 MINOR bump)
@@ -135,7 +135,7 @@ mechanical wire 후보 SSOT:
 - multi-session distributed work 환경 (복수 Orchestrator 세션 + worktree-first isolated workspace + Story-scoped feature branch)
 - lane flow 진행 중 main branch advance (sibling session merge stream)
 - pattern_count 6+ super-class evidence (CFP-953/946/949/1014/1334/1403)
-- 3-source polling detection (title-search / epic-state-poll / head-compare-sibling-commits / active_sessions_check)
+- 4-source polling detection (title-search / epic-state-poll / head-compare-sibling-commits / active_sessions_check)
 - 4-tier mitigation closed-enum (auto-merge / pre-emptive rebase / wait + retry / handoff baton transfer)
 
 ### Scope out (본 sentinel 영역 외)
@@ -162,4 +162,5 @@ mechanical wire 후보 SSOT:
 
 | 일자 (KST) | 변경 | Carrier | 비고 |
 |---|---|---|---|
-| 2026-05-25 | 신설 (rebase staleness sentinel SSOT — pattern_count 6+ super-class evidence + 3-source polling detection + 4-tier mitigation closed-enum + mechanism layer cross-ref) | CFP-1588 | parent_carrier CFP-1523 F-DR-011 advisory post-carrier (deferred → 본 codify 활성). 6 occurrence super-class (CFP-953/946/949/1014/1334/1403) 정합. declarative_layer 본 file 만 (mechanical wire = FU-1588-R 별 sub-CFP carrier). ADR-085 + ADR-073 + ADR-082 narrative SSOT companion (3 ADR 본문 변경 0건). |
+| 2026-07-22 | mechanical wire 배선 (script+py+workflow쌍+registry entry+label member+inventory bijection+consumer 전파) + 4-source polling detection 정정 (표 4행) | CFP-2784 | FU-1588-R 실현체(Wave 2). declarative_layer(CFP-1588) 위 mechanical wire. warning-tier 비차단. |
+| 2026-05-25 | 신설 (rebase staleness sentinel SSOT — pattern_count 6+ super-class evidence + 4-source polling detection + 4-tier mitigation closed-enum + mechanism layer cross-ref) | CFP-1588 | parent_carrier CFP-1523 F-DR-011 advisory post-carrier (deferred → 본 codify 활성). 6 occurrence super-class (CFP-953/946/949/1014/1334/1403) 정합. declarative_layer 본 file 만 (mechanical wire = FU-1588-R 별 sub-CFP carrier). ADR-085 + ADR-073 + ADR-082 narrative SSOT companion (3 ADR 본문 변경 0건). |
