@@ -20,7 +20,7 @@
 |---|---|---|
 | **DeployReviewPLAgent** | **Opus** | production-grade 성능 측정 1st-class lead — smoke / 성능 비교 / cutover 사후 검증 verdict 종합. 성능 미충족 시 root cause 1차 진단 + debate-protocol-v1 cross-module trigger + 구현/설계/요구사항 lane FIX dispatch. adversarial debate 자동 발동 영역 (Opus tier mandatory) |
 | **DeployReviewWorkerAgent** | sonnet | smoke test 실행 (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 비교 baseline 수집 (latency / throughput / error rate / CPU·memory) + cutover 사후 검증 worker |
-| **ProductionEvidenceDeputyAgent** | (CONDITIONAL deputy) | production cutover evidence quad (functional / security / monitoring / testing 4 source). ADR-72 이관 — codeforge-design CONDITIONAL → 본 lane 정식. production cutover-touching Story 시 spawn |
+| **ProductionEvidenceDeputyAgent** | (CONDITIONAL deputy) | production cutover evidence quad (functional / security / monitoring / testing 4 source). ADR-072 이관 — codeforge-design CONDITIONAL → 본 lane 정식. production cutover-touching Story 시 spawn |
 
 Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) (DeployReviewPL opus / DeployReviewWorker sonnet — ADR-141 Amendment 2 carve-out; DeployReviewPL OOS opus 유지). opus default + carve-out (ADR-141 — fallback 대상 없음). DeployReviewPL opus = 본 lane 이 adversarial debate 자동 발동 영역이므로 mandatory (ADR-042 §결정 1 정합).
 
@@ -52,9 +52,9 @@ Agent model tier 정책 SSOT = [ADR-042 Amendment 9](https://github.com/mclayer/
 - **IntegrationTest** = 시나리오 단위 정합 (production cutover 사후 검증 미접근)
 - **Deploy Review (본 lane)** = production 환경 성능 측정 + cutover 사후 검증 — 위 4 review lane 모두와 disjoint axis
 
-## ProductionEvidenceDeputy 이관 (ADR-088 §결정 4 / ADR-72 Amendment 4)
+## ProductionEvidenceDeputy 이관 (ADR-088 §결정 4 / ADR-072 Amendment 4)
 
-본 lane 정식 deputy. ownership = codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 (CFP-1059 Story-3). mandate body = ADR-72 §결정 1-7 verbatim 유지 (이관은 parent_pl / ssot_position 만 변경). production cutover-touching Story 시 CONDITIONAL spawn. InfraOperationalArch (codeforge-design) 와 disjoint axis — policy SSOT (design-time) vs evidence SSOT (runtime).
+본 lane 정식 deputy. ownership = codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 (CFP-1059 Story-3). mandate body = ADR-072 §결정 1-7 verbatim 유지 (이관은 parent_pl / ssot_position 만 변경). production cutover-touching Story 시 CONDITIONAL spawn. InfraOperationalArch (codeforge-design) 와 disjoint axis — policy SSOT (design-time) vs evidence SSOT (runtime).
 
 ## Self-write 책임
 
@@ -77,7 +77,7 @@ codeforge [ADR-064](https://github.com/mclayer/plugin-codeforge/blob/main/docs/a
 - [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane 신설 + ProductionEvidenceDeputy 이관 (본 plugin SSOT carrier)
 - [ADR-087](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane (직전 lane)
 - [ADR-042 Amendment 9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — DeployReviewPL opus (OOS 유지) + DeployReviewWorker sonnet (ADR-141 Amendment 2 carve-out)
-- [ADR-72](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy mandate (이관 후 본 lane deputy)
+- [ADR-072](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy mandate (이관 후 본 lane deputy)
 - [ADR-068](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) — I-5 dimensional empirical grounding (성능 측정 baseline TBD)
 - [ADR-059](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-059-debate-protocol-v1.md) — 성능 미충족 cross-module debate trigger
 - [ADR-035](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-035-fix-root-cause-final-decider.md) — root cause 최종 판정 = ArchitectPL

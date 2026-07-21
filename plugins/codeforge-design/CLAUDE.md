@@ -141,7 +141,7 @@ CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 - ADR-042 (+Amd 7/8) — design lane agent model tier SSOT + roster 재편 (APIContractArch/ModuleArch 등 + DataArch mandate 축소 + InfraArchitect·DDDArchitect 신설 reject)
 - ADR-044 — Phase-scoped sequential team (flat spawn / nested team·재귀 spawn·sub-lead 격상 금지)
 - ADR-068 (+Amd 2) — Boundary completeness invariants + chief tie-break ladder 3 단계 (RACI → invariant → judgement+Amendment)
-- ADR-72 — ProductionEvidenceDeputy + Epic cutover gate (ADR-088 §결정 4 로 codeforge-deploy-review 이관 완료 — 본 lane spawn 0, CFP-2170 design 본 파일 삭제)
+- ADR-072 — ProductionEvidenceDeputy + Epic cutover gate (ADR-088 §결정 4 로 codeforge-deploy-review 이관 완료 — 본 lane spawn 0, CFP-2170 design 본 파일 삭제)
 - ADR-078 — Living architecture doc SSOT (`docs/architecture/codeforge-design.md` 갱신 의무)
 - ADR-086 — Deputy 신설 결정 framework P7 (axis 분석 + 5-checklist self-application). agent file 신설/rename/축소 모두 self-application 의무.
 

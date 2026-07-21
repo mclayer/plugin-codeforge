@@ -10,7 +10,7 @@ related_stories:
   - CFP-1059  # carrier Epic
 related_adrs:
   - ADR-087  # Deploy lane (sibling carrier within CFP-1059 — disjoint axis: 매커니즘 실행 ↔ 한 번 끝나는 검증)
-  - ADR-72  # ProductionEvidenceDeputy mandate + Epic cutover gate (Amendment N 동반 — ownership 이관 mirror)
+  - ADR-072  # ProductionEvidenceDeputy mandate + Epic cutover gate (Amendment N 동반 — ownership 이관 mirror)
   - ADR-014  # operational risk SSOT (Amendment N 동반 — DeployReviewPL boundary)
   - ADR-042  # agent model selection (Amendment 9 동반 — DeployReviewPL Opus tier)
   - ADR-068  # boundary completeness invariants (I-5 dimensional empirical grounding — 성능 측정 기준)
@@ -24,7 +24,7 @@ related_adrs:
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무
 related_files:
   - docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
-  - docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md
+  - docs/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md
   - docs/adr/ADR-014-operational-risk-ssot-distribution.md
   - docs/adr/ADR-042-agent-model-selection-policy.md
   - docs/adr/ADR-026-post-merge-automation.md
@@ -69,11 +69,11 @@ mechanical_enforcement_actions:
 
 ### ProductionEvidenceDeputy 이관 동인
 
-현재 (ADR-72) ProductionEvidenceDeputy = `codeforge-design` lane 의 CONDITIONAL deputy. 본 deputy 의 mandate = production cutover-touching Story 시 spawn 의무 (4 prerequisite measurement source).
+현재 (ADR-072) ProductionEvidenceDeputy = `codeforge-design` lane 의 CONDITIONAL deputy. 본 deputy 의 mandate = production cutover-touching Story 시 spawn 의무 (4 prerequisite measurement source).
 
 **문제**: ProductionEvidenceDeputy mandate 가 production 환경 평가 영역 — 설계 lane 의 design 결정 layer 와 axis 불일치.
 
-**해결**: ownership = `codeforge-design` CONDITIONAL → `codeforge-deploy-review` 정식 이관. mandate body 자체는 보존 (ADR-72 §결정 1-7 그대로).
+**해결**: ownership = `codeforge-design` CONDITIONAL → `codeforge-deploy-review` 정식 이관. mandate body 자체는 보존 (ADR-072 §결정 1-7 그대로).
 
 ### 사용자 결정 (2026-05-20 KST)
 
@@ -110,14 +110,14 @@ ADR-042 Amendment 9 sibling carrier — 4 agent tier 결정 (DeployPL/Worker Son
 
 ### §결정 4 — ProductionEvidenceDeputy ownership 이관
 
-| 영역 | Before (ADR-72 현행) | After (본 ADR + ADR-72 Amendment N) |
+| 영역 | Before (ADR-072 현행) | After (본 ADR + ADR-072 Amendment N) |
 |---|---|---|
 | Ownership | `codeforge-design` lane CONDITIONAL deputy | `codeforge-deploy-review` lane 정식 deputy |
-| Mandate body | 변경 없음 — ADR-72 §결정 1-7 verbatim 유지 |
+| Mandate body | 변경 없음 — ADR-072 §결정 1-7 verbatim 유지 |
 | Spawn trigger | production cutover-touching Story 시 의무 (4 prerequisite measurement source) — 변경 없음 |
 | wrapper-self-app | N/A (CFP-954 precedent 정합 — wrapper / lane plugin 영역 미적용) — 보존 |
 
-ADR-72 Amendment N sibling carrier (mirror 갱신).
+ADR-072 Amendment N sibling carrier (mirror 갱신).
 
 ### §결정 5 — 성능 기준 미충족 시 FIX 발동 + debate-protocol-v1 trigger
 
@@ -177,12 +177,12 @@ atomic swap 후 cutover 사후 검증 (3-시간 동안 active monitoring)
 
 - ADR-RESERVATION row 88 = CFP-1059 active (commit `2104183`)
 - ADR-087 sibling carrier file 생성 확인 (본 commit batch 이전 step)
-- ADR-72 본문 = Amendment N 미적용 baseline (Amendment N 추가 = Task 12 영역, 본 Story-1 별 commit)
+- ADR-072 본문 = Amendment N 미적용 baseline (Amendment N 추가 = Task 12 영역, 본 Story-1 별 commit)
 
 ## 관련 파일
 
 - [ADR-087](ADR-087-deploy-lane-and-lifecycle-extension.md) — sibling carrier (Deploy lane)
-- [ADR-72](ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — Amendment N (ownership 이관 mirror)
+- [ADR-072](ADR-072-production-evidence-deputy-and-epic-cutover-gate.md) — Amendment N (ownership 이관 mirror)
 - [ADR-014](ADR-014-operational-risk-ssot-distribution.md) — Amendment N (DeployReviewPL boundary)
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — Amendment 9 (DeployReviewPL Opus + DeployReviewWorker Sonnet)
 - [ADR-068](ADR-068-boundary-completeness-invariants.md) — I-5 (성능 측정 dimensional empirical grounding)

@@ -576,3 +576,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "lane-entry ownership discriminating self-test (owner-absent RED / conflict RED / GREEN / MK mutation-kill, 4/4 결정적 fixture-injection GREEN) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. ★ CFP-2761 F5(b): 결정적 fixture-injection self-test(--lane/--git-identity/--sessions-file 주입, live session-time lane-entry 상태 무의존)는 CI(hook-selftest-execution.yml, warning-tier continue-on-error) 실행 — LIVE check 자체는 workflow:null hook-only 존치(anti-hollow: fresh-checkout 이 session-time lane-entry 상태 미관측). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
+
+  # ── CFP-2762 (ADR-133 Amendment 3) — ADR 파일명 3-digit zero-pad 통일 self-test enroll ──
+  # bijection: tests/scripts/*.sh 53 → 54 (신규 self-test enroll). 실행 채널 = adr-digit-width-check.yml
+  #   (wrapper-self only — templates copy 없음 → l2_full_scope N/A). hard-fail(continue-on-error 없음,
+  #   non_required — branch protection 7-tuple 무변경). run-line: `bash tests/scripts/test_adr-digit-width-unification.sh`.
+  - self_test: "tests/scripts/test_adr-digit-width-unification.sh"
+    execution_channel: "workflow:adr-digit-width-check.yml:adr-digit-width-check"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "ADR digit-width 3-digit zero-pad 통일 self-test (post-state invariant I-A~I-E + discriminating fixture pre-RED→post-GREEN + no-op stub 이빨 + EP/BVA 경계 negative-lookahead 불변) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 정규화 정합). hard-fail 채널(continue-on-error 없음, non_required — branch protection 7-tuple 무변경). honest-ceiling: presence ≠ truth, ADR-151 §결정7."

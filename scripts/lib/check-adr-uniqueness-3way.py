@@ -12,7 +12,7 @@
 #         INV-9  filename↔frontmatter mismatch flag
 #         INV-10 구조적 파싱 (RESERVATION 첫 열 slot number + filename regex + frontmatter parse.
 #                row 본문 문자열 grep 금지 — ADR cross-ref noise 오탐 회피, EC-6)
-#         INV-11 numeric 정규화 (zero-pad `ADR-72` vs `073` + quoted-string `"005"` 를 int 로 정규화)
+#         INV-11 numeric 정규화 (zero-pad token 2-digit↔3-digit + quoted-string `"005"` 를 int 로 정규화)
 #         INV-12 file↔row lapse (file 존재 ∧ RESERVATION row 부재 = lapse)
 #
 # 판정: finding 1건 이상이면 exit 1 (findings 를 type 별 그룹으로 출력). warning-tier semantics —
@@ -24,7 +24,10 @@
 #         C1 ADR-047 gitops-agent → ADR-160 / C2 ADR-056 domain-concept → ADR-161 /
 #         C3 ADR-048 ghec-governance → ADR-162 / C4 ADR-042 measurement-channel → ADR-163
 #         (각 pair 의 majority-referent slug 은 원 번호 042/047/048/056 유지 — Change Plan §3.3/§3.4/§12 D2).
-#   - zero-pad drift : ADR-72 (2-digit token, 관례 3-digit) — OOS(CFP-676 이 2-digit canonical 확정, 사용자 결정 대기)
+#   - zero-pad drift : (없음) — CFP-2762 rename(2026-07)으로 유일 2-digit 이상치 해소(구 file → ADR-072).
+#         참고(misattribution 정정): 구 form 규율의 실제 근거 = ADR-068 I-4 wording-SSOT / Codex S-CFP676-ADR72-FORM P2
+#         (CFP-676 = agent-구조 Story — digit-width 정책 아님). digit-width canonical SSOT = ADR-133 Amendment 3
+#         (파일명 3-digit zero-pad `ADR-NNN` / frontmatter adr_number bare int).
 #   - file-row-lapse : ADR-144/156/157/158/159 (RESERVATION row 부재) — OOS(별 finding class, 중복쌍 무관)
 #   - quoted-string : ADR-005 fm=`"005"` → 정규화 5 (mismatch 아님 — 정규화가 false-positive 차단)
 # NOTE: 구 frontmatter-collision(ADR-043+ADR-045 fm=43 / ADR-061+ADR-062 fm=61) + filename↔frontmatter

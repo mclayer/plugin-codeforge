@@ -11,7 +11,7 @@ family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모�
 <!-- 본 file = lane plugin self-owned seed (CFP-969 / Sub-Epic CFP-949 Wave 1, parent Epic CFP-756 / ADR-078).
      누적 현재 상태 SSOT — Story key 독립, 고정 경로. 델타는 Change Plan SSOT (disjoint, ADR-078 §결정 3).
      family-level structure = family_ref (wrapper repo seed) 참조. 본 doc 은 lane internal 구조만 채운다.
-     CFP-1026 S3 update: deputy 5+3 + 4-tuple sub-tuple 반영 (ADR-042 Amendment 7 / ADR-014 Amendment 4 / ADR-72).
+     CFP-1026 S3 update: deputy 5+3 + 4-tuple sub-tuple 반영 (ADR-042 Amendment 7 / ADR-014 Amendment 4 / ADR-072).
      CFP-1086 S1 update: 5+3 → 7+3+1 roster 재편 반영 (ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic). AggregateArch + APIContractArch 신설 / CodeArch → ModuleArch rename / DataArch mandate 축소. -->
 
 ## 모듈
@@ -46,7 +46,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 |---|---|---|---|
 | **LiveOpsDeputy** | Live touching Story (real funds / live exchange API / production credential / live order placement 1+ touching, CFP-77) | operator approval / kill switch / incident response / OperationEvent audit (Change Plan §13 + §7.5 consult input) | Opus |
 | **LiveOrderingDeputy** | Live touching Story (위 동일 CFP-77 trigger) | order submit / partial fill / cancel race / rejection mapping / ledger reconcile invariant (Change Plan §11 ledger + §8.5 order replay + §11.6 idempotency consult input) | Opus |
-| **ProductionEvidenceDeputy** (CFP-1026 S1 신설 — ADR-72) | production cutover Story (Change Plan §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A | 실측 production 통과 evidence quad (functional / security / monitoring / testing) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin | Opus inherit |
+| **ProductionEvidenceDeputy** (CFP-1026 S1 신설 — ADR-072) | production cutover Story (Change Plan §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A | 실측 production 통과 evidence quad (functional / security / monitoring / testing) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin | Opus inherit |
 | **AggregateArch CONDITIONAL applicability** (CFP-1086 Amendment 8 P2 신설 — 3+1) | `project.yaml aggregate_arch.applicable: bool` (default `true`). non-applicable consumer = frontend-only / API-only / external-managed RDB | AggregateArchitect deputy 활성 여부 결정. `false` 시 7 → 6 permanent deputy + 3 sub-tuple = 9 SubAgent parallel spawn | (CONDITIONAL flag, agent file 없음) |
 
 > **4-way 이념 대립 축** (CFP-1086 정합): RDB OLTP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ AggregateArch / 빅데이터 OLAP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch / Cross-layer (ELT/ETL/CDC) = AggregateArch + DataArch co-author deferred. chief author 가 충돌 해소 + Change Plan 명시. TestContractArch / InfraOperationalArch / ModuleArch / APIContractArch / ArchitectAnalyst / LiveOps / LiveOrdering / ProductionEvidence = contributor / single-mandate advocacy 단일 축 (대립 비참여).
@@ -86,11 +86,11 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 | §11 ledger reconcile + §8.5 order replay + §11.6 idempotency (order side, CONDITIONAL Live touching) | LiveOrderingDeputy |
 | Production evidence quad + EPIC CLOSED gate + post-cutover wiring + Family 7 canary pin (CONDITIONAL production cutover) | ProductionEvidenceDeputy |
 
-**InfraOperationalArch ↔ ProductionEvidence disjoint axis** (ADR-014 Amendment 4 §결정 3 / ADR-72 §결정 4):
+**InfraOperationalArch ↔ ProductionEvidence disjoint axis** (ADR-014 Amendment 4 §결정 3 / ADR-072 §결정 4):
 - policy SSOT axis (InfraOperationalArch) = §7.4 invariant 정의 — design-time decision
 - evidence SSOT axis (ProductionEvidence) = production grounding 실측 명시 — runtime evidence
 - consumer production cutover Story 에서 dual-spawn 가능 (영역 disjoint)
-- wrapper-self-app 시 ProductionEvidence N/A (ADR-72 §결정 6)
+- wrapper-self-app 시 ProductionEvidence N/A (ADR-072 §결정 6)
 
 **Cross-cutting gate boundary**:
 - **Codex Proactive Check Touchpoint #2** = ArchitectAgent §3 완료 직후 mandatory dispatch (CFP-532 / ADR-052 Amendment 4) — P0 + P1 finding 모두 inline FIX 의무 (skip 영역 차단)

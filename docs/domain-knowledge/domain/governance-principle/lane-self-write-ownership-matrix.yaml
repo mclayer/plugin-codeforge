@@ -176,7 +176,7 @@ sections:
       ArchitectAgent writes §11 Change Plan context (design lane).
       PMOAgent writes §11 retro/sprint-review (pmo lane).
     # CFP-1086 Story-5 (W3 S5) — deputy sub-ownership column (P6 carrier)
-    # ADR-042 Amendment 8 (Aggregate/Data split) + ADR-72 (ProductionEvidence CONDITIONAL)
+    # ADR-042 Amendment 8 (Aggregate/Data split) + ADR-072 (ProductionEvidence CONDITIONAL)
     deputy_sub_ownership:
       - sub_section: "11 RDB OLTP migration (schema rollback / aggregate invariant 보존)"
         deputy: ModuleArchitectAgent  # CFP-1126: AggregateArch deprecated, boundary axis ModuleArch 통합
@@ -190,8 +190,8 @@ sections:
       - sub_section: "11 production cutover evidence (Live touching / production touching Story)"
         deputy: ProductionEvidenceDeputyAgent
         ownership_kind: conditional
-        trigger: "Live touching Story OR production cutover Story (ADR-72)"
-        cross_ref: "ADR-72 §결정 1 + ADR-042 Amendment 7 CONDITIONAL spawn"
+        trigger: "Live touching Story OR production cutover Story (ADR-072)"
+        cross_ref: "ADR-072 §결정 1 + ADR-042 Amendment 7 CONDITIONAL spawn"
 
   - section: "12"
     heading: "회고 / Retro"

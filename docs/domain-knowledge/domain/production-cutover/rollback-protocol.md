@@ -13,7 +13,7 @@ tags:
   - postmortem
   - cfp-954
 related_adrs:
-  - ADR-72   # §결정 5 EPIC CLOSED gate evidence quad
+  - ADR-072   # §결정 5 EPIC CLOSED gate evidence quad
   - ADR-014  # boundary axis (DR / disconnect / clock / rate / env)
   - ADR-045  # retro mandatory trigger (PMOAgent auto-trigger) + §D-9 escalation (안전장치 3 사후 알림)
   - ADR-105  # 자동 rollback 도메인 재정의 — Step 4 2-layer disjoint amend (user-decision layer 보존 + auto-rollback layer 신설) + 안전장치 4 AND
@@ -66,7 +66,7 @@ production-touching label 부착 PR / Story open 시 즉시:
 
 ### Step 3 — Assess
 
-ProductionEvidenceDeputy + LiveOps + LiveOrdering 3 SubAgent 동시 spawn (consumer Story 영역 시 ADR-72 §결정 3 trigger axis 정합):
+ProductionEvidenceDeputy + LiveOps + LiveOrdering 3 SubAgent 동시 spawn (consumer Story 영역 시 ADR-072 §결정 3 trigger axis 정합):
 - ProductionEvidenceDeputy = 실측 evidence verify
 - LiveOps = production env containment + runbook 검증
 - LiveOrdering = order placement state + reconciliation invariant verify
@@ -109,7 +109,7 @@ rollback (canary 이전 state 복귀) vs forward-fix (canary 유지 + hotfix Sto
 
 ProductionEvidenceDeputy 4-evidence-quad re-run + cross-Story consistency check 4 entry:
 - CSC-1: label-registry-v2 sequential MINOR bump (current 정합)
-- CSC-2: ADR-72 amendment_log monotonic (current 정합)
+- CSC-2: ADR-072 amendment_log monotonic (current 정합)
 - CSC-3: reconcile-protocol-v1 schema version (current 정합)
 - **CSC-4 (신규, rollback path 만)**: rollback 정합 verify (reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` declarative invariant — Story-5 CFP-1014 carrier 완료 + marketplace.json channels[] revert 정합 + rollback ≠ demotion boundary disjoint annotation 정합)
 
@@ -128,7 +128,7 @@ Structured postmortem (Google SRE workbook "Postmortem culture" chapter 답습):
 
 ## 경계
 
-본 7-step protocol = Live touching consumer Story 영역 한정. wrapper governance Story (CFP-954 본 Story 자체 포함) = production cutover 영역 외 (code 0 + production deploy state 부재, ADR-72 §결정 6 wrapper-self-app N/A — 자동 rollback mechanism 실측도 wrapper N/A, ADR-105 §결정 4 / ADR-104 §결정 4 계승).
+본 7-step protocol = Live touching consumer Story 영역 한정. wrapper governance Story (CFP-954 본 Story 자체 포함) = production cutover 영역 외 (code 0 + production deploy state 부재, ADR-072 §결정 6 wrapper-self-app N/A — 자동 rollback mechanism 실측도 wrapper N/A, ADR-105 §결정 4 / ADR-104 §결정 4 계승).
 
 rollback decision 의 ADR-064 §self-application 정합은 **2 layer 로 disjoint** (ADR-105 §결정 2):
 - **auto-rollback layer** = `user_decision_branches: 0` (숫자 임계 deterministic — invariant 영역 *내*, 안전장치 4 AND 충족 시).
@@ -138,8 +138,8 @@ rollback decision 의 ADR-064 §self-application 정합은 **2 layer 로 disjoin
 
 ## 관련 ADR
 
-- **ADR-72 §결정 5** — EPIC CLOSED gate evidence quad SSOT (Detect step trigger source)
-- **ADR-72 §결정 6** — wrapper-self-app N/A invariant (경계)
+- **ADR-072 §결정 5** — EPIC CLOSED gate evidence quad SSOT (Detect step trigger source)
+- **ADR-072 §결정 6** — wrapper-self-app N/A invariant (경계)
 - **ADR-014** — boundary axis (DR / disconnect / clock / rate / env, incident classification)
 - **ADR-045** — retro mandatory trigger (Step 7 Postmortem PMOAgent auto-trigger)
 

@@ -1,0 +1,29 @@
+name: adr-digit-width-check
+# CFP-2762 — ADR 파일명 3-digit zero-pad(ADR-NNN) 통일 self-test.
+#
+# post-state invariant I-A~I-E + discriminating fixture(pre-RED → post-GREEN, no-op stub 이빨).
+# digit-width canonical SSOT = ADR-133 Amendment 3.
+#
+# ★hard-fail 채널(MEMORY CFP-2635/881 anti-pattern 회피): 본 job 은 continue-on-error 없음 —
+#   self-test RED = check run 실패(이빨). warning-tier fence 안 매몰(swallowed RED) 회피.
+#   단 branch protection required contexts(7-tuple)에는 미등재 = non-required hard-fail check
+#   (required 신설 0 — Change Plan §2.2 tier 무변경 / 결정 #6 정합).
+# wrapper-self 전용 (adr-uniqueness-check.yml 선례 — consumer red 회피).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  adr-digit-width-check:
+    name: adr-digit-width-check
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ADR digit-width 3-digit 통일 self-test (hard-fail — RED = 실패)
+        run: bash tests/scripts/test_adr-digit-width-unification.sh

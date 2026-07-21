@@ -43,7 +43,7 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 codeforge 설계 lane 의 deputy roster 변경 / 신설 / rename 결정이 누적되며 동질 결정 패턴이 반복:
 
 - CFP-46 (2026-04-30) — OperationalRiskArchitectAgent 6번째 deputy 신설 (axis: 운영 리스크)
-- CFP-632 / ADR-72 (2026-05-13) — ProductionEvidenceDeputyAgent CONDITIONAL 신설 (axis: production evidence)
+- CFP-632 / ADR-072 (2026-05-13) — ProductionEvidenceDeputyAgent CONDITIONAL 신설 (axis: production evidence)
 - CFP-676 (2026-05-19 / ADR-042 Amendment 7) — CodeArchitectAgent + ArchitectAnalystAgent 신설 + DataMigration → Data rename + OperationalRisk → InfraOperational rename (axis: §3 code single-mandate advocacy + 4-tuple sub-tuple PriorArt rename + 데이터 mandate 확장 + infra rename)
 - CFP-1086 Story-1 (본 carrier, 2026-05-20) — AggregateArchitectAgent + APIContractArchitectAgent 신설 + CodeArchitect → ModuleArchitect rename + DataArchitect 축소 (axis: RDB OLTP aggregate + API transport + module-level dependency direction + 빅데이터 OLAP)
 

@@ -82,7 +82,7 @@ related_adrs:
   - ADR-070  # Codex verify-before-trust (Touchpoint #2 carry-over)
   - ADR-073  # Orchestrator verify-before-assert (fact claim marker 5종)
   - ADR-063  # Marketplace ↔ plugin.json atomic invariant (Amendment 6 §결정 17 mirrored field × channel matrix carrier sibling — CFP-906 Amendment 1)
-  - ADR-72  # ProductionEvidenceDeputy spawn (§결정 1 canary tier production-impact trigger — CFP-906 §결정 9 canary tier semantic cross-ref)
+  - ADR-072  # ProductionEvidenceDeputy spawn (§결정 1 canary tier production-impact trigger — CFP-906 §결정 9 canary tier semantic cross-ref)
   - ADR-082  # Write-time self-write verification mandate (Amendment 2 / CFP-898 ratchet 강화 패턴 답습)
 related_files:
   - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # 본 ADR 의 schema carrier (kind:registry)
@@ -350,7 +350,7 @@ codeforge family plugin distribution 에서 **release channel** 은 **version sp
 본 결정 scope **외** (Wave 4 sub-Epic #1 후속 Story carrier 분리, ADR-067 §결정 4 sequential ordering 정합):
 
 - **Story-2 carrier**: runtime UpgradeAgent multi-channel dispatch + CLI `--channel` flag + channel-drift-detection workflow + `scripts/check-3way-version-parity.sh` 의 channel 차원 확장
-- **Story-3 carrier**: ProductionEvidenceDeputy canary tier activation (ADR-72 §결정 1 trigger) + IntegrationTestAgent Epic-level reactivation
+- **Story-3 carrier**: ProductionEvidenceDeputy canary tier activation (ADR-072 §결정 1 trigger) + IntegrationTestAgent Epic-level reactivation
 - **Story-4 carrier**: promotion criteria quantitative declare + canary coord + `gate:channel-*-promotion` label scheme (Story-4 carrier 영역, Story-1 영역 외)
 - **Story-5 carrier**: downgrade invariant declare (canary → beta → stable demotion 시 feature regression warning) + Wave 4 sub-Epic #1 close + retro
 
@@ -389,7 +389,7 @@ codeforge family plugin distribution 에서 **release channel** 은 **version sp
 | canary tier 가 enable 하는 production features | **consumer domain layer** | **HIGH** | ProductionEvidence deputy spawn time mandatory (Wave 4 sub-Epic #1 Story-3 carrier) |
 
 **Story-1 declaration-level**:
-- ProductionEvidenceDeputy = **NOT-spawn** (Story-1 declare-only — Live touching = FALSE, ADR-72 §결정 1 정합. canary tier semantic = declare only / canary tier 실 activation = Wave 4 sub-Epic #1 Story-3 carrier 시점 ProductionEvidenceDeputy spawn trigger)
+- ProductionEvidenceDeputy = **NOT-spawn** (Story-1 declare-only — Live touching = FALSE, ADR-072 §결정 1 정합. canary tier semantic = declare only / canary tier 실 activation = Wave 4 sub-Epic #1 Story-3 carrier 시점 ProductionEvidenceDeputy spawn trigger)
 - IntegrationTestAgent Epic-level reactivation = Story-3 carrier (Story-1 영역 외)
 
 #### 9.6 Empirical anchor — 3-tier channel pattern industry precedent
@@ -425,7 +425,7 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - `docs/project-config-schema.md codeforge.channel` (본 §결정 9 의 schema carrier, peer block)
 - `docs/adr/ADR-016-marketplace-registration-policy.md` Amendment 3 (family_7_plugin_atomic × channel pin invariant)
 - `docs/adr/ADR-063-marketplace-atomic-invariant.md` Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant)
-- `docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md` §결정 1 (canary tier production-impact = ProductionEvidenceDeputy spawn trigger, Story-3 carrier 영역)
+- `docs/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md` §결정 1 (canary tier production-impact = ProductionEvidenceDeputy spawn trigger, Story-3 carrier 영역)
 - `docs/inter-plugin-contracts/label-registry-v2.md` v2.30 (3 `channel:*` label + 신규 category enum `channel`)
 - `<internal-docs>/wrapper/stories/CFP-906.md` (본 ADR Amendment 1 carrier Story)
 - `<internal-docs>/wrapper/change-plans/cfp-906-channel-schema-ssot.md` (Phase 1 PR change plan)

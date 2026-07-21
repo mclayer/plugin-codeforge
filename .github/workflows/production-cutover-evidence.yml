@@ -1,6 +1,6 @@
 # templates/github-workflows/production-cutover-evidence.yml
 #
-# CFP-954 / ADR-72 §결정 3 — ProductionEvidenceDeputy spawn evidence verifier (warning tier).
+# CFP-954 / ADR-072 §결정 3 — ProductionEvidenceDeputy spawn evidence verifier (warning tier).
 #
 # Trigger (D2 consensus 2-trigger split):
 #   - pull_request: opened/synchronize/labeled — production-touching label PR open 시 evidence verify
@@ -14,7 +14,7 @@
 #   - Tier-1 (repo=wrapper): frontmatter/amendment_log/cross-ref presence verify only
 #   - Tier-2 (repo=consumer): 실 4-evidence-quad measurement
 #
-# Cross-ref: ADR-72 §결정 3 / §결정 6 (wrapper-self-app N/A) / CLAUDE.md L287 단락 갱신
+# Cross-ref: ADR-072 §결정 3 / §결정 6 (wrapper-self-app N/A) / CLAUDE.md L287 단락 갱신
 # Untrusted env policy (SecurityArch §C.1): PR title/body/actor = env-quoted reference only.
 
 name: production-cutover-evidence
@@ -64,7 +64,7 @@ jobs:
         run: |
           if [[ "$REPO" == "mclayer/plugin-codeforge" ]]; then
             echo "tier=1" >> "$GITHUB_OUTPUT"
-            echo "::notice::production-cutover-evidence: Tier-1 declare-time exemption (wrapper repo, ADR-72 §결정 6)"
+            echo "::notice::production-cutover-evidence: Tier-1 declare-time exemption (wrapper repo, ADR-072 §결정 6)"
           else
             echo "tier=2" >> "$GITHUB_OUTPUT"
             echo "::notice::production-cutover-evidence: Tier-2 runtime evidence verify (consumer repo)"

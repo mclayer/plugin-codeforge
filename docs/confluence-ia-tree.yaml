@@ -934,7 +934,7 @@ legacy_adr_migration_map:
       type: adr
       cascade_order: 95
     - page_id: 2130639
-      title: "ADR-72: ProductionEvidence Deputy 신설 + EPIC cutover gate evidence quad"
+      title: "ADR-072: ProductionEvidence Deputy 신설 + EPIC cutover gate evidence quad"
       source_file: "docs/adr/"
       category: "governance"
       previous_parent_id: 2097153
@@ -2153,28 +2153,28 @@ legacy_domain_knowledge_migration_map:
     source_category: "production-cutover"
     new_parent_id: 2163482
     plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2163436
     source_title: "domain/production-cutover/Production cutover — 4-evidence-quad 수집 절차"
     source_category: "production-cutover"
     new_parent_id: 2163482
     plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2098184
     source_title: "domain/production-cutover/Promotion Criteria 4-tuple — codeforge canary → beta → stable transition gate SSOT"
     source_category: "production-cutover"
     new_parent_id: 2163482
     plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2065580
     source_title: "domain/production-cutover/Production cutover — 7-step rollback protocol"
     source_category: "production-cutover"
     new_parent_id: 2163482
     plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2065602
     source_title: "domain/runtime/Claude Code deferred tool mechanism + SessionStart hook prompt-injection 모델 + codeforge 3-tier enforcement"
@@ -2213,7 +2213,7 @@ legacy_domain_knowledge_category_inference:
   # codeforge-test (2097239) — 2 pages
   integration-test: "codeforge-test"                # 2 page (per-plugin specific)
   # codeforge-deploy-review (2163482) — 4 pages
-  production-cutover: "codeforge-deploy-review"     # 4 page (per-plugin specific, ADR-72 ProductionEvidence ownership)
+  production-cutover: "codeforge-deploy-review"     # 4 page (per-plugin specific, ADR-072 ProductionEvidence ownership)
   # inter-plugin-contracts Registry (2130942) — 1 page
   inter-plugin-contracts: "cross-cutting (IPC Registry parent — CFP-1523 §3.1 IPC mapping table 정합)"  # 1 page
 

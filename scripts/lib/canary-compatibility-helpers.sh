@@ -2,7 +2,7 @@
 # scripts/lib/canary-compatibility-helpers.sh — canary promotion criteria 4-tuple verify helpers
 #
 # CFP-991 (Wave 4 sub-Epic #1 Story-4 — canary promotion criteria enforcement layer)
-# Carrier ADR: ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+# Carrier ADR: ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
 # RefactorAgent B-3 + A-3 (thin orchestrator + helper lib extraction CFP-954 gh-api-helpers.sh 선례 답습)
 #
 # 4 helper function:

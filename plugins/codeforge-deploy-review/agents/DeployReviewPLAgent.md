@@ -114,7 +114,7 @@ production_cutover_touching: bool      # ProductionEvidenceDeputy CONDITIONAL sp
 ### 5. ProductionEvidenceDeputy spawn 결정 (CONDITIONAL — ADR-088 §결정 4)
 
 - `production_cutover_touching: true` 시 ProductionEvidenceDeputy CONDITIONAL spawn (cutover evidence quad — functional / security / monitoring / testing 4 source).
-- 본 deputy ownership = codeforge-deploy-review 정식 (ADR-72 이관 후). mandate body = ADR-72 §결정 1-7 verbatim 유지.
+- 본 deputy ownership = codeforge-deploy-review 정식 (ADR-072 이관 후). mandate body = ADR-072 §결정 1-7 verbatim 유지.
 - wrapper-self-app N/A (CFP-954 precedent 보존).
 
 ### 6. verdict 종합 + Orchestrator 반환
@@ -160,7 +160,7 @@ discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제�
 - ADR-088 (Deploy Review lane 신설 + ProductionEvidenceDeputy 이관) — 본 agent SSOT carrier
 - ADR-087 (Deploy lane) — 직전 lane (배포 매커니즘)
 - ADR-042-agent-model-selection-policy Amendment 9 (DeployReviewPL Opus + DeployReviewWorker Sonnet)
-- ADR-72 (ProductionEvidenceDeputy mandate — 이관 후 본 lane deputy)
+- ADR-072 (ProductionEvidenceDeputy mandate — 이관 후 본 lane deputy)
 - ADR-068 I-5 (dimensional empirical grounding — 성능 측정 baseline TBD)
 - ADR-059 (debate-protocol-v1 — 성능 미충족 cross-module trigger)
 - ADR-026 Amendment N (Epic close → Deploy → Deploy Review cascade)

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # scripts/check-production-cutover-evidence.sh
 #
-# CFP-954 / ADR-72 §결정 3 production-cutover-evidence verifier (warning tier).
+# CFP-954 / ADR-072 §결정 3 production-cutover-evidence verifier (warning tier).
 #
-# Mechanical anchor 4-tuple (Change Plan §3.5 + ADR-72 amendment_log Amendment 2):
+# Mechanical anchor 4-tuple (Change Plan §3.5 + ADR-072 amendment_log Amendment 2):
 #   MS-1: live_touching                    — Story frontmatter (yaml.safe_load)
 #   MS-2: production_cutover_touching      — dual-source AND (frontmatter + label)
 #   MS-3: marketplace_publish_touching     — plugin.json .version diff + marketplace.json channels[] touch
@@ -144,14 +144,14 @@ fi
 #   exempt = docs/** + CLAUDE.md + scripts/**/*.{yaml,yml} (data file) + tests/**
 # Story-3 자체 = scripts/check-production-cutover-evidence.sh 신설 → runtime behavior change > 0 → Tier-1 exemption (declare-time presence verify only)
 if [[ $IS_WRAPPER_REPO -eq 1 ]]; then
-  # Tier-1 declare-time scope check: ADR-72 frontmatter + amendment_log + cross-ref presence
-  ADR_72_PATH="${REPO_ROOT}/archive/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md"
+  # Tier-1 declare-time scope check: ADR-072 frontmatter + amendment_log + cross-ref presence
+  ADR_72_PATH="${REPO_ROOT}/archive/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md"
   EVIDENCE_REGISTRY_PATH="${REPO_ROOT}/docs/evidence-checks-registry.yaml"
   LABEL_REGISTRY_PATH="${REPO_ROOT}/docs/inter-plugin-contracts/label-registry-v2.md"
 
   declare_failures=0
   if [[ ! -f "$ADR_72_PATH" ]]; then
-    echo "::warning::${_GH_HELPER_CALLER}: Tier-1 declare-time — ADR-72 file absent" >&2
+    echo "::warning::${_GH_HELPER_CALLER}: Tier-1 declare-time — ADR-072 file absent" >&2
     declare_failures=$((declare_failures + 1))
   fi
   if [[ ! -f "$EVIDENCE_REGISTRY_PATH" ]]; then
@@ -167,7 +167,7 @@ if [[ $IS_WRAPPER_REPO -eq 1 ]]; then
     echo "${_GH_HELPER_CALLER}: FAIL (declare-time) — ${declare_failures} mandatory wrapper SSOT file 부재"
     exit 1
   fi
-  echo "${_GH_HELPER_CALLER}: PASS — wrapper Tier-1 declare-time exemption (Story-3 self-applicable, ADR-72 §결정 6 정합)"
+  echo "${_GH_HELPER_CALLER}: PASS — wrapper Tier-1 declare-time exemption (Story-3 self-applicable, ADR-072 §결정 6 정합)"
   if [[ $MISMATCH -eq 1 ]] && ! _should_skip_issue; then
     gh issue create \
       --repo mclayer/plugin-codeforge \
@@ -177,7 +177,7 @@ if [[ $IS_WRAPPER_REPO -eq 1 ]]; then
 
 signature: dual-source-mismatch|${REPO}|${FRONTMATTER_TOUCH}|${LABEL_TOUCH}
 
-[codeforge-kpi-infra-error] CFP-954 / ADR-72 §결정 3" \
+[codeforge-kpi-infra-error] CFP-954 / ADR-072 §결정 3" \
       2>/dev/null || true
   fi
   exit 0
@@ -240,7 +240,7 @@ repo: ${REPO}
 
 signature: ${SIG}
 
-[codeforge-kpi-infra-error] CFP-954 / ADR-72 §결정 3" \
+[codeforge-kpi-infra-error] CFP-954 / ADR-072 §결정 3" \
       2>/dev/null || true
   fi
   echo "${_GH_HELPER_CALLER}: FAIL (runtime) — ${runtime_failures} mandatory anchor missing"
@@ -256,7 +256,7 @@ if [[ $MISMATCH -eq 1 ]] && ! _should_skip_issue; then
 
 signature: dual-source-mismatch|${REPO}|${FRONTMATTER_TOUCH}|${LABEL_TOUCH}
 
-[codeforge-kpi-infra-error] CFP-954 / ADR-72 §결정 3" \
+[codeforge-kpi-infra-error] CFP-954 / ADR-072 §결정 3" \
     2>/dev/null || true
 fi
 

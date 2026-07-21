@@ -104,7 +104,7 @@ invariants_preserved:
     name: "canary tier authority advisory"
     detail: >
       canary tier = HIGH risk class, admin 권장. consumer CODEOWNERS path 영역.
-      ProductionEvidenceDeputy spawn trigger (ADR-72 §결정 1 정합).
+      ProductionEvidenceDeputy spawn trigger (ADR-072 §결정 1 정합).
 
 open_extension: false
 

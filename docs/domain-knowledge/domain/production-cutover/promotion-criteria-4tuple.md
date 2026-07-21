@@ -11,7 +11,7 @@ created: 2026-05-19
 updated: 2026-05-19
 created_by: CFP-991  # Wave 4 sub-Epic #1 Story-4 carrier
 carrier_adrs:
-  - ADR-72 Amendment 3  # ProductionEvidenceDeputy mandate + EPIC cutover gate evidence quad — §결정 3 trigger axis 표 wrapper governance row + §결정 5 evidence quad 표 row (Amendment 3)
+  - ADR-072 Amendment 3  # ProductionEvidenceDeputy mandate + EPIC cutover gate evidence quad — §결정 3 trigger axis 표 wrapper governance row + §결정 5 evidence quad 표 row (Amendment 3)
   - ADR-076 §결정 9.6   # 3-tier channel taxonomy declaration — promotion criteria 4-tuple SSOT empirical anchor (4 industry exemplar)
   - ADR-016 Amendment 3 # codeforge family scope 7 plugin × channel 고정 invariant
   - ADR-063 Amendment 5 # marketplace atomic invariant — publisher↔registry↔consumer 3-way version atomic
@@ -47,7 +47,7 @@ related_contracts:
 - **Story-4 (CFP-991) = enforcement layer carrier (promotion criteria 4-tuple gate evaluation + canary cross-repo coordination)**
 - Story-5 (별 CFP) = downgrade asymmetry invariant declarative carrier
 
-**boundary 2-tier disjoint** (ADR-72 §결정 6 wrapper-self-app N/A invariant 정합):
+**boundary 2-tier disjoint** (ADR-072 §결정 6 wrapper-self-app N/A invariant 정합):
 - **Tier-1 declare-time exemption** (wrapper PR scope) — code 0 + runtime 0 + secret/credential 0 변경, fast-PASS triple-AND `production_cutover_touching=true AND repo=wrapper AND code_change=0`
 - **Tier-2 runtime measurement** (consumer canary tier 활성 Story scope) — admin-tier 권장 advisory, HIGH risk class
 
@@ -59,7 +59,7 @@ related_contracts:
 |---|---|---|
 | functional | consumer Story bats GREEN ratio + integration test PASS evidence (codeforge-test lane IntegrationTestAgent verdict) | wrapper_self (wrapper Story scope) / consumer_self (consumer Story scope) / mixed (양 source 혼합) |
 | security | consumer Story SecurityTestPLAgent verdict (codeforge-review SecurityTestPL) + ProductionEvidenceDeputy spawn evidence (consumer canary tier 활성 Story carrier 영역) | consumer_self (production-impact mandate) |
-| monitoring | consumer production-side monitoring metric (Prometheus rate / WAL sample / drainage rate — ADR-72 §결정 5 evidence quad 정합) | consumer_self (consumer production env scope) |
+| monitoring | consumer production-side monitoring metric (Prometheus rate / WAL sample / drainage rate — ADR-072 §결정 5 evidence quad 정합) | consumer_self (consumer production env scope) |
 | testing | consumer Story IntegrationTestAgent verdict (Epic-level baseline v2 — ADR-055 Amendment 3 §결정 1, baseline-v2-cfp-991.yaml 신설 carrier 영역) | consumer_self (Epic-level baseline scope) |
 
 ### family_7_atomic × channel × promotion gate 3-axis cross-product
@@ -93,13 +93,13 @@ stable → beta demotion / beta → canary demotion 영역 = Story-5 CFP-1014 ca
 
 ### wrapper-self-app N/A invariant (영구)
 
-ADR-72 §결정 6 verbatim — wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). 따라서 본 4-tuple SSOT 의 wrapper-self-app trigger = **영구적으로 N/A** (Tier-1 declare-time exemption fast-PASS).
+ADR-072 §결정 6 verbatim — wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). 따라서 본 4-tuple SSOT 의 wrapper-self-app trigger = **영구적으로 N/A** (Tier-1 declare-time exemption fast-PASS).
 
 ## 관련 ADR
 
 | ADR | 관계 |
 |---|---|
-| **ADR-72 Amendment 3** | 본 4-tuple SSOT 의 carrier ADR — §결정 1 표 wrapper governance row append + §결정 5 evidence quad 표 row append (5번째 row promotion criteria 4-tuple cross-ref). amendment_log Amendment 3 (CFP-991 carrier) |
+| **ADR-072 Amendment 3** | 본 4-tuple SSOT 의 carrier ADR — §결정 1 표 wrapper governance row append + §결정 5 evidence quad 표 row append (5번째 row promotion criteria 4-tuple cross-ref). amendment_log Amendment 3 (CFP-991 carrier) |
 | **ADR-076 §결정 9.6** | 4 industry exemplar SSOT (Chrome 3-channel Stable/Beta/Canary primary + npm dist-tag + Rust 3-channel + K8s 3-stage 보조 reference). 본 4-tuple 의 empirical anchor source |
 | ADR-016 §결정 1 + Amendment 3 | codeforge family scope 7 plugin atomic + channel 차원 확장 — family_7_atomic_canary_pin invariant SSOT |
 | ADR-063 Amendment 5 §결정 15 | publisher↔registry↔consumer 3-way version atomic invariant — three_way_match field cross-ref |
@@ -111,4 +111,4 @@ ADR-72 §결정 6 verbatim — wrapper plugin 자체 = production cutover 영역
 
 ## 변경 이력
 
-- **2026-05-19 CFP-991 신설**: Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer carrier. ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding sibling carrier. 4 industry exemplar verbatim cite (Chrome 3-channel primary + 보조 3개). wrapper Tier-1 declare-time exemption + consumer Tier-2 runtime measurement boundary 2-tier disjoint invariant. family_7_atomic × channel × promotion gate 3-axis cross-product mapping. downgrade scope (Story-5 carrier) / marketplace.json channels[] real populate scope (sequential carrier) / wrapper-self-app N/A scope (영구) 3 boundary 명시.
+- **2026-05-19 CFP-991 신설**: Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer carrier. ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding sibling carrier. 4 industry exemplar verbatim cite (Chrome 3-channel primary + 보조 3개). wrapper Tier-1 declare-time exemption + consumer Tier-2 runtime measurement boundary 2-tier disjoint invariant. family_7_atomic × channel × promotion gate 3-axis cross-product mapping. downgrade scope (Story-5 carrier) / marketplace.json channels[] real populate scope (sequential carrier) / wrapper-self-app N/A scope (영구) 3 boundary 명시.

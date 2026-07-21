@@ -18,7 +18,7 @@ related_adrs:
   - ADR-014      # 배경 — operational risk boundary axis (DR / disconnect / clock / rate / env) — 안전장치 4 kill-switch boundary 정합 (단 도메인 다름: ADR-014 = operator kill-switch / 본 ADR = 자동 mechanism disable 토글)
   - ADR-058      # 직접 제약 — §해소 기준 정량 명시 의무 (안전장치 1 모달 어휘 금지 정합)
   - ADR-064      # §결정 7 evidence-gated symmetric ratchet — consumer overlay 정책 축소 불가 (보존 기간 default 3h consumer 확장 가능 / 축소 불가)
-  - ADR-72       # 배경 — ProductionEvidenceDeputy + production cutover incident response 영역 (rollback-protocol.md 의 owner SubAgent — Step 6 4-evidence-quad re-verify 정합). file명 = ADR-72 2-digit form (ADR-088 precedent 정합)
+  - ADR-072       # 배경 — ProductionEvidenceDeputy + production cutover incident response 영역 (rollback-protocol.md 의 owner SubAgent — Step 6 4-evidence-quad re-verify 정합). file명 = ADR-072 2-digit form (ADR-088 precedent 정합)
   - ADR-084      # pattern_count >= 2 재발 시 mechanical promote precedent (frontmatter clause 형식)
   - ADR-054      # 배경 — doc-only fast-path — 본 Story 는 신규 ADR 포함 → fast-path 비대상 (full-lane)
 related_files:
@@ -164,7 +164,7 @@ N/A — permanent policy
 - **ADR-087 §결정 5** — blue-green + 3-시간 보존 (안전장치 2 default anchor, L142)
 - **ADR-014** — operational risk boundary axis (안전장치 4 kill-switch boundary — 단 도메인 다름, §결정 5 disambiguation)
 - **ADR-058 §결정 5** — §해소 기준 정량 명시 (안전장치 1) + 약화 evidence-gate (sunset_justification)
-- **ADR-72** — ProductionEvidenceDeputy + production cutover (rollback-protocol owner SubAgent, file명 2-digit form)
+- **ADR-072** — ProductionEvidenceDeputy + production cutover (rollback-protocol owner SubAgent, file명 2-digit form)
 
 ## 관련 파일
 

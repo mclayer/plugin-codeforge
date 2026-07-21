@@ -126,7 +126,7 @@ lane 외부 surface — kind:contract producer / consumer overlay slice / govern
 - **ADR-048 Amendment 1** — codeforge-test lane 통합테스트 전용 부활 (CFP-367 / 2026-05-10). TestAgent / StatefulTestAgent deprecated. 본 lane 의 존재 근거.
 - **ADR-055** — Integration Test Lane Policy SSOT. Amendment 2 (CFP-371) = per-Story → Epic-level 실행 구조 전환 (1회 spawn / `epic_complete` trigger).
 - **ADR-067** — Max FIX 3/3 + cross-lane RESET. 본 lane 의 FIX verdict 가 4 lane (CodeReview / SecurityTest / 본 lane) 누적 FIX 카운터에 합산.
-- **ADR-72** — Production cutover gate + ProductionEvidenceDeputy. Epic-level 통합테스트 PASS → 보안 lane → production cutover Story 시 ProductionEvidenceDeputy 동반.
+- **ADR-072** — Production cutover gate + ProductionEvidenceDeputy. Epic-level 통합테스트 PASS → 보안 lane → production cutover Story 시 ProductionEvidenceDeputy 동반.
 - **ADR-141** — opus default + Amendment 2 carve-out (IntegrationTestAgent sonnet, fallback 대상 없음 — 구 ADR-057 Sonnet→Opus rate-limit fallback 대체).
 - **IntegrationTest §7.4 측정 contract** (ADR-014 Amendment 4 §결정 2): evidence-driven 3-axis split (측정 대상 정의 DesignLane / 실측 본 lane / policy 결정 ArchitectLane post-measurement). FIX 루프 disjoint axis. 상세는 `agents/IntegrationTestAgent.md` §7.4. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
@@ -209,7 +209,7 @@ test_verdict.failures[].failure_type
 - **`tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/`** — IntegrationTestAgent self-write (Story Suite 자동 생성, §8.6 기반).
 - **`tests/integration/baseline/<STORY-KEY>/`** — IntegrationTestAgent self-commit (전체 suite PASS 시만 자동 승격).
 - **test_verdict v2.2 packet** — Orchestrator 핸드오프 carrier (Story §9 append + §10 FIX Ledger row append carrier).
-- **Epic close gate** — `epic_close_ready` 신호 (test_verdict PASS + 보안 lane PASS / N/A 후 ProductionEvidenceDeputy 분기 시 ADR-72).
+- **Epic close gate** — `epic_close_ready` 신호 (test_verdict PASS + 보안 lane PASS / N/A 후 ProductionEvidenceDeputy 분기 시 ADR-072).
 
 **ADR-067 cross-lane RESET 연동**:
 

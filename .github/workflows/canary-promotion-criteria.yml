@@ -1,11 +1,11 @@
 # templates/github-workflows/canary-promotion-criteria.yml
 #
-# CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+# CFP-991 / ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
 # canary_compatibility_check_binding — canary promotion criteria 4-tuple verifier (warning tier).
 #
 # Wave 4 sub-Epic #1 Story-4 — canary promotion criteria enforcement layer carrier.
 #
-# Trigger (ADR-72 §결정 5 production-cutover-evidence.yml D2 consensus 2-trigger split 답습):
+# Trigger (ADR-072 §결정 5 production-cutover-evidence.yml D2 consensus 2-trigger split 답습):
 #   - pull_request: opened/synchronize/labeled — consumer canary tier 활성 PR open 시 promotion criteria verify
 #   - workflow_dispatch — operations team manual pre-verify (Helm `helm test` precedent)
 #
@@ -13,7 +13,7 @@
 #   - continue-on-error: true (PR merge 차단 0)
 #   - hotfix-bypass:canary-promotion-criteria label 부착 시 skip (label-registry v2.35 45번째 family member)
 #
-# Wrapper-self-app exemption (D3 consensus Tier-1 declare-time + Tier-2 runtime split, ADR-72 §결정 6 invariant 정합):
+# Wrapper-self-app exemption (D3 consensus Tier-1 declare-time + Tier-2 runtime split, ADR-072 §결정 6 invariant 정합):
 #   - Tier-1 (repo=wrapper AND code_change=0): triple-AND fast-PASS (production_cutover_touching=true AND repo=wrapper AND code_change=0)
 #   - Tier-2 (repo=consumer): 실 4-tuple measurement quad (functional + security + monitoring + testing)
 #
@@ -21,7 +21,7 @@
 #   - `if: github.repository != 'mclayer/plugin-codeforge'` mechanical guard (label mis-attach 차단)
 #
 # Cross-ref:
-#   - ADR-72 Amendment 3 §결정 1 표 wrapper governance row + §결정 5 표 row (5번째)
+#   - ADR-072 Amendment 3 §결정 1 표 wrapper governance row + §결정 5 표 row (5번째)
 #   - ADR-076 §결정 9.6 (Chrome 3-channel Stable/Beta/Canary verbatim 4 industry exemplar SSOT)
 #   - ADR-070 §결정 D6 (CFP-988 Amendment 4 mandatory-real-execution-evidence STANDING — T-4.1 mitigation)
 #   - reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding (7 field schema)
@@ -104,7 +104,7 @@ jobs:
           # Triple-AND Tier-1 exemption
           if [[ "${PROD_TOUCHING}" == "true" && "${REPO_KIND}" == "wrapper" && "${CODE_CHANGE}" == "0" ]]; then
             echo "tier1_exempt=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::canary-promotion-criteria: Tier-1 wrapper-self-app exemption (triple-AND fast-PASS, ADR-72 §결정 6 invariant 정합)"
+            echo "::notice::canary-promotion-criteria: Tier-1 wrapper-self-app exemption (triple-AND fast-PASS, ADR-072 §결정 6 invariant 정합)"
           else
             echo "tier1_exempt=false" >> "$GITHUB_OUTPUT"
           fi

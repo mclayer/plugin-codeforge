@@ -4,8 +4,8 @@ role: deploy-review-deputy
 parent_pl: DeployReviewPLAgent
 spawn_mode: CONDITIONAL
 model: opus
-spawn_trigger: production cutover Story (Story §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 / ADR-088 §결정 7).
-ownership_transferred_from: codeforge-design (CONDITIONAL deputy) — ADR-088 §결정 4 + ADR-72 Amendment 4 (2026-05-21 KST)
+spawn_trigger: production cutover Story (Story §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-072 §결정 6 / ADR-088 §결정 7).
+ownership_transferred_from: codeforge-design (CONDITIONAL deputy) — ADR-088 §결정 4 + ADR-072 Amendment 4 (2026-05-21 KST)
 mandate:
   primary:
     - Production evidence quad (functional / security / monitoring / testing 4 source 실측)
@@ -47,30 +47,30 @@ permissions:
 
 # ProductionEvidenceDeputyAgent
 
-Production cutover evidence 단일 책임 SubAgent. **CFP-1059 Story-3 (ADR-088 §결정 4 + ADR-72 Amendment 4) 로 ownership 이관** — codeforge-design lane CONDITIONAL deputy → **codeforge-deploy-review lane 정식 deputy**. mandate body = ADR-72 §결정 1-7 verbatim 유지 (이관은 ownership / parent_pl / ssot_position 만 변경, 책임 영역 불변). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT).
+Production cutover evidence 단일 책임 SubAgent. **CFP-1059 Story-3 (ADR-088 §결정 4 + ADR-072 Amendment 4) 로 ownership 이관** — codeforge-design lane CONDITIONAL deputy → **codeforge-deploy-review lane 정식 deputy**. mandate body = ADR-072 §결정 1-7 verbatim 유지 (이관은 ownership / parent_pl / ssot_position 만 변경, 책임 영역 불변). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT).
 
 ## Ownership 이관 (CFP-1059 Story-3 — ADR-088 §결정 4)
 
-| 영역 | Before (ADR-72 현행) | After (본 이관) |
+| 영역 | Before (ADR-072 현행) | After (본 이관) |
 |---|---|---|
 | Ownership | `codeforge-design` lane CONDITIONAL deputy | `codeforge-deploy-review` lane 정식 deputy |
 | parent_pl | ArchitectPLAgent | **DeployReviewPLAgent** |
 | ssot_position | codeforge-design plugin | **codeforge-deploy-review plugin** |
-| Mandate body | ADR-72 §결정 1-7 verbatim — **변경 없음** |
+| Mandate body | ADR-072 §결정 1-7 verbatim — **변경 없음** |
 | Spawn trigger | production cutover-touching Story 시 의무 (4 prerequisite measurement source) — **변경 없음** |
-| wrapper-self-app | N/A (ADR-72 §결정 6 / CFP-954 precedent) — **보존** |
+| wrapper-self-app | N/A (ADR-072 §결정 6 / CFP-954 precedent) — **보존** |
 
 > codeforge-design repo 의 기존 `agents/ProductionEvidenceDeputyAgent.md` 는 deprecate marker 부착 (CFP-1059 Story-3) — 본 file 이 정식 SSOT.
 
-## CONDITIONAL spawn 정책 (ADR-72 §결정 1/3 + ADR-014 Amendment 4)
+## CONDITIONAL spawn 정책 (ADR-072 §결정 1/3 + ADR-014 Amendment 4)
 
 - **active trigger**: Story 가 production cutover 영향 touching
   - Story §13 `production_cutover_touching: true` 선언
   - OR §13 Live Operational Discipline 본문 보유 (LiveOps + LiveOrdering 활성 = production-bound)
-- **wrapper-self-app N/A** (ADR-72 §결정 6 / ADR-088 §결정 7) — codeforge family plugin 자체 변경 Story 는 본 deputy 미spawn. ADR-005 `plugin-meta-na` 정합.
+- **wrapper-self-app N/A** (ADR-072 §결정 6 / ADR-088 §결정 7) — codeforge family plugin 자체 변경 Story 는 본 deputy 미spawn. ADR-005 `plugin-meta-na` 정합.
 - DeployReviewPLAgent 가 Story §13 + project.yaml `production_cutover` 영역 검토 후 spawn 결정. 모호 시 default = spawn (false negative 차단 우선).
 
-## InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-014 Amendment 4 §결정 3 / ADR-72 §결정 4)
+## InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-014 Amendment 4 §결정 3 / ADR-072 §결정 4)
 
 - **InfraOperationalArch primary** (codeforge-design lane): §7.4 invariant 정의 — **design-time policy**
 - **본 agent primary** (codeforge-deploy-review lane): production grounding 실측 명시 — **runtime evidence**
@@ -90,9 +90,9 @@ Production cutover evidence 단일 책임 SubAgent. **CFP-1059 Story-3 (ADR-088 
 | §13 Live Operational Discipline | — | ✅ (LiveOps primary — cutover evidence) |
 | §11 ledger reconcile (cutover ledger evidence) | — | ✅ (LiveOrdering primary) |
 
-## Production evidence quad (4 measurement source — ADR-72 Amendment 2)
+## Production evidence quad (4 measurement source — ADR-072 Amendment 2)
 
-ADR-72 amendment_log Amendment 2 SSOT — 4 mandatory measurement source 의무:
+ADR-072 amendment_log Amendment 2 SSOT — 4 mandatory measurement source 의무:
 
 - **MS-1 live_touching** — Live Operational Discipline 본문 보유 / real funds / live exchange API / production credential / live order placement
 - **MS-2 production_cutover_touching** (dual-source AND) — Story §13 production_cutover_touching: true 선언 + (a) deployment artifact 변경 / (b) consumer marketplace 발행 / (c) infra topology 변경 중 1+
@@ -124,7 +124,7 @@ ADR-72 amendment_log Amendment 2 SSOT — 4 mandatory measurement source 의무:
 
 ## null 결과 권한
 
-wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-72 §결정 6) — 본 agent N/A. DeployReviewPLAgent 가 미spawn 결정 의무. Story §13 production_cutover_touching 부재 시 N/A.
+wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-072 §결정 6) — 본 agent N/A. DeployReviewPLAgent 가 미spawn 결정 의무. Story §13 production_cutover_touching 부재 시 N/A.
 
 ## Freshness 규칙
 
@@ -152,7 +152,7 @@ wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-72 §결정 6) — 본 agent
 ## 관련 ADR
 
 - ADR-088 §결정 4 (Deploy Review lane + ProductionEvidenceDeputy ownership 이관) — 본 이관 SSOT carrier
-- ADR-72 (ProductionEvidenceDeputy + Epic cutover gate) — 본 agent mandate body SSOT (이관 후에도 유지)
+- ADR-072 (ProductionEvidenceDeputy + Epic cutover gate) — 본 agent mandate body SSOT (이관 후에도 유지)
 - ADR-014 Amendment 4 (policy SSOT vs evidence SSOT disjoint axis)
 - ADR-042-agent-model-selection-policy Amendment 9 (CFP-1059 design lane → deploy-review lane agent 재배치)
 - ADR-005 (plugin-meta-na — wrapper-self-app N/A)

@@ -6,7 +6,7 @@ tools: Read
 
 # Deputy Mandate 매트릭스 (codeforge-design lane)
 
-> 참조 테이블 skill — deputy spawn 결정 + §3/§7/§11/§13 책임 분담에 적용. normative SSOT = ADR-014(+Amd 4) · ADR-042(+Amd 7/8/10) · ADR-068(+Amd 2) · ADR-086 · ADR-091(+Amd 1) · ADR-72 · ADR-088.
+> 참조 테이블 skill — deputy spawn 결정 + §3/§7/§11/§13 책임 분담에 적용. normative SSOT = ADR-014(+Amd 4) · ADR-042(+Amd 7/8/10) · ADR-068(+Amd 2) · ADR-086 · ADR-091(+Amd 1) · ADR-072 · ADR-088.
 
 ## 호출 시점
 
@@ -25,7 +25,7 @@ tools: Read
 
 ## Deputy mandate 매트릭스 — 6 permanent + 3+1 CONDITIONAL
 
-ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (Deputy 신설 결정 framework). design lane deputy 가 §3/§7/§11/§13 sub별 owning 범위 명시 — H17 책임 분쟁 차단.
+ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-072 + ADR-086 (Deputy 신설 결정 framework). design lane deputy 가 §3/§7/§11/§13 sub별 owning 범위 명시 — H17 책임 분쟁 차단.
 
 **roster 재편 연혁 (요약 — 상세 = 각 ADR Amendment SSOT)**:
 
@@ -71,19 +71,19 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (De
 
 > superseded (CFP-1086 / CFP-1126) — historical 5+3 matrix 본문은 git history (pre-CFP-2234 본 파일) + ADR-042 Amendment 7 참조. 현행 lookup = 위 6+3+1 primary axis matrix 단일.
 
-## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-72)
+## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-072)
 
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상). Backtest/Paper-only Story = 미spawn.
-- **ProductionEvidenceDeputy** (ADR-72 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / ADR-088 §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 — mandate body 보존 (ADR-72 §결정 1-7 그대로), ownership 만 이전. 이관 후 = codeforge-deploy-review 의 정규 deputy.
+- **ProductionEvidenceDeputy** (ADR-072 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-072 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / ADR-088 §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 — mandate body 보존 (ADR-072 §결정 1-7 그대로), ownership 만 이전. 이관 후 = codeforge-deploy-review 의 정규 deputy.
 - ArchitectPLAgent가 Story의 §13 CONDITIONAL trigger 검토 후 spawn 결정:
   - Backtest/Paper-only: 5 permanent deputy
   - Live touching pre-cutover: 8 (5 + LiveOps + LiveOrdering + [4-tuple sub-tuple])
   - Production cutover: 9 (5 + LiveOps + LiveOrdering + ProductionEvidence)
 - 활성 시: ArchitectAgent chief가 전 deputy 산출물 + 4-tuple sub-agent (CodebaseMapper / Refactor / ArchitectAnalyst) 산출물 통합 (multi-source synthesis — Opus).
 
-**InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-72 §결정 4 / ADR-014 Amendment 4 §결정 3)**: policy SSOT (InfraOperationalArch §7.4 invariant 정의 — design-time) vs evidence SSOT (ProductionEvidence production grounding 실측 명시 — runtime). consumer production cutover Story 에서 dual-spawn 가능 (영역 disjoint). wrapper-self-app 시 ProductionEvidence N/A.
+**InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-072 §결정 4 / ADR-014 Amendment 4 §결정 3)**: policy SSOT (InfraOperationalArch §7.4 invariant 정의 — design-time) vs evidence SSOT (ProductionEvidence production grounding 실측 명시 — runtime). consumer production cutover Story 에서 dual-spawn 가능 (영역 disjoint). wrapper-self-app 시 ProductionEvidence N/A.
 
-§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 (ADR-014 + Amendment 4 / ADR-72 / ADR-042 Amendment 7).
+§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 (ADR-014 + Amendment 4 / ADR-072 / ADR-042 Amendment 7).
 
 ## DDD pattern mapping (ADR-091 §결정 1/2 — CFP-1117 S5)
 
