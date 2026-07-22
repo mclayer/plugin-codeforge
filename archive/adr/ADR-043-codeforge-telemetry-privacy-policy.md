@@ -321,7 +321,7 @@ Epic CFP-2391 S3 (OMC-adopt per-agent replay/cost observability) 가 spawn-event
 
 **(A) §결정 1 future → current** — spawn-event-v1 = 더 이상 "future" 가 아닌 **current opt-in channel**. consumer overlay `telemetry.channels.spawn_event: false` default. global `telemetry.enabled: false` 시 disabled (global gate inherit). wrapper dogfood 도 Phase 1 = default false + 사용자 explicit opt-in 의무 (consumer 와 동일 trust model).
 
-**(B) §결정 2 Allow-list 에 spawn-event-v1 field set 추가** — spawn-event-v1 은 stop-event-v1 (18 field) 와 **별 channel 별 Allow-list** 를 가진다. spawn-event-v1 Allow-list 19 field (SSOT = spawn-event-v1.md §2):
+**(B) §결정 2 Allow-list 에 spawn-event-v1 field set 추가** — spawn-event-v1 은 stop-event-v1 (18 field) 와 **별도 channel 별 Allow-list** 를 가진다. spawn-event-v1 Allow-list 19 field (SSOT = spawn-event-v1.md §2):
 ```
 event_id / schema_version / timestamp / story_key / lane_label / agent_type /
 attribution_confidence / input_tokens / output_tokens / cache_creation_input_tokens /

@@ -13,87 +13,12 @@ grandfathered_violations:
 - file: archive/adr/ADR-006-testcontract-architect.md
   word: 별
   content: N/A — permanent policy (외부 venue/시계열 의존 Story 가 존재하는 한 영구 적용). Phase 2 lint wire = CFP-2504 Phase 2 COMPLETE (anchor-presence lint Active). warning→blocking 승격은 recurrence-driven 별 evidence-gated carrier (ADR-060 §결정 19) 추적.
-- file: archive/adr/ADR-014-operational-risk-ssot-distribution.md
-  word: 별
-  content: - **#1079 = §7.4 에 additive 로 끼는 구조**: #1079 의 test-parity / container axis 는 본 §7.4.7 (throughput/scale) 와 **disjoint sub** (별 §7.4.8+ slot 또는 §7.4.6 Container Docker 확장) — 본 Amendment 6 은 §7.4.7 단일 sub 만 점유, #1079 가 향후 §7.4.8 (test-parity) 또는 §7.4.6 확장 (container axis) 으로 additive 진입할 자리 보존. **본 Amendment 6 은 #1079 영역 무점유 (fold 안 함, dormant 보존)**.
-- file: archive/adr/ADR-014-operational-risk-ssot-distribution.md
-  word: 별
-  content: - **Phase 2 ( defer)**: (a) Story 의 outcome-signal 누락 detect mechanical lint (b) change-plan §7.4.7 body mirror (codeforge-design canonical) (c) consumer post-deploy benchmark seed — 모두 **별 sub-carrier defer** (ADR-119 §결정 8 declarative-only / ADR-060 4-tier promotion / Amendment 6 결정 3 Phase 1/2 split 답습 — verified via worktree Read ADR-119 line 213).
-- file: archive/adr/ADR-014-operational-risk-ssot-distribution.md
-  word: 별
-  content: - **hard-block 승격 = 별 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
-- file: archive/adr/ADR-015-stateful-test-category.md
-  word: 별
-  content: - **Phase 2 ( defer)**: (a) change-plan §8.5.1 body mirror (codeforge-design canonical) (b) 에 soak-derivation lint (accumulation/lifetime-class 해당 Story 의 §8.5.1 이 manifestation-derived 임계 OR duration floor 명시 없이 고정 단창만 작성 시 FAIL) — 모두 **별 sub-carrier defer** ([ADR-119](ADR-119-research-before-claims.md) §결정 8 declarative-only / [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) 4-tier promotion 경로 / 결정 5 §8.5.0 applicability lint 패턴 답습, verified via worktree Read ADR-119 §결정 8 enforcement 경로 + §결정 10 "enforcement / 경계" Phase 1 declarative-only).
-- file: archive/adr/ADR-016-marketplace-registration-policy.md
-  word: 별
-  content: - Wave 4 sub-Epic #1 Story-2 (runtime carrier, 별 CFP) UpgradeAgent = mixed channel detection + abort 의무 (declare layer = mandate semantic, runtime detection = Story-2 carrier 영역)
-- file: archive/adr/ADR-023-lane-plugin-lifecycle.md
-  word: 별
-  content: | 3 | 신규 plugin repo 생성 | Wave 2 (별 CFP) — wrapper-canonical SSOT 우선 ( defer marker 부재 — Wave 1 declaration only) |
-- file: archive/adr/ADR-023-lane-plugin-lifecycle.md
-  word: 별
-  content: | 4 | Marketplace 등록 | Phase 2 PR (별 CFP) — ADR-063 atomic invariant 정합 (3-file coordination — plugin.json + CHANGELOG.md + marketplace.json) |
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: #### Wave 3 (post Phase 2 PR merge 별 task — memory housekeeping)
 - file: archive/adr/ADR-024-story-scoped-branch-policy.md
   word: 별
   content: **audit trail 영구화**: PR comment 는 GitHub-side state (영구 보존, PR close 후도 유지) — file marker 와 disjoint, dedup 불요 (PR 별 1회 발화).
 - file: archive/adr/ADR-024-story-scoped-branch-policy.md
   word: 별
   content: **multi-signature 동시 reach 처리**: 단일 cron 실행에서 다중 (plugin, label) signature 가 동시에 threshold reach 시 각 signature 별 독립 carrier Issue 발의 (signature aggregation 금지 — 후속 evaluation 의 dedup 영역 별도).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: **§결정 6.A.2 와 disjoint invariant**: 동일 PR 가 §결정 6.A.2 (per-entry) + §결정 6.A.3 (per-plugin) 양 trigger 시 양 carrier Issue 각 발의 (signature aggregation 금지, 각 carrier 가 별 evaluation 영역).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **ADR-026 Amendment 5 (CFP-900)**: 5번째 fast-pass source content sanity orthogonal warning layer — fast-pass OR-gate 확장 sibling carrier (별 axis, orthogonal warning vs additive source)
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **blocking-on-merge tier escalation** — 별 CFP, ADR-060 승격 gate AND condition 통과 후
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **bypass narrative audit trail mechanical enforce** ( PR 코멘트 marker) — 별 CFP
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **carrier Issue 코멘트 append** (이미 발의된 Issue 에 추가 PR 정보 append) — 별 CFP
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **cross-repo bypass counter extension** (codeforge-internal-docs / marketplace) — 별 CFP, EC-1 정합
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - **per-plugin scope 누적 카운터** (단일 plugin 5 entry 각 1회 = 5회 분산이지만 근본은 동일 plugin 의 체계적 회피) — 별 CFP carrier
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - ADR-064 §결정 1 (CFP scope unitary — Wave 3 sync-drift lint 별 CFP)
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - ADR-064 §결정 5 CFP scope unitary (per-plugin-cumulative-counter 단일 entry 승격, sibling sub-decisions 6.A.4/6.A.5 별 CFP)
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - Phase 2 carrier 0 — mechanical layer 는 Story-1 + Story-2 에서 이미 완결 (existing-reuse status, 별 lint / workflow / script 신설 0건)
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-merge 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-merge 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무, Story-2 #861).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-pr 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-pr 격상 = empirical evidence 누적 후 별 CFP carrier 영역.
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: - warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). 본 entry = ADR-072 §결정 5 + 2 entry warning-tier 동반. blocking-on-pr 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: CFP-1000 (Tier-A) 가 1 registered-but-not-declared entry () registry-side late codify 으로 Tier-A 영역 close — Tier-B 영역 (35 registry→gh missing + 5 gh→registry missing + 1 naming mismatch = 41 raw drift, Issue body CFP-1000 retro 2026-05-19 morning verification 값) 은 별 CFP carrier 분리 (ADR-064 §결정 1 CFP scope unitary 정합 + CFP-963 retro escalation candidate). 본 Amendment 11 = CFP-1006 carrier 영역 Tier-B Wave 1 (gh→registry missing 5 entries + 1 naming mismatch).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: bidirectional drift 잔여 34 entries (gh→registry 5 + registry→gh 29) reconcile sweep = 별도 CFP #1004 (post-merge open) 이관. ADR-064 §결정 1 (CFP scope unitary) 정합 — 한 CFP 안 "Tier-A 경량 → Tier-B full" 단계 채택 금지. 별 CFP 분리 (CFP-1000 Tier-A + CFP-1004 Tier-B) 가 independent brainstorm + independent Story + independent PR invariant 보존.
 - file: archive/adr/ADR-024-story-scoped-branch-policy.md
   word: 별
   content: scope: "Amendment 10 — §결정 6.A per-entry namespace 의 45번째 (raw) 신규 family member registry-side late codify (CFP-954 carrier originally registered in gh repo at PR-time but missed registry §3 declaration — bidirectional drift Tier-A closure, CFP-963 retro 식별 + CFP-1000 Tier-A carrier). gh-side 1 hit verified 2026-05-19 KST, registry §3 yaml append 누락 sync gap closure. ADR-072 §결정 5 evidence-checks-registry 2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check) warning-tier bypass channel — Wave 4 sub-Epic #882 Story-3 ProductionEvidenceDeputy mandate first activation declare layer + Epic close-time quad-check. label-registry-v2 v2.36 → v2.37 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append). (CFP-894 v2.29 L994 이미 declared, gh-side 0 hits) 는 bootstrap-labels.yml workflow PR open 시 auto-run 의무 발효 영역 — registry §3 변경 0건, gh CLI 실행만 추가 (CFP-598 dynamic registry-driven pattern 자동, scripts/parse-hotfix-bypass-labels.py가 §3 yaml read auto-emit). 카운트 convention: raw active concrete grep (Amendment 9 historical-with-template-count convention 과 disjoint — template-vs-concrete 모호성 영역 외, entry-specific calibration). CFP-967 v2.36 self-describe \"45번째 (historical-with-template-count)\" 와 본 Amendment 10 raw count 45번째 는 동일 숫자 우연 — CFP-967 = pre-edit raw 44 + historical adjustment 1 = 45 historical / 본 Amendment 10 = post-edit raw 45 (pre-edit 44 + 1 new). 동일 숫자 occurrence 는 convention divergence calibration artifact. CLAUDE.md L295 prose 인용 = CFP-954 PR-time historical-with-template-count attribution 보존 (본 Story OOS — Tier-B CFP #1004 영역). Tier-B (bidirectional drift 잔여 34 entries reconcile sweep) = 별 CFP #1004 (post-merge open) 영역 (ADR-064 §결정 1 CFP scope unitary 정합 — 한 CFP 안 Tier-A → Tier-B 단계 채택 금지). prior art Amendment 9 (CFP-963) 직전 carrier 정합."
@@ -114,46 +39,10 @@ grandfathered_violations:
   content: scope: "Amendment 18 — §결정 6.A.10 신설 isChoreOnly fast-path 면제 채널 codify + CFP-1845 anti-pattern (단일 chore PR cross-repo phase-gate 영구 차단 해소). phase-gate-mergeable.yml 의 5번째 fast-pass source (CFP-1850 Story-1 PR #1866 MERGED) 를 ADR-024 branch protection 정책의 정식 면제 채널로 normative codify — fast-pass OR-gate 5-source 확장 (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly). 메커니즘 = 4-조건 AND strict (isPostMergeFix 3-조건 AND 보안 패턴 동형): (a) label ∧ (b) Story 미연결 ( PR-body marker 부재 + linked Issue 0 — Orchestrator monopoly, PR author 위조 불가 결정적 차단원) ∧ (c) / label 부재 ∧ (d) diff chore-safe path (기존 isDocOnly allow-list + 승격, // 여전히 배제). 조건 (b) helper catch = 404-only skip + 그 외 예외 (network / rate-limit / 403 / 5xx) fail-closed (isChoreOnly=false → 기존 평가 경로 진입). 충족 시 conclusion=success, title . **CFP-1845 anti-pattern 명문화**: 단일 chore PR (model 별칭 sync — → ) 이 를 건드려 → → label 이 phase 기본값 에 mismatch → 영구 → 라 admin merge 도 거부 → 6 lane plugin repo branch protection 손작업 우회 (protection off → merge → restore) 반복. 이 'enforce_admins:true invariant 손작업 우회 + 보안 게이트 단발 비활성' 가 재현불가/위험 anti-pattern. isChoreOnly 가 구조적 해소 (손작업 우회 불필요, enforce_admins:true invariant 보존). ratchet 방향: ADR-024 frontmatter permanent → sunset_justification N/A. 본 Amendment = 면제 채널 신설이지만 4-조건 AND strict + 조건 (b) Orchestrator monopoly 결정적 차단원 (위조 불가) 라 evidence-grounded carve-out (ratchet 약화 아님 — fast-pass 우회 표면 추가 0, ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합). 필요성 evidence: Story-2 (CFP-1850-S2 PR #1867 MERGED) 가 requirements/pmo 에 phase-gate-mergeable 필수 추가 (8 lane plugin repo 통일) → isChoreOnly 없으면 그 2 repo chore PR 도 동일 차단 메커니즘에 빠짐 = 면제 채널의 운영 필요성. mechanical_enforcement_actions: 신규 entry append 0건 — isChoreOnly 는 phase-gate-mergeable.yml + .github/workflows/phase-gate-mergeable.yml (byte-identical, ADR-005) 의 inline OR-gate 분기 (L319-380 영역) 에 이미 mechanical wired (CFP-1850-S1 PR #1866 MERGED). 별 lint action 불필요 — phase-gate-mergeable.yml 자체가 required status check (branch protection 1번째) 로 이미 mechanical gate, 본 5번째 source 는 그 gate 의 fast-pass 분기 확장 (별 lint/sentinel 영역 아님). label-registry-v2 bump 0 (family member 신설 0, kind:registry sibling sync 면제 영역, ADR-010 §결정 2 + ADR-008 §결정 3 — entry append 0). plugin.json bump 0 / marketplace_sync_declared: false (mirrored field 변경 0, ADR-063 atomic invariant 발효 조건 미충족). prior art = ADR-026 Amendment 4 §결정 6 (CFP-795) 4번째 fast-pass source isPostMergeFix 3-조건 AND 패턴 직접 동형 (3-source → 4-source ratchet 강화) — 본 Amendment 18 = 4-source → 5-source ratchet 강화 동형 답습 (gate 강화이며 약화 아님). ADR-054 (doc-only fast-path Story 분류) 와 disjoint axis — ADR-054 = Story 단위 lane skip 분류 / 본 §결정 6.A.10 = PR 단위 phase-gate fast-pass source 분류, 영역 disjoint. ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 — ADR-RESERVATION amendments_reserved[] row append + commit 후 본 row 작성). ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate 4-step verify-before-write: (a) source command (b) actual max value = 17 (Amendment 17 = CFP-1646 §결정 6.A.9, body L1595) (c) claim↔actual cross-verify (worktree base commit 10878775 post-CFP-1850-S2 merge, fact verified via on cfp-1850-s3-adr branch) (d) match → write. 정확 next-slot for CFP-1850 = 18 / next sub-decision = 6.A.10."
 - file: archive/adr/ADR-024-story-scoped-branch-policy.md
   word: 별
-  content: | **threshold** | per-(plugin) signature 누적 ≥5 reach-merged PR | per-entry threshold 3 (§결정 6.A.2) 보다 보수적 (5) — entry 다양성 cover 의 noise floor. dimension category = (PR 누적 횟수). units = . empirical-source = CFP-825 evidence cluster (single plugin 5+ entry 사용 corpus) + CFP-845 Research §unknown unknown 1 (per-plugin threshold calibration evidence 부족 → 보수적 시작, Phase 2 actual wire 후 별 calibration carrier) |
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: 가 on 획득하기 전까지 (ADR-066, 사용자 secret-domain) CI mechanism 은 future registry→gh drift self-heal 불가. 본 Amendment 12 backfill = one-time manual reconcile. Wave 3 sync-drift lint (별 CFP, ADR-064 §결정 1 unitary) 는 PAT remediate 전까지 detection-only. 문서화된 accepted residual — 본 Story blocker 아님.
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: 따라서 본 Amendment 18 = mechanical 신설 declarative codify (existing-reuse) — 별 lint / workflow / script 신설 0건. ADR-076 / ADR-082 / ADR-086 precedent ( declaration-only Wave 1) 와 disjoint — 본 entry 는 (이미 wired) status.
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: 본 §결정 6.A.10 = phase-gate-mergeable.yml inline OR-gate 분기 (이미 wired) — 별 lint / sentinel / evidence-check entry 신설 영역 외. Wave 2 carrier 0 (mechanical layer 완결).
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
-  content: 추가 OOS 영역 (CFP #1004 또는 별 CFP carrier):
-- file: archive/adr/ADR-024-story-scoped-branch-policy.md
-  word: 별
   content: 현 wrapper () 단일 cover → **3-repo 동시 cover** 확장: + + . signature = (repo, plugin, label) 3-tuple, threshold 별 calibration:
 - file: archive/adr/ADR-026-post-merge-automation.md
   word: 별
-  content: **4-tier framework 정합**: ADR-060 §결정 3 4-tier enum ( / / / ) — 본 entry 첫 도입 default = . 14-day window 누적 + sample sentinel collect 후 별 CFP (Phase 3 review-promotion) 가 승격 결정.
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
-  content: **EC-2 hotfix:minimal 경계**: ≠ (별개 메커니즘). = 설계리뷰 생략만, 보안테스트 필수 (). = cross-repo land_order 정정 전용 (조건 3 보안 non-touch 역참조 시 보안테스트 실질 N/A). 두 경로 혼동 금지 — Phase 2 명문화 의무. 는 per-entry namespace 와도 별 axis (hotfix-bypass = warning-tier lint conditional skip, post-merge-fix = phase-gate fast-pass source).
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
-  content: - PR-gate layer ( content sanity warning) = walker paradigm 과 **disjoint** 별 lifecycle — 본체 §결정 1-6 sunset 아님, 계속 유효
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
-  content: - mctrader-data#81 14 failing checks backfill remediate — cross-repo, Epic CFP-858 close 후 별 work (Epic §위험 신호 verbatim).
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
-  content: - reconcile-protocol-v1 v1.10 §4.13 field: 별 revert (kind:registry, sibling sync 면제).
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
   content: summary: "Amendment 7 = Amendment 5 sibling carrier role 만 sunset boundary declarative SSOT — CFP-1125 carrier (β2 audit #1113 Anchor 3 LOSSLESS 판정 carry-over). 본체 §결정 1-6 (post-merge automation SSOT — PR merge transition / Issue close keyword transition / Cross-repo PAT / Telemetry only / Disable-by-flag safety + PR-Issue close algorithm Amendment 1 / Action 1 strict regex + concurrency namespace Amendment 2 / Workflow file integrity Amendment 3 / Post-merge-fix phase-gate fast-pass Amendment 4 §결정 6 / Epic close → Deploy trigger Amendment 6 §결정 8) = sunset 대상 아님 (PR-merge gate 로직 자체 별 lifecycle 작동). 본 Amendment 7 = Amendment 5 §결정 7 의 sibling carrier role 만 sunset boundary 명시 — reconcile-protocol-v1 §4.13 result_fidelity_binding 의 declarative carrier_story CFP-900 sibling 역할이 CFP-1111 walker paradigm 전환 후 walker walk_result 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) 으로 carry. PR-gate layer 독립 보존 invariant — phase-gate-mergeable.yml content sanity warning layer 는 walker paradigm 과 disjoint 별 lifecycle. is_transitional: false 보존 (본체 sunset 아님 + sibling carrier role 만 sunset 영역 분리 — 부분 sunset declarative, ADR-058 §결정 5 정합). frontmatter 값 변경 0 (carrier_story / related_stories / supersedes / superseded_by / is_transitional). 해소 기준 3-tuple (metric / who / how) = walker schema field walk_result + exit_code_to_walk_result_mapping rule + walker integration test 4-value enum honest record verify + PR-gate layer 독립 작동 확인. β2 audit Anchor 3 carry-over 3 설계 주의 #2 정합 (sunset 영역 = sibling carrier role 만, 본체 §결정 1-6 sunset 아님)."
-- file: archive/adr/ADR-026-post-merge-automation.md
-  word: 별
-  content: 본 Amendment 5 의 효용 carrier = **PR-gate layer 독립 보존** (phase-gate-mergeable.yml 의 content sanity warning) — upgrade flow 영역 와 disjoint. CFP-1111 walker paradigm 전환 후에도 PR-merge gate 로직 자체는 별 lifecycle 로 작동 (sunset 대상 아님).
-- file: archive/adr/ADR-027-consumer-adoption-protocol.md
-  word: 별
-  content: **4-way enum closed-set**: / / / . open-set 확장 (예: / / 등) = 별 ADR carrier 영역 (본 Amendment scope 외).
 - file: archive/adr/ADR-027-consumer-adoption-protocol.md
   word: 별
   content: **Existence check only invariant**: content parsing (예: 안 field 검사 / 안 검사) 은 본 Amendment scope 외 — 해당 schema 검증은 ADR-027 §결정 1 ( Phase 2) + Amendment 4 §결정 8 (version_pin schema detection) 별 trigger 영역. **Signal detection = file existence 만** (분리 invariant).
@@ -166,27 +55,12 @@ grandfathered_violations:
 - file: archive/adr/ADR-027-consumer-adoption-protocol.md
   word: 별
   content: - comment prefix per-filetype (§결정 7.A.1) 별 anchored 패턴: / = / = (선/후행 whitespace tolerance 는 구현 spec — change-plan §3, leading whitespace trim 후 anchor).
-- file: archive/adr/ADR-027-consumer-adoption-protocol.md
-  word: 별
-  content: 영역 cross-repo gh api 는 본 ADR + ADR-083 scope 외 (별 ADR carrier 발의 시 enterprise org 차단 영역 graceful degradation 의무 검토).
-- file: archive/adr/ADR-037-plugin-version-bump-rule.md
-  word: 별
-  content: - **ADR-063 §결정 19 prose stale = 별도 follow-up 지목** (본 ADR 비수정·비의존): §19 본문의 "7-plugin DAG 가정" 텍스트 ↔ 9-plugin 실측 drift 정정 = 별 follow-up CFP (ADR-063 영역, 본 Amendment scope 외). 본 Amendment 는 그 stale 을 고치지 않되 **roster source 로 의존하지 않음을 명시** (디렉터리 enumeration authoritative).
-- file: archive/adr/ADR-037-plugin-version-bump-rule.md
-  word: 별
-  content: - **blocking 승격 trigger**: ADR-060 §결정 5 default warning + 승격 gate (PR 누적 ≥ N + bypass 외 failure_threshold + evidence sample 누적) 충족 후 별 amendment (또는 Epic 후속 Story) 로 context 전환. 승격 = ratchet 강화 방향 (warning → blocking, ADR-058 §결정 5 정합).
-- file: archive/adr/ADR-037-plugin-version-bump-rule.md
-  word: 별
-  content: - **lane CHANGELOG 은 해당 lane 검사에만 종속 가능**: 는 per-plugin self-owned (ADR-092 §결정 1 + Amendment 1 lane 8종 보존). lane bump 평가 시 lane CHANGELOG entry 동반은 ADR-092 §결정 2 drift detection (lane 8종) 영역 — 본 version-bump 게이트와 cross-ref (commit-signal 근거는 아님, 별 detection 축).
 - file: archive/adr/ADR-037-plugin-version-bump-rule.md
   word: 별
   content: - 8 lane plugin self-application = wrapper 단일 워크플로 + 9-plugin matrix 평가 (결정 A2-2) — lane 별 별도 워크플로 신설 0 (모노레포 단일 게이트 SSOT).
 - file: archive/adr/ADR-037-plugin-version-bump-rule.md
   word: 별
   content: - PR diff 가 wrapper root surface + lane surface 를 **동시** 건드리면 → 각 scope 별 독립 surface-table 평가 (wrapper 1개 + 영향 lane N개 = 최대 9 plugin 동시 평가). 단 wrapper↔lane 결합 시 coupling 전파 = 결정 A2-4 적용.
-- file: archive/adr/ADR-037-plugin-version-bump-rule.md
-  word: 별
-  content: | (templates 미러 짝 없음), 등 repo-meta | 비귀속 (별 게이트) | version-bump 게이트 surface 아님 — / 등 별 채널 |
 - file: archive/adr/ADR-038-progress-visualization-todowrite.md
   word: 별
   content: - §0 file channel: 자체 렌더 없는 plain markdown — file 채널 한정 4-marker glyph 유지 (변경 폭 최소 + 의미 매핑 1:1 보존, "두 channel 동일 어휘" invariant 해소 = channel 별 표현 분리)
@@ -195,67 +69,13 @@ grandfathered_violations:
   content: sunset_justification: "TodoWrite channel 표현 layer 약화 아님 — 이중 표기 제거 (네이티브 패널이 status field 로 자체 렌더: pending = 빈 체크박스 / in_progress = ✱ / completed = ✓ + 취소선 — content 이모지 prefix 는 중복 glyph). evidence: 사용자 directive 2026-06-13 (첨부 그림 = 네이티브 패널 렌더) + ADR-038 도입 (2026-05-08) 이래 TodoWrite 진행 시각화가 한 번도 실제 렌더되지 않음 실증 (root cause ① = de-bloat 9f80f0bc/#1912 의 CLAUDE.md 리마인더 제거 → 6시점 갱신 의무 anchor 소실, §결정 15 가 복원). §0 file channel (CFP-20) 은 자체 렌더 없는 plain markdown — file 채널 한정 4-marker glyph 유지 (변경 폭 최소: progress-examples 템플릿 7종 + §14.3 포맷 전면 개편 회피, native status 와 의미 매핑 1:1 보존). 'file / TodoWrite 두 channel 동일 어휘' invariant 는 본 Amendment 로 해소 (channel 별 표현 분리). 기존 결정 폐기 0건 — §결정 2/3/6 표현 layer annotation + §결정 15 신설."
 - file: archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md
   word: 별
-  content: **disjoint-axis note (Amendment 11, CFP-2770 — display 축 경계 명료화, enumeration 무변경)**: 위 whitelist entry #4 "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축 — inline vs spawn). 이는 ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축 — harness 진행 줄)과 **별 표면(disjoint axis)** 이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에 self-subject 프리픽스를 허용(INV-2 subset 완화)하되, 이는 본 §결정 2 whitelist "상태 보고" prose(prefix-exempt 유지)를 **건드리지 않는다** — mechanism 축 ≠ display 축. inline whitelist closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1 binary always-spawn 무변경. paired = ADR-143 Amendment 2.
-- file: archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md
-  word: 별
-  content: - **선례 정합**: Amendment 4 (CFP-1354) 가 "ADR-039 5번째 inline entry 신설 REJECTED" 로 closed enumeration 을 보호한 패턴과 정합 — 본 amendment 도 inline whitelist 를 확장하지 않는다 (spawn-scope 위임은 별 축).
-- file: archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md
-  word: 별
   content: ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축, harness 진행 줄)과 **별
-- file: archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md
-  word: 별
-  content: | 6 | **Merge-time Codex adversarial gate dispatch** (Amendment 6, CFP-2458) | ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) 의 Codex worker dispatch — 구현리뷰 PASS + CI gate PASS 후 "merge gate 진입" 직후 / 직전, Orchestrator top-level inline 에서 (ADR-081 D8 file-redirect) 1패스 발동 + result-via-file 수신 | **재귀 가드 회피 critical (H1 게이트 연극화 차단)**. sub-agent / PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드 ("subagent → Agent tool 호출 금지", L474 회피된 대안 C)로 Codex worker spawn 이 silent fallback skip ( fail-mode, ADR-070 Amendment 6) → 게이트 무발동 = 연극화 (Story §4.2 H1 실측 입증). 따라서 dispatch 주체 = Orchestrator top-level inline 고정 의무. dispatch 자체 = read-only adversarial check (verify-before-trust 무조건 적용 — ADR-070 Amendment 9, mismatch finding reject) 이라 §결정 1 "수정 작업" 정의 (file edit / GitHub state change) 와 disjoint axis — file/GitHub mutation 발생 0. 머지 보류·FIX 회부 등 후속 mutation 은 §결정 1/Amendment 2 영역 (별 mechanism). |
-- file: archive/adr/ADR-040-worktree-convention.md
-  word: 별
-  content: - **후속 carrier 발의 의무**: dedicated sandbox repo () capability-confinement environment-level enforcement = §7.J.3 known-limitation. 본 Amendment 6 Phase 2 PR merge 후 별 CFP 발의 (heavier infra, CFP-scope-unitary 정합 — 본 carrier = directive + lint + env scoping 1차 minimal scope).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: ### D2 — financial-invariant-0 shape (stakes 4-AND 와 orthogonal 한 별 축, OQ-1/OQ-5)
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: **orthogonal 축 확정 (OQ-1)**: financial-invariant-0 은 Amendment 16 의 stakes 4-AND(실자금/cutover/신규경계/live API = *stakes·safety* 축, InfraOpArch §7.4 mandate 를 끔)와 **다른 축** — *financial-correctness 결과 접촉* 축(DomainAgent financial mandate 를 끔). 두 predicate 가 끄는 mandate 표면이 다르므로 4-AND 에 5번째로 욱여넣지 않고 **DomainAgent 전용 별 predicate** 로 명시 분리. DomainAgent sonnet flip 조건 = **(4-AND low-stakes) AND (financial-invariant-0 shape)** — 2 predicate AND. 4-AND 가 false 면(live API/실자금 등) financial-invariant-0 여부와 무관하게 opus(stakes-gated 보존). 4-AND 가 true 여도 financial-invariant-0 가 false 면(결과 접촉) opus(financial mandate 살아있음).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: **미래 재발의 trigger** (ratchet 위반 아님): 별 consumer 가 DDD 학파 전용 mandate scope 신설 evidence 누적 시 (mandate scope disjoint 신규 영역) DDDArch 재발의 carrier 가능. 본 reject = axis 미정합 결정 — 미도입 결정 영역.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: **실 role delta (정직 축소)**: ServiceDeveloperAgent 의 generic DeveloperAgent 대비 role 차원의 실 차별점은 **path-scope (web-특화 2종 deny 제거 + DataEng 경계 2종 보존) 위에 sonnet tier 를 실현하는 것** 1.x 축이다. preset-packaging(opt-in 레시피) · consumer-communication(frontend-less framing) 2종은 role 차별화가 아니라 **배포·문서 포장** 임을 인정한다 — 이 둘을 별 "delta 축" 으로 세는 것은 over-claim 이었다.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **4-tuple sub-tuple 축소** (E scope) — helper 영역, fidelity loss source 아님. 별 CFP carrier.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **ISO/IEC 25010 Maintainability sub-characteristics (Modularity ↔ Reusability 별 축)**: Modularity(=decoupling/pattern/interface = 구조 3축) 와 Reusability(=측정 축) 가 별 sub-characteristic. source: ISO/IEC 25010:2023(en) Product quality model (https://www.iso.org/obp/ui/en/#!iso:std:78176:en).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **LiveOps + LiveOrdering CONDITIONAL 통합** (F scope) — 축소 효과 작음, 별 CFP carrier.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **OQ-8 (ADR-117 cross-ref)**: **ADR-042 Amd17 내 언급으로 충족, ADR-117 본체 미수정**. ADR-117 §결정 2 가 "Domain = 단기 구조적 역할" 로 **fable 상향**에서 명시 제외했으나, 그 단정 대상은 fable 적격성(상향 축)뿐 — opus floor 적정성(하향 sonnet 축)을 단정한 적 없음(ADR-117 전문 sonnet 하향 논의 0건). 두 ADR 이 같은 agent(DomainAgent)를 분류하므로 본 Amendment 가 **판정 축 disjoint(상향 fable vs 하향 sonnet) + "Domain opus 유지" 문구가 stakes-conditional(financial-invariant-0) 로 정제됨** 을 명시(Amd16 §결정 3 cross-ref 의무 실행). silent override 금지. ADR-117 본체에 현재 DomainAgent·financial 언급 0 → 별 amendment row 불요.
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
   content: - **Phase 2 (sibling PR)**: frontmatter conditional 주석(shape별 mandate 표면 declare) + 블록 신설 + gating 배선(orchestrator-playbook §3.0 + deputy-mandate SKILL) + 정합(이미 sonnet — 주석만) + deputy-mandate SKILL InfraOpArch row stakes 분기 각주 + consumer-guide stakes 섹션 + plugin bump(변경 plugin MINOR — ADR-037) + marketplace sync(ADR-063) + F1 baseline 측정 protocol 위치.
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
-  content: - **codeforge-design plugin AggregateArchitectAgent agent file 실 deprecate** = Wave 2 별 CFP carrier (cross-repo sibling sync, ADR-010 정합).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **gating predicate 확장** = 에 (별 predicate) + DomainAgent 분기 추가( 시 4-AND ∧ financial-invariant-0 양 predicate AND). 별 스크립트 신설 아닌 기존 스크립트 확장(메커니즘 신설 0). **fail-safe 동형** — financial-invariant-0 신호 부재/파싱불가 → high(opus), INV-1 monotone 정합.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
   content: - **invariant 위반이 되는 유일한 경로** = shape 분류만 하고 **mandate 표면 재정의를 동반 안 할 때**(단순 model field downgrade). 따라서 flip 은 **shape별 mandate 표면 명시 동반 의무** — low-stakes shape 에서 InfraOpArch = "§7.4.1/.2/.3/.4 N/A 발화 + §7.4.5/.6 표준 hygiene 잔존"의 mandate 표면을 명문 declare(Phase 2 agent file 주석). enforcement 선례 = Amendment 5 의 mandate text 재정의 동시 산출물 의무(§결정 2 invariant 의 enforcement mechanism).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **repo-level 분해 advocacy**: 응집 cluster 가 별 deploy/ownership 단위로 분리 가치 시 repo 분해 제안 (escalation-tier) — module/aggregate-level 경계 확정 = ModuleArch authority / **repo-level 분해 경계 확정 = ArchitectAgent chief authority** (macro-architecture, ModuleArch mandate 초과 — ModuleArch consult)
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **repo-분해 mechanical gate 는 advisory 유지 (out-of-scope)**: Amendment 13 의 repo-level 분해 advocacy (응집 cluster → 별 deploy/ownership 단위 분리) 는 본 Amendment 의 mechanical wire 대상이 아니다. repo-분해 경계 확정 = ArchitectAgent chief authority (macro-architecture) 로 advisory 유지 — 본 duplication-ratio 측정은 코드-수준 중복 비율만 산출하며 repo 분리 판정을 mechanical 하게 강제하지 않는다.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **warning-tier (비차단)**: 는 모든 경로 exit 0 — duplication ratio 초과 시 경고만 emit, merge 미차단. "게이트가 자동으로 향상을 강제 (blocking) 검증한다" 단언 금지 — 현 단계는 mechanical 측정 + warning 까지. **blocking 승격은 evidence 누적 후 별 CFP** (ADR-060 §결정 6 promotion gate).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: - **측정 연동 (declaration-only Wave 1)**: (d) 제안마다 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) emit → ArchitectAgent 통합 + 구현리뷰가 before → after 를 대조할 수 있도록 정량 신호 제공 (review 적용 시 falsifiable — 증거 ⑤ 충당). **단 자동 측정·enforcement (clone-detector / duplication-ratio CI gate) 는 deferred — 후속 carrier CFP** (mechanical wire = evidence-check-registry entry 별 CFP). 현 Amendment = Phase-1 declarative policy + 신호 제공까지 (자동 게이트 강제 단언 금지).
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
   content: - ADR-086 5-checklist #5 (deferred trigger 명시 — CFP-2364 adjacent-case 적용 표의 후속 carrier 별 CFP 가 본 CFP-2369)
@@ -264,31 +84,13 @@ grandfathered_violations:
   content: - AggregateArchitectAgent (deprecated — codeforge-design, mandate carry-over to ModuleArchitectAgent. agent file 실 deprecate = Wave 2 별 CFP carrier)
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
-  content: - Amendment 14 deferred trigger("duplication-ratio blocking 승격 = evidence 누적 후 별 CFP") = owner_adr ADR-060/ADR-042 governed **유지** — RefactorAgent-advocacy driver 만 Story C triage context 로 relocate (deferred 자체는 orphan 되지 않음).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
   content: - CFP-2445 # Amendment 17 carrier — DomainAgent financial-invariant-0 조건부 sonnet (CFP-2432 follow-up). Amd16 §결정 3 가 예약한 DomainAgent flip 자리 선결충족(catalog codify + 경계 falsifiable 확정). financial-invariant-0 = stakes 4-AND 와 orthogonal 한 financial-correctness 결과접촉 축, DomainAgent 전용 별 predicate. flip 조건 = (4-AND low-stakes) AND (financial-invariant-0 shape). D1 catalog 11 invariant(INV-1~11, F2 storytelling/outliers 편입 INV-10/11) + A/B 분류 + F1 1.4% 정정. mandate 표면 재정의 동반(§결정 2). ratchet 약화 방향 → sunset_justification(evidence) 의무
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
   content: 1. **§결정 1 3-tier 표 Superseded by ADR-141 §결정 1** — Opus/Sonnet/Haiku/Opus-pilot role-pattern 선택 기준 폐지. 현행 = 전 에이전트 plain (1M native) 단일 tier. tier 별 role 판정 불요.
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
-  content: 2. **repo-level 분해 advocacy** (응집 cluster → 별 deploy/ownership 단위 분리 = macro-structural boundary) = **설계-시점 관측 가능** (설계 스케치 macro-boundary 에서 판단 — 런타임 중복 관측 불요) → RefactorAgent **설계-시점 구조 escalation 축으로 존치** (advocacy/제안만; 경계 확정 = ArchitectAgent chief authority, RefactorAgent.md:33 기 anchor).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: 7. repo-level 분해 mandate 0 — 응집 cluster 의 별 repo 분리 advocacy 없음
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: Amendment 13 (CFP-2364) 는 RefactorAgent 에 (d) Reusability 축을 1급 advocacy 로 신설하되, **측정은 Phase-1 declarative** 로 두었다 — RefactorAgent 가 before 신호 (duplication ratio / clone 수 / 제거 예상 중복 LOC) 를 emit 하나, **자동 측정·enforcement (clone-detector / duplication-ratio CI gate) 는 deferred** (Amendment 13 §변경 사항 "측정 연동 (declaration-only Wave 1)" + ADR-086 5-checklist #5 "deferred trigger 명시 — 향후 evidence-check-registry entry 별 CFP carrier"). 본 Amendment 14 = 그 **deferred trigger 의 follow-through** — warning-tier mechanical wire 로 실현한다.
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: Amendment 13 의 ADR-086 adjacent-case 적용 표 #5 (deferred trigger 명시) 가 "duplication ratio 자동 측정 도구 (mechanical enforcement) 는 향후 evidence-check-registry entry 별 CFP carrier" 로 명시했으며, 본 CFP-2369 = 그 명시된 후속 carrier 다. 신설 deputy 0 / roster 무변경 / axis disjoint 보존 (RefactorAgent advocacy ↔ ModuleArch authority — 측정은 advocacy 정량 신호 산출일 뿐 경계 확정 권한과 무관).
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
   content: model 필드만 조건부 처리 = §결정 2 위반(Amd16 §D2 verbatim "invariant 위반이 되는 유일한 경로 = shape 분류만 하고 mandate 표면 재정의를 동반 안 할 때"). 따라서 DomainAgent.md mandate 에 **"financial-invariant-0 shape 에서 DomainAgent 책임 표면이 무엇인가"** 를 명시 declare(Phase 2 agent file). shape별 mandate 표면:
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: opus→sonnet tier-flip = ratchet **약화 방향**(reasoning depth 하향) → evidence 의무(ADR-058 §결정 5 / ADR-064 §결정 7 is_transitional:false governance symmetric evidence-gate). frontmatter amendment_id:16 본문 = evidence-grounded 3 axis(stakes-gated 정제 / falsifiable evidence-gate 동반 / 지배 low-stakes shape 비용효율). is_transitional: false 유지(영구 정책 정제, transitional pilot 아님). ChangeImpactAgent sonnet 비준(D4)도 약화 방향이나 그 evidence = "역할 = single-mandate advocacy 단일 축 = §결정 1 Sonnet (a) 정합 + 사용자 directive verbatim" 으로 sunset_justification 본문에 포함(별 row 불요 — 같은 carrier).
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
   content: summary: "CFP-1126 — AggregateArchitectAgent deprecate + ModuleArchitectAgent mandate 확장 (boundary axis advocate 통합, Amendment 8 partial retroactive rollback). 7 permanent → 6 permanent + 3+1 CONDITIONAL (AggregateArch applicability → ModuleArchitect CONDITIONAL carry-over 보존, frontend-only / API-only / external-managed RDB consumer non-applicable). ModuleArchitect mandate 확장 — module-level boundary (CodeArchitect rename from Amendment 7 본 mandate) + aggregate-level boundary (AggregateArch from Amendment 8 흡수). 사용자 직권 minimal path 2번째 적용 — CFP-1110 paired Amendment paradox-break 후속 carrier. ADR-058 §결정 5 sunset_justification first applied carrier (ratchet 축소 첫 시도, 약화 방향 evidence-grounded justification). Researcher 평가 net 35% 정당화 (verify-before-trust + Epic gate 영역만 net positive) + Codex ROI indeterminate-부정쪽 confidence medium 수렴 + synthesizer-stale-reference pattern_count 6 (CFP-722/801/792/810/819/825) + ADR-082 Amendment 5 §결정 1 sub-scope (1-C) 구조적 원인 #2 직접 인용 (codeforge-design lane fan-out 불균형 chief + 7 deputy + 4-tuple = 12+ agent advocacy vs 1 user 요구 weight 비대칭). minimal path 정합 — Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-21 KST) — closed-loop break 외부 결정 채널 2번째. Wave 1 = declarative anchor only (ADR-042 정책 SSOT). Wave 2 mechanical (codeforge-design plugin AggregateArchitectAgent agent file 실 deprecate + cross-repo sibling sync ADR-010 정합) = 별 CFP carrier (deferred-followup)."
@@ -312,40 +114,13 @@ grandfathered_violations:
   content: summary: "CFP-2560 — 전 에이전트 opus 단일 tier 전환에 따른 3-tier 정책 재편 (carrier = ADR-141). ADR-141(전 에이전트 opus 단일 tier + fable 폐기)이 신설되며 본 ADR §결정 1 의 Opus/Sonnet/Haiku 3-tier role-pattern 선택 표를 **superseded 마킹**한다 — 단일 tier = opus 이므로 role 별 tier 판정 불요. §결정 1 tier 표 위 Amendment 19 안내 blockquote + 파일 말미 섹션 append (기존 본문·Amendment 섹션 rewrite 0). **tier-flip 3종 dead 마킹**: Amd15(ServiceDeveloperAgent sonnet dev preset) / Amd16(InfraOperationalArchitectAgent stakes-gated opus→sonnet) / Amd17(DomainAgent financial-invariant-0 opus→sonnet) 은 대상 tier(sonnet)가 소멸하므로 dead — 전 에이전트 opus 라 flip 대상 0. **잔존 명시**: Amd13(RefactorAgent reusability 축 신설) / Amd14(측정 mechanical wire) / Amd18(RefactorAgent 측정 축 relocation) 은 mandate-축(tier 무관)이라 잔존. **§결정 3 의무 승계**: '신규 agent 도입 / model 변경 시 ADR 의무' → ADR-141 로 승계(신규 agent = opus default, 단일 tier 이탈 = ADR-141 amendment 의무). **§결정 2 invariant 지위 판정**: tier 신호로서는 폐지(sonnet tier 부재), role-정합 원칙('mandate 얕으면 role 재정의')으로는 잔존하되 결론이 model downgrade 아닌 mandate 명확화로만 이어짐. **§결정 5(Haiku rollback) / §결정 6(재-audit) = moot**(대상 haiku/sonnet tier 소멸). dead-path: check-stakes-tier-gating.sh + test = 존치(live-machinery, env-driven, frontmatter 무결합 — 삭제 시 evidence-checks-registry detect_command broken). ADR 텍스트로 dead 판정만, 기계 정리 0. Phase 1 = ADR-141 + 본 Amd19 + ADR-117 Superseded + ADR-057 Amd6 + architecture doc; Phase 2 = 45 frontmatter opus 통일 + SSOT 3 문서 청산 + registry dead 마킹 + plugin bump 9 + marketplace sync."
 - file: archive/adr/ADR-042-agent-model-selection-policy.md
   word: 별
-  content: | **AggregateArchitectAgent** | **deprecated** — mandate (RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책 tool-agnostic policy layer) carry-over to **ModuleArchitectAgent** (boundary axis 통합 advocate). agent file 실 deprecate = Wave 2 별 CFP carrier (codeforge-design plugin cross-repo sibling sync, ADR-010 정합). | Sonnet (Amendment 8) → deprecated |
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: | 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 | **PASS** — Story C = 측정 축 mechanical wire 실배선 carrier (check-duplication-ratio.sh 등 5파일 생애주기 결정 + Epic-close triage 배선). Amendment 14 blocking-승격 deferred(evidence 누적 후 별 CFP) = ADR-060/ADR-042 governed 유지. |
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: | 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 | **PASS** — duplication ratio 자동 측정 도구 (clone detector LSP 연동 mechanical enforcement) 는 향후 evidence-check-registry entry 별 CFP carrier (declaration-only Wave 1 — 본 Amendment 는 정책 + agent mandate codify, 자동 측정 wire 는 후속). repo-분해 escalation 의 mechanical gate 도 deferred. |
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
-  content: | Wave 2 (deferred-followup, 별 CFP carrier) | mechanical — codeforge-design plugin 안 agent file 실 deprecate (delete or status:deprecated 표시) + ModuleArchitectAgent.md mandate 본문 확장 | cross-repo sibling sync (codeforge-design plugin, ADR-010 정합) | 별 CFP carrier (brainstorm 단계 결정) |
-- file: archive/adr/ADR-042-agent-model-selection-policy.md
-  word: 별
   content: 본 Amendment 16 의 는 **정책 비준(declarative ratification)** 의미이지 즉시 런타임 발효를 뜻하지 않는다. **Phase 1(본 Amendment) = 정책 비준** — stakes-gated tier 정책 + low-stakes 4-AND enum + tier-flip 대상(InfraOpArch) 확정. **실 발효(enforcement) = Phase 2 guardrail 완비 시점** — (a) InfraOperationalArchitectAgent.md frontmatter conditional 주석(shape별 mandate 표면 declare) + (b) schema + (c) gating 배선(orchestrator-playbook §3.0 spawn-time 결정 로직 + deputy-mandate SKILL) + (d) marker gate 가 모두 갖춰져야 low-stakes shape 에서 실제 opus→sonnet override 가 발화한다. guardrail 완비 전까지는 frontmatter fail-safe default 가 유지되어 **현행 opus 동작 무변경**(파괴적 변경 0). 이 비준↔발효 split 은 AC-9 provisional / F1 evidence-gate 정합 — tier-flip 은 측정·복원 loop 으로 가드되는 provisional 정책이므로 비준만으로 무가드 런타임 적용 금지. **선례 = Amendment 13(declarative substrate) → Amendment 14(mechanical wire) 의 declarative→mechanical split 동형** (정책 비준과 enforcement realization 의 Phase 분리).
 - file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
   word: 별
-  content: **(B) §결정 2 Allow-list 에 spawn-event-v1 field set 추가** — spawn-event-v1 은 stop-event-v1 (18 field) 와 **별 channel 별 Allow-list** 를 가진다. spawn-event-v1 Allow-list 19 field (SSOT = spawn-event-v1.md §2):
+  content: **(B) §결정 2 Allow-list 에 spawn-event-v1 field set 추가** — spawn-event-v1 은 stop-event-v1 (18 field) 와 **별도 channel 별 Allow-list** 를 가진다. spawn-event-v1 Allow-list 19 field (SSOT = spawn-event-v1.md §2):
 - file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
   word: 별
   content: - **MINOR 영역 정합** (ADR-008 SemVer §결정 2): channel 별 Allow-list field set 추가 (additive) + inherit 선언 + privacy invariant 강화(ratchet ↑) = backward-compat. BREAKING 아님.
-- file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
-  word: 별
-  content: - **명시 경계**: 본 Amendment 는 **stop-event runtime 의 raw session_id bug 수정을 위임하지 않는다** — 그것은 별 follow-up (3문 게이트 통과 시 발의). 본 Amendment 는 spawn-event 가 sha256 을 쓴다는 것만 mandate.
-- file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
-  word: 별
-  content: - : enum optional (non-sensitive) — non-blocking marker. ADR-115 §결정 2 block 금지 binding constraint. closed-set 1-value, 확장 시 별 CFP + 본 Amendment 갱신 의무.
-- file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
-  word: 별
-  content: - stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임 (별 follow-up).
-- file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
-  word: 별
-  content: - §결정 2 stop-event-v1 18 field + spawn-event-v1 19 field Allow-list 무변경 (self-context = 별 record type, allow-list 확장만).
-- file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
-  word: 별
-  content: - §결정 2 stop-event-v1 18 field Allow-list 무변경 (spawn-event 는 별 channel Allow-list).
 - file: archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md
   word: 별
   content: summary: "spawn-event-v1 telemetry channel 확정 (Epic CFP-2391 S3). §결정 1 future→current (spawn-event-v1 = current opt-in channel) + §결정 2 Allow-list 에 spawn-event-v1 19-field set 추가 (별 channel Allow-list, enum/numeric/hash only — free-form string 0건) + §결정 3/4/5 inherit 선언 + **T-INFO-5 transcript content/path HARD invariant** (NEW privacy decision — spawn-event 가 transcript content/transcript_path 절대 미저장, numeric only) + **T-INFO-7 sha256 identity** (actor/parent_event_id sha256 hash, raw 금지 — spawn-event 한정. stop-event runtime raw bug 수정은 본 Amendment 미위임, 별 follow-up). MINOR (additive field set + inherit + privacy 강화 방향, ADR-008 SemVer)."
@@ -355,9 +130,6 @@ grandfathered_violations:
 - file: archive/adr/ADR-044-phase-scoped-sequential-team.md
   word: 별
   content: - **lane별 floor 차등 허용**: security lane floor 는 ≥1 peer 보다 높음 — packet 에 1차 native layer (Dependabot / CodeQL / Secret scanning / Push protection) inline + dependency manifest 필수 (). 타 review lane (design / code / requirements-review) = 균일 ≥1 peer floor.
-- file: archive/adr/ADR-045-story-retro-mandatory-trigger.md
-  word: 별
-  content: - **hard-block 승격 = 별 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
 - file: archive/adr/ADR-045-story-retro-mandatory-trigger.md
   word: 별
   content: 1. ** prefix comment + state transition** — Issue 별 closure decision rationale comment 작성 + state 전환 ( reason OR reason). 상세 PMOAgent.md §"closure rationale comment" (현 , 구 lane repo 삭제됨 2026-06-12) (Wave 2 sibling sync 시점).
@@ -375,55 +147,10 @@ grandfathered_violations:
   content: scope: "§D-9 sub-decision (c) 신설 — Pattern A (chief-author self-attest false claim) 반응형(reactive)→예방형(preventive) merge-time gate-provenance self-attest forcing function (additive ratchet, sub-decision (a)/(b) RETAIN, §D-9 본문 의미 변경 0건). Epic CFP-2324 S6 carrier (escalation #2322 흡수). 기존 §D-9 (a) post-detection escalation + (b) pre-publish 3-source AND verify 는 PMOAgent retro-time 영역. 본 (c) = gate verdict write-time 영역 (Orchestrator self-write gate-pass label/comment 직전 self-attest preventive gate). axis 분리: (a)/(b) = retro corpus / ADR draft 영역 ↔ (c) = gate verdict provenance 영역 (disjoint). carrier source = CFP-1353 Pattern A 'chief author self-attest false claim' pattern (명칭 SSOT = docs/agent-prompt-guardrails.md:26, Pattern A-2 = InfraEng FIX iter 1 false self-attest tests_passed 19/19 vs actual 10/27). 기존 ADR-082 §결정 1 (write-time self-write verify) + ADR-073 (verify-before-assert) 는 author 가 자기 claim 을 스스로 verify 하는 self-discipline layer = 반응형 (위반해도 검출 시점 = downstream review/retro). 본 (c) = merge-time mechanical preventive gate — gate verdict 가 (1) lane-produced machine-checkable artifact (review-verdict-v4 packet 형식 준수 + 필수필드 contract_version/lane/story_key/iteration/pl_recommendation 존재) ∧ (2) Story §14 lane-evidence binding (해당 lane row 존재 + output_status/outcome 정합) multi-anchor AND 충족 시에만 정당. wrapper-self repo = ADR-031 §결정 (Amendment, mixed repo §14 면제) 라 §14 anchor 대신 PR body/코멘트 review-verdict packet 병행 anchor 로 충당. multi-anchor AND 3-source 패턴 = ADR-026 §결정 6 isPostMergeFix (label ∧ Story §10 binding ∧ §7 보안 non-touch) 답습 — single point of forgery 제거 mechanism. 위협모델 = honest-but-careless (연극 게이트 / 실수로 빈 verdict 부착 / artifact 부재인데 gate-pass label 부착). 악의 단일계정 위조 (single-session·single-account = git author 기반 implementer≠certifier separation 불가) = out-of-scope accepted risk 명시 박제 (mitigation 비용 > 이득, dogfood wrapper-self 환경 single-operator). 적용 = 모든 게이트 (요구사항리뷰 [ADR-125 신규 lane, S2 self-attest 구멍 공동 차단] / 설계리뷰 / 보안테스트 / 배포리뷰). posture = warning-first → ratchet — Phase 1 = declarative anchor (본 sub-decision 신설 + multi-anchor AND schema codify), Phase 2 = advisory CI 경고 (mechanical wire, gate-pass label 부착 PR 에서 multi-anchor 부재 시 warning emit + PR comment, merge 미차단). hard-block 승격 = 별 follow-up Story (ADR-060 §결정 6 promotion gate AND 3/3 충족 후, ratchet 강화 방향). gate label authority SSOT = 기존 (ADR-022 §결정 4 review-verdict gate outcome contract + base-labels.tsv gate:* registry) — 신규 gate-provenance ADR 발의 안 함 (3문 게이트: 신규 ADR 비용 > 이득, ADR-045 §D-9 sub-decision 확장으로 충분). ratchet ↑ direction (강화 방향 only, sub-decision (a)/(b) 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire (advisory CI warning) = / S6 Phase 2 carrier defer. paired sibling = S7 (CFP-2331, ADR-014 Amendment 6) 동일 Epic gate-model 일관 설계 묶음 (phase-gate-mergeable.yml 게이트 매핑 공유)."
 - file: archive/adr/ADR-049-issue-types-native-migration.md
   word: 별
-  content: **Audit = deferred** — ADR-049 §결정 1 의 4-type 안 중 Audit 은 본 cutover 미포함 (사용자 결정). 별 CFP carrier 에서 신설. block 에 박제.
-- file: archive/adr/ADR-049-issue-types-native-migration.md
-  word: 별
   content: scope: "Amendment 3 — read-side cutover orphan 기록 + 라벨 물리 삭제 (A2-3) 안전 envelope 보강 (documentary, additive). CFP-2581(phase-gate-mergeable 자동 Story-issue 인식) 설계 lane 이 firsthand 로 발견한 A2-2 OR-bridge 의 read-side 미전파 gap 을 A2-3 promotion invariant 의 선결조건으로 기록한다. 3 기록: (1) read-side orphan — A2-2 OR-bridge( OR 라벨)는 story-init.yml 트리거에만 적용됐고 phase-gate-mergeable.yml 의 canonical issue 직독 predicate 2곳(step-3 L113 + deadlock-resolver L330 동일 검사)은 여전히 **라벨** predicate → cutover read-side 후속 미완. (2) A2-3 라벨 삭제 선결조건 추가 — 현 A2-3 의 PC-2 canary(TC-13)는 story-init 발화만 입증하고 phase-gate 직독은 미검. 라벨 삭제 후 L113/L330 이 label-only 인 채로 남으면 native-only Story 를 링크한 bare PR(현재 직독 성립 부류, #2559/#2580)마저 step-3 직독이 깨져 수동 미러로 회귀 → **PC-4 신설: 라벨 삭제 前 phase-gate read-side(L113+L330) OR-bridge 완료 + 직독 canary green**. (3) native-null blocker — #2563 은 =null(type:story 라벨만 보유, A2-1 silent type_id drop 잔재 추정, RequirementsReviewPL firsthand). native-null issue 는 라벨 삭제 시 label predicate ∧ OR-bridge 양쪽 실패 → **PC-5 신설: 라벨 삭제 前 native-type audit/backfill 로 native-null 집합 0 확인**(DI-1 완전 충족의 실 조건). scope 경계 — CFP-2581 실 변경 = PR body 의 canonical-issue 바인딩 파싱 확장(localRefs 정규식 same-repo 인식)으로 native-type cutover 와 **disjoint**(별 read 경로). read-side OR-bridge(구 후보 b) 자체는 본 Story 미실행 — A2-3 라벨 삭제 carrier 로 defer(선결조건으로만 기록). 본 Amendment 는 mechanism 무변경 documentary."
 - file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
   word: 별
-  content: **B4. mechanical detection deferred-followup** — Wave 1 declarative (본 Amendment 13 enum 확장 + cross-ref), Wave 2 mechanical detection lint (Codex output verdict-block presence grep + sandbox artifact size threshold heuristic) = pattern_count 2 reach 시 별 CFP carrier (ADR-076/082/086 precedent). 현 pattern_count = 1 (CFP-604 single sample).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AC) **substitution path 4번째 enum value 추가** (auto-retry / multi-source consensus / 외부 verify proxy 등) — 본 Story-A scope 외 (Story §5.3 verbatim "Out-of-Scope" 영역). 별 follow-up CFP carrier 분리. 본 Amendment 8 = 3-enum exhaustive retain.
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AG) **proactive 채널 SSOT 본문 자체에 reactive 영역 SSOT inline append** (ADR-052 본문 scope 확장) — ADR-052 본문 정책 SSOT (proactive 채널 한정) 보존 invariant 위배. Amendment 1-8 정합 = proactive 채널 영역만 강화 (substitution / verbatim 첨부 / boilerplate cross-ref / severity calibration cross-ref / fact-check / mandatory 전환 / multi-round debate / iterative reformulation). reactive 영역 = ADR-022 Deprecated + ADR-070 D1 L110 적용 외 = 본 ADR 외 영역 → 별 ADR (ADR-070/ADR-081) 본문 SSOT 위임 채택.
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AH) **Wave 1 + Wave 2 단일 CFP 통합** (mechanical lint 동시 도입) — ADR-064 §결정 1 (CFP scope unitary, "경량 → full" 단계 채택 금지) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 = ADR-064 §결정 1 정합 + CFP-963 Phase 2 mechanical lint 패턴 답습 (CFP-963 = Phase 1 declare + Phase 2 mechanical).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AJ) **codex-network-scope-presence lint scope 확장 (proactive + reactive 양면) inline 본 Amendment 9** — Wave 2 mechanical 영역, ADR-064 §결정 1 (CFP scope unitary) 정합 별 CFP carrier 분리. 본 Amendment 9 Wave 1 declarative-only 영역 = registry entry description text 본문 patch (scope clarification only, detect_command / workflow / current_tier 변경 0건).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AN) **Wave 1 + Wave 2 mechanical lint 단일 carrier 통합** — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 채택 (CFP-963 / CFP-1126 패턴 정합).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AR) **fail-mode enum 확장 + mechanical lint 동시 도입** (dispatch 발화 안 file-redirect 형식 presence-grep) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 Amendment 12 fail-mode enum 확장 + ADR-081 §결정 D8 cross-ref) + Wave 2 mechanical (dispatch invocation presence-grep lint) 별 CFP 분리 채택 — ADR-052 declaration-only retain precedent 정합.
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-AT) **CodexReviewAgent 흡수 (merge-time mandate 추가)** — lane mismatch (review-time per-file ↔ merge-time PR-unit holistic). channel-disjoint 식별 의무 (AC-12) 위배. 별 dispatch contract 채택 (worker agent 형태 = Phase 2 (a)/(b)/(c) 3택 설계 lane 결정).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - (Amendment-U) **ADR-052 본문 안 boilerplate composition section 직접 inline append** (별 ADR 신설 회피) — Amendment scope 가 크다 (cross-document 4-region 통합 영역). ADR-070 자매 패턴 (separate ADR + cross-ref) 정합성 부재. 영역 type 분리 (boilerplate composition ≠ touchpoint behavior) 차단 → 신규 ADR-081 채택 (ADR-070 자매 패턴 정합).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - **Wave 2 mechanical lint** () = 별 CFP carrier (deferred-followup, brainstorm 단계 결정). lint scope = wrapper-self Story 안 touchpoint 2 / 5 spawn 발화 발견 시 warning advisory.
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - **consumer Story** (mctrader 등 외부 product) — Codex FP 0 streak evidence wrapper-self 한정, consumer 영역 (evidence base 부재). 본 Amendment 11 의 wrapper-self trim 적용 시점 후 consumer 영역 동등 evidence 누적 가능 (Wave 3 별 CFP carrier).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - Amendment 발의 시점 = CFP-963 Codex TP#4 deferred scope closure (Codex TP#4 CX-963 deferred scope 의 별 CFP carrier closure 책무, active amendment ratchet 강화 방향)
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
   content: - CFP-1368 # Amendment 14 — CFP-1286 Wave 2 mechanical wire (codex-fallback-subclass-tally lint activation, mechanical_enforcement_actions [] → [codex-fallback-subclass-tally]). first prod observation closure carrier (CFP-1317 Wave A + Wave B sub-class disjoint evidence). PIVOT-6 META Codex calibration evidence (TP#4 F-5 self-stale catch by FIX iter 1 5-source ground truth verify). comment-prefix-registry-v1 v1.4 → v1.5 + label-registry-v2 v2.65 → v2.68 + evidence-checks-registry entry. CFP-1334 RED→GREEN stash proof + ADR-082 §결정 11.A mandate. 9-enum closed-set scope retain (10번째 candidate codex_sandbox_path_blocked = Out-of-scope 별 follow-up CFP).
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: - proactive/reactive boundary preservation 적용 영역 Wave 1 declarative-only 명시 (A3) — Wave 2 mechanical lint scope 확장 = 별 CFP carrier 분리 (ADR-064 §결정 1 unitary)
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: Wave 2 (별 CFP carrier 분리, ADR-064 §결정 1 unitary):
 - file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
   word: 별
   content: summary: "**proactive/reactive disjoint scope codify** — D1 본문 L84 'codex:rescue 사후 대응(reactive) 채널' + D1 L90 'codex:codex-rescue proactive check 채널 분리' 의 명시적 boundary anchor 강화. 본 ADR-052 의 D1-D4 + Amendment 1-8 = **proactive 6 touchpoint scope 한정** invariant explicit codify. reactive codex:rescue 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) 의 network_scope declare 의무 + verify-before-trust + boilerplate composition = ADR-070 Amendment 5 + ADR-081 Amendment 5 본문 SSOT 위임 (본 ADR 본문은 cross-ref only). Codex TP#4 (CFP-963 §6.3 OOS row + §3 EC-2 derived default — ' lint = OUT, proactive 한정') 의 deferred scope = 본 Amendment 9 + ADR-070 Amd 5 + ADR-081 Amd 5 chain 으로 closure. D1/D2/D3/D4 + Amendment 1-8 본문 의미 변경 0건 — proactive/reactive disjoint anchor 명시 cross-ref sub-section append only. mechanical lint scope 확장 = 별 CFP (Wave 2, ADR-064 §결정 1 CFP scope unitary). is_transitional=false, sunset_justification=N/A — permanent strengthening (proactive/reactive disjoint boundary explicit codify, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + src/tests 무변경)."
@@ -435,31 +162,16 @@ grandfathered_violations:
   content: summary: "CFP-1286 (Amendment 13 Wave 1 declarative anchor) 의 **Wave 2 mechanical wire** — 9 fail-mode enum 누적 카운터 lint mechanical enforcement layer activation. → 전환 (declaration-only retain → warning-tier mechanical wire). evidence-checks-registry yaml entry (warning tier, bypass ) + scripts/lib/check_codex_fallback_tally.py + workflow yml (PR-open + daily cron UTC) + bats fixture 9 TC (RED→GREEN stash proof, ADR-082 §결정 11.A + CFP-1334 mandate) + comment-prefix-registry-v1 v1.4 → v1.5 MINOR bump (2-entry append + , PIVOT-5 NEW Q5 (a) atomic 채택, 15 → 17 prefix taxonomy) + jsonl seed (ADR-013 §1 atomic rename pattern, ADR-076 misattribute 정정). ADR-045 §D-9 escalation_action enum 정합 (per-enum threshold 3 strict tuning vs ADR-045 N=2 baseline, per-enum sub-domain self-tuned). first prod observation closure carrier (Wave A S1 first prod evidence + Wave B S3 sandbox path block sub-class disjoint evidence — retro internal-docs#811 fe8524a §6 F3). 10번째 enum candidate = Out-of-scope (별 follow-up CFP carrier, ADR-064 §결정 1 scope unitary, Q1 (c) defer). PIVOT-6 META Codex calibration evidence acknowledge — Codex TP#4 F-5 self-stale 203 lines/v1.3 claim 정정 by Orchestrator FIX iter 1 ground truth 5건 direct file Read verify (ADR-052 line 812 + ls docs/observability/+kpi/ + wc comment-prefix-registry-v1.md = 219 lines/v1.4 + grep codex markers MISSING + grep bypass-justification line 178). label-registry-v2 v2.65 → v2.68 MINOR bump (sibling coordination: CFP-1306=v2.66 / CFP-1367=v2.67 / CFP-1368=v2.68 sequence, late-comer rebase invariant). marketplace atomic invariant (ADR-063 §결정 5) — plugin.json MINOR + CHANGELOG.md + marketplace.json sibling sync. dual-binding pattern 답습 (CFP-963 codex-network-scope-presence precedent — declaration source ADR-052/070/081 / enforcement source ADR-060 evidence-enforceable warning-tier framework). D1/D2/D3/D4 + Amendment 1-13 본문 의미 변경 0건 — frontmatter amendment_log + mechanical_enforcement_actions[] field 만 변경, sub-section append 패턴 정합. is_transitional=false, sunset_justification=N/A (ratchet 강화 방향 — declaration-only → warning tier mechanical enforcement layer activation, 약화 영역 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + mechanical_enforcement_actions[] field 만 변경 + sibling Bundle B coordination Phase 1, src/tests = Phase 2 carrier 분리)."
 - file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
   word: 별
-  content: | **codex-network-scope-presence lint scope** | proactive 6 touchpoint spawn prompt 한정 (현재 scope, evidence-checks-registry entry 본문 SSOT) | scope 외 (Wave 2 mechanical lint 확장 별 CFP carrier, ADR-064 §결정 1 unitary) |
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
   content: | 결함 단위 | PR-unit holistic finding | surviving mutant 별 |
-- file: archive/adr/ADR-052-codex-proactive-check-touchpoints.md
-  word: 별
-  content: 동일 lane(구현리뷰) 안 별 채널 (병렬 가능, 결과 dedup 규칙 = Story §8 AC-12). 중복 아닌 defense-in-depth.
 - file: archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md
   word: 별
   content: **판별 기준**: Agent tool result 에 / 포함 시 model-unavailable 로 분류. rate-limit ( / / ) 와 disjoint — fable spawn 이 rate-limit 에러를 반환하면 model-unavailable 이 아니라 rate-limit 경로(§결정 2 동형 mechanism, fresh-spawn-only 동일 적용)로 처리하되 §14 태그는 trigger 별 구분. 외부 모범(Anthropic API errors)상 model-unavailable = 403 permission / 404 not_found (permanent class — 재시도 무의미, 다른 모델 전환이 정답), rate-limit = 429 (transient) [source: https://platform.claude.com/docs/claude/reference/errors]. agent spawn 층이 raw HTTP status 아닌 메시지 문자열만 노출할 수 있어 string-match 불가피할 수 있음.
-- file: archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md
-  word: 별
-  content: 5. **결정 1·2·3 본문 변경 0건**: §결정 2 (max 1회 / 자동 재시도 금지 / 통지 후 대기) invariant 무손상 (byte-identical). §결정 4 가 별 결정축으로 trigger 를 확장(약화 아닌 강화).
 - file: archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md
   word: 별
   content: scope: "Amendment 5 (amendment 번호) — §결정 4 (decision 번호, fallback trigger 집합 확장: rate-limit → {rate-limit, model-unavailable}) 신설 + fresh-spawn-only invariant SSOT 명문화(§결정 2 본문 무변경 cross-cutting 적용). fable lane agent 10종 (ADR-117 §결정 1) spawn 이 model-unavailable 에러 반환 시 model:opus fresh re-spawn 1회. SendMessage resume 금지 (원본 agent model 재해석 재실패 root cause 해소 — CFP-2236 실측). per-spawn-attempt 독립 카운터 + [model-unavailable-fallback:fable→opus] 별 §14 태그 (sonnet rate-limit KPI 분모 8종 오염 차단). 결정 1·2·3 본문 변경 0건 — §결정 2 의 trigger 를 확장하는 §결정 4 신설(별 결정축). frontmatter related_adrs 에 ADR-117 추가. ADR 제목 scope 갱신 (Sonnet → Opus → 비-opus tier 일반). bump: plugin.json 6.19.1→6.19.2 PATCH (doc-only fast-path, CFP-2225 선례)."
 - file: archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md
   word: 별
   content: sunset_justification: "trigger 집합 확장은 §결정 2 normative 강도 약화가 아니라 강화 방향 (cover 범위 확대 — rate-limit 단일 → model-unavailable 추가, ADR-058 §결정 5 정합). 기존 sonnet rate-limit fallback 무손상 (max 1회 / 자동 재시도 금지 / 통지 후 대기 invariant 그대로). sunset gate 1·2 measurement contract 변경 0건 — 분모(Sonnet 잔류 8종)/분자([rate-limit-fallback:sonnet→opus] 태그)/window/sample sentinel 모두 그대로. fable→opus fallback 은 별 trigger 태그 [model-unavailable-fallback:fable→opus] 로 분리되어 KPI 분모/분자 오염 0. is_transitional:true 유지 (본 Amendment 가 sunset 성격 변경 안 함). root_cause evidence N=3 (CFP-2134/2234/2236 본 세션 실측 — 정책 부재로 매번 ad-hoc opus 우회). ADR-117 (Fable surgical tier, permanent) 결합으로 fable fallback 부분은 permanent 성격이나, §결정 2 sunset 시 fable 부분은 §결정 4 로 독립 잔존 — sunset 비대칭은 §결정 4 가 별 결정축으로 분리돼 해소 (§결정 2 archive 가 §결정 4 를 끌고 가지 않음). 사용자 directive 2026-06-14 KST (CFP-2236 후속 '후속 작업 모두 수행해')."
-- file: archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md
-  word: 별
-  content: trigger 집합 확장 = 강화 방향(cover 범위 확대). 기존 sonnet rate-limit fallback invariant 무손상. sunset gate 1·2 measurement contract 변경 0건 — fable fallback 은 별 trigger 태그 로 분리돼 KPI 분모(Sonnet 8종)/분자 오염 0. is_transitional:true 유지. ADR-117 (permanent) 결합으로 fable fallback 부분은 permanent 성격이나, §결정 4 가 별 결정축으로 분리돼 §결정 2 sunset 시 fable 부분이 독립 잔존(sunset 비대칭 해소). root_cause evidence N=3 (CFP-2134/2234/2236 실측). 사용자 directive 2026-06-14 KST.
-- file: archive/adr/ADR-059-debate-protocol-v1.md
-  word: 별
-  content: **본 결정 = 엔진 enum sibling(contract surface).** 정책 신설(설계 리팩터링 결정 방식 격상)의 carrier = **ADR-138**(별 ADR — 정책 결정 기록은 엔진 ADR 이 아님). producer/consumer 실 dispatch 배선 + verdict judge(ArchitectAgent chief) + anchor scope(per-Story) 는 ADR-138 소유 — 본 §결정 12 는 그 경계를 명시한다.
 - file: archive/adr/ADR-059-debate-protocol-v1.md
   word: 별
   content: summary: "설계 리팩터링(구조 3축 + repo-분해 escalation) consumer 추가 — dispatch_mode enum 에 blanket_designrefactor 추가(divergence 감지 없이 per-Story 무조건 발동, cross_module_signal block 불요; role_assignment={codex:proponent, claude:opponent} 기존 optional 필드 재사용; divergence_type structural per-lane keying 3-way 변별 — DesignLane 설계산출물 / blanket_refactor 실코드중복 / blanket_designrefactor 설계 리팩터 구조 축). 기존 가드(anti-sycophancy 4 + convergence_quality_invariant 3-tuple + anchor-recurrence ≥2 + min3/max5) 전부 상속, 신규 정의 0. debate-protocol-v1 v1.3→v1.4 MINOR bump 동반. 정책 신설(격상 결정) carrier = ADR-138(별 ADR), 본 Amendment 4 = 엔진 enum sibling. blanket_refactor(ADR-137) 무변경."
@@ -468,40 +180,10 @@ grandfathered_violations:
   content: ( — plugin-count 별 축 ADR-023) / ②negation
 - file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
   word: 별
-  content: **E-2.1 (dual-window 의 governing-window 자체가 미해소일 때 — 분류 보류 규칙)**: dual-window KPI 인데 registry window ↔ JSON window 불일치가 *아직 정정되지 않은 상태* (즉 어느 표현이 정정 후 최종 governing window 가 될지 별 follow-up CFP 로 위임된 상태) 라면 → 분류표 (26.D) 는 해당 KPI 를 **"분류 보류 (deferred)"** 로 기록하고, **26.B tie-break 의 안전 방향 = 잠정 jsonl** 을 적용하며, **최종 분류는 해당 window-불일치 정정 follow-up CFP (예: OOS-D1) 해소 후 26.A 로 재산정** 한다. 이 경우 분류표가 "정합 무변경" 같은 단정을 절대 발화하지 않는다 (window 불일치가 미해소인데 embedded 정합을 단정하면 곧 E-2 와 모순 + 정정 CFP 를 사실상 pre-judge — 26.E follow-up 경계 위반). 잠정 jsonl 은 *방향 권고* 일 뿐 즉시 마이그레이션 강제가 아니다 (실행은 OOS-migration / 해당 OOS follow-up CFP, data 0건이면 E-4 trivially 정합).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
   content: *plugin* count(8) 별 축 (cross-ref, 충돌 아님 — allowlist 축①
 - file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
   word: 별
-  content: - (b) start-up assertion = **unconditional** + 4-path 전체 적용 (candidate exclude 의 3-path 와 별 axis)
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **ADR-063** (marketplace atomic invariant): marketplace-drift 결합 — 26.E OOS-D2 별 CFP 권고의 atomic invariant 결합 근거.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **ADR-063** — plugin.json 6.71.0 → 6.72.0 MINOR (governance behavior — 신규 warning-tier lint runtime 활성화). marketplace.json cross-repo sync = 별 follow-up declare.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **OOS-D1 (retro-alert registry/JSON window 불일치 정정)** = 별 follow-up CFP. **26.D retro-alert 행의 "분류 보류 (deferred)" 를 해소하는 선결 follow-up** — 본 §결정 26 의 분류 자체가 OOS-D1 미해소를 전제로 잠정 verdict (E-2.1) 만 발화하므로, OOS-D1 = 26.D retro-alert 최종 분류의 prerequisite. entry = "retro-alert-pickup-rate ≥ 90% (3 month rolling window)" + "3 month window" + "gate_status 3 consecutive months = ok → sunset 판정" 인데 + 은 하드코딩 . 26.B E-2 (registry window deterministic 우선) 적용 시 governing window = registry **rolling-multi-month** → 26.A = jsonl 방향. 그러나 *어느 표현이 정정 후 SSOT 가 될지* (registry 를 1-month 로 정정 vs JSON/workflow 를 3-month 로 정정) 자체가 미결정 → 26.D 는 E-2.1 로 분류 보류 + 잠정 jsonl 만 기록. 정정 실행이 별 CFP 인 사유: registry // 는 schema-lint 및 ADR-045 §D-5 owner semantics 와 결합 → gate 판정 window 의미 변경 = owner-ADR-coupled 변경, ADR-064 §결정 5 번들 금지 대상. OOS-D1 해소 후 26.A 로 retro-alert 최종 분류 재산정 (정정 결과가 1-month 로 수렴하면 single-fixed-window×flat-bounded → embedded 정합 무변경; 3-month 로 수렴하면 rolling-multi-month → jsonl 정렬 필요 — *둘 다 26.A 에서 도출 가능*).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **OOS-D2 (marketplace semantic 처리)** = 별 follow-up CFP. **본 §결정 26 scope 외 항목** (26.D marketplace 행 = "26.A 미적용"). OOS-D2 의 역할 = scope 외 데이터를 *어떻게 다룰지* 결정 (본 규칙이 결정하지 않음). 사유 3중 (각 독립적으로 별-CFP 강제): (1) **scope-out semantic** — = gate-transition / lifecycle-status log (≠ metric-sample-history); OOS-D2 가 "state-transition-log 를 별 어휘로 둘지 / metric-history 와 통일할지" 를 결정해야 함 (본 규칙은 이 결정을 하지 않음 — 26.A scope boundary), (2) **data-bearing** — origin/main 실측 1 entry 보유 (status , transitioned 2026-05-15), 0-entry 아님 → 어떤 변경이든 데이터 변환 동반, (3) **ADR-063 atomic invariant 결합** — marketplace-drift 는 ADR-063 owner, schema bump 시 plugin.json/CHANGELOG.md/marketplace.json 3-file atomic coordination 의무. **본 규칙은 marketplace jsonl 마이그레이션을 함의하지 않는다** (scope 외 → R-1: THIS rule ⇒ no marketplace migration). 향후 marketplace-drift 에 metric-sample history 가 신설되면 그때 26.A 가 그 신규 history 에 새로 적용된다 (현행 와 무관).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **OOS-migration (실제 jsonl 마이그레이션 일반)** = 별 follow-up CFP. 규칙이 어떤 KPI 를 "jsonl 로 가야 한다" 분류해도 그 마이그레이션 실행 (schema bump + measure script + workflow rewrite) 은 본 Amendment scope 외.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **기존 entry grandfather**: 본 Amendment 발효 시점 기존 3 KPI 의 현행 key 명은 **grandfather** (즉시 rename 강제 아님). 규칙은 "신규 KPI 부터 적용 + 기존 KPI 는 분류표가 정렬 필요로 판정 시 별 follow-up CFP" 의 적용 시점을 명시한다 (E-5 — 기존 embedded 를 전부 jsonl 강제하면 ADR-064 §결정 5 폭발 → backward-compat 보장).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - **이미 별 ADR/contract 가 owner 인 비-KPI 시계열** (예: ADR-RESERVATION append, FIX Ledger row) — 본 framework KPI 도메인 외.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
   content: - CFP-2591 # Amendment 20 carrier — §결정 32.D 개정(surfacing tier 도입) + grandfather baseline 메커니즘 framework-wide 신설 + 18번째 warning-tier entry deferral-carrier-declared(carrier-mandate no-TBD lint). deferred-followup forcing-function 봉합 Stage 1+2(baseline + new-only shadow) — NO-FLIP: continue-on-error 유지 + self-entry current_tier:warning 불변, 실 flip=별 후속 PR(baseline main 착지 후). §결정3 reconciliation(surfacing qualifier — blocking-on-pr 자체가 contexts membership 미함의) + §결정6 harmonization(baseline-relative new-debt failure=0). self-entry deferred-followup-reconcile §결정6 carrier trio(outage runbook/author-verify/sticky at-most-once) evidence_artifacts 배선. ADR-127/ADR-024 amendment 불요(Tier 1 surfacing 6-tuple 회피). full-lane (baseline yaml + check new-only subtract + (b) Python SSOT/thin wrapper/.github workflow + runbook + registry (b) entry + self-entry evidence_artifacts + plugin.json 6.72.0 MINOR + registry-v1 v1.6). honest ceiling: hard block 미주장(admin 우회 구조적 가능, AC-20 count 관측만). prior art 답습: check_lane_count_ssot.py(5축 allowlist) + check_deferred_followup_reconcile.py(baseline loader/digest).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: - 실제 continue-on-error 제거(flip → blocking-on-pr surfacing) + tier 승격 = **baseline main 착지 후 별 후속 PR** (§7.2.2 self-deadlock 회피). Tier 2(hard-required, 6-tuple 편입) = FUTURE/OOS.
 - file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
   word: 별
   content: baseline main 착지 후 별 후속 PR (baseline 도입 PR 자신이 surfacing 이면
@@ -522,64 +204,16 @@ grandfathered_violations:
   content: surfacing) 및 self-entry tier 승격은 baseline main 착지 후 별 후속
 - file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
   word: 별
-  content: | **①within-line 이중토큰** | (plugin-count 별 축, ADR-023) | 라인 전체 면제 금지 — 같은 라인 미인접 잔여 stale 은 RED (dual-token masking 후 잔여 재검사) |
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: | | CFP-673 | embedded (1 entry: ) | **out-of-scope** — 유일 history array = = **gate-transition / lifecycle-status log** semantic (warming→ready→sunset 상태 전이 audit), metric-sample history *아님*; (누적 metric 측정값 0건) | N/A (scope 외 — 26.A 미적용) | N/A (scope 외) | **26.A 미적용** (scope boundary) | **26.A scope 외 — 본 규칙 미적용**. = gate-transition-log (≠ metric-sample-history). 향후 marketplace-drift 에 *metric-sample history* (예: 월별 시계열) 가 신설되면 그 시점에 26.A 재적용. 현행 의 key 명·표현 semantic 처리 (통일 여부/별 어휘) = **OOS-D2 별 follow-up CFP** (data-bearing 1 entry + ADR-063 atomic invariant + state-transition-log ↔ metric-history semantic 분리 결정 필요). 본 규칙은 marketplace 마이그레이션을 *함의하지 않음* (R-1 — scope 외이므로 jsonl 정렬 verdict 발화 자체가 category error) |
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: §결정 32.D 의 강제 action 은 종전 "warning emit, blocking 아님" 이었다. Amendment 20 이 tier(**Tier 1**)를 도입 — continue-on-error 제거로 red-X + sticky comment 표면화, 단 required 6-tuple 미편입. **단 본 CFP-2591 PR 은 Stage 1+2 까지만 ship — 실제 continue-on-error 제거(flip)는 baseline main 착지 후 별 후속 PR** (§7.2.2 self-deadlock 회피: baseline 을 도입하는 PR 자신이 blocking 이면 baseline 부재 상태에서 전 PR self-block). Tier 2(hard-required) = FUTURE/OOS.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
   content: 별 분리(OOS). plugin.json tagline 만 본 Story 정정 (marketplace-
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: 본 Amendment = warning-tier 만 ship (ADR-060 §결정 5 framework warning-first 준수). promotion_criteria = ADR-060 §결정 6 **STANDARD threshold** ( / ). codex worker spawn-prompt declaration 부재 → Codex finding evidence ground-truth verify 실패 risk (CFP-946 8-occurrence sentinel re-entry) — 본 entry 가 그 risk 의 mechanical detection layer. 그러나 본 Amendment 는 expedited gate 를 **encode 하지 않는다**. ADR-064 §결정 1 CFP-scope-unitary ("한 CFP 안 '경량 → full' 단계 채택 금지") 정합 — expedited-gate 는 prose/registry comment 의 **FUTURE labeled option** 으로만 기록, 별 follow-up CFP 의 독립 brainstorm + Story + PR 영역.
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: 본 Amendment = warning-tier 만 ship (ADR-060 §결정 5 framework warning-first 준수). promotion_criteria = ADR-060 §결정 6 **STANDARD threshold** ( / ). data-loss severity (PR #441 미검출 merge 시 ~700 LOC upstream lane work 영구 손실 risk) 가 expedited promotion gate 를 정성적으로 정당화하나 — 본 Amendment 는 expedited gate 를 **encode 하지 않는다**. ADR-064 §결정 1 CFP-scope-unitary ("한 CFP 안 '경량 → full' 단계 채택 금지") 정합 — expedited-gate 는 prose/registry comment 의 **FUTURE labeled option** 으로만 기록, 별 follow-up CFP 의 독립 brainstorm + Story + PR 영역. blocking-on-pr 승격 precondition 1 항목: internal-docs CODEOWNERS 부재 (cross-repo bypass-authz path 가 incident-carrier repo 에서 inoperative — warning-tier 동안은 무의미하나 blocking 승격 시 해소 필요).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: 본 §결정 26 = **declarative governance 규칙** (분류 판정·key 명·rationale). 즉시 mechanical enforcement 0건 (lint script / workflow 신설 없음 — doc-only fast-path 정합). 분류표 (26.D) 정합성을 신규/변경 KPI 에 대해 자동 검증하는 evidence-check entry ( 후보) 는 **별 follow-up CFP** 의 ADR-060 framework 자연스러운 entry 추가 영역 (본 Amendment scope 외 — ADR-040 Amendment 3 §결정 7.C retroactive 면제 / ADR-060 §결정 5 첫 도입 = warning). 본 Amendment 는 normative ADR-060 의 amendment 이나 신규 mechanical action 무도입 → 신규 entry append 불요 (기존 framework entry 변경 0건).
-- file: archive/adr/ADR-060-evidence-enforceable-promotion-framework.md
-  word: 별
-  content: 이론적 근거 = SonarQube **Clean-as-You-Code**(new-only) + betterer ratchet. 신규 debt 만 gate, legacy debt 는 별 backward-triage carrier(예: confluence-ia-tree TBD 2건 → #2097).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: **** — 5번째 enum value 시도 시 Rule (b) closed-set 위반. 신규 enum value 도입 = 별 ADR Amendment 신설 의무 (예: Amendment 11 으로 enum 5번째 값 추가 필요 시 carrier Story 별도 발의). **CFP-1403 Story §5.3 EC-8 정합** (closed-set invariant 보존 — F-SA-1403-03 source).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: **Bypass channel**: label (§결정 4) reuse — channel matrix 별 bypass 신설 0 (single bypass family 보존, ADR-024 Amendment 3 §결정 6.A per-entry namespace 영역에서 별도 family member 신설 회피 = minimal-change ADR-064).
 - file: archive/adr/ADR-063-marketplace-atomic-invariant.md
   word: 별
   content: **Context**: §결정 1 (3-file atomic invariant — plugin.json + CHANGELOG.md + marketplace.json) 는 wrapper 와 lane plugin 의 구분 없이 단일 scope 로 기재. imperative changelog walk 패러다임 (CFP-1111 / ADR-097) 도입 후 walk 단위가 **Tier 1 (wrapper bundle walk = )** vs **Tier 2 (lane per-walk = )** 로 분리됨 — atomic invariant scope 도 Tier 별 명확화 필요.
 - file: archive/adr/ADR-063-marketplace-atomic-invariant.md
   word: 별
-  content: **Mechanical enforcement**: Tier 2 per-walk detection layer = Phase 1 declare-only (deferred follow-up). Amendment 8 row append = 별 CFP (Phase 2 carrier 시점). ADR-040 Amendment 3 §결정 7.C retroactive 면제 정합 (본 Amendment 8 이후 신설 entry 의무).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: **Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별 CFP). frontmatter Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: - Tier 2 per-plugin walk 에 대한 detection layer = deferred follow-up (별 CFP) — 에 신규 entry 추가 0 (Phase 1 declare-only, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합)
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
   content: - mirrored field 4종 (§결정 1) 의 channel 별 분리 정책:
 - file: archive/adr/ADR-063-marketplace-atomic-invariant.md
   word: 별
-  content: - mirrored field 4종 closed-set invariant (§결정 1) **보존** — 5종 확장 시 별 ADR Amendment 의무 (Rule (b) 와 isomorphic, CFP-1403 Story §5.3 EC-8 정합).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
   content: - §결정 11 (Amendment 2, CFP-631) — description verbatim PR-time lint 정합 (channel 별 description 불변 invariant)
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: - — wrapper plugin source code ( 등 mirrored field 영역) 미touch + Phase 1 PR declarative SSOT scope. 후속 carrier (Phase 2 PR 또는 별 CFP) 시 promote 의무 (ADR-082/070/077/078/097 Wave 1 declaration-only precedent 정합).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: - 현 walk-infra (, ADR-096 §결정 2) 는 7-plugin DAG 가정 — deploy lane 의 DAG 위치 (의존성 방향) 결정 + / manifest 9-plugin 확장 = **별 follow-up CFP** (deploy lane lifecycle 의존성 분석 필요, 본 Story scope 외).
-- file: archive/adr/ADR-063-marketplace-atomic-invariant.md
-  word: 별
-  content: mirrored field 4종 1+ 변경 감지 AND author 가 명시 = **Rule (a) deterministic mandate 위반**. 본 sub-clause = **declarative SSOT only** — mechanical wire (lint script case detection) = Phase 2 / 별 CFP carrier 영역 (현재 Step 5 가 case completeness 만 검증, case violation detection 은 미wire). Mitigation = §결정 22 Gap B (blocking-on-pr) 실값 parity 가 **실효 차단 layer** — Rule (a) 위반 author 의 mistaken 선언이 실제로 marketplace.json drift 를 유발하려는 순간 §결정 22 가 plugin PR merge 를 차단. declarative SSOT (본 sub-clause) + blocking-on-pr layer (§결정 22) = layered defense.
 - file: archive/adr/ADR-063-marketplace-atomic-invariant.md
   word: 별
   content: summary: "§결정 17 신설 — mirrored field × channel matrix 확장 (Wave 4 sub-Epic #1 Story-1, Epic CFP-882). 기존 §결정 1 mirrored field 4종 (name/version/description/author) 위에 channel 차원 확장. marketplace.json array 신설 (per-channel version snapshot). mirrored field per-channel split: / / 모두 channel 동일 (불변, identity 영역) — 만 channel 별 분리 (per-channel version snapshot). family scope 7 plugin (wrapper + 6 lane) 의 marketplace.json entry 모두 동일 channels[] structure 의무. 3-way version invariant × channel 차원 확장 = publisher (per-channel branch/tag version) ↔ registry (marketplace.json channels[tier=<C>].version) ↔ consumer (codeforge.channel.tier resolved version) 3-way byte-identical (§결정 15 Amendment 5 mirror). marketplace.json channels[] field supply-chain trust = wrapper-canonical SSOT (label-registry-v2 v2.30 3-label = enum SSOT, marketplace.json mirror only — 3rd party PR channels[] tampering 방지). Story-1 = declarative SSOT mandate. runtime channel resolution + marketplace.json channels[] 실 등록 = Wave 4 sub-Epic #1 Story-2 carrier (declare layer scope — marketplace_sync_declared: false). bypass channel = label (§결정 4) reuse (channel matrix 별 bypass 신설 0, single bypass family 보존). Strengthening direction only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. ADR-076 §결정 9 (3-tier channel taxonomy declaration) + ADR-016 Amendment 3 (family_7_plugin_atomic × channel pin invariant) sibling cross-ref. reconcile-protocol-v1 v1.6 → v1.7 §4.3 (i) trigger 발동 + §4.10 multi_version_channel_pin_binding block carrier 동반."
@@ -598,39 +232,6 @@ grandfathered_violations:
 - file: archive/adr/ADR-065-architect-phase1-mechanical-self-check.md
   word: 별
   content: progress_note: "ADR-065 Amendment 5 (CFP-1462) 신설 시점 — declaration-only Wave 1 (ADR-082 §결정 6 retain pattern). chief author / InfraEng / QADev packet 발화 전 actual execution sample + verbatim output 첨부 의무 codify (manual self-check tier). mechanical lint 자동 검출 (verdict packet 안 / / field presence-grep + claim vs actual mismatch detect) = scope ( + evidence-checks-registry entry append + warning tier workflow yml). 본 status 승격 trigger = mechanical lint 신설 별 CFP merge 시점. Pattern A 'chief author self-attest false claim' pattern_count 3 reach Mandatory escalation (ADR-045 §D-9, CFP-1353 retro 3 lineage evidence). ADR-082 §결정 1 layer 1 (claim = ground truth) 직접 인접 sister carrier."
-- file: archive/adr/ADR-065-architect-phase1-mechanical-self-check.md
-  word: 별
-  content: | 기타 wrapper workflow | NO | 별 CFP 의무 |
-- file: archive/adr/ADR-065-architect-phase1-mechanical-self-check.md
-  word: 별
-  content: 본 §결정 10 = chief author / worker **manual evidence presence** 만 codify. mechanical lint (verdict packet 안 3 field presence-grep + claim vs actual mismatch detect) = 별 follow-up CFP scope. entry status: — 신설 merge 시점 status 승격 (declaration-only → warning → blocking-on-pr).
-- file: archive/adr/ADR-065-architect-phase1-mechanical-self-check.md
-  word: 별
-  content: 본 §결정 8 = chief author **manual self-check** 만 codify. mechanical lint (Story body strike-through 패턴 자동 enumerate + commit diff 비교) = 별 follow-up CFP scope. entry status: — mechanical lint 신설 별 CFP merge 시점 status 승격.
-- file: archive/adr/ADR-066-pat-rotation-policy.md
-  word: 별
-  content: **Cross-repo label endpoint write 권한 부재** — scope 는 same-repo label write 만 (cross-repo Issue comment 영역). cross-repo label endpoint = 별 grant 영역 (GitHub fine-grained PAT scope schema 정합 — permission per-repo grant).
-- file: archive/adr/ADR-067-fix-ledger-implementability-escalation.md
-  word: 별
-  content: **사용자 trade-off 정합 (req §5.6 #2)**: disjoint = 정직성↑ but 무한거부 위험 / 카운터 소비 = 수렴 강제 but 정직성 약화. 채택 = **disjoint** (정직성 우선, §1 "주장 아닌 실측") + safety valve = fix-attempt 카운터(max-FIX)가 별 채널로 수렴 강제. replay N회 반복 시 사용자 escalation 은 max-FIX implementability reassessment(§결정 2) 가 흡수.
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - **ADR Amendment carrier 발의 의무** — RACI 미codify 영역을 codify 하는 별 follow-up CFP (또는 본 Story 내 ADR Amendment) 발의. ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist self-app 의무 (Deputy 신설 결정 framework cross-ref).
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - **ADR-052 touchpoint #8 vs 별 ADR** — layer B 가 ADR-052 touchpoint 계열 (Codex 신호원 origin 재사용, advisory). 신규 touchpoint enum 추가 시 ADR-052 Amendment + playbook 절차 = Phase 2 조건부 (실 wire 시점). Phase 1 (본 amendment) 은 mechanism class codify 만.
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - **Amendment 1 (v4.4, CFP-528)**: I-5 별 boolean field 신설 (별 disjoint check)
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - **본 Amendment 2 (CFP-1086)**: scope expansion — 5 invariants (I-1 ~ I-4 + Amendment 2 chief tie-break ladder 3 단계 mechanism) 모두 통과 시 true. I-5 별 field 무변경 (Amendment 1 disjoint invariant 보존).
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - ADR-060 (4-tier promotion 경로 — invariant-surface-extension-check warning-tier → blocking 승격 별 CFP)
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: - I-1/I-2/I-3/I-4/I-5/I-6/I-7 본문 의미 변경 0건 — I-8 disjoint append only (standing invariant-surface axis 분리 — write-time 1회 발화 검증 axis 와 별 axis, 영속 standing-doc 색인 면)
 - file: archive/adr/ADR-068-boundary-completeness-invariants.md
   word: 별
   content: - Mitigation: claim 별 명시적 annotation (cited_adr + §결정 N / cited_value / verify_status) + commit 직전 target ADR direct 대조 (ADR-073 §결정 1 verify-before-assert primitive directly-analogous, source-of-truth direct fetch)
@@ -658,135 +259,24 @@ grandfathered_violations:
 - file: archive/adr/ADR-068-boundary-completeness-invariants.md
   word: 별
   content: §결정 1 I-8 declaration verbatim 적용. 각 long-lived mutable structure 별 7-key (name+location / kind / bound (backlog vs lifetime 구분) / lifetime (reclaim 여부) / ordering / 코드 보존 지점 / accumulation/lifetime-class? Y/N) standing-invariant-surface-row + 색인 존재 의무. template = (consumer-side standing surface).
-- file: archive/adr/ADR-068-boundary-completeness-invariants.md
-  word: 별
-  content: 본 cross-ref note = mechanical_enforcement_actions[] entry 0건 추가 — ADR-082 §결정 6 + ADR-070 §D5 + CFP-898 / CFP-899 / CFP-900 precedent declaration-only Wave 1 retain pattern 답습. 본 CFP-1059 Story-1 = declaration carrier (declarative scope), mechanical wire = Phase 2 PR (별 CFP — Wave 2 후속 carrier).
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: **3-enum exhaustive invariant**: 4번째 path 발생 = D1 expansion 거절된 대안 영역 (자동 retry / 외부 verify proxy / multi-source consensus 등). 본 ADR-070 scope 외 — 별 follow-up CFP carrier 영역 (CFP-946-B 도 미포함).
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: - (Amd10-E) **fail-mode 9-enum 에 mutation disposition 흡수** — axis mismatch (cause ↔ disposition disjoint, ADR-070 Amd 9 Amd9-B 선례). 별 §결정 D8 채택.
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: - (Amd9-B) **fail-mode 9-enum 에 disposition 흡수** (10번째 value 추가) — axis mismatch (cause ↔ disposition disjoint). 별 §결정 D7 disposition 3-enum 채택.
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: - (Amendment 5-B) **reactive 영역 mechanical lint inline 본 Amendment 5** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 채택 (CFP-963 Phase 1+2 패턴 답습).
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: - (Amendment 5-D) **review-verdict-v4 신규 contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR = doc-only fast-path 이탈. ADR-070 §D5 + ADR-081 §D5 + ADR-082 §결정 6 declaration-only retain precedent 위배 → declaration-only retain + Wave 2 mechanical lint (별 CFP carrier) 채택.
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: - (D1.exp-A) **substitution path 4번째 enum value 추가** (auto-retry / multi-source consensus / 외부 verify proxy 등) — 본 Story-A scope 외 (CFP-946-A §5.3 Out-of-Scope 영역). 별 follow-up CFP carrier 분리. 3-enum exhaustive retain.
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: 4. **Story §10 marker (또는 disjoint marker) 채택 권장** — reactive 채널 fail-mode tally audit trail (proactive 채널 의 disjoint variant, 또는 동일 marker 의 reactive scope value codify — Wave 2 mechanical lint 도입 시 별 CFP carrier 결정 영역). 사용자 자율 선택 — codeforge 강제 0.
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: lint (evidence-checks-registry entry, ADR-060 Amendment 14 §결정 28 carrier) 의 mechanical detection scope = proactive 6 touchpoint spawn prompt 한정 (CFP-963 Story §6.3 OOS row L374 derived default 정합) — reactive 영역 mechanical lint 확장 = 별 CFP carrier 분리 (Wave 2). ADR-064 §결정 1 (CFP scope unitary, "경량 → full" 단계 채택 금지) 정합. CFP-963 Phase 2 mechanical lint 패턴 답습 (Phase 1 declarative + Phase 2 mechanical = 별 CFP).
 - file: archive/adr/ADR-070-codex-verify-before-trust.md
   word: 별
   content: scope: "§결정 D1 expansion (Amendment 3) fail-mode 8-set → 9-set 확장 — 9번째 enum value 추가. CFP-604 Phase 2 CodeReview Iter 1 evidence: Codex worker file-redirect dispatch (ADR-081 Amendment 6 §결정 D8 정합) 정상 invocation 후에도 sandbox 영역 + Windows PowerShell policy reject + ~46KB artifact processing 누적 → reasoning budget 소진 → output 안 verdict analysis block 부재 (file content dump + git diff help dump 만 남음). 신규 fail-mode 영역 = file-redirect dispatch 후 invocation 자체는 성공 (network/sandbox/recursion guard 통과) 하나 reasoning budget exhausted → verdict 미생산 path (기존 8 value 어디에도 mapping 불가 — api_missing/version_skew/enterprise_blocked = invocation 단계 / gh_api_network_blocked = network 단계 / subagent_recursion_blocked = spawn 단계 / dispatch_stall_or_stream_timeout = stream stall 단계 / manual_substitution_declared + inline_orchestrator_verify_only = Orchestrator 결정 path, 본 9번째 value = post-invocation reasoning-exhausted path 의 disjoint sub-domain). 양 case 후속 = path + Story §10 marker. 본 Amendment 는 fail-mode enum 의 ratchet-up 확장 only (8-set retain + 9번째 append) — D1-D6 + Amendment 1-7 본문 의미 변경 0건. ADR-052 Amendment 13 + ADR-081 Amendment 7 cross-ref binding. ADR-070 §D5 declaration-only retain precedent chain 8번째 instance — retain. is_transitional: false (permanent — ratchet 강화 only, scope 축소 0). ADR-058 §결정 5 sunset_justification N/A. ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-1286 — CFP-604 retro F2 follow-up realized, single sample escalate_user 사용자 직접 채택). pattern_count=1 (single sample), 후속 sibling evidence 누적 시 mechanical detection lint 별 CFP carrier."
 - file: archive/adr/ADR-070-codex-verify-before-trust.md
   word: 별
   content: scope: "§결정 D1 적용 scope L107-L111 본문 강화 — reactive 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) 의 normative anchor codify. 기존 D1 L110 본문 보존 invariant 정합 + 사용자 책임 영역 안에서도 user-initiated invocation 시 D1 verify-before-trust pattern + D2 verbatim 첨부 + D3 verdict reject 흐름 + Amendment 3 substitution scope 3-path enum 의 적용 권장 (사용자 ad-hoc 영역의 normative anchor RETAIN — codeforge 측 강제 미발효, 사용자 ad-hoc 책임 영역에 대한 best-effort 가이드 anchor only). ADR-052 Amendment 9 + ADR-081 Amendment 5 chain — Codex TP#4 CX-963 deferred scope (CFP-963 §6.3 OOS + §3 EC-2 reactive codex:rescue network_scope = OUT derived default) closure. D1 본문 L107-L111 적용 scope 표 + Amendment 3 substitution 3-enum + D2 verbatim 첨부 의무 = proactive 6 touchpoint 한정 (codeforge 강제 invariant 정합) + reactive 채널 = best-effort 가이드 anchor (사용자 책임 영역 retain). D1-D6 + Amendment 1/2/3/4 본문 의미 변경 0건 — D1 적용 scope L107-L111 표 안 reactive 영역 row 의 anchor codify only. ADR-070 §D5 declaration-only retain precedent chain 5번째 instance — retain (Amendment 1-4 패턴 정합). is_transitional: false (permanent governance, ratchet 강화 방향 only — reactive 영역 사용자 책임 boundary 보존 + best-effort 가이드 anchor 강화). ADR-058 §결정 5 sunset_justification N/A (강화 방향, scope 축소 0). ADR-064 §결정 1 (CFP scope unitary) 정합 — Wave 1 declarative-only / Wave 2 mechanical lint = 별 CFP carrier 분리. ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-1003)."
-- file: archive/adr/ADR-070-codex-verify-before-trust.md
-  word: 별
-  content: 본 Wave 2 carrier = CFP-1003 retro 발의 시점 (또는 사용자 directive 시점) 별 CFP 분리. 본 Amendment 5 Wave 1 declarative-only scope retain.
 - file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
   word: 별
   content: (a) 2026-05-21 KST Epic CFP-1059 Story transition 4회 ("S4 / S5/S6 / S7 진입 시점 매번 본 세션 context 극한 → 별 세션 권장" reflex)
 - file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
   word: 별
-  content: **Forbidden**: Orchestrator 가 "context 압박" 감지 시 "별 세션에서 진행" / "새 세션 만들어" reflex 발화. 본 reflex 발화는 ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 외 발화 — Anti-pattern 7종 detect 시 발화 차단.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: **HARD GUARD**: §3.12 세션 재시작 Resume 경로의 "이 Epic 을 이어서 진행할까요?" confirmation = **out-of-scope, 무변경**. in-session 전환(본 §결정) ≠ session restart cold-resume — cold-resume 는 세션 context 소실 상태라 사용자 재확인이 정당(별 경로). 두 경로 conflation 금지.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **D2 채널 2 (FIX-3)** = (PreToolUse(Agent), 에 이미 배선된 matcher ) **EDIT** — 전환 reminder non-block inject 추가(**NEVER deny**, 기존 4-block spawn-format warning 로직 무손상). 신규 hook 파일 아닌 기존 gate 확장 = 구조 novelty 0. over-fire 완화 = 간결 text + 가능시 payload 판별. 채널 1(신규 sibling hook, UserPromptSubmit)과 disjoint fire 창 — 별 matcher 등록으로 상호 독립.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **DialogFidelityAgent runtime hook 확장** ( anchor 안 anti-pattern 7종 detect) — Wave 2 별 cross-repo CFP carrier (codeforge-pmo plugin).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **Mechanical lint** — anti-pattern 7종 detect mechanical check = behavioral directive only, 별 follow-up CFP carrier (deferred-followup, ADR-060 §결정 5 모든 신규 entry warning 시작 정합).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **Wave 3 DialogFidelityAgent runtime hook 확장** (codeforge-pmo plugin sibling sync) = 별 cross-repo CFP carrier (ADR-010 정합).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **codeforge-design lane fan-out 축소** (chief + 5 deputy + 4-tuple = 10+ agent → 핵심 4-5 축소) — fidelity vs coverage trade, 별 가치 판단 영역 → 별 CFP carrier (brainstorm 단계 결정).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **consumer overlay field** — consumer customization 영역, 별 follow-up CFP carrier (consumer-guide.md schema 확장).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **§결정 18 (session-swap reflex)** — **disjoint 축, cross-ref only, 재codify 금지**. session-swap("context 가득 → 별 세션")은 §결정 18 anti-pattern 7종이 이미 codify. 전환 경계에서 co-occur(§18.4 incident 처럼)하나 별 축 — 본 §결정은 over-halt/over-ask 절반만 신규 커버하고 session-swap 절반은 §결정 18 로 위임(중복 codification 회피, disjoint-axis invariant 보존).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - **신규 codename 추가** (16번째 entry 이상) — ratchet extensibility, 별 후속 CFP 의무 (ADR-064 §결정 5 CFP scope unitary 정합).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - D2 = **신규 sibling hook** (bash) + (self-contained stdlib, pattern A). skip-offer-reminder 확장 아님 — 별 mother ADR(§결정 22 vs §결정 21) + 별 governance 축, one-concern-per-hook 정착 패턴. shared reminder-base 추출 금지(YAGNI, fail-isolation).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - mechanical lint (over-asking 자동 검출) = platform inherent limit (turn-final hook 부재, runtime 발화 시점 block 불가) — behavioral directive only, 별 follow-up CFP scope.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: - §15.5 / §16.6 closed-enum 확장 규약(강화 ratchet + 별 CFP + Story §1 사용자 승인 의무)은 **미발동** — touchpoint 추가 0, trigger 추가 0, 사용자 발화 burden 증가 0.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: 2. **codeforge-design lane fan-out 불균형** — chief + 5 deputy + 4-tuple sub-tuple = 10+ agent advocacy. 1 user 요구 vs 10+ deputy mandate 의 weight 비대칭, deputy 가 자기 mandate 영역 expansion 만 강화 (cross-lane requirement traceability 약화). scope_boundary 영역 (17.6 참조 — 별 CFP carrier).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: 2. **lookup table SSOT location** = 카테고리 (c). ADR 본문 / skill SKILL.md / domain-knowledge 별 SSOT 금지 (중복 codification 0, single source of truth).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: 3. **closed enumeration cap = 15 codename** (첫 batch). 신규 어휘 등장 시 별 후속 CFP 의무 (ratchet extensibility).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
   content: Agent burst output paste 합성 시 mid-turn glossary lookup 의무 (§결정 19 신설). Orchestrator 가 agent burst output (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 등 4+ 부속 작업자) 결과를 사용자 메시지로 합성 (paste-and-translate) 할 때 카테고리 (c) codename → 평이 어휘 mapping table lookup 의무 — 1:1 치환 또는 평문 풀이 동반. lookup table SSOT location = wording-dictionary 카테고리 (c) (ADR 본문 / skill SKILL.md / domain-knowledge 별 SSOT 금지, single source of truth). closed enumeration cap = 15 codename 첫 batch + ratchet extensibility (신규 어휘 등장 시 별 후속 CFP). Scope = 사용자 dialog turn (Orchestrator 직접 발화) 영역만 — governance artifact (ADR / spec / change-plan / Story file) scope 외. §결정 2(a) frame mode step 4 (message 작성) 직전 step 3 cognitive 단계 "glossary lookup 필수 실행". 면제 channel = label (audit-trailed exception, Story-2 carrier 75번째 hotfix-bypass family member). Consumer false positive handling = consumer overlay field 별 follow-up CFP carrier (본 Amendment 8 scope 외). Source incident = mctrader-hub#517 consumer brainstorm Phase 1 dialog 4-turn 누적 jargon leak (사용자 directive 4건 verbatim + consumer ad-hoc fix 거부 + wrapper canonical path 의무). Axis disjoint declare 3종 — §결정 17 (Amendment 6 lane back-translation gate) = return-time output gate per-lane vertical axis ↔ 본 §결정 19 = mid-turn paste-and-translate horizontal axis (lane-agnostic Orchestrator 합성) / §결정 14 (effectiveness measurement, CFP-833) = post-hoc metric layer ↔ 본 §결정 19 = mid-turn forcing function layer / ADR-064 §결정 9 (question quality 3-check) = dialog 진입 결정 분기 self-check ↔ 본 §결정 19 = dialog 진입 후 발화 작성 mid-turn 단계. mechanical_enforcement_actions[] frontmatter entry append (Story-2 declarative anchor, deferred-followup). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-18 모두 보존, 5번째 cognitive layer 신설 금지 invariant 보존 (§결정 12.3 정합 — §결정 19 = mechanism 추가, cognitive layer count 변경 아님). is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용.
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: consumer project (mctrader-hub 등) 가 동일 codename 을 비즈니스 용어로 사용하는 경우 (예: "drift" = 포트폴리오 변동 감지), consumer overlay field 신설 — 별 follow-up CFP carrier (본 Amendment 8 scope 외). consumer overlay 가 wrapper 정책 축소 불가 invariant 정합 — exempt 선언은 false positive 회피 channel only (wrapper 정책 자체 약화 아님).
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: label (audit-trailed exception, [ADR-024](ADR-024-story-scoped-branch-policy.md) §결정 6 per-entry namespace 정합). 카테고리 (a) forbid 의 와 별 channel — disjoint scope. Story-2 carrier 75번째 hotfix-bypass family member 신설.
 - file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
   word: 별
   content: summary: Lane back-translation gate binding — DialogFidelityAgent read-only verifier (Amendment 1/2/3 3-anchor) → lane return 직후 binding 강화 (§결정 17 신설). lane traversal fidelity loss 차단 — 각 lane PL deliverable return 직후 사용자 원문 언어로 산출물 reverse summary 의무 부착. DialogFidelityAgent 가 user-utterance anchor (paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C) verbatim block) vs lane PL reverse summary 간 divergence 검출 시 lane 재실행 trigger (read-only verifier → binding mechanism 확장). 사용자 직권 minimal path 첫 적용 (codeforge process 가 lane traversal fidelity loss source 라는 평가 결과 정합 — Researcher 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적 evidence — synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope drift 만성 (CFP-758) + unverified-self-write-claim super-class 5 + DesignReviewPL cross-PL false-negative (CFP-906) — ADR-045 §D-9 pattern_count ≥ 6 ≫ threshold 2 escalation 정합. minimal path 정합 — Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널. Wave 1 = behavioral mandate (PL return 직후 reverse summary + Orchestrator divergence detection trigger) — Wave 2 mechanical lint + DialogFidelityAgent runtime hook 확장 = 별 CFP carrier (deferred-followup). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-15 + §결정 16 (CFP-1104 Amendment 5) 모두 보존, is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용. paired sibling Amendment = ADR-082 Amendment 5 (lane PL spawn prompt user-utterance verbatim anchor, 동일 CFP-1110 carrier — disjoint axis 정합, 본 ADR = return-time output gate / ADR-082 = write-time input anchor). collision rebase 정합 — CFP-1104 Amendment 5 mid-flight merge 후 본 CFP-1110 amendment_id 5 → 6 정정 + §결정 16 → 17 rename.
 - file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
   word: 별
-  content: | Wave 3 (DialogFidelityAgent runtime hook 확장) | post_lane_return anchor 실 runtime invocation (현 SessionStart hook + 3-anchor 외 4번째 anchor 자동 spawn) | DialogFidelityAgent SKILL.md runtime wire + codeforge-pmo lane plugin (DialogFidelityAgent owner) sibling sync (ADR-010 정합) | 별 cross-repo CFP carrier (codeforge-pmo plugin) |
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: | dirty tree abort 정확성 | — | regression test (별 CFP scope) |
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
-  content: | dirty tree | abort + 사용자 보고 (safe direction). opt-in flag 별 follow-up | Researcher Unknown #3 + InfraOperationalArch §7.4.5 env containment consult |
-- file: archive/adr/ADR-071-orchestrator-user-dialog-convergence.md
-  word: 별
   content: 무손상 invariant — frame mode 4 step(§결정 1) / Layer 1-4 cognitive enum(§결정 3) / sub-mechanism 2 종(§결정 4) / §결정 2(c) richness(3 줄 제약 거부·길이 자유·배경 포함) / 3 touchpoint frequency-richness(§결정 15) / ask-trigger 3종(§결정 20) / skip-offer 금지(§결정 21) / 5번째 cognitive layer 신설 금지 invariant 전부 보존 (§결정 22 = 기존 §결정 15/20 의 전환 지점 적용 강화, cognitive layer·touchpoint·trigger enum count 전부 불변). third strengthen-direction amendment(Amendment 11/12 에 이음). doc+hook carrier — D1 doc 명시 + D2 reminder hook(skip-offer 동형, mechanical_enforcement_actions[] reminder-only precedent 정합 — 별 action entry 불요). is_transitional=false 보존, 해소 기준 무변경.
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: - #822 §1 = skill (external claude-plugins-official) — defer (별 upstream PR)
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: - **#729 future Amendment 4 disjoint 영역**: plugin-codeforge#729 (ADR-073 "Amendment 1" title 표기 — 슬롯 충돌, Amendment 4 로 재배정 의무, ContinuityAgent CRITICAL 발견). Glob false negative P1 영역 — 본 Amendment 3 self-ownership verify 3-tuple 영역과 section disjoint 보장 (Amendment 4 = 별 §결정 영역).
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: - **Amendment 10** (): cross-repo label state mutation. 본 Amd 11 = spawn-time SHA-anchor (intra-repo git layer, not cross-repo label state). label state ↔ SHA pin disjoint, 양 layer 별 sub-domain.
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: 5번째 item 확장 = 별 CFP carrier 의무 (ADR-064 §결정 5 CFP scope unitary carve-out).
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: ADR-060 carrier = 위 registry-edit 의 inline provenance 주석 () 으로 충분 — 별 ADR-060 Amendment 불요 (registry 는 ADR-060 framework 의 데이터, 정책 변경 0).
 - file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
   word: 별
   content: scope: "truth-correction — Amendment 9 (CFP-1384) 의 mechanical wire active 주장 중 **PR-time workflow 축**(§결정 표의 PR-time workflow 행 + §동기의 mechanical-wire-active 서술 + §결정 표의 evidence-checks-registry entry 신설 행[status:Active·auto_blocking]; drift-proof section anchor — raw-line 미사용) 을 evidence-backed 현실로 정정. #1972 (017926df de-bloat, 'wrapper 자기검증 전용 CI 93개 blanket 삭제') 가 workflow YAML 2-root 를 삭제해 PR-time workflow 축이 실존하지 않으며, EC-5 ( L152-156 feature-branch silent-skip) + actions/checkout fresh-checkout 불변 (fetch-depth:1 / clean:true) 로 인해 PR-time CI 는 로컬 main staleness 의 유효 검출 표면이 **구조적으로 부재**(near-vacuous). 따라서 workflow 복원(①)은 anti-hollow (ADR-119) 저촉. 3택(복원/reconcile-정정/폐기) 중 **② reconcile-정정** 채택: registry entry 를 (dangling→null) + (INV-REG-1 강제력↔표면 정합 — hook/local 단일 live 표면 반영) + desc de-stale + 마커 로 정산. LIVE SessionStart hook (로컬 staleness 검출 유효 표면) 은 무손상 유지 → 검사 자체는 폐기 아님. 본 Amendment 는 Amendment 9 record 의 workflow-축 주장만 정정(hook/script/registry-declarative 축 무변경) — 강화/약화 아닌 truth-correction (aspirational auto_blocking 라벨 → 실 tier advisory 로 정직화, ratchet 방향성 무관 record 정합). dangling 참조 3곳 정산: (a) evidence-checks-registry.yaml L2003 workflow 필드 → null (Phase 2 구현 lane) / (b) deferred-followup-baseline.yaml L14-15 absent_axes → regen drop (Phase 2) / (c) 본 ADR §결정 표 PR-time workflow 행 inline SUPERSEDED 마커 (Phase 1 본 carrier). ADR-060 carrier = registry-edit 인라인 provenance (별 ADR 불요). hollow-carrier gap (② 하 workflow 미복원으로 vacuous-path 구조적 불가) = 관찰됨·미조치 (3문 게이트 #1 실패 — DEFER, follow-up 미발의)."
@@ -796,45 +286,15 @@ grandfathered_violations:
 - file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
   word: 별
   content: scope: "§결정 1 expansion — transition trigger enum 11번째 entry 추가 (closed-set ratchet 강화, Amendment 2/3/5/6/7/8/10/11 §결정 1-A precedent 답습). Sub-CFP B of CFP-1389 — paired sibling CFP-1437 (Sub-CFP A) 의 **reactive complement** (Sub-CFP A = preventive pre-spawn time / Sub-CFP B = reactive mid-spawn time). chief author / deputy / 4-tuple sub-tuple spawn-internal periodic check 영역 — 작업 중간 (예: 매 N file edit 또는 매 Edit/Write tool 호출 후) + 으로 spawn 시점 PRE-SPAWN-ORIGIN-MAIN-SHA 와 비교 drift 감지 의무. drift threshold (≥ N commits behind) 도달 시 flag 와 함께 Orchestrator 에 RETURN — Orchestrator 가 (a) fresh pin 으로 re-spawn / (b) fast-fail / (c) escalate 결정. CFP-1336 9+ collisions evidence preventive (Sub-CFP A) + reactive (Sub-CFP B) 2-layer defense forcing function 완결. 본 Amendment 는 §결정 1-11 본문 + Amendment 1+2+3+4+5+6+7+8+9+10+11 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. closed_enum: open_extension:false — 12번째 trigger 추가 시 Amendment 강화 방향만. evidence-checks-registry warning-tier entry 신설 = mechanical wire Wave 2 (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence precedent 답습). paired sibling ADR-082 Amendment 16 §결정 1 layer 1 sub-scope (1-F) spawn-internal periodic origin/main fetch + return early protocol (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1436 carrier). 본 Amendment 12 = mid-spawn time layer 영역 (chief author / deputy / sub-tuple self-detection + return early, transition trigger ) — Amendment 11 spawn-time SHA-anchor layer (pre-spawn time) 와 axis disjoint (mid-spawn time reactive drift detection layer, 별 sub-domain)."
-- file: archive/adr/ADR-073-orchestrator-verify-before-assert.md
-  word: 별
-  content: super-class = . **cross-repo state layer** — Amendment 7 의 git layer staleness (working tree HEAD vs origin/main divergence) + Amendment 8 의 auth layer staleness (MCP token TTL) 와 axis disjoint (label state ↔ git ↔ auth 3 layer disjoint, 별 staleness sub-domain).
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: CFP-1617 신규 sub-class (pattern_count 1, threshold 2 도달 시 별 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry sub-class 와 disjoint (token expiry = 일시적 / MCP disconnect = 세션 영구 영향). 본 sub-pattern 발생 시 §결정 10.2 3-source AND honest reporting 의무 즉시 발효 (별 §결정 활성 전 §결정 10 cover 영역).
 - file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
   word: 별
   content: amendment_summary: "§결정 10 신설 — partial-completion-cascade evidence-gated ratchet (pattern_count 3 reach, ADR-045 §D-9 threshold). cascade carrier (parent → child → grandchild 3-level) 영역에서 §결정 3 Amendment 3 result fidelity 의 3-source AND honest reporting (commit message + PR body + Issue close comment) 의무 확장. silent SUCCESS false claim 차단 scope = single transaction → cascade carrier propagation. evidence (pattern_count 3): CFP-1584 (Sub-A Phase 2, 7 of 20 partial) → CFP-1617 (Step 0 yaml schema only, Confluence push 0) → CFP-1641 (17 page MCP-disconnect deferred carrier). sub-pattern (CFP-1617 신규 sub-class, pattern_count 1 — threshold 2 도달 시 별 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry 와 disjoint sub-class. mechanical_enforcement_actions [] declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습, Wave 1 declarative). 후속 pattern_count 추가 reach 시 mechanical wire ( warning tier evidence-check-registry entry 후보). is_transitional Sunsetted 영역의 historical record Amendment (carrier-preserved sunset 무영향 — 강화 방향만, ADR-097 §결정 3 + ADR-058 §결정 5 정합). PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937)."
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: | **scripts/ (workflow_dependency_closure)** | (영역 1 ) 안 block 의 의존 / closure | **bundled_with_referencing_workflow** — 본 영역 자체는 별 mirror target 아님 (영역 1 byte_identical_mirror 의 atomic bundle 단위로 동반). closure resolver () 가 wholesale_mirror 진입 전 dependency closure resolve + missing 시 fail-closed (Amendment 2 / CFP-898 — Wave 4 sub-Epic CFP-858 S1 carrier. reconcile-protocol-v1 v1.7 §4.3 (i) trigger + §4.11 block 동반. ADR-064 §self-application ratchet 강화 only) |
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: | Story-2 (별 CFP) | runtime — UpgradeAgent multi-channel dispatch + CLI + channel-drift-detection workflow | Story-1 merge 후 sequential prerequisite |
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: | Story-3 (별 CFP) | ProductionEvidenceDeputy canary tier activation + IntegrationTestAgent Epic-level reactivation | Live touching = TRUE (canary tier production cutover) |
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: | Story-4 (별 CFP) | promotion criteria quantitative declare + canary coord + gate:channel-*-promotion label scheme | Story-1+2+3 merge 후 |
-- file: archive/adr/ADR-076-declarative-reconciliation-upgrade.md
-  word: 별
-  content: | Story-5 (별 CFP) | downgrade invariant declarative carrier + Wave 4 sub-Epic #1 close + retro | sequential terminus |
-- file: archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md
-  word: 별
-  content: - **"trigger origin 분류 추가" frame (핵심 — 약화 오독 차단)**: 순수 확정(내용 무변경)은 **요구 입력 변경 0** 이므로 §결정 1 value-equality skip 비차용 invariant 의 보호 대상 밖(clarification 답변 class 밖)이다 (). 따라서 본 Amendment 는 §결정 1(value-equality skip 비차용) 을 **약화하지 않는다** — value-equality skip 을 도입하는 것이 아니라, 애초에 clarification 답변이 아닌 event(순수 확정)를 별 origin 으로 분류하는 것이다. §결정 9 ratchet 도 약화하지 않는다(무조건 트리거는 clarification 답변 origin 에서 그대로 유지). **예외 신설이 아니라 origin taxonomy 확장** — 이 frame 이 아니면 value-equality skip 도입(§결정 1 약화)이나 게이트 재도입(§결정 9 약화)으로 오독될 수 있으므로 명문화한다.
 - file: archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md
   word: 별
   content: 2. §10 FIX Ledger (품질 게이트 layer) — lane별 max 3 (ADR-067)
-- file: archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md
-  word: 별
-  content: | (§결정 7, 기존) | ADR-052 Amendment 1 A4 Touchpoint #4 divergence | ADR-052 메커니즘 (별 축) |
 - file: archive/adr/ADR-078-living-architecture-doc.md
   word: 별
   content: ### 대안 4 — Change Plan 본문 안에 architecture diff 통합 (별 doc type X)
-- file: archive/adr/ADR-078-living-architecture-doc.md
-  word: 별
-  content: **open_extension: false closed-enum invariant**: 5-anchor 확장 (예: arc42 §6 Runtime View / arc42 §8 Crosscutting Concepts 추가) 시 별 CFP carrier 의무. 본 Amendment 2 = 5-anchor 박제 (사용자 발화 "한눈에 보기 좋게 정리하는 시스템 현황 section" 의 mechanism 정합 — 추가 anchor 시 "한눈" reading cost ↑).
 - file: archive/adr/ADR-078-living-architecture-doc.md
   word: 별
   content: **거절 사유**: Change Plan = Story별 변경 델타 = Story key 종속. 본 ADR core invariant = Story key 독립 누적 SSOT. 도메인 mismatch — Change Plan 누적 read 시 N Story 후 unbounded read cost.
@@ -843,115 +303,16 @@ grandfathered_violations:
   content: - (ADR-041 / CFP-7) = Story별 **변경 델타** SSOT (1회, Story key 종속)
 - file: archive/adr/ADR-078-living-architecture-doc.md
   word: 별
-  content: - 강화 방향 예시 (sunset_justification 면제): 5-anchor 확장 (별 CFP carrier 의무) / per-Epic 현행화 granularity 강화 (Phase 1 PR-level) / Confluence mirror authoritative 격상 강화 / diagram-as-code 의무 강화
-- file: archive/adr/ADR-078-living-architecture-doc.md
-  word: 별
   content: codeforge 설계 레인 산출물은 현재 **Story별 변경분(Change Plan)** + **결정 단위(ADR)** 뿐. *전체 구조를 담은·Story key 독립적인·영속 설계 문서* 가 doc 분류 (epic_results / story_file / adr / change_plan / retro / domain_knowledge / spec / plan / decision_packet / inter_plugin_contract / evidence_check_registry / upgrade_events / kpi_artifact) **어디에도 없음**. 따라서 요구사항 레인의 design-reading 에이전트(Epic A, ADR-077)나 인간이 "기존 설계"를 알려면 코드 / ADR / change-plan 을 직접 훑어야 한다.
-- file: archive/adr/ADR-078-living-architecture-doc.md
-  word: 별
-  content: | **S3.2** | (별 CFP carrier) | ADR-108 신설 — Confluence mirror sync mechanism 결정 영역 (ADR-103 위에서 Living Architecture page-specific sync 패턴) | S3.1 state dependency (본 Amendment 2 선행) |
-- file: archive/adr/ADR-078-living-architecture-doc.md
-  word: 별
-  content: | **S3.4** | (별 CFP carrier) | ArchitectAnalystAgent dual-read path 실 wire (codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 + git primary + Confluence fallback) | S3.1+S3.3 state dependency (schema + seed 선행) |
 - file: archive/adr/ADR-078-living-architecture-doc.md
   word: 별
   content: | | Story별 변경 델타 | before/after delta vs after only (누적 현재 상태) |
 - file: archive/adr/ADR-078-living-architecture-doc.md
   word: 별
   content: 형식으로 Story key 별 architecture doc 작성.
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 10-A) **D6 또는 D10 rubric 재사용 (D11 신설 회피)** — ground truth source disjoint (review verdict / merge-block impact ↔ hollow-gate 영향). review/merge severity 는 *산출물 결함* 축, mutation 은 *detector 검증 갭* 축. 별 §결정 D11 채택 (D6/D10 무손상).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 12-E) **wall-clock ceiling mechanical lint (dispatch 발화 presence-grep) inline 본 Amendment 12** (Wave 1 + Wave 2 단일 통합) — ADR-081 Amd6-E 예고 패턴 정합상 Wave 1 declarative (본 §결정 D14 + playbook + agent md prefix) + Wave 2 mechanical (presence-grep lint script + workflow + bats) 분리. 단 CFP-2545 는 dogfood wrapper-self 라 Wave 1/Wave 2 를 Phase 1 문서 PR + Phase 2 구현 PR 로 분리 (ADR-127 Phase 1/2 PR 분리 무조건) — 별 CFP 분리 아닌 동일 Story Phase 분리 채택 (mechanical lint = Phase 2 carrier).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 5-B) **reactive 영역 mechanical lint inline 본 Amendment 5** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 채택 (CFP-963 Phase 1+2 패턴 답습).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 6-E) **dispatch file-redirect invocation mechanical lint inline 본 Amendment 6** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 §결정 D8) + Wave 2 mechanical (dispatch 발화 안 presence-grep lint) 별 CFP 분리 채택 — ADR-081 §D5 declaration-only retain precedent 정합.
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 8-E) **fetch directive presence-grep mechanical lint inline 본 Amendment 8** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 §결정 D9) + Wave 2 mechanical (dispatch 발화 안 block presence-grep lint + value match + bats fixture + workflow + label entry + evidence-checks-registry entry) 별 CFP 분리 채택 — ADR-081 §D5 declaration-only retain precedent 정합 + CFP-1384 sibling Wave 2 split pattern 답습.
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - (Amendment 9-C) **D6 rubric 자체를 merge-time 포함하도록 확장 (D10 신설 회피)** — ground truth source 가 disjoint (review verdict ↔ merge-block impact). D6 표 확장 시 review-lane verdict 우선순위 표가 merge-time 에 적용 불능 (닫힘) → 의미 mismatch. 별 §결정 D10 채택 (D6 무손상).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - **grace window 종료 시 별 follow-up Amendment 5 reservation**: boolean field name 폐기 + lint hard-fail 승격. 본 Amendment 4 = 4-tier enum 도입만 (CFP scope unitary ADR-064 §결정 1 정합 — "경량 → full" 단계 차단).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: - declaration-only retain invariant **유지** (§D5 precedent — mechanical injection layer 부재, presence-grep warning lint 은 ADR-060 framework 의 별 entry 영역, CFP-722 / CFP-841 선례 동형 — 보완 관계 = 상충 0)
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: = Amendment 4 의 entry retain (변경 0건). dispatch file-redirect invocation 의 mechanical lint (예: dispatch 발화 안 형식 presence-grep) = 별 follow-up CFP carrier (Wave 2, ADR-064 §결정 1 unitary). 본 Amendment 6 = declaration-only normative anchor only — ADR-070 §D5 → ADR-082 §결정 6 → ADR-081 §D5/§D6.e → ADR-070 Amd 5 → ADR-081 Amd 5 declaration-only retain precedent chain 7번째 instance.
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: = Amendment 4 의 entry retain (변경 0건). §결정 D9 fetch directive presence-grep mechanical lint (예: dispatch 발화 안 block presence-grep + value match) = 별 follow-up CFP carrier (Wave 2, ADR-064 §결정 1 unitary). 본 Amendment 8 = declaration-only normative anchor only — ADR-070 §D5 → ADR-082 §결정 6 → ADR-081 §D5/§D6.e → ADR-070 Amd 5 → ADR-081 Amd 5 → ADR-081 Amd 6 → ADR-081 Amd 7 → 본 Amd 8 declaration-only retain precedent chain 8번째 instance.
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: lint (Amendment 4 의 entry, evidence-checks-registry entry SSOT) 의 mechanical detection scope = proactive 6 touchpoint spawn prompt 한정 (CFP-963 Story §6.3 OOS row L374 derived default 정합) — reactive 영역 mechanical lint 확장 = 별 CFP carrier 분리 (Wave 2). ADR-064 §결정 1 (CFP scope unitary) 정합. 본 Amendment 5 = 변경 0건 (Amendment 4 entry retain, scope expansion = Wave 2 carrier).
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: scope: "§결정 D1.A-D 4 mandatory boilerplate field 의 적용 scope codify — proactive 6 touchpoint scope 한정 (codeforge 강제 invariant) explicit anchor + reactive 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) best-effort 가이드 anchor 확장 적용. 기존 D1.A (dogfood-out Story path) + D1.B (current lane / phase) + D1.C (sandbox_outside_paths) + D1.D () 4 mandatory field 의미 변경 0건 — proactive 영역 codeforge 강제 invariant 정합 보존. 추가 SSOT: reactive 영역 4 field 채택 = 사용자 자율 선택 (codeforge 강제 0 invariant 보존, ADR-070 D1 L110 정합). ADR-052 Amendment 9 + ADR-070 Amendment 5 chain — Codex TP#4 CX-963 deferred scope (CFP-963 §6.3 OOS + §3 EC-2) closure. D1.A-D / D2 / D3 / D4 / D5 / D6 / D7 본문 의미 변경 0건 — proactive/reactive scope 적용 영역 표 본문 강화 only (D1 sub-section new row). 변경 0건 (Amendment 4 의 entry retain, scope expansion = Wave 2 별 CFP carrier 분리 ADR-064 §결정 1 unitary 정합). declaration-only retain invariant 유지 (§D5 precedent — mechanical injection layer 부재 + Wave 2 reactive mechanical lint = 별 CFP carrier). is_transitional false 유지 (permanent governance, ratchet 강화 방향 only — proactive 영역 codeforge 강제 invariant + reactive 영역 사용자 책임 영역 invariant 양립 보존)."
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: scope: "§결정 D1.D body 확장 — boolean toggle → strict ratchet-up codify. 4-tier enum value SSOT: (file-IO-only sandbox 영역 verify 완결) / (own-repo file-IO + own-repo git fetch 한정) / (external HTTP / cross-repo gh api / git fetch cross-repo 허용 — 기존 boolean true 의 broad path) / (Codex CLI 미가용 / sandbox network-block 확정 → Orchestrator substitution path activate, boolean equivalent 부재 — strict ratchet-up). Boolean → enum backward-compat mapping (advisory grace): / (default broad path) / (narrower variant explicit declare). Boolean legacy grace window = open-ended until ratchet trigger (declarative-only : enum-only window — ADR-060 §결정 6(b) default precedent-aligned per ADR-068 I-5 dimensional empirical grounding / OR explicit user/PMO escalation — manual proposal on trigger reach, auto-firing 부재). 본 Amendment 4 = enum 도입; boolean 폐기 = 별 follow-up Amendment 5 reservation. unconditional guard placement (ADR-068 I-3): boolean grace = unconditional advisory (lint emits comment but exits 0 unconditionally during grace window — no lint flag gating). declaration-only retain invariant **유지** (§D5 precedent — mechanical injection layer 부재). 단 신설: warning-tier evidence-checks-registry entry binding (ADR-040 Amendment 3 §결정 7.A 의무 — declaration ≠ presence check 영역 분리, CFP-722 story-section-ownership / CFP-841 corpus-claim-verify precedent 동형). D1.A-C 본문 의미 변경 0건. D6/D7 영역 영향 0. is_transitional false 유지 (permanent governance)."
-- file: archive/adr/ADR-081-codex-worker-prompt-boilerplate.md
-  word: 별
-  content: 본 Wave 2 carrier = CFP-1003 retro 발의 시점 (또는 사용자 directive 시점) 별 CFP 분리.
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: ### §결정 8 — per-area 분할 (scope a/b/c/d 각 별 ADR) 거부 (scope 외)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **3-block parity authoring (Amendment 32 self)** = 정확 (3 block 전부 amendment_id 31 보유). 단 ADR-082 의 **pre-existing genuine drift** (amendments 8-13/18/20-21 body section 부재 + amendment_log[] entry 13 부재) 는 narrow 후에도 dual-block ADR-082 검사에서 정당 surface 한다 — 이는 #1735 'ADR-082-only genuine drift: backfill vs accept' 별 smaller 결정 (본 CFP scope 외, do NOT address here). Amendment 32 자체의 entry 는 모든 block 에 parity 보유하므로 Amendment 32 row 가 lint warning 을 추가하지 않음. (META self-application — §결정 10.D 14th applied case). Amendment 17 §결정 1-G strict pre-reservation 7th applied case (ADR-RESERVATION row pre-append + commit 7926974d, ).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **META-ROOT pattern_count 1** (CFP-1025 bootstrap-labels.sh:53-55): codify rationale forward-prevention (META-ROOT severity = mis-diagnosis 전파 chain risk, recurrence ≥ 2 wait 시 P1 propagation 영역 — CFP-1006 mis-diagnosis lineage verified). codeforge-wide grep audit = follow-up CFP carrier (별 sweep). ADR-058 §결정 5 forward-prevention 영역 적격, ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 면제.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (CodeReviewPL audit dedicated points: tautology smell grep + resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (RequirementsPL §2.1 verified state table lint + retro empirical-verify-required marker) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **Wave 2 = actual mechanical wire** (Phase 2 PR 별 sub-carrier — DeveloperPL + QADev spawn):
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **known-limitation**: 본 §결정 9 = behavioral directive (Wave 1). Wave 2 mechanical lint ( script + workflow + bats fixture) = CFP-1216 Phase 2 (별 sub-carrier 로 land 완료, 2026-05-22 KST). **Amendment 7 (CFP-1312)** 가 Wave 2 lint Check (b) coverage gap (forward only → 양방향) 보강 — 양방향 비교 + / 출력 format 분리 + self-reference exemption (ADR file 자체) + templates/** path filter. frontmatter 의 entry status warning retain (scope expand only, tier 변경 0).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **scope**: 본 §결정 9 는 §결정 2(b) ("ArchitectAgent §3 / §7 corpus enumeration + ADR frontmatter value 인용 시 verify") 의 sub-specialization 이다. §결정 2(b) 가 이미 "ADR frontmatter value 인용 시 verify" 를 포괄하나, amendment 번호 citation 이 plan-time (β-issue / spec / change-plan 작성 시점) 에 발생하는 점 — 즉 §결정 2(b) 의 lane agent write-time 보다 이른 시점 — 을 명시적으로 언급하기 위해 별 결정으로 codify.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **결정**: §결정 1 layer 1 sub-scope (1-J) 신설 — cross-repo worktree target authority verify mandate. 4-tuple primitive (chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전): (a) 실행하여 expected repo (wrapper plugin-codeforge vs internal-docs) 와 actual remote URL 일치 verify, mismatch 시 write 차단 + sentinel 발화 / (b) spawn prompt 안 field 의무 명시 (write-target authority anchor block, enum / / / ) / (c) cross-repo 작업 sequence 시 명시적 worktree switch 의무 — wrapper repo worktree 안에서 internal-docs PR 생성 시도 금지 (각 repo 별 worktree 분리, ADR-040 worktree convention 정합) / (d) annotation 의무.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **영향**: ADR-082 super-class scope expansion = Amendment 8 (ArchitectAgent write-time discipline §결정 10) + 본 Amendment 9 (Code-level write-time discipline §결정 11) layer 양 layer 분할 (governance write-time ↔ code write-time disjoint axis). Wave 1 = declaration-only (2 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (CodeReviewPL audit dedicated points — tautology smell grep + resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **영향**: ADR-082 super-class scope expansion to GitOps coordination layer (write-time + retro-time + GitOps coordination 3-axis 통합). Wave 1 = declaration-only behavioral mandate. Wave 2 mechanical wire = 별 sub-carrier (deferred-followup).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **영향**: ADR-082 super-class scope expansion to retro-emission batch closure workflow axis (write-time + retro-time + GitOps coordination + retro batch closure layer 4-axis 통합). Wave 1 = declaration-only behavioral mandate (workflow pattern codify). Wave 2 mechanical wire = 별 sub-carrier (deferred-followup).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **영향**: ADR-082 §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate 가 ArchitectAgent chief author write-time discipline 4 sub-scope 영역으로 확장 (forbid scope 축소 0건). Wave 1 = declaration-only (4 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (DesignReviewPL audit dedicated points + ArchitectAgent self-discipline grep self-check) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **영향**: write-time (Amendment 1-9) + retro-time empirical verify (본 Amendment 10 §결정 12.B) 양 lifecycle expansion (forbid scope 축소 0건). Wave 1 = declaration-only behavioral mandate. Wave 2 mechanical wire (RequirementsPL §2.1 lint + retro empirical-verify-required marker) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: **후속 carrier 발의 의무 — Amendment 1 (CFP-841) 충족**: ~~scope (d) verify source 의 mechanical-queryable registry 화 (cross-plugin ownership registry + lint) = 별 후속 CFP carrier 분리 발의 (escalation_action , CFP-776 merge 후 발의 권장). scope (a) corpus annotation mechanical lint (ADR-068 I-5 패턴 재사용) = 동일 후속 carrier 또는 별 CFP 분리 — brainstorm 단계 결정.~~ → **CFP-841 단일 통합 carrier 로 충족** (brainstorm 단계 결정 = scope (a) + scope (d) 단일 carrier, ADR-064 §결정 1 unitary scope). 본 §결정 6 = Wave 1 behavioral mandate + Wave 2 (Amendment 1) deferred-followup mechanical declaration. actual lint script + workflow wire = CFP-841 Phase 2 carrier (Change Plan §3 SSOT).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - #822 §1 = skill (external claude-plugins-official) — defer (별 upstream PR)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: - (CHANGELOG.md pre-existing 'ratchet' / 'pin' / '별' standalone advisory)
@@ -960,58 +321,10 @@ grandfathered_violations:
   content: - (discriminating test — S2 동형, fact category별 RED/GREEN 쌍 + FP guard 4종 + PER_BLOCK_SCAN_CAP=50 + window=5 경계 + empty PASS + setup exit2 + §B 1-W-잔재 message-assert + §C fenced 빈줄 fragmentation FP 경계)
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
-  content: - **#1735 narrows**: dual-block ADR 만 policing → ADR-082 = 유일 genuine drift dual-block ADR. #1735 = 'ADR-082-only genuine drift: backfill vs accept' 별 smaller 결정 (본 CFP 미해결, separate carrier).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **(D-A) scope (e) 본 ADR 흡수** — disjoint 관심사 (fix-event-v1 schema 변경 동반 사용자 가치 판단 영역), CFP-scope-unitary 위반 → §결정 7 별 CFP 분리.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **(D-B) per-area 분할 (scope a/b/c/d 각 별 ADR)** — super-class anchor 4 ADR 분절, ADR-045 §D-9 pattern aggregation 약화 → §결정 8 단일 super-class 거부.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **(c) RequirementsPL spawn prompt template** mandate (canonical-side repo) — cross-repo sibling sync 동반 가치 판단 영역, CFP-1002 precedent 정합 (wrapper-only Story 우선, cross-repo sibling sync 후순위 ratchet) → 별 canonical CFP carrier.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **1-W** (CFP-1842) = Orchestrator-side spawn prompt fact (Orchestrator→subagent handoff) — 별 entry, 별 bypass label (firsthand: label-registry-v2.md L1942 등록 [verified]).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **Option A (새 ADR-NNN 신설)**: 새 ADR 신설 — verify axis disjoint axis 신설 (Amd 23 1-L upstream-inherited input axis 와 별 ADR file). **REJECT 사유**: super-class fragmentation 위험 (ADR-082 already permanent governance anchor verify-before-trust 4-layer 의 internal lane agent self-write super-class SSOT) + governance hygiene 위배 (Amd 23 Option B precedent 답습 정합 — super-class scope expansion 우선).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **Option A (새 ADR-NNN 신설)**: 새 ADR 신설 — verify axis disjoint axis 신설 (Amd 5 1-C user-utterance verbatim 형식 axis 와 별 ADR file). **REJECT 사유**: super-class fragmentation 위험 (ADR-082 already permanent governance anchor verify-before-trust 4-layer 의 internal lane agent self-write super-class SSOT) + governance hygiene 위배.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **Option B (ADR-082 Amendment 25 sub-scope 1-N append, Wave 1 declarative SSOT + Wave 2 mechanical wire 별 sub-carrier)** — **채택**: super-class 안 sub-scope (1-N) Wave 2 wire SSOT codify (1-K Wave 1 mandate 의 Wave 2 enforce wire). axis 정합 명확 (declaration mandate ↔ mechanical enforcement scope disjoint complement layered axis). Wave 1 → Wave 2 split precedent CFP-1437/1436/1435/1559/1578/1601/1590/1589 11번째 instance 답습. ratchet 강화 방향 (declarative → mechanical enforce).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **Option B (ADR-082 Amendment 27 sub-scope 1-P append, Wave 1 declarative SSOT + Wave 2 mechanical wire 별 sub-carrier)** — **채택**: super-class 안 sub-scope (1-P) Wave 2 wire SSOT codify (1-O Wave 1 mandate 의 Wave 2 enforce wire). axis 정합 명확 (declaration mandate ↔ mechanical enforcement scope disjoint complement layered axis, 1-K↔1-N pair pattern 답습). Wave 1 → Wave 2 split precedent CFP-1437/1436/1435/1559/1578/1601/1590/1589/1612/1637 13번째 instance 답습. ratchet 강화 방향 (declarative → mechanical enforce, 15 → 16 sub-scope).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **Wave 2 mechanical lint** ( script + workflow + bats fixture) = 별 CFP-1198 Phase 2 sub-carrier (deferred-followup).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **codeforge-design lane fan-out 축소** (chief + 5 deputy + 4-tuple = 10+ agent → 핵심 4-5 축소) — fidelity vs coverage trade, 별 가치 판단 영역 → 별 CFP carrier (brainstorm 단계 결정).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - **보안 통제 신뢰 금지 (T5 수용)**: 위조로 우회 = presence-only lint 본질적 한계. warning-tier advisory 라 보안 게이트 아님. blocking 승격 시 위조 false-PASS 가 구조적 가능 → "보안 통제로 신뢰 금지" (blocking 승격 = 별 follow-up CFP MUST, pattern_count >= 5 재발 trigger).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - 1-U (1-T dual-block lint Wave 2 wire) ↔ 1-V: 1-U = sub-scope 1-T mechanical lint / 1-V = 별 sub-scope 신설 declarative + Wave 2 wire
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - ADR-060 §결정 5 — warning mode first wire (presence-only, blocking 승격 별 CFP).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
   content: - CFP-1612 # Amendment 25 carrier (§결정 1 layer 1 sub-scope 1-N 신설 — numeric claim write-time verify Wave 2 mechanical enforcement wire. Issue #1612 HIGH FU-A from CFP-1601 retro carrier — 1-K Amd 22 Wave 1 declaration-only mandate 의 mechanical lint enforce. 4-tuple primitive: Python SSOT lint per ADR-061 + 6 dimension detection logic + FP guard 4종 + workflow + bypass + evidence-checks-registry warning-tier initial registration. Wave 1 본 Amendment = declarative SSOT (ADR Amendment + ADR-RESERVATION + evidence-checks-registry + label-registry-v2 MINOR + MANIFEST + CHANGELOG); Wave 2 별 sub-carrier = actual script/workflow/bats wire. precedent CFP-1437/1436/1435/1559/1578/1601/1590/1589 Wave 1→Wave 2 split 11번째 instance. META-self-applied (§결정 10.D 20th + Amendment 17 §결정 1-G 6th + Amendment 22 §결정 1-K 1st applied for Wave 2 wire carrier + Amendment 23 §결정 1-L 1st applied recursive dogfooding mid-flight collision recovery 3rd applied after CFP-FU-A Amd 19 + CFP-1590 Amd 23 — initial spawn pinned origin/main f2e78b16 + amendments[] max=23 → CFP-1589 Amd 24+1-M merge 후 base shift to 5b5c9f7b + max=24 → renumber Amd 24→25 + sub-scope 1-M→1-N on rebase).
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: - CFP-2383 # Amendment 37 — sub-scope 1-Z (sub-scope 1-L Amd 23 CFP-1590 Wave 1 declaration-only → Wave 2 mechanical wire SSOT). Epic CFP-2380 S3. PR-body-proxy static presence-only lint = S2 issue-body-claim-pre-screen 구조 + 삭제된 1-W source C1-C5 PATTERNS 이식 + tier-downgrade-guard.yml PR-event trigger. warning-tier ([verified-via: 위조 false-PASS 구조적 가능 → 보안 통제 신뢰 금지). 동인 = CFP-2380 S1 deferred-followup-reconcile FLAG 2건 중 spawn-prompt-fact-verify 3/3 auto_blocking (CFP-2383 해소 유일 대상; 별 1건 stale-local-main 8/3 = scope 외). Phase 1 = ADR + mechanical_enforcement_actions[] flip / Phase 2 = 실 script+workflow+test+registry flip+label-registry MINOR 별 구현 lane. deferral 2건 retain (retro-fact-verify-mandate Amd 31/1-T + fix-loop-reverify-mandate Amd 29/1-R) + #2166 부분 close. numeric-claim 1-K↔1-N / S2 Amd 20 precedent 답습.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - PMOAgent false-positive tally 별 axis carrier = OOS (Story §6.2 OOS-1, 별 ADR escalation candidate).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - scope 2(e) = §결정 7 별 CFP 분리 결정 유지 (fix-event-v1 schema 동반 가치 판단 영역)
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: - templates/github-workflows/cross-repo-label-sync.yml # Amendment 14 동반 — bidirectional sync workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
@@ -1023,64 +336,13 @@ grandfathered_violations:
   content: - templates/github-workflows/spawn-prompt-head-pin-check.yml # Amendment 15 동반 — spawn prompt SHA-anchor write-time verify workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
-  content: - tier = warning(ADR-060 §결정5, continue-on-error, PR merge 무차단). **blocking 승격**(FP 실측 = ADR-060 evidence-gate 통과 후) + 정책문서 표면 over-claim sweep + consumer 전파 = **별 named carrier**( 금지 — deferral-carrier-declared no-TBD lint 대상).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - — amendment-slot pre-reservation strict claim workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - — bidirectional sync workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - — entry warning-tier deferred-followup (Phase 1 declare / Phase 2 actual wire 별 sub-carrier)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - — spawn prompt SHA-anchor write-time verify workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - — spawn-internal periodic origin re-pin protocol workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - 후속 canonical carrier (Wave 3 cross-repo) = 별 CFP, RequirementsPL spawn prompt template mandate
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - 후속 carrier (Wave 2 mechanical lint) = 별 CFP, brainstorm 단계 결정
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: - 후속 carrier (codeforge-design lane fan-out 축소 — 가치 판단 영역) = 별 CFP, brainstorm 단계 결정
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
   content: 2. **6 dimension detection logic (Python dict SSOT)** — (i) **line count** (regex pattern e.g. + source command / line-occurrence) / (ii) **file count** (regex + source command / ) / (iii) **API count** (regex + source command / agent spawn count) / (iv) **pattern_count** (regex + source command cross-Story ADR-045 §D-9 base) / (v) **commit count** (regex + source command ) / (vi) **row count** (regex + source command yaml row / md table row / contract field). 각 dimension 별 numeric claim regex pattern + source command pattern map (Python dict SSOT 1 file).
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: 2. 4 표준 hotfix-bypass labels gh CLI 적용 (failure 영역 별):
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
-  content: 3. **cross-repo 작업 sequence 시 명시적 worktree switch 의무** — wrapper repo worktree 안에서 internal-docs PR 생성 시도 금지 (각 repo 별 worktree 분리, ADR-040 worktree convention 정합). cross-repo write 필요 시 별 worktree explicit create + cwd switch + write 의무 (single worktree 안 cross-repo write 차단).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
   content: 3. category 별 verify method 실행 (Read / Bash / git status 직접 호출)
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: 6번째 category 확장 = 별 CFP carrier (ADR-064 §결정 5 CFP scope unitary carve-out).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: 7번째 category 확장 = 별 CFP carrier (ADR-064 §결정 5 CFP scope unitary carve-out).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: ADR-082 Amendment 6 (CFP-1198, 2026-05-22 KST) 가 §결정 9 신설 + deferred-followup entry declare. CFP-1216 Phase 2 (2026-05-22 KST) 가 별 sub-carrier 로 Wave 2 mechanical lint 를 land 완료 — (Python SSOT) + (thin wrapper, ADR-061 §결정 6.A) + + (self-app) + + entry (warning tier).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: ADR-082 §결정 1 layer 1 (Orchestrator scope) + §결정 2 scope (a-d) (internal lane agent self-write scope) 의 write-time verify mandate 가 ArchitectAgent (codeforge-design chief author) 의 4 write-time discipline 영역까지 확장 적용된다. 4 sub-decisions 모두 별 axis disjoint 이며, 같은 super-class (verify-before-trust write-time semantic truth) 아래 단일 carrier 통합 (ADR-064 §결정 5 unitary 정합).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: Fix C 적용 후 lint 가 full frontmatter 를 읽으면, ADR-082 의 **body §Amendment 8-13 / 18-21 section 부재** 가 genuine drift WARNING 으로 정당 surface 한다 (해당 amendment 들은 frontmatter-only — body section 미작성). 이는 Fix C 가 의도대로 동작하는 **legitimate warning** 이며 CFP-1688 scope 외. body section backfill (또는 accept-as-historical 결정) = 별 follow-up CFP. parser-correctness bug (Fix A/B/C, in-scope) ↔ genuine body-section drift (out-of-scope) 의 명확 분리.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: Wave 1 (CFP-776) §결정 6 은 empty 를 명시적 known-limitation 으로 결정하면서 **후속 carrier 발의 의무**를 본문에 명문화했다 (scope (d) mechanical-queryable registry 화 + scope (a) corpus annotation lint = 별/동일 후속 carrier, brainstorm 단계 결정). CFP-776 retro §6 후보 1 escalation_action → 사용자 "Carrier 6+7 escalation 전체 발의" 승인 (2026-05-16 KST). brainstorm 단계 결정 = scope (a) + scope (d) **단일 통합 carrier** (ADR-064 §결정 1 unitary scope — scope (a) 만 부분 codify 시 §결정 6 rationale 2 super-class anchor 분절 위반).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: closed-set 정의: 본 6 dimension 외 numeric claim (예: timing latency / memory size / token count) 은 write-time strict mandate scope 외 ( 필요 시 ADR-082 별 Amendment 발의, ratchet 강화 방향 only).
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: note: "ADR-045 §D-9 pattern_count 2 ≥ threshold 2 Mandatory escalation 산물 (CFP-1177: ADR-027 Amendment 7 계획 → 실제 Amendment 9 stale / CFP-1179: ADR-063 Amendment 6/7 계획 → 실제 Amendment 8 stale). plan-time citation staleness 근본 원인 = target ADR frontmatter amendments: 목록 미검증 상태에서 번호 인용. §결정 2 scope (b) 의 'ADR frontmatter value 인용 시 verify' 범위가 amendment 번호 인용을 명시적으로 포함하도록 확장 — §결정 9 별도 결정으로 codify (scope (b) 의 sub-specialization). ADR-073 cross-ref: β-issue = Orchestrator-authored artifact (ADR-073 layer 1 scope) — 두 layer (ADR-073 Orchestrator-authored / ADR-082 internal lane agent self-write) 동시 적용 구조. mechanical_enforcement_actions[] 신규 entry amendment-number-frontmatter-verify deferred-followup 추가 (Phase 2 lint = 별 CFP-1198 Phase 2 sub-carrier). 본 Amendment 6 자체가 META-self-applied: 본 Amendment 번호(6) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(5)+1=6 으로 결정 (verified-via: Read ADR-082 frontmatter amendments[] 2026-05-22 KST)."
@@ -1131,18 +393,6 @@ grandfathered_violations:
   content: note: "사용자 직권 minimal path 첫 적용 (codeforge process 가 lane traversal fidelity loss source 라는 평가 결과 채택 정합 — Researcher net 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적 evidence: synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope 재확대 금지 invariant 6+ 위치 (CFP-758) + unverified-self-write-claim super-class 5. minimal path 정합: Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널. Wave 1 = behavioral mandate (lane PL spawn prompt 첫 줄 anchor block 의무) — Wave 2 mechanical lint = 별 CFP carrier (deferred-followup). sister Amendment = ADR-071 Amendment 6 (back-translation gate binding, lane return 직후 verify, CFP-1110 paired Amendment carrier)."
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
-  content: precedent: CFP-1437 (1-E pre-spawn pin) → Wave 2 CFP-1489 / CFP-1436 (1-F mid-spawn drift) → Wave 2 CFP-1500 / CFP-1435 (1-G slot reservation) → Wave 2 CFP-1497 / CFP-FU-A Amd 19 (1-I pre-spawn-prompt-finalize) → Wave 2 CFP-1502 / CFP-1559 (1-O Issue body stale-claim super-class) → Wave 2 별 sub-carrier / CFP-1578 (1-J cross-repo worktree target authority) → Wave 2 별 sub-carrier / CFP-1601 (1-K numeric claim mandate) → Wave 2 CFP-1612 (1-N) / CFP-1590 (1-L spawn prompt fact) → Wave 2 별 sub-carrier / CFP-1589 (1-M synthesis vs commit gap) → Wave 2 별 sub-carrier / CFP-1637 (1-O PR-level artifact declaration) → Wave 2 본 CFP-1647 (1-P) = 13번째 Wave 1→Wave 2 split instance.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: precedent: CFP-1437 (1-E pre-spawn pin) → Wave 2 CFP-1489 / CFP-1436 (1-F mid-spawn drift) → Wave 2 CFP-1500 / CFP-1435 (1-G slot reservation) → Wave 2 CFP-1497 / CFP-FU-A Amd 19 (1-I pre-spawn-prompt-finalize) → Wave 2 CFP-1502 / CFP-1559 (1-O Issue body stale-claim super-class) → Wave 2 별 sub-carrier / CFP-1578 (1-J cross-repo worktree target authority) → Wave 2 별 sub-carrier / CFP-1601 (1-K numeric claim mandate) → Wave 2 본 CFP-1612 = 8th carrier / CFP-1590 (1-L spawn prompt fact) → Wave 2 별 sub-carrier / CFP-1589 (1-M synthesis vs commit gap) → Wave 2 별 sub-carrier = 11번째 Wave 1→Wave 2 split instance.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-link/path 정정 FIX 명세 시 directory depth + 정정 규칙 범위 의무 필드) 는 **본 ADR scope 외 (별 CFP 분리)**. super-class write-time verify mandate (a-d) ↔ FIX 명세 depth-aware (e) = disjoint 관심사 — 전자 = write-time truth verify (behavioral) / 후자 = fix-event-v1 schema 필드 확장 (ADR-008 contract bump + ADR-010 sibling sync 동반 = 사용자 가치 판단 영역). 동일 Story 묶음 시 CFP-scope-unitary (ADR-064 §결정 1) 위반. (e) = CFP-770 §8 reservation Issue carrier (escalation_action , CFP-776 merge 후 발의 권장).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: status = Phase 1 declare (본 Amendment 6) / Phase 2 actual wire = 별 CFP-1198 Phase 2 sub-carrier (ADR-060 §결정 5 모든 신규 entry warning 시작 강제 + ADR-040 Amendment 3 self-application Wave 1→Wave 2 progression chain 정합).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
   content: status: deferred-followup # Phase 1 declare (본 Amendment 14, CFP-1336) / Phase 2 actual wire = 별 sub-carrier (cross-repo-label-sync.yml workflow runtime activation + bats fixture + bidirectional sync state lint)
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
@@ -1180,75 +430,18 @@ grandfathered_violations:
 - file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
   word: 별
   content: target_section: §결정 1 layer 1 sub-scope (1-J) # cross-repo worktree target authority verify mandate — spawn prompt 작성 또는 직접 file write 직전 worktree target authority verify-before-write 의무 (4-tuple primitive a- expected repo vs actual remote URL 일치 verify / b-spawn prompt 안 field 의무 / c-cross-repo 작업 sequence 시 명시적 worktree switch — 각 repo 별 worktree 분리 / d- annotation). 동인 = CFP-1539+CFP-1540 batch retro §4.1 #2 worktree mis-target 첫 catch carrier. ADR-013 dogfood-out internal-docs SSOT path + ADR-040 worktree convention 정합 영역 codify 부재 super-class gap closure. paired sibling = CFP-1559 Amendment 20 (Issue body stale claim pre-screen super-class, axis disjoint — content verify vs target authority verify).
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: | TC-B-TEMPLATE-EXEMPT | templates/test-fixture.md 안 인용 | PASS no [WARN] (또는 별 path exclusion) | templates/** canonical example 면제 (path filter guard 2) |
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: | Wave 3 (cross-repo, 후순위 ratchet) | RequirementsPL spawn prompt template ( — 현 , 구 repo 삭제됨 2026-06-12) explicit verify-before-trust mandate | cross-repo PR (canonical sibling sync, CFP-1002 precedent) | 별 canonical CFP carrier (wrapper-only Wave 1 우선, sibling sync 후순위 ratchet) |
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: 두 케이스 모두 공통 root cause = **plan-time citation staleness** — governance artifact 작성 전 target ADR frontmatter 목록을 Read verify 하지 않은 채 amendment 번호를 기재. 기존 §결정 2(b) ("ADR frontmatter value 인용 시 verify") 가 이 영역을 포괄하나, plan-time artifact 에 대한 명시적 언급이 없어 forcing function 으로서 약했음 — 별 §결정 9 로 명시적 codify.
-- file: archive/adr/ADR-082-write-time-self-write-verification-mandate.md
-  word: 별
-  content: 신규 entry warning-tier deferred-followup append. Wave 2 mechanical wire (workflow runtime activation + bats fixture + bidirectional sync state lint) = 별 sub-carrier 분리 (ADR-082 Wave 1 declaration-only precedent 답습 — ADR-070 D5 retain 패턴 / ADR-076 / ADR-086).
-- file: archive/adr/ADR-083-consumer-applicability-filter.md
-  word: 별
-  content: **4-way enum closed-set**: / / / . open-set 확장 (예: / 등) = 별 ADR carrier 영역 — 본 ADR scope 외.
-- file: archive/adr/ADR-083-consumer-applicability-filter.md
-  word: 별
-  content: **Signal filesystem-only invariant** (SecurityArch deputy primary recommendation): 두 signal 모두 consumer-side filesystem 안 — network call 0, gh api 0, marketplace.json membership check 0. 이유 = (a) offline-first invariant (ADR-066 PAT scope 최소화) / (b) trust boundary 명확 (filesystem-only = consumer 권한 area only, cross-repo trust 영역 0) / (c) primary signal 단일 read 비용 (file existence check) — 영역 cross-repo gh api 는 본 ADR scope 외 (별 ADR carrier).
-- file: archive/adr/ADR-083-consumer-applicability-filter.md
-  word: 별
-  content: - **강화 방향 evidence (ADR-058 §결정 5 CFP-1149 재정의 symmetric evidence-gate 정합)**: declaration-only-Wave-1 → walker apply Stage D wire active 격상 = 본 Amendment 3 = β2 audit LOSSLESS declared ↔ actual walk_plan.py 안 wire 0 match drift catch evidence-based 강화 방향 evidence. ADR-058 §결정 5 (CFP-1149 재정의 후) = "약화 차단 logic" 아니라 "약화 방향 evidence requirement" — symmetric evidence-gate. 약화 0건 (약화 발의 시 별 evidence requirement 동등 적용, 본 Amendment = 강화 방향 1급).
-- file: archive/adr/ADR-083-consumer-applicability-filter.md
-  word: 별
-  content: Epic CFP-858 (Wave 4 sub-Epic) = v1.7 §4.11 (CFP-898 S1) dependency bundle integrity binding 으로 **closure missing** 영역은 fail-closed 차단. 그러나 **closure 가 full 인 wrapper-only workflow yml 가 consumer repo 로 무차별 유입** 시 silent harm 의 별 super-class 가 존속 — mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim).
 - file: archive/adr/ADR-085-multi-session-collaboration-protocol.md
   word: 별
   content: ### 후속 carrier (별 CFP 의무)
-- file: archive/adr/ADR-085-multi-session-collaboration-protocol.md
-  word: 별
-  content: - **CFP-991 counter-evidence** — 2 ancestry corruption recovery (orphan cherry-pick) — force-push 사용 시 ancestry 손상 발생. ADR §6 candidate force-push pre-flight HEAD-pin gate carrier (pattern_count 2 CFP-967+991, 별 CFP 권고).
-- file: archive/adr/ADR-085-multi-session-collaboration-protocol.md
-  word: 별
-  content: - ✅ Session B: 다른 repo / 다른 ADR / 다른 file domain 의 별 work
-- file: archive/adr/ADR-086-deputy-creation-decision-framework.md
-  word: 별
-  content: - enforcement surface 확장 (design lane → 다른 lane 적용 확장 별 CFP)
-- file: archive/adr/ADR-086-deputy-creation-decision-framework.md
-  word: 별
-  content: 1. **별 follow-up CFP 발의** — FAIL 영역 해소 carrier (예: consumer carrier FAIL → consumer schema sub-Epic carrier 별 CFP)
-- file: archive/adr/ADR-086-deputy-creation-decision-framework.md
-  word: 별
-  content: 3. **axis 미확정 영역** — axis 분석 (§결정 1) 통과 안 됨 시 — 별 brainstorm 단위 (codeforge:brainstorm skill Phase 0+1+2) 후 axis 명확화 carrier 별 CFP
-- file: archive/adr/ADR-086-deputy-creation-decision-framework.md
-  word: 별
-  content: | 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 (sub-tuple expansion / CONDITIONAL P3 / consumer schema lint / RACI codify 등 follow-up 영역 enumeration) | PASS — 8 follow-up CFP enumeration (a)~(h) 명시 (sub-tuple 5-tuple expansion / CONDITIONAL P3 trigger / consumer schema lint / RACI mechanical / sibling Epic 통합 / consumer API schema lint / RACI mechanical enforcement / chief tie-break ladder mechanical) |
 - file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
   word: 별
   content: ### §결정 7 — Epic close → auto-deploy trigger (별 channel, ADR-026 disjoint)
 - file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
   word: 별
-  content: **Forward extensibility (EC-B)**: BG-1~4 = consumer 가 식별 가능한 stateful pattern 의 초기 닫힌-set. 향후 BG-N+1 추가 = 별 ADR-087 Amendment carrier (본 Amendment 1 = BG-4 까지).
-- file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
-  word: 별
-  content: - **ArchitectAgent self-judge**: §결정 9.5 = §결정 9 body sub-clause 통합 (별 §결정 10 분리 X). Rationale = data-plane single-writer (§9.3) + control-plane single-writer (§9.5) 둘 다 "단일성 invariant" 의 disjoint layer 표현, single coherent ADR §결정 영역 통합. 별 §결정 10 분리 시 §결정 9 ↔ §결정 10 coupling 인공 증가.
-- file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
-  word: 별
-  content: - Plan plan.md anchor ADR 번호 stale (085/086 명시) → 본 commit batch 가 087-090 으로 정정 (별 commit, internal-docs worktree)
-- file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
-  word: 별
-  content: ADR-068 I-5 dimensional empirical grounding cross-ref — 본 §5.1 안 annotation 3개소 (healthcheck window / graceful drain / retention period). Wave 2+ (consumer mctrader 실측 후 carrier 별 CFP 가 lock-in).
-- file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
-  word: 별
   content: | 4 | 건강 확인 | healthcheck endpoint + log signature poll. **[empirical-source: TBD]** — consumer 별 healthcheck window 측정 의무 (default 60s timeout, mctrader 사례 측정 후 lock-in) |
 - file: archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
   word: 별
-  content: | 9 | 3-시간 후 정리 | docker container stop + image 보존 (image registry retention 별 정책). 정리 (contract) 마이그레이션 = 다음 Epic step 2 통합 (별 흐름 — ADR-089 §결정 2 정합) |
-- file: archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md
-  word: 별
-  content: - ADR-072 본문 = Amendment N 미적용 baseline (Amendment N 추가 = Task 12 영역, 본 Story-1 별 commit)
+  content: | 9 | 3-시간 후 정리 | docker container stop + image 보존 (image registry retention 별 정책). 정리 (contract) 마이그레이션 = 다음 Epic step 2 통합 (별도 흐름 — ADR-089 §결정 2 정합) |
 - file: archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md
   word: 별
   content: - consumer 가 service 별 검증 mode 명시 의무 ( — ADR-027 Amendment N).
@@ -1258,384 +451,45 @@ grandfathered_violations:
 - file: archive/adr/ADR-089-schema-change-7-principles.md
   word: 별
   content: - column count 100+ → **[empirical-source: TBD]** — consumer 별 RDB engine threshold 실측 의무 (PostgreSQL 의 tuple width limit 8KB vs MySQL 의 row limit 65KB 영역 — mctrader PostgreSQL 사례 사후 lock-in)
-- file: archive/adr/ADR-089-schema-change-7-principles.md
-  word: 별
-  content: ADR-068 I-5 dimensional empirical grounding cross-ref — Wave 2+ consumer mctrader 실측 후 carrier 별 CFP 가 정량 lock-in.
 - file: archive/adr/ADR-090-cross-layer-reference-policy.md
   word: 별
   content: ### §결정 3 — layer 별 분리 정책 (RDB strict / 빅데이터 lenient)
 - file: archive/adr/ADR-090-cross-layer-reference-policy.md
   word: 별
   content: - ADR-083 # consumer-applicability filter (layer 별 적용 여부)
-- file: archive/adr/ADR-090-cross-layer-reference-policy.md
-  word: 별
-  content: - [ADR-083](ADR-083-consumer-applicability-filter.md) — layer 별 적용 여부
-- file: archive/adr/ADR-090-cross-layer-reference-policy.md
-  word: 별
-  content: - layer 별 분리 정책 = RDB strict / 빅데이터 lenient
 - file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
   word: 별
   content: ### design Change Plan sibling cross-ref (별 repo)
 - file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
   word: 별
-  content: **Consumer CI gate 제외** — vocabulary 가 1 CFP cycle stabilize 후 별 CFP 진입 (Codex Q6 "premature" 정합).
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: - **Q6 Prompt + Template lint + review-verdict enum**: consumer CI gate 별 CFP
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: - = **cross-plugin** (codeforge-design plugin agent file = 별 repo, wrapper = 0 core agent ADR-009). path-parameterized — design plugin CI 가 호출 또는 wrapper workflow 가 design repo clone 후 호출. clone 실패 = graceful degradation (warning + skip, PR merge 미차단). top-level line-based field 추출 (전체 YAML 파싱 회피 — agent description 멀티라인 콜론 robust).
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: - §결정 4 SSOT 표의 application BC 행 = consumer-specific 예시로 **cross-ref 유지** (표준 경로는 위 — consumer 별 overlay 가 노출 경로 매핑). content 작성(실 어휘) = 여전히 consumer downstream Epic 영역 (defer 유지) — 본 Amendment 는 **활동/machinery 표준만** 제정, content 미작성.
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별 BC**. (S1) 에서 명시 분리 (3 distinct semantics entry).
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
   content: summary: "§결정 6 enforcement layer Wave 2 mechanical wire — mechanical_enforcement_actions 3 entry (ubiquitous-language-drift-check / bounded-context-presence-check / ddd-pattern-frontmatter-check) 가 Wave 1 declaration-only (S1 LAND) → S3 Phase 2 actual mechanical wire 전환. 3 lint script (scripts/check-*.sh + scripts/lib/check_*.py) + 3 workflow yml (warning tier, continue-on-error) + self-app byte-identical + evidence-checks-registry 3 entry status Active + label-registry-v2 v2.42 → v2.43 (3 hotfix-bypass:* family member) + Story template §ubiquitous_language block 신설. ddd_pattern enum = §결정 1 base role 3종 + S2 sub-classification 6종 허용 (S2 비자명 #3 carrier). vocabulary theater 차단 forcing function (INV-5) mechanical enforce — lint 가 실제 fail signal (exit 1) emit, single nominal 아님. design Change Plan template (§bounded_context_boundary + §affected_aggregates) = 별 repo sibling carrier (Orchestrator 가 design worktree 에서 별 처리)."
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: | 5. deferred carrier path | 본 CFP 후속 carrier? | mctrader downstream Epic (별 CFP, BC charter + Top 10 ADR annotation + mctrader glossary SSOT) |
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: | mctrader application BC | (downstream Epic, 별 CFP) |
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: §결정 4 가 consumer application BC glossary 를 "downstream Epic, 별 CFP" 로 **content 작성을 defer** 하되 그 **생산·유지 활동의 표준은 부재**했다. 본 Amendment 가 그 활동을 표준화:
-- file: archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md
-  word: 별
-  content: §결정 7 INV-5 의 Change Plan DDD field (§bounded_context_boundary + §affected_aggregates) = **codeforge-design plugin ** (별 repo sibling). 본 S3 task scope 외 — Orchestrator 가 design worktree 에서 별 처리 (sibling carrier). 본 ADR §결정 6/§결정 7 mechanical wire 와 disjoint (wrapper-local lint 3 + design template = 별 repo).
-- file: archive/adr/ADR-092-changelog-ssot-location.md
-  word: 별
-  content: - **consumer overlay = 별 changelog 미보유** — consumer overlay () 는 자체 changelog 를 두지 않는다. consumer 는 wrapper changelog walk 의 **입력** (설치된 plugin version 집합) 으로 참여하며, 별 changelog SSOT 를 신설하지 않는다 (consumer = 정책 축소 불가 + 신규 SSOT 신설 비대상).
-- file: archive/adr/ADR-092-changelog-ssot-location.md
-  word: 별
-  content: - **tier = warning** (ADR-060 4-tier enum 의 — advisory). drift 검출 시 경고 emit, PR gate block 미발동 (§결정 0 carry-over 2 — PR-gate layer disjoint). 승격 (warning → blocking) 은 ADR-060 승격 gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 충족 후 별 amendment.
-- file: archive/adr/ADR-092-changelog-ssot-location.md
-  word: 별
-  content: - consumer overlay 별 changelog 미보유 declare — consumer 정책 축소 불가 + 신규 SSOT 폭발 차단.
-- file: archive/adr/ADR-092-changelog-ssot-location.md
-  word: 별
-  content: codeforge family 는 wrapper + 6 lane plugin (codeforge-{requirements,design,develop,review,test,pmo}) 7 개로 구성되며 ([ADR-016](ADR-016-marketplace-registration-policy.md) family scope), consumer project 는 overlay 메커니즘으로 이를 설치해 사용한다. governance evolution 의 기록 — 각 plugin 의 version bump 별 변경 내역 (changelog) — 이 **어디에 SSOT 로 존재하는가**가 본 ADR 의 대상 영역이다.
-- file: archive/adr/ADR-093-completion-report-4field-schema.md
-  word: 별
-  content: | **PMO 4-field = walk_result detail (내부 schema)** | / / / | machine / audit-facing | PMO 2nd pass — walk 과정 내부 audit detail (touched 파일 / atomic invariant 검증 / verify-via 경로 / lane 별 outcome) |
-- file: archive/adr/ADR-094-consumer-legacy-version-fallback-policy.md
-  word: 별
-  content: - degraded mode 의 "어떤 behavior 를 비활성하는가" 경계가 Wave 1 declaration-only — 정확한 per-behavior degraded scope 는 후속 carrier (별 CFP) 가 enumeration. Wave 1 은 grace period 정책 anchor 만 codify.
-- file: archive/adr/ADR-097-paradigm-replacement-governance-anchor.md
-  word: 별
-  content: **exception clause 형식 (K-1 결정)**: 본 면제는 ADR-064 에 **별 §결정 신설이 아니라 §결정 5 본문 안 exception clause 추가**로 codify 한다 (ADR-064 Amendment 7 carrier — 본 ADR sibling). 이유:
-- file: archive/adr/ADR-097-paradigm-replacement-governance-anchor.md
-  word: 별
-  content: - 별 §결정 신설 = ADR-064 §결정 번호 inflation + cross-ref 표면 증가 (disjoint 결정으로 오인 risk).
-- file: archive/adr/ADR-100-confluence-doc-ssot-recognition.md
-  word: 별
-  content: **mirror_targets[] enum validation (closed-enum 5)** — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook} (ADR-111 §결정 1 closed-enum 5 정합, Amendment 1 후). open_extension: false (확장 시 별 CFP 의무).
-- file: archive/adr/ADR-100-confluence-doc-ssot-recognition.md
-  word: 별
-  content: 3. **closed-enum 5 mirror 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge / Orchestrator Playbook)** (open_extension: false) — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (Q-1 사용자 확정 CFP-1668), 확장 시 별 CFP 의무
-- file: archive/adr/ADR-100-confluence-doc-ssot-recognition.md
-  word: 별
-  content: | | object (optional) | per-doc-type 별 binding override (예: ) | per-consumer instantiate | NOT secret |
 - file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
   word: 별
   content: ### Wave 3+ scope (별 follow-up CFP carrier)
-- file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
-  word: 별
-  content: - F1 / F2 blocking-on-pr 승격 = 별 follow-up CFP (Wave 4 evidence accumulation 후 ADR-060 §결정 6 AND condition 충족)
-- file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
-  word: 별
-  content: - F1 scope 확장 (다른 plugin templates/* file mapping) = 별 follow-up CFP (Wave 3 byte-parity scope 확장)
-- file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
-  word: 별
-  content: - F2 heuristic 정교화 (regex 확장 + 추가 evidence channel) = 별 follow-up CFP (Wave 3 heuristic tuning)
-- file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
-  word: 별
-  content: | ADR-086 (deputy creation decision framework) | declaration-only Wave 1 | 별 CFP carrier (deferred-followup) |
-- file: archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md
-  word: 별
-  content: | ADR-086 | declaration-only Wave 1 | 별 CFP carrier (deferred-followup) | sibling deferred 패턴 정합 |
-- file: archive/adr/ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md
-  word: 별
-  content: - **ADR-082 Amendment 7** (CFP-1312 — §결정 9 verify-before-cite 양방향 확장) — sibling axis (forward-parity ↔ backward-staleness 대칭 pair) — 별 follow-up CFP carry-over carrier 평가 영역
-- file: archive/adr/ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md
-  word: 별
-  content: - destructive historical sweep 영역 외 — 필요 시 별 follow-up CFP carrier (사전 evidence accumulate 후)
-- file: archive/adr/ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md
-  word: 별
-  content: - 본 ADR scope = label-registry-v2 단독 carrier — 다른 inter-plugin contract registry (review-verdict-v4 12 occ / evidence-checks 4 / MANIFEST 3 / debate-protocol 3 / comment-prefix 1) = pattern_count=0 영역 별 follow-up CFP carrier (evidence-gated unitary per ADR-064 §결정 5 정합 — CFP scope unitary 보호)
-- file: archive/adr/ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md
-  word: 별
-  content: - 본 ADR scope 외 (별 follow-up CFP carrier): cross-contract applicability (review-verdict-v4 등 8 other contract) + ADR-082 sibling axis carry-over (verify-before-cite specific axis instantiation 후보)
-- file: archive/adr/ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md
-  word: 별
-  content: - 양 axis = verify-before-trust 의 사실 input layer 의 대칭 pair — 별 follow-up CFP carry-over carrier 가능 영역 (description count parity 가 verify-before-cite specific axis instantiation 후보, 본 ADR-108 scope 외)
-- file: archive/adr/ADR-109-in-process-429-mitigation-framework.md
-  word: 별
-  content: - **detection**: HTTP 529 status code ( substring 별 detection enum 추가 영역 = 본 §결정 6 — §결정 1 4-tuple disjoint axis)
-- file: archive/adr/ADR-110-external-runtime-wrapper-ssot-boundary.md
-  word: 별
-  content: **Not strict** (wrapper 가 별 process 이므로 perfect coordination 불가 — Phase 2 telemetry refine 영역). extension upstream API exposure 시 strict coordination 영역 후속 sub-CFP carrier.
-- file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
-  word: 별
-  content: **Orchestrator Playbook scope boundary (5번째 영역, Amendment 1 — CFP-1618)**: 5번째 영역 = (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook / disaster recovery runbook 등) **포함 안 함**. 확장 시 별 CFP carrier 의무 (open_extension: false). split granularity = §-level page split (CFP-1524 Sub-A CFP-1584 carrier, 17 § + 부록 A+B 통합 = 19 entry skeleton + CRITICAL Step 0 §.N-level 추가 분할 carrier 별 follow-up CFP). split mapping SSOT = array + declaration block. §결정 3 IA axis 적용 영역: orchestrator-playbook = cross-cutting sibling 영역 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional, 정식 재구조화 Sub-B carrier defer). §결정 4 diagram strategy + §결정 5 cross-link discipline 동일 적용 (5번째 영역에도 diagram-as-code 의무 + git anchor + Confluence anchor 양쪽 link 의무 — §결정 3/4/5 본문 무수정 invariant 보존, 적용 영역 확장 만).
-- file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
-  word: 별
-  content: - closed-enum 9 (4 mirror + 5 retain) 의 확장 영역 (예: 신규 design doc type 도입) 시 별 CFP carrier 의무 (open_extension: false). 완화 = §결정 1/2 enum 확장 명시 carrier path (별 ADR Amendment + ADR-RESERVATION row 신설).
-- file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
-  word: 별
-  content: design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 5 대상 closed-enum 으로 박제한다 (open_extension: false, 확장 시 별 CFP carrier 의무). **5번째 영역 (orchestrator-runbook) = Amendment 1 (CFP-1618) 확장** — origin CFP-1584 Phase 1 audit 결과 4 영역 외 Playbook 영역 발견 carrier:
 - file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
   word: 별
   content: note: "§결정 1 closed-enum 4 → 5 영역 추가 (5번째 영역 = orchestrator-runbook, SSOT). Origin = CFP-1584 Phase 1 audit (PR #1608 merged 2026-05-25 11:08:46Z) — Sub-A (CFP-1524 Sub-A) Confluence push 진입 시 4 영역 (ADR / Living Architecture / Change Plan / Domain Knowledge) 외 Playbook 영역 발견, ADR-111 classification 적용 불가. 5번째 영역 정의 = (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). git 위치 = (wrapper repo). sync source repo = wrapper repo (plugin). sync direction = 단방향 git → Confluence (4 mirror 영역 정합). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook 등) **포함 안 함**. 확장 시 별 CFP carrier 의무 (open_extension: false). Amendment 1 = ratchet 강화 방향 (closed-enum 확장 + 인정 범위 명시화), ADR-058 §결정 5 sunset_justification 면제. §결정 3 IA axis = orchestrator-playbook 영역 = cross-cutting sibling 또는 per-plugin top-level (wrapper) sub-page 양 IA axis 모두 허용 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional 정합). 정식 재구조화는 Sub-B carrier ( 영역, 본 Amendment scope 외). §결정 4 diagram strategy + §결정 5 cross-link discipline 적용 영역 = 5번째 영역에도 동일 적용 (의미 변경 0, 적용 영역 확장 만 — §결정 3/4/5 본문 무수정 invariant 보존). docs/confluence-ia-tree.yaml block 동반 명시 (mapping declaration, source-of-truth = ADR-111 §결정 1 5번째 row). collision-rebase ratchet: amendment_log 직전 origin max amendment_id 재확인 = 0 (baseline ) → 1. amendments_reserved[] pre-claim 면제 (단일 session 영역, parallel race 0 verified). META-self-applied 0 (closed-enum 확장 carrier, ADR-082 §결정 9 verify-before-cite 영역 외)."
-- file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
-  word: 별
-  content: | **mirror_targets[] enum 확장** | 별 CFP 의무 (wrapper closed-enum 5 본문 변경 = 별 ADR-111 Amendment carrier — 본 Amendment 1 / Amendment 2 의 precedent) | open_extension: false (Q-1 SYMMETRIC subset 확정) |
-- file: archive/adr/ADR-111-confluence-mirror-classification-policy.md
-  word: 별
-  content: | 3 | **Change Plan** | (dogfood = internal-docs repo) | mclayer/codeforge-internal-docs (dogfood-out) + consumer repo (single_repo) | ADR-103 (sync mechanism — sync source repo 별) | 단방향 git → Confluence |
-- file: archive/adr/ADR-112-living-architecture-update-gate.md
-  word: 별
-  content: **Disjoint axis** (동일 verdict packet 안 별 boolean field, 6th):
-- file: archive/adr/ADR-112-living-architecture-update-gate.md
-  word: 별
-  content: - **Wrapper sibling sync (5 lane plugin)** = requirements/design/develop/test/pmo sibling drift = 본 PR scope 외 (별 sweep CFP carrier, CFP-1167 precedent).
 - file: archive/adr/ADR-112-living-architecture-update-gate.md
   word: 별
   content: - ADR-068 # Boundary completeness invariants (I-1~I-6) + verdict-level boolean field pattern. 본 ADR §결정 3 review-verdict-v4 6번째 verdict-level optional bool field 신설 = ADR-068 Amendment 1 (I-5 dimensional_empirical_self_check_passed) / Amendment 3 (I-6 audit_gate_pointer_self_check_passed) pattern verbatim 답습. disjoint axis (boundary completeness ↔ living architecture update timing, 별 packet field)
-- file: archive/adr/ADR-112-living-architecture-update-gate.md
-  word: 별
-  content: | (A) Per-Story mandate | 최대 frequency = minimum stale window | ArchitectAgent fatigue 위험 (Story 별 5-anchor 평가 over-frequent) + Story = sub-deliverable 단위 (cumulative 본문 변경 빈도 ↔ Story 빈도 mismatch). per-Epic = 적정 granularity (Epic = "사용자 capability 노출 완결 단위" align). |
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: **별 lint 신설 0건** — 본 ADR family member 추가 만으로 5 lint chain inherit. ADR-040 Amendment 3 §결정 7.D self-application precedent 답습.
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - (c) channel family 가 lint skip 영역 cover 하나, CLI silent override path 영역 = label family 미cover (별 sub-domain)
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - (e) Wave 4 brainstorm carrier 영역 (별 CFP 후속) — entry 보완 검토 (현 ADR-113 scope 외, follow-on carrier)
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - **5 lint chain auto-inherit (별 mechanism 0)**: ADR-024 Amendment 6/8 §결정 6.A 의 bypass-as-norm-mutation 차단 5 lint chain ( / / / / ) 자동 covered — 별 lint 신설 0건.
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - **fail-4 silent bypass attempt** — Orchestrator 또는 subagent 가 §결정 1 5-step procedure skip + 직접 호출 → §결정 4 5 lint chain 자동 covered (별 mechanism 0)
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - ADR-024 §결정 6.A bypass-as-norm-mutation 차단 chain (Amendment 6 §결정 6.A.2 + Amendment 8 §결정 6.A.3/6.A.4/6.A.5) 의 5 lint chain 자동 covered (별 lint 신설 0)
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: - branch protection rule change 의무 시점 = label family 의 audit-trailed exception channel **외** 영역 (별 ADR — 향후 branch protection rule mutation 의무 carrier CFP 발의 시 별 ADR codify 의무)
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: entry 부재 영역 fallback ( 영역 verified). Wave 4 brainstorm carrier (별 follow-on CFP) = entry 보완 검토 영역 (§결정 8 sibling).
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: | **Wave 4** | entry 보완 + manual re-trigger 경로 codify | 별 brainstorm carrier (Researcher hypothesis (e) follow-on) |
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: | **별** | ADR-RESERVATION row 107-112 backfill (registry row gap 영역) | 별 follow-up CFP carrier (chief author scope 외 — ADR-064 §결정 5 unitary 정합) |
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: | Wave 4 | entry 보완 검토 (Researcher hypothesis (e)) | 별 brainstorm carrier |
-- file: archive/adr/ADR-113-admin-merge-preflight-gate.md
-  word: 별
-  content: | 별 | ADR-RESERVATION row 107-112 backfill (registry row gap 영역, chief author scope 외) | 별 follow-up CFP |
-- file: archive/adr/ADR-114-minimal-path-direct-invocation-protocol.md
-  word: 별
-  content: - pattern_count ≥ 3 재발 시 mechanical enforcement promotion (when condition lint) — 별 follow-up CFP carrier
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: - ADR-057 오인용 정정(workflow 주석 + ADR-026 frontmatter + consumer-guide/schema/example + PR body) = 별 doc-only fix carrier CFP(CFP-1716 Story §11.3).
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: - R1(version guard) / R2(mktemp IPC) = Phase 2 동반 또는 별 enhancement CFP.
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: - consumer adoption(mctrader-data 등) = 별 cross-repo PR(본 ADR OOS).
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: N/A — permanent policy. 본 ADR 은 consumer 보안 화이트리스트 확장-only 주입 메커니즘의 상시 정책으로, sunset 대상이 아니다(reconcile-then-patch 불변식은 메커니즘 존속 동안 영구 유효). 잔존 P2 리스크(§결정 4 — bash 3.2 / /tmp marker)는 별 enhancement carrier 로 보강하되 본 ADR 의 결정 자체를 폐기하지 않는다.
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: leak 진원 = 주석 + ADR-026 Amendment 4 §결정 6 frontmatter summary(pre-existing) → 구현/Story §1 D4 가 답습. 본 ADR 은 ADR-057 을 **amend 하지 않고**(단일 결정 응집 보존), 올바른 근거를 재확정한다. 기존 leak 정정 = 별 doc-only fix carrier(CFP-1716 Story §11.3 권고).
-- file: archive/adr/ADR-116-consumer-whitelist-idempotent-injection.md
-  word: 별
-  content: 덮어쓰기 로직 자체를 제거하지 않는다(OOS). 주입은 **후처리 only** — wrapper 워크플로우 템플릿이 두꺼워지지 않도록 manual/optional step 으로 wire(현재). 자동 wire(reconcile→inject 체이닝)는 future codeforge-pmo UpgradeAgent 영역(별 CFP).
-- file: archive/adr/ADR-117-fable-5-surgical-model-tier.md
-  word: 별
-  content: - **Orchestrator Fable 채택**: 별 결정 사안(§결정 5) — 향후 별 ADR/CFP.
-- file: archive/adr/ADR-117-fable-5-surgical-model-tier.md
-  word: 별
-  content: N/A — permanent policy. 본 ADR 은 모델 tier 선택 정책의 상시 기준으로, sunset 대상이 아니다. 단, 모델 세대 전환(차기 최강 모델 GA / Opus·Fable 가격 구조 변동 / Orchestrator Fable 채택 별 결정)이 발생하면 본 ADR 을 amend 하여 surgical 대상·floor 버전을 재산정한다.
-- file: archive/adr/ADR-117-fable-5-surgical-model-tier.md
-  word: 별
-  content: 최상위 세션(Orchestrator) 모델은 현행 (ADR-057 mandate)를 유지한다. Fable Orchestrator 채택은 비용·세션 전반 영향이 별개 차원이므로 **별 결정 사안**으로 분리한다 — 본 ADR scope 외.
-- file: archive/adr/ADR-119-research-before-claims.md
-  word: 별
-  content: - (D-A) 게이트면 (① A/B) 과 진단면 (② C/D) 을 **별 원칙으로 분리** — 거절. 둘 다 "표면 신호 섣부른 단정" 이라는 단일 약점의 두 발현이라 한 umbrella (§결정 10) 가 정합. 분리 시 동형 비대칭 (프로세스 ↔ 증거 레벨) 이 두 ADR 로 쪼개져 SSOT 가 갈림.
-- file: archive/adr/ADR-122-superpowers-dependency-removal.md
-  word: 별
-  content: | tier | warning-first (전환 중간 PR 자기차단 deadlock 회피, ADR-060 framework). blocking 승격 = 별 follow-up |
 - file: archive/adr/ADR-124-external-knowledge-provisioning-model.md
   word: 별
   content: ### 결정 3 — lane별 깊은 검증 적합도 표 (목표 상태, 발동 잠재력 — 매 Story 강제 아님)
-- file: archive/adr/ADR-128-completion-stage-formalization.md
-  word: 별
-  content: - env = debugging/offline fail-safe(required check 우회 아님)라 ADR-127 §결정 1·2(process-derived fast-pass / skip-offer 폐지) 대상과 **별 범주** (ADR-127 §결정 1·2 = process-derived fast-pass 폐지; BYPASS_WORKTREE_GC 미열거). 본 env 는 origin 접촉 차단 환경·false-positive stale 의심·consumer opt-out 용 — lane/Story 생략 채널이 아니다.
-- file: archive/adr/ADR-128-completion-stage-formalization.md
-  word: 별
-  content: | **#549** (ADR-026 category vs ADR-040 enum, doc-only-fast-path label) | OPEN, /// | ADR-127 이 doc-only fast-path 폐지 → #549 의 "doc-only fast-path 자격" 전제 stale | **흡수/정정.** #549 의 label 전제 = ADR-127 §결정 2 supersede 로 무효. 본 ADR 은 ADR-026 category enum 을 변경하지 않으므로 #549 의 미결 enum 결정과 충돌 0. **권고 = #549 를 ADR-127 supersede 반영해 retitle(doc-only fast-path 제거) 후 정식 full-flow Story 로 재발의하거나, scope 잔존 가치 미달 시 CLOSE_AS_OBVIATED**(별 closure batch). 본 Story 가 #549 결정을 떠맡지 않음(scope unitary). |
-- file: archive/adr/ADR-128-completion-stage-formalization.md
-  word: 별
-  content: | **#772** (close-event auto-reopen 일반화 forcing function) | OPEN, // | 새 worktree-clean 게이트가 close lifecycle 과 상호작용(EC-5) | **정합 확인 — 충돌 0.** 본 ADR 의 worktree-clean self-check 는 **transition precondition**(label attach 직전)이지 Issue **close 차단**이 아니다. 의 close-blocking auto-reopen( 부재 시)과 axis disjoint — worktree-clean 은 reopen trigger 아님. #772(close-event auto-reopen 일반화)는 별 ADR-candidate 로 유지. 본 ADR §결정 2 게이트가 close lifecycle 에 새 reopen 경로를 추가하지 않음을 명시(중복 reopen 회피). |
 - file: archive/adr/ADR-130-applicability-closure-integrity.md
   word: 별
   content: (warning-tier, branch-protection 7-tuple 무변경 — required 승격은 별 rollout Story, §결정6). ReDoS-safe
-- file: archive/adr/ADR-130-applicability-closure-integrity.md
-  word: 별
-  content: - **(d) 축 분리**: ADR-083 의 sunset 사유(walker carry)와 신규 분류규칙(데이터+정책doc closure 완전성)이 *다른 축* — 별 ADR 가 이력 추적성 우수.
-- file: archive/adr/ADR-130-applicability-closure-integrity.md
-  word: 별
-  content: 3. **append-only(회귀 0)** — 기존 2패턴의 char-class·경로 접두는 넓히지 않는다(over-match 회귀 회피). 신규 shape 는 별 리스트 원소로만 추가 → 방향1/2/3 기존 판정 불변.
-- file: archive/adr/ADR-130-applicability-closure-integrity.md
-  word: 별
-  content: 6. **tier 무변경(warning)** — 본 확장은 warning-tier(continue-on-error) 유지 — branch-protection 7-tuple 무변경. §결정 6 의 warning→required 7일-green 승격 절차는 별 rollout Story 소관(본 Amendment 대상 아님). §1 요구의 "fail-closed" 는 logic-level 결정성(silent-pass 금지)으로 해석 — 검출 로직이 미등재를 결정적으로 보고.
-- file: archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md
-  word: 별
-  content: - **책임 *의미단위* 깊은 파생검증** — "선언된 소유레포가 *의미상 올바른* 도메인 레포냐"의 양방향 declared↔derived 검증은 **마커 시스템 선결**이라 본 Epic scope 외. **deferred follow-up (별 CFP)** — 책임 마커 시스템이 먼저 구축돼야 의미단위 파생이 기계화 가능 (AC-8). 게이트는 구조적 사실(고아/중복/거친 drift)만 hard-block, 의미 판정은 "리뷰어 근거인용 attestation 요구"로만(승인 자체는 대신 판단 안 함 — 검사연극 금지, ADR-119 정합).
-- file: archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md
-  word: 별
-  content: - **책임 의미단위 깊은 파생 = deferred** — "선언된 소유레포가 *의미상 올바른* 도메인 레포냐"의 양방향 declared↔derived 검증은 **마커 시스템 선결**이라 본 Epic scope 외 (deferred follow-up, 별 CFP — 결정 4 + Out-of-Scope 참조).
 - file: archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md
   word: 별
   content: enforcementAction 점진 승격 — hard-block 은 별 후속 CFP). 재정의 명문: "의미단위 깊은 파생" 중
-- file: archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md
-  word: 별
-  content: §결정 3/4 + Out-of-Scope 가 "책임 의미단위 깊은 파생검증 = 마커 시스템 선결 → deferred follow-up (별 CFP)" 로 미룬 그 **별 CFP = CFP-2428**. 본 Amendment 는 deferred 항목 중 **marker layer 자체**를 신설한다:
-- file: archive/adr/ADR-131-cross-repo-responsibility-placement-governance.md
-  word: 별
-  content: 세 종류 모두 **warning-tier(continue-on-error 비차단)** — §결정 3 의 L2 게이트와 동형 점진 승격(OPA Gatekeeper warn→deny — source: OPA Gatekeeper). hard-block ratchet 은 증거 축적 후 **별 후속 CFP** (본 Amendment scope = warning 까지). manifest 자체가 stale 될 수 있는 자기적용 함정은 warning-tier 라 *차단 아닌 변경시점 surfacing* 으로 회피 (hard-block 이었다면 manifest 갱신 누락이 무관 PR 을 막는 자기모순 — CFP-2422 동형).
-- file: archive/adr/ADR-132-consumer-branch-protection-auto-wire.md
-  word: 별
-  content: - consumer repo (배선 *대상* — 본 Story 는 도구만, 실 배선 = 별 Track).
 - file: archive/adr/ADR-133-adr-reservation-atomic-claim.md
   word: 별
   content: - ADR-085 # 3-layer disjoint precedent — session-level pre-hoc. axis-disjoint 신규 ADR 정당화 선례 (ADR-050 과 disjoint 별 입도)
-- file: archive/adr/ADR-133-adr-reservation-atomic-claim.md
-  word: 별
-  content: ADR-133 은 ADR-085 의 4·5번째 sub-decision 이 아니라 **별 입도의 신규 layer** 다. ADR-085 가 ADR-050(PR-level)과 axis-disjoint 신규 ADR(status Accepted)로 채택된 선례를 답습 — 신규 ADR 정당화 근거. **ADR-050 §결정 1(post-hoc re-sort)·§결정 3(non-blocking) 약화 금지 — 1차 방어 layer 추가**(ratchet 보존).
-- file: archive/adr/ADR-134-parallel-eligibility-dispatch.md
-  word: 별
-  content: - consumer adoption — 별 follow-on
-- file: archive/adr/ADR-135-force-push-preflight-head-pin-guard.md
-  word: 별
-  content: (CFP-428) 는 만 symlink 설치한다 — 는 미접촉 [verified]. 은 에 있어 **installer 자동 설치 대상이 아니다** (사용자 manual copy). 본 ADR 은 이 채널 분리를 유지 — pre-push hook 은 manual opt-in copy, installer 자동 등록은 family 만. (자동 force-push 가드 install 격상은 별 follow-up 후보 — pre-push hook 의 default-on 은 worktree-first 정상 push 마찰 risk 가 있어 본 Story scope 밖.)
-- file: archive/adr/ADR-135-force-push-preflight-head-pin-guard.md
-  word: 별
-  content: - pre-push hook 의 installer 자동 등록 / default-on (별 follow-up — worktree-first push 마찰 평가 필요).
-- file: archive/adr/ADR-136-frontend-quality-gate-standard.md
-  word: 별
-  content: - **partition-axis (§14.2 안①)**: 판정 = **class-scoped grep count**(overall actionlint exit code 무시 — shellcheck 부채로 non-zero 나와도 무관). class 별 count 0/≥1 대조가 primary, error-string regex 는 secondary 진단 라벨(F6 정합).
-- file: archive/adr/ADR-136-frontend-quality-gate-standard.md
-  word: 별
-  content: - **tier (결정 14 §14.5 정합)**: ratchet-UP-only(약화 방향 인용 불가 — 약화 시 ADR-058 §결정5 / ADR-064 §결정7 symmetric evidence 절차). day-1 착지 = **warning-tier**(, ADR-060 §결정5 warning-first). 개별 게이트의 L1(blocking) 승격은 결정 14 §14.5 B evidence-gate(ADR-060 3-tuple: PR누적≥20 / failure=0 / sibling merged) 종속 — 별 named carrier Story(CFP-TBD 금지).
-- file: archive/adr/ADR-136-frontend-quality-gate-standard.md
-  word: 별
-  content: - actionlint 를 전체 workflow 에 실행(overall exit code 무시 — )하고, **class 별 error-string 정규식으로 stdout+stderr 를 grep count** 한다. class C 의 count == 0 이면 GREEN, mutation 재삽입 시 count >= 1 이면 RED(class-scoped).
-- file: archive/adr/ADR-136-frontend-quality-gate-standard.md
-  word: 별
-  content: §결정5/§14.5 가 예약한 "D1 required 승격 = ADR-060 evidence-gate 통과 별 follow-up Story" 를 실행한다. 승격 1급 대상 = wrapper self(dogfood).
-- file: archive/adr/ADR-137-epic-close-implementation-refactor-triage.md
-  word: 별
-  content: §D-11 5-column structured-row 는 **패턴 참조 선례로만** 인용 — closure enum **값 비재사용**. deferred-item-lifecycle 이 §D-11 과 별 enum 를 신설한 선례를 답습(disposition 축 ⊥ narrative 판정 축). ADR-059 §결정11 이 "triage=Story C 소유"로 경계를 그었으므로 §결정12 흡수는 자기모순.
-- file: archive/adr/ADR-137-epic-close-implementation-refactor-triage.md
-  word: 별
-  content: 각 duplication anchor 별 ∀-전칭 판정:
-- file: archive/adr/ADR-138-design-refactoring-debate-elevation.md
-  word: 별
-  content: - **(b) ADR-059 단독 amendment (신규 ADR 없이)** — 거절. ADR-059 = **debate 엔진 SSOT**(protocol schema·라운드·termination·anti-sycophancy). enum 추가는 엔진 갱신이라 ADR-059 Amendment 4 가 sibling 으로 맞으나, **정책 신설(설계 리팩터링 결정 방식 격상)의 carrier 는 엔진 ADR 이 아님** — 정책 결정 기록은 별 ADR 필요. → ADR-138 carrier + ADR-059 Amd4 sibling 분리. (§결정1 근거)
-- file: archive/adr/ADR-139-background-wait-liveness-gate.md
-  word: 별
-  content: **contract-level 공백 (핵심 구현 gap)**: §6.3 — **INCONCLUSIVE/STALL verdict value 부재**. 같은 §6.3 주석 "crash recovery / fail-mode protocol = 별 CFP follow-up scope" 로 timeout/fail-mode protocol 을 명시 defer. CFP-2549 = 그 deferred follow-up carrier.
-- file: archive/adr/ADR-139-background-wait-liveness-gate.md
-  word: 별
-  content: - **(A) ADR-039 Amendment 10 (§결정 20) carrier**: §결정 19(lead-intervention)는 spawn-topology 축이고 liveness 정량 게이트는 별 축 → §결정 20 신설해도 ADR-039 scope(subagent-default spawn) 초과. spawn-권한 기반으로만 cross-ref (Amendment 10 은 sibling 으로 채택 — 아래).
-- file: archive/adr/ADR-139-background-wait-liveness-gate.md
-  word: 별
-  content: §6.3 enum 에 **INCONCLUSIVE** value 추가 () + timeout/fail-mode protocol 최소 섹션(background-wait liveness gate 4 불변식 cross-ref) 신설. §6.3 주석의 "crash recovery / fail-mode protocol = 별 CFP follow-up scope" defer 를 CFP-2549 로 해소. registry MINOR bump (v1.0 → v1.1, kind:registry sibling_sync_exempt 유지 — ADR-008/ADR-010 registry 면제).
 - file: archive/adr/ADR-140-dev-write-time-refactoring-hygiene.md
   word: 별
   content: 1. **md = 주 소유층 ($DEVSET 6 md 고정 열거)**: + + . 각 md 기존 원칙 섹션 말미에 **동일 6줄 hygiene 블록**(도입 1줄 + anchor 4-bullet + vacuous 면제 note 1줄, 주석만 md별 치환) append — md별 통합 편집 (기계 치환 금지: 6 md 섹션 구조 이질 실측 / 공용 문안 파일 폐기: L22-32 가 만 iterate → 렌더 붕괴 실측). QADeveloperAgent(role:qa) = 대상 외.
-- file: archive/adr/ADR-141-all-opus-single-tier.md
-  word: 별
-  content: - **haiku 429**: haiku 는 opus 와 별 pool·별 429 거동 → ADR-109(opus-scoped 429 mitigation) 미적용, fallback tier 부재(단일 tier 폐기 상속). 리스크 낮음(경고) — 운영 관찰 대상.
-- file: archive/adr/ADR-141-all-opus-single-tier.md
-  word: 별
-  content: - **sonnet 429**: sonnet 은 opus 와 별 pool·별 429 거동 → ADR-109(opus-scoped 429 mitigation) 미적용, fallback tier 부재. Amendment 1 A1-6 haiku 429 note 와 동형 — 리스크 낮음(경고), 운영 관찰 대상.
-- file: archive/adr/ADR-141-all-opus-single-tier.md
-  word: 별
-  content: 2. **guaranteed reinforcement** — **7 agent body 각각에 disambiguation 1줄**. agent 가 곧 subagent 의 system prompt 이므로 **system-prompt-embedded 보장 도달**(agent 별 명시). AC-2 "≥1 subagent-read layer surface" outcome 충족 — 실제로는 CLAUDE.md·agent md 두 layer 모두 subagent-read 이므로 over-determined.
-- file: archive/adr/ADR-141-all-opus-single-tier.md
-  word: 별
-  content: Opus/Sonnet/Haiku 3-tier role-pattern 선택 기준(ADR-042 §결정 1)을 **폐지**한다. 단일 tier = opus 이므로 role 별 tier 판정이 불요하다. ADR-042 Amd15(ServiceDev sonnet) / Amd16(InfraOpArch stakes-gated sonnet) / Amd17(DomainAgent financial-invariant-0 sonnet) tier-flip 은 대상 tier(sonnet)가 소멸하므로 **dead** 이다 (ADR-042 Amendment 19 로 dead 마킹).
-- file: archive/adr/ADR-142-orchestrator-self-read-synthesis-context-discipline.md
-  word: 별
-  content: - **미래 재개방**: platform 이 foreground-synchronous 반환 하드캡을 문서화하거나 feature 로 제공 시 = ADR-060 evidence-gate 경유 별 CFP + 본 §결정3 amendment. 현행 = feature-gap 후보로만 기록(추정 배선 금지).
-- file: archive/adr/ADR-142-orchestrator-self-read-synthesis-context-discipline.md
-  word: 별
-  content: is_transitional:false permanent governance anchor. 약화 방향 차단 ratchet(ADR-064 §결정7). sunset 해당 시 = holder×mutation 격자 자체 폐기 또는 platform 이 live self-context surface 제공 시 L7 proxy→direct 격상(별 CFP + 본 ADR amendment). mechanical_enforcement = Phase 2 §8 self-test 3종(disjoint-axis-whitelist-lint 물리강제 / return-envelope-schema-lint measurement / self-context-telemetry-allowlist-lint measurement + emission-liveness fixture).
-- file: archive/adr/ADR-143-agent-action-render-line-prefix.md
-  word: 별
-  content: inline whitelist(mechanism 축: inline vs spawn) 무변경 — render UI action/상태 LINE(display 축)은 별 표면. INV-2 완화는 Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 에 라벨만). 상세 disjoint note = ADR-039 Amendment 11(paired sibling).
-- file: archive/adr/ADR-144-orchestrator-autonomy-stop-taxonomy.md
-  word: 별
-  content: - **reason_class 자동분류 = 불가(CONFIRMED)** → 채움 = **PMO retro sidecar mapping**(stop_reason → reason_class 를 별 artifact 로; 원장 IN-PLACE EDIT 절대 안 함 — record-only INV ADR-115 §2 + ADR-072 policy/evidence disjoint). aggregate 는 optional classification-map 지원: map 有 → ratio, map 無 → per-stop_reason frequency(honest degrade).
-- file: archive/adr/ADR-144-orchestrator-autonomy-stop-taxonomy.md
-  word: 별
-  content: - phase-gate plumbing 갭(별 축 — gate plumbing ≠ 대화 stop, 관찰만 — Story §7.0 #7).
-- file: archive/adr/ADR-145-ac-traceability-zero-drop-gate.md
-  word: 별
-  content: - **(Amd5) F2 defer carrier**: 본 §결정11(C) 조건부-활성 disclosed residual(non- RTM 명명 트리거 시 활성 — Hop3 -only scope, 별 GitHub Issue 불요 §결정9)
-- file: archive/adr/ADR-145-ac-traceability-zero-drop-gate.md
-  word: 별
-  content: - **A 채택의 born-broken 안전 전제 (핵심 정당화 — 2 guard 구분)**: 즉시 required 의 실패 모드는 둘이며 각각 별 guard 로 차단된다 —
-- file: archive/adr/ADR-145-ac-traceability-zero-drop-gate.md
-  word: 별
-  content: - **Amendment prong (ADR-145 로 착륙) = 채택**: CFP-2609 은 (i) §결정4 no-optout 의 **정의역 명확화**("opt-out ≠ applicability-scoping") + (ii) §결정3 이 이미 선언한 6→7 등록의 **미완결 실행** 뿐이다. 신규 mechanism 도입 0 — 신규 workflow 0(기존 /core 수정), 신규 required context 0(§결정3 이 이미 선언한 6→7), 신규 스키마 0(§5.2 AC schema· 재사용), 신규 게이트/카테고리 0. per-PR applicability 는 기존 게이트의 self-scoping 정련이지 standalone governance mechanism 아님 → 별 context/결정/결과 블록이 ADR-145 중복.
-- file: archive/adr/ADR-145-ac-traceability-zero-drop-gate.md
-  word: 별
-  content: - **disclosed residual codify(DC-8 — silent 약화 금지)**: Hop3 resolution scope = ** ast symbol only** 를 명시 disclose. **named carrier = 본 §결정11(C) 조건부-활성 트리거**: *IF 향후 RTM 이 non-(예: ) 테스트를 normative-AC 명명 테스트로 지정하면, THAT Story 가 (a) non-grep 구조 파서(bashlex/tree-sitter-bash)로 Hop3 resolution 확장 OR (b) RTM 이 symbol 명명 하도록 규약 강제 — 그 시점 A2-5 재검(신규 mechanism 개입).* 이는 CFP-2590 TBD-naive 회피(조건부 트리거 = 완전 명세된 durable carrier, "추후 생성 placeholder" 아님) + §결정9 speculative-Issue 미발의(dormant, 강제요인 0) 양립. 별 GitHub Issue carrier 는 §결정9 상 불요(원할 시 Orchestrator 재량 — 본 clause 가 carrier SSOT).
-- file: archive/adr/ADR-145-ac-traceability-zero-drop-gate.md
-  word: 별
-  content: - **추출**: PR-body 마커 파싱을 pure leaf 모듈 (신규 — 형제, network-0 pure, argv/stdin·파일 입력)로 추출. . thin wrapper 신규 subcommand( — key=value/JSON stdout) 로 노출(additive, 기존 gate CLI 2-value exit 계약 무침범 — 별 subcommand).
-- file: archive/adr/ADR-146-dynamic-test-burden-flip-standard.md
-  word: 별
-  content: - **3축 AND**(ADR-127 §결정 5): 산출물 target 부재 ∧ downstream 무변경 ∧ 미래의무 무선결. 세 축 동시 충족만 자연 N/A. **Phase 2 runner-wiring 을 별 CFP 로 defer 하면 축3 위반**(declarative-seed 미래의무 선결) → template §8.8 + lint + self-test + agent-md mandate 는 **동일 Story Phase 2**(§8-§11 PR)가 carry.
-- file: archive/adr/ADR-146-dynamic-test-burden-flip-standard.md
-  word: 별
-  content: - **ADR-006 Amendment 3 로 착륙**: burden-flip+게이트 = 새 mechanism 이라 별 컨텍스트/결정/결과 블록 필요 → 기각, 신규 ADR-146 + agent-md mandate 흡수(§결정 11).
-- file: archive/adr/ADR-146-dynamic-test-burden-flip-standard.md
-  word: 별
-  content: - **fallback(미채택, 기록 보존)**: verdict-packet anchor 필요 시 (design-output-v2 additive MINOR, ADR-008 §결정 2, default false) 1건만 — 단 4기법 필드는 여전히 계약 밖. G1 v2.5 머지 후 별 follow-up 으로만.
-- file: archive/adr/ADR-146-dynamic-test-burden-flip-standard.md
-  word: 별
-  content: - **신규 lint 모듈(ALT-3 new-module)**: §8 은 template sub-section 축, 별 모듈 = MORE surface + 신규 context → 기각, 기존 파일 함수 추가.
 - file: archive/adr/ADR-146-dynamic-test-burden-flip-standard.md
   word: 별
   content: - ADR-127 # no-exemption 정식 풀 플로우 — §결정 5 자연 N/A 3축 AND(산출물부재 ∧ downstream 무변경 ∧ 미래의무 무선결). burden-flip = 이 원칙의 강화(계승, 충돌 아님, §결정 7). Phase 2 runner-wiring 별 CFP defer = 축3 위반이므로 동일 Story 유지
-- file: archive/adr/ADR-147-ci-runner-topology-selfhosted-migration.md
-  word: 별
-  content: - **leg 별 라우팅 보존**: linux leg → (private= → **group6**, public/unset=); windows leg → (private= → **group5**, public/unset=).
-- file: archive/adr/ADR-150-runtime-dast-security-axis.md
-  word: 별
-  content: - **ADR-146 Amendment 로 착륙**: security-attack oracle = 새 mechanism + 신규 게이트/좌표/cross-field 검사 → 별 컨텍스트/결정/결과 블록 필요 → 기각, 신규 ADR-150(§결정 1, A2-5 구조).
-- file: archive/adr/ADR-150-runtime-dast-security-axis.md
-  word: 별
-  content: - **DAST 실 구동 = consumer (또는 별 , QADeveloperAgent, ADR-048 CI-native 정합)**: (a) 앱 CI 기동(docker compose up / 로컬 바이너리) → (b) 스캐너(ZAP baseline/full/api-scan) 실행 → (c) 결과 파싱. 신규 codeforge 러너 부활 = ADR-048 재충돌 금지(StatefulTest deprecated 유지).
 - file: archive/adr/ADR-150-runtime-dast-security-axis.md
   word: 별
   content: - ADR-127 # no-exemption 자연 N/A 3축 AND — DAST 자연 N/A(공격 표면 부재) = skip 아님. 산출물 target 부재 ∧ downstream 무변경 ∧ 미래의무 무선결(3축 AND). Phase 2 runner-wiring 별 CFP defer = 축3 위반 → 동일 Story 유지
@@ -1644,31 +498,7 @@ grandfathered_violations:
   content: - ADR-136 # 강 의존(핵심 렌즈, amend 아님) — 결정14 execution-liveness 3요건(L1 blocking/L2 full-scope/L3 self-tested, cross-cutting standing 원리) = 본 ADR 의 자기적용 대상 원리. G6 = 그 원리를 wrapper-self self-test corpus 전체에 강제하는 corpus-wide 메타-게이트 신설. A2-5 판정(결정 1): 원리 재정의 0(재사용만) + 신규 fail-closed 메타-게이트 mechanism 도입 → 신규 ADR(ADR-136 결정14 actionlint N-class 은 단일 게이트 self-test, 본 ADR 은 corpus-wide 인벤토리 강제 = 별 mechanism). ADR-136 무수정
 - file: archive/adr/ADR-152-dark-path-activation-forcing-function.md
   word: 별
-  content: - **ADR-146/150 Amendment 로 착륙**: activation oracle = 새 mechanism + 신규 게이트/좌표/cross-field 검사 + G3(b) Epic-close 축 → 별 컨텍스트/결정/결과 블록 필요 → 기각, 신규 ADR-152(§결정 1, A2-5 구조).
-- file: archive/adr/ADR-152-dark-path-activation-forcing-function.md
-  word: 별
-  content: - **defer disposition → deferred-item-lifecycle**: "deferral" 판정된 슬라이스는 기존 5-column row()로 착지해 회수 게이트(warning-tier, no-silent-drop)에 도달한다. scanner()는 enum{tracked, observed}만 검증하고 column 은 미검증 [verified: origin/main L144-146] → 추가 = **scanner 무변경**(ADR-137 선례 동형, column 신설 아님). 하류 recovery 게이트 tier=warning(기존 유지 — 강도 상향은 별 결정).
-- file: archive/adr/ADR-152-dark-path-activation-forcing-function.md
-  word: 별
   content: - ADR-127 # no-exemption 자연 N/A 3축 AND — dark-path 자연 N/A(default-off flag 도입 0) = skip 아님. 산출물 target 부재 ∧ downstream 무변경 ∧ 미래의무 무선결(3축 AND). Phase 2 runner-wiring 별 CFP defer = 축3 위반 → 동일 Story 유지
-- file: archive/adr/ADR-154-hard-gate-self-verification-forcing-function.md
-  word: 별
-  content: - **Amendment prong (ADR-082 로 착륙) = 기각**: ADR-082 super-class(write-time semantic truth verify)는 kin 이고 §결정11.A red-green-stash-proof(RED proof)는 **재사용(REUSE, 재codify 금지)**한다. 그러나 ADR-082 의 Amendment 들은 전부 "**Wave 1 = declaration-only**"(§결정11 L939 verbatim: "2 sub-decisions 모두 behavioral directive")다 — 즉 behavioral directive + Wave 2 mechanical wire 별 sub-carrier defer. CFP-2684 는 normative+phase-2+coverage_required AC(AC-1/2/3/4/5/7/13)로 **이 Story 안에서 fail-closed 기계 메타-게이트 + 재귀 자기적용(AC-7)을 강제**한다 — ADR-151 §결정1 자신의 test("신규 fail-closed 메타-게이트 = 신규 ADR")를 충족하는 **신규 mechanism**. → ADR-082 = cross-ref, home 아님.
-- file: archive/adr/ADR-156-dev-process-metric-aggregation-escalation-feed.md
-  word: 별
-  content: A(#2687, ADR-155)가 substrate(9번째 Tier-3 persistent channel + 2계층 index/blob + 4-ID freeze + 결점 taxonomy 4-tuple + mining port)를 freeze 했으나, 그 위 **downstream 집계 = dev-process 지표**는 별 wave 로 명시 defer 됐다(A OOS 표: "B(#2688): 지표 계산식·사이클타임 산식·FIX 반복수 집계 알고리즘" ). B(#2688)가 그 집계 정책을 정의한다.
-- file: archive/adr/ADR-157-infra-resource-manifest-drift-gate.md
-  word: 별
-  content: - **동일 trust 도메인**: 별도 allowlist 를 두어도 carrier = 같은 consumer-authored (§4b write boundary). 악의적 manifest 저자는 namespace 와 allowlist 를 **동시에** 쓸 수 있어 same-file allowlist 는 보안 분리를 제공하지 않는다(CODEOWNERS-gated 별 도메인이 아닌 한 무의미).
-- file: archive/adr/ADR-163-codeforge-measurement-channel-architecture.md
-  word: 별
-  content: - §결정 2 (stop-event-v1 schema) 무변경 — spawn-event 는 별 contract.
-- file: archive/adr/ADR-163-codeforge-measurement-channel-architecture.md
-  word: 별
-  content: - §결정 4 (stop-event hot tier sqlite) 무변경 — spawn-event 는 JSONL (contract=runtime 일치 우선, drift 회피 — spawn-event-v1 §3 / Change Plan §2.4). stop-event 자체의 sqlite↔JSONL drift 정정은 본 Amendment scope 외 (별 follow-up — 3문 게이트).
-- file: archive/adr/ADR-163-codeforge-measurement-channel-architecture.md
-  word: 별
-  content: - 보류근거 #2 (aggregate script 로 충분) → per-agent token/cost attribution + replay 재구성은 §14 row count + post-merge-counters.jsonl 로 도출 **불가** (lane-coarse, token granularity 부재). spawn-event = 별 channel 필요성이 Epic directive 로 확정.
 - file: archive/adr/ADR-RESERVATION.md
   word: 별
   content: | 131 | CFP-2419 | active | 2026-06-26 KST (ArchitectAgent direct write per ADR-070 / CFP-578 chief author precedent — cross-repo 책임 배치 거버넌스 모델 SSOT carrier. Epic CFP-2418 (cross-repo 책임 배치 거버넌스, wrapper-self) Story 1 (선행 Story — S2 게이트 검사대상·S3 자동화 대조대상 전제 확정). 5 결정: §결정1 토폴로지 SSOT 1급화 (author = ArchitectAgent chief 권한 확장, 신규 영구 deputy 0 + 신규 RACI R 0 — ADR-042:876 repo-level 분해 경계 확정 chief authority pre-exists cross-ref) + §결정2 wrapper 메타불변식만 강제 (4 메타불변식: 모든 책임 정확히 1 소유레포 / 주인없는 책임 0 / 중복소유 0 / SSOT 파일 존재+스키마 유효; "정책값 공백 = PASS" 가 ADR-130 fail-closed(unknown=exit 1, L96)와 다른 LAYER 임 verbatim 명시 — wrapper 구조검증 vs consumer 정책 opt-in) + §결정3 게이트 = 메타불변식 hard-block + 거친 파생 (책임 의미단위 깊은 파생 = deferred, 마커 시스템 선결; declared↔derived = Bazel forward + Terraform reverse 2-도구 합성 유추) + §결정4 기계 vs 사람 판정 분리 (구조적 사실 = hard-block / 의미 판정 = 소유 선언 + 리뷰어 근거인용 attestation 요구만, 승인 자체 대신 판단 안 함 — 검사연극 금지 ADR-119 정합; CODEOWNERS 선례 + OPA Gatekeeper enforcementAction progressive) + §결정5 상위 자동화 = ADR-069 Phase 2 구현 (story-init.yml components 소비 라우팅, Story 3). axis-disjoint 5-checklist 자기적용 (ADR-086 동형): axis disjoint(토폴로지 SSOT author repo-level ⊥ ModuleArch 레포 내부 ⊥ RefactorAgent advocacy) + RefactorAgent advisory 무축소 verbatim 박제("배치 결정 강제 = 소유레포 확정·기록 강제이지 분해 제안 강제 아님 — RefactorAgent advisory(escalation-tier 제안) 무축소") + RACI R 단일(chief, ADR-042:876) + deputy 0 신설(6 permanent 무손상) + fail-safe layer 분리. ADR-069 Amendment 1 동반 발의 (repos[].components → repo 라우팅 Phase 2 codify + "소유레포 결정 source = ADR-131 토폴로지 SSOT" cross-ref). Out-of-Scope: 책임 의미단위 깊은 파생검증(deferred 별 CFP, 마커 시스템 선결) / 게이트 실행 스크립트(Story 2) / story-init.yml 자동화(Story 3) / consumer adoption(별 follow-on). is_transitional: false 영구 강화 ratchet (chief authority 확장 + 메타불변식 추가, 약화 surface 0 — ADR-058 §결정 5 sunset_justification 비대상). mechanical_enforcement_actions: [] Phase 1 declaration-only (검사 스크립트·required check 0 신설 — Story 2/3 carrier, 회귀 0 차단). collision check: git ls-tree origin/main archive/adr/ numeric max = ADR-130 (CFP-2395) → 131 free (verified-via worktree base b469bd41d8f889f664a4263db6c06e7e1cf41bc3, ADR-129/130 sibling 파일 실재 = numeric max 130 + registry table tail row = 129(CFP-2392)/130(CFP-2395) 등록 max 130 + commit 직전 재verify). status 미경유 직접 (row 120/121/126/127/129/130 ArchitectAgent/ArchitectPLAgent chief author precedent 정합). ADR file = . parent_epic CFP-2418.) |

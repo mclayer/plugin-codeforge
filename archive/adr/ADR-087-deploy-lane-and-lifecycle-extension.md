@@ -165,7 +165,7 @@ ADR-042 Amendment 9 sibling carrier (DeployPL + DeployWorker + DeployReviewPL + 
 | 6 | atomic swap | Traefik label 갱신 (blue → green priority swap), 단일 routing rule 변경 시점이 cutover 순간 |
 | 7 | blue graceful drain | active connection 종료 대기. **[empirical-source: TBD]** — HTTP default 30s timeout / WebSocket default 5min timeout (mctrader websocket 시세 수집 사례 사후 측정 lock-in) |
 | 8 | blue 3-시간 보존 | `retention-window-timer.yml` workflow 가 3h 후 cleanup trigger. **[empirical-source: TBD]** — 3-시간 = brainstorm Phase 1 합의 default, consumer override 가능 (`project.yaml deploy.retention_hours`) |
-| 9 | 3-시간 후 정리 | docker container stop + image 보존 (image registry retention 별 정책). 정리 (contract) 마이그레이션 = 다음 Epic step 2 통합 (별 흐름 — ADR-089 §결정 2 정합) |
+| 9 | 3-시간 후 정리 | docker container stop + image 보존 (image registry retention 별 정책). 정리 (contract) 마이그레이션 = 다음 Epic step 2 통합 (별도 흐름 — ADR-089 §결정 2 정합) |
 
 ADR-068 I-5 dimensional empirical grounding cross-ref — 본 §5.1 안 `[empirical-source: TBD]` annotation 3개소 (healthcheck window / graceful drain / retention period). Wave 2+ (consumer mctrader 실측 후 carrier 별도 CFP 가 lock-in).
 
