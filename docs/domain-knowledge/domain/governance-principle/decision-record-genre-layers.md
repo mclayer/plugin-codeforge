@@ -24,8 +24,9 @@ related_stories:
   - CFP-2697  # 카나리 carrier
   - CFP-2696  # Epic (stale/zombie decision-record 정산)
   - CFP-2699  # child C — 저작시점 예방(PREVENTIVE) 절 增分 (Epic #2696 체질/재발방지)
+  - CFP-1561  # §hygiene class (iv) 의미보존 lexical reword 增分 (frozen ADR cat-a 어휘 sweep — ADR-058 §결정 10 sibling)
 created: 2026-07-16
-updated: 2026-07-16
+updated: 2026-07-22
 ---
 
 # 결정기록 장르 4층 + 기수-임베드 좀비 벡터 + 4분기 처분 oracle + phantom-norm 인용 드리프트
@@ -121,11 +122,12 @@ updated: 2026-07-16
 
 ### hygiene vs weakening 판별 (본 절 = normative SSOT)
 
-**"결정기록에서 무언가를 빼는 것" 은 위생(hygiene)과 약화(weakening) 두 부류다 — 판별 기준은 효력 변화 여부.**
+**"결정기록에서 무언가를 빼거나 표면 어휘를 바꾸는 것" 은 위생(hygiene)과 약화(weakening) 두 부류다 — 판별 기준은 효력 변화 여부(제거·치환 형태 불문).**
 
-- **위생(효력 변화 0)** = (i) phantom-norm 정정(제정된 적 없어 약화할 규범 부재) / (ii) 좀비 de-리터럴화(같은 규범, 표현만 pointer化 — 오히려 invariant 강화) / (iii) 죽은 living-list 항목 제거(존재-license 만료). **위생은 효력을 바꾸지 않으므로 ADR-064 §결정7 evidence-gate(sunset_justification) 대상이 애초에 아니다** → 값싸게 수행.
+- **위생(효력 변화 0)** = (i) phantom-norm 정정(제정된 적 없어 약화할 규범 부재) / (ii) 좀비 de-리터럴화(같은 규범, 표현만 pointer化 — 오히려 invariant 강화) / (iii) 죽은 living-list 항목 제거(존재-license 만료) / **(iv) 의미보존 lexical reword**(forbid-list 어휘 준수 등 목적의 표면 어휘 치환 — 효력·substance/claim 무변경. 예: `별`→`별도`. 제거(remove)가 아닌 치환(substitute)이나 **효력-변화-0 이라는 동일 판별기준을 공유** → 위생). **위생은 효력을 바꾸지 않으므로 ADR-064 §결정7 evidence-gate(sunset_justification) 대상이 애초에 아니다** → 값싸게 수행.
 - **약화(효력 변화 있음)** = scope 축소 / 강도 완화 / forbid-list 축소 / non-safety 구조 결정 교체 등 **효력을 실제로 바꾸는 것**. 위생 아님 → **§결정7 대칭 evidence-gate 유지**.
-- **tie-break(fail-closed)**: 위생/약화 모호 → **약화로 취급**(sunset_justification 요구). 효력-불명이 costless 위생으로 위장되는 것 차단(묘비 "모호=보존" tie-break 과 대칭).
+- **tie-break(fail-closed)**: 위생/약화 모호 → **약화로 취급**(sunset_justification 요구). 효력-불명이 costless 위생으로 위장되는 것 차단(묘비 "모호=보존" tie-break 과 대칭). lexical reword(iv) 적용 시 구체: 치환이 의미를 바꿀 수 있거나 어휘가 용어-언급(meta)·정당 기술용어면 → 약화로 취급 = **보존**(exemption 형식화 inline-code/EXEMPT/prune, 치환 금지).
+- **dated-이력(① class) 안 lexical reword**: 4분기 oracle ①(Descriptive-dated → byte 보존)의 보호 대상은 그 기록이 *말한 substance/claim* 이지 orthographic 표면 form 이 아니다. 의미보존 lexical reword(효력·substance 변화 0)은 dated 기록의 claim 을 falsify 하지 않으므로 ① byte-보존과 충돌하지 않는다. **frozen Accepted ADR 산문 적용의 정식 codify = ADR-058 §결정 10**(외부 strict append-only 관례와의 deliberate divergence 명시 — 본 절 class (iv)를 frozen-ADR prose 로 확장. 판별 규범 SSOT = 본 절, ADR-058 §결정 10 은 pointer only).
 - **override 금지**: 위생을 safety-only 로 좁히거나 "구조 결정 자유 교체" 로 넓히는 것은 §결정7 대칭 scope 의 override → 금지. **본 절은 §결정7 위에 얹히는 예방층이지 §결정7 을 재정의하지 않는다.**
 
 > **근거 pointer (재서술 금지)**: 대칭 ratchet normative = **ADR-064 §결정7**(evidence-gated symmetric ratchet), 약화 방향 evidence requirement = **ADR-058 §결정5**, 약화 집행 절차 = **ADR-058 §결정9**(active-sunset-procedure). 본 절은 이들을 **pointer 로만 참조**하며 본문 규범을 재서술하지 않는다 — 재서술 자체가 split-brain(리터럴 복제)의 자기생산이기 때문이다.
@@ -160,7 +162,7 @@ honesty ceiling(ADR-136 I-6 정직 천장):
 - **ADR-125** — phantom norm 발원(6-tuple invariant 오인용). §결정2 는 원래 required contexts 무변경(INTERNAL 흡수) 선언이었으나 :99 가 이를 invariant 로 오인용.
 - **ADR-145** — ①→③ 도피 표본. I-APPLIC forward-only 해독제(적용성 판정의 비가역·비억제 성질)와 대비.
 - **ADR-087** — 5→6 ratchet 증가 실행(phantom 반증 근거 — 이 증가가 "불변"이 아니라 ratchet 이었음을 실증).
-- **ADR-058** — §결정 9 carrier-preserved in-place 본문 보존(dated 이력 byte 보존 원칙의 상위 근거).
+- **ADR-058** — §결정 9 carrier-preserved in-place 본문 보존(dated 이력 byte 보존 원칙의 상위 근거) / §결정 10 frozen Accepted ADR 의미보존 lexical 위생편집 허용 + 외부 append-only divergence codify(본 절 class (iv)의 frozen-ADR prose 적용 anchor, CFP-1561).
 - **ADR-136** — I-6 정직 천장(경계 절의 근거).
 - **ADR-013** — doc-only vehicle 근거(본 정정이 정식 doc-only Story 로 진행되는 근거).
 
@@ -168,3 +170,4 @@ honesty ceiling(ADR-136 I-6 정직 천장):
 
 - 2026-07-16 (CFP-2697): 신규 — 결정기록 장르 4층 + 4분기 처분 oracle + phantom-norm 인용 드리프트 methodology 정립 (Epic #2696 카나리).
 - 2026-07-16 (CFP-2699): 增分 — "저작시점 예방(PREVENTIVE)" 절 추가 (V1 phantom/citation-drift · V2 가변값 리터럴 임베드 금지 · V3 묘비 협소 · hygiene-vs-weakening 판별 normative SSOT · 폐기·교체 1급화 · 사본 단일 생성기 · 정직 천장). REACTIVE 처분 oracle 위에 얹히는 저작시점 PREVENTIVE 층 (Epic #2696 child C 체질/재발방지).
+- 2026-07-22 (CFP-1561): 增分 — §hygiene-vs-weakening 판별 절에 위생 class **(iv) 의미보존 lexical reword** 추가(제거 아닌 치환도 효력-변화-0 이면 위생) + dated-이력(① class) 안 lexical reword 정합(surface form ≠ substance) 명시. frozen Accepted ADR 산문 적용 codify 는 ADR-058 §결정 10 (외부 strict append-only 와의 deliberate divergence). cat-a 어휘 full-scope sweep(별→별도 등)의 위생 판별 근거.
