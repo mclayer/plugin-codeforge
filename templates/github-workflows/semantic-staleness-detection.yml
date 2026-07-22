@@ -46,6 +46,7 @@ env:
 jobs:
   semantic-staleness-detection:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -89,6 +90,7 @@ jobs:
     name: semantic-staleness-detection discriminating test (mutation 생존 0)
     if: github.repository == 'mclayer/plugin-codeforge'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Set up Python

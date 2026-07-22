@@ -86,8 +86,8 @@ BASE_SHA_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")   # B-M1 40-hex 검증
 # workitem body 내 경로 토큰 추출 — 선형 bounded regex(ReDoS 봉인, CFP-2786 보안FIX iter1).
 #   char class 에서 dot 제거 → dot 을 명시 segment separator 로 구조화(각 segment non-dot 필수)
 #   → char-class↔required `\.` overlap 소멸 → all-dots/`.a`-repeat per-position backtracking 폭발 제거.
-#   {1,255}=segment 길이 상한(실 repo 최장경로 106<255) / {0,16}=dotted-segment 개수 상한. bounded degradation(honest-ceiling).
-PATH_TOKEN_RE = re.compile(r"\.?[A-Za-z0-9_/-]{1,255}(?:\.[A-Za-z0-9_/-]{1,255}){0,16}\.(?:py|md|ya?ml|sh)")
+#   {1,128}=segment 길이 상한(실 repo 최장경로 106<128) / {0,16}=dotted-segment 개수 상한. bounded degradation(honest-ceiling).
+PATH_TOKEN_RE = re.compile(r"\.?[A-Za-z0-9_/-]{1,128}(?:\.[A-Za-z0-9_/-]{1,128}){0,16}\.(?:py|md|ya?ml|sh)")
 # lane 토큰 추출 (plugins/<lane>/ 폴더명 — carrier/workitem 공통 lane 축)
 LANE_DIR_RE = re.compile(r"(?:^|/)plugins/([A-Za-z0-9_-]+)/")
 # evidence-checks-registry.yaml 의 workflow: 라인 (라인 기반 parse — PyYAML 금지)
