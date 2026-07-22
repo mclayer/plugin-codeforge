@@ -177,7 +177,7 @@ atomic swap 후 cutover 사후 검증 (3-시간 동안 active monitoring)
 
 - ADR-RESERVATION row 88 = CFP-1059 active (commit `2104183`)
 - ADR-087 sibling carrier file 생성 확인 (본 commit batch 이전 step)
-- ADR-072 본문 = Amendment N 미적용 baseline (Amendment N 추가 = Task 12 영역, 본 Story-1 별 commit)
+- ADR-072 본문 = Amendment N 미적용 baseline (Amendment N 추가 = Task 12 영역, 본 Story-1 별도 commit)
 
 ## 관련 파일
 

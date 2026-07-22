@@ -158,7 +158,7 @@ schema_change_7_principles_self_check:
 - lock duration 5분+ → **[empirical-source: TBD]** — consumer 의 acceptable_downtime_ms 정합 (`project.yaml deploy.acceptable_downtime_ms`)
 - dependency depth 3+ → **[empirical-source: TBD]** — ADR-090 cross-layer 참조 정책 의존 그래프 traverse 결과 측정
 
-ADR-068 I-5 dimensional empirical grounding cross-ref — Wave 2+ consumer mctrader 실측 후 carrier 별 CFP 가 정량 lock-in.
+ADR-068 I-5 dimensional empirical grounding cross-ref — Wave 2+ consumer mctrader 실측 후 carrier 별도 CFP 가 정량 lock-in.
 
 ### §결정 5 — wrapper / lane plugin self-application = N/A
 

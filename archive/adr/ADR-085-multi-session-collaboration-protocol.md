@@ -197,7 +197,7 @@ active_sessions:
 #### Evidence
 
 - **CFP-681 retroactive evidence** — rebase merge first success variant. force-push 0 사용 → ancestry corruption 0 evidence anchor.
-- **CFP-991 counter-evidence** — 2 ancestry corruption recovery (orphan `15bc90f` cherry-pick) — force-push 사용 시 ancestry 손상 발생. ADR §6 candidate force-push pre-flight HEAD-pin gate carrier (pattern_count 2 CFP-967+991, 별 CFP 권고).
+- **CFP-991 counter-evidence** — 2 ancestry corruption recovery (orphan `15bc90f` cherry-pick) — force-push 사용 시 ancestry 손상 발생. ADR §6 candidate force-push pre-flight HEAD-pin gate carrier (pattern_count 2 CFP-967+991, 별도 CFP 권고).
 
 #### Exception (sub-§결정 4.1)
 
@@ -310,7 +310,7 @@ frontmatter `mechanical_enforcement_actions: [active-sessions-presence, lane-ent
 #### Good pattern
 
 - ✅ Session A: 단일 Story end-to-end (lane sequential within session)
-- ✅ Session B: 다른 repo / 다른 ADR / 다른 file domain 의 별 work
+- ✅ Session B: 다른 repo / 다른 ADR / 다른 file domain 의 별도 work
 - ✅ 양 session 동시 실행 시 file touch overlap = 0
 
 #### Sunset criteria
