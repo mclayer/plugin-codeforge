@@ -23,7 +23,7 @@ related_adrs:
   - ADR-090       # cross-layer impact + TIME-axis disjoint (intra-PR vs cross-PR-temporal)
   - ADR-119       # research-before-claims — presence != truth honest ceiling
   - ADR-151       # honesty ceiling — 안전성 claim 정직(수치 SLA 미강제)
-  - ADR-005       # byte-identical workflow parity (template <-> .github pair)
+  - ADR-065       # workflow template<->.github byte-identical self-app parity (§결정 1/6, diff -q blocking)
   - ADR-061       # thin wrapper convention (bash dispatch -> Python SSOT)
 related_stories:
   - CFP-2786      # 본 codify carrier (Epic #2783 Child B)
@@ -97,7 +97,7 @@ carrier touch 는 후보 필터일 뿐이다. sentinel 이 "matched" 로 표면�
 
 1. **discriminating self-test** — mutation 생존 0. cross-match 의 OR→AND 변이(M3a), narrowing 제거→all-in-flight 변이(M3b) 등이 self-test 에서 잡혀야 한다.
 2. **hard-fail workflow job** — self-test 를 warning-tier gate workflow 안에 배선(RED swallowed)하지 않고, `continue-on-error` 부재의 별 hard-fail job(`semantic-staleness-detection-test`)으로 분리(RED = exit 1 차단).
-3. **bijection** — Python SSOT + thin wrapper(ADR-061) + byte-identical workflow pair(ADR-005 template <-> .github) + self-test + registry entry 가 1:1 대응(누락 0).
+3. **bijection** — Python SSOT + thin wrapper(ADR-061) + byte-identical workflow pair(ADR-065 §결정1/6 template <-> .github) + self-test + registry entry 가 1:1 대응(누락 0).
 
 ### 규칙 4 — recall-first honest ceiling (수치 SLA 부재)
 
@@ -146,7 +146,7 @@ ADR-090 cross-layer impact 축은 **intra-PR**(한 PR 안 layer 간 영향)을 �
 - **ADR-090** (Cross-layer impact / dependency-order) — TIME-axis disjoint 근거(intra-PR vs cross-PR-temporal).
 - **ADR-119** (research-before-claims) — presence != truth honest ceiling 상속. carrier touch = candidate 이지 verdict 아님.
 - **ADR-151** (honesty ceiling) — 안전성/완전성 claim 정직. 수치 SLA 미강제, undecidable 완전검출 hard-claim 금지.
-- **ADR-005** (byte-identical self-application) — template <-> .github workflow pair byte-parity.
+- **ADR-065** §결정1/6 (workflow template<->.github byte-identical self-app parity) — template <-> .github workflow pair byte-parity (diff -q blocking).
 - **ADR-061** (thin wrapper convention) — bash dispatch -> Python SSOT 배선.
 
 ## 변경 이력

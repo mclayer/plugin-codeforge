@@ -438,7 +438,7 @@ def _snapshot_provenance() -> Dict[str, Any]:
     sha = None
     try:
         r = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
+            ["git", "rev-parse", "origin/main"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
         if r.returncode == 0 and r.stdout.strip():
