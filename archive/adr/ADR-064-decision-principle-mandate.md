@@ -164,11 +164,11 @@ amendment_log:
       ratchet 강화 방향 (사다리 rung 추가 = 진단 escalation 표현력 확장, scope 약화 0건). is_transitional: false 정합. 약화 방향 (3rd rung 제거 / 재진입 규율 3종 1+ 축소 / 비대칭 결정규칙 완화) = ADR-058 §결정 5 sunset_justification 의무.
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (root-cause 사다리 3rd rung 신설 = 진단 escalation 표현력 확장, scope 약화 0건)
-  - amendment: 14
+  - amendment: 15
     carrier_story: CFP-1561
     date: 2026-07-22
     summary: |
-      §결정 2 Amendment 5 표(per-word lint scope)의 `별` standalone row 를 lint 실동작에 정합 — 5-scope 표기 → **6-scope**(archive/adr 포함). CFP-2661 D1 이 ADR 실위치 이동(PR #1973 docs/adr→archive/adr) 후속으로 `별` lint scope 에 `archive/adr` 를 union-ADD(script L62 `WORD_TARGETS["별"]` 에 archive/adr 포함)했으나 SSOT 표기(본 §결정 2 Amd5 표 + docs/wording-dictionary.md L46 + script 헤더 주석 L31/L52)는 여전히 5-scope 로 stale → lint(6-scope) ↔ SSOT doc(5-scope) divergence(CFP-1561 §2.3 실측 `[verified]`). 본 Amendment 가 SSOT 표기를 lint 실동작에 정합(scope 확장 formalize).
+      §결정 2 Amendment 5 표(per-word lint scope)의 `별` standalone row 를 lint 실동작에 정합 (본 amendment = 15 — body `## Amendment 14`(CFP-2374) slot 충돌 회피 clean-slot renumber) — 5-scope 표기 → **6-scope**(archive/adr 포함). CFP-2661 D1 이 ADR 실위치 이동(PR #1973 docs/adr→archive/adr) 후속으로 `별` lint scope 에 `archive/adr` 를 union-ADD(script L62 `WORD_TARGETS["별"]` 에 archive/adr 포함)했으나 SSOT 표기(본 §결정 2 Amd5 표 + docs/wording-dictionary.md L46 + script 헤더 주석 L31/L52)는 여전히 5-scope 로 stale → lint(6-scope) ↔ SSOT doc(5-scope) divergence(CFP-1561 §2.3 실측 `[verified]`). 본 Amendment 가 SSOT 표기를 lint 실동작에 정합(scope 확장 formalize).
       lockstep 갱신: 본 §결정 2 Amd5 표 `별` row + docs/wording-dictionary.md L46(카테고리 (a) lint scope 표) + scripts/check-wording-dictionary.sh 헤더 주석 L31/L52(COMMENT-only, WORD_TARGETS 로직 무변경). 이 정합이 CFP-1561 cat-a full-scope sweep 의 frozen archive/adr 539 `별` = debt 전제를 governance SSOT 에 반영.
       ratchet 강화 방향 (declared scope 5→6 formalize — lint 실동작 이미 6-scope, doc 정합). is_transitional: false 정합. 약화 방향 (별 scope 축소 / archive/adr 제외) = ADR-058 §결정 5 sunset_justification 의무.
     direction: strengthen
@@ -197,7 +197,7 @@ related_stories:
   - CFP-1753 # Amendment 11 carrier — §결정 12 신설 (Trace 8 autonomous loop idle-without-purpose 자동 종료, 4-tuple AND gate + Anti-pattern enum + ScheduleWakeup-skip mandate)
   - CFP-1755 # Amendment 12 carrier — §결정 12 Wave 2A mechanical wire activation (PreToolUse `ScheduleWakeup` advisory reminder hook, hooks/schedule-wakeup-reminder + hooks/hooks.json second PreToolUse entry, CFP-1738 reminder pattern 2nd instantiation)
   - CFP-2350 # Amendment 13 carrier — §결정 13 신설 (Trace 9 root-cause-decision 사다리 3rd rung = 문제정의 오류 → 요구사항 lane 재진입, ADR-119 §결정 10 ② instantiation, Epic #2346 진단축 C)
-  - CFP-1561 # Amendment 14 carrier — §결정 2 Amd5 표 `별` scope 5→6 formalize (archive/adr union, CFP-2661 D1 lint 실동작 정합). cat-a 어휘 full-scope sweep governance
+  - CFP-1561 # Amendment 15 carrier — §결정 2 Amd5 표 `별` scope 5→6 formalize (archive/adr union, CFP-2661 D1 lint 실동작 정합). cat-a 어휘 full-scope sweep governance. slot=15 (body Amendment 14=CFP-2374 충돌 회피)
 related_adrs:
   - ADR-039
   - ADR-044  # CFP-609 Amendment 1 — agent teams enabled context (env=1) TeamCreate fan-out 자연 정합
@@ -316,7 +316,7 @@ codeforge 의 결정 원칙은 다음 4 회 누적 사용자 directive (2026-05-
 |---|---|---|
 | **CFP-449 8 어휘** (`임시` / `단계적` / `일단` / `우선` / `잠정` / `가벼운` / `minimal viable` / `quick win`) | 5 영역 한정 — `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**` | CFP-449 originally tuned (Amendment 2 baseline, Amendment 5 변경 없음 — `decision-principle-vocab` warning-tier entry 영역) |
 | **Amendment 2 4 어휘** (`박제` / `못 박기` / `pin` / `freezing`) | **확장 scope** — 거버넌스 문서 전체 + `docs/inter-plugin-contracts/**` + `CHANGELOG.md` | **Amendment 5 (CFP-750)** — registration ↔ enforcement 2-layer 분리의 enforcement scope 확장 (§Amendment 5 본문 참조) |
-| **Amendment 4 1 어휘** (`별` standalone) | **6 영역** (Amendment 14/CFP-1561 formalize) — 5 영역(`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`) + **`archive/adr/**`** | Amendment 5 자체 결정 — `별` standalone false-positive collateral (한자어 `別` / 분류 접미사 `~별` 의미 collision) 가 `docs/inter-plugin-contracts/**` 등 확장 scope 에서 증폭됨이 RequirementsPL 직접 lint verify 로 `[verified]` → `박제` expanded scope 는 배제. **Amendment 14 정합**: 단 `archive/adr` = ADR 실위치(PR #1973 이동)라 CFP-2661 D1 이 `별` lint scope union-ADD(script L62), lint 실 scope=6 → 본 표 5→6 정합(강화 방향 formalize, docs/wording-dictionary.md L46 + script 헤더 L31/L52 lockstep). per-word scope decoupling 의 첫 instantiation |
+| **Amendment 4 1 어휘** (`별` standalone) | **6 영역** (Amendment 15/CFP-1561 formalize) — 5 영역(`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`) + **`archive/adr/**`** | Amendment 5 자체 결정 — `별` standalone false-positive collateral (한자어 `別` / 분류 접미사 `~별` 의미 collision) 가 `docs/inter-plugin-contracts/**` 등 확장 scope 에서 증폭됨이 RequirementsPL 직접 lint verify 로 `[verified]` → `박제` expanded scope 는 배제. **Amendment 15 정합**: 단 `archive/adr` = ADR 실위치(PR #1973 이동)라 CFP-2661 D1 이 `별` lint scope union-ADD(script L62), lint 실 scope=6 → 본 표 5→6 정합(강화 방향 formalize, docs/wording-dictionary.md L46/L48/L94 + docs/evidence-checks-registry.yaml L666 + script 헤더 L31/L52 lockstep). per-word scope decoupling 의 첫 instantiation |
 
 per-word scope decoupling 의 운영 원리: lint script (`scripts/check-wording-dictionary.sh`) 가 어휘별 scope 를 분리 관리 (`TARGETS` map). 신규 어휘 추가 시 (a) scope 5 영역 기본 default (b) Amendment 별도 확장 trigger 명시 시 expanded scope. 어휘 추가 = scope 자동 확장 아님 — scope axis 독립 ratchet (§결정 7 정합).
 
@@ -1162,6 +1162,26 @@ ratchet 방향 = **강화** (사다리 rung 추가 = 진단 escalation 표현력
 ### Sunset justification
 
 강화 방향 (불필요한 멈춤·약화 옵션 제거). 약화 아님 → ADR-058 §결정 5 비대상. ADR-127 §결정 4 위임.
+
+## Amendment 15 — §결정 2 `별` lint scope 5→6 formalize (archive/adr union, CFP-1561, 2026-07-22 KST)
+
+> slot = 15 (frontmatter amendment_log 상 CFP-2374 는 body `## Amendment 14` 만 보유·frontmatter entry 부재로 14 이 body-only 점유 → CFP-1561 은 다음 free body slot 15. CFP-2374 무손상.)
+
+### 컨텍스트
+
+CFP-2661 D1 이 ADR 실위치 이동(PR #1973 `docs/adr`→`archive/adr`) 후속으로 `별` standalone lint scope 에 `archive/adr` 를 union-ADD 했다 (`scripts/check-wording-dictionary.sh` L62 `WORD_TARGETS["별"]`). 그러나 SSOT 표기 — 본 §결정 2 Amendment 5 표 `별` row + `docs/wording-dictionary.md` L46/L48/L94 + `docs/evidence-checks-registry.yaml` L666 + script 헤더 주석 L31/L52 — 는 여전히 5-scope 로 stale → **lint(6-scope) ↔ SSOT doc(5-scope) divergence** (CFP-1561 §2.3 firsthand 실측 `[verified]`).
+
+### 결정
+
+`별` standalone 의 **declared** lint scope 를 **6-scope** 로 formalize — 5 영역(`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`) + **`archive/adr/**`**. lint 실동작(L62)에 SSOT 표기를 정합.
+
+- **decoupling 동기 보존**: `별` 은 `docs/inter-plugin-contracts/**` / `CHANGELOG.md` 등 `박제` expanded scope 는 여전히 **배제**(false-positive collateral 차단 — Amendment 4 §Amendment 결정 6 + Amendment 5 정합) = 박제보다 narrow.
+- **lockstep 갱신**: 본 §결정 2 Amendment 5 표 `별` row + `docs/wording-dictionary.md`(L46/L48/L94) + `docs/evidence-checks-registry.yaml`(L666) + script 헤더 주석(L31/L52 — COMMENT-only, `WORD_TARGETS` 로직 무변경). **`decision-principle-vocab`(CFP-449 8 어휘) 5-scope 는 무변경** — 8 어휘는 archive/adr union 대상 아님(별 전용 union). evidence-registry L447 은 그 8-어휘 scope 라 유지.
+- **근거·전제** = CFP-1561 cat-a 어휘 full-scope sweep (frozen `archive/adr` 539 `별` = debt). frozen-ADR 편집 정책 = ADR-058 §결정 10 (sibling).
+
+### Sunset justification
+
+강화 방향 (declared scope 5→6 formalize — lint 실동작 이미 6-scope, doc 정합). 약화 0건. 약화 방향(별 scope 축소 / archive/adr 제외)은 ADR-058 §결정 5 sunset_justification 의무. is_transitional: false 정합.
 
 ## 해소 기준
 

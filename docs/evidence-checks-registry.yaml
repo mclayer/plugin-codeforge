@@ -663,7 +663,7 @@ entries:
       카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / mirrored field).
       SSOT: docs/wording-dictionary.md. per-word scope (ADR-064 Amendment 5 §결정 2):
       `박제`/`못 박기`/`pin`/`freezing` = docs/** + CLAUDE.md + templates/** (expanded scope — CHANGELOG.md target 은 CFP-2154 에서 main 부재 dead reference 로 제거);
-      `별` standalone = docs/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (5-scope 유지, false-positive carrier 분리).
+      `별` standalone = docs/adr/** + archive/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (6-scope — archive/adr CFP-2661 D1 union-ADD / ADR-064 Amendment 15/CFP-1561; docs/inter-plugin-contracts·CHANGELOG.md 배제 = false-positive carrier 분리).
       CFP-2154: Amendment 3 (CFP-1060) `별 + carrier-noun` exemption regex pre-screen wire (Wave 2 mechanical 실현) + `--self-test` counter-case fixture 12 case + label-registry-v2.md EXEMPT (ADR-108 append-only frozen 이력).
     detect_command: bash scripts/check-wording-dictionary.sh
     workflow: .github/workflows/wording-dictionary.yml

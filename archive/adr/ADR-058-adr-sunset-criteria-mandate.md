@@ -41,7 +41,7 @@ amendment_log:
     date: 2026-07-22
     summary: |
       §결정 10 신설 — frozen(Accepted) ADR 산문의 의미보존 lexical 위생편집(hygiene lexical edit) 정식 허용 + 외부 strict append-only 관례(Nygard 2011 / Azure Well-Architected)와의 deliberate divergence 명시 codify. §결정 9 는 ADR 일몰(demote) 절차, §결정 5 는 결정 약화(effect change) evidence-gate 를 정의하나, Accepted ADR 산문의 효력·substance 무변경 lexical 편집(forbid-list 어휘 준수 위한 `별`→`별도` reword 등) 정책은 전용 codify 부재였다 (ADR-070 오귀속 — ADR-070 = Codex verify-before-trust, frozen-ADR-edit 무관; grep 실측상 전용 ADR corpus 부재 = governance gap). 본 §결정 이 gap 충족.
-      판별 규범 재서술 0 — hygiene-vs-weakening 판별 SSOT = decision-record-genre-layers.md §hygiene 판별 절 class (iv) pointer only (§결정 5 Amendment 3 pointer-only 패턴 답습, split-brain 회피). fail-closed tie-break(모호=약화=보존) + M/T-class exemption 형식화 codify.
+      역할 분담(overstatement 방지): 위생/약화 판별 규범(effect-변화-0 discrimination = 무엇이 위생인가) = genre-layers §hygiene class (iv) 단일 SSOT, 본 §결정 은 pointer only 재서술 0 (§결정 5 Amendment 3 답습, split-brain 회피); 정책 적용층(frozen-ADR fail-closed tie-break 모호=약화=보존 + M/T-class exemption 형식화 = 판별을 frozen-ADR 편집에 어떻게 적용하는가)은 본 §결정 소유(판별 규범 복제 아님).
     direction: strengthen  # governance 표현력 확장 — 기존 hygiene SSOT 를 frozen-ADR prose 에 적용 codify + fail-closed guard 신설. 위생(효력 변화 0)은 §결정 5/ADR-064 §결정 7 상 애초에 weakening 아님 = immutability 완화 아님
     sunset_justification: null  # strengthen 방향 (hygiene codify + guard 신설). 잠재 "immutability 완화" 우려 evidence = (1) 외부 core concern(substance 이력 보존)과 양립 (2) genre-layers 효력-변화-0 판별 (3) CFP-2566/2762 mechanical frozen-edit 선례. is_transitional: false 유지
 related_stories:
@@ -194,7 +194,11 @@ ArchitectAgent (집행 §3 단계 1-5) + GitOpsAgent (RESERVATION 잠금 §3 단
 
 > **CFP-1561 (2026-07-22 KST)**: §결정 9 는 ADR 을 *일몰(demote)* 시키는 절차를, §결정 5 는 결정의 *약화(effect change)* evidence-gate 를 정의한다. 그러나 **Accepted(frozen) ADR 산문의 효력·substance 무변경 lexical 편집** (예: forbid-list 어휘 준수 위한 `별`→`별도` reword) 을 정식 허용하는 정책은 전용 codify 부재였다 — frozen-ADR wording 편집 전용 ADR 이 corpus 에 없음(grep 실측). 본 §결정 이 그 governance gap 을 충족한다.
 
-**결정**: Accepted(frozen) ADR 산문은 **효력 변화 0 AND 결정 substance/claim 변화 0** 인 **의미보존 lexical 위생편집**을 정식 허용한다. 판별 규범 SSOT = [`decision-record-genre-layers.md`](../../docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md) §hygiene-vs-weakening 판별 절 **class (iv) 의미보존 lexical reword**. 본 §결정 은 그 판별 규범을 **재서술하지 않고 pointer 로만 참조**한다 (재서술 = split-brain(리터럴 복제) 자기생산, §결정 5 Amendment 3 pointer-only 패턴 답습).
+**결정**: Accepted(frozen) ADR 산문은 **효력 변화 0 AND 결정 substance/claim 변화 0** 인 **의미보존 lexical 위생편집**을 정식 허용한다. 판별 규범 SSOT = [`decision-record-genre-layers.md`](../../docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md) §hygiene-vs-weakening 판별 절 **class (iv) 의미보존 lexical reword**.
+
+**역할 분담 (재서술 회피 경계 — overstatement 방지)**: 두 층을 구분한다.
+- **위생/약화 판별 규범** (effect-변화-0 discrimination = *무엇이* 위생인가) = genre-layers §hygiene 이 단일 SSOT. 본 §결정 은 이를 **재서술하지 않고 pointer 로만 참조**한다 (재서술 = split-brain(리터럴 복제) 자기생산, §결정 5 Amendment 3 pointer-only 답습).
+- **정책 적용 세부** (그 판별을 frozen-ADR 편집에 *어떻게* 적용하는가 = 아래 fail-closed tie-break 의 frozen-ADR 적용 + M/T-class exemption 형식화) = **본 §결정 이 소유**. 이는 판별 규범의 복제가 아니라 그 위에 얹히는 적용층이다 (genre-layers class (iv) 도 tie-break·exemption 을 자기 절에 서술하나, frozen-ADR 편집 맥락의 적용 규율은 본 §결정 이 owning layer).
 
 **외부 관례와의 divergence (명시 codify — endorsement 아닌 deliberate 내부 refinement)**:
 
@@ -206,7 +210,7 @@ ArchitectAgent (집행 §3 단계 1-5) + GitOpsAgent (RESERVATION 잠금 §3 단
 
 **선례 구분 (mechanical hygiene → prose hygiene 확장)**: CFP-2566(ADR 번호 renumber) / CFP-2762(ADR 자릿수 정규화)는 frozen ADR 파일을 편집했으나 대상이 **식별자·metadata(mechanical)** 였다. 본 §결정 은 그 hygiene 을 **산문 lexical(prose)** 로 확장한다 — 양자 모두 효력·substance 변화 0 이나, 본 건은 서사 본문 어휘를 대상으로 하므로 정식 codify 로 경계를 명시한다.
 
-**fail-closed tie-break (모호 = 보존)**: 어느 occurrence 든 (a) 치환이 의미를 바꿀 수 있거나 (b) 어휘가 용어-언급·정당 기술용어이면 → **약화로 취급 = 보존** (genre-layers §hygiene "모호=약화" tie-break 대칭). 구체:
+**fail-closed tie-break (본 §결정 소유 적용층 — genre-layers "모호=약화" 판별의 frozen-ADR 편집 적용)**: 어느 occurrence 든 (a) 치환이 의미를 바꿀 수 있거나 (b) 어휘가 용어-언급·정당 기술용어이면 → **약화로 취급 = 보존**. 구체:
 - **M-class (어휘를 용어로 인용·정의)** = 보존, exemption 형식화(inline-code-span / EXEMPT_FILES) — 치환 금지 (치환 시 정의 파괴).
 - **T-class (정당 기술용어)** = 보존, exemption 형식화(inline-code / prune 확장) — 치환 금지 (치환 시 표준표현 파괴).
 - 판정 모호 = 보존 (성급한 치환보다 잔존이 안전 — 참인 기록 훼손 방지).
