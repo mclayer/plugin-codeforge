@@ -85,7 +85,7 @@ axis enumeration 의무 (Story 또는 Epic spec §axis 분석 section 명시):
 | 2 | **cost-token budget** | spawn count 증가 시 ADR-068 I-5 dimensional empirical grounding 의무 (10 dimension `count` 의 quantitative parameter `[empirical-source: <ref> \| TBD]` annotation) | PASS — 평균 22→28 (1.27배) / full 34→40 (1.18배) 명시 + `[empirical-source: TBD]` annotation (Mitigation 2 explicit TBD) |
 | 3 | **consumer carrier** | consumer overlay 필드 명시 (CONDITIONAL applicability / tool override). `project.yaml` schema 신설 또는 갱신 의무 | PASS — `project.yaml aggregate_arch.{applicable, migration_tool}` schema 신설 (Tool scope B + 9-enum migration_tool override default alembic) |
 | 4 | **sibling Epic align** | 진행 중 sibling Epic 과 RACI 충돌 0 또는 cross-ref 명시 | PASS — CFP-1079 (OpsExecutionArch sibling Epic) Phase 1 PR open 시점 OPEN PR 0건 명시 → 본 Amendment 8 선점 + CFP-1079 후속 = Amendment 9 |
-| 5 | **deferred trigger 명시** | 후속 carrier 별 CFP 명시 (sub-tuple expansion / CONDITIONAL P3 / consumer schema lint / RACI codify 등 follow-up 영역 enumeration) | PASS — 8 follow-up CFP enumeration (a)~(h) 명시 (sub-tuple 5-tuple expansion / CONDITIONAL P3 trigger / consumer schema lint / RACI mechanical / sibling Epic 통합 / consumer API schema lint / RACI mechanical enforcement / chief tie-break ladder mechanical) |
+| 5 | **deferred trigger 명시** | 후속 carrier 별도 CFP 명시 (sub-tuple expansion / CONDITIONAL P3 / consumer schema lint / RACI codify 등 follow-up 영역 enumeration) | PASS — 8 follow-up CFP enumeration (a)~(h) 명시 (sub-tuple 5-tuple expansion / CONDITIONAL P3 trigger / consumer schema lint / RACI mechanical / sibling Epic 통합 / consumer API schema lint / RACI mechanical enforcement / chief tie-break ladder mechanical) |
 
 self-app 산출물 = Story spec §axis 분석 + §5-checklist self-app 표 (carrier Story 안 명시 의무).
 
@@ -95,9 +95,9 @@ self-app 산출물 = Story spec §axis 분석 + §5-checklist self-app 표 (carr
 
 deferred carrier path:
 
-1. **별 follow-up CFP 발의** — FAIL 영역 해소 carrier (예: consumer carrier FAIL → consumer schema sub-Epic carrier 별 CFP)
+1. **별도 follow-up CFP 발의** — FAIL 영역 해소 carrier (예: consumer carrier FAIL → consumer schema sub-Epic carrier 별도 CFP)
 2. **sibling Epic align** — sibling Epic 과 RACI 충돌 시 — sibling Epic close 후 carrier 진입 또는 cross-ref 명시 후 본 Epic 진행
-3. **axis 미확정 영역** — axis 분석 (§결정 1) 통과 안 됨 시 — 별 brainstorm 단위 (codeforge:brainstorm skill Phase 0+1+2) 후 axis 명확화 carrier 별 CFP
+3. **axis 미확정 영역** — axis 분석 (§결정 1) 통과 안 됨 시 — 별도 brainstorm 단위 (codeforge:brainstorm skill Phase 0+1+2) 후 axis 명확화 carrier 별도 CFP
 
 deferred carrier path 진입 시 본 Story 의 신설 결정 = 보류 (chief author 가 결정 lock + 사용자 escalation 의무, ADR-064 §결정 3 룰 5 가치 판단 한정 `AskUserQuestion` 정합).
 
@@ -174,7 +174,7 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 
 - scope 확장 (5-checklist → 6+ checklist 추가)
 - 강도 강화 (declaration-only → warning-tier evidence-check 승격)
-- enforcement surface 확장 (design lane → 다른 lane 적용 확장 별 CFP)
+- enforcement surface 확장 (design lane → 다른 lane 적용 확장 별도 CFP)
 
 약화 방향 (axis 분석 의무 약화 / 5-checklist 항목 축소 / deferred carrier path skip / `mechanical_enforcement_actions: []` retain 약화) 은 ADR-058 §결정 5 sunset_justification 의무로 차단.
 

@@ -148,7 +148,7 @@ N/A — permanent policy
 #### ratchet 강화 보존
 
 - **약화 방향 (차단)**: filter 약화 / fail-open default / whitelist 축소 발의 = 본 Amendment 3 ratchet 강화 ratchet 위배 invariant 보존.
-- **강화 방향 evidence (ADR-058 §결정 5 CFP-1149 재정의 symmetric evidence-gate 정합)**: declaration-only-Wave-1 → walker apply Stage D wire active 격상 = 본 Amendment 3 = β2 audit LOSSLESS declared ↔ actual walk_plan.py 안 wire 0 match drift catch evidence-based 강화 방향 evidence. ADR-058 §결정 5 (CFP-1149 재정의 후) = "약화 차단 logic" 아니라 "약화 방향 evidence requirement" — symmetric evidence-gate. 약화 0건 (약화 발의 시 별 evidence requirement 동등 적용, 본 Amendment = 강화 방향 1급).
+- **강화 방향 evidence (ADR-058 §결정 5 CFP-1149 재정의 symmetric evidence-gate 정합)**: declaration-only-Wave-1 → walker apply Stage D wire active 격상 = 본 Amendment 3 = β2 audit LOSSLESS declared ↔ actual walk_plan.py 안 wire 0 match drift catch evidence-based 강화 방향 evidence. ADR-058 §결정 5 (CFP-1149 재정의 후) = "약화 차단 logic" 아니라 "약화 방향 evidence requirement" — symmetric evidence-gate. 약화 0건 (약화 발의 시 별도 evidence requirement 동등 적용, 본 Amendment = 강화 방향 1급).
 - **약화 0건** declare (Amendment 3 본문 + amendment_log entry 모두 명시).
 
 #### Cross-ref
@@ -161,7 +161,7 @@ N/A — permanent policy
 
 ## 컨텍스트 — wholesale_mirror 무차별 유입 의 silent harm
 
-Epic CFP-858 (Wave 4 sub-Epic) = `reconcile-protocol-v1` v1.7 §4.11 (CFP-898 S1) dependency bundle integrity binding 으로 **closure missing** 영역은 fail-closed 차단. 그러나 **closure 가 full 인 wrapper-only workflow yml 가 consumer repo 로 무차별 유입** 시 silent harm 의 별 super-class 가 존속 — mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim).
+Epic CFP-858 (Wave 4 sub-Epic) = `reconcile-protocol-v1` v1.7 §4.11 (CFP-898 S1) dependency bundle integrity binding 으로 **closure missing** 영역은 fail-closed 차단. 그러나 **closure 가 full 인 wrapper-only workflow yml 가 consumer repo 로 무차별 유입** 시 silent harm 의 별도 super-class 가 존속 — mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim).
 
 ### 결함 2 evidence (mctrader-data#81 14 failing checks)
 
@@ -201,9 +201,9 @@ Epic CFP-858 (Wave 4 sub-Epic) = `reconcile-protocol-v1` v1.7 §4.11 (CFP-898 S1
 | ✅ | ✅ | `mixed` | dogfood repo (codeforge wrapper repo 자체 — `.claude-plugin/plugin.json` + 자기 자신의 `.claude/_overlay/project.yaml`) — full workflow set 적용 (plugin 영역 우선, self-app exemption) |
 | ❌ | ❌ | `unknown` | signal 부재 — fail-closed (no copy, abort with error log) |
 
-**4-way enum closed-set**: `plugin` / `consumer` / `mixed` / `unknown`. open-set 확장 (예: `library` / `monorepo` 등) = 별 ADR carrier 영역 — 본 ADR scope 외.
+**4-way enum closed-set**: `plugin` / `consumer` / `mixed` / `unknown`. open-set 확장 (예: `library` / `monorepo` 등) = 별도 ADR carrier 영역 — 본 ADR scope 외.
 
-**Signal filesystem-only invariant** (SecurityArch deputy primary recommendation): 두 signal 모두 consumer-side filesystem 안 — network call 0, gh api 0, marketplace.json membership check 0. 이유 = (a) offline-first invariant (ADR-066 PAT scope 최소화) / (b) trust boundary 명확 (filesystem-only = consumer 권한 area only, cross-repo trust 영역 0) / (c) primary signal 단일 read 비용 (file existence check) — `marketplace.json` 영역 cross-repo gh api 는 본 ADR scope 외 (별 ADR carrier).
+**Signal filesystem-only invariant** (SecurityArch deputy primary recommendation): 두 signal 모두 consumer-side filesystem 안 — network call 0, gh api 0, marketplace.json membership check 0. 이유 = (a) offline-first invariant (ADR-066 PAT scope 최소화) / (b) trust boundary 명확 (filesystem-only = consumer 권한 area only, cross-repo trust 영역 0) / (c) primary signal 단일 read 비용 (file existence check) — `marketplace.json` 영역 cross-repo gh api 는 본 ADR scope 외 (별도 ADR carrier).
 
 ### 결정 2 — Positive whitelist `consumer_applicable_workflows.txt`
 
