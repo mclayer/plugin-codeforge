@@ -54,7 +54,11 @@ from decision_record_disposition import (  # noqa: E402
     DISPOSITION_NO_ACTION,
     _TUPLE_RE,
 )
-from reference_integrity_guard import run_guard, check_structural_integrity  # noqa: E402
+from reference_integrity_guard import (  # noqa: E402
+    run_guard,
+    check_structural_integrity,
+    build_reference_index,
+)
 
 # 효력박탈(moot-mark) 마커 — bytes 보존(원본 값 불변) + normativity 만 무효화.
 _MOOT_MARKER = (
@@ -118,6 +122,7 @@ def plan(manifest, *, repo_root, live_required_contexts=None, dated_provider=Non
     불통과면 fail-closed skip 하는 cascade 가 있기 때문 — plan 은 그 cascade 이전 상태를 보고).
     """
     records = []
+    _index = None  # (CFP-2799 Q8) 첫 guard 필요 시 1회 build — filter-only, byte-identical.
     for item in manifest:
         file_rel = item["file"]
         lineno = item["line"]
@@ -146,9 +151,11 @@ def plan(manifest, *, repo_root, live_required_contexts=None, dated_provider=Non
         guard_pass = None
         rationale = reason
         if action in _GUARD_DISPOSITION_MAP:
+            if _index is None:
+                _index = build_reference_index(repo_root)
             guard_disp = _GUARD_DISPOSITION_MAP[action]
             target = {"file": file_rel, "row": lineno}
-            guard = run_guard(target, guard_disp, repo_root=repo_root)
+            guard = run_guard(target, guard_disp, repo_root=repo_root, index=_index)
             guard_pass = guard.get("pass")
             if guard_pass:
                 rationale = reason + " | guard: pass"
