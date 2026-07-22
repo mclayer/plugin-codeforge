@@ -79,7 +79,7 @@ _AGENT_TYPE_TO_LANE = {
     "InfraOperationalArchitectAgent": "설계",
     "LiveOpsDeputyAgent": "설계",
     "LiveOrderingDeputyAgent": "설계",
-    "ProductionEvidenceDeputyAgent": "설계",  # CFP-2782 RELOCATE — codeforge-design CONDITIONAL deputy (ADR-72 Am5)
+    "ProductionEvidenceDeputyAgent": "설계",  # CFP-2782 RELOCATE — codeforge-design CONDITIONAL deputy (ADR-072 Am5)
     # 설계-리뷰
     "DesignReviewPLAgent": "설계-리뷰",
     # 구현
