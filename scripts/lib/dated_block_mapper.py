@@ -49,6 +49,12 @@ _DATE_HEADER_RE = re.compile(r"^\s*(#{1,6})\s*\d{4}-\d{2}-\d{2}\b")
 _AMENDMENT_HEADER_RE = re.compile(r"^\s*(#{1,6})\s*Amendment\s+\d+", re.IGNORECASE)
 _AMENDMENTS_KEY_RE = re.compile(r"^(\s*)amendments\s*:")
 _DATE_FIELD_RE = re.compile(r"\bdate\s*:")
+# CFP-2799 (gray-zone 완결) — DBM-3 broaden: amendment 스키마 변이 per-detector 신호.
+#   self-slug(`ADR-127-Amendment-1-CFP-2456`), 별도 top-level `amendment_log:` 키(78 ADR 다수파),
+#   bare ADR cross-ref(`- ADR-033`, homonym = dated 아님).
+_SELF_SLUG_AMENDMENT_RE = re.compile(r"ADR-\d+-Amendment", re.IGNORECASE)
+_AMENDMENT_LOG_KEY_RE = re.compile(r"^(\s*)amendment_log\s*:")
+_BARE_ADR_XREF_RE = re.compile(r"^-?\s*ADR-\d+\b", re.IGNORECASE)
 
 
 def _region_end(lines, start_idx, level):
@@ -92,8 +98,35 @@ def _split_frontmatter(text):
     return None
 
 
-def _has_dated_amendments_frontmatter(text):
-    """frontmatter 안에 `amendments:` 리스트가 있고 그 원소 중 `date:` 필드를 가진 게 있는지.
+def _amendments_block_items(fm_lines):
+    """stdlib fallback: frontmatter `amendments:` 키 아래 리스트 원소(`- ...`) 문자열 목록 반환.
+    엄격 YAML 파서 아님 — bounded 단일-pass 라인 스캔(honest-ceiling)."""
+    amend_indent = None
+    start_at = None
+    for idx, line in enumerate(fm_lines):
+        m = _AMENDMENTS_KEY_RE.match(line)
+        if m:
+            amend_indent = len(m.group(1))
+            start_at = idx + 1
+            break
+    if amend_indent is None:
+        return []
+    items = []
+    for line in fm_lines[start_at:]:
+        if line.strip() == "":
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+        if indent <= amend_indent and not line.strip().startswith("-"):
+            break  # amendments 블록 종료(형제/부모 키로 복귀)
+        s = line.strip()
+        if s.startswith("-"):
+            items.append(s[1:].strip())
+    return items
+
+
+def _is_dict_date_amendments(text):
+    """(DBM-3 기존 로직 — CFP-2799 detector 분리) frontmatter `amendments:` 리스트 원소 중
+    `date:` 필드를 가진 dict-form 원소가 있는지.
 
     PyYAML 이 available 이면 fast-path 로 정식 파싱, 아니면(또는 파싱 실패 시) stdlib
     라인-스캔 fallback(엄밀 YAML 문법 파서 아님 — honest-ceiling, 상단 모듈 docstring 참조).
@@ -136,6 +169,108 @@ def _has_dated_amendments_frontmatter(text):
         if _DATE_FIELD_RE.search(line):
             return True
     return False
+
+
+def _is_self_slug_amendments(text):
+    """(CFP-2799 신규 detector) frontmatter `amendments:` 리스트 원소가 self-slug 문자열
+    (`ADR-127-Amendment-1-CFP-2456` 류)이면 dated 신호(날짜는 본문 inline `**Effective**:` 이나
+    frontmatter 존재 자체가 amendment 블록 dated 성 신호)."""
+    fm_lines = _split_frontmatter(text)
+    if fm_lines is None:
+        return False
+    fm_text = "\n".join(fm_lines)
+    try:
+        import yaml
+
+        data = yaml.safe_load(fm_text)
+        if isinstance(data, dict):
+            amendments = data.get("amendments")
+            if isinstance(amendments, list):
+                return any(
+                    isinstance(a, str) and _SELF_SLUG_AMENDMENT_RE.search(a) for a in amendments
+                )
+            return False
+    except Exception:
+        pass
+    return any(_SELF_SLUG_AMENDMENT_RE.search(it) for it in _amendments_block_items(fm_lines))
+
+
+def _has_amendment_log_key(text):
+    """(CFP-2799 신규 detector, 78 ADR 다수파 고가치) frontmatter 에 별도 top-level
+    `amendment_log:` 키가 있으면 `## Amendment N` region dated 신호."""
+    fm_lines = _split_frontmatter(text)
+    if fm_lines is None:
+        return False
+    for line in fm_lines:
+        if _AMENDMENT_LOG_KEY_RE.match(line):
+            return True
+    return False
+
+
+def _is_bare_xref_amendments(text):
+    """(CFP-2799 신규 homonym 판별자) frontmatter `amendments:` 리스트가 bare ADR cross-ref
+    (`- ADR-033`, 관련 ADR 목록)만이면 homonym → **dated 신호 아님**.
+
+    dict+date 원소나 self-slug(`-Amendment-`) 원소를 하나라도 가지면 bare-xref 아님(보수).
+    OR-chain(`_has_dated_amendments_frontmatter`)에는 넣지 않는다(AC-11 시그니처 강제) —
+    별도 positive-control 에서 "bare-xref → NOT dated" 실증 판별자로만 쓴다.
+    """
+    fm_lines = _split_frontmatter(text)
+    if fm_lines is None:
+        return False
+    fm_text = "\n".join(fm_lines)
+    try:
+        import yaml
+
+        data = yaml.safe_load(fm_text)
+        if isinstance(data, dict):
+            amendments = data.get("amendments")
+            if not isinstance(amendments, list) or not amendments:
+                return False
+            has_bare = False
+            for a in amendments:
+                if isinstance(a, dict):
+                    return False  # dict-form → bare-xref 아님
+                if isinstance(a, str):
+                    if _SELF_SLUG_AMENDMENT_RE.search(a):
+                        return False  # self-slug → bare-xref 아님
+                    if _BARE_ADR_XREF_RE.match(a.strip()):
+                        has_bare = True
+                    else:
+                        return False  # 알 수 없는 형태 → bare-xref 로 단정 안 함(보수)
+                else:
+                    return False
+            return has_bare
+    except Exception:
+        pass
+    items = _amendments_block_items(fm_lines)
+    if not items:
+        return False
+    has_bare = False
+    for it in items:
+        if _SELF_SLUG_AMENDMENT_RE.search(it) or _DATE_FIELD_RE.search(it):
+            return False
+        if _BARE_ADR_XREF_RE.match(it):
+            has_bare = True
+        else:
+            return False
+    return has_bare
+
+
+def _has_dated_amendments_frontmatter(text):
+    """(CFP-2799 OR-chain 조립 — 이름 보존: `test_dated_block_mapper.py` monkeypatch target 무손상)
+    frontmatter 가 amendment 블록의 dated 성을 시사하는지 — 4 per-schema detector OR 조립.
+
+    dated 신호 = dict+`date:` OR self-slug OR `amendment_log:` 키.
+    **`_is_bare_xref_amendments` 는 OR 에 포함하지 않는다**(bare ADR cross-ref = homonym, AC-11).
+    provider `True|None`(never False) 계약 무변경 — 4 detector 는 내부 bool 이고 상위
+    `dated_line_numbers`/`make_dated_provider` 가 `True|None` 로 감싼다.
+    """
+    return (
+        _is_dict_date_amendments(text)
+        or _is_self_slug_amendments(text)
+        or _has_amendment_log_key(text)
+    )
 
 
 def dated_line_numbers(text):
