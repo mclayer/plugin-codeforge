@@ -886,7 +886,7 @@ fail-mode axis 분리: 기존 fail-mode 9-enum (`api_missing`~`codex_truncated_n
 
 **무변경 default**: `.github/workflows/phase-gate-mergeable.yml` (label 정합 검사만, inline 절차이지 required CI check 아님). required check 강제(contexts 7-tuple) = 고비용·비가역, 본 요지 밖.
 
-**provenance/self-attest 차단 (#2322 흡수 — STRONG 반영)**: 게이트 결과 = lane-produced artifact (forgeable label self-attest 아님). artifact absence = PASS 불가. warning→blocking 승격 half (mechanical lint tier 격상) = 별 evidence-gated CFP 로 분리 (본 Story 비대상).
+**provenance/self-attest 차단 (#2322 흡수 — STRONG 반영)**: 게이트 결과 = lane-produced artifact (forgeable label self-attest 아님). artifact absence = PASS 불가. warning→blocking 승격 half (mechanical lint tier 격상) = 별도 evidence-gated CFP 로 분리 (본 Story 비대상).
 
 **cross-ref**: [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) (touchpoint #7) / [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) (inline whitelist 6번째 entry) / [ADR-070 Amendment 9](../archive/adr/ADR-070-codex-verify-before-trust.md) (verify-before-trust merge-time scope + §결정 D7 하이브리드 disposition) / [ADR-081 Amendment 9](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) (§결정 D10 merge-time severity rubric) / §3.10 (ProactiveCheckPacket #7 등재).
 
@@ -936,7 +936,7 @@ Codex 미가용 / sandbox 실패 시 disposition = `fail_open_then_record_with_m
 |---|---|
 | `[mutation-peer-fallback: fail-mode=<...>, mutants-attempted=<n>, disposition=open]` | Codex 미가용 시 lane-time fail-open — marker 기록 후 lane 진행 (mutation 미수행) |
 
-**CodexReviewAgent 와 disjoint (channel 분리 — 중복 아닌 defense-in-depth)**: CodexReviewAgent = 코드 산출물 품질(runtime bug / layer / Impl Manifest mapping) / per-file src** review ↔ touchpoint #8 = detector(테스트 스위트) adequacy / 변이 주입 후 survival 관찰. 동일 lane(구현리뷰) 안 별 채널 (병렬 가능). 동일 채널 취급 금지.
+**CodexReviewAgent 와 disjoint (channel 분리 — 중복 아닌 defense-in-depth)**: CodexReviewAgent = 코드 산출물 품질(runtime bug / layer / Impl Manifest mapping) / per-file src** review ↔ touchpoint #8 = detector(테스트 스위트) adequacy / 변이 주입 후 survival 관찰. 동일 lane(구현리뷰) 안 별도 채널 (병렬 가능). 동일 채널 취급 금지.
 
 **disposition/check 스크립트 (개발자 검증 helper, CI 미배선)**: `scripts/lib/check_mutation_disposition.py`(3-상태 disposition 결정 SSOT, 순수 함수) + `scripts/check-mutation-disposition.sh`(thin wrapper) + `tests/scripts/test-check-mutation-disposition.sh`(discriminating self-test). Story A `check-merge-gate-disposition` / Story C `check-research-corroboration-contract` 선례 동형 — consumer-scripts.manifest 미등재 / evidence-checks-registry entry 0 / required check 신설 0 (branch protection required contexts 무변경).
 
@@ -1152,7 +1152,7 @@ mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
 - `hard_block` 위반 detected 시 Epic 차단 (PMOAgent enforce)
 - `design_parallel` / `impl_parallel` = 동시 진행 허용
 - **Joint-phase PR 허용** (ADR-020 Amendment 1 §결정 9): 단일 Story 가 1 phase 안에서 multi-repo joint PR 보유 가능 (예: foundation Story 의 data + engine 동시 변경). 모든 PR 가 동일 Story key reference + dependency graph topological merge.
-- **전환 자율 진행** ([ADR-071 §결정 22](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md)): 한 세션에서 Epic 을 여러 child Story 로 진행할 때 **child Story N→N+1 전환(및 단일 Story Phase1→Phase2 전환) = 자동 이어서 진행이 default**. 전환 지점에서 over-halt(무발화 정지)·over-ask("다음 Story 진행할까요?") 금지 — 정당 멈춤 3종(요구 애매 / 진짜 가치 trade-off / 비가역·고비용)만 예외. **in-session 전환 한정** — 세션 재개 시 §3.12 cold-resume confirm 은 별 경로(session restart ≠ in-session 전환)로 무관. session-swap reflex(§결정 18)와도 disjoint 축.
+- **전환 자율 진행** ([ADR-071 §결정 22](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md)): 한 세션에서 Epic 을 여러 child Story 로 진행할 때 **child Story N→N+1 전환(및 단일 Story Phase1→Phase2 전환) = 자동 이어서 진행이 default**. 전환 지점에서 over-halt(무발화 정지)·over-ask("다음 Story 진행할까요?") 금지 — 정당 멈춤 3종(요구 애매 / 진짜 가치 trade-off / 비가역·고비용)만 예외. **in-session 전환 한정** — 세션 재개 시 §3.12 cold-resume confirm 은 별도 경로(session restart ≠ in-session 전환)로 무관. session-swap reflex(§결정 18)와도 disjoint 축.
 
 #### Epic Rollback
 producer merge 후 consumer break 시:
@@ -3883,7 +3883,7 @@ Codeforge observability stack 의 channel 별도 책임 분리 normative SSOT. T
 stop-event-v1 ledger 의 privacy / opt-in / sanitize 정책 = [ADR-043 (codeforge telemetry privacy policy)](../archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md) SSOT. 핵심 invariant 3:
 
 - **opt-in default false** (consumer overlay `telemetry.enabled: false` + per-channel `channels.<channel>: false` default — stop_event / spawn_event 모두)
-- **Allow-list ONLY (channel 별 whitelist)** (capture 시점 — stop-event-v1 schema 18 field / spawn-event-v1 schema 19 field 외 capture 금지. spawn-event = enum/numeric/hash only, free-form string 0건)
+- **Allow-list ONLY (channel 개별 whitelist)** (capture 시점 — stop-event-v1 schema 18 field / spawn-event-v1 schema 19 field 외 capture 금지. spawn-event = enum/numeric/hash only, free-form string 0건)
 - **Deny-list regex 6 pattern** (capture 통과 후 2차 안전망 — API key / GitHub PAT / 한국 주민번호 / email / hex≥32 / GitHub fine-grained PAT. spawn-event = free-form 0건이라 적용 0건이나 inherit 선언)
 - **transcript content/path HARD invariant (spawn-event-v1, T-INFO-5)** — spawn-event 는 numeric aggregate + enum + hash 만 저장. transcript content / transcript_path 절대 미저장 ([ADR-043 Amendment 2](../archive/adr/ADR-043-codeforge-telemetry-privacy-policy.md))
 

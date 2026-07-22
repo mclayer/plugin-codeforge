@@ -54,7 +54,7 @@ CFP-2521 비용 진단(2026-06-30 로컬 세션 로그): DeveloperPL 비용 94%=
   - open-ended carve-out(essential read 무한 예외) = hollow-gate.
   - 무조건 offload(trivial read 포함) = spawn 고정비 순손실.
   - "PL spawns workers"(env=0) = ADR-009 wrapper-only 위반(self-spawn 금지).
-  - magnitude floor 박제(예: "40-85% 보장") = estimate lock-in(upper-bound 모델 위반).
+  - magnitude floor `박제`(예: "40-85% 보장") = estimate lock-in(upper-bound 모델 위반).
 
 ## 관련 ADR
 
@@ -67,4 +67,4 @@ CFP-2521 비용 진단(2026-06-30 로컬 세션 로그): DeveloperPL 비용 94%=
 
 ## 변경 이력
 
-- 2026-06-30 KST — 초기 작성(CFP-2521 Phase 1 설계 lane). rule-of-three 도달(ADR-039 + DeveloperPLAgent.md + CFP-2521) + D2 carrier 결정 잠김 후 작성(박제 회피 — Story §6.2 보류 조건 해소).
+- 2026-06-30 KST — 초기 작성(CFP-2521 Phase 1 설계 lane). rule-of-three 도달(ADR-039 + DeveloperPLAgent.md + CFP-2521) + D2 carrier 결정 잠김 후 작성(`박제` 회피 — Story §6.2 보류 조건 해소).
