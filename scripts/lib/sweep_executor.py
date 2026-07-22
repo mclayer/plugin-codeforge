@@ -61,6 +61,19 @@ _MOOT_MARKER = (
     " [효력박탈:CFP-2698 — 불변 주장이 실변경으로 반증(현행 SSOT=CLAUDE.md 브랜치 보호 §)]"
 )
 
+# CFP-2799 (gray-zone 완결) — death-marker strip 마커(별도 상수, `_MOOT_MARKER` 재인코딩 아님).
+#   죽은 규칙 잔재(death-marker) 효력박탈용 — bytes 보존 + normativity 무효화. self-reflag-exempt
+#   idempotency key(§11.6): 이 마커 보유 라인은 census 후보 아님 + 재편집 skip(T2 완화 수렴).
+_DEATH_MARKER = (
+    " [효력박탈:CFP-2799 — 죽은 규칙 잔재(death-marker) 효력 상실, 원본 bytes 보존]"
+)
+
+
+def _has_death_or_moot_marker(body):
+    """(CFP-2799) 라인이 효력박탈 마커(`_MOOT_MARKER` 또는 `_DEATH_MARKER`)를 이미 보유하는지.
+    self-reflag-exempt + delete-path idempotency 봉합의 단일 판정(§7.6 T2 / §11.6)."""
+    return _MOOT_MARKER in body or _DEATH_MARKER in body
+
 # disposition(5-enum) → sweep action(4종) 매핑.
 _ACTION_MAP = {
     DISPOSITION_CORRECT: "correct",
@@ -214,7 +227,7 @@ def apply(plan_records, *, repo_root, live_count):
             body = original.rstrip("\n")
 
             if action == "correct":
-                if _MOOT_MARKER in body or _already_corrected(body, live_count):
+                if _has_death_or_moot_marker(body) or _already_corrected(body, live_count):
                     counts["skip"] += 1  # idempotent — 재실행 안전
                     continue
                 if not rec.get("guard_pass"):
@@ -231,7 +244,7 @@ def apply(plan_records, *, repo_root, live_count):
                 continue
 
             if action == "strip":
-                if _MOOT_MARKER in body:
+                if _has_death_or_moot_marker(body):
                     counts["skip"] += 1  # idempotent
                     continue
                 if not rec.get("guard_pass"):
@@ -247,13 +260,20 @@ def apply(plan_records, *, repo_root, live_count):
                 continue
 
             if action == "delete":
+                # ★CFP-2799 SecurityArch P1 seal — delete guard-pass 분기 marker-gap 봉합.
+                #   marker 보유 라인(이미 효력박탈된 death/moot)을 guard_pass 여부와 무관하게
+                #   재삭제하지 않는다(self-reflag→delete 승격 차단, idempotent). strip/downgrade
+                #   분기와 동형 — 이전엔 delete guard-pass 경로만 이 체크가 없었다(latent T2).
+                if _has_death_or_moot_marker(body):
+                    counts["skip"] += 1  # idempotent — marker-bearing 라인 재삭제 방지
+                    continue
                 if rec.get("guard_pass"):
                     del lines[idx]
                     edits += 1
                     counts["delete"] += 1
                     continue
                 # delete guard 불통과 → strip 으로 downgrade(그 자체도 guard 재확인, fail-closed).
-                if _MOOT_MARKER in body:
+                if _has_death_or_moot_marker(body):
                     counts["skip"] += 1  # idempotent
                     continue
                 strip_guard = run_guard(
