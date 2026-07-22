@@ -525,7 +525,7 @@ _canon_ok=1
 # F-CLA-2726-2: 하드카운트("10종") 금지 — 검사 키 목록을 배열로 두고 개수는 `${#arr[@]}` 로 도출.
 _canon_keys=(ANTHROPIC_API_KEY AUDIT_PII_KEY CODEFORGE_CROSS_REPO_PAT ATLASSIAN_API_TOKEN
              ATLASSIAN_USER_EMAIL CONFLUENCE_BASE_URL CONFLUENCE_SPACE_ID
-             DOCKER_HUB_TOKEN GITHUB_TOKEN SSH_KEY_PASSPHRASE)
+             GITHUB_TOKEN)  # CFP-2782: DOCKER_HUB_TOKEN/SSH_KEY_PASSPHRASE = 구 배포 machinery-only secret, project.yaml infra_resource 제거로 canonical 강등
 for k in "${_canon_keys[@]}"; do
   case "$_ac17_ri" in *"canonical_env=$k"*) : ;; *) _canon_ok=0; echo "  missing canonical_env=$k";; esac
 done
