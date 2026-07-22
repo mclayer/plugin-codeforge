@@ -602,3 +602,14 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "rebase-staleness sentinel lint self-test — commit-count-behind 감지 + 4-tier mitigation 권고(tier 1/2 advisory self-service) discriminating fixture(--rebase-check-mode head-compare + mock upstream commit 격차 inject + rebase-need RED→rebase-ok GREEN + MK mutation-kill) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 commit-count 검증). warning-tier hard-fail 채널(continue-on-error 없음 = exit 1 FAIL branch, non_required — branch protection 7-tuple 무변경). honest-ceiling: presence ≠ truth, ADR-151 §결정7."
+
+  # ── CFP-2786 (Epic #2783 Child B — 의미축 semantics-change sentinel) — discriminating self-test enroll ──
+  # bijection: tests/scripts/*.sh N-1 → N (신규 self-test enroll — append 시점 재산출). 실행 채널 = semantic-staleness-detection.yml:semantic-staleness-detection-test (wrapper-self only, warning-tier hard-fail no continue-on-error).
+  - self_test: "tests/scripts/test_check-semantic-staleness-sentinel.sh"
+    execution_channel: "workflow:semantic-staleness-detection.yml:semantic-staleness-detection-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "semantics-change sentinel lint self-test — carrier-path touch ∩ anchor cross-match 후보 산출 discriminating fixture(M1-M12 mutation-kill: carrier-classify/state-filter/anchor false-neg·pos/self-carve-out/degrade 4-class/disjoint-vocab/tier-flip/byte-parity) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 의미-staleness 검증, honest-ceiling ADR-151 §결정7)."

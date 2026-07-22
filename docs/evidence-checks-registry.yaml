@@ -4420,3 +4420,23 @@ entries:
       last_occurrence: "2026-05-25T02:16:46Z"
       promotion_trigger: advisory
     status: Active
+
+  # ordinal (ADR-108 §결정 2(B) canonical = append-time raw-grep post-append count — append 시점 재산출): firsthand grep post-append count — append 시점 재산출
+  - name: semantic-staleness-sentinel
+    description: |
+      Epic #2783 Child B(의미축) — 정책성 변경(ADR/게이트 tier 승격/컨벤션) merge 시 그 의미에
+      의존하던 진행 중(open PR / active Story) 작업을 carrier-path touch ∩ anchor
+      cross-match 로 골라 "재검토 필요" 신호로 표면화(자동 적용 0). SSOT =
+      governance-principle/semantics-change-sentinel.md. 위상축(rebase-staleness)과
+      disjoint(TIME-axis: merged 규칙 ↔ in-flight).
+    detect_command: bash scripts/check-semantic-staleness-sentinel.sh
+    workflow: templates/github-workflows/semantic-staleness-detection.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:semantic-staleness-sentinel
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    introduced_by: CFP-2786
+    introduced_date: 2026-07-22
+    owner_adr: ADR-085
+    carrier_adr: ADR-060
+    promotion_trigger: advisory
+    status: Active
