@@ -1351,7 +1351,7 @@ surviving mutant 주장 = `[hypothesis]` 지위 default (ADR-052 Amendment 3 A3 
 | trigger 시점 | merge-time (CI PASS 후 ~ `gh pr merge` 전) | 구현리뷰 lane-time (detector GREEN 시점) |
 | dispatch 주체 | Orchestrator top-level inline (ADR-039 entry 6) | 구현리뷰 lane worker (sub-agent) → Codex via Bash |
 | Codex 역할 | diff↔의도 불일치 발화 (read-only) | mutant 명세 생성 (read-only, 경로 B) |
-| 결함 단위 | PR-unit holistic finding | surviving mutant 별도 |
+| 결함 단위 | PR-unit holistic finding | surviving mutant 별 |
 
 같은 적대적 검증 family, 다른 mechanism = defense-in-depth (중복 아님, concept boundary 명시). 동일 채널 취급 금지.
 
