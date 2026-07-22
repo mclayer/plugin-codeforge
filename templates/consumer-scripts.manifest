@@ -196,3 +196,9 @@ scripts/check-lane-entry-ownership.sh
 # .sh->python3 lib/*.py = depth-2 SSOT (commit-count-behind 본체). 둘 다 chmod +x(100755).
 scripts/check-rebase-staleness-sentinel.sh:templates/github-workflows/rebase-staleness-detection.yml
 scripts/lib/check_rebase_staleness_sentinel.py:templates/github-workflows/rebase-staleness-detection.yml
+
+# CFP-2786 (Epic #2783 Child B) — semantic-staleness sentinel 전파 closure.
+# semantic-staleness-detection.yml run-block 1-hop = .sh (ADR-061 thin wrapper),
+# .sh->python3 lib/*.py = depth-2 SSOT. 둘 다 chmod +x(100755).
+scripts/check-semantic-staleness-sentinel.sh:templates/github-workflows/semantic-staleness-detection.yml
+scripts/lib/check_semantic_staleness_sentinel.py:templates/github-workflows/semantic-staleness-detection.yml

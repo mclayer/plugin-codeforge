@@ -1,0 +1,103 @@
+name: Semantic Staleness Detection (CFP-2786 / Epic #2783 Child B)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+
+# Warning-tier (non-blocking) semantic-staleness 탐지 — PR open 시점에 현재 변경이 governance/policy
+# carrier surface(ADR / CLAUDE.md / 계약 registry / template 등)의 의미를 바꾸는지 1차 필터하고,
+# 그 carrier 를 참조하는 in-flight open PR(작업 중 산출물)을 cross-match 해 "재검토 필요" 단일 신호를
+# 표면화한다. 위상 fresh != 의미 fresh — "뒤처진 커밋이 내가 의존하던 규칙의 뜻을 바꿨나"를 묻는 축이다.
+# 차단이 아니라 경고이므로 비차단(continue-on-error). registry entry `semantic-staleness-sentinel` 의
+# mechanical wire.
+#
+# 의미축은 "재검토 필요" 단일 신호이며 tier 카탈로그(위상축 4-tier mitigation)를 방출하지 않는다.
+# 신호는 하류 사람 게이트로 향한다 — recall >> precision 방향(비용 비대칭), 수치 SLA 부재.
+#
+# 본 구현(CFP-2786 Phase 2 wire) = carrier→in-flight cross-match 관측·표면화만, 자동 적용 0 —
+# 사용자는 조회만 가능. Orchestrator inline polling 과 비대칭 이중 coverage.
+#
+# Bypass 2종:
+#   - env BYPASS_SEMANTIC_STALENESS_SENTINEL=1 (스크립트 내부 무조건 skip, exit 0)
+#   - label hotfix-bypass:semantic-staleness-sentinel (본 workflow 가 sentinel run step skip)
+#
+# Graceful degradation (honest ceiling): sentinel 스크립트가 git/gh 실패를 stderr 증거 기반으로
+#   분류(honest-degrade) — api_quota_exceeded / gh_command_failed / gh_payload_invalid / git_fetch_failed
+#   4종을 degradation 필드로 표기 후 exit 0 (비차단). git/gh 미설치·repo 아님 = exit 2 (SETUP, error_kind)
+#   이며 아래 run step 의 `|| true` + continue-on-error 로 흡수돼 비차단 보장 (python3 부재 exit 2 동일).
+#   presence != truth — carrier touch = candidate surface 이지 verdict 아님(2차 diff-content 판정=사람).
+#
+# Consumer distribution: 본 workflow + scripts/check-semantic-staleness-sentinel.sh +
+#   scripts/lib/check_semantic_staleness_sentinel.py 모두 copy 의무 (CFP-97 manifest entry —
+#   consumer-guide §2c manifest-driven loop 가 처리).
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch: {}
+
+permissions:
+  issues: read
+  pull-requests: read
+  contents: read
+
+# tier 단일 축 (blockable-capable wire, warning 유지). continue-on-error 는 본 1개 지점에서만 derive
+#   (산재 금지). flip 1축만으로 blocking 전환됨을 보장하되 default = warning 고정.
+env:
+  SENTINEL_TIER: warning  # {warning, blocking} — default warning. blocking 승격 = 별 evidence-gated carrier (ADR-060 §결정 19).
+
+jobs:
+  semantic-staleness-detection:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # shallow 금지 — merge-base HEAD..origin/main 정확성 의존
+
+      - name: git fetch origin main
+        run: |
+          git fetch origin main
+
+      - name: Bypass note (label present)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:semantic-staleness-sentinel') }}
+        run: |
+          echo "::notice::hotfix-bypass:semantic-staleness-sentinel label 감지 — semantic-staleness sentinel skip (audit: check-bypass-audit-comment.sh 마커 패턴 의무)."
+
+      - name: Run semantic-staleness sentinel (warning-tier, 비차단)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:semantic-staleness-sentinel') }}
+        continue-on-error: ${{ env.SENTINEL_TIER != 'blocking' }}  # tier 단일 축 derive (warning→true 비차단 / blocking→false 차단). flip 1축 = blockable-capable.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f scripts/check-semantic-staleness-sentinel.sh ]; then
+            echo "::warning::scripts/check-semantic-staleness-sentinel.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
+            exit 0
+          fi
+          OUT="$(bash scripts/check-semantic-staleness-sentinel.sh --mode carrier-cross-match 2>&1 || true)"
+          echo "$OUT"
+          echo "## Semantic Staleness Detection (warning-tier, non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**의미축 = 재검토 필요 단일 신호** (위상축 tier 카탈로그 없음 — carrier touch != 의미변경, 2차 판정=사람)" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::재검토 필요 신호(advisory tier, non-blocking)" >> "$GITHUB_STEP_SUMMARY"
+
+  # discriminating self-test (mutation 생존 0). carrier→in-flight cross-match 가 hollow 가 아님을
+  # 보증: carrier 참조 in-flight 는 표면화하고 무관 in-flight 는 표면화 안 함 (SEPARATE-OR-top 유지).
+  # wrapper-self 전용 게이트 — `if: github.repository == 'mclayer/plugin-codeforge'` 라 consumer 로
+  # byte-identical 전파돼도 consumer repository 에선 skip. sentinel 본체는 stdlib(json/re/os/fnmatch)만
+  # 사용 → PyYAML 불요, gh 실경로 미진입(mock seam) → gh 인증 불요.
+  semantic-staleness-detection-test:
+    name: semantic-staleness-detection discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Run test_check-semantic-staleness-sentinel.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-semantic-staleness-sentinel.sh
+      - name: Run test_check-semantic-staleness-sentinel-redos.sh (ReDoS-bound 회귀, exit 1 차단)
+        run: bash tests/scripts/test_check-semantic-staleness-sentinel-redos.sh
