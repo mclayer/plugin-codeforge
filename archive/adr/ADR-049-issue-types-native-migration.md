@@ -137,7 +137,7 @@ org Issue Type 실측 (2026-06-15, `gh api /orgs/mclayer/issue-types`):
 | Story | type:story | org POST 신설 |
 | Epic | type:epic | org POST 신설 |
 
-**Audit = deferred** — ADR-049 §결정 1 의 4-type 안 중 Audit 은 본 cutover 미포함 (사용자 결정). 별 CFP carrier 에서 신설. `templates/issue-types.yaml` `_deferred` block 에 박제.
+**Audit = deferred** — ADR-049 §결정 1 의 4-type 안 중 Audit 은 본 cutover 미포함 (사용자 결정). 별도 CFP carrier 에서 신설. `templates/issue-types.yaml` `_deferred` block 에 박제.
 
 ### A1-2. 마이그레이션 대상 = type:* 부착 전체 487 이슈 (open+closed)
 

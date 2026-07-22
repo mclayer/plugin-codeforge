@@ -632,7 +632,7 @@ Consumer adoption detection signals = filesystem-only **2-signal cross-product**
 | ✅ | ✅ | `mixed` | dogfood repo (codeforge wrapper repo 자체 — plugin SSOT + 자기 자신의 consumer overlay self-app) |
 | ❌ | ❌ | `unknown` | signal 부재 (consumer bootstrap 미완료 또는 비-codeforge repo) |
 
-**4-way enum closed-set**: `plugin` / `consumer` / `mixed` / `unknown`. open-set 확장 (예: `library` / `monorepo` / `archived` 등) = 별 ADR carrier 영역 (본 Amendment scope 외).
+**4-way enum closed-set**: `plugin` / `consumer` / `mixed` / `unknown`. open-set 확장 (예: `library` / `monorepo` / `archived` 등) = 별도 ADR carrier 영역 (본 Amendment scope 외).
 
 #### §결정 10.B — Filesystem-only invariant (network call 0)
 
@@ -642,7 +642,7 @@ Consumer adoption detection signals = filesystem-only **2-signal cross-product**
 - (b) **Trust boundary 명확** — filesystem-only = consumer 권한 area only / cross-repo trust 영역 0 (signal spoofing surface 최소)
 - (c) **Primary signal 단일 read 비용** — file existence check (`Test-Path` / `[[ -f ... ]]`) 만 = O(1) syscall, < 1ms
 
-`marketplace.json` 영역 cross-repo gh api 는 본 ADR + ADR-083 scope 외 (별 ADR carrier 발의 시 enterprise org 차단 영역 graceful degradation 의무 검토).
+`marketplace.json` 영역 cross-repo gh api 는 본 ADR + ADR-083 scope 외 (별도 ADR carrier 발의 시 enterprise org 차단 영역 graceful degradation 의무 검토).
 
 #### §결정 10.C — Signal semantic invariant
 

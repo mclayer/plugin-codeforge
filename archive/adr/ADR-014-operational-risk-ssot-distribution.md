@@ -447,13 +447,13 @@ InfraOperationalArchitect §7.4 schema 에 **§7.4.7 Operational throughput/scal
 
 - **Phase 1 (declarative anchor)**: §7.4.7 신설 + 2축 measurable AC schema codify + `operational:true` label declare (base-labels.tsv). mechanical enforce 부재.
 - **Phase 2 (advisory CI 경고, mechanical wire — 별 sub-CFP / S7 Phase 2 carrier defer)**: `operational:true` label Story 의 Phase 1 PR 에서 §5 throughput + RSS 2축 AC 부재 OR `[empirical-source]` annotation 부재 detect 시 **warning tier emit + PR comment advisory** (merge 미차단). anti-theater discriminating test = 라벨만 부착 + AC 없음 mutation 이 실제 경고 트리거, 정상 Story (2축 AC + annotation) = false-positive 0.
-- **hard-block 승격 = 별 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
+- **hard-block 승격 = 별도 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
 
 ### 결정 4 — #1079 (OpsExecutionArchitect 신설 + §7.4 mandate 보강) additive slot + conflict/merge-order 마킹
 
 [#1079](https://github.com/mclayer/plugin-codeforge/issues/1079) (CFP — OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강, dormant) 는 §7.4 에 **test-parity / container axis** mandate 보강을 예정한다. 본 Amendment 6 의 §7.4.7 신설과 동일 §7.4 schema surface 를 touch 하므로 충돌 회피 구조화:
 
-- **#1079 = §7.4 에 additive 로 끼는 구조**: #1079 의 test-parity / container axis 는 본 §7.4.7 (throughput/scale) 와 **disjoint sub** (별 §7.4.8+ slot 또는 §7.4.6 Container Docker 확장) — 본 Amendment 6 은 §7.4.7 단일 sub 만 점유, #1079 가 향후 §7.4.8 (test-parity) 또는 §7.4.6 확장 (container axis) 으로 additive 진입할 자리 보존. **본 Amendment 6 은 #1079 영역 무점유 (fold 안 함, dormant 보존)**.
+- **#1079 = §7.4 에 additive 로 끼는 구조**: #1079 의 test-parity / container axis 는 본 §7.4.7 (throughput/scale) 와 **disjoint sub** (별도 §7.4.8+ slot 또는 §7.4.6 Container Docker 확장) — 본 Amendment 6 은 §7.4.7 단일 sub 만 점유, #1079 가 향후 §7.4.8 (test-parity) 또는 §7.4.6 확장 (container axis) 으로 additive 진입할 자리 보존. **본 Amendment 6 은 #1079 영역 무점유 (fold 안 함, dormant 보존)**.
 - **conflict 마킹**: 본 Amendment 6 PR 과 #1079 carrier PR 이 동시 open 시 `conflict:adr-number` label 부착 의무 (ADR-RESERVATION.md / ADR-014 §7.4 동시 수정 감지) — 단 본 Amendment = ADR-014 body Amendment 방식 (frontmatter amendment_log 부재) 이라 ADR 번호 충돌 자체는 무 (둘 다 ADR-014 body section), §7.4 schema row 충돌만 해당.
 - **merge-order 마킹**: 본 Amendment 6 (CFP-2331) 선행 merge → #1079 carrier 가 후속 (rebase main 후 §7.4.8 additive append). 역순 시 #1079 가 §7.4.7 자리 점유 회피 의무. `merge-order:1` (본 Amendment 6) / `merge-order:2` (#1079) 관례 적용 — 동시 진행 시.
 - **#1079 dormant 보존 (fold 안 함)**: 본 Amendment 6 은 #1079 의 OpsExecutionArchitect 신설 / test-parity / container mandate 를 흡수하지 않음 — #1079 는 독립 carrier 로 dormant 유지, 본 Amendment 는 throughput/scale axis 만 codify + #1079 의 additive 진입 자리 + merge-order 좌표만 박제.
@@ -527,7 +527,7 @@ operational(`operational:true` label 부착) Story 의 §7.4.7 AC 는 Amendment 
 ### 결정 4 — enforcement = Phase 1 declarative-only
 
 - **Phase 1 (본 Amendment 7, declarative anchor)**: §7.4.7 에 outcome-signal 3요소 선언 의무 codify (schema 확장). mechanical enforce 부재.
-- **Phase 2 (별 carrier defer)**: (a) `operational:true` Story 의 outcome-signal 누락 detect mechanical lint (b) change-plan §7.4.7 body mirror (codeforge-design canonical) (c) consumer post-deploy benchmark seed — 모두 **별 sub-carrier defer** (ADR-119 §결정 8 declarative-only / ADR-060 4-tier promotion / Amendment 6 결정 3 Phase 1/2 split 답습 — verified via worktree Read ADR-119 line 213).
+- **Phase 2 (별 carrier defer)**: (a) `operational:true` Story 의 outcome-signal 누락 detect mechanical lint (b) change-plan §7.4.7 body mirror (codeforge-design canonical) (c) consumer post-deploy benchmark seed — 모두 **별도 sub-carrier defer** (ADR-119 §결정 8 declarative-only / ADR-060 4-tier promotion / Amendment 6 결정 3 Phase 1/2 split 답습 — verified via worktree Read ADR-119 line 213).
 
 ### 결정 5 — §7.4.8 무점유 + #1079 merge-order 보존
 

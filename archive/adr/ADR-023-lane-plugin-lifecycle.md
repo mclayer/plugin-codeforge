@@ -150,8 +150,8 @@ N/A — permanent policy
 |---|---|---|
 | 1 | CFP Story 작성 | Story file `codeforge-internal-docs/wrapper/stories/CFP-1059.md` §1-7 (직전 T2-T5 commit `9a4b716` 산출) |
 | 2 | ADR 신설 | ADR-087 (Deploy lane) + ADR-088 (Deploy Review lane) 4 ADR 묶음 신설 (T2-T5 산출, commit `9a4b716`) |
-| 3 | 신규 plugin repo 생성 | Wave 2 (별 CFP) — wrapper-canonical SSOT 우선 (`is_transitional: true` defer marker 부재 — Wave 1 declaration only) |
-| 4 | Marketplace 등록 | Phase 2 PR (별 CFP) — ADR-063 atomic invariant 정합 (3-file coordination — plugin.json + CHANGELOG.md + marketplace.json) |
+| 3 | 신규 plugin repo 생성 | Wave 2 (별도 CFP) — wrapper-canonical SSOT 우선 (`is_transitional: true` defer marker 부재 — Wave 1 declaration only) |
+| 4 | Marketplace 등록 | Phase 2 PR (별도 CFP) — ADR-063 atomic invariant 정합 (3-file coordination — plugin.json + CHANGELOG.md + marketplace.json) |
 | 5 | Wrapper CLAUDE.md update | T14 (CLAUDE.md L150-L160 composition map 표 6 → 8 lane 확장) |
 | 6 | Internal-docs structure | T17 (`codeforge-internal-docs/codeforge-deploy/{specs,plans,...}` + `codeforge-deploy-review/{...}` 디렉터리 생성) |
 | 7 | Inter-plugin contract | T20 (`deploy-output-v1` + `deploy-review-output-v1` 신설 — sibling sync ADR-010 정합) |

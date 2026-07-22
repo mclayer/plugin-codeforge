@@ -218,7 +218,7 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 
 **Count 정합 (CFP-2572 §결정9 stub + ADR-142 disjoint-axis 정합 — 표기 정합, 결정 내용 무변경)**: 위 표 = §결정2 **base 4-entry**. 이후 **Amd2(§결정15) entry5**(Story-file §9/§10/§14/phase inline write) + **Amd6(§결정18) entry6**(merge-time Codex dispatch) append → **현행 effective inline-whitelist total = 6-entry** (§결정18/§결정19/§결정20 본문 "현 6-entry" 표기와 정합). 본 ADR 여러 amendment 의 "4-entry closed enumeration 무변경" 표현 = **base 표 무변경** 의미(effective 6-entry 와 무모순). **7번째 entry 신설 = amendment 의무**. enumeration 표·routing 규칙 자체 불변.
 
-**disjoint-axis note (Amendment 11, CFP-2770 — display 축 경계 명료화, enumeration 무변경)**: 위 whitelist entry #4 "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축 — inline vs spawn). 이는 ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축 — harness 진행 줄)과 **별 표면(disjoint axis)** 이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에 self-subject `[Orchestrator]` 프리픽스를 허용(INV-2 subset 완화)하되, 이는 본 §결정 2 whitelist "상태 보고" prose(prefix-exempt 유지)를 **건드리지 않는다** — mechanism 축 ≠ display 축. inline whitelist closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1 binary always-spawn 무변경. paired = ADR-143 Amendment 2.
+**disjoint-axis note (Amendment 11, CFP-2770 — display 축 경계 명료화, enumeration 무변경)**: 위 whitelist entry #4 "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축 — inline vs spawn). 이는 ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축 — harness 진행 줄)과 **별도 표면(disjoint axis)** 이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에 self-subject `[Orchestrator]` 프리픽스를 허용(INV-2 subset 완화)하되, 이는 본 §결정 2 whitelist "상태 보고" prose(prefix-exempt 유지)를 **건드리지 않는다** — mechanism 축 ≠ display 축. inline whitelist closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1 binary always-spawn 무변경. paired = ADR-143 Amendment 2.
 
 ### 결정 3 — Ownership ≠ Mechanism 분리
 
@@ -531,7 +531,7 @@ Chief author (특히 ArchitectAgent Opus) 의 single spawn 안 monolithic span (
 
 | # | Category | 설명 | Mechanism rationale |
 |---|---|---|---|
-| 6 | **Merge-time Codex adversarial gate dispatch** (Amendment 6, CFP-2458) | ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) 의 Codex worker dispatch — 구현리뷰 PASS + CI gate PASS 후 "merge gate 진입" 직후 / `gh pr merge` 직전, Orchestrator top-level inline 에서 `codex exec --sandbox read-only < <promptfile>` (ADR-081 D8 file-redirect) 1패스 발동 + result-via-file 수신 | **재귀 가드 회피 critical (H1 게이트 연극화 차단)**. sub-agent / PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드 ("subagent → Agent tool 호출 금지", L474 회피된 대안 C)로 Codex worker spawn 이 silent fallback skip (`subagent_recursion_blocked` fail-mode, ADR-070 Amendment 6) → 게이트 무발동 = 연극화 (Story §4.2 H1 실측 입증). 따라서 dispatch 주체 = Orchestrator top-level inline 고정 의무. dispatch 자체 = read-only adversarial check (verify-before-trust 무조건 적용 — ADR-070 Amendment 9, mismatch finding reject) 이라 §결정 1 "수정 작업" 정의 (file edit / GitHub state change) 와 disjoint axis — file/GitHub mutation 발생 0. 머지 보류·FIX 회부 등 후속 mutation 은 §결정 1/Amendment 2 영역 (별 mechanism). |
+| 6 | **Merge-time Codex adversarial gate dispatch** (Amendment 6, CFP-2458) | ADR-052 Amendment 15 touchpoint #7 (merge-time adversarial gate) 의 Codex worker dispatch — 구현리뷰 PASS + CI gate PASS 후 "merge gate 진입" 직후 / `gh pr merge` 직전, Orchestrator top-level inline 에서 `codex exec --sandbox read-only < <promptfile>` (ADR-081 D8 file-redirect) 1패스 발동 + result-via-file 수신 | **재귀 가드 회피 critical (H1 게이트 연극화 차단)**. sub-agent / PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드 ("subagent → Agent tool 호출 금지", L474 회피된 대안 C)로 Codex worker spawn 이 silent fallback skip (`subagent_recursion_blocked` fail-mode, ADR-070 Amendment 6) → 게이트 무발동 = 연극화 (Story §4.2 H1 실측 입증). 따라서 dispatch 주체 = Orchestrator top-level inline 고정 의무. dispatch 자체 = read-only adversarial check (verify-before-trust 무조건 적용 — ADR-070 Amendment 9, mismatch finding reject) 이라 §결정 1 "수정 작업" 정의 (file edit / GitHub state change) 와 disjoint axis — file/GitHub mutation 발생 0. 머지 보류·FIX 회부 등 후속 mutation 은 §결정 1/Amendment 2 영역 (별도 mechanism). |
 
 **6번째 entry 적용 범위 (closed enumeration)**:
 
@@ -588,7 +588,7 @@ dispatch 주체 = lead 가 `Agent` tool 로 spawn 한 background-Agent (run_in_b
 
 - §결정 2 inline whitelist (4 original entry + Amendment 2 §결정 15 entry 5 + Amendment 6 §결정 18 entry 6 = 현 **6-entry**) 는 본 amendment 로 **변경 0** (`git diff` 로 §결정 2 블록 + §결정 15/18 entry append-only 회귀 확인 가능).
 - **disjoint 근거**: inline whitelist 는 "Orchestrator 가 inline 으로 수행할까 vs subagent spawn 할까" (mechanism 차원) 를 다룬다. 본 §결정 19 는 "spawn 권한을 누구에게 위임할까" (spawn-scope 차원) 를 다룬다 — 두 축은 직교. 본 §결정은 teammate 에게 inline 수행 권한을 주지 않는다 (teammate 도 자기 scope 안에서 lane PL 을 **spawn** 한다, inline 대체 아님 → §결정 1 binary always-spawn 정합).
-- **선례 정합**: Amendment 4 (CFP-1354) 가 "ADR-039 5번째 inline entry 신설 REJECTED" 로 closed enumeration 을 보호한 패턴과 정합 — 본 amendment 도 inline whitelist 를 확장하지 않는다 (spawn-scope 위임은 별 축).
+- **선례 정합**: Amendment 4 (CFP-1354) 가 "ADR-039 5번째 inline entry 신설 REJECTED" 로 closed enumeration 을 보호한 패턴과 정합 — 본 amendment 도 inline whitelist 를 확장하지 않는다 (spawn-scope 위임은 별도 축).
 
 **§결정 1 binary always-spawn 무손상**:
 
