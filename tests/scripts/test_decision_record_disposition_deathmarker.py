@@ -239,8 +239,26 @@ def test_recensus_settled_manifest_reproducible_drift0(tmp_path):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# AC-9 (normative) — guard 4-check 통과분만 strip/downgrade (index invariance 포함)
+# AC-9 (normative) — guard 4-check 통과분만 strip/downgrade (guard-fail → fail-closed skip)
 # ─────────────────────────────────────────────────────────────────────────────
+def test_guard_4check_pass_only_strip_downgrade(tmp_path):
+    line = "wrapper 의 required_status_checks contexts 는 6-tuple 로 불변 유지"
+    path = _write(tmp_path, "g.md", "# D\n\n" + line + "\n")
+    before = open(path, "rb").read()
+    # guard_pass False → 편집 skip(fail-closed, INV-R1)
+    plan_fail = [{"file": "g.md", "line": 3, "action": "strip", "guard_pass": False,
+                  "disposition": "strip_normativity", "rationale": "x"}]
+    r_fail = sweep_executor.apply(plan_fail, repo_root=str(tmp_path), live_count=7)
+    assert open(path, "rb").read() == before, "guard-fail → no edit(fail-closed)"
+    assert r_fail["applied"]["strip"] == 0
+    # guard_pass True → strip 적용(marker append, bytes 보존)
+    plan_pass = [{"file": "g.md", "line": 3, "action": "strip", "guard_pass": True,
+                  "disposition": "strip_normativity", "rationale": "x"}]
+    r_pass = sweep_executor.apply(plan_pass, repo_root=str(tmp_path), live_count=7)
+    assert r_pass["applied"]["strip"] == 1
+    assert sweep_executor._MOOT_MARKER in open(path, encoding="utf-8").read()
+
+
 def test_guard_index_invariance_byte_identical():
     import reference_integrity_guard as g
     idx = g.build_reference_index(_REPO_ROOT)
