@@ -351,7 +351,7 @@ operational_constraints:
 - SubagentStop hook 확장 — agent_id/agent_type capture (현 subagent-stop = stop_reason 만 추출, net-new wiring) + lazy attribution(pointer only) 권고
 - replay 재구성 script — 기존 JSONL ledger + §14 + §10 read + 시간순(elapsed_seconds keyed) merge. **새 저장계층 미신설**
 - **§14 ↔ spawn-event dedup script** (ADR-163 §결정 13 precondition AC)
-- lint — kind:registry frontmatter / §1-§4 schema / Allow-list ONLY / attribution_confidence invariant / contract↔runtime parity(§2.4 drift 해소 후 reference pin) / idempotency
+- lint — kind:registry frontmatter / §1-§4 schema / Allow-list ONLY / attribution_confidence invariant / contract↔runtime parity(§2.4 drift 해소 후 reference `pin`) / idempotency
 - pricing constant table (로컬, 0 API)
 
 ROI gating prerequisite: ADR-163 §결정 11 (post-merge-counters.jsonl 30+ run) — **단 본 Story 는 Epic CFP-2391 directive 가 deferral 을 supersede** (ADR-163 Amendment 1 §근거 ROI gate 처리 참조).
