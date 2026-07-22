@@ -83,6 +83,9 @@ SEVEN_TUPLE_CONTEXTS = (
 # ═════════════════════════════════════════════════════════════════════════════
 # 독립 oracle 상수 (사전-고정 — 계약 SSOT 유래, module under test 에서 import 금지)
 #   VALID_LANE_LABELS = dev-process-event-v1 label-registry-v2 (11값). detecting_lane 유효 멤버 판정.
+#     ※ CFP-2782 note: dev-process-event substrate(P1 zero-edit 계약)는 배포/배포-리뷰 를 backward-compat
+#       historical lane label 로 존치(dev-process-event-v1.md §2 lane_label = 11값 유지 — spawn-event(9값)와
+#       달리 과거 로그 이벤트 호환 보존). 따라서 본 oracle 도 11값 유지가 계약 정합.
 #   CLOSED_7_FAMILIES = append_dev_process_event _DEFECT_FAMILIES(CLOSED-7). 새 family 발명 부재 판정.
 # ═════════════════════════════════════════════════════════════════════════════
 VALID_LANE_LABELS = frozenset({

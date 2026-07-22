@@ -4,16 +4,17 @@ r"""
 scripts/lib/check_lane_count_ssot.py
 CFP-2426 / ADR-060 Amendment 19 §결정 33 — lane-count SSOT consistency 게이트 (warning tier)
 
-canonical 작업레인(lane) 수 = 10 (ADR-125 Amendment 1 / CFP-2341) 이 governance 문서
+canonical 작업레인(lane) 수 = 8 (ADR-125 Amendment 4 / CFP-2782) 이 governance 문서
 전반에서 단조 유지되는지 grep-기반 mechanical lint 로 검출. 현재-상태 lane-count 단언
-(N 레인 / N번째 lane / 레인 N개, N≠10 = N∈{5,6,7,8,9}) 가 canonical=10 과 어긋나면 FLAG.
+(N 레인 / N번째 lane / 레인 N개, N≠8 = N∈{5,6,7,9,10}) 가 canonical=8 과 어긋나면 FLAG.
 5축 allowlist (within-line 이중토큰 / negation / history / path / counterfactual) 가
 false-positive 를 channel(line-prefix key) 단위로 차단.
 
-배경 (33.A — 메우는 갭): ADR-125 Amendment 1 이 canonical=10 을 정본 SSOT 로 박았으나
-(registration), 분산 governance 문서 사본이 그 사실에 단조 유지되도록 강제하는 mechanical
-enforcement 부재 → stale `N 레인`/`N번째 lane`(N≠10) drift 가 2 Story 연속(CFP-2341 →
-CFP-2376) leak. "registration 완료 ≠ enforcement 실효" 전형.
+배경 (33.A — 메우는 갭): ADR-125 가 canonical 작업레인 수를 정본 SSOT 로 박았으나
+(registration — Amendment 1 canonical=10, CFP-2782/Amendment 4 로 canonical=8 갱신), 분산
+governance 문서 사본이 그 사실에 단조 유지되도록 강제하는 mechanical enforcement 부재 →
+stale `N 레인`/`N번째 lane`(N≠canonical) drift 가 2 Story 연속(CFP-2341 → CFP-2376) leak.
+"registration 완료 ≠ enforcement 실효" 전형.
 
 Usage:
   python3 check_lane_count_ssot.py check [--repo-root <path>] [--paths <glob> ...]
@@ -36,12 +37,13 @@ ReDoS-safe (ADR-061 Amd3 CodeQL guard):
     선례 = scripts/lib/check_issue_body_claim_pre_screen.py 의 in_fence toggle
     (check_decision_principle_vocabulary.py 답습).
 
-N-range = canonical-10 특정값 detection (33.B / §7.B9 D4 documented-limitation):
-  현 정규식 N∈{5,6,7,8,9} 하드코딩은 canonical=10 기준. 미래 lane 증감(canonical→11) 시
-  `11 레인` 류를 silent 미검출(false-negative)하며 self-test({5..9} fixture)도 이 갭 미검출.
+N-range = canonical-8 특정값 detection (33.B / §7.B9 D4 documented-limitation):
+  현 정규식 N∈{5,6,7,9,10} 하드코딩은 canonical=8 기준 ("8" 제외 + "10" 두 자리 편입 —
+  CFP-2782/ADR-125 Amendment 4). 미래 lane 증감 시 canonical 아닌 값을 silent 미검출
+  (false-negative)하며 self-test fixture 도 이 갭 미검출.
   → lane count canonical 값을 바꾸는 미래 ADR-125 Amendment 는 본 lint 의 N-range 정규식 갱신
-  (+ self-test fixture range 확장)을 그 Amendment 의 REQUIRED mechanical-sync carrier 항으로
-  포함해야 한다 (구조 재설계 불요 — 범위 갱신만).
+  (+ self-test fixture range 반전)을 그 Amendment 의 REQUIRED mechanical-sync carrier 항으로
+  포함해야 한다 (구조 재설계 불요 — 범위 갱신만; CFP-2782 = 이 carrier 의 실현 예).
 
 Prior art (worktree 실존 확인 — ADR-119):
   scripts/lib/check_issue_body_claim_pre_screen.py  (line-by-line in_fence boolean toggle masking)
@@ -92,15 +94,17 @@ SELF_EXCLUDE_PATHS = (
 
 
 # ─────────────────────── 검출 정규식 (§7.B2 — STALE 토큰, ReDoS-safe) ─────────────
-# N∈{5,6,7,8,9} (canonical=10 외 현 surface 실측 등장 정수). bounded quantifier, nested 0.
+# N∈{5,6,7,9,10} (canonical=8 외 현 surface 실측 등장 정수 — "8" 제외 + "10" 두 자리 편입,
+#   CFP-2782/ADR-125 Amendment 4). bounded quantifier, nested 0.
+#   "10" 두 자리 = alternation `(10|…)` 선순위 + trailing `(?![0-9])` 로 `108`/`18`/`110` 오매칭 차단.
 
-# 한글 lane 표기: `9 레인`·`8 레인` (앞에 숫자 비인접 — `18 에이전트` 등 오매칭 회피는 history 축에서)
-_RE_HANGUL_LANE = re.compile(r"(?<![0-9])([6-9])\s{0,3}레인")
-# 한글 lane 표기 (개-form): `레인 5개`·`레인 8개`
-_RE_HANGUL_LANE_GAE = re.compile(r"레인\s{0,3}([5-9])개")
-# 영문 표기: `9번째 lane` (앞에 숫자 비인접 — `16번째 lane`/`26번째 lane` 류 leading-digit
+# 한글 lane 표기: `9 레인`·`10 레인` (앞뒤 숫자 비인접 — `18 레인`/`108 레인` 오매칭 회피 lookbehind+lookahead)
+_RE_HANGUL_LANE = re.compile(r"(?<![0-9])(10|[679])(?![0-9])\s{0,3}레인")
+# 한글 lane 표기 (개-form): `레인 5개`·`레인 10개`
+_RE_HANGUL_LANE_GAE = re.compile(r"레인\s{0,3}(10|[5679])(?![0-9])개")
+# 영문 표기: `9번째 lane`·`10번째 lane` (앞뒤 숫자 비인접 — `16번째 lane`/`26번째 lane` 류 leading-digit
 #   false-FLAG 차단, 한글형 `_RE_HANGUL_LANE` 가드 대칭화. F-CR-2426-P2)
-_RE_ENG_ORDINAL_LANE = re.compile(r"(?<![0-9])([6-9])번째\s{0,3}lane")
+_RE_ENG_ORDINAL_LANE = re.compile(r"(?<![0-9])(10|[679])(?![0-9])번째\s{0,3}lane")
 
 _DETECT_PATTERNS = [_RE_HANGUL_LANE, _RE_HANGUL_LANE_GAE, _RE_ENG_ORDINAL_LANE]
 
@@ -119,11 +123,12 @@ def stale_token_match(line):
 
 # 축① within-line 이중토큰: 같은 라인에 `N lane plugin` (plugin-count) 인접 →
 #   그 토큰만 면제 (라인 전체 면제 아님 — 잔여 stale 은 §7.B3 라인-단위라 잔여 stale_token_match 가 별 라인이면 검출).
-#   `8 lane plugin`·`6 lane plugin`·`8개 lane plugin`. detect 정규식(레인/lane)과 분리 채널.
+#   `6 lane plugin`·`8 lane plugin`·`6개 lane plugin`. detect 정규식(레인/lane)과 분리 채널.
+#   plugin-count canonical = 6 (CFP-2782 이후) — plugin-count 축은 lane-count 검출과 무관(exemption-only).
 _RE_AXIS1_DUAL_TOKEN = re.compile(r"([6-9])\s{0,3}개?\s{0,3}lane plugin")
 
 # 축② negation: `N번째 lane (이|은|는)? 아(니|님|닌)` (부정 토큰 인접) → 면제.
-_RE_AXIS2_NEGATION = re.compile(r"([6-9])번째\s{0,3}lane\s{0,3}(?:이|은|는)?\s{0,3}아(?:니|님|닌)")
+_RE_AXIS2_NEGATION = re.compile(r"(?:10|[679])번째\s{0,3}lane\s{0,3}(?:이|은|는)?\s{0,3}아(?:니|님|닌)")
 
 # 축③-a date행: frontmatter `date:` 또는 ISO 날짜 선두.
 _RE_AXIS3A_DATE = re.compile(r"^\s{0,8}date:\s|^\s{0,8}-?\s{0,3}\d{4}-\d{2}-\d{2}")
@@ -144,7 +149,7 @@ _AXIS3B_EVENT_VERB_WINDOW = 20
 #   live `section:` key 값은 제외(channel 갈림) — 본 정규식은 source_section / 주석 내 인용만.
 _RE_AXIS3C_SOURCE_SECTION = re.compile(r"^\s{0,8}source_section:")
 #   주석(`#`) 라인 안 따옴표 인용 (section-ownership L459 형). live `section:` value 와 분리.
-_RE_AXIS3C_COMMENT_QUOTE = re.compile(r"^\s{0,8}#.*\"[^\"]*(?:[6-9]\s{0,3}레인|레인\s{0,3}[5-9]개|[6-9]번째\s{0,3}lane)[^\"]*\"")
+_RE_AXIS3C_COMMENT_QUOTE = re.compile(r"^\s{0,8}#.*\"[^\"]*(?:(?:10|[679])\s{0,3}레인|레인\s{0,3}(?:10|[5679])개|(?:10|[679])번째\s{0,3}lane)[^\"]*\"")
 
 # 축③-d 버전이력 표: 숫자 전이(`6→8`/`9→10`) 또는 `(N 에이전트 · M 레인)` 과거 baseline 패턴.
 #   ★ over-broad 금지 (§5.3/§7.B3 ③-d): 면제는 STALE 토큰 자체가 *숫자 전이*(N→M)의 일부일 때만.
@@ -158,7 +163,7 @@ _RE_AXIS3D_VERSION_HISTORY = re.compile(r"\d+\s{0,3}에이전트\s{0,3}·\s{0,3}
 # 축⑤ counterfactual: 같은 라인 가정 조건절 마커 `만약` + lane-count 토큰 + 가상 귀결동사
 #   (신설|충돌|된다|무너) 가 lane 토큰 뒤. 진짜 counterfactual 구조만 면제 (`만약` 부재 단독 STALE = RED).
 _RE_AXIS5_COUNTERFACTUAL = re.compile(
-    r"만약.*([6-9])번째\s{0,3}lane.*(?:신설|충돌|된다|무너)"
+    r"만약.*(?:10|[679])번째\s{0,3}lane.*(?:신설|충돌|된다|무너)"
 )
 
 
@@ -427,14 +432,14 @@ def _emit_flag(item):
 
 
 _ACTION_GUIDE = (
-    "[lane-count-ssot] canonical 작업레인 수 = 10 (ADR-125 Amendment 1). "
-    "현재-상태 lane-count 단언이 10 과 어긋남 (warning mode — merge 비차단, advisory):\n"
-    "  ① 현재-상태 단언이면 `10 레인`/`10번째 lane` 으로 정정\n"
+    "[lane-count-ssot] canonical 작업레인 수 = 8 (ADR-125 Amendment 4). "
+    "현재-상태 lane-count 단언이 8 과 어긋남 (warning mode — merge 비차단, advisory):\n"
+    "  ① 현재-상태 단언이면 `8 레인`/`8번째 lane` 으로 정정\n"
     "  ② history(전이/changelog/amendment_log/date/source_section) 면 해당 channel 로 표기\n"
-    "     (전이는 `9→10` 화살표 / amendment_log 는 block 내부 이벤트동사 동반)\n"
+    "     (전이는 `10→8` 화살표 / amendment_log 는 block 내부 이벤트동사 동반)\n"
     "  ③ plugin-count 면 `N lane plugin` 이중토큰 형태 유지 (별 축, ADR-023)\n"
     "  ④ hotfix-bypass:lane-count-ssot-consistency label + audit comment\n"
-    "근거: ADR-060 Amendment 19 §결정 33 (CFP-2426) — canonical lane 수(10) SSOT "
+    "근거: ADR-060 Amendment 19 §결정 33 (CFP-2426) — canonical lane 수(8) SSOT "
     "mechanical consistency enforcement."
 )
 

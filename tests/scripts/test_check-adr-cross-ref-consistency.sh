@@ -410,17 +410,17 @@ run_wrapper() {
 # 보조 TC: tests/** path 는 (a)(b) 검사 제외 (INV-4 disjoint + L1_EXEMPT_PATH_PARTS)
 # ─────────────────────────────────────────────────────────────────────────────
 @test "TC-aux-tests-skip: tests/ 안 phantom 인용 → (a)(b) skip → exit 0" {
-  # ADR-088 파일: I-* 없음
-  write_fx "archive/adr/ADR-088-deploy-lane.md" \
-    "# ADR-088" \
+  # ADR-089 파일: I-* 없음 (surviving non-deploy ADR — CFP-2782 로 deploy ADR fixture 미참조)
+  write_fx "archive/adr/ADR-089-schema-principles.md" \
+    "# ADR-089" \
     "" \
-    "배포 레인 정의."
+    "스키마 변경 7원칙 정의."
 
   # tests/ 경로에 있는 파일은 L1_EXEMPT_PATH_PARTS('tests') 에 의해 (a)(b) skip
   write_fx "tests/unit/test_something.md" \
     "# Unit Test" \
     "" \
-    "ADR-088 I-99 는 테스트용 phantom 인용이다."
+    "ADR-089 I-99 는 테스트용 phantom 인용이다."
 
   run_wrapper "$FX"
   # tests/** skip → finding 없음 → exit 0

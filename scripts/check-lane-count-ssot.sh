@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # scripts/check-lane-count-ssot.sh — lane-count SSOT consistency 게이트 thin bash wrapper
 #
-# CFP-2426 / ADR-060 Amendment 19 §결정 33 — canonical 작업레인 수(10, ADR-125 Amendment 1)
+# CFP-2426 / ADR-060 Amendment 19 §결정 33 — canonical 작업레인 수(8, ADR-125 Amendment 4)
 #   SSOT mechanical consistency enforcement. 현재-상태 lane-count 단언(N 레인 / N번째 lane /
-#   레인 N개, N≠10) 가 canonical=10 과 어긋나는지 grep-기반 검출 + 5축 allowlist false-positive 차단.
+#   레인 N개, N≠8) 가 canonical=8 과 어긋나는지 grep-기반 검출 + 5축 allowlist false-positive 차단.
 # ADR-061: Python entry-point + thin bash wrapper convention (exec python3 — NO heredoc, NO logic).
 #
 # Usage:

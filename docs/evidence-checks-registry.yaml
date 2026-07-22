@@ -1398,68 +1398,6 @@ entries:
       promotion_trigger: auto_blocking  # recurrence.count ≥ threshold 시 별 carrier 강제 (ADR-060 §결정 19 enum)
     status: Active  # CFP-2451 Phase 2 wire COMPLETE — template+self-app workflow 신설 + manifest 2종 등록 + whitelist 추가 동반 Active 전환 (CFP-967 Phase 2 deferred → Active, ADR-073 Amendment 2). promotion gate (PR cumulative ≥ 20 + failure = 0) = 후속 별 carrier 추적.
   # CFP-991 / ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier — Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
-  - name: canary-compatibility-check
-    description: |
-      ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
-      canary_compatibility_check_binding mechanical verification — consumer
-      canary→beta promotion gate evaluation 시점 promotion criteria 4-tuple
-      (functional + security + monitoring + testing measurement source) + family_7
-      atomic canary 고정 (publisher↔registry↔consumer 3-way match length_invariant=7)
-      + canary_consumer_evidence_origin enum closed-set (wrapper_self / consumer_self
-      / mixed open_extension:false) + inter_plugin_contract_backward_compat_verify
-      (ADR-008 MINOR-only rule invariant guard) + promotion_gate_failure_mode (enum
-      warning_first / blocking_on_pr default warning_first) + downgrade_asymmetry_marker
-      (placeholder_reserve Story-5 carrier) 7 field schema verify. 5 threat × mitigation
-      matrix carrier (SecurityArch T-1.1/T-2.1/T-3.1/T-4.1/T-5.1). ADR-070 §결정 D6
-      (CFP-988 Amendment 4) mandatory-real-execution-evidence STANDING cross-ref
-      T-4.1 4-tuple measurement spoofing mitigation. wrapper-self-app Tier-1
-      exemption (production_cutover_touching=true AND repo=wrapper AND code_change=0
-      triple-AND fast-PASS, ADR-072 §결정 6 invariant 정합). 4 industry exemplar
-      verbatim cite (Chrome 3-channel Stable/Beta/Canary primary + npm dist-tag +
-      Rust 3-channel + K8s 3-stage 보조 reference, ADR-076 §결정 9.6 SSOT).
-    detect_command: bash scripts/check-canary-compatibility.sh
-    workflow: templates/github-workflows/canary-promotion-criteria.yml
-    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
-    bypass_label: hotfix-bypass:canary-promotion-criteria
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
-    promotion_criteria:
-      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
-      failure_threshold: 0          # ADR-060 §결정 6 (b)
-      sibling_dependencies: []      # Phase 2 carrier = 별 follow-up CFP (blocking-on-pr 승격)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-        - codex_tp4_p2_boundary_fixture_pair_evidence    # CX-963-3 P2 boundary mandate per Codex TP#4
-    modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
-    introduced_by: CFP-963
-    introduced_date: 2026-05-19
-    owner_adr: ADR-081-Amendment-4  # declaration source ADR — D1.D body 확장 (boolean → 4-tier `network_scope` enum strict ratchet-up SSOT)
-    carrier_adr: ADR-060            # enforcement source ADR — Amendment 14 §결정 28 evidence-enforceable warning-tier framework carrier
-    recurrence:
-      count: 0                      # CFP-963 ratchet 확장 carrier — sentinel-driven 도입 아닌 framework entry count 11 → 12 ratchet-UP (CFP-722 §결정 27 / channel-drift-detection / story-section-9-typed default 정합)
-      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
-      promotion_trigger: none       # count=0 < threshold=3 → 발화 없음 (Option A — parallel-work-sentinel-pickup count=2 sentinel 영역과 분리)
-    status: warning  # CFP-963 Phase 2 ACTIVE — mechanical wire complete: detect_command + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) ALL populated (2026-05-19 KST). deferred-followup → warning transition (ADR-060 §결정 6 — Phase 2 carrier merge 의무 충족). blocking-on-pr 승격 = pr_cumulative_min 20 + failure_threshold 0 + sibling_dependency merge (별 follow-up CFP)
-    mechanical_enforcement_actions:
-      - canary-compatibility-check   # ADR-040 Amendment 3 §결정 7.D cross-ref
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-991
-    introduced_date: 2026-05-19
-    owner_adr: ADR-072-Amendment-3   # ProductionEvidenceDeputy mandate Amendment 3 (CFP-991 carrier — promotion criteria 4-tuple wiring)
-    carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
-    recurrence:
-      count: 0
-      threshold: 3
-      last_occurrence: ~
-      promotion_trigger: advisory
-    status: Active
-
-  # ─── CFP-689 Phase 1 (worktree-first self-ownership verify 3-tuple — declarative anchor only, 2026-05-20 KST) ───
-  # ADR-073 Amendment 3 §결정 1-A (transition trigger enum 4번째 entry `worktree_lane_spawn` 추가) + §결정 1-D (path-based 3-tuple verify primitive) + §결정 1-E (subagent verdict re-verify mandate) carrier
-  # declaration source ADR-073-Amendment-3 / enforcement source ADR-060 dual-binding (codex-network-scope-presence precedent 답습)
-  # deferred-followup status — actual script (scripts/check-worktree-self-ownership.{sh,py}) + workflow (templates/github-workflows/worktree-self-ownership-verify.yml + .github/workflows/ self-app byte-identical) + hook json sample (templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample) + bats (tests/scripts/check-worktree-self-ownership/test_worktree_self_ownership.bats) + label-registry-v2 신규 entry (hotfix-bypass:worktree-self-ownership-verify) = Wave 2 별 sub-CFP carrier 후 Active 전환
-  # parallel-work-sentinel-pickup (CFP-966 → CFP-967 chain) declarative-only-Wave-1 precedent 답습 — Wave 1 declaration / Wave 2 mechanical wire 분리 (ADR-064 §결정 1 CFP scope unitary 정합)
   - name: deputy-spawn-count-empirical-grounding
     description: |
       ADR-068 I-5 dimensional empirical grounding `count` dimension backref entry.
@@ -1504,75 +1442,6 @@ entries:
         - adr_086_self_application_first_case_evidence  # 본 framework self-application 첫 사례 = CFP-1086 Story-1 Amendment 8 (spec §8 6 Story self-app 표 verbatim)
     modal_anti_pattern_dictionary: {}  # ADR-068 I-5 patterns (anti-pattern 4종 + Mitigation 4종) 재사용, modal 어휘 무관
 
-  - name: deploy-lane-spawn-evidence
-    description: |
-      ADR-087 §결정 1 mechanical anchor — Epic close 후 Deploy lane (codeforge-deploy plugin)
-      자동 trigger 시 DeployPLAgent spawn evidence Story §14 row append 의무. Phase 1
-      declarative — actual lint script + workflow wire = S2 sub-Story carrier 후 active.
-      ADR-076 / ADR-082 / ADR-086 precedent 답습 (declaration-only Wave 1).
-    introduced_by: CFP-1059
-    introduced_date: 2026-05-20  # KST
-    owner_adr: ADR-087  # declaration source — Deploy lane 신설 normative
-    carrier_adr: ADR-060  # enforcement source
-    recurrence:
-      count: 0
-      threshold: 3
-      promotion_trigger: none
-    status: deferred-followup  # Phase 1 = declaration only. S2 mechanical wire 후 warning 전환.
-    detect_command: bash scripts/check-deploy-lane-spawn-evidence.sh  # TBD — S2 carrier wire
-    workflow: templates/github-workflows/deploy-lane-spawn-evidence.yml  # TBD — S2 carrier wire
-    current_tier: warning  # ADR-060 schema v1.1 required field (deferred-followup status, tier 분류 = warning 의도)
-    bypass_label: hotfix-bypass:deploy-trigger  # 59번째 family member (label-registry-v2 v2.42)
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies:
-        - CFP-1059                              # 본 Story-1 (declarative anchor Wave 1)
-        - TBD-S2-deploy-plugin-seed             # S2 sub-Story (codeforge-deploy plugin seed 신설 + actual workflow wire)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-        - adr_087_deploy_lane_first_activation_evidence  # 본 ADR 첫 활성화 = S2 carrier merge 후 첫 Epic close trigger
-    modal_anti_pattern_dictionary: {}  # field presence check, modal 어휘 무관
-
-  # CFP-1059 / ADR-088 — Deploy Review lane spawn evidence lint (declaration-only Wave 1)
-  - name: deploy-review-lane-spawn-evidence
-    description: |
-      ADR-088 §결정 1 mechanical anchor — Deploy lane PASS 직후 Deploy Review lane
-      (codeforge-deploy-review plugin) 자동 trigger 시 DeployReviewPLAgent spawn
-      evidence Story §14 row append 의무. debate-protocol-v1 trigger 의무 carrier
-      (성능 미충족 시 multi-round adversarial debate 자동 발동). ProductionEvidenceDeputy
-      ownership 이관 mirror (codeforge-design CONDITIONAL → codeforge-deploy-review 정식).
-      Phase 1 declarative — actual lint script + workflow wire = S3 sub-Story carrier.
-    introduced_by: CFP-1059
-    introduced_date: 2026-05-20  # KST
-    owner_adr: ADR-088  # declaration source — Deploy Review lane 신설 normative
-    carrier_adr: ADR-060  # enforcement source
-    recurrence:
-      count: 0
-      threshold: 3
-      promotion_trigger: none
-    status: deferred-followup
-    detect_command: bash scripts/check-deploy-review-lane-spawn-evidence.sh  # TBD — S3 carrier wire
-    workflow: templates/github-workflows/deploy-review-lane-spawn-evidence.yml  # TBD — S3 carrier wire
-    current_tier: warning
-    bypass_label: hotfix-bypass:bidirectional-smoke  # 56번째 family member (label-registry-v2 v2.42 — smoke 검증 영역 primary bypass)
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies:
-        - CFP-1059                              # 본 Story-1 (declarative anchor Wave 1)
-        - TBD-S3-deploy-review-plugin-seed      # S3 sub-Story (codeforge-deploy-review plugin seed 신설 + actual workflow wire)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-        - adr_088_deploy_review_lane_first_activation_evidence  # 본 ADR 첫 활성화 = S3 carrier merge 후 첫 Deploy lane PASS 직후 spawn
-        - adr_088_production_evidence_deputy_ownership_transfer_audit  # ownership 이관 (codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3)
-    modal_anti_pattern_dictionary: {}
-
-  # CFP-1059 / ADR-089 — Schema 변경 7 원칙 self-check (declaration-only Wave 1)
   - name: schema-change-7-principles-self-check
     description: |
       ADR-089 §결정 1 mechanical anchor — Schema 변경 (DB schema / inter-plugin contract /
@@ -1683,89 +1552,6 @@ entries:
   # sub-classification 6종). lint scope rationale = check_ddd_pattern_frontmatter.py header.
 
   # CFP-1117-S3 / ADR-091 §결정 4 — Ubiquitous Language drift (warning tier, Active)
-  - name: deployment-schema-check
-    description: |
-      CFP-1059-S5 mechanical lint wire — consumer overlay .claude/_overlay/project.yaml
-      deploy.* block (5 sub-field) schema validation.
-      check_deployment_schema.py: yaml.safe_load 기반 (ADR-070 verify-before-trust, ADR-089 fail-loud),
-      exit code 3-tier (0 PASS / 1 FAIL / 2 lint-internal-error, ADR-060 SS결정 15).
-      Secret env-name 검증만 (value dereference 0 -- SS7 SecurityArch).
-      Phase 2 wire (declarative seed Story-1 T16 -> actual mechanical lint, ADR-054 Amendment 1).
-    introduced_by: CFP-1059-S5
-    introduced_date: 2026-05-21  # KST
-    owner_adr: ADR-027  # Consumer adoption protocol -- project.yaml deploy.* block schema 본문
-    carrier_adr: ADR-060  # Evidence-enforceable promotion framework
-    recurrence:
-      count: 0
-      threshold: 3
-      promotion_trigger: auto_blocking
-    status: warning
-    detect_command: bash scripts/check-deployment-schema.sh
-    workflow: templates/github-workflows/deployment-schema-check.yml
-    current_tier: warning
-    bypass_label: hotfix-bypass:deployment-schema  # 61번째 family member (label-registry-v2 v2.43 -- CFP-1059-S5 carrier)
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies:
-        - CFP-1117
-        - CFP-1059-S5                           # 본 Story (mechanical wire)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-1117
-    introduced_date: 2026-05-21        # KST
-    owner_adr: ADR-091                 # declaration source — §결정 5/§결정 6 normative
-    carrier_adr: ADR-060
-    recurrence:
-      count: 0
-      threshold: 3
-      promotion_trigger: none
-    status: Active
-
-  # CFP-1117-S3 / ADR-091 §결정 5 — DDD pattern frontmatter (warning tier, Active, cross-plugin)
-  - name: rollback-signal-monitor
-    description: |
-      ADR-105 §결정 3 안전장치 4 AND 실 mechanism 구현 layer (declaration-only Wave 1 → wire).
-      ADR-106 Amendment 1 단계 2-a: 자동 rollback 직후 사후 알림 Issue (ops-signal label, 안전장치 3 동반).
-      24h cron + check-rollback-signal.sh (thin bash) + check_rollback_signal.py (Python ADR-061):
-        (1) 에러율 / latency burn rate 숫자 임계 감지 (정량 — 모달 어휘 금지 ADR-064)
-        (2) 안전장치 4 AND 평가: safety_1(임계초과) AND safety_2(보존기간 hook위임) AND safety_3(알림존재) AND safety_4(kill-switch off)
-        (3) kill-switch 우선 (filesystem flag OR config flag — EC-2)
-        (4) 기존 CFP-1059 hook trigger (auto-rollback-hook.sh — 재구현 0)
-        (5) Issue-level signature dedup (동일 신호 24h 1 Issue — ADR-106 §결정 4 (a) 부분)
-        (6) ops-signal Issue 발의 (사후 알림, 무음 rollback 금지)
-      wrapper-self-app N/A (ADR-104 §결정 4 / ADR-072 Tier-1 declare-time exemption — fast-pass).
-      ADR-106 §결정 1 단계 3 (PMOAgent escalation) + 단계 4 (다음 Epic) = S6 carrier (미wire).
-      §7.4 empirical-source:
-        24h cron rate → channel-drift-detection.yml cron '0 0 * * *' 답습 (dimension: rate)
-        3시간 보존 window → ADR-087 §결정 5 / Issue #1059 카테고리 3/9 (dimension: lifecycle)
-    detect_command: bash scripts/check-rollback-signal.sh
-    workflow: templates/github-workflows/rollback-signal-monitor.yml
-    current_tier: warning   # ADR-060 §결정 15 3-tier / warning-first (신규 도입, evidence-gate 이후 승격)
-    bypass_label: hotfix-bypass:rollback-signal-monitor   # label-registry-v2 v2.45 신규 family member (64번째)
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies:
-        - CFP-1193   # S4 완료 (본 entry 도입 carrier)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - bats_15tc_green_proof
-        - kill_switch_or_disable_false_negative_zero_proof
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-1193
-    introduced_date: 2026-05-22    # KST (ADR-079 §결정 6 — 신규 작성분)
-    owner_adr: ADR-105             # declaration source — §결정 3 안전장치 4 / ADR-106 Amendment 1 §결정 1 단계 2-a
-    carrier_adr: ADR-060
-    recurrence:
-      count: 0
-      threshold: 3
-      promotion_trigger: none
-    status: Active
-
   - name: check-atlassian-allow
     description: |
       ADR-099 §결정 1/2/3 mechanical verification — check-no-atlassian.sh 역전 후
@@ -1839,41 +1625,6 @@ entries:
       promotion_trigger: none
     status: Active
 
-  - name: canary-auto-promote
-    description: |
-      CFP-1196 / ADR-105 §결정 3 — canary auto-promote mechanism.
-      canary subset 배포 → criteria 4-tuple 실측 (CFP-991 verbatim 재사용) →
-      안전장치 4 AND (criteria/보존기간/알림가용/kill-switch) → 충족 시 전체 promote /
-      미충족 정지+rollback + 사후 알림 Issue + kill-switch.
-      S7 = S4 (rollback-signal-monitor) mirror — trigger 방향만 반대.
-      3-layer disjoint: L1 criteria 정의 재사용 / L2 deploy/rollback 호출 / L3 오케스트레이션 신규.
-      D3 promote partial 실패: keep-forward + 실패 host rollback + 전체 정지.
-      F-1196-4 canary-phase partial 실패: 성공 canary 도 rollback (측정 기준선 일관성).
-    detect_command: bash scripts/canary-auto-promote.sh --repo "${GITHUB_REPOSITORY:-}" --image placeholder --host-list "${DEPLOY_HOST_LIST:-localhost}"
-    workflow: templates/github-workflows/canary-auto-promote.yml
-    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
-    bypass_label: hotfix-bypass:canary-auto-promote
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
-    promotion_criteria:
-      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
-      failure_threshold: 0          # ADR-060 §결정 6 (b)
-      sibling_dependencies: []      # Phase 2 carrier = 별 follow-up CFP (blocking-on-pr 승격)
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - bats_20_tc_green_proof
-        - lint_failure_count_zero_proof
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-1196
-    introduced_date: 2026-05-22
-    owner_adr: ADR-105             # 안전장치 4 AND 정책 SSOT
-    carrier_adr: ADR-060
-    mechanical_enforcement_actions:
-      - canary-auto-promote        # ADR-040 Amendment 3 §결정 7.D cross-ref (deploy lane)
-    status: Active
-
-  # CFP-1239 신설 — 1 entry (sunset-weakening-evidence)
-  # CFP-1249 description 갱신 — 2nd weakening pattern (forbid-list 축소) 추가 커버
-  # CFP-1255 description 갱신 — (B) pattern advisory-only → cross-file evidence-verified 승격
   - name: atlassian-tool-drift
     description: |
       CFP-1256 / ADR-103 §결정 3 Option B per-tool deny decomposition 의
@@ -4362,10 +4113,10 @@ entries:
       col-0 orphan(CFP-699 Wave 3 F-CR-821-6)·duplicate-key 등 grep 소비자(check-tier-downgrade-guard
       등)가 조용히 오독할 구조 결함을 상류에서 표면화한다. CFP-455 built-then-pruned revival =
       live workflow 실배선(계약 evidence-check-registry-v1 phantom-ref auto-heal).
-      ★ known 2 pre-existing duplicate-key locus(canary-compatibility-check 7키 / deployment-schema-check
-      6키 = (entry,key) 13-tuple)는 warning 으로 표면화(surface)만 — grandfather baseline 미도입,
+      ★ (CFP-2782 이전) known 2 pre-existing duplicate-key locus 는 해당 entry 삭제로 소멸
+      → 현 live dup-key set = 0 (known 0-tuple) — grandfather baseline 미도입,
       remediation forcing-function. regression fence = 전용 hard-fail self-test workflow
-      evidence-registry-check-test.yml (identity-oracle: live dup-key set == known 13-tuple).
+      evidence-registry-check-test.yml (identity-oracle: live dup-key set == KNOWN_DUP_LOCI, CFP-2782 후 ∅).
       ★ honesty ceiling(ADR-151 §결정7 상속): 구조만·exact-key 중복만 검증 — presence ≠ truth.
       alias-bomb = bounded degradation(면역 아님, ADR-082 Amд38 — "DoS-safe" hard-claim 부재).
       anomaly(§결정25)↔schema disjoint. loader-safety(base=SafeLoader / add_constructor 0 / key=

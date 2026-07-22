@@ -1,5 +1,5 @@
 ---
-title: codeforge family 전체 구조 (wrapper + 8 lane plugin)
+title: codeforge family 전체 구조 (wrapper + 6 lane plugin)
 last_captured: 2026-05-24
 last_update_cfp: CFP-2719  # ADR-157 D3 infra-resource drift 스캔 게이트 CLI 계약 interfaces 반영(CFP-2700 wire + CFP-2719 per-class census floor §3.8) — exit code 4-tier(0 PASS·warning 방출 / 1 drift 검출·none-위장·growth 거부 / 2 meta-error[manifest 부재·usage 오류 — malformed yaml exit 2 보장 없음, 라인 파서 관용·none-disguise exit 1 표면화] / 3 born-hollow[전역 candidates==0∧inert==0 OR per-class census floor 선언 class 열거 0] OR baseline substrate-failure[content_digest 불일치]) + baseline 스키마(docs/infra-resource-baseline.yaml — schema_version/generated_by/basis/content_digest/grandfathered_undeclared_surfaces 단일 section + growth_reason 각인). modules=N·boundaries=N·interfaces=Y·data_flow=N. 이전: CFP-2689  # ADR-158 author-time self-gate forcing function (Epic #2686 Story C, A #2687 substrate emit port 소비 + B #2688 하류 집계) — data_flow axis 1-node(producing lane 저작완료 → authoring_self_gate.py[신규 runner]가 기존 required 기계 게이트(ac-traceability Phase-aware / doc-section / doc-frontmatter / RTM format header signature)를 리뷰 lane 진입 前 현 Story 실 아티팩트에 shift-left invoke[re-impl 금지] → self-gate PASS/FAIL → 검출 결점 emit_dev_process_event.emit(defect_finding, detecting_lane=저작 lane_label honest-degrade + ttd) → A ledger → B compute_selfref_recurrence 소비) + interfaces axis 0(신규 계약 0, emit port 소비만). modules=N·boundaries=N(branch-protection 7-tuple 무변경, 신규 required context 0)·interfaces=N·data_flow=Y. C ⊥ #2684(ADR-154 게이트 자기검증 silent-green meta-gate) ⊥ #2322(provenance) ⊥ B(집계) ⊥ A(substrate 수정) disjoint. 5th boundary 무저촉(self-gate PASS/FAIL ≠ review-verdict-v4 재기록, defect_finding=semantic-evidence만 emit). enforcement=advisory lane-exit self-check day-1(실-게이트 invoke 강제·판정 대체 금지, fail-open 정직·merge-gate backstop; mechanical hook=future). detecting_lane honest-degrade(authoring-self-gate 비-멤버 → append `_norm_enum(...,None)` null coerce 신호소실 회피, `없음`은 lane_label 전용 fallback·detecting_lane nullable → first-class 표현=A-amendment upstream flag C scope 밖). honest-ceiling(저작시점 검출=구조/위치 conformance / semantic claim-accuracy=review-tier 잔여 정직 declare, "완전 방지" over-claim 금지 ADR-119). dogfood 자기적용(C self-gate를 C 자기 산출물 §5.3 AC표/§8 RTM/doc-section/frontmatter에 리뷰 前 선실행 born-red 예방) + self-test 2축(독립 oracle CFP-2673 X⊆X 금지 + 대칭 fail-closed CFP-2680 present-null 금지). Phase 1 = 설계 SSOT(ADR-158 + change-plan §1-13[§8.1.1 RTM 18 AC zero-drop gate-parseable] + Story §3/§7/§8/§11 + 본 doc data_flow), 실 authoring_self_gate.py + advisory wiring + (조건부)신규 lint + self-test + inventory enroll +1 = Phase 2. 이전: CFP-2688  # ADR-156 dev-process metric aggregation + §D-9 dev-domain escalation feed circuit (Epic #2686 Story B, A #2687 substrate 위 downstream 집계) — interfaces axis 1-node(de-facto KPI snapshot/history schema-pin[신규 formal inter-plugin 계약 dev-process-metric-v1 미신설 — kpi=local file 표면, MANIFEST registries 갱신 불요, doc-section §4-change-rules obligation 미발동] + §D-9 feed 필드 pattern_count/pattern_status/anchor_id/root_cause_class 노출) + data_flow axis 1-node(dev-process ledger → query_dev_process_event.query_with_stats()[B 유일 read 진입점] → aggregate_dev_process_event.py[단일 스크립트 + 6 pure compute_*(rows,stats)→dict] → KPI dual-file[history.jsonl content-hash-guarded append ⊥ snapshot.json overwrite-idempotent, atomic write] → §D-9 pattern_count PRODUCER → PMOAgent §D-9 escalation ACTION DECIDER). modules=N(단일 스크립트=scripts/lib 기존 계층)·boundaries=N(read-only consumer, branch-protection 7-tuple 무변경)·interfaces=Y·data_flow=Y. 6 지표(① cycletime lane-residency[6-point subtype 부재 → NOT time-to-PASS] / ② fixloop attempt·iteration 분리[distinct fix_id≠iteration 과대집계 회피] / ③ defect-attribution + should-have-caught[origin-lane 부재 → advisory heuristic] / ④ selfref-recurrence 4-tuple / ⑤ trend + §D-9[anchor_id/root_cause_class 부재 → AC-19 uncomputable=PRIMARY 경로] / ⑥ token-cost[spawn-event-v1 weighted 4-class, 3-gap 미해소 → honest-null]). producer↔decider 분리(B=pattern_count producer + N=2 eligibility 신호 / PMOAgent=escalation ACTION). 3-domain disjoint feed EXTEND(retro ADR-045 / operational ADR-106 / dev-process ADR-156 — ADR-045/106 본문 무변경, closure machinery[dedup/max-depth/escalate_user] 미복제 = B passive read-time feeder). honest-degrade 천장(measured-0≠dormant / exact-count 금지 / 인과 주장 금지, ADR-119 — self-referential dogfood 7연속 이력 대응). scope-guard ⊥ ADR-104(dev-process ⊥ operational-phase). 신규 secret 표면=NO(include_blob=False / index-tier-derived only / cross-channel JOIN correlation-only). Phase 1 = 설계 SSOT(ADR-156 + change-plan §1-13[§8.1.1 RTM 23 AC] + Story §3/§7 + 본 doc interfaces+data_flow), 실 aggregate_dev_process_event.py + 6 compute fn + KPI dual-file + lint/self-test + inventory enroll = Phase 2. 신규 required context 0(Phase 1 doc/ADR only, 7-tuple 무변경). C(self-gate verdict #2689) = OOS. 이전: CFP-2687  # ADR-155 dev-process observability substrate + dev-process-event-v1 증거계약 (Epic #2686 Story A, 선행) — interfaces axis 1-node(9번째 Tier-3 persistent channel dev-process-event-v1, new-sibling kind:registry — 기존 8 channel/stop·spawn·fix-event 무변경; ADR-163 Amd2 8→9 boundary + §15.2 5th invariant semantic-evidence-aggregation JOIN 허용/re-record 금지) + data_flow axis 1-node(dev-process capture 이원화 hook3/agent-emit5 + emit_source discriminator + 4-ID freeze story/lane/defect/fix + 2계층 index-allow-list-clean⊥evidence-blob-store + retention 3-tier hot/warm/cold AC-10∧AC-25 tombstone+hash-verified-transform 화해) + Open Decisions(substrate row). modules/boundaries=N(new-sibling 계약 표면, 신규 module/boundary 0)·interfaces=Y·data_flow=Y. Phase 1 = 설계 SSOT(ADR-155+ADR-163 Amd2+ADR-043 Amd4+change-plan+Story §3/§7), 실 dev-process-event-v1.md 계약 파일·capture 배선·blob store·mining·lint/self-test·playbook §15.1 8→9 = Phase 2. 정직 천장(taxonomy family/lane closed·type semi-open·ttd derived / resource-safety 무증거 ReDoS-safe 금지 / AC-23 드리프트 자동해소 주장 금지, ADR-119). scope-guard ⊥ ADR-104(dev-process ⊥ operational-phase disjoint axis). 신규 required context 0(Phase 1 doc-only, 7-tuple 무변경). 이전: CFP-2624  # ADR-152 dark/born-missing forcing function 게이트 (Epic CFP-2602 G3) — data_flow axis 1-node(§8.10 독립 dark-path activation manifest 게이트: design→§8.10→gate presence/구조 fail-closed + G3(b) EPIC-RESULTS §requirement-slice-mapping presence lint→defer→deferred-item-recovery 회수 흐름) + modules/interfaces/boundaries=N(check_section_8_10/check_epic_results_slice_mapping = pure-lint 층, 신규 boundary/계약 0)·data_flow=Y + Open Decisions(G3 row). discriminating-A(meta/self-test) ⊥ discriminating-B(product/flag 활성화) 어휘 분리. 정직 천장(presence/구조까지만, 검출력=review/advisory 미강제, ADR-119). §8.8/§8.9 zero-touch(§8.9 region-slice `^#{1,4}` 이미 §8.10 형제 종료). 신규 required context 0(기존 strict `doc section schema (CFP-28 — strict)` 편승, branch-protection 무변경). 이전: CFP-2622  # ADR-151 wrapper-self self-test execution-liveness 인벤토리/메타-게이트 (Epic CFP-2602 G6) — data_flow axis 1-node(governance CI 층: tests/scripts/*.sh self-test → execution-liveness 인벤토리(35 레코드 8-field) → 정적 메타-게이트 check_selftest_execution_liveness.py presence/alive/형식 fail-closed → 신규 non-required wrapper-self-only workflow) + modules(인벤토리 registry docs/selftest-execution-liveness-inventory.yaml + 메타-게이트 pure-lint 층, 신규 동적 러너 0 — ADR-048 무충돌) + Open Decisions(G6 row). 진성 hollow-gate 3(doc-section 8-7/8-8/8-9 = required 게이트 mutation-kill fixture 채널 죽음) 우선 backfill. A2-5 = ADR-136 결정14 원리 재정의 0 + corpus-wide 메타-게이트 신규 mechanism → 신규 ADR(ADR-136 무수정). 신규 required context 0(신규 non-required wrapper-self-only workflow, branch-protection 무변경). 이전: CFP-2612  # ADR-150 런타임 DAST 보안 동적 축 §8.9 (Epic CFP-2602 G5) — 데이터 흐름 axis 1-node(§8.9 독립 로스터 게이트, oracle=attack ⊥ G4-fuzz robustness; 3-lane decouple presence⊥test.yml⊥security_ai) + interfaces(12 산출물 필드 + 2 cross-field normative 선언-정합, enum-constrain) + Open Decisions(G5 row). 9축 category_enum 무변경(DAST=런타임 거울면, security.md pointer only). 신규 required context 0(기존 strict context 편승, 7-tuple 무변경 — G4 EXTEND-path 동형; §8.8 L355 region-slice 유일 예외). 이전: CFP-2613  # ADR-148 지속-liveness soak 게이트 (Epic CFP-2602 G2) — 데이터 흐름 axis 1-node(2-표면 게이트: 표면 A 선언 blocking-lint ⊥ 표면 B IntegrationTest boot-soak) + interfaces(sink_probes[]/daemon_type schema + verdict-kernel seam) + Open Decisions(required 편입 LIVE 6→7-tuple 사용자 결정 유보 shadow-first / kernel 물리형태 Phase 2 / 실배선 Phase 2). 신규 required context 0(G1 문서상 즉시등록이나 gh api live 미등록=dead-gate → CFP-2609 라우팅 / G4 편승0 과 대조). 이전: CFP-2605  # ADR-146 동적 테스트 최대화 표준(burden-flip) + fuzz/property/load/concurrency §8.8 1급 편입 게이트 (Epic CFP-2602 G4) — 데이터 흐름 axis 1-node(G4 §8.8 로스터 게이트) + Open Decisions 반영. 신규 required context 0 (baseline branch-protection tuple 무관 — G1 7-tuple 선착 등록 시에도 G4 추가 0, EXTEND-path 신규 module/workflow 0. G1 의 6→7 등록과 대조). 이전: CFP-2603 ADR-145 요건 traceability zero-drop 게이트 (AC-ID + phase-aware 2-tier fail-closed, Epic CFP-2602 G1) — 데이터 흐름 axis 신규 게이트/모듈 반영 (branch-protection 등록 = 사용자 결정 A 즉시 required, Phase 2 6→7-tuple; C4 required-check 표기 5→6 stale 정정). 이전: CFP-2560 전 에이전트 opus(1M) 단일 tier 정책 (ADR-141) — fable 폐기 + 3-tier 폐지. modules axis (agent composition tier 서술 갱신). 이전: CFP-2544 Orchestrator inline-write mechanical block (PreToolUse Write|Edit|MultiEdit, warning-tier, agent_id caller判정) 신설 — ADR-039 Amd9 + ADR-115 Amd1 / ADR-078 boundaries axis / CFP-2469 Consumer merge-gate boundary (advisory hook 層 ↔ mechanical branch protection 層) 신설 — ADR-132 / CFP-2341 lane 카운트 off-by-one 정정 9→10 (ADR-125 Amendment 1) / CFP-1427 Sub-C S3.3 5-anchor section schema expand (ADR-078 Amd 2) + 7→8 plugin family update (CFP-1059 declarative ADR-087+088 carrier)
 kind: architecture_doc
@@ -9,15 +9,15 @@ kind: architecture_doc
 
 <!-- 본 file = wrapper repo 1회 seed (CFP-920 / Epic B Story-2) + CFP-1427 5-anchor expand (Sub-C S3.3 / ADR-078 Amd 2).
      누적 현재 상태 SSOT (Story key 독립, 영속). 델타는 Change Plan SSOT (disjoint, ADR-078 §결정 3).
-     8 lane plugin self-owned architecture_doc 는 모노레포 `plugins/<plugin>/docs/architecture/<plugin>.md` SSOT (ADR-118 D3)
-     (CFP-949 Sub-Epic 6 lane plugin self-owned seed merged + CFP-1059 declarative 2 신규 plugin = follow-up sub-CFP 독립 carrier).
-     본 doc = family overview (cross-link source) + 8 lane plugin enumeration + 5-anchor 시스템 현황 layer. -->
+     6 lane plugin self-owned architecture_doc 는 모노레포 `plugins/<plugin>/docs/architecture/<plugin>.md` SSOT (ADR-118 D3)
+     (CFP-949 Sub-Epic 6 lane plugin self-owned seed merged; deploy·deploy-review 2 lane = ADR-121 / CFP-2782 물리 제거).
+     본 doc = family overview (cross-link source) + 6 lane plugin enumeration + 5-anchor 시스템 현황 layer. -->
 
 ## 모듈
 
-codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 family. **wrapper (codeforge) = 0 core agent** (wrapper-only, ADR-009 ζ arc) — Orchestrator (top-level Claude 세션) 가 8 lane plugin 의 agent 를 spawn.
+codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 family. **wrapper (codeforge) = 0 core agent** (wrapper-only, ADR-009 ζ arc) — Orchestrator (top-level Claude 세션) 가 6 lane plugin 의 agent 를 spawn.
 
-`[verified: CLAUDE.md @ HEAD fb06a04 "Development Agent Team" table — agent counts cross-checked]` — 8 lane plugin (6 → 8 확장, CFP-1059 / ADR-087+088) + Cross-cutting + agent composition:
+`[verified: CLAUDE.md @ HEAD fb06a04 "Development Agent Team" table — agent counts cross-checked]` — 6 lane plugin (deploy·deploy-review 2 lane 물리 제거 — ADR-121 / CFP-2782) + Cross-cutting + agent composition:
 
 | 모듈 (plugin) | 책임 | agent 구성 | status |
 |---|---|---|---|
@@ -27,8 +27,6 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | **codeforge-review** | 요구사항리뷰 / 설계리뷰 / 구현리뷰 / 보안테스트 레인 — 산출물 검수 (1 plugin 다 lane, CFP-2326 / ADR-125 요구사항리뷰 host 추가) | 6 (4 PL + 2 worker) | Active |
 | **codeforge-develop** | 구현 레인 — TDD 구현 + QA | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | Active |
 | **codeforge-test** | 통합테스트 레인 — Epic-level 통합 검증 | 1 (IntegrationTestAgent) | Active |
-| **codeforge-deploy** (CFP-1059 / ADR-087) | 배포 레인 — Epic 묶음 종료 후 변경 repo blue-green + atomic swap + 3-시간 보존 + 자동 rollback | 2 (DeployPLAgent + DeployWorkerAgent, Sonnet) | Phase 1 declarative — plugin seed 신설 = S2 sub-Story carrier |
-| **codeforge-deploy-review** (CFP-1059 / ADR-088) | 배포 검토 레인 — production smoke / 성능 비교 / cutover 사후 검증 + ProductionEvidenceDeputy 이관 owner | 3 (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet + ProductionEvidenceDeputy 이관) | Phase 1 declarative — plugin seed 신설 = S3 sub-Story carrier |
 | **codeforge-pmo** | Cross-cutting — Epic 창설 / Story 회고 / Git ops | 2 (PMOAgent + GitOpsAgent) | Active |
 
 > 각 lane plugin agent 역할·동작 = 해당 plugin CLAUDE.md SSOT (lane plugin self-owned architecture_doc 안 `## 모듈` H2 = lane internal 상세). 본 표 = family composition map (plugin 단위, 라인 수준 0건).
@@ -44,8 +42,6 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | codeforge-requirements | Story §2 · §5 · §6 |
 | codeforge-design | Story §3 · §7 · §11 + `docs/change-plans/**` + `docs/adr/**` + `docs/architecture/<plugin>.md` 갱신 (ADR-078 §결정 4 + Amd 2 per-Epic 현행화 mandate) |
 | codeforge-develop | Story §8 · §8.5 + Phase 2 PR |
-| codeforge-deploy (CFP-1059) | Story §12 배포 manifest (Phase 2 PR 후 trigger, Phase 1 declarative — S2 sub-Story body wire) |
-| codeforge-deploy-review (CFP-1059) | Story §13 배포 검증 evidence + ProductionEvidenceDeputy ownership (Phase 1 declarative — S3 sub-Story body wire) |
 | codeforge-pmo | Story §11(retro 영역) + `docs/retros/**` + `docs/architecture/<plugin>.md` 갱신 (PMO lane 자체 변경 시) |
 | Orchestrator | Story §9 (final verdict) · §10 (FIX Ledger, fix-event-v1 monopoly) · §14 (Lane Evidence) · phase 전환 label |
 
@@ -59,7 +55,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 모듈 간 계약 surface = `docs/inter-plugin-contracts/` (wrapper 단일 원본 — ADR-118 D5, sibling sync 폐지). `[verified: MANIFEST.yaml @ HEAD fb06a04]`:
 
-**kind:contract (9)** — lane 간 산출물 핸드오프 surface (CFP-1059 / ADR-087+088 신설 2종 placeholder):
+**kind:contract (7)** — lane 간 산출물 핸드오프 surface:
 
 | contract | producer plugin | 용도 | status |
 |---|---|---|---|
@@ -70,8 +66,6 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | test_verdict | codeforge-test | 통합테스트 verdict | Active |
 | pmo_output | codeforge-pmo | Epic/retro 산출물 | Active |
 | git_ops_event | codeforge-pmo | GitOpsAgent 이벤트 | Active |
-| **deploy_output** | codeforge-deploy | 배포 산출물 (Phase 2 PR merge 후 trigger 데이터) | Phase 1 placeholder — body wire = S2 sub-Story carrier |
-| **deploy_review_output** | codeforge-deploy-review | 배포 검증 산출물 (smoke / 성능 비교 / cutover 사후 검증) | Phase 1 placeholder — body wire = S3 sub-Story carrier |
 
 **kind:registry (sibling sync 면제 — ADR-010 §결정 2)**: label-registry-v2 / debate-protocol-v1 / evidence-check-registry-v1 / severity-propagation-v1 / parallel-dispatch-protocol-v1 / imperative-walker-protocol-v1 + chain-managed (comment-prefix-registry-v1 / fix-event-v1).
 
@@ -81,7 +75,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 ## 데이터 흐름
 
-**Story lane spawn flow** (Orchestrator 가 lane 진입 시 해당 lane plugin PL 1개 spawn — non-skippable. 10 lane (요구사항리뷰 CFP-2326 / ADR-125 + 배포 2 lane CFP-1059 / ADR-087+088)):
+**Story lane spawn flow** (Orchestrator 가 lane 진입 시 해당 lane plugin PL 1개 spawn — non-skippable. 8 lane (요구사항리뷰 CFP-2326 / ADR-125; deploy·deploy-review 2 lane = ADR-121 / CFP-2782 물리 제거)):
 
 ```
 사용자 요구 접수
@@ -94,8 +88,6 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
   → CI gate (phase-gate-mergeable) → merge
   → [Epic 종료 시] 통합테스트 lane (codeforge-test:IntegrationTestAgent) → test_verdict
   → 보안테스트 lane (codeforge-review:SecurityTestPLAgent) → review_verdict
-  → [Epic 묶음 종료 시] 배포 lane (codeforge-deploy:DeployPLAgent) → deploy_output [Phase 1 declarative]
-  → 배포 검토 lane (codeforge-deploy-review:DeployReviewPLAgent) → deploy_review_output [Phase 1 declarative]
 ```
 
 **Cross-cutting 흐름** (Story lane 게이트 비개입, 독립 spawn):
@@ -157,14 +149,14 @@ graph LR
     subgraph "External Systems"
         GitHub[GitHub API<br/>MCP github server]
         Codex[Codex CLI<br/>openai-codex plugin]
-        Marketplace[mclayer/marketplace<br/>9-plugin registry]
+        Marketplace[mclayer/marketplace<br/>7-plugin registry]
         Confluence[Confluence API<br/>readable mirror]
         InternalDocs[mclayer/codeforge-internal-docs<br/>dogfood monorepo]
     end
 
-    subgraph "codeforge family (wrapper + 8 lane plugin + Cross-cutting)"
+    subgraph "codeforge family (wrapper + 6 lane plugin + Cross-cutting)"
         Orchestrator[Orchestrator<br/>top-level Claude session]
-        Family[8 lane plugin + Cross-cutting<br/>see Building Block View]
+        Family[6 lane plugin + Cross-cutting<br/>see Building Block View]
     end
 
     User -- "요구 접수 dialog" --> Orchestrator
@@ -180,7 +172,7 @@ graph LR
 **Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API / **self-hosted runner host — private/internal repo CI 코드 실행 표면**). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function). self-hosted runner host(ADR-147)는 fork PR 임의 코드 실행 표면이나 `allow_forking=false` ∧ `allows_public_repositories=false` ∧ fork PR self-hosted 미실행(ADR-147 §결정 8)으로 CLOSED — DooD(host root 등가) / persistent runner cross-job 오염은 non-privileged container·ephemeral/JIT·secret CLI-arg 금지로 완화.
 
 **in-scope vs out-of-scope**:
-- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 10 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설)
+- in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 8 lane — CFP-2326 / ADR-125 요구사항 리뷰 신설; deploy·deploy-review 2 lane = ADR-121 / CFP-2782 물리 제거)
 - out-of-scope = production runtime monitoring / live incident response / customer-facing UI / billing — codeforge 는 dev lifecycle plugin (operational lifecycle 영역 = consumer 책임)
 
 ### arc42 §5 — Building Block View
@@ -206,19 +198,12 @@ graph TB
         PMO[codeforge-pmo<br/>2 PMO + GitOps]
     end
 
-    subgraph "Deploy lanes (2 declarative — CFP-1059 Phase 1)"
-        Deploy[codeforge-deploy<br/>2 Sonnet — Phase 2 seed S2]
-        DeployReview[codeforge-deploy-review<br/>3 Opus+Sonnet — Phase 2 seed S3]
-    end
-
     WrapperPolicy -.->|policy SSOT| Req
     WrapperPolicy -.->|policy SSOT| Design
     WrapperPolicy -.->|policy SSOT| Review
     WrapperPolicy -.->|policy SSOT| Develop
     WrapperPolicy -.->|policy SSOT| Test
     WrapperPolicy -.->|policy SSOT| PMO
-    WrapperPolicy -.->|policy SSOT| Deploy
-    WrapperPolicy -.->|policy SSOT| DeployReview
     WrapperContracts -.->|MANIFEST mirror| Design
     WrapperContracts -.->|MANIFEST mirror| Review
     WrapperContracts -.->|MANIFEST mirror| Develop
@@ -234,7 +219,7 @@ graph TB
 
 **plugin family lifecycle phase**:
 - **Active (6 production lanes)** = codeforge-{requirements,design,review,develop,test,pmo} 모두 모노레포 `plugins/<plugin>/` 동봉 (ADR-118 D3, 구 lane repo = 2026-06-12 GitHub archive — ADR-118 D1) + agent file + self-owned arch doc + marketplace 등록
-- **Declarative Phase 1 (2 deploy lanes)** = codeforge-{deploy,deploy-review} = CFP-1059 / ADR-087+088 declarative seed 후 모노레포 `plugins/codeforge-{deploy,deploy-review}/` 동봉 (구 lane repo = 2026-06-12 GitHub archive)
+- **deploy·deploy-review 2 lane = 물리 제거** (ADR-121 / CFP-2782) — 배포는 consumer GitHub Actions + Environments 완전 위임 (codeforge lane 0)
 
 ### C4 Container
 
@@ -264,7 +249,7 @@ graph TB
     end
 
     subgraph "Plugin Cache (codeforge family + dependencies)"
-        PluginCache[~/.claude/plugins/cache/<br/>codeforge 6.6.1<br/>+ 8 lane plugin<br/>+ codex]
+        PluginCache[~/.claude/plugins/cache/<br/>codeforge 6.6.1<br/>+ 6 lane plugin<br/>+ codex]
     end
 
     ClaudeCode <-- "agent spawn / Read/Write/Edit/Bash" --> Worktrees
@@ -290,7 +275,7 @@ graph TB
 - **Claude ↔ Codex CLI** = `codex exec --sandbox read-only < <promptfile>` file-redirect (ADR-081 Amd 6 D8 — direct stdin-pipe 차단 TTY 부재 0-byte stall 회피)
 - **Claude ↔ git** = local git CLI (worktree-first invariant ADR-040 Amd 6 — `git -C <worktree_abs_path>` 강제)
 - **Local state** = filesystem-only (no central state server, codeforge = stateless per-session orchestration)
-- **Plugin distribution** = `~/.claude/plugins/cache/` (consumer install via `mclayer/marketplace` registry, 9 plugin atomic version 고정 per CFP-744)
+- **Plugin distribution** = `~/.claude/plugins/cache/` (consumer install via `mclayer/marketplace` registry, 7 plugin atomic version 고정 per CFP-744)
 
 ### C4 Component
 
@@ -318,7 +303,7 @@ graph TB
 
     subgraph "codeforge-review (Review lane × 4 — CFP-2326 / ADR-125)"
         ReviewBase[review-pl-base.md<br/>공통 SSOT]
-        ReviewBase -.->|inherit| ReqReviewPL[RequirementsReviewPLAgent<br/>10번째 lane, 외부사실 의존성 게이트]
+        ReviewBase -.->|inherit| ReqReviewPL[RequirementsReviewPLAgent<br/>외부사실 의존성 게이트]
         ReviewBase -.->|inherit| DesignReviewPL[DesignReviewPLAgent]
         ReviewBase -.->|inherit| CodeReviewPL[CodeReviewPLAgent]
         ReviewBase -.->|inherit| SecurityTestPL[SecurityTestPLAgent]
@@ -342,17 +327,6 @@ graph TB
         IntegTest[IntegrationTestAgent<br/>Epic-level single-shot<br/>Sonnet]
     end
 
-    subgraph "codeforge-deploy (Deploy lane — Phase 1 declarative)"
-        DeployPL[DeployPLAgent<br/>Sonnet — S2 seed]
-        DeployPL --> DeployWorker[DeployWorkerAgent<br/>Sonnet — S2 seed]
-    end
-
-    subgraph "codeforge-deploy-review (Deploy Review lane — Phase 1 declarative)"
-        DeployReviewPL[DeployReviewPLAgent<br/>Opus — S3 seed]
-        DeployReviewPL --> DeployReviewWorker[DeployReviewWorkerAgent<br/>Sonnet — S3 seed]
-        DeployReviewPL --> ProdEvidenceDeputy[ProductionEvidenceDeputy<br/>이관 from codeforge-design]
-    end
-
     subgraph "codeforge-pmo (Cross-cutting)"
         PMO[PMOAgent<br/>Epic / retro / cross-Story]
         GitOps[GitOpsAgent<br/>long-running teammate]
@@ -370,7 +344,6 @@ graph TB
 - **worker peer 필수** = review lane 의 Claude + Codex 양 worker 모두 spawn 의무 (단독 fallback 0, ADR-001)
 - **CONDITIONAL deputy** = Live touching / production cutover Story 만 active (Backtest/Paper-only Story = 미spawn)
 - **Cross-cutting boundary** = PMO / GitOps 는 Story lane gate 비개입 (sibling 책임 영역 disjoint)
-- **Phase 1 declarative (deploy lanes)** = agent file / contract body / workflow 실 신설 = S2/S3 sub-Story carrier (본 declarative phase = 정책 anchor only)
 
 ### Open Decisions Pending
 
@@ -379,8 +352,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 | 영역 | 상태 | carrier |
 |---|---|---|
 | **Mega-Epic CFP-1415 (Confluence-as-derived-mirror governance standardization) 진행 중** | 4 Sub-Epic split (Sub-A/B/C/D) — 본 Sub-C S3.3 = wrapper family.md 5-anchor expand carrier | Issue #1415 (Epic) + Sub-Epic #1418 (Sub-C) |
-| **codeforge-deploy / codeforge-deploy-review 정식 승격 잔여** | CFP-1059 / ADR-087+088 declarative Phase 1 merged — 실 plugin seed 는 모노레포 `plugins/codeforge-{deploy,deploy-review}/` 동봉 (ADR-118 D3) | follow-up sub-CFP 2 (S2 codeforge-deploy seed / S3 codeforge-deploy-review seed) |
-| **8 lane plugin self-owned arch doc 5-anchor expand** | 6 active plugin (CFP-949 baseline) = 4 H2 schema 보유 / 5-anchor section 미반영 — 모노레포 `plugins/` in-tree follow-up | follow-up sub-CFP 6 (codeforge-{requirements,design,develop,review,test,pmo} 각자 self-owned arch doc 5-anchor expand) |
+| **6 lane plugin self-owned arch doc 5-anchor expand** | 6 active plugin (CFP-949 baseline) = 4 H2 schema 보유 / 5-anchor section 미반영 — 모노레포 `plugins/` in-tree follow-up | follow-up sub-CFP 6 (codeforge-{requirements,design,develop,review,test,pmo} 각자 self-owned arch doc 5-anchor expand) |
 | **ArchitectAnalystAgent dual-read path 실 wire** | ADR-078 Amd 2 §결정 1 declared (git primary + Confluence fallback) — 실 wire = codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 | follow-up Sub-C S3.4 (다른 sub-CFP carrier) |
 | **mechanical wire — review-verdict-v4 v4.10 `living_architecture_updated: bool`** | ADR-078 Amd 2 §결정 6 declared (Wave 1 declaration-only) — lint workflow + bats fixture + evidence-checks-registry row + hotfix-bypass label family member | follow-up Sub-C S3.5 / CFP-1429 carrier |
 | **5 follow-up CFP (HIGH 2 + MEDIUM 2 + LOW-DEFER 1)** | Mega-Epic CFP-1415 진행 중 5 follow-up declared — defer / immediate split | (다른 CFP 발의 후 status 갱신) |

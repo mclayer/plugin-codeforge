@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 / 배포 / 배포리뷰 FAIL). DeveloperPL 1차 진단 전 Orchestrator 호출.
+FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 FAIL). DeveloperPL 1차 진단 전 Orchestrator 호출.
 
 - **runtime 실패 분기 (3rd rung)**: runtime 실패(제품 동작 실패)가 표면 증상-anchored 진단 OR 설계 escalation 종점까지 가서도 반복 FAIL 이면 — 이는 FIX loop(구현 ↔ 설계 ping-pong) 가 아니라 **문제정의 오류 → 요구사항 lane 재진입** 의 별 경로다 (아래 §iteration 가설 차별화 원칙 의 3rd rung escalation 적용). ADR-064 §결정 13.
 
@@ -58,14 +58,6 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 | **Container secret 누설 (env / log / image layer) (CFP-128 / ADR-033)** | 구현 | §7.5 secret mount 전략 부재 → 설계 |
 | **Network mode 위반 (internal service host network 노출) (CFP-128 / ADR-033)** | 구현 | §7.1 network boundary 부재·모순 → 설계 |
 | **§7.4 Container restart loop / volume mount race (CFP-128 / ADR-033)** | 구현 | §7.4 restart policy / volume invariant 부재 → 설계 |
-| **배포 lane healthcheck FAIL (CFP-1059 / ADR-087)** | 구현 | §12 배포 manifest 안 healthcheck endpoint 정의 부재 또는 §7.4 health check policy 부재 → 설계 |
-| **배포 lane atomic swap FAIL (Traefik label flip race, CFP-1059 / ADR-087)** | 구현 | §3 도입할 설계 안 atomic swap mechanism 부재 또는 ADR-087 §결정 5 매커니즘 unsupported → 설계 |
-| **배포 lane secret lookup FAIL (1Password Connect / .env fallback, CFP-1059 / ADR-087)** | 구현 | consumer overlay deploy.1password.* 부재 + .env fallback 미설정 → 설계 또는 consumer config 부재 (root cause = consumer 영역) |
-| **배포 lane 자동 rollback 발동 (3-시간 보존 window 안, CFP-1059 / ADR-087)** | 구현 | §8 Test Contract 안 production smoke fixture 부재 → 설계, smoke spec 정상 but blue-green 매커니즘 결함 → 구현 |
-| **배포 리뷰 smoke FAIL (양방향 호환 위반, CFP-1059 / ADR-088 + ADR-089 §결정 4)** | **설계** | §11 데이터 마이그레이션 안 ADR-089 7 원칙 §결정 1 (양방향 호환) 위반 — backward / forward 양방향 호환 미보장 |
-| **배포 리뷰 성능 비교 FAIL (production runtime ↔ pre-deploy baseline, CFP-1059 / ADR-088)** | **설계** | ADR-068 I-5 dimensional empirical grounding 정합 — §3 도입할 설계 안 성능 invariant 부재 또는 `[empirical-source: TBD]` annotation 미해소. 단순 최적화로 해결 시 구현, 매커니즘 자체 결함 시 설계 (debate-protocol-v1 trigger 의무) |
-| **배포 리뷰 cutover 사후 검증 FAIL (ProductionEvidence 4 measurement source, CFP-1059 / ADR-088 §결정 3 + ADR-072)** | **설계** | ADR-072 §결정 1-7 4 prerequisite measurement source 누락 또는 모순 — functional / security / monitoring / testing 4-tuple evidence 부재 |
-| **배포 리뷰 schema 7 원칙 self-check FAIL (CFP-1059 / ADR-089)** | **설계** | §11 데이터 마이그레이션 안 7 원칙 (양방향 호환 / expand-contract 분리 / reverse / 양방향 smoke / cross-repo / backup / hard limit) 위반 — ArchitectAgent Phase 1 self-check 미흡 |
 | **Cross-layer 의존 영향 mis-감지 (CFP-1059 / ADR-090 §결정 1)** | 구현 | ADR-090 §결정 1 자동 감지 (deps / volume / ORM / contract MANIFEST) miss → 설계, 사용자 declare 영역 누락 → 구현 (consumer overlay deploy.* schema 영역) |
 | **변경 순서 invariant 위반 (expand source-first / contract leaf-first, CFP-1059 / ADR-090 §결정 2)** | **설계** | ADR-090 §결정 2 변경 순서 invariant 미준수 — 묶음 전체 rollback 영역, Change Plan §11 layer dependency 영역 부재 |
 | **runtime 실패 (제품 동작 실패) — 표면 증상-anchored 진단 OR escalation 종점(설계) 반복 FAIL (CFP-2358 / ADR-064 §결정 13)** | **요구사항(문제정의 오류)** | 문제정의 자체 재검증 필요 → 요구사항 lane 재진입 (FIX loop 아님). ADR-064 §결정 13 |

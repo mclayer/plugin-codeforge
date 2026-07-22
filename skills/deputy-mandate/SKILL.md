@@ -74,7 +74,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-072 + ADR-086 (D
 ## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-072)
 
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상). Backtest/Paper-only Story = 미spawn.
-- **ProductionEvidenceDeputy** (ADR-072 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-072 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / ADR-088 §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 — mandate body 보존 (ADR-072 §결정 1-7 그대로), ownership 만 이전. 이관 후 = codeforge-deploy-review 의 정규 deputy.
+- **ProductionEvidenceDeputy** (ADR-072 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-072 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 회귀 (CFP-2782 / ADR-072 Amendment 5)**: **codeforge-design CONDITIONAL deputy** 로 회귀 (RELOCATE — ADR-088 §결정 3/4 이관을 역전해 origin=design lane(§결정 1) 복귀; deploy·deploy-review lane 물리 제거로 orphan deputy 회피) — mandate body 보존 (ADR-072 §결정 1-7 그대로). codeforge-design lane CONDITIONAL deputy 재편입 (6+3+1).
 - ArchitectPLAgent가 Story의 §13 CONDITIONAL trigger 검토 후 spawn 결정:
   - Backtest/Paper-only: 5 permanent deputy
   - Live touching pre-cutover: 8 (5 + LiveOps + LiveOrdering + [4-tuple sub-tuple])
@@ -122,7 +122,7 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-072 + ADR-086 (D
 |---|---|---|
 | LiveOpsDeputy | "which subdomain under threat = **live ops**" | Live touching Story (real funds / live exchange API / production credential / live order placement 중 1+) — live ops subdomain decision at risk 시 spawn |
 | LiveOrderingDeputy | "which subdomain under threat = **live ordering**" | Live touching Story 의 order side (ledger reconcile / partial fill / fee invariant / order idempotency) — live ordering subdomain decision at risk 시 spawn |
-| ProductionEvidenceDeputy | "which subdomain under threat = **production evidence**" | production cutover 영향 Story (Change Plan §13 `production_cutover_touching: true` 또는 §13 Live Operational Discipline 본문 보유) — production evidence subdomain decision at risk 시 spawn. ownership = codeforge-deploy-review (ADR-088 §결정 3 이관 declarative) |
+| ProductionEvidenceDeputy | "which subdomain under threat = **production evidence**" | production cutover 영향 Story (Change Plan §13 `production_cutover_touching: true` 또는 §13 Live Operational Discipline 본문 보유) — production evidence subdomain decision at risk 시 spawn. ownership = codeforge-design (RELOCATE 회귀 — ADR-072 Amendment 5 / CFP-2782, ADR-088 §결정 3/4 이관 역전) |
 
 > **vocabulary theater 차단 (INV-5 — ADR-091 §결정 7)**: 본 "which subdomain under threat" 어휘는 **단순 nominal 명칭이 아니라 ArchitectPL 의 CONDITIONAL spawn 결정 input 에 실제 반영**된다. ArchitectPL 이 CONDITIONAL spawn 결정 (Backtest/Paper-only: 미spawn / Live touching: LiveOps + LiveOrdering / Production cutover: + ProductionEvidence) 시, **어느 subdomain decision 이 risk 에 처했는가** (live ops / live ordering / production evidence) 를 판정해 그 enum 어휘를 spawn rationale 로 명시 출력해야 한다. **어휘 emit ↔ spawn decision 결합 = forcing function**. Deputy = contributor 유지 (BC Owner 아님 — deputy = BC Owner = overreach 거부, ADR-091 §결정 2 rationale).
 

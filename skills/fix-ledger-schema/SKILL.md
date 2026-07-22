@@ -10,9 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 / **배포 / 배포 리뷰** FAIL — CFP-1059 / ADR-087+088 후 8 lane 확장). `codeforge:root-cause-decision`과 함께 호출.
-
-> **배포 + 배포 리뷰 lane FIX (CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))**: 본 스키마 = lane name 무관 (레인 column 에 "배포" / "배포-리뷰" 진입). 배포 lane FAIL = atomic swap race / healthcheck FAIL / secret lookup FAIL / 자동 rollback 발동 영역. 배포 리뷰 lane FAIL = smoke / 성능 비교 / cutover 사후 검증 3종 영역 — **debate-protocol-v1 trigger 의무** (성능 미충족 시 RequirementsPL ↔ ArchitectPL ↔ DeveloperPL 3-way multi-round adversarial debate 자동 발동). FIX dispatch routing = root-cause-decision skill 의 배포 단계 failure table 참조. ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL → codeforge-deploy-review 정식 — ADR-088 §결정 3) 영역 = §10 row 의 `lane` column = "배포-리뷰" + `원인 판정` column 영역 결정.
+FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 FAIL). `codeforge:root-cause-decision`과 함께 호출.
 
 ## §10 FIX Ledger 스키마
 

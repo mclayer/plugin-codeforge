@@ -8,21 +8,15 @@ tools: Read
 
 > 참조 테이블 skill — lane 진입 전 Story / Epic flow 패턴과 Preflight 체크 요건을 확인하세요.
 
-## 레인 10개 · 단계 정의 (CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) — 9 → 10 lane 확장, 요구사항리뷰 신설. 선행 CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
+## 레인 8개 · 단계 정의 (CFP-2782 / [ADR-121](../../archive/adr/ADR-121-deprecate-deploy-lanes.md) — deploy·deploy-review 2 lane 물리 제거로 10 → 8 lane. 선행 CFP-2326 / [ADR-125](../../archive/adr/ADR-125-requirements-review-lane.md) — 요구사항리뷰 신설)
 
 ```
 [Story] 요구사항 → 요구사항 리뷰 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]  ← N회 반복
-                                                                   ↓ 전체 Story PASS 후 1회
-                                                           [Epic 통합테스트]
-                                                                   ↓ Epic 묶음 모든 Story merged 후
-                                                           [배포] → [배포 리뷰] → Epic close
+                                                                   ↓ 전체 Story PASS 후 1회 (Epic 묶음 모든 Story merged 후)
+                                                           [Epic 통합테스트] → Epic close
 ```
 
-모든 Story는 **full 10 레인 + CI gate** 통과 (CFP-2326 후 — 요구사항 리뷰 신설; CFP-1059 후 — 배포 + 배포 리뷰 신설). 요구사항 리뷰는 Phase 1 내부 sub-gate (요구사항 §1-7 직후·설계 진입 전 — ADR-125 결정 1). **Fast-path 없음 (예외 0).** Hotfix 긴급경로(Minimal / Medium)도 폐지 — 운영 장애 시에도 정식 풀 플로우 무조건 거침. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, lane 생략 0 (ADR-127 §결정 3). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 를 백그라운드(Bash run_in_background)로 실행 — required check 만 대기 (전체 검사 대기 금지), watch 종료 시 자동 재개 → PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). required check 5분+ stuck 시 re-trigger 1회 → admin merge fallback + 사후 검증 + 결과 보고 자동 진행; required check 0건 repo 는 전체 watch fallback. FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution + Amendment 2).
-
-**배포 lane (Phase 1 declarative — CFP-1059 / ADR-087)**: Epic 묶음 종료 후 (모든 Story merged) Orchestrator → DeployPLAgent 자동 trigger. 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위). 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (단일 매커니즘 고정). FAIL 시 자동 rollback + FIX dispatch. 활성 조건 = consumer `project.yaml` 안 `deploy:` block 등록 + codeforge-deploy plugin install (opt-in).
-
-**배포 리뷰 lane (Phase 1 declarative — CFP-1059 / ADR-088)**: 배포 lane PASS 직후 mandatory. DeployReviewPLAgent (Opus + debate-protocol-v1 trigger 의무) 검증 3종 = smoke / 성능 비교 / cutover 사후 검증. ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL → codeforge-deploy-review 정식). 성능 미충족 시 multi-round adversarial debate 자동 발동 (RequirementsPL ↔ ArchitectPL ↔ DeveloperPL).
+모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-2326 후 — 요구사항 리뷰 신설; CFP-2782 / ADR-121 후 — deploy·deploy-review 2 lane 물리 제거). 요구사항 리뷰는 Phase 1 내부 sub-gate (요구사항 §1-7 직후·설계 진입 전 — ADR-125 결정 1). **Fast-path 없음 (예외 0).** Hotfix 긴급경로(Minimal / Medium)도 폐지 — 운영 장애 시에도 정식 풀 플로우 무조건 거침. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, lane 생략 0 (ADR-127 §결정 3). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 를 백그라운드(Bash run_in_background)로 실행 — required check 만 대기 (전체 검사 대기 금지), watch 종료 시 자동 재개 → PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). required check 5분+ stuck 시 re-trigger 1회 → admin merge fallback + 사후 검증 + 결과 보고 자동 진행; required check 0건 repo 는 전체 watch fallback. FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution + Amendment 2).
 
 ## Story flow (default — single-repo Story 또는 Epic 외 1 child Story)
 
@@ -70,8 +64,6 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks --required` 백그라운드 watch — ADR-048 Amd 2) | ∞ |
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
-| 배포 | Epic 하위 전체 Story merged (통합테스트·보안테스트 PASS) | (DeployPLAgent — consumer `deploy:` block opt-in) | — |
-| 배포 리뷰 | 배포 lane PASS | (DeployReviewPLAgent — smoke / 성능 비교 / cutover 사후 검증) | — |
 
 **통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../archive/adr/ADR-055-integration-test-lane-policy.md).
 

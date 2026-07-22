@@ -65,10 +65,10 @@ except Exception:  # pragma: no cover — import path fallback
 
 # ─────────────────────── 닫힌집합 enum (contract §2/§3) ───────────────────────
 
-# lane_label closed enum (11값 — label-registry-v2 정합: 10 lane + 없음)
+# lane_label closed enum (9값 — label-registry-v2 정합: 8 lane + 없음)
 _LANE_LABELS = {
     "요구사항", "요구사항-리뷰", "설계", "설계-리뷰", "구현", "구현-리뷰",
-    "구현-테스트", "보안-테스트", "배포", "배포-리뷰", "없음",
+    "구현-테스트", "보안-테스트", "없음",
 }
 _LANE_FALLBACK = "없음"
 

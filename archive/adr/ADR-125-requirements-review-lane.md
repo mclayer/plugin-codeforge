@@ -75,6 +75,14 @@ amendment_log:
       §결정 1~6 + Amendment 1/2 무수정(additive only). ratchet 강화 방향(축 추가 = 검증 표현력 확장 + 확정 위치 정밀화, scope 약화 0). review-verdict category literal(`internal-fitness-*`) 신설 + RequirementsReviewPLAgent/requirements.md checklist 배선 + phase 라벨 wiring = **Phase 2 defer**(review-verdict-v4.md / checklist 무수정 — 본 Story 미접촉, 병렬 충돌 회피). 본 Amendment = declarative 선언만. 신규 ADR-159 SSOT / ADR-071 Amendment 15(발화 frequency) / ADR-077 Amendment 1(terminal event·counter·리뷰-후 rewind) 짝. ADR-124 amendment 불요 — Amd2 도 ADR-124 cross-ref 만 처리(내부적합 = 외부지식 3-단계 internal 아날로그).
     direction: strengthen
     sunset_justification: "본 Amendment 는 약화가 아니라 additive 축 신설 + 위치 정밀화다 — 결정 A(확정 checkpoint 위치 정밀화)는 §결정 1 lane 신설·§결정 2 required contexts 무변경 invariant 를 상속(lane count 10 무변경, sub-gate 순서 정밀화이지 lane 추가 아님). 결정 B(내부 시스템 적합성 축)는 기존 외부사실 의존 검증 축(§결정 6)을 대체·약화하지 않고 disjoint axis 로 추가(공존) — Amendment 2 internal-invariant 축의 scope 일반화. §결정 1~6 + Amendment 1/2 의미 불변, 기존 dual-peer/debate-protocol 재사용(신규 worker 0), 검사연극 비충돌(repo Read 기반·WebSearch 비강제·declarative-only null-valid). review-verdict-v4/checklist/phase 라벨 배선 = Phase 2 defer(본 Story 무수정). additive 강화 방향이므로 sunset 대상 아니다. ADR-058 §결정 5 self-application + ADR-064 §결정 7 evidence-gated symmetric ratchet 강화 방향 정합. 원복은 별 Story 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
+  - by: "CFP-2782"
+    date: "2026-07-22"
+    scope: |
+      Amendment 4 — canonical 작업레인 수 10 → 8 (authority = ADR-121 deploy·deploy-review 2 lane 물리 제거). Amendment 1 이 정본화한 canonical=10(요구사항리뷰 추가 후)에서 deploy·deploy-review 2 lane 이 CFP-2782/ADR-121 로 물리 제거되어 canonical=8 로 갱신 — 최종 8 lane = 요구사항 · 요구사항리뷰 · 설계 · 설계리뷰 · 구현 · 구현리뷰 · 통합테스트 · 보안테스트.
+      REQUIRED mechanical-sync carrier 항 (check_lane_count_ssot.py docstring 이 지정한 의무): N-range 검출 regex flip — "8" 을 stale flag set 에서 제외(canonical화) + "10" 을 stale flag set 에 편입(두 자리 alternation, 상수 bump 아님) + self-test fixture 반전(§8.1/§8.2 SSOT: F-DET-2 "8 레인" FLAG→no-FLAG / F-EXIT-0 "10 레인" no-FLAG→FLAG / F-TRANS-2 "10번째 lane"→"8번째" / Mutation-5 anchor). 실 script/fixture 편집 = Phase 2 구현 scope(scripts/lib/check_lane_count_ssot.py + wrapper + test) — 본 Amendment 는 canonical SSOT 값 갱신 + mechanical-sync 의무 명문화.
+      Amendment 1 canonical=10(요구사항리뷰 추가 시점) = frozen 역사 기록(0건 변경, Event Sourcing). §결정 1~6 + Amendment 1/2/3 의미 불변 — lane 신설 결정 자체 무변경, 수치 SSOT(10→8)만 갱신. ADR 본체 status = Proposed 유지.
+    direction: corrective
+    sunset_justification: "canonical lane count 10 → 8 = ADR-121 deploy·deploy-review 2 lane 물리 제거 반영(numeric SSOT sync). 요구사항리뷰 lane §결정 1~6 게이트·라벨·worker 무손상 — lane 신설 결정 자체 무변경, 수치 표기만 정본화. count 하향은 정책 약화가 아니라 상위 ADR-121 로 제거된 lane 의 SSOT 반영(reflect-upstream). ADR-058 §결정 5 / ADR-064 §결정 7 정합 — governance surface(요구사항리뷰 게이트) 약화 0. is_transitional: false 유지. 원복(deploy lane 재도입)은 별 Story 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
 ---
 
 # ADR-125: 요구사항리뷰 lane 신설 (9번째 lane)
@@ -365,6 +373,36 @@ declaration-only Wave 1 retain 패턴 답습 (Amendment 2 §4 / ADR-082 §결정
 ### 해소 기준
 
 N/A — permanent (additive 축 신설 + 위치 정밀화). 본 Amendment 이후 요구사항리뷰 lane = 외부사실 축 + internal-invariant 축(Amd2) + 일반 내부적합 축(본 Amendment) 공존, 사용자 최종 확정 = 요구사항리뷰 PASS 후·설계 진입 전. mechanical wire (review-verdict-v4 `internal-fitness-*` / checklist 배선 / phase 라벨) 추적 = CFP-2725 Phase 2 carrier.
+
+## Amendment 4 (2026-07-22) — CFP-2782 — canonical 작업레인 수 10 → 8
+
+### 성격
+
+본 Amendment 는 **canonical lane count 정본 갱신** 이다 — Amendment 1 이 정본화한 canonical=10 에서, CFP-2782 / [ADR-121](ADR-121-deprecate-deploy-lanes.md) 의 deploy·deploy-review 2 lane 물리 제거를 반영해 **canonical=8** 로 갱신한다. ADR-121(별 주제 ADR)은 본 ADR-125 의 numeric SSOT 를 단독 재정의할 권위가 없으므로, `check_lane_count_ssot.py` docstring 이 지정한 **REQUIRED mechanical-sync carrier** = 본 Amendment 4 가 그 carrier 역할을 수행한다. ADR 본체 status = Proposed 유지. §결정 1~6 + Amendment 1/2/3 의미 불변.
+
+### 최종 8 lane
+
+요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트. (deploy·deploy-review 2 lane 제거 — ADR-121.)
+
+### REQUIRED mechanical-sync carrier (docstring 의무)
+
+`scripts/lib/check_lane_count_ssot.py` 의 canonical=10 + N-range 검출 regex 를 다음으로 flip (실 편집 = Phase 2 구현 scope):
+
+- **canonical 10 → 8**.
+- **N-range regex flip**: stale flag set 에서 "8" 제외(canonical화) + "10" 편입(두 자리 = alternation `(?:10|[679])` + capture-group 구조 변경 + lookbehind/trailing digit-boundary 재배치 — 상수 bump 아님).
+- **self-test fixture 반전**(§8.1/§8.2): F-DET-2 "8 레인" FLAG→no-FLAG / F-EXIT-0 "10 레인" no-FLAG→FLAG / F-TRANS-2 "10번째 lane"→"8번째" / Mutation-5 anchor regex 갱신 강제.
+
+### frozen 이력
+
+Amendment 1 의 canonical=10(요구사항리뷰 추가 시점 정본) = **frozen 역사 기록** (byte 0건 변경, Event Sourcing — 그 시점 카운트 결정 보존).
+
+### cross-ref (Amendment 4)
+
+| ADR | 관계 |
+|---|---|
+| ADR-121 | canonical count 10→8 authority (deploy·deploy-review lane deprecate) |
+| ADR-125 Amendment 1 | canonical=10 정본화 — frozen 역사 (본 Amendment 가 10→8 갱신) |
+| ADR-072 Amendment 5 | ProductionEvidenceDeputy RELOCATE (sibling — 동일 CFP-2782) |
 
 ## sunset_justification (ADR-058 §결정 5 — 약화 차단)
 

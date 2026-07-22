@@ -70,13 +70,12 @@ _FLOOR_MIN = 30
 _LANE_THRESHOLD_PROPOSAL_MIN = {
     # short / mechanical (commit·bump·single-file·swap) ≈ 30–45min
     "short": 45, "mechanical": 45,
-    "배포": 45,
     # medium (구현/설계 authoring) ≈ 2–3h
     "medium": 180,
     "요구사항": 180, "설계": 180, "구현": 180, "통합테스트": 180,
     # long review (설계리뷰/구현리뷰/보안테스트 dual-peer/deep-research/Codex adversarial) ≈ 3–4h
     "long": 240, "review": 240, "deep-research": 240,
-    "요구사항리뷰": 240, "설계리뷰": 240, "구현리뷰": 240, "보안테스트": 240, "배포리뷰": 240,
+    "요구사항리뷰": 240, "설계리뷰": 240, "구현리뷰": 240, "보안테스트": 240,
 }
 _DEFAULT_THRESHOLD_MIN = 180  # 미지 lane → medium 보수 default.
 # INV-L1 total-deadline ceiling (§결정 6) — generous, ≫ lane threshold. waiting-external self-attestation

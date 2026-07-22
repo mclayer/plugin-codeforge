@@ -112,11 +112,11 @@ _CLOSED_7 = frozenset({
     "test-gap", "doc-integrity", "process-discipline",
 })
 
-# 저작 lane_label CLOSED enum(11값) — detecting_lane honest-degrade(AC-4). 비-멤버("authoring-self-gate")
+# 저작 lane_label CLOSED enum(9값) — detecting_lane honest-degrade(AC-4). 비-멤버("authoring-self-gate")
 #   emit 금지(append `_norm_enum(...,None)` → null coerce 신호소실 회피). 저작시점 성격 = time_to_detection.
 _LANE_LABELS = frozenset({
     "요구사항", "요구사항-리뷰", "설계", "설계-리뷰", "구현", "구현-리뷰",
-    "구현-테스트", "보안-테스트", "배포", "배포-리뷰", "없음",
+    "구현-테스트", "보안-테스트", "없음",
 })
 
 # ★정직 천장 공개(ADR-119 / ADR-158 결정 6). AC-13 over-claim wording 미사용:

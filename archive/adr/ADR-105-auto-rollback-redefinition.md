@@ -1,7 +1,7 @@
 ---
 adr_number: 105
 title: 자동 rollback 도메인 재정의 — user-decision layer ↔ auto-rollback layer disjoint + 안전장치 4 AND codify
-status: Accepted
+status: Superseded by ADR-121
 category: governance
 date: 2026-05-22
 carrier_story: CFP-1191
@@ -27,8 +27,15 @@ related_files:
   - reconcile-protocol-v1 §4.14                                                       # rollback ≠ demotion disjoint (downgrade_asymmetry_marker — 무변경, AC-7)
 mechanical_enforcement_actions: []  # declaration-only Wave 1 — ADR-082 §결정 6 / ADR-070 §D5 / ADR-076 / ADR-086 / ADR-097 / ADR-104 retain pattern 답습 (behavioral directive only, 자동 rollback = 신규 정책 정의 layer / 실 mechanism (숫자 임계 trigger + 사후 알림 Issue + kill-switch workflow) = S4 carrier 가 신설 시 evidence-checks-registry row append; pattern_count >= 2 recurrence 시 follow-up CFP MUST promote to mechanical lint — ADR-084 precedent)
 is_transitional: false  # permanent governance anchor — ADR-087/088/104 (lane lifecycle / 운영 phase, is_transitional: false) 정합. 자동 rollback 재정의 (2-layer disjoint / 안전장치 4 AND / §self-application 2-layer / kill-switch disambiguation) 는 future 재사용 permanent. 약화 방향 차단 ratchet (ADR-058 §결정 5 정합 — Amendment 1 evidence-gate symmetric 재정의 후에도 약화 시 evidence requirement 의무)
-sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용 (안전장치 추가 / disjoint 강도 강화). 안전장치 축소 / AND→OR 완화 = ADR-058 §결정 5 (Amendment 1) 약화 evidence-gate 의무
-amendment_log: []
+sunset_justification: "TOMBSTONE (CFP-2782 / ADR-121 배포 완전 위임) — ADR-121 이 배포를 consumer GitHub Actions + Environments 로 완전 위임하며 codeforge-실행 blue-green auto-rollback layer 를 obviate. ADR-058 §결정 5 약화 evidence-gate 충족: (a) 완전 위임 obviate (b) 0% 구현(mechanical_enforcement_actions: [] declaration-only Wave 1 그대로) (c) anchor ADR-087 §결정 5(blue-green + 3h 보존 + 자동 rollback 단일 매커니즘) 이미 Superseded (d) 실측 0회 unexercised placeholder. mechanism(rollback-signal-monitor.yml / check_rollback_signal.py(+.sh) / auto_rollback_hook.py) = CFP-2782 delete-set. 미래 GitHub Environments auto-rollback governance = 신규 CFP(blue-green-specific 본 ADR 부활 아님)."
+amendment_log:
+  - amendment: 1
+    date: 2026-07-22
+    carrier_story: CFP-2782
+    status: applied
+    direction: sunset
+    summary: "TOMBSTONE — frontmatter status Accepted → Superseded by ADR-121 (본문 byte 무변경, ADR-087/088 tombstone 동형). auto-rollback = codeforge-실행 blue-green 의 자동 rollback layer → ADR-121 배포 완전 위임(consumer GitHub Actions + Environments)에 직접 obviated. mechanism(rollback-signal-monitor.yml / check_rollback_signal.py(+.sh) / auto_rollback_hook.py) = CFP-2782 delete-set. 0% 구현(mechanical_enforcement_actions: []) + anchor ADR-087 §결정 5 이미 Superseded + 실측 0회. §결정/context 본체 = Event Sourcing frozen(그 시점 결정 이력 보존). 판정 ③-a: auto-rollback ≠ production-evidence-grounding → ①(ProductionEvidenceDeputy RELOCATE, ADR-072 Amendment 5)과 separable. 미래 GitHub Environments auto-rollback governance 필요 시 = 신규 CFP(blue-green-specific 본 ADR 부활 아님)."
+    sunset_justification: "ADR-058 §결정 5 약화 evidence-gate 충족 — evidence: (a) ADR-121 완전 위임이 codeforge-실행 auto-rollback obviate (b) 0% 구현(mechanical_enforcement_actions: []) (c) anchor ADR-087 §결정 5 Superseded (d) 실측 0회 unexercised placeholder. is_transitional: false → Superseded 전환(자동 rollback 도메인 재정의 = codeforge 배포-실행 모델 전제, ADR-121 위임으로 전제 소멸)."
 ---
 
 # ADR-105 — 자동 rollback 도메인 재정의

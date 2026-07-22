@@ -13,7 +13,7 @@
 #                (multi-line amendment_log block 다음 sibling live `description:` STALE 까지 silent 면제 = false-negative).
 #  - Mutation-4: 축⑤ counterfactual 정규식 over-broaden(`만약` 가정 마커 anchor 제거 → 모든 lane-count 토큰 면제)
 #                → F-COUNTERFACTUAL-NEG RED (`만약` 부재 단독 `9 레인` silent 면제 = false-negative).
-#  - Mutation-5: ordinal lookbehind 가드 제거(F-CR-2426-P2, `(?<![0-9])([6-9])번째 lane` → `([6-9])번째 lane`)
+#  - Mutation-5: ordinal lookbehind 가드 제거(F-CR-2426-P2, `(?<![0-9])(10|[679])(?![0-9])번째 lane` → `(10|[679])(?![0-9])번째 lane`)
 #                → F-GUARD-1 RED (`16번째 lane` leading-digit `6` false-FLAG = 과검출).
 #
 # Exit code:
@@ -116,13 +116,13 @@ run_test "F-DET-1 label-registry desc형" \
   '    description: "Phase: 요구사항-리뷰 (CFP-2326 / ADR-125 — 9번째 lane, Phase 1 내부 sub-gate)"' \
   yes 1 "live description: 안 9번째 lane → FLAG (AC-1)"
 
-run_test "F-DET-2 plugin.json tagline형" \
-  '  "description": "0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev"' \
-  yes 1 "description tagline · 8 레인 → FLAG (AC-1)"
+run_test "F-DET-2 plugin.json tagline형 (two-digit stale)" \
+  '  "description": "0 core 에이전트 (wrapper-only) · 10 레인 + CI gate + role:dev"' \
+  yes 1 "description tagline · 10 레인 (two-digit stale, canonical=8) → FLAG (AC-1)"
 
 run_test "F-DET-3 section-ownership 2토큰" \
-  "$(printf '    section: "레인 5개 · 단계 정의"\n    section: "레인 8개 · 단계 정의"')" \
-  yes 1 "section: 값 레인 5개 + 레인 8개 → FLAG ×2 (AC-1)"
+  "$(printf '    section: "레인 5개 · 단계 정의"\n    section: "레인 10개 · 단계 정의"')" \
+  yes 1 "section: 값 레인 5개 + 레인 10개 → FLAG ×2 (AC-1)"
 
 run_test "F-DET-4 base-labels 형" \
   'gate:requirements-review-pass	0e8a16	Requirements review PASS (CFP-2326 / ADR-125 — 9번째 lane, 외부사실 게이트)' \
@@ -200,8 +200,8 @@ run_test "F-TRANS-1 transition" \
   no 0 "9→10 / 6→8 / 7→9 숫자 전이 → no-FLAG (③-d, AC-7)"
 
 run_test "F-TRANS-2 already-correct PASS" \
-  "$(printf '요구사항리뷰 신설로 9→10 전이 완료.\n현재 canonical = 10번째 lane (정답).\n')" \
-  no 0 "10번째 lane (정답) + 9→10 전이 한 파일 → no-FLAG PASS (AC-5)"
+  "$(printf '보안-테스트 terminal 정합으로 10→8 전이 완료.\n현재 canonical = 8번째 lane (정답).\n')" \
+  no 0 "8번째 lane (정답) + 10→8 전이 한 파일 → no-FLAG PASS (AC-5)"
 
 echo ""
 echo "── F-CHANNEL (★same-file channel-split — P0) ──"
@@ -214,8 +214,8 @@ run_test "F-CHANNEL-1 ★same-file split (multi-line span)" \
 
 # F-CHANNEL-2: section: 값(검출) + 주석 인용(면제) 동시.
 run_test "F-CHANNEL-2 section-ownership split" \
-  "$(printf '    section: "레인 8개 · 단계 정의"\n    # 본 §단락 = wrapper CLAUDE.md "레인 8개 · 단계 정의" 영역 mirror\n')" \
-  yes 1 "section: 값 레인 8개(검출) + 주석 따옴표 인용(면제) → FLAG (section: 값만, AC-8)"
+  "$(printf '    section: "레인 10개 · 단계 정의"\n    # 본 §단락 = wrapper CLAUDE.md "레인 10개 · 단계 정의" 영역 mirror\n')" \
+  yes 1 "section: 값 레인 10개(검출) + 주석 따옴표 인용(면제) → FLAG (section: 값만, AC-8)"
 
 echo ""
 echo "── F-BORDER (check-lane-evidence 주석 — §7.B5) ──"
@@ -228,8 +228,8 @@ echo ""
 echo "── F-EXIT (exit semantics) ──"
 
 run_test "F-EXIT-0 PASS (stale 0)" \
-  '현재 canonical = 10 레인 (정답). 8 lane plugin 별 축.' \
-  no 0 "stale 0 파일 → exit 0 (AC-6)"
+  '현재 canonical = 8 레인 (정답). 6 lane plugin 별 축.' \
+  no 0 "canonical 8 레인 + 6 lane plugin, stale 0 파일 → exit 0 (AC-6)"
 
 run_test "F-EXIT-1 FLAG (stale 1+, 비차단 warning)" \
   '현재 작업레인은 9 레인 이다 (stale).' \
@@ -335,7 +335,7 @@ mutate_and_check "Mutation-3 (span exit 미감지 = 무한확장)" \
 # Mutation-4: 축⑤ counterfactual over-broaden (만약 가정 마커 anchor 제거 → 모든 lane-count 토큰 면제) → F-CF-NEG RED.
 #   over-broad 형태 = 가정 마커·귀결동사 anchor 제거하고 일반 lane-count 토큰을 통째 면제.
 mutate_and_check "Mutation-4 (counterfactual over-broaden)" \
-  'r"만약.*([6-9])번째\s{0,3}lane.*(?:신설|충돌|된다|무너)"' \
+  'r"만약.*(?:10|[679])번째\s{0,3}lane.*(?:신설|충돌|된다|무너)"' \
   'r"([6-9])\s{0,3}레인|([6-9])번째\s{0,3}lane"' \
   '현재 작업레인은 9 레인 으로 운영 중이다 (만약 마커 부재 단독 현재-상태 단언).' \
   yes "counterfactual 정규식 over-broaden(가정 마커 제거 → 일반 lane-count 면제) 시 단독 9 레인(F-COUNTERFACTUAL-NEG) silent 면제 = false-negative RED"
@@ -344,8 +344,8 @@ mutate_and_check "Mutation-4 (counterfactual over-broaden)" \
 #   `(?<![0-9])([6-9])번째 lane` → `([6-9])번째 lane` 으로 가드 제거 시 `16번째 lane` 의 leading-digit
 #   `6` 이 false-FLAG → F-GUARD-1(no-FLAG 기대)이 과검출 RED.
 mutate_and_check "Mutation-5 (ordinal 가드 제거)" \
-  'r"(?<![0-9])([6-9])번째\s{0,3}lane"' \
-  'r"([6-9])번째\s{0,3}lane"' \
+  'r"(?<![0-9])(10|[679])(?![0-9])번째\s{0,3}lane"' \
+  'r"(10|[679])(?![0-9])번째\s{0,3}lane"' \
   '본 항목은 16번째 lane 항목이자 26번째 lane 후보 (ordinal 번호, lane count 단언 아님).' \
   no "ordinal lookbehind 가드 제거 시 16번째 lane leading-digit false-FLAG(F-GUARD-1 과검출) = RED"
 

@@ -6,8 +6,8 @@ name: evidence-registry-check (CFP-881 / ADR-060 Amendment 26 — warning mode)
 # Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 default). PR merge 미차단.
 # Bypass channel: omit (warning tier §결정 16 — bypass_label 미채택).
 # honesty ceiling(ADR-151 §결정7): 구조만·exact-key 중복만 검증 — presence ≠ truth.
-#   duplicate-key locus 는 warning 으로 표면화(surface)만 하고 차단하지 않는다 (2 pre-existing locus
-#   canary-compatibility-check / deployment-schema-check = remediation forcing-function).
+#   duplicate-key locus 는 warning 으로 표면화(surface)만 하고 차단하지 않는다 (duplicate-key
+#   remediation 은 별도 governance CFP — forcing-function).
 #   regression fence = 전용 hard-fail self-test workflow evidence-registry-check-test.yml (별개 채널).
 # self-test step 미포함 — CFP-2635 shell-test 처럼 self-test 를 warning job 안에 두면 RED 가 swallowed
 #   되므로 evidence-registry-check-test.yml (continue-on-error 부재) 로 분리 (F-B).
@@ -70,8 +70,7 @@ jobs:
               '> entry=name-nonempty-dict / current_tier enum / name 전역 unique / duplicate-key)을',
               '> yaml.safe_load strict-verify 로 검증. col-0 orphan·중복키 등 grep 소비자가 조용히',
               '> 오독할 구조 결함을 상류에서 표면화합니다.',
-              '> known 2 pre-existing duplicate-key locus(canary-compatibility-check /',
-              '> deployment-schema-check)는 warning 으로 표면화만 — remediation 은 별도 governance CFP.',
+              '> duplicate-key locus 는 warning 으로 표면화만 — remediation 은 별도 governance CFP.',
               '',
               '```',
               output.slice(0, 3000),

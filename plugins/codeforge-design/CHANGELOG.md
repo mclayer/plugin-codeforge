@@ -2,6 +2,21 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.44.0] - 2026-07-22 — CFP-2782 ProductionEvidenceDeputy RELOCATE 회귀 (deploy·deploy-review lane 물리 제거, MINOR)
+
+### Added (CFP-2782 — Epic CFP-2217 Wave 2, ADR-072 Amendment 5, MINOR)
+
+[CFP-2782] deploy·deploy-review 2 lane 물리 제거(ADR-121)에 따라 orphan 이 될 **ProductionEvidenceDeputyAgent** 를 codeforge-deploy-review → **codeforge-design 로 git mv 회귀** (RELOCATE — 원 origin = design lane 복귀, ADR-088 §결정 4 ownership 이관 역전).
+
+- `agents/ProductionEvidenceDeputyAgent.md`: home-lane / ownership metadata revert — frontmatter `parent_pl: DeployReviewPLAgent → ArchitectPLAgent` / `role: deploy-review-deputy → design-conditional-deputy` / `ssot_position` codeforge-deploy-review → codeforge-design / `ownership_transferred_from` 방향 역전(회귀) / `spawn_lifecycle` deploy-review lane → 설계 lane. mandate body (§결정1-7 evidence quad / mandate matrix / 이의제기 / 제약) = verbatim 불변.
+- `CLAUDE.md`: L53 CONDITIONAL deputy 표 row + L144 관련 ADR 의 canonical 포인터 codeforge-deploy-review → codeforge-design revert (본 lane 정식 SSOT 복귀).
+- `.claude-plugin/plugin.json`: description CFP-2782 회귀 entry prepend + version bump. (`agents` array 부재 — 본 plugin 은 `agents/` 디렉터리 auto-discover 이므로 agent file 존재 = 등록.)
+- wrapper skill `deputy-mandate/SKILL.md` + `docs/glossary.md`: ProductionEvidence ownership 회귀 정합 (별 sibling).
+
+#### Why
+
+deploy·deploy-review lane 물리 제거로 deploy-review lane host 가 소멸 → ProductionEvidenceDeputy 가 orphan. ADR-072 root 동기(production-grounding = design-time capability, deploy 실행과 orthogonal) 는 존속 가치 → design lane CONDITIONAL deputy 로 회귀. agent roster 회귀 편입 = additive capability → MINOR (ADR-037). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## [0.43.1] - 2026-07-21 — CFP-2762 ADR 파일명 자릿수 3-digit 통일 정규화 (PATCH)
 
 ### Changed (CFP-2762 — ADR digit-width 3-digit zero-pad 통일, PATCH)

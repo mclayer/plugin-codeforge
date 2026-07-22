@@ -47,6 +47,8 @@ related_plugins:
 # branch-protection-context-registry-v1 — Inter-plugin Contract Registry
 
 > **Archived (v1.2, CFP-2178 S6, 2026-06-12)** — lane repo 8개 GitHub archive (ADR-118 D1) 로 cross-repo parity 검증 대상 소멸. 잔존 SSOT = wrapper `CLAUDE.md` 브랜치 보호 표 (wrapper 1행) + [`docs/security/branch-protection-audit.md`](../security/branch-protection-audit.md). 본 file 은 historical record 로 보존 (ADR-008 §5.1). 이하 본문 = archive 시점 상태 동결.
+>
+> **CFP-2782 (ADR-121 Wave 2, 2026-07-22) supersession 주석 (frozen body 무수정)** — 배포 2 lane(구 ADR-087 / ADR-088 host plugin) + wrapper `Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)` context 는 ADR-121 / CFP-2782 로 물리 제거됐다. 현행 wrapper required contexts = 본 frozen snapshot 의 6-tuple(위 context 포함)이 아니라 **9→8-tuple 전환 후 상태** (deploy 관련 context 1개 제거, SSOT = wrapper CLAUDE.md 브랜치 보호 표 + `docs/security/branch-protection-audit.md` 2026-07-22 entry). 이하 §3·§5 의 위 context 및 배포 2 plugin repo entry = 2026-06-12 archive 시점 동결 이력이므로 **무수정 보존** (ADR-008 §5.1 historical record — frozen snapshot 재작성 = 이력 위조 회피).
 
 8 codeforge plugin family (wrapper + 7 lane plugin) 의 GitHub `main` branch protection `required_status_checks.contexts[]` array SSOT. cross-repo parity verify lint (`branch-protection-context-parity` — CFP-1807) + context name strict-match lint (`branch-protection-context-name-strict-match` — CFP-1849) 의 **input anchor SSOT** 로 작동.
 

@@ -321,30 +321,20 @@ class TestBootstrapFallbackMode:
 
 
 # -----------------------------------------------------------------------------
-# 문서화된 5 config 블록 (deploy/atlassian/runtime/security/aggregate_arch) 검증
+# 문서화된 4 config 블록 (atlassian/runtime/security/aggregate_arch) 검증
 # project-config-schema 문서·consumer-guide 가 안내하지만 SCHEMA_RULES 미등록이던 drift 수정.
-# Schema SSOT: docs/project-config-schema.md §aggregate_arch/§deploy/§atlassian + consumer-guide §1g/§1j
+# deploy.* 는 CFP-2782 로 validate_config 스키마 제거(Change Plan §3.3, 배포 machinery 물리 제거) → documented block 제외.
+# Schema SSOT: docs/project-config-schema.md §aggregate_arch/§atlassian + consumer-guide §1g/§1j
 # -----------------------------------------------------------------------------
 
 
 class TestDocumentedOptionalBlocks:
-    """문서가 안내하는 5 블록이 validate clean(exit 0) — 이전엔 _check_unknown_keys exit 4."""
+    """문서가 안내하는 4 블록이 validate clean(exit 0) — 이전엔 _check_unknown_keys exit 4.
+    (deploy.* 는 CFP-2782 로 validate_config 스키마 제거 → documented block 제외.)"""
 
-    def test_all_five_blocks_valid(self):
+    def test_all_four_blocks_valid(self):
         data = _minimal_valid_data()
         data["aggregate_arch"] = {"applicable": True, "migration_tool": "alembic"}
-        data["deploy"] = {
-            "host_mapping": [{"host": "deploy-01.acme.io", "containers": ["acme/api:latest"]}],
-            "docker_hub": {"org": "acme", "image_prefix": "acme-app-",
-                           "auth_secret_env": "DOCKER_HUB_TOKEN"},
-            "traefik": {"enabled": True, "network": "acme-public",
-                        "domain_pattern": "{service}.acme.io"},
-            "1password": {"enabled": True, "connect_host_env": "OP_CONNECT_HOST",
-                          "connect_token_env": "OP_CONNECT_TOKEN", "vault": "Production"},
-            "ssh_targets": [{"host": "deploy-01.acme.io", "user": "deploy",
-                             "key_secret_env": "SSH_DEPLOY_KEY", "port": 22}],
-            "auto_rollback": {"enabled": True, "error_rate_threshold": 0.02, "window": 3600},
-        }
         data["atlassian"] = {
             "enabled": True,
             "confluence": {"base_url": "https://myorg.atlassian.net/wiki", "space_key": "CGOV",
@@ -360,7 +350,6 @@ class TestDocumentedOptionalBlocks:
     def test_each_block_individually_valid(self):
         for block, payload in [
             ("aggregate_arch", {"applicable": False, "migration_tool": "prisma-migrate"}),
-            ("deploy", {"traefik": {"enabled": False}}),
             ("atlassian", {"enabled": True}),
             ("runtime", {"auto_resume": {"enabled": True}}),
             ("security", {"pat_rotation_cadence_days": 30}),

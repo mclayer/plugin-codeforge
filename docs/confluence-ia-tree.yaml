@@ -1109,22 +1109,7 @@ legacy_adr_migration_map:
       new_parent_id: 2130942
       type: ipc
       cascade_order: 117
-    - page_id: 2064975
-      title: "deploy-output-v1"
-      source_file: "docs/inter-plugin-contracts/"
-      category: null
-      previous_parent_id: 2129949
-      new_parent_id: 2130942
-      type: ipc
-      cascade_order: 118
-    - page_id: 2064995
-      title: "deploy-review-output-v1"
-      source_file: "docs/inter-plugin-contracts/"
-      category: null
-      previous_parent_id: 2129949
-      new_parent_id: 2130942
-      type: ipc
-      cascade_order: 119
+    # 배포 산출 계약 IPC 노드 2종 (구 page_id 2064975 cascade_order 118 / 2064995 cascade_order 119) = ADR-121 / CFP-2782 배포 계약 물리 제거로 삭제 (cascade_order 118·119 gap = 잔여 순서 hint, 재조밀 불요).
     - page_id: 2065015
       title: "design_output v1 — Inter-plugin Contract (ARCHIVED)"
       source_file: "docs/inter-plugin-contracts/"
@@ -1372,27 +1357,7 @@ top_level_pages:
         - { name: "Open Decisions Pending", page_id: "2098371", source: "Living Architecture §Open Decisions Pending" }
         - { name: "Change Plan archive", page_id: "2065850", source: "internal-docs/codeforge-pmo/change-plans/" }
 
-    - name: codeforge-deploy
-      page_id: "2130791"
-      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-deploy"
-      declarative_phase: true  # CFP-1059 / ADR-087
-      children:
-        - { name: "Living Architecture", page_id: "2098391", source: "docs/architecture/codeforge-deploy.md (declarative)" }
-        - { name: "ADR", page_id: "2098413", source: "docs/adr/ (lane:deploy, declarative)" }
-        - { name: "Domain Knowledge", page_id: "2065872", source: "docs/domain-knowledge/ (lane:deploy)" }
-        - { name: "Open Decisions Pending", page_id: "2065894", source: "Plugin seed body 실 wire 미완성" }
-        - { name: "Change Plan archive", page_id: "2163765", source: "internal-docs/codeforge-deploy/change-plans/" }
-
-    - name: codeforge-deploy-review
-      page_id: "2163482"
-      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-deploy-review"
-      declarative_phase: true  # CFP-1059 / ADR-088
-      children:
-        - { name: "Living Architecture", page_id: "2130919", source: "docs/architecture/codeforge-deploy-review.md (declarative)" }
-        - { name: "ADR", page_id: "2065914", source: "docs/adr/ (lane:deploy-review, declarative)" }
-        - { name: "Domain Knowledge", page_id: "2065936", source: "docs/domain-knowledge/ (lane:deploy-review)" }
-        - { name: "Open Decisions Pending", page_id: "2163787", source: "Plugin seed body 실 wire 미완성 (DeployReviewPL + DeployReviewWorker + ProductionEvidenceDeputy)" }
-        - { name: "Change Plan archive", page_id: "2065958", source: "internal-docs/codeforge-deploy-review/change-plans/" }
+    # 배포 plugin(구 page_id 2130791) / 배포 검토 plugin (구 2163482) plugin 노드 + 자식(Living Architecture/ADR/Domain/Open Decisions/Change Plan) = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 삭제.
 
   cross_cutting:
     - name: cross-cutting
@@ -1935,7 +1900,7 @@ legacy_domain_knowledge_migration_map:
   #   domain/operational-phase/* → wrapper-governance (2163807)
   #   domain/upgrade-flow/* → wrapper-governance (2163807)
   #   domain/integration-test/* → codeforge-test top-level (2097239)
-  #   domain/production-cutover/* → codeforge-deploy-review top-level (2163482)
+  #   domain/production-cutover/* → codeforge-design top-level (2064386, ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 제거)
   #   domain/inter-plugin-contracts/* → inter-plugin-contracts Registry (2130942)
 
   - source_page_id: 2162795
@@ -2151,30 +2116,30 @@ legacy_domain_knowledge_migration_map:
   - source_page_id: 2130744
     source_title: "domain/production-cutover/Production Cutover — narrative SSOT hub"
     source_category: "production-cutover"
-    new_parent_id: 2163482
-    plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
+    new_parent_id: 2064386  # ADR-121 / CFP-2782 — 구 배포 검토 plugin 2163482 제거, ProductionEvidence relocate → codeforge-design top-level (실 Confluence re-parent = 후속 sync)
+    plugin_scope: "codeforge-design"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-design (per-plugin specific, ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 제거, 실 Confluence re-parent = 후속 sync action)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2163436
     source_title: "domain/production-cutover/Production cutover — 4-evidence-quad 수집 절차"
     source_category: "production-cutover"
-    new_parent_id: 2163482
-    plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
+    new_parent_id: 2064386  # ADR-121 / CFP-2782 — 구 배포 검토 plugin 2163482 제거, ProductionEvidence relocate → codeforge-design top-level (실 Confluence re-parent = 후속 sync)
+    plugin_scope: "codeforge-design"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-design (per-plugin specific, ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 제거, 실 Confluence re-parent = 후속 sync action)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2098184
     source_title: "domain/production-cutover/Promotion Criteria 4-tuple — codeforge canary → beta → stable transition gate SSOT"
     source_category: "production-cutover"
-    new_parent_id: 2163482
-    plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
+    new_parent_id: 2064386  # ADR-121 / CFP-2782 — 구 배포 검토 plugin 2163482 제거, ProductionEvidence relocate → codeforge-design top-level (실 Confluence re-parent = 후속 sync)
+    plugin_scope: "codeforge-design"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-design (per-plugin specific, ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 제거, 실 Confluence re-parent = 후속 sync action)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2065580
     source_title: "domain/production-cutover/Production cutover — 7-step rollback protocol"
     source_category: "production-cutover"
-    new_parent_id: 2163482
-    plugin_scope: "codeforge-deploy-review"
-    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-072 ProductionEvidence ownership)"
+    new_parent_id: 2064386  # ADR-121 / CFP-2782 — 구 배포 검토 plugin 2163482 제거, ProductionEvidence relocate → codeforge-design top-level (실 Confluence re-parent = 후속 sync)
+    plugin_scope: "codeforge-design"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-design (per-plugin specific, ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 제거, 실 Confluence re-parent = 후속 sync action)"
     moved_at: "2026-05-26T08:53:19+09:00"
   - source_page_id: 2065602
     source_title: "domain/runtime/Claude Code deferred tool mechanism + SessionStart hook prompt-injection 모델 + codeforge 3-tier enforcement"
@@ -2212,8 +2177,8 @@ legacy_domain_knowledge_category_inference:
   upgrade-flow: "wrapper-governance"                # 1 page (codeforge family upgrade flow governance)
   # codeforge-test (2097239) — 2 pages
   integration-test: "codeforge-test"                # 2 page (per-plugin specific)
-  # codeforge-deploy-review (2163482) — 4 pages
-  production-cutover: "codeforge-deploy-review"     # 4 page (per-plugin specific, ADR-072 ProductionEvidence ownership)
+  # codeforge-design (2064386) — production-cutover 4 pages (ADR-072 ProductionEvidence relocate — ADR-121 / CFP-2782 구 배포 검토 plugin 2163482 top-level 제거)
+  production-cutover: "codeforge-design"     # 4 page (per-plugin specific, ADR-072 ProductionEvidence ownership → codeforge-design relocate; 실 Confluence 페이지 re-parent = 후속 sync action)
   # inter-plugin-contracts Registry (2130942) — 1 page
   inter-plugin-contracts: "cross-cutting (IPC Registry parent — CFP-1523 §3.1 IPC mapping table 정합)"  # 1 page
 
@@ -2222,7 +2187,7 @@ legacy_domain_knowledge_target_parents:
   cross_cutting: 2098283                            # cross-cutting parent (siblings: wrapper-governance / IPC Registry / orchestrator-playbook / ADR Registry / codeforge wrapper arch)
   wrapper_governance: 2163807                       # wrapper-governance bucket (CFP-1493 partial 산출)
   codeforge_test: 2097239                           # codeforge-test top-level (CFP-1494 minimal산출)
-  codeforge_deploy_review: 2163482                  # codeforge-deploy-review top-level
+  codeforge_design_production_cutover: 2064386      # codeforge-design top-level (ADR-072 ProductionEvidence relocate — 구 deploy-review lane top-level page 2163482 = ADR-121 / CFP-2782 제거)
   inter_plugin_contracts_registry: 2130942          # IPC Registry parent (CFP-1493 partial 산출)
 
 # ===========================================================================
@@ -2239,7 +2204,7 @@ living_architecture_pages:
   # CFP-1524 Sub-C Phase 2 (CFP-1586) Confluence push 결과 — 2026-05-25 KST
   # 7 plugin push 완료 (6 lane plugin version 2 갱신 + wrapper fresh create version 1) / 2 plugin defer:
   #   - wrapper (codeforge): CFP-1619 carrier 에서 push 완료 (ancestor = cross_cutting parent 2098283, derived default — 5번째 child 평면적 navigation 정합)
-  #   - codeforge-deploy / codeforge-deploy-review: GitHub repo 404 부재 (CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 carrier S2/S3)
+  #   - 구 배포 plugin/ 배포 검토 plugin 2 declarative plugin = ADR-121 / CFP-2782 배포 2 lane 물리 제거 (Living Arch push 레코드 삭제).
   - plugin_name: "codeforge"  # wrapper
     page_id: "2163863"  # CFP-1619 carrier — cross_cutting parent (2098283) 안 5번째 child fresh create
     ancestor_id: "2098283"  # cross_cutting parent (derived default — 평면적 navigation 정합, 기존 4 child = wrapper-governance/inter-plugin-contracts/orchestrator-playbook/ADR Registry 옆 5번째)
@@ -2304,24 +2269,7 @@ living_architecture_pages:
     mermaid_diagram_count: 0
     phase_2_status: "pushed"
     confluence_version_after_push: 2
-  - plugin_name: "codeforge-deploy"  # CFP-1059 신설 plugin — declarative phase
-    page_id: "2098391"
-    ancestor_id: "2130791"  # codeforge-deploy top-level parent (declarative_phase: true)
-    git_source_path: "docs/architecture/codeforge-deploy.md"
-    last_synced: "2026-06-01T14:22:29+09:00"  # CFP-1677 Stage 2a — git source 신설 후 Confluence push
-    five_anchor_codified: true  # CFP-1427 AC-1 declarative
-    mermaid_diagram_count: 0
-    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy#5 해소 — 구 lane repo PR, repo 삭제됨 2026-06-12, 현 plugins/codeforge-deploy/)
-    confluence_version_after_push: 2
-  - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin — declarative phase
-    page_id: "2130919"
-    ancestor_id: "2163482"  # codeforge-deploy-review top-level parent (declarative_phase: true)
-    git_source_path: "docs/architecture/codeforge-deploy-review.md"
-    last_synced: "2026-06-01T14:24:34+09:00"  # CFP-1677 Stage 2a — git source 신설 후 Confluence push
-    five_anchor_codified: true  # CFP-1427 AC-2 declarative
-    mermaid_diagram_count: 0
-    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy-review#4 해소)
-    confluence_version_after_push: 2
+  # 배포 plugin(구 page_id 2098391) / 배포 검토 plugin (구 2130919) Living Architecture push 레코드 = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 삭제 (구 Confluence 페이지 = 후속 sync teardown).
 
 # =============================================================================
 # CFP-1668 Schema 1.2 신설 — per_consumer_instantiate_template
@@ -2389,13 +2337,12 @@ per_consumer_instantiate_template:
     v1_1_consumers: "기존 1.1 consumer = 본 per_consumer_instantiate_template section 부재 — schema validator fallback (Wave 2 carrier). 기존 space.*/deviation_path/mark_engine_path 필드 구조 0 변경"
     field_addition_only: true   # ADR-089 §결정 1 양방향 호환 — 삭제/rename 0
 
-living_architecture_pages_total: 9  # 7 pushed + 2 defer (CFP-1619 wrapper push 완료 후 — 2 defer = CFP-1059 declarative-phase plugin repo 부재 영역 잔존)
+living_architecture_pages_total: 7  # 7 pushed (wrapper + 6 lane plugin — 구 배포 2 declarative plugin = ADR-121 / CFP-2782 물리 제거)
 living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586) + CFP-1619 (wrapper carrier — follow-up to CFP-1586 defer)"
-living_architecture_phase: "Phase 2 wrapper carrier complete (2026-05-25 KST) — 7 plugin pushed (6 lane plugin version 2 + wrapper version 1 fresh create CFP-1619), 2 plugin defer (CFP-1059 declarative-phase plugin repo 부재 영역 잔존 = codeforge-deploy + codeforge-deploy-review)"
+living_architecture_phase: "Phase 2 wrapper carrier complete (2026-05-25 KST) — 7 plugin pushed (6 lane plugin version 2 + wrapper version 1 fresh create CFP-1619). 구 배포 2 declarative plugin = ADR-121 / CFP-2782 물리 제거 (defer 영역 obviated)"
 living_architecture_git_baseline: "CFP-1427 (Sub-C S3.3 closed) — git source 5-anchor body seed"
 living_architecture_5anchor_ssot: "ADR-078 Amendment 2 (CFP-1425 closed 2026-05-24) — arc42 §3 (Context) + §5 (Building Block) + C4 Container + C4 Component + Open Decisions Pending"
 living_architecture_mechanical_wire_followup: "CFP-1429 (Sub-C S3.5) — living-architecture-update lint, 본 carrier scope 외"
 living_architecture_phase_2_followup_carriers:
-  - "codeforge-deploy plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S2 carrier"
-  - "codeforge-deploy-review plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S3 carrier"
+  # 구 배포 plugin/ 배포 검토 plugin plugin repo 신설 carrier = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 obviated.
   - "Mermaid/PlantUML diagram-as-code push (현재 text-only push) — ADR-111 §결정 4 정합 carrier 별 follow-up"

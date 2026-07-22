@@ -274,10 +274,8 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `phase:구현` | → `phase:구현-리뷰` | DeveloperPL (codeforge-develop) |
 | `phase:구현-리뷰` | → `phase:구현-테스트` | **Orchestrator** (CFP-61 / ADR-022 5-step) |
 | `phase:구현-테스트` | → `phase:통합-테스트` | **Orchestrator** (ADR-048 CI gate inline → IntegrationTestAgent spawn) |
-| `phase:통합-테스트` | → `phase:보안-테스트` (lanes.security_ai: true 시만) 또는 → `phase:배포` (CFP-1059 후 — 배포 lane 가용 시) | **Orchestrator** (ADR-055 IntegrationTestAgent PASS 후) |
-| `phase:보안-테스트` | → `phase:배포` (CFP-1059 후) 또는 terminal (배포 lane 미가용 시) | **Orchestrator** + `gate:security-test-pass` 부착 |
-| **`phase:배포`** (신설 — CFP-1059 / ADR-087) | → `phase:배포-리뷰` (DeployPLAgent PASS 후) | **Orchestrator** + `gate:deploy-pass` 부착 (DeployPLAgent 자기 진단 PASS 후, Phase 1 declarative — 실 lane plugin seed 후 활성) |
-| **`phase:배포-리뷰`** (신설 — CFP-1059 / ADR-088) | terminal (Epic 묶음 close 시점) | **Orchestrator** + `gate:deploy-review-pass` 부착 (DeployReviewPLAgent smoke/성능/cutover 3종 PASS 후, Phase 1 declarative) |
+| `phase:통합-테스트` | → `phase:보안-테스트` (lanes.security_ai: true 시만) 또는 terminal (lanes.security_ai: false 시) | **Orchestrator** (ADR-055 IntegrationTestAgent PASS 후) |
+| `phase:보안-테스트` | terminal (lanes.security_ai: true 시 default terminal) | **Orchestrator** + `gate:security-test-pass` 부착 |
 
 **Issue close 의무**:
 - Issue close 시 phase label = `phase:보안-테스트` (terminal) 가 default
@@ -689,17 +687,14 @@ echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
 
 **Cross-ref**: ADR-039 §결정 14 / §결정 9 (Amendment 1 enforcement Phase 2 hook 격상 경로) / [[feedback_verify_pin_head_sha]] / [[feedback_no_permission_prompts]] / codeforge-develop:`agents/DeveloperPLAgent.md` "PR 생성 Pre-flight Guard" Step 0 확장 (CFP-895 paired PR).
 
-### 3.1 10 레인 + Cross-cutting 스폰 순서 (요약, CFP-1059 / [ADR-087](../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 7 → 9 lane 확장 · CFP-2326 / [ADR-125](../archive/adr/ADR-125-requirements-review-lane.md) — 9 → 10 lane 확장)
-
-> **Phase 1 declarative**: 본 §3.1 의 배포 / 배포 리뷰 lane spawn 시퀀스 = declarative anchor (CFP-1059 Story-1). 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 — 별 sub-Story carrier 영역.
+### 3.1 8 레인 + Cross-cutting 스폰 순서 (요약, CFP-2326 / [ADR-125](../archive/adr/ADR-125-requirements-review-lane.md) — 요구사항리뷰 lane; 배포 2 lane = [ADR-121](../archive/adr/ADR-121-deprecate-deploy-lanes.md) / CFP-2782 물리 제거)
 
 ```
 [Cross-cutting 트리거]
 Epic 창설:  Orchestrator → PMOAgent (Scope 분해 자문)
 Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
-Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 trigger (Epic close → Deploy cascade, ADR-026 Amendment N 동반)
 
-[Story 내부 10 레인 — CFP-1059 ADR-087/088 — 6 → 8 단계 확장 + Cross-cutting PMOAgent]
+[Story 내부 8 레인 — 요구사항 ~ 보안 테스트 + Cross-cutting PMOAgent]
 요구사항:    Orchestrator → RequirementsPLAgent(DomainAgent ∥ Analyst ∥ Researcher 병렬, 셋 다 non-skippable) → PL dedup·상충 조정 → Story file §3-6 갱신
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch ∥ ModuleArchitect 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
                          → ArchitectAgent direct write (docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md) + ArchitectAgent 가 Story file §3/§7/§11 직접 self-write (codeforge-design self-write 표)
@@ -769,18 +764,8 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → PMOAgent 가 Story §11 직접 self-write (codeforge-pmo)
              → PMOAgent (회고)
 
-[Epic 묶음 완료 후 — CFP-1059 / ADR-087+088, Phase 1 declarative]
-배포:        Orchestrator → DeployPLAgent (codeforge-deploy plugin Phase 1 declare — 실 spawn = lane plugin seed 후) → 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위)
-             각 repo 배포 sequence: blue-green 신호 → green deploy → healthcheck poll → atomic swap (Traefik label flip) → 3-시간 보존 timer → 자동 rollback 결정
-             → §12 배포 manifest (codeforge-deploy self-write)
-             FAIL (healthcheck / atomic swap / secret lookup): 자동 rollback + Story §10 FIX Ledger append (Orchestrator) + DeveloperPL 또는 ArchitectPL 1차 진단 routing
-배포 리뷰:   Orchestrator → DeployReviewPLAgent (codeforge-deploy-review plugin Phase 1 declare, debate-protocol-v1 trigger 의무) → 검증 3종 병렬:
-             - smoke 검증 (양방향 호환 — ADR-089 §결정 4 + bidirectional-smoke.yml workflow)
-             - 성능 비교 (production runtime measure ↔ pre-deploy baseline — ADR-068 I-5 dimensional empirical grounding 정합)
-             - cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 — codeforge-design CONDITIONAL → codeforge-deploy-review 정식)
-             → §13 배포 검증 evidence (codeforge-deploy-review self-write)
-             FAIL: 성능 미충족 / smoke 실패 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 가능)
-             PASS: Orchestrator self-write (gate:deploy-review-pass label + phase:완료 전환) → Epic 묶음 close
+# 배포 2 lane = ADR-121 / CFP-2782 물리 제거 (배포는 consumer GitHub Actions + Environments 완전 위임).
+# Epic 묶음 close 시점 terminal = 보안 테스트(lanes.security_ai true 시) 또는 통합 테스트(false 시).
 ```
 
 **Lane-specific write targets (Step 4 GitHub comment / label / phase 매핑)**:
@@ -3115,9 +3100,7 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 | `phase:구현` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (intuitive naming 어긋남) |
 | `phase:구현-리뷰` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (동일) |
 | `phase:구현-테스트` | (gate 무) | CFP-317 / ADR-048 | CI gate inline polling, gate label 미부착 |
-| `phase:보안-테스트` | `gate:security-test-pass` | (consumer `lanes.security_ai: true` opt-in 시에만) | (Epic 묶음 종료 직전) — 배포 lane prerequisite (CFP-1059 후) |
-| **`phase:배포`** (신설 — CFP-1059) | **`gate:deploy-pass`** | CFP-1059 / ADR-087 | Epic 묶음 완료 후 DeployPLAgent spawn 진행 중 (Phase 1 declarative) |
-| **`phase:배포-리뷰`** (신설 — CFP-1059) | **`gate:deploy-review-pass`** | CFP-1059 / ADR-088 | terminal gate — production smoke / 성능 비교 / cutover 사후 검증 PASS 후 Epic close (Phase 1 declarative) |
+| `phase:보안-테스트` | `gate:security-test-pass` | (consumer `lanes.security_ai: true` opt-in 시에만) | (Epic 묶음 종료 직전) — terminal gate (default terminal) |
 | (Story binding 부재 / 그 외) | `gate:design-review-pass` (legacy heuristic) | workflow line 207 | No Story binding fallback |
 
 **핵심 anomaly (CFP-342 fix)**:
@@ -3151,13 +3134,11 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 | `phase:구현-리뷰` | `phase:구현-리뷰` | `phase:구현` | (`gate:design-review-pass` retain — 별도 code-review gate 미도입) | DeveloperPL ready + CodeReviewPLAgent spawn 직전 | Orchestrator |
 | `phase:구현-테스트` | `phase:구현-테스트` | `phase:구현-리뷰` | — (gate 무 — CI gate inline polling) | CodeReview PASS + CI gate `gh pr checks --required --watch --fail-fast` 백그라운드 watch 진입 직전 (ADR-048 Amd 2) | Orchestrator |
 | `phase:보안-테스트` (opt-in) | `phase:보안-테스트` | `phase:구현-테스트` | `gate:security-test-pass` | 통합테스트 PASS + SecurityTestPLAgent spawn 직전 (consumer `lanes.security_ai: true` 시에만) | Orchestrator |
-| `phase:배포` (CFP-1059) | `phase:배포` | `phase:보안-테스트` (또는 `phase:구현-테스트` if security 미활성) | `gate:deploy-pass` | Epic 묶음 완료 후 DeployPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
-| `phase:배포-리뷰` (CFP-1059) | `phase:배포-리뷰` | `phase:배포` | `gate:deploy-review-pass` | DeployPL PASS + DeployReviewPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
-| **`phase:완료`** | `phase:완료` | `phase:구현-리뷰` (또는 `phase:배포-리뷰` if deploy lane 활성) | **precondition AND**: `gate:design-review-pass` (또는 활성 lane 의 terminal gate) + `gate:retro-complete` (label-registry-v2 line 558, ADR-045) + **worktree-clean self-check** (완료 Story worktree eager 정리 확인, ADR-045 Amendment 13 §D-12) + **deferred-item-recovery self-check** (retro 서사 deferred 각각 tracked\|observed 명시판정 확인, ADR-128 Amendment 1) | **Phase 2 PR merge 후 + retro write 완료 후 + worktree-clean self-check 후 + retro deferred 판정 self-check 후** (PMOAgent `gate:retro-complete` 부착 확인 + `STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0 확인) | Orchestrator (phase 전환 + worktree-clean self-check) + PMOAgent (`gate:retro-complete` self-write) |
+| **`phase:완료`** | `phase:완료` | `phase:구현-리뷰` (또는 `phase:보안-테스트` if lanes.security_ai 활성) | **precondition AND**: `gate:design-review-pass` (또는 활성 lane 의 terminal gate) + `gate:retro-complete` (label-registry-v2 line 558, ADR-045) + **worktree-clean self-check** (완료 Story worktree eager 정리 확인, ADR-045 Amendment 13 §D-12) + **deferred-item-recovery self-check** (retro 서사 deferred 각각 tracked\|observed 명시판정 확인, ADR-128 Amendment 1) | **Phase 2 PR merge 후 + retro write 완료 후 + worktree-clean self-check 후 + retro deferred 판정 self-check 후** (PMOAgent `gate:retro-complete` 부착 확인 + `STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0 확인) | Orchestrator (phase 전환 + worktree-clean self-check) + PMOAgent (`gate:retro-complete` self-write) |
 
 **핵심 invariant (CFP-1577 — `phase:완료` premature attach 차단)**:
 
-- `phase:완료` 부착은 **2 gate AND + worktree-clean self-check + deferred-item-recovery self-check** 의무: (a) Phase 2 PR merge 후 활성 lane 의 terminal gate label (`gate:design-review-pass` default, deploy lane 활성 시 `gate:deploy-review-pass`) (b) `gate:retro-complete` (PMOAgent self-write 후) (c) **worktree-clean self-check** (`STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0, ADR-045 Amendment 13 §D-12) (d) **deferred-item-recovery self-check** (retro/Story 서사 deferred 각각이 tracked\|observed 명시 판정됐는지 확인 — silent drop 검출, ADR-128 Amendment 1 / CFP-2470). 미통과(WARN 1+) = 판정 누락 항목을 tracked(추적 Issue) 또는 observed(사유 명시)로 판정 후 재확인이지 "생략 후 진행" 아님 (ADR-127 정합). warning-tier 로컬+CI self-check (required CI 불가 — retro 정본 cross-repo + behavioral, branch protection required contexts 무변경). 양 gate 부재 시 `phase-gate-mergeable.yml` ACTION_REQUIRED 발생 (workflow line 391-404 default fallback path = `phaseOk = (phaseLabel === required.phase)` mismatch).
+- `phase:완료` 부착은 **2 gate AND + worktree-clean self-check + deferred-item-recovery self-check** 의무: (a) Phase 2 PR merge 후 활성 lane 의 terminal gate label (`gate:design-review-pass` default, `lanes.security_ai` 활성 시 `gate:security-test-pass`) (b) `gate:retro-complete` (PMOAgent self-write 후) (c) **worktree-clean self-check** (`STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh` detected=0, ADR-045 Amendment 13 §D-12) (d) **deferred-item-recovery self-check** (retro/Story 서사 deferred 각각이 tracked\|observed 명시 판정됐는지 확인 — silent drop 검출, ADR-128 Amendment 1 / CFP-2470). 미통과(WARN 1+) = 판정 누락 항목을 tracked(추적 Issue) 또는 observed(사유 명시)로 판정 후 재확인이지 "생략 후 진행" 아님 (ADR-127 정합). warning-tier 로컬+CI self-check (required CI 불가 — retro 정본 cross-repo + behavioral, branch protection required contexts 무변경). 양 gate 부재 시 `phase-gate-mergeable.yml` ACTION_REQUIRED 발생 (workflow line 391-404 default fallback path = `phaseOk = (phaseLabel === required.phase)` mismatch).
 - `phase:완료` attach precondition 위반 = `phase:구현-리뷰` (또는 적용 가능한 직전 phase) + 해당 gate 재부착으로 정정 후 PASS (CFP-1539+CFP-1540 batch incident resolution pattern).
 - `gate:retro-complete` 부재 시 `retro-mandatory.yml` (ADR-045) 가 Story Issue close 차단 (auto-reopen) — `phase:완료` attach 와 함께 retro write 완료 확인 의무.
 - **worktree-clean self-check 미통과 (detected>=1)** = GitOpsAgent eager 정리 누락 → 정리 실행 후 재확인이지 "생략 후 진행" 아님 (ADR-127 정합). 본 self-check 는 transition precondition (label attach 직전)이지 Issue close 차단(reopen)이 아니다 — `retro-mandatory.yml` close-blocking auto-reopen 과 axis disjoint (ADR-045 Amendment 13 §13.C, #772 EC-5 정합). warning-tier 로컬 self-check (required CI 불가 — worktree 클라우드 러너 미접근, branch protection required contexts 무변경).
@@ -3198,7 +3179,7 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 
 ## 10. Hotfix 경로 (운영 장애 대응)
 
-> **[POLICY-RETIRED — ADR-127 §결정 3]** hotfix Minimal/Medium lane-skip 긴급경로는 폐지됐다. 운영 장애 시에도 정식 풀 플로우(요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트 → 배포 → 배포리뷰)를 **무조건** 거친다. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, **lane 생략 0**. 대기시간 축약(정식 lane 병렬 dispatch + check timeout 상한 + on-call reviewer 선지정)만 허용 — 증거 0 축약 (ADR-127 §결정 3.4). 아래는 historical 기록.
+> **[POLICY-RETIRED — ADR-127 §결정 3]** hotfix Minimal/Medium lane-skip 긴급경로는 폐지됐다. 운영 장애 시에도 정식 풀 플로우(요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트)를 **무조건** 거친다. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, **lane 생략 0**. 대기시간 축약(정식 lane 병렬 dispatch + check timeout 상한 + on-call reviewer 선지정)만 허용 — 증거 0 축약 (ADR-127 §결정 3.4). 아래는 historical 기록.
 
 정상 full flow 는 Story 1건당 반나절~수일 소요. (구 정책 — retired) 운영 장애로 즉시 대응 필요한 경우 Minimal Path (`severity:bug`, ≤30 lines) 또는 Medium Path (`severity:critical`, multi-file) 중 하나 선택. 어느 경로든 사후 감사 (next working session 자동 수행) 의무.
 

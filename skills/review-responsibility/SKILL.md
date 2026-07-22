@@ -1,6 +1,6 @@
 ---
 name: review-responsibility
-description: Design/Code/Security 리뷰 책임 매트릭스. 6 lane(RequirementsReview·DesignLane·DesignReview·CodeReview·SecurityTest·DeployReview) 체크 항목 분담 테이블 + 요구사항리뷰 외부사실 의존 체크(실 trigger=CFP-2326 / ADR-125). 요구사항리뷰·설계리뷰·구현리뷰·보안테스트·배포리뷰 lane 진입 시 Orchestrator 호출 의무.
+description: Design/Code/Security 리뷰 책임 매트릭스. 5 lane(RequirementsReview·DesignLane·DesignReview·CodeReview·SecurityTest) 체크 항목 분담 테이블 + 요구사항리뷰 외부사실 의존 체크(실 trigger=CFP-2326 / ADR-125). 요구사항리뷰·설계리뷰·구현리뷰·보안테스트 lane 진입 시 Orchestrator 호출 의무.
 tools: Read
 ---
 
@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-요구사항리뷰 lane 진입 시 (RequirementsReviewPL spawn 전 — CFP-2326 / ADR-125), 설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전), 배포리뷰 lane 진입 시 (DeployReviewPLAgent spawn 전).
+요구사항리뷰 lane 진입 시 (RequirementsReviewPL spawn 전 — CFP-2326 / ADR-125), 설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전).
 
 ## 개요
 
@@ -95,15 +95,7 @@ tools: Read
 - **DesignReview**: 문서(Change Plan + ADR) 감사. 실구현 코드 미검토. §7 완결성 감사
 - **CodeReview**: 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심
 - **SecurityTest**: 코드 + 인프라 + 의존성. 1차 GitHub native (Dependabot/CodeQL/Secret Scanning), 2차 Claude/Codex
-- **DeployReview (CFP-1059 / [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md), Phase 1 declarative)**: production runtime 측정 + cutover 사후 검증 (위 4 review lane 모두와 disjoint axis — code-level / production-level 분리). 검증 3종 = (a) smoke (양방향 호환 — ADR-089 §결정 4) / (b) 성능 비교 (production runtime ↔ pre-deploy baseline, ADR-068 I-5 dimensional empirical grounding 정합 — `[empirical-source: ...]` annotation 의무) / (c) cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3). FAIL 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 자동 발동 의무)
 - 중복 지적 발생 시 해당 레인 ReviewPL이 dedup → severity 높은 쪽 채택
-
-> **DeployReview ↔ 기존 4 review lane disjoint axis (ADR-088 §결정 2 / Lane 진입 시 review-responsibility skill 호출 의무)**:
-> - DesignReview = ADR 정합 / 설계 보장성, code-level / production-level 미접근
-> - CodeReview = 구현 품질, production runtime 측정 미접근
-> - SecurityTest = code-level 보안 정합, production 환경 성능 측정 미접근
-> - IntegrationTest (codeforge-test) = 시나리오 단위 정합 검증, production cutover 사후 검증 미접근
-> - **DeployReview (본 신설 lane)** = production 환경 성능 측정 + cutover 사후 검증, 위 4 review lane 모두와 disjoint axis
 
 ## 깊은 검증(deep-research) 차등 적용 원칙 (ADR-124)
 
@@ -122,7 +114,6 @@ tools: Read
 | 보안테스트 | 高 (2차 web 단계 심화 = 강화) | 취약점·CVE·공급망 = 본질적 외부지식. 실구현 = CFP-2327 — 2차 워커 web 단계 다출처(NVD+GHSA+CISA KEV)+adversarial+시의성 (1차 자동도구 대체 아님, security.md §7.1-§7.3) |
 | 설계리뷰 | 부분 (외부 기술선택만) | 외부 기술선택 결론에만 의존 — 내부근거-only 설계 정합성은 비대상. 실구현 = CFP-2327 — positive-list(라이브러리·프로토콜·알고리즘·성능모델) ∩ negative-list(ADR·boundary·계약·§8·섹션) 양면 휴리스틱 (design.md "외부 기술선택 검증") |
 | 구현리뷰 | 低 (미적용) | 구현 품질·런타임 결함 = 내부 코드 사실 축. web 금지 전면 보존 (설계리뷰 좁은 예외와 비대칭 — CFP-2327 / ADR-124 Amd 1 A1-3) |
-| 배포리뷰 | 미적용 | 배포·배포리뷰 2 lane = ADR-121 §결정 1 **폐지 결정(deprecated)** (deprecation 진행 중) + production 경험적 측정이라 단계③ 무의존 (적합도 等級 부여 안 함) |
 
 > 적합도가 높다는 것은 그 lane 의 결론이 외부사실에 의존할 *잠재력* 이 높다는 뜻이지, 매 Story 마다 깊은 검증이 강제 발동된다는 뜻이 아니다 (실제 발동 = 외부사실 의존 게이트가 결정). 외부사실 의존 판정 휴리스틱 (O: 팩트체크·벤더·표준·CVE / X: 팀 암묵지식 / 경계?: 시장정보·벤치마크·StackOverflow — ADR-125 결정 6 운영 판정: 단계② 우선 + 리뷰어 재량 escalation) 상세 = ADR-124 결정 6 + ADR-125 결정 6.
 

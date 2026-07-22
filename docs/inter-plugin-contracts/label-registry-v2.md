@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.112"
+version: "2.113"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-07-22  # CFP-2782 / ADR-121 v2.113 — 배포 2 lane 물리 제거로 13 label entry 삭제 (배포 2 phase + 배포 2 gate + 배포 2 plugin namespace + 배포 machinery hotfix-bypass 7: canary promotion lint / canary auto-promote lint / retention-window / auto-rollback / deploy-trigger / deployment-schema / rollback signal monitor). MINOR bump (13 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), label-registry mirrored field 무관 = marketplace_sync_declared: false (plugin.json version 만 marketplace sync 대상). MANIFEST.yaml row "2.112" → "2.113" 정합. 제거 중 hotfix-bypass 7건 포함 → raw active hotfix-bypass grep count 7 감소 (111 → 104). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (ADR-108 §결정 2(B), #2112 v2.93 NOTE 답습). gate:channel-{canary,beta,stable}-promotion + channel:* tier marker(ADR-076 consumer channel release-channel)는 배포 canary teardown scope 대비 별 축 = 무삭제(구현리뷰 escalate 대상). schema gate(bidirectional-smoke / cross-layer-impact / dependency-order)는 ADR-089/090 존치 = KEEP(attach_owner 의 구 배포 검토 lane 참조만 codeforge-design 로 정합).
 date: 2026-07-22  # CFP-2786 v2.112 — hotfix-bypass:semantic-staleness-sentinel 112번째 family member 추가 (Epic #2783 Child B 의미축 semantics-change sentinel warning-tier bypass channel). MINOR bump additive (1 entry, backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), marketplace_sync_declared: false (plugin.json version 만 marketplace sync 대상). MANIFEST.yaml row "2.111" -> "2.112" 정합. ADR-108 §결정 2(B) canonical = append-time grep -c '^  - name: hotfix-bypass:' post-append raw active count = 112, NOT monotonic-ratchet.
 date: 2026-07-22  # CFP-2784 / FU-1588-R v2.111 — hotfix-bypass:rebase-staleness-sentinel (111번째 family member — rebase-staleness sentinel mechanical wire warning-tier bypass channel). MINOR bump additive (+1 entry, backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), marketplace_sync_declared: false (plugin.json version 만 marketplace sync). MANIFEST.yaml row "2.110" -> "2.111" 정합. ADR-108 §결정 2(B) canonical = append-time grep -c post-append raw active count = 111.
 date: 2026-07-19  # CFP-2761 / ADR-085 §결정 10 (Amendment 2) + ADR-073 Amendment 21 v2.110 — 1 신규 hotfix-bypass:* entry 추가 (mid-flight-marker-stale 110번째 family member — mid-flight 산출물 artifact-level provenance marker stale lint enforcement carrier bypass channel, ADR-085 §결정 10 marker convention). ★ active-sessions-presence(51번째) / lane-entry-ownership-verify(52번째) / worktree-self-ownership-verify 는 기존 label(ADR-085 v2.40 / ADR-073 Amendment 3) 재사용 — CFP-2761 Phase 2 가 evidence-checks-registry + script + workflow 로 Wave 2 wire 활성화하나 label bypass channel 은 이미 존재(중복 append 금지, firsthand HEAD 대조 확인, write-time 재사용-우선 hygiene ADR-140). MINOR bump additive (+1 entry, backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), label-registry mirrored field 무관 = marketplace_sync_declared: false (plugin.json version 만 marketplace sync 대상 — plugin.json MINOR). MANIFEST.yaml row "2.109" → "2.110" 정합. ADR-108 §결정 2(B)/§결정 3 forcing function parity mandate — description text N번째 = append-time `grep -c '^  - name: hotfix-bypass:' docs/inter-plugin-contracts/label-registry-v2.md` post-append raw active count 정합 (canonical = raw-grep post-append, NOT monotonic-ratchet). firsthand 실측: post-append raw active count = 110.
@@ -608,20 +609,7 @@ labels:
     single_active: true
     attach_owner_plugin: "cfp-reserve.yml Issue Form (자동 첨부) / Orchestrator (수동 promote 시 detach) / auto-phase-label.yml (CFP-481 — Epic Phase N+1 close PR 3순위 terminal default)"
 
-  # phase:* CFP-1059 신설 — 8 lane 확장 (배포 + 배포 리뷰)
-  - name: phase:배포
-    category: phase
-    color: "1d76db"
-    description: "Phase: 배포 (CFP-1059 / ADR-087 — codeforge-deploy plugin DeployPLAgent 진행 중. Epic 묶음 종료 후 자동 trigger, 변경 repo blue-green 배포 진행, 3-시간 보존 timer active, atomic swap 진행 영역. Phase 1 declarative — 실 phase transition = codeforge-deploy plugin seed 신설 후 활성)"
-    single_active: true
-    attach_owner_plugin: "Orchestrator (Epic close 후 자동 trigger, CFP-1059 deploy lane 신설 carrier) / DeployPLAgent (codeforge-deploy plugin self-write, S2 sub-Story carrier)"
-
-  - name: phase:배포-리뷰
-    category: phase
-    color: "1d76db"
-    description: "Phase: 배포-리뷰 (CFP-1059 / ADR-088 — codeforge-deploy-review plugin DeployReviewPLAgent 진행 중. production smoke / 성능 비교 / cutover 사후 검증 3종 평가 영역, debate-protocol-v1 trigger 의무, ProductionEvidenceDeputy ownership 이관 mirror. terminal phase — Epic 묶음 close 직전. Phase 1 declarative — 실 phase transition = codeforge-deploy-review plugin seed 신설 후 활성)"
-    single_active: true
-    attach_owner_plugin: "Orchestrator (deploy lane PASS 후 자동 trigger, CFP-1059 deploy review lane 신설 carrier) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
+  # 구 배포 2 lane phase label (CFP-1059 / ADR-087+088) = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 삭제.
 
   # gate:* (4종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030) / gate:requirements-review-pass added v2.96 (CFP-2326 / ADR-125)
   - name: gate:requirements-review-pass
@@ -659,21 +647,7 @@ labels:
     single_active: false
     attach_owner_plugin: "codeforge-pmo (PMOAgent self-write) — Phase 2 PR merge 후 retro write 완료 시 부착"
 
-  # gate:* CFP-1059 신설 — 5 entry (deploy lane + cross-layer/dependency/smoke gate)
-  - name: gate:deploy-pass
-    category: gate
-    color: "0e8a16"
-    description: "Deploy lane PASS (CFP-1059 / ADR-087 — DeployPLAgent 가 변경 repo 전부 blue-green + atomic swap + healthcheck poll 통과 + 3-시간 보존 timer 설정 완료 + 자동 rollback 미발동 영역). phase:배포 → phase:배포-리뷰 transition 직전 부착. Phase 1 declarative — 실 부착 = DeployPLAgent spawn 후."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059 deploy lane 신설 carrier) / DeployPLAgent (codeforge-deploy plugin self-write, S2 sub-Story carrier)"
-
-  - name: gate:deploy-review-pass
-    category: gate
-    color: "0e8a16"
-    description: "Deploy Review lane PASS (CFP-1059 / ADR-088 — DeployReviewPLAgent 가 smoke / 성능 비교 / cutover 사후 검증 3종 PASS 영역). terminal gate — Epic 묶음 close 직전 부착. Phase 1 declarative — 실 부착 = DeployReviewPLAgent spawn 후."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059 deploy review lane 신설 carrier) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
-
+  # gate:* CFP-1059 신설 — cross-layer/dependency/smoke gate 3 entry (구 배포 2 lane gate = ADR-121 / CFP-2782 물리 제거)
   - name: gate:cross-layer-impact-pass
     category: gate
     color: "0e8a16"
@@ -693,7 +667,7 @@ labels:
     color: "0e8a16"
     description: "Bidirectional smoke (양방향 호환 smoke 검증) 통과 (CFP-1059 / ADR-089 §결정 4 — blue ↔ green traffic mix window 안 schema 양방향 호환 verify PASS). bidirectional-smoke.yml workflow warning-tier (Phase 1 declarative, S2 carrier wire 후 active). schema-change-7-principles-self-check 의 §결정 4 anchor PASS marker."
     single_active: false
-    attach_owner_plugin: "bidirectional-smoke.yml CI Action (자동, Phase 2 carrier wire) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
+    attach_owner_plugin: "bidirectional-smoke.yml CI Action (자동, Phase 2 carrier wire) / ArchitectAgent (codeforge-design lane — schema 양방향 호환 검증 carrier; 구 배포 검토 lane attach = ADR-121 / CFP-2782 물리 제거)"
 
   # fix:* (4종, 누적 가능) — fix:요구사항-리뷰-retry added v2.96 (CFP-2326 / ADR-125)
   - name: fix:요구사항-리뷰-retry
@@ -1149,7 +1123,7 @@ labels:
   - name: sibling-pr
     category: fast-pass
     color: "0e8a16"
-    description: "CFP-499 / ADR-010 Amendment 4 cross-repo Story mirror PR fast-pass channel — phase-gate-mergeable workflow 의 hasCode=true PR 가 wrapper Story binding 없이도 fast-pass 통과 (sibling PR 가 wrapper Story 의 mirror 임을 명시). 사용법: cross-repo Story mirror PR (codeforge family lane plugin repo 의 sibling sync PR — codeforge-pmo / codeforge-review / codeforge-design / codeforge-develop / codeforge-test / codeforge-requirements / codeforge-deploy / codeforge-deploy-review) open 시 부착 — wrapper Story `## Sibling PRs` 섹션 binding 명시 + `hotfix-bypass:sibling-pr-author-check` (9번째 hotfix-bypass:* family member, v2.5 CFP-521) anti-misuse 안전망 lint 대상. fast-pass category 2번째 family member (CFP-795 v2.21 `post-merge-fix` 1번째 후 답습, 별 axis disjoint with hotfix-bypass)."
+    description: "CFP-499 / ADR-010 Amendment 4 cross-repo Story mirror PR fast-pass channel — phase-gate-mergeable workflow 의 hasCode=true PR 가 wrapper Story binding 없이도 fast-pass 통과 (sibling PR 가 wrapper Story 의 mirror 임을 명시). 사용법: cross-repo Story mirror PR (codeforge family lane plugin repo 의 sibling sync PR — codeforge-pmo / codeforge-review / codeforge-design / codeforge-develop / codeforge-test / codeforge-requirements) open 시 부착 — wrapper Story `## Sibling PRs` 섹션 binding 명시 + `hotfix-bypass:sibling-pr-author-check` (9번째 hotfix-bypass:* family member, v2.5 CFP-521) anti-misuse 안전망 lint 대상. fast-pass category 2번째 family member (CFP-795 v2.21 `post-merge-fix` 1번째 후 답습, 별 axis disjoint with hotfix-bypass)."
     single_active: false
     attach_owner_plugin: "Orchestrator (cross-repo Story mirror PR open 시 부착 — sibling PR 가 wrapper Story 의 mirror 임을 명시, ADR-010 Amendment 4 §결정 5 정합) / lane plugin PL (sibling sync PR author)"
 
@@ -1346,17 +1320,11 @@ labels:
     attach_owner_plugin: "Orchestrator (Story §1 frontmatter `operational: true` 선언 또는 component:* 운영 component 도입 PR/Issue open 시 부착) / 사용자 직접"
 
   # canary promotion criteria (4 entries — CFP-991 / ADR-072 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier, Wave 4 sub-Epic #1 Story-4 enforcement layer)
-  # hotfix-bypass:canary-promotion-criteria = 46번째 family member (warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel).
-  # gate:channel-{canary,beta,stable}-promotion = 3 entry (canary→beta→stable transition gate marker, attach_owner_plugin: codeforge-design / 사용자 직접).
+  # 구 배포 canary promotion lint bypass label = ADR-121 / CFP-2782 배포 canary machinery 물리 제거로 삭제 (bypass 대상 workflow teardown).
+  # gate:channel-{canary,beta,stable}-promotion = 3 entry (canary→beta→stable transition gate marker, attach_owner_plugin: codeforge-design / 사용자 직접). ADR-076 consumer channel — ADR-121 배포 canary teardown scope 대비 별 축(escalate 대상).
   # canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2). marketplace.json sync 면제, plugin.json bump 0.
   # ADR-008 §결정 3 SSOT: 신규 label entry append = MINOR bump (v2.34 → v2.35, 4 family member 동시 추가).
   # MANIFEST.yaml ratchet 동반 ("2.34" CFP-954 → "2.35" CFP-991 carrier).
-  - name: hotfix-bypass:canary-promotion-criteria
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "templates/github-workflows/canary-promotion-criteria.yml (CFP-991 carrier) warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, 43번째 hotfix-bypass:* family member). reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding.promotion_gate_failure_mode.bypass_label field 정합 — consumer canary→beta promotion gate 4-tuple evidence quad 일시 부재 시 bypass 영역 (ADR-060 evidence-enforceable promotion framework `canary-compatibility-check` evidence-checks-registry entry warning-tier cross-ref). bypass 사용 시 check-bypass-audit-comment.sh 가 audit comment 자동 발의."
-    single_active: false
-    attach_owner_plugin: "사용자 직접 (PR open 시 부착 — bypass 사용 시점 audit comment 자동 발의 후 reviewer approval)"
   - name: gate:channel-canary-promotion
     category: gate
     color: "0e8a16"
@@ -1499,7 +1467,7 @@ labels:
     color: "fef2c0"
     description: "hotfix-bypass: cross-layer-impact warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059 / ADR-090 §결정 1 carrier — cross-layer-impact-check.yml workflow + scripts/check-cross-layer-impact.sh lint bypass channel, ADR-024 Amendment N §결정 6.A per-entry namespace 정합). 54번째 hotfix-bypass:* family member."
     single_active: false
-    attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — cross-layer 영역 carrier Story PR bypass) / DeployPLAgent (S2 carrier wire 후)"
+    attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — cross-layer 영역 carrier Story PR bypass; 구 배포 2 lane attach = ADR-121 / CFP-2782 물리 제거)"
 
   - name: hotfix-bypass:dependency-order
     category: hotfix-bypass
@@ -1513,28 +1481,9 @@ labels:
     color: "fef2c0"
     description: "hotfix-bypass: bidirectional-smoke warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059 / ADR-089 §결정 4 carrier — bidirectional-smoke.yml workflow lint bypass channel, schema 양방향 호환 smoke 검증 영역). 56번째 hotfix-bypass:* family member."
     single_active: false
-    attach_owner_plugin: "DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier — smoke 검증 영역) / ArchitectAgent (Phase 1 self-check carrier)"
+    attach_owner_plugin: "ArchitectAgent (codeforge-design lane — schema 양방향 호환 smoke 검증 carrier; 구 배포 검토 lane attach = ADR-121 / CFP-2782 물리 제거)"
 
-  - name: hotfix-bypass:retention-window
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: retention-window warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059 / ADR-087 §결정 5 carrier — 3-시간 보존 timer invariant 위반 시 bypass channel, blue container cleanup 정책). 57번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "DeployPLAgent (codeforge-deploy plugin self-write, S2 sub-Story carrier — 3-시간 보존 timer 영역) / Orchestrator (carrier Story PR bypass)"
-
-  - name: hotfix-bypass:auto-rollback
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: auto-rollback warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059 / ADR-087 §결정 5 carrier — 자동 rollback 결정 영역 bypass channel, healthcheck 실패 / 성능 미달 / smoke 실패 영역 manual override). 58번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "DeployPLAgent (codeforge-deploy plugin self-write, S2 sub-Story carrier) / Orchestrator (carrier Story PR bypass)"
-
-  - name: hotfix-bypass:deploy-trigger
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: deploy-trigger warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059 / ADR-087 §결정 1 + ADR-026 Amendment N carrier — Epic close → Deploy lane 자동 trigger 영역 bypass channel, manual deploy operator override). 59번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059 deploy lane trigger 신설 carrier — Epic close 후 manual deploy operator override 시 부착)"
+  # 구 배포 machinery hotfix-bypass label 3종 (retention-window / auto-rollback / deploy-trigger, CFP-1059 / ADR-087) = ADR-121 / CFP-2782 배포 machinery 물리 제거로 삭제 (bypass 대상 workflow teardown).
 
   - name: hotfix-bypass:big-change-manual
     category: hotfix-bypass
@@ -1558,15 +1507,9 @@ labels:
     single_active: false
     attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — DDD vocabulary governance carrier Story PR bypass) / Orchestrator (carrier Story PR bypass)"
 
-  # CFP-1059-S5 신설 — 1 entry (deployment-schema-check)
-  - name: hotfix-bypass:deployment-schema
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: deployment-schema warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1059-S5 / ADR-027 consumer adoption protocol + ADR-087 mechanical_enforcement_actions carrier — consumer overlay .claude/_overlay/project.yaml deploy.* schema validation bypass channel). 61번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059-S5 deploy.* schema validation warning-tier bypass — consumer 재정의 deploy block 검토 중 임시 skip 시 부착)"
+  # 구 deployment schema 관련 hotfix-bypass label (CFP-1059-S5) = ADR-121 / CFP-2782 배포 schema 물리 제거로 삭제.
 
-  # CFP-1193 신설 — 2 entry (ops-signal + hotfix-bypass:rollback-signal-monitor)
+  # CFP-1193 신설 — ops-signal (ADR-106 operational, KEEP)
   - name: ops-signal
     category: operational-signal
     color: "e4e669"
@@ -1574,12 +1517,7 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (rollback signal monitor 사후 알림 Issue / ops-signal 회로 접점) / DeveloperPLAgent (CFP-1193 구현 lane)"
 
-  - name: hotfix-bypass:rollback-signal-monitor
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: rollback-signal-monitor warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1193 / ADR-105 §결정 3 + ADR-106 Amendment 1 §결정 1 단계 2-a carrier — 24h cron ongoing 임계 감지 / 안전장치 4 AND / kill-switch / ops-signal Issue 발의 monitor workflow bypass channel, evidence-checks-registry rollback-signal-monitor entry 의 bypass channel). 64번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1193 rollback signal monitor warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
+  # 구 배포 auto-rollback 신호 monitor bypass label (CFP-1193 / ADR-105) = ADR-121 / CFP-2782 배포 auto-rollback machinery 물리 제거로 삭제 (S4 producer + monitor workflow teardown, ADR-106 Amendment 4).
 
   # CFP-1194 신설 — 1 entry (hotfix-bypass:operational-monitor)
   - name: hotfix-bypass:operational-monitor
@@ -1590,13 +1528,7 @@ labels:
     attach_owner_plugin: "Orchestrator (CFP-1194 regression/health monitor warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
 
 
-  # CFP-1196 신설 — 1 entry (hotfix-bypass:canary-auto-promote)
-  - name: hotfix-bypass:canary-auto-promote
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: canary-auto-promote warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1196 / ADR-105 §결정 3 + ADR-106 Amendment 1 §결정 1 단계 2 carrier — 안전장치 4 AND / 3h retention window / ops-signal Issue 사후 알림 / kill-switch / criteria 4-tuple 집계 canary auto-promote workflow bypass channel, evidence-checks-registry canary-auto-promote entry 의 bypass channel). 68번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1196 canary auto-promote warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
+  # 구 배포 canary auto-promote lint bypass label (CFP-1196 / ADR-105) = ADR-121 / CFP-2782 배포 canary machinery 물리 제거로 삭제 (bypass 대상 workflow teardown).
 
   # CFP-1239 신설 — 1 entry (hotfix-bypass:sunset-weakening-evidence)
   - name: hotfix-bypass:sunset-weakening-evidence
@@ -1648,20 +1580,7 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-2504 venue-shape-fidelity warning-tier bypass — venue 형상 재현 anchor-presence lint 임시 skip 시 부착, audit-trailed exception channel 의무) / ArchitectAgent / DeveloperPLAgent"
 
-  # plugin:* CFP-1059 신설 — 2 entry (codeforge-deploy / codeforge-deploy-review)
-  - name: plugin:codeforge-deploy
-    category: plugin
-    color: "5319e7"
-    description: "plugin:codeforge-deploy lane plugin namespace marker (CFP-1059 / ADR-087 — Deploy lane 신설 carrier). 본 Issue / PR 이 codeforge-deploy plugin 영역 touching (DeployPLAgent / DeployWorkerAgent / deploy-output contract / auto-deploy.yml workflow 등). Phase 1 declarative — 실 plugin seed 신설 = S2 sub-Story carrier."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059 deploy lane 신설 carrier — Issue / PR 영역 표기) / DeployPLAgent (codeforge-deploy plugin self-write, S2 sub-Story carrier)"
-
-  - name: plugin:codeforge-deploy-review
-    category: plugin
-    color: "5319e7"
-    description: "plugin:codeforge-deploy-review lane plugin namespace marker (CFP-1059 / ADR-088 — Deploy Review lane 신설 carrier). 본 Issue / PR 이 codeforge-deploy-review plugin 영역 touching (DeployReviewPLAgent / DeployReviewWorkerAgent / deploy-review-output contract / bidirectional-smoke.yml workflow / ProductionEvidenceDeputy ownership 이관 등). Phase 1 declarative — 실 plugin seed 신설 = S3 sub-Story carrier."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1059 deploy review lane 신설 carrier — Issue / PR 영역 표기) / DeployReviewPLAgent (codeforge-deploy-review plugin self-write, S3 sub-Story carrier)"
+  # 구 배포 2 lane plugin namespace label (CFP-1059 / ADR-087+088) = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 삭제.
 ```
 
 ## 4. 변경 규칙

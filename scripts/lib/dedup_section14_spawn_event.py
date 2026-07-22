@@ -50,7 +50,7 @@ _DEFAULT_LEDGER_PARENT_REL = os.path.join(".claude", "ledger")
 # spawn-event-v1 lane_label closed enum (append_spawn_event 와 동일 SSOT)
 _LANE_LABELS = {
     "요구사항", "요구사항-리뷰", "설계", "설계-리뷰", "구현", "구현-리뷰",
-    "구현-테스트", "보안-테스트", "배포", "배포-리뷰", "없음",
+    "구현-테스트", "보안-테스트", "없음",
 }
 
 

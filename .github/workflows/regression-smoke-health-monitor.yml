@@ -8,7 +8,7 @@ name: regression-smoke-health-monitor
 #
 # S5 = 신호 3·4 (regression / smoke·health) — S4 (신호 1·2, rollback trigger) 와 disjoint
 # S5 ∉ rollback: 본 workflow = regression/health 감지 + ops-signal Issue 발의 (경고 전용)
-#   자동 rollback trigger = rollback-signal-monitor.yml (S4, ADR-105 §결정 3 안전장치 4 AND)
+#   구 자동 rollback trigger(S4) = CFP-2782 로 제거 (ADR-105 tombstone — 배포 완전 위임)
 #
 # 신호 source (ADR-104 §결정 3 — 0 API call):
 #   신호 3: regression — .codeforge/operational-baseline.json vs .codeforge/current-metric.json
@@ -28,11 +28,11 @@ name: regression-smoke-health-monitor
 #   hotfix-bypass:operational-monitor label 부착 시 skip + audit comment
 #   (ADR-024 Amendment 3 hotfix-bypass family, label-registry-v2 v2.46 신규 member)
 #
-# 답습 source: rollback-signal-monitor.yml (CFP-1193 S4) — byte-pattern verbatim
+# 답습 source: CFP-1193 S4 monitor 패턴 (byte-pattern verbatim — 원 워크플로는 CFP-2782 로 제거)
 #   schedule cron + workflow_dispatch + permissions deny-all + concurrency + continue-on-error
 #
 # §7.4 empirical-source:
-#   24h cron rate: rollback-signal-monitor.yml cron '0 0 * * *' 답습 (dimension: rate)
+#   24h cron rate: CFP-1193 S4 monitor cron '0 0 * * *' 답습 (dimension: rate)
 #   flap N-tick: Grafana/Prometheus 'for' clause 산업 표준 (dimension: count)
 #   hysteresis margin: Datadog hysteresis 패턴 (dimension: rate)
 #

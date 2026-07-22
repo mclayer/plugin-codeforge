@@ -452,48 +452,47 @@ owned_sections:
     # 후속 Amendment 시 본 §단락 row append 시 self-app 결과 명시 의무.
 
   - file: CLAUDE.md
-    section: "레인 8개 · 단계 정의"
-    owner_adr: ADR-087
+    section: "레인 6개 · 단계 정의"
+    owner_adr: ADR-121
     parallel_edit: locked
-    # NOTE (CFP-1059): 본 Story-1 carrier 가 6 → 8 lane 으로 확장 (배포 + 배포 리뷰 신설).
-    # 본 §단락 = wrapper CLAUDE.md "레인 8개 · 단계 정의" 영역, lane spawn 시퀀스 +
-    # Cross-cutting trigger + 8 lane composition map 보유. locked — 후속 lane 추가 /
-    # rename 시 ADR-064 §결정 1 CFP scope unitary 정합 (별 CFP carrier 의무).
+    # NOTE (CFP-2782): CFP-1059 이 6 → 8 lane 확장(배포 2 lane 신설)했으나 ADR-121 / CFP-2782 로
+    # 배포 2 lane 물리 제거 → 6 lane plugin 회귀. 본 §단락 = wrapper CLAUDE.md "레인 6개 · 단계 정의"
+    # 영역, lane spawn 시퀀스 + Cross-cutting trigger + 6 lane composition map 보유. locked — 후속 lane
+    # 추가 / rename 시 ADR-064 §결정 1 CFP scope unitary 정합 (별 CFP carrier 의무).
     # ratchet 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
 
   - file: docs/orchestrator-playbook.md
-    section: "§3.1 10 레인 + Cross-cutting 스폰 순서"
-    owner_adr: ADR-087
+    section: "§3.1 8 레인 + Cross-cutting 스폰 순서"
+    owner_adr: ADR-121
     parallel_edit: locked
-    # NOTE (CFP-1059): CFP-1059 Story-1 carrier 가 7 → 9 lane spawn 순서 확장
-    # (배포 + 배포 리뷰 spawn 시퀀스 추가). locked — lane spawn 순서 변경 = ADR-064 §결정 1
-    # CFP scope unitary 정합 (별 CFP carrier 의무). Phase 1 declarative — 실 lane plugin
-    # seed 신설 = S2/S3 sub-Story carrier.
+    # NOTE (CFP-2782): CFP-1059 이 7 → 9 lane spawn 순서 확장(배포 2 lane)했으나 ADR-121 / CFP-2782 로
+    # 배포 2 lane 물리 제거 → 8 레인 spawn 순서 회귀. locked — lane spawn 순서 변경 = ADR-064 §결정 1
+    # CFP scope unitary 정합 (별 CFP carrier 의무).
 
   - file: docs/inter-plugin-contracts/MANIFEST.yaml
     section: "contracts (kind:contract entry list)"
     owner_adr: ADR-008
     parallel_edit: append-only
-    # NOTE (CFP-1059): 7 → 9 entry 확장 (deploy_output + deploy_review_output entry append,
-    # Phase 1 placeholder declare). append-only — 신규 contract 추가만 허용.
-    # ADR-008 §결정 3 row append 정합.
+    # NOTE (CFP-2782): CFP-1059 이 배포 산출 계약 2종 entry 추가(7 → 9)했으나
+    # ADR-121 / CFP-2782 로 배포 2 lane 물리 제거 → 두 계약 entry 삭제(9 → 7). append-only 기본 위 예외
+    # 삭제 = 상위 ADR-121 배포 2 lane 물리 제거 근거 (ADR-008 §결정 3 append 기본 유지).
 
   - file: docs/inter-plugin-contracts/label-registry-v2.md
     section: "§3. 항목"
     owner_adr: ADR-008
     parallel_edit: append-only
-    # NOTE (CFP-1059): v2.41 → v2.42 MINOR bump (14 신규 entry append: 2 phase:* + 5 gate:* +
-    # 2 plugin:* + 7 hotfix-bypass:* + 신규 category enum `deployment`). append-only —
-    # 신규 label entry 추가만 허용. v3.0 BREAKING 변경 시 별 CFP carrier 의무.
+    # NOTE (CFP-2782): CFP-1059 이 v2.41 → v2.42 로 14 entry(배포 2 lane 관련 phase/gate/plugin label 포함)
+    # 추가했으나 ADR-121 / CFP-2782 로 배포 2 lane 물리 제거 → 배포 관련 label 삭제. append-only 기본 위
+    # 예외 삭제 = 상위 ADR-121 근거. v3.0 BREAKING 변경 시 별 CFP carrier 의무.
 
   - file: docs/evidence-checks-registry.yaml
-    section: "entries (Deploy lane + Deploy Review lane evidence checks)"
+    section: "entries (schema-change / cross-layer evidence checks)"
     owner_adr: ADR-060
     parallel_edit: append-only
-    # NOTE (CFP-1059): 5 신규 entry append (deploy-lane-spawn-evidence + deploy-review-lane-
-    # spawn-evidence + schema-change-7-principles-self-check + cross-layer-impact-detection +
-    # dependency-order-enforce). 모두 declaration-only Wave 1 (deferred-followup status).
-    # ADR-076 / ADR-082 / ADR-086 precedent 답습. ADR-060 §결정 6 row append 정합.
+    # NOTE (CFP-2782): CFP-1059 이 5 entry 추가(배포 spawn-evidence 2종 + schema-change-7-principles-self-check
+    # + cross-layer-impact-detection + dependency-order-enforce)했으나 ADR-121 / CFP-2782 로 배포 2 lane 물리
+    # 제거 → 배포 spawn-evidence 2종 삭제. schema/cross-layer 3종(ADR-089/090 존치)은 유지.
+    # ADR-060 §결정 6 row append 정합.
 
   - file: archive/adr/ADR-083-consumer-applicability-filter.md  # CFP-2661 D15: per-copy REPLACE docs/adr→archive/adr (ADR 실 위치, PR #1973). gate parallel-epic-conflict-check.yml:69 이 parallel_edit==locked 일 때만 이 file: 을 read → dead docs/adr 는 lock 이 조용히 절대 안 걸림(conflict-detection false-negative). wrapper-only(consumer 미러 부재) → union 아닌 치환.
     section: "Amendment 3 (CFP-1293) — §결정 5 wire location expand"

@@ -9,7 +9,7 @@
 # ADR-061: regression %비교 + flap 카운터 = Python 위임 (본 파일 = orchestration 전용)
 # ADR-064: 모달 어휘 금지 (regression 임계 = 숫자 정량 강제)
 #
-# 답습 source: check-rollback-signal.sh (CFP-1193 S4) — 구조 verbatim
+# 답습 source: 구 S4 신호 producer 스크립트 (CFP-1193, CFP-2782 로 제거됨) — 구조 verbatim 계승
 #   호출 흐름 동형 (wrapper fast-pass → Python 위임 → signature dedup → Issue 발의)
 #
 # 호출 흐름:

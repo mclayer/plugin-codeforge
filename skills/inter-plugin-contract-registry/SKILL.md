@@ -1,6 +1,6 @@
 ---
 name: inter-plugin-contract-registry
-description: Inter-plugin contract MANIFEST / Versioning / Write boundary lookup 시 (contract version bump 결정). kind:contract 9 group / 14 file / kind:registry 17 file / versioning + write boundary 규칙을 정의한다. 단일 원본 체계 (CFP-2158 / ADR-118 D5 — sibling sync 폐지).
+description: Inter-plugin contract MANIFEST / Versioning / Write boundary lookup 시 (contract version bump 결정). kind:contract 7 group / 12 file / kind:registry 17 file / versioning + write boundary 규칙을 정의한다. 단일 원본 체계 (CFP-2158 / ADR-118 D5 — sibling sync 폐지).
 tools: Read
 ---
 
@@ -10,7 +10,7 @@ tools: Read
 
 codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 의 [docs/inter-plugin-contracts/](../../docs/inter-plugin-contracts/) 디렉터리가 **단일 원본 (canonical)** — CFP-2158 / ADR-118 D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). 두 종류 보유:
 
-## kind:contract (typed inter-plugin schema, 9 group / 14 file)
+## kind:contract (typed inter-plugin schema, 7 group / 12 file)
 
 [docs/inter-plugin-contracts/MANIFEST.yaml](../../docs/inter-plugin-contracts/MANIFEST.yaml) 가 SSOT. lint 였던 `scripts/check-inter-plugin-contracts.sh` 는 CFP-2159 (ADR-118 S3) 에서 은퇴 — 모노레포 통합으로 cross-repo mirror 검사 대상 소멸. contract 단일화 = S2 (CFP-2158) — lane 측 사본 폐지, 본 디렉터리가 유일 위치.
 
@@ -23,8 +23,6 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 | `test_verdict` | codeforge-test | test-verdict-v1.md (Archived) · [test-verdict-v2.md](../../docs/inter-plugin-contracts/test-verdict-v2.md) (Active — CFP-367 / ADR-055) |
 | `pmo_output` | codeforge-pmo | pmo-output-v1.md (Active) |
 | `git_ops_event` | codeforge-pmo | git-ops-event-v1.md (Active — CFP-139) |
-| `deploy_output` | codeforge-deploy | deploy-output-v1.md (Draft — Active 복귀는 deploy lane 별 carrier) |
-| `deploy_review_output` | codeforge-deploy-review | deploy-review-output-v1.md (Draft — Active 복귀는 deploy lane 별 carrier) |
 
 각 contract 파일은 본 디렉터리가 단일 원본 — lane 측 사본·sibling sync 의무 없음. 구 sibling sync 정책 = Superseded ([ADR-010](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) Amendment 5). Producer plugin 열은 schema 의 의미상 owner (어느 lane 이 produce 하는가) — 파일 위치와 무관하게 유효.
 

@@ -63,41 +63,6 @@ def _is_int(v: Any) -> bool:
     return isinstance(v, int) and not isinstance(v, bool)
 
 
-def _is_list_of_host_mapping_entries(v: Any) -> bool:
-    """deploy.host_mapping — list of {host: str, containers: list[str]}.
-
-    Schema SSOT: docs/project-config-schema.md §2 (deploy 섹션, ~L361-366).
-    """
-    if not isinstance(v, list):
-        return False
-    for entry in v:
-        if not isinstance(entry, dict):
-            return False
-        if not _is_str(entry.get("host")):
-            return False
-        if "containers" in entry and not _is_list_of_str(entry["containers"]):
-            return False
-    return True
-
-
-def _is_list_of_ssh_target_entries(v: Any) -> bool:
-    """deploy.ssh_targets — list of {host, user, key_secret_env: str, port: int}.
-
-    Schema SSOT: docs/project-config-schema.md §2 (deploy 섹션, ~L388-393).
-    """
-    if not isinstance(v, list):
-        return False
-    for entry in v:
-        if not isinstance(entry, dict):
-            return False
-        for field in ("host", "user", "key_secret_env"):
-            if field in entry and not _is_str(entry[field]):
-                return False
-        if "port" in entry and not _is_int(entry["port"]):
-            return False
-    return True
-
-
 def _is_list_of_str_or_empty(v: Any) -> bool:
     """list of non-empty str (빈 list 허용 — atlassian.mirror_targets 등)."""
     return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
@@ -391,72 +356,6 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
          "flyway", "liquibase", "sqlx-migrate", "custom"),
      "aggregate_arch.migration_tool (9-enum: alembic|prisma-migrate|typeorm|goose|"
      "golang-migrate|flyway|liquibase|sqlx-migrate|custom, default alembic), optional"),
-
-    # [선택] deploy — Deploy lane settings (CFP-1059 / ADR-087 / ADR-088)
-    # Schema SSOT: docs/project-config-schema.md §deploy (~L347-466) · consumer-guide §1n
-    ("deploy", False, dict, "deploy section (mapping), optional"),
-    ("deploy.host_mapping", False, _is_list_of_host_mapping_entries,
-     "deploy.host_mapping (list of {host: str, containers: list[str]}), optional"),
-    ("deploy.docker_hub", False, dict, "deploy.docker_hub section (mapping), optional"),
-    ("deploy.docker_hub.org", False, _is_str, "deploy.docker_hub.org (non-empty string), optional"),
-    ("deploy.docker_hub.image_prefix", False, _is_str,
-     "deploy.docker_hub.image_prefix (non-empty string), optional"),
-    ("deploy.docker_hub.auth_secret_env", False, _is_str,
-     "deploy.docker_hub.auth_secret_env (env-key reference string), optional"),
-    ("deploy.traefik", False, dict, "deploy.traefik section (mapping), optional"),
-    ("deploy.traefik.enabled", False, _is_bool, "deploy.traefik.enabled (boolean), optional"),
-    ("deploy.traefik.network", False, _is_str, "deploy.traefik.network (non-empty string), optional"),
-    ("deploy.traefik.domain_pattern", False, _is_str,
-     "deploy.traefik.domain_pattern (non-empty string), optional"),
-    # NOTE: '1password' = YAML 에서 int 가 아닌 문자열 키 (따옴표 불요 — bare key 로도 string 처리됨)
-    ("deploy.1password", False, dict, "deploy.1password section (mapping), optional"),
-    ("deploy.1password.enabled", False, _is_bool, "deploy.1password.enabled (boolean), optional"),
-    ("deploy.1password.connect_host_env", False, _is_str,
-     "deploy.1password.connect_host_env (env-key reference string), optional"),
-    ("deploy.1password.connect_token_env", False, _is_str,
-     "deploy.1password.connect_token_env (env-key reference string), optional"),
-    ("deploy.1password.vault", False, _is_str, "deploy.1password.vault (non-empty string), optional"),
-    ("deploy.ssh_targets", False, _is_list_of_ssh_target_entries,
-     "deploy.ssh_targets (list of {host,user,key_secret_env: str, port: int}), optional"),
-    ("deploy.auto_rollback", False, dict, "deploy.auto_rollback section (mapping), optional"),
-    ("deploy.auto_rollback.enabled", False, _is_bool,
-     "deploy.auto_rollback.enabled (boolean), optional"),
-    ("deploy.auto_rollback.error_rate_threshold", False, _is_number,
-     "deploy.auto_rollback.error_rate_threshold (number, e.g. 0.02), optional"),
-    ("deploy.auto_rollback.latency_burn_rate_threshold", False, _is_number,
-     "deploy.auto_rollback.latency_burn_rate_threshold (number), optional"),
-    ("deploy.auto_rollback.window", False, _is_int,
-     "deploy.auto_rollback.window (int seconds, default 3600), optional"),
-    ("deploy.operational_monitor", False, dict,
-     "deploy.operational_monitor section (mapping), optional"),
-    ("deploy.operational_monitor.enabled", False, _is_bool,
-     "deploy.operational_monitor.enabled (boolean), optional"),
-    ("deploy.operational_monitor.signal_type", False, _is_str,
-     "deploy.operational_monitor.signal_type (string), optional"),
-    ("deploy.operational_monitor.metric_name", False, _is_str,
-     "deploy.operational_monitor.metric_name (string), optional"),
-    ("deploy.operational_monitor.regression_threshold", False, _is_number,
-     "deploy.operational_monitor.regression_threshold (number), optional"),
-    ("deploy.operational_monitor.recovery_margin", False, _is_number,
-     "deploy.operational_monitor.recovery_margin (number, default 0.5), optional"),
-    ("deploy.operational_monitor.flap_n", False, _is_int,
-     "deploy.operational_monitor.flap_n (int, default 2), optional"),
-    ("deploy.operational_monitor.window", False, _is_int,
-     "deploy.operational_monitor.window (int seconds, default 86400), optional"),
-    ("deploy.self_improving_loop", False, dict,
-     "deploy.self_improving_loop section (mapping), optional"),
-    ("deploy.self_improving_loop.enabled", False, _is_bool,
-     "deploy.self_improving_loop.enabled (boolean), optional"),
-    ("deploy.self_improving_loop.loop_max_depth", False, _is_int,
-     "deploy.self_improving_loop.loop_max_depth (int, default 3), optional"),
-    ("deploy.self_improving_loop.dedup_window_hours", False, _is_int,
-     "deploy.self_improving_loop.dedup_window_hours (int, default 24), optional"),
-    ("deploy.self_improving_loop.pattern_count_threshold", False, _is_int,
-     "deploy.self_improving_loop.pattern_count_threshold (int, default 2), optional"),
-    ("deploy.canary", False, dict, "deploy.canary section (mapping), optional"),
-    ("deploy.canary.subset", False, _is_str, "deploy.canary.subset (string), optional"),
-    ("deploy.canary.auto_promote_enabled", False, _is_bool,
-     "deploy.canary.auto_promote_enabled (boolean), optional"),
 
     # [선택] atlassian — Atlassian suite 재결합 (CFP-1215 / ADR-100 / ADR-111)
     # Schema SSOT: docs/project-config-schema.md §atlassian (~L468-555) · consumer-guide §1o

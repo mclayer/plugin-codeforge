@@ -57,6 +57,10 @@ amendment_log:
     carrier: CFP-1125
     section: "Amendment 7 — Amendment 5 sibling carrier role 만 sunset (declarative boundary, β2 audit Anchor 3 carry-over)"
     summary: "Amendment 7 = Amendment 5 sibling carrier role 만 sunset boundary declarative SSOT — CFP-1125 carrier (β2 audit #1113 Anchor 3 LOSSLESS 판정 carry-over). 본체 §결정 1-6 (post-merge automation SSOT — PR merge transition / Issue close keyword transition / Cross-repo PAT / Telemetry only / Disable-by-flag safety + PR-Issue close algorithm Amendment 1 / Action 1 strict regex + concurrency namespace Amendment 2 / Workflow file integrity Amendment 3 / Post-merge-fix phase-gate fast-pass Amendment 4 §결정 6 / Epic close → Deploy trigger Amendment 6 §결정 8) = sunset 대상 아님 (PR-merge gate 로직 자체 별 lifecycle 작동). 본 Amendment 7 = Amendment 5 §결정 7 의 sibling carrier role 만 sunset boundary 명시 — reconcile-protocol-v1 §4.13 result_fidelity_binding 의 declarative carrier_story CFP-900 sibling 역할이 CFP-1111 walker paradigm 전환 후 walker walk_result 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) 으로 carry. PR-gate layer 독립 보존 invariant — phase-gate-mergeable.yml `.github/` content sanity warning layer 는 walker paradigm 과 disjoint 별 lifecycle. is_transitional: false 보존 (본체 sunset 아님 + sibling carrier role 만 sunset 영역 분리 — 부분 sunset declarative, ADR-058 §결정 5 정합). frontmatter 값 변경 0 (carrier_story / related_stories / supersedes / superseded_by / is_transitional). 해소 기준 3-tuple (metric / who / how) = walker schema field walk_result + exit_code_to_walk_result_mapping rule + walker integration test 4-value enum honest record verify + PR-gate layer 독립 작동 확인. β2 audit Anchor 3 carry-over 3 설계 주의 #2 정합 (sunset 영역 = sibling carrier role 만, 본체 §결정 1-6 sunset 아님)."
+  - date: 2026-07-22
+    carrier: CFP-2782
+    section: "Amendment 8 — §결정 8 (Epic close → Deploy trigger hook, Amendment 6) 영구 무효화"
+    summary: "Amendment 8 = Epic close → DeployPL spawn hook (Amendment 6 §결정 8) 영구 무효 — 대상 배포 lane(codeforge-deploy / codeforge-deploy-review 2 lane) 이 CFP-2782 / ADR-121 로 물리 제거됨 → spawn 대상 PL 부재. epic-close-deploy-trigger.yml = declaration-only-Wave-1 상태로 .github + templates 양쪽 미materialize 실측(삭제할 실물 0) + mechanical_enforcement_actions 별도 entry 미생성(Amendment 6 은 body/amendment_log 선언만 — fast-pass 계열과 비대칭) → superseded-never-materialized 로 영구 폐지(별도 flip 대상 entry 없음, 본 Amendment 가 텍스트 기록으로 확정). post-merge automation trigger 5-source → 4-source 축소(Epic close transition trigger channel 소멸; 잔존 4 source = PR merge transition / Issue close keyword dual-source AND / post-merge-fix phase-gate fast-pass §결정 6 / .github fast-pass content sanity §결정 7). §결정 1~8 본문 0건 변경(append-only). ADR-058 §결정 5 약화-gate 예외 — 미구현 dead declaration 정리(대상 hook 이 상위 ADR-121 로 이미 폐지, 신규 enforcement 축소 아님) → sunset_justification 불요."
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A schema 정합 — list[object] verbatim entry name + status + progress_note + target_section
   # 본 mechanical_enforcement_actions[] field 도입 = CFP-688 Amendment 3 §결정 5.G binding (ADR-040 Amendment 3 §결정 7.A 정합)
@@ -799,3 +803,30 @@ mechanical_enforcement_actions:
 - ADR-005 (self-application byte-identical mirror — `templates/github-workflows/epic-close-deploy-trigger.yml` ↔ `.github/workflows/` Phase 2 PR 의무)
 - ADR-064 §self-application top-down ratchet (강화 방향 only, 약화 0)
 - ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 = sunset 면제, is_transitional: false 보존)
+
+## Amendment 8 (CFP-2782, 2026-07-22) — Epic close → Deploy trigger hook 영구 무효화
+
+### 대상 + 판정
+
+Amendment 6 §결정 8 이 신설한 **Epic close → DeployPL spawn hook** (Epic Issue closed + `gate:retro-complete` 동시 활성 시 DeployPL spawn) 을 **영구 무효화**한다. 근거 = 대상 배포 lane(codeforge-deploy / codeforge-deploy-review 2 lane) 이 CFP-2782 / ADR-121 로 **물리 제거**됨 → spawn 대상 PL 부재.
+
+### firsthand 상태
+
+- `epic-close-deploy-trigger.yml` = Amendment 6 이 declaration-only Wave 1 로 선언했으나 **`.github/workflows/` + `templates/github-workflows/` 양쪽 미materialize** (삭제할 실물 0).
+- `mechanical_enforcement_actions[]` = epic-close-deploy-trigger 별도 entry **미생성** (Amendment 6 은 body + amendment_log 선언만 — fast-pass 계열 entry 와 비대칭). 따라서 flip 대상 entry 부재 — 본 Amendment 가 `superseded-never-materialized` 상태를 텍스트 기록으로 확정한다.
+
+### 결과
+
+- **post-merge automation trigger 5-source → 4-source**: Epic close transition trigger channel 소멸. 잔존 4 source = ① PR merge phase transition ② Issue close keyword dual-source AND(Amendment 1) ③ post-merge-fix phase-gate fast-pass(Amendment 4 §결정 6) ④ `.github/` fast-pass content sanity(Amendment 5 §결정 7).
+- **§결정 1~8 본문 0건 변경** (append-only — 본 Amendment 8 body + frontmatter amendment_log row 만).
+
+### sunset_justification
+
+ADR-058 §결정 5 약화-gate **예외** — 미구현 dead declaration 정리다. 대상 hook 의 spawn 대상(DeployPL)이 상위 ADR-121 로 이미 폐지되어 enforcement 능력이 원래 0 (declaration-only, never materialized) → 신규 enforcement 축소가 아니라 dead-declaration cleanup. is_transitional: false 보존.
+
+### Cross-references
+
+- ADR-121 (deploy·deploy-review lane deprecate — 본 무효화 authority)
+- ADR-026 Amendment 6 §결정 8 (무효화 대상 — Epic close → Deploy trigger hook, frozen 역사 기록)
+- ADR-072 Amendment 5 (ProductionEvidenceDeputy RELOCATE — ①, separable)
+- ADR-105 Amendment 1 (auto-rollback TOMBSTONE — ③, sibling)

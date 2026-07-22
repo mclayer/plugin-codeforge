@@ -67,7 +67,7 @@ if [[ "${CHANGE_TYPE}" == "hard-limit" ]]; then
   exit 0
 else
   echo "[INFO] 일반 변경 (normal) — 자동 배포 흐름 유지"
-  echo "[INFO] 자동 흐름: auto-deploy.yml -> deploy-blue-green.sh"
+  echo "[INFO] 자동 흐름: consumer GitHub Actions 배포 파이프라인 (CFP-2782 — 배포 완전 위임)"
   echo "[INFO] hard limit 해당 시 --change-type hard-limit 사용"
   exit 0
 fi
