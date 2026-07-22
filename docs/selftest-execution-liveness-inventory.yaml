@@ -613,3 +613,14 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "semantics-change sentinel lint self-test — carrier-path touch ∩ anchor cross-match 후보 산출 discriminating fixture(M1-M12 mutation-kill: carrier-classify/state-filter/anchor false-neg·pos/self-carve-out/degrade 4-class/disjoint-vocab/tier-flip/byte-parity) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 의미-staleness 검증, honest-ceiling ADR-151 §결정7)."
+
+  # ── CFP-2786 보안FIX iter1 — M13 ReDoS-bound regression self-test enroll ──
+  # bijection: tests/scripts/*.sh 56 → 57 (신규 self-test enroll — append 시점 재산출). 실행 채널 = semantic-staleness-detection.yml:semantic-staleness-detection-test (기존 hard-fail job 에 신규 step 배선, no continue-on-error).
+  - self_test: "tests/scripts/test_check-semantic-staleness-sentinel-redos.sh"
+    execution_channel: "workflow:semantic-staleness-detection.yml:semantic-staleness-detection-test"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "semantics-change sentinel PATH_TOKEN_RE ReDoS-bound perf regression — 소스 PATH_TOKEN_RE 동적 추출 후 64KB all-dots findall timing < 2.0s assert(수정본 0.002s / O(n²) 취약본 회귀 시 threshold 초과 RED). correctness M1-M12(별 self-test file)와 disjoint 타이밍 축(CI-load flakiness 격리, baked-in 취약 revert 실행 0). soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. honest-ceiling ADR-151 §결정7 — presence≠truth."

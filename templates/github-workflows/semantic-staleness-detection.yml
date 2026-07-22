@@ -97,3 +97,5 @@ jobs:
           python-version: "3.12"
       - name: Run test_check-semantic-staleness-sentinel.sh (회귀 시 exit 1 차단)
         run: bash tests/scripts/test_check-semantic-staleness-sentinel.sh
+      - name: Run test_check-semantic-staleness-sentinel-redos.sh (ReDoS-bound 회귀, exit 1 차단)
+        run: bash tests/scripts/test_check-semantic-staleness-sentinel-redos.sh
