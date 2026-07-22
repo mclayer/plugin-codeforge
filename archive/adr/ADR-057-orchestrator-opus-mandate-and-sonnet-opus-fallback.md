@@ -360,11 +360,11 @@ Amendment 1 sunset gate 1 ("Sonnet 잔류 agent 0건") 거리 = 5종 → 8종 (3
 2. **fresh-spawn-only invariant SSOT = 신규 §결정 4**: fallback = 새 `Agent` spawn + opts.model:opus, SendMessage resume 금지. CFP-2236 실측 root cause(원본 agent model 재해석 → 무한 재실패) 직접 해소. 이 invariant 는 sonnet rate-limit(§결정 2) 케이스에도 cross-cutting 적용되나, **§결정 2 본문은 무변경(byte-identical)** — 신규 §결정 4 가 양 trigger 공통 invariant 를 추가하는 구조이며 §결정 2 를 소급 수정하지 않는다(기존 "동일 입력 패킷 재spawn" 문구를 §결정 4 가 resume 금지로 명시화).
 3. **frontmatter title 갱신**: "Sonnet → Opus rate-limit fallback" → "비-opus tier → Opus fallback (Sonnet rate-limit / fable model-unavailable)". 본문 제목 동기.
 4. **frontmatter related_adrs 에 ADR-117 추가**: fable tier 정책(ADR-117 §결정 1 대상 명단 + §결정 5 Orchestrator 제외) 결합 명시.
-5. **결정 1·2·3 본문 변경 0건**: §결정 2 (max 1회 / 자동 재시도 금지 / 통지 후 대기) invariant 무손상 (byte-identical). §결정 4 가 별 결정축으로 trigger 를 확장(약화 아닌 강화).
+5. **결정 1·2·3 본문 변경 0건**: §결정 2 (max 1회 / 자동 재시도 금지 / 통지 후 대기) invariant 무손상 (byte-identical). §결정 4 가 별도 결정축으로 trigger 를 확장(약화 아닌 강화).
 
 ### sunset_justification (ADR-058 §결정 5 정합)
 
-trigger 집합 확장 = 강화 방향(cover 범위 확대). 기존 sonnet rate-limit fallback invariant 무손상. sunset gate 1·2 measurement contract 변경 0건 — fable fallback 은 별 trigger 태그 `[model-unavailable-fallback:fable→opus]` 로 분리돼 KPI 분모(Sonnet 8종)/분자 오염 0. is_transitional:true 유지. ADR-117 (permanent) 결합으로 fable fallback 부분은 permanent 성격이나, §결정 4 가 별 결정축으로 분리돼 §결정 2 sunset 시 fable 부분이 독립 잔존(sunset 비대칭 해소). root_cause evidence N=3 (CFP-2134/2234/2236 실측). 사용자 directive 2026-06-14 KST.
+trigger 집합 확장 = 강화 방향(cover 범위 확대). 기존 sonnet rate-limit fallback invariant 무손상. sunset gate 1·2 measurement contract 변경 0건 — fable fallback 은 별도 trigger 태그 `[model-unavailable-fallback:fable→opus]` 로 분리돼 KPI 분모(Sonnet 8종)/분자 오염 0. is_transitional:true 유지. ADR-117 (permanent) 결합으로 fable fallback 부분은 permanent 성격이나, §결정 4 가 별도 결정축으로 분리돼 §결정 2 sunset 시 fable 부분이 독립 잔존(sunset 비대칭 해소). root_cause evidence N=3 (CFP-2134/2234/2236 실측). 사용자 directive 2026-06-14 KST.
 
 ### bump 관례 (doc-only fast-path)
 

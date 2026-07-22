@@ -154,7 +154,7 @@ CFP-1336 (Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl r
 - `marketplace contents:read` (marketplace.json fetch)
 - `reconcile-target-repos contents:write + pull_requests:write` (UpgradeAgent reconcile PR open)
 
-**Cross-repo label endpoint write 권한 부재** — `repo:write` scope 는 same-repo label write 만 (cross-repo Issue comment 영역). cross-repo label endpoint = 별 grant 영역 (GitHub fine-grained PAT scope schema 정합 — `issues:write` permission per-repo grant).
+**Cross-repo label endpoint write 권한 부재** — `repo:write` scope 는 same-repo label write 만 (cross-repo Issue comment 영역). cross-repo label endpoint = 별도 grant 영역 (GitHub fine-grained PAT scope schema 정합 — `issues:write` permission per-repo grant).
 
 **Least-privilege 핵심 결정 (보안 변호자 입장)**:
 

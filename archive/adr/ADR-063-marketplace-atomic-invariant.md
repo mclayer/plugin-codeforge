@@ -580,7 +580,7 @@ plugins:
 
 **Story-1 scope (declare)**: 본 §결정 17 = declarative SSOT mandate. 실 marketplace.json `channels[]` field 추가 = Wave 4 sub-Epic #1 Story-2 (runtime UpgradeAgent multi-channel dispatch carrier) 영역. Story-1 = ADR + contract MINOR bump + project-config-schema MINOR + label-registry MINOR — declare layer only (marketplace.json 자체 변경 0, plugin.json bump 0 — `marketplace_sync_declared: false`).
 
-**Bypass channel**: `hotfix-bypass:marketplace-atomic` label (§결정 4) reuse — channel matrix 별 bypass 신설 0 (single bypass family 보존, ADR-024 Amendment 3 §결정 6.A per-entry namespace 영역에서 별도 family member 신설 회피 = minimal-change ADR-064).
+**Bypass channel**: `hotfix-bypass:marketplace-atomic` label (§결정 4) reuse — channel matrix 별도 bypass 신설 0 (single bypass family 보존, ADR-024 Amendment 3 §결정 6.A per-entry namespace 영역에서 별도 family member 신설 회피 = minimal-change ADR-064).
 
 **Ratchet 강화 only**: mirrored field 4종 scope 의 channel 차원 자동 확장 (scope 확장) — scope 축소 0. channel 차원 축소 (예: per-channel mirrored field merge / channels[] supply-chain trust 약화 / channel:* enum 축소) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 의무.
 
@@ -599,7 +599,7 @@ plugins:
 
 본 Amendment 6 = 강화 방향 only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장 + invariant 강도 상승 — 3-way version invariant 위에 channel 차원 추가). ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: channel matrix 축소 / per-channel mirrored field merge / channels[] supply-chain trust 약화 / single channel 으로 회귀) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 6 = mirrored field × channel matrix 확장 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
 
-**Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별 CFP). frontmatter `mechanical_enforcement_actions[]` Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
+**Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별도 CFP). frontmatter `mechanical_enforcement_actions[]` Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
@@ -658,7 +658,7 @@ plugins:
 
 **CFP-1059 9-plugin family 정합 (deferred follow-up)**:
 - Amendment 7 §결정 18-B 이 family scope 를 7 → **9 plugin** (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
-- 현 walk-infra (`TOPOLOGICAL_ORDER`, ADR-096 §결정 2) 는 7-plugin DAG 가정 — deploy lane 의 DAG 위치 (의존성 방향) 결정 + `TOPOLOGICAL_ORDER` / `min_prerequisite_version` manifest 9-plugin 확장 = **별 follow-up CFP** (deploy lane lifecycle 의존성 분석 필요, 본 Story scope 외).
+- 현 walk-infra (`TOPOLOGICAL_ORDER`, ADR-096 §결정 2) 는 7-plugin DAG 가정 — deploy lane 의 DAG 위치 (의존성 방향) 결정 + `TOPOLOGICAL_ORDER` / `min_prerequisite_version` manifest 9-plugin 확장 = **별도 follow-up CFP** (deploy lane lifecycle 의존성 분석 필요, 본 Story scope 외).
 - `LANE_PLUGINS` 가 `TOPOLOGICAL_ORDER` 에서 derive 하므로, 그 follow-up 에서 `TOPOLOGICAL_ORDER` 9-plugin 확장 시 본 Tier classification roster 자동 정합 (수동 동기화 0 — drift 차단).
 
 **구현 상수/함수 (ADR-061 Python SSOT)**:
@@ -675,7 +675,7 @@ plugins:
 
 **Tier 2 per-walk detection**:
 - §결정 13 Amendment 3 4-layer defense (marketplace-drift-detection workflow) = Tier 1 만 적용 (현행)
-- Tier 2 per-plugin walk 에 대한 detection layer = deferred follow-up (별 CFP) — `mechanical_enforcement_actions[]` 에 신규 entry 추가 0 (Phase 1 declare-only, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합)
+- Tier 2 per-plugin walk 에 대한 detection layer = deferred follow-up (별도 CFP) — `mechanical_enforcement_actions[]` 에 신규 entry 추가 0 (Phase 1 declare-only, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합)
 
 ### 결정 20: Self-application — Amendment 8 ratchet 검증
 
@@ -688,7 +688,7 @@ plugins:
 
 ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Tier 1 atomic scope 축소 / family_atomic 강제 해제 / classify_tier silent-default 도입) 미해당. ADR-058 §결정 5 `sunset_justification` = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 8 = atomic scope Tier 분리 명확화 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
 
-**Mechanical enforcement**: Tier 2 per-walk detection layer = Phase 1 declare-only (deferred follow-up). `mechanical_enforcement_actions[]` Amendment 8 row append = 별 CFP (Phase 2 carrier 시점). ADR-040 Amendment 3 §결정 7.C retroactive 면제 정합 (본 Amendment 8 이후 신설 entry 의무).
+**Mechanical enforcement**: Tier 2 per-walk detection layer = Phase 1 declare-only (deferred follow-up). `mechanical_enforcement_actions[]` Amendment 8 row append = 별도 CFP (Phase 2 carrier 시점). ADR-040 Amendment 3 §결정 7.C retroactive 면제 정합 (본 Amendment 8 이후 신설 entry 의무).
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
@@ -743,17 +743,17 @@ mirrored field 4종 (`name` / `version` / `description` / `author`) 중 **1+ 변
 
 **Rule (a) sub-clause — Violation detection (declarative SSOT, F-SA-1403-01 source)**:
 
-mirrored field 4종 1+ 변경 감지 AND author 가 `marketplace_sync_required: false` 명시 = **Rule (a) deterministic mandate 위반**. 본 sub-clause = **declarative SSOT only** — mechanical wire (lint script `false` case detection) = Phase 2 / 별 CFP carrier 영역 (현재 `check-architect-marketplace-self-check.sh` Step 5 가 `true` case completeness 만 검증, `false` case violation detection 은 미wire). Mitigation = §결정 22 Gap B `check-version-bump-atomic.sh` (blocking-on-pr) 실값 parity 가 **실효 차단 layer** — Rule (a) 위반 author 의 mistaken `false` 선언이 실제로 marketplace.json drift 를 유발하려는 순간 §결정 22 가 plugin PR merge 를 차단. declarative SSOT (본 sub-clause) + blocking-on-pr layer (§결정 22) = layered defense.
+mirrored field 4종 1+ 변경 감지 AND author 가 `marketplace_sync_required: false` 명시 = **Rule (a) deterministic mandate 위반**. 본 sub-clause = **declarative SSOT only** — mechanical wire (lint script `false` case detection) = Phase 2 / 별도 CFP carrier 영역 (현재 `check-architect-marketplace-self-check.sh` Step 5 가 `true` case completeness 만 검증, `false` case violation detection 은 미wire). Mitigation = §결정 22 Gap B `check-version-bump-atomic.sh` (blocking-on-pr) 실값 parity 가 **실효 차단 layer** — Rule (a) 위반 author 의 mistaken `false` 선언이 실제로 marketplace.json drift 를 유발하려는 순간 §결정 22 가 plugin PR merge 를 차단. declarative SSOT (본 sub-clause) + blocking-on-pr layer (§결정 22) = layered defense.
 
 **Rule (b) — `marketplace_sync_required` field 4 enum closed-set (open_extension: false)**:
 
 - `true` — Rule (a) 충족 (mirrored field 1+ 변경 감지). marketplace sibling sync PR 선행 merge 의무 (§결정 2 ordering).
-- `declaration_only_wave_1` — wrapper plugin source code (`.claude-plugin/plugin.json` 등 mirrored field 영역) 미touch + Phase 1 PR declarative SSOT scope. 후속 carrier (Phase 2 PR 또는 별 CFP) 시 `true` promote 의무 (ADR-082/070/077/078/097 Wave 1 declaration-only precedent 정합).
+- `declaration_only_wave_1` — wrapper plugin source code (`.claude-plugin/plugin.json` 등 mirrored field 영역) 미touch + Phase 1 PR declarative SSOT scope. 후속 carrier (Phase 2 PR 또는 별도 CFP) 시 `true` promote 의무 (ADR-082/070/077/078/097 Wave 1 declaration-only precedent 정합).
 - `sibling_story_scope` — sibling Story 영역에서 plugin.json bump 진행, 본 Story scope 외 (별 PR 에서 mirrored field 변경 + marketplace sync 처리).
 - `cross_repo_dogfood_out` — cross-repo dogfood-out flow 진행 (예: `mclayer/marketplace` repo PR 이 별도 진행), 본 wrapper PR scope 외. PR description `dogfood-out:true` marker 동반 의무 (Step 3 (B) cross-repo case 정합).
 - `doc_only_fast_path` — ADR-054 doc-only fast-path 영역, `src/` + `tests/` + `.claude-plugin/` 변경 0건 (`phase:문서` label 동반).
 
-**`open_extension: false`** — 5번째 enum value 시도 시 Rule (b) closed-set 위반. 신규 enum value 도입 = 별 ADR Amendment 신설 의무 (예: Amendment 11 으로 enum 5번째 값 추가 필요 시 carrier Story 별도 발의). **CFP-1403 Story §5.3 EC-8 정합** (closed-set invariant 보존 — F-SA-1403-03 source).
+**`open_extension: false`** — 5번째 enum value 시도 시 Rule (b) closed-set 위반. 신규 enum value 도입 = 별도 ADR Amendment 신설 의무 (예: Amendment 11 으로 enum 5번째 값 추가 필요 시 carrier Story 별도 발의). **CFP-1403 Story §5.3 EC-8 정합** (closed-set invariant 보존 — F-SA-1403-03 source).
 
 **Rule (c) — Owner clarification (SSOT)**:
 
@@ -769,7 +769,7 @@ mirrored field 4종 1+ 변경 감지 AND author 가 `marketplace_sync_required: 
 **Cross-reference (boundary clarity, F-SA-1403-02 source)**:
 
 - **cross-repo `mclayer/marketplace` PR injection scenario** = **§결정 2** (ordering policy: marketplace sibling sync PR 先 merge) + **§결정 22** (Gap B blocking-on-pr `check-version-bump-atomic.sh` 실값 parity, marketplace.json 의 byte-identical mirror parity 검증) 영역. **Amendment 10 scope 외** — Amendment 10 = wrapper PR 안 `marketplace_sync_required` field **선언 값 결정** layer, cross-repo marketplace PR 의 실제 sync 실행 / state verify 는 §결정 2 + §결정 22 영역.
-- mirrored field 4종 closed-set invariant (§결정 1) **보존** — 5종 확장 시 별 ADR Amendment 의무 (Rule (b) `open_extension: false` 와 isomorphic, CFP-1403 Story §5.3 EC-8 정합).
+- mirrored field 4종 closed-set invariant (§결정 1) **보존** — 5종 확장 시 별도 ADR Amendment 의무 (Rule (b) `open_extension: false` 와 isomorphic, CFP-1403 Story §5.3 EC-8 정합).
 
 **FACT FIX note (ArchitectAnalyst Phase 1 deputy verdict, SSOT)**:
 
