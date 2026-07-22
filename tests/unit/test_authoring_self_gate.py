@@ -72,12 +72,12 @@ AB_SUBSTRATE_BASENAMES = frozenset({
     "dev-process-event-v1.md",  # A 계약
 })
 
-# 7-tuple branch-protection required contexts (CLAUDE.md SSOT — AC-6/16 무변경 확인, 독립 하드코딩)
+# 8-tuple branch-protection required contexts (CLAUDE.md SSOT — 독립 하드코딩; CFP-2782: `Verify deploy lane presence` 제거 9→8 + CFP-2780 css-lint 2 반영. 명칭 SEVEN_TUPLE = cosmetic 잔존)
 SEVEN_TUPLE_CONTEXTS = (
     "phase-gate-mergeable", "invariant-check",
     "doc frontmatter schema (CFP-28 — strict)", "doc section schema (CFP-28 — strict)",
-    "check-gate", "Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)",
-    "ac-traceability-matrix",
+    "check-gate", "ac-traceability-matrix",
+    "css structural lint (stylelint, warning-tier)", "css-lint discriminating test (mutation 생존 0)",
 )
 
 # ═════════════════════════════════════════════════════════════════════════════

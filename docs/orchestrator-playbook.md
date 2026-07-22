@@ -2244,7 +2244,7 @@ Wave 2 mechanical wire (`scripts/check-admin-merge-preflight.sh` + workflow + ba
 
 ## 3B. Preflight 체크 (lane 진입 직전)
 
-**full-lane 단일 분류 (ADR-127 §결정 1/2 — doc-only fast-path 폐지)**: Story 분류 판정 직후, Orchestrator가 **모든 Story = full 10 lane + Phase 1/2 PR 분리**로 적용한다. 구 3-way 분류(chore 면제 / doc-only fast-path / full-lane)는 폐지 — chore 면제·doc-only 단일 PR 경로 모두 소멸. SSOT 문서만 바뀌는 변경도 정식 풀 플로우. lane 이 검사할 산출물 target 이 부재한 lane 은 **N/A 3축 AND 판정**(① 산출물 부재 ∧ ② downstream 무변경 ∧ ③ 미래 의무 무선결 — ADR-127 §결정 5)으로 `N/A — <사유>` 표기(ADR-005), 단축 아닌 정식 분류의 정상 결과. 1축이라도 위반 시 정식 lane 무조건 진입. SSOT: [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정 1/2/5.
+**full-lane 단일 분류 (ADR-127 §결정 1/2 — doc-only fast-path 폐지)**: Story 분류 판정 직후, Orchestrator가 **모든 Story = full 8 lane + Phase 1/2 PR 분리**로 적용한다. 구 3-way 분류(chore 면제 / doc-only fast-path / full-lane)는 폐지 — chore 면제·doc-only 단일 PR 경로 모두 소멸. SSOT 문서만 바뀌는 변경도 정식 풀 플로우. lane 이 검사할 산출물 target 이 부재한 lane 은 **N/A 3축 AND 판정**(① 산출물 부재 ∧ ② downstream 무변경 ∧ ③ 미래 의무 무선결 — ADR-127 §결정 5)으로 `N/A — <사유>` 표기(ADR-005), 단축 아닌 정식 분류의 정상 결과. 1축이라도 위반 시 정식 lane 무조건 진입. SSOT: [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정 1/2/5.
 
 Orchestrator가 **각 레인 진입 직전에 의무 수행**. 3개 체크 중 하나라도 FAIL이면 **block + report**: 에이전트 스폰 없이 사용자에게 실패 사유 반환.
 
