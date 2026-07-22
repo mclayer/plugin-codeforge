@@ -139,7 +139,7 @@ ArchitectAnalyst 이의 3 (dogfood vs consumer Confluence sync 범위 불일치)
 
 1. **git = SoR-work / Confluence = SoR-docs disjoint axis** — consumer 측 `atlassian.confluence.*` schema 도 단방향 git→Confluence mirror direction immutable (역방향 0건)
 2. **sync direction = 단방향 git → Confluence (write boundary = ADR-103 sync agent 단일 진입점)** — consumer 측 schema 의 `mirror_direction` field 도 `git_to_confluence` immutable
-3. **closed-enum 5 mirror 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge / Orchestrator Playbook)** (open_extension: false) — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (Q-1 사용자 확정 CFP-1668), 확장 시 별 CFP 의무
+3. **closed-enum 5 mirror 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge / Orchestrator Playbook)** (open_extension: false) — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (Q-1 사용자 확정 CFP-1668), 확장 시 별도 CFP 의무
 4. **Issue-only retain 5 면제 (Story file / FIX Ledger / Lane Evidence / decision packet / spawn prompt)** Confluence mirror 금지 — consumer 측 도 동일 retain 영역 (mirror 0건, Q-2 사용자 확정 CFP-1668)
 5. **3-anchor verify (content hash / version / sync commit SHA) + dual-layer verify + SSRF Layer 3 base_url allowlist** invariant — consumer 측 sync 도 동일 invariant, 약화 0건
 6. **token = `*_env` reference 패턴 (평문 token 직접 mount 금지)** — consumer 측 `atlassian.confluence.api_token_env` 형식 의무 (평문 0건)
@@ -202,10 +202,10 @@ atlassian.* schema 신설은 ADR-027 amendment 불요 — atlassian.* schema 가
 |---|---|---|---|---|
 | `confluence.mirror_targets[]` | array of string | consumer 측 mirror 대상 enum (closed-enum SYMMETRIC subset, Q-1 정합) | per-consumer instantiate | NOT secret |
 | `confluence.homepage_id` | string (optional) | consumer 측 Confluence space root page id (parent_id placement 결정 영역) | per-consumer instantiate | NOT secret |
-| `confluence.per_doc_type_override` | object (optional) | per-doc-type 별 binding override (예: `{adr: {parent_page_id: ...}}`) | per-consumer instantiate | NOT secret |
+| `confluence.per_doc_type_override` | object (optional) | per-doc-type 개별 binding override (예: `{adr: {parent_page_id: ...}}`) | per-consumer instantiate | NOT secret |
 | `confluence.instance` | string (optional) | consumer 측 multi-instance Confluence Cloud account binding (sandbox/production 동시 운영 영역 declarative anchor — multi-instance binding mechanism = OOS 별 carrier) | per-consumer instantiate | NOT secret |
 
-**mirror_targets[] enum validation (closed-enum 5)** — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook} (ADR-111 §결정 1 closed-enum 5 정합, Amendment 1 후). open_extension: false (확장 시 별 CFP 의무).
+**mirror_targets[] enum validation (closed-enum 5)** — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook} (ADR-111 §결정 1 closed-enum 5 정합, Amendment 1 후). open_extension: false (확장 시 별도 CFP 의무).
 
 **secret boundary 보존** — 4 신규 field 모두 NOT secret (Internal 분류). secret = `api_token` + `user_email` (Amendment 1 이전 §결정 3 본문 보존) — schema field 는 `*_env` reference (env key name) 만 허용, 평문 token / email 직접 기재 금지.
 

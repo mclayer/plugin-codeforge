@@ -85,13 +85,13 @@ ADR-100 §결정 1 "wrapper git-commit governance docs" = enumeration 미codify 
 
 ### §결정 1 — Confluence mirror authoritative 대상 closed-enum 5 (design doc 영역, Amendment 1 후)
 
-design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 5 대상 closed-enum 으로 박제한다 (open_extension: false, 확장 시 별 CFP carrier 의무). **5번째 영역 (orchestrator-runbook) = Amendment 1 (CFP-1618) 확장** — origin CFP-1584 Phase 1 audit 결과 4 영역 외 Playbook 영역 발견 carrier:
+design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 5 대상 closed-enum 으로 박제한다 (open_extension: false, 확장 시 별도 CFP carrier 의무). **5번째 영역 (orchestrator-runbook) = Amendment 1 (CFP-1618) 확장** — origin CFP-1584 Phase 1 audit 결과 4 영역 외 Playbook 영역 발견 carrier:
 
 | # | 대상 | git 위치 | sync source repo | carrier ADR | sync direction |
 |---|---|---|---|---|---|
 | 1 | **ADR** | `docs/adr/` | wrapper repo (plugin) | ADR-100 §결정 1 + 본 ADR-111 §결정 1 | 단방향 git → Confluence |
 | 2 | **Living Architecture page** | per-plugin `docs/architecture/` (9 plugin family — wrapper + 8 lane) | wrapper repo + 6 lane plugin repo (CFP-949 Sub-Epic 6 lane plugin self-owned architecture doc seed) | ADR-078 (living architecture doc SSOT) | 단방향 git → Confluence |
-| 3 | **Change Plan** | `docs/change-plans/` (dogfood = internal-docs repo) | mclayer/codeforge-internal-docs (dogfood-out) + consumer repo (single_repo) | ADR-103 (sync mechanism — sync source repo 별) | 단방향 git → Confluence |
+| 3 | **Change Plan** | `docs/change-plans/` (dogfood = internal-docs repo) | mclayer/codeforge-internal-docs (dogfood-out) + consumer repo (single_repo) | ADR-103 (sync mechanism — sync source repo 개별) | 단방향 git → Confluence |
 | 4 | **Domain Knowledge** | `docs/domain-knowledge/` | wrapper repo (plugin) | ADR-100 §결정 1 (wrapper git-commit governance docs 영역) | 단방향 git → Confluence |
 | 5 | **Orchestrator Playbook** (orchestrator-runbook) | `docs/orchestrator-playbook.md` | wrapper repo (plugin) | ADR-111 §결정 1 Amendment 1 (CFP-1618) | 단방향 git → Confluence |
 
@@ -101,7 +101,7 @@ design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 
 
 **Change Plan sync source repo dogfood/consumer 분기**: dogfood (wrapper plugin family) = internal-docs repo SSOT (ADR-013 §결정 1 MOVE 영역). consumer = consumer repo (single_repo) SSOT. sync source = repo 별로 결정 (ADR-103 carrier).
 
-**Orchestrator Playbook scope boundary (5번째 영역, Amendment 1 — CFP-1618)**: 5번째 영역 = `docs/orchestrator-playbook.md` (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook / disaster recovery runbook 등) **포함 안 함**. 확장 시 별 CFP carrier 의무 (open_extension: false). split granularity = §-level page split (CFP-1524 Sub-A CFP-1584 carrier, 17 § + 부록 A+B 통합 = 19 entry skeleton + CRITICAL Step 0 §.N-level 추가 분할 carrier 별 follow-up CFP). split mapping SSOT = `docs/confluence-ia-tree.yaml` `playbook_split_pages[]` array + `playbook_pages_adr_111_classification` declaration block. §결정 3 IA axis 적용 영역: orchestrator-playbook = cross-cutting sibling 영역 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional, 정식 재구조화 Sub-B carrier defer). §결정 4 diagram strategy + §결정 5 cross-link discipline 동일 적용 (5번째 영역에도 diagram-as-code 의무 + git anchor + Confluence anchor 양쪽 link 의무 — §결정 3/4/5 본문 무수정 invariant 보존, 적용 영역 확장 만).
+**Orchestrator Playbook scope boundary (5번째 영역, Amendment 1 — CFP-1618)**: 5번째 영역 = `docs/orchestrator-playbook.md` (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook / disaster recovery runbook 등) **포함 안 함**. 확장 시 별도 CFP carrier 의무 (open_extension: false). split granularity = §-level page split (CFP-1524 Sub-A CFP-1584 carrier, 17 § + 부록 A+B 통합 = 19 entry skeleton + CRITICAL Step 0 §.N-level 추가 분할 carrier 별도 follow-up CFP). split mapping SSOT = `docs/confluence-ia-tree.yaml` `playbook_split_pages[]` array + `playbook_pages_adr_111_classification` declaration block. §결정 3 IA axis 적용 영역: orchestrator-playbook = cross-cutting sibling 영역 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional, 정식 재구조화 Sub-B carrier defer). §결정 4 diagram strategy + §결정 5 cross-link discipline 동일 적용 (5번째 영역에도 diagram-as-code 의무 + git anchor + Confluence anchor 양쪽 link 의무 — §결정 3/4/5 본문 무수정 invariant 보존, 적용 영역 확장 만).
 
 #### consumer scope binding — SYMMETRIC subset (Amendment 2 — CFP-1668 Wave 1)
 
@@ -112,7 +112,7 @@ design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 
 | **subset 선택 mechanism** | consumer 가 자기 `atlassian.confluence.mirror_targets[]` field 안 wrapper closed-enum 5 중 일부 또는 전체 entry 선택 (예: `[adr]` / `[adr, change_plan]` / `[adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook]` 모두) | enum_closure 검증 — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook}. wrapper 외 신규 type 추가 금지 (open_extension: false) |
 | **per-consumer space 결정** | consumer 가 자기 Confluence space (예: mctrader = `MCT`, 미래 consumer = 자기 결정) 의 root parent page 를 `atlassian.confluence.homepage_id` 로 명시 — per-consumer 영역, wrapper space (예: `CFP`) 와 disjoint | wrapper space namespace 침범 0건. consumer 자기 space ownership |
 | **sync source repo** | consumer repo (자기 git source) — 단방향 git→Confluence (ADR-100 §결정 1 disjoint axis 정합) | sync direction immutable |
-| **mirror_targets[] enum 확장** | 별 CFP 의무 (wrapper closed-enum 5 본문 변경 = 별 ADR-111 Amendment carrier — 본 Amendment 1 / Amendment 2 의 precedent) | open_extension: false (Q-1 SYMMETRIC subset 확정) |
+| **mirror_targets[] enum 확장** | 별도 CFP 의무 (wrapper closed-enum 5 본문 변경 = 별도 ADR-111 Amendment carrier — 본 Amendment 1 / Amendment 2 의 precedent) | open_extension: false (Q-1 SYMMETRIC subset 확정) |
 
 **ADR-068 I-2 cross-module propagation completeness — enum_closure annotation 의무**:
 
@@ -220,7 +220,7 @@ design doc 안 diagram = **diagram-as-code (Mermaid / PlantUML) 우선**. Conflu
 
 ### 부정 / trade-off
 
-- closed-enum 9 (4 mirror + 5 retain) 의 확장 영역 (예: 신규 design doc type 도입) 시 별 CFP carrier 의무 (open_extension: false). 완화 = §결정 1/2 enum 확장 명시 carrier path (별 ADR Amendment + ADR-RESERVATION row 신설).
+- closed-enum 9 (4 mirror + 5 retain) 의 확장 영역 (예: 신규 design doc type 도입) 시 별도 CFP carrier 의무 (open_extension: false). 완화 = §결정 1/2 enum 확장 명시 carrier path (별도 ADR Amendment + ADR-RESERVATION row 신설).
 - Confluence anchor field (§결정 5 frontmatter `confluence_anchor`) 신설 = 4 design doc 영역 frontmatter schema 갱신 (선택적) — 실 wire 시 ADR-041 doc-locations.yaml schema 갱신 동반 (ADR-103 carrier defer 영역 정합).
 - diagram-as-code (§결정 4) 의무화 = Confluence native macro 사용처 영역 migration 필요 (현 시점 사용처 0 추정 — verify 영역). 완화 = §결정 4 예외 영역 enum (외부 embed / 개인 SoE 영역) 명시.
 - mechanical_enforcement_actions `[issue-design-content-confluence-link]` Wave 1 declaration-only — 실 wire = Sub-A S1.3 / CFP-1421 carrier. pattern_count >= 2 재발 시 follow-up CFP MUST promote.

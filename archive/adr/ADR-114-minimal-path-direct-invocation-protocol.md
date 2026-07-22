@@ -89,7 +89,7 @@ minimal path direct scope 제한:
 minimal path direct = exception channel (full-lane default 우선). exception path 가 norm 으로 mutation 되지 않도록:
 - minimal path 발동 = 사용자 directive 필수 (Orchestrator self-decide 불가)
 - 매 발동 = Story §14 Lane Evidence 에 `[minimal-path-direct: <trigger-condition>]` marker 의무 (audit trail)
-- pattern_count ≥ 3 재발 시 mechanical enforcement promotion (when condition lint) — 별 follow-up CFP carrier
+- pattern_count ≥ 3 재발 시 mechanical enforcement promotion (when condition lint) — 별도 follow-up CFP carrier
 
 ## 결과
 

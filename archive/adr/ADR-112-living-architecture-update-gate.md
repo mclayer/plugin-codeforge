@@ -92,7 +92,7 @@ ArchitectAgent 는 다음 5 anchor section 중 **최소 1개 update 의무 OR `[
 - `false` = 충족 부족 — FIX 의무 (ArchitectAgent re-spawn) + DesignReviewPL findings[].type `living-architecture-not-updated` 동반 emit (§결정 4)
 - null/omit = v4.10 이전 consumer backward-compat (Orchestrator 무시)
 
-**Disjoint axis** (동일 verdict packet 안 별 boolean field, 6th):
+**Disjoint axis** (동일 verdict packet 안 별도 boolean field, 6th):
 1. `mechanical_self_check_passed` (v4.2, ADR-065 syntactic 7-item)
 2. `boundary_completeness_self_check_passed` (v4.3, ADR-068 I-1~I-4)
 3. `dimensional_empirical_self_check_passed` (v4.4, ADR-068 Amendment 1 I-5)
@@ -133,7 +133,7 @@ ArchitectAgent 는 다음 5 anchor section 중 **최소 1개 update 의무 OR `[
 
 | 대안 | rationale | reject 사유 |
 |---|---|---|
-| (A) Per-Story mandate | 최대 frequency = minimum stale window | ArchitectAgent fatigue 위험 (Story 별 5-anchor 평가 over-frequent) + Story = sub-deliverable 단위 (cumulative 본문 변경 빈도 ↔ Story 빈도 mismatch). per-Epic = 적정 granularity (Epic = "사용자 capability 노출 완결 단위" align). |
+| (A) Per-Story mandate | 최대 frequency = minimum stale window | ArchitectAgent fatigue 위험 (Story 개별 5-anchor 평가 over-frequent) + Story = sub-deliverable 단위 (cumulative 본문 변경 빈도 ↔ Story 빈도 mismatch). per-Epic = 적정 granularity (Epic = "사용자 capability 노출 완결 단위" align). |
 | (B) Section update OR silent skip | 단순 (no-op rationale 작성 면제) | no-op 모호함 — retro corpus enumeration 시 "왜 update 안 했는가" 사후 reconstruct 불가능. DesignReviewPL cross-validate 불가 (silent skip ↔ 정당한 no-op disjoint signal 부재). closed-binary explicit declare (§결정 2) 채택 — 모호함 차단. |
 | (C) ArchitectAgent self-write only (DesignReviewPL cross-validate 면제) | code-time invariant 영역 외 (governance write-time anchor) | DesignReviewPL = read-only verifier 활성 시 cross-anchor parity check (CFP-1303 parallel_anchors_checked[] pattern verbatim 답습) — self-check false positive / false negative 차단. §결정 4 finding type emit 의무 채택. |
 | (D) `findings[].type` enum 신설 0건 (verdict field 만 추가) | 단순 MINOR bump (field 1개) | DesignReviewPL emit 시 finding type 표준화 필요 (anchor_id + type 조합 stable identifier — debate-protocol-v1 §결정 2/4 정합). 기존 enum literal pattern (boundary-completeness / mechanical_sync_required / dimensional-empirical-gap / audit-gate-pointer-missing / DDD 3종 / confluence-mirror-link-missing) 답습 — 10번째 literal `living-architecture-not-updated` 추가 채택. |
@@ -152,7 +152,7 @@ ArchitectAgent 는 다음 5 anchor section 중 **최소 1개 update 의무 OR `[
 - **Sibling Story #1425 (S3.1)** = ADR-078 Amendment 2 (5-anchor section closed-set codify, base for §결정 2). ADR-078 본문 update 영역 = S3.1 scope, 본 PR 영역 외.
 - **Sibling cross-repo PR** = `codeforge-review/agents/DesignReviewPLAgent.md` (DesignReviewPL check item 추가 — §결정 4 `living-architecture-not-updated` finding emit 영역). Follow-up CFP carrier.
 - **Mechanical wire (S3.5 / CFP-1429)** = `scripts/check-living-architecture-update.sh` + `templates/github-workflows/living-architecture-update.yml` + label-registry-v2 family member `hotfix-bypass:living-architecture-update`. 본 PR scope 외.
-- **Wrapper sibling sync (5 lane plugin)** = requirements/design/develop/test/pmo `review-verdict-v4.md` sibling drift = 본 PR scope 외 (별 sweep CFP carrier, CFP-1167 precedent).
+- **Wrapper sibling sync (5 lane plugin)** = requirements/design/develop/test/pmo `review-verdict-v4.md` sibling drift = 본 PR scope 외 (별도 sweep CFP carrier, CFP-1167 precedent).
 
 ### Backward-compat invariant
 

@@ -215,7 +215,7 @@ runtime 실패의 진단 ("원인 = X") 은 acted-on (수정 착수) **전에 fa
 
 #### 거절된 대안
 
-- (D-A) 게이트면 (① A/B) 과 진단면 (② C/D) 을 **별 원칙으로 분리** — 거절. 둘 다 "표면 신호 섣부른 단정" 이라는 단일 약점의 두 발현이라 한 umbrella (§결정 10) 가 정합. 분리 시 동형 비대칭 (프로세스 ↔ 증거 레벨) 이 두 ADR 로 쪼개져 SSOT 가 갈림.
+- (D-A) 게이트면 (① A/B) 과 진단면 (② C/D) 을 **별도 원칙으로 분리** — 거절. 둘 다 "표면 신호 섣부른 단정" 이라는 단일 약점의 두 발현이라 한 umbrella (§결정 10) 가 정합. 분리 시 동형 비대칭 (프로세스 ↔ 증거 레벨) 이 두 ADR 로 쪼개져 SSOT 가 갈림.
 
 **ADR-058 §결정 5 / ADR-064 §결정 7 정합**: 본 Amendment = additive ratchet **강화 방향** (검증 적용면 claim/proposal/report → verdict/diagnosis 로 확장) → sunset_justification = "N/A — permanent governance, 강화 방향 only". 약화 0.
 

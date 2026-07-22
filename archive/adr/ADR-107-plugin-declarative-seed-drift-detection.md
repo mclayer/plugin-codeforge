@@ -137,7 +137,7 @@ ArchitectAgent §3 작성 시 cross-repo plugin 영역 fact claim (file existenc
 |---|---|---|
 | ADR-070 (Codex verify-before-trust) | `mechanical_enforcement_actions: []` retain (§D5) | CFP-963 (codex-network-scope-presence) 12번째 warning-tier entry |
 | ADR-082 (write-time self-write verification mandate) | `mechanical_enforcement_actions: []` Wave 1 known-limitation | Amendment 1 (CFP-841) — behavioral→mechanical 전환 2-entry (corpus-claim-verify / cross-plugin-ownership-verify) |
-| ADR-086 (deputy creation decision framework) | `mechanical_enforcement_actions: []` declaration-only Wave 1 | 별 CFP carrier (deferred-followup) |
+| ADR-086 (deputy creation decision framework) | `mechanical_enforcement_actions: []` declaration-only Wave 1 | 별도 CFP carrier (deferred-followup) |
 | **ADR-107 (본 ADR)** | `mechanical_enforcement_actions: []` declaration-only Wave 1 | **pattern_count >= 2 재발 시 follow-up CFP MUST promote** (ADR-082 §결정 6 rationale 답습) |
 
 **rationale**: pattern_count=6 evidence 가 governance ratchet 강화 anchor codify 의 1차 mandate — mechanical enforcement layer 는 Wave 2 별 carrier 가 spec/plan + bats fixture + workflow yml + evidence-checks-registry row 동시 atomic codify (declaration-only Wave 1 가 wire 의 정합 source).
@@ -240,13 +240,13 @@ CFP-1317 Epic close 후 retro internal-docs#811 fe8524a §6 follow-up F1+F2 HIGH
 |---|---|---|---|
 | ADR-070 | declaration-only `mechanical_enforcement_actions: []` retain (§D5) | CFP-963 codex-network-scope-presence | 12번째 warning-tier entry (evidence-checks-registry) |
 | ADR-082 | Wave 1 known-limitation `mechanical_enforcement_actions: []` | Amendment 1 (CFP-841) corpus-claim-verify + cross-plugin-ownership-verify | 2-entry 통합 wire (본 ADR-107 Amendment 1 패턴 inspiration) |
-| ADR-086 | declaration-only Wave 1 | 별 CFP carrier (deferred-followup) | sibling deferred 패턴 정합 |
+| ADR-086 | declaration-only Wave 1 | 별도 CFP carrier (deferred-followup) | sibling deferred 패턴 정합 |
 | **ADR-107 (본 Amendment 1)** | declaration-only Wave 1 `mechanical_enforcement_actions: []` | **CFP-1367 — plugin-declarative-seed-byte-parity-check + design-lane-plugin-feasibility-check** | **2-entry 통합 wire (ADR-082 Amendment 1 정합)** |
 
 ### Wave 3+ scope (별 follow-up CFP carrier)
 
 본 Amendment 1 scope 외 (Story §5.4 Out-of-Scope 정합):
-- F1 / F2 blocking-on-pr 승격 = 별 follow-up CFP (Wave 4 evidence accumulation 후 ADR-060 §결정 6 AND condition 충족)
-- F1 scope 확장 (다른 plugin templates/* file mapping) = 별 follow-up CFP (Wave 3 byte-parity scope 확장)
-- F2 heuristic 정교화 (regex 확장 + 추가 evidence channel) = 별 follow-up CFP (Wave 3 heuristic tuning)
+- F1 / F2 blocking-on-pr 승격 = 별도 follow-up CFP (Wave 4 evidence accumulation 후 ADR-060 §결정 6 AND condition 충족)
+- F1 scope 확장 (다른 plugin templates/* file mapping) = 별도 follow-up CFP (Wave 3 byte-parity scope 확장)
+- F2 heuristic 정교화 (regex 확장 + 추가 evidence channel) = 별도 follow-up CFP (Wave 3 heuristic tuning)
 - threshold tuning = evidence-based Wave 3 별 carrier

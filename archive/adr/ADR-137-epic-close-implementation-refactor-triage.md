@@ -48,11 +48,11 @@ Epic-close 수렴 시점(Epic 하위 전 Story merged, playbook §9.7.2 Orchestr
 | **대상 모집단** | 누적 retro follow-up **Issue**(≥3) | 실머지 **코드 duplication anchor** |
 | **결정 enum** | CLOSE_AS_OBVIATED/SENTINEL/PROMOTE/DEFER | now/defer/drop |
 
-§D-11 5-column structured-row 는 **패턴 참조 선례로만** 인용 — closure enum **값 비재사용**. deferred-item-lifecycle 이 §D-11 과 별 enum `{tracked, observed}` 를 신설한 선례를 답습(disposition 축 ⊥ narrative 판정 축). ADR-059 §결정11 이 "triage=Story C 소유"로 경계를 그었으므로 §결정12 흡수는 자기모순.
+§D-11 5-column structured-row 는 **패턴 참조 선례로만** 인용 — closure enum **값 비재사용**. deferred-item-lifecycle 이 §D-11 과 별도 enum `{tracked, observed}` 를 신설한 선례를 답습(disposition 축 ⊥ narrative 판정 축). ADR-059 §결정11 이 "triage=Story C 소유"로 경계를 그었으므로 §결정12 흡수는 자기모순.
 
 ### 결정 2 — 3분기 triage verdict (now / defer / drop)
 
-각 duplication anchor 별 ∀-전칭 판정:
+각 duplication anchor 개별 ∀-전칭 판정:
 
 - **now** — 별도 리팩터 Story 정식 10레인 발의. 조건 = debate 합의 "지금 리팩터" + ADR-119 3문 전부 YES. safety guard 1(결정 3) 상속.
 - **defer** — 이연 + forcing-function. deferred-item-lifecycle **narrative-recorded** state 진입 → `check-deferred-item-recovery.sh` 회수 강제. **triage-defer verdict → §deferred structured 5-column row 변환 append = 본 ADR 배선 의무**(dead-path 방지). **착지 파일 = `EPIC-RESULTS-<EPIC_KEY>.md` 의 `## §deferred` 섹션**(PMOAgent self-write, Epic-close artifact) — 그 파일이 `check-deferred-item-recovery.sh` 인자 목록(playbook §9.7.2 self-check)에 등록돼 `_scan_retro_file` 도달 보장. row 의 **기존 `source` column**(origin `_evaluate_row` L135 `cells=[disposition,item,tracking,rationale,source]` — 이미 5번째 상주, CFP-2470/W2)에 값 `triage-defer` 를 명시(column 신규 추가 아님 — 값 도메인 확장; retro-narrative 와 변별, 경계혼합 방지).

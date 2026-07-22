@@ -138,11 +138,11 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 ### lint scope 결정 rationale
 
 - `ubiquitous-language` + `bounded-context-presence` = **wrapper-local** 자족 (docs/glossary.md + docs/stories / docs/change-plans / docs/adr).
-- `ddd-pattern-frontmatter` = **cross-plugin** (codeforge-design plugin agent file = 별 repo, wrapper = 0 core agent ADR-009). path-parameterized — design plugin CI 가 `bash <wrapper>/scripts/check-ddd-pattern-frontmatter.sh agents/*.md` 호출 또는 wrapper workflow 가 design repo clone 후 호출. clone 실패 = graceful degradation (warning + skip, PR merge 미차단). top-level line-based field 추출 (전체 YAML 파싱 회피 — agent description 멀티라인 콜론 robust).
+- `ddd-pattern-frontmatter` = **cross-plugin** (codeforge-design plugin agent file = 별도 repo, wrapper = 0 core agent ADR-009). path-parameterized — design plugin CI 가 `bash <wrapper>/scripts/check-ddd-pattern-frontmatter.sh agents/*.md` 호출 또는 wrapper workflow 가 design repo clone 후 호출. clone 실패 = graceful degradation (warning + skip, PR merge 미차단). top-level line-based field 추출 (전체 YAML 파싱 회피 — agent description 멀티라인 콜론 robust).
 
 ### design Change Plan sibling cross-ref (별 repo)
 
-§결정 7 INV-5 의 Change Plan DDD field (§bounded_context_boundary + §affected_aggregates) = **codeforge-design plugin `templates/change-plan.md`** (별 repo sibling). 본 S3 task scope 외 — Orchestrator 가 design worktree 에서 별 처리 (sibling carrier). 본 ADR §결정 6/§결정 7 mechanical wire 와 disjoint (wrapper-local lint 3 + design template = 별 repo).
+§결정 7 INV-5 의 Change Plan DDD field (§bounded_context_boundary + §affected_aggregates) = **codeforge-design plugin `templates/change-plan.md`** (별도 repo sibling). 본 S3 task scope 외 — Orchestrator 가 design worktree 에서 별도 처리 (sibling carrier). 본 ADR §결정 6/§결정 7 mechanical wire 와 disjoint (wrapper-local lint 3 + design template = 별도 repo).
 
 ### 정정 invariant 보존
 
@@ -159,10 +159,10 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 
 **(A) §결정 4 consumer scope 승격 (활동 표준화)**
 
-§결정 4 가 consumer application BC glossary 를 "downstream Epic, 별 CFP" 로 **content 작성을 defer** 하되 그 **생산·유지 활동의 표준은 부재**했다. 본 Amendment 가 그 활동을 표준화:
+§결정 4 가 consumer application BC glossary 를 "downstream Epic, 별도 CFP" 로 **content 작성을 defer** 하되 그 **생산·유지 활동의 표준은 부재**했다. 본 Amendment 가 그 활동을 표준화:
 
 - consumer application BC 어휘 SSOT = `docs/domain-knowledge/domain/<area>/lexicon.md` (동음/유의/반의 관계) + `concept-dictionary.md` (개념별 정의/불변식/위치). owner = DomainAgent (codeforge-requirements, 기존 `domain/**` 권한 내 — glob 변경 0).
-- §결정 4 SSOT 표의 application BC 행 `mctrader-hub/docs/glossary.md` = consumer-specific 예시로 **cross-ref 유지** (표준 경로는 위 `docs/domain-knowledge/domain/<area>/` — consumer 별 overlay 가 노출 경로 매핑). content 작성(실 어휘) = 여전히 consumer downstream Epic 영역 (defer 유지) — 본 Amendment 는 **활동/machinery 표준만** 제정, content 미작성.
+- §결정 4 SSOT 표의 application BC 행 `mctrader-hub/docs/glossary.md` = consumer-specific 예시로 **cross-ref 유지** (표준 경로는 위 `docs/domain-knowledge/domain/<area>/` — consumer 개별 overlay 가 노출 경로 매핑). content 작성(실 어휘) = 여전히 consumer downstream Epic 영역 (defer 유지) — 본 Amendment 는 **활동/machinery 표준만** 제정, content 미작성.
 - 생산 트리거 = bootstrap 1회 (4-plane multi-agent 수집 — "수집 단계 ↔ 최종 편집 owner(DomainAgent)" 분리 의무) + per-Story 증분 (capture-gate §1.3 term-drift routing, ADR-129 Amendment 1 정합).
 
 **(B) §결정 6/§결정 7 stale `mechanical_enforcement_actions` "Active" 정정 (firsthand falsify)**
@@ -216,7 +216,7 @@ ratchet 강화 (scope 확대 + INV-R6 신규 + INV-5 application-BC 확장). 약
 - **Q3 Top 10**: mctrader retroactive ADR annotation = ADR-029~033 + 영향도 기준 5 추가 (downstream Epic, 본 ADR 영역 외)
 - **Q4 Subdomain Specialist + "which subdomain under threat"**: deputy spawn rationale 어휘 transition
 - **Q5 양쪽 다**: PL = metaphor only / ArchitectLane 산출물 = real Aggregate (consistency boundary)
-- **Q6 Prompt + Template lint + review-verdict enum**: consumer CI gate 별 CFP
+- **Q6 Prompt + Template lint + review-verdict enum**: consumer CI gate 별도 CFP
 
 ### Codex BIG CONCERN
 
@@ -272,7 +272,7 @@ CFP-1086 4-way RACI matrix ⚠ (Security/InfraOp/TestContract × Aggregate/Data/
 | **Layer A (governance BC, PL metaphor)** | supervised authority cluster — ArchitectPLAgent 가 6 deputy + chief author 산출물 통합하는 supervisor 의 metaphor only | ArchitectPLAgent role description 에 명시 (S2 agent frontmatter `ddd_pattern: Authority Pair (Aggregate Root metaphor)`) |
 | **Layer B (governance BC, ArchitectLane 산출물 = real Aggregate)** | Change Plan + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 = real consistency boundary. **§1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함** | ArchitectAgent 산출물 검증 의무 — DesignReviewPL 의 review-verdict-v4 finding type `aggregate_violation` (S4 신설) 가 cross-validate |
 
-mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별 BC**. `docs/glossary.md` (S1) 에서 명시 분리 (3 distinct semantics entry).
+mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별도 BC**. `docs/glossary.md` (S1) 에서 명시 분리 (3 distinct semantics entry).
 
 **Rationale (Q5 Codex verbatim)**: PL = Aggregate Root 는 supervised authority 의 metaphor only. Change Plan + ADR draft 산출물 자체는 real consistency boundary. 핵심 invariant: §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함. CFP 가 "agent control metaphor" vs "artifact consistency boundary" 를 explicit separate 해야 함.
 
@@ -283,7 +283,7 @@ mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 *
 | BC | Published Language SSOT |
 |---|---|
 | codeforge governance BC | `plugin-codeforge/docs/glossary.md` (본 ADR Story-1 신규) |
-| mctrader application BC | `mctrader-hub/docs/glossary.md` (downstream Epic, 별 CFP) |
+| mctrader application BC | `mctrader-hub/docs/glossary.md` (downstream Epic, 별도 CFP) |
 
 동음이의 (Aggregate / Module / Repository 등) 의 의미 충돌 차단. 양 glossary 가 cross-reference (link only, content duplication 금지).
 
@@ -312,7 +312,7 @@ DDD vocabulary enforcement = 3-tier:
 2. **Template lint (S3 — Wave 2 mechanical wire 완료, Amendment 2 정합)** — `scripts/check-ubiquitous-language.sh` + `scripts/check-bounded-context-presence.sh` + `scripts/check-ddd-pattern-frontmatter.sh` 3 entry warning tier. mechanical_enforcement_actions 3 entry (`ubiquitous-language-drift-check` / `bounded-context-presence-check` / `ddd-pattern-frontmatter-check`) = Wave 1 declaration-only (S1) → S3 Phase 2 actual mechanical wire (lint script + workflow + evidence-checks-registry Active). 상세 artifact enumeration = 본 ADR `## Amendment 2` section 참조. (구 entry name `check-ddd-vocabulary.sh` = S3 구현 시 `check-ubiquitous-language.sh` 로 확정 — evidence-checks-registry entry name `ubiquitous-language-drift-check` 정합.)
 3. **review-verdict-v4 enum (S4)** — finding type 3 신설: `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` (v4.7 → v4.8 MINOR bump)
 
-**Consumer CI gate 제외** — vocabulary 가 1 CFP cycle stabilize 후 별 CFP 진입 (Codex Q6 "premature" 정합).
+**Consumer CI gate 제외** — vocabulary 가 1 CFP cycle stabilize 후 별도 CFP 진입 (Codex Q6 "premature" 정합).
 
 **Rationale (Q6 Codex verbatim)**: prompt 만으로는 drift + agent compliance inconsistent. Template lint = mechanical structure / reviewer finding type = semantic accountability. Consumer CI gate (option D) = premature — vocabulary 가 적어도 1 CFP cycle stabilize 후 진입.
 
@@ -400,7 +400,7 @@ ADR-086 framework 의무 적용. 본 CFP 가 agent 신설 0건이지만 framewor
 | 2. cost analysis | 신규 agent 신설 시 cost? | N/A — 신설 0건 |
 | 3. consumer impact | consumer overlay 변경 영향? | N/A — wrapper 단독 SSOT, consumer CI gate 제외 (Q6 합의) |
 | 4. sibling cross-ref | sibling ADR conflict? | ADR-080 / ADR-064 / ADR-068 amendment 후보 = ratchet 강화 방향만 (충돌 0) |
-| 5. deferred carrier path | 본 CFP 후속 carrier? | mctrader downstream Epic (별 CFP, BC charter + Top 10 ADR annotation + mctrader glossary SSOT) |
+| 5. deferred carrier path | 본 CFP 후속 carrier? | mctrader downstream Epic (별도 CFP, BC charter + Top 10 ADR annotation + mctrader glossary SSOT) |
 
 **5-checklist 통과** — agent 신설 0건이므로 framework axis 1 영역 외, axis 4 sibling cross-ref + axis 5 deferred carrier path 만 적용. 본 CFP 진행 가능.
 

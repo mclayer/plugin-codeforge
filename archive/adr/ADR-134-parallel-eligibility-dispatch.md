@@ -197,7 +197,7 @@ merge-time 2단 재검증을 위한 전용 신규 워크플로 신설.
 - ADR 번호 atomic claim primitive (#724) — E3a (ADR-133)
 - force-push HEAD-pin gate (#1027) — E2
 - sentinel blocking wire (CFP-967/991 non-blocking → blocking) — E2
-- consumer adoption — 별 follow-on
+- consumer adoption — 별도 follow-on
 
 ## 관련 ADR
 

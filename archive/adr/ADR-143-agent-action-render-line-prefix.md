@@ -321,7 +321,7 @@ hook injection 은 여전히 **top-level Bash(`agent_type` 부재) EXCLUDE**(기
 
 #### A2.4 ADR-039 §결정 2 disjoint
 
-inline whitelist(mechanism 축: inline vs spawn) 무변경 — render UI action/상태 LINE(display 축)은 별 표면. INV-2 완화는 Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 에 라벨만). 상세 disjoint note = ADR-039 Amendment 11(paired sibling).
+inline whitelist(mechanism 축: inline vs spawn) 무변경 — render UI action/상태 LINE(display 축)은 별도 표면. INV-2 완화는 Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 에 라벨만). 상세 disjoint note = ADR-039 Amendment 11(paired sibling).
 
 #### A2.5 OOS 재확인
 

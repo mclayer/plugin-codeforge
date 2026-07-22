@@ -105,7 +105,7 @@ grace window 시작점 = wrapper 가 해당 consumer 환경에서 floor 미만�
 
 ### 부정 / trade-off
 
-- degraded mode 의 "어떤 behavior 를 비활성하는가" 경계가 Wave 1 declaration-only — 정확한 per-behavior degraded scope 는 후속 carrier (별 CFP) 가 enumeration. Wave 1 은 grace period 정책 anchor 만 codify.
+- degraded mode 의 "어떤 behavior 를 비활성하는가" 경계가 Wave 1 declaration-only — 정확한 per-behavior degraded scope 는 후속 carrier (별도 CFP) 가 enumeration. Wave 1 은 grace period 정책 anchor 만 codify.
 - grace window 만료 hard-fail 의 mechanical enforcement Wave 1 부재 (`mechanical_enforcement_actions: []`) — degraded warning 발화 / window 만료 hard-fail 은 behavioral directive (ADR-097 §결정 0 / ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습). pattern_count >= 2 재발 시 follow-up CFP MUST promote to mechanical lint.
 - grace window 시작점 (최초 감지 시점) 의 영속화 mechanism 이 consumer 환경별 state 의존 — Wave 1 은 정책 정량만, state 영속화 runtime 은 후속 carrier.
 

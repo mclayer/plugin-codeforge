@@ -146,7 +146,7 @@ grep -c '^  - name: hotfix-bypass:' docs/inter-plugin-contracts/label-registry-v
 
 - prior frozen entries (45번째 / 47번째 / 70번째 / 73번째 등 frozen-at-append 시점 박제, ADR-064 Amendment 5 historical narrative audit trail 보존 영역) **retroactive 정정 0건**
 - 신규 append-time entry 만 결정 2 forcing function 적용
-- destructive historical sweep 영역 외 — 필요 시 별 follow-up CFP carrier (사전 evidence accumulate 후)
+- destructive historical sweep 영역 외 — 필요 시 별도 follow-up CFP carrier (사전 evidence accumulate 후)
 
 근거: Event Sourcing immutable event log 정합 (결정 1 (A)), historical audit trail 보존 의무 (governance accountability).
 
@@ -166,7 +166,7 @@ axis 분리 정당 — sequential composition cross-ref OK (ADR-082 verify-befor
 **ADR-082 Amendment 7 sibling axis** (CFP-1312 — §결정 9 verify-before-cite scope 양방향 확장):
 - ADR-082 Amd 7 = backward-staleness lint (prior cite reference 가 후속 fact 갱신 시점 stale 인지 backward verify)
 - ADR-108 = forward-parity lint (write-time fact citation 이 post-append raw fact 와 parity 인지 forward verify)
-- 양 axis = verify-before-trust 의 사실 input layer 의 대칭 pair — 별 follow-up CFP carry-over carrier 가능 영역 (description count parity 가 verify-before-cite specific axis instantiation 후보, 본 ADR-108 scope 외)
+- 양 axis = verify-before-trust 의 사실 input layer 의 대칭 pair — 별도 follow-up CFP carry-over carrier 가능 영역 (description count parity 가 verify-before-cite specific axis instantiation 후보, 본 ADR-108 scope 외)
 
 ### 결정 6 — META self-application invariant (1st applied case dogfood loop close)
 
@@ -195,7 +195,7 @@ axis 분리 정당 — sequential composition cross-ref OK (ADR-082 verify-befor
 ### 부정 / Trade-off
 
 - Phase 2 wire 까지 mechanical detection 부재 (declaration-only Wave 1 — ADR-082 §결정 6 retain pattern 답습 / ADR-070 / ADR-086 precedent)
-- 본 ADR scope = label-registry-v2 단독 carrier — 다른 inter-plugin contract registry (review-verdict-v4 12 occ / evidence-checks 4 / MANIFEST 3 / debate-protocol 3 / comment-prefix 1) = pattern_count=0 영역 별 follow-up CFP carrier (evidence-gated unitary per ADR-064 §결정 5 정합 — CFP scope unitary 보호)
+- 본 ADR scope = label-registry-v2 단독 carrier — 다른 inter-plugin contract registry (review-verdict-v4 12 occ / evidence-checks 4 / MANIFEST 3 / debate-protocol 3 / comment-prefix 1) = pattern_count=0 영역 별도 follow-up CFP carrier (evidence-gated unitary per ADR-064 §결정 5 정합 — CFP scope unitary 보호)
 - Author 가 raw grep count 재verify 의무 lock-in (cognitive overhead — Phase 2 lint 가 mitigate)
 
 ### 영향 받는 코드·레이어·운영 경계
@@ -205,7 +205,7 @@ axis 분리 정당 — sequential composition cross-ref OK (ADR-082 verify-befor
 - `docs/evidence-checks-registry.yaml` — `label-registry-frozen-baseline-count-parity` entry row append (Phase 1)
 - `CLAUDE.md` — ADR-108 cross-ref 단락 + 20번째 warning entry 명시
 - Phase 2 (sibling sub-Story carrier wire): `scripts/check-label-registry-frozen-baseline-count-parity.sh` + workflow + bats fixture
-- 본 ADR scope 외 (별 follow-up CFP carrier): cross-contract applicability (review-verdict-v4 등 8 other contract) + ADR-082 sibling axis carry-over (verify-before-cite specific axis instantiation 후보)
+- 본 ADR scope 외 (별도 follow-up CFP carrier): cross-contract applicability (review-verdict-v4 등 8 other contract) + ADR-082 sibling axis carry-over (verify-before-cite specific axis instantiation 후보)
 
 ## 해소 기준
 
@@ -222,7 +222,7 @@ N/A — permanent policy (`is_transitional: false`).
 - **ADR-064** (decision principle mandate §결정 5 CFP scope unitary + §결정 7 evidence-gated symmetric ratchet) — 본 ADR scope = label-registry-v2 단독 carrier (evidence-gated unitary)
 - **ADR-073** (Orchestrator verify-before-assert) — 본 ADR 의 forcing function = verify-before-trust grep-count sub-scope axis-instantiation
 - **ADR-082** (write-time self-write verification mandate §결정 1 layer 1 sub-scope 1-C) — axis disjoint sibling (author claim verify ↔ description text count parity)
-- **ADR-082 Amendment 7** (CFP-1312 — §결정 9 verify-before-cite 양방향 확장) — sibling axis (forward-parity ↔ backward-staleness 대칭 pair) — 별 follow-up CFP carry-over carrier 평가 영역
+- **ADR-082 Amendment 7** (CFP-1312 — §결정 9 verify-before-cite 양방향 확장) — sibling axis (forward-parity ↔ backward-staleness 대칭 pair) — 별도 follow-up CFP carry-over carrier 평가 영역
 - **ADR-045** (§D-9 cross_story_pattern_adr_trigger pattern_count ≥ 2 reach escalation_action: adr_draft_emitted) — 본 ADR carrier origin
 - **ADR-107** (Plugin declarative seed drift detection — 2026-05-24 KST active) — adjacent concept, **axis disjoint** (ADR-107 = plugin file declarative seed drift vs ADR-108 = description text count drift). sibling carrier pattern 답습 (collision rebase ratchet precedent row 107 → 108 next sequential)
 

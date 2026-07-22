@@ -175,10 +175,10 @@ closure 는 **3종 종속 묶음**의 의존 폐포다:
 
 1. **shape 추가** — `_DEP_PATTERNS` 에 shape `re.compile(r"\bscripts/lib/[a-z0-9_-]+\.py\b")` **1개를 append** 하여 "yml→`scripts/lib/*.py` 1-hop 직접" shape 의 closure-완전성 coverage 를 완성한다. §결정 3 의 3종 종속 묶음 규칙(scripts + 데이터 + 정책doc)은 무변경 — 본 확장은 그 규칙의 *shape 인식 표면*을 넓히는 것이다.
 2. **char-class underscore 확장 근거** — `[a-z0-9_-]`(underscore + hyphen union). underscore 는 **load-bearing**: Python module 파일명 규약(PEP 8 snake_case)상 `scripts/lib/*.py` helper 는 underscore名이 지배적(story-init lib 6종 전부 underscore名)이므로, 형제 2패턴의 `[a-z0-9-]`(underscore 없음)을 그대로 복사하면 신규 shape 가 inert 가 된다. hyphen 은 미래 robustness(현 corpus 무영향).
-3. **append-only(회귀 0)** — 기존 2패턴의 char-class·경로 접두는 넓히지 않는다(over-match 회귀 회피). 신규 shape 는 별 리스트 원소로만 추가 → 방향1/2/3 기존 판정 불변.
+3. **append-only(회귀 0)** — 기존 2패턴의 char-class·경로 접두는 넓히지 않는다(over-match 회귀 회피). 신규 shape 는 별도 리스트 원소로만 추가 → 방향1/2/3 기존 판정 불변.
 4. **born-red 회피 ordering (reusable pattern)** — coverage 를 넓히면 기존 미등재 closure 자산이 즉시 위반으로 켜진다(born-red = self-block). 따라서 **선등재(gap 해소) → 패턴 활성** 순서를 강제한다: (D1) 미등재 helper(`workflow_story_init_project_config_repos.py`)를 manifest 에 선등재 + `chmod +x`(100755) → (D2) `_DEP_PATTERNS` 확장. firsthand 실측: whitelist-scoped `scripts/lib/*.py` run-block 직접호출 중 현 미등재 = repos.py 1종뿐 → D1 후 born-green. 이 "선등재→패턴활성" 은 coverage 확장 게이트의 재사용 가능 패턴이다.
 5. **scan surface·함정 무변경** — whitelist scoping(방향3 L321 `for name in whitelist`) + 주석 strip(`_YAML_COMMENT_LINE`) 재사용으로 두 false-RED 함정(① 주석-언급 helper / ② plugin-only workflow helper)이 자동 중화된다. 신규 로직 0.
-6. **tier 무변경(warning)** — 본 확장은 warning-tier(continue-on-error) 유지 — branch-protection 7-tuple 무변경. §결정 6 의 warning→required 7일-green 승격 절차는 별 rollout Story 소관(본 Amendment 대상 아님). §1 요구의 "fail-closed" 는 logic-level 결정성(silent-pass 금지)으로 해석 — 검출 로직이 미등재를 결정적으로 보고.
+6. **tier 무변경(warning)** — 본 확장은 warning-tier(continue-on-error) 유지 — branch-protection 7-tuple 무변경. §결정 6 의 warning→required 7일-green 승격 절차는 별도 rollout Story 소관(본 Amendment 대상 아님). §1 요구의 "fail-closed" 는 logic-level 결정성(silent-pass 금지)으로 해석 — 검출 로직이 미등재를 결정적으로 보고.
 
 **정합**: 본 확장은 §결정 3 closure-완전성 규칙의 **coverage 확장(강화 방향, ratchet)** 이므로 ADR-058 §결정 5 sunset_justification 비대상 + 8 invariant·다른 §결정 무변경. carrier = CFP-2751 (mechanical_enforcement_actions 의 "pattern_count >= 2 재발 시 follow-up CFP MUST promote" 발동 이행). repos.py 출처 = ADR-069 Amendment 1(multi-repo component routing, yq fallback helper).
 
@@ -281,7 +281,7 @@ domain-knowledge 1급 정의 문서:
 - **(a) sunset paradigm 모순 회피** [verified-via: walk_plan.py 36 match wire LIVE]: ADR-083 의 sunset 은 실제로 walker 로 carry 됐다. **Amendment 3 의 "0 match drift" 서술은 stale** — CFP-1293 Phase 2 에서 walk_plan.py 에 filter wire 가 실재하게 됐으므로 현재는 36 match. 따라서 sunset 은 정당하며, un-sunset 은 "carrier shift 완료" 를 되돌리는 모순. (※ ADR-083 Amendment 3 의 "0 match drift" 문구를 verbatim 인용 금지 — 당시 시점 한정 stale fact.)
 - **(b) ADR-097 carrier-preserved sunset 선례**: sunset 효용을 신규 ADR 가 명시적으로 계승(supersedes)하는 것이 이력 명료.
 - **(c) ADR-125/126 신규-ADR 선례**: 외부지식 arc 도 신규 ADR 로 처리.
-- **(d) 축 분리**: ADR-083 의 sunset 사유(walker carry)와 신규 분류규칙(데이터+정책doc closure 완전성)이 *다른 축* — 별 ADR 가 이력 추적성 우수.
+- **(d) 축 분리**: ADR-083 의 sunset 사유(walker carry)와 신규 분류규칙(데이터+정책doc closure 완전성)이 *다른 축* — 별도 ADR 가 이력 추적성 우수.
 - **un-sunset 리스크 회피**: Amendment 1-3 충돌(부분 계승 vs 전면 재활성)의 모호성 차단.
 
 **ADR-083 frontmatter 처리**: ADR-083 의 `sunset_status: Sunsetted` 보존. 본 ADR-130 이 ADR-083 을 supersede 하므로 ADR-083 에 `superseded_by: ADR-130` cross-ref 추가 (Phase 2 구현 lane 에서 ADR-083 frontmatter 갱신 — Story A 는 본 ADR-130 측 `supersedes` 명문화로 충분).

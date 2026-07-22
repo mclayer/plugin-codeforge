@@ -44,7 +44,7 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 
 ### 동인
 
-A(#2687, ADR-155)가 `dev-process-event-v1` substrate(9번째 Tier-3 persistent channel + 2계층 index/blob + 4-ID freeze + 결점 taxonomy 4-tuple + mining port)를 freeze 했으나, 그 위 **downstream 집계 = dev-process 지표**는 별 wave 로 명시 defer 됐다(A OOS 표: "B(#2688): 지표 계산식·사이클타임 산식·FIX 반복수 집계 알고리즘" `[verified: dev-process-event-v1.md:361-362]`). B(#2688)가 그 집계 정책을 정의한다.
+A(#2687, ADR-155)가 `dev-process-event-v1` substrate(9번째 Tier-3 persistent channel + 2계층 index/blob + 4-ID freeze + 결점 taxonomy 4-tuple + mining port)를 freeze 했으나, 그 위 **downstream 집계 = dev-process 지표**는 별도 wave 로 명시 defer 됐다(A OOS 표: "B(#2688): 지표 계산식·사이클타임 산식·FIX 반복수 집계 알고리즘" `[verified: dev-process-event-v1.md:361-362]`). B(#2688)가 그 집계 정책을 정의한다.
 
 **landing ≠ activation**: A 실 ledger `.claude/ledger/dev-process-event.jsonl` = 파일 부재(capture DORMANT) `[verified: Story §2.2]`. B 는 buildable now(query port empty→`[]`+zero graceful `[verified: query_dev_process_event.py:386-389]`)이나 실 가치 = substrate activation 이후. 따라서 B 는 (a) 산식·집계 로직 정의 + (b) 실측은 activation 이후 + (c) empty-ledger honest-degrade 자세를 상속한다.
 

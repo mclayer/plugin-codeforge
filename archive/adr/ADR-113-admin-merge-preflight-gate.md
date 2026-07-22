@@ -69,9 +69,9 @@ Accepted (2026-05-25 KST) — CFP-1522 carrier_story, parent Epic CFP-1543. ADR-
 
 - (a) Orchestrator inline whitelist 4-entry (ADR-039 §결정 2) 중 4번째 entry "Status report" path 안 `gh pr merge --admin` 호출이 verify-before-trust 의무 (ADR-073 §결정 1) 영역 외 → admin merge attempt 시점 mechanical pre-flight gate 부재
 - (b) `phase-gate-mergeable.yml` `on:` block = `pull_request: [opened, synchronize, labeled, unlabeled, edited]` only, `workflow_dispatch` entry 0 → required check ACTION_REQUIRED 잔존 시 manual re-trigger 경로 부재 (verified ground truth, 535 lines workflow file `on:` block grep direct)
-- (c) `hotfix-bypass:*` channel family 가 lint skip 영역 cover 하나, `gh pr merge --admin` CLI silent override path 영역 = label family 미cover (별 sub-domain)
+- (c) `hotfix-bypass:*` channel family 가 lint skip 영역 cover 하나, `gh pr merge --admin` CLI silent override path 영역 = label family 미cover (별도 sub-domain)
 - (d) `enforce_admins: true` invariant 가 branch protection rule layer 강제하나, `gh api -X PATCH /repos/.../branches/main/protection` 호출 자체에 explicit forbid 영역 0 (Threat B: branch protection toggle abuse 우회 attack surface)
-- (e) Wave 4 brainstorm carrier 영역 (별 CFP 후속) — `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 검토 (현 ADR-113 scope 외, follow-on carrier)
+- (e) Wave 4 brainstorm carrier 영역 (별도 CFP 후속) — `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 검토 (현 ADR-113 scope 외, follow-on carrier)
 
 ### Decision principle anchor (ADR-064 §결정 1-7 정합)
 
@@ -122,7 +122,7 @@ git -C "<worktree_abs_path>" commit --allow-empty -m "[CFP-NNN] re-trigger requi
 git -C "<worktree_abs_path>" push origin <branch>
 ```
 
-`workflow_dispatch` entry 부재 영역 fallback (`phase-gate-mergeable.yml` 영역 verified). Wave 4 brainstorm carrier (별 follow-on CFP) = `workflow_dispatch` entry 보완 검토 영역 (§결정 8 sibling).
+`workflow_dispatch` entry 부재 영역 fallback (`phase-gate-mergeable.yml` 영역 verified). Wave 4 brainstorm carrier (별도 follow-on CFP) = `workflow_dispatch` entry 보완 검토 영역 (§결정 8 sibling).
 
 **Step 4 — re-verify (≤ 60s wait + re-fetch)**
 
@@ -160,8 +160,8 @@ Threat A (counter reset abuse — close+reopen / PR 재생성 / attempt 분산) 
 Threat B (enforce_admins toggle abuse — `gh api -X PATCH /repos/<org>/<repo>/branches/main/protection` 으로 `enforce_admins.enabled: false` toggle 우회 attack) mitigation:
 
 - `gh api -X PATCH /repos/<org>/<repo>/branches/main/protection*` 또는 동등 호출 = **explicit forbid** (Orchestrator inline whitelist 영역 외, subagent 영역 모두 영역 외)
-- branch protection rule change 의무 시점 = `hotfix-bypass:*` label family 의 audit-trailed exception channel **외** 영역 (별 ADR — 향후 branch protection rule mutation 의무 carrier CFP 발의 시 별 ADR codify 의무)
-- ADR-024 §결정 6.A bypass-as-norm-mutation 차단 chain (Amendment 6 §결정 6.A.2 + Amendment 8 §결정 6.A.3/6.A.4/6.A.5) 의 5 lint chain 자동 covered (별 lint 신설 0)
+- branch protection rule change 의무 시점 = `hotfix-bypass:*` label family 의 audit-trailed exception channel **외** 영역 (별도 ADR — 향후 branch protection rule mutation 의무 carrier CFP 발의 시 별도 ADR codify 의무)
+- ADR-024 §결정 6.A bypass-as-norm-mutation 차단 chain (Amendment 6 §결정 6.A.2 + Amendment 8 §결정 6.A.3/6.A.4/6.A.5) 의 5 lint chain 자동 covered (별도 lint 신설 0)
 
 **ADR-066 cross-ref**: branch protection rule PATCH 권한 = session-level admin authentication (`gh auth login` interactive 또는 admin session token, repo admin role) — ADR-066 §결정 2 CODEFORGE_CROSS_REPO_PAT 6-scope set (CI/automation rotation policy) 와 disjoint axis. 본 §결정 3 = 권한 보유 형태와 무관한 procedure-level forbid (session admin auth revoke 영역 외, behavioral directive only).
 
@@ -177,7 +177,7 @@ Threat B (enforce_admins toggle abuse — `gh api -X PATCH /repos/<org>/<repo>/b
 | `cross-repo-bypass-counter` | ADR-024 Amendment 8 §결정 6.A.5 | cross-repo 3-repo signature 누적 |
 | `check-bypass-audit-comment.sh` | ADR-060 framework | bypass audit comment 자동 발의 |
 
-**별 lint 신설 0건** — 본 ADR family member 추가 만으로 5 lint chain inherit. ADR-040 Amendment 3 §결정 7.D self-application precedent 답습.
+**별도 lint 신설 0건** — 본 ADR family member 추가 만으로 5 lint chain inherit. ADR-040 Amendment 3 §결정 7.D self-application precedent 답습.
 
 ### 결정 5 — Failure mode enum 4-fail + fail-closed semantic
 
@@ -186,7 +186,7 @@ admin-merge pre-flight gate 의 failure mode closed-enum:
 - **fail-1 API call failure** — network failure / token expiry / Anthropic infra 429 → retry exp-backoff 3회 + `codeforge:rate-limit-429-mitigation` skill cross-ref + ADR-066 PAT 만료 check (90d rotation invariant)
 - **fail-2 state enum unknown** — `gh pr checks` 반환 state value 가 §결정 1 abort_states_enum closed-set 외 → **fail-closed semantic** (admin merge 차단 + 사용자 escalation, 10-value enum invariant 보존)
 - **fail-3 re-trigger 후 ACTION_REQUIRED 잔존** — Step 3 fresh commit trigger 후 Step 4 re-verify 에서 동일 ACTION_REQUIRED 잔존 → workflow self-error 추정 → attempt cap 카운트 + Step 5 STOP escalation
-- **fail-4 silent bypass attempt** — Orchestrator 또는 subagent 가 §결정 1 5-step procedure skip + `gh pr merge --admin` 직접 호출 → §결정 4 5 lint chain 자동 covered (별 mechanism 0)
+- **fail-4 silent bypass attempt** — Orchestrator 또는 subagent 가 §결정 1 5-step procedure skip + `gh pr merge --admin` 직접 호출 → §결정 4 5 lint chain 자동 covered (별도 mechanism 0)
 
 10-value `abort_states_enum` closed-set + `unknown` fail-closed 영역 정합. 본 enum extension 시 ADR Amendment 의무 (ADR-082 closed-set ratchet 정합, open_extension: false).
 
@@ -225,8 +225,8 @@ branch naming `cfp-1495-redo` 권장 (ADR-024 cfp-NNN 정합, 간결 — `cfp-14
 |---|---|---|
 | **Wave 2** ✅ | mechanical wire — `scripts/check-admin-merge-preflight.sh` + `scripts/lib/check_admin_merge_preflight.py` (5-step procedure SSOT) + `admin-merge-preflight-check.yml` self-app (warning-tier) + bats 7 TC RED→GREEN + 3-layer self-block (pre-commit + pre-push `.sample` advisory; 3번째 layer = playbook §3.19 Orchestrator self-instrumentation, 신규 skill 불요 — redundant) | **CFP-1564 (완료)** — evidence-registry `status: deferred-followup → active` |
 | **Wave 3** | Codex worker fail mode enum 9번째 entry (`admin_merge_preflight_skip`) + ADR-070 §결정 D1 sub-class | 별 carrier (Codex collaboration governance scope) |
-| **Wave 4** | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 + manual re-trigger 경로 codify | 별 brainstorm carrier (Researcher hypothesis (e) follow-on) |
-| **별** | ADR-RESERVATION row 107-112 backfill (registry row gap 영역) | 별 follow-up CFP carrier (chief author scope 외 — ADR-064 §결정 5 unitary 정합) |
+| **Wave 4** | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 + manual re-trigger 경로 codify | 별도 brainstorm carrier (Researcher hypothesis (e) follow-on) |
+| **별도** | ADR-RESERVATION row 107-112 backfill (registry row gap 영역) | 별도 follow-up CFP carrier (chief author scope 외 — ADR-064 §결정 5 unitary 정합) |
 
 ADR-082 §결정 6 retain pattern (declaration-only-Wave-1) + ADR-086 self-application 정합.
 
@@ -237,7 +237,7 @@ ADR-082 §결정 6 retain pattern (declaration-only-Wave-1) + ADR-086 self-appli
 - **`admin_merge_action_required_force_attempt` super-class mitigation**: 3-incident pattern_count 3 reach (CFP-1334 / CFP-1318 / CFP-1495) 의 procedural governance gap closure — admin-merge attempt 시점 5-step pre-flight gate 가 ACTION_REQUIRED silent override path 차단.
 - **Threat A counter reset abuse mitigation**: attempt cap=3 dual scope (per-PR AND per-Story) 가 close+reopen / PR 재생성 / attempt 분산 우회 경로 차단 — counter telemetry `admin_merge_attempts` optional field (Story §14 Lane Evidence) 가 PMOAgent retro corpus enumeration (ADR-045 §D-9) cross-Story pattern_count tally evidence base.
 - **Threat B branch protection toggle abuse mitigation**: `gh api -X PATCH .../branches/main/protection` explicit forbid 가 `enforce_admins.enabled: false` toggle 우회 attack surface 차단 (procedural directive, session admin auth 권한 보유 시에도 호출 금지).
-- **5 lint chain auto-inherit (별 mechanism 0)**: ADR-024 Amendment 6/8 §결정 6.A 의 bypass-as-norm-mutation 차단 5 lint chain (`bypass-label-counter` / `per-plugin-cumulative-counter` / `bypass-justification-marker` / `cross-repo-bypass-counter` / `check-bypass-audit-comment.sh`) 자동 covered — 별 lint 신설 0건.
+- **5 lint chain auto-inherit (별도 mechanism 0)**: ADR-024 Amendment 6/8 §결정 6.A 의 bypass-as-norm-mutation 차단 5 lint chain (`bypass-label-counter` / `per-plugin-cumulative-counter` / `bypass-justification-marker` / `cross-repo-bypass-counter` / `check-bypass-audit-comment.sh`) 자동 covered — 별도 lint 신설 0건.
 - **declaration-only Wave 1 mechanical wire deferred-followup**: `mechanical_enforcement_actions: [admin-merge-preflight-gate]` frontmatter (ADR-040 Amendment 3 §결정 7.D self-application 정합) → Wave 2 별 sub-CFP carrier 가 `scripts/check-admin-merge-preflight.sh` 3-layer wire (pre-commit hook + pre-push hook + Orchestrator self-instrumentation) 산출.
 
 ## 관련 파일
@@ -263,9 +263,9 @@ N/A — permanent governance ratchet (ADR-058 §결정 7 보안 ADR default pres
 |---|---|---|
 | Wave 2 ✅ | `scripts/check-admin-merge-preflight.sh` + `scripts/lib/check_admin_merge_preflight.py` + `admin-merge-preflight-check.yml` self-app + bats 7 TC + 3-layer self-block (pre-commit / pre-push `.sample` + playbook §3.19 Orchestrator instrumentation, 신규 skill 불요) — **CFP-1564 (완료)** | evidence-registry active |
 | Wave 3 | Codex worker fail mode enum 9번째 entry + ADR-070 §결정 D1 sub-class instantiation | 별 carrier (Codex governance) |
-| Wave 4 | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 검토 (Researcher hypothesis (e)) | 별 brainstorm carrier |
+| Wave 4 | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 검토 (Researcher hypothesis (e)) | 별도 brainstorm carrier |
 | 즉시 | CFP-1495 carrier 재진입 (§결정 7 DR procedure 활성) | post-CFP-1522 merge 직후 |
-| 별 | ADR-RESERVATION row 107-112 backfill (registry row gap 영역, chief author scope 외) | 별 follow-up CFP |
+| 별도 | ADR-RESERVATION row 107-112 backfill (registry row gap 영역, chief author scope 외) | 별도 follow-up CFP |
 
 ## Amendments
 

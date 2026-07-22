@@ -99,7 +99,7 @@ delivery-gap(P10)은 **축 B(liveness)** 규율로만 해소된다(§결정 1). 
 stop-event 원장 aggregate 경로를 신설한다. **tier = `[measurement]` strict record-only** — `hook_decision="record-only"` 불변, non-blocking.
 
 - **신규 `scripts/lib/aggregate_stop_event.py`**(GAP-7 실체 = 부재) — `.claude/ledger/stop-event.jsonl`(실 구현 경로) 를 읽어 per-reason_class count + 부당(`policy_violation*`)/정당(`user_stop_legitimate` · `decider_escalation_required`) 비율 산출.
-- **reason_class 자동분류 = 불가(CONFIRMED)** → 채움 = **PMO retro sidecar mapping**(stop_reason → reason_class 를 별 artifact 로; 원장 IN-PLACE EDIT 절대 안 함 — record-only INV ADR-115 §2 + ADR-072 policy/evidence disjoint). aggregate 는 optional classification-map 지원: map 有 → ratio, map 無 → per-stop_reason frequency(honest degrade).
+- **reason_class 자동분류 = 불가(CONFIRMED)** → 채움 = **PMO retro sidecar mapping**(stop_reason → reason_class 를 별도 artifact 로; 원장 IN-PLACE EDIT 절대 안 함 — record-only INV ADR-115 §2 + ADR-072 policy/evidence disjoint). aggregate 는 optional classification-map 지원: map 有 → ratio, map 無 → per-stop_reason frequency(honest degrade).
 - **★HONESTY(binding)**: 실 원장은 전부 5-field(reason_class 부재) → 실 aggregate = backfill 전까지 all-unclassified → aggregate 는 **"분류 없인 정량 불가 (측정 ≠ 분류)" honesty 서술을 반드시 emit**. "10:2 실측" / "telemetry 가 stop 을 줄인다" 주장 금지(측정만).
 - **dedup = row-hash**(canonical JSON `sort_keys` → sha256; event_id 부재 → forward-compat + canonicalization). honest under-count caveat — 동일-초 별개 이벤트 병합 불가피 → `rows_total`/`rows_deduped`/`duplicates_collapsed` emit, exact-count 주장 금지.
 - edge: malformed → skip+count / empty → zero-count exit 0 / window → tz-aware ISO parse.
@@ -147,7 +147,7 @@ PreToolUse(AskUserQuestion) `permissionDecision:"deny"` 로 **tool-mediated ask 
 - tool-mediated AskUserQuestion deny hard lever 화(§결정 8 — 관찰만).
 - full auto-wake-parent dispatcher(env=1) 구현(§결정 4 (ii) DEFER-escalate, narrative defer).
 - #797 accumulation-layer lint 흡수·발의(참조만 — 3문 게이트 대상, 자동 followup 금지).
-- phase-gate plumbing 갭(별 축 — gate plumbing ≠ 대화 stop, 관찰만 — Story §7.0 #7).
+- phase-gate plumbing 갭(별도 축 — gate plumbing ≠ 대화 stop, 관찰만 — Story §7.0 #7).
 
 ## 해소 기준
 
