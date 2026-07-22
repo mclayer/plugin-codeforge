@@ -75,7 +75,7 @@ walker 완료 보고 = **walk_result + 4-field**. K-5 결정 = closed_enum `open
 | layer | 4-field | facing | 역할 |
 |---|---|---|---|
 | **사용자 4-field = walk completion report (외부 보고)** | `from_version` / `to_version` / `target_version_release_date` / `key_changes_summary` | human-facing | 사용자 발화 verbatim — walk 종료 시 사용자가 받는 완료 보고 본문 (어느 버전 → 어느 버전, target 버전 release 일자, 핵심 변경 요약) |
-| **PMO 4-field = walk_result detail (내부 schema)** | `touched_files` / `atomic_invariants` / `verify_via` / `lane_outcomes` | machine / audit-facing | PMO 2nd pass — walk 과정 내부 audit detail (touched 파일 / atomic invariant 검증 / verify-via 경로 / lane 별 outcome) |
+| **PMO 4-field = walk_result detail (내부 schema)** | `touched_files` / `atomic_invariants` / `verify_via` / `lane_outcomes` | machine / audit-facing | PMO 2nd pass — walk 과정 내부 audit detail (touched 파일 / atomic invariant 검증 / verify-via 경로 / lane 개별 outcome) |
 
 양 layer 는 동일 walk 의 다른 surface 다. 외부 보고 (사용자 4-field) 는 walk_result enum 과 함께 사용자에게 발화되고, 내부 schema (PMO 4-field) 는 walk_result 의 detail 로서 audit/집계 surface 에 기록된다. 두 layer 모두 §결정 2 closed_enum invariant 적용.
 

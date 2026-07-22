@@ -84,10 +84,10 @@ scope boundary 밖 (면제 비대상): 단일 ADR amendment / 단일 contract ve
 
 paradigm replacement (§결정 1 3 조건 충족) 영역은 ADR-064 §결정 5 "한 CFP 안 '경량 → full' 단계 채택 금지" 의 **면제**다. 단일 atomic Epic 안에서 9+ ADR/contract 동시 sunset + 신규 anchor 묶음 atomic 도입이 허용된다.
 
-**exception clause 형식 (K-1 결정)**: 본 면제는 ADR-064 에 **별 §결정 신설이 아니라 §결정 5 본문 안 exception clause 추가**로 codify 한다 (ADR-064 Amendment 7 carrier — 본 ADR sibling). 이유:
+**exception clause 형식 (K-1 결정)**: 본 면제는 ADR-064 에 **별도 §결정 신설이 아니라 §결정 5 본문 안 exception clause 추가**로 codify 한다 (ADR-064 Amendment 7 carrier — 본 ADR sibling). 이유:
 
 - 면제는 §결정 5 (CFP scope unitary) 의 carve-out 이지 독립 결정이 아님 — §결정 5 본문 인접 배치가 reader 가독성 + drift 차단에 유리 (§결정 5 읽는 자가 면제 조건을 같은 자리에서 확인).
-- 별 §결정 신설 = ADR-064 §결정 번호 inflation + cross-ref 표면 증가 (disjoint 결정으로 오인 risk).
+- 별도 §결정 신설 = ADR-064 §결정 번호 inflation + cross-ref 표면 증가 (disjoint 결정으로 오인 risk).
 
 **면제 = 명시적 carve-out (scope 약화 아님)**: 면제는 ADR-064 §결정 5 의 적용 범위를 좁히는 것이 아니라, paradigm replacement 라는 명시 영역에 대한 carve-out 이다. 일반 amendment 영역에서 §결정 5 의 강도는 0건 약화 — 면제는 scope boundary (§결정 1) 충족 영역에 한정. ADR-064 §결정 7 self-application top-down ratchet 정합 (governance 표현력 확장 = 강화 방향).
 

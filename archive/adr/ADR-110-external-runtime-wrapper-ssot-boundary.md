@@ -182,7 +182,7 @@ ELSE THEN gate_result = fail → sub-area b/c/d ABORT, sub-area e 만 carry-over
 | VS Code session active check | wrapper invoke 직전 best-effort process enumeration (`Get-Process Code` exists?) |
 | 2-channel disjoint notify | extension suspend signal + wrapper resume signal 분리 (extension lifecycle 영역 외부, wrapper notify channel 만) |
 
-**Not strict** (wrapper 가 별 process 이므로 perfect coordination 불가 — Phase 2 telemetry refine 영역). extension upstream API exposure 시 strict coordination 영역 후속 sub-CFP carrier.
+**Not strict** (wrapper 가 별도 process 이므로 perfect coordination 불가 — Phase 2 telemetry refine 영역). extension upstream API exposure 시 strict coordination 영역 후속 sub-CFP carrier.
 
 ## 결과
 

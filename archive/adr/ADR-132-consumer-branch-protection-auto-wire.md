@@ -188,7 +188,7 @@ cleanup scope:
 ### 영향 범위
 
 - wrapper-self 도구 (신규 wire-*/reapply-* + bootstrap stage + readiness check). consumer-distributable 아님 (operator-run).
-- consumer repo (배선 *대상* — 본 Story 는 도구만, 실 배선 = 별 Track).
+- consumer repo (배선 *대상* — 본 Story 는 도구만, 실 배선 = 별도 Track).
 - ADR-024 (Amendment 20 — step 2 수동→자동) + ADR-027 (Amendment 13 — mechanical/advisory layer) paired.
 
 ### 후속 carrier

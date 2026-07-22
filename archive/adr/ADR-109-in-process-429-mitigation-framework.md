@@ -141,7 +141,7 @@ Circuit breaker open trigger = 3 window 모두 충족 (AND):
 - **429** (Anthropic rate limit) = §결정 1 4-tuple detection + §결정 2 exp-backoff
 - **529** (Anthropic overloaded) = retry 무의미, **longer cooldown 60s base max 300s** (5x longer cap)
   - **rationale**: 529 = service-wide overload signal (single retry sequence 영역 외, sustained high load 영역). exp-backoff 적용 시 cascade amplification risk → longer cooldown invariant.
-  - **detection**: HTTP 529 status code (`"529"` substring 별 detection enum 추가 영역 = 본 §결정 6 — §결정 1 4-tuple disjoint axis)
+  - **detection**: HTTP 529 status code (`"529"` substring 별도 detection enum 추가 영역 = 본 §결정 6 — §결정 1 4-tuple disjoint axis)
 
 ### §결정 7 — Retry primitive 위치 = skill body (ADR-039 closed 4-entry 보호)
 

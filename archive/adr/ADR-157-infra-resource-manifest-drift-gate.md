@@ -320,7 +320,7 @@ manifest = **semi-trusted**(consumer/developer-authored, §7.2). namespace·ref 
 ### 판정 — F-CR-002 → honesty-ceiling (dead allowlist 제거, 실 통제 정직 문서화)
 
 operator-curated 별도 allowlist 신설(택일 a)은 **기각**한다:
-- **동일 trust 도메인**: 별도 allowlist 를 두어도 carrier = 같은 consumer-authored `project.yaml`(§4b write boundary). 악의적 manifest 저자는 namespace 와 allowlist 를 **동시에** 쓸 수 있어 same-file allowlist 는 보안 분리를 제공하지 않는다(CODEOWNERS-gated 별 도메인이 아닌 한 무의미).
+- **동일 trust 도메인**: 별도 allowlist 를 두어도 carrier = 같은 consumer-authored `project.yaml`(§4b write boundary). 악의적 manifest 저자는 namespace 와 allowlist 를 **동시에** 쓸 수 있어 same-file allowlist 는 보안 분리를 제공하지 않는다(CODEOWNERS-gated 별도 도메인이 아닌 한 무의미).
 - **read-only + fetch-result 이미 fail-closed**: 잘못된/미승인 namespace 는 fetch 404 → hard-fail(exit 1), 오타-실재 repo 는 content-mismatch → fail-closed 로 **이미** 걸린다 → allowlist 는 중복 pre-check.
 - **proposal-necessity gate(ADR-119 §결정9) 미충족**: 깨지지 않았고(공격 표면 아님) 이득<비용(governance 표면 + consumer 부담 순증). fake operator-approval 통제 추가 = 역방향 "선언 ≠ 배선".
 

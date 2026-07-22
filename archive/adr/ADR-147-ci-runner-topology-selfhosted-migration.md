@@ -140,7 +140,7 @@ strategy:
 runs-on: ${{ fromJSON(vars[format('CI_RUNS_ON_{0}_JSON', matrix.leg)] || matrix.runner_default) }}
 ```
 
-- **leg 별 라우팅 보존**: linux leg → `CI_RUNS_ON_LINUX_JSON`(private=`["self-hosted","X64","Linux","docker"]` → **group6**, public/unset=`["ubuntu-latest"]`); windows leg → `CI_RUNS_ON_WINDOWS_JSON`(private=`["self-hosted","Windows","X64"]` → **group5**, public/unset=`["windows-latest"]`).
+- **leg 개별 라우팅 보존**: linux leg → `CI_RUNS_ON_LINUX_JSON`(private=`["self-hosted","X64","Linux","docker"]` → **group6**, public/unset=`["ubuntu-latest"]`); windows leg → `CI_RUNS_ON_WINDOWS_JSON`(private=`["self-hosted","Windows","X64"]` → **group5**, public/unset=`["windows-latest"]`).
 - **byte-identical**: `matrix.include` 블록 + `runs-on` 표현식이 repo 간 uniform → §결정 3 byte-parity 무붕괴. 분기는 leg-keyed 변수 **값**에서만.
 - **container job**: DooD/`container:` job 은 항상 linux leg key(group6, Windows docker 부재 §결정 2)로 pin.
 - **provisioning invariant(§결정 4)**: matrix repo 는 `CI_RUNS_ON_LINUX_JSON` ∧ `CI_RUNS_ON_WINDOWS_JSON` 둘 다 SET; unset 감지 lint 는 둘 다 검사.

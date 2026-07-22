@@ -196,7 +196,7 @@ OCC 의 단일값 비교에는 **ABA 문제**가 도사린다 — client 가 값
 | 2 | ADR-085 | **session-level** | pre-hoc (세션 ownership 사전 조율) |
 | 3 | **ADR-133 (신규)** | **artifact-slot-level** | pre-hoc (ADR-번호 단일 slot atomic claim) |
 
-ADR-133 은 ADR-085 의 4·5번째 sub-decision 이 아니라 **별 입도의 신규 layer** 다. ADR-085 가 ADR-050(PR-level)과 axis-disjoint 신규 ADR(status Accepted)로 채택된 선례를 답습 — 신규 ADR 정당화 근거. **ADR-050 §결정 1(post-hoc re-sort)·§결정 3(non-blocking) 약화 금지 — 1차 방어 layer 추가**(ratchet 보존).
+ADR-133 은 ADR-085 의 4·5번째 sub-decision 이 아니라 **별도 입도의 신규 layer** 다. ADR-085 가 ADR-050(PR-level)과 axis-disjoint 신규 ADR(status Accepted)로 채택된 선례를 답습 — 신규 ADR 정당화 근거. **ADR-050 §결정 1(post-hoc re-sort)·§결정 3(non-blocking) 약화 금지 — 1차 방어 layer 추가**(ratchet 보존).
 
 **(b) ADR-082 Amendment 17 sub-scope 1-G 일반화 (중복 신설 아님)**: ADR-082 Amd 17 = `amendments_reserved[]`(ADR-RESERVATION sub-tree, CFP-1058) 의 `amendment_id` slot 을 chief author write 전 strict pre-claim 하는 **4-tuple primitive** 를 이미 codify 했다: (a) pre-reservation row pre-append 의무 / (b) spawn prompt `pre_reserved_amendment_slots` field / (c) reservation row ↔ actual write cross-verify / (d) `pre_reservation_verified` annotation. ADR-082 본문이 *"ADR number reservation(ADR-050 §결정 1)과 amendment slot reservation(Amd 17) = 동일 race coordination 패턴"* 명시.
 

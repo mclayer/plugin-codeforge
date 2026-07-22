@@ -92,7 +92,7 @@ CFP-1059 brainstorm Phase 1 dialog 결과:
 
 - 의존 매핑 = 자동 감지 + 사용자 declare hybrid
 - 강제 강도 = 경고 (warning tier) + 사용자 declare 의무
-- layer 별 분리 정책 = RDB strict / 빅데이터 lenient
+- layer 개별 분리 정책 = RDB strict / 빅데이터 lenient
 - 변경 순서 = expand → source-first / contract → leaf-first
 - 한쪽 실패 = 묶음 전체 rollback (atomic invariant)
 
@@ -259,7 +259,7 @@ CFP-1086 Story-1 결과 4 architect (AggregateArch / APIContractArch / ModuleArc
 - [ADR-088](ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — sibling carrier
 - [ADR-068](ADR-068-boundary-completeness-invariants.md) — I-2 cross-module propagation completeness cross-ref
 - [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — expand-contract pattern 동형
-- [ADR-083](ADR-083-consumer-applicability-filter.md) — layer 별 적용 여부
+- [ADR-083](ADR-083-consumer-applicability-filter.md) — layer 개별 적용 여부
 - `templates/github-workflows/cross-layer-impact-check.yml` (Phase 1 skeleton)
 - `templates/github-workflows/dependency-order-check.yml` (Phase 1 skeleton)
 - `templates/change-plan.md` §11 cross-layer dependency 영역

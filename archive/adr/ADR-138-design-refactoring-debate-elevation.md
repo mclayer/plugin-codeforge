@@ -119,7 +119,7 @@ origin `docs/domain-knowledge/domain/governance-principle/refactoring-activity-t
 본문 분산 논거를 집약 (H1-H2 결정 근거의 대칭 negative):
 
 - **(a) ADR-137 amendment 흡수** — 거절. ADR-137 §비대상(origin line ~86)이 "설계 리팩터링 Codex 상시 격상 (RefactorAgent 설계-lane inline 존치)" 를 **명시적 non-goal 선언**. amendment 로 흡수하면 ADR-137 이 자기 non-goal 을 뒤집는 자기모순 → 신규 carrier(ADR-138) 로 분리. (§결정1 근거)
-- **(b) ADR-059 단독 amendment (신규 ADR 없이)** — 거절. ADR-059 = **debate 엔진 SSOT**(protocol schema·라운드·termination·anti-sycophancy). enum 추가는 엔진 갱신이라 ADR-059 Amendment 4 가 sibling 으로 맞으나, **정책 신설(설계 리팩터링 결정 방식 격상)의 carrier 는 엔진 ADR 이 아님** — 정책 결정 기록은 별 ADR 필요. → ADR-138 carrier + ADR-059 Amd4 sibling 분리. (§결정1 근거)
+- **(b) ADR-059 단독 amendment (신규 ADR 없이)** — 거절. ADR-059 = **debate 엔진 SSOT**(protocol schema·라운드·termination·anti-sycophancy). enum 추가는 엔진 갱신이라 ADR-059 Amendment 4 가 sibling 으로 맞으나, **정책 신설(설계 리팩터링 결정 방식 격상)의 carrier 는 엔진 ADR 이 아님** — 정책 결정 기록은 별도 ADR 필요. → ADR-138 carrier + ADR-059 Amd4 sibling 분리. (§결정1 근거)
 - **(c) 대칭 enum(blanket_cross_module_designlane) 재사용** — 거절. 해당 enum = **대칭(role_assignment 없음)** + cross-module Story 전체(Change Plan §3/ADR/§7/§11) 대상. 본 Story 는 Codex=proponent/Claude=opponent **방향 배정 필요**(role_assignment) + 구조 축 per-Story 대상 → 방향배정·scope 양면 부정합. `blanket_refactor`(refactor lane 전용·Epic-close cadence)도 lane·cadence 부정합. → 신규 `blanket_designrefactor` enum. (§결정2 근거)
 
 ## 해소 기준

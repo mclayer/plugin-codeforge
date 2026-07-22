@@ -434,7 +434,7 @@ Epic CFP-2391 S3 (OMC-adopt per-agent replay/cost observability) 가 spawn-event
 
 **(A) §결정 3 (spawn-event-v1 신설 보류) supersede** — 보류 해제. **원 §결정 3 본문은 보존**(이력) 하되 본 Amendment 가 supersede 한다. spawn-event-v1 = 본 Amendment 로 land. 원 보류근거 3 의 처리:
 - 보류근거 #1 (§14↔spawn-event dual-write race) → spawn-event-v1 contract §3 `append_rules.idempotency.section14_dedup` 이 **§14↔spawn-event dedup script 를 Phase 2 precondition AC 로 commit** (read-time dedup, append-time 아님 — cross-channel coupling 회피). race 자체는 SubagentStop single-write(option i) + O_APPEND per-row 로 구조적 차단.
-- 보류근거 #2 (aggregate script 로 충분) → per-agent token/cost attribution + replay 재구성은 §14 row count + post-merge-counters.jsonl 로 도출 **불가** (lane-coarse, token granularity 부재). spawn-event = 별 channel 필요성이 Epic directive 로 확정.
+- 보류근거 #2 (aggregate script 로 충분) → per-agent token/cost attribution + replay 재구성은 §14 row count + post-merge-counters.jsonl 로 도출 **불가** (lane-coarse, token granularity 부재). spawn-event = 별도 channel 필요성이 Epic directive 로 확정.
 - 보류근거 #3 (30+ post-merge-counters run ROI gate) → **아래 §근거 의 ROI gate 처리 참조**.
 
 **(B) §결정 1 4-channel boundary 표 8번째 channel 추가** — boundary 표에 spawn-event-v1 row 추가:
@@ -457,8 +457,8 @@ playbook §15.1 8-channel boundary table SSOT 동반 갱신 (§결정 1 land 위
 
 ### 비-영향
 
-- §결정 2 (stop-event-v1 schema) 무변경 — spawn-event 는 별 contract.
-- §결정 4 (stop-event hot tier sqlite) 무변경 — spawn-event 는 JSONL (contract=runtime 일치 우선, drift 회피 — spawn-event-v1 §3 / Change Plan §2.4). stop-event 자체의 sqlite↔JSONL drift 정정은 본 Amendment scope 외 (별 follow-up — 3문 게이트).
+- §결정 2 (stop-event-v1 schema) 무변경 — spawn-event 는 별도 contract.
+- §결정 4 (stop-event hot tier sqlite) 무변경 — spawn-event 는 JSONL (contract=runtime 일치 우선, drift 회피 — spawn-event-v1 §3 / Change Plan §2.4). stop-event 자체의 sqlite↔JSONL drift 정정은 본 Amendment scope 외 (별도 follow-up — 3문 게이트).
 - §결정 5/6/7/8/9/10/11 (Allow-list / opt-in / 2-layer flag / 0-API·50ms / isolation / measurement-vs-fix / ROI) = spawn-event-v1 inherit (변경 없음, 적용 확장만).
 - 6 lane plugin / inter-plugin contract 6 변경 0건 (§결정 12 비-Phase 1 scope 정합).
 - stop-event-v1 contract 무변경 (spawn-event 가 sibling 로 추가될 뿐).
