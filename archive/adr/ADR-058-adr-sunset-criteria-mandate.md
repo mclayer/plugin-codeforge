@@ -36,11 +36,20 @@ amendment_log:
       §결정 5 에 hygiene-vs-weakening 저작시점 판별 SSOT cross-ref pointer 1줄 추가 (Epic #2696 child C — 저작시점 예방 forcing function). §결정 5 약화 evidence requirement 본문 무변경 — pointer 만(재서술 금지). 위생(효력 변화 0)은 ADR-064 §결정 7 symmetric ratchet 상 이미 weakening 이 아니므로 §결정 5 본문 재서술 = 중복 normative = 자기역설 → pointer 로만 참조한다. 판별 SSOT = docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md 저작시점 예방(PREVENTIVE) 절.
     direction: strengthen  # cross-ref pointer 추가 = governance 표현력 확장 (약화 0건)
     sunset_justification: null  # strengthen 방향 — §결정 5 약화 evidence-gate 무관 (pointer 추가 = 강화). is_transitional: false 유지 (§결정 6 self false 보존)
+  - amendment: 4
+    carrier_story: CFP-1561
+    date: 2026-07-22
+    summary: |
+      §결정 10 신설 — frozen(Accepted) ADR 산문의 의미보존 lexical 위생편집(hygiene lexical edit) 정식 허용 + 외부 strict append-only 관례(Nygard 2011 / Azure Well-Architected)와의 deliberate divergence 명시 codify. §결정 9 는 ADR 일몰(demote) 절차, §결정 5 는 결정 약화(effect change) evidence-gate 를 정의하나, Accepted ADR 산문의 효력·substance 무변경 lexical 편집(forbid-list 어휘 준수 위한 `별`→`별도` reword 등) 정책은 전용 codify 부재였다 (ADR-070 오귀속 — ADR-070 = Codex verify-before-trust, frozen-ADR-edit 무관; grep 실측상 전용 ADR corpus 부재 = governance gap). 본 §결정 이 gap 충족.
+      판별 규범 재서술 0 — hygiene-vs-weakening 판별 SSOT = decision-record-genre-layers.md §hygiene 판별 절 class (iv) pointer only (§결정 5 Amendment 3 pointer-only 패턴 답습, split-brain 회피). fail-closed tie-break(모호=약화=보존) + M/T-class exemption 형식화 codify.
+    direction: strengthen  # governance 표현력 확장 — 기존 hygiene SSOT 를 frozen-ADR prose 에 적용 codify + fail-closed guard 신설. 위생(효력 변화 0)은 §결정 5/ADR-064 §결정 7 상 애초에 weakening 아님 = immutability 완화 아님
+    sunset_justification: null  # strengthen 방향 (hygiene codify + guard 신설). 잠재 "immutability 완화" 우려 evidence = (1) 외부 core concern(substance 이력 보존)과 양립 (2) genre-layers 효력-변화-0 판별 (3) CFP-2566/2762 mechanical frozen-edit 선례. is_transitional: false 유지
 related_stories:
   - CFP-387
   - CFP-1149  # Amendment 1 carrier — §결정 5 차단 → 약화 evidence-gate 재정의 (ADR-064 §결정 7 symmetric sibling)
   - CFP-2061-S3  # Amendment 2 carrier — §결정 9 능동 일몰 실행 절차 anchor (de-bloat 거버넌스 영속화 Epic CFP-2061)
   - CFP-2699  # Amendment 3 carrier — §결정 5 hygiene-vs-weakening 판별 SSOT cross-ref pointer (Epic #2696 child C 저작시점 예방)
+  - CFP-1561  # Amendment 4 carrier — §결정 10 신설 (frozen ADR 의미보존 lexical 위생편집 허용 + 외부 append-only divergence codify, cat-a 어휘 full-scope sweep governance anchor)
 related_adrs:
   - ADR-010
   - ADR-013
@@ -180,6 +189,31 @@ SecurityArchitectAgent consult 결과 통합.
 **mechanical enforcement = 후속 carrier (Wave 1 declarative-only)**: 역참조 dangling 차단 lint (`adr-sunset-crossref-dangling` warning tier 후보) 는 후속 carrier — `scripts/` + `templates/github-workflows/` 변경이 ADR-054 §결정 4/5 full-lane 강제를 유발하므로 본 carrier (doc-only fast-path) 에서 분리. pattern_count >= 2 재발 시 follow-up CFP MUST promote to mechanical (ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습).
 
 ArchitectAgent (집행 §3 단계 1-5) + GitOpsAgent (RESERVATION 잠금 §3 단계 6) RACI 는 연결 문서 §7 SSOT.
+
+### 결정 10 — frozen Accepted ADR 산문 의미보존 lexical 위생편집 허용 + 외부 strict append-only divergence codify (CFP-1561, Amendment 4)
+
+> **CFP-1561 (2026-07-22 KST)**: §결정 9 는 ADR 을 *일몰(demote)* 시키는 절차를, §결정 5 는 결정의 *약화(effect change)* evidence-gate 를 정의한다. 그러나 **Accepted(frozen) ADR 산문의 효력·substance 무변경 lexical 편집** (예: forbid-list 어휘 준수 위한 `별`→`별도` reword) 을 정식 허용하는 정책은 전용 codify 부재였다 — frozen-ADR wording 편집 전용 ADR 이 corpus 에 없음(grep 실측). 본 §결정 이 그 governance gap 을 충족한다.
+
+**결정**: Accepted(frozen) ADR 산문은 **효력 변화 0 AND 결정 substance/claim 변화 0** 인 **의미보존 lexical 위생편집**을 정식 허용한다. 판별 규범 SSOT = [`decision-record-genre-layers.md`](../../docs/domain-knowledge/domain/governance-principle/decision-record-genre-layers.md) §hygiene-vs-weakening 판별 절 **class (iv) 의미보존 lexical reword**. 본 §결정 은 그 판별 규범을 **재서술하지 않고 pointer 로만 참조**한다 (재서술 = split-brain(리터럴 복제) 자기생산, §결정 5 Amendment 3 pointer-only 패턴 답습).
+
+**외부 관례와의 divergence (명시 codify — endorsement 아닌 deliberate 내부 refinement)**:
+
+- 외부 1차출처 = **strict append-only**: Michael Nygard, "Documenting Architecture Decisions" (2011) — accepted record 는 collection 신뢰성 위해 "immutable in practice", 결정 변경 시 old record 삭제·편집 않고 supersede record 작성. Microsoft Azure Well-Architected, "Architecture decision record" — "Don't go back and edit accepted records. If a decision changes, write a new record that supersedes the original." **외부 관례는 의미보존 lexical 정정을 granted 하지 않는다** (overclaim 금지).
+- 외부 관례의 **core concern = 결정 substance·이력 무결성 보존** (supersede-not-mutate). codeforge 의미보존 위생편집은 substance·claim 을 건드리지 않으므로 이 core concern 과 **양립**한다.
+- codeforge 는 그 strict append-only 위에 **hygiene-vs-weakening 판별을 내부 refinement 로 얹은 deliberate divergence** — 효력·substance 무변경 lexical 편집을 orthographic 표면 hygiene 으로 허용한다. 외부보다 **더 permissive** 하되 core concern 무손상. 이 divergence 는 implicit 관행이 아니라 본 §결정 으로 정식 codify (외부 endorsement 로 단정하지 않음).
+
+**dated 이력(genre-layers ① class) byte-보존 과의 정합**: 4분기 oracle ① Descriptive-dated(dated 이력 = 시점 고정 참 → byte 보존)은 그 기록이 *말한 substance/claim* 의 falsification 을 차단하는 원칙이다. 의미보존 lexical reword(효력·substance 변화 0)은 dated 기록의 claim 을 falsify 하지 않으므로 ① byte-보존과 충돌하지 않는다 — 보호 대상은 **substance 이지 orthographic 표면 form 이 아니다**.
+
+**선례 구분 (mechanical hygiene → prose hygiene 확장)**: CFP-2566(ADR 번호 renumber) / CFP-2762(ADR 자릿수 정규화)는 frozen ADR 파일을 편집했으나 대상이 **식별자·metadata(mechanical)** 였다. 본 §결정 은 그 hygiene 을 **산문 lexical(prose)** 로 확장한다 — 양자 모두 효력·substance 변화 0 이나, 본 건은 서사 본문 어휘를 대상으로 하므로 정식 codify 로 경계를 명시한다.
+
+**fail-closed tie-break (모호 = 보존)**: 어느 occurrence 든 (a) 치환이 의미를 바꿀 수 있거나 (b) 어휘가 용어-언급·정당 기술용어이면 → **약화로 취급 = 보존** (genre-layers §hygiene "모호=약화" tie-break 대칭). 구체:
+- **M-class (어휘를 용어로 인용·정의)** = 보존, exemption 형식화(inline-code-span / EXEMPT_FILES) — 치환 금지 (치환 시 정의 파괴).
+- **T-class (정당 기술용어)** = 보존, exemption 형식화(inline-code / prune 확장) — 치환 금지 (치환 시 표준표현 파괴).
+- 판정 모호 = 보존 (성급한 치환보다 잔존이 안전 — 참인 기록 훼손 방지).
+
+**범위 한정 (substance 편집 불허)**: 본 §결정 은 오직 효력·substance 무변경 lexical hygiene 만 허용한다. 결정 substance/effect 변경(약화·강화·scope 변경)은 여전히 amendment(§결정 5 evidence-gate) 또는 supersede(외부 append-only core) 경로 의무 — 본 §결정 이 그 경계를 완화하지 않는다.
+
+**direction 판정 (약화 아님)**: governance 표현력 확장(기존 hygiene SSOT 를 frozen-ADR prose 에 적용 codify + fail-closed guard 신설). 위생(효력 변화 0)은 §결정 5 / ADR-064 §결정 7 상 애초에 weakening 아니므로 immutability 완화가 아니다. 잠재 "immutability 완화" 우려 evidence 3종: (1) 외부 관례 core concern(substance 보존)과 양립(§6.2 1차출처 실측) (2) genre-layers §hygiene 효력-변화-0 판별 (3) CFP-2566/2762 mechanical frozen-edit 선례 무논란. is_transitional: false 유지.
 
 ## 결과
 

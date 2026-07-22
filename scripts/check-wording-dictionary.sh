@@ -28,7 +28,7 @@
 #
 # Lint 적용 영역 (ADR-064 Amendment 5 §Amendment 결정 2 — per-word scope decoupling):
 #   박제 / 못 박기 / pin / freezing = docs/** + CLAUDE.md + templates/** (expanded scope)
-#   별 (standalone) = docs/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (5-scope 유지)
+#   별 (standalone) = docs/adr/** + archive/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (6-scope — archive/adr CFP-2661 D1 union-ADD, ADR-064 Amendment 14/CFP-1561 SSOT 정합. WORD_TARGETS L62 이 SSOT)
 # 단, 인자로 파일/디렉토리를 직접 지정 시 (uniform override mode) 해당 대상에만 적용.
 # CHANGELOG.md = scope 에서 제거 (CFP-2154 — main 에 CHANGELOG.md 부재 dead reference 정리.
 #   정책 선언 자체는 docs/wording-dictionary.md 유지 — 파일 재생성 시 target 재추가).
@@ -49,7 +49,7 @@ set -uo pipefail
 # Amendment 5 (CFP-750): FORBID_DICTIONARY array → per-word WORD_TARGETS associative array.
 #   어휘별 scope 독립 결정 — scope 확장 시 `별` standalone false-positive collateral 차단.
 #   박제/못 박기/pin/freezing = expanded scope (docs/** + CLAUDE.md + templates/**)
-#   별 = 5-scope 유지 (별 standalone fp carrier 분리, Amendment 4 §Amendment 결정 6)
+#   별 = 6-scope (5 영역 + archive/adr CFP-2661 D1 union-ADD; 확장 scope docs/inter-plugin-contracts 등은 배제 — fp carrier 분리, Amendment 4 §Amendment 결정 6 + Amendment 14/CFP-1561)
 # CHANGELOG.md target 제거 (CFP-2154 — main 부재 dead reference 정리, 행동 변화 0).
 # SSOT forcing function: 어휘 list ↔ scope 가 단일 map 에 통합 → drift 차단.
 # 한국어 어휘 = substring match (POSIX \b ASCII boundary only — 한국어 영역 의미 부재).

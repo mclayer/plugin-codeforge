@@ -43,7 +43,7 @@ codeforge 의 표현 규율 (ADR-064 §결정 2 + §결정 9) 의 어휘 SSOT.
 | 어휘 | lint scope |
 |---|---|
 | 박제 / 못 박기 / pin / freezing | `docs/**` (전체 — adr / change-plans / inter-plugin-contracts / domain-knowledge / retros / security 등 모든 sub-dir + top-level `docs/*.md`) + `CLAUDE.md` + `CHANGELOG.md` + `templates/**` (expanded scope) |
-| 별 (standalone) | `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**` (5-scope 유지 — `별` standalone false-positive carrier 분리, ADR-064 Amendment 4 §Amendment 결정 6) |
+| 별 (standalone) | `docs/adr/**` / `archive/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**` (**6-scope** — `별` standalone false-positive carrier 분리로 `docs/inter-plugin-contracts/**` 등 확장 scope 는 배제하되, `archive/adr` = ADR 실위치라 CFP-2661 D1 이 lint scope union-ADD → ADR-064 Amendment 14/CFP-1561 이 SSOT 표기 5→6 정합. ADR-064 Amendment 4 §Amendment 결정 6 + Amendment 14) |
 
 > **per-word scope decoupling 동기**: scope 확장 (5 → 전체) 시 `별` standalone 어휘를 동일 scope 에 두면 `각 packet 별` / `tier 별` / `별 layer` 등 한자어 `別` / 분류 접미사 `~별` 정당 사용이 expanded scope (특히 `docs/inter-plugin-contracts/**`) 에서 false-positive 로 증폭된다. **이는 expanded scope 도입의 known collateral** (silent bug 아님 — documented expected state). `별` 5-scope 유지 = §1 scope 위반 차단 + Amendment 4 carrier 분리 정합. (ADR-064 Amendment 5 §Amendment 결정 2 / `docs/domain-knowledge/domain/governance-principle/wording-discipline-enforcement.md` §규칙 5 와 3곳 mirror.)
 
