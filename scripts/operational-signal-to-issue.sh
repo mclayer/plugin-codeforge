@@ -19,7 +19,7 @@
 # ADR-060: exit 3-tier (0=PASS / 1=reserved / 2=SETUP error)
 # ADR-079: KST timestamp (detected_at_kst)
 #
-# 답습 source: check-rollback-signal.sh (CFP-1193) + check-operational-regression.sh (CFP-1194)
+# 답습 source: 구 S4 신호 producer (CFP-1193, CFP-2782 로 제거됨) + check-operational-regression.sh (CFP-1194)
 #   wrapper fast-pass / _CFP1193_MOCK_* 패턴 / exit 3-tier / ops-signal label
 #
 # mock seam (_CFP1195_MOCK_* namespace):

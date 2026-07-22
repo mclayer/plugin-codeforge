@@ -161,20 +161,14 @@ infra_resources:
       canonical_env: JIRA_READ_TOKEN
       aliases:
         accepted: []
-    - id: docker-hub-token
-      canonical_env: DOCKER_HUB_TOKEN
-      aliases:
-        accepted: []
+    # docker-hub-token / ssh-key-passphrase 자원 = ADR-121 / CFP-2782 배포 machinery 물리 제거로 삭제
+    #   (유일 소비면 = 구 배포 signal seed workflow + 배포 스크립트 삭제 → orphan 회피 위해 선언도 제거).
     - id: github-token
       canonical_env: GITHUB_TOKEN                # GitHub Actions 기본 주입 토큰 (항상 존재)
       aliases:
         # gh CLI 관례 env 명 — 동일 GitHub 토큰 자원의 별칭 (G6 alias-gap 해소, rename 0).
-        #   소비면 = scripts/canary_auto_promote.py:200 + scripts/lib/check_deferred_item_recovery.py:248.
+        #   소비면 = scripts/lib/check_deferred_item_recovery.py:248.
         accepted: [GH_TOKEN]
-    - id: ssh-key-passphrase
-      canonical_env: SSH_KEY_PASSPHRASE
-      aliases:
-        accepted: []
   # ── plane B: 실행단위 → required 자원 (실 .github/workflows/*.yml 만, ID-only 참조) ──
   execution_units:
     # confluence-forward-sync.yml — git→Confluence 무인 fallback. continue-on-error:true(:38) +
@@ -193,15 +187,7 @@ infra_resources:
         confluence-base-url_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
         confluence-space_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
         confluence-user-email_degraded_behavior: "secret 부재 시 dry-run (실 AI/Confluence 호출 0, exit 0)"
-    # auto-deploy.yml — Epic close→배포 signal (declarative seed, warning-tier). continue-on-error:true(:44) +
-    #   mask step 이 `if [[ -n "${secret:-}" ]]` graceful(:53-58) → 부재 시 masking skip + signal-only 진행(실 배포 미수행).
-    auto-deploy:
-      required: [docker-hub-token, ssh-key-passphrase]
-      resource_modes:
-        docker-hub-token: optional_degradable
-        ssh-key-passphrase: optional_degradable
-        docker-hub-token_degraded_behavior: "부재 시 secret masking skip + signal-only 진행 (declarative seed, continue-on-error — 실 배포 미수행)"
-        ssh-key-passphrase_degraded_behavior: "부재 시 secret masking skip + signal-only 진행 (declarative seed, continue-on-error — 실 배포 미수행)"
+    # 구 배포 자동화 execution_unit(Epic close→배포 signal seed) = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 삭제 (해당 seed workflow 삭제).
     # ac-traceability-matrix.yml — cross-repo AC 추적 (required check, continue-on-error 없음).
     #   cross-repo-pat 부재 = fail-closed(:64 "부재/degraded = FAIL"; :140 `if(!token){fail(...);return}`) → required.
     #   github-token = Actions 기본 주입(:68) 항상 존재 → required.

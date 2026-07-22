@@ -238,7 +238,7 @@ mclayer/mctrader-data            (빅데이터 OLAP — Parquet + DuckDB + 시�
 RDB OLTP (engine / web) → 빅데이터 OLAP (data) 의 **ELT / ETL / CDC pipeline** = AggregateArch + DataArch **co-author 영역**:
 
 - **scope boundary** — RDB schema (AggregateArch primary, Alembic SSOT) ↔ Parquet schema (DataArch primary, schema evolution rule) 의 변환 mapping
-- **CFP-1086 Story-1 declare** "deferred carrier (별 sibling 배포 lane Epic 산출 후 결정)" — 본 S4 mctrader evidence 가 first applied case
+- **CFP-1086 Story-1 declare** "deferred carrier (별 sibling Epic 산출 후 결정)" — 본 S4 mctrader evidence 가 first applied case
 - **chief tie-break trigger** — 변환 mapping wording 충돌 시 (예: enum name AggregateArch UPPER_SNAKE_CASE vs DataArch lowercase snake_case) Amendment 2 ladder 2 단계 (I-4 wording SSOT) 적용
 - **consumer carrier path** — mctrader 측 ELT/ETL pipeline 구현 시 codeforge sibling Epic 발의 → ADR-086 §결정 3 deferred carrier path 호출
 

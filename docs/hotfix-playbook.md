@@ -1,6 +1,6 @@
 # Hotfix Playbook (운영 장애 대응)
 
-> **[POLICY-RETIRED — ADR-127 §결정 3]** 본 playbook 의 Minimal Path(§1) / Medium Path(§2) lane-skip 긴급경로는 **폐지**됐다. 운영 장애 시에도 정식 풀 플로우(요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트 → 배포 → 배포리뷰)를 **무조건** 거친다. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, **lane 생략 0**. 본문은 historical 보존(삭제 안 함). 대기시간 축약(정식 lane 병렬 dispatch + check timeout 상한 + on-call reviewer 선지정)만 허용 — 증거(lane 산출물) 0 축약. 운영 긴급 대응 대체 절차 = ADR-127 §결정 3.4. **§6 cross-repo land_order post-merge-fix 만 별 경로로 존속**(운영 장애 hotfix 아님 — §6 배너 참조).
+> **[POLICY-RETIRED — ADR-127 §결정 3]** 본 playbook 의 Minimal Path(§1) / Medium Path(§2) lane-skip 긴급경로는 **폐지**됐다. 운영 장애 시에도 정식 풀 플로우(요구사항 → 요구사항리뷰 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 통합테스트 → 보안테스트)를 **무조건** 거친다. 긴급도는 우선순위 표기(`severity:critical` 라벨 / PR title)만, **lane 생략 0**. 본문은 historical 보존(삭제 안 함). 대기시간 축약(정식 lane 병렬 dispatch + check timeout 상한 + on-call reviewer 선지정)만 허용 — 증거(lane 산출물) 0 축약. 운영 긴급 대응 대체 절차 = ADR-127 §결정 3.4. **§6 cross-repo land_order post-merge-fix 만 별 경로로 존속**(운영 장애 hotfix 아님 — §6 배너 참조).
 
 > **Source**: `docs/orchestrator-playbook.md` §10 에서 분리 (CFP-93, P2-9 follow-up — cognitive overhead reduction). mctrader debut audit 시점 까지 hotfix 사용 사례 0 — full flow 가 default.
 

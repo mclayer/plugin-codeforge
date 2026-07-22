@@ -104,8 +104,8 @@ codeforge 의 lane 은 Story-scoped 구조 (종료 게이트 포함). 운영 pha
 
 | 제외 영역 | 담당 |
 |---|---|
-| 배포 실행 절차 (blue-green swap / atomic rollout) | ADR-087 / DeployPLAgent |
-| 배포 직후 1회 smoke / 성능비교 / cutover 사후검증 | ADR-088 / DeployReviewPLAgent |
+| 배포 실행 절차 (blue-green swap / atomic rollout) | consumer 배포 완전 위임 (ADR-121 — codeforge 배포 2 lane 물리 제거, GitHub Actions + Environments) |
+| 배포 직후 1회 smoke / 성능비교 / cutover 사후검증 | consumer 배포 위임 (ADR-121); production cutover evidence = ProductionEvidenceDeputy (codeforge-design CONDITIONAL, ADR-072) |
 | 운영 실행 절차 결정 (OpsExecutionArchitect) | CFP-1079 disjoint |
 | 운영 phase mechanism 실 구현 (workflow yml / script) | S4~S7 |
 | loop closure gate 실 구현 (dedup / max-depth / 사용자 gate) | S6 |

@@ -953,13 +953,19 @@ def test_ac17_canonical_secret_reverse_index():
     # G6 갱신: confluence-user-email canonical = ATLASSIAN_USER_EMAIL (2계열 수렴 — 구 CONFLUENCE_USER_EMAIL
     #   은 accepted alias 로 강등, canonical 아님) + audit-pii-key(AUDIT_PII_KEY) 신규 등재.
     rc, out = run_scanner(SSOT_PY, REPO_ROOT, "--emit-reverse-index")
+    # CFP-2782: DOCKER_HUB_TOKEN / SSH_KEY_PASSPHRASE = 삭제된 배포 machinery 전용 secret →
+    #   배포 machinery 물리 제거로 project.yaml infra_resource 선언 제거 → canonical 아님.
     canonical = ["ANTHROPIC_API_KEY", "AUDIT_PII_KEY", "CODEFORGE_CROSS_REPO_PAT", "ATLASSIAN_API_TOKEN",
                  "ATLASSIAN_USER_EMAIL", "CONFLUENCE_BASE_URL", "CONFLUENCE_SPACE_ID",
-                 "DOCKER_HUB_TOKEN", "GITHUB_TOKEN", "SSH_KEY_PASSPHRASE"]
+                 "GITHUB_TOKEN"]
     missing = [k for k in canonical if ("canonical_env=" + k) not in out]
     assert not missing, "AC-17: canonical secret 역색인 방출 누락 = %s" % missing
     assert "canonical_env=CONFLUENCE_USER_EMAIL" not in out, \
         "AC-17(G6): CONFLUENCE_USER_EMAIL 은 canonical 이 아니라 accepted alias 여야 함(2계열 수렴)"
+    # CFP-2782 discriminating: 삭제된 deploy-only secret 은 역색인에서 더 이상 방출 안 됨(선언 제거 확증).
+    for removed in ("DOCKER_HUB_TOKEN", "SSH_KEY_PASSPHRASE"):
+        assert ("canonical_env=" + removed) not in out, \
+            "AC-17(CFP-2782): %s 는 배포 machinery 물리 제거로 canonical 방출 0 이어야 함" % removed
 
 
 def test_ac17_mutation_no_secrets():
@@ -1035,11 +1041,11 @@ def test_ac22_wrapper_live_convergence_zero_without_baseline():
     refs = mm.group(1)
     assert ".claude/_overlay/project.yaml" in refs and ".github/workflows/confluence-forward-sync.yml" in refs, \
         "AC-22: 2계열 참조면(선언면+소비면) 동일 자원 매핑 실패 — refs=%s" % refs
-    # alias-gap 해소: GH_TOKEN 스크립트 소비면이 github-token 자원으로 흡수.
+    # alias-gap 해소: 스크립트 소비면이 github-token 자원으로 흡수.
+    #   (구 referrer 1건은 CFP-2782 로 삭제됨 → 잔여 referrer 만 결박.)
     mm = re.search(r"resource-id=github-token canonical_env=GITHUB_TOKEN referenced_by=\[([^\]]*)\]", out)
-    assert mm and "scripts/canary_auto_promote.py" in mm.group(1) \
-        and "scripts/lib/check_deferred_item_recovery.py" in mm.group(1), \
-        "AC-22: GH_TOKEN alias 소비면의 github-token 매핑 실패\n%s" % out
+    assert mm and "scripts/lib/check_deferred_item_recovery.py" in mm.group(1), \
+        "AC-22: 스크립트 소비면의 github-token 매핑 실패\n%s" % out
     # audit-pii-key 신규 자원: .py 리터럴 + .sh passthrough 양 소비면 매핑.
     mm = re.search(r"resource-id=audit-pii-key canonical_env=AUDIT_PII_KEY referenced_by=\[([^\]]*)\]", out)
     assert mm and "scripts/lib/audit_trail_pii_redact.py" in mm.group(1) \

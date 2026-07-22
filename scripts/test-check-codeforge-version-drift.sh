@@ -66,8 +66,8 @@ if [[ "$repo_path" == *"openai/codex-plugin-cc"* ]]; then
   exit 0
 
 elif [[ "$repo_path" == *"mclayer/marketplace"* ]]; then
-  # AC-4: mclayer fallback (9 codeforge + codex 1.0.4)
-  mklp='{"plugins":[{"name":"codeforge","version":"6.40.1"},{"name":"codeforge-requirements","version":"6.40.1"},{"name":"codeforge-design","version":"6.40.1"},{"name":"codeforge-review","version":"6.40.1"},{"name":"codeforge-develop","version":"6.40.1"},{"name":"codeforge-test","version":"6.40.1"},{"name":"codeforge-pmo","version":"6.40.1"},{"name":"codeforge-deploy","version":"6.40.1"},{"name":"codeforge-deploy-review","version":"6.40.1"},{"name":"codex","version":"1.0.4"}]}'
+  # AC-4: mclayer fallback (7 codeforge + codex 1.0.4)
+  mklp='{"plugins":[{"name":"codeforge","version":"6.40.1"},{"name":"codeforge-requirements","version":"6.40.1"},{"name":"codeforge-design","version":"6.40.1"},{"name":"codeforge-review","version":"6.40.1"},{"name":"codeforge-develop","version":"6.40.1"},{"name":"codeforge-test","version":"6.40.1"},{"name":"codeforge-pmo","version":"6.40.1"},{"name":"codex","version":"1.0.4"}]}'
   if [[ -n "$jq_option" ]]; then
     echo -n "$mklp" | base64 -w 0
     echo ""
@@ -93,7 +93,7 @@ chmod +x "$SANDBOX/bin/gh"
 # PLUGINS_DIR="${HOME}/.claude/plugins/cache" 파생이므로 HOME override
 # cache key (registry name) 별 plugin.json 배치:
 # - openai-codex/codex/1.0.4/.claude-plugin/plugin.json (installed=1.0.4, latest override=1.0.5)
-# - mclayer/codeforge[*]/6.40.1/.claude-plugin/plugin.json (9 entry)
+# - mclayer/codeforge[*]/6.40.1/.claude-plugin/plugin.json (7 entry)
 
 mkdir -p "$SANDBOX/.claude/plugins/cache/openai-codex/codex/1.0.4/.claude-plugin"
 cat > "$SANDBOX/.claude/plugins/cache/openai-codex/codex/1.0.4/.claude-plugin/plugin.json" << 'EOF'
@@ -104,9 +104,9 @@ cat > "$SANDBOX/.claude/plugins/cache/openai-codex/codex/1.0.4/.claude-plugin/pl
 }
 EOF
 
-# mclayer 9 plugin (all at 6.40.1)
+# mclayer 7 plugin (all at 6.40.1)
 for plugin in codeforge codeforge-requirements codeforge-design codeforge-review \
-              codeforge-develop codeforge-test codeforge-pmo codeforge-deploy codeforge-deploy-review; do
+              codeforge-develop codeforge-test codeforge-pmo; do
   mkdir -p "$SANDBOX/.claude/plugins/cache/mclayer/$plugin/6.40.1/.claude-plugin"
   cat > "$SANDBOX/.claude/plugins/cache/mclayer/$plugin/6.40.1/.claude-plugin/plugin.json" << EOF
 {
@@ -157,7 +157,7 @@ FAIL_COUNT=0
 # ── Case (c): AC-4 mclayer 무회귀 (fallback via PLUGIN_MARKETPLACE, override미등재) ──
 {
   echo ""
-  echo "━━ Case (c): AC-4 mclayer fallback (9 codeforge plugin)"
+  echo "━━ Case (c): AC-4 mclayer fallback (7 codeforge plugin)"
   case_c_output=$(bash "$SCRIPT_PATH" --plugin codeforge --json 2>/dev/null || echo "")
   if echo "$case_c_output" | grep -q '"plugin":"codeforge".*"status":"none".*"installed":"6.40.1".*"latest":"6.40.1"' 2>/dev/null || false; then
     echo "✓ Case (c) PASS: mclayer fallback 정상 (override미등재 → \$mp fallback)"

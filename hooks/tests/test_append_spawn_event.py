@@ -659,7 +659,7 @@ class TestEventTypeClosedEnum:
 
 
 class TestLaneLabelClosedEnum:
-    """lane_label ∈ {10 lane + 없음} (closed, 11값)"""
+    """lane_label ∈ {8 lane + 없음} (closed, 9값 — CFP-2782 로 2 lane 제거)"""
 
     def test_valid_lane_labels(self, tmp_path):
         """
@@ -668,7 +668,7 @@ class TestLaneLabelClosedEnum:
         """
         valid_lanes = [
             "요구사항", "요구사항-리뷰", "설계", "설계-리뷰", "구현",
-            "구현-리뷰", "구현-테스트", "보안-테스트", "배포", "배포-리뷰", "없음"
+            "구현-리뷰", "구현-테스트", "보안-테스트", "없음"
         ]
 
         for lane in valid_lanes:

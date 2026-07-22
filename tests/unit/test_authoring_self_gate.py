@@ -72,17 +72,20 @@ AB_SUBSTRATE_BASENAMES = frozenset({
     "dev-process-event-v1.md",  # A 계약
 })
 
-# 7-tuple branch-protection required contexts (CLAUDE.md SSOT — AC-6/16 무변경 확인, 독립 하드코딩)
+# 8-tuple branch-protection required contexts (CLAUDE.md SSOT — 독립 하드코딩; CFP-2782: `Verify deploy lane presence` 제거 9→8 + CFP-2780 css-lint 2 반영. 명칭 SEVEN_TUPLE = cosmetic 잔존)
 SEVEN_TUPLE_CONTEXTS = (
     "phase-gate-mergeable", "invariant-check",
     "doc frontmatter schema (CFP-28 — strict)", "doc section schema (CFP-28 — strict)",
-    "check-gate", "Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)",
-    "ac-traceability-matrix",
+    "check-gate", "ac-traceability-matrix",
+    "css structural lint (stylelint, warning-tier)", "css-lint discriminating test (mutation 생존 0)",
 )
 
 # ═════════════════════════════════════════════════════════════════════════════
 # 독립 oracle 상수 (사전-고정 — 계약 SSOT 유래, module under test 에서 import 금지)
 #   VALID_LANE_LABELS = dev-process-event-v1 label-registry-v2 (11값). detecting_lane 유효 멤버 판정.
+#     ※ CFP-2782 note: dev-process-event substrate(P1 zero-edit 계약)는 배포/배포-리뷰 를 backward-compat
+#       historical lane label 로 존치(dev-process-event-v1.md §2 lane_label = 11값 유지 — spawn-event(9값)와
+#       달리 과거 로그 이벤트 호환 보존). 따라서 본 oracle 도 11값 유지가 계약 정합.
 #   CLOSED_7_FAMILIES = append_dev_process_event _DEFECT_FAMILIES(CLOSED-7). 새 family 발명 부재 판정.
 # ═════════════════════════════════════════════════════════════════════════════
 VALID_LANE_LABELS = frozenset({

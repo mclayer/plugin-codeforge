@@ -75,7 +75,7 @@ permissions:
 
 ## DataArch ↔ ModuleArch (aggregate-level) cross-layer boundary (deferred carrier)
 
-**RDB ↔ 빅데이터 cross-layer (ELT / ETL / CDC) boundary** = DataArch + ModuleArch (aggregate-level) **co-author 영역**. sibling Epic (배포 lane 또는 데이터 엔지니어링 별 Epic) 산출 후 carrier 결정 — **deferred** (CFP-1086+α follow-up 가능성).
+**RDB ↔ 빅데이터 cross-layer (ELT / ETL / CDC) boundary** = DataArch + ModuleArch (aggregate-level) **co-author 영역**. 데이터 엔지니어링 별 sibling Epic 산출 후 carrier 결정 — **deferred** (CFP-1086+α follow-up 가능성).
 
 - **데이터 in-flight** (예: CDC capture → Kafka → Parquet sink) = boundary 영역
 - **batch ETL** (예: PostgreSQL → S3 Parquet daily dump) = boundary 영역

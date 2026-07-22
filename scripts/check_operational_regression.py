@@ -23,7 +23,7 @@ ADR-061 (multi-line Python > 5줄 → 외부 .py 의무):
   (c) signature dedup: 동일 signature open Issue → bash 조율 (본 스크립트 = flap_suppressed 출력)
 
 §7.4 empirical-source:
-  24h cron rate: rollback-signal-monitor.yml 답습 (dimension: rate)
+  24h cron rate: CFP-1193 S4 monitor 패턴 답습 (dimension: rate)
   flap N-tick (dimension: count): Grafana/Prometheus 'for' clause 산업 표준; 구체 N = consumer overlay
   hysteresis margin (dimension: rate): Datadog hysteresis; 구체 margin = consumer overlay
   regression 임계 구체값: consumer SLO (overlay) — 본 스크립트 = 형식+비교 로직만
@@ -92,7 +92,7 @@ def parse_args() -> argparse.Namespace:
 def make_signature(signal_type: str, measured: float, window: int) -> str:
     """
     sha256("<signal_type>|<measured>|<window>")[:16]
-    S4 check_rollback_signal.py 공식 verbatim (Change Plan §3.5 SSOT)
+    S4 signal signature sha256 공식 verbatim (ADR-106 / Change Plan §3.5 SSOT — S4 producer 는 CFP-2782 로 제거)
     """
     raw = f"{signal_type}|{measured}|{window}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]

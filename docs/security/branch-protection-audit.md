@@ -250,3 +250,12 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
 - **doc = live = 7-tuple parity**: CLAUDE.md L93 브랜치보호 표(이미 7-tuple, SSOT) ↔ 본 audit doc ↔ live(gh api 7-tuple) 3자 정합. 이전 doc-ahead divergence 해소.
 - **carrier / mandate**: 등록 terminal carrier #2670 = CLOSED/COMPLETED `[verified]`. 본 record 정합 근거 = ADR-145 Amendment 5(line 380) 코드-외 조치("`docs/security/branch-protection-audit.md` HELD→완결 갱신"). CLAUDE.md L93 표 = 무변경(이미 7-tuple).
 - 기록 시각: 2026-07-14T01:08:52+09:00 (KST).
+
+## 2026-07-22 — CFP-2782 (ADR-121 Wave 2): 배포 2 lane 물리 제거 → wrapper required contexts 9→8 (deploy-lane-presence context 제거)
+
+- **전환 = 9-tuple → 8-tuple**: `Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)` context 를 wrapper `required_status_checks.contexts[]` 에서 제거. 배포 2 lane 물리 제거(ADR-121 §결정 A, sunset 2026-07-13 KST 경과)로 해당 context 의 목적(배포 2 lane wiring 존재 확인)이 obviated — 여전히 필요한 control 을 제거하는 것이 아니라 gate 목적 자체 소멸. 산출 workflow(job-level `name:` = 위 context 문자열)도 동반 삭제.
+- **현행 live 크기 근거 = 9-tuple (Change Plan CFP-2782 §2.3 firsthand `gh api .../required_status_checks` 실측 인용)**: `phase-gate-mergeable` · `invariant-check` · `doc frontmatter schema (CFP-28 — strict)` · `doc section schema (CFP-28 — strict)` · `check-gate` · `Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)` · `ac-traceability-matrix` · `css structural lint (stylelint, warning-tier)` · `css-lint discriminating test (mutation 생존 0)` = 9. 본 ledger 의 직전 logged 상태(2026-07-14 entry)는 7-tuple 이며, 그 사이 css-lint 2종 등록은 본 ledger 에 별도 기록되지 않았다(logged-state ↔ live drift 정직 공개). **본 worker(content-edit only)는 live gh api 를 firsthand 실측 불가 → 9-tuple 근거 = Change Plan 인용 의존(ADR-119)**; 실등록 전환 실측·확정은 등록 행위자(post-merge Orchestrator gh-api act) 소관.
+- **제거 후 = 8-tuple**: 위 9 중 `Verify deploy lane presence…` 1개 제거, 나머지 8 잔존.
+- **등록 행위자 = post-merge Orchestrator gh-api act (settings-plane admin PATCH, 코드 PR 밖)**: `gh api -X PATCH /repos/mclayer/plugin-codeforge/branches/main/protection/required_status_checks` contexts 배열에서 해당 문자열 drop. ordering-invariant(Change Plan §7.2): context drop 을 산출 workflow 삭제 PR gate 평가 前(또는 동시) 선행 — 역순(workflow 먼저 삭제) 시 stuck-expected deadlock(전 PR merge 불능).
+- **rollback**: context 재추가(`gh api PATCH` 로 원 9-tuple 복원) — settings-plane 가역.
+- 기록 시각: 2026-07-22 (KST) — 계획/설계 기록 (실 PATCH act = post-merge Orchestrator, 실측 timestamp 는 등록 실행 시 후속 갱신).

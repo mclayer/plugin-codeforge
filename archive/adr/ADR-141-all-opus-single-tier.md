@@ -94,6 +94,26 @@ amendment_log:
       dead ADR-042 §결정 1/Amd15/16/17 부활 아님). 3rd-party pin 정합 = sonnet alias 는
       1M-capable(opus 와 symmetric — haiku 200K `[1m]` 금지 비대칭과 다름); pin 값·`[1m]`
       여부 = 요구사항리뷰 확정치 인용(무출처 정밀 단정 회피 — ADR-119).
+  - amendment: 3
+    carrier_story: CFP-2782
+    date: 2026-07-22
+    scope: >-
+      deploy agent 4종(DeployPLAgent · DeployWorkerAgent · DeployReviewPLAgent ·
+      DeployReviewWorkerAgent) 물리 제거 note — CFP-2782 / ADR-121 Wave 2 로 deploy·deploy-review
+      2 lane plugin dir 삭제. Amendment 1/2 carve-out 표 + §결정 prose 가 참조하던 deploy agent 가
+      더 이상 실재하지 않음을 기록. (a) Amendment 2 tier 표(sonnet carve-out: DeployPL · DeployWorker ·
+      DeployReviewWorker)는 dated Amendment 이력 = Event Sourcing frozen(byte 무변경 — 그 시점
+      tier 결정 이력 보존). (b) A2-4 DeployPL asymmetry 단락 + A2-5 Phase-2 실행 범위(L405-408
+      deploy CLAUDE.md tier 표 인용) = 삭제 대상 파일 참조라 정합(이미 CFP-2735/2748 Phase 2
+      이행분). (c) all-opus §결정 1 = 무영향 — agent 수 감소일 뿐 tier 정책 동일(전 잔존 에이전트 opus
+      단일 tier 무변경). (d) ProductionEvidenceDeputy = ADR-141 §결정 6 opus 명시 유지, CFP-2782 로
+      codeforge-design CONDITIONAL deputy RELOCATE 회귀(ADR-072 Amendment 5). ADR-141 정책 자체
+      철회 아님 — 물리 제거된 4 deploy agent 참조 note 만. 상세 = 본문 `## Amendment 3`.
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 본 amendment 는 tier
+      정책 약화가 아니라 상위 ADR-121 로 물리 제거된 4 deploy agent 의 참조 note 다 — all-opus
+      §결정 1(전 에이전트 opus 단일 tier) 무영향(agent 수 감소, tier 동일), Amendment 1/2 carve-out
+      표는 frozen 역사 보존(byte 무변경). governance surface 축소 0 — dead-agent reference cleanup.
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -414,3 +434,29 @@ under-enumeration 이 지배 실패축(Amendment 1 self-ref 교훈)이므로 누
 - **§결정 6 하한 재해석 (2-clause → 3-clause)**: Amendment 1 A1-6 의 2-clause(haiku 7 하한=haiku / 그 외=opus)를 **3-clause** 로 확장한다 — **haiku 7 하한=haiku / sonnet 14 하한=sonnet / 그 외 = opus 미만 down-tier 불허**. consumer overlay 는 각 에이전트 ADR-정의 tier 미만으로의 down-tier 를 불허(보수 상향만 허용, ADR-127 §결정 6 확장-only 정합). 소비자 intent 무변경.
 - **rate-limit fallback machinery 구분 (K-5 — false 정정 리스크 차단)**: sonnet tier 가 carve-out 으로 부활해도 ADR-057 §결정 2(sonnet rate-limit → opus fallback) machinery 는 여전히 dead 이다(단일 tier 폐기 상속, fallback tier 부재). 따라서 `evidence-checks-registry.yaml` 의 "sonnet fallback 대상 0"(rate-limit-fallback-rate) 및 "tier-flip 대상 0"(stakes-tier-flip-evidence) dead-mark 은 **보존**한다 — prose 정정 = "carve-out 열거 확장(+ sonnet 14)" 이지 "fallback/tier-flip 대상 부활" 이 아니다.
 - **sonnet 429**: sonnet 은 opus 와 별도 pool·별도 429 거동 → ADR-109(opus-scoped 429 mitigation) 미적용, fallback tier 부재. Amendment 1 A1-6 haiku 429 note 와 동형 — 리스크 낮음(경고), 운영 관찰 대상.
+
+## Amendment 3 (CFP-2782, 2026-07-22) — deploy agent 4종 물리 제거 note
+
+### 대상 + 판정
+
+CFP-2782 / [ADR-121](ADR-121-deprecate-deploy-lanes.md) Wave 2 로 deploy·deploy-review 2 lane plugin dir 이 삭제되며 **DeployPLAgent · DeployWorkerAgent · DeployReviewPLAgent · DeployReviewWorkerAgent** 4종이 물리 제거됐다. 본 ADR(Accepted, NOT Superseded)이 Amendment 1/2 carve-out 표 + §결정 prose 에서 이 deploy agent 를 live-ref 로 보유했으므로, 그 referent 가 소멸했음을 note 로 기록한다.
+
+### frozen 이력 (Event Sourcing)
+
+- **Amendment 2 tier 표** (sonnet carve-out: DeployPL · DeployWorker · DeployReviewWorker) = **dated Amendment 이력**, byte 무변경 frozen — 그 시점 tier 결정 이력 보존.
+- **A2-4 DeployPL asymmetry** 단락 + **A2-5 Phase-2 실행 범위**(deploy CLAUDE.md tier 표 인용, L405-408) = 이미 CFP-2735/2748 Phase 2 이행분 + 삭제 대상 파일 참조라 정합. byte 무변경.
+
+### all-opus 정책 무영향
+
+**§결정 1 (전 에이전트 opus 단일 tier) = 무영향** — deploy agent 4종 물리 제거는 agent 수 감소일 뿐, 잔존 전 에이전트의 tier(opus 단일)는 동일. ProductionEvidenceDeputy = §결정 6 opus 명시 유지, CFP-2782 로 codeforge-design CONDITIONAL deputy RELOCATE 회귀(ADR-072 Amendment 5).
+
+### sunset_justification
+
+N/A — is_transitional: false permanent policy 유지. tier 정책 약화가 아니라 상위 ADR-121 로 물리 제거된 4 deploy agent 의 참조 note (dead-agent reference cleanup). all-opus §결정 1 무영향, Amendment 1/2 carve-out 표 frozen 보존. governance surface 축소 0.
+
+### Cross-ref
+
+- [ADR-121](ADR-121-deprecate-deploy-lanes.md) — deploy·deploy-review lane deprecate (deploy agent 제거 authority)
+- ADR-141 Amendment 1/2 (carve-out 표 — deploy agent live-ref 보유처, frozen 역사)
+- [ADR-042 Amendment 20](ADR-042-agent-model-selection-policy.md) — 4-agent deploy roster deprecated (sibling)
+- [ADR-072 Amendment 5](ADR-072-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy RELOCATE 회귀

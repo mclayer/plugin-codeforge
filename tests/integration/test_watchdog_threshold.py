@@ -41,12 +41,12 @@ class TestWatchdogThreshold:
         assert thresholds.get("mechanical", 0) <= 60  # 45 min
         assert thresholds.get("구현", 0) == 180  # 3 hours
         assert thresholds.get("구현리뷰", 0) == 240  # 4 hours
-        assert thresholds.get("배포", 0) == 45  # short
+        assert thresholds.get("short", 0) == 45  # short (구 deploy lane fixture = CFP-2782 제거, short 대표로 대체)
 
         now = datetime(2026, 7, 20, 12, 0, 0, tzinfo=timezone.utc)
 
         # ─ short lane ──
-        latest_short = {"short-br": _mk_hb("short-br", 1, lane="배포")}
+        latest_short = {"short-br": _mk_hb("short-br", 1, lane="short")}
         cursor = {}
         results, cursor_updated = evaluate(latest_short, cursor, now, thresholds)
         assert results["short-br"]["threshold_min"] == 45

@@ -50,7 +50,7 @@ codeforge core (>= 5.0.0) 의존.
 |---|---|---|
 | **LiveOpsDeputy** (CONDITIONAL — Live touching Story 만) | real funds / live exchange API / production credential / live order placement 1+ touching | "operator approval / kill switch / incident response 가 충족되는가, OperationEvent audit trail 이 보존되는가" |
 | **LiveOrderingDeputy** (CONDITIONAL — Live touching Story 만) | LiveOps 동일 trigger | "order submit / partial fill / cancel race / rejection mapping / ledger reconcile invariant 이 정합인가" |
-| **ProductionEvidenceDeputy** | — | codeforge-deploy-review 로 이관 완료 (ADR-088 §결정 4) — 본 lane 은 spawn 하지 않음 (canonical = `plugins/codeforge-deploy-review/agents/ProductionEvidenceDeputyAgent.md`) |
+| **ProductionEvidenceDeputy** (CONDITIONAL — production cutover touching Story 만) | Change Plan §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유. wrapper-self-app N/A | "production evidence quad (functional / security / monitoring / testing) 4 source 실측·EPIC CLOSED cutover 완결 evidence 가 있는가" — codeforge-design CONDITIONAL deputy 회귀 (RELOCATE — ADR-072 Amendment 5 / CFP-2782, ADR-088 §결정 4 이관 역전). canonical = `plugins/codeforge-design/agents/ProductionEvidenceDeputyAgent.md` |
 | **ModuleArch aggregate-level CONDITIONAL applicability** | `project.yaml aggregate_arch.applicable: bool` (default `true`). non-applicable consumer = frontend-only / API-only / external-managed RDB | "본 consumer 가 RDB OLTP schema 제어권 보유하는가 — aggregate-level 영역 (ModuleArch mandate 8-13) 만 conditional, module-level 영역 (1-7) 은 무조건 applicable" |
 
 ## 4-tuple sub-tuple (deputy 아님 — ADR-044 CFP-676 reaffirm)
@@ -141,7 +141,7 @@ CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 - ADR-042 (+Amd 7/8) — design lane agent model tier SSOT + roster 재편 (APIContractArch/ModuleArch 등 + DataArch mandate 축소 + InfraArchitect·DDDArchitect 신설 reject)
 - ADR-044 — Phase-scoped sequential team (flat spawn / nested team·재귀 spawn·sub-lead 격상 금지)
 - ADR-068 (+Amd 2) — Boundary completeness invariants + chief tie-break ladder 3 단계 (RACI → invariant → judgement+Amendment)
-- ADR-072 — ProductionEvidenceDeputy + Epic cutover gate (ADR-088 §결정 4 로 codeforge-deploy-review 이관 완료 — 본 lane spawn 0, CFP-2170 design 본 파일 삭제)
+- ADR-072 (+Amd 5) — ProductionEvidenceDeputy + Epic cutover gate (CFP-2782 로 ownership codeforge-design 회귀 — deploy·deploy-review lane 물리 제거로 orphan deputy 회피, ADR-088 §결정 4 이관 역전, git mv 로 본 lane 정식 SSOT 복귀)
 - ADR-078 — Living architecture doc SSOT (`docs/architecture/codeforge-design.md` 갱신 의무)
 - ADR-086 — Deputy 신설 결정 framework P7 (axis 분석 + 5-checklist self-application). agent file 신설/rename/축소 모두 self-application 의무.
 

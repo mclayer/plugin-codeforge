@@ -72,7 +72,7 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `schema_version` | string | required | `spawn-event-v1` 고정 | — |
 | `timestamp` | ISO8601 UTC | required | **UTC Z strict** — `2026-06-24T14:22:33Z`. +00:00 / bare datetime 불허 (fix-event-v1 §4 / stop-event-v1 정합) | — |
 | `story_key` | string | required | e.g. `CFP-2393` (KEY prefix overlay 정합). Public non-sensitive | non-sensitive (public) |
-| `lane_label` | enum | required | 요구사항 / 요구사항-리뷰 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 / 배포 / 배포-리뷰 / 없음 (label-registry-v2 정합 — 10 lane + 없음). closed-set | non-sensitive |
+| `lane_label` | enum | required | 요구사항 / 요구사항-리뷰 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 / 없음 (label-registry-v2 정합 — 8 lane + 없음; 구 배포 2 값 deploy·deploy-review = ADR-121 / CFP-2782 물리 제거). closed-set | non-sensitive |
 | `agent_type` | enum (semi-open) | required | spawn 된 subagent 종류 (e.g. `ArchitectPLAgent` / `DomainAgent` / `DeveloperAgent`). **Public non-PII** (SecurityArch — Allow-list safe). **value set = roster-derived + `unknown-agent` fallback (semi-open, NOT strict closed-set)** — value ∈ (`templates/` agent roster ∪ consumer `project.yaml` roster); roster 미등재 = `unknown-agent` fallback (정확 closed-set 이 아닌 이유 = 미등재 값을 reject 하지 않고 fallback bucket 으로 흡수. Deny-list 불요 — fallback 이 free-form leak 차단). **lint(§8.1)은 enum membership reject 검증 아님** — `unknown-agent` 가 fallback 으로 존재함을 검증 (lint-vs-reality gap 회피) | non-sensitive |
 | `attribution_confidence` | enum | required | `{attributed, unattributed, unsupported}`. **default = `unattributed`** (token source 정확도 미보장 시 — F2 transcript undercount caveat). `attributed` = 정확 source 확보 / `unattributed` = source 부정확·불가 (token field = null) / `unsupported` = 플랫폼이 token surface 미제공. **추정치 저장 금지** (ADR-119 검증-후-단언) | non-sensitive |
 | `input_tokens` | int \| null | optional | OMC `SubagentInfo.token_usage.input_tokens` 차용. `attribution_confidence != attributed` 시 **null** (추정 합산 금지). numeric only | non-sensitive (count) |
@@ -169,8 +169,8 @@ spawn_event_schema:
   lane_label:
     type: enum
     required: true
-    values: [요구사항, 요구사항-리뷰, 설계, 설계-리뷰, 구현, 구현-리뷰, 구현-테스트, 보안-테스트, 배포, 배포-리뷰, 없음]
-    note: "label-registry-v2 lane enum 정합 (10 lane + 없음, 11 값). closed-set — 신규 lane 추가 시 ADR-043 §결정 2 Amendment 동반"
+    values: [요구사항, 요구사항-리뷰, 설계, 설계-리뷰, 구현, 구현-리뷰, 구현-테스트, 보안-테스트, 없음]
+    note: "label-registry-v2 lane enum 정합 (8 lane + 없음, 9 값). closed-set — 신규 lane 추가 시 ADR-043 §결정 2 Amendment 동반. 구 배포 2 값(deploy·deploy-review) = ADR-121 / CFP-2782 배포 2 lane 물리 제거로 enum narrowing (11 값 → 9 값)."
     stop_event_alignment: "spawn-event lane_label = 11 값 registry 정합(현행). stop-event 측 lane_label 표현은 stale — **stop-event lane_label alignment = Phase 2 deferred** (stop-event 영역 over-reach 회피, 본 spawn-event Story scope 외). spawn-event 는 이 stale 을 복사하지 않음."
 
   agent_type:

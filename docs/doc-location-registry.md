@@ -331,8 +331,6 @@
   - plugins/codeforge-review/docs/architecture/codeforge-review.md (CFP-971)
   - plugins/codeforge-test/docs/architecture/codeforge-test.md (CFP-972)
   - plugins/codeforge-pmo/docs/architecture/codeforge-pmo.md (CFP-973)
-  - plugins/codeforge-deploy/docs/architecture/codeforge-deploy.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S2 sub-Story carrier, body wire deferred)
-  - plugins/codeforge-deploy-review/docs/architecture/codeforge-deploy-review.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S3 sub-Story carrier, body wire deferred)
   - mclayer/codeforge-internal-docs/wrapper/architecture/wrapper-overview.md (dogfood)
 
   **notes**:
@@ -348,9 +346,8 @@
   > lane 게이트 = S3 (#921) carrier. drift lint = S4 (#923) carrier.
   > parallel-edit policy = locked (architecture_doc = ArchitectAgent monopoly + design lane verdict gate).
   > Sub-Epic CFP-949 (2026-05-18) — 6 lane plugin self-owned seed (codeforge-{requirements,design,develop,review,test,pmo}) 추가, closing-the-loop 7 seed completion (wrapper 1 + lane 6).
-  > CFP-1059 / ADR-087+088 (2026-05-23) — Deploy lane + Deploy Review lane 신설 declarative Phase 1.
-  > 8 lane plugin family 확장 (6 → 8). 신규 2 plugin (codeforge-deploy + codeforge-deploy-review) self-owned arch doc
-  > examples row 신설 (declarative placeholder — plugin repo 신설 자체 = S2/S3 sub-Story carrier).
+  > CFP-1059 / ADR-087+088 (2026-05-23, Superseded) — Deploy lane + Deploy Review lane 신설 declarative Phase 1 (6 → 8 확장).
+  > ADR-121 / CFP-2782 (2026-07-22) — 배포 2 lane 물리 제거 → 6 lane plugin family 회귀. 배포는 consumer GitHub Actions/Environments 완전 위임. 구 배포 plugin arch doc examples row 제거.
   > CFP-1427 (Sub-C S3.3 / Mega-Epic CFP-1415 Sub-C bundle CFP-1418) — wrapper family.md 5-anchor section schema expand
   > (ADR-078 Amendment 2 §결정 3 closed-enum: arc42 §3 Context+Scope / arc42 §5 Building Block / C4 Container /
   > C4 Component / Open Decisions Pending). 6 lane plugin self-owned arch doc 5-anchor expand = follow-up sub-CFP 6

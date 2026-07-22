@@ -1173,7 +1173,7 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
     open_extension: false
     default: "warning_first"   # ADR-060 §결정 5 default 정합 — Phase 1 = warning tier 활성
     escalation_path: "warning_first → blocking_on_pr (ADR-060 evidence-enforceable 4-tier promotion gate 정합, 역방향 약화 = ADR-058 §결정 5 sunset_justification 의무) — Phase 2 (별 PR, Develop lane) = warning → blocking-on-pr 승격 carrier (별 follow-up CFP)"
-    bypass_label: "hotfix-bypass:canary-promotion-criteria"   # label-registry-v2 v2.37 신규 entry (46번째 family member)
+    bypass_label: "(구 배포 canary lint bypass label = ADR-121 / CFP-2782 물리 제거 — bypass 대상 workflow teardown)"   # 구 label-registry-v2 entry
     bypass_audit_lint: "bash scripts/check-bypass-audit-comment.sh (audit comment 자동 발의 — reuse 패턴, 기존 entry 동일)"
 
   downgrade_asymmetry_marker:   # RefactorAgent B-2 (§4.8 placeholder_reserve → active 단독 promotion 선례 답습) — SecurityArch T-5.1 mitigation core field, v1.12 CFP-1014 Story-5 carrier wired 활성 완료
@@ -1188,7 +1188,7 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
   hook_integration:
     file: "scripts/check-canary-compatibility.sh"
     helper_lib: "scripts/lib/canary-compatibility-helpers.sh"   # RefactorAgent A-3 + B-3 (thin orchestrator + helper lib extraction CFP-954 gh-api-helpers.sh 선례 답습)
-    workflow: "templates/github-workflows/canary-promotion-criteria.yml (+ .github/workflows/canary-promotion-criteria.yml byte-identical mirror, ADR-005)"
+    workflow: "(구 배포 canary promotion lint workflow = ADR-121 / CFP-2782 물리 제거 — templates+.github mirror 양 사본 삭제)"
     trigger_modes: ["pull_request_open", "workflow_dispatch"]   # ADR-072 §결정 5 production-cutover-evidence.yml D2 consensus 답습 (event-driven not continuous monitoring, cron 24h 미권고)
     helpers:   # RefactorAgent B-3 (4 helper extraction)
       - "_extract_4tuple_measurement_source()"   # promotion_criteria_4tuple 각 sub의 measurement_source 파싱
@@ -1204,7 +1204,7 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
       probe_sandbox_env: "scripts/check-probe-sandbox-env.sh (CFP-843) + bats setup/teardown export 패턴 답습"
     exit_code_contract:
       "0": "PASS (3-way match + 4-tuple all 'pass' OR 'n_a')"
-      "1": "warning (missing data / network 일시 실패 / sandbox-bound fetch fail) — advisory only, hotfix-bypass:canary-promotion-criteria bypass 가능"
+      "1": "warning (missing data / network 일시 실패 / sandbox-bound fetch fail) — advisory only (구 배포 canary lint bypass label = ADR-121 / CFP-2782 물리 제거)"
       "2": "mechanical anchor invalid (schema breach / real divergence) — hard fail + Issue auto-create + on-call notification"
     sequential_composition_order:
       - step_1: "wrapper-self-app Tier-1 exemption fast-PASS check (triple-AND: production_cutover_touching=true AND repo=wrapper AND code_change=0 → exit 0)"
@@ -1233,6 +1233,8 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
 Phase 1 (CFP-991) merge 시 본 §4.14 binding block 활성 (schema declare + workflow + scripts/lib warning tier 활성) — declaration + mechanical lint enforcement carrier. **v1.12 (CFP-1014 Story-5)** merge 시 `downgrade_asymmetry_marker.status: placeholder_reserve → wired` 단독 promotion 완료 (§4.8 단독 promotion 선례 verbatim 답습, partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 invariant 보존). Phase 2 (별 PR, Develop lane) merge 시 promotion_gate_failure_mode `warning_first → blocking_on_pr` 승격 + consumer canary→beta promotion runtime 4-tuple evaluation 실 carrier 영역 + downgrade execution runtime path (별 future carrier — Story-5 = declare-only disjoint declarative SSOT only, runtime demotion execution path = sequential carrier). Sibling carrier: ADR-072 amendment_log Amendment 3 + label-registry-v2 v2.34 → v2.35 MINOR (4 신규 entry) + `docs/evidence-checks-registry.yaml` `canary-compatibility-check` entry (warning tier) + `docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md` 신설 (CFP-28 6-section schema, 4 industry exemplar verbatim cite) + `docs/parallel-work/section-ownership.yaml` `canary_compatibility_check` row append + `docs/doc-locations.yaml` 16번째 entry `promotion_criteria_4tuple_artifact` 신설.
 
 ### §4.14 sunset boundary (CFP-1111 carrier)
+
+> **CFP-2782 (ADR-121 Wave 2, 2026-07-22) teardown 주석 (Sunsetted contract, ADR-076 disposition escalate)**: 본 §4.14 binding 의 **기계 enforcement machinery**(check-canary-compatibility.sh / 배포 canary promotion lint workflow 양 사본 / canary-compatibility-helpers.sh)는 ADR-121 / CFP-2782 배포 canary teardown(§3.5)으로 물리 제거됐다 — bypass label 도 label-registry-v2 v2.112 에서 삭제. 단, 본 binding 의 **본질 = ADR-076 §결정 9.6 consumer channel(Chrome-style Stable/Beta/Canary) promotion criteria** 이며 ADR-076 은 본 removal Story 의 ADR 판단 집합(§10) 밖이다. 따라서 binding 구조 전면 제거는 ADR-076 consumer-channel-canary disposition 이 필요한 substantive 결정 → **구현리뷰 escalate 대상**(binding body 는 Sunsetted-historical 로 존치, machinery 소실만 상기 반영). 배포 blue-green 자동승격 canary(ADR-105 auto-promote machinery)와 consumer release-channel canary(ADR-076)의 축 구분이 crux.
 
 본 binding (canary_compatibility_check_binding + downgrade_asymmetry_marker, v1.11→v1.12 chain) 는 CFP-1111 walker paradigm 으로 carry.
 

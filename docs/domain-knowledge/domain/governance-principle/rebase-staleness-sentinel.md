@@ -146,7 +146,7 @@ mechanical wire 후보 SSOT:
 - **ADR-085 본문 변경 0건** — 본 sentinel = ADR-085 coordination axis 의 narrative SSOT companion (ADR 본문 무변경 invariant)
 - **ADR-073 본문 변경 0건** — 본 sentinel = ADR-073 verify axis 의 narrative SSOT companion (4 Amendment cumulative cover)
 - **force-push procedure 본 sentinel 외** — ADR-040 §결정 1 worktree-first invariant + ADR-024 §결정 1 main push 차단 별 mechanism layer
-- **codeforge-deploy / deploy-review lane 영역 외** — production cutover sentinel = ADR-072 + ProductionEvidenceDeputy 별 mechanism
+- **production cutover 영역 외** — production cutover sentinel = ADR-072 + ProductionEvidenceDeputy (codeforge-design CONDITIONAL deputy, ADR-121 / CFP-2782 배포 2 lane 물리 제거 후) 별 mechanism
 
 ## 관련 ADR
 

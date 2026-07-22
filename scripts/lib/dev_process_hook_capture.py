@@ -79,6 +79,7 @@ _AGENT_TYPE_TO_LANE = {
     "InfraOperationalArchitectAgent": "설계",
     "LiveOpsDeputyAgent": "설계",
     "LiveOrderingDeputyAgent": "설계",
+    "ProductionEvidenceDeputyAgent": "설계",  # CFP-2782 RELOCATE — codeforge-design CONDITIONAL deputy (ADR-072 Am5)
     # 설계-리뷰
     "DesignReviewPLAgent": "설계-리뷰",
     # 구현
@@ -95,13 +96,6 @@ _AGENT_TYPE_TO_LANE = {
     "StatefulTestAgent": "구현-테스트",
     # 보안-테스트
     "SecurityTestPLAgent": "보안-테스트",
-    # 배포
-    "DeployPLAgent": "배포",
-    "DeployWorkerAgent": "배포",
-    # 배포-리뷰
-    "DeployReviewPLAgent": "배포-리뷰",
-    "DeployReviewWorkerAgent": "배포-리뷰",
-    "ProductionEvidenceDeputyAgent": "배포-리뷰",
     # (미등재 = 의도적 "없음"): ClaudeReviewAgent / CodexReviewAgent (lane-agnostic 공유 리뷰) /
     #                          PMOAgent / GitOpsAgent (cross-cutting).
 }

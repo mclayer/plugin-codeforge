@@ -158,18 +158,18 @@ def test_required_registration_ordering_no_self_register():
 # ─────────────────────────────────────────────────────────────────────────────
 def test_seven_tuple_doc_live_parity():
     claude = _read(_CLAUDE_MD)
-    original_six = [
+    # CFP-2782 (ADR-121 Wave 2): `Verify deploy lane presence` context 제거(9→8). 잔존 required context 보존 확인.
+    preserved = [
         "phase-gate-mergeable",
         "invariant-check",
         "doc frontmatter schema (CFP-28 — strict)",
         "doc section schema (CFP-28 — strict)",
         "check-gate",
-        "Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)",
     ]
-    for ctx in original_six:
-        assert ctx in claude, f"CLAUDE.md 브랜치 보호 표에 기존 context '{ctx}' 부재 (6 보존 위반)"
-    assert "ac-traceability-matrix" in claude, "CLAUDE.md 에 ac-traceability-matrix(7번째 context) 부재"
-    assert "7-tuple" in claude, "CLAUDE.md 7-tuple 명문 부재"
+    for ctx in preserved:
+        assert ctx in claude, f"CLAUDE.md 브랜치 보호 표에 기존 context '{ctx}' 부재 (보존 위반)"
+    assert "ac-traceability-matrix" in claude, "CLAUDE.md 에 ac-traceability-matrix context 부재"
+    assert "8-tuple" in claude, "CLAUDE.md 8-tuple 명문 부재"
 
 
 # ─────────────────────────────────────────────────────────────────────────────

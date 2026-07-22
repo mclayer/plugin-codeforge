@@ -55,7 +55,6 @@ _DEFAULT_REQUIRED_WORKFLOWS = (
     "phase-gate-mergeable.yml",
     "invariant-check.yml",
     "ac-traceability-matrix.yml",
-    "deploy-lane-presence.yml",
     "doc-frontmatter-category-test.yml",
     "doc-schema-check.yml",
     "doc-section-schema.yml",

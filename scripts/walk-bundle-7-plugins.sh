@@ -2,7 +2,7 @@
 # walk-bundle-7-plugins.sh — CFP-1170 Phase 2 — per-family atomic imperative walk CLI
 #
 # Change Plan §3.3 / §4.2 CLI arg enum / §7.4 DR
-# CFP-1219: FAMILY 9 (CFP-1199 follow-up: deploy lane 활성화 — codeforge-deploy + codeforge-deploy-review)
+# CFP-2782: 배포 관련 2 lane plugin 제거 (9→7) — FAMILY 는 walk_plan.py TOPOLOGICAL_ORDER 에서 derive
 # CFP-1225: FAMILY derive from walk_plan.py TOPOLOGICAL_ORDER (dual-roster 제거 — single SSOT 정합)
 #
 # 역할: per-family atomic walk orchestration shell ONLY
@@ -105,7 +105,7 @@ orthogonal arg:
   - --plugin arg 미지원 (bundle = 항상 family 전체 — 단일 plugin 은 walk-single-plugin.sh)
   - per-family transaction = 9 plugin all-or-rollback (partial state 0, ADR-068 I-3 unconditional)
   - F-002 옵션 A — codex/superpowers 구조적 배제 (9-name FAMILY loop)
-  - CFP-1219: FAMILY 9 (CFP-1199 follow-up: deploy lane 활성화)
+  - CFP-2782: 배포 관련 2 lane plugin 제거 (FAMILY 9→7, walk_plan.py derive)
 USAGE
 }
 

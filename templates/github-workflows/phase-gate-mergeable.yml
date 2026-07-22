@@ -442,12 +442,6 @@ jobs:
               // CFP-342 fix: Phase 2 PR (구현 phase) — gate:design-review-pass 만 요구
               // (CFP-317 / ADR-048: security-test gate 기본 불필요, lanes.security_ai:true opt-in만)
               required = { phase: phaseLabel, gates: ['gate:design-review-pass'] };
-            } else if (phaseLabel === 'phase:배포' || phaseLabel === '배포') {
-              // CFP-1333 / ADR-087: Deploy lane PR — gate:deploy-pass single AND-매핑
-              required = { phase: phaseLabel, gates: ['gate:deploy-pass'] };
-            } else if (phaseLabel === 'phase:배포-리뷰' || phaseLabel === '배포-리뷰') {
-              // CFP-1333 / ADR-088: Deploy Review lane PR — gate:deploy-review-pass single AND-매핑
-              required = { phase: phaseLabel, gates: ['gate:deploy-review-pass'] };
             } else {
               // No Story binding — file-based heuristic (legacy).
               // CFP-317 / ADR-048: code PRs no longer require gate:security-test-pass by default.
@@ -595,7 +589,7 @@ jobs:
             });
 
             // ── CFP-2324 S6 provenance — warning-first (fail-safe) ───────────────────────
-            //   active-gate PR (요구사항/설계리뷰·보안·배포리뷰 gate 매핑, 즉 review/test producer lane) 의
+            //   active-gate PR (요구사항/설계리뷰·보안 gate 매핑, 즉 review/test producer lane) 의
             //   CLAIMED pass 가 multi-anchor provenance 를 갖는지 검사.
             //   anchor 1 = review-verdict-v4 packet (PR body 또는 comment) 필수 필드 동반.
             //   anchor 2 = Story §14 lane-evidence binding (## Lane evidence 섹션 + lane row 1+).
@@ -603,7 +597,7 @@ jobs:
             //   warning emit only — merge conclusion 무변경 (checks.create 이후 실행, 재호출 0).
             //   fail-safe: 전체 try/catch silent — honest PR 막지 않음 (CFP-900 §4.13 패턴).
             try {
-              const provenanceGates = ['gate:requirements-review-pass', 'gate:design-review-pass', 'gate:security-test-pass', 'gate:deploy-review-pass'];
+              const provenanceGates = ['gate:requirements-review-pass', 'gate:design-review-pass', 'gate:security-test-pass'];
               const isActiveGatePr = required.gates.some(g => provenanceGates.includes(g));
               const gatePassLabelAttached = allLabels.some(l => provenanceGates.includes(l));
               // CLAIMED pass = active-gate PR ∧ (gate-pass label 부착 OR comment evidence 존재)
