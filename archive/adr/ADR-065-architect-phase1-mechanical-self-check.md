@@ -213,7 +213,7 @@ cross-ref only — 중복 codification 회피.
 | `claude-md-line-cap.yml` | NO (Amendment 1 시점) | 별 Epic carrier 후보 |
 | `wording-dictionary.yml` | NO (Amendment 1 시점) | 별 Epic carrier 후보 |
 | `bootstrap-labels.yml` | NO | CFP-662 prior-art (label registration parity 영역, workflow file parity 와 분리) |
-| 기타 wrapper workflow | NO | 별 CFP 의무 |
+| 기타 wrapper workflow | NO | 별도 CFP 의무 |
 
 **검증 mode (E-5 mode-mixing 회피, CFP-685 §5.3 E-5 정합)**:
 - **raw-byte equality + enforced LF** (1 mode 단독): `.gitattributes` 강제 LF (`<file>.yml text eol=lf` 의무) + `cmp -s` byte-level diff exit 0
@@ -330,7 +330,7 @@ review-verdict-v4 schema `mechanical_self_check_passed: bool` field semantic 무
 
 #### 8.3 mechanical 자동 검출 deferred
 
-본 §결정 8 = chief author **manual self-check** 만 codify. mechanical lint (Story body strike-through 패턴 자동 enumerate + commit diff 비교) = 별 follow-up CFP scope. `mechanical_enforcement_actions[]` `story-self-declared-correction-verify` entry status: `deferred-followup` — mechanical lint 신설 별 CFP merge 시점 status 승격.
+본 §결정 8 = chief author **manual self-check** 만 codify. mechanical lint (Story body strike-through 패턴 자동 enumerate + commit diff 비교) = 별도 follow-up CFP scope. `mechanical_enforcement_actions[]` `story-self-declared-correction-verify` entry status: `deferred-followup` — mechanical lint 신설 별도 CFP merge 시점 status 승격.
 
 #### 8.4 ADR-082 Amendment 1 scope b sister
 
@@ -452,7 +452,7 @@ ADR-082 §결정 1 layer 1 (claim = ground truth invariant) 직접 인접 — wr
 
 #### 10.5 mechanical 자동 검출 deferred (Wave 1 declaration-only)
 
-본 §결정 10 = chief author / worker **manual evidence presence** 만 codify. mechanical lint (verdict packet 안 3 field presence-grep + claim vs actual mismatch detect) = 별 follow-up CFP scope. `mechanical_enforcement_actions[]` `mechanical-self-check-evidence-presence` entry status: `deferred-followup` — `scripts/check-mechanical-self-check-evidence.sh` 신설 별 sub-CFP merge 시점 status 승격 (declaration-only → warning → blocking-on-pr).
+본 §결정 10 = chief author / worker **manual evidence presence** 만 codify. mechanical lint (verdict packet 안 3 field presence-grep + claim vs actual mismatch detect) = 별도 follow-up CFP scope. `mechanical_enforcement_actions[]` `mechanical-self-check-evidence-presence` entry status: `deferred-followup` — `scripts/check-mechanical-self-check-evidence.sh` 신설 별 sub-CFP merge 시점 status 승격 (declaration-only → warning → blocking-on-pr).
 
 ADR-082 §결정 6 retain pattern 정합 (declaration-only Wave 1, pattern_count >= 2 재발 시 follow-up CFP MUST promote).
 

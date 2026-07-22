@@ -755,7 +755,7 @@ Amendment 2 §결정 1-A 3-step (title-based search + Epic state poll + HEAD com
   - `mclayer/codeforge-internal-docs/wrapper/stories/CFP-689.md` — Story-1 declarative anchor (본 Amendment 3 carrier — RequirementsPL 7-agent synthesis §2-6 + ArchitectAgent §3/§7/§11 final write)
   - `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-689.md` — Change Plan (declarative)
   - **sibling Story-2 (TBD 별 sub-CFP)**: mechanical wire (`scripts/check-worktree-self-ownership.{sh,py}` + `templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample` + `templates/github-workflows/worktree-self-ownership-verify.yml` + `tests/scripts/check-worktree-self-ownership/test_worktree_self_ownership.bats` + label-registry-v2 신규 entry `hotfix-bypass:worktree-self-ownership-verify`)
-  - **#729 future Amendment 4 disjoint 영역**: plugin-codeforge#729 (ADR-073 "Amendment 1" title 표기 — 슬롯 충돌, Amendment 4 로 재배정 의무, ContinuityAgent CRITICAL 발견). Glob false negative P1 영역 — 본 Amendment 3 self-ownership verify 3-tuple 영역과 section disjoint 보장 (Amendment 4 = `Glob false negative` 별 §결정 영역).
+  - **#729 future Amendment 4 disjoint 영역**: plugin-codeforge#729 (ADR-073 "Amendment 1" title 표기 — 슬롯 충돌, Amendment 4 로 재배정 의무, ContinuityAgent CRITICAL 발견). Glob false negative P1 영역 — 본 Amendment 3 self-ownership verify 3-tuple 영역과 section disjoint 보장 (Amendment 4 = `Glob false negative` 별도 §결정 영역).
 
 ## 해소 기준
 
@@ -1066,7 +1066,7 @@ cross-repo 영역의 label state mutation event — wrapper repo Story Issue `ph
 - cross-repo PAT (CODEFORGE_CROSS_REPO_PAT) write 후 wrapper-side workflow 가 또 다시 `label_change` event 발화 → 무한 self-trigger loop (T-2 invariant 위반)
 - impl repo PR label change event 가 verified-via annotation 부재 상태로 wrapper Issue label write 발화 → cross-repo state ground truth verify 미수행 false claim
 
-super-class = `cross_repo_label_state_drift_unverified`. **cross-repo state layer** — Amendment 7 의 git layer staleness (working tree HEAD vs origin/main divergence) + Amendment 8 의 auth layer staleness (MCP token TTL) 와 axis disjoint (label state ↔ git ↔ auth 3 layer disjoint, 별 staleness sub-domain).
+super-class = `cross_repo_label_state_drift_unverified`. **cross-repo state layer** — Amendment 7 의 git layer staleness (working tree HEAD vs origin/main divergence) + Amendment 8 의 auth layer staleness (MCP token TTL) 와 axis disjoint (label state ↔ git ↔ auth 3 layer disjoint, 별도 staleness sub-domain).
 
 #### §결정 1 expansion — `label_change` transition trigger 9번째 entry
 
@@ -1217,7 +1217,7 @@ ADR-073 Amendment 11 = transition 시점 spawn prompt SHA pin verify (when + how
 - **Amendment 5** (`fix_iter_start`): FIX iter N > 0 시점 main HEAD pin verify. 본 Amd 11 = spawn-time SHA pin verify (FIX iter 이전 spawn-time discipline). FIX iter ↔ spawn-time disjoint, 양 staleness sub-domain.
 - **Amendment 7** (`stale_local_main_checkout`): Orchestrator self-Read working tree HEAD vs origin/main divergence. 본 Amd 11 = spawn prompt anchor SHA pin (spawn-time write 시점, not Read 시점). Read ↔ spawn-time write disjoint, 양 git layer staleness sub-domain.
 - **Amendment 8** (`mcp_token_expired_mid_flight`): MCP server auth token TTL. 본 Amd 11 = spawn prompt body anchor (git ground truth layer, not auth layer). auth ↔ git layer disjoint, 양 staleness sub-domain.
-- **Amendment 10** (`label_change`): cross-repo label state mutation. 본 Amd 11 = spawn-time SHA-anchor (intra-repo git layer, not cross-repo label state). label state ↔ SHA pin disjoint, 양 layer 별 sub-domain.
+- **Amendment 10** (`label_change`): cross-repo label state mutation. 본 Amd 11 = spawn-time SHA-anchor (intra-repo git layer, not cross-repo label state). label state ↔ SHA pin disjoint, 양 layer 별도 sub-domain.
 - **ADR-082 sub-scope 1-C** (`[USER-UTTERANCE-VERBATIM]`): spawn prompt user-utterance verbatim anchor (user input fidelity). 본 Amd 11 = spawn prompt SHA-anchor (ground truth fidelity, git layer). user input ↔ git ground truth disjoint, 양 spawn-time anchor sub-domain — precedent pattern 답습 (block 형식 verbatim 답습).
 - **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 11 = pattern_count 9+ reach Mandatory carrier (CFP-1293/1303/1318/1336-iter1~iter4/1390 + forward-prevention) — preventive solution carrier (sentinel-driven + ratchet 확장 hybrid).
 
@@ -1528,7 +1528,7 @@ Wave 1 retain rationale: Amd 11/12/13/14 (CFP-1437 spawn_prompt_emit + CFP-1436 
 3. **plugin metadata version** — `git -C <worktree> show origin/main:plugin.json` `version` field (또는 `.claude-plugin/plugin.json` actual path)
 4. **marketplace.json version** — cross-repo `git -C <marketplace-worktree> show origin/main:marketplace.json` `plugins[name=codeforge].version` field
 
-5번째 item 확장 = 별 CFP carrier 의무 (ADR-064 §결정 5 CFP scope unitary carve-out).
+5번째 item 확장 = 별도 CFP carrier 의무 (ADR-064 §결정 5 CFP scope unitary carve-out).
 
 #### §B. Single-reader pattern — Phase 0 race 차단 (PMOAgent 2nd pass 단독 reader)
 
@@ -1683,8 +1683,8 @@ is_transitional: false 보존. Amd 19 = 강화 방향 only (transition trigger 1
 - Story: `<internal-docs>/plugin-codeforge/stories/CFP-822.md`
 - Spec: `<internal-docs>/plugin-codeforge/specs/CFP-822-subagent-self-report-verify-gate.md`
 - 본 carrier scope = wrapper-actionable §2 only:
-  - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별 upstream PR)
-  - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
+  - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별도 upstream PR)
+  - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별도 consumer PR)
 
 ## Amendment 20 (2026-07-15 KST, CFP-2692) — Amendment 9 `stale-local-main-checkout-divergence-check` PR-time workflow 축 active 주장 truth-correction (reconcile-정정)
 
@@ -1730,7 +1730,7 @@ Amendment 9 (CFP-1384, 2026-05-24) 는 `stale-local-main-checkout-divergence-che
 | `docs/deferred-followup-baseline.yaml` L11-15 gate_flag | reconcile 후 미검출 → **`gen_deferred_followup_baseline` regen 하여 drop** (hand-edit 금지, content_digest 무결 유지) | Phase 2 |
 | 본 ADR §결정 표 PR-time workflow 행 | inline **SUPERSEDED 마커** (dangling 참조 (c) 정산) | **Phase 1 (본 carrier)** |
 
-ADR-060 carrier = 위 registry-edit 의 inline provenance 주석 (`# CFP-2692 reconcile ...`) 으로 충분 — 별 ADR-060 Amendment 불요 (registry 는 ADR-060 framework 의 데이터, 정책 변경 0).
+ADR-060 carrier = 위 registry-edit 의 inline provenance 주석 (`# CFP-2692 reconcile ...`) 으로 충분 — 별도 ADR-060 Amendment 불요 (registry 는 ADR-060 framework 의 데이터, 정책 변경 0).
 
 ### §E. hollow-carrier gap — 관찰됨·미조치 (DEFER)
 

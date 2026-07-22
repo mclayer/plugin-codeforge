@@ -337,7 +337,7 @@ FIX "수정됨" 닫기 = 원 finding 을 정당화한 reproducer 재실행 GREEN
 - **무한거부 backstop = fix-attempt 카운터**: replay 가 반복 `falsified` 면 무한루프 위험은 max-FIX 가 아니라 **실제 fix 시도** (새 §10 row Iter)가 backstop 한다. DeveloperPL 이 새 fix 를 시도(새 Iter append)할 때마다 max-FIX(설계-리뷰/구현-리뷰 lane)가 소진되고, 그 카운터 3/3 도달 시 §결정 1~3 implementability reassessment 가 정상 발동한다. replay 게이트는 닫기 정직성만 담당.
 - **§결정 1~3 무손상**: max-FIX trigger 범위(설계-리뷰/구현-리뷰 2 lane), escalation 의무 3종(§결정 2), RESET vs escalation 권한(§결정 3) 본문 의미 변경 0. replay 는 그 카운터의 입력도 출력도 아닌 disjoint axis (close-gate).
 
-**사용자 trade-off 정합 (req §5.6 #2)**: disjoint = 정직성↑ but 무한거부 위험 / 카운터 소비 = 수렴 강제 but 정직성 약화. 채택 = **disjoint** (정직성 우선, §1 "주장 아닌 실측") + safety valve = fix-attempt 카운터(max-FIX)가 별 채널로 수렴 강제. replay N회 `falsified` 반복 시 사용자 escalation 은 max-FIX implementability reassessment(§결정 2) 가 흡수.
+**사용자 trade-off 정합 (req §5.6 #2)**: disjoint = 정직성↑ but 무한거부 위험 / 카운터 소비 = 수렴 강제 but 정직성 약화. 채택 = **disjoint** (정직성 우선, §1 "주장 아닌 실측") + safety valve = fix-attempt 카운터(max-FIX)가 별도 채널로 수렴 강제. replay N회 `falsified` 반복 시 사용자 escalation 은 max-FIX implementability reassessment(§결정 2) 가 흡수.
 
 #### 8.2 replay fail-mode 2축 분리 (InfraOp refinement)
 

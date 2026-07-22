@@ -282,10 +282,10 @@ ADR-159 이 요구사항 lane 에 사용자 최종 확정(design-entry gate)을 
 | trigger origin | 진입 | 재조사 fan-out |
 |---|---|---|
 | `user-answer-driven` (§결정 1, 기존) | 사용자 clarification 답변 (요구 입력 변경) | 무조건 발동 (value-equality skip 비차용) |
-| `Codex-divergence-driven` (§결정 7, 기존) | ADR-052 Amendment 1 A4 Touchpoint #4 divergence | ADR-052 메커니즘 (별 축) |
+| `Codex-divergence-driven` (§결정 7, 기존) | ADR-052 Amendment 1 A4 Touchpoint #4 divergence | ADR-052 메커니즘 (별도 축) |
 | **`user-final-confirmation-driven` (본 Amendment, 신규)** | 사용자 최종 확정 발화 (design-entry gate, ADR-159 결정 4) | **순수 확정(내용 무변경) = terminal event — 미발동** |
 
-- **"trigger origin 분류 추가" frame (핵심 — 약화 오독 차단)**: 순수 확정(내용 무변경)은 **요구 입력 변경 0** 이므로 §결정 1 value-equality skip 비차용 invariant 의 보호 대상 밖(clarification 답변 class 밖)이다 (`verified — §결정 1 "요구 입력의 정의상 변경" 정의 + 컨텍스트 절 "답변이 들어왔다는 사실 자체가 입력 변경"`). 따라서 본 Amendment 는 §결정 1(value-equality skip 비차용) 을 **약화하지 않는다** — value-equality skip 을 도입하는 것이 아니라, 애초에 clarification 답변이 아닌 event(순수 확정)를 별 origin 으로 분류하는 것이다. §결정 9 ratchet 도 약화하지 않는다(무조건 트리거는 clarification 답변 origin 에서 그대로 유지). **예외 신설이 아니라 origin taxonomy 확장** — 이 frame 이 아니면 value-equality skip 도입(§결정 1 약화)이나 게이트 재도입(§결정 9 약화)으로 오독될 수 있으므로 명문화한다.
+- **"trigger origin 분류 추가" frame (핵심 — 약화 오독 차단)**: 순수 확정(내용 무변경)은 **요구 입력 변경 0** 이므로 §결정 1 value-equality skip 비차용 invariant 의 보호 대상 밖(clarification 답변 class 밖)이다 (`verified — §결정 1 "요구 입력의 정의상 변경" 정의 + 컨텍스트 절 "답변이 들어왔다는 사실 자체가 입력 변경"`). 따라서 본 Amendment 는 §결정 1(value-equality skip 비차용) 을 **약화하지 않는다** — value-equality skip 을 도입하는 것이 아니라, 애초에 clarification 답변이 아닌 event(순수 확정)를 별도 origin 으로 분류하는 것이다. §결정 9 ratchet 도 약화하지 않는다(무조건 트리거는 clarification 답변 origin 에서 그대로 유지). **예외 신설이 아니라 origin taxonomy 확장** — 이 frame 이 아니면 value-equality skip 도입(§결정 1 약화)이나 게이트 재도입(§결정 9 약화)으로 오독될 수 있으므로 명문화한다.
 - **내용 수정 동반 확정 = 기존 경로**: 확정 발화가 내용 수정을 동반하면 그 부분은 `user-answer-driven`(clarification) origin 으로 분류되어 §결정 1 무조건 재조사 후 재확정. 모호 시 default = 수정 동반 측(fan-out — 안전 방향).
 
 #### 2. why-왕복 counter = §결정 5 5번째 disjoint measurement channel

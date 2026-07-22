@@ -182,7 +182,7 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 | **Branch protection** | `.github/branch-protection-manifest.json` (declarative) | API call required — consumer `gh api` apply (Story-3 carrier 영역) |
 | **plugin.json mirrored field** | `name` / `version` / `description` / `author` 4종 (ADR-063 atomic invariant) | atomic — marketplace sync PR 선행 merge 의무 |
 | **CHANGELOG.md** | wrapper repo SSOT | append-only — version bump 동반 |
-| **scripts/ (workflow_dependency_closure)** | `templates/github-workflows/*.yml` (영역 1 `github_workflow`) 안 `run:` block 의 의존 `scripts/check-*.sh` / `python3 templates/scripts/*.py` closure | **bundled_with_referencing_workflow** — 본 영역 자체는 별 mirror target 아님 (영역 1 byte_identical_mirror 의 atomic bundle 단위로 동반). closure resolver (`templates/scripts/mirror-dependency-closure.py`) 가 wholesale_mirror 진입 전 dependency closure resolve + missing 시 fail-closed (Amendment 2 / CFP-898 — Wave 4 sub-Epic CFP-858 S1 carrier. reconcile-protocol-v1 v1.7 §4.3 (i) trigger + §4.11 `dependency_bundle_integrity_binding` block 동반. ADR-064 §self-application ratchet 강화 only) |
+| **scripts/ (workflow_dependency_closure)** | `templates/github-workflows/*.yml` (영역 1 `github_workflow`) 안 `run:` block 의 의존 `scripts/check-*.sh` / `python3 templates/scripts/*.py` closure | **bundled_with_referencing_workflow** — 본 영역 자체는 별도 mirror target 아님 (영역 1 byte_identical_mirror 의 atomic bundle 단위로 동반). closure resolver (`templates/scripts/mirror-dependency-closure.py`) 가 wholesale_mirror 진입 전 dependency closure resolve + missing 시 fail-closed (Amendment 2 / CFP-898 — Wave 4 sub-Epic CFP-858 S1 carrier. reconcile-protocol-v1 v1.7 §4.3 (i) trigger + §4.11 `dependency_bundle_integrity_binding` block 동반. ADR-064 §self-application ratchet 강화 only) |
 
 위 11 영역이 wrapper plugin 의 declarative SSOT 단위 (旧 "9 영역" = Story-1 작성 시점 → CFP-821 D1 carrier 가 `PR template` row 1행 append → 10 영역 정정 → **Amendment 2 / CFP-898 이 `scripts/` workflow_dependency_closure row 1행 append → 11 영역 ratchet**. 표 row append = ratchet 강화 방향 only, ADR-064 §self-application 정합, fact 영향 0 추적성/count 정정만 — ADR-068 I-4 wording SSOT). 본 enumeration 이 Story-3 carrier (UpgradeAgent + CLI) 의 reconcile target 정의 의 input. 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 의 self 영역 enumeration 은 ADR-016 family scope 정합 후속 carrier 영역 (본 Story-1 scope 외, Wave 2 Story-4 atomic upgrade carrier).
 
@@ -412,10 +412,10 @@ codeforge family plugin distribution 에서 **release channel** 은 **version sp
 | Story | scope | trigger |
 |---|---|---|
 | **Story-1 (CFP-906, 본 carrier)** | schema SSOT — declare layer (channel taxonomy + binding block + sibling ADR Amendment) | Wave 4 sub-Epic #1 entry, Live touching = FALSE |
-| Story-2 (별 CFP) | runtime — UpgradeAgent multi-channel dispatch + CLI + channel-drift-detection workflow | Story-1 merge 후 sequential prerequisite |
-| Story-3 (별 CFP) | ProductionEvidenceDeputy canary tier activation + IntegrationTestAgent Epic-level reactivation | Live touching = TRUE (canary tier production cutover) |
-| Story-4 (별 CFP) | promotion criteria quantitative declare + canary coord + gate:channel-*-promotion label scheme | Story-1+2+3 merge 후 |
-| Story-5 (별 CFP) | downgrade invariant declarative carrier + Wave 4 sub-Epic #1 close + retro | sequential terminus |
+| Story-2 (별도 CFP) | runtime — UpgradeAgent multi-channel dispatch + CLI + channel-drift-detection workflow | Story-1 merge 후 sequential prerequisite |
+| Story-3 (별도 CFP) | ProductionEvidenceDeputy canary tier activation + IntegrationTestAgent Epic-level reactivation | Live touching = TRUE (canary tier production cutover) |
+| Story-4 (별도 CFP) | promotion criteria quantitative declare + canary coord + gate:channel-*-promotion label scheme | Story-1+2+3 merge 후 |
+| Story-5 (별도 CFP) | downgrade invariant declarative carrier + Wave 4 sub-Epic #1 close + retro | sequential terminus |
 
 ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단).
 
@@ -456,7 +456,7 @@ cascade carrier 의 partial-completion 발생 시 다음 3 source 모두 partial
 
 #### 10.3 sub-pattern — `mcp-server-disconnect-mid-session-partial-completion`
 
-CFP-1617 신규 sub-class (pattern_count 1, threshold 2 도달 시 별 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry sub-class 와 disjoint (token expiry = 일시적 / MCP disconnect = 세션 영구 영향). 본 sub-pattern 발생 시 §결정 10.2 3-source AND honest reporting 의무 즉시 발효 (별 §결정 활성 전 §결정 10 cover 영역).
+CFP-1617 신규 sub-class (pattern_count 1, threshold 2 도달 시 별도 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry sub-class 와 disjoint (token expiry = 일시적 / MCP disconnect = 세션 영구 영향). 본 sub-pattern 발생 시 §결정 10.2 3-source AND honest reporting 의무 즉시 발효 (별도 §결정 활성 전 §결정 10 cover 영역).
 
 #### 10.4 Evidence (pattern_count 3, ADR-045 §D-9 threshold reach)
 
