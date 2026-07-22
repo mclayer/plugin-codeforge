@@ -148,7 +148,7 @@ CFP-391 retro follow-up — wrapper plugin.json mirrored field 변경 시 별도
 - ADR-016 §결정 1 family scope 7 plugin (wrapper + codeforge-{requirements, design, develop, test, review, pmo}) = **동일 channel atomic 운영 의무**
 - consumer `.claude/_overlay/project.yaml codeforge.channel.tier: <stable|beta|canary>` 선언 시 family 7 plugin 모두 해당 channel 으로 resolve
 - per-plugin channel override = **거부** (ADR-016 §결정 1 family scope invariant 위배 — mixed channel 운영 시 6 lane plugin 간 contract version skew 발생, inter-plugin contract MANIFEST invariant 위배 risk)
-- Wave 4 sub-Epic #1 Story-2 (runtime carrier, 별 CFP) UpgradeAgent = mixed channel detection + abort 의무 (declare layer = mandate semantic, runtime detection = Story-2 carrier 영역)
+- Wave 4 sub-Epic #1 Story-2 (runtime carrier, 별도 CFP) UpgradeAgent = mixed channel detection + abort 의무 (declare layer = mandate semantic, runtime detection = Story-2 carrier 영역)
 
 **3-tier channel taxonomy** (ADR-076 §결정 9.1 verbatim 정합):
 

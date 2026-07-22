@@ -794,7 +794,7 @@ Pattern A pattern_count 3 ≥ threshold 2 = Mandatory escalation (§D-9 forcing 
 **posture = warning-first → ratchet**:
 - **Phase 1 (본 Amendment, declarative anchor)**: sub-decision (c) 신설 + multi-anchor AND schema codify + `mixed` 면제 병행 anchor 규칙 codify. mechanical enforce 부재 (declaration-only).
 - **Phase 2 (advisory CI 경고, mechanical wire — 별 sub-CFP / S6 Phase 2 carrier defer)**: gate-pass label 부착 PR 에서 multi-anchor 부재 detect 시 **warning tier emit + PR comment advisory** (merge 미차단 — ADR-026 Amendment 5 §결정 7 content-sanity warning tier 패턴 동형). fast-pass OR-gate 무변경 invariant 보존.
-- **hard-block 승격 = 별 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
+- **hard-block 승격 = 별도 follow-up Story** (ADR-060 §결정 6 promotion gate AND 3/3 충족 후 — ratchet 강화 방향만, 약화 0).
 
 **gate label authority SSOT 무변경 (신규 ADR 발의 안 함)**: gate label registry authority = 기존 SSOT 유지 (ADR-022 §결정 4 review-verdict gate outcome contract-fixed `PASS|FIX` + `templates/labels/base-labels.tsv` gate:* registry). 본 sub-decision (c) = provenance 예방형 layer 추가일 뿐 gate label 정의 SSOT 신설 아님. **신규 gate-provenance ADR 발의 안 함** — 3문 게이트 (① 깨졌나: Pattern A reactive-only 갭 존재 ② 이득>비용: 신규 ADR governance surface 추가 비용 > §D-9 sub-decision 확장 이득 ③ 관찰자 없어도 할 일: yes) 적용 결과 = ADR-045 §D-9 sub-decision 확장으로 충분.
 

@@ -540,7 +540,7 @@ gh run list \
 - KPI workflow cron weekly 발화 (`templates/github-workflows/post-merge-followup-success-rate-kpi.yml`)
 - workflow_dispatch ad-hoc trigger 허용
 
-**4-tier framework 정합**: ADR-060 §결정 3 4-tier enum (`warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass`) — 본 entry 첫 도입 default = `warning`. 14-day window 누적 + sample sentinel collect 후 별 CFP (Phase 3 review-promotion) 가 `blocking-on-pr` 승격 결정.
+**4-tier framework 정합**: ADR-060 §결정 3 4-tier enum (`warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass`) — 본 entry 첫 도입 default = `warning`. 14-day window 누적 + sample sentinel collect 후 별도 CFP (Phase 3 review-promotion) 가 `blocking-on-pr` 승격 결정.
 
 **Hotfix-bypass channel**: `hotfix-bypass:post-merge-followup-success-rate` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). emergency bypass channel.
 
@@ -609,7 +609,7 @@ Amendment 1 (§결정 5.A-5.D) = PR-Issue close trigger algorithm + Amendment 2 
 
 **EC-1 재귀 hotfix depth 제어**: hotfix-1 merge 후 발견된 bug → hotfix-2. Story §10 FIX Ledger row chain depth (또는 PR body `corrects_pr:` reference chain) > 2 시 escalate 강제 (BLOCK + escalate marker). audit trail 누적 depth mechanical 추적.
 
-**EC-2 hotfix:minimal 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별개 메커니즘). `hotfix:minimal` = 설계리뷰 생략만, 보안테스트 필수 (`docs/hotfix-playbook.md §1`). `post-merge-fix` = cross-repo land_order 정정 전용 (조건 3 보안 non-touch 역참조 시 보안테스트 실질 N/A). 두 경로 혼동 금지 — `docs/consumer-guide.md` Phase 2 명문화 의무. `post-merge-fix` 는 `hotfix-bypass:*` per-entry namespace 와도 별 axis (hotfix-bypass = warning-tier lint conditional skip, post-merge-fix = phase-gate fast-pass source).
+**EC-2 hotfix:minimal 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별개 메커니즘). `hotfix:minimal` = 설계리뷰 생략만, 보안테스트 필수 (`docs/hotfix-playbook.md §1`). `post-merge-fix` = cross-repo land_order 정정 전용 (조건 3 보안 non-touch 역참조 시 보안테스트 실질 N/A). 두 경로 혼동 금지 — `docs/consumer-guide.md` Phase 2 명문화 의무. `post-merge-fix` 는 `hotfix-bypass:*` per-entry namespace 와도 별도 axis (hotfix-bypass = warning-tier lint conditional skip, post-merge-fix = phase-gate fast-pass source).
 
 **구조 정합 (Refactor 검토)**: 4번째 source append 는 순수 additive — boolean OR 의 monotonic 특성상 기존 3 source (isEpicLabel/isSiblingPr/isDocOnly) 의 evaluation/short-circuit 동작 무변경 (각 source 독립 boolean, 상호 미참조). 조건 2/3 은 비동기 fetch 동반 → `isPostMergeFix` 를 OR-gate 직전 별도 async 평가 후 boolean 으로 진입 (기존 "boolean 사전 계산" 패턴 동형 유지). API 절약: `isPostMergeFix` 평가는 조건 1 (`post-merge-fix` label 존재) 시에만 short-circuit 진입 (라벨 부재 시 조건 2/3 fetch skip). 조건 2 cross-repo fetch 는 기존 L48-90 fetch content 재사용 권고 (별도 helper function 추출 — frontmatter parse 전용 기존 로직과 §10 row 전용 신규 로직 분리, PAT/URL parse 공유 DRY).
 
@@ -672,7 +672,7 @@ Amendment 1 (§결정 5.A-5.D PR-Issue close algorithm) + Amendment 2 (§결정 
 
 - §결정 7 (content sanity warning layer): Phase 2 PR 의 `phase-gate-mergeable.yml` 변경에서 content sanity 평가 블록 제거 = 기존 4-source fast-pass 동작 복원 (orthogonal 특성상 clean rollback, fast-pass OR-gate 무영향). `.github/workflows/` mirror 동시 revert (ADR-005).
 - ADR-026 Amendment 5 자체 revert: ADR file revert (workflow 본체 무영향, declarative SSOT 만 revert) — but Amendment 5 design intent (`.github/` fast-pass content sanity governance) 가 normative directive 로 격하.
-- reconcile-protocol-v1 v1.10 §4.13 `result_fidelity_binding.fast_pass_content_sanity` field: 별 revert (kind:registry, sibling sync 면제).
+- reconcile-protocol-v1 v1.10 §4.13 `result_fidelity_binding.fast_pass_content_sanity` field: 별도 revert (kind:registry, sibling sync 면제).
 
 ### Out-of-scope (Amendment 5 scope)
 
@@ -680,7 +680,7 @@ Amendment 1 (§결정 5.A-5.D PR-Issue close algorithm) + Amendment 2 (§결정 
 - `phase-gate-mergeable.yml` content sanity mechanical 구현 — Phase 2 구현 lane (Change Plan §3/§7/§8 SSOT 이행, declaration-only-Wave-1).
 - content sanity blocking tier 승격 — evidence-checks-registry tier 승격 gate AND condition 충족 후 future CFP separate.
 - semantic-level workflow logic equivalence diff — AM-3 derived default 외, future CFP separate (CFP scope unitary).
-- mctrader-data#81 14 failing checks backfill remediate — cross-repo, Epic CFP-858 close 후 별 work (Epic §위험 신호 verbatim).
+- mctrader-data#81 14 failing checks backfill remediate — cross-repo, Epic CFP-858 close 후 별도 work (Epic §위험 신호 verbatim).
 
 ### 해소 기준 (Amendment 5 scope)
 
@@ -688,7 +688,7 @@ N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 5
 
 ### Amendment 5 sunset boundary (CFP-1111 carrier — sibling carrier role 만)
 
-본 Amendment 5 의 효용 carrier = **PR-gate layer 독립 보존** (phase-gate-mergeable.yml 의 `.github/` content sanity warning) — upgrade flow 영역 와 disjoint. CFP-1111 walker paradigm 전환 후에도 PR-merge gate 로직 자체는 별 lifecycle 로 작동 (sunset 대상 아님).
+본 Amendment 5 의 효용 carrier = **PR-gate layer 독립 보존** (phase-gate-mergeable.yml 의 `.github/` content sanity warning) — upgrade flow 영역 와 disjoint. CFP-1111 walker paradigm 전환 후에도 PR-merge gate 로직 자체는 별도 lifecycle 로 작동 (sunset 대상 아님).
 
 다만 reconcile-protocol-v1 §4.13 result_fidelity_binding 의 sibling carrier 역할 (declarative carrier_story CFP-900) = walker walk_result 4-value enum 으로 carry — 그 영역의 sibling carrier role 만 sunset.
 
@@ -705,7 +705,7 @@ N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 5
 carry 증거 (β2 audit Anchor 3 LOSSLESS 확인):
 - walker `walk_result` 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) = reconcile-protocol §4.13 result enum 4-value closed-set semantic equivalent
 - silent false SUCCESS 차단 0건 / N walk 보존 (imperative-walker-protocol-v1 §2 walk_result honest record 의무)
-- PR-gate layer (`phase-gate-mergeable.yml` `.github/` content sanity warning) = walker paradigm 과 **disjoint** 별 lifecycle — 본체 §결정 1-6 sunset 아님, 계속 유효
+- PR-gate layer (`phase-gate-mergeable.yml` `.github/` content sanity warning) = walker paradigm 과 **disjoint** 별도 lifecycle — 본체 §결정 1-6 sunset 아님, 계속 유효
 
 **is_transitional 무변경**: `false` 유지 (본체 §결정 1-6 + Amendment 5 §결정 7 PR-gate layer 영구 불변). 본 sunset = Amendment 5 sibling carrier role 만 (reconcile-protocol §4.13 result_fidelity_binding 의 ADR-026 선언 역할 해소).
 

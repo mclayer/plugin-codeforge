@@ -182,7 +182,7 @@ Epic #2346 (감지축 B) S3 (CFP-2349) carrier — [ADR-119](ADR-119-research-be
 ### 결정 3 — enforcement = Phase 1 declarative-only
 
 - **Phase 1 (본 Amendment 1, declarative anchor)**: ADR-015 결정 1/5 의 §8.5.1 schema 의무 확장 — soak-derivation 규칙 (manifestation-derived OR duration floor) 선언 의무 codify. mechanical enforce 부재.
-- **Phase 2 (별 carrier defer)**: (a) change-plan `templates/change-plan.md` §8.5.1 body mirror (codeforge-design canonical) (b) `scripts/check-doc-section-schema.sh` 에 soak-derivation lint (accumulation/lifetime-class 해당 Story 의 §8.5.1 이 manifestation-derived 임계 OR duration floor 명시 없이 고정 단창만 작성 시 FAIL) — 모두 **별 sub-carrier defer** ([ADR-119](ADR-119-research-before-claims.md) §결정 8 declarative-only / [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) 4-tier promotion 경로 / 결정 5 §8.5.0 applicability lint 패턴 답습, verified via worktree Read ADR-119 §결정 8 enforcement 경로 + §결정 10 "enforcement / 경계" Phase 1 declarative-only).
+- **Phase 2 (별 carrier defer)**: (a) change-plan `templates/change-plan.md` §8.5.1 body mirror (codeforge-design canonical) (b) `scripts/check-doc-section-schema.sh` 에 soak-derivation lint (accumulation/lifetime-class 해당 Story 의 §8.5.1 이 manifestation-derived 임계 OR duration floor 명시 없이 고정 단창만 작성 시 FAIL) — 모두 **별도 sub-carrier defer** ([ADR-119](ADR-119-research-before-claims.md) §결정 8 declarative-only / [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) 4-tier promotion 경로 / 결정 5 §8.5.0 applicability lint 패턴 답습, verified via worktree Read ADR-119 §결정 8 enforcement 경로 + §결정 10 "enforcement / 경계" Phase 1 declarative-only).
 
 ### 기존 정책 변경 0건 (ADR-015 본문)
 

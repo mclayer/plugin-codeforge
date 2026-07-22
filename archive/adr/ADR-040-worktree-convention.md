@@ -889,7 +889,7 @@ fallback 호환 = worktree 없는 구형 환경 = warning tier (tier 점진 정�
   - `scripts/check-worktree-first-spawn-evidence-cwd.sh` (또는 actual `detect_command` script) scope 확장 알고리즘 (write target path → worktree root membership resolve)
   - test/probe sandbox env (`CBL_SKIP_ISSUE_CREATE` 류) bats setup/teardown + SessionStart hook + spawn prompt 표준 wire
   - bats TC 추가 (write-target-path membership PASS/FAIL + env-scoped probe side-effect skip)
-- **후속 carrier 발의 의무**: dedicated sandbox repo (`mclayer/codeforge-sandbox`) capability-confinement environment-level enforcement = §7.J.3 known-limitation. 본 Amendment 6 Phase 2 PR merge 후 별 CFP 발의 (heavier infra, CFP-scope-unitary 정합 — 본 carrier = directive + lint + env scoping 1차 minimal scope).
+- **후속 carrier 발의 의무**: dedicated sandbox repo (`mclayer/codeforge-sandbox`) capability-confinement environment-level enforcement = §7.J.3 known-limitation. 본 Amendment 6 Phase 2 PR merge 후 별도 CFP 발의 (heavier infra, CFP-scope-unitary 정합 — 본 carrier = directive + lint + env scoping 1차 minimal scope).
 
 ### 정합성 검증
 
