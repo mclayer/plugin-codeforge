@@ -6,29 +6,31 @@ superseded_by: ADR-141
 category: governance
 date: 2026-06-10
 carrier_story: CFP-2134
-is_transitional: false   # ADR 본체 = permanent policy. Amendment 1 (CFP-2241) 만 transitional override (제약 해제 시 원복) — amendment_log 참조. [2026-07-03 CFP-2560 Amendment 3: 본 ADR 전체 Superseded by ADR-141 — fable 영구 폐기, 이력 보존.]
+is_transitional: false   # ADR 본체 = permanent policy. [2026-07-03 CFP-2560 Amendment 3: 본 ADR 전체 Superseded by ADR-141 — fable 영구 폐기, 이력 보존.] [2026-07-24 CFP-2811 Amendment 4: obsolete 외부 제약 서사(구 Amendment 1·2) 본문 삭제 — Amendment 3 §결정 3 명시 override, 이력 = git history + ADR-141 컨텍스트 ledger.]
 amends: null
 supersedes: null
 amendment_log:
   - by: "CFP-2241"
-    date: "2026-06-14"
-    scope: "Amendment 1 — 미 정부 제약에 따른 fable → opus 임시 transitional override. 결정 1 의 surgical 10 에이전트 `model: fable` → `model: opus` 임시 치환 (정책 = 어느 역할이 fable 적격인가 결정 1 표 불변, 모델 alias 만 임시 교체). 결정 3 floor (Claude Code 2.1.170) + ADR-057 Amendment 5 (fable model-unavailable → opus fresh re-spawn fallback) 는 삭제하지 않고 dormant 보존 (원복 대비). 결정 1·2·3·4·5 본문 변경 0건 — model alias 만 frontmatter 치환. bump: 4 lane plugin PATCH (design 0.25.3 / develop 0.10.2 / review 1.12.2 / requirements 0.8.3) + wrapper 6.19.3."
-    sunset_justification: "transitional override 는 ratchet 강화가 아니라 외부 제약(미 정부 fable 사용 불가)에 대한 임시 대응이다. 원의도(capability 상승이 2배 비용을 정당화하는 surgical 역할에 최강 모델 적용)는 thinking 프로파일 동일(ADR-117 컨텍스트)인 opus 로 충족 — 능력 손실 0. 명시 override(frontmatter 직접 치환) 채택 근거 = ADR-057 Amendment 5 의 매 spawn 실패→재시도 fallback 은 지연 + 제약 트리거 문구 불확실. 원복 trigger = 사용자 '제약 해제' 통지, 원복 절차 = (a) 10 frontmatter opus → fable 환원 + 임시 표식 코멘트 제거 (b) 본 Amendment 를 dormant/superseded 마킹 (c) floor·fallback 정책 재활성 확인 — 원복도 Story 경유. ADR-058 §결정 5 self-application (Amendment 시 sunset_justification 의무) 정합. [상태: dormant/superseded — 2026-07-02 CFP-2554 Amendment 2 로 해소(원복 완료). 실 frontmatter 환원 = Phase 2.]"
+    date: "2026-06-14"   # 구 Amendment 1 (transitional override) — 서사 필드(scope/sunset_justification) = CFP-2811 Amendment 4 로 삭제, by/date 최소 audit skeleton 만 잔존 (결정-사실 = ADR-141 컨텍스트 ledger)
   - by: "CFP-2554"
-    date: "2026-07-02"
-    scope: "Amendment 2 — 미 정부 제약 해제에 따른 fable 원복 실행 + surgical set 10→11 정합. Amendment 1 (CFP-2241 임시 opus override) 를 dormant/superseded 마킹. 결정 1 표(10행) + Amendment 1 표(10행) 를 11행으로 정합 — RequirementsReviewPLAgent 추가(적대적 심판 / 요구사항리뷰 verdict, ADR-125 carrier drift 청산: ADR-125 가 요구사항리뷰 lane 신설 시 CFP-2241 override 관습을 승계했으나 ADR-117 표 미갱신). 결정 1·2 본문 '10' 카운트 정정. floor(결정 3) + ADR-057 Amendment 5 fallback + SSOT dormant 주석 3곳(CLAUDE.md:86 / consumer-guide:59 / playbook:515, 10→11) 재활성 = Phase 2 적용. 실 frontmatter opus→fable 환원 + 임시 코멘트 제거 + bump + marketplace sync = Phase 2 PR."
-    sunset_justification: "본 Amendment 는 ratchet 강화가 아니라 Amendment 1 transitional override 의 해소(원복)다. 원복 trigger = 사용자 '제약 해제' 통지(ADR-117 Amd1 §원복 절차 revert-trigger 정의 정합). 능력 손실 0(fable/opus thinking 프로파일 동형 — 가격비 2배·프로파일 동형 CFP-2554 §6.3 cited 재확인). Amendment 2 자체는 permanent(원복은 되돌리지 않음) — Amendment 1 만 dormant/superseded. ADR-058 §결정 5 self-application(Amendment 시 sunset_justification 의무) 정합. is_transitional 무변경(false 유지 — 본체 permanent, Amendment 1 만 transitional 이었고 이제 해소)."
+    date: "2026-07-02"   # 구 Amendment 2 (원복 실행) — 서사 필드 = CFP-2811 Amendment 4 로 삭제, by/date 최소 audit skeleton 만 잔존 (결정-사실 = ADR-141 컨텍스트 ledger)
   - by: "CFP-2560"
     date: "2026-07-03"
     scope: "Amendment 3 — 본 ADR 전체 Superseded by ADR-141 (전 에이전트 opus 단일 tier 정책). fable 을 영구·전면 폐기(surgical 11 + 3-tier 폐지). frontmatter status Accepted → Superseded + superseded_by: ADR-141 추가. 본체 텍스트(결정 1~5 + Amendment 1·2)는 rewrite 0 — frozen audit trail 이력 보존. Amendment 1 옵션 C('fable 영구 폐기 + opus 정착') 기각 사유였던 '임시 조치·원복 가능' 전제가 사용자 새 directive('fable 안쓸거다. 전부 opus with 1M로 돌려라', 2026-07-03 KST)로 대체됨 → 영구 폐기가 이제 사용자 결정. 실 frontmatter opus 통일 + fable alias 청산 = CFP-2560 Phase 2."
     sunset_justification: "본 Amendment 는 ratchet 강화·약화가 아니라 상위 carrier(ADR-141)로의 supersede 전이다. fable surgical tier(비용 거버넌스 정제)의 폐기 = 3-tier 축소 = 약화 방향이므로 evidence 3축(ADR-058 §결정 5 / ADR-064 §결정 7)을 ADR-141 근거 섹션에 기재 — (a) 사용자 directive 명확 + fable↔opus 2일 4진동 obsolescence(진동 부채) (b) opus ≥ fable/sonnet/haiku reasoning(능력 상향) + machinery 소멸(운영 단순화) (c) fable→opus 11종 = 비용 절반(fable $10/$50 = opus $5/$25 의 2배, ADR-117 컨텍스트 실측). 본체 이력 보존 = Event Sourcing(frozen audit trail, ADR-042 Amd12 선례). is_transitional 무변경(false — 본체 permanent 였고 이제 Superseded)."
+  - by: "CFP-2811"
+    date: "2026-07-24"
+    scope: "Amendment 4 — obsolete 외부 제약 서사 삭제 (Option B). 구 본문 `## Amendment 1`(CFP-2241 임시 override 서사) + `## Amendment 2`(CFP-2554 원복 서사) 전문 삭제 + frontmatter 해당 entry 의 scope/sunset_justification 필드 삭제(by/date 최소 audit skeleton 잔존) + is_transitional 주석 구 Amd1 절 삭제 + related_stories 주석 reword. Amendment 3 §결정 3('결정 1~5 + Amendment 1·2 텍스트 삭제 0') 명시 override — paired override = ADR-141 Amendment 5(§상태·§결정 2 보존지시 한정 override). 거버넌스 근거 = ADR-058 §결정 11(obsolete 사실서사 제거 이중 게이트: 보존결정 명시 amendment override + 사용자 비준 — 사용자 Option B sign-off 2026-07-24). 결정 1~5 + Amendment 3 + 상태/컨텍스트/근거/결과/관련 파일 = frozen 보존. 결정-사실 audit = ADR-141 §컨텍스트 진동 부채 ledger + plugins 4 CHANGELOG + git history."
+    sunset_justification: "본 Amendment 는 tier 정책 무접촉 — frozen 이력-보존 default 의 obsolete 사실서사 1건 한정 governed 예외 집행(ADR-058 §결정 11)이다. evidence: ① 사용자 명시 비준(CFP-2811 §9 Option B sign-off, 2026-07-24 — 애매성 0) ② obsolete 3중 무효화(CFP-2554 해소 → ADR-141 fable 폐기 → CFP-2803/ADR-141 Amendment 4 fable 정식 재도입 6.120.0 live)로 서사가 기술한 상태 불성립 + stale 인과 참조의 하류 드리프트 실증(ADR-042 4곳) ③ 결정-사실 substance 는 ADR-141 ledger + CHANGELOG + git 에 복구 가능(의미 손실 0 — 외부 append-only core concern 무손상). is_transitional 무변경(false — 본체 Superseded 상태 유지)."
 related_adrs:
   - ADR-057  # Orchestrator Opus 필수 mandate + Sonnet→Opus rate-limit fallback — 본 ADR §결정 5 (Orchestrator 제외) 정합. Amendment 5 (fable model-unavailable → opus fallback) = ADR-117 Amendment 1 로 dormant 보존, Amendment 2 로 재활성(Phase 2).
+  - ADR-058  # §결정 11 (CFP-2811) — obsolete 사실서사 제거 이중 게이트 (본 ADR Amendment 4 의 거버넌스 근거, 첫 적용 사례)
   - ADR-125  # 요구사항리뷰 lane 신설 (CFP-2326) — RequirementsReviewPLAgent 도입원. ADR-125 가 CFP-2241 override 관습을 승계하며 surgical 명단을 10→11 로 늘렸으나 본 ADR 표를 미갱신 → Amendment 2 stale 발생원. Amendment 2 로 표 11행 정합.
 related_stories:
   - CFP-2134  # carrier (Cross-repo Fable 5 채택 Epic — foundation)
-  - CFP-2241  # Amendment 1 carrier (미 정부 제약 fable → opus 임시 override)
-  - CFP-2554  # Amendment 2 carrier (미 정부 제약 해제 → fable 원복 실행 + surgical 10→11 정합)
+  - CFP-2241  # 구 Amendment 1 carrier — 본문 서사 CFP-2811 Amendment 4 로 삭제 (결정-사실 = ADR-141 컨텍스트 ledger)
+  - CFP-2554  # 구 Amendment 2 carrier — 본문 서사 CFP-2811 Amendment 4 로 삭제 (결정-사실 = ADR-141 컨텍스트 ledger)
+  - CFP-2811  # Amendment 4 carrier (obsolete 외부 제약 서사 삭제 + Amendment 3 §결정 3 override)
 related_files:
   - docs/consumer-guide.md
 mechanical_enforcement_actions: []   # 신규 lint/sentinel 0 — model alias 적용은 각 lane plugin 의 에이전트 frontmatter (별 lane PR) 가 SSOT. Claude Code 버전 floor 는 런타임 spawn 실패로 자가 강제 (미인식 ID = silent fallback 없이 fail).
@@ -123,109 +125,6 @@ N/A — permanent policy. 본 ADR 은 모델 tier 선택 정책의 상시 기준
 
 - `docs/consumer-guide.md`
 
-## Amendment 1 (2026-06-14) — CFP-2241 — 미 정부 제약에 따른 fable → opus 임시 transitional override
-
-> **상태: dormant/superseded (2026-07-02, CFP-2554 Amendment 2 로 해소 — 원복 완료).** 미 정부 제약이 해제되어 fable 이 재가용해졌고, Amendment 2 가 본 임시 override 를 해소했다(설계 = Phase 1, 실 frontmatter opus→fable 환원 = Phase 2). 아래 내용은 **이력 보존용**이며 더는 현행 상태를 규정하지 않는다 — 현행 = fable surgical(결정 1 원상태). 원복 실행·재활성 계획은 Amendment 2 참조.
-
-### 성격
-
-본 Amendment 는 **transitional**(임시 + 원복 가능)이었다. ADR 본체 status 는 **Accepted 유지** — 결정 1~5 의 정책은 불변이며, 본 Amendment 는 외부 제약 기간에 한정해 모델 **alias 만** 임시 치환했다. 제약 해제 시 원복 절차 완료로 해소한다 (→ 2026-07-02 CFP-2554 Amendment 2 로 해소 완료).
-
-### 컨텍스트
-
-2026-06-14 KST, 미 정부 제약으로 `fable` alias(Claude Fable 5) 사용이 불가해졌다. 그 결과 결정 1 의 surgical 10 에이전트(`model: fable`)가 spawn 실패/우회 상태가 된다. 기존 ADR-057 Amendment 5(fable model-unavailable → opus fresh re-spawn fallback)는 매 spawn 실패 후 재시도 방식이라 (a) 실패→재시도 지연이 누적되고 (b) 제약 환경의 에러 문구가 fallback trigger 문자열과 일치한다는 보장이 없어 trigger 가 불확실하다.
-
-### 결정
-
-결정 1 의 surgical 10 에이전트 frontmatter `model: fable` → `model: opus`(최신 Opus tier alias)로 **임시 override** 한다.
-
-- **정책 불변**: "어느 역할이 fable 적격인가"(결정 1 표 — chief author / 장기 agentic 코딩 / 적대적 심판 10 역할)는 그대로다. 모델 alias 만 임시 치환한다.
-- **능력 손실 0**: ADR-117 컨텍스트의 사실대로 fable 의 thinking 프로파일은 opus 4.8 과 동일(adaptive on / extended 없음)이라 `fable` → `opus` 교체 시 thinking 능력 손실이 없다.
-- **명시 override 채택**: 매 spawn 실패 후 재시도하는 ADR-057 Amendment 5 fallback 에 의존하지 않고 frontmatter 를 직접 교체한다 — 지연 + trigger 불확실성 제거.
-- **임시 표식**: 각 frontmatter `model:` 라인에 임시 override 임을 알리는 inline 코멘트(CFP-2241 / ADR-117 Amendment 1 / 원복 안내)를 부착한다.
-
-적용 대상 11 에이전트(결정 1 표와 동일 — CFP-2554 Amendment 2 로 11행 정합):
-
-| lane | 에이전트 | frontmatter |
-|---|---|---|
-| requirements | ResearcherAgent | `model: opus` (임시) |
-| develop | DeveloperAgent | `model: opus` (임시) |
-| develop | DeveloperPLAgent | `model: opus` (임시) |
-| design | ArchitectAgent | `model: opus` (임시) |
-| design | ArchitectPLAgent | `model: opus` (임시) |
-| design | SecurityArchitectAgent | `model: opus` (임시) |
-| review | ClaudeReviewAgent | `model: opus` (임시) |
-| review | CodeReviewPLAgent | `model: opus` (임시) |
-| review | DesignReviewPLAgent | `model: opus` (임시) |
-| review | SecurityTestPLAgent | `model: opus` (임시) |
-| review | RequirementsReviewPLAgent | `model: opus` (임시) [주] |
-
-> **[주] (CFP-2554 Amendment 2)**: RequirementsReviewPLAgent 는 CFP-2241 (Amendment 1) 당시 표에 **부재**했다. 원인 = ADR-125(요구사항리뷰 lane 신설, CFP-2326)가 이 PL 을 신설하며 CFP-2241 의 `model: opus` 임시 override 코멘트 관습을 승계했으나(실 frontmatter 에는 override 가 존재), ADR-125·ADR-117 어느 쪽도 본 표를 동기화하지 않은 drift 다. 실측 override 대상은 처음부터 11개였고, Amendment 2 가 이 11번째 행을 표에 명시해 drift 를 청산했다.
-
-### 보존(미삭제) 명시 — dormant
-
-다음 정책은 **삭제하지 않고 dormant 보존** 한다 — 제약 해제 시 즉시 재유효해야 하기 때문이다.
-
-- **결정 3 floor(Claude Code 2.1.170)**: fable alias 인식 floor. 현재 wrapper self 는 opus override 라 floor 가 휴면이나, consumer-guide 의 floor 문장은 보존한다(원복 시 재유효).
-- **ADR-057 Amendment 5(fable model-unavailable → opus fresh re-spawn fallback)**: 현재 surgical 11(Amendment 1 당시 표는 10 — [주] 참조) 이 opus override 라 model-unavailable trigger 가 휴면이다. ADR-057 §결정 4 / playbook §3.0.12 / CLAUDE.md "비-opus tier → Opus fallback" 문장은 dormant 주석만 부착하고 보존한다. (CFP-2554 Amendment 2 로 재활성 — Phase 2.)
-
-SSOT 문서 dormant 주석 부착 위치: `CLAUDE.md`(비-opus tier 섹션) · `docs/consumer-guide.md`(floor 의존성) · `docs/orchestrator-playbook.md`(§3.0.12 fable model-unavailable case).
-
-### 원복 절차
-
-원복 trigger = 사용자가 "제약 해제" 통지. 원복도 Story 경유로 수행한다.
-
-1. 11 에이전트(Amendment 1 당시 표는 10 — [주] 참조) frontmatter `model: opus` → `model: fable` 환원 + 임시 표식 코멘트 제거.
-2. 본 Amendment 1 을 dormant/superseded 로 마킹(amendment_log + 본 섹션 상태 표기).
-3. 보존해 둔 floor(결정 3) + ADR-057 Amendment 5 fallback + SSOT dormant 주석이 재활성됐는지 확인(주석 제거 / trigger 재유효).
-4. 4 lane plugin + wrapper version bump + marketplace sync(mirrored field 변경 시 ADR-063 atomic invariant).
-
-### 해소 기준
-
-미 정부 제약 해제 시 위 원복 절차 완료로 본 Amendment 가 해소된다. 해소 시 ADR 본체는 변경 없이 결정 1~5 가 원래대로(fable surgical) 작동한다.
-
-### 근거 (Rationale)
-
-- 옵션 A(ADR-057 Amendment 5 자동 fallback 에 의존) **기각** — 매 spawn 실패→재시도 지연 누적 + 제약 환경 에러 문구가 fallback trigger 문자열과 일치한다는 보장 없음(trigger 불확실).
-- 옵션 B(명시 frontmatter override) **채택** — 사전 결정적이라 지연 0, trigger 확실. thinking 프로파일 동일이라 능력 손실 0. floor·fallback 정책은 dormant 보존이라 원복 즉시 가능.
-- 옵션 C(fable 영구 폐기 + opus 정착) **기각** — 사용자 결정상 fable 영구 폐기가 아니며 제약 기간 한정 조치다. 영구 전환은 원복 불가를 초래해 사용자 전제(임시 + 원복 가능)에 위배.
-
-## Amendment 2 (2026-07-02) — CFP-2554 — 미 정부 제약 해제에 따른 fable 원복 실행 + surgical 10→11 정합
-
-### 성격
-
-본 Amendment 는 **원복(reversal) 실행 + 표 정합**이다 — ratchet 강화가 아니라 Amendment 1(CFP-2241) transitional override 의 **해소**다. Amendment 2 자체는 **permanent**(원복은 되돌리지 않는다) — dormant 마킹 대상은 Amendment 1 뿐이다. ADR 본체 status = **Accepted 유지**, `is_transitional` = **false 유지**(본체 permanent, Amendment 1 만 transitional 이었고 이제 해소). 결정 1~5 정책은 불변 — 모델 alias 만 `opus`(임시) → `fable`(원상) 환원.
-
-### 컨텍스트
-
-- **트리거**: 사용자 통지(2026-07-02, CFP-2554 §1) — "fable 이 다시 사용 가능한 것 같다". 미 정부 제약 해제로 fable 재가용. 이는 Amendment 1 §원복 절차가 규정한 **"제약 해제 통지"** revert-trigger 에 정합한다. 법적 해제 사실 자체는 구조적 검증 불가(research-before-claims ③ — Orchestrator·에이전트 독립 확인 수단 부재) → 사용자 발화를 트리거로 간주.
-- **능력 손실 0 재확인 (cited)**: fable 5·opus 4.8 모두 adaptive-only thinking + effort 파라미터, extended budget 미지원 → thinking 프로파일 **동형**. 가격은 fable $10/$50 = opus 4.8 $5/$25 의 정확히 2배 — surgical 대상 선정 시 이미 정당화된 역할군 한정이라 비용 재부담 근거 불변. 출처: Claude Platform pricing / whats-new-claude-4-8 / introducing-claude-fable-5 (CFP-2554 §6.3 cited).
-- **self-application 시점 불변식**: 원복 대상 11개 중 design/develop/review lane 에이전트가 본 Story 의 후속 lane 수행자다(자기 모델 tier 를 되돌리는 self-reference). plugin frontmatter 변경은 **plugin 재로드(= 다음 세션)부터** 유효하므로, 본 Story 를 진행 중인 에이전트는 여전히 opus 로 완주한다 — 원복 효과는 다음 세션부터. 이 지연은 결함이 아니라 plugin 로드 모델의 구조적 성질.
-
-### 결정 (known-issue 3항 판정)
-
-1. **10↔11 ADR-117 표 정합 방향 — RequirementsReviewPL surgical 정식 편입 채택.** RequirementsReviewPL 은 결정 1 표가 이미 "적대적 심판(verdict)"으로 분류한 CodeReviewPL·DesignReviewPL·SecurityTestPL 3 리뷰 lane PL 과 **동형**(요구사항 외부사실 게이트 verdict) — 4번째 리뷰 lane PL 이다. ADR-125(요구사항리뷰 lane 신설, CFP-2326)가 이 PL 을 도입하며 CFP-2241 override 관습을 승계했으나 표를 미갱신한 drift 를 청산. **반박(기각) = 옵션 "override 만 제거, 표 10 유지"**: 실측 override 는 11개인데 표만 10 으로 남기면 RequirementsReviewPL 이 fable 근거 없이 opus 로 되돌아가거나(orphan) drift 가 영속화 → 더 큰 정합 파괴. 따라서 표 11행 정합 채택.
-2. **RequirementsReviewPL fable 환원 포함 — 채택(YES).** 결정 1 종속 — 11개 전부 fable 환원 대상. (Phase 1 이 PR 에서 frontmatter 는 미변경하되, 표에는 11번째로 등재. 실 frontmatter 환원 = Phase 2.)
-3. **dormant 주석 "10" 3곳 (CLAUDE.md:86 / consumer-guide:59 / playbook:515) — Phase 2 에서 10→11 정정 + 재활성.** 원복 시 이 3곳 주석이 더는 "현재 opus override 상태"를 단정하지 않게 재활성하되, 잔존 stale count "10"→"11" 동반 정정. 방향 = Phase 1 에서 확정, 적용 = Phase 2.
-
-### 원복 실행 범위 (Phase 분리)
-
-- **Phase 1 (이 설계 PR — CFP-2554 Phase 1)**: ADR-117 표 정합(결정 1·Amendment 1 표 10→11) + 결정 1·3·Rationale 카운트 정정 + Amendment 1 dormant/superseded 마킹 + **본 Amendment 2 저술** + Story §7 설계 서사(내장 §8 Test Contract 포함). **frontmatter · plugin.json bump · dormant 주석 3곳 · marketplace = 미변경**(Phase 2 누출 방지). 이 PR 변경 파일 = ADR-117 단일.
-- **Phase 2 (후속 구현 PR)**: 11 frontmatter `model: opus`(임시) → `model: fable` 환원 + 임시 코멘트(`# 임시(CFP-2241)...`) 제거 + dormant 주석 3곳 재활성(10→11) + 5 plugin(design/develop/review/requirements + wrapper) version bump + marketplace sync(mirrored field 변경 시 ADR-063 atomic invariant). **AC-1~AC-8 (CFP-2554 §5.2 / Story §7 Test Contract) = Phase 2 GREEN 대상** (Phase 1 이 이행하는 것은 AC-4 표 정합 일부 + 본 Amendment 저술).
-
-### 재활성 계획 (Phase 2)
-
-원복 시 dormant 보존 정책 3종이 재활성된다:
-1. **결정 3 floor (Claude Code 2.1.170)**: fable alias 인식 floor 재유효 — consumer-guide floor 문장(§1b, `consumer-guide.md:59`)의 dormant 마킹 제거 + surgical count "10"→"11".
-2. **ADR-057 Amendment 5 (fable model-unavailable → opus fresh re-spawn fallback)**: model-unavailable trigger 재활성 — `CLAUDE.md:86` 비-opus tier 섹션 + `docs/orchestrator-playbook.md:515` §3.0.12 fable model-unavailable case 의 dormant 주석 제거 + fallback 대상 count "10종"→"11종".
-3. **SSOT dormant 주석 3곳 정정**: `CLAUDE.md:86`("surgical 10 에이전트") / `docs/consumer-guide.md:59`("surgical 10 에이전트") / `docs/orchestrator-playbook.md:515`("10 에이전트" + "10종") 을 모두 "11" 로 정정하고 "현재 opus override 상태" 단정을 제거.
-
-### 근거 (Rationale)
-
-- **옵션 A(표 11행 정합 + RequirementsReviewPL 정식 편입) 채택** — 실측 override 11 = 표 11 = dormant 주석 count 11 = 임시 코멘트 대상 11 로 네 SSOT 를 일치시켜 drift 를 청산. RequirementsReviewPL 이 "적대적 심판" category 에 성격상 부합(형제 3 리뷰 PL 과 동형)해 편입 근거 견고. TestContractArch consult 의 P0(표 10행 ≠ 실측 11) 청산.
-- **옵션 B(override 만 제거, 표 10 유지) 기각** — RequirementsReviewPL 을 fable 근거 없이 되돌리거나(orphan) 표/실측 drift 를 영속화. 원복이 새 drift 를 만드는 자기모순.
-- **옵션 C(RequirementsReviewPL 을 surgical 에서 제외 → 표 10 유지 + 이 PL 만 opus 정착) 기각** — 이 PL 은 요구사항리뷰 verdict(외부사실 게이트)로 적대적 심판 category 에 명백히 부합하며, 형제 3 리뷰 PL 과 다른 tier 를 부여할 원칙적 근거가 없다. 임의 예외는 정책 일관성 파괴.
-
 ## Amendment 3 (2026-07-03) — CFP-2560 — 본 ADR 전체 Superseded by ADR-141 (fable 영구 폐기)
 
 ### 성격
@@ -254,3 +153,36 @@ SSOT 문서 dormant 주석 부착 위치: `CLAUDE.md`(비-opus tier 섹션) · `
 - **옵션 A(dormant 보존 — fable 정책 두되 opus 임시 override) 기각** — CFP-2241/2554 진동 부채의 재생산 구조. 4번째 진동 유혹 존속.
 - **옵션 B(fable 완전 폐기 + ADR-141 carrier supersede) 채택** — 사용자 directive 직접 이행. 진동 부채 완전 청산 + 운영 단순화(3-tier machinery 소멸) + surgical 11 비용 절반(fable→opus). 본체 이력 보존으로 audit trail 무손실.
 - 약화-evidence 3축 = ADR-141 근거 섹션 SSOT (본 amendment_log row sunset_justification 요약).
+
+## Amendment 4 (2026-07-24) — CFP-2811 — obsolete 외부 제약 서사 삭제 (구 Amendment 1·2 본문 제거 + Amendment 3 §결정 3 명시 override)
+
+### 성격
+
+본 Amendment 는 **obsolete 사실서사 제거**다 — 구 `## Amendment 1`(CFP-2241, 2026-06-14: 외부 제약에 따른 fable→opus 임시 transitional override 서사) + 구 `## Amendment 2`(CFP-2554, 2026-07-02: 제약 해소에 따른 fable 원복 서사) 본문 전문과 frontmatter 의 해당 서사 필드를 삭제한다. Amendment 3 §결정 3("본체 이력 보존 — 결정 1~5 + Amendment 1·2 텍스트 삭제 0")의 보존지시를 **명시 override** 한다. paired override = **ADR-141 Amendment 5** — ADR-141 §상태·§결정 2 의 "ADR-117 본체 텍스트 이력 보존, 삭제 안 함" 지시의 동반 한정 override. 거버넌스 근거 = **ADR-058 §결정 11**(obsolete 사실서사 제거 이중 게이트: ① 보존결정 명시 amendment override ② 사용자 명시 비준) 충족 — 사용자 비준 = CFP-2811 Story §9 **Option B sign-off (2026-07-24)**.
+
+### 컨텍스트 (obsolete 판정 — 3중 무효화)
+
+구 Amendment 1 이 서술한 "외부 제약으로 fable 사용 불가" 사실 상태는 3중으로 무효화됐다:
+1. **CFP-2554 (2026-07-02)** — 제약 해소, fable 원복 완료 (구 Amendment 2).
+2. **ADR-141 / CFP-2560 (2026-07-03)** — fable 완전 폐기 (서사의 대상 자체 소멸).
+3. **CFP-2803 / ADR-141 Amendment 4 (2026-07-23)** — **Fable 5 정식 재도입**(apex 10종 carve-out, 6.120.0 live). 현재 fable 정상 가용 — 서사가 기술한 상태의 정반대가 현행.
+
+서사는 유지 비용만 남긴다: 문서 무게 + stale 인과 참조의 하류 드리프트 재생산(ADR-042 4곳 실증 — 본 Story 가 동반 정정).
+
+### 결정 (삭제/보존 열거)
+
+**삭제 (본 Amendment 집행)**:
+1. 본문 구 `## Amendment 1` 전문 (구 L126-191 — override 서사·적용 표·dormant 보존·원복 절차·근거).
+2. 본문 구 `## Amendment 2` 전문 (구 L193-227 — 원복 실행·재활성 계획·근거).
+3. frontmatter amendment_log 구 Amendment 1·2 entry 의 서사 필드(scope / sunset_justification) — `by`/`date` 는 최소 audit skeleton 으로 잔존.
+4. frontmatter `is_transitional` 주석의 구 Amendment 1 절 + related_stories CFP-2241/CFP-2554 주석의 서사절 (reword — carrier key 지칭만).
+
+**보존 (frozen 그대로 — byte 무변경)**:
+- `## 상태` · `## 컨텍스트` · 결정 1~5 · `## 해소 기준` · `## 근거` · `## 결과` · `## 관련 파일` · `## Amendment 3` 전문 — Amendment 3 가 Amendment 1·2 를 인용하는 dated 서술 포함(시점 고정 참, falsify 아님).
+- 결정-사실 audit trail: **ADR-141 §컨텍스트 "fable↔opus 진동 부채" ledger**(CFP-2241 override 부과 + CFP-2554 원복 사실 rows — byte 무변경) + `plugins/{codeforge-design,codeforge-develop,codeforge-requirements,codeforge-review}/CHANGELOG.md` 원복 기록(append-only) + **git history**(삭제 서사 전문 복구 채널). → "의미 손실 0" 성립 (firsthand 확인 — CFP-2811 Story §7.4).
+
+### 근거 (Rationale)
+
+- **옵션 A(스텁 슬림화 — Superseded pointer 만 잔존) 기각** — 결정 1~5(원 surgical 결정)와 Amendment 3(supersede 기록)까지 삭제하면 ADR-141 §결정 2 보존지시와 과잉 충돌 + supersede 이력 손실. 사용자 최종 비준도 Option B (§9 재비준 — 충돌 인지 후).
+- **옵션 B(obsolete 서사 한정 full 삭제 + 보존결정 2건 amendment override) 채택** — 사용자 확정 (2026-07-24). 삭제 범위를 obsolete 서사(구 Amendment 1·2)로 한정하고, 결정-사실 substance 는 ADR-141 ledger + CHANGELOG + git 에 잔존시켜 audit-trail invariant 충족.
+- **frozen audit trail 원칙 자체는 철회 아님** — dated 이력의 byte-보존 default 는 존속한다. 본 건은 ADR-058 §결정 11 이중 게이트를 통과한 obsolete 사실서사 1건 한정의 governed 예외 집행이며, silent 삭제가 아니라 본 Amendment 가 삭제 범위를 열거해 audit 를 남긴다.
