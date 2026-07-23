@@ -2,6 +2,20 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.44.2] - 2026-07-23 — CFP-2804 구 패러다임 어휘 위생 정정 (PATCH)
+
+### Changed (CFP-2804 — ADR-064 §결정7 L406 이연 cascade, PATCH)
+
+[CFP-2804] 구 패러다임(top-down / 약화 차단) 어휘 잔존을 현행 규범(evidence-gated symmetric ratchet / 약화 evidence-gate)으로 맞추는 효력-변화-0 위생 정정 cascade 의 codeforge-design 분:
+
+- `agents/ArchitectAgent.md`: L117 chief judgement 지침 `ratchet 강화 방향만.` → `ratchet = evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무).` (framing 어휘만 치환, mandate body 무변경).
+- `docs/architecture/codeforge-design.md`: descriptor `ADR = 단일 결정 단위 (불변)` 2개소(:105,:189) → `(결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)` qualify (byte-immutable 오독 제거, genre 대조 보존).
+- `.claude-plugin/plugin.json`: description CFP-2804 entry prepend + version 0.44.1 → 0.44.2 (PATCH — ADR-037 §결정1 (a)minor-edit/(g)clarity).
+
+#### Why
+
+ADR-064 §결정7 L406 이연 cascade 집행. 규범(symmetric ratchet)은 CFP-1149 로 이미 codify — 본 정정은 옛말로 서술하던 문장을 현행 어휘로 맞추는 hygiene(효력 변화 0). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## [0.44.0] - 2026-07-22 — CFP-2782 ProductionEvidenceDeputy RELOCATE 회귀 (deploy·deploy-review lane 물리 제거, MINOR)
 
 ### Added (CFP-2782 — Epic CFP-2217 Wave 2, ADR-072 Amendment 5, MINOR)
