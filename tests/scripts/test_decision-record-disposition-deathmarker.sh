@@ -26,6 +26,8 @@
 #          M3 amendment_log-off / M4 bare-xref dated-force / M5 census-dispatch-off /
 #          M6 #2698 exclusion-off — 각 축 ablate 시 verdict flip(RED).
 #  Part C  positive-control: bare-xref NOT dated + sunset_justification NOT death + INV-R2 byte-unchanged.
+#  Part D  guard FIX iter1 회귀(SecurityTestPL P2×2, reference_integrity_guard.py:234): D1 case-fix
+#          (CWE-178 dead-branch → ADR argv body_parsed True) + D2 ReDoS-bound(CWE-1333 → <2.0s, real-source).
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 export LC_ALL=C.UTF-8
@@ -273,6 +275,60 @@ if before != after: die("INV-R2: dated amendment_log 라인 apply 후 byte 변�
 print("ok")
 PY
 run_case "C2 INV-R2 positive-control (dated amendment_log byte-unchanged)" "${WORK}/c_invr2.py"
+
+# ═════════════════════════ Part D — guard FIX iter1 회귀 (SecurityTestPL P2×2, line 234) ═════════════════════════
+echo "── Part D: reference_integrity_guard check_parser_scan FIX 회귀 ──"
+
+cat > "${WORK}/d_casefix.py" <<'PY'
+import os
+exec(open(os.environ["CFP2799_PRE"], encoding="utf-8").read())
+import re
+import reference_integrity_guard as g
+# (P2-② CWE-178 case dead-branch 재현 + 정정) — line=raw.lower(), base=ADR-NNN(대문자).
+base = "ADR-127-foo.md"
+argv_low = "python scripts/decision-record-sweep.py archive/adr/adr-127-foo.md"
+old_hit = re.search(r"(python|bash|sh|\./)\S*.*" + re.escape(base), argv_low) is not None
+bl = base.lower(); pos = argv_low.find(bl)
+new_hit = pos != -1 and any(t in argv_low[:pos] for t in ("python", "bash", "sh", "./"))
+if old_hit is not False:
+    die("case-bug 재현 실패 — 구 regex 가 lowercased line 에서 uppercase base 로 dead 여야")
+if new_hit is not True:
+    die("case-fix 실패 — 수정 로직이 ADR argv 라인을 감지해야")
+# real-source end-to-end: 수정된 check_parser_scan 가 ADR argv 라인 감지(body_parsed True).
+d = tempfile.mkdtemp()
+os.makedirs(os.path.join(d, "scripts")); os.makedirs(os.path.join(d, "archive", "adr"))
+open(os.path.join(d, "archive", "adr", "ADR-127-foo.md"), "w", encoding="utf-8", newline="\n").write("# ADR-127\nbody\n")
+open(os.path.join(d, "scripts", "runner.sh"), "w", encoding="utf-8", newline="\n").write(
+    "#!/bin/bash\npython tool.py archive/adr/ADR-127-foo.md\n")
+res = g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, d)
+if res["body_parsed"] is not True:
+    die("real-source check_parser_scan ADR argv 미감지 — case dead-branch 잔존(mutation: base.lower() 제거 시 RED)")
+print("ok")
+PY
+run_case "D1 case-fix (CWE-178 dead-branch → ADR argv body_parsed True, real-source)" "${WORK}/d_casefix.py"
+
+cat > "${WORK}/d_redos.py" <<'PY'
+import os
+exec(open(os.environ["CFP2799_PRE"], encoding="utf-8").read())
+import re, time
+import reference_integrity_guard as g
+# (P2-① CWE-1333) real-source ReDoS-bound: 64KB no-ws repeat-anchor corpus 라인 → bounded.
+#   수정본(linear substring) = ms. revert(`\S*.*` regex) = super-linear backtracking → 초과 RED.
+d = tempfile.mkdtemp()
+os.makedirs(os.path.join(d, "scripts")); os.makedirs(os.path.join(d, "archive", "adr"))
+open(os.path.join(d, "archive", "adr", "ADR-127-foo.md"), "w", encoding="utf-8", newline="\n").write("# ADR-127\nbody\n")
+open(os.path.join(d, "scripts", "patho.sh"), "w", encoding="utf-8", newline="\n").write(
+    "python " + "adr-" * 16000 + "\n")  # ~64KB non-ws repeat-anchor, full base 부재
+t0 = time.perf_counter(); g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, d); scan_t = time.perf_counter() - t0
+if scan_t >= 2.0:
+    die("check_parser_scan adversarial corpus 시간 초과(%.3fs>=2.0s) — ReDoS 잔존(revert 감지)" % scan_t)
+# 참조(informational, non-asserted): 구 vulnerable regex 의 super-linear 특성 문서화(소입력).
+old = re.compile(r"(python|bash|sh|\./)\S*.*" + re.escape("ADR-127-foo.md"))
+ref = "python" + "adr-" * 2000
+t0 = time.perf_counter(); old.search(ref); old_t = time.perf_counter() - t0
+print("ok scan=%.4fs(bound 2.0s) ref_old_regex(2406ch)=%.4fs(super-linear class)" % (scan_t, old_t))
+PY
+run_case "D2 ReDoS-bound (CWE-1333 super-linear → check_parser_scan <2.0s, real-source)" "${WORK}/d_redos.py"
 
 # ── verdict ──
 echo ""

@@ -230,8 +230,20 @@ def check_parser_scan(target, repo_root, *, index=None):
             low = raw.lower()
             parsed = any(v in low for v in _PARSE_VERBS)
             if not parsed:
-                # 대상 경로가 python/bash/script 호출의 argv 로 넘어가는 형태도 parse 로 간주
-                if re.search(r"(python|bash|sh|\./)\S*.*" + re.escape(base), low):
+                # 대상 경로가 python/bash/script 호출의 argv 로 넘어가는 형태도 parse 로 간주.
+                # ★CFP-2799 FIX iter1 (SecurityTestPL P2×2): 구 regex
+                #   `(python|bash|sh|\./)\S*.*` + re.escape(base) 는 두 결함:
+                #   (a) case dead-branch(CWE-178) — `low`=raw.lower()(소문자)에 `base`(대문자 ADR-NNN
+                #       basename)를 검색 → 전 ADR 대상 영구 미스매치 = 이 분기 dead → argv-fallback
+                #       감지 상실 → delete-guard `not body_parsed` 약화(corpus 삭제 guard silent-weaken).
+                #   (b) super-linear ReDoS(CWE-1333) — `\S*.*` polynomial backtracking(CodeQL-invisible).
+                #   → linear substring 스캔으로 교체(백트래킹 0 + case 정정 동시): base 위치 이전 prefix 에
+                #     script-invocation 토큰(python/bash/sh/./)이 있으면 argv-parse 로 간주(verb→base 순서 보존).
+                base_low = base.lower()
+                base_pos = low.find(base_low)
+                if base_pos != -1 and any(
+                    tok in low[:base_pos] for tok in ("python", "bash", "sh", "./")
+                ):
                     parsed = True
             if parsed:
                 evidence.append(

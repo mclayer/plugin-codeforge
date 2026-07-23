@@ -259,6 +259,41 @@ def test_guard_4check_pass_only_strip_downgrade(tmp_path):
     assert sweep_executor._MOOT_MARKER in open(path, encoding="utf-8").read()
 
 
+def test_parser_scan_argv_fallback_case_fix(tmp_path):
+    """CFP-2799 FIX iter1 (SecurityTestPL P2-② CWE-178): check_parser_scan argv-fallback 가
+    lowercased line 에서 대문자 ADR base 를 case-정정해 감지(구 dead-branch 회귀 방지)."""
+    import reference_integrity_guard as g
+    os.makedirs(os.path.join(str(tmp_path), "scripts"))
+    os.makedirs(os.path.join(str(tmp_path), "archive", "adr"))
+    with open(os.path.join(str(tmp_path), "archive", "adr", "ADR-127-foo.md"), "w",
+              encoding="utf-8", newline="\n") as fh:
+        fh.write("# ADR-127\nbody\n")
+    with open(os.path.join(str(tmp_path), "scripts", "runner.sh"), "w",
+              encoding="utf-8", newline="\n") as fh:
+        fh.write("#!/bin/bash\npython tool.py archive/adr/ADR-127-foo.md\n")
+    res = g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, str(tmp_path))
+    assert res["body_parsed"] is True, "ADR argv 라인 감지(case dead-branch 정정) 실패"
+
+
+def test_parser_scan_no_redos_bound(tmp_path):
+    """CFP-2799 FIX iter1 (SecurityTestPL P2-① CWE-1333): check_parser_scan 가 64KB
+    non-ws repeat-anchor corpus 라인에서 bounded(<2.0s) — linear substring(구 `\\S*.*` 제거)."""
+    import time
+    import reference_integrity_guard as g
+    os.makedirs(os.path.join(str(tmp_path), "scripts"))
+    os.makedirs(os.path.join(str(tmp_path), "archive", "adr"))
+    with open(os.path.join(str(tmp_path), "archive", "adr", "ADR-127-foo.md"), "w",
+              encoding="utf-8", newline="\n") as fh:
+        fh.write("# ADR-127\nbody\n")
+    with open(os.path.join(str(tmp_path), "scripts", "patho.sh"), "w",
+              encoding="utf-8", newline="\n") as fh:
+        fh.write("python " + "adr-" * 16000 + "\n")
+    t0 = time.perf_counter()
+    g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, str(tmp_path))
+    elapsed = time.perf_counter() - t0
+    assert elapsed < 2.0, "check_parser_scan adversarial corpus %.3fs — ReDoS 잔존" % elapsed
+
+
 def test_guard_index_invariance_byte_identical():
     import reference_integrity_guard as g
     idx = g.build_reference_index(_REPO_ROOT)
