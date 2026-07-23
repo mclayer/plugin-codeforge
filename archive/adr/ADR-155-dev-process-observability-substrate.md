@@ -253,7 +253,7 @@ Phase 2 carrier(본 ADR = 설계 SSOT, `mechanical_enforcement_actions: []` — 
 
 ## 해소 기준
 
-N/A — permanent substrate policy (약화 방향 차단 ratchet, is_transitional: false)
+N/A — permanent substrate policy (약화 방향 evidence-gate ratchet, is_transitional: false)
 
 ## 관련 ADR
 

@@ -404,7 +404,7 @@ Amendment 1 의 canonical=10(요구사항리뷰 추가 시점 정본) = **frozen
 | ADR-125 Amendment 1 | canonical=10 정본화 — frozen 역사 (본 Amendment 가 10→8 갱신) |
 | ADR-072 Amendment 5 | ProductionEvidenceDeputy RELOCATE (sibling — 동일 CFP-2782) |
 
-## sunset_justification (ADR-058 §결정 5 — 약화 차단)
+## sunset_justification (ADR-058 §결정 5 — 약화 evidence-gate)
 
 본 ADR 은 약화 0건이다. **additive lane 신설** — 기존 8 lane·게이트·라벨·worker 무손상이며, branch protection required contexts 무변경, ADR-052 touchpoint #4 무약화 (disjoint 공존), ADR-001 worker 신설 0 (재사용). ADR-124 deferral 경계 (S3/S4/S5) 무침범. is_transitional: false (permanent governance anchor). 원복은 별도 Story 의 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 (약화 시 sunset_justification 의무) 를 따른다.
 

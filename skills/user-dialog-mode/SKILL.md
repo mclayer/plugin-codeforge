@@ -126,7 +126,7 @@ tools: Read
 
 > normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) (+ 4번째 touchpoint·design-entry gate = [ADR-071 §결정 23](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) / [ADR-159](../../archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md)). 본 sub-section = **lookup mirror only**.
 
-**frequency vs richness 분리 invariant**: 좁히는 것은 말 거는 횟수·시점 (frequency / timing) 만 — **말할 때의 풍부함은 §결정 2(c) (3 줄 제약 거부 · 길이 자유 · 배경 포함) 그대로 보존** (ADR-058 §결정 5 약화 차단 근거).
+**frequency vs richness 분리 invariant**: 좁히는 것은 말 거는 횟수·시점 (frequency / timing) 만 — **말할 때의 풍부함은 §결정 2(c) (3 줄 제약 거부 · 길이 자유 · 배경 포함) 그대로 보존** (ADR-058 §결정 5 약화 evidence-gate 근거).
 
 ### 4 touchpoint closed enumeration (3 공통 + 1 요구사항 lane-scoped — ADR-071 §결정 23)
 

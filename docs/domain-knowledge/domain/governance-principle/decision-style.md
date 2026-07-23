@@ -69,7 +69,7 @@ updated: 2026-05-12
 | best-effort | 결정 제안 시점에 도달 가능한 최선의 안 채택. "추후 보완" 핑계로 약화 옵션 채택 = 본 원칙 위반 |
 | broad coverage | 결정 menu 작성 시점에 side effect / edge case / 외연 영역까지 후보 포함. AWS Well-Architected 5 pillar review 패턴 |
 | full-scope | 결정 scope 가 도메인 전체 즉시 적용. partial / opt-in 분기 차단 |
-| active amendment | 강화 방향 amendment 적극 발의. 약화 방향은 ADR-058 §결정 5 sunset_justification 의무로 차단 (top-down ratchet) |
+| active amendment | 강화 방향 amendment 적극 발의. 약화 방향은 ADR-058 §결정 5 sunset_justification 의무로 gate (evidence-gated symmetric ratchet — evidence 있으면 약화 1급 허용) |
 
 #### Forbid-list dictionary (ADR-064 §결정 2)
 

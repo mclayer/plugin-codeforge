@@ -89,7 +89,7 @@ ADR-077 §결정 1 verbatim — "dirty 전파의 값 무관성 (value-independen
 | 3. PL재량 재스폰 (lateral) | playbook §4.4 2회 재스폰 한도 | 2 | PL재량 재실행 |
 | 4. adversarial 합의 (lateral) | debate round counter | min 3 / max 5 | adversarial 합의 |
 
-**cross-pollinate 금지** — 본 4 layer 간 카운터 합산·치환·skip-cascade 금지. **약화 방향 차단** (layer 합치 / cap 완화) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 의무.
+**cross-pollinate 금지** — 본 4 layer 간 카운터 합산·치환·skip-cascade 금지. **약화 방향 evidence-gate** (layer 합치 / cap 완화) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 의무.
 
 **Why** — scope 정교화 (forward) ↔ 게이트 회귀 (backward) 의미 분리가 본 개념의 핵심. layer 합산 시 정상 scope 정교화가 품질 결함으로 오분류 → 사용자 directive ("정상적 scope 정교화 차단 아님") 위반.
 

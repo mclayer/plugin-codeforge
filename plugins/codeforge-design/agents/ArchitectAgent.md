@@ -114,7 +114,7 @@ permissions:
 ### Chief tie-break ladder (wording 충돌 시 3단계 sequential)
 1. **RACI lookup** — `codeforge:deputy-mandate` skill의 RACI row. 명시 R 존재 → 그 deputy verbatim 채택. R 부재/충돌 또는 row 부재 → 2단계.
 2. **ADR-068 invariant 적용 (I-1~I-5)** — I-4 wording 충돌 시 ADR §결정 wording 우선 SSOT(governance permanent layer). I-3 충돌 시 unconditional 우선. I-5 충돌 시 `[verified]` 보유 측 우선, 양측 TBD면 3단계.
-3. **chief judgement + escalation** — 단독 결정 = `AskUserQuestion` 의무(가치 판단 영역) + ADR Amendment carrier 발의(RACI 미codify 영역 codify). ratchet 강화 방향만.
+3. **chief judgement + escalation** — 단독 결정 = `AskUserQuestion` 의무(가치 판단 영역) + ADR Amendment carrier 발의(RACI 미codify 영역 codify). ratchet = evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무).
 
 ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_passed: true`. 미적용 또는 ACK 없는 임의 결정 = false + `findings[].type: "boundary-completeness"`.
 

@@ -733,7 +733,7 @@ def detect_backward(cfg: LintConfig) -> list[Finding]:
                         f"identifier `{ident}` used in impl but absent in ADR/contract"
                     ),
                     suggestion=(
-                        "ADR Amendment 또는 rename 의무 — ADR-058/064 top-down ratchet "
+                        "ADR Amendment 또는 rename 의무 — ADR-058/064 evidence-gated symmetric ratchet "
                         "self-application"
                     ),
                 )

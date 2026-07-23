@@ -102,7 +102,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 **Disjoint scope** (ADR-078 §결정 3):
 - 본 doc (architecture_doc) = lane internal 누적 현재 상태, Story key 독립
 - Change Plan = Story별 변경 델타, Story key 종속, 1회 작성
-- ADR = 단일 결정 단위, 불변
+- ADR = 단일 결정 단위 (결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)
 - 본 doc ↔ Change Plan = 상보 disjoint (구조 vs 델타)
 
 ## 인터페이스 계약
@@ -186,7 +186,7 @@ ArchitectPLAgent 검수 → review-verdict packet 작성
 **artifact propagation**:
 - Story file (`internal-docs/codeforge-design/stories/<KEY>.md`) = lane 컨텍스트 SSOT (ArchitectAgent self-fetch §1-§7)
 - Change Plan (`docs/change-plans/<slug>.md`) = Story별 변경 델타 (1회 작성, Story key 종속)
-- ADR (`docs/adr/`) = 단일 결정 단위 (불변)
+- ADR (`docs/adr/`) = 단일 결정 단위 (결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)
 - 본 doc (architecture_doc) = 누적 현재 상태 (영속, Story key 독립) — 매 Change Plan merge 시 4 H2 영역 갱신 의무 (CLAUDE.md `Self-write 책임` 표 last row)
 
 > 본 흐름 = lane spawn / event / artifact propagation 수준. 함수 호출 trace / 변수 전달 라인 0건 (anti-scope guard 준수).

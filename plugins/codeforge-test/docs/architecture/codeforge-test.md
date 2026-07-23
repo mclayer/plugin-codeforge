@@ -85,7 +85,7 @@ codeforge-test lane = **Epic-level 통합테스트 — Epic 하위 전체 Story 
 
 - 본 doc (architecture_doc) = lane internal 누적 현재 상태, Story key 독립, 영속.
 - Change Plan = Story별 변경 델타, Story key 종속, 1회 작성.
-- ADR = 단일 결정 단위 (불변).
+- ADR = 단일 결정 단위 (결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10).
 - 본 doc ↔ Change Plan = 상보 disjoint (구조 vs 델타).
 
 ## 인터페이스 계약

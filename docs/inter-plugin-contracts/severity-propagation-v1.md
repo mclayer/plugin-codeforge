@@ -150,7 +150,7 @@ evidence-checks-registry `current_tier` 약화 (blocking-on-pr → warning downg
 
 - **kind:registry**: MINOR / PATCH bump = sibling sync 면제 (ADR-010 §결정 2)
 - **MAJOR bump**: 본 contract 자체 breaking change 시 별도 ADR 의무 (ADR-058 §결정 5 sunset_justification 적용)
-- **Amendment**: ratchet 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application)
+- **Amendment**: ratchet evidence-gated symmetric (강화·약화 양방향 + 양방향 evidence 의무, ADR-058 §결정 5 + ADR-064 §결정 7 self-application)
 
 ### 4.2 SemVer rule (ADR-008 §결정 2 정합)
 
@@ -167,7 +167,7 @@ evidence-checks-registry `current_tier` 약화 (blocking-on-pr → warning downg
 
 ### 4.4 Ratchet 보존 의무 (downgrade 차단)
 
-본 contract 의 모든 Amendment 는 강화 방향만 허용 (ADR-064 top-down self-application). 약화 방향 (severity downgrade / tier 약화 / channel 제거) 은 ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단.
+본 contract 의 모든 Amendment 는 evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무, ADR-064 §결정 7 self-application). 약화 방향 (severity downgrade / tier 약화 / channel 제거) 은 ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단.
 
 ### 4.5 CFP-529 Phase 2 mechanical implementation 참조
 

@@ -88,7 +88,7 @@ Axis disjoint 정합: 5 decision 모두 ModuleArch primary axis + 2 decision (D-
 
 | Location | Role | Content |
 |---|---|---|
-| `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` (본 file) | **SSOT primary (narrative body)** | mapping rule 전체 정의 + rationale + governance `ratchet` ("강화 방향만 허용 + 약화 차단" — ADR amendment top-down rule) |
+| `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` (본 file) | **SSOT primary (narrative body)** | mapping rule 전체 정의 + rationale + governance `ratchet` ("evidence-gated symmetric ratchet — 강화·약화 양방향 허용 + 양방향 evidence 의무" — ADR amendment symmetric rule) |
 | `docs/confluence-ia-tree.yaml` `lane_mapping_rule:` field | **cross-ref pointer (yaml field)** | `ssot_ref: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` + `closed_enum: [<16 normalized enum>]` field 만 (narrative body 영역 0) |
 
 Published Language content duplication 금지 (ADR-091 §결정 4) 정합 — 단일 owner location.

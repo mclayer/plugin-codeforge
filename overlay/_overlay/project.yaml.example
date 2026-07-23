@@ -155,7 +155,7 @@ progress_narration_verbosity: full
 
 # Parallel Dispatch Protocol (CFP-609 / ADR-064 Amendment 1)
 # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
-# Consumer overlay default 영역. ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).
+# Consumer overlay default 영역. ADR-064 §결정 7 ratchet — evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무).
 # 변경 시 ADR-058 §결정 5 sunset_justification 의무.
 parallel_dispatch:
   # 1. pl_autonomous_parallel_authority — PL 의 자율 병렬 권한 default
