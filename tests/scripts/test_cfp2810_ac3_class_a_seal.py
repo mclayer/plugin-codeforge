@@ -27,6 +27,7 @@ from _cfp2810_crosswalk import (
 
 
 DISQUALIFYING_MARKERS = [
+    # GitHub Actions API (github.rest.*)
     r"addLabels",
     r"removeLabels?",
     r"setLabels",
@@ -36,6 +37,10 @@ DISQUALIFYING_MARKERS = [
     r"git\.createRef",
     r"git\s+(push|commit|tag)",
     r"checks\.create",
+    # GitHub CLI (gh *)
+    r"gh\s+pr\s+edit",
+    r"gh\s+label",
+    r"gh\s+issue\s+(create|edit|close)",
 ]
 
 DISQUALIFYING_PATTERN = "|".join(f"({m})" for m in DISQUALIFYING_MARKERS)

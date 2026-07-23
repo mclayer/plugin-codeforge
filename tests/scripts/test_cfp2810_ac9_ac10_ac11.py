@@ -119,7 +119,7 @@ def test_ac10_no_deleted_yml_files(wt_root):
 def test_ac10_no_jobs_removed(wt_root):
     """
     AC-10 (part b): Verify no jobs were removed from workflows between base and current.
-    This is a spot-check (not exhaustive).
+    Full scan of all modified .yml files.
     """
     import yaml
 
@@ -127,7 +127,8 @@ def test_ac10_no_jobs_removed(wt_root):
     modified_yml = [fp for s, fp in diff_names if s in {"M", "A"} and fp.endswith(".yml")]
 
     failures = []
-    for fp in modified_yml[:5]:  # Spot-check first 5
+    checked = 0
+    for fp in modified_yml:  # Full scan (not spot-check)
         try:
             base_content = run_git_show(wt_root, BASE_COMMIT, fp)
             if base_content is None:
@@ -137,6 +138,7 @@ def test_ac10_no_jobs_removed(wt_root):
             if not current_path.exists():
                 continue
 
+            checked += 1
             base_wf = yaml.safe_load(base_content)
             with open(current_path, 'r', encoding='utf-8') as f:
                 current_wf = yaml.safe_load(f)
@@ -150,10 +152,8 @@ def test_ac10_no_jobs_removed(wt_root):
         except Exception as e:
             failures.append(f"{fp}: {e}")
 
-    if failures:
-        pytest.skip(f"AC-10 spot-check: {len(failures)} modified workflows with job removals")
-    else:
-        assert True, "AC-10: spot-check passed, no obvious job removals"
+    assert not failures, \
+        f"AC-10 (part b) full scan ({checked} modified workflows): {len(failures)} job removal violations\n" + "\n".join(failures)
 
 
 def test_ac11_preexisting_concurrency_retained(wt_root):
@@ -163,12 +163,9 @@ def test_ac11_preexisting_concurrency_retained(wt_root):
     """
     import yaml
 
-    # Enumerate workflows that had concurrency in base
+    # Enumerate workflows that had concurrency in base (all MANIFEST rows, including SKIP)
     base_with_concurrency = set()
     for row in MANIFEST:
-        if not row["wired"]:
-            continue
-
         try:
             path_str = resolve_path(row).replace("\\", "/")
             base_content = run_git_show(wt_root, BASE_COMMIT, path_str)
@@ -180,6 +177,10 @@ def test_ac11_preexisting_concurrency_retained(wt_root):
                 base_with_concurrency.add(row["name"])
         except Exception:
             pass
+
+    # AC-11 floor: origin/main 68ea503a must have at least 13 pre-existing concurrency workflows
+    assert len(base_with_concurrency) >= 13, \
+        f"AC-11 floor violation: expected >= 13 pre-existing concurrency workflows, found {len(base_with_concurrency)}"
 
     failures = []
     for wf_name in base_with_concurrency:

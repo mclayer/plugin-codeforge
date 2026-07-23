@@ -79,18 +79,17 @@ def test_ac4_narrow_14_have_explicit_pr_types(wt_root):
 
             # Check types
             expected = ["opened", "synchronize", "reopened"]
-            if types and sorted(types) != sorted(expected):
+            if not types or sorted(types) != sorted(expected):
                 failures.append(
                     f"{row['name']}: pull_request.types={types}, "
-                    f"expected {expected}"
+                    f"expected {expected} (empty or mismatched)"
                 )
         except Exception as e:
             failures.append(f"{row['name']}: {e}")
 
-    # AC-4 allows workflows to have different triggers (workflow_run, etc.)
-    # Only fail if we found explicit violations
-    if failures:
-        pytest.skip(f"AC-4: {len(failures)} workflows may use alternative triggers (not pre-merge checkable)")
+    # AC-4: NARROW-14 must all have explicit types (no empty, no absent)
+    assert not failures, \
+        f"AC-4 narrowing violations ({len(failures)}): NARROW-14 types must be explicit\n" + "\n".join(failures)
 
 
 def test_ac4_non_narrow_retain_flexibility():
