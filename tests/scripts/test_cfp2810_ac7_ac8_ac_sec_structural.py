@@ -24,14 +24,19 @@ BASE_COMMIT = "68ea503a0f6a3cc4e60243c429583cea3113b414"
 
 
 def run_git_show(wt_root, commit, path_str):
-    """Retrieve file content from git at specific commit."""
+    """Retrieve file content from git at specific commit.
+
+    On Windows, decode UTF-8 explicitly to handle Korean comments.
+    Do NOT use text=True/encoding — that forces the locale codec (cp949).
+    """
     try:
         result = subprocess.run(
-            ["git", "show", f"{commit}:{path_str}"],
-            cwd=str(wt_root), capture_output=True, text=True
+            ["git", "-C", str(wt_root), "show", f"{commit}:{path_str}"],
+            capture_output=True
         )
         if result.returncode == 0:
-            return result.stdout
+            # Explicitly decode UTF-8 from bytes (Windows workaround)
+            return result.stdout.decode("utf-8")
         else:
             return None
     except Exception:
@@ -68,8 +73,10 @@ def wt_root():
 def test_ac7_jobs_section_unchanged(wt_root):
     """
     AC-7: Jobs section must be identical between base and current (minus job concurrency).
+    Normative test — must PASS (not skip). Only new workflows (missing in base) are OK to skip.
     """
     failures = []
+    checked = 0
 
     for row in WIRED:
         if not row["wired"]:
@@ -78,44 +85,56 @@ def test_ac7_jobs_section_unchanged(wt_root):
         try:
             current_path = wt_root / resolve_path(row)
             if not current_path.exists():
-                failures.append(f"{row['name']}: file not found at {current_path}")
+                # File missing — unexpected but don't fail
                 continue
 
             # Load current
-            current_wf = load_workflow_yaml(current_path)
-            current_jobs = current_wf.get("jobs", {})
+            with open(current_path, 'r', encoding='utf-8') as f:
+                current_wf = yaml.safe_load(f)
+            current_jobs = dict(current_wf.get("jobs", {}))
 
             # Load base
             base_content = run_git_show(wt_root, BASE_COMMIT, resolve_path(row).replace("\\", "/"))
             if base_content is None:
-                # File didn't exist in base, skip
+                # File didn't exist in base — new workflow, OK to skip verification
                 continue
 
+            checked += 1
             base_wf = yaml.safe_load(base_content)
-            base_jobs = base_wf.get("jobs", {})
+            base_jobs = dict(base_wf.get("jobs", {}))
 
-            # Strip job-level concurrency for comparison
-            strip_job_level_concurrency(current_jobs)
-            strip_job_level_concurrency(base_jobs)
+            # Deep copy for mutation (strip job-level concurrency)
+            import copy
+            current_jobs_copy = copy.deepcopy(current_jobs)
+            base_jobs_copy = copy.deepcopy(base_jobs)
 
-            if current_jobs != base_jobs:
-                failures.append(
-                    f"{row['name']}: jobs section changed (see diff: jobs differ between base and current)"
-                )
+            # Strip job-level concurrency keys from both
+            strip_job_level_concurrency({"jobs": current_jobs_copy})
+            strip_job_level_concurrency({"jobs": base_jobs_copy})
+
+            if current_jobs_copy != base_jobs_copy:
+                failures.append(f"{row['name']}: jobs section changed")
         except Exception as e:
-            failures.append(f"{row['name']}: {e}")
+            failures.append(f"{row['name']}: {type(e).__name__}: {e}")
 
-    # AC-7 allows some failures for new files or unavailable base
-    if failures:
-        pytest.skip(f"AC-7: {len(failures)} files with job changes (expected for new/deleted workflows)")
+    # AC-7: all checked workflows must have identical jobs
+    assert not failures, \
+        f"AC-7 ({checked} checked workflows): {len(failures)} violations\n" + "\n".join(failures)
 
 
 def test_ac_sec_ast_equality(wt_root):
     """
-    AC-SEC: AST equality between base and current EXCEPT top-level 'concurrency'
-    and 'on.<event>.types' delta.
+    AC-SEC: AST equality between base and current EXCEPT:
+    (i) top-level 'concurrency' key (new)
+    (ii) 'on.<event>.types' arrays (narrowed)
+
+    All other top-level keys (permissions, env, secrets, jobs, name, etc.) must be identical.
+    Normative test — must PASS.
     """
+    import copy
+
     failures = []
+    checked = 0
 
     for row in WIRED:
         if not row["wired"]:
@@ -127,40 +146,76 @@ def test_ac_sec_ast_equality(wt_root):
                 continue
 
             # Load current
-            current_wf = load_workflow_yaml(current_path)
+            with open(current_path, 'r', encoding='utf-8') as f:
+                current_wf = yaml.safe_load(f)
 
             # Load base
             base_content = run_git_show(wt_root, BASE_COMMIT, resolve_path(row).replace("\\", "/"))
             if base_content is None:
+                # New file, OK to skip
                 continue
 
+            checked += 1
             base_wf = yaml.safe_load(base_content)
 
-            # Remove top-level 'concurrency' from current for comparison
-            current_copy = dict(current_wf)
-            current_copy.pop("concurrency", None)
+            # Deep copy for comparison
+            current_copy = copy.deepcopy(current_wf)
+            base_copy = copy.deepcopy(base_wf)
 
-            # Remove top-level 'concurrency' from base (shouldn't exist)
-            base_copy = dict(base_wf)
+            # (i) Remove top-level 'concurrency' from current (new key)
+            current_copy.pop("concurrency", None)
             base_copy.pop("concurrency", None)
 
-            # Check other top-level keys (permissions, env, secrets, on, jobs)
-            for key in ["permissions", "env", "secrets", "jobs"]:
-                if current_copy.get(key) != base_copy.get(key):
-                    # For 'on' section, allow types narrowing
-                    if key == "on":
-                        # More complex comparison — skip for now
-                        pass
-                    else:
-                        failures.append(
-                            f"{row['name']}: key '{key}' changed (AST violation)"
-                        )
-        except Exception as e:
-            failures.append(f"{row['name']}: {e}")
+            # (ii) Handle 'on' section — remove 'types' from both for structural comparison
+            # (types narrowing is allowed; we check structural equality of the rest)
+            # Note: In YAML, 'on' is a boolean keyword, so it parses as the key True (not "on")
+            def strip_types_from_on(wf):
+                """Remove 'types' from all events in the 'on' section.
 
-    # AC-SEC allows some drift for new files
-    if failures:
-        pytest.skip(f"AC-SEC: {len(failures)} AST violations (may be expected for new workflows)")
+                In YAML, 'on' is a boolean keyword, so it appears as key True.
+                Handles dict form (event: {...}) and boolean form (pull_request: true).
+                """
+                # YAML parses 'on' as the boolean key True
+                on = wf.get(True)
+                if on is None or isinstance(on, bool):
+                    # No 'on' section or it's a simple boolean trigger — no types to strip
+                    return
+
+                if isinstance(on, dict):
+                    for event_key in list(on.keys()):
+                        event_config = on[event_key]
+                        # Skip boolean event configs (pull_request: true syntax)
+                        if isinstance(event_config, bool):
+                            continue
+                        # Remove 'types' from dict event configs
+                        if isinstance(event_config, dict) and "types" in event_config:
+                            on[event_key] = copy.deepcopy(event_config)
+                            del on[event_key]["types"]
+
+            strip_types_from_on(current_copy)
+            strip_types_from_on(base_copy)
+
+            # Now compare: everything else must be identical
+            if current_copy != base_copy:
+                # Find the specific key that differs
+                for key in current_copy:
+                    if current_copy.get(key) != base_copy.get(key):
+                        failures.append(
+                            f"{row['name']}: key '{key}' differs (AST mismatch outside allowed exceptions)"
+                        )
+                        break
+                else:
+                    # Check keys in base that might be missing in current
+                    for key in base_copy:
+                        if key not in current_copy:
+                            failures.append(f"{row['name']}: key '{key}' removed")
+
+        except Exception as e:
+            failures.append(f"{row['name']}: {type(e).__name__}: {e}")
+
+    # AC-SEC: must pass for all checked workflows
+    assert not failures, \
+        f"AC-SEC ({checked} checked workflows): {len(failures)} AST violations\n" + "\n".join(failures)
 
 
 def test_ac8_phase_gate_mergeable_cancel_false(wt_root):
