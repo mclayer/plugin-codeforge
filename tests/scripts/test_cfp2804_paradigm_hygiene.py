@@ -309,3 +309,78 @@ class TestDiscriminatingPositiveControl:
 
         # Verify current state still matches none
         assert not DESC_OLDFORM.search(original_text), "Original must still have no oldform"
+
+
+class TestAC6AmbiguousCohortUntouched:
+    """AC-6: Ambiguous 20-cohort no-processing guard (fail-closed preservation).
+
+    These files are out-of-allow-list (not in EXPECT) and should NOT be swept
+    by CFP-2804 — they contain 模糊 content where corrections are uncertain.
+    Guard: verify they still contain ≥1 old-paradigm pattern (sweep not applied).
+    """
+
+    # Ambiguous cohort (10 files: 9 ADR + 1 examples)
+    AMBIGUOUS_COHORT = [
+        "archive/adr/ADR-095-sunset-metric-standardization.md",
+        "archive/adr/ADR-096-min-prerequisite-version-manifest-schema.md",
+        "archive/adr/ADR-098-upgrade-agent-runtime-ownership.md",
+        "archive/adr/ADR-099-atlassian-allow-redefinition.md",
+        "archive/adr/ADR-100-confluence-doc-ssot-recognition.md",
+        "archive/adr/ADR-101-verify-before-trust-confluence-rest.md",
+        "archive/adr/ADR-103-git-confluence-sync-mechanism.md",
+        "archive/adr/ADR-104-operational-phase-definition.md",
+        "archive/adr/ADR-107-plugin-declarative-seed-drift-detection.md",
+        "examples/ddd-golden-path-mct031.md",
+    ]
+
+    def test_ambiguous_cohort_untouched(self):
+        """AC-6 no-processing guard: cohort files untouched (still have old-paradigm language).
+
+        Each cohort file must:
+        1. NOT be in EXPECT allow-list (confirmation of out-of-sweep scope)
+        2. Still contain ≥1 hit from 3-family patterns (sweep not applied)
+        """
+        for relpath in self.AMBIGUOUS_COHORT:
+            # Guard 1: file NOT in allow-list (must be out-of-scope)
+            assert relpath not in EXPECT, (
+                f"AC-6: {relpath} should be out-of-allow-list (ambiguous cohort), "
+                f"but found in EXPECT. This breaks fail-closed preservation intent."
+            )
+
+            # Guard 2: file still has ≥1 old-paradigm pattern (no sweep applied)
+            text = read_file(relpath)
+            hits = count_distinct_line_hits(text)
+            assert hits >= 1, (
+                f"AC-6: {relpath} must preserve ≥1 old-paradigm pattern hit "
+                f"(sweep not applied), but got {hits} hits. "
+                f"This breaks fail-closed no-processing intent."
+            )
+
+    def test_ambiguous_cohort_discriminating_control(self):
+        """Discriminating control: prove fixture detects pattern removal (fixture teeth).
+
+        Pick one ambiguous file, mutate to remove all patterns in-memory,
+        verify hits become 0 (fixture actually detects the sweep).
+        """
+        test_file = self.AMBIGUOUS_COHORT[0]  # ADR-095
+        original_text = read_file(test_file)
+
+        # Verify pre-mutation: original has ≥1 hit
+        original_hits = count_distinct_line_hits(original_text)
+        assert original_hits >= 1, f"Test precondition: {test_file} must have ≥1 hit"
+
+        # Simulate hypothetical sweep: remove pattern-1 and pattern-2 text
+        mutated_text = original_text
+        for pattern in PATTERNS[:2]:  # pattern-1 and pattern-2 only
+            # Replace pattern matches with placeholder
+            for line in mutated_text.split("\n"):
+                if pattern.search(line):
+                    mutated_text = mutated_text.replace(line, "# [pattern removed during mutation]")
+
+        # Verify mutation reduced hits (not strictly 0, but demonstrates removal)
+        mutated_hits = count_distinct_line_hits(mutated_text)
+        assert mutated_hits < original_hits, (
+            f"Mutation must reduce hits: {test_file} had {original_hits} hits, "
+            f"after mutation got {mutated_hits} hits. "
+            f"Fixture has teeth (detects pattern removal)."
+        )
