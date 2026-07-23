@@ -35,6 +35,10 @@ permissions:
   contents: read
   pull-requests: write   # CFP-2591 §결정6 vi — sticky comment upsert (at-most-once)
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   deferred-followup-reconcile:
     name: deferred-followup carrier-부재 검출 (blocking-on-pr surfacing — CFP-2594)

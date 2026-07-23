@@ -17,7 +17,7 @@ name: Active-sessions presence lint (warning mode)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
     paths:
       - 'scripts/lib/check_active_sessions_presence.py'
       - 'scripts/check-active-sessions-presence.sh'
@@ -29,6 +29,10 @@ on:
 permissions:
   pull-requests: write
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   active-sessions-presence-check:

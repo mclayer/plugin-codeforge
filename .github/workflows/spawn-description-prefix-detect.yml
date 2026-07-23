@@ -19,7 +19,7 @@ name: Spawn description prefix detect (warning mode)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
     paths:
       - 'scripts/**'
       - 'hooks/**'
@@ -30,6 +30,10 @@ on:
 permissions:
   pull-requests: write
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   spawn-description-prefix-detect:

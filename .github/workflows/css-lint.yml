@@ -57,6 +57,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   css-lint:
     # (i) unique job name (ADR-130 §결정6 — required 승격 전제, ambiguous required 회피).

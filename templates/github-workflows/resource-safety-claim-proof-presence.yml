@@ -20,7 +20,7 @@ name: Resource-safety claim proof-link presence lint (blocking-on-pr)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
     paths:
       - 'scripts/*.py'
       - 'scripts/lib/*.py'
@@ -36,6 +36,10 @@ on:
 permissions:
   pull-requests: write
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   resource-safety-claim-proof-presence:

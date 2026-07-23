@@ -31,6 +31,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   deferral-carrier-declared:
     name: deferral carrier no-TBD 검출 (blocking-on-pr surfacing — CFP-2594)

@@ -32,6 +32,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   requirements-dialog-formalization-presence:
     name: design-entry 확정 배선 anchor-presence detect (warning-tier)

@@ -52,6 +52,10 @@ permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── self-test (게이트 로직 RED→GREEN proof — 정상 게이팅, exit 1 on regression) ──
   self-test:
