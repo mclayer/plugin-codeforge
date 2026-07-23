@@ -276,8 +276,14 @@ def test_parser_scan_argv_fallback_case_fix(tmp_path):
 
 
 def test_parser_scan_no_redos_bound(tmp_path):
-    """CFP-2799 FIX iter1 (SecurityTestPL P2-① CWE-1333): check_parser_scan 가 64KB
-    non-ws repeat-anchor corpus 라인에서 bounded(<2.0s) — linear substring(구 `\\S*.*` 제거)."""
+    """CFP-2799 FIX iter1+iter2 (SecurityTestPL P2-① CWE-1333): check_parser_scan 가 discriminating
+    adversarial corpus 라인에서 bounded(<2.0s) — linear substring(구 `\\S*.*` 제거).
+
+    ★corpus discriminating(iter2 정정, 초판 born-hollow): scan 라인 = verb + no-space long run +
+    **mixed-case base 포함**(`python`+`a`*N+`ADR-127-foo.md`). base 포함이라 line225 pre-filter 통과 →
+    line234 도달; verb 직후 공백 0 이라 `\\S*` 가 긴 run 소비 → 취약 regex 가 lowercased low 에서
+    대문자 base 를 max-backtrack-to-fail(super-linear). 수정본=linear ms / 취약 revert=>2.0s RED.
+    """
     import time
     import reference_integrity_guard as g
     os.makedirs(os.path.join(str(tmp_path), "scripts"))
@@ -287,7 +293,7 @@ def test_parser_scan_no_redos_bound(tmp_path):
         fh.write("# ADR-127\nbody\n")
     with open(os.path.join(str(tmp_path), "scripts", "patho.sh"), "w",
               encoding="utf-8", newline="\n") as fh:
-        fh.write("python " + "adr-" * 16000 + "\n")
+        fh.write("python" + "a" * 100000 + "ADR-127-foo.md\n")
     t0 = time.perf_counter()
     g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, str(tmp_path))
     elapsed = time.perf_counter() - t0
