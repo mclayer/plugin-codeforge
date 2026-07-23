@@ -22,6 +22,10 @@ permissions:
   contents: read
   issues: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   issue-body-claim-pre-screen:
     name: issue-body stale-claim pre-screen (warning-tier)

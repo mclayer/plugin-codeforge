@@ -44,6 +44,10 @@ permissions:
 env:
   SENTINEL_TIER: warning  # {warning, blocking} — default warning. blocking 승격 = 별 evidence-gated carrier (ADR-060 §결정 19).
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   parallel-work-sentinel:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}

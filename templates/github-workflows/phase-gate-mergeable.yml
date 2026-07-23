@@ -17,6 +17,10 @@ env:
   # 화이트리스트 미일치 시 즉시 cond2=false (fail-closed). PR body derive 절대 금지 (zero-trust).
   ALLOWED_HUB_REPOS: "github.com/mclayer/codeforge-internal-docs"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   check-gate:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}

@@ -35,6 +35,10 @@ permissions:
   contents: read
   # GITHUB_STEP_SUMMARY = CI-native durable verdict surface (requires actions:write 없음, default OK).
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   watchdog:
     name: branch-liveness-watchdog

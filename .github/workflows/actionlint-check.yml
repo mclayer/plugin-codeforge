@@ -41,6 +41,10 @@ on:
 
 permissions: {}  # top-level deny-all (ADR-060 Amendment 8 §결정 21 / CFP-300 least-privilege)
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   actionlint-check:
     runs-on: ubuntu-latest

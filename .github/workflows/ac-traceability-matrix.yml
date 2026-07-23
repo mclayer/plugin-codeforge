@@ -43,6 +43,10 @@ env:
   # cross-repo Story/Change Plan fetch venue 화이트리스트 (zero-trust anchor, strict match — 미일치=FAIL).
   ALLOWED_HUB_REPOS: "mclayer/codeforge-internal-docs"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ac-traceability-matrix:
     name: ac-traceability-matrix

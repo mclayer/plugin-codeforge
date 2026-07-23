@@ -20,7 +20,7 @@ name: Hook-only check self-test execution (deterministic fixture self-tests)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
     paths:
       - 'scripts/lib/check_worktree_self_ownership.py'
       - 'scripts/check-worktree-self-ownership.sh'
@@ -33,6 +33,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   hook-selftest-execution:

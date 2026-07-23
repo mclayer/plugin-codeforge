@@ -16,7 +16,7 @@ name: ADR cross-ref consistency lint (warning mode)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
     paths:
       - '**/*.md'
       - '**/*.yml'
@@ -30,6 +30,10 @@ on:
 permissions:
   pull-requests: write
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   adr-cross-ref-consistency:

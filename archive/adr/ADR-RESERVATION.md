@@ -665,6 +665,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-2776
     reservation_date: 2026-07-20 KST
     status: active   # DeveloperPLAgent commit time 점유 (CFP-2776 Phase 2 구현 PR carrier — ADR-158 Amendment 1: author-time self-gate advisory→mechanical 승격 정본화(internal-docs Hop1 well-formedness blocking gate `ac-schema-authoring-gate.yml`). `mechanical_enforcement_actions: []` → populate + `## Amendment 1` 절. amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via firsthand `grep -qE '^amendments:' archive/adr/ADR-158-...md` → NONE → next slot = 1 collision 0 + 기존 amendments_reserved[] ADR-158 row(adr_number:158 CFP-2689)는 신규-ADR 번호 claim(amendment_id 부재) → amendment_id:1 collision 0. dual-block sync(frontmatter amendments[] id=1 신설 + body `## Amendment 1` 절). worktree base SHA = 790da84a (origin/main firsthand). status reserved 미경유 직접 active (ADR-158 결정 3 pre-authorized 승격 — pattern_count≥2 사전인가 clause 실현). sunset_justification: null (강화 방향 — advisory→mechanical 승격 + dogfood 자기적용 강화, is_transitional:false ratchet 정합, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 165
+    reserved_by_cfp: CFP-2810
+    reservation_date: 2026-07-24 KST
+    status: active   # DeveloperPLAgent commit time 점유 (CFP-2810 Phase 2 구현 PR carrier — ADR-165 신규 발급: fleet-wide CI concurrency/trigger governance (4-class taxonomy + KEEP/NARROW rubric)). adr_number claim (신규 ADR — ADR-133 §결정 4 fallback: GH_TOKEN 부재 → OCC primitive 미실행, firsthand max 검증 경유). verified-via `ls archive/adr/ADR-*.md` numeric max = ADR-164 + ADR-RESERVATION.md 전수 max adr_number = 164 → next = 165 collision 0. 병렬 plugin-codeforge open PR 충돌 0 (Continuity firsthand) + adr-reservation-state ledger 165 claim 부재. dual-key 3-leg: filename `ADR-165-ci-concurrency-trigger-governance.md` ∧ frontmatter `adr_number: 165` ∧ 본 row 165. worktree base SHA = 68ea503a (origin/main firsthand). status reserved 미경유 직접 active (DeveloperPLAgent Phase 2 carrier — ADR-159 CFP-2725 new-ADR 패턴 정합). sunset_justification: null (신규 governance 정책 ADR — permanent policy, ADR-058 §결정 5 강화 방향).
 ```
 
 ## 해소 기준

@@ -45,6 +45,10 @@ on:
 
 permissions: {}  # top-level deny-all
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   regression-smoke-health-monitor:
     runs-on: ubuntu-latest
