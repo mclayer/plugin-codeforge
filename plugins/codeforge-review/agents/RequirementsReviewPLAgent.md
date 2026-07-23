@@ -1,6 +1,6 @@
 ---
 name: RequirementsReviewPLAgent
-model: opus
+model: fable
 description: 요구사항 리뷰 레인 PL — 요구사항 산출물(§1-7) 외부사실 의존성 게이트. 공통 base는 templates/review-pl-base.md SSOT
 permissions:
   allow:

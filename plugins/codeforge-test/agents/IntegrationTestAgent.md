@@ -1,7 +1,7 @@
 ---
 name: IntegrationTestAgent
-model: sonnet
-# ADR-141 Amendment 2(CFP-2748) non-opus(sonnet) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
+model: fable
+# ADR-141 Amendment 4(CFP-2803) non-opus(fable) carve-out — self-refuse 금지(본문 guard 참조). rate-limit fallback tier 부재(ADR-057 §결정2 dead 상속)
 description: Epic 통합테스트 lane 전담 — §8.6 Integration Test Contract 이행, Epic 하위 전체 Story CI gate PASS 이후 1회 실행. Deployability 검증(4-step + 조건부 지속-liveness soak step, project.yaml health_checks+db_probes+daemon_type/sink_probes) + Baseline Suite + Story Suite 자동 생성(story_keys 메타데이터 주입) + Baseline 자동 승격(self-commit) + story_keys blame 3-tier
 permissions:
   allow:

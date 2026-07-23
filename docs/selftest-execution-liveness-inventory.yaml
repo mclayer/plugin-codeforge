@@ -637,3 +637,15 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "death-marker/amendment oracle 확장 discriminating self-test — 실 소스 monkeypatch 양방향 mutation-kill(M1 under-detect·M2 over-detect candidate / M3 amendment_log-off dated region 붕괴 / M4 bare-xref dated-force AC-11 / M5 census-dispatch-off / M6 #2698 exclusion-off AC-6) + baseline GREEN(death candidate·census pl_review_bucket·no-blind-apply·dated 보존·delete-gap seal SecurityArch P1) + positive-control(bare-xref NOT dated / sunset_justification NOT death / INV-R2 byte-unchanged) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, oracle 확장 판별력 결박; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-151 §결정7 — death staleness 레지스트리 부재로 mechanical 완전분류 미주장)."
+
+  # -- CFP-2803 (ADR-141 Amendment 4) — fable roster-integrity §8 게이트 discriminating self-test enroll --
+  # bijection: tests/scripts/*.sh +1 (신규 enroll). 실행 채널 = fable-roster-integrity.yml:fable-roster-integrity-test
+  #   (전용 hard-fail job, no continue-on-error, if: mclayer/plugin-codeforge). byte-identical template pair(.github ↔ templates).
+  - self_test: "tests/scripts/test-check-fable-roster-integrity.sh"
+    execution_channel: "workflow:fable-roster-integrity.yml:fable-roster-integrity-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "fable tier roster-integrity §8 discriminating self-test — GREEN(canonical 10 fable / SecurityTestPL opus / census 41 dist 7-10-10-14) 대 RED 4-mutation(count=9 / exclusion / census=38 preset-drop / bijection non-target) exit-1 판별 + real-repo find-enumeration 41 liveness. soak=G2 / DAST=G5 / real-render=§8.7 runtime 축 disjoint (정적 tier-분배 lint, wrapper-self plugin-meta-na). honest-ceiling(ADR-151 §결정7): presence(tier 값 배치) != truth(실 carve-out 기능성), 검출력=G3 미강제."

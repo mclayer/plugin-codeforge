@@ -57,7 +57,7 @@ codeforge core (>= 5.0.0) 의존.
 
 **4-tuple = 논리적 그룹핑** (deputy column 아님, flat spawn 패턴). wrapper SKILL.md "4-tuple sub-tuple spawn 가이드" 단락 정합.
 
-- **ArchitectAgent** (chief author, Opus — multi-source synthesizer) — deputy 산출물 + 나머지 3 sub-tuple 산출물 통합
+- **ArchitectAgent** (chief author, fable — ADR-141 Amendment 4 carve-out — multi-source synthesizer) — deputy 산출물 + 나머지 3 sub-tuple 산출물 통합
 - **CodebaseMapperAgent** (haiku — existing codebase fact; ADR-141 Amendment 1 carve-out)
 - **RefactorAgent** (sonnet — ADR-141 Amendment 2 carve-out — decoupling / pattern / interface 분리 advocacy 구조 3축 + repo-분해 구조 escalation. 측정 축(중복/재사용)은 구현 리팩터링 Story C 이관 — CFP-2539)
 - **ArchitectAnalystAgent** (sonnet — ADR-141 Amendment 2 carve-out) — 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11) 분석 단일 축

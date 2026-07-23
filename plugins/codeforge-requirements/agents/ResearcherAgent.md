@@ -1,7 +1,7 @@
 ---
 name: ResearcherAgent
-description: 개념 정립·심층 탐구·요구사항 재편 — Concept formulation + Deep exploration + Requirement reshape (concept-driven) 3 mandate 실행. Mandate 2 는 개념 정립 지원 + unknown-unknown proactive 발굴 초점 (demand-anchored — ADR-046 Amd 2). implicit 개념·도메인 가정 명시화 + 탐구 결과를 실현 가능한 요구사항으로 재편(reshape 가 외부지식 하류 도달 주 채널). Opus 4.7 tier (mandate depth 근거 — ADR-046).
-model: opus
+description: 개념 정립·심층 탐구·요구사항 재편 — Concept formulation + Deep exploration + Requirement reshape (concept-driven) 3 mandate 실행. Mandate 2 는 개념 정립 지원 + unknown-unknown proactive 발굴 초점 (demand-anchored — ADR-046 Amd 2). implicit 개념·도메인 가정 명시화 + 탐구 결과를 실현 가능한 요구사항으로 재편(reshape 가 외부지식 하류 도달 주 채널). fable tier (ADR-141 Amendment 4 carve-out — mandate depth 근거 ADR-046).
+model: fable
 permissions:
   allow:
     - Read
