@@ -322,7 +322,7 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
      "must match publisher plugin.json + registry marketplace.json version"),
     # CFP-609 / ADR-064 Amendment 1 — Parallel Dispatch Protocol consumer overlay
     # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
-    # ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).
+    # ADR-064 §결정 7 ratchet — evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무).
     ("parallel_dispatch", False, dict, "parallel_dispatch section (mapping), optional"),
     ("parallel_dispatch.pl_autonomous_parallel_authority", False,
      lambda v: isinstance(v, str) and v in ("required", "optional", "disabled"),

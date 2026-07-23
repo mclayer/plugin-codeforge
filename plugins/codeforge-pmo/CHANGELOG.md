@@ -4,6 +4,16 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.8.2] - 2026-07-23 — CFP-2804 구 패러다임 어휘 descriptor 위생 정정 (PATCH)
+
+### Changed (CFP-2804 — ADR-064 §결정7 L406 이연 cascade, PATCH)
+
+[CFP-2804] `docs/architecture/codeforge-pmo.md` descriptor `ADR = 단일 결정 단위, 불변`(:54) → `(결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)` qualify — byte-immutable 오독 봉쇄 + genre 대조 보존. 효력-변화-0 위생.
+
+#### Why
+
+ADR-058 §결정10 + supersede 1급화 정합. marketplace version·description sync(ADR-063).
+
 ## [0.8.0] - 2026-07-18 — CFP-2748 ADR-141 Amendment 2 GitOps opus→sonnet carve-out (MINOR)
 
 ### Changed (CFP-2748 — ADR-141 Amendment 2, MINOR)

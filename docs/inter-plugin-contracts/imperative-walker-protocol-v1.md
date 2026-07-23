@@ -382,7 +382,7 @@ walk_result_enum_invariant:
 - **reconcile-protocol-v1.md** (v1.13 Deprecated, CFP-1125): paradigm replacement source — §4.13 walk_result enum semantic 의 §2.A lossless carry source.
 - **ADR-008 §결정 2 / ADR-010 §결정 2**: kind:registry MINOR/PATCH bump = sibling sync 면제 anchor.
 - **ADR-058 §결정 5**: closed_enum / schema 확장 시 sunset_justification 의무 (ratchet 강화 방향 invariant).
-- **ADR-064 §self-application**: CFP scope unitary + amendment 강화 방향만 anchor.
+- **ADR-064 §self-application**: CFP scope unitary + amendment evidence-gated symmetric ratchet anchor (강화·약화 양방향 + 양방향 evidence 의무).
 
 ## 4. 변경 규칙
 
@@ -390,7 +390,7 @@ walk_result_enum_invariant:
 
 - **kind:registry**: MINOR / PATCH bump = sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 2)
 - **MAJOR bump**: 본 contract breaking change 시 별도 ADR Amendment 의무 (ADR-058 §결정 5 sunset_justification 적용)
-- **Amendment trigger**: ratchet 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application)
+- **Amendment trigger**: ratchet evidence-gated symmetric (강화·약화 양방향 + 양방향 evidence 의무, ADR-058 §결정 5 + ADR-064 §결정 7 self-application)
 
 ### 4.2 SemVer rule (ADR-008 §결정 2 정합)
 

@@ -23,7 +23,7 @@ related_adrs:
   - ADR-064 (amend — §결정10 일반 external-skill 원칙 존속, superpowers 어구 cleanup)
   - ADR-034 (amend — Stage 0 brainstorming fallback 문구 제거)
   - ADR-013 (무손상 — dogfood-out policy, 경로 강제 정책 원천)
-  - ADR-058 (sunset_justification 의무 — 약화 차단)
+  - ADR-058 (sunset_justification 의무 — 약화 evidence-gate)
   - ADR-060 (evidence-enforceable promotion framework — registry entry 12·13 retired + 신규 entry)
 related_files:
   - skills/codeforge-brainstorm/SKILL.md
@@ -154,7 +154,7 @@ ADR-034 Stage 0(pre-Issue brainstorming) 개념 존속. "조건 불충족 시 su
 - consumer-guide / project-config-schema 의 "필수 4종" advertisement 에서 superpowers 강제성 제거 — consumer 는 opt-in. consumer 는 ADR-017 미적용이므로 `docs/superpowers/**` 경로 사용 가능 (brainstorming-path-override fragment 의 consumer 분기 정합).
 - bootstrap WARN(check_bootstrap.py) 은 이미 non-blocking — consumer breaking 0.
 
-## sunset_justification (ADR-058 §결정5 — 약화 차단)
+## sunset_justification (ADR-058 §결정5 — 약화 evidence-gate)
 
 본 supersede/sunset 은 **weaken 아닌 "referent 소멸 cleanup"**. 3축:
 

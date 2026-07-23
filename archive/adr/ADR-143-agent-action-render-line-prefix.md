@@ -211,7 +211,7 @@ ADR-038 §결정 9 3-tier 모델((a) physical CI/git hook / (b) startup-hook / (
 
 ## 해소 기준
 
-N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governance presumption). ephemeral-UI 표시 규약은 sunset 대상 아닌 영구 표시 governance. 약화 방향 amendment(sub-layer scope 축소 / KST anchor 제거 / persist-guard 해제)는 ADR-058 §결정 5 `sunset_justification` 의무로 차단(ratchet — 강화 방향만).
+N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governance presumption). ephemeral-UI 표시 규약은 sunset 대상 아닌 영구 표시 governance. 약화 방향 amendment(sub-layer scope 축소 / KST anchor 제거 / persist-guard 해제)는 ADR-058 §결정 5 `sunset_justification` 의무로 gate (evidence-gated symmetric ratchet — evidence 있으면 약화 1급 허용).
 
 ## Amendment 1 (CFP-2587) — advisory ceiling → mechanical injection
 

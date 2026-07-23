@@ -279,7 +279,7 @@ codeforge 는 외부지식 (모델 training 으로는 보장되지 않는 산업
 - mechanical_enforcement_actions (S1 시점): [] — S1 declarative-only. 실 게이트 trigger·lane 배선·차등 실구현 = S2~S5 별 carrier (ADR-054 §결정 6.1 / ADR-119 §결정 8 declarative-only 패턴 정합).
 - mechanical_enforcement_actions (Amendment 1, CFP-2327 S3): 단계③ 차등 실구현 정착 — ① `templates/review-checklists/security.md` §7 2차 워커 web 단계 심화 (다출처+adversarial+시의성) + SecurityTestPLAgent.md ② `templates/review-checklists/design.md` "외부 기술선택 검증" sub-section (positive∩negative 휴리스틱) + DesignReviewPLAgent.md packet ③ ClaudeReviewAgent.md (design 행만 web 예외, code 금지 보존) + CodexReviewAgent.md design focus prompt ④ codeforge-review/CLAUDE.md Worker 호출 규약 web 허용 lane 3 종 한정. 발동 = declarative-only (외부사실 의존 게이트가 실 발동 결정).
 
-## sunset_justification (ADR-058 §결정 5 — 약화 차단)
+## sunset_justification (ADR-058 §결정 5 — 약화 evidence-gate)
 
 본 ADR 은 기존 거버넌스 (ADR-046/119) 의 합성·정밀화이며 약화 0 건이다. ADR-046 의 어느 mandate 도 삭제·완화하지 않고, ADR-119 의 어느 결정도 흡수·약화하지 않으며, 단계① 의 demand-anchored frame 은 적극 탐색 default skew 를 좁히지 않고 frame 만 더하는 강화 방향이다. is_transitional: false (permanent governance anchor). 원복은 별도 Story 의 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 (약화 시 sunset_justification 의무) 를 따른다.
 

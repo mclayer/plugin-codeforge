@@ -69,7 +69,7 @@ Registration 완료 ≠ 실효성 확보. Enforcement layer 의 3 변수 (tier /
 
 ### 규칙 3 — Lint scope 확장 = 강화 방향 (sunset_justification 불요) 판정
 
-ADR-064 §결정 7 self-application top-down ratchet 은 amendment 를 강화 방향만 허용하고, 약화 방향은 ADR-058 §결정 5 sunset_justification 의무로 차단한다. **lint scope 확장이 강화 방향인지의 판정 기준**:
+ADR-064 §결정 7 self-application evidence-gated symmetric ratchet 은 amendment 를 강화·약화 양방향 허용하되 양방향 evidence 를 요구하고, 약화 방향은 ADR-058 §결정 5 sunset_justification 의무로 gate 한다. **lint scope 확장이 강화 방향인지의 판정 기준**:
 
 | Amendment 변경 | 방향 | sunset_justification | 근거 |
 |---|---|---|---|

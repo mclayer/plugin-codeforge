@@ -1299,7 +1299,7 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 | `pr_open` | PR open 직전 (`gh pr create` 직전, Phase 1 / Phase 2 / retro PR) | 동일 3-step + sibling Story PR list cross-ref |
 | `merge_transition` | PR merge 직전 (`gh pr merge` 직전) + 직후 (gate label / phase label transition 직전) | 동일 3-step + Epic state final poll (close eligibility check) |
 
-closed enum — 4번째 trigger 추가 = ADR-073 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+closed enum — 4번째 trigger 추가 = ADR-073 Amendment = evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무, ADR-058 §결정 5 / ADR-064 §결정 7 정합).
 
 **HEAD compare pattern (verify-before-trust 4-layer governance Layer 1)** — 매 transition trigger 직전 3-step 의무:
 
@@ -2354,7 +2354,7 @@ codeforge family upgrade 의 선언적 reconciliation 실행 주체. **3 책임 
 
 consumer 가 자연어 token `codeforge upgrade` (또는 한글 변형) 발화 시 Orchestrator 가 dialog reflex 없이 즉시 §3.16 UpgradeAgent dispatch 호출. ADR-076 invariant `user_decision_branches: 0` 의 **dialog 진입 단계 enforcement** carrier — base ADR-071 §결정 5 사실/가치 분리 원칙의 dialog reflex 차단 first applied case.
 
-**closed enumeration 보존 invariant**: 본 trigger lookup table = ADR-071 §16.2 closed enumeration 1 entry. 2번째 trigger token 확장 시 별도 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification null 보존 + Story §1 사용자 explicit 승인 + SecurityArch consult — trust boundary 영역).
+**closed enumeration 보존 invariant**: 본 trigger lookup table = ADR-071 §16.2 closed enumeration 1 entry. 2번째 trigger token 확장 시 별도 CFP 의무 (ADR-064 §결정 7 evidence-gated symmetric ratchet + ADR-058 §결정 5 sunset_justification null 보존 + Story §1 사용자 explicit 승인 + SecurityArch consult — trust boundary 영역).
 
 #### Trigger token (closed enumeration, 1 entry)
 

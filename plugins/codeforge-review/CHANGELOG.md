@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.28.2 — 2026-07-23
+
+### Changed (CFP-2804 — ADR-064 §결정7 L406 이연 cascade, PATCH)
+
+[CFP-2804] `docs/architecture/codeforge-review.md` descriptor `ADR = 단일 결정 단위, 불변`(:73) → `(결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)` qualify — byte-immutable 오독 봉쇄 + genre 대조 보존. 효력-변화-0 위생.
+
+#### Why
+
+ADR-058 §결정10 + supersede 1급화 정합. marketplace version·description sync(ADR-063).
+
 ## 1.28.0 — 2026-07-18
 
 ### Added (CFP-2735 — ADR-141 Amendment 1: CodexReviewAgent opus→haiku carve-out + self-refusal guard, MINOR)
