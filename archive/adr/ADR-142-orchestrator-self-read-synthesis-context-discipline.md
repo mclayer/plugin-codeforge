@@ -156,7 +156,7 @@ wrapper Orchestrator-self 축 한정. lane plugin 8종 CLAUDE.md / 6 SubAgent = 
 
 ## 해소 기준
 
-is_transitional:false permanent governance anchor. 약화 방향 차단 ratchet(ADR-064 §결정7). sunset 해당 시 = holder×mutation 격자 자체 폐기 또는 platform 이 live self-context surface 제공 시 L7 proxy→direct 격상(별도 CFP + 본 ADR amendment). mechanical_enforcement = Phase 2 §8 self-test 3종(disjoint-axis-whitelist-lint 물리강제 / return-envelope-schema-lint measurement / self-context-telemetry-allowlist-lint measurement + emission-liveness fixture).
+is_transitional:false permanent governance anchor. 약화 evidence-gate ratchet(ADR-064 §결정7 evidence-gated symmetric). sunset 해당 시 = holder×mutation 격자 자체 폐기 또는 platform 이 live self-context surface 제공 시 L7 proxy→direct 격상(별도 CFP + 본 ADR amendment). mechanical_enforcement = Phase 2 §8 self-test 3종(disjoint-axis-whitelist-lint 물리강제 / return-envelope-schema-lint measurement / self-context-telemetry-allowlist-lint measurement + emission-liveness fixture).
 
 ## 관련 파일
 

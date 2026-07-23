@@ -13,7 +13,7 @@ import pytest
 # Repo root: tests/scripts/test_*.py → repo/
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# AC-4: 37 correction targets (rel, old, new)
+# AC-4: 38 correction targets (rel, old, new)
 CORR = [
     # ---------- archive/adr (group 2) ----------
     ("archive/adr/ADR-122-superpowers-dependency-removal.md",
@@ -130,6 +130,10 @@ CORR = [
     ("plugins/codeforge-design/docs/architecture/codeforge-design.md",
      "- ADR (`docs/adr/`) = 단일 결정 단위 (불변)",
      "- ADR (`docs/adr/`) = 단일 결정 단위 (결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)"),
+    # ---------- ADR-142 (new correction, Change Plan update) ----------
+    ("archive/adr/ADR-142-orchestrator-self-read-synthesis-context-discipline.md",
+     "약화 방향 차단 ratchet(ADR-064 §결정7)",
+     "약화 evidence-gate ratchet(ADR-064 §결정7 evidence-gated symmetric)"),
 ]
 
 # AC-4: 3-pattern regex (used for preserve-count validation)
@@ -139,13 +143,14 @@ PATTERNS = [
     re.compile(r"top-down\s+(ratchet|rule|self-application)")
 ]
 
-# AC-4: 24 allow-list files with expected post-correction preserve-count (distinct-line hits)
+# AC-4: 25 allow-list files with expected post-correction preserve-count (distinct-line hits)
 EXPECT = {
     "archive/adr/ADR-122-superpowers-dependency-removal.md": 2,
     "archive/adr/ADR-123-document-readability-and-communication-standard.md": 0,
     "archive/adr/ADR-124-external-knowledge-provisioning-model.md": 4,
     "archive/adr/ADR-125-requirements-review-lane.md": 0,
     "archive/adr/ADR-126-on-demand-research-request-gate.md": 2,
+    "archive/adr/ADR-142-orchestrator-self-read-synthesis-context-discipline.md": 0,
     "archive/adr/ADR-143-agent-action-render-line-prefix.md": 0,
     "archive/adr/ADR-155-dev-process-observability-substrate.md": 0,
     "archive/adr/ADR-159-requirements-lane-enrichment-and-design-entry-signoff.md": 1,
@@ -181,7 +186,7 @@ DESC_QUAL = "결정 시점 고정 — 개정=supersede / 의미보존 위생편�
 
 def read_file(relpath: str) -> str:
     """Read file from repo root as UTF-8."""
-    p = REPO_ROOT / relpath.replace("/", "\\") if "\\" in str(REPO_ROOT) else REPO_ROOT / relpath
+    p = REPO_ROOT / relpath.replace("/", "\\")
     with open(p, "rb") as f:
         return f.read().decode("utf-8")
 
@@ -271,7 +276,6 @@ class TestDiscriminatingPositiveControl:
 
         # NOW: Pattern-1 should MATCH on mutated_text (RED condition)
         pattern1 = PATTERNS[0]  # r"강화\s*방향만"
-        line_hits_before = count_distinct_line_hits(mutated_text)
 
         # Verify pattern catches the reverted form (discriminating)
         has_pattern = any(pattern1.search(line) for line in mutated_text.split("\n") if "ratchet" in line)
