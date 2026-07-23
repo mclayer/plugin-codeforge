@@ -32,16 +32,26 @@ on:
     paths:
       - 'scripts/lib/decision_record_disposition.py'
       - 'scripts/lib/reference_integrity_guard.py'
+      - 'scripts/lib/dated_block_mapper.py'
+      - 'scripts/lib/sweep_executor.py'
+      - 'scripts/lib/decision_record_disposition_deathmarker.py'
+      - 'scripts/decision-record-sweep.py'
       - 'scripts/check-decision-record-disposition.sh'
       - 'tests/scripts/test_check-decision-record-disposition.sh'
+      - 'tests/scripts/test_decision-record-disposition-deathmarker.sh'
       - '.github/workflows/decision-record-disposition-test.yml'
   push:
     branches: [main]
     paths:
       - 'scripts/lib/decision_record_disposition.py'
       - 'scripts/lib/reference_integrity_guard.py'
+      - 'scripts/lib/dated_block_mapper.py'
+      - 'scripts/lib/sweep_executor.py'
+      - 'scripts/lib/decision_record_disposition_deathmarker.py'
+      - 'scripts/decision-record-sweep.py'
       - 'scripts/check-decision-record-disposition.sh'
       - 'tests/scripts/test_check-decision-record-disposition.sh'
+      - 'tests/scripts/test_decision-record-disposition-deathmarker.sh'
       - '.github/workflows/decision-record-disposition-test.yml'
   workflow_dispatch: {}
 
@@ -67,3 +77,6 @@ jobs:
 
       - name: Run born-alive smoke (5 canonical verdicts — P-1/2/3 correct / N-1 homonym / N-2 dated no_action)
         run: bash scripts/check-decision-record-disposition.sh --smoke
+
+      - name: Run CFP-2799 death-marker/amendment discriminating self-test (.sh — Part A baseline + Part B 6 mutation-kill(over/under-detect·amendment_log·bare-xref·dispatch·exclusion) + Part C positive-control, day-1 hard-fail)
+        run: bash tests/scripts/test_decision-record-disposition-deathmarker.sh

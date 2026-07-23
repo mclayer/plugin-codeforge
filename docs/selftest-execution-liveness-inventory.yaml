@@ -624,3 +624,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "semantics-change sentinel PATH_TOKEN_RE ReDoS-bound perf regression — 소스 PATH_TOKEN_RE 동적 추출 후 64KB all-dots findall timing < 2.0s assert(수정본 0.002s / O(n²) 취약본 회귀 시 threshold 초과 RED). correctness M1-M12(별 self-test file)와 disjoint 타이밍 축(CI-load flakiness 격리, baked-in 취약 revert 실행 0). soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. honest-ceiling ADR-151 §결정7 — presence≠truth."
+
+  # ── CFP-2799 (Epic #2696 B(#2698) gray-zone 완결) — death-marker/amendment oracle 확장 discriminating self-test enroll ──
+  # bijection: tests/scripts/*.sh 57 → 58 (신규 self-test enroll — append 시점 재산출). 실행 채널 =
+  #   decision-record-disposition-test.yml:decision-record-disposition (기존 hard-fail job 에 신규 step 배선, no continue-on-error).
+  #   byte-identical template pair(.github ↔ templates), wrapper-self-only(job-level if:), non-required day-1 hard-fail.
+  - self_test: "tests/scripts/test_decision-record-disposition-deathmarker.sh"
+    execution_channel: "workflow:decision-record-disposition-test.yml:decision-record-disposition"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "death-marker/amendment oracle 확장 discriminating self-test — 실 소스 monkeypatch 양방향 mutation-kill(M1 under-detect·M2 over-detect candidate / M3 amendment_log-off dated region 붕괴 / M4 bare-xref dated-force AC-11 / M5 census-dispatch-off / M6 #2698 exclusion-off AC-6) + baseline GREEN(death candidate·census pl_review_bucket·no-blind-apply·dated 보존·delete-gap seal SecurityArch P1) + positive-control(bare-xref NOT dated / sunset_justification NOT death / INV-R2 byte-unchanged) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, oracle 확장 판별력 결박; 검출력=review-tier honest-ceiling, presence ≠ truth, ADR-151 §결정7 — death staleness 레지스트리 부재로 mechanical 완전분류 미주장)."

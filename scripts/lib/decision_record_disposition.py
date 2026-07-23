@@ -612,8 +612,22 @@ def smoke_report():
 # ─────────────────────────────────────────────────────────────────────────────
 # CLI 층 (파일 I/O 는 여기서만 — importable 함수는 순수 유지)
 # ─────────────────────────────────────────────────────────────────────────────
-def _census_over_files(paths, *, live_required_contexts=None, dated_provider=None, dated_context=None):
+def _census_over_files(
+    paths,
+    *,
+    live_required_contexts=None,
+    dated_provider=None,
+    dated_context=None,
+    domain_classifiers=None,
+):
     """파일들을 읽어 `\\d+-tuple` 포함 라인을 classify, 조치-필요 항목(correct/strip/historical)만 수집.
+
+    (CFP-2799 census DI) `domain_classifiers` = None(default) → 기존 cardinal-only path 완전
+    무변경(byte-identical, 기존 호출자 3곳 무파괴). dict 주입 시 = `{domain: {"candidate":
+    predicate, "classify": classifier}}` per-domain 라우팅 — death/amendment 도메인의 결정
+    불가분을 신규 `pl_review_bucket` 로 surface(auto-correct 제외, no-blind-apply). 비-cardinal
+    domain 은 cardinal-flagged 라인을 exclude(축-disjoint, §4.3) + mechanical action 도
+    `needs_disposition`(blind apply feed) 에 넣지 않는다(report-only). `classify()` core 무변경.
 
     (DBM-4) 구 시그니처 `_census_over_files(paths, dated_context=None)` 를 keyword-only
     `live_required_contexts` + `dated_provider` 로 확장(census 층 threading — classify() 자체는
@@ -639,6 +653,7 @@ def _census_over_files(paths, *, live_required_contexts=None, dated_provider=Non
     """
     needs = []
     by_disp = {}
+    pl_review_bucket = []
     cardinal_lines = 0
     scanned = 0
     action_dispositions = {
@@ -657,33 +672,82 @@ def _census_over_files(paths, *, live_required_contexts=None, dated_provider=Non
             continue
         for idx, raw in enumerate(lines, start=1):
             line = raw.rstrip("\n")
-            if not _TUPLE_RE.search(_low(line)):
+
+            if domain_classifiers is None:
+                # ── 기존 cardinal-only path (byte-identical 무변경) ──
+                if not _TUPLE_RE.search(_low(line)):
+                    continue
+                cardinal_lines += 1
+                if dated_provider is not None:
+                    dated = dated_provider(path, idx)
+                    if dated is None:
+                        dated = dated_context
+                else:
+                    dated = dated_context
+                res = classify(
+                    line, live_required_contexts=live_required_contexts, dated_context=dated
+                )
+                disp = res["disposition"]
+                by_disp[disp] = by_disp.get(disp, 0) + 1
+                if disp in action_dispositions:
+                    needs.append(
+                        {
+                            "file": path,
+                            "line": idx,
+                            "disposition": disp,
+                            "reason": res["reason"],
+                            "text": line.strip(),
+                        }
+                    )
                 continue
-            cardinal_lines += 1
+
+            # ── domain_classifiers 주입 path (CFP-2799 additive — pl_review_bucket surface) ──
+            is_cardinal = bool(_TUPLE_RE.search(_low(line)))
             if dated_provider is not None:
                 dated = dated_provider(path, idx)
                 if dated is None:
                     dated = dated_context
             else:
                 dated = dated_context
-            res = classify(line, live_required_contexts=live_required_contexts, dated_context=dated)
-            disp = res["disposition"]
-            by_disp[disp] = by_disp.get(disp, 0) + 1
-            if disp in action_dispositions:
-                needs.append(
-                    {
-                        "file": path,
-                        "line": idx,
-                        "disposition": disp,
-                        "reason": res["reason"],
-                        "text": line.strip(),
-                    }
+            for domain_name, spec in domain_classifiers.items():
+                if is_cardinal and domain_name != "cardinal":
+                    continue  # 교집합 라인 = cardinal domain 소유(축-disjoint, §4.3)
+                if not spec["candidate"](line):
+                    continue
+                if domain_name == "cardinal":
+                    cardinal_lines += 1
+                res = spec["classify"](
+                    line, live_required_contexts=live_required_contexts, dated_context=dated
                 )
+                disp = res["disposition"]
+                by_disp[disp] = by_disp.get(disp, 0) + 1
+                entry = {
+                    "file": path,
+                    "line": idx,
+                    "domain": domain_name,
+                    "disposition": disp,
+                    "reason": res.get("reason", ""),
+                    "text": line.strip(),
+                }
+                if res.get("pl_review"):
+                    pl_review_bucket.append(entry)
+                elif domain_name == "cardinal" and disp in action_dispositions:
+                    needs.append(
+                        {
+                            "file": path,
+                            "line": idx,
+                            "disposition": disp,
+                            "reason": res["reason"],
+                            "text": line.strip(),
+                        }
+                    )
+                # 비-cardinal domain 의 mechanical action = no-blind-apply → needs 미투입(surface만)
     return {
         "scanned": scanned,
         "cardinal_lines": cardinal_lines,
         "needs_disposition": needs,
         "by_disposition": by_disp,
+        "pl_review_bucket": pl_review_bucket,
     }
 
 

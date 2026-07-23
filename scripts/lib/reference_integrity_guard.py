@@ -113,6 +113,47 @@ def _iter_text_files(repo_root, subdirs):
                     yield os.path.join(root, name)
 
 
+def build_reference_index(repo_root, subdirs=None):
+    """(CFP-2799 Q8) guard per-target full-walk 의 반복 파일 read/splitlines 를 1회로 줄이는
+    역인덱스(read-cache + lowered full-text). **filter-only** — 스캔 대상 파일 집합·라인 순서·
+    `_anchor_matches` sufficiency 판정은 무변경(index 유무와 결과 byte-identical).
+
+    plan() 이 진입 시 1회 build 후 `run_guard(..., index=...)` 로 주입 → M targets × F files 의
+    반복 read 를 F read 로 축약. 미주입(default None) 시 각 check 는 현행 full-walk 그대로.
+
+    반환: {"lines": {abspath: [line,...]}, "text_low": {abspath: <lowered full text>}}.
+    ADR-082 bounded-degradation: 최악 여전히 corpus-linear floor — "임의 입력 무해" 단정 아님.
+    """
+    if subdirs is None:
+        subdirs = tuple(dict.fromkeys(_INBOUND_SCAN_DIRS + _SCAN_DIRS))
+    lines_map = {}
+    text_low = {}
+    for scan_path in _iter_text_files(repo_root, subdirs):
+        ap = os.path.abspath(scan_path)
+        if ap in lines_map:
+            continue
+        text = _read_text(scan_path)
+        if text is None:
+            continue
+        lines_map[ap] = text.splitlines()
+        text_low[ap] = text.lower()
+    return {"lines": lines_map, "text_low": text_low}
+
+
+def _anchor_core(anchor):
+    """(CFP-2799 Q8 filter) anchor 매칭의 **necessary 조건**이 되는 파일-레벨 core 토큰.
+    `§결정` anchor 는 whitespace-flexible 정규식이지만 리터럴 `§결정` 조각을 반드시 포함하므로
+    core=`§결정`. 그 외(`ADR-NNN`/`#anchor`/`file:line`)는 substring 매칭이라 anchor 자체가 core.
+    file 에 core 가 (대소문자 무시) 부재하면 그 파일의 어떤 라인도 매칭 불가 → 안전 skip."""
+    return "§결정" if "§결정" in anchor else anchor
+
+
+def _index_lines_for(index, scan_path):
+    """index 에서 scan_path 의 (lines, text_low) 를 조회 — 미캐시면 (None, None)."""
+    ap = os.path.abspath(scan_path)
+    return index["lines"].get(ap), index["text_low"].get(ap)
+
+
 def _resolve_body(target, repo_root):
     """target 에서 대상 row 의 body 텍스트 확보. body 명시되면 그대로, 아니면 file+row 에서 읽음."""
     if target.get("body"):
@@ -144,12 +185,15 @@ def _resolve_body(target, repo_root):
 # ─────────────────────────────────────────────────────────────────────────────
 # ① parser-scan
 # ─────────────────────────────────────────────────────────────────────────────
-def check_parser_scan(target, repo_root):
+def check_parser_scan(target, repo_root, *, index=None):
     """대상 파일 body 가 workflow/lint/script 에 의해 파싱되는지 실스캔.
 
     heuristic(honest-ceiling): 대상 파일 경로/basename 이 스캔 대상 파일 안에서 read/parse 동사와
     같은 라인에 등장하면 body_parsed=True 로 본다. 순수 주석(`#` 선두)/echo-only 는 제외한다.
     전체 dataflow 분석이 아니라 토큰-근접 heuristic 임을 명시한다.
+
+    (CFP-2799 Q8) `index`(build_reference_index 산출) 주입 시 = read-cache + necessary-token
+    pre-filter(파일에 base/norm 부재면 skip) — 스캔 파일 집합·per-line 판정 무변경(byte-identical).
     """
     file_rel = target.get("file")
     if not file_rel:
@@ -161,10 +205,23 @@ def check_parser_scan(target, repo_root):
         # 대상 자기 자신은 제외
         if os.path.abspath(scan_path) == os.path.abspath(os.path.join(repo_root, file_rel)):
             continue
-        text = _read_text(scan_path)
-        if text is None:
-            continue
-        for lineno, raw in enumerate(text.splitlines(), start=1):
+        if index is not None:
+            cached, low_full = _index_lines_for(index, scan_path)
+            if cached is None:
+                text = _read_text(scan_path)
+                if text is None:
+                    continue
+                cached, low_full = text.splitlines(), text.lower()
+            # necessary pre-filter: 파일에 base/norm 부재면 어떤 라인도 매칭 불가 → skip.
+            if low_full is not None and base.lower() not in low_full and norm.lower() not in low_full:
+                continue
+            src_lines = cached
+        else:
+            text = _read_text(scan_path)
+            if text is None:
+                continue
+            src_lines = text.splitlines()
+        for lineno, raw in enumerate(src_lines, start=1):
             if base not in raw and norm not in raw:
                 continue
             stripped = raw.strip()
@@ -173,8 +230,20 @@ def check_parser_scan(target, repo_root):
             low = raw.lower()
             parsed = any(v in low for v in _PARSE_VERBS)
             if not parsed:
-                # 대상 경로가 python/bash/script 호출의 argv 로 넘어가는 형태도 parse 로 간주
-                if re.search(r"(python|bash|sh|\./)\S*.*" + re.escape(base), low):
+                # 대상 경로가 python/bash/script 호출의 argv 로 넘어가는 형태도 parse 로 간주.
+                # ★CFP-2799 FIX iter1 (SecurityTestPL P2×2): 구 regex
+                #   `(python|bash|sh|\./)\S*.*` + re.escape(base) 는 두 결함:
+                #   (a) case dead-branch(CWE-178) — `low`=raw.lower()(소문자)에 `base`(대문자 ADR-NNN
+                #       basename)를 검색 → 전 ADR 대상 영구 미스매치 = 이 분기 dead → argv-fallback
+                #       감지 상실 → delete-guard `not body_parsed` 약화(corpus 삭제 guard silent-weaken).
+                #   (b) super-linear ReDoS(CWE-1333) — `\S*.*` polynomial backtracking(CodeQL-invisible).
+                #   → linear substring 스캔으로 교체(백트래킹 0 + case 정정 동시): base 위치 이전 prefix 에
+                #     script-invocation 토큰(python/bash/sh/./)이 있으면 argv-parse 로 간주(verb→base 순서 보존).
+                base_low = base.lower()
+                base_pos = low.find(base_low)
+                if base_pos != -1 and any(
+                    tok in low[:base_pos] for tok in ("python", "bash", "sh", "./")
+                ):
                     parsed = True
             if parsed:
                 evidence.append(
@@ -272,21 +341,40 @@ def _anchor_matches(anchor, raw):
     return anchor in raw
 
 
-def check_inbound_scan(target, repo_root):
-    """대상 row/anchor 로 들어오는 인바운드 참조 수(파일 단위 아님)."""
+def check_inbound_scan(target, repo_root, *, index=None):
+    """대상 row/anchor 로 들어오는 인바운드 참조 수(파일 단위 아님).
+
+    (CFP-2799 Q8) `index` 주입 시 = read-cache + necessary-token pre-filter(파일에 anchor core
+    (`§결정` 또는 anchor 자체)가 부재면 skip) — 스캔 파일 집합·per-line `_anchor_matches` 판정
+    무변경(byte-identical). 미주입 시 현행 full-walk 그대로.
+    """
     anchors = _target_row_anchors(target, repo_root)
     file_rel = (target.get("file") or "").replace("\\", "/")
     refs = []
     if not anchors:
         return {"inbound_count": 0, "refs": [], "anchors": []}
     self_abspath = os.path.abspath(os.path.join(repo_root, file_rel)) if file_rel else None
+    cores = [_anchor_core(a).lower() for a in anchors] if index is not None else None
     for scan_path in _iter_text_files(repo_root, _INBOUND_SCAN_DIRS):
         if self_abspath and os.path.abspath(scan_path) == self_abspath:
             continue  # 자기 파일 내부는 인바운드 아님
-        text = _read_text(scan_path)
-        if text is None:
-            continue
-        for lineno, raw in enumerate(text.splitlines(), start=1):
+        if index is not None:
+            cached, low_full = _index_lines_for(index, scan_path)
+            if cached is None:
+                text = _read_text(scan_path)
+                if text is None:
+                    continue
+                cached, low_full = text.splitlines(), text.lower()
+            # necessary pre-filter: anchor core 중 어느 것도 파일에 없으면 매칭 불가 → skip.
+            if low_full is not None and not any(c in low_full for c in cores):
+                continue
+            src_lines = cached
+        else:
+            text = _read_text(scan_path)
+            if text is None:
+                continue
+            src_lines = text.splitlines()
+        for lineno, raw in enumerate(src_lines, start=1):
             for anchor in anchors:
                 if _anchor_matches(anchor, raw):
                     refs.append(
@@ -508,7 +596,7 @@ _DISPOSITION_ALIASES = {
 }
 
 
-def run_guard(target, disposition, *, repo_root):
+def run_guard(target, disposition, *, repo_root, index=None):
     """4 check 실행 후 disposition 별 verdict 산출.
 
     Parameters
@@ -516,6 +604,8 @@ def run_guard(target, disposition, *, repo_root):
     target : dict — {"file": <relpath>, "row": <anchor|line>, "body"?: str, "external_ids"?: list}
     disposition : str — "correct" | "strip" | "strip_normativity" | "delete"
     repo_root : str — 스캔 루트
+    index : dict | None — (CFP-2799 Q8) build_reference_index 산출. 주입 시 parser/inbound scan
+        이 read-cache + necessary-token pre-filter 로 가속(byte-identical). None=현행 full-walk.
 
     Returns
     -------
@@ -530,8 +620,8 @@ def run_guard(target, disposition, *, repo_root):
             "checks": {},
         }
 
-    parser = check_parser_scan(target, repo_root)
-    inbound = check_inbound_scan(target, repo_root)
+    parser = check_parser_scan(target, repo_root, index=index)
+    inbound = check_inbound_scan(target, repo_root, index=index)
     external = check_external_id_scan(target, repo_root)
     structural = check_structural_integrity(target, disp, repo_root)
 

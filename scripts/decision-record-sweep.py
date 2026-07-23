@@ -41,6 +41,7 @@ if _LIB_DIR not in sys.path:
 import decision_record_disposition as _oracle  # noqa: E402
 import dated_block_mapper  # noqa: E402
 import sweep_executor  # noqa: E402
+import decision_record_disposition_deathmarker as _deathmarker  # noqa: E402
 
 
 def _collect_corpus_files(census_from, positional_files):
@@ -127,6 +128,19 @@ def _main(argv=None):
         help="manifest 에서 제외할 file:line — 반복 가능",
     )
     ap.add_argument("--repo-root", default=".", help="스캔/편집 루트(기본 CWD)")
+    ap.add_argument(
+        "--referent-domain",
+        choices=["cardinal", "deathmarker", "amendment"],
+        default="cardinal",
+        help="census referent domain — cardinal(기존 tuple oracle, plan/guard/apply) 또는 "
+        "deathmarker/amendment(신규 report-only census + pl_review_bucket, apply 미배선)",
+    )
+    ap.add_argument(
+        "--emit-manifest",
+        default=None,
+        help="settled-line manifest(JSON {file,line} 목록)를 이 경로로 emit — 동일 config "
+        "결정적 재실행 재현(Q7 재처리 방지)",
+    )
     ap.add_argument("files", nargs="*", help="census 대상 구체 파일 목록(선택)")
     args = ap.parse_args(argv)
 
@@ -135,8 +149,42 @@ def _main(argv=None):
     dated_provider = dated_block_mapper.make_dated_provider(repo_root)
 
     corpus_files = _collect_corpus_files(args.census_from, args.files)
+
+    # ── death/amendment domain = report-only census(pl_review_bucket surface, apply 미배선) ──
+    if args.referent_domain != "cardinal":
+        dc = _deathmarker.build_domain_classifiers()
+        domain = args.referent_domain
+        report = _oracle._census_over_files(
+            corpus_files,
+            live_required_contexts=live_required_contexts,
+            dated_provider=dated_provider,
+            domain_classifiers={domain: dc[domain]},
+        )
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        sys.stderr.write(
+            "CENSUS SUMMARY [%s]: scanned=%d candidates=%d pl_review=%d by_disposition=%s\n"
+            % (
+                domain,
+                report["scanned"],
+                sum(report["by_disposition"].values()),
+                len(report["pl_review_bucket"]),
+                report["by_disposition"],
+            )
+        )
+        if args.emit_manifest:
+            settled = [
+                {"file": e["file"], "line": e["line"]} for e in report["pl_review_bucket"]
+            ]
+            with open(args.emit_manifest, "w", encoding="utf-8", newline="\n") as fh:
+                json.dump(settled, fh, ensure_ascii=False, indent=2)
+        return 0
+
     manifest = _build_manifest(corpus_files, live_required_contexts, dated_provider)
     manifest = _apply_exclusions(manifest, args.exclude_file, args.exclude_line)
+
+    if args.emit_manifest:
+        with open(args.emit_manifest, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(manifest, fh, ensure_ascii=False, indent=2)
 
     plan_records = sweep_executor.plan(
         manifest,
