@@ -44,12 +44,21 @@ amendment_log:
       역할 분담(overstatement 방지): 위생/약화 판별 규범(effect-변화-0 discrimination = 무엇이 위생인가) = genre-layers §hygiene class (iv) 단일 SSOT, 본 §결정 은 pointer only 재서술 0 (§결정 5 Amendment 3 답습, split-brain 회피); 정책 적용층(frozen-ADR fail-closed tie-break 모호=약화=보존 + M/T-class exemption 형식화 = 판별을 frozen-ADR 편집에 어떻게 적용하는가)은 본 §결정 소유(판별 규범 복제 아님).
     direction: strengthen  # governance 표현력 확장 — 기존 hygiene SSOT 를 frozen-ADR prose 에 적용 codify + fail-closed guard 신설. 위생(효력 변화 0)은 §결정 5/ADR-064 §결정 7 상 애초에 weakening 아님 = immutability 완화 아님
     sunset_justification: null  # strengthen 방향 (hygiene codify + guard 신설). 잠재 "immutability 완화" 우려 evidence = (1) 외부 core concern(substance 이력 보존)과 양립 (2) genre-layers 효력-변화-0 판별 (3) CFP-2566/2762 mechanical frozen-edit 선례. is_transitional: false 유지
+  - amendment: 5
+    carrier_story: CFP-2811
+    date: 2026-07-24
+    summary: |
+      §결정 11 신설 — §결정 10 확장: frozen(Accepted/Superseded) ADR 의 obsolete 사실서사 제거(의미 변경 있는 삭제)를 이중 게이트(① 보존결정 명시 amendment override — silent 삭제 금지 ② 사용자 명시 비준) + 결정-사실 복구가능성 의무 + fail-closed(모호=보존, 효력 살아있는 결정 텍스트 비대상) 하에 정식 허용. §결정 10 은 의미보존 lexical hygiene 한정이라 obsolete 서사 제거를 커버하지 못하는 governance gap(CFP-2811 요구사항리뷰 firsthand 판정 — "§결정 10 단독 인용 = under-cover")을 충족. 첫 적용 = ADR-117 구 Amendment 1·2 외부 제약 override 서사 삭제(ADR-117 Amd4 + ADR-141 Amd5 paired override, 사용자 Option B sign-off 2026-07-24).
+    direction: weaken  # frozen-ADR 불변성 적용 범위의 governed 한정 완화 (obsolete 사실서사에 한해 삭제 허용) — §결정 5 약화 evidence-gate 대상
+    sunset_justification: |
+      약화 evidence 3축: (1) 사용자 명시 비준(CFP-2811 Story §9 Option B sign-off, 2026-07-24 — 애매성 0) + obsolete 3중 무효화 실증(CFP-2554 해소 → ADR-141 fable 폐기 → CFP-2803/ADR-141 Amd4 fable 정식 재도입 6.120.0 live) (2) obsolete 서사 잔존의 실측 비용 — 하류 stale 인과 참조 드리프트 재생산(ADR-042 4곳 실측; CFP-2804 이연 cascade 실증 계보) (3) core concern 무손상 — 이중 게이트 + 결정-사실 복구가능성 의무(superseder ledger/CHANGELOG/git history)로 외부 append-only 관례의 substance·이력 무결성 보존, silent 삭제 금지(override amendment 가 삭제/보존 범위 열거 의무). is_transitional: false 유지 (§결정 6 self false 보존).
 related_stories:
   - CFP-387
   - CFP-1149  # Amendment 1 carrier — §결정 5 차단 → 약화 evidence-gate 재정의 (ADR-064 §결정 7 symmetric sibling)
   - CFP-2061-S3  # Amendment 2 carrier — §결정 9 능동 일몰 실행 절차 anchor (de-bloat 거버넌스 영속화 Epic CFP-2061)
   - CFP-2699  # Amendment 3 carrier — §결정 5 hygiene-vs-weakening 판별 SSOT cross-ref pointer (Epic #2696 child C 저작시점 예방)
   - CFP-1561  # Amendment 4 carrier — §결정 10 신설 (frozen ADR 의미보존 lexical 위생편집 허용 + 외부 append-only divergence codify, cat-a 어휘 full-scope sweep governance anchor)
+  - CFP-2811  # Amendment 5 carrier — §결정 11 신설 (obsolete 사실서사 제거 이중 게이트 — 첫 적용: ADR-117 구 Amendment 1·2 서사 삭제)
 related_adrs:
   - ADR-010
   - ADR-013
@@ -60,6 +69,8 @@ related_adrs:
   - ADR-064  # §결정 7 evidence-gated symmetric ratchet sibling carrier (CFP-1149 Amendment 8 ↔ 본 ADR-058 Amendment 1)
   - ADR-095  # Amendment 2 cross-ref — sunset metric 표준 + K8s 시간 threshold (능동 sunset 후보 판정 입력)
   - ADR-097  # Amendment 2 cross-ref — §결정 3 carrier-preserved bulk sunset (단일·평시 sunset 의 bulk 분기 경로)
+  - ADR-117  # Amendment 5 cross-ref — §결정 11 첫 적용 사례 (구 Amendment 1·2 obsolete 외부 제약 서사 삭제, ADR-117 Amd4)
+  - ADR-141  # Amendment 5 cross-ref — §결정 11 첫 적용 paired override (보존지시 한정 override, ADR-141 Amd5)
 related_files:
   - templates/adr.md
   - docs/adr/ADR-058-adr-sunset-criteria-mandate.md
@@ -218,6 +229,25 @@ ArchitectAgent (집행 §3 단계 1-5) + GitOpsAgent (RESERVATION 잠금 §3 단
 **범위 한정 (substance 편집 불허)**: 본 §결정 은 오직 효력·substance 무변경 lexical hygiene 만 허용한다. 결정 substance/effect 변경(약화·강화·scope 변경)은 여전히 amendment(§결정 5 evidence-gate) 또는 supersede(외부 append-only core) 경로 의무 — 본 §결정 이 그 경계를 완화하지 않는다.
 
 **direction 판정 (약화 아님)**: governance 표현력 확장(기존 hygiene SSOT 를 frozen-ADR prose 에 적용 codify + fail-closed guard 신설). 위생(효력 변화 0)은 §결정 5 / ADR-064 §결정 7 상 애초에 weakening 아니므로 immutability 완화가 아니다. 잠재 "immutability 완화" 우려 evidence 3종: (1) 외부 관례 core concern(substance 보존)과 양립(§6.2 1차출처 실측) (2) genre-layers §hygiene 효력-변화-0 판별 (3) CFP-2566/2762 mechanical frozen-edit 선례 무논란. is_transitional: false 유지.
+
+### 결정 11 — obsolete 사실서사 제거 확장 (§결정 10 확장 — 보존결정 명시 override + 사용자 비준 이중 게이트) (CFP-2811, Amendment 5)
+
+> **CFP-2811 (2026-07-24 KST)**: §결정 10 은 frozen ADR 산문의 **의미보존 lexical 위생편집**(효력·substance 변화 0)만 정식 허용하고 "결정 substance/effect 변경은 amendment/supersede 경로 의무" 를 명시했다. 그러나 **obsolete 사실서사** — frozen/Superseded ADR 에 남은, 기술한 사실 상태가 후속 결정들로 더는 성립하지 않는 서사(예: ADR-117 구 Amendment 1·2 의 임시 외부 제약 override 서사) — 의 *제거*(의미 변경 있는 삭제)는 §결정 10 범위 밖이었다(CFP-2811 요구사항리뷰 firsthand 판정 — "§결정 10 단독 인용 = under-cover"). 본 §결정 이 그 경로를 codify 한다.
+
+**결정**: frozen(Accepted/Superseded) ADR 의 **obsolete 사실서사 제거**는 다음 **이중 게이트 동시 충족** 시 정식 허용한다:
+
+1. **보존결정 명시 amendment override** — 삭제 대상 텍스트를 보존-지시한 frozen 결정이 존재하면(예: "텍스트 삭제 0" / "본체 이력 보존"), 그 보존결정을 보유한 **각 ADR 에 override amendment 를 append** 해 삭제 범위·보존 범위를 열거한다. **silent 삭제 금지** — §결정 5/§결정 10 의 "substance 변경 = amendment 경로 의무" 준수.
+2. **사용자 명시 비준** — 사용자 sign-off 기록 의무 (CFP-1561/Amendment 4 의 사용자 비준 패턴 상속).
+
+**적용 조건 (fail-closed)**:
+
+- **대상 = obsolete 사실서사만**: 서술한 사실 상태가 명시적 후속 결정으로 무효화됐고(**무효화 chain 인용 의무**), 서사의 효력이 이미 0(해소/Superseded)인 텍스트만. **효력이 살아있는 결정 텍스트의 삭제는 본 §결정 대상 아님** — 여전히 §결정 5 약화 evidence-gate / supersede 경로.
+- **결정-사실 substance 복구가능성 의무**: 삭제 전, 결정-사실(무엇을·언제·왜)이 잔존 audit 위치(superseder ADR ledger / CHANGELOG / git history)에 복구 가능함을 **firsthand 확인·기재**한다 — 외부 append-only 관례의 core concern(substance·이력 무결성) 양립 조건(§결정 10 divergence 서술 상속).
+- **모호 = 보존** — obsolete 여부·substance 잔존 여부가 모호하면 보존 (§결정 10 fail-closed tie-break 상속).
+
+**§결정 10 과의 경계**: §결정 10 = 의미보존 lexical(효력·substance 변화 0 — 단독 집행 가능). 본 §결정 11 = **의미 변경 있는 삭제**(서사 제거) — 이중 게이트 + 복구가능성 의무라는 더 무거운 절차를 요구한다. 첫 적용 사례 = CFP-2811 (ADR-117 구 Amendment 1·2 서사 삭제 — ADR-117 Amd4 + ADR-141 Amd5 paired override + 사용자 Option B sign-off 2026-07-24).
+
+**direction 판정 (약화 — evidence-gate 이행)**: 본 §결정 은 frozen-ADR 불변성의 적용 범위를 governed 하게 한정 완화한다 → §결정 5 약화 evidence-gate 대상이며, evidence 는 frontmatter Amendment 5 `sunset_justification` 3축(사용자 비준 + obsolete 무효화·드리프트 실증 + core concern 무손상)에 기재했다.
 
 ## 결과
 
