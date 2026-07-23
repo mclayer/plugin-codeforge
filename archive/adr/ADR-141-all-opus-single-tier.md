@@ -573,5 +573,5 @@ Change Plan(CFP-2803) 이 SSOT. 실 실행 = 별도 Phase 2 PR:
 - [ADR-117](ADR-117-fable-5-surgical-model-tier.md) — fable 최초 도입(Superseded); 본 Amendment 는 **부활 아님**(다른 근거·다른 대상)
 - ADR-141 §결정 2(fable 완전 폐기 — 본 Amendment 가 부분 역전) / §결정 3(3-tier 선택 함수 폐지 — **부활 안 함**) / §결정 6(overlay 하한 — 4-clause 확장)
 - [ADR-119](ADR-119-research-before-claims.md) — anti-fabrication over-claim 회피 + runtime-failure(refusal) 재spawn 정합
-- [ADR-127](ADR-127-mandatory-full-flow.md) §결정 6 — overlay 확장-only(fable clause down-tier 불허 정합)
-- [ADR-142](ADR-142-orchestrator-context-delegation.md) §결정 1 L1 — Orchestrator raw-read offload = fable 2배 비용 주 완화축
+- [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 6 — overlay 확장-only(fable clause down-tier 불허 정합)
+- [ADR-142](ADR-142-orchestrator-self-read-synthesis-context-discipline.md) §결정 1 L1 — Orchestrator raw-read offload = fable 2배 비용 주 완화축
