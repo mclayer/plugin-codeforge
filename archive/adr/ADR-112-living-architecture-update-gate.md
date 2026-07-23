@@ -15,11 +15,30 @@ related_adrs:
   - ADR-064  # 결정 원칙 mandate — §결정 7 evidence-gated symmetric ratchet (강화 방향 evidence requirement: pattern_count / incident evidence). 본 ADR is_transitional: false 결정 = ratchet 강화 방향 (per-Epic mandatory update gate 신설 = governance 강도 확장), sunset_justification 면제 정합
   - ADR-058  # ADR sunset criteria mandate — §결정 5 sunset_justification 의무 (ratchet 차단). 본 ADR is_transitional: false 영역 (permanent governance ratchet), sunset_justification: null 정합
   - ADR-008  # Inter-plugin Contract Versioning (MAJOR/MINOR bump) — 본 ADR §결정 3 review-verdict-v4 v4.10 → v4.11 MINOR bump 정합 ("새 선택 필드 추가" + "enum literal 추가" MINOR bump 정합, additive only backward-compat invariant)
+  - ADR-060  # Amendment 1 (CFP-2813) — §결정 5 tier 재정의의 어휘 SSOT: blocking-on-pr(surfacing) = §7.9.A/§7.9.B (continue-on-error 없음 ∧ required contexts 미부착). warning-first 보편 default 의 명시 carve-out 근거 결박 + required 승격 = §결정 6 3-tuple evidence-gate
+  - ADR-154  # Amendment 1 (CFP-2813) — 재건축 게이트의 self-verification 번들 의무 (positive-control / fail-closed / execution-trace / honest-ceiling) enroll 대상
+  - ADR-166  # 읽기 프로토콜 (소비 방향) 신규 sibling — 본 ADR update gate 가 그 mandatory 발효의 선결 조건 (freshness precondition)
 is_transitional: false
 sunset_justification: null
 mechanical_enforcement_actions:
-  - living-architecture-update
-amendment_log: []
+  - living-architecture-update  # Amendment 1 (CFP-2813) — 구 wire (CFP-1429, f30abe550) 는 #1972/#2110 로 제거 → CFP-2813 Phase 2 재건축 (per-PR + blocking-on-pr(surfacing) + discriminating self-test)
+amendment_log:
+  - amendment: 1
+    date: 2026-07-24
+    carrier: CFP-2813
+    summary: |
+      per-PR 발동 default 승격 (§결정 1 Trigger 절의 declared sub-Story 단위 옵션의 default 화 —
+      완전 신규 아님) + §결정 2 closed-binary 의 판정 단위 확장 (PR 변경 표면에서 도출되는 doc
+      집합 전체 per-doc bijection + mapping-miss FAIL + frontmatter-only diff 불인정 anti-gaming)
+      + §결정 5 tier 재정의 (warning 시작 → blocking-on-pr(surfacing) day-1, ADR-060 §7.9.A/B
+      어휘 — promote gate 3-AND 는 required 승격 조건으로 재결박) + 제거 이력 명시 (#1972/#2110).
+      불변: §결정 2 (a)/(b)/(c) closed-binary 구조 / §결정 3 verdict field (v4.11 기존재 — bump
+      불요) / §결정 4 DesignReviewPL cross-validate 문언 (CFP-2813 Phase 2 = 소비 로직 배선만).
+    direction: strengthening
+    sunset_justification: |
+      N/A — ratchet 강화 only (per-Epic → per-PR = 발동 빈도·커버리지 확대 / warning → surfacing
+      hard-fail = enforcement 강화 / bijection·anti-gaming = 판정 정밀 강화). ADR-058 §결정 5
+      면제 (약화 방향 0건 — 원 §결정 5 promote gate 는 폐기 아닌 required 승격 조건으로 존속).
 ---
 
 # ADR-112 — Living Architecture per-Epic mandatory update gate
@@ -185,3 +204,37 @@ N/A — permanent policy
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — ADR sunset criteria mandate (§결정 5 sunset_justification)
 - [ADR-008](../inter-plugin-contracts/MANIFEST.yaml) — Inter-plugin Contract Versioning (MAJOR/MINOR bump)
 - [review-verdict-v4 sibling](../inter-plugin-contracts/review-verdict-v4.md) — wrapper sibling reference (canonical = codeforge-review plugin)
+
+## Amendment 1 (2026-07-24 KST, CFP-2813) — per-PR default 승격 + closed-binary bijection 확장 + tier 재정의
+
+### 동인 (제거 이력 명시 — CFP-2813 Story §4.1/§4.3 실측)
+
+§결정 5 가 위임한 mechanical wire (S3.5 / CFP-1429) 는 **실집행 완료였다** — PR #1484 (`f30abe550`) 가 script + lib 291L + workflow + review-verdict-v4 v4.11 field 를 실 wire. 이후 **PR #1972** (2026-06-05, wrapper 자기검증 CI 대량 prune) 가 workflow 를, **PR #2110** (2026-06-10, Issue #2105 follow-up) 이 orphan script·registry entry 를 삭제 → 기계 layer 완전 부재 회귀 (선언 layer 만 잔존: v4.11 field + finding type + orphan bypass 라벨). Issue #2105 자체가 "enforcement 모델 미배치가 원인, 게이트 무가치 판정 아님" 경고를 남겼다 (재개방 정당성). 본 Amendment = 그 재건축의 규범 확정. 구 wire 의 **self-test 부재 비대칭** 은 이번 재건축에서 discriminating self-test 필수 동반으로 해소한다 (ADR-154 enroll).
+
+### A1-1 — §결정 1 granularity: per-PR 발동 default 승격
+
+§결정 1 Trigger 절이 이미 declare 한 "Epic 중 sub-Story 단위 발효 옵션 (evidence-gated)" 을 **per-PR 발동 default** 로 승격한다 (완전 신규 아님 — declared 옵션의 default 화):
+
+- evidence: CI native Epic-close 이벤트 부재 (구조적) + Epic 없는 단독 Story 다수 경로 (UC-6 상시 우회 채널) + 구 게이트 자신의 per-PR heuristic proxy 착지 이력 (label description 원형 실측).
+- **fatigue rationale 층위 구분 (원 rationale 보존)**: §결정 1 "per-Story mandate = ArchitectAgent fatigue 위험" 논거는 **재spawn 의무** 축에 유효하다. per-PR 게이트는 재spawn 을 의무화하지 않는다 — 요구 = "갱신 or `[living-arch-no-impact]` declare" 선언뿐 (PR 저자 1줄). 층위 상이 → 원 거절 논거와 비충돌 (strengthening).
+
+### A1-2 — §결정 2 closed-binary 확장 (bijection + anti-gaming)
+
+§결정 2 의 (a)/(b)/(c) 3-way 구조는 불변. 판정 단위를 확장한다:
+
+- **bijection**: PR 변경 표면에서 도출되는 대응 doc 집합 **전체에 per-doc** 로 (a) 갱신 또는 (b) declare 존재 (AC-22). 매핑 = 파일시스템 glob self-discovery (`plugins/<X>/** → plugins/<X>/docs/architecture/<X>.md`, 그 외 wrapper 구조 표면 → family.md — Change Plan §3.2 SSOT).
+- **mapping-miss = FAIL**: 대응 doc 를 도출할 수 없는 구조 표면 (예: 신규 plugin 폴더에 arch doc 부재) = 통과가 아니라 FAIL (매핑 누락 범주) — 신규 대상 seed 강제 forcing function (AC-9).
+- **anti-gaming**: 대응 doc 의 diff 가 frontmatter-only (`last_captured`/`captured_at_sha` 등) 이면 (a) 불인정 — 날짜-touch 단독 GREEN 차단 (AC-7). 본문 1줄 치환 잔여는 L3 review-tier (정직 천장 — §결정 4 채널).
+- **marker 확장**: 기존 global `[living-arch-no-impact: <rationale>]` + per-doc 정밀형 `[living-arch-no-impact(<doc-id>): <rationale>]` (bounded regex — Change Plan §3.3).
+
+### A1-3 — §결정 5 tier 재정의 (warning 시작 → blocking-on-pr(surfacing) day-1)
+
+§결정 5 의 "Initial tier: warning" 을 **blocking-on-pr(surfacing) day-1** 로 재정의한다 (ADR-060 §7.9.A/§7.9.B 어휘 — continue-on-error 없음 = 위반 시 job RED ∧ `required_status_checks.contexts` 미부착 = merge 물리 차단 없음, branch protection 8-tuple 무변경):
+
+- **ADR-060 warning-first 보편 default 의 명시 carve-out** — 근거 결박: ① rot evidence — 동일 게이트 2기 (architecture-drift / living-architecture-update) 가 warning 인 채 실효 없이 잊혀 제거된 이력 (#1972/#2110). 그 재발 방지가 본 재건축의 존재 이유. ② NO-FLIP self-deadlock (ADR-060 ★ NO-FLIP 불변식) 부재 — closed-binary (b) declare 경로가 도입 PR 자신에게 열려 있어 구조적 self-block 없음 (baseline-substrate 의존 게이트와 상이). ③ 구조 형판 선례 `semantic-staleness-detection.yml` 은 warning-tier — **구조 형판이지 tier 선례 아님** (정직 기재).
+- **promote gate 재결박**: 원 §결정 5 의 3-AND (PR≥20 / bypass 외 failure=0 / sibling merged) 는 폐기가 아니라 **required contexts 승격 조건** 으로 존속 (ADR-060 §결정 6 조작화 + evidence 6종 — Change Plan §9.R ③ SSOT. "7일-green" = ADR-130 §결정 6 플랫폼 precondition 일 뿐, 절차 SSOT = ADR-060 §결정 6/§결정 19). 승격 시 메인 job + discriminating self-test job **둘 다** required 등재 (ADR-136 Amd5 §결정 16 C hollow-gate 회피 동형).
+- **Bypass channel 존속**: `hotfix-bypass:living-architecture-update` (orphan active 라벨 재사용 — 신규 append 0, description 현행화만).
+
+### A1-4 — 불변 명시
+
+§결정 2 (a)/(b)/(c) closed-binary 3-way 구조 / §결정 3 `living_architecture_updated_self_check_passed` field (v4.11 로 기존재 — **계약 bump 불요**, 현행 v4.16 실측) / §결정 4 DesignReviewPL cross-validate 문언 (CFP-2813 Phase 2 = DesignReviewPLAgent.md 소비 로직 배선만 — 계약 문언 무변경) — 전부 보존. 읽기 프로토콜 (소비 방향) = [ADR-166](ADR-166-design-info-read-protocol.md) sibling — 본 게이트가 그 mandatory 발효의 freshness 선결 조건.
