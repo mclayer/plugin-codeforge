@@ -1,6 +1,6 @@
 ---
 name: CodeReviewPLAgent
-model: opus
+model: fable
 description: 구현 리뷰 레인 PL — 코드 품질 게이트. 공통 base는 templates/review-pl-base.md SSOT
 permissions:
   allow:

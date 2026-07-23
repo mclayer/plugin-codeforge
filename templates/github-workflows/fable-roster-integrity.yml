@@ -1,0 +1,60 @@
+name: fable-roster-integrity
+# CFP-2803 Phase 2 §8 — Fable tier roster-integrity hard-gate.
+#
+# 검사 대상: 10 agents model: fable 정확 확보 + target bijection + SecurityTestPL opus +
+#   census 41개 (haiku 7 / sonnet 10 / fable 10 / opus 14). Change Plan §7 SSOT.
+#
+# Gate contract: scripts/lib/check_fable_roster_integrity.py (Python core) +
+#   scripts/check-fable-roster-integrity.sh (thin bash wrapper per ADR-061).
+# Self-test: --self-test 모드로 5-mutation discriminating fixture 검사.
+#
+# ── Jobs ──────────────────────────────────────────────────────────────────────
+# Job A: fable-roster-integrity (main gate, hard-fail, no continue-on-error)
+#   Runs: bash scripts/check-fable-roster-integrity.sh
+#   Exit 0 = pass, 1 = fail, 2 = setup error. All non-zero → PR check FAIL.
+#
+# Job B: fable-roster-integrity-test (discriminating self-test, QADev Phase 2)
+#   Runs: bash tests/scripts/test-check-fable-roster-integrity.sh (parallel, if: mclayer/plugin-codeforge)
+#   QADev 작성 시 이 run-line 을 정확히 참조.
+#
+# ── born-broken avoidance (CFP-2635/881/2762 계보) ──────────────────────────
+# 1. Job A --self-test inline 검사 (이 파일에 내재)
+# 2. Job B tests/scripts 전실행 (QADev 병렬 discriminating)
+# 3. Hard-gate workflow (no continue-on-error) ✓
+# 4. Inventory AC-2 wiring bijection ✓ (docs/selftest-execution-liveness-inventory.yaml)
+#
+# ── Template parity ──────────────────────────────────────────────────────────
+# css-lint.yml 선례: .github + templates 양 copy byte-identical (ADR-130 Amendment 3).
+# 본 게이트도 동일 parity 따름 → create templates/github-workflows/fable-roster-integrity.yml copy.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  fable-roster-integrity:
+    name: fable tier roster-integrity check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run fable-roster-integrity gate
+        run: bash scripts/check-fable-roster-integrity.sh
+
+  # Discriminating test job — wrapper-self only
+  # QADev 작성 tests/scripts/test-check-fable-roster-integrity.sh 실행
+  fable-roster-integrity-test:
+    name: fable-roster-integrity discriminating test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test-check-fable-roster-integrity.sh (QADev fixture)
+        run: bash tests/scripts/test-check-fable-roster-integrity.sh

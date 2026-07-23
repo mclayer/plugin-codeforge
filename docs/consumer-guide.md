@@ -642,6 +642,8 @@ story_stakes:
 
 → consumer overlay 는 tier 를 약화할 수 없다. 합법 형태 = `conservative_override[]`(강제 opus)뿐.
 
+**overlay-floor 4-clause (ADR-141 Amendment 4 — fable carve-out 정합)**: down-tier 불허 하한은 각 role 의 배정 tier 그대로다 — haiku 7 하한=haiku / sonnet 10 하한=sonnet / **fable 10 하한=fable(down-tier 불허)** / 그 외 = opus 미만 불허. 특히 **fable 배정 role(10 apex)의 fable clause 를 opus 로 낮추는 '비용 escape' 도 불허**(확장-only, [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) §결정6 정합) — 소비자는 wrapper 의 fable 배정을 그대로 상속한다. **비용 파급 정직 고지**: fable = $10/$50 per MTok(input/output)로 opus $5/$25 의 **2배+** — 이 소비자 비용 증가는 완화 장치 없이 정직하게 문서화한다(하한 강제라 opt-out 불가, Change Plan §1/§5/§6 비용 사실).
+
 #### 미정의 시 동작
 
 `story_stakes` 섹션 자체가 없으면 모든 agent 현행 tier(wrapper floor) 유지 — 파괴적 변경 0(부재=현행 동작, optional). low-stakes tier-flip 은 wrapper 정책으로 자동 발화(consumer 설정 불요).
