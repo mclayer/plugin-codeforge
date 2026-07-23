@@ -312,23 +312,26 @@ import os
 exec(open(os.environ["CFP2799_PRE"], encoding="utf-8").read())
 import re, time
 import reference_integrity_guard as g
-# (P2-① CWE-1333) real-source ReDoS-bound: 64KB no-ws repeat-anchor corpus 라인 → bounded.
-#   수정본(linear substring) = ms. revert(`\S*.*` regex) = super-linear backtracking → 초과 RED.
+# (P2-① CWE-1333) real-source ReDoS-bound — ★discriminating corpus(구현리뷰 iter2 정정, 초판 born-hollow):
+#   scan 라인이 (a) mixed-case base(ADR-127-foo.md 대문자) 포함 → line225 `base not in raw` pre-filter
+#   통과(구 corpus 는 base 미포함 → skip → line234 미도달 = hollow) + (b) verb 직후 no-space long run
+#   ("python"+"a"*N, 공백 0 → \S* 가 긴 run 소비) → 취약 regex 가 lowercased low 에서 대문자 base 를
+#   max-backtrack-to-fail. 수정본(linear substring, base.lower()) = ms GREEN / 취약 revert = super-linear RED.
 d = tempfile.mkdtemp()
 os.makedirs(os.path.join(d, "scripts")); os.makedirs(os.path.join(d, "archive", "adr"))
 open(os.path.join(d, "archive", "adr", "ADR-127-foo.md"), "w", encoding="utf-8", newline="\n").write("# ADR-127\nbody\n")
 open(os.path.join(d, "scripts", "patho.sh"), "w", encoding="utf-8", newline="\n").write(
-    "python " + "adr-" * 16000 + "\n")  # ~64KB non-ws repeat-anchor, full base 부재
+    "python" + "a" * 100000 + "ADR-127-foo.md\n")  # verb+no-space run+mixed-case base(line225 통과, line234 도달)
 t0 = time.perf_counter(); g.check_parser_scan({"file": "archive/adr/ADR-127-foo.md"}, d); scan_t = time.perf_counter() - t0
 if scan_t >= 2.0:
-    die("check_parser_scan adversarial corpus 시간 초과(%.3fs>=2.0s) — ReDoS 잔존(revert 감지)" % scan_t)
-# 참조(informational, non-asserted): 구 vulnerable regex 의 super-linear 특성 문서화(소입력).
+    die("check_parser_scan adversarial corpus 시간 초과(%.3fs>=2.0s) — ReDoS 잔존(취약 regex revert 감지)" % scan_t)
+# 참조(informational, non-asserted): 동일 corpus 라인에 구 취약 regex 직접 적용 super-linear 문서화.
 old = re.compile(r"(python|bash|sh|\./)\S*.*" + re.escape("ADR-127-foo.md"))
-ref = "python" + "adr-" * 2000
-t0 = time.perf_counter(); old.search(ref); old_t = time.perf_counter() - t0
-print("ok scan=%.4fs(bound 2.0s) ref_old_regex(2406ch)=%.4fs(super-linear class)" % (scan_t, old_t))
+low = ("python" + "a" * 100000 + "ADR-127-foo.md").lower()
+t0 = time.perf_counter(); old.search(low); old_t = time.perf_counter() - t0
+print("ok scan=%.4fs(bound 2.0s, fixed=linear) ref_old_regex(same corpus)=%.3fs(super-linear, ~%.1fx bound)" % (scan_t, old_t, old_t / 2.0))
 PY
-run_case "D2 ReDoS-bound (CWE-1333 super-linear → check_parser_scan <2.0s, real-source)" "${WORK}/d_redos.py"
+run_case "D2 ReDoS-bound (CWE-1333 super-linear → check_parser_scan <2.0s, real-source, discriminating corpus)" "${WORK}/d_redos.py"
 
 # ── verdict ──
 echo ""
