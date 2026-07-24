@@ -1,6 +1,8 @@
 ---
 title: codeforge-test lane 구조 (통합테스트 — Epic-level 통합 검증)
-last_captured: 2026-05-18
+last_captured: 2026-07-24
+captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
+last_update_cfp: CFP-2813  # stale 해소 실갱신 — IntegrationTest tier sonnet→fable 정정(ADR-141 Amd4 carve-out, model frontmatter 실측) + test_verdict version literal 미박제 원칙 적용(v2.2 literal 제거 — 현행 v2.3 soak_liveness_results 는 MANIFEST SSOT) + 조건부 지속-liveness soak step(ADR-148 G2 — daemon_type/sink_probes) 반영 + test-verdict wrapper 단일 원본(ADR-118 D5) + arch doc write monopoly 정정(ArchitectAgent — INV-3) + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1) + ADR-166 read protocol G5 관점
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -20,7 +22,7 @@ codeforge-test lane = **Epic-level 통합테스트 — Epic 하위 전체 Story 
 
 | 모듈 (agent) | tier | 책임 1줄 |
 |---|---|---|
-| **IntegrationTestAgent** | sonnet (ADR-141 Amendment 2 carve-out — fallback 대상 없음) | Epic 하위 `stories_in_scope` 전체 CI gate PASS 후 1회 spawn — Deployability 검증 (4-step) + Baseline Suite + Story Suite (§8.6 자동 생성) + Baseline 자동 승격 (self-commit) + story_keys blame 3-tier — `test_verdict v2.2` packet 반환 |
+| **IntegrationTestAgent** | **fable** (ADR-141 Amendment 4 carve-out — 구 sonnet 에서 이전, CFP-2803. model frontmatter 실측 @ 14ac6b9b3) | Epic 하위 `stories_in_scope` 전체 CI gate PASS 후 1회 spawn — Deployability 검증 (4-step + **조건부 지속-liveness soak step**: `daemon_type: long_running_daemon` ∧ `operational:true` Story 시 프로세스 생존 ∧ terminal-sink monotone 전진 실측 — ADR-148 G2) + Baseline Suite + Story Suite (§8.6 자동 생성) + Baseline 자동 승격 (self-commit) + story_keys blame 3-tier — `test_verdict` packet 반환 (version = MANIFEST SSOT, literal 미박제) |
 
 **Deprecated (2 agent, ADR-048 §결정 2 historical 보존)** — agents/ tree 에 file 존재하나 신규 Story 미spawn (역사적 참조용):
 
@@ -40,7 +42,7 @@ codeforge-test lane = **Epic-level 통합테스트 — Epic 하위 전체 Story 
 | `[통합-테스트]` prefix GitHub comment | IntegrationTestAgent |
 | `tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/` 테스트 파일 write | IntegrationTestAgent (Story Suite 자동 생성, §8.6 기반) |
 | `tests/integration/baseline/<STORY-KEY>/` Baseline 자동 승격 write + self-commit | IntegrationTestAgent (PASS 시만 — FAIL 상태 승격 invariant 차단) |
-| `docs/architecture/codeforge-test.md` (본 doc 영역) | IntegrationTestAgent or 설계 lane ArchitectAgent (lane gate — ADR-078 §결정 1 4 H2 영역 갱신 의무, 매 Change Plan merge 시) |
+| `docs/architecture/codeforge-test.md` (본 doc 영역) | **ArchitectAgent write monopoly** (INV-3 — per-PR 현행화: `plugins/codeforge-test/**` 변경 PR = 본 doc 본문 갱신 OR `[living-arch-no-impact]` declare closed-binary, ADR-078 Amd3 / ADR-112 Amd1 / CFP-2813 게이트 강제) |
 | `phase:통합-테스트` → `phase:보안-테스트` transition | Orchestrator (verdict 수령 후, lane plugin agent write 영역 외) |
 
 > Story §9 통합테스트 섹션은 IntegrationTestAgent 가 **직접 write 안 함** — test_verdict packet 을 Orchestrator 에 반환 → Orchestrator 가 Epic 내 각 관련 Story §9 append.
@@ -96,7 +98,7 @@ lane 외부 surface — kind:contract producer / consumer overlay slice / govern
 
 | contract | 위치 | 용도 |
 |---|---|---|
-| `test_verdict` | `docs/inter-plugin-contracts/test-verdict-v2.md` (canonical, lane plugin repo) + wrapper sibling sync mirror (ADR-010) | Epic-level 통합테스트 결과 패킷. IntegrationTestAgent → Orchestrator 핸드오프. `lane: "integration"` + `trigger: "epic_complete"` 고정. `stories_in_scope` / `suite_summary` / `failures[].story_keys[]` + `attribution_confidence` enum / `pl_recommendation` enum |
+| `test_verdict` | `docs/inter-plugin-contracts/test-verdict-v2.md` (**wrapper 단일 원본 — ADR-118 D5**, sibling sync 폐지) | Epic-level 통합테스트 결과 패킷. IntegrationTestAgent → Orchestrator 핸드오프. `lane: "integration"` + `trigger: "epic_complete"` 고정. `stories_in_scope` / `suite_summary` / `failures[].story_keys[]` + `attribution_confidence` enum / `pl_recommendation` enum |
 
 > contract schema field-level 상세 + version 값 = canonical contract file SSOT + wrapper `MANIFEST.yaml`. version literal 미박제 (drift 회피, ADR-008).
 
@@ -127,7 +129,8 @@ lane 외부 surface — kind:contract producer / consumer overlay slice / govern
 - **ADR-055** — Integration Test Lane Policy SSOT. Amendment 2 (CFP-371) = per-Story → Epic-level 실행 구조 전환 (1회 spawn / `epic_complete` trigger).
 - **ADR-067** — Max FIX 3/3 + cross-lane RESET. 본 lane 의 FIX verdict 가 4 lane (CodeReview / SecurityTest / 본 lane) 누적 FIX 카운터에 합산.
 - **ADR-072** — Production cutover gate + ProductionEvidenceDeputy. Epic-level 통합테스트 PASS → 보안 lane → production cutover Story 시 ProductionEvidenceDeputy 동반.
-- **ADR-141** — opus default + Amendment 2 carve-out (IntegrationTestAgent sonnet, fallback 대상 없음 — 구 ADR-057 Sonnet→Opus rate-limit fallback 대체).
+- **ADR-141** — opus default + carve-out. IntegrationTestAgent = **fable** (Amendment 4 apex 10 — 구 Amendment 2 sonnet 배정에서 이전, CFP-2803. rate-limit fallback machinery 는 폐지 — 429 대응 = ADR-109).
+- **ADR-166** (design-info read protocol, CFP-2813) — 본 lane = **G5 (실행·검증 leaf — mandatory read 대상 아님)**: 통합테스트 입력 = §8.6 Test Contract + CI ground-truth 이지 설계 현재상태 재구성 아님. 본 doc 자신은 게이트 (a) 의 갱신 대상 (위 경계 표).
 - **IntegrationTest §7.4 측정 contract** (ADR-014 Amendment 4 §결정 2): evidence-driven 3-axis split (측정 대상 정의 DesignLane / 실측 본 lane / policy 결정 ArchitectLane post-measurement). FIX 루프 disjoint axis. 상세는 `agents/IntegrationTestAgent.md` §7.4. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
 **Skill anchor** (Orchestrator lane 진입 시 호출):
@@ -184,7 +187,7 @@ Orchestrator → IntegrationTestAgent spawn (single-shot, 1회 per Epic — ADR-
   ├─ SUITE_TYPE: "story" → "baseline" 갱신
   └─ git commit (IntegrationTestAgent self-commit, "test(baseline): <EPIC-KEY> Story Suite 자동승격")
   ▼
-test_verdict v2.2 packet emit → Orchestrator 반환
+test_verdict packet emit (version = MANIFEST SSOT) → Orchestrator 반환
   ▼
 Orchestrator 분기:
   ├─ pl_recommendation: PASS                  → 보안 테스트 lane or Epic 완료 (epic_close_ready)
@@ -208,7 +211,7 @@ test_verdict.failures[].failure_type
 - **Story file** (`internal-docs/codeforge-test/stories/<KEY>.md` §9 통합테스트 섹션) — Orchestrator 가 verdict 수령 후 Epic 내 각 관련 Story §9 append (lane plugin agent write 영역 외).
 - **`tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/`** — IntegrationTestAgent self-write (Story Suite 자동 생성, §8.6 기반).
 - **`tests/integration/baseline/<STORY-KEY>/`** — IntegrationTestAgent self-commit (전체 suite PASS 시만 자동 승격).
-- **test_verdict v2.2 packet** — Orchestrator 핸드오프 carrier (Story §9 append + §10 FIX Ledger row append carrier).
+- **test_verdict packet** (version = MANIFEST SSOT — literal 미박제) — Orchestrator 핸드오프 carrier (Story §9 append + §10 FIX Ledger row append carrier).
 - **Epic close gate** — `epic_close_ready` 신호 (test_verdict PASS + 보안 lane PASS / N/A 후 ProductionEvidenceDeputy 분기 시 ADR-072).
 
 **ADR-067 cross-lane RESET 연동**:
