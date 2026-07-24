@@ -20,6 +20,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -33,31 +34,37 @@ WORKTREE_ROOT = Path(__file__).resolve().parent.parent.parent
 HOOK_SCRIPT = WORKTREE_ROOT / "hooks" / "subagent-start-render-discipline"
 KST_STAMP_HELPER = WORKTREE_ROOT / "scripts" / "kst-render-stamp.sh"
 
+# bash 인터프리터 위치 (Linux/macOS/Windows Git Bash 대응)
+_BASH = shutil.which("bash") or (
+    r"C:\Program Files\Git\bin\bash.exe" if os.name == "nt"
+    and Path(r"C:\Program Files\Git\bin\bash.exe").exists() else None)
+
+pytestmark = pytest.mark.skipif(_BASH is None, reason="bash interpreter 부재 (non-Git-Bash CI)")
+
 
 class TestSubagentStartRenderDisciplineHook:
-    """SubagentStart hook 실행 환경 + 경계 조건 fixture."""
+    """SubagentStart hook 실행 환경 + 경계 조건 fixture (Linux+Windows 양호환)."""
 
     def _run_hook(
         self,
         payload: Optional[str] = None,
         env_override: Optional[dict[str, str]] = None,
     ) -> tuple[int, str, str]:
-        """hook 을 subprocess 로 fork — stdin 에 payload 주입.
-        Windows 환경: run-hook.cmd wrapper 를 통해 실행.
+        """hook 을 subprocess 로 bash 실행 — stdin 에 payload 주입.
+        기존 hook 테스트 패턴 mirror: bash <hook_path> (run-hook.cmd wrapper 제거)
         반환: (returncode, stdout, stderr)
         """
-        hook_runner = WORKTREE_ROOT / "hooks" / "run-hook.cmd"
-        if not hook_runner.exists():
-            pytest.skip(f"hook runner not found: {hook_runner}")
+        if not HOOK_SCRIPT.exists():
+            pytest.skip(f"hook script not found: {HOOK_SCRIPT}")
 
         run_env = dict(os.environ)
         run_env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
         if env_override:
             run_env.update(env_override)
 
-        # run-hook.cmd wrapper 호출 (Windows cmd.exe 를 통해)
+        # bash 직접 실행 (Linux/macOS/Windows Git Bash 모두 호환)
         proc = subprocess.run(
-            [str(hook_runner), "subagent-start-render-discipline"],
+            [_BASH, str(HOOK_SCRIPT)],
             input=payload or "",
             capture_output=True,
             text=True,
@@ -257,16 +264,15 @@ class TestSubagentStartRenderDisciplineHook:
 )
 def test_subject_sanitization_parametrized(agent_type, expected_subject):
     """G2 subject sanitize 규칙 parametrized fixture — 모든 분기 커버"""
-    hook_runner = WORKTREE_ROOT / "hooks" / "run-hook.cmd"
-    if not hook_runner.exists():
-        pytest.skip("hook runner not found")
+    if not HOOK_SCRIPT.exists():
+        pytest.skip("hook script not found")
 
     payload = json.dumps({"agent_type": agent_type})
     run_env = dict(os.environ)
     run_env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
 
     proc = subprocess.run(
-        [str(hook_runner), "subagent-start-render-discipline"],
+        [_BASH, str(HOOK_SCRIPT)],
         input=payload,
         capture_output=True,
         text=True,
@@ -283,9 +289,8 @@ def test_subject_sanitization_parametrized(agent_type, expected_subject):
 
 def test_fail_open_exit_always_zero():
     """fail-open ALWAYS: 어떤 failure (JSON, helper, etc) 도 exit 0"""
-    hook_runner = WORKTREE_ROOT / "hooks" / "run-hook.cmd"
-    if not hook_runner.exists():
-        pytest.skip("hook runner not found")
+    if not HOOK_SCRIPT.exists():
+        pytest.skip("hook script not found")
 
     # 여러 실패 케이스
     test_cases = [
@@ -300,7 +305,7 @@ def test_fail_open_exit_always_zero():
 
     for payload, description in test_cases:
         proc = subprocess.run(
-            [str(hook_runner), "subagent-start-render-discipline"],
+            [_BASH, str(HOOK_SCRIPT)],
             input=payload,
             capture_output=True,
             text=True,
@@ -310,28 +315,34 @@ def test_fail_open_exit_always_zero():
         assert proc.returncode == 0, f"fail-open 위반 ({description}): exit {proc.returncode}"
 
 
-def test_perf_hook_execution_under_500ms():
-    """Performance baseline: hook 실행 ≤ 500ms (python subprocess) / ≤ 1500ms (cmd.exe wrapper).
-    Windows run-hook.cmd 오버헤드 고려하여 1500ms threshold 사용."""
-    hook_runner = WORKTREE_ROOT / "hooks" / "run-hook.cmd"
-    if not hook_runner.exists():
-        pytest.skip("hook runner not found")
+def test_perf_hook_execution_smoke():
+    """Smoke test (not mandated perf baseline).
+
+    Story §8.3: perf baseline = N/A ("성능 영향 없음"). 신규 hook 은 mandated baseline 대상 아님.
+    유일 mandated perf 회귀 = 기존 `test_inject_single_fork_perf_under_500ms`.
+    본 테스트는 smoke-tier — 중대 회귀만 탐지.
+
+    Platform-aware threshold: Windows(nt) subprocess 오버헤드 고려 3000ms, 그 외 1000ms.
+    """
+    if not HOOK_SCRIPT.exists():
+        pytest.skip("hook script not found")
 
     payload = json.dumps({"agent_type": "TestAgent"})
     run_env = dict(os.environ)
     run_env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
 
     import time
-    start = time.perf_counter()
-    proc = subprocess.run(
-        [str(hook_runner), "subagent-start-render-discipline"],
+    t0 = time.perf_counter()
+    subprocess.run(
+        [_BASH, str(HOOK_SCRIPT)],
         input=payload,
         capture_output=True,
         text=True,
         encoding="utf-8",
         env=run_env,
     )
-    elapsed_ms = (time.perf_counter() - start) * 1000
+    elapsed_ms = (time.perf_counter() - t0) * 1000
 
-    # Windows cmd.exe wrapper + bash 실행 오버헤드 포함하여 1500ms threshold (비win 500ms 기준)
-    assert elapsed_ms < 1500, f"perf regression: {elapsed_ms:.1f}ms >= 1500ms"
+    # Platform-aware threshold: Windows subprocess fork 오버헤드 ~900-1200ms
+    threshold_ms = 3000 if os.name == "nt" else 1000
+    assert elapsed_ms < threshold_ms, f"perf regression: {elapsed_ms:.1f}ms >= {threshold_ms}ms"
