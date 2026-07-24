@@ -378,7 +378,7 @@ N/A — permanent (additive 축 신설 + 위치 정밀화). 본 Amendment 이후
 
 ### 성격
 
-본 Amendment 는 **canonical lane count 정본 갱신** 이다 — Amendment 1 이 정본화한 canonical=10 에서, CFP-2782 / [ADR-121](ADR-121-deprecate-deploy-lanes.md) 의 deploy·deploy-review 2 lane 물리 제거를 반영해 **canonical=8** 로 갱신한다. ADR-121(별 주제 ADR)은 본 ADR-125 의 numeric SSOT 를 단독 재정의할 권위가 없으므로, `check_lane_count_ssot.py` docstring 이 지정한 **REQUIRED mechanical-sync carrier** = 본 Amendment 4 가 그 carrier 역할을 수행한다. ADR 본체 status = Proposed 유지. §결정 1~6 + Amendment 1/2/3 의미 불변.
+본 Amendment 는 **canonical lane count 정본 갱신** 이다 — Amendment 1 이 정본화한 canonical=10 에서, CFP-2782 / [ADR-121](ADR-121-deprecate-deploy-lanes.md) 의 deploy·deploy-review 2 lane 물리 제거를 반영해 **canonical=8** 로 갱신한다. ADR-121(별개 주제 ADR)은 본 ADR-125 의 numeric SSOT 를 단독 재정의할 권위가 없으므로, `check_lane_count_ssot.py` docstring 이 지정한 **REQUIRED mechanical-sync carrier** = 본 Amendment 4 가 그 carrier 역할을 수행한다. ADR 본체 status = Proposed 유지. §결정 1~6 + Amendment 1/2/3 의미 불변.
 
 ### 최종 8 lane
 
