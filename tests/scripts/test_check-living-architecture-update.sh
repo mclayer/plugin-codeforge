@@ -165,6 +165,12 @@ run_gate() {
   (
     cd "$fixture_root"
     export LIVING_ARCH_CHANGED_MOCK="$changed_files"
+    # Verify mock-seam activation (distinct-marker — ADR-060 Amd22)
+    # Pre-check: mock path is active before calling gate
+    if [ -z "$LIVING_ARCH_CHANGED_MOCK" ]; then
+      echo "[ERROR] LIVING_ARCH_CHANGED_MOCK not set — mock-seam inactive" >&2
+      return 1
+    fi
     bash "$GATE_WRAPPER" >/dev/null 2>&1
   ) || exit_code=$?
 

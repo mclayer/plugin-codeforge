@@ -109,7 +109,7 @@ FAMILY_STRUCTURAL_PREFIXES = (
     "docs/inter-plugin-contracts/",
     ".claude-plugin/",
 )
-FAMILY_STRUCTURAL_EXACT = ("CLAUDE.md", "plugin.json")
+FAMILY_STRUCTURAL_EXACT = ("CLAUDE.md",)  # F5: 구 enum 의 bare `plugin.json` 제거 (ArchitectPL 판정) — wrapper root 미실재(F-4 실측 top-level 20 entries 에 부재), 실 plugin.json 은 `.claude-plugin/**` prefix 가 커버. 미래 top-level plugin.json = unknown-surface fail-closed 강제.
 
 # 비구조 표면(발동 없음) — closed enum ("그 외" open-set 아님, Change Plan §3.2 F-4).
 NON_STRUCTURAL_PREFIXES = (
