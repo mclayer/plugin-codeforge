@@ -20,6 +20,7 @@ related_files:
   - templates/team-spec-security-test.yaml
 related_stories:
   - CFP-1354
+  - CFP-2823   # Amendment 1 carrier — §결정 1 감지집합 session/usage-limit class 편입 + fable-리밋 failover 합성
 related_adrs:
   - ADR-039
   - ADR-044
@@ -32,11 +33,34 @@ related_adrs:
   - ADR-104
   - ADR-106
   - ADR-108
+  - ADR-141   # Amendment 1 — fable-리밋 opus failover override carrier (§결정 3 step2 dead slot re-tenant)
 mechanical_enforcement_actions:
   - 429-retry-evidence-presence
   - debate-parallel-cap-check
   - deputy-stagger-check
-amendments: []
+amendments:
+  - amendment: 1
+    carrier_story: CFP-2823
+    date: 2026-07-24
+    scope: >-
+      §결정 1 detection closed-set 을 base 4-tuple 에서 session/usage-limit class 2 literal
+      편입해 확장 — `session limit`(확정, 2026-07-24 실관측 `You've hit your session limit`)
+      + `usage limit`(추정·미실측, fail-open — 요구사항-named 개념 커버, 유일 firsthand 등장 =
+      본 ADR §컨텍스트 §1:54 부정 문맥 "not your usage limit") = base 4 + class 2 = 6 literal.
+      실관측 세션 한도 문자열이 base 4-tuple 과 substring 0/4 불일치(firsthand 반증)라 확장
+      필수. 3→4 확장 선례(§결정 1 "Server is temporarily limiting" 편입, L97) 동형 — 별도
+      enum 신설 아님, 단일 §결정 1 closed-set 확장, literal-substring `no regex wildcard`
+      invariant 유지. §결정 1 base 4-tuple = byte-intact 보존(rewrite 0). 동반 = fable-리밋
+      opus failover 의 ADR-109 합성 배치(§결정 3 step2 dead slot[구 ADR-057 §결정 2, moot]
+      re-tenant + fable step1 bypass + cascade depth fable→opus hop count-in) — carrier =
+      ADR-141 Amendment 6(SSOT), 본 amendment 는 감지집합 확장 SSOT + 합성 배치 codify.
+      529(§결정 6)는 disjoint 유지(failover 감지집합 NOT-IN, `429`≠`529`). 상세 = 본문
+      `## Amendment 1`.
+    sunset_justification: >-
+      N/A — §결정 1 closed-set invariant("5번째 pattern 추가 = 본 ADR Amendment 의무")의
+      정확 이행이자 ratchet 강화 방향(감지 집합 확대, 약화 0). ADR-109 §해소 기준
+      "N/A permanent policy — sunset_justification 면제" 상속(ADR-058 §결정 5 / ADR-064
+      §결정 7 evidence-gated symmetric ratchet 강화 방향 정합).
 ---
 
 # ADR-109: in-process Anthropic infra 429 surgical mitigation framework
@@ -247,3 +271,56 @@ N/A — permanent policy
 - [ADR-104](ADR-104-operational-phase-definition.md) — 운영 phase 1st-class 정의
 - [ADR-106](ADR-106-operational-signal-pmo-input-circuit.md) — 운영 metric → PMOAgent input 회로
 - [ADR-108](ADR-108-label-registry-v2-frozen-baseline-description-carry-drift.md) — label-registry forcing function (description text raw grep count parity)
+
+## Amendment 1 (CFP-2823 — session/usage-limit class 감지집합 편입 + fable-리밋 failover 합성)
+
+**날짜**: 2026-07-24 KST · **carrier**: CFP-2823 · **방향**: ratchet **강화**(§결정 1 detection closed-set 확대, 약화 0). 본 Amendment 가 §결정 1 closed-set invariant("5번째 pattern 추가 = 본 ADR Amendment 의무")의 정확 이행이다. **§결정 1 base 4-tuple 은 byte-intact 보존**(rewrite 0) — 본 Amendment 가 class 2 literal 을 추가할 뿐이다. fable-리밋 opus failover 의 규범 SSOT = [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 6; 본 Amendment 는 그 감지 SSOT + framework 합성 배치를 codify 한다.
+
+### (a) 확장 rationale (firsthand 반증)
+
+실관측 리밋 문자열 (2026-07-24, CFP-2823 진행 중 fable PL 이 세션 리밋으로 mid-run 조기종료하며 발화):
+
+```
+Agent terminated early due to an API error: You've hit your session limit · resets 10:20pm (Asia/Seoul)
+```
+
+이 문자열은 §결정 1 base 4-tuple(`rate limit` / `quota exceeded` / `429` / `Server is temporarily limiting`)과 substring **0/4 불일치**(firsthand — reproducer `any(p in s for p in base)` = exit 1 RED). 즉 §결정 1 이 사용자 요구(사용량/세션 한도 감지, CFP-2823 §1)를 **미커버**한다. → session/usage-limit class 를 §결정 1 closed-set 에 편입해야 커버된다.
+
+### (b) 확장 감지집합 (본 Amendment = 확장 SSOT)
+
+session/usage-limit 포함 detection = 다음 6 literal any-match (closed-set, no regex wildcard — §결정 1 invariant 승계):
+
+```
+"rate limit"
+"quota exceeded"
+"429"
+"Server is temporarily limiting"
+"session limit"
+"usage limit"
+```
+
+- 앞 4 literal = **§결정 1 base 4-tuple, byte-frozen**(순서·문자 무변경). 뒤 2 literal = **본 Amendment 1 신규 class 2**: `"session limit"`(확정 — 2026-07-24 실관측) + `"usage limit"`(추정·미실측 — 요구사항-named 개념 커버, fail-open; (f) 참조).
+- **별도 enum 신설 아님** — 단일 §결정 1 closed-set 확장(3→4 확장 선례[§결정 1 "Server is temporarily limiting" 편입, L97] 동형). literal-substring `no regex wildcard` invariant 유지(정규식 wildcard 도입 0).
+
+### (c) enum single-SSOT 강화 (G1)
+
+본 code-fence(6 literal) = detection enum 단일 source. `codeforge:rate-limit-429-mitigation` skill body / `docs/orchestrator-playbook.md` §3.0.12 / ADR-141 Amendment 6 = **prose cross-ref only**(중복 정의 0, §결정 1 "Single SSOT" 규율 승계). AC-4 discriminating check fixture 는 본 code-fence 를 **파싱해 enum source 로** 사용한다 — 하드코딩 사본 금지(fixture-vs-SSOT drift 차단).
+
+### (d) fable-리밋 failover 합성 배치
+
+ADR-141 Amendment 6(규범 SSOT)의 fable-리밋 opus failover 를 본 framework 에 합성한다:
+
+- **§결정 3 step2 dead slot re-tenant** — step2(cross-model substitution)가 cross-ref 하던 구 ADR-057 §결정 2(sonnet rate-limit→opus)는 ADR-141 로 moot/dead 라 구조적으로 비어 있다. fable 브랜치가 신규 trigger(fable 리밋)로 그 slot 을 re-tenant(부활 아님 — ADR-057 Superseded 유지).
+- **fable step1 bypass** — fable 리밋 시 step1(fable same-model exp-backoff soak)을 건너뛰고 step2(fable→opus)로 즉시 직행(Option A 즉시전환 — ADR-141 A6-2 근거 3층: reset long-horizon / 별 pool / Retry-After trap). opus 착지 **후** 비로소 §결정 2 exp-backoff / §결정 3 step1·3·4 가 opus 를 same-model 로 재정박.
+- **cascade depth count-in** — fable→opus hop = `cascade_depth` **1(COUNTS)**. opus 착지 후 opus 자기 within-model soak 은 미증가. opus soak 소진 후 cascade ≥ 2 = §결정 5 user manual resume only.
+- **§14 격리** — failover = §14 전용 태그 `[rate-limit-failover:fable→opus]`(§결정 9 §10 FIX Ledger 금지 상속, 기존 §결정 8 `[429-auto-retry: ...]` 및 dead 태그 `[rate-limit-fallback:sonnet→opus]`/`[model-unavailable-fallback:fable→opus]` 와 비합산·별 measurement).
+
+### (e) 529 disjoint 재확인
+
+529(`529` / `overloaded`) = pool-agnostic service-wide overload → **failover 감지집합 NOT-IN**. §결정 6(429 vs 529 disjoint — longer cooldown 60s→300s)이 correct handler 이며, 529 에 failover 적용 시 §결정 6 "cascade amplification risk" 정합으로 futile+amplifying. literal `429` ≠ `529`(substring 무접점) 확인 — 529 는 본 Amendment 확장 감지집합에 편입하지 않는다(운영 근거 = pool-agnostic overload, 단순 "enum 밖" 아님).
+
+### (f) `usage limit` negated-context 정직 note + `429` over-match wart
+
+- **`usage limit` = 추정·미실측** — 실관측 runtime 문자열은 `session limit` 뿐(`usage limit` 관측 0건, discriminating check 무기여). 유일 firsthand 등장 = 본 ADR §컨텍스트 §1(L54)의 **부정 문맥** `Server is temporarily limiting requests (not your usage limit)`. 부정 문맥 substring 매칭은 무해하나(fail-open bounded) literal 선정 근거는 부실 — 요구사항-named 개념(사용량 한도, CFP-2823 §1 intake 결정 3) 커버용으로 유지(over-inclusion 무해·bounded). 설계리뷰/구현 lane corroborate 대상.
+- **`429` bare-substring over-match** — `429` 는 무관 문자열(예: `error 10429`)에 substring 매칭될 수 있는 bounded wart. no-regex-wildcard invariant 와 tension(좁히려면 word-boundary 필요하나 wildcard 금지)이나, 현재는 fail-open bounded 로 수용(§결정 1 base 이미 동일 성질). 좁힐지는 설계 재량.
+- **case-sensitivity gap** — closed-set 대소문자 구분 substring 이라 `Session Limit`(대문자) 형태는 miss 가능. 실관측은 소문자 `session limit` 이라 현 위험 낮음 — literal 선정·case-fold 여부는 설계리뷰 escalate 후보(CFP-2823 §5.7).
