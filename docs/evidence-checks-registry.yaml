@@ -4191,3 +4191,40 @@ entries:
     carrier_adr: ADR-060
     promotion_trigger: advisory
     status: Active
+
+  # CFP-2813 (ADR-112 Amendment 1 + ADR-078 Amendment 3 재건축) — Living Architecture per-PR 최신성 게이트.
+  # 구 wire(CFP-1429, f30abe550)는 #1972/#2110 로 제거 → per-PR + blocking-on-pr(surfacing) +
+  # discriminating self-test 로 재건축. living-architecture-update.yml run-block 1-hop = .sh
+  # (ADR-061 thin wrapper), .sh->python3 lib/*.py = depth-2 SSOT. 둘 다 chmod +x(100755).
+  - name: living-architecture-update
+    description: |
+      CFP-2813 — PR 이 구조 표면(scripts/** · templates/** · plugins/<X>/** · hooks/** ·
+      .github/workflows·scripts/** · overlay/** · .claude/agents/** · docs/inter-plugin-contracts/** ·
+      CLAUDE.md 등)을 변경했는데 대응 Living Architecture doc(docs/architecture/codeforge-family.md +
+      6 lane plugins/<X>/docs/architecture/<X>.md)을 갱신하지도 no-op declare 하지도 않으면 FAIL.
+      판정축 = 변경-문서 coupling(touch/timing closed-binary) — 날짜(git commit / last_captured)
+      신호 신뢰 불가라 "무엇을 언제 바꿨나" 만 본다. 실패 4-enum: missing-update / invalid-declare /
+      mapping-miss / unknown-surface(fail-closed). honest ceiling: 본 게이트(L2) = presence/shape/coupling
+      까지 — L3 substance("doc 가 델타를 실제 반영했는가")는 DesignReviewPL review-tier
+      (review-verdict-v4 living-architecture-not-updated finding). "기계 강제 100%" over-claim 금지.
+    detect_command: bash scripts/check-living-architecture-update.sh
+    workflow: templates/github-workflows/living-architecture-update.yml
+    current_tier: blocking-on-pr    # surfacing (ADR-060 §7.9.A/B): continue-on-error 없음(위반=RED) ∧ required contexts 미부착(8-tuple 무변경). warning 아님(약화 flip env 축 미도입 — D5).
+    bypass_label: hotfix-bypass:living-architecture-update
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) — living-architecture-update.yml 재도입 merge(CFP-2813 Phase 2)부터 merged-PR 카운트(run 아님)
+      failure_threshold: 0          # ADR-060 §결정 6 (b) — bypass 외 failure=0 (각 PR final commit 기준, hotfix-bypass 적용 PR 제외)
+      sibling_dependencies:
+        - CFP-2813                  # 게이트+프로토콜 도입 Story 자신 (css-lint CFP-2505 동형 정의)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - outage_runbook            # ADR-060 §결정 6 (iv) — required enforce 진입 시 의무 (surfacing 기간은 비차단이라 불요)
+    introduced_by: CFP-2813
+    introduced_date: 2026-07-24
+    owner_adr: ADR-112             # per-PR update gate 재정의(Amendment 1) + ADR-078 Amendment 3 (per-PR default 확정)
+    carrier_adr: ADR-060           # evidence-enforceable framework — required 승격 = §결정 6 3-tuple + evidence 6종 (Change Plan §9.R ③)
+    promotion_trigger: advisory    # required contexts 승격 = 별도 후속 carrier (본 Story 내 branch protection 8-tuple 무변경)
+    status: Active

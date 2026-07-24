@@ -1,0 +1,92 @@
+name: Living Architecture Update (CFP-2813 / ADR-112 Amd1 + ADR-078 Amd3 재건축)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+
+# per-PR Living Architecture 최신성 게이트 — PR 이 구조 표면(scripts/** · templates/** ·
+# plugins/<X>/** · hooks/** · .github/workflows·scripts/** · overlay/** · .claude/agents/** ·
+# docs/inter-plugin-contracts/** · CLAUDE.md 등)을 변경했는데 대응 Living Architecture doc
+# (docs/architecture/codeforge-family.md + 6 lane plugins/<X>/docs/architecture/<X>.md)을
+# 갱신하지도 no-op declare 하지도 않으면 FAIL. 판정축 = 변경-문서 coupling(touch/timing) —
+# 날짜(git commit / last_captured) 신호가 신뢰 불가하므로 "무엇을 언제 바꿨나" 만 본다.
+#
+# tier = blocking-on-pr(surfacing) day-1 (ADR-060 §7.9.A/B): continue-on-error 없음(위반 = job RED)
+#   ∧ branch protection required contexts 미부착(8-tuple 무변경 — merge 물리 차단 없음). required
+#   승격 = 별도 후속 carrier(ADR-060 §결정 6 3-tuple + evidence 6종 — Change Plan §9.R ③).
+#   약화 flip env 축 미도입 (default=blocking 이라 SENTINEL_TIER 형판 미채택 — D5).
+#
+# honest ceiling: 본 게이트(L2) = presence/shape/coupling 까지. "doc 가 델타를 실제 반영했는가"
+#   (L3 substance) = DesignReviewPL review-tier (review-verdict-v4 living-architecture-not-updated
+#   finding). "기계 강제 100%" over-claim 금지 (ADR-119).
+#
+# on: paths filter 금지 (ADR-130 §결정4) — 비발동 조건은 전부 job 내부 명시 Success (python core 가
+#   구조 표면 0 / capability 미보유를 explicit Success 로 처리, Pending-expected 회피).
+#
+# Bypass: label hotfix-bypass:living-architecture-update → 판정 skip + audit comment 강제
+#   (check-bypass-audit-comment.sh — 부재 시 fail-closed).
+#
+# Consumer distribution: 본 workflow + scripts/check-living-architecture-update.sh +
+#   scripts/lib/check_living_architecture_update.py 모두 copy 의무 (consumer-scripts.manifest 등재 —
+#   consumer-guide §2c manifest-driven loop 가 처리). 메인 job = 전 repo 적용 / self-test job =
+#   wrapper-ONLY (if: github.repository == 'mclayer/plugin-codeforge').
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  living-architecture-update:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # shallow 금지 — merge-base origin/<base>...HEAD 정확성 의존
+
+      - name: git fetch base ref
+        run: |
+          git fetch origin "${GITHUB_BASE_REF:-main}"
+
+      - name: Bypass audit (label present — 판정 skip + audit comment 강제)
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:living-architecture-update') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "::notice::hotfix-bypass:living-architecture-update 라벨 감지 — 최신성 판정 skip, audit comment 강제 검증."
+          bash scripts/check-bypass-audit-comment.sh
+
+      - name: Run living-architecture-update gate (blocking-on-pr surfacing, 위반 = RED)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:living-architecture-update') }}
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          bash scripts/check-living-architecture-update.sh
+          echo "## Living Architecture Update (blocking-on-pr surfacing)" >> "$GITHUB_STEP_SUMMARY"
+
+  # discriminating self-test (mutation 생존 0 — ADR-154 §결정 7/8). 게이트가 껍데기가 아님을 보증:
+  #   위반 표본 심기 → RED firsthand + real-copy sed-mutation 각 KILLED. wrapper-self 전용 —
+  #   if: github.repository == 'mclayer/plugin-codeforge' 라 consumer 로 byte-identical 전파돼도 skip.
+  living-architecture-update-test:
+    name: living-architecture-update discriminating test (mutation 생존 0)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install hypothesis (property self-test — pyyaml install 선례 답습)
+        run: pip install --user hypothesis
+      - name: Run test_check-living-architecture-update.sh (회귀 시 exit 1 차단)
+        run: bash tests/scripts/test_check-living-architecture-update.sh
