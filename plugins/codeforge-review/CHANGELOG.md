@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.29.0 — 2026-07-24
+
+### Added (CFP-2813 — ADR-166 / ADR-078 Amd3 / ADR-112 Amd1: 리뷰 PL mandatory read + Living Architecture 갱신 substance 소비 배선, MINOR)
+
+[CFP-2813] 리뷰 lane PL 이 산출 전 설계정보를 mandatory read 하고, 설계리뷰가 Living Architecture 갱신 여부를 substance 로 소비하도록 배선:
+
+- `templates/review-pl-base.md`: 리뷰 PL 4 전원(RequirementsReviewPL · DesignReviewPL · CodeReviewPL · SecurityTestPL) design-info-read-protocol-v1 mandatory read 주입 — verdict 종합 전 Living Architecture(`docs/architecture/<plugin>.md`) / 설계정보 선행 read 강제 (ADR-078 Amendment 3 git-source + ADR-112 Amendment 1 dual-read 정합).
+- `agents/DesignReviewPLAgent.md`: L3 substance 소비 배선 — Living Architecture 갱신 marker(`living_architecture_updated_self_check_passed` / `living-architecture-not-updated`)를 설계리뷰 verdict 근거로 소비(갱신 누락 = blocking-on-pr surfacing).
+- `.claude-plugin/plugin.json`: description CFP-2813 entry prepend + version 1.28.2 → 1.29.0.
+
+#### Why
+
+리뷰 PL 이 최신 설계정보를 읽지 않은 채 verdict 를 내는 갭 + Living Architecture 갱신 누락이 리뷰에서 잡히지 않는 갭을 차단. review-pl-base 템플릿 mandatory read 주입(additive) + DesignReviewPLAgent substance 소비 표면(additive) → MINOR (ADR-037 (d) Template additive / (a) Agent file 추가 / ADR-008). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## 1.28.2 — 2026-07-23
 
 ### Changed (CFP-2804 — ADR-064 §결정7 L406 이연 cascade, PATCH)
