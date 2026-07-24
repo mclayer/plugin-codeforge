@@ -32,6 +32,8 @@ honest ceiling (필수 — L2/L3 분할, ADR-119 / Change Plan §3.4/§3.5):
     DesignReviewPL review-tier 소관(review-verdict-v4 living_architecture_updated_self_check_passed
     + living-architecture-not-updated finding). 본문 1줄 어휘 치환도 (a) 를 충족한다(L2 천장 정직 공개).
   - "기계 강제 100%" over-claim 금지. 본 게이트는 최신성 결박의 필요조건이지 충분조건 아님.
+  - marker rationale 의 실질 토큰 padding gaming(stop-phrase + 무의미 토큰 부풀리기)은 L2 로 완봉
+    불가 — rationale 타당성 판정은 L3 review-tier 잔존(형식 floor·정규화 anchored 까지가 기계 천장).
 
 resource-safety (marker 정규식 — ADR-082 §결정16 정직):
   - MARKER_RE 는 전 quantifier bounded({1,64}/{0,8}/{1,400}), 중첩 모호 quantifier 0
@@ -84,8 +86,15 @@ MARKER_RE = re.compile(
 )
 MARKER_PREFIX_LITERAL = "[living-arch-no-impact"  # 구조 미완성 attempt 검출용
 GLOBAL_DOC_ID = "*"                                 # 내부 sentinel — 실제 doc-id 아님
-RATIONALE_MIN = 15                                  # Change Plan §3.3 rationale floor
-STOPLIST = frozenset({"해당 없음", "not applicable", "n/a"})  # 단순 부정 단독 차단
+RATIONALE_MIN = 15                                  # Change Plan §3.3 rationale floor (길이 축 — 독립)
+# 단순 부정 stoplist — 정규화(소문자·구두점/공백→토큰) 후 token-anchored 검사 (길이 floor 와 독립 축).
+#   floor 선행 dead-branch 회피(QADev M7 kill): stoplist 항목이 <15자여도 padding("not applicable ....")
+#   으로 floor 통과분이 stoplist 분기에 도달해야 함 → 정규화 anchored + residual-token 임계.
+#   순수 무제한 substring 매칭 금지 — 실질 근거 문장이 어구 포함만으로 오차단되면 게이트 신뢰 훼손.
+STOPLIST_SOURCE = ("해당 없음", "not applicable", "n/a")     # 사람 가독 원구 (아래 NORM 은 pre-computed)
+STOPLIST_NORM_TOKENS = (("해당", "없음"), ("not", "applicable"), ("n", "a"))  # 위 원구의 _normalize_tokens 결과
+RESIDUAL_MIN_SUBSTANTIVE = 2                         # stop-phrase anchored 후 잔여 실질 토큰이 미만이면 gaming 판정
+_NORM_TOKEN_SPLIT_RE = re.compile(r"[^0-9a-z가-힣]+")  # 정규화 분할 (bounded char-class + 단일 +, ReDoS-safe)
 
 # 구조 표면(family.md 도출) — closed enum (Change Plan §3.2).
 FAMILY_STRUCTURAL_PREFIXES = (
@@ -261,20 +270,46 @@ def unsatisfied_docs(
     return sorted((d for d in doc_set if not _doc_satisfied(d, changed, markers)), key=str)
 
 
+def _normalize_tokens(text: str) -> List[str]:
+    """rationale 정규화 → 실질 토큰 목록 (소문자 + 구두점/공백 축약, Korean·영숫자만 잔존)."""
+    return [t for t in _NORM_TOKEN_SPLIT_RE.split(text.lower()) if t]
+
+
+def _rationale_reject_reason(rationale: str) -> Optional[str]:
+    """rationale 거절 사유 (없으면 None). 축 2개 독립 (길이 floor 선행 dead-branch 회피 — QADev M7):
+
+    ① stoplist(정규화 token-anchored, 길이 무관): stop-phrase 와 동치(residual 0) 또는 stop-phrase 로
+       anchored 시작 + 잔여 실질 토큰 < RESIDUAL_MIN_SUBSTANTIVE → invalid. 순수 무제한 substring 매칭
+       아님(token-anchored prefix) — 실질 근거 문장이 어구 포함만으로 오차단되지 않음.
+    ② 길이 floor(정규화·stoplist 무관): len(strip) < RATIONALE_MIN → invalid.
+    두 축 모두 통과해야 valid — padding 으로 floor 통과한 stop-phrase 도 ①이 잡음."""
+    stripped = rationale.strip()
+    norm = _normalize_tokens(stripped)
+    for stop in STOPLIST_NORM_TOKENS:
+        n = len(stop)
+        if tuple(norm[:n]) == stop:
+            residual = len(norm) - n
+            if residual < RESIDUAL_MIN_SUBSTANTIVE:
+                return (
+                    "stoplist 단순부정(정규화 anchored '%s', 잔여 실질 토큰 %d<%d): '%s'"
+                    % (" ".join(stop), residual, RESIDUAL_MIN_SUBSTANTIVE, stripped[:48])
+                )
+    if len(stripped) < RATIONALE_MIN:
+        return "rationale 길이 미달(%d<%d): '%s'" % (len(stripped), RATIONALE_MIN, stripped[:48])
+    return None
+
+
 def parse_markers(pr_body: str) -> Tuple[MarkerSet, List[str]]:
-    """PR body → (유효 MarkerSet, invalid-declare 사유 목록). 구조 미완성/빈 rationale/stoplist 검출."""
+    """PR body → (유효 MarkerSet, invalid-declare 사유 목록). 구조 미완성/길이 floor/정규화 stoplist(anchored) 검출."""
     marker_set = MarkerSet()
     invalid: List[str] = []
     matches = list(MARKER_RE.finditer(pr_body or ""))
     for m in matches:
         doc_id = m.group(1) or GLOBAL_DOC_ID
         rationale = (m.group(2) or "").strip()
-        if len(rationale) < RATIONALE_MIN:
-            invalid.append(
-                "rationale 길이 미달(%d<%d): '%s'" % (len(rationale), RATIONALE_MIN, rationale[:48])
-            )
-        elif rationale.lower() in STOPLIST:
-            invalid.append("stoplist 단순부정 단독 차단: '%s'" % rationale[:48])
+        reason = _rationale_reject_reason(rationale)
+        if reason:
+            invalid.append(reason)
         elif doc_id == GLOBAL_DOC_ID:
             marker_set.global_present = True
         else:
