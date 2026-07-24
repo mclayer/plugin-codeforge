@@ -257,7 +257,7 @@ amendment_log:
   - amendment_id: 20
     date: "2026-07-22"
     status: applied
-    summary: "CFP-2782 — Amendment 9 의 4-agent deploy tier roster(DeployPLAgent / DeployWorkerAgent / DeployReviewPLAgent / DeployReviewWorkerAgent) deprecated — 대상 4 에이전트가 CFP-2782 / ADR-121 Wave 2 로 물리 제거됨(deploy·deploy-review 2 lane plugin dir 삭제). Amendment 9 body(§결정 3 신규 agent ADR 의무 이행분 — deploy roster tier 배정) = frozen 역사 기록(byte 0건 변경, Event Sourcing). §결정 1 3-tier 표는 Amendment 19(CFP-2560/ADR-141)로 이미 superseded(전 에이전트 opus 단일 tier)이므로 deploy roster tier 배정은 이중으로 moot. ProductionEvidenceDeputy = Amendment 9 4-agent roster 에 미등재 확인(별 entry — ADR-141 §결정 6 opus 명시, CFP-2782 로 codeforge-design RELOCATE 회귀). 결정 1~6 본문 0건 변경(append-only — 본 amendment_log row + 파일 말미 ## Amendment 20 body)."
+    summary: "CFP-2782 — Amendment 9 의 4-agent deploy tier roster(DeployPLAgent / DeployWorkerAgent / DeployReviewPLAgent / DeployReviewWorkerAgent) deprecated — 대상 4 에이전트가 CFP-2782 / ADR-121 Wave 2 로 물리 제거됨(deploy·deploy-review 2 lane plugin dir 삭제). Amendment 9 body(§결정 3 신규 agent ADR 의무 이행분 — deploy roster tier 배정) = frozen 역사 기록(byte 0건 변경, Event Sourcing). §결정 1 3-tier 표는 Amendment 19(CFP-2560/ADR-141)로 이미 superseded(전 에이전트 opus 단일 tier)이므로 deploy roster tier 배정은 이중으로 moot. ProductionEvidenceDeputy = Amendment 9 4-agent roster 에 미등재 확인(별개 entry — ADR-141 §결정 6 opus 명시, CFP-2782 로 codeforge-design RELOCATE 회귀). 결정 1~6 본문 0건 변경(append-only — 본 amendment_log row + 파일 말미 ## Amendment 20 body)."
     ref: ADR-121
     carrier_story: CFP-2782
     sunset_justification: "dead-roster cleanup — 대상 4 deploy 에이전트가 상위 ADR-121 로 물리 제거되어 roster entry 가 dead. governance surface(tier criteria §결정 1 / invariant §결정 2 / 신규 agent ADR 의무 §결정 3 / inheritance §결정 4 / Haiku rollback §결정 5 / 재-audit §결정 6) 축소 0건 — 물리 제거된 에이전트의 roster 기록 정리이지 정책 약화 아님. §결정 1 3-tier 표는 Amendment 19 로 이미 superseded 상태. is_transitional: false 보존."
@@ -1604,7 +1604,7 @@ Amendment 9 (CFP-1059) 가 신설한 **4-agent deploy tier roster** — DeployPL
 
 - Amendment 9 body (§결정 3 신규 agent ADR 의무 이행분 — deploy roster tier 배정) = **byte 0건 변경** (Event Sourcing frozen — 그 시점 tier 결정 이력 보존).
 - §결정 1 3-tier 표는 **Amendment 19 (CFP-2560 / ADR-141) 로 이미 superseded** (전 에이전트 opus 단일 tier) → deploy roster tier 배정은 이중으로 moot.
-- **ProductionEvidenceDeputy = Amendment 9 4-agent roster 에 미등재** 확인 (별 entry — ADR-141 §결정 6 opus 명시). CFP-2782 로 codeforge-design CONDITIONAL deputy 로 RELOCATE 회귀(ADR-072 Amendment 5) — deploy roster 제거와 무관.
+- **ProductionEvidenceDeputy = Amendment 9 4-agent roster 에 미등재** 확인 (별개 entry — ADR-141 §결정 6 opus 명시). CFP-2782 로 codeforge-design CONDITIONAL deputy 로 RELOCATE 회귀(ADR-072 Amendment 5) — deploy roster 제거와 무관.
 
 ### sunset_justification
 
