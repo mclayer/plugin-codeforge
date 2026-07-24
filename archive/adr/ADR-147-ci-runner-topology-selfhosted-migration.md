@@ -17,6 +17,7 @@ related_adrs:
   - ADR-125
   - ADR-078
   - ADR-112
+  - ADR-066  # Amendment 1 (CFP-2821) — §결정 8 적격 조건 3 cross-ref (ADR-066 Amd5 exception 은 self-hosted 경로 미적용)
 related_files:
   - templates/github-workflows/
   - .github/workflows/invariant-check.yml
@@ -26,6 +27,14 @@ related_files:
   - docs/architecture/codeforge-family.md
 related_stories:
   - CFP-2607
+  - CFP-2821  # Amendment 1 — §결정 8 bounded enumeration 에 3rd sanctioned mitigation path(runtime secret-manager JIT sourcing) 추가
+amendments:
+  - amendment: 1
+    date: 2026-07-25
+    cfp: CFP-2821
+    summary: "§결정 8 org-wide PAT 절 bounded enumeration('hosted 유지 또는 OIDC')에 3rd sanctioned mitigation path 추가 — runtime secret-manager JIT sourcing (1Password service-account, load-secrets-action full-SHA pin, env-only + auto-mask + CLI-arg 0, bootstrap = read-only single-purpose-vault SA token). 기저 = CFP-2743 Change Plan §10.1 amendment TEXT 초안의 부활 (구현리뷰 FIX iter1 B-hosted 가 supersede 했던 판정을 CFP-2821 사용자 확정 R2[internal-docs fix-ledger-sync self-hosted 이관 — billing-block 상시-FAIL 의존 구조 제거]가 재개봉 — 전제 재성립). self-hosted 적격 조건 7종 전부 AND: ① private 3중(private ∧ allow_forking=false ∧ allows_public_repositories=false) ② fork-PR self-hosted 미실행 불변 ③ write credential least-privilege(org-wide classic 의 self-hosted 상주 금지 — fine-grained issues:write@대상repo 또는 scoped App ≤1h; ADR-066 Amd5 exception 은 self-hosted 경로 미적용) ④ runtime JIT sourcing 의무(env-only + auto-mask + CLI-arg 0) ⑤ residual 완화 의무(post-job env-purge + permissions 최소 + T4/T5 명시 수용 declare) ⑥ supply-chain(secret-bearing action full-SHA pin + egress allowlist region-correct) ⑦ scope 검증 = SecurityTest lane 실측(presence-only = false-oracle). 정직 한정: standing-credential-0(OIDC 등가) 아님 — standing SA token 1 잔존; persistent 러너 cross-job residue(T4/T5) = OIDC 포함 전 credential 모델 공통 limb(본 path differentiator 아님). 방향 = 저장 축 강화(org-wide-write 정적 상주 → single-vault-read SA token, blast-radius 축소) + 러너 topology 축 residual 재수용 동시 — 순 강화 단정 금지, evidence-gated(ADR-064 §결정 7 Amendment 8 symmetric ratchet; evidence = fix-ledger-sync 14일 상시-FAIL census[#2820, Story §2.1 재실측 895 run = 834 fail] + self-hosted 대조군 4 workflow 성공 지속 + group6 8대 online 실측 2026-07-24)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent infrastructure topology invariant(본 ADR is_transitional: false) 내부의 sanctioned path 확장. 적격 조건 7종 AND 중 1+ 미충족 시 본 path 무효 — §결정 8 기존 2-path(hosted 유지 / OIDC) default 복귀. 약화 방향(조건 7종 일부 삭제 / org-wide classic write credential 의 self-hosted 상주 허용 / SecurityTest 실측 검증 생략) 발의 차단."
 ---
 
 # ADR-147: CI runner topology — mclayer org self-hosted 이관 표준 (vars 기반 조건부 runs-on)
@@ -110,6 +119,19 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
 - **org allow_forking 실측(PL firsthand)**: `mctrader`(internal) `allow_forking=false`, org `default_workflow_permissions=read`, `can_approve_pull_request_reviews=false` → fork-PR 공격 표면은 대체로 CLOSED. 단 18 repo 전수 `allow_forking` 확인은 구현/리뷰 lane prerequisite 로 명시한다.
 - **DooD 완화**: DooD job 은 host root 등가(`docker.sock` → escape) 이므로 non-privileged container / trusted 화이트리스트로 제한한다.
 - **persistent runner 완화**: cross-job 오염(secret / tool-cache) 차단을 위해 ephemeral/JIT 를 권고하고, job 후 purge + secret 을 CLI-arg 로 전달 금지한다. org-wide PAT(`CODEFORGE_CROSS_REPO_PAT`) 사용 job 은 hosted 유지 또는 OIDC 로 전환한다.
+
+**Amendment 1 (CFP-2821, 2026-07-25) — runtime secret-manager JIT sourcing = 3rd sanctioned mitigation path (bounded)**: 위 "org-wide PAT(`CODEFORGE_CROSS_REPO_PAT`) 사용 job 은 hosted 유지 또는 OIDC 로 전환한다" 의 bounded enumeration 에 제3의 sanctioned mitigation path 를 추가한다 — **runtime secret-manager JIT sourcing**: org-wide PAT 를 정적 GH-secret store 에서 제거하고, runtime 에 secret-manager(1Password service account, `1password/load-secrets-action@<full-SHA>`)로 **JIT env-only injection**(CLI-arg 0, auto-mask)한다. bootstrap credential = **read-only single-purpose-vault narrow-scope service-account token**(`OP_SERVICE_ACCOUNT_TOKEN`). 기저 = CFP-2743 Change Plan §10.1 amendment TEXT 초안의 부활(구현리뷰 FIX iter1 B-hosted supersede 의 전제[fix-ledger 의 persistent 러너 이탈]를 CFP-2821 사용자 확정 R2 가 재개봉).
+
+  본 path 의 self-hosted 적격 = 아래 7종 조건 **전부 AND** 충족 시에 한한다:
+  1. **private 한정** — `private` ∧ `allow_forking=false` ∧ runner group `allows_public_repositories=false` 3중.
+  2. **fork-PR self-hosted 미실행 불변** — 본 §결정 8 1문단 무약화.
+  3. **write credential least-privilege** — org-wide classic PAT 의 self-hosted 상주 금지: fine-grained `issues:write`@대상 repo 한정 또는 scoped GitHub App installation token(≤1h). **ADR-066 Amendment 5 exception(classic No-expiration)은 self-hosted 경로에 미적용.**
+  4. **runtime JIT sourcing 의무** — env-only injection + auto-mask + CLI-arg 0(정적 env-binding 원복 금지).
+  5. **residual 완화 의무** — post-job env-purge + workflow `permissions` 최소 + T4/T5(persistent 러너 cross-job residue) **명시 수용 declare**(Story/Change Plan §7).
+  6. **supply-chain** — secret-bearing action full-SHA pin + egress allowlist region-correct(secret-manager endpoint 는 SA 계정 region 실측 — repo 실측 불가 항목은 operator 확인으로 정직 처리).
+  7. **scope 검증 = SecurityTest lane 실측** — SA token 의 read-only ∧ single-vault scope 는 presence-only 검사로 검증 불가(false-oracle) → provisioning-side 실측 의무.
+
+  **정직 한정(over-claim 금지)**: 본 path 는 standing-credential-**0**(OIDC 등가) 아님 — standing SA token 1 잔존. T4/T5(persistent 러너 job-env cross-job residue)는 OIDC 포함 **전 credential 모델 공통 limb** 이며 ephemeral/JIT-*runner* 전환으로만 완전봉인 — 본 path 의 differentiator 로 서술 금지. carrier = CFP-2821(Change Plan `cfp-2821-fix-ledger-selfhosted-migration` §7/§10).
 
 ### §결정 9 — ADR-048(ci-native) Amendment 필요성 (stuck 판정 pickup-기반)
 
