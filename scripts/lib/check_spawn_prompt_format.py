@@ -24,7 +24,7 @@
 #   exit 0: all blocks present (or bypass)
 #   exit 1: 1+ block missing
 #
-# Block enum (closed-set, ADR-115 §결정 6):
+# Block enum (closed-set — 4 블록 실 출처 = ADR-082 Amendment 15·Amendment 5 + ADR-040 Amendment 6 + ADR-064 Amendment 1, 4 분산 ADR):
 #   "PRE-SPAWN-ORIGIN-MAIN-SHA"  / "USER-UTTERANCE-VERBATIM"
 #   "WORKTREE-FIRST-DIRECTIVE"   / "PARALLEL-DISPATCH-DIRECTIVE"
 #
