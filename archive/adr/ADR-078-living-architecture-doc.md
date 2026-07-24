@@ -60,11 +60,32 @@ amendment_log:
       (permanent governance ratchet). 약화 방향 (예: 5-anchor section schema 축소 /
       per-Epic 현행화 의무 약화 / Confluence mirror authoritative 격상 reversal) 은 ADR-
       058 §결정 5 sunset_justification 의무로 evidence-gate 통과 요구.
+  - amendment: 3
+    date: 2026-07-24
+    carrier: CFP-2813
+    summary: |
+      Amendment 2 §결정 2 의 granularity 결정 위임 (Epic-level vs Phase 1 PR-level — "S3.5 /
+      CFP-1429 lane gate wire 시점 결정") 을 per-PR default 로 확정 (un-defer) + 제거 이력 명시
+      (CFP-1429 mechanical wire 는 실집행 완료 후 PR #1972 workflow 삭제 → PR #2110 script·
+      registry 삭제로 완전 부재 회귀) + Wave 2 wire 재집행 선언 (CFP-2813 Phase 2 재건축 —
+      per-PR 변경-문서 coupling closed-binary + blocking-on-pr(surfacing) day-1 + discriminating
+      self-test 필수 동반, 구 wire 의 self-test 부재 비대칭 해소). §결정 4 드리프트 체크 의무의
+      프레이밍 확정 — content-drift 기계 대조 (구 architecture-drift 경로) 재도입 금지 (구조-only
+      문서와 라인-level 코드 사이 mechanical 대조 anchor 원리적 부재 — Story §2.6 T-2/T-3),
+      실효화 축 = touch/timing update gate (ADR-112 Amendment 1 소유). 불변: §결정 1 (4 영역
+      closed-enum + anti-scope guard) / 거절대안 2 (per-plugin 분산) / Amendment 2 §결정 3
+      (5-anchor closed-set, open_extension: false). 읽기 프로토콜 축 = 신규 ADR-166 분리.
+    direction: strengthening
+    sunset_justification: |
+      N/A — ratchet 강화 only (granularity per-Epic → per-PR 확정 = Amendment 2 결정 7 이
+      명시한 "per-Epic 현행화 granularity 강화 (Phase 1 PR-level)" 강화 방향 예시의 실행 +
+      제거된 mechanical wire 의 재건축 = enforcement ratchet up). ADR-058 §결정 5 면제.
 related_stories:
   - CFP-919  # 본 Story carrier — Story-1 (anchor only, ADR + doc 타입 신설)
   - CFP-756  # Epic B parent — 설계 레인 영속 구조 설계 문서 유지 정책
   - CFP-1425  # Amendment 2 carrier — Mega-Epic CFP-1415 Sub-C bundle (CFP-1418) S3.1 (Living Architecture Confluence mirror authoritative + per-Epic 현행화 mandate + 5-anchor section schema)
   - CFP-1415  # Mega-Epic parent — Confluence-as-derived-mirror governance standardization (Amendment 2 carrier 의 umbrella)
+  - CFP-2813  # Amendment 3 carrier — Living Architecture 1차 소스 승격 (per-PR granularity 확정 + 게이트 재건축 + 신규 ADR-166 읽기 프로토콜 분리)
 related_adrs:
   - ADR-041  # Doc Location Registry — architecture_doc 14번째 entry append-only mechanism
   - ADR-076  # 선언적 reconciliation upgrade flow SSOT — desired/current/converge 3-layer 패턴 재사용 (도메인 disjoint, 패턴 동형)
@@ -108,6 +129,11 @@ mechanical_enforcement_actions:
 # update.sh + bats fixture + evidence-checks-registry row + label-registry-v2 hotfix-bypass:
 # living-architecture-update family member). ADR-040 Amendment 3 §결정 7.D self-application
 # invariant 정합 — declare 시점 1 entry append + 후속 carrier (S3.5) 명시.
+# Amendment 3 (CFP-2813, 2026-07-24) — living-architecture-update 재-wire: CFP-1429 wire (f30abe550)
+# 는 PR #1972 (workflow prune) → PR #2110 (script·registry 정리) 로 제거되어 완전 부재 상태였음 →
+# CFP-2813 Phase 2 가 per-PR 변경-문서 coupling closed-binary + blocking-on-pr(surfacing) day-1 +
+# discriminating self-test 동반으로 재건축 (ADR-112 Amendment 1 + ADR-154 self-verification enroll).
+# architecture-drift entry 는 무수정 (T-3 — content-drift 재도입 금지, 제거 이력 기록만 보존).
 ---
 
 # ADR-078: 살아있는 구조 설계 문서 (living architecture doc) 유지 정책 SSOT
@@ -374,6 +400,35 @@ mechanical_enforcement_actions:
 | **S3.3** | CFP-1427 | 8 lane plugin Living Arch seed (`docs/architecture/codeforge-{requirements,design,develop,review,test,pmo,deploy,deploy-review}.md` + wrapper `docs/architecture/codeforge-family.md` 5-anchor expand) | S3.1 state dependency (5-anchor schema 선행) |
 | **S3.4** | (별도 CFP carrier) | ArchitectAnalystAgent dual-read path 실 wire (codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 + git primary + Confluence fallback) | S3.1+S3.3 state dependency (schema + seed 선행) |
 | **S3.5** | CFP-1429 | mechanical wire — review-verdict-v4 v4.10 MINOR `living_architecture_updated: bool` + lint workflow + bats fixture + evidence-checks-registry row + hotfix-bypass label family member | S3.1+S3.3+S3.4 state dependency (mandate + seed + dual-read path 선행) |
+
+## Amendment 3 (2026-07-24 KST, CFP-2813) — per-PR granularity 확정 (un-defer) + mechanical wire 재집행 선언
+
+### 동인
+
+사용자 확정 진단 (CFP-2813 Story §1, 2026-07-23): Living Architecture 최신성 기계 강제 공백. 실측 이력 — Amendment 2 §결정 2 가 위임한 mechanical wire (S3.5 / CFP-1429, PR #1484 `f30abe550`) 는 **declare→wire 완주 후 제거**됐다: PR #1972 (2026-06-05, wrapper 자기검증 CI 대량 prune) 가 workflow 를, PR #2110 (2026-06-10, Issue #2105 follow-up orphan 정리) 이 script·registry entry 를 삭제 → 현재 script 0 / workflow 0 완전 부재. `hotfix-bypass:living-architecture-update` 라벨만 orphan active 잔존. 6/7 doc 의 `last_captured` 가 모노레포 통합(2026-06-12) 이전에 정지 — 게이트 부재의 실증.
+
+### Amendment 3 결정 1 — granularity un-defer: per-PR default 확정
+
+Amendment 2 §결정 2 의 "granularity 결정 위임 (Epic merge vs Phase 1 PR merge — S3.5 wire 시점 결정)" 을 **per-PR (매 PR merge 단위) default** 로 확정한다:
+
+- CI 에 Epic-close native 이벤트 부재 (Epic = 논리 묶음, git/GitHub-native 아님) — per-Epic 발동은 기계 게이트로 착지 불가 (구조적).
+- Epic 없는 단독 Story/PR 이 다수 경로 — per-Epic 은 상시 우회 채널 (Story §5.1 UC-6).
+- 구 게이트 자신이 이미 **per-PR heuristic proxy** 로 착지했던 이력 (label-registry-v2 `hotfix-bypass:living-architecture-update` description 원형 보존 실측).
+- Amendment 2 결정 7 이 명시한 강화 방향 예시 ("per-Epic 현행화 granularity 강화 (Phase 1 PR-level)") 의 실행 — ratchet 강화, ADR-058 §결정 5 면제.
+
+per-PR 판정·anti-gaming·tier 상세 = ADR-112 Amendment 1 소유 (본 ADR = what/where + granularity anchor).
+
+### Amendment 3 결정 2 — §결정 4 드리프트 체크 의무의 프레이밍 확정 (content-drift 재도입 금지)
+
+§결정 4 의 2번째 의무 ("드리프트 체크: architecture_doc 본문 vs 실제 코드 구조 mechanical drift 감지") 는 **content-drift 기계 대조 (구 architecture-drift, detection class a/b/d) 경로로 재도입하지 않는다**: 구조-only 본문과 라인-level 코드 사이에 mechanical 대조용 공유 anchor 가 원리적으로 없어 (anti-scope guard 4종이 라인 anchor 를 의도적으로 금지) 기계 대조는 vacuous 또는 false-noise 로 귀결한다 (Story §2.6 T-2). 실효화 축 = **변경-문서 coupling (touch/timing) update gate** (ADR-112) + L3 semantic 대조 = DesignReviewPL review-tier. frontmatter `architecture-drift` entry = 무수정 (이력 기록 보존 — T-3).
+
+### Amendment 3 결정 3 — Wave 2 wire 재집행 선언 (CFP-2813 Phase 2)
+
+`mechanical_enforcement_actions` 의 `living-architecture-update` 를 CFP-2813 Phase 2 가 재건축한다: per-PR 변경-문서 coupling closed-binary + **blocking-on-pr(surfacing) day-1** (ADR-060 §7.9.A/B 어휘 — continue-on-error 없음 ∧ required contexts 미편입) + **discriminating self-test 필수 동반** (구 wire 의 self-test 부재 비대칭 해소 — ADR-154 self-verification 번들 enroll). 파일 단위 배선 = Change Plan `cfp-2813-living-arch-primary-source.md` §5 SSOT.
+
+### Amendment 3 불변 명시
+
+§결정 1 (4 영역 closed-enum + anti-scope guard 4종) / 거절대안 2 (per-plugin self-owned 분산 — wrapper canonical 1파일 거절) / Amendment 2 §결정 3 (5-anchor closed-set, open_extension: false) — 전부 무변경. 읽기 프로토콜 (소비 방향) = 신규 [ADR-166](ADR-166-design-info-read-protocol.md) 분리 (본 ADR 은 write/문서 축 유지).
 
 ## 거절된 대안
 
