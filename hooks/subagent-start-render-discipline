@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# SubagentStart hook for codeforge plugin — render-line-prefix 저작 규율 전달
+#
+# Carrier: CFP-2818 Phase 2 (ADR-143 Amendment 3 — 값 정확성 저작 규율)
+#
+# 책임 경계 (ADR-143 Amendment 3 §7.11 #3 / §7.2 D1):
+#   - 책임: SubagentStart 이벤트에서 서브에이전트로 (a) self명 (b) KST 실측 앵커 (c) 저작 규율
+#           3요소를 additionalContext 로 전달. input `agent_type` 을 받아 G2 sanitize 규칙으로
+#           self명 도출. fresh KST 헬퍼 실측치 주입. fail-open ALWAYS (ADR-143 §결정 4).
+#   - 비책임: 서브에이전트의 실제 준수는 advisory (render 기계게이트 불가, §A3.3).
+#             agent_type 외 payload 정보 변조 금지.
+#
+# 정적 properties (ADR-143 Amendment 3 §7.11 체크):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 hook block 금지
+#   (b) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp (stdin/stderr 만)
+#   (c) network call 0
+#   (d) Python 호출 — 기존 check_spawn_description_prefix.py 재사용 (§7.11 hygiene)
+#   (e) exit 0 ALWAYS (fail-open)
+#
+# Graceful degradation 3층:
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) JSON parse 실패 / stdin 읽기 실패 → stdout 무출력 + exit 0
+#   (c) 헬퍼 실패(KST·sanitize) → additionalContext 에서 시각 요소 생략 (§7.3 floor, 허구 금지)
+#
+# one-channel rule (ADR-143 Amendment 3 §결정 5):
+#   marker: [codeforge-wrapper-subagent-start-render-discipline]
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — fail-open ALWAYS (§7.11 #3)
+trap 'exit 0' ERR
+
+# ── stdin = SubagentStart JSON payload 읽기 ──────────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# payload 가 비어있으면 pass-through (additionalContext 미emit)
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── agent_type 추출 (SubagentStart input 에서 쿼리) ────────────────────────────
+#   정정: JSON parse 성공 + agent_type FIELD 부재/빈값 → additionalContext 출력 (self명 = unknown-agent 포함).
+#         무출력은 JSON parse 실패 경로 전용.
+AGENT_TYPE=""
+JSON_PARSE_OK="0"
+PYTHON_CMD=""
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -n "$PYTHON_CMD" ]; then
+  _AT="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    sys.stdout.write('OK:')
+    if 'agent_type' in data:
+        v = data.get('agent_type')
+        sys.stdout.write(v if isinstance(v, str) else '')
+    else:
+        sys.stdout.write('')
+except Exception:
+    sys.stdout.write('ERR:')
+" 2>/dev/null || true)"
+
+  # parse 결과 판정 (OK: 또는 ERR: 프리픽스)
+  case "$_AT" in
+    OK:*)
+      JSON_PARSE_OK="1"
+      AGENT_TYPE="${_AT#OK:}"
+      ;;
+    *)
+      JSON_PARSE_OK="0"
+      AGENT_TYPE=""
+      ;;
+  esac
+fi
+
+# JSON parse 실패 → hook scope 외 (무출력 + exit 0)
+if [ "$JSON_PARSE_OK" = "0" ]; then
+  exit 0
+fi
+
+# parse 성공 → additionalContext 생성·출력 (agent_type 부재/빈값도 포함 — unknown-agent fallback)
+
+# ── KST render stamp (헬퍼 실행, 실패 시 빈 문자열 — rung 4 degradation) ────────
+STAMP=""
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+elif [ -f "scripts/kst-render-stamp.sh" ]; then
+  STAMP="$(bash "scripts/kst-render-stamp.sh" 2>/dev/null || true)"
+fi
+
+# ── subject sanitize (G2 규칙 재사용 — check_spawn_description_prefix.py) ──────
+#   재사용 방식: 해당 Python 모듈의 _sanitize_subject 로직을 bash heredoc 로 복제.
+#   사유: subject 1개 필드만 필요해 Python 모듈 import/subprocess 오버헤드 회피,
+#   PLUGIN_ROOT/cwd 이중 경로 해석도 필요 없음 (인라인 삽입이 명시적).
+#   원본: scripts/lib/check_spawn_description_prefix.py L111-137 (ADR-061 Amd3, ReDoS-safe).
+
+_sanitize_subject() {
+  local raw="$1"
+  # 1. namespace strip: ':' 있으면 마지막 ':' 뒤만
+  if [[ "$raw" == *":"* ]]; then
+    raw="${raw##*:}"
+  fi
+  # 2. '[' , ']' 문자 제거 (RE_PREFIX 파괴 방지)
+  raw="${raw//\[/}"
+  raw="${raw//\]/}"
+  # 3. 제어문자·개행 정규화 → 공백 (CFP-2599 P2-1 / check_spawn_description_prefix.py F6)
+  #    POSIX [:cntrl:] = 0x00-0x1f, 0x7f (bash regexp 지원, portable)
+  raw=$(printf '%s' "$raw" | sed 's/[[:cntrl:]]/ /g')
+  # 4. strip() — leading/trailing whitespace 제거
+  raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  # 5. ≤64 자 truncate (RE_PREFIX bound 정합)
+  if [ ${#raw} -gt 64 ]; then
+    raw="${raw:0:64}"
+  fi
+  # 6. '' → "unknown-agent" fallback
+  if [ -z "$raw" ]; then
+    printf '%s' "unknown-agent"
+  else
+    printf '%s' "$raw"
+  fi
+}
+
+SANITIZED_SUBJECT="$(_sanitize_subject "$AGENT_TYPE")"
+
+# ── additionalContext TEXT 구성 (§7.11 #3 TEXT 계약 정합) ──────────────────────
+#   구성 요소:
+#   - 헤더 행: [render-line-prefix 저작 규율 — ADR-143 Amd3 / CFP-2818]
+#   - self명 행: self명 = <sanitized>
+#   - KST 앵커 행: KST 실측 앵커 = <STAMP> (실패시 생략)
+#   - 저작 규율 compact (각 요소 1행)
+
+ADDITIONAL_CONTEXT="[render-line-prefix 저작 규율 — ADR-143 Amd3 / CFP-2818]
+self명 = $SANITIZED_SUBJECT"
+
+# 앵커 보유 여부로 조건 분기 (§7.3 생략형 fallback)
+if [ -n "$STAMP" ]; then
+  ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT
+KST 실측 앵커 = $STAMP"
+else
+  ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT
+앵커 미확보 — 시각 생략"
+fi
+
+# 저작 규율 compact 텍스트 추가
+ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT
+
+저작 규율:
+① leaf 도구호출 description = [\$<self명>] \$<앵커> - \$<액션> (앵커 verbatim, 상향 가산 금지)
+② 앵커 부재 시 시각 생략 (생략 > fabrication)
+③ subject = roster 실명 verbatim (허구명·작업명 금지, unknown-agent 명시 unknown)
+(자세히: ADR-143 Amendment 3 §A3.1-A3.4 + CLAUDE.md render-line-prefix 절)"
+
+# ── JSON 출력 구성 (§7.2 D1 primary reach ③d) ──────────────────────────────────
+#   형식: {"hookSpecificOutput": {"hookEventName": "SubagentStart", "additionalContext": "<TEXT>"}}
+#   요구사항: wholehour stdout = 유효 JSON 1건, permissionDecision 미emit, fail-open exit 0.
+
+if [ -n "$PYTHON_CMD" ]; then
+  printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    payload = json.load(sys.stdin)
+    # additionalContext 내용 생성 (bash 에서 전달받은 값 — 여기서 escaping 처리)
+    additional_context = '''$ADDITIONAL_CONTEXT'''
+
+    output = {
+        'hookSpecificOutput': {
+            'hookEventName': 'SubagentStart',
+            'additionalContext': additional_context
+        }
+    }
+    json.dump(output, sys.stdout)
+except Exception:
+    pass
+" 2>/dev/null || true
+fi
+
+exit 0
