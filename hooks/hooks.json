@@ -159,6 +159,17 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-start-render-discipline",
+            "async": false
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "hooks": [

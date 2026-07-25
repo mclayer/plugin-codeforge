@@ -80,7 +80,7 @@ Evidence-checks-registry entry: parallel-work-sentinel-pickup (ADR-073 Amendment
 
 Graceful degradation: gh API failure → local git log fallback (non-blocking, warning tier).
 
-[codeforge render-line-prefix advisory — CFP-2574 / ADR-143 Amendment 2 (CFP-2770)]
+[codeforge render-line-prefix advisory — CFP-2574 / ADR-143 Amendment 2 (CFP-2770) · Amendment 3 값 정확성 저작 규율 (CFP-2818)]
 
 Agent 스폰·도구호출·Orchestrator 상태 줄 렌더에 `[<주체명>] MM/DD HH:MM - <내용>` 프리픽스를 직접 저작(advisory, 비강제).
 화면 렌더 도달 유일 통로 = model-authored 프리픽스(에이전트/Orchestrator 가 description·prose 에 직접 저작 — primary).
@@ -88,7 +88,11 @@ PreToolUse hook updatedInput 기계 주입 = 실행 입력 계층만 치환·화
 - 범위① Agent spawn description = `[<피스폰 agent_type>] MM/DD HH:MM - <task>` (subject=피스폰자, dispatcher/Orchestrator 명 미등장 — INV-1).
 - 범위② 서브에이전트 leaf 도구호출 description = `[<self agent_type>] MM/DD HH:MM - <action>` (subject=self).
 - 범위③ Orchestrator 상태·액션 줄 = `[Orchestrator] MM/DD HH:MM - <내용>` self-subject 직접 저작 (렌더 UI 진행 줄 한정, INV-2 완화).
-- 시각 = KST (UTC+9 고정 산술), dispatch/작성 시점 근사. helper: bash scripts/kst-render-stamp.sh
+- 시각(model 계층) = 실측 앵커에서만 유도 — 앵커 = 헬퍼 `bash scripts/kst-render-stamp.sh` 실행 산출(또는 SubagentStart·spawn packet 주입 실측치). 로컬 clock read·offset 재가산 일절 금지(이미-KST 값 +9 재가산 = 정확히 +9h 미래). "UTC+9 고정 산술"은 헬퍼 invocation 내부 정당화이지 model 저작 지침 아님 — tz 변환은 헬퍼 단일 경로.
+- floor = 앵커 값 verbatim (경과분 상향 가산·반올림 금지, 표시 시각 ≤ 저작 시점 실측 now — 앵커는 저작 이전 측정이라 미래 overshoot 정의상 불가).
+- 재실측 trigger 4종 = 제어 (재)획득한 매 활성화 turn 시작 시(T1 park/child-대기 복귀 / T2 세션 resume·cold-resume / T3 공백 후 lane·컨텍스트 전환 / T4 임의 suspension 복귀) timestamp 최초 저작 전 헬퍼 1회 재실행. 수치 상한("X분 초과") 게이트 없음(≈10분 = 비규범 comfort 참고).
+- 앵커 부재 시 시각 생략 = `[<주체명>] MM/DD - <내용>`(HH:MM 생략) 또는 시각 요소 전체 생략 (생략 > fabrication — 허구 시각 기입 금지, RFC 5424 §6.2.3 NILVALUE MUST).
+- 주체(subject) = spawn-event-v1 agent_type roster 실명 verbatim (범위①=피스폰 subagent_type / 범위②=self agent_type), 미등재·불명 = unknown-agent — 허구명·작업명·dispatcher 명 금지.
 - TodoWrite 행 + prose 상태보고(사용자 대상 대화 텍스트, prefix-exempt) 제외.
 - 3요소(주체명/시각/내용)에 secret·token·절대경로·자격증명 임베드 금지 — 내용은 액션 요약만.
 EOF

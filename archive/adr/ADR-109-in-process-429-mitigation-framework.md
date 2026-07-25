@@ -311,9 +311,9 @@ session/usage-limit 포함 detection = 다음 6 literal any-match (closed-set, n
 ADR-141 Amendment 6(규범 SSOT)의 fable-리밋 opus failover 를 본 framework 에 합성한다:
 
 - **§결정 3 step2 dead slot re-tenant** — step2(cross-model substitution)가 cross-ref 하던 구 ADR-057 §결정 2(sonnet rate-limit→opus)는 ADR-141 로 moot/dead 라 구조적으로 비어 있다. fable 브랜치가 신규 trigger(fable 리밋)로 그 slot 을 re-tenant(부활 아님 — ADR-057 Superseded 유지).
-- **fable step1 bypass** — fable 리밋 시 step1(fable same-model exp-backoff soak)을 건너뛰고 step2(fable→opus)로 즉시 직행(Option A 즉시전환 — ADR-141 A6-2 근거 3층: reset long-horizon / 별 pool / Retry-After trap). opus 착지 **후** 비로소 §결정 2 exp-backoff / §결정 3 step1·3·4 가 opus 를 same-model 로 재정박.
+- **fable step1 bypass** — fable 리밋 시 step1(fable same-model exp-backoff soak)을 건너뛰고 step2(fable→opus)로 즉시 직행(Option A 즉시전환 — ADR-141 A6-2 근거 3층: reset long-horizon / 별개 pool / Retry-After trap). opus 착지 **후** 비로소 §결정 2 exp-backoff / §결정 3 step1·3·4 가 opus 를 same-model 로 재정박.
 - **cascade depth count-in** — fable→opus hop = `cascade_depth` **1(COUNTS)**. opus 착지 후 opus 자기 within-model soak 은 미증가. opus soak 소진 후 cascade ≥ 2 = §결정 5 user manual resume only.
-- **§14 격리** — failover = §14 전용 태그 `[rate-limit-failover:fable→opus]`(§결정 9 §10 FIX Ledger 금지 상속, 기존 §결정 8 `[429-auto-retry: ...]` 및 dead 태그 `[rate-limit-fallback:sonnet→opus]`/`[model-unavailable-fallback:fable→opus]` 와 비합산·별 measurement).
+- **§14 격리** — failover = §14 전용 태그 `[rate-limit-failover:fable→opus]`(§결정 9 §10 FIX Ledger 금지 상속, 기존 §결정 8 `[429-auto-retry: ...]` 및 dead 태그 `[rate-limit-fallback:sonnet→opus]`/`[model-unavailable-fallback:fable→opus]` 와 비합산·별도 measurement).
 
 ### (e) 529 disjoint 재확인
 

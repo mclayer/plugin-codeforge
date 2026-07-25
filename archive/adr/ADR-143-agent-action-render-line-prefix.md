@@ -78,6 +78,34 @@ amendment_log:
       변조 성공)은 무손상 — render 목적 자동 달성 함의만 정정.
       §결정 6/7/8 UNCHANGED 재확인 — 저작 주체 model 회귀에도 신규 persist/export 경로 0(ephemeral
       유지) → §결정 8 persist-guard 미발동. is_transitional: false 유지.
+  - number: 3
+    carrier_story: CFP-2818
+    date: 2026-07-24
+    direction: strengthen
+    target: "§결정 3 (시각원 계층 분기 + floor verbatim + control-yield 재실측 trigger) · §결정 2 (앵커-부재 생략형 additive 변형) · §결정 5 (primary-reach 나열 정정 — agent .md 항목 honesty-correction + SubagentStart 채널 실 wiring) · Amendment 2 carrier 헤더 (실존하지 않는 change-plan 인용 사실 정정)"
+    summary: >-
+      값 정확성 저작 규율 신설 — 사용자 신고 2증상(미래 시각·주체명 오기)은 Amendment 2 가
+      render primary 를 model-authored 로 승격하며 값 정확성 보증(Amd 1 hook per-dispatch
+      stamp)이 화면 통로에서 상실된 부작용. 정정 = (a) §결정 3 시각원 지침의 계층 분기 —
+      헬퍼 계층 "UTC+9 고정 산술"(UNCHANGED, FORBID 2문 carry) / model 계층 신설 "실측
+      앵커(헬퍼 실행 또는 SubagentStart·spawn packet 주입 실측치)에서만 유도, 로컬 clock
+      read·암산 offset 가산 금지" + floor(앵커 값 verbatim — 상향 가산·반올림 금지, 표시
+      시각 ≤ 실측 now invariant) + control-yield 재실측 trigger 4종(T1 park 복귀/T2
+      resume/T3 lane 전환/T4 suspension 복귀 — 수치 게이트 비채택, model-uncheckable).
+      (b) §결정 2 앵커-부재 한정 생략형 변형 additive 추가(생략 > fabrication, RFC 5424
+      §6.2.3 NILVALUE MUST 동형) — RE_PREFIX 골격·체커·hook 무변경(생략형은 render 계층
+      규율, hook 재주입 stamp = 매 dispatch 헬퍼 실측치라 실행-계층 정확도 보정으로 수용).
+      (c) §결정 5 primary-reach 나열에서 선언-미wiring "agent .md" 제거 + SubagentStart
+      hook additionalContext 채널 실 wiring 추가(공식 지원 — input agent_type 포함, 모델-가시
+      컨텍스트 주입) + spawn packet 저작 규율 보조(spawner-asserted 정직 선언).
+      (d) Amendment 2 carrier 헤더의 실존하지 않는 change-plan 파일 인용 정정(§결과 절
+      change-plan 면제 선언과 자기모순 해소 — 결정 내용 무변경, 사실 표기만).
+    sunset_justification: >-
+      N/A — anti-fabrication 강화(값 정확성 규율 = capability-ADD, forbid-scope 축소 0)
+      + 선언-실재 gap 정정(honesty-correction — Amd 2 §A2.1 #15897 오프레이밍 정정과 동형).
+      §결정 5 "agent .md" 항목 제거는 실 wiring 0건인 선언의 정정이지 실재 채널 축소가
+      아니며, §결정 2 생략형은 canonical 대체 아닌 additive 변형. ADR-058 §결정 5 는
+      WEAKENING 에만 justification 의무 — 본 amendment 비해당.
 related_files:
   - CLAUDE.md  # 범위① Orchestrator spawn-description 규약 directive + 전-agent behavioral note (Phase 2)
   - hooks/pretooluse-agent-spawn-gate  # 범위① description-format detect 확장 (warning-tier, exit-0-always, Phase 2)
@@ -293,7 +321,7 @@ N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governanc
 
 ## Amendment 2 (CFP-2770) — render-glanceability primary → model-authored / hook backup 강등
 
-> Carrier: CFP-2770 (사용자 결정 2026-07-19 = Option A "가능한 것부터 확실히"). Direction = **weaken (forbid-scope 축소 + primary→backup 강등)**, `is_transitional` 무변경(false). 본 절은 §결정 원문 + Amendment 1 을 **삭제하지 않고 amend** — decision-by-decision 상태 기재. 설계 SSOT = Change Plan `2026-07-20-cfp-2770-agent-render-prefix.md`. Gate = 설계 lane firsthand render probe(기계게이트 불가 — ephemeral display + upstream #61152 render-transform hook 부재).
+> Carrier: CFP-2770 (사용자 결정 2026-07-19 = Option A "가능한 것부터 확실히"). Direction = **weaken (forbid-scope 축소 + primary→backup 강등)**, `is_transitional` 무변경(false). 본 절은 §결정 원문 + Amendment 1 을 **삭제하지 않고 amend** — decision-by-decision 상태 기재. 설계 SSOT = 본 ADR Amendment 2 + Story CFP-2770 §7. Gate = 설계 lane firsthand render probe(기계게이트 불가 — ephemeral display + upstream #61152 render-transform hook 부재).
 
 #### A2.0 핵심 전환 (render-loss 근본원인 재지정)
 
@@ -328,6 +356,124 @@ inline whitelist(mechanism 축: inline vs spawn) 무변경 — render UI action/
 - **todo-line** (ADR-038 §결정 2 Amd5 native status 전용·이중표기 금지) = OOS.
 - **description-less 도구**(Read/Grep/Edit/Write — 저작 표면 부재) = OOS(advisory residual 조차 불가).
 - **hook 기반 render 자동각인**(upstream #61152 render-transform hook 부재) = OOS(upstream-blocked). 해소 시 E-5 경로로 재승격 재판정.
+
+## Amendment 3 (CFP-2818) — 값 정확성 저작 규율 (시각 floor·생략형·주체 실명) + 전달 채널 실 wiring
+
+> Carrier: CFP-2818 (사용자 확정 2026-07-24 — AC 6건 = Story §5.3). Direction =
+> **strengthen** (honesty-correction 성분 §A3.1 §결정 5 항목·carrier 헤더 정정에 명기).
+> 본 절은 §결정 원문 + Amendment 1 + Amendment 2 를 삭제하지 않고 amend —
+> decision-by-decision 기재. 설계 SSOT = 본 ADR §결정/Amendment + Story CFP-2818 §7
+> (change-plan 면제 — §결과 절 선언 재확인).
+> Amd 2 carrier-헤더 사실 정정(§A3.1 말미) = **metadata-only 예외** — 결정 본문
+> append-only 관행 무손상 (frontmatter/carrier 표기의 사실 오류 정정 한정, 설계리뷰 P2-② 반영).
+
+#### A3.0 핵심 (두 증상 = model-authored primary 통로의 값 정확성 규율 공백)
+
+사용자 신고 2증상(미래 시각 빈번·주체명 오기)은 서로 다른 두 버그가 아니라 Amendment 2
+비대칭의 두 증상이다: 화면 도달 유일 통로 = model-authored 저작인데, 값 정확성을 기계
+보증하던 hook 주입(Amendment 1 per-dispatch stamp)은 실행-입력 계층에만 작용한다.
+헬퍼·hook 코드 = 무결 [3중 실측] — 정정 대상은 model 저작 규율 + 전달 채널이며,
+Amendment 2 의 render-primary 결정 자체는 재론하지 않는다.
+
+- 미래 시각 원인 2계 (사용자 확인 07/24 — "둘 다 관측"): α = 앵커 부재 fabrication /
+  근사 미래측 overshoot(몇 분 단위), β = 이미-KST 시각원에 "+9 고정 산술" 재적용
+  (정확히 +9h 미래). 대등한 1급 원인 — α 차단 = floor + 생략형, β 차단 = 계층 분기.
+- 주체명 오기 원인: subagent 가 self명을 알 구조적 경로 부재 [verified: 조립기
+  agent_type 주입 0] → 전달 채널 실 wiring 으로 해소.
+
+#### A3.1 decision-by-decision
+
+- **§결정 1 (scope/subject)** — **UNCHANGED**. INV-1 LOAD-BEARING / INV-2 Amd 2 완화
+  그대로. 주체 규율 보강 = §결정 2 값 공간 재확인 + §A3.4 전달 채널 — subject 판정
+  규칙 자체 무변경.
+- **§결정 2 (format)** — **AMENDED (additive)**. canonical `[에이전트명] MM/DD HH:MM
+  - 내용` 유지 + **앵커-부재 한정 생략형 변형** 추가: 실측 앵커 미보유 시
+  `[<주체명>] MM/DD - <내용>`(HH:MM 생략 — 날짜는 harness date-only 주입으로 가용
+  [verified: #34530]) 또는 시각 요소 전체 생략. 허구 시각 기입 금지(생략 > fabrication
+  [source: RFC 5424 §6.2.3 — TIMESTAMP 획득 불가 시 NILVALUE MUST]). RE_PREFIX 골격
+  무변경 — 생략형은 model 저작(render) 계층 변형이며 체커/hook 확장 비동반(§A3.2).
+- **§결정 3 (clock)** — **AMENDED (계층 분기 — 산술 자체 UNCHANGED)**.
+  - **헬퍼 계층**: "UTC+9 고정 산술"(`date -u -d '+9 hours'` / `kst_render_stamp.py`)
+    + FORBID machine-local `date` + FORBID `TZ=Asia/Seoul` — verbatim carry, 단
+    이 서술의 관할 = 헬퍼 invocation 내부 정당화로 명시 한정(model 저작 지침 아님).
+  - **model 계층 (신설)**: 표시 시각은 **실측 앵커에서만 유도** — 앵커 = 헬퍼 실행
+    산출 또는 SubagentStart·spawn packet 주입 실측치. 로컬 clock read·암산 offset
+    가산 일절 금지(이미-KST 값 +9 재가산 = 정확히 +9h 미래, 원인 β). tz 변환 =
+    헬퍼 단일 경로.
+  - **floor (근사 방향 pin — R-3 해소)**: 앵커 값 **verbatim** 사용, 경과분 상향
+    가산·반올림 금지 — "표시 시각 ≤ 저작 시점 실측 now" invariant. 앵커는 저작 이전
+    측정이라 verbatim 사용 시 미래 overshoot 정의상 불가. leaf② "coarse turn-anchor
+    근사" 의미 = "앵커 재사용"으로 정밀화(경과 가산 아님). 연도-부재 MM/DD 비교
+    blind-spot 은 비교 연산 불요화(verbatim)로 구조 회피 + 잔여 honest 수용.
+  - **재실측 trigger (stale 앵커)**: 제어를 (재)획득한 매 활성화 turn 시작 시 —
+    T1 park/child-대기 복귀 / T2 세션 resume·cold-resume / T3 공백 후 lane·컨텍스트
+    전환 / T4 임의 suspension 복귀 — timestamp 최초 저작 전 헬퍼 1회 재실행. 수치
+    상한("X분 초과") 게이트 비채택 — model 은 경과 실측 시계 부재(uncheckable 게이트
+    = theater, ADR-119 §결정 6). ≈10분 = comfort 참고(비규범).
+- **§결정 4 (enforcement)** — **UNCHANGED**. advisory ceiling / theater-ban / render
+  primary = model-authored + hook fail-open backup(Amd 2) 유지.
+- **§결정 5 (injection point)** — **AMENDED (honesty-correction + 실 wiring)**.
+  Amd 2 primary-reach 4채널 나열 중 "agent .md" = 선언-미wiring(plugins/** 규범 참조
+  0건 [verified: Grep]) → 나열에서 **제거**(per-agent 45파일 지양 invariant 존중 —
+  실 wiring 갈래 비채택). 신규 실 wiring 채널 = **SubagentStart hook
+  `additionalContext`** [source: code.claude.com/docs/en/hooks.md — subagent spawn
+  시 발화, input `agent_type` 포함(plugin subagent = plugin-scoped 식별자), 모델-가시
+  컨텍스트 주입, blocking 없음]: (a) self명 (b) fresh KST 헬퍼 실측치 (c) 저작 규율
+  3요소 단일 entry 전달, consumer 세션 포함. 재문안 후 primary reach = CLAUDE.md
+  directive + 매턴 self-check backstop + SessionStart advisory(top-level) +
+  **SubagentStart additionalContext(서브에이전트)** + spawn packet 저작 규율(보조 —
+  self명 = "spawner-asserted, subagent-unverified" 정직 선언 동반). plugin
+  hooks.json 의 SubagentStart 등재 지원 = 공식문서 명시 미확정 → Phase 2 배선 시
+  실측 gate, 미지원 판명 시 spawn packet 보조 = fallback.
+- **§결정 6 / §결정 7 / §결정 8** — **UNCHANGED (명시 재확인)**. 신규 persist/export
+  경로 0 — SubagentStart additionalContext = 세션 컨텍스트 주입이지 render line
+  persist 아님 → §결정 8 persist-guard 미발동.
+- **Amendment 2 carrier 헤더 정정 (동반 — 사실 오류)**: "설계 SSOT = Change Plan
+  `2026-07-20-cfp-2770-agent-render-prefix.md`" → 해당 파일 실존 0 [verified:
+  docs/change-plans/ 목록 + git log --all --diff-filter=A]. §결과 절 "change-plan
+  면제" 선언과 자기모순 → "설계 SSOT = 본 ADR Amendment 2 + Story CFP-2770 §7" 로
+  정정. Amd 2 결정 내용·amendment_log entry 무변경 — carrier 헤더 사실 표기만.
+
+#### A3.2 체커·hook 무변경 (상충 판정 codify)
+
+생략형(§결정 2 변형)은 render 계층 규율 — RE_PREFIX/RE_KST_STAMP/idempotency guard
+확장 비동반. 실행-입력 계층에서 hook 이 생략형을 non-conformant 판정 후 재주입하는
+stamp = **매 dispatch 헬퍼 실측치** [verified: pretooluse-agent-spawn-gate
+L202-205 / pretooluse-bash-description-inject L97-100] → fabrication 아닌 실측
+보정(실행-계층 시각 정확도 상승). 이중 프리픽스 = 실행-입력 계층 한정·화면
+불가시·fail-open harmless. **화면 개선효과 0**(화면 = model 원본 렌더, Amd 2) 정직
+declare. 장래 확장 시 발동 조건: superset 형태 + ReDoS 안전 7조건(anchor 보존 /
+fixed-count only / single-level optionality / bounded subject / 길이 cap / 2-regex
+순차 대안 우선 / execution-backed proof 또는 honest-ceiling) + 멱등 f(f(x))=f(x) 보존.
+
+#### A3.3 enforcement 상한 재확인 (AC-6)
+
+본 amendment 의 전 규율 = advisory ceiling — 렌더 도달 기계게이트 불가 invariant
+(ephemeral + upstream #61152) 무손상. SubagentStart 채널 = **전달의 기계화이지 준수의
+기계화 아님**. "100% 기계강제" / "hard-gate" 서술 FORBID 유지. content
+secret-ban = advisory(체커는 subject 만 위생 [verified: L166-169]) — 기계 차단 참칭 금지.
+
+#### A3.4 매턴 self-check 확장 (backstop)
+
+기존 self-check 문항에 값 정확성 2항 추가: "시각 — 실측 앵커를 보유했는가(부재 시
+생략했는가)? 앵커 값을 verbatim 사용했는가(상향 가산·+9 재가산 0)?" / "주체 —
+subject 는 roster 실명(피스폰=`subagent_type` / self=`agent_type`) verbatim 인가
+(허구명·작업명·dispatcher 명 0)?"
+
+#### A3.5 T-RENDER-4 — SubagentStart additionalContext 주입면 위협 행 (설계리뷰 P2-① 반영)
+
+§결정 5 신규 SubagentStart `additionalContext` 채널의 주입면 전용 위협 행 — Amd 1 §A1.3
+STRIDE-LITE 표를 SubagentStart 표면으로 확장(신규 trust boundary 0, §7.1 TB-2 harness-payload
+상향과 정합). 완화 축 = 기존 G2 sanitize 경계 재사용 + 공식문서 "No blocking or decision
+control" [source: code.claude.com/docs/en/hooks.md] + fail-open exit 0 ALWAYS.
+
+| STRIDE 범주 | 위협 (SubagentStart additionalContext) | 완화 | 판정 |
+|---|---|---|---|
+| **S**poofing | 주입 self명(`agent_type`) 오염 → 타 에이전트 사칭 | G2 재사용(namespace-strip · `[`/`]` strip · ≤64 truncate · empty→`unknown-agent`) + `agent_type` = harness payload(TB-3 급 trusted 원천, spawner-asserted 아님) | **N/A** — bounded roster 식별자, 표시 라벨이지 인증 주체 아님 |
+| **I**nfo disclosure | additionalContext 내용에 secret/token/절대경로 임베드 | hook 저자 바이트 = self명 + 시각 + 저작 규율 문안(secret-incapable) — 신규 기계 secret-scan 미추가(ADR-119 theater 회피); content-secret-ban = advisory 정직 선언 | **N/A** — hook-authored 3요소 = secret-incapable |
+| **E**levation | additionalContext 가 spawn 차단·결정 override 시도 | 공식문서 "No blocking or decision control" — SubagentStart 는 컨텍스트 주입만, blocking/decision 권한 부재 [source: code.claude.com/docs/en/hooks.md] + fail-open exit 0 | **N/A** — 채널 자체가 decision-incapable |
+
+3행 전건 **N/A** = 신규 trust boundary 0(전달 채널은 표시-계층 컨텍스트 주입이지 인증·결정점 신설 아님). 채널 presence ≠ 준수 강제 — §A3.3 advisory ceiling 무손상.
 
 ## 관련 파일
 
