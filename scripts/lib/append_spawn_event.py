@@ -18,9 +18,11 @@
 #     write. config 부재 = 둘 다 false → no-op (row 0, exit 0). silent always-on 금지.
 #   - attribution_confidence default = unattributed. != attributed 면 token/cost = null.
 #     추정치 저장 절대 금지 (ADR-119) — naive transcript-sum 도 unattributed 분류.
-#   - O_APPEND per-row (H1 lost-update race 회피): os.open(O_APPEND|O_CREAT|O_WRONLY)
-#     1 row write. stop-event 의 read-modify-write(whole-file read + os.replace) 패턴
-#     복사 금지 (append_stop_event.py _atomic_append = lost-update bug).
+#   - cross-platform kernel-atomic single-row append (H1 완료행 clobber 봉인, ADR-155 Amd1):
+#     POSIX = os.O_APPEND 단일-write(이미 kernel-atomic) / Windows = FILE_APPEND_DATA
+#     (MSVCRT lseek-then-write 대체 — clobber-free) + open 불가 FS non-blocking lock fallback.
+#     stop-event 의 read-modify-write(whole-file read + os.replace) 패턴 복사 금지
+#     (append_stop_event.py _atomic_append = lost-update bug). 상세 = _append_jsonl_row.
 #   - actor = top-level session id 의 sha256 (raw session_id 저장 금지 — T-INFO-7).
 #     stop-event runtime 의 raw session_id 패턴(append_stop_event.py line 73) 복사 금지.
 #   - event_id = deterministic sha256(session_id_hash || agent_id_hash || spawn_seq)
@@ -403,27 +405,171 @@ def _opt_in_enabled(args):
     return enabled and spawn_event
 
 
-# ─────────────────────── O_APPEND per-row write (H1) ─────────────────────────
+# ───────── cross-platform kernel-atomic single-row append (H1 / ADR-155 Amendment 1) ─────────
+#   공유 write primitive — spawn-event-v1 · self-context-v1 · dev-process-event-v1 3 consumer 상속.
+#   봉인 축 = 완료행 lost-update(clobber): 2-writer 경합에서 한 writer 가 다른 writer 의 완료행을
+#   유효 JSON 으로 통째 overwrite 하는 silent 소실(CFP-2817 FIX Iter 3, T-CLOBBER-SILENT).
+#     - POSIX(os.name != 'nt'): os.O_APPEND 단일-write 는 이미 kernel-atomic — 커널이 seek-to-EOF 와
+#       write 를 분리 불가하게 직렬화(POSIX.1-2017 write(), O_APPEND). 무변경.
+#     - Windows(os.name == 'nt'): MSVCRT os.O_APPEND = lseek-then-write(비원자) → 경합 시 clobber.
+#       FILE_APPEND_DATA(ctypes CreateFileW, FILE_WRITE_DATA 불포함) 로 대체 → 커널이 append 를
+#       단일 atomic 으로 직렬화(lock-free → MCT-51 keepalive-stall 무위험, 원장 read 0 →
+#       O_APPEND-pure no-read 불변식 보존). open 불가 FS → msvcrt.locking(LK_NBLCK) non-blocking
+#       뮤텍스 fallback + bounded retry + VISIBLE degrade. racy 무잠금 O_APPEND silent fallback 및
+#       10초 blocking LK_LOCK 절대 금지(ADR-155 Amendment 1).
+#   Honest-ceiling(2축 분리): clobber 축 보장 = local NTFS/POSIX 정규파일 + row당 단일-write 한정.
+#     network share(SMB/NFS)·redirected volume 제외. torn(multi-sector interleave) 축 = 별개 무주장
+#     (Win32 single-sector atomic·multi-sector 무보장 unless transaction; index row <4KB bounded).
+
+_WIN_APPEND_LOCK_OFFSET = 0xFFFFFF00   # fallback 뮤텍스 sentinel offset(실 데이터 미도달·64/32-bit 안전)
+_WIN_LOCK_RETRIES = 8                   # non-blocking lock bounded retry (총 backoff ~0.18s << MCT-51 10s)
+_WIN_LOCK_BACKOFF_S = 0.005            # 재시도 backoff base (bounded — LK_LOCK blocking 회피)
+
+_win_fileapi = None  # lazy ctypes 바인딩 캐시 (Windows only — POSIX 미도달, import-cost 0)
+
+
+class _AppendFallback(Exception):
+    """FILE_APPEND_DATA open 불가(예: 일부 network FS) → msvcrt-lock fallback 신호 (내부 전용)."""
+
+
+def _win_fileapi_bindings():
+    """Windows FILE_APPEND_DATA 용 ctypes 바인딩 lazy 초기화 (POSIX 미도달)."""
+    global _win_fileapi
+    if _win_fileapi is not None:
+        return _win_fileapi
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create = k32.CreateFileW
+    create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                       wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    create.restype = wintypes.HANDLE
+    write = k32.WriteFile
+    write.argtypes = [wintypes.HANDLE, wintypes.LPCVOID, wintypes.DWORD,
+                      ctypes.POINTER(wintypes.DWORD), wintypes.LPVOID]
+    write.restype = wintypes.BOOL
+    close = k32.CloseHandle
+    close.argtypes = [wintypes.HANDLE]
+    close.restype = wintypes.BOOL
+    _win_fileapi = {
+        "ctypes": ctypes, "wintypes": wintypes,
+        "CreateFileW": create, "WriteFile": write, "CloseHandle": close,
+        "INVALID_HANDLE_VALUE": ctypes.c_void_p(-1).value,
+        "FILE_APPEND_DATA": 0x0004,          # FILE_WRITE_DATA(0x0002) 불포함 — append-only access
+        "FILE_SHARE_READ": 0x00000001, "FILE_SHARE_WRITE": 0x00000002,
+        "OPEN_ALWAYS": 4, "FILE_ATTRIBUTE_NORMAL": 0x00000080,
+    }
+    return _win_fileapi
+
+
+def _win_append_file_append_data(path_str, data):
+    """Windows kernel-atomic append — CreateFileW(FILE_APPEND_DATA) → WriteFile → CloseHandle.
+
+    dwDesiredAccess=FILE_APPEND_DATA(0x0004, FILE_WRITE_DATA 불포함) → 모든 WriteFile 이 커널
+    seek-to-EOF+write 단일 atomic(clobber-free, lock-free). open 불가(INVALID_HANDLE_VALUE) →
+    _AppendFallback(→ msvcrt fallback). WriteFile 실패/부분write → OSError raise(VISIBLE —
+    절대 silent drop 안 함).
+    """
+    b = _win_fileapi_bindings()
+    ct = b["ctypes"]
+    wt = b["wintypes"]
+    h = b["CreateFileW"](
+        path_str, b["FILE_APPEND_DATA"],
+        b["FILE_SHARE_READ"] | b["FILE_SHARE_WRITE"],
+        None, b["OPEN_ALWAYS"], b["FILE_ATTRIBUTE_NORMAL"], None,
+    )
+    if not h or h == b["INVALID_HANDLE_VALUE"]:
+        # open 실패 = network FS 등 FILE_APPEND_DATA 미지원 가능 → fallback (racy O_APPEND 아님)
+        raise _AppendFallback("CreateFileW(FILE_APPEND_DATA) failed err=%d" % ct.get_last_error())
+    try:
+        written = wt.DWORD(0)
+        ok = b["WriteFile"](h, data, len(data), ct.byref(written), None)
+        if not ok:
+            raise OSError("WriteFile failed err=%d" % ct.get_last_error())
+        if written.value != len(data):
+            raise OSError("WriteFile short write %d/%d" % (written.value, len(data)))
+    finally:
+        b["CloseHandle"](h)
+
+
+def _win_append_locked_fallback(path_str, data):
+    """FILE_APPEND_DATA 불가 FS fallback — msvcrt.locking(LK_NBLCK) non-blocking 뮤텍스 + bounded retry.
+
+    sentinel offset(실 데이터 미도달·write 미발생 — 순수 lock 좌표)에 non-blocking 잠금으로 O_APPEND
+    write 를 직렬화 → clobber 방지. LK_NBLCK 만 사용(10초 blocking LK_LOCK 금지 — MCT-51 keepalive
+    stall). bounded retry 소진 시 VISIBLE degrade(raise → caller WARN 표면화). racy 무잠금 O_APPEND
+    silent fallback 절대 금지.
+    """
+    import msvcrt
+    import time
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | getattr(os, "O_BINARY", 0)
+    last_exc = None
+    for attempt in range(_WIN_LOCK_RETRIES):
+        fd = os.open(path_str, flags, 0o600)
+        try:
+            os.lseek(fd, _WIN_APPEND_LOCK_OFFSET, os.SEEK_SET)
+            try:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)  # non-blocking 뮤텍스 획득 (실패 → OSError)
+            except OSError as exc:
+                last_exc = exc  # 다른 writer 보유 → bounded backoff 후 재시도
+            else:
+                try:
+                    written = os.write(fd, data)  # O_APPEND seek-to-EOF+write, 뮤텍스가 직렬화
+                    if written != len(data):
+                        raise OSError("short write %d/%d" % (written, len(data)))
+                    return
+                finally:
+                    os.lseek(fd, _WIN_APPEND_LOCK_OFFSET, os.SEEK_SET)
+                    try:
+                        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+                    except OSError:
+                        pass
+        finally:
+            os.close(fd)
+        time.sleep(_WIN_LOCK_BACKOFF_S * (attempt + 1))
+    raise OSError(
+        "append_spawn_event: FILE_APPEND_DATA 불가 + msvcrt non-blocking lock %d회 재시도 실패 "
+        "→ VISIBLE degrade (racy silent O_APPEND fallback·10초 blocking LK_LOCK 금지 — MCT-51). "
+        "last=%r" % (_WIN_LOCK_RETRIES, last_exc)
+    )
+
 
 def _append_jsonl_row(ledger_path, row):
-    """O_APPEND per-row write — 1 JSON line + "\\n". lost-update race 회피 (H1).
+    """cross-platform kernel-atomic single-row append — 1 JSON line + "\\n" (H1 / ADR-155 Amd1).
 
-    os.open(path, O_APPEND | O_CREAT | O_WRONLY, 0o600) → 1 row write → close.
-    stop-event 의 read-modify-write(whole-file read + os.replace) 패턴 절대 복사 금지.
+    공유 write primitive(spawn-event-v1 · self-context-v1 · dev-process-event-v1 3 consumer 상속).
+    산출 bytes = json.dumps(row, ensure_ascii=False) + "\\n" (utf-8) — 계약/스키마/데이터 byte-compat.
+    원장 read 0(O_APPEND-pure). (ledger_path, row) 시그니처 무변경. stop-event 의 read-modify-write
+    (whole-file read + os.replace) 패턴 절대 복사 금지.
+
+    완료행 clobber(lost-update) 축 봉인 (CFP-2817 FIX Iter 3):
+      - POSIX: os.O_APPEND 단일-write = 이미 kernel-atomic (무변경, no-op).
+      - Windows: FILE_APPEND_DATA kernel-atomic append(MSVCRT lseek-then-write 대체) — open 불가
+        FS → msvcrt.locking(LK_NBLCK) non-blocking fallback + bounded retry + VISIBLE degrade.
+    Honest-ceiling: clobber 축 = local NTFS/POSIX 정규파일 + row당 단일-write. network share
+      (SMB/NFS) 제외 · torn(multi-sector) 축 별개 무주장.
     """
     # parent dir 보장
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 1 JSON line (ensure_ascii=False — 한글 lane_label 보존)
+    # 1 JSON line (ensure_ascii=False — 한글 lane_label 보존). 산출 bytes 불변(byte-compat).
     line = json.dumps(row, ensure_ascii=False) + "\n"
+    data = line.encode("utf-8")
+    path_str = str(ledger_path)
 
-    # O_APPEND per-row — kernel-atomic append (cross-process lost-update 회피)
-    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY
-    fd = os.open(str(ledger_path), flags, 0o600)
-    try:
-        os.write(fd, line.encode("utf-8"))
-    finally:
-        os.close(fd)
+    if os.name != "nt":
+        # POSIX — os.O_APPEND 단일-write 이미 kernel-atomic (POSIX.1-2017 write()). 무변경.
+        fd = os.open(path_str, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+        try:
+            os.write(fd, data)
+        finally:
+            os.close(fd)
+    else:
+        # Windows — FILE_APPEND_DATA kernel-atomic append; open 불가 FS → non-blocking lock fallback.
+        try:
+            _win_append_file_append_data(path_str, data)
+        except _AppendFallback:
+            _win_append_locked_fallback(path_str, data)
 
     # file mode 0600 (Unix; Windows = ACL 영역 외 no-op)
     try:

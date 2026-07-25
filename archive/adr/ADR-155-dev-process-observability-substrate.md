@@ -168,6 +168,20 @@ dev-process-channel-scoped 3-tier(ADR-163 §결정 4 hot+cold 2-tier 를 본 cha
 
 **신규 substrate 는 ADR-104 §결정 4 wrapper-N/A 를 건드리지도 약화하지도 않는다** — wrapper-N/A 는 **운영(production) phase 측정에만** 적용(배포된 consumer 앱 런타임 신호), dev-process observability(개발 과정 관측)는 **disjoint axis** 로 그 공백을 메운다. homonym 주의: `measurement-channel.md` 파일 2개(operational-phase area vs orchestrator-discipline area)는 별개 도메인 — 같은 이름이 유발하는 착시(firsthand: measurement-channel.md operational-phase 판 = "배포된 앱 런타임" 정의). 이 scope-guard 부재 시 설계리뷰가 "wrapper runtime 0 → 측정 불가" broad-오독으로 false-block.
 
+## Amendment 1 — 공유 append substrate 의 cross-platform kernel-atomic write 불변식 (CFP-2817 W1 Story A / FIX Iter 3)
+- carrier: CFP-2817 (Epic plugin-codeforge#2814 W1). amends: §결정 1(index tier append substrate) + §결정 6(append-only 논리 스트림) — Phase 2 append primitive(O_APPEND) 커밋을 cross-platform kernel-atomic 으로 정련. 신규 ADR 0.
+- 동기(empirical): Story A Port-B 활성화 = 공유 원장 2번째 상시 writer → Windows MSVCRT os.O_APPEND(lseek-then-write, 비원자) 경합. Codex 재현: 2 proc×500 row×5 trial → 99–128/1000 완료행 silent clobber(9.9–12.8%), torn=0 [empirical-source: Codex 재현 2026-07-25]. WSL2 POSIX 대조군 1000/1000/0. 결함 = Windows-MSVCRT 국소.
+- 신규 불변식(write-atomicity/clobber-freedom): 공유 write 루틴 `_append_jsonl_row`(scripts/lib/append_spawn_event.py)은 row당 단일-write append 에 cross-platform kernel-atomic clobber-free 보장:
+  - POSIX: os.O_APPEND 단일-write = 이미 kernel-atomic — 무변경(no-op). 근거: POSIX.1-2017 write() — O_APPEND 시 "the file offset shall be set to the end of the file prior to each write and no intervening file modification operation shall occur between changing the file offset and the write operation" (source: pubs.opengroup.org/onlinepubs/9699919799/functions/write.html). 대조군 1000/1000/0 확증.
+  - Windows: MSVCRT os.O_APPEND → FILE_APPEND_DATA(ctypes CreateFileW, FILE_WRITE_DATA 불포함) — 커널이 seek-to-EOF+write 단일 atomic 직렬화. 근거: Win32 WriteFile — "To write to the end of file, specify both the Offset and OffsetHigh members of the OVERLAPPED structure as 0xFFFFFFFF. This is functionally equivalent to previously calling the CreateFile function to open hFile using FILE_APPEND_DATA access." (source: learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile, ms.date 2025-02-28).
+  - lock-free: 커널 append 시맨틱 의존·명시 lock 미사용 → MCT-51 keepalive-stall 무위험 + 원장 read 0(O_APPEND-pure no-read 보존).
+  - no-blocking-lock(MCT-51): fallback lock = non-blocking msvcrt.locking(LK_NBLCK)+bounded retry만. 10초 blocking LK_LOCK 금지.
+  - no-silent-racy-fallback + VISIBLE-degrade: atomic 확립 불가 시 racy MSVCRT 경로 silent 손실 금지 → None+WARN+ACT-3 가시 degrade(ADR-115 record-only·exit-0 정합).
+- Honest-ceiling: 보장 scope = local NTFS/POSIX 정규파일 + row당 단일-write 의 clobber 축. network share(SMB/NFS)·redirected volume 제외. torn(multi-sector interleave) 축 = 별개 무주장(Win32 single-sector atomic·multi-sector 무보장 unless transaction; index row <4KB bounded+empirical torn=0이나 임의 multi-sector 미주장).
+- posture 반전(정직 기록): 본 amendment 는 런타임 primitive 헤더 "append 무보장 천장·kernel-atomic 미주장"(append_dev_process_event.py:33-38·:472-474)를 clobber 축에서 반전 — POSIX 단일-write 실제 clobber-free·Windows fix 후 kernel-atomic. append_spawn_event.py:420 "O_APPEND per-row — kernel-atomic append" over-claim(Windows MSVCRT known-false)도 정정. 3 주석 정정 = Phase 2.
+- cross-consumer note: 공유 primitive 개선 → spawn-event-v1·self-context-event 도 atomic write 상속. 3 consumer CONTRACT/SCHEMA/DATA untouched(byte-compat JSONL). spawn-event-v1 = 별 계약·§결정 2 new-sibling 매트릭스·INV-3 JOIN 무변경. uncontended atomic append 비용 동형(무회귀).
+- 검증: §8.8 concurrency negative-control(pre-fix MSVCRT clobber>0 = RED / kernel-atomic clobber 0 = GREEN). Phase 2 StatefulTest = clobber-freedom 회귀 방어로 재정의(torn 축 관측 감시).
+
 ## 회피된 대안
 
 ### 대안 A — 기존 stop-event-v1 확장 (경로 B)

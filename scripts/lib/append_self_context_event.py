@@ -27,7 +27,9 @@
 #     true 일 때만 write. config 부재 = no-op (row 0, exit 0). silent always-on 금지.
 #   - session_id = raw session id 의 sha256 (raw 저장 절대 금지 — T-INFO-7).
 #   - pre_tokens = compact_boundary.preTokens 정수만 (transcript raw 미도달 — T-INFO-5 상속).
-#   - O_APPEND per-row (H1 lost-update race 회피) — append_spawn_event._append_jsonl_row 재사용.
+#   - cross-platform kernel-atomic single-row append (H1 완료행 clobber 봉인) — 공유 primitive
+#     append_spawn_event._append_jsonl_row 재사용(POSIX O_APPEND / Windows FILE_APPEND_DATA —
+#     ADR-155 Amendment 1 원자성 상속, self-context 계약/6-field cap 무접촉).
 #   - never-block + fail-VISIBLE: 어떤 예외도 exit 0, 단 silent-success-on-error 금지 —
 #     stderr 에 greppable "DROPPED" trace 출력 후 exit 0 (dropped-count 관측 채널).
 #   - 0 API call: local I/O only.

@@ -410,6 +410,14 @@ def _self_test():
 #   (2) --timestamp 인자 부재(AC-13) — 시각은 always primitive 내부 UTC. --prev-timestamp-utc 는
 #   monotonic clamp 용 직전 행 값 전달만(시각 계산 아님). (3) seq = derive_seq() 파생만(단일 SSOT —
 #   caller hand-rolled seq flag 미노출, 이형 토큰 drift 예방). append `_build_parser` 어휘 재사용.
+#
+#   ★--args-file UTF-8 채널(CFP-2817 FIX Iter 2 결함2 봉합 — 한국어 lane_label/content 의 cp949
+#   argv-mangle 제거): Windows shell(Git Bash cp949) 을 통과한 한국어 argv 는 byte-mangle 되어
+#   _norm_lane_label 미매칭 → "없음" collapse(증거 오염). Orchestrator 가 emit 필드를 **UTF-8 JSON
+#   파일**로 쓰고 CLI 가 그 파일을 **명시 encoding='utf-8'** (locale default cp949 아님)로 read →
+#   emit(). ASCII path 만 argv 통과, 한국어 content 는 파일 내부 → argv 인코딩 문제 전 필드 제거.
+#   신규 source 파일 0(args-file = transient runtime 입력) · REC-2(emit() 경유) · AC-13(timestamp
+#   필드 금지) · 18필드/event_id/seq 무변경 유지. 기존 argv CLI 는 무손상(additive).
 
 def _add_common_emit_args(sp):
     """3 서브커맨드 공통 arg — append `_build_parser` 어휘 재사용(--story-key/--lane-label/
@@ -503,7 +511,72 @@ def _dispatch_emit(args):
     return 0
 
 
+def _dispatch_from_args_file(argv_list):
+    """★--args-file UTF-8 채널 (CFP-2817 FIX Iter 3 결함2 봉합 — 한국어 lane_label/content 의 cp949
+    argv byte-mangle→"없음" collapse 제거). Orchestrator 가 emit 필드를 UTF-8 JSON 파일로 write,
+    CLI 가 utf-8 로 read → argparse.Namespace 구성 → 기존 `_dispatch_emit`(emit() 경유, REC-2) 재사용.
+    ASCII path 만 argv 통과·한국어 content 는 파일 내부 → shell cp949 경계 우회. 신규 source 파일 0
+    (args-file = transient runtime 입력). AC-13: caller-computed timestamp 필드 불수용(무시+WARN)."""
+    import argparse
+    import json
+    idx = argv_list.index("--args-file")
+    try:
+        path = argv_list[idx + 1]
+    except IndexError:
+        sys.stderr.write("[emit-dev-process-event] ERROR: --args-file 뒤 경로 누락\n")
+        return 2
+    try:
+        with open(path, encoding="utf-8") as f:  # ★utf-8 명시 — locale(cp949) default 금지(회귀 진원)
+            payload = json.load(f)
+    except (OSError, ValueError) as exc:
+        sys.stderr.write("[emit-dev-process-event] ERROR: --args-file 읽기/파싱 실패 %r: %r\n" % (path, exc))
+        return 2
+    if not isinstance(payload, dict):
+        sys.stderr.write("[emit-dev-process-event] ERROR: --args-file JSON 최상위는 object 여야 함\n")
+        return 2
+    # AC-13: 저장층 primitive 내부 UTC 단일 소스 — caller 시각 계산 금지. timestamp 필드 무시.
+    if "timestamp" in payload or "timestamp_utc" in payload:
+        sys.stderr.write("[emit-dev-process-event] WARN: args-file timestamp 필드 무시(AC-13 — "
+                         "저장층 UTC 단일 소스). prev_timestamp_utc(monotonic clamp)만 허용.\n")
+    ns = argparse.Namespace(
+        command=payload.get("command"),
+        story_key=payload.get("story_key"),
+        lane_label=payload.get("lane_label"),
+        transition_kind=payload.get("transition_kind"),
+        fix_iter=payload.get("fix_iter"),
+        reset_generation=payload.get("reset_generation"),
+        ordinal=payload.get("ordinal"),
+        consumer_scope=payload.get("consumer_scope"),
+        ledger_path=payload.get("ledger_path"),
+        content=payload.get("content"),
+        prev_timestamp_utc=payload.get("prev_timestamp_utc"),
+        defect_id=payload.get("defect_id"),
+        defect_family=payload.get("defect_family"),
+        defect_type=payload.get("defect_type"),
+        detecting_lane=payload.get("detecting_lane"),
+        time_to_detection=payload.get("time_to_detection"),
+        self_test=False,
+    )
+    # required-field 강제 (argparse required=True 등가 — args-file 경로에서도 동일 계약)
+    missing = [k for k in ("command", "story_key", "lane_label", "transition_kind") if not getattr(ns, k)]
+    if missing:
+        sys.stderr.write("[emit-dev-process-event] ERROR: args-file 필수 필드 누락 %r\n" % missing)
+        return 2
+    if ns.transition_kind not in _TRANSITION_KINDS:
+        sys.stderr.write("[emit-dev-process-event] ERROR: args-file transition_kind %r 미지원(허용=%r)\n"
+                         % (ns.transition_kind, sorted(_TRANSITION_KINDS)))
+        return 2
+    if ns.command not in ("lane-transition", "verdict", "defect-finding"):
+        sys.stderr.write("[emit-dev-process-event] ERROR: args-file command %r 미지원\n" % ns.command)
+        return 2
+    return _dispatch_emit(ns)
+
+
 def main(argv=None):
+    argv_list = list(sys.argv[1:] if argv is None else argv)
+    # ★--args-file UTF-8 채널 (결함2 봉합) — 개별 arg 경로(D6-a)보다 선행 분기. shell cp949 argv 우회.
+    if "--args-file" in argv_list:
+        return _dispatch_from_args_file(argv_list)
     p = _build_parser()
     args = p.parse_args(argv)
     if args.self_test:

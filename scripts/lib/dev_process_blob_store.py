@@ -248,7 +248,16 @@ def warm_compress_blob(blob_ref, root=None):
 
 # ─────────────────────── public: prune_blobs (off-hot-path GC + tombstone) ─────────
 def _emit_tombstone(root, blob_ref, tier, now):
-    """append-only blob-evicted 증거(index blob_ref 는 절대 null 안 함 — 별 sidecar ledger)."""
+    """append-only blob-evicted 증거(index blob_ref 는 절대 null 안 함 — 별 sidecar ledger).
+
+    ★single-writer exemption (ADR-155 Amendment 1 — 공유 kernel-atomic primitive 요건 면제):
+      본 inline os.O_APPEND write 는 prune_blobs(off-hot-path grace-period GC)에서만 호출되며
+      (capture hook 절대 호출 금지 — 아래 prune_blobs docstring), GC Orchestrator 단일 실행 +
+      별 sidecar tombstone ledger 라 2-writer 경합이 구조적으로 부재하다. ∴ 공유
+      append_spawn_event._append_jsonl_row 의 cross-platform kernel-atomic 요건에서 면제(단일-writer
+      → clobber 위험 0). 향후 concurrent 승격(복수 GC/hot-path 유입) 시 이 면제는 소멸 —
+      _append_jsonl_row 로 라우팅해야 한다.
+    """
     ledger = _resolve_root(root) / _TOMBSTONE_LEDGER
     ledger.parent.mkdir(parents=True, exist_ok=True)
     row = {
