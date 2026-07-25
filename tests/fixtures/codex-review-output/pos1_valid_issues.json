@@ -1,0 +1,13 @@
+{
+  "verdict": "ISSUES",
+  "counts": { "P0": 0, "P1": 1, "P2": 0, "P3": 0 },
+  "findings": [
+    {
+      "severity": "P1",
+      "category": "runtime-bug",
+      "location": "src/x.py:42",
+      "title": "[runtime-bug] possible null deref",
+      "body": "schema-valid ∧ cross-field 정합(counts.P1=1 ↔ findings P1 1건) ∧ category∈enum → helper exit 0."
+    }
+  ]
+}

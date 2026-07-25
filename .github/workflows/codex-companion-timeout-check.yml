@@ -1,8 +1,8 @@
 name: Codex companion timeout presence lint (warning mode)
-# CFP-2545 / ADR-081 Amendment 12 §결정 D14 — Codex companion 브로커 경로 wall-clock 가드 presence lint.
-# codeforge 소유 codex companion dispatch 발화(node ... adversarial-review | task --write)가 항상
-# `timeout --kill-after=<K> <N>` (option-first runnable) wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
-# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D14 Phase 2 wire)
+# CFP-2545 / CFP-2828 / ADR-081 Amendment 12→14 §결정 D14→D15 — Codex 리뷰 dispatch wall-clock 가드 presence lint.
+# codeforge 소유 Codex 리뷰 dispatch 발화(codex exec ... - < <promptfile>, companion 브로커 우회 재타겟)가 항상
+# `timeout --kill-after=<K> <N>` (option-first runnable) wall-clock 가드 + stdin `- <` file-redirect 로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D15 Phase 2 wire)
 # Bypass channel: hotfix-bypass:codex-companion-timeout-presence (ADR-024 §결정 6.A per-entry namespace)
 #
 # consumer degradation (SSOT = scripts/lib/check_codex_companion_timeout_presence.py header §5):
@@ -52,16 +52,24 @@ jobs:
         run: bash scripts/check-codex-companion-timeout-presence.sh --self-test
 
       - name: Run discriminating test suite (QADev — mutation proof + consumer no-op)
-        # tests/scripts/test_check-codex-companion-timeout-presence.sh (9-case: GREEN 3 + RED 6,
+        # tests/scripts/test_check-codex-companion-timeout-presence.sh
+        # (codex exec dispatch 가드 discriminating suite + 실 agent md grep-presence:
         # 가드 제거 → RED 전환 mutation proof + hollow-gate I-3 + consumer no-op). wrapper-self only
         # (CI channel = 본 step, ADR-136 Amd2 QADev tests/scripts 실행 채널 선례 동형).
         if: hashFiles('tests/scripts/test_check-codex-companion-timeout-presence.sh') != ''
         run: bash tests/scripts/test_check-codex-companion-timeout-presence.sh
 
+      - name: Run codex review output schema helper test suite (AC-6 negative fixture)
+        # tests/scripts/test_check_codex_review_output_schema.sh — AC-6 out.json 소비 재검증 helper
+        # (scripts/lib/check_codex_review_output_schema.py) discriminating driver: negative 6종 →
+        # exit 1 inconclusive + positive 2종 → exit 0 + 취약 revert cross-field 검출. CFP-2828 신설 self-test 실행 채널.
+        if: hashFiles('tests/scripts/test_check_codex_review_output_schema.sh') != ''
+        run: bash tests/scripts/test_check_codex_review_output_schema.sh
+
       - name: Run codex companion timeout presence lint
         id: lint
         run: |
-          bash scripts/check-codex-companion-timeout-presence.sh . 2>&1 | tee lint-output.txt
+          bash scripts/check-codex-companion-timeout-presence.sh 2>&1 | tee lint-output.txt
           exit ${PIPESTATUS[0]}
         continue-on-error: true
 

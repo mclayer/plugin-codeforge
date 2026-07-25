@@ -1,0 +1,1 @@
+{"verdict":"PASS","counts":{"P0":0,"P1":0,"P2":0,"P3":0},"findings":[{"severity":"P0","category":"runtime-bug","location":"src/x.py:10","title":"[runtime-bug] null deref","body":"the handler dereferences a possibly-

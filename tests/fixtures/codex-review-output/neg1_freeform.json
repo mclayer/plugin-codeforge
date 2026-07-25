@@ -1,0 +1,7 @@
+Here is my review of the diff.
+
+Overall the change looks reasonable. I did not find any blocking issues,
+so my verdict is PASS. There is one minor nit in the naming of the helper.
+
+(#15451 documented 형상: --output-schema 는 request 이지 강제 아님 — 모델이
+schema 대신 free-form 산문을 out.json 에 방출한 silent-drop 재현. 소비 재검증 ②JSON parse 에서 fail-closed.)

@@ -663,6 +663,18 @@ self_tests:
     identity_bearing: false
     g_boundary_check: "living-architecture-update 게이트 discriminating self-test (ADR-154 §결정 7) — RED(missing-update/mapping-miss/invalid-declare/unknown-surface 4-category fixture) exit 1 vs clean GREEN exit 0 대조 + M1-M8 mutation KILL(marker-regex·presence-judgement·frontmatter-gaming·glob-noop·mapping-fail·exit2-silent·stoplist·classify-degrade) 전수 검증 + ReDoS 시간-상한 회귀(CWE-1333 polynomial quantifier) + invariant 5종(struct=0→0·mapping-never-PASS·frontmatter-never-ok·unparseable→2·bypass-no-silent) + F-4 repo-root bijection(전수 분류) + scanned-N trace emit. soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 CI lint gate, wrapper-self plugin-meta-na). identity_bearing:false (dispatch/routing 식별자 아님 — no-impact marker 수집이 attack surface 아님). honest-ceiling(ADR-151 §결정7): presence(marker schema·regex bounded·rationale floor) != truth(실 no-impact 근거 타당성·semantic drift=L3 review-tier), discriminating 검출력=G3 미강제."
 
+  # -- CFP-2828 (ADR-081 Amendment 14 §결정 D15) — codex-review out.json AC-6 소비 재검증 helper discriminating self-test enroll --
+  # bijection: tests/scripts/*.sh +1 (신규 enroll). 실행 채널 = codex-companion-timeout-check.yml:codex-companion-timeout-presence
+  #   (기존 warning-tier job 에 신규 step 배선, sibling test_check-codex-companion-timeout-presence.sh 인근). byte-identical template pair(.github ↔ templates).
+  - self_test: "tests/scripts/test_check_codex_review_output_schema.sh"
+    execution_channel: "workflow:codex-companion-timeout-check.yml:codex-companion-timeout-presence"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "codex-review out.json AC-6 소비 재검증 helper(scripts/lib/check_codex_review_output_schema.py) discriminating self-test — negative 6종(free-form/파일부재/truncated/verdict enum-out/counts↔findings cross-field mismatch/category∉enum) → exit 1 inconclusive(+stdout sentinel 병행 assert) + positive 2종 → exit 0 + 취약 revert cross-field KILL(vacuous-green 방지). soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 schema 소비 재검증 판별력 결박). honest-ceiling(ADR-151 §결정7): presence(재검증 5단계 형식 통과) != truth(실 리뷰 verdict 정확성=L3 review-tier), 검출력=G3 미강제."
+
   # ── CFP-2812 (ADR-167 adr-amendment-compaction-ratchet / ADR-060) — ADR amendment 누적 임계 + parity 게이트 discriminating self-test enroll (2건) ──
   # bijection: tests/scripts/*.sh 60 → 62 (신규 self-test 2 enroll). 실행 채널 = adr-amendment-threshold-test.yml:adr-amendment-threshold-test
   #   (byte-identical .github + templates pair, wrapper-self only, non-required day-1 hard-fail — branch protection 8-tuple 무변경).

@@ -7,7 +7,8 @@ permissions:
     - Read
     - Grep
     - Glob
-    - Bash(node *)
+    - Bash(codex *)
+    - Bash(timeout *)
     - Bash(grep *)
     - Bash(bash *)
     - Bash(sh *)
@@ -66,68 +67,82 @@ Codex 플러그인 미설치 시 **모든 리뷰 lane 진행 불가** — Orches
 ## 역할
 
 1. PL packet 검증
-2. lane별 Codex companion focus prompt 조립 (아래 §실행 패턴)
-3. Codex companion 스크립트 실행
-4. 원문에서 `[P0]/[P1]/[P2]/[P3]` severity 태그 추출 → 정규화 스키마로 변환
+2. lane별 focus prompt 를 **promptfile** 로 조립 (아래 §실행 패턴 — packet + lane focus + diff)
+3. `codex exec` 직접 dispatch (Codex CLI, read-only sandbox 단일 primitive — companion 브로커 우회)
+4. `-o out.json` 소비 **직전** 재검증 (AC-6 fail-closed 5단계) → schema 필드 직접 read (`[P0]` 텍스트 태그 스캔 폐지)
 5. 호출 PL이 직접 필드 참조할 수 있는 구조화 보고 반환
 
 자체 코드·문서 수정 금지 — 읽기·분석·보고만 (read-only 분석 + read-only sandbox 안 실행 검증 = "분석" 범주 정합, ADR-001 무손상).
 
+> **AC-13 declare (Bash allowlist 변경 = 실행 표면 확대 아님)**: frontmatter 에 `Bash(codex *)`+`Bash(timeout *)` 추가 + `Bash(node *)` 은퇴 = **own-Bash 실행 확대 아님** — 실행 주체는 여전히 **Codex 자체 sandbox**(read-only 기본, 아래 §실행 패턴)이며 python/pytest 실행 표면 확대 0. `codex`/`timeout` 는 companion 브로커(`node`) 를 대체하는 dispatch primitive 로, 순 실행 표면은 **감소**(node dead-permission 은퇴). `-c` override 는 `model_reasoning_effort` **한정** — `--dangerously-bypass-approvals-and-sandbox` / `--dangerously-bypass-hook-trust` 사용 금지 (TH-B).
+
 ## 실행 패턴 (단일 Bash 호출)
 
-shell state가 유지되지 않으므로 경로 해결 + `node` 실행을 하나의 Bash 커맨드로 묶는다. **focus prompt는 packet의 lane에 따라 조립**.
+shell state가 유지되지 않으므로 promptfile 조립 + `codex exec` 실행을 하나의 Bash 커맨드로 묶는다. **focus prompt는 packet의 lane에 따라 promptfile 로 조립**.
 
-> **dispatch 명령 — `review --focus` 사용 금지 (죽은 경로)** [verified: codex-companion.mjs `validateNativeReviewRequest`]: `review` subcommand 는 native reviewer 로 custom focus text 를 거부(error throw)한다. 정적 리뷰 + 실행 검증 모두 **`adversarial-review`(read-only 고정 turn, focus 지원) primary** 로 dispatch. 실행 검증이 repo 수정을 요구하는 게이트(fixture/temp/lockfile)는 **`task --write`(workspace-write) 예외** + 명시 marker. ADR-081 §결정 D8 file-redirect + §결정 D13 execution dispatch 정합.
+> **dispatch primitive — `codex exec` 직접 (companion 브로커 우회, CFP-2828 / ADR-081 §결정 D15)** [verified: `codex exec` default sandbox=read-only / `-o`=최종 메시지 파일 / `--output-schema`=request(강제 아님), 공식 non-interactive docs + 1st-party cookbook `codex exec --output-schema … --sandbox read-only - < prompt.md`]: 정적 리뷰 + 실행 검증 모두 **`codex exec` 단일 primitive** 로 dispatch (sandbox 수위 × reasoning effort × promptfile 내용 프로파일 차이로 수렴 — 구 2-트랙/브로커 커맨드 폐지). 실행 검증이 repo 수정을 요구하는 게이트(fixture/temp/lockfile)는 **`-s workspace-write` 예외** + 명시 marker `[exec-verify-write-mode: <check>]`. ADR-081 §결정 D8 file-redirect(`- <`) 계승 + §결정 D15 direct-CLI dispatch.
 
-> **companion 브로커 wall-clock 가드 의무 (ADR-081 §결정 D14 / CFP-2545)** — companion `request()` 는 deadline 부재라 stall 시 node·Bash·worker·Orchestrator 순차 무한 대기. 모든 `adversarial-review --wait` / `task --write` dispatch 발화는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행 명령으로 오인 → exit 127 가드 무효 [verified: coreutils 8.32 실측]. option 은 duration 앞에 와야 함). **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap 900s). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL, detached node 좀비 방지). **N 값은 추정값 — empirical 미실증** (codex companion 스트림 완료 시간 1차 실측 출처 없음 — lock-in 금지, env-override 유지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
+> **wall-clock 가드 의무 (ADR-081 §결정 D15 / CFP-2828 — D14 re-scope)** — stall 축은 companion 제거로 "소멸" 아닌 **"이동"**: CLI 고유 hang(#20919/#19945) 대비 wall-clock 가드는 잔존 1급. 모든 `codex exec` dispatch 발화는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행 명령으로 오인 → exit 127 가드 무효 [verified: coreutils 8.32 실측]. option 은 duration 앞에 와야 함). **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap 900s). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL — hermetic `--ignore-user-config` 로 grandchild 미생성 → single-process 트리 완전 reap). **N 값은 추정값 — empirical 미실증** (실 리뷰 규모 1차 실측 출처 없음 — lock-in 금지, env-override 유지). ★ honest-ceiling: `timeout` 은 wall-clock bound 이지 **총 작업량/자원 소비 bound 아님** ("DoS-safe" 서술 금지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
 
-```bash
-CMD=""
-for p in \
-  "${CLAUDE_PLUGIN_ROOT:+${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs}" \
-  "${HOME}/.claude/plugins/marketplaces/openai-codex/plugins/codex/scripts/codex-companion.mjs"; do
-  [ -n "$p" ] && [ -f "$p" ] && CMD="$p" && break
-done
-[ -z "$CMD" ] && { echo "ERROR: codex-companion.mjs not found — install openai-codex plugin."; exit 1; }
-# POSIX timeout preflight (Windows Git Bash 부재 대비 — 부재 시 skip+marker, CI=Linux runner 는 무관, Story §7.6)
-command -v timeout >/dev/null 2>&1 || { echo "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"; verdict=inconclusive; }
-# 정적 리뷰 + 실행 검증 (read-only sandbox 안 Codex 가 게이트 실행) — focus prompt 에 실행 대상·대조 단정 포함
-# wall-clock ceiling (ADR-081 §결정 D14) — companion 무한 대기 근절. exit 124 = timeout kill.
-timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} node "$CMD" adversarial-review --wait "<lane별 focus prompt + 실행 검증 instruction>"
-# write 필요 게이트(fixture/temp 쓰는 check) 한정 예외 — 동형 wall-clock 가드 + 명시 marker 동반:
-# timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} node "$CMD" task --write "<게이트 실행 instruction>"   # [exec-verify-write-mode: <check>]
-```
-
-**exit code 판정 — fail-open 금지 (ADR-081 §결정 D14 A3 / Story §7.2.1)**: PASS 자동 승격 채널을 구조적으로 차단한다. `timeout` 은 만료 시 exit **124** 반환 (GNU coreutils).
+정본 dispatch 템플릿 (§3.1). `codex exec` = **단일 실행 라인**(option-first timeout prefix + `- <` file-redirect). `<EFFORT>` = 아래 lane 프로파일 표:
 
 ```bash
-exit_code=$?
-if   [ "$exit_code" -eq 124 ]; then   # timeout wall-clock kill (GNU coreutils)
-      emit_marker "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"
-      verdict=inconclusive            # substitution 진입 (fail-open 금지)
-elif [ "$exit_code" -eq 0 ]; then
-      verdict=$(parse_verdict_field stdout)
-      [ -z "$verdict" ] && verdict=inconclusive   # exit 0 + verdict 부재 = inconclusive (E1/E2 차단)
-elif [ "$exit_code" -ge 125 ]; then   # 125/126/127 = timeout 자체 실패
-      verdict=inconclusive
-else                                  # codex 비정상 종료
-      verdict=inconclusive
+# ── 정본 dispatch 템플릿 (CFP-2828 — ADR-081 Amd14 §결정 D15) ──
+# PROMPTFILE/OUT_JSON = per-invocation unique + git-tracked 경로 금지 (I-6 + §7.5)
+TS="$(date +%s)-$$"                                       # <ts> = epoch+PID (I-6 per-invocation unique — 4-lane 병렬 안전)
+PROMPTFILE="<scratch>/codex-review-<lane>-${TS}.md"       # packet + lane focus + diff 조립
+OUT_JSON="<scratch>/codex-review-out-<lane>-${TS}.json"   # verdict 정본 채널 (-o)
+SCHEMA="${CLAUDE_PLUGIN_ROOT}/schemas/codex-review-output-schema-v1.json"
+
+if ! command -v timeout >/dev/null 2>&1; then
+  # GNU timeout 부재 (Windows Git Bash 등) = dispatch skip (제어흐름 단절 필수 — fall-through 시 부재 timeout 호출 exit 127).
+  echo "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"; verdict=inconclusive
+else
+  export MSYS_NO_PATHCONV=1   # 별도 줄 export (inline env-prefix 는 lint execution_first_tokens first-token 판정 파괴 → 금지)
+  # CWD = 리뷰 대상 repo(worktree) 안 (trusted-dir, --skip-git-repo-check 금지). read-only 기본 (code write-gate 만 workspace-write).
+  timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s read-only -c model_reasoning_effort=<EFFORT> --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"
+  # code lane write 필요 게이트만 sandbox 교체 (동형 wall-clock 가드 + 명시 marker):
+  # timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s workspace-write -c model_reasoning_effort=medium --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"   # [exec-verify-write-mode: <check>]
 fi
-# PASS 는 verdict == "PASS" 명시 문자열일 때만 (PASS-only-if-explicit).
-# 부분 stall (4 lane 중 일부) → ANY(inconclusive) → 전체 inconclusive (완료분 기준 전체 PASS 승격 금지).
-# marker emit ≠ PASS 승격 — verdict=inconclusive 는 substitution path(Orchestrator inline verify-before-trust) 로 진입.
 ```
+
+| lane | `<EFFORT>` | sandbox (기본) | N override (기존 값 유지) | PROMPTFILE focus 원천 |
+|---|---|---|---|---|
+| requirements-review | `medium` | `read-only` | 300 (default) | 아래 `lane=requirements-review` 템플릿 |
+| design | `high` | `read-only` | 240 (`_DESIGN`) | 아래 `lane=design` 템플릿 |
+| code | `medium` | `read-only` (write 필요 게이트만 `workspace-write` + `[exec-verify-write-mode: <check>]` marker) | 300 (default) | 아래 `lane=code` 템플릿 |
+| security | `high` | `read-only` | 420 (`_SECURITY`) | 아래 `lane=security` 템플릿 |
+
+- **hermetic 플래그** (`--ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral`): config.toml 미적재 → #15451 silent-drop 조건 제거 + notify hook/shell env drop + grandchild 미생성. `--ignore-user-config` = model pin drop → `-m` 동반 **필수** (default 리터럴은 config.toml 과 독립 pin, `CODEX_REVIEW_MODEL` env-override 로 stale 완화). effort 는 전 lane `-c model_reasoning_effort` **명시** (config 무의존 결정론 — config.toml 자체는 무변경 diff 0, AC-8).
+- **D8 계승**: `- < "$PROMPTFILE"` = D8 file-redirect 의무 계승 (inline positional prompt / direct stdin-pipe 금지 — #20919 "writer 없는 stdin" hang 은 `- <` 즉시 EOF 로 구조적 비해당). `-o "$OUT_JSON"` = "result-via-file" 수신 (stdout 중간 메시지 오적용 #19816 대비 — verdict 정본 = out.json 파일).
+
+**exit code 판정 — fail-open 금지 + out.json 소비 재검증 (AC-6) (§7.4.1 판정표 = runbook)**: PASS 자동 승격 채널을 구조적으로 차단. `verdict` 정본 SSOT = out.json `verdict` 필드 (I-7 — exit code 는 fail-closed gate only, finding-count·severity 원천 아님).
+
+| exit_code | 의미 | verdict 처분 |
+|---|---|---|
+| **124** | GNU timeout wall-clock kill | `inconclusive` + marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` → substitution |
+| **0 + out.json valid** | 정상 완료 | AC-6 재검증 통과 → out.json `verdict` **read** (I-7) |
+| **0 + out.json 부재/empty** | silent crash (#19945) / no-output | `inconclusive` (PASS 금지 — empty 는 crash 강신호) |
+| **0 + schema 비정합/free-form** | silent 강등 (#15451/#19816) | `inconclusive` (fail-closed, 재검증 실패 declare) |
+| **1** | CLI 자체 오류 (trusted-dir 거부/auth 실패 — 모델 미호출 fast-fail) | `inconclusive` — **독립 bucket: stderr 진단 보존·surface** (env/CWD 교정 신호 = verification-constraint, 제품결함 아님) |
+| **2** | arg-parse conflict | `inconclusive` (dispatch 배선 버그 회귀 신호) |
+| **125/126/127** | timeout 자체 실패 / 실행 불가 / 바이너리 부재 | `inconclusive` (127 = preflight `command -v` 선차단) |
+| **기타 >0** | codex 비정상 종료 | `inconclusive` |
+
+**AC-6 소비 재검증 (fail-closed 5단계 — out.json 소비 직전)**: exit 0 이어도 out.json 을 신뢰 전 재검증. helper `scripts/lib/check_codex_review_output_schema.py "$OUT_JSON" "$SCHEMA" "<packet category_enum, 쉼표구분>"` — ① 파일 존재 ② JSON parse ③ schema 준수(required/additionalProperties/enum) ④ cross-field(`counts.Px` ↔ `findings[]` severity별 실개수 일치) ⑤ `findings[].category` ∈ packet `category_enum`. helper exit 0 = 통과(out.json `verdict` read) / exit 1 = 하나라도 실패 → **inconclusive** (PASS 승격 0 — unclassified 강등 개념은 schema 경로에서 소멸, 재검증 fail-closed 로 대체). 3번째 인자 = dispatch 시점 워커가 packet `category_enum` 을 쉼표로 join 해 전달.
+
+불변 invariant 5건: ① PASS-only-if-explicit (out.json `verdict=="PASS"` 명시 시만) ② **exit code → severity 매핑 절대 금지** (I-7) ③ empty-stdout / out.json 부재 = FAIL ④ 부분 stall (4 lane 중 일부) → ANY(inconclusive) → 전체 inconclusive ⑤ marker emit ≠ PASS 승격 — `verdict=inconclusive` 는 substitution path(Orchestrator inline verify-before-trust)로 진입.
 
 **실행 검증 dispatch 규약** (ADR-070 Amendment 11 §결정 D9 + concept execution-based-review-verification):
 
-- **실행 주체 = Codex 자체 sandbox** (read-only 기본 / network-off / `.git`·`.codex` 보호 / OS 격리) — CodexReviewAgent own-Bash 직접 실행 아님. CodexReviewAgent Bash allowlist 미확대 (python/pytest 추가 0 — Python 게이트도 Codex sandbox python3 안 실행). discriminating 게이트 다수가 Python 의존(ADR-061 thin-wrapper)이라 Codex sandbox python3 가용이 게이트.
-- **실행 대상 선택** = PR touch ∩ discriminating check(self-test/eval 모드, 결함 시 RED) 우선. 70+ 전수 금지. focus prompt 에 대상 스크립트 + 대조할 단정(PR/Story 명시 주장 + ADR-037류 명백 정책) 명시.
+- **실행 주체 = Codex 자체 sandbox** (read-only 기본 / network-off / `.git`·`.codex` 보호 / OS 격리) — CodexReviewAgent own-Bash 직접 실행 아님. CodexReviewAgent Bash allowlist python/pytest 확대 0 (Python 게이트도 Codex sandbox python3 안 실행). discriminating 게이트 다수가 Python 의존(ADR-061 thin-wrapper)이라 Codex sandbox python3 가용이 게이트.
+- **실행 대상 선택** = PR touch ∩ discriminating check(self-test/eval 모드, 결함 시 RED) 우선. 70+ 전수 금지. promptfile focus 에 대상 스크립트 + 대조할 단정(PR/Story 명시 주장 + ADR-037류 명백 정책) 명시.
 - **신뢰 승격** = 실행결과 finding = `[hypothesis]` → PL 직접 재실행 falsify 통과 시만 `[verified]`. 실행 GREEN 은 finding 미승격 (Popper falsify 전용). RED/mismatch 도 다회 실행 결정론 확인 후 승격 — flaky/환경차 의심 시 `undetermined` 보류 (자동 승격·자동 reject 아님).
 - **fail-mode** = Codex 미가용 시 lane-time `fail_open_then_record_with_marker` — `[exec-verify-fallback: fail-mode=<...>, targets-attempted=<n>, disposition=open]` (lane 진행, 실행검증 미수행 명시).
 
 ### Lane별 focus prompt 템플릿
 
-워커가 packet `lane` 값에 따라 아래 prompt를 inline 조립.
+워커가 packet `lane` 값에 따라 아래 prompt를 **promptfile** 로 조립 (`- < "$PROMPTFILE"` 주입 — inline argv 아님, TH-A 한글 argv mangling 회피). prompt 내용은 lane 별 아래 verbatim.
 
 #### lane=requirements-review (CFP-2326 / ADR-125)
 
@@ -210,7 +225,7 @@ code review for src/** + config/** + deploy/** + scripts/** + tests/** (story: <
    etc.). Report ONLY mismatches (exec-result-mismatch). GREEN proves nothing (Popper falsify-only).
    Determinism: re-run same input; flaky/env-diff suspicion → undetermined (NOT auto-finding).
    Forbidden: full-sweep of 70+ checks (discriminating ∩ PR-touch only); destructive/write
-   commands unless the gate needs fixture/temp (then task --write + marker); claiming product
+   commands unless the gate needs fixture/temp (then -s workspace-write + marker); claiming product
    defect when failure is a verification-infra gap (env/deps/encoding = verification-constraint, not defect).
 Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {runtime-bug,
 layer-violation, naming, test-quality, impl-manifest-mismatch, concurrency,
@@ -253,9 +268,9 @@ location as path:line, CWE/CVE reference where applicable.
 
 ### 변종
 
-- `--base main --scope branch`: main 대비 전체 변경
-- `--background`: 큰 변경에서 세션 블록 방지 (status/result 폴링 필수)
-- `timeout --kill-after=<K> <N> adversarial-review --wait "<focus>"`: 심층 리뷰 (보안 lane 권장) — wall-clock 가드 필수, **option-first** (GNU coreutils runnable 형태, duration-first 는 exit 127 무효) (ADR-081 §결정 D14, K=`${CODEX_REVIEW_KILL_AFTER_SEC:-30}` / N=`${CODEX_REVIEW_TIMEOUT_SEC:-300}`)
+- **main 대비 전체 변경(`--base main` 대응)**: `codex exec` 는 argv 타겟팅(`--base`) 없이 diff 를 **promptfile 본문에 명시 주입** — 워커가 `git diff main...HEAD` (또는 `--scope branch` 등가) 결과를 promptfile 에 embed (packet 지시 ↔ 비신뢰 diff 구획 분리, delimited untrusted block).
+- **세션 블록 방지**: `--background` companion job-관리 개념 **폐지** — `codex exec` 는 동기 1-shot + GNU timeout wall-clock supervision 이 세션 블록 방지를 대체 (status/result 폴링 불요, wall-clock ceiling 이 상한 보장).
+- **심층 리뷰(보안 lane 권장)**: 별도 커맨드 아님 — 위 프로파일 표대로 `-c model_reasoning_effort=high` + N=420(`_SECURITY`). wall-clock 가드는 정본 템플릿에 상시 포함(option-first, ADR-081 §결정 D15).
 
 ## 정규화 보고 스키마 (ClaudeReviewAgent와 동일)
 
@@ -281,16 +296,14 @@ findings:
 <원문 verbatim>
 ```
 
-### 변환 규칙
+### 변환 규칙 (schema 필드 기반 — AC-7)
 
-- 출력에서 `[P0]`·`[P1]`·`[P2]`·`[P3]` 태그 + `[high]=P1`·`[medium]=P2`·`[low]=P3` 스캔
-- `No-ship`·`critical`·`release blocker`·`ADR violation` 키워드 → P0
-- CVE severity `CRITICAL`→P0, `HIGH`→P1, `MEDIUM`→P2, `LOW`→P3
-- severity 없으면 `unclassified`
-- P0 ≥ 1 → `NO_SHIP`, 그 외 findings 있으면 `ISSUES`, 없으면 `PASS`
-- packet 누락 시 → `ESCALATE_PACKET_INCOMPLETE` (Codex 호출 자체 skip)
-- **오프라인 파싱** (Codex 재호출 금지)
-- **title/body 형식 강제 변환**: Codex 원문이 자유 형식이어도 정규화 시 `title`은 `[<category>] <원인 요약>` 형식으로 재작성, `body` 첫 줄은 `location · trigger · impact` 1문장 요약. lane=code·security의 P0·P1 finding은 `body` 마지막 줄에 회귀 힌트(`1차 원인 가정` + `권장 회귀`)를 추가 — 원문에 명시 없으면 워커가 lane별 진단 가이드(체크리스트 §1차 원인 가정)에 따라 추론
+- **verdict = out.json `verdict` 필드 직접 read** (I-7 SSOT). `[P0]`~`[P3]` 텍스트 태그 스캔 · `No-ship`/`critical`/`release blocker`/`ADR violation` 키워드 매핑 · CVE severity 매핑 · `P0 ≥ 1 → NO_SHIP` 재계산은 **전부 폐지** — schema 가 `verdict`(closed enum) + `counts`(P0-P3) + `findings[].severity`(closed enum)를 구조로 강제하므로 필드 그대로 이식 (텍스트 파싱 잔존 범위 = 0).
+- **AC-7 정직 declare**: 정적 트랙 별도 파싱은 **(A) `codex exec` 단일 primitive 수렴**으로 존재하지 않는다 — 정적·실행검증 모두 동일 out.json schema 필드로 수렴 (구 regex 스캔 트랙 소멸).
+- **findings[] 직접 이식**: out.json `findings[].{severity, category, location, title, body}` → 정규화 findings. severity 는 schema enum(P0-P3)이라 Codex 경로에서 `unclassified` 미발생 (schema-invalid severity = AC-6 재검증 fail → inconclusive). `unclassified` 필드는 ClaudeReviewAgent shape 대칭용으로 정규화 스키마에 잔존(Codex 경로 값 = 0).
+- packet 누락 시 → `ESCALATE_PACKET_INCOMPLETE` (Codex 호출 자체 skip — schema 밖 워커 자체 발화, I-1).
+- **오프라인** (Codex 재호출 금지 — out.json 필드만 소비).
+- **title/body 형식 강제 변환**: out.json `title` 이 형식 미준수여도 정규화 시 `[<category>] <원인 요약>` 으로 재작성, `body` 첫 줄은 `location · trigger · impact` 1문장 요약. lane=code·security의 P0·P1 finding은 `body` 마지막 줄에 회귀 힌트(`1차 원인 가정` + `권장 회귀`)를 추가 — 원문에 명시 없으면 워커가 lane별 진단 가이드(체크리스트 §1차 원인 가정)에 따라 추론
 - 회귀 힌트 추론 기준: lane=code의 dup-boundary / layer 위반 / API 계약 위반 → 설계 / dup-local / 단순 런타임 결함 → 구현. lane=security의 trust-boundary / auth model 결함 → 설계 / injection / credential / CVE → 구현
 
 ## 제약

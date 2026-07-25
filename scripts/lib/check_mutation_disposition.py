@@ -5,7 +5,7 @@ CFP-2464 Phase 2 — mutation peer (touchpoint #8) surviving-mutant disposition 
 기능:
   ProactiveCheckPacket #8 (mutation peer) 의 surviving-mutant 주장 + PL/QADev 재현
   결과를 입력받아, 3-상태 disposition 을 결정론적으로 산출하는 *순수 함수* SSOT.
-  구현리뷰 lane worker (CodexReviewAgent 동형 Bash dispatch) 가 Codex 로부터 받은
+  구현리뷰 lane worker (Bash 로 Codex dispatch — touchpoint #8 미배선 dormant, 권한 원천 = lane worker context) 가 Codex 로부터 받은
   surviving-mutant finding 을 lane(QADev/CodeReviewPL)이 재현 falsify 한 뒤, 그 재현
   결과를 본 함수에 위임(SSOT)해 disposition 을 확정한다. discriminating test
   (tests/scripts/test-check-mutation-disposition.sh)가 INV-M1~M5 별 RED→GREEN

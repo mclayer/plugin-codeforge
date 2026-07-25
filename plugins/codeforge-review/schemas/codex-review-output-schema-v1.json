@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "codex-review-output-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "counts", "findings"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "ISSUES", "NO_SHIP"],
+      "description": "Codex 산출 verdict closed enum. ESCALATE_PACKET_INCOMPLETE 는 dispatch-전 워커 자체 발화라 본 schema 밖 (I-1 경계: packet 검증 실패 시 Codex 호출 자체 skip). PASS 는 이 필드가 명시 'PASS' 일 때만 (I-3/I-7)"
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["P0", "P1", "P2", "P3"],
+      "properties": {
+        "P0": { "type": "integer", "minimum": 0 },
+        "P1": { "type": "integer", "minimum": 0 },
+        "P2": { "type": "integer", "minimum": 0 },
+        "P3": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "category", "location", "title", "body"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2", "P3"] },
+          "category": { "type": "string", "description": "packet category_enum 값 — schema 는 string 만 강제. lane 별 enum 대조 = 소비 재검증 helper 3번째 입력 category_enum (packet 유래) 이 수행 (소비 규칙 ⑤단계, 위반 = inconclusive — F-DR-001 1안). Structured Outputs 는 dispatch-시점 정적 schema 라 lane 동적 enum 불가" },
+          "location": { "type": "string", "description": "path:line | path:§section | ADR 파일" },
+          "title": { "type": "string", "description": "[<category>] <원인 한 줄> — PL dedup 키 (location+category+title prefix) 형식은 워커 정규화 단계에서 강제" },
+          "body": { "type": "string" }
+        }
+      }
+    }
+  }
+}
