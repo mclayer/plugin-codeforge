@@ -414,28 +414,79 @@ assert_mutant_reveals_red "T1-A 팔A-skip 무력화" "$fr" \
   's/        if is_superseded_status(s.get("status")):/        if False:/'
 rm -rf "$fr"
 
-# T1-B: 팔B write_baseline (Superseded + Accepted 혼재 → baseline 은 Accepted 만)
+# T1-B: 팔B write_baseline canon + mutation-kill (Superseded 필터 삭제 → 재포함 = KILLED)
 # fixture = Superseded ADR(eff 11) + Accepted ADR(eff 12) + clean ADR(eff 0)
 fr="$(mktemp -d)"
 make_status_adr "$fr" "ADR-911-sup.md" "Superseded" 11
 make_status_adr "$fr" "ADR-912-acc.md" "Accepted" 12
 make_heading_adr "$fr" "ADR-913-clean.md" 0
+
+# canon: 정본 --write-baseline
 PYTHONUTF8=1 "$PYBIN" "$SRC" --mode threshold --write-baseline --repo-root "$fr" >/dev/null 2>&1
 wb_rc=$?
-if [ "$wb_rc" -eq 0 ] && [ -f "$fr/docs/adr-amendment-threshold-baseline.yaml" ]; then
+base_baseline_path="$fr/docs/adr-amendment-threshold-baseline.yaml"
+if [ "$wb_rc" -eq 0 ] && [ -f "$base_baseline_path" ]; then
   # baseline 에 ADR-912 Accepted 존재 확인 + ADR-911 Superseded 제외 확인
-  if grep -q '^- adr: ADR-912$' "$fr/docs/adr-amendment-threshold-baseline.yaml" && \
-     ! grep -q '^- adr: ADR-911$' "$fr/docs/adr-amendment-threshold-baseline.yaml"; then
-    echo "PASS: T1-B 팔B baseline write (Accepted 포함, Superseded 제외)"
+  if grep -q '^- adr: ADR-912$' "$base_baseline_path" && \
+     ! grep -q '^- adr: ADR-911$' "$base_baseline_path"; then
+    echo "PASS: T1-B 팔B baseline write canon (Accepted 포함, Superseded 제외)"
     PASS=$((PASS+1))
   else
-    echo "FAIL: T1-B 팔B baseline write — Accepted 미포함 또는 Superseded 재포함"
+    echo "FAIL: T1-B 팔B baseline write canon — Accepted 미포함 또는 Superseded 재포함"
     FAIL=$((FAIL+1))
   fi
 else
-  echo "FAIL: T1-B 팔B baseline write 실패 (rc=$wb_rc)"
+  echo "FAIL: T1-B 팔B baseline write canon 실패 (rc=$wb_rc)"
   FAIL=$((FAIL+1))
 fi
+
+# mutation-kill: 팔B picked 필터 삭제 → Superseded 재포함 (§8 Test Contract 명시)
+# 정본: ADR-911 부재 / mutant(필터 제거): ADR-911 등장 = KILLED
+base_baseline_copy="/tmp/t1b_base_$$.yaml"
+cp "$base_baseline_path" "$base_baseline_copy"
+
+# mutant 생성
+mdir="$(mktemp -d)"
+mutant="$mdir/mutant.py"
+cp "$SRC" "$mutant"
+# 팔B picked 필터 제거: `        and not is_superseded_status(s.get("status"))` 줄 제거
+sed -i '/^        and not is_superseded_status(s.get("status"))$/d' "$mutant"
+
+# no-op guard
+if diff -q "$SRC" "$mutant" >/dev/null 2>&1; then
+  echo "FAIL: T1-B mutation-kill — sed mutation no-op (팔B 필터 미제거)"
+  FAIL=$((FAIL+1))
+else
+  # mutant 로 baseline 재생성 (정본 baseline 제거 후 mutant 실행)
+  rm -f "$base_baseline_path"
+  PYTHONUTF8=1 "$PYBIN" "$mutant" --mode threshold --write-baseline --repo-root "$fr" >/dev/null 2>&1
+  mut_wb_rc=$?
+
+  if [ "$mut_wb_rc" -eq 0 ] && [ -f "$base_baseline_path" ]; then
+    # 정본 baseline: ADR-911 부재, ADR-912 존재
+    # mutant baseline: ADR-911 존재, ADR-912 존재
+    base_has_911=0 base_has_912=0 mut_has_911=0 mut_has_912=0
+    grep -q '^- adr: ADR-911' "$base_baseline_copy" && base_has_911=1
+    grep -q '^- adr: ADR-912' "$base_baseline_copy" && base_has_912=1
+    grep -q '^- adr: ADR-911' "$base_baseline_path" && mut_has_911=1
+    grep -q '^- adr: ADR-912' "$base_baseline_path" && mut_has_912=1
+
+    # KILLED 조건: base(911 부재, 912 존재) AND mutant(911 존재, 912 존재)
+    if [ "$base_has_911" -eq 0 ] && [ "$base_has_912" -eq 1 ] && \
+       [ "$mut_has_911" -eq 1 ] && [ "$mut_has_912" -eq 1 ]; then
+      echo "PASS: T1-B mutation-kill — 정본(911 부재) / mutant(911 등장) KILLED (팔B 필터 무력화)"
+      PASS=$((PASS+1))
+    else
+      echo "FAIL: T1-B mutation-kill — baseline 조건 미충족 (base:911=$base_has_911,912=$base_has_912 / mut:911=$mut_has_911,912=$mut_has_912)"
+      FAIL=$((FAIL+1))
+    fi
+  else
+    echo "FAIL: T1-B mutation-kill — mutant baseline 생성 실패 (rc=$mut_wb_rc)"
+    FAIL=$((FAIL+1))
+  fi
+fi
+rm -rf "$mdir"
+rm -f "$base_baseline_copy"
 rm -rf "$fr"
 
 # T1-C: predicate mutation (over-breadth) — Superseded 판정 무력화 (re.match → startswith over-breadth)
