@@ -72,6 +72,7 @@ ADR-058 Amendment 1 (CFP-1149) 컨텍스트의 "실 retire 0건" 주장은 **sta
 - ADR `is_transitional: true` 의 `## 해소 기준` 3-tuple metric 이 충족됨 (ADR-058 §결정 3).
 - ADR-095 시간 threshold 도달 (도입 사유 해소 후 GA-tier 12개월 / Beta-tier 9개월 경과).
 - 대체 ADR/contract 가 Accepted 되어 본 ADR 효용이 다른 carrier 로 이전 가능 (supersede 신호).
+- amendment 누적 임계(`effective_count >= N`) 도달 또는 재해석 조항(`reinterpretation: true`) 부착 (신규 governance ADR — 재제정 의무 트리거, ADR-167). 참조 절차 = 본 G1 6단계 (ADR-023 §결정 2 7-step lane-plugin lifecycle 아님).
 
 ### 단계 2 — 후보 판정 (sunset 자격 검증)
 
@@ -124,6 +125,8 @@ status 강등 = **frontmatter 플래그 set + 파일 위치 유지 + RESERVATION
 
 **위치 확정 근거 (C-4)**: 일몰 ADR 을 별도 디렉터리로 *이동*하지 않는다. 이유 = (a) 역참조 경로 대량 파손, (b) `check_adr_sunset_criteria.py` 및 doc-locations 패턴이 `archive/adr/` 단일 위치 가정, (c) ADR-076/083 전례가 in-place 보존. 일몰 신호 = 파일 위치가 아닌 `sunset_status` frontmatter 플래그.
 
+**C-1 variant (Superseded 경로) — named 후계 재제정 시 (ADR-167)**: 후계 ADR 이 명명된 재제정(carrier-preserved recodification)에서는 **top-level `status: Superseded by ADR-Y` 전이** (ADR-121 shape) + `sunset_status` **미사용** + **본문 byte 무변경 유지**. 기존 C-1 (`sunset_status: Sunsetted` + top-level status 무변경) = 무후계 Sunsetted 전용과 **disjoint** — named 후계 유무로 경로 분기한다. RESERVATION row 전이(단계 6 `active → archived`) · 역참조 갱신(G3) · 본문 삭제 금지(C-3) · 파일 위치 유지(C-4)는 양 경로 공통. ADR-167 재제정 경로가 본 variant 를 사용한다.
+
 ### G3 — 역참조(cross-reference) 안전 점검 절차
 
 sunset 대상 ADR 을 인용하는 모든 지점을 식별·갱신해 dangling reference 를 차단한다.
@@ -149,6 +152,10 @@ sunset 대상 ADR 을 인용하는 모든 지점을 식별·갱신해 dangling r
 본 G3 는 **declarative-only** 다. 역참조 dangling 을 차단하는 mechanical lint (예: `sunset_status: Sunsetted` ADR 을 `related_adrs` 에 보유하면서 carrier 포인터 미부착 시 warning) 는 **후속 carrier** 다.
 
 **근거**: lint script 신설 = `scripts/` + `templates/github-workflows/` 변경 → ADR-054 §결정 4/5 full-lane 강제. 본 S3 의 doc-only fast-path 유지를 위해 Wave 1 = declarative-only. mechanical 승격 = ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습 — pattern_count >= 2 (실 sunset 2건 이상 역참조 누락 발생) 재발 시 follow-up CFP MUST promote to mechanical (`adr-sunset-crossref-dangling` warning tier evidence-check-registry entry 후보).
+
+#### G3.4 supersedes N:1 전수 기재 의무 (재제정 경로)
+
+재제정 신규 ADR 의 frontmatter `supersedes:` 배열은 **전 퇴역 대상을 전수 기재**한다 (N:1 — 다수 구 ADR 을 1건으로 접는 재제정에서 배열 누락 0). 실증 = ADR-121 의 `supersedes:` 배열 2건 vs status 역링크 3건 (ADR-105 누락) — 배열↔역링크 비대칭이 dangling 역참조를 낳는 실물. mechanical lint 은 G3.3 declarative-only 정합 (현 실증 1건 — pattern_count >= 2 재발 시 follow-up CFP MUST promote, ADR-167 §결정 3).
 
 ### 책임 (RACI)
 

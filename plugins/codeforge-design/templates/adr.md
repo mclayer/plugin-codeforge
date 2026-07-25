@@ -31,11 +31,13 @@ related_stories:
   - <STORY_KEY_PREFIX>-N
   - <STORY_KEY_PREFIX>-M
 # (선택) is_transitional: true ADR amendment 시 amendments[] 의무
+# forward-only: 신규 amendment entry 는 frontmatter amendments[] 에 기재 의무 (heading-only 저작 금지 — parity lint 검출, ADR-167).
 amendments:
   - by: "<STORY_KEY_PREFIX>-N"
     date: "YYYY-MM-DD"
     scope: "<변경 내용>"
     sunset_justification: "<왜 기존 sunset 미충족인지 — ADR-058 §결정 5 의무>"
+    reinterpretation: true | false   # ADR-167 필수 — 본문 의미 소급 재해석 여부 self-declare (forward-only 신규 entry 의무). presence/type 만 기계 검사, 진위=리뷰 판정 축(honest-ceiling)
 ---
 ```
 

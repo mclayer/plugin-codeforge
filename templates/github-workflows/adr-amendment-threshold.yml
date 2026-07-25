@@ -1,0 +1,73 @@
+name: ADR amendment threshold (warning mode)
+# CFP-2812 / ADR-167 — ADR amendment 누적 임계 재제정(compaction) ratchet 게이트.
+# Tier: warning (continue-on-error, non-required check — branch protection 8-tuple 무배선, D3).
+# permissions: contents: read 단독 — annotation-only(::error/::warning), PR comment 미발행 (least-privilege, §7.3).
+# bypass channel 미신설 — warning tier 는 merge 를 차단하지 않으므로 bypass 불요 (D3 / SecurityArch T5).
+#
+# byte-parity 쌍: templates/github-workflows/adr-amendment-threshold.yml ↔ .github/workflows/adr-amendment-threshold.yml
+#   두 파일 byte-identical (invariant-check.yml Workflow parity diff -q 대상, LF 고정).
+#
+# 2 job (job-per-check 격리 — D4, 한쪽 실패가 다른 verdict 오염 방지):
+#   adr-amendment-threshold : effective_count = max(본문 헤딩 count, frontmatter 합산 count) >= N 임계 +
+#                             grandfather baseline 대조 (count 축).
+#   adr-amendment-parity    : 신규 amendment heading↔fm 기재 정합 + reinterpretation marker presence
+#                             (판정 forward-only 축).
+#
+# 재제정 경로 = 기존 supersede + 능동 일몰 mechanics 재사용 (신규 절차 발명 0) — 상세 = ADR-167.
+# 승격 path: warning → required 승격 시 별도 carrier PR 이 (1) continue-on-error 제거
+#   (2) branch protection required_status_checks.contexts 에 job 추가 (3) ADR-060 §결정 6 evidence 3 산출물 제출.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'archive/adr/ADR-*.md'
+      - 'docs/adr-amendment-threshold-baseline.yaml'
+      - 'scripts/check-adr-amendment-threshold.sh'
+      - 'scripts/check-adr-amendment-parity.sh'
+      - 'scripts/lib/check_adr_amendment_threshold.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # count 축 — effective_count >= N 임계 + grandfather baseline 무결성 (B-1 단조 diff seal / B-2 ceiling sanity).
+  adr-amendment-threshold:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10  # F-SEC-01(a) defense-in-depth — 스캐너 self-DoS 잔여 안전망 상한 (-test.yml 대칭)
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 를 차단하지 않음. required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # B-1 단조 diff seal (git merge-base 대비 baseline diff) + count 판정 corpus 전수 스캔.
+          fetch-depth: 0
+
+      - name: Install pyyaml
+        # pyyaml 부재 = fail-closed (D9) — install step 보유로 운용상 안전 (침묵 GREEN 봉인).
+        run: python3 -m pip install --user pyyaml
+
+      - name: Run ADR amendment threshold lint (count 축)
+        # corpus 전수 스캔 (無인자) — count 정확성 우선. exit 0=PASS / 1=violation (annotation ::error/::warning).
+        run: bash scripts/check-adr-amendment-threshold.sh
+
+  # 판정 forward-only 축 — heading↔fm parity + reinterpretation marker presence/consistency (D4/D5).
+  adr-amendment-parity:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10  # F-SEC-01(a) defense-in-depth — 스캐너 self-DoS 잔여 안전망 상한 (-test.yml 대칭)
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # forward-only 판정 = PR diff (merge-base 대비) 신규 추가 amendment 헤딩 — merge-base 접근 필요.
+          fetch-depth: 0
+
+      - name: Install pyyaml
+        run: python3 -m pip install --user pyyaml
+
+      - name: Run ADR amendment parity lint (heading↔fm + marker presence)
+        run: bash scripts/check-adr-amendment-parity.sh
