@@ -162,12 +162,12 @@ run_kst_exact() {
   fi
 }
 
-# T2-3: epoch 0 = 1970-01-01T00:00Z, +9h → 01/01 09:00.
-run_kst_exact "T2-3: epoch 0 → 01/01 09:00" 0 "01/01 09:00" "1970-01-01T00:00Z +9h = 09:00 (동일자)"
-# T2-4: epoch 72000 = 1970-01-01T20:00Z, +9h → 01/02 05:00 (일자 rollover).
-run_kst_exact "T2-4: epoch 72000 → 01/02 05:00 (일자 rollover)" 72000 "01/02 05:00" "1970-01-01T20:00Z +9h = 다음날 05:00"
-# T2-5: epoch 1735675200 = 2024-12-31T20:00Z, +9h → 01/01 05:00 (연/월/일 rollover).
-run_kst_exact "T2-5: epoch 1735675200 → 01/01 05:00 (연/월/일 rollover)" 1735675200 "01/01 05:00" "2024-12-31T20:00Z +9h = 2025-01-01T05:00 KST"
+# T2-3: epoch 0 = 1970-01-01T00:00Z, +9h → 01/01 09:00:00 (CFP-2836 seconds).
+run_kst_exact "T2-3: epoch 0 → 01/01 09:00:00" 0 "01/01 09:00:00" "1970-01-01T00:00Z +9h = 09:00:00 (동일자)"
+# T2-4: epoch 72000 = 1970-01-01T20:00Z, +9h → 01/02 05:00:00 (일자 rollover).
+run_kst_exact "T2-4: epoch 72000 → 01/02 05:00:00 (일자 rollover)" 72000 "01/02 05:00:00" "1970-01-01T20:00Z +9h = 다음날 05:00:00"
+# T2-5: epoch 1735675200 = 2024-12-31T20:00Z, +9h → 01/01 05:00:00 (연/월/일 rollover).
+run_kst_exact "T2-5: epoch 1735675200 → 01/01 05:00:00 (연/월/일 rollover)" 1735675200 "01/01 05:00:00" "2024-12-31T20:00Z +9h = 2025-01-01T05:00:00 KST"
 
 # non-deprecated API + stderr 격리: `-W error` 로 DeprecationWarning→error 승격.
 #   utcnow()(deprecated) 사용이면 warning→error→exit≠0 & stderr 비어있지 않음 → RED.
@@ -180,12 +180,12 @@ run_kst_no_deprecation() {
   trap "rm -f '$errfile'" RETURN
   out=$(python3 -W error "$KST" --epoch 0 2>"$errfile") || exit_code=$?
   err_content=$(cat "$errfile")
-  if [ "$exit_code" -eq 0 ] && [ -z "$err_content" ] && [ "$out" = "01/01 09:00" ]; then
+  if [ "$exit_code" -eq 0 ] && [ -z "$err_content" ] && [ "$out" = "01/01 09:00:00" ]; then
     echo "✓ PASS: $name (exit 0, stderr 빈, out '$out') — non-deprecated API (utcnow→DeprecationWarning 회귀 방지)"
     PASS=$((PASS+1))
   else
     echo "✗ FAIL: $name"
-    echo "  Expected exit 0 ∧ stderr 빈 ∧ out '01/01 09:00', got exit=$exit_code out='$out'"
+    echo "  Expected exit 0 ∧ stderr 빈 ∧ out '01/01 09:00:00', got exit=$exit_code out='$out'"
     echo "  stderr: $err_content"
     FAIL=$((FAIL+1))
   fi
@@ -310,7 +310,8 @@ echo "════════════════════════�
 echo
 
 # distinct-marker = RENDER_RE 매칭(도메인 stamp 형상 sentinel) — 단순 exit 아님.
-RENDER_RE='^[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]$'
+# RENDER_RE = MANDATORY-SS format (CFP-2836): MM/DD HH:MM:SS (seconds required, not optional like acceptor).
+RENDER_RE='^[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$'
 
 # B-1: python SSOT 무 --epoch → now(timezone.utc) default 분기 실행 (전 케이스 --epoch 주입으로 미커버였던 경로).
 b1_exit=0
