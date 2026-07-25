@@ -1,8 +1,8 @@
 name: Codex companion timeout presence lint (warning mode)
-# CFP-2545 / ADR-081 Amendment 12 §결정 D14 — Codex companion 브로커 경로 wall-clock 가드 presence lint.
-# codeforge 소유 codex companion dispatch 발화(node ... adversarial-review | task --write)가 항상
-# `timeout --kill-after=<K> <N>` (option-first runnable) wall-clock 가드로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
-# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D14 Phase 2 wire)
+# CFP-2545 / CFP-2828 / ADR-081 Amendment 12→14 §결정 D14→D15 — Codex 리뷰 dispatch wall-clock 가드 presence lint.
+# codeforge 소유 Codex 리뷰 dispatch 발화(codex exec ... - < <promptfile>, companion 브로커 우회 재타겟)가 항상
+# `timeout --kill-after=<K> <N>` (option-first runnable) wall-clock 가드 + stdin `- <` file-redirect 로 감싸졌는지 + 발화 건수 ≥1 (hollow-gate 차단, invariant I-3).
+# Tier: warning (continue-on-error, non-required check — ADR-060 §결정 5 / ADR-081 §D15 Phase 2 wire)
 # Bypass channel: hotfix-bypass:codex-companion-timeout-presence (ADR-024 §결정 6.A per-entry namespace)
 #
 # consumer degradation (SSOT = scripts/lib/check_codex_companion_timeout_presence.py header §5):
@@ -61,7 +61,7 @@ jobs:
       - name: Run codex companion timeout presence lint
         id: lint
         run: |
-          bash scripts/check-codex-companion-timeout-presence.sh . 2>&1 | tee lint-output.txt
+          bash scripts/check-codex-companion-timeout-presence.sh 2>&1 | tee lint-output.txt
           exit ${PIPESTATUS[0]}
         continue-on-error: true
 

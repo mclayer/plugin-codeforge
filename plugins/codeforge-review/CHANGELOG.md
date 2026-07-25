@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.30.0 — 2026-07-25
+
+### Changed (CFP-2828 — ADR-081 Amendment 14 §결정 D15: dispatch 계층 companion 브로커 → `codex exec` 직접, MINOR)
+
+[CFP-2828] CodexReviewAgent(4 리뷰 lane 공유 워커)의 Codex dispatch 를 companion 브로커(`node codex-companion.mjs adversarial-review --wait`, app-server thread 경유)에서 Codex CLI `codex exec` 직접 호출 **단일 primitive** 로 전환 (sandbox 수위 × reasoning effort × promptfile 내용 프로파일 차이로 구 2-트랙 수렴):
+
+- `agents/CodexReviewAgent.md` — §실행 패턴을 정본 `codex exec` dispatch 템플릿(option-first `timeout --kill-after=<K> <N>` wall-clock 가드 + `- <` file-redirect + hermetic `--ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral` + `-s read-only` 기본 + `-c model_reasoning_effort=<EFFORT>` + `--output-schema`/`-o out.json`) + lane 프로파일 표(requirements=medium/read-only/300 · design=high/read-only/240 · code=medium/read-only[write-gate만 workspace-write] · security=high/read-only/420) + §7.4.1 exit-code 판정표로 교체. companion 탐색 for-loop 순삭제. 변환 규칙 = `[P0]` regex 스캔 폐지 → out.json schema 필드 직접 read(AC-7). frontmatter `Bash(node *)` 은퇴 + `Bash(codex *)`/`Bash(timeout *)` 추가(실행 표면 순감소 — AC-13, 실행 주체 = Codex 자체 sandbox 불변).
+- `schemas/codex-review-output-schema-v1.json` (신설) — out.json findings 계약(draft-07, 전 필드 required ∧ additionalProperties:false ∧ closed enum verdict/severity — Structured Outputs subset).
+- `scripts/lib/check_codex_review_output_schema.py` (신설, wrapper 인프라) — AC-6 소비 재검증 helper. 시그니처 `(out_json, schema, category_enum 쉼표구분) → exit 0/1`, 5단계 fail-closed(파일 존재 / JSON parse / schema 준수 / counts↔findings cross-field / category∈enum). stdlib-only, malformed/truncated/deeply-nested no-crash.
+- `scripts/lib/check_codex_companion_timeout_presence.py` (재타겟, 파일명·action 명 유지 D-5) — DISPATCH regex `node ... adversarial-review` → `codex exec`(read-only/workspace-write sandbox 축 라벨), `execution_first_tokens ('timeout','node')→('timeout','codex')`, AC-4 stdin `- <` redirect presence 축 편입(base 무변경 composition). self-test 7-case 재작성(failure-mode 판정으로 재타겟 회귀 자기검출).
+- `templates/review-pl-base.md` §10 + `templates/review-checklists/code.md` — companion dispatch 서술 → `codex exec` 정합 갱신.
+
+#### Why
+
+companion `request()` deadline 부재 + detached daemon 좀비 + 4-lane blast radius 축 소멸 + 파싱 신뢰성(regex → schema 필드 read) 개선. stall 축은 "소멸" 아닌 "이동"(CLI 고유 hang #20919/#19945)이라 wall-clock 가드 잔존 1급. dispatch 절 behavior-change → MINOR (CFP-2545 선례 동형, ADR-037 / ADR-008). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## 1.29.0 — 2026-07-24
 
 ### Added (CFP-2813 — ADR-166 / ADR-078 Amd3 / ADR-112 Amd1: 리뷰 PL mandatory read + Living Architecture 갱신 substance 소비 배선, MINOR)

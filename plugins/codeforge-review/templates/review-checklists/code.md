@@ -81,7 +81,7 @@ CFP-367 / ADR-055 — IntegrationTestAgent 진입 전 CodeReviewPL이 검증하�
 CFP-2477 / ADR-070 Amendment 11 §결정 D9 — **execute-the-gate vs read-the-diff**. Codex worker가 정적 diff 읽기에 더해 PR touch 한 게이트·체크를 실제 실행해 단정과 대조 (개념 SSOT = `docs/domain-knowledge/concept/execution-based-review-verification.md`).
 
 - **실행 대상** = PR touch 파일 ∩ discriminating check(self-test/eval 모드, 결함 시 RED) 우선. 70+ 전수 금지. 대표 후보 = `check-plugin-version-bump-self.sh`(ADR-037) 외 self-test 보유 게이트. Python 게이트(ADR-061 thin-wrapper, *.py)도 대상 — Codex sandbox python3 안 실행.
-- **실행 주체** = Codex 자체 sandbox (read-only 기본 / network-off / `.git`·`.codex` 보호). lane worker own-Bash 실행 아님 (CodexReviewAgent allowlist 미확대). write 필요 게이트만 `task --write`(workspace-write) + `[exec-verify-write-mode: <check>]` marker.
+- **실행 주체** = Codex 자체 sandbox (read-only 기본 / network-off / `.git`·`.codex` 보호). lane worker own-Bash 실행 아님 (CodexReviewAgent python/pytest 확대 0). write 필요 게이트만 `codex exec -s workspace-write` + `[exec-verify-write-mode: <check>]` marker.
 - **승격 룰** = 실행결과 ↔ 단정 모순일 때만 finding (`exec-result-mismatch`). 실행 GREEN 은 승격 금지 (Popper falsify 전용). 동일 입력 다회 실행 결정론 확인 후 승격 — flaky/환경차 의심 = `undetermined` 보류. finding 구조 = {asserted/expected, executed target, exec verdict(exit+stdout), conflict summary}.
 - **verify-before-trust** = Codex 실행 결과 = `[hypothesis]` → **CodeReviewPL 직접 재실행 falsify 통과 시만 채택** (ADR-070 Amd11 §결정 D9, §결정 D6.1 mandatory-real-execution-evidence 확장). 정적 추정만으로 채택 불가.
 - **검증 제약 분리** = 실행 불가(권한/interpreter 부재/환경 미구성)는 "검증 제약" 으로 제품결함 finding 과 분리 (UC-3). Codex 미가용 = lane-time `fail_open_then_record_with_marker` (`[exec-verify-fallback: ...]`).

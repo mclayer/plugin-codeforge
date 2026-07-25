@@ -1,0 +1,13 @@
+{
+  "verdict": "ISSUES",
+  "counts": { "P0": 0, "P1": 1, "P2": 0, "P3": 0 },
+  "findings": [
+    {
+      "severity": "P1",
+      "category": "totally-unknown-cat",
+      "location": "src/x.py:42",
+      "title": "[totally-unknown-cat] some issue",
+      "body": "schema-valid string category, but outside the packet category_enum → helper ⑤단계 검출."
+    }
+  ]
+}

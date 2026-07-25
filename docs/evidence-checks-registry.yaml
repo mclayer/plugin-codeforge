@@ -3284,18 +3284,21 @@ entries:
   # AC-1 mechanical 강제 층 (markdown agent 지시만으로는 self-discipline → hollow-gate). warning tier.
   - name: codex-companion-timeout-presence
     description: |
-      CFP-2545 / ADR-081 Amendment 12 §결정 D14 — codeforge 소유 codex companion 브로커 경로
-      dispatch 발화(`node ... adversarial-review` / `task --write`) 가 항상 wall-clock 상한
-      (`timeout --kill-after=<K> <N>`, option-first runnable) prefix 로 감싸졌는지 정적 검사. companion `request()` deadline
-      부재 → stall 시 node·Bash·worker·Orchestrator 무한 대기(4 리뷰 lane 공유 워커 blast radius).
-      검사 (scripts/lib/check_codex_companion_timeout_presence.py SSOT + thin wrapper, ADR-061):
+      CFP-2545 / CFP-2828 / ADR-081 Amendment 12→14 §결정 D14→D15 — codeforge 소유 Codex 리뷰
+      dispatch 발화(`codex exec ... - < <promptfile>`, companion 브로커 우회 재타겟) 가 항상 wall-clock 상한
+      (`timeout --kill-after=<K> <N>`, option-first runnable) prefix + stdin `- <` file-redirect 를 동반하는지
+      정적 검사. CLI 고유 hang(#20919/#19945)은 stall 축 "소멸" 아닌 "이동" — wall-clock 가드 잔존 1급.
+      검사 (scripts/lib/check_codex_companion_timeout_presence.py SSOT + thin wrapper, ADR-061; action 명 유지 D-5):
       (1) dispatch 발화 앞 `timeout <N>` prefix 존재 (리터럴 정수 또는 ${VAR:-<int>} env-default 형태 허용) /
       (2) `--kill-after=<K>` 동반 / (3) N 양의 정수(0/음수 위반) / (4) hollow-gate 차단 I-3 (스캔 대상
       파일 존재 시 dispatch 발화 ≥1 — 발화 0건 → exit 1, 구조 drift 로 발화가 스코프 이탈해도 항상 GREEN
       되는 경로 차단) / (5) 경로 부재 fail-open (consumer no-op — byte-identical mirror 상속해도
-      plugins/codeforge-review 부재 시 honest no-op exit 0, spurious RED 미발생). RED→GREEN discriminating
-      self-test (--self-test 8-case: timeout prefix GREEN / 제거·발화0건·N=0·음수·kill-after 누락 RED) +
-      mutation proof (가드 제거 시 PASS→RED, DevPL firsthand 실증). ReDoS-safe (anchored 리터럴 + \d+).
+      plugins/codeforge-review 부재 시 honest no-op exit 0, spurious RED 미발생) / (6) AC-4 stdin `- <`
+      redirect presence (positive 구조 계약 — inline positional prompt 금지, D8 계승). RED→GREEN discriminating
+      self-test (--self-test 7-case: G1/G2 GREEN / R1 timeout 제거[failure-mode=violation 판정으로 재타겟 회귀
+      자기검출]·R2 duration-first·R3 N=0·R4 kill-after 누락·R5 hollow RED) + mutation proof (가드 제거 시
+      PASS→RED, DevPL firsthand 실증). ReDoS 관측: line-by-line bounded scan + anchored 리터럴 + \d+ +
+      zero-width lookahead(nested quantifier 부재) — 총 작업량 무해성 절대단정 아님(honest ceiling).
       warning tier (ADR-060 §결정 5 default warning mode — blocking 승격 = evidence-gated 별 carrier).
       injection-safe (pull_request NOT pull_request_target / permissions contents:read).
     detect_command: bash scripts/check-codex-companion-timeout-presence.sh
