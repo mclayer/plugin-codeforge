@@ -601,19 +601,13 @@ class TestConcurrentTwoWriterAppend:
             "nonblank(%d) != valid(%d)+malformed(%d) — reader 회계 불일치" % (
                 nonblank, res["stats"]["rows_total"], res["stats"]["malformed_skipped"])
 
-    @pytest.mark.xfail(
-        strict=False,
-        reason="§6.1 R5: Windows MS-CRT O_APPEND(lseek-then-write) 비원자 — 2-writer 경합 시 "
-               "완료행 clobber 실측(실행마다 ~3-14% 유실). §8.8 oracle 'clobber 0' vs append primitive "
-               "'무보장 천장'(무변경) 내부 충돌 → §8.8 '무보장 천장 승계' 절에 따라 xfail 로 문서화. "
-               "일부 유실은 malformed_skipped 로 관측(D2)되나 일부는 물리 overwrite 로 SILENT — "
-               "AC-3 fail-VISIBLE / AC-9 실패방향(visible≫silent) 갭. ArchitectPL 회부(발견 사항).",
-)
-    def test_two_writer_completed_row_clobber_zero_HONEST_CEILING(self, tmp_path):
-        """§8.8 oracle aspirational: 선행 완료행 바이트 clobber 0 (성공 append event_id 전량 생존).
+    def test_two_writer_completed_row_clobber_zero(self, tmp_path):
+        """§8.8 oracle: 선행 완료행 바이트 clobber 0 (성공 append event_id 전량 생존).
 
-        primitive(무변경)가 Windows 에서 이를 보장 못 함 → xfail(strict=False, R5). fix(lock/atomic
-        append = 계획 §5 append 무변경 amendment) 후 XPASS 로 flip 시 알림."""
+        CFP-2817 FIX Iter 3: 공유 primitive append_spawn_event._append_jsonl_row 이 cross-platform
+        kernel-atomic append(Windows FILE_APPEND_DATA / POSIX O_APPEND, ADR-155 Amendment 1)로 완료행
+        clobber 를 봉인 → iter1 xfail(R5 '무보장 천장') 철회, cross-platform 실 GREEN. discriminating
+        negative-control = test_dev_process_concurrency.TestClobberOracleDiscriminating."""
         exp, res, _ = self._run(tmp_path / "dev-process-event.jsonl")
         got = {r["event_id"] for r in res["rows"]}
         missing = exp - got
