@@ -277,7 +277,7 @@ graph TB
 - **Claude ↔ MCP server** = JSON-RPC over stdio (Claude Code harness)
 - **Claude ↔ GitHub API** = REST + GraphQL via MCP github tool (PAT auth)
 - **Claude ↔ Confluence API** = REST via MCP atlassian tool (consumer overlay project.yaml atlassian.* 주입, ADR-103)
-- **Claude ↔ Codex CLI** = `codex exec --sandbox read-only < <promptfile>` file-redirect (ADR-081 Amd 6 D8 — direct stdin-pipe 차단 TTY 부재 0-byte stall 회피)
+- **Claude ↔ Codex CLI** = `codex exec --sandbox read-only < <promptfile>` file-redirect (ADR-081 Amd 6 D8 — direct stdin-pipe 차단 TTY 부재 0-byte stall 회피). 리뷰 dispatch (CodexReviewAgent 4 lane) = D8 canonical 계승 + `--output-schema <schema> -o <out.json>` 구조화 출력 — verdict 정본 = out.json field read + 소비 시점 schema 재검증 fail-closed (ADR-081 Amd 14 D15, CFP-2828 — companion 브로커 경유 폐지)
 - **Claude ↔ git** = local git CLI (worktree-first invariant ADR-040 Amd 6 — `git -C <worktree_abs_path>` 강제)
 - **Local state** = filesystem-only (no central state server, codeforge = stateless per-session orchestration)
 - **Plugin distribution** = `~/.claude/plugins/cache/` (consumer install via `mclayer/marketplace` registry, 7 plugin atomic version 고정 per CFP-744)

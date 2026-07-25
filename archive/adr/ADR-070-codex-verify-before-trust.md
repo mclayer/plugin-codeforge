@@ -93,6 +93,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 12 + ## 결정 / D1 적용 scope 정책-실행 row + FIX-close replay row"
     sunset_justification: null
+  - amendment_id: 13
+    cfp: CFP-2828
+    date: 2026-07-25
+    scope: "§B3 execution-dispatch-pattern-v1 7-step 중 step① dispatch-형식 인용 현행화 (②~⑦ 무손상) — ADR-081 Amendment 14 (§결정 D15, CodexReviewAgent 리뷰 dispatch companion 브로커 → Codex CLI 직접) sibling cross-ref. step① 원문 'dispatch=adversarial-review/task(file-redirect)' 는 companion 계층 시절 형식 인용으로 보존 (당시 참) — 현행 적용형 pointer 만 append: `timeout --kill-after=<K> <N> codex exec --ignore-user-config -m <model> --ephemeral --sandbox <read-only|workspace-write> -c model_reasoning_effort=<effort> --output-schema <schema> -o <out.json> - < <promptfile>` (D8 canonical 계승 — file-redirect 원리 동일). step②(실행주체 Codex sandbox)~⑦(대상선택) + §결정 D9 3-상태 disposition + §B2 fail_open_then_record_with_marker = dispatch-agnostic 무손상 (firsthand 재확인 — 판정/신뢰승격/flaky/대상선택 layer 는 호출 커맨드 형식과 무관). 추가 정밀화: verdict 소비 채널 = out.json schema field read (exit code = fail-closed gate only — verdict SSOT 아님), schema-valid finding 도 [hypothesis] 지위 불변 (transport 신뢰성 ≠ 판정 신뢰성). D1-D9 본문 의미 변경 0건 — 현행 pointer append only. mechanical_enforcement_actions[] 변경 0건 (declaration-only retain precedent chain). is_transitional: false, 강화 방향 (dispatch 형식 현행화 + 구조화 출력 소비 규율 명시, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2828 Phase 1, dogfood wrapper-self)."
+    status: applied
+    ref: "## Amendments / Amendment 13 + §B3 step① 현행 pointer"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
@@ -824,6 +831,21 @@ FIX-close replay disposition 은 **§결정 D9 3-상태 disposition 을 그대�
 - (Amd12-A) **신규 §결정 D10 (정책-실행/FIX-close 전용 disposition)** — §결정 D9 가 이미 일반 실행검증 disposition (3-상태 + 다회 결정론 + lane-time fail-mode)을 codify. 정책-실행 = D9 curated-membership 적용 / FIX-close = D9 FIX-close 일반화 — 신규 §결정 불요 (재사용). D9 본문 의미 변경 0, row append only 채택.
 - (Amd12-B) **carve-out 유지 ("정책 게이트 실행결과·replay 결과 = 재현 가능 객관 사실" 이므로 verify-before-trust 면제)** — silent auto-trust = #7/#8/E1 review-lane 과 비대칭 governance hole. 실행결과·replay 결과도 flaky/환경차 오염 가능 (X-5) → PL 재실행 falsify 후 채택 필수. 2 row append (full 적용) 채택.
 - (Amd12-C) **FIX-close replay 를 신규 ADR 로 분리** — execution-dispatch-pattern-v1(Amd11) + §결정 D9 disposition 이 이미 SSOT, FIX-close 는 그 시점 일반화 + ADR-119 §결정 10② close-time wire 실현 + ADR-067 max-FIX disjoint amendment 로 깔끔히 담김. 신규 orphan ADR 불요 — amendment-led 채택 (ArchitectAgent chief 판정, Change Plan §10).
+
+### Amendment 13 (2026-07-25 KST, CFP-2828)
+
+**§B3 execution-dispatch-pattern-v1 step① dispatch-형식 인용 현행화 (②~⑦ 무손상) — ADR-081 Amendment 14 (§결정 D15) sibling cross-ref. dogfood wrapper-self carrier (CFP-2828).**
+
+#### Context (Amendment 13)
+
+CFP-2828 이 CodexReviewAgent 리뷰 dispatch 를 companion 브로커(`adversarial-review --wait` / `task --write`)에서 Codex CLI 직접(`codex exec` 단일 primitive)으로 전환한다 (ADR-081 Amendment 14 §결정 D15). Amendment 11 §B3 의 execution-dispatch-pattern-v1 7-step 중 **step① 만** companion 시절 dispatch 형식을 인용하고 있어 현행 pointer 가 필요하다.
+
+#### 결정 (Amendment 13)
+
+1. **step① 현행 적용형 pointer** — §B3 step① 원문 "① dispatch=adversarial-review/task(file-redirect)" 은 companion 계층 시절 형식 인용으로 **보존** (당시 참 — 물리 편집 0). 현행 유효 dispatch 형식 = ADR-081 §결정 D15 canonical: `timeout --kill-after=<K> <N> codex exec --ignore-user-config -m <model> --ephemeral --sandbox <read-only|workspace-write> -c model_reasoning_effort=<effort> --output-schema <schema> -o <out.json> - < <promptfile>` — §D8 file-redirect 원리 동일 계승 (promptfile stdin redirect, inline-arg 금지).
+2. **step②~⑦ dispatch-agnostic 무손상** [firsthand 재확인 — CFP-2828 설계 lane, ArchitectAnalyst + chief 이중]: ② 실행주체=Codex sandbox(read-only 기본/network-off) ③ 실행결과=exit code(primary)+stdout(semantic body) ④ finding 구조 ⑤ 신뢰승격=[hypothesis]→PL 재실행 falsify→[verified] ⑥ flaky 3-상태 disposition ⑦ 대상선택=discriminating∩PR-touch — 전부 호출 커맨드 형식과 무관한 판정/신뢰승격/flaky/대상선택 layer. §결정 D9 disposition + §B2 fail_open_then_record_with_marker 도 무손상.
+3. **정밀화 (③ 결과 채널)** — 신 dispatch 에서 verdict 소비 정본 채널 = `-o` out.json 의 schema field read (exit code = fail-closed gate only, verdict SSOT 아님 — ADR-081 §D15 A1.4). **schema-valid finding 도 [hypothesis] 지위 불변** — `--output-schema` 는 transport 신뢰성 개선이지 판정 신뢰성과 무관 (Popper 비대칭 — 본 ADR 의 verify-before-trust 규율이 그대로 신뢰 게이트).
+4. **ratchet/scope** — D1-D9 본문 의미 변경 0건, mechanical_enforcement_actions[] 무변경 (declaration-only retain precedent chain). 강화 방향 (dispatch 형식 현행화 + 구조화 출력 소비 규율 명시, 약화 0). ADR-054 doc-only fast-path 적격.
 
 ## 해소 기준
 

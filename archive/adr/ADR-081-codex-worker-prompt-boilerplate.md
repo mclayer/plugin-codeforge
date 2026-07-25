@@ -100,6 +100,13 @@ amendments:
     status: applied
     ref: "## Amendment 13 / 본문 ### D14 → ADR-139 cross-ref"
     sunset_justification: "ratchet 강화 방향 (§결정 D14 companion wall-clock ceiling → ADR-139 background-wait liveness gate first-instance cross-ref 선언 — codex-특정 인스턴스가 일반 원리의 첫 사례임을 명문화, SSOT 분산 방지). 약화 영역 0건 (§결정 D14 본문 무변경, D1-D14 본문 의미 변경 0, mechanical_enforcement_actions[] 무변경, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 14
+    cfp: CFP-2828
+    date: 2026-07-25
+    scope: "신규 §결정 D15 (CodexReviewAgent 리뷰 dispatch = Codex CLI 직접 — §D8 canonical 계승 + 구조화 출력) append + §결정 D13 현행 적용형 재규정 (원문 보존) + §결정 D14 re-scope (본문 0바이트 무손상 append-only — ADR-058 §결정 11 이중 게이트 비발동) + Amendment 12-C 기각 근거 해소 override (사실관계 서술). CodexReviewAgent(4 리뷰 lane 공유 워커) dispatch 를 companion 브로커(node codex-companion.mjs adversarial-review --wait / task --write)에서 Codex CLI 직접 단일 primitive 로 전환: option-first `timeout --kill-after=<K> <N> codex exec --ignore-user-config -m <model> --ephemeral --sandbox <read-only|workspace-write> -c model_reasoning_effort=<lane effort> --output-schema <schema> -o <out.json> - < <promptfile>`. 2-트랙(정적/실행검증) = 별도 서브커맨드 아닌 sandbox 수위 × effort × promptfile 내용 프로파일 차이로 수렴 (§5.5-1 확정 (A) — PROMPT⊕타겟팅 CLI 상호배타 3중 실측: 공식 docs + openai/codex#22145 + PL exit 2 재현, v0.144.5). `- < promptfile` = §D8 file-redirect 의무 계승 (inline-arg/direct stdin-pipe 금지 유지) / `-o` = §D8 result-via-file 요건의 강화 구현 (+JSON Schema 기계 강제, Structured Outputs subset). verdict SSOT = out.json field (exit code = fail-closed gate only) + 소비 시점 schema 재검증 fail-closed (silent-drop 실증 3종 #4181/#15451/#19816 대비). §D14 는 잔존 companion 표면(ADR-052 touchpoint #8 mutation peer)에 일반 명제로 잔존 유효 — CodexReviewAgent 이탈 = 적용범위 협소화이지 서사 무효화 아님 (append-only sub-decision, D14 본문 무변경 — Amendment 13 선언과 무충돌). Amd12-C 기각 근거(companion job 관리 상실)는 native `codex exec --output-schema`/`-o` 등장으로 해소 — 당시 판단 정당성 부정 아닌 사실관계 갱신. D1.A-D 4 mandatory field 무변경, D1-D14 본문 의미 변경 0건 — §결정 D15 sub-section append only. mechanical_enforcement_actions[] `codex-companion-timeout-presence` entry target §D14 → §D15 재타겟 (action 명·파일명 유지 — required-context 재적립 chicken-egg 회피, ADR-130 §결정6 동형; Phase 2 wire: DISPATCH regex + execution_first_tokens ('timeout','node')→('timeout','codex') + KIND_LABELS + fixture 재작성). ADR-070 Amendment 13 (§B3 step① 현행화) sibling cross-ref. is_transitional: false, 강화 방향 (dispatch reliability + 구조화 출력 + hermetic 공격면 축소, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-2828 Phase 1, dogfood wrapper-self)."
+    status: applied
+    ref: "## Amendment 14 / 본문 ### D15 + D13 재규정 + D14 re-scope + 거절된 대안"
+    sunset_justification: "ratchet 강화 방향 (CodexReviewAgent dispatch 를 experimental app-server 의존 companion 브로커에서 안정 subcommand 직접 호출로 전환 — §D8 canonical 계승 + JSON Schema 구조화 출력 + 소비 시점 재검증 fail-closed + hermetic 공격면 축소 + wall-clock ceiling direct-CLI 인스턴스 승계). 약화 영역 0건 (§D14 본문 무변경 — 잔존 companion 표면 한정 잔존 유효 re-scope, D8 file-redirect 원리 계승, fail-open 금지·PASS-only-if-explicit·dual-peer·packet 계약·read-only+network-off invariant 5종 무손상, D1-D14 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -119,6 +126,7 @@ related_stories:
   - CFP-2477 # Amendment 11 — 신규 §결정 D13 Codex worker execution dispatch (adversarial-review/task file-redirect + Codex sandbox 실행) + §결정 D3 3-lane partition execution ground-truth axis 추가. ADR-070 Amendment 11 sibling. Epic CFP-2476 E1.
   - CFP-2545 # Amendment 12 — 신규 §결정 D14 Codex companion 브로커 경로 wall-clock ceiling mandate (adversarial-review --wait 무한 대기 근절 — §D8 file-redirect 0-byte stall 방어층 미포함 companion process wall-clock hang 방어 + fail-open 금지 + Orchestrator liveness 게이트). ADR-052 Amd12 fail-mode #8 재사용 + ADR-039 + ADR-119 Amd2 sibling. dogfood wrapper-self.
   - CFP-2549 # Amendment 13 — §결정 D14 → ADR-139 background-wait liveness gate cross-ref (companion 경로 = first instance 임을 declare, §D14 본문 무변경). ADR-139 sibling Amendment set (§결정 6) — 본 Amd13 + ADR-039 Amd10 (§결정 20). dogfood wrapper-self.
+  - CFP-2828 # Amendment 14 — 신규 §결정 D15 CodexReviewAgent 리뷰 dispatch Codex CLI 직접 (companion 브로커 우회 — codex exec 단일 primitive + --output-schema/-o 구조화 출력 + hermetic + D14 re-scope append-only + Amd12-C 기각 근거 해소 override). ADR-070 Amendment 13 sibling. dogfood wrapper-self.
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref + Amendment 15 (CFP-2458) touchpoint #7 merge-time gate)
   - ADR-077  # Amendment 9 (CFP-2458) — §결정 7 정보 무결성 invariant (fact-check marker 무검증 승격 금지) (critic severity hypothesis→verified 확정 절차 reuse)
@@ -180,9 +188,19 @@ mechanical_enforcement_actions:
   # byte-identical mirror (templates/ + .github/workflows/ ADR-005) +
   # evidence-checks-registry entry (status: Active, tier: warning) + label-registry
   # hotfix-bypass entry + 본 frontmatter list append 3번째 entry.
+  # Amendment 14 (CFP-2828, 2026-07-25) — CodexReviewAgent dispatch 가 companion 브로커에서
+  # Codex CLI 직접(§결정 D15)으로 전환됨에 따라 본 entry 의 target 을 §D14 → §D15 로 재타겟.
+  # action 명·lint 파일명(check_codex_companion_timeout_presence.py) 유지 — rename 은
+  # required-context 재적립 chicken-egg (ADR-130 §결정6 동형) 로 deferred. Phase 2 wire
+  # (CFP-2828 Phase 2): DISPATCH regex `node...adversarial-review|task --write` → `codex exec`
+  # 계열 재타겟 + execution_first_tokens ('timeout','node') → ('timeout','codex') (미갱신 시
+  # 신 dispatch 라인이 prose 오분류 → hollow) + KIND_LABELS 갱신 + self-test/bats fixture
+  # 신 dispatch 리터럴 재작성 + AC-4 positive 구조 계약 축(stdin `- <` redirect presence) 편입.
+  # §D14 잔존 companion 표면(ADR-052 touchpoint #8)은 scan dir(plugins/codeforge-review) 밖
+  # (playbook)이라 본 lint 무간섭.
   - action: codex-companion-timeout-presence
-    status: deferred-followup     # CFP-2545 Phase 2 wire activation 시 evidence-checks-registry status: Active (workflow PR-time fire) — 본 ADR frontmatter status 는 Amendment 4/8 precedent 답습 (deferred-followup retain, registry yaml = Active)
-    target_section: §결정 D14     # codeforge-owned companion dispatch 발화(node ... codex-companion ... adversarial-review/--wait/task --write) 안 `timeout <N>` prefix presence-grep heuristic + dispatch 발화 건수 ≥1 검사 (발화 0건 → exit 1 hollow-gate 차단)
+    status: deferred-followup     # CFP-2828 Phase 2 재타겟 wire 시 evidence-checks-registry description 동기 갱신 (action 명 무변경) — 본 ADR frontmatter status 는 Amendment 4/8/12 precedent 답습 (deferred-followup retain, registry yaml = Active)
+    target_section: §결정 D15     # CodexReviewAgent 직접 CLI dispatch 발화(codex exec ...) 안 option-first `timeout --kill-after=<K> <N>` prefix presence-grep heuristic + dispatch 발화 건수 ≥1 검사 (발화 0건 → exit 1 hollow-gate 차단). 구 target §결정 D14 는 Amendment 14 A3 re-scope — 잔존 companion 표면(touchpoint #8) 한정 잔존 유효
 ---
 
 # ADR-081: Codex worker prompt boilerplate composition SSOT (3 mandatory section + verify-before-trust scope + 3-lane partition)
@@ -1297,6 +1315,87 @@ Amendment 12 의 `codex-companion-timeout-presence` entry retain (변경 0건). 
 
 - (Amendment 13-A) **§결정 D14 를 일반 subagent 대기로 직접 확장 (ADR-081 안에서 generalize)** — ADR-081 = Codex worker prompt boilerplate + invocation SSOT scope. 일반 subagent (harness-managed, prompt boilerplate 무관) 확장은 scope mismatch (ADR-139 거절된 대안 (B) 정합). §D14 pattern 일반화는 ADR-139 이 carrier, 본 Amendment 는 first-instance cross-ref 만 채택.
 - (Amendment 13-B) **cross-ref 없이 §D14 를 그대로 두기** — ADR-139 이 §D14 를 일반화 first instance 로 인용하는데 역방향 cross-ref 부재 시 forward-only reference (ADR 허위 자기단언 회피 원칙 — cross-ref forward+reverse 둘 다 필요). 본 Amendment 13 = reverse cross-ref carrier.
+
+## Amendment 14 (CFP-2828, 2026-07-25 KST)
+
+**신규 §결정 D15 (CodexReviewAgent 리뷰 dispatch = Codex CLI 직접 — §D8 canonical 계승 + 구조화 출력) append + §결정 D13 현행 적용형 재규정 (원문 보존) + §결정 D14 re-scope (본문 0바이트 무손상 append-only) + Amendment 12-C 기각 근거 해소 override (사실관계 서술). ADR-070 Amendment 13 (§B3 step① 현행화) sibling. dogfood wrapper-self carrier (CFP-2828).**
+
+### Context (Amendment 14)
+
+CFP-2828 = CodexReviewAgent(4 리뷰 lane 공유 워커)의 Codex dispatch 를 companion 브로커(`node codex-companion.mjs adversarial-review --wait`, [experimental] `codex app-server` thread 프로토콜 경유)에서 **Codex CLI `codex exec` 직접 호출 단일 primitive** 로 전환한다.
+
+배경 사실관계 (전부 firsthand/1차 출처):
+
+1. §결정 D13(Amendment 11)·Amendment 12-C 기각은 native CLI 에 리뷰 요구 기능(`--output-schema` 구조화 출력 + custom PROMPT 수용)이 없던 시절의 결정 — 현재 CLI(v0.144.5)는 `codex exec --output-schema <schema> -o <out.json>` 을 직접 제공한다 [verified: PL firsthand probe 2026-07-25 — exit 0, 5s, out.json schema 완전 준수].
+2. 단 `codex review` 의 custom PROMPT ⊕ native 타겟팅(`--base`/`--uncommitted`/`--commit`)은 **CLI 도 상호배타** [verified: 공식 CLI reference "conflict with one another" + openai/codex#22145 open + PL 직접 실행 exit 2 재현] — 원 요구의 2-트랙(track 1 `codex review --base <ref> "<prompt>"`) 형태는 불성립 → **(A) `codex exec` 단일 primitive 수렴** 확정 (Story §5.5-1 RESOLUTION, 재개봉 금지. 2-트랙 = sandbox 수위 × reasoning effort × promptfile 내용 프로파일 차이로 수렴 — 1st-party cookbook `codex exec --output-schema … --sandbox read-only - < prompt.md` 선례 1:1).
+3. companion 제거로 소멸하는 축 [firsthand: app-server.mjs L85-96 deadline 부재 / broker-lifecycle.mjs L64+L67 detached+unref] = ① `request()` deadline 부재 stall ② detached daemon 좀비 GC ③ 4-lane shared-worker blast radius. 단 stall 축은 "소멸"이 아니라 **"이동"** — CLI 고유 hang 모드 실재 (#20919 stdin pipe hang / #19945 detached silent crash, openai/codex open issues) → wall-clock ceiling 은 잔존 1급 (ADR-139 INV-L1~L4 dispatch-agnostic 승계).
+
+본 Amendment 14 = §결정 D15 sub-section append only. D1.A-D 4 mandatory boilerplate field 무변경, D1-D14 본문 의미 변경 0건.
+
+### A1. §결정 D15 — CodexReviewAgent 리뷰 dispatch: Codex CLI 직접 (§D8 canonical 계승 + 구조화 출력)
+
+CodexReviewAgent 가 4 리뷰 lane (requirements-review/design/code/security) 리뷰를 dispatch 할 때:
+
+1. **dispatch canonical 형식** — 단일 커맨드 템플릿 + lane 프로파일 파라미터 (sandbox/effort/promptfile 만 lane 분기):
+   `timeout --kill-after=<K> <N> codex exec --ignore-user-config -m <model> --ephemeral --sandbox <read-only|workspace-write> -c model_reasoning_effort=<lane effort> --output-schema <schema> -o <out.json> - < <promptfile>`
+   (lane effort: security/design = `high`, 그 외 = `medium` 명시 — hermetic 하에서 config 무의존 결정론. `~/.codex/config.toml` 무변경 invariant.)
+2. **§D8 canonical 계승** — `- < <promptfile>` = §D8 file-redirect 의무 계승 (inline-arg / direct stdin-pipe 금지 유지 — 신 dispatch 의 모든 발화는 stdin `- <` redirect 형태, inline positional prompt 부재가 positive 구조 계약). `-o <out.json>` = §D8 "result-via-file 수신" 요건의 강화 구현 (파일 경유 + JSON Schema 기계 강제). D15 = D8 invocation axis 의 리뷰-워커 sub-domain 확장이지 신규 axis 아님.
+3. **구조화 출력 + 소비 시점 재검증 fail-closed** — `--output-schema` = Structured Outputs subset schema (전 필드 required + additionalProperties:false + verdict closed enum {PASS,ISSUES,NO_SHIP}). **`--output-schema` 는 request-side 요청이지 보장 아님** (silent-drop 실증 3종: openai/codex#4181 model-guard / #15451 MCP 활성 무시 / #19816 중간 메시지 오적용) → 정본 소비 채널 = `-o` 파일 (stdout 아님) + 소비 직전 schema 재검증 (파일 존재/parse/schema/cross-field counts↔findings 재계산 대조) — 하나라도 실패 = verdict inconclusive (PASS 승격 금지).
+4. **verdict SSOT = out.json `verdict` field / exit code = fail-closed gate only** — exit code ↔ finding 유무 semantics 는 미문서 → exit code 를 severity/finding-count 원천으로 사용 금지. exit 판정표: 124→inconclusive+fail-mode #8 marker / 0+out.json valid→field read / 0+부재·비정합→inconclusive / **1→독립 bucket (trusted-dir/auth fast-fail — stderr 진단 보존, verification-constraint)** / 2→arg-parse 배선 회귀 신호 / ≥125·기타→inconclusive. PASS-only-if-explicit + 부분 stall ANY(inconclusive)→전체 inconclusive 무손상.
+5. **hermetic 호출** — `--ignore-user-config` (user config MCP/notify/env 미적재: schema silent-drop #15451 조건 제거 + grandchild 프로세스 미생성 → `--kill-after` 2단이 single-process 트리 완전 reap) + `-m <model>` 동반 필수 (model pin drop 보상 — env-override 채널 권장) + `--ephemeral` (세션 영속 미저장). 위험 플래그 명문 금지: `--dangerously-bypass-approvals-and-sandbox` / `--dangerously-bypass-hook-trust` / `-c` 의 sandbox 계열 override (`-c` 는 `model_reasoning_effort` 한정). `--skip-git-repo-check` 남용 금지 — exit 1 trusted-dir 거부 = CWD 운영 버그 신호 (CWD = 리뷰 대상 worktree 안 의무).
+6. **wall-clock ceiling 승계** — §D14 원리(option-first `timeout --kill-after=<K> <N>`, duration-first = exit 127 무효)의 direct-CLI 인스턴스 (ADR-139 INV-L1~L4 승계). `--kill-after` rationale 전환: "detached node 좀비 방지" → "codex 프로세스 트리 reap". N/K 상수 = 기존 값 유지 (N=300 default / lane override / K=30, 추정값 정직 선언 + env-override — lock-in 금지).
+7. **declare ↔ enforce 분리 (§D1.D 패턴 재사용 pointer)** — `-s read-only`/`--output-schema`/`-c effort` 전부 codeforge 측 호출 단위 declaration (USING) — enforcement 는 Codex CLI runtime (OWNING). declaration 이 enforcement 결과를 담보하지 않는다 (3항 재검증이 그 보상 통제).
+8. **불변 invariant 5종 무손상 declare** — dual-peer 병렬 독립 / packet 계약 ESCALATE_PACKET_INCOMPLETE / PASS-only-if-explicit + fail-open 금지 / verify-before-trust [hypothesis]→PL falsify→[verified] (schema-valid finding 도 [hypothesis] — transport 신뢰성 ≠ 판정 신뢰성, Popper 비대칭) / read-only 기본 + network-off (workspace-write 예외 = `[exec-verify-write-mode: <check>]` marker 의무, network 는 별도 opt-in 이라 write 예외에도 자동 개방 0).
+
+### A2. §결정 D13 현행 적용형 재규정 (원문 보존 — 개정 아닌 override sub-clause append)
+
+§결정 D13 원문("실행 검증 dispatch = `adversarial-review` primary / `task --write` 예외")은 companion 계층 시절 사실 기술로서 **보존**된다 (당시 참 — "review --focus 죽은 경로" 판정의 근거 validateNativeReviewRequest throw 는 companion 계층 제약으로서 정확했고, CFP-2828 실측이 이를 반박하는 게 아니라 **정밀화**한다: CLI 는 PROMPT 단독 preset 을 수용하나 PROMPT⊕타겟팅 결합은 CLI 도 거부 — D13 은 "틀린 전제"가 아니라 "불완전 전제" 위의 결정). **현행 유효 dispatch 형식 = §결정 D15** (본 Amendment A1) — D13 의 실행-검증 의미론 (실행 주체 = Codex 자체 sandbox / own-Bash 미확대 / write 예외 marker) 은 D15 가 그대로 승계한다. `Bash(codex *)`+`Bash(timeout *)` allowlist 추가 = Amendment 11-B 기각 패턴("Codex CLI 자체 sandbox 안 실행, allowlist 미확대")의 **집행 수단**이지 위반 아님 (python/pytest 확대 0, 실행 주체 불변). `Bash(node *)` = dead-permission 은퇴 (harness 실행 표면 순감소).
+
+### A3. §결정 D14 re-scope (본문 0바이트 무손상 — ADR-058 §결정 11 이중 게이트 비발동)
+
+1. **§D14 일반 명제는 잔존 유효** — §D14 적용 대상 "companion 브로커 경로(`adversarial-review --wait` / `task --write` / 등가 `--wait` 동기 block)" 중 CodexReviewAgent 발화분만 본 전환으로 이탈한다. **ADR-052 touchpoint #8 (mutation peer, `node codex-companion.mjs review` 채널)은 companion 브로커 표면을 유지·잔존** (CFP-2828 §5.5-2 default scope-out) — companion 경로 호출이 존재하는 한 §D14 wall-clock ceiling 의무는 그 표면에 그대로 유효하다.
+2. **CodexReviewAgent 이탈 = 적용범위 협소화** — "서사가 거짓이 됨"(obsolete)이 아니라 주 발화원 소멸에 따른 scope 재획정. §D14 본문·Amendment 12/13 텍스트는 1바이트도 편집하지 않는다 → ADR-058 §결정 11 이중 게이트(대상 = substance 있는 서사 **삭제**)는 **비발동**이며, Amendment 13 의 "§결정 D14 본문 무변경" 선언과도 충돌 0. 모호 시 fail-closed(보존) 원칙 = 본 채택안 그 자체.
+3. **신 dispatch 의 wall-clock 요건은 §결정 D15 A1.6 이 커버** — §D14(companion 잔존 표면) ⊥ §D15(direct-CLI 표면) 2 인스턴스가 ADR-139 일반 원리(INV-L1~L4) 아래 병렬 성립.
+
+### A4. Amendment 12-C 기각 근거 해소 override (사실관계 서술)
+
+Amendment 12-C 는 "리뷰 worker 를 `codex exec < promptfile` 직접 전환" 2안을 **companion job 관리(background/status/native review 파싱, `runAppServerReview`) 통째 상실 + 4 lane blast radius + 큰 변경** 근거로 기각했다 — **당시 정당했던 결정이다** (native `--output-schema`/`-o` 부재 시절, 판단 오류 지적 아님). 현재는 그 기각 근거가 방어하던 기능이 native CLI 로 대체 가능해졌다:
+
+| Amd12-C 가 방어한 companion 기능 | native 대체 (사실관계 갱신) |
+|---|---|
+| background/status 폴링 job 관리 | 불요 — `codex exec` = 동기 1-shot + GNU timeout supervision 이 세션 블록 방지를 대체 (wall-clock ceiling 이 상한 보장) |
+| native review 출력 파싱 (`runAppServerReview`) | `--output-schema` + `-o out.json` 구조화 출력 (기계 강제 + 소비 재검증 — regex 스캔 파싱 자체가 소멸) |
+| 4-lane blast radius 방어 (shared worker 보존 논거) | 역전 — 프로세스별 격리가 blast radius 축을 **소멸**시킴 (shared daemon 이 오히려 4-lane 공유 stall 축이었음, Amendment 12 Context 실증) |
+
+또한 companion 의존 표면(`codex app-server`)은 [experimental] 표기 [verified: 로컬 `codex --help`] — 안정 subcommand(`exec`) 직접 호출이 의존 안정성 측면에서도 우위.
+
+### A5. frontmatter mechanical_enforcement 재타겟 계획
+
+`codex-companion-timeout-presence` entry: `target_section` §결정 D14 → **§결정 D15** 재타겟 (frontmatter 동반 갱신 — frontmatter = live registry, frozen 본문 아님). action 명·lint 파일명 유지 (rename = required-context 재적립 chicken-egg, ADR-130 §결정6 동형 → deferred). Phase 2 wire = DISPATCH regex 재타겟 + `execution_first_tokens ('timeout','node')→('timeout','codex')` (미갱신 시 신 dispatch 라인 prose 오분류 → hollow — 재타겟 sound 의 필요조건) + KIND_LABELS + self-test/bats fixture 신 리터럴 재작성 + AC-4 positive 구조 계약 축 편입. **agent md dispatch 문자열 교체와 동일 변경(Phase 2 PR) 내 원자 처리 의무** — 분리 시 hollow-gate I-3 born-broken RED.
+
+### A6. ratchet / ADR-064 / doc-only 정합
+
+- **ADR-058 §결정 5**: 강화 방향 (frontmatter sunset_justification verbatim — 약화 0: D14 본문 무변경 re-scope / D8 원리 계승 / invariant 5종 무손상). `is_transitional: false` 유지.
+- **ADR-064**: active amendment (CFP-2828 설계 lane 산출) + forbid-list 어휘 0건 self-attest. Amendment-first (신규 ADR 0 — Amd12-A 기각 선례 동형: 본 ADR 이 companion/dispatch 계보 SSOT).
+- **ADR-054 §결정 1**: 본 Amendment 14 자체 = doc-only fast-path 적격 (Phase 1 문서 PR — Amendment row append + sub-section append + frontmatter entry 재타겟). Phase 2 = agent md + lint + fixture + schema + registry (ADR-127 Phase 1/2 분리).
+- fail-mode enum: **신규 value 0** — #8 `dispatch_stall_or_stream_timeout` 재사용 (direct-CLI stall = 동형 class, Amendment 12 A3 선례 — closed-set 크기 무변경).
+
+### 거절된 대안 (Amendment 14)
+
+- (Amendment 14-A) **(B)안 — native `codex review` 를 focus 없는 preset-only pass 로 유지 + lane focus 는 exec 위임** — 4-lane 리뷰 흐름에 preset-only 소비자 부재 + free-form 출력 파싱 잔존 (why ② 미달성) + 리뷰당 dispatch 2회 (과금 2배). (A) 단일 primitive 수렴 채택 (§5.5-1 사용자 확정).
+- (Amendment 14-B) **(C)안 — `codex exec review` 서브커맨드 채택** — undocumented 표면 + `-s` 플래그 부재 + `--output-schema` 실효 미검증 [verified: PL probe P1 — 표면 실재하나 schema 실효 미확인] → 안정성 근거 부족. 성립 확인 시 후속 재검토 가능 (본 결정 재개봉 아닌 별도 Story).
+- (Amendment 14-C) **D14 본문 편집 (obsolete 서사 삭제)** — ADR-058 §결정 11 이중 게이트(사용자 비준 + override amendment) 발동 + Amendment 13 "본문 무변경" 선언과 마찰 + touchpoint #8 잔존 표면에 대한 유효 명제까지 소거. append-only re-scope (A3) 채택 — 게이트 자체가 비발동.
+- (Amendment 14-D) **신규 ADR ("codex direct-CLI review dispatch") 분리** — ADR-064 §결정 1 (신규 ADR = full-lane 강제) + SSOT 분산. 본 ADR 이 D8→D13→D14 dispatch 계보 SSOT — Amendment 12-A 기각 선례 동형.
+- (Amendment 14-E) **hermetic 미채택 (user config 적재 유지)** — node_repl MCP 활성 = #15451 silent-drop 조건 상시 충족 + grandchild orphan 리스크 (GNU timeout 은 직접 자식만 시그널) + notify hook 외부 exe 실행 표면. 채택 시에도 AC-6 소비 재검증은 hermetic 여부와 무관한 floor — hermetic 은 depth-in-defense (SecArch/InfraOps 수렴 권고 채택. model-pin drop 은 `-m` env-override 로 보상).
+
+### 결과 (Amendment 14)
+
+- §결정 D15 신설 — CodexReviewAgent 리뷰 dispatch Codex CLI 직접 canonical (D8 계승 + 구조화 출력 + 소비 재검증 fail-closed + verdict SSOT=out.json + hermetic + wall-clock 승계 + declare/enforce 분리 + invariant 5종 무손상) — A1 SSOT
+- §결정 D13 원문 보존 + 현행 적용형 = §D15 pointer — A2 SSOT
+- §결정 D14 re-scope (본문 0바이트, touchpoint #8 잔존 표면 한정 잔존 유효, §결정 11 비발동) — A3 SSOT
+- Amendment 12-C 기각 근거 해소 override (사실관계 갱신 — 당시 정당성 부정 아님) — A4 SSOT
+- frontmatter `codex-companion-timeout-presence` target §D14 → §D15 재타겟 + Phase 2 wire 계획 — A5 SSOT
+- ADR-070 Amendment 13 (§B3 step① 현행화, ②~⑦ 무손상) sibling cross-ref
 
 ## 해소 기준
 
