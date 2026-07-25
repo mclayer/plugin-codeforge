@@ -46,7 +46,7 @@ mechanical_enforcement_actions: []  # 게이트 배선(threshold/parity workflow
 
 codeforge ADR corpus 는 append-only (본문 동결 + Amendment append) 라 Amendment 누적 시 본문(구 서술)과 실효 규범(접힌 상태)이 어긋나는 stale drift 가 생긴다. 실측 (2026-07-23): Amendment 헤딩 539건/75문서, 상위 5개 문서가 46%. 사후 sweep (CFP-2697/2799/2804) 은 고비용이고 미집행 시 구 표현이 신규 저작으로 재생산됨이 실증됐다 (CFP-2804). 외부 ADR 표준 (Nygard/MADR/adr-tools) 은 supersede mechanics 는 정의하나 **"언제 supersede 해야 하는가" 트리거 규범이 없다** — 임계 기반 트리거 규범화가 본 ADR 의 고유 substance 다. `source: cognitect.com/blog/2011/11/15/documenting-architecture-decisions, adr.github.io/madr (Story §6.1 C1 승계)`
 
-**용어 정의** (AC-1 ⑧): **compaction = 재제정 (re-enactment/recodification)** — 실효 규범을 의미 무변경으로 깨끗한 신규 record 에 재작성하고 구본을 동결 퇴역시키는 것. **이력 삭제가 아니다** — Kafka log compaction (key 별 최신값만 보존, 구 레코드 물리 삭제) semantics 를 **명시 부정**한다: 구 ADR 은 본문 byte-보존 + in-place 동결 유지 (이력 = 구 ADR 동결 보존). 의미 모델의 원류 = 법제 재제정 (positive law codification — "restate without substantive change"). `source: docs.confluent.io/kafka/design/log_compaction.html, uscode.house.gov/codification (Story §6.1 C2/C3 승계)`
+**용어 정의** (AC-1 ⑧): **compaction = 재제정 (re-enactment/recodification)** — 실효 규범을 의미 무변경으로 깨끗한 신규 record 에 재작성하고 구본을 동결 퇴역시키는 것. **이력 삭제가 아니다** — Kafka log compaction (key별 최신값만 보존, 구 레코드 물리 삭제) semantics 를 **명시 부정**한다: 구 ADR 은 본문 byte-보존 + in-place 동결 유지 (이력 = 구 ADR 동결 보존). 의미 모델의 원류 = 법제 재제정 (positive law codification — "restate without substantive change"). `source: docs.confluent.io/kafka/design/log_compaction.html, uscode.house.gov/codification (Story §6.1 C2/C3 승계)`
 
 ## 결정
 
@@ -74,7 +74,7 @@ codeforge ADR corpus 는 append-only (본문 동결 + Amendment append) 라 Amen
 
 **§결정 5 — forward-only 적용 경계 + grandfather** (AC-1 ⑥):
 - 적용 경계 = **forward-only + grandfather 페어** (ADR-145 I-APPLIC 답습): 게이트 강제는 도입 이후 신규 누적분부터. 기존 backlog 는 소급 fail 0.
-- baseline = **ADR 별 grandfathered-at count** — 집합·값 = 게이트 실제 산식의 도입 시점 corpus 스캔으로 산정 (별도 리터럴 목록 금지 — 산식↔baseline 소스 동일성 invariant). baseline **단조 비증가** (entry 값 증가·추가 금지 — 유일 예외 = N 하향 변경 시 재산정) + 퇴역 시 항목 제거 + **재제정 신규 ADR 은 count 0 재시작** (사이클 반복 정합 — 트리거 재발동 = 정상 동작).
+- baseline = **ADR별 grandfathered-at count** — 집합·값 = 게이트 실제 산식의 도입 시점 corpus 스캔으로 산정 (별도 리터럴 목록 금지 — 산식↔baseline 소스 동일성 invariant). baseline **단조 비증가** (entry 값 증가·추가 금지 — 유일 예외 = N 하향 변경 시 재산정) + 퇴역 시 항목 제거 + **재제정 신규 ADR 은 count 0 재시작** (사이클 반복 정합 — 트리거 재발동 = 정상 동작).
 - 신규 amendment 는 **frontmatter entry 기재 의무 (forward-only)** — parity lint 가 heading-only 저작을 검출하고, 신규 entry 는 `reinterpretation:` boolean marker 를 필수 포함한다.
 - **backfill 경계 (오검출 방지 semantics)**: grandfather 기준 = 도입 시점 스캔의 **관측치**. 도입 시점에 이미 관측된 amendment 의 사후 frontmatter 등록은 max() 산식상 count 를 바꾸지 않는다 (오검출 0). 도입 시점 양 표면 모두에 비가시였던 은닉 누적의 사후 노출은 **소급이 아닌 신규 관측 — 검출 정당 (지연 검출)**. "소급 fail 0" 의 보호 대상 = 도입 시점 관측 가능했던 누적.
 
@@ -89,6 +89,16 @@ codeforge ADR corpus 는 append-only (본문 동결 + Amendment append) 라 Amen
 (+) stale drift 를 사후 sweep (REACTIVE) 이 아닌 임계 트리거 (PREVENTIVE) 로 예방 — CFP-2697/2799/2804 계열 비용 구조 절감. (+) 신규 절차 발명 0 — 전 mechanics 기존 자산 재사용. (−) 재제정 의무 1건 = full 8-lane Story 1건 비용 (ADR-127). (−) marker 진위·prose-only 편집은 기계 보증 밖 잔존 (§결정 7 정직 명시). backlog 18건 (도입 시점 실측) 의 실제 재제정 = 별도 Story (워스트 상위부터, 자발 — grandfather 로 강제 아님).
 
 **cross-ref**: ADR-058 §결정 5 (pointer-only)/§결정 9·10 · genre-layers 폐기·교체 1급화 절 · ADR-121 (mechanics 선례 — semantic 선례 아님) · ADR-133/ADR-050 (번호·잠금) · ADR-097 §결정 3 (disjoint specialize) · ADR-095 (age 축 병존) · ADR-064 §결정 7 (symmetric ratchet) · ADR-145 (forward-only+grandfather) · ADR-153 (baseline 은퇴 선례) · ADR-060 (게이트 tier host) · ADR-119/ADR-136 (honest ceiling).
+
+## 관련 파일
+
+- `scripts/lib/check_adr_amendment_threshold.py` — 게이트 SSOT (순수 함수 6종 + THRESHOLD_N 단일 리터럴 + fail-closed 파싱 + B-1/B-2 baseline 무결성)
+- `scripts/check-adr-amendment-threshold.sh` / `scripts/check-adr-amendment-parity.sh` — thin wrapper (count 축 / 판정 forward-only 축)
+- `docs/adr-amendment-threshold-baseline.yaml` — grandfather baseline (`--write-baseline` 단일 writer 생성, 산식↔baseline 소스 동일성)
+- `templates/github-workflows/adr-amendment-threshold.yml` + `.github/workflows/` (byte-parity 쌍) — warning-tier CI 게이트 (threshold / parity 2 job)
+- `docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md` — 재제정 실행 절차 (G1 4번째 트리거 + G2 C-1 Superseded variant)
+- `plugins/codeforge-design/templates/adr.md` — `reinterpretation:` forward-only marker 필수 필드
+- `docs/evidence-checks-registry.yaml` — 게이트 tier/promotion 등록 (owner_adr ADR-167 / carrier_adr ADR-060)
 
 ## 해소 기준
 
