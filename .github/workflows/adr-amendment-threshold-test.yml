@@ -1,0 +1,58 @@
+name: adr-amendment-threshold-test
+# CFP-2812 / ADR-167 / ADR-151 — ADR amendment threshold·parity 게이트 self-test 실행 채널.
+# QADev self-test(tests/scripts/test_adr-amendment-threshold.sh / test_adr-amendment-parity.sh)를 실 CI 로 배선해
+#   "선언(L3 fixture)" 을 "실 CI 실행(channel alive)" 으로 승격 (silent-un-run 봉인, ADR-151 §결정5).
+#
+# byte-parity 쌍: templates/github-workflows/adr-amendment-threshold-test.yml ↔ .github/workflows/adr-amendment-threshold-test.yml
+#   두 파일 byte-identical (invariant-check.yml Workflow parity diff -q 대상, LF 고정).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-151 §결정5): self-test 실패 = job red.
+#   discriminating self-test 는 취약 revert 시 RED / 정본 GREEN 을 보증 (mutation 생존 0) — 실패를 삼키면 hollow.
+#
+# wrapper-self-only (consumer born-red 회피 — selftest-execution-liveness-test.yml 선례):
+#   job-level if: github.repository == 'mclayer/plugin-codeforge' — wrapper self-CI 에서만 실행.
+#   consumer 는 tests/scripts self-test 미배포 → job skip = inert (ADR-130 job-level if graceful no-op 정합).
+#   byte-parity 쌍이라 templates copy 는 배포되나 guard 로 consumer inert.
+#
+# selftest-execution-liveness inventory(ADR-151) 참조 execution_channel job id = adr-amendment-threshold-test.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/lib/check_adr_amendment_threshold.py'
+      - 'scripts/check-adr-amendment-threshold.sh'
+      - 'scripts/check-adr-amendment-parity.sh'
+      - 'tests/scripts/test_adr-amendment-threshold.sh'
+      - 'tests/scripts/test_adr-amendment-parity.sh'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  adr-amendment-threshold-test:
+    name: adr-amendment-threshold-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pyyaml (게이트 lib imports yaml)
+        run: pip install pyyaml
+
+      - name: Run threshold self-test (AC-2/3/8 discriminating — day-1 hard-fail)
+        run: bash tests/scripts/test_adr-amendment-threshold.sh
+
+      - name: Run parity self-test (F-1 heading-only RED + marker 미기재 RED — day-1 hard-fail)
+        run: bash tests/scripts/test_adr-amendment-parity.sh

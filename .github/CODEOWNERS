@@ -7,6 +7,11 @@
 # 설계 결정 (ADR) — architect 의무 review
 archive/adr/**                                @mccho8865
 
+# ADR amendment 임계 grandfather baseline — audit 가시성 (CFP-2812 / ADR-167 B-3)
+# 주의: Code Owner review 는 1인 환경에서 OFF — 본 매핑은 audit/문서화 (baseline 손편집 세탁 signal).
+# 실 무결성 강제 = 게이트 B-1 단조 diff seal + B-2 ceiling sanity (기계 강제 아님을 정직 명시).
+docs/adr-amendment-threshold-baseline.yaml    @mccho8865
+
 # 변경 계획 (Change Plan) — architect 의무 review
 docs/change-plans/**                          @mccho8865
 
