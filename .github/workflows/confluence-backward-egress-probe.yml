@@ -1,0 +1,78 @@
+name: confluence-backward-egress-probe
+
+# CFP-2829 S2 AC-15: Egress reachability probe for Fulcio/Rekor (S6 signing blocker)
+#
+# Purpose: Detect early if self-hosted Windows runner can reach sigstore egress
+# (fulcio.sigstore.dev, rekor.sigstore.dev) required by S6 code-signing.
+#
+# Tier: advisory observed-only (non-gating, creds-disjoint)
+# Trigger: manual (workflow_dispatch) — not on every push
+# Runner: self-hosted Windows (IO-2: ubuntu-latest won't trigger self-hosted leg)
+
+on:
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: Verbose logging (true/false)
+        required: false
+        default: "false"
+
+jobs:
+  egress-probe:
+    name: Sigstore Egress Probe
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 5
+
+    steps:
+      - name: Probe fulcio.sigstore.dev
+        id: fulcio
+        continue-on-error: true
+        run: |
+          $endpoint = "https://fulcio.sigstore.dev/.well-known/openid-configuration"
+          Write-Host "Probing: $endpoint"
+          try {
+            $response = Invoke-WebRequest -Uri $endpoint -TimeoutSec 10 -UseBasicParsing
+            Write-Host "✓ fulcio reachable (HTTP $($response.StatusCode))"
+            echo "status=reachable" >> $env:GITHUB_OUTPUT
+          } catch {
+            Write-Host "✗ fulcio unreachable: $_"
+            echo "status=unreachable" >> $env:GITHUB_OUTPUT
+            echo "error=$_" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Probe rekor.sigstore.dev
+        id: rekor
+        continue-on-error: true
+        run: |
+          $endpoint = "https://rekor.sigstore.dev/api/v1/log/proofs"
+          Write-Host "Probing: $endpoint"
+          try {
+            $response = Invoke-WebRequest -Uri $endpoint -TimeoutSec 10 -UseBasicParsing
+            Write-Host "✓ rekor reachable (HTTP $($response.StatusCode))"
+            echo "status=reachable" >> $env:GITHUB_OUTPUT
+          } catch {
+            Write-Host "✗ rekor unreachable: $_"
+            echo "status=unreachable" >> $env:GITHUB_OUTPUT
+            echo "error=$_" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Summary
+        run: |
+          Write-Host "=========================================="
+          Write-Host "Sigstore Egress Probe Summary"
+          Write-Host "=========================================="
+          Write-Host "fulcio.sigstore.dev: ${{ steps.fulcio.outputs.status }}"
+          Write-Host "rekor.sigstore.dev:  ${{ steps.rekor.outputs.status }}"
+          Write-Host ""
+          Write-Host "Note: This is an advisory observed-only probe."
+          Write-Host "It does not block merge (non-gating)."
+          Write-Host "S6 code-signing will require egress if enabled."
+          Write-Host "=========================================="
+
+      - name: Verbose
+        if: ${{ github.event.inputs.verbose == 'true' }}
+        run: |
+          Write-Host "Fulcio error: ${{ steps.fulcio.outputs.error }}"
+          Write-Host "Rekor error:  ${{ steps.rekor.outputs.error }}"
+          Write-Host "Runner: self-hosted Windows"
+          Write-Host "Job status: ${{ job.status }}"
