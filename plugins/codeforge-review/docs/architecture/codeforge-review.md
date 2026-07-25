@@ -1,8 +1,8 @@
 ---
 title: codeforge-review lane 구조 (요구사항리뷰 / 설계리뷰 / 구현리뷰 / 보안테스트 — 산출물 검수)
-last_captured: 2026-07-24
-captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
-last_update_cfp: CFP-2813  # stale 해소 실갱신 — model tier 실측(ADR-141: PL 3 fable Amd4 / SecurityTestPL opus 명시 제외 / Claude worker opus / Codex worker haiku Amd1) + RequirementsReview lane 다축 정정(ADR-125 Amd2 internal-invariant + Amd3 결정 B 내부적합 — 구 "외부사실 단일 축" 서술 supersede) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol(리뷰 PL 4 전원 = G2 mandatory, review-pl-base 주입) + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1 — DesignReviewPL 이 L3 소비 로직 보유)
+last_captured: 2026-07-25
+captured_at_sha: 5bbe94cba  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2828 Phase 2, CodexReviewAgent.md dispatch 재배선 반영)
+last_update_cfp: CFP-2828  # dispatch 재배선 반영 — CodexReviewAgent dispatch primitive 을 companion 브로커(node) → `codex exec` 직접 단일 primitive 로 재배선(ADR-081 §결정 D15): hermetic read-only sandbox + `-o out.json` result-via-file + AC-6 소비 재검증(fail-closed 5단계) + option-first timeout wall-clock 가드. 직전 CFP-2813 = model tier 실측(ADR-141) + RequirementsReview lane 다축(ADR-125 Amd2/Amd3) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -25,7 +25,7 @@ codeforge-review = **4 review lane (요구사항리뷰 + 설계리뷰 + 구현�
 | **CodeReviewPLAgent** | PL (구현리뷰 lane) — fable (Amd4 apex) | Phase 2 PR commit 검수 — 코드 품질 / 테스트 정합 / Change Plan §3-§7 적합성. PL 책임 = synthesis only (동일 패턴) |
 | **SecurityTestPLAgent** | PL (보안테스트 lane) — opus (ADR-141 Amd4 명시 제외 — fable cyber refusal 순손실) | 보안 검증 lane — WebSearch/WebFetch 허용 (security lane 전용) + GitHub native 1차 layer fetch 의무 (worker spawn 전) |
 | **ClaudeReviewAgent** | Worker (lane-agnostic) — opus | PL packet 수신 → checklist 항목 수행 → finding return. lane 도메인은 packet 으로 주입 (worker 본문 hard-coded 0건). **Codex 와 필수 peer 병렬** |
-| **CodexReviewAgent** | Worker (lane-agnostic) — haiku (ADR-141 Amd1 외부위임 — 실 추론 = 외부 Codex) | 동일 packet 수신 → 독립 관점 finding return. ADR-070/081 verify-before-trust + boilerplate 적용. **Claude 와 필수 peer 병렬** |
+| **CodexReviewAgent** | Worker (lane-agnostic) — haiku (ADR-141 Amd1 외부위임 — 실 추론 = 외부 Codex) | 동일 packet 수신 → 독립 관점 finding return. ADR-070/081 verify-before-trust + boilerplate 적용. **Claude 와 필수 peer 병렬**. **dispatch primitive = `codex exec` 직접 단일 primitive** (companion 브로커 `node` 우회 폐지 — ADR-081 §결정 D15 / CFP-2828): 정적 리뷰 + 실행검증 2-트랙이 hermetic read-only sandbox(config 격리) 단일 primitive 로 수렴 → verdict 는 `-o out.json` result-via-file 채널로 수신 → **AC-6 소비 재검증(fail-closed 5단계)** 통과 후에만 `verdict` 필드 소비(텍스트 태그 스캔 폐지). own-Bash 실행표면 확대 0 (`node` dead-permission 은퇴 → 순 표면 감소) |
 
 **공통 base** `templates/review-pl-base.md` = 4 PL 공유 SSOT (severity 종합 / dedup / noise 분류 / 보고 형식 / escalation / FIX Ledger / 워커 의존성). 각 PL md 본문은 lane-specific 4 항목만 (checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트). **ADR-166 (CFP-2813): 리뷰 PL 4 전원 = G2 mandatory 소비자** — 심사 대상 관련 Living Architecture 선행 read (per-PL 예외 0, 주입 표면 = 본 base — CFP-2813 Phase 2 배선. RequirementsReviewPL 편입 근거 = ADR-125 Amd3 결정 B 내부적합 축의 현재상태 대조 mandate).
 
@@ -112,7 +112,7 @@ lane 간 + lane 내부 계약 surface — kind:contract producer / kind:registry
 - **ADR-059** (debate-protocol-v1) — host 책임 anchor. v1.2 = blanket_cross_module_designlane (Wave 4 cross-module Story 자동 활성) + `convergence_quality_invariant` 3 marker AND (counterargument_present / alternative_proposed / debate_purpose_statement_present).
 - **ADR-068** (boundary completeness invariants, semantic) — DesignReviewPL + CodeReviewPL **dual-binding cross-validate** anchor. I-1 API contract semantic / I-2 cross-module propagation / I-3 guard placement intent / I-4 wording SSOT / I-5 dimensional empirical grounding 5 invariants self-check 결과 review-verdict-v4 carrier field (`boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed`) verify.
 - **ADR-070** (Codex verify-before-trust, 4-layer governance Layer 2) — CodexReviewAgent output ground truth 를 Orchestrator direct file Read 로 verify, mismatch 시 verdict reject + Story §10 false positive count tally + override rationale 명시.
-- **ADR-081** (Codex worker prompt boilerplate) — CodexReviewAgent spawn prompt 본문 3 mandatory section (dogfood-out Story path / lane stage / sandbox boundary) + verify-before-trust scope 5 sub-scope + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint). severity calibration (D6) bidirectional binding evidence.
+- **ADR-081** (Codex worker prompt boilerplate) — CodexReviewAgent spawn prompt 본문 3 mandatory section (dogfood-out Story path / lane stage / sandbox boundary) + verify-before-trust scope 5 sub-scope + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint). severity calibration (D6) bidirectional binding evidence. **§결정 D15 (CFP-2828 — dispatch 재배선)**: 정적·실행검증 2-트랙 + companion 브로커(`node`) dispatch 폐지 → `codex exec` **단일 primitive** 수렴 (sandbox 수위 × reasoning effort × promptfile focus 프로파일 차이로만 분기). D8 file-redirect(`- < promptfile`) 계승 + option-first `timeout --kill-after=<K> <N>` wall-clock 가드(무한대기 방지, honest-ceiling: wall-clock bound 이지 자원소비 bound 아님) + `-o out.json` result-via-file verdict SSOT + AC-6 소비 재검증(fail-closed 5단계) helper `check_codex_review_output_schema.py`.
 - **DesignReviewPL §8.6 audit gate** (ADR-014 Amendment 4 §결정 2): IntegrationTest contract pointer 존재 mechanical check only. policy 값 공백 PASS invariant. 상세는 `templates/review-pl-base.md` §8.6 + `templates/review-checklists/design.md` 분담 표. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer, 라인 수준 0건). 계약 schema field-level 상세 + version 값 = 각 contract file + MANIFEST.yaml SSOT (drift 회피 위해 본 doc version literal 미박제).
@@ -162,6 +162,8 @@ Orchestrator 수령 → Story §9 final verdict + GitHub comment `[설계리뷰]
   ├─ pl_recommendation: FIX_DISCRETIONARY → 사용자 판단 trigger
   └─ pl_recommendation: ESCALATE_PACKET_INCOMPLETE → 상위 lane 재spawn
 ```
+
+**CodexReviewAgent dispatch 메커니즘 (ADR-081 §결정 D15 / CFP-2828 — companion 브로커 폐지)**: 2 worker 중 Codex 워커는 `codex exec` **단일 primitive** 로 dispatch (구 companion 브로커 `node` job-관리 / status·result 폴링 폐지) — hermetic read-only sandbox(정적 리뷰 + 실행검증 수렴, code write-gate 만 `workspace-write` 예외) 실행 → verdict 는 `-o out.json` result-via-file 채널로 수신 → 소비 **직전** AC-6 재검증(① 파일존재 ② JSON parse ③ schema 준수 ④ counts↔findings cross-field ⑤ category∈enum) fail-closed 통과 시에만 `verdict` 필드 소비. exit 0 자동 PASS 승격 = 구조적 차단(재검증 실패 = `inconclusive`). option-first `timeout` wall-clock 가드가 세션 블록/무한대기 방지(구 `--background` 폴링 대체). Claude 워커는 네이티브 실행 — 본 dispatch 재배선은 Codex 워커 축 한정(peer 대칭 보고 스키마 무변경).
 
 **RequirementsReview lane / CodeReview lane / SecurityTest lane** — 동일 패턴 (PL + 2 worker parallel + verdict synthesis) 이지만 lane-specific 차이:
 
