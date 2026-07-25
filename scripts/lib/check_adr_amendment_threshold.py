@@ -84,8 +84,11 @@ MAX_PHYSICAL_LINE_LEN = 8192
 
 # 본문 헤딩 Amendment 매칭 — bounded quantifier `\s{0,80}` (무제한 quantifier 미사용, D10).
 HEADING_RE = re.compile(r"^#{2,4}\s{0,80}Amendment", re.MULTILINE)
-# frontmatter 구획 추출 (선례 check_adr_sunset_criteria.py:70 답습).
-FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+# frontmatter 구획 추출 — born-safe bound (D10) 을 HEADING_RE 와 대칭 적용.
+# delimiter 후행 whitespace 는 `[ \t]*`(가로 공백만) — `\s*`(개행 포함) 는 blank-line 연속 입력에서
+# `(.*?)` 와 결합해 이차 backtracking(O(n²)) ReDoS 를 유발한다 (F-SEC-01, PR-author 제어 corpus 도달).
+# `[ \t]*` 는 개행 미소비라 비-backtracking + 파싱 semantics 무변경(delimiter=`---`+가로공백+개행).
+FRONTMATTER_RE = re.compile(r"^---[ \t]*\n(.*?)\n---[ \t]*\n", re.DOTALL)
 # ADR 식별키 추출 (파일명 `ADR-082-slug.md` → `ADR-082`).
 ADR_ID_RE = re.compile(r"^(ADR-\d+)")
 # archive/adr anchored path 매칭 (Windows backslash → forward slash 정규화 후).
@@ -286,14 +289,17 @@ def _merge_base(repo_root: str, base_ref):
         candidates.append(f"origin/{env_base}")
     candidates += ["origin/main", "main"]
     for ref in candidates:
-        out = _run_git(repo_root, ["merge-base", ref, "HEAD"])
+        # F-SEC-02 hardening: `--end-of-options` 로 leading-dash ref 의 argument-injection 차단
+        # (ref 는 CLI --base-ref / GITHUB_BASE_REF env 유래 — semi-trusted).
+        out = _run_git(repo_root, ["merge-base", "--end-of-options", ref, "HEAD"])
         if out and out.strip():
             return out.strip()
     return None
 
 
 def _git_show(repo_root: str, ref: str, rel_path: str):
-    return _run_git(repo_root, ["show", f"{ref}:{rel_path}"])
+    # F-SEC-02 hardening: `--end-of-options` 로 leading-dash ref argument-injection 차단.
+    return _run_git(repo_root, ["show", "--end-of-options", f"{ref}:{rel_path}"])
 
 
 def _threshold_n_at(repo_root: str, ref: str):

@@ -38,6 +38,7 @@ jobs:
   # count 축 — effective_count >= N 임계 + grandfather baseline 무결성 (B-1 단조 diff seal / B-2 ceiling sanity).
   adr-amendment-threshold:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10  # F-SEC-01(a) defense-in-depth — 스캐너 self-DoS 잔여 안전망 상한 (-test.yml 대칭)
     # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 를 차단하지 않음. required_status_checks.contexts 부착 X.
     continue-on-error: true
     steps:
@@ -57,6 +58,7 @@ jobs:
   # 판정 forward-only 축 — heading↔fm parity + reinterpretation marker presence/consistency (D4/D5).
   adr-amendment-parity:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10  # F-SEC-01(a) defense-in-depth — 스캐너 self-DoS 잔여 안전망 상한 (-test.yml 대칭)
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4

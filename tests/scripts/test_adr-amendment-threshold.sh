@@ -276,6 +276,47 @@ printf 'entries:\n- adr: ADR-999\n  grandfathered_at: 10\n' > "$fr/docs/adr-amen
 assert_gate_exit "AC-8 dangling baseline entry RED(B-2)" "$fr" 1
 rm -rf "$fr"
 
+# ── F-SEC-01(c) ReDoS teeth: FRONTMATTER_RE blank-line payload sub-초 파싱 (discriminating) ──
+# born-safe bound 검출력 — 정본([ \t]*) sub-초 완료 / 취약 revert(\s*, 개행 소비 복원) 이차 backtracking
+#   → timeout 초과 = KILLED. 단순 존재 아닌 검출력(mutation-kill) 실증. mktemp 격리 + diff -q no-op guard.
+echo "-- F-SEC-01(c) ReDoS teeth (FRONTMATTER_RE blank-line, discriminating) --"
+if ! command -v timeout >/dev/null 2>&1; then
+  echo "SKIP: ReDoS teeth — 'timeout' 미가용 (CI Linux 채널 adr-amendment-threshold-test.yml 에서 실행)"
+else
+  redos_root="$(mktemp -d)"
+  mkdir -p "$redos_root/archive/adr"
+  # blank-line payload (~60KB, 미완결 frontmatter) — 전 body backtrack 유도
+  { printf -- '---\n'; head -c 61440 /dev/zero | tr '\0' '\n'; printf 'x\n'; } > "$redos_root/archive/adr/ADR-909-redos.md"
+  printf 'schema_version: "1.0"\nentries: []\n' > "$redos_root/empty-baseline.yaml"
+  timeout 6 env PYTHONUTF8=1 "$PYBIN" "$SRC" --mode threshold --repo-root "$redos_root" \
+    --baseline "$redos_root/empty-baseline.yaml" "$redos_root/archive/adr/ADR-909-redos.md" >/dev/null 2>&1
+  canon_rc=$?
+  if [ "$canon_rc" -eq 124 ]; then
+    echo "FAIL: ReDoS teeth — 정본이 timeout(124) — FRONTMATTER_RE ReDoS 미수정 의심"
+    FAIL=$((FAIL+1))
+  else
+    rmut="$(mktemp -d)"; rmutant="$rmut/mutant.py"; cp "$SRC" "$rmutant"
+    sed -i 's/\[ \\t\]\*/\\s*/g' "$rmutant"   # FRONTMATTER_RE [ \t]* → \s* (취약 복원)
+    if diff -q "$SRC" "$rmutant" >/dev/null 2>&1; then
+      echo "FAIL: ReDoS teeth — sed mutation no-op ([ \\t]* 미치환, 정본에 born-safe bound 부재 의심)"
+      FAIL=$((FAIL+1))
+    else
+      timeout 6 env PYTHONUTF8=1 "$PYBIN" "$rmutant" --mode threshold --repo-root "$redos_root" \
+        --baseline "$redos_root/empty-baseline.yaml" "$redos_root/archive/adr/ADR-909-redos.md" >/dev/null 2>&1
+      mut_rc=$?
+      if [ "$mut_rc" -eq 124 ]; then
+        echo "PASS: ReDoS teeth — 정본 sub-초(rc=$canon_rc) / 취약 revert timeout(124) KILLED (FRONTMATTER_RE 이차 backtracking 검출력)"
+        PASS=$((PASS+1))
+      else
+        echo "FAIL: ReDoS teeth — 취약 revert 가 timeout 안 남(rc=$mut_rc) — discriminating 미작동"
+        FAIL=$((FAIL+1))
+      fi
+    fi
+    rm -rf "$rmut"
+  fi
+  rm -rf "$redos_root"
+fi
+
 echo ""
 echo "==============================================================================="
 echo "Test Results: $PASS passed, $FAIL failed"
