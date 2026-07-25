@@ -217,6 +217,7 @@ amendment_log:
   - amendment: 7
     carrier_story: CFP-2839
     date: 2026-07-25
+    reinterpretation: false
     scope: >-
       서브에이전트 tier ≤ Orchestrator tier 상한 규범 신설 + 모델 tier 전순서
       최초 명문 codify. (a) **전순서 codify** — `haiku < sonnet < opus < fable`
@@ -238,8 +239,8 @@ amendment_log:
       disjoint. 동기 = 비용 escape 아닌 권위·정합성 일관(§1 why). "opus
       Orchestrator launch = de-facto 비용 escape" 반론은 §1 예시 verbatim(opus
       세션 fable cap-down 명시 지시)이 사용자 결정임으로 방어. (d) **Amd6 관계 =
-      보완(complement)** — cap = 사전 tier 판정·항시 / Amd6 = 사후 리밋 반응, 별
-      trigger·별 축. cap-down 은 `[rate-limit-failover:fable→opus]` 태그
+      보완(complement)** — cap = 사전 tier 판정·항시 / Amd6 = 사후 리밋 반응, 별개
+      trigger·별개 축. cap-down 은 `[rate-limit-failover:fable→opus]` 태그
       미사용(AC-7). opus 세션에서 cap 이 fable spawn 을 pre-empt → Amd6
       per-spawn failover churn 방지. (e) **advisory ceiling 정직 라벨** — 강제력
       = prompt-mandate(문구 presence grep-testable = normative) + 세션 실준수
@@ -300,7 +301,7 @@ Accepted (2026-07-03 KST — CFP-2560 carrier). codeforge family 의 **전 에�
 >
 > **Amendment 6 (2026-07-24 KST, CFP-2823)**: fable-리밋 한정 **runtime opus failover 신설** — fable 배정 subagent(Amendment 4 roster 10종)가 리밋 계열 신호(ADR-109 §결정 1 amendment 감지집합)를 spawn-시점 거부 또는 mid-run 조기종료로 반환하면 Orchestrator 가 동일 입력 패킷 + `model: opus` override 로 fresh re-spawn 1회(Option A 즉시전환). §결정 2 dead-mark("rate-limit fallback machinery 부활 0")를 fable-리밋 한정 부분 override — rate-limit *fallback* 축(sonnet, dead) 부활 아님(별 trigger·별 SSOT·별 태그 `[rate-limit-failover:fable→opus]`). agent frontmatter·tier 정책(§결정 1~6) 무접촉(runtime spawn-시점 override 한정). 상세 = 본문 말미 **`## Amendment 6`**.
 >
-> **Amendment 7 (2026-07-25 KST, CFP-2839)**: 서브에이전트 tier **≤ Orchestrator tier 상한** 규범 신설 + 모델 tier **전순서 최초 명문 codify** — `haiku < sonnet < opus < fable`(fable 최상위, tier = 모델버전 pin 아닌 version-agnostic **SLOT**). 어떤 subagent 도 effective tier > Orchestrator effective tier 로 spawn 불가(동급 허용, 초과만 금지); 집행 = spawn 시 `model: min(frontmatter, orchestrator)` runtime override(fresh-spawn only — SendMessage resume 금지, Amd6 A6-2 shape 상속). 유일 live 실효 = **Orchestrator=opus 세션 × fable 10역할 → opus cap-down**(fable 세션 = no-op, SecurityTestPL opus AC-5 무변화). §결정 6 + Amd4 4-clause "fable 하한 fable(down-tier 불허)" 는 **consumer overlay 정적 축**, 본 cap 은 **세션-runtime 축** — disjoint(축 분리, 동기 = 비용 escape 아닌 권위 일관). advisory ceiling(prompt-mandate = normative + 세션 실준수 = 비-PR-enforceable, hook backup 불성립 — "100% 기계강제" over-claim 금지, ADR-143 동형). Amd6 failover 와 별 trigger·별 태그(보완 관계, pre-emption). agent frontmatter·§결정 1~6 substance 무접촉(runtime override 한정, roster-integrity fable=10 GREEN 유지). 상세 = 본문 말미 **`## Amendment 7`**.
+> **Amendment 7 (2026-07-25 KST, CFP-2839)**: 서브에이전트 tier **≤ Orchestrator tier 상한** 규범 신설 + 모델 tier **전순서 최초 명문 codify** — `haiku < sonnet < opus < fable`(fable 최상위, tier = 모델버전 pin 아닌 version-agnostic **SLOT**). 어떤 subagent 도 effective tier > Orchestrator effective tier 로 spawn 불가(동급 허용, 초과만 금지); 집행 = spawn 시 `model: min(frontmatter, orchestrator)` runtime override(fresh-spawn only — SendMessage resume 금지, Amd6 A6-2 shape 상속). 유일 live 실효 = **Orchestrator=opus 세션 × fable 10역할 → opus cap-down**(fable 세션 = no-op, SecurityTestPL opus AC-5 무변화). §결정 6 + Amd4 4-clause "fable 하한 fable(down-tier 불허)" 는 **consumer overlay 정적 축**, 본 cap 은 **세션-runtime 축** — disjoint(축 분리, 동기 = 비용 escape 아닌 권위 일관). advisory ceiling(prompt-mandate = normative + 세션 실준수 = 비-PR-enforceable, hook backup 불성립 — "100% 기계강제" over-claim 금지, ADR-143 동형). Amd6 failover 와 별개 trigger·별개 태그(보완 관계, pre-emption). agent frontmatter·§결정 1~6 substance 무접촉(runtime override 한정, roster-integrity fable=10 GREEN 유지). 상세 = 본문 말미 **`## Amendment 7`**.
 
 ## 컨텍스트
 
@@ -826,8 +827,8 @@ codeforge 가 사용하는 모델 tier 전순서(total order)를 확정한다:
 
 cap 과 Amd6(fable-리밋 opus failover)는 **다른 축**이며 상호 보완한다:
 
-- **별 trigger** — cap = **사전 tier 판정**(spawn 전, 리밋 무관, 매 spawn 항시) / Amd6 = **사후 리밋 반응**(spawn 결과가 리밋 신호 반환 시, ADR-109 §결정 1 Amendment 1 감지집합). 시점·발동조건이 disjoint.
-- **별 태그 (AC-7)** — cap-down spawn 은 Amd6 의 `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**. cap-down 은 리밋 반응이 아니라 사전 ceiling 계산이므로, 그 태그를 오용하면 failover telemetry(§14)를 오염시킨다. cap-down 의 관측 표기는 Amd6 태그와 반드시 구분한다(관측 표면 형식 = M-2, A7-9 설계 판단).
+- **별개 trigger** — cap = **사전 tier 판정**(spawn 전, 리밋 무관, 매 spawn 항시) / Amd6 = **사후 리밋 반응**(spawn 결과가 리밋 신호 반환 시, ADR-109 §결정 1 Amendment 1 감지집합). 시점·발동조건이 disjoint.
+- **별개 태그 (AC-7)** — cap-down spawn 은 Amd6 의 `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**. cap-down 은 리밋 반응이 아니라 사전 ceiling 계산이므로, 그 태그를 오용하면 failover telemetry(§14)를 오염시킨다. cap-down 의 관측 표기는 Amd6 태그와 반드시 구분한다(관측 표면 형식 = M-2, A7-9 설계 판단).
 - **pre-emption(실전 이득)** — opus Orchestrator 세션에선 cap 이 fable spawn 을 spawn-시점에 opus 로 pre-empt 하므로, playbook §3.0.12b fable-branch 도달 자체가 0(해당 세션 한정 dormant). fable-리밋 시 사용자가 세션을 opus 로 전환하는 반복 패턴(CFP-2803/2818/2823 실관측)에서, cap 부재 시 opus 세션이 fable subagent 를 spawn → 즉시 리밋 재히트 → Amd6 per-spawn failover churn 이 반복되는데, **cap 이 이 churn 을 spawn-시점에 pre-empt**한다. cap-down 으로 opus 스폰된 인스턴스의 리밋은 opus same-model 경로(ADR-109 §결정 2)로 처리된다.
 
 ### A7-5. advisory ceiling 정직 라벨 (강제력 매트릭스 — ADR-119 / ADR-143 동형)
