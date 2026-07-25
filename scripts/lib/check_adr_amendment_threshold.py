@@ -95,8 +95,8 @@ ADR_ID_RE = re.compile(r"^(ADR-\d+)")
 ADR_PATH_RE = re.compile(r"(?:^|/)archive/adr/ADR-[^/]+\.md$")
 
 
-# ══════════════════════ 순수 함수 6종 (Change Plan D2 — 파일시스템 무접촉) ══════════
-# 아래 6종은 QADev self-test 가 python 레벨로 직접 fixture 주입한다 (AC-3 mutation-kill).
+# ══════════════════════ 순수 함수 6종 + is_superseded_status 7번째 helper(CFP-2840) (Change Plan D2 — 파일시스템 무접촉) ══════════
+# 아래 6종 + is_superseded_status 7번째는 QADev self-test 가 python 레벨로 직접 fixture 주입한다 (AC-3 mutation-kill).
 
 def count_heading_amendments(body: str) -> int:
     """본문 헤딩 `^#{2,4}\\s{0,80}Amendment` 매치 수 (bounded quantifier — D10)."""
@@ -181,6 +181,15 @@ def check_marker_presence(entry: dict) -> list[str]:
     return []
 
 
+def is_superseded_status(status) -> bool:
+    """status 가 Superseded 계열(3형: bare / `Superseded by ADR-NNN` / `Superseded-by-ADR-MMM`) 판정.
+
+    delimiter-anchored — 3형 포섭 ∧ `supersededxyz` 등 garbage status 배제(over-breadth 이의1 해소,
+    임계 회피 차단). casefold + strip 정규화. Accepted/Proposed/Sunsetted/None/empty = False(no-false-skip, INV-4).
+    """
+    return bool(re.match(r"superseded($|[\s\-])", str(status).strip().casefold()))
+
+
 # ══════════════════════ orchestration (top-level — 순수 함수 밖) ═══════════════════
 
 def _adr_id_from_name(name: str):
@@ -247,6 +256,7 @@ def _scan_adr(path: Path, rel: str) -> dict:
         "heading_n": heading_n,
         "fm_n": fm_n,
         "effective": effective_count(heading_n, fm_n),
+        "status": fm.get("status"),
         "fm": fm,
         "error": None,
     }
@@ -368,6 +378,7 @@ def write_baseline(path: str, corpus_scans):
         (s["adr_id"], s["effective"])
         for s in corpus_scans
         if s.get("error") is None and s.get("adr_id") and s["effective"] >= THRESHOLD_N
+        and not is_superseded_status(s.get("status"))
     ]
     picked.sort(key=lambda t: (int(re.sub(r"\D", "", t[0]) or 0), t[0]))
 
@@ -509,6 +520,8 @@ def run_threshold(repo_root: str, paths, baseline_path: str, base_ref) -> int:
     for s in scans:
         if not s["adr_id"]:
             continue
+        if is_superseded_status(s.get("status")):
+            continue  # 재제정 완료 상태(Superseded)는 판정 skip(무모순) — files_checked 계수는 유지(census floor, INV-3)
         violations.extend(check_threshold(s["effective"], s["adr_id"], baseline_map, THRESHOLD_N))
 
     # B-2 ceiling sanity (매 실행 무조건).

@@ -1697,7 +1697,7 @@ entries:
     modal_anti_pattern_dictionary: {}
     introduced_by: CFP-1391
     introduced_date: 2026-05-24
-    owner_adr: ADR-082              # Amendment 9 §결정 11.B silent error mask directly-analogous (silent degradation sub-domain)
+    owner_adr: ADR-168              # ADR-168 §결정 11.B (구 ADR-082 Amendment 9 §결정 11.B) silent error mask directly-analogous (silent degradation sub-domain)
     carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
     recurrence:
       count: 1                      # CFP-1346 Phase 2 F-CR-1346-1 sentinel #1 only
@@ -1890,7 +1890,7 @@ entries:
     modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
     introduced_by: CFP-1559
     introduced_date: 2026-05-25
-    owner_adr: ADR-082-Amendment-20  # declaration source ADR — Amendment 20 §결정 15 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate
+    owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 15 (구 ADR-082 Amendment 20 §결정 15) 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate
     carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence dual-binding precedent 답습)
     recurrence:
       count: 7                      # CFP-FU-B Issue #1477 5-defect 3 PIVOT (60% stale rate) + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 = 합산 ≥ 7 reach. threshold: 3 = ADR-045 §D-9 N=2 baseline 보다 strict (sister carrier pattern_count 7+ Mandatory escalation 산물 reflective).
@@ -1941,7 +1941,7 @@ entries:
     modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
     introduced_by: CFP-1590
     introduced_date: 2026-05-25
-    owner_adr: ADR-082-Amendment-23  # declaration source ADR — Amendment 23 §결정 1 layer 1 sub-scope (1-L) 신설 spawn prompt fact verify-before-trust mandate
+    owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 1 sub-scope 1-L (구 ADR-082 Amendment 23) 신설 spawn prompt fact verify-before-trust mandate
     carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence + CFP-1559 issue-body-claim-pre-screen + CFP-1601 numeric-claim-write-time-verify dual-binding precedent 답습)
     recurrence:
       count: 3                      # 3 occurrences pattern reach (CFP-1493 + CFP-1523 + CFP-1591) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물
@@ -1991,7 +1991,7 @@ entries:
     modal_anti_pattern_dictionary: {}  # presence-grep heuristic (artifacts_written ↔ git log cross-verify), modal 어휘 무관
     introduced_by: CFP-1589
     introduced_date: 2026-05-25
-    owner_adr: ADR-082-Amendment-24  # declaration source ADR — Amendment 24 §결정 1 layer 1 sub-scope (1-M) 신설 own-author synthesis 보고 vs actual git commit gap verify mandate
+    owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 1 sub-scope 1-M (구 ADR-082 Amendment 24) 신설 own-author synthesis 보고 vs actual git commit gap verify mandate
     carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-1590 spawn-prompt-fact-verify + CFP-1601 numeric-claim-write-time-verify + CFP-1559 issue-body-claim-pre-screen precedent 답습)
     recurrence:
       count: 1                      # 1 occurrence pattern (CFP-1523 F-DR-002 P0 finding ArchitectPL verdict packet 'Artifacts written' ≠ actual git commit, DesignReviewPL audit detect FIX iter 1 dispatch)
@@ -2120,7 +2120,7 @@ entries:
       sibling_story_merged: true
     introduced_by: CFP-1683
     introduced_date: 2026-05-26
-    owner_adr: ADR-082-Amendment-29
+    owner_adr: ADR-168  # ADR-168 §결정 1 sub-scope 1-R (구 ADR-082 Amendment 29 sub-scope 1-R)
     carrier_adr: ADR-060
     sibling_dependencies: [CFP-1683, CFP-1646]
     recurrence:
@@ -2158,7 +2158,7 @@ entries:
       sibling_story_merged: true
     introduced_by: CFP-1684
     introduced_date: 2026-05-26
-    owner_adr: ADR-082-Amendment-31   # reslot from Amendment 30 (CFP-1688 slot collision) → Amendment 31 sub-scope 1-T
+    owner_adr: ADR-168   # ADR-168 §결정 1 sub-scope 1-T (구 ADR-082 Amendment 31 — reslot from Amendment 30 CFP-1688 slot collision → Amendment 31 sub-scope 1-T)
     carrier_adr: ADR-060
     sibling_dependencies: [CFP-1684, CFP-1646]
     recurrence:
@@ -3678,7 +3678,7 @@ entries:
     modal_anti_pattern_dictionary: {}  # resource-safety claim↔proof presence lint, modal 어휘 무관
     introduced_by: CFP-2646
     introduced_date: 2026-07-13      # KST (Phase 2 mechanical wire delivery)
-    owner_adr: ADR-082              # declaration source — Amendment 38 §결정 16 (write-time verify super-class presence-lint carrier)
+    owner_adr: ADR-168              # declaration source — ADR-168 §결정 16 (구 ADR-082 Amendment 38 §결정 16, write-time verify super-class presence-lint carrier)
     carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + AC-1a 인벤토리 등재 의무
     spec_invariant_measurement_required: false  # 정적 구조 presence lint (안전성-claim 옆 proof-ref/ceiling presence) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.6 Perf Baseline N/A). 판별력 = self-test discriminating fixture + DoS 회귀가드 결박

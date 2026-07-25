@@ -50,7 +50,7 @@ Story file 시작 부 `---` ... `---` block. 표준 필드 + multi-repo system �
 | `epic_owner_repo` | string \| null | optional | ADR-020 §결정 1 — Epic owner repo (`null` = 단일 repo) |
 | `carrier_story` | string \| null | optional | ADR-062 §결정 1 — 본 Story 가 자신이 정의하는 protocol 의 carrier 인 경우 자기 자신 KEY (예: `CFP-407`). non-carrier = 미선언 (default `null`) |
 | `bootstrap_exempt_protocols` | list of typed key | optional | ADR-062 §결정 1 — typed key list `"<type>:<identifier>"`. 5 standard prefix: `adr` / `contract` / `policy` / `workflow` / `script` (예: `["adr:ADR-062", "policy:todowrite-progress-visualization"]`). `carrier_story` 선언 시 의무 |
-| `issue_origin` | enum | optional | **ADR-082 Amendment 2 (CFP-1016)** — `user_authored_issue_form` (default, fallback when missing) / `orchestrator_authored_followup` (Orchestrator 가 retro time / brainstorm Phase 0 후속 / ADR amendment carrier reservation / pattern_count escalation forcing function 산물로 Issue 본문 author 한 경우). `orchestrator_authored_followup` 시 §2.1 verified state table 작성 의무 (Orchestrator-authored Issue body pre-publish verify mandate forcing function) |
+| `issue_origin` | enum | optional | **ADR-168 §결정 1 sub-scope 1-B (구 ADR-082 Amendment 2, CFP-1016)** — `user_authored_issue_form` (default, fallback when missing) / `orchestrator_authored_followup` (Orchestrator 가 retro time / brainstorm Phase 0 후속 / ADR amendment carrier reservation / pattern_count escalation forcing function 산물로 Issue 본문 author 한 경우). `orchestrator_authored_followup` 시 §2.1 verified state table 작성 의무 (Orchestrator-authored Issue body pre-publish verify mandate forcing function) |
 | `active_sessions` | list of dict | optional | **ADR-085 §결정 2 (CFP-1041)** — 복수 Claude Code session 동시 작업 시 ownership coordination dual carrier (Story Issue body `<!-- active_sessions -->` HTML comment block + 본 frontmatter array). 각 entry = 5-tuple: `git_identity` (string, 예: `"MinCheol Cho <mccho@mclayer.it>"`) / `worktree_path` (string, ADR-040 worktree namespace 정합) / `entry_phase` (enum: `"Phase 1 requirements"` \| `"Phase 1 design"` \| `"Phase 1 design-review"` \| `"Phase 2 develop"` \| `"Phase 2 code-review"` \| `"Phase 2 security-test"` \| `"Phase 2 integration-test"` \| `"Phase 2 retro"`) / `entered_at_kst` (ISO 8601 zoned strict `YYYY-MM-DDTHH:MM:SS+09:00`, ADR-079) / `last_heartbeat_kst` (ISO 8601 zoned strict, update on lane phase transition + 매 PR open / commit push 직후). Optional handoff field = `fix_iter_ownership` (dict, ADR-085 §결정 5): `handoff_from` / `handoff_to` / `fix_iter_number` / `handoff_at_kst` / `handoff_reason` (enum: `"context-budget-exhausted"` \| `"user-redirect"` \| `"structural-restart-ADR-053"` \| `"other"`). backward-compat: 기존 미명시 Story default `[]` (Wave 1 declarative — Wave 2 mechanical lint promotion 시 점진 ratchet (강화 방향 단계적 적용 — 정책 scope/강도 양적 증분, ADR-058 §결정 5), `active-sessions-presence` evidence-checks-registry entry warning tier deferred-followup). |
 | `mid-flight marker` (인라인 관례) | inline HTML comment (관례 — frontmatter 필드 아님) | optional | **ADR-085 §결정 10 (Amendment 2, CFP-2761)** — mid-flight(미완) 산출물의 artifact-level provenance 마커 관례. 세션 순차 교대/병렬 인계 시 이전 세션 미완 산출물에 부착: `<!-- mid-flight: owner=<git_identity>[\|worktree=<path>]; kst=<YYYY-MM-DDTHH:MM:SS+09:00>; status=<draft\|provisional\|final> -->`. `owner` = §결정 2 `active_sessions[].git_identity` 정합(별도 identity 신설 금지) / `kst` = ADR-079 KST +09:00 zoned strict / `status` ∈ closed-set {draft, provisional, final} (E1 legacy 마커 부재 = `provisional` 간주). **advisory provenance** (기계 자동-skip 아님 — `status ≠ final` = 후속 세션 재판정 후보 신호, 자동 차단 없음, warning-tier). CI-visibility 3분류: tracked content(유형1-3 committed 마커 직접 스캔) / local-state probe(유형4 미머지 worktree, ADR-073 Amendment 21 `workflow: null` hook-only) / tracked anchor narrow(유형5 untracked ADR draft = ADR-RESERVATION 예약 row `status`+age proxy, owner/kst 미주장). Wave 2 mechanical wire = `mid-flight-marker-stale` evidence-checks-registry entry(warning). narrative SSOT = `docs/domain-knowledge/domain/orchestrator-discipline/mid-flight-marker-provenance.md`. |
 
@@ -90,7 +90,7 @@ Story file 시작 부 `---` ... `---` block. 표준 필드 + multi-repo system �
 
 **타이밍**: 파일 생성 시점엔 placeholder (요구사항 레인 진입 전 비어있음). DomainAgent가 Analyst·Researcher와 **병렬 실행** 후 결과 반환하면 RequirementsPL 이 §2 직접 self-write (codeforge-requirements) — 따라서 **Analyst·Researcher는 §2를 입력으로 참조하지 않음** (독립 관점 보장). §5·§6과 같은 사이클에 동시 기록.
 
-#### §2.1 Issue body 가정 vs verified state (ADR-082 §결정 1 layer 1 — Amendment 2 codification, CFP-1016)
+#### §2.1 Issue body 가정 vs verified state (ADR-168 §결정 1 layer 1 sub-scope 1-B — 구 ADR-082 Amendment 2 codification, CFP-1016)
 
 **적용 조건** (CONDITIONAL):
 - frontmatter `issue_origin: orchestrator_authored_followup` 시 **의무**
@@ -111,7 +111,7 @@ Story file 시작 부 `---` ... `---` block. 표준 필드 + multi-repo system �
 2. **`[verified]` annotation 의무** — verify evidence column 에 verify mechanism (`git show <ref>:<path>` / `grep -c` / `sed -n` / `ls` / `gh issue view` / `mcp__github__get_file_contents` 등) + 결과 + `[verified]` annotation 부착
 3. **Pivot 판정** — verified state 가 Issue body 와 일치 시 "Pivot 부재" + 정정 방향 1줄, 불일치 시 "Pivot N" + 정정 방향 (drift 종류: inverted / stale / inexistent / regex FP / filename gap 등)
 4. **[verified] / [hypothesis] 분리** — verify 가능 영역 = `[verified]`, LLM ambiguity 영역 = `[hypothesis]` (ADR-052 Amendment 3 marker 4종 정합)
-5. **citation ≠ assertion** — Issue body 가 외부 lint output / cross-lane verdict 를 verbatim 인용한 경우 citation (verify 면제, §결정 4) but Orchestrator authorship 시점에 lint output 사실성 verify 의무 (ADR-082 §결정 1 layer 1 (1-B) sub-scope)
+5. **citation ≠ assertion** — Issue body 가 외부 lint output / cross-lane verdict 를 verbatim 인용한 경우 citation (verify 면제, §결정 4) but Orchestrator authorship 시점에 lint output 사실성 verify 의무 (ADR-168 §결정 1 layer 1 (1-B) sub-scope)
 
 **예시 (CFP-1000/CFP-1001/CFP-1002 precedent)**:
 - CFP-1000 §2.1 (9-row drift mapping) → 3 inversions catch (`prod-cutover-deputy-evidence` INVERTED + baseline stale + `.claude-work/label-registry-bootstrap.json` inexistent)
@@ -119,7 +119,7 @@ Story file 시작 부 `---` ... `---` block. 표준 필드 + multi-repo system �
 - CFP-1002 §2.1 (2 row verify) → ADR-054 filename `-fast-path.md` cited but actual `-story-fast-path.md` catch (Pivot 부재, trivial 1-character-level edit)
 - CFP-1016 §2.1 (META self-application) → 본 Story 자체가 Amendment 2 carrier — Issue body 4 claims (CFP-1000 inversions / CFP-1001 lint output / CFP-1002 filename / ADR-082 next amendment_id) verify
 
-**미작성 시** (`issue_origin: orchestrator_authored_followup` 인데도): §2.1 verified state table 부재 = ADR-082 §결정 1 layer 1 (1-B) Wave 1 behavioral violation. Wave 2 mechanical lint (`scripts/check-story-section-issue-origin.sh`, deferred-followup) 가 향후 detect.
+**미작성 시** (`issue_origin: orchestrator_authored_followup` 인데도): §2.1 verified state table 부재 = ADR-168 §결정 1 layer 1 (1-B) Wave 1 behavioral violation. Wave 2 mechanical lint (`scripts/check-story-section-issue-origin.sh`, deferred-followup) 가 향후 detect.
 
 ### §3. 관련 ADR
 - 직접 제약 ADR (verbatim 또는 full 요약)
