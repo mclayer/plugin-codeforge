@@ -21,7 +21,7 @@ honest ceiling (ADR-082 §결정 16 / ADR-119 §결정 6 / ADR-136 정직 천장
 resource 정직 (ADR-082 §결정 16 — Change Plan D10, honest-downgrade):
   born-safe bound 4-axis: (1) path filter = archive/adr/ADR-*.md anchored + ADR-RESERVATION.md EXEMPT
   (2) bounded-quantifier regex — 헤딩 매칭 `^#{2,4}\s{0,80}Amendment` (무제한 quantifier 미사용)
-  (3) per-file 물리 라인 length truncate (MAX_PHYSICAL_LINE_LEN) (4) total-work bound — 166 파일 유한 corpus 1-shot.
+  (3) per-file 물리 라인 length truncate (MAX_PHYSICAL_LINE_LEN) (4) total-work bound — 유한 corpus 1-shot (도입 시점 ≈166 ADR, 수치는 corpus 성장에 따라 변동).
   본 bound 은 bounded degradation 정직 천장 — 임의 입력 무해 단정 아님(honest ceiling). "ReDoS-safe" 류
   안전성 hard-claim 은 paired proof-ref(복잡도 회귀 self-test) 동반 없이는 하지 않는다.
 
@@ -526,6 +526,14 @@ def _fm_lists(fm: dict):
 
 
 def run_parity(repo_root: str, paths, base_ref) -> int:
+    """parity 모드 — heading↔fm drift(check_parity) + 신규 entry marker presence(check_marker_presence).
+
+    forward-only 판정 = merge-base 대비 delta. **신생 ADR 파일(merge-base 미존재)의 marker presence 검사
+    skip = 의도된 동작**: per-file forward-only 해석상 신규 파일 전체가 "기존" 이 아닌 "신규 추가"라 개별
+    entry 의 신규-delta 를 git 없이 분별할 수 없다. 이 skip 의 backstop = **count 축(threshold 모드)** —
+    신생 ADR 이 임계 초과 시 threshold 게이트가 검출한다. marker presence 는 기존 ADR 에 신규 amendment
+    entry 를 추가하는 흔한 경로에서 forward-only 로 강제된다 (§8 Impl note / AC-4 honest-ceiling).
+    """
     violations = []
     warnings = []
     adr_candidates = 0

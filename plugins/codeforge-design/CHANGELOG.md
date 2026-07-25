@@ -2,6 +2,14 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.45.1] - 2026-07-25 — CFP-2812 adr.md 템플릿 reinterpretation forward-only marker 필드 (PATCH)
+
+### Added (CFP-2812 — ADR-167, PATCH)
+
+[CFP-2812] ADR amendment 누적 임계 재제정(compaction) ratchet 배선의 일부로 canonical ADR 템플릿에 forward-only marker 필드 추가:
+
+- `templates/adr.md`: `amendments[]` 블록에 `reinterpretation: true | false` 필수 필드 + forward-only 기재 의무 주석 추가 — 신규 amendment entry 가 본문 의미를 소급 재해석하는지 저작 시점 self-declare (parity 게이트가 presence/type 만 기계 검사, 진위는 리뷰 판정 축 — honest-ceiling, ADR-167 §결정 7). template schema field 확장 = PATCH (0.45.0 → 0.45.1).
+
 ## [0.45.0] - 2026-07-24 — CFP-2813 design-info-read-protocol-v1 선행 read 배선 (MINOR)
 
 ### Added (CFP-2813 — ADR-166 / ADR-078 Amd3 / ADR-112 Amd1, MINOR)
