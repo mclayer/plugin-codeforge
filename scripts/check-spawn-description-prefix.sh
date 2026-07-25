@@ -2,7 +2,7 @@
 # CFP-2574 / ADR-143 §결정 4 — spawn description-prefix DETECT thin wrapper + self-test
 # ADR-061 §결정 1 — thin wrapper (scripts/lib/check_spawn_description_prefix.py SSOT)
 #
-# 범위① Agent spawn 최상위 헤더 description 이 렌더-줄 프리픽스 `[에이전트명] MM/DD HH:MM - 내용`
+# 범위① Agent spawn 최상위 헤더 description 이 렌더-줄 프리픽스 `[에이전트명] MM/DD HH:MM:SS - 내용`
 # 형식인지 DETECT (warning-tier, exit 0, rewrite/mutation 0 — SecurityArch §7.1 non-mutation 상속).
 #
 # 모드:

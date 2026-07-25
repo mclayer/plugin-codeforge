@@ -5,7 +5,7 @@
 #
 # 목적 (범위① Agent spawn 최상위 헤더 description):
 #   Agent spawn 의 tool_input.description 이 렌더-줄 프리픽스 형식
-#   `[에이전트명] MM/DD HH:MM - 내용` 인지 DETECT (warning-tier, exit 0 ALWAYS, rewrite/mutation 0).
+#   `[에이전트명] MM/DD HH:MM:SS - 내용` 인지 DETECT (warning-tier, exit 0 ALWAYS, rewrite/mutation 0).
 #   SecurityArch §7.1 non-mutation invariant 상속 — description 을 읽되 되쓰지 않고 exit code advisory-only.
 #
 # Entry-point:
@@ -21,10 +21,10 @@
 #     stdout JSON {"bypass": true, "description_prefix_conformant": true}, exit 0.
 #
 # 판정 규칙 (ADR-143 §결정 2):
-#   - RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S (anchored, bounded, ReDoS-safe)
+#   - RE_PREFIX = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2}(:\d{2})? - \S (anchored, fixed-count, single-level `?`, ReDoS-safe — ADR-143 §A4.3)
 #     · re.match() 선두 앵커 / 부정 문자 클래스 [^\]] 비중첩 / open-ended .* 부재 / 양화사 중첩 부재.
 #     · 이 regex 가 자동으로 AC-3(정확히 ` - ` 단일공백-하이픈-공백) · AC-4(offset `+09:00` 있으면 미매칭) ·
-#       AC-15(컴팩트 MM/DD HH:MM) 를 강제.
+#       AC-15(컴팩트 MM/DD HH:MM:SS, 옛 HH:MM 하위호환 수용) 를 강제.
 #   - 빈 description (strip 후 "") → empty:true, description_prefix_conformant:true (leaf 빈 description 은 위반 아님, AC-10).
 #
 # SSOT carrier: CFP-2574 Phase 2 (ADR-143 §결정 4)
@@ -57,16 +57,16 @@ CHECKED_PREVIEW_LEN = 80
 #   - 양화사 중첩 금지: (?:...)*? / (.+)+ 등 부재
 #   - open-ended .* 부재 (bounded {1,64})
 #
-# 프리픽스: [<에이전트명 1~64자, ] 미포함>] <MM>/<DD> <HH>:<MM> - <내용 1자+>
-#   `] `(닫는 대괄호+공백) → `\d{2}/\d{2}`(날짜, / 구분자) → ` ` → `\d{2}:\d{2}`(시각) → ` - `(공백-하이픈-공백) → `\S`(내용 최소 1 non-ws)
+# 프리픽스: [<에이전트명 1~64자, ] 미포함>] <MM>/<DD> <HH>:<MM>(:<SS>) - <내용 1자+>
+#   `] `(닫는 대괄호+공백) → `\d{2}/\d{2}`(날짜, / 구분자) → ` ` → `\d{2}:\d{2}(:\d{2})?`(시각·초 optional) → ` - `(공백-하이픈-공백) → `\S`(내용 최소 1 non-ws)
 # ADR-143 §결정 2 `- 내용` nonempty 정합 — 끝 `\S` 로 empty-content(`- ` 뒤 빈/trailing space)를 nonconformant 로 tighten.
 #   빈 필드(프리픽스 자체 부재, strip=="")는 check_description 의 별도 empty 분기(regex 미도달)로 conformant 보존.
-RE_PREFIX = re.compile(r'^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - \S')
+RE_PREFIX = re.compile(r'^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2}(:\d{2})? - \S')
 
 # ── --inject 모드 KST stamp 유효성 (CFP-2587 Phase 2) ─────────────────────────
-#   컴팩트 `MM/DD HH:MM` 만 인정 (ADR-143 §결정 2/3). anchored·bounded (ReDoS-safe).
+#   컴팩트 `MM/DD HH:MM:SS`(옛 `MM/DD HH:MM` 하위호환 수용, 초 optional) 인정 (ADR-143 §결정 2/3 + Amendment 4). anchored·fixed-count·single-level `?` (ReDoS-safe — §A4.3).
 #   invalid stamp → build_injected_description 이 None 반환(KST-fail skip, degradation rung 4).
-RE_KST_STAMP = re.compile(r'^\d{2}/\d{2} \d{2}:\d{2}$')
+RE_KST_STAMP = re.compile(r'^\d{2}/\d{2} \d{2}:\d{2}(:\d{2})?$')
 
 # _sanitize_subject '' fallback (G2)
 UNKNOWN_AGENT = "unknown-agent"
@@ -142,7 +142,7 @@ def build_injected_description(subject: str, kst_stamp: str, original: str):
     렌더-줄 프리픽스 주입 description 을 생성 — 실패/skip 조건이면 None 반환 (fail-open, non-emit).
 
     반환:
-      str  — `[<sanitized>] <MM/DD HH:MM> - <내용>` (RE_PREFIX-conformant 보장)
+      str  — `[<sanitized>] <MM/DD HH:MM:SS> - <내용>` (RE_PREFIX-conformant 보장)
       None — skip (updatedInput 미emit): 아래 5 조건 중 하나
         · original 이 공백/빈 문자열 (§7.7-1)
         · original 이 이미 프리픽스-conformant (idempotent, AC-11/AC-12 — check_description SSOT 재사용)
@@ -361,7 +361,7 @@ def main(argv: list) -> int:
     if not result["description_prefix_conformant"]:
         print(
             f"{SCRIPT_NAME} WARN: spawn description prefix nonconformant — "
-            f"expected [<agent_type>] MM/DD HH:MM - <내용> (ADR-143, advisory)",
+            f"expected [<agent_type>] MM/DD HH:MM:SS - <내용> (ADR-143, advisory)",
             file=sys.stderr,
         )
 
