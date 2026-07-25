@@ -18,6 +18,7 @@ related_adrs:
   - ADR-078
   - ADR-112
   - ADR-066  # Amendment 1 (CFP-2821) — §결정 8 적격 조건 3 cross-ref (ADR-066 Amd5 exception 은 self-hosted 경로 미적용)
+  - ADR-013  # Amendment 1 (CFP-2821) — §결정 8 조건 3 reconciliation cross-ref (ADR-013 Amd4 단일 PAT consolidation 을 self-hosted surface 한정 supersede-in-part; F-DR-2821-1)
 related_files:
   - templates/github-workflows/
   - .github/workflows/invariant-check.yml
@@ -125,7 +126,7 @@ RefactorAgent(in-file default=ubuntu-latest, public 안전)와 InfraOperationalA
   본 path 의 self-hosted 적격 = 아래 7종 조건 **전부 AND** 충족 시에 한한다:
   1. **private 한정** — `private` ∧ `allow_forking=false` ∧ runner group `allows_public_repositories=false` 3중.
   2. **fork-PR self-hosted 미실행 불변** — 본 §결정 8 1문단 무약화.
-  3. **write credential least-privilege** — org-wide classic PAT 의 self-hosted 상주 금지: fine-grained `issues:write`@대상 repo 한정 또는 scoped GitHub App installation token(≤1h). **ADR-066 Amendment 5 exception(classic No-expiration)은 self-hosted 경로에 미적용.**
+  3. **write credential least-privilege** — org-wide classic PAT 의 self-hosted 상주 금지: fine-grained `issues:write`@대상 repo 한정 또는 scoped GitHub App installation token(≤1h). **ADR-066 Amendment 5 exception(classic No-expiration)은 self-hosted 경로에 미적용.** **ADR-013 Amendment 4 cross-ref(reconciliation — CFP-2821 DR FIX iter1 F-DR-2821-1)**: 본 조건이 강제하는 self-hosted 전용 down-scope fine-grained credential(별도 물리 토큰)은 ADR-013 Amendment 4 §결정 2/3 의 "단일 `CODEFORGE_CROSS_REPO_PAT` consolidation(신규 PAT 도입 시 별도 ADR 발의 의무)" 을 **self-hosted surface 한정 supersede-in-part** 한다 — 방향 = 강화(persistent 공유 러너에 상주하는 credential 의 org-wide classic write → 1-repo `issues:write` scope 축소, blast-radius 축소), evidence-gated(fix-ledger-sync 14일 상시-FAIL census[#2820] + self-hosted 대조군 지속 성공 + group6 online 실측; ADR-064 §결정 7 Amendment 8 symmetric ratchet 정합). **literal 위반 아님**: (i) ADR-013 §결정 3 "신규 PAT 도입 시 별도 ADR 발의 의무" = 본 Amendment 1 이 그 발의를 **이행**(위반이 아니라 충족) (ii) ADR-013 §결정 2 "신규 secret 도입 금지(cross-repo write-PAT 비확산)" = cross-repo write credential 은 workflow `CROSS_REPO_PAT` env(port) 불변 — org-wide classic PAT 는 static GH secret store 에서 제거(JIT materialization), 신규 GH secret 은 read-only `OP_SERVICE_ACCOUNT_TOKEN`(vault-access 별도 credential class, cross-repo write PAT 아님) 뿐이고, down-scope fine-grained PAT = 1Password vault-item 값 ≠ GH secret. 자기 선례 형식 = ADR-145 §결정 3(fail-closed 비호환 override codify) / ADR-125(required-context divergence 추적)의 supersede-in-part 패턴 답습. reciprocal 각주 = ADR-013 Amendment 4(bidirectional cross-ref).
   4. **runtime JIT sourcing 의무** — env-only injection + auto-mask + CLI-arg 0(정적 env-binding 원복 금지).
   5. **residual 완화 의무** — post-job env-purge + workflow `permissions` 최소 + T4/T5(persistent 러너 cross-job residue) **명시 수용 declare**(Story/Change Plan §7).
   6. **supply-chain** — secret-bearing action full-SHA pin + egress allowlist region-correct(secret-manager endpoint 는 SA 계정 region 실측 — repo 실측 불가 항목은 operator 확인으로 정직 처리).
