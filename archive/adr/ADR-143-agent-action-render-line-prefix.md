@@ -1,6 +1,6 @@
 ---
 adr_number: 143
-title: Agent 수행 액션 렌더 줄 프리픽스 규약 (`[에이전트명] MM/DD HH:MM - 내용`) — ephemeral-UI 표시 sub-layer
+title: Agent 수행 액션 렌더 줄 프리픽스 규약 (`[에이전트명] MM/DD HH:MM:SS - 내용`) — ephemeral-UI 표시 sub-layer
 status: Accepted
 category: governance
 date: 2026-07-05
@@ -106,6 +106,39 @@ amendment_log:
       §결정 5 "agent .md" 항목 제거는 실 wiring 0건인 선언의 정정이지 실재 채널 축소가
       아니며, §결정 2 생략형은 canonical 대체 아닌 additive 변형. ADR-058 §결정 5 는
       WEAKENING 에만 justification 의무 — 본 amendment 비해당.
+  - number: 4
+    carrier_story: CFP-2836
+    date: 2026-07-25
+    direction: strengthen
+    reinterpretation: false  # ADR-167 §결정 1(b) — forward-effective format/clock override 이지 동결 본문(§결정 2/3) 의미 소급 재해석 아님 (self-declared, 리뷰 판정 축; parity lint 는 presence/type 만 검사). effective_count=4 < N=10 → 재제정 트리거 무발동.
+    target: "§결정 2 (format: `MM/DD HH:MM` → `MM/DD HH:MM:SS`) · §결정 3 (clock: 앵커 재사용 floor 강화 + 산술 증분(+N) 표시 FORBID ADD) · title (metadata-only 초 sync) · AC-11 (앵커 정밀도 co-requirement 신설)"
+    summary: >-
+      렌더 프리픽스 시각 초(SS) 표기 강화 — 사용자 재신고(오늘 06:40 Amd3 머지 직후 즉시)
+      증상 = 1회 측정 앵커에서 model 이 +1분 산술 증분 표시. 근인 = 분(minute) granularity 가
+      실측(clock re-read)과 위조(+1분 암산)를 byte-identical 산출로 만들어 어떤 detector 도
+      측정↔위조 provenance 를 구별 불가(구조적 false-oracle) + §결정 3 leaf② "앵커 재사용"
+      서술이 증분을 licensing 하는 것으로 오독 가능. 정정 = (a) §결정 2 format
+      `MM/DD HH:MM`→`MM/DD HH:MM:SS` — "초 미표기" forbid 를 "초 표기" require 로 substitute
+      (higher-precision anti-fabrication mandate, RFC 5424 §6.2.3 whole-second baseline +
+      Benford terminal-digit 조작 노출). offset·연도·KST 라벨 생략은 PRESERVED (boundary-critical
+      — ADR-079 zoned-scope disjoint 유지 · §결정 6/7 무변경). ACCEPTOR regex = optional-seconds
+      `\d{2}:\d{2}(:\d{2})?`(전환안전 — 옛 HH:MM + 신 HH:MM:SS 양형 idempotency) / EMIT helper =
+      mandatory `:%S`. (b) §결정 3 leaf② 앵커 재사용 = KEPT + hardened — floor(앵커 값 verbatim,
+      경과분 상향가산·반올림 금지, Amd3 계승) + 초 granularity 로 증분 un-fakeable + 산술 증분(+N)
+      표시 FORBID ADD. literal per-render-line 재측정(사용자 REJECT 옵션 B)은 model wall-clock
+      부재로 구조적 실현 불가 → §결정 3 override 아닌 floor 강화. (c) AC-11 앵커 정밀도
+      co-requirement — SS 강제는 앵커 채널(kst_render_stamp.py/.sh RENDER_FMT +%S / SubagentStart
+      hook subagent-start-render-discipline STAMP pass-through / spawn packet / per-dispatch stamp)
+      의 초-정밀 동반 격상을 REQUIRE(미격상 시 model 이 초 필드 fabricate = 의도 정반대, IA-2 급소).
+      SS-presence = machine-testable / SS-value-freshness = advisory(machine-ungated by design,
+      #34530/#61152) — "100% 기계강제/hard-gate" 참칭 금지(§A4.3).
+    sunset_justification: >-
+      N/A — strengthen (higher-precision anti-fabrication mandate). §결정 2 "초 미표기" forbid
+      sub-item 이 struck 되나 이는 "초 표기" require 로의 SUBSTITUTE(정밀도 상향)이지 permission
+      expansion 아님 — forbid-scope 축소 0(오히려 "산술 증분(+N) 표시 금지" forbid 를 ADD).
+      §결정 3 앵커 재사용은 reversal 아닌 floor 강화(verbatim + un-fakeable). ADR-058 §결정 5 는
+      WEAKENING/forbid-scope 축소에만 justification 의무 — 본 amendment 비해당. (ADR-058 §결정 8
+      direction 모호 flag 선제 해소 — struck forbid sub-item 의 strengthen rationale 명기.)
 related_files:
   - CLAUDE.md  # 범위① Orchestrator spawn-description 규약 directive + 전-agent behavioral note (Phase 2)
   - hooks/pretooluse-agent-spawn-gate  # 범위① description-format detect 확장 (warning-tier, exit-0-always, Phase 2)
@@ -487,3 +520,121 @@ control" [source: code.claude.com/docs/en/hooks.md] + fail-open exit 0 ALWAYS.
 - `docs/evidence-checks-registry.yaml` — spawn-description-prefix-detect warning-tier entry (Phase 2)
 - `docs/inter-plugin-contracts/spawn-event-v1.md` — `agent_type` 어휘 SSOT (cross-ref, 무편집)
 - `docs/inter-plugin-contracts/comment-prefix-registry-v1.md` — `[lane]` homonym disjoint surface (cross-ref, 무편집)
+
+## Amendment 4 (CFP-2836) — 렌더 프리픽스 초(SS) 표기 + 앵커 재사용 증분 un-fakeable 강화
+
+> Carrier: CFP-2836 (사용자 확정 2026-07-25 KST — 축② = "제어 잡을 때마다 실측 + 초까지
+> verbatim frozen + 증분 전면금지". literal per-render-line 재측정(옵션 B)은 model wall-clock
+> 부재로 구조적 실현 불가 = REJECTED). Direction = **strengthen** (anti-fabrication forcing
+> function — 초 granularity 로 증분 위조 un-fakeable 화 + 앵커 재사용 floor 강화, forbid-scope
+> 축소 0; §A4.1 §결정 2·§결정 3 direction 명기).
+> 본 절은 §결정 원문 + Amendment 1/2/3 을 삭제하지 않고 amend — decision-by-decision 기재.
+> 설계 SSOT = 본 ADR §결정/Amendment + Story CFP-2836 §7 (change-plan 면제 — §결과 절 재확인).
+> **ADR-167 정합 (reinterpretation: false)**: 본 amendment 는 forward-effective 한 format/clock
+> override 이지 동결 본문(§결정 2/3)의 의미를 소급 재해석하지 않는다. effective_count(본문
+> `## Amendment` 헤딩 4 ⟺ frontmatter amendment_log entry 4) = 4 < N(10) → 재제정 트리거
+> 무발동(정상 append). frontmatter amendment_log entry 4 에 marker 기재.
+> **title 동반 정정 = metadata-only 사실 sync**: 프론트매터 `title` 의 `MM/DD HH:MM` →
+> `MM/DD HH:MM:SS` 정정은 metadata(frontmatter/title) 사실 동기화이지 동결 body prose 개정이
+> 아니다(Amd 3 carrier-헤더 사실 정정 선례 동형 — §A3.1 말미 metadata-only 예외). 동결 §결정 2
+> 본문("컴팩트 = `MM/DD HH:MM`")은 rewrite 하지 않으며, 실효 format 은 본 Amendment 4 가 carry.
+
+#### A4.0 핵심 (초 = 증분 위조 봉투를 붕괴시키는 forcing function)
+
+render-prefix 4번째 Story(2574→2770→2818→2836). Amd3(오늘 06:40 머지) 가 **값-방향 축**
+(미래 overshoot·+9 재가산)을 floor 로 clamp 한 직후, 사용자가 즉시 재신고한 증상은 **측정-빈도
+축**에 살아있었다: 1회 앵커에서 model 이 `18:39`→`18:40` 처럼 +1분 산술 증분 표시.
+
+- **META-A · 분(minute) granularity = 구조적 false-oracle**: 진짜 1분 경과(clock re-read)와
+  +1분 암산 증분은 **byte-identical 출력**. 렌더 문자열은 자기 유도 방법(measurement vs
+  fabrication)의 provenance 를 담지 않는다 → 어떤 detector(lint·hook·사람)도 구별 불가. 걸릴
+  관측 대상 자체가 부재였다(감독 소홀 아닌 구조적 맹점). `source: 조작 수치 = round-number bias
+  vs 진짜 측정치 말단 자리 균등분포 — ACFE terminal-digit / Benford`.
+- **초(SS) = 방어의 이동**: SS 는 방어를 "위조 검출"(불가 — false-oracle)에서 **"위조 생산
+  불가능화"(forcing function)로 이동**한다. 초는 high-entropy → plausible 암산 증분 불가 → 준수
+  최소저항 경로가 "실제 측정"이 됨(ADR-158 author-time self-gate 동형 — detector 추가 아닌 정직
+  경로 최소저항화). `source: RFC 5424 §6.2.3 — whole-second 필수(현 분 단위 = 표준 baseline 미달)`.
+- **두 축 disjoint (Phase 2 구현 계약 — §8)**: **EMIT axis** = helper 출력이 반드시 `:%S`
+  (mandatory-SS) / **ACCEPTOR axis** = 검증 regex 는 `(:\d{2})?`(optional-seconds, 전환안전).
+  EMIT↔ACCEPTOR co-change invariant — RENDER_FMT 이 `:%S` 를 얻는데 RE_KST_STAMP 가 strict(초
+  미수용)면 SS stamp 가 reject → `build_injected_description` None → inject backup 이 born-dark.
+
+#### A4.1 decision-by-decision
+
+- **§결정 1 (scope/subject)** — **UNCHANGED**. subject 판정(헤더=피스폰 `subagent_type` /
+  leaf=self `agent_type` / Orchestrator 명 부재 INV-1)·INV-2 Amd2 완화 그대로. 초 도입은 시각
+  필드 정밀도 확장이지 subject 규칙 무저촉.
+- **§결정 2 (format)** — **AMENDED (strengthen)**. 컴팩트 형식 `[에이전트명] MM/DD HH:MM - 내용`
+  → **`[에이전트명] MM/DD HH:MM:SS - 내용`** (초 2자리 zero-pad). 동결 §결정 2 본문의 "초 전부
+  **미표기**" forbid sub-item 은 **"초 표기 require" 로 substitute** — higher-precision
+  anti-fabrication mandate 이지 permission expansion 아님. **offset(`+09:00`)·연도·`KST` 라벨
+  생략은 PRESERVED**(boundary-critical — persist 시 §결정 8 재판정 여지 유지 + ADR-079 zoned-scope
+  disjoint 보존, 오직 "초"만 이동). **Fork#2 (regex strictness)**: ACCEPTOR(`RE_PREFIX`/
+  `RE_KST_STAMP`) = **single-regex optional-seconds** `\d{2}:\d{2}(:\d{2})?`(전환안전 — 옛 HH:MM
+  in-flight + 신 HH:MM:SS 양형 idempotent, 이중 프리픽스 0) / EMIT helper(`kst_render_stamp.py`
+  `RENDER_FMT` · `kst-render-stamp.sh`) = **mandatory `:%S`**. `source: RFC 5424 §6.2.3 FULL-TIME
+  ABNF — TIME-SECOND 강제`.
+- **§결정 3 (clock source) — AMENDED (leaf② floor 강화, reversal 아님)**. §결정 3 헬퍼 계층
+  "UTC+9 고정 산술"(§A1.2/§A3.1 carry) · model 계층 실측 앵커 floor(Amd3 §A3.1 "앵커 값 verbatim
+  … 경과분 상향가산·반올림 금지, 표시 시각 ≤ 저작 시점 실측 now") 모두 **UNCHANGED carry**. 본
+  amendment 는 leaf② "coarse turn-anchor 재사용" 을 **KEEP + harden**:
+  - (i) **verbatim floor 재확인** — 앵커 값을 verbatim 표시, 경과분 산술 가산 금지(Amd3 계승).
+  - (ii) **초 granularity → 증분 un-fakeable** — 초는 high-entropy 라 plausible 한 암산 증분
+    (+N초/+N분)이 불가 → 재사용값은 정지된 앵커값으로만 정직 표시된다.
+  - (iii) **literal per-render-line 재측정은 구조적 실현 불가** — model wall-clock 부재(#34530
+    harness date-only) · 매줄 helper Bash = §결정 3 이 "재귀·비용 폭증" 으로 기각한 경로 · hook
+    per-dispatch stamp = 화면 미도달 backup(Amd2 계층 어긋남) · SubagentStart = per-activation.
+    ∴ 사용자 축② "제어 잡을 때마다 실측" 은 **fresh 앵커 획득(spawn/dispatch/T1-T4)마다 초-정밀
+    재측정 + 그 사이 verbatim frozen reuse** 로 실현(옵션 A) — 사용자 확정. 이는 §결정 3 leaf②
+    override 가 아니라 floor 강화다(honest declare).
+  - **ADDS forbid**: 앵커에 대한 **산술 증분(+N) 표시 FORBID** 명문화(Amd3 floor "경과분 상향가산
+    금지" 의 render-line 표면 명시적 재선언). 재실측 trigger T1-T4(§A3.1) 무변경 — 수치 상한
+    게이트 비채택(model-uncheckable, ADR-119 §결정 6) 유지.
+- **§결정 4 (enforcement)** — **UNCHANGED**. advisory ceiling · theater-ban · render primary =
+  model-authored + hook fail-open backup(Amd2) 유지. 초 도입은 강제 tier 변경 아님.
+- **§결정 5 (injection point)** — **UNCHANGED (초 auto-propagate)**. 앵커 전달 채널
+  (SubagentStart hook `subagent-start-render-discipline` `$STAMP` pass-through · spawn packet ·
+  per-dispatch hook stamp)은 helper 출력을 verbatim 경유하므로 helper 가 `:%S` 를 emit 하면 초가
+  **코드 변경 0 으로 자동 전파**(§A4.2). 채널 나열·wiring 무변경.
+- **§결정 6 / §결정 7 / §결정 8** — **UNCHANGED (명시 재확인)**. 초 도입은 신규 persist/export
+  경로 0 → §결정 8 persist-guard 미발동(render line ephemeral 정체성 무손상). 컴팩트-SS 는 연도·
+  `T`·offset 부재로 `check_kst_timestamp.py` `KST_TS_RE` 구조적 non-match → §결정 6 ADR-079 경계
+  무저촉(EXEMPT 유지) · §결정 7 homonym 불변.
+- **Ratchet 방향 = STRENGTHEN**. `sunset_justification` = **N/A** (ADR-058 §결정 5 는
+  WEAKENING/forbid-scope 축소에만 의무 — 본 amendment 는 정밀도 상향 substitute + forbid ADD,
+  축소 0). `is_transitional: false` 유지.
+
+#### A4.2 AC-11 — 앵커 정밀도 co-requirement (IA-2 급소)
+
+SS mandate 는 **앵커 채널이 초를 emit 함을 REQUIRE** 한다 — 앵커가 분(minute) 정밀도이면 model
+은 초 필드를 지어낼 수밖에 없어 SS 강제가 **신규 fabrication 표면을 개방**(의도 정반대). 초-정밀
+동반 격상 대상 채널:
+
+| 앵커 채널 | 초-정밀 격상 방식 (Phase 2) |
+|---|---|
+| `kst_render_stamp.py` `RENDER_FMT` · `kst-render-stamp.sh` | 출력 포맷에 `:%S` 부가 (EMIT axis, mandatory) |
+| SubagentStart hook `subagent-start-render-discipline` | `$STAMP` = helper pass-through → 초 **자동 전파**(코드 변경 0) |
+| spawn packet 앵커(spawner-asserted) | helper 실측 SS 값 주입 |
+| per-dispatch hook stamp(실행-입력 계층 backup) | helper 실측 SS 값(화면 미도달, 실행-계층 정확도) |
+
+**honest 한계**: SS-**presence** 는 기계 testable(`RE_PREFIX`/헬퍼/테스트) — 채널이 초를 emit
+하는지 검증 가능. **SS-value-freshness**(그 초가 실제 저작 시점 실측인지)는 여전히 advisory(model
+이 `:00` 하드코딩·stale 초 재사용 가능, machine-ungated by design). AC-11 = **전달의 기계화이지
+준수의 기계화 아님**(§A3.3 계승).
+
+#### A4.3 honest-ceiling + ReDoS 안전 (§A3.2 장래확장 발동조건 계승)
+
+- **정직 천장 재확인**: render 도달 기계게이트 불가 invariant(ephemeral + upstream #61152
+  render-transform hook 부재 + #34530 harness date-only) 무손상. **"100% 기계강제" / "hard-gate"
+  서술 FORBID 유지** — SS 는 fabrication plausibility 봉투를 붕괴시키는 부분적·정직한 개선이지
+  hard-fresh gate 아님(ADR-119 §결정 6 정합).
+- **ReDoS 안전 (§A3.2 7조건 대조)**: ACCEPTOR optional-seconds `\d{2}:\d{2}(:\d{2})?` 는 §A3.2
+  장래확장 발동조건을 충족한다 — anchor 보존(`^`/` - ` 경계) · fixed-count only(`\d{2}` 고정,
+  무제한 quantifier 0) · single-level optionality(중첩 `?` 0) · bounded subject(길이 cap
+  11→14 자) · superset(옛 HH:MM ⊂ 신 HH:MM:SS) · 멱등 `f(f(x))=f(x)` 보존(옛·신 stamp 양형
+  idempotency). **proof obligation (ADR-082 §결정 16)**: "ReDoS-safe" 단정은 paired proof-ref
+  없이 하지 않는다 — 근거 = §8 Test Contract 의 pathological-input wall-clock self-test(Phase 2
+  실행). write-time 무근거 안전성 단정 대신 proof 를 §8 로 pair(honest — 구조적 논거는 제시하되
+  실증은 Phase 2).
+- **§결정 8 persist-guard 무저촉**: 초는 persist 경로를 추가하지 않는다(ephemeral zero-persist
+  정체성 유지). `check_kst_timestamp.py` 무편집(AC-12) — 컴팩트-SS 구조적 non-match.

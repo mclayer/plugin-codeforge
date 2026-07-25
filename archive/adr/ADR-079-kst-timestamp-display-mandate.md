@@ -20,6 +20,12 @@ amendment_log:
     carrier_story: CFP-2574
     summary: "Additive — 제3 ephemeral-UI render-line 표시 sub-layer 신설, §결정 2 zoned 의무에서 EXEMPT. VS Code(및 동류 harness) 확장이 Agent 스폰·도구호출을 native 로 렌더하는 줄(파일 미저장 ephemeral, persist gap#3 = zero persist path)의 시각 = 컴팩트 `MM/DD HH:MM`, offset 생략 ≡ KST 고정(§결정 7 wrapper-canonical anchor). 조건부 persist-guard: render line 이 committed artifact 로 persist/export 되면 그 export 는 §결정 2 zoned scope 로 재분류 + layer 재판정. 규약 본문 SSOT = ADR-143(carrier CFP-2574). §결정 2 영역 표에 additive row 1개 추가(zoned scope 0건 축소) + §결정 본문 무변경. §결정 2 명시 'comment prefix'(GitHub Issue surface, comment-prefix-registry 결속)는 render line(VS Code UI surface)과 disjoint — 규칙이 이 신규 표면에 도달한 적 없음 → additive/strengthen(약화 아님). §결정 6 forward-only + §결정 7 consumer tz override 불가 무변경, 오히려 UTC+9 고정 산술(ADR-143 §결정 3)이 §결정 7 강화 인용. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제)."
     direction: strengthen
+  - amendment: 3
+    date: 2026-07-25
+    carrier_story: CFP-2836
+    reinterpretation: false  # ADR-167 §결정 1(b) — mirror-sync(SSOT=ADR-143 Amd4 를 따르는 사실 반영)이지 §결정 2 본문 의미 소급 재해석 아님 (self-declared, 리뷰 판정 축). effective_count(fm entry 3 ⟺ 본문 blockquote convention, `## Amendment` 헤딩 0) = 3 < N=10 → 재제정 트리거 무발동.
+    summary: "Mirror-sync — 제3 ephemeral-UI render-line row(§결정 2 표 4번째 row)의 초 표기를 SSOT(ADR-143 Amendment 4, CFP-2836)에 맞춰 동기화. 컴팩트 `MM/DD HH:MM` → `MM/DD HH:MM:SS` + omission list 에서 '초' 제거(offset·연도·KST 라벨 생략은 PRESERVED — boundary-critical). direction=strengthen(mirror-accuracy — SSOT 를 따르는 사실 반영). EXEMPT/zoned scope 0건 축소(컴팩트-SS 도 연도·`T`·offset 부재로 `KST_TS_RE` 구조적 non-match 유지, `check_kst_timestamp.py` 무편집 — AC-12). §결정 3 contract field layer·§결정 6 forward-only·§결정 7 consumer tz override 불가 무변경. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제 — 초 표기는 정밀도 상향이지 display scope 축소 아님)."
+    direction: strengthen
 related_stories:
   - CFP-770  # 본 Story carrier — Phase 1 (ADR-079 신설 + RESERVATION row 79 reserved 미경유 직접 active + CLAUDE.md/playbook/template/domain-knowledge)
   - CFP-771  # Phase 2 mechanical lint carrier (blocks-on CFP-770) — Amendment 1 이 mechanical_enforcement_actions[] 채움
@@ -102,11 +108,13 @@ display layer 영속 artifact 시각 표기 = **ISO 8601 RFC 3339 §5.6 colon-of
 | 영속 artifact (CLAUDE.md / playbook / ADR / retro / EPIC-RESULTS / Story §10·§14·§9 본문 표 / comment prefix) | ISO 8601 zoned `2026-05-16T19:30:00+09:00` |
 | dialog · prose (Orchestrator ↔ 사용자) | prose `2026-05-16 19:30 KST` 허용 (사용자 가시성 우선) |
 | frontmatter `date:` (date-only) | `2026-05-16` = **KST 일자 의미** 명문화 (zoned 형식 강제 아님 — date-only vs zoned 의도적 분리. Korea fixed +9 / DST 영구 부재로 일자 의미 모호성 없음) |
-| **ephemeral harness-UI render line** (Amendment 2, ADR-143) | 컴팩트 `MM/DD HH:MM` (`[에이전트명] MM/DD HH:MM - 내용`) — offset·연도·초·KST 라벨 생략 ≡ **KST 고정**(§결정 7 wrapper-canonical anchor). 파일 미저장 ephemeral(persist gap#3 = zero persist path) → **zoned 의무 EXEMPT**. 규약 SSOT = ADR-143. 조건부 persist-guard: committed artifact 로 persist/export 시 위 zoned row 로 재분류 + layer 재판정 |
+| **ephemeral harness-UI render line** (Amendment 2, ADR-143; 초 sync Amendment 3, CFP-2836) | 컴팩트 `MM/DD HH:MM:SS` (`[에이전트명] MM/DD HH:MM:SS - 내용`) — offset·연도·KST 라벨 생략 ≡ **KST 고정**(§결정 7 wrapper-canonical anchor). 파일 미저장 ephemeral(persist gap#3 = zero persist path) → **zoned 의무 EXEMPT**. 규약 SSOT = ADR-143(§결정 2 + Amendment 4). 조건부 persist-guard: committed artifact 로 persist/export 시 위 zoned row 로 재분류 + layer 재판정 |
 
 KST 약어 단독 표기 회피 — 영속 artifact 는 numeric `+09:00` 의무, prose 는 `KST` 허용 (IANA `Asia/Seoul` ≡ numeric `+09:00`, ResearcherAgent UU#3 KST abbreviation collision 회피).
 
 > **Amendment 2 (2026-07-05 KST, CFP-2574)**: 위 표 3번째 row(ephemeral harness-UI render line)는 **additive** — §결정 2 zoned scope 0건 축소. §결정 2 가 display layer 로 명시 열거한 "comment prefix" = GitHub Issue comment surface(comment-prefix-registry 결속)로, VS Code render line(harness UI surface)과 **disjoint** — §결정 2 규칙이 이 신규 표면에 도달한 적 없으므로 규칙 추가 = additive/strengthen(약화 아님). 컴팩트 offset-less 표기의 정당성은 "ephemeral 화면 전용 + Korea 고정 +9·DST 부재 invariant" 에 한정되며, persist 경로 도입 시 §결정 8(ADR-143) persist-guard 로 zoned 재판정. 상세 규약·강제 상한(advisory ceiling)·주입점 = ADR-143 SSOT.
+
+> **Amendment 3 (2026-07-25 KST, CFP-2836)**: 위 표 4번째 row(ephemeral harness-UI render line)의 초 표기 **mirror-sync** — 컴팩트 `MM/DD HH:MM` → `MM/DD HH:MM:SS`, omission list 에서 "초" 제거. SSOT = ADR-143 Amendment 4(CFP-2836 — render 프리픽스 초 표기 anti-fabrication forcing function, "초 미표기" forbid → "초 표기" require substitute). **offset·연도·KST 라벨 생략은 PRESERVED**(오직 "초"만 이동 — boundary-critical, EXEMPT/zoned scope 0건 축소). 컴팩트-SS 도 연도·`T`·offset 부재로 `KST_TS_RE`(RFC 3339 full-zoned) 구조적 non-match 유지 → §결정 2 zoned 의무 EXEMPT 무저촉 · `check_kst_timestamp.py` 무편집. §결정 3 contract field layer 불변·§결정 6 forward-only·§결정 7 consumer tz override 불가 무변경. direction = strengthen(mirror-accuracy, SSOT 를 따르는 사실 반영이지 display scope 축소 아님), sunset_justification N/A(ADR-058 §결정 5 강화 방향 면제).
 
 ### 결정 3 — contract field layer 불변 invariant (0건 변경)
 
