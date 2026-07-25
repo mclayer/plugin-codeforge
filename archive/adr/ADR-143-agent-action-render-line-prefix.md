@@ -137,8 +137,10 @@ amendment_log:
       sub-item 이 struck 되나 이는 "초 표기" require 로의 SUBSTITUTE(정밀도 상향)이지 permission
       expansion 아님 — forbid-scope 축소 0(오히려 "산술 증분(+N) 표시 금지" forbid 를 ADD).
       §결정 3 앵커 재사용은 reversal 아닌 floor 강화(verbatim + un-fakeable). ADR-058 §결정 5 는
-      WEAKENING/forbid-scope 축소에만 justification 의무 — 본 amendment 비해당. (ADR-058 §결정 8
-      direction 모호 flag 선제 해소 — struck forbid sub-item 의 strengthen rationale 명기.)
+      WEAKENING/forbid-scope 축소에만 justification 의무 — 본 amendment 비해당. (ADR-058 **§결정 8**
+      의 DesignReview flag 의무[missing/ambiguous sunset criteria·모달 어휘 검사]를 저작시점 선제
+      충족 — struck forbid sub-item 의 strengthen rationale 명기. safe-direction default 는 별건
+      §결정 4.)
 related_files:
   - CLAUDE.md  # 범위① Orchestrator spawn-description 규약 directive + 전-agent behavioral note (Phase 2)
   - hooks/pretooluse-agent-spawn-gate  # 범위① description-format detect 확장 (warning-tier, exit-0-always, Phase 2)
@@ -632,9 +634,10 @@ SS mandate 는 **앵커 채널이 초를 emit 함을 REQUIRE** 한다 — 앵커
   장래확장 발동조건을 충족한다 — anchor 보존(`^`/` - ` 경계) · fixed-count only(`\d{2}` 고정,
   무제한 quantifier 0) · single-level optionality(중첩 `?` 0) · bounded subject(길이 cap
   11→14 자) · superset(옛 HH:MM ⊂ 신 HH:MM:SS) · 멱등 `f(f(x))=f(x)` 보존(옛·신 stamp 양형
-  idempotency). **proof obligation (ADR-082 §결정 16)**: "ReDoS-safe" 단정은 paired proof-ref
-  없이 하지 않는다 — 근거 = §8 Test Contract 의 pathological-input wall-clock self-test(Phase 2
-  실행). write-time 무근거 안전성 단정 대신 proof 를 §8 로 pair(honest — 구조적 논거는 제시하되
-  실증은 Phase 2).
+  idempotency). **구조적 proof 완결 (paired proof-ref 불요)**: `\d{2}:\d{2}(:\d{2})?` 는
+  anchored · fixed-count `\d{2}`(무제한 quantifier 0) · single-level optionality(중첩 `?` 0) ·
+  bounded subject 로 catastrophic backtracking 이 **수학적으로 불가** — 구조적 논거 자체가 완전한
+  ReDoS-safety proof(ADR-082 §결정 16 = paired proof-ref **또는** honest-ceiling, 여기선 구조적
+  proof 로 충족). 별도 timing self-test 불요 — §8.6 bounded-regex-N/A 가 §8 anchor.
 - **§결정 8 persist-guard 무저촉**: 초는 persist 경로를 추가하지 않는다(ephemeral zero-persist
   정체성 유지). `check_kst_timestamp.py` 무편집(AC-12) — 컴팩트-SS 구조적 non-match.
