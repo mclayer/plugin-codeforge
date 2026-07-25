@@ -15,6 +15,7 @@ worktree 에 아직 착지하지 않았다. INV-8b orchestration(capture_blob→
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,14 @@ import pytest
 import append_dev_process_event as ade
 import dev_process_blob_store as bs
 import query_dev_process_event as q
+
+# CFP-2817: KPI 집계기 (AC-2 판정식 — 무변경 소비 접점)
+try:
+    import aggregate_dev_process_event as agg
+except Exception:  # pragma: no cover
+    agg = None
+
+_AGG_REQUIRED = pytest.mark.skipif(agg is None, reason="aggregate_dev_process_event 미착지")
 
 
 def _read_rows(ledger: Path):
@@ -165,6 +174,43 @@ _EMIT_REQUIRED = pytest.mark.skipif(
 _SECRET = "api_key = AKIAIOSFODNN7EXAMPLE and /home/mccho/.ssh/id_rsa"
 
 
+# ── CFP-2817 D1: derive_seq (production role:dev 착지 전 예상 RED) ──
+def _derive_seq():
+    """emit_dev_process_event.derive_seq 반환 or 명확한 RED (hollow-green 차단)."""
+    assert emitmod is not None, "emit_dev_process_event 미착지 — derive_seq 검증 불가"
+    fn = getattr(emitmod, "derive_seq", None)
+    assert fn is not None, (
+        "emit_dev_process_event.derive_seq 미구현 — CFP-2817 D1 착지 전 예상 RED (구현 후 GREEN)"
+    )
+    return fn
+
+
+# ── AC-2 판정식용 synthetic index row 조립 (격리 aggregate 로직 검증 — 완료 증거 아님, AC-10 무손상) ──
+_ALL_ROW_KEYS_DEFAULTS = dict(
+    schema_version="dev-process-event-v1", consumer_scope="wrapper",
+    defect_id=None, fix_id=None, blob_ref=None,
+    redaction_applied=False, redaction_count=0, redaction_rules_fired=[],
+    defect_family=None, defect_type=None, time_to_detection=None, detecting_lane=None,
+)
+
+
+def _mk_line(event_type, emit_source, ts, story="CFP-2817", lane="구현", eid=None):
+    """격리 검증용 synthetic JSONL row — aggregate 판정식(AC-2) 로직 lock 전용.
+
+    ★ 실 완료-증거 원장이 아니라 in-memory line (AC-10 synthetic-emit 금지와 disjoint —
+    이건 aggregate 계산 검증이지 완료 판정 증거가 아님)."""
+    eid = eid or "%s|%s|%s|%s" % (event_type, emit_source, ts, lane)
+    row = dict(_ALL_ROW_KEYS_DEFAULTS)
+    row.update(event_id=eid, event_type=event_type, emit_source=emit_source,
+               timestamp_utc=ts, story_key=story, lane_label=lane)
+    return json.dumps(row, ensure_ascii=False)
+
+
+def _cycletime_of(lines):
+    res = q.query_lines(lines)
+    return agg.aggregate_rows(res["rows"], res["stats"])["cycletime"]
+
+
 def _boom(*_a, **_k):
     raise OSError("append failure injected")
 
@@ -235,3 +281,340 @@ class TestEmitLayerOrchestration:
             "CFP-2687", "구현", content=None, consumer_scope="wrapper",
             ledger_path=str(tmp_path / "l.jsonl"), blob_root=str(tmp_path / "s"))
         assert out is None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-6 — 6-point → lane_transition 매핑 회귀 (CLI 배선 end-to-end)
+#   CLI 가 --transition-kind → derive_seq 파생 → seq 각인 → 6 상이 event_id.
+# ══════════════════════════════════════════════════════════════════════════════
+@_EMIT_REQUIRED
+class TestSixPointMappingRegression:
+    def test_six_point_via_cli_yields_distinct_event_ids(self, tmp_path):
+        """AC-6: 6-point 각 시점 CLI emit → 6 상이 event_id, 6행 전부 생존(dedup 삼킴 0).
+
+        read-time transition-kind 판별은 요구하지 않음(§2.2 coarse) — 행 존재·상이 id 만 관측."""
+        ledger = tmp_path / "dev-process-event.jsonl"
+        specs = [
+            ("enter", []), ("pass", []),
+            ("fix-detected", ["--fix-iter", "1"]), ("cause", ["--fix-iter", "1"]),
+            ("re-enter", ["--fix-iter", "1"]), ("complete", []),
+        ]
+        for tok, extra in specs:
+            rc = emitmod.main(
+                ["lane-transition", "--story-key", "CFP-2817", "--lane-label", "구현",
+                 "--transition-kind", tok, "--consumer-scope", "wrapper",
+                 "--ledger-path", str(ledger)] + extra)
+            assert rc == 0, "CLI lane-transition(%s) exit %r != 0 (record-only 위반)" % (tok, rc)
+        rows = q.query(ledger_path=str(ledger), story_key="CFP-2817",
+                       lane_label="구현", event_type="lane_transition")
+        eids = [r["event_id"] for r in rows]
+        assert len(rows) == 6, "6-point lane_transition 행 %d != 6 (dedup 소실 or emit 실패)" % len(rows)
+        assert len(set(eids)) == 6, "6-point 이 상이 event_id 를 못 냄: %s" % eids
+        assert all(r["emit_source"] == "agent" for r in rows), "6-point 행 emit_source != agent"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-4 §8.2-D — 재진입 dedup discriminating (생존 / collapse / 멱등)
+# ══════════════════════════════════════════════════════════════════════════════
+@_EMIT_REQUIRED
+class TestReentryDedupDiscriminating:
+    _KW = dict(content=None, consumer_scope="wrapper")
+
+    def _emit(self, ledger, store, seq):
+        return emitmod.emit_lane_transition(
+            "CFP-2817", "구현", ledger_path=str(ledger), blob_root=str(store), seq=seq, **self._KW)
+
+    def test_distinct_reentry_both_survive(self, tmp_path):
+        """생존(INV-2 소실0): state-derived seq(enter vs re-enter) → 2행 생존."""
+        d = _derive_seq()
+        ledger, store = tmp_path / "l.jsonl", tmp_path / "s"
+        self._emit(ledger, store, d("enter", fix_iter=None, reset_generation=0, ordinal=0))
+        self._emit(ledger, store, d("re-enter", fix_iter=1, reset_generation=0, ordinal=0))
+        rows = q.query(ledger_path=str(ledger), story_key="CFP-2817",
+                       lane_label="구현", event_type="lane_transition")
+        assert len(rows) == 2, "재진입 별개전이 생존 실패 %d != 2 (AC-4 소실)" % len(rows)
+
+    def test_undifferentiated_seq_collapse_NEGATIVE_CONTROL(self, tmp_path):
+        """collapse(hollow-green 차단): seq 미분화(둘 다 '') → 동일 event_id → read-time dedup 1행.
+
+        이 붕괴가 실재함을 못박아 위 '생존' 이 discriminating(seq 규율에 민감)함을 in-suite 증명."""
+        ledger, store = tmp_path / "l.jsonl", tmp_path / "s"
+        self._emit(ledger, store, "")
+        self._emit(ledger, store, "")
+        rows = q.query(ledger_path=str(ledger), story_key="CFP-2817",
+                       lane_label="구현", event_type="lane_transition")
+        assert len(rows) == 1, "seq 미분화인데 dedup collapse 안 됨 %d != 1 (충돌 전제 무효)" % len(rows)
+
+    def test_idempotent_retry_collapses(self, tmp_path):
+        """멱등대조(INV-1): 동일 논리전이 재시도(동일 derive_seq) → 동일 event_id → 1행."""
+        d = _derive_seq()
+        ledger, store = tmp_path / "l.jsonl", tmp_path / "s"
+        for _ in range(2):
+            self._emit(ledger, store, d("re-enter", fix_iter=1, reset_generation=0, ordinal=0))
+        rows = q.query(ledger_path=str(ledger), story_key="CFP-2817",
+                       lane_label="구현", event_type="lane_transition")
+        assert len(rows) == 1, "동일 논리전이 재시도 collapse 안 됨 %d != 1 (멱등 붕괴)" % len(rows)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-2 §8.2-A1 — 완료판정식 (interval_count>=1, status/measured_at 금지)
+#   ★ synthetic line = aggregate 계산 로직 lock 전용, 완료 증거 아님(AC-10 무손상).
+# ══════════════════════════════════════════════════════════════════════════════
+@_AGG_REQUIRED
+class TestAc2NonVacuousVerdict:
+    def test_hook_only_ledger_vacuous_status_but_zero_interval(self):
+        """★핵심: hook-only 원장 → status='measured'·measured_at non-null (VACUOUS) 이나
+        interval_count==0·by_group=={} → 완료판정에 status/measured_at 사용 금지 근거."""
+        lines = [
+            _mk_line("tool_call", "hook", "2026-07-24T10:00:00.000Z"),
+            _mk_line("prompt_input", "hook", "2026-07-24T10:00:01.000Z"),
+            _mk_line("diff", "hook", "2026-07-24T10:00:02.000Z"),
+        ]
+        snap = _cycletime_of(lines)
+        assert snap["status"] == "measured", "hook 행 존재인데 status != measured (판정 전제 무효)"
+        assert snap["measured_at"] is not None, "hook 행 존재인데 measured_at None (판정 전제 무효)"
+        assert snap["overall"]["interval_count"] == 0, "hook-only 인데 interval_count != 0 (오염)"
+        assert snap["overall"]["by_group"] == {}, "hook-only 인데 by_group != {}"
+
+    def test_agent_lane_transition_moves_interval_and_closes(self):
+        """AC-2 PASS 방향: agent lane_transition≥1 → interval_count≥1; verdict anchor → closed≥1."""
+        lines = [
+            _mk_line("tool_call", "hook", "2026-07-24T10:00:00.000Z"),        # noise
+            _mk_line("lane_transition", "agent", "2026-07-24T10:00:01.000Z", lane="구현"),
+            _mk_line("verdict", "agent", "2026-07-24T10:00:05.000Z", lane="구현"),
+        ]
+        snap = _cycletime_of(lines)
+        assert snap["overall"]["interval_count"] >= 1, "agent lane_transition 인데 interval_count 0"
+        assert snap["overall"]["closed_interval_count"] >= 1, \
+            "verdict anchor 있는데 closed_interval_count 0 (§8.2-A1 강화)"
+        assert snap["overall"]["by_group"] != {}, "interval 있는데 by_group == {}"
+
+    def test_hook_noise_does_not_contaminate_interval_count(self):
+        """'hook 행이 있어도 interval_count 오염 0' — Port-A hook 타입(tool_call/prompt_input/diff)
+        추가는 interval_count 불변. interval_count = emit_source=agent lane_transition 파생
+        (Port-A hook 어댑터는 lane_transition 어휘 미발화 → hook lane_transition 행 0 by-construction)."""
+        agent_only = [
+            _mk_line("lane_transition", "agent", "2026-07-24T10:00:01.000Z", lane="구현"),
+            _mk_line("lane_transition", "agent", "2026-07-24T10:00:02.000Z", lane="구현-리뷰"),
+        ]
+        with_noise = agent_only + [
+            _mk_line("tool_call", "hook", "2026-07-24T10:00:03.000Z"),
+            _mk_line("prompt_input", "hook", "2026-07-24T10:00:04.000Z"),
+            _mk_line("diff", "hook", "2026-07-24T10:00:05.000Z"),
+        ]
+        ic_clean = _cycletime_of(agent_only)["overall"]["interval_count"]
+        ic_noisy = _cycletime_of(with_noise)["overall"]["interval_count"]
+        assert ic_clean == ic_noisy == 2, "hook noise 오염: clean=%r noisy=%r" % (ic_clean, ic_noisy)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-12 — defect_finding 배선-존재 게이트 (격리 ledger, spy + negative-control)
+#   dispatch = D6-a emit CLI main() 서브커맨드 (dev-pl-2817 확정). raw --seq 미노출.
+# ══════════════════════════════════════════════════════════════════════════════
+def _defect_argv(ledger):
+    # review-verdict-v4-shaped test-double (실결점 아님 — 배선 존재만 증명). defect_type = closed vocab(OBJ-1).
+    return [
+        "defect-finding", "--story-key", "CFP-2817", "--lane-label", "구현-리뷰",
+        "--transition-kind", "fix-detected", "--fix-iter", "1",
+        "--defect-family", "design-boundary", "--defect-type", "boundary-completeness",
+        "--detecting-lane", "구현-리뷰", "--consumer-scope", "wrapper",
+        "--ledger-path", str(ledger),
+    ]
+
+
+def _lane_argv(ledger):
+    return [
+        "lane-transition", "--story-key", "CFP-2817", "--lane-label", "구현",
+        "--transition-kind", "enter", "--consumer-scope", "wrapper",
+        "--ledger-path", str(ledger),
+    ]
+
+
+@_EMIT_REQUIRED
+class TestAc12DefectFindingWiring:
+    def test_defect_finding_command_lands_agent_row(self, tmp_path):
+        """defect-finding 서브커맨드 → 격리 ledger 에 emit_source=agent ∧ defect_finding 행 1개.
+
+        distinct-marker: exit-code 단독 아님 — ledger 행(emit_source=agent) 병행 assert
+        (REC-2: emit() 경유 = emit_source=agent 고정, append_event 직접 우회면 이 신호 불성립)."""
+        ledger = tmp_path / "dev-process-event.jsonl"
+        rc = emitmod.main(_defect_argv(ledger))
+        assert rc == 0, "emit CLI defect-finding exit %r != 0 (record-only 위반)" % rc
+        rows = q.query(ledger_path=str(ledger), event_type="defect_finding")
+        assert len(rows) == 1, "defect_finding 행 %d != 1 (배선 부재)" % len(rows)
+        assert rows[0]["emit_source"] == "agent", "defect_finding 이 agent writer 로 안 감 (REC-2 우회)"
+        assert rows[0]["defect_family"] == "design-boundary", "defect_family 전파 실패"
+
+    def test_defect_dispatch_calls_emit_defect_finding_SPY(self, tmp_path, monkeypatch):
+        """positive: defect-finding 커맨드 → _dispatch_emit 이 emit_defect_finding 실호출(spy)."""
+        calls = []
+        real = emitmod.emit_defect_finding
+
+        def _spy(*a, **k):
+            calls.append((a, k))
+            return real(*a, **k)
+
+        monkeypatch.setattr(emitmod, "emit_defect_finding", _spy)
+        emitmod.main(_defect_argv(tmp_path / "l.jsonl"))
+        assert len(calls) == 1, "defect-finding 커맨드인데 emit_defect_finding 미호출 (배선 부재=AC-12 방지대상)"
+
+    def test_lane_command_does_NOT_call_defect_NEGATIVE_CONTROL(self, tmp_path, monkeypatch):
+        """negative-control(hollow-green 차단): lane-transition 커맨드 → emit_defect_finding 미호출.
+
+        clean 세션(결점 미발생)에서 defect dispatch 이 오발화하지 않음을 못박아
+        '2/3 배선으로 AC 통과' 오탐(정확히 AC-12 방지대상)을 차단."""
+        calls = []
+        monkeypatch.setattr(emitmod, "emit_defect_finding", lambda *a, **k: calls.append(1))
+        ledger = tmp_path / "l.jsonl"
+        emitmod.main(_lane_argv(ledger))
+        assert calls == [], "lane-transition 인데 emit_defect_finding 발화 (defect dispatch 오발화)"
+        assert q.query(ledger_path=str(ledger), event_type="defect_finding") == [], \
+            "lane-transition 인데 defect_finding 행 생성"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-13 — emit 경로 시각 소스 단일화 (CLI --timestamp 부재, primitive UTC 만)
+# ══════════════════════════════════════════════════════════════════════════════
+_TS_MS_UTC_Z = __import__("re").compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
+
+
+@_EMIT_REQUIRED
+class TestAc13TimeSourceWiring:
+    def test_cli_rejects_timestamp_flag(self, tmp_path):
+        """AC-13: CLI 에 --timestamp 부재 — caller 시각 계산·주입 경로 0 (unrecognized → SystemExit)."""
+        with pytest.raises(SystemExit):
+            emitmod.main(["lane-transition", "--story-key", "CFP-2817", "--lane-label", "구현",
+                          "--transition-kind", "enter",
+                          "--timestamp", "2020-01-01T00:00:00.000Z",
+                          "--ledger-path", str(tmp_path / "l.jsonl")])
+
+    def test_emitted_timestamp_is_primitive_utc_z(self, tmp_path):
+        """저장 timestamp = primitive 내부 UTC Z(ms) — caller 주입 아님(§2.6 축5 기봉인)."""
+        ledger = tmp_path / "l.jsonl"
+        emitmod.main(["lane-transition", "--story-key", "CFP-2817", "--lane-label", "구현",
+                      "--transition-kind", "enter", "--consumer-scope", "wrapper",
+                      "--ledger-path", str(ledger)])
+        rows = q.query(ledger_path=str(ledger))
+        assert len(rows) == 1
+        assert _TS_MS_UTC_Z.match(rows[0]["timestamp_utc"]), \
+            "timestamp_utc ms-precision UTC Z 아님: %r" % rows[0]["timestamp_utc"]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 AC-8/AC-7/AC-11 — Port-A 무회귀 + emit_source 무결성 + story_key 오귀속 0
+# ══════════════════════════════════════════════════════════════════════════════
+@_EMIT_REQUIRED
+class TestPortARegressionAndIsolation:
+    def test_emit_rejects_all_port_a_types(self, tmp_path):
+        """AC-8/INV-7: Port-A 3종(prompt_input/tool_call/diff)은 agent writer(emit)로 기록 0."""
+        ledger = tmp_path / "l.jsonl"
+        for t in ("prompt_input", "tool_call", "diff"):
+            assert emitmod.emit(t, content="x", consumer_scope="wrapper",
+                                ledger_path=str(ledger), blob_root=str(tmp_path / "s"),
+                                story_key="CFP-2817", lane_label="구현") is None, \
+                "Port-A %s 이 agent writer 로 기록됨(침범)" % t
+        assert q.query(ledger_path=str(ledger)) == []
+
+    def test_hook_and_agent_streams_coexist(self, tmp_path):
+        """AC-8: 배선 후 hook Port-A stream 지속 + agent Port-B 공존(무회귀), 침범 0."""
+        ledger = tmp_path / "l.jsonl"
+        ade.append_event(ledger_path=str(ledger), event_type="tool_call", emit_source="hook",
+                         story_key="CFP-2817", lane_label="구현", consumer_scope="wrapper", seq="h1")
+        emitmod.emit_lane_transition("CFP-2817", "구현", content=None, consumer_scope="wrapper",
+                                     ledger_path=str(ledger), blob_root=str(tmp_path / "s"), seq="a1")
+        rows = q.query(ledger_path=str(ledger))
+        assert {r["emit_source"] for r in rows} == {"hook", "agent"}, "hook/agent 공존 실패"
+        for r in rows:
+            if r["event_type"] in ("prompt_input", "tool_call", "diff"):
+                assert r["emit_source"] == "hook", "Port-A 타입이 agent 로 기록(침범)"
+            if r["event_type"] in ("lane_transition", "verdict", "defect_finding",
+                                   "fix_transition", "final_artifact"):
+                assert r["emit_source"] == "agent", "Port-B 타입이 hook 으로 기록"
+
+    def test_emit_stamps_agent_source(self, tmp_path):
+        """AC-7/INV-7: emit() 는 emit_source 를 agent 로 고정(writer monopoly)."""
+        ledger = tmp_path / "l.jsonl"
+        emitmod.emit_lane_transition("CFP-2817", "구현", content=None, consumer_scope="wrapper",
+                                     ledger_path=str(ledger), blob_root=str(tmp_path / "s"), seq="x")
+        assert q.query(ledger_path=str(ledger))[0]["emit_source"] == "agent"
+
+    def test_parallel_story_keys_no_misattribution(self, tmp_path):
+        """AC-11/INV-10: 병렬 Story 동일 ledger — story_key 명시주입 → 오귀속 0, cross-story 충돌 0."""
+        ledger, store = tmp_path / "l.jsonl", tmp_path / "s"
+        emitmod.emit_lane_transition("CFP-2817", "구현", content=None, consumer_scope="wrapper",
+                                     ledger_path=str(ledger), blob_root=str(store), seq="x")
+        emitmod.emit_lane_transition("CFP-2999", "구현", content=None, consumer_scope="wrapper",
+                                     ledger_path=str(ledger), blob_root=str(store), seq="x")
+        r17 = q.query(ledger_path=str(ledger), story_key="CFP-2817")
+        r99 = q.query(ledger_path=str(ledger), story_key="CFP-2999")
+        assert len(r17) == 1 and r17[0]["story_key"] == "CFP-2817", "CFP-2817 오귀속"
+        assert len(r99) == 1 and r99[0]["story_key"] == "CFP-2999", "CFP-2999 오귀속"
+        assert r17[0]["event_id"] != r99[0]["event_id"], "cross-story event_id 충돌(story_key 미산입)"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 §8.8 concurrency — Port-A hook ∥ Port-B agent 2-writer O_APPEND (§6.3 edge#7 / R5)
+#   oracle: 성공 append event_id 전량 read-back 생존(선행 완료행 clobber 0) ∧ torn 개별 skippable.
+#   정직 천장: small-row bounded·platform-observational(Windows dev-host)·primitive 무변경.
+# ══════════════════════════════════════════════════════════════════════════════
+class TestConcurrentTwoWriterAppend:
+    @staticmethod
+    def _w_hook(ledger, n, out):
+        for i in range(n):
+            eid = ade.append_event(ledger_path=str(ledger), event_type="tool_call",
+                                   emit_source="hook", story_key="CFP-2817", lane_label="구현",
+                                   consumer_scope="wrapper", seq="hook-%d" % i)
+            if eid:
+                out.append(eid)
+
+    @staticmethod
+    def _w_agent(ledger, n, out):
+        for i in range(n):
+            eid = ade.append_event(ledger_path=str(ledger), event_type="lane_transition",
+                                   emit_source="agent", story_key="CFP-2817", lane_label="구현",
+                                   consumer_scope="wrapper", seq="agent-%d" % i)
+            if eid:
+                out.append(eid)
+
+    def _run(self, ledger, n=500):
+        rh, ra = [], []
+        th = threading.Thread(target=self._w_hook, args=(ledger, n, rh))
+        ta = threading.Thread(target=self._w_agent, args=(ledger, n, ra))
+        th.start(); ta.start(); th.join(); ta.join()
+        text = ledger.read_text(encoding="utf-8")
+        nonblank = [ln for ln in text.splitlines() if ln.strip()]
+        res = q.query_lines(text.splitlines())
+        return set(rh) | set(ra), res, len(nonblank)
+
+    def test_two_writer_reader_skip_tolerant_and_survivors_valid(self, tmp_path):
+        """§8.8 honest 불변식(satisfiable): 2-writer 후에도 reader(query_lines) 무크래시 ∧
+        생존행 전부 well-formed(손상 survivor 0) ∧ 물리 nonblank == valid + malformed
+        (torn/merged 행이 개별 skippable — 전체 원장 손상 아님, malformed 로 격리)."""
+        exp, res, nonblank = self._run(tmp_path / "dev-process-event.jsonl")
+        # reader 는 mangled ledger 에도 crash 없이 raw rows 반환
+        for r in res["rows"]:
+            assert isinstance(r, dict) and len(r.get("event_id", "")) == 64, "손상 survivor row"
+            assert r["emit_source"] in ("hook", "agent"), "survivor emit_source 손상"
+            assert r["event_type"] in ("tool_call", "lane_transition"), "survivor event_type 손상"
+        # 물리 nonblank 라인 = valid(rows_total) + malformed_skipped (phantom/은폐 라인 0 = skip-tolerant)
+        assert nonblank == res["stats"]["rows_total"] + res["stats"]["malformed_skipped"], \
+            "nonblank(%d) != valid(%d)+malformed(%d) — reader 회계 불일치" % (
+                nonblank, res["stats"]["rows_total"], res["stats"]["malformed_skipped"])
+
+    @pytest.mark.xfail(
+        strict=False,
+        reason="§6.1 R5: Windows MS-CRT O_APPEND(lseek-then-write) 비원자 — 2-writer 경합 시 "
+               "완료행 clobber 실측(실행마다 ~3-14% 유실). §8.8 oracle 'clobber 0' vs append primitive "
+               "'무보장 천장'(무변경) 내부 충돌 → §8.8 '무보장 천장 승계' 절에 따라 xfail 로 문서화. "
+               "일부 유실은 malformed_skipped 로 관측(D2)되나 일부는 물리 overwrite 로 SILENT — "
+               "AC-3 fail-VISIBLE / AC-9 실패방향(visible≫silent) 갭. ArchitectPL 회부(발견 사항).",
+)
+    def test_two_writer_completed_row_clobber_zero_HONEST_CEILING(self, tmp_path):
+        """§8.8 oracle aspirational: 선행 완료행 바이트 clobber 0 (성공 append event_id 전량 생존).
+
+        primitive(무변경)가 Windows 에서 이를 보장 못 함 → xfail(strict=False, R5). fix(lock/atomic
+        append = 계획 §5 append 무변경 amendment) 후 XPASS 로 flip 시 알림."""
+        exp, res, _ = self._run(tmp_path / "dev-process-event.jsonl")
+        got = {r["event_id"] for r in res["rows"]}
+        missing = exp - got
+        assert not missing, "완료행 clobber %d건 (§6.1 R5 Windows O_APPEND 비원자 — 실측 유실)" % len(missing)

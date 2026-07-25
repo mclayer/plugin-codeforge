@@ -44,11 +44,28 @@ if hasattr(sys.stderr, "reconfigure"):
 
 _CONTRACT_REL = os.path.join("docs", "inter-plugin-contracts", "dev-process-event-v1.md")
 _HOOKS_JSON_REL = os.path.join("hooks", "hooks.json")
+_PLAYBOOK_REL = os.path.join("docs", "orchestrator-playbook.md")
 _APPEND_MODULE = "append_dev_process_event"
+_EMIT_MODULE = "emit_dev_process_event"
 
 # activation hook anchor — PostToolUse hook command 이 이 substring 을 포함해야 함 (HookDev
 # 배선 = `posttooluse-dev-process-capture`, hyphen). underscore 변형도 관용 매칭.
 _HOOK_ANCHOR_RE = re.compile(r"dev[-_]process", re.IGNORECASE)
+
+# ─── ACT-3 (Port-B agent-emit 배선 — CFP-2817 additive) ──────────────────────────
+# ACT-3a: playbook §14.7 render flow 에 dev-process Port-B emit step present anchor.
+_PORTB_ANCHOR_RE = re.compile(
+    r"emit_dev_process_event|dev-process(?:-event)?\s+(?:agent-)?emit", re.IGNORECASE)
+# ACT-3b: lane plugin agent surface(plugins/*/agents/**) 에서 emit invocation/import/direct-call 금지
+#   (Orchestrator-owned 표면 독점 — ADR-039 §결정3 / REC-1). doc file-listing(.py 뒤 주석) FP 회피 위해
+#   CLI 는 subcommand/flag 동반만 매칭. helper 직접 call 5종도 deny(lane 이 emit() 우회 = policy_violation).
+_EMIT_INVOCATION_RE = re.compile(
+    r"emit_dev_process_event\.py\s+(?:lane-transition|verdict|defect-finding|--)"
+    r"|(?:^|[^\w.])import\s+emit_dev_process_event\b"
+    r"|from\s+emit_dev_process_event\s+import"
+    r"|emit_(?:lane_transition|verdict|defect_finding|fix_transition|final_artifact)\s*\(",
+    re.MULTILINE,
+)
 
 
 # ─────────────────────── code-anchor importability (born-drift seal) ──────────
@@ -117,15 +134,94 @@ def parse_always_on_declared(contract_body):
     return has_always_on and has_wrapper
 
 
+# ─────────────────────── ACT-3: Port-B (agent-emit) 배선 판정 (CFP-2817 additive) ─────────
+
+def import_emit_surface(repo_root, import_fn=None):
+    """emit_dev_process_event import → (has_derive_seq_bool, importable_bool).
+
+    Port-B 호출 표면(D6-a CLI + `derive_seq` seq 채번 SSOT) present 정적 확인. import 실패 → (False, False).
+    honesty ceiling: import 가능 + derive_seq present = '호출 표면 배선 present'이지 runtime emit 무결 아님.
+    """
+    if import_fn is not None:
+        return import_fn(repo_root)
+    lib_dir = os.path.join(repo_root, "scripts", "lib")
+    if not os.path.isdir(lib_dir):
+        lib_dir = os.path.dirname(os.path.abspath(__file__))
+    inserted = False
+    if lib_dir not in sys.path:
+        sys.path.insert(0, lib_dir)
+        inserted = True
+    try:
+        import importlib
+        mod = importlib.import_module(_EMIT_MODULE)
+        return callable(getattr(mod, "derive_seq", None)), True
+    except Exception:
+        return False, False
+    finally:
+        if inserted and lib_dir in sys.path:
+            try:
+                sys.path.remove(lib_dir)
+            except ValueError:
+                pass
+
+
+def parse_portb_wiring(playbook_body):
+    """playbook §14.7 render flow 에 dev-process Port-B emit step present bool (ACT-3a).
+
+    §14.7 region(### 14.7 ~ 다음 ### 14.8) 안에 emit_dev_process_event 호출 anchor 존재 확인.
+    Orchestrator 가 6-point 전이 시점에 실제로 emit 을 호출하도록 배선됐는가의 정적 증거
+    (hook Port-A 의 ACT-1[hooks.json 등록]에 대응하는 Port-B 대칭). honesty ceiling: '배선 present'.
+    """
+    if not playbook_body:
+        return False
+    m = re.search(r"(?ms)^###\s*14\.7\b.*?(?=^###\s*14\.8\b|\Z)", playbook_body)
+    region = m.group(0) if m else playbook_body
+    return bool(_PORTB_ANCHOR_RE.search(region))
+
+
+def scan_portb_containment(repo_root):
+    """lane plugin agent surface(plugins/**/agents/**) 에서 Port-B emit invocation/import 정적 scan → 위반 파일 list (ACT-3b).
+
+    emit 호출은 Orchestrator-owned 표면 독점(ADR-039 §결정3 writer monopoly / REC-1). lane plugin
+    agent prompt·subagent code 에서 emit_dev_process_event 호출/import/직접 helper call 발견 = 위반.
+    honesty ceiling: 정적 grep — 런타임 call-graph 아님(우회 표기 false-neg 잔여 인정).
+    """
+    plugins_dir = os.path.join(repo_root, "plugins")
+    if not os.path.isdir(plugins_dir):
+        return []
+    violations = []
+    for dirpath, _dirnames, filenames in os.walk(plugins_dir):
+        rel_dir = "/" + os.path.relpath(dirpath, repo_root).replace("\\", "/") + "/"
+        if "/agents/" not in rel_dir:
+            continue
+        for fn in filenames:
+            if not (fn.endswith(".md") or fn.endswith(".py")):
+                continue
+            fpath = os.path.join(dirpath, fn)
+            try:
+                with open(fpath, encoding="utf-8") as f:
+                    body = f.read()
+            except OSError:
+                continue
+            if _EMIT_INVOCATION_RE.search(body):
+                violations.append(os.path.relpath(fpath, repo_root).replace("\\", "/"))
+    return sorted(violations)
+
+
 # ─────────────────────── check 조립 (구조 입력) ──────────────────────────────
 
 def evaluate(contract_present, contract_body, row_keys, importable,
-             hook_registered, hook_matcher, always_on_declared):
+             hook_registered, hook_matcher, always_on_declared,
+             portb_wired=None, emit_has_derive_seq=None, portb_containment_violations=None):
     """활성화 manifest 판정 → (violations, state_report dict).
 
     state_report = landing/activation 정직 구분 보고용.
+    ACT-3(CFP-2817 additive): Port-B(agent-emit) 배선 present + call-site containment.
+      기존 ACT-1(hook Port-A)/ACT-2(always-on gate) 판정 로직 무손상.
     """
     violations = []
+    if portb_containment_violations is None:
+        portb_containment_violations = []
 
     # ── LAND-1: 계약 landed (파일 존재) ── (fail-closed, vacuous pass 금지)
     if not contract_present:
@@ -160,8 +256,32 @@ def evaluate(contract_present, contract_body, row_keys, importable,
             "(ACT-2) 계약 §10.2 wrapper always-on 활성 정책 선언 부재 — always-on gate anchor 없음 = RED"
         )
 
+    # ── ACT-3: Port-B (agent-emit) 배선 present + call-site containment (CFP-2817 additive) ──
+    #   honesty ceiling 계승: "배선 present"(정적) 검증이지 runtime always-on emit 무결 단정 아님
+    #   (실 emit 증명 = Phase 2 test lane + AC-1 실 세션 원장 실측, 역할 분리).
+    #   None = ACT-3 입력 미제공(legacy caller) → ACT-3 skip(기존 ACT-1/2 판정 무손상).
+    if portb_wired is not None and not portb_wired:
+        violations.append(
+            "(ACT-3a) playbook §14.7 render flow 에 dev-process Port-B emit step 미배선 — "
+            "Orchestrator 6-point 전이 시점 emit 호출 부재 = Port-B NOT activated (§8.10 landing≠activation). RED"
+        )
+    if emit_has_derive_seq is not None and not emit_has_derive_seq:
+        violations.append(
+            "(ACT-3a) %s.derive_seq (seq 채번 SSOT) 미import/부재 — Port-B 호출 표면 파손 = RED"
+            % _EMIT_MODULE
+        )
+    for vf in portb_containment_violations:
+        violations.append(
+            "(ACT-3b) Port-B emit invocation 이 lane plugin agent surface 에 유입 — %s "
+            "(call-site containment 위반: emit 호출 = Orchestrator-owned 표면 독점, ADR-039 §결정3 / REC-1). RED"
+            % vf
+        )
+
     landed = contract_present and importable and bool(row_keys)
     activated = landed and hook_registered and always_on_declared
+    # Port-B activation = 배선 present + seq SSOT present + lane-surface 누출 0 (Port-A activated 와 disjoint 축)
+    portb_activated = (bool(portb_wired) and bool(emit_has_derive_seq)
+                       and not portb_containment_violations)
     state = {
         "contract_present": contract_present,
         "impl_importable": importable,
@@ -171,6 +291,10 @@ def evaluate(contract_present, contract_body, row_keys, importable,
         "always_on_declared": always_on_declared,
         "landed": landed,
         "activated": activated,
+        "portb_wired": portb_wired,
+        "emit_has_derive_seq": emit_has_derive_seq,
+        "portb_containment_violations": list(portb_containment_violations),
+        "portb_activated": portb_activated,
     }
     return violations, state
 
@@ -182,11 +306,17 @@ def _print_state(state):
     print("  activation: hook_registered=%s (matcher=%r) / always_on_declared=%s → activated=%s"
           % (state["hook_registered"], state["hook_matcher"],
              state["always_on_declared"], state["activated"]))
+    if state.get("portb_wired") is not None or state.get("emit_has_derive_seq") is not None:
+        print("  Port-B    : playbook §14.7 emit-wired=%s / derive_seq present=%s / "
+              "lane-surface 누출=%d → portb_activated=%s (정적 배선 present, runtime 무결 아님)"
+              % (state.get("portb_wired"), state.get("emit_has_derive_seq"),
+                 len(state.get("portb_containment_violations") or ()), state.get("portb_activated")))
 
 
 # ─────────────────────── check 진입 ──────────────────────────────────────────
 
-def _load_inputs(repo_root, hooks_json_override=None, import_fn=None):
+def _load_inputs(repo_root, hooks_json_override=None, import_fn=None,
+                 playbook_override=None, emit_surface_fn=None, containment_override=None):
     """실 파일에서 manifest 입력 수집 (selftest 는 override 주입)."""
     contract_path = os.path.join(repo_root, _CONTRACT_REL)
     contract_present = os.path.isfile(contract_path)
@@ -215,8 +345,29 @@ def _load_inputs(repo_root, hooks_json_override=None, import_fn=None):
                 hooks_obj = None
     hook_registered, hook_matcher = find_dev_process_posttool_hook(hooks_obj)
     always_on = parse_always_on_declared(contract_body)
+
+    # ── ACT-3 inputs (CFP-2817 additive) ──
+    if playbook_override is not None:
+        playbook_body = playbook_override
+    else:
+        playbook_path = os.path.join(repo_root, _PLAYBOOK_REL)
+        playbook_body = ""
+        if os.path.isfile(playbook_path):
+            try:
+                with open(playbook_path, encoding="utf-8") as f:
+                    playbook_body = f.read()
+            except OSError:
+                playbook_body = ""
+    portb_wired = parse_portb_wiring(playbook_body)
+    emit_has_derive_seq, _emit_importable = import_emit_surface(repo_root, import_fn=emit_surface_fn)
+    if containment_override is not None:
+        containment = list(containment_override)
+    else:
+        containment = scan_portb_containment(repo_root)
+
     return (contract_present, contract_body, row_keys, importable,
-            hook_registered, hook_matcher, always_on)
+            hook_registered, hook_matcher, always_on,
+            portb_wired, emit_has_derive_seq, containment)
 
 
 def cmd_check(args):
@@ -236,7 +387,8 @@ def cmd_check(args):
         sys.exit(1)
 
     print("check-dev-process-activation-manifest: PASS — landed ∧ born-drift-sealed "
-          "(landed→impl importable) ∧ activated(hook 배선 + always-on gate 선언). "
+          "(landed→impl importable) ∧ Port-A activated(hook 배선 + always-on gate 선언) "
+          "∧ Port-B activated(§14.7 emit 배선 + derive_seq SSOT + lane-surface 누출 0). "
           "★runtime always-on 동작 증명 = test lane (본 gate = 정적 배선 present 검증, over-claim 금지).")
     sys.exit(0)
 
@@ -273,6 +425,17 @@ def _selftest(args):
     nh_v, nh_state = evaluate(*nh_inputs)
     results.append(("NEG-HOOK (dev-process hook 미등록 → ACT-1 RED)", True, nh_v, nh_state))
 
+    # ── NEG-PORTB: playbook §14.7 emit 배선 부재 시뮬 → ACT-3a RED (Port-B NOT activated) ──
+    np_inputs = _load_inputs(repo_root, playbook_override="### 14.7 Render flow\n(emit step 부재)\n### 14.8 x")
+    np_v, np_state = evaluate(*np_inputs)
+    results.append(("NEG-PORTB (§14.7 emit 배선 부재 → ACT-3a RED)", True, np_v, np_state))
+
+    # ── NEG-CONTAINMENT: lane plugin agent surface 에 emit 호출 누출 시뮬 → ACT-3b RED ──
+    nc_inputs = _load_inputs(repo_root,
+                             containment_override=["plugins/codeforge-review/agents/LeakAgent.md"])
+    nc_v, nc_state = evaluate(*nc_inputs)
+    results.append(("NEG-CONTAINMENT (lane surface emit 누출 → ACT-3b RED)", True, nc_v, nc_state))
+
     all_ok = True
     print("[check-dev-process-activation-manifest --selftest] discriminating negative-control")
     print("=" * 78)
@@ -287,7 +450,8 @@ def _selftest(args):
     print("=" * 78)
     if all_ok:
         print("[check-dev-process-activation-manifest --selftest] PASS — "
-              "positive GREEN + NEG-DRIFT/NEG-HOOK RED (discriminating: born-drift seal + activation).")
+              "positive GREEN + NEG-DRIFT/NEG-HOOK/NEG-PORTB/NEG-CONTAINMENT RED "
+              "(discriminating: born-drift seal + Port-A activation + Port-B 배선/containment).")
         return 0
     print("[check-dev-process-activation-manifest --selftest] FAIL — 판별성 위반.")
     return 1
