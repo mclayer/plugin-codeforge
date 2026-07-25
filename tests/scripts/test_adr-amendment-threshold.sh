@@ -58,6 +58,24 @@ make_heading_adr() {
   } > "$dir/archive/adr/$name"
 }
 
+# n 개의 헤딩 + 지정 status 의 ADR (CFP-2840 T1-P/A 신설).
+make_status_adr() {
+  local dir="$1" name="$2" status="$3" n="$4"
+  mkdir -p "$dir/archive/adr"
+  {
+    printf -- '---\n'
+    printf 'title: fixture status ADR\n'
+    printf 'status: %s\n' "$status"
+    printf -- '---\n\n'
+    local i=1
+    while [ "$i" -le "$n" ]; do
+      printf '## Amendment %d\n' "$i"
+      i=$((i+1))
+    done
+    printf 'body text without further headings.\n'
+  } > "$dir/archive/adr/$name"
+}
+
 # heading 0 + frontmatter dual-key (amendment_log 6 + amendments 6 = 12) ADR.
 #   합산 산식이 첫-키-우선(first-key-wins) 으로 회귀하면 12 -> 6 으로 줄어 임계 검출이 누락된다.
 make_dualkey_adr() {
@@ -150,6 +168,50 @@ assert_threshold_mutant_killed() {
     PASS=$((PASS+1))
   else
     echo "FAIL: $name -- mutant SURVIVED/불일치 (base_rc=$base_rc mut_rc=$mut_rc, 기대 1/0)"
+    FAIL=$((FAIL+1))
+  fi
+}
+
+# ─── 역방향 mutation-kill (CFP-2840 T1-A 신설): 정본 GREEN(exit0), 변이본 RED(exit1) ─────
+# skip 무력화 변이본이 미판정 RED 를 유발할 때 KILLED. census 병행 assert 필수.
+assert_mutant_reveals_red() {
+  local name="$1" fixroot="$2" sed_expr="$3"
+  local mdir mutant base_out base_rc mut_out mut_rc
+  mdir="$(mktemp -d)"
+  mutant="$mdir/mutant.py"
+  cp "$SRC" "$mutant"
+  sed -i "$sed_expr" "$mutant"
+
+  # no-op guard: sed 가 실제로 소스를 바꿨는지 (symmetric trap 차단)
+  if diff -q "$SRC" "$mutant" >/dev/null 2>&1; then
+    echo "FAIL: $name -- sed mutation no-op (소스 무변경 — mutant 정의 오류)"
+    FAIL=$((FAIL+1))
+    rm -rf "$mdir"
+    return
+  fi
+
+  base_out="$(PYTHONUTF8=1 "$PYBIN" "$SRC" --mode threshold --repo-root "$fixroot" 2>&1)"
+  base_rc=$?
+  mut_out="$(PYTHONUTF8=1 "$PYBIN" "$mutant" --mode threshold --repo-root "$fixroot" 2>&1)"
+  mut_rc=$?
+  rm -rf "$mdir"
+
+  # distinct-marker: census 관측(>=1 candidate) — exit-code 우연일치·미 fork 방어
+  local base_census=0 mut_census=0
+  printf '%s\n' "$base_out" | grep -q 'census adr_candidates=[1-9]' && base_census=1
+  printf '%s\n' "$mut_out"  | grep -q 'census adr_candidates=[1-9]' && mut_census=1
+  if [ "$base_census" -ne 1 ] || [ "$mut_census" -ne 1 ]; then
+    echo "FAIL: $name -- census 미관측 (fork/scan 미실행 의심: base=$base_census mut=$mut_census)"
+    FAIL=$((FAIL+1))
+    return
+  fi
+
+  # KILLED = 정본 GREEN(exit0) AND 변이본 RED(exit1) — 역방향
+  if [ "$base_rc" -eq 0 ] && [ "$mut_rc" -eq 1 ]; then
+    echo "PASS: $name -- mutant KILLED (정본 GREEN exit0, 변이본 RED exit1)"
+    PASS=$((PASS+1))
+  else
+    echo "FAIL: $name -- mutant SURVIVED/불일치 (base_rc=$base_rc mut_rc=$mut_rc, 기대 0/1)"
     FAIL=$((FAIL+1))
   fi
 }
@@ -316,6 +378,79 @@ else
   fi
   rm -rf "$redos_root"
 fi
+
+# ── CFP-2840 T1-P/A/B/C/D: is_superseded_status predicate + Superseded-skip ────────
+echo ""
+echo "-- CFP-2840 T1-P/A/B/C/D (Superseded-skip discriminating self-test) --"
+
+# T1-P: predicate 진리 pin (3형 True / 기타 False — AC-1/INV-1)
+run_py_assert "T1-P: Superseded bare True" \
+  "m.is_superseded_status('Superseded')==True"
+run_py_assert "T1-P: Superseded by ADR-168 True" \
+  "m.is_superseded_status('Superseded by ADR-168')==True"
+run_py_assert "T1-P: Superseded-by-ADR-168 True" \
+  "m.is_superseded_status('Superseded-by-ADR-168')==True"
+run_py_assert "T1-P: superseded(casefold) True" \
+  "m.is_superseded_status('superseded')==True"
+run_py_assert "T1-P: ' Superseded '(strip) True" \
+  "m.is_superseded_status('  Superseded  ')==True"
+run_py_assert "T1-P: supersededxyz(over-breadth) False" \
+  "m.is_superseded_status('supersededxyz')==False"
+run_py_assert "T1-P: Accepted False" \
+  "m.is_superseded_status('Accepted')==False"
+run_py_assert "T1-P: Proposed False" \
+  "m.is_superseded_status('Proposed')==False"
+run_py_assert "T1-P: Sunsetted False" \
+  "m.is_superseded_status('Sunsetted')==False"
+run_py_assert "T1-P: None False" \
+  "m.is_superseded_status(None)==False"
+run_py_assert "T1-P: empty string False" \
+  "m.is_superseded_status('')==False"
+
+# T1-A: 팔A threshold-skip (Superseded ADR 은 판정 skip, 변이본은 RED) — 역방향 assert_mutant_reveals_red
+# fixture = Superseded + heading 11 + empty baseline → 정본 exit0(skip) / skip 삭제 변이본 exit1(RED)
+fr="$(mktemp -d)"; make_status_adr "$fr" "ADR-910-sup.md" "Superseded" 11
+assert_mutant_reveals_red "T1-A 팔A-skip 무력화" "$fr" \
+  's/        if is_superseded_status(s.get("status")):/        if False:/'
+rm -rf "$fr"
+
+# T1-B: 팔B write_baseline (Superseded + Accepted 혼재 → baseline 은 Accepted 만)
+# fixture = Superseded ADR(eff 11) + Accepted ADR(eff 12) + clean ADR(eff 0)
+fr="$(mktemp -d)"
+make_status_adr "$fr" "ADR-911-sup.md" "Superseded" 11
+make_status_adr "$fr" "ADR-912-acc.md" "Accepted" 12
+make_heading_adr "$fr" "ADR-913-clean.md" 0
+PYTHONUTF8=1 "$PYBIN" "$SRC" --mode threshold --write-baseline --repo-root "$fr" >/dev/null 2>&1
+wb_rc=$?
+if [ "$wb_rc" -eq 0 ] && [ -f "$fr/docs/adr-amendment-threshold-baseline.yaml" ]; then
+  # baseline 에 ADR-912 Accepted 존재 확인 + ADR-911 Superseded 제외 확인
+  if grep -q '^- adr: ADR-912$' "$fr/docs/adr-amendment-threshold-baseline.yaml" && \
+     ! grep -q '^- adr: ADR-911$' "$fr/docs/adr-amendment-threshold-baseline.yaml"; then
+    echo "PASS: T1-B 팔B baseline write (Accepted 포함, Superseded 제외)"
+    PASS=$((PASS+1))
+  else
+    echo "FAIL: T1-B 팔B baseline write — Accepted 미포함 또는 Superseded 재포함"
+    FAIL=$((FAIL+1))
+  fi
+else
+  echo "FAIL: T1-B 팔B baseline write 실패 (rc=$wb_rc)"
+  FAIL=$((FAIL+1))
+fi
+rm -rf "$fr"
+
+# T1-C: predicate mutation (over-breadth) — Superseded 판정 무력화 (re.match → startswith over-breadth)
+# fixture = supersededxyz (eff 10, 미등재) → 정본 is_superseded FALSE(미skip) → RED / startswith 변이본 TRUE(오skip) → GREEN
+fr="$(mktemp -d)"; make_status_adr "$fr" "ADR-914-over.md" "supersededxyz" 10
+assert_threshold_mutant_killed "T1-C predicate-over-breadth" "$fr" \
+  "s/return bool(re.match(/return bool(str(status).startswith(\"superseded\") or re.match(/"
+rm -rf "$fr"
+
+# T1-D: false-skip(INV-4) — Accepted 는 절대 skip 되면 안 됨 (Accepted 는 미등재 임계 초과 RED)
+# fixture = Accepted ADR(eff 10, threshold N=10 경계) → 정본 RED / always-True 변이본 GREEN
+fr="$(mktemp -d)"; make_status_adr "$fr" "ADR-915-acc.md" "Accepted" 10
+assert_threshold_mutant_killed "T1-D false-skip(INV-4)" "$fr" \
+  "s/^    return bool(re.match(.*)/    return True/"
+rm -rf "$fr"
 
 echo ""
 echo "==============================================================================="
