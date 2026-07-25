@@ -51,7 +51,7 @@ mechanical_enforcement_actions:  # 재제정 re-home(§5.5(c)) — action 명(st
     status: deferred-followup
     target_section: §결정 2(d)
   - action: amendment-number-frontmatter-verify
-    status: warning-tier wired  # 양방향(forward+backward) staleness lint 배선 완료
+    status: deferred-followup  # 현행 미배선(script/workflow/registry active entry 부재 — Orchestrator/DesignReview firsthand 실측). 구 ADR-082 Amd7/Amd20 "CFP-1216 wired" claim 은 stale.
     target_section: §결정 9
   - action: cross-repo-label-sync
     status: deferred-followup
@@ -75,13 +75,13 @@ mechanical_enforcement_actions:  # 재제정 re-home(§5.5(c)) — action 명(st
     status: deferred-followup
     target_section: §결정 1 sub-scope 1-J
   - action: numeric-claim-write-time-verify
-    status: warning-tier wired(governance-docs scope) / declarative(PR-level scope)  # 1-N wired, 1-P 선언만
+    status: deferred-followup  # 현행 미배선(1-N Wave2 wire SSOT 선언, actual script/workflow/registry 부재 — firsthand 실측).
     target_section: §결정 1 sub-scope 1-K / 1-N / 1-O / 1-P
   - action: spawn-prompt-fact-verify
-    status: warning-tier wire SSOT(1-Z) / Phase 2 actual wire 별 carrier
+    status: warning-tier wired  # 1-Z: check_spawn_prompt_fact_verify.py + workflow + registry active(L1909) 실배선 완료 — firsthand 실측(구 ADR-082 "Phase2 별carrier 미완" 은 stale).
     target_section: §결정 1 sub-scope 1-L / 1-Z
   - action: synthesis-vs-commit-gap-check
-    status: deferred-followup
+    status: deferred-followup  # registry entry 등재(L1956)이나 mechanical script/workflow 부재 — partial declarative.
     target_section: §결정 1 sub-scope 1-M
   - action: execution-context-state-presence
     status: deferred-followup(registry deferred — Wave 1 declarative)  # 1-V G4: registry SSOT 신뢰
@@ -165,7 +165,7 @@ layer 1(Orchestrator scope + chief author scope + lane PL scope)은 특정 autho
 | **1-K** | numeric claim write-time strict claim(6-dimension closed-set: line/file/API/pattern_count/commit/row count) | Amd 22 | declaration(governance docs) |
 | **1-L** | spawn prompt fact verify-before-trust(worker→worker handoff upstream-inherited stale fact) | Amd 23 | Wave 2 wire = 1-Z |
 | **1-M** | own-author synthesis 보고 ↔ actual git commit gap verify | Amd 24 | deferred-followup |
-| **1-N** | 1-K Wave 2 mechanical enforcement wire(governance docs scope) | Amd 25 | **wired · active** |
+| **1-N** | 1-K Wave 2 mechanical enforcement wire(governance docs scope) | Amd 25 | **미배선**(현행 script 부재 — firsthand 실측) |
 | **1-O** | PR commit message + PR body numeric claim write-time strict claim | Amd 26 | declaration-only |
 | **1-P** | 1-O Wave 2 mechanical enforcement wire SSOT(PR-level artifact scope) | Amd 27 | 선언만(actual script 미wired) |
 | **1-Q** | ADR dual-block parity 3-invariant forward-prevention lint | Amd 28 | 최종형 = 1-U(narrow) |
@@ -177,7 +177,7 @@ layer 1(Orchestrator scope + chief author scope + lane PL scope)은 특정 autho
 | **1-W** | ~~orchestrator_spawn_prompt_fact_verify_before_embed~~ — **de-bloat 제거(복원 금지)**; C1-C5 fact patterns 는 1-Z handoff axis 로 이관 | Amd 34 | **제거(obsolete)** |
 | **1-X** | subagent_self_report_post_task_verify(Orchestrator ← subagent "DONE/PASS/MERGED" 보고 후 artifact 실존·내용 verify) | Amd 35 | deferred-followup |
 | **1-Y** | amendment_array_ordering_convention(amendments[] + amendment_log[] 배열 ordering SSOT: id ascending + reservation_date tie-break; `amendment_log[].sub_scope` field = mapping SSOT) | Amd 36 | convention(향후 ADR-167 재배치 여지 — 본 Story 범위 밖) |
-| **1-Z** | spawn_prompt_fact_verify Wave 2 mechanical wire SSOT(1-L 최초 배선; PR-body-proxy static presence-only lint) | Amd 37 | Phase 1 SSOT 선언(Phase 2 실배선 미완) |
+| **1-Z** | spawn_prompt_fact_verify Wave 2 mechanical wire SSOT(1-L 최초 배선; PR-body-proxy static presence-only lint) | Amd 37 | **wired · active**(실배선 완료 — firsthand 실측) |
 
 > sub-scope 는 전량 disjoint axis 다(surface 특화). 인접 sub-scope 간에도 verify 대상이 disjoint(예: 1-D label-write authority ↔ 1-J filesystem write-target authority). 1-U 가 1-Q(Amd 28) / 1-S FixA(Amd 30) 의 dual-block-narrow 최종형이며, 순차 수정된 중간 상태(1-Q 원서술 / 1-S FixA)는 이력이다(동결 ADR-082 보존).
 
@@ -223,7 +223,7 @@ scope (e) FIX 명세 depth-aware(broken-link/path 정정 FIX 명세 시 director
 
 거버넌스 artifact(β-issue body / spec / change-plan / PR body / ADR amendment 본문) 안에서 ADR 또는 inter-plugin contract 의 amendment 번호를 인용할 때, 인용 직전 target frontmatter `amendments:`(또는 `amendment_log`)를 `Read` 로 직접 확인한 후 **정확 next-slot `M = max(amendment_id) + 1` 만 사용**한다. `M > max+1`(forward-staleness) / `M ≤ max`(backward-staleness) **양방향** stale citation 을 차단한다.
 
-verify-before-cite 의무: (1) target frontmatter 항목 직접 Read → (2) 현재 max `amendment_id` 확인 → (3) 새 번호 = 정확히 `max+1` → (4) `verified-via: <경로 및 시각>` annotation 부착. 본 §결정 은 §결정 2(b)의 sub-specialization(plan-time 시점 명시). Wave 2 mechanical lint(`amendment-number-frontmatter-verify`, 양방향 비교 + `[FORWARD-STALE]`/`[BACKWARD-STALE]` + self-reference exemption + templates/** filter)는 wired. ADR-068 I-4 wording SSOT 연계(stale 번호 = wording drift 원인).
+verify-before-cite 의무: (1) target frontmatter 항목 직접 Read → (2) 현재 max `amendment_id` 확인 → (3) 새 번호 = 정확히 `max+1` → (4) `verified-via: <경로 및 시각>` annotation 부착. 본 §결정 은 §결정 2(b)의 sub-specialization(plan-time 시점 명시). Wave 2 mechanical lint(`amendment-number-frontmatter-verify`, 양방향 비교 + `[FORWARD-STALE]`/`[BACKWARD-STALE]` + self-reference exemption + templates/** filter)는 미배선(현행 script 부재 — firsthand 실측). ADR-068 I-4 wording SSOT 연계(stale 번호 = wording drift 원인).
 
 ### §결정 10 — ArchitectAgent write-time discipline (4 sub-scope)
 
@@ -328,7 +328,7 @@ governance/보안 tooling(evidence-check 게이트·보안 script·워크플로 
 | 22 | CFP-1601 | §결정 1 sub-scope 1-K | carrier-preserved | `## Amendment 22` | numeric claim write-time strict claim(6-dim closed-set) |
 | 23 | CFP-1590 | §결정 1 sub-scope 1-L | carrier-preserved | `## Amendment 23` | spawn prompt fact verify. Wave 2 wire = 1-Z(Amd37) |
 | 24 | CFP-1589 | §결정 1 sub-scope 1-M | carrier-preserved | `## Amendment 24` | own-author synthesis ↔ git commit gap verify |
-| 25 | CFP-1612 | §결정 1 sub-scope 1-N | carrier-preserved (**wired·active**) | `## Amendment 25` | 1-K Wave 2 mechanical wire(governance docs scope). Wave 진행 서사 제거, 실현 상태만 |
+| 25 | CFP-1612 | §결정 1 sub-scope 1-N | carrier-preserved (**미배선 — 현행 script 부재**) | `## Amendment 25` | 1-K Wave 2 mechanical wire(governance docs scope). Wave 진행 서사 제거, 실현 상태만(현행 미배선) |
 | 26 | CFP-1637 | §결정 1 sub-scope 1-O | carrier-preserved | `## Amendment 26` | PR commit msg + PR body numeric claim strict claim |
 | 27 | CFP-1647 | §결정 1 sub-scope 1-P | carrier-preserved (**선언만 미wired**) | `## Amendment 27` | 1-O Wave 2 wire SSOT — actual script 미wired 정직 기재(G-정직) |
 | 28 | CFP-1648 | §결정 1 sub-scope 1-Q | **obsolete제거 (N:1)** | `## Amendment 28` | ADR dual-block parity 3-invariant lint. Amd30(FixA)+Amd32에 순차 supersede → **1-U 최종형만**(G3). Amd28 원서술 배제 |
@@ -340,7 +340,7 @@ governance/보안 tooling(evidence-check 게이트·보안 script·워크플로 
 | 34 | CFP-1842 | **drop** → 1-Z 이관 | **obsolete제거** | `## Amendment 34` | orchestrator_spawn_prompt_fact_verify(1-W). **de-bloat 제거 유지·복원 금지**(ADR-058 §결정 5 ratchet). C1-C5 fact patterns 는 1-Z(handoff axis)로 이식(부활 아님). G7 |
 | 35 | CFP-822 | §결정 1 sub-scope 1-X | carrier-preserved | `## Amendment 35` | subagent_self_report_post_task_verify |
 | 36 | CFP-1613 | §결정 1 sub-scope 1-Y | carrier-preserved | `## Amendment 36` | amendment_array_ordering_convention(id ascending + reservation_date tie-break; `amendment_log[].sub_scope` field = mapping SSOT). G8: 향후 ADR-167 재배치 여지(본 Story 범위 밖) |
-| 37 | CFP-2383 | §결정 1 sub-scope 1-Z | carrier-preserved (**Phase 1 SSOT 선언, Phase 2 미완**) | `## Amendment 37` | 1-L Wave 2 wire SSOT(PR-body-proxy presence-only lint). Phase 2 실배선 미완 정직(G-정직) |
+| 37 | CFP-2383 | §결정 1 sub-scope 1-Z | carrier-preserved (**wired·active**) | `## Amendment 37` | 1-L Wave 2 wire SSOT(PR-body-proxy presence-only lint). 실배선 완료(firsthand 실측) |
 | 38 | CFP-2646 | §결정 16 | carrier-preserved (**wired·active**) | `## Amendment 38` / `### §결정 16` | resource-safety-claim ↔ proof-link presence-lint(5-piece wired) |
 
 ### (3) base row (amendment 비귀속 — zero-drop 완결성)
