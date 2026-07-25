@@ -214,6 +214,64 @@ amendment_log:
       evidence-registry "fallback 대상 0"·"tier-flip 대상 0" dead-mark 무접촉 보존
       ③ 연속성 강화 방향(machinery 재도입 아닌 fable-리밋 공백 메움). 3-tier 자동선택
       부활 0 — Amendment 4 의 10 named-role 고정 enumeration 대상 한정, 선택 함수 아님.
+  - amendment: 7
+    carrier_story: CFP-2839
+    date: 2026-07-25
+    scope: >-
+      서브에이전트 tier ≤ Orchestrator tier 상한 규범 신설 + 모델 tier 전순서
+      최초 명문 codify. (a) **전순서 codify** — `haiku < sonnet < opus < fable`
+      (fable 최상위)를 governance SSOT 에 처음으로 명문화(origin/main 154b6e69
+      전문 grep = 전순서·ceiling 조항 부재 firsthand 실측 → 신규 저작). tier =
+      모델버전 pin 이 아닌 **가격·역량 SLOT**(version-agnostic — opus slot =
+      현행 Opus 5 + legacy Opus 4.8 동 $5/$25 slot; Opus 5 GA 2026-06-09 는 slot
+      채움만 바꿈, 전순서 무영향). 3축 co-monotone(역량 공식 positioning / 비용
+      $1/$5 < $3/$15 < $5/$25 < $10/$50 엄격 단조 / codeforge apex ADR-141 Amd4).
+      (b) **≤ ceiling invariant** — 어떤 subagent 도 effective tier >
+      Orchestrator effective tier 로 spawn 될 수 없다(동급 허용, 초과만 금지).
+      집행 = spawn 시 `model: min(frontmatter_tier, orchestrator_tier)` runtime
+      override(fresh-spawn only — SendMessage resume = 원본 frontmatter fable
+      재해석 함정 CFP-2236, Amd6 A6-2 shape 상속). 정적 frontmatter 무접촉. (c)
+      **축 분리(F1 필수 방어)** — §결정 6 + Amd4 4-clause "fable 하한 fable
+      (down-tier 불허)" + consumer-guide "opt-out 불가" 는 **consumer overlay
+      정적 축**(frontmatter 영구 하향 금지), 본 cap 은 **세션-runtime 축**
+      (Orchestrator=opus 조건부·세션 종료 시 소멸·frontmatter byte 무변경) —
+      disjoint. 동기 = 비용 escape 아닌 권위·정합성 일관(§1 why). "opus
+      Orchestrator launch = de-facto 비용 escape" 반론은 §1 예시 verbatim(opus
+      세션 fable cap-down 명시 지시)이 사용자 결정임으로 방어. (d) **Amd6 관계 =
+      보완(complement)** — cap = 사전 tier 판정·항시 / Amd6 = 사후 리밋 반응, 별
+      trigger·별 축. cap-down 은 `[rate-limit-failover:fable→opus]` 태그
+      미사용(AC-7). opus 세션에서 cap 이 fable spawn 을 pre-empt → Amd6
+      per-spawn failover churn 방지. (e) **advisory ceiling 정직 라벨** — 강제력
+      = prompt-mandate(문구 presence grep-testable = normative) + 세션 실준수
+      (advisory·비-PR-enforceable·NOT testable). hook 기계 backup 불성립
+      (Orchestrator 세션모델 ground-truth env 부재 firsthand 실측 — self-declare
+      오선언 검출 불가). "100% 기계강제/hard-gate" over-claim 금지(ADR-143 동형).
+      (f) **anti-fabrication tradeoff consciously-accepted** — opus Orchestrator
+      세션에서 fable apex(Amd4) 일시 상실 = bounded·수용 tradeoff("품질영향 ≈0"
+      금지). (g) **bounded live scope** — 유일 실효 = opus 세션 × fable 10역할
+      cap-down; fable 세션 = no-op; SecurityTestPL(opus) = AC-5 무변화. (h)
+      **신규 모델 = amendment 의무** — 전순서 비열거 모델은 slot 확정 amendment
+      전 ceiling 비교 비참(closed-set·implicit rank 금지, AC-8); Opus 5 GA 가
+      확장구조 필요성 live 실증. frontmatter 무변경 확정(`plugins/**` 41 byte
+      무변경 + fable-roster-integrity GREEN 유지, fable=10 불변). Phase 2 배선 =
+      CLAUDE.md `## opus default + ADR-141 carve-out` 절 + playbook §3.0.12 부근.
+      상세 = 본문 `## Amendment 7`.
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 본
+      Amendment 는 tier 정책 약화(거버넌스 축소)가 아니라 **계층 권위 정합 강화**
+      (지휘자 Orchestrator 가 하위 일꾼보다 낮은 tier 로 out-rank 되는 상태 금지)
+      다 — 배정표(Amd1 haiku 7 / Amd2 sonnet 10 / Amd4 fable 10) 무접촉, 그 위에
+      "≤ Orchestrator" 불변식만 추가(정적 배정 byte 무변경). §해소 기준 재산정
+      트리거 매칭 = "사용자 directive 로 tier 다양화 재요구"(§1 verbatim, 애매성
+      0) + "모델 세대 전환"(Opus 5 GA 2026-06-09 — slot 프레이밍 필요성 live
+      실증). ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gate: ① 사용자 directive
+      애매성 0 ② 방향 = cap-down 은 opus 세션 한정 비용 절반(fable→opus)이나 상시
+      아님(fable 세션 no-op) — 세션-조건부 ceiling 계산이라 배정 진동(dormant
+      toggle) 미형성 ③ consumer overlay down-tier 불허(§결정 6/Amd4 4-clause)와
+      disjoint 축(정적 overlay vs 세션-runtime) — 비용 escape machinery 부활 아님
+      ④ over-claim 회피 = advisory ceiling 정직 라벨(prompt-mandate normative +
+      세션 실준수 비-PR-enforceable, hook backup 불성립). 3-tier 자동선택 부활 0
+      (전순서 = slot enumeration + 확장 amendment 구조, 선택 함수 아님).
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -241,6 +299,8 @@ Accepted (2026-07-03 KST — CFP-2560 carrier). codeforge family 의 **전 에�
 > **Amendment 5 (2026-07-24 KST, CFP-2811)**: ADR-117 obsolete 외부 제약 서사(구 Amendment 1·2) 삭제에 따른 **보존지시 한정 override** — 본 §상태 의 "ADR-117 → Superseded (본체 텍스트 이력 보존, 삭제 아님)" 및 §결정 2 의 "ADR-117 본체 텍스트는 이력 보존" 은 이후 **"obsolete 외부 제약 서사(구 Amendment 1·2)를 제외한 본체 보존"** 으로 읽는다. tier 정책(§결정 1~6 substance) 무접촉. §컨텍스트 진동 부채 ledger(CFP-2241/2554 rows) = byte 무변경 보존. 상세 = 본문 말미 **`## Amendment 5`**.
 >
 > **Amendment 6 (2026-07-24 KST, CFP-2823)**: fable-리밋 한정 **runtime opus failover 신설** — fable 배정 subagent(Amendment 4 roster 10종)가 리밋 계열 신호(ADR-109 §결정 1 amendment 감지집합)를 spawn-시점 거부 또는 mid-run 조기종료로 반환하면 Orchestrator 가 동일 입력 패킷 + `model: opus` override 로 fresh re-spawn 1회(Option A 즉시전환). §결정 2 dead-mark("rate-limit fallback machinery 부활 0")를 fable-리밋 한정 부분 override — rate-limit *fallback* 축(sonnet, dead) 부활 아님(별 trigger·별 SSOT·별 태그 `[rate-limit-failover:fable→opus]`). agent frontmatter·tier 정책(§결정 1~6) 무접촉(runtime spawn-시점 override 한정). 상세 = 본문 말미 **`## Amendment 6`**.
+>
+> **Amendment 7 (2026-07-25 KST, CFP-2839)**: 서브에이전트 tier **≤ Orchestrator tier 상한** 규범 신설 + 모델 tier **전순서 최초 명문 codify** — `haiku < sonnet < opus < fable`(fable 최상위, tier = 모델버전 pin 아닌 version-agnostic **SLOT**). 어떤 subagent 도 effective tier > Orchestrator effective tier 로 spawn 불가(동급 허용, 초과만 금지); 집행 = spawn 시 `model: min(frontmatter, orchestrator)` runtime override(fresh-spawn only — SendMessage resume 금지, Amd6 A6-2 shape 상속). 유일 live 실효 = **Orchestrator=opus 세션 × fable 10역할 → opus cap-down**(fable 세션 = no-op, SecurityTestPL opus AC-5 무변화). §결정 6 + Amd4 4-clause "fable 하한 fable(down-tier 불허)" 는 **consumer overlay 정적 축**, 본 cap 은 **세션-runtime 축** — disjoint(축 분리, 동기 = 비용 escape 아닌 권위 일관). advisory ceiling(prompt-mandate = normative + 세션 실준수 = 비-PR-enforceable, hook backup 불성립 — "100% 기계강제" over-claim 금지, ADR-143 동형). Amd6 failover 와 별 trigger·별 태그(보완 관계, pre-emption). agent frontmatter·§결정 1~6 substance 무접촉(runtime override 한정, roster-integrity fable=10 GREEN 유지). 상세 = 본문 말미 **`## Amendment 7`**.
 
 ## 컨텍스트
 
@@ -726,3 +786,124 @@ Change Plan 면제(ADR-carrier 선례 정합 — ADR-141 A1-5/A2-5/A4-5 동형, 
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) §결정 2/4 — 설계 shape 자산 4종 답습처(Superseded 유지, 부활 아님)
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — spawn monopoly(failover 실행 주체 = Orchestrator)
 - ADR-013 — change-plan 면제 근거(ADR carrier = 설계 SSOT, 별도 change-plan 없이 amendment 내 Phase 2 열거)
+
+## Amendment 7 (CFP-2839 — 서브에이전트 tier ≤ Orchestrator tier 상한 신설 + 모델 tier 전순서 최초 명문 codify)
+
+**날짜**: 2026-07-25 KST · **carrier**: CFP-2839 · **방향**: tier 정책 약화 아님 — **계층 권위 정합 강화**(지휘자 Orchestrator 가 자기가 spawn 한 하위 일꾼보다 낮은 tier 로 out-rank 되는 상태 금지). 본 Amendment 는 배정표(Amd1 haiku 7 / Amd2 sonnet 10 / Amd4 fable 10)를 **대체하지 않고** 그 위에 "≤ Orchestrator" 상한 불변식과 tier 전순서 codify 를 **추가**한다. §결정 1~6·Amd1~6 원문 = frozen audit trail, 무손상. 본 Amendment 가 tier 전순서·ceiling 규범의 **최초 저작 SSOT** 이다(origin/main 154b6e69 전문 grep = 전순서·ceiling 조항 부재 firsthand 실측 → 신규 저작).
+
+### A7-1. tier 전순서 최초 명문 codify (SLOT 프레이밍 + 3축 co-monotone)
+
+codeforge 가 사용하는 모델 tier 전순서(total order)를 확정한다:
+
+> **`haiku < sonnet < opus < fable`** (fable 최상위)
+
+- **tier = 모델버전 pin 이 아닌 SLOT (version-agnostic)** — tier 는 특정 모델버전에 pin 된 라벨이 아니라 **가격·역량 slot** 이다. 그 slot 을 어느 세대 모델이 채우는지는 시간에 따라 교체되나 slot 자체와 slot 간 순서는 불변이다. **opus slot = 현행 Opus 5(`claude-opus-5`, $5/$25) + legacy Opus 4.8(`claude-opus-4-8`, 동 $5/$25 slot)** — 둘 다 동일 opus slot. Opus 5 GA(2026-06-09)는 opus slot 의 현행 채움만 바꿨을 뿐 tier enum·전순서에 무영향.
+- **3축 co-monotone (slot 기준)** — 어느 축을 key 로 잡아도 동일한 `haiku < sonnet < opus < fable`(lexicographic tiebreak 불요, well-defined):
+  - **역량** (공식 positioning ordinal 체인, platform.claude.com): fable "most capable widely released model" > opus "complex agentic coding and enterprise work" > sonnet "best combination of speed and intelligence" > haiku "fastest ... near-frontier intelligence".
+  - **비용** ($/1M in→out, 엄격 단조): haiku $1/$5 < sonnet $3/$15 < opus $5/$25 < fable $10/$50 (fable = opus slot 의 정확히 2배).
+  - **codeforge apex** (거버넌스 rank): fable = "정점(apex)에만" 배정(ADR-141 Amendment 4).
+- **정직 한계** — 전순서는 현 4-tier slot 의 3축 co-monotonicity 라는 경험적 사실에 의존한다. 미래 모델이 이를 깨면(더 싸면서 더 유능 등) 전순서 재도출이 필요하며, 그 재도출은 본 ADR amendment 의무다(A7-8).
+- **task-conditional 성능 partial order 와 무충돌** — 태스크별 우열 역전은 상존하나, 본 전순서는 태스크-조건부 성능이 아닌 일반 역량 positioning + 비용 + 거버넌스 rank 위에 정의된다(두 층위 disjoint). SecurityTestPL 의 opus slot 유지도 tier 역전이 아니라 cyber classifier 에 따른 **역할-적합성 배정**(feasibility/availability 제약)으로 전순서 축과 별개다(A7-7).
+
+### A7-2. ≤ ceiling invariant + 집행 mechanism (runtime min-override, fresh-spawn only)
+
+**불변식**: 어떤 서브에이전트도 effective tier 가 Orchestrator effective tier 를 **초과**해 spawn 될 수 없다 — **동급 tier 는 허용**, 초과만 금지(≤ 상한 시맨틱).
+
+- **집행 지점 = spawn 시 runtime override** — `effective_tier = min(frontmatter_tier, orchestrator_tier)`(전순서 A7-1 기준). Orchestrator(ADR-039 spawn monopoly)가 spawn 대상 frontmatter tier 가 자기 세션 tier 를 **초과**할 때만 Agent tool `model:` 파라미터로 자기 tier 를 명시 전달하고, 그 외(≤ 이면) 파라미터를 생략해 frontmatter 를 그대로 둔다. Agent tool schema 문언("Optional model override ... **Takes precedence over the agent definition's model frontmatter**")이 이 mechanism 을 뒷받침하며, ADR-141 Amd6 fable-리밋 failover 가 정확히 이 `model: opus` override 를 origin/main 에서 운용 중(playbook §3.0.12b)인 것이 운영 선례다.
+- **정적 배정층 무접촉** — cap 은 `plugins/*/agents/*.md` frontmatter `model:`(41 field-bearing) 를 **바꾸지 않는다**. 정적 배정은 유지되고, "spawn-시 유효 tier = min(배정, Orchestrator)" 불변식만 얹는다. 이것이 본 요구의 도메인적 본질(정적 배정층 무접촉).
+- **shape 상속 (Amd6 A6-2 동형, fresh-spawn only)** — cap-down spawn 은 반드시 **새 `Agent` spawn + `model:` override**(fresh-spawn)로 수행한다. **SendMessage resume 금지** — 원본 frontmatter `model: fable` 가 resume 시 재해석되어 cap 이 무력화되는 함정(CFP-2236 root cause, Amd6 A6-2 명시)을 상속 차단한다.
+
+### A7-3. ★F1 축 분리 (consumer overlay 정적 축 vs 세션-runtime 축) — de-facto 비용 escape 반론 방어
+
+**설계리뷰 필수 방어 지점.** 본 cap 은 다음 기존 규범과 **문언 표면 충돌**로 읽힐 수 있으나 실 충돌이 아니다:
+
+- **기존 규범 (consumer overlay 정적 축)** — §결정 6("overlay opus 미만 down-tier 불허") + Amd4 A4-1 4-clause("fable 10 하한 fable — down-tier 불허") + `docs/consumer-guide.md`(CFP-2803: "fable clause 를 opus 로 낮추는 '비용 escape' 불허 ... **opt-out 불가**"). 이들은 **consumer 가 overlay 로 frontmatter 배정을 영구 하향하는 것**을 금지하는 규율이다.
+- **본 cap (세션-runtime 축)** — Orchestrator=opus 세션에서만 조건부로 발동하고, **세션 종료와 함께 소멸**하며, **frontmatter byte 를 무변경**으로 둔다.
+- **disjoint 판정** — 두 규율은 **다른 축**이다: (i) 정적 overlay 축 = 소비자 배정 영구 하향 / (ii) 세션-runtime 축 = 지휘자 세션 조건부 ceiling 계산. 한쪽이 다른 쪽을 override 하지 않으며 양립한다.
+- **"opus Orchestrator launch = de-facto 비용 escape 아닌가" 반론 방어** — cap-down 의 기능적 결과(opus 세션 = fable roster 전원 opus 실행 → 비용 절감)가 "비용 escape 불허"·"opt-out 불가" 문언과 표면 상반해 보인다. 그러나 (a) 동기가 다르다 — overlay 금지의 동기 = 소비자가 비용을 이유로 apex 강화를 회피하는 것 차단이고, 본 cap 의 동기 = **권위·정합성 일관**(지휘자가 하위보다 낮은 tier 로 out-rank 되는 역전 금지, §1 why)이지 비용 절감이 목적이 아니다(비용 절감은 부수 결과). (b) **§1 예시 verbatim 이 이 결과를 사용자가 명시 지시**했다 — "Orchestrator=opus 세션에서는 fable 지정 에이전트가 opus 로 cap-down 되어야 하고". 즉 opus 세션의 cap-down 은 사용자 결정 사항(ask-trigger ② 가치 trade-off 는 이미 landing)이며 Amendment 는 문서 정합 조정 의무만 진다.
+
+### A7-4. Amd6 failover 관계 = 보완(complement), 충돌 아님
+
+cap 과 Amd6(fable-리밋 opus failover)는 **다른 축**이며 상호 보완한다:
+
+- **별 trigger** — cap = **사전 tier 판정**(spawn 전, 리밋 무관, 매 spawn 항시) / Amd6 = **사후 리밋 반응**(spawn 결과가 리밋 신호 반환 시, ADR-109 §결정 1 Amendment 1 감지집합). 시점·발동조건이 disjoint.
+- **별 태그 (AC-7)** — cap-down spawn 은 Amd6 의 `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**. cap-down 은 리밋 반응이 아니라 사전 ceiling 계산이므로, 그 태그를 오용하면 failover telemetry(§14)를 오염시킨다. cap-down 의 관측 표기는 Amd6 태그와 반드시 구분한다(관측 표면 형식 = M-2, A7-9 설계 판단).
+- **pre-emption(실전 이득)** — opus Orchestrator 세션에선 cap 이 fable spawn 을 spawn-시점에 opus 로 pre-empt 하므로, playbook §3.0.12b fable-branch 도달 자체가 0(해당 세션 한정 dormant). fable-리밋 시 사용자가 세션을 opus 로 전환하는 반복 패턴(CFP-2803/2818/2823 실관측)에서, cap 부재 시 opus 세션이 fable subagent 를 spawn → 즉시 리밋 재히트 → Amd6 per-spawn failover churn 이 반복되는데, **cap 이 이 churn 을 spawn-시점에 pre-empt**한다. cap-down 으로 opus 스폰된 인스턴스의 리밋은 opus same-model 경로(ADR-109 §결정 2)로 처리된다.
+
+### A7-5. advisory ceiling 정직 라벨 (강제력 매트릭스 — ADR-119 / ADR-143 동형)
+
+cap 은 **정적 게이트(CI/PR)로 강제 불가**하다 — 판정식 우변(Orchestrator 세션 모델)이 사용자 launch 시점에만 결정되는 런타임 변수라 repo 상태만 보는 게이트가 검증할 수 없다(ADR-141 §결정 4 "Orchestrator 모델 mandate 비-PR-enforceable" 판정과 동형). 강제력을 정직하게 라벨한다:
+
+| 표면 | 강제력 | testable? |
+|---|---|---|
+| ADR-141 Amendment 7 + CLAUDE.md 규범 문구 | prompt-mandate (매턴 자기검열) | 문구 presence = **grep testable (normative)** |
+| playbook cap 판정 절차 | prompt-mandate | presence testable |
+| Orchestrator spawn 시 min() 적용 | **advisory (세션 실준수)** | **NOT testable (비-PR-enforceable)** |
+| hook 기계 backup | **불성립 (firsthand 실측)** | — |
+| CI/PR 게이트 | **불가** (런타임 변수 정적 단정 = false-gate) | — |
+
+- **hook 기계 backup 불성립 근거 (firsthand 실측)** — `hooks/pretooluse-agent-spawn-gate` 는 PreToolUse(Agent) 로 spawn 의 `model`·`subagent_type` 를 관측·수정(`updatedInput`)할 수 있고 좌변(배정 tier)은 frontmatter lookup 으로 산출 가능하나, **우변(Orchestrator 세션 모델)을 알 방법이 없다**(env 스캔 `CLAUDE_*MODEL*`/`ANTHROPIC_MODEL` 계열 0, hook 소스에 model 참조 0 — Feasibility 실측 + PL 재검증). Orchestrator 가 자기 tier 를 spawn 패킷에 self-declare 해도 그 값은 ground-truth 가 아니다(오선언 검출 불가) → 순수 기계 backup 불성립, advisory 귀착.
+- **over-claim 금지** — "100% 기계강제 / hard-gate" 로 프레이밍하지 않는다. 1차 구현 = Orchestrator model-authored 런타임 정책(ADR-143 렌더 프리픽스 primary 동형 — 준수 규범 + 정직 ceiling 라벨, "기계 backup 이 있어 완전" over-claim 금지).
+
+### A7-6. anti-fabrication tradeoff consciously-accepted (ADR-119 framing)
+
+opus Orchestrator 세션에서 fable 10역할이 opus 로 cap-down 되면 **Amd4 의 anti-fabrication apex 강화가 그 세션에 한해 일시 상실**된다. 이를 "품질영향 ≈0" 으로 위장하지 않고 **bounded·consciously-accepted tradeoff** 로 기록한다(Amd1 A1-4 / Amd2 A2-4 / Amd4 A4-4 framing 규율 상속):
+
+- **수용 근거 3중** — (i) opus 는 all-opus 단일 tier 시절의 거버넌스 baseline 이므로 cap-down 은 그 baseline **이하로 하강하지 않는다**(하한 = opus). (ii) Amd4 A4-4 자인대로 anti-fabrication 은 **모델 내재 속성이 아니라 프롬프트-달성 강화 default**("nearly eliminated", 기계 보장 아님)이므로 fable→opus delta 는 bounded. (iii) §1 why(권위·정합성 일관)가 우선한다는 사용자 결정. → tradeoff 는 실재하나 유계이며, 세션-조건부(opus 세션 한정)라 fable 세션에선 Amd4 apex 가 온전 유지된다.
+
+### A7-7. bounded live scope (유일 실효 + no-op + SecurityTestPL AC-5)
+
+유효 Orchestrator 세션 모델 = **{opus, fable} 2종뿐**(CLAUDE.md "Sonnet/Haiku 세션이면 중단" self-halt — haiku/sonnet 세션은 규칙 도달 전 차단). 따라서 cap 의 실효 범위는 다음으로 bounded:
+
+- **유일한 실효 = Orchestrator=opus 세션에서 fable 지정 10역할이 opus 로 cap-down** — 6 lane PL(RequirementsPL · RequirementsReviewPL · ArchitectPL · DesignReviewPL · DeveloperPL · CodeReviewPL) + ArchitectAgent + ResearcherAgent + PMOAgent + IntegrationTestAgent(Amd4 A4-1 roster).
+- **Orchestrator=fable 세션(권장 default) = no-op** — fable 최상위라 전 배정 ≤ fable, override 미발생(AC-4).
+- **opus 세션 × haiku/sonnet/opus 배정 31종 = 무변화** — 전부 ≤ opus. **SecurityTestPLAgent(opus)는 opus Orchestrator 세션에서도 무변화**(≤ opus 라 cap-down 비대상, AC-5). SecurityTestPL 의 opus slot 유지는 cyber classifier 역할-적합성 배정(A7-1)이지 tier 역전이 아니다.
+- **동급 discriminating (AC-3)** — opus subagent under opus Orchestrator 는 cap-down **비대상**(≤ 시맨틱 = 동급 허용, override 미발생). 이 discriminating 예시로 "≤" 가 "<" 이 아님을 규범에 명시한다.
+- **미래 scope 확대** — fable 초과 모델 등장 시에만 실효 scope 가 넓어진다(전순서 확장 의무 A7-8 연동).
+
+### A7-8. 신규 모델 = amendment 의무 (closed-set, implicit rank 금지)
+
+전순서는 현행 4-tier **closed-set** 위에 정의된다. 전순서에 **비열거된 신규 모델**은 slot 확정 amendment 전까지 **ceiling 비교에 참여하지 않는다**(implicit rank 부여 금지 — 무근거 순서 추정 차단):
+
+- 신규 모델이 **기존 slot 을 채우면**(예: 차기 Opus 가 opus slot 진입) 전순서·cap 은 **무영향**으로 흡수된다(SLOT 프레이밍 A7-1).
+- 신규 모델이 **새 slot 을 열면**(기존 3축 co-monotonicity 를 깨거나 새 가격/역량 지점) 전순서 확장 = **ADR-141 amendment 의무**(ADR-042 §결정 3 "신규 agent 도입 / model 변경 시 ADR 의무" 승계 경로 정합, AC-8).
+- **Opus 5 GA(2026-06-09)가 이 확장구조 필요성의 live 실증** — 요건 작성 이후 실제 신규 모델(Opus 5)이 opus slot 에 진입했고, slot 프레이밍 덕에 전순서·cap 이 무영향으로 흡수됐다. tier enum 을 모델버전 하드코딩이 아닌 **slot + 확장 가능 구조**로 둘 근거를 강화한다.
+
+### A7-9. open question / 설계 판단 기록 (M-1 · M-2 · M-5 — scope 경계)
+
+본 Story 의 미해결 open question 을 설계 판단으로 기록한다(요구사항리뷰 §5.4 이월):
+
+- **M-1 (비열거 세션 모델 보수 default)** — 세션 모델이 전순서 비열거 값일 때 안전 방향 = **낮은 쪽으로 간주**(cap 보수 적용). false-negative(초과 tier 통과) 차단 우선.
+- **M-2 (cap-down 관측 표기)** — cap-down 발생 시 기록 태그·렌더 표기 형식은 Amd6 failover 태그(`[rate-limit-failover:fable→opus]`)와 **반드시 구분**한다(A7-4). 구체 태그 형식은 Phase 2 배선에서 확정.
+- **M-5 (opus alias resolve — scope 경계 명시)** — `model: opus` alias 가 현행 **Opus 5** 로 resolve 하는지 pinned **Opus 4.8** 로 하는지는 cap-down 타깃·SecurityTestPL 의 cyber-refusal-free 속성(Opus 5 도 cyber classifier 보유, classifier-free = Opus 4.8 legacy — §6.1 참조)에 영향을 준다. 그러나 이는 **별개 model-selection 결정**(ADR-141 roster scope)이며 tier 전순서·≤ 상한 시맨틱은 **slot 기준**이라 무영향이다. **본 cap Story 의 scope 밖**임을 명시해 scope 팽창을 차단한다.
+- **M-4 (cap scope — harness 기본 agent)** — §1 "어떤 lane 에이전트·deputy·PL 도" 는 전 spawn 포괄을 권장한다(초과 tier 실보유는 fable 뿐이라 harness 기본 agent[general-purpose 등] 포함 여부는 실효 동일). 설계 판단 = 전 spawn 포괄(보수).
+
+### A7-10. frontmatter 무변경 확정 + Phase 2 실행 범위 (구현 PR — 본 Phase 1 ADR PR 밖, 열거만)
+
+- **frontmatter 무변경 확정** — cap = runtime override 이므로 `plugins/**` frontmatter `model:` **41 파일 byte 무변경** + `check-fable-roster-integrity` 게이트 **GREEN 유지 필수**(fable=10 bijection 불변). 정적 frontmatter cap-down 은 이 게이트를 FAIL 시키는 금지 경로(AC-6). Amd6 A6-6 AC-7 처방 동형.
+- **change-plan 면제(EXEMPT)** — ADR-carrier 선례 정합(ADR-141 A1-5/A2-5/A4-5/A6-5 동형 — ADR = §3 설계 SSOT; ADR-013 은 산출물 위치 정책으로 면제를 금지하지 않음). 별도 change-plan 없이 본 Amendment 내 Phase 2 열거.
+- **Phase 2 실행 범위** (Story §4.1 DELTA 지도 SSOT, 별도 Phase 2 PR):
+  1. **CLAUDE.md `## opus default + ADR-141 carve-out` 절** — tier-cap 규범 추가(전순서 `haiku < sonnet < opus < fable` + ≤ Orchestrator 상한 + opus 세션 cap-down 규칙 + fable 세션 no-op + 동급 discriminating 예시 + advisory ceiling 정직 라벨).
+  2. **`docs/orchestrator-playbook.md` §3.0.12 부근** — spawn-시 cap 판정 절차(`effective = min(frontmatter, orchestrator)` / fresh-spawn override / 비대상 no-op / Amd6 태그 비오염).
+  3. **선택(설계 판단, 동반 후보)** — (a) **A4-5 guard-gap 동반 이행** — Amd4 A4-5 항목2(fable 10 agent `.md` #846 guard 배치)가 미이행 gap 실측(#846 canonical guard 보유 = IntegrationTestAgent 1건뿐, 그마저 stale "Amendment 2(sonnet)" 문구 — Story §4.1 [verified]). cap-down 은 "frontmatter=fable, 실행=opus" 인스턴스를 상시화하므로 self-refuse 위험 표면이 커진다(AC-9). 동반 이행 = 설계 lane 판단. (b) **stale mirror 정정** — `docs/architecture/codeforge-family.md` L238 "Orchestrator session / Opus tier" = stale(Amd4 가 mandate 를 fable 로 codify 했으나 미갱신); cap 이 Orchestrator-모델 축을 건드리므로 동반 갱신 후보. `docs/architecture/codeforge-family.md` L238 부근 tier 서술. (c) **IntegrationTestAgent guard 주석 Amd2→Amd4 정정** — stale "Amendment 2(sonnet)" → "Amendment 4(fable)".
+  4. **roster-integrity GREEN 재확인** — frontmatter 무변경이므로 `check-fable-roster-integrity` fable=10 bijection GREEN 유지(회귀 0).
+  5. **bump/sync** — CLAUDE.md/playbook(+선택 mirror) 변경 시 wrapper bump + CHANGELOG. marketplace sync 는 plugin.json mirrored field 변경 시만(ADR-063) — 본 건 mirrored field 무변경.
+
+### A7-11. 영향 경계 + dead-mark / 진동 부채 오독 방지
+
+- **blast radius (Phase 1)** = ADR-141(본 Amendment 7 amendment_log + 상단 callout + 본문) + Story CFP-2839 §7. **agent frontmatter 무변경**(AC-6). **§결정 1~6 substance 무접촉**(runtime override 한정).
+- **Amd4 apex 배정 무접촉** — cap 은 fable 10 배정 enumeration·근거(anti-fabrication 표적)를 바꾸지 않는다(A7-6). Amd6 failover 인프라 재사용(별도 병렬 배선 회피 권장, Story §4.2-8-iii).
+- **진동 부채 오독 방지** — ADR-141 §컨텍스트 fable↔opus 진동 ledger 관점에서 cap-down 은 배정 진동(frontmatter flip · dormant toggle)이 **아니라** 세션-종속 결정론적 ceiling 계산(frontmatter byte 무변경)이다 — "5번째 진동" 오독을 차단한다.
+- **rate-limit fallback machinery 무접촉** — cap 은 rate-limit 무관 사전 tier 판정이라 ADR-057 §결정 2 dead-mark("rate-limit fallback machinery 부활 0")·`evidence-checks-registry.yaml` dead entry 를 **무접촉 보존**한다.
+
+### Cross-ref
+
+- ADR-141 §결정 1(전 에이전트 opus — cap 은 배정 무변경 상한 추가) / §결정 4(Orchestrator mandate 비-PR-enforceable — advisory ceiling 동형 선례) / §결정 6(overlay 하한 — **disjoint 정적 축**, A7-3)
+- ADR-141 Amendment 4 — A4-1(fable 10 roster = cap-down 대상 집합) / A4-4(anti-fabrication 프롬프트-달성 framing 상속) / 4-clause overlay 하한(A7-3 축 분리)
+- ADR-141 Amendment 6 — A6-2(fresh-spawn + `model:` override shape 자산 상속, SendMessage resume 금지) / failover 태그(cap-down 비오염, A7-4 보완 관계)
+- [ADR-143](ADR-143-agent-action-render-line-prefix.md) — advisory·비-기계강제 mechanism 정직 라벨 선례(model-authored primary + hook backup 불성립, "100% 기계강제" over-claim 금지 — A7-5 동형)
+- [ADR-109](ADR-109-in-process-429-mitigation-framework.md) §결정 1 Amendment 1 — fable-리밋 감지집합(cap[사전 tier 판정] vs Amd6 failover[사후 리밋 반응] 경로 구분 기준점)
+- [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — spawn monopoly(cap 집행 주체 = Orchestrator, fresh-spawn override)
+- [ADR-042](ADR-042-agent-model-selection-policy.md) §결정 3 — "신규 agent / model 변경 시 ADR 의무" 승계(전순서 비열거 신규 모델 확장 = amendment 의무, A7-8)
+- [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 6 — overlay 확장-only(정적 축 down-tier 불허, A7-3 disjoint)
+- ADR-013 — change-plan 면제 근거(ADR carrier = 설계 SSOT, 별도 change-plan 없이 amendment 내 Phase 2 열거, A7-10)
