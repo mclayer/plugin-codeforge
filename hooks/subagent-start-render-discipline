@@ -164,17 +164,20 @@ ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT
 #   요구사항: wholehour stdout = 유효 JSON 1건, permissionDecision 미emit, fail-open exit 0.
 
 if [ -n "$PYTHON_CMD" ]; then
+  # F-CR-001 (P0) 정정: additional_context 를 env var 로 전달 — bash 변수를 Python 소스
+  #   리터럴에 보간하지 않음 (source-splice ACE 차단, ADR-143 Amd3). sibling subagent-stop
+  #   L112 / 본 hook 첫 Python 블록(L56)의 stdin/env 데이터-분리 패턴 준수.
+  #   Python 소스에는 정적 리터럴만 등장 ($<bashvar> 보간 0).
+  export CFP2818_ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT"
   printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
-import json, sys
+import json, os, sys
 try:
-    payload = json.load(sys.stdin)
-    # additionalContext 내용 생성 (bash 에서 전달받은 값 — 여기서 escaping 처리)
-    additional_context = '''$ADDITIONAL_CONTEXT'''
-
+    json.load(sys.stdin)  # payload 유효성 재확인 (parse 실패 시 무출력, fail-open)
+    additional_context = os.environ.get('CFP2818_ADDITIONAL_CONTEXT', '')
     output = {
         'hookSpecificOutput': {
             'hookEventName': 'SubagentStart',
-            'additionalContext': additional_context
+            'additionalContext': additional_context,
         }
     }
     json.dump(output, sys.stdout)

@@ -49,9 +49,11 @@ class TestSubagentStartRenderDisciplineHook:
         self,
         payload: Optional[str] = None,
         env_override: Optional[dict[str, str]] = None,
+        cwd: Optional[str] = None,
     ) -> tuple[int, str, str]:
         """hook 을 subprocess 로 bash 실행 — stdin 에 payload 주입.
         기존 hook 테스트 패턴 mirror: bash <hook_path> (run-hook.cmd wrapper 제거)
+        cwd: 작업 디렉토리 (rung-4 격리 — 헬퍼 fallback 경로 차단 시 필요)
         반환: (returncode, stdout, stderr)
         """
         if not HOOK_SCRIPT.exists():
@@ -70,6 +72,7 @@ class TestSubagentStartRenderDisciplineHook:
             text=True,
             encoding="utf-8",
             env=run_env,
+            cwd=cwd,
         )
         return proc.returncode, proc.stdout, proc.stderr
 
@@ -145,21 +148,28 @@ class TestSubagentStartRenderDisciplineHook:
         assert "self명 = " + ("X" * 64) in additional_context
 
     def test_valid_json_helper_failure_anchor_omitted(self):
-        """분기: ✓JSON ✓agent_type ✗helper(PATH 조작 제거)
-        기대: additionalContext 생성 BUT KST 앵커 라인 부재 ("앵커 미확보" 생략형)
+        """분기: ✓JSON ✓agent_type ✗helper — CLAUDE_PLUGIN_ROOT=헬퍼부재 dir + cwd 격리 (PATH·python 유지).
+        기대: additionalContext emit AND "KST 실측 앵커 =" 부재 AND "앵커 미확보" 존재 — unguarded assert.
+        (F-CR-002 정정: 구 fixture 는 PATH=/nonexistent 로 python 자체를 죽여 무출력→guard skip 공허 GREEN.
+         이제 python 은 살리고 KST 헬퍼만 도달 불가로 만들어 실제 '앵커 미확보' 분기 실도달 검증.)
         """
         payload = json.dumps({"agent_type": "TestAgent"})
-        # PATH 에서 헬퍼 찾을 수 없도록 mock env
-        run_env = {"PATH": "/nonexistent"}
-        returncode, stdout, stderr = self._run_hook(payload, env_override=run_env)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # CLAUDE_PLUGIN_ROOT = 헬퍼 부재 dir (첫 분기 [-f $ROOT/scripts/...] 실패)
+            # cwd = tmpdir (elif [-f scripts/kst-render-stamp.sh] fallback 실패)
+            # PATH 미조작 → python 정상 → parse OK → additionalContext emit
+            returncode, stdout, stderr = self._run_hook(
+                payload, env_override={"CLAUDE_PLUGIN_ROOT": tmpdir}, cwd=tmpdir
+            )
 
         assert returncode == 0, "fail-open: helper 실패해도 exit 0"
-        # stdout 여전히 emit (agent_type 있으므로)
-        if stdout.strip():
-            output = json.loads(stdout)
-            additional_context = output["hookSpecificOutput"]["additionalContext"]
-            # 앵커 부재 분기 → 시각 요소 생략
-            assert "KST 실측 앵커 = " not in additional_context or "앵커 미확보" in additional_context
+        # unguarded: parse OK + agent_type 有 → 반드시 output emit
+        assert stdout.strip(), "헬퍼 실패해도 JSON parse OK → additionalContext emit 필수"
+        output = json.loads(stdout)
+        additional_context = output["hookSpecificOutput"]["additionalContext"]
+        assert "self명 = TestAgent" in additional_context, "self명 정상 렌더"
+        assert "KST 실측 앵커 = " not in additional_context, "헬퍼 실패 시 KST 앵커 라인 부재"
+        assert "앵커 미확보" in additional_context, "앵커 미확보 생략형 emit (fabrication 금지)"
 
     def test_invalid_json_parse_failure(self):
         """분기: ✗JSON(parse 실패) × ×
@@ -203,6 +213,25 @@ class TestSubagentStartRenderDisciplineHook:
         additional_context = output["hookSpecificOutput"]["additionalContext"]
         # \n, \t 가 공백으로 정규화됨
         assert "Agent" in additional_context and "With" in additional_context
+
+    def test_injection_subject_rendered_literally_no_eval(self):
+        """F-CR-001 변별 test (P0 code-injection RED→GREEN oracle).
+        agent_type 에 Python triple-quote escape 페이로드 주입 → subject 리터럴 verbatim 렌더 +
+        산술 eval(6117*7=42819)·코드실행 0. env-var 전달로 소스 보간이 사라져 주입 불가.
+        취약 revert(hook L172 source-splice 원복) 시 42819 출현 or output 파손 → 이 test RED (baked-GREEN 방지).
+        """
+        injection = "x'''+str(6117*7)+'''x"
+        payload = json.dumps({"agent_type": injection})
+        returncode, stdout, stderr = self._run_hook(payload)
+
+        assert returncode == 0, "fail-open: 주입 시도해도 exit 0"
+        assert stdout.strip(), "정상 output emit (parse OK)"
+        output = json.loads(stdout)
+        additional_context = output["hookSpecificOutput"]["additionalContext"]
+        # 코드실행 0 증거: 산술 eval 결과 미출현
+        assert "42819" not in additional_context, "Python 산술 eval 금지 (code-injection 차단)"
+        # subject 리터럴 verbatim (sanitize 는 quote 미제거 → 그대로)
+        assert f"self명 = {injection}" in additional_context, "subject 리터럴 verbatim 렌더"
 
     # ───── 출력 형식 검증 ──────
 
