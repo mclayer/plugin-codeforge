@@ -12,13 +12,13 @@ CFP-2812 / ADR-167(adr-amendment-compaction-ratchet) / ADR-060 — ADR amendment
                        의 `reinterpretation:` marker presence/consistency 판정.
   - --write-baseline : 도입 시점 corpus 전수 스캔 → effective_count >= N 인 ADR 을 grandfathered_at 로 동결 write.
 
-honest ceiling (ADR-082 §결정 16 / ADR-119 §결정 6 / ADR-136 정직 천장 — Change Plan D5/D10):
+honest ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) / ADR-119 §결정 6 / ADR-136 정직 천장 — Change Plan D5/D10):
   기계 게이트가 보증하는 것은 (a) count 산식 판정 (b) marker presence/type consistency (c) baseline 무결성
   검사까지다. 재해석 여부의 의미 판정 / prose-only 본문 편집(양 표면 미기재) / 재제정 의미 무변경(semantic
   fidelity) 은 기계화 불가 — 리뷰 판정 축(인간)의 몫이다. "모든 재해석 기계 검출"·"stale drift 재발 근절"
   류 hard-claim 은 하지 않는다.
 
-resource 정직 (ADR-082 §결정 16 — Change Plan D10, honest-downgrade):
+resource 정직 (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) — Change Plan D10, honest-downgrade):
   born-safe bound 4-axis: (1) path filter = archive/adr/ADR-*.md anchored + ADR-RESERVATION.md EXEMPT
   (2) bounded-quantifier regex — 헤딩 매칭 `^#{2,4}\s{0,80}Amendment` (무제한 quantifier 미사용)
   (3) per-file 물리 라인 length truncate (MAX_PHYSICAL_LINE_LEN) (4) total-work bound — 유한 corpus 1-shot (도입 시점 ≈166 ADR, 수치는 corpus 성장에 따라 변동).
@@ -41,7 +41,7 @@ Exit codes:
   1 = violation >=1 (임계 초과 신규분 / baseline 무결성 위반 / heading-only drift / marker 미기재·비-boolean / 파싱 실패)
 
 ADR refs: ADR-167(adr-amendment-compaction-ratchet) §결정 1~8 / ADR-060 (게이트 tier host) / ADR-145
-  (forward-only+grandfather) / ADR-153 (baseline 은퇴 선례) / ADR-082 §결정 16 (resource 정직) /
+  (forward-only+grandfather) / ADR-153 (baseline 은퇴 선례) / ADR-168 §결정 16 (resource 정직, 구 ADR-082 §결정 16 재제정) /
   ADR-119·ADR-136 (honest ceiling) / ADR-061 (Python SSOT + thin wrapper) / ADR-005 (byte-parity workflow 쌍).
 """
 
