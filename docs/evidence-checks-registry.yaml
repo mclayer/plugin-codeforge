@@ -3408,7 +3408,7 @@ entries:
   - name: spawn-description-prefix-detect
     description: |
       CFP-2574 도입 / CFP-2587 repurpose — Agent spawn description(범위①) 렌더-줄 프리픽스
-      `[<agent_type>] MM/DD HH:MM - <내용>` 형식 injection regression guard.
+      `[<agent_type>] MM/DD HH:MM:SS - <내용>` 형식 injection regression guard.
       CFP-2587 (Gate-A/B GO): 기존 detect-only warning layer → PreToolUse(Agent) updatedInput 주입 경로 전환
       (runtime hook 이 non-conformant description 에 프리픽스 주입 = updatedInput mutation — DeveloperAgent 소관 경로).
       detect helper(check-spawn-description-prefix.sh)는 주입 경로 안 idempotency guard 로 재사용

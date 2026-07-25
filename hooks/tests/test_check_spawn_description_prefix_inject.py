@@ -30,7 +30,8 @@ import check_spawn_description_prefix as csdp
 WORKTREE_ROOT = Path(__file__).resolve().parent.parent.parent
 FIXTURES = WORKTREE_ROOT / "tests" / "spike" / "cfp-2587-updatedinput-honor" / "fixtures"
 CHECKER = WORKTREE_ROOT / "scripts" / "lib" / "check_spawn_description_prefix.py"
-KST_STAMP = "07/09 19:30"  # RE_KST_STAMP-conformant fixed stamp
+KST_STAMP = "07/09 19:30:00"  # RE_KST_STAMP-conformant fixed stamp (with seconds, CFP-2836)
+KST_STAMP_SS = "07/09 19:30:03"  # Optional-seconds variant for AC-2/4 discriminating test
 
 
 def _load_fixture(name: str) -> dict:
@@ -109,14 +110,26 @@ def test_sanitize_subject_bracket_and_control_combo_still_conformant():
 
 def test_build_injects_prefix():
     got = csdp.build_injected_description("DeveloperAgent", KST_STAMP, "do a thing")
-    assert got == "[DeveloperAgent] 07/09 19:30 - do a thing"
+    assert got == "[DeveloperAgent] 07/09 19:30:00 - do a thing"
     assert csdp.RE_PREFIX.match(got) is not None  # T-5
 
 
 def test_build_idempotent_returns_none():
     """T-4: 이미 conformant → None (재주입 금지, 이중 프리픽스 미발생)."""
-    already = "[X] 07/09 19:30 - already"
+    already = "[X] 07/09 19:30:00 - already"
     assert csdp.build_injected_description("X", KST_STAMP, already) is None
+
+
+def test_build_idempotent_both_forms():
+    """AC-4 idempotency양형: both old (MM/DD HH:MM) and new (MM/DD HH:MM:SS) conformant forms
+    should return None (no re-injection). Mutation: guard removal → double-prefix RED."""
+    # Old form (pre-CFP-2836)
+    old_already = "[X] 07/09 19:30 - already conformant"
+    assert csdp.build_injected_description("X", KST_STAMP, old_already) is None
+
+    # New form (post-CFP-2836)
+    new_already = "[X] 07/09 19:30:03 - already conformant"
+    assert csdp.build_injected_description("X", KST_STAMP_SS, new_already) is None
 
 
 def test_build_empty_or_whitespace_returns_none():
@@ -126,15 +139,58 @@ def test_build_empty_or_whitespace_returns_none():
 
 
 def test_build_invalid_kst_returns_none():
-    """KST-fail skip (degradation rung 4) — invalid stamp → None."""
-    for bad in ["", "2026-07-09T19:30:00Z", "7/9 19:30", "07/09 19:30:00", "garbage"]:
+    """KST-fail skip (degradation rung 4) — invalid stamp → None.
+    NOTE: "07/09 19:30:00" is VALID (optional-seconds after CFP-2836), removed from bad-list."""
+    for bad in ["", "2026-07-09T19:30:00Z", "7/9 19:30", "garbage"]:
         assert csdp.build_injected_description("X", bad, "content") is None
+
+
+def test_build_invalid_kst_seconds_malformed():
+    """AC-2 bidirectional mutation-lock: 초 자릿수/콜론 오류 strictly nonconformant.
+    mutation: RE_KST_STAMP을 (:\\d{1,3})?로 over-broad 하거나 \\d{1,2}로 완화 → RED
+    (single-digit/3-digit/missing-colon-sep 통과 = false-positive)."""
+    # Single-digit seconds: "14:30:3" 또는 "07/09 14:30:3"
+    malformed = ["07/09 14:30:3", "07/09 14:30:030", "07/09 14:30::", "07/09 14:30: 00"]
+    for bad in malformed:
+        result = csdp.build_injected_description("X", bad, "content")
+        assert result is None, f"malformed KST '{bad}' should reject (AC-2 bidirectional)"
+
+
+def test_build_valid_kst_with_optional_seconds():
+    """AC-2 positive case: optional-seconds accept both MM/DD HH:MM and MM/DD HH:MM:SS.
+    After CFP-2836, both forms are conformant."""
+    # Old form (HH:MM only, no seconds)
+    old_form = "07/09 19:30"
+    got_old = csdp.build_injected_description("X", old_form, "old action")
+    assert got_old is not None and "[X] 07/09 19:30 - old action" in got_old
+
+    # New form (HH:MM:SS with seconds)
+    new_form = KST_STAMP_SS  # "07/09 19:30:03"
+    got_new = csdp.build_injected_description("X", new_form, "new action")
+    assert got_new is not None and "[X] 07/09 19:30:03 - new action" in got_new
+
+
+def test_re_prefix_matches_both_old_and_new_forms():
+    r"""AC-3 RE_PREFIX acceptor backward-compat: both old (HH:MM) and new (HH:MM:SS)
+    are conformant to RE_PREFIX regex. Mutation: seconds optional removal (:\d{2})? → mandatory
+    or complete removal → RED (old-form rejection)."""
+    # Old form conformant
+    old_prefix = "[ArchitectAgent] 07/05 14:30 - old form"
+    assert csdp.RE_PREFIX.match(old_prefix) is not None, "old form HH:MM should match"
+
+    # New form conformant
+    new_prefix = "[ArchitectAgent] 07/05 14:30:45 - new form"
+    assert csdp.RE_PREFIX.match(new_prefix) is not None, "new form HH:MM:SS should match"
+
+    # Malformed (incomplete seconds) non-conformant
+    malformed = "[ArchitectAgent] 07/05 14:30:4 - incomplete second"
+    assert csdp.RE_PREFIX.match(malformed) is None, "incomplete second should NOT match"
 
 
 def test_build_leading_space_content_still_conformant():
     """lstrip 으로 `- ` 직후 \\S 보장 → RE_PREFIX-conformant."""
     got = csdp.build_injected_description("X", KST_STAMP, "   leading spaces")
-    assert got == "[X] 07/09 19:30 - leading spaces"
+    assert got == "[X] 07/09 19:30:00 - leading spaces"
     assert csdp.RE_PREFIX.match(got) is not None
 
 
@@ -150,7 +206,7 @@ def test_build_injected_leading_ws_already_conformant_skips():
 def test_build_injected_leading_ws_nonconformant_injects_once():
     """F2: leading-ws + nonconformant → 1회 주입, 프리픽스 정확히 1개([Dev]) — content 는 lstrip 적용."""
     out = csdp.build_injected_description("Dev", KST_STAMP, "   raw content")
-    assert out is not None and out.startswith("[Dev] 07/09 19:30 - raw content")
+    assert out is not None and out.startswith("[Dev] 07/09 19:30:00 - raw content")
     assert out.count("[Dev]") == 1
 
 
@@ -179,7 +235,7 @@ def test_inject_whole_echo_preserves_all_args_bash():
     assert ui["timeout"] == 120000
     assert ui["run_in_background"] is False
     # description = stamped prefix + original
-    assert ui["description"].startswith("[general-purpose] 07/09 19:30 - ")
+    assert ui["description"].startswith("[general-purpose] 07/09 19:30:00 - ")
     assert csdp.RE_PREFIX.match(ui["description"]) is not None
     # G4: NO permissionDecision
     assert "permissionDecision" not in obj["hookSpecificOutput"]
@@ -346,7 +402,7 @@ def test_tc1_build_label_single_render_line(c):
     built = csdp.build_injected_description("A" + c + "B", KST_STAMP, "raw action")
     assert built is not None
     assert len(built.splitlines()) == 1
-    assert built == "[A B] 07/09 19:30 - raw action"
+    assert built == "[A B] 07/09 19:30:00 - raw action"
     assert csdp.RE_PREFIX.match(built) is not None
 
 
@@ -365,7 +421,7 @@ def test_tc2a_reminder_value_shadow_no_excess_reminder():
     assert obj is not None
     hso = obj["hookSpecificOutput"]
     assert "additionalContext" not in hso          # 값-위치 리터럴이 flag 로 오인 안 됨
-    assert hso["updatedInput"]["description"] == "[--transition-reminder] 07/09 19:30 - raw action"
+    assert hso["updatedInput"]["description"] == "[--transition-reminder] 07/09 19:30:00 - raw action"
     assert hso["updatedInput"]["command"] == "ls"  # whole-echo 보존 (I2)
 
 
@@ -377,7 +433,7 @@ def test_tc2b_subject_absent_value_shadow_still_injects():
     obj = _run_inject(_bash_payload(), "--subject-absent", KST_STAMP)
     assert obj is not None                         # skip 안 됨
     assert obj["hookSpecificOutput"]["updatedInput"]["description"] == \
-        "[--subject-absent] 07/09 19:30 - raw action"
+        "[--subject-absent] 07/09 19:30:00 - raw action"
 
 
 def test_tc2c_kst_stamp_value_shadow_first_match_reads_valid_stamp():
@@ -388,7 +444,7 @@ def test_tc2c_kst_stamp_value_shadow_first_match_reads_valid_stamp():
     obj = _run_inject(_bash_payload(), "--kst-stamp", KST_STAMP)
     assert obj is not None                         # KST-fail skip 아님
     assert obj["hookSpecificOutput"]["updatedInput"]["description"] == \
-        "[--kst-stamp] 07/09 19:30 - raw action"
+        "[--kst-stamp] 07/09 19:30:00 - raw action"
 
 
 def test_tc4_empty_subject_unknown_agent_fallback_single_line():
@@ -406,5 +462,5 @@ def test_tc5_ec2_mixed_ascii_and_unicode_newline_single_line():
     built = csdp.build_injected_description("A\nB\u2028C", KST_STAMP, "raw action")
     assert built is not None
     assert len(built.splitlines()) == 1
-    assert built == "[A B C] 07/09 19:30 - raw action"
+    assert built == "[A B C] 07/09 19:30:00 - raw action"
     assert csdp.RE_PREFIX.match(built) is not None

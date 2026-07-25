@@ -4,7 +4,7 @@ type: domain-knowledge
 slug: render-line-display-sublayer
 title: Render line display sub-layer — 비영속 화면 표시 sub-layer의 값 획득 규율 (시각·주체) + model-authored primary / hook fail-open backup + 렌더 도달 honest ceiling
 status: Active
-updated: 2026-07-24
+updated: 2026-07-25
 carrier_story: CFP-2818
 related_adrs:
   - ADR-143  # carrier — Agent 수행 액션 렌더 줄 프리픽스 규약 SSOT (Amendment 3 = 값 정확성 저작 규율). 본 concept = 그 sub-layer 개념의 domain-knowledge mirror
@@ -30,7 +30,7 @@ sources:
 
 ## 정의
 
-**Render line display sub-layer** = harness UI 가 Agent 스폰·도구호출·Orchestrator 상태 줄을 렌더하는 **비영속(ephemeral) 화면 표시 sub-layer**. 프리픽스 `[<주체명>] MM/DD HH:MM - <내용>` 가 표시되는 계층이며, 두 가지 근본 성질로 정의된다:
+**Render line display sub-layer** = harness UI 가 Agent 스폰·도구호출·Orchestrator 상태 줄을 렌더하는 **비영속(ephemeral) 화면 표시 sub-layer**. 프리픽스 `[<주체명>] MM/DD HH:MM:SS - <내용>` 가 표시되는 계층이며, 두 가지 근본 성질로 정의된다:
 
 1. **zero-persist** — 이 sub-layer 에 표시되는 값은 어떤 커밋 산출물·계약 필드·영속 artifact 로도 흘러가지 않는다. 화면에 한 번 렌더되고 사라지는 표시 전용 계층이다 (이 경계를 넘어 persist 경로로 새면 관할 위반).
 2. **표시된 값의 정확성 = 두 상류(값 획득) 규율의 하류 결과** — 화면에 도달하는 프리픽스는 (a) 시각 (b) 주체명 두 값을 담으며, 그 정확성은 표시 계층이 아니라 **값이 획득되는 상류 단계**에서 결정된다.
@@ -72,6 +72,7 @@ sources:
 - **시각원 계층 분기 (+9 재가산 차단)**: 시각 값은 **헬퍼(또는 SubagentStart·spawn packet 으로 주입된 실측치) 앵커에서만** 유도한다. 로컬 clock read·암산 offset 가산 일절 금지. "UTC+9 고정 산술"은 헬퍼 내부(절대 UTC read 존재)의 정당화일 뿐이며, 모델이 이미-KST 인 로컬 시각에 이를 재적용하면 정확히 +9h 미래가 된다. tz 변환은 헬퍼 단일 경로에 격리한다.
 - **재실측 trigger (control-yield 4종)**: 앵커는 stale 될 수 있다. 제어를 (재)획득한 매 활성화 turn 시작 시, timestamp 프리픽스 최초 저작 전 헬퍼를 1회 재실행한다 — (T1) park/child-대기 복귀 (T2) 세션 resume·cold-resume (T3) 공백 후 lane·컨텍스트 전환 (T4) 임의 suspension 복귀. **수치 상한 게이트는 두지 않는다** — 모델은 앵커 후 경과를 실측할 시계가 없어 "X분 초과" 판정이 model-uncheckable(검사연극)이기 때문. 약 10분 soft 경계는 비규범 참고치일 뿐이다.
 - **부재 시 생략 (생략 > fabrication)**: 실측 앵커를 확보하지 못하면 시각 요소를 **생략**한다 — `[<주체명>] MM/DD - <내용>`(날짜는 harness date-only 주입으로 가용) 또는 시각 전체 생략. 허구 값 기입 금지. 이는 canonical 포맷의 대체가 아니라 앵커-부재 한정 additive 변형이다. 오정보보다 정보 부재가 우월하다. [source: RFC 5424 §6.2.3 — 시각 획득 불가 시 NILVALUE **MUST**; OTel ObservedTimestamp — origin 시각 불명 시 관측자 실측 앵커로 대체]
+- **granularity forcing function (초 = 위조 봉투 붕괴)**: 표기 granularity ↑ = self-reported 값 조작 비용 ↑. 분(minute) 단위는 +1분 암산 증분을 진짜 경과와 **byte-identical** 로 은닉(구조적 false-oracle)하지만, 초(SS)는 high-entropy 라 plausible 한 암산 증분이 불가 → 준수의 최소저항 경로가 "실제 측정"이 된다(위조 검출이 아닌 **위조 생산 불가능화** forcing function). 근거 = ADR-143 Amendment 4 §A4.0. [source: RFC 5424 §6.2.3 — whole-second baseline]
 
 ## 값 획득 — 주체
 
@@ -93,7 +94,7 @@ sources:
 | 하류 — 표기(notation) | **kst-display-invariant** | 획득된 값을 어떻게 적는가 — 값 무변환, 표기 형식만 강제 |
 
 - **경계의 실증(+9 재가산)**: 모델이 로컬 시각을 읽어 +9 를 재적용하는 결함은 두 개념의 교차점이다. 이는 (a) 값 획득 규율 위반(헬퍼 앵커가 아닌 로컬 clock read)이면서 (b) kst-display-invariant 가 금지하는 값 변환(표기 단계에서 값을 바꿈)을 흉내낸다. 두 개념 모두 처방은 같은 방향 — 표기 계층은 값을 변환하지 않고(하류), 값은 헬퍼 단일 경로 실측에서만 온다(상류).
-- **표기 EXEMPT 재확인**: render line 의 compact `MM/DD HH:MM` 형식은 ADR-079 §결정 6 로 제3 ephemeral-UI sub-layer EXEMPT — 본 개념은 형식이 아닌 **값의 정확성(출처)** 만 다루며, ADR-079 표기 mandate 와 disjoint co-exist 한다.
+- **표기 EXEMPT 재확인**: render line 의 compact `MM/DD HH:MM:SS` 형식은 ADR-079 §결정 6 로 제3 ephemeral-UI sub-layer EXEMPT — 본 개념은 형식이 아닌 **값의 정확성(출처)** 만 다루며, ADR-079 표기 mandate 와 disjoint co-exist 한다.
 
 ### disjoint 축 (재유입 봉인)
 
@@ -117,3 +118,4 @@ sources:
 | 일자(KST) | Story | 변경 |
 |---|---|---|
 | 2026-07-24 | CFP-2818 | 신규 — 비영속 화면 표시 sub-layer 개념 SSOT. zero-persist + model-authored primary / hook fail-open backup + 렌더 도달 honest ceiling(기계강제 불가·advisory ceiling) 정의. 값 획득 2절(시각 = 실측 앵커 verbatim floor·control-yield 재실측·부재 시 생략 / 주체 = roster 실명·explicit unknown·spawner-asserted 정직 선언) 흡수. kst-display-invariant(표기·하류)와 disjoint upstream 경계 명시. ADR-143 dangling related_concepts 참조 해소. |
+| 2026-07-25 | CFP-2836 | 초(SS) 표기 반영 — 프리픽스 format literal `MM/DD HH:MM` → `MM/DD HH:MM:SS`(compact EXEMPT 논거 보존). 값 획득—시각 절에 granularity forcing function 문단 추가(초 = high-entropy → 위조 생산 불가능화). 근거 ADR-143 Amendment 4 §A4.0. |

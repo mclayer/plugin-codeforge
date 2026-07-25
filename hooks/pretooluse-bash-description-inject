@@ -6,7 +6,7 @@
 #
 # 책임 경계 (SRP = description injection ONLY):
 #   - 책임: subagent 안 Bash 호출의 tool_input.description 에 렌더-줄 프리픽스
-#           `[<agent_type>] MM/DD HH:MM - <내용>` 를 hookSpecificOutput.updatedInput 으로 주입
+#           `[<agent_type>] MM/DD HH:MM:SS - <내용>` 를 hookSpecificOutput.updatedInput 으로 주입
 #           (self-agent 관측 — 어느 에이전트가 어느 시각에 무엇을 했는지 렌더 줄에 각인).
 #           whole-echo REPLACE-safe (spike BARE01: 부분 updatedInput=schema HARD-FAIL) ·
 #           bare updatedInput (permissionDecision 미emit, G4) · 전경로 fail-open.
