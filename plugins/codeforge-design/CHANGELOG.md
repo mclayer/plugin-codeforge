@@ -2,6 +2,20 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.45.0] - 2026-07-24 — CFP-2813 design-info-read-protocol-v1 선행 read 배선 (MINOR)
+
+### Added (CFP-2813 — ADR-166 / ADR-078 Amd3 / ADR-112 Amd1, MINOR)
+
+[CFP-2813] 설계 lane agent 가 산출 전 Living Architecture / 설계정보를 선행 read 하도록 강제하는 design-info-read-protocol-v1 배선:
+
+- `agents/CodebaseMapperAgent.md`: design-info-read-protocol-v1 선행 read 단계 주입 — 코드베이스 사실 변호 전 Living Architecture(`docs/architecture/<plugin>.md`) / 설계정보 선행 read (ADR-078 Amendment 3 git-source primary + ADR-112 Amendment 1 dual-read 경로 정합).
+- `agents/ArchitectAnalystAgent.md`: design-info-read-protocol-v1 선행 read 단계 주입 — 기존 설계(ADR / Change Plan / Living Architecture) 분석 축에 프로토콜 선행 read 배선.
+- `.claude-plugin/plugin.json`: description CFP-2813 entry prepend + version 0.44.2 → 0.45.0.
+
+#### Why
+
+설계정보·Living Architecture 를 읽지 않은 채 산출하는 stale-context 갭을 프로토콜 선행 read 로 차단. agent 산출 전 read 배선 = additive behavior 표면 확장 → MINOR (ADR-037 (a) Agent file 추가 tier / ADR-008). marketplace version·description sync(ADR-063, sync PR 선행 merge).
+
 ## [0.44.2] - 2026-07-23 — CFP-2804 구 패러다임 어휘 위생 정정 (PATCH)
 
 ### Changed (CFP-2804 — ADR-064 §결정7 L406 이연 cascade, PATCH)

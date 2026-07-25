@@ -202,3 +202,12 @@ scripts/lib/check_rebase_staleness_sentinel.py:templates/github-workflows/rebase
 # .sh->python3 lib/*.py = depth-2 SSOT. 둘 다 chmod +x(100755).
 scripts/check-semantic-staleness-sentinel.sh:templates/github-workflows/semantic-staleness-detection.yml
 scripts/lib/check_semantic_staleness_sentinel.py:templates/github-workflows/semantic-staleness-detection.yml
+
+# CFP-2813 (ADR-112 Amendment 1 + ADR-078 Amendment 3 재건축) — Living Architecture per-PR 최신성
+# 게이트 전파 closure. living-architecture-update.yml run-block 1-hop = .sh (ADR-061 thin wrapper),
+# .sh->python3 lib/*.py = depth-2 SSOT (변경-문서 coupling closed-binary 본체). 각 .sh·.py 쌍은 동일
+# workflow run-block 1-hop exec 닫힘이라 둘 다 :dep_workflow 부착(consumer degraded copy 시 누락
+# hard-block 회피 + degraded-mode suppression). 둘 다 chmod +x(100755) — Check 4 exec-bit 의무
+# (.sh/.py 비면제, check-consumer-scripts-manifest.sh L137-148).
+scripts/check-living-architecture-update.sh:templates/github-workflows/living-architecture-update.yml
+scripts/lib/check_living_architecture_update.py:templates/github-workflows/living-architecture-update.yml

@@ -649,3 +649,16 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "fable tier roster-integrity §8 discriminating self-test — GREEN(canonical 10 fable / SecurityTestPL opus / census 41 dist 7-10-10-14) 대 RED 4-mutation(count=9 / exclusion / census=38 preset-drop / bijection non-target) exit-1 판별 + real-repo find-enumeration 41 liveness. soak=G2 / DAST=G5 / real-render=§8.7 runtime 축 disjoint (정적 tier-분배 lint, wrapper-self plugin-meta-na). honest-ceiling(ADR-151 §결정7): presence(tier 값 배치) != truth(실 carve-out 기능성), 검출력=G3 미강제."
+
+  # -- CFP-2813 (ADR-078 Amd3 + ADR-112 Amd1) — living-architecture-update 게이트 discriminating self-test enroll --
+  # bijection: tests/scripts/*.sh +1 (신규 enroll). 실행 채널 = living-architecture-update.yml:living-architecture-update-test
+  #   (전용 hard-fail job, no continue-on-error, if: mclayer/plugin-codeforge). byte-identical template pair(.github ↔ templates).
+  - self_test: "tests/scripts/test_check-living-architecture-update.sh"
+    execution_channel: "workflow:living-architecture-update.yml:living-architecture-update-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    identity_bearing: false
+    g_boundary_check: "living-architecture-update 게이트 discriminating self-test (ADR-154 §결정 7) — RED(missing-update/mapping-miss/invalid-declare/unknown-surface 4-category fixture) exit 1 vs clean GREEN exit 0 대조 + M1-M8 mutation KILL(marker-regex·presence-judgement·frontmatter-gaming·glob-noop·mapping-fail·exit2-silent·stoplist·classify-degrade) 전수 검증 + ReDoS 시간-상한 회귀(CWE-1333 polynomial quantifier) + invariant 5종(struct=0→0·mapping-never-PASS·frontmatter-never-ok·unparseable→2·bypass-no-silent) + F-4 repo-root bijection(전수 분류) + scanned-N trace emit. soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 CI lint gate, wrapper-self plugin-meta-na). identity_bearing:false (dispatch/routing 식별자 아님 — no-impact marker 수집이 attack surface 아님). honest-ceiling(ADR-151 §결정7): presence(marker schema·regex bounded·rationale floor) != truth(실 no-impact 근거 타당성·semantic drift=L3 review-tier), discriminating 검출력=G3 미강제."

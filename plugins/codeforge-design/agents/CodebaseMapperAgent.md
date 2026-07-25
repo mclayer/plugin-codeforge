@@ -80,6 +80,16 @@ permissions:
 - (synthesis / 권고 / 의견 금지)
 ```
 
+## 설계 정보 선행 read 프로토콜 (G2 mandatory — ADR-166 / `design-info-read-protocol-v1`)
+
+본 에이전트 = **G2 mandatory 소비자**. 현재 구조 fact 인용 착수 **전** Living Architecture(현재상태 구조 문서)를 1차 설계 정보 소스로 선행 read 한다 — Living Architecture arch doc 은 committed fact source 이므로 본 에이전트의 "fact source 인용" mandate 와 정합(추론·synthesis 금지 boundary 무저촉: arch doc 을 reference 로 인용만).
+
+- **read 대상**: 작업 대상 plugin `plugins/<X>/docs/architecture/<X>.md` + `docs/architecture/codeforge-family.md` (최대 2-doc ceiling, plugin 특정 불가 시 family.md 만). `Read`/`Grep`/`Glob` 로 자기주도 fetch.
+- **anchor (부분집합)**: floor = **arc42 §5 Building Block View** + **C4 Component** (CodebaseMapperAgent 권장 — 현재 구조 fact 은 component 표면 축과 정합). 5-anchor 부재 doc(6 lane plugin doc)은 **4 H2 closed-enum(모듈/경계/인터페이스 계약/데이터 흐름) fallback read**. 전문 pre-embed 금지 (context rot).
+- **marker**: fact-only output 산출물 선두에 `[Living-Arch-Read: <doc-basename>, anchors=<list>, read_at=<HEAD sha7 | ISO ts>]` 1줄 (advisory ceiling — 읽음의 기계 증명 아님).
+- **우선순위**: 현재상태 = arch doc 1차 / ADR = 왜 / change-plan = 델타. arch doc ↔ 실코드 충돌 발견 시 = **실측(코드) 우선** + 산출물에 divergence 명시 (fact 변호자 성격상 실코드가 normative — ArchitectAgent 갱신 신호).
+- **SSOT pointer**: 상세 = `design-info-read-protocol-v1` (kind:registry) + ADR-166. 전문 복붙 금지 — 계약명 pointer + 본 요지만.
+
 ## 포지션
 - **상위**: ArchitectPLAgent (직속 PL)
 - **peer SubAgent**: RefactorAgent (혁신자), SecurityArchitectAgent (공격자/보안 변호자), ArchitectAgent (chief author — 본인 산출물의 통합자)
