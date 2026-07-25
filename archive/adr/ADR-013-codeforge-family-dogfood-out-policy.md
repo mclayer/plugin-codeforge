@@ -16,6 +16,7 @@ related_stories:
   - CFP-596  # Amendment 5 carrier (story-init workflow cross-repo write mandate — original)
   - CFP-671  # Amendment 5 ACTUAL integration + Amendment 6 carrier (regression incident, CFP-596 phantom changelog evidence)
   - CFP-2252  # Amendment 7 carrier (TARGET_REPO → project.yaml github.story_ssot_repo 파라미터화, 확장-only)
+  - CFP-2821  # Amendment 4 reciprocal 각주 (ADR-147 Amendment 1 조건 3 2-surface credential-model — self-hosted JIT sourcing supersede-in-part; F-DR-2821-1)
 related_adrs:
   - ADR-009
   - ADR-012
@@ -25,6 +26,7 @@ related_adrs:
   - ADR-060  # evidence-enforceable framework (Amendment 5 mechanical_enforcement_actions[] 연동)
   - ADR-066  # Amendment 5 PAT scope normative minimum cross-ref
   - ADR-036  # CFP-671 Amendment 1 cross-ref (title regex precedence)
+  - ADR-147  # Amendment 4 reciprocal 각주 — self-hosted JIT sourcing surface 한정 supersede-in-part (CFP-2821, ADR-147 Amendment 1 조건 3)
 mechanical_enforcement_actions:
   - name: story-init-cross-repo-write
     tier: warning
@@ -262,6 +264,15 @@ CFP-393 (#398, merged) §11 follow-up #2 가 식별: KPI workflow (`templates/gi
 - KPI workflow 가 internal-docs PRIVATE 상태에서 정합 동작 (PAT 사용 + fallback graceful).
 - 단일 PAT scope consolidation 으로 rotation overhead 최소화 (codeforge family ops 부담 감소).
 - visibility drift 해소 — ADR-013 §결정 1 의 "(Public)" 가정이 더 이상 신뢰 source 아님 (본 Amendment 가 supersede SSOT).
+
+### 2-surface credential-model 각주 (Amendment 4 reciprocal — CFP-2821, ADR-147 Amendment 1 조건 3)
+
+append-only 각주(기존 §결정 2/3 문장 무삭제 — CFP-2821 DR FIX iter1 F-DR-2821-1 reciprocal). ADR-147 Amendment 1(CFP-2821, internal-docs `Fix Ledger Sync` self-hosted 이관) 조건 3 이 본 Amendment 4 §결정 2/3 의 "단일 `CODEFORGE_CROSS_REPO_PAT` consolidation(신규 PAT 도입 시 별도 ADR 발의 의무)" 을 **self-hosted surface 한정 supersede-in-part** 한다. credential-model 은 러너 topology 축으로 2-surface 분화한다:
+
+- **hosted / org-wide job** = 단일 consolidated `CODEFORGE_CROSS_REPO_PAT`(본 Amendment 4 §결정 2/3 불변 — default surface, cross-repo write-PAT 비확산 유지).
+- **self-hosted JIT sourcing job**(persistent 공유 러너 상주) = scoped down-scope credential(fine-grained `issues:write`@1-repo 또는 ≤1h scoped App token) — ADR-147 Amendment 1 조건 3 이 강제. 방향 = **강화**(persistent 공유 러너에 상주하는 credential 의 org-wide classic write → 1-repo scope 축소, blast-radius 축소), evidence-gated(#2820 fix-ledger-sync 14일 상시-FAIL census + self-hosted 대조군 지속 성공 + group6 online 실측). 본 별도 credential 도입은 §결정 3 "신규 PAT 도입 시 별도 ADR 발의 의무" 를 ADR-147 Amendment 1 발의로 **이행**(위반 아님) — §결정 2 consolidation intent(cross-repo write-PAT 비확산)는 hosted surface 에서 불변 보존.
+
+자기 선례 형식 = ADR-145 §결정 3(fail-closed 비호환 override codify) / ADR-125(required-context divergence 추적)의 supersede-in-part 패턴. carrier = CFP-2821(Change Plan `cfp-2821-fix-ledger-selfhosted-migration` §7.3/§10.2). is_transitional: false — 강화 방향 ratchet(scope 축소), 약화 아님.
 
 ### 관련 파일
 

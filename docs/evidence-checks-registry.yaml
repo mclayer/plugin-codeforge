@@ -4231,3 +4231,45 @@ entries:
     carrier_adr: ADR-060           # evidence-enforceable framework — required 승격 = §결정 6 3-tuple + evidence 6종 (Change Plan §9.R ③)
     promotion_trigger: advisory    # required contexts 승격 = 별도 후속 carrier (본 Story 내 branch protection 8-tuple 무변경)
     status: Active
+
+  # CFP-2812 (ADR-167) — ADR amendment 누적 임계 재제정(compaction) ratchet 게이트 2 entry (threshold count 축 + parity 판정 축).
+  # warning tier + bypass_label omit(D3 미신설) + owner_adr ADR-167 / carrier_adr ADR-060. byte-parity workflow 쌍 adr-amendment-threshold.yml(2 job).
+  - name: adr-amendment-threshold
+    description: |
+      ADR amendment 누적 임계 재제정(compaction) ratchet — count 축. effective_count =
+      max(본문 헤딩 count `^#{2,4} Amendment`, frontmatter amendment_log+amendments 합산 count)
+      >= N 판정 + grandfather baseline(docs/adr-amendment-threshold-baseline.yaml) 대조
+      (미등재·grandfathered_at 초과 = RED, B-1 단조 diff seal / B-2 ceiling sanity 무결성).
+      corpus 전수 스캔(archive/adr/ADR-*.md, ADR-RESERVATION.md EXEMPT). 재제정 유도 트리거 —
+      amendment 차단 아님(ADR-058 §결정5 옵션A 거부 무변경). SSOT = ADR-167(governance).
+    detect_command: bash scripts/check-adr-amendment-threshold.sh
+    workflow: templates/github-workflows/adr-amendment-threshold.yml
+    current_tier: warning
+    # bypass_label: omit — warning tier 비차단, D3 미신설. required 승격 carrier 에서 신설
+    # bypass_audit_lint: omit — bypass_label 미정의
+    introduced_by: CFP-2812
+    introduced_date: 2026-07-25
+    owner_adr: ADR-167
+    carrier_adr: ADR-060
+    promotion_trigger: advisory
+    status: Active
+
+  - name: adr-amendment-parity
+    description: |
+      ADR amendment heading↔frontmatter parity + reinterpretation self-declare marker
+      presence/consistency — 신규 amendment(PR diff forward-only, merge-base 대비)의
+      heading-only 저작 검출(본문 헤딩만 추가·fm entry 미기재 = RED) + 신규 entry
+      reinterpretation boolean marker 필수(미기재·비-boolean = RED). presence/consistency
+      까지만 기계 보증 — 재해석 의미 판정은 리뷰 판정 축(honest ceiling, ADR-167 §결정7).
+      동일 workflow adr-amendment-threshold.yml 내 parity job. SSOT = ADR-167(governance).
+    detect_command: bash scripts/check-adr-amendment-parity.sh
+    workflow: templates/github-workflows/adr-amendment-threshold.yml
+    current_tier: warning
+    # bypass_label: omit — warning tier 비차단, D3 미신설. required 승격 carrier 에서 신설
+    # bypass_audit_lint: omit — bypass_label 미정의
+    introduced_by: CFP-2812
+    introduced_date: 2026-07-25
+    owner_adr: ADR-167
+    carrier_adr: ADR-060
+    promotion_trigger: advisory
+    status: Active

@@ -674,3 +674,25 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "codex-review out.json AC-6 소비 재검증 helper(scripts/lib/check_codex_review_output_schema.py) discriminating self-test — negative 6종(free-form/파일부재/truncated/verdict enum-out/counts↔findings cross-field mismatch/category∉enum) → exit 1 inconclusive(+stdout sentinel 병행 assert) + positive 2종 → exit 0 + 취약 revert cross-field KILL(vacuous-green 방지). soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 schema 소비 재검증 판별력 결박). honest-ceiling(ADR-151 §결정7): presence(재검증 5단계 형식 통과) != truth(실 리뷰 verdict 정확성=L3 review-tier), 검출력=G3 미강제."
+
+  # ── CFP-2812 (ADR-167 adr-amendment-compaction-ratchet / ADR-060) — ADR amendment 누적 임계 + parity 게이트 discriminating self-test enroll (2건) ──
+  # bijection: tests/scripts/*.sh 60 → 62 (신규 self-test 2 enroll). 실행 채널 = adr-amendment-threshold-test.yml:adr-amendment-threshold-test
+  #   (byte-identical .github + templates pair, wrapper-self only, non-required day-1 hard-fail — branch protection 8-tuple 무변경).
+  #   단일 job 이 두 self-test(threshold/parity)를 각각 run: 배선. run-line: `bash tests/scripts/test_adr-amendment-threshold.sh` / `bash tests/scripts/test_adr-amendment-parity.sh`.
+  - self_test: "tests/scripts/test_adr-amendment-threshold.sh"
+    execution_channel: "workflow:adr-amendment-threshold-test.yml:adr-amendment-threshold-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "ADR amendment 누적 임계 게이트 discriminating self-test (순수 함수 6종 python-level fixture: dual-key 합산·effective=max·BVA 4분기 N=10·marker presence/consistency + 게이트 subprocess fork mutation-kill 4종[임계검사-제거/경계-off-by-one/baseline-미등재-세탁/first-key-wins-회귀] 정본 RED↔변이본 GREEN + census distinct-marker 병행 + fail-closed(D9) malformed RED + AC-2 산식↔baseline 동일성 + AC-8 count0 GREEN·dangling B-2 RED) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 governance lint self-test, wrapper-self plugin-meta-na). honest-ceiling(ADR-151 §결정7): presence(임계 산식 판정·marker 타입) ≠ truth(재해석 의미 판정=L3 review-tier), 검출력=G3 미강제."
+
+  - self_test: "tests/scripts/test_adr-amendment-parity.sh"
+    execution_channel: "workflow:adr-amendment-threshold-test.yml:adr-amendment-threshold-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "heading↔fm parity + 재해석 marker discriminating self-test (check_parity/check_marker_presence python-level fixture: heading-only RED[F-1]·fm≥heading GREEN·marker 미기재/비-boolean RED·boolean GREEN + pure-function mutation-kill 3종[parity-검사-제거/marker-타입검사-회귀/marker-presence-제거] 정본 RED↔변이본 GREEN + orchestration fail-closed malformed RED·clean GREEN 비-vacuous census) — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 governance lint self-test, wrapper-self plugin-meta-na). forward-only 정직 천장(D4): orchestration heading-only 검출은 merge-base delta 소관(git 미사용) — 검출력 discriminating 은 순수 함수 mutation-kill 로 결박. honest-ceiling(ADR-151 §결정7): presence ≠ truth, 검출력=G3 미강제."
