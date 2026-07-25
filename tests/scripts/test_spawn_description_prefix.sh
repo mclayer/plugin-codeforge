@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # tests/scripts/test_spawn_description_prefix.sh
 # CFP-2574 Phase 2 (QADev — §8 Test Contract 이행) — Discriminating suite for
-#   ADR-143 Agent 수행 액션 렌더 줄 프리픽스 규약 (`[에이전트명] MM/DD HH:MM - 내용`).
+#   ADR-143 Agent 수행 액션 렌더 줄 프리픽스 규약 (`[에이전트명] MM/DD HH:MM:SS - 내용`).
 #
 # 대상 Dev 스크립트 인터페이스 (계약 고정):
-#   A. scripts/lib/kst_render_stamp.py            — `--epoch <s>` → stdout `MM/DD HH:MM\n`, stderr 빈, exit 0. UTC+9 고정 산술.
+#   A. scripts/lib/kst_render_stamp.py            — `--epoch <s>` → stdout `MM/DD HH:MM:SS\n`, stderr 빈, exit 0. UTC+9 고정 산술.
 #   B. scripts/lib/check_spawn_description_prefix.py — `--description-stdin` → stdout JSON
 #        {"description_prefix_conformant":<bool>,"empty":<bool>,...}, exit 0 ALWAYS.
-#        conformant regex = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2} - .
+#        conformant regex = ^\[[^\]]{1,64}\] \d{2}/\d{2} \d{2}:\d{2}(:\d{2})? - .
 #   D. scripts/lib/check_kst_timestamp.py (기존, 무편집) — KST_TS_RE (full-zoned only).
 #
 # 3 spec invariant ↔ assertion 1:1 매핑:
@@ -321,7 +321,7 @@ if [ "$b1_exit" -eq 0 ] && printf '%s' "$b1_out" | grep -Eq "$RENDER_RE"; then
   PASS=$((PASS+1))
 else
   echo "✗ FAIL: B-1: python SSOT 무-epoch"
-  echo "  Expected exit 0 ∧ out RENDER_RE(MM/DD HH:MM) 매칭, got exit=$b1_exit out='$b1_out'"
+  echo "  Expected exit 0 ∧ out RENDER_RE(MM/DD HH:MM:SS) 매칭, got exit=$b1_exit out='$b1_out'"
   FAIL=$((FAIL+1))
 fi
 

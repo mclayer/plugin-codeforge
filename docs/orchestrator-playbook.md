@@ -3769,9 +3769,9 @@ Orchestrator 는 매 agent spawn 시 **Spawn ID 대장**을 `.claude-work/progre
 harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<주체명>] MM/DD HH:MM:SS - <내용>` 프리픽스가 뜨게 해 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 화면 렌더에 실제 도달하는 **유일 통로 = model-authored 프리픽스** — 에이전트/Orchestrator 가 description·prose 에 **직접 저작(primary)**. harness UI 는 model-emitted 원본 description 을 렌더하므로, PreToolUse hook `updatedInput` 기계 주입(CFP-2587)은 실행 입력 계층만 치환하고 화면 렌더 줄에 미도달 → render 목적에서 **fail-open backup 으로 강등**(실행-계층 정확성 목적 유효 잔존). 규약 SSOT = ADR-143 (Amendment 2).
 
 **형식**: `[<주체명>] MM/DD HH:MM:SS - <내용>`
-- **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13 - Change Plan §3 통합`.
-- **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15 - kst helper 작성`.
-- **범위③** Orchestrator 상태·액션 줄 — subject = `[Orchestrator]` self-subject(렌더 UI 진행 줄 한정, INV-2 완화). 예: `[Orchestrator] 07/21 14:05 - 설계리뷰 PASS → 구현 lane 진입`.
+- **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13:07 - Change Plan §3 통합`.
+- **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15:42 - kst helper 작성`.
+- **범위③** Orchestrator 상태·액션 줄 — subject = `[Orchestrator]` self-subject(렌더 UI 진행 줄 한정, INV-2 완화). 예: `[Orchestrator] 07/21 14:05:31 - 설계리뷰 PASS → 구현 lane 진입`.
 - `[<주체명>]` 값 SSOT = spawn-event-v1 `agent_type`(roster-derived PascalCase + `unknown-agent` fallback) + Orchestrator self-subject `[Orchestrator]` — §14.11 Spawn ID 대장의 agent_type 어휘 재사용(신규 명명체계 0).
 
 **시각**: KST(UTC+9 고정 산술). 컴팩트 — offset·연도·`KST` 라벨 미표기, 초 표기(`MM/DD HH:MM:SS`). dispatch/작성 시점 **근사**(exact per-call HH:MM:SS 아님) — 단 앵커 verbatim, 산술 증분(+N) 표시 금지(ADR-143 Amendment 4). helper = `bash scripts/kst-render-stamp.sh`(GNU date primary + Python fallback). machine-local `date`·`TZ=Asia/Seoul` 금지 — Korea 고정 +9 invariant 로 UTC+9 고정 산술만.

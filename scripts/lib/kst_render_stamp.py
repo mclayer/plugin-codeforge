@@ -3,7 +3,7 @@
 # CFP-2574 / ADR-143 §결정 3 — KST render-line 시각원 (UTC+9 고정 산술) Python SSOT
 #
 # 목적: Agent 액션 렌더 줄 프리픽스 `[에이전트명] MM/DD HH:MM:SS - 내용` 의 컴팩트 KST 시각
-#       `MM/DD HH:MM:SS` 를 산출. harness 는 system context 로 날짜만 주입하고 시각(HH:MM)은
+#       `MM/DD HH:MM:SS` 를 산출. harness 는 system context 로 날짜만 주입하고 시각(HH:MM:SS)은
 #       미주입 [source: anthropics/claude-code #34530 Closed not-planned + 실측] → 실시계 read 로만 확보.
 #
 # TZ-invariant 보장 (ADR-143 §결정 3):
