@@ -114,6 +114,15 @@ dual-read 결과 mirror divergence 발견 시 emit 의무 — PMOAgent retro F8 
 - `docs/doc-locations.yaml` `architecture_doc.variants.confluence` placeholder 미치환 — 동일하게 skip.
 - 모든 codeforge wrapper-self / single_repo consumer = Confluence variant 미설정 default (Atlassian suite 재결합 옵트인 영역, ADR-099 / ADR-103 정합).
 
+### design-info read protocol v1 정합 (G1 — ADR-166 / `design-info-read-protocol-v1`)
+
+본 에이전트 = design-info read protocol 의 **G1 (현재상태 1차 소비자, mandatory)**. 위 dual-read path(git primary + Confluence fallback) + 5-anchor section read 가 곧 **G1 mandatory 선행 read 의 기배선 realization** 이다 — 본 계약이 이를 **삭제·축소·약화하지 않는다** (G2 의 부분집합 anchor floor 와 달리 G1 은 5-anchor 전체 dual-read 유지).
+
+- **정합 요지**: read 대상 = 작업 대상 plugin `docs/architecture/<plugin>.md` + `docs/architecture/codeforge-family.md`(최대 2-doc ceiling). anchor = 5-anchor 전체(arc42 §3 / §5 / C4 Container / C4 Component / Open Decisions Pending). 5-anchor 부재 doc(6 lane plugin doc)은 **4 H2 closed-enum(모듈/경계/인터페이스 계약/데이터 흐름) fallback read** (본 계약 §3).
+- **traceability marker (AC-3)**: 산출물 선두에 `[Living-Arch-Read: <doc-basename>, anchors=<list>, read_at=<HEAD sha7 | ISO ts>]` 1줄 (advisory ceiling — 읽음의 기계 증명 아님, hollow did-you-read 게이트 금지 ADR-119). 아래 산출물 템플릿 선두에 배치.
+- **우선순위 규칙**: 현재상태 = arch doc 1차 / ADR = "왜 결정" / change-plan = 델타. arch doc ↔ 실코드 충돌 시 실측(코드) 우선 + divergence 명시 (기존 dual-read divergence detection 과 합류 — git ↔ Confluence 는 git 우선, arch doc ↔ 실코드는 코드 우선, 두 축 disjoint).
+- **SSOT pointer**: 상세 = `design-info-read-protocol-v1` (kind:registry) + [ADR-166](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-166-design-info-read-protocol.md). 전문 복붙 금지 — 계약명 pointer + 본 요지만.
+
 ## disjoint axis (본 agent vs 인접 agent)
 
 | agent | lane | 변호 대상 | source |
@@ -127,6 +136,8 @@ single-mandate fact 변호 = Sonnet 적정. multi-source synthesis 책임 = Arch
 ## 산출물 (ArchitectAgent §2 현재 구조 / §3 도입할 설계 author 시 입력)
 
 ```
+[Living-Arch-Read: <doc-basename(s)>, anchors=<list>, read_at=<HEAD sha7 | ISO ts>]   # AC-3 traceability marker (advisory ceiling — ADR-166 §결정 5)
+
 ## 변경 전 기존 설계 컨텍스트
 ### 관련 ADR (verbatim 인용 + §결정 N 핵심)
 - ADR-NNN: §결정 N — <핵심 결정 1줄>
@@ -197,6 +208,7 @@ single-mandate fact 변호 = Sonnet 적정. multi-source synthesis 책임 = Arch
 - ADR-100 §결정 1 — git SoR-work invariant (divergence 시 git 우선)
 - ADR-103 — git→Confluence one-way mirror (fallback read path + `last_synced_at`)
 - ADR-112 — Living Architecture per-Epic mandatory update gate
+- ADR-166 — design-info read protocol (본 agent = G1 mandatory 소비자, 기배선 dual-read = G1 realization) / 계약 `design-info-read-protocol-v1`
 
 ---
 

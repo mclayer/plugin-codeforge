@@ -15,6 +15,20 @@ ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/arch
 
 ---
 
+## 1.5 설계 정보 선행 read 프로토콜 (G2 mandatory — ADR-166 / `design-info-read-protocol-v1`)
+
+**4 리뷰 PL 전원(Requirements-review · Design · Code · Security) = G2 mandatory 소비자.** per-PL 예외 0 — 본 절이 유일 SSOT 배선 (lane별 사본 분기 금지). 심사 착수 전 Living Architecture(현재상태 구조 문서)를 **1차 설계 정보 소스**로 선행 read 한다 — 현재상태 질문을 append-only 이력(archive/adr) 조각에서 재구성하는 layer 오용 차단.
+
+1. **선행 read 대상**: 심사 대상 plugin 의 `plugins/<X>/docs/architecture/<X>.md` + `docs/architecture/codeforge-family.md` — **최대 2-doc ceiling**. 대상 plugin 특정 불가 시 `codeforge-family.md` 만.
+2. **anchor (부분집합)**: floor = **arc42 §5 Building Block View** + 심사 대상 관련 anchor on-demand. **RequirementsReviewPL = + Open Decisions Pending** (내부적합 축의 과거 결정 충돌·중복 대조 정합). 5-anchor section 부재 doc(6 lane plugin doc — 5-anchor 는 family.md 만 보유)은 **4 H2 closed-enum(`## 모듈` / `## 경계` / `## 인터페이스 계약` / `## 데이터 흐름`) fallback read**. 전문(full-doc) pre-embed 금지 (context rot).
+3. **traceability marker**: verdict 산출물 선두에 1줄 — `[Living-Arch-Read: <doc-basename>, anchors=<list>, read_at=<HEAD sha7 | ISO ts>]` (grep 가능). **advisory ceiling**: 읽음의 기계 증명 아님 — hollow "did-you-read" 게이트 배선 금지 (ADR-119 검사연극 금지).
+4. **우선순위 규칙**: 현재상태(지금 어떻게) = arch doc 1차 / ADR = "왜 결정"(explanation) / change-plan = "이번에 무엇을"(델타) 보조. arch doc ↔ 실코드 충돌 발견 시 = **실측(코드) 우선** + verdict 에 divergence 명시 (설계리뷰 `living-architecture-not-updated` L3 채널 합류).
+5. **SSOT pointer**: 상세 = `design-info-read-protocol-v1` (kind:registry) + [ADR-166](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-166-design-info-read-protocol.md). 전문 복붙 금지 — 계약명 pointer + 본 요지만.
+
+> **Orchestrator 제외(T-1)**: 본 선행 read 강제는 **lane-agent 계층(리뷰 PL) 한정** — Orchestrator 는 대상 아님 (ADR-142 L1 정합).
+
+---
+
 ## 2. 워커 packet 구성 (PL → Orchestrator → Worker)
 
 PL은 lane 진입 시 다음 필드를 채운 packet을 워커에 주입한다. **필수 필드 누락 시 워커가 ESCALATE 신호(`ESCALATE_PACKET_INCOMPLETE`) 반환 — generic fallback 금지**.

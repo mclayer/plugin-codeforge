@@ -1,6 +1,7 @@
 ---
 title: <대상 영역 한 줄 — 예: codeforge family 전체 구조>
 last_captured: <YYYY-MM-DD>   # KST 일자 의미 (ADR-079 display layer 정합) — 마지막 구조 캡처 시점
+captured_at_sha: <full-or-7 hex>   # CFP-2813 D7 provenance — 이 구조 서술이 검증된 시점의 코드 commit anchor (Drift 3-tuple coarse 적용). advisory field — living-architecture-update 게이트 기계 강제 없음 (SHA 정확성 기계 검증 = 또 다른 touch-gaming 표면 → honest ceiling, ADR-119). 신규 doc = 최초 캡처 commit SHA.
 kind: architecture_doc
 ---
 

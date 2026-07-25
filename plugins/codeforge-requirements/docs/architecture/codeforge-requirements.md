@@ -1,6 +1,8 @@
 ---
 title: codeforge-requirements lane 구조 (요구사항 레인 — 사용자 요구 접수 → 통합 요구사항 명세)
-last_captured: 2026-05-18
+last_captured: 2026-07-24
+captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
+last_update_cfp: CFP-2813  # stale 해소 실갱신 — 요구사항리뷰 lane 후행 삽입(ADR-125/159: lane exit = phase:요구사항-리뷰 + 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전) + PL·Researcher fable tier(ADR-141 Amd4) + ADR-166 read protocol G2 소비자 관점(요구 4종 mandatory 선행 read) + 본 doc 자신 = living-architecture-update per-PR 게이트 대상(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -33,7 +35,7 @@ codeforge-requirements lane = **사용자 요구 접수 → 통합 요구사항 
 
 | 모듈 | self-write 영역 | Mechanism |
 |---|---|---|
-| RequirementsPLAgent | Story §2 (도메인 분석) · §5 (확장 해석) · §6 (개념·외부 지식) · `[요구사항]` GitHub comment · `phase:요구사항 → phase:설계` label 전환 | `Edit(docs/stories/**)` + `mcp__github__add_issue_comment` + `mcp__github__issue_write` |
+| RequirementsPLAgent | Story §2 (도메인 분석) · §5 (확장 해석) · §6 (개념·외부 지식) · `[요구사항]` GitHub comment · `phase:요구사항 → phase:요구사항-리뷰` transition 신호 (lane exit — 후행 = 요구사항리뷰 lane, ADR-125. 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전, ADR-125 Amd3 결정 A / ADR-159) | `Edit(docs/stories/**)` + `mcp__github__add_issue_comment` + `mcp__github__issue_write` |
 | ChangeImpactAgent · FeasibilityAgent · ContinuityAgent | Story §4.1 / §4.2 / §4.3 (code-context 3-row) | `.claude-work/doc-queue/` (write queue drain — PL 통합 시점) |
 | DomainAgent | `docs/domain-knowledge/domain/<area>/<topic>.md` (CFP-26 Phase 0a — owner direct write) | `Edit(docs/domain-knowledge/domain/**)` |
 | ResearcherAgent | `docs/domain-knowledge/concept/<slug>.md` (ADR-161) | `Edit(docs/domain-knowledge/concept/**)` |
@@ -67,8 +69,10 @@ lane 의 외부 surface — kind:contract producer / kind:registry consumer / go
 
 - **ADR-077** (clarification 강제 재조사 — recheck_counter cap=5) — RequirementsPLAgent 가 lane 진입 후 clarification 답변이 §2/§5/§6 의미 변경 도달 시 재spawn 의무 (§9.0 Clarification 재스폰 이력 §10 FIX Ledger 와 disjoint 제3 채널, fix:* 미부착).
 - **ADR-052 Amendment 1 Touchpoint #4** (mandatory) — RequirementsPLAgent §1-§6 완료 직후 Codex Proactive Check 자동 dispatch + divergence 감지 시 `debate-protocol-v1` 발동. divergence 영역 4 criteria (AC 의미 / Edge Case 누락 / Why 해석 mismatch / fact-check drift). PL synthesis fact claim 영역 marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + reverse-explicit `[verification-out-of-scope: <사유>]` 의무.
-- **ADR-046** (ResearcherAgent role redefinition) — Opus tier rationale + 3 mandate (Concept formulation + Deep exploration + Requirement reshape) anchor. Amendment 2 (CFP-2328) = Mandate 2 demand-anchored 재초점 + concept/ silo close-loop read (독자 = 미래 Story 의 Researcher 자신) + 외부지식 하류 도달 주 채널 = §6 Section 5 reshape (모듈/경계/dimension 구조 무변경, governance 정밀화).
+- **ADR-046** (ResearcherAgent role redefinition) — 3 mandate (Concept formulation + Deep exploration + Requirement reshape) anchor. tier = fable (ADR-141 Amendment 4 carve-out — RequirementsPL·Researcher 포함 apex 10, 구 Opus 표기 supersede). Amendment 2 (CFP-2328) = Mandate 2 demand-anchored 재초점 + concept/ silo close-loop read (독자 = 미래 Story 의 Researcher 자신) + 외부지식 하류 도달 주 채널 = §6 Section 5 reshape (모듈/경계/dimension 구조 무변경, governance 정밀화).
 - **ADR-161** (concept-knowledge schema) — `docs/domain-knowledge/concept/**` ResearcherAgent direct write + `kind: concept_definition` schema.
+- **ADR-166** (design-info read protocol, CFP-2813) — 본 lane 소속 **G2 mandatory 소비자 4종 = DomainAgent · FeasibilityAgent · ChangeImpactAgent · ContinuityAgent**: 작업 개시 시 Living Architecture (대상 plugin doc + family.md, 부분집합 anchor — floor arc42 §5, 5-anchor 부재 시 4 H2 fallback) 선행 read 가 표준 경로 (append-only 이력 재구성 = 프로토콜 위반 경로). 산출물 `[Living-Arch-Read]` marker (advisory ceiling). 그 외 lane 구성원 (PL·Analyst·Researcher) = mandatory 대상 아님. 배선 = 각 agent .md in-band (CFP-2813 Phase 2).
+- **ADR-125 / ADR-159** (요구사항리뷰 lane + design-entry sign-off) — lane 후행 = 요구사항리뷰 (외부사실 + internal-invariant + 내부적합 다축 게이트), 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전.
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer). 계약 schema field-level 상세 = 해당 contract file + `MANIFEST.yaml` SSOT.
 
@@ -125,8 +129,12 @@ ADR-077 clarification 강제 재조사 check (recheck_counter cap=5)
 requirements_output packet emit (Story §1-§6 synthesis 통합 요구사항 명세)
   │
   ▼
-Orchestrator → phase:요구사항 → phase:설계 label 전환 → 설계 lane (ArchitectPLAgent) 핸드오프
+phase:요구사항 → phase:요구사항-리뷰 전환 → 요구사항리뷰 lane (codeforge-review:RequirementsReviewPLAgent —
+외부사실 + internal-invariant + 내부적합 다축 게이트, ADR-125) → PASS → 사용자 최종 확정 (design-entry
+sign-off, ADR-125 Amd3 결정 A / ADR-159) → 설계 lane (ArchitectPLAgent) 핸드오프
 ```
+
+**선행 read (ADR-166, CFP-2813 Phase 2 배선)**: 위 fan-out 의 G2 4종 (Domain/Feasibility/ChangeImpact/Continuity) 은 dispatch 입력 처리 전 Living Architecture 선행 read 가 표준 — 특히 ContinuityAgent 의 충돌/중복 분류와 FeasibilityAgent 의 구현 가능성 판단이 이력 재구성 대신 현재상태 canonical source 를 1차로 읽는다.
 
 **artifact propagation**:
 
@@ -156,6 +164,6 @@ Orchestrator → phase:요구사항 → phase:설계 label 전환 → 설계 lan
 
 - **desired state** = 본 doc (`docs/architecture/codeforge-requirements.md`) — lane 의 영속 구조 SSOT.
 - **current state** = lane plugin agent file (`agents/RequirementsPLAgent.md` · `agents/DomainAgent.md` · `agents/RequirementsAnalystAgent.md` · `agents/ResearcherAgent.md` · `agents/ChangeImpactAgent.md` · `agents/FeasibilityAgent.md` · `agents/ContinuityAgent.md` · `agents/codex-proactive-check.md`) + `CLAUDE.md` (runtime 실제 동작).
-- **converge** = ArchitectAgent self-write 확장 (Sub-Epic CFP-949 S3 carrier `mclayer/plugin-codeforge-design` — 구 lane repo, 현 `plugins/codeforge-design/`, repo 삭제됨 2026-06-12 — ADR-082 §결정 1 mechanism) + design lane verdict gate (drift lint CFP-923 detection class d, Wave 4 carrier).
+- **converge** = ArchitectAgent per-PR 현행화 (ADR-078 Amd3 / ADR-112 Amd1, CFP-2813 — 본 doc 을 대상으로 하는 `living-architecture-update` per-PR 게이트: `plugins/codeforge-requirements/**` 변경 PR 은 본 doc 본문 갱신 OR `[living-arch-no-impact]` declare 없이 통과 불가. 구 drift lint (CFP-923) 는 #1972/#2110 로 제거 — content-drift 재도입 금지, touch/timing coupling 으로 재건축).
 
 > 본 cross-ref = 패턴 답습 (pattern). 도메인 (upgrade flow ↔ 설계 lane) 은 disjoint. wording SSOT = ADR-076 본문 + ADR-078 §결정 2.
