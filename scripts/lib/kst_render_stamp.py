@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # CFP-2574 / ADR-143 §결정 3 — KST render-line 시각원 (UTC+9 고정 산술) Python SSOT
 #
-# 목적: Agent 액션 렌더 줄 프리픽스 `[에이전트명] MM/DD HH:MM - 내용` 의 컴팩트 KST 시각
-#       `MM/DD HH:MM` 를 산출. harness 는 system context 로 날짜만 주입하고 시각(HH:MM)은
+# 목적: Agent 액션 렌더 줄 프리픽스 `[에이전트명] MM/DD HH:MM:SS - 내용` 의 컴팩트 KST 시각
+#       `MM/DD HH:MM:SS` 를 산출. harness 는 system context 로 날짜만 주입하고 시각(HH:MM:SS)은
 #       미주입 [source: anthropics/claude-code #34530 Closed not-planned + 실측] → 실시계 read 로만 확보.
 #
 # TZ-invariant 보장 (ADR-143 §결정 3):
@@ -15,7 +15,7 @@
 # Entry-point:
 #   python3 kst_render_stamp.py [--epoch <unix_seconds>]
 #     --epoch 주면 그 UTC 시각, 없으면 현재 시각.
-#   stdout: 정확히 `MM/DD HH:MM\n` 만 (성공 시 stderr 완전히 비어야 함 — 경고 격리).
+#   stdout: 정확히 `MM/DD HH:MM:SS\n` 만 (성공 시 stderr 완전히 비어야 함 — 경고 격리).
 #   exit 0: 성공 / exit 2: usage·인자 오류(stderr 메시지).
 #
 # -W error 하 무경고 보장: argparse 미사용(argv 수동 파싱), DeprecationWarning 유발 코드 0,
@@ -36,8 +36,8 @@ if hasattr(sys.stdout, "reconfigure"):
 # KST = fixed +9 offset (tzdata 무의존, Korea 고정 offset·DST 영구 부재 invariant)
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
-# 컴팩트 포맷 — offset·연도·초·KST 라벨 전부 미표기 (ADR-143 §결정 2)
-RENDER_FMT = "%m/%d %H:%M"
+# 컴팩트 포맷 — offset·연도·KST 라벨 미표기, 초는 표기 (ADR-143 §결정 2 + Amendment 4)
+RENDER_FMT = "%m/%d %H:%M:%S"
 
 
 def main(argv):
