@@ -3716,7 +3716,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 - **story_key 명시 주입** (AC-11): active-Story context 의 story_key 를 `--story-key` 로 명시 전달 (ambient 추론 금지 — 병렬 Story 오귀속 0).
 - **시각 소스 = primitive 내부 UTC 단일** (AC-13): CLI 에 `--timestamp` 인자 **부재**. 저장 timestamp 는 `append_dev_process_event._utc_z_now/_utc_z_monotonic` 내부 생성. `--prev-timestamp-utc` 는 monotonic clamp 용 직전 행 값 전달만 (시각 계산 아님, shell `date`/local-time 재도입 0).
 - **defect_type = review-verdict-v4 closed vocab 파생만** (OBJ-1): `--defect-type` 은 verdict-v4 type 어휘에서만 채운다 (자유텍스트 금지 — semi-open index 는 redaction 미적용 유일 content 채널).
-- **non-blocking / fail-VISIBLE** ([ADR-115](../archive/adr/ADR-115-runtime-hook-enforcement-and-non-blocking-observability.md)): emit 은 exit-0 record-only — 실패해도 lane 진행 무차단. emit() None 반환은 stderr WARN 로 가시화(silent-success 금지). 부재판별 = `check_dev_process_activation_manifest.py` ACT-3 (Port-B 배선 present + call-site containment 정적 판정, honesty ceiling: runtime 무결 아님).
+- **non-blocking / fail-VISIBLE** ([ADR-115](../archive/adr/ADR-115-runtime-hook-enforcement.md)): emit 은 exit-0 record-only — 실패해도 lane 진행 무차단. emit() None 반환은 stderr WARN 로 가시화(silent-success 금지). 부재판별 = `check_dev_process_activation_manifest.py` ACT-3 (Port-B 배선 present + call-site containment 정적 판정, honesty ceiling: runtime 무결 아님).
 - **jira-progress-mirror 와 disjoint 채널**: 동일 6-point 실행 지점에서 progress-mirror(Jira 코멘트) ∥ dev-process(ledger) 각각 emit — 한쪽 실패가 다른 쪽을 막지 않는다(ADR-115 record-only, §15.2 boundary).
 
 **ADR-038 6-point ↔ transition_kind ↔ event_type 매핑 lookup (로직 0 — `scripts/jira-channel/progress-format.sh` 6-token 재사용, [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md) §3.1 / AC-6)**:

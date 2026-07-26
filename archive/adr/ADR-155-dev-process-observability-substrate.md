@@ -31,6 +31,12 @@ related_files:
   - docs/architecture/codeforge-family.md  # interfaces + data_flow + Open Decisions 갱신
 is_transitional: false
 mechanical_enforcement_actions: []  # Phase 1 = 설계 SSOT (계약 스키마 lint / self-test / parity = Phase 2). ADR-082 §결정 6 retain pattern — Phase 2 carrier = 본 Story §8-§11.
+amendment_log:
+  - amendment: 1
+    date: 2026-07-27
+    carrier_story: CFP-2817
+    reinterpretation: true
+    summary: "§결정 1(index tier append substrate) + §결정 6(append-only 논리 스트림) 정련 — Phase 2 append primitive(O_APPEND) 커밋에 cross-platform kernel-atomic clobber-free 불변식(write-atomicity) 추가. 동기 = Story A Port-B 활성화로 공유 원장 2번째 상시 writer 유입 시 Windows MSVCRT lseek-then-write 비원자 경합(Codex 재현 9.9~12.8% silent clobber, WSL2 POSIX 대조군 1000/1000/0 무결). POSIX 무변경(단일-write 이미 kernel-atomic)·Windows fix 후 FILE_APPEND_DATA kernel-atomic 직렬화. 런타임 primitive 헤더의 kernel-atomic 미주장 over-claim 을 clobber 축에서 정정(posture 반전 정직 기록, honest-ceiling = 로컬 정규파일 + row당 단일-write clobber 축 한정, network share·torn 축 무주장). 3 consumer(spawn-event-v1/self-context-event) 계약·스키마·데이터 untouched(byte-compat JSONL). 신규 ADR 0. Phase 2 구현 co-land."
 ---
 
 # ADR-155: Dev-process observability substrate + dev-process-event-v1 evidence contract
@@ -179,7 +185,7 @@ dev-process-channel-scoped 3-tier(ADR-163 §결정 4 hot+cold 2-tier 를 본 cha
   - no-silent-racy-fallback + VISIBLE-degrade: atomic 확립 불가 시 racy MSVCRT 경로 silent 손실 금지 → None+WARN+ACT-3 가시 degrade(ADR-115 record-only·exit-0 정합).
 - Honest-ceiling: 보장 scope = local NTFS/POSIX 정규파일 + row당 단일-write 의 clobber 축. network share(SMB/NFS)·redirected volume 제외. torn(multi-sector interleave) 축 = 별개 무주장(Win32 single-sector atomic·multi-sector 무보장 unless transaction; index row <4KB bounded+empirical torn=0이나 임의 multi-sector 미주장).
 - posture 반전(정직 기록): 본 amendment 는 런타임 primitive 헤더 "append 무보장 천장·kernel-atomic 미주장"(append_dev_process_event.py:33-38·:472-474)를 clobber 축에서 반전 — POSIX 단일-write 실제 clobber-free·Windows fix 후 kernel-atomic. append_spawn_event.py:420 "O_APPEND per-row — kernel-atomic append" over-claim(Windows MSVCRT known-false)도 정정. 3 주석 정정 = Phase 2.
-- cross-consumer note: 공유 primitive 개선 → spawn-event-v1·self-context-event 도 atomic write 상속. 3 consumer CONTRACT/SCHEMA/DATA untouched(byte-compat JSONL). spawn-event-v1 = 별 계약·§결정 2 new-sibling 매트릭스·INV-3 JOIN 무변경. uncontended atomic append 비용 동형(무회귀).
+- cross-consumer note: 공유 primitive 개선 → spawn-event-v1·self-context-event 도 atomic write 상속. 3 consumer CONTRACT/SCHEMA/DATA untouched(byte-compat JSONL). spawn-event-v1 = 별도 계약·§결정 2 new-sibling 매트릭스·INV-3 JOIN 무변경. uncontended atomic append 비용 동형(무회귀).
 - 검증: §8.8 concurrency negative-control(pre-fix MSVCRT clobber>0 = RED / kernel-atomic clobber 0 = GREEN). Phase 2 StatefulTest = clobber-freedom 회귀 방어로 재정의(torn 축 관측 감시).
 
 ## 회피된 대안
