@@ -53,6 +53,14 @@ _EMIT_MODULE = "emit_dev_process_event"
 _HOOK_ANCHOR_RE = re.compile(r"dev[-_]process", re.IGNORECASE)
 
 # ─── ACT-3 (Port-B agent-emit 배선 — CFP-2817 additive) ──────────────────────────
+# ★ACT-3 fail-VISIBLE 부재판별 (Port-A born-drift seal 과 대칭): Port-B 배선이 ABSENT 면 silent-skip
+#   (vacuous GREEN)이 아니라 RED violation 으로 **가시화**한다 — (a) §14.7 render flow 에 emit step 부재
+#   → ACT-3a RED, (b) derive_seq seq-채번 SSOT 부재 → ACT-3a RED, (c) lane plugin agent surface 로 emit
+#   호출 누출 → ACT-3b RED. 부재를 침묵 통과시키지 않음(landed≠activated 위장 차단)이 본 축의 존재 이유다.
+# ★ACT-3 HONESTY CEILING (over-claim 금지): ACT-3 판정은 전부 **정적**이다 — (a)=playbook anchor grep,
+#   (b)=emit 모듈 import 후 derive_seq attr present, (c)=agent surface grep. 즉 "Port-B 배선 present +
+#   call-site containment" 를 정적 판정할 뿐, 매 6-point 전이마다 실제 emit 되는 runtime always-on 동작
+#   (무결)은 정적 증명 불가 — 실 emit 증명 = Phase 2 test lane + AC-1 실 세션 원장 실측(역할 분리).
 # ACT-3a: playbook §14.7 render flow 에 dev-process Port-B emit step present anchor.
 _PORTB_ANCHOR_RE = re.compile(
     r"emit_dev_process_event|dev-process(?:-event)?\s+(?:agent-)?emit", re.IGNORECASE)
@@ -263,17 +271,21 @@ def evaluate(contract_present, contract_body, row_keys, importable,
     if portb_wired is not None and not portb_wired:
         violations.append(
             "(ACT-3a) playbook §14.7 render flow 에 dev-process Port-B emit step 미배선 — "
-            "Orchestrator 6-point 전이 시점 emit 호출 부재 = Port-B NOT activated (§8.10 landing≠activation). RED"
+            "Orchestrator 6-point 전이 시점 emit 호출 부재 = Port-B NOT activated (§8.10 landing≠activation). "
+            "fail-VISIBLE 부재판별: silent-skip(vacuous GREEN) 대신 RED 가시화 "
+            "(정적 anchor 판정 — runtime always-on emit 무결 단정 아님). RED"
         )
     if emit_has_derive_seq is not None and not emit_has_derive_seq:
         violations.append(
-            "(ACT-3a) %s.derive_seq (seq 채번 SSOT) 미import/부재 — Port-B 호출 표면 파손 = RED"
+            "(ACT-3a) %s.derive_seq (seq 채번 SSOT) 미import/부재 — Port-B 호출 표면 파손 = RED "
+            "(fail-VISIBLE: import present 정적 판정, runtime 무결 아님)"
             % _EMIT_MODULE
         )
     for vf in portb_containment_violations:
         violations.append(
             "(ACT-3b) Port-B emit invocation 이 lane plugin agent surface 에 유입 — %s "
-            "(call-site containment 위반: emit 호출 = Orchestrator-owned 표면 독점, ADR-039 §결정3 / REC-1). RED"
+            "(call-site containment 위반: emit 호출 = Orchestrator-owned 표면 독점, ADR-039 §결정3 / REC-1; "
+            "정적 surface grep 판정 — 우회 표기 false-neg 잔여 인정). RED"
             % vf
         )
 

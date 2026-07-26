@@ -49,6 +49,12 @@ amendments:
     date: "2026-07-20"
     scope: "advisory→mechanical 승격 정본화 — internal-docs 저작 repo 에 ac-traceability Hop1 well-formedness blocking CI 게이트(ac-schema-authoring-gate.yml) 배선. mechanical_enforcement_actions [] → populate. 결정 2 사전인가 clause(pattern_count>=2 재발 시 mechanical 승격 MUST) 실현 — malformed-VALUE subset scope. tier-choice mislabel = review-tier 잔여(honest ceiling 보존). branch-protection 7-tuple·wrapper ac-traceability-matrix.yml 무변경. advisory authoring_self_gate.py 존치(defense-in-depth)."
     sunset_justification: "null — is_transitional:false 강화 방향 ratchet(대상 게이트 집합 확장 internal-docs Hop1 추가 + dogfood 자기적용 강화). honest-ceiling 완화·over-claim·실게이트 invoke 판정 대체 아님 → ADR-058 §결정 5 약화 evidence requirement 미해당."
+  - by: "CFP-2817"
+    amendment_id: 2
+    date: "2026-07-27"
+    reinterpretation: false  # ADR-167 §결정 1(b) — enforcement(test) 표면을 결정 3 의 subject-국한 원문 의미로 재정합(과일반화 정정) + carve-out 신규 sanctioned-path 추가이지, 결정 1-9 본문 의미의 소급 재해석 아님 (본 amendment 명시: "결정 3 문언·주어 무변경"·"결정 1-9 본문 무supersede(append-only)"; self-declared, 리뷰 판정 축; parity lint 는 presence/type 만 검사). effective_count(heading 2 ⟺ fm entry 2) = 2 < N=10 → 재제정 트리거 무발동.
+    scope: "AC-6 enforcement 표면의 subject 정합화 + substrate-amendment 동반 carve-out — 결정 3(주어=C, subject-국한 계약)의 Phase 2 test 구현(test_ac6 git-실측 leg)이 branch-agnostic 영구 게이트로 과일반화되어, 결정 4 가 확립한 소관 upstream amendment 원리의 확장 적용 경로(Epic plugin-codeforge#2814 substrate activation / CFP-2817 = ADR-155 Amendment 1 동승)를 RED 오차단(cross-Epic 게이트 충돌, FIX Iter 4). carve-out = A/B substrate 접촉이 같은 diff 에 소관 계약 ADR lineage amendment(A 파일=ADR-155 lineage, B aggregator=ADR-156 lineage, per-file 매핑) 동반 시 sanctioned. 미동반 접촉(무단 drive-by)·소관 불일치 = 여전히 위반(discriminating 보존). git base 미확보(shallow checkout) 시 git leg silent pass → visible skip 전환(AC-17 silent-covered 금지 정합). 결정 1-9 본문 무supersede(append-only), 결정 3 문언·주어 무변경."
+    sunset_justification: "null — is_transitional:false 강화 방향 ratchet(무단 substrate 접촉 RED 보존 + A-substrate 수정 = 소관 ADR amendment 동반 의무의 기계 판별 명문화 + silent skip 의 visible 화). 게이트 제거·검출력 축소 아님 → ADR-058 §결정 5 약화 evidence requirement 미해당."
 ---
 
 # ADR-158 — Author-time self-gate forcing function
@@ -176,6 +182,20 @@ C 가 shift-left 하는 게이트는 이미 7-tuple required — merge-gate 에�
 **ratchet 방향**: 대상 게이트 집합 확장(internal-docs Hop1 추가) + dogfood 자기적용 강화(carrier Story CFP-2776 자기 §5.3 에 저작시점 선실행 = live CI PASS 실증) — `is_transitional: false` 강화-only ratchet 정합(약화 아님). §결정 1-9 무supersede·무rewrite(append-only).
 
 **carrier**: internal-docs Phase 2 PR(D1-D4 runner/게이트/drift-guard + pytest self-test, **선행 land**) + 본 wrapper Phase 2 PR(순수 prose ADR + plugin.json bump). 설계 SSOT = Change Plan `wrapper/change-plans/2026-07-20-cfp-2776-dogfood-story-ac-well-formedness-hop1-gate.md` @ `78a15a45`.
+
+## Amendment 2 (2026-07-27 KST, carrier CFP-2817) — AC-6 enforcement 의 subject 정합화 + substrate-amendment 동반 carve-out
+
+**동기 (cross-Epic 게이트 충돌, firsthand)**: 결정 3 의 원문 주어는 C 다 — "C 는 A substrate 파일 + B aggregator 를 0개 수정하며 emit port 를 소비만 한다"(subject-국한 계약). 그러나 Phase 2 test `tests/unit/test_authoring_self_gate.py::test_ac6_ab_substrate_zero_edit_and_7tuple_unchanged` 의 git-실측 leg 는 **모든 브랜치**의 merge-base 대비 변경파일에서 `AB_SUBSTRATE_BASENAMES` 접촉을 무조건 RED 판정하는 branch-agnostic 영구 게이트로 과일반화됐다. 이 enforcement 는 결정 4 가 확립한 "A 소관 upstream amendment 후보" 원리의 확장 적용 경로 — Epic plugin-codeforge#2814(dormant substrate emit 배선 활성화, A 자신의 activation arc) Story A(CFP-2817, **ADR-155 Amendment 1 동승**) — 를 포착하지 못해, 설계리뷰 3-iter PASS 로 승인된 substrate 활성화 작업의 4파일 접촉(emit/append/blob_store/계약 파일)을 로컬 full-clone pytest 에서 RED 오차단했다. CI 는 shallow-checkout 으로 git base 미확보 → git leg silent pass(구조적 맹점 — 로컬만 RED 인 비대칭).
+
+**결정 (carve-out — 결정 3/4 무supersede, enforcement 표면 정합화)**:
+1. **subject 보존**: C(authoring-self-gate)는 여전히 A/B substrate 를 0개 수정하며 emit port 를 소비만 한다 — 결정 3 문언·의미 무변경.
+2. **amendment-동반 carve-out**: A/B substrate 파일 접촉은 **같은 diff(merge-base 대비 변경 집합)에 소관 계약 ADR lineage 파일 변경이 동반**될 때 계약 위반이 아니다 — A substrate 파일(append/query/emit/blob_store/redact .py + dev-process-event-v1.md) = **ADR-155 lineage**(`archive/adr/ADR-155-*.md`), B aggregator(aggregate_dev_process_event.py) = **ADR-156 lineage**. 이것이 결정 4 "A 소관 upstream amendment" 경로의 기계 판별 실현이다.
+3. **discriminating 보존**: 소관 ADR amendment 미동반 substrate 접촉(무단 drive-by)은 여전히 RED — carve-out 은 sanctioned-path 정의이지 검출력 축소가 아니다. 소관 불일치(B 파일을 A-소관 ADR 로 sanction 시도)도 RED(per-file lineage 매핑).
+4. **shallow-checkout 정직 공개(AC-17 정합)**: git base 미확보 시 git leg 를 silent pass 가 아니라 **visible skip**(사유 문자열 명시)으로 전환 — "silent-covered" 주장 금지. CI 상시 평가(워크플로 fetch-depth 확보)는 본 amendment scope 밖 follow-up 후보로 명시 defer — defer 기간 중 git leg 실평가 표면 = 로컬 full-clone 한정.
+
+**적용 (Phase 2, CFP-2817 구현 lane)**: test_ac6 git leg 를 per-file lineage 판별 pure helper 로 재구성 + 무단 접촉/소관 동반/소관 불일치/집합 밖 4방향 discriminating negative-control 테스트 동반. 설계 SSOT = CFP-2817 change-plan `wrapper/change-plans/CFP-2817-dev-process-agent-emit.md` §0.b/§10.A-Iter4.
+
+**정직 천장(결정 6 상속)**: carve-out 은 "같은 diff 에 소관 ADR 파일 변경 존재"라는 co-presence 판별이다 — 그 amendment 의 **내용 충실성**(접촉을 실제로 정당화하는가)은 기계 판별 밖(review-tier 잔여). "substrate 무단 수정 완전 방지" over-claim 금지 — self-gate PASS = 실 게이트 실행 outcome ground-truth(proxy 아님).
 
 ## 관련 파일
 
