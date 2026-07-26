@@ -532,6 +532,16 @@ fable 배정 subagent(Amendment 4 carve-out 10 역할 — 6 lane PL + ArchitectA
 - **cascade count-in** = fable→opus hop = `cascade_depth` **1(COUNTS)**. opus 착지 후 opus 자기 within-model soak 미증가. opus soak(ADR-109 §결정2/3) 소진 후에도 리밋 = cascade ≥ 2 → **user manual resume only**(§결정5, 자동 무한 failover 금지). opus 착지 후 비로소 §결정2 exp-backoff / §결정3 step1·3·4 가 opus 를 same-model 로 재정박(AC-2 정합).
 - **§14 태그 기록** = `[rate-limit-failover:fable→opus]`(태그 스키마 SSOT = skill `codeforge:rate-limit-429-mitigation` Telemetry 절). **§10 FIX Ledger row 금지**(ADR-109 §결정9 / ADR-057 §결정4 격리 — failover = 운영 telemetry ≠ FIX), 기존 dead 태그(`[rate-limit-fallback:sonnet→opus]` / `[model-unavailable-fallback:fable→opus]`)와 비합산·별도 measurement. **AC-7 정합** — agent frontmatter `model: fable` 무변경(runtime spawn-시점 override 한정, 정적 down-tier 아님, roster-integrity fable=10 GREEN 유지).
 
+#### §3.0.12c 서브에이전트 tier ≤ Orchestrator 상한 (cap-down 판정 절차 — ADR-141 Amendment 7)
+
+Orchestrator(ADR-039 spawn monopoly)는 subagent spawn 시점에 tier 상한을 판정한다 — 어떤 서브에이전트도 effective tier 가 Orchestrator effective tier 를 **초과**해 spawn 될 수 없다(동급 허용, 초과만 금지, ≤ 상한). tier 전순서 = `haiku < sonnet < opus < fable`(version-agnostic SLOT — opus slot = 현행 Opus 5 + legacy Opus 4.8). §3.0.12b failover(사후 리밋 반응)와 **별개 축**인 사전 tier 판정이다.
+
+- **판정식** = `effective = min(frontmatter_tier, orchestrator_tier)`(전순서 기준). spawn 대상 frontmatter tier 가 Orchestrator 세션 tier 를 **초과**할 때만 Agent tool `model:` 파라미터로 Orchestrator tier 를 명시 전달하고, **그 외(≤)는 파라미터 생략**(frontmatter 그대로 — override 미발생).
+- **fresh-spawn override** = 새 `Agent` spawn + `model:` override(§3.0.12b 동형 shape). **SendMessage resume 금지**(원본 frontmatter `model: fable` resume 재해석이 cap 무력화 — CFP-2236 root cause, Amd6 A6-2 상속).
+- **유일 live 실효** = Orchestrator=opus 세션 × fable 지정 10역할 → opus cap-down. **fable 세션 = no-op**(전 배정 ≤ fable). **동급 discriminating** = opus subagent under opus Orchestrator 는 cap-down 비대상(override 미발생) — SecurityTestPLAgent(opus) 무변화(≤ opus).
+- **Amd6 태그 비오염** = cap-down spawn 은 `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**(cap-down = 사전 ceiling 계산이지 리밋 반응 아님 → §14 failover telemetry 오염 방지, cap-down 관측 표기는 별도). opus 세션에서 cap 이 fable spawn 을 spawn-시점에 pre-empt 하므로 §3.0.12b fable-branch 도달 자체가 0(dormant, per-spawn churn 사전 차단).
+- **정적 배정 무접촉 + advisory 라벨** = frontmatter `model:` 41 파일 byte 무변경(`check-fable-roster-integrity` fable=10 GREEN 유지). 강제력 = 규범 문구 presence(prompt-mandate·grep testable=normative) + Orchestrator 세션 실준수(advisory·비-PR-enforceable — hook 기계 backup 불성립, Orchestrator 세션모델 ground-truth env 부재 firsthand). "100% 기계강제/hard-gate" over-claim 금지(ADR-143 동형). SSOT = [ADR-141](../archive/adr/ADR-141-all-opus-single-tier.md) Amendment 7.
+
 #### §3.0.13 PR description `## Lane evidence` manual append 정책 (CFP-507)
 
 Phase 2 PR description 안 `## Lane evidence` row append 시 Orchestrator (또는 Orchestrator-owned delegate subagent — §3.0.6 정합) 가 아래 3-step 절차를 준수한다. 본 정책은 CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — codeforge-develop sibling plugin DeveloperPLAgent body composition convention (`agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" section) 와 짝.
@@ -3809,15 +3819,15 @@ Orchestrator 는 매 agent spawn 시 **Spawn ID 대장**을 `.claude-work/progre
 
 ### 14.11a Agent 액션 렌더 줄 프리픽스 규약 (ADR-143 Amendment 2 / CFP-2770 — ephemeral-UI 표시 sub-layer)
 
-harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<주체명>] MM/DD HH:MM - <내용>` 프리픽스가 뜨게 해 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 화면 렌더에 실제 도달하는 **유일 통로 = model-authored 프리픽스** — 에이전트/Orchestrator 가 description·prose 에 **직접 저작(primary)**. harness UI 는 model-emitted 원본 description 을 렌더하므로, PreToolUse hook `updatedInput` 기계 주입(CFP-2587)은 실행 입력 계층만 치환하고 화면 렌더 줄에 미도달 → render 목적에서 **fail-open backup 으로 강등**(실행-계층 정확성 목적 유효 잔존). 규약 SSOT = ADR-143 (Amendment 2).
+harness UI(VS Code 확장 등)가 Agent 의 스폰·도구호출을 렌더하는 줄에 `[<주체명>] MM/DD HH:MM:SS - <내용>` 프리픽스가 뜨게 해 "누가·언제·무엇을 시작했는지" 를 줄 단위로 즉시 식별(glanceability). 화면 렌더에 실제 도달하는 **유일 통로 = model-authored 프리픽스** — 에이전트/Orchestrator 가 description·prose 에 **직접 저작(primary)**. harness UI 는 model-emitted 원본 description 을 렌더하므로, PreToolUse hook `updatedInput` 기계 주입(CFP-2587)은 실행 입력 계층만 치환하고 화면 렌더 줄에 미도달 → render 목적에서 **fail-open backup 으로 강등**(실행-계층 정확성 목적 유효 잔존). 규약 SSOT = ADR-143 (Amendment 2).
 
-**형식**: `[<주체명>] MM/DD HH:MM - <내용>`
-- **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13 - Change Plan §3 통합`.
-- **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15 - kst helper 작성`.
-- **범위③** Orchestrator 상태·액션 줄 — subject = `[Orchestrator]` self-subject(렌더 UI 진행 줄 한정, INV-2 완화). 예: `[Orchestrator] 07/21 14:05 - 설계리뷰 PASS → 구현 lane 진입`.
+**형식**: `[<주체명>] MM/DD HH:MM:SS - <내용>`
+- **범위①** Agent spawn 최상위 헤더 — subject = 피스폰 에이전트. 예: `[ArchitectAgent] 07/05 02:13:07 - Change Plan §3 통합`.
+- **범위②** 서브에이전트 leaf 도구호출(bash/edit/read 등) — subject = self. 예: `[DeveloperAgent] 07/05 02:15:42 - kst helper 작성`.
+- **범위③** Orchestrator 상태·액션 줄 — subject = `[Orchestrator]` self-subject(렌더 UI 진행 줄 한정, INV-2 완화). 예: `[Orchestrator] 07/21 14:05:31 - 설계리뷰 PASS → 구현 lane 진입`.
 - `[<주체명>]` 값 SSOT = spawn-event-v1 `agent_type`(roster-derived PascalCase + `unknown-agent` fallback) + Orchestrator self-subject `[Orchestrator]` — §14.11 Spawn ID 대장의 agent_type 어휘 재사용(신규 명명체계 0).
 
-**시각**: KST(UTC+9 고정 산술). 컴팩트 — offset·연도·초·`KST` 라벨 미표기(`MM/DD HH:MM`). dispatch/작성 시점 **근사**(exact per-call HH:MM 아님). helper = `bash scripts/kst-render-stamp.sh`(GNU date primary + Python fallback). machine-local `date`·`TZ=Asia/Seoul` 금지 — Korea 고정 +9 invariant 로 UTC+9 고정 산술만.
+**시각**: KST(UTC+9 고정 산술). 컴팩트 — offset·연도·`KST` 라벨 미표기, 초 표기(`MM/DD HH:MM:SS`). dispatch/작성 시점 **근사**(exact per-call HH:MM:SS 아님) — 단 앵커 verbatim, 산술 증분(+N) 표시 금지(ADR-143 Amendment 4). helper = `bash scripts/kst-render-stamp.sh`(GNU date primary + Python fallback). machine-local `date`·`TZ=Asia/Seoul` 금지 — Korea 고정 +9 invariant 로 UTC+9 고정 산술만.
 
 **제외**: TodoWrite 행(native status 렌더 전용, 이중 표기 금지) + prose 상태보고(사용자 대상 대화 텍스트 — ADR-039 §결정 2 whitelist entry #4, prefix-exempt 유지). subject discriminator(INV-1 유지) = 헤더는 피스폰자 / leaf 는 self — **dispatcher/Orchestrator 명이 spawned 줄 subject 로 leak 금지**. 단 Orchestrator **자기 렌더 action/상태 LINE**(display 축, 범위③)은 self-subject `[Orchestrator]` 허용(INV-2 완화) — prose 상태보고(mechanism 축)와 disjoint.
 

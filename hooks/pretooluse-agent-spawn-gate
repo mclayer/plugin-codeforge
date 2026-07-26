@@ -163,7 +163,7 @@ fi
 #   Agent.description 에 직접 저작). updatedInput 은 도구 실행 입력 계층만 치환하고 harness UI 렌더
 #   줄(model-emitted 원본)에 미도달 → 본 주입 목적 = 실행-계층 정확성(backup). 로직·G1-G5 무변경
 #   (강등 = 서술/주석, 코드 삭제 0).
-# tool_input.description 에 렌더-줄 프리픽스 `[<subagent_type>] MM/DD HH:MM - <내용>` 를
+# tool_input.description 에 렌더-줄 프리픽스 `[<subagent_type>] MM/DD HH:MM:SS - <내용>` 를
 # hookSpecificOutput.updatedInput 으로 주입(mechanical) + 전환-자율 reminder additionalContext 를
 # 동일 JSON 에 병합 → hook stdout = 정확히 하나의 JSON. ★ F1 이후 본 블록은 PROMPT_TEXT 유무와
 # 무관하게 UNCONDITIONAL 도달 (§7.3 LOAD-BEARING).
