@@ -16,7 +16,7 @@ To prevent accidental prod pollution:
   5. Offline mock mode when creds unavailable
 
 Env vars:
-  - ATLASSIAN_BASE_URL: Confluence instance URL
+  - CONFLUENCE_BASE_URL: Confluence instance URL
   - ATLASSIAN_API_TOKEN / ATLASSIAN_USER_EMAIL: basic-auth creds (via ~/.claude/codeforge-scratch/atlassian-creds.env)
   - CFP2829_TEST_PAGE_ID: throwaway test page ID (REQUIRED for write)
   - CFP2829_MEASURE_SKIP_WRITE: 1 to skip writes despite creds
@@ -60,7 +60,7 @@ MAX_WRITES_PER_MEASUREMENT = 20
 CFP1495_MOCK_MODE = os.environ.get("CFP1495_MOCK_MODE", "0") == "1"
 
 # Confluence config
-CONFLUENCE_BASE_URL = os.environ.get("ATLASSIAN_BASE_URL", "https://mclayer.atlassian.net")
+CONFLUENCE_BASE_URL = os.environ.get("CONFLUENCE_BASE_URL", "https://mclayer.atlassian.net")
 
 # Note: CFP2829_TEST_PAGE_ID and CFP2829_MEASURE_SKIP_WRITE are read at point-of-use
 # (after creds file is loaded in main()), not here at module level.
