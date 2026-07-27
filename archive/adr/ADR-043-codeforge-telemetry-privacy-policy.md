@@ -46,6 +46,11 @@ amendment_log:
     date: 2026-07-15
     carrier_story: CFP-2687
     summary: "dev-process-event-v1 telemetry channel privacy 확정 (Epic #2686 Story A, ADR-155 sibling). dev-process-event 는 stop/spawn 이 마주한 적 없는 rich-content(프롬프트/diff/tool-call/findings/산출물) 를 evidence-blob-store 에 저장하는 net-new leak surface 를 마주한다. (A) §결정 1 always-on 비대칭 codify — wrapper-self dogfood scope=always-on(checkout-identity 파생, user-settable bool 아님) / consumer scope=opt-in default-false 무약화(ADR-064 §결정7 extend-only, T-DPE-9 consumer floor 하방 override 불가) + INV-8 redaction-precedes-always-on(always-on 이 redaction 우회 불가). (B) §결정 2 dev-process-event index tier 별도 channel allow-list — enum/numeric/hash/상관ID/blob-ref only, free-form content 0(T-INFO-8), emit_source discriminator. (C) §결정 3 deny-regex 6→7종 — 절대/home-prefixed 경로 pattern 신규(repo-relative 경로는 보존 — diff 진단 신호 public) + Authorization/Cookie 헤더 + cloud-key(gitleaks 차용) + env dump·자격증명 subprocess = capture 제외. (D) Amd2 §D 확장 — redacted-blob tier = T-INFO-5 no-conflict 신규 표면(INV-8a hash-over-redacted / INV-8b blob-before-index / T-DPE-2 hash-oracle 봉인 / audit enum redaction_applied·count·rules_fired, 매칭 secret 원문/hash 절대 미기록 T-DPE-8). resource-safety honest-ceiling — 무증거 ReDoS-safe 단정 금지, born-safe bound(byte/line cap+timeout)만, proof=Phase 2 SecurityTest. MINOR (additive channel allow-list + deny-regex 확장 + privacy 강화 방향, ADR-008 SemVer)."
+  - amendment: 5
+    date: 2026-07-27
+    carrier_story: CFP-2850
+    reinterpretation: false
+    summary: "Amendment (CFP-2850) — spawn-event-v1 Allow-list 4 field 확장: total_tokens(int|null) · model(enum semi-open) · outcome(enum closed) · termination_cause(enum closed). 전부 numeric/enum(free-form 0). opt-in default false / Deny-list no-op inherit / T-INFO-5·7·8 무변경. spawn-event-v1 v1.1→v1.2 MINOR 동반."
 mechanical_enforcement_actions: []
 ---
 
@@ -441,3 +446,36 @@ Epic #2686 Story A (CFP-2687) 가 `dev-process-event-v1`(신규 ADR-155 sibling)
 - §결정 3 기존 6 deny-regex pattern 무변경 (7번째 경로 pattern additive).
 - §결정 4/5 (sanitize SSOT / isolation) inherit — dev-process 자동 적용, 정책 자체 무변경.
 - Amendment 1/2/3 무변경. stop-event-v1 runtime raw session_id bug = 본 Amendment 미위임(별도 follow-up).
+
+## Amendment 5 (CFP-2850, 2026-07-27) — spawn-event-v1 Allow-list 4 field 확장 (실측 append 활성화 P0-2 + agent outcome 분류 N9)
+
+### 배경
+
+Epic #2814 W1 Story B (CFP-2850) 가 spawn-event-v1 의 실측 append 를 활성화(P0-2: Orchestrator 가 Agent task-notification 수신 시점 실측 aggregate 를 배선)하고 agent outcome 분류(N9)를 additive 로 도입한다. 실측을 정직하게 담고(honest-null — ADR-119) role·model·outcome 별 실패율·낭비 토큰 집계를 가능하게 하려면 spawn-event-v1 이 19-field → 23-field 로 4 optional field 를 additive 로 확장한다. 이 4 field 는 전부 numeric/enum 이므로 §결정 2 Allow-list ONLY enforcement 상 정식 확장 amendment 의무(silent expansion 차단)를 발동한다. 실 계약 bump(spawn-event-v1 v1.1 → v1.2 MINOR)·runtime 배선 = CFP-2850 Phase 2.
+
+### 개정 내용
+
+**(A) §결정 2 Allow-list 에 spawn-event-v1 4 신규 optional field 추가** — spawn-event-v1 channel Allow-list 19 → 23 field. 4 신규 field (전부 numeric/enum — free-form string 0건):
+
+- `total_tokens`: int | null (optional) — task-notification `<usage>` 단일 `subagent_tokens` aggregate 실측. `attribution_confidence != attributed` 시 null. numeric only.
+- `model`: enum (semi-open) | null (optional) — pricing-table model roster ∪ `unknown-model` fallback (agent_type semi-open 패턴 REUSE, free-form leak 차단). 현행 pricing arg 였으나 row 미저장 → 신설.
+- `outcome`: enum | null (optional) — subagent completion-quality `{success, inconclusive, failure, partial}` (closed-set, open_extension:false, SUCCESS-hardcode 금지 — ADR-093). record-only.
+- `termination_cause`: enum | null (optional) — subagent termination mechanism `{normal, timeout, zero_output, error, cancelled}` (closed-set). record-only.
+
+**(B) §결정 3 Deny-list no-op inherit 선언** — 4 신규 field 전부 numeric/enum → Deny-list regex 6 pattern 어느 것도 매치 불가 = non-sensitive pass-through. free-form field 0건 유지(T-INFO-8 구조적 차단) → Deny-list 적용 0건 inherit 선언(defense-in-depth 선언만, silent bypass 금지).
+
+**(C) §결정 1/4/5 + T-INFO-5/7/8 inherit·무변경** — opt-in default false 무약화(§결정 1) / sanitize SSOT 통합 자동 inherit(§결정 4) / wrapper-vs-consumer isolation inherit(§결정 5). T-INFO-5 transcript content/path 절대 미저장 · T-INFO-7 sha256 identity · T-INFO-8 free-form 0건 전부 무변경.
+
+### 근거
+
+- **§결정 1 이 이미 "future ledger 자동 inherit" 명문 + Amendment 2 가 spawn-event-v1 channel 확정** — 본 Amendment 는 그 확정 channel 의 field-set additive 확장이지 신규 privacy SSOT 신설 아님(대안 A reject 정합, 신규 ADR 미신설).
+- **MINOR 정합**(ADR-008 SemVer §결정 2): additive optional field 4종 + inherit 선언 = backward-compat. v1.0 reader 가 4 신규 field skip 가능 → BREAKING 아님.
+- **numeric/enum only 정직 codify** — 4 field 전부 numeric/enum(model 은 semi-open fallback bucket 으로 free-form leak 차단) → T-INFO-8 free-form 0건 invariant 무약화. outcome/termination_cause 는 record-only(gate/block/deny 금지, INV-5).
+
+### 비-영향
+
+- §결정 1 opt-in default-false 무변경.
+- §결정 2 stop-event 18 / self-context 6 / dev-process index tier Allow-list 무변경 (spawn-event 는 별도 channel Allow-list — 19 → 23 field 확장만).
+- §결정 3 Deny-list regex 6 pattern 무변경 (4 신규 field non-sensitive → 적용 0건, inherit 선언만).
+- §결정 4/5 (sanitize SSOT / isolation) inherit — 정책 자체 무변경.
+- Amendment 1/2/3/4 무변경. transcript content/path HARD invariant(Amendment 2 §D) 무손상 (신규 4 field 전부 numeric/enum, transcript 미도달).

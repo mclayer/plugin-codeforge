@@ -3867,6 +3867,31 @@ Orchestrator 는 매 spawn 결과 수령 후 **Spawn token telemetry 대장**을
 - stop-event-v1 (Tier 3) 과 이중 기록 금지 — quota 분석용 로컬 계산 전용.
 - **spawn-event-v1 land 이후 (CFP-2393) 관계 = 역할 분리(role separation), double-count 아님** (§15.2 4번째 boundary invariant SSOT): 본 §14.12 = **Tier-1 quota-only 로 잔존** (예산 대비 실적, gitignored, Story-only). spawn-event-v1 = Tier-3 persistent per-agent **회계(accounting) + replay**. 본 대장은 spawn-event land 후에도 deprecate 안 됨 — 두 채널 disjoint. **cross-write 금지** (한쪽이 다른 쪽 read/mirror 금지 — 50ms ceiling + cross-channel coupling 회피). 신뢰도 표기 차이: §14.12 = `?` placeholder / spawn-event = `attribution_confidence` enum (1급 상태, 추정치 저장 금지). 상세 = [spawn-event-v1 §1.1](inter-plugin-contracts/spawn-event-v1.md).
 
+### 14.12a Spawn-event Tier-3 실측 append (P0-2 활성화 — CFP-2850 / Epic #2814 W1-B)
+
+Orchestrator 는 **Agent task-notification 을 수신하는 시점**에 (opt-in 유효 시) Tier-3 `spawn-event-v1` row 를 `.claude/ledger/spawn-event.jsonl` 에 append 한다. 이는 §14.12 Tier-1 mini-table(quota-only, ephemeral) 와 **disjoint** 한 Tier-3 persistent accounting 채널로의 **실측 배선**이다(§15.2 4번째 boundary invariant — cross-write 금지). writer = **Orchestrator single-write**(ADR-039 §결정 3 monopoly + §결정 21 7번째 inline-whitelist entry — Tier-3 measurement 배선 inline 허용). 이 배선이 spawn-event-v1 의 landed-but-vacuous 상태(파일 부재 = 0 rows)를 실 데이터 관측으로 전환한다(activation ≠ landing).
+
+**수신 시점 emit 절차 (non-blocking, record-only)**:
+
+1. **실측값 추출** (task-notification `<usage>` 블록 — 실측 source only, 추정 금지 · ADR-119 honest-null):
+   - `subagent_tokens`(단일 aggregate) → `total_tokens` field. 계약 4-way(input/output/cache_creation/cache_read) 분해가 payload 에 없으면 4-way·cost_usd = **null**(aggregate 를 4-way 로 날조 금지, blended-rate cost 추정 금지 — degrade ladder tier-2).
+   - `tool_uses` → `tool_call_count`.
+   - `duration_ms` = usage block **OR** Orchestrator wall-clock(spawn dispatch → task-notification 수신 elapsed) — 둘 다 실측(추정 아님).
+   - 실측 미확보 field = null(`attribution_confidence != attributed`), attributed 오인 저장 금지.
+2. **lane-context 주입** — `story_key` + `lane_label` = Orchestrator causal-state 파생(Orchestrator 가 아는 유일 주체). 이 주입이 §14↔spawn-event dedup 을 non-vacuous 로 전환한다(ADR-163 §결정 13 realization — 구 전 row `lane_label="없음"` vacuous 탈출).
+3. **outcome 분류(N9)** — `outcome{success/inconclusive/failure/partial}`(completion-quality) + `termination_cause{normal/timeout/zero_output/error/cancelled}`(mechanism) 2축 기록. machine-observable 우선(`tool_uses=0` → `termination_cause=zero_output` / error-termination → `timeout`; envelope.verdict 단독 SUCCESS 신뢰 금지 — SUCCESS↔INCONCLUSIVE 는 verify-후 or coarse-defer). **record-only**(gate/block/deny 금지, INV-5).
+4. **args-file 채널로 append** — 위 값 + lane-context + outcome 을 **UTF-8 JSON args-file**(ASCII path)로 write 후 `python3 scripts/lib/append_spawn_event.py --args-file <ascii-path>` 호출. argv 는 ASCII path 만, 한국어 `lane_label` 등 실값·content 는 파일 내부(argv string-interp injection·cp949 argv-mangle 회피 — T-ELEV-1, CFP-2817 선례). usage 정수는 args-file write 前 비음수 + 상한 validation(T-TAMP-2), 실패 시 `attribution=unattributed`.
+
+**opt-in / graceful degradation**:
+
+- **opt-in default false** — `telemetry.enabled ∧ channels.spawn_event` 둘 다 true 일 때만 write(둘 중 하나라도 false = no-op, 0 rows). "데이터 없음"과 "배선 미작동" 구분(AC-3).
+- **exit-0 비차단**(ADR-115) — append 실패/usage 파싱 실패 → `attribution=unattributed` + fail-VISIBLE stderr + drop-counter, 작업 흐름 무차단. 0-API + 50ms ceiling(측정이 측정대상 amplify 금지, INV-8).
+- **honest-null** — 블록 부재/malformed(crash) 시 전 token null + unattributed, `termination_cause=zero_output|error` 기록(degrade ladder tier-3).
+
+**writer topology (Amendment 4 — SubagentStop single-write → Orchestrator task-notification single-write)**: SubagentStop hook 의 spawn-event **row-write** 는 retire(single-writer 전환 — event_id cross-path 불일치·이중 append 구조적 제거). 단 SubagentStop 에 경량 **spawn-completion COUNTER**(bare count, row-writer 아님, disjoint 채널)를 보존해 task-notification-recorded row count 와 **COUNT-레벨 reconcile**로 single-writer survivorship gap(emit 실패/notification-loss)을 crash-safe 관측한다(F-B, record-only). self-context-v1 append 는 disjoint 채널로 SubagentStop 잔존(INV-3).
+
+**cross-ref**: 채널 boundary = [§15.1 spawn-event-v1 row](#151-9-channel-boundary-table)(Owner = Orchestrator task-notification single-write) · 스키마·degrade ladder·writer topology 상세 = [spawn-event-v1 계약 Amendment 4](inter-plugin-contracts/spawn-event-v1.md) · inline 허용 근거 = ADR-039 §결정 21(7번째 inline-whitelist entry) · Allow-list = ADR-043 Amendment 5.
+
 ---
 
 ### 14.11 완료 시각 + 소요 시간 reporting (normative — wrapper + all consumers)
@@ -3907,7 +3932,7 @@ Codeforge observability stack 의 channel 별도 책임 분리 normative SSOT. T
 | **Story §14 Lane Evidence** ([ADR-031](../archive/adr/ADR-031-lane-spawn-evidence-trail.md)) | 2 committed | lane spawn coarse | git commit | Orchestrator monopoly | persistent (append-only) |
 | **post-merge-counters.jsonl** ([ADR-026](../archive/adr/ADR-026-post-merge-automation.md)) | 3 persistent | post-merge action outcome | git commit | post-merge-followup.yml | persistent (append-only, opt-in) |
 | **stop-event-v1 ledger** ([ADR-163 §결정 2](../archive/adr/ADR-163-codeforge-measurement-channel-architecture.md), [stop-event-v1](inter-plugin-contracts/stop-event-v1.md)) | 3 persistent | discrete stop event | hot tier (sqlite/JSONL) + cold tier (markdown) | Orchestrator-owned delegate subagent | hot 7-30d / cold persistent / opt-in default false |
-| **spawn-event-v1 ledger** ([ADR-163 Amendment 1](../archive/adr/ADR-163-codeforge-measurement-channel-architecture.md), [spawn-event-v1](inter-plugin-contracts/spawn-event-v1.md)) | 3 persistent | per-agent spawn (subagent 1개 = row 1개) | hot tier JSONL (`.claude/ledger/spawn-event.jsonl`) | Orchestrator-owned delegate subagent | persistent append-only / opt-in default false |
+| **spawn-event-v1 ledger** ([ADR-163 Amendment 1](../archive/adr/ADR-163-codeforge-measurement-channel-architecture.md), [spawn-event-v1](inter-plugin-contracts/spawn-event-v1.md)) | 3 persistent | per-agent spawn (subagent 1개 = row 1개) | hot tier JSONL (`.claude/ledger/spawn-event.jsonl`) | Orchestrator task-notification 수신 시점 single-write (Amendment 4 / CFP-2850 — 구 SubagentStop hook row-write retire, hook 은 경량 spawn-completion COUNTER 만 잔존[disjoint 채널], §14.12a) | persistent append-only / opt-in default false |
 | **dev-process-event-v1 ledger** ([ADR-163 Amendment 2](../archive/adr/ADR-163-codeforge-measurement-channel-architecture.md) / [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md), [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md)) | 3 persistent | typed dev-process event (8 type: lane전이/prompt/tool-call/diff/verdict/findings/FIX전이/최종산출물) | 2계층 — hot JSONL index (`.claude/ledger/dev-process-event.jsonl`) + evidence-blob-store (content-addressed redacted blob) | Orchestrator-owned delegate (Port B agent-emit) + hook-adapter (Port A) | 3-tier hot/warm/cold / wrapper always-on · consumer opt-in default false |
 
 > 위 표 = 9 channel (ADR-163 §결정 1 + Amendment 1 — spawn-event-v1 8번째 + Amendment 2 / ADR-155 — dev-process-event-v1 9번째). channel 추가 시 §15.3 invariant.
