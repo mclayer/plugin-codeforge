@@ -115,6 +115,35 @@ else
   bad "AC-10 bypass→exit0+audit 기대" "ec=$ecBy out=<<$outBy>>"
 fi
 
+# ── F-CR-003: production managed_root() 실해소 discriminating (monkeypatch/base 주입 0) ──
+#   위 케이스는 judge=base 주입 / main_tier=managed_root monkeypatch 라 production managed_root()
+#   이 Windows 에서 None(WSL bash 오해소) 또는 MSYS POSIX 경로(`/c/...`) 반환으로 가드 silent
+#   no-op / false-positive 되는 hollow 를 못 잡는다(§8.7 oracle 공백 — AC-10 hollow 근본). 본
+#   케이스는 base= 미주입 → 내부 managed_root() 를 실제로 경유하여 (a) 실 non-None 관리루트 산출
+#   (no-op 아님) + (b) 표준/비표준 정확 분류를 입증. (Windows 자가호스트 runner 에서 F-CR-003
+#   회귀를 실포착 — Linux 는 bug 미발현이라 양쪽 GREEN, no-op 은 아님.)
+HOME_MIXED="$("$PY" -c 'import os;print(os.path.expanduser(chr(126)).replace(chr(92),"/"))')"
+STD_PROD="git worktree add \"$HOME_MIXED/.claude/worktrees/somerepo/cfp-1-작업\" HEAD"
+BAD_PROD="git worktree add \"$HOME_MIXED/stray-wt-밖\" HEAD"
+prod_probe() {   # is_nonstandard_location(cmd) base 미주입 → production managed_root 경유. "SET|<bool>"/"NONE|<bool>"
+  printf '%s' "$1" > "$CMDDIR/cmd.txt"
+  CFP2822_CMDFILE="$CMDDIR/cmd.txt" CFP2822_PCWD="$2" "$PY" - <<'PY'
+import sys, os
+sys.path.insert(0, os.environ["CFP2822_LIBDIR"])
+import check_worktree_location_guard as g
+cmd = open(os.environ["CFP2822_CMDFILE"], encoding="utf-8").read()
+mr = g.managed_root(cwd=os.environ["CFP2822_PCWD"])                    # 실 production 해소 (monkeypatch 없음)
+res = g.is_nonstandard_location(cmd, cwd=os.environ["CFP2822_PCWD"])   # base 미주입 → 내부 managed_root 소비
+print("%s|%s" % ("NONE" if mr is None else "SET", res))
+PY
+}
+rP_std=$(prod_probe "$STD_PROD" "$REPO_ROOT")
+rP_bad=$(prod_probe "$BAD_PROD" "$REPO_ROOT")
+[ "$rP_std" = "SET|False" ] && ok "F-CR-003 production managed_root 실해소(non-None·no-op 아님) + 표준 target→통과(False): $rP_std" \
+  || bad "F-CR-003 표준: SET|False 기대 (managed_root None/POSIX hollow 회귀?)" "got=$rP_std"
+[ "$rP_bad" = "SET|True" ] && ok "F-CR-003 production managed_root 실해소 + 비표준 target(관리루트 밖)→위반(True): $rP_bad" \
+  || bad "F-CR-003 비표준: SET|True 기대" "got=$rP_bad"
+
 rm -rf "$CMDDIR" "$ROOT"
 echo ""
 echo "============================================"

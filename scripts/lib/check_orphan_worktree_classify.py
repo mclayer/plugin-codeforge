@@ -197,7 +197,13 @@ def unpushed_count(path):
     반환: (count:int, inconclusive:bool).
       · remote 미설정 → push 상태 판정 불가 → inconclusive=True (INV-2 → KEEP).
       · git 실패 → inconclusive=True.
-      · remote 존재 → `git log --branches --not --remotes --oneline` 라인 수."""
+      · remote 존재 → `git log HEAD --branches --tags --not --remotes --oneline` 라인 수.
+
+    F-CR-002 fix: 도달성 positive ref 에 **HEAD 포함**(+ --tags). 종전 `--branches` 단독은
+      detached HEAD 위의 local commit 을 어느 branch 도 포함 안 해 미포착 → unpushed=0 오판 →
+      독립 clone(detached+local commit)이 REMOVE 로 data-loss(도메인 class 9 회귀). HEAD 추가로
+      detached local commit 도 포착. over-preserve 아님: `--not --remotes` 가 remote 도달분을
+      계속 제외하므로 clean+pushed(detached at pushed HEAD 포함)는 여전히 0 → 삭제 가능(AC-12)."""
     if not path or not os.path.isdir(path):
         return (0, True)
     remotes = _git(["-C", path, "remote"], cwd=path)
@@ -205,7 +211,7 @@ def unpushed_count(path):
         return (0, True)
     if not (remotes.stdout or "").strip():
         return (0, True)  # remote 없음 → push 여부 판정 불가 → 보존
-    cp = _git(["-C", path, "log", "--branches", "--not", "--remotes", "--oneline"], cwd=path)
+    cp = _git(["-C", path, "log", "HEAD", "--branches", "--tags", "--not", "--remotes", "--oneline"], cwd=path)
     if cp is None or cp.returncode != 0:
         return (0, True)
     lines = [ln for ln in (cp.stdout or "").splitlines() if ln.strip()]
@@ -221,6 +227,49 @@ def stash_count(path):
         return (0, True)
     lines = [ln for ln in (cp.stdout or "").splitlines() if ln.strip()]
     return (len(lines), False)
+
+
+def locked_signal(path):
+    """`git worktree lock` 된 linked worktree 인가 (INV-1 보존 신호 — 자동삭제 금지, E4 자동 unlock 기각).
+
+    F-CR-001 fix: 종전 orphan_state_signals/judge_orphan 은 locked 신호를 미검사(docstring 만
+      언급) → git worktree lock 한 clean+pushed+aged worktree 가 REMOVE 판정 = locked 삭제
+      (INV-1/AC-12 위반, 등록경로 check-worktree-stale.sh 는 KEEP 하는데 orphan 경로만 비대칭).
+
+    판정원 = `git -C <path> worktree list --porcelain` 에서 path 자신 record 의 `locked` flag
+      (등록경로 check-worktree-stale.sh L323~ `"locked"*` 와 **동일 porcelain 소스** — 양 삭제
+      경로 보존신호 enum parity). 반환:
+        · True  — locked 확정 → judge KEEP(사유 "locked").
+        · False — non-locked 확정(목록에 있으나 locked flag 부재, 또는 독립 clone main worktree
+                  = lock 불가라 목록 부재 시도 non-locked 확정) → 다른 신호로 판정 진행.
+        · None  — 판정불능(git 실패/예외) → 호출자 INCONCLUSIVE→KEEP fail-safe(INV-2)."""
+    if not path or not os.path.isdir(path):
+        return None  # 판정불능 → fail-safe
+    cp = _git(["-C", path, "worktree", "list", "--porcelain"], cwd=path)
+    if cp is None or cp.returncode != 0:
+        return None  # 판정불능 (INV-2)
+    target = _norm(path)
+    cur_path = None
+    cur_locked = False
+    for line in (cp.stdout or "").splitlines():
+        if line.startswith("worktree "):
+            # 새 record 시작 — 이전 record flush (stale.sh flush_record 동형)
+            if cur_path is not None and _norm(cur_path) == target:
+                return cur_locked
+            cur_path = line[len("worktree "):].strip()
+            cur_locked = False
+        elif line == "locked" or line.startswith("locked "):
+            cur_locked = True  # `locked` 단독 또는 `locked <reason>` 양형 (stale.sh "locked"* 동형)
+        elif not line.strip():
+            # record 경계 flush
+            if cur_path is not None and _norm(cur_path) == target:
+                return cur_locked
+            cur_path = None
+            cur_locked = False
+    # 마지막 record flush (trailing 빈 줄 없을 수 있음)
+    if cur_path is not None and _norm(cur_path) == target:
+        return cur_locked
+    return False  # 목록에 path 부재 = locked 아님 확정 (독립 clone main worktree 등)
 
 
 def has_pin_marker(path):
@@ -484,12 +533,16 @@ def orphan_state_signals(path):
     up_count, up_inconc = unpushed_count(path)
     st_count, st_inconc = stash_count(path)
     pin = has_pin_marker(path)
+    locked = locked_signal(path)  # True(locked)/False(non-locked)/None(판정불능)
     return {
         "dirty": dirty,
         "unpushed": up_count,
         "stash": st_count,
         "pin": pin,
-        "inconclusive": up_inconc or st_inconc,
+        "locked": locked is True,
+        # locked 판정불능(None) → INCONCLUSIVE 합류(INV-2 fail-safe KEEP). 정상 git repo 는
+        #   worktree list 성공 → True/False 확정이라 기존 REMOVE 케이스 회귀 없음.
+        "inconclusive": up_inconc or st_inconc or (locked is None),
         "age": age_seconds(path),
     }
 
@@ -516,6 +569,9 @@ def judge_orphan(path, source, git_exists):
         # (INV-1) 상태 신호 1+ → 보존
         if sig["dirty"]:
             return ("KEEP", "dirty", age)
+        if sig.get("locked"):
+            # (F-CR-001) git worktree lock → 명시 보존 (자동 unlock/force-remove 금지, E4)
+            return ("KEEP", "locked", age)
         if sig["unpushed"] > 0:
             return ("KEEP", "unpushed-%d" % sig["unpushed"], age)
         if sig["stash"] > 0:

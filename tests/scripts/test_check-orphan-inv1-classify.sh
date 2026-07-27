@@ -60,6 +60,48 @@ mk_repo() {
   )
 }
 
+# ── 실 detached-HEAD fixture (F-CR-002 discriminating): <dir> <bare> <make_local_commit:0|1> ──
+# push main → detach HEAD → (mklocal=1) 어느 branch/remote 도 아닌 local commit 1개.
+# working tree 는 커밋 후 clean (dirty 아님) → 순수 detached-unpushed 축만 구동.
+mk_detached() {
+  local dir="$1" bare="$2" mklocal="$3"
+  mkdir -p "$(dirname "$dir")"
+  git init -q "$dir"
+  (
+    cd "$dir" || exit 1
+    git config user.email t@t.local; git config user.name t; git config commit.gpgsign false
+    echo base > base.txt; git add base.txt; git -c commit.gpgsign=false commit -qm init
+    git init -q --bare "$bare"
+    git remote add origin "$bare"
+    git push -q origin HEAD:refs/heads/main 2>/dev/null
+    git checkout -q --detach                    # detached at pushed HEAD (clean·pushed)
+    if [ "$mklocal" = "1" ]; then
+      echo more >> base.txt; git add base.txt; git -c commit.gpgsign=false commit -qm "detached-local"
+    fi
+    exit 0
+  )
+}
+
+# ── 실 locked linked-worktree fixture (F-CR-001 discriminating): <main> <wt> <bare> <lock:0|1> ──
+# main push → wt = --detach at pushed HEAD (clean·pushed) → (lock=1) `git worktree lock`.
+# orphan judge_orphan 의 locked 신호(porcelain locked flag)를 실제로 구동.
+mk_locked_wt() {
+  local main="$1" wt="$2" bare="$3" lock="$4"
+  mkdir -p "$(dirname "$main")" "$(dirname "$wt")"
+  git init -q "$main"
+  (
+    cd "$main" || exit 1
+    git config user.email t@t.local; git config user.name t; git config commit.gpgsign false
+    echo base > base.txt; git add base.txt; git -c commit.gpgsign=false commit -qm init
+    git init -q --bare "$bare"
+    git remote add origin "$bare"
+    git push -q origin HEAD:refs/heads/main 2>/dev/null
+    git worktree add -q --detach "$wt" HEAD
+    [ "$lock" = "1" ] && git worktree lock "$wt"
+    exit 0
+  )
+}
+
 # judge_orphan(path, 'home-direct', git_exists) → "DECISION|REASON".
 judge_probe() {
   local path="$1" git_exists="$2"
@@ -95,6 +137,22 @@ r=$(judge_probe "$tmp/작업 공간/독립 clone" 1)
 mk_repo "$tmp/작업 공간/pushed clone" 0 0 1 "$tmp/b2.git"; touch -d "@$OLD_EPOCH" "$tmp/작업 공간/pushed clone"
 r=$(judge_probe "$tmp/작업 공간/pushed clone" 1)
 [ "$r" = "REMOVE|None" ] && ok "INV-1 unpushed 해제(0·age>7d)→REMOVE: $r" || bad "INV-1 unpushed 0→REMOVE 기대" "got=$r"
+rm -rf "$tmp"
+
+# ───── INV-1 (2b) detached-HEAD 로컬커밋 unpushed (F-CR-002 discriminating) — 양방향 ─────
+#   `git log --branches --not --remotes` 는 어느 branch 도 아닌 detached commit 미포착 → 종전
+#   REMOVE data-loss(도메인 class 9). fix = `git log HEAD --branches --tags --not --remotes`.
+#   이 fixture 부재가 base "PASS"가 F-CR-002 를 통과시킨 oracle 공백(§8.7). clean tree 로 dirty
+#   축 배제 → detached-unpushed 신호만 변별.
+tmp=$(mktemp -d)
+mk_detached "$tmp/작업 공간/detached 로컬" "$tmp/b1.git" 1; touch -d "@$OLD_EPOCH" "$tmp/작업 공간/detached 로컬"
+r=$(judge_probe "$tmp/작업 공간/detached 로컬" 1)
+[ "$r" = "KEEP|unpushed-1" ] && ok "INV-1 detached-HEAD 로컬커밋(clean·age>7d)→KEEP(unpushed-1): $r" \
+  || bad "INV-1 detached-HEAD unpushed→KEEP(unpushed-1) 기대 (F-CR-002 미포착 회귀?)" "got=$r"
+mk_detached "$tmp/작업 공간/detached 푸시분" "$tmp/b2.git" 0; touch -d "@$OLD_EPOCH" "$tmp/작업 공간/detached 푸시분"
+r=$(judge_probe "$tmp/작업 공간/detached 푸시분" 1)
+[ "$r" = "REMOVE|None" ] && ok "INV-1 detached-HEAD at pushed(로컬커밋 0·clean·age>7d)→REMOVE(over-preserve 금지): $r" \
+  || bad "INV-1 detached at pushed→REMOVE 기대 (over-preserve 회귀?)" "got=$r"
 rm -rf "$tmp"
 
 # ─────────────────── INV-1 (3) pin — 양방향 ───────────────────
@@ -183,6 +241,27 @@ if [ -f "$STALE_SH" ]; then
   fi
 else
   bad "check-worktree-stale.sh 부재 (locked case)" "$STALE_SH"
+fi
+
+# ───── INV-1 (5b) orphan judge_orphan locked 축 (F-CR-001 discriminating) — 양방향 ─────
+#   위 (5)는 등록경로(check-worktree-stale.sh) locked 만 검증 → orphan judge_orphan 의 locked
+#   축은 미검증이었고, 그 공백이 base "11/11 PASS"가 F-CR-001(orphan locked→REMOVE data-loss)을
+#   통과시킨 oracle 결함(§8.7). 여기서 실 `git worktree lock` 한 clean·pushed·aged linked
+#   worktree 를 judge_orphan 으로 직접 구동 → 등록/orphan 양 경로 locked 보존 enum parity 실현.
+if command -v git >/dev/null 2>&1; then
+  tmp=$(mktemp -d)
+  mk_locked_wt "$tmp/작업 공간/main" "$tmp/작업 공간/wt 잠긴" "$tmp/bl.git" 1
+  touch -d "@$OLD_EPOCH" "$tmp/작업 공간/wt 잠긴"
+  r=$(judge_probe "$tmp/작업 공간/wt 잠긴" 1)
+  [ "$r" = "KEEP|locked" ] && ok "INV-1 orphan locked(git worktree lock·clean·pushed·age>7d)→KEEP(locked): $r" \
+    || bad "INV-1 orphan locked→KEEP(locked) 기대 (F-CR-001 미가드 회귀?)" "got=$r"
+  # 해제 → REMOVE (자동 unlock 금지: 테스트가 수동 unlock; judge 는 force-remove 안 함)
+  git -C "$tmp/작업 공간/main" worktree unlock "$tmp/작업 공간/wt 잠긴" 2>/dev/null
+  touch -d "@$OLD_EPOCH" "$tmp/작업 공간/wt 잠긴"
+  r=$(judge_probe "$tmp/작업 공간/wt 잠긴" 1)
+  [ "$r" = "REMOVE|None" ] && ok "INV-1 orphan locked 해제(수동 unlock·clean·pushed·age>7d)→REMOVE: $r" \
+    || bad "INV-1 orphan locked 해제→REMOVE 기대 (locked over-preserve 회귀?)" "got=$r"
+  rm -rf "$tmp"
 fi
 
 # ─────────────────── AC-12 (3-case + 등록·존재 ≠ 보존) ───────────────────

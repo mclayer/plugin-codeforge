@@ -55,6 +55,7 @@ PreToolUse block contract (Claude Code):
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -115,16 +116,21 @@ def _resolve_port():
     return cand if os.path.isfile(cand) else None
 
 
-def managed_root(cwd=None):
-    """표준 관리 루트(`$HOME/.claude/worktrees`) 를 worktree_base() 포트에서 파생.
-    포트를 subprocess 로 source → `worktree_base` 출력의 부모를 반환.
-    실패(포트 부재/bash 부재/비-repo cwd 등) → None (호출자 fail-open)."""
+def _managed_root_via_port(cwd=None):
+    """worktree_base() 포트를 source 해 관리 루트 도출 (Refactor D-2 SSOT 소비).
+
+    bare-name `bash` 대신 `shutil.which("bash")` 절대경로로 실행 → Windows 에서 PATH 선두
+      WSL bash(`execvpe(/bin/bash) failed`, rc=1) 오해소를 회피(F-CR-003 1차 원인).
+    반환: 포트 출력의 부모(= `$HOME/.claude/worktrees`) 또는 None(포트/bash 불능)."""
     port = _resolve_port()
     if not port:
         return None
+    bash_bin = shutil.which("bash")
+    if not bash_bin:
+        return None
     try:
         proc = subprocess.run(
-            ["bash", "-c", 'source "$1"; worktree_base', "bash", port],
+            [bash_bin, "-c", 'source "$1"; worktree_base', "bash", port],
             cwd=(cwd or None),
             capture_output=True,
             text=True,
@@ -139,6 +145,49 @@ def managed_root(cwd=None):
         return None
     # 포트는 항상 `$HOME/.claude/worktrees/<repo>` → 부모 = managed root (repo/cwd 불변).
     return os.path.dirname(base)
+
+
+def _is_native_abs(p):
+    """p 가 **현 플랫폼 네이티브 절대경로**인가 (MSYS POSIX 경로 배제).
+
+    Windows: drive-letter(`C:`) 또는 UNC(`\\\\`) 여야 함. bash 포트가 반환하는 MSYS 경로
+      (`/c/Users/...`)는 drive 부재(`os.path.splitdrive` → `('', ...)`) → False → 채택 배제
+      (POSIX↔Windows `_norm` 불일치로 인한 false-positive 원천 차단, F-CR-003).
+    POSIX: 절대경로면 네이티브."""
+    if not p or not os.path.isabs(p):
+        return False
+    if os.name == "nt":
+        drive, _ = os.path.splitdrive(p)
+        return bool(drive)  # drive-letter/UNC 만 네이티브 (leading-slash MSYS 경로 배제)
+    return True
+
+
+def managed_root(cwd=None):
+    """표준 관리 루트(`$HOME/.claude/worktrees`) — **항상 non-None**(가드 무발화 사각지대 제거).
+
+    F-CR-003 fix (AC-10 hollow no-op 제거): 종전 구현은 bare `bash` subprocess 단독 의존 →
+      Windows 에서 WSL bash 오해소(rc=1) → None → is_nonstandard_location 항상 False →
+      block tier 조차 silent no-op(가드 미발화). 나아가 Git Bash 절대경로로 source 해도 포트가
+      MSYS POSIX 경로(`/c/Users/...`)를 반환 → Windows `_norm` 이 `c:\\c\\Users\\...` 로
+      오정규화 → 표준 target 을 nonstandard 로 오탐(false-positive). 두 모드 모두 결함.
+
+    2단 도출:
+      1차 — worktree_base() 포트 source(_managed_root_via_port, 절대경로 bash). 산출이
+            **현 플랫폼 네이티브 절대경로 && 실재 디렉터리**면 채택. Windows 에서 포트가 뱉는
+            MSYS 경로(`/c/...`)는 _is_native_abs 로 배제(isdir 만으로는 이 env 에서 `/c/...` 를
+            통과시켜 false-positive 재현 — 실측). 포트가 유효한 플랫폼(Linux/macOS)에서는 SSOT 를
+            계속 소비(Refactor D-2 유지).
+      2차 fallback — 포트 불능/비-네이티브/부적합 → 결정론 파생. 포트 SSOT 불변식
+            (`$HOME/.claude/worktrees/<repo>`)의 **부모** = `$HOME/.claude/worktrees`
+            (본 파일 도입부 문서 · repo/cwd 불변)을 그대로 재현. `.claude/worktrees` 리터럴은
+            이 fallback 1곳에만 존재하며(worktree_base() SSOT tail 미러 — 동기 유지 대상), 포트가
+            유효한 플랫폼에서는 1차가 계속 SSOT 를 소비하므로 Refactor D-2 의도(SSOT 단일 소비)를
+            포트-가용 플랫폼에서 보존한다."""
+    root = _managed_root_via_port(cwd=cwd)
+    if root and _is_native_abs(root) and os.path.isdir(root):
+        return root
+    # fallback — 결정론(silent no-op 제거). 포트 부모의 불변($HOME/.claude/worktrees) 재현.
+    return os.path.join(os.path.expanduser("~"), ".claude", "worktrees")
 
 
 def _parse_worktree_add_target(cmd):
