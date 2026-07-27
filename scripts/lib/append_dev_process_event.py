@@ -17,8 +17,10 @@
 #   - content-blind: append_event 는 allow-list 필드(enum/numeric/hash/상관ID/blob-ref/emit_source)
 #     만 수용한다. free-form content 본문은 절대 수령·저장하지 않는다 — allow-list 밖 kwarg = drop
 #     (row 자체가 content 를 담는 경로가 구조적으로 부재).
-#   - O_APPEND per-row (H1 lost-update race 회피): append_spawn_event._append_jsonl_row **재사용**.
-#     read-modify-write(append_stop_event._atomic_append = O(n) + lost-update) 패턴 **복사 금지**.
+#   - cross-platform kernel-atomic single-row append (H1 완료행 clobber 봉인): 공유 primitive
+#     append_spawn_event._append_jsonl_row **재사용**(POSIX O_APPEND / Windows FILE_APPEND_DATA —
+#     ADR-155 Amendment 1). read-modify-write(append_stop_event._atomic_append = O(n) +
+#     lost-update) 패턴 **복사 금지**.
 #   - event_id = deterministic sha256 (random UUID 금지 — §11.6). 동일 논리 이벤트 → 동일 event_id
 #     (at-least-once idempotent, read-time dedup key). timestamp 는 event_id 산입 제외 (재시도 멱등).
 #   - timestamp = UTC Z strict 저장 (KST 표시는 표현 계층 — ADR-079). monotonic 이 필요하면
@@ -30,12 +32,17 @@
 #     caller 는 exit-0 semantics 유지 (ADR-115).
 #   - 0 API call — local I/O only.
 #
-# ★정직 (append 무보장 천장 — change-plan §7.4.1):
-#   본 primitive 는 "kernel-atomic" 을 **주장하지 않는다**. small-row 단일-write O_APPEND 는
-#   offset-append clobber-free 이나, POSIX write() 는 임의 크기 정규파일 non-interleave 를
+# ★정직 (append 원자성 2축 분리 — change-plan §7.4.1 / ADR-155 Amendment 1):
+#   [clobber 축 — 봉인됨] 완료행 lost-update(clobber)는 공유 primitive
+#   append_spawn_event._append_jsonl_row 가 cross-platform kernel-atomic single-row append
+#   (POSIX O_APPEND / Windows FILE_APPEND_DATA)로 봉인 — 2-writer 경합 완료행 clobber-free.
+#   ("kernel-atomic 미주장" 이전 표기는 clobber 축에서 철회 — MSVCRT lseek-then-write 버그 수리 후
+#   실제 kernel-atomic). 보장 scope = local NTFS/POSIX 정규파일 + row당 단일-write.
+#   [torn 축 — 무주장 잔존] network share(SMB/NFS) 제외 + torn(multi-sector interleave)은 별개
+#   무주장: single-write O_APPEND 는 offset-append clobber-free 이나 임의 크기 non-interleave 는
 #   보장하지 않는다(pubs.opengroup.org write.html) — 무-interleave 는 small-row 불변식(<4KB,
-#   index=blob-ref only 이므로 작음)에 의해 bounded 될 뿐이다. concurrent no-interleave 증명
-#   = Phase 2 StatefulTest.
+#   index=blob-ref only 이므로 작음)에 의해 bounded 될 뿐이다. torn no-interleave 증명 = Phase 2
+#   StatefulTest.
 #
 # ★activation gate 경계 (INV-8b / α 비대칭 — 계약 §telemetry-activation):
 #   본 primitive 는 **gate-free mechanism** 이다. telemetry 활성 정책(wrapper always-on /
@@ -469,9 +476,11 @@ def append_event(ledger_path=None, **index_fields):
     blob_ref 는 **이미 계산된 str** 로 수령한다 (redaction·blob write 는 sibling/emit 계층 소관).
     non-blocking: 어떤 실패도 raise 하지 않는다 — graceful degrade + return None (caller exit-0).
 
-    ★append 무보장 천장 (change-plan §7.4.1): small-row 단일-write O_APPEND 는 offset-append
-      clobber-free 이나 임의크기 non-interleave 는 무보장 — small-row 불변식으로 bounded.
-      concurrent no-interleave 증명 = Phase 2 StatefulTest.
+    ★append 원자성 2축 (change-plan §7.4.1 / ADR-155 Amd1): 완료행 clobber 축은 공유 primitive
+      _append_jsonl_row 의 cross-platform kernel-atomic append(POSIX O_APPEND / Windows
+      FILE_APPEND_DATA)로 봉인(clobber-free, local NTFS/POSIX 단일-write scope). torn(multi-sector
+      interleave) 축은 별개 무주장 — small-row 불변식(<4KB, index=blob-ref only)으로 bounded,
+      증명 = Phase 2 StatefulTest.
     """
     try:
         row = build_row(**index_fields)

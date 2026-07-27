@@ -3634,6 +3634,20 @@ fix_cycle: <N>
 
 R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip** (verbosity 무관).
 
+**dev-process-event 매핑 (CFP-2817 — event → dev-process event_type/transition_kind, [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md) §3.3)**: 위 표의 lane-level 이벤트는 §14.7 step 5.5 에서 Port-B agent-emit(emit_source=agent)로도 기록된다. 채번·호출 규율 SSOT = §14.7 lookup 표.
+
+| 위 §14.5 이벤트 | dev-process event_type | transition_kind |
+|---|---|---|
+| Lane 진입 | `lane_transition` | `enter` |
+| Lane PASS | `lane_transition` (+ 리뷰 lane `verdict`) | `pass` |
+| Lane FIX | `lane_transition` + `verdict`(FAIL) + `defect_finding` | `fix-detected` → `cause` |
+| Lane 재진입 (FIX 후) | `lane_transition` | `re-enter` |
+| RESET 마커 | `lane_transition` (reset_generation +1) | `re-enter` |
+| Story 완료 | `lane_transition` (+ 선택 `final_artifact`) | `complete` |
+| Deputy spawn/return · CI gate · N/A · R11 fast-path 등 | — (dev-process emit 대상 아님) | — |
+
+R10 prefetch 등 사용자 무관 메타 이벤트는 dev-process emit 도 대상 아님(§14.7 step 5.5 비발화).
+
 **TodoWrite 시도 의무 + 실패 non-blocking 원칙 (ADR-038 §결정 8 시도 의무 + §결정 7 non-blocking — Amendment 1)**: 두 속성을 명확히 분리한다.
 
 - **시도 의무 (non-skippable)**: 위 표의 TodoWrite 갱신 컬럼에 표시된 이벤트 각각에서 Orchestrator 는 TodoWrite 갱신을 **반드시 시도**해야 한다. 시도 자체를 건너뛰는 것은 ADR-038 §결정 8 위반이다.
@@ -3685,6 +3699,8 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
        ├→ 3) Write(.claude-work/progress/<KEY>.md) — full rewrite, last_processed_seq 증가
        ├→ 4) terminal narration emit (ADR-029)
        ├→ 5) ★ TodoWrite update — non-skippable 시도 (ADR-038 §결정 8) / failure non-blocking (ADR-038 §결정 7)
+       ├→ 5.5) ★ dev-process-event Port-B emit (CFP-2817) — 6-point 전이/verdict/defect_finding 시점에
+       │        emit_dev_process_event.py 호출 (emit_source=agent, non-blocking record-only exit-0 — ADR-115)
        └→ 6) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
 ```
 
@@ -3698,6 +3714,33 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 - Single-Story 모드 — `[KEY]` prefix drop (모든 row 에서)
 - 시도 의무: step 5 건너뛰기는 ADR-038 §결정 8 위반 (시도 후 실패는 §결정 7 — non-blocking)
 - 실패 처리: TodoWrite update 실패 시 warning, lane primary work 미차단 (§14.5 원칙)
+
+**dev-process-event Port-B emit (step 5.5) detail (CFP-2817 / [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md) / [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md) §결정 4)** — 본 step 은 순수 배선 지침(로직 0):
+
+- **호출 주체 = Orchestrator(-owned delegate) 독점** (AC-7, [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 3 writer monopoly). review lane 은 verdict/defect packet 을 **반환**할 뿐 emit 을 직접 호출하지 않는다 (직접 append = policy_violation).
+- **무엇을 emit** (ADR-038 6-point 각 시점 + verdict/defect 수령 시점):
+  - 6-point 전이 각각 → `lane_transition` 1행 (`emit_dev_process_event.py lane-transition`).
+  - 리뷰 verdict 수령 → `verdict` 1행 (`emit_dev_process_event.py verdict`). AC-1 완료 데이터 bar(lane_transition+verdict 최소)의 verdict 앵커.
+  - defect-bearing verdict 수령 → `defect_finding` 1행 (`emit_dev_process_event.py defect-finding`). 한 물리 시점(예: 구현-리뷰 FAIL)에 lane_transition(fix-detected) + verdict(FAIL) + defect_finding 복수 event_type 동시 발생 가능.
+- **seq = causal-state 파생** (계약 §4 seq 규율 SSOT): CLI 는 `--transition-kind` + (FIX 계열은) `--fix-iter` [+ `--reset-generation`/`--ordinal`] 를 받아 내부에서 `emit_dev_process_event.derive_seq()` 로 seq 를 파생한다 (raw seq 주입 flag 없음 — 단일 SSOT). 원장 tail-read·primitive 내부 채번·random-UUID **금지**(at-least-once 멱등 붕괴). fix_iter 미상 = **ESCALATE**(§10 FIX Ledger/[session-recovery](../skills/session-recovery/SKILL.md) §7.4 복원, 복원 불가 시 사용자 ESCALATE — coarse-fallback·silent loss 금지).
+- **story_key 명시 주입** (AC-11): active-Story context 의 story_key 를 `--story-key` 로 명시 전달 (ambient 추론 금지 — 병렬 Story 오귀속 0).
+- **시각 소스 = primitive 내부 UTC 단일** (AC-13): CLI 에 `--timestamp` 인자 **부재**. 저장 timestamp 는 `append_dev_process_event._utc_z_now/_utc_z_monotonic` 내부 생성. `--prev-timestamp-utc` 는 monotonic clamp 용 직전 행 값 전달만 (시각 계산 아님, shell `date`/local-time 재도입 0).
+- **defect_type = review-verdict-v4 closed vocab 파생만** (OBJ-1): `--defect-type` 은 verdict-v4 type 어휘에서만 채운다 (자유텍스트 금지 — semi-open index 는 redaction 미적용 유일 content 채널).
+- **non-blocking / fail-VISIBLE** ([ADR-115](../archive/adr/ADR-115-runtime-hook-enforcement.md)): emit 은 exit-0 record-only — 실패해도 lane 진행 무차단. emit() None 반환은 stderr WARN 로 가시화(silent-success 금지). 부재판별 = `check_dev_process_activation_manifest.py` ACT-3 (Port-B 배선 present + call-site containment 정적 판정, honesty ceiling: runtime 무결 아님).
+- **jira-progress-mirror 와 disjoint 채널**: 동일 6-point 실행 지점에서 progress-mirror(Jira 코멘트) ∥ dev-process(ledger) 각각 emit — 한쪽 실패가 다른 쪽을 막지 않는다(ADR-115 record-only, §15.2 boundary).
+
+**ADR-038 6-point ↔ transition_kind ↔ event_type 매핑 lookup (로직 0 — `scripts/jira-channel/progress-format.sh` 6-token 재사용, [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md) §3.1 / AC-6)**:
+
+| ADR-038 6-point | transition_kind 토큰 | emit 되는 event_type | fix_iter 필수? |
+|---|---|---|---|
+| lane 진입 | `enter` | `lane_transition` | 아니오 |
+| lane PASS | `pass` | `lane_transition` (+ 리뷰 lane 이면 `verdict`) | 아니오 |
+| lane FIX 검출 | `fix-detected` | `lane_transition` + `verdict`(FAIL) + `defect_finding` | **예** |
+| FIX 원인 판정 | `cause` | `lane_transition` | **예** |
+| lane 재진입 (FIX 후) | `re-enter` | `lane_transition` | **예** |
+| Story 완료 | `complete` | `lane_transition` (+ 선택 `final_artifact`) | 아니오 |
+
+> **read-time kind 판별 미보장** (§2.2 / [aggregate honesty_note](../scripts/lib/aggregate_dev_process_event.py)): transition_kind 는 seq 에 각인되나 read-time 복원은 보장하지 않는다(현 substrate coarse). KPI① cycletime 은 lane_label + timestamp 만으로 성립 — kind 불요. 본 표는 emit **작성** 시점 매핑이지 read 복원 계약이 아니다.
 
 ### 14.8 Resume / corruption 처리
 
@@ -3868,6 +3911,8 @@ Codeforge observability stack 의 channel 별도 책임 분리 normative SSOT. T
 | **dev-process-event-v1 ledger** ([ADR-163 Amendment 2](../archive/adr/ADR-163-codeforge-measurement-channel-architecture.md) / [ADR-155](../archive/adr/ADR-155-dev-process-observability-substrate.md), [dev-process-event-v1](inter-plugin-contracts/dev-process-event-v1.md)) | 3 persistent | typed dev-process event (8 type: lane전이/prompt/tool-call/diff/verdict/findings/FIX전이/최종산출물) | 2계층 — hot JSONL index (`.claude/ledger/dev-process-event.jsonl`) + evidence-blob-store (content-addressed redacted blob) | Orchestrator-owned delegate (Port B agent-emit) + hook-adapter (Port A) | 3-tier hot/warm/cold / wrapper always-on · consumer opt-in default false |
 
 > 위 표 = 9 channel (ADR-163 §결정 1 + Amendment 1 — spawn-event-v1 8번째 + Amendment 2 / ADR-155 — dev-process-event-v1 9번째). channel 추가 시 §15.3 invariant.
+>
+> **dev-process-event-v1 emit 지점 cross-ref (CFP-2817)**: 위 표의 dev-process-event-v1 ledger 는 **어디서 write 되는가** — (Port A hook-adapter) PostToolUse dev-process capture hook / (Port B agent-emit) **§14.7 render flow step 5.5** — Orchestrator 가 ADR-038 6-point 전이·verdict·defect_finding 시점에 `emit_dev_process_event.py` 호출(emit_source=agent, non-blocking record-only). 6-point↔transition_kind 매핑·seq 채번 규율 = §14.7 lookup 표. 배선 present 정적 판정 = `check_dev_process_activation_manifest.py` ACT-3.
 
 ### 15.2 Boundary 차단 invariant (5)
 

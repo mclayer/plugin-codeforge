@@ -73,6 +73,8 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 - **설계 원인 판정 시**: Change Plan 갱신 (§3/§6/§7/§8 해당 항목) → Phase 1 follow-up PR → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, Phase 2 PR commit append → 구현 리뷰 재실행
 
+> **dev-process-event Port-B emit anchor (CFP-2817 — 배선 규율, 로직 아님)**: FIX 원인 판정(6-point `cause`) 시점은 Orchestrator 의 dev-process Port-B emit 지점이다 (playbook §14.7 step 5.5). Orchestrator(-owned delegate)가 `emit_dev_process_event.py lane-transition --transition-kind cause --fix-iter <Iter> ...` 로 `lane_transition` 을 emit 하며, 앞선 FIX 검출(`fix-detected`) 시점에는 `verdict`(FAIL) + `defect_finding` 도 동반 emit 한다. **호출 주체 = Orchestrator 독점**(AC-7, ADR-039 §결정 3) — root-cause 진단을 수행하는 lane/DeveloperPL 은 emit 을 직접 호출하지 않는다(직접 append = policy_violation). seq 채번(`derive_seq`, fix_iter 필수)·시각 소스·defect_type verdict-v4 vocab 규율 = playbook §14.7 SSOT. non-blocking record-only(ADR-115) — emit 실패가 FIX 판정 흐름을 막지 않는다.
+
 ### FIX-close 시점 ground-truth replay 의무 (CFP-2480 / ADR-070 Amendment 12 + ADR-119 §결정 10②)
 
 > 진단 시점(위 decision table)은 falsification discipline 을 강제하나, **닫기 시점은 공백** 이었다 — E3 가 이 공백을 메운다. 본 3rd rung generative invariant sweep 의 close-time Codex 자동화 layer (중복 게이트 아님 — 진단=falsify 발화 / 닫기=replay 반증 후 close, 같은 Popper 비대칭의 다른 시점).
