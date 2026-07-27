@@ -52,6 +52,31 @@ def test_args_file_korean_lane_label_round_trips(tmp_path, lane):
     assert rows[0]["emit_source"] == "agent", "Port-B agent-emit"
 
 
+def test_args_file_deep_nested_recursion_graceful(tmp_path):
+    """★보안 P2(CFP-2817 Phase2): 극심 nested JSON args-file 이 json.load 재귀 한도 초과 →
+    RecursionError(RuntimeError 하위 — OSError/ValueError 미포착) 유발 시, traceback+exit1 대신
+    기존 malformed 경로와 동일한 graceful(WARN+exit 2)로 흡수. ADR-115 record-only·non-blocking
+    불변식 회복. discriminating: fix 前엔 RecursionError 미포착 → uncaught traceback + returncode 1.
+    fix 後 GREEN(traceback 부재 + exit 2 + ledger 미오염)."""
+    ledger = tmp_path / "dev-process-event.jsonl"
+    args_file = tmp_path / "emit_args.json"
+    # 20000-deep nested list — valid JSON 이나 json.load 파싱 재귀 한도 초과 → RecursionError
+    args_file.write_bytes(b"[" * 20000 + b"]" * 20000)
+    r = subprocess.run(
+        [sys.executable, EMIT, "--args-file", str(args_file)],
+        cwd=str(REPO_ROOT), capture_output=True, timeout=60,
+    )
+    stderr = r.stderr.decode(errors="replace")
+    # 기존 malformed(읽기/파싱 실패) 경로와 동일 exit code
+    assert r.returncode == 2, \
+        "graceful exit 2(malformed 경로 동일) 기대, got %d: %r" % (r.returncode, stderr)
+    # traceback 부재 — record-only·non-blocking 불변식 (uncaught 면 Traceback 노출)
+    assert "Traceback" not in stderr, "uncaught RecursionError traceback 노출: %r" % stderr
+    # ledger 미오염 — json.load 파싱 단계 실패이므로 어떤 row 도 append 되지 않음
+    assert not ledger.exists() or ledger.read_text(encoding="utf-8").strip() == "", \
+        "ledger 오염(파싱 실패인데 row append)"
+
+
 def test_args_file_ac13_rejects_caller_timestamp(tmp_path):
     """AC-13: args-file 의 caller-computed timestamp 필드는 무시(저장층 UTC 단일 소스). WARN 만·exit 0."""
     ledger = tmp_path / "dev-process-event.jsonl"

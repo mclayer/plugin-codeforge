@@ -528,7 +528,10 @@ def _dispatch_from_args_file(argv_list):
     try:
         with open(path, encoding="utf-8") as f:  # ★utf-8 명시 — locale(cp949) default 금지(회귀 진원)
             payload = json.load(f)
-    except (OSError, ValueError) as exc:
+    # ★RecursionError(RuntimeError 하위 — OSError/ValueError 미포함): 극심 nested JSON 이 json.load
+    #   재귀 한도 초과 시 발생. 미포착이면 traceback+exit1 = ADR-115 record-only·non-blocking 불변식
+    #   breach → 기존 malformed 경로와 동일하게 graceful(WARN+exit 2) 흡수(CFP-2817 보안 P2).
+    except (OSError, ValueError, RecursionError) as exc:
         sys.stderr.write("[emit-dev-process-event] ERROR: --args-file 읽기/파싱 실패 %r: %r\n" % (path, exc))
         return 2
     if not isinstance(payload, dict):
