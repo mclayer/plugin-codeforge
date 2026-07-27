@@ -66,6 +66,13 @@ jobs:
         if: hashFiles('tests/scripts/test_check_codex_review_output_schema.sh') != ''
         run: bash tests/scripts/test_check_codex_review_output_schema.sh
 
+      - name: Run CFP-2851 dispatch template completeness test suite (AC-1~11)
+        # tests/scripts/test_cfp-2851-dispatch-template-completeness.sh — CodexReviewAgent.md dispatch
+        # 템플릿 완결성 discriminating driver: AC-1~11 별 fence-interior/변종절 anchoring GREEN 대 sed/awk
+        # 변이 fixture RED 이중검증(AC-9=advisory 제외 전수) + EDIT_SHA 동적 앵커 pre-edit 대조. CFP-2851 신설 self-test 실행 채널.
+        if: hashFiles('tests/scripts/test_cfp-2851-dispatch-template-completeness.sh') != ''
+        run: bash tests/scripts/test_cfp-2851-dispatch-template-completeness.sh
+
       - name: Run codex companion timeout presence lint
         id: lint
         run: |
