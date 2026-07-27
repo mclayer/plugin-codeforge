@@ -469,8 +469,9 @@ def main():
     # Deny-scan before output
     is_safe, scan_error = _deny_scan_for_secrets(output)
     if not is_safe:
-        logger.error(f"DENY-SCAN FAILED: {scan_error}")
-        logger.error("Aborting output — potential secret leak detected")
+        # scan_error 는 검출된 패턴(→ 잠재적 secret) 을 포함할 수 있으므로 verbatim 로깅 금지
+        # (CodeQL clear-text logging — SA-3 정합). 상세 억제, abort 만.
+        logger.error("DENY-SCAN FAILED: 출력에서 잠재적 secret 패턴 검출 — 상세 억제(leak 방지), abort")
         return 1
 
     print(output, file=sys.stdout)
