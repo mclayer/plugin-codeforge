@@ -33,7 +33,21 @@ related_files:
   - docs/adr-amendment-threshold-baseline.yaml  # grandfather baseline(도입 시점 산식 스캔 — 단조 비증가)
   - docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md  # G1 4번째 트리거 + G2 C-1 variant(Superseded 경로) + supersedes N:1 전수 기재
 is_transitional: false
-mechanical_enforcement_actions: []  # 게이트 배선(threshold/parity workflow + baseline + registry 2 entry) = CFP-2812 §5 이행. 본 ADR = 재제정 ratchet 규범 결정 SSOT.
+amendments:
+  - amendment_id: 1
+    carrier_story: CFP-2840
+    date: 2026-07-26
+    reinterpretation: false  # 본문 §결정 1-8 소급 재해석 아님 — §결정 5 "퇴역 시 항목 제거"의 count 게이트 realization 명문화(규범 substance 무변경)
+    summary: "§결정 5 Superseded-skip semantics 명문화 — 재제정 완료 상태(구 ADR status: Superseded 전이 + baseline 항목 제거) 무모순 성립을 위해 count 게이트가 status: Superseded 계열 3형을 (a) threshold 판정 ∧ (b) --write-baseline picked 양층에서 skip(census files_checked 계수 유지, no-false-skip: Accepted/Proposed/Sunsetted/None/empty 절대 skip 안 함). ratchet 강화 방향(퇴역 realization 게이트 배선)."
+    sunset_justification: "N/A — ratchet 강화 방향 (퇴역 realization 게이트 Superseded-skip 배선, forbid scope 축소 아님). ADR-058 §결정 5 강화 방향. is_transitional: false 유지."
+amendment_log:
+  - amendment_id: 1
+    carrier_story: CFP-2840
+    reservation_date: 2026-07-26 KST
+    sub_scope: "§결정 5"
+    reinterpretation: false
+    summary: "게이트 Superseded-skip semantics 명문화(§결정 5 realization) — CFP-2840 Phase 2 게이트 배선 carrier."
+mechanical_enforcement_actions: []  # 게이트 배선(threshold/parity workflow + baseline + registry 2 entry) = CFP-2812 §5 이행. 본 ADR = 재제정 ratchet 규범 결정 SSOT. Amendment 1(CFP-2840) = §결정 5 Superseded-skip 게이트 배선(is_superseded_status 7번째 순수 helper + 양층 skip).
 ---
 
 # ADR-167: ADR amendment 누적 임계 재제정(compaction) ratchet
@@ -103,3 +117,11 @@ codeforge ADR corpus 는 append-only (본문 동결 + Amendment append) 라 Amen
 ## 해소 기준
 
 N/A — permanent policy (ADR amendment 누적 임계 재제정 ratchet 상시 적용, is_transitional: false).
+
+## Amendment 1 (CFP-2840) — §결정 5 Superseded-skip semantics 명문화
+
+- `direction: strengthening` / `reinterpretation: false` (본문 소급 재해석 아님 — §결정 5 "퇴역 시 항목 제거"의 count 게이트 realization 명문화, 규범 substance 무변경).
+- **§결정 5 보강 (Superseded-skip semantics)**: 재제정 완료 상태(구 ADR `status: Superseded by ADR-Y` 전이 + baseline 항목 제거)의 무모순 성립을 위해, count 게이트(`scripts/lib/check_adr_amendment_threshold.py`)는 `status: Superseded` 계열 3형(bare `Superseded` / `Superseded by ADR-NNN` / `Superseded-by-ADR-MMM`) ADR 을 (a) threshold 판정 ∧ (b) `--write-baseline` picked 선별 **양층에서 skip** 한다. skip 대상도 census(`files_checked`) 계수는 유지한다(anti-vacuity). skip 은 `status: Superseded` 계열만 — `Accepted` / `Proposed` / `Sunsetted` / `None` / empty 는 절대 skip 하지 않는다(no-false-skip).
+- **honest ceiling 상속 (§결정 7)**: 재제정 *설계 시점*(본 Story 병합 전)에는 live corpus 에 Superseded ∧ effective ≥ N ADR = 0 이었으나, **본 Story 재제정으로 ADR-082(`status: Superseded by ADR-168`, effective 76 ≥ N, byte-frozen 본문)가 첫 permanent-live 케이스**가 되어 skip 브랜치를 상시 exercise 한다 — "skip 은 production 에서 안 밟힘/dead-branch" 오독 금지. 회귀 담보 = 격리 fixture + 양방향 mutation self-test(설계 시점 dead-branch 대비 도입, 이후 permanent-live 회귀 보장). **Superseded status 진정성**(genuine 재제정 vs bare-flip evasion) 검증 = **governance-tier**(C-1 variant named-successor `Superseded by ADR-Y` 필수 + archive/adr PR review + branch protection + ADR-014 superseded-amend 결격) — 기계 skip 은 status 표기만 신뢰하며 진정성은 human review 축 위임(honest-ceiling, self-gaming 잔여 정직 수용). "완전 봉인" 류 hard-claim 은 하지 않는다.
+- `sunset_justification`: N/A — ratchet 강화 방향(퇴역 realization 게이트 배선, forbid scope 축소 0).
+- 게이트 코드·self-test 실배선 = CFP-2840 Phase 2 (`scripts/lib/check_adr_amendment_threshold.py` `is_superseded_status` 7번째 순수 helper + 양층 skip + `tests/scripts/test_adr-amendment-threshold.sh` 확장).

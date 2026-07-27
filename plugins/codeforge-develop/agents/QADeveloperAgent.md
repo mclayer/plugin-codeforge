@@ -220,7 +220,7 @@ Change Plan §8 안 invariant N개 중 M (M<N) 만 measurable 시 매핑표 안 
 
 src/** 또는 인프라 결함 발견 시 **수정하지 말고** 매핑표 하단 "발견 사항" 섹션에 기록. 실제 변경은 Orchestrator 경유 ArchitectPLAgent → ArchitectAgent (chief author) + RefactorAgent 계획서 갱신.
 
-## resource-safety claim 정직 (write-time 강제 — ADR-082 §결정 16, Layer 1)
+## resource-safety claim 정직 (write-time 강제 — ADR-168 §결정 16, Layer 1)
 
 self-test·게이트 script(governance/보안 tooling)의 **docstring·inline 주석·워크플로 YAML 주석**에 resource-safety/복잡도/DoS-guard 안전성-claim(`catastrophic backtracking 0` / `ReDoS-safe` / `DoS 가드` / `nested quantifier 0` / `scan cap = 총 작업량 bound` 류)을 쓸 때:
 - **(a) paired proof-reference 동반** — reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크(`tests/scripts/...`), **또는 (b) honest-ceiling 로 downgrade** — "bounded degradation, 임의 입력 무해 아님"(ADR-151 §결정7 상속)

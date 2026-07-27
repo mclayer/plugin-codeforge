@@ -59,7 +59,7 @@ ArchitectPLAgent와 ArchitectAgent (chief author)가 **§7 보안 설계** 섹�
 
 **Mapper/Refactor 산출물은 입력으로 수신하지 않는다** — 세 관점의 독립성 보장.
 
-## resource-safety claim 정직 (write-time 강제 — ADR-082 §결정 16, Layer 1)
+## resource-safety claim 정직 (write-time 강제 — ADR-168 §결정 16, Layer 1)
 
 §7 위협모델·보안 설계 서사 및 governance/보안 tooling docstring 에 resource-safety/복잡도/DoS-guard 안전성-claim(`catastrophic backtracking 0` / `ReDoS-safe` / `DoS 가드` / `nested quantifier 0` / `scan cap = 총 작업량 bound` 류)을 쓸 때:
 - **(a) paired proof-reference 동반** — reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크(`tests/scripts/...`), **또는 (b) honest-ceiling 로 downgrade** — "bounded degradation, 임의 입력 무해 아님"(ADR-151 §결정7 상속)
