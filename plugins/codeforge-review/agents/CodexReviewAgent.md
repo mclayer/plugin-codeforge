@@ -101,8 +101,16 @@ else
   export MSYS_NO_PATHCONV=1   # 별도 줄 export (inline env-prefix 는 lint execution_first_tokens first-token 판정 파괴 → 금지)
   # CWD = 리뷰 대상 repo(worktree) 안 (trusted-dir, --skip-git-repo-check 금지). read-only 기본 (code write-gate 만 workspace-write).
   timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s read-only -c model_reasoning_effort=<EFFORT> --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"
+  codex_rc=$?   # codex exit 즉시 캡처 (helper exit 과 별 채널 — 2-변수 구조; L103 append-only 무접촉)
   # code lane write 필요 게이트만 sandbox 교체 (동형 wall-clock 가드 + 명시 marker):
   # timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s workspace-write -c model_reasoning_effort=medium --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"   # [exec-verify-write-mode: <check>]
+  # ── AC-6 소비 재검증: codex exit 0 이어도 out.json 재검증 (fail-closed 2-단계 게이트, I-3/I-7) ──
+  check_codex_review_output_schema.py "$OUT_JSON" "$SCHEMA" "<packet category_enum, 쉼표구분>"; helper_rc=$?
+  if [ "$codex_rc" -eq 0 ] && [ "$helper_rc" -eq 0 ]; then
+    verdict=<out.json `verdict` 필드 read>   # I-7 SSOT — verdict 정본=out.json field, exit→severity 매핑 금지. read 명령 = 기존 AC-6 재검증 form 계승(실행표면 무확대); exhaustive exit universe = §exit-code 판정표 SSOT
+  else
+    verdict=inconclusive                       # codex 비-0 OR 재검증 실패(helper exit 1/2) → fail-closed (상세=판정표 참조)
+  fi
 fi
 ```
 
@@ -269,6 +277,8 @@ location as path:line, CWE/CVE reference where applicable.
 ### 변종
 
 - **main 대비 전체 변경(`--base main` 대응)**: `codex exec` 는 argv 타겟팅(`--base`) 없이 diff 를 **promptfile 본문에 명시 주입** — 워커가 `git diff main...HEAD` (또는 `--scope branch` 등가) 결과를 promptfile 에 embed (packet 지시 ↔ 비신뢰 diff 구획 분리, delimited untrusted block).
+- **working-tree 미커밋(`--uncommitted` 대응)**: `codex exec` 는 argv 타겟팅(`--uncommitted`) 없이 — codex `--uncommitted` scope = **staged + unstaged + untracked** 3종이나, promptfile embed 근사 = `git diff HEAD`(tracked staged+unstaged). **untracked 파일은 어떤 단일 tracked-diff embed 로도 미포착**(honest limitation — untracked 리뷰 필요 시 명시적 파일 추가). 워커가 `git diff HEAD` 결과를 promptfile 에 embed (packet 지시 ↔ 비신뢰 diff 구획 분리, delimited untrusted block — `--base main` 케이스 동일 상속).
+- **단일 커밋(`--commit <SHA>` 대응)**: `codex exec` 는 argv 타겟팅(`--commit`) 없이 — 워커가 `git show <SHA>` 결과를 promptfile 에 embed. `git show` 는 diff 외 **commit 메시지 헤더(Author·Date·메시지 body = author 통제 prose)** 를 포함하므로, delimited untrusted block 은 **diff + commit 메시지 헤더 전체**를 감싼다 — commit 메시지도 비신뢰 텍스트로 구획 내 포함(packet 지시 밖). 헤더를 신뢰 preamble 로 구획 밖 분리 배치 금지 (prompt-injection 방어; 완화는 bounded — 완전 차단 아님).
 - **세션 블록 방지**: `--background` companion job-관리 개념 **폐지** — `codex exec` 는 동기 1-shot + GNU timeout wall-clock supervision 이 세션 블록 방지를 대체 (status/result 폴링 불요, wall-clock ceiling 이 상한 보장).
 - **심층 리뷰(보안 lane 권장)**: 별도 커맨드 아님 — 위 프로파일 표대로 `-c model_reasoning_effort=high` + N=420(`_SECURITY`). wall-clock 가드는 정본 템플릿에 상시 포함(option-first, ADR-081 §결정 D15).
 

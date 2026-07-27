@@ -790,3 +790,14 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "CFP-2822 §8-3.4 판정-3 relocate(scripts/ → tests/scripts/) — 완료-게이트 F2 대상 판정 계약 변별(sub-worktree 즉시검출 / Story root mergedAt non-null 시만 / open-PR 보존 / gh미인증·dirty fail-safe, TC-3/TC-4/TC-6 git·gh stub 양방향). 기존 미등재 갭 보정 enroll. soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint. honest-ceiling(ADR-151 §결정7): presence(검출 로직) ≠ truth(self-check 호출 강제=비기계 검증), 검출력=G3 미강제."
+  # -- CFP-2851 (Phase 2 구현 — CodexReviewAgent dispatch 템플릿 완결성) — dispatch 템플릿 완결성 게이트 discriminating self-test enroll --
+  # bijection: tests/scripts/*.sh +1 (신규 enroll). 실행 채널 = codex-companion-timeout-check.yml:codex-companion-timeout-presence
+  #   (기존 warning-tier job 에 신규 step 배선, sibling test_check_codex_review_output_schema.sh 인근). byte-identical template pair(.github ↔ templates).
+  - self_test: "tests/scripts/test_cfp-2851-dispatch-template-completeness.sh"
+    execution_channel: "workflow:codex-companion-timeout-check.yml:codex-companion-timeout-presence"
+    channel_status: "alive"
+    blocking_tier: "warning_tier"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "CodexReviewAgent.md dispatch 템플릿 완결성 discriminating self-test — AC-1~11 별 fence-interior/변종절 line-shift-robust anchoring(awk) + helper 호출·2-변수 exit 게이트·--uncommitted/--commit 등가 bullet 등 정본 GREEN 대 sed/awk 변이(취약) fixture RED 이중검증(AC-9 제외 전수 discriminating, AC-9=advisory) + EDIT_SHA 동적 앵커(HEAD~1 하드코딩 회피, 후속 커밋 rebase-robust) + pre-edit(git show EDIT_SHA~1) 대조로 additive AC genuine-실패 사후입증. soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 md 템플릿 완결성 판별력 결박). honest-ceiling(ADR-151 §결정7): presence(grep anchoring 통과) != truth(실 Codex dispatch 런타임 거동=L3 review-tier), 검출력=G3 미강제."
