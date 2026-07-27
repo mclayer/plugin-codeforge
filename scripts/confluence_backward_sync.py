@@ -87,6 +87,19 @@ class InvariantViolation(RuntimeError):
     """INV-A/INV-B/INV-READ 위반 — fail-closed 신호."""
 
 
+import re
+_DENY_BASIC_AUTH_RE = re.compile(r"Basic [A-Za-z0-9+/=]{20,}")
+
+
+def pr_body_deny_scan(text: str) -> None:
+    """SA-3: PR body/commit message 에 basic-auth 패턴 검출 시 fail-closed abort.
+
+    leg A(creds-free)라 구조적 leak 0 — defense-in-depth 가드.
+    """
+    if text and _DENY_BASIC_AUTH_RE.search(text):
+        raise InvariantViolation("SA-3 위반: PR body/commit message 에 basic-auth 패턴 검출 — fail-closed abort")
+
+
 # ── cutover flag (AC-3/AC-4, §3.7) ──────────────────────────────────────────
 FLAG_ENV = "CFP2829_BACKWARD_SYNC_ENABLED"
 
@@ -332,7 +345,7 @@ def _default_branch_name(rel_path: str) -> str:
 def build_pr_proposal(rel_path, branch, base="main", title=None, body=None,
                       commit_metadata=None) -> dict:
     """git PR 제안 descriptor — auto_merge/direct-write 구조적 비활성(INV-A)."""
-    return {
+    proposal = {
         "kind": "git-pr-proposal",
         "base": base,
         "branch": branch,
@@ -343,6 +356,9 @@ def build_pr_proposal(rel_path, branch, base="main", title=None, body=None,
         "body": body or "",
         "commit_metadata": commit_metadata or {},
     }
+    pr_body_deny_scan(proposal["title"])   # SA-3: basic-auth 패턴 fail-closed
+    pr_body_deny_scan(proposal["body"])
+    return proposal
 
 
 def assert_pr_only(proposal: dict) -> None:
@@ -433,6 +449,7 @@ def _execute_pr_proposal(proposal, derive_result, repo) -> None:
     write_substrate_working_tree(repo, rel, derive_result["markdown"])
     trailer = f"\n\n{SUBSTRATE_MARKER}\nsource: {derive_result.get('commit_metadata', {}).get('source_page_url')}"
     commit_msg = f"[backward-substrate] {rel}{trailer}"
+    pr_body_deny_scan(commit_msg)        # SA-3: basic-auth 패턴 fail-closed
     _run(["git", "-C", repo, "checkout", "-b", branch])
     _run(["git", "-C", repo, "add", rel])
     _run(["git", "-C", repo, "commit", "-m", commit_msg])

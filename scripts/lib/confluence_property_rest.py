@@ -162,6 +162,43 @@ def _deny_scan_for_secrets(text: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
+# ── Error Classification (AC-12) ────────────────────────────────────────────
+
+def is_over_limit_error(version: int, status_code: int, body_text: str = "") -> bool:
+    """
+    Classify over-limit errors disjointly across v1 and v2 APIs (AC-12).
+
+    Rules:
+      - v1: status_code == 413 (Payload Too Large) → True
+      - v2: status_code == 400 AND body contains size signature → True
+            (signatures: "too large", "too long", "32", "5242880")
+      - All other cases → False
+
+    Args:
+        version: API version (1 or 2)
+        status_code: HTTP status code
+        body_text: Response body (parsed message for v2 classification)
+
+    Returns:
+        True if error is classified as over-limit; False otherwise.
+
+    Note:
+        v1 uses status code alone (413 is unambiguous Payload Too Large).
+        v2 uses status code + body parsing (400 is generic Bad Request; must parse message).
+    """
+    if version == 1:
+        return status_code == 413
+
+    if version == 2:
+        if status_code != 400:
+            return False
+        # Check body for size-limit signatures
+        body_lower = body_text.lower() if body_text else ""
+        return any(sig in body_lower for sig in ["too large", "too long", "32", "5242880"])
+
+    return False
+
+
 # ── Creds I/O (env-indirect, IO-1) ──────────────────────────────────────────
 
 def _get_creds() -> Tuple[Optional[str], Optional[str]]:
@@ -289,10 +326,15 @@ class ConfluencePropertyREST:
 
         Handles:
           - JSON encoding budget check (AC-11)
-          - Over-limit errors (v2 = 400, parse body for 'too large'/'32')
+          - Over-limit error classification (v1: 413 / v2: 400+body; AC-12)
           - Rate-limit headers (observed)
 
         Returns: (success, error_message)
+
+        Note:
+            v2 is the primary transport (AC-1, default). Over-limit classifier (AC-12)
+            recognizes both v1 (413) and v2 (400+body) for reference, though v1 methods
+            are not currently exposed (interface-frozen).
         """
         if not self.token or not self.email:
             # IO-1: hard-fail on creds absence
@@ -357,11 +399,11 @@ class ConfluencePropertyREST:
                     return True, None
 
                 elif resp.status_code == 400:
-                    # v2 over-limit = 400 (not 413)
+                    # v2 over-limit = 400 (classified via AC-12 checker)
                     body = resp.json() if resp.headers.get("content-type") == "application/json" else {}
                     error_msg = body.get("message", resp.text)
 
-                    if any(s in error_msg.lower() for s in ["too large", "too long", "32", "5242880"]):
+                    if is_over_limit_error(2, resp.status_code, error_msg):
                         logger.error(f"Over-limit (v2 400): {_scrub(error_msg)}")
                         return False, f"Over-limit: {error_msg[:100]}"
 

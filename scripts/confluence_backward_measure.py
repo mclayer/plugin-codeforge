@@ -59,12 +59,12 @@ MAX_WRITES_PER_MEASUREMENT = 20
 # Mock mode for offline testing
 CFP1495_MOCK_MODE = os.environ.get("CFP1495_MOCK_MODE", "0") == "1"
 
-# Measurement control
-MEASURE_SKIP_WRITE = os.environ.get("CFP2829_MEASURE_SKIP_WRITE", "0") == "1"
-TEST_PAGE_ID = os.environ.get("CFP2829_TEST_PAGE_ID")
-
 # Confluence config
 CONFLUENCE_BASE_URL = os.environ.get("ATLASSIAN_BASE_URL", "https://mclayer.atlassian.net")
+
+# Note: CFP2829_TEST_PAGE_ID and CFP2829_MEASURE_SKIP_WRITE are read at point-of-use
+# (after creds file is loaded in main()), not here at module level.
+# See: _get_test_page_id() and _get_measure_skip_write() helper functions below.
 
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -78,6 +78,16 @@ logger = logging.getLogger(__name__)
 
 
 # ── Dry-run / Creds Check ────────────────────────────────────────────────────
+
+def _get_test_page_id() -> Optional[str]:
+    """Read TEST_PAGE_ID from environment at point-of-use (after creds load)."""
+    return os.environ.get("CFP2829_TEST_PAGE_ID")
+
+
+def _get_measure_skip_write() -> bool:
+    """Read MEASURE_SKIP_WRITE from environment at point-of-use (after creds load)."""
+    return os.environ.get("CFP2829_MEASURE_SKIP_WRITE", "0") == "1"
+
 
 def _creds_present() -> bool:
     """Check if Atlassian creds are set (env-indirect)."""
@@ -137,11 +147,14 @@ def measure_property_size_budget(client) -> Dict[str, any]:
     """
     logger.info("=== AC-11: Property Size Budget Measurement ===")
 
-    if not TEST_PAGE_ID:
+    test_page_id = _get_test_page_id()
+    measure_skip_write = _get_measure_skip_write()
+
+    if not test_page_id:
         logger.warning("AC-11: Skipping write — CFP2829_TEST_PAGE_ID not set")
         return {"status": "BLOCKED-no-test-page-id", "verdict": "declared"}
 
-    if MEASURE_SKIP_WRITE:
+    if measure_skip_write:
         logger.info("AC-11: SKIP_WRITE=1, offline only")
         return {"status": "offline-only", "verdict": "declared"}
 
@@ -182,7 +195,7 @@ def measure_property_size_budget(client) -> Dict[str, any]:
 
         # Attempt store
         success, error = client.put_property_v2(
-            TEST_PAGE_ID,
+            test_page_id,
             f"test__{name}",
             property_value
         )
@@ -191,7 +204,7 @@ def measure_property_size_budget(client) -> Dict[str, any]:
 
         if success:
             # Cleanup: DELETE property
-            del_ok, del_err = client.delete_property_v2(TEST_PAGE_ID, f"test__{name}")
+            del_ok, del_err = client.delete_property_v2(test_page_id, f"test__{name}")
             logger.info(f"Cleanup DELETE: {del_ok}")
 
         return {
@@ -232,11 +245,14 @@ def measure_oversize_error_codes(client) -> Dict[str, any]:
     """
     logger.info("=== AC-12: Over-Limit Error Code Measurement ===")
 
-    if not TEST_PAGE_ID:
+    test_page_id = _get_test_page_id()
+    measure_skip_write = _get_measure_skip_write()
+
+    if not test_page_id:
         logger.warning("AC-12: Skipping — CFP2829_TEST_PAGE_ID not set")
         return {"status": "BLOCKED-no-test-page-id", "verdict": "declared"}
 
-    if MEASURE_SKIP_WRITE:
+    if measure_skip_write:
         logger.info("AC-12: SKIP_WRITE=1")
         return {
             "status": "offline-only",
@@ -269,7 +285,7 @@ def measure_oversize_error_codes(client) -> Dict[str, any]:
         }
 
         success, error = client.put_property_v2(
-            TEST_PAGE_ID,
+            test_page_id,
             "test__oversize_31kb",
             oversize_payload
         )
@@ -310,11 +326,14 @@ def measure_rate_limit_headers(client) -> Dict[str, any]:
     """
     logger.info("=== AC-13: Rate-Limit Header Observation ===")
 
-    if not TEST_PAGE_ID:
+    test_page_id = _get_test_page_id()
+    measure_skip_write = _get_measure_skip_write()
+
+    if not test_page_id:
         logger.warning("AC-13: Skipping — no test page")
         return {"status": "BLOCKED-no-test-page-id", "verdict": "observed-only"}
 
-    if MEASURE_SKIP_WRITE:
+    if measure_skip_write:
         return {
             "status": "offline-only",
             "leg_split": {
@@ -401,8 +420,8 @@ def main():
     # Summary
     logger.info("=" * 70)
     logger.info("CFP-2829 S2 Measurement Harness")
-    logger.info(f"Test page ID: {TEST_PAGE_ID or 'NOT SET (write disabled)'}")
-    logger.info(f"Skip write: {MEASURE_SKIP_WRITE}")
+    logger.info(f"Test page ID: {_get_test_page_id() or 'NOT SET (write disabled)'}")
+    logger.info(f"Skip write: {_get_measure_skip_write()}")
     logger.info(f"Creds present: {_creds_present()}")
     logger.info(f"Mock mode: {CFP1495_MOCK_MODE}")
     logger.info("=" * 70)

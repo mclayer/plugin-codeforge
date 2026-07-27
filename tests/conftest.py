@@ -12,11 +12,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-# tests/ → repo root → scripts/lib
+# tests/ → repo root → scripts/ + scripts/lib
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS_LIB = REPO_ROOT / "scripts" / "lib"
-if str(SCRIPTS_LIB) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_LIB))
+SCRIPTS_DIR = REPO_ROOT / "scripts"
+SCRIPTS_LIB = SCRIPTS_DIR / "lib"
+for _p in (str(SCRIPTS_DIR), str(SCRIPTS_LIB)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 
 def run_cli_check_liveness(script_path, comments_path, cursor_path, now_iso):
