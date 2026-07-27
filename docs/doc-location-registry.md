@@ -4,8 +4,8 @@
 # Doc Location Registry (auto-generated)
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
-**schema_version**: 1.2  
-**Last regen**: 2026-07-13T14:16:15Z  
+**schema_version**: 1.3  
+**Last regen**: 2026-07-27T15:34:39Z  
 **Registered doc types**: 20
 
 ## Summary table
