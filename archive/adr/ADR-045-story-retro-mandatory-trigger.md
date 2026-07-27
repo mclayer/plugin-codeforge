@@ -27,6 +27,7 @@ related_stories:
   - CFP-2330  # Amendment 12 carrier — §D-9 sub-decision (c) 신설 (Pattern A 반응형→예방형 merge-time gate-provenance self-attest, warning-first → ratchet posture, Epic CFP-2324 S6, #2322 흡수). gate verdict 의 lane-produced machine-checkable artifact (review-verdict-v4 packet 형식·필수필드) ∧ Story §14 lane-evidence binding multi-anchor AND (wrapper-self `mixed` repo = ADR-031 §14 면제라 PR body/코멘트 병행 anchor). 위협모델 = honest-but-careless (연극 게이트). 악의 단일계정 위조 = out-of-scope accepted risk 명시 박제. 모든 게이트 (요구사항리뷰/설계리뷰/보안테스트/배포리뷰) 적용. multi-anchor AND 3-source 패턴 = ADR-026 §결정 6 isPostMergeFix 답습.
   - CFP-2377  # Amendment 13 carrier — §D-12 신설 (phase:완료 precondition worktree-clean self-check 추가, ADR-128 완료 단계 정식화 묶음, paired sibling ADR-040 Amendment 9)
   - CFP-2392  # Amendment 14 carrier — §D-13 신설 (phase:완료 precondition capture self-check 추가, ADR-129 OMC-adopt 지식캡처 묶음, paired sibling ADR-071 Amendment 12)
+  - CFP-2822  # Amendment 15 carrier — §D-14 신설 (phase:완료 precondition residue-clean self-check 추가, ADR-169 세션 잔재 수명 규약 묶음, paired sibling ADR-040 Amendment 10 + ADR-128 Amendment 2)
 related_adrs:
   - ADR-009
   - ADR-137  # Epic-close 구현-리팩터링 triage (CFP-2541 Story C) — §D-11 Epic-close sibling, 모집단·enum axis-disjoint (retro follow-up Issue ↔ 실코드 duplication anchor / CLOSE_AS_* ↔ now/defer/drop)
@@ -42,6 +43,7 @@ related_adrs:
   - ADR-128  # Amendment 13 — 완료 단계 정식화 umbrella (본 §D-12 = phase:완료 worktree-clean precondition carrier)
   - ADR-040  # Amendment 13 — paired sibling Amendment 9 (§결정 7.K worktree-clean cleanup invariant + backstop SessionEnd 트리거)
   - ADR-129  # Amendment 14 — OMC-adopt 지식캡처+메모리다이어트 umbrella (본 §D-13 = phase:완료 capture self-check precondition carrier)
+  - ADR-169  # Amendment 15 — 세션 잔재 수명 규약 umbrella (본 §D-14 = phase:완료 residue-clean self-check precondition carrier, paired sibling ADR-040 Amendment 10 + ADR-128 Amendment 2)
   - ADR-071  # Amendment 14 — paired sibling Amendment 12 (§18.7 MEMORY.md 슬림화 mechanism deferred 해제)
 supersedes: null
 superseded_by: null
@@ -143,6 +145,15 @@ amendment_log:
     scope: "§D-13 신설 — phase:완료 transition precondition 에 capture self-check 추가 (완료시점 재사용지식 외부화 게이트, ADR-129 OMC-adopt 지식캡처 묶음 carrier, additive ratchet). ADR-128 Amendment 13 §D-12 worktree-clean self-check 와 동형 구조 (둘 다 phase:완료 local-only warning-tier self-check). 기존 phase:완료 precondition = 2-gate AND + worktree-clean self-check (§D-12) → 본 Amendment 14 = capture self-check 1항 추가. capture self-check = '이번 Story 에서 재사용 가능한 지식이 외부화됐는가' — capture artifact (신규 skills/<slug>/SKILL.md 또는 docs/domain-knowledge/.../*.md) OR 명시적 no-capture note('캡처 대상 검토 완료 — 외부화 불요(사유)' 1줄) 흔적 검사. 둘 다 부재 = WARN (silent skip 금지, forced-no-silent-skip). 3문 admission(구글5분/코드베이스특정/실제노력) 자체 판정 = semantic(behavioral, Orchestrator self-eval), lint 은 '흔적 존재'만 presence 검사. tier = Orchestrator behavioral precondition (로컬 self-write) — phase:완료 transition = Orchestrator self-write + 완료 marker working-tree 검출이라 required CI check 불가. 3-조합 기계화 = (a) playbook §9.7.2 완료 단계 수렴 SSOT capture self-check pointer + (b) 로컬 check 스크립트 scripts/check-capture-gate-completion.sh (Phase 2) + (c) evidence-checks-registry warning-tier knowledge-capture-completion-gate workflow:null (ADR-099/ADR-122/ADR-128 local-only 선례). data-loss hard-block 금지 (git/gh 미인증 시 exit 0 보존). close lifecycle 무영향 (worktree-clean §D-12 동형 — transition precondition 이지 Issue close 차단 아님). branch protection 6-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합). ADR-045 §결정 5 close-blocking + §D-6/§D-12 entry 의미 변경 0건 (precondition 1항 추가만). paired sibling carrier = ADR-071 Amendment 12 (§18.7 MEMORY.md 슬림화 mechanism deferred 해제) + ADR-129 (OMC-adopt 지식캡처+메모리다이어트 umbrella). gate label authority SSOT = 기존 (ADR-022 §결정 4) — 신규 gate:capture label 신설 안 함 (ADR-128 §D-12 worktree-clean label 미신설 패턴 답습). axis-disjoint vs §D-9 retro: TIMING(pre-completion vs post-hoc) / UNIT(single-task vs multi-Story) / OUTPUT(skill·domain-knowledge artifact vs ADR escalation) 3축 disjoint → §D-9 흡수 불가, ADR-129 NEW umbrella (ADR-128 archetype 답습). ratchet ↑ direction (강화 방향 only, §결정 1-8 + §D-9~D-12 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정 5 면제. Wave 2 mechanical wire = Phase 2 carrier."
     status: applied
     ref: §D-13 + paired sibling ADR-071 Amendment 12 (§18.7 MEMORY.md 슬림화 deferred 해제) + ADR-129 (OMC-adopt 지식캡처+메모리다이어트 umbrella) + ADR-128 §D-12 worktree-clean self-check 동형 + playbook §9.7.2 완료 단계 수렴 SSOT + ADR-099/ADR-122/ADR-128 workflow:null local-only 선례
+    sunset_justification: null
+    direction: strengthening
+    nature: ratchet-up
+  - amendment_id: 15
+    cfp: CFP-2822
+    date: 2026-07-26
+    scope: "§D-14 신설 — phase:완료 transition precondition 에 residue-clean self-check 추가 (세션 잔재 수명 규약 완료-게이트 확장 carrier 의 ADR-045 측 amendment, ADR-169 묶음, additive ratchet). ADR-128 Amendment 13 §D-12(worktree-clean self-check) + Amendment 14 §D-13(capture self-check) 와 동형 구조 — 셋 다 phase:완료 local-only warning-tier self-check. 기존 phase:완료 precondition = 2-gate AND + worktree-clean self-check(§D-12) + capture self-check(§D-13) → 본 Amendment 15 = residue-clean self-check 1항 추가. residue-clean self-check = '완료 Story 의 잔재(worktree + scratch + stash + orphan)가 가시화·정리됐는가' — discovery 스캐너 Story-scoped 모드(--story-key cfp-NNN)가 생성한 리포트 확인. 자동 삭제 강제 아님(가시화 = INV-3, stash 자동삭제 Non-goal). tier = Orchestrator behavioral precondition(로컬 self-write). 3-조합 기계화 = (a) playbook §9.7.1 precondition 행에 residue-clean self-check 1항 + (b) 로컬 check = discovery 스캐너 --story-key 모드(fail-safe 4종 상속) + (c) evidence-checks-registry warning-tier + workflow:null(ADR-099/ADR-122/ADR-128 §D-12 local-only 선례). gate:residue-clean label 신설 안 함 — ADR-045 §D-12 worktree-clean label 미신설 패턴 답습. branch protection 8-tuple 무변경(신규 required check 0 → ADR-024 Amd19 §B 정합). residue-clean self-check = transition precondition(label attach 직전)이지 Issue close 차단 아님 — §D-12 worktree-clean 과 disjoint(worktree-clean = 등록 worktree eager 미실행 검출 / residue-clean = 잔재 전반 가시화). §결정5 close-blocking 의미 변경 0. paired sibling = ADR-040 Amendment 10 + ADR-128 Amendment 2 + ADR-169(세션 잔재 수명 규약 umbrella). ratchet ↑ direction(강화 방향 only, §결정1-8 + §D-9~D-13 의미 변경 0 / threshold 약화 0 / sunset 0) — ADR-058 §결정5 면제. Wave 2 mechanical wire = Phase 2 carrier."
+    status: applied
+    ref: §D-14 + paired sibling ADR-040 Amendment 10 + ADR-128 Amendment 2 + ADR-169(세션 잔재 수명 규약 umbrella) + ADR-128 §D-12 worktree-clean self-check 동형 + playbook §9.7.1 precondition + ADR-099/ADR-122/ADR-128 workflow:null local-only 선례
     sunset_justification: null
     direction: strengthening
     nature: ratchet-up
@@ -902,6 +913,32 @@ ADR-129(OMC-adopt 지식캡처 + 메모리 다이어트) 의 갭 A(capture timin
 - **ADR-127 정합**: forcing function 추가 방향 (process-skip 채널 0). capture self-check 미통과 = 외부화(또는 no-capture note) 후 재확인이지 "생략 후 진행" 아님.
 - **ADR-119 정합 (통합 금지)**: 3문 admission 과 ADR-119 §결정 9 제안 필요성 3문 게이트는 동형이나 도메인 disjoint(지식 캡처 ↔ 작업 제안) → 통합 금지, cross-ref 만.
 - **ADR-045 §결정 1-8 + §D-9~D-12 무손상**: §D-13 sub-section 추가만, 기존 결정 변경 없음.
+
+## D-14 — phase:완료 transition precondition 에 residue-clean self-check 추가 (Amendment 15, CFP-2822, 2026-07-26)
+
+ADR-169(세션 잔재 수명 규약) 의 완료-게이트 확장 carrier 의 ADR-045 측 amendment. ADR-040 Amendment 10 / ADR-128 Amendment 2 와 paired. §D-12 worktree-clean self-check 와 **동형 구조**(warning-tier + workflow:null + behavioral, label 미신설).
+
+### §15.A — precondition 확장 (residue-clean self-check 1항 추가)
+
+`phase:완료` precondition 에 residue-clean self-check 추가: "완료 Story 의 잔재(worktree + scratch + stash + orphan)가 가시화·정리됐는가" — discovery 스캐너 Story-scoped 모드(`--story-key cfp-NNN`)가 생성한 리포트 확인. **자동 삭제 강제 아님**(가시화 = INV-3, stash 자동삭제 Non-goal).
+
+### §15.B — tier = Orchestrator behavioral precondition (§D-12/§D-13 답습)
+
+1. (a) Orchestrator behavioral precondition — playbook §9.7.1 precondition 행에 residue-clean self-check 1항.
+2. (b) 로컬 check 스크립트 — discovery 스캐너 `--story-key` 모드(fail-safe 4종 상속).
+3. (c) evidence-checks-registry warning-tier + workflow:null(ADR-099/ADR-122/ADR-128 §D-12 local-only 선례). **`gate:residue-clean` label 신설 안 함** — ADR-045 §D-12 worktree-clean label 미신설 패턴 답습.
+
+**branch protection 8-tuple 무변경** — 신규 required check 0(ADR-024 Amd19 §B 정합).
+
+### §15.C — axis-disjoint / close lifecycle 무영향
+
+residue-clean self-check = transition precondition(label attach 직전)이지 Issue close 차단 아님. §D-12 worktree-clean 과 disjoint(worktree-clean = 등록 worktree eager 미실행 검출 / residue-clean = 잔재 전반 가시화). §결정5 close-blocking 의미 변경 0.
+
+### 정합성 검증 (§D-14)
+
+- **ADR-169 정합**: 본 Amendment 15 = ADR-169 §결정7(가시화+aging) 의 phase:완료 precondition wire.
+- **ADR-058 §결정5**: precondition 1항 추가 = strengthening, is_transitional: false permanent.
+- **ADR-045 §결정1-8 + §D-9~D-13 무손상**: §D-14 sub-section 추가만.
 
 ## 해소 기준
 

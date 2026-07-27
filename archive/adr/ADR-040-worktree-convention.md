@@ -52,6 +52,11 @@ amendments:
     date: 2026-06-20
     title: Backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire) + worktree-clean 확인을 cleanup invariant 에 편입 (ADR-128 완료 단계 정식화 묶음, §결정 5 트리거 복원 + §결정 7.K 신설)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 9 = §결정 5 backstop GC 의 자동 트리거 복원 (현재 트리거 0 → SessionEnd async dispatch 단일 wire) + §결정 7.K 신설 (eager 정리 검증 = phase:완료 worktree-clean self-check 를 cleanup invariant 에 편입, 정리 실행 owner=GitOpsAgent eager 불변, 본 게이트는 검증만). check-worktree-stale.sh 스크립트 로직 무변경 (트리거만 복원). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~8 무손상, backstop 자동 발화 복원 = enforcement 보강) — sunset 면제. 동인 실증: hooks.json SessionStart 에 check-worktree-stale 호출 0건 (문서-실배선 drift) + 2026-06-12 stale 230개 누적."
+  - id: 10
+    carrier_story: CFP-2822
+    date: 2026-07-26
+    title: §결정5 backstop 보완 트리거 다중화 (SessionEnd 단일 wire → SessionEnd + SessionStart detached lazy GC, ADR-128 Amendment 2 페어 / ADR-169 세션 잔재 수명 규약 묶음)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). Amendment 10 = §결정5 backstop 트리거를 SessionEnd 단일 wire → SessionEnd + SessionStart detached lazy GC 다중화(크래시-안전 catch-up). 트리거 단일화 invariant 를 '멱등/lock 실증된 다중 wire' 로 완화(ADR-128 Amendment 2 페어 동시개정). ratchet 강화 방향(crash blind-spot 해소 = enforcement 보강, ADR-058 §결정5 정합) — sunset 면제. 동인 실증: SessionEnd 정상종료 1회 발화의 crash blind-spot(~70 잔존) + 2026-07-24 실측."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -1141,3 +1146,23 @@ ADR-128(완료 단계 정식화) 의 갭 A 해소 carrier. 본 Amendment 9 = 두
 - 2026-06-12 worktree GC 캠페인 (stale 약 230개, 4.3G→192M) — 동인 실증
 - ADR-099 / ADR-122 (`workflow: null` local-only check 선례)
 - ADR-024 Amendment 19 §B (required check bypass 신설 금지 invariant)
+
+## Amendment 10 (CFP-2822, 2026-07-26) — §결정5 backstop 보완 트리거 다중화 (SessionStart detached lazy GC)
+
+ADR-169(세션 잔재 수명 규약) 의 크래시 보완 트리거 다중화 carrier 의 ADR-040 측 amendment. ADR-128 Amendment 2 와 paired sibling(near-verbatim 동일 invariant → 동시개정 필수). frontmatter row 10 `sunset_justification` 명시.
+
+### §결정5 보완 (트리거 단일화 invariant 재해석)
+
+**AS-IS(Amendment 9)**: "backstop 자동 트리거는 단일 event(SessionEnd 권장)에만 wire. SessionEnd + Stop 동시 wire 금지. 단일 트리거면 동시 GC 실행 race 자체가 발생하지 않음 → 멱등성 가정 불요."
+
+**TO-BE(Amendment 10)**: "backstop 자동 트리거는 **단일 wire OR (멱등/lock 이 실증된 다중 wire)**. 진짜 invariant = **동시 GC 실행 race 가 발생하면 안 된다**(단일 wire 는 그 시점 유일하게 검증된 방법이었을 뿐). 다중 wire(SessionEnd + SessionStart detached lazy GC) 시 **mkdir 원자 lock + cooldown + 멱등 remove 를 활성화 전 선행**(E10, 순서 = step1 lock 착지→step2 double-delete 0 GREEN→step3 SessionStart 활성화). '멱등성 가정 불요' 문장 삭제 — 다중 wire 에서 멱등성이 다시 필수." (취지 = race 방지 보존)
+
+**SessionStart 배제 재해석**: ADR-128 §결정3 배제 근거 "SessionStart async:true 무시→동기 full-scan→지연 회귀"는 **무거운 동기 full-scan** 전제. SessionStart hook 이 **detached 백그라운드 프로세스만 즉시 kick-off + return**(fire-and-forget)하면 전제 불성립(stray-scratch-leak 이 이미 SessionStart 에서 경량 os.listdir 만 하는 실배선 반증 사례). 이 detach 경로만 배제에서 carve-out(무거운 동기 스캔 배제는 유지).
+
+**detach-infeasible contingency(F-C-1)**: detached-spawn 이 harness 트리 wait 하 실분리되는지는 설계시점 검증 불가(단일 외부기술 전제) → Phase 2 §5.2 step0 검증에서 미분리 판명 시 AC-13 primary 대체 = OS 스케줄러 wrapper-default 조건부 승격(비-Windows cron/systemd-timer) 또는 AC-13 best-effort catch-up tier 재정의. detach 성공을 landing 무조건 전제로 두지 않음(배제 재해석 자체는 무변경).
+
+### 정합성 검증
+
+- **ADR-128 Amendment 2 정합**: 본 Amendment 10 = ADR-128 §결정3 재해석의 ADR-040 측 carrier(paired sibling, near-verbatim 복제 관계[동일 invariant, 축약 재기술 포함] → 동시개정 필수).
+- **ADR-058 §결정5 정합**: 트리거 다중화 = strengthening(crash blind-spot 해소) — is_transitional: false permanent.
+- **ADR-040 §결정1-7 + Amendment 1-9 무손상**: §결정5 보완(트리거 완화, 스크립트 로직 무변경)만.

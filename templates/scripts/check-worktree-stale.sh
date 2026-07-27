@@ -58,6 +58,109 @@ GC_TEMP_IGNORE_RE="${GC_TEMP_IGNORE_RE:-^\?\? (\.tmp|marketplace-snapshot\.json)
 PRUNED=0
 WOULD_PRUNE=0
 
+# ─── CFP-2822 ⑤ E10 다중-트리거 double-delete 방어 (mkdir 원자 lock + cooldown) ───
+# flock 부재 확정(MINGW64 command -v flock=ABSENT) → mkdir(단일 원자 syscall)로 상호배제.
+# 목적: SessionEnd + SessionStart(step3 활성화 시) 등 다중 트리거 동시발화 시 double-delete 0.
+# 하위호환(step1 비협상): GC_DRY_RUN preview 는 read-only → lock/cooldown 전면 우회
+#   (직렬화·상태쓰기 불요) → 기존 self-test(TC-5, 전부 dry-run) 무손상. 단일 트리거(현행
+#   SessionEnd) 에서 lock 은 항상 무경쟁 취득(no-op harmless).
+# 상태 위치: ~/.claude/worktree-gc-state/ (codeforge-scratch 밖 — TTL self-exemption, 판정-5).
+# 기존 로직·output contract("[stale-check] DONE: pruned=N") 무손상 — guard 추가만.
+GC_STATE_DIR="${HOME:-/tmp}/.claude/worktree-gc-state"
+GC_LOCK_DIR="${GC_STATE_DIR}/.locks/worktree-gc.lock"
+GC_LASTRUN_FILE="${GC_STATE_DIR}/last-run.epoch"
+GC_LOCK_TTL="${WORKTREE_GC_LOCK_TTL_SECONDS:-1800}"   # stale lock 회수 임계 (기본 30분)
+GC_COOLDOWN="${WORKTREE_GC_COOLDOWN_SECONDS:-300}"    # 빈발 재실행 억제 (기본 5분)
+GC_LOCK_HELD=0
+
+_gc_now() { date +%s 2>/dev/null || echo 0; }
+
+# trap EXIT — lock 취득한 이 프로세스만 원자 해제(rmdir 계열).
+_gc_release_lock() {
+  [[ "$GC_LOCK_HELD" == "1" ]] || return 0
+  rm -rf "$GC_LOCK_DIR" 2>/dev/null || true
+  GC_LOCK_HELD=0
+}
+
+# stale lock 판정: (pid 미생존[kill -0 실패]) AND (age>TTL) 2-AND 에서만 stale.
+#   보수 default = 의심 시 non-stale(회수 금지, 이번 pass skip).
+_gc_lock_is_stale() {
+  local lpid lepoch now age
+  lpid="$(cat "$GC_LOCK_DIR/pid" 2>/dev/null || echo "")"
+  if [[ -n "$lpid" ]] && kill -0 "$lpid" 2>/dev/null; then
+    return 1  # 소유 프로세스 생존 → non-stale
+  fi
+  lepoch="$(cat "$GC_LOCK_DIR/epoch" 2>/dev/null || echo "")"
+  [[ -z "$lepoch" ]] && return 1        # epoch 미상 = 판정 불능 → non-stale(보수)
+  [[ "$lepoch" =~ ^[0-9]+$ ]] || return 1
+  now="$(_gc_now)"
+  age=$(( now - lepoch ))
+  (( age < 0 )) && age=0
+  (( age > GC_LOCK_TTL )) && return 0    # pid dead AND age>TTL → stale
+  return 1
+}
+
+# lock 내부 메타(pid/epoch/session_id) 기록.
+_gc_write_lock_meta() {
+  printf '%s\n' "$$"                         > "$GC_LOCK_DIR/pid"        2>/dev/null || true
+  printf '%s\n' "$(_gc_now)"                 > "$GC_LOCK_DIR/epoch"      2>/dev/null || true
+  printf '%s\n' "${CLAUDE_SESSION_ID:-unknown}" > "$GC_LOCK_DIR/session_id" 2>/dev/null || true
+}
+
+# lock 취득: 성공=0, 실패(경쟁 중, skip 권장)=1.
+#   상태 dir 생성 불능 시 fail-open(취득 간주) — GC 영구 무력화 방지(3중 방어의 나머지 2층이 담보).
+_gc_try_lock() {
+  mkdir -p "$GC_STATE_DIR/.locks" 2>/dev/null || { GC_LOCK_HELD=0; return 0; }  # fail-open
+  if mkdir "$GC_LOCK_DIR" 2>/dev/null; then
+    GC_LOCK_HELD=1; _gc_write_lock_meta; return 0
+  fi
+  # 취득 실패 — stale 이면 1회 회수 후 원자 재-mkdir, 아니면 skip.
+  if _gc_lock_is_stale; then
+    rm -rf "$GC_LOCK_DIR" 2>/dev/null || true
+    if mkdir "$GC_LOCK_DIR" 2>/dev/null; then
+      GC_LOCK_HELD=1; _gc_write_lock_meta; return 0
+    fi
+  fi
+  return 1
+}
+
+# cooldown 창 이내면 0(skip), 창 밖/판정불능이면 1.
+_gc_in_cooldown() {
+  local last now age
+  last="$(cat "$GC_LASTRUN_FILE" 2>/dev/null || echo "")"
+  [[ -z "$last" ]] && return 1
+  [[ "$last" =~ ^[0-9]+$ ]] || return 1
+  now="$(_gc_now)"
+  age=$(( now - last ))
+  (( age < 0 )) && age=0
+  (( age < GC_COOLDOWN )) && return 0 || return 1
+}
+
+# last-run 기록 — 단조 전진 last-writer-wins(new=max(old,now)) → clock skew rewind 방어(IDEM-7).
+_gc_record_lastrun() {
+  local now old
+  now="$(_gc_now)"
+  old="$(cat "$GC_LASTRUN_FILE" 2>/dev/null || echo 0)"
+  [[ "$old" =~ ^[0-9]+$ ]] || old=0
+  (( now < old )) && now=$old
+  printf '%s\n' "$now" > "$GC_LASTRUN_FILE" 2>/dev/null || true
+}
+
+# 순서(§5.3 비협상): 트리거 → lock 취득 → cooldown 확인 → GC → last-run 기록 → release.
+if [[ "$GC_DRY_RUN" != "1" ]]; then
+  if ! _gc_try_lock; then
+    echo "[stale-check] SKIP (다른 GC pass 실행 중 — lock 경쟁, 이번 pass skip)" >&2
+    echo "[stale-check] DONE: pruned=0"
+    exit 0
+  fi
+  trap '_gc_release_lock' EXIT
+  if _gc_in_cooldown; then
+    echo "[stale-check] SKIP (cooldown 창 이내 — 빈발 재실행 억제)" >&2
+    echo "[stale-check] DONE: pruned=0"
+    exit 0
+  fi
+fi
+
 # gh 가용성 1회 평가 (인증/network 포함). 불가 시 prune 단계 진입 자체를 막아 fail-safe.
 GH_OK=0
 if command -v "$GC_GH_BIN" >/dev/null 2>&1; then
@@ -179,6 +282,12 @@ evaluate_worktree() {
     WOULD_PRUNE=$((WOULD_PRUNE + 1))
     return 0
   fi
+  # CFP-2822 idempotent-remove (E10 double-delete 0, 3중 방어 2번째 층):
+  #   제거 직전 존재 재확인 — 다른 GC pass 가 이미 제거했으면 skip (concurrent 흡수).
+  if [[ ! -d "$wt_path" ]]; then
+    echo "[stale-check] SKIP (이미 제거됨 — idempotent): $wt_path" >&2
+    return 0
+  fi
   echo "[stale-check] PRUNING (stale ${STALE_DAYS}d, merged, clean): $wt_path branch=$branch"
   if _git -C "$REPO_ROOT" worktree remove --force "$wt_path" 2>/dev/null; then
     _git -C "$REPO_ROOT" branch -D "$branch" >/dev/null 2>&1 || true
@@ -226,6 +335,17 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 done < <(_git -C "$REPO_ROOT" worktree list --porcelain 2>/dev/null)
 # 마지막 record flush (trailing 빈 줄 없을 수 있음)
 [[ -n "$WT_PATH" ]] && flush_record
+
+# CFP-2822 F1: git worktree prune 명시 호출 — 빈 껍데기 admin record 회수
+#   (prune=metadata-only, 실 dir 미삭제 인지). 현행 0호출 → 명시 추가. output contract 무접촉.
+#   set -e 미사용(advisory) → prune 실패는 흐름에 영향 없음(다음 줄로 진행). PRUNED 카운트 무관.
+if [[ "$GC_DRY_RUN" == "1" ]]; then
+  _git -C "$REPO_ROOT" worktree prune -n 2>/dev/null
+else
+  _git -C "$REPO_ROOT" worktree prune 2>/dev/null
+  # cooldown last-run 기록 — 실 GC 완료 후(단조 전진). dry-run preview 는 상태 무기록.
+  _gc_record_lastrun
+fi
 
 if [[ "$GC_DRY_RUN" == "1" ]]; then
   echo "[stale-check] DRY_RUN: would_prune=$WOULD_PRUNE (no removal)" >&2

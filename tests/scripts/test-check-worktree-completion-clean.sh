@@ -25,7 +25,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"   # CFP-2822 §8-3.4: scripts/ → tests/scripts/ relocate (repo-root = 2 level up)
 TARGET="$REPO_ROOT/scripts/check-worktree-completion-clean.sh"
 
 PASS=0

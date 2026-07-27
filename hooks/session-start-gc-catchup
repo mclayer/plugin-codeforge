@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# hooks/session-start-gc-catchup — SessionStart 2차 트리거: detached lazy GC 크래시 보완 (CFP-2822 ⑤)
+#
+# Carrier: CFP-2822 ⑤ (AC-3 크래시 보완 회수 / AC-13 다음 세션 개시 회수)
+#          ADR-040 Amendment 10 (SessionStart detached lazy GC primary) / ADR-128 Amendment 2
+#
+# 왜 별도 hook entry 인가 (설계 §3.2⑤ "SessionStart 배열" 의도 실현):
+#   - hooks/session-start 는 strict-hygiene prereq hook 이다(정적 properties (a)-(f):
+#     set -euo pipefail / single-quoted heredoc / filesystem touch 0 / network call 0 /
+#     exit 0 / plain stdout SSOT — CFP-475·ADR-038 §결정7-9 verified clean).
+#   - GC fork(프로세스 spawn + 로그 파일 append + last-run 판정)를 session-start 에 직접 넣으면
+#     properties (c)(filesystem touch 0) 를 깬다. → §3.2⑤ 의 "SessionStart '배열'" 의도대로
+#     별도 dedicated hook entry 로 분리(session-start prereq hook 무손상). stray-scratch-leak /
+#     stale-local-main-checkout 과 동급의 SessionStart 배열 peer(그들도 git/fs 접촉 hook).
+#   - Change Plan §5.1 은 "hooks/session-start 수정" 을 예상했으나, session-start strict-hygiene
+#     충돌 회피를 위한 별도 entry 는 설계 의도(SessionStart 배열 catch-up) 실현이지 설계 변경 아님.
+#
+# 동작(경량 판정 → 임계 초과 시에만 detached fork → 즉시 return):
+#   - 절대 동기 full-scan 금지(ADR-128 §결정3 배제 근거 = 동기 지연 회귀). 경량 판정 = last-run.epoch
+#     읽어 마지막 backstop 실행 후 임계 초과 시에만 fork. 실 스캔은 분리 자식(gc-catchup-runner.sh).
+#   - detach: Windows = powershell Start-Process -WindowStyle Hidden(fd 완전분리, firsthand 실증).
+#             POSIX  = setsid(진짜 세션 분리) 우선, 부재 시 nohup+disown(bash nohup 미분리 가능 caveat).
+#   - E10 double-delete 0: 분리 자식이 부르는 check-worktree-stale.sh 가 mkdir lock+cooldown 으로
+#     SessionEnd GC 와 직렬화(step1/step2 landed). 본 hook 은 트리거만.
+#
+# Bypass (신규 env 발명 0 — §3.6 disjoint set 무변경):
+#   BYPASS_WORKTREE_GC=1 → catch-up fork 자체 suppress(자식도 자체 존중하나 needless fork 회피).
+#
+# Tunable:
+#   WORKTREE_GC_CATCHUP_THRESHOLD_SECONDS — catch-up 판정 임계(초). 기본 = WORKTREE_GC_COOLDOWN_SECONDS(300)
+#     와 정합(자식 cooldown 과 coherent). 마지막 GC 후 이 값 초과 경과 시에만 fork.
+set -uo pipefail
+trap 'exit 0' ERR   # 어떤 fail 도 세션 개시 block 금지
+
+# ── Bypass (기존 env 재사용) ──
+if [[ "${BYPASS_WORKTREE_GC:-}" == "1" ]]; then
+  >&2 printf '[gc-catchup] BYPASS_WORKTREE_GC=1 — SessionStart catch-up fork suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 0
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)" || exit 0
+GC_SCRIPT="${REPO_ROOT}/templates/scripts/check-worktree-stale.sh"
+RUNNER="${REPO_ROOT}/scripts/gc-catchup-runner.sh"
+
+# 아티팩트 부재 → graceful skip (non-blocking)
+[[ -f "$GC_SCRIPT" && -f "$RUNNER" ]] || exit 0
+
+# ── 경량 판정 (동기 full-scan 금지) ──
+GC_STATE_DIR="${HOME:-/tmp}/.claude/worktree-gc-state"
+GC_LASTRUN_FILE="${GC_STATE_DIR}/last-run.epoch"
+GC_CATCHUP_THRESHOLD="${WORKTREE_GC_CATCHUP_THRESHOLD_SECONDS:-${WORKTREE_GC_COOLDOWN_SECONDS:-300}}"
+[[ "$GC_CATCHUP_THRESHOLD" =~ ^[0-9]+$ ]] || GC_CATCHUP_THRESHOLD=300
+
+_now() { date +%s 2>/dev/null || echo 0; }
+now="$(_now)"
+last="$(cat "$GC_LASTRUN_FILE" 2>/dev/null || echo "")"
+if [[ "$last" =~ ^[0-9]+$ ]]; then
+  age=$(( now - last ))
+  (( age < 0 )) && age=0
+  if (( age <= GC_CATCHUP_THRESHOLD )); then
+    # 마지막 backstop 이 임계 이내(정상 SessionEnd 최근 실행) → catch-up 불요, fork skip.
+    exit 0
+  fi
+fi
+# stale(age>threshold) 또는 last-run 부재/파싱불능 → 크래시 보완 catch-up 진행.
+
+RUN_CWD="$PWD"
+LOG_DIR="${HOME:-/tmp}/.claude/codeforge-scratch"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+LOG_FILE="${LOG_DIR}/worktree-stale-gc.log"
+
+# ── detached fire-and-forget 실행 (부모 즉시 반환) ──
+uname_s="$(uname -s 2>/dev/null || echo unknown)"
+case "$uname_s" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Windows — Start-Process -WindowStyle Hidden = fd 완전분리(부모 즉시반환·자식 실 GC 완료 firsthand 실증).
+    bash_win="$(cygpath -w "$(command -v bash)" 2>/dev/null || echo bash.exe)"
+    powershell.exe -NoProfile -NonInteractive -Command "Start-Process -FilePath '${bash_win}' -ArgumentList @('${RUNNER}','${RUN_CWD}','${GC_SCRIPT}','${LOG_FILE}') -WindowStyle Hidden" >/dev/null 2>&1 || true
+    ;;
+  *)
+    # POSIX — setsid(새 세션·프로세스그룹 = 진짜 분리) 우선. 부재 시 nohup+disown.
+    #   caveat(설계 F-C-1): bash nohup 은 harness 프로세스트리 wait 하에서 완전분리 안 될 수 있음 → setsid 선호.
+    if command -v setsid >/dev/null 2>&1; then
+      setsid bash "$RUNNER" "$RUN_CWD" "$GC_SCRIPT" "$LOG_FILE" </dev/null >/dev/null 2>&1 &
+    else
+      nohup bash "$RUNNER" "$RUN_CWD" "$GC_SCRIPT" "$LOG_FILE" </dev/null >/dev/null 2>&1 &
+      disown 2>/dev/null || true
+    fi
+    ;;
+esac
+
+exit 0
