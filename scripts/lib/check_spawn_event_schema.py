@@ -10,7 +10,7 @@
 # 책임 (Change Plan §5 / §8.2 — 8 검증 항목):
 #   (a) kind:registry frontmatter (kind: registry + registry: spawn-event present).
 #   (b) §1/§2/§3/§4 headings present.
-#   (c) Allow-list ONLY — §2 field 표 19 row, free-form string field 0 (enum/numeric/hash only).
+#   (c) Allow-list ONLY — §2 field 표 23 row, free-form string field 0 (enum/numeric/hash only).
 #   (d) attribution_confidence invariant — enum {attributed, unattributed, unsupported}
 #       + default unattributed + literal "unattributed" 존재.
 #   (e) agent_type semi-open membership — enum reject 검증 아님; unknown-agent fallback 존재
@@ -18,7 +18,11 @@
 #   (f) event_type closed enum — {agent_start, agent_stop, tool, file_touch, mode_change} 명시.
 #   (g) idempotency — event_id deterministic 규칙 (sha256, random UUID 금지) 명시 present.
 #   (h) opt-in default false — literal 또는 동등 present.
-#   + contract↔runtime PARITY (선택) — append_spawn_event.py row key ↔ contract 19 set 일치.
+#   (i) N9 enum membership (CFP-2850 Amendment 4) — outcome closed-set
+#       {success, inconclusive, failure, partial} + termination_cause closed-set
+#       {normal, timeout, zero_output, error, cancelled} + model semi-open
+#       (unknown-model fallback 존재) 가 §2 표에 명시됐는지 검증.
+#   + contract↔runtime PARITY (선택) — append_spawn_event.py row key ↔ contract 23 set 일치.
 #
 # 불변식:
 #   - 0 API call, local read only.
@@ -51,17 +55,28 @@ _DEFAULT_CONTRACT_REL = os.path.join(
     "docs", "inter-plugin-contracts", "spawn-event-v1.md"
 )
 
-# contract §2 Allow-list 19 field (정확 키 — SSOT)
-_CONTRACT_19_FIELDS = [
+# contract §2 Allow-list 23 field (정확 키 — SSOT).
+# 기존 19 core + CFP-2850 Amendment 4 additive 4 field(total_tokens·model·outcome·
+# termination_cause) 순서대로 append. runtime append_spawn_event._ROW_KEYS(23) 와 parity SSOT.
+_CONTRACT_23_FIELDS = [
     "event_id", "schema_version", "timestamp", "story_key", "lane_label",
     "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
     "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
     "duration_ms", "tool_call_count", "actor", "parent_event_id",
     "consumer_scope", "event_type", "elapsed_seconds",
+    # ── CFP-2850 Amendment 4 additive (19 → 23) ──
+    "total_tokens", "model", "outcome", "termination_cause",
 ]
 
 _EVENT_TYPE_VALUES = ["agent_start", "agent_stop", "tool", "file_touch", "mode_change"]
 _ATTRIBUTION_VALUES = ["attributed", "unattributed", "unsupported"]
+
+# N9 enum membership (CFP-2850 Amendment 4) — outcome/termination_cause closed-set +
+# model semi-open fallback. append_spawn_event._OUTCOMES/_TERMINATION_CAUSES/_MODEL_FALLBACK
+# 와 동일 vocab (contract §2 표에 closed-set membership 이 명시됐는지 검증).
+_OUTCOME_VALUES = ["success", "inconclusive", "failure", "partial"]
+_TERMINATION_CAUSE_VALUES = ["normal", "timeout", "zero_output", "error", "cancelled"]
+_MODEL_FALLBACK = "unknown-model"
 
 
 # ─────────────────────── frontmatter / 본문 split ────────────────────────────
@@ -111,27 +126,52 @@ def _check_headings(body, violations):
             violations.append("(b) §%d heading 부재" % n)
 
 
-def _check_allowlist_19(body, violations):
-    """(c) Allow-list ONLY — §2 field 표 19 row 전부 present + free-form string field 0.
+def _check_allowlist_23(body, violations):
+    """(c) Allow-list ONLY — §2 field 표 23 row 전부 present + free-form string field 0.
 
-    19 field 가 §2 표에 `| \\`field\\` |` 형태로 전부 등장하는지 + free-form string
-    타입 선언 부재 검증. 'free-form string field' 명시 부재 = 구조적 차단 (T-INFO-8).
+    23 field(19 core + CFP-2850 Amendment 4 additive 4)가 §2 표에 `| \\`field\\` |`
+    형태로 전부 등장하는지 + free-form string 타입 선언 부재 검증.
+    'free-form string field' 명시 부재 = 구조적 차단 (T-INFO-8).
     """
     missing = []
-    for field in _CONTRACT_19_FIELDS:
+    for field in _CONTRACT_23_FIELDS:
         # `| \`event_id\` |` 형태 (백틱 wrapped, 표 cell)
         pat = re.compile(r"\|\s*`%s`\s*\|" % re.escape(field))
         if not pat.search(body):
             missing.append(field)
     if missing:
         violations.append(
-            "(c) §2 Allow-list 19 field 중 표 미등장: %s" % ", ".join(missing)
+            "(c) §2 Allow-list 23 field 중 표 미등장: %s" % ", ".join(missing)
         )
 
     # free-form string field 0 검증 — 명시적 "free-form string field 0/부재" 선언 present
     if not re.search(r"free-form string field\s*(0개|0건|부재|0)", body):
         violations.append(
             "(c) 'free-form string field 0/부재' 명시 부재 (T-INFO-8 구조적 차단 선언)"
+        )
+
+
+def _check_n9_enum_membership(body, violations):
+    """(i) N9 enum membership (CFP-2850 Amendment 4) — outcome/termination_cause
+    closed-set + model semi-open fallback 가 §2 표에 명시됐는지 검증.
+
+    (d) attribution / (f) event_type 의 literal-presence 패턴 REUSE (동형 검증):
+      - outcome closed-set {success, inconclusive, failure, partial} 4값 전부 present.
+      - termination_cause closed-set {normal, timeout, zero_output, error, cancelled}
+        5값 전부 present.
+      - model semi-open — `unknown-model` fallback literal present (agent_type semi-open
+        패턴 정합; strict closed-set reject 검증 아님).
+    """
+    for v in _OUTCOME_VALUES:
+        if v not in body:
+            violations.append("(i) outcome closed-set 값 '%s' 미명시 (N9)" % v)
+    for v in _TERMINATION_CAUSE_VALUES:
+        if v not in body:
+            violations.append("(i) termination_cause closed-set 값 '%s' 미명시 (N9)" % v)
+    # model semi-open — unknown-model fallback 존재 검증 (membership reject 아님)
+    if _MODEL_FALLBACK not in body:
+        violations.append(
+            "(i) model semi-open '%s' fallback 명시 부재 (N9)" % _MODEL_FALLBACK
         )
 
 
@@ -189,9 +229,10 @@ def _check_opt_in_default_false(body, violations):
 
 
 def _check_runtime_parity(repo_root, violations, notes):
-    """contract↔runtime PARITY (선택) — append_spawn_event.py _ROW_KEYS ↔ contract 19 set.
+    """contract↔runtime PARITY (선택) — append_spawn_event.py _ROW_KEYS ↔ contract 23 set.
 
-    import 가능 시 빈 row key 추출해 19 set 비교 (Phase 2 contract=runtime 일치 가정).
+    import 가능 시 row key 추출해 23 set 비교 (Phase 2 contract=runtime 일치 —
+    CFP-2850 Amendment 4 로 19→23 확장, AC-6 parity 정합).
     import 어려우면 skip (notes 기록 — Phase 1 theater 회피, runtime parity 는 별 검증).
     """
     lib_dir = os.path.join(repo_root, "scripts", "lib")
@@ -213,17 +254,17 @@ def _check_runtime_parity(repo_root, violations, notes):
             except ValueError:
                 pass
 
-    contract_keys = set(_CONTRACT_19_FIELDS)
+    contract_keys = set(_CONTRACT_23_FIELDS)
     if runtime_keys != contract_keys:
         missing_in_runtime = sorted(contract_keys - runtime_keys)
         extra_in_runtime = sorted(runtime_keys - contract_keys)
         violations.append(
-            "(parity) append_spawn_event _ROW_KEYS ↔ contract 19 set 불일치 — "
+            "(parity) append_spawn_event _ROW_KEYS ↔ contract 23 set 불일치 — "
             "runtime missing: %s / runtime extra: %s"
             % (missing_in_runtime, extra_in_runtime)
         )
     else:
-        notes.append("parity: append_spawn_event _ROW_KEYS == contract 19 set (일치)")
+        notes.append("parity: append_spawn_event _ROW_KEYS == contract 23 set (일치)")
 
 
 # ─────────────────────── 서브커맨드: check ───────────────────────────────────
@@ -266,12 +307,13 @@ def cmd_check(args):
 
     _check_frontmatter_kind(fm, violations)        # (a)
     _check_headings(body, violations)              # (b)
-    _check_allowlist_19(body, violations)          # (c)
+    _check_allowlist_23(body, violations)          # (c)
     _check_attribution_invariant(body, violations) # (d)
     _check_agent_type_semi_open(body, violations)  # (e)
     _check_event_type_enum(body, violations)       # (f)
     _check_idempotency(body, violations)           # (g)
     _check_opt_in_default_false(body, violations)  # (h)
+    _check_n9_enum_membership(body, violations)    # (i) N9 outcome/termination_cause/model
     _check_runtime_parity(repo_root, violations, notes)  # parity (선택)
 
     for note in notes:
@@ -288,9 +330,9 @@ def cmd_check(args):
         sys.exit(1)
 
     print(
-        "check-spawn-event-schema: PASS — (a)~(h) + parity 전부 충족 "
-        "(19 field Allow-list / attribution invariant / semi-open agent_type / "
-        "idempotency / opt-in default false)"
+        "check-spawn-event-schema: PASS — (a)~(i) + parity 전부 충족 "
+        "(23 field Allow-list / attribution invariant / semi-open agent_type / "
+        "idempotency / opt-in default false / N9 outcome·termination_cause·model enum)"
     )
     sys.exit(0)
 

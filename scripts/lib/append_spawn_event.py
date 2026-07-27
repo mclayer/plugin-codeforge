@@ -9,9 +9,11 @@
 #       (codeforge 는 측정·관측만 — ADR-163 §결정 10).
 #
 # 책임:
-#   - spawn-event-v1.md §2 19-field Allow-list + §3 append_rules 를 byte-faithful 구현.
-#   - SubagentStop hook 단일 write 지점 (option i) 에서 호출되는 row append CLI.
-#   - 본 파일의 _build_row() 가 생성하는 19-key dict = lint/dedup/replay 의 SSOT.
+#   - spawn-event-v1.md §2 23-field Allow-list + §3 append_rules 를 byte-faithful 구현
+#     (CFP-2850 Amendment 4 — 19 → 23, +total_tokens/model/outcome/termination_cause additive).
+#   - Orchestrator task-notification 수신 시점 single-write CLI (Amendment 4 writer topology —
+#     구 SubagentStop hook single-write option i supersede). 실값 = UTF-8 args-file 채널.
+#   - 본 파일의 _build_row() 가 생성하는 23-key dict = lint/dedup/replay 의 SSOT.
 #
 # 필수 불변식 (spawn-event-v1.md §3 / Change Plan §8.2 — 절대 위반 금지):
 #   - opt-in default false: telemetry.enabled AND channels.spawn_event 둘 다 true 일 때만
@@ -55,14 +57,19 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # pricing 파생 (attributed 일 때만 사용). import 실패해도 graceful (cost=None fallback).
+# per_token_rates 는 model semi-open 정규화(roster 해석 가능 여부)에 REUSE — 별도 roster
+# 상수 복제 금지 (ADR-140 reuse-before-write). import 실패 시 model 은 pass-through(검증 불가).
 try:
     from spawn_event_pricing import cost_usd as _pricing_cost_usd
+    from spawn_event_pricing import per_token_rates as _pricing_per_token_rates
 except Exception:  # pragma: no cover — import path fallback
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from spawn_event_pricing import cost_usd as _pricing_cost_usd
+        from spawn_event_pricing import per_token_rates as _pricing_per_token_rates
     except Exception:
         _pricing_cost_usd = None
+        _pricing_per_token_rates = None
 
 
 # ─────────────────────── 닫힌집합 enum (contract §2/§3) ───────────────────────
@@ -88,13 +95,44 @@ _CONSUMER_SCOPES = {"wrapper", "consumer"}
 # agent_type semi-open fallback (roster 미등재 흡수)
 _AGENT_TYPE_FALLBACK = "unknown-agent"
 
-# 19-field 정확 키 순서 (lint/dedup/replay 가 참조하는 SSOT)
+# model semi-open fallback (CFP-2850 Amendment 4 — pricing roster ∪ unknown-model).
+# agent_type semi-open 패턴 REUSE. pricing roster 미해석 non-empty 값 → unknown-model
+# 버킷(free-form leak 차단, T-INFO-8). empty/None → null (optional field).
+_MODEL_FALLBACK = "unknown-model"
+
+# outcome closed enum (CFP-2850 N9 — completion-quality 축, open_extension:false).
+# stop-event-v1 outcome 3값 REUSE + inconclusive additive. SUCCESS-hardcode 금지(ADR-093):
+# 미제공/미매칭 → None(null), success 로 default 하지 않는다. record-only.
+_OUTCOMES = {"success", "inconclusive", "failure", "partial"}
+
+# termination_cause closed enum (CFP-2850 N9 — mechanism 축).
+# timeout = 시간·context·turn·budget/credit-exhaustion 통합 상위. zero_output = tool_uses=0
+# silent failure. 미제공/미매칭 → None(null). record-only.
+_TERMINATION_CAUSES = {"normal", "timeout", "zero_output", "error", "cancelled"}
+
+# ★T-TAMP-2 (CFP-2850 §7.2) — args-file usage 정수 sanity 상한 (비음수 + overflow guard).
+# interim cap (empirical-source: TBD Phase 2 payload dump — §13 dimensional). 위반 시
+# attribution=unattributed + token null (추정 대체 금지). 1e12 = 임의 실측 초과 방어 bound.
+_USAGE_SANITY_CAP = 1_000_000_000_000
+
+# T-TAMP-2 적용 대상 usage 정수 field (args-file 병합값 검증 — argparse dest 명명).
+_USAGE_INT_FIELDS = (
+    "total_tokens", "input_tokens", "output_tokens",
+    "cache_creation_input_tokens", "cache_read_input_tokens",
+    "duration_ms", "tool_call_count",
+)
+
+# 23-field 정확 키 순서 (lint/dedup/replay 가 참조하는 SSOT).
+# 기존 19-field 순서·의미 불변(additive) — CFP-2850 Amendment 4 로 하단 4 field append
+# (total_tokens·model·outcome·termination_cause). 전부 optional(v1.0 reader skip, ADR-008).
 _ROW_KEYS = (
     "event_id", "schema_version", "timestamp", "story_key", "lane_label",
     "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
     "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
     "duration_ms", "tool_call_count", "actor", "parent_event_id",
     "consumer_scope", "event_type", "elapsed_seconds",
+    # ── CFP-2850 Amendment 4 additive (19 → 23) ──
+    "total_tokens", "model", "outcome", "termination_cause",
 )
 
 _SCHEMA_VERSION = "spawn-event-v1"
@@ -172,6 +210,52 @@ def _normalize_event_type(raw):
     return s if s in _EVENT_TYPES else _EVENT_TYPE_DEFAULT
 
 
+def _normalize_model(raw):
+    """model semi-open (CFP-2850 Amendment 4) — pricing roster ∪ unknown-model fallback.
+
+    agent_type semi-open 패턴 REUSE. empty/None → None (optional field, null — model 미제공).
+    non-empty:
+      - pricing roster 해석 가능(_pricing_per_token_rates 有) → 원 model id pass-through
+        (AC-9 role·model grouping key 보존).
+      - non-empty 이나 pricing roster 미해석 → `unknown-model` fallback bucket
+        (free-form string leak 차단 — T-INFO-8, Deny-list 불요).
+      - pricing 모듈 import 실패(_pricing_per_token_rates None) → 검증 불가 → pass-through
+        (semi-open — membership reject 은 lint 책임, append 는 fallback 만).
+    """
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None  # 미제공 → null (optional)
+    if _pricing_per_token_rates is not None:
+        try:
+            if _pricing_per_token_rates(s) is None:
+                return _MODEL_FALLBACK  # roster 미해석 → unknown-model bucket
+        except Exception:
+            return s  # 검증 불가 → pass-through (semi-open)
+    return s
+
+
+def _normalize_outcome(raw):
+    """outcome closed enum (N9) — 미제공/미매칭 → None (null).
+
+    SUCCESS-hardcode 금지 (ADR-093 open_extension:false, SUCCESS 로 default 하지 않음) —
+    실측 machine-observable 근거 없이 success 를 날조하지 않는다 (honest-null). record-only.
+    """
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    return s if s in _OUTCOMES else None
+
+
+def _normalize_termination_cause(raw):
+    """termination_cause closed enum (N9) — 미제공/미매칭 → None (null). record-only."""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    return s if s in _TERMINATION_CAUSES else None
+
+
 def _normalize_attribution_confidence(raw):
     """attribution_confidence closed enum — 미매칭 → default unattributed."""
     if raw is None:
@@ -228,12 +312,21 @@ def _derive_token_cost(attribution_confidence, args):
     default unattributed 가 정상 경로 — token flag 가 주어져도 attribution != attributed 면
     null 강제. attributed 는 호출자가 명시적으로 정확 source 를 보장할 때만.
 
-    Returns dict {input_tokens, output_tokens, cache_creation_input_tokens,
-                  cache_read_input_tokens, cost_usd}.
+    Returns dict {total_tokens, input_tokens, output_tokens,
+                  cache_creation_input_tokens, cache_read_input_tokens, cost_usd}.
+
+    ★CFP-2850 degrade ladder (3-tier, honest-null 불변식 보존):
+      - tier-1 (4-way 분해 제공): 4 field populate + cost 파생(model 有) + total_tokens.
+      - tier-2 (aggregate-only = 관측된 실 형상, subagent_tokens 단일): total_tokens
+        populate + 4-way null + cost null. **model 有여도 cost=null** — cost 파생은
+        pricing 이 4-way 부재 시 None 반환(spawn_event_pricing.cost_usd `any(t is None)→None`)
+        → 회귀 금지(AC-1 P3 pin). 아래 로직은 4-way 미제공(None)이면 cost None 을 자연 산출.
+      - tier-3 (블록 부재/unattributed): 전 token 및 total_tokens null 강제.
     """
-    # attributed 가 아니면 전부 null 강제 (token flag 무시 — 추정 합산 금지)
+    # attributed 가 아니면 전부 null 강제 (token flag 무시 — 추정 합산 금지, tier-3)
     if attribution_confidence != "attributed":
         return {
+            "total_tokens": None,
             "input_tokens": None,
             "output_tokens": None,
             "cache_creation_input_tokens": None,
@@ -242,11 +335,14 @@ def _derive_token_cost(attribution_confidence, args):
         }
 
     # attributed — 호출자가 정확 source 보장. numeric coerce (실패 시 None).
+    total_tokens = _coerce_int_or_none(args.total_tokens)   # tier-2 aggregate honest 저장
     input_tokens = _coerce_int_or_none(args.input_tokens)
     output_tokens = _coerce_int_or_none(args.output_tokens)
     cache_creation = _coerce_int_or_none(args.cache_creation_input_tokens)
     cache_read = _coerce_int_or_none(args.cache_read_input_tokens)
 
+    # cost 파생 = pricing(model, 4-way). 4-way 中 하나라도 None(tier-2 aggregate-only) →
+    # pricing 이 None 반환 → cost null (blended-rate 추정 금지, granularity caveat honest-null).
     cost = None
     if _pricing_cost_usd is not None and args.model:
         cost = _pricing_cost_usd(
@@ -254,6 +350,7 @@ def _derive_token_cost(attribution_confidence, args):
         )
 
     return {
+        "total_tokens": total_tokens,
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
         "cache_creation_input_tokens": cache_creation,
@@ -265,8 +362,10 @@ def _derive_token_cost(attribution_confidence, args):
 # ─────────────────────── row 구성 (19-field SSOT) ────────────────────────────
 
 def _build_row(args):
-    """spawn-event-v1 v1.0 19-field row dict 구성 (Allow-list ONLY — SSOT).
+    """spawn-event-v1 v1.2 23-field row dict 구성 (Allow-list ONLY — SSOT).
 
+    기존 19-field 순서·의미 불변 + CFP-2850 Amendment 4 additive 4 field
+    (total_tokens·model·outcome·termination_cause, 전부 numeric/enum — T-INFO-8 free-form 0).
     transcript content / transcript_path 절대 미저장 (T-INFO-5) — numeric/enum/hash only.
     """
     session_id_hash = _sha256(args.session_id)   # actor 원천 (raw 미저장)
@@ -300,6 +399,11 @@ def _build_row(args):
         "consumer_scope": _normalize_consumer_scope(args.consumer_scope),
         "event_type": _normalize_event_type(args.event_type),
         "elapsed_seconds": _coerce_float_or_none(args.elapsed_seconds),
+        # ── CFP-2850 Amendment 4 additive (total_tokens honest-null gated in token_cost) ──
+        "total_tokens": token_cost["total_tokens"],
+        "model": _normalize_model(args.model),
+        "outcome": _normalize_outcome(args.outcome),
+        "termination_cause": _normalize_termination_cause(args.termination_cause),
     }
     return row
 
@@ -610,18 +714,37 @@ def _build_parser():
     # attribution / token (attributed 일 때만 numeric — 그 외 null 강제)
     p.add_argument("--attribution-confidence", default=_ATTRIBUTION_DEFAULT,
                    help="enum {attributed, unattributed, unsupported} (default unattributed)")
+    p.add_argument("--total-tokens", default=None,
+                   help="total_tokens — task-notification subagent_tokens aggregate 실측 "
+                        "(CFP-2850, attributed 시에만; tier-2 aggregate-only honest 저장)")
     p.add_argument("--input-tokens", default=None, help="input_tokens (attributed 시에만 사용)")
     p.add_argument("--output-tokens", default=None, help="output_tokens (attributed 시에만 사용)")
     p.add_argument("--cache-creation-input-tokens", default=None,
                    help="cache_creation_input_tokens (attributed 시에만)")
     p.add_argument("--cache-read-input-tokens", default=None,
                    help="cache_read_input_tokens (attributed 시에만)")
-    p.add_argument("--model", default="", help="cost_usd 파생용 model id (attributed 시 pricing 입력)")
+    p.add_argument("--model", default="",
+                   help="model id — cost_usd 파생 입력 + row model field (CFP-2850, semi-open "
+                        "roster ∪ unknown-model). row 에 persist (현행 pricing arg gap 봉합, AC-9)")
+
+    # N9 outcome 분류 (record-only, closed enum — gate 아님)
+    p.add_argument("--outcome", default="",
+                   help="outcome closed enum {success, inconclusive, failure, partial} "
+                        "(CFP-2850 N9 — 미제공/미매칭 → null, SUCCESS-hardcode 금지)")
+    p.add_argument("--termination-cause", default="",
+                   help="termination_cause closed enum {normal, timeout, zero_output, error, "
+                        "cancelled} (CFP-2850 N9 — 미제공/미매칭 → null)")
 
     # storage
     p.add_argument("--ledger-path", default="", help="ledger jsonl full path override (test/직접 지정)")
     p.add_argument("--storage-path", default="",
                    help="telemetry.storage_path override (parent dir 대체, basename 고정)")
+
+    # ★UTF-8 args-file 채널 (CFP-2850 OQ-3 / T-ELEV-1) — argv=ASCII path 만, 실값·한국어
+    #   lane_label content 는 파일 내부 UTF-8 JSON (argv string-interp injection + cp949 mangle 회피).
+    p.add_argument("--args-file", default="",
+                   help="UTF-8 JSON args-file (ASCII path) — key=CLI dest(dash|underscore) 병합. "
+                        "usage 정수는 read 후 T-TAMP-2 validation(비음수+상한, 위반→unattributed)")
 
     # opt-in gate (default false — silent always-on 금지)
     p.add_argument("--telemetry-enabled", action="store_true",
@@ -631,12 +754,83 @@ def _build_parser():
     return p
 
 
+# ─────────────────────── UTF-8 args-file 채널 + T-TAMP-2 (CFP-2850) ──────────
+
+def _usage_within_bounds(value):
+    """T-TAMP-2 — usage 정수 비음수 + 상한 sanity cap. None/미제공 = valid(무제약).
+
+    정수 변환 불가 = validation 위반 아님(별도 coerce 단계서 None 처리 — 여기선 통과).
+    비음수 위반(음수) / cap 초과 = 위반(False).
+    """
+    if value is None:
+        return True
+    try:
+        iv = int(value)
+    except (TypeError, ValueError):
+        return True  # 정수 아님 → coerce None (별개 경로), T-TAMP-2 위반 아님
+    return 0 <= iv <= _USAGE_SANITY_CAP
+
+
+def _load_args_file(args):
+    """--args-file UTF-8 JSON 병합 + T-TAMP-2 validation (CFP-2850 OQ-3 / T-ELEV-1).
+
+    argv 는 ASCII path 만; 실값·한국어 lane_label content 는 파일 내부 UTF-8 JSON
+    (argv string-interp injection·Windows cp949 mangle 회피 — CFP-2817 D6 선례).
+    파일 키 = CLI dest 명 (dash 또는 underscore 허용 — dash→underscore 정규화).
+
+    T-TAMP-2: 병합된 usage 정수(total/input/output/cache/duration/tool)가 비음수+상한
+    sanity cap 위반 시 → attribution=unattributed 강제(token null, 추정 대체 금지, §7.2).
+    파싱 실패 = graceful(argv 값 유지 + fail-VISIBLE stderr). exit-0 무손상.
+    """
+    path = getattr(args, "args_file", "") or ""
+    if not path:
+        return
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as exc:  # 읽기/파싱 실패 → graceful (fail-VISIBLE)
+        print(
+            "[codeforge-spawn-event] WARN: args-file 읽기 실패 — %s (argv 값 유지)" % exc,
+            file=sys.stderr,
+        )
+        return
+    if not isinstance(data, dict):
+        print(
+            "[codeforge-spawn-event] WARN: args-file JSON 이 object 아님 — 병합 skip",
+            file=sys.stderr,
+        )
+        return
+
+    # 병합: file 키 → args attr (dash→underscore, 미지의 키는 무시 — allow-list = argparse dest)
+    for key, value in data.items():
+        dest = str(key).replace("-", "_")
+        if dest == "args_file":
+            continue  # 재귀 방지 (args-file 이 또 args-file 지정 무의미)
+        if hasattr(args, dest):
+            setattr(args, dest, value)
+
+    # T-TAMP-2 — 병합된 usage 정수 sanity validation (위반 → unattributed + token null)
+    for field in _USAGE_INT_FIELDS:
+        if not _usage_within_bounds(getattr(args, field, None)):
+            print(
+                "[codeforge-spawn-event] WARN: args-file usage 정수 '%s' T-TAMP-2 위반 "
+                "(음수 또는 상한 %d 초과) → attribution=unattributed 강제 (token null, 추정 금지)"
+                % (field, _USAGE_SANITY_CAP),
+                file=sys.stderr,
+            )
+            args.attribution_confidence = "unattributed"
+            break
+
+
 def main():
     parser = _build_parser()
     args = parser.parse_args()
 
     # graceful degradation: 어떤 예외도 exit 0 (block 금지 — ADR-115 §결정 5 inherit)
     try:
+        # UTF-8 args-file 병합 + T-TAMP-2 (opt-in gate 前 — file 이 opt-in flag 도 실을 수 있음)
+        _load_args_file(args)
+
         # opt-in gate — off 면 no-op (row 0, exit 0)
         if not _opt_in_enabled(args):
             # silent no-op (opt-in default false — silent always-on 금지의 역: off 시 write 0)

@@ -153,11 +153,11 @@ run_discriminating_test \
 # Helper: create RED mutant — SURGICAL attribution-invariant removal (F-CR-003).
 #
 # 기존 mutant 은 contract 를 2줄로 붕괴시켜 RED 가 ~8 이유(frontmatter parse 실패 / 전
-# heading 부재 / 19 field 전멸 / ...)로 fire → check (d) attribution invariant 가
+# heading 부재 / 23 field 전멸 / ...)로 fire → check (d) attribution invariant 가
 # 실제로 작동하는지 변별 불가 (non-discriminating). 이를 surgical single-purpose
 # 변형으로 교체: attribution_confidence 의 **invariant content (enum 3값 + default
 # unattributed + literal)만** 제거하고 나머지 contract 구조(frontmatter / 4 heading /
-# 19 field name cell / agent_type semi-open / event_type / idempotency / opt-in)는
+# 23 field name cell / agent_type semi-open / event_type / idempotency / opt-in)는
 # 전부 보존한다. 결과 lint RED 는 **오직 check (d)** 만 fire → check (d) 가 깨지면
 # TC-2 가 false PASS 로 flip 하여 회귀를 잡는다 (genuine mutation discrimination).
 #
