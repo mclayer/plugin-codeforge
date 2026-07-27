@@ -451,7 +451,7 @@ Epic #2686 Story A (CFP-2687) 가 `dev-process-event-v1`(신규 ADR-155 sibling)
 
 ### 배경
 
-Epic #2814 W1 Story B (CFP-2850) 가 spawn-event-v1 의 실측 append 를 활성화(P0-2: Orchestrator 가 Agent task-notification 수신 시점 실측 aggregate 를 배선)하고 agent outcome 분류(N9)를 additive 로 도입한다. 실측을 정직하게 담고(honest-null — ADR-119) role·model·outcome 별 실패율·낭비 토큰 집계를 가능하게 하려면 spawn-event-v1 이 19-field → 23-field 로 4 optional field 를 additive 로 확장한다. 이 4 field 는 전부 numeric/enum 이므로 §결정 2 Allow-list ONLY enforcement 상 정식 확장 amendment 의무(silent expansion 차단)를 발동한다. 실 계약 bump(spawn-event-v1 v1.1 → v1.2 MINOR)·runtime 배선 = CFP-2850 Phase 2.
+Epic #2814 W1 Story B (CFP-2850) 가 spawn-event-v1 의 실측 append 를 활성화(P0-2: Orchestrator 가 Agent task-notification 수신 시점 실측 aggregate 를 배선)하고 agent outcome 분류(N9)를 additive 로 도입한다. 실측을 정직하게 담고(honest-null — ADR-119) role·model·outcome 축 실패율·낭비 토큰 집계를 가능하게 하려면 spawn-event-v1 이 19-field → 23-field 로 4 optional field 를 additive 로 확장한다. 이 4 field 는 전부 numeric/enum 이므로 §결정 2 Allow-list ONLY enforcement 상 정식 확장 amendment 의무(silent expansion 차단)를 발동한다. 실 계약 bump(spawn-event-v1 v1.1 → v1.2 MINOR)·runtime 배선 = CFP-2850 Phase 2.
 
 ### 개정 내용
 

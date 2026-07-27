@@ -9,7 +9,7 @@ ADR-119 검증-후-단언 원칙 이행. Change Plan §8.2 P0 test contract.
     - attr_conf != attributed 면 token/cost 전부 null 강제 (추정 합산 금지)
 
   P0-2. contract↔runtime parity
-    - runtime row keys == contract Allow-list 19-set (초과/누락 0, free-form string 0)
+    - runtime row keys == contract Allow-list 23-set (초과/누락 0, free-form string 0 — CFP-2850 Amendment 4)
 
   P0-3. idempotency/dedup
     - event_id deterministic: sha256(session_id_hash || agent_id_hash || spawn_seq)
@@ -187,27 +187,30 @@ class TestAttributionConfidenceInvariant:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# § P0-2: CONTRACT ↔ RUNTIME PARITY (19-field Allow-list only)
+# § P0-2: CONTRACT ↔ RUNTIME PARITY (23-field Allow-list only — CFP-2850 Amendment 4)
 # ═════════════════════════════════════════════════════════════════════════════
 
 
 class TestContractRuntimeParity:
-    """P0-2: runtime row keys == contract Allow-list 19-set (정확 일치, 초과/누락 0)"""
+    """P0-2: runtime row keys == contract Allow-list 23-set (정확 일치, 초과/누락 0)"""
 
-    def test_runtime_keys_match_contract_19_field_allow_list(self, tmp_path):
+    def test_runtime_keys_match_contract_23_field_allow_list(self, tmp_path):
         """
         [P0-2 parity test]
-        생성 row 의 key 집합이 정확히 contract §2 명시 19-field 일 것.
+        생성 row 의 key 집합이 정확히 contract §2 명시 23-field 일 것
+        (19 core + CFP-2850 Amendment 4 additive 4: total_tokens/model/outcome/termination_cause).
         초과 key 1개라도 BREAKING (ADR-043 §결정 2).
         누락 key 1개라도 contract 위반.
         """
-        # Contract allow-list 19 field (SSOT - contract §2)
-        CONTRACT_19_FIELDS = {
+        # Contract allow-list 23 field (SSOT - contract §2, v1.2)
+        CONTRACT_23_FIELDS = {
             "event_id", "schema_version", "timestamp", "story_key", "lane_label",
             "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
             "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
             "duration_ms", "tool_call_count", "actor", "parent_event_id",
             "consumer_scope", "event_type", "elapsed_seconds",
+            # ── CFP-2850 Amendment 4 additive (19 → 23) ──
+            "total_tokens", "model", "outcome", "termination_cause",
         }
 
         ledger_path = tmp_path / "spawn-event.jsonl"
@@ -239,8 +242,8 @@ class TestContractRuntimeParity:
         runtime_keys = set(row.keys())
 
         # 정확 일치 (초과 & 누락 0)
-        assert runtime_keys == CONTRACT_19_FIELDS, \
-            f"[P0-2] Key mismatch: \n  missing: {CONTRACT_19_FIELDS - runtime_keys}\n  extra: {runtime_keys - CONTRACT_19_FIELDS}"
+        assert runtime_keys == CONTRACT_23_FIELDS, \
+            f"[P0-2] Key mismatch: \n  missing: {CONTRACT_23_FIELDS - runtime_keys}\n  extra: {runtime_keys - CONTRACT_23_FIELDS}"
 
 
 # ═════════════════════════════════════════════════════════════════════════════
