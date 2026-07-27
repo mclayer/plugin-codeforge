@@ -82,25 +82,19 @@ def test_ac10_model_tier():
     assert fm.get("model") == "opus", "model must be 'opus' for backward-author"
 
 
-# ── AC-10 축① MUTATION: disallowedTools entry removed ──────────────────────
-
-def test_ac10_mutation_disallowed_entry_removed(monkeypatch):
-    """AC-10 MUTATION: if createConfluencePage removed from disallowedTools.
-
-    Discriminating case: agent should forbid write, but mutant allows it.
-    """
-    fm = load_backward_author_frontmatter()
-
-    # Mutant: remove disallowed entry
-    mutant_fm = fm.copy()
-    if "disallowedTools" in mutant_fm:
-        mutant_disallowed = list(mutant_fm["disallowedTools"])
-        if "mcp__plugin_atlassian_atlassian__createConfluencePage" in mutant_disallowed:
-            mutant_disallowed.remove("mcp__plugin_atlassian_atlassian__createConfluencePage")
-        mutant_fm["disallowedTools"] = mutant_disallowed
-
-    # Mutant removes the protection
-    assert "mcp__plugin_atlassian_atlassian__createConfluencePage" not in mutant_fm.get("disallowedTools", [])
+# ── AC-10 축① source-mutation kill (static artifact — agent frontmatter) ───
+#
+# 이 AC 의 "production logic" = agent frontmatter(정적 artifact) 그 자체다. 위 positive
+# 테스트(test_ac10_confluence_create_page_disallowed / _update_page_disallowed /
+#  _no_confluence_write_in_tools)가 실 frontmatter 를 직접 파싱해 disallowedTools 봉인을
+# 검증하므로 artifact 변조에 대해 discriminating 하다.
+#
+# artifact-mutation kill 실증 (neuter→run→RED→restore, DevPL firsthand):
+#   .claude/agents/confluence-sync-backward-author.md 의 disallowedTools 목록에서
+#   `mcp__plugin_atlassian_atlassian__createConfluencePage` 라인 삭제
+#     → test_ac10_confluence_create_page_disallowed RED.
+#   명령: python -m pytest tests/scripts/test_confluence_backward_author_preset.py::test_ac10_confluence_create_page_disallowed
+#   기대: 라인 삭제 시 FAILED / 복원 시 PASSED.
 
 
 if __name__ == "__main__":

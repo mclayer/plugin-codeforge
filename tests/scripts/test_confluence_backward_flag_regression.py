@@ -112,60 +112,21 @@ def test_ac3_backward_disabled_no_forward_impact():
     assert hasattr(confluence_forward_sync, "load_manifest"), "forward_sync.load_manifest must exist"
 
 
-# ── AC-3 MUTATION: flag always ON (backward 항상 활성) ───────────────────
-
-def test_ac3_mutation_flag_always_on(monkeypatch):
-    """AC-3 MUTATION: if backward_sync_enabled() always returns True.
-
-    Discriminating case: flag OFF 시 backward 전면 skip 이어야 하는데,
-    mutant 는 항상 활성(flag check bypass).
-    """
-    def mutant_enabled():
-        return True  # MUTANT: always ON, no check
-
-    monkeypatch.setattr("confluence_backward_sync.backward_sync_enabled", mutant_enabled)
-
-    # Clear flag to OFF
-    old_flag = os.environ.pop(FLAG_ENV, None)
-
-    try:
-        # Mutant always returns True regardless of flag
-        from confluence_backward_sync import backward_sync_enabled as patched_enabled
-        result = patched_enabled()
-        assert result is True  # Mutant enables despite flag OFF
-
-    finally:
-        if old_flag:
-            os.environ[FLAG_ENV] = old_flag
-
-
-# ── AC-3 MUTATION: flag always OFF (backward 항상 비활성) ──────────────────
-
-def test_ac3_mutation_flag_always_off(monkeypatch):
-    """AC-3 MUTATION: if backward_sync_enabled() always returns False.
-
-    Discriminating case: flag ON 시 backward 엔진 활성이어야 하는데,
-    mutant 는 항상 비활성.
-    """
-    def mutant_enabled():
-        return False  # MUTANT: always OFF, no check
-
-    monkeypatch.setattr("confluence_backward_sync.backward_sync_enabled", mutant_enabled)
-
-    # Set flag to ON
-    old_flag = os.environ.get(FLAG_ENV)
-
-    try:
-        os.environ[FLAG_ENV] = "1"
-        from confluence_backward_sync import backward_sync_enabled as patched_enabled
-        result = patched_enabled()
-        assert result is False  # Mutant disables despite flag ON
-
-    finally:
-        if old_flag:
-            os.environ[FLAG_ENV] = old_flag
-        else:
-            os.environ.pop(FLAG_ENV, None)
+# ── AC-3 source-mutation kill (production-through discriminating tests) ─────
+#
+# backward_sync_enabled 는 env 를 직접 읽는 terminal predicate 라 주입 가능한 sub-dependency
+# 가 없다. 위 positive/negative 테스트가 production 을 직접 호출해 양방향으로 discriminating 하다:
+#   · test_ac3_flag_default_off / _set_zero_is_off / _set_empty_is_off  → "always-ON" mutant kill
+#   · test_ac3_flag_set_one_is_on / _set_any_non_zero_is_on             → "always-OFF" mutant kill
+#
+# source-mutation kill 실증 (neuter→run→RED→restore, DevPL firsthand):
+#   always-ON  : confluence_backward_sync.py backward_sync_enabled 본문을 `return True` 로 치환
+#                → test_ac3_flag_default_off RED.
+#   always-OFF : 본문을 `return False` 로 치환
+#                → test_ac3_flag_set_one_is_on RED.
+#   명령: python -m pytest tests/scripts/test_confluence_backward_flag_regression.py::test_ac3_flag_default_off
+#         python -m pytest tests/scripts/test_confluence_backward_flag_regression.py::test_ac3_flag_set_one_is_on
+#   기대: 각 neuter 시 대응 테스트 FAILED / restore 시 PASSED.
 
 
 if __name__ == "__main__":

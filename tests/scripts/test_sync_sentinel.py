@@ -40,30 +40,20 @@ def test_ac7_anchor_equality_empty_values_safe_default():
     assert anchor_equality_skip("abc", None) is False
 
 
-def test_ac7_anchor_equality_mutation_always_false(monkeypatch):
-    """AC-7 MUTATION: if anchor_equality_skip always returns False.
-
-    Discriminating case: equal anchors should skip, but mutant doesn't.
-    Result: re-sync loop (sync proceeds incorrectly for equal case).
-
-    This test verifies the mutant by directly injecting always-False.
-    """
-    # Save original
-    original_func = anchor_equality_skip
-
-    # Mutant: always-False version
-    def mutant_always_false(live, current):
-        return False
-
-    monkeypatch.setattr("sync_sentinel.anchor_equality_skip", mutant_always_false)
-
-    # Re-import to get patched version
-    from sync_sentinel import anchor_equality_skip as patched
-
-    # Same anchor should skip (original), but mutant doesn't → assertion fails
-    same_anchor = "abc123"
-    assert patched(same_anchor, same_anchor) is False  # Mutant fails here!
-    # (Assertion on mutant to demonstrate it's RED when injected)
+# AC-7 PRIMARY source-mutation kill (production-through discriminating tests)
+#
+# anchor_equality_skip 는 순수 `==` terminal predicate 라 주입 가능한 sub-dependency 가 없다.
+# 위 test_ac7_anchor_equality_same_values_skip(equal→True) /
+# _different_values_no_skip(diff→False) / _empty_values_safe_default 가 production 을 직접
+# 호출해 양방향 discriminating 하다.
+#
+# source-mutation kill 실증 (neuter→run→RED→restore, DevPL firsthand):
+#   always-False : sync_sentinel.py anchor_equality_skip 본문을 `return False` 로 치환
+#                  → test_ac7_anchor_equality_same_values_skip RED (equal 인데 skip 안 함).
+#   always-True  : 본문을 `return True` 로 치환
+#                  → test_ac7_anchor_equality_different_values_no_skip RED (diff 인데 skip).
+#   명령: python -m pytest tests/scripts/test_sync_sentinel.py::test_ac7_anchor_equality_same_values_skip
+#   기대: neuter 시 FAILED / restore 시 PASSED.
 
 
 # ── AC-7 SECONDARY: sentinel marker fast-path ──────────────────────────────

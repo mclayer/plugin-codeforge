@@ -77,35 +77,18 @@ def test_ac5_branch_missing_fails():
         bsync.assert_pr_only(proposal)
 
 
-# ── AC-5 MUTATION: auto_merge check removed (always-pass mutant) ───────────
-
-def test_ac5_mutation_auto_merge_check_removed(monkeypatch):
-    """AC-5 MUTATION: if auto_merge check is commented out (always-pass).
-
-    Discriminating case: auto_merge=True should raise, but mutant doesn't check.
-    """
-    def mutant_assert_pr_only(proposal):
-        # MUTANT: auto_merge check removed
-        if proposal.get("direct_push_to_base"):
-            raise bsync.InvariantViolation("INV-A 위반: direct_push_to_base=True")
-        branch = proposal.get("branch")
-        base = proposal.get("base")
-        if not branch or branch == base:
-            raise bsync.InvariantViolation(f"INV-A 위반: feature branch 부재/base 동일")
-
-    monkeypatch.setattr("confluence_backward_sync.assert_pr_only", mutant_assert_pr_only)
-
-    from confluence_backward_sync import assert_pr_only as patched
-
-    proposal = {
-        "branch": "feature",
-        "base": "main",
-        "auto_merge": True,  # Should fail, but mutant ignores
-        "direct_push_to_base": False,
-    }
-
-    # Mutant does NOT raise (because check is removed)
-    patched(proposal)  # No exception
+# ── AC-5 source-mutation kill (production-through discriminating tests) ─────
+#
+# assert_pr_only 는 terminal predicate(주입 가능한 sub-dependency 부재) 이므로 in-suite
+# monkeypatch mutation 은 production 을 경유하지 못한다(hollow). 대신 위 negative 테스트
+# (test_ac5_auto_merge_true_fails / _direct_push_to_base_fails / _branch_equals_base_fails /
+#  _branch_missing_fails)가 production assert_pr_only 를 직접 호출해 각 guard 를 kill 한다.
+#
+# source-mutation kill 실증 (neuter→run→RED→restore, DevPL firsthand):
+#   auto_merge guard 제거   → confluence_backward_sync.py `if proposal.get("auto_merge"):` 블록 삭제
+#                             → test_ac5_auto_merge_true_fails RED (pytest.raises 미충족).
+#   명령: python -m pytest tests/scripts/test_confluence_backward_invariant.py::test_ac5_auto_merge_true_fails
+#   기대: neuter 시 FAILED / restore 시 PASSED.
 
 
 # ── AC-3: cutover flag (backward_sync_enabled) ──────────────────────────────

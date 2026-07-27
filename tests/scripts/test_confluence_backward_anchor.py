@@ -98,47 +98,45 @@ def test_ac8_anchor_mismatch_1byte_sensitive():
     assert bsync.anchor_mismatch(modified, stored_anchor) is True
 
 
-# ── AC-8 MUTATION: normalization bypass (fails to detect 1-byte drift) ──────
+# ── AC-8 MUTATION: normalization bypass (genuine — production 경유 + 실 dependency mutate) ──
 
 def test_ac8_mutation_normalize_bypass_detectable(monkeypatch):
-    """AC-8 MUTATION: if _normalize_markdown is removed/identity.
+    """AC-8 MUTATION (genuine, option-a): production substrate_anchor_a 를 그대로 호출하되
+    실 dependency `_normalize_markdown` 를 identity 로 monkeypatch 해 production output 이
+    실제로 flip 하는지 assert.
 
-    Discriminating case: 1-byte drift in normalized content would be missed.
-    POS: mismatch detected. MUT: mismatch missed (False when should be True).
-
-    Inject mutant: _normalize_markdown returns input unchanged.
+    discriminating 계약 (_normalize_markdown = CRLF→LF + per-line rstrip):
+      base     = b"alpha\\nbeta"            (trailing ws 없음)
+      trailing = b"alpha   \\nbeta\\t\\t"   (line별 trailing ws)
+      · REAL normalization → 둘 다 "alpha\\nbeta" 로 collapse → anchor SAME.
+      · identity mutant(normalization 제거) → trailing ws 보존 → anchor DIFFERENT.
+    production substrate_anchor_a 가 실제로 _normalize_markdown 을 경유함을 입증(제거 시 drift 미붕괴).
     """
-    # Save original
-    original_normalize = bsync._normalize_markdown
+    base = b"alpha\nbeta"
+    trailing = b"alpha   \nbeta\t\t"
 
-    # Mutant: identity (no normalization)
+    # (1) REAL normalization 하 production 호출 → trailing ws collapse → 동일 anchor.
+    real_base = bsync.substrate_anchor_a(base)
+    real_trailing = bsync.substrate_anchor_a(trailing)
+    assert real_base == real_trailing, \
+        "REAL: _normalize_markdown rstrip 이 trailing ws 를 collapse 해야 함(동일 anchor)"
+
+    # (2) identity mutant 주입(normalization 제거) 후 동일 production 함수 재호출.
     def mutant_identity(data):
-        return bytes(data) if isinstance(data, (bytes, bytearray)) else data.encode("utf-8")
+        return bytes(data) if isinstance(data, (bytes, bytearray)) else str(data).encode("utf-8")
 
     monkeypatch.setattr("confluence_backward_sync._normalize_markdown", mutant_identity)
 
-    # Re-import to get patched function
-    from confluence_backward_sync import substrate_anchor_a as patched_anchor
+    mut_base = bsync.substrate_anchor_a(base)
+    mut_trailing = bsync.substrate_anchor_a(trailing)
 
-    base = b"test"
-    modified = b"test "  # trailing space
-
-    # With proper normalization, both should hash same (space stripped)
-    # With mutant (identity), they hash differently
-    anchor_base = patched_anchor(base)
-    anchor_modified = patched_anchor(modified)
-
-    # Mutant: anchors differ (identity doesn't strip)
-    # Correct: anchors same (normalization strips space)
-    # This test shows mutant produces different anchors when they should be same
-    # (or vice versa depending on normalization order)
-
-    # The key discriminating case: 1-byte input drift WITHOUT normalization
-    # is detected. With normalization OFF, drift is NOT detected for equivalent inputs.
-    base_anchor = original_normalize(base)
-    modified_anchor = original_normalize(modified)
-    # If normalize strips trailing, they should be equal after; if not, should differ
-    # The point is: any single-byte change outside normalization scope is detected
+    # MUTANT: identity 는 trailing ws 를 strip 안 함 → anchor DIFFER (production output flip).
+    assert mut_base != mut_trailing, \
+        "MUT: normalization 제거 시 trailing ws 가 보존되어 anchor 가 달라져야 함(discriminating)"
+    # cross-check: mutant base 는 REAL base 와 동일(공백 없는 입력은 normalize 영향 0),
+    #              mutant trailing 은 REAL trailing 과 다름(normalize 가 load-bearing 이던 부분).
+    assert mut_base == real_base
+    assert mut_trailing != real_trailing
 
 
 if __name__ == "__main__":

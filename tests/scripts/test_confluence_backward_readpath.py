@@ -85,30 +85,28 @@ def test_ac9_empty_anchors_safe_no_divergence_flag():
     assert result["diverged"] is False
 
 
-# ── AC-9 MUTATION: read routing poisoned (agent→atlassian-first) ──────────
+# ── AC-9 read-routing propagation (production-through discriminating) ──────
 
-def test_ac9_mutation_agent_routed_to_atlassian(monkeypatch):
-    """AC-9 MUTATION: if resolve_read_source(agent) → 'atlassian-first' (direct Confluence).
+def test_ac9_divergence_routing_propagates_through_production():
+    """AC-9 (production-through): resolve_read_with_divergence 가 내부 resolve_read_source 를
+    실제로 경유해 read_source 를 결정함을 입증(agent→git-substrate 라우팅이 하류까지 전파).
 
-    Discriminating case: agent should read git-substrate primary, but mutant
-    routes to Confluence direct → read-poisoning (UX surface instead of truth).
-
-    Inject mutant: agent maps to wrong path.
+    resolve_read_source 는 terminal predicate 라 sub-dependency mutation 불가 →
+    상위 production 함수(resolve_read_with_divergence)를 그대로 호출해 라우팅 전파를 검증한다.
     """
-    def mutant_resolve_read_source(subject):
-        if subject == "agent":
-            return "atlassian-first"  # WRONG: should be git-substrate
-        if subject == "human":
-            return "atlassian-first"
-        raise ValueError(f"unknown read subject: {subject!r}")
+    r_agent = bsync.resolve_read_with_divergence("agent", live_anchor_a="h", git_source_hash="h")
+    assert r_agent["read_source"] == "git-substrate"
+    r_human = bsync.resolve_read_with_divergence("human", live_anchor_a="h", git_source_hash="h")
+    assert r_human["read_source"] == "atlassian-first"
 
-    monkeypatch.setattr("confluence_backward_sync.resolve_read_source", mutant_resolve_read_source)
 
-    from confluence_backward_sync import resolve_read_source as patched
-
-    # Agent should read substrate, not Confluence
-    result = patched("agent")
-    assert result == "atlassian-first"  # Mutant produces wrong result
+# ── AC-9 source-mutation kill (neuter→run→RED→restore, DevPL firsthand) ────
+#   agent 라우팅 poison → confluence_backward_sync.py resolve_read_source 의
+#     `if subject == "agent": return "git-substrate"` → `return "atlassian-first"` 로 치환
+#     → test_ac9_agent_maps_to_git_substrate RED
+#        (+ 위 propagation 테스트도 RED — 하류 전파 반영).
+#   명령: python -m pytest tests/scripts/test_confluence_backward_readpath.py::test_ac9_agent_maps_to_git_substrate
+#   기대: neuter 시 FAILED / restore 시 PASSED.
 
 
 if __name__ == "__main__":

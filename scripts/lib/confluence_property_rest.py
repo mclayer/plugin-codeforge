@@ -66,6 +66,14 @@ RATE_LIMIT_POINTS_PER_WRITE = 1  # property write ≈ 1 point (approx)
 MAX_RETRY_ATTEMPTS = 3
 INITIAL_BACKOFF_SECONDS = 1.0
 
+# IO-7: 실 저장 대상 page id (부재 시 dry-run — 실 write 0).
+TEST_PAGE_ID_ENV = "CFP2829_TEST_PAGE_ID"
+
+
+class ChunkStoreError(RuntimeError):
+    """leg-B chunk-store orchestration 무결성 위반 (manifest 부재 / 부분 저장 / reassemble 실패)
+    — fail-closed 신호 (부분 데이터 노출 0, IO-6)."""
+
 
 # ── MOCK Mode (creds-free testing) ───────────────────────────────────────────
 
@@ -164,15 +172,37 @@ def _deny_scan_for_secrets(text: str) -> Tuple[bool, Optional[str]]:
 
 # ── Error Classification (AC-12) ────────────────────────────────────────────
 
+# v2 400 over-limit phrase signatures (whole-phrase substring — bare "32" 금지, F-CR-004).
+#   근거: Confluence content property = "no more than 32KB of JSON-encoded data" (32768 byte).
+#   bare "32" substring 매칭은 "field xyz32 invalid" / "error code 1324" 등을 오분류(false-positive)
+#   → phrase/whole-token 매칭으로 정밀화.
+_OVER_LIMIT_V2_PHRASES = (
+    "too large",
+    "too long",
+    "maximum size",
+    "size limit",
+    "exceeds",
+    "exceed the",
+    "payload too large",
+    "request entity too large",
+)
+# 크기 수치 토큰 — word-boundary 로 정밀화(bare "32" 오매칭 방지: "xyz32"/"1324" 는 boundary 불충족).
+_OVER_LIMIT_V2_TOKEN_RE = re.compile(r"\b(?:32\s?kb|32768|5242880)\b", re.IGNORECASE)
+
+
 def is_over_limit_error(version: int, status_code: int, body_text: str = "") -> bool:
     """
     Classify over-limit errors disjointly across v1 and v2 APIs (AC-12).
 
     Rules:
       - v1: status_code == 413 (Payload Too Large) → True
-      - v2: status_code == 400 AND body contains size signature → True
-            (signatures: "too large", "too long", "32", "5242880")
+      - v2: status_code == 400 AND body contains size signature (whole-phrase / boundary token) → True
       - All other cases → False
+
+    v2 size signature (F-CR-004 정밀화):
+      - phrase substring: "too large" / "too long" / "maximum size" / "size limit" / "exceeds" / ...
+      - boundary token:   \\b32kb\\b / \\b32768\\b / \\b5242880\\b (word-boundary — bare "32" 금지)
+      제거: bare "32" substring (false-positive: "field xyz32 invalid", "error code 1324").
 
     Args:
         version: API version (1 or 2)
@@ -192,9 +222,11 @@ def is_over_limit_error(version: int, status_code: int, body_text: str = "") -> 
     if version == 2:
         if status_code != 400:
             return False
-        # Check body for size-limit signatures
-        body_lower = body_text.lower() if body_text else ""
-        return any(sig in body_lower for sig in ["too large", "too long", "32", "5242880"])
+        body = body_text or ""
+        body_lower = body.lower()
+        if any(sig in body_lower for sig in _OVER_LIMIT_V2_PHRASES):
+            return True
+        return bool(_OVER_LIMIT_V2_TOKEN_RE.search(body))
 
     return False
 
@@ -255,6 +287,8 @@ class ConfluencePropertyREST:
         self.session_v1 = None
         self.session_v2 = None
         self.rate_limit_state = {"remaining": 65000, "reset_at": None}  # OAuth Tier1 estimate
+        # IO-7 dry-run/offline round-trip 용 in-memory store (실 API 미도달 시에만 사용).
+        self._mock_store: Dict[str, Any] = {}
 
     def _ensure_session(self, version: int) -> Optional[Any]:
         """Lazy-init requests session with basic-auth (if HAS_REQUESTS)."""
@@ -471,6 +505,130 @@ class ConfluencePropertyREST:
         except Exception as e:
             logger.error(f"delete_property_v2 failed: {e}")
             return False, str(e)
+
+    # ── leg-B chunk-store orchestration (manifest-last 원자성, IO-6 / F-CR-003) ──
+
+    def _is_dry_run(self, dry_run: Optional[bool]) -> bool:
+        """dry-run 판정 — 명시 인자 우선, 미지정 시 IO-7(TEST_PAGE_ID 부재 → dry-run)."""
+        if dry_run is not None:
+            return dry_run
+        return not os.environ.get(TEST_PAGE_ID_ENV)
+
+    def _put_one(self, page_id: str, remote_key: str, value: Dict[str, Any],
+                 dry: bool) -> Tuple[bool, Optional[str]]:
+        """단일 property PUT. dry=True 면 실 write 0(IO-7) — in-memory store 에만 기록."""
+        if dry:
+            self._mock_store[remote_key] = value
+            logger.info(f"[DRY-RUN] store {remote_key} (실 write 0, IO-7)")
+            return True, None
+        return self.put_property_v2(page_id, remote_key, value)
+
+    def _get_one(self, page_id: str, remote_key: str, dry: bool) -> Optional[Dict[str, Any]]:
+        """단일 property GET. dry=True 면 in-memory store 조회 (offline round-trip)."""
+        if dry:
+            return self._mock_store.get(remote_key)
+        return self.get_property_v2(page_id, remote_key)
+
+    def store_chunked_property(self, page_id: str, chunk_dict: Dict[str, Any],
+                               dry_run: Optional[bool] = None) -> Dict[str, Any]:
+        """chunk dict 를 leg-B 로 저장 — **전 __chunk_{n} PUT 후 마지막에 __manifest PUT**
+        (manifest-last commit-marker 원자성, IO-6).
+
+        입력 chunk_dict = confluence_property_chunking.chunk() 산출 =
+          {"__manifest": {chunk_count, total_sha256, per_chunk_sha256}, "__chunk_0": <b64>, ...}
+        (local key). 저장 시 remote key 로 매핑: __chunk_n → CHUNK_KEY_TEMPLATE, __manifest → MANIFEST_KEY.
+
+        manifest-last 근거: 저장이 중간에 crash 하면 __manifest 가 아직 없어 reader(load_chunked_property)
+        가 fail-closed → 부분 데이터를 canonical 로 오인 0 (IO-6). manifest 는 전 chunk 커밋 후 최후에만 PUT.
+
+        dry_run: None → IO-7(TEST_PAGE_ID 부재 시 dry-run, 실 write 0). 실 API 저장은 creds 필요(BLOCKED-재이월).
+        return: {"success": True, "dry_run": bool, "put_order": [remote_key,...], "chunk_count": N}
+                — put_order[-1] 은 항상 MANIFEST_KEY (manifest-last 검증 anchor).
+        raise: ChunkStoreError — chunk 누락 / PUT 실패 (부분 저장 방지, fail-closed).
+        """
+        from confluence_property_chunking import (
+            MANIFEST_KEY as _LOCAL_MANIFEST_KEY, chunk_key as _local_chunk_key,
+        )
+
+        if not isinstance(chunk_dict, dict) or _LOCAL_MANIFEST_KEY not in chunk_dict:
+            raise ChunkStoreError(
+                f"chunk_dict 에 {_LOCAL_MANIFEST_KEY} 부재 — store 거부 (fail-closed)"
+            )
+        manifest = chunk_dict[_LOCAL_MANIFEST_KEY]
+        if not isinstance(manifest, dict) or "chunk_count" not in manifest:
+            raise ChunkStoreError("manifest 형식 오류 (chunk_count 부재) — store 거부 (fail-closed)")
+        chunk_count = manifest["chunk_count"]
+
+        dry = self._is_dry_run(dry_run)
+        put_order: List[str] = []
+
+        # 1) 전 __chunk_{n} PUT (0-based ordered) — manifest 이전에 모두 완료.
+        for n in range(chunk_count):
+            lkey = _local_chunk_key(n)
+            if lkey not in chunk_dict:
+                raise ChunkStoreError(f"chunk 누락 — {lkey} (부분 store 방지, fail-closed)")
+            remote_key = CHUNK_KEY_TEMPLATE.format(n=n)
+            ok, err = self._put_one(page_id, remote_key, {"data": chunk_dict[lkey]}, dry)
+            if not ok:
+                raise ChunkStoreError(
+                    f"chunk PUT 실패 — {remote_key}: {err} (manifest 미커밋 상태 유지, reader fail-closed)"
+                )
+            put_order.append(remote_key)
+
+        # 2) 마지막에 __manifest PUT — commit marker (IO-6 manifest-last 원자성).
+        ok, err = self._put_one(page_id, MANIFEST_KEY, manifest, dry)
+        if not ok:
+            raise ChunkStoreError(
+                f"manifest PUT 실패 — {err} (chunk orphaned; manifest 부재로 reader fail-closed 유지)"
+            )
+        put_order.append(MANIFEST_KEY)
+
+        return {
+            "success": True,
+            "dry_run": dry,
+            "put_order": put_order,
+            "chunk_count": chunk_count,
+        }
+
+    def load_chunked_property(self, page_id: str,
+                              dry_run: Optional[bool] = None) -> bytes:
+        """leg-B 저장 property 를 조회해 canonical bytes 로 재조립 (fail-closed, IO-6).
+
+        __manifest 를 먼저 GET → chunk_count 만큼 __chunk_{n} GET → local dict 재구성 →
+        confluence_property_chunking.reassemble() 위임(per-chunk sha256 + total_sha256 전수 검증).
+
+        fail-closed (부분 데이터 노출 0):
+          - manifest 부재 → ChunkStoreError (store 미완/crash 시 부분 chunk 를 canonical 오인 0).
+          - chunk 부재 / hash 불일치 / total_sha256 불일치 → ChunkStoreError (reassemble 위임).
+        """
+        from confluence_property_chunking import (
+            MANIFEST_KEY as _LOCAL_MANIFEST_KEY, chunk_key as _local_chunk_key,
+            reassemble as _reassemble, ChunkIntegrityError as _ChunkIntegrityError,
+        )
+
+        dry = self._is_dry_run(dry_run)
+
+        manifest = self._get_one(page_id, MANIFEST_KEY, dry)
+        if manifest is None:
+            raise ChunkStoreError(
+                "manifest 부재 (__manifest) — 부분 데이터 재조립 거부, 노출 0 (IO-6 fail-closed)"
+            )
+        if not isinstance(manifest, dict) or not isinstance(manifest.get("chunk_count"), int):
+            raise ChunkStoreError("manifest 형식 오류 (chunk_count) — fail-closed")
+        chunk_count = manifest["chunk_count"]
+
+        local: Dict[str, Any] = {_LOCAL_MANIFEST_KEY: manifest}
+        for n in range(chunk_count):
+            remote_key = CHUNK_KEY_TEMPLATE.format(n=n)
+            stored = self._get_one(page_id, remote_key, dry)
+            if stored is None or "data" not in stored:
+                raise ChunkStoreError(f"chunk 부재 — {remote_key} (부분 데이터, fail-closed)")
+            local[_local_chunk_key(n)] = stored["data"]
+
+        try:
+            return _reassemble(local)   # chunking 모듈 전수 무결성 검증 (fail-closed 위임)
+        except _ChunkIntegrityError as e:
+            raise ChunkStoreError(f"reassemble 무결성 실패 — {e} (fail-closed)") from e
 
 
 # ── Public API (leg B) ───────────────────────────────────────────────────────

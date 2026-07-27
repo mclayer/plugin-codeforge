@@ -13,11 +13,12 @@
 
 dedup key = (page_id, version_number) — ordering invariant, 중복 PR 제거(AC-14).
 
-★ 배선 경계 (interface-freeze / DevPL→ArchitectPL 회부 中):
-  본 모듈은 순수 predicate 만 노출한다. forward(confluence_forward_sync.py cmd_sync) 진입부
-  배선은 **하지 않는다** — forward_sync.py 는 AC-3/L605 interface-freeze(0줄 변경) 대상이라
-  Change Plan §3.8/R-4 의 "cmd_sync 1줄 가드 삽입"과 모순되기 때문이다. SUBSTRATE_MARKER 는
-  backward-writer stamp ↔ forward filter 양쪽이 참조하는 단일 SSOT 상수로만 제공한다.
+★ 배선 경계 (S2 scope = predicate-capability 한정, forward-integration = S3-defer):
+  본 모듈은 순수 predicate(anchor_equality_skip + sentinel-marker + dedup)만 노출한다. S2 범위는
+  이 predicate-capability 와 그 unit test 로 한정되고, forward(confluence_forward_sync.py cmd_sync)
+  진입부 통합 배선은 **S3 로 이연(defer)**한다 — forward_sync.py = AC-3 interface-freeze(0줄 변경)
+  보존 대상이라, cmd_sync 가드 삽입은 forward-path 통합이 열리는 S3 에서 수행한다(AC-3 보존).
+  SUBSTRATE_MARKER 는 backward-writer stamp ↔ forward filter 양쪽이 참조하는 단일 SSOT 상수로만 제공한다.
 """
 
 # ── SSOT 상수 (backward-writer stamp ↔ forward filter 양쪽 참조 — 분산 하드코딩 금지) ──
