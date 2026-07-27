@@ -32,7 +32,12 @@ related_files:
   - scripts/lib/query_dev_process_event.py            # mining/query port (raw typed rows + blob deref)
   - scripts/lib/dev_process_blob_store.py             # evidence-blob-store (capture_blob / deref_blob — sibling)
   - scripts/lib/redact_dev_process_content.py         # capture-time redaction (redact — sibling)
-amendment_log: []
+amendment_log:
+  - id: A1
+    date: 2026-07-25
+    carrier: CFP-2817 (Epic #2814 W1 P0-1)
+    class: amendment_log-only  # no version bump — 18필드·event_id 산식·allow-list 무변경
+    change: "§4 producer-normative seq 채번 규율 명문화(causal-state 파생, 원장-read·primitive-internal·random-UUID 금지, 4 불변식+실패방향). §2 필드1 dangling '§11.6' 참조 정정(→CFP-2687 change-plan §11.6). §3.3 발화 주체 주석(Orchestrator write / review lane semantic-source, AC-7)."
 attribution:
   external_soft_align: "OpenTelemetry Logs Data Model / CloudEvents / ECS (typed append-only event) · W3C Trace Context (correlation ID) · git blob/IPFS CID (content-addressed blob) · gitleaks/crypto-shredding (redaction) · Elasticsearch ILM hot/warm/cold (retention). 전부 soft-align(map only) — 외부 OTel GenAI semconv 는 Development/unstable 이라 hard-freeze 대상 아님 (Story §6.4 R5). Sources = Story CFP-2687 §6.5."
 ---
@@ -68,7 +73,7 @@ attribution:
 
 | # | 필드 | 타입 | nullable | 적용 event_type | 설명 |
 |---|---|---|---|---|---|
-| 1 | `event_id` | sha256 string | required | 전체 | idempotency invariant — **deterministic** `sha256(schema_version‖event_type‖emit_source‖story_key‖lane_label‖consumer_scope‖defect_id‖fix_id‖blob_ref‖seq)`. **timestamp 산입 제외**(재시도 멱등). random UUID 금지(§11.6). read-time dedup key |
+| 1 | `event_id` | sha256 string | required | 전체 | idempotency invariant — **deterministic** `sha256(schema_version‖event_type‖emit_source‖story_key‖lane_label‖consumer_scope‖defect_id‖fix_id‖blob_ref‖seq)`. **timestamp 산입 제외**(재시도 멱등). random UUID 금지(seq 채번 규율 = §4 / idempotency 근거 = CFP-2687 change-plan `2026-07-15-cfp-2687-dev-process-observability-substrate.md` §11.6 — 본 계약 내부 §11.6 부재, dangling ref 정정). read-time dedup key |
 | 2 | `schema_version` | const string | required | 전체 | `dev-process-event-v1` 고정 — 다중 계약 stream 판별 discriminator |
 | 3 | `event_type` | enum (CLOSED 8) | required | 전체 | §3 8종 closed enum |
 | 4 | `emit_source` | enum (CLOSED 2) | required | 전체 | `{hook, agent}` — capture 경로 discriminator(§결정 4, single-stream JOIN 보존) |
@@ -157,6 +162,8 @@ noise_discard:
 - **single-stream JOIN 보존**: `emit_source` enum discriminator 로 capture path 를 정직 구분하되 stream 은 하나(2-channel 물리 분리 기각 — INV-3 JOIN 파괴 회피).
 - **hook NON-ambient**: hook 은 lane ambient 를 알 수 없다 — `agent_type→lane` map(semi-open, 미등재 → `없음` fallback) 또는 agent-emit 직접 주입. Stop hook 에 lane ambient 기대 금지(dependency direction: hook→env only). 둘 다 부재 → lane=`없음` + vacuous status(consistent 위장 금지).
 
+> **발화 주체 vs semantic 발생원 (AC-7, ADR-039 §결정3)**: 위 표의 verdict/defect_finding/final_artifact 행 "review lane"/"lane" 표기는 **semantic 발생원**(누가 verdict/결점을 생산하나)이며 **write 호출 주체가 아니다**. Port-B emit 호출자 = **Orchestrator(-owned delegate) 독점**(§10.1 writer 정합); review lane 은 packet 을 **반환**할 뿐 emit 을 직접 호출하면 policy_violation(§10.1).
+
 ## 4. 변경 규칙
 
 - **Allow-list ONLY (v1.x)**: §2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING).
@@ -167,6 +174,7 @@ noise_discard:
 - **`_ROW_KEYS` parity**: §2 필드 순서·멤버는 `append_dev_process_event._ROW_KEYS` 와 항상 일치(born-drift = FAIL). 한쪽 변경 = 양쪽 동반 + amendment.
 - **opt-in / always-on 정책 변경**: α 비대칭(wrapper always-on / consumer opt-in-false) 약화 = ADR-043/ADR-064 amendment 의무(BREAKING — privacy invariant 위반).
 - **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-163 §결정 4 amendment.
+- **`seq` 채번 규율 (producer-normative — event_id disambiguator SSOT, 18필드 무변경·미persist)**: `seq` 는 §2 필드1 `event_id` 산입 disambiguator 이며 index row 에 **미persist**(`_ROW_KEYS` 부재 — 무변경). producer(Orchestrator-owned delegate)는 `seq` 를 **causal-state 파생**으로만 채번한다 — `seq = f(transition_kind ‖ fix_iter ‖ reset_generation ‖ ordinal)`. transition_kind = ADR-038 6-point 전이 종류 토큰(`enter/pass/fix-detected/cause/re-enter/complete`, `scripts/jira-channel/progress-format.sh` 어휘 재사용); fix_iter = 해당 FIX 사이클의 §10 FIX Ledger Iter 값(§10 row 의 persisted 필드가 아니라 Orchestrator 가 그 row 쓰기 직전 보유한 causal state — Iter:fix_id = 1:N 이므로 Iter 재사용 금지); reset_generation = 해당 lane 의 §10 RESET 마커 누적 세대(RESET 경계 재발 disambiguation); ordinal = 동일 (transition_kind, fix_iter, reset_generation) 내 복수 시도(verdict 복수발생·동일 Iter defect 재검출)의 attempt 서브카운터. **금지**: 원장 tail-read 채번·primitive 내부 자동 채번·random UUID — 전부 at-least-once 멱등 붕괴(재시도가 다른 원장 상태 관측 → 다른 seq → 중복 행 + read-time dedup 무력화). **불변식 4**: ① 동일 논리 이벤트 재시도 → 동일 값 **재계산·재사용**(동일 event_id, 멱등 — 재계산 결과가 attempt 마다 달라지면 안 됨); ② 별개 논리 전이 → 상이 값(소실 0); ③ **실패방향 원칙** — 채번 불확실 시 fallback 은 **가시적 중복 방향만** 허용, `seq` 재사용에 의한 silent loss 금지; ④ `seq` 미persist·primitive 원장 read 금지 하에서 세션 재기동 후 §10 FIX Ledger + phase label 로부터 재구성 가능. `seq` 채번 로직 SSOT = emit 계층 pure 함수(`emit_dev_process_event.derive_seq`); primitive(`append_dev_process_event.py`)는 `seq` 를 통과만 시킨다(원장 read 금지 불변식 무손상).
 
 ## 5. 상관 ID freeze + 결점 taxonomy (B·C 공유 — AC-4/5)
 

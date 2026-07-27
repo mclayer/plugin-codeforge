@@ -12,13 +12,13 @@ CFP-2812 / ADR-167(adr-amendment-compaction-ratchet) / ADR-060 — ADR amendment
                        의 `reinterpretation:` marker presence/consistency 판정.
   - --write-baseline : 도입 시점 corpus 전수 스캔 → effective_count >= N 인 ADR 을 grandfathered_at 로 동결 write.
 
-honest ceiling (ADR-082 §결정 16 / ADR-119 §결정 6 / ADR-136 정직 천장 — Change Plan D5/D10):
+honest ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) / ADR-119 §결정 6 / ADR-136 정직 천장 — Change Plan D5/D10):
   기계 게이트가 보증하는 것은 (a) count 산식 판정 (b) marker presence/type consistency (c) baseline 무결성
   검사까지다. 재해석 여부의 의미 판정 / prose-only 본문 편집(양 표면 미기재) / 재제정 의미 무변경(semantic
   fidelity) 은 기계화 불가 — 리뷰 판정 축(인간)의 몫이다. "모든 재해석 기계 검출"·"stale drift 재발 근절"
   류 hard-claim 은 하지 않는다.
 
-resource 정직 (ADR-082 §결정 16 — Change Plan D10, honest-downgrade):
+resource 정직 (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) — Change Plan D10, honest-downgrade):
   born-safe bound 4-axis: (1) path filter = archive/adr/ADR-*.md anchored + ADR-RESERVATION.md EXEMPT
   (2) bounded-quantifier regex — 헤딩 매칭 `^#{2,4}\s{0,80}Amendment` (무제한 quantifier 미사용)
   (3) per-file 물리 라인 length truncate (MAX_PHYSICAL_LINE_LEN) (4) total-work bound — 유한 corpus 1-shot (도입 시점 ≈166 ADR, 수치는 corpus 성장에 따라 변동).
@@ -41,7 +41,7 @@ Exit codes:
   1 = violation >=1 (임계 초과 신규분 / baseline 무결성 위반 / heading-only drift / marker 미기재·비-boolean / 파싱 실패)
 
 ADR refs: ADR-167(adr-amendment-compaction-ratchet) §결정 1~8 / ADR-060 (게이트 tier host) / ADR-145
-  (forward-only+grandfather) / ADR-153 (baseline 은퇴 선례) / ADR-082 §결정 16 (resource 정직) /
+  (forward-only+grandfather) / ADR-153 (baseline 은퇴 선례) / ADR-168 §결정 16 (resource 정직, 구 ADR-082 §결정 16 재제정) /
   ADR-119·ADR-136 (honest ceiling) / ADR-061 (Python SSOT + thin wrapper) / ADR-005 (byte-parity workflow 쌍).
 """
 
@@ -95,8 +95,8 @@ ADR_ID_RE = re.compile(r"^(ADR-\d+)")
 ADR_PATH_RE = re.compile(r"(?:^|/)archive/adr/ADR-[^/]+\.md$")
 
 
-# ══════════════════════ 순수 함수 6종 (Change Plan D2 — 파일시스템 무접촉) ══════════
-# 아래 6종은 QADev self-test 가 python 레벨로 직접 fixture 주입한다 (AC-3 mutation-kill).
+# ══════════════════════ 순수 함수 6종 + is_superseded_status 7번째 helper(CFP-2840) (Change Plan D2 — 파일시스템 무접촉) ══════════
+# 아래 6종 + is_superseded_status 7번째는 QADev self-test 가 python 레벨로 직접 fixture 주입한다 (AC-3 mutation-kill).
 
 def count_heading_amendments(body: str) -> int:
     """본문 헤딩 `^#{2,4}\\s{0,80}Amendment` 매치 수 (bounded quantifier — D10)."""
@@ -181,6 +181,15 @@ def check_marker_presence(entry: dict) -> list[str]:
     return []
 
 
+def is_superseded_status(status) -> bool:
+    """status 가 Superseded 계열(3형: bare / `Superseded by ADR-NNN` / `Superseded-by-ADR-MMM`) 판정.
+
+    delimiter-anchored — 3형 포섭 ∧ `supersededxyz` 등 garbage status 배제(over-breadth 이의1 해소,
+    임계 회피 차단). casefold + strip 정규화. Accepted/Proposed/Sunsetted/None/empty = False(no-false-skip, INV-4).
+    """
+    return bool(re.match(r"superseded($|[\s\-])", str(status).strip().casefold()))
+
+
 # ══════════════════════ orchestration (top-level — 순수 함수 밖) ═══════════════════
 
 def _adr_id_from_name(name: str):
@@ -247,6 +256,7 @@ def _scan_adr(path: Path, rel: str) -> dict:
         "heading_n": heading_n,
         "fm_n": fm_n,
         "effective": effective_count(heading_n, fm_n),
+        "status": fm.get("status"),
         "fm": fm,
         "error": None,
     }
@@ -368,6 +378,7 @@ def write_baseline(path: str, corpus_scans):
         (s["adr_id"], s["effective"])
         for s in corpus_scans
         if s.get("error") is None and s.get("adr_id") and s["effective"] >= THRESHOLD_N
+        and not is_superseded_status(s.get("status"))
     ]
     picked.sort(key=lambda t: (int(re.sub(r"\D", "", t[0]) or 0), t[0]))
 
@@ -509,6 +520,8 @@ def run_threshold(repo_root: str, paths, baseline_path: str, base_ref) -> int:
     for s in scans:
         if not s["adr_id"]:
             continue
+        if is_superseded_status(s.get("status")):
+            continue  # 재제정 완료 상태(Superseded)는 판정 skip(무모순) — files_checked 계수는 유지(census floor, INV-3)
         violations.extend(check_threshold(s["effective"], s["adr_id"], baseline_map, THRESHOLD_N))
 
     # B-2 ceiling sanity (매 실행 무조건).

@@ -1,7 +1,7 @@
 ---
 adr_number: 82
 title: Write-time self-write verification mandate — internal lane agent §9 evidence / Phase 0 mapping / corpus enumeration verify super-class
-status: Accepted
+status: Superseded by ADR-168
 category: governance
 date: 2026-05-17
 carrier_story: CFP-776

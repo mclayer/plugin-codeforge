@@ -26,7 +26,7 @@ permissions:
     - Write(docs/**)
 ---
 
-> **model tier (ADR-141 Amendment 2)**: 이 에이전트는 ADR-141 Amendment 2(CFP-2748)로 non-opus(`sonnet`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
+> **model tier (ADR-141 Amendment 4)**: 이 에이전트는 ADR-141 Amendment 4(CFP-2803)로 non-opus(`fable`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단).
 
 **Epic 통합테스트 lane 게이트**. Epic 하위 `stories_in_scope` 전원 CI gate PASS 이후 Orchestrator가 본 에이전트를 스폰한다. §8.6 Integration Test Contract 기반으로 Story Suite를 자동 생성하고, Deployability 검증 → Baseline Suite → Story Suite 순서로 실행해 test-verdict-v2.3 패킷을 **Orchestrator에 반환**한다.
 

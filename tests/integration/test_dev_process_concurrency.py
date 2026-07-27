@@ -6,17 +6,22 @@ Under test: scripts/lib/append_dev_process_event.py (append_event → _append_js
 두 축을 분리 검증 (정직 — 설계 §7.4.1 honest-ceiling 반영):
   · INTEGRITY (cross-platform GREEN): 병렬 append 하에서도 landed row 는 절대 torn/interleaved
     되지 않는다 — 각 줄 valid JSON dict, 정확히 18 키. (single os.write per small row.)
-  · NO-LOST-UPDATE (count == writes): POSIX 는 atomic O_APPEND 로 보장(GREEN). **Windows msvcrt
-    O_APPEND = seek+write 비원자** → 고동시성에서 whole-row lost-update 발생(clean loss, torn 아님).
-    → win32 xfail(strict=False), POSIX(ubuntu CI authoritative)에서 실검증.
-    ★발견사항: append_spawn_event._append_jsonl_row:420 주석 "cross-process lost-update 회피"는
-      Windows 에서 over-claim (change-plan §7.4.1 "kernel-atomic 단정 아님"이 이미 hedge).
+  · NO-LOST-UPDATE (count == writes): cross-platform GREEN (CFP-2817 FIX Iter 3). POSIX os.O_APPEND
+    단일-write = 이미 kernel-atomic. Windows = FILE_APPEND_DATA(ctypes CreateFileW, FILE_WRITE_DATA
+    불포함) kernel-atomic append 로 MSVCRT lseek-then-write 대체 → 완료행 clobber 0. iter1 win32
+    xfail 철회(봉합 완료 — ADR-155 Amendment 1).
+    ★정정됨: append_spawn_event._append_jsonl_row 은 이제 kernel-atomic(FILE_APPEND_DATA / POSIX
+      O_APPEND). 이전 :420 "over-claim" 발견사항 = ADR-155 Amendment 1 로 실 보증 확립(정정).
+    ★discriminating(hollow-green 차단, §8.8): test_negative_control_lost_update_is_detectable 가
+      pre-fix lseek-then-write 비원자를 강제 재현 → count oracle(lost_rows>0)이 clobber 검출.
+      GREEN 이 vacuous 아님을 증명(threshold = lost_rows>0, harness-config-independent).
 """
 
 from __future__ import annotations
 
 import concurrent.futures
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -32,11 +37,9 @@ ROWS_PER_WORKER = 25
 TOTAL = N_WORKERS * ROWS_PER_WORKER
 
 WIN = sys.platform == "win32"
-_WIN_APPEND_XFAIL = pytest.mark.xfail(
-    WIN, strict=False,
-    reason="Windows msvcrt O_APPEND 비원자(seek+write) → 고동시성 whole-row lost-update. "
-           "POSIX atomic O_APPEND 에서는 count==writes GREEN. 발견사항(매핑표) — src 미수정(QADev).",
-)
+# CFP-2817 FIX Iter 3: Windows FILE_APPEND_DATA kernel-atomic append 봉합 → win32 xfail 철회.
+# count==writes 가 이제 cross-platform GREEN(완료행 clobber 0). discriminating 은 아래
+# test_negative_control_lost_update_is_detectable(pre-fix 경로 강제 재현)로 보장.
 
 
 def _worker(ledger_path: str, worker_id: int):
@@ -77,12 +80,11 @@ class TestConcurrentAppendIntegrity:
 class TestConcurrentAppendNoLostUpdate:
     """count == writes — POSIX atomic O_APPEND (GREEN) / Windows 비원자 (xfail)."""
 
-    @_WIN_APPEND_XFAIL
     def test_thread_parallel_count_equals_writes(self, tmp_path):
+        # CFP-2817 FIX Iter 3: FILE_APPEND_DATA/POSIX O_APPEND kernel-atomic → clobber 0 (win32 포함 GREEN).
         raw_lines = _run_threads(tmp_path / "dev-process-event.jsonl")
         assert len(raw_lines) == TOTAL, f"lost-update: {len(raw_lines)} lines != {TOTAL} writes"
 
-    @_WIN_APPEND_XFAIL
     def test_process_parallel_cli_count_equals_procs(self, tmp_path):
         """별도 프로세스(subprocess CLI) 병렬 append — cross-process O_APPEND.
 
@@ -141,3 +143,38 @@ class TestProcessCliIntegrity:
         for ln in lines:
             row = json.loads(ln)   # torn 이면 RED
             assert tuple(row.keys()) == ade._ROW_KEYS
+
+
+class TestClobberOracleDiscriminating:
+    """§8.8 discriminating (hollow-green 차단): count==writes oracle 가 실제로 clobber 를 검출함을 증명.
+
+    pre-fix lseek-then-write 비원자(kernel-atomic FILE_APPEND_DATA/O_APPEND 미경유)를 강제 재현 →
+    lost_rows>0 검출. 이 RED negative-control 이 없으면 GREEN(count==writes)이 vacuous(항상 통과)일 수
+    있다. GREEN 짝 = TestConcurrentAppendNoLostUpdate(kernel-atomic 공유 primitive 경유, clobber 0).
+    threshold = lost_rows>0 (harness-config-independent — 관측 magnitude[9.9-12.8%, Codex 재현]는 참고).
+    """
+
+    def test_negative_control_lost_update_is_detectable(self, tmp_path):
+        ledger = tmp_path / "neg-control.jsonl"
+        ledger.write_bytes(b"")
+        # equal-length distinct lines (실 index row 처럼 동일 길이 — clean overwrite 결정론 재현)
+        line_a = (json.dumps({"seq": "A", "pad": "x" * 40}) + "\n").encode("utf-8")
+        line_b = (json.dumps({"seq": "B", "pad": "y" * 40}) + "\n").encode("utf-8")
+        p = str(ledger)
+        # pre-fix lseek-then-write 비원자 재현: 두 writer 가 각자 EOF offset 계산(둘 다 0=empty) 후
+        # 그 offset 에 write → B 가 A 를 통째 clobber. kernel-atomic append 였다면 구조적으로 불가.
+        fd_a = os.open(p, os.O_WRONLY | os.O_CREAT, 0o600)
+        fd_b = os.open(p, os.O_WRONLY | os.O_CREAT, 0o600)
+        try:
+            os.lseek(fd_a, 0, os.SEEK_END)   # A: offset 0
+            os.lseek(fd_b, 0, os.SEEK_END)   # B: offset 0 (A 아직 미write → 동일 offset)
+            os.write(fd_a, line_a)           # A → offset 0
+            os.write(fd_b, line_b)           # B → offset 0 → A clobber
+        finally:
+            os.close(fd_a)
+            os.close(fd_b)
+        lines = [ln for ln in ledger.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        # 2 writes 했으나 clobber 로 소실 → count oracle(len==writes)이 검출(lost_rows>0 = discriminating).
+        assert len(lines) < 2, (
+            "negative-control 실패: lseek-then-write 비원자가 clobber 를 재현해야 함 "
+            "(미재현 시 count==writes GREEN 이 vacuous — oracle 판별력 미증명). got %d rows" % len(lines))

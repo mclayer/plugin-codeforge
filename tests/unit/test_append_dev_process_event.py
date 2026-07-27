@@ -27,6 +27,34 @@ import pytest
 
 import append_dev_process_event as ade
 
+# ── CFP-2817 D1: derive_seq (emit 계층 6번째 pure helper, causal-state 파생) ──
+#   production 미착지 시 예상 RED (TDD red-first) — grep 실측 시 derive_seq 부재.
+#   emit_dev_process_event import 자체는 성공(모듈 실존) — derive_seq getattr 만 None.
+try:
+    import emit_dev_process_event as _emitmod
+except Exception:  # pragma: no cover — import path fallback (conftest 가 scripts/lib 주입)
+    _emitmod = None
+
+# ADR-038 6-point transition_kind 토큰 (progress-format.sh 6-token 재사용, D3).
+_SIX_POINT_TOKENS = ("enter", "pass", "fix-detected", "cause", "re-enter", "complete")
+
+
+def _require_derive_seq():
+    """emit_dev_process_event.derive_seq 를 반환하거나 명확한 RED 로 실패.
+
+    CFP-2817 D1 production(role:dev) 착지 전에는 AttributeError-equivalent RED —
+    "무엇을 검증하는지 모른 채 GREEN" 을 차단(hollow-green 금지). 착지 후 GREEN.
+    """
+    assert _emitmod is not None, (
+        "emit_dev_process_event import 실패 — derive_seq 단위검증 불가 (conftest sys.path 확인)"
+    )
+    fn = getattr(_emitmod, "derive_seq", None)
+    assert fn is not None, (
+        "emit_dev_process_event.derive_seq 미구현 — CFP-2817 D1 착지 전 예상 RED (구현 후 GREEN)"
+    )
+    return fn
+
+
 TS_MS_UTC_Z = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 
 
@@ -226,3 +254,146 @@ class TestPartialRecordIdentifiable:
         res = q.query_lines(ledger.read_text(encoding="utf-8").splitlines())
         assert res["stats"]["rows_total"] == 2, "선행 valid row 손상됨"
         assert res["stats"]["malformed_skipped"] == 1, "torn 줄이 malformed 로 식별 안 됨"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 D1 — derive_seq causal-state 파생 (INV-1 멱등 / INV-2 소실0 / INV-4 재구성)
+#   §11.6 4 불변식의 emit-계층 pure helper 실현. 원장 read 0 (0 I/O).
+#   ★ production(role:dev) 착지 전에는 예상 RED — RED 진정성 = git-stash/HEAD-shadow 사후입증.
+# ══════════════════════════════════════════════════════════════════════════════
+class TestDeriveSeqDeterminism:
+    """INV-1 (D1-①): 동일 (transition_kind, fix_iter, reset_generation, ordinal) → 동일 seq (멱등)."""
+
+    def test_same_causal_state_same_seq(self):
+        d = _require_derive_seq()
+        a = d("re-enter", fix_iter=2, reset_generation=0, ordinal=0)
+        b = d("re-enter", fix_iter=2, reset_generation=0, ordinal=0)
+        assert a == b, "동일 causal-state 재계산이 다른 seq (INV-1 멱등 위반 → 재시도 event_id drift)"
+
+    def test_recompute_is_pure_across_calls_INV4(self):
+        """INV-4 (D1-④): 원장 read 없이 causal-state 만으로 동일 seq 재계산 — 세션 재기동 재구성 결정성.
+
+        derive_seq 는 pure(0 I/O) 이므로 '재기동' = 동일 causal-state fresh 재호출로 모델링.
+        (§8.5 restart-aware N → §8.2-C 평문 결정성 단위테스트 재귀속.)"""
+        d = _require_derive_seq()
+        # 세션 A 가 계산한 값
+        session_a = d("fix-detected", fix_iter=3, reset_generation=1, ordinal=0)
+        # 세션 재기동 후: §10 FIX Ledger + phase label 로 causal-state 복원 → 동일 재계산
+        session_b = d("fix-detected", fix_iter=3, reset_generation=1, ordinal=0)
+        assert session_a == session_b, "재기동 재구성이 다른 seq (INV-4 위반 → 재기동 후 중복 행)"
+
+    def test_signature_has_no_ledger_io_param_INV4(self):
+        """INV-4/§3.1: derive_seq 는 pure — 원장/파일 I/O 인자 부재(0 I/O, ledger read 금지 불변식 무손상)."""
+        import inspect
+        d = _require_derive_seq()
+        params = set(inspect.signature(d).parameters)
+        forbidden = {"ledger", "ledger_path", "path", "rows", "lines", "prev_timestamp_utc"}
+        leaked = params & forbidden
+        assert not leaked, f"derive_seq 시그니처에 I/O 인자 유입 {leaked} — pure(0 I/O) 위반"
+        assert "transition_kind" in params, "transition_kind 인자 부재"
+
+
+class TestDeriveSeqDistinctTransitions:
+    """INV-2 (D1-②, AC-4): 별개 논리전이 → 상이 seq (소실 0)."""
+
+    def test_six_point_tokens_all_distinct(self):
+        """6-point 각 transition_kind → 6 상이 seq (AC-6 상이 event_id 기반)."""
+        d = _require_derive_seq()
+        # FIX 계열 3종은 fix_iter 필수(raise 계약) → 부여. 나머지는 None.
+        seqs = []
+        for tok in _SIX_POINT_TOKENS:
+            fi = 1 if tok in ("fix-detected", "cause", "re-enter") else None
+            seqs.append(d(tok, fix_iter=fi, reset_generation=0, ordinal=0))
+        assert len(set(seqs)) == 6, f"6-point 토큰이 상이 seq 를 못 냄(붕괴): {seqs}"
+
+    def test_distinct_fix_iter_distinct_seq(self):
+        d = _require_derive_seq()
+        assert d("re-enter", fix_iter=1, reset_generation=0, ordinal=0) != \
+               d("re-enter", fix_iter=2, reset_generation=0, ordinal=0), \
+               "다른 fix_iter 인데 동일 seq (FIX 반복 disambiguation 실패)"
+
+    def test_distinct_reset_generation_distinct_seq(self):
+        """F-DR-1: RESET 경계 넘어 동일 (kind, fix_iter) 재발 → reset_generation 이 disambiguate."""
+        d = _require_derive_seq()
+        assert d("re-enter", fix_iter=1, reset_generation=0, ordinal=0) != \
+               d("re-enter", fix_iter=1, reset_generation=1, ordinal=0), \
+               "RESET 세대만 다른데 동일 seq (RESET 경계 재발 event_id 충돌 → AC-4 위반)"
+
+    def test_distinct_ordinal_distinct_seq(self):
+        """동일 (kind, fix_iter, reset_gen) 내 복수 시도(verdict 복수발생·defect 재검출) attempt 흡수."""
+        d = _require_derive_seq()
+        assert d("cause", fix_iter=1, reset_generation=0, ordinal=0) != \
+               d("cause", fix_iter=1, reset_generation=0, ordinal=1), \
+               "ordinal 만 다른데 동일 seq (동일 Iter 복수 시도 collapse)"
+
+
+class TestDeriveSeqFailureDirection:
+    """INV-3 (D1-③, AC-9): 실패방향 — 채번 불확실 시 silent-reuse 금지, visible ValueError raise.
+
+    dev-pl-2817 확정 raise 계약: 6-token 밖/빈 토큰 → ValueError; FIX 계열인데 fix_iter=None → ValueError.
+    이형 토큰 drift(예 '진입'/'lane_entry')로 인한 dedup 붕괴를 visible-over-silent 로 예방.
+    """
+
+    def test_unknown_token_raises_not_silent(self):
+        d = _require_derive_seq()
+        for bad in ("진입", "lane_entry", "ENTER", "", None):
+            with pytest.raises(ValueError):
+                d(bad, fix_iter=None, reset_generation=0, ordinal=0)
+
+    def test_fix_transition_without_fix_iter_raises(self):
+        """FIX 계열 3종(fix-detected/cause/re-enter) + fix_iter=None → ValueError (coarse-fallback 금지, P2-2)."""
+        d = _require_derive_seq()
+        for tok in ("fix-detected", "cause", "re-enter"):
+            with pytest.raises(ValueError):
+                d(tok, fix_iter=None, reset_generation=0, ordinal=0)
+
+    def test_non_fix_transition_without_fix_iter_ok(self):
+        """대조: 비-FIX 전이(enter/pass/complete)는 fix_iter 없이도 정상 파생(raise 아님)."""
+        d = _require_derive_seq()
+        for tok in ("enter", "pass", "complete"):
+            assert d(tok, fix_iter=None, reset_generation=0, ordinal=0)  # non-empty str
+
+    def test_transition_kind_constants_exposed(self):
+        """AC-9 계약 lock: 6-token / FIX-계열 vocabulary 를 모듈 상수로 노출(문서↔코드 SSOT 단일화)."""
+        assert _emitmod is not None, "emit 모듈 import 실패"
+        tks = getattr(_emitmod, "_TRANSITION_KINDS", None)
+        fix_tks = getattr(_emitmod, "_FIX_TRANSITION_KINDS", None)
+        assert tks is not None and set(tks) == set(_SIX_POINT_TOKENS), \
+            f"_TRANSITION_KINDS 가 6-token 과 불일치: {tks}"
+        assert fix_tks is not None and set(fix_tks) == {"fix-detected", "cause", "re-enter"}, \
+            f"_FIX_TRANSITION_KINDS 가 FIX 계열 3종과 불일치: {fix_tks}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# § CFP-2817 재진입 seq 미분화 충돌 — compute_event_id 층 (§8.2-D CFP-1334 RED→GREEN)
+#   integration 층(emit+query) = tests/integration/test_dev_process_inv8b_ordering.py
+# ══════════════════════════════════════════════════════════════════════════════
+class TestReentrySeqCollisionAtEventId:
+    _BASE = ("lane_transition", "agent", "CFP-2817", "구현", "wrapper")
+
+    def test_undifferentiated_seq_collides_RISK_PRESENT(self):
+        """[risk-present] 동일 (story,lane) 재진입에서 seq 미분화(둘 다 '') → 동일 event_id.
+
+        이것이 정확한 봉인 대상 실패모드(진입/재진입이 하나로 붕괴 → read-time dedup 이 삼킴).
+        충돌이 실재함을 in-suite 로 못박아 아래 'derive_seq 생존' 이 discriminating 함을 증명."""
+        enter = ade.compute_event_id(*self._BASE, seq="")
+        reenter = ade.compute_event_id(*self._BASE, seq="")
+        assert enter == reenter, "seq 미분화인데 event_id 가 이미 상이 — 충돌 전제 무효(테스트 재설계 필요)"
+
+    def test_derived_seq_disambiguates_reentry_SURVIVES(self):
+        """[GREEN 방향] derive_seq(enter) vs derive_seq(re-enter) → 상이 seq → 상이 event_id → 양자 생존."""
+        d = _require_derive_seq()
+        enter = ade.compute_event_id(
+            *self._BASE, seq=d("enter", fix_iter=None, reset_generation=0, ordinal=0))
+        reenter = ade.compute_event_id(
+            *self._BASE, seq=d("re-enter", fix_iter=1, reset_generation=0, ordinal=0))
+        assert enter != reenter, "derive_seq 적용해도 event_id 동일 — 재진입 소실(AC-4 위반)"
+
+    def test_idempotent_retry_same_derived_seq_collapses(self):
+        """[INV-1 멱등] 동일 논리전이 재시도(동일 causal-state) → 동일 seq → 동일 event_id → collapse."""
+        d = _require_derive_seq()
+        a = ade.compute_event_id(
+            *self._BASE, seq=d("re-enter", fix_iter=1, reset_generation=0, ordinal=0))
+        b = ade.compute_event_id(
+            *self._BASE, seq=d("re-enter", fix_iter=1, reset_generation=0, ordinal=0))
+        assert a == b, "동일 논리전이 재시도가 다른 event_id (멱등 붕괴 → 중복 잔존)"
