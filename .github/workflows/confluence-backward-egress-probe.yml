@@ -1,5 +1,9 @@
 name: confluence-backward-egress-probe
 
+# 최소 권한 (probe = HTTPS GET only, 토큰 불요) — workflow-permissions-block-presence 게이트 정합.
+permissions:
+  contents: read
+
 # CFP-2829 S2 AC-15: Egress reachability probe for Fulcio/Rekor (S6 signing blocker)
 #
 # Purpose: Detect early if self-hosted Windows runner can reach sigstore egress
