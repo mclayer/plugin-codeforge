@@ -156,16 +156,15 @@ def _deny_scan_for_secrets(text: str) -> Tuple[bool, Optional[str]]:
     if not isinstance(text, str):
         return True, None
 
-    # Pattern: Basic [A-Za-z0-9+/=]{20,}
+    # Pattern: Basic [A-Za-z0-9+/=]{20,}  (align with _scrub L104 Basic-auth mask)
     if re.search(r'Basic [A-Za-z0-9+/=]{20,}', text):
         return False, "Detected Basic auth header in output — aborting"
 
-    # Pattern: Raw token-like (20+ alphanumeric/+/= in sequence)
-    # (This is a heuristic — real detection requires context)
+    # F-SEC-03: deny-scan abort-gate 폭을 _scrub(L101, 20+ base64-like 전량 무조건 redact) 수준으로 정렬.
+    # 기존은 token/password/secret 키워드 인접일 때만 abort → _scrub 보다 좁아 bare-token leak 이 통과 가능.
+    # 이제 _scrub 이 마스킹하는 것과 동일한 20+ [A-Za-z0-9+/=] 시퀀스는 deny-scan 도 무조건 abort(fail-closed).
     if re.search(r'[A-Za-z0-9+/=]{20,}', text):
-        # Only fail if it looks like it's near "token" keyword
-        if re.search(r'(?:token|password|secret)["\']?\s*[:=]\s*[A-Za-z0-9+/=]{20,}', text, re.IGNORECASE):
-            return False, "Detected potential token in output — aborting"
+        return False, "Detected potential token/secret (20+ base64-like sequence) in output — aborting"
 
     return True, None
 

@@ -37,7 +37,10 @@ jobs:
           } catch {
             Write-Host "✗ fulcio unreachable: $_"
             echo "status=unreachable" >> $env:GITHUB_OUTPUT
-            echo "error=$_" >> $env:GITHUB_OUTPUT
+            $delim = "EOF_$(New-Guid)"
+            "error<<$delim" >> $env:GITHUB_OUTPUT
+            $_ >> $env:GITHUB_OUTPUT
+            $delim >> $env:GITHUB_OUTPUT
           }
 
       - name: Probe rekor.sigstore.dev
@@ -53,16 +56,22 @@ jobs:
           } catch {
             Write-Host "✗ rekor unreachable: $_"
             echo "status=unreachable" >> $env:GITHUB_OUTPUT
-            echo "error=$_" >> $env:GITHUB_OUTPUT
+            $delim = "EOF_$(New-Guid)"
+            "error<<$delim" >> $env:GITHUB_OUTPUT
+            $_ >> $env:GITHUB_OUTPUT
+            $delim >> $env:GITHUB_OUTPUT
           }
 
       - name: Summary
+        env:
+          FULCIO_STATUS: ${{ steps.fulcio.outputs.status }}
+          REKOR_STATUS: ${{ steps.rekor.outputs.status }}
         run: |
           Write-Host "=========================================="
           Write-Host "Sigstore Egress Probe Summary"
           Write-Host "=========================================="
-          Write-Host "fulcio.sigstore.dev: ${{ steps.fulcio.outputs.status }}"
-          Write-Host "rekor.sigstore.dev:  ${{ steps.rekor.outputs.status }}"
+          Write-Host "fulcio.sigstore.dev: $env:FULCIO_STATUS"
+          Write-Host "rekor.sigstore.dev:  $env:REKOR_STATUS"
           Write-Host ""
           Write-Host "Note: This is an advisory observed-only probe."
           Write-Host "It does not block merge (non-gating)."
@@ -71,8 +80,12 @@ jobs:
 
       - name: Verbose
         if: ${{ github.event.inputs.verbose == 'true' }}
+        env:
+          FULCIO_ERROR: ${{ steps.fulcio.outputs.error }}
+          REKOR_ERROR: ${{ steps.rekor.outputs.error }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          Write-Host "Fulcio error: ${{ steps.fulcio.outputs.error }}"
-          Write-Host "Rekor error:  ${{ steps.rekor.outputs.error }}"
+          Write-Host "Fulcio error: $env:FULCIO_ERROR"
+          Write-Host "Rekor error:  $env:REKOR_ERROR"
           Write-Host "Runner: self-hosted Windows"
-          Write-Host "Job status: ${{ job.status }}"
+          Write-Host "Job status: $env:JOB_STATUS"

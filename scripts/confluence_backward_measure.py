@@ -120,6 +120,13 @@ def _load_creds_from_file(creds_path: Optional[str] = None) -> bool:
                     continue
                 if "=" in line:
                     key, value = line.split("=", 1)
+                    key = key.strip()
+                    value = value.strip()   # F-SEC-05: 토큰 trailing-ws 파싱 견고성
+                    # F-SEC-05: 키 allowlist — ATLASSIAN_* / CFP2829_* 접두 키만 수용(그 외 무시).
+                    # 신뢰 못할 creds 파일이 임의 env(PATH/LD_PRELOAD 등)를 주입해 환경을 오염시키는 것 차단.
+                    if not (key.startswith("ATLASSIAN_") or key.startswith("CFP2829_")):
+                        logger.debug("Skipped non-allowlisted creds key (allowlist: ATLASSIAN_*/CFP2829_*)")
+                        continue
                     os.environ[key] = value
         logger.info("Loaded creds from file")
         return True

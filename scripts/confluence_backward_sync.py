@@ -59,6 +59,7 @@ from sync_sentinel import (                   # AC-7: 순환차단 predicate  # 
     anchor_equality_skip, dedup_key,
 )
 from confluence_backward_gate import verify_substrate  # AC-2/AC-6: structure-gate-bridge  # noqa: E402
+from path_safety import contained_target  # F-SEC-01: path-traversal 컨테인먼트  # noqa: E402
 
 
 # ── 3anchor.py 4 helper importlib 동적 로드 (하이픈 파일, 0줄 변경 — R-1/R-2) ──
@@ -247,9 +248,19 @@ def _adf_marks_wrap(text: str, marks, dropped) -> str:
     return text
 
 
+MAX_ADF_DEPTH = 100   # F-SEC-02: ADF 재귀 깊이 상한 (attacker-nested ADF DoS 방어)
+
+
 def _adf_node_to_md(node, dropped, depth=0, ordered_idx=None) -> str:
-    """ADF 노드 → markdown 재귀 변환. ADF-only 노드는 dropped 기록 후 skip(lossy-accept)."""
+    """ADF 노드 → markdown 재귀 변환. ADF-only 노드는 dropped 기록 후 skip(lossy-accept).
+
+    F-SEC-02: depth 를 매 재귀 증분 + MAX_ADF_DEPTH 초과 시 lossy-accept 절단
+    (crash/RecursionError 대신 fail-closed 유지 — attacker-nested ADF DoS 방어).
+    """
     if not isinstance(node, dict):
+        return ""
+    if depth > MAX_ADF_DEPTH:
+        dropped.append("depth-exceeded")   # F-SEC-02: 무제한 재귀 차단(lossy-accept)
         return ""
     ntype = node.get("type")
     content = node.get("content", []) or []
@@ -259,7 +270,7 @@ def _adf_node_to_md(node, dropped, depth=0, ordered_idx=None) -> str:
         return ""
 
     if ntype == "doc":
-        blocks = [_adf_node_to_md(c, dropped, depth) for c in content]
+        blocks = [_adf_node_to_md(c, dropped, depth + 1) for c in content]
         return "\n\n".join(b for b in blocks if b.strip())
 
     if ntype == "text":
@@ -269,20 +280,20 @@ def _adf_node_to_md(node, dropped, depth=0, ordered_idx=None) -> str:
         return "\n"
 
     if ntype == "paragraph":
-        return "".join(_adf_node_to_md(c, dropped, depth) for c in content)
+        return "".join(_adf_node_to_md(c, dropped, depth + 1) for c in content)
 
     if ntype == "heading":
         level = int((node.get("attrs") or {}).get("level", 1))
-        inner = "".join(_adf_node_to_md(c, dropped, depth) for c in content)
+        inner = "".join(_adf_node_to_md(c, dropped, depth + 1) for c in content)
         return f"{'#' * max(1, min(6, level))} {inner}"
 
     if ntype == "blockquote":
-        inner = "\n\n".join(_adf_node_to_md(c, dropped, depth) for c in content)
+        inner = "\n\n".join(_adf_node_to_md(c, dropped, depth + 1) for c in content)
         return "\n".join(f"> {ln}" for ln in inner.split("\n"))
 
     if ntype == "codeBlock":
         lang = (node.get("attrs") or {}).get("language", "") or ""
-        code = "".join(_adf_node_to_md(c, dropped, depth) for c in content)
+        code = "".join(_adf_node_to_md(c, dropped, depth + 1) for c in content)
         return f"```{lang}\n{code}\n```"
 
     if ntype == "rule":
@@ -303,7 +314,7 @@ def _adf_node_to_md(node, dropped, depth=0, ordered_idx=None) -> str:
         return "\n".join(items)
 
     if ntype == "listItem":
-        parts = [_adf_node_to_md(c, dropped, depth) for c in content]
+        parts = [_adf_node_to_md(c, dropped, depth + 1) for c in content]
         return " ".join(p.strip() for p in parts if p.strip())
 
     # 알 수 없는 노드 — 정직 lossy 기록(out-of-model).
@@ -382,7 +393,10 @@ def write_substrate_working_tree(repo, rel_path, markdown_bytes) -> str:
 
     파일 write 만 — direct git write(protected branch push) 0. 실 branch/commit/PR = propose 단계.
     """
-    target = Path(repo) / rel_path.replace("\\", "/").lstrip("/")
+    try:
+        target = contained_target(repo, rel_path)   # F-SEC-01: path-traversal 방어 (`..`/절대경로 거부)
+    except ValueError as e:
+        raise InvariantViolation(f"path-traversal 거부(F-SEC-01): {e}")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(markdown_bytes)
     return str(target)

@@ -112,25 +112,14 @@ def test_ac6_empty_rel_path():
 
 # ── AC-6 MUTATION: fail-open escape (gate always True) ───────────────────────
 
-def test_ac6_mutation_gate_always_passes(monkeypatch):
-    """AC-6 MUTATION: if _run_gate always returns True (fail-open escape).
-
-    Discriminating case: malformed substrate should be blocked,
-    but mutant always passes (no validation).
-    """
-    def mutant_run_gate(script, staging_dir):
-        return True  # FAIL-OPEN: always pass
-
-    monkeypatch.setattr("confluence_backward_gate._run_gate", mutant_run_gate)
-
-    from confluence_backward_gate import verify_substrate as patched_verify
-
-    # Completely invalid markdown (no frontmatter, empty)
-    invalid = b""
-
-    # Mutant: returns True (fail-open escape)
-    result = patched_verify(invalid, "adr", "docs/adr/test.md")
-    assert result is True  # Mutant passes
+# CR-C1 (F-CR-002 residual): hollow mutation test 제거 (지연 ClaudeReview peer 검출).
+# 직전 버전(test_ac6_mutation_gate_always_passes)은 production _run_gate 를 always-True 로
+# monkeypatch 한 뒤 그 mutant 결과(True)를 자기-assert → production fail-closed 회귀를
+# 미검출(판별력 0, hollow theater).
+# AC-6 fail-open mutation kill = source-mutation harness 로 실증(주석 기록):
+#   production confluence_backward_gate._run_gate 를 `return True`(fail-open)로 실변조 →
+#   아래 production-through negative test(test_ac6_gated_adr_missing_sections_blocked 등) RED.
+# genuine 커버리지는 그 negative test 들이 담당(production verify_substrate 실호출).
 
 
 # ── AC-2 + AC-6: real subprocess execution (if gate scripts present) ────────

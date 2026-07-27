@@ -45,6 +45,7 @@ _LIB_DIR = Path(__file__).resolve().parent / "lib"
 if str(_LIB_DIR) not in sys.path:
     sys.path.insert(0, str(_LIB_DIR))
 from confluence_property_chunking import _normalize_markdown  # noqa: E402
+from path_safety import contained_target  # F-SEC-01: staging path-traversal 방어  # noqa: E402
 
 # ── 대상 게이트 스크립트 경로 (interface-freeze — subprocess 호출) ──
 _GATE_SCRIPTS = (
@@ -94,15 +95,16 @@ def verify_substrate(candidate_bytes: bytes, doc_type: str, rel_path: str) -> bo
     """
     if not isinstance(candidate_bytes, (bytes, bytearray)):
         raise TypeError("candidate_bytes must be bytes")
-    rel = rel_path.replace("\\", "/").lstrip("/")
-    if not rel:
-        return False
-
     normalized = _normalize_markdown(bytes(candidate_bytes))
 
     with tempfile.TemporaryDirectory(prefix="cfp2829-gate-") as td:
         staging = Path(td)
-        target = staging / rel
+        try:
+            # F-SEC-01: `..`/절대경로 rel_path 가 staging 밖으로 이탈해 게이트가 빈 tree 를
+            # 검사(vacuous-pass)하는 것을 fail-closed 봉인.
+            target = contained_target(staging, rel_path)
+        except ValueError:
+            return False
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(normalized)

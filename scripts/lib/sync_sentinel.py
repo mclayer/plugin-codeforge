@@ -47,7 +47,10 @@ def is_machine_authored_substrate(commit_ref: str, repo: str = None) -> bool:
     cmd = ["git"]
     if repo:
         cmd += ["-C", repo]
-    cmd += ["log", "-1", "--format=%B", commit_ref]
+    # F-SEC-04: commit_ref 가 '-' 로 시작하는 leading-dash arg injection 방어 —
+    # --end-of-options 이후 인자는 git 이 옵션으로 재해석하지 않는다(revision 시맨틱 보존).
+    # (bare '--' 는 git log 에서 ref 를 pathspec 으로 재해석 → 항상 빈 메시지, 시맨틱 붕괴이므로 부적합.)
+    cmd += ["log", "-1", "--format=%B", "--end-of-options", commit_ref]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     except (OSError, ValueError):
