@@ -53,6 +53,7 @@ amendments:
     title: Backstop GC 자동 트리거 복원 (SessionEnd async dispatch 단일 wire) + worktree-clean 확인을 cleanup invariant 에 편입 (ADR-128 완료 단계 정식화 묶음, §결정 5 트리거 복원 + §결정 7.K 신설)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 9 = §결정 5 backstop GC 의 자동 트리거 복원 (현재 트리거 0 → SessionEnd async dispatch 단일 wire) + §결정 7.K 신설 (eager 정리 검증 = phase:완료 worktree-clean self-check 를 cleanup invariant 에 편입, 정리 실행 owner=GitOpsAgent eager 불변, 본 게이트는 검증만). check-worktree-stale.sh 스크립트 로직 무변경 (트리거만 복원). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~8 무손상, backstop 자동 발화 복원 = enforcement 보강) — sunset 면제. 동인 실증: hooks.json SessionStart 에 check-worktree-stale 호출 0건 (문서-실배선 drift) + 2026-06-12 stale 230개 누적."
   - id: 10
+    reinterpretation: true
     carrier_story: CFP-2822
     date: 2026-07-26
     title: §결정5 backstop 보완 트리거 다중화 (SessionEnd 단일 wire → SessionEnd + SessionStart detached lazy GC, ADR-128 Amendment 2 페어 / ADR-169 세션 잔재 수명 규약 묶음)

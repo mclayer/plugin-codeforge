@@ -68,7 +68,7 @@ sources:
 
 - **TTL-at-creation**: 생성 규약에 수명(클래스)을 선언하고 회수기는 선언만 읽고 동작. (규약-위치형은 위치=클래스로 겸용 가능.)
 - **GC 트리거 4형**: ① eager(완결 시점) ② scheduled(주기) ③ **next-session lazy(다음 개시 시)** ④ threshold(용량 임계). 단일 트리거 의존이 아니라 2+ 중첩이 일반형 — 특히 크래시-안전은 다음 세션 개시 경로가 문서상 유일하게 실행이 보장되는 지점.
-- **보존 예외(preservation override)**: dirty / unpushed / locked / pin 은 회수기가 침범하지 못하는 **명시 마커**. 등록·존재 여부 자체는 보존 사유가 아니며, **상태 신호 1+ 양성 또는 판정 불능(INCONCLUSIVE)** 시에만 fail-safe 보존 + 메타파일 사유 기록. mtime 단독 삭제 금지(상태 신호 AND 결합).
+- **보존 예외(preservation override)**: dirty / unpushed / locked / worktree-pin 은 회수기가 침범하지 못하는 **명시 마커**. 등록·존재 여부 자체는 보존 사유가 아니며, **상태 신호 1+ 양성 또는 판정 불능(INCONCLUSIVE)** 시에만 fail-safe 보존 + 메타파일 사유 기록. mtime 단독 삭제 금지(상태 신호 AND 결합).
 - **quarantine-grace**: 삭제 판정분도 즉시 삭제 대신 유예 후 삭제(동시 실행 안전 목적) — git `gc.pruneExpire` 기본 2주 grace 가 원형.
 - **aging report**: 보존 예외 항목의 사유 + 나이를 주기 보고하고 임계 초과 시 재알림(지수 backoff + item·reason dedup) — fail-safe 무한 잔존을 막는 기성형. 자동 삭제 기한(TTL 강제 삭제)을 새로 두지 않는다(보존 원칙 역행 = 기각).
 - **"지워도 되는가" 최종 판정 = 각 클래스 오너에게 위임**. 본 개념은 잔재 전반의 **발견 / 분류 / 가시화**를 표준화하되, 실제 삭제 authz(등록 worktree = git 경로 + 4-AND / 독립 clone = 삭제 금지 default / loose scratch = age + `.git` 미보유 + canonical / Temp = 관측-only)는 클래스별 오너 규칙에 맡긴다.
