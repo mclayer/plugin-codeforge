@@ -24,6 +24,7 @@ Windows/CI 안전: fixture write = newline="\n"(CRLF 금지). tmp override(tmp_p
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -64,13 +65,38 @@ CHANGE_PLAN = os.path.join(_INTERNAL, "wrapper", "change-plans",
                            "2026-07-16-cfp-2689-authoring-self-gate.md")
 STORY = os.path.join(_INTERNAL, "wrapper", "stories", "CFP-2689.md")
 
-# A/B substrate 파일 basenames (§4.1 MUST NOT touch — AC-6). 이 파일들 0 수정이 계약.
-AB_SUBSTRATE_BASENAMES = frozenset({
-    "append_dev_process_event.py", "query_dev_process_event.py",
-    "emit_dev_process_event.py", "dev_process_blob_store.py",
-    "redact_dev_process_content.py", "aggregate_dev_process_event.py",  # B aggregator
-    "dev-process-event-v1.md",  # A 계약
-})
+# ADR-158 Amendment 2 (carrier CFP-2817) — amendment-동반 carve-out: 파일별 소관 계약 ADR lineage.
+# A/B substrate 파일 접촉(§4.1)은 같은 diff 에 소관 ADR lineage amendment 동반 시 sanctioned,
+# 미동반(무단 drive-by)·소관 불일치는 여전히 위반(discriminating 보존). A 파일=ADR-155 lineage,
+# B aggregator=ADR-156 lineage (per-file 매핑). 이 map 의 keyset = 이전 AB_SUBSTRATE_BASENAMES(7파일).
+AB_SANCTION_LINEAGE = {
+    "append_dev_process_event.py": "ADR-155-",    # A substrate
+    "query_dev_process_event.py": "ADR-155-",
+    "emit_dev_process_event.py": "ADR-155-",
+    "dev_process_blob_store.py": "ADR-155-",
+    "redact_dev_process_content.py": "ADR-155-",
+    "dev-process-event-v1.md": "ADR-155-",        # A 계약
+    "aggregate_dev_process_event.py": "ADR-156-",  # B aggregator
+}
+
+# DR4-1 (path-segment carrier 판별 — substring 오인 방지): sanction carrier 로 인정되는 ADR 파일은
+# archive/adr 또는 docs/adr **디렉토리 경계** 하위의 ADR-*.md 만이다. substring `"adr/" in c` 판별은
+# `xxxadr/ADR-155-x.md`·`tests/fixtures/adr/ADR-155-fake.md` 를 carrier 로 오인하므로 path-segment 로 강화.
+_ADR_CARRIER_RE = re.compile(r"(?:^|/)(?:archive|docs)/adr/[^/]+\.md$")
+
+
+def _ab_substrate_violations(changed):
+    """무단 substrate 접촉만 반환 — 같은 diff 에 소관 ADR lineage(archive|docs/adr/ 하위 ADR-*.md)
+    동반 시 sanctioned. carrier 판별은 path-segment(_ADR_CARRIER_RE, DR4-1)라 substring 오인 경로가
+    carrier 로 인정되지 않는다. repo 상태 무관 pure 함수(module-level)."""
+    norm = {c.replace("\\", "/") for c in changed}
+    basenames = {os.path.basename(c) for c in norm}
+    adr_carriers = {os.path.basename(c) for c in norm if _ADR_CARRIER_RE.search(c)}
+    out = set()
+    for name in basenames & set(AB_SANCTION_LINEAGE):
+        if not any(b.startswith(AB_SANCTION_LINEAGE[name]) for b in adr_carriers):
+            out.add(name)
+    return out
 
 # 8-tuple branch-protection required contexts (CLAUDE.md SSOT — 독립 하드코딩; CFP-2782: `Verify deploy lane presence` 제거 9→8 + CFP-2780 css-lint 2 반영. 명칭 SEVEN_TUPLE = cosmetic 잔존)
 SEVEN_TUPLE_CONTEXTS = (
@@ -384,12 +410,56 @@ def test_ac6_ab_substrate_zero_edit_and_7tuple_unchanged():
     assert '"authoring-self-gate"' not in cm, \
         "신규 required context 'authoring-self-gate' 추가됨(7-tuple 무변경 위반)"
 
-    # git 실측 — A/B substrate 파일 0 수정(available 시). 미가용 → doc/7-tuple 로 여전히 유효.
+    # git 실측 — A/B substrate 무단 접촉 0(ADR-158 Amd2 carve-out: 소관 ADR lineage 동반 시 sanctioned).
+    # base 미확보(shallow checkout) → silent pass 대신 visible skip(AC-17 silent-covered 금지 정합).
     changed, base = _changed_files(_REPO_ROOT)
-    if base is not None:
-        touched_ab = {c for c in changed
-                      if os.path.basename(c.replace("\\", "/")) in AB_SUBSTRATE_BASENAMES}
-        assert not touched_ab, "A/B substrate 파일 수정 검출(계약 위반): %s" % sorted(touched_ab)
+    if base is None:
+        pytest.skip("shallow checkout — merge-base 미해석, git leg 미평가(#2848 defer); "
+                    "ADR-158 AC-17 silent-covered 주장 금지, 실평가 표면=로컬 full-clone")
+    violations = _ab_substrate_violations(changed)
+    assert not violations, (
+        "A/B substrate 무단 접촉(같은 diff 에 소관 계약 ADR lineage amendment 미동반 — "
+        "ADR-158 Amendment 2 carve-out 위반): %s" % sorted(violations))
+
+
+def test_ac6b_substrate_carveout_discriminating():
+    """ADR-158 Amd2 carve-out 판별력: 무단=RED방향 / 소관동반=sanctioned / 소관불일치=RED방향 / 집합밖=무저촉."""
+    # (1) 무단 drive-by → 위반 (RED 방향 보존 — 기존 검출력 무손실)
+    assert _ab_substrate_violations({"scripts/lib/emit_dev_process_event.py"})
+    # (2) A-소관 ADR-155 lineage 동반 → sanctioned (결정 4 경로 = CFP-2817 실사례)
+    assert not _ab_substrate_violations({
+        "scripts/lib/emit_dev_process_event.py",
+        "archive/adr/ADR-155-dev-process-observability-substrate.md"})
+    # (3) B aggregator 를 A-소관 ADR 로 sanction 시도 → 여전히 위반 (per-file 소관 판별)
+    assert _ab_substrate_violations({
+        "scripts/lib/aggregate_dev_process_event.py",
+        "archive/adr/ADR-155-dev-process-observability-substrate.md"})
+    # (4) B-소관 ADR-156 lineage 동반 → sanctioned
+    assert not _ab_substrate_violations({
+        "scripts/lib/aggregate_dev_process_event.py",
+        "archive/adr/ADR-156-dev-process-metric-aggregation-escalation-feed.md"})
+    # (5) 집합 밖 파일(Story B #2406 표면: 공유 primitive) → 무저촉
+    assert not _ab_substrate_violations({"scripts/lib/append_spawn_event.py"})
+
+
+def test_ac6c_substrate_carrier_path_antispoof():
+    """DR4-1 negative-control: substring 오인 경로(비-adr-dir)는 carrier 로 인정 안 됨 → 무단 접촉 여전히 위반.
+
+    구 substring 판별(`"adr/" in c`)은 `xxxadr/...`·`tests/fixtures/adr/...` 를 carrier 로 오인해
+    substrate 무단 접촉을 가짜-sanction 했다. path-segment(_ADR_CARRIER_RE)로 강화되어 오인 배제됨을 assert.
+    """
+    # (a) 비-(archive|docs)/adr 디렉토리 하위 ADR-*.md → carrier 아님 → 여전히 위반
+    assert _ab_substrate_violations({
+        "scripts/lib/emit_dev_process_event.py",
+        "tests/fixtures/adr/ADR-155-fake.md"})
+    # (b) `adr/` substring 오인 경로(xxxadr/) → carrier 아님 → 여전히 위반
+    assert _ab_substrate_violations({
+        "scripts/lib/emit_dev_process_event.py",
+        "xxxadr/ADR-155-x.md"})
+    # (c) 대조군 — 진짜 archive/adr/ 하위 ADR-155-*.md 는 carrier 로 인정 → sanctioned (판별력 양방향 확증)
+    assert not _ab_substrate_violations({
+        "scripts/lib/emit_dev_process_event.py",
+        "archive/adr/ADR-155-dev-process-observability-substrate.md"})
 
 
 def test_ac17_runnable_vs_ci_defer_classification(tmp_path):
