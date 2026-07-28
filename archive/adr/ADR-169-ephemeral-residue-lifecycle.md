@@ -52,9 +52,9 @@ multi-repo walk + orphan 3-분류 + scratch TTL + stash/체크아웃 census 를 
 
 3축(등록여부/git존재/상태검사)은 **분류 신호로만**, 보존 트리거 = 상태 신호(dirty/unpushed/locked/pin/INCONCLUSIVE) 1+ 양성 또는 판정 불능 시 fail-safe 보존 + 메타파일 사유 기록. **등록·존재 여부 자체 ≠ 보존 사유**(AC-12). 신규 스캔 클래스(scratch/Temp/clone/stash)에도 data-loss 가드 일관 이식. mtime 단독 삭제 금지(상태신호 AND). 07/24 unpushed 2건 near-miss = (A)age-only/(B)등록-only 판정의 data-loss 리스크 실증.
 
-### §결정 4 — 크래시 보완 트리거 = SessionStart detached lazy GC primary (ADR-128 §결정3 amendment 경유)
+### §결정 4 — 크래시 보완 트리거 = SessionStart detached lazy GC primary (ADR-040 §결정 5·ADR-128 §결정 3 단일-wire sub-claim scoped-supersede)
 
-SessionEnd best-effort eager 유지 + SessionStart detached lazy GC 를 주 크래시-안전 경로로 추가. SessionStart hook 즉시반환 + 진짜 분리 프로세스 spawn(실 스캔 백그라운드) → ADR-128 이 SessionStart 를 배제한 "async 무시→동기 full-scan→지연 회귀" 전제를 detach 로 붕괴. detach = Windows Start-Process -WindowStyle Hidden(fd 완전분리) / POSIX setsid·nohup+disown(bash nohup 은 harness 트리 wait 시 미분리 가능 → Start-Process 권장). OS 스케줄러(ADR-110) = consumer opt-in 보조(주 트리거 아님 — Windows-only + race 최악 + persistent 보안벡터). 2차 트리거 활성화 전 mkdir lock + cooldown + 멱등 선행 의무(E10, 순서 = step0 detach 실작동 검증→step1 lock 착지→step2 double-delete 0 GREEN→step3 활성화). **detach-infeasible contingency(F-C-1)**: SessionStart detached-spawn 이 harness 트리 wait 하 실분리되는지는 설계시점 검증 불가(단일 외부기술 전제) → §5.2 step0 에서 미분리 판명 시 AC-13 primary 대체 = OS 스케줄러 wrapper-default 조건부 승격(비-Windows cron/systemd-timer) 또는 AC-13 을 best-effort catch-up tier(Orchestrator behavioral GC step)로 재정의. SessionStart 배제 재해석(무거운 동기 full-scan 한정)은 무변경, 대체 경로만 추가.
+SessionEnd best-effort eager 유지 + SessionStart detached lazy GC 를 주 크래시-안전 경로로 추가. SessionStart hook 즉시반환 + 진짜 분리 프로세스 spawn(실 스캔 백그라운드) → ADR-128 이 SessionStart 를 배제한 "async 무시→동기 full-scan→지연 회귀" 전제를 detach 로 붕괴. detach = Windows Start-Process -WindowStyle Hidden(fd 완전분리) / POSIX setsid·nohup+disown(bash nohup 은 harness 트리 wait 시 미분리 가능 → Start-Process 권장). OS 스케줄러(ADR-110) = consumer opt-in 보조(주 트리거 아님 — Windows-only + race 최악 + persistent 보안벡터). 2차 트리거 활성화 전 mkdir lock + cooldown + 멱등 선행 의무(E10, 순서 = step0 detach 실작동 검증→step1 lock 착지→step2 double-delete 0 GREEN→step3 활성화). **detach-infeasible contingency(F-C-1)**: SessionStart detached-spawn 이 harness 트리 wait 하 실분리되는지는 설계시점 검증 불가(단일 외부기술 전제) → §5.2 step0 에서 미분리 판명 시 AC-13 primary 대체 = OS 스케줄러 wrapper-default 조건부 승격(비-Windows cron/systemd-timer) 또는 AC-13 을 best-effort catch-up tier(Orchestrator behavioral GC step)로 재정의. SessionStart 배제 재해석(무거운 동기 full-scan 한정)은 무변경, 대체 경로만 추가. **본 §결정 4 는 ADR-040 §결정 5(Amendment 9) 및 ADR-128 §결정 3 의 '단일 트리거 전용 wire → 멱등성 가정 불요' sub-claim 을 scoped-supersede 한다**(두 ADR 의 나머지 결정 무손상 — 부분 supersession, 전체 supersede 아님). 진짜 invariant = 동시 GC 실행 race 방지이며, 다중 wire(SessionEnd eager + SessionStart detached lazy)에서 mkdir 원자 lock + cooldown + 멱등 remove(E10)가 race 를 막고 멱등성이 필수다. (구 ADR-040 Amd10 / ADR-128 Amd2 페어 amendment 는 재제정-ratchet 회피 위해 폐지 — 재해석 SSOT 를 본 §결정 4 로 단일화.)
 
 ### §결정 5 — 생성위치 강제 = PreToolUse(Bash) 로컬 가드 primary (2중방어)
 
@@ -71,6 +71,14 @@ codeforge-scratch 순수 loose 파일 age>TTL 자동 purge(`.git` 보유 항목 
 ### §결정 8 — bypass env 3종 disjoint 예약 (INV-6)
 
 `BYPASS_WORKTREE_LOCATION_GUARD`(①) / `BYPASS_WORKSPACE_RESIDUE_SCAN`(③④) / `BYPASS_CODEFORGE_SCRATCH_TTL`(②) 신규 예약(기존 31개 disjoint). 별도 축: `TEMP_GC_DELETE_ENABLED`(default-off, Temp 삭제 gate) / `WORKTREE_LOCATION_GUARD_TIER`(tier). 각 사용 시 audit 한 줄 + 전역 export 경고 + 본 ADR SSOT 등재. 가드-무력화 env(GC_TEMP_IGNORE_RE/GC_*_BIN) production 미노출, test-only 격리.
+
+### §결정 9 — phase:완료 residue-clean self-check precondition (완료-게이트 형제)
+
+완료 Story 잔재(worktree + scratch + stash + orphan)의 가시화·정리 여부를 `phase:완료` transition precondition 에 self-check 1항으로 추가한다: "완료 Story 의 잔재가 가시화·정리됐는가" — discovery 스캐너 Story-scoped 모드(`--story-key cfp-NNN`)가 생성한 리포트 확인. **자동 삭제 강제 아님**(가시화 = §결정7 INV-3, stash 자동삭제 Non-goal).
+
+**tier 3-조합** = (a) Orchestrator behavioral precondition(playbook §9.7.1) + (b) 로컬 check(discovery `--story-key` 모드, fail-safe 4종 상속) + (c) evidence-checks-registry warning-tier + `workflow: null`(ADR-099 / ADR-122 / ADR-128 §결정2 local-only 선례).
+
+`gate:residue-clean` label 미신설(ADR-045 §D-12 worktree-clean 답습). branch protection 8-tuple 무변경(신규 required check 0). ADR-128 §결정2 worktree-clean 완료-게이트와 **disjoint 축**(등록 worktree eager 미실행 검출 ↔ 잔재 전반 가시화). 본 §결정9 = §결정7 가시화 mechanism 의 phase:완료 wire.
 
 ## 결과
 
@@ -92,7 +100,7 @@ codeforge-scratch 순수 loose 파일 age>TTL 자동 purge(`.git` 보유 항목 
 
 ## 관련 ADR
 
-- ADR-040 Amendment 10(§결정5 보완 트리거 다중화 페어) / ADR-128 Amendment 2(§결정3 재해석) / ADR-045 Amendment 15(§D-14 residue-clean self-check) — paired sibling carrier.
+- ADR-040 §결정 5(Amd9) + ADR-128 §결정 3 — 본 §결정 4 가 '단일-wire/멱등-불요' sub-claim scoped-supersede (페어 amendment 폐지, 재제정-ratchet 회피). ADR-045 §D-14 원안 = 본 ADR §결정 9 로 relocation(residue-clean 완료-게이트 owner).
 - ADR-027(consumer adoption 상위 protocol) + ADR-031(7일 grace·CFP-97 manifest install prior-art 선례 — ADR-040 자인) / ADR-058(evidence-gate 정확 인용) / ADR-061(thin-wrapper) / ADR-110(Task Scheduler opt-in) / ADR-009·ADR-024·ADR-127(제약).
 
 ## 해소 기준

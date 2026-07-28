@@ -3,7 +3,7 @@
 # hooks/session-start-gc-catchup — SessionStart 2차 트리거: detached lazy GC 크래시 보완 (CFP-2822 ⑤)
 #
 # Carrier: CFP-2822 ⑤ (AC-3 크래시 보완 회수 / AC-13 다음 세션 개시 회수)
-#          ADR-040 Amendment 10 (SessionStart detached lazy GC primary) / ADR-128 Amendment 2
+#          ADR-169 §결정4 (SessionStart detached lazy GC 재해석 SSOT)
 #
 # 왜 별도 hook entry 인가 (설계 §3.2⑤ "SessionStart 배열" 의도 실현):
 #   - hooks/session-start 는 strict-hygiene prereq hook 이다(정적 properties (a)-(f):

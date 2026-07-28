@@ -2655,7 +2655,7 @@ entries:
 
   - name: residue-clean-completion-gate
     description: |
-      CFP-2822 / ADR-169 §결정 7 + ADR-045 Amendment 15 §D-14 —
+      CFP-2822 / ADR-169 §결정 9 —
       phase:완료 residue-clean self-check (완료-게이트 확장 형제).
       "완료 Story 의 잔재(worktree + scratch + stash + orphan)가 가시화·정리됐는가" 검출.
       discovery 스캐너 Story-scoped 모드(--story-key cfp-NNN)가 생성한 리포트 확인

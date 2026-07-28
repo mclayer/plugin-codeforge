@@ -9,8 +9,8 @@ carrier_story: CFP-2822
 related_adrs:
   - ADR-169  # 세션 잔재 수명 규약 SSOT — 본 concept 를 §결정 1 concept SSOT 로 명명
   - ADR-040  # registered worktree lifecycle — 인접·분리 (본 개념의 상위집합, anti-corruption layer)
-  - ADR-128  # 완료 단계 정식화 — 크래시 보완 트리거 다중화 (§결정 3 재해석 = SessionStart detached lazy GC)
-  - ADR-045  # Story 완료 회고 — §D-14 residue-clean self-check phase:완료 precondition
+  - ADR-128  # 완료 단계 정식화 (§결정 3 = ADR-169 §결정 4 가 단일-wire sub-claim scoped-supersede)
+  - ADR-045  # Story 완료 회고 (residue-clean 완료-게이트 = ADR-169 §결정 9 로 이관)
   - ADR-061  # thin-wrapper (8-line bash launcher + Python SSOT) — 발견 스캐너 구조 근거
   - ADR-110  # Task Scheduler — OS 스케줄러 consumer opt-in 보조 트리거
 related_files:
@@ -84,8 +84,8 @@ sources:
 
 - **ADR-169** — 세션 잔재 수명 규약 normative SSOT. 본 concept 를 §결정 1 의 concept SSOT 로 명명(4분류 + discovery 스캐너 + orphan 3-분류 + 크래시 보완 트리거 + scratch/Temp/stash 가시화).
 - **ADR-040** — registered worktree lifecycle. 본 개념의 상위집합 관계 + anti-corruption layer(§경계).
-- **ADR-128** — 완료 단계 정식화. Amendment 2 = 크래시 보완 트리거 다중화(SessionStart detached lazy GC, §결정 3 재해석).
-- **ADR-045** — Story 완료 회고. Amendment 15 / §D-14 = phase:완료 residue-clean self-check precondition.
+- **ADR-128** — 완료 단계 정식화. 크래시 보완 트리거 다중화 재해석 SSOT = ADR-169 §결정 4.
+- **ADR-045** — Story 완료 회고. residue-clean self-check precondition = ADR-169 §결정 9.
 - **ADR-061** — thin-wrapper(8-line bash launcher + Python SSOT). 발견 스캐너 구조 근거.
 - **ADR-110** — Task Scheduler. OS 스케줄러 = consumer opt-in 보조 트리거(주 트리거 아님).
 

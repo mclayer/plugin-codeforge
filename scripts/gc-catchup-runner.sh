@@ -2,7 +2,7 @@
 # scripts/gc-catchup-runner.sh — SessionStart 2차 트리거(detached lazy GC)의 분리 자식 본체.
 #
 # Carrier: CFP-2822 ⑤ 크래시 보완 트리거 (AC-3 / AC-13)
-#          ADR-040 Amendment 10 (SessionStart detached lazy GC) / ADR-128 Amendment 2
+#          ADR-169 §결정4 (SessionStart detached lazy GC 재해석 SSOT)
 #
 # 책임 경계:
 #   - hooks/session-start-gc-catchup 가 경량 판정(임계 초과) 후 detach 로 fire-and-forget 실행하는

@@ -14,20 +14,13 @@ amendments:
     carrier_story: CFP-2470
     scope: "Amendment 1 — phase:완료 precondition 3-조합 → 4-조합 확장 (Track W/W2 deferred-recovery self-check 추가). 기존 3 self-check(worktree-clean §결정 2 / capture ADR-045 §D-13 / retro-complete) 에 deferred-recovery self-check 1항 추가. no-silent-drop 게이트 = retro/Story 서사의 deferred 각각이 (추적 Issue 전환) OR (관찰-only + 사유 명시) 중 하나로 명시 판정되게 강제 (silent drop 만 차단). structured disposition row schema = 게이트 전용 직교 2-value enum (tracked|observed) 신설 + 신규 5-column schema (ADR-045 §D-11 batch-closure 5-column table 는 structured-row-over-free-text 패턴의 참조 선례로만 인용 — closure enum 값 재사용 아님, 의미 축 직교: closure disposition ⊥ narrative deferred 판정). 자유텍스트 NLP 회피. 게이트 tier = §결정 2 동형 archetype (warning-tier + workflow:null + behavioral precondition 3-조합). cross-repo Contents API(internal-docs wrapper/retros) + CODEFORGE_CROSS_REPO_PAT graceful skip (retro-mandatory.yml L196-203/L289-292 패턴 재사용). consumer 전파 = hooks.json UserPromptSubmit reminder (CFP-2456 skip-offer-reminder 동형 채널). branch protection 6-tuple 무변경 / required check 신설 0 (ADR-024 Amd19 §B 정합). ADR-119 §결정9(발견≠필요 filter)와 순차직렬(충돌 아님). CFP-2380(evidence-checks-registry carrier)과 disjoint. 본문 = ## Amendment 1 섹션."
     ref: "## Amendment 1 (phase:완료 4-조합 deferred-recovery self-check)"
-  - number: 2
-    date: 2026-07-26
-    carrier_story: CFP-2822
-    scope: "Amendment 2 — §결정3 트리거 단일화 invariant 재해석 (멱등/lock 실증 다중 wire 허용). ADR-169(세션 잔재 수명 규약)의 크래시 보완 트리거 다중화 묶음 carrier 의 ADR-128 측 amendment, ADR-040 Amendment 10 과 paired sibling (near-verbatim 동일 invariant → 한쪽만 고치면 self-contradiction, CFP-2782 회고 'SSOT↔결합상수 동시 전파 실패' 재발 방지). AS-IS = 'SessionEnd + Stop 동시 wire 금지, 단일 트리거면 동시 GC 실행 race 자체 미발생 → 멱등성 가정 불요' → TO-BE = '동시 GC 실행 race 방지 invariant — backstop 자동 트리거는 단일 wire OR (멱등/lock 이 실증된 다중 wire). 다중 wire(SessionEnd + SessionStart detached lazy GC)는 mkdir 원자 lock + cooldown + 멱등 remove 를 활성화 전 선행해야 허용(E10). 멱등성 가정 불요 문장 삭제 — 다중 wire 에서 멱등성 필수.' SessionStart 배제 = 무거운 동기 full-scan 한정, detached fire-and-forget carve-out (ADR-040 Amendment 10 페어와 동일 wording, paired sibling 일치). detach-infeasible contingency(F-C-1) = SessionStart detached-spawn 이 harness 트리 wait 하 실분리되는지 설계시점 검증 불가(단일 외부기술 전제) → Phase 2 §5.2 step0 미분리 판명 시 AC-13 primary 대체 (OS 스케줄러 wrapper-default 조건부 승격[비-Windows cron/systemd-timer] 또는 AC-13 best-effort catch-up tier[Orchestrator behavioral] 재정의). SessionStart 배제 재해석 자체는 무변경 (대체 경로만 추가). §결정4(단일 자동 수렴 검증기 과설계 금지) 무손상 — 트리거 재해석 = race 방지 방법 확장이지 검증기 신설 아님. required check 신설 0 — branch protection 8-tuple 무변경. ratchet 강화 방향(crash blind-spot 해소 = enforcement 보강, ADR-058 §결정5 정합) — is_transitional: false permanent. 본문 = ## Amendment 2 섹션."
-    reinterpretation: true
-    ref: "## Amendment 2 (§결정3 트리거 단일화 invariant 재해석)"
 related_stories:
   - CFP-2377  # 본 ADR 신설 carrier (완료 단계 정식화)
   - CFP-2470  # Amendment 1 carrier (deferred-recovery self-check — no-silent-drop 게이트, Track W/W2)
-  - CFP-2822  # Amendment 2 carrier (§결정3 트리거 단일화 invariant 재해석 — SessionStart detached lazy GC 다중 wire, ADR-169 묶음)
 related_adrs:
   - ADR-040   # Amendment 9 동반 — backstop SessionEnd async dispatch 자동 트리거 복원 + worktree-clean cleanup invariant 편입
   - ADR-045   # Amendment 13 동반 — phase:완료 precondition 에 worktree-clean self-check 추가 (2-gate AND → 2-gate + self-check)
-  - ADR-169   # Amendment 2 동반 — 세션 잔재 수명 규약 umbrella (본 §결정3 재해석 = 크래시 보완 트리거 다중화 페어, ADR-040 Amendment 10 paired sibling)
+  - ADR-169   # ADR-169 §결정 4 가 §결정 3 단일-wire/멱등-불요 sub-claim scoped-supersede (본 §결정 3 pointer 참조)
   - ADR-026   # post-merge automation 4 action (갭 B 4-트리거 중 클라우드 측 1 — post-merge-followup.yml)
   - ADR-024   # Amendment 19 §B required-6-tuple-skip bypass 신설 금지 invariant — 본 ADR 게이트가 required check 신설 안 함 정합
   - ADR-127   # 모든 면제·단축경로 폐지 (forcing function 추가 방향 ratchet 정합 — process-skip 채널 신설 0)
@@ -148,6 +141,8 @@ backstop GC(`templates/scripts/check-worktree-stale.sh`)의 자동 트리거가 
 - **배제(확정)** — SessionStart async:true(무시·동기 실행 = 지연 회귀) / SessionStart 동기(90+ worktree 스캔 시작 지연 재발) / GitHub Actions cron(클라우드 러너 로컬 worktree 미접근).
 - **트리거 단일화 invariant (race 1순위 안전장치)** — SessionEnd + Stop 동시 wire **금지**. 단일 트리거면 동시 GC 실행 race 자체 미발생 → 멱등성 가정 불요 (EC-4 정정 정합).
 
+> **[CFP-2822 scoped-supersede]** 본 '단일 트리거 / 멱등성 가정 불요' sub-claim 은 ADR-169 §결정 4 가 supersede — 다중 wire(SessionEnd + SessionStart detached lazy GC) 허용 + mkdir lock/cooldown/멱등 remove(E10) 필수. SSOT = ADR-169 §결정 4.
+
 ### §결정 4 — 갭 B: 통합 wrap-up 수렴 SSOT (절차 명문화 + 텔레메트리 관찰, 신규 SSOT 신설 0)
 
 4개 wrap-up 트리거의 수렴 확인·종결을 한 곳에서 cross-ref 하는 단일 SSOT 를 명문화한다. **별도 신규 SSOT 신설 금지** — 기존 `post-merge-closure` skill + playbook "완료 단계" 섹션 확장으로 수렴점을 명문화 (Continuity dup 회피).
@@ -265,24 +260,6 @@ plugin-root CLAUDE.md 는 consumer 측 미로드(CFP-2456 lesson) → consumer �
 - 데이터 마이그레이션 = **N/A** — schema 변경 0, 신규 lint 채널만. 기존 retro 파일 backfill 불요 (게이트 forward-only — 신규 retro 부터 적용, retroactive 강제 0). `[근거: concept §정의 + AC scope]`
 - 통합테스트 = N/A (wrapper-self runtime behavior 부재). 보안테스트 = cross-repo PAT scope(internal-docs only, read-only Contents API) trust boundary 명시(§7), secret 노출 0 — 단 PAT scope 검증은 정식 보안 lane 대상.
 - change-plan = **작성**(면제 아님) — Phase 2 코드(스크립트/워크플로/hook/registry) 동반이라 doc-only 아님. 실 적재 = internal-docs `wrapper/change-plans/cfp-2470-deferred-item-recovery.md` (PR #1415, dogfood variant SSOT). doc-locations.yaml `change_plan` dogfood variant = `mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md` 정합 — codeforge family(wrapper) change-plan 정본은 internal-docs `wrapper/change-plans/`. `[verified: doc-locations.yaml change_plan dogfood variant + PR #1415 file list — wrapper/change-plans/cfp-2470-deferred-item-recovery.md 실재 firsthand]`
-
-## Amendment 2 (CFP-2822, 2026-07-26) — §결정3 트리거 단일화 invariant 재해석 (멱등/lock 실증 다중 wire 허용)
-
-ADR-169(세션 잔재 수명 규약) 의 크래시 보완 트리거 다중화 carrier 의 ADR-128 측 amendment. ADR-040 Amendment 10 과 paired sibling — §결정3 이 ADR-040 Amd9 §결정5 의 **near-verbatim 복제**(동일 invariant, 축약 재기술 포함)라 한쪽만 고치면 self-contradiction → 동시개정 필수. frontmatter amendments row 2 참조.
-
-### §결정3 재해석 (AS-IS → TO-BE)
-
-**AS-IS**: "트리거 단일화 invariant — SessionEnd + Stop 동시 wire 금지. 단일 트리거면 동시 GC 실행 race 자체 미발생 → 멱등성 가정 불요."
-
-**TO-BE**: "**동시 GC 실행 race 방지 invariant** — backstop 자동 트리거는 단일 wire OR (멱등/lock 이 실증된 다중 wire). 다중 wire(SessionEnd + SessionStart detached lazy GC) 는 mkdir 원자 lock + cooldown + 멱등 remove 를 **활성화 전 선행**해야 허용(E10). '멱등성 가정 불요' 문장 삭제 — 다중 wire 에서 멱등성 필수." (SessionStart 배제 = 무거운 동기 full-scan 한정, detached fire-and-forget carve-out — ADR-040 Amendment 10 페어와 동일 wording(paired sibling 일치).)
-
-**detach-infeasible contingency(F-C-1)**: SessionStart detached-spawn 이 harness 트리 wait 하 실분리되는지는 설계시점 검증 불가(단일 외부기술 전제) → Phase 2 §5.2 step0 검증에서 미분리 판명 시 AC-13 primary 대체 = OS 스케줄러 wrapper-default 조건부 승격(비-Windows cron/systemd-timer) 또는 AC-13 best-effort catch-up tier(Orchestrator behavioral) 재정의. SessionStart 배제 재해석 자체는 무변경(대체 경로만 추가).
-
-### 정합성 검증
-
-- **ADR-040 Amendment 10 정합**: 본 Amendment 2 = ADR-128 §결정3(= ADR-040 Amd9 §결정5 near-verbatim 복제[동일 invariant])의 ADR-128 측 carrier. paired sibling — 한쪽만 고치면 self-contradiction(CFP-2782 회고 "SSOT↔결합상수 동시 전파 실패" 재발 방지).
-- **ADR-128 §결정4(단일 자동 수렴 검증기 과설계 금지) 무손상**: 트리거 재해석 = race 방지 방법 확장, 검증기 신설 아님.
-- **required check 신설 0** — branch protection 8-tuple 무변경.
 
 ## 결과
 

@@ -1,16 +1,16 @@
 ---
 name: worktree-lifecycle
-description: Worktree-first 개발 규약 lookup 시 (① 코딩/수정 작업 개시 직전 worktree 생성, ② Story/PR 완결 직후 eager 정리). 개시(생성위치 표준·3단계 deadline) → 작업 중 git -C 주입 → 완결 시 정리(1급 단계) → backstop GC → 잔재 발견·scratch TTL·orphan 판정(§4a) → residue-clean 완료-게이트 → bypass env 의 전 lifecycle 을 정의한다. lookup mirror — 정책 SSOT = ADR-040(+Amd 1~10) + ADR-169(세션 잔재 수명 규약), 절차 SSOT = orchestrator-playbook §3.5 + §0a-prime + §9.7.1/§9.7.2.
+description: Worktree-first 개발 규약 lookup 시 (① 코딩/수정 작업 개시 직전 worktree 생성, ② Story/PR 완결 직후 eager 정리). 개시(생성위치 표준·3단계 deadline) → 작업 중 git -C 주입 → 완결 시 정리(1급 단계) → backstop GC → 잔재 발견·scratch TTL·orphan 판정(§4a) → residue-clean 완료-게이트 → bypass env 의 전 lifecycle 을 정의한다. lookup mirror — 정책 SSOT = ADR-040(+Amd 1~9) + ADR-169(세션 잔재 수명 규약), 절차 SSOT = orchestrator-playbook §3.5 + §0a-prime + §9.7.1/§9.7.2.
 tools: Read
 ---
 
-# Worktree Lifecycle (CFP-2191 / ADR-040 Amendment 8·10 / ADR-169)
+# Worktree Lifecycle (CFP-2191 / ADR-040 Amendment 8·9 / ADR-169)
 
 > 참조 테이블 skill — 코딩/수정 작업 **개시 직전** 과 Story/PR **완결 직후** 두 시점에 본 skill 을 확인하세요.
 
 본 skill 은 **lookup mirror** — 내용의 원본은 아래 2곳이며 본 skill 로의 SSOT 이동/변경 금지:
 
-- **정책 SSOT**: [ADR-040 worktree convention (+Amendment 1~10)](../../archive/adr/ADR-040-worktree-convention.md) + ADR-169(세션 잔재 수명 규약 — 잔재 발견/scratch TTL/생성위치 가드/residue-clean 완료-게이트)
+- **정책 SSOT**: [ADR-040 worktree convention (+Amendment 1~9)](../../archive/adr/ADR-040-worktree-convention.md) + ADR-169(세션 잔재 수명 규약 — 잔재 발견/scratch TTL/생성위치 가드/residue-clean 완료-게이트)
 - **절차 SSOT**: [orchestrator-playbook](../../docs/orchestrator-playbook.md) §3.5 (Worktree dispatch + 잔재 발견/scratch TTL) + §9.7.1/§9.7.2 (residue-clean 완료-게이트) + Step 0a-prime (eager 정리 + backstop GC)
 
 **호출 시점 2개**:
@@ -60,7 +60,7 @@ push → PR 생성 → gh pr view <N> --json mergedAt 확인 (non-null) → git 
 
 eager 정리(§3)를 못 거친 크래시·중단 orphan 전용. eager 와 disjoint 2-경로 (playbook Step 0a-prime).
 
-**자동 트리거 = `SessionEnd` async dispatch (primary wire)** (ADR-040 Amendment 9 §결정 5 / ADR-128 §결정 3): `hooks/hooks.json` SessionEnd entry (`async: true`) → `hooks/session-end` 가 background GC (`check-worktree-stale.sh`) 호출. 세션당 1회 종료 발화 → 7일 GC cadence 빈도 정합. **동시 GC race 방지 invariant (비협상)**: SessionEnd + Stop 동시 wire 금지. **단 ADR-040 Amendment 10 / ADR-128 Amendment 2 재해석**: 진짜 invariant = 동시 GC race 방지이지 "단일 wire"가 아님 — 단일 wire **OR 멱등/lock 실증 다중 wire**. crash-blind-spot 보완 = SessionStart detached lazy GC 다중화(§4a, mkdir 원자 lock + cooldown + 멱등 remove 선행 조건). 수동/스케줄 호출도 병행 가능:
+**자동 트리거 = `SessionEnd` async dispatch (primary wire)** (ADR-040 Amendment 9 §결정 5 / ADR-128 §결정 3): `hooks/hooks.json` SessionEnd entry (`async: true`) → `hooks/session-end` 가 background GC (`check-worktree-stale.sh`) 호출. 세션당 1회 종료 발화 → 7일 GC cadence 빈도 정합. **동시 GC race 방지 invariant (비협상)**: SessionEnd + Stop 동시 wire 금지. **단 ADR-169 §결정 4 재해석(SessionEnd primary + SessionStart detached carve-out)**: 진짜 invariant = 동시 GC race 방지이지 "단일 wire"가 아님 — 단일 wire **OR 멱등/lock 실증 다중 wire**. crash-blind-spot 보완 = SessionStart detached lazy GC 다중화(§4a, mkdir 원자 lock + cooldown + 멱등 remove 선행 조건). 수동/스케줄 호출도 병행 가능:
 
 ```bash
 GC_DRY_RUN=1 bash templates/scripts/check-worktree-stale.sh   # preview (prune 대상만 보고)
@@ -74,7 +74,7 @@ prune 조건 = 4 조건 **ALL** (스크립트 헤더 SSOT):
 3. worktree CLEAN (tracked 변경 0 + 알려진 임시파일 외 untracked 0 — 잔여 변경 있으면 절대 prune 금지)
 4. 현재/main worktree 아님 + `locked` 아님
 
-> 과거 SessionStart hook 동기/주기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연). **SessionStart 배제 = 무거운 동기 full-scan 한정** — SessionStart async:true 무시 → 동기 실행 = 지연 회귀라 배제(요구사항리뷰 PASS 확정 외부사실). **단 detached fire-and-forget(즉시 return + 실 스캔 분리 프로세스)는 carve-out**(전제 불성립 → §4a 크래시 보완 트리거, ADR-040 Amendment 10 / ADR-128 Amendment 2). backstop 자동 트리거 = SessionEnd async primary wire + SessionStart detached lazy GC(§4a) + 수동/스케줄 병행.
+> 과거 SessionStart hook 동기/주기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연). **SessionStart 배제 = 무거운 동기 full-scan 한정** — SessionStart async:true 무시 → 동기 실행 = 지연 회귀라 배제(요구사항리뷰 PASS 확정 외부사실). **단 detached fire-and-forget(즉시 return + 실 스캔 분리 프로세스)는 carve-out**(전제 불성립 → §4a 크래시 보완 트리거, ADR-169 §결정 4). backstop 자동 트리거 = SessionEnd async primary wire + SessionStart detached lazy GC(§4a) + 수동/스케줄 병행.
 
 ## 4a. 잔재 발견(residue discovery) + scratch TTL + orphan 3축 판정 (CFP-2822 / ADR-169)
 
@@ -92,7 +92,7 @@ bash templates/scripts/check-codeforge-scratch-ttl.sh                           
 - **harness Temp = observe-only (AC-6 1단계, INV-9)**: Temp 하위 총량·나이·git-여부 관측 + git-aware 판정(unpushed/stash/locked → 보존 "temp-git-worktree"). **삭제 실행 0** — 2단계(삭제)는 `TEMP_GC_DELETE_ENABLED` default-off + self-scratchpad 배제·활성세션 proxy·harness GC 중복 해소 3전제 충족 후에만. 제3자 소유 Temp 삭제 금지 = 보안 불변식.
 - **fail-safe (AC-7)**: dirty/unpushed/locked/pin 감지 시 보존 + 사유 명시("dirty" / "unpushed-N-commits" / "locked" / "pin") + 메타파일 저장 + 상태 보고 포함. 자동 unlock/force 금지(INV-1, 수동 해소만).
 - **reporting (AC-8/8a/14/15)**: `[residue-scan] DONE: scanned=N flagged=M`(**always exit 0 advisory**, 기존 `[stale-check]`/`[completion-clean]` output contract 무접촉). 보존-예외 항목별 **사유 + 나이(aging)** 집계 + 임계 초과 **재알림**(지수 backoff base 7d→max 90d + item+reason dedup). **stash census**(건수·나이, **삭제 0** — 가시화-only, git 무만료 = 의도적 사용자 데이터) + **용량 임계 경고** + 순수 관측 집계(삭제수/보존수/회수GB 히스토리). 재알림 상태 = `~/.claude/worktree-gc-state/` JSONL append(크래시 무손상).
-- **크래시 보완 트리거 (AC-3/13)**: SessionEnd best-effort eager + **SessionStart detached lazy GC** 다중화(ADR-040 Amendment 10 / ADR-128 Amendment 2 페어 — "멱등/lock 실증 다중 wire" 완화). 2차 트리거 활성화 전 **mkdir 원자 lock + cooldown + 멱등 remove 선행**(E10 double-delete 0). detach = Windows `Start-Process -WindowStyle Hidden` / POSIX `setsid`·`nohup+disown`(bash nohup 은 harness 트리 wait 시 미분리 가능 주의). OS 스케줄러(ADR-110) = consumer opt-in 보조(주 트리거 아님).
+- **크래시 보완 트리거 (AC-3/13)**: SessionEnd best-effort eager + **SessionStart detached lazy GC** 다중화(ADR-169 §결정 4 — "멱등/lock 실증 다중 wire" 완화). 2차 트리거 활성화 전 **mkdir 원자 lock + cooldown + 멱등 remove 선행**(E10 double-delete 0). detach = Windows `Start-Process -WindowStyle Hidden` / POSIX `setsid`·`nohup+disown`(bash nohup 은 harness 트리 wait 시 미분리 가능 주의). OS 스케줄러(ADR-110) = consumer opt-in 보조(주 트리거 아님).
 - **정책 SSOT** = ADR-169(세션 잔재 수명 규약), 절차 SSOT = playbook §3.5. 대상=worktree 클래스 한정(Temp 2단계·stash 는 GC 삭제 경로에 미포함, AC-3).
 
 ## 4b. 완료-게이트 — phase:완료 worktree-clean self-check
@@ -105,7 +105,7 @@ STORY_KEY=cfp-NNN bash scripts/check-worktree-completion-clean.sh   # detected=0
 
 검출 대상 (F2 구분 계약, ADR-040 §결정 7.K): (a) 본 STORY_KEY scope ∧ ((b) sub-worktree `cfp-NNN/lane/*`·`cfp-NNN/fix-iter-*` 잔존 = 즉시 검출 OR (c) Story root `cfp-NNN` flat = Phase 2 PR `mergedAt` non-null 일 때만 검출, open(보존 중)이면 제외). fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0). `phase:완료` transition precondition (playbook §9.7.1 (c)) 에서 Orchestrator self-check 가 호출. warning-tier 로컬 self-check (required CI 불가 — worktree 클라우드 러너 미접근).
 
-**residue-clean self-check (CFP-2822 / ADR-045 Amendment 15 §D-14 / ADR-169)**: worktree-clean 과 **disjoint 형제** — 완료 Story 잔재(worktree+scratch+stash+orphan) 가시화 확인(worktree-clean = 등록 worktree eager 미실행 검출 / residue-clean = 잔재 전반 가시화).
+**residue-clean self-check (CFP-2822 / ADR-169 §결정 9)**: worktree-clean 과 **disjoint 형제** — 완료 Story 잔재(worktree+scratch+stash+orphan) 가시화 확인(worktree-clean = 등록 worktree eager 미실행 검출 / residue-clean = 잔재 전반 가시화).
 
 ```bash
 bash templates/scripts/check-workspace-residue-discovery.sh --story-key cfp-NNN   # flagged 보존항목 aging 리포트 확인
