@@ -240,7 +240,9 @@ def execute(verdicts, allowed_roots, dry_run=None):
             # observe-only(temp) / cross-check-only(worktrees-base) = 삭제 미도달 (INV-9 코드강제)
             results.append(ExecResult(v.path, "skipped", True, "mode=%s (no-delete)" % v.mode))
             continue
-        ok, note = base.safe_remove(v.path, allowed_roots, dry_run=dry_run)
+        # recheck_inv1 (F-SEC-002 TOCTOU): 실 삭제 직전 judge_orphan 재호출로 판정 후 상태
+        #   변화(dirty/unpushed/locked/pin/stash 신규) 재검증 → 변화 시 ABORT(blocked=보존 방향).
+        ok, note = base.safe_remove(v.path, allowed_roots, dry_run=dry_run, recheck_inv1=True)
         if ok:
             action = "removed"
         elif note.startswith("dry-run"):
@@ -248,7 +250,7 @@ def execute(verdicts, allowed_roots, dry_run=None):
         elif note.startswith("skip"):
             action = "skipped"
         else:
-            action = "blocked"       # guard-reject/remove-failed → INV-1 보존 방향
+            action = "blocked"       # guard-reject/remove-failed/toctou-abort → INV-1 보존 방향
         results.append(ExecResult(v.path, action, ok, note))
     return results
 

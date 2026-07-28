@@ -77,7 +77,13 @@ case "$uname_s" in
   MINGW*|MSYS*|CYGWIN*)
     # Windows — Start-Process -WindowStyle Hidden = fd 완전분리(부모 즉시반환·자식 실 GC 완료 firsthand 실증).
     bash_win="$(cygpath -w "$(command -v bash)" 2>/dev/null || echo bash.exe)"
-    powershell.exe -NoProfile -NonInteractive -Command "Start-Process -FilePath '${bash_win}' -ArgumentList @('${RUNNER}','${RUN_CWD}','${GC_SCRIPT}','${LOG_FILE}') -WindowStyle Hidden" >/dev/null 2>&1 || true
+    # 경로를 env 변수로 자식에 전달 — PowerShell -Command 문자열 보간 제거(injection 차단, POSIX
+    #   argv-safe 미러, F-SEC-001). -Command 뒤 = 작은따옴표 bash 문자열(bash 가 $env: 미보간,
+    #   PowerShell 이 런타임에 env 값을 문자열 데이터로 해석). 값에 '·; 있어도 재파싱 0.
+    GC_BASH="$bash_win" GC_RUNNER="$RUNNER" GC_RUN_CWD="$RUN_CWD" GC_SCRIPT_PATH="$GC_SCRIPT" GC_LOG="$LOG_FILE" \
+      powershell.exe -NoProfile -NonInteractive -Command \
+      'Start-Process -FilePath $env:GC_BASH -ArgumentList @($env:GC_RUNNER,$env:GC_RUN_CWD,$env:GC_SCRIPT_PATH,$env:GC_LOG) -WindowStyle Hidden' \
+      >/dev/null 2>&1 || true
     ;;
   *)
     # POSIX — setsid(새 세션·프로세스그룹 = 진짜 분리) 우선. 부재 시 nohup+disown.

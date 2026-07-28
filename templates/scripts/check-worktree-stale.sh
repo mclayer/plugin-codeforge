@@ -59,7 +59,10 @@ PRUNED=0
 WOULD_PRUNE=0
 
 # ─── CFP-2822 ⑤ E10 다중-트리거 double-delete 방어 (mkdir 원자 lock + cooldown) ───
-# flock 부재 확정(MINGW64 command -v flock=ABSENT) → mkdir(단일 원자 syscall)로 상호배제.
+# flock 부재 확정(MINGW64 command -v flock=ABSENT) → mkdir(단일 원자 syscall) 로 best-effort
+#   상호배제(acquire mkdir 원자성 한정). double-delete=0 안전은 lock 이 아니라 E10 idempotent-
+#   remove(제거 직전 존재 재확인)가 **독립 보장** — lock 은 빈발 재실행 억제·직렬화 최적화층이다
+#   (F-SEC-003 정직 정정: "lock 이 mutual exclusion 을 보장" 이 아니라 best-effort + E10 독립 담보).
 # 목적: SessionEnd + SessionStart(step3 활성화 시) 등 다중 트리거 동시발화 시 double-delete 0.
 # 하위호환(step1 비협상): GC_DRY_RUN preview 는 read-only → lock/cooldown 전면 우회
 #   (직렬화·상태쓰기 불요) → 기존 self-test(TC-5, 전부 dry-run) 무손상. 단일 트리거(현행
@@ -108,17 +111,26 @@ _gc_write_lock_meta() {
 }
 
 # lock 취득: 성공=0, 실패(경쟁 중, skip 권장)=1.
-#   상태 dir 생성 불능 시 fail-open(취득 간주) — GC 영구 무력화 방지(3중 방어의 나머지 2층이 담보).
+#   상태 dir 생성 불능 시 fail-open(취득 간주) — GC 영구 무력화 방지(E10 idempotent-remove 가 담보).
 _gc_try_lock() {
   mkdir -p "$GC_STATE_DIR/.locks" 2>/dev/null || { GC_LOCK_HELD=0; return 0; }  # fail-open
   if mkdir "$GC_LOCK_DIR" 2>/dev/null; then
     GC_LOCK_HELD=1; _gc_write_lock_meta; return 0
   fi
-  # 취득 실패 — stale 이면 1회 회수 후 원자 재-mkdir, 아니면 skip.
+  # 취득 실패 — stale 이면 회수 후 재-mkdir, 아니면 skip.
+  #   회수 원자화(F-SEC-003): 종전 `rm -rf + mkdir` 은 비원자(동시 stale 회수 시 double-acquire
+  #   가능한 nit — E10 idempotent-remove 가 double-delete 는 이미 독립 차단). rename(2)(mv) 으로
+  #   stale lock 을 this-process-private 경로로 원자 이동 → 동시 회수 시 source 를 옮긴 단일 승자만
+  #   성공(패자는 source 부재로 mv 실패) → 회수 double-acquire 0. aside 경로는 공유자원 아님(내 pid
+  #   전용) → 사전 청소·사후 청소 안전.
   if _gc_lock_is_stale; then
-    rm -rf "$GC_LOCK_DIR" 2>/dev/null || true
-    if mkdir "$GC_LOCK_DIR" 2>/dev/null; then
-      GC_LOCK_HELD=1; _gc_write_lock_meta; return 0
+    local _stale_aside="${GC_LOCK_DIR}.stale.$$"
+    rm -rf "$_stale_aside" 2>/dev/null || true          # this-process-private scratch 사전 청소
+    if mv "$GC_LOCK_DIR" "$_stale_aside" 2>/dev/null; then
+      rm -rf "$_stale_aside" 2>/dev/null || true        # 옮긴 stale 분 best-effort 청소
+      if mkdir "$GC_LOCK_DIR" 2>/dev/null; then
+        GC_LOCK_HELD=1; _gc_write_lock_meta; return 0
+      fi
     fi
   fi
   return 1

@@ -48,12 +48,42 @@ _SELF_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SELF_DIR not in sys.path:
     sys.path.insert(0, _SELF_DIR)
 
-# §7.5 redaction SSOT 재사용 (secret 패턴 3번째 카피 금지). import 실패 시 no-op fallback.
+# §7.5 redaction SSOT 재사용 (secret 패턴 3번째 카피 금지). import 실패 시 **fail-closed** fallback
+#   (F-SEC-004): raw 반환(fail-open) 금지 — 손상/부분배포에서 SSOT 부재 시 최소 built-in 으로
+#   고신뢰 구조 secret(github PAT/AWS/GCP/Slack/PEM/generic token 대입)만 obliterate 후 반환.
+#   비대칭 해소: _RE_CLOUD_STRUCT import 실패 fail-closed(obliterate)와 대칭. non-match = 원문 보존
+#   (benign 경로 over-redact 회피). 최소 set = honest-ceiling — SSOT 전 rule(cookie/session_id/
+#   env_dump 등) 미포함, 고신뢰 구조 토큰만 방어(ADR-119, 임의입력 무해 단정 아님).
 try:
     from redact_dev_process_content import redact as _redact_secrets  # type: ignore
 except Exception:  # pragma: no cover - defensive
+    _FALLBACK_SECRET_RES = (
+        re.compile(r"ghp_[A-Za-z0-9]{36}"),                       # github PAT
+        re.compile(r"github_pat_[A-Za-z0-9_]{82}"),               # github fine-grained PAT
+        re.compile(r"A(?:KIA|SIA)[0-9A-Z]{16}"),                  # AWS access key id
+        re.compile(r"AIza[0-9A-Za-z_\-]{35}"),                    # Google API key
+        re.compile(r"xox[baprs]-[0-9A-Za-z\-]{10,}"),             # Slack token
+        re.compile(
+            r"(?i)(?:api[_-]?key|secret|token|password|bearer)\s*[:=]\s*['\"]?[A-Za-z0-9_\-]{16,}"
+        ),                                                        # generic 대입형 credential
+        re.compile(
+            r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?-----END [A-Z0-9 ]*PRIVATE KEY-----",
+            re.DOTALL,
+        ),                                                        # PEM private key block
+    )
+
     def _redact_secrets(raw):  # type: ignore
-        return (raw if isinstance(raw, str) else str(raw), {})
+        """import 실패 fail-closed fallback (F-SEC-004). 최소 built-in 고신뢰 구조 secret
+        obliterate. 매치 시 audit 에 'fallback_builtin_redact'(high-conf, path-오탐 rule 아님)
+        보고 → sanitize 가 obliterate 반환. non-match = 원문 보존(benign 경로 over-redact 회피)."""
+        s = raw if isinstance(raw, str) else ("" if raw is None else str(raw))
+        fired = False
+        for _rx in _FALLBACK_SECRET_RES:
+            s, _n = _rx.subn("[REDACTED:fallback]", s)
+            if _n:
+                fired = True
+        audit = {"redaction_rules_fired": ["fallback_builtin_redact"]} if fired else {}
+        return (s, audit)
 
 # 구조 cloud key(AWS/GCP/Slack) 전용 컴파일 패턴 재사용 (secret 패턴 3번째 카피 금지 — ADR-140
 #   reuse-before-write). sanitize 가 audit 상 이름이 모호한 'cloud_key'(구조 real 키와
@@ -412,7 +442,7 @@ def is_symlink_or_reparse(path):
     return False
 
 
-def safe_remove(path, allowed_roots, dry_run=None):
+def safe_remove(path, allowed_roots, dry_run=None, recheck_inv1=False):
     """TB-3 filesystem-direct 삭제 — 파괴표면 가드 6종 강제.
 
     가드 6종 (§7.1.3 / §7.6):
@@ -424,6 +454,10 @@ def safe_remove(path, allowed_roots, dry_run=None):
       (6) filesystem-direct 전용 (등록 worktree=git-mediated 은 discover 에서 제외 — 여기 미도달).
 
     IDEM-3 double-delete 0: 삭제 직전 존재 재확인 + 이미-부재 = no-op 성공 + graceful.
+    recheck_inv1 (F-SEC-002 TOCTOU): True 면 실 삭제 직전 judge_orphan 재호출로 INV-1 보존
+      신호(dirty/unpushed/locked/pin/stash/INCONCLUSIVE)를 재검사 — 판정 직후 상태 변화 시
+      삭제 ABORT(KEEP 방향). IDEM-3 존재 재확인과 별개 layer(존재≠상태). 기존 judge 로직
+      재사용(별 신설 0). git_exists 는 path 로 재도출(source 는 judge_orphan 미사용).
     반환: (removed:bool, note:str). note = 사유 요약 (secret/절대경로 미포함 — sanitize).
     """
     dr = GC_DRY_RUN if dry_run is None else dry_run
@@ -448,6 +482,17 @@ def safe_remove(path, allowed_roots, dry_run=None):
 
     if dr:
         return (False, "dry-run: would-remove")
+
+    # (F-SEC-002) 실 삭제 직전 INV-1 재검증 — 판정~삭제 사이 상태 변화(dirty/unpushed/locked/
+    #   pin/stash/INCONCLUSIVE 신규 발생) 시 삭제 ABORT. 기존 judge_orphan 재사용(별 신설 0).
+    #   IDEM-3(존재 재확인)와 별개 layer. judge_orphan 은 source 미사용 → git_exists 만 재도출.
+    if recheck_inv1:
+        try:
+            decision, _r, _a = judge_orphan(path, None, has_git_dir(path))
+        except Exception:  # pragma: no cover - defensive: 재검증 실패 = 보수적 ABORT
+            return (False, "abort: toctou-recheck-failed")
+        if decision != "REMOVE":
+            return (False, "abort: toctou-state-changed")
 
     # graceful filesystem-direct 삭제
     try:
