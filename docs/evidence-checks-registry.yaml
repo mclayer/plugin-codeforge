@@ -2618,7 +2618,7 @@ entries:
       fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0 advisory).
       tier = warning (로컬 self-check). phase:완료 transition = Orchestrator self-write(로컬) +
       worktree 클라우드 러너 미접근 → required CI check 불가 (AC-2/AC-12) → workflow: null.
-      anti-theater 변별 test = scripts/test-check-worktree-completion-clean.sh
+      anti-theater 변별 test = tests/scripts/test-check-worktree-completion-clean.sh
       (git/gh stub 으로 sub/root/open-PR/gh미인증/dirty 변별). branch protection 6-tuple 무변경
       (신규 required check 0 → ADR-024 Amendment 19 §B bypass 신설 금지 invariant 원천 정합).
       gate:worktree-clean label 신설 안 함 (사용자 방향 "기존 게이트 확장", label 없이 Orchestrator self-check).
@@ -2647,6 +2647,156 @@ entries:
     owner_adr: ADR-128             # 완료 단계 정식화 umbrella — 완료-게이트 policy SSOT
     carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  - name: residue-clean-completion-gate
+    description: |
+      CFP-2822 / ADR-169 §결정 9 —
+      phase:완료 residue-clean self-check (완료-게이트 확장 형제).
+      "완료 Story 의 잔재(worktree + scratch + stash + orphan)가 가시화·정리됐는가" 검출.
+      discovery 스캐너 Story-scoped 모드(--story-key cfp-NNN)가 생성한 리포트 확인
+      ([residue-scan] DONE: scanned=N flagged=M — flagged 보존항목별 사유+나이 aging 집계).
+      **자동 삭제 강제 아님** (가시화 = INV-3, stash 자동삭제 = Non-goal, git 무만료 = 의도적 사용자 데이터).
+      §D-12 worktree-clean self-check 와 동형 구조(warning-tier + workflow:null + behavioral) +
+      disjoint 축: worktree-clean = 등록 worktree eager 미실행 검출 / residue-clean = 잔재 전반 가시화.
+      fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0 advisory).
+      tier = warning (로컬 self-check). phase:완료 transition = Orchestrator self-write(로컬) +
+      잔재 스캔 대상(~/.claude/worktrees + codeforge-scratch + workspace root + Temp) = repo 외부 +
+      클라우드 러너 미접근 → required CI check 불가 → workflow: null
+      (ADR-099/ADR-122/ADR-128 worktree-clean 선례 동형).
+      branch protection 8-tuple 무변경 (신규 required check 0 → ADR-024 Amendment 19 §B / ADR-127 정합).
+      **gate:residue-clean label 신설 안 함** — ADR-045 §D-12 worktree-clean label 미신설 패턴 답습.
+    detect_command: bash templates/scripts/check-workspace-residue-discovery.sh --story-key cfp-NNN
+    workflow: null   # CI 미wire — local-only check (phase:완료 transition = Orchestrator self-write + 잔재 스캔 대상 = ~/.claude 외부·workspace root·Temp = 클라우드 러너 미접근). ADR-099/ADR-122/ADR-128 worktree-clean 선례 동형.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 self-check, blocking 승격 불가 — required CI 구조적 불가)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2822   # 본 entry 도입 carrier (세션 잔재 수명 규약 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 잔재 가시화 presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2822
+    introduced_date: 2026-07-26    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
+    owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — residue-clean 게이트 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  # ── CFP-2822 / ADR-169 세션 잔재 수명 규약 신규 GC 체크 3종 (§8-3.4 형제 entry) ──
+  #   전부 warning-tier + workflow:null (로컬 실행 — 잔재 스캔 대상 = ~/.claude·workspace root·Temp
+  #   = repo 외부·클라우드 러너 미접근, required CI 구조적 불가). residue-clean-completion-gate 와
+  #   동형 구조(ADR-099/ADR-122/ADR-128 local-only 선례). branch protection 8-tuple 무변경.
+  #   변별 test = tests/scripts/test_check-*(worktree-completion-gate.yml 배선, selftest-liveness enroll).
+  - name: residue-scan
+    description: |
+      CFP-2822 / ADR-169 §결정 2 — 세션 잔재 발견(discovery) 스캐너 (on-demand/SessionEnd 확장).
+      multi-repo walk + orphan 3-분류 + Temp 관측(observe-only) + stash census + aging 재알림.
+      5-함수 파이프라인(discover→classify→judge→execute→report). judge/execute 분리로 INV-9 2단계를
+      execute flag 로 제어. 출력 = 별도 네임스페이스 [residue-scan] DONE: scanned=N flagged=M
+      (기존 [stale-check]/[completion-clean] 과 disjoint — INV-5 물리 무접촉). always exit 0 advisory.
+      fail-safe 4종 상속 (gh 미인증→보존 / dirty→data-loss 가드 / hard-block 금지 / always exit 0).
+      tier = warning (로컬 스캔). 스캔 대상(~/.claude/worktrees + workspace root + Temp) = repo 외부 +
+      클라우드 러너 미접근 → required CI check 불가 → workflow: null. residue-clean-completion-gate
+      (--story-key 완료-게이트 모드)와 동일 스크립트의 general 모드 — disjoint 용도.
+    detect_command: bash templates/scripts/check-workspace-residue-discovery.sh
+    workflow: null   # CI 미wire — local-only (스캔 대상 = repo 외부·클라우드 러너 미접근). ADR-099/ADR-122/ADR-128 선례.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 스캔, blocking 승격 불가 — required CI 구조적 불가)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2822   # 본 entry 도입 carrier (세션 잔재 수명 규약 Phase 2)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 잔재 발견 presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2822
+    introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
+    owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — 발견 스캐너 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  - name: scratch-ttl-purge
+    description: |
+      CFP-2822 / ADR-169 §결정 6 — codeforge-scratch TTL purge (AC-5).
+      ~/.claude/codeforge-scratch/ 내부 순수 loose 파일 age>TTL 자동 삭제. .git 보유 항목
+      (clone/worktree/export)은 TTL 삭제 제외 → AC-12 orphan 경로 회부 (INV-1 class 5 이식).
+      상태/영속 로그(worktree-stale-gc.log)는 명시 제외(하위호환). age = 절대 epoch 뺄셈(TZ-safe).
+      TB-3 filesystem-direct 삭제 가드 6종(realpath prefix 재검증 / symlink·junction 제외 /
+      normcase allowlist fail-closed / 빈경로 가드 / .git 오삭제 금지 / 정규 파일만). always exit 0.
+      출력 = [scratch-ttl] DONE: purged=N kept=M (별도 네임스페이스, INV-5). Bypass=BYPASS_CODEFORGE_SCRATCH_TTL.
+      tier = warning (로컬 SessionStart 경량 purge). codeforge-scratch = repo 외부 per-user 경로 +
+      클라우드 러너 미접근 → required CI check 불가 → workflow: null.
+    detect_command: bash templates/scripts/check-codeforge-scratch-ttl.sh
+    workflow: null   # CI 미wire — local-only (codeforge-scratch = repo 외부 per-user·클라우드 러너 미접근). ADR-099/ADR-122 선례.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (로컬 purge, blocking 승격 불가)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2822   # 본 entry 도입 carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # TTL purge presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2822
+    introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
+    owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — scratch TTL policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  - name: worktree-location-guard
+    description: |
+      CFP-2822 / ADR-169 §결정 5 — worktree 생성위치 PreToolUse(Bash) 가드 (AC-10, 2중방어).
+      git worktree add <path> 의 target 이 표준 관리 위치($HOME/.claude/worktrees/) 밖이면
+      warn(도입기)→block(승격기, exit 2). tier = WORKTREE_LOCATION_GUARD_TIER=warn|block.
+      정직한 한계(§7.6 T-GUARD): 1차 예방(best-effort, fail-open) — matcher 회피(비-Bash)·명령
+      난독화로 완전차단 불가. 2차 검출 = residue-scan(AC-11) 사후 가시화(예방⊕검출). Bypass=
+      BYPASS_WORKTREE_LOCATION_GUARD (audit 한 줄). worktree_base() 포트 소비(5번째 인라인 카피 방지).
+      tier = warning (로컬 PreToolUse hook — 클라우드 러너에 로컬 worktree 생성 시점 미도달) →
+      required CI check 구조적 불가 → workflow: null. hook-트리거라 manifest 불요(plugin 자동 도달).
+    detect_command: bash scripts/check-worktree-location-guard.sh
+    workflow: null   # CI 미wire — local PreToolUse hook (로컬 worktree 생성 시점 실패모드·클라우드 러너 미접근). ADR-099/ADR-122 선례.
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning (도입기 warn tier, block 승격 로드맵)
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2822   # 본 entry 도입 carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 위치 가드 presence 게이트 — modal 어휘 검사 미포함
+    introduced_by: CFP-2822
+    introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
+    owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — 생성위치 가드 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
       threshold: 3

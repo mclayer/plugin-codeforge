@@ -22,7 +22,10 @@ consumer 프로젝트가 **설치해 쓰는 플러그인**이다. 프로젝트�
 ## 작업 규칙 (필수)
 - **브랜치**: 모든 변경은 feature 브랜치(`cfp-NNN[-slug]`) + PR 경유. **main 직접 push 금지.**
 - **worktree**: 모든 코딩 작업은 격리된 worktree(`~/.claude/worktrees/<repo>/<branch>`) 안에서 — `git checkout` 직접 편집 금지 — **Story/PR 완결(merge 확인) 직후 해당 worktree 즉시 정리**. 절차 = `codeforge:worktree-lifecycle` skill.
-- **스크래치 위치**: repo 밖 임시 산출물은 `~/.claude/codeforge-scratch/` 만 허용 (홈 루트 직접 쓰기 금지 — repo-confinement 가드가 차단).
+- **스크래치 위치 + 잔재 수명 규약 (CFP-2822 / ADR-169)**: repo 밖 임시 산출물은 `~/.claude/codeforge-scratch/` 만 허용 (홈 루트 직접 쓰기 금지 — repo-confinement 가드가 차단). **찌꺼기 축적 방지 = 생성 시점 수명 규약 + 자동 회수 + 완료 게이트 검증** — 절차·판정 SSOT = `codeforge:worktree-lifecycle` skill + playbook §3.5, 정책 SSOT = ADR-169(세션 잔재 수명 규약).
+  - **scratch TTL 자동회수**: codeforge-scratch 내부 age>TTL **순수 loose 파일**만 자동 purge — `.git` 보유 항목(clone/worktree/export)은 삭제 제외 → orphan 분류 경로 회부(INV-1 data-loss 가드). 상태·메타파일은 scratch **밖** `~/.claude/worktree-gc-state/` 배치(자기소멸 회피).
+  - **worktree 생성위치 표준**: worktree 는 `~/.claude/worktrees/<repo>/` 안에서만 생성 — 표준 위치 밖 `git worktree add` = 위반(도입기 warn → 승격기 block, PreToolUse 위치 가드 1차 예방 ⊕ discovery 스캐너 2차 검출). "기계적 차단" ≠ 완전봉인(matcher 회피·난독화 잔여 — over-claim 금지).
+  - **bypass env 3종(각 사용 시 audit 1줄, 전역 export 금지)**: `BYPASS_WORKTREE_LOCATION_GUARD`(위치 가드) / `BYPASS_WORKSPACE_RESIDUE_SCAN`(잔재 발견 스캔) / `BYPASS_CODEFORGE_SCRATCH_TTL`(scratch TTL). Temp 회수는 별도 축 `TEMP_GC_DELETE_ENABLED`(default-off — 미충족 시 관측·보고만, 제3자 소유 삭제 0 = INV-9).
 - **subagent default**: 수정 작업은 `Agent` tool spawn 으로 수행. inline 직접 편집(Read/Write/Edit/Bash 직접)은 4종만 허용 — 사용자 대화 / TodoWrite / 읽기전용 Q&A 답변 / 상태 보고.
 - **병렬 default**: 서로 독립인 작업은 한 메시지에 다중 spawn. 순차는 (상태 의존 / 공유 자원 / 순서 자체가 의미) 중 하나일 때만.
 - **진행 시각화**: Story 진행 중 lane 전이 6시점(진입/PASS/FIX 검출/원인 판정/재진입/완료) TodoWrite 갱신 시도 의무 (non-skippable, 실패는 non-blocking). 마커 = 네이티브 status 렌더 (content 이모지 금지). SSOT: ADR-038 + playbook §14.

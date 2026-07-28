@@ -20,6 +20,7 @@ related_stories:
 related_adrs:
   - ADR-040   # Amendment 9 동반 — backstop SessionEnd async dispatch 자동 트리거 복원 + worktree-clean cleanup invariant 편입
   - ADR-045   # Amendment 13 동반 — phase:완료 precondition 에 worktree-clean self-check 추가 (2-gate AND → 2-gate + self-check)
+  - ADR-169   # ADR-169 §결정 4 가 §결정 3 단일-wire/멱등-불요 sub-claim scoped-supersede (본 §결정 3 pointer 참조)
   - ADR-026   # post-merge automation 4 action (갭 B 4-트리거 중 클라우드 측 1 — post-merge-followup.yml)
   - ADR-024   # Amendment 19 §B required-6-tuple-skip bypass 신설 금지 invariant — 본 ADR 게이트가 required check 신설 안 함 정합
   - ADR-127   # 모든 면제·단축경로 폐지 (forcing function 추가 방향 ratchet 정합 — process-skip 채널 신설 0)
@@ -139,6 +140,8 @@ backstop GC(`templates/scripts/check-worktree-stale.sh`)의 자동 트리거가 
 - **대안 = `Stop` async dispatch** — repo 에 live 비차단 Stop hook 존재(`hooks/stop`, `trap 'exit 0' ERR`, exit 0 항상 `[verified]` stop:37-47). 매 turn 발화 → throttle(timestamp 파일 + N시간 쿨다운) 필수. SessionEnd 채택 불가 시(PoC fail) fallback.
 - **배제(확정)** — SessionStart async:true(무시·동기 실행 = 지연 회귀) / SessionStart 동기(90+ worktree 스캔 시작 지연 재발) / GitHub Actions cron(클라우드 러너 로컬 worktree 미접근).
 - **트리거 단일화 invariant (race 1순위 안전장치)** — SessionEnd + Stop 동시 wire **금지**. 단일 트리거면 동시 GC 실행 race 자체 미발생 → 멱등성 가정 불요 (EC-4 정정 정합).
+
+> **[CFP-2822 scoped-supersede]** 본 '단일 트리거 / 멱등성 가정 불요' sub-claim 은 ADR-169 §결정 4 가 supersede — 다중 wire(SessionEnd + SessionStart detached lazy GC) 허용 + mkdir lock/cooldown/멱등 remove(E10) 필수. SSOT = ADR-169 §결정 4.
 
 ### §결정 4 — 갭 B: 통합 wrap-up 수렴 SSOT (절차 명문화 + 텔레메트리 관찰, 신규 SSOT 신설 0)
 

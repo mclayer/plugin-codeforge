@@ -56,7 +56,29 @@ jobs:
           exit 0
 
       - name: 변별 test — completion-clean (TC-3 / TC-4 / TC-6)
-        run: bash scripts/test-check-worktree-completion-clean.sh
+        run: bash tests/scripts/test-check-worktree-completion-clean.sh
 
       - name: 변별 test — backstop wire + registry + 회귀 (TC-1 / TC-2 / TC-5 / TC-7)
-        run: bash scripts/test-worktree-backstop-wire.sh
+        run: bash tests/scripts/test-worktree-backstop-wire.sh
+
+      # ── CFP-2822 Phase 2 세션 잔재 수명 규약 GC self-tests (ADR-169) ──
+      # QADev §8 Test Contract 이행 — selftest-execution-liveness-inventory enroll 정합
+      # (execution_channel: workflow:worktree-completion-gate.yml:worktree-completion-gate).
+      - name: CFP-2822 E10 double-delete race (P0, §8.5.3)
+        run: bash tests/scripts/test_check-worktree-gc-e10-race.sh
+      - name: CFP-2822 INV-1 5종 보존 + AC-12 orphan 분류 (P0)
+        run: bash tests/scripts/test_check-orphan-inv1-classify.sh
+      - name: CFP-2822 AC-5 scratch TTL purge
+        run: bash tests/scripts/test_check-scratch-ttl-ac5.sh
+      - name: CFP-2822 AC-6 harness Temp INV-9 (삭제 syscall 0)
+        run: bash tests/scripts/test_check-harness-temp-ac6-inv9.sh
+      - name: CFP-2822 AC-10 위치 가드 warn→block 스위치
+        run: bash tests/scripts/test_check-location-guard-ac10.sh
+      - name: CFP-2822 AC-8/11/15 discovery 재알림·orphan·용량
+        run: bash tests/scripts/test_check-residue-discovery-ac8-11-15.sh
+      - name: CFP-2822 AC-14 stash census (삭제 0)
+        run: bash tests/scripts/test_check-stash-census-ac14.sh
+      - name: CFP-2822 §7.5 sanitize/redaction discriminating
+        run: bash tests/scripts/test_check-orphan-sanitize.sh
+      - name: CFP-2822 born-broken 5종 회피
+        run: bash tests/scripts/test_check-residue-born-broken.sh

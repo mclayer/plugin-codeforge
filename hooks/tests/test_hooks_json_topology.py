@@ -22,6 +22,7 @@ EXPECTED_BASH = {
     "cross-repo-gh-safety",
     "repo-confinement",
     "git-branch-delete-merge-gate",
+    "worktree-location-guard",              # CFP-2822 생성위치 가드 (PreToolUse Bash deny-gate, ADR-169 §결정5)
     "pretooluse-bash-description-inject",   # CFP-2587 injection hook
 }
 EXPECTED_AGENT = {"pretooluse-agent-spawn-gate"}
@@ -36,8 +37,8 @@ def _matcher_hook_names(matcher: str) -> set:
     return set()
 
 
-def test_bash_matcher_exact_4_hook_set():
-    """Bash matcher = 정확히 4 hook (3 sibling deny-gate + injection). exact-set (초과/누락 검출)."""
+def test_bash_matcher_exact_5_hook_set():
+    """Bash matcher = 정확히 5 hook (4 sibling deny-gate[+worktree-location-guard, CFP-2822] + injection). exact-set (초과/누락 검출)."""
     assert _matcher_hook_names("Bash") == EXPECTED_BASH
 
 

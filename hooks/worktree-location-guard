@@ -1,0 +1,57 @@
+: << 'CMDBLOCK'
+@REM Polyglot hook: worktree-location-guard (CFP-2822, AC-10)
+@REM Adapted from hooks/repo-confinement polyglot pattern (CFP-2092 / CFP-475)
+@echo off
+REM PreToolUse(Bash) hook — 표준 위치 밖 `git worktree add <path>` 생성 가드
+REM Invokes scripts/check-worktree-location-guard.sh via Python SSOT
+REM tier(WORKTREE_LOCATION_GUARD_TIER=warn|block) 에 따라 exit 2(block)/0(warn)
+REM stdin (PreToolUse JSON payload) 상속. fail-open (SSOT/python 부재 = exit 0)
+
+set "REPO_ROOT=%~dp0.."
+if exist "C:\Program Files\Git\bin\bash.exe" (
+    "C:\Program Files\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-worktree-location-guard.sh"
+    exit /b %ERRORLEVEL%
+)
+if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+    "C:\Program Files (x86)\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-worktree-location-guard.sh"
+    exit /b %ERRORLEVEL%
+)
+where bash >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    bash "%REPO_ROOT%\scripts\check-worktree-location-guard.sh"
+    exit /b %ERRORLEVEL%
+)
+exit /b 0
+CMDBLOCK
+
+#!/usr/bin/env bash
+# hooks/worktree-location-guard — PreToolUse(Bash) hook: worktree 생성위치 가드 (CFP-2822, AC-10)
+#
+# 책임 경계:
+#   - PreToolUse(Bash) 시점에 `git worktree add <path>` 의 target 이 표준 위치
+#     (worktree_base() = $HOME/.claude/worktrees/<repo>) 밖이면 가드 발동.
+#   - 비책임: 판정 로직(경로 정규화·is_nonstandard_location·tier·bypass)은
+#     scripts/lib/check_worktree_location_guard.py (Python SSOT) 가 소유.
+#     본 hook 은 dispatch 만 — repo-confinement / git-branch-delete-merge-gate
+#     sibling 패턴 동형(code-share 없는 3번째 entry).
+#
+# Contract (Claude Code PreToolUse):
+#   tier=block → 위반 시 exit 2 + stderr = 차단. tier=warn(default) → stderr 경고 + exit 0.
+#   fail-open: 가드 스크립트/python/SSOT 부재 = exit 0 (정상 작업 차단 금지).
+#   BYPASS_WORKTREE_LOCATION_GUARD=1 → skip + audit (Python SSOT 담당, repo-confinement 패턴).
+#   stdin (PreToolUse payload JSON) 상속, exit code 그대로 전파 (block=2 보존).
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)"
+
+SCRIPT="${REPO_ROOT}/scripts/check-worktree-location-guard.sh"
+
+if [ ! -f "${SCRIPT}" ]; then
+  # Script 부재 → fail-open (guard 미차단, exit 0)
+  exit 0
+fi
+
+# Run guard — stdin (payload) 상속, exit code 그대로 전파.
+bash "${SCRIPT}"
+exit $?

@@ -211,3 +211,24 @@ scripts/lib/check_semantic_staleness_sentinel.py:templates/github-workflows/sema
 # (.sh/.py 비면제, check-consumer-scripts-manifest.sh L137-148).
 scripts/check-living-architecture-update.sh:templates/github-workflows/living-architecture-update.yml
 scripts/lib/check_living_architecture_update.py:templates/github-workflows/living-architecture-update.yml
+
+# CFP-2822 (ADR-169 §결정2/6 — 세션 잔재 수명 규약) — ② scratch TTL purge + ③ 잔재 발견(discovery)
+# 스캐너 consumer 전파 closure. 둘 다 로컬 스캐너(SessionStart/on-demand/SessionEnd 트리거이지
+# CI workflow-invoke 아님) → :dep_workflow 미부착(worktree-*.sh / build-local.sh / codeforge-upgrade.sh
+# script-only 선례 답습). 각 thin wrapper(.sh, ADR-061)는 depth-2 Python SSOT(scripts/lib/*.py 를
+# ../../scripts/lib/ 상대경로로 호출) → consumer 가 실제 실행하려면 .sh + .py 전량 co-distribution 필수
+# (ADR-130 §결정3/5 closure-완전성 — .py 누락 시 wrapper fail-open no-op = born-broken 스캐너).
+# ③ discovery 는 flat sibling 3종(orphan classify / stash census / harness temp)까지 import 하므로 함께 등재.
+# ① worktree-location-guard(hook) + ⑤ check-worktree-stale.sh(기존 worktree-*.sh 그룹 등재분) = 본 블록
+#   대상 아님(① 순수 hook-트리거 plugin 자동 도달, ⑤ 기존 잔존). 전 asset chmod +x(100755) — Check 4
+#   exec-bit 의무(.sh/.py 비면제, check-consumer-scripts-manifest.sh L137-148). .py = Developer/Dev-Discovery
+#   병렬 저작, 본 등록은 경로 참조만(파일 on-disk 실존 = collection 시점 PL manifest-lint 검증, CFP-2761 선례).
+# ② scratch TTL purge (AC-5):
+templates/scripts/check-codeforge-scratch-ttl.sh
+scripts/lib/check_codeforge_scratch_ttl.py
+# ③ discovery 스캐너 (AC-8/8a/11/12/14/15) — orchestrator + flat siblings:
+templates/scripts/check-workspace-residue-discovery.sh
+scripts/lib/check_workspace_residue_discovery.py
+scripts/lib/check_orphan_worktree_classify.py
+scripts/lib/check_stash_aging_census.py
+scripts/lib/check_harness_temp_residue.py

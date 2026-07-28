@@ -28,7 +28,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"   # CFP-2822 §8-3.4: scripts/ → tests/scripts/ relocate (repo-root = 2 level up)
 HOOKS_JSON="$REPO_ROOT/hooks/hooks.json"
 REGISTRY="$REPO_ROOT/docs/evidence-checks-registry.yaml"
 STALE_SH="$REPO_ROOT/templates/scripts/check-worktree-stale.sh"

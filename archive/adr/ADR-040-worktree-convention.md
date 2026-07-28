@@ -1071,6 +1071,8 @@ ADR-128(완료 단계 정식화) 의 갭 A 해소 carrier. 본 Amendment 9 = 두
 
 **트리거 단일화 invariant (race 1순위 안전장치 — 비협상)**: backstop 자동 트리거는 **단일 event(SessionEnd 권장)에만** wire. SessionEnd + Stop 동시 wire **금지**. 단일 트리거면 동시 GC 실행 race 자체가 발생하지 않음 → `git worktree remove --force` 멱등성 가정 불요 (멱등성은 무출처 단정이라 의존 안 함). check-worktree-stale.sh 의 기존 안전장치(dirty/locked 보존 / merged-only / always exit 0)는 **데이터 손실 방지**이지 동시 실행 race 방지가 아니므로 — 후자는 트리거 단일화로 해결.
 
+> **[CFP-2822 scoped-supersede]** 본 '트리거 단일화 / 멱등성 가정 불요' sub-claim 은 ADR-169 §결정 4 가 supersede — 진짜 invariant = 동시 GC race 방지(다중 wire 허용) + mkdir lock/cooldown/멱등 remove(E10) 필수. SSOT = ADR-169 §결정 4.
+
 **`BYPASS_WORKTREE_GC=1` env 무손상** — §결정 5 SSOT short-circuit 동작 유지. 자동 트리거 경로에서도 env 활성 시 origin 접촉 0 + prune 0 + exit 0.
 
 #### §결정 7.K — eager 정리 검증을 cleanup invariant 에 편입 (worktree-clean self-check)
