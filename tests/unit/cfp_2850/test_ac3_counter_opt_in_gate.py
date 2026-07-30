@@ -5,7 +5,7 @@ Change Plan §8.1.1 RTM AC-3 확장 (counter 축) + AC-12 count-reconcile ON-reg
 기존 `test_ac3_opt_in.py` 는 **ledger row 만** 검사해 hook COUNTER 를 못 잡는
 non-discriminating 상태였다 (F-CR-001 ④). 본 파일은 opt-in OFF 에서
 `.claude/ledger/spawn-completion.count` 가 **미생성/무증가** 임을 실 hook 실행으로 gate 한다:
-counter 가 opt-in gate **밖**에 있으면(현행 hook L222-226 opt-in-INDEPENDENT) RED.
+counter 가 opt-in gate **밖**에 있으면(구 구현 hook L222-226 opt-in-INDEPENDENT(F-CR-001 게이트 편입 전)) RED.
 
   - OFF-1 (config 부재)          → counter 0            [production 의존: counter opt-in gate]
   - OFF-2 (enabled AND channel)  → channel false 면 0    [production 의존: AND semantics]
@@ -157,7 +157,7 @@ def test_ac3_hook_counter_no_op_when_opt_in_config_absent(tmp_path):
     """(disc) config 부재(opt-in default false) → spawn-completion.count 미생성/무증가.
 
     [RED-until-landed: hook COUNTER 를 _opt_in_enabled gate 뒤로 이동]
-    현행 hook 은 counter 를 opt-in-INDEPENDENT 로 append → 본 test RED.
+    구 구현 hook 은 counter 를 opt-in-INDEPENDENT 로 append(게이트 편입 전 RED-first 시점) → 본 test RED.
     mutation(counter 를 gate 밖으로 되돌림) 시 counter 1 → RED (discriminating).
     """
     project = _make_project(tmp_path, "proj-optin-absent")
