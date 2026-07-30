@@ -108,13 +108,13 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 ## 2.1 self-context-v1 record type (ADR-043 Amendment 3 — L7 Orchestrator self-context proxy)
 
-**별개 record type** — 위 §2 의 19-field spawn row 와 **다른** row schema 이며, **동일 `spawn-event.jsonl` channel 을 공유**한다. 두 record type 은 `schema_version` **discriminator** 로 구분된다 (`spawn-event-v1` = 19-field spawn row / `self-context-v1` = 아래 6-field lead-self aggregate row). 본 record 는 장기 세션 Orchestrator(lead-self)의 context 누적을 **record-only proxy telemetry** 로 남긴다. substrate = 기존 SubagentStop-wired 채널 재사용 (신규 hook 블록 0). 실 emission 은 Phase 2 (본 §2.1 = allow-list POLICY 편입 — ADR-043 Amendment 3 §근거 (C)).
+**별개 record type** — 위 §2 의 23-field spawn row 와 **다른** row schema 이며, **동일 `spawn-event.jsonl` channel 을 공유**한다. 두 record type 은 `schema_version` **discriminator** 로 구분된다 (`spawn-event-v1` = 23-field spawn row / `self-context-v1` = 아래 6-field lead-self aggregate row). 본 record 는 장기 세션 Orchestrator(lead-self)의 context 누적을 **record-only proxy telemetry** 로 남긴다. substrate = 기존 SubagentStop-wired 채널 재사용 (신규 hook 블록 0). 실 emission 은 Phase 2 (본 §2.1 = allow-list POLICY 편입 — ADR-043 Amendment 3 §근거 (C)).
 
 ### 2.1.1 self-context 6 field (numeric / enum / hash only)
 
 | 필드 | 타입 | 필수 | 설명 | Sanitize |
 |---|---|---|---|---|
-| `schema_version` | const string | required | `self-context-v1` 고정 — 19-field spawn row 와의 **discriminator** | — |
+| `schema_version` | const string | required | `self-context-v1` 고정 — 23-field spawn row 와의 **discriminator** | — |
 | `session_id` | sha256 hash | required | top-level Claude session ID **hash** (raw session_id 저장 금지 — T-INFO-7 상속) | hash (raw 부재) |
 | `turn_index` | int | required | monotonic turn 카운터 | non-sensitive (count) |
 | `delegation_ratio` | float 0.0–1.0 | required | inline 대비 spawn 위임 비율 (coarse-round). **proxy** — lead-self ground-truth 아님 | non-sensitive (ratio) |
@@ -337,13 +337,13 @@ operational_constraints:
 
 ## 4. 변경 규칙
 
-- **Allow-list ONLY (v1.x)**: §2 의 19 field 외 새 field 추가 = ADR-043 §결정 2 Amendment 의무 + 본 contract version bump. optional field 추가 = MINOR (ADR-008 §결정 2 — backward-compat, v1.0 reader skip 가능). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR (v2.0 BREAKING).
+- **Allow-list ONLY (v1.x)**: §2 의 23 field 외 새 field 추가 = ADR-043 §결정 2 Amendment 의무 + 본 contract version bump. optional field 추가 = MINOR (ADR-008 §결정 2 — backward-compat, v1.0 reader skip 가능). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR (v2.0 BREAKING).
 - **free-form string field 도입 금지 (v1.x invariant)**: T-INFO-8 구조적 mitigation 보존. 만약 free-form string field 가 불가피하면 = ADR-043 §결정 3 Deny-list regex 6 pattern 적용 의무 + Amendment. (현 v1.0 = free-form 0건 → Deny-list no-op, 단 **inherit 선언** — defense in depth: 향후 string field 도입 시 자동 적용 대상).
 - **enum 값 추가**: `lane_label` / `agent_type` / `event_type` / `attribution_confidence` enum 확장 = additive 면 MINOR (ADR-043 §결정 2 Amendment 동반). enum 값 제거 = MAJOR.
 - **storage backend 변경 (JSONL → sqlite)**: ADR-163 §결정 4 amendment 의무 (BREAKING — 단 spawn-event 는 contract=runtime JSONL 일치가 §3 invariant. stop-event sqlite 계약 理想으로 align 하려면 stop-event runtime 도 동반 migration 필요 = 별 Epic).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 - **timestamp 형식**: UTC Z strict (§3). +00:00 / bare datetime 불허 — clarification 변경 = minor commentary.
-- **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 19-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
+- **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 23-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
 - **writer topology 변경 (append_rules.writer)**: write 지점/writer-path 변경 = amendment 의무 + MINOR (producer-normative — schema field 무변경이나 append 토폴로지는 계약 관측 semantic 이므로 amendment). CFP-2850 Amendment 4 = SubagentStop single-write → Orchestrator task-notification single-write.
 
 ## 5. Phase 1 / Phase 2 scope
@@ -371,7 +371,7 @@ ROI gating prerequisite: ADR-163 §결정 11 (post-merge-counters.jsonl 30+ run)
 
 ### self-context-v1 record type (CFP-2572 / ADR-043 Amendment 3 — Phase 1 doc-only)
 
-- §2.1 self-context-v1 6-field record type = **allow-list POLICY 편입** (ADR-043 Amendment 3). L7 Orchestrator self-context proxy — 동일 spawn-event.jsonl channel 공유, `schema_version` discriminator 로 19-field spawn row 와 분기.
+- §2.1 self-context-v1 6-field record type = **allow-list POLICY 편입** (ADR-043 Amendment 3). L7 Orchestrator self-context proxy — 동일 spawn-event.jsonl channel 공유, `schema_version` discriminator 로 23-field spawn row 와 분기.
 - **record-only proxy** — `delegation_ratio` / `pre_tokens` 는 lead-self ground-truth 가 아니다 (platform live per-turn self-context surface 부재 P1). 어떤 self-context 판정도 게이트가 아니며 gate/block/deny 를 세우지 않는다 (ADR-142 tier 정직 invariant).
 - 실 emission (append/dedup) = Phase 2 (본 §2.1 = POLICY declare, spawn-event-v1 contract bump 시 field-set count reconciliation 확정 — ADR-043 Amendment 3 §근거).
 

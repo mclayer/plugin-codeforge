@@ -20,10 +20,17 @@
 #   - INV-3 disjoint 채널 — counter 는 spawn-event.jsonl 와 물리 분리(별 sidecar). 본 script 는
 #     read-only 대조만(어느 파일도 write/mutate 안 함).
 #   - 0 API call (ADR-163 §결정8) — local read only.
-#   - honest-degrade (ADR-119): counter 는 opt-in-INDEPENDENT(모든 platform 완료 계수) 이나
-#     recorded row 는 opt-in-gated → opt-in OFF 세션의 gap 은 survivorship 이 아니라 opt-in-off.
-#     본 reconcile 은 gap 을 **upper-bound residual** 로 정직 표기(단정 금지). "gap = survivorship
-#     loss" 라 확정하지 않는다.
+#   - honest-degrade (ADR-119): counter(hooks/subagent-stop)와 recorded row(Orchestrator)는
+#     **동일 opt-in 술어**(telemetry.enabled AND channels.spawn_event)에 종속한다 —
+#     CFP-2850 구현리뷰 FIX Iter 2 / F-CR-001 로 counter 가 opt-in gate 안으로 이동
+#     (구 "opt-in-INDEPENDENT" 전제는 폐기: ADR-043 §결정 1 opt-in default false 위반이었음).
+#     따라서 **opt-in OFF 구간은 counter 도 0** — 그 구간은 gap 이 아니라 **측정 공백**이며
+#     본 reconcile 에 애초에 나타나지 않는다(no_data). 이는 gap 의 opt-in-off 오염을 제거하나,
+#     동시에 **opt-in OFF 세션의 완료는 아무 것도 관측하지 못한다**는 천장을 낳는다
+#     (counter 는 "모든 platform 완료 계수" 가 아니다 — over-claim 금지).
+#     opt-in ON 구간에서도 gap 은 여전히 **upper-bound residual** 로만 정직 표기(단정 금지):
+#     hook 발화 후 opt-in flip / gate probe fail-closed / counter 파일 소실 등이 섞일 수 있어
+#     "gap = survivorship loss" 라 확정하지 않는다.
 #
 # 사용:
 #   python3 reconcile_spawn_completion_count.py check [--count-path P] [--ledger-path P]
@@ -61,10 +68,14 @@ _DEFAULT_LEDGER_PARENT_REL = os.path.join(".claude", "ledger")
 
 _HONESTY = (
     "[measurement] STRICT record-only — gap = upper-bound residual(단정 금지). "
-    "hook counter 는 opt-in-INDEPENDENT(모든 platform 완료 계수) / recorded row 는 opt-in-gated "
-    "→ opt-in OFF 세션 gap 은 survivorship 이 아니라 opt-in-off. gap>0 = single-writer emit 실패/"
-    "notification-loss 의 upper-bound 관측(crash-safe), 인과 확정 아님(honest-degrade). counter "
-    "line append 원자성 = 로컬 FS best-effort(network-share 무보장)."
+    "hook counter 와 recorded row 는 **동일 opt-in 술어**(telemetry.enabled AND "
+    "channels.spawn_event)에 종속(F-CR-001 — counter 가 opt-in gate 안으로 이동, 구 "
+    "'opt-in-INDEPENDENT' 전제 폐기) → opt-in OFF 구간은 counter 도 0 이라 gap 이 아니라 "
+    "**측정 공백**(no_data)이며, 그 구간 완료는 관측 불가(counter = 모든 platform 완료 계수 아님). "
+    "opt-in ON 구간의 gap>0 = single-writer emit 실패/notification-loss 의 upper-bound 관측 "
+    "(crash-safe), 인과 확정 아님 — 구간 중 opt-in flip / gate probe fail-closed / counter 파일 "
+    "소실도 같은 gap 으로 보인다(honest-degrade). counter line append 원자성 = 로컬 FS "
+    "best-effort(network-share 무보장)."
 )
 
 

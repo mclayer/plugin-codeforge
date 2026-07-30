@@ -182,12 +182,38 @@ def _normalize_parent_event_id(raw_parent, already_hashed):
 
 # ─────────────────────── enum 정규화 (graceful fallback) ─────────────────────
 
+# ★F-CR-014 (구현리뷰 FIX Iter 2) — 미매칭 enum 값 stderr WARN (무음 강등 정직 가시화).
+# 구 구현은 closed-set 밖 값을 **조용히** null/fallback 으로 강등해, 호출자 오타(예:
+# outcome="succeeded")와 "값 미제공"이 ledger 상 구분 불가했다(둘 다 null). 강등 자체는
+# graceful 유지(reject 안 함 — record-only never-block)하되 **강등 사실을 stderr 로 표면화**
+# 한다 (silent-success-on-error 금지, ADR-119 정직 표기).
+# 경계: **미제공(None/빈 문자열) 은 WARN 대상 아님** — 미제공은 정상 honest-null 이지
+# 미매칭이 아니다. stderr 전용 (ledger row 에는 어떤 free-form 도 유입되지 않음 — T-INFO-8).
+_WARN_VALUE_MAXLEN = 64
+
+
+def _warn_enum_fallback(field, raw, fallback_desc):
+    """미매칭 enum 값 1건을 stderr 로 표면화 (record 는 계속 — graceful)."""
+    s = str(raw)
+    if len(s) > _WARN_VALUE_MAXLEN:
+        s = s[:_WARN_VALUE_MAXLEN] + "…(truncated)"
+    print(
+        "[codeforge-spawn-event] WARN: '%s' 미매칭 enum 값 %r → %s (closed-set 밖 — "
+        "record 계속, 무음 강등 아님)" % (field, s, fallback_desc),
+        file=sys.stderr,
+    )
+
+
 def _normalize_lane_label(raw):
     """lane_label closed enum — 미매칭 → '없음' fallback (reject 안 함, graceful)."""
     if raw is None:
         return _LANE_FALLBACK
     s = str(raw).strip()
-    return s if s in _LANE_LABELS else _LANE_FALLBACK
+    if s in _LANE_LABELS:
+        return s
+    if s:  # 미제공(빈 값) 은 WARN 대상 아님 — 미매칭만
+        _warn_enum_fallback("lane_label", s, "'%s' fallback" % _LANE_FALLBACK)
+    return _LANE_FALLBACK
 
 
 def _normalize_agent_type(raw):
@@ -207,7 +233,11 @@ def _normalize_event_type(raw):
     if raw is None:
         return _EVENT_TYPE_DEFAULT
     s = str(raw).strip()
-    return s if s in _EVENT_TYPES else _EVENT_TYPE_DEFAULT
+    if s in _EVENT_TYPES:
+        return s
+    if s:
+        _warn_enum_fallback("event_type", s, "default '%s'" % _EVENT_TYPE_DEFAULT)
+    return _EVENT_TYPE_DEFAULT
 
 
 def _normalize_model(raw):
@@ -230,7 +260,9 @@ def _normalize_model(raw):
     if _pricing_per_token_rates is not None:
         try:
             if _pricing_per_token_rates(s) is None:
-                return _MODEL_FALLBACK  # roster 미해석 → unknown-model bucket
+                # roster 미해석 → unknown-model bucket (F-CR-014 — 무음 버킷화 가시화)
+                _warn_enum_fallback("model", s, "'%s' bucket (pricing roster 미해석)" % _MODEL_FALLBACK)
+                return _MODEL_FALLBACK
         except Exception:
             return s  # 검증 불가 → pass-through (semi-open)
     return s
@@ -245,7 +277,11 @@ def _normalize_outcome(raw):
     if raw is None:
         return None
     s = str(raw).strip()
-    return s if s in _OUTCOMES else None
+    if s in _OUTCOMES:
+        return s
+    if s:
+        _warn_enum_fallback("outcome", s, "null (미분류)")
+    return None
 
 
 def _normalize_termination_cause(raw):
@@ -253,7 +289,11 @@ def _normalize_termination_cause(raw):
     if raw is None:
         return None
     s = str(raw).strip()
-    return s if s in _TERMINATION_CAUSES else None
+    if s in _TERMINATION_CAUSES:
+        return s
+    if s:
+        _warn_enum_fallback("termination_cause", s, "null (미분류)")
+    return None
 
 
 def _normalize_attribution_confidence(raw):
@@ -261,7 +301,11 @@ def _normalize_attribution_confidence(raw):
     if raw is None:
         return _ATTRIBUTION_DEFAULT
     s = str(raw).strip()
-    return s if s in _ATTRIBUTION_CONFIDENCE else _ATTRIBUTION_DEFAULT
+    if s in _ATTRIBUTION_CONFIDENCE:
+        return s
+    if s:
+        _warn_enum_fallback("attribution_confidence", s, "default '%s'" % _ATTRIBUTION_DEFAULT)
+    return _ATTRIBUTION_DEFAULT
 
 
 def _normalize_consumer_scope(raw):
@@ -270,6 +314,8 @@ def _normalize_consumer_scope(raw):
         s = str(raw).strip()
         if s in _CONSUMER_SCOPES:
             return s
+        if s:
+            _warn_enum_fallback("consumer_scope", s, "basename 휴리스틱 fallback")
     # 미지정 → basename 휴리스틱: plugin-codeforge checkout = wrapper, 그 외 = consumer
     proj_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
     if proj_dir:
@@ -300,6 +346,48 @@ def _coerce_int_or_none(value):
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+# ★F-CR-004 ③ (구현리뷰 FIX Iter 2) — hollow attributed 강등 대상 측정 field.
+# attribution_confidence 는 계약 §2 상 **token 측정 source 확보 여부**를 뜻한다
+# (contract §2: "attributed = 측정 실측 source 확보 — 4-way 분해 OR aggregate-only",
+# §2.2 degrade ladder tier-1/tier-2). 따라서 판정 대상 = total_tokens + 4-way 뿐이다.
+# **duration_ms / tool_call_count 는 의도적으로 제외** — 계약 §2.2 tier-3 이
+# "전 token null / unattributed / duration_ms=wall-clock 가능" 을 명시하므로,
+# duration 존재를 attribution 근거로 세면 tier-3 형상을 attributed 로 오분류하게 된다.
+_TOKEN_MEASUREMENT_FIELDS = (
+    "total_tokens", "input_tokens", "output_tokens",
+    "cache_creation_input_tokens", "cache_read_input_tokens",
+)
+
+
+def _effective_attribution(attribution_confidence, args):
+    """hollow attributed 강등 — attributed 인데 token 측정 field 가 전무하면 unattributed.
+
+    ★F-CR-004 ③: 구 구현은 호출자가 `--attribution-confidence attributed` 만 주고 token 을
+    하나도 안 주면 **attributed + 전 token null** 인 hollow row 를 그대로 기록했다. 이는
+    "측정 source 를 확보했다" 는 1급 상태 표기와 "측정치가 하나도 없다" 는 실체가 모순인
+    row 로, 하류 AC-15(attributed row ≥1 = landing bar) 를 **bare 배선만으로 통과**시키는
+    activation≠landing 위장 경로였다. 측정 field 전무 = source 미확보이므로 unattributed 로
+    강등한다 (honest-null 정합 — 없는 측정을 있는 것처럼 표기하지 않는다, ADR-119).
+
+    강등 판정 = `_coerce_int_or_none` 재사용 (별 coerce 규칙 복제 금지 — ADR-140):
+    비정수 쓰레기값도 coerce 후 None 이므로 hollow 로 동일 취급된다.
+    tier-2(aggregate-only, total_tokens 만) 는 **강등 대상 아님** — 측정 1개라도 있으면 attributed.
+    """
+    if attribution_confidence != "attributed":
+        return attribution_confidence
+    for field in _TOKEN_MEASUREMENT_FIELDS:
+        if _coerce_int_or_none(getattr(args, field, None)) is not None:
+            return "attributed"  # 측정 1개 이상 확보 (tier-1 또는 tier-2)
+    print(
+        "[codeforge-spawn-event] WARN: attributed 선언이나 token 측정 field 전무 "
+        "(%s 전부 null) → attribution_confidence=unattributed 강등 "
+        "(hollow attributed 금지 — 측정 없는 attributed 는 honest-null 위반)"
+        % ", ".join(_TOKEN_MEASUREMENT_FIELDS),
+        file=sys.stderr,
+    )
+    return _ATTRIBUTION_DEFAULT
 
 
 def _derive_token_cost(attribution_confidence, args):
@@ -373,6 +461,8 @@ def _build_row(args):
 
     event_id = _compute_event_id(session_id_hash, agent_id_hash, args.spawn_seq)
     attribution_confidence = _normalize_attribution_confidence(args.attribution_confidence)
+    # hollow attributed 강등 (F-CR-004 ③) — row 의 attribution_confidence field 도 강등 반영
+    attribution_confidence = _effective_attribution(attribution_confidence, args)
     token_cost = _derive_token_cost(attribution_confidence, args)
 
     parent_event_id = _normalize_parent_event_id(
@@ -743,8 +833,10 @@ def _build_parser():
     # ★UTF-8 args-file 채널 (CFP-2850 OQ-3 / T-ELEV-1) — argv=ASCII path 만, 실값·한국어
     #   lane_label content 는 파일 내부 UTF-8 JSON (argv string-interp injection + cp949 mangle 회피).
     p.add_argument("--args-file", default="",
-                   help="UTF-8 JSON args-file (ASCII path) — key=CLI dest(dash|underscore) 병합. "
-                        "usage 정수는 read 후 T-TAMP-2 validation(비음수+상한, 위반→unattributed)")
+                   help="UTF-8 JSON args-file (ASCII path, BOM 허용) — key=CLI dest"
+                        "(dash|underscore) 실값 병합. opt-in gate flag 는 병합 거부(F-CR-009), "
+                        "미지의 키는 drop+stderr WARN(F-CR-004). usage 정수는 argv 병합 후 "
+                        "T-TAMP-2 validation(비음수+상한, 위반→unattributed)")
 
     # opt-in gate (default false — silent always-on 금지)
     p.add_argument("--telemetry-enabled", action="store_true",
@@ -771,22 +863,66 @@ def _usage_within_bounds(value):
     return 0 <= iv <= _USAGE_SANITY_CAP
 
 
+# ★F-CR-009 (구현리뷰 FIX Iter 2) — args-file 이 실을 수 **없는** gate-flag closed-set.
+# 구 구현은 args-file 을 opt-in gate **앞**에서 무제한 병합해, args-file 이
+# {"telemetry-enabled": true, "spawn-event-enabled": true} 를 실으면 project.yaml 의
+# opt-in 설정(ADR-043 §결정 1 default false)을 **파일 하나로 우회**할 수 있었다. gate 결정은
+# 오직 (a) 명시 CLI flag 또는 (b) project config 에서만 온다 — args-file 은 **측정 실값 채널**
+# 이지 정책 채널이 아니다. 병합 시도는 drop + stderr WARN (silent bypass 금지).
+_ARGS_FILE_DENIED_KEYS = frozenset({"telemetry_enabled", "spawn_event_enabled"})
+
+
+def _validate_usage_bounds(args):
+    """T-TAMP-2 — usage 정수 sanity validation (비음수 + 상한 cap). 위반 → unattributed 강제.
+
+    ★F-CR-008 (구현리뷰 FIX Iter 2) — **argv 경로까지 확장**:
+    구 구현은 이 validation 을 `_load_args_file` **안**에서만 돌려, args-file 경로로 들어온
+    값은 검증하고 argv 로 직접 전달된 동일 값(`--total-tokens -5`)은 무검증 통과하는 비대칭
+    구멍이 있었다(같은 field, 다른 전달 매체로 가드 우회). 이제 argv/args-file 병합 **최종값**
+    을 단일 지점에서 검증한다 — 검증 로직 복제 0 (ADR-140), 호출 지점 = main() 1곳.
+
+    위반 시 attribution=unattributed 강제 → token/cost null (추정 대체 금지, §7.2 / ADR-119).
+    record-only 이므로 reject/비-0 exit 하지 않는다 (ADR-115 never-block).
+    """
+    for field in _USAGE_INT_FIELDS:
+        if not _usage_within_bounds(getattr(args, field, None)):
+            print(
+                "[codeforge-spawn-event] WARN: usage 정수 '%s' T-TAMP-2 위반 "
+                "(음수 또는 상한 %d 초과 — argv/args-file 병합 최종값) → "
+                "attribution=unattributed 강제 (token null, 추정 금지)"
+                % (field, _USAGE_SANITY_CAP),
+                file=sys.stderr,
+            )
+            args.attribution_confidence = "unattributed"
+            return False
+    return True
+
+
 def _load_args_file(args):
-    """--args-file UTF-8 JSON 병합 + T-TAMP-2 validation (CFP-2850 OQ-3 / T-ELEV-1).
+    """--args-file UTF-8 JSON 병합 (CFP-2850 OQ-3 / T-ELEV-1).
 
     argv 는 ASCII path 만; 실값·한국어 lane_label content 는 파일 내부 UTF-8 JSON
     (argv string-interp injection·Windows cp949 mangle 회피 — CFP-2817 D6 선례).
     파일 키 = CLI dest 명 (dash 또는 underscore 허용 — dash→underscore 정규화).
 
-    T-TAMP-2: 병합된 usage 정수(total/input/output/cache/duration/tool)가 비음수+상한
-    sanity cap 위반 시 → attribution=unattributed 강제(token null, 추정 대체 금지, §7.2).
+    병합 규율 (구현리뷰 FIX Iter 2):
+      - **F-CR-010**: `utf-8-sig` 로 read — BOM 있는 UTF-8(Windows 편집기/PowerShell
+        `Out-File -Encoding utf8` 기본 산출)도 수용. BOM 없는 UTF-8 은 동작 불변
+        (utf-8-sig 는 BOM 부재 시 utf-8 과 동일 — byte-compat).
+      - **F-CR-009**: gate-flag(`_ARGS_FILE_DENIED_KEYS`) 는 병합 거부 + WARN (opt-in 우회 차단).
+      - **F-CR-004 ①**: allow-list(argparse dest) 밖 키는 여전히 drop 하되 **stderr WARN 으로
+        가시화**. 구 구현은 무음 drop 이라 오타 키(`total-token`)나 계약 drift(신규 field 를
+        writer 가 보내는데 append 가 모름)가 조용히 사라지고 row 는 정상처럼 보였다 —
+        drop 은 반드시 trace 를 남긴다(silent-success-on-error 금지).
     파싱 실패 = graceful(argv 값 유지 + fail-VISIBLE stderr). exit-0 무손상.
+    T-TAMP-2 validation 은 본 함수가 아니라 `_validate_usage_bounds` (argv 경로 공통, F-CR-008).
     """
     path = getattr(args, "args_file", "") or ""
     if not path:
         return
     try:
-        with open(path, encoding="utf-8") as f:
+        # utf-8-sig: BOM 허용 (BOM 부재 시 utf-8 과 동일 — F-CR-010)
+        with open(path, encoding="utf-8-sig") as f:
             data = json.load(f)
     except Exception as exc:  # 읽기/파싱 실패 → graceful (fail-VISIBLE)
         print(
@@ -801,25 +937,39 @@ def _load_args_file(args):
         )
         return
 
-    # 병합: file 키 → args attr (dash→underscore, 미지의 키는 무시 — allow-list = argparse dest)
+    # 병합: file 키 → args attr (dash→underscore). allow-list = argparse dest.
+    dropped = []   # allow-list 밖 (오타/계약 drift 후보) — F-CR-004 ①
+    denied = []    # gate-flag 우회 시도 — F-CR-009
     for key, value in data.items():
         dest = str(key).replace("-", "_")
         if dest == "args_file":
             continue  # 재귀 방지 (args-file 이 또 args-file 지정 무의미)
+        if dest in _ARGS_FILE_DENIED_KEYS:
+            denied.append(dest)
+            continue
         if hasattr(args, dest):
             setattr(args, dest, value)
+        else:
+            dropped.append(dest)
 
-    # T-TAMP-2 — 병합된 usage 정수 sanity validation (위반 → unattributed + token null)
-    for field in _USAGE_INT_FIELDS:
-        if not _usage_within_bounds(getattr(args, field, None)):
-            print(
-                "[codeforge-spawn-event] WARN: args-file usage 정수 '%s' T-TAMP-2 위반 "
-                "(음수 또는 상한 %d 초과) → attribution=unattributed 강제 (token null, 추정 금지)"
-                % (field, _USAGE_SANITY_CAP),
-                file=sys.stderr,
-            )
-            args.attribution_confidence = "unattributed"
-            break
+    if denied:
+        print(
+            "[codeforge-spawn-event] WARN: args-file 의 opt-in gate flag 병합 거부 — %s "
+            "(gate 는 명시 CLI flag 또는 project config 에서만 결정 — args-file 우회 불가, "
+            "ADR-043 §결정 1 opt-in default false)" % ", ".join(sorted(set(denied))),
+            file=sys.stderr,
+        )
+    if dropped:
+        # 키 이름만 표면화 (값 미출력 — content 유입 0). 과다 시 bound.
+        names = sorted(set(dropped))
+        shown = names[:20]
+        suffix = " …(+%d)" % (len(names) - len(shown)) if len(names) > len(shown) else ""
+        print(
+            "[codeforge-spawn-event] WARN: args-file 미지의 키 %d개 drop — %s%s "
+            "(argparse dest allow-list 밖: 오타 또는 계약 drift 의심 — 무음 drop 아님)"
+            % (len(names), ", ".join(shown), suffix),
+            file=sys.stderr,
+        )
 
 
 def main():
@@ -828,8 +978,12 @@ def main():
 
     # graceful degradation: 어떤 예외도 exit 0 (block 금지 — ADR-115 §결정 5 inherit)
     try:
-        # UTF-8 args-file 병합 + T-TAMP-2 (opt-in gate 前 — file 이 opt-in flag 도 실을 수 있음)
+        # UTF-8 args-file 실값 병합. gate-flag 는 병합 대상 아님 (F-CR-009) —
+        # 따라서 이 호출은 opt-in 판정에 영향을 주지 못한다 (측정 실값 채널 전용).
         _load_args_file(args)
+
+        # T-TAMP-2 — argv/args-file 병합 최종값 sanity (F-CR-008: argv 경로 포함 단일 지점)
+        _validate_usage_bounds(args)
 
         # opt-in gate — off 면 no-op (row 0, exit 0)
         if not _opt_in_enabled(args):

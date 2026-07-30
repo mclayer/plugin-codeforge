@@ -62,16 +62,29 @@ except Exception:  # pragma: no cover — import path fallback
 # 광의가 아닌 명시 closed-set — outcome=None 정직 제외).
 _NONSUCCESS_OUTCOMES = frozenset({"failure", "inconclusive", "partial"})
 
+# record type discriminator (contract §2.1) — spawn-event.jsonl 은 **공유 channel** 이라
+# self-context-v1 등 별 record type 이 같은 파일에 섞인다. 집계 대상 = spawn row 만.
+_SPAWN_SCHEMA_VERSION = "spawn-event-v1"
+
 
 # ─────────────────────── row 로드 (replay primitive REUSE) ───────────────────
 
 def load_rows(ledger_path, story_key=""):
-    """ledger read → event_id read-time dedup → (선택) story_key filter.
+    """ledger read → **schema_version filter** → event_id read-time dedup → story_key filter.
 
     replay_spawn_event 의 _read_ledger / _dedup_by_event_id / _filter_story REUSE
     (ADR-140 — JSONL read + at-least-once dedup 로직 단일 원본). 부재 → [] (graceful).
+
+    ★F-CR-002 (구현리뷰 FIX Iter 2) — schema_version 필터 신설:
+    spawn-event.jsonl 은 spawn-event-v1 과 self-context-v1 이 `schema_version`
+    discriminator 로 공존하는 **공유 channel**(contract §2.1). 필터 부재 시 self-context row
+    (agent_type/model/outcome/total_tokens 전부 부재)가 `(None, None)` 그룹으로 pivot 에
+    유입돼 AC-9 실패율 denominator 를 오염시키고, AC-10 낭비집계 row_count 를 부풀렸다.
+    필터 위치·형태 = reconcile_spawn_completion_count.count_recorded_rows(:109) 동형 패턴
+    REUSE (filter → dedup 순서 동일 — 신규 로직 0).
     """
     rows = _replay._read_ledger(Path(ledger_path))
+    rows = [r for r in rows if r.get("schema_version") == _SPAWN_SCHEMA_VERSION]
     rows = _replay._dedup_by_event_id(rows)
     rows = _replay._filter_story(rows, story_key)
     return rows
@@ -228,8 +241,41 @@ def _emit_table(agg):
     )
 
 
+def _setup_error(ledger_path):
+    """setup error 판정 — ledger path 가 비정상 형상이면 사유 문자열, 정상이면 None.
+
+    ★F-CR-012 (구현리뷰 FIX Iter 2) — 종료코드 규약 실배선:
+    모듈 docstring 이 `2 = setup error (ledger path 가 디렉터리 등 비정상)` 를 **선언만** 하고
+    구현이 없어, 디렉터리/권한 오류가 `_read_ledger` 의 OSError swallow 로 **빈 결과 + exit 0**
+    (= "0 groups" 정상 출력)으로 위장됐다. usage/setup 오류와 "정말 데이터가 없음"을 호출자가
+    구분 못 하는 silent-success → exit 2 로 분리한다.
+    **경계**: ledger **부재**는 setup error 아님(graceful 0 — 계측 미시작 정상 상태).
+    본 script 는 read-only aggregate 이며 append 경로가 아니다 — append 의 exit-0 불변식
+    (ADR-115, record-only never-block)과는 별 축이다(혼동 금지).
+    """
+    p = Path(ledger_path)
+    if p.is_dir():
+        return "ledger path 가 디렉터리 (파일 기대): %s" % p
+    if p.exists():
+        try:
+            with open(str(p), "rb"):
+                pass
+        except OSError as e:
+            return "ledger read 불가 (%s): %s" % (e.__class__.__name__, p)
+    return None
+
+
 def cmd_aggregate(args):
     ledger_path = _replay._resolve_ledger_path(args.ledger_path)
+
+    err = _setup_error(ledger_path)
+    if err is not None:
+        print(
+            "[codeforge-spawn-event-aggregate-setup-error] aggregate-spawn-event: %s" % err,
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     rows = load_rows(ledger_path, args.story_key)
     agg = aggregate(rows)
     if args.format == "json":

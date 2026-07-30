@@ -10,7 +10,9 @@
 # 책임 (Change Plan §5 / §8.2 — 8 검증 항목):
 #   (a) kind:registry frontmatter (kind: registry + registry: spawn-event present).
 #   (b) §1/§2/§3/§4 headings present.
-#   (c) Allow-list ONLY — §2 field 표 23 row, free-form string field 0 (enum/numeric/hash only).
+#   (c) Allow-list ONLY — §2 field 표 **실파싱**(하드코딩 상수 아님, F-CR-003):
+#       파싱 공집합 금지 / 중복 row 금지 / heading 선언 개수 ↔ 표 실측 행수 일치 /
+#       타입 열 free-form `string` 0 (enum/numeric/hash/const only — T-INFO-8).
 #   (d) attribution_confidence invariant — enum {attributed, unattributed, unsupported}
 #       + default unattributed + literal "unattributed" 존재.
 #   (e) agent_type semi-open membership — enum reject 검증 아님; unknown-agent fallback 존재
@@ -22,7 +24,9 @@
 #       {success, inconclusive, failure, partial} + termination_cause closed-set
 #       {normal, timeout, zero_output, error, cancelled} + model semi-open
 #       (unknown-model fallback 존재) 가 §2 표에 명시됐는지 검증.
-#   + contract↔runtime PARITY (선택) — append_spawn_event.py row key ↔ contract 23 set 일치.
+#   + contract↔runtime PARITY — §2 doc-parse(set A) ↔ append_spawn_event._ROW_KEYS
+#     code-import(set B) **양방향 대칭** 비교: A\B(계약⊄runtime) · B\A(runtime⊄계약)
+#     둘 다 검출 (F-CR-003 — 구 단방향/상수-대조 tautology 대체).
 #
 # 불변식:
 #   - 0 API call, local read only.
@@ -55,18 +59,14 @@ _DEFAULT_CONTRACT_REL = os.path.join(
     "docs", "inter-plugin-contracts", "spawn-event-v1.md"
 )
 
-# contract §2 Allow-list 23 field (정확 키 — SSOT).
-# 기존 19 core + CFP-2850 Amendment 4 additive 4 field(total_tokens·model·outcome·
-# termination_cause) 순서대로 append. runtime append_spawn_event._ROW_KEYS(23) 와 parity SSOT.
-_CONTRACT_23_FIELDS = [
-    "event_id", "schema_version", "timestamp", "story_key", "lane_label",
-    "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
-    "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
-    "duration_ms", "tool_call_count", "actor", "parent_event_id",
-    "consumer_scope", "event_type", "elapsed_seconds",
-    # ── CFP-2850 Amendment 4 additive (19 → 23) ──
-    "total_tokens", "model", "outcome", "termination_cause",
-]
+# ★F-CR-003 (구현리뷰 FIX Iter 2) — 구 `_CONTRACT_23_FIELDS` 하드코딩 상수 제거.
+#   구 lint 은 "23개 field 이름" 을 **이 파일에 복사해 둔 상수**와 대조했다. 그래서
+#   contract §2 표가 바뀌어도(24번째 field 추가 / field 삭제) 상수가 그대로면 lint 은
+#   PASS 했고, parity 도 `상수 ↔ runtime` 이라 **doc 은 비교에 아예 참여하지 않는** 2-source
+#   착시(실은 1-source tautology)였다. 이제 field 집합은 contract §2 표를 **실파싱**해서만
+#   얻고, 비교는 `doc-parse ↔ code-import(_ROW_KEYS)` **양방향 대칭**으로 한다.
+#   구조 선례 REUSE = check_dev_process_event_schema.py (§2 doc-parse vs _ROW_KEYS code-import,
+#   SYMMETRIC fail-closed + 공집합 vacuous-pass 금지) — 신규 parity 개념 0.
 
 _EVENT_TYPE_VALUES = ["agent_start", "agent_stop", "tool", "file_touch", "mode_change"]
 _ATTRIBUTION_VALUES = ["attributed", "unattributed", "unsupported"]
@@ -77,6 +77,22 @@ _ATTRIBUTION_VALUES = ["attributed", "unattributed", "unsupported"]
 _OUTCOME_VALUES = ["success", "inconclusive", "failure", "partial"]
 _TERMINATION_CAUSE_VALUES = ["normal", "timeout", "zero_output", "error", "cancelled"]
 _MODEL_FALLBACK = "unknown-model"
+
+# ── free-form string 검출 (T-INFO-8) ──────────────────────────────────────────
+# §2 표 `타입` 열이 **구조 수식 없는 순수 `string`** 이면 free-form 유입 후보다.
+# 아래 토큰 중 하나라도 타입 셀에 있으면 구조가 pin 된 것으로 본다 (free-form 아님).
+_TYPE_STRUCTURE_TOKENS = (
+    "sha256", "hash", "enum", "const", "int", "number", "float", "bool",
+    "iso8601", "reference",
+)
+
+# ★baseline (ratchet) — 현행 계약이 `string` 으로 선언하나 구조가 pin 된 2 field.
+#   - `schema_version`: §3 항목이 `const: "spawn-event-v1"` 로 고정 (사실상 const string).
+#   - `story_key`: KEY prefix + 번호 형태의 구조 키 (§2 Sanitize 열 = non-sensitive(public)).
+#   본 baseline 은 **동결선**이지 면죄부가 아니다 — 여기 없는 새 bare-`string` field 가
+#   §2 표에 등장하면 violation 으로 fire 한다(T-INFO-8 신규 유입 차단 ratchet).
+#   baseline 자체를 늘리는 변경 = 계약 §4 free-form 금지 조항 검토 + amendment 대상.
+_FREEFORM_STRING_BASELINE = frozenset({"schema_version", "story_key"})
 
 
 # ─────────────────────── frontmatter / 본문 split ────────────────────────────
@@ -100,6 +116,63 @@ def _split_frontmatter(text):
     except yaml.YAMLError:
         return None, body
     return (fm if isinstance(fm, dict) else None), body
+
+
+# ─────────────────────── §2 표 실파싱 (doc-parse = parity set A) ─────────────
+
+def _strip_fenced_blocks(text):
+    """``` ... ``` fenced code block 제거 — §2 안의 markdown **예시 표**가 필드 파싱에
+    섞이지 않도록 (예시는 field 이름이 아니라 header 나열이라 오탐 원천)."""
+    return re.sub(r"(?ms)^```.*?^```\s*?$", "", text)
+
+
+def _extract_section(text, start_pat, end_pat):
+    """start_pat ~ 그 뒤 첫 end_pat 직전까지 슬라이스 (없으면 None).
+
+    check_dev_process_event_schema.py `_extract_section` 동형 (동일 doc-parse 계열 —
+    구조 REUSE, ADR-140). 별 모듈 import 는 하지 않는다 (계약 간 결합 회피).
+    """
+    ms = re.search(start_pat, text)
+    if not ms:
+        return None
+    tail = text[ms.end():]
+    me = re.search(end_pat, tail)
+    end = ms.end() + me.start() if me else len(text)
+    return text[ms.start():end]
+
+
+def parse_section2_fields(body):
+    """§2 field 표 실파싱 → [(field_name, type_cell), ...] (표 등장 순서).
+
+    범위 = `## 2. Schema` ~ `## 2.1`(self-context record type) 직전. §2.1 의 6-field 표는
+    **별 record type** 이므로 spawn row allow-list 에 섞으면 안 된다 (discriminator 분리).
+    fenced block 제거 후, `| \\`field\\` | 타입 | ...` 형태 data row 만 수집.
+    """
+    section2 = _extract_section(body, r"(?m)^##\s*2\.\s", r"(?m)^##\s*2\.1")
+    if section2 is None:
+        return []
+    section2 = _strip_fenced_blocks(section2)
+    fields = []
+    for m in re.finditer(r"(?m)^\|\s*`([^`|]+)`\s*\|([^|]*)\|", section2):
+        fields.append((m.group(1).strip(), m.group(2).strip()))
+    return fields
+
+
+def parse_declared_field_count(body):
+    """§2 heading 이 선언한 field 개수 (`## 2. Schema (23개 필드 ...)`) → int | None.
+
+    표 실측 행 수와 대조해 "heading 은 23 이라는데 표는 24행" 류 자기모순을 잡는다.
+    """
+    m = re.search(r"(?m)^##\s*2\.\s*Schema\s*\((\d+)\s*개", body)
+    return int(m.group(1)) if m else None
+
+
+def _is_freeform_string_type(type_cell):
+    """타입 셀이 구조 수식 없는 순수 `string` 인가 (T-INFO-8 free-form 후보)."""
+    lowered = type_cell.lower()
+    if "string" not in lowered:
+        return False
+    return not any(tok in lowered for tok in _TYPE_STRUCTURE_TOKENS)
 
 
 # ─────────────────────── 검증 항목 (a)~(h) + parity ──────────────────────────
@@ -126,22 +199,54 @@ def _check_headings(body, violations):
             violations.append("(b) §%d heading 부재" % n)
 
 
-def _check_allowlist_23(body, violations):
-    """(c) Allow-list ONLY — §2 field 표 23 row 전부 present + free-form string field 0.
+def _check_allowlist(parsed_fields, declared_count, body, violations, notes):
+    """(c) Allow-list ONLY — §2 표 **실파싱** 결과 자체 정합 + free-form string 타입 검출.
 
-    23 field(19 core + CFP-2850 Amendment 4 additive 4)가 §2 표에 `| \\`field\\` |`
-    형태로 전부 등장하는지 + free-form string 타입 선언 부재 검증.
-    'free-form string field' 명시 부재 = 구조적 차단 (T-INFO-8).
+    ★F-CR-003: 하드코딩 상수 대조를 폐기하고 §2 표를 실파싱한 결과로 검증한다.
+      (c1) 파싱 공집합 = vacuous pass 금지 → RED (표 형식이 깨졌는데 PASS 하는 사고 차단).
+      (c2) 중복 field row 검출.
+      (c3) heading 선언 개수 ↔ 표 실측 행 수 대조 (자기모순 검출).
+      (c4) **타입 열 free-form `string` 검출** — 구조 수식(sha256/enum/const/int/…) 없는
+           순수 `string` field 가 baseline 밖에서 등장하면 T-INFO-8 위반(Deny-list 를 no-op
+           으로 유지시키는 구조적 차단이 뚫림).
+      (c5) 계약이 스스로 "free-form string field 0/부재" 를 선언하는지 (기존 유지).
     """
-    missing = []
-    for field in _CONTRACT_23_FIELDS:
-        # `| \`event_id\` |` 형태 (백틱 wrapped, 표 cell)
-        pat = re.compile(r"\|\s*`%s`\s*\|" % re.escape(field))
-        if not pat.search(body):
-            missing.append(field)
-    if missing:
+    names = [f for f, _t in parsed_fields]
+
+    if not names:
         violations.append(
-            "(c) §2 Allow-list 23 field 중 표 미등장: %s" % ", ".join(missing)
+            "(c) §2 field 표 doc-parse 결과 공집합 — 표 파싱 실패. vacuous pass 금지 → RED"
+        )
+        return
+
+    dupes = sorted({n for n in names if names.count(n) > 1})
+    if dupes:
+        violations.append("(c) §2 표 중복 field row: %s" % ", ".join(dupes))
+
+    if declared_count is None:
+        violations.append(
+            "(c) §2 heading 의 field 개수 선언(`## 2. Schema (N개 필드 ...)`) 부재 — "
+            "표 실측과 대조 불가"
+        )
+    elif declared_count != len(names):
+        violations.append(
+            "(c) §2 heading 선언 %d개 ↔ 표 실측 %d행 불일치 (계약 자기모순)"
+            % (declared_count, len(names))
+        )
+    else:
+        notes.append("allow-list: §2 heading 선언 == 표 실측 %d field (자기정합)" % len(names))
+
+    freeform = sorted(
+        {
+            f for f, t in parsed_fields
+            if _is_freeform_string_type(t) and f not in _FREEFORM_STRING_BASELINE
+        }
+    )
+    if freeform:
+        violations.append(
+            "(c) §2 타입 열 free-form `string` field 검출: %s — T-INFO-8 구조적 차단 위반 "
+            "(enum/numeric/hash/const 로 pin 하거나 계약 §4 Deny-list 적용 + amendment 의무)"
+            % ", ".join(freeform)
         )
 
     # free-form string field 0 검증 — 명시적 "free-form string field 0/부재" 선언 present
@@ -228,17 +333,23 @@ def _check_opt_in_default_false(body, violations):
         violations.append("(h) 'opt-in default false' (또는 동등) 명시 부재")
 
 
-def _check_runtime_parity(repo_root, violations, notes):
-    """contract↔runtime PARITY (선택) — append_spawn_event.py _ROW_KEYS ↔ contract 23 set.
+def _check_runtime_parity(repo_root, parsed_fields, violations, notes):
+    """contract↔runtime PARITY — §2 **doc-parse** set A ↔ `_ROW_KEYS` **code-import** set B.
 
-    import 가능 시 row key 추출해 23 set 비교 (Phase 2 contract=runtime 일치 —
-    CFP-2850 Amendment 4 로 19→23 확장, AC-6 parity 정합).
-    import 어려우면 skip (notes 기록 — Phase 1 theater 회피, runtime parity 는 별 검증).
+    ★F-CR-003: 구 구현은 set A 를 이 파일의 하드코딩 상수에서 가져왔다 → 계약 문서가 비교에
+    참여하지 않는 1-source tautology(계약 표를 24번째 field 로 바꿔도 PASS). 이제 set A 는
+    contract §2 표 실파싱 결과이며, 비교는 **SYMMETRIC**(A\\B, B\\A 양방향) 이다:
+      - contract ⊄ runtime (A\\B) = 계약에 있는데 runtime 이 안 쓰는 field.
+      - runtime ⊄ contract (B\\A) = runtime 이 쓰는데 계약에 없는 field (allow-list 이탈).
+    doc-parse 공집합은 `_check_allowlist` 가 이미 RED 로 잡는다(vacuous pass 금지).
+    import 불가 = code anchor 부재 → skip + note (over-claim 금지 — 봉인했다고 주장하지 않음).
     """
+    contract_keys = {f for f, _t in parsed_fields}
+
     lib_dir = os.path.join(repo_root, "scripts", "lib")
     append_module_path = os.path.join(lib_dir, "append_spawn_event.py")
     if not os.path.isfile(append_module_path):
-        notes.append("parity: append_spawn_event.py 부재 — runtime parity skip")
+        notes.append("parity: append_spawn_event.py 부재 — runtime parity skip (봉인 주장 없음)")
         return
     try:
         sys.path.insert(0, lib_dir)
@@ -254,17 +365,27 @@ def _check_runtime_parity(repo_root, violations, notes):
             except ValueError:
                 pass
 
-    contract_keys = set(_CONTRACT_23_FIELDS)
+    if not runtime_keys:
+        violations.append(
+            "(parity) append_spawn_event 는 import 되나 _ROW_KEYS 공집합/부재 — "
+            "code anchor 파손 (impl-present non-skippable → RED)"
+        )
+        return
+
     if runtime_keys != contract_keys:
         missing_in_runtime = sorted(contract_keys - runtime_keys)
         extra_in_runtime = sorted(runtime_keys - contract_keys)
         violations.append(
-            "(parity) append_spawn_event _ROW_KEYS ↔ contract 23 set 불일치 — "
-            "runtime missing: %s / runtime extra: %s"
-            % (missing_in_runtime, extra_in_runtime)
+            "(parity) 계약 §2(doc-parse, %d) ↔ append_spawn_event._ROW_KEYS(code-import, %d) "
+            "불일치 [SYMMETRIC fail-closed] — contract\\runtime: %s / runtime\\contract: %s"
+            % (len(contract_keys), len(runtime_keys), missing_in_runtime, extra_in_runtime)
         )
     else:
-        notes.append("parity: append_spawn_event _ROW_KEYS == contract 23 set (일치)")
+        notes.append(
+            "parity: A(%d, doc-parse §2) == B(%d, code-import _ROW_KEYS) — "
+            "TWO-SOURCE 일치 (doc-vs-code, tautology 아님)"
+            % (len(contract_keys), len(runtime_keys))
+        )
 
 
 # ─────────────────────── 서브커맨드: check ───────────────────────────────────
@@ -305,16 +426,20 @@ def cmd_check(args):
     violations = []
     notes = []
 
+    # ★F-CR-003 — field 집합의 유일 source = contract §2 표 실파싱 (하드코딩 상수 폐기).
+    parsed_fields = parse_section2_fields(body)
+    declared_count = parse_declared_field_count(body)
+
     _check_frontmatter_kind(fm, violations)        # (a)
     _check_headings(body, violations)              # (b)
-    _check_allowlist_23(body, violations)          # (c)
+    _check_allowlist(parsed_fields, declared_count, body, violations, notes)  # (c)
     _check_attribution_invariant(body, violations) # (d)
     _check_agent_type_semi_open(body, violations)  # (e)
     _check_event_type_enum(body, violations)       # (f)
     _check_idempotency(body, violations)           # (g)
     _check_opt_in_default_false(body, violations)  # (h)
     _check_n9_enum_membership(body, violations)    # (i) N9 outcome/termination_cause/model
-    _check_runtime_parity(repo_root, violations, notes)  # parity (선택)
+    _check_runtime_parity(repo_root, parsed_fields, violations, notes)  # parity (SYMMETRIC)
 
     for note in notes:
         print("::notice::check-spawn-event-schema: %s" % note)
@@ -331,8 +456,10 @@ def cmd_check(args):
 
     print(
         "check-spawn-event-schema: PASS — (a)~(i) + parity 전부 충족 "
-        "(23 field Allow-list / attribution invariant / semi-open agent_type / "
-        "idempotency / opt-in default false / N9 outcome·termination_cause·model enum)"
+        "(§2 doc-parse %d field Allow-list / free-form string 0 / attribution invariant / "
+        "semi-open agent_type / idempotency / opt-in default false / "
+        "N9 outcome·termination_cause·model enum / SYMMETRIC doc↔code parity)"
+        % len(parsed_fields)
     )
     sys.exit(0)
 
