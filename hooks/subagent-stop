@@ -103,57 +103,11 @@ fi
 >&2 printf '  Orchestrator = subagent artifacts verbatim Read + mismatch reject + §10 FP count tally.\n'
 >&2 printf '  ADR-071 §결정 17 back-translation gate: [USER-UTTERANCE-VERBATIM] block 유무 확인.\n'
 
-# ── agent_type 및 agent_id 추출 ───────────────────────────────────────────────
-# SubagentStop hook payload 에서 agent_type / agent_id 시도 추출
-AGENT_TYPE="unknown-agent"
-AGENT_ID=""
-
-if [ -n "$PAYLOAD" ] && command -v python3 >/dev/null 2>&1; then
-  AGENT_TYPE="$(printf '%s' "${PAYLOAD}" | python3 -c "
-import json, sys
-try:
-    data = json.loads(sys.stdin.read())
-    agent_type = data.get('subagent_type') or data.get('agent_type') or 'unknown-agent'
-    print(agent_type, end='')
-except Exception:
-    print('unknown-agent', end='')
-" 2>/dev/null || true)"
-
-  AGENT_ID="$(printf '%s' "${PAYLOAD}" | python3 -c "
-import json, sys
-try:
-    data = json.loads(sys.stdin.read())
-    agent_id = data.get('agent_id', '')
-    print(agent_id, end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-elif [ -n "$PAYLOAD" ] && command -v python >/dev/null 2>&1; then
-  AGENT_TYPE="$(printf '%s' "${PAYLOAD}" | python -c "
-import json, sys
-try:
-    data = json.loads(sys.stdin.read())
-    agent_type = data.get('subagent_type') or data.get('agent_type') or 'unknown-agent'
-    print(agent_type, end='')
-except Exception:
-    print('unknown-agent', end='')
-" 2>/dev/null || true)"
-
-  AGENT_ID="$(printf '%s' "${PAYLOAD}" | python -c "
-import json, sys
-try:
-    data = json.loads(sys.stdin.read())
-    agent_id = data.get('agent_id', '')
-    print(agent_id, end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-fi
-
-# Fallback: AGENT_TYPE 미추출 시 기본값
-if [ -z "$AGENT_TYPE" ]; then
-  AGENT_TYPE="unknown-agent"
-fi
+# ── agent_type / agent_id 추출 블록 제거 (CFP-2850 FIX Iter 2 / F-CR-013 죽은 코드) ──
+# 구 블록은 spawn-event row-write(RETIRED — Amendment 4) 전용 입력이었고, retire 이후
+# 어떤 소비처도 없는 write-only 변수(AGENT_TYPE/AGENT_ID)였다. SubagentStop 마다 Python
+# 인터프리터를 4회 fork 하는 순수 낭비 → 제거. stop-event append 는 이 값을 쓰지 않는다
+# (--hook-source/--stop-reason/--session-id/--ledger-path 만 전달).
 
 # ── Python verifier 경로 결정 ─────────────────────────────────────────────────
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
@@ -196,44 +150,79 @@ fi
   --ledger-path "${LEDGER_FILE}" \
   2>/dev/null || true
 
-# ── spawn-event append (opt-in gate) ──────────────────────────────────────────
-# telemetry/spawn-event opt-in flag 검토 (append_spawn_event.py 가 직접 config 읽음)
-APPEND_SPAWN_SCRIPT=""
-
+# ── spawn-event row-write RETIRED (CFP-2850 Amendment 4, OQ-4/OQ-6) ───────────
+# 구 SubagentStop spawn-event row-write 는 retire 됐다 — writer topology 가
+# Orchestrator task-notification 수신 시점 single-write 로 이동(계약 §3 append_rules.writer
+# Amendment 4). 이전 hook path 는 story_key/lane_label/실측/outcome source 부재로
+# 전 row 가 vacuous(story_key=""/lane_label="없음", 실측 0, opt-in OFF=0행) 였고,
+# 보존 시 event_id cross-path 불일치(hook spawn_seq="" ≠ Orchestrator causal-state seq)로
+# read-time dedup 이 collide 못해 이중계수(AC-12 위반) → 구조적 제거가 정답(single-writer).
+#
+# ── 대신: 경량 disjoint spawn-completion COUNTER (F-B — 설계리뷰 P2 흡수) ──────
+# hook 이 crash 에도 발화하는 platform-trigger 이점을 bare count 로 보존한다(InfraOp
+# §7.4.2 dissent 부분 수용). 이 counter 는 **spawn-event row-writer 가 아니다** —
+# event_id·attribution·lane-context·dedup 전부 불요, spawn-event.jsonl 와 **disjoint 채널**
+# (.claude/ledger/spawn-completion.count — INV-3 무위반, spawn-event row 아님). numeric/
+# timestamp only(transcript·identity 미포함 — privacy-safe). task-notification-recorded
+# row count 와의 COUNT-레벨 reconcile(reconcile_spawn_completion_count.py)로
+# `hook_completion_count > recorded_row_count` gap = single-writer survivorship residual
+# (Orchestrator-side emit 실패/notification-loss)을 crash-safe 하게 관측(record-only, gate 아님).
+# ★관측 범위 = **opt-in ON 구간 한정**(아래 gate). opt-in OFF 구간은 counter·row 양쪽이 0 이라
+# 애초에 관측 대상이 아니다(측정 공백이지 gap 아님 — 정직 표기는 reconcile §honesty).
+#
+# ★opt-in GATED (CFP-2850 구현리뷰 FIX Iter 2 — F-CR-001, ArchitectPL 판정 (a) 확정):
+# 구 구현은 이 counter 를 opt-in gate **밖**에 두고 "opt-in-INDEPENDENT BY DESIGN" 이라
+# 선언했다. 그 결과 telemetry OFF(기본값) 세션에서도 `.claude/ledger/spawn-completion.count`
+# 파일이 생성돼 **ADR-043 §결정 1 opt-in default false**(telemetry OFF = 계측 산출물 0)를
+# 위반했다 — counter 도 host-local 계측 산출물이므로 예외가 아니다. 이제 counter 는
+# spawn-event 채널과 **동일 술어**(telemetry.enabled AND channels.spawn_event)에 종속한다.
+#   - gate 판정 = `append_spawn_event._opt_in_enabled` **재사용** (신규 gate mechanism 0 —
+#     ADR-140 reuse-before-write; config 해석 규칙 복제 시 drift 발생).
+#   - ★GATE-PROBE ONLY — spawn-event **row-write 는 여전히 RETIRED**. 본 hook 은
+#     `_opt_in_enabled` 술어만 평가하며 row 를 append 하지 않는다(append CLI 미호출,
+#     --spawn-seq/--ledger-path 등 row 인자 미전달) → single-writer(Orchestrator) 무손상.
+#   - **fail-closed**: config read 실패 / 모듈 import 실패 / 인터프리터 부재 = counter 미기록
+#     (probe 오류는 stderr WARN 으로 fail-VISIBLE — silent-success 금지).
+# reconcile 영향: counter 가 opt-in 종속이 되면서 "opt-in OFF 구간 = counter 도 0" 이 된다
+# (reconcile 의 정직 전제 재기술 — reconcile_spawn_completion_count.py §honesty 동반 갱신).
+# honest-ceiling: 짧은 1-line append 의 원자성 = 로컬 FS(NTFS/POSIX) best-effort — network
+# share 무보장. count = 라인 수(wc -l), record-only advisory 라 미세 오차 허용.
+SPAWN_LIB_DIR=""
 if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_spawn_event.py" ]; then
-  APPEND_SPAWN_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_spawn_event.py"
+  SPAWN_LIB_DIR="${PLUGIN_ROOT}/scripts/lib"
 elif [ -f "scripts/lib/append_spawn_event.py" ]; then
-  APPEND_SPAWN_SCRIPT="scripts/lib/append_spawn_event.py"
+  SPAWN_LIB_DIR="scripts/lib"
 fi
 
-# spawn-event append 실행 (append_spawn_event.py 가 opt-in 자체를 gate 함)
-#
-# ── F-CR-001 (P0) 수정: --ledger-path 절대 전달 금지 ─────────────────────────
-# ${LEDGER_FILE} = stop-event.jsonl (stop-event 전용 경로). 이를 spawn append 에
-# 넘기면 spawn-event-v1 row 가 stop-event.jsonl 에 cross-write 되어:
-#   (1) contract 경로 .claude/ledger/spawn-event.jsonl 가 미생성 → replay/dedup 가
-#       default spawn-event.jsonl(빈 파일) 을 읽어 read stack 死.
-#   (2) stop-event.jsonl 에 두 schema(stop-event-v1 + spawn-event-v1) row 가 혼입.
-# → --ledger-path arg 를 제거해 append_spawn_event.py 의 _resolve_storage_path()
-#   default(${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl) 가 적용되게 한다.
-#   (append_spawn_event.py 가 CLAUDE_PROJECT_DIR 를 직접 env 에서 읽음 — 본 hook 환경
-#   에 이미 export 돼 있어 추가 전달 불요.)
-#
-# ── F-CR-002 (P1) note: story_key / lane_label 은 SubagentStop trigger 에 부재 ──
-# SubagentStop hook 가용 source = CLAUDE_SESSION_ID / CLAUDE_PROJECT_DIR /
-# CLAUDE_PLUGIN_ROOT env + payload(stop_reason / subagent_completed /
-# subagent_type|agent_type / agent_id) 뿐. story_key / lane_label 은 env·payload
-# 어디에도 없음 (sibling append_stop_event.py 도 동일하게 미수령 — 플랫폼 한계).
-# → spawn append 에 --story-key / --lane-label 미전달. 결과 row 는 story_key=""
-#   / lane_label="없음" (append_spawn_event default fallback). lane-context writer
-#   가용 시점까지 dedup gate 의 silent-vacuous 회피는 dedup 측에서 처리
-#   (dedup_section14_spawn_event.py vacuous status — F-CR-002 대응).
-if [ -n "$APPEND_SPAWN_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
-  "$PYTHON_CMD" "$APPEND_SPAWN_SCRIPT" \
-    --agent-type "${AGENT_TYPE}" \
-    --agent-id "${AGENT_ID}" \
-    --session-id "${SESSION_ID}" \
-    2>/dev/null || true
+# gate rc: 0 = opt-in ON / 1 = OFF (fail-closed 기본값) / 3 = probe 오류 (fail-closed + WARN)
+SPAWN_COUNT_GATE_RC=1
+if [ -n "$PYTHON_CMD" ] && [ -n "$SPAWN_LIB_DIR" ]; then
+  SPAWN_COUNT_GATE_RC=0
+  CODEFORGE_SPAWN_LIB_DIR="$SPAWN_LIB_DIR" "$PYTHON_CMD" -c "
+import argparse, os, sys
+try:
+    sys.path.insert(0, os.environ.get('CODEFORGE_SPAWN_LIB_DIR', ''))
+    from append_spawn_event import _opt_in_enabled   # GATE-PROBE ONLY (row-write 아님)
+    ns = argparse.Namespace(telemetry_enabled=False, spawn_event_enabled=False)
+    sys.exit(0 if _opt_in_enabled(ns) else 1)
+except Exception:
+    sys.exit(3)
+" >/dev/null 2>&1 || SPAWN_COUNT_GATE_RC=$?
+fi
+
+# ★S-7 (보안테스트 iter1, P3) — probe 종료코드 WARN 범위 확장.
+#   구 조건은 `rc = 3` 만 WARN 했다. probe 는 python -c 를 fork 하므로 3 외에도
+#   **127**(인터프리터/모듈 부재 = command not found), **137**(SIGKILL — OOM/강제종료),
+#   126(실행 불가) 등이 나올 수 있는데 이들은 전부 "OFF(=1)" 와 구분 없이 조용히 흘러가
+#   **probe 가 아예 못 돌았다** 는 사실이 은폐됐다(silent-success-on-error).
+#   → 정상 판정 코드 {0=ON, 1=OFF} 밖의 **모든** rc 를 fail-closed + WARN 으로 표면화한다
+#   (127/137 을 하드코딩 열거하는 대신 여집합 — 미래 신규 코드도 자동 포착).
+if [ "$SPAWN_COUNT_GATE_RC" != "0" ] && [ "$SPAWN_COUNT_GATE_RC" != "1" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: spawn-completion COUNTER opt-in gate 판정 실패 (rc=%s — 3:probe 예외 / 127:인터프리터·모듈 부재 / 137:SIGKILL(OOM) / 기타 미분류) — fail-closed (counter 미기록)\n' "$SPAWN_COUNT_GATE_RC"
+elif [ "$SPAWN_COUNT_GATE_RC" = "0" ] && [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  SPAWN_COUNT_FILE="${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-completion.count"
+  mkdir -p "${CLAUDE_PROJECT_DIR}/.claude/ledger" 2>/dev/null || true
+  printf '%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$SPAWN_COUNT_FILE" 2>/dev/null || true
 fi
 
 # ── self-context append (L7 record-only 계측, opt-in gate) ─────────────────────

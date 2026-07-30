@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: spawn-event
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/spawn-event-v1.md
@@ -25,6 +25,7 @@ related_files:
   - docs/domain-knowledge/domain/orchestrator-discipline/measurement-channel.md  # 도메인 정의 cross-ref
 amendment_log:
   - "Amendment 3 (CFP-2572, 2026-07-05) — self-context-v1 6-field record type 추가 (§2.1 신설, L7 Orchestrator self-context proxy). 동일 spawn-event.jsonl channel 공유 + schema_version discriminator 구분. version 1.0 → 1.1 MINOR (additive record type, ADR-008 §결정 2). SSOT = ADR-043 Amendment 3 / ADR-142 §결정 4. 19-field spawn row schema 무변경 (별 record type)."
+  - "Amendment 4 (CFP-2850, 2026-07-27) — spawn-event 실측 append 활성화(P0-2) + agent outcome 분류(N9). version 1.1 → 1.2 MINOR (4 additive optional field, ADR-008 §결정2). (i) §2 신규 optional field 4종: total_tokens(int|null, task-notification subagent_tokens aggregate) · model(enum semi-open, pricing-table roster ∪ unknown-model fallback) · outcome(enum {success,inconclusive,failure,partial}) · termination_cause(enum {normal,timeout,zero_output,error,cancelled}) — 전부 numeric/enum(T-INFO-8 free-form 0 보존). 19-field → 23-field. (ii) §3 writer topology: SubagentStop hook single-write(option i) → Orchestrator task-notification 수신 시점 single-write. hook spawn-append(hooks/subagent-stop L199-237) retire (self-context append disjoint 잔존). (iii) §3 writer mechanism: inline via UTF-8 args-file (ADR-039 §결정2 7th inline-whitelist entry 동반). (iv) lane_context_limitation superseded 재기술 (lane-context writer 로 non-vacuous reconcile 실현 — ADR-163 §결정13 realization). (v) §3 idempotency: spawn_seq = Orchestrator causal-state 파생 4-불변식 (ledger-read/primitive-internal/random-UUID 금지). (vi) §4 writer-topology 변경 카테고리 신설 (append_rules/writer 변경 = amendment + MINOR). (vii) degrade ladder + total_tokens granularity caveat (aggregate ≠ 4-way, aggregate-only 시 4-way null·cost null). (viii) N9 outcome/termination_cause enum harmonize note (stop-event-v1 outcome 3값 REUSE + inconclusive additive / recovery_action REUSE by reference / record-only). (ix) §2 attribution_confidence field-def clarify (attributed = 측정 aggregate 확보 — 4-way 분해 OR aggregate-only, degrade ladder 참조; F-A tier-2 desync 해소). SSOT = ADR-043 Amendment(Allow-list 4 field) + ADR-039 §결정2 Amendment(inline-whitelist) + ADR-163 §결정13."
 attribution:
   source: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
   scope: "per-agent registry 개념(token_usage/cost_usd/tool_usage field 구조) + replay event 종류(agent_start/agent_stop/tool/file_touch/mode_change) + 경과시간 keyed 패턴 차용. enforcement(COST_LIMIT_USD intervention) / HUD UI / model routing 은 비-차용 (측정·관측만, ADR-163 §결정 10 measurement-vs-fix boundary)."
@@ -62,9 +63,9 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 §14.12 는 spawn-event land 이후에도 **Tier-1 quota-only 채널로 잔존**한다 (deprecate 안 함 — playbook §14.12 "관계" note). 두 채널의 disjoint = playbook §15.2 **4번째 boundary invariant** 로 명문화. cross-write 금지 — 한쪽이 다른 쪽을 읽거나 mirror 하지 않는다(50ms ceiling + cross-channel coupling 회피, §3 append_rules).
 
-## 2. Schema (19개 필드 Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
+## 2. Schema (23개 필드 Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
 
-각 spawn-event ledger row entry = **19개 필드 Allow-list** (아래 표 19 row, §4 변경 규칙 SSOT). **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
+각 spawn-event ledger row entry = **23개 필드 Allow-list** (19 core + CFP-2850 Amendment 4 additive 4 field: total_tokens·model·outcome·termination_cause, §4 변경 규칙 SSOT). **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
 
 | 필드 | 타입 | 필수 | 설명 | Sanitize |
 |---|---|---|---|---|
@@ -74,7 +75,7 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `story_key` | string | required | e.g. `CFP-2393` (KEY prefix overlay 정합). Public non-sensitive | non-sensitive (public) |
 | `lane_label` | enum | required | 요구사항 / 요구사항-리뷰 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 / 없음 (label-registry-v2 정합 — 8 lane + 없음; 구 배포 2 값 deploy·deploy-review = ADR-121 / CFP-2782 물리 제거). closed-set | non-sensitive |
 | `agent_type` | enum (semi-open) | required | spawn 된 subagent 종류 (e.g. `ArchitectPLAgent` / `DomainAgent` / `DeveloperAgent`). **Public non-PII** (SecurityArch — Allow-list safe). **value set = roster-derived + `unknown-agent` fallback (semi-open, NOT strict closed-set)** — value ∈ (`templates/` agent roster ∪ consumer `project.yaml` roster); roster 미등재 = `unknown-agent` fallback (정확 closed-set 이 아닌 이유 = 미등재 값을 reject 하지 않고 fallback bucket 으로 흡수. Deny-list 불요 — fallback 이 free-form leak 차단). **lint(§8.1)은 enum membership reject 검증 아님** — `unknown-agent` 가 fallback 으로 존재함을 검증 (lint-vs-reality gap 회피) | non-sensitive |
-| `attribution_confidence` | enum | required | `{attributed, unattributed, unsupported}`. **default = `unattributed`** (token source 정확도 미보장 시 — F2 transcript undercount caveat). `attributed` = 정확 source 확보 / `unattributed` = source 부정확·불가 (token field = null) / `unsupported` = 플랫폼이 token surface 미제공. **추정치 저장 금지** (ADR-119 검증-후-단언) | non-sensitive |
+| `attribution_confidence` | enum | required | `{attributed, unattributed, unsupported}`. **default = `unattributed`**. `attributed` = **측정 실측 source 확보 (4-way 분해 OR aggregate-only — granularity 는 §2.2 degrade ladder 참조)** / `unattributed` = source 부정확·불가 (token/cost = null) / `unsupported` = 플랫폼 token surface 미제공 (token/cost = null). **추정치 저장 금지** (ADR-119 검증-후-단언) | non-sensitive |
 | `input_tokens` | int \| null | optional | OMC `SubagentInfo.token_usage.input_tokens` 차용. `attribution_confidence != attributed` 시 **null** (추정 합산 금지). numeric only | non-sensitive (count) |
 | `output_tokens` | int \| null | optional | OMC 차용. 위 동일 (null when not attributed) | non-sensitive (count) |
 | `cache_creation_input_tokens` | int \| null | optional | OMC 차용 (Anthropic prompt-caching 1.25× tier). null when not attributed | non-sensitive (count) |
@@ -87,8 +88,12 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `consumer_scope` | enum | required | `{wrapper, consumer}` (ADR-163 §결정 9 isolation marker) | non-sensitive |
 | `event_type` | enum | required | replay event 종류 (OMC session-replay 차용) — `{agent_start, agent_stop, tool, file_touch, mode_change}`. closed-set. attribution row = `agent_stop` 가 primary (token/cost 확정 시점) | non-sensitive |
 | `elapsed_seconds` | number \| null | optional | replay 경과초 keyed (OMC `agent-replay-*.jsonl` 차용) — Story/세션 시작 기준 상대 시각. replay 재구성 정렬 key. numeric only | non-sensitive |
+| `total_tokens` | int \| null | optional | task-notification `<usage>` 단일 `subagent_tokens` aggregate 실측 (계약 4-way 분해와 별개 — **granularity caveat**: aggregate-only payload 는 4-way field 를 채우지 못하고 total_tokens 만 채운다). `attribution != attributed` 시 null. numeric only | non-sensitive (count) |
+| `model` | enum (semi-open) \| null | optional | spawn 모델 (pricing-table model roster ∪ `unknown-model` fallback — agent_type semi-open 패턴). **현행 pricing arg 였으나 row 미저장 → 신설**(AC-9 role·model grouping key). model 은 per-spawn roster override 결정이라 `agent_type→tier` 파생 불가(동일 agent_type 이 다른 model 로 spawn 가능). free-form leak 차단 (fallback bucket) | non-sensitive |
+| `outcome` | enum \| null | optional | subagent completion-quality — `{success, inconclusive, failure, partial}` (closed-set, open_extension:false, SUCCESS-hardcode 금지 — ADR-093). stop-event-v1 outcome 3값 REUSE + inconclusive(false/hallucinated completion) additive. record-only (gate 아님) | non-sensitive |
+| `termination_cause` | enum \| null | optional | subagent termination mechanism — `{normal, timeout, zero_output, error, cancelled}` (closed-set). timeout = 시간·context·turn·**budget/credit-exhaustion** 통합 상위 (CREDIT-EXHAUSTED = sub-case, 독립 top-level 아님). zero_output = tool_uses=0 silent failure. record-only | non-sensitive |
 
-**Allow-list ONLY enforcement**: 위 19 field 외 capture 금지. 추가 field = BREAKING (ADR-043 §결정 2 Amendment 의무, §4). **free-form string field 부재** = T-INFO-8 구조적 mitigation (Deny-list 적용 대상 0건, 단 §4 에 inherit 선언 — defense in depth).
+**Allow-list ONLY enforcement**: 위 23 field 외 capture 금지. 추가 field = BREAKING (ADR-043 §결정 2 Amendment 의무, §4). **free-form string field 부재** = T-INFO-8 구조적 mitigation (Deny-list 적용 대상 0건, 단 §4 에 inherit 선언 — defense in depth).
 
 §2 row markdown 형식 예시 (attribution 가능 case + 불가능 case 양쪽):
 
@@ -103,13 +108,13 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 ## 2.1 self-context-v1 record type (ADR-043 Amendment 3 — L7 Orchestrator self-context proxy)
 
-**별개 record type** — 위 §2 의 19-field spawn row 와 **다른** row schema 이며, **동일 `spawn-event.jsonl` channel 을 공유**한다. 두 record type 은 `schema_version` **discriminator** 로 구분된다 (`spawn-event-v1` = 19-field spawn row / `self-context-v1` = 아래 6-field lead-self aggregate row). 본 record 는 장기 세션 Orchestrator(lead-self)의 context 누적을 **record-only proxy telemetry** 로 남긴다. substrate = 기존 SubagentStop-wired 채널 재사용 (신규 hook 블록 0). 실 emission 은 Phase 2 (본 §2.1 = allow-list POLICY 편입 — ADR-043 Amendment 3 §근거 (C)).
+**별개 record type** — 위 §2 의 23-field spawn row 와 **다른** row schema 이며, **동일 `spawn-event.jsonl` channel 을 공유**한다. 두 record type 은 `schema_version` **discriminator** 로 구분된다 (`spawn-event-v1` = 23-field spawn row / `self-context-v1` = 아래 6-field lead-self aggregate row). 본 record 는 장기 세션 Orchestrator(lead-self)의 context 누적을 **record-only proxy telemetry** 로 남긴다. substrate = 기존 SubagentStop-wired 채널 재사용 (신규 hook 블록 0). 실 emission 은 Phase 2 (본 §2.1 = allow-list POLICY 편입 — ADR-043 Amendment 3 §근거 (C)).
 
 ### 2.1.1 self-context 6 field (numeric / enum / hash only)
 
 | 필드 | 타입 | 필수 | 설명 | Sanitize |
 |---|---|---|---|---|
-| `schema_version` | const string | required | `self-context-v1` 고정 — 19-field spawn row 와의 **discriminator** | — |
+| `schema_version` | const string | required | `self-context-v1` 고정 — 23-field spawn row 와의 **discriminator** | — |
 | `session_id` | sha256 hash | required | top-level Claude session ID **hash** (raw session_id 저장 금지 — T-INFO-7 상속) | hash (raw 부재) |
 | `turn_index` | int | required | monotonic turn 카운터 | non-sensitive (count) |
 | `delegation_ratio` | float 0.0–1.0 | required | inline 대비 spawn 위임 비율 (coarse-round). **proxy** — lead-self ground-truth 아님 | non-sensitive (ratio) |
@@ -138,6 +143,18 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 ### 2.1.5 disjoint-axis note
 
 self-context proxy telemetry 는 layer-1 delegation-ratio substrate 를 **재사용**한다. 이는 **record-only measurement 이지 whitelist entry 가 아니다** — ADR-039 §결정 2 inline-whitelist(inline-vs-spawn mechanism 축)와 **disjoint axis** (그 6-entry closed enumeration 무침범).
+
+### 2.2 실측 degrade ladder (task-notification usage block — UNDOCUMENTED harness surface)
+
+> CFP-2850 Amendment 4 — total_tokens/4-way/cost 저장의 3-tier honest degrade. `<usage>` 블록은 harness-internal(UNDOCUMENTED 표면, ADR-142 P3) 이므로 tier 형상은 실 payload 로 확정.
+
+| tier | payload | 저장 |
+|---|---|---|
+| 1 | 4-way 분해 | input/output/cache_creation/cache_read populate + cost 파생(model 有) / attributed |
+| 2 | aggregate-only (subagent_tokens 단일 — 관측된 실 형상) | total_tokens populate + 4-way null + cost null(per-tier split 부재) / attributed(="측정 aggregate 확보") |
+| 3 | 블록 부재/malformed (crash) | 전 token null / unattributed / duration_ms=wall-clock 가능 / outcome+termination_cause 기록 / fail-VISIBLE |
+
+추정 저장 절대 금지 (ADR-119) — aggregate 를 4-way 로 분해 저장하거나 blended-rate 로 cost 추정하지 않는다.
 
 ## 3. 항목
 
@@ -250,9 +267,9 @@ spawn_event_schema:
 
 append_rules:
   writer:
-    - "Orchestrator-owned delegate subagent 만 (ADR-039 §결정 3 — mechanism = subagent OK, ownership = Orchestrator)"
-    - "lane plugin agent 가 자체 임의 ledger write = policy_violation (defect). spawn-event 도 stop-event 와 동일 monopoly inherit"
-    - "**write 지점 = SubagentStop hook single-write (option i)** — PreToolUse(Agent) spawn-gate 에 ledger write 추가 금지 (Refactor HIGH — spawn-gate 의 'filesystem touch 0' SRP 위반). 2-phase open/close 미채택"
+    - "Orchestrator-owned (ADR-039 §결정3 — ownership = Orchestrator). mechanism = Orchestrator task-notification 수신 시점 inline via UTF-8 args-file (ADR-039 §결정2 7th inline-whitelist entry). lane plugin agent 자체 write = policy_violation."
+    - "**write 지점 = Orchestrator task-notification 수신 시점 single-write (Amendment 4 — 구 option i SubagentStop hook single-write supersede)**. SubagentStop hook 의 spawn-event row-write 는 retire — story_key/lane_label/실측/outcome source 부재로 vacuous 였음. 단 SubagentStop 에 경량 spawn-completion COUNTER(bare count, row-writer 아님, disjoint 채널)를 보존해 task-notification-recorded row count 와 COUNT-레벨 reconcile 로 single-writer survivorship gap(emit 실패/notification-loss)을 crash-safe 관측(F-B, record-only, INV-3/INV-5 무위반). self-context-v1 append 는 disjoint 채널로 SubagentStop 잔존 (INV-3)."
+    - "single-writer residual-risk (Amendment 4 정직 기록): Orchestrator-side emit 실패/notification-loss 시 row 유실 (failure-case survivorship-bias). 완화 = fail-VISIBLE stderr+drop-counter + follow-up trigger(경험적 failure gap 노출 시 dual-path (session,agent)-keyed precedence dedup escalate)."
 
   write_mechanism:
     storage:
@@ -265,32 +282,104 @@ append_rules:
           - stop-event(sqlite) default parent = `.claude-work/measurement/` (basename = `stop-event.sqlite`). storage_path 미지정 시 이 default.
           - **per-channel 별 default 가 다름** — `telemetry.storage_path` 는 양 channel 에 동일 적용된다 (지정 시 두 channel 의 parent dir 을 함께 대체, 각자 자기 basename 유지). 미지정 시 각 channel 의 위 default parent 사용.
           - escape 금지: override 값이 wrapper checkout dir 로 escape 금지 (InfraOpArch §7.4.5 / ADR-163 §결정 9 isolation). project-config-schema.md telemetry.storage_path comment 정합.
+      destination_containment: |
+        **원장 목적지 containment** — override 로 결정된 목적지는 **허용 root 3종 안**이어야 한다:
+          ① `${CLAUDE_PROJECT_DIR}` (**선언 시에만** 산입) ② 본 스크립트 checkout 의 **repo root** ③ **OS 임시 디렉터리**(`tempfile.gettempdir()`).
+        `CLAUDE_PROJECT_DIR` **미선언 시 허용 root 는 `repo root ∪ OS temp` 로 축소**된다 (①이 빠짐 — 검사가 더 엄격해지는 방향).
+        **적용 범위 = 두 override 경로 모두** — `--ledger-path`(명시 full path override) 와 `telemetry.storage_path`(parent dir 대체 + basename 고정) **양쪽 다** containment 를 통과해야 하며, **`--ledger-path` 는 면제 대상이 아니다**.
+        **검사 방식** = `realpath`(symlink resolve) + `normcase` 정규화 후 **`commonpath` 포함 검사**
+        (`commonpath([candidate, root]) == root`). resolve-**후**-검사이므로 symlink 로 밖을 가리키는 override 도 실경로 기준으로 판정된다.
+        **위반 시 = default 목적지로 강등 + stderr WARN** — reject / 비-0 exit 아님 (record-only · never-block, ADR-115 §결정 2 상속).
+        다른 드라이브 등으로 `commonpath` 가 **`ValueError`** 면 **미포함 취급**(fail-closed — 판정 불가를 통과로 읽지 않는다).
+        검사 대상이 아닌 유일 경로 = **default**(`${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl`). 이는 면제가 아니라 **그것이 강등 목적지 자체**이기 때문이다 (위반 시 여기로 되돌린다).
+        위 basename 고정 규칙과 **중복이 아니라 보완**이다 — basename 고정은 "어떤 **파일명**" 을, containment 는 "어떤 **디렉터리**" 를 각각 pin 한다.
+      destination_containment_ceiling: |
+        **honest-ceiling (over-claim 금지)** — **OS temp 는 의도된 carve-out**(테스트·임시 경로의 기존 정당 용법 보존)이며,
+        이 검사는 **authz 가 아니라 containment** 다. **"임의 경로 쓰기를 권한 수준에서 막는다"고 주장하지 않는다**:
+        CLI 호출자는 이미 임의 명령 실행 권한을 가지므로 호출자의 FS 권한을 제한하는 장치가 아니고, carve-out ③ 때문에
+        임시 디렉터리 안으로의 write 는 여전히 가능하다. realpath 기반 판정도 TOCTOU 를 봉인하지 않는다.
+        봉인 대상은 **"측정 채널의 원장 write 가 프로젝트 ∪ repo ∪ OS temp 밖으로 새는 경로"** 하나이며,
+        그 밖은 bounded degradation 이다 (임의 입력·임의 경로가 무해하다는 뜻이 아니다).
       note: "JSONL 채택 사유 = (1) DB UNIQUE 부재여도 deterministic event_id + read-time dedup 로 idempotency 충분 (InfraOpArch §11.6) (2) stop-event runtime 와 동형 = 운영 패턴 검증됨. sqlite 는 stop-event 계약 理想이나 runtime 미구현 = drift — spawn-event 는 contract=runtime 일치 우선"
       pattern_a_disclaimer: "**host-local ledger ≠ Pattern A 대상**. race-condition-handling-pattern.md 의 Pattern A(SHA-based optimistic concurrency) 는 cross-repo Contents API write(post-merge-counters.jsonl) 전용 — host-local O_APPEND per-row(spawn-event/stop-event)에는 적용하지 않는다. Tier-3 ledger 라고 전부 Pattern A 가 아니다 (write 토폴로지로 갈림: cross-repo=Pattern A 의무, host-local=O_APPEND kernel-atomic 로 충분). measurement-channel.md Tier-3 분기 note 정합."
     append_io:
       rule: "**O_APPEND per-row** — os.open(path, O_APPEND | O_CREAT) 1 row write (InfraOpArch H1 권고). stop-event runtime 의 read-modify-write(whole-file read + append + os.replace) 패턴 복사 금지 — 병렬 spawn 동시 SubagentStop 시 lost-update race (append_stop_event.py _atomic_append). os.replace 는 torn-write 막지만 lost-update 못 막음"
     file_mode: "0600 (Unix); Windows = ACL 영역 외 no-op"
 
+  args_file_channel:  # writer inline mechanism 의 UTF-8 JSON 실값 채널 (위 writer — ADR-039 §결정 2 7th inline-whitelist entry)
+    scalar_only: |
+      **args-file 값은 scalar 만 허용** — `string` / `number` / `bool` / `null` 만 병합한다.
+      `dict` / `list` / `tuple` 값은 **거부 + stderr WARN** (병합하지 않는다).
+      근거: 구 구현은 컨테이너를 그대로 setattr 해 `str()` / `%r` 경로에서 **컨테이너 `repr` 이 원장 문자열 field 에 착지**할 수 있었다
+      (free-form 유입 = T-INFO-8 구조적 차단 우회 + 행 길이 팽창).
+    policy_key_deny: |
+      **args-file 이 실을 수 없는 정책 키 (closed-set)** — 병합 거부(drop) + stderr WARN:
+        - `telemetry_enabled` / `spawn_event_enabled` — **opt-in gate**. gate 결정은 오직 (a) 명시 CLI flag 또는 (b) project config 에서만 온다
+          (위 `opt_in_default_false` / ADR-043 §결정 1 default false).
+        - `ledger_path` / `storage_path` — **원장 목적지**. 목적지 결정도 (a)/(b) 에서만 온다.
+      **근거: args-file 은 측정 실값 채널이지 정책 채널이 아니다** — 파일 하나로 opt-in 이나 원장 위치를 바꿔치기하는 경로를 차단한다.
+      키는 dash→underscore 정규화 후 대조하므로 `ledger-path` 표기도 동일하게 거부된다.
+      본 deny 는 위 `write_mechanism.storage.destination_containment` 와 **2층** 관계다 — deny 가 주입 채널을, containment 가 최종 목적지를 각각 막는다.
+    silent_drop_forbidden: |
+      **무음 drop 금지** — 정책 키 deny / 비-scalar 거부 / allow-list 밖 미지 키 drop 은 전부 stderr WARN 으로 trace 를 남긴다
+      (silent-success-on-error 금지 — §2.1.3 fail-VISIBLE 동형). 표면화는 **키 이름만**이며 값은 출력하지 않는다 (content 유입 0).
+
   idempotency:
     rule: "deterministic event_id (random UUID 금지) + read-time dedup (aggregate/replay 시점, append-time 아님)"
     nested_spawn_dedup: "parent_event_id chain — nested spawn 이중계산 방지 (read-time)"
     section14_dedup: "**§14 Lane Evidence ↔ spawn-event dedup script = ADR-163 §결정 13 precondition AC (Phase 2 의무)**. §14 row count(lane spawn coarse) 와 spawn-event row count(per-agent) 정합 검증. dedup = aggregate/read-time script 책임 (append-time 아님 — cross-channel coupling + 50ms 위반 회피, Refactor MED)"
     lane_context_limitation: |
-      **SubagentStop trigger 에 story_key / lane_label source 부재 (플랫폼 한계 — F-CR-002)**:
-      SubagentStop hook 가용 source = CLAUDE_SESSION_ID / CLAUDE_PROJECT_DIR / CLAUDE_PLUGIN_ROOT env
-      + payload(stop_reason / subagent_completed / subagent_type|agent_type / agent_id) 뿐.
-      story_key / lane_label 은 env·payload 어디에도 없음 (sibling stop-event runtime 도 동일 미수령).
-      → SubagentStop single-write 경로로 append 되는 row 는 story_key="" / lane_label="없음" (default fallback).
-      **dedup gate 의 silent-vacuous 회피**: ledger row 가 전부 lane_label="없음" (대조 가능 lane 0) 인 경우
-      dedup 는 "consistent" 가 아니라 **"vacuous" status** 를 emit 한다 (정합 PASS 위장 금지 — ADR-119 검증-후-단언).
-      lane-context writer (lane plugin agent 가 spawn-time 에 lane_label 을 주입하는 별 채널) 가 가용해지기
-      전까지 meaningful §14 ↔ spawn-event reconcile 은 불가 — vacuous 가 정상 상태. **dedup gate 를 lane-context
-      writer 가용 시점까지 명시 defer 할지 = 설계 결정 (ArchitectPLAgent 판정 대상, Change Plan §8 갱신 후보).**
+      **[Amendment 4 SUPERSEDED — lane-context writer 실현]**: 구 제약 = SubagentStop trigger 에 story_key/lane_label source 부재 → 전 row lane_label="없음" → §14↔spawn-event dedup 영구 vacuous.
+      Amendment 4 = writer topology 를 Orchestrator task-notification single-write 로 이동 → Orchestrator 는 story_key/lane_label 을 아는 유일 주체 → spawn-time lane-context 주입 → dedup non-vacuous reconcile 실성립 (ADR-163 §결정13 realization, ArchitectPLAgent 판정 = 옵션 a 배선, 정식 defer 아님).
+      vacuous status 는 lane-context 미주입 legacy row (있으면) 에만 잔존 — dedup 은 여전히 vacuous 를 정직 emit (혼합 상태 시).
+    spawn_seq_rule: |
+      **spawn_seq 채번 규율 (producer-normative — event_id disambiguator, 미persist)**: spawn_seq 는 event_id 산입 disambiguator 이며 row 에 미persist. producer(Orchestrator)는 causal-state 파생으로만 채번 — 세션 내 spawn dispatch monotonic ordinal (dispatch 시점 확정). **금지**: 원장 tail-read 채번·primitive 내부 자동 채번·random UUID (전부 at-least-once 멱등 붕괴). **4 불변식** (dev-process-event-v1 §4 by-reference): ① 동일 논리 spawn 재시도 → 동일 seq 재계산·재사용(동일 event_id, 멱등); ② 별개 spawn → 상이 seq(소실 0); ③ 채번 불확실 시 fallback = 가시적 중복 방향만(silent loss 금지); ④ seq 미persist·primitive 원장 read 금지 하에 세션 재기동 후 causal-state 재구성 가능. append primitive 는 spawn_seq 를 통과만 시킨다 (O_APPEND-pure no-read 불변식 무손상 — 50ms ceiling + 멱등 양축 load-bearing).
 
   opt_in_default_false:
     rule: "telemetry.enabled: false default + telemetry.channels.spawn_event: false default (ADR-043 §결정 1 inherit — wrapper / consumer 동일 trust model)"
     wrapper_dogfood: "Phase 1 = wrapper dogfood 도 default false + 사용자 explicit opt-in 의무 (always-on enforcement = 별 Phase 2 CFP)"
     silent_always_on: "금지 — default false 위반 시 policy_violation"
+
+read_rules:  # reader-normative (append_rules = writer-normative — 두 블록 disjoint, cross-import 금지)
+  framing:
+    row_terminator: |
+      **1 row = `\n` 종단** (JSONL). writer 는 O_APPEND per-row 로 1 row 를 1 줄로 append 하며,
+      row 내부에 raw `\n` 은 등장하지 않는다 (`json.dumps` 가 문자열 내 개행을 `\n` escape 로 직렬화).
+    canonical_split: |
+      **정본 분할 = universal-newline 단일 규칙** — reader 는 ledger 본문을 `\n` 기준으로만 분할한다.
+      universal-newline(`\n` / `\r\n` / `\r`) 밖의 어떤 문자도 개행으로 취급하지 않는다.
+      모든 소비자(aggregate / reconcile / replay / lint)가 이 한 규칙을 공유해야 행 계수가 writer 와 일치한다.
+    splitlines_forbidden: |
+      **`str.splitlines()` 금지** — Python `splitlines()` 는 universal-newline 에 더해
+      **U+0085(NEL) / U+2028(LS) / U+2029(PS)** 를 개행으로 취급한다. 이 문자들이 row 안에 실려 오면
+      writer 가 쓴 **1 row 를 reader 가 2 row 로 계수**한다 → writer↔reader 행 계수 불일치.
+      그 위에 세운 dedup / reconcile / aggregate 는 부풀린 계수를 정상으로 오인한다 (CFP-2850 S-4 실증).
+    writer_unconstrained: |
+      **writer 측 무제약** — 본 폐쇄는 **reader 통일만으로 완결**이며, writer 에 문자 제약을 걸거나
+      `json.dumps(ensure_ascii=False)` 를 `ensure_ascii=True` 로 전환하지 **않는다**.
+      근거: writer 의 `json.dumps` 가 `<0x20` 제어문자를 escape 하므로 escape 를 빠져나가 분할을 유발할 수 있는
+      문자는 U+0085/U+2028/U+2029 셋뿐이고, 이 셋은 universal-newline 분할 대상이 아니다 → reader 정본화 = 완전 폐쇄.
+      `ensure_ascii=True` 전환은 byte-exact golden vector 를 파손하고 한글 필드를 팽창시키면서 안전 이득이 0이다.
+
+  reader_ssot:
+    canonical_reader: |
+      **정본 reader = 단일 함수** — `scripts/lib/replay_spawn_event.py` 의 ledger-read 함수(현행 `_read_ledger`).
+      ledger 를 읽는 신규 소비자는 **그 함수를 재사용할 의무**가 있고 **JSONL 파싱을 재구현하지 않는다**
+      (ADR-140 reuse-before-write — 소비자마다 파싱을 다시 쓰는 순간 규율이 갈린다).
+    owned_disciplines: |
+      다음 규율은 전부 그 정본 reader 에 **귀속**된다 (소비자 각자 재구현·우회 금지):
+        - **분할** = 위 `framing.canonical_split` (`splitlines()` 금지).
+        - **decode** = `encoding="utf-8", errors="replace"` — 손상 byte 가 `UnicodeDecodeError` crash 로 번지지 않게 한다
+          (구 reader 는 `except OSError` 만 감싸 `UnicodeDecodeError` 를 놓쳤다). 치환된 row 는 JSON parse 실패로 graceful skip.
+        - **dedup** = deterministic event_id read-time dedup (위 `idempotency.rule`) + `parent_event_id` chain.
+    cross_check_rule: |
+      **교차검증은 피검증 소비자와 동일 reader 를 통과한 계수만 비교한다 — reader 가 다르면 reconcile 은
+      자기 손실을 볼 수 없다 (CFP-2850 S-4 실증).**
+    adr163_alignment: |
+      **ADR-163 §결정 13 정합** — 그 결정이 부과한 "§14 Lane Evidence ↔ spawn-event dedup script" 의무
+      (위 `idempotency.section14_dedup`) 는 read-time script 책임이므로, 그 script 역시 본 `reader_ssot` 를 통과한
+      row 만 계수한다. reader 가 갈리면 §결정 13 의 dedup 은 non-vacuous 처럼 보이면서 실제로는 계수 불일치를 은폐한다
+      (Amendment 4 가 실현한 non-vacuous reconcile 의 전제 조건).
 
 operational_constraints:
   zero_api_call:
@@ -325,13 +414,14 @@ operational_constraints:
 
 ## 4. 변경 규칙
 
-- **Allow-list ONLY (v1.x)**: §2 의 19 field 외 새 field 추가 = ADR-043 §결정 2 Amendment 의무 + 본 contract version bump. optional field 추가 = MINOR (ADR-008 §결정 2 — backward-compat, v1.0 reader skip 가능). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR (v2.0 BREAKING).
+- **Allow-list ONLY (v1.x)**: §2 의 23 field 외 새 field 추가 = ADR-043 §결정 2 Amendment 의무 + 본 contract version bump. optional field 추가 = MINOR (ADR-008 §결정 2 — backward-compat, v1.0 reader skip 가능). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR (v2.0 BREAKING).
 - **free-form string field 도입 금지 (v1.x invariant)**: T-INFO-8 구조적 mitigation 보존. 만약 free-form string field 가 불가피하면 = ADR-043 §결정 3 Deny-list regex 6 pattern 적용 의무 + Amendment. (현 v1.0 = free-form 0건 → Deny-list no-op, 단 **inherit 선언** — defense in depth: 향후 string field 도입 시 자동 적용 대상).
 - **enum 값 추가**: `lane_label` / `agent_type` / `event_type` / `attribution_confidence` enum 확장 = additive 면 MINOR (ADR-043 §결정 2 Amendment 동반). enum 값 제거 = MAJOR.
 - **storage backend 변경 (JSONL → sqlite)**: ADR-163 §결정 4 amendment 의무 (BREAKING — 단 spawn-event 는 contract=runtime JSONL 일치가 §3 invariant. stop-event sqlite 계약 理想으로 align 하려면 stop-event runtime 도 동반 migration 필요 = 별 Epic).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 - **timestamp 형식**: UTC Z strict (§3). +00:00 / bare datetime 불허 — clarification 변경 = minor commentary.
-- **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 19-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
+- **record type 추가 (self-context-v1 등)**: 동일 channel 을 공유하는 별 record type 추가 = **MINOR** (§2 23-field spawn row Allow-list 무변경, discriminator `schema_version` 로 분기 — additive, ADR-008 §결정 2). CFP-2572 v1.0 → v1.1 (§2.1 self-context-v1 6-field record type 추가 — ADR-043 Amendment 3 / ADR-142 §결정 4). self-context record 도 free-form string field 0개 (numeric / enum / hash only) → T-INFO-8 구조적 mitigation 상속, Deny-list no-op inherit.
+- **writer topology 변경 (append_rules.writer)**: write 지점/writer-path 변경 = amendment 의무 + MINOR (producer-normative — schema field 무변경이나 append 토폴로지는 계약 관측 semantic 이므로 amendment). CFP-2850 Amendment 4 = SubagentStop single-write → Orchestrator task-notification single-write.
 
 ## 5. Phase 1 / Phase 2 scope
 
@@ -358,7 +448,7 @@ ROI gating prerequisite: ADR-163 §결정 11 (post-merge-counters.jsonl 30+ run)
 
 ### self-context-v1 record type (CFP-2572 / ADR-043 Amendment 3 — Phase 1 doc-only)
 
-- §2.1 self-context-v1 6-field record type = **allow-list POLICY 편입** (ADR-043 Amendment 3). L7 Orchestrator self-context proxy — 동일 spawn-event.jsonl channel 공유, `schema_version` discriminator 로 19-field spawn row 와 분기.
+- §2.1 self-context-v1 6-field record type = **allow-list POLICY 편입** (ADR-043 Amendment 3). L7 Orchestrator self-context proxy — 동일 spawn-event.jsonl channel 공유, `schema_version` discriminator 로 23-field spawn row 와 분기.
 - **record-only proxy** — `delegation_ratio` / `pre_tokens` 는 lead-self ground-truth 가 아니다 (platform live per-turn self-context surface 부재 P1). 어떤 self-context 판정도 게이트가 아니며 gate/block/deny 를 세우지 않는다 (ADR-142 tier 정직 invariant).
 - 실 emission (append/dedup) = Phase 2 (본 §2.1 = POLICY declare, spawn-event-v1 contract bump 시 field-set count reconciliation 확정 — ADR-043 Amendment 3 §근거).
 

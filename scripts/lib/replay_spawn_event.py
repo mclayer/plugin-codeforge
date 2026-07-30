@@ -61,27 +61,51 @@ def _resolve_ledger_path(ledger_path_arg):
 
 
 def _read_ledger(ledger_path):
-    """JSONL ledger read → list of row dict. graceful (부재/깨진 line skip).
+    """★ledger reader 정본 (SSOT) — JSONL read → list[dict]. graceful (부재/깨진 line skip).
+
+    본 함수 = spawn-event.jsonl 을 읽는 **모든** 소비자의 단일 원본이다
+    (`aggregate_spawn_event` / `dedup_section14_spawn_event` / `reconcile_spawn_completion_count`
+    가 전부 이 함수를 호출한다 — reader 계보 물리 통합, ADR-140 no-duplication).
+    `ledger_path` 는 `str` 또는 `Path` 둘 다 허용 (호출자 경로 타입 어댑터 불요).
+
+    ★S-4 (보안테스트 iter1, P1) — **행분할 규칙 = `\\n` only**:
+    구 구현은 `str.splitlines()` 를 썼다. splitlines 는 `\\n` 외에 U+2028(LS)·U+2029(PS)·
+    U+0085(NEL) 등도 개행으로 취급하는데, writer(`_append_jsonl_row`)는 `json.dumps(...,
+    ensure_ascii=False)` 라 **이 셋을 escape 하지 않는다**(escape 대상은 <0x20 제어문자).
+    그래서 문자열 field 에 U+2028 이 섞이면 writer 가 append 한 **1 논리 row 가 reader 에서
+    2 조각**으로 쪼개져 양쪽 다 JSON parse 실패 → **그 row 가 통째로 사라졌다**(집계 은닉).
+    같은 파일을 `for line in f`(=\\n 기반)로 읽던 reconcile 계열과 **행 계수가 발산**했다.
+    → 파일 iteration + `newline="\\n"` 으로 분할 규칙을 못 박는다(universal-newline 의 `\\r`
+    분할도 함께 배제 — 원장 안 raw `\\r` 는 json escape 로 애초에 존재 불가).
+    writer 축은 무접촉이다: escape 를 빠져나가는 문자가 정확히 이 셋뿐이고 셋 다 `\\n` 분할을
+    유발하지 않으므로 **reader 통일만으로 결함이 닫힌다**(ensure_ascii=False 무변경 —
+    byte-exact golden vector 보존).
+
+    ★decode 정책도 여기로 귀속: `errors="replace"`. 구 구현들은 `read_text(encoding="utf-8")`
+    를 `except OSError` 로만 감싸 **UnicodeDecodeError(ValueError)** 가 잡히지 않아 손상 바이트
+    1개에 reader 전체가 crash 했다(부분 손상 → 전량 관측 불가). replace 로 손상 문자만 U+FFFD
+    치환 → 해당 line 만 JSON parse 실패로 skip 되고 나머지 row 는 살아남는다(graceful).
 
     Returns list[dict]. 부재 → [].
     """
     rows = []
-    if not ledger_path.exists():
-        return rows
+    path_str = str(ledger_path)
+    if not os.path.isfile(path_str):
+        return rows  # 부재 / 디렉터리 → [] (graceful)
     try:
-        text = ledger_path.read_text(encoding="utf-8")
+        with open(path_str, encoding="utf-8", errors="replace", newline="\n") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # 깨진 line skip (graceful)
+                if isinstance(obj, dict):
+                    rows.append(obj)
     except OSError:
         return rows
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            continue  # 깨진 line skip (graceful)
-        if isinstance(obj, dict):
-            rows.append(obj)
     return rows
 
 

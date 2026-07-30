@@ -9,7 +9,7 @@ ADR-119 검증-후-단언 원칙 이행. Change Plan §8.2 P0 test contract.
     - attr_conf != attributed 면 token/cost 전부 null 강제 (추정 합산 금지)
 
   P0-2. contract↔runtime parity
-    - runtime row keys == contract Allow-list 19-set (초과/누락 0, free-form string 0)
+    - runtime row keys == contract Allow-list 23-set (초과/누락 0, free-form string 0 — CFP-2850 Amendment 4)
 
   P0-3. idempotency/dedup
     - event_id deterministic: sha256(session_id_hash || agent_id_hash || spawn_seq)
@@ -90,7 +90,7 @@ class TestAttributionConfidenceInvariant:
             "--spawn-event-enabled",  # opt-in flag 2/2
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0, f"exit code {result.returncode}: {result.stderr}"
 
         # ledger 읽기 (JSONL append-only)
@@ -137,7 +137,7 @@ class TestAttributionConfidenceInvariant:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0, f"exit {result.returncode}: {result.stderr}"
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -172,7 +172,7 @@ class TestAttributionConfidenceInvariant:
             "--model", "claude-opus-4-20250514",  # pricing table lookup
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -187,27 +187,30 @@ class TestAttributionConfidenceInvariant:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# § P0-2: CONTRACT ↔ RUNTIME PARITY (19-field Allow-list only)
+# § P0-2: CONTRACT ↔ RUNTIME PARITY (23-field Allow-list only — CFP-2850 Amendment 4)
 # ═════════════════════════════════════════════════════════════════════════════
 
 
 class TestContractRuntimeParity:
-    """P0-2: runtime row keys == contract Allow-list 19-set (정확 일치, 초과/누락 0)"""
+    """P0-2: runtime row keys == contract Allow-list 23-set (정확 일치, 초과/누락 0)"""
 
-    def test_runtime_keys_match_contract_19_field_allow_list(self, tmp_path):
+    def test_runtime_keys_match_contract_23_field_allow_list(self, tmp_path):
         """
         [P0-2 parity test]
-        생성 row 의 key 집합이 정확히 contract §2 명시 19-field 일 것.
+        생성 row 의 key 집합이 정확히 contract §2 명시 23-field 일 것
+        (19 core + CFP-2850 Amendment 4 additive 4: total_tokens/model/outcome/termination_cause).
         초과 key 1개라도 BREAKING (ADR-043 §결정 2).
         누락 key 1개라도 contract 위반.
         """
-        # Contract allow-list 19 field (SSOT - contract §2)
-        CONTRACT_19_FIELDS = {
+        # Contract allow-list 23 field (SSOT - contract §2, v1.2)
+        CONTRACT_23_FIELDS = {
             "event_id", "schema_version", "timestamp", "story_key", "lane_label",
             "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
             "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
             "duration_ms", "tool_call_count", "actor", "parent_event_id",
             "consumer_scope", "event_type", "elapsed_seconds",
+            # ── CFP-2850 Amendment 4 additive (19 → 23) ──
+            "total_tokens", "model", "outcome", "termination_cause",
         }
 
         ledger_path = tmp_path / "spawn-event.jsonl"
@@ -230,7 +233,7 @@ class TestContractRuntimeParity:
             "--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -239,8 +242,8 @@ class TestContractRuntimeParity:
         runtime_keys = set(row.keys())
 
         # 정확 일치 (초과 & 누락 0)
-        assert runtime_keys == CONTRACT_19_FIELDS, \
-            f"[P0-2] Key mismatch: \n  missing: {CONTRACT_19_FIELDS - runtime_keys}\n  extra: {runtime_keys - CONTRACT_19_FIELDS}"
+        assert runtime_keys == CONTRACT_23_FIELDS, \
+            f"[P0-2] Key mismatch: \n  missing: {CONTRACT_23_FIELDS - runtime_keys}\n  extra: {runtime_keys - CONTRACT_23_FIELDS}"
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -275,12 +278,12 @@ class TestIdempotency:
         ]
 
         cmd1 = cmd_base + ["--ledger-path", str(ledger_path_1)]
-        result1 = subprocess.run(cmd1, cwd=REPO_ROOT, capture_output=True, text=True)
+        result1 = subprocess.run(cmd1, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result1.returncode == 0
 
         # 두 번째 실행 (동일 입력)
         cmd2 = cmd_base + ["--ledger-path", str(ledger_path_2)]
-        result2 = subprocess.run(cmd2, cwd=REPO_ROOT, capture_output=True, text=True)
+        result2 = subprocess.run(cmd2, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result2.returncode == 0
 
         row1 = json.loads(ledger_path_1.read_text(encoding="utf-8").strip().split('\n')[0])
@@ -320,7 +323,7 @@ class TestActorSha256:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -399,7 +402,7 @@ class TestOptInDefaultFalse:
             # --telemetry-enabled / --spawn-event-enabled 미지정 (opt-in false)
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
 
         # Assertion (a): exit code 0 (graceful, block 안 함)
         assert result.returncode == 0, f"exit {result.returncode}: {result.stderr}"
@@ -432,7 +435,7 @@ class TestOptInDefaultFalse:
             "--spawn-event-enabled",  # opt-in flag 2/2
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         # Assertion: ledger 존재 + row 1개
@@ -470,7 +473,7 @@ class TestTimestampUtcZStrict:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -514,7 +517,7 @@ class TestTranscriptPrivacyInvariant:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -555,7 +558,7 @@ class TestAgentTypeSemiOpen:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -580,7 +583,7 @@ class TestAgentTypeSemiOpen:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -619,7 +622,7 @@ class TestEventTypeClosedEnum:
                 "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
             ]
 
-            result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
             assert result.returncode == 0
 
             rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -646,7 +649,7 @@ class TestEventTypeClosedEnum:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -686,7 +689,7 @@ class TestLaneLabelClosedEnum:
                 "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
             ]
 
-            result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
             assert result.returncode == 0
 
             rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -711,7 +714,7 @@ class TestLaneLabelClosedEnum:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -746,7 +749,7 @@ class TestConsumerScope:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0
 
         rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").strip().split('\n') if line]
@@ -781,7 +784,7 @@ class TestGracefulDegradation:
             "--ledger-path", str(ledger_path),"--telemetry-enabled","--spawn-event-enabled",
         ]
 
-        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8")
         assert result.returncode == 0, f"exit {result.returncode}: {result.stderr}"
         assert ledger_path.exists(), "ledger file should be created"
 

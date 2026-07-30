@@ -140,6 +140,40 @@ amendment_log:
       무축소). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향(경계 명료화), 약화
       0건. carrier_story CFP-2770 = ADR-143 Amendment 2 paired sibling(axis disjoint — ADR-143 =
       display-surface render 규약 / ADR-039 = mechanism-축 whitelist 경계 note).
+  - amendment: 12
+    date: 2026-07-27
+    carrier_story: CFP-2850
+    reinterpretation: false
+    summary: |
+      §결정 21 신설 (Inline whitelist **7번째 entry** — Tier-3 measurement-channel ledger row append).
+      §결정 2 inline whitelist (4 original + Amd2 §결정 15 entry 5 + Amd6 §결정 18 entry 6 = 현행 effective
+      6-entry) 에 **7번째 entry** append. §결정 18 line 551 exhaustiveness declare ("7번째 inline whitelist
+      entry 추가 = 별도 ADR Amendment 의무 — ADR-058 §결정 5 evidence-gate") 의 충족 carrier. 동인 =
+      CFP-2850 P0-2 (Epic #2814 W1-B) — Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement
+      channel) 실측 aggregate row 를 task-notification/spawn-completion 수신 시점에 구조화 CLI/args-file
+      invocation 으로 append 하는 measurement 배선. 범위 한정: (a) free-form content 0(numeric/enum/hash
+      only, T-INFO-8) (b) args-file = ASCII path + UTF-8 JSON content(argv string-interp injection 회피,
+      T-ELEV-1) (c) record-only(gate/block/deny 금지, INV-5) (d) 0-API + 50ms ceiling + exit-0(INV-8) —
+      measurement 배선 전용, 판정/게이트 로직 inline 금지. (e) evidence-gate 통과 논거(ADR-058 §결정 5) =
+      entry5(Story-file §9/§10/§14 구조화 append)·entry6(merge-time Codex dispatch) 와 동형 "Orchestrator
+      monopoly 소형 구조화 append · free-form 0 · 판정 로직 부재" 3-조건 충족. (f) sunset_justification =
+      강화방향 additive only(measurement 배선 1종 narrow 추가, inline 허용 범위 일반 확대 아님) · 약화 0.
+      **§결정 1 binary always-spawn 무손상** (수정 작업 영역 spawn 의무 무변경, 본 entry 는 Tier-3
+      measurement 소형 append mechanism 만 inline 허용) + 기존 6-entry 무손상(entry1~6 무변경) + writer
+      monopoly 무약화(lane plugin 직접 write = 여전히 policy_violation). paired = spawn-event-v1 Amendment 4
+      + ADR-043 Amendment 5 + ADR-163 §결정 13 realization (Epic #2814 W1-B). is_transitional false.
+      doc-only(ADR-039 in-place amendment, src/tests 무변경).
+    direction: strengthening
+    sunset_justification: |
+      §결정 1 binary always-spawn invariant 무변경 + 기존 6-entry 무손상 — 7번째 entry append (closed
+      enumeration 확장 additive). ADR-039 §결정 18 line 551 "7번째 inline whitelist entry 추가 = 별도 ADR
+      Amendment 의무 (ADR-058 §결정 5 evidence-gate)" 충족. evidence-gate = entry5(Story-file
+      §9/§10/§14 구조화 append)·entry6(merge-time Codex dispatch) 와 동형 3-조건(Orchestrator monopoly
+      소형 구조화 append · free-form content 0 · 판정 로직 부재) 충족. 강화방향 additive only(measurement
+      배선 1종 narrow 추가 — inline 허용 범위 일반 확대 아님), 약화 0(spawn 기본값 unchanged, lane plugin
+      직접 write = 여전히 policy_violation). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합.
+      carrier_story CFP-2850 = ADR-039 Amendment 12 + spawn-event-v1 Amendment 4 + ADR-043 Amendment 5
+      sibling amendment set (Epic #2814 W1-B).
 is_transitional: false
 ---
 
@@ -203,7 +237,7 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 
 "이건 inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 자체 금지 — branch logic 제거가 본 ADR 의 핵심.
 
-### 결정 2 — Inline whitelist (closed enumeration — base 4-entry 표, 현행 effective 6-entry)
+### 결정 2 — Inline whitelist (closed enumeration — base 4-entry 표, 현행 effective 7-entry)
 
 | # | Category | 설명 | Mechanism rationale |
 |---|---|---|---|
@@ -212,11 +246,11 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 | 3 | Read-only Q&A 답변 | 사용자 정보 요청에 대한 응답 (state report / option enumeration / 도메인 설명) | 수정 작업 아님 — codeforge orchestration scope 외 |
 | 4 | Status report | Phase 완료 / Story close / final report | 수정 작업 아님 (read-only synthesis) — ADR-025 Amendment 1 §결정 11 의 "1번 final report" |
 
-현행 6-entry(아래 **Count 정합** 참조) **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무. **모호 시 = 수정 작업 측 분류** (안전 방향 — ADR-013 cutoff precedent 정합).
+현행 7-entry(아래 **Count 정합** 참조) **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무. **모호 시 = 수정 작업 측 분류** (안전 방향 — ADR-013 cutoff precedent 정합).
 
-다음(7번째) 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future "Skill 호출 / Glob / Grep / Read tool 분류 enum 확장" 압박을 차단 — 모두 현행 6-entry 의 어느 하나로 routing 또는 수정 작업 측 분류.
+다음(8번째) 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future "Skill 호출 / Glob / Grep / Read tool 분류 enum 확장" 압박을 차단 — 모두 현행 7-entry 의 어느 하나로 routing 또는 수정 작업 측 분류.
 
-**Count 정합 (CFP-2572 §결정9 stub + ADR-142 disjoint-axis 정합 — 표기 정합, 결정 내용 무변경)**: 위 표 = §결정2 **base 4-entry**. 이후 **Amd2(§결정15) entry5**(Story-file §9/§10/§14/phase inline write) + **Amd6(§결정18) entry6**(merge-time Codex dispatch) append → **현행 effective inline-whitelist total = 6-entry** (§결정18/§결정19/§결정20 본문 "현 6-entry" 표기와 정합). 본 ADR 여러 amendment 의 "4-entry closed enumeration 무변경" 표현 = **base 표 무변경** 의미(effective 6-entry 와 무모순). **7번째 entry 신설 = amendment 의무**. enumeration 표·routing 규칙 자체 불변.
+**Count 정합 (CFP-2572 §결정9 stub + ADR-142 disjoint-axis 정합 — 표기 정합, 결정 내용 무변경)**: 위 표 = §결정2 **base 4-entry**. 이후 **Amd2(§결정15) entry5**(Story-file §9/§10/§14/phase inline write) + **Amd6(§결정18) entry6**(merge-time Codex dispatch) + **Amd12(§결정21) entry7**(Tier-3 measurement-channel ledger row append — CFP-2850) append → **현행 effective inline-whitelist total = 7-entry** (§결정18/§결정19/§결정20 본문 "현 6-entry" 표기 = 각 amendment 작성 시점 historical snapshot, 현행 effective 7-entry 가 live count SSOT). 본 ADR 여러 amendment 의 "4-entry closed enumeration 무변경" 표현 = **base 표 무변경** 의미(effective 7-entry 와 무모순). **8번째 entry 신설 = amendment 의무**. enumeration 표·routing 규칙 자체 불변.
 
 **disjoint-axis note (Amendment 11, CFP-2770 — display 축 경계 명료화, enumeration 무변경)**: 위 whitelist entry #4 "Status report" = 사용자 대상 **prose 대화 채널**(mechanism 축 — inline vs spawn). 이는 ADR-143 §결정 1 이 규율하는 **렌더 UI action/상태 LINE**(display 축 — harness 진행 줄)과 **별도 표면(disjoint axis)** 이다. ADR-143 Amendment 2(CFP-2770)가 Orchestrator 자기 렌더 action/상태 LINE 에 self-subject `[Orchestrator]` 프리픽스를 허용(INV-2 subset 완화)하되, 이는 본 §결정 2 whitelist "상태 보고" prose(prefix-exempt 유지)를 **건드리지 않는다** — mechanism 축 ≠ display 축. inline whitelist closed enumeration **무변경**(7번째 entry 신설 0), Orchestrator 에게 신규 inline 실행 권한 미부여(이미 발생 중인 top-level 액션의 렌더 LINE 라벨링일 뿐). §결정 1 binary always-spawn 무변경. paired = ADR-143 Amendment 2.
 
@@ -636,6 +670,37 @@ lead 가 background subagent/worker 응답을 대기할 때의 **유한성(liven
 - ADR-139 §컨텍스트 firsthand — lane PL background-yield 후 parent 무한 정지 / DeveloperAgent 0-byte output → stall 오판 / 본 CFP-2549 설계 lane ArchitectPL 6 deputy fan-out 후 4 deputy 가 lead 로 delivery-gap surface (stall 자기 재현)
 - §결정 1 binary always-spawn / §결정 2 closed inline whitelist 6-entry / §결정 9 inline-write-detect slot / §결정 19 body 무영향 verify (invariant 보존)
 - ADR-139 (background-wait liveness gate carrier SSOT) + ADR-081 Amendment 13 (§D14 companion first-instance cross-ref) sibling 정합 — 본 §결정 20 = ADR-139 §결정 6 sibling Amendment set (ADR-039 = spawn-권한 기반 게이트 소유 layer)
+
+### 결정 21 — Inline whitelist 7번째 entry (Tier-3 measurement-channel ledger row append — Amendment 12, CFP-2850)
+
+§결정 2 의 Inline whitelist 표 (4 original entry + Amendment 2 §결정 15 entry 5 + Amendment 6 §결정 18 entry 6 = 현행 effective 6-entry) 에 **7번째 entry** append. §결정 18 line 551 exhaustiveness declare ("7번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 — ADR-058 §결정 5 evidence-gate") 의 충족 carrier. 동인 = CFP-2850 P0-2 (Epic #2814 W1-B) — Orchestrator 가 spawn-event-v1 실측 aggregate 를 Agent task-notification 수신 시점에 ledger 로 append 하는 measurement 배선.
+
+**Inline whitelist 6-entry → 7-entry 확장 (§결정 2 의 whitelist 위 추가)**:
+
+7. **Tier-3 measurement-channel ledger row append** — Orchestrator 가 task-notification/spawn-completion 수신 시점, spawn-event-v1 (또는 sibling Tier-3 measurement channel) row 를 구조화 CLI/args-file invocation 으로 append. 범위 한정: (a) free-form content 0 (numeric/enum/hash only, T-INFO-8) (b) args-file = ASCII path + UTF-8 JSON content (argv string-interp injection 회피, T-ELEV-1) (c) record-only(gate/block/deny 금지, INV-5) (d) 0-API + 50ms ceiling + exit-0(INV-8). measurement 배선 전용 — 판정/게이트 로직 inline 금지. (e) **evidence-gate 통과 논거(ADR-058 §결정5)**: 본 entry = entry5(Story-file §9/§10/§14 구조화 append)·entry6(merge-time Codex dispatch) 와 동형 — "Orchestrator monopoly 소형 구조화 append · free-form 0 · 판정 로직 부재" 3-조건 충족 → evidence-gate 통과. (f) **sunset_justification**: 강화방향 additive only(measurement 배선 1종 narrow 추가 — inline 허용 범위 일반 확대 아님), 약화 0(기존 6-entry 무손상, spawn 기본값 unchanged, lane plugin 직접 write = 여전히 policy_violation) → `is_transitional: false` 영구 정책(monopoly 무약화).
+
+**7번째 entry 적용 범위 (closed enumeration)**:
+
+1. **dispatch trigger**: Orchestrator 가 Agent task-notification `<usage>` 블록 또는 spawn-completion 을 수신하는 시점 단일 — 다른 mechanism(수정 작업)은 본 entry scope 외.
+2. **invocation 형식**: `python3 scripts/lib/append_spawn_event.py --args-file <ascii-path>` (UTF-8 JSON content) — argv 는 ASCII path 만, 한국어 lane_label 등 실값·content 는 파일 내부(string-interp 표면 제거, T-ELEV-1).
+3. **mutation 0 invariant (measurement-only)**: append 행위 자체 = spawn-event.jsonl 한 row record-only. gate/block/deny 미발생(INV-5) · 0-API(INV-8) · transcript content/path 미도달(T-INFO-5). outcome/termination_cause 는 판정 결과 저장이지 판정 로직 inline 실행 아님.
+
+**§결정 1 binary always-spawn 무손상 (disjoint axis)**:
+
+- §결정 1 "수정 작업" 정의 (file edit / GitHub state change / Story file write / label transition / workflow yaml / ADR write) = 모두 subagent spawn 의무 유지. 본 entry 는 Tier-3 measurement 배선(소형 구조화 append) mechanism 만 inline 허용. 수정 작업 영역 spawn 정책 무변경.
+- Amendment 2 §결정 15 entry 5 (Story-file handoff 4-sub-scope inline) + Amendment 6 §결정 18 entry 6 (merge-time Codex dispatch) 무변경.
+
+**기존 6-entry 와 disjoint / writer monopoly 무약화**:
+
+본 entry 7 = Tier-3 measurement-channel ledger row append (measurement 배선 축). entry 5(Story-file handoff) · entry 6(merge-time Codex dispatch) · entry 1~4(base) 와 mechanism category disjoint. **writer monopoly 무약화** — ledger write ownership = Orchestrator 단독(ADR-039 §결정 3 / spawn-event-v1 append_rules) 유지, lane plugin agent 자체 append = 여전히 policy_violation (약화 0).
+
+**7번째 entry exhaustiveness declare**: 7번째 entry 추가 후 — 8번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 (ADR-058 §결정 5 evidence-gate). closed enumeration 안정성 보장.
+
+**Verification evidence**:
+
+- spawn-event-v1 Amendment 4 (writer mechanism = inline via UTF-8 args-file) + ADR-043 Amendment 5 (Allow-list 4 field) + ADR-163 §결정 13 realization sibling 정합
+- entry 5(§결정 15) · entry 6(§결정 18) evidence-gate 3-조건 동형 (Orchestrator monopoly 소형 구조화 append · free-form 0 · 판정 로직 부재)
+- §결정 1 binary always-spawn / 기존 6-entry / §결정 3 Ownership ≠ Mechanism 무영향 verify (invariant 보존)
 
 
 ## 회피된 대안
