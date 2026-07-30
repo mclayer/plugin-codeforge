@@ -129,7 +129,11 @@ def _run_hook(command: str | None, env_extra: dict, tool_name: str = "Bash"):
         [sys.executable, str(HOOK_PY)],
         input=json.dumps(payload),
         capture_output=True,
-        text=True,
+        # encoding 명시 (Windows 기본 cp949 디코딩 → UnicodeDecodeError 스레드 예외 회피).
+        # errors="replace": gh 부재 case 에서 **OS 로케일(cp949) 에러 메시지**가 stderr 로
+        # 새어 들어와 UTF-8 로 디코딩 불가한 바이트가 섞인다 — 본 test 는 exit code 와
+        # ASCII marker 만 판정하므로 치환 디코딩으로 충분(디코딩 예외로 죽지 않게).
+        text=True, encoding="utf-8", errors="replace",
         env=env,
     )
     return result.returncode, result.stderr

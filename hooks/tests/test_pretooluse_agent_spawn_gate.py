@@ -273,7 +273,7 @@ def _run_gate_subprocess(prompt_text: str):
         ["bash", str(GATE_SCRIPT)],
         input=json.dumps(payload, ensure_ascii=False),
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8",
         cwd=str(WORKTREE_ROOT),
         env=env,
     )

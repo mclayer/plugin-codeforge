@@ -115,10 +115,22 @@ def test_perf_append_under_50ms_ceiling_size_independent(tmp_path):
     """§8.3 50ms p99 append ceiling(ADR-163 §결정8 SLA) — best-of-N 측정(scheduler noise robust).
 
     honest-ceiling: best-of-N(min)은 p99 상한의 하한 증거(엄밀 p99 부하측정 아님, ADR-119).
-    파일 크기 독립도 병행 확인(empty vs 5000행 append 시간이 dramatic 하게 벌어지지 않음 =
-    tail-read 부재의 성능적 방증).
+
+    ★F-CR-017 (구현리뷰 FIX Iter2): 구 test 는 이름·docstring 이 **size-independence** 를
+    표방하면서 정작 `min_empty` vs `min_big` **비교 assertion 이 없었다** — 각각 50ms 미만인지만
+    봤으므로, 원장 크기에 비례해 느려지는 구현(예: tail-read 도입)이 들어와도 두 값이 모두
+    50ms 아래이기만 하면 GREEN 이었다(이름값 못 하는 사문 perf). 아래 (b) 가 그 축을 실측 비교한다.
     """
     CEILING_S = 0.050  # 50ms
+    # size-independence 허용폭 (flaky 회피 근거):
+    #   RATIO 3배 + FLOOR 3ms 의 max — best-of-30(min) 이 스케줄러 스파이크를 이미 제거하므로
+    #   남는 것은 타이머 해상도·페이지캐시 편차 수준의 미세 노이즈뿐이다. 실측(본 트리) =
+    #   empty 0.72ms / big(5000행·282KB) 0.81ms (비 1.12) → 허용선 3ms 대비 3.7배 여유(안정),
+    #   반면 동일 조건에서 원장 전량 tail-read 를 주입하면 14.5ms (허용선의 4.8배)로 확실히 초과 →
+    #   "노이즈에는 둔감하고 크기-의존 회귀에는 민감"한 폭. 절대 floor 를 둔 이유 = 빠른 머신에서
+    #   min_empty 가 타이머 해상도에 붙으면 순수 비율 판정이 노이즈로 flaky 해지기 때문.
+    SIZE_INDEP_RATIO = 3.0
+    SIZE_INDEP_FLOOR_S = 0.003
 
     def _min_append_time(ledger, n=30):
         parser = ase._build_parser()
@@ -146,3 +158,12 @@ def test_perf_append_under_50ms_ceiling_size_independent(tmp_path):
     # 측정 assertion (a): 단일 append best-case < 50ms ceiling (양측)
     assert min_empty < CEILING_S, f"empty 원장 append best {min_empty*1000:.3f}ms ≥ 50ms ceiling"
     assert min_big < CEILING_S, f"5000행 원장 append best {min_big*1000:.3f}ms ≥ 50ms ceiling"
+
+    # 측정 assertion (b): size-independence — 5000행 원장 append 가 empty 대비 유의하게
+    #   느려지지 않음 (0-ledger-read 의 성능적 귀결). tail-read 회귀 시 여기서 RED.
+    allowed = max(min_empty * SIZE_INDEP_RATIO, SIZE_INDEP_FLOOR_S)
+    assert min_big <= allowed, (
+        f"size-independence 위반: empty {min_empty*1000:.3f}ms → 5000행 {min_big*1000:.3f}ms "
+        f"(허용 {allowed*1000:.3f}ms = max({SIZE_INDEP_RATIO}×empty, {SIZE_INDEP_FLOOR_S*1000:.0f}ms)). "
+        "원장 크기에 비례해 느려짐 = tail-read/whole-file 접근 회귀 의심 (50ms ceiling·멱등 양축 위협)."
+    )

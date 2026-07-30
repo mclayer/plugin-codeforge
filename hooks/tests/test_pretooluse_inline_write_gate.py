@@ -475,7 +475,7 @@ def test_case_10_verifier_absent_failopen(tmp_path, monkeypatch, capsys):
             ["bash", str(wrapper_copy)],
             input=payload_json,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8",
             cwd=str(temp_dir),  # lib/ 경로 부재 환경
             env=env,
         )
@@ -798,7 +798,7 @@ def test_subprocess_wrapper_block_case(tmp_path, monkeypatch):
         ["bash", str(wrapper_script)],
         input=payload_json,
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8",
         env=env,
     )
 
@@ -854,7 +854,7 @@ def test_subprocess_wrapper_bypass_case(tmp_path, monkeypatch):
         ["bash", str(wrapper_script)],
         input=payload_json,
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8",
         env=env,
     )
 
@@ -919,7 +919,7 @@ def test_subprocess_wrapper_verifier_absent_failopen(tmp_path, monkeypatch):
             ["bash", str(wrapper_copy)],
             input=payload_json,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8",
             cwd=str(temp_dir),  # lib/ 경로 부재 환경
             env=env,
         )

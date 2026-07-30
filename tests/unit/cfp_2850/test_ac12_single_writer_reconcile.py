@@ -7,6 +7,13 @@ Change Plan §8.1.1 RTM AC-12 (4 named test). phase2.
   - **F-B (discriminating)**: hook spawn-completion COUNTER > recorded row COUNT →
     survivorship gap 가시(gap 은닉 시 RED).
 
+★F-CR-001 ⑤ (구현리뷰 FIX Iter2): COUNTER 가 opt-in gate 뒤로 이동했으므로 count-reconcile
+  시나리오의 전제 regime = **opt-in ON** 이다 (OFF regime 은 counter 자체가 0 → gap 정의상 0,
+  survivorship 관측 불가). 본 파일의 ledger row 는 전부 `opt_in=True` 명시로 ON regime 을 고정한다
+  (기본값 의존 금지 — 기본값이 뒤집혀도 전제가 조용히 바뀌지 않도록).
+  실 hook 을 fork 해 counter 를 **실제로 증가**시키는 ON-regime e2e =
+  `test_ac3_counter_opt_in_gate.py::test_ac12_count_reconcile_under_opt_in_on_regime`.
+
 production 로직 재구현 금지 — 실제 hooks/subagent-stop 텍스트 +
   scripts/lib/reconcile_spawn_completion_count.py (import + CLI) + append_spawn_event
   _compute_event_id 직접 호출.
@@ -50,15 +57,30 @@ def _run_reconcile_cli(count_path, ledger_path):
 
 
 def test_ac12_single_writer_hook_spawn_append_retired():
-    """(reg) hooks/subagent-stop 의 spawn-event row-write RETIRED — single-writer 보존.
+    """(reg, 구조) hooks/subagent-stop 의 spawn-event **row-write** RETIRED — single-writer 보존.
 
-    mutation: hook 이 append_spawn_event 재호출(spawn-event row-write 부활)하면 이중 writer
-      → event_id cross-path 불일치로 이중계수(AC-12 위반) → 이 reg 가 RED.
+    ★판정 기준 정정 (FIX Iter2): 구 assert 는 `"append_spawn_event" not in text` 라는
+    **식별자 부재** 프록시였다. 이는 (i) row-write 가 아닌 정당한 재사용 — 예: opt-in gate 판정을
+    `append_spawn_event._opt_in_enabled` import 로 **재사용**(ADR-140 reuse-before-write) — 까지
+    싸잡아 RED 로 만들고, (ii) 식별자 없이 row 를 쓰는 우회(별 wrapper 경유)는 못 잡는
+    양방향 부정확 프록시였다. 실 불변식은 "**spawn-event row 를 쓰지 않는다**" 이므로,
+    row-writer CLI 호출의 **argv 서명**(row identity/lane-context flag)이 hook 에 없음을 본다.
+    behavioral 확증(실 hook 실행 → spawn-event-v1 row 0)은
+      `test_ac3_counter_opt_in_gate.py::test_ac12_hook_writes_no_spawn_event_row_under_opt_in_on`.
+
+    mutation: hook 이 row-write 를 부활(identity flag 전달)하면 이중 writer → event_id
+      cross-path 불일치로 이중계수(AC-12 위반) → 이 reg 가 RED.
     """
     text = HOOK.read_text(encoding="utf-8")
-    # 측정 assertion (a): hook 은 spawn-event row-writer(append_spawn_event) 를 호출 안 함(retired)
-    assert "append_spawn_event" not in text, (
-        "hooks/subagent-stop 가 spawn-event row-write 를 부활시킴 — single-writer(Orchestrator) 위반"
+    # 실행 라인만 검사 (주석 라인 제외) — 주석의 row-flag 언급은 retire 를 **설명**하는 문서이지
+    # 실행이 아니다. 실행 여부가 판정 대상이므로 comment-stripped 코드에서만 서명을 찾는다.
+    code = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
+    # 측정 assertion (a): spawn-event row-writer CLI 의 argv 서명 부재 (row-write 호출 0)
+    row_write_flags = ("--spawn-seq", "--story-key", "--lane-label", "--attribution-confidence")
+    present = [f for f in row_write_flags if f in code]
+    assert not present, (
+        f"hooks/subagent-stop 실행부에 spawn-event row-write argv 서명 {present} 등장 — "
+        "single-writer(Orchestrator) 위반 (row-write 부활)"
     )
     # (b): retire 명문 marker 존재
     assert "RETIRED" in text, "spawn-event row-write RETIRE marker 부재 (single-writer 근거 소실)"
@@ -84,13 +106,15 @@ def test_ac12_deterministic_event_id_within_path_dedup(tmp_path, run_append, rea
 
     # (b) within-path dedup: 동일 identity 2회 + distinct 1회 → 물리 3행, recorded 2
     ledger = tmp_path / "spawn-event.jsonl"
-    for _ in range(2):  # 동일 identity 재append (dup event_id)
+    for _ in range(2):  # 동일 identity 재append (dup event_id) — opt-in ON regime 명시
         run_append(
-            ledger, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
+            ledger, opt_in=True, story_key="CFP-2850", lane_label="구현",
+            agent_type="DeveloperAgent",
             session_id="sess-dup", agent_id="agent-dup", spawn_seq="7",
         )
     run_append(  # distinct identity (별 event_id)
-        ledger, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
+        ledger, opt_in=True, story_key="CFP-2850", lane_label="구현",
+        agent_type="DeveloperAgent",
         session_id="sess-dup", agent_id="agent-distinct", spawn_seq="8",
     )
     physical = read_rows(ledger)
@@ -112,12 +136,12 @@ def test_ac12_no_double_count_after_retire(tmp_path, run_append):
     """
     ledger = tmp_path / "spawn-event.jsonl"
     count_path = tmp_path / "spawn-completion.count"
-    # Orchestrator single-writer: 완료 1건 → spawn-event row 1
+    # Orchestrator single-writer: 완료 1건 → spawn-event row 1 (opt-in ON regime 명시 — ⑤)
     run_append(
-        ledger, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
+        ledger, opt_in=True, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
         session_id="sess-nodouble", agent_id="agent-nodouble", spawn_seq="1",
     )
-    # hook disjoint COUNTER: 동일 완료 1건 → count line 1 (retired hook 의 경량 tally 형상)
+    # hook disjoint COUNTER: 동일 완료 1건 → count line 1 (opt-in ON 이므로 counter 발화)
     count_path.write_text("2026-07-28T01:00:00Z\n", encoding="utf-8")
 
     result = recon.reconcile(str(count_path), str(ledger))
@@ -143,11 +167,11 @@ def test_ac12_count_reconcile_hook_counter_vs_recorded_gap_visible(tmp_path, run
     """
     ledger = tmp_path / "spawn-event.jsonl"
     count_path = tmp_path / "spawn-completion.count"
-    # hook COUNTER = 3 completions (crash·notification-loss 포함 platform-trigger 계수)
+    # hook COUNTER = 3 completions (opt-in ON regime — crash·notification-loss 포함 계수)
     count_path.write_text("t1\nt2\nt3\n", encoding="utf-8")
     # recorded = 1 spawn-event row (Orchestrator single-writer 가 2건 놓침 = survivorship)
     run_append(
-        ledger, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
+        ledger, opt_in=True, story_key="CFP-2850", lane_label="구현", agent_type="DeveloperAgent",
         session_id="sess-gap", agent_id="agent-gap", spawn_seq="1",
     )
 

@@ -28,20 +28,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 APPEND_SCRIPT = REPO_ROOT / "scripts" / "lib" / "append_spawn_event.py"
 GOLDEN_PATH = REPO_ROOT / "tests" / "fixtures" / "cfp_2850" / "task_notification_usage_golden.py"
 
-# 23-field 계약↔runtime parity 기대 (Change Plan §3.7 / §10.A — 19-field + 4 additive).
-CONTRACT_19_FIELDS = (
-    "event_id", "schema_version", "timestamp", "story_key", "lane_label",
-    "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
-    "cache_creation_input_tokens", "cache_read_input_tokens", "cost_usd",
-    "duration_ms", "tool_call_count", "actor", "parent_event_id",
-    "consumer_scope", "event_type", "elapsed_seconds",
-)
-NEW_4_FIELDS = ("total_tokens", "model", "outcome", "termination_cause")
-CONTRACT_23_FIELDS = CONTRACT_19_FIELDS + NEW_4_FIELDS
-
-# outcome / termination_cause closed-set (Change Plan §3.2 / §10.A verbatim).
-OUTCOME_ENUM = {"success", "inconclusive", "failure", "partial"}
-TERMINATION_CAUSE_ENUM = {"normal", "timeout", "zero_output", "error", "cancelled"}
+# 기대 상수(23-field parity / outcome·termination_cause closed-set) SSOT = `_expect.py`.
+# ★F-CR-013 (구현리뷰 FIX Iter2): 본 conftest 에 있던 동일 상수 사본 5종을 **제거**했다 —
+# 어떤 test 도 conftest 를 import 하지 않아(전부 `import _expect`) 사문이었고, 계약이 바뀔 때
+# 한쪽만 갱신되는 3중 mirror drift 원천이었다. 값 추가 금지: 계약 mirror 는 `_expect.py` 단일 정본.
 
 
 def _cli_run(ledger_path, opt_in=True, **flags):

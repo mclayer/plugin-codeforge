@@ -1,9 +1,10 @@
 """AC-8 — enum 완결성 (§1 실사례류 포괄 + gap) + CREDIT=timeout sub-case.
 
-Change Plan §8.1.1 RTM AC-8 (3 named test). phase1.
+Change Plan §8.1.1 RTM AC-8 (5 named test). phase1.
   - outcome covers success·inconclusive (completion-quality 축).
   - termination_cause covers timeout·zero_output·error·cancelled (+normal, mechanism 축).
   - credit-exhaustion = timeout sub-case (독립 top-level enum 아님).
+  - ★F-CR-005: production 상수 ↔ 기대 enum **양방향 일치** (초과/누락 0) — 아래 참조.
 
 [RED-until-landed] dev-core outcome/termination_cause field + closed-enum 정규화.
 """
@@ -11,6 +12,9 @@ Change Plan §8.1.1 RTM AC-8 (3 named test). phase1.
 from __future__ import annotations
 
 import _expect
+
+import aggregate_spawn_event  # 실 production aggregate 모듈 (비성공 closed-set SSOT)
+import append_spawn_event  # 실 production 모듈 (enum 상수 SSOT — 테스트 내 재선언 금지)
 
 
 def test_ac8_outcome_covers_success_inconclusive(tmp_path, run_append, read_rows):
@@ -71,4 +75,47 @@ def test_ac8_credit_exhaustion_subcase_of_timeout(tmp_path, run_append, read_row
     )
     assert stored in (None, *_expect.TERMINATION_CAUSE_ENUM), (
         f"termination_cause 는 closed-enum 값이거나 null, got {stored!r}"
+    )
+
+
+# ─────────── ★F-CR-005 — production 상수 ↔ 기대 enum 양방향 일치 (drift 봉인) ───────────
+
+
+def test_ac8_production_enum_constants_bidirectional_match():
+    """(disc) production `_TERMINATION_CAUSES` / `_OUTCOMES` == 기대 enum (양방향, 초과·누락 0).
+
+    구 assert 는 "기대 값이 저장되는가"(단방향 subset)만 봤기에 production 이 **enum 값을
+    추가**해도(예: credit_exhausted 독립 top-level 부활, respawn 추가) 통과했다.
+    본 test 는 production 상수를 **직접 대조**한다 (테스트 내 enum 재선언 금지 — _expect 가
+    계약 §2/§3 mirror SSOT).
+    mutation: production enum 에 1값 추가/삭제 → set 불일치로 RED (양방향 discriminating).
+    """
+    # 측정 assertion (a): termination_cause 양방향 일치
+    assert append_spawn_event._TERMINATION_CAUSES == _expect.TERMINATION_CAUSE_ENUM, (
+        f"termination_cause enum drift:\n"
+        f"  production 초과: {append_spawn_event._TERMINATION_CAUSES - _expect.TERMINATION_CAUSE_ENUM}\n"
+        f"  production 누락: {_expect.TERMINATION_CAUSE_ENUM - append_spawn_event._TERMINATION_CAUSES}"
+    )
+    # (b): outcome 동형 양방향 일치
+    assert append_spawn_event._OUTCOMES == _expect.OUTCOME_ENUM, (
+        f"outcome enum drift:\n"
+        f"  production 초과: {append_spawn_event._OUTCOMES - _expect.OUTCOME_ENUM}\n"
+        f"  production 누락: {_expect.OUTCOME_ENUM - append_spawn_event._OUTCOMES}"
+    )
+
+
+def test_ac8_aggregate_nonsuccess_set_derived_from_production_outcomes():
+    """(disc) aggregate 비성공 closed-set == production outcome enum − {success} (양방향).
+
+    실패율 numerator / 낭비집계 대상 = 비성공 outcome. append 측 enum 이 확장됐는데
+    aggregate 측 closed-set 이 안 따라오면 신규 outcome 이 조용히 '성공' 취급된다
+    (silent 누락 — AC-9/AC-10 오집계). 두 production 상수를 직접 대조해 봉인한다.
+    mutation: 한쪽만 확장하면 RED.
+    """
+    expected_nonsuccess = set(append_spawn_event._OUTCOMES) - {"success"}
+    actual = set(aggregate_spawn_event._NONSUCCESS_OUTCOMES)
+    # 측정 assertion: 양방향 일치 (초과 = 미지 값 산입 / 누락 = 신규 outcome 이 성공 취급)
+    assert actual == expected_nonsuccess, (
+        f"aggregate 비성공 set drift:\n  초과: {actual - expected_nonsuccess}\n"
+        f"  누락(성공으로 오취급): {expected_nonsuccess - actual}"
     )

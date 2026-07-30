@@ -17,6 +17,7 @@
 # [empirical-source: 2026-07-27 실세션 task-notification]
 #   각 dict = 단일 task-notification 의 usage block 삼중항 verbatim.
 #   subagent_tokens 는 단일 aggregate(4-way 분해 부재 — tier-2 관측 형상).
+#   출처 vantage: Orchestrator-vantage relay (원 payload = Orchestrator 세션 수신분, Story §9.4-note 등재).
 SESSION_CAPTURES = [
     {"subagent_tokens": 139284, "tool_uses": 25, "duration_ms": 524995},
     {"subagent_tokens": 216489, "tool_uses": 3,  "duration_ms": 531031},
