@@ -304,6 +304,47 @@ append_rules:
     wrapper_dogfood: "Phase 1 = wrapper dogfood 도 default false + 사용자 explicit opt-in 의무 (always-on enforcement = 별 Phase 2 CFP)"
     silent_always_on: "금지 — default false 위반 시 policy_violation"
 
+read_rules:  # reader-normative (append_rules = writer-normative — 두 블록 disjoint, cross-import 금지)
+  framing:
+    row_terminator: |
+      **1 row = `\n` 종단** (JSONL). writer 는 O_APPEND per-row 로 1 row 를 1 줄로 append 하며,
+      row 내부에 raw `\n` 은 등장하지 않는다 (`json.dumps` 가 문자열 내 개행을 `\n` escape 로 직렬화).
+    canonical_split: |
+      **정본 분할 = universal-newline 단일 규칙** — reader 는 ledger 본문을 `\n` 기준으로만 분할한다.
+      universal-newline(`\n` / `\r\n` / `\r`) 밖의 어떤 문자도 개행으로 취급하지 않는다.
+      모든 소비자(aggregate / reconcile / replay / lint)가 이 한 규칙을 공유해야 행 계수가 writer 와 일치한다.
+    splitlines_forbidden: |
+      **`str.splitlines()` 금지** — Python `splitlines()` 는 universal-newline 에 더해
+      **U+0085(NEL) / U+2028(LS) / U+2029(PS)** 를 개행으로 취급한다. 이 문자들이 row 안에 실려 오면
+      writer 가 쓴 **1 row 를 reader 가 2 row 로 계수**한다 → writer↔reader 행 계수 불일치.
+      그 위에 세운 dedup / reconcile / aggregate 는 부풀린 계수를 정상으로 오인한다 (CFP-2850 S-4 실증).
+    writer_unconstrained: |
+      **writer 측 무제약** — 본 폐쇄는 **reader 통일만으로 완결**이며, writer 에 문자 제약을 걸거나
+      `json.dumps(ensure_ascii=False)` 를 `ensure_ascii=True` 로 전환하지 **않는다**.
+      근거: writer 의 `json.dumps` 가 `<0x20` 제어문자를 escape 하므로 escape 를 빠져나가 분할을 유발할 수 있는
+      문자는 U+0085/U+2028/U+2029 셋뿐이고, 이 셋은 universal-newline 분할 대상이 아니다 → reader 정본화 = 완전 폐쇄.
+      `ensure_ascii=True` 전환은 byte-exact golden vector 를 파손하고 한글 필드를 팽창시키면서 안전 이득이 0이다.
+
+  reader_ssot:
+    canonical_reader: |
+      **정본 reader = 단일 함수** — `scripts/lib/replay_spawn_event.py` 의 ledger-read 함수(현행 `_read_ledger`).
+      ledger 를 읽는 신규 소비자는 **그 함수를 재사용할 의무**가 있고 **JSONL 파싱을 재구현하지 않는다**
+      (ADR-140 reuse-before-write — 소비자마다 파싱을 다시 쓰는 순간 규율이 갈린다).
+    owned_disciplines: |
+      다음 규율은 전부 그 정본 reader 에 **귀속**된다 (소비자 각자 재구현·우회 금지):
+        - **분할** = 위 `framing.canonical_split` (`splitlines()` 금지).
+        - **decode** = `encoding="utf-8", errors="replace"` — 손상 byte 가 `UnicodeDecodeError` crash 로 번지지 않게 한다
+          (구 reader 는 `except OSError` 만 감싸 `UnicodeDecodeError` 를 놓쳤다). 치환된 row 는 JSON parse 실패로 graceful skip.
+        - **dedup** = deterministic event_id read-time dedup (위 `idempotency.rule`) + `parent_event_id` chain.
+    cross_check_rule: |
+      **교차검증은 피검증 소비자와 동일 reader 를 통과한 계수만 비교한다 — reader 가 다르면 reconcile 은
+      자기 손실을 볼 수 없다 (CFP-2850 S-4 실증).**
+    adr163_alignment: |
+      **ADR-163 §결정 13 정합** — 그 결정이 부과한 "§14 Lane Evidence ↔ spawn-event dedup script" 의무
+      (위 `idempotency.section14_dedup`) 는 read-time script 책임이므로, 그 script 역시 본 `reader_ssot` 를 통과한
+      row 만 계수한다. reader 가 갈리면 §결정 13 의 dedup 은 non-vacuous 처럼 보이면서 실제로는 계수 불일치를 은폐한다
+      (Amendment 4 가 실현한 non-vacuous reconcile 의 전제 조건).
+
 operational_constraints:
   zero_api_call:
     rule: "0 API call (ADR-163 §결정 8) — Anthropic/GitHub/external API 호출 금지. token source = transcript_path 파싱 또는 SDK total_cost_usd (Phase 2 실측 후 택일), pricing = 로컬 상수. local I/O only"
