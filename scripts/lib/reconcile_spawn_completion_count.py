@@ -76,6 +76,9 @@ _HONESTY = (
     "완료 계수' 가 아니다(over-claim 금지). opt-in ON 구간의 gap>0 = single-writer emit 실패/"
     "notification-loss 의 upper-bound 관측(crash-safe), 인과 확정 아님 — 구간 중 opt-in flip / "
     "gate probe fail-closed / counter 파일 소실도 같은 gap 으로 보인다(honest-degrade). "
+    "예외 — writer 가 CLI opt-in flag(--telemetry-enabled/--spawn-event-enabled)로 config "
+    "를 우회해 write 하면 hook counter(config 술어)와 recorded row(flag 술어)가 **불일치**할 "
+    "수 있다: 이때 recorded > hook 이 되어 recorded_excess 로 표기된다(gap 의 역방향). "
     "counter line append 원자성 = 로컬 FS best-effort(network-share 무보장)."
 )
 

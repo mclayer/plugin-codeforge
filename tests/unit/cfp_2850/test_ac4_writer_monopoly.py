@@ -36,6 +36,13 @@ def _load_contract_yaml_block():
     assert candidates, (
         "계약 §3 에 append_rules 를 담은 ```yaml 블록이 없음 — writer 규범이 구조적으로 소실"
     )
+    # ★F-CX2-002 하드닝: append_rules 블록은 **유일**해야 한다. 동명 블록이 2개 이상이면
+    # `candidates[0]` 이 어느 블록인지 문서 순서에 좌우돼(엉뚱한 블록 파싱) 아래 구조
+    # assert 가 실제 규범이 아닌 사본을 검증할 수 있다 — 계약 SSOT 이중화 자체를 차단한다.
+    assert len(candidates) == 1, (
+        "계약에 append_rules 를 담은 ```yaml 블록이 %d개 — SSOT 이중화(파싱이 엉뚱한 블록을 "
+        "집을 수 있음). 계약 블록은 유일해야 함" % len(candidates)
+    )
     data = yaml.safe_load(candidates[0])
     assert isinstance(data, dict), f"§3 YAML 블록이 mapping 이 아님: {type(data)}"
     return data

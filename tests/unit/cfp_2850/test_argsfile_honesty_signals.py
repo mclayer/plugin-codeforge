@@ -9,6 +9,8 @@ Change Plan §3.4 args-file 채널(OQ-3 / T-ELEV-1) + §7.2 T-TAMP-2 + ADR-043 �
   - F-CR-009    args-file 이 **opt-in gate flag 를 실어 우회 금지**(정책 채널 아님)
   - F-CR-010    args-file `utf-8-sig` 수용(BOM 있는 UTF-8 — Windows 편집기 산출)
   - F-CR-014    미매칭 enum 값 → **stderr WARN**(무음 강등 금지) / 미제공은 WARN 대상 아님
+  - F-CX2-001   usage 정수의 **bool / 비정수 float** → T-TAMP-2 위반 처리(fake-attributed 착지
+                차단) + **stderr WARN**. 정수값 float/문자열은 계속 허용(과잉 거부 회귀 방어)
 
 production 로직 재구현 금지 — 전부 실 `append_spawn_event.py` CLI(run_append) 호출 결과로 판정.
 exit-masking(`|| true` 류) 없음: 모든 실행은 returncode + row 상태 + stderr 를 동반 assert.
@@ -296,3 +298,130 @@ def test_absent_enum_value_does_not_warn(tmp_path, run_append, read_rows):
     assert res.stderr.strip() == "", (
         f"미제공(정상 honest-null) 경로에서 WARN 발생 — 신호 대 잡음 붕괴, stderr={res.stderr!r}"
     )
+
+
+# ─── F-CX2-001 — usage 정수 type sanity (bool / 비정수 float 는 T-TAMP-2 위반) ───
+#
+# 구 구현의 `_usage_within_bounds` / `_coerce_int_or_none` 는 `int(value)` 를 써서
+# JSON `true`/`false`/`1.9` 를 **통과**시켰다 (`int(True)==1`, `int(1.9)==1`).
+# writer 가 그 값을 곧바로 int 로 강제 변환해 원장에 실으므로 bool 흔적조차 남지 않아,
+# 하류 aggregate 의 bool 가드는 **구조적 도달 불가**(writer↔reader 비대칭)였다.
+# 결과 = fake-attributed row 착지 + WARN 0 (완전 침묵 경로).
+#
+# 정책 (PL 확정):
+#   - bool(true/false)          → 거부 (T-TAMP-2 위반 → unattributed + token/cost null + WARN)
+#   - 비정수 float(1.9)          → 거부 (정밀도 손실 — 동일 처리)
+#   - 정수값 float/문자열         → **허용** (139284.0 / "139284" — 현행 유지, 과잉 거부 금지)
+# 어느 경로든 침묵 금지: 거부는 반드시 stderr WARN 을 동반한다 (silent drop 0).
+
+
+def _append_usage_via_args_file(tmp_path, run_append, name, total_tokens_value):
+    """args-file 채널로 total_tokens 실값 1건을 실어 실제 CLI 를 1회 호출 (production 재구현 0).
+
+    attributed + model 을 함께 실어 "정상이면 attributed 로 착지하는" 형상을 만든다 —
+    거부 케이스가 실제로 **착지를 막았는지**(단순 미착지가 아님) 대조 가능해진다.
+    """
+    ledger = tmp_path / ("%s.jsonl" % name)
+    args_file = _write_args_file(tmp_path / ("%s-args.json" % name), {
+        "story-key": "CFP-2850", "lane-label": "구현", "agent-type": "DeveloperAgent",
+        "session-id": "sess-%s" % name, "agent-id": "agent-%s" % name, "spawn-seq": "1",
+        "attribution-confidence": "attributed",
+        "model": "claude-opus-4",
+        "total-tokens": total_tokens_value,   # ← 검증 대상 (JSON 원형 그대로)
+    })
+    return run_append(ledger, args_file=str(args_file)), ledger
+
+
+def test_ttamp2_argsfile_bool_usage_rejected_not_attributed(tmp_path, run_append, read_rows):
+    """(disc) args-file 의 usage 정수가 **bool** 이면 T-TAMP-2 위반 → attributed 착지 금지 + WARN.
+
+    `int(True)==1` / `int(False)==0` 이라 구 구현은 bool 을 정상 정수로 통과시키고 원장에
+    `1`/`0` 으로 실었다 — 원장에 bool 흔적이 없으니 하류 reader 의 bool 가드는 영원히
+    발화하지 못한다(writer↔reader 비대칭). 즉 "측정을 확보했다"고 표기된 **fake-attributed
+    row 가 무음으로 착지**한다.
+    mutation: production 의 bool 배제를 되돌리면 attributed + total_tokens=1/0 → RED.
+    """
+    for label, raw in (("bool-true", True), ("bool-false", False)):
+        res, ledger = _append_usage_via_args_file(tmp_path, run_append, label, raw)
+
+        # (a) record-only never-block — 거부는 실패가 아니다 (exit 0 유지)
+        assert res.returncode == 0, f"[{label}] exit {res.returncode}: {res.stderr}"
+        rows = read_rows(ledger)
+        assert len(rows) == 1, f"[{label}] record-only 위반(row {len(rows)}), stderr={res.stderr!r}"
+        row = rows[0]
+        # 측정 assertion (b): fake-attributed 착지 차단
+        assert row["attribution_confidence"] != "attributed", (
+            f"[{label}] bool usage 가 T-TAMP-2 를 통과해 attributed 로 착지 — "
+            f"fake-attributed row(측정 표기 vs 실체 모순), row total_tokens={row['total_tokens']!r}"
+        )
+        # (c): bool 이 int 로 강제 변환돼 원장에 실리지 않음 (1/0 착지 금지 — 흔적 세탁 차단)
+        assert row["total_tokens"] is None, (
+            f"[{label}] bool 이 정수로 세탁돼 원장에 착지함, got {row['total_tokens']!r}"
+        )
+        assert row["cost_usd"] is None, f"[{label}] cost 파생값 잔존, got {row['cost_usd']!r}"
+        # (d): 침묵 금지 — 거부 사실 + 해당 field 가 stderr 로 VISIBLE
+        assert "WARN" in res.stderr, (
+            f"[{label}] bool usage 거부가 무음 처리됨(WARN 0 = 침묵 경로), stderr={res.stderr!r}"
+        )
+        assert "total_tokens" in res.stderr, (
+            f"[{label}] 어떤 field 가 거부됐는지 stderr 로 식별 불가, stderr={res.stderr!r}"
+        )
+
+
+def test_ttamp2_argsfile_non_integral_float_usage_rejected(tmp_path, run_append, read_rows):
+    """(disc) 비정수 float(1.9) usage 도 T-TAMP-2 위반 → attributed 착지 금지 + WARN.
+
+    `int(1.9)==1` 이라 구 구현은 통과시키고 **1** 을 원장에 실었다 — 정밀도를 소리 없이
+    잃은 값이 실측처럼 기록되는 경로(honest 측정 위반).
+    mutation: 비정수 float 거부를 되돌리면 attributed + total_tokens=1 → RED.
+    """
+    res, ledger = _append_usage_via_args_file(tmp_path, run_append, "float-frac", 1.9)
+
+    assert res.returncode == 0, f"exit {res.returncode}: {res.stderr}"
+    rows = read_rows(ledger)
+    assert len(rows) == 1, f"record-only 위반(row {len(rows)}), stderr={res.stderr!r}"
+    row = rows[0]
+    # 측정 assertion (a): 절삭된 값의 attributed 착지 차단
+    assert row["attribution_confidence"] != "attributed", (
+        "비정수 float usage 가 T-TAMP-2 를 통과해 attributed 로 착지 — 절삭 실측 위장, "
+        f"row total_tokens={row['total_tokens']!r}"
+    )
+    # (b): 절삭값(1) 이 원장에 실리지 않음
+    assert row["total_tokens"] is None, (
+        f"비정수 float 이 절삭돼 원장에 착지함(정밀도 손실 은폐), got {row['total_tokens']!r}"
+    )
+    assert row["cost_usd"] is None
+    # (c): 침묵 금지
+    assert "WARN" in res.stderr and "total_tokens" in res.stderr, (
+        f"비정수 float 거부가 stderr 로 표면화돼야 함(침묵 금지), stderr={res.stderr!r}"
+    )
+
+
+def test_ttamp2_argsfile_integral_usage_forms_still_attributed(tmp_path, run_append, read_rows):
+    """(대조군) **정수값** int/float/문자열은 계속 정상 attributed 착지 — 과잉 거부 회귀 방어.
+
+    bool/비정수 float 배제가 "숫자 아니면 다 막기" 로 번지면 실 writer 가 보내는 정상 실측
+    (JSON 이 `139284.0` 으로 직렬화하거나 문자열로 싣는 형상)까지 막혀 attributed row 가
+    0 이 된다 — 결함 수정이 측정 자체를 죽이는 회귀. 세 형상 모두 동일 정수로 착지해야 한다.
+    mutation: 정수값 float/문자열까지 거부하면 unattributed → RED.
+    """
+    for label, raw in (("int-plain", 139284), ("float-integral", 139284.0), ("str-digits", "139284")):
+        res, ledger = _append_usage_via_args_file(tmp_path, run_append, label, raw)
+
+        assert res.returncode == 0, f"[{label}] exit {res.returncode}: {res.stderr}"
+        rows = read_rows(ledger)
+        assert len(rows) == 1, f"[{label}] row 형상 붕괴({len(rows)}), stderr={res.stderr!r}"
+        row = rows[0]
+        # 측정 assertion (a): 정상 실측은 attributed 유지 (과잉 거부 아님)
+        assert row["attribution_confidence"] == "attributed", (
+            f"[{label}] 정수값 usage 가 거부돼 attribution 이 강등됨(과잉 거부 회귀) — "
+            f"got {row['attribution_confidence']!r}, stderr={res.stderr!r}"
+        )
+        # (b): 값 자체도 손실 없이 정수로 착지
+        assert row["total_tokens"] == 139284, (
+            f"[{label}] 정수값 실측이 원장에 보존되지 않음, got {row['total_tokens']!r}"
+        )
+        # (c): 정상 경로는 WARN 무발화 (거부 WARN 남발 시 실 신호가 묻힘)
+        assert "WARN" not in res.stderr, (
+            f"[{label}] 정상 정수값 경로에서 WARN 발생 — 신호 대 잡음 붕괴, stderr={res.stderr!r}"
+        )

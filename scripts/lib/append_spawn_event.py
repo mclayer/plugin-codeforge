@@ -339,8 +339,16 @@ def _utc_z_now():
 # ─────────────────────── token / cost 파생 (추정 금지) ───────────────────────
 
 def _coerce_int_or_none(value):
-    """int 변환 또는 None (실패/빈값 → None)."""
+    """int 변환 또는 None (실패/빈값 → None).
+
+    ★F-CX2-001 — bool 명시 배제(defense-in-depth): T-TAMP-2 `_usage_within_bounds` 가
+    1차 차단하나, bool 은 int subclass 라 여기서도 `int(True)==1` 로 둔갑할 수 있다.
+    writer 가 bool 을 int 로 바꿔 쓰면 원장에 흔적이 안 남아 reader 측 bool 가드가
+    도달 불가가 된다(writer↔reader 비대칭) → 두 지점 모두에서 배제한다.
+    """
     if value is None:
+        return None
+    if isinstance(value, bool):
         return None
     try:
         return int(value)
@@ -849,17 +857,34 @@ def _build_parser():
 # ─────────────────────── UTF-8 args-file 채널 + T-TAMP-2 (CFP-2850) ──────────
 
 def _usage_within_bounds(value):
-    """T-TAMP-2 — usage 정수 비음수 + 상한 sanity cap. None/미제공 = valid(무제약).
+    """T-TAMP-2 — usage 정수 **타입 + 범위** sanity. None/미제공 = valid(무제약).
 
-    정수 변환 불가 = validation 위반 아님(별도 coerce 단계서 None 처리 — 여기선 통과).
+    정수 변환 불가(임의 문자열 등) = validation 위반 아님(별도 coerce 단계서 None 처리).
     비음수 위반(음수) / cap 초과 = 위반(False).
+
+    ★F-CX2-001 (구현리뷰 iter2 재판정, P1) — **타입 축 미이행 봉합**:
+    구 구현은 `int(value)` 만 써서 JSON `true`/`false`/`1.9` 를 **통과**시켰다. bool 은 int
+    subclass 라 `int(True)==1`, 비정수 float 는 `int(1.9)==1` 로 **소리 없이 값이 바뀌어**
+    fake-attributed row 가 착지했다(WARN 0 — 침묵 경로). 게다가 writer 가 bool 을 int 로
+    강제 변환해 원장에 bool 흔적이 남지 않으므로, reader 측 `aggregate_spawn_event`
+    `_measured_total_tokens` 의 bool 가드는 **구조적으로 도달 불가**였다(writer↔reader 비대칭).
+    T-TAMP-2 는 이미 "usage 정수" 를 명령했으므로 타입 축은 신규 정책이 아니라 미이행분이다.
+
+    - **bool = 항상 위반** (`aggregate` 의 명시 bool 배제 의도와 정합 — True/False 오산입 차단).
+    - **비정수 float(1.9) = 위반** (절삭은 측정값 무성의 변조 — 추정 저장 금지, ADR-119).
+      정수값 float(139284.0) · 숫자 문자열("139284") 은 값 보존이라 **통과**(현행 유지).
+    위반은 호출측에서 WARN 발화 + attribution=unattributed 강등 — 침묵 drop 0.
     """
     if value is None:
         return True
+    if isinstance(value, bool):
+        return False  # F-CX2-001 — int subclass 통과 구멍 차단
     try:
         iv = int(value)
     except (TypeError, ValueError):
         return True  # 정수 아님 → coerce None (별개 경로), T-TAMP-2 위반 아님
+    if isinstance(value, float) and iv != value:
+        return False  # F-CX2-001 — 비정수 float 절삭 = 값 변조
     return 0 <= iv <= _USAGE_SANITY_CAP
 
 
@@ -888,9 +913,9 @@ def _validate_usage_bounds(args):
         if not _usage_within_bounds(getattr(args, field, None)):
             print(
                 "[codeforge-spawn-event] WARN: usage 정수 '%s' T-TAMP-2 위반 "
-                "(음수 또는 상한 %d 초과 — argv/args-file 병합 최종값) → "
-                "attribution=unattributed 강제 (token null, 추정 금지)"
-                % (field, _USAGE_SANITY_CAP),
+                "(bool / 비정수 float / 음수 / 상한 %d 초과 — argv/args-file 병합 "
+                "최종값 %r) → attribution=unattributed 강제 (token null, 추정 금지)"
+                % (field, _USAGE_SANITY_CAP, getattr(args, field, None)),
                 file=sys.stderr,
             )
             args.attribution_confidence = "unattributed"
