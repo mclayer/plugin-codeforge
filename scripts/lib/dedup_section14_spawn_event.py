@@ -27,10 +27,10 @@
 #            check-lane-evidence.sh (§14 YAML block 파싱 — ## (§)?14 heading + ```yaml block)
 
 import argparse
-import json
 import os
 import re
 import sys
+# `json` 은 ledger reader 정본 위임(S-4) 후 본 모듈에서 사용처 0 → import 제거 (unused).
 
 # Windows cp949 인코딩 회피 (ADR-061 portability)
 if hasattr(sys.stdout, "reconfigure"):
@@ -42,6 +42,14 @@ try:
     import yaml
 except ImportError:  # pragma: no cover
     yaml = None
+
+# ledger reader 정본(SSOT) REUSE — 자체 JSONL reader 사본 금지 (ADR-140 / S-4 행분할·decode
+# 규칙 단일화). import 실패 시 path fallback (aggregate_spawn_event 선례 동형).
+try:
+    import replay_spawn_event as _replay
+except Exception:  # pragma: no cover — import path fallback
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import replay_spawn_event as _replay
 
 
 _LEDGER_BASENAME = "spawn-event.jsonl"
@@ -150,26 +158,13 @@ def _resolve_ledger_path(ledger_path_arg, repo_root):
     return os.path.join(base, _DEFAULT_LEDGER_PARENT_REL, _LEDGER_BASENAME)
 
 
-def _read_ledger_rows(ledger_path):
-    """JSONL ledger read → list[dict]. 부재 → [] (graceful)."""
-    rows = []
-    if not os.path.isfile(ledger_path):
-        return rows
-    try:
-        with open(ledger_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if isinstance(obj, dict):
-                    rows.append(obj)
-    except OSError:
-        return rows
-    return rows
+# ★S-4 (보안테스트 iter1) — ledger reader **정본 alias** (wrapper 조차 두지 않는다).
+# 구 구현은 자체 JSONL reader 사본이라 행분할 규칙(\n vs splitlines)·decode 정책(errors)이
+# 소비자마다 갈렸고, 그 발산이 "같은 원장을 읽는데 reader 마다 row 수가 다르다" 는 관측 왜곡
+# (U+2028 row 은닉)의 본체였다. 이제 이 이름은 `replay_spawn_event._read_ledger` **바로 그
+# 함수 객체**를 가리킨다 (ADR-140 — 사본 0, 규칙 drift 원천 봉인). 시그니처 무변경:
+# 정본이 str|Path 양쪽을 수용하므로 기존 호출자(str 경로) 무영향.
+_read_ledger_rows = _replay._read_ledger
 
 
 def _dedup_rows(rows):

@@ -45,8 +45,10 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -122,6 +124,18 @@ _USAGE_INT_FIELDS = (
     "duration_ms", "tool_call_count",
 )
 
+# ★S-3 (보안테스트 iter1, P1) — T-TAMP-2 **float 축** 편입 (Iter-3 F-CX2-001 누락분).
+# 구 구현은 `_USAGE_INT_FIELDS` 만 검증해 **`elapsed_seconds` 는 무검증**이었다: 음수·bool·
+# NaN·Infinity 가 전부 통과했고, 특히 NaN/Infinity 는 `json.dumps` 가 **비표준 토큰**
+# (`NaN`/`Infinity`)으로 직렬화해 **RFC 8259 미적합 행**을 원장에 착지시켰다(strict reader 파손).
+# int 축과 규칙이 다르므로(소수 정상값 12.5 를 거부하면 안 됨) **field 목록만 분리**하고
+# 검증 진입점·WARN·강등 경로는 int 축과 **단일 공유**한다 (`_validate_usage_bounds` 1곳 —
+# 검증 로직 복제 0, ADR-140). 범위 규칙(비음수 + 상한)은 `_usage_range_ok` 공유 술어.
+_USAGE_FLOAT_FIELDS = ("elapsed_seconds",)
+
+# T-TAMP-2 전체 대상 (int ∪ float) — 검증 loop 의 단일 원본.
+_USAGE_FIELDS = _USAGE_INT_FIELDS + _USAGE_FLOAT_FIELDS
+
 # 23-field 정확 키 순서 (lint/dedup/replay 가 참조하는 SSOT).
 # 기존 19-field 순서·의미 불변(additive) — CFP-2850 Amendment 4 로 하단 4 field append
 # (total_tokens·model·outcome·termination_cause). 전부 optional(v1.0 reader skip, ADR-008).
@@ -192,11 +206,20 @@ def _normalize_parent_event_id(raw_parent, already_hashed):
 _WARN_VALUE_MAXLEN = 64
 
 
-def _warn_enum_fallback(field, raw, fallback_desc):
-    """미매칭 enum 값 1건을 stderr 로 표면화 (record 는 계속 — graceful)."""
+def _truncate_for_warn(raw):
+    """WARN 출력용 값 truncate — stderr 폭주/장문 유입 bound (표면화 공통 primitive).
+
+    enum fallback WARN 과 config flag WARN 이 공유한다 (truncate 규칙 복제 금지 — ADR-140).
+    """
     s = str(raw)
     if len(s) > _WARN_VALUE_MAXLEN:
         s = s[:_WARN_VALUE_MAXLEN] + "…(truncated)"
+    return s
+
+
+def _warn_enum_fallback(field, raw, fallback_desc):
+    """미매칭 enum 값 1건을 stderr 로 표면화 (record 는 계속 — graceful)."""
+    s = _truncate_for_warn(raw)
     print(
         "[codeforge-spawn-event] WARN: '%s' 미매칭 enum 값 %r → %s (closed-set 밖 — "
         "record 계속, 무음 강등 아님)" % (field, s, fallback_desc),
@@ -496,7 +519,7 @@ def _build_row(args):
         "parent_event_id": parent_event_id,
         "consumer_scope": _normalize_consumer_scope(args.consumer_scope),
         "event_type": _normalize_event_type(args.event_type),
-        "elapsed_seconds": _coerce_float_or_none(args.elapsed_seconds),
+        "elapsed_seconds": _sanitized_elapsed_seconds(args.elapsed_seconds),
         # ── CFP-2850 Amendment 4 additive (total_tokens honest-null gated in token_cost) ──
         "total_tokens": token_cost["total_tokens"],
         "model": _normalize_model(args.model),
@@ -507,16 +530,98 @@ def _build_row(args):
 
 
 def _coerce_float_or_none(value):
-    """float 변환 또는 None."""
+    """float 변환 또는 None (실패/빈값/비유한 → None).
+
+    ★S-3 (보안테스트 iter1, P1) — int 쌍둥이(`_coerce_int_or_none`)와 **대칭 회복**.
+    Iter-3 F-CX2-001 은 int 축만 봉합하고 float 축을 빠뜨렸다:
+      - **bool 배제**: bool 은 int subclass 라 `float(True)==1.0` 으로 둔갑해 원장에 흔적을
+        남기지 않는다(writer↔reader 비대칭 — reader 측 bool 가드가 도달 불가).
+      - **NaN/Infinity 배제(핵심)**: `json.dumps` 는 이 둘을 **비표준 토큰** `NaN`/`Infinity`
+        로 직렬화한다 → RFC 8259 미적합 행이 원장에 착지해 strict JSON reader 가 깨진다.
+        `math.isfinite` 로 차단하고 **null**(honest-null)로 기록한다 — 0 으로 날조하지 않는다.
+    """
     if value is None:
         return None
+    if isinstance(value, bool):
+        return None
     try:
-        return float(value)
+        fv = float(value)
     except (TypeError, ValueError):
         return None
+    if not math.isfinite(fv):
+        return None  # NaN / ±Infinity → null (비표준 JSON 토큰 원장 착지 금지)
+    return fv
+
+
+def _sanitized_elapsed_seconds(value):
+    """T-TAMP-2 float 축을 **통과한 값만** elapsed_seconds 로 착지 (S-3).
+
+    위반(bool / NaN·Infinity / 음수 / 상한 초과) → None(honest-null). "측정한 적 없는 값" 을
+    측정치인 척 남기지 않는다 — 음수 초는 물리적으로 성립하지 않는 값이므로 0 이나 절댓값으로
+    날조하지 않고 **버린다**(ADR-119 추정 금지). 판정은 `_usage_float_within_bounds`,
+    변환은 `_coerce_float_or_none` 재사용 — 규칙 복제 0 (ADR-140).
+    WARN 발화·attribution 강등은 `_validate_usage_bounds`(main 단일 지점) 소관이라 여기서
+    중복 출력하지 않는다.
+    """
+    if not _usage_float_within_bounds(value):
+        return None
+    return _coerce_float_or_none(value)
 
 
 # ─────────────────────── storage path 결정 (override = parent dir 대체) ──────
+
+# ★S-2 (보안테스트 iter1, P1) — 원장 목적지 containment (**storage_path 축 한정**).
+# 구 구현의 escape 검사는 "best-effort(단순 path join)" 라 **아무 검사도 하지 않았다**:
+# storage_path 가 `..`/절대경로/symlink 로 프로젝트 밖 아무 디렉터리나 가리켜도 그대로 write
+# (parent dir 를 mkdir 까지 한다).
+# args-file 채널은 `_ARGS_FILE_DENIED_KEYS` 로 이미 차단했고(정책 채널 아님), 본 검사는 그
+# **보완층**(CLI/설정 축 + deny-list 우회·미래 config 배선 대비)이다.
+# 허용 root (realpath 후 commonpath 포함) — 3종:
+#   ① ${CLAUDE_PROJECT_DIR} (선언 시)  ② 본 스크립트 checkout 의 repo root
+#   ③ OS 임시 디렉터리(tempfile.gettempdir()) — 테스트/CI 의 ephemeral scratch(pytest tmp_path,
+#     mktemp -d)가 원장 목적지로 쓰이는 **기존 정당 용법** 보존용 명시 carve-out.
+# ★honest-ceiling (over-claim 금지): 본 검사는 **authz 경계가 아니다**. CLI 호출자는 이미 임의
+#   명령 실행 권한을 가지므로 호출자의 FS 권한을 제한하는 장치가 아니며, ③ 때문에 임시
+#   디렉터리 안으로의 write 는 여전히 가능하다(bounded degradation — 임의 위치 무해 아님).
+#   봉인하는 것은 "측정 채널의 원장 write 가 프로젝트 ∪ repo ∪ OS temp 밖으로 새는" 경로다.
+_HERE_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT_GUESS = os.path.dirname(os.path.dirname(_HERE_DIR))  # scripts/lib → repo root
+
+
+def _real_norm(path):
+    """realpath(symlink resolve) + normcase — containment 비교 정규형.
+
+    resolve-**후**-검사이므로 symlink 로 밖을 가리키는 경로도 실경로 기준으로 판정된다
+    (POSIX symlink 축 상당 부분 커버 — TOCTOU 완전 봉인은 아님, honest-ceiling).
+    """
+    return os.path.normcase(os.path.realpath(str(path)))
+
+
+def _allowed_ledger_roots():
+    """원장 write 허용 root 목록 (containment base) — ① 프로젝트 ② repo root ③ OS temp."""
+    roots = [os.environ.get("CLAUDE_PROJECT_DIR", ""), _REPO_ROOT_GUESS]
+    try:
+        roots.append(tempfile.gettempdir())
+    except Exception:  # pragma: no cover — tempdir 판정 실패 시 carve-out 없음(더 엄격)
+        pass
+    return [r for r in roots if r]
+
+
+def _within_allowed_roots(candidate):
+    """candidate 가 허용 root 중 하나 안인가 (realpath 후 commonpath 포함 검사)."""
+    try:
+        c = _real_norm(candidate)
+    except (OSError, ValueError):
+        return False
+    for root in _allowed_ledger_roots():
+        try:
+            r = _real_norm(root)
+            if os.path.commonpath([c, r]) == r:
+                return True
+        except (OSError, ValueError):
+            continue  # 다른 드라이브(Windows commonpath ValueError) 등 → 미포함 취급
+    return False
+
 
 def _resolve_storage_path(args):
     """ledger path 결정 — basename 고정(spawn-event.jsonl), override 는 parent dir 만 대체.
@@ -526,24 +631,37 @@ def _resolve_storage_path(args):
       2. telemetry.storage_path override (parent dir 대체) + 고정 basename.
       3. default = ${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl.
 
-    escape 검사 = best-effort (단순 path join — InfraOpArch §7.4.5 escape 금지는 best-effort).
+    ★S-2 — 1·2 의 결과는 `_within_allowed_roots` containment 를 통과해야 한다. 벗어나면
+    **default(3) 로 강등 + stderr WARN**(reject/비-0 exit 아님 — append 경로 never-block,
+    ADR-115). 기존 basename 고정 규칙과 **중복이 아니라 보완**이다: basename 고정은 "어떤
+    파일명" 을, containment 는 "어떤 디렉터리" 를 각각 pin 한다.
     """
+    proj_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or "."
+    default_path = Path(proj_dir) / _DEFAULT_PARENT_REL / _LEDGER_BASENAME
+
     # 1. 명시 full path override
     if args.ledger_path:
-        return Path(args.ledger_path)
-
-    proj_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or "."
-
-    # 2. telemetry.storage_path override (parent dir 대체)
-    storage_path = args.storage_path
-    if storage_path:
-        parent = Path(storage_path)
+        candidate, source = Path(args.ledger_path), "--ledger-path"
+    elif args.storage_path:
+        # 2. telemetry.storage_path override (parent dir 대체, basename 고정)
+        parent = Path(args.storage_path)
         if not parent.is_absolute():
             parent = Path(proj_dir) / parent
-        return parent / _LEDGER_BASENAME
+        candidate, source = parent / _LEDGER_BASENAME, "storage_path"
+    else:
+        # 3. default (containment 검사 대상 아님 — 이것이 강등 목적지 자체)
+        return default_path
 
-    # 3. default
-    return Path(proj_dir) / _DEFAULT_PARENT_REL / _LEDGER_BASENAME
+    if not _within_allowed_roots(candidate):
+        print(
+            "[codeforge-spawn-event] WARN: %s 가 허용 root 밖을 가리킴 (%s) → default 로 강등 "
+            "(%s). 허용 root = CLAUDE_PROJECT_DIR|repo root|OS temp — realpath 후 commonpath "
+            "판정 (원장 목적지는 측정 채널 지정 영역 밖으로 나갈 수 없다)"
+            % (source, candidate, default_path),
+            file=sys.stderr,
+        )
+        return default_path
+    return candidate
 
 
 # ─────────────────────── opt-in gate (default false) ────────────────────────
@@ -580,6 +698,52 @@ def _read_config_telemetry(proj_dir):
     return {}
 
 
+# ★S-1 (보안테스트 iter1, P1) — config flag truthiness 정규화 (opt-in **fail-open** 봉합).
+# 구 구현은 `bool(tel.get("enabled", False))` 였다. YAML/JSON 에서 값을 따옴표로 감싸면
+# (`enabled: "false"`, `spawn_event: "off"`) 파서는 **문자열**을 주는데 파이썬에서 비어있지
+# 않은 문자열은 전부 truthy 라 `bool("false") is True` — 운영자가 OFF 라고 적은 config 가
+# 계측을 **켰다**(ADR-043 §결정 1 opt-in default false 위반 = fail-OPEN, 미동의 데이터 생성).
+# 정규화 = **fail-CLOSED**: 애매하면 끈다(계측 미실행은 안전, 미동의 계측 실행은 위반).
+_CONFIG_FALSE_STRINGS = frozenset({"false", "no", "off", "0", ""})
+_CONFIG_TRUE_STRINGS = frozenset({"true", "yes", "on", "1"})
+
+
+def _config_flag_enabled(key, raw):
+    """project config 의 opt-in flag 1개를 bool 로 정규화 (fail-closed).
+
+    규칙 (기존 동작 보존 + 문자열 축만 봉합):
+      - bool        → 그대로 (unquoted `false`/`true` **기존 동작 보존**).
+      - int/float   → bool(n) (`0` → False, `1` → True — **기존 동작 보존**).
+      - str         → strip().lower() 후
+                        {"false","no","off","0",""}  → False
+                        {"true","yes","on","1"}      → True
+                        **그 외 미지 문자열**(예: "maybe") → **False + stderr WARN**.
+      - 그 외 타입(dict/list 등) → False + stderr WARN.
+    미지 값을 True 로 여는 경로는 **없다**(fail-open 금지). 강등은 반드시 WARN 을 동반한다 —
+    침묵으로 끄면 "왜 계측이 안 되나" 를 운영자가 진단할 수 없다(silent 금지, ADR-119 정직 표기).
+    """
+    if raw is None:
+        return False
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, (int, float)):
+        return bool(raw)
+    if isinstance(raw, str):
+        s = raw.strip().lower()
+        if s in _CONFIG_FALSE_STRINGS:
+            return False
+        if s in _CONFIG_TRUE_STRINGS:
+            return True
+    print(
+        "[codeforge-spawn-event] WARN: telemetry config '%s' 값 %r 해석 불가 → False "
+        "(fail-closed — 미지 값을 opt-in 으로 열지 않는다, ADR-043 §결정 1 default false). "
+        "허용 표기: true/false·yes/no·on/off·1/0 (bool 또는 문자열)"
+        % (key, _truncate_for_warn(raw)),
+        file=sys.stderr,
+    )
+    return False
+
+
 def _opt_in_enabled(args):
     """opt-in gate — telemetry.enabled AND channels.spawn_event 둘 다 true 일 때만 True.
 
@@ -601,9 +765,13 @@ def _opt_in_enabled(args):
     # flag 미지정 → config 읽기 (default false)
     proj_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
     tel = _read_config_telemetry(proj_dir)
-    enabled = bool(tel.get("enabled", False))
+    # ★S-1 — 문자열 truthiness 정규화 (quoted "false"/"no"/"off" 가 게이트를 여는 fail-open 봉합)
+    enabled = _config_flag_enabled("telemetry.enabled", tel.get("enabled", False))
     channels = tel.get("channels")
-    spawn_event = bool(channels.get("spawn_event", False)) if isinstance(channels, dict) else False
+    spawn_event = (
+        _config_flag_enabled("telemetry.channels.spawn_event", channels.get("spawn_event", False))
+        if isinstance(channels, dict) else False
+    )
     return enabled and spawn_event
 
 
@@ -834,17 +1002,21 @@ def _build_parser():
                         "cancelled} (CFP-2850 N9 — 미제공/미매칭 → null)")
 
     # storage
-    p.add_argument("--ledger-path", default="", help="ledger jsonl full path override (test/직접 지정)")
+    p.add_argument("--ledger-path", default="",
+                   help="ledger jsonl full path override (test/직접 지정) — 허용 root "
+                        "(CLAUDE_PROJECT_DIR|repo root|OS temp) 밖이면 default 강등+WARN (S-2)")
     p.add_argument("--storage-path", default="",
-                   help="telemetry.storage_path override (parent dir 대체, basename 고정)")
+                   help="telemetry.storage_path override (parent dir 대체, basename 고정) — "
+                        "동일 containment 적용 (S-2)")
 
     # ★UTF-8 args-file 채널 (CFP-2850 OQ-3 / T-ELEV-1) — argv=ASCII path 만, 실값·한국어
     #   lane_label content 는 파일 내부 UTF-8 JSON (argv string-interp injection + cp949 mangle 회피).
     p.add_argument("--args-file", default="",
                    help="UTF-8 JSON args-file (ASCII path, BOM 허용) — key=CLI dest"
-                        "(dash|underscore) 실값 병합. opt-in gate flag 는 병합 거부(F-CR-009), "
-                        "미지의 키는 drop+stderr WARN(F-CR-004). usage 정수는 argv 병합 후 "
-                        "T-TAMP-2 validation(비음수+상한, 위반→unattributed)")
+                        "(dash|underscore) 실값 병합. 정책 채널 키(opt-in gate flag "
+                        "+ ledger_path/storage_path)는 병합 거부(F-CR-009 / S-2), dict·list 값 "
+                        "거부(S-6), 미지의 키는 drop — 전부 stderr WARN(F-CR-004). usage 수치는 "
+                        "argv 병합 후 T-TAMP-2 validation(비음수+상한+유한, 위반→unattributed)")
 
     # opt-in gate (default false — silent always-on 금지)
     p.add_argument("--telemetry-enabled", action="store_true",
@@ -885,7 +1057,36 @@ def _usage_within_bounds(value):
         return True  # 정수 아님 → coerce None (별개 경로), T-TAMP-2 위반 아님
     if isinstance(value, float) and iv != value:
         return False  # F-CX2-001 — 비정수 float 절삭 = 값 변조
-    return 0 <= iv <= _USAGE_SANITY_CAP
+    return _usage_range_ok(iv)
+
+
+def _usage_range_ok(number):
+    """T-TAMP-2 범위 술어 — 비음수 + 상한 cap (int/float 축 **공유**, 복제 0)."""
+    return 0 <= number <= _USAGE_SANITY_CAP
+
+
+def _usage_float_within_bounds(value):
+    """T-TAMP-2 **float 축** sanity (S-3) — `_usage_within_bounds` 의 float 쌍둥이.
+
+    int 축과 다른 점은 **소수 허용**뿐이다(elapsed_seconds=12.5 는 정상 측정치이므로
+    비정수 float 거부 규칙을 그대로 옮기면 안 된다). 나머지 규율은 동일:
+      - None/미제공 = valid(무제약).
+      - **bool = 항상 위반** (int subclass 둔갑 차단 — `_coerce_float_or_none` 과 양쪽 배제).
+      - **NaN / ±Infinity = 위반** (`math.isfinite`) — 비표준 JSON 토큰 착지 축.
+      - 숫자 변환 불가(임의 문자열) = 위반 아님 (coerce 단계서 None — 별 경로, int 축 동형).
+      - 범위 = `_usage_range_ok` 공유 술어 (비음수 + 상한).
+    """
+    if value is None:
+        return True
+    if isinstance(value, bool):
+        return False
+    try:
+        fv = float(value)
+    except (TypeError, ValueError):
+        return True
+    if not math.isfinite(fv):
+        return False  # NaN / Infinity (문자열 "NaN"/"Infinity" 포함) → 위반
+    return _usage_range_ok(fv)
 
 
 # ★F-CR-009 (구현리뷰 FIX Iter 2) — args-file 이 실을 수 **없는** gate-flag closed-set.
@@ -894,7 +1095,16 @@ def _usage_within_bounds(value):
 # opt-in 설정(ADR-043 §결정 1 default false)을 **파일 하나로 우회**할 수 있었다. gate 결정은
 # 오직 (a) 명시 CLI flag 또는 (b) project config 에서만 온다 — args-file 은 **측정 실값 채널**
 # 이지 정책 채널이 아니다. 병합 시도는 drop + stderr WARN (silent bypass 금지).
-_ARGS_FILE_DENIED_KEYS = frozenset({"telemetry_enabled", "spawn_event_enabled"})
+#
+# ★S-2 (보안테스트 iter1, P1) — **원장 목적지 키도 정책 채널**이므로 동일 클래스로 편입:
+# `ledger_path` / `storage_path` 를 args-file 이 실으면 파일 하나로 원장 **위치를 바꿔치기**
+# (측정 데이터 유출 목적지 지정 / 타 채널 오염 / 임의 경로 파일 생성)할 수 있다. gate flag 와
+# 같은 근거(F-CR-009 원칙)로 drop + stderr WARN. 목적지는 오직 (a) 명시 CLI flag 또는
+# (b) project config 에서만 결정된다.
+_ARGS_FILE_DENIED_KEYS = frozenset({
+    "telemetry_enabled", "spawn_event_enabled",   # opt-in gate (F-CR-009)
+    "ledger_path", "storage_path",                # 원장 목적지 정책 (S-2)
+})
 
 
 def _validate_usage_bounds(args):
@@ -908,14 +1118,25 @@ def _validate_usage_bounds(args):
 
     위반 시 attribution=unattributed 강제 → token/cost null (추정 대체 금지, §7.2 / ADR-119).
     record-only 이므로 reject/비-0 exit 하지 않는다 (ADR-115 never-block).
+
+    ★S-3 — 검증 대상 = `_USAGE_FIELDS`(int ∪ float). float 축(`elapsed_seconds`)은 규칙만
+    다른 술어(`_usage_float_within_bounds`)로 분기하고 **WARN·강등 경로는 이 loop 1곳을 공유**
+    한다 (검증 로직 복제 0 — ADR-140).
     """
-    for field in _USAGE_INT_FIELDS:
-        if not _usage_within_bounds(getattr(args, field, None)):
+    for field in _USAGE_FIELDS:
+        value = getattr(args, field, None)
+        ok = (
+            _usage_float_within_bounds(value)
+            if field in _USAGE_FLOAT_FIELDS
+            else _usage_within_bounds(value)
+        )
+        if not ok:
             print(
-                "[codeforge-spawn-event] WARN: usage 정수 '%s' T-TAMP-2 위반 "
-                "(bool / 비정수 float / 음수 / 상한 %d 초과 — argv/args-file 병합 "
-                "최종값 %r) → attribution=unattributed 강제 (token null, 추정 금지)"
-                % (field, _USAGE_SANITY_CAP, getattr(args, field, None)),
+                "[codeforge-spawn-event] WARN: usage 수치 '%s' T-TAMP-2 위반 "
+                "(bool / 비정수 float(int 축) / NaN·Infinity(float 축) / 음수 / 상한 %d 초과 "
+                "— argv/args-file 병합 최종값 %r) → attribution=unattributed 강제 "
+                "(token null, 추정 금지)"
+                % (field, _USAGE_SANITY_CAP, value),
                 file=sys.stderr,
             )
             args.attribution_confidence = "unattributed"
@@ -963,14 +1184,21 @@ def _load_args_file(args):
         return
 
     # 병합: file 키 → args attr (dash→underscore). allow-list = argparse dest.
-    dropped = []   # allow-list 밖 (오타/계약 drift 후보) — F-CR-004 ①
-    denied = []    # gate-flag 우회 시도 — F-CR-009
+    dropped = []    # allow-list 밖 (오타/계약 drift 후보) — F-CR-004 ①
+    denied = []     # 정책 채널 키 주입 시도 — F-CR-009(gate flag) + S-2(원장 목적지)
+    nonscalar = []  # dict/list 값 — S-6 (repr 원장 착지 차단)
     for key, value in data.items():
         dest = str(key).replace("-", "_")
         if dest == "args_file":
             continue  # 재귀 방지 (args-file 이 또 args-file 지정 무의미)
         if dest in _ARGS_FILE_DENIED_KEYS:
             denied.append(dest)
+            continue
+        if isinstance(value, (dict, list, tuple)):
+            # ★S-6 — args-file 값은 **scalar 만**. 구 구현은 dict/list 를 그대로 setattr 해
+            # `str(...)`/`%r` 경로에서 **컨테이너 repr** 이 원장 문자열 field 에 착지할 수
+            # 있었다(free-form 유입 — T-INFO-8 구조적 차단 우회 + 행 길이 팽창). 거부 + WARN.
+            nonscalar.append(dest)
             continue
         if hasattr(args, dest):
             setattr(args, dest, value)
@@ -979,9 +1207,19 @@ def _load_args_file(args):
 
     if denied:
         print(
-            "[codeforge-spawn-event] WARN: args-file 의 opt-in gate flag 병합 거부 — %s "
-            "(gate 는 명시 CLI flag 또는 project config 에서만 결정 — args-file 우회 불가, "
-            "ADR-043 §결정 1 opt-in default false)" % ", ".join(sorted(set(denied))),
+            "[codeforge-spawn-event] WARN: args-file 의 정책 채널 키 병합 거부 — %s "
+            "(opt-in gate flag: telemetry_enabled/spawn_event_enabled — 명시 CLI flag 또는 "
+            "project config 에서만 결정, ADR-043 §결정 1 default false / 원장 목적지: "
+            "ledger_path/storage_path — args-file 은 측정 실값 채널이지 정책 채널이 아니다)"
+            % ", ".join(sorted(set(denied))),
+            file=sys.stderr,
+        )
+    if nonscalar:
+        print(
+            "[codeforge-spawn-event] WARN: args-file 비-scalar 값 %d개 거부 — %s "
+            "(dict/list 는 원장 field 타입 아님 — repr 착지·free-form 유입 차단, T-INFO-8. "
+            "scalar(string/number/bool/null) 만 병합)"
+            % (len(set(nonscalar)), ", ".join(sorted(set(nonscalar)))),
             file=sys.stderr,
         )
     if dropped:

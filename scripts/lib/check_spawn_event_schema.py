@@ -120,10 +120,22 @@ def _split_frontmatter(text):
 
 # ─────────────────────── §2 표 실파싱 (doc-parse = parity set A) ─────────────
 
+# ★S-5 (보안테스트 iter1, P2) — fence 제거 정규식 평탄화 (초선형 백트래킹 제거).
+# 구 패턴 `(?ms)^```.*?^```\s*?$` 는 닫는 fence 뒤에 **언어 태그**(```yaml)가 오는 실계약
+# 형상에서 `\s*?$` 가 매칭에 실패하고, 그 실패마다 lazy `.*?` 가 다음 후보로 확장되며
+# 재탐색을 반복해 입력 길이에 대해 초선형(관측 O(n²))으로 악화됐다(lint 은 CI 에서 임의
+# 크기의 계약 문서를 읽는다 — resource-safety 축).
+# 신 패턴 = 모호성 제거: 여는 fence 는 `[^\n]*\n`(info string 을 그 줄에서 확정 소비),
+# 닫는 fence 는 `[^\n]*$`(닫는 줄 잔여 텍스트를 greedy 하게 확정) → `\s*?$` 실패-후-재탐색
+# 경로 자체가 사라진다.
+# ★honest-ceiling: "백트래킹 0" 을 주장하지 않는다 — lazy `.*?` 는 여전히 미종결 fence 에서
+#   EOF 까지 전방 스캔한다(입력당 bounded degradation, 임의 입력 무해 아님). 제거한 것은
+#   `\s*?$` 실패에서 오던 **반복 재탐색**이며, 계측 근거는 재현 스크립트 sec_codex_verify.py
+#   C-3(언어태그 fence n=100~800 wall-clock) 의 봉합 전/후 대조다.
 def _strip_fenced_blocks(text):
     """``` ... ``` fenced code block 제거 — §2 안의 markdown **예시 표**가 필드 파싱에
     섞이지 않도록 (예시는 field 이름이 아니라 header 나열이라 오탐 원천)."""
-    return re.sub(r"(?ms)^```.*?^```\s*?$", "", text)
+    return re.sub(r"(?ms)^```[^\n]*\n.*?^```[^\n]*$", "", text)
 
 
 def _extract_section(text, start_pat, end_pat):

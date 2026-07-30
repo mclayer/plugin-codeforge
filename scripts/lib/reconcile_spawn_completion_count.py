@@ -53,13 +53,19 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # ── sibling REUSE (ADR-140 reuse-before-write — 동일 채널 ledger reader 재사용) ──
+# ★S-4 (보안테스트 iter1) — ledger reader 는 **정본 1함수**(replay_spawn_event._read_ledger)만
+#   쓴다. 구 구현은 자체 JSONL reader 사본(_read_rows fallback)을 들고 있어 행분할·decode 정책이
+#   소비자마다 갈릴 여지를 남겼다 → 사본 제거 + 정본 위임 (reader 계보 물리 통합).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 try:
-    from dedup_section14_spawn_event import _read_ledger_rows, _dedup_rows
-except Exception:  # pragma: no cover — import 실패 시 자립 fallback(graceful)
+    from replay_spawn_event import _read_ledger as _read_ledger_rows
+except Exception:  # pragma: no cover — import 실패 시 read 불가(정직 degrade, 사본 금지)
     _read_ledger_rows = None
+try:
+    from dedup_section14_spawn_event import _dedup_rows
+except Exception:  # pragma: no cover — dedup 은 자립 fallback 유지(본 건 대상 아님)
     _dedup_rows = None
 
 _SPAWN_SCHEMA_VERSION = "spawn-event-v1"
@@ -127,27 +133,20 @@ def count_recorded_rows(ledger_path):
 
 
 def _read_rows(ledger_path):
-    if _read_ledger_rows is not None:
-        return _read_ledger_rows(ledger_path)
-    # fallback (sibling import 실패) — 최소 JSONL reader
-    rows = []
-    if not os.path.isfile(ledger_path):
-        return rows
-    try:
-        with open(ledger_path, encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if isinstance(obj, dict):
-                    rows.append(obj)
-    except OSError:
-        return rows
-    return rows
+    """ledger read — 정본(`replay_spawn_event._read_ledger`) 위임 (S-4 reader 통일).
+
+    정본 import 실패 = 사본으로 때우지 않고 **빈 결과 + WARN**(정직 degrade). 사본을 두면
+    행분할(\\n vs splitlines)·decode 정책이 다시 갈라져 같은 원장을 읽는 reader 끼리 row 수가
+    발산한다 — 그 발산이 본 건(S-4)의 결함 본체였다.
+    """
+    if _read_ledger_rows is None:
+        print(
+            "[codeforge-spawn-event] WARN: ledger reader 정본(replay_spawn_event) import 실패 "
+            "— recorded_row_count=0 으로 정직 degrade (사본 reader 금지, S-4)",
+            file=sys.stderr,
+        )
+        return []
+    return _read_ledger_rows(ledger_path)
 
 
 def _dedup(rows):

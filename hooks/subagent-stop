@@ -210,8 +210,15 @@ except Exception:
 " >/dev/null 2>&1 || SPAWN_COUNT_GATE_RC=$?
 fi
 
-if [ "$SPAWN_COUNT_GATE_RC" = "3" ]; then
-  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: spawn-completion COUNTER opt-in gate 판정 실패 — fail-closed (counter 미기록)\n'
+# ★S-7 (보안테스트 iter1, P3) — probe 종료코드 WARN 범위 확장.
+#   구 조건은 `rc = 3` 만 WARN 했다. probe 는 python -c 를 fork 하므로 3 외에도
+#   **127**(인터프리터/모듈 부재 = command not found), **137**(SIGKILL — OOM/강제종료),
+#   126(실행 불가) 등이 나올 수 있는데 이들은 전부 "OFF(=1)" 와 구분 없이 조용히 흘러가
+#   **probe 가 아예 못 돌았다** 는 사실이 은폐됐다(silent-success-on-error).
+#   → 정상 판정 코드 {0=ON, 1=OFF} 밖의 **모든** rc 를 fail-closed + WARN 으로 표면화한다
+#   (127/137 을 하드코딩 열거하는 대신 여집합 — 미래 신규 코드도 자동 포착).
+if [ "$SPAWN_COUNT_GATE_RC" != "0" ] && [ "$SPAWN_COUNT_GATE_RC" != "1" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: spawn-completion COUNTER opt-in gate 판정 실패 (rc=%s — 3:probe 예외 / 127:인터프리터·모듈 부재 / 137:SIGKILL(OOM) / 기타 미분류) — fail-closed (counter 미기록)\n' "$SPAWN_COUNT_GATE_RC"
 elif [ "$SPAWN_COUNT_GATE_RC" = "0" ] && [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
   SPAWN_COUNT_FILE="${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-completion.count"
   mkdir -p "${CLAUDE_PROJECT_DIR}/.claude/ledger" 2>/dev/null || true
