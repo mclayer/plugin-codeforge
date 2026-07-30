@@ -23,7 +23,8 @@
 #   - honest-degrade (ADR-119): counter(hooks/subagent-stop)와 recorded row(Orchestrator)는
 #     **동일 opt-in 술어**(telemetry.enabled AND channels.spawn_event)에 종속한다 —
 #     CFP-2850 구현리뷰 FIX Iter 2 / F-CR-001 로 counter 가 opt-in gate 안으로 이동
-#     (구 "opt-in-INDEPENDENT" 전제는 폐기: ADR-043 §결정 1 opt-in default false 위반이었음).
+#     (구 "counter 는 telemetry 설정과 무관하게 증가한다" 전제는 폐기 — 그 전제가
+#      ADR-043 §결정 1 opt-in default false 위반이었음).
 #     따라서 **opt-in OFF 구간은 counter 도 0** — 그 구간은 gap 이 아니라 **측정 공백**이며
 #     본 reconcile 에 애초에 나타나지 않는다(no_data). 이는 gap 의 opt-in-off 오염을 제거하나,
 #     동시에 **opt-in OFF 세션의 완료는 아무 것도 관측하지 못한다**는 천장을 낳는다
@@ -67,15 +68,15 @@ _LEDGER_BASENAME = "spawn-event.jsonl"
 _DEFAULT_LEDGER_PARENT_REL = os.path.join(".claude", "ledger")
 
 _HONESTY = (
-    "[measurement] STRICT record-only — gap = upper-bound residual(단정 금지). "
+    "[measurement] STRICT record-only — gap = upper-bound residual(단정 금지), gate 아님. "
     "hook counter 와 recorded row 는 **동일 opt-in 술어**(telemetry.enabled AND "
-    "channels.spawn_event)에 종속(F-CR-001 — counter 가 opt-in gate 안으로 이동, 구 "
-    "'opt-in-INDEPENDENT' 전제 폐기) → opt-in OFF 구간은 counter 도 0 이라 gap 이 아니라 "
-    "**측정 공백**(no_data)이며, 그 구간 완료는 관측 불가(counter = 모든 platform 완료 계수 아님). "
-    "opt-in ON 구간의 gap>0 = single-writer emit 실패/notification-loss 의 upper-bound 관측 "
-    "(crash-safe), 인과 확정 아님 — 구간 중 opt-in flip / gate probe fail-closed / counter 파일 "
-    "소실도 같은 gap 으로 보인다(honest-degrade). counter line append 원자성 = 로컬 FS "
-    "best-effort(network-share 무보장)."
+    "channels.spawn_event)에 종속한다 → **opt-in OFF 구간은 counter 자체가 증가하지 않으므로** "
+    "그 구간의 hook_count vs recorded_count 비교는 성립하지 않는다(둘 다 0 = no_data — gap 이 "
+    "아니라 측정 공백). 그 구간의 완료는 아무 것도 관측되지 않는다 — counter 는 '모든 platform "
+    "완료 계수' 가 아니다(over-claim 금지). opt-in ON 구간의 gap>0 = single-writer emit 실패/"
+    "notification-loss 의 upper-bound 관측(crash-safe), 인과 확정 아님 — 구간 중 opt-in flip / "
+    "gate probe fail-closed / counter 파일 소실도 같은 gap 으로 보인다(honest-degrade). "
+    "counter line append 원자성 = 로컬 FS best-effort(network-share 무보장)."
 )
 
 
