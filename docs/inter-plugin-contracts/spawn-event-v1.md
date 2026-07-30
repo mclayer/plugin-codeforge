@@ -282,11 +282,47 @@ append_rules:
           - stop-event(sqlite) default parent = `.claude-work/measurement/` (basename = `stop-event.sqlite`). storage_path 미지정 시 이 default.
           - **per-channel 별 default 가 다름** — `telemetry.storage_path` 는 양 channel 에 동일 적용된다 (지정 시 두 channel 의 parent dir 을 함께 대체, 각자 자기 basename 유지). 미지정 시 각 channel 의 위 default parent 사용.
           - escape 금지: override 값이 wrapper checkout dir 로 escape 금지 (InfraOpArch §7.4.5 / ADR-163 §결정 9 isolation). project-config-schema.md telemetry.storage_path comment 정합.
+      destination_containment: |
+        **원장 목적지 containment** — override 로 결정된 목적지는 **허용 root 3종 안**이어야 한다:
+          ① `${CLAUDE_PROJECT_DIR}` (**선언 시에만** 산입) ② 본 스크립트 checkout 의 **repo root** ③ **OS 임시 디렉터리**(`tempfile.gettempdir()`).
+        `CLAUDE_PROJECT_DIR` **미선언 시 허용 root 는 `repo root ∪ OS temp` 로 축소**된다 (①이 빠짐 — 검사가 더 엄격해지는 방향).
+        **적용 범위 = 두 override 경로 모두** — `--ledger-path`(명시 full path override) 와 `telemetry.storage_path`(parent dir 대체 + basename 고정) **양쪽 다** containment 를 통과해야 하며, **`--ledger-path` 는 면제 대상이 아니다**.
+        **검사 방식** = `realpath`(symlink resolve) + `normcase` 정규화 후 **`commonpath` 포함 검사**
+        (`commonpath([candidate, root]) == root`). resolve-**후**-검사이므로 symlink 로 밖을 가리키는 override 도 실경로 기준으로 판정된다.
+        **위반 시 = default 목적지로 강등 + stderr WARN** — reject / 비-0 exit 아님 (record-only · never-block, ADR-115 §결정 2 상속).
+        다른 드라이브 등으로 `commonpath` 가 **`ValueError`** 면 **미포함 취급**(fail-closed — 판정 불가를 통과로 읽지 않는다).
+        검사 대상이 아닌 유일 경로 = **default**(`${CLAUDE_PROJECT_DIR}/.claude/ledger/spawn-event.jsonl`). 이는 면제가 아니라 **그것이 강등 목적지 자체**이기 때문이다 (위반 시 여기로 되돌린다).
+        위 basename 고정 규칙과 **중복이 아니라 보완**이다 — basename 고정은 "어떤 **파일명**" 을, containment 는 "어떤 **디렉터리**" 를 각각 pin 한다.
+      destination_containment_ceiling: |
+        **honest-ceiling (over-claim 금지)** — **OS temp 는 의도된 carve-out**(테스트·임시 경로의 기존 정당 용법 보존)이며,
+        이 검사는 **authz 가 아니라 containment** 다. **"임의 경로 쓰기를 권한 수준에서 막는다"고 주장하지 않는다**:
+        CLI 호출자는 이미 임의 명령 실행 권한을 가지므로 호출자의 FS 권한을 제한하는 장치가 아니고, carve-out ③ 때문에
+        임시 디렉터리 안으로의 write 는 여전히 가능하다. realpath 기반 판정도 TOCTOU 를 봉인하지 않는다.
+        봉인 대상은 **"측정 채널의 원장 write 가 프로젝트 ∪ repo ∪ OS temp 밖으로 새는 경로"** 하나이며,
+        그 밖은 bounded degradation 이다 (임의 입력·임의 경로가 무해하다는 뜻이 아니다).
       note: "JSONL 채택 사유 = (1) DB UNIQUE 부재여도 deterministic event_id + read-time dedup 로 idempotency 충분 (InfraOpArch §11.6) (2) stop-event runtime 와 동형 = 운영 패턴 검증됨. sqlite 는 stop-event 계약 理想이나 runtime 미구현 = drift — spawn-event 는 contract=runtime 일치 우선"
       pattern_a_disclaimer: "**host-local ledger ≠ Pattern A 대상**. race-condition-handling-pattern.md 의 Pattern A(SHA-based optimistic concurrency) 는 cross-repo Contents API write(post-merge-counters.jsonl) 전용 — host-local O_APPEND per-row(spawn-event/stop-event)에는 적용하지 않는다. Tier-3 ledger 라고 전부 Pattern A 가 아니다 (write 토폴로지로 갈림: cross-repo=Pattern A 의무, host-local=O_APPEND kernel-atomic 로 충분). measurement-channel.md Tier-3 분기 note 정합."
     append_io:
       rule: "**O_APPEND per-row** — os.open(path, O_APPEND | O_CREAT) 1 row write (InfraOpArch H1 권고). stop-event runtime 의 read-modify-write(whole-file read + append + os.replace) 패턴 복사 금지 — 병렬 spawn 동시 SubagentStop 시 lost-update race (append_stop_event.py _atomic_append). os.replace 는 torn-write 막지만 lost-update 못 막음"
     file_mode: "0600 (Unix); Windows = ACL 영역 외 no-op"
+
+  args_file_channel:  # writer inline mechanism 의 UTF-8 JSON 실값 채널 (위 writer — ADR-039 §결정 2 7th inline-whitelist entry)
+    scalar_only: |
+      **args-file 값은 scalar 만 허용** — `string` / `number` / `bool` / `null` 만 병합한다.
+      `dict` / `list` / `tuple` 값은 **거부 + stderr WARN** (병합하지 않는다).
+      근거: 구 구현은 컨테이너를 그대로 setattr 해 `str()` / `%r` 경로에서 **컨테이너 `repr` 이 원장 문자열 field 에 착지**할 수 있었다
+      (free-form 유입 = T-INFO-8 구조적 차단 우회 + 행 길이 팽창).
+    policy_key_deny: |
+      **args-file 이 실을 수 없는 정책 키 (closed-set)** — 병합 거부(drop) + stderr WARN:
+        - `telemetry_enabled` / `spawn_event_enabled` — **opt-in gate**. gate 결정은 오직 (a) 명시 CLI flag 또는 (b) project config 에서만 온다
+          (위 `opt_in_default_false` / ADR-043 §결정 1 default false).
+        - `ledger_path` / `storage_path` — **원장 목적지**. 목적지 결정도 (a)/(b) 에서만 온다.
+      **근거: args-file 은 측정 실값 채널이지 정책 채널이 아니다** — 파일 하나로 opt-in 이나 원장 위치를 바꿔치기하는 경로를 차단한다.
+      키는 dash→underscore 정규화 후 대조하므로 `ledger-path` 표기도 동일하게 거부된다.
+      본 deny 는 위 `write_mechanism.storage.destination_containment` 와 **2층** 관계다 — deny 가 주입 채널을, containment 가 최종 목적지를 각각 막는다.
+    silent_drop_forbidden: |
+      **무음 drop 금지** — 정책 키 deny / 비-scalar 거부 / allow-list 밖 미지 키 drop 은 전부 stderr WARN 으로 trace 를 남긴다
+      (silent-success-on-error 금지 — §2.1.3 fail-VISIBLE 동형). 표면화는 **키 이름만**이며 값은 출력하지 않는다 (content 유입 0).
 
   idempotency:
     rule: "deterministic event_id (random UUID 금지) + read-time dedup (aggregate/replay 시점, append-time 아님)"
