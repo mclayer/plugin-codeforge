@@ -3882,6 +3882,35 @@ Orchestrator 는 **Agent task-notification 을 수신하는 시점**에 (opt-in 
 3. **outcome 분류(N9)** — `outcome{success/inconclusive/failure/partial}`(completion-quality) + `termination_cause{normal/timeout/zero_output/error/cancelled}`(mechanism) 2축 기록. machine-observable 우선(`tool_uses=0` → `termination_cause=zero_output` / error-termination → `timeout`; envelope.verdict 단독 SUCCESS 신뢰 금지 — SUCCESS↔INCONCLUSIVE 는 verify-후 or coarse-defer). **record-only**(gate/block/deny 금지, INV-5).
 4. **args-file 채널로 append** — 위 값 + lane-context + outcome 을 **UTF-8 JSON args-file**(ASCII path)로 write 후 `python3 scripts/lib/append_spawn_event.py --args-file <ascii-path>` 호출. argv 는 ASCII path 만, 한국어 `lane_label` 등 실값·content 는 파일 내부(argv string-interp injection·cp949 argv-mangle 회피 — T-ELEV-1, CFP-2817 선례). usage 정수는 args-file write 前 비음수 + 상한 validation(T-TAMP-2), 실패 시 `attribution=unattributed`.
 
+**args-file JSON 완전 예시** (step 4 payload — 값만 치환해 그대로 사용):
+
+```json
+{
+  "story-key": "CFP-2850",
+  "lane-label": "구현",
+  "agent-type": "DeveloperAgent",
+  "session-id": "<top-level session id (raw — actor sha256 원천, row 미저장)>",
+  "agent-id": "<피스폰 subagent id (raw — event_id sha256 원천, row 미저장)>",
+  "spawn-seq": 7,
+  "attribution-confidence": "attributed",
+  "total-tokens": 184320,
+  "tool-call-count": 23,
+  "duration-ms": 412000,
+  "model": "claude-opus-4-8",
+  "outcome": "success",
+  "termination-cause": "normal"
+}
+```
+
+- **키 명명 = CLI dest** — 파일 키는 `scripts/lib/append_spawn_event.py` 의 argparse dest 와 1:1 (`--story-key` → dest `story_key`). 파일 안에서는 dash/underscore 양형 허용(`story-key` ≡ `story_key` — 병합 시 dash→underscore 정규화). 위 예시는 CLI 옵션명과 눈으로 대조되도록 dash 형. dest 에 없는 키는 병합 대상이 아니며(drop) row 에 미반영되므로, 키는 dest 명과 정확히 일치시킨다.
+- **실측 삼중항** — `total-tokens` = task-notification `subagent_tokens` aggregate / `tool-call-count` = `tool_uses` / `duration-ms` = usage block 값 **또는** Orchestrator wall-clock(dispatch → 수신 elapsed). 셋 다 실측 source (step 1 추정 금지 그대로).
+- **`attribution-confidence: "attributed"`** 는 위 실측 source 를 실제로 확보했을 때만 쓴다. 미확보면 `"unattributed"` 로 두고 token 키는 넣지 않는다 — attributed 로 두고 추정치를 채우는 것이 금지 대상(ADR-119 honest-null). 4-way 분해(`input-tokens`·`output-tokens`·`cache-creation-input-tokens`·`cache-read-input-tokens`)가 payload 에 없으면 예시처럼 **키 자체를 생략**한다 (aggregate 를 4-way 로 분할 금지 → `cost_usd` 는 자동 null, degrade ladder tier-2).
+- **`spawn-seq`** = Orchestrator causal-state 파생 — 세션 내 spawn dispatch monotonic ordinal(dispatch 시점 확정, row 에 미persist·`event_id` 결정성 원천). **원장 tail-read 채번 · primitive 내부 자동 채번 · random UUID 금지**(at-least-once 멱등 붕괴) — 규율 SSOT = [spawn-event-v1 §3 spawn_seq_rule](inter-plugin-contracts/spawn-event-v1.md).
+- **lane-context** — `story-key` + `lane-label`(closed enum 한국어 값). 이 한국어 값이 argv 가 아니라 **파일 내부**에 오는 것이 args-file 채널의 존재 이유다 (Windows cp949 argv-mangle · argv string-interp injection 회피 — T-ELEV-1). argv 에 남는 것은 ASCII path 하나뿐 — `--args-file <ascii-path>`, 실값·content 는 전부 UTF-8 파일 내부(불변식 재확인).
+- **N9 2축** — `outcome` ∈ {`success`, `inconclusive`, `failure`, `partial`}, `termination-cause` ∈ {`normal`, `timeout`, `zero_output`, `error`, `cancelled`}. 미제공·미매칭 값은 null 로 기록(SUCCESS-hardcode 금지), record-only(gate/block 금지 — INV-5).
+- **`model`** = semi-open (pricing roster ∪ `unknown-model` fallback). 예시 값은 wrapper 표준 opus 고정 id 계열(`claude-opus-4-8` — [consumer-guide](consumer-guide.md) provider 고정값 기준). roster 미해석 non-empty 값은 `unknown-model` 버킷으로 흡수된다(free-form leak 차단).
+- **opt-in gate flag 는 args-file 에 싣지 않는다** — `telemetry-enabled` / `spawn-event-enabled` 는 opt-in 판정 입력이며 CLI flag 또는 `project.yaml` telemetry 블록 경로 전용. 데이터 payload 가 자신을 활성화하지 못하게 한다(opt-in default false 무손상).
+
 **opt-in / graceful degradation**:
 
 - **opt-in default false** — `telemetry.enabled ∧ channels.spawn_event` 둘 다 true 일 때만 write(둘 중 하나라도 false = no-op, 0 rows). "데이터 없음"과 "배선 미작동" 구분(AC-3).
