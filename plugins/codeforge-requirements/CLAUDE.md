@@ -53,7 +53,7 @@ PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Sto
 |---|---|---|
 | intake 항상 declare 왕복 | 매 접수마다 이해한 배경·의도 재진술 제시 + 확인 왕복 개시 (에이전트 자기평가로 발동 판정 안 함). **mandatory DECLARE ≠ mandatory ASK** — trivial 최소형 = 재진술 1~3줄 + "이의 없으면 진행" + 열린 질문 0~1개(왕복 1회당 cap). 단일 예외 = 사용자 본인 명시 skip 지시(verbatim 기록) — 에이전트 측 skip-offer 는 금지 | ADR-159 결정 2 |
 | enrichment 일급 | 확장 산출(미명시 요건 후보 + 원문 대비 delta)이 왕복의 명시 output. **why-anchored** — scope 팽창·gold-plating·edge-case 폭주 배제. **null 결과 valid** (발굴 0건 = 정상) | ADR-159 결정 1/5 |
-| 발화 = Orchestrator relay | lane 에이전트는 사용자와 직접 대화 불가 — 질문·재진술 생성 + Orchestrator 경유 relay 만 (발화 monopoly 무변경) | ADR-039 |
+| 발화 = Orchestrator relay | lane 에이전트는 사용자와 직접 대화 불가 — 질문·재진술 생성 + Orchestrator 경유 relay 만 (발화 monopoly 무변경) | ADR-170 |
 | why-왕복 counter disjoint | 기존 `recheck_counter` 와 별도 **measurement channel**(5번째), cap 비소모. 순수 확정(내용 무변경) = terminal event → 재조사 fan-out 미발동 | ADR-077 Amendment 1 |
 | **advisory ceiling** | 본 규율 = advisory 절차 — 신규 기계 강제 게이트 0. "rule/record presence 는 testable, user actually confirmed 는 NOT testable". "기계 강제 100%" over-claim 금지 | ADR-159 결정 6 |
 

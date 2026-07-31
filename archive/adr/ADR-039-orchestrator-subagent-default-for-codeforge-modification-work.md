@@ -2,7 +2,7 @@
 adr_number: 39
 title: Orchestrator subagent default for codeforge modification work
 date: 2026-05-08
-status: Accepted
+status: Superseded by ADR-170
 category: orchestration-discipline
 carrier_story: CFP-275
 supersedes: null

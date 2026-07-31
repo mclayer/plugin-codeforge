@@ -10,7 +10,7 @@ tags:
   - subagent
   - spawn-policy
   - inline-whitelist
-  - adr-039
+  - adr-170
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator definition)
   - ADR-025  # stop discipline (motivation)
@@ -31,11 +31,14 @@ codeforge 수정 작업 중 Orchestrator 가 모든 work 을 `Agent` tool spawn 
 
 ## Pattern
 
-**Inline whitelist 4-entry** (subagent spawn 면제 — Orchestrator 직접 수행 허용):
+**Inline whitelist 7-entry** (subagent spawn 면제 — Orchestrator 직접 수행 허용. count·정의 live SSOT = ADR-170 §결정 2 flat 단일표):
 1. 사용자 dialog (텍스트 응답)
 2. TodoWrite scratchpad (progress visualization)
 3. Read-only Q&A 답변 (Read / Grep / Glob only, no write)
 4. Status report (lane 진행 현황 텍스트)
+5. Orchestrator-monopoly Story-file handoff inline write (§9 verdict / §10 FIX Ledger row append / §14 Lane Evidence row append / phase transition 4-sub-scope 한정 — ADR-170 §결정 15)
+6. Merge-time Codex adversarial gate dispatch (ADR-052 touchpoint #7 — `codex exec --sandbox read-only` 1패스, 재귀 가드 회피 위해 Orchestrator top-level 고정 — ADR-170 §결정 18)
+7. Tier-3 measurement-channel ledger row append (spawn-event-v1 등 구조화 CLI/args-file invocation — free-form 0 · record-only · 판정 로직 부재 — ADR-170 §결정 21)
 
 **Whitelist 외 모든 작업** = subagent spawn 의무 (Read/Write/Edit/Bash/Grep/Glob/mcp__github__\* 포함).
 
@@ -44,7 +47,7 @@ codeforge 수정 작업 중 Orchestrator 가 모든 work 을 `Agent` tool spawn 
 ## Usage
 
 Orchestrator 코드 실행 전 체크리스트:
-1. 현재 작업이 Inline whitelist 4-entry 중 하나인가? → Yes: inline OK. No: spawn 의무.
+1. 현재 작업이 Inline whitelist 7-entry 중 하나인가? → Yes: inline OK. No: spawn 의무.
 2. `Agent` tool 프롬프트에 `docs/stories/<KEY>.md` path 주입 → agent self-fetch.
 3. 복수 독립 lane = 병렬 spawn (Track A ∥ Track B — playbook §3.1).
 4. agent teams enabled context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) 시: TeamCreate 패턴으로 전환 (ADR-044). whitelist invariant 유지.
@@ -75,6 +78,8 @@ Orchestrator 코드 실행 전 체크리스트:
 - branch / PR creation / merge
 - workflow yaml 수정·추가
 - ADR / Change Plan / domain-knowledge 페이지 write
+
+> **4-sub-scope inline 예외 (ADR-170 §결정 15 — §결정 2 entry 5 partial rollback)**: 위 목록 중 §9 verdict write / §10 FIX Ledger row append / §14 Lane Evidence row append / phase transition (label flip + Story frontmatter `phase` 갱신) 4-sub-scope 만 Orchestrator inline write 허용 (closed enum — 5번째 sub-scope 추가 = ADR Amendment 의무). 그 외 Story 섹션·수정 작업은 본 spawn 정책 유지.
 - trivial Read 1건 — **Read 도 subagent spawn 의무** (사용자 directive 명시)
 
 ### Inline 수행의 정의
@@ -123,9 +128,9 @@ Orchestrator 코드 실행 전 체크리스트:
 
 **Phase execution visibility (ADR-029) 와의 interaction** — ADR-029 §결정 5 "Writer: Orchestrator 단독" — sub-step narration 은 Orchestrator 가 stderr 1-line 으로 발생. 본 정책 하에서는 매 subagent spawn / return 가 narrate 대상이 됨. ADR-029 의 narration 책임은 Orchestrator 가 subagent return 받은 직후 발화 — subagent 측 narration 의무 X.
 
-**Lane-spawn evidence (ADR-031) 와의 interaction** — ADR-031 §결정 1 의 §14 row append 행위는 본 정책 하에서도 **Orchestrator self-write** 로 유지. 단 §14 row append 자체가 file write 행위이므로, append 작업도 subagent spawn 으로 수행 (즉 Orchestrator 가 "§14 row append 전용 subagent" 를 spawn 해 Edit tool 호출). lane plugin 측 변경 0 건 (ADR-031 §결과 invariant 무손상).
+**Lane-spawn evidence (ADR-031) 와의 interaction** — ADR-031 §결정 1 의 §14 row append 행위는 본 정책 하에서도 **Orchestrator self-write** 로 유지. 단 §14 row append 는 ADR-170 §결정 15 (4-sub-scope partial rollback) 에 따라 Orchestrator inline write 허용 — spawn mechanism 과 병존한다 (Ownership ≠ Mechanism, ADR-170 §결정 3·§결정 15). lane plugin 측 변경 0 건 (ADR-031 §결과 invariant 무손상).
 
-**TodoWrite scratchpad 와의 interaction** — TodoWrite tool surface = file write 아님 (Orchestrator turn meta channel — file system / GitHub state mutation 미발화). 본 정책 하에서도 TodoWrite 호출 자체는 Orchestrator inline 행위 (수정 작업 enumeration 미포함, ADR-039 §결정 2 Inline whitelist entry 2 standalone 정당화). TodoWrite 호출은 subagent spawn 의무 비-적용. (참고: ADR-038 = TodoWrite progress visualization 도입 informational reference, 본 분류의 normative dependency 아님.)
+**TodoWrite scratchpad 와의 interaction** — TodoWrite tool surface = file write 아님 (Orchestrator turn meta channel — file system / GitHub state mutation 미발화). 본 정책 하에서도 TodoWrite 호출 자체는 Orchestrator inline 행위 (수정 작업 enumeration 미포함, ADR-170 §결정 2 Inline whitelist entry 2 standalone 정당화). TodoWrite 호출은 subagent spawn 의무 비-적용. (참고: ADR-038 = TodoWrite progress visualization 도입 informational reference, 본 분류의 normative dependency 아님.)
 
 ## 관련 ADR
 

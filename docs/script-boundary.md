@@ -5,7 +5,7 @@ category: governance
 status: active
 created: 2026-05-17
 carrier: CFP-821
-related_adrs: [ADR-039, ADR-061, ADR-005, ADR-064]
+related_adrs: [ADR-170, ADR-061, ADR-005, ADR-064]
 ---
 
 # Script Ownership Boundary Taxonomy
@@ -34,7 +34,7 @@ related_adrs: [ADR-039, ADR-061, ADR-005, ADR-064]
 - `scripts/check-3way-version-parity.sh` (CFP-820 3-way version atomic)
 - `scripts/setup-branch-protection.sh` (→ Category 3 참조: consumer-distributed)
 
-**ADR-039 정합**: Subagent context에서 wrapper SSOT script는 Orchestrator가 inline whitelist 없이 직접 호출 금지. DeveloperPL의 subagent(DeveloperAgent)가 위임 실행.
+**ADR-170 정합**: Subagent context에서 wrapper SSOT script는 Orchestrator가 inline whitelist 없이 직접 호출 금지. DeveloperPL의 subagent(DeveloperAgent)가 위임 실행.
 
 ---
 
@@ -49,9 +49,9 @@ related_adrs: [ADR-039, ADR-061, ADR-005, ADR-064]
 **예시** (consumer 영역):
 - consumer 프로젝트 특화 배포 스크립트
 - consumer가 직접 작성한 데이터 처리 스크립트
-- ADR-039 §결정 2 consumer overlay 정의 파일 (`scripts/*.sh`)
+- ADR-170 §결정 2 consumer overlay 정의 파일 (`scripts/*.sh`)
 
-**ADR-039 정합**: consumer overlay script는 codeforge 에이전트의 직접 수정 대상이 아니다. Orchestrator가 consumer에게 수정 지시를 내릴 수 있으나, agent가 직접 write하지 않는다.
+**ADR-170 정합**: consumer overlay script는 codeforge 에이전트의 직접 수정 대상이 아니다. Orchestrator가 consumer에게 수정 지시를 내릴 수 있으나, agent가 직접 write하지 않는다.
 
 ---
 
@@ -75,7 +75,7 @@ related_adrs: [ADR-039, ADR-061, ADR-005, ADR-064]
 - `templates/scripts/worktree-create.sh` → consumer `scripts/worktree-create.sh`
 - `templates/scripts/manual-story-init-fallback.sh`
 
-**ADR-039 정합**: Mixed-zone script는 DeveloperAgent가 Phase 2 PR에서 templates 경로에 작성 (wrapper SSOT). consumer deployment는 UpgradeAgent 또는 bootstrap 시 반영.
+**ADR-170 정합**: Mixed-zone script는 DeveloperAgent가 Phase 2 PR에서 templates 경로에 작성 (wrapper SSOT). consumer deployment는 UpgradeAgent 또는 bootstrap 시 반영.
 
 ---
 
@@ -91,7 +91,7 @@ related_adrs: [ADR-039, ADR-061, ADR-005, ADR-064]
 
 ## ADR Cross-references
 
-- **ADR-039** (Orchestrator subagent default): Category 1 script 호출은 DeveloperPL subagent 위임. consumer overlay는 Orchestrator 직접 write 금지. [ADR-039 §결정 1]
+- **ADR-170** (Orchestrator subagent default): Category 1 script 호출은 DeveloperPL subagent 위임. consumer overlay는 Orchestrator 직접 write 금지. [ADR-170 §결정 1]
 - **ADR-061** (Python script-writing convention): Category 1/3 script 중 Python 로직이 5줄 초과하거나 backslash escape를 포함하면 외부 `.py` 파일 의무 (bash heredoc 금지). [ADR-061 §결정 1]
 - **ADR-005** (byte-identical self-app): Category 3 Mixed-zone의 templates 경로 원본 ↔ `.github/` 또는 `.github/workflows/` 미러는 byte-identical (ADR-005). script 파일은 consumer cp 후 diverge 허용 (D4 marker 범위 내).
 - **ADR-064** (decision principle): 본 taxonomy = declarative SSOT only. mechanical lint는 별도 follow-up Issue 권장 — ADR-064 minimal-change + Story scope creep 회피.

@@ -1,7 +1,7 @@
 """AC-4 — writer monopoly (Orchestrator-owned writer).
 
 Change Plan §8.1.1 RTM AC-4. phase1.
-  - writer ownership = Orchestrator(-owned delegate) (ADR-039 §결정3).
+  - writer ownership = Orchestrator(-owned delegate) (ADR-170 §결정3).
   - write 지점 = Orchestrator task-notification 수신 시점 single-write (Amendment 4).
   - lane/plugin 직접 append = 요구 충족 아님 (policy_violation).
 
@@ -73,15 +73,15 @@ def test_ac4_append_rules_writer_block_structure(contract_yaml):
 
 
 def test_ac4_orchestrator_owned_writer(contract_yaml):
-    """(구조) append_rules.writer 안에 Orchestrator ownership 명제 + ADR-039 근거가 존재.
+    """(구조) append_rules.writer 안에 Orchestrator ownership 명제 + ADR-170 근거가 존재.
 
     mutation: ownership 주체를 lane/hook 으로 바꾸거나 근거 ADR 인용을 지우면 RED.
     """
     writer = contract_yaml["append_rules"]["writer"]
-    # 측정 assertion (a): ownership 주체 = Orchestrator (근거 ADR-039 동반 entry)
-    ownership_entries = [e for e in writer if "Orchestrator" in e and "ADR-039" in e]
+    # 측정 assertion (a): ownership 주체 = Orchestrator (근거 ADR-170 동반 entry)
+    ownership_entries = [e for e in writer if "Orchestrator" in e and "ADR-170" in e]
     assert ownership_entries, (
-        f"writer 규범에 'Orchestrator ownership + ADR-039 근거' 명제 부재, got {writer}"
+        f"writer 규범에 'Orchestrator ownership + ADR-170 근거' 명제 부재, got {writer}"
     )
     # (b): write 지점 = task-notification 수신 시점 single-write (Amendment 4 topology)
     single_write_entries = [

@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "1.0"
+contract_version: "1.0.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/return-envelope-v1.md
@@ -8,7 +8,7 @@ related_plugins:
   - codeforge (wrapper, consumer) — Orchestrator + 전 lane PL/worker 반환
 related_adrs:
   - ADR-142 (Orchestrator-self context discipline — §결정 3 return-envelope-v1 carrier)
-  - ADR-039 (subagent default — §결정 2 inline-whitelist disjoint axis)
+  - ADR-170 (subagent default — §결정 2 inline-whitelist disjoint axis)
   - ADR-044 (Phase-scoped Sequential Team — worker 반환 경계)
   - ADR-119 (research-before-claims — high-signal / proxy 정직 표기 + hollow-gate 차단)
   - ADR-008 (Inter-plugin Contract Versioning)
@@ -76,9 +76,9 @@ raw 원문이 불가피한 경우는 **닫힌 3종뿐**이며, 이 셋조차 env
 
 이 3종은 **CLOSED set** 이다 (추가/제거 = 본 contract §8 version bump 대상). 표현 규칙 = `envelope.meta.evidence_ref` 에 **path:line 포인터**로 남기고 필요 시점에 소비자가 **on-demand refetch** — envelope 에 raw 를 실어 보내지 않는다 (inline 금지, 포인터화 유지).
 
-## 5. disjoint-axis 선언 (MANDATORY — ADR-039 §결정 2 무침범)
+## 5. disjoint-axis 선언 (MANDATORY — ADR-170 §결정 2 무침범)
 
-본 return-size 계약은 ADR-039 §결정 2 의 inline-whitelist 와 **disjoint axis** 다. inline-whitelist 는 **inline-vs-spawn 메커니즘 축**(현재 유효 6-entry closed enumeration)이고, return-envelope-v1 은 **return 크기 · 신호 밀도 축**이다. return-envelope-v1 은 **ADR-039 §결정 2 의 7번째 whitelist entry 가 아니며**, 그 closed enumeration 을 **건드리지 않는다** (별개 축 — mechanism 축 무변경, 6-entry closed 유지).
+본 return-size 계약은 ADR-170 §결정 2 의 inline-whitelist 와 **disjoint axis** 다. inline-whitelist 는 **inline-vs-spawn 메커니즘 축**(현재 유효 7-entry closed enumeration)이고, return-envelope-v1 은 **return 크기 · 신호 밀도 축**이다. return-envelope-v1 은 **ADR-170 §결정 2 의 8번째 whitelist entry 가 아니며**, 그 closed enumeration 을 **건드리지 않는다** (별개 축 — mechanism 축 무변경, 7-entry closed 유지).
 
 ## 6. [measurement] scoping (hollow-gate 차단)
 
@@ -100,7 +100,7 @@ worker spawn prompt 는 tight-return 계약을 **실어야 한다(SHOULD)** — 
 ## 9. Cross-references
 
 - **ADR-142** §결정 3 (return-envelope carrier) / §결정 4 (self-context proxy sibling — spawn-event-v1 §2.1)
-- **ADR-039** §결정 2 — inline-whitelist (disjoint axis, §5)
+- **ADR-170** §결정 2 — inline-whitelist (disjoint axis, §5)
 - **fix-event-v1** / **review-verdict-v4** / **`*_output-v1`** — wrapped payload 계약 (schema 무변경)
 - **ADR-119** — high-signal / proxy 정직 표기 + hollow-gate 차단 근거
 - **ADR-008** — inter-plugin contract versioning (§8)
