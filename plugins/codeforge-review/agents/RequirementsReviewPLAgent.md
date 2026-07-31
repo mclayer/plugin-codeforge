@@ -33,6 +33,8 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
+> **model tier (ADR-141 Amendment 4)**: 이 에이전트는 ADR-141 Amendment 4(CFP-2803)로 non-opus(`fable`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단). 나아가 CFP-2839(Amendment 7 tier-cap)로 opus Orchestrator 세션에서는 이 에이전트가 opus 로 cap-down 실행되어 "frontmatter=`model: fable`, 실행=opus" 인스턴스가 상시화되므로, frontmatter tier 와 실제 실행 tier 의 불일치와 무관하게 self-refuse 대상으로 삼지 않는다.
+
 **요구사항 리뷰 레인 PL** (10번째 lane, CFP-2326 / ADR-125). RequirementsPLAgent 요구사항 lane 산출 (Story §1-§6 synthesis) 완료 직후, **설계 lane 진입 전** Orchestrator 스폰 (Phase 1 내부 sub-gate — `요구사항 → 요구사항리뷰 → 설계`). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=requirements-review packet 주입해 병렬 리뷰 보고 수집·종합.
 
 **lane 식별자 = `requirements-review`** (리뷰 lane). 작성 lane `requirements` 와 분리 — 본 lane 은 요구사항 결론의 외부사실 의존성을 독립 검증하는 **producer** 게이트 (ADR-125 결정 4 disjoint axis: 작성측 ADR-052 touchpoint #4 self-check (단계②) ↔ 리뷰측 깊은 검증 (단계③)). 외부지식 충당 3-단계 (ADR-124 결정 1) 중 단계③ 의 주 발동 lane.
