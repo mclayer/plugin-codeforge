@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: spawn-event
-version: "1.2"
+version: "1.2.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/spawn-event-v1.md
@@ -13,7 +13,7 @@ related_adrs:
   - ADR-043  # codeforge telemetry privacy policy — §결정 1 opt-in default false + §결정 2 Allow-list ONLY + §결정 3 Deny-list regex (Amendment 2: spawn-event field 추가 + T-INFO-5 transcript hard invariant + T-INFO-7 sha256 identity)
   - ADR-031  # lane-spawn evidence — §14 Lane Evidence (lane-coarse) ↔ spawn-event-v1 (per-agent fine) boundary
   - ADR-038  # progress visualization TodoWrite — boundary 차단 (meta-cognitive scratchpad ≠ accounting)
-  - ADR-039  # subagent default — §결정 3 Orchestrator-owned write monopoly (writer 정의)
+  - ADR-170  # subagent default — §결정 3 Orchestrator-owned write monopoly (writer 정의)
   - ADR-115  # runtime hook enforcement policy — block 금지 + graceful degradation 5층 inherit
   - ADR-119  # research-before-claims — attribution 불가 시 unattributed/unsupported 정직 표기 근거 (검증-후-단언)
 related_files:
@@ -142,7 +142,7 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 ### 2.1.5 disjoint-axis note
 
-self-context proxy telemetry 는 layer-1 delegation-ratio substrate 를 **재사용**한다. 이는 **record-only measurement 이지 whitelist entry 가 아니다** — ADR-039 §결정 2 inline-whitelist(inline-vs-spawn mechanism 축)와 **disjoint axis** (그 6-entry closed enumeration 무침범).
+self-context proxy telemetry 는 layer-1 delegation-ratio substrate 를 **재사용**한다. 이는 **record-only measurement 이지 whitelist entry 가 아니다** — ADR-170 §결정 2 inline-whitelist(inline-vs-spawn mechanism 축)와 **disjoint axis** (그 7-entry closed enumeration 무침범).
 
 ### 2.2 실측 degrade ladder (task-notification usage block — UNDOCUMENTED harness surface)
 
@@ -267,7 +267,7 @@ spawn_event_schema:
 
 append_rules:
   writer:
-    - "Orchestrator-owned (ADR-039 §결정3 — ownership = Orchestrator). mechanism = Orchestrator task-notification 수신 시점 inline via UTF-8 args-file (ADR-039 §결정2 7th inline-whitelist entry). lane plugin agent 자체 write = policy_violation."
+    - "Orchestrator-owned (ADR-170 §결정3 — ownership = Orchestrator). mechanism = Orchestrator task-notification 수신 시점 inline via UTF-8 args-file (ADR-170 §결정2 7th inline-whitelist entry). lane plugin agent 자체 write = policy_violation."
     - "**write 지점 = Orchestrator task-notification 수신 시점 single-write (Amendment 4 — 구 option i SubagentStop hook single-write supersede)**. SubagentStop hook 의 spawn-event row-write 는 retire — story_key/lane_label/실측/outcome source 부재로 vacuous 였음. 단 SubagentStop 에 경량 spawn-completion COUNTER(bare count, row-writer 아님, disjoint 채널)를 보존해 task-notification-recorded row count 와 COUNT-레벨 reconcile 로 single-writer survivorship gap(emit 실패/notification-loss)을 crash-safe 관측(F-B, record-only, INV-3/INV-5 무위반). self-context-v1 append 는 disjoint 채널로 SubagentStop 잔존 (INV-3)."
     - "single-writer residual-risk (Amendment 4 정직 기록): Orchestrator-side emit 실패/notification-loss 시 row 유실 (failure-case survivorship-bias). 완화 = fail-VISIBLE stderr+drop-counter + follow-up trigger(경험적 failure gap 노출 시 dual-path (session,agent)-keyed precedence dedup escalate)."
 
@@ -306,7 +306,7 @@ append_rules:
       rule: "**O_APPEND per-row** — os.open(path, O_APPEND | O_CREAT) 1 row write (InfraOpArch H1 권고). stop-event runtime 의 read-modify-write(whole-file read + append + os.replace) 패턴 복사 금지 — 병렬 spawn 동시 SubagentStop 시 lost-update race (append_stop_event.py _atomic_append). os.replace 는 torn-write 막지만 lost-update 못 막음"
     file_mode: "0600 (Unix); Windows = ACL 영역 외 no-op"
 
-  args_file_channel:  # writer inline mechanism 의 UTF-8 JSON 실값 채널 (위 writer — ADR-039 §결정 2 7th inline-whitelist entry)
+  args_file_channel:  # writer inline mechanism 의 UTF-8 JSON 실값 채널 (위 writer — ADR-170 §결정 2 7th inline-whitelist entry)
     scalar_only: |
       **args-file 값은 scalar 만 허용** — `string` / `number` / `bool` / `null` 만 병합한다.
       `dict` / `list` / `tuple` 값은 **거부 + stderr WARN** (병합하지 않는다).

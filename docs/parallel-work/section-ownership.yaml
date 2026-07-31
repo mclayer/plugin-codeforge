@@ -18,7 +18,7 @@ owned_sections:
 
   - file: CLAUDE.md
     section: "오케스트레이션 규칙"
-    owner_adr: ADR-039
+    owner_adr: ADR-170
     parallel_edit: locked
 
   - file: CLAUDE.md
@@ -49,7 +49,7 @@ owned_sections:
 
   - file: docs/orchestrator-playbook.md
     section: "§3 Lane 실행"
-    owner_adr: ADR-039
+    owner_adr: ADR-170
     parallel_edit: locked
 
   - file: docs/orchestrator-playbook.md

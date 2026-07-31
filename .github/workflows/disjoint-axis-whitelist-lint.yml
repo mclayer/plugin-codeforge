@@ -1,12 +1,21 @@
 name: disjoint-axis-whitelist-lint
-# CFP-2572 Phase 2 / ADR-142 §결정 3 — ADR-039 inline-whitelist static-integrity lint.
+# CFP-2572 Phase 2 (원 도입) / CFP-2869 Phase 2 (ADR-039→ADR-170 재제정 대응 재지향) /
+#   ADR-142 §결정 3 — ADR-170 inline-whitelist static-integrity lint.
 #
 # Tier: [물리강제 — ADR-integrity 정적, 유일 물리강제]. 본 게이트는 ADR STATIC INTEGRITY 만
 #   단언한다 (behavior/runtime 강제 아님):
-#     (C1) effective inline-whitelist total == 6 (ADR-039 §결정2 Count 정합: base4 + entry5 + entry6)
-#     (C2) return-envelope-v1.md 'disjoint axis' 선언 존재 (ADR-039 §결정2 무침범)
-#     (C3) return-envelope-v1.md self-claim(inline-whitelist entry 자칭) 부재
-#   §결정2 base 표만 세는(=4) 구현은 BORN-BROKEN (CFP-2530/2527/2535 self-defeating lineage) — 회피.
+#     (C0) lint 대상 ADR frontmatter `status` 가 Superseded 계열이 아님 — 재제정으로 동결된 구본을
+#          대상에 남긴 배선 오류가 영구-PASS hollow-gate 로 굳는 것을 차단 (ADR-170 재제정 lineage)
+#     (C1) declared-vs-actual self-consistency — ADR-170 §결정 2 정형 선언 라인의 declared count 가
+#          같은 절 flat 단일표의 실 entry row 수(actual)와 일치. 기대 count 상수 pin 폐기:
+#          기대값을 workflow·lint 에 복제하면 ADR 갱신 시 stale drift 를 재생산하므로
+#          (CFP-2850 entry 7 추가 시 미동조 실적) 문서 내부 self-consistency 로 판정한다 —
+#          8번째 entry 신설 시 본 게이트 무접촉.
+#     (C2) return-envelope-v1.md 'disjoint axis' 선언 존재 (ADR-170 §결정 2 무침범)
+#     (C3) return-envelope-v1.md self-claim(inline-whitelist entry 자칭) 부재 — 긍정 copula 한정
+#          (부정 어미 자연 문구 오탐 0)
+#   §결정 2 절 경계(`### 결정 2(?![0-9])`→`### 결정 3(?![0-9])`) 밖을 계상하는 구현은 BORN-BROKEN
+#   (CFP-2530/2527/2535 self-defeating lineage) — 자매 discriminating test 가 mutation 으로 검출.
 #
 # single-root (.github only): governance registry(ADR/L-doc) 정합 검사라 .github-only 정합
 #   (templates/github-workflows mirror 미운용 — spawn-event-schema-lint 동형). ADR-005 byte-parity
@@ -45,7 +54,7 @@ jobs:
         run: bash scripts/check-disjoint-axis-whitelist.sh check
 
   disjoint-axis-whitelist-test:
-    name: discriminating test (surgical R1/R2/R3 — mutation 생존 0)
+    name: discriminating test (C0~C3 / M1~M9 — mutation 생존 0)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

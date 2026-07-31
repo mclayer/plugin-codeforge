@@ -12,8 +12,6 @@ entries:
   grandfathered_at: 19
 - adr: ADR-037
   grandfathered_at: 20
-- adr: ADR-039
-  grandfathered_at: 11
 - adr: ADR-040
   grandfathered_at: 16
 - adr: ADR-042

@@ -132,7 +132,7 @@ bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 
 ### 1f. Agent teams 적극 도입 (CFP-137 / [ADR-044](../archive/adr/ADR-044-phase-scoped-sequential-team.md))
 
-> **Optional**: agent teams 적극 도입 = wrapper / consumer Orchestrator 모두 적용 가능. 활성 시 Phase-scoped sequential team + SendMessage continuous dialog + Adversarial debate 패턴 사용 가능. 비활성 시 ADR-039 default subagent context (one-shot Agent tool) fallback — 본 CFP-137 도입 전 동작과 동일.
+> **Optional**: agent teams 적극 도입 = wrapper / consumer Orchestrator 모두 적용 가능. 활성 시 Phase-scoped sequential team + SendMessage continuous dialog + Adversarial debate 패턴 사용 가능. 비활성 시 ADR-170 default subagent context (one-shot Agent tool) fallback — 본 CFP-137 도입 전 동작과 동일.
 
 **Prerequisite**:
 
@@ -145,7 +145,7 @@ bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 }
 ```
 
-설정 후 **신규 세션 재시작** 의무. env=0 또는 미설정 시 = ADR-039 default subagent context — 본 CFP-137 의 SendMessage / TeamCreate / TaskCreate / TeammateIdle 모두 미발화, hook 등록되어도 trigger 0.
+설정 후 **신규 세션 재시작** 의무. env=0 또는 미설정 시 = ADR-170 default subagent context — 본 CFP-137 의 SendMessage / TeamCreate / TaskCreate / TeammateIdle 모두 미발화, hook 등록되어도 trigger 0.
 
 **Hook 3종 install** (CFP-137 / ADR-044 §결정 3):
 
@@ -205,13 +205,13 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 2. Nested team 금지 (no team-of-teams)
 3. One-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무
 
-**Disable / rollback**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 unset → ADR-039 default subagent context fallback. hook 3종 install 되어도 trigger 미발화. Phase-scoped sequential team 은 자연 무효화 — 기존 one-shot Agent tool spawn 패턴.
+**Disable / rollback**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 unset → ADR-170 default subagent context fallback. hook 3종 install 되어도 trigger 미발화. Phase-scoped sequential team 은 자연 무효화 — 기존 one-shot Agent tool spawn 패턴.
 
 **상세 SSOT**:
 - Policy: [ADR-044](../archive/adr/ADR-044-phase-scoped-sequential-team.md) (CFP-137 carrier)
 - Epic context: [ADR-035](../archive/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) D2
 - Domain knowledge: [docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md](domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md)
-- Default fallback: [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md)
+- Default fallback: [ADR-170](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md)
 - Worktree integration: [ADR-040](../archive/adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
 
@@ -267,7 +267,7 @@ codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story b
 
 ### 1h. Action 차단 환경 fallback (CFP-658 / [ADR-027 Amendment 2](../archive/adr/ADR-027-consumer-adoption-protocol.md))
 
-GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 설정 시 — codeforge 6 핵심 workflow 가 silent skip. consumer workaround 금지 (ADR-039 inline whitelist) 와 codeforge 의무 사용 (ADR-027) 의무 충돌 해소를 위한 **manual fallback path** 의무.
+GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 설정 시 — codeforge 6 핵심 workflow 가 silent skip. consumer workaround 금지 (ADR-170 inline whitelist) 와 codeforge 의무 사용 (ADR-027) 의무 충돌 해소를 위한 **manual fallback path** 의무.
 
 #### 활성 trigger 2종 (hybrid, 우선순위 (C) > (A))
 
@@ -2853,9 +2853,9 @@ Architecture decision SSOT = [`docs/adr/ADR-035-codeforge-agent-teams-epic-archi
 
 또는 동등 wording. 이 경우 Orchestrator 가 ad-hoc Sonnet invoke (Agent tool with model:sonnet). decision-packet schema 의무 아님 — 사용자 prompt 자유 형식. Story §12 Sonnet Decision Log row append (사용자 요청 evidence 명시).
 
-## 7.0 Subagent default (codeforge orchestration) — ADR-039
+## 7.0 Subagent default (codeforge orchestration) — ADR-170
 
-> consumer Orchestrator (예: mctrader Orchestrator / 추후 다른 consumer) 도 본 정책 inheritance — wrapper [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Phase 1 trust model + [playbook §3.0](orchestrator-playbook.md) normative SSOT 의 직접 적용. 본 subsection = consumer-side cross-ref anchor.
+> consumer Orchestrator (예: mctrader Orchestrator / 추후 다른 consumer) 도 본 정책 inheritance — wrapper [ADR-170](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) Phase 1 trust model + [playbook §3.0](orchestrator-playbook.md) normative SSOT 의 직접 적용. 본 subsection = consumer-side cross-ref anchor.
 
 ### 7.0.1 결정 stmt (consumer 적용)
 
@@ -2878,23 +2878,23 @@ consumer Orchestrator 도 동일 — 사용자 dialog (entry 1) 와 dialog 직�
 
 ### 7.0.4 Phase 1 trust model (enforcement hook 없음)
 
-매 consumer Orchestrator 행위 시 본 §7.0 + wrapper [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) + [playbook §3.0](orchestrator-playbook.md) reading 의무. 자동 enforcement 부재 — wrapper Phase 1 trust model 패턴 정합 (ADR-025 / ADR-029 precedent — Phase 1 doc-only trust pattern).
+매 consumer Orchestrator 행위 시 본 §7.0 + wrapper [ADR-170](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) + [playbook §3.0](orchestrator-playbook.md) reading 의무. 자동 enforcement 부재 — wrapper Phase 1 trust model 패턴 정합 (ADR-025 / ADR-029 precedent — Phase 1 doc-only trust pattern).
 
 ### 7.0.5 Consumer 측 활성 directive (Phase 1 trust model — enforcement scope 만 directive 의존)
 
 **정책 normative status** = consumer 가 codeforge family plugin 을 사용하는 시점부터 **항상 적용** (§7.0.1 결정 stmt). directive 발화 여부와 무관 — 정책 자체 normative.
 
-**Enforcement scope 만 Phase 1 trust model 적용** = directive 부재 시 자동 enforcement hook 부재. 즉 정책은 발효되지만, consumer Orchestrator 자체 인지 (본 §7.0 + ADR-039 reading) 가 1차 안전망. Phase 2 자동 enforcement (hook / telemetry, §7.0.6) 도입 전까지 implementation 책임 = consumer Orchestrator 자체.
+**Enforcement scope 만 Phase 1 trust model 적용** = directive 부재 시 자동 enforcement hook 부재. 즉 정책은 발효되지만, consumer Orchestrator 자체 인지 (본 §7.0 + ADR-170 reading) 가 1차 안전망. Phase 2 자동 enforcement (hook / telemetry, §7.0.6) 도입 전까지 implementation 책임 = consumer Orchestrator 자체.
 
 consumer 측 사용자 활성 directive 권장 (wrapper directive 패턴 mirror — 자체 인지 강화 채널):
 
-> "이 프로젝트에서도 codeforge plugin Subagent default (ADR-039) 적용해서 모든 수정 작업 = subagent spawn 으로 수행해라."
+> "이 프로젝트에서도 codeforge plugin Subagent default (ADR-170) 적용해서 모든 수정 작업 = subagent spawn 으로 수행해라."
 
-또는 동등 wording. directive 발화 시 consumer Orchestrator 정책 인지 reinforced — 그러나 발화 부재 시에도 정책 normative 적용 보존 (wrapper Phase 1 trust model 패턴 정합 — ADR-025 §결정 9 / ADR-029 / ADR-039 §결정 7 동일).
+또는 동등 wording. directive 발화 시 consumer Orchestrator 정책 인지 reinforced — 그러나 발화 부재 시에도 정책 normative 적용 보존 (wrapper Phase 1 trust model 패턴 정합 — ADR-025 §결정 9 / ADR-029 / ADR-170 §결정 7 동일).
 
 ### 7.0.6 Phase 2 instrumentation (후속)
 
-stop-event-v1 ledger / inline write detect hook / spawn cost telemetry — wrapper [ADR-039 §결정 9](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) deferred follow-up CFP. consumer-side 측정도 wrapper 와 동시 도입.
+stop-event-v1 ledger / inline write detect hook / spawn cost telemetry — wrapper [ADR-170 §결정 9](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) deferred follow-up CFP. consumer-side 측정도 wrapper 와 동시 도입.
 
 ### 7.0.7 Telemetry opt-in (CFP-283 / ADR-163 / ADR-043)
 
@@ -3009,7 +3009,7 @@ consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — 
 
 > "이 프로젝트에서도 codeforge plugin Stop discipline + Epic-level continuity (ADR-025 / CFP-80) 적용해서 작업 단위 끝까지 자동 진행 + 1번 final report 해라."
 
-또는 동등 wording. directive 발화 시 consumer Orchestrator 정책 인지 reinforced — 그러나 발화 부재 시에도 정책 normative 적용 보존 (§7.0.5 / ADR-039 §결정 7 동일 패턴).
+또는 동등 wording. directive 발화 시 consumer Orchestrator 정책 인지 reinforced — 그러나 발화 부재 시에도 정책 normative 적용 보존 (§7.0.5 / ADR-170 §결정 7 동일 패턴).
 
 ### Phase 2 instrumentation (후속)
 
@@ -3048,7 +3048,7 @@ consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — 
 
 ## 7.4 Research-before-claims 상속 (ADR-119)
 
-wrapper [ADR-119](../archive/adr/ADR-119-research-before-claims.md) 의 research-before-claims 원칙은 consumer 가 codeforge family plugin 을 사용하는 시점부터 consumer Orchestrator 에 자동 상속된다 (ADR-039 §결정 7 inheritance 패턴 — §7.0.1 과 동일 구조).
+wrapper [ADR-119](../archive/adr/ADR-119-research-before-claims.md) 의 research-before-claims 원칙은 consumer 가 codeforge family plugin 을 사용하는 시점부터 consumer Orchestrator 에 자동 상속된다 (ADR-170 §결정 7 inheritance 패턴 — §7.0.1 과 동일 구조).
 
 - 핵심 의무 = 외부 지식 단정 전 자료 조사 + 출처 인용 / repo·cross-repo 사실 단정 전 실측 (cross-repo 는 `git fetch` 후 origin/main 실제 확인 — `git show origin/main:<path>`, wrapper ADR-073 패턴) / 확인 불가 시 "확인 불가/추정" 명시(abstention) 후 진행 — 3-way matrix 상세 = ADR-119 §결정 1 SSOT (본 절 = cross-ref anchor, 재서술 금지)
 - consumer overlay 로 본 원칙 축소 불가 — 확장만 가능. 약화 = wrapper ADR-119 amendment 경로만 (evidence-gated, ADR-064 §결정 7)
@@ -3135,7 +3135,7 @@ gh api "repos/$REPO/branches/main/protection/enforce_admins" -X POST
 
 ## 7.6 Session-swap controlled-path 상속 (ADR-071 §결정 24)
 
-wrapper [ADR-071 §결정 24](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) 의 **session-swap controlled-path** 는 consumer 가 codeforge family plugin 을 사용하는 시점부터 consumer Orchestrator 에 자동 상속된다 (ADR-039 §결정 7 inheritance 패턴 — §7.0.1 / §7.4 와 동일 구조).
+wrapper [ADR-071 §결정 24](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) 의 **session-swap controlled-path** 는 consumer 가 codeforge family plugin 을 사용하는 시점부터 consumer Orchestrator 에 자동 상속된다 (ADR-170 §결정 7 inheritance 패턴 — §7.0.1 / §7.4 와 동일 구조).
 
 - **핵심 의무** = Orchestrator 가 (정당·부당 무관) **세션 전환을 권유하려는 순간** → 다음 세션용 **자족(self-contained) handoff 프롬프트를 선제 생성·동반**해야 전환 권유가 허용된다(controlled-path). handoff 미동반 전환 권유("context 가득 → 새 세션에서" 류 reflex)는 §결정 18 anti-pattern 그대로 차단 — 상세 = ADR-071 §결정 24 SSOT (본 절 = cross-ref anchor, 재서술 금지).
 - **handoff 6 필수요소** = ① 진행 Story/PR·Epic 번호 ② 완료 vs 남은 lane·단계 ③ worktree·브랜치 경로 ④ 기결정=재논의 금지 목록 ⑤ 이번 세션 gotcha ⑥ 다음 세션 첫 액션 1문 — 다음 세션이 현세션 참조 0(0-context)으로 복붙 1회 재개 가능해야 함 (ADR-085 §결정 9 4-rule specialization).

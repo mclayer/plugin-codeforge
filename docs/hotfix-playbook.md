@@ -4,7 +4,7 @@
 
 > **Source**: `docs/orchestrator-playbook.md` §10 에서 분리 (CFP-93, P2-9 follow-up — cognitive overhead reduction). mctrader debut audit 시점 까지 hotfix 사용 사례 0 — full flow 가 default.
 
-> **ADR-039 적용 (CFP-275, 2026-05-08, historical)**: 본 Hotfix 경로 (Minimal / Medium 양 경로) 도 Orchestrator subagent default 적용 — emergency hotfix 도 무조건 spawn. spawn 의무(ADR-039)는 유지되나, lane-skip 긴급경로 자체는 ADR-127 §결정 3 으로 폐지됐다 (정식 lane 도 무조건). 정책 SSOT [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) + [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) + normative SSOT [playbook §3.0](orchestrator-playbook.md).
+> **ADR-039 적용 (CFP-275, 2026-05-08, historical)**: 본 Hotfix 경로 (Minimal / Medium 양 경로) 도 Orchestrator subagent default 적용 — emergency hotfix 도 무조건 spawn. spawn 의무(ADR-170)는 유지되나, lane-skip 긴급경로 자체는 ADR-127 §결정 3 으로 폐지됐다 (정식 lane 도 무조건). 정책 SSOT [ADR-170](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) + [ADR-127](../archive/adr/ADR-127-mandatory-full-flow-no-exemption.md) + normative SSOT [playbook §3.0](orchestrator-playbook.md).
 
 ## 1. Minimal Path (`severity:bug` — 기본 hotfix)
 
@@ -50,9 +50,9 @@ Orchestrator → (사용자 승인) → ArchitectAgent (chief author) 빠른 Cha
 
 ## 3. 사후 감사 (X 경로 — 양 hotfix 공통 의무)
 
-Hotfix merge 완료 후 **next working session** 초두에 Orchestrator 가 자동 수행. **모든 step 의 mechanism = subagent spawn** (ADR-039 §결정 1 / §결정 6 — Hotfix 의 fast-path 본질 무변, mechanism 만 spawn 의무):
+Hotfix merge 완료 후 **next working session** 초두에 Orchestrator 가 자동 수행. **모든 step 의 mechanism = subagent spawn** (ADR-170 §결정 1 / §결정 6 — Hotfix 의 fast-path 본질 무변, mechanism 만 spawn 의무):
 
-1. **Audit Issue 자동 생성**: Orchestrator 가 Audit Issue 생성 전용 delegate subagent spawn → spawn 된 delegate 가 GitHub Issue Forms (audit.yml) 기반 `mcp__github__issue_write` 호출. label `audit:post-hotfix` + `phase:요구사항` (Orchestrator-owned delegate semantics, ADR-039 §결정 3 + §결정 12 / ADR-031 Amendment 1)
+1. **Audit Issue 자동 생성**: Orchestrator 가 Audit Issue 생성 전용 delegate subagent spawn → spawn 된 delegate 가 GitHub Issue Forms (audit.yml) 기반 `mcp__github__issue_write` 호출. label `audit:post-hotfix` + `phase:요구사항` (Orchestrator-owned delegate semantics, ADR-170 §결정 3 + §결정 12 / ADR-031 Amendment 1)
 2. **Change Plan 소급 작성**: Orchestrator → ArchitectAgent (chief author) spawn → hotfix 변경 diff 를 소급해 Change Plan 작성 (§1-10 전부, 단 실구현은 이미 존재 상태). ArchitectAgent self-write `docs/change-plans/` commit (CFP-26 owner direct write)
 3. **구현 리뷰 소급**: Orchestrator → CodeReviewPL spawn → hotfix 변경사항 대상 소급 리뷰 (Claude + Codex worker subagent 병렬 spawn 모두)
 4. **보안 테스트 소급** (Minimal Path 에서 Claude peer 생략한 경우에 한함): Orchestrator → SecurityTestPL spawn → hotfix 대상 보안 리뷰 전체 재수행

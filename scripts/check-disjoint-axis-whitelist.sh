@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# scripts/check-disjoint-axis-whitelist.sh — ADR-039 inline-whitelist static-integrity lint (thin wrapper)
+# scripts/check-disjoint-axis-whitelist.sh — ADR-170 inline-whitelist static-integrity lint (thin wrapper)
 #
-# CFP-2572 Phase 2 / ADR-142 §결정 3 — [물리강제] ADR-integrity 정적 (유일 물리강제).
+# CFP-2572 Phase 2 (원 도입) / CFP-2869 Phase 2 (ADR-039→ADR-170 재제정 대응 재지향) /
+# ADR-142 §결정 3 — [물리강제] ADR-integrity 정적 (유일 물리강제).
 # ADR-061: Python entry-point + thin bash wrapper convention (exec python3 — NO heredoc, NO logic).
 #
 # Usage:
@@ -10,7 +11,7 @@
 # Exit codes (ADR-060 §결정 15 3-tier):
 #   0 = PASS
 #   1 = violation (warning emit — workflow continue-on-error 로 비차단, advisory)
-#   2 = SETUP error (ADR-039 / return-envelope-v1.md 부재 / python3 미설치)
+#   2 = SETUP error (대상 ADR / return-envelope-v1.md 부재 · 대상 ADR frontmatter status 미검출 / python3 미설치)
 #
 # Prior art: scripts/check-spawn-event-schema.sh (ADR-061 thin wrapper).
 
