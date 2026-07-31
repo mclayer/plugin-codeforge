@@ -33,7 +33,7 @@ related_stories:
   - CFP-2869
 related_files:
   - scripts/lib/check_disjoint_axis_whitelist.py  # 기계 결박 1 — Phase 2 재저작(declared-vs-actual self-consistency)
-  - scripts/test-check-disjoint-axis-whitelist.sh  # 기계 결박 2 — 자매 discriminating test(M1~M8 mutation, Phase 2)
+  - scripts/test-check-disjoint-axis-whitelist.sh  # 기계 결박 2 — 자매 discriminating test(M1~M9 mutation — 정의 소재 Story §8.3, Phase 2)
   - .github/workflows/disjoint-axis-whitelist-lint.yml  # 기계 결박 3 — 헤더 주석 pin 재기술(Phase 2)
   - docs/inter-plugin-contracts/return-envelope-v1.md  # 기계 결박 4 — lint LDOC 검사 대상, §5 disjoint-axis 선언 현행화 + PATCH bump(Phase 2)
   - docs/inter-plugin-contracts/spawn-event-v1.md  # 기계 결박 5 — writer 정의 authority 인용 재지향 + PATCH bump(Phase 2)
@@ -56,7 +56,7 @@ related_files:
 
 ## 본질 선언
 
-codeforge 를 이용한 **수정 작업**에서 Orchestrator(top-level Claude 세션)는 "이건 inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 없이 **무조건 subagent spawn** 으로 수행한다(사용자 directive verbatim "무조건 subagent" — 컨텍스트 참조). inline 수행이 허용되는 표면은 §결정 2 의 closed inline whitelist 가 전부다. 본 ADR 이 충족되지 않으면 나머지 §결정 mechanism 을 몇 개 쌓든 의미 없다 — 모든 §결정 은 이 binary always-spawn 본질을 보조하는 scaffolding 이다.
+codeforge 를 이용한 **수정 작업**에서 Orchestrator(top-level Claude 세션)는 "이건 inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 없이 **무조건 subagent spawn** 으로 수행한다(사용자 directive verbatim "무조건 subagent" — 컨텍스트 참조). inline 수행이 허용되는 표면은 §결정 2 의 closed inline whitelist 가 전부다. 본 ADR 이 충족되지 않으면 나머지 §결정 mechanism 을 몇 개 쌓든 의미 없다 — §결정 3~15·18·19·21 은 이 binary always-spawn 본질을 보조하는 scaffolding 이며, §결정 16(permission UI)·§결정 17(span guideline)·§결정 20(background-wait liveness)은 각자 선언한 disjoint axis 를 규율한다.
 
 ## 컨텍스트
 
@@ -74,7 +74,7 @@ codeforge 를 이용한 **수정 작업**에서 Orchestrator(top-level Claude �
 
 ### 재제정 대상 · fold 소스 구조
 
-구 ADR-039(2026-05-08 제정, 원 carrier CFP-275)는 원 §결정 1~13 + amendment 12건이 누적된 847행 record 다. fold 소스 구조는 선례 ADR-082(본문 `## Amendment` 절 38개)와 다르다 — ADR-039 는 본문 Amendment 헤딩 0 이며 **12건 전부 이미 본문에 fold 완료** 상태다: 신설형 8건(Amd 1/2/3/5/6/7/10/12 → §결정 14~21 헤딩 신설) + in-place fold형 4건(Amd 4/8/9 → §결정 9 인라인 amend, Amd 11 → §결정 2 note). 따라서 본 재제정의 실체 = **§결정 1~21 의 의미 보존 재구성(dated 서사 제거 + 분산 표 통합) + frontmatter amendment_log 12행 제거(count 0 재시작)** 다.
+구 ADR-039(2026-05-08 제정, 원 carrier CFP-275)는 원 §결정 1~13 + amendment 12건이 누적된 847행 record 다. fold 소스 구조는 선례 ADR-082(본문 `## Amendment` 절 38개)와 다르다 — ADR-039 는 본문 Amendment 헤딩 0 이며 **12건 중 11건이 이미 본문에 fold 완료** 상태다: 신설형 8건(Amd 1/2/3/5/6/7/10/12 → §결정 14~21 헤딩 신설) + in-place fold형 3건(Amd 8/9 → §결정 9 인라인 amend, Amd 11 → §결정 2 note). 나머지 1건 **Amd 4(rate-limit carryover)는 구본 본문 미반영**(frontmatter `amendment_log[4]` 전용 — 구본 body ADR-109 언급 0건, firsthand grep) — 본 재제정이 §결정 9 재기술 + §결정 18 disjoint 논거로 최초 본문 승계한다. 따라서 본 재제정의 실체 = **§결정 1~21 의 의미 보존 재구성(dated 서사 제거 + 분산 표 통합) + Amd 4 본문 승계 + frontmatter amendment_log 12행 제거(count 0 재시작)** 다.
 
 ### 해석 우선순위 조항 (R2 — no-substantive-change presumption)
 
@@ -196,13 +196,15 @@ ADR-022 (Sonnet decider 5-trigger 자동 발동) = Deprecated by ADR-035. 본 �
 §결정 3 의 Ownership ≠ Mechanism 분리 (Orchestrator-spawned delegate subagent = Orchestrator-owned) 가 normative 정합을 갖도록, ADR-031 (lane-spawn evidence) + fix-event-v1 contract (Story §10 FIX Ledger) 의 "Orchestrator self-write" / "Writer monopoly: Orchestrator 단독" invariant 는 **Orchestrator-owned delegate subagent 의 self-write 행위를 explicitly cover** 한다:
 
 - ADR-031 Amendment 1 — Orchestrator-owned delegate subagent 의 §14 lane evidence write = "Wrapper Orchestrator self-write" 정의에 포함 (이행 실재 — ADR-031 본문 Amendment 1 절).
-- fix-event-v1 `append_rules.writer` — "Orchestrator 단독" 의 Orchestrator 정의 = top-level Claude 세션 + §10 row append 전용 delegate subagent + Orchestrator inline (§결정 15) 모두 포함 (이행 실재 — fix-event-v1 §append_rules.writer Amendment 절).
+- fix-event-v1 `append_rules.writer` — "Orchestrator 단독" 의 Orchestrator 정의 = top-level Claude 세션 + Orchestrator 가 §10 row append 전용으로 spawn 한 delegate subagent 모두 포함 (**2-mechanism** — 계약 원문 verbatim 정합; 이행 실재 = fix-event-v1 §1 Amendment(CFP-275) 단락 + `append_rules.writer` 3항 + §4 Writer monopoly 주석).
+
+**Orchestrator inline (§결정 15) 의 지위 — 계약 writer 정의 확장 아님**: Orchestrator inline write 는 위 계약 writer 정의의 3번째 mechanism 이 아니다 — inline 은 top-level Claude 세션 자체가 수행하는 mechanism 으로서 §결정 15 / §결정 2 entry 5 가 규율하며, 계약 writer 정의(2-mechanism)의 "top-level Claude 세션" 항에 이미 포섭된다 (fix-event-v1 writer 문언 확장 0).
 
 lane plugin agent 의 자체 임의 §10/§14 직접 append 는 여전히 금지 (lane plugin spawn ≠ Orchestrator-owned delegate spawn). fix-event-v1 canonical = wrapper 단일 — sibling sync overhead 0건. (기술정정 note: 구본 §결정 12 는 위 두 amendment 의 "commit 동반 의무" 를 규정했고 그 의무는 원 carrier Story 에서 이행 완료 — 본 §결정 은 이행된 정합 상태를 현재형 invariant 로 재기술한다.)
 
-### 결정 13 — SSOT 인지 표면 동기 유지 (4 SSOT doc)
+### 결정 13 — SSOT 인지 표면 (4 SSOT doc — 도입 시점 동일-PR 정렬 발효 완료)
 
-본 정책의 인지 표면 = 4 SSOT doc: `docs/orchestrator-playbook.md` §3.0 / `CLAUDE.md` 오케스트레이션 규칙(subagent default 단락) / `docs/consumer-guide.md` § "Subagent default (codeforge orchestration)" / `docs/hotfix-playbook.md` cross-ref 1줄. 이 4 doc 의 본 정책 서술은 **본 ADR 와 동기 유지 의무** — 정책 서술 변경은 본 ADR 와 동일 PR 안에서 갱신한다 ("Accepted but not effective" normative gap 방지). (기술정정 note: 구본의 Phase 1 PR scope 확정·effective date 서사 = 도입기 이력 — 동결 구본 보존. 동기 유지 의무만 현재형 승계.)
+본 정책의 인지 표면 = 4 SSOT doc: `docs/orchestrator-playbook.md` §3.0 / `CLAUDE.md` 오케스트레이션 규칙(subagent default 단락) / `docs/consumer-guide.md` § "Subagent default (codeforge orchestration)" / `docs/hotfix-playbook.md` cross-ref 1줄. 이 4 doc 는 도입 시점(원 carrier CFP-275)에 구 ADR-039 와 **동일 PR 안에서 정렬 갱신되어 "Accepted but not effective" normative gap 없이 발효 완료**된 상태다 — 본 §결정 은 그 이행-완료 상태를 현재형으로 기술한다 (§결정 12 동형). (기술정정 note: 구본 §결정 13 의 Phase 1 PR scope 확정·effective date 서사 = 도입기 이력 — 동결 구본 보존.)
 
 ### 결정 14 — Pre-spawn-pin mandate (DeveloperPL + branch-creating subagent)
 
@@ -261,7 +263,7 @@ Orchestrator 의 permission UI behavior normative SSOT. **destructive-only ask, 
 5. Issue mutation (close / state change / lock)
 6. label create (registry mutation)
 7. workflow yaml 변경 (`.github/workflows/**` add / edit / delete — CI/CD policy mutation)
-8. ADR row append (`ADR-RESERVATION.md` yaml mutation — sequential append registry, collision rebase 영역)
+8. ADR row append (`archive/adr/ADR-RESERVATION.md` yaml mutation — sequential append registry, collision rebase 영역)
 
 **외부 visible (destructive enum 동격)** — ask permission 의무: PR create / merge / close / comment to shared main branch + external notification (public Issue comment / Discussion post / external webhook trigger).
 
@@ -289,7 +291,7 @@ Orchestrator 의 permission UI behavior normative SSOT. **destructive-only ask, 
 
 **사용자 directive verbatim citation** (2026-05-17 KST CFP-848): "아 묻지말고 그냥 하라고" / "쓰잘데기 없는 권한 묻지말고 전부 수정하라".
 
-**exhaustiveness declare**: destructive enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (강화 방향 ratchet 정합). reversible enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (auto-proceed 영역 확장 = 사용자 burden 영향). 외부 visible super-class 확장 = 별도 ADR Amendment 의무.
+**exhaustiveness declare**: destructive enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (강화 방향 ratchet 정합). reversible enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (auto-proceed 영역 확장 = 사용자 burden 영향). 외부 visible super-class 확장 = 별도 ADR Amendment 의무. 강화 ratchet — closed enumeration **확장만, 약화 0** (ADR-064 §결정 7 symmetric ratchet 정합).
 
 ### 결정 17 — Chief author spawn span guideline
 
@@ -303,7 +305,7 @@ Chief author (특히 ArchitectAgent) 의 single spawn 안 monolithic span (15-40
 2. **Body spawn**: substantive content (Change Plan / ADR §결정 본문 / Story mirror 본문). previous skeleton state passed as input.
 3. **Integration spawn**: cross-refs verify + lint validation + finalize + commit. previous body state passed as input.
 
-**Trade-off**: (이득) drift surface per spawn ↓ — preventive complement to ADR-073 Amd 11 SHA pin + ADR-168 §결정 1 sub-scope 1-E(spawn prompt SHA-anchor)/1-F(mid-spawn drift detection)/1-G(amendment-slot pre-reservation) (구 ADR-082 Amd 15/16/17 — 현 위치 해소는 ADR-168 처분표 lookup). (비용) spawn 수 ↑ / coordination complexity ↑ / spawn 간 state 전달 불완전 위험. 측정 metric (telemetry carrier deferred): spawn time histogram + per-spawn collision count + chief author span KPI.
+**Trade-off**: (이득) drift surface per spawn ↓ — preventive complement to ADR-073 Amd 11 SHA pin·Amd 12 mid-spawn drift detection + ADR-168 §결정 1 sub-scope 1-E(spawn prompt SHA-anchor)/1-F(mid-spawn drift detection)/1-G(amendment-slot pre-reservation) (구 ADR-082 Amd 15/16/17 — 현 위치 해소는 ADR-168 처분표 lookup). (비용) spawn 수 ↑ / coordination complexity ↑ / spawn 간 state 전달 불완전 위험. 측정 metric (telemetry carrier deferred): spawn time histogram + per-spawn collision count + chief author span KPI.
 
 **Recommendation tier, NOT mandatory** — monolithic span 채택 시 결격 0. 승격(warning-tier 등재)은 evidence-gated (ADR-060 gate) 별 sub-CFP.
 
@@ -358,7 +360,7 @@ lead 가 background subagent/worker 응답을 대기할 때의 **유한성(liven
 - **INV-L3 ("0-byte ≠ stall" 3-state marker)** — wall-clock ceiling + progress-marker (output mtime + content grep + task-notification). 0-byte stdout 단독 stall 단정 금지.
 - **INV-L4 (게이트 소유 = Orchestrator/lead 고정)** — worker 자가-spawn 금지. 값 순서 불변식 `timeout N < liveness max-wait`. 이 소유 고정이 본 ADR spawn-권한 근거 — 대기 주체 ↔ 판정 주체 분리 (worker self-attestation 차단).
 
-**§결정 19 body 무변경**: §결정 19 의 "lead force-resume/TaskStop 책임" 은 정성 기술 — 본 §결정 = 그 개입 축을 ADR-139 4 불변식 (wall-clock 상한 + progress-marker 관측 + fail-open 금지 + re-dispatch max-retry cap) 으로 정량화하는 cross-ref.
+**§결정 19 body 무변경**: §결정 19 의 "lead force-resume/TaskStop 책임" 은 정성 기술 — 본 §결정 = 그 개입 축을 ADR-139 4 불변식 (wall-clock 상한 + progress-marker 관측 + fail-open 금지 + 게이트 소유 Orchestrator/lead 고정(INV-L4)) 으로 정량화하는 cross-ref. (기술정정 — 구본 동 위치 괄호 열거의 4번째 항 "re-dispatch max-retry cap 2" 는 INV-L4 오기의 canonical 정정 대상; cap 값 SSOT = parallel-dispatch-protocol-v1 §6.3.1.)
 
 **§결정 9 slot 미침범 (disjoint axis)**: §결정 9 detect hook slot = **inline-write-detect 축** (Orchestrator 직접 mutation 감지). 본 §결정 = **background-wait liveness (완료 감지) 축** — 대기 중 subagent 생존 판정. 두 축 완전 별개 — liveness 를 §결정 9 에 밀어넣으면 scope 오염이므로 별도 §결정 으로 분리 유지.
 
@@ -383,7 +385,7 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 ## 결과
 
 - Orchestrator binary always-spawn (§결정 1) + closed inline whitelist 7-entry flat 단일표 (§결정 2) 가 단일 record 로 재계보화 — "inline 으로 충분한가" 결정 분기 제거 본질 무변경.
-- Ownership ≠ Mechanism (§결정 3/12) / scope (§결정 4/7) / lane plugin 0 변경 (§결정 5) / hotfix 동일 적용 (§결정 6) / doc trust + enforcement 현황 (§결정 8/9) / 계승·해소 관계 (§결정 10/11) / 인지 표면 동기 (§결정 13) invariant 전량 승계.
+- Ownership ≠ Mechanism (§결정 3/12) / scope (§결정 4/7) / lane plugin 0 변경 (§결정 5) / hotfix 동일 적용 (§결정 6) / doc trust + enforcement 현황 (§결정 8/9) / 계승·해소 관계 (§결정 10/11) / 인지 표면 (§결정 13 — 도입 시점 동일-PR 정렬 발효 완료) invariant 전량 승계.
 - 운영 discipline 4종 (§결정 14 pre-spawn-pin / §결정 16 permission UI / §결정 17 span guideline / §결정 19·20 위임 topology + liveness) 원번호 보존 승계.
 - 구본 대비 정리: 분산 3곳 표(base 4 + entry 5 + entry 6) + prose(entry 7) → 7-entry flat 단일표 / "현 N-entry" dated snapshot → §결정 2 라이브 포인터 / `## 결정 (17)` 류 stale 괄호 카운트 제거 / dated 진행 서사·저작 증적 제거 (동결 구본이 이력 담보).
 - (−) 의미 무변경(semantic fidelity) 검증 oracle 은 기계화 불가 (ADR-167 §결정 7 honest ceiling) — 담보 = no-substantive-change 선언 + 재제정 처분표 + 8-lane 리뷰 신구 대조. "완전 봉인" 류 hard-claim 없음.
@@ -398,7 +400,7 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 | 구 §결정 | 신 위치 | 태그 | 구 앵커 (ADR-039) | 비고 |
 |---|---|---|---|---|
 | §결정 1 (binary always-spawn) | §결정 1 | carrier-preserved | `### 결정 1` | 수정 작업 closed enumeration + branch logic 제거. Story-file 4-sub-scope 제외절 = §결정 15 partial rollback 기반영분 그대로 승계 |
-| §결정 2 (inline whitelist) | §결정 2 | **기술정정(구조개선)** | `### 결정 2` | base 4-entry 표 + 분산 entry 5/6(§결정 15/18 절내 표) + entry 7(§결정 21 prose) → **7-entry flat 단일표 통합** (entry 텍스트 무변경·위치만 통합 + entry 7 표-row 형식 통일). "Count 정합" 이중 서술 → 정형 선언 라인 1개 + 역사 해석 note. Amd 11 disjoint-axis note = in-place fold 존치. exhaustiveness("8번째 entry = amendment 의무") 현재형 승계 |
+| §결정 2 (inline whitelist) | §결정 2 | **기술정정(구조개선)** | `### 결정 2` | base 4-entry 표 + 분산 entry 5/6(§결정 15/18 절내 표) + entry 7(§결정 21 prose) → **7-entry flat 단일표 통합** (규범 무변경 — dated 표기 기술정정(entry 1 "5번째 entry 신설 아님"→"신규 entry 신설 아님") + entry 5/6/7 저작 증적 제거 + 위치 통합 + entry 7 표-row 형식 통일). "Count 정합" 이중 서술 → 정형 선언 라인 1개 + 역사 해석 note. Amd 11 disjoint-axis note = in-place fold 존치. exhaustiveness("8번째 entry = amendment 의무") 현재형 승계 |
 | §결정 3 (Ownership ≠ Mechanism) | §결정 3 | carrier-preserved | `### 결정 3` | "Amendment 2" 시점 표기 → "§결정 15" 앵커 재지정만 |
 | §결정 4 (scope 한정) | §결정 4 | carrier-preserved | `### 결정 4` | — |
 | §결정 5 (lane plugin 0 변경) | §결정 5 | **기술정정** | `### 결정 5` | 2026-05-08 시점 deputy·contract 개별 열거(구명칭 OpRiskArch/DataMigrationArch 등) → 현행 roster/registry skill SSOT pointer 로 교체. "변경 0" invariant 무변 |
@@ -408,8 +410,8 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 | §결정 9 (Phase 2 enforcement deferred) | §결정 9 | **기술정정** | `### 결정 9` | Amd 4/8/9 in-place fold 의 "Update (Amendment N)" 진행 서사 제거 → 현재형 최종 상태만 재기술 (Write/Edit/MultiEdit = IMPLEMENTED Wave1 / Read 축 영구 advisory 천장 / mcp·Bash-redirect deferred / ADR-142 cross-ref stub) |
 | §결정 10 (ADR-009 amends 관계) | §결정 10 | **기술정정** | `### 결정 10` | 규범 substance(자연 확장/explicit 격상) 무변. 관계 표기만 frontmatter `amends` → `related_adrs` 주석 이관 (ADR-054→ADR-127 선례 동형 — §7 OQ-3 B안) |
 | §결정 11 (ADR-022 충돌 해소) | §결정 11 | carrier-preserved | `### 결정 11` | — |
-| §결정 12 (Cross-ADR amendment 의무) | §결정 12 | **기술정정** | `### 결정 12` | 일회성 "commit 동반 의무" = 원 carrier 에서 이행 완료 (ADR-031 Amendment 1 + fix-event-v1 writer Amendment 실재 — firsthand 확인) → 이행된 정합 상태를 현재형 invariant 로 재기술 |
-| §결정 13 (Phase 1 scope 4 SSOT doc) | §결정 13 | **기술정정** | `### 결정 13` | dated effective-date·PR scope 확정 서사 제거 → 4 SSOT doc 동기 유지 의무 현재형 승계 |
+| §결정 12 (Cross-ADR amendment 의무) | §결정 12 | **기술정정** | `### 결정 12` | 일회성 "commit 동반 의무" = 원 carrier 에서 이행 완료 → 이행된 정합 상태를 현재형 invariant 로 재기술. attestation = 존재-attest 한정(ADR-031 본문 Amendment 1 절 + fix-event-v1 §1 Amendment(CFP-275) 단락 실재 — firsthand 확인; 문언 내용 SSOT = 각 원문). writer 정의 = **2-mechanism** (inline 은 §결정 15 규율 — 계약 writer 확장 아님) |
+| §결정 13 (Phase 1 scope 4 SSOT doc) | §결정 13 | **기술정정** | `### 결정 13` | dated effective-date·PR scope 확정 서사 제거 → 도입 시점 동일-PR 정렬 발효 완료 상태의 현재형 재기술 (§결정 12 동형 — 상시 동기 의무 신설 0) |
 
 ### (2) amendment-신설 §결정 14-21 → §결정 14-21 (번호 보존)
 
@@ -417,11 +419,11 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 |---|---|---|---|---|
 | §결정 14 (Pre-spawn-pin mandate) | Amd 1 | **기술정정(부분)** | `### 결정 14` | 행위 규범 전량 보존 (Step 0 pin 절차 + post-spawn verify + self-reset 금지). 3-row incident evidence 표 + verification evidence 목록 = 저작 증적 제거 (동결 구본 보존) |
 | §결정 15 (Story-file handoff entry 5) | Amd 2 | **기술정정(구조개선)** | `### 결정 15` | 4-sub-scope + exclusion + Edge-1/2 + exhaustiveness 보존. 절내 5-entry 확장 mini-table 삭제 (row 5 = §결정 2 flat 표). "6번째 entry 추가 의무" dated arithmetic → §결정 2 라이브 포인터. **weakening_partial 최종 상태 그대로 승계** (상태 절 약화 fold 예외 declare) |
-| §결정 16 (permission UI) | Amd 3 | **기술정정(부분)** | `### 결정 16` | destructive 8 + 외부 visible + reversible 8 + disjoint 표 + directive verbatim 보존. "Reversible closed enum (≥6 항목)" 헤더 ↔ 실 8 항목 불일치 stale 표기 기술정정 |
+| §결정 16 (permission UI) | Amd 3 | **기술정정(부분)** | `### 결정 16` | destructive 8 + 외부 visible + reversible 8 + disjoint 표 + directive verbatim 보존. "Reversible closed enum (≥6 항목)" 헤더 ↔ 실 8 항목 불일치 stale 표기 기술정정 + Destructive 헤더 "(≥8 항목)"→"(8 항목)" 확정 표기 동조(closed enum 9번째 = amendment 의무와 정합 — 확장만, 약화 0) |
 | §결정 17 (chief span guideline) | Amd 5 | **기술정정(부분)** | `### 결정 17` | anti-pattern + 3-step + trade-off + recommendation tier 보존. "ADR-082 Amd 15/16/17" 인용 → ADR-168 §결정 1 sub-scope 1-E/1-F/1-G 현 위치 해소 (ADR-168 처분표 lookup). META-self-application demonstration 서사 = 저작 증적 제거 |
 | §결정 18 (entry 6 Codex dispatch) | Amd 6 | **기술정정(구조개선)** | `### 결정 18` | 적용 범위 3항 + H1 재귀 가드 rationale + Amd 4 disjoint 논거 보존. 절내 6-entry 확장 mini-table 삭제 (row 6 = §결정 2 flat 표). "현 5-entry / 7번째 entry" dated arithmetic → §결정 2 라이브 포인터 |
 | §결정 19 (Story-teammate 위임) | Amd 7 | **기술정정(부분)** | `### 결정 19` | 재정의 + dispatch 메커니즘 + 2-level 토폴로지 + stall 마찰 정직 기술 + lead 처리 책임 보존. "현 6-entry" snapshot → 라이브 포인터. "Phase A 위험 흡수 (E2/E3 가드 아직 LIVE 아님)" 도입기 한시 단락 = obsolete 제거 (lead 능동 모니터 책임 규범은 존치; atomic claim 은 ADR-133 으로 LIVE) |
-| §결정 20 (liveness ADR-139 cross-ref) | Amd 10 | **기술정정(부분)** | `### 결정 20` | INV-L1~L4 상속 + §결정 9 slot 미침범 + §결정 19 관계 보존. "현 6-entry" snapshot → 라이브 포인터 |
+| §결정 20 (liveness ADR-139 cross-ref) | Amd 10 | **기술정정(부분)** | `### 결정 20` | INV-L1~L4 상속 + §결정 9 slot 미침범 + §결정 19 관계 보존. "현 6-entry" snapshot → 라이브 포인터. 구본 §결정 20 괄호 열거 4번째 항 "re-dispatch max-retry cap 2" → INV-L4(게이트 소유 고정) 기술정정 — cap-2 값은 본문 미승계 **삭제**(값 SSOT = parallel-dispatch-protocol-v1 §6.3.1 "max-retry cap = 2", 삭제 정당) |
 | §결정 21 (entry 7 measurement) | Amd 12 | **기술정정(구조개선)** | `### 결정 21` | 적용 범위 3항 + evidence-gate 3-조건 논거 + monopoly 무약화 보존. entry 7 정의 prose → §결정 2 flat 표 row 이동 (표-row 형식 통일). "8번째 entry = amendment 의무" exhaustiveness = §결정 2 로 현재형 승계 |
 
 ### (3) amendment 1-12 처분 (provenance — 이원 앵커)
@@ -433,7 +435,7 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 | 1 | CFP-895 | §결정 14 | carrier-preserved | `amendment_log[1]` + `### 결정 14` | Pre-spawn-pin mandate 신설형. direction: strengthening |
 | 2 | CFP-1340 | §결정 15 + §결정 2 row 5 | carrier-preserved | `amendment_log[2]` + `### 결정 15` | **direction: weakening_partial (유일)** — §결정 15 partial rollback 자체가 최종 effective 상태 (상태 절 약화 fold 예외 declare 참조, arithmetic 병합 불요) |
 | 3 | CFP-1340 | §결정 16 | carrier-preserved | `amendment_log[3]` + `### 결정 16` | permission UI 신설형 |
-| 4 | CFP-1354 | §결정 9 | **carrier-preserved (inline fold into §결정 9)** | `amendment_log[4]` (전용 헤딩 부재) | rate-limit second-order risk carryover — ADR-109 SSOT + "entry 신설 REJECTED, retry = skill body" 기록 (§결정 9 재기술 + §결정 18 disjoint 논거에 승계) |
+| 4 | CFP-1354 | §결정 9 | **carrier-preserved (inline fold into §결정 9)** | `amendment_log[4]` (전용 헤딩 부재) | rate-limit second-order risk carryover — ADR-109 SSOT + "entry 신설 REJECTED, retry = skill body" 기록. 구본 본문 미반영(`amendment_log[4]` 전용 — body ADR-109 언급 0건) — 본 재제정이 §결정 9 재기술 + §결정 18 disjoint 논거로 최초 본문 승계 |
 | 5 | CFP-1438 | §결정 17 | carrier-preserved | `amendment_log[5]` + `### 결정 17` | chief span guideline 신설형 |
 | 6 | CFP-2458 | §결정 18 + §결정 2 row 6 | carrier-preserved | `amendment_log[6]` + `### 결정 18` | entry 6 신설형 (evidence-gate 충족 carrier) |
 | 7 | CFP-2488 | §결정 19 | carrier-preserved | `amendment_log[7]` + `### 결정 19` | Story-teammate 위임 신설형 (ADR-134 paired) |
@@ -445,17 +447,19 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 
 **공통 dated-history 제거 (전 row 적용)**: "Update (Amendment N)" 진행 서사 / 시점별 entry 누적 arithmetic ("현 4/5/6-entry") / incident evidence 표 / verification evidence 목록 / META demonstration·Phase A 한시 서술 / `## 결정 (17)` stale 괄호 카운트 = 의무·금지·조건·예외가 아닌 **저작 증적·시점 표기** → 본 ADR 본문 전량 제거 (동결 구본 ADR-039 가 이력 담보). 이는 문언 실질 변경이 아닌 obsolete 제거·기술 정정 (재제정 허용 변경 4종 안).
 
-**비-§결정 섹션 처분**: 구본 컨텍스트(사용자 directive verbatim / Gap 분석) 중 규범 원천(directive 4 발화)은 본 ADR 컨텍스트로 승계, Gap 분석·"회피된 대안"(A~D)·"외부 fact"·"검증 채널"·"결과/Out-of-scope" = 도입기 rationale·이력 서사 → **동결 구본 보존** (ADR-168 선례 동형 — 각 §결정 이 필요 rationale 을 자체 내장하도록 재기술했으므로 규범 손실 0. 회피된 대안의 거부 논거 중 살아있는 것: 대안 A selective spawn 거부 = §결정 1 본문 / 대안 C lane plugin 적용 거부 = §결정 5 / 대안 D 무제한 재귀 거부 = §결정 19 2-level bounded — 전부 §결정 내장 승계).
+**비-§결정 섹션 처분**: 구본 컨텍스트(사용자 directive verbatim / Gap 분석) 중 규범 원천(directive 4 발화)은 본 ADR 컨텍스트로 승계, Gap 분석·"회피된 대안"(A~D)·"외부 fact"·"검증 채널"·"결과/Out-of-scope" = 도입기 rationale·이력 서사 → **동결 구본 보존** (ADR-168 선례 동형 — 각 §결정 이 필요 rationale 을 자체 내장하도록 재기술했으므로 규범 손실 0. 회피된 대안의 거부 논거 중 살아있는 것: 대안 A selective spawn 거부 = §결정 1 본문 / 대안 B 즉시 hook enforcement 거부 = §결정 8 doc trust + §결정 9 enforcement 현황 / 대안 C lane plugin 적용 거부 = §결정 5 / 대안 D 무제한 재귀 거부 = §결정 19 2-level bounded — 전부 §결정 내장 승계).
 
 ## 관련 파일
 
 **기계 결박 5표면 (Phase 2 재저작·재지향 — atomic bundle)**:
 
 - `scripts/lib/check_disjoint_axis_whitelist.py` (+ thin wrapper `scripts/check-disjoint-axis-whitelist.sh`) — 결박 1: `_DEFAULT_ADR_REL`(구본 파일명 하드코드) + `_EXPECTED_BASE=4`/`_EXPECTED_EFFECTIVE=6` 상수 + `### 결정 2/15/18` 헤딩·"N번째 entry" 문자열 결박 → **본 ADR 대상 + declared-vs-actual self-consistency(§결정 2 정형 선언 ↔ flat 표 row count) 알고리즘으로 재저작** + 대상 ADR Superseded-status 동결사체 가드
-- `scripts/test-check-disjoint-axis-whitelist.sh` — 결박 2: 자매 discriminating test — sed 콘텐츠 앵커 → 구조-패턴(마지막 `| N |` row) 앵커 + fake row `| 99 |` out-of-band + M1~M8 mutation 세트 + negative-control fixture (C3 부정어미 오탐 0)
+- `scripts/test-check-disjoint-axis-whitelist.sh` — 결박 2: 자매 discriminating test — sed 콘텐츠 앵커 → 구조-패턴(마지막 `| N |` row) 앵커 + fake row `| 99 |` out-of-band + M1~M9 mutation 세트(정의 소재 = Story CFP-2869 §8.3 — M9 = 섹션 경계 lookahead 검증) + negative-control fixture (C3 부정어미 오탐 0)
 - `.github/workflows/disjoint-axis-whitelist-lint.yml` — 결박 3: 헤더 주석 "(C1) == 6" pin → self-consistency 서술로 동기 재기술
-- `docs/inter-plugin-contracts/return-envelope-v1.md` — 결박 4 (lint `_DEFAULT_LDOC_REL` 검사 대상): §5 disjoint-axis 선언의 "현재 유효 6-entry"·"7번째 whitelist entry 가 아니며" → 7-entry + "8번째 entry 가 아니며" 현행화 + **PATCH bump + MANIFEST row 갱신**
-- `docs/inter-plugin-contracts/spawn-event-v1.md` + `tests/unit/cfp_2850/test_ac4_writer_monopoly.py` — 결박 5: writer 정의 authority 인용(ADR-039 §결정 2/3) 번호 재지향 + "ADR-039" 문자열 assert 동기 갱신 + **PATCH bump + MANIFEST row 갱신** (changelog dated 이력 인용은 보존)
+- `docs/inter-plugin-contracts/return-envelope-v1.md` — 결박 4 (lint `_DEFAULT_LDOC_REL` 검사 대상): §5 disjoint-axis 선언(:81)의 "현재 유효 6-entry"·"7번째 whitelist entry 가 아니며" → 7-entry + "8번째 entry 가 아니며" 현행화 + :79 §5 헤딩·:103 §9 cross-ref 의 "ADR-039 §결정 2" 인용 재지향 + **PATCH bump + MANIFEST row 갱신**
+- `docs/inter-plugin-contracts/spawn-event-v1.md` + `tests/unit/cfp_2850/test_ac4_writer_monopoly.py` — 결박 5: writer 정의 authority 인용(ADR-039 §결정 2/3) 번호 재지향(:16 related_adrs 주석 포함) + :145 §2.1.5 disjoint-axis note 의 "6-entry" stale → §결정 2 현행 표(7-entry) 현행화 + "ADR-039" 문자열 assert 동기 갱신 + **PATCH bump + MANIFEST row 갱신** (changelog dated 이력 인용은 보존)
+
+**Phase 2 전역 re-grep 규율**: 위 결박 표면의 라인 번호(spawn-event-v1 :16/:145, return-envelope-v1 :79/:81/:103 등)는 Phase 1 저작 시점 실측 스냅샷이다 — Phase 2 재지향 시 파일별 전 인용 라인을 re-grep 으로 재실측한 뒤 전수 재지향한다 (라인 드리프트·누락 방어).
 
 **Phase 2 나머지 대상**:
 
