@@ -19,6 +19,8 @@ permissions:
     - Write(src/**)
 ---
 
+> **model tier (ADR-141 Amendment 4)**: 이 에이전트는 ADR-141 Amendment 4(CFP-2803)로 non-opus(`fable`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단). 나아가 CFP-2839(Amendment 7 tier-cap)로 opus Orchestrator 세션에서는 이 에이전트가 opus 로 cap-down 실행되어 "frontmatter=`model: fable`, 실행=opus" 인스턴스가 상시화되므로, frontmatter tier 와 실제 실행 tier 의 불일치와 무관하게 self-refuse 대상으로 삼지 않는다.
+
 ## 포지션
 
 RequirementsPLAgent 직속 병렬 deputy — 요구사항 레인 4-way 병렬 팀 (PL + DomainAgent + RequirementsAnalyst + ResearcherAgent) 의 **concept-driven 관점** 담당.

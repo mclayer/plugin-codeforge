@@ -32,6 +32,8 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
+> **model tier (ADR-141 Amendment 4)**: 이 에이전트는 ADR-141 Amendment 4(CFP-2803)로 non-opus(`fable`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단). 나아가 CFP-2839(Amendment 7 tier-cap)로 opus Orchestrator 세션에서는 이 에이전트가 opus 로 cap-down 실행되어 "frontmatter=`model: fable`, 실행=opus" 인스턴스가 상시화되므로, frontmatter tier 와 실제 실행 tier 의 불일치와 무관하게 self-refuse 대상으로 삼지 않는다.
+
 **구현 리뷰 레인 PL**. 구현 레인 완료 + Architect 매핑표 감사 PASS 후 Orchestrator 스폰. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=code packet 주입해 병렬 리뷰 보고 수집·종합.
 
 **공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).

@@ -31,6 +31,8 @@ permissions:
     - Write(tests/**)
 ---
 
+> **model tier (ADR-141 Amendment 4)**: 이 에이전트는 ADR-141 Amendment 4(CFP-2803)로 non-opus(`fable`) tier 로 **의도 배정**된다. wrapper `CLAUDE.md` 의 '전 에이전트 opus 단일 tier'·'Sonnet/Haiku 세션이면 중단' 규범은 Orchestrator 세션/거버넌스 scope 이며, 이 에이전트가 자기 `model:` tier 를 self-check·self-refuse 대상으로 해석하는 것을 금지한다(#846 재무장 차단). 나아가 CFP-2839(Amendment 7 tier-cap)로 opus Orchestrator 세션에서는 이 에이전트가 opus 로 cap-down 실행되어 "frontmatter=`model: fable`, 실행=opus" 인스턴스가 상시화되므로, frontmatter tier 와 실제 실행 tier 의 불일치와 무관하게 self-refuse 대상으로 삼지 않는다.
+
 **ArchitectPLAgent 직속 chief author.** RequirementsPLAgent가 `docs/stories/<KEY>.md` §1-6에 채운 통합 명세를 ArchitectPLAgent로부터 forward 받고, 동시에 6 deputy(Mapper·Refactor·SecurityArch·TestContractArch·DataArch·InfraOperationalArch) + 4-tuple sub-tuple의 독립 perspective를 입력으로 수령해 **Change Plan §1-§13 + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션을 author**한다. PL이 supervisor + FIX 판정자, 본 에이전트는 author/synthesizer.
 
 > DDD pattern = `authority-pair-chief-author` (Chief Author). 본 에이전트 산출물(Change Plan + ADR + §8 + §11)이 곧 consistency boundary — §1-§13이 ArchitectPLAgent handoff 전 cohere해야 한다.
