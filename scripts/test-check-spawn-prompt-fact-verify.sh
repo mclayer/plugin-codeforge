@@ -2,7 +2,7 @@
 # scripts/test-check-spawn-prompt-fact-verify.sh
 # CFP-2383 Phase 2 — Discriminating test for check-spawn-prompt-fact-verify.sh
 #
-# ADR-082 Amendment 34 sub-scope 1-W anti-theater test: spawn-prompt fixture (unverified fact 1+ 포함)
+# ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 34 sub-scope 1-W — de-bloat 제거, 기능 1-Z 이관, 재제정 CFP-2840) anti-theater test: spawn-prompt fixture (unverified fact 1+ 포함)
 # → 검출돼야 할 fact 이 검출 안 되면 RED (missing-case) + exit code assert
 #
 # 5 fact category (C1-C5) RED/GREEN 쌍 + message-assert (pattern + line 동시) +

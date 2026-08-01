@@ -56,9 +56,9 @@ codeforge-pmo = **Cross-cutting** lane plugin. 단일 Story lane 게이트에 �
 - ADR = 단일 결정 단위 (결정 시점 고정 — 개정=supersede / 의미보존 위생편집 채널; ADR-058 §결정10)
 - 본 doc ↔ Change Plan = 상보 disjoint (구조 vs 델타)
 
-**verify-before-trust 4-layer 안전망 안의 본 lane 위치** (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D-9):
+**verify-before-trust 4-layer 안전망 안의 본 lane 위치** (ADR-073 / ADR-070 / ADR-168 (구 ADR-082, 재제정 CFP-2840) / ADR-045 §D-9):
 - ADR-045 §D-9 (PMOAgent retro corpus enumeration cross-Story pattern_count ≥ threshold 2 검출 시 ADR escalation **forcing function**) = 본 lane 의 4-layer 마지막 layer 주관
-- 다른 3 layer (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification) = 본 lane 의 owner 아님 (Orchestrator / 외부 worker / internal lane agent 각각 disjoint)
+- 다른 3 layer (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-168 write-time self-write verification (구 ADR-082, 재제정 CFP-2840)) = 본 lane 의 owner 아님 (Orchestrator / 외부 worker / internal lane agent 각각 disjoint)
 
 ## 인터페이스 계약
 
@@ -127,7 +127,7 @@ PMOAgent spawn (Orchestrator)
   ↓
 [cross-Story pattern 분석 — 매 retro write 시점]
   · patterns_observed[] enumeration (FIX 반복 / ESCALATE 트렌드 / 성능 회귀 / 코드 핫스팟)
-  · ADR-082 scope (a) corpus-claim-verify 의무 (write-time source direct verify)
+  · ADR-168 §결정 2 (a) corpus-claim-verify 의무 (구 ADR-082 scope (a), 재제정 CFP-2840) (write-time source direct verify)
   ↓ pattern_count ≥ 2 reach
 [trigger 3: cross_story_pattern_adr_trigger forcing function] ADR-045 Amendment 5 §D-9 (Mandatory framing)
   ↓

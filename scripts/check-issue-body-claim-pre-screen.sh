@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/check-issue-body-claim-pre-screen.sh — issue-body-claim-pre-screen 게이트 thin bash wrapper
 #
-# CFP-2382 / ADR-082 Amendment 20 §결정 15 (CFP-1559 carrier) — orchestrator-authored followup
+# CFP-2382 / ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) (CFP-1559 carrier) — orchestrator-authored followup
 #   Issue body 안 4 sub-pattern (PR state / CFP state / count / sister carrier) stale-claim 을
 #   동일-line `[verified-via:` annotation presence 로 pre-screen (warning tier, advisory).
 # ADR-061: Python entry-point + thin bash wrapper convention (exec python3 — NO heredoc, NO logic).

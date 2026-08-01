@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/check-resource-safety-claim-proof.sh — resource-safety claim ↔ proof-link presence lint thin wrapper
 #
-# CFP-2646 / ADR-082 Amendment 38 §결정 16 — governance/보안 tooling(evidence-check 게이트·보안 script·
+# CFP-2646 / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) — governance/보안 tooling(evidence-check 게이트·보안 script·
 #   워크플로 YAML)의 docstring·inline 주석·워크플로 YAML 주석에 resource-safety/복잡도/DoS-guard 안전성-claim
 #   을 쓸 때 paired proof-reference OR honest-ceiling 문구 presence 를 정적 검사한다. presence ≠ truth
 #   (honesty ceiling ADR-151 §결정7 상속) — claim 의 참됨은 강제하지 않음. blocking-on-pr tier (CFP-2650 승격 — continue-on-error 제거로 체크 red surfacing; branch-protection 무변경).

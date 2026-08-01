@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/check-spawn-prompt-fact-verify.sh — spawn-prompt-fact-verify 게이트 thin bash wrapper
 #
-# CFP-2383 / ADR-082 Amendment 37 §결정 1 layer 1 sub-scope 1-Z (sub-scope 1-L Amd 23, CFP-1590
+# CFP-2383 / ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 37, 재제정 CFP-2840) (sub-scope 1-L Amd 23, CFP-1590
 #   carrier) — worker→worker handoff spawn prompt PR-body-proxy 안 5 fact category
 #   (C1 counter / C2 version / C3 SHA / C4 verify-result / C5 file-existence) inherit fact 단언 시
 #   동일-line `[verified-via:` annotation presence 로 pre-screen (warning tier, advisory).

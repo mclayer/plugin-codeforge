@@ -14,8 +14,8 @@
 #             코드 품질 / 보안 검사 영역 외 (CodeReview / SecurityTest lane 책임).
 #
 # 검증 대상 4 block (ADR-115 §결정 6 closed-set):
-#   1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  — ADR-082 Amendment 15 1-E
-#   2. [USER-UTTERANCE-VERBATIM]            — ADR-082 Amendment 5 1-C
+#   1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  — ADR-168 §결정 1 sub-scope 1-E (구 ADR-082 Amendment 15, 재제정 CFP-2840)
+#   2. [USER-UTTERANCE-VERBATIM]            — ADR-168 §결정 1 sub-scope 1-C (구 ADR-082 Amendment 5, 재제정 CFP-2840)
 #   3. worktree-first directive presence    — ADR-040 Amendment 6
 #   4. parallel-dispatch directive presence — ADR-064 Amendment 1
 #
@@ -144,8 +144,8 @@ except Exception:
       if [ -n "$MISSING_BLOCKS" ]; then
         >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt missing required blocks: [%s]\n' "$MISSING_BLOCKS"
         >&2 printf '  ADR-115 §결정 6 / Change Plan §3.3 — 4 block presence 의무:\n'
-        >&2 printf '  1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  (ADR-082 Amendment 15 1-E)\n'
-        >&2 printf '  2. [USER-UTTERANCE-VERBATIM]            (ADR-082 Amendment 5 1-C)\n'
+        >&2 printf '  1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  (ADR-168 §결정 1 sub-scope 1-E, 구 ADR-082 Amendment 15)\n'
+        >&2 printf '  2. [USER-UTTERANCE-VERBATIM]            (ADR-168 §결정 1 sub-scope 1-C, 구 ADR-082 Amendment 5)\n'
         >&2 printf '  3. worktree-first directive             (ADR-040 Amendment 6)\n'
         >&2 printf '  4. parallel-dispatch directive          (ADR-064 Amendment 1)\n'
         >&2 printf '  Wave 1: warning-only (spawn allowed). Wave 2 deny 활성 = 별 sub-CFP carrier.\n'
