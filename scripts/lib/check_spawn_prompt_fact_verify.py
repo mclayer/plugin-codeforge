@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_spawn_prompt_fact_verify.py
-CFP-2383 / ADR-082 Amendment 37 sub-scope 1-Z (sub-scope 1-L Amd 23, CFP-1590 carrier) —
+CFP-2383 / ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 37, 재제정 CFP-2840) (sub-scope 1-L Amd 23, CFP-1590 carrier) —
 spawn-prompt-fact-verify 게이트 (warning tier)
 
 sub-scope 1-L (worker→worker handoff spawn prompt fact verify-before-trust mandate) 의 Wave 2
@@ -50,9 +50,9 @@ FP guard 4종 EXEMPT (S2 답습 — PR body 도 markdown):
   (1) in_fence (fenced code block) (2) inline code-span (backtick `...`)
   (3) blockquote (> prefix)        (4) SELF_SOURCE (자기 정의 meta-reference)
 
-ADR refs: ADR-082 Amendment 37 §결정 1 layer 1 sub-scope 1-Z (CFP-2383) /
+ADR refs: ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 37, 재제정 CFP-2840) (CFP-2383) /
   sub-scope 1-L (Amd 23, CFP-1590) declaration parent / sub-scope 1-W (Amd 34, CFP-1842) C1-C5 source /
-  ADR-082 §결정 15 (Amd 20, CFP-1559) S2 구조 답습 base / ADR-060 / ADR-061 / ADR-127
+  ADR-168 §결정 15 (구 ADR-082 §결정 15, 재제정 CFP-2840) (Amd 20, CFP-1559) S2 구조 답습 base / ADR-060 / ADR-061 / ADR-127
 """
 
 import re
@@ -252,7 +252,7 @@ _ACTION_GUIDE = (
     "     (check-bypass-audit-comment.sh 마커 패턴)\n"
     "한계: PR body 는 spawn prompt 의 proxy — 실 spawn prompt 아님 (transcribe 케이스만 검출). "
     "warning-tier advisory (presence-only, 위조 false-PASS 구조적 가능 → 보안 통제 신뢰 금지).\n"
-    "근거: ADR-082 Amendment 37 §결정 1 layer 1 sub-scope 1-Z (CFP-2383) — sub-scope 1-L (CFP-1590) "
+    "근거: ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 37, 재제정 CFP-2840) (CFP-2383) — sub-scope 1-L (CFP-1590) "
     "worker→worker handoff spawn prompt fact verify-before-trust mandate Wave 2 mechanical wire."
 )
 

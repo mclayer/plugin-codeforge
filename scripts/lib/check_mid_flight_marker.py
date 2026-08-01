@@ -39,7 +39,7 @@ CFP-2761 §5.2 / ADR-085 §결정10 — mid-flight marker ownership/freshness PR
   placeholder-token (타입 3): `<!--\s*dispatch:\s*\S+\s+pending\s*-->` OR verdict slot value ∈
     {pending, TBD, —, placeholder}.
 
-DoS guard (§8.6, ADR-082 Amendment 38 resource-safety): anchored bounded regex (nested/인접-무제한
+DoS guard (§8.6, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) resource-safety): anchored bounded regex (nested/인접-무제한
   quantifier 0) + per-line length cap(MAX_PHYSICAL_LINE_LEN 초과 truncate) + per-file line count
   cap(PER_FILE_SCAN_CAP) + O(n) index-advance. 총 작업량 <= line-count-cap × per-line-cap 로 유한
   bound (~1.5MB 코퍼스 blowup 0). 완화 = bounded degradation — 임의 입력 무해가 아닌 정직 천장.
@@ -63,7 +63,7 @@ Exit codes (ADR-060 §결정5 tri-tier — warning tier, advisory NEVER blocks):
 
 ADR refs: CFP-2761 §5.2 (carrier) / ADR-085 §결정10 (mid-flight marker owner) / ADR-073 (worktree
   self-ownership context — 타입 5 예약 proxy) / ADR-060 §결정5 (warning tri-tier) /
-  ADR-082 Amendment 38 §8.6 (resource-safety DoS guard) / ADR-061 §결정1 (Python SSOT + thin wrapper).
+  ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) §8.6 (resource-safety DoS guard) / ADR-061 §결정1 (Python SSOT + thin wrapper).
 """
 
 import argparse

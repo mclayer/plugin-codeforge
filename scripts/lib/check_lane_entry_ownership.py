@@ -39,7 +39,7 @@ scope = **ownership-presence subset** — 진입 세션 git-identity 가 Story a
   않는다(no double-coverage). `--lane` 은 이제 informational only(lane-entry 자체가 trigger, 검증
   essence = ownership-presence 이며 entry_phase 필터링 없음).
 
-DoS guard (§8.6, ADR-082 Amendment 38 resource-safety): Story/sessions-file bounded read(byte cap),
+DoS guard (§8.6, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) resource-safety): Story/sessions-file bounded read(byte cap),
   frontmatter 구조 파싱만(재귀 없음), O(n) entry iterate. bounded degradation — 임의 입력 무해 아님.
 
 CLI 계약 (ADR-061 house style — 고정, hook + self-test 소비; 전 인자 optional):
@@ -55,7 +55,7 @@ Exit codes (ADR-060 §결정5 tri-tier — warning tier, advisory NEVER blocks):
   1 = strict-tier 미사용 (warning tier).
 
 ADR refs: CFP-2761 §5.2 (carrier) / ADR-085 §결정3 (lane-entry ownership) / ADR-073 Amendment 2
-  (polling 4th source) / ADR-060 §결정5 (warning tri-tier) / ADR-082 Amendment 38 §8.6
+  (polling 4th source) / ADR-060 §결정5 (warning tri-tier) / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) §8.6
   (resource-safety) / ADR-061 §결정1 (Python SSOT + thin wrapper).
 """
 

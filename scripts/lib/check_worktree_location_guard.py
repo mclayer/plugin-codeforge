@@ -35,7 +35,7 @@ worktree_base() 포트 소비 (Refactor D-2, 인라인 하드코딩 금지):
   worktree 의 2차 검출 = ③ discovery 스캐너(AC-11)가 사후 가시화(예방⊕검출).
   파싱/판정 실패는 통과(fail-open) — false-negative 가 false-positive 보다 안전.
 
-resource-safety (§7.6 T-REGEX honest-ceiling — ADR-082):
+resource-safety (§7.6 T-REGEX honest-ceiling — ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   경로/명령 파싱은 정규식이 아니라 `shlex` 토큰 분해 + 토큰 비교를 쓴다 →
   untrusted 입력에 대한 정규식 backtracking 표면을 두지 않는 설계(best-effort).
   "임의 입력 무해"를 단정하지 않는다 — bounded degradation 지향.

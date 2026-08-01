@@ -24,7 +24,7 @@ mode 판정:
     fixture 필수 = toplevel + worktree-list-file + branch (reflog-file 는 optional, 부재 = GC fallback).
   fixture args 전무 = LIVE — 실 git -C <repo-root> rev-parse/worktree list/reflog 조회.
 
-DoS guard (§8.6, ADR-082 Amendment 38 resource-safety): worktree-list/reflog 파일 bounded read
+DoS guard (§8.6, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) resource-safety): worktree-list/reflog 파일 bounded read
   (per-line cap + line-count cap), anchored bounded regex, O(n) 파싱. bounded degradation.
 
 CLI 계약 (ADR-061 house style — 고정, hook + self-test 소비):
@@ -40,7 +40,7 @@ Exit codes (ADR-060 §결정5 tri-tier — warning tier, advisory NEVER blocks):
   1 = strict-tier 미사용 (warning tier).
 
 ADR refs: CFP-2761 §5.2 (carrier) / ADR-073 Amendment 3 §결정1-D/1-E (worktree self-ownership
-  3-tuple) / ADR-060 §결정5 (warning tri-tier) / ADR-082 Amendment 38 §8.6 (resource-safety) /
+  3-tuple) / ADR-060 §결정5 (warning tri-tier) / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) §8.6 (resource-safety) /
   ADR-061 §결정1 (Python SSOT + thin wrapper).
 """
 

@@ -1347,9 +1347,9 @@ gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commi
 
 **Cross-ref**: [ADR-073 Amendment 2](../archive/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1-A/1-B/1-C (declarative anchor SSOT) / evidence-checks-registry `parallel-work-sentinel-pickup` (warning tier) / [`parallel-work-sentinel-polling.md`](../docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md) (narrative SSOT) / memory rule 6·7 / sibling Story-2 [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) (mechanical wire).
 
-#### §3.5.2 Cross-repo worktree target authority verify (CFP-1578 / [ADR-082 Amendment 21](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J)
+#### §3.5.2 Cross-repo worktree target authority verify (CFP-1578 / [ADR-168 §결정 1 sub-scope 1-J](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082 Amendment 21, 재제정 CFP-2840))
 
-> **NORMATIVE — ADR-082 Amendment 21 §결정 1 layer 1 sub-scope (1-J) declarative anchor**. chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 cross-repo worktree target authority verify-before-write 의무. mechanical wire (lint script + workflow + hook json sample + bats fixture) = 별 sub-CFP Wave 2 carrier — 본 §3.5.2 = behavioral directive + declarative anchor (Wave 1 declaration-only).
+> **NORMATIVE — ADR-168 §결정 1 layer 1 sub-scope 1-J (구 ADR-082 Amendment 21, 재제정 CFP-2840) declarative anchor**. chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 cross-repo worktree target authority verify-before-write 의무. mechanical wire (lint script + workflow + hook json sample + bats fixture) = 별 sub-CFP Wave 2 carrier — 본 §3.5.2 = behavioral directive + declarative anchor (Wave 1 declaration-only).
 
 **동인 (sentinel evidence)**: CFP-1539+CFP-1540 batch retro §4.1 #2 — wrapper worktree 안 internal-docs PR target `git worktree add` 시도 (mis-target 첫 catch). paired sibling = CFP-1559 Amendment 20 (content verify vs target authority verify axis disjoint).
 
@@ -1362,7 +1362,7 @@ gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commi
 | (c) | cross-repo 작업 sequence 시 명시적 worktree switch | wrapper repo worktree 안에서 internal-docs PR 생성 시도 금지 (repo 단위 worktree 분리, ADR-040 정합). cross-repo write 필요 시 별도 worktree explicit create + cwd switch + write 의무 |
 | (d) | verified-via annotation `worktree_target_authority_verified: <bool>` | spawn prompt 안 명시 (write-time semantic truth verify, annotation 부재 시 sentinel 발화) |
 
-**Verify pattern (verify-before-trust 4-layer governance Layer 3 — ADR-082 sub-scope 1-J)**:
+**Verify pattern (verify-before-trust 4-layer governance Layer 3 — ADR-168 §결정 1 sub-scope 1-J (구 ADR-082 sub-scope 1-J, 재제정 CFP-2840))**:
 
 ```bash
 # mandate (a): actual remote 가 expected enum 매핑과 일치하는지 verify — mismatch 시 write 차단 + sentinel 발화
@@ -1375,7 +1375,7 @@ ACTUAL_REMOTE_URL=$(git -C <worktree_abs_path> remote get-url origin)
 
 **Cold start sentinel**: session 첫 turn 직후 active worktree list ↔ expected-repo 매핑 scan (SessionStart hook tier — Wave 2 sub-CFP wire). actual sustained verify = 매 spawn prompt 작성 / file write 직전 본 mandate.
 
-**Cross-ref**: [ADR-082 Amendment 21](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope (1-J) (declarative anchor SSOT) / [ADR-040](../archive/adr/ADR-040-worktree-convention.md) (namespace 표준) / [ADR-013](../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (dogfood-out path 분리: Story·Change Plan·retro = internal-docs, src·workflow·ADR·CLAUDE.md = wrapper) / evidence-checks-registry `worktree-target-authority-verify` (warning tier) / paired sibling CFP-1559 Amendment 20.
+**Cross-ref**: [ADR-168 §결정 1 sub-scope 1-J](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082 Amendment 21, 재제정 CFP-2840) (declarative anchor SSOT) / [ADR-040](../archive/adr/ADR-040-worktree-convention.md) (namespace 표준) / [ADR-013](../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (dogfood-out path 분리: Story·Change Plan·retro = internal-docs, src·workflow·ADR·CLAUDE.md = wrapper) / evidence-checks-registry `worktree-target-authority-verify` (warning tier) / paired sibling CFP-1559 Amendment 20.
 
 #### §3.5.3 Version race coordination sequential merge orchestration (CFP-1603 / [ADR-045 §D-9](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) pattern_count 2 escalation_resolved_carrier)
 
@@ -1413,7 +1413,7 @@ ADR-045 §D-9 pattern_count ≥ threshold 2 reach = Mandatory framing 발동 영
 
 **Race resolution evidence (Wave 3, 2026-05-25 KST)**: #1580 (MINOR 6.8.0) + #1559 (PATCH 6.7.3) same base 6.7.2 race — §3.5.1 `pr_open` polling detect → MINOR 선행 merge → #1559 rebase 6.7.3→6.8.1 + marketplace sibling sync. 실측 7-step 전개 = ADR-045 §D-9 carrier 기록 (CFP-1603).
 
-**Wave 2 mechanical wire carrier (declaration-only Wave 1 retain)**: workflow lint (sequential merge ordering 자동 verify — registry `version-race-coordination-ordering` entry 후보) + bats fixture (MINOR+PATCH / PATCH+PATCH / MAJOR+MINOR / marketplace 부재 4 case) = 별 sub-CFP. `mechanical_enforcement_actions: []` (ADR-082 §결정 6 + ADR-070 §D5 retain 답습).
+**Wave 2 mechanical wire carrier (declaration-only Wave 1 retain)**: workflow lint (sequential merge ordering 자동 verify — registry `version-race-coordination-ordering` entry 후보) + bats fixture (MINOR+PATCH / PATCH+PATCH / MAJOR+MINOR / marketplace 부재 4 case) = 별 sub-CFP. `mechanical_enforcement_actions: []` (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-070 §D5 retain 답습).
 
 **Cross-ref**: [ADR-037 §결정 1](../archive/adr/ADR-037-plugin-version-bump-rule.md) (SemVer monotonic + 12 surface category SSOT) / [ADR-063 §결정 1·2](../archive/adr/ADR-063-marketplace-atomic-invariant.md) (3-file atomic + sibling ordering SSOT) / [ADR-045 §D-9](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) (forcing function SSOT — pattern_count 2 → escalate_user → 본 codify carrier) / [ADR-050 §3.4.2](../archive/adr/ADR-050-parallel-epic-conflict-coordination.md) (Epic-scope conflict, axis disjoint) / §3.5.1 (race detection mechanism) / [ADR-024 §3](../archive/adr/ADR-024-story-scoped-branch-policy.md) (sequence-of-singletons) / §3.5 marketplace sync proactive dispatch (sibling axis disjoint).
 
@@ -1791,7 +1791,7 @@ DesignReview lane (review-verdict-v4 `findings[]` structured 비교) 과 달리 
 | task | "ADR 결정 논거 검토. 순환 논리, 약한 근거, 대안 미검토, §결정 ↔ §컨텍스트 불일치 포착" |
 | 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent ADR 수정 후 설계리뷰 진입 |
 
-> **ADR-082 cross-ref (CFP-776)**: Codex proactive check 의 finding evidence 신뢰는 외부 worker output verify layer (ADR-070). lane agent 가 §9 evidence / corpus enumeration write 시점 source/value verify 누락은 별 disjoint layer ([ADR-082 §결정 2](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md)) — Codex proactive check 와 verify 대상 disjoint (Codex output ↔ lane self-write write-time).
+> **ADR-082 cross-ref (CFP-776)**: Codex proactive check 의 finding evidence 신뢰는 외부 worker output verify layer (ADR-070). lane agent 가 §9 evidence / corpus enumeration write 시점 source/value verify 누락은 별 disjoint layer ([ADR-168 §결정 2](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082 §결정 2, 재제정 CFP-2840)) — Codex proactive check 와 verify 대상 disjoint (Codex output ↔ lane self-write write-time).
 
 #### §3.10.7 Merge-time Adversarial Gate (touchpoint #7 — **merge-time** / [ADR-052 Amendment 15](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) / Epic CFP-2457 Story A)
 
@@ -1972,7 +1972,7 @@ debate-protocol-v1 (§3.13) = **agent ↔ agent** debate domain. 본 §3.14 = **
 
 > **본질 anchor**: Orchestrator 가 사용자와 대화할 때, mechanical rule 추종이 아니라 진짜 수렴 대화에 참여하도록 codeforge SSOT 를 영구적으로 바꾸는 변화. 본 anchor 가 충족되지 않으면 아래 mechanism 을 몇 개 쌓든 의미 없다 — 모든 mechanism 은 본질을 보조하는 scaffolding (가설 E 의 mechanical 규칙 자체 한계 trap 회피 forcing function).
 
-> **ADR-082 cross-ref (CFP-776)**: 본 §3.14 = Orchestrator ↔ user 대화 표현 layer. lane agent §9 evidence / corpus enumeration write-time source/value verify 는 별 disjoint layer ([ADR-082 §결정 1](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) 4-layer 표) — 사실 verify layer ↔ 대화 표현 layer 분리 (ADR-073 ↔ ADR-071 분리 패턴과 동형). schema 재사용 금지.
+> **ADR-082 cross-ref (CFP-776)**: 본 §3.14 = Orchestrator ↔ user 대화 표현 layer. lane agent §9 evidence / corpus enumeration write-time source/value verify 는 별 disjoint layer ([ADR-168 §결정 1](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082 §결정 1, 재제정 CFP-2840) 4-layer 표) — 사실 verify layer ↔ 대화 표현 layer 분리 (ADR-073 ↔ ADR-071 분리 패턴과 동형). schema 재사용 금지.
 
 #### 호출 시점 + skill 호출
 
@@ -2427,7 +2427,7 @@ consumer 가 자연어 token `codeforge upgrade` (또는 한글 변형) 발화 �
 - **inv-4** (ADR-071 §결정 15 frequency suppression 정합): step 5 result enum 보고 = touchpoint (c) "최종 완료 보고 1회".
 - **inv-5** (ADR-076 §결정 5 SSOT carrier): CLI 진입점 `scripts/codeforge-upgrade.{sh,ps1}` 변경 0. 본 §3.16.1 = orchestrator 발화 → CLI invocation 단계 mapping carrier.
 
-### §3.17 Orchestrator-authored Issue body pre-publish verify mandate (CFP-1016 / [ADR-082 Amendment 2](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md))
+### §3.17 Orchestrator-authored Issue body pre-publish verify mandate (CFP-1016 / [ADR-168 §결정 1 sub-scope 1-B](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082 Amendment 2, 재제정 CFP-2840))
 
 **적용 trigger**: Orchestrator 가 Issue body 를 author 할 때 — 즉 사용자 GitHub Issue Form submit 이 아닌 **Orchestrator-initiated** body authorship:
 
@@ -2438,7 +2438,7 @@ consumer 가 자연어 token `codeforge upgrade` (또는 한글 변형) 발화 �
 
 위 4 trigger 중 1+ 시 본 §3.17 mandate 적용.
 
-**verify-before-trust 의무** (Wave 1 behavioral mandate, ADR-082 §결정 1 layer 1 sub-scope (1-B)):
+**verify-before-trust 의무** (Wave 1 behavioral mandate, ADR-168 §결정 1 layer 1 sub-scope 1-B (구 ADR-082 §결정 1 layer 1 sub-scope 1-B, 재제정 CFP-2840)):
 
 Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 author. 모든 fact citation (file path / registry value / lint output / cross-repo state / ADR frontmatter value / amendment count / 카운터 / file existence 등) 을 다음 mechanism 으로 verify:
 
@@ -2452,7 +2452,7 @@ Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 autho
 | registry value / yaml field | `Read <yaml path>` + 수동 verify |
 | ADR frontmatter value | `Read docs/adr/ADR-NNN-*.md` (offset/limit 활용, 첫 50줄) |
 | amendment count / amendment_id | `Read docs/adr/ADR-NNN-*.md` frontmatter `amendments[]` array length verify |
-| lint output verbatim 인용 | lint output 의 source state 자체 verify (lint regex FP 가능성 — citation ≠ assertion 분리, ADR-082 §결정 4) |
+| lint output verbatim 인용 | lint output 의 source state 자체 verify (lint regex FP 가능성 — citation ≠ assertion 분리, ADR-168 §결정 4 (구 ADR-082 §결정 4, 재제정 CFP-2840)) |
 
 **Issue body 작성 절차** (4-step):
 
@@ -2461,7 +2461,7 @@ Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 autho
 3. **verified-via annotation** — Issue body 안 fact citation 옆에 `[verified: <mechanism> <timestamp KST>]` annotation 부착 (또는 verify 결과 본문 통합)
 4. **publish** — `mcp__github__issue_write` 또는 `gh issue create` 발화
 
-**Story-level forcing function** (Wave 1 mechanical, ADR-082 Amendment 2 alternative (a)):
+**Story-level forcing function** (Wave 1 mechanical, ADR-168 §결정 1 sub-scope 1-B (구 ADR-082 Amendment 2 alternative (a), 재제정 CFP-2840)):
 
 본 §3.17 trigger 4종 1+ 충족 시 Orchestrator 가 Story file frontmatter `issue_origin: orchestrator_authored_followup` 부착 의무 → RequirementsPL 이 Story §2.1 verified state table 작성 의무 (story-page-structure.md §2 template 정합). §2.1 = Issue body verbatim claim ↔ verified state ↔ Pivot 판정 4-column schema.
 
@@ -2514,12 +2514,12 @@ handoff_reason enum: `context-budget-exhausted` / `user-redirect` / `structural-
 
 #### Wave 1 vs Wave 2 progression
 
-- **Wave 1 (현재)**: declarative-only (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습). Orchestrator self-discipline + lane PL spawn 직전 manual 4-step polling.
+- **Wave 1 (현재)**: declarative-only (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-070 §D5 retain pattern 답습). Orchestrator self-discipline + lane PL spawn 직전 manual 4-step polling.
 - **Wave 2 (별 sub-CFP carrier)**: mechanical wire — `templates/scripts/check-active-sessions-presence.{sh,py}` + `templates/scripts/check-lane-entry-ownership.{sh,py}` + `templates/github-workflows/active-sessions-presence.yml` + `templates/github-workflows/lane-entry-ownership-verify.yml` + bats test suite (evidence-checks-registry `active-sessions-presence` + `lane-entry-ownership-verify` 2 entry warning tier deferred-followup, ADR-060 §결정 5 정합).
 
 #### Cross-ref
 
-- ADR-085 §결정 1 5-layer disjoint 표 (ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설) — coordination axis disjoint complement.
+- ADR-085 §결정 1 5-layer disjoint 표 (ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설) — coordination axis disjoint complement.
 - ADR-073 Amendment 4 + ADR-082 Amendment 3 cross-ref-only Amendment (본문 0건 변경 invariant).
 - 8 parallel race incidents single session lineage evidence (CFP-953/946/949/932/954/991/967/1014, 2026-05-18 ~ 2026-05-19 KST) — ADR-045 §D-9 cross_story_pattern_adr_trigger pattern_count ≥ 8 reach escalation_action `adr_draft_emitted` 산물.
 
@@ -4059,11 +4059,11 @@ PMOAgent batch closure write-time 각 Issue 에 다음 5 sub-scope 의무 (ADR-0
 
 | sub-scope | verify 대상 | command / source | cross-ref |
 |---|---|---|---|
-| (a) per-Issue body verbatim cite | Issue body wording 직접 인용 | `mcp__github__issue_read method=get` body field verbatim | ADR-082 §결정 1 layer 1 sub-scope (1-C) USER-UTTERANCE-VERBATIM block 패턴 답습 |
+| (a) per-Issue body verbatim cite | Issue body wording 직접 인용 | `mcp__github__issue_read method=get` body field verbatim | ADR-168 §결정 1 layer 1 sub-scope 1-C (구 ADR-082 §결정 1 layer 1 sub-scope 1-C, 재제정 CFP-2840) USER-UTTERANCE-VERBATIM block 패턴 답습 |
 | (b) recent merge state direct verify | carrier PR merge state | `gh api repos/<owner>/<repo>/pulls/<N>` + `git log --oneline <SHA>` | ADR-073 verify-before-assert primitive 답습 |
-| (c) axis disjoint discrimination | "비슷한 carrier 가 cover 한다" false-positive obviation | manual axis enumeration + Issue body intent ↔ carrier scope diff verify | ADR-082 §결정 12 retro-time verify-before-trust 정합 batch closure 영역 |
-| (d) sibling carrier cross-link via PR number | closure rationale 안 PR/Issue 번호 explicit cite | comment body 안 #NNN explicit cite + `mcp__github__pull_request_read` verify | ADR-082 §결정 9 verify-before-cite 양방향 답습 batch closure 영역 |
-| (e) sub-scope alphabet sequential verify | 본 §18.3 sub-scope (a)~(e) pre-write 위치 확인 | manual sub-scope alphabet sequential check before each verify step | ADR-082 §결정 1 sub-scope codify 패턴 답습 |
+| (c) axis disjoint discrimination | "비슷한 carrier 가 cover 한다" false-positive obviation | manual axis enumeration + Issue body intent ↔ carrier scope diff verify | ADR-168 §결정 12 (구 ADR-082 §결정 12, 재제정 CFP-2840) retro-time verify-before-trust 정합 batch closure 영역 |
+| (d) sibling carrier cross-link via PR number | closure rationale 안 PR/Issue 번호 explicit cite | comment body 안 #NNN explicit cite + `mcp__github__pull_request_read` verify | ADR-168 §결정 9 (구 ADR-082 §결정 9, 재제정 CFP-2840) verify-before-cite 양방향 답습 batch closure 영역 |
+| (e) sub-scope alphabet sequential verify | 본 §18.3 sub-scope (a)~(e) pre-write 위치 확인 | manual sub-scope alphabet sequential check before each verify step | ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) sub-scope codify 패턴 답습 |
 
 **1+ sub-scope failure** = closure 중단 + §18.2 decision tree (`codeforge:post-merge-closure` skill 수록) 재진입 (DEFER 또는 PROMOTE 으로 re-classify).
 

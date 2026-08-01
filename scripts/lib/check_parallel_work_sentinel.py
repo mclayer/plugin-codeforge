@@ -170,7 +170,7 @@ def _stderr_excerpt(stderr: str) -> str:
     """gh stderr 발췌 (D7) — 토큰 마스킹 선행 → cap 후행.
 
     마스킹: 공식 토큰 prefix 형식(classic gh[pousr]_ / fine-grained github_pat_) best-effort 치환.
-      honest-ceiling (ADR-082 §결정 16 / ADR-151 §결정 7): best-effort defense-in-depth —
+      honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) / ADR-151 §결정 7): best-effort defense-in-depth —
       임의 stderr 무해성 단정 아님, 공식 prefix 형식 외 비정형 비밀은 미커버 잔존 (bounded degradation).
     cap: 첫 8줄 ∧ 1024B 중 먼저 도달 (출력 payload bound).
     순서(마스킹→cap): cap 선행 시 절단 경계 토큰 분할 → 정규식 미포착 leak → 마스킹 선행이 구조적 봉인

@@ -21,7 +21,7 @@ grep/awk 가 아니라 Python ``yaml.safe_load`` 로 ``docs/evidence-checks-regi
 정직 상한 (ADR-151 §결정7 상속): 본 게이트는 구조(structure)만 검증한다 — tier 값의 정책
 적절성(policy-correctness)이나 anomaly/inventory drift(ADR-060 §결정25 직교)는 검증하지 않는다.
 exact-key 중복만 포착(semantic 중복 미검출). ``safe_load`` 는 alias 를 materialize 하므로
-alias-bomb 은 bounded degradation(면역 아님, ADR-082 Amд38). "완전 봉인"·"DoS-safe" hard-claim 부재.
+alias-bomb 은 bounded degradation(면역 아님, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840)). "완전 봉인"·"DoS-safe" hard-claim 부재.
 
 loader-safety 3 invariant (ADR-070/ADR-082 §7.2):
   (1) base = ``yaml.SafeLoader`` 유지 (Loader/FullLoader/UnsafeLoader swap 금지)
@@ -43,7 +43,7 @@ reuse-before-write (ADR-061 / RefactorAgent): ``load_registry_entries`` +
 (별도 registry loader·path 리터럴 유입 금지). ``_UniqueKeyLoader`` = 본 파일 유일 소비자
 (repo 전역 dup-key loader 0건 — 2nd consumer 발생 시 scripts/lib/ 승격, 조기 추상화 회피).
 
-ADR refs: ADR-060 / ADR-151 / ADR-061 / ADR-082 Amд38 / ADR-005 / ADR-119 / ADR-127
+ADR refs: ADR-060 / ADR-151 / ADR-061 / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) / ADR-005 / ADR-119 / ADR-127
 """
 
 import argparse

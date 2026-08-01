@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_resource_safety_claim_proof.py
-CFP-2646 / ADR-082 Amendment 38 §결정 16 — resource-safety claim ↔ proof-link write-time 정직 presence lint
+CFP-2646 / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) — resource-safety claim ↔ proof-link write-time 정직 presence lint
   (write-time self-write verify super-class 의 3번째 presence-lint carrier, blocking-on-pr tier / Layer 2 — CFP-2650 승격).
 
 대상 = wrapper-self governance/보안 tooling 의 docstring·inline 주석·워크플로 YAML 주석
@@ -61,7 +61,7 @@ Exit codes (ADR-060 §결정 5 3-tier — blocking-on-pr tier, CFP-2650 승격; 
   1 = >=1 new-over-claim (blocking-on-pr — workflow continue-on-error 제거로 job 실패=체크 red, `::warning::` GHA annotation surface).
   2 = usage/parse 오류 (argparse).
 
-ADR refs: ADR-082 Amendment 38 §결정 16 (carrier) / ADR-151 §결정7 (honesty ceiling 상속) /
+ADR refs: ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) (carrier) / ADR-151 §결정7 (honesty ceiling 상속) /
   ADR-061 §결정1 (Python SSOT + thin wrapper) / ADR-005 (byte-identical workflow pair) /
   ADR-060 §결정5 (도입 tier) + Amendment 25 (CFP-2650 blocking-on-pr 승격) / ADR-119 (게이트=ground-truth, 오탐 0) / ADR-127 (1 Story = 2 PR).
 """
@@ -400,7 +400,7 @@ def write_baseline(path, findings):
         "(ADR-060 §결정6 Clean-as-You-Code). new 안전성-claim 은 proof-ref/ceiling 동반 의무.",
         "schema_version: '1.0'",
         "generated_by: CFP-2646",
-        "basis: ADR-082 Amendment 38 §결정 16 승격 시점 in-scope 코퍼스 over-claim(file, claim_token) 동결",
+        "basis: ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) 승격 시점 in-scope 코퍼스 over-claim(file, claim_token) 동결",
         "grandfathered_claims:",
     ]
     if not pairs:
@@ -421,7 +421,7 @@ def write_baseline(path, findings):
 # ─────────────────────── 출력 (surface) ──────────────────────────────────────────
 
 _ACTION_GUIDE = (
-    "[resource-safety-claim-proof-presence] blocking-on-pr (ADR-082 Amendment 38 §결정 16 · CFP-2650 승격 — "
+    "[resource-safety-claim-proof-presence] blocking-on-pr (ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) · CFP-2650 승격 — "
     "continue-on-error 제거로 체크 red surfacing; branch-protection 무변경이면 required merge 차단은 아님):\n"
     "  검출 = 안전성-claim(catastrophic backtracking 0 / ReDoS-safe / DoS 가드 / nested quantifier 0 / "
     "scan cap = bound 류)이\n"

@@ -13,7 +13,7 @@ PR 시점(커밋된 content 관측)에 검사한다. committed-content observabl
     PASS = frontmatter 에 active_sessions 키 존재 OR 본문에 <!-- active_sessions --> 블록 존재.
     else = warn (active_sessions[] frontmatter 도 body 블록도 부재).
 
-DoS guard (§8.6, ADR-082 Amendment 38 resource-safety): anchored bounded regex + per-line length
+DoS guard (§8.6, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) resource-safety): anchored bounded regex + per-line length
   cap + O(n) frontmatter 경계 파싱. 총 작업량 유한 bound (bounded degradation — 임의 입력 무해 아님).
 
 CLI 계약 (ADR-061 house style — 고정, self-test + hook 소비):
@@ -29,7 +29,7 @@ Exit codes (ADR-060 §결정5 tri-tier — warning tier, advisory NEVER blocks):
   zero-target(TC-EMPTY) = honest-degrade: exit 0 + 명시 non-silent line (silent-green 금지).
 
 ADR refs: CFP-2761 §5.2 (carrier) / ADR-085 §결정8 (multi-session active_sessions presence owner) /
-  ADR-060 §결정5 (warning tri-tier) / ADR-082 Amendment 38 §8.6 (resource-safety DoS guard) /
+  ADR-060 §결정5 (warning tri-tier) / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) §8.6 (resource-safety DoS guard) /
   ADR-061 §결정1 (Python SSOT + thin wrapper).
 """
 

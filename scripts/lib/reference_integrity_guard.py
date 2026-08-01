@@ -31,7 +31,7 @@ anti-overfit:
   코드에 하드코딩하지 않는다. required-context workflow 목록은 governance **config**(override 가능)이지
   대상 파일의 신원이 아니다.
 
-resource-safety honest-ceiling (ADR-082 §결정 16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   스캔은 governance 디렉터리(.github/workflows, scripts, docs/archive)의 텍스트 파일에 대해
   라인-단위로 수행된다. 스캔 총량은 대상 repo 파일 수에 선형(bounded)이나, 본 주석은 "임의 입력
   무해"를 단정하지 않는다 — bounded degradation 만 주장한다.
@@ -122,7 +122,7 @@ def build_reference_index(repo_root, subdirs=None):
     반복 read 를 F read 로 축약. 미주입(default None) 시 각 check 는 현행 full-walk 그대로.
 
     반환: {"lines": {abspath: [line,...]}, "text_low": {abspath: <lowered full text>}}.
-    ADR-082 bounded-degradation: 최악 여전히 corpus-linear floor — "임의 입력 무해" 단정 아님.
+    ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) bounded-degradation: 최악 여전히 corpus-linear floor — "임의 입력 무해" 단정 아님.
     """
     if subdirs is None:
         subdirs = tuple(dict.fromkeys(_INBOUND_SCAN_DIRS + _SCAN_DIRS))
@@ -322,7 +322,7 @@ def _compiled_anchor_pattern(anchor):
 
     anchor 의 공백-run 을 전부 `\\s*` 로 치환(리터럴 조각은 `re.escape`) — `§결정  6`(다중 공백)
     과 `§결정6`(공백 없음) 둘 다 매치. ReDoS-safe: escaped 리터럴 사이에 `\\s*` 만 삽입
-    (중첩 수량자 0, bounded) — 본 주석은 "임의 입력 무해"를 단정하지 않는다(ADR-082 §결정 16
+    (중첩 수량자 0, bounded) — 본 주석은 "임의 입력 무해"를 단정하지 않는다(ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)
     honest-ceiling), anchor 자체가 bounded 길이 토큰이라는 전제 하의 bounded degradation 만 주장.
     """
     parts = [p for p in _WS_RE.split(anchor) if p]

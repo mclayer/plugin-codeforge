@@ -24,7 +24,7 @@ CFP-2698 / Epic #2696 (canary artifact D6, Story A TOOL ROBUSTENING) — decisio
 anti-overfit: 본 모듈의 어떤 함수도 파일 신원(경로/특정 라인 번호)을 하드코딩하지 않는다 —
   입력은 텍스트(또는 provider 를 통한 파일 경로 데이터)뿐이다.
 
-resource-safety honest-ceiling (ADR-082 §결정 16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   헤더/frontmatter 스캔은 라인-단위 순회이며 문서 길이에 선형(bounded)이다. 정규식은 전부
   bounded 형태(중첩 수량자 0)이나, 본 주석은 "임의 입력 무해(ReDoS-safe)"를 단정하지 않는다 —
   bounded degradation(정상 decision-record 문서에 대해 선형)만 주장한다. frontmatter
