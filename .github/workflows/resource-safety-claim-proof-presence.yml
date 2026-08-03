@@ -1,5 +1,5 @@
 name: Resource-safety claim proof-link presence lint (blocking-on-pr)
-# CFP-2646 / ADR-082 Amendment 38 §결정 16 — governance/보안 tooling(evidence-check 게이트·보안 script·
+# CFP-2646 / ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) — governance/보안 tooling(evidence-check 게이트·보안 script·
 # 워크플로 YAML)의 docstring·inline 주석·워크플로 YAML 주석에 resource-safety/복잡도/DoS-guard 안전성-claim
 # 을 쓸 때 paired proof-reference OR honest-ceiling 문구 presence 를 정적 검사. claim 의 참됨(truth)은
 # 강제하지 않음 (presence ≠ truth, honesty ceiling ADR-151 §결정7 상속). anti-hollow-gate 1급 요건 =
@@ -92,7 +92,7 @@ jobs:
             const body = [
               '## Resource-safety claim proof-link presence lint — blocking-on-pr',
               '',
-              '> ADR-082 Amendment 38 §결정 16 · CFP-2650 blocking-on-pr 승격 — continue-on-error 제거로 체크 red surfacing. branch-protection 7-tuple 무변경이므로 required-context merge 차단은 아님 (surfacing ≠ required).',
+              '> ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) · CFP-2650 blocking-on-pr 승격 — continue-on-error 제거로 체크 red surfacing. branch-protection 7-tuple 무변경이므로 required-context merge 차단은 아님 (surfacing ≠ required).',
               '> governance/보안 tooling 의 resource-safety/DoS-guard 안전성-claim 이 동일 파일에 proof-reference(reproducer / wall-clock 벤치마크 / 복잡도 회귀 self-test 링크) 도 honest-ceiling(bounded degradation, 임의 입력 무해 아님) 도 동반하지 않음.',
               '> presence ≠ truth (honesty ceiling ADR-151 §결정7): lint 은 증거 존재만 검사 — 참됨은 보안테스트 lane 소관.',
               '> remediation: proof-reference 부착 / honest-ceiling 로 downgrade / 부인문(denial) 정직 재서술.',

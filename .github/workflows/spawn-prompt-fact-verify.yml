@@ -1,5 +1,5 @@
 name: spawn-prompt-fact-verify
-# CFP-2383 / ADR-082 Amendment 37 §결정 1 layer 1 sub-scope 1-Z (sub-scope 1-L Amd 23, CFP-1590
+# CFP-2383 / ADR-168 §결정 1 sub-scope 1-Z (구 ADR-082 Amendment 37, 재제정 CFP-2840) (sub-scope 1-L Amd 23, CFP-1590
 # carrier) — spawn-prompt-fact-verify 게이트 (warning-tier).
 #
 # worker→worker handoff spawn prompt PR-body-proxy 안 5 fact category (C1 counter / C2 version /
