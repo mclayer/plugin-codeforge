@@ -2,7 +2,7 @@
 # scripts/test-check-issue-body-claim-pre-screen.sh
 # CFP-2382 Phase 2 — Discriminating test for check-issue-body-claim-pre-screen.sh
 #
-# ADR-082 Amendment 20 §결정 15 anti-theater test: issue-body fixture (stale claim 1+ 포함)
+# ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) anti-theater test: issue-body fixture (stale claim 1+ 포함)
 # → 검출돼야 할 claim 이 검출 안 되면 RED (missing-case) + exit code assert
 #
 # 4 sub-pattern (a/b/c/d) RED/GREEN 쌍 + 한글 enum (R2) + fenced/inline (R3/F7) +

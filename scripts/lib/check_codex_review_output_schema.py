@@ -32,7 +32,7 @@
 #
 # fuzz-hardening (§8.8 DO): malformed / truncated / deeply-nested / oversize 입력 → no-crash ∧ fail-closed
 #   (never-PASS-on-invalid). 16MB read cap + RecursionError catch = **bounded degradation** — 임의 입력
-#   총 작업량 무해성 단정 아님 (honest ceiling, ADR-082 §결정 16 상속 / ADR-151 §결정 7).
+#   총 작업량 무해성 단정 아님 (honest ceiling, ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) 상속 / ADR-151 §결정 7).
 
 import json
 import os

@@ -4,8 +4,8 @@
 # ADR-061 Amendment 3 §결정 11 — Python script-writing convention + CodeQL ReDoS guard
 #
 # 4 block presence verifier (line-by-line parse, ReDoS guard):
-#   1. [PRE-SPAWN-ORIGIN-MAIN-SHA]  — ADR-082 Amendment 15 1-E
-#   2. [USER-UTTERANCE-VERBATIM]    — ADR-082 Amendment 5 1-C
+#   1. [PRE-SPAWN-ORIGIN-MAIN-SHA]  — ADR-168 §결정 1 sub-scope 1-E (구 ADR-082 Amendment 15, 재제정 CFP-2840)
+#   2. [USER-UTTERANCE-VERBATIM]    — ADR-168 §결정 1 sub-scope 1-C (구 ADR-082 Amendment 5, 재제정 CFP-2840)
 #   3. worktree-first directive     — ADR-040 Amendment 6
 #   4. parallel-dispatch directive  — ADR-064 Amendment 1 / parallel-dispatch-protocol-v1
 #
@@ -24,7 +24,7 @@
 #   exit 0: all blocks present (or bypass)
 #   exit 1: 1+ block missing
 #
-# Block enum (closed-set — 4 블록 실 출처 = ADR-082 Amendment 15·Amendment 5 + ADR-040 Amendment 6 + ADR-064 Amendment 1, 4 분산 ADR):
+# Block enum (closed-set — 4 블록 실 출처 = ADR-168 §결정 1 sub-scope 1-E·1-C (구 ADR-082 Amendment 15·Amendment 5, 재제정 CFP-2840) + ADR-040 Amendment 6 + ADR-064 Amendment 1, 4 분산 ADR):
 #   "PRE-SPAWN-ORIGIN-MAIN-SHA"  / "USER-UTTERANCE-VERBATIM"
 #   "WORKTREE-FIRST-DIRECTIVE"   / "PARALLEL-DISPATCH-DIRECTIVE"
 #

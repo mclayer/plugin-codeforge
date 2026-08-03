@@ -28,7 +28,7 @@ anti-overfit: 본 엔진은 target["file"]/target["line"] 를 **데이터**로�
   신원을 코드에 하드코딩하지 않는다. 특정 파일/라인 exclusion 은 caller(CLI)가 manifest 를
   필터링해 넘기는 방식으로만 이뤄진다(엔진 내부 hardcode 0).
 
-resource-safety honest-ceiling (ADR-082 §결정 16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   치환 정규식(`_TUPLE_RE`, oracle 재사용)은 bounded(중첩 수량자 0)이고 라인-단위로만
   쓰인다. 본 주석은 "임의 입력 무해"를 단정하지 않는다 — bounded degradation(정상
   decision-record 라인에 대해 선형)만 주장한다.

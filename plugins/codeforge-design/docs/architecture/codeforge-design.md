@@ -96,7 +96,7 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 - **Codex Proactive Check Touchpoint #2** = ArchitectAgent §3 완료 직후 mandatory dispatch (CFP-532 / ADR-052 Amendment 4) — P0 + P1 finding 모두 inline FIX 의무 (skip 영역 차단)
 - **ADR-065 mechanical self-check** = Phase 1 산출물 commit 직전 7-item mechanical sync (label-registry / doc-locations / workflow self-app / link target / MANIFEST.yaml / section-ownership / doc-locations row) self-verify 의무
 - **ADR-068 boundary completeness** = ArchitectAgent §3 / §7 작성 시 4+1 semantic invariants (I-1 API contract semantic / I-2 cross-module propagation / I-3 guard placement intent / I-4 wording SSOT / I-5 dimensional empirical grounding) self-verify 의무. **Amendment 2 (CFP-1086) chief tie-break ladder 3 단계**: (1) RACI matrix lookup → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment carrier 발의
-- **ADR-082 write-time self-write verification** = §9 evidence / corpus enumeration / cross-plugin ownership write-time source direct verify 의무 (assertion 금지)
+- **ADR-168 write-time self-write verification** (구 ADR-082, 재제정 CFP-2840) = §9 evidence / corpus enumeration / cross-plugin ownership write-time source direct verify 의무 (assertion 금지)
 - **ADR-086 Deputy 신설 결정 framework (CFP-1086 신설)** = deputy roster 변경 carrier Story 시 axis 분석 의무 (§결정 1) + 5-checklist self-application (§결정 2: axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger) + deferred carrier path (§결정 3). review-verdict-v4 v4.6 `deputy_axis_restructure_self_check_passed` field carrier
 
 **Disjoint scope** (ADR-078 §결정 3):

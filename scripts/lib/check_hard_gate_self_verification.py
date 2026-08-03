@@ -20,7 +20,7 @@ silent-fallback≠honest-degrade 3-way taxonomy)을 갖췄는지 **정적 presen
   하지 않는다(그런 hard-claim 부재 = 검사연극·위양성, ADR-119 §결정6). game-able residual 정직 공개:
   (a) AC-2 2-exit shape 는 tautological same-path(inline hand-copy 위장)에 완전 봉인 불가,
   (b) AC-13 열거 완결성은 self-declared 의존이라 미선언 게이트 semantic 재분류 불가 — 둘 다 review-tier
-  cross-ref(AC-9) + tautology-smell grep loop-closure(ADR-082 §11.A).
+  cross-ref(AC-9) + tautology-smell grep loop-closure(ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840)).
 
 ━━ SCOPE disjoint (ADR-154 §결과 경계) ━━
   ⊥ L3 detection-power(검출 sufficiency, review-tier) / ⊥ ADR-151(self-test 채널 alive = execution-
@@ -77,7 +77,7 @@ Exit codes (fail-closed):
 
 ADR refs: ADR-154 (결정 SSOT — super-class/3-way taxonomy/2-control/honest-ceiling) /
   ADR-151 (execution-liveness 인벤토리 REUSE + honest-ceiling §결정7 상속) / ADR-152 (discriminating-A/B) /
-  ADR-082 §11.A (red-green-stash-proof REUSE) / ADR-061 §결정1 (Python entry + thin bash wrapper) /
+  ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840) (red-green-stash-proof REUSE) / ADR-061 §결정1 (Python entry + thin bash wrapper) /
   ADR-119 (게이트=ground-truth, honest-ceiling) / ADR-060 (warning-tier 등록).
 """
 

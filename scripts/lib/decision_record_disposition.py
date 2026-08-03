@@ -49,7 +49,7 @@ prefilter/보조:
 트리 순서(§9): Q0 referent → Q0′ phantom → Q1 dated/scope(→ Q1-scope hypothetical) → Q2 cardinal
   → Q3 존재-license → Q4.
 
-resource-safety honest-ceiling (ADR-082 §결정 16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   정규식은 라인-단위 토큰 탐지에만 쓰이고 입력은 decision-record 라인(길이 bounded)이다. 수량자는
   전부 bounded 형태이나 본 주석은 "임의 입력 무해(ReDoS-safe)"를 단정하지 않는다 — bounded
   degradation(정상 결정-기록 라인에 대해 선형)만 주장한다. proof-reference/벤치 없는 절대 안전

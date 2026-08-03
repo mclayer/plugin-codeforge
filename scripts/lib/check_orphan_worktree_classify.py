@@ -23,7 +23,7 @@
 #   INV-3  보존 = 사유 + 나이 동반 (Verdict-like tuple 항상 reason+age).
 #   TB-3   filesystem-direct 삭제(safe_remove)에만 파괴표면 가드 6종. 등록 worktree=git-mediated.
 #
-# ── 정직 천장 (ADR-119 / ADR-082 §결정 16 Layer 1) ────────────────────────────────
+# ── 정직 천장 (ADR-119 / ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) Layer 1) ────────────────────────────────
 #   본 모듈의 정규식은 bounded quantifier + anchor 로 작성하나, 임의·적대적 입력 무해성을
 #   단정하지 않는다("ReDoS-safe" 무증거 단정 금지). 보장 = bounded degradation.
 #   실증(취약입력 wall-clock 상한) = Phase 2 SecurityTest 복잡도 self-test. (§7.6 T-REGEX)

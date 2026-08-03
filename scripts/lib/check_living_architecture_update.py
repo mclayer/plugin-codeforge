@@ -35,7 +35,7 @@ honest ceiling (필수 — L2/L3 분할, ADR-119 / Change Plan §3.4/§3.5):
   - marker rationale 의 실질 토큰 padding gaming(stop-phrase + 무의미 토큰 부풀리기)은 L2 로 완봉
     불가 — rationale 타당성 판정은 L3 review-tier 잔존(형식 floor·정규화 anchored 까지가 기계 천장).
 
-resource-safety (marker 정규식 — ADR-082 §결정16 정직):
+resource-safety (marker 정규식 — ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) 정직):
   - MARKER_RE 는 전 quantifier bounded({1,64}/{0,8}/{1,400}), 중첩 모호 quantifier 0
     (CWE-1333 ReDoS-safe). paired proof-reference =
     tests/scripts/test_check-living-architecture-update.sh 의 ReDoS 시간-상한 회귀 테스트

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_issue_body_claim_pre_screen.py
-CFP-2382 / ADR-082 Amendment 20 §결정 15 (CFP-1559 carrier) — issue-body-claim-pre-screen 게이트 (warning tier)
+CFP-2382 / ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) (CFP-1559 carrier) — issue-body-claim-pre-screen 게이트 (warning tier)
 
 Wave 1 declarative anchor (CFP-1559, evidence-checks-registry entry `issue-body-claim-pre-screen`)
 의 Wave 2 mechanical wire. orchestrator-authored followup Issue body 안 4 sub-pattern (PR state /
@@ -33,7 +33,7 @@ Exit codes (ADR-060 §결정 15 3-tier — warning tier):
   (c) count number — `\d+\s*(영문 enum|한글 count-명백 단위)` ; ordinal-모호(번/항목/차례) 제외 (F6 FP 보수)
   (d) sister carrier — `(carrier|sibling|paired)\s*:?\s*CFP-\d+`
 
-ADR refs: ADR-082 Amendment 20 §결정 15 / ADR-060 / ADR-061 / ADR-127
+ADR refs: ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) / ADR-060 / ADR-061 / ADR-127
 """
 
 import re
@@ -221,7 +221,7 @@ _ACTION_GUIDE = (
     "     (pattern 별 hint 참조 — gh pr view / gh issue view / grep count / carrier 출처)\n"
     "  ② hotfix-bypass:issue-body-claim-pre-screen label + audit comment\n"
     "     (check-bypass-audit-comment.sh 마커 패턴)\n"
-    "근거: ADR-082 Amendment 20 §결정 15 (CFP-1559) — Issue body stale-claim verify-before-trust "
+    "근거: ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) (CFP-1559) — Issue body stale-claim verify-before-trust "
     "write-time pre-screen mandate."
 )
 

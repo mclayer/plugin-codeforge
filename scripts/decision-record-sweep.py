@@ -24,7 +24,7 @@ corpus 지정: positional `files`(구체 파일 목록) 와 `--census-from`(디�
   `--exclude-line`) 은 census 결과(manifest) 에서 caller 가 지정한 파일/라인을 제거한다
   (엔진에 신원 하드코딩 0 — 배제는 CLI 층의 데이터일 뿐).
 
-resource-safety honest-ceiling (ADR-082 §결정 16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   본 CLI 의 디렉터리 walk·파일 census 는 corpus 크기에 선형(bounded)이나, 임의 입력 무해를
   단정하지 않는다 — bounded degradation 만 주장한다.
 """

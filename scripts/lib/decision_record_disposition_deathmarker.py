@@ -23,7 +23,7 @@ honest ceiling(ADR-119 / ADR-136 §결정15 / ADR-151 §결정7):
   core 는 본 sibling 을 **모른다**(census DI 는 composition root 가 주입). sweep_executor 는
   본 sibling 을 import 하지 않는다 → cycle 없음.
 
-resource-safety honest-ceiling (ADR-082 §결정16):
+resource-safety honest-ceiling (ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840)):
   death 어휘 매칭은 feature-축(단일 whole-line regex 아님) + bounded substring. "임의 입력
   무해(ReDoS-safe)" 단정 금지 — bounded-degradation(정상 corpus 라인 선형)만 주장.
 

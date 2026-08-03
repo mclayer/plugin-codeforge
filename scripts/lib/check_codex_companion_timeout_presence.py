@@ -42,7 +42,7 @@
 #
 # ReDoS 관측: line-by-line bounded scan + anchored 고정 리터럴 + \d+ + zero-width lookahead `[^\n]*`
 #   (단일 선형 pass, nested quantifier 부재 = catastrophic backtracking 구조 부재 — structural, per-line
-#   bounded). 임의 입력 총 작업량 무해성 절대단정 아님 (honest ceiling — ADR-082 §결정 16 / ADR-151 §결정 7).
+#   bounded). 임의 입력 총 작업량 무해성 절대단정 아님 (honest ceiling — ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) / ADR-151 §결정 7).
 
 import os
 import re
