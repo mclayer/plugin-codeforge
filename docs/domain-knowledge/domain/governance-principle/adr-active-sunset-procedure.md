@@ -151,7 +151,7 @@ sunset 대상 ADR 을 인용하는 모든 지점을 식별·갱신해 dangling r
 
 본 G3 는 **declarative-only** 다. 역참조 dangling 을 차단하는 mechanical lint (예: `sunset_status: Sunsetted` ADR 을 `related_adrs` 에 보유하면서 carrier 포인터 미부착 시 warning) 는 **후속 carrier** 다.
 
-**근거**: lint script 신설 = `scripts/` + `templates/github-workflows/` 변경 → ADR-054 §결정 4/5 full-lane 강제. 본 S3 의 doc-only fast-path 유지를 위해 Wave 1 = declarative-only. mechanical 승격 = ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습 — pattern_count >= 2 (실 sunset 2건 이상 역참조 누락 발생) 재발 시 follow-up CFP MUST promote to mechanical (`adr-sunset-crossref-dangling` warning tier evidence-check-registry entry 후보).
+**근거**: lint script 신설 = `scripts/` + `templates/github-workflows/` 변경 → ADR-054 §결정 4/5 full-lane 강제. 본 S3 의 doc-only fast-path 유지를 위해 Wave 1 = declarative-only. mechanical 승격 = ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) / ADR-070 §D5 retain pattern 답습 — pattern_count >= 2 (실 sunset 2건 이상 역참조 누락 발생) 재발 시 follow-up CFP MUST promote to mechanical (`adr-sunset-crossref-dangling` warning tier evidence-check-registry entry 후보).
 
 #### G3.4 supersedes N:1 전수 기재 의무 (재제정 경로)
 

@@ -9,7 +9,7 @@ related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoint SSOT
   - ADR-070  # Codex verify-before-trust pattern SSOT
   - ADR-081  # Codex worker prompt boilerplate composition SSOT
-  - ADR-082  # Write-time self-write verification mandate (disjoint super-class)
+  - ADR-168  # Write-time self-write verification mandate (disjoint super-class) (구 ADR-082, 재제정 CFP-2840)
   - ADR-073  # Orchestrator verify-before-assert (disjoint layer)
   - ADR-064  # decision principle mandate (forbid-list 13 어휘)
 related_files:
@@ -95,7 +95,7 @@ substitution path = "Codex worker substitution" 이지 verify-before-trust 면�
 ## §7. 운영 invariant
 
 - **3-enum exhaustive** — 4번째 path 발생 = ADR-070 §결정 D1 expansion 거절된 대안 영역 (auto-retry / 외부 verify proxy / multi-source consensus 등). 별 follow-up CFP carrier 영역.
-- **declaration-only retain (ADR-070 §D5 precedent chain)** — substitution path 3-enum codification = mechanical lint 부재. ADR-070 §D5 declaration-only retain precedent + ADR-082 §결정 6 + ADR-081 §D5/§D6.e + ADR-076 §결정 6 fail-closed clause precedent chain 5번째 link. `mechanical_enforcement_actions: []` retain.
+- **declaration-only retain (ADR-070 §D5 precedent chain)** — substitution path 3-enum codification = mechanical lint 부재. ADR-070 §D5 declaration-only retain precedent + ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-081 §D5/§D6.e + ADR-076 §결정 6 fail-closed clause precedent chain 5번째 link. `mechanical_enforcement_actions: []` retain.
 - **KPI deferred** — `substitution_count` + `verify_failure_rate` 정량 측정 (threshold=5 / 15%) 는 post-merge follow-up CFP carrier 영역. 본 narrative 의무 = prose tally only (Story §10 marker grep count, lint 없음).
 
 ## §8. Story-B 영역 cross-ref (Story-A scope 외)

@@ -14,7 +14,7 @@ tags:
 related_adrs:
   - ADR-072   # §결정 5 EPIC CLOSED gate evidence quad 4중 정의
   - ADR-014  # CONDITIONAL SubAgent base + boundary axis (design-time SSOT vs runtime-evidence)
-  - ADR-082  # write-time self-write verification mandate
+  - ADR-168  # write-time self-write verification mandate (구 ADR-082, 재제정 CFP-2840)
 related_stories:
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
   - CFP-954  # 본 carrier Story (Story-3)
@@ -132,7 +132,7 @@ trigger gate (4 measurement source 4-tuple) ↔ verify gate (4-evidence-quad) �
 - **ADR-072 §결정 5** — EPIC CLOSED gate production evidence quad 4중 정의 SSOT
 - **ADR-072 §결정 6** — wrapper-self-app N/A invariant
 - **ADR-014** — CONDITIONAL SubAgent base + boundary axis (design-time SSOT vs runtime-evidence)
-- **ADR-082** — write-time self-write verification mandate (evidence value 사실성 source direct verify)
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** — write-time self-write verification mandate (evidence value 사실성 source direct verify)
 
 ## 변경 이력
 

@@ -146,7 +146,7 @@ Batch closure 산출 retro PR 의 closure forcing function 3 step (ADR-045 §D-1
 
 - **ADR-045 §D-11** = normative SSOT (본 §18 의 wording authority)
 - **ADR-045 §D-9 / §D-10** = adjacent forcing function (escalation / pre-publish verify), 본 §18 = post-batch closure lifecycle disjoint axis
-- **ADR-082 §결정 12** = retro-time verify-before-trust adjacent axis (PMOAgent retro write-time vs PMOAgent batch closure-time 분리)
+- **ADR-168 §결정 12 (구 ADR-082 §결정 12, 재제정 CFP-2840)** = retro-time verify-before-trust adjacent axis (PMOAgent retro write-time vs PMOAgent batch closure-time 분리)
 - **playbook §13.5 PMOAgent 보고 기록** = `[PMO]` phase prefix comment 정합 batch closure 영역 sub-domain
 
 ## 3부 — 완료 단계 수렴 SSOT pointer (CFP-2377 / ADR-128 §결정 4)

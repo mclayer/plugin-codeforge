@@ -12,7 +12,7 @@ carrier_story: CFP-989
 related_adrs:
   - ADR-084  # 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
   - ADR-076  # reconcile-protocol-v1 declarative reconciliation (first applied case host)
-  - ADR-082  # disjoint 4-layer 표 governance pattern source
+  - ADR-168  # disjoint 4-layer 표 governance pattern source (구 ADR-082, 재제정 CFP-2840)
   - ADR-068  # boundary completeness invariants (scope disjoint — Q1 분기)
 owner_agent: codeforge-design:ArchitectAgent
 introduced_by: CFP-989
@@ -32,7 +32,7 @@ P-3 패턴 (Epic CFP-858 retro §6.3 emission): spec 자체는 sound 했으나 d
 
 CFP-986 §4.12 + §4.13 b6d7eb5 spec clarification = first applied case. ADR-084 = first applied case 의 일반화 codification.
 
-ADR-082 §결정 1 disjoint 4-layer 표 governance pattern (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 의 inter-plugin contract level 동형 layer 확장 영역.
+ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) disjoint 4-layer 표 governance pattern (ADR-073 / ADR-070 / ADR-168 / ADR-045 §D) 의 inter-plugin contract level 동형 layer 확장 영역.
 
 ## 핵심 규칙
 
@@ -63,9 +63,9 @@ implicit clause = **무한 defensible-misread surface**. 1 reviewer 가 catch �
 
 이 영역은 lint false positive 영역 — DesignReviewPL 인지 의존 (ADR-084 D4 behavioral directive 만 적용, lint 자동 grep 불가).
 
-### EC-2: ADR-082 disjoint 4-layer 표 axis disjoint
+### EC-2: ADR-168 disjoint 4-layer 표 axis disjoint
 
-본 narrative SSOT scope = inter-plugin contract level codify boundary axis. ADR-082 §결정 1 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) write-time semantic truth layer 와 disjoint axis. ADR-068 boundary completeness invariants (ArchitectAgent §3/§7 self-check axis) 와 scope disjoint.
+본 narrative SSOT scope = inter-plugin contract level codify boundary axis. ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) 4-layer 표 (ADR-073 / ADR-070 / ADR-168 / ADR-045 §D) write-time semantic truth layer 와 disjoint axis. ADR-068 boundary completeness invariants (ArchitectAgent §3/§7 self-check axis) 와 scope disjoint.
 
 ## 핵심 적용 사례 (CFP-986 first applied case)
 
@@ -161,7 +161,7 @@ implicit identity propagation 시 다음 failure mode 발현:
 
 - [ADR-084](../../../../archive/adr/ADR-084-numeric-space-sharing-channel-disjointness.md) — 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
 - [ADR-076](../../../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) — reconcile-protocol-v1 declarative reconciliation host
-- [ADR-082](../../../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — disjoint 4-layer 표 governance pattern source
+- [ADR-168](../../../../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082, 재제정 CFP-2840) — disjoint 4-layer 표 governance pattern source
 - [ADR-068](../../../../archive/adr/ADR-068-boundary-completeness-invariants.md) — boundary completeness invariants (scope disjoint — ArchitectAgent self-check axis ↔ inter-plugin contract codify axis)
 
 ## 변경 이력

@@ -17,7 +17,7 @@ related_adrs:
   - ADR-048  # CI-native test execution + Amendment 1 DeveloperPL diagnosis
   - ADR-041  # doc location registry (integration_test_baseline 15th entry)
   - ADR-073  # verify-before-assert (`frozen-SHA pin` discipline)
-  - ADR-082  # write-time self-write verification mandate
+  - ADR-168  # write-time self-write verification mandate (구 ADR-082, 재제정 CFP-2840)
 related_stories:
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
   - CFP-954  # 본 carrier Story (Story-3)

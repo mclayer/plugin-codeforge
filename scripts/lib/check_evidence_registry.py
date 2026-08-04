@@ -23,7 +23,7 @@ grep/awk 가 아니라 Python ``yaml.safe_load`` 로 ``docs/evidence-checks-regi
 exact-key 중복만 포착(semantic 중복 미검출). ``safe_load`` 는 alias 를 materialize 하므로
 alias-bomb 은 bounded degradation(면역 아님, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840)). "완전 봉인"·"DoS-safe" hard-claim 부재.
 
-loader-safety 3 invariant (ADR-070/ADR-082 §7.2):
+loader-safety 3 invariant (ADR-070/ADR-168 (구 ADR-082, 재제정 CFP-2840); §7.2 = CFP-881 Change Plan 자체절):
   (1) base = ``yaml.SafeLoader`` 유지 (Loader/FullLoader/UnsafeLoader swap 금지)
   (2) override 는 add_constructor 0 (dup-key guard + super().construct_mapping delegation 만)
   (3) key 는 ``self.construct_object(key_node)`` (안전 registry) 경유

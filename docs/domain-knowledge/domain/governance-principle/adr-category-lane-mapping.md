@@ -23,7 +23,7 @@ related_adrs:
   - ADR-064   # decision principle mandate (§결정 5 CFP scope unitary)
   - ADR-068   # boundary completeness invariants (I-3 unconditional vs conditional + I-4 wording SSOT case-normalization)
   - ADR-076   # declarative reconciliation upgrade flow (drift detection cross-ref)
-  - ADR-082   # write-time self-write verification mandate (§결정 1 layer 1-A ADR corpus direct grep)
+  - ADR-168   # write-time self-write verification mandate (§결정 1 layer 1-A ADR corpus direct grep) (구 ADR-082, 재제정 CFP-2840)
   - ADR-091   # ArchitectLane DDD vocabulary governance (§결정 1/2/4 Published Language content duplication 금지 + §3.1 deputy mandate)
   - ADR-100   # Confluence doc SSOT recognition (SoR-docs layer scope)
   - ADR-101   # verify-before-trust Confluence REST (Phase 2 execution time dual-layer verify mandatory)
@@ -137,7 +137,7 @@ Published Language content duplication 금지 (ADR-091 §결정 4) 정합 — �
 
 본 mapping rule = primary owner lane bucket + cross-ref note 패턴. 3 edge case:
 
-1. **Multi-lane ADR** (예: ADR-082 verify-before-trust 4-layer = governance + 모든 lane 정합) — primary = wrapper-governance bucket (D-3 fallback) + 모든 lane bucket ADR anchor cross-ref note
+1. **Multi-lane ADR** (예: ADR-168 (구 ADR-082, 재제정 CFP-2840) verify-before-trust 4-layer = governance + 모든 lane 정합) — primary = wrapper-governance bucket (D-3 fallback) + 모든 lane bucket ADR anchor cross-ref note
 2. **lane-agnostic IPC** (예: `review-verdict-v4` = design-review + code-review + security-test 3 lane 공통) — shared kernel bucket (cross-cutting `inter-plugin-contracts Registry`) primary + 해당 lane bucket IPC sub-anchor cross-ref
 3. **ADR cross-cutting** (예: ADR-091 DDD vocabulary = ArchitectLane primary but 다른 lane 도 cross-ref) — primary owner lane bucket (예: 설계 lane) anchor + cross-ref note
 
@@ -235,7 +235,7 @@ Phase 2 PR 안 6 MCP call atomic execution:
 - **ADR-064** (decision principle mandate) §결정 5 — CFP scope unitary (16-enum closed-set 안 신규 enum 도입 = 별 sub-CFP 의무)
 - **ADR-068** (boundary completeness invariants) I-3 unconditional vs conditional guard placement + I-4 wording SSOT case-normalization invariant
 - **ADR-076** (declarative reconciliation upgrade flow) — FU-1523-2 desired/current/converge pattern + `marketplace-drift-detection.yml` byte-pattern 답습
-- **ADR-082** (write-time self-write verification mandate) §결정 1 layer 1-A — 본 file `^category:` field 117 ADR corpus direct grep verified (`git -C <wrapper-worktree> ls-files docs/adr/ADR-*.md | wc -l = 117`)
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** (write-time self-write verification mandate) §결정 1 layer 1-A — 본 file `^category:` field 117 ADR corpus direct grep verified (`git -C <wrapper-worktree> ls-files docs/adr/ADR-*.md | wc -l = 117`)
 - **ADR-091** (ArchitectLane DDD vocabulary governance) §결정 1/2/4 — DDD vocabulary governance + Published Language content duplication 금지 + §3.1 SecurityArch / InfraOperationalArch / ModuleArch deputy mandate cross-ref
 - **ADR-100** (Confluence doc SSOT recognition) — SoR-docs layer scope 본 file = codeforge governance BC published language
 - **ADR-101** (verify-before-trust Confluence REST) — Phase 2 execution time MCP `getConfluencePage` / `updateConfluencePage` / `getPagesInConfluenceSpace` 응답 dual-layer verify 의무

@@ -23,7 +23,7 @@ sibling_cfp:
 related_adrs:
   - ADR-073  # carrier — Amendment 2 §결정 1-A/1-B/1-C declarative anchor
   - ADR-070  # 자매 layer 2 — Codex verify-before-trust (외부 worker output)
-  - ADR-082  # disjoint super-class (internal lane agent self-write verify)
+  - ADR-168  # disjoint super-class (internal lane agent self-write verify) (구 ADR-082, 재제정 CFP-2840)
   - ADR-045  # 자매 layer 4 — PMOAgent retro corpus enumeration (§D-9)
   - ADR-060  # evidence-enforceable warning-tier framework
   - ADR-058  # ADR sunset criteria — Amendment 2 ratchet 강화 방향 정합
@@ -158,7 +158,7 @@ Wave 3 follow-up CFP (blocking-on-pr → blocking-on-merge 승격)
 - **Sibling Story-2** — [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) (mechanical wire carrier — script + hook + workflow + bats)
 - **Memory rule 6** — feedback_session_start_parallel_work_check.md `Rule 6 — title-based search 의무` (CFP-953 incident carrier)
 - **Memory rule 7** — feedback_session_start_parallel_work_check.md `Rule 7 — Epic 진행 중 polling 의무` (CFP-946 incident carrier)
-- **Verify-before-trust 4-layer governance** ([CLAUDE.md](../../../../CLAUDE.md) "## ADR" section) — ADR-073 Layer 1 / ADR-070 Layer 2 / ADR-082 Layer 3 / ADR-045 §D Layer 4 disjoint scope
+- **Verify-before-trust 4-layer governance** ([CLAUDE.md](../../../../CLAUDE.md) "## ADR" section) — ADR-073 Layer 1 / ADR-070 Layer 2 / ADR-168 (구 ADR-082, 재제정 CFP-2840) Layer 3 / ADR-045 §D Layer 4 disjoint scope
 - **Orchestrator playbook §3.5** ([`docs/orchestrator-playbook.md`](../../../orchestrator-playbook.md)) — Worktree dispatch lane spawn lifecycle + polling 의무 enum
 
 ## 정의
@@ -191,14 +191,14 @@ cold start `session_start` 보강: SessionStart hook tier 가 turn 0 prompt-inje
 
 - **본 Story-1 (CFP-966) scope = declarative anchor only**: ADR-073 Amendment 2 §결정 1-A/1-B/1-C 본문 + evidence-checks-registry entry (warning tier, deferred-followup status) + 본 narrative SSOT + CLAUDE.md 2 cross-ref + playbook §3.5.1. 실 코드 0줄.
 - **mechanical wire = sibling Story-2 (CFP-967) carrier (disjoint)**: `scripts/check-parallel-work-sentinel.{sh,py}` + `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` + `templates/github-workflows/parallel-work-sentinel-check.yml` + `tests/bats/test_parallel_work_sentinel.bats`. registry entry 의 `workflow` / `detect_command` field 는 Story-2 carrier populate 까지 omit (deferred-followup precedent `production-cutover-deputy-spawn-evidence` / `epic-cutover-gate-evidence-quad-check` 답습 — workflow/detect_command key 자체 omit + status: deferred-followup).
-- **transition state verify ↔ write-time self-write verify disjoint (ADR-082 §결정 1 layer)**: 본 polling discipline = ADR-073 Layer 1 (Orchestrator transition state verify) — ADR-082 Layer 3 (internal lane agent write-time self-write verify) 와 verify 대상 / 행위 주체 disjoint, scope 침범 0.
+- **transition state verify ↔ write-time self-write verify disjoint (ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) layer)**: 본 polling discipline = ADR-073 Layer 1 (Orchestrator transition state verify) — ADR-168 Layer 3 (internal lane agent write-time self-write verify) 와 verify 대상 / 행위 주체 disjoint, scope 침범 0.
 - **memory rule = wrapper-local + consumer 비전파 + single-session scope**: 진정한 mechanical enforcement 가 아닌 normative directive — structural enforcement = Story-2 CFP-967 mechanical wire carrier.
 
 ## 관련 ADR
 
 - [ADR-073](../../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md) **Amendment 2** (CFP-966 carrier) — §결정 1-A transition trigger enum 3종 / §결정 1-B cold start session_start 보강 / §결정 1-C sustained polling mandate. base §결정 1 (CFP-622) + Amendment 1 (CFP-776 ADR-082 cross-ref) scope 강화 (ratchet 방향 only).
 - [ADR-070](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) — verify-before-trust 4-layer governance Layer 2 (Codex 외부 worker output verify). 본 polling = Layer 1, disjoint scope.
-- [ADR-082](../../../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — Layer 3 (internal lane agent write-time self-write verify). ADR-082 §결정 1 layer disjoint 4-layer 표 = 공통 anchor.
+- [ADR-168](../../../../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082, 재제정 CFP-2840) — Layer 3 (internal lane agent write-time self-write verify). ADR-168 §결정 1 layer disjoint 4-layer 표 = 공통 anchor.
 - [ADR-045](../../../../archive/adr/ADR-045-story-retro-mandatory-trigger.md) §D-9 — Layer 4 (PMOAgent retro corpus enumeration cross-Story pattern_count escalation).
 - [ADR-060](../../../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable warning-tier framework. `parallel-work-sentinel-pickup` entry carrier_adr. recurrence-driven promotion gate (count 2 / threshold 3 / promotion_trigger auto_blocking, §결정 19 Amendment 6).
 - [ADR-058](../../../../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — Amendment 2 = scope 강화 방향만 (sunset_justification N/A 정당, is_transitional: false 보존).

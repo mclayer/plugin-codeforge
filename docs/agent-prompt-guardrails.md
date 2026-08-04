@@ -5,7 +5,7 @@ owner: codeforge-wrapper
 related_cfp:
   - CFP-1470  # B7 carrier of Epic CFP-1353 FU sweep
 related_adrs:
-  - ADR-082   # write-time self-write verification mandate (carrier-source citation invariant)
+  - ADR-168   # write-time self-write verification mandate (carrier-source citation invariant) (구 ADR-082, 재제정 CFP-2840)
   - ADR-170   # Orchestrator subagent default for modification work
   - ADR-071   # Orchestrator user-dialog convergence (USER-UTTERANCE-VERBATIM block lineage)
 last_updated_kst: "2026-05-24"
@@ -29,7 +29,7 @@ escalation (ADR-045 §D-9) lineage 중 Pattern A-2 = **InfraEng FIX iter 1 false
 
 - Orchestrator 가 agent 를 spawn 할 때 사용자 발화를 prompt 본문에 carrier source 로 첨부.
 - agent (특히 PL tier) 가 이를 "신규 요구사항" 으로 **re-interpret** 하여 scope 를 자체 확장.
-- ADR-082 §결정 1 layer 1 sub-scope (1-C) `[USER-UTTERANCE-VERBATIM]` block 도입 (CFP-1110)
+- ADR-168 §결정 1 sub-scope 1-C (구 ADR-082 §결정 1 layer 1 sub-scope (1-C), 재제정 CFP-2840) `[USER-UTTERANCE-VERBATIM]` block 도입 (CFP-1110)
   으로 anchor 자체는 명문화되었으나, **anchor 안 내용을 신규 task 로 오해석** 하는 의미층 위반은
   여전히 패턴 잔존 (Pattern A-2 evidence + retro 미관찰 다중 occurrence 추정).
 
@@ -102,7 +102,7 @@ EXECUTE ONLY. AskUserQuestion 0. scope re-interpretation 0.
 
 ## Cross-references
 
-- [ADR-082 §결정 1 layer 1 sub-scope (1-C)](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — anchor 자체 신설 SSOT
+- [ADR-168 §결정 1 sub-scope 1-C](../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) (구 ADR-082, 재제정 CFP-2840) — anchor 자체 신설 SSOT
 - [ADR-071 §결정 17](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) — back-translation gate (lane return)
 - [ADR-170](../archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) — subagent default + inline whitelist 7-entry
 - [ADR-064 §결정 9 / §결정 10](../archive/adr/ADR-064-decision-principle-mandate.md) — Question quality 3-check + Skill body precedence
