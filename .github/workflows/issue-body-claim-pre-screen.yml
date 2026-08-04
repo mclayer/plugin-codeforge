@@ -1,5 +1,5 @@
 name: issue-body-claim-pre-screen
-# CFP-2382 / ADR-082 Amendment 20 §결정 15 (CFP-1559 carrier) — issue-body-claim-pre-screen 게이트 (warning-tier).
+# CFP-2382 / ADR-168 §결정 15 (구 ADR-082 Amendment 20, 재제정 CFP-2840) (CFP-1559 carrier) — issue-body-claim-pre-screen 게이트 (warning-tier).
 #
 # orchestrator-authored followup Issue body 안 4 sub-pattern (PR state / CFP state / count /
 # sister carrier) stale-claim 을 동일-line `[verified-via:` annotation presence 로 write-time
@@ -33,7 +33,7 @@ jobs:
     # R1 scope predicate (story-init.yml:52-58 답습) — orchestrator-authored followup 한정.
     #   precedence: label > title. codeforge-improvement 부재 시 즉시 out-of-scope
     #   (작성자 무관 — governance followup 아님). 사용자 raw 요구사항 Issue 는 story-init 전
-    #   codeforge-improvement 미부착 → 자연 out-of-scope (ADR-082 Amd2 1-A immutable scope 정합).
+    #   codeforge-improvement 미부착 → 자연 out-of-scope (ADR-168 §결정 1 sub-scope 1-B(Orchestrator-authored 한정) scope 정합 (구 ADR-082 Amendment 2, 재제정 CFP-2840; 구 표기 'Amd2 1-A' 는 동결 ADR-082 Amd 20 문언 오귀속 — Amd 2 신설 sub-scope = 1-B)).
     #   workflow_dispatch (event.issue 부재) 는 predicate false → lint job skip (test job 만 실행).
     if: |
       contains(github.event.issue.labels.*.name, 'codeforge-improvement') &&
