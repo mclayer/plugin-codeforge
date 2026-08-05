@@ -281,46 +281,46 @@ deny-scan gate 통과 후:
 
 ---
 
-## §8. Infra-D1 Applicability (Design Review Settlement)
+## §8. Infra-D1 적용가능성 (설계리뷰 정산)
 
-**Judgment**: `CFP2829_TEST_PAGE_ID` env-var is **N/A** for `docs/infra-resource-baseline.yaml` declaration.
+**판정**: `CFP2829_TEST_PAGE_ID` env-var 은 **N/A** (infra-resource-baseline.yaml 선언 불필요)
 
-**Basis** (3-AND):
-1. Infra-signal scanner suffix enum (`scripts/lib/check_infra_resource_drift.py` L39-40) excludes `_ID` suffix from drift scope
-2. Consumer (wrapper-self) infra-resources baseline = pre-existing main (no new infra entrypoint)
-3. Baseline YAML related entries = 0 (no resources to declare)
+**근거** (3-AND):
+1. Infra-signal 스캐너 suffix enum (`scripts/lib/check_infra_resource_drift.py` L39-40) 은 `_ID` suffix 를 drift scope 에서 제외
+2. Consumer (wrapper-self) infra-resources baseline = main 기존재 (신규 infra entrypoint 0)
+3. Baseline YAML 관련 entry = 0 (선언할 resource 없음)
 
-**Disposition**: No baseline-edit action required — N/A judgement documented as design-review iter1 compliance (settles P3 gate).
-
----
-
-## §9. Container Deployment N/A
-
-**Execution environment**: developer local shell (fixed).
-- CFP-2829 change-plan §7.4.6 condition: "container N/A" preserved if **self-hosted runner integration not applied**
-- Status: no runner integration in scope
-- **Re-evaluation trigger**: if measurements move to CI/self-hosted runner, revisit this section (new applicability decision)
+**처분**: baseline 편집 action 불필요 — N/A 판정 은 설계리뷰 iter1 준수로 문서화 (P3 gate 해소)
 
 ---
 
-## Appendix: Troubleshooting
+## §9. 컨테이너 배포 N/A
 
-| Issue | Diagnosis | Remedy |
+**실행 환경**: 로컬 개발자 셸 (고정)
+- CFP-2829 change-plan §7.4.6 조건: "container N/A" 는 **self-hosted runner 통합 미적용** 시 유지
+- 상태: runner 통합 범위 밖
+- **재평가 trigger**: 측정이 CI/self-hosted runner 로 이전 시 본 절 재검토 (신규 적용가능성 판정)
+
+---
+
+## 부록: 문제해결
+
+| 문제 | 진단 | 조치 |
 |---|---|---|
-| K-1 (401) | Token expired or email mismatch | Refresh PAT in 1Password, re-provision creds file |
-| K-2 (cap hit at write 21) | Over-budget scenario | Reduce write probes or approve second run |
-| K-4 (429 repeated) | Rate limit exhausted | Wait per Retry-After, consider staggered re-run next day |
-| K-5 (page-id mismatch) | Test page not in deny-set | Verify page ID + recreate if needed, list ia-tree roots |
-| K-6 (deny-scan fail) | Secret detected in NDJSON | Audit token scope, run deny-scan standalone on files |
-| K-7 (creds file missing) | Preflight gate | Provision `~/.claude/codeforge-scratch/atlassian-creds.env` |
-| Reconcile drift | Cleanup incomplete or interrupted | Manual re-check via no-filter listing; inspect error logs |
+| K-1 (401) | Token 만료 또는 email 불일치 | 1Password 에서 PAT 갱신, creds 파일 재provision |
+| K-2 (write 21 에서 cap hit) | 예산 초과 시나리오 | write probe 축소 또는 새로운 승인 루프로 2번째 run |
+| K-4 (429 반복) | 속도 제한 소진 | Retry-After 대기, 내일 staggered re-run 고려 |
+| K-5 (page-id 불일치) | Test page deny-set 미포함 | page ID 확인 + 필요 시 재생성, ia-tree roots 열거 |
+| K-6 (deny-scan 실패) | NDJSON 내 secret 감지 | token scope 감사, 파일 단독 deny-scan 실행 |
+| K-7 (creds 파일 미발견) | Preflight gate | `~/.claude/codeforge-scratch/atlassian-creds.env` provision |
+| Reconcile drift | Cleanup 미완료 또는 중단 | no-filter 열거로 수동 재확인; error log 검사 |
 
 ---
 
-## References
+## 참고자료
 
-- **Change Plan**: `wrapper/change-plans/2026-08-04-cfp-2889-live-measurement-settlement.md` §3.10 (decision 13 — operational discipline)
-- **Parent Story**: `wrapper/stories/CFP-2829.md` (backward-sync engine validation)
-- **Golden Standard**: `tests/fixtures/cfp_2889/` (captured evidence archive)
-- **Existing Runbook**: `scripts/CONFLUENCE_BACKWARD_MEASURE_RUNBOOK.md` (complementary offline guide)
+- **Change Plan**: `wrapper/change-plans/2026-08-04-cfp-2889-live-measurement-settlement.md` §3.10 (결정 13 — 운영 규율)
+- **부모 Story**: `wrapper/stories/CFP-2829.md` (backward-sync 엔진 검증)
+- **Golden 표준**: `tests/fixtures/cfp_2889/` (captured evidence archive)
+- **기존 Runbook**: `scripts/CONFLUENCE_BACKWARD_MEASURE_RUNBOOK.md` (보완 offline 가이드)
 - **Atlassian API**: developer.atlassian.com/cloud/confluence/rest (v2 properties CRUD, list pagination)

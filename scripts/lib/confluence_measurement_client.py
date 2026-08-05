@@ -27,10 +27,15 @@ Security (Change Plan §7):
   - T-10 잔여 방어: value-allow 값도 `_scrub` 경유 후 200자 절단 (미지 secret 혼입 backstop).
   - 응답 body = 부모의 `sanitize_body_field` 재사용 (truncate ≤200B → scrub → deny-scan 원경로,
     hit 시 필드 drop). 본 모듈은 sanitization 원시함수를 **재구현하지 않는다** (rest.py = SSOT).
+  - `safe_path` = **validator 강제** (자사 템플릿 경로 화이트리스트 fullmatch 실패 = ValueError,
+    silent pass-through 금지 — `grouped_hex` digest 축 validator 동형). 비-템플릿 입력
+    (서버 유래 `_links.next` 등 I-4 비신뢰) 은 `safe_path_or_drop` 이 **필드 drop + marker** 로
+    흡수한다 (§3.9 body 축 동형) — 변환 세탁 경로 0.
 
 D6: 내부 import = `lib.confluence_property_rest` qualified (repo 단일 참조 방법).
 """
 
+import re
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -310,6 +315,7 @@ __all__ = [
     "create_measurement_client",
     "classify_header_policy",
     "safe_path",
+    "safe_path_or_drop",
     "VALUE_ALLOW_EXTRA",
     "PRESENCE_ONLY_NAMES",
     "V1_PROPERTY_PATH_TEMPLATE",

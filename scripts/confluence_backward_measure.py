@@ -67,7 +67,7 @@ for _p in (str(_SCRIPTS_DIR), str(_LIB_DIR)):
 
 from lib.ac_id import TIER_ENUM                                    # noqa: E402
 from lib.confluence_measurement_client import (                    # noqa: E402
-    MeasurementRESTClient, create_measurement_client, safe_path,
+    MeasurementRESTClient, create_measurement_client, safe_path_or_drop,
 )
 from lib.confluence_property_chunking import (                     # noqa: E402
     MANIFEST_KEY as LOCAL_MANIFEST_KEY, chunk, chunk_key as local_chunk_key,
@@ -103,9 +103,6 @@ MEASURE_KEY_PREFIX = "cfp2889.measure"
 
 #: throwaway page 양성 sentinel (제목 포함 필수 — K-5).
 PAGE_SENTINEL_PREFIX = "CFP-2889-THROWAWAY-"
-
-#: 산출물·이벤트 생성 위치 (ADR-169 — repo 밖 scratch 만 허용, 홈 루트 직접 쓰기 금지).
-SCRATCH_DIRNAME = ("​.claude", "codeforge-scratch")  # placeholder (아래 helper 가 실경로 구성)
 
 KST = datetime.timezone(datetime.timedelta(hours=9))
 
@@ -1112,12 +1109,23 @@ def write_golden_candidate(run_id: str, name: str, payload: Any) -> Path:
     return path
 
 
-def build_shape_golden(envelope: Dict[str, Any], run_id: str, endpoint: str,
+def build_shape_golden(envelope: Dict[str, Any], run_id: str, page_id: str,
                        status: Any) -> Dict[str, Any]:
-    """단건 PropertyEnvelope shape golden — payload 는 치환, 골격(키·타입·중첩)만 보존."""
+    """단건 PropertyEnvelope shape golden — payload 는 치환, 골격(키·타입·중첩)만 보존.
+
+    provenance endpoint 는 **실제 자사 템플릿 경로**로 재구성한다 (`safe_path` validator 통과 —
+    `<id>` 류 플레이스홀더 문자열은 화이트리스트 불일치라 변환 거부 대상이다).
+    """
     golden = json.loads(json.dumps(envelope, ensure_ascii=False))
     golden["value"] = redact_payload(envelope.get("value"))
-    golden["empirical_source"] = provenance(endpoint, status, run_id)
+    property_id = envelope.get("id")
+    path = f"/wiki/api/v2/pages/{page_id}/properties"
+    if property_id is not None:
+        path = f"{path}/{property_id}"
+    endpoint, omitted = safe_path_or_drop(path)
+    golden["empirical_source"] = provenance(endpoint or "PUT v2 property (endpoint 표기 drop)",
+                                            status, run_id)
+    golden["endpoint_omitted_by_validator"] = omitted
     return golden
 
 
@@ -1154,7 +1162,8 @@ def capture_list_golden(client: MeasurementRESTClient, page_id: str, run_id: str
         return None
     if not isinstance(body, dict):
         return None
-    return build_list_golden(body, run_id, f"GET {safe_path(path)}", 200)
+    endpoint, _omitted = safe_path_or_drop(path)
+    return build_list_golden(body, run_id, f"GET {endpoint or 'v2 properties list'}", 200)
 
 
 # ── live run ────────────────────────────────────────────────────────────────
@@ -1264,9 +1273,7 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
     # captured-golden 후보 (실측 산출물 — repo 커밋은 operator 몫)
     golden_files: List[str] = []
     if envelope_sample is not None:
-        shape = build_shape_golden(envelope_sample, ctx.run_id,
-                                   f"PUT {safe_path('/wiki/api/v2/pages/<id>/properties/<pid>')}",
-                                   200)
+        shape = build_shape_golden(envelope_sample, ctx.run_id, page_id, 200)
         golden_files.append(write_golden_candidate(ctx.run_id, "shape-golden", shape).name)
     if list_golden is not None:
         golden_files.append(write_golden_candidate(ctx.run_id, "list-golden", list_golden).name)
