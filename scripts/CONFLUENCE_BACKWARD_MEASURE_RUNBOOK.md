@@ -131,18 +131,19 @@ python scripts/confluence_backward_measure.py --measure-rate-limits
 If script is interrupted and properties are left orphaned:
 
 1. Go to test page in Confluence UI
-2. Edit page → Details → Properties (or via REST API):
+2. List properties to identify IDs (v2 API uses property-id, not key):
    ```bash
    curl -X GET \
-     "https://mclayer.atlassian.net/wiki/api/v2/pages/<page-id>/properties" \
+     "https://mclayer.atlassian.net/wiki/api/v2/pages/<page-id>/properties?key=codeforge.sync.canonical" \
      -H "Authorization: Basic $(echo -n 'email:token' | base64)"
    ```
-3. Delete unwanted `codeforge.sync.canonical.*` properties via REST:
+3. Extract property-id from response, then delete by ID:
    ```bash
    curl -X DELETE \
-     "https://mclayer.atlassian.net/wiki/api/v2/pages/<page-id>/properties/<key>" \
+     "https://mclayer.atlassian.net/wiki/api/v2/pages/<page-id>/properties/<property-id>" \
      -H "Authorization: Basic $(echo -n 'email:token' | base64)"
    ```
+   (Repeat for each property-id in the results above)
 
 ## Interpretation
 
@@ -163,8 +164,9 @@ If script is interrupted and properties are left orphaned:
 ### AC-13: Rate Limits
 
 - **Property write leg** (raw REST, basic-auth):
-  - Observes `Retry-After` (standard), `Beta-RateLimit-Policy`, `Beta-RateLimit-Remaining`
-  - Applies exp-backoff on 429
+  - Attempts to capture all response header names + rate-limit family headers (Retry-After, X-RateLimit-*, RateLimit-*, Beta-*, X-Beta-*)
+  - Note: basic-auth does not use points-model rate limiting (RFC compliant basic-auth requests may not receive Beta-* headers — header absence does not indicate failure, and is normal per Atlassian documentation)
+  - Applies backoff on 429 with server Retry-After priority
 - **Backward-polling leg** (MCP, OAuth):
   - No rate headers exposed → **BLOCKED-re-issuance** (S2 cannot measure MCP rate)
 
@@ -188,9 +190,18 @@ If script is interrupted and properties are left orphaned:
 - Integrate into gated S2 → S6 transition validation
 - Measure ~1x per release cycle (not on every commit)
 
+## Test Page Lifecycle
+
+**Important**: Confluence test page created during measurement **persists after script completion**.
+
+- **Reason**: MCP tool set lacks page deletion capability (Atlassian API limitation)
+- **Operator action required**: Manual deletion via Confluence UI after measurement complete
+- **Rationale**: Automation cannot guarantee safe cleanup of test page; human judgment required for throwaway page retention or deletion
+- **Tracking**: Refer to operationally-maintained test page log to identify old test pages for periodic UI cleanup
+
 ## References
 
 - **Change Plan**: CFP-2829.md §7.3 (operation risk) / §5.5.A (provisioning)
-- **Atlassian Docs**: developer.atlassian.com confluence-entity-properties
-- **Community**: confluence-entity-properties rate-limiting
-- **Related Scripts**: `confluence_property_rest.py` (REST transport)
+- **Live Measurement Runbook (CFP-2889)**: `docs/runbooks/cfp-2889-live-measurement-runbook.md` (full operator-gated execution guide)
+- **Atlassian Docs**: developer.atlassian.com confluence-entity-properties (v2 properties CRUD)
+- **Related Scripts**: `confluence_property_rest.py` (REST transport layer)
