@@ -33,7 +33,8 @@ date: 2026-08-06
 - **Page ID 출처**: shell env var `CFP2829_TEST_PAGE_ID` (env 주입 우선 — stale id 위험 완화)
 - **생성**: MCP `createConfluencePage` 사용
   - 제목 sentinel: `CFP-2889-THROWAWAY-<YYYYMMDD>` (예: `CFP-2889-THROWAWAY-20260806`)
-  - Ancestor: mirror IA tree 밖 (mirror-IA root 아래 아님)
+  - Ancestor: 지정하지 않음 — parentId 미지정 시 서버가 space homepage(1867943) 직속으로 자동배정. 이 space 는 homepage 가 곧 mirror IA tree 루트라 "mirror IA tree 밖" 배치는 **구조적 달성 불가** (CFP-2889 구현 C 실측 정정)
+  - 실제 보장 = **deny-set 미소속 ∧ sentinel 제목 ∧ homepage 직속 형제** — 기계 게이트는 deny-set + sentinel 2축(조상 관계 미검사)
   - Standalone throwaway = 안전한 삭제 범위
 - **보유 주의**: 테스트 페이지는 **영구 잔존** — 수동 UI 삭제만 가능 (MCP tool 부재)
 
