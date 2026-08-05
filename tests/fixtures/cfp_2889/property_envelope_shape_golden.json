@@ -1,0 +1,14 @@
+{
+  "version": {
+    "number": 1,
+    "message": "",
+    "minorEdit": false,
+    "authorId": "<str>",
+    "createdAt": "2026-08-05T21:02:12.333Z"
+  },
+  "value": "<b64:len=184,sha8=a54a8c94>",
+  "key": "cfp2889.measure.enc-utf8",
+  "id": "21463043",
+  "empirical_source": "[empirical-source: 2026-08-06T06:02:00+09:00,  / wiki / api / v2 / pages / 21430273 / properties / 21463043, 200, tenant=redacted, run_id=20260806T060155]",
+  "endpoint_omitted_by_validator": false
+}
