@@ -663,7 +663,7 @@ def write_baseline(path, violations):
         "# DO NOT EDIT BY HAND. Regenerate: bash scripts/check-path-relocation-consistency.sh "
         "--repo-root . --write-baseline",
         "# grandfather = 승격 시점 D-scope 외 pre-existing 잔존 dead-path(file, snippet) 동결 → new-only "
-        "subtract (ADR-060 §결정6 Clean-as-You-Code). 신규 dead-path 유입만 flag. candidate/inert census 무영향.",
+        "subtract (ADR-171 §결정6 Clean-as-You-Code). 신규 dead-path 유입만 flag. candidate/inert census 무영향.",
         "schema_version: '1.0'",
         "generated_by: CFP-2661",
         "basis: ADR-136 Amendment 4 §결정 15 승격 시점 D1~D15 외 pre-existing dead-path(file, snippet) 동결",

@@ -397,7 +397,7 @@ def write_baseline(path, findings):
         "# DO NOT EDIT BY HAND. Regenerate: bash scripts/check-resource-safety-claim-proof.sh "
         "--repo-root . --write-baseline",
         "# grandfather = 승격 시점 legacy over-claim(file, claim_token) 동결 → new-only subtract "
-        "(ADR-060 §결정6 Clean-as-You-Code). new 안전성-claim 은 proof-ref/ceiling 동반 의무.",
+        "(ADR-171 §결정6 Clean-as-You-Code). new 안전성-claim 은 proof-ref/ceiling 동반 의무.",
         "schema_version: '1.0'",
         "generated_by: CFP-2646",
         "basis: ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) 승격 시점 in-scope 코퍼스 over-claim(file, claim_token) 동결",
