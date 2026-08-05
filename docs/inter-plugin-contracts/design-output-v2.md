@@ -311,7 +311,7 @@ ArchitectAgent (chief author) 가 6 SubAgent 산출물을 받아 Change Plan §1
 
 ### Disjoint axis (review-verdict-v4 v4.5 + design-output-v2 v2.4 동시 emit)
 
-ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 self-check boolean field 동시 emit:
+ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) layer disjoint 정합 — design lane verdict packet 의 4 self-check boolean field 동시 emit:
 
 - `mechanical_self_check_passed` (ADR-065) — 7-item mechanical sync
 - `boundary_completeness_self_check_passed` (ADR-068) — I-1~I-4 semantic
@@ -323,7 +323,7 @@ ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 se
 ### Cross-references
 
 - [ADR-078 architecture doc lane gate](../../archive/adr/ADR-078-living-architecture-doc.md) §결정 1 (4 wording SSOT)
-- [ADR-082 write-time self-write verification](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) scope (b)
+- [ADR-168 write-time self-write verification (구 ADR-082, 재제정 CFP-2840)](../../archive/adr/ADR-168-write-time-self-write-verification-mandate.md) scope (b)
 - [ADR-008 inter-plugin contract versioning](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
 - [ADR-010 sibling sync ordering](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) §결정 1 (canonical first → sibling follow)
 

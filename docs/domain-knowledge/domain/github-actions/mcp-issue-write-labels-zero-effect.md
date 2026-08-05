@@ -19,7 +19,7 @@ related_adrs:
   - ADR-052     # Codex proactive check touchpoints (verify-before-trust 의 외부 worker output 영역, MCP write tool output 도 verify 의무 sub-domain instantiate)
   - ADR-070     # Codex verify-before-trust (외부 worker output ground truth direct read verify)
   - ADR-073     # Orchestrator verify-before-assert (cross-repo state / assumption 직 verify)
-  - ADR-082     # Write-time self-write verification mandate (lane agent self-write 영역, MCP write tool output verify 의무 disjoint axis sub-domain)
+  - ADR-168     # Write-time self-write verification mandate (lane agent self-write 영역, MCP write tool output verify 의무 disjoint axis sub-domain) (구 ADR-082, 재제정 CFP-2840)
 related_stories:
   - CFP-1439    # 본 codify carrier (MCP `issue_write` labels field zero-effect 증거 12 Issue + 3 AC 발의)
   - CFP-1415    # Mega-Epic Confluence-as-derived-mirror governance standardization 발의 batch (12 Issue 영향, 본 bug 발견 carrier)
@@ -69,13 +69,13 @@ root cause 확정 = CFP-1439 AC-1 (별 carrier 영역).
 
 ### verify-before-trust 4-layer governance sub-domain 위치
 
-본 bug 는 4-layer verify-before-trust governance (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D-9) 의 **5번째 sub-domain (MCP write tool output verify)** 위치:
+본 bug 는 4-layer verify-before-trust governance (ADR-073 / ADR-070 / ADR-168 (구 ADR-082, 재제정 CFP-2840) / ADR-045 §D-9) 의 **5번째 sub-domain (MCP write tool output verify)** 위치:
 
 | Layer | ADR | 영역 |
 |---|---|---|
 | 1 | ADR-073 | Orchestrator verify-before-assert (cross-repo state / assumption) |
 | 2 | ADR-070 | Codex verify-before-trust (외부 worker output) |
-| 3 | ADR-082 | Write-time self-write verification (internal lane agent self-write 값) |
+| 3 | ADR-168 (구 ADR-082, 재제정 CFP-2840) | Write-time self-write verification (internal lane agent self-write 값) |
 | 4 | ADR-045 §D-9 | PMOAgent retro corpus enumeration cross-Story pattern_count escalation |
 | **5 (본 entry)** | (ADR-073 disjoint sub-axis 후보) | **MCP write tool output verify** — request body 안 명시한 field 가 응답 / 실 state 에 반영됐는지 post-call verify 의무 (silent zero-effect 차단) |
 
@@ -151,7 +151,7 @@ gh issue edit N --add-label "lbl-C"
 - **AC-2 root cause 별 mitigation 결정** (consumer-guide PAT scope / upstream Issue report / label 사전 check script) — CFP-1439 AC-2 별 carrier.
 - **AC-3 workaround 자동화** (PMOAgent batch 발의 script 안 자동 `gh issue edit --add-label` 보정) — codeforge-pmo plugin scope 별 carrier.
 - **cross-plugin agent prompt sweep** — 8 lane plugin (codeforge-{requirements,design,develop,review,pmo,test,deploy,deploy-review}) agent prompt 안 `issue_write` 호출 sites 모두 explicit fallback instruction 추가. wrapper scope 외, cross-plugin Story carrier 영역.
-- **ADR amendment** (ADR-073 sub-axis sub-scope 신설 또는 ADR-082 §결정 1 layer 1 sub-scope 확장) — pattern_count 추가 evidence 시 ADR escalation 영역 (현재 본 SSOT codify 단계, ADR 강화 = 별 carrier).
+- **ADR amendment** (ADR-073 sub-axis sub-scope 신설 또는 ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840) layer 1 sub-scope 확장) — pattern_count 추가 evidence 시 ADR escalation 영역 (현재 본 SSOT codify 단계, ADR 강화 = 별 carrier).
 - **MCP github plugin upstream PR** (Anthropic 영역) — codeforge governance 영역 외.
 
 ## 관련 ADR
@@ -160,7 +160,7 @@ gh issue edit N --add-label "lbl-C"
 - **ADR-052** — Codex proactive check touchpoints. verify-before-trust 의 외부 worker output 영역. 본 sub-domain (MCP write tool output) = ADR-052 verify-before-trust 5 sub-scope 의 직접 인접 패턴 (request/response mapping verify).
 - **ADR-070** — Codex verify-before-trust. 외부 worker output ground truth direct read verify 의무. 본 SSOT 의 `gh issue view` post-call verify = ADR-070 §결정 1 direct verify 동일 pattern.
 - **ADR-073** — Orchestrator verify-before-assert. §결정 1 verify-before-assert primitive = 본 SSOT 의 verify-before-trust 4-layer 5번째 sub-domain 의 direct parent. transition trigger enum 확장 후보 (`mcp_write_tool_response` 5번째 entry, evidence-gated promotion 영역).
-- **ADR-082** — Write-time self-write verification mandate. lane agent self-write 영역 (scope a-d). 본 SSOT 의 MCP write tool output verify = ADR-082 disjoint axis sub-domain (lane self-write ↔ MCP tool output 분리).
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** — Write-time self-write verification mandate. lane agent self-write 영역 (scope a-d). 본 SSOT 의 MCP write tool output verify = ADR-168 disjoint axis sub-domain (lane self-write ↔ MCP tool output 분리).
 
 ## 변경 이력
 

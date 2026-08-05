@@ -20,7 +20,7 @@ related_adrs:
   - ADR-027 Amendment 2 (Action-blocked fallback — CFP-658, [SECURITY-FALLBACK] prefix carrier)
   - ADR-024 Amendment 8 (bypass-as-norm-mutation 후속 escalation — CFP-845 §결정 6.A.4, [bypass-justification] prefix carrier)
   - ADR-073 Amendment 9 (cross-repo bidirectional label sync verify-before-assert mandate — CFP-1336, [CROSS-REPO-SYNC] prefix carrier)
-  - ADR-082 Amendment 14 (§결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling)
+  - ADR-168 §결정 1 sub-scope 1-D (구 ADR-082 Amendment 14, 재제정 CFP-2840) (§결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling)
   - ADR-066 Amendment 4 (§결정 2 scope minimum 6번째 entry cross-repo-target-repos issues:write — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling PAT scope grant layer)
   - ADR-052 Amendment 14 (CFP-1286 Wave 2 mechanical wire — codex-fallback-subclass-tally lint activation, CFP-1368 carrier, [codex-sandbox-fallback] + [codex-substitution-scope-declared] 2-prefix codify)
   - ADR-070 Amendment 8 (fail-mode enum 8 → 9 확장 codex_truncated_no_verdict 9번째 value, CFP-1286 declaration-source carrier — CFP-1368 lint logic SSOT cross-validate target)
@@ -196,7 +196,7 @@ prefixes:
     phase: cross-repo-sync
     current_owner: "cross-repo-label-sync.yml workflow + Orchestrator (CFP-1336 Wave 2 wire 후 자동 게시)"
     target_owner_plugin: "core wrapper (Orchestrator 직접 게시 또는 cross-repo-label-sync.yml workflow 자동 게시 — workflow grep-presence audit 대상)"
-    scope: "cross-repo bidirectional label sync workflow (wrapper Story Issue ↔ impl repo PR labels) 의 audit channel comment — (a) warning: PAT 부재 / linked PR 부재 / cross-org reject 시 graceful skip 안내 / (b) skip: 4-pattern T-2 self-trigger guard AND fail (sender.type / actor-allowlist / `[skip-cross-repo-sync]` marker / idempotent diff) 시 audit trail / (c) sync 완료: bidirectional sync success 시 verified-via annotation 포함 audit. ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` verify-before-assert 4-step + ADR-082 Amendment 14 sub-scope 1-D 4-tuple write authority verify + ADR-066 Amendment 4 §결정 2 6번째 entry PAT scope grant 정합."
+    scope: "cross-repo bidirectional label sync workflow (wrapper Story Issue ↔ impl repo PR labels) 의 audit channel comment — (a) warning: PAT 부재 / linked PR 부재 / cross-org reject 시 graceful skip 안내 / (b) skip: 4-pattern T-2 self-trigger guard AND fail (sender.type / actor-allowlist / `[skip-cross-repo-sync]` marker / idempotent diff) 시 audit trail / (c) sync 완료: bidirectional sync success 시 verified-via annotation 포함 audit. ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` verify-before-assert 4-step + ADR-168 §결정 1 sub-scope 1-D (구 ADR-082 Amendment 14, 재제정 CFP-2840) 4-tuple write authority verify + ADR-066 Amendment 4 §결정 2 6번째 entry PAT scope grant 정합."
     example: "[CROSS-REPO-SYNC] 본 PR 은 CODEFORGE_CROSS_REPO_PAT secret 미설정으로 degraded mode — manual label sync required (ADR-027 Amendment 2 fallback:manual 정합, ADR-073 Amendment 9 §결정 1-A 9번째 entry label_change trigger graceful skip + verify-before-assert 4-step 정합)."
     posters:
       - Orchestrator                                  # Wave 2 wire 후 직접 게시 (audit 보강 + manual sync 안내)

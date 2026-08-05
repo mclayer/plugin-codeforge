@@ -1358,7 +1358,7 @@ entries:
   # CFP-966 / ADR-073 Amendment 2 declarative anchor (Wave 4 sub-Epic family — same-day 2/2 parallel race incidents sentinel)
   # 2026-05-18 KST sentinel: CFP-953 (first incident, label-based search miss) + CFP-946 (second incident, 11분 gap Epic close miss)
   # deferred-followup status — actual script (scripts/check-parallel-work-sentinel.{sh,py}) + workflow (.github/workflows/parallel-work-sentinel-check.yml) + hook json sample (templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample) = sibling Story-2 CFP-967 Phase 2 carrier + CFP-2451 propagation wire 로 Active 전환 COMPLETE (2026-06-29)
-  # ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 4-instance established pattern) 답습
+  # ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 4-instance established pattern) 답습
   - name: parallel-work-sentinel-pickup
     description: |
       ADR-073 Amendment 2 §결정 1-A/1-B/1-C mechanical verification — Orchestrator
@@ -1413,7 +1413,7 @@ entries:
 
       검증 패턴: Story §1 (또는 spec §2 axis 최종안 표) 안 spawn count 평균 / full
       activation 명시 + `[empirical-source: TBD]` 또는 `[empirical-source:
-      <local probe ref>]` annotation presence-grep. ADR-082 §결정 2(a)
+      <local probe ref>]` annotation presence-grep. ADR-168 §결정 2(a) (구 ADR-082 §결정 2(a), 재제정 CFP-2840)
       corpus-claim-verify lint 의 backref pattern verbatim 재사용
       (`[verified: git show <ref>:<path>]` annotation 동형 mechanical 패턴 정합).
     introduced_by: CFP-1086
@@ -1668,7 +1668,7 @@ entries:
       CFP-1346 Phase 2 F-CR-1346-1 P1 finding sentinel —
       `github.event.pull_request.changed_files.*.filename` 무효 expression
       (changed_files = integer NOT array of file objects). Empty string evaluate
-      → script fallback silent degradation (ADR-082 Amendment 9 §결정 11.B
+      → script fallback silent degradation (ADR-168 §결정 11.B (구 ADR-082 Amendment 9, 재제정 CFP-2840)
       silent error mask 금지 directly-analogous sub-domain).
 
       Sibling convention SSOT = `git diff --name-only origin/${{ github.base_ref }}...HEAD`
@@ -1749,7 +1749,7 @@ entries:
       freshness (auth layer) 와 axis disjoint (auth ↔ git layer disjoint,
       양 staleness sub-domain).
 
-      ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup +
+      ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-060 Amendment 10 §결정 24 deferred-followup +
       Wave 1 declaration anchor only precedent established (L1417/L1452/L1574
       4-instance + parallel-work-sentinel-pickup L2731 +
       worktree-self-ownership-verify + subagent-sibling-story-polling-evidence
@@ -1871,8 +1871,8 @@ entries:
       guards (Wave 2 design scope): code-span EXEMPT (backtick block) + quoted-text EXEMPT (blockquote /
       quote) + templates/** EXEMPT (canonical example pattern) + docs/stories/§9 transcript EXEMPT
       (Round 0 verbatim cite). Issue body scope = `issue_origin: orchestrator_authored_followup` Issue
-      body 만 (사용자-authored Issue body = §1 verbatim immutable scope 외, ADR-082 Amendment 2 §결정 1
-      layer 1 sub-scope 1-A scope 정합). pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물
+      body 만 (사용자-authored Issue body = §1 verbatim immutable scope 외, ADR-168 §결정 1 sub-scope 1-B
+      (구 ADR-082 Amendment 2, 재제정 CFP-2840; 구 표기 'sub-scope 1-A' = 오귀속 — Amd 2 신설 sub-scope = 1-B, CFP-2885 §7.3 3-anchor 판정 verbatim 답습) scope 정합). pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물
       (CFP-FU-B Issue #1477 5-defect 3 PIVOT 60% stale rate + CFP-1041/1050 RequirementsPL spawn packet
       stale claim lineage 4 = 합산 ≥ 7, threshold 2 의 3.5배 large margin). PER_BLOCK_SCAN_CAP=50 line
       CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel verbatim 답습 — nested quantifier regex 절대 금지).
@@ -1904,7 +1904,7 @@ entries:
   # ADR-073 Amendment 15 (CFP-1571) Wave 1 declarative anchor → ADR-073 Amendment 16 (CFP-1581) Wave 2 mechanical wire activation
   # codeforge-design lane ArchitectAgent (chief author, Opus) spawn cadence 영역의 mechanical enforcement carrier
   # warning tier initial registration (NOT promotion per ADR-060 §결정 5 'first introduction = warning mode' default — entry registration vs promotion 영역 분리 명시)
-  # ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 + L2729 + L4290 + L4360 + L4426 + L4505 + L4921 + L4993 8-instance established pattern) 답습
+  # ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 + L2729 + L4290 + L4360 + L4426 + L4505 + L4921 + L4993 8-instance established pattern) 답습
   # CFP-967 (parallel-work-sentinel-pickup L2731-2768) + CFP-963 (codex-network-scope-presence L2775+) + CFP-1437 (spawn-prompt-head-pin-presence L4288) + CFP-1436 (mid-spawn-drift-detection L4426) + CFP-1539 (pre-spawn-prompt-finalize-verify L4921) + CFP-1368 (codex-fallback-subclass-tally L4993) Wave 1→Wave 2 split precedent 답습 chain 6-instance established pattern
   - name: spawn-prompt-fact-verify
     description: |
@@ -1965,7 +1965,7 @@ entries:
           (40-char hex), future MINOR bump v4.9 → v4.10 carrier 별 sub-CFP. packet 안
           `artifacts_written[]` claim ↔ `artifact_commits[]` hash array 1:1 매핑 verify
       (c) verify-before-trust 4-layer 정합 — Story §14 Lane Evidence row append 시 actual commit
-          verify (ADR-073 verify-before-assert + ADR-082 §결정 1 sub-scope 1-M dual binding)
+          verify (ADR-073 verify-before-assert + ADR-168 §결정 1 sub-scope 1-M (구 ADR-082 §결정 1 sub-scope 1-M, 재제정 CFP-2840) dual binding)
       (d) verified-via annotation field 의무 — synthesis packet / verdict packet / 완료 보고 안
           `synthesis_vs_commit_gap_verified: <bool>` field 명시 (write-time semantic truth verify)
       axis 분리 vs Amd 23 1-L (upstream-inherited input verify, synthesis input 측 4 sub-source) ↔
@@ -1977,7 +1977,7 @@ entries:
       fix-event-v1 contract level) ↔ 본 1-M (lane agent self-write own-author axis, lane plugin
       영역). pattern_count 1 reach (CFP-1523 F-DR-002 P0 finding single occurrence) deferred-followup
       carrier — Wave 1 declaration-only mandate (pattern_count 누적 시 Wave 2 mechanical wire 별
-      carrier 발의, ADR-082 §결정 6 retain pattern 답습).
+      carrier 발의, ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) retain pattern 답습).
     detect_command: bash scripts/check-synthesis-vs-commit-gap.sh  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, script 부재 — TBD via Wave 2 mechanical wire)
     workflow: .github/workflows/synthesis-vs-commit-gap-check.yml  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, workflow 부재 — TBD via Wave 2 mechanical wire)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
@@ -1998,7 +1998,7 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
       last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1523 retro emission carry-over via PMOAgent, F-DR-002 detection 2026-05-25 KST, ADR-079 KST normative
       promotion_trigger: declarative_only  # count=1 < threshold=3 → 즉시 발화 안함 (Wave 1 declaration anchor only, pattern_count 누적 시 promotion 평가)
-    status: deferred-followup       # Phase 1 declare (본 CFP-1589) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture + review-verdict-v4 v4.10 MINOR, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+    status: deferred-followup       # Phase 1 declare (본 CFP-1589) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture + review-verdict-v4 v4.10 MINOR, ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
 
   # ─── CFP-1612 Phase 1 (ADR-082 Amendment 25 Wave 2 mechanical wire activation — numeric-claim-write-time-verify, 2026-05-25 KST) ───
   # ADR-082 Amendment 25 §결정 1 layer 1 sub-scope (1-N) — numeric claim write-time verify Wave 2 mechanical enforcement wire
@@ -2146,7 +2146,7 @@ entries:
 
       Bypass: `hotfix-bypass:retro-fact-verify-mandate` 107번째 family member.
 
-      axis disjoint from ADR-082 §결정 9 (CFP-1312 Amd 7 ArchitectAgent + Orchestrator scope) — 본 1-S = PMOAgent retro write scope.
+      axis disjoint from ADR-168 §결정 9 (구 ADR-082 §결정 9, 재제정 CFP-2840) (CFP-1312 Amd 7 ArchitectAgent + Orchestrator scope) — 본 1-S = PMOAgent retro write scope.
     detect_command: bash scripts/check-retro-fact-verify.sh
     workflow: .github/workflows/retro-fact-verify-check.yml
     current_tier: warning
@@ -2372,7 +2372,7 @@ entries:
   - name: chief-author-crossref-consistency
     description: |
       CFP-1565 / ADR-068 Amendment 5 §결정 1 I-7 chief-author cross-ADR scope/fact
-      claim consistency invariant — Wave 1 declaration-only (ADR-082 §결정 6 +
+      claim consistency invariant — Wave 1 declaration-only (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) +
       ADR-070 §D5 retain pattern 답습). verdict field-only enforcement
       (`chief_author_crossref_consistency_self_check_passed: bool` review-verdict-v4
       v4.12 + `findings[].type: "chief-author-crossref-inconsistency"`).
@@ -2390,7 +2390,7 @@ entries:
       Wave 2 mechanical wire (별 sub-CFP carrier): scripts/check-chief-author-
       crossref-consistency.sh (ADR-061) + scripts/lib + workflow yml + bats fixture
       RED→GREEN stash proof. pattern_count >= 2 재발 시 follow-up CFP MUST promote
-      (ADR-082 §결정 6 정합).
+      (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) 정합).
       Wave 2 carrier = CFP-2478 (Epic CFP-2476 E2) 충족 — layer A 결정론 cross-document sweep (a)cross-ADR 존재/(b)phantom ID ownership/(c)enum SSOT/(e)content-anchor + (d)version opt-in.
     detect_command: bash scripts/check-adr-cross-ref-consistency.sh
     workflow: .github/workflows/adr-cross-ref-consistency.yml
@@ -2403,7 +2403,7 @@ entries:
     carrier_adr: ADR-060  # enforcement framework source
     recurrence:
       count: 1  # CFP-1522 retro F-003 P1 첫 occurrence (ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch)
-      threshold: 2  # pattern_count >= 2 재발 시 Wave 2 mechanical wire warning-tier promotion MUST (ADR-082 §결정 6)
+      threshold: 2  # pattern_count >= 2 재발 시 Wave 2 mechanical wire warning-tier promotion MUST (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840))
       promotion_trigger: none  # Wave 1 = declaration only. Wave 2 별 sub-CFP merge 후 warning 전환.
     status: warning  # CFP-2478 Phase 2 carrier 신설 완료 (Wave 2 mechanical wire) → deferred-followup → warning 전환 (2026-06-30)
     promotion_criteria:
@@ -3908,7 +3908,7 @@ entries:
       동치 + oracle problem) → review-tier(AC-9, review-responsibility SKILL) + honest-ceiling. presence ≠
       truth. "universal detection 완전 봉인" framing 부재(그런 hard-claim = 검사연극·위양성 ADR-119 §결정6).
       game-able residual 정직 공개: AC-2 tautological same-path + AC-13 열거 완결성(self-declared) 둘 다
-      완전 봉인 불가 → review-tier cross-ref(tautology-smell grep loop-closure ADR-082 §11.A).
+      완전 봉인 불가 → review-tier cross-ref(tautology-smell grep loop-closure ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840)).
       ★ 2-control 계약: positive-control(sanity mutant → silent-green 방어) ⊕ internal-control identity-probe
       (self-declared `identity_bearing: true` selector — 미선언=미대상 정직 no-op, semantic 재분류 금지 =
       AC-13 silent-skip 봉인). ★ 3-way taxonomy: silent-green(검출력 0)/silent-fallback(경로 우회)/
@@ -4271,7 +4271,7 @@ entries:
       remediation forcing-function. regression fence = 전용 hard-fail self-test workflow
       evidence-registry-check-test.yml (identity-oracle: live dup-key set == KNOWN_DUP_LOCI, CFP-2782 후 ∅).
       ★ honesty ceiling(ADR-151 §결정7 상속): 구조만·exact-key 중복만 검증 — presence ≠ truth.
-      alias-bomb = bounded degradation(면역 아님, ADR-082 Amд38 — "DoS-safe" hard-claim 부재).
+      alias-bomb = bounded degradation(면역 아님, ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840) — "DoS-safe" hard-claim 부재).
       anomaly(§결정25)↔schema disjoint. loader-safety(base=SafeLoader / add_constructor 0 / key=
       construct_object 경유) → 임의객체 tag ConstructorError BLOCKED. injection-safe(pull_request
       NOT pull_request_target / permissions contents:read + pull-requests:write).

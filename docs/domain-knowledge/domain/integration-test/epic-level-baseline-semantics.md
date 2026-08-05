@@ -16,7 +16,7 @@ related_adrs:
   - ADR-055  # Amendment 3 carrier (Epic-level baseline first activation)
   - ADR-044  # §결정 5 IntegrationTestAgent single-shot
   - ADR-073  # verify-before-assert (`frozen-SHA pin` discipline)
-  - ADR-082  # write-time self-write verification
+  - ADR-168  # write-time self-write verification (구 ADR-082, 재제정 CFP-2840)
 related_stories:
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
   - CFP-954  # 본 carrier Story (Story-3)
@@ -96,7 +96,7 @@ Story-level integration test (`tests/integration/<story-key>/`, QADeveloperAgent
 - **ADR-055 Amendment 3** — Epic-level baseline first activation SSOT (CFP-954 carrier)
 - **ADR-044 §결정 5** — IntegrationTestAgent single-shot pattern (test lane = single subagent)
 - **ADR-073** — verify-before-assert (`frozen-SHA pin` discipline, self-claim SHA 금지)
-- **ADR-082** — write-time self-write verification mandate (frozen_shas value 사실성 source direct verify)
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** — write-time self-write verification mandate (frozen_shas value 사실성 source direct verify)
 
 ## 변경 이력
 

@@ -20,7 +20,7 @@ related_adrs:
   - ADR-060   # framework primary anchor (warning-tier entry)
   - ADR-061   # production-scale invariant sibling axis (Amendment 2 §결정 9)
   - ADR-068   # boundary completeness invariants cross-ref (6-invariant axis 분석)
-  - ADR-082   # write-time self-write verification mandate cross-ref (§결정 7 per-area 분할 거부)
+  - ADR-168   # write-time self-write verification mandate cross-ref (§결정 8 per-area 분할 거부) (구 ADR-082, 재제정 CFP-2840; 구 '§결정 7' = 오귀속 정정)
   - ADR-086   # deputy creation decision framework (chief tie-break ladder Step 3 5-checklist)
 related_stories:
   - CFP-1334  # 본 entry carrier
@@ -148,7 +148,7 @@ self-contained fixture (외부 state — tmp dir / env var / DB connection 의�
 - **ADR-068** — Boundary completeness invariants (6 invariant cross-ref, chief tie-break ladder Step 2 axis 분석)
 - **ADR-068 Amendment 2** — Chief tie-break ladder 3 단계 (Step 1 RACI → Step 2 ADR-068 invariant → Step 3 chief judgement)
 - **ADR-068 Amendment 3** — I-6 audit-gate-pointer-existence (retroactive 면제 precedent verbatim)
-- **ADR-082 §결정 7** — Per-area 분할 거부 invariant (Option B reject 근거)
+- **ADR-168 §결정 8** (구 ADR-082 §결정 8, 재제정 CFP-2840; 구 표기 '§결정 7' 은 오귀속 — 동결 원문 per-area 분할 거부 = §결정 8) — Per-area 분할 거부 invariant (Option B reject 근거)
 - **ADR-086** — Deputy creation decision framework (5-checklist self-app, chief tie-break ladder Step 3)
 
 ## 변경 이력

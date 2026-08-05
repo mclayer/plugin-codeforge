@@ -81,13 +81,13 @@ cross-repo MCT-NNN key 신설 시 mctrader-hub `counters.json` reservation 선�
 
 ### verify-before-trust 4-layer governance positional axis
 
-본 violation pattern 은 verify-before-trust 4-layer governance (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D-9) 의 **distributed coordination layer (ADR-085 sibling)** 영역 — counter SSOT 영역 sub-domain 위치:
+본 violation pattern 은 verify-before-trust 4-layer governance (ADR-073 / ADR-070 / ADR-168 (구 ADR-082, 재제정 CFP-2840) / ADR-045 §D-9) 의 **distributed coordination layer (ADR-085 sibling)** 영역 — counter SSOT 영역 sub-domain 위치:
 
 | Layer | ADR | 영역 |
 |---|---|---|
 | 1 | ADR-073 | Orchestrator verify-before-assert (cross-repo state) |
 | 2 | ADR-070 | Codex verify-before-trust (외부 worker output) |
-| 3 | ADR-082 | Write-time self-write verification (internal lane agent) |
+| 3 | ADR-168 (구 ADR-082, 재제정 CFP-2840) | Write-time self-write verification (internal lane agent) |
 | 4 | ADR-045 §D-9 | PMOAgent retro corpus pattern_count escalation |
 | 5 | ADR-085 | Multi-session collaboration protocol (active_sessions / handoff) |
 | **6 (본 entry)** | (ADR-085 disjoint sub-axis 후보) | **Counter SSOT cross-repo enforcement** — distributed counter reservation verify-before-assign |
@@ -126,7 +126,7 @@ pattern_count ≥ 3 reach (ADR-045 §D-9 cross_story_pattern_adr_trigger Mandato
 - `scripts/check-counter-ssot.sh` + `scripts/lib/check_counter_ssot.py` — Python SSOT 정합
 - evidence-checks-registry `counter-ssot-check` entry (warning tier 첫 도입, ADR-060 §결정 5)
 - `hotfix-bypass:counter-ssot-check` label 신설 (ADR-024 §결정 6.A per-entry namespace, family member next)
-- bats fixture (TDD RED→GREEN proof per ADR-082 §결정 11.A)
+- bats fixture (TDD RED→GREEN proof per ADR-168 §결정 11.A (구 ADR-082 §결정 11.A, 재제정 CFP-2840))
 - 7+ repo 전수 적용 (cross-repo workflow, CODEFORGE_CROSS_REPO_PAT scope)
 
 ### 규칙 4 — pattern_count + ADR-045 §D-9 escalation threshold
@@ -150,7 +150,7 @@ pattern_count ≥ 3 reach (ADR-045 §D-9 cross_story_pattern_adr_trigger Mandato
 
 ### scope 외 (별 carrier 영역)
 
-- **Option A 실 구현** (workflow + script + bats + evidence-checks-registry + label-registry) — **CFP-FU-1 별 follow-up Story** (Phase 1 declarative anchor 본 SSOT + Phase 2 mechanical wire 별 Story carrier, ADR-082 §결정 6 retain pattern 답습)
+- **Option A 실 구현** (workflow + script + bats + evidence-checks-registry + label-registry) — **CFP-FU-1 별 follow-up Story** (Phase 1 declarative anchor 본 SSOT + Phase 2 mechanical wire 별 Story carrier, ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) retain pattern 답습)
 - **Option C centralization** (plugin API + consumer migration) — over-engineering (single org dogfood scope, 별 carrier 영역)
 - **mctrader consumer-side counters.json schema** — consumer repo SSOT 영역 (wrapper plugin scope 외)
 - **cross-repo CODEFORGE_CROSS_REPO_PAT scope 확장** — Option A 의 transitive requirement (ADR-066 carrier)

@@ -21,7 +21,7 @@ related_adrs:
   - ADR-050       # Parallel epic coordination — Epic-level scope manifest + conflict label coordination
   - ADR-054       # Story 작성 의무 + doc-only fast-path — 본 codify 형식
   - ADR-073       # Orchestrator verify-before-assert — lane-entry sentinel 4-step polling (Amendment 2~4)
-  - ADR-082       # Write-time self-write verification mandate — author claim verify (write-time anchor)
+  - ADR-168       # Write-time self-write verification mandate — author claim verify (write-time anchor) (구 ADR-082, 재제정 CFP-2840)
   - ADR-085       # Multi-session collaboration protocol — active_sessions[] + lane-entry sentinel + rebase merge 우선
 related_stories:
   - CFP-1588      # 본 codify carrier (FU-1523-3 묶음 F-DR-011)
@@ -74,11 +74,11 @@ sunset_criteria: |
 
 각 occurrence 의 ROOT cause = **lane flow 진행 중 main branch advance** (sibling session merge stream). worktree-first invariant 정합 환경 inherent — single-session sequential 환경에서는 재현 불가 영역.
 
-### Cross-reference (ADR-085 / ADR-073 / ADR-082 multi-layer governance)
+### Cross-reference (ADR-085 / ADR-073 / ADR-168 multi-layer governance)
 
 - **ADR-085** (Multi-session collaboration protocol) §1 — `active_sessions[]` field + lane-entry sentinel + rebase merge 우선 `normative` ("강제 규칙") 3-pillar anchor. 본 sentinel = ADR-085 coordination axis 의 sentinel pattern instance.
 - **ADR-073 Amendment 2~4** (Orchestrator verify-before-assert) §결정 1 — transition trigger enum 4-set (`lane_spawn` / `pr_open` / `merge_transition` / `worktree_lane_spawn`) + lane-entry sentinel 4-step polling (title-search / epic-state-poll / head-compare-sibling-commits / active_sessions_check). 본 sentinel 의 verify axis layer.
-- **ADR-082 §결정 1** (Write-time self-write verification mandate) — author claim verify (write-time anchor). 본 sentinel 발생 시 stale local main checkout state 회피 forcing function 영역.
+- **ADR-168 §결정 1 (구 ADR-082 §결정 1, 재제정 CFP-2840)** (Write-time self-write verification mandate) — author claim verify (write-time anchor). 본 sentinel 발생 시 stale local main checkout state 회피 forcing function 영역.
 
 ## 핵심 규칙
 
@@ -155,7 +155,7 @@ mechanical wire 후보 SSOT:
 - **ADR-054** (doc-only fast-path) — 본 carrier (CFP-1588) classification 근거 (SSOT 문서 변경 + src/tests 무변경)
 - **ADR-058** (ADR sunset criteria mandate) §결정 5 — `is_transitional: false` permanent governance sentinel rationale
 - **ADR-073** (Orchestrator verify-before-assert) Amendment 2~4 — transition trigger enum 4-set + lane-entry sentinel 4-step polling (verify axis carrier)
-- **ADR-082** (Write-time self-write verification mandate) §결정 1 — stale local main checkout state 회피 forcing function (write-time anchor)
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** (Write-time self-write verification mandate) §결정 1 — stale local main checkout state 회피 forcing function (write-time anchor)
 - **ADR-085** (Multi-session collaboration protocol) — `active_sessions[]` + lane-entry sentinel + rebase merge 우선 `normative` 3-pillar anchor (coordination axis carrier, 본 sentinel = narrative SSOT companion)
 
 ## 변경 이력

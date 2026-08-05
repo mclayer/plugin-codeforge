@@ -391,7 +391,7 @@ self_tests:
     manual_reason: ""
     g_boundary_check: "정적 shell-test exit-masking/mock-seam lint self-test — soak=G2·real-render=§8.7·DAST=G5 runtime 축 disjoint (wrapper-self plugin-meta-na, 정적 lint 판별력 결박)."
 
-  # ── CFP-2646 (ADR-082 Amendment 38 §결정 16) — resource-safety-claim-proof-presence self-test (dedicated workflow step, alive) ──
+  # ── CFP-2646 (ADR-168 §결정 16 (구 ADR-082 Amendment 38, 재제정 CFP-2840)) — resource-safety-claim-proof-presence self-test (dedicated workflow step, alive) ──
   - self_test: "tests/scripts/test_check-resource-safety-claim-proof.sh"
     execution_channel: "workflow:resource-safety-claim-proof-presence.yml:resource-safety-claim-proof-presence"
     channel_status: "alive"

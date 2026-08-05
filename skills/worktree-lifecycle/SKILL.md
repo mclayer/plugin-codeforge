@@ -38,7 +38,7 @@ bash templates/scripts/worktree-create.sh <branch-name> [<base-branch>]   # base
 - **subagent spawn 시**: prompt 에 `Working dir: <worktree-path>` 주입 (playbook §3.5 step 2).
 - **모든 file operation** = worktree 절대경로 기준 — git command 는 `git -C <worktree_abs_path> <subcommand>`, Write/Edit 는 worktree 하위 absolute path (forward-slash 정규형). 상대경로 호출은 harness cwd reset 후 main repo 로 resolve 되는 사고 경로 (ADR-040 Amendment 6 §결정 7.J.1).
 - **Read/Grep 도 worktree 경로 고정** — main repo path 는 stale snapshot 위험 (ADR-040 Amendment 7 §결정 7.J.4).
-- **cross-repo 작업** = repo 별 worktree 분리. wrapper worktree 안에서 internal-docs write 금지 — 별도 worktree explicit create + switch (playbook §3.5.2 / ADR-082 Amendment 21 sub-scope 1-J).
+- **cross-repo 작업** = repo 별 worktree 분리. wrapper worktree 안에서 internal-docs write 금지 — 별도 worktree explicit create + switch (playbook §3.5.2 / ADR-168 §결정 1 sub-scope 1-J (구 ADR-082 Amendment 21, 재제정 CFP-2840)).
 
 ## 3. 완결 시 정리 — eager primary (1급 단계)
 
