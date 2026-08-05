@@ -158,23 +158,23 @@ Windows drive-letter case 변동 (`C:/` vs `c:/`) + slash direction (`/` vs `\`)
 
 ## 관련 ADR
 
-### ADR-082 §결정 1 layer disjoint 4-layer 표 cross-ref
+### ADR-168 §결정 1 layer disjoint 4-layer 표 cross-ref
 
 | Layer | ADR | Verify 대상 | scope 분리 |
 |---|---|---|---|
 | Layer 1 (Orchestrator self-assertion) | ADR-073 base | cross-repo state + file path 단정 | working tree < origin/main canonical staleness 영역 |
 | Layer 2 (External worker output) | ADR-070 | Codex finding evidence | sandbox boundary cross-cutting |
-| Layer 3 (Internal lane agent self-write) | ADR-082 | §9 evidence / Phase 0 mapping / corpus enumeration write-time semantic truth | 작성 값 자체의 사실성 source verify |
+| Layer 3 (Internal lane agent self-write) | ADR-168 (구 ADR-082, 재제정 CFP-2840) | §9 evidence / Phase 0 mapping / corpus enumeration write-time semantic truth | 작성 값 자체의 사실성 source verify |
 | Layer 4 (PMOAgent retro corpus pattern_count) | ADR-045 §D-9 | cross-Story pattern_count ≥ threshold 2 검출 시 ADR escalation forcing function | retro corpus enumeration |
 | **+ Amendment 3 (본 narrative)** | **ADR-073 Amendment 3** | **worktree-first self-confusion (lane agent self-write 가 만든 commit 의 self-ownership)** | **Layer 1 자체 영역 확장 (multi-worktree self-confusion sub-domain) — Layer 3 self-write 영역과 disjoint 보완** |
 
-본 Amendment 3 = ADR-073 Layer 1 자체 영역 안 multi-worktree self-confusion sub-domain 신설. ADR-082 Layer 3 = 작성 값 사실성 verify / 본 Amendment 3 = commit ownership worktree topology verify — disjoint axis.
+본 Amendment 3 = ADR-073 Layer 1 자체 영역 안 multi-worktree self-confusion sub-domain 신설. ADR-168 (구 ADR-082, 재제정 CFP-2840) Layer 3 = 작성 값 사실성 verify / 본 Amendment 3 = commit ownership worktree topology verify — disjoint axis.
 
 ### Cross-ref enumeration
 
 - **ADR-073 Amendment 3** = 본 narrative SSOT 의 normative anchor (worktree-first self-ownership verify 3-tuple, declaration-only-Wave-1)
 - **ADR-040 worktree convention** = 본 도메인의 동인 root (multi-worktree distributed local state 토폴로지 생성)
-- **ADR-082** = disjoint super-class (write-time semantic truth verify vs commit ownership worktree topology verify)
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** = disjoint super-class (write-time semantic truth verify vs commit ownership worktree topology verify)
 - **ADR-073 Amendment 2 + memory rule 6/7** = detection layer (본 verification layer 의 선행 layer)
 - **ADR-064** = decision principle mandate (self-application top-down ratchet — Amendment 3 강화 방향 only)
 - **ADR-058** = ADR sunset criteria mandate (is_transitional: false 영구 정책, sunset_justification N/A)

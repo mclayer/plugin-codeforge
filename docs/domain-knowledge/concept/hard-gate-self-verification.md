@@ -10,7 +10,7 @@ related_adrs:
   - ADR-154  # carrier — super-class 명명 + 3-way taxonomy + 2-control 계약 + presence/shape 메타-게이트 + honest-ceiling(§결정1~10). 본 concept = ADR-154 결정의 domain-knowledge mirror
   - ADR-151  # execution-liveness(L1) 인벤토리 8-field REUSE + honest-ceiling(§결정7) 상속. subject disjoint(self-test 코퍼스 ↔ 임의 hard-gate core)
   - ADR-152  # discriminating-A/B 어휘 + honest-ceiling 구조 + born-hollow positive-leak 상속 (재codify 금지, cross-ref)
-  - ADR-082  # §11.A red-green-stash-proof(RED proof) REUSE — write-time verify super-class kin (amend 아님)
+  - ADR-168  # §11.A red-green-stash-proof(RED proof) REUSE — write-time verify super-class kin (amend 아님) (구 ADR-082, 재제정 CFP-2840)
   - ADR-119  # research-before-claims — 게이트 verdict = outcome ground-truth. honest-ceiling = "universal detection 기계강제" hard-claim 금지 근거(§결정6 검사연극 차단)
   - ADR-060  # evidence-gate — 신규 메타-게이트 = warning-tier 등록(day-1 required 승격 없음). 등급/승격 축 ⊥ 검출보장 축
   - ADR-006  # §8.7 discriminating-fixture 선례 (CFP-1334)
@@ -64,7 +64,7 @@ sources:
 
 본 super-class 는 기존 named 조각을 **재정의 없이 cross-ref 로 compose** 한다. 조각과 그 SSOT(재codify 금지 — 각 소유 ADR 이 authoritative):
 
-- `red-green-stash-proof` — RED proof (ADR-082 §11.A). REUSE.
+- `red-green-stash-proof` — RED proof (ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840)). REUSE.
 - `vacuous-pass` — 검출력 0 green 의 상위 class. cross-ref.
 - `execution-liveness` — self-test 채널 alive, L1 (ADR-151). REUSE.
 - `discriminating-fixture` — clean↔mutant 구별 fixture (ADR-006 §8.7). cross-ref.
@@ -100,7 +100,7 @@ sources:
 - 검출 sufficiency 는 **review-tier**(declared)만 — L3 를 normative(기계강제)로 격상하는 어떤 규칙도 금지(불변식).
 - **presence ≠ truth**: 메타-게이트의 green 은 "번들이 형식상 존재한다"이지 "게이트가 결함을 실제로 죽인다"가 아니다.
 - **"universal detection 완전 봉인" framing 을 하지 않는다** — 그런 hard-claim 은 검사연극(ADR-119 §결정6)이자 위양성. 본 개념은 "구조 fail-closed + 형식누락 저감 + 잔여 정직 공개"로만 재약속하며 **"완전 봉인"을 주장하지 않는다**(불가). bounded degradation.
-- **game-able residual 정직 공개**: (a) AC-2 shape-scan 은 tautological same-path(inline hand-copy 가 2-exit shape 로 위장)에 속을 수 있고, (b) AC-13 identity-bearing 열거 완결성은 self-declared 의존이라 미선언 게이트를 semantic 재분류 못 한다 — 두 잔여 모두 기계로 **완전 봉인 불가**임을 정직 공개하고 review-tier(설계리뷰) + tautology-smell grep loop-closure(ADR-082 §11.A)에 cross-ref 한다.
+- **game-able residual 정직 공개**: (a) AC-2 shape-scan 은 tautological same-path(inline hand-copy 가 2-exit shape 로 위장)에 속을 수 있고, (b) AC-13 identity-bearing 열거 완결성은 self-declared 의존이라 미선언 게이트를 semantic 재분류 못 한다 — 두 잔여 모두 기계로 **완전 봉인 불가**임을 정직 공개하고 review-tier(설계리뷰) + tautology-smell grep loop-closure(ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840))에 cross-ref 한다.
 
 ### R-5: presence/shape 메타-게이트 계약 (mechanizable floor)
 
@@ -119,7 +119,7 @@ disjoint 축(재유입 봉인):
 - **⊥ L3 detection-power(검출 sufficiency)**: 게이트가 실제 결함을 죽이는가 = review-tier/undecidable. 본 개념 = L1(ADR-151 소유) + L2 presence/shape 까지. 완전 봉인 아님.
 - **⊥ execution-liveness(ADR-151)**: self-test 채널 alive = ADR-151 소관. 본 개념 = 임의 hard-gate core 의 self-verification 계약(subject disjoint).
 - **⊥ evidence-gate 등급/승격(ADR-060)**: 등급/승격 축 ⊥ 검출보장 축. 신규 메타-게이트 = warning-tier 등록.
-- **⊥ ADR-082 §11.A(regression test↔production binding)**: bug-fix regression 스코프 ⊥ 임의 hard-gate self-verification super-class. red-green-stash-proof 재codify 금지(cross-ref).
+- **⊥ ADR-168 §결정 11.A (구 ADR-082 §11.A, 재제정 CFP-2840)(regression test↔production binding)**: bug-fix regression 스코프 ⊥ 임의 hard-gate self-verification super-class. red-green-stash-proof 재codify 금지(cross-ref).
 - **⊥ runtime soak/DAST/real-render**: 정적 lint — soak(G2)/DAST(G5)/real-render(§8.7) runtime 축 무관(wrapper-self plugin-meta-na).
 
 ## 관련 ADR
@@ -127,7 +127,7 @@ disjoint 축(재유입 봉인):
 - **ADR-154** (carrier) — super-class 명명 + 3-way taxonomy + 2-control + presence/shape 메타-게이트 + honest-ceiling. 본 concept = 그 결정의 domain-knowledge mirror.
 - **ADR-151** — execution-liveness(L1) + 인벤토리 8-field REUSE + honest-ceiling(§결정7) 상속. subject disjoint.
 - **ADR-152** — discriminating-A/B 어휘 + honest-ceiling 구조 + born-hollow positive-leak 상속(재codify 금지).
-- **ADR-082** — §11.A red-green-stash-proof REUSE (write-time verify super-class kin, amend 아님).
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** — §11.A red-green-stash-proof REUSE (write-time verify super-class kin, amend 아님).
 - **ADR-119** — 게이트 verdict = outcome ground-truth + 검사연극 차단(honest-ceiling 근거).
 - **ADR-060** — 신규 메타-게이트 warning-tier 등록 host.
 - **ADR-006** — §8.7 discriminating-fixture 선례.

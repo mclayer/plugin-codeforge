@@ -20,7 +20,7 @@ related_adrs:
   - ADR-053-Amendment-2   # D1 trigger TYPE 6번째 entry (external-wrapper-invoked session resume) sibling
   - ADR-057               # Sonnet→Opus model-tier substitution (in-process axis, disjoint mechanism)
   - ADR-073               # verify-before-assert (transition trigger enum, lane_spawn/pr_open/merge_transition)
-  - ADR-082               # write-time self-write verification mandate (chief author write discipline)
+  - ADR-168               # write-time self-write verification mandate (chief author write discipline) (구 ADR-082, 재제정 CFP-2840)
   - ADR-085               # active_sessions[] multi-session collaboration protocol
   - ADR-070               # §D6 mandatory-real-execution-evidence STANDING (4-source measurement carrier)
   - ADR-068               # I-3 conditional guard + I-5 dimensional empirical grounding
@@ -224,7 +224,7 @@ THEN gate_result = fail
 ### Mechanical enforcement 한계
 
 - 본 entry = empirical knowledge SSOT (DomainAgent kind). mechanical enforcement = ADR-110 mechanical_enforcement_actions 2 entry (`external-wrapper-ssot-boundary-self-check` + `resume-fidelity-test-evidence`) 영역.
-- Phase 1 = declaration-only Wave 1 (ADR-082 §결정 6 retain pattern 답습). Phase 2 = mechanical wire 영역.
+- Phase 1 = declaration-only Wave 1 (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) retain pattern 답습). Phase 2 = mechanical wire 영역.
 
 ### Cross-platform 한계
 
@@ -248,7 +248,7 @@ THEN gate_result = fail
 - **ADR-053 Amendment 2** — §D1 trigger TYPE 6번째 entry `external-wrapper-invoked session resume` (Windows Task Scheduler + PowerShell wrapper 가 `claude --resume <uuid>` 호출로 신규 session spawn 시 구조적 재구동 의무 영역). sibling carrier — D1 5 기존 trigger 와 axis 동형.
 - **ADR-057 §결정 2** — Sonnet→Opus model-tier substitution (in-process axis). 본 entry OS-external axis 와 disjoint mechanism — 본 entry 활성 시 ADR-057 §결정 2 위배 0 (axis disjoint cross-ref 영구 codify).
 - **ADR-073 §결정 1** — verify-before-assert (lane_spawn / pr_open / merge_transition trigger). 본 carrier Story (CFP-1355) chief author write-time pre-publish FIX 영역 (chief packet ADR-110 → ADR-109 → ADR-110 2-layer verify-before-trust catch, ADR-082 Amendment 7 backward-staleness 정합).
-- **ADR-082** — write-time self-write verification mandate. 본 entry write-time verify (sub-dir 미존재 verify / cross-ref ADR direct grep verify) 의무 정합.
+- **ADR-168 (구 ADR-082, 재제정 CFP-2840)** — write-time self-write verification mandate. 본 entry write-time verify (sub-dir 미존재 verify / cross-ref ADR direct grep verify) 의무 정합.
 - **ADR-085** — multi-session collaboration protocol. 본 entry wrapper resume 후 새 session 의 active_sessions[] field 영역 — single-user 가정 retain (Phase 1 scope).
 - **ADR-070 §D6** — mandatory-real-execution-evidence STANDING. 본 entry §결정 7 4-source measurement 실 실행 의무 정합 — Phase 2 사용자 hand-test 영역.
 - **ADR-068 I-3 + I-5** — conditional guard + dimensional empirical grounding. 본 entry §결정 7 4-source measurement 의 dimensional empirical-source annotation 정합.

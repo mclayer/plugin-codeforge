@@ -20,7 +20,7 @@ related_adrs:
   - ADR-063  # Amendment 6 §결정 17 marketplace channels[] matrix (cross-ref)
   - ADR-040  # worktree-first convention
   - ADR-073  # verify-before-assert (`frozen-SHA pin`)
-  - ADR-082  # write-time self-write verification mandate
+  - ADR-168  # write-time self-write verification mandate (구 ADR-082, 재제정 CFP-2840)
 related_stories:
   - CFP-699  # grandparent Epic
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
