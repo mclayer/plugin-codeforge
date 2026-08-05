@@ -15,7 +15,8 @@ diff 0 (seam 축 한정 주장. production 클래스 내부는 D1~D6 로 별도 
 
 추가 표면 3종 (§4.1 / §3.5 / 결정 14):
   1. `write_property_unbudgeted` — pre-flight budget bypass (AC-5 over-limit payload 의 실 API 도달).
-     명명 제약 = "존재하지 않는 budgeted 짝을 함의하는 이름 금지" → `put_property_v2_unbudgeted` 기각.
+     명명 제약 = "존재하지 않는 budgeted 짝을 함의하는 이름 금지" (부모에 budgeted 짝이 존속하지
+     않으므로 구 key-path 메서드명 + `_unbudgeted` 형 명명은 모순 신호 — §4.1 정정 확정치 채택).
   2. `probe_property_v1` — v1 endpoint PUT **1-call** probe (재시도·backoff 0, 429 조우 = 즉시 종결).
   3. 전 응답 HeaderCapture — `_perform_request` override 로 **응답마다 무조건** 레코드 생성
      (AC-6a normative: 레코드 생성은 자사 코드 결정론이라 헤더 존재 여부와 무관하게 강제 가능).

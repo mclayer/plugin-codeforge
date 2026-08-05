@@ -3,14 +3,16 @@
 """
 confluence_backward_measure.py — CFP-2829 잔여 4건 live 실측 harness (CFP-2889 전면 재작성).
 
-원판(CFP-2829 S2)은 born-broken 이었다 — verdict 하드코딩(L304-313)·tier enum 비소속 토큰
-`"observed-only"`(L341/350/361/375)·`estimated_tier` 추정치 각인(L374)·구 key-path 3메서드 호출·
-HTTP 0회 상태의 `(observed)` 각인. 본 파일은 그 구조를 **전면 재작성**한다 (Change Plan §5 #3).
+원판(CFP-2829 S2)은 born-broken 이었다 — verdict 하드코딩(L304-313)·AC-13 4분기가 HTTP 0회
+상태에서 **tier enum 비소속 산문 토큰**을 고정 반환(L341/350/361/375)·basic-auth 에 비적용인
+**추정 tier 수치 필드** 각인(L374)·구 key-path 3메서드 호출·HTTP 0회 상태의 `(observed)` 각인.
+본 파일은 그 구조를 **전면 재작성**한다 (Change Plan §5 #3).
 
 핵심 구조 (테스트 가능성 = 컴포넌트 분리):
   1. **순수 verdict 3종** (`verdict_storage_axis` / `verdict_over_limit_axis` / `verdict_rate_axis`)
      — 관측 dict 입력만, I/O 0. 반환 직전 `lib.ac_id.TIER_ENUM` 대조 assert (비소속 토큰 =
-     즉시 AssertionError = fail-loud). `"observed-only"`·`estimated_tier` 는 본 파일 전체에 0회.
+     즉시 AssertionError = fail-loud). 원판의 enum 비소속 산문 토큰·추정 tier 필드는 본 파일에
+     식별자·리터럴 어느 형태로도 잔존하지 않는다 (grep 으로 반증 가능한 형태의 단언).
   2. **결정론 fixture** (`build_w1_fixture` / `build_boundary_payload`) — `time.time()` 0
      (결정 16: byte-exact 정의역 = 동일 실행 내 store→load).
   3. **PageIdentityGate** (K-5) — `docs/confluence-ia-tree.yaml` runtime 파싱 deny-set
@@ -225,11 +227,22 @@ def redact_payload(value: Any) -> str:
 def emit_record(obj: Any) -> str:
     """stdout·NDJSON·golden-후보 **전 채널 공통** 최종 관문.
 
-    단계 (§7.1 gate D — 순서 고정):
+    단계 (§7.1 gate D):
       1. (필드 생성 시점 — 호출자 책임) digest 는 `digest_grouped`, body 는 `sanitize_body_field`
          를 이미 통과했어야 한다. 본 함수는 원시 64-hex·미가공 body 를 정상화하지 않는다.
-      2. 직렬화 후 `_scrub` — exact-value redaction(token·email·b64 파생형) 1순위 + 휴리스틱.
-      3. 최종 전체 `_deny_scan_for_secrets` — hit = **K-6 abort** (원문 로깅 금지, 상세 억제).
+      2. **조립 직후(pre-scrub) deny-scan — hit = K-6 abort**.
+      3. `_scrub` — exact-value redaction(token·email·b64 파생형) 1순위 + 휴리스틱 backstop.
+      4. 최종 전체 `_deny_scan_for_secrets` 재수행 (§7.1 step 4 문언 그대로 — 최종 방어선).
+
+    **step 2 배치 근거 (구현 lane 관측 — 설계 §7.1 문언은 scrub→deny-scan 순서만 명시)**:
+    `_scrub` 의 휴리스틱(`[A-Za-z0-9+/=]{20,}` → REDACT)은 deny-scan 의 탐지 패턴과 **동일
+    문자클래스의 상위집합**이라, scrub 을 먼저 걸면 deny-scan 이 볼 20+ run 이 남지 않는다 →
+    K-6 은 구조적으로 발화 불가(hollow gate)가 되고, 산출물에 원문 hash 를 주입해도 abort 대신
+    `***REDACTED***` 로 **조용히 소실**된다. 이는 설계 자신의 discriminating 계약
+    **D-10a("산출물 원문 hash 주입 → deny-scan RED")** 와 정면 충돌한다. 따라서 abort 판정은
+    pre-scrub 텍스트로 하고(§3.9 의 grouped-hex·값 비기록 규율이 여기서 실제 의미를 가진다),
+    §7.1 step 4 의 최종 재수행은 그대로 남긴다. body 축은 이미 필드 생성 시점에 drop 되므로
+    (D-10b) 비신뢰 응답이 pre-scrub 판정을 오발동시키지 않는다.
 
     dict/list 는 JSON 직렬화, str 은 그대로 통과 (사람 가독 회계표도 동일 관문을 지나게).
     """
@@ -237,11 +250,19 @@ def emit_record(obj: Any) -> str:
         text = obj
     else:
         text = json.dumps(obj, ensure_ascii=False, indent=2)
-    text = _scrub(text)
+
+    # step 2 — 조립 원문 판정 (K-6 primary). 검출 상세(=잠재 secret)는 로그·예외 메시지에
+    # 싣지 않는다 (CodeQL clear-text logging 정합).
     ok, _err = _deny_scan_for_secrets(text)
     if not ok:
-        # 검출 상세(=잠재 secret)를 로그·예외 메시지에 싣지 않는다 (CodeQL clear-text logging 정합).
-        raise EmitDenyScanAbort("emit deny-scan hit — 산출물 방출 중단 (K-6, 상세 억제)")
+        raise EmitDenyScanAbort("emit deny-scan hit (조립 원문) — 산출물 방출 중단 (K-6, 상세 억제)")
+
+    text = _scrub(text)
+
+    # step 4 — 최종 방어선 재수행 (scrub 이 새 패턴을 만들지 않음을 확인).
+    ok, _err = _deny_scan_for_secrets(text)
+    if not ok:
+        raise EmitDenyScanAbort("emit deny-scan hit (최종) — 산출물 방출 중단 (K-6, 상세 억제)")
     return text
 
 
@@ -250,7 +271,7 @@ def emit_record(obj: Any) -> str:
 def _tier(value: str) -> str:
     """반환 직전 기계 SSOT 대조 — TIER_ENUM 비소속 토큰은 즉시 AssertionError (fail-loud).
 
-    `"observed-only"` 류 산문 수식어가 tier 값으로 새는 경로를 구조적으로 차단한다
+    enum 비소속 산문 수식어가 tier 값으로 새는 경로를 구조적으로 차단한다
     (원판 L341/350/361/375 결함의 재발 방지 — D-3).
     """
     if value not in TIER_ENUM:
@@ -1382,12 +1403,20 @@ def setup_logging() -> None:
     """T-3 — root logger 에 SanitizedHandler 부착 (rest.py 의 sanitizer 재사용).
 
     import 시점이 아니라 `main()` 에서만 호출한다 (모듈 import 부작용 0 — verdict 함수 순수성).
+
+    formatter 배치 주의 (rest.py 무수정 제약 하 이중 prefix 회피): `SanitizedHandler.emit` 은
+    자기 formatter 로 1회 format → scrub → `record.msg` 치환 → base handler 가 **다시** format
+    한다. 따라서 base 에 full format 을 주면 `TS [INFO] TS [INFO] msg` 로 prefix 가 겹친다.
+    배치 = base 는 `%(message)s`(pass-through), wrapper 가 full format 을 소유 (생성자가
+    base.formatter 를 복사하므로 **생성 후** 재지정해야 한다).
     """
     root = logging.getLogger()
     root.setLevel(logging.INFO)
     base = logging.StreamHandler(sys.stderr)
-    base.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-    root.handlers = [SanitizedHandler(base)]
+    base.setFormatter(logging.Formatter("%(message)s"))
+    handler = SanitizedHandler(base)
+    handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    root.handlers = [handler]
 
 
 def build_parser() -> argparse.ArgumentParser:
