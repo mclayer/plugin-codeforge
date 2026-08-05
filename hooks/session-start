@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-# Bypass check — audit trail 의무 (ADR-058 §결정 5 + ADR-060 §결정 7 정합, §3 결정 2 verbatim)
+# Bypass check — audit trail 의무 (ADR-058 §결정 5 + ADR-171 §결정 7 정합, §3 결정 2 verbatim)
 if [ "${BYPASS_CODEFORGE_PREREQ:-0}" = "1" ]; then
   >&2 printf '[codeforge-prereq] BYPASS_CODEFORGE_PREREQ=1 — TodoWrite preload directive suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   exit 0

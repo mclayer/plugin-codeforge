@@ -89,7 +89,7 @@ codeforge 식별자 어휘. **사용 금지 아님** — 단 등장 시 inline �
 
 ## 사용 규칙
 
-- **카테고리 (a) 어휘**: 사용 시 lint warning (`scripts/check-wording-dictionary.sh`). PR 머지 차단 안 함 (warning tier, ADR-060 §결정 5). 정당 사용 = `hotfix-bypass:wording-dictionary` label + PR description `### Bypass reason` 의무.
+- **카테고리 (a) 어휘**: 사용 시 lint warning (`scripts/check-wording-dictionary.sh`). PR 머지 차단 안 함 (warning tier, ADR-171 §결정 5). 정당 사용 = `hotfix-bypass:wording-dictionary` label + PR description `### Bypass reason` 의무.
 - **카테고리 (b) 어휘**: 사용 가능. 단 inline 평문 정의 동반 필수. 정의 누락 시 advisory warning (exit 0).
 - **lint 적용 영역 (per-word scope decoupling — ADR-064 Amendment 5 / CFP-750)**: 어휘별 독립 — `박제` / `못 박기` / `pin` / `freezing` = `docs/**` + `CLAUDE.md` + `CHANGELOG.md` + `templates/**` (expanded scope) / `별` standalone = `docs/adr/**` / `archive/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**` (**6-scope** — archive/adr CFP-2661 D1 union, ADR-064 Amendment 15/CFP-1561; `docs/inter-plugin-contracts/**`·`CHANGELOG.md` 배제 = 박제보다 narrow). 카테고리 (b) advisory = 박제 expanded scope 와 동일 영역.
 - **behavioral directive 영역** (Orchestrator user-facing dialog text turn): mechanical enforce 미시도. retro audit signal 만 (PMOAgent retro file §wording-discipline 표).
