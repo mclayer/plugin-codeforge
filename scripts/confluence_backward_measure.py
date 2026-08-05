@@ -692,9 +692,9 @@ def plan_accounting(cap: int = WRITE_CAP) -> Dict[str, Any]:
 def render_plan_table(plan: Dict[str, Any]) -> str:
     """회계표 사람 가독 렌더 (승인 대상 표면)."""
     lines: List[str] = []
-    lines.append("=" * 74)
+    lines.append("-" * 74)
     lines.append("CFP-2889 measurement plan (실 write 0 — 승인 전 사전 회계표)")
-    lines.append("=" * 74)
+    lines.append("-" * 74)
     lines.append(f"self-cap                 : {plan['cap']} (POST·PUT HTTP 시도 합산, retry 포함)")
     lines.append(f"논리 write 합             : {plan['logical_write_total']}")
     lines.append(f"최악 write 시도 (429 재시도): {plan['worst_case_write_attempts']} "
@@ -721,7 +721,7 @@ def render_plan_table(plan: Dict[str, Any]) -> str:
     identity = plan.get("page_identity") or {}
     lines.append(f"page 신원 확인            : {identity.get('summary', '미확인 — creds/page-id 부재')}")
     lines.append(f"환경 게이트               : {plan.get('gate_summary', '')}")
-    lines.append("=" * 74)
+    lines.append("-" * 74)
     lines.append("live 실행 조건 4-AND: --confirm-live-write ∧ creds ∧ CFP2829_TEST_PAGE_ID "
                  "∧ ¬CFP2829_MEASURE_SKIP_WRITE")
     return "\n".join(lines)
