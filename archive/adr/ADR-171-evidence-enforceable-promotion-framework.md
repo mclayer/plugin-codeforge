@@ -462,38 +462,38 @@ Tier 1 surfacing 은 required contexts 를 회피 → ADR-127 required-check SSO
 
 ### (2) 자체 §결정 1~12 (ADR-060 최초 codify, CFP-389) → §결정 1~12 (번호 보존)
 
-| 구 §결정 | 신 위치 | 태그 | 구 앵커 (ADR-060) | 비고 |
-|---|---|---|---|---|
-| §결정 1 (Framework SSOT 위치) | §결정 1 | carrier-preserved | `### 결정 1` | §5.5 CL-1 채택 서사 제거(저작 증적) |
-| §결정 2 (Registry data single SSOT) | §결정 2 | **기술정정(구조개선)** | `### 결정 2` | "entry-level 현행값 = registry 유일 원본" 정형 문장 추가 — §결정 2 원칙의 명시화(본 재제정 fold direction 의 근거 조항) |
-| §결정 3 (4-tier enum) | §결정 3 | **기술정정(구조개선)** | `### 결정 3` | 구 Amd2(required 전환) + §7.9.B(surfacing qualifier) + 구 Amd25(honesty-ceiling tier-독립) fold — "CFP-391 이 후속 명시" dated 서사 제거 |
-| §결정 4 (첫 entry) | §결정 4 | **기술정정(구조개선)** | `### 결정 4` | entry yaml 사본 → registry SSOT 이관. lint 책임 4건·exit·bypass skip = 전량 승계 |
-| §결정 5 (warning mode 첫 적용) | §결정 5 | **기술정정(구조개선)** | `### 결정 5` | workflow 양식 상세(trigger·paths·pip) = dated 이행분(구본 동결). 신규 entry "신규 §결정 0" 등록 절차 = 구 Amd21(fm)~26 반복 관행의 fold(현재형 일반 규칙 승격 — 규범 신설 아닌 기존 관행 모아쓰기) |
-| §결정 6 (승격 gate 3-AND) | §결정 6 | **기술정정(구조개선)** | `### 결정 6` | (c) sibling 구체 CFP 열거 → registry field SSOT + 관행 2종(append-보존/self-carrier 제외 — 구 Amd1·2·11 fold). evidence 6 산출물(i~vi) 전량 승계. §7.9.C baseline-relative fold |
-| §결정 7 (hotfix bypass channel) | §결정 7 | carrier-preserved | `### 결정 7` | 구 Amd3 sharpening 문단 = 본문 fold(구본은 (Amendment 3) 표기로 기반영). label-registry MINOR 절차 서사 = dated |
-| §결정 8 (audit trail schema) | §결정 8 | carrier-preserved | `### 결정 8` | schema·re-entry·lint·author 검증·sticky 전량 승계 + §7.9.F 실배선 실물 pointer |
-| §결정 9 (모달 어휘 1차 사전) | §결정 9 | carrier-preserved | `### 결정 9` | 4 표현 verbatim + chain SSOT 위치 + word-boundary 전환 의무 승계 |
-| §결정 10 (velocity-normalized metric) | §결정 10 | carrier-preserved | `### 결정 10` | — |
-| §결정 11 (영구 정책) | §결정 11 | carrier-preserved | `### 결정 11` | supersede 종료 경로 = 본 재제정이 실물 — 지위 신 record 승계 명시(기술정정) |
-| §결정 12 (CFP-B carrier 일체화) | §결정 12 | **기술정정** | `### 결정 12` | 후속 carrier 잠정 목록(CFP-C/D 등) = 이행 완료 dated → carrier 분리 원칙만 현재형 재기술 |
+| 구 §결정 | 신 위치 | 태그 | 구 앵커 (ADR-060) | NSC | 비고 |
+|---|---|---|---|---|---|
+| §결정 1 (Framework SSOT 위치) | §결정 1 | carrier-preserved | `### 결정 1` | Y | §5.5 CL-1 채택 서사 제거(저작 증적) |
+| §결정 2 (Registry data single SSOT) | §결정 2 | **기술정정(구조개선)** | `### 결정 2` | Y(4종) | "entry-level 현행값 = registry 유일 원본" 정형 문장 추가 — §결정 2 원칙의 명시화(본 재제정 fold direction 의 근거 조항) |
+| §결정 3 (4-tier enum) | §결정 3 | **기술정정(구조개선)** | `### 결정 3` | Y(4종) | 구 Amd2(required 전환) + §7.9.B(surfacing qualifier) + 구 Amd25(honesty-ceiling tier-독립) fold — "CFP-391 이 후속 명시" dated 서사 제거 |
+| §결정 4 (첫 entry) | §결정 4 | **기술정정(구조개선)** | `### 결정 4` | Y(4종) | entry yaml 사본 → registry SSOT 이관. lint 책임 4건·exit·bypass skip = 전량 승계 |
+| §결정 5 (warning mode 첫 적용) | §결정 5 | **기술정정(구조개선)** | `### 결정 5` | Y(4종) | workflow 양식 상세(trigger·paths·pip) = dated 이행분(구본 동결). 신규 entry "신규 §결정 0" 등록 절차 = 구 Amd21(fm)~26 반복 관행의 fold(현재형 일반 규칙 승격 — 규범 신설 아닌 기존 관행 모아쓰기) |
+| §결정 6 (승격 gate 3-AND) | §결정 6 | **기술정정(구조개선)** | `### 결정 6` | Y(4종) | (c) sibling 구체 CFP 열거 → registry field SSOT + 관행 2종(append-보존/self-carrier 제외 — 구 Amd1·2·11 fold). evidence 6 산출물(i~vi) 전량 승계. §7.9.C baseline-relative fold |
+| §결정 7 (hotfix bypass channel) | §결정 7 | carrier-preserved | `### 결정 7` | Y | 구 Amd3 sharpening 문단 = 본문 fold(구본은 (Amendment 3) 표기로 기반영). label-registry MINOR 절차 서사 = dated |
+| §결정 8 (audit trail schema) | §결정 8 | carrier-preserved | `### 결정 8` | Y | schema·re-entry·lint·author 검증·sticky 전량 승계 + §7.9.F 실배선 실물 pointer |
+| §결정 9 (모달 어휘 1차 사전) | §결정 9 | carrier-preserved | `### 결정 9` | Y | 4 표현 verbatim + chain SSOT 위치 + word-boundary 전환 의무 승계 |
+| §결정 10 (velocity-normalized metric) | §결정 10 | carrier-preserved | `### 결정 10` | Y | — |
+| §결정 11 (영구 정책) | §결정 11 | carrier-preserved | `### 결정 11` | Y | supersede 종료 경로 = 본 재제정이 실물 — 지위 신 record 승계 명시(기술정정) |
+| §결정 12 (CFP-B carrier 일체화) | §결정 12 | **기술정정** | `### 결정 12` | Y(4종) | 후속 carrier 잠정 목록(CFP-C/D 등) = 이행 완료 dated → carrier 분리 원칙만 현재형 재기술 |
 
 ### (3) fm mechanical_enforcement_actions 13건 (승계 11 + drop 2)
 
-| # | action (구 fm) | 유래 | 처분 | 태그 |
-|---|---|---|---|---|
-| 1 | story-section-ownership | 구 Amd13 (CFP-722) | **승계** — 신 fm entry + §결정 27 | carrier-preserved |
-| 2 | codex-network-scope-presence | 구 Amd14 (CFP-963) | **drop** — registry `entries[].name` 부재(2026-06-10 de-bloat 고아 제거 이력·Phase 2 미이행 deferred-followup) = fm↔registry 불일치 drift. 승계 시 사실과 불일치 상태 복제 → 불승계. §결정 28 이 현행 상태 기록·재도입 경로 명시(무단 누락 아님) | **obsolete제거** |
-| 3 | parallel-anchors-checked-presence | 구 Amd15 (CFP-1306) | **drop** — registry `entries[].name` 부재(동일 drift 범주). §결정 29 기록 | **obsolete제거** |
-| 4 | increment-justification-presence | 구 Amd16 (CFP-2061-S1) | **승계** — §결정 30 | carrier-preserved |
-| 5 | governance-drift-detection | 구 Amd17 (CFP-2061-S4) | **승계** — §결정 31 | carrier-preserved |
-| 6 | deferred-followup-reconcile | 구 Amd18 (CFP-2381) | **승계** — §결정 32 | carrier-preserved |
-| 7 | deferral-carrier-declared | 구 Amd20 (CFP-2591) | **승계** — §7.9.E (target_section §결정 32) | carrier-preserved |
-| 8 | lane-count-ssot-consistency | 구 Amd19 (CFP-2426) | **승계** — §결정 33 | carrier-preserved |
-| 9 | peer-completion-falsifiability | 구 fm Amd21 (CFP-2597) | **승계** — §결정 5 (신규 §결정 0) | carrier-preserved |
-| 10 | shell-test-exit-masking-detect | 구 fm Amd22 (CFP-2635) | **승계** — §결정 5 | carrier-preserved |
-| 11 | infra-resource-undeclared-surface | 구 fm Amd23 (CFP-2700) | **승계** — §결정 5 (+§7.9.D/§결정 32 surfacing 상속) | carrier-preserved |
-| 12 | infra-resource-orphan-reconcile | 구 fm Amd23 (CFP-2700) | **승계** — §결정 5 | carrier-preserved |
-| 13 | evidence-registry-structure-verify | 구 Amd26 (CFP-881) | **승계** — §결정 5/14 | carrier-preserved |
+| # | action (구 fm) | 유래 | 처분 | 태그 | NSC |
+|---|---|---|---|---|---|
+| 1 | story-section-ownership | 구 Amd13 (CFP-722) | **승계** — 신 fm entry + §결정 27 | carrier-preserved | Y |
+| 2 | codex-network-scope-presence | 구 Amd14 (CFP-963) | **drop** — registry `entries[].name` 부재(2026-06-10 de-bloat 고아 제거 이력·Phase 2 미이행 deferred-followup) = fm↔registry 불일치 drift. 승계 시 사실과 불일치 상태 복제 → 불승계. §결정 28 이 현행 상태 기록·재도입 경로 명시(무단 누락 아님) | **obsolete제거** | Y(4종) |
+| 3 | parallel-anchors-checked-presence | 구 Amd15 (CFP-1306) | **drop** — registry `entries[].name` 부재(동일 drift 범주). §결정 29 기록 | **obsolete제거** | Y(4종) |
+| 4 | increment-justification-presence | 구 Amd16 (CFP-2061-S1) | **승계** — §결정 30 | carrier-preserved | Y |
+| 5 | governance-drift-detection | 구 Amd17 (CFP-2061-S4) | **승계** — §결정 31 | carrier-preserved | Y |
+| 6 | deferred-followup-reconcile | 구 Amd18 (CFP-2381) | **승계** — §결정 32 | carrier-preserved | Y |
+| 7 | deferral-carrier-declared | 구 Amd20 (CFP-2591) | **승계** — §7.9.E (target_section §결정 32) | carrier-preserved | Y |
+| 8 | lane-count-ssot-consistency | 구 Amd19 (CFP-2426) | **승계** — §결정 33 | carrier-preserved | Y |
+| 9 | peer-completion-falsifiability | 구 fm Amd21 (CFP-2597) | **승계** — §결정 5 (신규 §결정 0) | carrier-preserved | Y |
+| 10 | shell-test-exit-masking-detect | 구 fm Amd22 (CFP-2635) | **승계** — §결정 5 | carrier-preserved | Y |
+| 11 | infra-resource-undeclared-surface | 구 fm Amd23 (CFP-2700) | **승계** — §결정 5 (+§7.9.D/§결정 32 surfacing 상속) | carrier-preserved | Y |
+| 12 | infra-resource-orphan-reconcile | 구 fm Amd23 (CFP-2700) | **승계** — §결정 5 | carrier-preserved | Y |
+| 13 | evidence-registry-structure-verify | 구 Amd26 (CFP-881) | **승계** — §결정 5/14 | carrier-preserved | Y |
 
 **(3) 공통 기술정정**: 승계 11건의 `progress_note` 는 이행 진행 서사(Phase 1/2 scope 열거·prior art 목록·plugin bump 이력)를 제거한 요지 1줄로 compact 재기술 — entry-level 상세의 현행 SSOT = registry(§결정 2), 이행 이력 = 동결 구본 fm. `status`·`target_section` 값은 verbatim 보존(승계 11건 전건 registry `entries[].name` 실재 grep 대조 완료 — 2026-08-04).
 
@@ -514,8 +514,8 @@ Tier 1 surfacing 은 required contexts 를 회피 → ADR-127 required-check SSO
 - `archive/adr/ADR-060-evidence-enforceable-promotion-framework.md` — status 전이 (frontmatter 최소행)
 - `docs/adr-amendment-threshold-baseline.yaml` — ADR-060 행 제거 16→15 (`--write-baseline` 단일 writer, 손편집 금지)
 - `scripts/lib/check_adr_amendment_threshold.py` — 리터럴 4개소 re-home
-- `docs/evidence-checks-registry.yaml` — 헤더 L4 + `owner_adr` 11 + `paired_owner_adr` 3 + `carrier_adr` 105 = 120개소 중 119 치환(값-앵커 한정 `:[[:space:]]+ADR-060([^0-9]|$)` — loose `.*` 금지) + 쌍-보존 예외 1건(:549-550) + 인라인 주석 "ADR-060 Amendment N" 9건 dated provenance 보존 + 대사 1행 `ADR-171.*Amendment [0-9]+` == 0
-- GENERATED writer 리터럴 잔여 5개소 (2026-08-04 소비 직전 re-Read 실측) — `scripts/check-wording-dictionary.sh:452` / `scripts/lib/gen_deferred_followup_baseline.py:49` / `scripts/lib/check_infra_resource_drift.py:97` / `scripts/lib/check_path_relocation_consistency.py:666` / `scripts/lib/check_resource_safety_claim_proof.py:400` (각 재생성 결정론 확인 후 in-scope — 재생성 diff = 헤더 앵커 행만인지 검증(INV-R), 비결정론 writer 는 해당 쌍만 f/u 분리 + 잠복 명시)
+- `docs/evidence-checks-registry.yaml` — 헤더 L4 + `owner_adr` 11 + `paired_owner_adr` 3 + `carrier_adr` 105 = 120개소 중 119 치환(값-앵커 한정 `:[[:space:]]+ADR-060([^0-9]|$)` — loose `.*` 금지) + 쌍-보존 예외 1건(:549-550 — 값·주석 무접촉) + 인라인 주석 dated provenance 9행 처분 = 값-치환 동반 8행(:961/:1122/:2515/:2849/:3170/:3686/:3772/:4292)의 bare "(Amendment N)" 주석을 "(ADR-060 Amendment N)" 명시형으로 **동시 rewrite**(주석층 기술정정 — 값 치환 후 신 ADR 오귀속 차단) + 대사 1행 = **comment-제외형** `ADR-171[^#]*Amendment [0-9]+` == 0. 치환·주석 rewrite·대사 3항 논리 정합(설계리뷰 iter1 F-DR-1 정정 — 구 대사 `ADR-171.*Amendment [0-9]+` 는 값-치환된 8행에서 값↔주석 same-line cross-match 로 born-RED)
+- GENERATED writer 리터럴 잔여 5개소 (emit-리터럴 실측 — 설계리뷰 iter1 F-DR-2 정정 반영) — `scripts/check-wording-dictionary.sh:452` / `scripts/lib/gen_deferred_followup_baseline.py:49` / `scripts/lib/check_infra_resource_drift.py:915`(GENERATED 본문 emit 리터럴 — 헤더 909/911·baseline:3 착지 실측. :6/:97/:151/:176 은 docstring·주석 층 = 일반 re-home 축) / `scripts/lib/check_path_relocation_consistency.py:666` / `scripts/lib/check_resource_safety_claim_proof.py:400` (각 재생성 결정론 확인 후 in-scope — 재생성 diff = 헤더 앵커 행만인지 검증(INV-R), 비결정론 writer 는 해당 쌍만 f/u 분리 + 잠복 명시)
 - `plugins/{codeforge-develop,codeforge-pmo,codeforge-requirements}/agents/` 3종 + `docs/orchestrator-playbook.md` + `hooks/` 3종 + `docs/inter-plugin-contracts/`(재-grep 전수 — PATCH bump + MANIFEST row) + `docs/wording-dictionary.{md,yaml}` + `docs/doc-location-registry.md` + `docs/architecture/codeforge-family.md` — live anchor re-home
 - `archive/adr/ADR-RESERVATION.md` — row 60 `active → archived`(요약표 enum — `superseded` 금지, 2-표 enum 비대칭. `amendments_reserved[]` sub-tree 의 `adr_number: 60 / amendment_id: 25`(CFP-2650) row = **무접촉** — sub-tree enum 별개 축 + status active = spent 적용완료, Superseded 전이 후 amend 봉쇄 = ADR-014 의도 동작)
 
