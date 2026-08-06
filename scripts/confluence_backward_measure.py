@@ -557,6 +557,11 @@ class RunContext:
         self.consecutive_failures = 0
         self.events_path = events_path or (scratch_dir() / f"cfp2889-run-{run_id}.ndjson")
         self.emitted_events = 0
+        # 신호 전파 (§7.4, 보안 FIX iter2 N1) — 회수 경로가 흡수한 첫 kill-switch **예외 객체**.
+        # `results` 가 아니라 ctx 에 두는 이유: results 는 `emit_record` 로 직렬화되므로 예외
+        # 객체를 실을 수 없고, 반환 dict 에 실었다가 호출부가 pop 하는 형태는 "차단이 계약이
+        # 아니라 한 줄의 우연" 이 되어 NEW-1 과 같은 함정을 재생산한다.
+        self.cleanup_kill_switch: Optional[BaseException] = None
         self._ensure_events_dir()
 
     def _ensure_events_dir(self) -> None:
@@ -986,8 +991,12 @@ def scenario_w2(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
 
 
 def scenario_w3(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
-                dry: bool) -> Dict[str, Any]:
-    """W3 — ensure_ascii lever 2-인코딩 probe (한글 fixture) + read-back 재정규화 관측."""
+                dry: bool) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+    """W3 — ensure_ascii lever 2-인코딩 probe (한글 fixture) + read-back 재정규화 관측.
+
+    반환 = `(관측 dict, envelope_sample)` **2-tuple**. `envelope_sample`(서버 원본 envelope)은
+    golden 빌더 전용이며 `results` 로 흘러가면 안 되므로 관측 dict 밖으로 분리한다 (NEW-1).
+    """
     value = build_w3_fixture()
     utf8_bytes = len(json.dumps(value, ensure_ascii=False).encode("utf-8"))
     ascii_bytes = len(json.dumps(value, ensure_ascii=True).encode("utf-8"))
@@ -1029,15 +1038,20 @@ def scenario_w3(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
                 if isinstance(readback_value, str) else None),
         })
 
+    # NEW-1(iter2): `envelope_sample` 은 **반환 dict 에 싣지 않는다**. 이 값은 서버 원본
+    # envelope(신원 필드 포함)이고 소비처는 golden 빌더 단 하나인데, 반환 dict 에 실으면
+    # `results` 유입 차단이 호출부의 `pop` 한 줄에 걸린 **우연**이 된다 (그 줄이 사라지면
+    # 즉시 stdout 유출). 별도 반환값으로 분리해 **구조적으로** 도달 불가하게 만든다.
+    # "반환 시점 sanitize" 는 채택하지 않는다 — 빌더가 원문 골격을 요구하므로 이중 sanitize 가
+    # §3.3 "1차 출처 = 실 capture" 추적을 흐린다.
     return {
         "scenario": "W3",
         "utf8_bytes": utf8_bytes,
         "ascii_bytes": ascii_bytes,
         "delta_bytes": ascii_bytes - utf8_bytes,
         "encodings": encodings,
-        "envelope_sample": envelope_sample,
         "note": "readback_identical_to_sent=False 는 서버 재정규화 관측 (G5)",
-    }
+    }, envelope_sample
 
 
 def scenario_w4(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
@@ -1168,7 +1182,8 @@ def cleanup_properties(client: MeasurementRESTClient, ctx: RunContext, page_id: 
     단 **침묵 흡수는 금지**: 삼킨 예외가 kill-switch 계열이면 `cleanup_result` 에
     `kill_switch_id` 를 덧붙이고 `abort` 이벤트 1행을 원장에 남긴다 (중단은 하지 않는다 — 기록만).
     """
-    outcome: Dict[str, Any] = {"attempted": 0, "deleted": 0, "failed": 0, "details": []}
+    outcome: Dict[str, Any] = {"attempted": 0, "deleted": 0, "failed": 0,
+                               "kill_switch_ids": [], "details": []}
     for key in cleanup_order(list(ctx.orphans.keys())):
         entry = ctx.orphans.get(key, {})
         if entry.get("status") == "deleted":
@@ -1208,6 +1223,11 @@ def cleanup_properties(client: MeasurementRESTClient, ctx: RunContext, page_id: 
             swallowed_kill_switch = isinstance(e, KillSwitchAbort)
             if swallowed_kill_switch:
                 detail["kill_switch_id"] = kill_switch_id(e)
+                outcome["kill_switch_ids"].append(kill_switch_id(e))
+                # 흡수는 *중단*의 예외이지 *결과 반영*의 예외가 아니다 (§7.4 신호 전파 정책).
+                # 첫 예외 **객체**를 ctx 에 보존해 회수 완주 후 run_live 가 승격한다.
+                if ctx.cleanup_kill_switch is None:
+                    ctx.cleanup_kill_switch = e
             try:
                 extra = ({"kill_switch_id": kill_switch_id(e)}
                          if swallowed_kill_switch else {})
@@ -1215,12 +1235,10 @@ def cleanup_properties(client: MeasurementRESTClient, ctx: RunContext, page_id: 
                                error=type(e).__name__, **extra)
             except Exception:                        # noqa: BLE001
                 pass
-            if swallowed_kill_switch:
-                # 회수는 계속하되 kill-switch 발생 사실은 원장에 남긴다 (침묵 흡수 0).
-                try:
-                    ctx.emit_abort(e)
-                except Exception:                    # noqa: BLE001
-                    pass
+            # ※ 여기서 `emit_abort` 를 호출하지 **않는다** (iter2 판정 (i)): 승격된 신호를
+            #   run_live 가 최종 1행으로 남기므로 여기서도 남기면 **원장 abort 2행**이 된다.
+            #   흡수 사실 자체는 위 `cleanup_result` 의 `kill_switch_id` 로 원장에 보존되므로
+            #   신호 손실은 0 이다.
         outcome["details"].append(detail)
     return outcome
 
@@ -1267,35 +1285,54 @@ def write_golden_candidate(run_id: str, name: str, payload: Any) -> Path:
 
 # ── golden 값-축 3분류 (F3 — §3.9 정밀화 · 결정 14 헤더 값 3분류의 envelope 축 동형 확장) ──
 #
-# **allowlist 는 dotted path 기준**이다 — bare key name 매칭은 중첩 깊이마다 재등장하는
+# **allowlist 는 경로 기준**이다 — bare key name 매칭은 중첩 깊이마다 재등장하는
 # `key`/`number`/`id` 때문에 `results[*].version.number` 류를 의도치 않게 통과시킨다.
+#
+# **경로 표현 = typed segment 튜플** (보안 FIX iter2 N2). 구 구현은 경로를 `f"{path}.{key}"`
+# 로 **문자열 연결**했는데, 그 표현은 키 내용에 대해 **injective 하지 않다**: 서버가 리터럴
+# dotted key(`{"version.number": ...}`)를 돌려주면 경로 문자열이 `version.number` 와 충돌해
+# 미지 필드가 value-allow 로 **verbatim 복사**된다 (실증: account-id 형 값 원문 누출).
+# 튜플은 세그먼트 경계가 값이 아니라 **구조**로 표현되므로 키에 `.`·`[` 가 있어도 충돌 0 이다.
+# 문자열 이스케이프는 채택하지 않는다 — "이스케이프가 injective 함" 이라는 증명 부담을 새로
+# 만드는, 같은 클래스의 함정이다.
 
-#: (i) value-allow — verbatim 보존 (단건 envelope golden 기준 dotted path).
+class _ListIndex:
+    """list 원소 세그먼트 sentinel — dict 키(항상 `str`)와 **타입으로** 분별된다."""
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:                       # pragma: no cover - 진단 표기용
+        return "[*]"
+
+
+LIST_INDEX = _ListIndex()
+
+#: (i) value-allow — verbatim 보존 (단건 envelope golden 기준 typed 경로).
 SHAPE_GOLDEN_VALUE_ALLOW = (
     # `id` 등재 근거 3: ① 실측 id 가 `[0-9]{1,32}` 라 §4.1 문법 계약을 자연 충족한다
     # (placeholder 로 지우면 그 golden 을 replay 하는 mock 이 공급하는 `property_id` 가 문법
     # 계약을 통과하지 못한다) ② §7.5 가 page/property id 를 Internal(기록 허용)로 분류한다
     # ③ §4.2 정정 註 ①("id 는 int 가 아니라 숫자 문자열")의 실측 근거가 바로 이 golden 이라
     # 지우면 그 註의 근거가 소멸한다.
-    "id",
-    "key",
-    "version.number",
-    "empirical_source",                  # wrapper 자기저작 (측정 harness 산출)
-    "endpoint_omitted_by_validator",     # wrapper 자기저작
+    ("id",),
+    ("key",),
+    ("version", "number"),
+    ("empirical_source",),               # wrapper 자기저작 (측정 harness 산출)
+    ("endpoint_omitted_by_validator",),  # wrapper 자기저작
 )
 
 #: list golden — `results[*]` 하위에 동일 규칙 + wrapper 자기저작 필드(root).
 LIST_GOLDEN_VALUE_ALLOW = (
-    "results[*].id",
-    "results[*].key",
-    "results[*].version.number",
-    "empirical_source",
-    "endpoint_omitted_by_validator",
+    ("results", LIST_INDEX, "id"),
+    ("results", LIST_INDEX, "key"),
+    ("results", LIST_INDEX, "version", "number"),
+    ("empirical_source",),
+    ("endpoint_omitted_by_validator",),
 )
 
 #: (ii) payload 축 — b64 digest 치환 (`redact_payload` 재사용, 무변경).
-SHAPE_GOLDEN_PAYLOAD_PATHS = ("value",)
-LIST_GOLDEN_PAYLOAD_PATHS = ("results[*].value",)
+SHAPE_GOLDEN_PAYLOAD_PATHS = (("value",),)
+LIST_GOLDEN_PAYLOAD_PATHS = ((("results", LIST_INDEX, "value")),)
 
 #: (iii) 타입 placeholder — bool 을 int 보다 먼저 검사한다 (`isinstance(True, int)` 는 True).
 _TYPE_PLACEHOLDERS = ((bool, "<bool>"), (int, "<int>"), (float, "<float>"), (str, "<str>"))
@@ -1311,12 +1348,13 @@ def _type_placeholder(value: Any) -> str:
     return "<unknown>"
 
 
-def sanitize_golden_values(node: Any, *, value_allow: Tuple[str, ...],
-                           payload_paths: Tuple[str, ...], path: str = "") -> Any:
+def sanitize_golden_values(node: Any, *, value_allow: Tuple[Tuple[Any, ...], ...],
+                           payload_paths: Tuple[Tuple[Any, ...], ...],
+                           path: Tuple[Any, ...] = ()) -> Any:
     """golden 값-축 3분류 — 키·중첩 구조·타입은 **전수 보존**, 값만 처분한다 (F3).
 
     분류 (§3.9 정밀화 = 결정 14 헤더 값 3분류의 envelope 축 동형):
-      (i)   `value_allow` dotted path 소속 → **verbatim**
+      (i)   `value_allow` 경로(typed segment 튜플) 소속 → **verbatim**
       (ii)  payload 축(`value`) → `redact_payload` b64 digest 치환 (기존 정책 무변경)
       (iii) **그 외 전부 + 미지 필드** → 타입 placeholder (`<str>`/`<int>`/`<bool>`/… 원문 미수록)
 
@@ -1344,12 +1382,14 @@ def sanitize_golden_values(node: Any, *, value_allow: Tuple[str, ...],
     if path in value_allow:
         return copy.deepcopy(node)                    # verbatim (참조 공유 회피)
     if isinstance(node, dict):
+        # 경로는 **튜플 append** 로 누적한다 — 키 문자열을 구분자로 잇지 않으므로 키가
+        # `.` 을 포함해도 상위 경로와 충돌하지 않는다 (N2).
         return {key: sanitize_golden_values(
                     value, value_allow=value_allow, payload_paths=payload_paths,
-                    path=f"{path}.{key}" if path else str(key))
+                    path=path + (str(key),))
                 for key, value in node.items()}
     if isinstance(node, list):
-        child = f"{path}[*]"
+        child = path + (LIST_INDEX,)
         return [sanitize_golden_values(item, value_allow=value_allow,
                                        payload_paths=payload_paths, path=child)
                 for item in node]
@@ -1482,8 +1522,7 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
             results["scenarios"]["W2"] = scenario_w2(client, ctx, page_id, dry)
             ctx.emit_cap_state("after-W2")
 
-            w3 = scenario_w3(client, ctx, page_id, dry)
-            envelope_sample = w3.pop("envelope_sample", None)
+            w3, envelope_sample = scenario_w3(client, ctx, page_id, dry)
             results["scenarios"]["W3"] = w3
             ctx.emit_cap_state("after-W3")
 
@@ -1504,6 +1543,16 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
             results["cleanup"] = cleanup_properties(client, ctx, page_id, dry)
         except Exception as e:                       # noqa: BLE001
             results["cleanup"] = {"error": type(e).__name__}
+
+    # ── 신호 전파 (§7.4 — 보안 FIX iter2 N1) ────────────────────────────────
+    # 회수 루프는 **이미 완주**했고(§3.10 "cleanup 은 cap 이후에도 계속" 무손상) 그 *뒤에*
+    # 흡수된 kill-switch 를 결과 축으로 승격한다. 승격 대상 = **kill-switch 계열 한정**
+    # (판정 (ii)): 일반 DELETE 실패(`failed > 0`)는 승격하지 않고 reconcile 판정에 위임한다
+    # — 경계가 흐려지면 §7.4.1 상태 A(회수 완료) 회수 규범과 충돌한다.
+    # cleanup 실패 신호와 reconcile 결과는 **독립 신호**이며, 상충 시 reconcile 단독으로
+    # "깨끗함" 을 단정할 수 없다 (§7.4.1 註).
+    if abort_exc is None and ctx.cleanup_kill_switch is not None:
+        abort_exc = ctx.cleanup_kill_switch
 
     # step R actual (cleanup 이후 — abort 여부와 무관하게 시도)
     actual_partial = False
@@ -1774,8 +1823,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     except CredsPreflightAbort as e:
         return abort_with_ledger(e, run_id, ctx)
 
+    # N9(iter2): host-선언 필드(구 `base_url_host_...` 계열) 제거 — 본 이벤트는 host 검증
+    #   ※ 필드명 리터럴을 주석에도 남기지 않는다: 정적 backstop 이 소스 텍스트를 검사하므로
+    #     주석 잔존만으로 false RED 가 난다 (실측 확인).
+    # (`create_client_or_abort`) **이전**에 기록되므로, pin 실패 run 의 원장에 `true` 행과
+    # K-7 abort 행이 공존하는 **자기모순 원장**이 된다. pin 성공 사실은 client 생성 성공이,
+    # 실패 사실은 K-7 abort 행이 각각 증명하므로 본 필드는 잉여다.
     ctx.emit_event("preflight", stage="env",
-                   base_url_host_declared=True, cap=WRITE_CAP,
+                   cap=WRITE_CAP,
                    cbl_skip_issue_create_set=bool(cbl_skip),
                    creds_file_found=creds_file_found,
                    # FIX iter1 F-CL-11: mock seam flag 상태를 원장에 기록 (future-run —

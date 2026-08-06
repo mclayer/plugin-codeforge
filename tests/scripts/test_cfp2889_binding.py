@@ -42,6 +42,8 @@ choke-point 등)의 결박은 여전히 구현 이행 전제이며 "결박 계�
 """
 
 import json
+import pathlib
+import re
 import sys
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlsplit
@@ -58,6 +60,9 @@ from requests.models import PreparedRequest, Response
 import confluence_backward_measure as measure
 from lib.confluence_measurement_client import MeasurementRESTClient
 from lib.confluence_property_rest import WriteAccounting
+# N7 단일 출처 — PII 패턴을 로컬 리터럴로 복제하지 않는다 (복제하면 한쪽 약화가 다른 쪽에서
+# 은폐된다). 같은 tests/scripts 디렉터리 모듈이라 pytest rootdir 삽입 경로로 import 된다.
+from test_confluence_property_rest import F3_PII_PATTERNS
 
 TEST_PAGE = "21430273"
 SENTINEL_TITLE = "CFP-2889-THROWAWAY-binding-suite"
@@ -450,3 +455,159 @@ def test_d14d_kill_switch_k1_halts_and_leaves_ledger(binding_spy, tmp_path):
     assert len(aborts) >= 1, "abort 원장 행 0 — 원장 없는 종료 금지 (§3.10)"
     assert binding_spy.writes() == [], (
         f"kill-switch 이후 write 가 발생 — 전파 미결박: {binding_spy.writes()}")
+
+
+def test_d14d_cleanup_swallowed_kill_switch_promotes_to_verdict(binding_spy, tmp_path):
+    """D-14d **cleanup 승격 arm** (iter2 N1): 회수 경로가 흡수한 kill-switch 가 결과 축에 반영된다.
+
+    자극 = **DELETE 만 401**(read/delete 권한 분리 모사) — GET/POST/PUT 는 정상 200 이라
+    본문 시나리오는 완주하고 kill-switch 는 **cleanup 루프 안에서만** 발생한다.
+
+    구 거동(iter1): cleanup 광역 `except` 가 흡수하며 `abort` 이벤트만 남기고 `abort_exc` 를
+    세우지 않아 → `exit_code=0` · `operational_verdict=RECONCILED` 인데 **원장에는 K-1 abort 행**
+    이 있는 상호모순 산출물. "흡수는 *중단*의 예외이지 *결과 반영*의 예외가 아니다" (§7.4).
+
+    오라클 = ⓐ exit≠0 ⓑ `operational_verdict == "ABORTED"` ⓒ **`abort` 원장 정확히 1행**
+    (승격 후 최종 1행으로 통일 — cleanup 내부 `emit_abort` 를 제거했다. 2행이면 중복 회귀)
+    ⓓ 회수 루프는 **완주**했다(§3.10 무손상 — `attempted` 가 cleanup 대상 전건).
+    mutant: 승격 2줄(`abort_exc = ctx.cleanup_kill_switch`) 제거 → ⓐⓑ RED /
+            cleanup 내부 `emit_abort` 복원 → ⓒ RED(2행).
+    """
+    def responder(request: PreparedRequest) -> Response:
+        parts = urlsplit(request.url)
+        if parts.path.endswith(f"/pages/{TEST_PAGE}"):
+            return _json_response(request, 200, {"id": TEST_PAGE, "title": SENTINEL_TITLE})
+        if request.method == "DELETE":
+            return _json_response(request, 401, {"message": "Unauthorized"})
+        if request.method in ("POST", "PUT"):
+            return _json_response(request, 200, {
+                "id": "900001", "key": "cfp2889.bind", "value": {}, "version": {"number": 1}})
+        return _json_response(request, 200, {"results": [], "_links": {}})
+
+    binding_spy.responder = responder
+    ctx, exit_code, results = _run_live_with(binding_spy, tmp_path, "n1-promote")
+
+    cleanup = results.get("cleanup", {})
+    # 구성 전제 — kill-switch 가 실제로 cleanup 안에서 흡수됐다 (오라클이 공허하지 않음)
+    assert cleanup.get("kill_switch_ids"), (
+        f"cleanup 이 kill-switch 를 흡수하지 않음 — 자극 미도달: {cleanup}")
+    assert exit_code != 0, "cleanup 이 흡수한 kill-switch 가 exit code 에 미반영 (신호 소멸)"
+    assert results.get("operational_verdict") == "ABORTED", (
+        f'verdict 미승격 — {results.get("operational_verdict")} '
+        f'(원장은 kill-switch 를 기록했는데 verdict 는 정상 종료를 말한다)')
+    aborts = _abort_rows(ctx.events_path)
+    assert len(aborts) == 1, (
+        f"abort 원장 행 = {len(aborts)} (기대 정확히 1 — 승격 전 cleanup 내부 emit 이 남으면 2행)")
+    # ⓓ §3.10 무손상 — 승격은 회수를 중단시키지 않는다
+    assert cleanup.get("attempted", 0) >= len(cleanup.get("kill_switch_ids", [])), (
+        "회수 루프가 첫 kill-switch 에서 중단됨 — §3.10 '회수는 계속' 위반")
+    # 산출물 직렬화 가능 (예외 객체가 results 로 새지 않았다)
+    assert isinstance(measure.emit_record(results), str)
+
+
+def test_d14d_plain_cleanup_failure_does_not_promote(binding_spy, tmp_path):
+    """D-14d **승격 경계 arm** (iter2 판정 (ii)): 일반 DELETE 실패는 승격 대상이 **아니다**.
+
+    kill-switch 가 아닌 평범한 실패(404 등)는 `reconcile` 판정에 위임한다 — 경계가 흐려져
+    `failed > 0` 만으로 승격하면 §7.4.1 상태 A(회수 완료) 회수 규범과 충돌한다.
+    본 arm 이 없으면 "전부 승격" 이라는 과잉 처방이 GREEN 으로 통과한다.
+    """
+    def responder(request: PreparedRequest) -> Response:
+        parts = urlsplit(request.url)
+        if parts.path.endswith(f"/pages/{TEST_PAGE}"):
+            return _json_response(request, 200, {"id": TEST_PAGE, "title": SENTINEL_TITLE})
+        if request.method == "DELETE":
+            # 500 = kill-switch 아닌 평범한 실패. 404 는 쓰지 않는다 — production 이 404 를
+            # "이미 부재" 로 **성공 처리**(idempotent 회수)하므로 `failed` 가 0 이 되어 본 arm 의
+            # 구성 전제 자체가 성립하지 않는다 (실측 확인).
+            return _json_response(request, 500, {"message": "Internal Server Error"})
+        if request.method in ("POST", "PUT"):
+            return _json_response(request, 200, {
+                "id": "900001", "key": "cfp2889.bind", "value": {}, "version": {"number": 1}})
+        return _json_response(request, 200, {"results": [], "_links": {}})
+
+    binding_spy.responder = responder
+    ctx, _exit_code, results = _run_live_with(binding_spy, tmp_path, "n1-boundary")
+
+    cleanup = results.get("cleanup", {})
+    assert cleanup.get("failed", 0) > 0, f"구성 전제 미충족 — DELETE 실패 0: {cleanup}"
+    assert not cleanup.get("kill_switch_ids"), "404 가 kill-switch 로 분류됨 (경계 오염)"
+    assert results.get("operational_verdict") != "ABORTED", (
+        "일반 DELETE 실패가 ABORTED 로 승격됨 — 승격 조건이 kill-switch 계열을 넘어 확장됐다")
+    assert _abort_rows(ctx.events_path) == [], "kill-switch 아닌 실패에 abort 행이 남음"
+def test_n9_preflight_does_not_declare_unverified_host_static():
+    """N9(iter2) — **정적 backstop** (D-14 계상 대상 아님, 계상 규율 준수).
+
+    결함: `preflight(stage=env)` 이벤트가 `base_url_host_declared=True` 를 host 검증
+    (`create_client_or_abort`) **이전**에 기록하면, pin 실패 run 의 같은 원장에 `true` 행과
+    K-7 abort 행이 공존하는 자기모순 원장이 된다.
+
+    ★ **동적 결박 불가 — 정직 기재 (PL firsthand 실측 2026-08-07)**: 이 preflight 이벤트는
+    `live = confirm_live_write ∧ creds ∧ page_id ∧ ¬skip_write` 4-AND 를 통과한 **live 경로
+    전용**이다. plan 모드(4-AND 미충족)는 이 emit 을 지나지 않으므로, `--confirm-live-write`
+    를 금지하는 본 suite 는 fake adapter 로도 해당 원장 행에 도달할 수 없다(실측: pin 실패
+    arm 의 원장에는 abort 1행만 남고 preflight 행이 아예 없다). 따라서 오라클을 산출물
+    side-effect 로 세울 수 없어 **소스 텍스트 검사로 강등**한다.
+
+    본 테스트는 값싼 backstop 이며 D-14 결박 계열로 **계상하지 않는다** — 정적 검사는 죽은
+    분기를 잡지 못한다는 계상 규율(§8.1.D-14)을 그대로 승계한다.
+    mutant: preflight emit 에 필드를 되살림 → RED.
+    """
+    source = (pathlib.Path(measure.__file__)).read_text(encoding="utf-8")
+    assert "base_url_host_declared" not in source, (
+        "host 검증 이전 emit 되는 preflight 이벤트에 `base_url_host_declared` 단정이 남아 있음 "
+        "(pin 실패 run 에서 `true` 행 ↔ K-7 abort 행 공존 = 자기모순 원장)")
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# D-14e — 값-축 allowlist ↔ emit 채널 결박 (진입점 = run_live · iter2 NEW-1)
+# ════════════════════════════════════════════════════════════════════════════
+
+_TAINTED_AUTHOR_ID = "000000:aaaaaaaa-1111-2222-3333-444444444444"
+_TAINTED_TENANT_BASE = f"https://{measure.EXPECTED_HOST}/wiki"
+
+
+def test_d14e_emit_channel_carries_no_server_identity(binding_spy, tmp_path):
+    """D-14e: 값-축 allowlist 가 golden 빌더뿐 아니라 **emit 채널**에도 걸려 있는가.
+
+    §3.9 는 서버 유래 신원값의 차단층이 값-축 allowlist **하나**라고 선언한다. 그런데 그 선언이
+    참이려면 서버 원본 envelope 가 **산출 채널로 새는 경로 자체가 없어야** 한다. 구 구현은
+    `scenario_w3` 가 원본 envelope 를 반환 dict 에 실었고, 유출 차단이 호출부의 `pop` 한 줄에
+    걸려 있었다 — **차단이 계약이 아니라 우연**이었다(그 줄이 지워지면 즉시 stdout 유출).
+
+    오라클 = 문서 문언이 아니라 **실 산출물 바이트**: `emit_record(results)` 문자열에 서버 유래
+    신원 패턴(account-id 형 · tenant host 형) 매치 **0건**. 패턴은 F3 스캐너 상수를 공유한다.
+    mutant: `envelope_sample` 을 `results` 에 남긴 채 emit → RED.
+    """
+    def responder(request: PreparedRequest) -> Response:
+        parts = urlsplit(request.url)
+        if parts.path.endswith(f"/pages/{TEST_PAGE}"):
+            return _json_response(request, 200, {"id": TEST_PAGE, "title": SENTINEL_TITLE})
+        # v1 probe(`/wiki/rest/api/content/...`) 응답은 **깨끗한 body** 로 둔다 — 자극 축 분리.
+        # 이 응답의 body 원문은 `W5.probe.body_verbatim` 으로 산출물에 **그대로 실린다**(관측
+        # 충실도 목적, deny-scan 이 유일 필터). 그 축은 §3.9 값-축 allowlist 의 정의역이 아니라
+        # **body 축(§7.1 step 1 truncate→scrub→drop)** 소관이라 본 sub 의 판정 대상이 아니다.
+        # 여기 신원값을 넣으면 본 sub 가 envelope 축이 아니라 body 축 결함으로 RED 가 되어
+        # mutant 판별 대상이 흐려진다 (PL firsthand 실측 — 별건 finding 으로 회부).
+        if "/rest/api/content/" in parts.path:
+            return _json_response(request, 200, {"id": "v1", "key": "cfp2889.bind"})
+        # 서버가 신원 필드를 실어 보내는 상황 (I-4 비신뢰 진입점) — envelope 축 자극
+        tainted = {"id": "900001", "key": "cfp2889.bind", "value": {"d": 1},
+                   "version": {"number": 1, "authorId": _TAINTED_AUTHOR_ID},
+                   "_links": {"base": _TAINTED_TENANT_BASE}}
+        if request.method in ("POST", "PUT"):
+            return _json_response(request, 200, tainted)
+        return _json_response(request, 200, {"results": [], "_links": {}})
+
+    binding_spy.responder = responder
+    _ctx, _exit_code, results = _run_live_with(binding_spy, tmp_path, "d14e")
+
+    emitted = measure.emit_record(results)
+    # 구성 전제 — 오염 응답이 실제로 소비됐다 (오라클이 "미도달" 로 공허하게 성립하지 않음)
+    assert binding_spy.writes(), "write 응답이 없어 오염 envelope 가 산출 경로에 진입하지 못했다"
+    for label, pattern in F3_PII_PATTERNS:
+        matches = re.findall(pattern, emitted)
+        assert not matches, (
+            f"emit 채널 산출 문자열에 서버 유래 {label} 유출 — {matches[:3]} "
+            f"(값-축 allowlist 가 emit 채널에 미결박)")
+

@@ -1278,6 +1278,17 @@ def test_f3_dotted_path_exact_matching_nested_key():
     assert "atlassian.net" not in str(golden)
 
 
+#: F3 PII 스캐너 패턴집합 — **스캔 테스트(F3.3①)와 계측기 유효성 테스트(F3.3②)의 단일 출처**.
+#: 로컬 리터럴로 복제하면 한쪽 패턴이 삭제·약화돼도 다른 쪽이 자기 리터럴로 GREEN 을 내
+#: mutant 가 생존한다 (iter2 N7). 위치-기반 whitelist 필터는 금지 — 예외는 값이 아니라
+#: **패턴 자체**로 좁힌다 (golden 선두 placeholder 하나가 이후 전 매치를 무시시키는 hollow).
+F3_PII_PATTERNS = (
+    ("account-id", r"\d{6,}:[0-9a-f]{8}-[0-9a-f-]{4,}"),
+    ("email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
+    ("tenant-host", r"https?://[a-zA-Z0-9.-]+\.atlassian\.net"),
+)
+
+
 def test_f3_committed_golden_no_pii_scan():
     """F3.3 ①: 커밋 golden 파일 regression guard — PII 미유입 (양성 케이스).
 
@@ -1291,31 +1302,26 @@ def test_f3_committed_golden_no_pii_scan():
     assert shape_path.exists(), f"shape golden 부재: {shape_path}"
     assert list_path.exists(), f"list golden 부재: {list_path}"
 
-    # PII 정규식 — account-id, email-like, tenant hostname
-    # ★ 위치-기반 whitelist 필터 금지 (hollow 재발 차단, PL firsthand 실증 2026-08-07):
-    #   "매치 위치 이전에 `<str>`/`redaction` 문자열이 있으면 무시" 류 필터는 golden 선두에
-    #   placeholder 가 1개만 있어도 **이후 전 매치를 무시**해 실 PII 주입에도 GREEN 이 된다
-    #   (실증: authorId 에 실 account-id 형 값 주입 → 구 구현 GREEN). 예외는 값이 아니라
-    #   **패턴 자체**로 좁힌다.
-    pii_patterns = [
-        ("account-id", r"\d{6,}:[0-9a-f]{8}-[0-9a-f-]{4,}"),
-        ("email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
-        ("tenant-host", r"https?://[a-zA-Z0-9.-]+\.atlassian\.net"),
-    ]
-
     for path in (shape_path, list_path):
         content = path.read_text(encoding="utf-8")
-        for label, pattern in pii_patterns:
+        for label, pattern in F3_PII_PATTERNS:
             matches = re.findall(pattern, content)
             assert not matches, \
                 f"{path.name}: {label} PII 원문 검출 — {matches} (§3.9 값-축 allowlist 미적용)"
 
 
 def test_f3_pii_pattern_detector_catches_synthesized_account_id():
-    """F3.3 ②: PII 정규식 작동 검증 — 합성 account-id 검출 (discriminating case).
+    """F3.3 ②: 스캐너 **패턴집합 자체**의 유효성 — 합성 account-id 를 반드시 잡는다.
 
-    정규식이 실제로 account-id 형 PII 를 감지하는지 discriminating case 로 확인한다.
-    mutant: 정규식에서 account-id 패턴을 제거하면 합성 PII 를 미포착하여 RED.
+    ★ 계측기 유효성 대조는 **같은 상수를 봐야** 성립한다 (iter2 N7, peer M-COMBO 실증):
+    구 구현은 이 짝 테스트가 **자기 로컬 리터럴 정규식**을 써서, 스캔 테스트(F3.3①)의 패턴이
+    삭제·약화돼도 여기서는 자기 리터럴로 GREEN 이 나 mutant 가 생존했다
+    (golden PII 재삽입 + 패턴 제거 동시 → 5 passed).
+
+    따라서 판정은 2단이다 — ⓐ 스캐너 상수에 account-id 패턴이 **존재**하는가(삭제 검출)
+    ⓑ 그 패턴이 합성 PII 를 **실제로 매치**하는가(약화·항상-미매치 검출).
+    ⓑ(positive fixture)는 필수다: 상수 공유는 "같은 패턴을 쓴다" 만 보장하고 "그 패턴이 실
+    PII 를 잡는다" 는 보장하지 않으므로, 공유가 discriminating 힘을 대체하지 않는다.
     """
     # 합성 golden with PII
     golden_with_pii = {
@@ -1324,13 +1330,50 @@ def test_f3_pii_pattern_detector_catches_synthesized_account_id():
         "redaction_note": "Original PII not redacted (synthesized test case)"
     }
 
-    pii_pattern = r"\d{6,}:[0-9a-f-]{8,}"
+    # ⓐ 삭제 검출 — 스캔 테스트가 쓰는 **바로 그 상수**를 조회한다 (로컬 리터럴 금지)
+    patterns = dict(F3_PII_PATTERNS)
+    assert "account-id" in patterns, (
+        "스캐너 패턴집합(F3_PII_PATTERNS)에서 account-id 패턴이 소실됨 — "
+        "스캔 테스트가 이 클래스를 더 이상 검출하지 못한다")
+
+    # ⓑ 약화 검출 — positive fixture 가 반드시 매치되어야 한다
+    pii_pattern = patterns["account-id"]
     content = json.dumps(golden_with_pii)
     matches = re.findall(pii_pattern, content)
 
-    # PII 가 검출되어야 함
-    assert matches, f"정규식 {pii_pattern} 이 account-id PII 를 미포착 (RED 기대)"
+    assert matches, f"정규식 {pii_pattern} 이 합성 account-id 를 미포착 (패턴 약화·항상-미매치)"
     assert "000000:aaaaaaaa-1111-2222-3333-444444444444" in matches[0]
+
+
+def test_f3_literal_dotted_key_does_not_alias_allowlist():
+    """N2(iter2): 서버가 **리터럴 dotted key** 를 돌려줘도 allowlist 와 별칭되지 않는다.
+
+    구 구현은 경로를 `f"{path}.{key}"` **문자열 연결**로 만들었다. 그 표현은 키 내용에 대해
+    injective 하지 않아, 서버가 `{"version.number": ...}` 를 돌려주면 경로 문자열이 allowlist
+    항목 `version.number` 와 **충돌**해 미지 필드가 verbatim 복사됐다 (실증: account-id 형 값이
+    출력에 원문 등장). typed segment 튜플은 세그먼트 경계를 값이 아니라 구조로 표현하므로
+    키에 `.` 이 있어도 상위 경로와 충돌하지 않는다.
+
+    mutant: `path=path + (str(key),)` → `path=f"{path}.{key}" if path else str(key)` 로 되돌리고
+    allowlist 를 문자열로 환원 → 원문 verbatim 복사로 RED.
+    """
+    tainted = "000000:aaaaaaaa-1111-2222-3333-444444444444"
+    envelope = {
+        "id": "21463043",
+        "key": "cfp2889.n2",
+        "value": {"d": 1},
+        "version.number": tainted,          # ← 리터럴 dotted key (미지 필드)
+        "version": {"number": 7, "authorId": tainted},
+    }
+    golden = measure.build_shape_golden(envelope, run_id="n2", page_id="21430273", status=200)
+
+    # 별칭 금지 — 리터럴 dotted key 는 allowlist 소속이 아니다
+    assert golden["version.number"] == "<str>", (
+        f"리터럴 dotted key 가 allowlist 와 별칭돼 verbatim 복사됨: {golden['version.number']!r}")
+    assert tainted not in json.dumps(golden, ensure_ascii=False), "PII 원문이 golden 에 유출"
+    # 정상 경로 무손상 — 진짜 중첩 version.number 는 여전히 verbatim
+    assert golden["version"]["number"] == 7
+    assert golden["version"]["authorId"] == "<str>"
 
 
 def test_f3_unknown_field_fail_closed_placeholder():
