@@ -1144,7 +1144,10 @@ def build_shape_golden(envelope: Dict[str, Any], run_id: str, page_id: str,
     if property_id is not None:
         path = f"{path}/{property_id}"
     endpoint, omitted = safe_path_or_drop(path)
-    golden["empirical_source"] = provenance(endpoint or "PUT v2 property (endpoint 표기 drop)",
+    # FIX iter1 F-CR-03: list golden(`GET {endpoint}`)과 대칭 — method 프리픽스 명기 (future-run.
+    # 기captured golden 은 무편집 — 갱신은 실 재측정 시에만, §3.9).
+    golden["empirical_source"] = provenance(f"PUT {endpoint}" if endpoint
+                                            else "PUT v2 property (endpoint 표기 drop)",
                                             status, run_id)
     golden["endpoint_omitted_by_validator"] = omitted
     return golden
@@ -1344,6 +1347,9 @@ def build_basis_golden(results: Dict[str, Any], client: MeasurementRESTClient,
             "v2_probe_status": (w4.get("probe") or {}).get("http_status"),
             "v2_probe_classified_as": (w4.get("probe") or {}).get("classified_as"),
             "v2_control_status": (w4.get("control") or {}).get("http_status"),
+            # FIX iter1 F-CL-07: null(성공 경로 status 미기록) ↔ 미실행 다의성 해소 — future-run 부터
+            # write_success 동반 기록 (기captured golden 무편집 — §3.9).
+            "v2_control_write_success": (w4.get("control") or {}).get("write_success"),
             "v1_probe_status": (w5.get("probe") or {}).get("http_status"),
             "v1_classification": (w5.get("probe") or {}).get("classification"),
         },
@@ -1487,6 +1493,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                    base_url_host_declared=True, cap=WRITE_CAP,
                    cbl_skip_issue_create_set=bool(cbl_skip),
                    creds_file_found=creds_file_found,
+                   # FIX iter1 F-CL-11: mock seam flag 상태를 원장에 기록 (future-run —
+                   # 기captured NDJSON 무편집).
+                   mock_429_env_set=(os.environ.get("CFP1495_API_MOCK_429", "0") == "1"),
+                   mock_401_env_set=(os.environ.get("CFP1495_API_MOCK_401", "0") == "1"),
                    note="creds 파일 경로·값은 기록하지 않는다 (§7.5)")
 
     client = create_measurement_client(base_url, os.environ.get("ATLASSIAN_API_TOKEN"),

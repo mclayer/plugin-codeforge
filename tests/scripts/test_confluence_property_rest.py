@@ -756,10 +756,13 @@ def test_d13_no_silent_skip_in_source():
     """
     needle = "pytest" + ".skip"
     marker_needle = "skip" + "if"
+    # FIX iter1 F-CL-08: marker 계열 skip 데코레이터 회피 봉인 (연접 구성 — 자기 오탐 0).
+    mark_needle = "mark" + ".skip"
     for name in ("test_confluence_property_rest.py", "test_cfp2889_restart_recovery.py"):
         src = (Path(__file__).parent / name).read_text(encoding="utf-8")
         assert needle not in src, f"{name}: {needle} 검출 — D-13 위반"
         assert marker_needle not in src, f"{name}: {marker_needle} 검출 — 플랫폼 분기는 명시 분기로"
+        assert mark_needle not in src, f"{name}: {mark_needle} 검출 — D-13 위반 (marker skip)"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -885,6 +888,246 @@ def test_seam_not_referenced_from_production():
             if needle in src:
                 offenders.append(f"{py.name}:{needle}")
     assert offenders == [], f"production 경로에서 seam 참조 검출: {offenders}"
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# §8.8 동적 테스트 로스터 (FIX iter1 F-CR-01 — Change Plan §8.8.1 fuzz / §8.8.2 property)
+#   - suite-A 소속 (golden 비의존 — 전 대상 순수함수, live API 0. requests session 미생성).
+#   - corpus = tests/fixtures/cfp_2889/fuzz_corpus/ (synthetic seed, not captured —
+#     §3.9 captured-golden 규약 비적용. 실 400 body 원문은 §3.9 body drop 정책으로
+#     run 산출물에 미보존 → 합성 seed 한정, 정직 이월).
+# ════════════════════════════════════════════════════════════════════════════
+
+import random
+
+from hypothesis import example, given, settings
+from hypothesis import strategies as st
+
+from lib.confluence_property_chunking import reassemble
+
+FUZZ_CORPUS_DIR = REPO_ROOT / "tests" / "fixtures" / "cfp_2889" / "fuzz_corpus"
+# §8.8.1 execution_budget — corpus 결정론 변이 iterations (실측 = Story §8.4 기록).
+FUZZ_ITERATIONS = 3000
+
+
+def _load_fuzz_corpus():
+    files = sorted(FUZZ_CORPUS_DIR.glob("seed_*.txt"))
+    assert files, (
+        f"fuzz corpus 부재: {FUZZ_CORPUS_DIR}/seed_*.txt — §8.8.1 seed_or_corpus 계약 (명시 fail)")
+    return [f.read_text(encoding="utf-8", errors="replace") for f in files]
+
+
+def _mutate(rng: random.Random, s: str) -> str:
+    """결정론 변이 6종 — 절단·제어문자·비-UTF8 decode 잡음·중복 팽창·case 반전·역순."""
+    if not s:
+        s = "x"
+    op = rng.randrange(6)
+    if op == 0:
+        return s[:rng.randrange(len(s) + 1)]
+    if op == 1:
+        pos = rng.randrange(len(s) + 1)
+        return s[:pos] + chr(rng.randrange(0, 32)) + s[pos:]
+    if op == 2:
+        noise = bytes(rng.randrange(256) for _ in range(rng.randrange(1, 16)))
+        return s + noise.decode("latin-1")
+    if op == 3:
+        return s * rng.randrange(1, 4)
+    if op == 4:
+        return s.swapcase()
+    return s[::-1]
+
+
+def test_fuzz_is_over_limit_error_corpus_mutation_crash_zero():
+    """§8.8.1 fuzz: corpus seed × 결정론 변이 — uncaught 예외 0 ∧ bool 불변 ∧ fail-safe 축 불변식.
+
+    oracle (분류기 재구현 아닌 축 불변식 — tautology 회피):
+      - 반환 타입 bool (crash/panic 0)
+      - v1: body 무관 `status == 413` 에만 True (body-독립 불변)
+      - v2: status != 400 → 무조건 False (fail-safe — over-limit 오인 없음)
+      - version ∉ {1, 2} → 무조건 False (fail-safe)
+    """
+    rng = random.Random(0x2889)
+    seeds = _load_fuzz_corpus()
+    statuses = (400, 413, 404, 200, 500, 429, 0, -1)
+    versions = (1, 2, 0, 3, -1)
+    for i in range(FUZZ_ITERATIONS):
+        body = _mutate(rng, seeds[i % len(seeds)])
+        version = versions[rng.randrange(len(versions))]
+        status = statuses[rng.randrange(len(statuses))]
+        result = rest_module.is_over_limit_error(version, status, body)
+        assert isinstance(result, bool), f"iter {i}: 반환 타입 {type(result)} — bool 불변 위반"
+        if version == 1:
+            assert result is (status == 413), f"iter {i}: v1 body-독립 불변 위반"
+        elif version == 2 and status != 400:
+            assert result is False, f"iter {i}: v2 status!=400 fail-safe 위반"
+        elif version not in (1, 2):
+            assert result is False, f"iter {i}: 미지 version fail-safe 위반"
+
+
+@settings(max_examples=200, deadline=None)
+@given(version=st.integers(min_value=-2, max_value=4),
+       status=st.integers(min_value=-1, max_value=600),
+       body=st.one_of(st.text(max_size=300),
+                      st.binary(max_size=300).map(lambda b: b.decode("latin-1"))))
+@example(version=2, status=400, body="")
+@example(version=1, status=413, body="\x00")
+def test_fuzz_is_over_limit_error_hypothesis_arbitrary(version, status, body):
+    """§8.8.1 fuzz (Hypothesis 축): 임의 (version, status, body) — crash 0 + fail-safe 불변."""
+    result = rest_module.is_over_limit_error(version, status, body)
+    assert isinstance(result, bool)
+    if version not in (1, 2):
+        assert result is False
+    if version == 2 and status != 400:
+        assert result is False
+    if version == 1:
+        assert result is (status == 413)
+
+
+# §8.8.2 sample_budget — Hypothesis examples (실측 = Story §8.4 기록).
+_PROP_MAX_EXAMPLES = 120
+
+
+@settings(max_examples=_PROP_MAX_EXAMPLES, deadline=None)
+@given(data=st.binary(min_size=0, max_size=2048),
+       budget=st.integers(min_value=6, max_value=30000))
+@example(data=b"", budget=6)
+@example(data=b"\x00", budget=6)
+@example(data=("한글 라인 무결성\n" * 200).encode("utf-8"), budget=200)
+def test_prop_chunk_reassemble_roundtrip(data, budget):
+    """§8.8.2 property ①: reassemble(chunk(b, budget)) == b (∀ bytes b, 유효 budget ≥ 6)."""
+    assert reassemble(chunk_canonical(data, budget)) == data
+
+
+@settings(max_examples=_PROP_MAX_EXAMPLES, deadline=None)
+@given(data=st.binary(min_size=0, max_size=2048),
+       budget=st.integers(min_value=6, max_value=28662))
+@example(data=b"\xff" * 2048, budget=6)
+def test_prop_wrap_budget_invariant(data, budget):
+    """§8.8.2 property ②: json_encoded_size(wrap(chunk_i)) ≤ budget + WRAP_OVERHEAD ≤ BUDGET_BYTES."""
+    props = chunk_canonical(data, budget)
+    for key, val in props.items():
+        if key == LOCAL_MANIFEST_KEY:
+            continue
+        wrapped = json_encoded_size({"data": val})
+        assert wrapped <= budget + WRAP_OVERHEAD_BYTES
+        assert wrapped <= BUDGET_BYTES
+
+
+def test_prop_wrap_budget_strategy_bound_is_effective_budget():
+    """§8.8.2 전략 상한 28662 = effective_chunk_budget() 결박 (상수 드리프트 시 본 테스트 RED)."""
+    assert effective_chunk_budget() == 28662 == BUDGET_BYTES - WRAP_OVERHEAD_BYTES
+
+
+def test_prop_wrap_budget_invariant_at_effective_budget_full_chunk():
+    """§8.8.2 경계 pin: effective budget 가득 찬 chunk 도 wrap 후 BUDGET_BYTES 이하 (D-5 ∀-형)."""
+    budget = effective_chunk_budget()
+    props = chunk_canonical(b"\xa5" * 43000, budget)   # raw_budget=21495 → chunk 3개 (첫 2개 가득)
+    payload_keys = [k for k in props if k != LOCAL_MANIFEST_KEY]
+    assert len(payload_keys) >= 2
+    for k in payload_keys:
+        assert json_encoded_size({"data": props[k]}) <= BUDGET_BYTES
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# basis golden 결박 suite (FIX iter1 F-CL-06/07 — Change Plan §8.1–§8.2 basis 결선 이행)
+#   read-only: golden·NDJSON 은 읽기만 한다 (§3.9 — 갱신은 실 재측정 시에만).
+#   결박 상대 = scripts/ production 상수·verdict 함수 (golden 을 읽지 않는 함수 — tautology 차단).
+# ════════════════════════════════════════════════════════════════════════════
+
+FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures" / "cfp_2889"
+BASIS_GOLDEN_PATH = FIXTURES_DIR / "measurement_basis_golden.json"
+RUN_NDJSON_PATH = FIXTURES_DIR / "run-20260806T060155.ndjson"
+
+
+def _load_basis():
+    if not BASIS_GOLDEN_PATH.exists():
+        pytest.fail(f"basis golden 부재: {BASIS_GOLDEN_PATH} (D-13 — skip 금지, 명시 fail)")
+    return json.loads(BASIS_GOLDEN_PATH.read_text(encoding="utf-8"))
+
+
+@pytest.mark.requires_golden
+def test_ac11_replay_basis_boundary_32768():
+    """AC-11 replay: 경계 관측 32767 성공 / 32769 → 400 + discriminating 결박 (Change Plan §8.1–§8.2)."""
+    basis = _load_basis()
+    points = {p["json_encoded_bytes"]: p for p in basis["boundary_basis"]["points"]}
+    assert points[32767]["write_success"] is True
+    assert points[32769]["write_success"] is False
+    assert points[32769]["http_status"] == 400
+    assert basis["boundary_basis"]["discriminating"] is True
+
+
+@pytest.mark.requires_golden
+def test_ac11_replay_basis_budget_constants_binding():
+    """AC-4/AC-11: basis golden budget_basis ↔ 코드 상수 SSOT 결박 (드리프트 = RED)."""
+    bb = _load_basis()["budget_basis"]
+    assert bb["budget_bytes"] == BUDGET_BYTES
+    assert bb["wrap_overhead_bytes_declared"] == WRAP_OVERHEAD_BYTES
+    assert bb["wrap_overhead_bytes_local_measured"] == WRAP_OVERHEAD_BYTES
+    assert bb["effective_chunk_budget"] == effective_chunk_budget()
+
+
+@pytest.mark.requires_golden
+def test_ac12_replay_basis_over_limit_tier_binding():
+    """AC-12 replay: 관측(v2 400 malformed 미분별·v1 404) → production verdict 함수 = declared 결박."""
+    basis = _load_basis()
+    olb = basis["over_limit_basis"]
+    assert olb["v2_probe_status"] == 400
+    assert olb["v2_probe_classified_as"] == "malformed"
+    assert olb["v1_probe_status"] == 404
+    observation = {"origin": "server-response",
+                   "http_status": olb["v2_probe_status"],
+                   "classified_as": olb["v2_probe_classified_as"],
+                   "control_pair_ok": True}
+    tier = measure.verdict_over_limit_axis([observation])
+    assert tier == basis["measurement_tiers"]["over_limit_axis"] == "declared"
+
+
+@pytest.mark.requires_golden
+def test_ac13_replay_captured_headers_verdict():
+    """AC-13a replay: rate 계열 헤더 전 부재(유효 negative) + 42건 캡처 → production verdict = advisory."""
+    basis = _load_basis()
+    lowered = {n.lower() for n in basis["header_name_set"]}
+    assert "retry-after" not in lowered
+    assert not any(n.startswith(("x-ratelimit-", "ratelimit-", "beta-", "x-beta-"))
+                   for n in lowered)
+    count = basis["header_capture_count"]
+    assert count == 42 and count >= 1
+    tier = measure.verdict_rate_axis([{"idx": i} for i in range(count)])
+    assert tier == basis["measurement_tiers"]["rate_axis"] == "advisory"
+
+
+@pytest.mark.requires_golden
+def test_basis_measurement_tiers_enum_membership():
+    """basis golden 3축 tier 전건 TIER_ENUM 소속 + storage 축 normative (D-3 확장 결박)."""
+    tiers = _load_basis()["measurement_tiers"]
+    assert set(tiers.keys()) == {"storage_axis", "over_limit_axis", "rate_axis"}
+    for value in tiers.values():
+        assert value in TIER_ENUM
+    assert tiers["storage_axis"] == "normative"
+
+
+@pytest.mark.requires_golden
+def test_basis_control_status_null_disambiguated_by_ndjson():
+    """F-CL-07: `v2_control_status: null` = control write 성공 경로 status 미기록 — NDJSON 교차 결박.
+
+    committed run NDJSON 의 overlimit-control cleanup_result(ok ∧ property_id 실재)가 control
+    write 실행+성공을 증거한다 (null ≠ 미실행). future-run 은 emit 이 `v2_control_write_success`
+    필드를 동반 기록한다 (기captured golden·NDJSON 무편집 — §3.9).
+    """
+    if not RUN_NDJSON_PATH.exists():
+        pytest.fail(f"run NDJSON 부재: {RUN_NDJSON_PATH} (D-13 — skip 금지, 명시 fail)")
+    assert _load_basis()["over_limit_basis"]["v2_control_status"] is None
+    control_cleanup = None
+    for line in RUN_NDJSON_PATH.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        rec = json.loads(line)
+        if (rec.get("event") == "cleanup_result"
+                and str(rec.get("key", "")).endswith("overlimit-control")):
+            control_cleanup = rec
+    assert control_cleanup is not None, "overlimit-control cleanup_result 미발견"
+    assert control_cleanup.get("ok") is True
+    assert control_cleanup.get("property_id"), "property_id 부재 — control write 성공 증거 불성립"
 
 
 if __name__ == "__main__":

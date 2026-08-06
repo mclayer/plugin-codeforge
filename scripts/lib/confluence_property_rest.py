@@ -77,7 +77,9 @@ BUDGET_BYTES = 28 * 1024
 #   wrap  = `{"data": "<b64>"}`  = len(b64) + 12
 #   ⇒ overhead = 10B (산술 — Change Plan §3.6. compact separator 구현 시 9B 이나 본 구현은
 #     기본 separator 로 직렬화·전송하므로 10B 가 wire-정확).
-# [empirical-source: TBD → AC-4 ③ envelope overhead 실측치로 확정 갱신]
+# [empirical-source: 2026-08-06T06:02:00+09:00, run_id=20260806T060155 — AC-4 ③ 확정: 로컬 인코딩
+#   산술 실측 10B (서버 관측 아님 — basis golden budget_basis.wrap_overhead_bytes_local_measured=10,
+#   갱신은 실 재측정 시에만 §3.9)]
 WRAP_OVERHEAD_BYTES = 10
 
 

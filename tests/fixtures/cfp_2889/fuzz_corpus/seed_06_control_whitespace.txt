@@ -1,0 +1,4 @@
+	line-with-tab
+  line with spaces
+
+trailing-blank-and-crlf-mix
