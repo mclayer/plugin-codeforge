@@ -7,10 +7,12 @@
 # 계약 SSOT: wrapper/change-plans/cfp-2884-codex-promptfile-utf8-language-partition.md §5 row 14.
 #
 # 실행 진정성 계약 (r10 — R7-1, distinct-marker 의무 · exit-code-only 금지):
-#   pytest fork 판정 = exit code ∧ stdout 'passed' 토큰 병행 assert
-#   (전량 skip 출력 'N skipped' 에는 'passed' 토큰 부재 — 판별력 실측)
+#   pytest fork 판정 = exit code ∧ stdout 정규식 '[0-9]+ passed' 병행 assert
+#   (정규식 = xpass 배제, bare-substring 'passed' 는 'xpassed'⊃'passed' 상한 제거)
 #   - 선례: tests/scripts/test_authoring-self-gate.sh L13-16 (★distinct-marker) + L72 (pytest 'passed' assert)
 #   - CFP-2635 / ADR-060 Amendment 22: exit-code masking 금지, subprocess-fork 진정성
+#   - r8 C1: 정규식 `[0-9]+ passed` 채택. 잔여 상한: 부분 skip ∨ xpass 혼재해도 'N passed' 공존 시 GREEN
+#     (pytest -q 요약 구조상 잔여 — exit 0 병행 gate 가 실패 케이스는 차단)
 #
 # Windows/Git-Bash 견고성 (CFP-2659): mktemp -d 안전 (python helper 경로 = argv 전달).
 # Exit 0 = pytest suite PASS.
@@ -49,8 +51,12 @@ OUT="$WORK/pytest.out"; EC=0
 assert_eq "pytest suite: exit 0 (fixture AC-1~6/AC-9 PASS)" "$EC" "0" \
   "tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py 전량 GREEN"
 
-# Distinct-marker: pytest 실 실행 sentinel 'passed' (전량 skip = 'N skipped' 출력이라 sentinel 부재 판별)
-assert_has "pytest: distinct-marker (실 실행 'passed')" "$(cat "$OUT")" "passed"
+# distinct-marker: 정규식 앵커 '[0-9]+ passed' (r8 C1 — bare-substring 은 xpassed⊃passed 상한; 정규식은 xpass 배제 실측 검증)
+if grep -Eq '[0-9]+ passed' "$OUT"; then
+  pass "pytest: distinct-marker (정규식 '[0-9]+ passed')"
+else
+  fail "pytest: distinct-marker (정규식 '[0-9]+ passed')" "pytest -q 요약에 'N passed' 부재 (전량 skip/error/미실행)"
+fi
 
 echo
 echo "═══════════════════════════════════════════════════════════════════════════"
