@@ -3,10 +3,10 @@
     {
       "version": {
         "number": 1,
-        "message": "",
-        "minorEdit": false,
+        "message": "<str>",
+        "minorEdit": "<bool>",
         "authorId": "<str>",
-        "createdAt": "2026-08-05T20:58:02.821Z"
+        "createdAt": "<str>"
       },
       "value": "<b64:len=222,sha8=8b9e52e4>",
       "key": "cfp2889.measure.golden-skeleton",
@@ -14,7 +14,8 @@
     }
   ],
   "_links": {
-    "base": "https://mclayer.atlassian.net/wiki"
+    "base": "<str>"
   },
-  "empirical_source": "[empirical-source: 2026-08-06T06:01:56+09:00, GET  / wiki / api / v2 / pages / 21430273 / properties, 200, tenant=redacted, run_id=20260806T060155]"
+  "empirical_source": "[empirical-source: 2026-08-06T06:01:56+09:00, GET  / wiki / api / v2 / pages / 21430273 / properties, 200, tenant=redacted, run_id=20260806T060155]",
+  "redaction_note": "[redaction @CFP-2889 보안테스트 FIX iter1, 2026-08-06] §3.9 값-축 3분류 allowlist 소급 적용 — 서버 유래 비-allowlist 값을 타입 placeholder 로 치환. 측정치 무변조: 키·중첩·타입·수치(version.number·id·payload digest) 전건 불변. 치환 필드: results[0].version.message, results[0].version.minorEdit, results[0].version.authorId, results[0].version.createdAt, _links.base"
 }
