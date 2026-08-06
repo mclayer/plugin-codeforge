@@ -145,10 +145,9 @@ governance self-write 만 KST 직접 표기. external timestamp (GitHub API resp
 1. **V-1 pause/resume checkpoint (PRIMARY)** — `[PAUSE] YYYY-MM-DDTHH:MM:SS+09:00 — <사유>` / `[RESUME] YYYY-MM-DDTHH:MM:SS+09:00 — <재개점>` 표준. 사용자 directive 가 직접 지목한 유일 영역 (AC-9).
 2. **V-2 retro auto-trigger 시각 (secondary)** — `[RETRO TRIGGER] YYYY-MM-DDTHH:MM:SS+09:00 — Phase 2 PR merge +5min` comment prefix 표준 (ADR-045 / CFP-138, comment-prefix-registry 정합, AC-10).
 3. **V-3 §10 FIX Ledger dual-clock 분리 (secondary)** — Story §10 ledger 표시 시각 = Orchestrator local KST clock (display layer) / `fix-ledger-sync.yml` Action mirror = GitHub API UTC (machine layer). fix-event-v1 contract field 는 UTC strict 보존, Story §10 ledger 표시만 KST (AC-11, E-2 정합).
+4. **V-4 ADR amendment_log date (secondary)** — `date:` field = date-only KST 일자 의미 normative (AC-12).
 
 > **Amendment 4 (2026-08-06 KST, CFP-2879)**: §10 시각 **표시** 칸 정본 = §결정 2 초-KST `YYYY-MM-DDTHH:MM:SS+09:00` 임을 CFP-2879 가 adjudicate (V-3 기결정의 명문화 — 신규 결정 아님). fix-event-v1 v1.5 가 계약 문면 전파 + 상호 cross-ref (계약 §2 표 `시각` 설명 W1 / §3 constraints W2 / §4 / `## v1.5` 절). 재발 경로 = V-3 이 secondary 검증 항목에 머물러 발견가능성이 낮았던 것 + 계약 문면 미전파 (CFP-2879 §2.3 — v1.4 까지 fix-event-v1 은 본 재배정을 반영하는 amendment 를 받은 적 없고 ADR-079 를 cross-ref 하지 않았다).
-
-4. **V-4 ADR amendment_log date (secondary)** — `date:` field = date-only KST 일자 의미 normative (AC-12).
 
 ### 결정 6 — forward-only effective date
 
