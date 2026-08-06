@@ -19,9 +19,11 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 ```
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
 |------|------|------|--------|-----------|-------------|--------|
-| 1    | ISO8601 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — |
-| 2    | ISO8601 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | **RESET 구현-리뷰** |
+| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — |
+| 2    | 2026-04-29T23:22:00+09:00 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | **RESET 구현-리뷰** |
 ```
+
+시각 칸(표시) = ADR-079 §결정 2 초-KST `+09:00` (`YYYY-MM-DDTHH:MM:SS+09:00`) / machine 층 UTC = [fix-event-v1 §3](../../docs/inter-plugin-contracts/fix-event-v1.md).
 
 상세 룰 (max FIX 횟수 / RESET marker / parallel diagnosis / mechanical fast-path) 은 [playbook §6](../../docs/orchestrator-playbook.md) SSOT.
 
