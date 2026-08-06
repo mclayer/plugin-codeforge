@@ -971,6 +971,9 @@ def test_fuzz_is_over_limit_error_corpus_mutation_crash_zero():
                       st.binary(max_size=300).map(lambda b: b.decode("latin-1"))))
 @example(version=2, status=400, body="")
 @example(version=1, status=413, body="\x00")
+@example(version=1, status=400, body="value too large")   # v1 완화 mutant 결정론 판별 pin
+@example(version=2, status=413, body="too long")          # v2 status!=400 fail-safe 판별 pin
+@example(version=3, status=413, body="too long")          # 미지 version fail-safe 판별 pin
 def test_fuzz_is_over_limit_error_hypothesis_arbitrary(version, status, body):
     """§8.8.1 fuzz (Hypothesis 축): 임의 (version, status, body) — crash 0 + fail-safe 불변."""
     result = rest_module.is_over_limit_error(version, status, body)
