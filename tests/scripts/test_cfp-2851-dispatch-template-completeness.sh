@@ -200,6 +200,8 @@ declare -a SKEL_TOKENS=(
   '- < "$PROMPTFILE"'
   'timeout --kill-after='
   '소비 재검증'
+  '### 언어 구획 규약'
+  'ANCHOR_LINE:'
 )
 for t in "${SKEL_TOKENS[@]}"; do
   if ! grep -qF -- "$t" "$MD"; then SKEL_OK=0; echo "    골격 토큰 부재: $t"; fi
@@ -207,7 +209,7 @@ done
 # lane effort 표 (별도 확인)
 grep -qF '| requirements-review |' "$MD" || { SKEL_OK=0; echo "    골격 토큰 부재: lane effort 표"; }
 if [ "$SKEL_OK" -eq 1 ]; then
-  pass "AC-5 GREEN: 골격 6 토큰(codex exec / --ignore-user-config -m … --ephemeral / - < \$PROMPTFILE / timeout --kill-after= / 소비 재검증 / lane effort 표) 전부 존재"
+  pass "AC-5 GREEN: 골격 8 토큰(codex exec / --ignore-user-config -m … --ephemeral / - < \$PROMPTFILE / timeout --kill-after= / 소비 재검증 / 언어 구획 규약 헤더 / ANCHOR_LINE / lane effort 표) 전부 존재"
 else
   fail "AC-5 GREEN: 골격 토큰 일부 부재 (post-change 파손)"
 fi
