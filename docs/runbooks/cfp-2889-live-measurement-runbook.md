@@ -17,6 +17,10 @@ date: 2026-08-06
 
 ## §1. 사전 점검 목록
 
+### 1.0 테스트 실행 사전 요건 (suite-A/B 공통)
+
+- `pip install --user -r requirements.txt` (hypothesis 포함 — §8.8 fuzz/property 의존. 미설치 시 test collection 이 fail-loud exit 2 로 명시 중단, FIX iter2 F-CL2-01)
+
 ### 1.1 자격증명 설정
 
 - **파일 위치**: `~/.claude/codeforge-scratch/atlassian-creds.env` (ADR-169 scratch TTL purge 정의역)

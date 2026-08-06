@@ -900,8 +900,16 @@ def test_seam_not_referenced_from_production():
 
 import random
 
-from hypothesis import example, given, settings
-from hypothesis import strategies as st
+# FIX iter2 F-CL2-01: 선례 동형 fail-loud 가드 (test_cfp2813_living_arch.py L29-34) —
+# 부재 시 원시 traceback 대신 조치 안내 + 결정론 exit 2 (진단층. 부재 근본 처치 =
+# requirements.txt `hypothesis` 선언 — 가드는 전멸을 막지 않는다).
+try:
+    from hypothesis import example, given, settings
+    from hypothesis import strategies as st
+except ImportError:
+    print("[codeforge-error] hypothesis not installed — pip install --user hypothesis",
+          file=sys.stderr)
+    sys.exit(2)
 
 from lib.confluence_property_chunking import reassemble
 
@@ -1131,6 +1139,50 @@ def test_basis_control_status_null_disambiguated_by_ndjson():
     assert control_cleanup is not None, "overlimit-control cleanup_result 미발견"
     assert control_cleanup.get("ok") is True
     assert control_cleanup.get("property_id"), "property_id 부재 — control write 성공 증거 불성립"
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# golden builder pin (FIX iter2 F-CL2-02 — FIX iter1 emit 수정 경로 회귀 net)
+#   suite-A 소속: builder = dict 입력 순수함수 (기golden 무편집·live 0 — future-run emit 계약 고정).
+# ════════════════════════════════════════════════════════════════════════════
+
+import types
+
+
+def test_build_shape_golden_provenance_put_prefix():
+    """F-CR-03 회귀 net: shape golden empirical_source = `PUT <endpoint>` (list golden GET 대칭)."""
+    envelope = {"id": "999001", "key": "cfp2889.pin", "value": "pin-payload",
+                "version": {"number": 3}}
+    golden = measure.build_shape_golden(envelope, run_id="pin-run", page_id="21430273",
+                                        status=200)
+    src = golden["empirical_source"]
+    # safe_path 실 계약 = 공백-분리 세그먼트 표기 (deny-scan 20+run 회피 무관 결정론 변환).
+    assert ", PUT " in src, src   # method 프리픽스 실재 (F-CR-03 — list golden GET 대칭)
+    assert "/ wiki / api / v2 / pages / 21430273 / properties / 999001" in src, src
+    assert golden["endpoint_omitted_by_validator"] is False
+    assert golden["value"].startswith("<b64:len=")   # payload 원문 미수록 (§3.9 치환 유지)
+
+
+def test_build_basis_golden_control_write_success_field():
+    """F-CL-07 회귀 net: basis golden 이 `v2_control_write_success` 를 W4 control 에서 전달."""
+    results = {
+        "scenarios": {
+            "W2": {"points": [], "boundary_discriminating": True},
+            "W3": {"utf8_bytes": 1, "ascii_bytes": 2, "delta_bytes": 1},
+            "W4": {"control": {"write_success": True, "http_status": None},
+                   "probe": {"http_status": 400, "classified_as": "malformed"}},
+            "W5": {"probe": {"http_status": 404, "classification": "other"}},
+        },
+        "operational_verdict": "RECONCILED",
+        "measurement_tiers": {"storage_axis": "normative",
+                              "over_limit_axis": "declared", "rate_axis": "advisory"},
+    }
+    stub_client = types.SimpleNamespace(header_captures=[])
+    basis = measure.build_basis_golden(results, stub_client, run_id="pin-run")
+    olb = basis["over_limit_basis"]
+    assert olb["v2_control_write_success"] is True
+    assert olb["v2_control_status"] is None   # null = 성공 경로 status 미기록 (F-CL-07 의미 고정)
+    assert olb["v2_probe_classified_as"] == "malformed"
 
 
 if __name__ == "__main__":
