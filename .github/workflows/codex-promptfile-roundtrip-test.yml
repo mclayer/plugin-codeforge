@@ -1,0 +1,71 @@
+name: codex-promptfile-roundtrip-test
+# CFP-2884 / ADR-081 Amendment 15 §결정 D16 3항 — Codex promptfile UTF-8 round-trip 검증 helper
+#   (scripts/lib/check_promptfile_utf8_roundtrip.py) 의 discriminating fixture suite 를 실 CI red/green
+#   으로 산출한다 (born-dormant 차단).
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 **별도 workflow** 인가 (Change Plan §5 row 7 / §8.1 teeth 2층):
+#   기존 codex-companion-timeout-check.yml 은 job-level `continue-on-error: true` (warning tier) 라
+#   그 안에 pytest step 을 얹으면 step 실패가 job 성공에 삼켜져 hollow (AC-4 teeth 0) 가 된다.
+#   → 그 workflow 는 무접촉으로 두고(AC-7 lint 축 = warning tier 유지, 변경 없음) 본 전용 hard-fail
+#   job 으로 fixture 통과·판별력을 강제한다. 선례 = ac-traceability-self-test.yml (pytest step) /
+#   authoring-self-gate-test.yml · evidence-registry-check-test.yml (day-1 hard-fail 전용 채널).
+#
+# 검사 대상: tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py
+#   — AC-4 fixture 5종 (① invalid-byte / ②a latin-1 mojibake / ②b cp949 mojibake [byte-pinned] /
+#     ③ 조립측 앵커 provenance-discriminating / ④ 앵커 무손상+본문 변이 content-discriminating)
+#   + AC-9 whitelist mutation·validity 축 + §8.8.1 fuzz / §8.8.2 property (Hypothesis round-trip identity).
+#
+# **teeth 2층 정직 구분 (Change Plan §8.1)**: 본 채널이 강제하는 것은 fixture **통과·판별력** 이다.
+#   명명 테스트의 **실재** 강제는 별개 층(required `ac-traceability-matrix` — RTM Hop2/Hop3)이 소유한다.
+#   "AC-4 를 required 로 기계 강제" 서술 금지 — 두 층의 보증 대상이 다르다 (실재 ≠ 통과).
+#
+# **day-1 hard-fail** (continue-on-error 금지) — fixture 실패 = job red. round-trip assert 의 판별력을
+#   검증하는 채널이 hollow 로 새지 않도록 실패를 삼키지 않는다 (ADR-151 §결정5 모델).
+# **non-required** (branch-protection 8-tuple[문서 SSOT, CLAUDE.md] 무변경 — 신규 required context 0).
+#   required 승격 = 7일-green 재적립 chicken-egg (ADR-130 §결정6) 이므로 별 carrier 소관.
+# **wrapper-self-only**: job-level `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). ADR-130 job-level `if:` graceful no-op 정합.
+#
+# **.github-only (templates/github-workflows copy 미운용)** — 순수 self-test workflow 관례.
+#   invariant-check.yml 의 Workflow parity step 은 templates/*.yml → .github/<base>.yml **단방향**만 walk
+#   하므로 template copy 없는 wrapper-self-only workflow 는 자동 parity-safe.
+#   선례 = ac-traceability-self-test.yml / evidence-registry-check-test.yml / selftest-execution-liveness-test.yml.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/lib/check_promptfile_utf8_roundtrip.py'
+      - 'tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py'
+      - 'plugins/codeforge-review/agents/CodexReviewAgent.md'
+      - 'plugins/codeforge-review/templates/codex-korean-literal-whitelist.md'
+      - '.github/workflows/codex-promptfile-roundtrip-test.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codex-promptfile-roundtrip-test:
+    name: codex-promptfile-roundtrip-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest + hypothesis = §8.8.2 property round-trip identity)
+        run: pip install --quiet pytest hypothesis
+
+      - name: Run promptfile UTF-8 round-trip fixture suite (AC-4/AC-9, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py -q
