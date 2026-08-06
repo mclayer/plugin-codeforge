@@ -390,7 +390,7 @@ P2 <n>건 · P3 <n>건 — 내용은 위 [Codex Review 원문] 참조 (요약 �
 - **오프라인** (Codex 재호출 금지 — out.json 필드만 소비).
 - **title/body 형식 강제 변환**: out.json `title` 이 형식 미준수여도 정규화 시 `[<category>] <원인 요약>` 으로 재작성, `body` 첫 줄은 `location · trigger · impact` 1문장 요약. lane=code·security의 P0·P1 finding은 `body` 마지막 줄에 회귀 힌트(`1차 원인 가정` + `권장 회귀`)를 추가 — 원문에 명시 없으면 워커가 lane별 진단 가이드(체크리스트 §1차 원인 가정)에 따라 추론
 - 회귀 힌트 추론 기준: lane=code의 dup-boundary / layer 위반 / API 계약 위반 → 설계 / dup-local / 단순 런타임 결함 → 구현. lane=security의 trust-boundary / auth model 결함 → 설계 / injection / credential / CVE → 구현
-- **구획 C 한글 요약 (additive 병기)**: `[Codex Review 원문]` verbatim 슬롯 **무변경** + 그 아래 `[한글 요약 — 비권위·additive]` 블록 **추가** (교체 금지 — 요약이 원문을 대체하면 위반). granularity = verdict 1줄 + counts 1줄 + P0·P1 finding 별 1줄, **P2·P3 는 건수만**. `severity`·`category`·`location` 은 **무재해석** = out.json 필드 verbatim 복사이며, 한글화 대상은 자연어 요지 1줄뿐. 생성 주체 = 워커 전사 계층 (out.json schema 무접촉 — 신규 필드 0). 오역이 나도 원문 슬롯이 정본으로 잔존하므로 가독성 손실이지 정확성 손실 아님 — 단 원문을 지우는 순간 그 정직성 근거가 소멸한다.
+- **구획 C 한글 요약 (additive 병기)**: 규칙 SSOT = §언어 구획 규약 (재인용 금지). 본 절 소관 = 생성 주체 = 워커 전사 계층 (out.json schema 무접촉 — 신규 필드 0).
 
 ## 제약
 
