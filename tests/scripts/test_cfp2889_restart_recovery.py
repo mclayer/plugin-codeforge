@@ -52,9 +52,9 @@ from confluence_backward_measure import RunContext
 from lib.confluence_measurement_client import create_measurement_client
 
 ctx = RunContext("killtest", events_path=Path({events!r}))
-client = create_measurement_client("https://example.atlassian.net", "tok-fake", "e@x.io",
+client = create_measurement_client("https://mclayer.atlassian.net", "tok-fake", "e@x.io",
                                    accounting=ctx.accounting)
-ok, env, err = client.create_property_v2("p1", "codeforge.sync.canonical.__killprobe",
+ok, env, err = client.create_property_v2("21430274", "codeforge.sync.canonical.__killprobe",
                                          {{"v": 1}}, dry=False)
 ctx.record_write_outcome(bool(ok), label="killtest")
 print("DRIVER_DONE", flush=True)

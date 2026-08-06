@@ -40,6 +40,7 @@ Env vars:
 """
 
 import argparse
+import copy
 import datetime
 import hashlib
 import json
@@ -76,12 +77,12 @@ from lib.confluence_property_chunking import (                     # noqa: E402
     json_encoded_size,
 )
 from lib.confluence_property_rest import (                         # noqa: E402
-    BUDGET_BYTES, CHUNK_KEY_TEMPLATE, DELETE_SOFT_CEILING, MANIFEST_KEY,
+    BUDGET_BYTES, CHUNK_KEY_TEMPLATE, DELETE_SOFT_CEILING, EXPECTED_HOST, MANIFEST_KEY,
     PROPERTY_KEY_PREFIX, WRAP_OVERHEAD_BYTES,
-    AuthAbortError, ChunkStoreError, PropertyResolveError, RateAbortError,
+    AuthAbortError, ChunkStoreError, KillSwitchAbort, PropertyResolveError, RateAbortError,
     SanitizedHandler, WriteAccounting, WriteCapExceeded,
     _deny_scan_for_secrets, _scrub, _unwrap_property,
-    effective_chunk_budget, grouped_hex, sanitize_body_field,
+    effective_chunk_budget, grouped_hex, sanitize_body_field, validate_resource_id,
 )
 
 
@@ -114,15 +115,27 @@ TEST_PAUSE_ENV = "CFP2889_TEST_PAUSE_AFTER_INTENT"
 CBL_SKIP_ISSUE_CREATE_ENV = "CBL_SKIP_ISSUE_CREATE"
 
 CONFLUENCE_BASE_URL_ENV = "CONFLUENCE_BASE_URL"
-DEFAULT_BASE_URL = "https://mclayer.atlassian.net"
+
+#: 기본 base_url — host pin SSOT(`EXPECTED_HOST`, rest.py)에서 **파생**한다 (상수 2벌 금지).
+#: 리터럴을 따로 두면 한쪽만 갱신됐을 때 "기본값이 자기 pin 을 통과하지 못하는" born-broken 이 된다.
+DEFAULT_BASE_URL = f"https://{EXPECTED_HOST}"
 
 logger = logging.getLogger("confluence_backward_measure")
 
 
 # ── kill-switch 예외 (K-3 / K-5 / K-6 / K-7 — 나머지는 rest.py 소유) ─────────
 
-class MeasureAbort(RuntimeError):
-    """측정 run abort 기반 클래스 — 모든 abort 는 `abort` 이벤트 기록 후 exit≠0."""
+class MeasureAbort(KillSwitchAbort):
+    """측정 run abort 기반 클래스 — 모든 abort 는 `abort` 이벤트 기록 후 exit≠0.
+
+    base = rest.py 의 `KillSwitchAbort` (F5). 하위 4종(K-3/K-5/K-6/K-7)이 kill-switch 표식을
+    자동 상속하므로 중간 `except` 의 `except KillSwitchAbort: raise` 선행절 하나가 rest.py 소유
+    kill-switch(K-1/K-2/K-4)와 본 모듈 소유 kill-switch를 **함께** 결박한다 (site 별 타입 열거
+    드리프트 0).
+
+    의존 방향은 무역전이다 — base 는 부모 모듈이 소유하고 rest.py 는 measure.py 를 import 하지
+    않는다 (측정 → 부모 단방향).
+    """
     kill_switch = "K-?"
 
 
@@ -142,7 +155,20 @@ class EmitDenyScanAbort(MeasureAbort):
 
 
 class CredsPreflightAbort(MeasureAbort):
-    """K-7 — creds preflight 실패 (파일 부재 등)."""
+    """K-7 — **creds·endpoint preflight** 실패 (creds 부재 / base_url host pin·형식 거부 /
+    대상 자원 id 문법 위반).
+
+    정의 확장 (§3.10 註 ④ — FIX iter1 F1): 원 정의는 "creds preflight" 였으나, 생성자 host pin
+    (F1)과 L1 자원 id 검증(F2)이 던지는 실패도 **run 을 시작하기 전 전제가 붕괴** 라는 동일
+    성질이라 K-7 이 자연 수용한다. **신규 K-8 은 신설하지 않는다** — kill-switch 개수 표기
+    ("7종")가 §13L.7·§8.5.2·runbook 3면에 박혀 있어 신설은 3면 동시 개정을 요구하고, 그 비용이
+    분류 이득을 넘는다.
+
+    K-5 와 disjoint (번호 오독 차단):
+      - **K-5** = 문법은 맞으나 deny-set 소속이거나 sentinel 이 없는 **page 신원** 실패.
+      - **K-7** = **문법 자체가 틀린** resource-id / endpoint preflight 실패.
+    한쪽이 다른 쪽을 포섭하지 않는다 (K-7 통과가 K-5 를 면제하지 않고, 그 역도 아니다).
+    """
     kill_switch = "K-7"
 
 
@@ -476,6 +502,13 @@ class PageIdentityGate:
             if getattr(client, "accounting", None) is not None:
                 client.accounting.record_get()
             resp = client._perform_request("GET", f"/wiki/api/v2/pages/{target}", dry=dry)
+        except KillSwitchAbort:                      # F5 — kill-switch 를 K-5 로 오분류하지 않는다
+            # **도달 경로 정직 기재 (firsthand 실측 2026-08-07)**: 401→`AuthAbortError` 승격은
+            # `_send_write` 내부 한정이라 이 GET(`_perform_request` 직접 호출)에서 401 은 예외가
+            # 아니라 status 로 돌아온다(비-200 분기가 처리) → 본 선행절은 401 축이 아니라 dry 경로
+            # `GoldenFixtureMissingError` 등 kill-switch 계열이 "page 신원 GET 실패(K-5)" 로
+            # 재분류되는 것을 막는다. F5 형식 invariant(중간 except 는 base 로만 재-raise) 준수.
+            raise
         except Exception as e:                       # noqa: BLE001
             result["reason"] = f"page 신원 GET 실패 ({type(e).__name__}) — fail-closed"
             return result
@@ -800,6 +833,64 @@ def creds_preflight(creds_file_found: bool) -> None:
     )
 
 
+def abort_with_ledger(exc: BaseException, run_id: str,
+                      ctx: Optional["RunContext"] = None) -> int:
+    """abort 원장 **1행** 을 보장한 뒤 exit code 1 을 돌려준다 (§3.10 — 원장 없는 종료 금지).
+
+    preflight abort 는 `RunContext` 가 아직 없는 시점(진입점 초입·plan 모드)에 발화할 수 있다.
+    그 경우 여기서 최소 context 를 만들어 **기존** `RunContext.emit_abort` 를 그대로 재사용한다
+    — abort 기록 경로를 2벌 작성하면 한쪽만 갱신되는 드리프트가 생긴다 (재사용 선행, ADR-140).
+    """
+    context = ctx if ctx is not None else RunContext(run_id=run_id, cap=WRITE_CAP)
+    context.emit_abort(exc)
+    logger.error(f"abort — {kill_switch_id(exc)} / {type(exc).__name__} (원장 1행 기록)")
+    return 1
+
+
+def create_client_or_abort(base_url: str, token: Optional[str], email: Optional[str],
+                           accounting: Optional[WriteAccounting] = None) -> MeasurementRESTClient:
+    """측정 client 생성 — 생성자 L1 host pin 의 `ValueError` 를 **K-7 preflight abort 로 승격**.
+
+    승격이 필요한 이유 (F1 조건 (a)/(b)): pin 집행 지점은 `ConfluencePropertyREST.__init__` 이고
+    거기서 나오는 `ValueError` 는 `emit_abort` 결박 **밖**이다. 그대로 두면 "원장 미기록 종료" 가
+    되어 §3.10("모든 abort = `abort` 이벤트 기록 후 exit≠0")을 위반한다. 승격 지점은 client 를
+    만드는 **모든** 진입점(`main` live 경로 · `run_plan`)이며, 특히 plan 경로에서는 뒤따르는
+    `PageIdentityGate.verify(dry=False)` 가 자격증명을 실은 실 HTTP GET 을 발사하므로 승격이
+    그보다 앞서야 한다.
+
+    사유 문자열에 `endpoint-preflight` 를 남겨 creds 축(K-7)과 원장에서 분별 가능하게 한다.
+    """
+    try:
+        return create_measurement_client(base_url, token, email, accounting=accounting)
+    except ValueError as e:
+        raise CredsPreflightAbort(
+            f"endpoint-preflight 실패 (base_url host pin·형식) — {e}. "
+            f"{CONFLUENCE_BASE_URL_ENV} 를 정정한 뒤 재실행 (K-7 — 자격증명 오도착 차단, "
+            f"HTTP 0회)"
+        ) from e
+
+
+def validate_page_id_or_abort(raw: str) -> str:
+    """L1 층 대상 자원 id preflight — 위반 = **K-7 abort** (write 0회, run 미개시).
+
+    처분이 L2 의 local-reject 가 아니라 abort 인 이유: 여기서 깨진 것은 호출 1건이 아니라
+    **실행 전제**(측정 대상 page 지목) 그 자체다. "잘못된 page_id 로 run 을 시작하지 않는다" 가
+    회수 불가 오염을 0 으로 만드는 유일한 처분이다.
+
+    배치 순서 = **검증 → K-5 deny 대조 → sentinel**. 검증이 선행해야 deny-set 대조가 성립한다 —
+    deny-set 대조는 canonical id 문자열 비교(`str(page_id).strip() in self.deny_ids`)이므로
+    `1867943/../x` 는 대조를 통과하면서 실제 요청 경로는 `/pages/1867943/...` 로 수렴한다
+    (= 운영 mirror page 지목). 정규화가 아니라 거부여야 하는 이유도 같다 (`validate_resource_id`).
+    """
+    try:
+        return validate_resource_id(raw, field=TEST_PAGE_ID_ENV)
+    except ValueError as e:
+        raise CredsPreflightAbort(
+            f"endpoint-preflight 실패 (resource-id 문법) — {e}. 대상 page id 를 정정한 뒤 "
+            f"재실행 (K-7 — 잘못된 대상으로 run 을 시작하지 않는다, write 0회)"
+        ) from e
+
+
 # ── 측정 시나리오 (W1~W5) ───────────────────────────────────────────────────
 
 def _measure_key(suffix: str) -> str:
@@ -1030,9 +1121,15 @@ def scenario_w5(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
 
 def enumerate_property_keys(client: MeasurementRESTClient, page_id: str,
                             dry: bool) -> Tuple[Optional[List[str]], bool, Optional[str]]:
-    """no-filter 전량 열거 → (keys | None, partial, error). 실패 = None (reconcile_unknown 근거)."""
+    """no-filter 전량 열거 → (keys | None, partial, error). 실패 = None (reconcile_unknown 근거).
+
+    kill-switch 는 삼키지 않는다 (F5): 본 함수의 광역 `except` 는 **실 K-1(401) 삼킴 지점**
+    이었다 — 인증 실패가 여기서 흡수되면 401 신호가 소멸한 채 run 이 계속된다.
+    """
     try:
         envs = client.list_properties_v2(page_id, dry=dry)
+    except KillSwitchAbort:                          # F5 — kill-switch 단일 base 재-raise 선행절
+        raise
     except Exception as e:                           # noqa: BLE001
         return None, False, type(e).__name__
     keys = sorted(str(env.get("key")) for env in envs if isinstance(env, dict))
@@ -1060,7 +1157,17 @@ def cleanup_order(keys: List[str]) -> List[str]:
 
 def cleanup_properties(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
                        dry: bool) -> Dict[str, Any]:
-    """try/finally 로 결박되는 회수 루틴 — DELETE 는 cap 밖이라 K-2 이후에도 계속 수행된다."""
+    """try/finally 로 결박되는 회수 루틴 — DELETE 는 cap 밖이라 K-2 이후에도 계속 수행된다.
+
+    **광역 `except` 의 명시 예외 (F5 — "예외를 예외로 declare")**: 본 루프의 `except Exception`
+    은 kill-switch 결박 규범(`except KillSwitchAbort: raise`)의 **의도된 예외로 존치**한다 —
+    여기서 결박하면 첫 kill-switch 에 회수가 중단되어 §7.4.1 상태 B/C(회수 목록 미확보 = 운영
+    page 에 orphan 잔존)가 재발한다. 예외를 예외로 명시하지 않으면 그 자체가 다음 번
+    `declared-not-bound`(선언만 있고 결박은 없는 규범)이 되므로 여기 1줄로 declare 한다.
+
+    단 **침묵 흡수는 금지**: 삼킨 예외가 kill-switch 계열이면 `cleanup_result` 에
+    `kill_switch_id` 를 덧붙이고 `abort` 이벤트 1행을 원장에 남긴다 (중단은 하지 않는다 — 기록만).
+    """
     outcome: Dict[str, Any] = {"attempted": 0, "deleted": 0, "failed": 0, "details": []}
     for key in cleanup_order(list(ctx.orphans.keys())):
         entry = ctx.orphans.get(key, {})
@@ -1094,30 +1201,58 @@ def cleanup_properties(client: MeasurementRESTClient, ctx: RunContext, page_id: 
             ctx.emit_event("cleanup_result", key=key, ok=bool(ok),
                            property_id=property_id)
         except Exception as e:                       # noqa: BLE001 — 회수는 어떤 예외로도 멈추지 않는다
+            # ↑ kill-switch 결박 규범의 **명시 예외** (docstring 참조). 흡수하되 침묵하지 않는다.
             ctx.register_orphan(key, status="unknown")
             outcome["failed"] += 1
             detail["result"] = f"예외 — {type(e).__name__}"
+            swallowed_kill_switch = isinstance(e, KillSwitchAbort)
+            if swallowed_kill_switch:
+                detail["kill_switch_id"] = kill_switch_id(e)
             try:
+                extra = ({"kill_switch_id": kill_switch_id(e)}
+                         if swallowed_kill_switch else {})
                 ctx.emit_event("cleanup_result", key=key, ok=False,
-                               error=type(e).__name__)
+                               error=type(e).__name__, **extra)
             except Exception:                        # noqa: BLE001
                 pass
+            if swallowed_kill_switch:
+                # 회수는 계속하되 kill-switch 발생 사실은 원장에 남긴다 (침묵 흡수 0).
+                try:
+                    ctx.emit_abort(e)
+                except Exception:                    # noqa: BLE001
+                    pass
         outcome["details"].append(detail)
     return outcome
 
 
-def reconcile(baseline: Optional[List[str]], actual: Optional[List[str]]) -> Dict[str, Any]:
-    """step R 불변식 — `S_actual ∖ S_baseline == ∅`.
+def reconcile(baseline: Optional[List[str]], actual: Optional[List[str]],
+              baseline_partial: bool, actual_partial: bool) -> Dict[str, Any]:
+    """step R 불변식 — `S_actual ∖ S_baseline == ∅` + **부분 열거 신호 결박** (F4).
 
-    열거 실패 = `reconcile_unknown` (RECONCILED 아님 — "확인 못 함" ≠ "깨끗함").
+    4 인자 전부 **positional 필수** 다 (default 금지). default 를 두면 partial 을 전달하지 않는
+    기존 호출부가 조용히 통과해 누락이 드러나지 않는다 — 호출부를 강제로 깨뜨리는 것이 목적이다.
+
+    status 4종:
+      - `reconcile_unknown` — 열거 **실패**(None). 아무것도 세지 못했다.
+      - `reconcile_partial` — 부분 열거(`baseline_partial ∨ actual_partial`) ∧ 잔여 ∅.
+        `reconcile_unknown` 과 **다른 상태**다: "확인 못 함" ≠ "일부만 확인". 두 상태를 한 토큰에
+        뭉개면 운영자가 재시도(열거 실패)와 범위 확대(부분 열거)를 구별할 수 없다.
+      - `DRIFT` — 잔여 ≠ ∅. **부분 열거보다 우선한다** — 부분 열거로 *이미 관측된* 잔여는 확정
+        사실이고, 더 셌다면 잔여가 늘 뿐이라 부분성이 그 사실을 약화시키지 않는다.
+      - `RECONCILED` — 전량 열거 ∧ 잔여 ∅ (유일하게 "깨끗함" 을 단정할 수 있는 상태).
     """
+    flags = {"baseline_partial": bool(baseline_partial),
+             "actual_partial": bool(actual_partial)}
     if baseline is None or actual is None:
-        return {"status": "reconcile_unknown", "residual": None,
+        return {"status": "reconcile_unknown", "residual": None, **flags,
                 "note": "열거 실패 — 깨끗함을 단정할 수 없음 (fail-closed)"}
     residual = sorted(set(actual) - set(baseline))
-    if not residual:
-        return {"status": "RECONCILED", "residual": []}
-    return {"status": "DRIFT", "residual": residual}
+    if residual:
+        return {"status": "DRIFT", "residual": residual, **flags}
+    if flags["baseline_partial"] or flags["actual_partial"]:
+        return {"status": "reconcile_partial", "residual": [], **flags,
+                "note": "부분 열거 — 관측 범위 안에서는 잔여 0 이나 전량 확인은 아님"}
+    return {"status": "RECONCILED", "residual": [], **flags}
 
 
 # ── captured-golden 후보 산출 (§3.9 — scratch 생성, repo 커밋은 operator 몫) ──
@@ -1130,22 +1265,119 @@ def write_golden_candidate(run_id: str, name: str, payload: Any) -> Path:
     return path
 
 
+# ── golden 값-축 3분류 (F3 — §3.9 정밀화 · 결정 14 헤더 값 3분류의 envelope 축 동형 확장) ──
+#
+# **allowlist 는 dotted path 기준**이다 — bare key name 매칭은 중첩 깊이마다 재등장하는
+# `key`/`number`/`id` 때문에 `results[*].version.number` 류를 의도치 않게 통과시킨다.
+
+#: (i) value-allow — verbatim 보존 (단건 envelope golden 기준 dotted path).
+SHAPE_GOLDEN_VALUE_ALLOW = (
+    # `id` 등재 근거 3: ① 실측 id 가 `[0-9]{1,32}` 라 §4.1 문법 계약을 자연 충족한다
+    # (placeholder 로 지우면 그 golden 을 replay 하는 mock 이 공급하는 `property_id` 가 문법
+    # 계약을 통과하지 못한다) ② §7.5 가 page/property id 를 Internal(기록 허용)로 분류한다
+    # ③ §4.2 정정 註 ①("id 는 int 가 아니라 숫자 문자열")의 실측 근거가 바로 이 golden 이라
+    # 지우면 그 註의 근거가 소멸한다.
+    "id",
+    "key",
+    "version.number",
+    "empirical_source",                  # wrapper 자기저작 (측정 harness 산출)
+    "endpoint_omitted_by_validator",     # wrapper 자기저작
+)
+
+#: list golden — `results[*]` 하위에 동일 규칙 + wrapper 자기저작 필드(root).
+LIST_GOLDEN_VALUE_ALLOW = (
+    "results[*].id",
+    "results[*].key",
+    "results[*].version.number",
+    "empirical_source",
+    "endpoint_omitted_by_validator",
+)
+
+#: (ii) payload 축 — b64 digest 치환 (`redact_payload` 재사용, 무변경).
+SHAPE_GOLDEN_PAYLOAD_PATHS = ("value",)
+LIST_GOLDEN_PAYLOAD_PATHS = ("results[*].value",)
+
+#: (iii) 타입 placeholder — bool 을 int 보다 먼저 검사한다 (`isinstance(True, int)` 는 True).
+_TYPE_PLACEHOLDERS = ((bool, "<bool>"), (int, "<int>"), (float, "<float>"), (str, "<str>"))
+
+
+def _type_placeholder(value: Any) -> str:
+    """값 → 타입만 남긴 placeholder 토큰 (원문 미수록)."""
+    if value is None:
+        return "<null>"
+    for py_type, token in _TYPE_PLACEHOLDERS:
+        if isinstance(value, py_type):
+            return token
+    return "<unknown>"
+
+
+def sanitize_golden_values(node: Any, *, value_allow: Tuple[str, ...],
+                           payload_paths: Tuple[str, ...], path: str = "") -> Any:
+    """golden 값-축 3분류 — 키·중첩 구조·타입은 **전수 보존**, 값만 처분한다 (F3).
+
+    분류 (§3.9 정밀화 = 결정 14 헤더 값 3분류의 envelope 축 동형):
+      (i)   `value_allow` dotted path 소속 → **verbatim**
+      (ii)  payload 축(`value`) → `redact_payload` b64 digest 치환 (기존 정책 무변경)
+      (iii) **그 외 전부 + 미지 필드** → 타입 placeholder (`<str>`/`<int>`/`<bool>`/… 원문 미수록)
+
+    필드를 **drop 하지 않는** 이유: 미지 필드의 *존재·타입 자체* 가 shape 발견의 측정 가치다
+    (서버가 무엇을 돌려주는가). 그래서 처분은 삭제가 아니라 값 치환이다.
+
+    (iii) 이 default 라는 점이 **fail-closed** 다 — 열거되지 않은 신규 서버 필드는 정의상 이
+    분기로 떨어진다. `version.authorId`·`createdAt`·`message`·`minorEdit` 과 `_links.base`
+    (tenant 호스트)가 여기서 막힌다. 구 구현은 `json.loads(json.dumps(...))` deep-copy 뒤
+    `value`·`key` 만 치환해 **미지 필드를 무제한 통과**시켰고, 그 결과 커밋된 golden 2파일에
+    서버 유래 `authorId` 가 유입됐다 (repo PUBLIC).
+
+    **정직 한계 (over-claim 금지)**: 이 클래스의 유출은 emit 파이프라인 step 2/4 deny-scan 이
+    잡지 못한다 — account-id 형(`<digits>:<uuid>`)은 `:`·`-` 로 분절돼 20+ `[A-Za-z0-9+/=]` run 을 형성하지
+    않아 원경로를 그대로 통과한다 (보안테스트 실측). 즉 **본 allowlist 가 이 축의 유일 차단층**
+    이고 deny-scan 은 이 축의 backstop 이 **아니다**. 반대로 "allowlist 로 완전 차단" 도 아니다 —
+    value-allow 에 사람이 민감 필드를 등재하면 그대로 통과하는 사람-경로 잔여가 존치한다.
+
+    적용 계층 = §7.1 emit 파이프라인 **step 1(필드 생성 시점) per-field 처리** — digest
+    grouped-hex 변환·body truncate/scrub/drop 과 동일 단계의 **세 번째 disjoint per-field 규칙**
+    이다. step 2-4(record 조립 후 deny-scan abort/scrub/backstop)는 무손상.
+    """
+    if path in payload_paths:
+        return redact_payload(node)
+    if path in value_allow:
+        return copy.deepcopy(node)                    # verbatim (참조 공유 회피)
+    if isinstance(node, dict):
+        return {key: sanitize_golden_values(
+                    value, value_allow=value_allow, payload_paths=payload_paths,
+                    path=f"{path}.{key}" if path else str(key))
+                for key, value in node.items()}
+    if isinstance(node, list):
+        child = f"{path}[*]"
+        return [sanitize_golden_values(item, value_allow=value_allow,
+                                       payload_paths=payload_paths, path=child)
+                for item in node]
+    return _type_placeholder(node)
+
+
 def build_shape_golden(envelope: Dict[str, Any], run_id: str, page_id: str,
                        status: Any) -> Dict[str, Any]:
-    """단건 PropertyEnvelope shape golden — payload 는 치환, 골격(키·타입·중첩)만 보존.
+    """단건 PropertyEnvelope shape golden — 골격(키·중첩·타입) 보존 + **값-축 3분류** 처분.
 
     provenance endpoint 는 **실제 자사 템플릿 경로**로 재구성한다 (`safe_path` validator 통과 —
     `<id>` 류 플레이스홀더 문자열은 화이트리스트 불일치라 변환 거부 대상이다).
+
+    **갱신 트리거 정정 (§3.9 정밀화 — FIX iter1 F3)**: 기captured golden 의 갱신 트리거는
+    ① 실 재측정 **또는** ② 값-축 sanitize 규칙의 소급 적용이다. ②는 "합성 편집 금지"(= 측정치
+    변조 금지, anti-fabrication 축) 위반이 **아니다** — 허용 조건은 **키·중첩·타입·수치 불변**
+    이며, 소급 적용 시 치환한 필드명 목록을 병기할 의무가 따른다. 구 주석의 "기captured golden 은
+    무편집 — 갱신은 실 재측정 시에만" 문언은 이 정밀화로 정정된다.
     """
-    golden = json.loads(json.dumps(envelope, ensure_ascii=False))
-    golden["value"] = redact_payload(envelope.get("value"))
+    golden = sanitize_golden_values(envelope, value_allow=SHAPE_GOLDEN_VALUE_ALLOW,
+                                    payload_paths=SHAPE_GOLDEN_PAYLOAD_PATHS)
     property_id = envelope.get("id")
     path = f"/wiki/api/v2/pages/{page_id}/properties"
     if property_id is not None:
         path = f"{path}/{property_id}"
     endpoint, omitted = safe_path_or_drop(path)
-    # FIX iter1 F-CR-03: list golden(`GET {endpoint}`)과 대칭 — method 프리픽스 명기 (future-run.
-    # 기captured golden 은 무편집 — 갱신은 실 재측정 시에만, §3.9).
+    # FIX iter1 F-CR-03: list golden(`GET {endpoint}`)과 대칭 — method 프리픽스 명기.
+    # (갱신 트리거 = 실 재측정 **또는** 값-축 sanitize 규칙의 소급 적용 — docstring §3.9 정밀화.)
     golden["empirical_source"] = provenance(f"PUT {endpoint}" if endpoint
                                             else "PUT v2 property (endpoint 표기 drop)",
                                             status, run_id)
@@ -1155,15 +1387,23 @@ def build_shape_golden(envelope: Dict[str, Any], run_id: str, page_id: str,
 
 def build_list_golden(body: Dict[str, Any], run_id: str, endpoint: str,
                       status: Any) -> Dict[str, Any]:
-    """list 응답 wrapper golden — `results` 는 골격 1건만 남기고 값 치환 (pagination 필드 보존)."""
-    golden = json.loads(json.dumps(body, ensure_ascii=False))
-    results = golden.get("results")
+    """list 응답 wrapper golden — `results` 골격 1건 + **값-축 3분류** 처분 (pagination 필드 보존).
+
+    `sanitize_golden_values` 공유 (shape 빌더와 같은 헬퍼 1개 — allowlist 로직 복붙 0). 두 빌더의
+    차이는 dotted path prefix(`results[*].`) 뿐이다.
+
+    `_links.base`(= tenant 호스트 `https://…atlassian.net/wiki`)는 value-allow 비소속이라
+    (iii) 타입 placeholder 로 떨어진다 — provenance 의 `tenant=redacted` 규약과 list golden
+    실물 사이의 **기존 자기모순**도 여기서 함께 해소된다.
+    """
+    golden = sanitize_golden_values(body, value_allow=LIST_GOLDEN_VALUE_ALLOW,
+                                    payload_paths=LIST_GOLDEN_PAYLOAD_PATHS)
+    results = golden.get("results") if isinstance(golden, dict) else None
     if isinstance(results, list) and results:
         skeleton = results[0]
-        if isinstance(skeleton, dict):
-            skeleton["value"] = redact_payload(skeleton.get("value"))
-            if "key" in skeleton:
-                skeleton["key"] = f"{MEASURE_KEY_PREFIX}.golden-skeleton"
+        # `key` 는 value-allow(verbatim)라 wrapper 자기저작 값으로 덮어써도 규칙 충돌이 없다.
+        if isinstance(skeleton, dict) and "key" in skeleton:
+            skeleton["key"] = f"{MEASURE_KEY_PREFIX}.golden-skeleton"
         golden["results"] = [skeleton]
     else:
         golden["results"] = []
@@ -1182,6 +1422,8 @@ def capture_list_golden(client: MeasurementRESTClient, page_id: str, run_id: str
         if getattr(resp, "status_code", None) != 200:
             return None
         body = resp.json()
+    except KillSwitchAbort:                          # F5 — kill-switch 는 "미캡처" 로 삼키지 않는다
+        raise
     except Exception:                                # noqa: BLE001
         return None
     if not isinstance(body, dict):
@@ -1205,6 +1447,9 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
     over_limit_observations: List[Dict[str, Any]] = []
     abort_exc: Optional[BaseException] = None
     baseline: Optional[List[str]] = None
+    # F4: partial 신호는 abort 조기 이탈(K-5 등) 시에도 reconcile 로 전달돼야 하므로 try 밖에서
+    # 선-초기화한다 (try 안에서만 바인딩하면 조기 이탈 경로가 미바인딩 참조로 깨진다).
+    baseline_partial: bool = False
     envelope_sample: Optional[Dict[str, Any]] = None
     list_golden: Optional[Dict[str, Any]] = None
 
@@ -1221,10 +1466,10 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
             raise PageIdentityAbort(f"page 신원 게이트 실패 — {identity['reason']} (K-5)")
 
         # step R baseline (읽기 전용 · cap 무관)
-        baseline, partial, enum_err = enumerate_property_keys(client, page_id, dry)
+        baseline, baseline_partial, enum_err = enumerate_property_keys(client, page_id, dry)
         ctx.emit_event("reconcile_snapshot", phase="baseline", keys=baseline,
-                       partial=partial, error=enum_err)
-        results["baseline_partial"] = partial
+                       partial=baseline_partial, error=enum_err)
+        results["baseline_partial"] = baseline_partial
         list_golden = capture_list_golden(client, page_id, ctx.run_id, dry)
 
         if selected["size_budget"]:
@@ -1261,11 +1506,23 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
             results["cleanup"] = {"error": type(e).__name__}
 
     # step R actual (cleanup 이후 — abort 여부와 무관하게 시도)
-    actual, actual_partial, actual_err = enumerate_property_keys(client, page_id, dry)
+    actual_partial = False
+    try:
+        actual, actual_partial, actual_err = enumerate_property_keys(client, page_id, dry)
+    except KillSwitchAbort as e:
+        # F5 결과 결박: 열거는 더 이상 kill-switch 를 삼키지 않는다. 다만 이 호출은 try/finally
+        # **밖**이라 그대로 전파하면 §3.10 의 "원장 기록 후 exit≠0" 이 깨진다(traceback 종료 =
+        # abort 이벤트 0행). 따라서 삼키지 않되 abort 로 승격해 아래 `emit_abort` 가 1행을 남기고
+        # exit≠0 로 종결하게 한다 (신호 소멸 0 ∧ 원장 누락 0).
+        actual, actual_err = None, type(e).__name__
+        if abort_exc is None:
+            abort_exc = e
+        logger.error(f"step R actual 열거 중 kill-switch — {kill_switch_id(e)}")
     ctx.emit_event("reconcile_snapshot", phase="actual", keys=actual,
                    partial=actual_partial, error=actual_err)
-    reconcile_result = reconcile(baseline, actual)
+    reconcile_result = reconcile(baseline, actual, baseline_partial, actual_partial)
     results["reconcile"] = reconcile_result
+    results["actual_partial"] = actual_partial
 
     # 측정 tier (관측 outcome ground-truth) ⊥ 운영 verdict (2축 분리 — §3.10)
     measurement_tiers = {
@@ -1279,6 +1536,10 @@ def run_live(client: MeasurementRESTClient, ctx: RunContext, page_id: str,
         operational_verdict = "RECONCILED"
     elif reconcile_result["status"] == "DRIFT":
         operational_verdict = "DRIFT"
+    elif reconcile_result["status"] == "reconcile_partial":
+        # bare 토큰 — `APPROVED-` 접두는 확산 금지 (아래 `APPROVED-UNRECONCILED` 는 리네임 파급
+        # 3면[산출물 JSON·커밋된 golden/events fixture·테스트 assert] 비용 때문에 legacy 1건 잔존).
+        operational_verdict = "PARTIAL"
     else:
         operational_verdict = "APPROVED-UNRECONCILED"
 
@@ -1374,6 +1635,11 @@ def run_plan(args, base_url: str, page_id: Optional[str], gate_summary: str) -> 
 
     예외 1건: creds ∧ page-id 가 모두 있으면 page 신원 GET **1회 read-only** 확인을 허용한다
     (승인 판단 재료). 부재 시 "미확인 — creds/page-id 부재" 로 정직 표기한다.
+
+    K-7 endpoint preflight 는 이 GET **보다 앞선다** (F1): 아래 `gate.verify(..., dry=False)` 가
+    자격증명을 실은 실 HTTP GET 을 4-AND 승인 이전에 발사하므로, client 생성의 host pin 위반을
+    광역 `except` 가 "미확인" 으로 삼키면 오도착 위험이 조용히 넘어간다. 승격된
+    `CredsPreflightAbort` 는 호출자(`main`)가 원장 1행 + exit≠0 로 종결한다.
     """
     plan = plan_accounting(cap=WRITE_CAP)
     plan["run_id"] = normalize_run_id(args.run_id)
@@ -1382,18 +1648,23 @@ def run_plan(args, base_url: str, page_id: Optional[str], gate_summary: str) -> 
     identity: Dict[str, Any] = {"checked": False,
                                 "summary": "미확인 — creds/page-id 부재"}
     if creds_present() and page_id:
+        # ↓ try 밖 — endpoint preflight 실패는 "미확인" 이 아니라 abort 다 (HTTP 0회 유지).
+        accounting = WriteAccounting(cap=WRITE_CAP)
+        client = create_client_or_abort(base_url, os.environ.get("ATLASSIAN_API_TOKEN"),
+                                        os.environ.get("ATLASSIAN_USER_EMAIL"),
+                                        accounting=accounting)
         try:
-            accounting = WriteAccounting(cap=WRITE_CAP)
-            client = create_measurement_client(base_url, os.environ.get("ATLASSIAN_API_TOKEN"),
-                                               os.environ.get("ATLASSIAN_USER_EMAIL"),
-                                               accounting=accounting)
             gate = PageIdentityGate()
             verdict = gate.verify(page_id, client, dry=False)
             identity = {"checked": True, "summary":
                         ("OK — " if verdict["ok"] else "차단 — ") + verdict["reason"]}
             identity.update({k: v for k, v in verdict.items() if k != "title_verbatim"})
         except PageIdentityAbort as e:
+            # K-5 전용 arm — KillSwitchAbort 선행절보다 **앞**에 둔다 (기존 처분 유지: plan 모드는
+            # 신원 차단을 회계표에 표기하고 exit 0 으로 승인 판단 재료를 남긴다).
             identity = {"checked": True, "summary": f"차단 — {e}"}
+        except KillSwitchAbort:                      # F5 — kill-switch 는 "미확인" 으로 삼키지 않는다
+            raise
         except Exception as e:                       # noqa: BLE001
             identity = {"checked": True, "summary": f"미확인 — 확인 시도 실패 ({type(e).__name__})"}
     plan["page_identity"] = identity
@@ -1454,6 +1725,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     creds_file_found = load_creds_from_file(Path(args.load_creds) if args.load_creds else None)
 
     page_id = os.environ.get(TEST_PAGE_ID_ENV)
+    # L1 자원 id preflight (F2) — **K-5 deny 대조·sentinel 보다 앞선다**. 값이 있을 때만 검사하며
+    # 미설정(정상 dry 경로)은 기존 거동 그대로다. 위반 = K-7 abort (write 0회, run 미개시).
+    if page_id:
+        try:
+            page_id = validate_page_id_or_abort(page_id)
+        except CredsPreflightAbort as e:
+            return abort_with_ledger(e, run_id)
+
     skip_write = os.environ.get(SKIP_WRITE_ENV, "0") == "1"
     base_url = os.environ.get(CONFLUENCE_BASE_URL_ENV, DEFAULT_BASE_URL)
     cbl_skip = os.environ.get(CBL_SKIP_ISSUE_CREATE_ENV)
@@ -1470,7 +1749,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not live:
         if args.confirm_live_write:
             logger.warning("--confirm-live-write 가 있으나 4-AND 미충족 — plan 모드로 강등")
-        return run_plan(args, base_url, page_id, gate_summary)
+        try:
+            return run_plan(args, base_url, page_id, gate_summary)
+        except KillSwitchAbort as e:
+            # plan 경로도 **원장 없는 종료를 만들지 않는다** (§3.10). run_plan 은 RunContext 를
+            # 소유하지 않으므로 여기서 최소 context 로 abort 1행을 남기고 exit≠0 로 종결한다.
+            # 포착 범위 = `MeasureAbort` 가 아니라 상위 `KillSwitchAbort` 다 — run_plan 의 F5
+            # 재-raise 절은 rest.py 소유 kill-switch(K-1/K-2/K-4)도 올려보내므로, 좁게 잡으면
+            # 그쪽이 원장 없는 traceback 으로 빠져나간다.
+            return abort_with_ledger(e, run_id)
 
     selected = {
         "size_budget": bool(args.all or args.measure_size_budget
@@ -1483,11 +1770,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     ctx = RunContext(run_id=run_id, cap=WRITE_CAP)
     try:
-        creds_preflight(creds_file_found)            # K-7
+        creds_preflight(creds_file_found)            # K-7 (creds 축)
     except CredsPreflightAbort as e:
-        ctx.emit_abort(e)
-        logger.error("K-7 creds preflight abort")
-        return 1
+        return abort_with_ledger(e, run_id, ctx)
 
     ctx.emit_event("preflight", stage="env",
                    base_url_host_declared=True, cap=WRITE_CAP,
@@ -1499,9 +1784,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                    mock_401_env_set=(os.environ.get("CFP1495_API_MOCK_401", "0") == "1"),
                    note="creds 파일 경로·값은 기록하지 않는다 (§7.5)")
 
-    client = create_measurement_client(base_url, os.environ.get("ATLASSIAN_API_TOKEN"),
-                                       os.environ.get("ATLASSIAN_USER_EMAIL"),
-                                       accounting=ctx.accounting)
+    try:
+        # K-7 (endpoint 축) — 생성자 host pin 의 ValueError 를 승격해 원장에 결박한다 (F1).
+        client = create_client_or_abort(base_url, os.environ.get("ATLASSIAN_API_TOKEN"),
+                                        os.environ.get("ATLASSIAN_USER_EMAIL"),
+                                        accounting=ctx.accounting)
+    except CredsPreflightAbort as e:
+        return abort_with_ledger(e, run_id, ctx)
 
     exit_code, results = run_live(client, ctx, page_id, selected)
     print(emit_record(results), file=sys.stdout)

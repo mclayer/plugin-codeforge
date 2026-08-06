@@ -157,8 +157,8 @@ def test_ac10_creds_absent_write_rejected(monkeypatch):
     monkeypatch.delenv("ATLASSIAN_USER_EMAIL", raising=False)
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
 
-    client = MeasurementRESTClient("https://example.atlassian.net", None, None)
-    ok, envelope, err = client.upsert_property_v2("page123", "key", {"v": 1}, dry=False)
+    client = MeasurementRESTClient("https://mclayer.atlassian.net", None, None)
+    ok, envelope, err = client.upsert_property_v2("21430272", "key", {"v": 1}, dry=False)
 
     assert ok is False
     assert envelope is None
@@ -331,7 +331,7 @@ class _FakeTransport:
 
 
 def _harness_client(list_envelopes=None):
-    client = ConfluencePropertyREST("https://example.atlassian.net", "tok-fake", "e@x.io")
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", "tok-fake", "e@x.io")
     fake = _FakeTransport(list_envelopes)
     client._perform_request = fake          # 인스턴스 속성 shadow — production 오케스트레이션 그대로
     return client, fake
@@ -341,7 +341,7 @@ def test_d6_upsert_existing_key_put_version_n_plus_1():
     """D-6: resolve 1건 존재 → POST 0 ∧ PUT by id ∧ version n+1 송신 (n+1 제거 mutant → RED)."""
     envelope = {"id": 7, "key": "k", "value": 0, "version": {"number": 4}}
     client, fake = _harness_client({"k": [envelope]})
-    ok, env, err = client.upsert_property_v2("p1", "k", {"v": 2}, dry=False)
+    ok, env, err = client.upsert_property_v2("21430274", "k", {"v": 2}, dry=False)
     assert ok is True and err is None
     assert fake.method_calls("POST") == [], "기존 key 에 POST 발생 — upsert 프로토콜 위반"
     puts = fake.method_calls("PUT")
@@ -353,7 +353,7 @@ def test_d6_upsert_existing_key_put_version_n_plus_1():
 def test_d6_upsert_absent_key_post():
     """D-6: resolve 0건 → POST (version 미송신 — 결정 12)."""
     client, fake = _harness_client({})
-    ok, env, err = client.upsert_property_v2("p1", "k-new", {"v": 1}, dry=False)
+    ok, env, err = client.upsert_property_v2("21430274", "k-new", {"v": 1}, dry=False)
     assert ok is True and err is None
     posts = fake.method_calls("POST")
     assert len(posts) == 1
@@ -366,7 +366,7 @@ def test_d6_upsert_multi_resolve_fail_closed():
     dup = [{"id": 1, "key": "k", "value": 0, "version": {"number": 1}},
            {"id": 2, "key": "k", "value": 0, "version": {"number": 1}}]
     client, fake = _harness_client({"k": dup})
-    ok, env, err = client.upsert_property_v2("p1", "k", {"v": 1}, dry=False)
+    ok, env, err = client.upsert_property_v2("21430274", "k", {"v": 1}, dry=False)
     assert ok is False and err is not None
     assert "다중" in (err.get("message") or "")
     assert fake.method_calls("POST") == [] and fake.method_calls("PUT") == []
@@ -375,9 +375,9 @@ def test_d6_upsert_multi_resolve_fail_closed():
 def test_d6_replay_reupsert_no_duplicate_post():
     """§8.5.3 replay ①②: 동일 key 재-upsert → POST 재발생 0 (orphan 잔존 재실행 수렴)."""
     client, fake = _harness_client({})
-    client.upsert_property_v2("p1", "k", {"v": 1}, dry=False)     # 최초 = POST
+    client.upsert_property_v2("21430274", "k", {"v": 1}, dry=False)     # 최초 = POST
     assert len(fake.method_calls("POST")) == 1
-    ok, _env, _err = client.upsert_property_v2("p1", "k", {"v": 2}, dry=False)  # 재실행 = PUT
+    ok, _env, _err = client.upsert_property_v2("21430274", "k", {"v": 2}, dry=False)  # 재실행 = PUT
     assert ok is True
     assert len(fake.method_calls("POST")) == 1, "재-upsert 가 POST 중복 생성 — 멱등 위반"
     assert len(fake.method_calls("PUT")) == 1
@@ -390,7 +390,7 @@ def test_d6_replay_stale_chunk_purge():
                                      "value": {"data": "old"}, "version": {"number": 1}}]
              for i in range(3)}
     client, fake = _harness_client(stale)
-    purged = client._purge_stale_chunks("p1", new_chunk_count=2, dry=False)
+    purged = client._purge_stale_chunks("21430274", new_chunk_count=2, dry=False)
     assert purged == [f"{chunk_prefix}2"]
     deletes = fake.method_calls("DELETE")
     assert len(deletes) == 1 and deletes[0]["path"].endswith("/properties/102")
@@ -404,23 +404,23 @@ def test_d6_replay_stale_chunk_purge():
 def test_d7_dry_round_trip_byte_exact(monkeypatch):
     """D-7: golden-파생 mock 경유 store→load byte-exact (mock bare-value 회귀 → RED)."""
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
     cdict = chunk_canonical(data, effective_chunk_budget())
-    result = client.store_chunked_property("pageX", cdict, dry_run=True)
+    result = client.store_chunked_property("21430273", cdict, dry_run=True)
     assert result["success"] is True
-    assert client.load_chunked_property("pageX", dry_run=True) == data
+    assert client.load_chunked_property("21430273", dry_run=True) == data
 
 
 @pytest.mark.requires_golden
 def test_d7_manifest_last_ordering(monkeypatch):
     """D-7: put_order = 전 chunk 뒤 manifest (IO-6 원자성)."""
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
     cdict = chunk_canonical(data, effective_chunk_budget())
     n = cdict[LOCAL_MANIFEST_KEY]["chunk_count"]
-    put_order = client.store_chunked_property("pageX", cdict, dry_run=True)["put_order"]
+    put_order = client.store_chunked_property("21430273", cdict, dry_run=True)["put_order"]
     assert put_order[-1] == MANIFEST_KEY
     assert put_order[:-1] == [CHUNK_KEY_TEMPLATE.format(n=i) for i in range(n)]
 
@@ -429,7 +429,7 @@ def test_d7_manifest_last_ordering(monkeypatch):
 def test_d7_manifest_absent_fail_closed(monkeypatch):
     """D-7: manifest 미커밋(crash 모사) → load fail-closed (부분 데이터 노출 0)."""
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
     cdict = chunk_canonical(data, effective_chunk_budget())
     n = cdict[LOCAL_MANIFEST_KEY]["chunk_count"]
@@ -438,39 +438,39 @@ def test_d7_manifest_absent_fail_closed(monkeypatch):
                                       {"data": cdict[local_chunk_key(i)]}, 1)
         client._mock_store[CHUNK_KEY_TEMPLATE.format(n=i)] = env
     with pytest.raises(ChunkStoreError, match="manifest"):
-        client.load_chunked_property("pageX", dry_run=True)
+        client.load_chunked_property("21430273", dry_run=True)
 
 
 @pytest.mark.requires_golden
 def test_d7_corrupt_chunk_fail_closed(monkeypatch):
     """D-7: 저장 chunk 손상 → sha256 불일치 fail-closed."""
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
-    client.store_chunked_property("pageX", chunk_canonical(data, effective_chunk_budget()),
+    client.store_chunked_property("21430273", chunk_canonical(data, effective_chunk_budget()),
                                   dry_run=True)
     corrupt = client._mock_store[CHUNK_KEY_TEMPLATE.format(n=0)]
     corrupt["value"] = {"data": "dGFtcGVyZWQ="}
     with pytest.raises(ChunkStoreError):
-        client.load_chunked_property("pageX", dry_run=True)
+        client.load_chunked_property("21430273", dry_run=True)
 
 
 @pytest.mark.requires_golden
 def test_d7_auto_dry_run_no_session(monkeypatch):
     """D-7 / IO-7: TEST_PAGE_ID 부재 → 자동 dry-run + 실 HTTP session 미생성."""
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
-    result = client.store_chunked_property("pageX", chunk_canonical(data, effective_chunk_budget()))
+    result = client.store_chunked_property("21430273", chunk_canonical(data, effective_chunk_budget()))
     assert result["dry_run"] is True
     assert client._session is None
 
 
 def test_d7_manifest_reject_transport_free():
     """suite-A 존치분: manifest 없는 chunk_dict 는 transport 도달 전 거부 (golden 불요)."""
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     with pytest.raises(ChunkStoreError, match="__manifest"):
-        client.store_chunked_property("pageX", {"__chunk_0": "abc"}, dry_run=True)
+        client.store_chunked_property("21430273", {"__chunk_0": "abc"}, dry_run=True)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -705,9 +705,9 @@ def test_d12_mock_429_exercises_retry_loop(monkeypatch):
     """
     monkeypatch.setenv("CFP1495_API_MOCK_429", "1")
     acc = WriteAccounting(cap=20)
-    client = ConfluencePropertyREST("https://example.atlassian.net", "tok-fake", "e@x.io",
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", "tok-fake", "e@x.io",
                                     accounting=acc)
-    ok, env, err = client.create_property_v2("p1", "k1", {"v": 1}, dry=False)
+    ok, env, err = client.create_property_v2("21430274", "k1", {"v": 1}, dry=False)
     assert ok is False
     assert acc.write_attempts == 2, "429-한정 1회 재시도 미실행 (retry 루프 미행사)"
     assert len(client.rate_events) == 2
@@ -717,11 +717,11 @@ def test_d12_mock_429_exercises_retry_loop(monkeypatch):
 def test_d12_rate_429_accumulation_aborts(monkeypatch):
     """D-12 / K-4: run 내 429 누적 3 → RateAbortError (의도적 유발 근접 회피)."""
     monkeypatch.setenv("CFP1495_API_MOCK_429", "1")
-    client = ConfluencePropertyREST("https://example.atlassian.net", "tok-fake", "e@x.io",
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", "tok-fake", "e@x.io",
                                     accounting=WriteAccounting(cap=20))
-    client.create_property_v2("p1", "k1", {"v": 1}, dry=False)    # 429 관측 2
+    client.create_property_v2("21430274", "k1", {"v": 1}, dry=False)    # 429 관측 2
     with pytest.raises(RateAbortError):
-        client.create_property_v2("p1", "k2", {"v": 2}, dry=False)  # 3번째 관측 → abort
+        client.create_property_v2("21430274", "k2", {"v": 2}, dry=False)  # 3번째 관측 → abort
     assert RATE_429_ABORT_THRESHOLD == 3
 
 
@@ -742,10 +742,10 @@ def test_d13_golden_missing_dry_roundtrip_fails(monkeypatch, tmp_path):
     """D-13: golden 부재 상태의 dry round-trip = 명시 fail 전파 (suite-B 실행-시-fail 거동)."""
     monkeypatch.setenv(GOLDEN_DIR_ENV, str(tmp_path))
     monkeypatch.delenv(TEST_PAGE_ID_ENV, raising=False)
-    client = ConfluencePropertyREST("https://example.atlassian.net", None, None)
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", None, None)
     data = measure.build_w1_fixture()
     with pytest.raises(GoldenFixtureMissingError):
-        client.store_chunked_property("pageX", chunk_canonical(data, effective_chunk_budget()),
+        client.store_chunked_property("21430273", chunk_canonical(data, effective_chunk_budget()),
                                       dry_run=True)
 
 
@@ -779,7 +779,7 @@ def test_boundary_payload_exact_size(target):
 @pytest.mark.parametrize("size,rejected", [(28671, False), (28672, False), (28673, True)])
 def test_boundary_budget_reject(size, rejected):
     """tier A: pre-flight budget 경계 28671/28672 통과·28673 reject (local-reject 분류)."""
-    client = ConfluencePropertyREST("https://example.atlassian.net", "t", "e")
+    client = ConfluencePropertyREST("https://mclayer.atlassian.net", "t", "e")
     value = measure.build_boundary_payload(size)
     result = client._budget_reject(value, enforce_budget=True, ascii_mode=False)
     if rejected:
@@ -899,6 +899,7 @@ def test_seam_not_referenced_from_production():
 # ════════════════════════════════════════════════════════════════════════════
 
 import random
+import re
 
 # FIX iter2 F-CL2-01: 선례 동형 fail-loud 가드 (test_cfp2813_living_arch.py L29-34) —
 # 부재 시 원시 traceback 대신 조치 안내 + 결정론 exit 2 (진단층. 부재 근본 처치 =
@@ -1183,6 +1184,186 @@ def test_build_basis_golden_control_write_success_field():
     assert olb["v2_control_write_success"] is True
     assert olb["v2_control_status"] is None   # null = 성공 경로 status 미기록 (F-CL-07 의미 고정)
     assert olb["v2_probe_classified_as"] == "malformed"
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# F3: discriminating 회귀 4종 — allowlist sanitize (FIX iter1 — 보안테스트 F3 처치)
+#   suite-A 소속: golden 비의존 순수함수 (allowlist·placeholder 로직만 검증, live API 0)
+# ════════════════════════════════════════════════════════════════════════════
+
+
+def test_f3_allowlist_unlisted_field_becomes_placeholder():
+    """F3.1: 미열거 필드 → placeholder 로 치환 (원문 미수록 — vacuous-pass mutant RED).
+
+    서버 envelope 에 allowlist 비소속 필드(`version.author_email`, `createdDate`)를 주입하면
+    산출 golden 에서 그것이 타입 placeholder 로 치환되는지 확인한다. mutant: (iii) 분기를
+    identity 로 무력화하면 원문이 그대로 노출되어 RED 가 된다.
+    """
+    # 실제 서버 응답 모사 (allowlist 비소속 필드 포함)
+    server_envelope = {
+        "id": "999001",
+        "key": "cfp2889.test-f3",
+        "value": {"data": "base64payload"},
+        "version": {
+            "number": 5,
+            "message": "Version updated",           # 비소속 — placeholder 기대
+            "minorEdit": False,                     # 비소속 — placeholder 기대
+            "authorId": "000000:aaaaaaaa-1111-2222-3333-444444444444",  # 비소속 PII(합성) — placeholder 기대
+            "author_email": "user@example.com",     # 신규 필드 — placeholder 기대
+            "createdAt": "2026-08-06T12:00:00Z"     # 비소속 — placeholder 기대
+        }
+    }
+    golden = measure.build_shape_golden(server_envelope, run_id="f3test", page_id="21430273",
+                                        status=200)
+
+    # 허용된 필드는 verbatim 유지
+    assert golden["version"]["number"] == 5
+    assert golden["id"] == "999001"
+    assert golden["key"] == "cfp2889.test-f3"
+
+    # 비소속 필드는 placeholder (원문 절대 금지)
+    assert golden["version"]["message"] in ("<str>", "<int>", "<bool>")
+    assert golden["version"]["minorEdit"] == "<bool>"
+    assert golden["version"]["authorId"] == "<str>"
+    assert golden["version"]["author_email"] == "<str>"
+    assert golden["version"]["createdAt"] == "<str>"
+
+    # 원문이 남아있으면 실패 (PII 검출)
+    assert "000000:aaaaaaaa-1111-2222-3333-444444444444" not in str(golden)
+    assert "user@example.com" not in str(golden)
+
+
+def test_f3_dotted_path_exact_matching_nested_key():
+    """F3.2: dotted-path 정밀성 — 중첩 동명 키 구분 (bare-match 퇴화 mutant RED).
+
+    allowlist 에 `version.number` (top-level) 만 등재되면, list 컨테이너 안의
+    동명 경로 `results[*].version.number` 는 **allowlist 비소속**이어야 한다.
+    bare-name 매칭으로 퇴화하면 둘 다 통과하여 nested 쪽도 verbatim 이 되고 RED.
+    """
+    list_response = {
+        "results": [
+            {
+                "id": "999002",
+                "key": "f3.list-test",
+                "value": {"data": "b64val"},
+                "version": {
+                    "number": 7,
+                    "message": "nested message",
+                    "authorId": "999:nested-user"
+                }
+            }
+        ],
+        "_links": {
+            "base": "https://tenant.atlassian.net/wiki"
+        }
+    }
+    golden = measure.build_list_golden(list_response, run_id="f3test",
+                                        endpoint="/wiki/api/v2/pages/999/properties",
+                                        status=200)
+
+    # LIST_GOLDEN_VALUE_ALLOW 에는 "results[*].id", "results[*].key", "results[*].version.number"
+    # 등이 등재되어 있으므로 그들은 verbatim 또는 builder 에 의해 덮어씌워짐 (golden-skeleton)
+    assert golden["results"][0]["id"] == "999002"
+    # key 는 builder 에서 고정된 값으로 덮어씌워짐 (LIST_GOLDEN_VALUE_ALLOW 정책에 따라)
+    assert golden["results"][0]["key"] == "cfp2889.measure.golden-skeleton"
+    assert golden["results"][0]["version"]["number"] == 7
+
+    # "results[*].version.message" 는 allowlist 비소속
+    assert golden["results"][0]["version"]["message"] == "<str>"
+    # "results[*].version.authorId" 는 allowlist 비소속 (top-level "authorId" 와 다른 경로)
+    assert golden["results"][0]["version"]["authorId"] == "<str>"
+
+    # _links.base 는 allowlist 비소속 (테넌트 정보 — 민감)
+    assert golden["_links"]["base"] == "<str>"
+    assert "atlassian.net" not in str(golden)
+
+
+def test_f3_committed_golden_no_pii_scan():
+    """F3.3 ①: 커밋 golden 파일 regression guard — PII 미유입 (양성 케이스).
+
+    현재 repo 에 커밋된 2개 golden 파일에서 account-id 등 PII 원문 부재를 확인한다.
+    구 구현의 결함(§3.9 미적용)과 달리 현 golden 은 sanitize 정책 소급 적용으로
+    PII 를 placeholder 로 치환했으므로 원문이 없어야 한다.
+    """
+    shape_path = FIXTURES_DIR / "property_envelope_shape_golden.json"
+    list_path = FIXTURES_DIR / "property_list_shape_golden.json"
+
+    assert shape_path.exists(), f"shape golden 부재: {shape_path}"
+    assert list_path.exists(), f"list golden 부재: {list_path}"
+
+    # PII 정규식 — account-id, email-like, tenant hostname
+    # ★ 위치-기반 whitelist 필터 금지 (hollow 재발 차단, PL firsthand 실증 2026-08-07):
+    #   "매치 위치 이전에 `<str>`/`redaction` 문자열이 있으면 무시" 류 필터는 golden 선두에
+    #   placeholder 가 1개만 있어도 **이후 전 매치를 무시**해 실 PII 주입에도 GREEN 이 된다
+    #   (실증: authorId 에 실 account-id 형 값 주입 → 구 구현 GREEN). 예외는 값이 아니라
+    #   **패턴 자체**로 좁힌다.
+    pii_patterns = [
+        ("account-id", r"\d{6,}:[0-9a-f]{8}-[0-9a-f-]{4,}"),
+        ("email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
+        ("tenant-host", r"https?://[a-zA-Z0-9.-]+\.atlassian\.net"),
+    ]
+
+    for path in (shape_path, list_path):
+        content = path.read_text(encoding="utf-8")
+        for label, pattern in pii_patterns:
+            matches = re.findall(pattern, content)
+            assert not matches, \
+                f"{path.name}: {label} PII 원문 검출 — {matches} (§3.9 값-축 allowlist 미적용)"
+
+
+def test_f3_pii_pattern_detector_catches_synthesized_account_id():
+    """F3.3 ②: PII 정규식 작동 검증 — 합성 account-id 검출 (discriminating case).
+
+    정규식이 실제로 account-id 형 PII 를 감지하는지 discriminating case 로 확인한다.
+    mutant: 정규식에서 account-id 패턴을 제거하면 합성 PII 를 미포착하여 RED.
+    """
+    # 합성 golden with PII
+    golden_with_pii = {
+        "version": {"authorId": "000000:aaaaaaaa-1111-2222-3333-444444444444"},
+        "id": "999001",
+        "redaction_note": "Original PII not redacted (synthesized test case)"
+    }
+
+    pii_pattern = r"\d{6,}:[0-9a-f-]{8,}"
+    content = json.dumps(golden_with_pii)
+    matches = re.findall(pii_pattern, content)
+
+    # PII 가 검출되어야 함
+    assert matches, f"정규식 {pii_pattern} 이 account-id PII 를 미포착 (RED 기대)"
+    assert "000000:aaaaaaaa-1111-2222-3333-444444444444" in matches[0]
+
+
+def test_f3_unknown_field_fail_closed_placeholder():
+    """F3.4: 완전 신규 필드(allowlist·payload 모두 비소속) → placeholder 기본 처분 (통과 default 회피).
+
+    allowlist 와 payload_paths 중 어느 쪽도 아닌 필드는 구조 3분류 중 (iii) 타입
+    placeholder 로 떨어져야 한다. 통과 default 로 퇴화하면 원문 노출 RED.
+    """
+    envelope_with_unknown = {
+        "id": "999003",
+        "key": "f3.unknown-test",
+        "value": {"data": "payload123"},
+        "version": {
+            "number": 1,
+            "secret_field": "confidential-data-123",          # 완전 신규
+            "internal_metadata": {"nested_unknown": "secret"}  # 중첩 신규
+        },
+        "custom_extension": "should-not-appear"                # root 레벨 신규
+    }
+    golden = measure.build_shape_golden(envelope_with_unknown, run_id="f3test",
+                                        page_id="21430273", status=200)
+
+    # allowlist·payload 비소속 신규 필드는 placeholder
+    assert golden["version"]["secret_field"] == "<str>"
+    assert isinstance(golden["version"]["internal_metadata"], dict)
+    assert golden["version"]["internal_metadata"]["nested_unknown"] == "<str>"
+    assert golden["custom_extension"] == "<str>"
+
+    # 신규 필드 원문은 절대 나타나지 않음 (fail-closed 검증)
+    assert "confidential-data-123" not in str(golden)
+    # "secret" 는 필드명으로도 나타나므로 특정 값으로 검증
+    assert "confidential" not in str(golden)  # 값의 일부만 검증
+    assert "should-not-appear" not in str(golden)
 
 
 if __name__ == "__main__":

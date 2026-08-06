@@ -23,6 +23,20 @@ CFP-2829 S2 원판 → CFP-2889 재설계 (Change Plan §3/§4/§5 #1):
         증가 지점 = transport HTTP 시도 직전 (retry loop 내부). cap 도달 = WriteCapExceeded
         hard-stop (silent False 금지). DELETE 는 cap 밖 별도 집계 (soft-ceiling 40). GET 별도.
 
+보안테스트 FIX iter1 (CFP-2889 — F1/F2/F4/F5):
+  - F1: `EXPECTED_HOST` SSOT + **생성자 단일 집행** — `__init__` 이 `normalize_base_url(...,
+        expected_host=EXPECTED_HOST)` 를 무조건 경유 (팩토리·호출 site 배선은 누락 site 재생산).
+        공개 인자 목록 무변경(interface-freeze), env override 스위치 없음 (§3.7 T-1).
+  - F2: `validate_resource_id` — URL 경로에 보간되는 page_id / property_id 를 `[0-9]{1,32}`
+        **fullmatch** 로 검증. 위반 = **정규화 없는 거부** (정규화는 다른 자원을 지목하는 변환).
+        L2 처분 = local-reject (HTTP 0회, run 계속) — abort 는 L1 만.
+  - F4: list pagination 3 탈출 arm(미지 next / 후속 비-200 / cap 소진) **전부** partial 표기
+        (구 코드는 cap 소진 arm 누락 → 21페이지째부터 "전량 열거" 오보). 정상 종료만 미표기.
+        `_parse_list_response` 의 dead bool flag(항상 False) 제거.
+  - F5: `KillSwitchAbort` 단일 base — 중간 `except` 는 base 로만 재-raise (개별 열거는 site 간
+        드리프트를 낳았다: 5 site 중 3 site 가 `WriteCapExceeded` 누락, 409 재-resolve arm 은
+        `except Exception` 으로 kill-switch 를 삼킴).
+
 Security (Change Plan §7):
   - SA-1: env-indirect token (ATLASSIAN_API_TOKEN / ATLASSIAN_USER_EMAIL)
   - T-4/T-4b: `_scrub` = exact-value redaction 1순위 (token·email·b64(email:token) 파생형)
@@ -63,6 +77,12 @@ except ImportError:
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
+
+# T-5 host pin SSOT — Basic auth 자격증명이 도착할 수 있는 유일 호스트. 본 파일이 SSOT 이며
+# 집행 지점 = `ConfluencePropertyREST.__init__` 단일(L1). 팩토리·호출 site 배선은 호출자 규율에
+# 의존해 누락 site 를 재생산하므로 금지. env override 스위치도 없음
+# (§3.7 T-1 — 신뢰 못할 파일이 가드를 끄는 형태 금지).
+EXPECTED_HOST = "mclayer.atlassian.net"
 
 PROPERTY_KEY_PREFIX = "codeforge.sync.canonical"
 MANIFEST_KEY = f"{PROPERTY_KEY_PREFIX}.__manifest"
@@ -115,26 +135,39 @@ LIST_GOLDEN_FILENAME = "property_list_shape_golden.json"
 RATE_HEADER_FAMILIES = ("retry-after", "x-ratelimit-", "ratelimit-", "beta-", "x-beta-")
 
 
+class KillSwitchAbort(RuntimeError):
+    """전 kill-switch(K-1~K-7) 단일 base — run 을 즉시 멈춰야 하는 abort 신호의 공통 상위형.
+
+    **규범**: 중간 `except` 절은 kill-switch 를 **본 base 로만** 재-raise 한다. 개별 타입 수기
+    열거(`except (AuthAbortError, RateAbortError, ...)`) 금지 — 열거는 site 마다 드리프트해
+    새 kill-switch 나 누락 타입을 조용히 삼킨다 (실측: 5 site 중 3 site 에서 `WriteCapExceeded`
+    누락).
+
+    비-kill-switch 예외(`ChunkStoreError`·`PropertyResolveError`)는 본 base 를 상속하지 않는다
+    — 무결성 실패·resolve 실패는 run 중단 신호가 아니라 해당 시나리오의 실패이기 때문이다.
+    """
+
+
 class ChunkStoreError(RuntimeError):
     """leg-B chunk-store orchestration 무결성 위반 (manifest 부재 / 부분 저장 / reassemble 실패)
-    — fail-closed 신호 (부분 데이터 노출 0, IO-6)."""
+    — fail-closed 신호 (부분 데이터 노출 0, IO-6). kill-switch 아님 (시나리오 실패)."""
 
 
-class GoldenFixtureMissingError(RuntimeError):
+class GoldenFixtureMissingError(KillSwitchAbort):
     """captured-golden fixture 부재/형식 미달 — dry round-trip 은 명시 에러 (skip 금지, §3.3).
 
     mock 이 실측 없이 임의 형상을 fabricate 하는 것을 구조적으로 차단한다 (D-13 negative-control 대상)."""
 
 
-class AuthAbortError(RuntimeError):
+class AuthAbortError(KillSwitchAbort):
     """401 Unauthorized — K-1 전역 abort (재시도 0, refresh 신설 금지)."""
 
 
-class RateAbortError(RuntimeError):
+class RateAbortError(KillSwitchAbort):
     """429 누적 >= RATE_429_ABORT_THRESHOLD — K-4 abort (의도적 유발 실험 근접 회피)."""
 
 
-class WriteCapExceeded(RuntimeError):
+class WriteCapExceeded(KillSwitchAbort):
     """self-cap 도달 — K-2 hard-stop (silent False 금지). cleanup(DELETE) 은 cap 밖이라 계속."""
 
 
@@ -383,6 +416,40 @@ def normalize_base_url(base_url: str, expected_host: Optional[str] = None) -> st
     return f"{p.scheme}://{p.netloc.rstrip('/')}".rstrip("/")
 
 
+# ── 자원 id 검증 (F2 — URL 경로 보간 성분 fail-closed) ───────────────────────
+
+_RESOURCE_ID_RE = re.compile(r"[0-9]{1,32}")
+
+
+def validate_resource_id(raw: Any, *, field: str) -> str:
+    """URL 경로에 보간되는 자원 id(page_id / property_id) 검증 — fail-closed.
+
+    계약 = `[0-9]{1,32}` **fullmatch**. 부분매칭(`search`/`match`)은 앵커가 없어
+    `12/../34` 같은 traversal 이 그대로 통과하므로 금지 — 반드시 fullmatch.
+
+    위반은 **거부(`ValueError`)** 이며 정규화(sanitize/strip/quote)를 하지 않는다: 주소 정규화는
+    무손실 변환이 아니라 "다른 자원을 지목"하는 변환이고(`12/../34` → `1234` 는 **다른 property**
+    를 건드린다 = 회수 불가 오염), 거부만이 오도착 0 을 보장한다.
+
+    상한 32 [empirical-source: 부재 — 벤더 문서상 page/property id 길이 상한 확인 불가].
+    실측 관측 id 는 7~8자리(page `1867943` / property `21463043`) 이며, 32 는 그 위에 얹은
+    **설계 보수 파라미터이지 실측치가 아니다** (60s clamp·DELETE soft-ceiling 40 의 수치 출처
+    규율과 대칭 — 실 재측정 전까지 근거는 "여유" 이지 "관측" 이 아니다).
+
+    비-str 입력(golden 유래 int id 등)은 `str()` 로 표기만 취해 동일 계약을 적용한다
+    (id 표기 타입은 서버 golden 이 결정 — `_golden_envelope` 참조).
+
+    Returns: 검증을 통과한 원문 문자열 (변형 없음).
+    """
+    text = raw if isinstance(raw, str) else str(raw)
+    if not _RESOURCE_ID_RE.fullmatch(text):
+        raise ValueError(
+            f"{field}: 자원 id 형식 위반 — `[0-9]{{1,32}}` 만 허용 "
+            f"(정규화 없는 거부, F2 fail-closed)"
+        )
+    return text
+
+
 # ── captured-golden 파생 mock transport 골격 (D2) ────────────────────────────
 
 def _golden_dir() -> Path:
@@ -564,7 +631,11 @@ class ConfluencePropertyREST:
 
     def __init__(self, base_url: str, token: Optional[str], email: Optional[str],
                  accounting: Optional[WriteAccounting] = None):
-        self.base_url = (base_url or "").rstrip("/")
+        # L1 host pin — 생성자가 **유일 집행 지점**이다 (F1). 팩토리·호출 site 배선은 호출자
+        # 규율에 의존해 누락 site 를 재생산하므로 여기서만 강제한다. 인자 추가·env override 없음
+        # (interface-freeze §2.2 / §3.7 T-1). 실패 = `ValueError` 전파 —
+        # 호출자(measure.py)가 K-7 preflight abort 로 승격한다.
+        self.base_url = normalize_base_url(base_url, expected_host=EXPECTED_HOST)
         self.token = token
         self.email = email
         self.accounting = accounting
@@ -794,15 +865,40 @@ class ConfluencePropertyREST:
         AC-4 ensure_ascii lever 측정 전용 (measurement client 경유)."""
         return json.dumps(obj, ensure_ascii=ascii_mode).encode("utf-8")
 
+    # ── L2 진입 검증 (F2 — 자원 id 오도착 차단 SSOT) ──
+
+    def _reject_bad_resource_ids(self, **fields: Any) -> Optional[Dict[str, Any]]:
+        """공개 메서드 진입부의 자원 id 검증 SSOT — 위반 시 local-reject ErrorInfo 를 반환한다.
+
+        처분 = **local-reject** (HTTP 0회, run 계속) 이지 abort 가 아니다: L1(생성자 host pin)
+        위반은 "자격증명이 낯선 호스트로 나간다" 는 run 전체의 신뢰 붕괴라 K-7 abort 이지만,
+        L2 의 id 위반은 그 호출 1건의 오도착 위험이므로 해당 호출만 거부하면 족하다
+        (§7.1 註 표: L2·L3 = local-reject, L1 = K-7 abort).
+
+        5 공개 메서드가 본 헬퍼 하나로 수렴한다 (진입 검증 5벌 복붙 금지 — ADR-140).
+        """
+        for field, raw in fields.items():
+            try:
+                validate_resource_id(raw, field=field)
+            except ValueError as e:
+                return _error_info("local-reject", message=str(e))
+        return None
+
     # ── v2 public 5메서드 (§4.1) ──
 
     def list_properties_v2(self, page_id: str, key: Optional[str] = None,
                            dry: Optional[bool] = None) -> List[Dict[str, Any]]:
         """key resolve (`?key=`) + no-filter 전량 열거 (step R 겸용).
 
-        pagination: `_links.next` 관측 시 추종 (상한 20 page). 추종 실패 = 부분 열거 —
-        `self.last_list_partial = True` 정직 표기 (§14 #5). 실패 = PropertyResolveError
-        (fail-closed — 추정치 PUT 금지, 결정 12)."""
+        pagination: `_links.next` 관측 시 추종 (상한 20 page). **정상 종료(next 부재)를 제외한
+        3 탈출 arm 전부**가 부분 열거이므로 `self.last_list_partial = True` 를 세운다 (§14 #5).
+        실패 = PropertyResolveError (fail-closed — 추정치 PUT 금지, 결정 12).
+
+        page_id 위반 = PropertyResolveError (local-reject — HTTP 0회). 본 메서드의 계약이
+        "실패 = 예외" 이므로 3-tuple 대신 fail-closed 예외로 처분한다 (F2)."""
+        bad = self._reject_bad_resource_ids(page_id=page_id)
+        if bad is not None:
+            raise PropertyResolveError(f"{bad['message']} — local-reject (HTTP 0회)")
         dry = self._is_dry_run(dry)
         self.last_list_partial = False
         params = {"key": key} if key is not None else None
@@ -815,30 +911,36 @@ class ConfluencePropertyREST:
         if resp.status_code != 200:
             raise PropertyResolveError(f"property list 실패 — HTTP {resp.status_code} (fail-closed)")
 
-        results, partial = self._parse_list_response(resp)
+        results = self._parse_list_response(resp)
 
-        # pagination 추종 (실측 확정 대상 — §14 #5): _links.next 상대경로 추종, 상한 20.
+        # pagination 추종 (실측 확정 대상 — §14 #5): _links.next 상대경로 추종, 상한 20 page.
+        # 3 탈출 arm(① 미지 형식 next / ② 후속 페이지 비-200 / ③ cap 소진) 전부가 partial 을
+        # 세운다 — cap 소진 arm 만 표기를 빠뜨리면 21페이지째 이후가 "전량 열거"로 보고된다(F4).
+        # 정상 종료(`_links.next` 부재)만 partial 미설정 = 실제로 전량 열거다.
         pages_followed = 0
         body = self._safe_json(resp)
-        while isinstance(body, dict) and isinstance(body.get("_links"), dict) \
-                and body["_links"].get("next") and pages_followed < 20:
-            next_path = body["_links"]["next"]
+        while True:
+            next_path = None
+            if isinstance(body, dict) and isinstance(body.get("_links"), dict):
+                next_path = body["_links"].get("next")
+            if not next_path:
+                break                              # 정상 종료 — 전량 열거 (partial 미설정)
+            if pages_followed >= 20:
+                self.last_list_partial = True      # arm ③ cap 소진 = 부분 열거
+                break
             if not isinstance(next_path, str) or not next_path.startswith("/"):
-                self.last_list_partial = True
+                self.last_list_partial = True      # arm ① 미지 형식 next
                 break
             if self.accounting is not None:
                 self.accounting.record_get()
             resp = self._perform_request("GET", next_path, dry=dry)
             if resp.status_code != 200:
-                self.last_list_partial = True
+                self.last_list_partial = True      # arm ② 후속 페이지 실패
                 break
-            more, partial2 = self._parse_list_response(resp)
-            results.extend(more)
-            partial = partial or partial2
+            results.extend(self._parse_list_response(resp))
             body = self._safe_json(resp)
             pages_followed += 1
 
-        self.last_list_partial = self.last_list_partial or partial
         return results
 
     @staticmethod
@@ -848,19 +950,27 @@ class ConfluencePropertyREST:
         except Exception:
             return None
 
-    def _parse_list_response(self, resp) -> Tuple[List[Dict[str, Any]], bool]:
+    def _parse_list_response(self, resp) -> List[Dict[str, Any]]:
+        """단일 페이지 파싱 — 형상 미지 = fail-closed 예외.
+
+        구 시그니처의 2번째 반환값(partial bool)은 구조적으로 항상 False 였다(성공 2 경로 모두
+        리터럴 False, 나머지는 raise) = dead flag → 제거. partial 판정은 호출부의 pagination
+        탈출 arm 이 단독 소유한다 (F4)."""
         body = self._safe_json(resp)
         if isinstance(body, dict) and isinstance(body.get("results"), list):
-            return list(body["results"]), False
+            return list(body["results"])
         if isinstance(body, list):
-            return list(body), False
+            return list(body)
         raise PropertyResolveError("property list 응답 형상 미지 — fail-closed (실형상 = 실측 확정)")
 
     def create_property_v2(self, page_id: str, key: str, value: Any,
                            dry: Optional[bool] = None, *, enforce_budget: bool = True,
                            ascii_mode: bool = False, probe_pair_id: Optional[str] = None
                            ) -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-        """POST — version 미송신 (결정 12)."""
+        """POST — version 미송신 (결정 12). page_id 위반 = local-reject (HTTP 0회, F2)."""
+        bad = self._reject_bad_resource_ids(page_id=page_id)
+        if bad is not None:
+            return False, None, bad
         dry = self._is_dry_run(dry)
         if not dry and (not self.token or not self.email):
             return False, None, _error_info("local-reject", message="Creds absent — IO-1 hard-fail")
@@ -872,7 +982,7 @@ class ConfluencePropertyREST:
             resp = self._send_write("POST", f"/wiki/api/v2/pages/{page_id}/properties",
                                     body_bytes, dry=dry,
                                     intent={"label": f"POST {key}", "key": key, "page_id": page_id})
-        except (AuthAbortError, RateAbortError, WriteCapExceeded, GoldenFixtureMissingError):
+        except KillSwitchAbort:   # F5 — 전 kill-switch 단일 base (개별 타입 열거 금지)
             raise
         except Exception as e:
             return False, None, _error_info("exception",
@@ -890,7 +1000,14 @@ class ConfluencePropertyREST:
                            enforce_budget: bool = True, ascii_mode: bool = False,
                            probe_pair_id: Optional[str] = None
                            ) -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-        """PUT by property-id — resolve 된 version n+1 항상 송신 (결정 12, optional 이어도 무해)."""
+        """PUT by property-id — resolve 된 version n+1 항상 송신 (결정 12, optional 이어도 무해).
+
+        `property_id` 는 **서버 유래**(list resolve envelope 의 `id`) 라 I-4 신뢰 경계 밖이다 —
+        page_id 와 함께 진입 검증한다. 본 검증이 `_upsert_impl` 의 409 재-resolve arm
+        (`env2.get("id")`) 재유입도 덮으므로 그쪽 중복 배치는 두지 않는다 (F2)."""
+        bad = self._reject_bad_resource_ids(page_id=page_id, property_id=property_id)
+        if bad is not None:
+            return False, None, bad
         dry = self._is_dry_run(dry)
         if not dry and (not self.token or not self.email):
             return False, None, _error_info("local-reject", message="Creds absent — IO-1 hard-fail")
@@ -904,7 +1021,7 @@ class ConfluencePropertyREST:
                 "PUT", f"/wiki/api/v2/pages/{page_id}/properties/{property_id}",
                 body_bytes, dry=dry,
                 intent={"label": f"PUT {key}", "key": key, "page_id": page_id})
-        except (AuthAbortError, RateAbortError, WriteCapExceeded, GoldenFixtureMissingError):
+        except KillSwitchAbort:   # F5 — 전 kill-switch 단일 base (개별 타입 열거 금지)
             raise
         except Exception as e:
             return False, None, _error_info("exception",
@@ -919,7 +1036,13 @@ class ConfluencePropertyREST:
 
     def remove_property_v2(self, page_id: str, property_id: Any,
                            dry: Optional[bool] = None) -> Tuple[bool, Optional[Dict[str, Any]]]:
-        """DELETE by property-id (cleanup — cap 밖 별도 집계, 404 = already gone 성공 처리)."""
+        """DELETE by property-id (cleanup — cap 밖 별도 집계, 404 = already gone 성공 처리).
+
+        `property_id` 는 서버 유래(I-4) 이므로 page_id 와 함께 진입 검증 — 위반 = local-reject
+        (HTTP 0회). 삭제는 회수 불가라 오도착 거부가 특히 중요하다 (F2)."""
+        bad = self._reject_bad_resource_ids(page_id=page_id, property_id=property_id)
+        if bad is not None:
+            return False, bad
         dry = self._is_dry_run(dry)
         if not dry and (not self.token or not self.email):
             return False, _error_info("local-reject", message="Creds absent — IO-1 hard-fail")
@@ -927,7 +1050,7 @@ class ConfluencePropertyREST:
             resp = self._send_write(
                 "DELETE", f"/wiki/api/v2/pages/{page_id}/properties/{property_id}",
                 b"", dry=dry, intent={"label": f"DELETE id={property_id}"}, kind="delete")
-        except (AuthAbortError, RateAbortError, GoldenFixtureMissingError):
+        except KillSwitchAbort:   # F5 — 전 kill-switch 단일 base (구 열거는 WriteCapExceeded 누락)
             raise
         except Exception as e:
             return False, _error_info("exception", message=f"{type(e).__name__}")
@@ -938,7 +1061,13 @@ class ConfluencePropertyREST:
     def upsert_property_v2(self, page_id: str, key: str, value: Any,
                            dry: Optional[bool] = None
                            ) -> Tuple[bool, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-        """upsert 오케스트레이터 (§3.2 flow) — GET ?key= resolve → 부재 POST / 존재 PUT n+1."""
+        """upsert 오케스트레이터 (§3.2 flow) — GET ?key= resolve → 부재 POST / 존재 PUT n+1.
+
+        page_id 진입 검증 1회 (F2) — 하류 `_upsert_impl` 은 내부 헬퍼이고, 그 안의 list/
+        create/update 도 각자 진입 검증을 갖추므로 여기 1회로 족하다 (중복 배치 없음)."""
+        bad = self._reject_bad_resource_ids(page_id=page_id)
+        if bad is not None:
+            return False, None, bad
         return self._upsert_impl(page_id, key, value, dry=dry)
 
     def _upsert_impl(self, page_id: str, key: str, value: Any, *, dry: Optional[bool] = None,
@@ -954,7 +1083,7 @@ class ConfluencePropertyREST:
         # resolve (실패 = 추정치 PUT 금지 fail-closed — 결정 12)
         try:
             envs = self.list_properties_v2(page_id, key=key, dry=dry)
-        except (AuthAbortError, RateAbortError, GoldenFixtureMissingError):
+        except KillSwitchAbort:   # F5 — 전 kill-switch 단일 base (구 열거는 WriteCapExceeded 누락)
             raise
         except PropertyResolveError as e:
             return False, None, _error_info("server-response",
@@ -985,6 +1114,8 @@ class ConfluencePropertyREST:
         if not ok and err is not None and err.get("http_status") == 409:
             try:
                 envs2 = self.list_properties_v2(page_id, key=key, dry=dry)
+            except KillSwitchAbort:   # F5 — 구 `except Exception` 단독은 kill-switch 를 삼켰다
+                raise
             except Exception:
                 return False, None, err
             if len(envs2) == 1:
@@ -1055,7 +1186,7 @@ class ConfluencePropertyREST:
         chunk_prefix = f"{PROPERTY_KEY_PREFIX}.__chunk_"
         try:
             envs = self.list_properties_v2(page_id, dry=dry)
-        except (AuthAbortError, RateAbortError, GoldenFixtureMissingError):
+        except KillSwitchAbort:   # F5 — 전 kill-switch 단일 base (구 열거는 WriteCapExceeded 누락)
             raise
         except Exception as e:
             raise ChunkStoreError(f"stale-chunk 열거 실패 — store 거부 (유령 chunk 위험): {e}") from e
