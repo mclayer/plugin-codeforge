@@ -26,6 +26,12 @@ amendment_log:
     reinterpretation: false  # ADR-167 §결정 1(b) — mirror-sync(SSOT=ADR-143 Amd4 를 따르는 사실 반영)이지 §결정 2 본문 의미 소급 재해석 아님 (self-declared, 리뷰 판정 축). effective_count(fm entry 3 ⟺ 본문 blockquote convention, `## Amendment` 헤딩 0) = 3 < N=10 → 재제정 트리거 무발동.
     summary: "Mirror-sync — 제3 ephemeral-UI render-line row(§결정 2 표 4번째 row)의 초 표기를 SSOT(ADR-143 Amendment 4, CFP-2836)에 맞춰 동기화. 컴팩트 `MM/DD HH:MM` → `MM/DD HH:MM:SS` + omission list 에서 '초' 제거(offset·연도·KST 라벨 생략은 PRESERVED — boundary-critical). direction=strengthen(mirror-accuracy — SSOT 를 따르는 사실 반영). EXEMPT/zoned scope 0건 축소(컴팩트-SS 도 연도·`T`·offset 부재로 `KST_TS_RE` 구조적 non-match 유지, `check_kst_timestamp.py` 무편집 — AC-12). §결정 3 contract field layer·§결정 6 forward-only·§결정 7 consumer tz override 불가 무변경. sunset_justification N/A (강화 방향, ADR-058 §결정 5 면제 — 초 표기는 정밀도 상향이지 display scope 축소 아님)."
     direction: strengthen
+  - amendment: 4
+    date: 2026-08-06
+    carrier_story: CFP-2879
+    reinterpretation: false  # V-3 의미 그대로의 계약 문면 전파 — Amendment 3 mirror-sync 선례 동형 (§결정 1/2/3·V-3 본문 byte 무변경, additive blockquote + frontmatter 만). effective_count 3→4 < 재제정 임계 (SSOT = check_adr_amendment_threshold.py THRESHOLD_N) → ADR-167 재제정 트리거 무발동.
+    summary: "§10 FIX Ledger 표 시각 열(표시 표면) 정본 = §결정 2 초-KST 임을 CFP-2879 가 adjudicate — §결정 5 V-3 dual-clock 기결정의 명문화 + fix-event-v1 v1.5 계약 문면 전파 + 상호 cross-ref (fix-event-v1 두-주인 판독 종료: 계약 §2 표 시각 설명 / §2 예시 표 / §3 constraints / §4 / ## v1.5 절 동반 정정, 계약 related_adrs 에 ADR-079 등재). display scope 축소 0 (§10 은 §결정 1/2 display 열거 기존 멤버 — 강화 방향), sunset_justification N/A (ADR-058 §결정 5 강화 방향 면제). 재발 경로 = V-3 이 secondary 검증 항목에 머물러 발견가능성이 낮았던 것 + 계약 문면 미전파 (CFP-2879 §2.3)."
+    direction: strengthen
 related_stories:
   - CFP-770  # 본 Story carrier — Phase 1 (ADR-079 신설 + RESERVATION row 79 reserved 미경유 직접 active + CLAUDE.md/playbook/template/domain-knowledge)
   - CFP-771  # Phase 2 mechanical lint carrier (blocks-on CFP-770) — Amendment 1 이 mechanical_enforcement_actions[] 채움
@@ -139,6 +145,9 @@ governance self-write 만 KST 직접 표기. external timestamp (GitHub API resp
 1. **V-1 pause/resume checkpoint (PRIMARY)** — `[PAUSE] YYYY-MM-DDTHH:MM:SS+09:00 — <사유>` / `[RESUME] YYYY-MM-DDTHH:MM:SS+09:00 — <재개점>` 표준. 사용자 directive 가 직접 지목한 유일 영역 (AC-9).
 2. **V-2 retro auto-trigger 시각 (secondary)** — `[RETRO TRIGGER] YYYY-MM-DDTHH:MM:SS+09:00 — Phase 2 PR merge +5min` comment prefix 표준 (ADR-045 / CFP-138, comment-prefix-registry 정합, AC-10).
 3. **V-3 §10 FIX Ledger dual-clock 분리 (secondary)** — Story §10 ledger 표시 시각 = Orchestrator local KST clock (display layer) / `fix-ledger-sync.yml` Action mirror = GitHub API UTC (machine layer). fix-event-v1 contract field 는 UTC strict 보존, Story §10 ledger 표시만 KST (AC-11, E-2 정합).
+
+> **Amendment 4 (2026-08-06 KST, CFP-2879)**: §10 시각 **표시** 칸 정본 = §결정 2 초-KST `YYYY-MM-DDTHH:MM:SS+09:00` 임을 CFP-2879 가 adjudicate (V-3 기결정의 명문화 — 신규 결정 아님). fix-event-v1 v1.5 가 계약 문면 전파 + 상호 cross-ref (계약 §2 표 `시각` 설명 W1 / §3 constraints W2 / §4 / `## v1.5` 절). 재발 경로 = V-3 이 secondary 검증 항목에 머물러 발견가능성이 낮았던 것 + 계약 문면 미전파 (CFP-2879 §2.3 — v1.4 까지 fix-event-v1 은 본 재배정을 반영하는 amendment 를 받은 적 없고 ADR-079 를 cross-ref 하지 않았다).
+
 4. **V-4 ADR amendment_log date (secondary)** — `date:` field = date-only KST 일자 의미 normative (AC-12).
 
 ### 결정 6 — forward-only effective date

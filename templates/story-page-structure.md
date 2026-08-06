@@ -409,8 +409,10 @@ PL(RequirementsPL / ArchitectPLAgent)이 병렬 서브 에이전트 결과 통�
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover | affected_scope | affected_paths_with_depth |
 |------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|----------------|---------------------------|
-| 1    | ISO8601 | 설계-리뷰 | ... | 설계 | ... | — | null | null | single-file | null |
+| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰 | ... | 설계 | ... | — | null | null | single-file | null |
 | ... |
+
+시각 column(표시 표면) = KST `+09:00` 초 포함 `YYYY-MM-DDTHH:MM:SS+09:00` (display layer — ADR-079 §결정 2, §결정 5 V-3 / CFP-2879 adjudication). machine event 층 UTC strict = [fix-event-v1 §3](../docs/inter-plugin-contracts/fix-event-v1.md) (contract field layer — 두 layer disjoint co-exist, §14 field #4/#5 동형).
 
 **Column SSOT** = [fix-event-v1 §2 Schema](../docs/inter-plugin-contracts/fix-event-v1.md). v1.3 신규 2 column:
 - `affected_scope` — enum (single-file / cross-module / cross-repo / cross-plugin), optional, RESET 결정 input
