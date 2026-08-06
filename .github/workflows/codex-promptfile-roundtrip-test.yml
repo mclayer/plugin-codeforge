@@ -16,6 +16,14 @@ name: codex-promptfile-roundtrip-test
 #     ③ 조립측 앵커 provenance-discriminating / ④ 앵커 무손상+본문 변이 content-discriminating)
 #   + AC-9 whitelist mutation·validity 축 + §8.8.1 fuzz / §8.8.2 property (Hypothesis round-trip identity).
 #
+# **실행 경로 = wrapper 경유** (Change Plan §5 row 7 r9 / row 14): run-line 은 pytest 를 직접 호출하지 않고
+#   얇은 wrapper `tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.sh` 를 실행한다.
+#   사유 = ADR-151 execution-liveness 메타-게이트 AC-2 는 인벤토리 record 의 self_test **basename(.sh) 이
+#   해당 job 의 run: line 에 등장**할 것을 요구한다 (scripts/lib/check_selftest_execution_liveness.py
+#   `_check_workflow_channel` — basename 미등장 = 배선 부재 RED [firsthand 실독]).
+#   직접 pytest run-line 은 .sh basename 부재 → AC-2 RED (ArchitectPL 4단계 시뮬레이션 실측 2026-08-06).
+#   wrapper 자체가 exit-code ∧ distinct-marker('passed' 토큰) 병행으로 pytest 실 실행을 판정한다 (row 14).
+#
 # **teeth 2층 정직 구분 (Change Plan §8.1)**: 본 채널이 강제하는 것은 fixture **통과·판별력** 이다.
 #   명명 테스트의 **실재** 강제는 별개 층(required `ac-traceability-matrix` — RTM Hop2/Hop3)이 소유한다.
 #   "AC-4 를 required 로 기계 강제" 서술 금지 — 두 층의 보증 대상이 다르다 (실재 ≠ 통과).
@@ -38,6 +46,7 @@ on:
     paths:
       - 'scripts/lib/check_promptfile_utf8_roundtrip.py'
       - 'tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py'
+      - 'tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.sh'
       - 'plugins/codeforge-review/agents/CodexReviewAgent.md'
       - 'plugins/codeforge-review/templates/codex-korean-literal-whitelist.md'
       - '.github/workflows/codex-promptfile-roundtrip-test.yml'
@@ -67,5 +76,5 @@ jobs:
       - name: Install test deps (pytest + hypothesis = §8.8.2 property round-trip identity)
         run: pip install --quiet pytest hypothesis
 
-      - name: Run promptfile UTF-8 round-trip fixture suite (AC-4/AC-9, day-1 hard-fail)
-        run: python3 -m pytest tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.py -q
+      - name: Run promptfile UTF-8 round-trip fixture suite via wrapper (AC-4/AC-9, day-1 hard-fail)
+        run: bash tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.sh

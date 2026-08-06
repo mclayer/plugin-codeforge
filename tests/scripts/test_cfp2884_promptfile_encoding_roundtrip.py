@@ -625,7 +625,7 @@ def test_ac6_axis_ab_coexistence():
 
     with open(CODEX_AGENT_PATH, "r", encoding="utf-8") as f:
         content = f.read()
-        assert "### 언어 구획 규약" in content, \
+        assert "### 언어 구획 규약 (3-구획 — ADR-081 §결정 D16 SSOT)" in content, \
             "AC-6 axis B: partition section header missing"
         assert "ANCHOR_LINE:" in content, \
             "AC-6 axis B: anchor line reference missing"
