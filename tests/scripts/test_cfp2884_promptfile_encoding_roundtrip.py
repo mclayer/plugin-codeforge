@@ -119,6 +119,75 @@ ANCHOR_LINE_PREFIX = "ANCHOR_LINE:"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Static Oracle: AC-1 CodexReviewAgent.md focus-block Korean verification
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _verify_ac1_static_oracle():
+    """
+    AC-1 static oracle: CodexReviewAgent.md 의 5개 `#### lane=` 블록에서 한글 산문 검증.
+
+    Contract (CP §8.2A oracle-scope 계약):
+      - 헤딩 수 == 5 (hollow guard)
+      - 각 블록 내부 한글 음절(U+AC00-D7A3) == 0 (partition A 한글 0 규칙)
+      - 헤딩 라인 자체 + anchor/whitelist 리터럴은 제외 (whitelist 토큰 단위 예외)
+
+    Mutant protocol:
+      - mutant: 한 블록 내부에 한글 산문 주입 → oracle RED
+      - coverage: discriminating + regression-guard (양쪽 조건 검증)
+    """
+    # Hangul character class (한글 음절 U+AC00-D7A3)
+    hangul_pattern = re.compile(r'[가-힣]')
+
+    # Extract all `#### lane=` headings and their fenced blocks
+    with open(CODEX_AGENT_PATH, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # Find all `#### lane=` headin positions
+    lane_headings = []
+    for i, line in enumerate(lines):
+        if line.startswith("#### lane="):
+            lane_headings.append(i)
+
+    # Hollow guard: exactly 5 lane headings required
+    assert len(lane_headings) == 5, \
+        f"AC-1 oracle: expected 5 `#### lane=` headings, found {len(lane_headings)}"
+
+    # For each heading, extract fenced block (``` ... ```) and check for Korean characters
+    for idx, heading_line_num in enumerate(lane_headings):
+        # Find next ``` fence start after heading
+        block_start = None
+        for i in range(heading_line_num + 1, len(lines)):
+            if lines[i].strip().startswith("```"):
+                block_start = i
+                break
+
+        if block_start is None:
+            raise AssertionError(f"AC-1 oracle: lane heading {idx} missing fenced block start")
+
+        # Find closing ``` fence
+        block_end = None
+        for i in range(block_start + 1, len(lines)):
+            if lines[i].strip().startswith("```"):
+                block_end = i
+                break
+
+        if block_end is None:
+            raise AssertionError(f"AC-1 oracle: lane heading {idx} missing fenced block end")
+
+        # Extract block content (between fences, excluding the fence lines themselves)
+        block_content = "".join(lines[block_start + 1:block_end])
+
+        # Check for Hangul characters in this block
+        hangul_matches = hangul_pattern.findall(block_content)
+
+        # Assert: no Hangul in partition A block
+        assert len(hangul_matches) == 0, \
+            f"AC-1 oracle: lane heading {idx} (line {heading_line_num + 1}) " \
+            f"contains {len(hangul_matches)} Hangul character(s): {hangul_matches[:5]} — " \
+            f"partition A oracle violation (floor = Hangul 0)"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Utility: Read Whitelist & Anchor
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -255,9 +324,17 @@ def test_ac1_partition_a_zero_hangul_with_whitelist():
       2. 블록 내부 한글 → rc 0 (partition B verbatim 보존)
       3. 외부는 앵커+whitelist 리터럴만 → rc 0 (정상 구획)
 
+    Static oracle (§8.2A):
+      - CodexReviewAgent.md: 5개 `#### lane=` 헤딩 추출 → 각 블록 내부 한글 문자 검증
+      - 헤딩 수 == 5 (hollow guard: 무헤딩 블록 누락 차단)
+      - 블록 내부 한글 == 0 (partition A oracle scope)
+
     Stub state: all paths → exit 2 (NOT_IMPLEMENTED)
     Test: assert rc 값 대조 (RED in stub state — contract-based)
     """
+    # Static oracle: CodexReviewAgent.md focus-block 한글 검증
+    _verify_ac1_static_oracle()
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
@@ -575,6 +652,11 @@ def test_ac5_env_presence_three_surfaces():
       - docs/orchestrator-playbook.md: 같음
 
     Precondition assert: 3 표면이 모두 실재.
+
+    3중 약화 제거 (F-CR-3):
+      - surface 부재 → skip (continue) 제거 → pytest.fail
+      - LC_ALL ∧ PYTHONUTF8 (AND) — 약화 (OR) 제거
+      - 각 env 별도 assert
     """
     surfaces = [
         ("CodexReviewAgent", CODEX_AGENT_PATH),
@@ -584,24 +666,33 @@ def test_ac5_env_presence_three_surfaces():
 
     for name, path in surfaces:
         if not path.exists():
-            # Surface missing is allowed (some may be in Phase 2 only)
-            continue
+            pytest.fail(f"AC-5: {name} file missing (required surface): {path}")
 
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
-            # At least one env export required
+            # Both env vars required (AND, not OR)
             has_lc_all = "export LC_ALL=C.UTF-8" in content
             has_pythonuft8 = "export PYTHONUTF8=1" in content
 
-            if path == CODEX_AGENT_PATH or path == REQUIREMENTS_AGENT_PATH:
-                # Both env vars expected for these surfaces
-                assert has_lc_all or has_pythonuft8, \
-                    f"AC-5: {name} missing both LC_ALL and PYTHONUTF8 env exports"
+            # Assert each env var separately
+            assert has_lc_all, \
+                f"AC-5: {name} missing 'export LC_ALL=C.UTF-8'"
+            assert has_pythonuft8, \
+                f"AC-5: {name} missing 'export PYTHONUTF8=1'"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # AC-6: Axis A/B coexistence (helper + whitelist + 구획 절)
 # ═══════════════════════════════════════════════════════════════════════════
+
+def _ac6_predicate(helper_path: Path, workflow_path: Path) -> bool:
+    """
+    AC-6 Axis A predicate: helper script ∧ workflow 동시 존재 검증.
+
+    Returns: True if both paths exist, False otherwise.
+    """
+    return helper_path.exists() and workflow_path.exists()
+
 
 def test_ac6_axis_ab_coexistence():
     """
@@ -612,8 +703,12 @@ def test_ac6_axis_ab_coexistence():
 
     하위 케이스: 합성 tmp tree(axis A 경로 부재) → predicate FALSE → RED
     """
-    # Axis A: helper 존재 (Phase 2에서 생성)
-    # workflow 는 untracked 상태일 수 있으므로 부재 허용
+    # Axis A: helper 존재 ∧ workflow 존재 (4-술어 복원)
+    workflow_path = REPO_ROOT / ".github" / "workflows" / "codex-promptfile-roundtrip-test.yml"
+    axis_a_result = _ac6_predicate(HELPER_SCRIPT, workflow_path)
+    assert axis_a_result, \
+        f"AC-6 axis A: helper missing or workflow missing. " \
+        f"helper={HELPER_SCRIPT.exists()}, workflow={workflow_path.exists()}"
 
     # Axis B: whitelist 존재 필수
     assert WHITELIST_PATH.exists(), \
@@ -629,6 +724,18 @@ def test_ac6_axis_ab_coexistence():
             "AC-6 axis B: partition section header missing"
         assert "ANCHOR_LINE:" in content, \
             "AC-6 axis B: anchor line reference missing"
+
+    # Sub-case: 합성 tmp tree에서 축 A 경로 부재 시 predicate FALSE
+    # (신규 하위케이스 추가)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        # Simulate missing helper path
+        fake_helper = tmpdir_path / "nonexistent" / "helper.py"
+        fake_workflow = tmpdir_path / "nonexistent" / "workflow.yml"
+
+        axis_a_sub_result = _ac6_predicate(fake_helper, fake_workflow)
+        assert not axis_a_sub_result, \
+            "AC-6 sub-case: nonexistent paths must yield FALSE predicate"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -723,16 +830,22 @@ def test_ac9_whitelist_mutation_discriminating():
       - original whitelist: token NOT in list → rc 1 (partition violation)
       - mutant whitelist: token IN list → rc 0 (partition OK)
 
+    양방향 mutation (F-CR-11):
+      - Axis A: 항목 **추가** (미등재 토큰 등재 → oracle 판정 완화 검출)
+      - Axis B: 항목 **제거** (등재 토큰 삭제 → oracle 판정 강화 검출)
+
     Sub-cases (B-2 gap 4 — whitelist validity self-check):
       ⓐ 근거경로 비실재 (entry 의 reference path 가 파일 없음) → rc 1
       ⓑ 경로 실재·literal grep 부재 (경로는 있는데 토큰이 파일에 없음) → rc 1
       ⓒ 정상 (경로 실재 ∧ literal 존재) → rc 0
 
+    Soft-skip 제거 (F-CR-11): pytest.skip → pytest.fail
+
     Stub: both → exit 2
     Test: assert rc 값 대조 (RED in stub state — contract-based)
     """
     if not WHITELIST_PATH.exists():
-        pytest.skip("AC-9: whitelist missing")
+        pytest.fail("AC-9: whitelist missing (required file)")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
@@ -848,6 +961,95 @@ def test_ac9_whitelist_mutation_discriminating():
         )
         assert rc_good == 0, f"AC-9 sub-case ⓒ (valid whitelist entry): rc 0, got {rc_good}"
 
+        # Axis B: 양방향 mutation — 항목 **제거** (등재 토큰 삭제 → oracle 판정 강화 검출)
+        # CP §3.2 "추가/제거 시 oracle 판정이 변해야 GREEN" 문면 그대로
+        # Baseline: 원본 whitelist에서 첫 번째 entry 제거 → fixture 에서 그 토큰 사용
+        # → 원본 whitelist: token IN list → rc 0
+        # → 제거된 whitelist: token NOT in list → rc 1
+
+        # Extract first whitelisted token from original (if any)
+        # Entry format: `<literal>\t<path>` (TAB-separated, no leading #)
+        # TAB-filter: entry判定線 = tab 포함 줄만 (helper _parse_entries 동일 판정선)
+        all_tokens = []  # Collect all valid tokens for assert (수술 1)
+        first_token = None
+        first_token_line_idx = None
+        for i, line in enumerate(whitelist_content.split("\n")):
+            if "\t" in line and not line.startswith("#") and line.strip():
+                parts = line.split("\t", 1)
+                if len(parts) >= 1:
+                    token = parts[0].strip()
+                    all_tokens.append(token)
+                    if first_token is None:  # First occurrence
+                        first_token = token
+                        first_token_line_idx = i
+
+        # Validation (수술 1): first_token must be in actual entry list (13+ entries)
+        if first_token:
+            assert first_token in all_tokens, \
+                f"AC-9 validation: first_token '{first_token}' not in parsed entries. " \
+                f"all_tokens={all_tokens}"
+
+        if first_token and first_token_line_idx is not None:
+            # Create fixture using the first whitelisted token
+            fixture_with_token = f"{promptfile_header()}\nPartition A text with {first_token} included\n"
+
+            # Test with original whitelist: token in list → rc 0
+            out_with_token = tmpdir_path / "out_with_token.md"
+            rc_with_token, _, _ = run_helper(
+                mode="write",
+                out_path=str(out_with_token),
+                whitelist=str(WHITELIST_PATH),
+                stdin_data=fixture_with_token.encode("utf-8"),
+            )
+            assert rc_with_token == 0, \
+                f"AC-9 axis B (token in original whitelist): rc 0, got {rc_with_token}"
+
+            # Create mutant whitelist with first entry removed
+            mutant_removed_lines = []
+            for i, line in enumerate(whitelist_content.split("\n")):
+                if i == first_token_line_idx:
+                    # Skip this first entry line
+                    continue
+                mutant_removed_lines.append(line)
+
+            mutant_removed_content = "\n".join(mutant_removed_lines)
+            mutant_removed_whitelist = tmpdir_path / "whitelist_removed.md"
+            with open(mutant_removed_whitelist, "w", encoding="utf-8") as f:
+                f.write(mutant_removed_content)
+
+            # Test with mutant whitelist (entry removed): token not in list → rc 1
+            out_removed = tmpdir_path / "out_removed.md"
+            rc_removed, _, _ = run_helper(
+                mode="write",
+                out_path=str(out_removed),
+                whitelist=str(mutant_removed_whitelist),
+                stdin_data=fixture_with_token.encode("utf-8"),
+            )
+            assert rc_removed == 1, \
+                f"AC-9 axis B (token removed from whitelist): rc 1, got {rc_removed}"
+
+        # Sub-case B-2-format: 문장부호 리터럴 "등재" 시 whitelist 형식 집행 RED (F-CR-4 결박)
+        # 격리: punct 는 whitelist "엔트리" 에 있다 — promptfile 은 clean (partition 축 비발화).
+        # 공백 없는 표본 = 공백 축이 아닌 문자 클래스 축 격리 (helper 허용 = 한글 음절·영숫자·`:` `-` `_`).
+        ref_ok_file = tmpdir_path / "ref_punct_entry.md"
+        with open(ref_ok_file, "w", encoding="utf-8", newline="\n") as f:
+            f.write("이것은산문리터럴이다.\n")  # validity 축 통과용 (literal grep 실재)
+        punct_whitelist = tmpdir_path / "whitelist_punct_entry.md"
+        with open(punct_whitelist, "w", encoding="utf-8", newline="\n") as f:
+            f.write(whitelist_content + f"\n이것은산문리터럴이다.\t{ref_ok_file}\n")
+        clean_fixture = f"{promptfile_header()}\nClean English body only.\n"
+        out_punct_fmt = tmpdir_path / "out_punct_format.md"
+        rc_punct_fmt, stdout_pf, stderr_pf = run_helper(
+            mode="write",
+            out_path=str(out_punct_fmt),
+            whitelist=str(punct_whitelist),
+            stdin_data=clean_fixture.encode("utf-8"),
+        )
+        assert rc_punct_fmt == 1, (
+            f"AC-9 B-2-format: punct 엔트리 등재 whitelist = 형식 위반 rc 1 기대, got {rc_punct_fmt}. "
+            f"stderr={stderr_pf}"
+        )
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Fuzz: seed-pinned mutation (§8.8.1)
@@ -962,9 +1164,9 @@ if HAS_HYPOTHESIS:
                     f"{sentinel_end}\n"
                 )
                 stdin_data = promptfile_content.encode("utf-8")
-            except (FileNotFoundError, ValueError):
-                # Whitelist setup error — skip this test iteration
-                pytest.skip("Whitelist anchor missing (setup error)")
+            except (FileNotFoundError, ValueError) as e:
+                # Whitelist setup error — fail instead of skip (F-CR-11 soft-skip removal)
+                pytest.fail(f"Whitelist anchor missing (setup error): {e}")
                 return
 
             rc, stdout, stderr = run_helper(

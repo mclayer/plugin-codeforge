@@ -106,7 +106,14 @@ whitelist 소비 계약
 
   · 엔트리 라인 = `^<literal>\\t<근거 SSOT 경로>$` (TAB 1개 구분). 그 외 줄은 파싱 대상 아님.
   · 앵커 라인 = `^ANCHOR_LINE: ` 로 시작하는 **유일한** 줄. 0개·2개 이상 = setup error(exit 2).
-  · 형식 제약 위반 (길이 >32자 / 공백 포함 / 엔트리 >30 / 빈 토큰) = 위반(exit 1).
+  · 형식 제약 위반 (길이 >32자 / 공백 포함 / 엔트리 >30 / 빈 토큰 / literal 허용 문자 클래스
+    이탈) = 위반(exit 1). **literal 허용 문자 = 한글 음절(U+AC00-D7A3) ∪ ASCII 영숫자 ∪
+    `:` `-` `_` 뿐**이며 산문 문장부호(마침표·쉼표·따옴표·괄호·물음표·말줄임·중점 등)는 불가다 —
+    한글 산문을 등재해 구획 A 를 형해화하는 경로의 구조 봉쇄이며, `:` `-` `_` 만 여는 이유는
+    `phase:구현` 류 label 기계 식별자를 등재 불능으로 만들면 규약 자체가 성립하지 않기 때문이다
+    (선언 SSOT = whitelist 템플릿 §형식 제약 3항 — 본 helper 는 그 문면의 이행이다).
+    문자 클래스 대상은 **literal 토큰 한정** — 근거 경로 토큰은 `/` `.` 를 포함하므로 대상이
+    아니며 공백·빈 토큰 제약만 받는다.
   · **validity self-check** — 각 엔트리의 근거 경로 실재 ∧ 그 파일 안에 literal grep 실재.
     위반(경로 소멸·리터럴 개명/삭제) = 위반(exit 1). 정직 천장: 기계 대조는 *존재·경로 실재*까지이며
     등재 리터럴이 원 SSOT 와 **의미상** 같은 것을 가리키는지는 판정 불가 (리뷰 lane 소관).
@@ -176,8 +183,9 @@ RE_END = re.compile(r"^END_UNTRUSTED_DATA nonce=(\S+)[ \t]*$")
 # 클래스를 런타임 조립한다 — 이 파일 자체가 인코딩 검증기라, 판정 상수를 raw 한글 리터럴로 두면
 # 소스가 오염될 때 검사기까지 조용히 함께 깨진다 (미할당 경계 code point 는 리터럴로 쓰면 눈으로
 # 검수도 불가능하다).
+HANGUL_SYLLABLE_RANGE = (0xAC00, 0xD7A3)
 HANGUL_RANGES = (
-    (0xAC00, 0xD7A3),  # 음절
+    HANGUL_SYLLABLE_RANGE,  # 음절
     (0x1100, 0x11FF),  # 자모
     (0x3130, 0x318F),  # 호환자모 — 음절 범위 단독이 놓치는 U+3131 (ㄱ) 포함
     (0xA960, 0xA97F),  # 확장 A
@@ -185,6 +193,18 @@ HANGUL_RANGES = (
 )
 HANGUL_RE = re.compile(
     "[" + "".join("%s-%s" % (chr(lo), chr(hi)) for lo, hi in HANGUL_RANGES) + "]"
+)
+
+# whitelist 엔트리 **literal 토큰**의 허용 문자 클래스 (docstring 'whitelist 소비 계약' 형식 제약
+# SSOT 이행 — 선언 원본은 whitelist 템플릿 §형식 제약 3항 "공백 0 · 문장부호 0"). 허용 = 한글 음절
+# ∪ ASCII 영숫자 ∪ label namespace 구분자 `:` `-` `_`; 그 외 전부 불허(= 산문 문장부호 차단).
+# 자모·호환자모·확장 A/B 는 HANGUL_RANGES 와 달리 여기서 제외한다 — 저들은 partition 검사의 *검출*
+# 대상 범위이지 label 식별자의 구성 요소가 아니며, 등재 표면을 필요 이상으로 넓히지 않는다.
+# 음절 범위는 HANGUL_SYLLABLE_RANGE 를 재사용한다 (판정 상수를 raw 한글 리터럴로 두지 않는 위 규율의
+# 연장 — 소스가 오염될 때 검사기까지 함께 조용히 깨지는 경로 차단).
+LITERAL_DISALLOWED_RE = re.compile(
+    "[^0-9A-Za-z:_\\-%s-%s]"
+    % (chr(HANGUL_SYLLABLE_RANGE[0]), chr(HANGUL_SYLLABLE_RANGE[1]))
 )
 
 # BOM = U+FEFF. escape 표기 고정 — raw 로 두면 소스에서 보이지 않아 검수·diff 가 불가능하다.
@@ -221,7 +241,12 @@ def _parse_entries(lines):
 
     "그 외 줄은 파싱 대상 아님" 의 기계 판정선 = TAB 유무 (whitelist 문서가 엔트리 블록 밖에서
     실 TAB 사용을 금지하는 이유와 동일 축). TAB 이 있는데 형식이 어긋나면 조용히 무시하지 않고
-    위반으로 올린다 — 무시하면 형식 제약 4종이 전부 공허해진다.
+    위반으로 올린다 — 무시하면 형식 제약 5종이 전부 공허해진다.
+
+    집행 5종 = 빈 토큰 / 공백 포함(literal·ref 양측) / literal 허용 문자 클래스(literal 한정 —
+    산문 문장부호 차단) / literal 길이 ≤ MAX_LITERAL_LEN / 총 엔트리 ≤ MAX_ENTRIES.
+    docstring 'whitelist 소비 계약' 의 선언과 1:1 대응한다 (선언만 있고 집행이 없으면 whitelist
+    가 산문 등재로 형해화된다 — 구획 A 한글 0 floor 가 등재 한 줄로 무력화되는 경로).
     """
     entries = []
     for lineno, line in enumerate(lines, 1):
@@ -237,6 +262,13 @@ def _parse_entries(lines):
             raise ViolationError(f"whitelist line {lineno}: 빈 토큰")
         if any(ch.isspace() for ch in literal) or any(ch.isspace() for ch in ref):
             raise ViolationError(f"whitelist line {lineno}: 토큰 내 공백 포함")
+        # 공백 검사 뒤에 둔다 — 공백은 이 클래스에도 걸리지만, 더 구체적인 위 진단을 보존한다.
+        bad = LITERAL_DISALLOWED_RE.search(literal)
+        if bad is not None:
+            raise ViolationError(
+                f"whitelist line {lineno}: literal 허용 문자 클래스 이탈 — {bad.group(0)!r} "
+                "(허용: 한글 음절 · ASCII 영숫자 · `:` `-` `_`; 산문 문장부호 불가)"
+            )
         if len(literal) > MAX_LITERAL_LEN:
             raise ViolationError(
                 f"whitelist line {lineno}: literal 길이 {len(literal)} > {MAX_LITERAL_LEN}"
