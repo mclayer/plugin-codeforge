@@ -3,16 +3,16 @@
 # content_digest = sha256 over canonical {gate_flags, declaration_surfaces} (provenance/generated_at 제외).
 schema_version: '1.0'
 generated_by: CFP-2591
-generated_at: '2026-07-15T19:07:29+09:00'
-generated_from_commit: f5cd56a6ddd1c0127c80a5253fcb7b24a84b15e6
-basis: ADR-060 §결정6 승격 시점 registry+declaration FLAG 집합 동결 (Clean-as-You-Code new-only, CFP-2591)
-content_digest: 5513e4343cb79dbdb76d4e55ddeb51722fe3cc9fd42e65277cc268796d9439a0
+generated_at: '2026-08-05T14:38:28+09:00'
+generated_from_commit: 91d7dd7ad872973635d4d1ef70bfb1180f4939b6
+basis: ADR-171 §결정6 승격 시점 registry+declaration FLAG 집합 동결 (Clean-as-You-Code new-only, CFP-2591)
+content_digest: cd248c2169297fc5b63584207ff7ee0f31cf5904e36be1a51aaed81cfc342dbe
 gate_flags: []
 declaration_surfaces:
 - locator: docs/doc-location-registry.md:164
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/doc-locations.yaml:187
+- locator: docs/doc-locations.yaml:190
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md:228
@@ -30,7 +30,7 @@ declaration_surfaces:
 - locator: docs/domain-knowledge/domain/governance-principle/rebase-staleness-sentinel.md:27
   token: FU-1523-3
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
-- locator: docs/evidence-checks-registry.yaml:2239
+- locator: docs/evidence-checks-registry.yaml:1990
   token: CFP-TBD
   reason: pre-existing (CFP-2591 baseline snapshot grandfather)
 - locator: templates/github-workflows/post-merge-followup.yml:262

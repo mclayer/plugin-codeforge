@@ -2,7 +2,7 @@
 kind: registry
 registry: defense-in-depth-sublayer-registry
 contract_name: defense-in-depth-sublayer-registry
-version: "1.0"
+version: "1.0.1"
 status: Active
 date: 2026-05-14
 authors:
@@ -17,7 +17,7 @@ related_adrs:
   - ADR-063  # marketplace atomic invariant — §결정 5 본문 표 sublayer enumeration source
   - ADR-008  # inter-plugin contract versioning
   - ADR-010  # sibling sync 면제 정합
-  - ADR-060  # evidence-enforceable promotion framework — enforce_tier enum 정합
+  - ADR-171  # evidence-enforceable promotion framework — enforce_tier enum 정합
 ---
 
 # Defense-in-depth sublayer registry v1.0
@@ -56,7 +56,7 @@ codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-06
 | `stage` | enum | yes | `pre_commit` / `pre_push` / `pull_request_event` / `post_merge` / `scheduled_cron` |
 | `mechanism` | string | yes | sublayer 작동 방식 1-line summary |
 | `trigger_event` | string | yes | sublayer 발화 trigger (예: "git push" / "pull_request open" / "24h cron") |
-| `enforce_tier` | enum | yes | `advisory` / `warning` / `blocking-on-pr` / `blocking-on-merge` (ADR-060 4-tier enum 정합) |
+| `enforce_tier` | enum | yes | `advisory` / `warning` / `blocking-on-pr` / `blocking-on-merge` (ADR-171 4-tier enum 정합) |
 | `file_path` | list[string] | yes | sublayer artifact file path (script + workflow + hook sample 등) |
 | `env_opt_in_flag` | string | no | opt-in env var (예: `PRE_PUSH_AUTO_REBASE=1`) — opt-in sublayer 만 |
 | `bypass_label` | string | no | bypass channel label (ADR-024 Amendment 3 §결정 6.A family member) — blocking tier 만 의무 |
@@ -71,7 +71,7 @@ codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-06
   - `post_merge` — PR merge 후
   - `scheduled_cron` — GitHub Actions schedule (cron)
 
-- **`enforce_tier`** = sublayer enforcement 강도. ADR-060 4-tier enum 정합 + `advisory` (opt-in local hook 영역):
+- **`enforce_tier`** = sublayer enforcement 강도. ADR-171 4-tier enum 정합 + `advisory` (opt-in local hook 영역):
   - `advisory` — opt-in local hook, fail 시 warning print 만 (blocking 분기 env 미선언 시)
   - `warning` — workflow `continue-on-error: true`, fail 시 audit
   - `blocking-on-pr` — pull_request event 시 required check, fail 시 PR 차단
@@ -166,4 +166,4 @@ ADR-010 §결정 2 verbatim 정합 (kind:registry sibling sync 면제 정책).
 - [`docs/inter-plugin-contracts/MANIFEST.yaml`](MANIFEST.yaml) — registries 블록 7번째 entry
 - [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) — versioning policy
 - [`docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) — sibling sync 면제
-- [`docs/adr/ADR-060-evidence-enforceable-promotion-framework.md`](../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — enforce_tier enum 정합
+- [`archive/adr/ADR-171-evidence-enforceable-promotion-framework.md`](../../archive/adr/ADR-171-evidence-enforceable-promotion-framework.md) — enforce_tier enum 정합

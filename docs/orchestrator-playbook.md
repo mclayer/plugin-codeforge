@@ -676,7 +676,7 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 
 **위반 시**: ADR-064 §결정 4 위반. spawn prompt 에 sequential 선택 사유 명시 없이 sequential dispatch = ADR-039 §결정 7 `policy_violation_subdecision` 발화 채널.
 
-**Mechanical enforcement**: `parallel-dispatch-prompt-check` warning tier lint (ADR-060 evidence-enforceable framework 정합) — `scripts/check-parallel-dispatch-prompt.sh` + `templates/github-workflows/parallel-dispatch-prompt-check.yml` (`continue-on-error: true`, bypass label `hotfix-bypass:parallel-dispatch-prompt`).
+**Mechanical enforcement**: `parallel-dispatch-prompt-check` warning tier lint (ADR-171 evidence-enforceable framework 정합) — `scripts/check-parallel-dispatch-prompt.sh` + `templates/github-workflows/parallel-dispatch-prompt-check.yml` (`continue-on-error: true`, bypass label `hotfix-bypass:parallel-dispatch-prompt`).
 
 **env=0 / env=1 동등성** (registry §6.4):
 - env=0 (default subagent context, ADR-039) — Orchestrator round-trip polyfill, PL 이 batch N task multi-instance subagent dispatch 1 round trip 안에 spawn
@@ -687,7 +687,7 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 - ADR-039 §결정 7 `policy_violation_subdecision` — 위반 발화 채널
 - ADR-044 §결정 2 `dispatch_mode` enum — env=1 직교 차원
 - ADR-056 — team-spec-requirements 6-way teammates (CFP-609 absorb)
-- ADR-060 — evidence-enforceable promotion framework (warning tier entry)
+- ADR-171 — evidence-enforceable promotion framework (warning tier entry, 구 ADR-060 재제정)
 - §12 spawn prompt template — `[Parallel Dispatch Hint]` block 기재 의무 (registry §4.1 verbatim)
 
 #### §3.0.16 — DeveloperPL + branch-creating subagent pre-spawn-pin mandate (CFP-895 / ADR-039 Amendment 1)
@@ -1650,7 +1650,7 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 
 **narrative SSOT**: [`docs/domain-knowledge/domain/codex-collaboration/`](../docs/domain-knowledge/domain/codex-collaboration/) (ADR-052/070/081 cross-ref hub + substitution scope decision tree).
 
-#### §3.10.1-bis Graceful degradation step pair (a)(b)(c) (CFP-963 / [ADR-081 Amendment 4](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D1.D body 확장 + [ADR-060 Amendment 14](../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) §결정 28 carrier)
+#### §3.10.1-bis Graceful degradation step pair (a)(b)(c) (CFP-963 / [ADR-081 Amendment 4](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D1.D body 확장 + [ADR-171](../archive/adr/ADR-171-evidence-enforceable-promotion-framework.md) §결정 28 carrier — 구 ADR-060 Amendment 14)
 
 ADR-081 Amendment 4 §결정 D1.D body 확장 (`sandbox_network_required: <bool>` → `network_scope: <4-tier enum>`: `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`) 의 codify. 본 sub-section = Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 시 **graceful degradation step pair (a)(b)(c)** — fail-mode 8-enum (위 substitution 3-path 표 `fallback_skip_with_marker` row 가 enum 8종 SSOT) 의 mechanical detection layer.
 
@@ -1679,7 +1679,7 @@ step (a) 1+ probe 실패 시 Orchestrator 는 다음 action:
 
 substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
 
-1. **Story §10 marker (1 회/spawn)**: `[codex-sandbox-fallback: <fail-mode>]` row append — fail-mode 8-enum (위 substitution 3-path 표 SSOT) 안 정확 1 value 보유 의무. fix-event-v1 contract 정합 (Orchestrator monopoly, CFP-32). `codex-network-scope-presence` lint (ADR-060 Amendment 14 §결정 28 / CFP-963 Phase 2 carrier) 가 marker enum membership check 검증.
+1. **Story §10 marker (1 회/spawn)**: `[codex-sandbox-fallback: <fail-mode>]` row append — fail-mode 8-enum (위 substitution 3-path 표 SSOT) 안 정확 1 value 보유 의무. fix-event-v1 contract 정합 (Orchestrator monopoly, CFP-32). `codex-network-scope-presence` lint (ADR-171 §결정 28 — 구 ADR-060 Amendment 14 / CFP-963 Phase 2 carrier) 가 marker enum membership check 검증.
 2. **§14 Lane Evidence row 의 `network_scope_actual` field** (optional 13번째 field — evidence-check-registry-v1 v1.3 신규 schema, ADR-031 §14 12 field 영향 0 backward-compat): 본 lane row 의 actual scope (`offline_substitution_declared`) 기록. Codex dispatch 아닌 lane row = omit (omit-on-N/A pattern). present 시 4-tier enum 안 정확 1 value 보유 의무 (offline / repo-fetch-only / web-fetch / offline_substitution_declared). `codex-network-scope-presence` lint 가 §14 row 안 본 field membership check 검증.
 3. **PMOAgent retro trigger 영역 carry-over** (선택): substitution 발화 누적 ≥3 occurrence within Story = ADR-045 §D-9 cross-Story pattern threshold reach 후보 (PMO retro carrier evaluation 영역).
 
@@ -2135,7 +2135,7 @@ enterprise org-level `default_workflow_permissions: read` 차단 환경 또는 �
 
 | Invariant | Mitigation | Tier |
 |---|---|---|
-| §1 verbatim immutable | post-merge lint `section-1-verbatim-postmerge.yml` (Phase 2 carrier) warning tier | ADR-060 framework |
+| §1 verbatim immutable | post-merge lint `section-1-verbatim-postmerge.yml` (Phase 2 carrier) warning tier | ADR-171 framework |
 | phase-label transition | Orchestrator 수동 의무 (본 §3.15 Step 4) | governance |
 | 4 required check | manual PR 도 phase-gate-mergeable + doc frontmatter + doc section + invariant-check 통과 의무 (`enforce_admins:true` ratchet 유지, CFP-70) | blocking |
 
@@ -2264,7 +2264,7 @@ branch naming `cfp-1495-redo` 권장 (ADR-024 cfp-NNN 정합, 간결 — `cfp-14
 - entry name: `admin-merge-preflight-gate`
 - current_tier: `warning` (deferred-followup Wave 1 declaration-only)
 - bypass_label: `hotfix-bypass:admin-merge-preflight-gate` (label-registry-v2 v2.70 95번째 family member)
-- carrier_adr: ADR-060 (4-tier framework)
+- carrier_adr: ADR-171 (4-tier framework)
 - owner_adr: ADR-113 (5-step procedure SSOT)
 - paired_owner_adr: ADR-073 §결정 1 (verify-before-assert transition trigger `admin_merge_attempt` sub-domain)
 
@@ -2473,7 +2473,7 @@ Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 autho
 
 **Bypass**: 본 mandate 는 behavioral mandate (Wave 1). 응급 fast-publish 영역 (hotfix Issue 등) 에서 `BYPASS_ISSUE_BODY_VERIFY=1` env (Wave 2 mechanical lint 도입 후) → audit trail 보존. Wave 1 = audit trail prose-only (Story §2.1 표 자체).
 
-**Wave 2 progression** (deferred-followup): `scripts/check-story-section-issue-origin.sh` (warning tier, ADR-060 §결정 5 정합) — `issue_origin: orchestrator_authored_followup` 시 §2.1 verified state table 존재 + 4-column schema 정합 lint. 별도 CFP carrier (brainstorm 단계 결정).
+**Wave 2 progression** (deferred-followup): `scripts/check-story-section-issue-origin.sh` (warning tier, ADR-171 §결정 5 정합) — `issue_origin: orchestrator_authored_followup` 시 §2.1 verified state table 존재 + 4-column schema 정합 lint. 별도 CFP carrier (brainstorm 단계 결정).
 
 **Wave 3 progression** (후순위 ratchet, CFP-1002 precedent 정합): RequirementsPL spawn prompt template (`plugins/codeforge-requirements/` in-tree) explicit verify-before-trust mandate — 별도 CFP carrier 분리.
 
@@ -2515,7 +2515,7 @@ handoff_reason enum: `context-budget-exhausted` / `user-redirect` / `structural-
 #### Wave 1 vs Wave 2 progression
 
 - **Wave 1 (현재)**: declarative-only (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840) + ADR-070 §D5 retain pattern 답습). Orchestrator self-discipline + lane PL spawn 직전 manual 4-step polling.
-- **Wave 2 (별 sub-CFP carrier)**: mechanical wire — `templates/scripts/check-active-sessions-presence.{sh,py}` + `templates/scripts/check-lane-entry-ownership.{sh,py}` + `templates/github-workflows/active-sessions-presence.yml` + `templates/github-workflows/lane-entry-ownership-verify.yml` + bats test suite (evidence-checks-registry `active-sessions-presence` + `lane-entry-ownership-verify` 2 entry warning tier deferred-followup, ADR-060 §결정 5 정합).
+- **Wave 2 (별 sub-CFP carrier)**: mechanical wire — `templates/scripts/check-active-sessions-presence.{sh,py}` + `templates/scripts/check-lane-entry-ownership.{sh,py}` + `templates/github-workflows/active-sessions-presence.yml` + `templates/github-workflows/lane-entry-ownership-verify.yml` + bats test suite (evidence-checks-registry `active-sessions-presence` + `lane-entry-ownership-verify` 2 entry warning tier deferred-followup, ADR-171 §결정 5 정합).
 
 #### Cross-ref
 

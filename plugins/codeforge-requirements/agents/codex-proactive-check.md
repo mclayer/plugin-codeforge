@@ -51,7 +51,7 @@ Orchestrator inline dispatch — packet schema 는 wrapper [`docs/orchestrator-p
 | **file path verification** | `Glob` + `Read` (path / line / 함수명 실측) |
 | **cross-repo state verification** | `Bash(codex exec *)` 내 `gh api repos/*/contents/*` + `Read` (sibling plugin / contract / marketplace.json mirrored field 실측) |
 
-발견된 fact 불일치 = `findings[]` 에 `severity: major` 이상 + description 에 sub-criterion 명시 의무 (예: `[fact-check: registry-execution drift] ADR-060 §결정 5 인용 tier=warning 인데 실제 entry.current_tier=blocking-on-pr`).
+발견된 fact 불일치 = `findings[]` 에 `severity: major` 이상 + description 에 sub-criterion 명시 의무 (예: `[fact-check: registry-execution drift] ADR-171 §결정 5 인용 tier=warning 인데 실제 entry.current_tier=blocking-on-pr`).
 
 PL synthesis 의 fact claim marker (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`) 5종 인지 의무 — `[verified]` marker 부착 claim 검증 시 PL 인용 evidence line 까지 cross-verify, `[verification-out-of-scope: <사유>]` 마커는 fact-check sub-criteria 면제.
 

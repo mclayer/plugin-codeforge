@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 scripts/lib/check_adr_amendment_threshold.py
-CFP-2812 / ADR-167(adr-amendment-compaction-ratchet) / ADR-060 — ADR amendment 누적 임계 재제정(compaction) ratchet lint
+CFP-2812 / ADR-167(adr-amendment-compaction-ratchet) / ADR-171 — ADR amendment 누적 임계 재제정(compaction) ratchet lint
 
 목적 (Change Plan §3 D1~D11):
   ADR corpus 의 append-only 누적 부채에 대해 재제정(compaction) ratchet 을 기계 판정한다.
@@ -40,7 +40,7 @@ Exit codes:
   0 = PASS (violation 0)
   1 = violation >=1 (임계 초과 신규분 / baseline 무결성 위반 / heading-only drift / marker 미기재·비-boolean / 파싱 실패)
 
-ADR refs: ADR-167(adr-amendment-compaction-ratchet) §결정 1~8 / ADR-060 (게이트 tier host) / ADR-145
+ADR refs: ADR-167(adr-amendment-compaction-ratchet) §결정 1~8 / ADR-171 (게이트 tier host) / ADR-145
   (forward-only+grandfather) / ADR-153 (baseline 은퇴 선례) / ADR-168 §결정 16 (resource 정직, 구 ADR-082 §결정 16 재제정) /
   ADR-119·ADR-136 (honest ceiling) / ADR-061 (Python SSOT + thin wrapper) / ADR-005 (byte-parity workflow 쌍).
 """
@@ -387,7 +387,7 @@ def write_baseline(path: str, corpus_scans):
         "scripts/lib/check_adr_amendment_threshold.py --write-baseline (CFP-2812)",
         "# DO NOT EDIT BY HAND. Regenerate: bash scripts/check-adr-amendment-threshold.sh --write-baseline",
         "# grandfather = 도입 시점 corpus effective_count(max(헤딩, fm 합산)) >= THRESHOLD_N 동결 → "
-        "forward-only 신규 누적분만 재제정 의무 (ADR-060 §결정 6 / ADR-145 forward-only+grandfather).",
+        "forward-only 신규 누적분만 재제정 의무 (ADR-171 §결정 6 / ADR-145 forward-only+grandfather).",
         "# 무결성: B-1 단조 비증가(entry 값 증가·추가 금지, N 하향 재산정 예외) + B-2 ceiling sanity"
         "(grandfathered_at <= 현재 스캔값 + dangling entry 검출). 단조 shrink → 공집합 도달 시 은퇴(ADR-153).",
         "schema_version: '1.0'",
@@ -649,7 +649,7 @@ def _emit(violations, mode: str) -> int:
 def main(argv) -> int:
     parser = argparse.ArgumentParser(
         prog="check_adr_amendment_threshold.py",
-        description="ADR amendment 누적 임계 재제정 ratchet lint (warning tier — CFP-2812 / ADR-060).",
+        description="ADR amendment 누적 임계 재제정 ratchet lint (warning tier — CFP-2812 / ADR-171).",
     )
     parser.add_argument("--mode", choices=("threshold", "parity"), required=True, help="판정 모드.")
     parser.add_argument("--write-baseline", action="store_true", help="도입 시점 corpus 를 baseline 으로 동결 write.")

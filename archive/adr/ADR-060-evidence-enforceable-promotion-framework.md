@@ -1,7 +1,7 @@
 ---
 adr_number: 60
 title: Evidence-enforceable promotion framework — declaration → warning → enforce 점진 적용 SSOT
-status: Accepted
+status: Superseded by ADR-171
 category: governance
 date: 2026-05-11
 is_transitional: false

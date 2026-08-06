@@ -9,7 +9,7 @@
 # 책임 경계 (ADR-115 §결정 1 / §결정 4 / §결정 6 정합):
 #   - 책임: Agent tool spawn 직전 spawn-prompt 안 필수 4 block presence 검증.
 #           Wave 1 warning-only — 누락 시 stderr warning 발화 + exit 0 (deny 비활성).
-#           Wave 2 (별 sub-CFP, ADR-060 evidence-gate 후): stdout JSON deny 활성.
+#           Wave 2 (별 sub-CFP, ADR-171 evidence-gate 후): stdout JSON deny 활성.
 #   - 비책임: spawn prompt 내용 변조 금지. inline-write 검출 영역 외 (Change Plan §결정 6).
 #             코드 품질 / 보안 검사 영역 외 (CodeReview / SecurityTest lane 책임).
 #

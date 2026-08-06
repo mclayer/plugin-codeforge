@@ -46,7 +46,7 @@ if hasattr(sys.stderr, "reconfigure"):
 SCHEMA_VERSION = "1.0"
 GENERATED_BY = "CFP-2591"
 BASIS_TEXT = (
-    "ADR-060 §결정6 승격 시점 registry+declaration FLAG 집합 동결 "
+    "ADR-171 §결정6 승격 시점 registry+declaration FLAG 집합 동결 "
     "(Clean-as-You-Code new-only, CFP-2591)"
 )
 SURFACE_REASON = "pre-existing (CFP-2591 baseline snapshot grandfather)"

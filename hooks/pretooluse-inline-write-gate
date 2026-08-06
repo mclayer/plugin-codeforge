@@ -8,7 +8,7 @@
 #   - 책임: Write/Edit/MultiEdit 직전 caller(agent_id) + file_path(repo/worktree) 판정.
 #           Wave 1 warning-only — Orchestrator 직접 repo/worktree 편집 시 stderr block
 #           마커 발화 + exit 0 (deny 비활성).
-#           Wave 2 (별 sub-CFP, ADR-060 evidence-gate 후): exit 2 deny 활성.
+#           Wave 2 (별 sub-CFP, ADR-171 evidence-gate 후): exit 2 deny 활성.
 #   - 비책임: 편집 내용 변조 금지. subagent 편집(agent_id 존재) 통과. Bash redirect
 #             (U2) / mcp__github__* (U3) 검출 영역 외 (후속 CFP).
 #

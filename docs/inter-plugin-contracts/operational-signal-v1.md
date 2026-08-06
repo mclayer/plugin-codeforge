@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: operational-signal
-version: "1.0"
+version: "1.0.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/operational-signal-v1.md
@@ -10,6 +10,7 @@ authors:
   - ArchitectAgent (CFP-1195 carrier — ADR-106 §결정 5 defer resolve, self-improving loop input schema SSOT)
 version_history:
   - { version: "1.0", date: 2026-05-22, carrier: CFP-1195, change: "initial — 운영 신호 input schema (monitor cron → PMOAgent escalation). 10-field signal event schema + signal_type 4-value enum (error_rate/latency_burn_rate/regression/smoke_health) + escalation_action 3-value enum (adr_draft_emitted/escalate_user/none) + 단계 1→2-b→3→4 회로 경계 + pmo-output-v1 cross-ref (input vs output disjoint). ADR-106 §결정 3 KPI 구조 + §결정 5 contract defer resolve (A-2 kind:registry 채택). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합)." }
+  - { version: "1.0.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
 owner_adr: ADR-106  # 운영 metric → PMOAgent input 회로 (§결정 3 KPI 구조 / §결정 5 contract defer resolve)
 carrier_story: CFP-1195
 sibling_sync_exempt: true
@@ -21,7 +22,7 @@ related_adrs:
   - ADR-008  # Inter-plugin contract versioning (registry MINOR/PATCH sibling sync 면제)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry exempt §결정 2)
   - ADR-024  # hotfix-bypass label family (`hotfix-bypass:self-improving-loop`)
-  - ADR-060  # Evidence-enforceable promotion framework (warning tier entry `self-improving-loop-closure`)
+  - ADR-171  # Evidence-enforceable promotion framework (warning tier entry `self-improving-loop-closure`)
   - ADR-064  # 정량 우선 (loop closure threshold 숫자) + Trace 4 default parallel
   - ADR-079  # KST display layer (detected_at_kst field)
 related_files:
