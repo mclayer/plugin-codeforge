@@ -120,7 +120,7 @@ NON_STRUCTURAL_PREFIXES = (
     ".claude/",    # .claude/agents/** 는 위 구조 side 소속(structural 이 먼저 매칭)
     ".github/",    # .github/workflows·scripts 는 위 구조 side 소속(structural 이 먼저 매칭)
 )
-NON_STRUCTURAL_EXACT = (".gitignore", ".gitattributes", "mark.toml", "requirements.txt")
+NON_STRUCTURAL_EXACT = (".gitignore", ".gitattributes", "mark.toml", "requirements.txt", "pytest.ini")  # CFP-2889: pytest.ini = 테스트 러너 marker 선언 config — requirements.txt 와 동류(빌드/테스트 의존 선언, family.md 도출 표면 아님). closed enum 분류 확정(unknown-surface fail-closed 해소).
 
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 
