@@ -59,10 +59,9 @@ from requests.models import PreparedRequest, Response
 # conftest 가 scripts/ + scripts/lib/ 를 sys.path 주입
 import confluence_backward_measure as measure
 from lib.confluence_measurement_client import MeasurementRESTClient
-from lib.confluence_property_rest import WriteAccounting
-# N7 단일 출처 — PII 패턴을 로컬 리터럴로 복제하지 않는다 (복제하면 한쪽 약화가 다른 쪽에서
-# 은폐된다). 같은 tests/scripts 디렉터리 모듈이라 pytest rootdir 삽입 경로로 import 된다.
-from test_confluence_property_rest import F3_PII_PATTERNS
+# 신원 패턴 SSOT — production 상수를 직접 참조한다 (3자 단일 출처: body 마스킹 ·
+# 커밋 golden 스캔 · 본 emit 채널 결박). 로컬 리터럴 복제는 한쪽 약화를 은폐한다 (iter2 N7).
+from lib.confluence_property_rest import F3_PII_PATTERNS, WriteAccounting
 
 TEST_PAGE = "21430273"
 SENTINEL_TITLE = "CFP-2889-THROWAWAY-binding-suite"
@@ -610,4 +609,54 @@ def test_d14e_emit_channel_carries_no_server_identity(binding_spy, tmp_path):
         assert not matches, (
             f"emit 채널 산출 문자열에 서버 유래 {label} 유출 — {matches[:3]} "
             f"(값-축 allowlist 가 emit 채널에 미결박)")
+
+
+def test_d14e_emit_channel_masks_identity_in_probe_body(binding_spy, tmp_path):
+    """D-14e **body 축 arm** (iter2 연장): probe 응답 **body** 경유 신원값도 산출 채널에 안 남는다.
+
+    envelope arm(위)과 **자극 축이 다르다**: 여기서 오염되는 것은 서버 응답 body 원문이며,
+    그 값은 `W4`/`W5` probe 의 `body_verbatim` 필드로 산출물에 실린다. 이 축은 §3.9 값-축
+    allowlist 의 정의역이 **아니라** body 축(§7.1 step 1) 소관이고, deny-scan 은 account-id 형을
+    구조적으로 못 잡는다(`:`·`-` 분절로 20+ run 미형성) — 따라서 `mask_identity_tokens` 가
+    이 축의 유일 차단층이다.
+
+    오라클 = ⓐ `emit_record(results)` 산출 문자열에 신원 패턴 매치 0 (F3 SSOT 상수 공유)
+    ⓑ **진단 문언은 verbatim 잔존**(over-limit 시그니처 `too large`·`32768`) — 마스킹이
+    진단 가치를 훼손하지 않음을 같은 산출물에서 확인한다. ⓑ 가 없으면 "body 를 통째로 지워도
+    GREEN" 이 되어 §4.2(실문언 = AC-12 1차 출처) 파괴안이 통과한다.
+
+    mutant: `sanitize_body_field` 의 `mask_identity_tokens` 호출 제거 → ⓐ RED.
+
+    ★ 정직 한계: body 마스킹은 **denylist = fail-open** 이라 미열거 신원 형식은 통과한다
+    (envelope 축 allowlist 의 fail-closed 와 보증 수준이 다르다). 본 arm 은 열거된 패턴에
+    한해 결박을 증명할 뿐 "body 축이 envelope 축과 같은 수준으로 막혔다" 를 증명하지 않는다.
+    """
+    over_limit_phrase = "The value is too large; maximum size is 32768 bytes"
+
+    def responder(request: PreparedRequest) -> Response:
+        parts = urlsplit(request.url)
+        if parts.path.endswith(f"/pages/{TEST_PAGE}"):
+            return _json_response(request, 200, {"id": TEST_PAGE, "title": SENTINEL_TITLE})
+        # probe 경로(v1/v2)의 **에러 body** 에 진단 문언 + 신원값을 함께 실어 보낸다
+        if "/rest/api/content/" in parts.path or request.method in ("POST", "PUT"):
+            return _json_response(request, 400, {
+                "message": over_limit_phrase,
+                "authorId": _TAINTED_AUTHOR_ID,
+                "base": _TAINTED_TENANT_BASE,
+            })
+        return _json_response(request, 200, {"results": [], "_links": {}})
+
+    binding_spy.responder = responder
+    _ctx, _exit_code, results = _run_live_with(binding_spy, tmp_path, "d14e-body")
+
+    emitted = measure.emit_record(results)
+    # 구성 전제 — body 가 실제로 산출물에 실렸다 (오라클이 "미도달" 로 공허하지 않음)
+    assert "body_verbatim" in emitted, "probe body 필드가 산출물에 없어 자극이 도달하지 않았다"
+    for label, pattern in F3_PII_PATTERNS:
+        matches = re.findall(pattern, emitted)
+        assert not matches, (
+            f"probe body 경유 서버 유래 {label} 유출 — {matches[:3]} (body 축 마스킹 미결박)")
+    # ⓑ 진단 가치 보존 — 신원 토큰만 지워지고 over-limit 시그니처는 남는다
+    assert "too large" in emitted and "32768" in emitted, (
+        "마스킹이 진단 문언까지 제거했다 — §4.2 실문언(AC-12 1차 출처) 파괴")
 

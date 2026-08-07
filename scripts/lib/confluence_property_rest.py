@@ -311,11 +311,51 @@ def ungroup_hex(grouped: str) -> str:
 
 # ── body 축: 비신뢰 응답 body 필드 정책 (§3.9 — grouping 전면 비적용) ─────────
 
+#: 서버 유래 **신원 패턴** SSOT — 3자 공용 (① body 축 마스킹 `mask_identity_tokens`
+#: ② 커밋 golden PII 스캔 테스트 ③ 그 스캐너의 계측기 유효성 짝 테스트).
+#: 리터럴 복제 금지 — 복제하면 한쪽 약화가 다른 쪽에서 은폐된다 (iter2 N7 실증: 짝 테스트가
+#: 로컬 리터럴을 쓰자 "PII 재삽입 ∧ 패턴 삭제" mutant 가 생존했다).
+F3_PII_PATTERNS = (
+    ("account-id", r"\d{6,}:[0-9a-f]{8}-[0-9a-f-]{4,}"),
+    ("email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
+    ("tenant-host", r"https?://[a-zA-Z0-9.-]+\.atlassian\.net"),
+)
+
+#: 치환 토큰 — `-` 로 분절돼 새 20+ `[A-Za-z0-9+/=]` run 을 만들지 않는다 (deny-scan 무간섭).
+IDENTITY_MASK_TOKEN = "[identity-redacted]"
+
+_IDENTITY_RES = tuple((label, re.compile(pattern)) for label, pattern in F3_PII_PATTERNS)
+
+
+def mask_identity_tokens(text: str) -> str:
+    """body 자유 텍스트에서 **신원 토큰만** 치환하고 나머지 문언은 verbatim 유지한다.
+
+    **진단 가치 보존이 설계 조건이다**: over-limit 시그니처(`too large`·`32768`·`5242880` 등
+    `_OVER_LIMIT_V2_PHRASES`/`_OVER_LIMIT_V2_TOKEN_RE`)와 신원 패턴은 **정의역이 겹치지 않는다**
+    (account-id 는 `<digits>:<uuid>` 콜론 형태를 요구하므로 bare 숫자 토큰과 무교차). 따라서
+    AC-12 분류기의 1차 출처(§4.2 "실문언 보정은 실측 golden body 로 회귀 고정")는 무손상이다.
+
+    ★ **정직 한계 (보증 수준 차이 — over-claim 금지)**: 본 마스킹은 **denylist = fail-open** 이다.
+    열거된 패턴만 지우므로 미열거 신원 형식은 **그대로 통과**한다. envelope 축의 값-축
+    allowlist 는 미열거 값이 정의상 placeholder 로 떨어지는 **fail-closed** 라 보증 수준이
+    다르다. body 는 비신뢰 서버 자유 텍스트라 "허용 값 열거" 가 원리상 불가능해 denylist 가
+    불가피한 선택이며, "envelope 축과 같은 수준으로 막혔다" 는 서술은 성립하지 않는다.
+    """
+    for _label, regex in _IDENTITY_RES:
+        text = regex.sub(IDENTITY_MASK_TOKEN, text)
+    return text
+
+
 def sanitize_body_field(text: Optional[str]) -> Tuple[Optional[str], bool, int]:
-    """응답 body verbatim 필드 정책: truncate ≤200B → scrub → deny-scan 원경로.
+    """응답 body verbatim 필드 정책: truncate ≤200B → scrub → deny-scan → **신원 마스킹**.
 
     hit 시 = 필드 drop (`body_omitted_by_deny_scan: true` — 원문은 어떤 채널에도 미기록,
     run 은 계속. "우회" 가 아니라 "drop", DR-P0-2 (b)).
+
+    **신원 마스킹은 deny-scan 판정 *이후*에 적용한다** — 판정 입력을 바꾸지 않으므로 K-6 가
+    hollow 화하지 않는다. (선례: `_scrub` 을 deny-scan 앞에 두자 치환 결과가 20+ run 을
+    구조적으로 없애 K-6 가 무력화됐다 — 같은 함정을 반복하지 않는다. 덧붙여 신원 패턴은
+    `:`·`-`·`.` 로 분절돼 애초에 20+ run 을 형성하지 않아 deny-scan 정의역과 **disjoint** 다.)
 
     Returns: (body_verbatim | None, omitted_by_deny_scan, body_length_bytes)
     """
@@ -328,7 +368,7 @@ def sanitize_body_field(text: Optional[str]) -> Tuple[Optional[str], bool, int]:
     ok, _err = _deny_scan_for_secrets(scrubbed)
     if not ok:
         return None, True, raw_len
-    return scrubbed, False, raw_len
+    return mask_identity_tokens(scrubbed), False, raw_len
 
 
 # ── Error Classification (AC-12 — 순수함수 계약 유지) ────────────────────────

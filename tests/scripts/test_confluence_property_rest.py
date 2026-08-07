@@ -40,6 +40,7 @@ from lib.ac_id import TIER_ENUM
 from lib.confluence_property_rest import (
     BUDGET_BYTES,
     CHUNK_KEY_TEMPLATE,
+    F3_PII_PATTERNS,          # 신원 패턴 SSOT — body 마스킹과 **같은 상수** (리터럴 복제 금지)
     ChunkStoreError,
     ConfluencePropertyREST,
     GOLDEN_DIR_ENV,
@@ -1276,17 +1277,6 @@ def test_f3_dotted_path_exact_matching_nested_key():
     # _links.base 는 allowlist 비소속 (테넌트 정보 — 민감)
     assert golden["_links"]["base"] == "<str>"
     assert "atlassian.net" not in str(golden)
-
-
-#: F3 PII 스캐너 패턴집합 — **스캔 테스트(F3.3①)와 계측기 유효성 테스트(F3.3②)의 단일 출처**.
-#: 로컬 리터럴로 복제하면 한쪽 패턴이 삭제·약화돼도 다른 쪽이 자기 리터럴로 GREEN 을 내
-#: mutant 가 생존한다 (iter2 N7). 위치-기반 whitelist 필터는 금지 — 예외는 값이 아니라
-#: **패턴 자체**로 좁힌다 (golden 선두 placeholder 하나가 이후 전 매치를 무시시키는 hollow).
-F3_PII_PATTERNS = (
-    ("account-id", r"\d{6,}:[0-9a-f]{8}-[0-9a-f-]{4,}"),
-    ("email", r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
-    ("tenant-host", r"https?://[a-zA-Z0-9.-]+\.atlassian\.net"),
-)
 
 
 def test_f3_committed_golden_no_pii_scan():
