@@ -583,6 +583,28 @@ def _write_lane_fixture(path, extra_by_lane=None, second_fence_by_lane=None):
     path.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
 
 
+def test_helper_hangul_ranges_pinned():
+    """helper `HANGUL_RANGES` 5-tuple **리터럴 pin** (OBS-1 — r5 관찰 반영).
+
+    oracle 은 이 상수를 import 재사용한다 (F1). 그래서 상수가 축소되면 **검사기와 테스트가 함께**
+    약해진다 — 이 suite 의 한글 mutant(U+3131 등)도 같이 통과해버리는 실 false-GREEN 벡터다
+    (import 재사용의 대가: SSOT 가 무너지면 소비자도 조용히 무너진다).
+    → 값 자체를 리터럴로 못박아 축소를 독립 축에서 신고한다. 여기서만 재유도가 정당하다:
+      이 test 의 목적이 바로 "import 한 값이 기대와 같은가" 의 대조이기 때문.
+    """
+    helper = _load_helper_module()
+    assert helper.HANGUL_RANGES == (
+        (0xAC00, 0xD7A3),   # 음절
+        (0x1100, 0x11FF),   # 자모
+        (0x3130, 0x318F),   # 호환자모 — 음절 단독이 놓치는 U+3131 (ㄱ)
+        (0xA960, 0xA97F),   # 확장 A
+        (0xD7B0, 0xD7FF),   # 확장 B
+    ), (
+        f"OBS-1: HANGUL_RANGES 가 기대 5-tuple 과 다르다 (got {helper.HANGUL_RANGES}). "
+        "범위 축소는 검사기와 이 suite 를 **동시에** 약화시킨다 — 축소가 의도된 변경이라면 "
+        "본 pin 과 CP §8.2A 근거를 함께 갱신할 것")
+
+
 def test_ac1_oracle_fence_guard_discriminating():
     """
     AC-1 oracle **fence-인지 guard** 결박 (FIX Iter 4 F-CR4-2 — harness 롤백으로 소실됐던 것 재추가).
@@ -677,6 +699,23 @@ def test_ac1_oracle_second_fence_in_lane_region_discriminating():
         assert "lane 당 fenced 블록 정확히 1개" in msg_en, (
             "F-CR4-1 ⓑ: RED 이긴 하나 **구조 계약 축이 아니다** (초과 span 신고 assert 가 "
             f"무력화됨). 실제 메시지: {msg_en[:160]}")
+
+        # ⓒ (r5 case B) **첫** fence 에 한글 + 마지막 fence 는 clean → partition 축 RED
+        #   ⓐ 의 거울상이다. ⓐ 만으로는 `spans[:1]`(첫 span 만) 회귀만 잡히고,
+        #   `spans[-1:]`(마지막 span 만) 회귀는 살아남는다 — 그쪽은 ⓐ 의 한글이 마지막 span 에
+        #   있어 여전히 검출되기 때문. ⓒ 는 한글을 **첫** span 에 두어 그 회귀를 정면으로 겨눈다.
+        #   ★ 축 귀속 assert 필수: `spans[-1:]` mutant 에서도 lane2 는 span 2개라 **구조 축**이
+        #     대신 RED 를 낸다 — 단순 RED assert 로는 mutant 가 생존한다.
+        ko_first_md = tp / "FirstFenceKorean.md"
+        _write_lane_fixture(ko_first_md,
+                            extra_by_lane={2: ["첫번째 펜스 안 한글 산문"]},
+                            second_fence_by_lane={2: ["English only."]})
+        msg_kf = _red_axis(ko_first_md)
+        assert msg_kf is not None, (
+            "F-CR4-1 ⓒ: 첫 fence 의 한글이 검출되지 않았다 (PASS) — 전 span 검사 붕괴")
+        assert "구획 A 위반" in msg_kf, (
+            "F-CR4-1 ⓒ: RED 이긴 하나 **partition 축이 아니다** — 첫 span 이 검사 대상에서 빠진 채 "
+            f"구조 축이 대신 울었다 (`spans[-1:]` 류 회귀). 실제 메시지: {msg_kf[:160]}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
