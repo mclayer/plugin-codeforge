@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.3  
-**Last regen**: 2026-07-27T15:34:39Z  
+**Last regen**: 2026-08-05T06:19:17Z  
 **Registered doc types**: 20
 
 ## Summary table
@@ -230,7 +230,7 @@
   - mclayer/plugin-codeforge/docs/evidence-checks-registry.yaml
 
   **notes**:
-  > ADR-060 carrier — evidence-enforceable promotion framework registry data SSOT.
+  > ADR-171 carrier — evidence-enforceable promotion framework registry data SSOT (구 ADR-060 재제정).
   > Schema doc = docs/inter-plugin-contracts/evidence-check-registry-v1.md (kind:registry).
   > MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
   > parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
@@ -422,10 +422,10 @@
 - **naming_pattern**: `[a-z0-9-]+\.md`
 - **frontmatter_required**: False
 - **examples**:
-  - mclayer/plugin-codeforge/docs/runbooks/deferred-followup-reconcile-enforce-outage.md (CFP-2591 / ADR-060 Amendment 20 — enforce-tier outage 운영 절차)
+  - mclayer/plugin-codeforge/docs/runbooks/deferred-followup-reconcile-enforce-outage.md (CFP-2591 / ADR-171 §7.9.E — 구 ADR-060 Amendment 20, enforce-tier outage 운영 절차)
 
   **notes**:
-  > CFP-2591 / ADR-060 Amendment 20 carrier — governance 게이트 enforce-tier outage / self-block 회복
+  > CFP-2591 / ADR-171 §7.9.E carrier (구 ADR-060 Amendment 20) — governance 게이트 enforce-tier outage / self-block 회복
   > 운영 절차 SSOT 위치. 각 runbook = 외부의존 열거 + outage 처리 원칙 + manual fallback + honest ceiling.
   > 첫 entry = deferred-followup-reconcile enforce outage runbook (§7.2.3 (iv) 의무 선-충족, Stage 1+2
   > shadow 시점엔 self-block 불가 — 미래 flip PR 대비 사전 문서화).

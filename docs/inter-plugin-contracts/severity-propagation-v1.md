@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: severity-propagation
-version: "1.0"
+version: "1.0.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/severity-propagation-v1.md
@@ -10,6 +10,7 @@ authors:
   - ArchitectAgent (CFP-529 carrier — RC#8 bidirectional binding SSOT)
 version_history:
   - { version: "1.0", date: 2026-05-13, carrier: CFP-529, change: "initial — review-verdict-v4 findings[].severity ↔ label-registry-v2 severity:* ↔ evidence-checks-registry current_tier 3-way bidirectional binding SSOT. RC#8 (Codex 적대적 검토 발견, Epic #525) carrier." }
+  - { version: "1.0.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
 owner_adr: ADR-068
 carrier_story: CFP-529
 sibling_sync_exempt: true
@@ -18,7 +19,7 @@ related_adrs:
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry exempt)
   - ADR-024  # hotfix-bypass label family
   - ADR-058  # ADR sunset criteria mandate (top-down ratchet)
-  - ADR-060  # Evidence-enforceable promotion framework (current_tier enum)
+  - ADR-171  # Evidence-enforceable promotion framework (current_tier enum)
   - ADR-063  # Marketplace atomic invariant (severity ↔ guard binding example)
   - ADR-064  # Decision principle mandate (top-down ratchet self-application)
   - ADR-068  # Boundary completeness invariants (RC#8 carrier)
@@ -28,7 +29,7 @@ related_files:
   - docs/inter-plugin-contracts/evidence-check-registry-v1.md
   - docs/evidence-checks-registry.yaml
   - docs/adr/ADR-068-boundary-completeness-invariants.md
-  - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md
+  - archive/adr/ADR-171-evidence-enforceable-promotion-framework.md
 related_plugins:
   - codeforge (wrapper, consumer of severity ↔ guard binding)
   - codeforge-review (canonical owner of review-verdict-v4 severity field)
@@ -52,7 +53,7 @@ severity 정의 변경 시 implementation guard / test threshold / hotfix-bypass
 
 1. **review-verdict-v4 `findings[].severity`**: P0 / P1 / P2 / critical / blocker enum
 2. **label-registry-v2 `severity:*` family**: `severity:P0` / `severity:P1` / `severity:P2` / `severity:critical` / `severity:blocker` label set
-3. **evidence-checks-registry `current_tier`**: warning / blocking-on-pr / blocking-on-merge / hotfix-bypass enum (ADR-060 framework)
+3. **evidence-checks-registry `current_tier`**: warning / blocking-on-pr / blocking-on-merge / hotfix-bypass enum (ADR-171 framework)
 
 3 channel 의 severity 어휘 의미가 drift 시 review packet ↔ GitHub label ↔ CI gate 의 enforce 강도가 mismatch → boundary gap.
 
@@ -66,7 +67,7 @@ severity 정의 변경 시 implementation guard / test threshold / hotfix-bypass
 
 - severity enum 자체 값 정의 (review-verdict-v4 SSOT)
 - label naming convention (label-registry-v2 SSOT)
-- tier promotion threshold (ADR-060 framework SSOT)
+- tier promotion threshold (ADR-171 framework SSOT)
 
 ## 2. Schema
 
@@ -77,7 +78,7 @@ severity 정의 변경 시 implementation guard / test threshold / hotfix-bypass
 severity_propagation:
   review_verdict_severity: <P0|P1|P2|critical|blocker>     # review-verdict-v4 findings[].severity
   label_registry_severity: <severity:P0|...|severity:blocker>  # label-registry-v2 severity:* family
-  evidence_checks_tier: <warning|blocking-on-pr|blocking-on-merge|hotfix-bypass>  # ADR-060 current_tier
+  evidence_checks_tier: <warning|blocking-on-pr|blocking-on-merge|hotfix-bypass>  # ADR-171 current_tier
   guard_continue_on_error: <true|false>                    # workflow yml continue-on-error
   binding_direction: <forward|backward|lateral>            # CFP-529 Phase 2 3-direction enum
 ```
@@ -99,7 +100,7 @@ severity_propagation:
 severity (P2 → P1 → critical → blocker) bump 시 다음 mechanical 갱신 의무:
 
 - label-registry-v2 `severity:*` label add (해당 severity level 없으면 신설)
-- evidence-checks-registry 해당 entry `current_tier` 승격 후보 자동 등재 (ADR-060 framework gate 평가 trigger)
+- evidence-checks-registry 해당 entry `current_tier` 승격 후보 자동 등재 (ADR-171 framework gate 평가 trigger)
 - workflow `continue-on-error: true` → `continue-on-error: false` 평가 (blocking 승격 시점)
 
 #### Rule 3.1.2 — severity downgrade 금지 (ratchet, ADR-058 self-application)
@@ -137,7 +138,7 @@ evidence-checks-registry `current_tier` 약화 (blocking-on-pr → warning downg
 ### 3.3 Cross-references
 
 - **ADR-068 (Boundary completeness invariants)**: RC#8 carrier. §결정 2 dual-binding 으로 severity ↔ guard mismatch detection.
-- **ADR-060 (Evidence-enforceable promotion framework)**: `current_tier` 4-tier enum (warning / blocking-on-pr / blocking-on-merge / hotfix-bypass) SSOT. 본 contract 가 severity ↔ tier 매핑 의무 정의.
+- **ADR-171 (Evidence-enforceable promotion framework)**: `current_tier` 4-tier enum (warning / blocking-on-pr / blocking-on-merge / hotfix-bypass) SSOT. 본 contract 가 severity ↔ tier 매핑 의무 정의.
 - **ADR-064 (Decision principle mandate)**: top-down ratchet self-application — severity / tier downgrade 차단 (Rule 3.1.2 / 3.1.3).
 - **ADR-024 Amendment 3 (hotfix-bypass label family)**: per-entry namespace `hotfix-bypass:<entry-name>` exempt channel.
 - **review-verdict-v4** (`docs/inter-plugin-contracts/review-verdict-v4.md`): `findings[].severity` field SSOT.

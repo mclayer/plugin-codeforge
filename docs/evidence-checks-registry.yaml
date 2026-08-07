@@ -1,7 +1,7 @@
 # docs/evidence-checks-registry.yaml
 # Evidence-enforceable governance check registry — single SSOT
 # Schema doc: docs/inter-plugin-contracts/evidence-check-registry-v1.md
-# Carrier ADR: ADR-060 (Evidence-enforceable promotion framework)
+# Carrier ADR: ADR-171 (Evidence-enforceable promotion framework)
 # Lint chain: check-doc-frontmatter.sh + check-doc-section-schema.sh (kind:registry pattern)
 # parallel-edit policy: append-only (docs/parallel-work/section-ownership.yaml)
 #
@@ -46,7 +46,7 @@ entries:
         - "until further notice"
     introduced_by: CFP-389
     owner_adr: ADR-058
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -78,7 +78,7 @@ entries:
     # modal_anti_pattern_dictionary: omit — lint 가 모달 어휘 검사 미포함
     introduced_by: CFP-393
     owner_adr: ADR-057           # 정책 ADR — fallback rate sunset gate owner
-    carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
+    carrier_adr: ADR-171         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -119,7 +119,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + fix-event-v1
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 2
       last_occurrence: "2026-05-12T00:00:00Z"    # CFP-451 본 세션 transient 2차 발생 (대략 timestamp)
@@ -144,7 +144,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-041
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -167,7 +167,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-016 / ADR-023 §결정 5
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -194,7 +194,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-002 (footer pattern) + 다중 CFP (5/7/8) + CFP-2159 (review parity 이식)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -217,7 +217,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + label-registry-v2
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -240,7 +240,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: comment-prefix-registry-v1 (kind:registry)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -262,7 +262,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: label-registry-v2 (kind:registry)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -285,7 +285,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: ADR-050
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -308,7 +308,7 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-390
     owner_adr: CFP-26 / ADR-009 (write 권한 invariant)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -476,7 +476,7 @@ entries:
         - "quick win"
     introduced_by: CFP-449
     owner_adr: ADR-064               # forbid-list dictionary SSOT
-    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    carrier_adr: ADR-171             # framework carrier (warning mode entry)
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -516,7 +516,7 @@ entries:
     # modal_anti_pattern_dictionary: omit — workflow lint, modal 어휘 검사 미포함
     introduced_by: CFP-481
     owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
-    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    carrier_adr: ADR-171             # framework carrier (warning mode entry)
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
@@ -585,8 +585,8 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-530
     introduced_date: 2026-05-13
-    owner_adr: ADR-060
-    carrier_adr: ADR-060
+    owner_adr: ADR-171
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       promotion_trigger: none
@@ -614,8 +614,8 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-583
     introduced_date: 2026-05-13
-    owner_adr: ADR-060
-    carrier_adr: ADR-060
+    owner_adr: ADR-171
+    carrier_adr: ADR-171
     recurrence:
       count: 6                         # CFP-449 carrier 이후 broken 상태 6 workflow 동시 영향 (§2.1 evidence)
       threshold: 3                     # ADR-060 §결정 6 promotion gate
@@ -717,7 +717,7 @@ entries:
     introduced_by: CFP-619
     introduced_date: 2026-05-14
     owner_adr: ADR-045
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 3
@@ -749,7 +749,7 @@ entries:
     introduced_by: CFP-628
     introduced_date: 2026-05-14
     owner_adr: ADR-045
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sunset_gate:
       metric: "retro-alert-pickup-rate ≥ 90% (3 month rolling window)"
       who: "PMOAgent (monthly cron retro-alert-pickup-kpi.yml 자동 측정)"
@@ -793,7 +793,7 @@ entries:
     introduced_by: CFP-638
     introduced_date: 2026-05-14
     owner_adr: ADR-064  # Amendment 3 §결정 9 normative base
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sunset_gate:
       metric: "사용자 frustration 발화 0건 / 3 Story 누적 + 연속 '진행해' pattern (5+ turn) 발화 후 dialog format reflex 0건"
       who: "PMOAgent (cross-Story retro 패턴 분석)"
@@ -840,7 +840,7 @@ entries:
     activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
     activated_date: 2026-05-18
     owner_adr: ADR-072
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 3
@@ -878,7 +878,7 @@ entries:
     activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
     activated_date: 2026-05-18
     owner_adr: ADR-072
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 3
@@ -922,7 +922,7 @@ entries:
     introduced_by: CFP-658
     introduced_date: 2026-05-14
     owner_adr: ADR-027  # Amendment 2 §결정 6.C
-    carrier_adr: ADR-060  # evidence-enforceable promotion framework
+    carrier_adr: ADR-171  # evidence-enforceable promotion framework
     recurrence:
       count: 0
       threshold: 3
@@ -957,8 +957,8 @@ entries:
     modal_anti_pattern_dictionary: {}  # 본 lint = precondition check, modal phrase 검사 미포함
     introduced_by: CFP-662
     introduced_date: 2026-05-14
-    owner_adr: ADR-060               # framework SSOT — PR-time precondition check pattern 의 정책 owner
-    carrier_adr: ADR-060             # self-carrier (Amendment 10)
+    owner_adr: ADR-171               # framework SSOT — PR-time precondition check pattern 의 정책 owner
+    carrier_adr: ADR-171             # self-carrier (ADR-060 Amendment 10)
     recurrence:
       count: 1                       # MCT-104 Phase 2 mctrader-data PR #14 (2026-05-09) actual occurrence [empirical-source: spec PR #393 §"동인" + Issue #318]
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
@@ -994,7 +994,7 @@ entries:
     introduced_by: CFP-688
     introduced_date: 2026-05-15
     owner_adr: ADR-026               # workflow file integrity safeguards SSOT
-    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    carrier_adr: ADR-171             # framework carrier (warning mode entry)
     recurrence:
       count: 1                       # CFP-688 P0 incident (100/100 FAILURE 17h) = 1 occurrence evidence
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) -- threshold 3 standard
@@ -1035,7 +1035,7 @@ entries:
     introduced_by: CFP-702
     introduced_date: 2026-05-15
     owner_adr: ADR-027               # consumer adoption protocol + D4 marker SSOT
-    carrier_adr: ADR-060             # framework carrier (blocking-on-pr tier)
+    carrier_adr: ADR-171             # framework carrier (blocking-on-pr tier)
     recurrence:
       count: 0                       # 첫 도입 — prior incident 없음
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) -- threshold 3 standard
@@ -1074,7 +1074,7 @@ entries:
     introduced_by: CFP-771
     introduced_date: 2026-05-16
     owner_adr: ADR-079               # Amendment 1 SSOT — KST display layer mandate
-    carrier_adr: ADR-060             # evidence-enforceable framework carrier
+    carrier_adr: ADR-171             # evidence-enforceable framework carrier
     recurrence:
       count: 0                       # 첫 도입 — prior incident 없음
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
@@ -1119,7 +1119,7 @@ entries:
     introduced_by: CFP-722
     introduced_date: 2026-05-16
     owner_adr: ADR-031               # §14 Lane Evidence monopoly SSOT + Amendment 1 delegate subagent
-    carrier_adr: ADR-060             # evidence-enforceable framework carrier (Amendment 13)
+    carrier_adr: ADR-171             # evidence-enforceable framework carrier (ADR-060 Amendment 13)
     recurrence:
       count: 0                       # 첫 도입 — incident = PR #441 (pre-lint era, 별도 historical entry 아님)
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
@@ -1159,7 +1159,7 @@ entries:
     introduced_by: CFP-745
     introduced_date: 2026-05-16
     owner_adr: ADR-027                # D4 marker block syntax SSOT (Amendment 3 §결정 7.D)
-    carrier_adr: ADR-060              # evidence-enforceable framework carrier
+    carrier_adr: ADR-171              # evidence-enforceable framework carrier
     recurrence:
       count: 0
       threshold: 3                    # ADR-060 §결정 19 (Amendment 6)
@@ -1195,7 +1195,7 @@ entries:
     introduced_by: CFP-825
     introduced_date: 2026-05-17
     owner_adr: ADR-024            # Amendment 6 §결정 6.A.2 (ratchet 룰 SSOT)
-    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    carrier_adr: ADR-171          # evidence-enforceable framework carrier
     recurrence:
       count: 5                    # CFP-770/771 #788 (2) + CFP-819 #823 (1) + CFP-786/801/795 unit-tests (2) — 5+ evidence cluster
       threshold: 3                # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
@@ -1237,7 +1237,7 @@ entries:
     introduced_by: CFP-845
     introduced_date: 2026-05-17
     owner_adr: ADR-024            # Amendment 8 §결정 6.A.4 (PR comment marker mechanical enforce SSOT)
-    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    carrier_adr: ADR-171          # evidence-enforceable framework carrier
     recurrence:
       count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
       threshold: 1                # PR per-presence boolean (binary) — 단일 PR scope, 누적 threshold 미적용
@@ -1273,7 +1273,7 @@ entries:
     introduced_by: CFP-820
     introduced_date: 2026-05-17
     owner_adr: ADR-063         # 정책 ADR — marketplace atomic invariant Amendment 5 §결정 15
-    carrier_adr: ADR-060       # framework carrier (CFP-388 / ADR-060 §결정 12 family)
+    carrier_adr: ADR-171       # framework carrier (CFP-388 / ADR-060 §결정 12 family)
     recurrence:
       count: 0
       threshold: 3
@@ -1309,7 +1309,7 @@ entries:
     introduced_by: CFP-821
     introduced_date: 2026-05-17
     owner_adr: ADR-024         # branch protection context SSOT — Amendment 2 §결정 A/B/C
-    carrier_adr: ADR-060       # evidence-enforceable framework carrier
+    carrier_adr: ADR-171       # evidence-enforceable framework carrier
     recurrence:
       count: 0
       threshold: 3
@@ -1347,7 +1347,7 @@ entries:
     introduced_by: CFP-898
     introduced_date: 2026-05-18
     owner_adr: ADR-076               # declarative reconciliation upgrade SSOT
-    carrier_adr: ADR-060             # evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171             # evidence-enforceable warning-tier framework
     recurrence:
       count: 0
       threshold: 3
@@ -1390,7 +1390,7 @@ entries:
     introduced_by: CFP-966
     introduced_date: 2026-05-18
     owner_adr: ADR-073-Amendment-2  # Orchestrator verify-before-assert Amendment 2 (transition trigger enum + sustained polling) — SSOT 통일 (Story §5 AC-2 + domain-knowledge frontmatter 정합, Codex #2 F#1 ac-semantic-divergence FIX iter 2)
-    carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # evidence-enforceable warning-tier framework
     recurrence:
       count: 2                      # CFP-953 first incident (label-based search miss) + CFP-946 second incident (11분 gap Epic close miss), both 2026-05-18 KST
       threshold: 3                  # 3-occurrence 도달 시 warning → blocking-on-pr 자동 승격 trigger (ADR-060 §결정 19 Amendment 6 / schema v1.2 auto-firing)
@@ -1453,7 +1453,7 @@ entries:
     introduced_by: CFP-1059
     introduced_date: 2026-05-20  # KST
     owner_adr: ADR-089  # declaration source — Schema 7 원칙 normative
-    carrier_adr: ADR-060  # enforcement source
+    carrier_adr: ADR-171  # enforcement source
     recurrence:
       count: 0
       threshold: 3
@@ -1487,7 +1487,7 @@ entries:
     introduced_by: CFP-1059
     introduced_date: 2026-05-20  # KST
     owner_adr: ADR-090  # declaration source — Cross-layer 참조 정책 §결정 1 normative
-    carrier_adr: ADR-060  # enforcement source
+    carrier_adr: ADR-171  # enforcement source
     recurrence:
       count: 0
       threshold: 3
@@ -1520,7 +1520,7 @@ entries:
     introduced_by: CFP-1059
     introduced_date: 2026-05-20  # KST
     owner_adr: ADR-090  # declaration source — §결정 2 normative
-    carrier_adr: ADR-060  # enforcement source
+    carrier_adr: ADR-171  # enforcement source
     recurrence:
       count: 0
       threshold: 3
@@ -1581,7 +1581,7 @@ entries:
     introduced_by: CFP-1147
     introduced_date: 2026-05-22    # KST (ADR-079 §결정 6 — 신규 작성분)
     owner_adr: ADR-099             # ADR-060 L860 등록 보류 해소 — 본 ADR 이 owner_adr
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 3
@@ -1618,7 +1618,7 @@ entries:
     introduced_by: CFP-1194
     introduced_date: 2026-05-22
     owner_adr: ADR-106
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 3
@@ -1656,7 +1656,7 @@ entries:
     introduced_by: CFP-1256
     introduced_date: 2026-05-22
     owner_adr: ADR-103
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 0
       threshold: 2   # ADR-103 §결정 3: "pattern_count >= 2 재발 시 promote"
@@ -1698,7 +1698,7 @@ entries:
     introduced_by: CFP-1391
     introduced_date: 2026-05-24
     owner_adr: ADR-168              # ADR-168 §결정 11.B (구 ADR-082 Amendment 9 §결정 11.B) silent error mask directly-analogous (silent degradation sub-domain)
-    carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # evidence-enforceable warning-tier framework
     recurrence:
       count: 1                      # CFP-1346 Phase 2 F-CR-1346-1 sentinel #1 only
       threshold: 2                  # ADR-045 §D-9 Mandatory escalation threshold
@@ -1774,7 +1774,7 @@ entries:
     introduced_by: CFP-1384
     introduced_date: 2026-05-24
     owner_adr: ADR-073-Amendment-7  # declaration source ADR — §결정 1 transition trigger 7번째 entry stale_local_main_checkout + Amendment 9 mechanical wire activation carrier
-    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (4-tier framework, default 새 entry pattern)
+    carrier_adr: ADR-171            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (4-tier framework, default 새 entry pattern)
     recurrence:
       count: 8                      # CFP-1146 W5-S14/S16 (2) + CFP-1318 (1) + CFP-1333 (3) + CFP-1384 iter 1 (1) + ArchitectPL iter 2 본 spawn (1) = 8 sentinel reach
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 8 >> 3 reach 충족 (CFP-2692 reconcile: promotion_trigger:advisory 정정 — auto-firing 아닌 advisory 신호, ADR-119 정직)
@@ -1829,7 +1829,7 @@ entries:
     introduced_by: CFP-1495
     introduced_date: 2026-05-24
     owner_adr: ADR-103                 # §결정 1 영역 (git→Confluence sync mechanism + ADR-103 Amendment N S2.2 carrier)
-    paired_owner_adr: ADR-060          # evidence-enforceable promotion framework
+    paired_owner_adr: ADR-171          # evidence-enforceable promotion framework
     carrier_adr: ADR-103               # Sub-B Sub-Epic CFP-1490 mechanical layer (Mega-Epic CFP-1415)
     recurrence:
       count: 1                         # CFP-1495 Wave 1 첫 도입 (MCP-direct path)
@@ -1891,7 +1891,7 @@ entries:
     introduced_by: CFP-1559
     introduced_date: 2026-05-25
     owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 15 (구 ADR-082 Amendment 20 §결정 15) 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate
-    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence dual-binding precedent 답습)
+    carrier_adr: ADR-171            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence dual-binding precedent 답습)
     recurrence:
       count: 7                      # CFP-FU-B Issue #1477 5-defect 3 PIVOT (60% stale rate) + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 = 합산 ≥ 7 reach. threshold: 3 = ADR-045 §D-9 N=2 baseline 보다 strict (sister carrier pattern_count 7+ Mandatory escalation 산물 reflective).
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict
@@ -1942,7 +1942,7 @@ entries:
     introduced_by: CFP-1590
     introduced_date: 2026-05-25
     owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 1 sub-scope 1-L (구 ADR-082 Amendment 23) 신설 spawn prompt fact verify-before-trust mandate
-    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence + CFP-1559 issue-body-claim-pre-screen + CFP-1601 numeric-claim-write-time-verify dual-binding precedent 답습)
+    carrier_adr: ADR-171            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence + CFP-1559 issue-body-claim-pre-screen + CFP-1601 numeric-claim-write-time-verify dual-binding precedent 답습)
     recurrence:
       count: 3                      # 3 occurrences pattern reach (CFP-1493 + CFP-1523 + CFP-1591) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
@@ -1992,7 +1992,7 @@ entries:
     introduced_by: CFP-1589
     introduced_date: 2026-05-25
     owner_adr: ADR-168               # declaration source ADR — ADR-168 §결정 1 sub-scope 1-M (구 ADR-082 Amendment 24) 신설 own-author synthesis 보고 vs actual git commit gap verify mandate
-    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-1590 spawn-prompt-fact-verify + CFP-1601 numeric-claim-write-time-verify + CFP-1559 issue-body-claim-pre-screen precedent 답습)
+    carrier_adr: ADR-171            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-1590 spawn-prompt-fact-verify + CFP-1601 numeric-claim-write-time-verify + CFP-1559 issue-body-claim-pre-screen precedent 답습)
     recurrence:
       count: 1                      # 1 occurrence pattern (CFP-1523 F-DR-002 P0 finding ArchitectPL verdict packet 'Artifacts written' ≠ actual git commit, DesignReviewPL audit detect FIX iter 1 dispatch)
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
@@ -2048,7 +2048,7 @@ entries:
     introduced_by: CFP-1646
     introduced_date: 2026-05-26
     owner_adr: ADR-024-Amendment-17  # declaration source ADR — Amendment 17 §결정 6.A.9 신설 Issue label timing discipline mandate (behavioral directive normative 승격 첫 carrier)
-    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963/CFP-1559/CFP-1612/CFP-1632/CFP-1648 dual-binding precedent 답습)
+    carrier_adr: ADR-171            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963/CFP-1559/CFP-1612/CFP-1632/CFP-1648 dual-binding precedent 답습)
     sibling_dependencies: [CFP-1646]
     recurrence:
       count: 0                      # 첫 도입, 0 occurrence (CFP-1111 follow-up #1198/#1199 origin = behavioral directive trigger, not lint occurrence)
@@ -2082,7 +2082,7 @@ entries:
     introduced_by: CFP-1682
     introduced_date: 2026-05-26
     owner_adr: ADR-040-Amendment-7
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1682, CFP-1646]
     recurrence:
       count: 1                      # CFP-1646 ArchitectPL FIX iter 1 false premise direct evidence
@@ -2121,7 +2121,7 @@ entries:
     introduced_by: CFP-1683
     introduced_date: 2026-05-26
     owner_adr: ADR-168  # ADR-168 §결정 1 sub-scope 1-R (구 ADR-082 Amendment 29 sub-scope 1-R)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1683, CFP-1646]
     recurrence:
       count: 3                      # CFP-1646 FIX iter 1+2+3 events (3 parallel race in 1 Story)
@@ -2159,7 +2159,7 @@ entries:
     introduced_by: CFP-1684
     introduced_date: 2026-05-26
     owner_adr: ADR-168   # ADR-168 §결정 1 sub-scope 1-T (구 ADR-082 Amendment 31 — reslot from Amendment 30 CFP-1688 slot collision → Amendment 31 sub-scope 1-T)
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1684, CFP-1646]
     recurrence:
       count: 2                      # CFP-1646 retro 2 commit SHA claim mismatch (wrapper + internal-docs)
@@ -2199,7 +2199,7 @@ entries:
     introduced_by: CFP-1745
     introduced_date: 2026-05-27
     owner_adr: ADR-115
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1745, CFP-1740]
     recurrence:
       count: 0
@@ -2233,7 +2233,7 @@ entries:
     introduced_by: CFP-1745
     introduced_date: 2026-05-27
     owner_adr: ADR-115
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1745, CFP-1740]
     recurrence:
       count: 0
@@ -2271,7 +2271,7 @@ entries:
     introduced_by: CFP-1745
     introduced_date: 2026-05-27
     owner_adr: ADR-115
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1745, CFP-1740]
     recurrence:
       count: 0
@@ -2309,7 +2309,7 @@ entries:
     introduced_by: CFP-1745
     introduced_date: 2026-05-27
     owner_adr: ADR-115
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-1745, CFP-1740]
     recurrence:
       count: 0
@@ -2359,7 +2359,7 @@ entries:
     introduced_by: CFP-2544
     introduced_date: 2026-07-02
     owner_adr: ADR-115
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     sibling_dependencies: [CFP-2544, CFP-1745]
     recurrence:
       count: 0
@@ -2400,7 +2400,7 @@ entries:
     introduced_by: CFP-1565
     introduced_date: 2026-06-01  # KST
     owner_adr: ADR-068-Amendment-5  # declaration source — I-7 chief-author cross-ADR claim consistency
-    carrier_adr: ADR-060  # enforcement framework source
+    carrier_adr: ADR-171  # enforcement framework source
     recurrence:
       count: 1  # CFP-1522 retro F-003 P1 첫 occurrence (ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch)
       threshold: 2  # pattern_count >= 2 재발 시 Wave 2 mechanical wire warning-tier promotion MUST (ADR-168 §결정 6 (구 ADR-082 §결정 6, 재제정 CFP-2840))
@@ -2450,8 +2450,8 @@ entries:
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     introduced_by: CFP-2057
     introduced_date: 2026-06-08  # KST
-    owner_adr: ADR-060  # evidence-checks-registry framework
-    carrier_adr: ADR-060
+    owner_adr: ADR-171  # evidence-checks-registry framework
+    carrier_adr: ADR-171
     recurrence:
       count: 1  # CFP-2057 진원 — ADR-057 오인용 9 occurrence (6 파일)
       threshold: 2
@@ -2484,9 +2484,9 @@ entries:
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     introduced_by: CFP-2061-S1
     introduced_date: 2026-06-09  # KST
-    owner_adr: ADR-060  # evidence-checks-registry framework
-    carrier_adr: ADR-060
-    paired_owner_adr: ADR-060
+    owner_adr: ADR-171  # evidence-checks-registry framework
+    carrier_adr: ADR-171
+    paired_owner_adr: ADR-171
     spec_invariant_measurement_required: false  # grep-presence lint — qualitative-only
     recurrence:
       count: 0
@@ -2512,8 +2512,8 @@ entries:
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     introduced_by: CFP-2061-S4
     introduced_date: 2026-06-09  # KST
-    owner_adr: ADR-060  # evidence-checks-registry framework (Amendment 17)
-    carrier_adr: ADR-060
+    owner_adr: ADR-171  # evidence-checks-registry framework (ADR-060 Amendment 17)
+    carrier_adr: ADR-171
     spec_invariant_measurement_required: false  # advisory cron drift check — qualitative-only
     recurrence:
       count: 0
@@ -2555,7 +2555,7 @@ entries:
     introduced_by: CFP-2249
     introduced_date: 2026-06-15    # KST (ADR-122 회귀 방지 설계)
     owner_adr: ADR-122             # superpowers 의존 제거 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework
+    carrier_adr: ADR-171           # evidence-checks-registry framework
     recurrence:
       count: 0
       threshold: 3
@@ -2597,7 +2597,7 @@ entries:
     introduced_by: CFP-2369
     introduced_date: 2026-06-19    # KST (CFP-2364 측정 연동 Phase-2 mechanical wire)
     owner_adr: ADR-042             # Amendment 14 — Reusability(d) 측정 연동 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     recurrence:
       count: 0
       threshold: 3
@@ -2645,7 +2645,7 @@ entries:
     introduced_by: CFP-2377
     introduced_date: 2026-06-20    # KST (ADR-128 완료 단계 정식화 Phase 2)
     owner_adr: ADR-128             # 완료 단계 정식화 umbrella — 완료-게이트 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2686,7 +2686,7 @@ entries:
     introduced_by: CFP-2822
     introduced_date: 2026-07-26    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
     owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — residue-clean 게이트 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2726,7 +2726,7 @@ entries:
     introduced_by: CFP-2822
     introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
     owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — 발견 스캐너 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2761,7 +2761,7 @@ entries:
     introduced_by: CFP-2822
     introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
     owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — scratch TTL policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2795,7 +2795,7 @@ entries:
     introduced_by: CFP-2822
     introduced_date: 2026-07-27    # KST (ADR-169 세션 잔재 수명 규약 Phase 2)
     owner_adr: ADR-169             # 세션 잔재 수명 규약 umbrella — 생성위치 가드 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2845,8 +2845,8 @@ entries:
     modal_anti_pattern_dictionary: {}  # 본 lint = registry static scan, modal 어휘 검사 미포함
     introduced_by: CFP-2381
     introduced_date: 2026-06-20      # KST (ADR-060 Amendment 18 §결정 32)
-    owner_adr: ADR-060               # framework SSOT — §결정 32 forcing function 정책 owner
-    carrier_adr: ADR-060             # self-carrier (Amendment 18)
+    owner_adr: ADR-171               # framework SSOT — §결정 32 forcing function 정책 owner
+    carrier_adr: ADR-171             # self-carrier (ADR-060 Amendment 18)
     spec_invariant_measurement_required: false  # presence/structural classification 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     status: Active                   # §32.E — 처음부터 Active (실파일 실존 동반 → carrier_absent==false 자연 PASS, recurrence 미부여)
 
@@ -2883,7 +2883,7 @@ entries:
     introduced_by: CFP-2392
     introduced_date: 2026-06-25    # KST (ADR-129 OMC-adopt 지식캡처 Phase 2)
     owner_adr: ADR-129             # OMC-adopt 지식캡처+메모리다이어트 umbrella — capture 게이트 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2922,7 +2922,7 @@ entries:
     introduced_by: CFP-2392
     introduced_date: 2026-06-25    # KST (ADR-129 MEMORY.md 용량관리 Phase 2)
     owner_adr: ADR-129             # OMC-adopt 지식캡처+메모리다이어트 umbrella — 용량관리 policy SSOT
-    carrier_adr: ADR-060           # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171           # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # size/presence 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -2961,7 +2961,7 @@ entries:
     introduced_by: CFP-2393
     introduced_date: 2026-06-25      # KST (Phase 2 infrastructure delivery)
     owner_adr: ADR-163 / ADR-043     # spawn-event 계약 owner ADR
-    carrier_adr: ADR-060             # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171             # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural classification 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -3007,7 +3007,7 @@ entries:
     introduced_date: 2026-06-25      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-130              # declaration source — §결정 3/5 closure ENFORCEMENT + 3-way 일관성
     paired_owner_adr: ADR-130       # ArchitectPL packet forward — paired_owner_adr=ADR-130 (Story 지시)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # cross-table consistency lint — 측정 가능한 runtime spec invariant 0 (structural/qualitative gate, change-plan §6.4 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3051,7 +3051,7 @@ entries:
     introduced_date: 2026-06-26      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-131              # declaration source — §결정 2/3/4 메타불변식 + 게이트 hard-block + 기계/사람 분리
     paired_owner_adr: ADR-131       # ArchitectPL packet forward — paired_owner_adr=ADR-131 (Story 지시)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.4 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3094,7 +3094,7 @@ entries:
     introduced_date: 2026-06-26      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-131              # declaration source — Amendment 1 declared-marker layer L1 + drift 3종 + 기계/사람 분리
     paired_owner_adr: ADR-131       # ArchitectPL packet forward — paired_owner_adr=ADR-131 (Story 지시)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.3 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3133,7 +3133,7 @@ entries:
     introduced_by: CFP-2453
     introduced_date: 2026-06-29      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-091              # declaration source — Amendment 3 consumer scope 승격 + INV-R6 + INV-5 application-BC 확장
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural lint — 측정 가능한 runtime spec invariant 0 (change-plan §8.3 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3167,9 +3167,9 @@ entries:
     modal_anti_pattern_dictionary: {}  # grep 토큰 lint, modal 어휘 무관
     introduced_by: CFP-2426
     introduced_date: 2026-06-26      # KST
-    owner_adr: ADR-060              # framework host — Amendment 19 §결정 33
-    paired_owner_adr: ADR-060       # (Story 지시 — owner=paired=ADR-060)
-    carrier_adr: ADR-060
+    owner_adr: ADR-171              # framework host — ADR-060 Amendment 19 §결정 33
+    paired_owner_adr: ADR-171       # (Story 지시 — owner=paired=ADR-060)
+    carrier_adr: ADR-171
     spec_invariant_measurement_required: false  # 정적 grep lint — runtime spec invariant 0 (§8.3 Perf Baseline N/A)
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3205,7 +3205,7 @@ entries:
     introduced_by: CFP-2432
     introduced_date: 2026-06-27      # KST
     owner_adr: ADR-042              # 정책 host — Amendment 16 §F1 / AC-9
-    carrier_adr: ADR-060            # evidence-enforceable framework host
+    carrier_adr: ADR-171            # evidence-enforceable framework host
     spec_invariant_measurement_required: true  # tier 판정 invariant(INV-1/2/3) = discriminating test 측정 대상
     recurrence:
       count: 0                      # ratchet 확장 carrier (sentinel-driven 아님)
@@ -3252,7 +3252,7 @@ entries:
     introduced_by: CFP-2470
     introduced_date: 2026-06-30      # KST (ADR-128 Amendment 1 deferred 판정 의무화)
     owner_adr: ADR-128               # 무음차단 정책 SSOT — 완료 단계 umbrella
-    carrier_adr: ADR-060             # evidence-checks-registry framework (warning tier)
+    carrier_adr: ADR-171             # evidence-checks-registry framework (warning tier)
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     recurrence:
       count: 0
@@ -3291,7 +3291,7 @@ entries:
     introduced_by: CFP-2480
     introduced_date: 2026-06-30      # KST
     owner_adr: ADR-037              # 정책 host — version-bump rule + Amendment 4 정책팩 진입점
-    carrier_adr: ADR-060           # evidence-enforceable framework host
+    carrier_adr: ADR-171           # evidence-enforceable framework host
     policy_pack_member: true        # CFP-2480 / Epic CFP-2476 E3 — executable policy gate pack 첫 멤버 (concept policy-pack-executable-governance.md P-1: deterministic·CFP-2457 incident·stable A급 자격)
     policy_pack_scope:              # wrapper-self 적용 (version-bump = wrapper plugin.json 대상)
       - wrapper
@@ -3348,7 +3348,7 @@ entries:
     introduced_by: CFP-2504
     introduced_date: 2026-06-30     # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-006-Amendment-1  # declaration source — §8 Test Contract 형상 재현 fidelity 의무 SSOT
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework carrier
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework carrier
     recurrence:
       count: 1                      # mctrader MCT-58 GAP-flood single occurrence (firsthand carrier evidence)
       threshold: 2                  # ADR-045 §D-9 N=2 standard Mandatory escalation threshold
@@ -3389,7 +3389,7 @@ entries:
     introduced_by: CFP-2490
     introduced_date: 2026-06-30      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-135              # declaration source — own-branch push-time pre-flight + 2-layer + warning tier
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural git-ancestry lint — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A)
     recurrence:
       count: 2                      # CFP-967 first incident + CFP-991 second incident (ancestry_corruption, #1027 pattern_count 2 reach 2026-05) — both ISO8601 lineage
@@ -3422,7 +3422,7 @@ entries:
     introduced_by: CFP-2491
     introduced_date: 2026-06-30       # KST
     owner_adr: ADR-133               # OCC atomic claim 프로토콜 SSOT (Amendment 1 = E3b 구현 결정)
-    carrier_adr: ADR-060             # evidence-enforceable framework host
+    carrier_adr: ADR-171             # evidence-enforceable framework host
     recurrence:
       count: 0
       threshold: 3                   # ADR-060 §결정 19 standard default
@@ -3468,7 +3468,7 @@ entries:
     introduced_by: CFP-2545
     introduced_date: 2026-07-02      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-081              # declaration source — companion 브로커 wall-clock ceiling mandate (Amendment 12 §D14)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural presence lint (dispatch 발화 timeout-prefix 존재) — 측정 가능한 runtime spec invariant 0 (Story §8.3 Perf Baseline N/A)
     recurrence:
       count: 0
@@ -3508,7 +3508,7 @@ entries:
     introduced_by: CFP-2549
     introduced_date: 2026-07-02      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-139              # declaration source — background-wait liveness gate mandate (§결정 4 2안)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # structural presence lint (background-wait dispatch 발화 timeout-prefix 존재) — 측정 가능한 runtime spec invariant 0 (Story §8.3 Perf Baseline N/A). 실행 축(124/127) = self-test 결박, lint 자체는 구조 presence
     recurrence:
       count: 0
@@ -3548,7 +3548,7 @@ entries:
     introduced_by: CFP-2563
     introduced_date: 2026-07-03       # KST
     owner_adr: ADR-133               # declaration source — Amendment 2 (A2-6) 3-way uniqueness lint warning tier
-    carrier_adr: ADR-060             # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
     recurrence:
       count: 0
       threshold: 3                   # ADR-060 §결정 19 standard default
@@ -3580,7 +3580,7 @@ entries:
     introduced_by: CFP-2574
     introduced_date: 2026-07-05
     owner_adr: ADR-143               # 렌더-줄 프리픽스 format SSOT 불변(§결정 4). CFP-2587 injection mechanism repurpose — owner_adr 재조정은 injection ADR 확정 시 docs 소관
-    carrier_adr: ADR-060             # enforcement framework 불변
+    carrier_adr: ADR-171             # enforcement framework 불변
     recurrence:
       count: 0
       threshold: 3
@@ -3614,7 +3614,7 @@ entries:
     introduced_by: CFP-2573
     introduced_date: 2026-07-05      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-144              # declaration source — decision-null pause(vague-pause) 신설 (§결정 2)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     recurrence:
       count: 0
       threshold: 3                   # ADR-060 §결정 19 standard default
@@ -3647,7 +3647,7 @@ entries:
     introduced_by: CFP-2573
     introduced_date: 2026-07-05
     owner_adr: ADR-144              # declaration source — 자율화 정직 상한 + tier honesty meta-gate (§결정 7)
-    carrier_adr: ADR-060            # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171            # enforcement source — evidence-enforceable warning-tier framework
     recurrence:
       count: 0
       threshold: 3
@@ -3683,8 +3683,8 @@ entries:
         - pr_cumulative_count_proof
     introduced_by: CFP-2591
     introduced_date: 2026-07-10      # KST (ADR-060 Amendment 20)
-    owner_adr: ADR-060               # framework host — Amendment 20 no-TBD carrier-mandate
-    carrier_adr: ADR-060             # evidence-enforceable framework host
+    owner_adr: ADR-171               # framework host — ADR-060 Amendment 20 no-TBD carrier-mandate
+    carrier_adr: ADR-171             # evidence-enforceable framework host
     spec_invariant_measurement_required: false  # presence/structural 게이트 — 측정 가능한 runtime spec invariant 0 (qualitative-only)
     status: Active                   # 실파일 동반 신설 (check_deferral_carrier_declared.py + thin wrapper + .github workflow + QADev discriminating test) → carrier_absent==false 자연 PASS. current_tier:warning 불변.
 
@@ -3720,7 +3720,7 @@ entries:
     introduced_by: CFP-2597
     introduced_date: 2026-07-10      # KST (ADR-044 Amendment 6)
     owner_adr: ADR-044               # Amendment 6 §결정 12 — verification-floor 축③ (peer-completion falsifiability)
-    carrier_adr: ADR-060             # evidence-enforceable warning-tier framework host (§결정 5 warning-tier 등록 절차)
+    carrier_adr: ADR-171             # evidence-enforceable warning-tier framework host (§결정 5 warning-tier 등록 절차)
     recurrence:
       count: 0
       threshold: 3
@@ -3769,8 +3769,8 @@ entries:
     modal_anti_pattern_dictionary: {}  # exit-masking/mock-seam 구조 lint, modal 어휘 무관
     introduced_by: CFP-2635
     introduced_date: 2026-07-12      # KST (Phase 2 mechanical wire delivery)
-    owner_adr: ADR-060              # declaration source — Amendment 22 (20번째 warning-tier entry 등록)
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    owner_adr: ADR-171              # declaration source — ADR-060 Amendment 22 (20번째 warning-tier entry 등록)
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + AC-1a 인벤토리 등재 의무
     spec_invariant_measurement_required: false  # 정적 구조 presence lint (masking 구문 부재 + mock-seam 동반 assert 존재) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A). 판별력 = self-test discriminating fixture 결박
     recurrence:
@@ -3829,7 +3829,7 @@ entries:
     introduced_by: CFP-2646
     introduced_date: 2026-07-13      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-168              # declaration source — ADR-168 §결정 16 (구 ADR-082 Amendment 38 §결정 16, write-time verify super-class presence-lint carrier)
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + AC-1a 인벤토리 등재 의무
     spec_invariant_measurement_required: false  # 정적 구조 presence lint (안전성-claim 옆 proof-ref/ceiling presence) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.6 Perf Baseline N/A). 판별력 = self-test discriminating fixture + DoS 회귀가드 결박
     recurrence:
@@ -3884,7 +3884,7 @@ entries:
     introduced_by: CFP-2661
     introduced_date: 2026-07-13      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-136              # declaration source — Amendment 4 §결정 15 (census-floor / empty-scope oracle)
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + 인벤토리 등재 의무
     spec_invariant_measurement_required: false  # 정적 구조 construct-scoped lint (co-occurrence presence + census-floor) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf = DoS bound self-test 로 커버). 판별력 = discriminating self-test + born-hollow guard 결박
     recurrence:
@@ -3940,7 +3940,7 @@ entries:
     introduced_by: CFP-2684
     introduced_date: 2026-07-15      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-154             # declaration source — hard-gate self-verification super-class + 3-way taxonomy + presence/shape 메타-게이트
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 + AC-1a 인벤토리 등재 의무(bijection cross-seal)
     spec_invariant_measurement_required: false  # 정적 구조 presence/shape 메타-게이트 (self-verification 번들 presence + fail-closed shape) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A). 판별력 = self-test discriminating fixture(M1-M6) + DoS 회귀가드 결박
     recurrence:
@@ -3986,7 +3986,7 @@ entries:
     introduced_by: CFP-2697
     introduced_date: 2026-07-16      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-151             # declaration source — self-test execution-liveness(선언→실행 승격) 정책; 본 채널이 canary self-test 를 alive 로 결박 (인벤토리 레코드 cross-seal). Epic #2696 전용 ADR = dogfood story repo(codeforge-internal-docs) 소재로 본 repo 부재 → PL 확인 시 정정 가능
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # canary self-test 실행 채널 (정적 disposition oracle 3-축 ablation + guard 4-check conjunction 판별력 presence) — 측정 가능한 runtime spec invariant 0 (Change Plan §8.3 Perf Baseline N/A). 판별력 = self-test discriminating fixture(5-replay + M1-M5)
     recurrence:
       count: 0                      # preventive canary 채널 — live 결함 계보 아님 (Epic #2696 D6 산출물 liveness)
@@ -4035,7 +4035,7 @@ entries:
     introduced_by: CFP-2700
     introduced_date: 2026-07-16      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-157             # declaration source — D1~D5 인프라 자원 선언/스캔/drift/역색인 결정 SSOT
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # 정적 구조 drift 스캔 (manifest ↔ 스캔 표면명 대조) — 측정 가능한 runtime spec invariant 0. 판별력 = self-test discriminating fixture(AC-5/7/10/11/17) + census born-hollow guard
     recurrence:
       count: 0                      # preventive — MinIO 사고 계보이나 wrapper-self live 결함 아님 (재유입 차단층)
@@ -4079,7 +4079,7 @@ entries:
     introduced_by: CFP-2700
     introduced_date: 2026-07-16      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-157             # declaration source — D1~D5 인프라 자원 선언/스캔/drift/역색인 결정 SSOT
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # 정적 구조 orphan 스캔 (manifest 선언 ↔ 참조면 대조) — 측정 가능한 runtime spec invariant 0. 판별력 = self-test discriminating fixture(AC-6 orphan) + census born-hollow guard
     recurrence:
       count: 0                      # preventive — stale declaration 재유입 차단층 (live 결함 계보 아님)
@@ -4126,7 +4126,7 @@ entries:
     introduced_by: CFP-2761
     introduced_date: 2026-07-19      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-085             # declaration source — §결정 10 Amendment 2 mid-flight artifact-level marker convention SSOT
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # 정적 마커 provenance/freshness 스캔 — 측정 가능한 runtime spec invariant 0. 판별력 = 5-유형 discriminating self-test + per-유형 mutation-kill isolation
     recurrence:
       count: 3                      # root_cause_class N=3 (CFP-777 + CFP-991 + CFP-2190) ≥ ADR-045 §D-9 threshold 2
@@ -4165,7 +4165,7 @@ entries:
     introduced_by: CFP-2761
     introduced_date: 2026-07-19      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-085             # declaration source — §결정 2/8 active_sessions[] presence + Wave 2 promotion carrier
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # 정적 presence-grep — 측정 가능한 runtime spec invariant 0. 판별력 = bats RED(부재)→GREEN(존재) discriminating self-test
     recurrence:
       count: 3                      # root_cause_class N=3 (CFP-777 + CFP-991 + CFP-2190) ≥ ADR-045 §D-9 threshold 2
@@ -4209,7 +4209,7 @@ entries:
     introduced_by: CFP-2761
     introduced_date: 2026-07-19      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-073             # declaration source — Amendment 3 §결정 1-D path-based 3-tuple + Amendment 21 Wave 2 activation carrier
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # 정적 local-state probe — 측정 가능한 runtime spec invariant 0. 판별력 = bats ownership-mismatch RED → verified GREEN + subagent re-verify discriminating self-test
     recurrence:
       count: 3                      # CFP-689 §결정 1-E 3-occurrence (CFP-1026 STAND-DOWN / cfp-1014 dup / ArchitectPL 자기 mis-flag) ≥ ADR-045 §D-9 threshold 3
@@ -4247,7 +4247,7 @@ entries:
     introduced_by: CFP-2761
     introduced_date: 2026-07-19      # KST (Phase 2 mechanical wire delivery)
     owner_adr: ADR-085             # declaration source — §결정 3/8 lane-entry 4-step polling + Wave 2 promotion carrier
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     spec_invariant_measurement_required: false  # session-time polling subprocess invoke — 측정 가능한 runtime spec invariant 0. 판별력 = bash self-test 4-step polling discriminating fixture
     recurrence:
       count: 3                      # root_cause_class N=3 (CFP-777 + CFP-991 + CFP-2190) ≥ ADR-045 §D-9 threshold 2
@@ -4289,8 +4289,8 @@ entries:
     modal_anti_pattern_dictionary: {}  # 구조 무결성 lint, modal 어휘 무관
     introduced_by: CFP-881
     introduced_date: 2026-07-20      # KST (Phase 2 mechanical wire delivery)
-    owner_adr: ADR-060             # declaration source — Amendment 26 (warning-tier entry 등록)
-    carrier_adr: ADR-060           # enforcement source — evidence-enforceable warning-tier framework
+    owner_adr: ADR-171             # declaration source — ADR-060 Amendment 26 (warning-tier entry 등록)
+    carrier_adr: ADR-171           # enforcement source — evidence-enforceable warning-tier framework
     paired_owner_adr: ADR-151      # honesty ceiling(§결정7) 상속 — presence ≠ truth, self-test execution-liveness
     spec_invariant_measurement_required: false  # 정적 구조 무결성 lint (safe_load strict-verify + dup-key surface) — 측정 가능한 runtime spec invariant 0. 판별력 = discriminating pytest(AC-1~14) + identity-oracle
     recurrence:
@@ -4317,7 +4317,7 @@ entries:
     introduced_by: CFP-2784
     introduced_date: 2026-07-22
     owner_adr: ADR-085
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     recurrence:
       count: 6
       threshold: 3
@@ -4341,7 +4341,7 @@ entries:
     introduced_by: CFP-2786
     introduced_date: 2026-07-22
     owner_adr: ADR-085
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active
 
@@ -4378,7 +4378,7 @@ entries:
     introduced_by: CFP-2813
     introduced_date: 2026-07-24
     owner_adr: ADR-112             # per-PR update gate 재정의(Amendment 1) + ADR-078 Amendment 3 (per-PR default 확정)
-    carrier_adr: ADR-060           # evidence-enforceable framework — required 승격 = §결정 6 3-tuple + evidence 6종 (Change Plan §9.R ③)
+    carrier_adr: ADR-171           # evidence-enforceable framework — required 승격 = §결정 6 3-tuple + evidence 6종 (Change Plan §9.R ③)
     promotion_trigger: advisory    # required contexts 승격 = 별도 후속 carrier (본 Story 내 branch protection 8-tuple 무변경)
     status: Active
 
@@ -4400,7 +4400,7 @@ entries:
     introduced_by: CFP-2812
     introduced_date: 2026-07-25
     owner_adr: ADR-167
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active
 
@@ -4420,6 +4420,6 @@ entries:
     introduced_by: CFP-2812
     introduced_date: 2026-07-25
     owner_adr: ADR-167
-    carrier_adr: ADR-060
+    carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active

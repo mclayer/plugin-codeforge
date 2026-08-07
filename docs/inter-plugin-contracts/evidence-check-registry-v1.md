@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.6"
+version: "1.6.1"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
 date: 2026-05-19
@@ -22,7 +22,7 @@ related_adrs:
   - ADR-041  # doc-locations
   - ADR-050  # parallel epic + warning mode prior art
   - ADR-058  # ADR sunset criteria mandate (직접 동인)
-  - ADR-060  # Evidence-enforceable promotion framework (carrier)
+  - ADR-171  # Evidence-enforceable promotion framework (carrier)
   - ADR-037  # v1.5 — 정책팩 진입점 (Amendment 4, version-bump 게이트 = 정책팩 첫 멤버)
   - ADR-092  # v1.5 — changelog SSOT (§결정 3 wrapper 동결 → policy_pack_scope lane-plugin/consumer 한정)
 related_files:
@@ -39,7 +39,7 @@ related_files:
 
 ## 1. 목적
 
-codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-058 declaration 의 mechanical enforcement 점진 적용 framework (ADR-060) 의 schema doc + 운영 룰.
+codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-058 declaration 의 mechanical enforcement 점진 적용 framework (ADR-171) 의 schema doc + 운영 룰.
 
 각 evidence check entry 는 `docs/evidence-checks-registry.yaml` 의 row 로 정의되며, 본 schema 가 row 의 필수 / optional 필드 + 4-tier enforcement enum + promotion gate + bypass channel + audit trail 양식을 규정.
 
@@ -60,18 +60,18 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `description` | string | 필수 | 본 entry 가 검증하는 정책 요약 (1-3 문장). |
 | `detect_command` | string | 필수 | violation 감지 lint 실행 명령 (절대 또는 repo-relative path). 예: `bash scripts/check-adr-sunset-criteria.sh`. |
 | `workflow` | string | 필수 | GitHub Actions workflow yaml path. 예: `templates/github-workflows/adr-sunset-criteria.yml`. |
-| `current_tier` | enum | **필수 (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환)** | enforcement tier. enum = `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass` (대소문자 / 공백 정확 일치). 결정 3 (ADR-060). 미보유 entry = `scripts/check-evidence-registry.sh` exit 1 (validation FAIL). |
+| `current_tier` | enum | **필수 (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환)** | enforcement tier. enum = `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass` (대소문자 / 공백 정확 일치). 결정 3 (ADR-171). 미보유 entry = `scripts/check-evidence-registry.sh` exit 1 (validation FAIL). |
 | `bypass_label` | string | optional — tier 별 의무 분리 (v1.1, CFP-455 / ADR-060 Amendment 2 §결정 16): `warning` = omit 권고 (non-blocking, bypass 의미 부적용) / `blocking-on-pr` / `blocking-on-merge` = optional (운영 장애 hotfix 채널 도입 가능) / `hotfix-bypass` = **required** (정의상 bypass channel SSOT) | bypass label name. namespace = `hotfix-bypass:<entry-name>` (예: `hotfix-bypass:adr-sunset`). per-entry namespace 분리 의무 (ADR-060 §결정 7). |
-| `bypass_audit_lint` | string | optional (bypass_label 정의 시 의무) | audit comment 존재 검증 lint 명령. 예: `bash scripts/check-bypass-audit-comment.sh`. ADR-060 §결정 8. |
+| `bypass_audit_lint` | string | optional (bypass_label 정의 시 의무) | audit comment 존재 검증 lint 명령. 예: `bash scripts/check-bypass-audit-comment.sh`. ADR-171 §결정 8. |
 | `promotion_criteria` | object | 필수 (current_tier=warning 시) | warning → blocking 승격 gate 정의. 필드: |
-| `promotion_criteria.pr_cumulative_min` | int | 필수 | 본 entry merge 후 카운트 시작, throughput 독립 PR 누적 (ADR-060 §결정 10). 기본 `20`. |
+| `promotion_criteria.pr_cumulative_min` | int | 필수 | 본 entry merge 후 카운트 시작, throughput 독립 PR 누적 (ADR-171 §결정 10). 기본 `20`. |
 | `promotion_criteria.failure_threshold` | int | 필수 | bypass label 외 failure count 허용 임계 (0 = 무사고). 기본 `0`. |
 | `promotion_criteria.sibling_dependencies` | list[string] | optional | 본 entry 승격 전 merged 필요한 sibling Story keys. 예: `[CFP-390, CFP-391]`. |
 | `promotion_criteria.evidence_artifacts` | list[string] | 필수 | 승격 carrier PR 의 evidence 산출물 유형 (자동화 카운터 미도입 시 manual 첨부 의무). |
 | `modal_anti_pattern_dictionary` | object | optional (lint 가 모달 어휘 검사 포함 시) | 모달 어휘 anti-pattern 사전. 필드: `version` (string, e.g., `"1.0"`) + `dictionary` (list[string]). versioning 의무 (확장 어휘 도입 시 MINOR bump). |
 | `introduced_by` | string | 필수 | 본 entry 도입 carrier Story key. 예: `CFP-389`. |
 | `owner_adr` | string | 필수 | 본 entry 가 검증 대상으로 삼는 정책 ADR. 예: `ADR-058`. |
-| `carrier_adr` | string | 필수 | 본 entry 도입의 carrier ADR (framework SSOT 외). 예: `ADR-060`. |
+| `carrier_adr` | string | 필수 | 본 entry 도입의 carrier ADR (framework SSOT 외). 예: `ADR-171`. |
 | `status` | enum | optional (default `Active`) | entry lifecycle. enum = `Active` / `Deprecated` / `Archived` / `deferred-followup` (v1.6, CFP-2591 — registry 실사용 17+ entry 가 이미 사용 중이던 drift 정합화, ADR-060 Amendment 20 §32.G / D6 Layer 1, backward-compatible append). |
 | `recurrence` | object | optional (v1.2, CFP-509 / ADR-060 Amendment 6 — recurrence-driven promotion 정식 도입) | recurrence tracking. 필드: |
 | `recurrence.count` | int | 필수 (recurrence 정의 시) | 본 entry 도입 후 누적 위반 발생 횟수 (machine-usable). 기본 `0`. |
@@ -87,7 +87,7 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 |---|---|---|---|
 | `lane_evidence[].network_scope_actual` | enum | optional (Codex dispatch lane only — omit-on-N/A pattern) | Codex worker dispatch 시점에 실제 적용된 network scope. 4-tier enum value SSOT (ADR-081 Amendment 4 §결정 D1.D 정합): `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`. spawn-prompt 안 `network_scope` declare value 와 실제 invocation 의 actual scope 간 mismatch 추적 영역 (graceful degradation step (c) 의 §14 evidence trace SSOT). 본 field present 시 4-tier enum 안 정확 1 value 보유 의무 — `codex-network-scope-presence` lint 가 membership check 만 (semantic adequacy 검증 불가). Codex dispatch 아닌 lane row = omit (backward-compat default — ADR-031 §14 기존 12 field schema 영향 0). |
 
-**backward-compat**: 본 field 는 optional + omit-on-N/A pattern — ADR-031 §14 기존 12 field schema 영향 0 (1.1↔1.2↔1.3 backward-compat 보존). 기존 entry / 기존 §14 lane_evidence row 는 본 field 없이 정상 통과 (warning tier first, ADR-060 §결정 5 정합).
+**backward-compat**: 본 field 는 optional + omit-on-N/A pattern — ADR-031 §14 기존 12 field schema 영향 0 (1.1↔1.2↔1.3 backward-compat 보존). 기존 entry / 기존 §14 lane_evidence row 는 본 field 없이 정상 통과 (warning tier first, ADR-171 §결정 5 정합).
 
 **field semantic**:
 - 4-tier enum value 의미 = ADR-081 Amendment 4 §결정 D1.D 본문 SSOT (offline = file-IO-only / repo-fetch-only = own-repo + git fetch / web-fetch = cross-repo egress 허용 / offline_substitution_declared = codex CLI 미가용 substitution path activate)
@@ -146,7 +146,7 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 
 **v1.2 → v1.3 MINOR bump (CFP-963, 2026-05-19)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`, ADR-081 Amendment 4 §결정 D1.D 본문 확장 정합). ADR-060 Amendment 14 §결정 28 carrier — 12번째 warning-tier evidence-checks-registry entry `codex-network-scope-presence` 가 §14 row 안 본 field membership check 검증. Codex TP#4 CX-963-4 P3 finding integration. 기존 entry / 기존 §14 row 는 본 field 없이 정상 통과 (optional + omit-on-N/A pattern, backward-compat). **MANIFEST drift catch-up 동반**: `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 `evidence-check-registry-v1.md` row 의 `version: "1.1"` (CFP-509 v1.1→v1.2 sibling MANIFEST sync miss 영역의 silent stale — INV-1 parity drift) → `"1.3"` atomic catch-up (CFP-509 v1.1→v1.2 sibling sync 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer 단일 PR row write, INV-1 parity ratchet). 본 catch-up annotation = MANIFEST row inline comment SSOT.
 
-## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-060 §결정 7-8)
+## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-171 §결정 7-8)
 
 ### 5.1 권한자
 
@@ -160,7 +160,7 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 
 ### 5.3 Audit trail 3중 안전망
 
-1. **Audit comment**: GitHub Actions bot 가 PR comment 1개 자동 append. schema (CI-parsable, ADR-060 §결정 8):
+1. **Audit comment**: GitHub Actions bot 가 PR comment 1개 자동 append. schema (CI-parsable, ADR-171 §결정 8):
    ```
    [hotfix-bypass-audit] PR=<number> label_applied_by=<user> reason=<bypass_reason_textbox> ADR_files=<comma-separated-paths> timestamp=<ISO8601>
    ```
@@ -175,11 +175,11 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 
 bypass PR 안 변경 자체가 정책 위반 (재귀 시나리오) → audit comment 에 `[sunset-criteria-deferred]` 또는 entry-specific 태그 자동 추가 + 후속 보완 의무 자동 Issue 발의 (별도 carrier scope).
 
-## 6. 승격 gate (ADR-060 §결정 6, AND condition)
+## 6. 승격 gate (ADR-171 §결정 6, AND condition)
 
 warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 
-- **(a) `promotion_criteria.pr_cumulative_min`**: ADR-060 / 본 entry merge 후 첫 main PR merge 일자부터 카운트. `hotfix-bypass:*` label 적용 PR 도 throughput 카운트 (EC-C 정합).
+- **(a) `promotion_criteria.pr_cumulative_min`**: ADR-171 / 본 entry merge 후 첫 main PR merge 일자부터 카운트. `hotfix-bypass:*` label 적용 PR 도 throughput 카운트 (EC-C 정합).
 - **(b) `promotion_criteria.failure_threshold = 0`**: bypass label 외 failure count = 0. bypass label 적용 PR 의 lint 결과 skip (failure 미카운트).
 - **(c) `promotion_criteria.sibling_dependencies` 모두 merged**: 본 entry 가 다른 Story 의존 시 모두 main merge 완료.
 
@@ -204,6 +204,7 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 - **v1.2 (CFP-509, 2026-05-13 — Accepted)**: `recurrence:` field 정식 도입 (optional object). MINOR bump (신규 optional field). ADR-060 Amendment 6 carrier. CFP-490 description-only `recurrence_count` (lane-evidence-trail entry, CFP-500 FIX-5 + CFP-451 transient 2회) 의 schema 흡수.
 - **v1.4 (CFP-2061-S2, 2026-06-09 — Accepted)**: `entries[].tags` optional list field 정식 도입 (closed-set enum `security` / `consumer-whitelist` — 검사 dead 자동 제외 hard-exclude 가드). MINOR bump (신규 optional field + omit-on-N/A pattern backward-compat). SSOT carrier = `docs/check-dead-criteria.yaml`. 신규 ADR 0 (doc-only fast-path, ADR-054). CFP-2061-S1 §11 FU-1 tag SSOT 단일화 충족. MANIFEST `evidence_check_registry` row "1.3" → "1.4" 동반.
 - **v1.3 (CFP-963, 2026-05-19 — Accepted)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT). MINOR bump (신규 optional field + omit-on-N/A pattern backward-compat). ADR-060 Amendment 14 + ADR-081 Amendment 4 carrier. Codex worker dispatch lane evidence 영역 — `codex-network-scope-presence` lint (12번째 warning-tier entry, ADR-060 Amendment 14 §결정 28) 가 §14 row 안 본 field membership check 검증. **MANIFEST drift catch-up 동반** (`docs/inter-plugin-contracts/MANIFEST.yaml` row "1.1" → "1.3" — CFP-509 v1.1→v1.2 sibling MANIFEST sync miss INV-1 parity 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer atomic).
+- **v1.6.1 (CFP-2875, 2026-08-05 — Accepted)**: ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례). MANIFEST drift catch-up 동반 (row "1.5" → "1.6.1" — v1.6 (CFP-2591) sibling MANIFEST sync miss 정정).
 
 ### Tier value transition 첫 사례 — `current_tier: warning → blocking-on-pr` (CFP-1607, 2026-05-25 KST — schema 변경 0, value transition only)
 
@@ -263,7 +264,7 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 - `docs/inter-plugin-contracts/MANIFEST.yaml` — `registries:` 블록 entry 추가 (versioning 추적)
 - `docs/doc-locations.yaml` — 신규 doc type `evidence_check_registry` row (ADR-041)
 - `docs/parallel-work/section-ownership.yaml` — `evidence-checks-registry.yaml` append-only entry (ADR-050)
-- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — framework carrier ADR
+- `archive/adr/ADR-171-evidence-enforceable-promotion-framework.md` — framework carrier ADR (구 ADR-060 재제정)
 - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — 직접 동인 / 첫 entry 의 검증 대상 정책
 - `docs/adr/ADR-024-story-scoped-branch-policy.md` Amendment 3 — audit-trailed exception channel 정식 도입
 - `scripts/check-adr-sunset-criteria.sh` — 첫 entry lint 구체

@@ -273,7 +273,7 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 - doc-only(src delta=0) 작업은 hygiene 실행 대상 없음 — vacuous 자연 면제 (별도 스캔 채널 없음).
 - dev 반환 보고의 hygiene 이행 declaration(재사용 탐색 수행 여부 1줄)을 수집 — 기존 구현리뷰 dup-local/dup-boundary P1 이 사후 falsify (contract field 신설 아님 — develop-output-v1 무영향, ADR-140 §결정 6).
 
-## 테스트 작성-시점 exit-masking / mock-seam 금지 packet 주입 (ADR-060 Amendment 22 / CFP-2635)
+## 테스트 작성-시점 exit-masking / mock-seam 금지 packet 주입 (ADR-171 §결정 5 — 구 ADR-060 Amendment 22 / CFP-2635)
 
 Layer 1 (thin) — role:dev / QADev spawn prompt 에 아래 2항 anchor 를 포함. shell self-test 작성 시점에 false-coverage 를 애초에 유입하지 않게 하는 예방층 (Layer 2 = `shell-test-exit-masking-detect` warning-tier 정적 lint 이 사후 검출).
 
@@ -335,7 +335,7 @@ PL 은 worker 를 **스스로 spawn 할 수 없다** (re-entrancy 3종: 재귀 s
 
 ### enforcement tier
 
-enforcement = ADR-039 Amendment 8 §결정 9 D3 **advisory/warning-tier** + ADR-060 evidence-gate 후 승격. 즉시 blocking 아님.
+enforcement = ADR-039 Amendment 8 §결정 9 D3 **advisory/warning-tier** + ADR-171 evidence-gate 후 승격. 즉시 blocking 아님.
 
 ## Operating environment (ADR-044)
 

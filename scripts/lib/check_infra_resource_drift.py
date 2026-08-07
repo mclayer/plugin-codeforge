@@ -912,7 +912,7 @@ def render_baseline(pairs, growth_reason=None):
         "exit 3(substrate-failure)으로 검출된다. Regenerate: bash scripts/check-infra-resource-drift.sh "
         "--repo-root . --write-baseline",
         "# grandfather = 승격 시점 pre-existing 미선언 infra 표면(file, env-key) 동결 → new-only subtract "
-        "(ADR-060 §결정6 monotonic shrink). 신규 미선언 유입만 flag. candidate/inert census 무영향.",
+        "(ADR-171 §결정6 monotonic shrink). 신규 미선언 유입만 flag. candidate/inert census 무영향.",
         "# monotonic shrink: 본 목록은 줄어들 수만 있다. 정당한 corpus 확장은 "
         "`--allow-baseline-growth --reason \"<사유>\"` 로만 통과하며 사유가 growth_reason 에 각인된다.",
         "schema_version: '1.0'",

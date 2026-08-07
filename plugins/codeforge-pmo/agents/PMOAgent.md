@@ -235,7 +235,7 @@ Mechanical enforcement: warning-tier `retro-batch-adr-draft-pre-publish` lint (`
 **Decision enum (closed-set 4-option)** — 각 Issue 별 1 값:
 
 - **`CLOSE_AS_OBVIATED`** — recent carrier 가 이미 cover (direct merge link verify 의무)
-- **`CLOSE_AS_SENTINEL`** — declarative monitor only (pattern_count not reached, ADR-060 promotion gate 미충족)
+- **`CLOSE_AS_SENTINEL`** — declarative monitor only (pattern_count not reached, ADR-171 promotion gate 미충족)
 - **`PROMOTE`** — pattern_count reached, active Story 발의 의무 (label `priority:P1` 부착)
 - **`DEFER`** — keep open, future carrier 대기 (rationale 명시 의무)
 

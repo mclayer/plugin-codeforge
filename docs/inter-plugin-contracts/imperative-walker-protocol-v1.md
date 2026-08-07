@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: imperative-walker-protocol
-version: "1.2.0"
+version: "1.2.1"
 status: Active
 sibling_sync: exempt (ADR-010 §결정 2 kind:registry)
 supersedes_carrier: reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125)
@@ -50,6 +50,7 @@ version_history:
   - { version: "1.0.1", date: 2026-05-22, carrier: CFP-1169, change: "CFP-703 stale ref → CFP-1155 (UpgradeAgent 실 carrier = CFP-1111 Wave 2 Story-4) traceability 정정. §2.F.2 ownership boundary codify only 설명 + §4.3(c) amendment trigger 의 CFP-703 → CFP-1155 + Wave 2 Story-3 → Wave 2 Story-4 정정. 오타 수준 추적성 정정 — semantic 변경 0건. PATCH bump (ADR-008 §결정 2 cross-reference 정정 category)." }
   - { version: "1.1.0", date: 2026-05-22, carrier: CFP-1256, change: "§2.G git→Confluence docs sync extension 신규 codify source ADR-103 — §4.2 'MINOR = 신규 codify source ADR 영역 § append' 정합. walk_result closed_enum 무침범. §4.3 Amendment trigger (e) ADR-103 merge 추가. MINOR bump (ADR-008 §결정 2 신규 codify source ADR 영역 § append category)." }
   - { version: "1.2.0", date: 2026-05-23, carrier: CFP-1293, change: "§2.E.4 consumer_applicability_filter_binding sub-§ append — ADR-083 Amendment 3 carrier (walker apply Stage D wire active, sunset_justification 실현). §결정 5 wire location 3 영역 atomic codify 의 walker contract layer: (a) reconcile-overlay.sh §4.12 hook (보존) + (b) walk_plan.py apply_overlay_file caller 영역 filter hook (Phase 2 carrier) + (c) UpgradeAgent.md Stage 3 apply Step A/D R-3 sub-section (Phase 1 carrier). filter_hook_invocation_layer + repo_kind_detection_signals + 4_way_truth_table + positive_whitelist_source + fail_closed_unknown_semantic + wrapper_self_app_exemption + detection_layer + filter_layer 8 field declarative declare. walk_result closed_enum 무침범 (4-value invariant 보존). §4.3 Amendment trigger (f) ADR-083 Amendment 3 merge 추가. MINOR bump (ADR-008 §결정 2 신규 codify source ADR 영역 § append category). β2 audit (CFP-1113) Anchor 2 LOSSLESS declared ↔ origin/main walk_plan.py 안 wire 0 match drift evidence-based — verify-before-trust catch (ADR-073 §결정 1 정합). ratchet 강화 only (declaration-only-Wave-1 → walker apply Stage D wire active), 약화 0건." }
+  - { version: "1.2.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
 ---
 
 # imperative-walker-protocol-v1 — Inter-plugin Contract Registry
@@ -140,7 +141,7 @@ walker 의 입력 source = **per-plugin self-owned `CHANGELOG.md`** (ADR-092 §�
 - **consumer overlay = changelog 미보유**: consumer 는 walker 입력 (설치 plugin version 집합) 으로만 참여, 별 changelog SSOT 신설 0.
 - **aggregate view = walker derived**: "통합 변경 내역" 단일 진입점은 walker 가 7 plugin `CHANGELOG.md` 를 합집합 (union) 으로 조립해 제공 — derived view 이지 SSOT 아님. 매 호출 재생성 (영속 file 부재), drift 발생 불가.
 
-**drift detection = warning tier** (ADR-092 §결정 2, ADR-060 evidence-enforceable framework `warning` tier). 각 plugin `CHANGELOG.md` 마지막 entry version ↔ 해당 plugin `.claude-plugin/plugin.json` `.version` field 정합 (equality). mismatch = drift 신호. PR gate block 미발동 (PR-gate layer disjoint — ADR-026 보존). mechanical wire = 별 sub-CFP carrier (pattern_count >= 2 재발 시 follow-up CFP MUST promote). ADR-016 mirrored field versioning + ADR-063 marketplace ↔ plugin.json atomic invariant 와 disjoint axis (atomic coordination 의무 + 사후 drift detection 보완).
+**drift detection = warning tier** (ADR-092 §결정 2, ADR-171 evidence-enforceable framework `warning` tier). 각 plugin `CHANGELOG.md` 마지막 entry version ↔ 해당 plugin `.claude-plugin/plugin.json` `.version` field 정합 (equality). mismatch = drift 신호. PR gate block 미발동 (PR-gate layer disjoint — ADR-026 보존). mechanical wire = 별 sub-CFP carrier (pattern_count >= 2 재발 시 follow-up CFP MUST promote). ADR-016 mirrored field versioning + ADR-063 marketplace ↔ plugin.json atomic invariant 와 disjoint axis (atomic coordination 의무 + 사후 drift detection 보완).
 
 ### §2.C Fallback 정책 (ADR-094 codify)
 
@@ -209,13 +210,13 @@ min_prerequisite_version:
   dag_invariant: "lane → wrapper 단방향 cross-tier 의존, cycle 부재 (DAG)"
   wrapper_self: empty_or_omit   # wrapper = top of dependency tree, min_prerequisite_version 빈 map 또는 생략
   mismatch_action: fallback_trigger   # §2.C Fallback (ADR-094 hybrid grace) trigger
-  mismatch_lint_tier: warning   # ADR-060 4-tier `warning` (Wave 1 declaration-only, blocking 승격 = ADR-060 승격 gate 후)
+  mismatch_lint_tier: warning   # ADR-171 4-tier `warning` (Wave 1 declaration-only, blocking 승격 = ADR-171 승격 gate 후)
 ```
 
 - **dual carrier (K-8)** — publisher 선언 (`plugin.json` `min_prerequisite_version: { codeforge: <range> }`, "이 lane plugin 이 동작하려면 wrapper 최소 버전") + consumer 고정값 (`project.yaml` `codeforge.version_pin.version`, 실 install 버전). 두 carrier 교집합 비교 (publisher 요구 range ↔ consumer 고정 실값) 가 mismatch detection 입력. 단일 carrier 는 cross-tier 의존 양 끝 표현 불가.
 - **semver range + topological resolve** — range 표현 = npm `engines` semantics. 7 plugin (wrapper + 6 lane) 의존 그래프 = topological sort. lane → wrapper 단방향 (6 lane 각각이 wrapper prerequisite, wrapper = root 의존 없음). topological order = `[wrapper, ...6 lane]` — wrapper 먼저 resolve → 각 lane `min_prerequisite_version` 이 확정 wrapper 버전 검증. cross-tier 단방향 = cycle 부재 (DAG invariant). Cargo MSRV resolver + npm engines walk ordering 정합.
 - **mismatch = §2.C Fallback trigger** — topological walk 중 어느 lane plugin 의 range 를 consumer wrapper version_pin 실값이 미만으로 충족 못하면 (`consumer_pin < plugin_min_prerequisite`) → §2.C ADR-094 Fallback (hybrid grace) trigger. resolve 는 detection 만, 처리 (degraded mode / grace / 호환 범위) 는 §2.C / ADR-094 SSOT 위임 (detection 본 §2.E ↔ 처리 §2.C disjoint binding).
-- **mismatch lint = warning tier** — ADR-060 `warning` tier. Wave 1 declaration-only (mechanical wire = 후속 sub-CFP Phase 2 carrier). false-block risk (구형 consumer 정상 운영 차단) 회피 — warning 으로 가시화 + §2.C Fallback 경로 안내가 1차 적정 강도. pattern_count >= 2 mismatch 재발 시 follow-up CFP MUST promote.
+- **mismatch lint = warning tier** — ADR-171 `warning` tier. Wave 1 declaration-only (mechanical wire = 후속 sub-CFP Phase 2 carrier). false-block risk (구형 consumer 정상 운영 차단) 회피 — warning 으로 가시화 + §2.C Fallback 경로 안내가 1차 적정 강도. pattern_count >= 2 mismatch 재발 시 follow-up CFP MUST promote.
 
 #### §2.E.4 consumer_applicability_filter_binding (ADR-083 Amendment 3 codify, CFP-1293)
 
@@ -395,7 +396,7 @@ walk_result_enum_invariant:
 ### 4.2 SemVer rule (ADR-008 §결정 2 정합)
 
 - **MAJOR**: `walk_result.enum` 4-value (SUCCESS/SUCCESS_WITH_DEGRADATION/PARTIAL_FAILURE/FAILED) 자체 breaking 변경 / 양 4-field (외부 보고 / PMO) layer 의미 breaking 변경 / `open_extension: false` invariant 약화 (= ADR-058 sunset_justification 차단) / `fallback_mode` 3-value enum breaking 변경 / `min_prerequisite_version.carrier` dual 의미 breaking 변경
-- **MINOR**: 신규 codify source ADR 영역 § append (§2.G 등) / `walk_result.enum` 값 추가 (ADR-093 amendment) / `fallback_mode.enum` 값 추가 (ADR-094 amendment) / `sunset_metric.source.enum` 값 추가 (ADR-095 amendment) / mismatch lint tier `warning` → `blocking-on-pr` 승격 (ADR-060 승격 gate 후)
+- **MINOR**: 신규 codify source ADR 영역 § append (§2.G 등) / `walk_result.enum` 값 추가 (ADR-093 amendment) / `fallback_mode.enum` 값 추가 (ADR-094 amendment) / `sunset_metric.source.enum` 값 추가 (ADR-095 amendment) / mismatch lint tier `warning` → `blocking-on-pr` 승격 (ADR-171 승격 gate 후)
 - **PATCH**: 오타 / 설명 보강 / 예시 추가 / cross-reference 정정 / quantitative parameter empirical-source annotation 정정
 
 ### 4.3 Amendment trigger 조건

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: parallel-dispatch-protocol
-version: "1.1"
+version: "1.1.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md
@@ -11,6 +11,7 @@ authors:
 version_history:
   - { version: "1.0", date: 2026-05-13, carrier: CFP-609, change: "initial — Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator → PL dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기 + env=0/env=1 동등성 + idempotency invariant 6종 + dispatch packet schema. ADR-064 §결정 4 Trace 4 implementation contract — execution-time enforcement carrier. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합)." }
   - { version: "1.1", date: 2026-07-02, carrier: CFP-2549, change: "§6.3 worker_outcomes enum +INCONCLUSIVE + timeout/fail-mode protocol 섹션 (ADR-139 background-wait liveness gate 4 불변식 cross-ref) — §6.3 주석 'crash recovery/fail-mode = 별 CFP follow-up' defer 해소. kind:registry sibling_sync_exempt 유지." }
+  - { version: "1.1.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
 owner_adr: ADR-064  # Amendment 1 carrier
 carrier_story: CFP-609
 sibling_sync_exempt: true
@@ -24,7 +25,7 @@ related_adrs:
   - ADR-050  # Parallel epic coordination — scope_manifest cross-section conflict 정합
   - ADR-056  # team-spec teammates implementation gap (CFP-609 absorb)
   - ADR-058  # ADR sunset criteria mandate (top-down ratchet 차단)
-  - ADR-060  # Evidence-enforceable promotion framework (warning tier entry `parallel-dispatch-prompt-check`)
+  - ADR-171  # Evidence-enforceable promotion framework (warning tier entry `parallel-dispatch-prompt-check`)
   - ADR-061  # Python script-writing convention (lint shim ≤ 5 lines)
   - ADR-063  # Marketplace atomic invariant — marketplace_sync_ordering enum 정합
   - ADR-064  # carrier (Amendment 1)
@@ -271,12 +272,12 @@ batch dispatch 의 재실행 / crash recovery / cross-batch state 영역 invaria
 
 ## §8. Mechanical Enforcement (warning tier)
 
-ADR-060 evidence-enforceable promotion framework 정합 warning tier entry:
+ADR-171 evidence-enforceable promotion framework 정합 warning tier entry:
 
 - **detect**: `bash scripts/check-parallel-dispatch-prompt.sh` (1-line shim → `python scripts/check_parallel_dispatch_prompt.py` — ADR-061 python-script-writing-convention 정합)
 - **workflow**: `templates/github-workflows/parallel-dispatch-prompt-check.yml` (`continue-on-error: true`)
 - **bypass**: `hotfix-bypass:parallel-dispatch-prompt` label (ADR-024 Amendment 3 정합)
-- **registry entry**: `docs/evidence-checks-registry.yaml` (`parallel-dispatch-prompt-check` entry, owner_adr: ADR-064, carrier_adr: ADR-060)
+- **registry entry**: `docs/evidence-checks-registry.yaml` (`parallel-dispatch-prompt-check` entry, owner_adr: ADR-064, carrier_adr: ADR-171)
 
 검사 항목 5종:
 
@@ -319,7 +320,7 @@ PMOAgent retro file `§wall-clock 표` 가 measurement carrier (Story 단위 tim
 - ADR-008 §결정 2 (kind:registry sibling sync 면제)
 - ADR-010 §결정 2 (sibling sync 책임 분리)
 - ADR-063 §결정 2 (marketplace_sync_ordering enum 정합)
-- ADR-060 (evidence-enforceable promotion framework — warning tier entry)
+- ADR-171 (evidence-enforceable promotion framework — warning tier entry)
 - ADR-040 (worktree convention — 1 Story = 1 worktree, env isolation)
 - ADR-061 (Python script-writing convention — lint shim ≤ 5 lines)
 - ADR-024 Amendment 3 (hotfix-bypass label family)
@@ -341,7 +342,7 @@ graph TD
     Enum["6 sequential mandate enum<br/>(close-set)"]
     Prompt["Orchestrator → PL dispatch prompt<br/>(4 의무 항목)"]
     Tree["PL 자율 병렬 결정 tree<br/>(4 분기)"]
-    Lint["parallel-dispatch-prompt-check<br/>(warning tier, ADR-060)"]
+    Lint["parallel-dispatch-prompt-check<br/>(warning tier, ADR-171)"]
     PMO["PMOAgent retro<br/>(MCT-160 wall-clock 측정)"]
 
     User --> ADR064
