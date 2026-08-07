@@ -408,7 +408,7 @@ def assert_anchor(text, anchor_value, expected_nonce=None):
     기계화 대상 문면 = whitelist 템플릿 §한글 앵커 **조립 규약** ("promptfile 헤더에 위
     `ANCHOR_LINE:` 줄을 **verbatim 1회** 포함") + CP §8.4 '앵커 라인 부재 = RED'.
 
-    전문(全文) substring 단독 검사는 그 문면의 두 축을 놓친다:
+    전문(문서 전체) substring 단독 검사는 그 문면의 두 축을 놓친다:
       · **위치** — 앵커가 untrusted block **안에만** 있어도 통과한다. 구획 B 는 인용 원문
         verbatim 구역이므로 조립이 앵커를 인용문 안으로 밀어 넣으면 **헤더 앵커 부재**가 블록 안
         사본으로 은폐된다. 앵커의 존재 의의는 구획 A(헤더) 무결성의 증인이지 인용문 장식이 아니다.

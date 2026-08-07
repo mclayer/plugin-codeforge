@@ -211,9 +211,15 @@ def _verify_ac1_static_oracle(agent_path=None, whitelist_path=None):
         lines = f.readlines()
 
     # ── 구조 스캔 1회 (FIX Iter 3 CR3-1) — fence 상태를 추적하며 헤딩·fence span 동시 수집 ──
-    # 왜 fence-인지 스캔인가: 이 파일의 fence **안**에는 `# ── 정본 dispatch 템플릿 …` 류
-    #   shell 주석이 8줄 있다 (실측 L123-138). 헤딩을 fence 무시하고 `^#{1,6} ` 로만 뽑으면
-    #   그 주석이 헤딩으로 오인돼 lane 블록의 bound 를 그 자리에서 끊는다 → 정상 파일이 false-RED.
+    # 왜 fence-인지 스캔인가 (FIX Iter 4 F-CR4-1 — 인과 정정):
+    #   ★ 앞선 주석은 "fence 안 shell 주석 8줄(L123-138)이 bound 를 끊는다" 고 적었으나 **반증됐다**
+    #     — 그 8줄은 전부 **첫 lane 헤딩(L210)보다 앞**이고, bound 는 lane 헤딩 **이후**의
+    #     heading_lines 에서만 고른다 (`j > heading_line_num`). bound 후보에 도달조차 못 한다.
+    #   실제 load-bearing case = **fence 안의 `#### lane=` 리터럴**이다. guard 가 없으면 그 decoy 가
+    #     lane_headings 에 섞여 `헤딩 수 == 5` conjunct 가 `found 6` 으로 터진다 = 정상 파일 false-RED
+    #     (r4 실측). guard 가 있으면 decoy 는 fence 안이라 헤딩으로 세지 않는다.
+    #   이 guard 는 committed suite 가 커버하지 못하고 있었다 (제거 mutant 생존 실측) →
+    #     `test_ac1_oracle_fence_guard_discriminating` 이 결박한다. 주석의 주장은 증거를 동반한다.
     # 왜 bound 를 **다음 lane 헤딩**이 아니라 **다음 임의 레벨 헤딩**으로 넓혔는가 (CR3-1):
     #   마지막 lane(=tail 구간)은 다음 lane 헤딩이 없어 bound 가 EOF 였다. 그래서 그 fence 를
     #   지우면 스캔이 하류의 **non-lane** fence(`### 변종` 이후)를 조용히 집어 블록 수 5 를 유지했다
@@ -245,22 +251,34 @@ def _verify_ac1_static_oracle(agent_path=None, whitelist_path=None):
     assert len(lane_headings) == 5, \
         f"AC-1 oracle: expected 5 `#### lane=` headings, found {len(lane_headings)}"
 
-    blocks = []
+    # ── 구간 내 fence span **전건** 수집 (FIX Iter 4 F-CR4-1) ─────────────────────
+    # 구 구현은 `next(...)` 로 구간의 **첫** span 만 집었다. lane 구간이 두 번째 fence 를 갖게 되면
+    #   그 content 는 count 축(첫 span 이 이미 있으니 블록 수 5 유지)·partition 축(검사 대상에서
+    #   빠짐) **양쪽에서 침묵**한다 = 한글이 조용히 통과.
+    # ★ 현 파일 기준 활성 false-GREEN 은 0 이다 (lane 구간별 span 실측 = 전부 정확히 1개).
+    #   즉 이것은 발현 중인 결함이 아니라 **잠복 벡터**이며, in-memory 사본에 두 번째 fence(한글)를
+    #   주입하면 구 구현 PASS / 본 구현 RED 로 갈린다 (r4 실측). 파일 구조가 바뀌는 순간 발현한다.
+    # 처방 = 구간 내 span 전건 수집 후 **전부** check_partition. 블록 수 계약은 "lane 당 정확히 1개"
+    #   로 유지하되(계약 문면 = 헤딩 수 == 블록 수 == 5), 초과분도 검사에서 빠지지 않게 별도 축으로
+    #   신고한다 — 초과 자체를 조용히 무시하면 같은 함정이 되돌아온다.
+    blocks = []                 # 검사 대상 span 전건 (초과분 포함)
+    lane_span_counts = []       # lane 별 구간 내 span 개수 (계약 판정용)
     for idx, heading_line_num in enumerate(lane_headings):
         bound = next((j for j in heading_lines if j > heading_line_num), len(lines))
-        span = next(((s, e) for s, e in fence_spans if heading_line_num < s < bound), None)
-        if span is None:
-            continue
-        blocks.append((idx, heading_line_num, span[0], span[1]))
+        spans = [(s, e) for s, e in fence_spans if heading_line_num < s < bound]
+        lane_span_counts.append((idx, heading_line_num, len(spans)))
+        for s, e in spans:
+            blocks.append((idx, heading_line_num, s, e))
 
-    # 계약 conjunct 2/2: 블록 수 == 5 (구 구현에서 탈락해 있던 축 — F2 복원)
-    assert len(blocks) == 5, (
-        f"AC-1 oracle: expected 5 fenced blocks (헤딩 수 == 블록 수 == 5 계약), found {len(blocks)}. "
-        f"헤딩 line = {[h + 1 for h in lane_headings]}, "
-        f"블록 보유 헤딩 idx = {[b[0] for b in blocks]} — "
-        f"fence 가 없는 헤딩의 content 가 조용히 검사 밖으로 샜다"
-    )
-
+    # ── 판정 순서: **partition 먼저, 구조 계약 나중** (FIX Iter 4) ────────────────
+    # 왜 이 순서인가: 구조 계약(lane 당 1블록)을 먼저 걸면, span 2개짜리 fixture 는 **항상** 그
+    #   assert 에서 먼저 터져 "전 span 을 검사한다" 는 코드 경로가 영원히 미도달이 된다 —
+    #   즉 그 동작을 행사하는 discriminating 케이스를 쓸 수 없고, 첫-span-만-검사로 회귀시켜도
+    #   구조 assert 가 대신 RED 를 내줘 mutant 가 생존한다 (실측: 두 mutant 모두 생존).
+    #   partition 을 먼저 돌리면 두 축이 **독립 관측 가능**해진다:
+    #     · 두 번째 fence 에 한글  → partition 축 RED (전 span 검사가 load-bearing)
+    #     · 두 번째 fence 가 영어  → 구조 계약 축 RED (초과 span 신고)
+    #   두 케이스의 진단 메시지가 달라 테스트가 축 귀속까지 assert 할 수 있다.
     for idx, heading_line_num, block_start, block_end in blocks:
         block_text = "".join(lines[block_start + 1:block_end])
         try:
@@ -272,6 +290,18 @@ def _verify_ac1_static_oracle(agent_path=None, whitelist_path=None):
                 f"fence L{block_start + 1}-L{block_end + 1}) 구획 A 위반 — {exc} "
                 f"(위 line 번호는 블록 내 상대값; 파일 line = {block_start + 1} + 상대)"
             ) from exc
+
+    # 계약 conjunct 2/2: lane 당 블록 정확히 1개 → 총 5개 (구 구현에서 탈락해 있던 축 — F2 복원)
+    #   fence 부재(0개)와 초과(2개+)를 **같은 축**에서 신고한다: 전자는 content 가 검사 밖으로 새고,
+    #   후자는 계약이 상정하지 않은 구조라 어느 span 이 정본인지 판정 불능이다.
+    assert lane_span_counts and all(n == 1 for _, _, n in lane_span_counts), (
+        f"AC-1 oracle: lane 당 fenced 블록 정확히 1개 (헤딩 수 == 블록 수 == 5 계약) 위반. "
+        f"lane 별 (idx, heading_line, span 수) = "
+        f"{[(i, h + 1, n) for i, h, n in lane_span_counts]} — "
+        f"0 = fence 없는 헤딩의 content 가 검사 밖으로 샘 / 2+ = 계약 미상정 구조(정본 판정 불능)"
+    )
+    assert len(blocks) == 5, \
+        f"AC-1 oracle: expected 5 fenced blocks total, found {len(blocks)}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -525,6 +555,128 @@ def test_ac1_partition_a_zero_hangul_with_whitelist():
             raise AssertionError(
                 "AC-1 sub-case 4: whitelist 에서 `phase:설계` 를 빼도 oracle 이 PASS — "
                 "제외집합이 런타임 read 가 아니라 하드코딩/미구현 (CP §8.2A 계약 위반)")
+
+
+def _write_min_whitelist(path):
+    """합성 oracle fixture 용 최소 whitelist (앵커 1줄 + 유효 엔트리 1건)."""
+    path.write_text(
+        "ANCHOR_LINE: 인코딩-무결성-앵커 한글 원문 무손상 확인용 고정 리터럴 수정금지\n"
+        "phase:설계\tdocs/inter-plugin-contracts/label-registry-v2.md\n",
+        encoding="utf-8", newline="\n")
+
+
+def _write_lane_fixture(path, extra_by_lane=None, second_fence_by_lane=None):
+    """`#### lane=` 5개 + 각 1 fence 인 최소 합성 agent md 생성.
+
+    extra_by_lane        : {lane_idx: [블록 **안**에 추가할 줄]}
+    second_fence_by_lane : {lane_idx: [해당 lane 구간에 **두 번째 fence** 로 넣을 줄]}
+    """
+    extra_by_lane = extra_by_lane or {}
+    second_fence_by_lane = second_fence_by_lane or {}
+    out = []
+    for i in range(5):
+        out += [f"#### lane={i}", "```", "English instruction line."]
+        out += extra_by_lane.get(i, [])
+        out += ["```", ""]
+        if i in second_fence_by_lane:
+            out += ["```"] + second_fence_by_lane[i] + ["```", ""]
+    path.write_text("\n".join(out) + "\n", encoding="utf-8", newline="\n")
+
+
+def test_ac1_oracle_fence_guard_discriminating():
+    """
+    AC-1 oracle **fence-인지 guard** 결박 (FIX Iter 4 F-CR4-2 — harness 롤백으로 소실됐던 것 재추가).
+
+    guard = 구조 스캔에서 헤딩을 셀 때의 `_open_at is None` (= fence **밖**) 조건.
+    load-bearing case = **fence 안의 `#### lane=` 리터럴**. dispatch 템플릿·예시 안에 그 문자열이
+    등장할 수 있고, guard 가 없으면 decoy 가 lane 헤딩으로 집계돼 `헤딩 수 == 5` 가 `found 6` 으로
+    터진다 = 정상 파일 false-RED.
+
+    ★ 인과 정정 (F-CR4-1): 앞선 주석이 근거로 든 "fence 안 shell 주석 8줄(L123-138)" 은 **오답**
+      이었다 — 그 줄들은 전부 첫 lane 헤딩(L210) **앞**이라 bound 후보(`j > heading_line_num`)에
+      도달조차 못 한다. 실제 load-bearing case 는 위 decoy 다.
+    ★ 이 guard 는 committed suite 가 커버하지 못했다 (제거 mutant 생존 실측, r4). 본 test 가 그
+      공백을 닫는다 — guard 제거 mutant 를 넣으면 RED 로 전환된다.
+    """
+    helper = _load_helper_module()
+    with tempfile.TemporaryDirectory() as td:
+        tp = Path(td)
+        wl = tp / "wl.md"
+        _write_min_whitelist(wl)
+        agent_md = tp / "SyntheticAgent.md"
+        # lane[0] 블록 **안**에 `#### lane=` decoy 1줄
+        _write_lane_fixture(agent_md, extra_by_lane={0: ["#### lane=decoy-inside-fence"]})
+
+        raw = agent_md.read_text(encoding="utf-8").splitlines()
+        # precondition: fence 를 무시하고 세면 6 — 이 값이 5 면 본 test 는 guard 를 못 행사한다
+        naive = sum(1 for l in raw if l.startswith("#### lane="))
+        assert naive == 6, \
+            f"fixture precondition: fence-무시 집계 6 기대 (got {naive}) — decoy 가 무력하면 공허 케이스"
+        # precondition: 한글 0 → 본 fixture 의 RED 는 오직 헤딩 집계 축에서만 올 수 있다
+        assert helper.HANGUL_RE.search("\n".join(raw)) is None, \
+            "fixture precondition: 한글 0 (partition 축 혼입 시 축 귀속 불명)"
+
+        # guard 있음 → decoy 는 fence 안이라 헤딩 아님 → 5개 → PASS
+        _verify_ac1_static_oracle(agent_path=agent_md, whitelist_path=wl)
+
+
+def test_ac1_oracle_second_fence_in_lane_region_discriminating():
+    """
+    AC-1 oracle: lane 구간의 **두 번째 fence** content 도 검사 대상 (FIX Iter 4 F-CR4-1).
+
+    구 구현은 `next(...)` 로 구간 첫 span 만 집었다 → 두 번째 fence 안 한글이
+    count 축·partition 축 **양쪽에서 침묵** (조용히 통과).
+
+    ★ 정직 표기: 이것은 **잠복 벡터**였다 — 실 CodexReviewAgent.md 는 lane 구간별 span 이 전부
+      정확히 1개라 활성 false-GREEN 은 0 이었다 (r4 인용 좌표 `(287,289)` 는 헤딩+fence-open 오독
+      으로 재현 불가). 합성 fixture 로 그 벡터를 **영구 결박**한다.
+
+    하위 케이스 2종 (단일 변수 = 두 번째 fence 의 내용):
+      ⓐ 두 번째 fence 에 한글 → RED (구 구현은 PASS)
+      ⓑ 두 번째 fence 가 영어뿐 → 그래도 RED — lane 당 1블록 계약(span 수 == 1) 위반이므로.
+         한글 유무와 무관하게 "계약 미상정 구조" 자체를 신고한다 (조용한 무시 = 함정 복귀).
+    """
+    with tempfile.TemporaryDirectory() as td:
+        tp = Path(td)
+        wl = tp / "wl.md"
+        _write_min_whitelist(wl)
+
+        # 기준선: 두 번째 fence 없음 → PASS (아래 두 RED 가 fixture 자체 결함이 아님을 결박)
+        base_md = tp / "Base.md"
+        _write_lane_fixture(base_md)
+        _verify_ac1_static_oracle(agent_path=base_md, whitelist_path=wl)
+
+        # ★ 축 귀속 assert 필수: "AssertionError 아무거나" 로 판정하면 **다른 축**이 대신 RED 를
+        #   내줘 mutant 가 생존한다 (실측: 첫-span-만 회귀 mutant / 계약 assert 무력화 mutant 둘 다
+        #   생존했다 — 구조 계약 축이 partition 축의 침묵을 가렸다). 진단 메시지로 축을 못박는다.
+        def _red_axis(md_path):
+            try:
+                _verify_ac1_static_oracle(agent_path=md_path, whitelist_path=wl)
+            except AssertionError as exc:
+                return str(exc)
+            return None
+
+        # ⓐ 두 번째 fence 에 한글 → **partition 축** RED (= 전 span 검사가 load-bearing)
+        ko_md = tp / "SecondFenceKorean.md"
+        _write_lane_fixture(ko_md, second_fence_by_lane={2: ["두번째 펜스 안 한글 산문"]})
+        msg_ko = _red_axis(ko_md)
+        assert msg_ko is not None, (
+            "F-CR4-1 ⓐ: lane 구간 두 번째 fence 의 한글이 검출되지 않았다 (PASS) — "
+            "구간 첫 span 만 검사하는 구현으로 회귀")
+        assert "구획 A 위반" in msg_ko, (
+            "F-CR4-1 ⓐ: RED 이긴 하나 **partition 축이 아니다** — 두 번째 span 이 검사 대상에서 "
+            f"빠진 채 다른 축이 대신 울었다. 실제 메시지: {msg_ko[:160]}")
+
+        # ⓑ 두 번째 fence 가 영어뿐 → **구조 계약 축** RED (초과 span 신고)
+        en_md = tp / "SecondFenceEnglish.md"
+        _write_lane_fixture(en_md, second_fence_by_lane={2: ["English only second fence."]})
+        msg_en = _red_axis(en_md)
+        assert msg_en is not None, (
+            "F-CR4-1 ⓑ: lane 당 fenced 블록 1개 계약 위반(span 2개)이 신고되지 않았다 — "
+            "초과 span 을 조용히 무시하면 정본 판정 불능 구조가 방치된다")
+        assert "lane 당 fenced 블록 정확히 1개" in msg_en, (
+            "F-CR4-1 ⓑ: RED 이긴 하나 **구조 계약 축이 아니다** (초과 span 신고 assert 가 "
+            f"무력화됨). 실제 메시지: {msg_en[:160]}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -944,7 +1096,7 @@ def test_ac6_axis_ab_coexistence():
     하위 케이스 (CR3-3): `_ac6_predicate` 진리표 4종 — (fake,fake)/(real,fake)/(fake,real) → False,
       (real,real) → True. 혼합 2종이 AND→OR mutant 를, (real,real) 이 상수-False 구현을 죽인다.
     """
-    # Axis A: helper 존재 ∧ workflow 존재 (4-술어 복원)
+    # Axis A: helper 존재 ∧ workflow 존재 (**2-술어** AND — 4 요소는 축 A 2 + 축 B 2 의 합)
     workflow_path = REPO_ROOT / ".github" / "workflows" / "codex-promptfile-roundtrip-test.yml"
     axis_a_result = _ac6_predicate(HELPER_SCRIPT, workflow_path)
     assert axis_a_result, \
@@ -966,7 +1118,7 @@ def test_ac6_axis_ab_coexistence():
         assert "ANCHOR_LINE:" in content, \
             "AC-6 axis B: anchor line reference missing"
 
-    # ── Sub-case: `_ac6_predicate` 진리표 3종 (CR3-3) ──────────────────────────
+    # ── Sub-case: `_ac6_predicate` 진리표 **4종** (CR3-3) ─────────────────────
     # 구 구현은 (fake, fake) 1종뿐이라 술어가 AND 인지 OR 인지 구분하지 못했다:
     #   `and` → `or` 로 바꿔도 (fake,fake) 는 여전히 False → mutant 생존.
     # **혼합 입력 2종**이 AND 를 결박한다 — OR 이면 둘 다 True 가 되어 즉시 RED.
@@ -990,7 +1142,7 @@ def test_ac6_axis_ab_coexistence():
             "AC-6 sub-case ⓒ (fake helper, real workflow): AND 술어면 FALSE 여야 한다 — "
             "TRUE = OR 약화 또는 helper 인자 무시")
 
-        # (real, real) → True — 위 3종이 vacuous-FALSE 상수가 아님을 결박
+        # (real, real) → True — 앞 False 3종이 vacuous-FALSE 상수가 아님을 결박
         #   (항상 False 를 돌려주는 구현이면 여기서 죽는다).
         assert _ac6_predicate(HELPER_SCRIPT, workflow_path), (
             "AC-6 sub-case ⓓ (real, real): TRUE 여야 한다 — FALSE = 술어가 상수 False "
