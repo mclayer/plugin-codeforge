@@ -352,10 +352,28 @@ def sanitize_body_field(text: Optional[str]) -> Tuple[Optional[str], bool, int]:
     hit 시 = 필드 drop (`body_omitted_by_deny_scan: true` — 원문은 어떤 채널에도 미기록,
     run 은 계속. "우회" 가 아니라 "drop", DR-P0-2 (b)).
 
-    **신원 마스킹은 deny-scan 판정 *이후*에 적용한다** — 판정 입력을 바꾸지 않으므로 K-6 가
-    hollow 화하지 않는다. (선례: `_scrub` 을 deny-scan 앞에 두자 치환 결과가 20+ run 을
-    구조적으로 없애 K-6 가 무력화됐다 — 같은 함정을 반복하지 않는다. 덧붙여 신원 패턴은
-    `:`·`-`·`.` 로 분절돼 애초에 20+ run 을 형성하지 않아 deny-scan 정의역과 **disjoint** 다.)
+    **순서 불변식 (K-6 무손상의 실제 근거) — `_scrub` 선행 ∧ 마스킹 후행**:
+    `_scrub` → deny-scan 판정 → `mask_identity_tokens` 순서를 **재배치하지 말 것**.
+
+    ★ **구 문언의 "신원 패턴은 deny-scan 정의역과 disjoint" 는 거짓이라 삭제했다** (실측
+    반증): 3패턴 중 **2개가 교차**한다 — email 은 local part 가 길면
+    (`aaaaaaaaaaaaaaaaaaaaaaaa@acme.co.kr`) 20+ `[A-Za-z0-9+/=]` run 을 **형성**하고,
+    tenant-host 도 서브도메인이 길면(`https://ABCDEFGHIJKLMNOPQRSTUV.atlassian.net`) **형성**한다.
+    disjoint 가 성립하는 건 account-id **하나뿐**이다.
+
+    따라서 안전의 근거는 정의역 분리가 아니라 **순서**다: `_scrub` 이 먼저 20+ run 을
+    `***REDACTED***` 로 치환하므로 deny-scan 판정 시점에 이미 그 run 이 없다. 마스킹을
+    `_scrub` **앞**에 두면 신원 패턴이 deny 대상 문자열을 선소거해 K-6 가 hollow 화한다
+    (email·tenant-host 에서 실발생). 판정 이후 적용은 판정 입력을 바꾸지 않아 무해하다.
+    결박 = `test_d14e_scrub_precedes_deny_scan_witness` (산출 문자열 오라클).
+
+    **§7.1 "순서 정정 註" 와 모순 아님 (층 구분)**: 그 註가 "`_scrub` 선행은 K-6 를 hollow
+    화한다" 고 말한 대상은 **record 축(step 2)의 abort 판정**이고, 그래서 그 판정은
+    **pre-scrub 텍스트**로 옮겨졌다. 본 함수가 하는 것은 **per-field 축(step 1)의
+    post-scrub deny-scan** 으로 **층이 다르다** — 여기서의 deny hit 은 abort 가 아니라
+    해당 필드 **drop**(DR-P0-2 (b))이며, record 전체에 대한 무조건 abort(K-6)는 step 2 에
+    그대로 살아 있다. 곧 "과거의 함정" 에 현재 코드가 의존하는 것이 아니라, 서로 다른 두
+    층이 각자의 순서 규약을 갖는다.
 
     Returns: (body_verbatim | None, omitted_by_deny_scan, body_length_bytes)
     """

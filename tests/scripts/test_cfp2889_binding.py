@@ -61,7 +61,13 @@ import confluence_backward_measure as measure
 from lib.confluence_measurement_client import MeasurementRESTClient
 # 신원 패턴 SSOT — production 상수를 직접 참조한다 (3자 단일 출처: body 마스킹 ·
 # 커밋 golden 스캔 · 본 emit 채널 결박). 로컬 리터럴 복제는 한쪽 약화를 은폐한다 (iter2 N7).
-from lib.confluence_property_rest import F3_PII_PATTERNS, WriteAccounting
+from lib.confluence_property_rest import (
+    F3_PII_PATTERNS,
+    WriteAccounting,
+    _deny_scan_for_secrets,
+    mask_identity_tokens,
+    sanitize_body_field,
+)
 
 TEST_PAGE = "21430273"
 SENTINEL_TITLE = "CFP-2889-THROWAWAY-binding-suite"
@@ -659,4 +665,46 @@ def test_d14e_emit_channel_masks_identity_in_probe_body(binding_spy, tmp_path):
     # ⓑ 진단 가치 보존 — 신원 토큰만 지워지고 over-limit 시그니처는 남는다
     assert "too large" in emitted and "32768" in emitted, (
         "마스킹이 진단 문언까지 제거했다 — §4.2 실문언(AC-12 1차 출처) 파괴")
+
+
+def test_d14e_scrub_precedes_deny_scan_witness():
+    """D-14e **순서 witness arm**: `_scrub` 선행 ∧ 마스킹 후행 불변식을 산출 문자열로 결박.
+
+    ★ **본 arm 이 존재하는 이유 = 앞선 "정의역 disjoint 실증" 이 판별력 0 이었기 때문**이다.
+    그 실험은 신원 witness ∧ 20+ `[A-Za-z0-9+/=]` run 을 **동시에** 만족하는 입력을 쓰지 않아
+    검증 대상 속성에 **비민감**했고(M9·M9b 양쪽 GREEN), 그 위에서 "두 층은 겹치지 않는다" 는
+    거짓 명제가 실증된 것처럼 기록됐다. 여기서는 **양 속성을 동시에 만족하는 witness** 를 쓴다.
+
+    witness = `aaaa…(24자)@acme.co.kr` — email 신원 패턴에 매치되면서 local part 가 20+ run 을
+    형성한다(실측: `_deny_scan_for_secrets` 가 hit). 곧 두 층의 정의역은 **겹친다**.
+
+    오라클 = **산출 문자열이 `***REDACTED***` 를 보유할 것** (= `_scrub` 이 20+ run 에 *먼저*
+    발화한 증거). 실측 대조:
+      - 현 조립(`_scrub`→deny→mask)              → `'***REDACTED***@acme.co.kr'`  (GREEN)
+      - M9 (mask 를 deny 앞으로, `_scrub` 유지)   → `'***REDACTED***@acme.co.kr'`  (GREEN)
+      - M9b(M9 ∧ `_scrub` 제거)                  → `'[identity-redacted]'`        (**RED**)
+
+    ★ `omitted is True` 오라클은 **판별 불가**라 쓰지 않는다 — 현 조립도 M9b 도 `omitted=False`
+    다(`_scrub` 이 20+ run 을 지워 deny 가 애초에 발화하지 않거나, 마스킹이 먼저 지워 같은 결과).
+    판별은 **어느 층이 먼저 손댔는지가 남는 산출 문자열**에서만 선다.
+
+    ★ **M9 단독이 GREEN 인 것은 정상이며 검출 대상이 아니다** — `_scrub` 이 선행하는 한 deny
+    판정 입력에는 이미 20+ run 이 없으므로 마스킹을 판정 앞에 둬도 실제로 안전하다. 본 arm 이
+    지키는 불변식은 "마스킹이 `_scrub` 보다 앞서지 않을 것" 이고, 그 위반(M9b)만 RED 다.
+    """
+    witness = '{"m":"too large 32768","e":"' + "a" * 24 + '@acme.co.kr"}'
+
+    # 구성 전제 ① — witness 가 신원 패턴에 실제로 매치된다
+    assert mask_identity_tokens(witness) != witness, "witness 가 신원 패턴에 매치되지 않음"
+    # 구성 전제 ② — witness 가 20+ run 을 형성한다 (두 층 정의역이 겹친다는 실측 근거)
+    ok, _err = _deny_scan_for_secrets("a" * 24 + "@acme.co.kr")
+    assert ok is False, "witness 가 20+ run 을 형성하지 않음 — 교차 전제 미충족"
+
+    out, _omitted, _length = sanitize_body_field(witness)
+
+    assert "***REDACTED***" in out, (
+        f"산출물에 `_scrub` 발화 흔적이 없음 — 마스킹이 `_scrub` 보다 먼저 실행돼 deny 대상을 "
+        f"선소거했다(K-6 hollow 경로): {out!r}")
+    # 진단 문언은 여전히 verbatim (마스킹·scrub 이 시그니처를 훼손하지 않음)
+    assert "too large" in out and "32768" in out
 
