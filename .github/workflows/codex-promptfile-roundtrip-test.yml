@@ -50,6 +50,9 @@ on:
       - 'plugins/codeforge-review/agents/CodexReviewAgent.md'
       - 'plugins/codeforge-review/templates/codex-korean-literal-whitelist.md'
       - '.github/workflows/codex-promptfile-roundtrip-test.yml'
+      # AC-5 표면 2종 (CP §5 row 7 r11·r12 — 구현리뷰 r1 F-CR-14 Option A: AC-5 검사 표면 3종 전부 ⊆ 트리거 경로)
+      - 'plugins/codeforge-requirements/agents/RequirementsAnalystAgent.md'
+      - 'docs/orchestrator-playbook.md'
   workflow_dispatch: {}
 
 permissions:
