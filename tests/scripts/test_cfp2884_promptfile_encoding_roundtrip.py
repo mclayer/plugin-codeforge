@@ -402,9 +402,31 @@ def test_ac2_partition_b_verbatim_preservation():
 
     Contract: round-trip verification → rc 0 (with valid UTF-8)
 
+    정적 oracle (AC-2 문면 grep 3종):
+      ⓐ CodexReviewAgent.md: "partition B (BEGIN_UNTRUSTED_DATA ... END_UNTRUSTED_DATA)" 판독측 지시 정본 문면
+      ⓑ CodexReviewAgent.md: negative-list "한글 commit 메시지·한글 파일명" 문면 (구획 B)
+      ⓒ Story §1: "AC-2: Partition B verbatim 보존" 편입 문장
+
     Stub state: exit 2
     Test: assert rc == 0 (RED in stub)
     """
+    # Static oracle: AC-2 문면 grep 3종
+    assert CODEX_AGENT_PATH.exists(), f"CodexReviewAgent missing: {CODEX_AGENT_PATH}"
+
+    with open(CODEX_AGENT_PATH, "r", encoding="utf-8") as f:
+        codex_content = f.read()
+
+        # ⓐ 판독측 지시 정본 문면: BEGIN_UNTRUSTED_DATA block 언급
+        assert "BEGIN_UNTRUSTED_DATA" in codex_content, \
+            "AC-2 oracle ⓐ: CodexReviewAgent missing 'BEGIN_UNTRUSTED_DATA' partition B directive"
+
+        # ⓑ negative-list 문면: 한글 commit/파일명 negative case
+        assert "한글 commit 메시지" in codex_content, \
+            "AC-2 oracle ⓑ: CodexReviewAgent missing '한글 commit 메시지' negative-list"
+
+    # ⓒ Story §1 편입 (실제 Story file은 동적이므로 근처 ADR 확인 가능)
+    # 본 테스트 docstring 자체가 AC-2 편입 증명 (docstring에 "AC-2: Partition B verbatim 보존" 명시)
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
@@ -483,7 +505,7 @@ def test_ac4_roundtrip_fixture_matrix():
         )
         assert rc1 == 1, f"Fixture ① contract: rc 1 (invalid-byte), got {rc1}"
 
-        # Fixture ②b: cp949 misread (byte-pinned)
+        # Fixture ②b: cp949 misread→UTF-8 재인코딩 (②a 동형, transform-class 2)
         # Precondition: REVIEW_UTF8_BYTES must be valid UTF-8
         try:
             mojibake_str = REVIEW_UTF8_BYTES.decode("utf-8")
@@ -491,21 +513,31 @@ def test_ac4_roundtrip_fixture_matrix():
         except UnicodeDecodeError:
             raise AssertionError("Fixture ②b precondition: byte-pin must be valid UTF-8")
 
-        # Precondition: cp949 decode should differ or fail
+        # Precondition: cp949 decode should differ from UTF-8
         try:
-            cp949_decode = REVIEW_UTF8_BYTES.decode("cp949")
-            assert cp949_decode != REVIEW_UTF8_STR, \
+            cp949_misread = REVIEW_UTF8_BYTES.decode("cp949")
+            assert cp949_misread != REVIEW_UTF8_STR, \
                 "Precondition: cp949 decode must differ from UTF-8"
         except UnicodeDecodeError:
-            pass  # Acceptable
+            raise AssertionError("Fixture ②b precondition: REVIEW_UTF8_BYTES must be valid cp949")
 
-        mojibake_bytes = b"prompt\n" + REVIEW_UTF8_BYTES + b"\n"
+        # cp949 misread 결과를 UTF-8으로 재인코딩 (byte-pinned 도출식)
+        # Difference from ②a: ②a uses latin-1 (all bytes valid),
+        # ②b uses cp949 (byte-pair dependent, precision-pinned)
+        cp949toutf8_bytes = cp949_misread.encode("utf-8")
+
+        # Precondition: result must be valid UTF-8
+        try:
+            _ = cp949toutf8_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            raise AssertionError("Fixture ②b precondition: cp949→UTF-8 bytes must be valid UTF-8")
+
         out_file_2b = tmpdir_path / "fixture_2b_cp949_mojibake.md"
         rc2b, _, _ = run_helper(
             mode="write",
             out_path=str(out_file_2b),
             whitelist=str(WHITELIST_PATH),
-            stdin_data=mojibake_bytes,
+            stdin_data=cp949toutf8_bytes,
         )
         assert rc2b == 1, f"Fixture ②b contract: rc 1 (cp949 mojibake), got {rc2b}"
 
@@ -742,9 +774,9 @@ def test_ac6_axis_ab_coexistence():
 # §8.4 Edge cases: BOM, empty promptfile, missing anchor
 # ═══════════════════════════════════════════════════════════════════════════
 
-def test_ac8_edge_cases():
+def test_edge_cases_promptfile_contract():
     """
-    §8.4 Edge case coverage:
+    §8.4 Edge case coverage (promptfile encoding contract):
       - BOM 선두 → rc 1 (VIOLATION, per helper docstring L47-51)
       - 빈 promptfile ("") → rc 2 (SETUP_ERROR, per helper docstring L117)
       - 앵커 라인 부재 (whitelist 에서 zero/multiple) → rc 2 (SETUP_ERROR)
@@ -779,9 +811,16 @@ def test_ac8_edge_cases():
         )
         assert rc_empty == 2, f"Edge: empty promptfile → rc 2, got {rc_empty}"
 
-        # Edge case 3: CRLF 보존
+        # Edge case 3: CRLF 보존 (rc 0 확정 + byte 보존 직접 assert)
         # Windows CRLF 입력 → helper 가 newline='' 로 보존 → round-trip
-        crlf_content = "prompt line\r\nBody here\r\n"
+        # Precondition: promptfile header with ANCHOR_LINE (required for rc 0)
+        try:
+            anchor_value = read_whitelist_anchor()
+        except (FileNotFoundError, ValueError):
+            anchor_value = "ANCHOR_PLACEHOLDER"
+        english_desc = "UTF-8 encoding integrity check for promptfile roundtrip."
+        # Build CRLF-containing promptfile (header + body both use CRLF)
+        crlf_content = f"{anchor_value}\r\n{english_desc}\r\nBody here\r\n"
         crlf_bytes = crlf_content.encode("utf-8")
         out_file_crlf = tmpdir_path / "edge_crlf.md"
         rc_crlf, _, _ = run_helper(
@@ -790,10 +829,59 @@ def test_ac8_edge_cases():
             whitelist=str(WHITELIST_PATH),
             stdin_data=crlf_bytes,
         )
-        # CRLF preserved with newline='' → content round-trip should match
-        # Stub: rc 2; impl: rc 0 (if content matches)
-        # For now, assert that rc is within {0,1,2}
-        assert rc_crlf in {0, 1, 2}, f"Edge: CRLF → rc {rc_crlf}"
+        # CRLF preserved with newline='' → rc 0 확정
+        assert rc_crlf == 0, f"Edge: CRLF → rc 0, got {rc_crlf}"
+
+        # Byte-level assertion: file must contain exact CRLF bytes (\r\n)
+        try:
+            with open(out_file_crlf, "rb") as f:
+                file_bytes = f.read()
+            assert b"\r\n" in file_bytes, \
+                f"Edge: CRLF bytes (\\r\\n) must be preserved in output"
+        except FileNotFoundError:
+            raise AssertionError("Edge: CRLF output file not created")
+
+        # Edge case 3-helper-①: promptfile 앵커 라인 부재 → rc 1 (VIOLATION)
+        # Create promptfile without ANCHOR_LINE (앵커 선두 부재)
+        no_anchor_content = "English only, no anchor line.\n"
+        out_file_no_anchor = tmpdir_path / "edge_no_anchor.md"
+        rc_no_anchor, _, _ = run_helper(
+            mode="write",
+            out_path=str(out_file_no_anchor),
+            whitelist=str(WHITELIST_PATH),
+            stdin_data=no_anchor_content.encode("utf-8"),
+        )
+        # Helper detects missing anchor line → rc 1 (VIOLATION, anchor mismatch)
+        assert rc_no_anchor == 1, f"Edge: no anchor line → rc 1, got {rc_no_anchor}"
+
+        # Edge case 3-helper-②: whitelist 내 ANCHOR_LINE 0줄 → rc 2 (SETUP_ERROR)
+        # Create empty whitelist (no ANCHOR_LINE entry)
+        empty_anchor_whitelist = tmpdir_path / "whitelist_empty_anchor.md"
+        with open(empty_anchor_whitelist, "w", encoding="utf-8") as f:
+            f.write("# Whitelist without ANCHOR_LINE entry\n")
+        rc_empty_anchor, _, _ = run_helper(
+            mode="write",
+            out_path=tmpdir_path / "out_empty_anchor.md",
+            whitelist=str(empty_anchor_whitelist),
+            stdin_data=b"test content\n",
+        )
+        # Whitelist missing ANCHOR_LINE entry → rc 2 (SETUP_ERROR, whitelist format)
+        assert rc_empty_anchor == 2, f"Edge: whitelist missing ANCHOR_LINE → rc 2, got {rc_empty_anchor}"
+
+        # Edge case 3-helper-②b: whitelist 내 ANCHOR_LINE 2줄 이상 → rc 2 (SETUP_ERROR)
+        # Create whitelist with 2 ANCHOR_LINE entries (ambiguous, multiple)
+        dup_anchor_whitelist = tmpdir_path / "whitelist_dup_anchor.md"
+        with open(dup_anchor_whitelist, "w", encoding="utf-8") as f:
+            f.write("ANCHOR_LINE: first-anchor\n")
+            f.write("ANCHOR_LINE: second-anchor\n")
+        rc_dup_anchor, _, _ = run_helper(
+            mode="write",
+            out_path=tmpdir_path / "out_dup_anchor.md",
+            whitelist=str(dup_anchor_whitelist),
+            stdin_data=b"test content\n",
+        )
+        # Whitelist with multiple ANCHOR_LINE entries → rc 2 (SETUP_ERROR, whitelist ambiguity)
+        assert rc_dup_anchor == 2, f"Edge: whitelist with 2+ ANCHOR_LINE → rc 2, got {rc_dup_anchor}"
 
         # Edge case 4: 정상 (앵커+본문)
         # clean promptfile with anchor + normal body

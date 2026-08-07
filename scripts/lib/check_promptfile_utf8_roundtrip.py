@@ -55,7 +55,10 @@ write 모드 (권장 — dispatch 경로 의무)
   6. **내용 동일성 대조** — (2) 의 in-memory 원본 문자열과 (5) 의 re-read 전문이 완전히 같아야 한다.
      불일치 = 위반(exit 1). ★ 이 단계가 write 모드의 핵심 기제다 — 앵커 assert 만으로 대체하면
      본문만 변이된 경우를 놓친다 (anchor-assert-only hollow).
-  7. **한글 앵커 assert** — whitelist 파일에서 취득한 앵커 라인이 re-read 결과에 verbatim 존재.
+  7. **한글 앵커 assert** — whitelist 파일에서 취득한 앵커가 re-read 결과의 **블록 외부**에
+     verbatim **정확히 1회** 존재 (whitelist 템플릿 §한글 앵커 조립 규약 "verbatim 1회" 의 기계화).
+     ★ 전문 substring 단독 검사는 금지 — 앵커가 untrusted block **안에만** 있어도, 2회+ 중복돼도
+     통과해 헤더 앵커 부재를 은폐한다 (anchor-presence-only hollow).
   8. **partition 검사** (아래) 수행.
   전부 통과 = exit 0.
 
@@ -125,8 +128,8 @@ Exit code (closed enum — 이 밖의 값 반환 금지)
 ════════════════════════════════════════════════════════════════════════════════
 
   0 = PASS.
-  1 = 검증 위반 (RED) — invalid byte / BOM / 내용 불일치 / 앵커 부재 / partition 위반 /
-      whitelist 형식·validity 위반.
+  1 = 검증 위반 (RED) — invalid byte / BOM / 내용 불일치 / 앵커 위반(부재 · 2회+ 중복 ·
+      블록 내부 전용) / partition 위반 / whitelist 형식·validity 위반.
   2 = setup error — 인자 오류, whitelist 파일 부재, 앵커 라인 0개·2개+, 빈 promptfile
       (`"" == ""` 공허 통과 차단), --out/--in 미지정, 파일 I/O 실패.
   ※ 호출측 (CodexReviewAgent dispatch) 은 rc != 0 이면 codex 를 호출하지 않고 dispatch 를 중단한다
@@ -340,17 +343,17 @@ def load_whitelist(whitelist_path):
     return result
 
 
-def assert_anchor(text, anchor_value):
-    """한글 앵커 assert — 앵커 값이 verbatim 존재하지 않으면 RED (CP §8.4 '앵커 라인 부재 = RED')."""
-    if anchor_value not in text:
-        raise ViolationError(
-            "한글 앵커 부재 — whitelist 취득 앵커 값이 promptfile 안에 verbatim 없음 "
-            "(조립 규약: 헤더에 `ANCHOR_LINE:` 줄 verbatim 1회 포함 의무)"
-        )
+def _split_partition(text, expected_nonce=None):
+    """구획 분해 **공유 seam** — 블록 구조를 파싱해 **블록 외부** 라인 `[(lineno, line)]` 을 반환.
 
+    구조 위반 (짝 불일치 · 중첩 · close 선행 · nonce 불일치 · EOF 미닫힘) = ViolationError
+    (docstring 'partition 검사' (a) 항). 블록 **내부** 라인은 반환하지 않는다 — 구획 B 는 인용
+    원문 verbatim 구역이라 외부 판정의 대상이 아니다.
 
-def check_partition(text, anchor_value, literals, expected_nonce=None):
-    """구획 검사 — (a) 블록 구조 정합 + (b) 블록 외부 한글 0. 위반 = ViolationError."""
+    `assert_anchor`(앵커가 블록 **외부**에 1회) 와 `check_partition`(블록 외부 한글 0) 이 **같은**
+    A/B 경계를 보도록 분해 로직을 단일화한 지점이다 — 파서를 2벌 두면 두 판정의 경계가 조용히
+    갈라진다 (drift 표면).
+    """
     lines = split_lines(text)
 
     in_block = False
@@ -395,6 +398,47 @@ def check_partition(text, anchor_value, literals, expected_nonce=None):
 
     if in_block:
         raise ViolationError("EOF: 미닫힌 UNTRUSTED 블록 (close sentinel 부재)")
+
+    return outside
+
+
+def assert_anchor(text, anchor_value, expected_nonce=None):
+    """한글 앵커 assert — 앵커가 **블록 외부**에 **정확히 1회** verbatim 존재해야 통과.
+
+    기계화 대상 문면 = whitelist 템플릿 §한글 앵커 **조립 규약** ("promptfile 헤더에 위
+    `ANCHOR_LINE:` 줄을 **verbatim 1회** 포함") + CP §8.4 '앵커 라인 부재 = RED'.
+
+    전문(全文) substring 단독 검사는 그 문면의 두 축을 놓친다:
+      · **위치** — 앵커가 untrusted block **안에만** 있어도 통과한다. 구획 B 는 인용 원문
+        verbatim 구역이므로 조립이 앵커를 인용문 안으로 밀어 넣으면 **헤더 앵커 부재**가 블록 안
+        사본으로 은폐된다. 앵커의 존재 의의는 구획 A(헤더) 무결성의 증인이지 인용문 장식이 아니다.
+      · **횟수** — "verbatim 1회" 가 2회+ 로 늘어도 통과한다. 고정 헤더가 복수면 어느 것이 헤더인지
+        판정 불능이고, 사본 하나만 pristine 이어도 나머지 사본의 오염이 가려진다.
+    """
+    total = text.count(anchor_value)
+    if total == 0:
+        raise ViolationError(
+            "한글 앵커 부재 — whitelist 취득 앵커 값이 promptfile 안에 verbatim 없음 "
+            "(조립 규약: 헤더에 `ANCHOR_LINE:` 줄 verbatim 1회 포함 의무)"
+        )
+    if total > 1:
+        raise ViolationError(
+            f"한글 앵커 {total}회 출현 — 조립 규약은 **verbatim 1회** "
+            "(고정 헤더 중복 = 헤더 판정 불능 · 사본 하나만 pristine 이면 나머지 오염 은폐)"
+        )
+
+    # 위치 판정 = partition 분해 seam 재사용 (신규 파서 0 — check_partition 과 동일 A/B 경계).
+    outside = _split_partition(text, expected_nonce)
+    if not any(anchor_value in line for _, line in outside):
+        raise ViolationError(
+            "한글 앵커가 UNTRUSTED 블록 **안**에만 존재 — 앵커는 구획 A(헤더) 소속이며, "
+            "블록 안 사본은 인용 원문일 뿐 헤더 무결성을 증언하지 못한다"
+        )
+
+
+def check_partition(text, anchor_value, literals, expected_nonce=None):
+    """구획 검사 — (a) 블록 구조 정합 + (b) 블록 외부 한글 0. 위반 = ViolationError."""
+    outside = _split_partition(text, expected_nonce)
 
     # 긴 리터럴 우선 제거 — `phase:요구사항` 을 먼저 지우면 `phase:요구사항-리뷰` 의 `-리뷰` 가
     # 잔여 한글로 남아 오탐이 된다.
@@ -451,6 +495,9 @@ def compare_roundtrip(original_text, out_path, whitelist_path):
 
     anchor_value, _ = load_whitelist(whitelist_path)
     try:
+        # expected_nonce 미전달 = 블록 경계를 파일 첫 open 마커에서 유도 (seam 의 3-인자 계약 보존 —
+        # CP §8.2 fixture ④ 가 이 시그니처를 직접 호출한다). nonce **위조** 검출은 이 seam 이 아니라
+        # run_write 가 `--nonce` 를 넘겨 부르는 check_partition 소유다 (책임 분리, 검사 누락 0).
         assert_anchor(re_read, anchor_value)
     except ViolationError as exc:
         print(f"VIOLATION: {exc}", file=sys.stderr)
@@ -521,7 +568,7 @@ def run_verify(in_path, whitelist_path, nonce):
     _reject_bom(text)
 
     anchor_value, literals = load_whitelist(whitelist_path)
-    assert_anchor(text, anchor_value)
+    assert_anchor(text, anchor_value, nonce)
     check_partition(text, anchor_value, literals, nonce)
 
     print(

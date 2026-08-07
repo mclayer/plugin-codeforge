@@ -134,15 +134,21 @@ export PYTHONUTF8=1     # 별도 줄 export (2급 — 우리 Python helper 한�
 # 조립 원본 = 한글 앵커 라인 + 구획 A(packet·lane focus·판독측 지시) + 구획 B untrusted block(nonce=${TS}).
 # 워커가 조립 원본을 stdout 으로 emit → helper 가 유일 write 주체 (표면별 자체 write 금지 — 검사기 분산 = drift 표면).
 # 1급 방어 = helper 코드계층 명시 encoding='utf-8' (env 아님 — "env 걸었으니 write 안전" 오해 금지).
+# 파이프 rc 은폐 차단 (별도 줄 — 위 export 2종 관례 동형): 미설정 시 파이프 상태 = **말단** helper rc 뿐이라
+#   상류 `<조립 원본 emit>` 이 절단·비정상 종료해도 helper 가 그 잘린 입력을 통과시키면 assert_rc=0 으로 dispatch 가 진행된다.
+set -o pipefail
 <조립 원본 emit> | check_promptfile_utf8_roundtrip.py --mode write --out "$PROMPTFILE" --whitelist "$WHITELIST" --nonce "$TS"
-assert_rc=$?   # 0=PASS / 1=검증 위반 / 2=setup error (helper exit enum — 상세=판정표 참조)
+assert_rc=$?   # 0=PASS / 1=검증 위반 / 2=setup error (helper exit enum — 상세=판정표 참조).
+               # pipefail 하에선 **상류 emit 의 rc** 도 실릴 수 있다 (helper enum 밖 값 가능) — 처분은 동일: ≠0 = dispatch 중단.
 
-if ! command -v timeout >/dev/null 2>&1; then
+if [ "$assert_rc" -ne 0 ]; then
+  # 축 A fail-closed: codex 미호출 (at-most-once 안전). 재조립 ≤1회, 초과 = ESCALATE — 자동 재시도 금지 (상세=판정표).
+  # ★ 분기 **순서가 load-bearing**: timeout-부재 분기를 앞에 두면 인코딩 assert 실패가 stall marker 로 오귀속돼
+  #   전용 marker 가 발화하지 못하고 stall 통계까지 오염된다 (판정표 전용-marker 행 = 원인 분별 요구).
+  echo "[promptfile-encoding-assert-failed: rc=${assert_rc}]"; verdict=inconclusive
+elif ! command -v timeout >/dev/null 2>&1; then
   # GNU timeout 부재 (Windows Git Bash 등) = dispatch skip (제어흐름 단절 필수 — fall-through 시 부재 timeout 호출 exit 127).
   echo "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"; verdict=inconclusive
-elif [ "$assert_rc" -ne 0 ]; then
-  # 축 A fail-closed: codex 미호출 (at-most-once 안전). 재조립 ≤1회, 초과 = ESCALATE — 자동 재시도 금지 (상세=판정표).
-  echo "[promptfile-encoding-assert-failed: rc=${assert_rc}]"; verdict=inconclusive
 else
   export MSYS_NO_PATHCONV=1   # 별도 줄 export (inline env-prefix 는 lint execution_first_tokens first-token 판정 파괴 → 금지)
   # CWD = 리뷰 대상 repo(worktree) 안 (trusted-dir, --skip-git-repo-check 금지). read-only 기본 (code write-gate 만 workspace-write).
@@ -182,7 +188,7 @@ fi
 | **2** | arg-parse conflict | `inconclusive` (dispatch 배선 버그 회귀 신호) |
 | **125/126/127** | timeout 자체 실패 / 실행 불가 / 바이너리 부재 | `inconclusive` (127 = preflight `command -v` 선차단) |
 | **기타 >0** | codex 비정상 종료 | `inconclusive` |
-| **(pre-dispatch) `assert_rc` ≠ 0** | promptfile UTF-8 round-trip assert 실패 — **codex 미호출** (codex exit 과 별 채널: helper enum `1`=검증 위반 / `2`=setup error) | `inconclusive` + **전용** marker `[promptfile-encoding-assert-failed: rc=<n>]` → re-assemble **≤1회**, 초과 = ESCALATE (자동 재시도 금지 — 입력 결함은 재시도로 낫지 않고, 중단이 codex 호출 이전이라 at-most-once 안전). stall/sandbox-fallback marker 재사용 금지 (stall 통계 오염·원인 오귀속 방지) |
+| **(pre-dispatch) `assert_rc` ≠ 0** | promptfile UTF-8 round-trip assert 실패 — **codex 미호출** (codex exit 과 별 채널: helper enum `1`=검증 위반 / `2`=setup error / pipefail 하 상류 emit rc — F-CR-7) | `inconclusive` + **전용** marker `[promptfile-encoding-assert-failed: rc=<n>]` → re-assemble **≤1회**, 초과 = ESCALATE (자동 재시도 금지 — 입력 결함은 재시도로 낫지 않고, 중단이 codex 호출 이전이라 at-most-once 안전). stall/sandbox-fallback marker 재사용 금지 (stall 통계 오염·원인 오귀속 방지) |
 
 **AC-6 소비 재검증 (fail-closed 5단계 — out.json 소비 직전)**: exit 0 이어도 out.json 을 신뢰 전 재검증. helper `scripts/lib/check_codex_review_output_schema.py "$OUT_JSON" "$SCHEMA" "<packet category_enum, 쉼표구분>"` — ① 파일 존재 ② JSON parse ③ schema 준수(required/additionalProperties/enum) ④ cross-field(`counts.Px` ↔ `findings[]` severity별 실개수 일치) ⑤ `findings[].category` ∈ packet `category_enum`. helper exit 0 = 통과(out.json `verdict` read) / exit 1 = 하나라도 실패 → **inconclusive** (PASS 승격 0 — unclassified 강등 개념은 schema 경로에서 소멸, 재검증 fail-closed 로 대체). 3번째 인자 = dispatch 시점 워커가 packet `category_enum` 을 쉼표로 join 해 전달.
 
@@ -199,7 +205,7 @@ fi
 
 워커가 packet `lane` 값에 따라 아래 prompt를 **promptfile** 로 조립 (`- < "$PROMPTFILE"` 주입 — inline argv 아님). 근거 anchor = **ADR-081 §결정 D16 + ADR-170 §결정 21 (= §결정 2 표 entry 7) 동형 승계** — "argv 는 ASCII path 만, 한국어 실값·content 는 UTF-8 파일 내부". argv 축은 §결정 D8 file-redirect 가 기차단하고, 파일 **내용** 축은 D16 축 A (round-trip assert) 가 완결한다. prompt 내용은 lane 별 아래 verbatim.
 
-> 아래 5 블록 = **구획 A (영어 강제, floor = 한글 0)** — 판정·예외·oracle scope 규칙 SSOT = §언어 구획 규약 (재인용 금지). 한글 pointer 산문은 `#### lane=` 구획 밖(본 줄)에만 둔다 — 구획 안에 두면 oracle 판정 표면을 오염시킨다.
+> 아래 5 블록 = **구획 A (영어 강제, floor = 한글 0)** — 판정·예외·oracle scope 규칙 SSOT = §언어 구획 규약 (재인용 금지). 한글 pointer 산문은 `#### lane=` 헤딩 직하 **fenced 블록 밖**(본 줄 · 블록 사이 산문)에만 둔다 — 블록 **안**에 두면 oracle 판정 표면을 오염시킨다.
 
 #### lane=requirements-review (CFP-2326 / ADR-125)
 
