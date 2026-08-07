@@ -1,0 +1,4 @@
+	line-with-tab
+  line with spaces
+
+trailing-blank-mix (CR 미포함 — 파일 채널은 .gitattributes LF 정규화 지배, CR 변이는 테스트 합성 소관)

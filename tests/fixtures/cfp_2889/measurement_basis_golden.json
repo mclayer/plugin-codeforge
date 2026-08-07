@@ -1,0 +1,73 @@
+{
+  "run_id": "20260806T060155",
+  "empirical_source": "[empirical-source: 2026-08-06T06:02:00+09:00, v2 property CRUD (measure run), RECONCILED, tenant=redacted, run_id=20260806T060155]",
+  "encoding_basis": {
+    "utf8_bytes": 184,
+    "ascii_bytes": 280,
+    "delta_bytes": 96
+  },
+  "boundary_basis": {
+    "points": [
+      {
+        "json_encoded_bytes": 32767,
+        "write_success": true,
+        "http_status": null
+      },
+      {
+        "json_encoded_bytes": 32769,
+        "write_success": false,
+        "http_status": 400
+      }
+    ],
+    "discriminating": true
+  },
+  "over_limit_basis": {
+    "v2_probe_status": 400,
+    "v2_probe_classified_as": "malformed",
+    "v2_control_status": null,
+    "v1_probe_status": 404,
+    "v1_classification": "other"
+  },
+  "header_name_set": [
+    "Atl-Confluence-Via",
+    "Atl-Request-Id",
+    "Atl-Traceid",
+    "Cache-Control",
+    "Connection",
+    "Content-Encoding",
+    "Content-Type",
+    "Date",
+    "Deprecation",
+    "Expires",
+    "Link",
+    "Nel",
+    "Report-To",
+    "Reporting-Endpoints",
+    "Server",
+    "Server-Timing",
+    "Strict-Transport-Security",
+    "Transfer-Encoding",
+    "Vary",
+    "Via",
+    "Warning",
+    "X-Amz-Cf-Id",
+    "X-Amz-Cf-Pop",
+    "X-Cache",
+    "X-Confluence-Request-Time",
+    "X-Content-Type-Options",
+    "X-Xss-Protection"
+  ],
+  "header_capture_count": 42,
+  "budget_basis": {
+    "budget_bytes": 28672,
+    "wrap_overhead_bytes_declared": 10,
+    "wrap_overhead_bytes_local_measured": 10,
+    "effective_chunk_budget": 28662,
+    "measurement_note": "wrap overhead 는 로컬 인코딩 산술 실측 — 서버 관측 아님"
+  },
+  "measurement_tiers": {
+    "storage_axis": "normative",
+    "over_limit_axis": "declared",
+    "rate_axis": "advisory"
+  }
+}
