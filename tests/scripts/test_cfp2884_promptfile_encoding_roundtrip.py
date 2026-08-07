@@ -122,11 +122,18 @@ PLAYBOOK_PATH = REPO_ROOT / "docs" / "orchestrator-playbook.md"
 
 # Byte-pinned fixture: UTF-8 bytes for '리뷰' (2 hangul syllables)
 # strict cp949 decode of these exact bytes → 由щ럭 (mojibake, but valid UTF-8)
+# ★ 위 `由` 는 CLAUDE.md 한자 금지의 예외다 — 산문이 아니라 **실측 mojibake 산출값 verbatim**
+#   (이 byte 열을 cp949 로 strict decode 하면 나오는 글자 그대로). 한글로 바꾸면 기록된 측정
+#   결과가 거짓이 된다. 금지 규칙의 대상은 서술 문장이지 pin 된 관측치가 아니다.
 REVIEW_UTF8_BYTES = b"\xeb\xa6\xac\xeb\xb7\xb0"  # '리뷰' in UTF-8
 REVIEW_UTF8_STR = "리뷰"  # Correct rendering
 
 # Anchor line from whitelist file (§3.3, fixture ③ precondition)
 ANCHOR_LINE_PREFIX = "ANCHOR_LINE:"
+
+# ATX 헤딩 (`# ` ~ `###### `) — AC-1 oracle 의 블록 bound 판정선. fence **밖** 줄에만 적용한다
+# (fence 안 shell 주석 `# …` 을 헤딩으로 오인하면 정상 파일이 false-RED — CR3-1).
+ATX_HEADING_RE = re.compile(r"^#{1,6} ")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -203,30 +210,48 @@ def _verify_ac1_static_oracle(agent_path=None, whitelist_path=None):
     with open(agent_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    lane_headings = [i for i, line in enumerate(lines) if line.startswith("#### lane=")]
+    # ── 구조 스캔 1회 (FIX Iter 3 CR3-1) — fence 상태를 추적하며 헤딩·fence span 동시 수집 ──
+    # 왜 fence-인지 스캔인가: 이 파일의 fence **안**에는 `# ── 정본 dispatch 템플릿 …` 류
+    #   shell 주석이 8줄 있다 (실측 L123-138). 헤딩을 fence 무시하고 `^#{1,6} ` 로만 뽑으면
+    #   그 주석이 헤딩으로 오인돼 lane 블록의 bound 를 그 자리에서 끊는다 → 정상 파일이 false-RED.
+    # 왜 bound 를 **다음 lane 헤딩**이 아니라 **다음 임의 레벨 헤딩**으로 넓혔는가 (CR3-1):
+    #   마지막 lane(=tail 구간)은 다음 lane 헤딩이 없어 bound 가 EOF 였다. 그래서 그 fence 를
+    #   지우면 스캔이 하류의 **non-lane** fence(`### 변종` 이후)를 조용히 집어 블록 수 5 를 유지했다
+    #   — 그 하류 블록이 한글까지 없으면 count 축·partition 축 **둘 다 침묵** (r3 합성 반증 실측).
+    #   임의 레벨 헤딩으로 bound 하면 tail 도 `### 변종`(L347)에서 닫혀 span 이 lane 구간에 갇힌다.
+    # 이제 위 주석의 "구조적 disjoint" 는 tail 포함 전 구간에서 참이다: fence span 은 단일 pass
+    #   토글로 서로 배타이고, 각 lane 의 선택 구간 (h, bound] 는 헤딩 순서상 서로 겹치지 않는다.
+    fence_spans = []          # [(start, end)] — 여는/닫는 ``` 줄 번호 쌍 (content = 그 사이)
+    heading_lines = []        # fence **밖** ATX 헤딩만
+    _open_at = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("```"):
+            if _open_at is None:
+                _open_at = i
+            else:
+                fence_spans.append((_open_at, i))
+                _open_at = None
+            continue
+        if _open_at is None and ATX_HEADING_RE.match(line):
+            heading_lines.append(i)
+    # 미닫힌 fence = 구조 파손 (falsifiable — 닫는 fence 1줄 제거하면 발화한다)
+    assert _open_at is None, (
+        f"AC-1 oracle: {agent_path.name} L{_open_at + 1} 의 fence 가 EOF 까지 닫히지 않았다 — "
+        f"블록 경계 판정 불능")
+
+    lane_headings = [i for i in heading_lines if lines[i].startswith("#### lane=")]
 
     # 계약 conjunct 1/2: 헤딩 수 == 5
     assert len(lane_headings) == 5, \
         f"AC-1 oracle: expected 5 `#### lane=` headings, found {len(lane_headings)}"
 
-    # 블록 탐색은 **다음 헤딩 직전까지** bound (F2) — 미bound 면 fence 가 사라진 헤딩이
-    # 다음 헤딩의 fence 를 조용히 집어 검사 커버리지가 축소된다 (CR2-2 실증: 4/5 무검출).
-    # bound 덕에 블록 span 은 구조적으로 서로 disjoint 하다 (별도 assert 를 두면 절대 실패할 수
-    # 없는 hollow assert 가 되므로 두지 않는다).
     blocks = []
     for idx, heading_line_num in enumerate(lane_headings):
-        bound = lane_headings[idx + 1] if idx + 1 < len(lane_headings) else len(lines)
-        block_start = next(
-            (i for i in range(heading_line_num + 1, bound) if lines[i].strip().startswith("```")),
-            None)
-        if block_start is None:
+        bound = next((j for j in heading_lines if j > heading_line_num), len(lines))
+        span = next(((s, e) for s, e in fence_spans if heading_line_num < s < bound), None)
+        if span is None:
             continue
-        block_end = next(
-            (i for i in range(block_start + 1, bound) if lines[i].strip().startswith("```")),
-            None)
-        if block_end is None:
-            continue
-        blocks.append((idx, heading_line_num, block_start, block_end))
+        blocks.append((idx, heading_line_num, span[0], span[1]))
 
     # 계약 conjunct 2/2: 블록 수 == 5 (구 구현에서 탈락해 있던 축 — F2 복원)
     assert len(blocks) == 5, (
@@ -907,12 +932,17 @@ def _ac6_predicate(helper_path: Path, workflow_path: Path) -> bool:
 
 def test_ac6_axis_ab_coexistence():
     """
-    AC-6: 4가지 필수 요소의 동시 존재.
+    AC-6: 축 A·B 산출물의 동시 존재 (4 요소).
 
-    Axis A: helper script 실재 ∧ workflow 실재
-    Axis B: whitelist 파일 실재 ∧ CodexReviewAgent 구획 절 존재
+    구조 (docstring 과 1:1 — CR3-2 재기술): 4 요소가 **한 술어**에 들어있지 않다.
+      · Axis A = `_ac6_predicate(helper, workflow)` — **2-술어 AND** (경로 2개 존재)
+      · Axis B = **별개 assert 2종** — whitelist 파일 존재 / CodexReviewAgent 구획 절 헤더 문면
+        (+ ANCHOR_LINE 참조). 술어 함수가 아니라 본문 assert 다.
+      구 docstring 의 "4-술어" 는 `_ac6_predicate` 가 4개를 본다는 오해를 준다 — 실물은
+      2-술어 함수 + 별개 assert 2종 구조다.
 
-    하위 케이스: 합성 tmp tree(axis A 경로 부재) → predicate FALSE → RED
+    하위 케이스 (CR3-3): `_ac6_predicate` 진리표 4종 — (fake,fake)/(real,fake)/(fake,real) → False,
+      (real,real) → True. 혼합 2종이 AND→OR mutant 를, (real,real) 이 상수-False 구현을 죽인다.
     """
     # Axis A: helper 존재 ∧ workflow 존재 (4-술어 복원)
     workflow_path = REPO_ROOT / ".github" / "workflows" / "codex-promptfile-roundtrip-test.yml"
@@ -936,17 +966,35 @@ def test_ac6_axis_ab_coexistence():
         assert "ANCHOR_LINE:" in content, \
             "AC-6 axis B: anchor line reference missing"
 
-    # Sub-case: 합성 tmp tree에서 축 A 경로 부재 시 predicate FALSE
-    # (신규 하위케이스 추가)
+    # ── Sub-case: `_ac6_predicate` 진리표 3종 (CR3-3) ──────────────────────────
+    # 구 구현은 (fake, fake) 1종뿐이라 술어가 AND 인지 OR 인지 구분하지 못했다:
+    #   `and` → `or` 로 바꿔도 (fake,fake) 는 여전히 False → mutant 생존.
+    # **혼합 입력 2종**이 AND 를 결박한다 — OR 이면 둘 다 True 가 되어 즉시 RED.
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
-        # Simulate missing helper path
         fake_helper = tmpdir_path / "nonexistent" / "helper.py"
         fake_workflow = tmpdir_path / "nonexistent" / "workflow.yml"
 
-        axis_a_sub_result = _ac6_predicate(fake_helper, fake_workflow)
-        assert not axis_a_sub_result, \
-            "AC-6 sub-case: nonexistent paths must yield FALSE predicate"
+        # (fake, fake) → False (양측 부재)
+        assert not _ac6_predicate(fake_helper, fake_workflow), \
+            "AC-6 sub-case ⓐ (fake, fake): nonexistent paths must yield FALSE predicate"
+
+        # (real, fake) → False — helper 만 있어도 workflow 부재면 공존 아님.
+        #   AND→OR mutant 는 여기서 True 를 내며 죽는다.
+        assert not _ac6_predicate(HELPER_SCRIPT, fake_workflow), (
+            "AC-6 sub-case ⓑ (real helper, fake workflow): AND 술어면 FALSE 여야 한다 — "
+            "TRUE = OR 로 약화된 것 (한쪽만 있어도 '공존' 판정 = 계약 위반)")
+
+        # (fake, real) → False — 대칭 축. 한쪽만 검사하는 구현도 여기서 죽는다.
+        assert not _ac6_predicate(fake_helper, workflow_path), (
+            "AC-6 sub-case ⓒ (fake helper, real workflow): AND 술어면 FALSE 여야 한다 — "
+            "TRUE = OR 약화 또는 helper 인자 무시")
+
+        # (real, real) → True — 위 3종이 vacuous-FALSE 상수가 아님을 결박
+        #   (항상 False 를 돌려주는 구현이면 여기서 죽는다).
+        assert _ac6_predicate(HELPER_SCRIPT, workflow_path), (
+            "AC-6 sub-case ⓓ (real, real): TRUE 여야 한다 — FALSE = 술어가 상수 False "
+            "(위 ⓐⓑⓒ 가 전부 공허해진다)")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1238,7 +1286,7 @@ def test_ac9_whitelist_mutation_discriminating():
 
         # Extract first whitelisted token from original (if any)
         # Entry format: `<literal>\t<path>` (TAB-separated, no leading #)
-        # TAB-filter: entry判定線 = tab 포함 줄만 (helper _parse_entries 동일 판정선)
+        # TAB-filter: entry 판정선 = tab 포함 줄만 (helper _parse_entries 동일 판정선)
         all_tokens = []  # Collect all valid tokens for assert (수술 1)
         first_token = None
         first_token_line_idx = None
