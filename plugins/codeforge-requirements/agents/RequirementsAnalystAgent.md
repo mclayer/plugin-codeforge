@@ -66,6 +66,8 @@ permissions:
 
 ```bash
 which codex >/dev/null 2>&1 || { echo "ERROR: codex CLI not found"; exit 1; }
+export LC_ALL=C.UTF-8   # 별도 줄 export (inline env-prefix 금지 — first-token 판정 파괴, ADR-081 §결정 D16 3항)
+export PYTHONUTF8=1     # 우리 Python 조립·검증 계층 한정 (codex 실행 사슬 = node→Rust native 라 codex 자신엔 무효)
 OUT=/tmp/req-analysis-$$.md
 mkdir -p /tmp
 codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
@@ -116,6 +118,17 @@ rm -f "$OUT"
 - exit 1 하드 실패 → 게이트 블록
 - 실행 성공 시 `$OUT` 파일 내용 + 메타데이터 반환
 - 사용자 원문·ADR heredoc verbatim (변조 금지)
+
+### 언어 구획 · UTF-8 인코딩 규약 (지시문 프레임 한정 — ADR-081 §결정 D16 SSOT)
+
+규칙 본문 SSOT = [ADR-081](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D16 (재인용 금지 — drift 회피).
+
+- **적용 범위 = 지시문 프레임 한정** (D16 9항). 본 표면의 분석 대상 자체가 **사용자 한글 원문**이라 프롬프트 본문은 구획 B 지배다 — CodexReviewAgent 의 mandatory 전면 적용과 등급이 다르다.
+  - **구획 B (verbatim 보존, 번역·재서술·요약 대체 금지)**: heredoc 안 `[사용자 요구사항]` / `[관련 ADR]` / `[관련 코드/문서]` / `[이전 합의]` 슬롯에 주입되는 실값 전부. 위 "사용자 원문·ADR heredoc verbatim (변조 금지)" 항의 언어 축 재확인이며 신규 제약이 아니다.
+  - **구획 A (지시문 프레임)**: 출력 형식 지시·역할 프레이밍. 본 표면은 한글 유지 — 전면 영어화는 D16 9항이 CodexReviewAgent 에만 부과한다.
+- **축 A — UTF-8 인코딩 배선**: 위 실행 패턴의 `export LC_ALL=C.UTF-8` + `export PYTHONUTF8=1` **별도 줄** export 2종 (inline env-prefix 금지). 이 2종은 **2급 defense-in-depth** 이다 — `LC_ALL`/`LANG` 은 Python-on-Windows 파일 I/O 에 무효이고 codex 자신(node→Rust native)에도 무효다. 실효 대상 = 우리 쪽 Python 조립·검증 계층 한정.
+- **보증 등급 차이 (정직 공개 — Change Plan §12-8)**: 본 표면은 heredoc 직접 주입이라 **promptfile write 산출물이 없다** → `scripts/lib/check_promptfile_utf8_roundtrip.py` 의 round-trip 내용 동일성 assert 는 **구조적으로 비적용** (누락이 아니라 대상 부재). 확보되는 보증 = env pin (위 2종) + 검증 helper 를 경유하는 promptfile class 표면과 **동일 등급이 아님**을 명시한다. "본 경로도 round-trip 보증된다" 서술 금지.
+- **관찰 기록 (조치 없음)**: 같은 codex dispatch 계열인데 CodexReviewAgent 는 promptfile(`- <` file-redirect), 본 표면은 heredoc 이라 **비대칭**이 존재한다. heredoc→promptfile 전환은 현재 3문 게이트 (ADR-119 §결정 9) 미충족으로 out-of-scope — 본 경로에서 mojibake 재발이 관측되면 전환 재평가 trigger (재개정 권한 = 요구사항 lane).
 
 ## 보고 형식
 

@@ -1522,6 +1522,14 @@ codeforge Orchestrator/lane 이 Codex CLI worker check 를 invoke 할 때 (Codex
 
 dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 
+**promptfile 조립 UTF-8 배선 + round-trip 검증 helper 호출 계약** (CFP-2884 / [ADR-081 Amendment 15](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D16 3항·9항):
+
+위 file-redirect 로 write 하는 promptfile 은 **promptfile class** 이므로 조립 표면이 공용 검증 adapter 를 경유할 의무를 진다 (표면별 자체 검증 재구현 금지 — 검사기 분산 = drift 표면).
+
+1. **env export 2종 — 별도 줄** (inline env-prefix 금지: `LC_ALL=C.UTF-8 codex exec …` 형태는 lint first-token 판정을 파괴한다). `export LC_ALL=C.UTF-8` / `export PYTHONUTF8=1` 을 각각 독립 줄로 배치 — CodexReviewAgent.md 의 `export MSYS_NO_PATHCONV=1` 선례 동형. ★ 이 2종은 **2급 defense-in-depth** — `LC_ALL`/`LANG` 은 Python-on-Windows 파일 I/O 에 무효이고 codex 자신(node→Rust native)에도 무효다. **1급 보증은 아래 2번 helper 의 코드계층 명시 `encoding='utf-8'`**.
+2. **round-trip 검증 helper 호출 — write 모드 우선 + rc 검사 의무**: promptfile write 를 `python3 scripts/lib/check_promptfile_utf8_roundtrip.py` **write 모드**로 수행하고 (조립 원본 in-memory 텍스트 ↔ 파일 re-read 내용 동일성 대조) **반환 rc 를 반드시 분기 검사**한다. rc ≠ 0 → dispatch 중단 + `verdict=inconclusive` (fail-closed — 기존 substitution path 재사용, 신규 실패 경로 0). **verify 모드는 degrade 경로**로, 조립 원본 in-memory 텍스트를 보유하지 않은 사후 검증 주체(산출물 실물 감사)에만 허용된다 — dispatch 직전 검증을 verify 모드로 대체하면 계약 위반이고, verify 단독으로 내용 동일성이 확보됐다고 주장할 수 없다(보증 = 앵커 floor 한정).
+3. **정직 라벨 — advisory ceiling** (ADR-119): 본 표면의 조립은 Orchestrator 의 runtime 행위이고 본 문서는 실행 스크립트가 아닌 prose 다 → 위 1·2 준수는 **기계 게이트 불가**. 강제 가능한 것은 promptfile 산출물이 잔존하는 경우의 **사후 verify 모드 감사**뿐이다. "기계 강제/hard-gate" 서술 금지 (CodexReviewAgent 의 executable 템플릿 표면과 보증 등급이 다르다).
+
 **codex exec dispatch wall-clock ceiling mandate** (CFP-2545 / CFP-2828 / [ADR-081 Amendment 12→14](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D14→D15 + [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) liveness 게이트 소유 + [ADR-119](../archive/adr/ADR-119-research-before-claims.md) Amendment 2 fail-open 금지):
 
 §결정 D8 file-redirect(`codex exec ... - < <promptfile>`)는 0-byte TTY stall 방어층이고, 실 리뷰 worker(CodexReviewAgent, 4 리뷰 lane 공유)는 CFP-2828 이후 **companion 브로커를 우회해 `codex exec` 를 직접** 호출한다 (§결정 D15). CLI 고유 hang(#20919/#19945)은 stall 축의 "소멸" 아닌 **"이동"**이라 wall-clock process-level 가드는 잔존 1급 (§D8 file-redirect 이 미포함하는 disjoint sub-failure-mode).

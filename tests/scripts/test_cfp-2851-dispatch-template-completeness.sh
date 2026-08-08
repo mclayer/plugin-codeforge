@@ -200,6 +200,8 @@ declare -a SKEL_TOKENS=(
   '- < "$PROMPTFILE"'
   'timeout --kill-after='
   '소비 재검증'
+  '### 언어 구획 규약'
+  'ANCHOR_LINE:'
 )
 for t in "${SKEL_TOKENS[@]}"; do
   if ! grep -qF -- "$t" "$MD"; then SKEL_OK=0; echo "    골격 토큰 부재: $t"; fi
@@ -207,7 +209,7 @@ done
 # lane effort 표 (별도 확인)
 grep -qF '| requirements-review |' "$MD" || { SKEL_OK=0; echo "    골격 토큰 부재: lane effort 표"; }
 if [ "$SKEL_OK" -eq 1 ]; then
-  pass "AC-5 GREEN: 골격 6 토큰(codex exec / --ignore-user-config -m … --ephemeral / - < \$PROMPTFILE / timeout --kill-after= / 소비 재검증 / lane effort 표) 전부 존재"
+  pass "AC-5 GREEN: 골격 8 토큰(codex exec / --ignore-user-config -m … --ephemeral / - < \$PROMPTFILE / timeout --kill-after= / 소비 재검증 / 언어 구획 규약 헤더 / ANCHOR_LINE / lane effort 표) 전부 존재"
 else
   fail "AC-5 GREEN: 골격 토큰 일부 부재 (post-change 파손)"
 fi
@@ -220,14 +222,28 @@ else
   pass "AC-5 RED(token): 골격 토큰 제거 fixture → 미검출(RED 재현) = 골격 presence discriminating"
 fi
 # diff-preservation: MD-편집 커밋(${EDIT_SHA}~1..${EDIT_SHA}) 에 골격 토큰 담은 삭제라인(^-) 0
+# per-token 정합: 토큰이 삭제라인에는 있되 추가라인에 없을 때만 제거로 판정 (수정쌍 보존)
 if [ -n "$EDIT_SHA" ] && git -C "$REPO_ROOT" rev-parse --verify -q "${EDIT_SHA}~1" >/dev/null 2>&1; then
   DIFF_TXT="$WORK/diff.txt"
   git -C "$REPO_ROOT" diff "${EDIT_SHA}~1" "$EDIT_SHA" -- "$MD_REL" > "$DIFF_TXT" 2>/dev/null || true
   removed_skel=0
   for t in "${SKEL_TOKENS[@]}"; do
-    # ^-(비 ---) 삭제라인 중 골격 토큰 포함 = 골격 삭제/수정 (위반)
-    c=$(grep -E '^-[^-]' "$DIFF_TXT" 2>/dev/null | grep -cF -- "$t" 2>/dev/null) || c=0
-    removed_skel=$((removed_skel + c))
+    # 삭제라인에 토큰 존재?
+    if grep -E '^-[^-]' "$DIFF_TXT" 2>/dev/null | grep -qF -- "$t"; then
+      has_removed=1
+    else
+      has_removed=0
+    fi
+    # 추가라인에 토큰 존재?
+    if grep -E '^\+[^+]' "$DIFF_TXT" 2>/dev/null | grep -qF -- "$t"; then
+      has_added=1
+    else
+      has_added=0
+    fi
+    # 삭제에만 있으면 제거됨 (위반)
+    if [ "$has_removed" -eq 1 ] && [ "$has_added" -eq 0 ]; then
+      removed_skel=$((removed_skel + 1))
+    fi
   done
   if [ "$removed_skel" -eq 0 ]; then
     pass "AC-5 GREEN(diff): MD-편집 커밋(\${EDIT_SHA}~1..\${EDIT_SHA}) 에 골격 토큰 담은 삭제라인 0 (append-only, 골격 무손상)"

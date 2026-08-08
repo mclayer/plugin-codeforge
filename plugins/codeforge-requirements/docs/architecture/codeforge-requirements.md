@@ -2,7 +2,7 @@
 title: codeforge-requirements lane 구조 (요구사항 레인 — 사용자 요구 접수 → 통합 요구사항 명세)
 last_captured: 2026-07-24
 captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
-last_update_cfp: CFP-2813  # stale 해소 실갱신 — 요구사항리뷰 lane 후행 삽입(ADR-125/159: lane exit = phase:요구사항-리뷰 + 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전) + PL·Researcher fable tier(ADR-141 Amd4) + ADR-166 read protocol G2 소비자 관점(요구 4종 mandatory 선행 read) + 본 doc 자신 = living-architecture-update per-PR 게이트 대상(ADR-078 Amd3/ADR-112 Amd1)
+last_update_cfp: CFP-2884  # interfaces 축 갱신 — ADR-081 §결정 D16(Amendment 15) 의 본 lane 적용분 반영: RequirementsAnalystAgent heredoc 표면에 축 A env 2종(LC_ALL/PYTHONUTF8 별도 줄 export) + 구획 규약(heredoc 실값 슬롯 = 구획 B verbatim 보존 / 지시문 프레임 = 구획 A 이나 본 표면 한글 유지 — 영어화 의무는 CodexReviewAgent 한정) 배선. heredoc = promptfile class 아님(write 산출물 부재) → round-trip helper 내용 동일성 assert 비대상 = 보증 등급 차이 정직 공개. modules=N·boundaries=N·interfaces=Y·data_flow=N. 이전: CFP-2813  # stale 해소 실갱신 — 요구사항리뷰 lane 후행 삽입(ADR-125/159: lane exit = phase:요구사항-리뷰 + 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전) + PL·Researcher fable tier(ADR-141 Amd4) + ADR-166 read protocol G2 소비자 관점(요구 4종 mandatory 선행 read) + 본 doc 자신 = living-architecture-update per-PR 게이트 대상(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -73,6 +73,7 @@ lane 의 외부 surface — kind:contract producer / kind:registry consumer / go
 - **ADR-161** (concept-knowledge schema) — `docs/domain-knowledge/concept/**` ResearcherAgent direct write + `kind: concept_definition` schema.
 - **ADR-166** (design-info read protocol, CFP-2813) — 본 lane 소속 **G2 mandatory 소비자 4종 = DomainAgent · FeasibilityAgent · ChangeImpactAgent · ContinuityAgent**: 작업 개시 시 Living Architecture (대상 plugin doc + family.md, 부분집합 anchor — floor arc42 §5, 5-anchor 부재 시 4 H2 fallback) 선행 read 가 표준 경로 (append-only 이력 재구성 = 프로토콜 위반 경로). 산출물 `[Living-Arch-Read]` marker (advisory ceiling). 그 외 lane 구성원 (PL·Analyst·Researcher) = mandatory 대상 아님. 배선 = 각 agent .md in-band (CFP-2813 Phase 2).
 - **ADR-125 / ADR-159** (요구사항리뷰 lane + design-entry sign-off) — lane 후행 = 요구사항리뷰 (외부사실 + internal-invariant + 내부적합 다축 게이트), 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전.
+- **ADR-081 §결정 D16** (Codex dispatch 언어 구획 + UTF-8 배선, CFP-2884) — 본 lane 의 Codex 접촉 표면 = **RequirementsAnalystAgent heredoc 조립** (`codex exec` 입력을 heredoc 으로 구성, write 산출물 없음). 적용분 2종: ⓐ **축 A env** `export LC_ALL=C.UTF-8` + `export PYTHONUTF8=1` **별도 줄** 배선 (inline env-prefix 금지 — lint first-token 판정 보존) ⓑ **구획 규약** — heredoc 실값 슬롯 (`[사용자 요구사항]`·`[관련 ADR]`·`[관련 코드/문서]`·`[이전 합의]`) = 구획 B **verbatim 보존** (번역·재서술·요약 대체 금지), 지시문 프레임 = 구획 A 이나 **본 표면은 한글 유지** (전면 영어화 의무 = D16 9항이 CodexReviewAgent 에만 부과). **보증 등급 차이 정직 공개**: heredoc 표면은 promptfile class 가 아니라 (파일 write 산출물 부재) round-trip helper `check_promptfile_utf8_roundtrip.py` 의 내용 동일성 assert 대상이 아니다 — 확보분은 env 계층 + 구획 규약까지이며 CodexReviewAgent promptfile 표면과 동급 보증 아님.
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer). 계약 schema field-level 상세 = 해당 contract file + `MANIFEST.yaml` SSOT.
 
