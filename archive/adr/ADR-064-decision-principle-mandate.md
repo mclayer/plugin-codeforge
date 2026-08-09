@@ -1237,7 +1237,13 @@ CFP-2914 요구사항 lane 전수 실측 결과 그 4-piece 중 **실재하는 �
 - 기존 `check_parallelization()`(설계 lane 6-deputy)은 **무손상 존치**한다 — 회귀 self-test 로 bit-identical 을 지킨다.
 - 대상 lane = **closed-set 명시 배열 4종**(`요구사항-리뷰` / `설계-리뷰` / `구현-리뷰` / `보안-테스트`) + 정확 일치 lookup. `*리뷰*` substring 매칭은 구조적으로 금지한다 — 그 실패 양식이 `보안-테스트` lane 3 그룹을 통째로 누락시킨 실물 오류의 원인이다.
 - **판정 불가 ≠ PASS.** peer 가 2종 미만이거나 산출이 0인 그룹은 위반이 아니라 **별개 상태(판정 불가)** 로 분리 집계하며 조용한 PASS 로 접지 않는다.
-- **"판정 불가" 는 두 축이며 소재가 다르다** — (A) *row 는 있으나 그 peer 가 산출을 냈는가* 는 원장 필드(`tool_call_count`·`termination_cause`)를 요구하므로 **local-only 진단 도구 전용**이다. Story §14 schema 는 12 field 이며 그 두 필드를 보유하지 않고, §14 `outcome` enum(`PASS/FIX/SKIPPED`)은 원장 `outcome` enum(`success/…/partial`)과 **동음이의로 충돌**한다 `[verified: templates/story-page-structure.md:558-581 · docs/inter-plugin-contracts/spawn-event-v1.md:93]`. 따라서 실효 판정 사다리를 게이트 leg 에 얹으면 전건이 최종 규칙으로 낙하해 **판별력 0 인 검사가 GREEN 을 발화**한다(born-hollow) → 게이트 leg 에 배선하지 않는다. (B) *판정에 필요한 peer row 자체가 2행 미만인가* 는 §14 row 수만으로 계산되므로 **게이트 leg 의 잔존 의무**다. 이 분리는 검사량 축소가 아니라 **소재 확정**이며, 검사 leg 계상 단위는 게이트+진단 **family 합산**이다(스크립트별 계상 시 이동이 감소로 오독된다).
+- **"판정 불가" 는 두 축이며 소재가 다르다** — (A) *row 는 있으나 그 peer 가 산출을 냈는가* 는 원장 필드(`tool_call_count`·`termination_cause`)를 요구하므로 **local-only 진단 도구 전용**이다. Story §14 schema 는 12 field 이며 그 두 필드를 보유하지 않고, §14 `outcome` enum(`PASS/FIX/SKIPPED`)은 원장 `outcome` enum(`success/…/partial`)과 **동음이의로 충돌**한다 `[verified: templates/story-page-structure.md:573-586 (Field semantics 12-field 표) · docs/inter-plugin-contracts/spawn-event-v1.md:93]`. 따라서 실효 판정 사다리를 게이트 leg 에 얹으면 전건이 최종 규칙으로 낙하해 **판별력 0 인 검사가 GREEN 을 발화**한다(born-hollow) → 게이트 leg 에 배선하지 않는다. (B) *판정에 필요한 **distinct peer 신원이 2 미만인가*** 는 §14 의 `lane` ∧ `iteration` ∧ `agent` **3 field 로 계산**되므로 **게이트 leg 의 잔존 의무**다. 이 분리는 검사량 축소가 아니라 **소재 확정**이며, 검사 leg 계상 단위는 게이트+진단 **family 합산**이다(스크립트별 계상 시 이동이 감소로 오독된다).
+
+- **(B) 는 "§14 row 수" 로 계산되지 않는다 (2축 키잉 + 등식 가드).** row 수로 계산하면 두 축에서 동시에 틀린다 — **신원 축**(lane row 수를 peer 수로 오독) ∧ **그룹화 축**(서로 다른 FIX 라운드 row 를 한 batch 로 병합). 확정 키잉:
+  - **그룹 키 = `(lane 정확일치, iteration)`** — `iteration` 의 계약 의미가 dispatch round 식별자다 `[verified: templates/story-page-structure.md:576 "Lane local 1+ (FIX 시 multiple row)"]`.
+  - **신원 계수 = `agent` 선두 토큰 정확 일치**(좌측 trim 후 첫 `[공백 또는 '(']` 직전) ∈ `{ClaudeReviewAgent, CodexReviewAgent}`. **substring·토큰경계 regex 금지** — `*리뷰*` substring 금지와 **동형 실패**이며, 함정은 경계가 아니라 **한 row 의 `agent` 가 여러 신원을 서술**하는 데 있다.
+  - **등식 가드 `peer_ts_count == peer_rows` (blocking)** — 불성립 시 timing 분기 미도달, `evidence_absent` 낙하. 설계 leg 는 이 가드를 이미 보유한다 `[verified: scripts/check-lane-evidence.sh:352 "spawned_at_count == design_rows >= 6 보장 → timestamps 6+ 개, min/max index-0 안전"]`. 미승계 시 `peer_rows 2 ∧ 유효 spawned_at 1` 형상에서 `min == max` 로 **허위 CO-DISPATCH PASS** 가 발화한다.
+  - **정직 경계** — 2축 키잉이 고치는 것은 **오그룹화·오계수**이며, **자기단언의 진위는 어떤 keying scheme 으로도 고쳐지지 않는다**. 게이트 leg 의 PASS 는 *"선언된 값들이 서로 60초 안"* 이라는 뜻이지 *"실제로 60초 안에 spawn 됐다"* 는 뜻이 아니다.
 - **C-7 정합** — 신규 check 는 **warning tier 로 출생**한다. required 승격은 ADR-171 §결정 6 의 3-AND + evidence 6종을 선결로 두며 본 Amendment 범위 밖이다.
 
 #### 결정 16-4 — cap 문면 정합 (7 → 13)
@@ -1248,9 +1254,9 @@ CFP-2914 요구사항 lane 전수 실측 결과 그 4-piece 중 **실재하는 �
 
 **대조면(무접촉·모순 0 확인) 3종** = `ADR-042`(roster SSOT 이며 cap 미보유) + `skills/deputy-mandate/SKILL.md:13`(deputy 계수만 보유) + **`ADR-044:29`**. 마지막 항목은 문면 자신이 값의 SSOT 를 본 계약이라 선언하고 자기는 *derived* 기록임을 명시하므로, 계약이 13 이 되어도 제정 시점 파생값의 **byte-frozen 이력**이다 — **소급 편집 금지 · 별도 Amendment 불요**(규범 delta 0). 미래 독자가 "누락된 반영면" 으로 오인해 소급 편집하는 것을 차단하기 위해 본 Amendment 에 명시 등재한다.
 
-**정직 라벨(무손상)** — cap 상향은 이 3필드를 읽는 코드가 0건이므로 **런타임 행위를 바꾸지 않는 문면 정합 변경**이다. 이를 "충돌을 집행한다"고 기술하면 declared-not-bound 를 재생산한다. 정확한 기술 = "태생적 위반 상태인 문면을 실재와 일치시킨다".
+**정직 라벨 — 기계 소비자 0 ∧ advisory 소비자 1.** `parallel_spawn_cap` / `spawn_stagger_ms` / `cascade_circuit_breaker` 3필드를 **코드가 읽는 site 는 0건**이고, 계약 §8 검사 5번(`worker_count ≤ worker_count_max`)은 **호출자 0인 고아 스크립트 안에만** 존재한다 — 따라서 이 상향은 **기계 집행을 만들지 않는다**. 다만 "런타임 행위를 1도 바꾸지 않는다" 로 쓰면 과장이다: `skills/rate-limit-429-mitigation/SKILL.md` 는 429 사후 대응 전용이 아니라 **`## When to invoke` trigger 2 = Pre-burst preventive** 를 보유하며 그 하위 항목이 *"ArchitectPLAgent 6+3+1 deputy + 4-tuple sub-tuple 단일-메시지 multi-tool spawn 직전"* 이고, `intensity == 0`(직전 30분 429 0건 = 통상 경로) 분기가 `parallel_spawn_cap = 7  # default` + `spawn_stagger_ms = 0` 을 준다 → **통상 fan-out 직전 권고 동시 폭이 7 → 13 으로 바뀐다.** 이를 "미배선" 으로 선언하면 declared-vs-bound 오계상을 방향만 뒤집어 재생산한다.
 
-**정직 라벨**: 이 상향은 **런타임 행위를 바꾸지 않는다.** `parallel_spawn_cap` 3필드의 소비자는 0이고, 계약 §8 검사 5번(`worker_count ≤ worker_count_max`)은 호출자 0인 고아 스크립트 안에만 존재한다. 따라서 정확한 기술은 "충돌을 집행한다"가 아니라 **"태생적 위반 상태인 문면을 실재와 일치시킨다"** 이다.
+정확한 기술 = **"태생적 위반 상태인 문면을 실재와 일치시키며, 그 부수 효과로 advisory 권고값 1개가 바뀐다"** — "충돌을 집행한다" 도 "아무것도 바뀌지 않는다" 도 아니다. ⑤ 반영 시 값 옆에 **경험칙(F-14 동시 3~5 / 5~10) 초과 사실**과 **429 관측 의무** 포인터를 인라인 병기한다.
 
 batch 분할은 기각한다 — wall-clock 을 `max(batch1) + max(batch2)` 로 만들어 분 단위 새 직렬 구간을 도입하며, 이는 대기시간 단축이라는 목적과 정면 충돌한다.
 
