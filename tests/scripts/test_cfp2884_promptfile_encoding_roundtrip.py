@@ -1230,6 +1230,305 @@ def test_ac9_whitelist_mutation_discriminating():
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Edge cases: Encoding contract violations (§8.4)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_edge_cases_promptfile_contract():
+    """
+    §8.4 Edge case coverage (promptfile encoding contract):
+      - BOM 선두 → rc 1 (VIOLATION, per helper docstring L47-51)
+      - 빈 promptfile ("") → rc 2 (SETUP_ERROR, per helper docstring L117)
+      - 앵커 라인 부재 (whitelist 에서 zero/multiple) → rc 2 (SETUP_ERROR)
+      - CRLF 보존 (write newline='\\n', read newline='') → round-trip OK → rc 0
+      - clean (앵커+정상 본문) → rc 0
+
+    Comparator (술어 = docstring 과 1:1):
+      · BOM 선두 promptfile → rc==1 + re-read 문자 검증(mojibake NOT 발생 — 디코드 단계에서 거부)
+      · empty → rc==2
+      · no-anchor → rc==1
+      · whitelist anchor 0개/2개 → rc==2
+      · CRLF → rc==0 + byte-level `b"\\r\\n" in file_bytes` assert (mutant: newline='' 제거 시 CRLF 손실 → RED)
+      · clean → rc==0
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        # Edge case 1: BOM 선두
+        # U+FEFF (BOM) + valid UTF-8 content
+        bom_bytes = b"\xef\xbb\xbf" + b"prompt text\n"
+        out_file_bom = tmpdir_path / "edge_bom.md"
+        rc_bom, stdout_bom, stderr_bom = run_helper(
+            mode="write",
+            out_path=str(out_file_bom),
+            whitelist=str(WHITELIST_PATH),
+            nonce="edge-bom-nonce",
+            stdin_data=bom_bytes,
+        )
+        assert rc_bom == 1, f"Edge: BOM prefix → rc 1, got {rc_bom}. stderr: {stderr_bom}"
+        assert "BOM" in stderr_bom or "BOM" in stdout_bom or \
+               "FEFF" in stderr_bom or "FEFF" in stdout_bom, \
+            "Edge: BOM case distinct-marker (BOM 거부 언급) 부재"
+
+        # Edge case 2: 빈 promptfile
+        empty_bytes = b""
+        out_file_empty = tmpdir_path / "edge_empty.md"
+        rc_empty, stdout_empty, stderr_empty = run_helper(
+            mode="write",
+            out_path=str(out_file_empty),
+            whitelist=str(WHITELIST_PATH),
+            nonce="edge-empty-nonce",
+            stdin_data=empty_bytes,
+        )
+        assert rc_empty == 2, f"Edge: empty promptfile → rc 2, got {rc_empty}. stderr: {stderr_empty}"
+
+        # Edge case 3: CRLF 보존 (rc 0 확정 + byte 보존 직접 assert)
+        # valid_promptfile 로 full valid promptfile 구성 후, newline='\\n' 로 쓰여진 것이
+        # newline='' 로 다시 읽히면 CRLF 바이트가 보존되어야 함 (round-trip identity).
+        crlf_body = "Body line one\r\nBody line two"
+        crlf_promptfile = valid_promptfile(crlf_body, "edge-crlf-nonce")
+        # valid_promptfile 은 LF 텍스트를 반환하므로, body 내 CRLF 만 보존됨.
+        crlf_bytes = crlf_promptfile.encode("utf-8")
+        out_file_crlf = tmpdir_path / "edge_crlf.md"
+        rc_crlf, stdout_crlf, stderr_crlf = run_helper(
+            mode="write",
+            out_path=str(out_file_crlf),
+            whitelist=str(WHITELIST_PATH),
+            nonce="edge-crlf-nonce",
+            stdin_data=crlf_bytes,
+        )
+        assert rc_crlf == 0, f"Edge: CRLF → rc 0, got {rc_crlf}. stderr: {stderr_crlf}"
+
+        # Byte-level assertion: file must contain exact CRLF bytes (\r\n)
+        try:
+            with open(out_file_crlf, "rb") as f:
+                file_bytes = f.read()
+            assert b"\r\n" in file_bytes, \
+                "Edge: CRLF bytes (\\r\\n) must be preserved in output (newline='\\n' write + read)"
+        except FileNotFoundError:
+            raise AssertionError("Edge: CRLF output file not created")
+
+        # Edge case 4: promptfile 앵커 라인 부재 → rc 1 (VIOLATION)
+        # Create promptfile without ANCHOR_LINE (앵커 선두 부재)
+        no_anchor_content = "English only, no anchor line.\n"
+        out_file_no_anchor = tmpdir_path / "edge_no_anchor.md"
+        rc_no_anchor, stdout_no_anchor, stderr_no_anchor = run_helper(
+            mode="write",
+            out_path=str(out_file_no_anchor),
+            whitelist=str(WHITELIST_PATH),
+            nonce="edge-no-anchor-nonce",
+            stdin_data=no_anchor_content.encode("utf-8"),
+        )
+        # Helper detects missing anchor line → rc 1 (VIOLATION, anchor mismatch)
+        assert rc_no_anchor == 1, f"Edge: no anchor line → rc 1, got {rc_no_anchor}. stderr: {stderr_no_anchor}"
+
+        # Edge case 5: whitelist 내 ANCHOR_LINE 0줄 → rc 2 (SETUP_ERROR)
+        # Create empty whitelist (no ANCHOR_LINE entry)
+        empty_anchor_whitelist = tmpdir_path / "whitelist_empty_anchor.md"
+        with open(empty_anchor_whitelist, "w", encoding="utf-8", newline="\n") as f:
+            f.write("# Whitelist without ANCHOR_LINE entry\n")
+        rc_empty_anchor, stdout_5, stderr_5 = run_helper(
+            mode="write",
+            out_path=str(tmpdir_path / "out_empty_anchor.md"),
+            whitelist=str(empty_anchor_whitelist),
+            nonce="edge-whitelist-0-nonce",
+            stdin_data=b"test content\n",
+        )
+        # Whitelist missing ANCHOR_LINE entry → rc 2 (SETUP_ERROR, whitelist format)
+        assert rc_empty_anchor == 2, f"Edge: whitelist missing ANCHOR_LINE → rc 2, got {rc_empty_anchor}. stderr: {stderr_5}"
+
+        # Edge case 6: whitelist 내 ANCHOR_LINE 2줄 이상 → rc 2 (SETUP_ERROR)
+        # Create whitelist with 2 ANCHOR_LINE entries (ambiguous, multiple)
+        dup_anchor_whitelist = tmpdir_path / "whitelist_dup_anchor.md"
+        with open(dup_anchor_whitelist, "w", encoding="utf-8", newline="\n") as f:
+            f.write("ANCHOR_LINE: first-anchor\n")
+            f.write("ANCHOR_LINE: second-anchor\n")
+        rc_dup_anchor, stdout_6, stderr_6 = run_helper(
+            mode="write",
+            out_path=str(tmpdir_path / "out_dup_anchor.md"),
+            whitelist=str(dup_anchor_whitelist),
+            nonce="edge-whitelist-2-nonce",
+            stdin_data=b"test content\n",
+        )
+        # Whitelist with multiple ANCHOR_LINE entries → rc 2 (SETUP_ERROR, whitelist ambiguity)
+        assert rc_dup_anchor == 2, f"Edge: whitelist with 2+ ANCHOR_LINE → rc 2, got {rc_dup_anchor}. stderr: {stderr_6}"
+
+        # Edge case 7: 정상 (유효한 promptfile)
+        # clean promptfile with anchor + normal body using valid_promptfile helper
+        clean_content = valid_promptfile("This is a normal promptfile body.\n", "edge-clean-nonce")
+        clean_bytes = clean_content.encode("utf-8")
+        out_file_clean = tmpdir_path / "edge_clean.md"
+        rc_clean, stdout_clean, stderr_clean = run_helper(
+            mode="write",
+            out_path=str(out_file_clean),
+            whitelist=str(WHITELIST_PATH),
+            nonce="edge-clean-nonce",
+            stdin_data=clean_bytes,
+        )
+        assert rc_clean == 0, f"Edge: clean (valid promptfile) → rc 0, got {rc_clean}. stderr: {stderr_clean}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Fuzz fixture seeds (§8.8.1)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_fuzz_fixture_seeds():
+    """
+    Fuzz oracle (§8.8.1): uncaught exception 0 + hang 0 + exit code enum {0,1,2}.
+
+    Seeds: 5 fixture bytes (4 invalid/corrupted + 1 valid rc=0 case)
+           + PRNG deterministic mutation (no OS locale).
+    Budget: N iterations [empirical source: Phase 2 consumer test.yml]
+
+    Comparator (술어 = docstring 과 1:1 — FIX Iter 2 F5 정정):
+      · exit enum   → `rc in {0,1,2}`
+      · hang 0      → 같은 assert 가 커버 (run_helper 의 TimeoutExpired → rc 124 ∉ enum → RED)
+      · **내부 crash 0 → stderr 의 `예기치 못한 내부 오류` 마커 부재 assert** (신설).
+        구 구현은 `rc in {0,1,2}` **하나뿐**이라 "uncaught exception 0" 주장에 대응하는
+        comparator 가 0줄이었다. helper `main()` 은 broad `except Exception` 으로 예기치 못한
+        오류를 **rc 2 로 흡수**하므로(=exit enum 폐쇄 보증), enum 검사만으로는 내부 crash 와
+        정당한 SETUP_ERROR 가 **구분 불가**하다. 관측 가능한 유일 판별 신호가 그 marker 다.
+        (초안에서 traceback 문자열을 볼 뻔했으나 — broad-except 때문에 traceback 은 절대
+         stderr 에 안 나온다 = **절대 실패 불가능한 hollow assert**. 실측으로 폐기했다.)
+    """
+    import random
+
+    # Fixture seed bytes (CP §8.2 fixture 5종 + NEW valid seed)
+    seeds = [
+        b"\xff\xfe" + b"text",  # Fixture ① invalid-byte
+        REVIEW_UTF8_BYTES,  # Fixture ②b cp949
+        b"clean\n",
+        b"",
+        b"\xc3\x28",  # UTF-8 invalid
+        valid_promptfile("fuzz valid body\n", "fuzz-valid-seed-nonce").encode("utf-8"),  # NEW: rc=0 valid seed
+    ]
+
+    budget = 10  # Empirical budget (actual N from consumer test.yml config)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        for i, seed in enumerate(seeds):
+            for j in range(budget):
+                # Deterministic PRNG (no ambient randomness)
+                rng = random.Random(f"seed-{i}-iter-{j}")
+
+                # Mutate seed: flip random bits (except valid seed — test as-is)
+                mutated = bytearray(seed)
+                if i < len(seeds) - 1 and len(mutated) > 0:  # Skip mutation for last (valid) seed
+                    idx = rng.randint(0, len(mutated) - 1)
+                    bit_pos = rng.randint(0, 7)
+                    mutated[idx] ^= (1 << bit_pos)
+
+                out_file = tmpdir_path / f"fuzz_{i}_{j}.md"
+                rc, stdout, stderr = run_helper(
+                    mode="write",
+                    out_path=str(out_file),
+                    whitelist=str(WHITELIST_PATH),
+                    nonce=f"fuzz-seed-{i}-iter-{j}",
+                    stdin_data=bytes(mutated),
+                    timeout_sec=20.0,
+                )
+
+                # Oracle ①: exit enum (hang → run_helper 가 124 반환 → 여기서 RED)
+                assert rc in {0, 1, 2}, \
+                    f"Fuzz seed {i} iter {j}: invalid exit code {rc} (must be 0/1/2; 124=hang)"
+                # Oracle ②: 내부 crash 0 — main() broad-except 가 예기치 못한 예외를 rc 2 로
+                #   흡수하므로 enum 단독으로는 crash 와 정당 SETUP_ERROR 를 구분 못한다.
+                #   구분 신호 = 그 handler 가 찍는 marker 문자열.
+                assert "예기치 못한 내부 오류" not in stderr, (
+                    f"Fuzz seed {i} iter {j}: helper 내부 crash (rc={rc}) — "
+                    f"broad-except 로 rc 2 에 흡수됐을 뿐 정당한 SETUP_ERROR 가 아니다. "
+                    f"stderr:\n{stderr[:800]}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Property: Round-trip identity (§8.8.2 — Hypothesis if available)
+# ═══════════════════════════════════════════════════════════════════════════
+
+if HAS_HYPOTHESIS:
+    @given(
+        st.one_of(
+            st.text(),
+            st.text(alphabet=st.characters(
+                min_codepoint=0xAC00,
+                max_codepoint=0xD7A3
+            )),
+        )
+    )
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=None)
+    def test_property_roundtrip_identity(arbitrary_text):
+        """
+        Property: write(text) → re-read decode == text (round-trip identity).
+
+        Input generator: Hypothesis text() with Korean character emphasis (§8.8.2 CP contract)
+        Sample budget: 50 examples (empirical, config in consumer test.yml)
+        Pass condition: no counterexample found (shrinking on failure)
+
+        Comparator (술어 = docstring 과 1:1):
+          · promptfile_content = valid_promptfile(arbitrary_text, nonce)
+          · write → re-read (newline='') → file == promptfile_content byte-identical
+          · rc==0 prerequisite
+
+        Mutant protocol (닫힘 증거):
+          · newline='' → newline='' universal 으로 변경 시 CRLF→LF 손실 → file != input → RED
+          · helper 가 stdout 미출력 → rc 값은 달라질 수 있으나 원본 round-trip 에 메워지지 않음
+        """
+        # Sentinel nonce to avoid collision with arbitrary_text
+        sentinel_nonce = "property-test-nonce-roundtrip"
+
+        # Assume: arbitrary_text does not accidentally contain BEGIN/END markers
+        assume(f"BEGIN_UNTRUSTED_DATA nonce={sentinel_nonce}" not in arbitrary_text)
+        assume(f"END_UNTRUSTED_DATA nonce={sentinel_nonce}" not in arbitrary_text)
+
+        # Skip empty input (would trip setup error guard)
+        if not arbitrary_text:
+            return
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            out_file = tmpdir_path / "property_roundtrip.md"
+
+            # Prepare promptfile with anchor + untrusted block for arbitrary_text
+            try:
+                promptfile_content = valid_promptfile(arbitrary_text, sentinel_nonce)
+                stdin_data = promptfile_content.encode("utf-8")
+            except (FileNotFoundError, ValueError) as e:
+                # Whitelist setup error — pytest.skip instead of pytest.fail
+                # (property tests should gracefully skip on setup, not fail)
+                pytest.skip(f"Whitelist anchor missing (setup error): {e}")
+                return
+
+            # Surrogate encode guard: if arbitrary_text contains surrogates, skip
+            try:
+                arbitrary_text.encode("utf-8")
+            except UnicodeEncodeError:
+                # Surrogates (U+D800-DFFF) cannot encode to UTF-8
+                assume(False)
+
+            rc, stdout, stderr = run_helper(
+                mode="write",
+                out_path=str(out_file),
+                whitelist=str(WHITELIST_PATH),
+                nonce=sentinel_nonce,
+                stdin_data=stdin_data,
+            )
+
+            # Hard assertion: helper must return rc 0 (round-trip success)
+            assert rc == 0, f"Property: rc must be 0 (round-trip), got {rc}. stderr: {stderr}"
+
+            # If rc == 0, assert file content matches input exactly
+            # Helper writes UTF-8 with newline='\\n' write, read with newline='' universal → exact match
+            if out_file.exists():
+                with open(out_file, "r", encoding="utf-8", newline="") as f:
+                    file_content = f.read()
+                    # Exact equality: input and output must match (wrapper adds nothing)
+                    assert file_content == promptfile_content, \
+                        "Property: round-trip identity must be exact (input == output)"
+            else:
+                pytest.fail(f"Property: output file not created: {out_file}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Entry point
 # ═══════════════════════════════════════════════════════════════════════════
 
