@@ -1529,6 +1529,209 @@ if HAS_HYPOTHESIS:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# AC-2a: Nonce distinctness (§8.3 AC-2a)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_ac2a_nonce_distinctness():
+    """
+    AC-2a: nonce 불가측성(distinctness) — 연속 emit-nonce 호출이 서로 다른 값.
+
+    Comparator (술어 = docstring과 1:1):
+      · emit-nonce mode 2회 호출 → rc==0 각각
+      · stdout 값(nonce 문자열) 이 서로 다름
+
+    Mutant protocol (닫힘 증거):
+      · fixed constant nonce 구현 → 두 호출의 nonce 동일 → RED
+      · 고정 timestamp-based(date+PID) → hex-32 미매치(AC-2b 함께 서신) or 재현성 낮음(test 간헐 실패) → RED
+    """
+    nonce1_rc, nonce1_stdout, nonce1_stderr = run_helper(mode="emit-nonce")
+    nonce2_rc, nonce2_stdout, nonce2_stderr = run_helper(mode="emit-nonce")
+
+    # Both calls must succeed
+    assert nonce1_rc == 0, f"First emit-nonce rc=0, got {nonce1_rc}. stderr: {nonce1_stderr}"
+    assert nonce2_rc == 0, f"Second emit-nonce rc=0, got {nonce2_rc}. stderr: {nonce2_stderr}"
+
+    # Extract nonce values (stdout should be single line)
+    nonce1_value = nonce1_stdout.strip()
+    nonce2_value = nonce2_stdout.strip()
+
+    # Nonces must be non-empty
+    assert nonce1_value, f"First emit-nonce stdout empty"
+    assert nonce2_value, f"Second emit-nonce stdout empty"
+
+    # Nonces must be different (distinctness)
+    assert nonce1_value != nonce2_value, \
+        f"Nonce distinctness violation: emit-nonce returned same value twice: {nonce1_value}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AC-2b: Nonce charset & length floor (§8.3 AC-2b)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_ac2b_nonce_charset_length_floor():
+    """
+    AC-2b: nonce 형식 = secrets.token_hex(16) (hex + length==32).
+
+    Comparator (술어 = docstring과 1:1):
+      · emit-nonce 호출 → rc==0
+      · stdout.strip() 이 re.fullmatch(r"[0-9a-f]{32}", nonce) 매치
+
+    Mutant protocol (닫힘 증거):
+      · timestamp-based(date %s, 10자) → hex-32 미매치 → RED
+      · base64(21자) 또는 uuid(36자) → hex-32 미매치 → RED
+      · 짧은 hex(16자) → hex-32 미매치 → RED
+    """
+    rc, stdout, stderr = run_helper(mode="emit-nonce")
+
+    # emit-nonce must succeed
+    assert rc == 0, f"emit-nonce rc=0, got {rc}. stderr: {stderr}"
+
+    nonce_value = stdout.strip()
+    assert nonce_value, "emit-nonce stdout empty"
+
+    # Nonce must match hex format [0-9a-f]{32}
+    hex_pattern = re.compile(r"^[0-9a-f]{32}$")
+    assert hex_pattern.fullmatch(nonce_value), \
+        f"Nonce format violation: expected hex 32-char, got '{nonce_value}' (len={len(nonce_value)})"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AC-3: Born-broken self-referential avoidance (§8.3 AC-3)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_ac3_born_broken_self_referential():
+    """
+    AC-3: 자기참조 본문(anchor/sentinel 리터럴 인용) → round-trip 성공 (birth-defect 부재).
+
+    Fixture: partition B body = anchor 값 1줄 + 다른 nonce 의 sentinel 리터럴
+      BEGIN_UNTRUSTED_DATA nonce=quoted-other
+      END_UNTRUSTED_DATA nonce=quoted-other
+    + has_sentinel 심볼 인용.
+    write → rc==0 (OLD helper: rc=1, bare-substring has_sentinel overkill)
+    → round-trip 파일 re-read → anchor/sentinel 라인 verbatim 보존
+
+    Mutant protocol (닫힘 증거):
+      · OLD helper (bare-substring has_sentinel / full-text anchor count) 구현 → rc=1(anchor 2회 오탐) → RED
+      · NEW helper (nonce-결합 full-line + outside-scope count) → rc=0(anchorcount=1 outside only) → GREEN
+      양방향 판별 가능성 입증(NEW 구현이 기존 오류를 수정했음).
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        # Self-referential body: anchor 값 + sentinel 리터럴(다른 nonce) + sentinel 심볼 인용
+        anchor_value = read_whitelist_anchor()
+        other_nonce = "quoted-other-nonce"
+        sentinel_symbol = "SENTINEL_BEGIN"
+
+        self_ref_body = (
+            f"{anchor_value}\n"
+            f"BEGIN_UNTRUSTED_DATA nonce={other_nonce}\n"
+            f"quoted-other content\n"
+            f"END_UNTRUSTED_DATA nonce={other_nonce}\n"
+            f"Symbol reference: {sentinel_symbol}\n"
+        )
+
+        # Build full promptfile with our dispatch nonce
+        dispatch_nonce = "ac3-self-ref-nonce"
+        promptfile_content = valid_promptfile(self_ref_body, dispatch_nonce)
+        stdin_data = promptfile_content.encode("utf-8")
+
+        out_file = tmpdir_path / "ac3_self_referential.md"
+
+        # Write with dispatch nonce
+        rc, stdout, stderr = run_helper(
+            mode="write",
+            out_path=str(out_file),
+            whitelist=str(WHITELIST_PATH),
+            nonce=dispatch_nonce,
+            stdin_data=stdin_data,
+        )
+
+        # NEW helper (nonce-결합 full-line): anchor count=1 outside scope → rc=0
+        assert rc == 0, f"AC-3: self-ref body must rc=0 (NEW helper), got {rc}. stderr: {stderr}"
+
+        # Round-trip: re-read and verify verbatim preservation
+        with open(out_file, "r", encoding="utf-8", newline="") as f:
+            file_content = f.read()
+
+        # Anchor line must be preserved verbatim in file
+        assert anchor_value in file_content, \
+            "AC-3: anchor value not preserved in round-trip"
+
+        # Quoted sentinel lines must be preserved verbatim
+        assert f"BEGIN_UNTRUSTED_DATA nonce={other_nonce}" in file_content, \
+            f"AC-3: quoted sentinel BEGIN not preserved"
+        assert f"END_UNTRUSTED_DATA nonce={other_nonce}" in file_content, \
+            f"AC-3: quoted sentinel END not preserved"
+
+        # File should match input (byte-identity)
+        assert file_content == promptfile_content, \
+            "AC-3: self-ref body round-trip identity broken"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AC-8a: Honest-ceiling phrase discipline (§8.3 AC-8a)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_ac8a_forbidden_phrase_discipline():
+    """
+    AC-8a: honest-ceiling 규율 — forbidden assertive phrases 0.
+
+    Forbidden phrases: ["완전 차단", "required 강제", "완전 봉인"]
+    Target surfaces: helper 소스 + CodexReviewAgent.md + whitelist 템플릿
+
+    Comparator (술어 = docstring과 1:1):
+      · 각 파일 read → phrase 검색
+      · 각 occurrence 의 인접 window(±40자) 에 부정 토큰(`아님`, `금지`, `NOT`, `않`) 존재
+      · assertive occurrence(부정 문맥 없음) = 0
+
+    Mutant protocol (닫힘 증거):
+      · fixture: assertive 문장(부정 토큰 미포함) 삽입 → assertion RED
+      · 현 파일 ALL occurrence 는 부정형(honest-ceiling 선언) → GREEN
+    """
+    forbidden = ["완전 차단", "required 강제", "완전 봉인"]
+    negation_tokens = ["아님", "금지", "NOT", "않"]
+
+    # Target surfaces
+    surfaces = [
+        ("helper", HELPER_SCRIPT),
+        ("CodexReviewAgent", CODEX_AGENT_PATH),
+        ("whitelist", WHITELIST_PATH),
+    ]
+
+    all_assertive_found = []
+
+    for surface_name, surface_path in surfaces:
+        if not surface_path.exists():
+            pytest.skip(f"AC-8a: {surface_name} file missing: {surface_path}")
+
+        with open(surface_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        for phrase in forbidden:
+            # Find all occurrences of forbidden phrase
+            for match in re.finditer(re.escape(phrase), content):
+                start_pos = max(0, match.start() - 40)
+                end_pos = min(len(content), match.end() + 40)
+                window = content[start_pos:end_pos]
+
+                # Check if window contains negation token
+                has_negation = any(token in window for token in negation_tokens)
+
+                if not has_negation:
+                    # Assertive occurrence (no negation)
+                    all_assertive_found.append(
+                        f"{surface_name}: assertive '{phrase}' at pos {match.start()}"
+                    )
+
+    # Assert zero assertive occurrences
+    assert len(all_assertive_found) == 0, (
+        f"AC-8a: forbidden assertive phrases found:\n" +
+        "\n".join(all_assertive_found)
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Entry point
 # ═══════════════════════════════════════════════════════════════════════════
 
