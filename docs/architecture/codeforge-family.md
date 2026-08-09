@@ -68,7 +68,9 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | pmo_output | codeforge-pmo | Epic/retro 산출물 | Active |
 | git_ops_event | codeforge-pmo | GitOpsAgent 이벤트 | Active |
 
-**kind:registry (sibling sync 면제 — ADR-010 §결정 2)**: label-registry-v2 / debate-protocol-v1 / evidence-check-registry-v1 / severity-propagation-v1 / parallel-dispatch-protocol-v1 / imperative-walker-protocol-v1 + chain-managed (comment-prefix-registry-v1 / fix-event-v1).
+**kind:registry (sibling sync 면제 — ADR-010 §결정 2)**: label-registry-v2 / debate-protocol-v1 / evidence-check-registry-v1 / severity-propagation-v1 / parallel-dispatch-protocol-v1 / imperative-walker-protocol-v1 / gate-lane-map-v1 / spawn-event-v1 + chain-managed (comment-prefix-registry-v1 / fix-event-v1).
+
+> **CFP-2914 (ADR-064 Amendment 16 / ADR-031 Amendment 3)** — registry 2건 MINOR: `parallel-dispatch-protocol-v1` (`worker_count_max` default 상향 = 순수 loosening) / `gate-lane-map-v1` (entry append). 두 계약 모두 **선언 surface 이며 현행 코드 소비자 0** 이다 — 계약 문면을 실재와 일치시키는 정합 변경이지 런타임 행위 변경이 아니다(정직 라벨). lane 열거 SSOT 는 `요구사항-리뷰` 편입으로 8종 정합(ADR-125 신설 lane 이 evidence 채널 4곳에 미반영이던 drift 정산).
 
 > 계약 schema field-level 상세 = 각 contract file SSOT + `MANIFEST.yaml`. 본 섹션 = surface enumeration (계약 이름 + SSOT pointer, 라인 수준 0건). version 값은 MANIFEST.yaml SSOT 가 권위 (본 doc 누적 현재 상태 — version drift 회피 위해 본 섹션 version literal 미박제).
 
@@ -92,6 +94,24 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
   → [Epic 종료 시] 통합테스트 lane (codeforge-test:IntegrationTestAgent) → test_verdict
   → 보안테스트 lane (codeforge-review:SecurityTestPLAgent) → review_verdict
 ```
+
+**lane-spawn 관측 흐름** (CFP-2914 / ADR-064 Amendment 16 · ADR-031 Amendment 3) — 위 lane spawn flow 가 **실제로 규범대로 일어났는지**를 사후 관측하는 별개 흐름. **두 family 가 disjoint 하며 재통합 금지**:
+
+```
+[게이트 family — CI-reachable]
+  Orchestrator lane spawn → Story §14 Lane Evidence (spawned_at 등 12 field) + PR body `## Lane evidence` 8-row
+    → lane-evidence-check.yml (PR body format) + check-lane-evidence.sh
+        ├ check_parallelization()      설계 lane 6-deputy co-dispatch  (기존, 무손상)
+        └ check_peer_codispatch()      리뷰 peer 4 lane co-dispatch + 커버리지  (신설)
+    → warning tier check-run  (required 미승격 — ADR-171 §결정 6 선결 미충족)
+
+[진단 family — local-only]
+  task-notification → Orchestrator 수기 append → .claude/ledger/spawn-event.jsonl (gitignored)
+    → scripts/lib/analyze_spawn_concurrency.py  (co-dispatch 참고치 · 임계 경로 귀속)
+    → 산출 결과는 커밋 문서에 값으로 박제 (원장 유실 = baseline 소멸 완화)
+```
+
+> **경계 불변식**: 원장은 gitignored + 로컬 단일본 + CI checkout 불가라 **어떤 workflow 에도 배선하지 않는다** — 배선 시 permanently-vacuous job 또는 보안 재심사 미이행. 반대로 게이트 family 는 원장을 **0건 참조**한다. 관측 채널의 입력 신뢰 등급은 **선언 기반**(저작자 self-report)이며 실행 이벤트 ground-truth 가 아니다 — 보장하는 것은 "선언된 값들이 60초 이내로 선언되었다"이지 "실제로 60초 이내에 spawn 되었다"가 아니다(advisory ceiling, ADR-143 동형).
 
 **Cross-cutting 흐름** (Story lane 게이트 비개입, 독립 spawn):
 - PMOAgent — Epic 창설 / Story 완료 retro (Phase 2 PR merge 후 5분 grace 자동 trigger, ADR-045)
@@ -371,6 +391,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 | **5 follow-up CFP (HIGH 2 + MEDIUM 2 + LOW-DEFER 1)** | Mega-Epic CFP-1415 진행 중 5 follow-up declared — defer / immediate split | (다른 CFP 발의 후 status 갱신) |
 | **#1320 사용자 dependency** | 사용자 발화 영역의 hard dependency — 본 Sub-C 진행 중 absorb 필요 시 status update | Issue #1320 |
 | **#1439 MCP labels bug** | MCP labels API 영역 known bug — codeforge family 안 cross-cutting 영향 (label-registry-v2 propagation 차단 가능) | Issue #1439 (독립 fix carrier) |
+| **lane-spawn 관측의 ground-truth 부재 (CFP-2914 미해소)** | spawn 실측 채널이 **자기보고 opt-in 원장 1개**뿐이라 "미스폰 vs 미기록"이 확정 불가하고(AC-7 4축 전건 판별 불가), `agent_type: "claude"` generic 워커와 review peer 를 구별할 필드도 없다(±18%p). 관측 강도 천장 = **선언 기반 검출 + advisory** — spawn 사전 차단은 ADR-115 Wave 2, required 승격은 ADR-171 §결정 6 선결. `duration_ms` provenance 부재(두 측정량 혼재)도 미해소 | CFP-2914 (ADR-064 Amd 16 / ADR-031 Amd 3) — 구조적 해소 경로 = §14 `spawned_at` 직접 기록 복원 후 baseline 재적립 |
 | **observability Tier-3 spawn-event-v1 (per-agent token/cost attribution + replay + agent outcome) — ACTIVE 배선 (CFP-2850 P0-2+N9, activation≠landing)** | CFP-2393 / Epic CFP-2391 S3 substrate **LANDED**(append_spawn_event.py[O_APPEND] + replay script + §14↔spawn-event dedup script[ADR-163 §결정 13] + lint + pricing 전부 실재) → CFP-2393 시점 landed-but-vacuous(파일 부재=0 rows). ADR-163(measurement) §결정 3 보류 해제(Amendment 1) + ADR-043 Amendment 2. 8번째 observability channel. oh-my-claudecode(MIT) 차용. **CFP-2850(Epic #2814 W1-B) = vacuous 해소 activation**: writer topology = SubagentStop hook single-write → **Orchestrator task-notification 수신 시점 single-write**(hook spawn-event row-write retire + 경량 spawn-completion COUNTER disjoint 보존) + 실측값(subagent_tokens aggregate·tool_uses·duration_ms) + lane-context(story_key/lane_label) 주입 → §14↔spawn-event non-vacuous reconcile 실현. **N9 additive**(19→23-field): total_tokens·model·outcome·termination_cause 4 optional field(spawn-event-v1 v1.1→v1.2 MINOR; ADR-043 Allow-list Amendment + ADR-039 §결정 2 7th inline-whitelist entry). agent outcome = completion-quality ⊥ termination-mechanism 2 직교축(record-only, taxonomy=concept/subagent-outcome-terminal-state-taxonomy.md 신설). token attribution = task-notification aggregate 실측(4-way 부재 시 honest-null, transcript undercount 배제). **완료 = 실 attributed row≥1**(activation≠landing) | 본 Story Phase 2 PR (CFP-2850 §5) |
 | **동적 테스트 최대화 게이트 G4 (ADR-146 / CFP-2605) — Phase 1 설계 landed** | burden-flip 표준(feasible 동적 검증 default 수행) + fuzz/property/load/concurrency §8.8 1급 로스터 설계 완료(Phase 1 = 본 doc data_flow + Open Decisions). **Phase 2 미실현** = template §8.8(change-plan.md + story-page-structure.md 미러) + `check_section_8_8` lint 함수(check_doc_section_schema.py 확장, 신규 workflow 0) + `test-check-doc-section-8-8.sh` self-test(L3 discriminating mutation-kill) + TestContractArch/QADev §8.8 agent-md mandate. Ports&Adapters lint 구조 정합 = Phase 2 ModuleArch 재검토 note(`check_section_8_8` = pure-lint 층, Phase 1 신규 boundary/module 0). 신규 required context 0(baseline tuple 무관 — G1 6→7 선착 시에도 G4 추가 0) | 본 Story Phase 2 PR (CFP-2605 §8-§11) |
 | **지속-liveness soak 게이트 G2 (ADR-148 / CFP-2613) — Phase 1 설계 landed** | 2-표면(선언 fail-closed CI-lint ⊥ 런타임 IntegrationTest boot-soak) + verdict-kernel seam(`evaluate_soak_sample` 순수함수 + reason-code enum 단일소스화) + INV-D1~D6 + 정직 천장 설계 완료(Phase 1 = 본 doc + ADR-148 + change-plan + Story §7). **미결(사용자 결정)** = 표면 A required 편입(**LIVE 6→7-tuple** [verified gh api 2026-07-12; 최종 크기 = G1 등록순서 의존], 비가역+consumer mass-break=ask-trigger) — 설계리뷰 escalate, **권장 shadow-first**(blocking 승격하되 required 미편입 → bounded window 실 PR 신호 → 후속 CFP 편입 — G1 documented⊥live drift[dead-gate, CFP-2609 라우팅]가 shadow-first 지지). **미결(Phase 2 구현)** = verdict-kernel 물리형태(templates/ 소script vs schema spec-embed, §3.2) / 표면 A blocking(exit1) 승격 + sink_probes[]·daemon_type schema + test-verdict-v2 v2.3 + fixture-daemon self-test 실배선. soak/restart/replay = G2 단일소유(ADR-146 §결정3 g2_boundary_check). 신규 required context 0(사용자 결정 유보) | 본 Story Phase 2 PR (CFP-2613 §8-§11) + required 편입 = 사용자 결정 후속 CFP |
