@@ -1221,6 +1221,8 @@ CFP-2914 요구사항 lane 전수 실측 결과 그 4-piece 중 **실재하는 �
 
 파일명 불일치(`check-parallel-dispatch-prompt.sh` ↔ `check_parallel_dispatch_prompt.py`)는 본 Amendment 가 서술 차원에서 정합화한다.
 
+**존치의 필수 동반 조건 = 파일 자신 안의 정직 미배선 마커.** 이 스크립트의 모듈 docstring 은 검사 5종을 집행 서술로 적고 있으나 호출자가 0이다 — 마커 없는 존치는 본 Amendment 가 다른 site 에서 정정하기로 한 **바로 그 declared-not-bound 형상을 파일 안에 유지**하는 것이다. 따라서 docstring 선두에 "현행 배선 상태 = 미배선(호출자 0) · 검사 항목 삭제 0 · 재배선 시 declare 제거" 를 부착해 **declared-and-labeled 로 전이**시킨다. 판정 기준(정직 마커 보유 여부가 declared-not-bound 와 declared-and-labeled 를 가른다)을 남에게만 적용하고 자신에게 적용하지 않으면 self-exemption 이다.
+
 #### 결정 16-2 — 2026-06 prune 의 §결정 7 위반 사후 기록
 
 `archive/prune-2026-06/` 5 파일 전수 `sunset_justification` grep **0건** `[verified]`. 2026-06 prune 이 `parallel-dispatch-prompt-check` warning tier 를 절단하면서 §결정 7 이 의무화한 justification 을 남기지 않았다 — **ratchet 위반이 확정**된다.
@@ -1235,13 +1237,18 @@ CFP-2914 요구사항 lane 전수 실측 결과 그 4-piece 중 **실재하는 �
 - 기존 `check_parallelization()`(설계 lane 6-deputy)은 **무손상 존치**한다 — 회귀 self-test 로 bit-identical 을 지킨다.
 - 대상 lane = **closed-set 명시 배열 4종**(`요구사항-리뷰` / `설계-리뷰` / `구현-리뷰` / `보안-테스트`) + 정확 일치 lookup. `*리뷰*` substring 매칭은 구조적으로 금지한다 — 그 실패 양식이 `보안-테스트` lane 3 그룹을 통째로 누락시킨 실물 오류의 원인이다.
 - **판정 불가 ≠ PASS.** peer 가 2종 미만이거나 산출이 0인 그룹은 위반이 아니라 **별개 상태(판정 불가)** 로 분리 집계하며 조용한 PASS 로 접지 않는다.
+- **"판정 불가" 는 두 축이며 소재가 다르다** — (A) *row 는 있으나 그 peer 가 산출을 냈는가* 는 원장 필드(`tool_call_count`·`termination_cause`)를 요구하므로 **local-only 진단 도구 전용**이다. Story §14 schema 는 12 field 이며 그 두 필드를 보유하지 않고, §14 `outcome` enum(`PASS/FIX/SKIPPED`)은 원장 `outcome` enum(`success/…/partial`)과 **동음이의로 충돌**한다 `[verified: templates/story-page-structure.md:558-581 · docs/inter-plugin-contracts/spawn-event-v1.md:93]`. 따라서 실효 판정 사다리를 게이트 leg 에 얹으면 전건이 최종 규칙으로 낙하해 **판별력 0 인 검사가 GREEN 을 발화**한다(born-hollow) → 게이트 leg 에 배선하지 않는다. (B) *판정에 필요한 peer row 자체가 2행 미만인가* 는 §14 row 수만으로 계산되므로 **게이트 leg 의 잔존 의무**다. 이 분리는 검사량 축소가 아니라 **소재 확정**이며, 검사 leg 계상 단위는 게이트+진단 **family 합산**이다(스크립트별 계상 시 이동이 감소로 오독된다).
 - **C-7 정합** — 신규 check 는 **warning tier 로 출생**한다. required 승격은 ADR-171 §결정 6 의 3-AND + evidence 6종을 선결로 두며 본 Amendment 범위 밖이다.
 
 #### 결정 16-4 — cap 문면 정합 (7 → 13)
 
 `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` 의 `worker_count_max` default 를 **7 → 13** 으로 상향한다(계약 MINOR `1.1.1` → `1.2`, 순수 loosening). 근거 = roster 산술 — 최대 batch = 9 deputy(6 permanent + 3 CONDITIONAL) + 4-tuple sub-tuple 4 = **13**. 계수 단위는 계약 `:213` 이 직접 정의한 "한 batch 의 task 수" 다.
 
-반영 면 = 계약 2곳 + `templates/team-spec-*.yaml` 7 파일 + `skills/rate-limit-429-mitigation/SKILL.md:133` (**5번째 면** — 429 발생 시 읽히는 skill 이라 stale cap 이 남으면 그 순간 잘못된 값을 준다). `ADR-042` 는 roster SSOT 이며 cap 을 보유하지 않으므로 **대조면**으로만 사용한다(무변경).
+**반영면(값을 바꾸는 면) 4종** = 계약 2곳(`:214`·`:288`) + `templates/team-spec-*.yaml` 7 파일 + `skills/rate-limit-429-mitigation/SKILL.md:133` (429 발생 시 읽히는 skill 이라 stale cap 이 남으면 그 순간 잘못된 값을 준다) + **`scripts/check_parallel_dispatch_prompt.py:75` `WORKER_COUNT_MAX_DEFAULT`** (계약 §8 검사 5번의 유일 구현체 — 호출자 0 을 유지하므로 런타임 행위 변화는 여전히 0이나, 계약값과 어긋난 채 두면 stale 계약을 박제한다).
+
+**대조면(무접촉·모순 0 확인) 3종** = `ADR-042`(roster SSOT 이며 cap 미보유) + `skills/deputy-mandate/SKILL.md:13`(deputy 계수만 보유) + **`ADR-044:29`**. 마지막 항목은 문면 자신이 값의 SSOT 를 본 계약이라 선언하고 자기는 *derived* 기록임을 명시하므로, 계약이 13 이 되어도 제정 시점 파생값의 **byte-frozen 이력**이다 — **소급 편집 금지 · 별도 Amendment 불요**(규범 delta 0). 미래 독자가 "누락된 반영면" 으로 오인해 소급 편집하는 것을 차단하기 위해 본 Amendment 에 명시 등재한다.
+
+**정직 라벨(무손상)** — cap 상향은 이 3필드를 읽는 코드가 0건이므로 **런타임 행위를 바꾸지 않는 문면 정합 변경**이다. 이를 "충돌을 집행한다"고 기술하면 declared-not-bound 를 재생산한다. 정확한 기술 = "태생적 위반 상태인 문면을 실재와 일치시킨다".
 
 **정직 라벨**: 이 상향은 **런타임 행위를 바꾸지 않는다.** `parallel_spawn_cap` 3필드의 소비자는 0이고, 계약 §8 검사 5번(`worker_count ≤ worker_count_max`)은 호출자 0인 고아 스크립트 안에만 존재한다. 따라서 정확한 기술은 "충돌을 집행한다"가 아니라 **"태생적 위반 상태인 문면을 실재와 일치시킨다"** 이다.
 
