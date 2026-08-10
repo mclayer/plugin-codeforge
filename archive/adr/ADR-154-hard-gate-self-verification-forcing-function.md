@@ -6,6 +6,27 @@ category: governance
 date: 2026-07-14
 carrier_story: CFP-2684
 supersedes: []
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2922
+    date: 2026-08-10
+    scope: >-
+      적용 대상 확장(instrument-side) — §결정 5(2-control 계약) + §결정 7(born-hollow 금지)의
+      적용 대상에 "리뷰·구현 레인이 게이트 판별력을 재기 위해 작성하는 뮤테이션 측정 하네스"를 추가.
+      신규 normative = L-1(declared-unit 의미층 확증 = §결정 7 double-guard 3번째 leg) ·
+      L-2(주입 국소성 = 앵커·건수 한정 + 변경 site 수 assert) 2 leg ONLY. 대표 형상 ③(선택자 미포함
+      → "안 돌았다") ④(계기 사망 — cp949/WSL/MSYS) = 신규 0(기존 §결정 3 AC-5 execution-trace ·
+      §결정 5 internal-control 재사용). applicability = self-declared opt-in `mutation_harness`
+      (§결정 5 identity_bearing 형판 재사용, normative 계수 비산입). 하네스는 §결정 8 5-piece chain ·
+      ADR-151 인벤토리 enroll · 메타-게이트 스캔 대상으로 끌어들이지 않음(born-broken 방지).
+      ADR-152/151/082 무접촉. 근거 = CFP-2878 arc 침묵 주입/복원 실패(주체 ≥5 role-횡단, 전건 개정 전 스코프 밖).
+    sunset_justification: >-
+      N/A — ADR-154 = is_transitional:false permanent governance ratchet → ADR-058 §결정 5 sunset
+      trigger 미해당. 본 Amendment = 강화 방향(약화 surface 0): 신규 required context 0 ·
+      branch-protection 7-tuple 무변경 · inter-plugin 계약 무변경 · 신규 category 0 · 신규 workflow 0.
+      INV-5(ceiling immutable) 무손상 — L-1 은 declared-unit assertion 이지 L3 detection sufficiency
+      격상이 아니다.
+    reinterpretation: false  # 본문 §결정 1-10 소급 재해석 아님 — 적용 대상 추가 + 전방 leg 추가이며 forward-only ratchet(landed 산출물 소급 무효화 0, retrofit = review-tier 별 carrier defer). 판정 근거 = 본문 §A1-4·A1-5 공통 절. 진위 = 리뷰 판정 축(honest-ceiling)
 related_adrs:
   - ADR-082  # 재사용/super-class kin(amend 아님) — §결정11.A red-green-stash-proof(RED proof, carrier CFP-1330/1025) 는 REUSE(재codify 금지, cross-ref). super-class(write-time semantic truth verify) 는 kin 이나 §결정11 = "Wave 1 = declaration-only, 2 sub-decisions 모두 behavioral directive"(L939 verbatim) → CFP-2684 의 normative+phase-2+fail-closed 메타-게이트+재귀 자기적용 = 신규 mechanism → ADR-082 = cross-ref home 아님(§결정1 A2-5 Amendment prong 기각)
   - ADR-151  # 형제/증분(amend 아님) — self-test 채널 execution-liveness(L1) 봉인 + 8-field 인벤토리 스키마(REUSE — 신규 스키마 0). subject disjoint(self-test 코퍼스 ↔ 임의 게이트 core). AC-4 는 검출력을 G3/review 로 명시 DEFER(§결정7). axis-(ii) shape-scan = ADR-151 AC-4 enum→shape 1단계 증분(cross-ref, ADR-151 Amendment 아님 — landed self-tested `check_selftest_execution_liveness.py` 무침습). 신규 메타-게이트 self-test 는 ADR-151 인벤토리 1행 enroll(bijection cross-seal)
@@ -200,3 +221,142 @@ N/A — permanent policy (permanent governance ratchet, ADR-058 §결정5 강화
 - **Phase 1(본 ADR 동반)**: `docs/architecture/codeforge-family.md`(governance CI 층 1-line + Open Decisions row) · `archive/adr/ADR-RESERVATION.md`(154 row)
 - **선례(exemplar 답습)**: `.github/workflows/doc-frontmatter-category-test.yml` · `.github/workflows/ac-traceability-self-test.yml` · `.github/workflows/selftest-execution-liveness-test.yml`(day-1 hard-fail wrapper-self-only)
 - **cross-ref(재사용, amend 금지)**: ADR-082 §11.A(red-green-stash-proof) · ADR-151(execution-liveness 인벤토리 8-field) · ADR-152(discriminating-A/B·honest-ceiling·born-hollow positive-leak) · ADR-006 §8.7(discriminating-fixture) · ADR-153(sibling)
+
+---
+
+## Amendment 1 (CFP-2922, 2026-08-10) — 적용 대상 확장: 게이트 self-test → 리뷰·구현 레인 뮤테이션 측정 하네스(instrument-side). 신규 normative = L-1(declared-unit 의미층 확증) · L-2(주입 국소성) **2 leg ONLY**, 대표 형상 ③④ 는 **신규 0**(기존 조항 재사용). INV-5 무손상
+
+### 배경 — 미승계는 "안 읽음" 이 아니었다 (CFP-2878 arc 실측)
+
+CFP-2878(vacuous-PASS census + §10 시각 lint) arc 가 자기 Change Plan §13.1 에 규율 2종을 **"신설"** 했는데, 그 둘은 이미 본 ADR 정본에 있었다 — §13.1-32 ⓑ *"무해 대조군 필수"* = **§결정 5 2-control 계약** / §13.1-30 *"의미 층 확증"* = **§결정 7 mutation-validity double-guard**.
+
+★**그리고 그 Change Plan 은 본 ADR 을 알고 있었다.** origin/main 판본 실측 `[ArchitectAgent firsthand 2026-08-10]`:
+
+| 실측 | 값 |
+|---|---|
+| CP frontmatter `related_adrs` 에 ADR-154 | **존재**(`L15`) |
+| CP §13.1-5(`L588`)의 ADR-154 인용 | **INV-5 단 하나** — *"L3 detection sufficiency 를 normative 로 격상 금지"* |
+| CP 본문의 `identity-probe`(= §결정 5 AC-13 어휘) | **2회**(`L52`·`L69`) — ★**둘 다 "비대상" 선언** |
+
+⇒ 저자는 §결정 5 의 어휘까지 읽었고, **건설 중이던 산출물(N3 census 게이트)에 대해 올바로 스코프 아웃했다.** 빠진 것은 그 조항이 **측정하는 계기(instrument)** 에도 걸린다는 문면이다. ★**근인 = 문면 갭이지 주의력 결손이 아니다. 문면 갭의 처방은 감사 강화가 아니라 문면 갱신이다** — 그래서 본 Amendment 가 곧 미승계 처분이다.
+
+**문면 침묵 실측 (null 주장 + 판별 대조군 — 동일 파일·동일 도구 ripgrep, shell 미경유)** `[ArchitectAgent firsthand 2026-08-10]`:
+
+| 패턴 | hit | 역할 |
+|---|---|---|
+| `리뷰 레인 \| review lane \| review-lane \| 측정 하네스 \| harness` | **0** | null 주장 |
+| `review-tier \| honest-ceiling \| 정직 천장` | **29** | 대조군(혼합) |
+| `게이트 자기검증` | **3** | ★한글 전용 대조군 |
+
+술어는 살아 있고 **대상이 없다.** 그리고 §경계 블록이 5개 disjoint 축을 열거하는데 **리뷰-레인 측정 하네스는 포함도 배제도 되어 있지 않다 — 침묵이다.** CP §13.1-31 조건 ⓘ 가 세운 명제(*"명세가 침묵하는 축에서의 pin 은 명시가 아니라 결정"*)를 ADR 측에 대칭 적용하면, **침묵 축의 승계 기대는 기대가 아니라 요행**이다.
+
+**발생 규모 (★기질 병기 — 절대값은 술어-의존)**: CP §13.1-30(`L920`)은 *"같은 형 6건 / 주체 6"* → 갱신 *"주체 7 · 사례 9+"*; PMO 회고 패킷은 *"11건 · 주체 5(회고 후 6)"*. **계수 술어에 따라 값이 갈린다.** 따라서 본 Amendment 는 근거를 값이 아니라 **주체 다수성(≥5 · role-횡단 — 설계 PL · 구현 PL · 구현 리뷰 PL · peer · Orchestrator · PMO)** 에 건다. 결론은 술어-불변이다: **개인 부주의가 아니라 절차의 구조적 공백**이며, 그래서 규율이지 반성문이 아니다. ★그리고 **그 전부가 리뷰·측정 레인의 뮤테이션 하네스에서 났지 gate self-test 에서 나지 않았다** — 즉 전부 개정 전 스코프 밖이었다.
+
+**계기 사망은 이 arc 밖에서도 살아 있다 (본 Amendment 판정 세션 자기 실증, 2026-08-10)** `[ArchitectAgent firsthand]`:
+
+- bash `sed -n '/결정 8/,/결정 9/p'` 가 한글 범위지정 오작동으로 **§결정 1 구간을 반환**했다. Grep 도구(shell 미경유)로 전환 후 정상. **측정 명령이 성공 종료했고 출력도 있었으나 대상이 아니었다.**
+- 로컬 `codeforge-internal-docs` 체크아웃이 **3커밋 뒤**였고 그 판본 §13.1 은 **23항까지뿐**이었다 — 그대로 읽었으면 *"§13.1-29~32 부재"* 라는 **거짓 null** 을 냈다. `git show origin/main:` 재측정으로 회피. ★이것도 같은 형이다: **읽은 대상이 내가 읽으려던 대상인가** = §결정 5 internal-control 의 문서 축 instance.
+
+### A1-1 — 형태 판정: Amendment 채택 · 신규 ADR 기각 (§결정 1 A2-5 3-prong **자기적용 = 0/3**)
+
+§결정 1 의 신규-ADR 3-prong 을 본 후보에 그대로 적용한다:
+
+| prong | 판정 | 근거 |
+|---|---|---|
+| (i) distinct context | **기각** | 본 ADR 이 이미 명명한 class 의 **네 번째 발생지**. §컨텍스트 super-class 정의(*"게이트가 green 이어도 … 위양성"*)가 그대로 덮는다. 새 인스턴스가 distinct context 라면 본 ADR 은 재발마다 재발행돼야 한다 |
+| (ii) distinct decisions | **기각** | 후보의 normative 내용이 §결정 5·§결정 7·§결정 6 에 **1:1 사상**된다. 신규 *결정 블록* 이 아니라 기존 조항의 **leg** 다 |
+| (iii) distinct result | **기각(결정적)** | 본 ADR 이 인용하는 ADR-151 §결정1 test = *"신규 fail-closed 메타-게이트 = 신규 ADR"*. 후보는 신규 게이트를 낳지 않는다 — 기계화는 이미 `plugin-codeforge#2922` ⓑ 소유. **결과가 남의 carrier 인 ADR 은 distinct result 가 없다** |
+
+**0/3 → 신규 ADR 기각.** 독립 근거 2: 여기서 새 ADR 을 쓰면 본 ADR 이 두 번 금지한 것을 어긴다 — §결정 9 *"재codify 0"*, §결정 2 *"신규 가치 = super-class 명명 + silent-fallback taxonomy + identity-probe codify **ONLY**"*. **informational 강등도 기각** — 위 §배경이 문면 갭을 실측했고, 문면 갭은 문면으로만 닫힌다. 경쟁 home 3종 배제(무언 폐기 금지): **ADR-158** = 자기 title 이 `#2684 게이트 자기검증 disjoint` 명시 선언 / **ADR-163** = telemetry event ledger 아키텍처(계기 무결성 축 아님) / **ADR-073** = 주어가 Orchestrator role(본 건은 주체 ≥5 role-횡단).
+
+### A1-2 — 적용 대상 확장 (스코프 — **신규 normative 0**)
+
+§결정 5(2-control 계약) 와 §결정 7(born-hollow 금지)의 적용 대상에 다음을 **추가**한다:
+
+> **리뷰·구현 레인이 게이트의 판별력을 재기 위해 작성하는 뮤테이션 측정 하네스**(ad-hoc·임시 포함) — 이하 **instrument-side**.
+
+근거 = §결정 2 super-class(*"green ≠ detection guarantee"*)의 **계기 측 instance**. 게이트가 자기 검증 대상을 실제로 검출하는지 보장되지 않으면 위양성이듯, **계기가 자기 측정 대상을 실제로 재는지 보장되지 않으면 그 측정값도 위양성**이다. 새 개념이 아니라 같은 명제의 한 층 위 적용이다.
+
+**§경계 갱신(침묵 제거)** — 기존 §경계 5행에 다음을 더한다: **instrument-side 뮤테이션 하네스 = ⊥ 아님(본 ADR 대상)**. 다만 L3 detection-power 는 여전히 ⊥ 다(§결정 4 무손상).
+
+### A1-3 — ★경계: 하네스에 landed 계약을 걸지 않는다 (born-broken 방지)
+
+instrument-side 확장은 **계약(§결정 5·7)에 한정**한다. 다음으로는 **끌어들이지 않는다**:
+
+- **⊥ §결정 8 5-piece chain**(`.py` SSOT core / `.sh` wrapper / template yml / mirror yml / self-test) — 하네스는 landed 산출물이 아니다
+- **⊥ ADR-151 인벤토리 enroll**(bijection cross-seal) — 임시 산출물을 인벤토리에 넣으면 항상-stale
+- **⊥ 메타-게이트 정적 스캔 대상** — 스캔할 안정 좌표가 없다
+
+★**임시 산출물에 landed 계약을 걸면 born-broken 이다.** 본 Amendment 는 하네스에 *지켜야 할 것* 을 주되 *스캔당할 자리* 를 주지 않는다. 그 대가는 A1-8 정직 천장에 공개한다.
+
+### A1-4 — 신규 normative ① **L-1 의미층 확증 = declared-unit assertion** (§결정 7 double-guard 의 **3번째 leg**)
+
+**현 조항**: `mutation-validity double-guard(diff-q sed-actually-changed + py_compile mutated-is-valid-python)` = ⓐ 바이트 층 + ⓑ 문법 층.
+
+**ⓐ 를 firsthand 반증한 실측** (CP §13.1-30 `L921`, 7번째 실증): 구판 *"주입 직후 `patched != original`"* assert 가 **통과했음에도 의미상 no-op** 이었다 — 신판 parity step 앞에 **공백행**이 있어 지운 개행이 주석이 아니라 그 공백행에 붙었고, **바이트는 변했으나 YAML 은 그대로 5 step**. ★**그 상태의 초록을 읽었으면 *"미봉합"* 이라는 정반대 결론이 났다.**
+
+⇒ **신규 leg ⓒ**: **주입 직후, 그 주입이 *의도한 의미 단위* 를 실제로 바꿨는지 피검 대상의 의미 표현(파싱 결과 · census · exit code)으로 assert 한다.** 바이트 차이는 주입의 **필요조건이지 충분조건이 아니다** — ⓐ 는 최소 조건으로 존치한다.
+
+**★왜 더 강하게 쓰지 않았는가 (rationale — 약하게 쓴 이유가 계약의 일부다)**
+
+L-1 은 **저자가 선언한 단위**에 대한 델타 assert 만 강제한다(declared-unit assertion). ***"의미상 no-op 을 검출한다" 로 쓰지 않는다 — 금지다.***
+
+- 후자는 임의 뮤테이션의 semantic non-equivalence **일반 판정** = equivalent-mutant = halting 동치이며, **§결정 4 INV-5(ceiling immutable) 정면 위반** + over-claim P0 다.
+- 따라서 L-1 은 **선언되지 않은 축의 no-op 은 잡지 못한다.** 이 약함은 결함이 아니라 **천장**이다.
+- ★**그리고 이 절제 자체가 본 Amendment 가 codify 하는 명제와 동형이다** — CFP-2878 이 세운 *"단언 ≠ 판별"*(CP §13.1-32 `L950`)은 **단언을 판별로 과대주장하지 말라**는 것이다. L-1 을 *"no-op 검출"* 로 쓰면 **이 Amendment 가 자기가 codify 하는 규율을 첫 문장에서 어긴다.**
+- **형판** = ADR-152 §결정 4 *"declared-consistency 를 강제할 뿐 detection 을 강제하지 않는다"*(cross-ref, 재codify 0).
+- ★**다음 저자에게**: 이 문면을 *"약하게 쓴 실수"* 로 읽고 강화하지 말 것. **강화 시도가 곧 INV-5 위반이다.**
+
+### A1-5 — 신규 normative ② **L-2 주입 국소성** (§결정 7 신규 leg)
+
+**형상**: 전건 `str.replace` 치환이 **실행행과 주석을 동시에** 바꿔 단언 실패가 났고, 그것을 **KILL 로 오독**했다(거짓 KILL). ★이 arc 에서 Orchestrator 와 Codex peer 가 **같은 술어로 같은 오답**을 냈다.
+
+**현 2-leg 어느 것도 "의도한 자리만 바꿨는가" 를 보지 않는다** — ⓐ 는 "바뀌었는가", ⓑ 는 "여전히 유효한가" 만 본다.
+
+⇒ **신규 leg**: **치환은 앵커·건수 한정(anchored / count-bounded)으로 수행하고, 변경된 site 수가 의도한 수와 일치함을 assert 한다.** 전건 치환(`replace()` 무제한 · 전역 `s///g`)은 하네스에서 금지하며, 불가피하면 변경 site 를 열거해 선언한다.
+
+**INV-5 무관**: diff hunk 계수는 concrete 케이스에서 decidable 하다 — detection sufficiency 판정이 아니다.
+
+**★A1-4 · A1-5 공통 — 적용 범위 + forward-only ratchet (`reinterpretation: false` 의 근거)**
+
+- **적용 = §결정 7 전체**(instrument-side ∪ 게이트 self-test). **같은 결함류에 임의 경계를 긋지 않는다** — 바이트 층 assert 의 불충분성은 하네스든 landed self-test 든 동일하다.
+- ★**forward-only ratchet — landed 산출물 소급 무효화 0**: L-1·L-2 는 **신규·개정** 하네스/self-test 에 적용한다. 이미 착지한 §결정 7 산출물(메타-게이트 self-test M1-M6 등)을 **소급 위반으로 재분류하지 않는다.** 그 retrofit 은 **review-tier + 별 carrier defer**(ADR-060 evidence-gate 형판 — §결정 8 의 required 승격 defer 와 동형).
+- ⇒ **`reinterpretation: false`**: 기존 §결정 1-10 문면의 **landed 대상에 대한 의미가 불변**이다. 본 Amendment 는 *적용 대상 추가 + 전방 leg 추가* 이지 기존 결정의 **소급 재해석이 아니다**. (이 marker 는 presence/type 만 기계 검사되고 **진위 = 리뷰 판정 축**이므로 — 템플릿 honest-ceiling — 판정 근거를 문면에 남긴다.)
+- ★**미측정 정직 고지**: landed self-test 가 **실제로 L-1 결함을 보유하는지는 재지 않았다.** 그래서 소급 강제도 하지 않고, *"landed 는 안전하다"* 는 단정도 하지 않는다 — 둘 다 근거가 없다.
+
+### A1-6 — ★신규 0 명시: 대표 형상 ③④ 는 **기존 조항 재사용** (과대주장 절제)
+
+본 arc 대표 형상 4종 중 **2종은 A1-2 스코프 확장만으로 덮인다. 신규 leg 을 만들지 않는다.**
+
+| 형상 | 처분 | 커버하는 **기존** 조항 |
+|---|---|---|
+| ③ 선택자에 수호 테스트가 안 들어감 → 초록이 *"안 죽었다"* 가 아니라 ***"안 돌았다"*** (CP §13.1-29 `L916`) | **신규 0** | **§결정 3 mechanical floor AC-5 execution-trace** — 대상 count/스캔수/처리항목 emit |
+| ④ 계기 사망 — 한글 리터럴 cp949 파손(arc 3회 + PMO 2회) · `bash` 의 WSL 릴레이 해석 · MSYS 경로 맹글링 | **신규 0** | **§결정 5 internal-control(identity probe)** — *"선언 대상 = 실행 대상"* known-answer 증명. 문서 축 instance = 판별 대조군 병기 |
+
+★**과대주장 절제가 본 Amendment 의 신뢰성이다.** 이 둘을 "신규 leg" 로 계상하면 §결정 9(재codify 0)를 어기고, 본 Amendment 가 겨냥하는 *"같은 규칙 두 벌"* 을 스스로 생산한다. **본 Amendment 의 신규 normative 는 L-1 · L-2 둘뿐이며, 그 외 어떤 것도 추가하지 않았다.**
+
+### A1-7 — applicability = **self-declared opt-in** (§결정 5 `identity_bearing` 형판 재사용 — 재codify 0)
+
+"어떤 산출물이 instrument-side 계약의 대상인가" 를 **semantic 추론에 맡기지 않는다**(비결정·gameable — §결정 5 가 AC-13 에서 이미 기각한 방식):
+
+- 뮤테이션 측정을 수행하는 산출물이 **`mutation_harness: true`** 를 선언하면 A1-2 계약(2-control) + A1-4/A1-5 2-leg presence 가 대상이 된다. **미선언(`false`/필드 부재) = 미대상(정직 no-op).**
+- **형판 = §결정 5 `identity_bearing: true/false`** verbatim 구조. 신규 메커니즘 0.
+- ★**이 절은 normative 계수에 들어가지 않는다 — 축이 다르다.** §결정 5 자신의 어휘가 이미 가른다: ***"applicability = self-declared(opt-in), probe presence = normative"***. `mutation_harness` 는 **applicability selector** 이지 하네스가 만족해야 할 요건이 아니다. 따라서 A1-6 의 *"신규 normative = L-1 · L-2 둘뿐"* 은 본 절에도 불구하고 유지된다. (같은 이유로 §결정 5 가 AC-13 을 *"probe presence 강제이지 detection sufficiency 강제가 아니므로 INV-5 무손상"* 이라 판정한 논리가 그대로 상속된다.)
+- **실효 강제점 = `plugin-codeforge#2922` ⓑ 공유 라이브러리** — 라이브러리 import 가 곧 선언이 되게 배선한다(구현면, Phase 2).
+
+**잔여 상속(신규 저작 0)**: *"모든 진짜 하네스가 실제로 self-declare 했는가"*(열거 완결성)는 **기계 강제 불가 — self-declared 의존이라 declared 완결성**이다. 이 잔여는 §결과의 **AC-13 열거-완결성 residual 문단과 동일 형식**이므로 그 처분을 그대로 상속한다(AC-8 honest-ceiling 공개 + AC-9 review-tier 판정). 새 잔여 문법을 만들지 않는다.
+
+### A1-8 — 정직 천장 (본 Amendment 자신의 잔여 — 미기재 시 §13.1-28 형 재생산)
+
+- ★**하네스 규율은 기계 강제가 아니다.** 하네스는 임시 산출물이라 §결정 8 5-piece chain 산출물이 아니고 **메타-게이트 정적 스캔 대상이 아니다**(A1-3). 따라서 A1-4/A1-5 는 **review-tier + 공유 라이브러리 채택**으로만 실효를 갖는다.
+- ★**`#2922` ⓑ 라이브러리의 채택률은 강제되지 않는다.** 하네스는 매번 새로 쓰일 수 있고, 라이브러리를 쓰지 않은 하네스를 fail-closed 로 막는 표면이 **없다**.
+- **A1-4 미선언 축 잔여**: 저자가 선언하지 않은 의미 축의 no-op 은 잡히지 않는다(위 rationale — 강화 금지).
+- **A1-7 열거 완결성 잔여**: 상속(위).
+- ★**어휘 금지 재확인**: 본 Amendment 에 대해 *"universal / 완전 봉인 / 하네스 위양성 근절"* 류 framing 금지 — §결정 4 + INV-5 **무손상**이며, 위반 시 설계리뷰 P0.
+
+### A1-9 — 접촉 경계 + carrier 결속
+
+- **ADR-154 단독 amend.** **ADR-152 무접촉** — §관련 파일이 `cross-ref(재사용, **amend 금지**)` 로 못 박았고, `KILLED ⟺ …` 는 ADR-152 §결정8 원문(단방향)이 아니라 **본 ADR §결정 7 자신의 합성**이다. **ADR-151 인벤토리 8-field 스키마 무접촉 · ADR-082 무접촉.**
+- **강화 방향 유지(약화 surface 0)**: 신규 required context **0** · branch-protection 7-tuple **무변경** · inter-plugin 계약 **무변경** · 신규 category **0** · 신규 workflow **0**.
+- **carrier 결속(계약면 ⊥ 구현면)**: **계약면 = 본 Amendment**(Phase 1) ⊥ **구현면 = `plugin-codeforge#2922` ⓑ** — *"뮤테이션 하네스 공통 유틸(주입 assert + canary)을 라이브러리화하고 리뷰/구현 레인이 공유. 우선순위 1"*(Phase 2). 계약면 없이 라이브러리만 만들면 채택이 자율이라 *"선언만 하고 강제 안 함"* 이 재생산되고, 라이브러리 없이 계약만 쓰면 *"규율이 문서로만 산다"* 가 된다 — **양방향으로 필요하다.**
+- ★**본 Amendment 는 `#2922` Phase 2 의 blocking 전제조건이 아니다** — §결정 8 의 Phase 1 narrative / Phase 2 실코드 분리 **무손상**.
