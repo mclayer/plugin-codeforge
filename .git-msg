@@ -1,4 +1,0 @@
-[CFP-2948] 설계 lane salvage: ADR-170 Amd1 / ADR-141 Amd8 / ADR-115 Amd2 진행분
-
-salvage-commit — 저작 에이전트가 세션 한도로 중단. Orchestrator 대행 커밋.
-내용 판정 아님 (설계리뷰 소관), 유실 방지 목적.
