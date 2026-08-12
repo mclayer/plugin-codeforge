@@ -36,6 +36,19 @@ is_transitional: false
 
 본 Amendment 는 §결정 1~5 의 normative 결정을 변경하지 않는다 — Story file 이 존재하는 모든 consumer / 일반 wrapper Story 에는 §14 evidence trail 이 종전과 동일하게 의무. 단지 "Story file 이 구조적으로 부재한 dogfood `mixed` 환경" 에 대한 applicability 공백을 advisory 면제로 보완한다. Cross-ref: ADR-013 (dogfood-out) / ADR-027 Amendment 6 §결정 10 (4-way truth-table) / ADR-083 §결정 1-2 (filesystem-only detection) / 짝 변경 #2247 (외부 script fork 테스트 distinct-marker — exit code 단독 판정 금지, stdout sentinel 병행).
 
+**Amendment 3 (2026-08-09, CFP-2914)** — **§결정 1 lane 목록 7 → 8 (`요구사항-리뷰` 추가) + §결정 2 required lane row 동수 확장.** §결정 1 은 **FROZEN** 이므로 본 확장은 Amendment 의무 대상이다(직접 편집 금지).
+
+ADR-125 / CFP-2326 이 **요구사항리뷰 lane 을 9번째 lane 으로 신설**했고, 이후 ADR-121 / CFP-2782 가 배포 2 lane 을 물리 제거해 현행 lane 은 **8종**이다 — `요구사항` / `요구사항-리뷰` / `설계` / `설계-리뷰` / `구현` / `구현-리뷰` / `구현-테스트` / `보안-테스트`. 그런데 §결정 1(`매 lane spawn (요구사항 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 …)`)은 **7종에 머물러 `요구사항-리뷰` 를 누락**한다. 같은 누락이 관측 채널 4곳에 전파돼 있다 `[verified: `.github/scripts/check-lane-evidence-block.mjs:24` REQUIRED_LANES 7종 · `.github/workflows/lane-evidence-check.yml:173` requiredLanes 7종 · `templates/story-page-structure.md:549` 7종]`. 반면 `scripts/check-lane-evidence.sh:82` `LANES` 는 이미 8종이고, `docs/inter-plugin-contracts/spawn-event-v1.md:73` `lane_label` enum 도 8종(+`없음`)이다 — 즉 **evidence 채널 안에서만 drift** 가 남아 있다.
+
+본 Amendment 는 다음을 확정한다:
+
+1. **§결정 1 lane 목록 = 8종** — `요구사항-리뷰` 를 정식 편입한다. FROZEN 인 storage location(= Story file `§14 Lane Evidence` section)과 12 field YAML schema 는 **무변경** — 확장 대상은 lane 열거뿐이다.
+2. **§결정 2 PR body `## Lane evidence` required row = 8** — `.mjs` / `.yml` / `templates/story-page-structure.md` 를 동수 확장한다. **배열 단일화 의무**: `.mjs:24` ↔ `.yml:173` 은 현재 동일 배열의 2파일 복사본이라 각자 drift 할 수 있다 → `.mjs` 를 export 로 승격하고 `.yml` 이 이를 소비한다(선례 = `.yml:134-136` 이 이미 `.mjs` 를 dynamic import).
+3. **하위호환 완화** — required row 가 7 → 8 로 늘면 기존 7-row PR 이 RED 가 된다. 신설 lane row 의 `SKIPPED` 값 사용을 명문 허용하고(row 값 enum 에 이미 존재), 게이트 메시지가 누락 lane 을 정확히 지시하게 한다.
+4. **Amendment 2 면제 무손상** — dogfood `mixed` ∧ `STORY_PATH` 부재 시의 §14 면제는 본 Amendment 로 변경되지 않는다. lane 개수 확장은 면제 조건과 직교한다.
+
+ratchet 강화 방향(관측 lane 축 순증 1, 감축 0). is_transitional: false 정합. 약화 방향(lane 목록 재축소)은 ADR-058 §결정 5 sunset_justification 의무. Cross-ref: ADR-125 (요구사항리뷰 lane 신설) / ADR-121 · CFP-2782 (배포 2 lane 물리 제거) / ADR-064 Amendment 16 (같은 carrier CFP-2914 의 peer co-dispatch leg 신설 — 본 Amendment 가 그 leg 의 lane 축 SSOT 를 정합화).
+
 ## 컨텍스트
 
 CFP-124 진단 (2026-05-06) §1.3 architectural root cause A1:

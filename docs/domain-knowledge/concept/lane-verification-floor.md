@@ -4,7 +4,7 @@ type: domain-knowledge
 slug: lane-verification-floor
 title: Lane verification floor (≥1 independent peer = separation-of-duties / Codex = ceiling-not-floor / honest degrade ≠ silent skip / fan-out observability)
 status: Active
-updated: 2026-06-29
+updated: 2026-08-09
 carrier_story: CFP-2471
 related_adrs:
   - ADR-044  # review lane dispatch_mode SSOT — Codex ad-hoc-only, default roster = PL + Claude worker (floor 충족자 = Claude peer)
@@ -61,6 +61,8 @@ CFP-2471(Epic CFP-2468 Track W / W3) 동인 = mctrader(첫 비-dogfood consumer)
 
 설계 lane 6 permanent deputy(SecurityArch/InfraOperationalArch/TestContractArch/DataArch/ModuleArch/APIContractArch) / 구현 lane role:dev roster(sonnet 구현자 포함) 의 실 spawn 수가 기대 미만이면 관측·경고. platform 의 observability↔enforcement 분리(orchestrator-runtime-hook-enforcement) — SubagentStart hook = block 불가(관측만), PreToolUse `Agent` matcher = block 가능(강제). 기대 roster 는 **shape-aware**(CONDITIONAL LiveOps/LiveOrdering/ProductionEvidence + N/A deputy 의 applicability 반영) — 정당한 N/A skip 을 false-block 하면 cry-wolf.
 
+**리뷰 lane peer(ClaudeReviewAgent/CodexReviewAgent) 도 축③ roster 에 포함하되 채널 한정** (CFP-2914 scope 확장 — 구멍 정정이 아니라 미열거 roster class 편입): 축③ 이 소유하는 것은 **Story §14 spawn row 채널의 spawn-time 관측**(PEER-0/1/2 census + 개시 시차)이고, verdict packet 자기단언(`peer_count`) 및 artifact-backed `peer_verdicts[]` 는 각각 축①/축② 소관으로 **disjoint** 하다. 세 datum 은 화해 규약이 부재하며 우선순위 = `peer_verdicts[]`(artifact-backed) > `peer_count` ≈ §14 PEER-N — 근거는 **차단 tier·소관**이지 정확도가 아니다(뒤 둘은 둘 다 자기단언이라 정확도 서열이 없다).
+
 ### R-5: 게이트 자기 무결성 (meta-hollow-gate 차단)
 
 "검증을 강제하는 게이트"가 자신은 silent SKIP 으로 빠지면(현 check-lane-evidence: <6 row silent SKIP + design 한정 + advisory) self-defeating. 게이트의 SKIP 도 honest 표식 의무. stale roster 정정(현 6 permanent)이 강화의 선결 — stale 이면 현 deputy 를 매칭 못 해 미spawn 검출 자체가 실패.
@@ -89,3 +91,4 @@ security lane floor 는 ≥1 peer 보다 높을 수 있음 — packet 에 1차 n
 ## 변경 이력
 
 - 2026-06-29 KST — 초기 작성 (CFP-2471 RequirementsPL 합성 — DomainAgent firsthand framing + ADR-044/094/119/128 직접 Read grounding). SoD(SLSA) / cross-model diversity(N-version) / graceful degradation cited.
+- 2026-08-09 KST — R-4 축③ roster **1행 확장** (CFP-2914 ArchitectAgent chief verdict). 리뷰 lane peer(Claude/Codex)를 축③ 대상에 명시 편입하되 **채널 한정**(Story §14 spawn row = 축③ / verdict packet `peer_count` = 축①·② / `peer_verdicts[]` = artifact-backed). 성격 = **구멍 정정이 아니라 미열거 roster class 로의 scope 확장** — R-4 원 문면이 설계 deputy·구현 role:dev 만 열거했고 `:44` 구멍 (a) 도 구현 role:dev 지시였다는 firsthand 실측에 근거. datum 3채널 우선순위 declare 동반(근거 = 차단 tier·소관, **정확도 아님** — 뒤 둘은 둘 다 자기단언). 축①/②/R-5/R-6/경계 절 무접촉, 검사 신설 0.
