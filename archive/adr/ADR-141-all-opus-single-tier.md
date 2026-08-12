@@ -983,7 +983,7 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 - `docs/orchestrator-playbook.md` §3.0.12b / `skills/rate-limit-429-mitigation/SKILL.md` = **pointer 화**. 단 skill 은 한도 대응 중 즉시 참조되는 문서이므로 **"1줄 요약 + 명시 포인터"** 형태를 표준으로 유지한다(전면 삭제 시 사고 대응 중 맥락 손실).
 - 개정 시 **동기 sweep 의무 (전수 술어 — 절대 site 수·행번호 assert 금지)**: sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 repo 전체에 실행해 얻은 hit 중 **아래 제외 술어를 적용한 나머지 전건**이다. 한 곳 누락 = born-broken.
   - **제외①(동음이의)** `archive/adr/ADR-026-post-merge-automation.md` 의 GitHub Actions concurrency queue 문맥(`pending 안 기존 대기 run`) — 본 규범과 무관한 오탐.
-  - **제외②(메타 표면)** 본 ADR **Amendment 8 절 내부**의 인용·판정 서술(A8-1 현행 문언 인용 블록 · A8-2 · A8-3 · 본 항) — 폐기 *대상* 문언을 기록하는 면이라 **verbatim 보존이 의무**이며 개정 대상이 아니다.
+  - **제외②(메타 표면)** 본 ADR `## Amendment 8` **절 내부 전체**의 인용·판정 서술 — 폐기 *대상* 문언을 기록하는 면이라 **verbatim 보존이 의무**이며 개정 대상이 아니다. 절 경계 = `## Amendment 8` heading 부터 다음 `## ` heading 직전까지(하위 절 목록을 정본으로 두지 않는다 — 열거는 증가·재배치로 stale 해진다).
   - **제외③(이력 기록면)** frontmatter `amendment_log` — 제외② 와 동일 사유.
   - 나머지(= A6-3(a) 본문 및 그 문장을 **현행 규범으로 mirror 하는 타 문서 site**)가 sweep 대상이다.
   - **술어화 근거**: 절대 행번호·site 개수를 기준으로 쓰면 개정이 진행될수록 기준 자체가 stale 해진다 — 본 Amendment 자신의 삽입으로 A6-3(a) 행번호가 이동함이 실측됐다(A8-2-1). 동형 규율 = CFP-2944 Story AC-5/AC-11 "전수 술어 · 절대 site 수 assert 금지"(INV-T6) + `ADR-026` 문맥 제외(INV-T8).
