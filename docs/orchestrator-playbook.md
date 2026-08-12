@@ -2675,6 +2675,27 @@ Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 
 
 직렬화 지점을 줄이려는 노력 (예: ADR 번호 atomic claim 격상 = ADR-133 OCC, CFP-2563 실배선 완료) 은 `f` 자체를 줄여 speedup 상한을 끌어올리는 시도다 (단순 문서화 아님 — "병렬화로 줄일 수 없는 영역" 상한 선언).
 
+### 4.6 세션 동시 subagent 슬롯 예산 — static budget (CFP-2926 AC-12)
+
+> **lookup mirror** — 정책 SSOT = CFP-2926 Story §7.7.4 "슬롯 — static budget (런타임 카운터 원리적 불가)" (AC-12, `codeforge-internal-docs` `wrapper/stories/CFP-2926.md`). 본 절 = 그 배분표의 운영 진입점 전사이며, 수치·근거를 여기서 새로 만들지 않는다.
+
+★하드 제약★: 세션 내부에 running count 관측면이 없다. lead 는 자기 depth-1 만 셀 수 있고 depth-2 는 계보 부재로 불가시 ⇒ 런타임 카운터 스케줄러가 성립하지 않는다. 그래서 배분은 **정적(static)** 이며, 지켜지는 지점은 실행이 아니라 **admission (요청을 받아들이는 순간)** 이다.
+
+| 몫 | 슬롯 | 근거 |
+|---|---:|---|
+| ★Reserved (lead 전용, 대여 금지)★ | 4 | dual-peer 2 + research 1 + FIX 진단 1. ★peer 가 슬롯 기아로 못 뜨면 그것이 NC-1 위반★ (T-DOS-1) |
+| lane PL pool | 14 | per-PL cap 6 (동시 lane ≤2) / 동시 lane 3 이면 cap 4 |
+| Headroom (미할당 고정) | 2 | depth-2 불가시분 흡수 |
+
+합 = 4 + 14 + 2 = **20** (세션 동시 subagent 상한).
+
+**동반 규율 4항** (Story §7.7.4 원문 보존 — 요약·개작 금지):
+
+1. **초과 시 = 새 spawn 을 발행하지 말고 lead 에 요청** — 플랫폼 안내가 초과분 재시도를 금하므로, 남는 경로는 admission-side 예방뿐이다.
+2. **상한 상향 반대** — 근거 = ★S1 k≥8 이득 0 / S2 k=16 포화★ (구 `1.35` 역산 근거는 참고치로 강등). 20 은 애초에 binding 이 아니다.
+3. ★`ultracode` 경고★ — 공식 문서 *"Sessions with `ultracode` active are exempt: the limit isn't enforced there"* `[source: code.claude.com/docs/en/sub-agents]`. 이는 **용량 증가가 아니라 가드 제거**다. 그 세션에서는 static budget 이 **유일한 보호막**이다.
+4. ★over-claim 금지★ — static budget 은 **런타임 강제가 아니라 admission 규율**이다. "20 슬롯이 bound 를 준다"고 쓰지 않는다. 유일한 backstop = 초과 시 뜨는 명시 에러(`Concurrent subagent limit reached`) = **bounded degradation** (시끄러운 실패) 이지 봉인이 아니다.
+
 ---
 
 ## 5. docs/stories file 동기화
