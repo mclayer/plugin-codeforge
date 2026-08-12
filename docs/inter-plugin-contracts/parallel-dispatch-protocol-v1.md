@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: parallel-dispatch-protocol
-version: "1.1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md
@@ -12,6 +12,7 @@ version_history:
   - { version: "1.0", date: 2026-05-13, carrier: CFP-609, change: "initial — Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator → PL dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기 + env=0/env=1 동등성 + idempotency invariant 6종 + dispatch packet schema. ADR-064 §결정 4 Trace 4 implementation contract — execution-time enforcement carrier. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합)." }
   - { version: "1.1", date: 2026-07-02, carrier: CFP-2549, change: "§6.3 worker_outcomes enum +INCONCLUSIVE + timeout/fail-mode protocol 섹션 (ADR-139 background-wait liveness gate 4 불변식 cross-ref) — §6.3 주석 'crash recovery/fail-mode = 별 CFP follow-up' defer 해소. kind:registry sibling_sync_exempt 유지." }
   - { version: "1.1.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
+  - { version: "1.2", date: 2026-08-13, carrier: CFP-2914, change: "§6.2 `worker_count_max` default 7 → 13 (`:214`) + §8 검사 5번 문면(`:288`) 동시 정합. 근거 = roster 산술(최대 batch = 9 deputy[6 permanent + 3 CONDITIONAL] + 4-tuple sub-tuple 4 = 13), 계수 단위 = §6.2 `:213` 이 직접 정의한 '한 batch 의 task 수'. 순수 loosening(기존 통과값 전건 계속 통과) → MINOR, BREAKING 아님. + §8 선두 '현행 배선 상태 = 미배선(호출자 0)' 정직 declare 추가 — 검사 항목 삭제 0(5 → 5), 로직 무접촉. 정직 라벨 = 기계 소비자 0 ∧ advisory 소비자 1(skills/rate-limit-429-mitigation pre-burst preventive lookup) — '충돌을 집행한다'도 '아무것도 바뀌지 않는다'도 아님. carrier = ADR-064 Amendment 16. kind:registry sibling_sync_exempt 유지." }
 owner_adr: ADR-064  # Amendment 1 carrier
 carrier_story: CFP-609
 sibling_sync_exempt: true
@@ -211,7 +212,8 @@ orchestrator_to_pl_packet:
 pl_to_worker_packet:
   batch_id: str
   worker_count: int             # batch tasks count 와 동일 또는 ≤ worker_count_max
-  worker_count_max: int         # default 7 (codeforge-brainstorm 7-way 자기 시연 정합 + OperationalRiskArchitect §7.4.4 rate-limit consult)
+  worker_count_max: int         # default 13 (v1.2 / CFP-2914 — roster 산술: 9 deputy[6 permanent + 3 CONDITIONAL] + 4-tuple sub-tuple 4.
+                                #             구 default 7 = codeforge-brainstorm 7-way 자기 시연 정합 + OperationalRiskArchitect §7.4.4 rate-limit consult)
   worker_assignments:
     - task_ref: str
       subagent_kind: str        # role:dev preset OR named agent
@@ -272,7 +274,15 @@ batch dispatch 의 재실행 / crash recovery / cross-batch state 영역 invaria
 
 ## §8. Mechanical Enforcement (warning tier)
 
-ADR-171 evidence-enforceable promotion framework 정합 warning tier entry:
+> **현행 배선 상태 = 미배선(호출자 0)** — CFP-2914 firsthand 실측(2026-08-13, worktree HEAD).
+>
+> 아래 4-piece 중 실재하는 파일은 `scripts/check_parallel_dispatch_prompt.py` **1개뿐**이며, 그 파일을 호출하는 workflow·hook·shim 은 **0개**다. 나머지는 전건 부재다 — detect shim `scripts/check-parallel-dispatch-prompt.sh`(부재) · `templates/github-workflows/parallel-dispatch-prompt-check.yml`(부재) · `.github/workflows/parallel-dispatch-prompt-check.yml`(부재) · `docs/evidence-checks-registry.yaml` 의 `parallel-dispatch-prompt-check` entry(부재). 측정 방법 = 파일 존재 확인 + `git grep` 호출자 검색.
+>
+> 따라서 아래 bullet 4종과 **검사 항목 5종은 집행 사실이 아니라 선언**이다. 실재 파일명(`check_parallel_dispatch_prompt.py`)과 아래 선언 파일명(`check-parallel-dispatch-prompt.sh`)의 불일치는 애초부터 존재했으며 ADR-064 Amendment 16 이 정정한다.
+>
+> **검사 항목 삭제 0** — 본 declare 는 문면 정정이며 검사 항목 수(5 → 5)·판정 로직·bypass 채널을 건드리지 않는다. **재배선 시 본 declare 를 제거한다.** SSOT = ADR-064 Amendment 16(`mechanical_enforcement_actions[]` binding 지위를 "집행 사실 → 선언"으로 재규정) + CFP-2914 Change Plan §3.7.
+
+ADR-171 evidence-enforceable promotion framework 정합 warning tier entry (**위 declare 전제 — 아래는 선언 문면이다**):
 
 - **detect**: `bash scripts/check-parallel-dispatch-prompt.sh` (1-line shim → `python scripts/check_parallel_dispatch_prompt.py` — ADR-061 python-script-writing-convention 정합)
 - **workflow**: `templates/github-workflows/parallel-dispatch-prompt-check.yml` (`continue-on-error: true`)
@@ -285,7 +295,7 @@ ADR-171 evidence-enforceable promotion framework 정합 warning tier entry:
 2. `pl_autonomous_parallel_authority: required` 또는 `enum [required]` 기재 여부 (§4.2 — `disabled` 차단 영역)
 3. `sequential_mandate_reasons` 6 enum 외 영역 발견 시 위반 (§4.3 / §3)
 4. `file_conflict_resolution_patterns` 기재 여부 (§4.4)
-5. `worker_count <= worker_count_max` (default 7) 검증 (§6.2 / OperationalRiskArchitect §7.4.4 rate-limit consult 정합)
+5. `worker_count <= worker_count_max` (default 13 — v1.2 / CFP-2914) 검증 (§6.2 / OperationalRiskArchitect §7.4.4 rate-limit consult 정합)
 
 ## §9. Backward Compatibility
 

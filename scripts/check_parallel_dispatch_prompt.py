@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """scripts/check_parallel_dispatch_prompt.py
 
-parallel-dispatch-protocol-v1 §8 mechanical enforcement — warning tier lint.
+현행 배선 상태 = **미배선(호출자 0)**. 아래 검사 5종은 선언이며 어떤 workflow·hook 도 본
+스크립트를 호출하지 않는다. 검사 항목 삭제 0 · 재배선 시 본 declare 를 제거한다.
+(CFP-2914 firsthand 실측 — ADR-064 Amendment 16 / Change Plan §3.7.2 존치(retain, non-wired) 처분.
+ 계약 §8 이 선언한 shim `scripts/check-parallel-dispatch-prompt.sh` 및 workflow
+ `templates/github-workflows/parallel-dispatch-prompt-check.yml` 은 실재하지 않는다 —
+ 본 파일명과 선언 파일명의 불일치도 애초부터 존재했으며 Amendment 16 이 정정한다.)
+
+parallel-dispatch-protocol-v1 §8 mechanical enforcement — warning tier lint (선언).
 
 SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md §4 + §8
 Carrier ADR: ADR-064 Amendment 1 §결정 4 (mechanical_enforcement_actions[].action = parallel-dispatch-prompt-check)
@@ -12,7 +19,7 @@ Verification (5 항목):
   2. pl_autonomous_parallel_authority required 박제 (disabled 차단 영역)
   3. sequential_mandate_reasons 6 enum 외 영역 발견 시 위반
   4. file_conflict_resolution_patterns 박제 — `same-file-different-method` 또는 `same-file-same-method` pattern
-  5. worker_count <= worker_count_max (default 7) — count 명시 시 검증
+  5. worker_count <= worker_count_max (default 13) — count 명시 시 검증
 
 Scope: docs/stories/**.md + spec/plan/PR description payload (CLI arg 또는 stdin).
 
@@ -72,7 +79,9 @@ WORKER_COUNT_PATTERN = re.compile(
     r"worker_count\s*[:=]\s*(\d+)",
     re.IGNORECASE,
 )
-WORKER_COUNT_MAX_DEFAULT = 7
+# parallel-dispatch-protocol-v1 v1.2 §6.2 worker_count_max (CFP-2914 — roster 산술:
+# 9 deputy[6 permanent + 3 CONDITIONAL] + 4-tuple sub-tuple 4 = 13). 구 값 7.
+WORKER_COUNT_MAX_DEFAULT = 13
 
 # Hotfix bypass env var (ADR-040 Amendment 5 패턴 정합)
 BYPASS_ENV = "BYPASS_PARALLEL_DISPATCH"
