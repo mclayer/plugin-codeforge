@@ -70,7 +70,7 @@ PL 이 dispatch packet 작성 시 위 5 필수 필드 누락 또는 값 부재 =
 1. Story frontmatter `status: escalate` + escalation reason 기재
 2. PL 경유 Architect → Story 반환 (재작성 의무)
 
-## 3. 필드별 정의 (§2 필수 필드 상세)
+## 3. 항목 (필드별 정의 — §2 필수 필드 상세)
 
 ### contract_version
 - **값**: `"1.0"` (본 계약의 major.minor version)
