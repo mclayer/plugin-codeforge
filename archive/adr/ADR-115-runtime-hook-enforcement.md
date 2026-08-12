@@ -8,7 +8,7 @@ carrier_story: CFP-1740
 parent_epic: CFP-1740
 supersedes: null
 amends: null
-amendments: [1]
+amendments: [1, 2]
 amendment_log:
   - amendment: 1
     date: 2026-07-02
@@ -18,12 +18,22 @@ amendment_log:
     direction: strengthening
     sunset_justification: |
       §결정 6 disjoint sub-domain 판정 유지 (Read 축 advisory 천장 보존) — Write/Edit/MultiEdit 축만 이관·이행 (blockable mutation). §결정 5 graceful degradation closed-set 무변경. ADR-064 §결정 7 정합 강화 방향, 약화 0. carrier_story CFP-2544 = ADR-115 Amendment 1 + ADR-039 Amendment 9 paired sibling.
+  - amendment: 2
+    date: 2026-08-13
+    carrier_story: CFP-2948
+    summary: |
+      §결정 6 scope 열거에 **5번째 hook 종 `PreToolUse(matcher:"Workflow")` 편입**. 플랫폼 신기능 `Workflow` tool 채택의 **opt-in 세션 선언 게이트**(진입점 1회 차단·기록) carrier. 처분 = `hooks/hooks.json` PreToolUse 배열에 **신규 독립 entry append**(matcher = `Workflow` **단일 토큰**, alternation 없음) + **기존 5 entries byte 무변경**(`Bash`/`ScheduleWakeup`/`Agent`/`Write|Edit|MultiEdit`/`Agent|Bash|Write|Edit|MultiEdit` — firsthand 실측). amend 대상이 §결정 6 인 이유 = 그 조항이 ADR-115 의 **scope 열거를 닫는 표면**이며, Amendment 1(CFP-2544)이 동일하게 §결정 6 을 대상으로 삼은 **선례 답습**. ★**§결정 1 4-hook tier 표는 무변경(4 row 유지)**★ — 그 표는 hook 스크립트 인벤토리가 아니라 **event 종별 차단능력 tier 분류**이고 `PreToolUse` blocking tier 는 이미 1행이 확립(Amendment 1 도 5번째 PreToolUse entry 추가 시 표에 행 미추가 — verified). **deny-at-birth**(warning-first 미경유) 정당화 = §결정 4 warning-first 는 *"PreToolUse(**Agent**) spawn-format gate"* **한정** 조항이고 사유가 spawn deadlock 회피인데 본 게이트는 spawn-format 검증이 아닌 **opt-in 선언 유무 이진 확인**이라 실패 양태 비공유 + §결정 1 표 각주가 `cross-repo-gh-safety` **deny 선례** 명시 인정 + 양성 대조 `hooks/cross-repo-gh-safety:93` 실 `exit 2` 존재(`:27` block contract) [verified — firsthand] + ADR-171 warning-first 는 **CI check tier 축**이라 hooks.json 존재 lint 에만 적용·런타임 deny 미적용(disjoint). ★정직 라벨★ = 보장 범위는 **진입점 1회 차단·기록까지**이며 스크립트가 스폰하는 agent 의 도구 호출은 **정의역 밖** — *"Workflow matcher 로 파이프라인을 감시한다"* 서술 금지. **deny 도메인 declare** = matcher 는 도구 축에서만 disjoint 하고 `Workflow` 안에서는 disjoint 하지 않음(선언 없는 세션의 **모든** Workflow 호출이 deny 대상 — hook 은 lane 판별 수단 부재) → 의도된 거동 + bypass `BYPASS_WORKFLOW_OPTIN_GATE=1`(audit 1줄, 전역 export 금지). 5-part hook-frame 재사용(structural novelty 0) + §결정 5 graceful degradation 5-layer 정합. ★**조건부**★ — 실현이 **C-1**(workflow agent 도구 호출의 PreToolUse 발화)·**U13**(P3 경로의 `Workflow` 도구 호출 표면화) 미검증 전제에 조건부(부정 시 채택 철회, ADR-172 §결정 3). sibling = ADR-170 Amd 1 / ADR-141 Amd 8 / 신규 ADR-172.
+    direction: strengthening
+    sunset_justification: |
+      §결정 6 disjoint sub-domain 판정 유지 — Read 축 + mcp__github__* 축 + Bash-redirect 우회는 **여전히 제외**(Amendment 1 경계 무변경). 본 amendment 는 신규 hook 종 **추가**(net-new 예방 표면)라 ADR-058 §결정 5 / ADR-064 §결정 7 **강화 방향**, 약화 표면 0: ① 기존 5 entries byte 무변경 = 기존 게이트 약화 0 ② §결정 1 tier 표 무변경 = 차단능력 분류 완화 0 ③ §결정 5 graceful degradation closed-set 무변경 ④ deny tier 채택은 warning→blocking **상향**이며 ADR-171 승격 사다리 우회가 아니라 **정의역 밖**(그 사다리 = CI check tier 축) ⑤ over-claim 회피 = "진입점 1회 차단·기록까지" 정직 천장 + deny 도메인 비-disjoint declare + C-1/U13 조건부 명시. bypass env 신설은 기존 3종 hook bypass 관례 동형(audit 의무 부착)이라 신규 완화 채널 아님.
 related_stories:
   - CFP-1740  # carrier_story (원안)
   - CFP-2544  # Amendment 1 — §결정 6 inline-write detect hook Write/Edit/MultiEdit 축 이관·이행 (Wave1)
+  - CFP-2948  # Amendment 2 — §결정 6 scope 5번째 hook 종 PreToolUse(matcher:"Workflow") opt-in 게이트 편입
 related_cfps:
   - CFP-1740
   - CFP-2544
+  - CFP-2948
 is_transitional: false
 mechanical_enforcement_actions:
   - runtime-hook-presence
@@ -53,6 +63,7 @@ related_files:
   - hooks/pretooluse-inline-write-gate                        # CFP-2544 Amendment 1 — 신규 extensionless polyglot (Orchestrator inline-write gate Wave1 warning, Phase 2 carrier)
   - scripts/check-inline-write-gate.sh                        # CFP-2544 Amendment 1 — thin bash wrapper (ADR-061, Phase 2 carrier)
   - scripts/lib/check_inline_write_gate.py                    # CFP-2544 Amendment 1 — Python verifier (agent_id caller判정, heredoc 금지, Phase 2 carrier)
+  - hooks/pretooluse-workflow-optin-gate                      # CFP-2948 Amendment 2 — 신규 extensionless polyglot (Workflow opt-in 세션 선언 게이트, deny-at-birth `exit 2`, matcher `Workflow` 단일 토큰, Phase 2 carrier)
   - templates/github-workflows/runtime-hook-presence.yml      # workflow 신설
   - docs/inter-plugin-contracts/stop-event-v1.md              # v1.0 → v1.1 MINOR (hook_source / hook_decision field)
   - docs/inter-plugin-contracts/label-registry-v2.md          # `hotfix-bypass:runtime-hook-presence` family member append
@@ -191,6 +202,8 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 
 본 ADR scope = **4 hook 종**: UserPromptSubmit / PreToolUse(matcher:"Agent") / Stop / SubagentStop.
 
+> **Update (Amendment 2, CFP-2948)** — 위 scope 열거에 **5번째 hook 종 `PreToolUse(matcher:"Workflow")` 추가**. 플랫폼 신기능 `Workflow` tool 채택의 opt-in 선언 게이트(진입점 1회 차단·기록)가 그 자리다. 본 §결정 6 이 ADR-115 의 **scope 열거를 닫는 조항**이므로 5번째 hook 종 추가 = 본 ADR amendment 의무 — Amendment 1(CFP-2544 `pretooluse-inline-write-gate`) 이 동일하게 **§결정 6 을 amend 대상으로 삼은 선례**를 답습한다. ★**§결정 1 의 4-hook tier 표는 무변경(4 row 유지)**★ — 그 표는 개별 hook 스크립트 인벤토리가 아니라 **hook event 종별 차단능력 tier 분류**이고, `PreToolUse` 의 blocking tier 는 이미 표 1행(`PreToolUse (matcher: "Agent")`)이 확립했다. Amendment 1 도 5번째 PreToolUse entry 를 추가하면서 §결정 1 표에 행을 더하지 않았다 `[verified — 표 row 수 4 유지]`. 상세 = 아래 **제외 영역** 하위 Update 및 본 절 말미.
+
 **제외 영역** (별도 follow-up CFP):
 - **inline-write detect hook** — ADR-039 §결정 9 두번째 bullet 의 Orchestrator inline Read/Write/Edit/Bash 직접 호출 검출 영역. PreToolUse(matcher:"Read"|"Write"|"Edit") 분기 + Orchestrator turn 컨텍스트 차별 검출 (Inline whitelist 4-entry vs 그 외 영역) 의 별도 mechanism 설계 필요. **본 Epic 제외, 후속 CFP**.
   - **Update (Amendment 1, CFP-2544)**: 이 제외 영역의 **Write/Edit/MultiEdit 축**은 CFP-2544 로 이관·이행 (IMPLEMENTED Wave1 warning-tier) — 신규 `hooks/pretooluse-inline-write-gate` (본 ADR-115 5-part hook-frame 완전 재사용, structural novelty 0) + `scripts/lib/check_inline_write_gate.py` (agent_id caller判정) + `scripts/check-inline-write-gate.sh` thin wrapper. §결정 5 graceful degradation 5-layer closed-set 정합 + §결정 4 warning-tier 답습. **Read 축 + mcp__github__* 축 + Bash-redirect 우회는 여전히 제외** (advisory 천장 = Read 축 한정, blockable mutation ≠ Read). paired sibling = ADR-039 Amendment 9.
@@ -203,6 +216,27 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 - PostToolUse hook (사후 tool output 감사)
 - Notification hook (사용자 통지 양식 강제)
 - Live touching production-cutover lane 진입 시 추가 PreToolUse 분기 (CONDITIONAL ProductionEvidenceDeputy 정합)
+
+### Amendment 2 (CFP-2948) — 5번째 hook 종 `PreToolUse(matcher:"Workflow")` scope 편입
+
+**처분** — `hooks/hooks.json` PreToolUse 배열에 **신규 독립 entry append**. matcher = **`Workflow` 단일 토큰**(alternation 없음). **기존 5 entries byte 무변경** (`Bash` / `ScheduleWakeup` / `Agent` / `Write|Edit|MultiEdit` / `Agent|Bash|Write|Edit|MultiEdit` — 2026-08-13 KST firsthand 실측).
+
+**deny-at-birth 정당화** (warning-first 사다리와 **정의역 disjoint**):
+
+- §결정 4 의 warning-first 는 *"**PreToolUse(Agent) spawn-format gate 는** warning-tier 부터 시작"* 이라는 **그 게이트 한정** 조항이고, 사유는 **spawn deadlock 회피**(false-positive deny → 스폰 자체가 막힘)다. 본 게이트는 spawn-format 검증이 아니라 **세션 opt-in 선언 유무**라는 이진 사실 확인이라 그 실패 양태를 공유하지 않는다.
+- 같은 ADR §결정 1 표 각주가 *"PreToolUse(Bash) `cross-repo-gh-safety` **deny 선례**"* 를 명시 인정한다 — 즉 이 hook 시스템에서 PreToolUse deny 는 **정책상 이미 허용된 tier** 다.
+- **양성 대조 실측**: `hooks/cross-repo-gh-safety:93` 에 실제 `exit 2` 존재 `[verified — firsthand]` (동 파일 `:27` = *"PreToolUse block contract (Claude Code): exit 2 + stderr = block"*). ⇒ deny 는 이 시스템에서 **실재 작동하는 경로**다.
+- **ADR-171 warning-first 와도 disjoint** — 그쪽은 **CI check tier 축**이라 `hooks.json` 엔트리 **존재 lint** 에만 적용되고 **런타임 deny 에는 미적용**이다.
+
+★**정직 라벨 (필수)**★ — 이 hook 이 보장하는 것은 ★**진입점 1회 차단·기록까지**★다. 스크립트가 스폰하는 **agent 들의 도구 호출은 이 hook 의 정의역 밖**이다. *"`Workflow` matcher 를 달아 파이프라인을 감시한다"* 는 서술 **금지**.
+
+**deny 도메인 정직 declare** — matcher 는 **도구 축에서만** disjoint 하고 **`Workflow` 안에서는 disjoint 하지 않다**: 선언되지 않은 세션의 **모든** `Workflow` 호출(P1/P2·ad-hoc 포함)이 deny 대상이다. hook 은 "이 호출이 리뷰 파이프라인인지" 판별할 수단이 **없다**(PreToolUse 입력에 lane 개념 부재). 이는 **의도된 거동**으로 declare 하며, escape hatch = `BYPASS_WORKFLOW_OPTIN_GATE=1`(사용 시 **audit 1줄**, 전역 export 금지 — 기존 3종 hook bypass env 관례 동형).
+
+**5-part hook-frame 재사용** (structural novelty 0, Amendment 1 선례 동형) + §결정 5 graceful degradation 5-layer closed-set 정합(파일 부재 / interpreter 부재 / timeout / verifier 실패 / parse error → 전부 fail-open exit 0).
+
+★**조건부 성립**★ — 본 amendment 의 실현은 **C-1**(workflow agent 도구 호출이 PreToolUse 를 발화하는가)과 **U13**(P3 auto-planned 경로가 `Workflow` **도구 호출**로 표면화되어 PreToolUse 에 도달하는가)에 조건부다. 두 전제는 **미검증**이며 1회 probe run 으로 해소한다(부정 시 채택 철회 — ADR-172 §결정 3).
+
+**A6 조건부 egress 축소 (sibling 배선)** — C-1·C-2 성립 시 본 신규 hook 을 `WebFetch|WebSearch` matcher 에도 **sibling 배선**한다. MCP 축(`mcp__*` 매칭 여부)은 **확인 불가 → 미보장 declare**. 미성립 시 stage 계약 declare(문면·advisory)만 남으며 이를 *"egress 가 통제된다"* 로 서술 **금지**. 타 lane 확대 시 **재판정 의무**(web 허용 lane 은 비대칭 방향이 반대).
 
 ## 결과 (Consequences)
 

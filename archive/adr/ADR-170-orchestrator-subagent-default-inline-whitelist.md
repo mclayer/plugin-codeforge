@@ -8,6 +8,50 @@ carrier_story: CFP-2869
 supersedes:
   - ADR-039
 amends: null
+amendments: [1]
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2948
+    date: 2026-08-13
+    reinterpretation: false
+    target_section: §결정 1 (의무 조항)
+    scope: >-
+      §결정 1 **의무** 조항의 spawn 채널 표기를 `Agent` tool 단수에서 **채널 집합
+      (`Agent` tool ∪ `Workflow` tool) 경유 subagent 위임** 으로 기술정정. 플랫폼 신기능
+      `Workflow` tool(선언적 다단계 오케스트레이션 — 스크립트가 `agent()` 로 워커 spawn)
+      채택 검토에서 §결정 1 이 정책 공백처럼 보인 건에 대한 판정. **정책 확장 아님 —
+      도구명 박제 정정**. 근거 (강도 순): (a) §결정 2 말미 fail-closed 룰("7-entry 외
+      모든 orchestration 행위 = subagent spawn 의무")이 **이미 정답을 낸다** — Workflow 는
+      실제로 subagent 를 spawn 하므로 의무를 **충족**(위반 아님). 어긋난 것은 의무 조항의
+      *표기* 한 곳뿐. (b) §결정 1 **금지** 조항의 정의역 = "inline 수행 (Read / Write /
+      Edit / Bash / Grep / Glob / mcp__github__* 직접 호출)" **closed 7-tool 열거**이고
+      `Workflow` 는 부재 ⇒ 금지 조항 **무변경**(Workflow 를 여기 넣으면 위임 채널을 inline
+      금지 목록에 넣는 정반대 오분류). (c) §결정 3 Ownership ≠ Mechanism + §결정 19
+      "위임한 spawn 행위의 ownership identity = lead" — workflow agent = Orchestrator 소유
+      delegate spawn, §결정 19 depth 0→1 슬롯과 동형(보조 경험 근거 = probe run per-agent
+      meta 199/199 `agentType: 'workflow-subagent'` ∧ `spawnDepth: 1` [verified —
+      ArchitectPL firsthand]; ★플랫폼 내부 표현이 codeforge 정책 판정을 자동 결정하지
+      않음★ — 보강일 뿐 대체 아님). (d) 범주 오류 회피 — whitelist entry = "inline 으로
+      해도 되는 것" 목록이므로 Workflow 를 8번째 entry 로 넣으면 **위임 mechanism 을 inline
+      예외로 오분류**; 또한 entry 7 의 3-조건(monopoly 소형 구조화 append / free-form 0 /
+      판정 로직 부재)을 free-form prompt + schema 가 정면 미충족해 evidence-gate 통과 난망.
+      변경 표면 = 정확히 3점: 의무 조항 정정 / **금지 조항 무변경** / **§결정 2 whitelist
+      7-entry closed 무변경(8번째 entry 신설 0 → ratchet 무손상)**. §결정 19 토폴로지 ·
+      §결정 5 lane plugin 0 변경 invariant 무손상. 집행 tier = **문서 규범(prompt-mandate)
+      한정** — 기계 검증 표면 신설 0(그 축 = ADR-115 Amd 2 진입점 게이트 + ADR-172, 그마저
+      "진입점 1회 차단·기록까지"가 상한). 상세 = 본문 `## Amendment 1`.
+    direction: technical-correction
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 본 amendment 는
+      규범 **약화·확장이 아니라 기술정정**이다: 의무 조항이 요구하는 실질("inline 아닌
+      subagent 위임")은 무변이고, 그 실질을 이미 충족하는 채널이 표기 누락으로 규범 밖처럼
+      보이던 것을 바로잡는다. ADR-058 §결정 5 / ADR-064 §결정 7 약화-evidence gate 관점:
+      ① inline whitelist entry 신설 0(7-entry closed 무손상) = 완화 표면 0 ② 금지 조항
+      closed 7-tool 열거 무변경 = 금지 범위 축소 0 ③ 신규 허용 = 없음(Workflow 는 정정 전
+      규범 하에서도 §결정 2 fail-closed 룰상 이미 적합) ④ over-claim 회피 = 집행 tier
+      prompt-mandate 정직 라벨(기계강제 참칭 0). 신규 채택 조건·철회·운영 규율은 본 ADR 이
+      아니라 sibling ADR-172 소관(disjoint) — 본 amendment 로 Workflow 채택이 승인되는 것이
+      아니다.
 reinterpretation: false  # ADR-167 §결정 1(b) — 본 ADR 은 ADR-039 실효 규범의 의미 무변경 재제정(restatement)이지 소급 재해석이 아니다. 신규 저작(재해석 marker false).
 is_transitional: false
 related_adrs:
@@ -41,7 +85,8 @@ related_files:
   - docs/parallel-work/section-ownership.yaml  # owner_adr ADR-039 2행 re-home(Phase 2)
   - docs/adr-amendment-threshold-baseline.yaml  # ADR-039 행 제거 17→16(--write-baseline 단일 writer, Phase 2)
   - archive/adr/ADR-RESERVATION.md  # ADR-number row 170 신설(Phase 1, 본 Story)
-# effective_count 재시작 = 0: 본문 `^#{2,4} Amendment` 헤딩 0 ∧ frontmatter amendments:/amendment_log: 키 자체 생략(양쪽 결합, AC-1). ADR-167 §결정 5 재제정 신규 count 0 재시작 정합.
+# effective_count 재시작 = 0 (도입 시점, CFP-2869): 본문 `^#{2,4} Amendment` 헤딩 0 ∧ frontmatter amendments:/amendment_log: 키 자체 생략(양쪽 결합, AC-1). ADR-167 §결정 5 재제정 신규 count 0 재시작 정합.
+# 현재 effective_count = 1 (CFP-2948 Amendment 1 — 본문 헤딩 1 ∧ fm amendments[] 1, max=1). THRESHOLD_N=10 미달 → ADR-167 재제정 ratchet 미발동, baseline(docs/adr-amendment-threshold-baseline.yaml) entry 신설 대상 아님(grandfather = 도입 시점 >= N 한정).
 ---
 
 # ADR-170: Orchestrator subagent default for codeforge modification work — binary always-spawn + inline whitelist (ADR-039 재제정)
@@ -86,7 +131,9 @@ codeforge 를 이용한 **수정 작업**에서 Orchestrator(top-level Claude �
 
 ### 결정 1 — codeforge 수정 작업 = Orchestrator default subagent spawn
 
-codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Claude 세션, ADR-009) 는 모든 work 을 `Agent` tool spawn (subagent) 으로 수행한다. inline 수행 (Orchestrator turn 안에서 Read / Write / Edit / Bash / Grep / Glob / mcp__github__\* 직접 호출) 은 §결정 2 의 inline whitelist 외 영역에서 금지.
+codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Claude 세션, ADR-009) 는 모든 work 을 **spawn 채널 집합 (`Agent` tool ∪ `Workflow` tool) 을 경유한 subagent 위임** 으로 수행한다. inline 수행 (Orchestrator turn 안에서 Read / Write / Edit / Bash / Grep / Glob / mcp__github__\* 직접 호출) 은 §결정 2 의 inline whitelist 외 영역에서 금지.
+
+> **Update (Amendment 1, CFP-2948)** — 위 의무 조항의 "`Agent` tool spawn" 은 **도구명 박제**였다. 원 규범의 요구는 "inline 이 아니라 subagent 에게 위임하라" 이고, 그 위임을 실현하는 **채널이 `Agent` 하나뿐**이던 시점의 표기다. `Workflow` tool 은 **실제로 subagent 를 spawn** 하므로 그 요구를 **충족**한다 — 위반이 아니다. 따라서 본 amendment 는 **정책 확장이 아니라 도구명 박제의 기술정정**이다. **금지 조항(위 inline 7-tool closed 열거)은 무변경** — `Workflow` 는 inline 수행이 아니므로 열거에 추가하지 않는다. **§결정 2 whitelist 7-entry closed 열거도 무변경** (8번째 entry 신설 0 → ratchet 무손상). 상세 = 본문 `## Amendment 1`.
 
 **수정 작업 정의** (closed enumeration):
 
@@ -476,3 +523,37 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 ## 해소 기준
 
 N/A — permanent policy (Orchestrator subagent default + inline whitelist 상시 적용, is_transitional: false). 구 ADR-039 의 동일 선언 승계.
+
+## Amendment 1 (CFP-2948, 2026-08-13) — §결정 1 spawn 채널 집합 기술정정 (`Agent` ∪ `Workflow`)
+
+### A1-1. 대상 + 정정 성격
+
+플랫폼 신기능 `Workflow` tool(선언적 다단계 오케스트레이션 — 스크립트가 `agent()` 로 워커를 spawn) 채택 검토 중, ADR-170 §결정 1 **의무 조항**의 `Agent` tool 명시가 정책 공백처럼 보이는 문제가 제기됐다. 판정 = **공백은 의무 조항의 도구명 박제 한 곳뿐**이며, 정책 자체는 이미 정답을 낸다.
+
+**본 amendment 는 정책 확장이 아니라 기술정정(technical correction)이다.** 근거 4항 (강도 순):
+
+1. **§결정 2 fail-closed 룰이 이미 정답을 낸다** — §결정 2 말미의 *"위 7-entry **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무"*. `Workflow` 는 **실제로 subagent 를 spawn** 하므로 그 의무를 **충족**한다. 위반이 아니다. 즉 규범은 이미 올바른 결과를 내고 있고, 어긋난 것은 의무 조항의 *표기*뿐이다.
+2. **금지 조항의 정의역에 `Workflow` 가 없다** — §결정 1 금지 대상은 *"inline 수행 (Orchestrator turn 안에서 Read / Write / Edit / Bash / Grep / Glob / mcp__github__\* 직접 호출)"* 이라는 **closed 7-tool 열거**다. `Workflow` 부재 ⇒ 금지 조항이 `Workflow` 를 포섭하지 않는다. 그러므로 금지 조항은 **무변경**이어야 한다 — `Workflow` 를 여기 추가하면 "위임 채널을 inline 금지 목록에 넣는" 정반대 오분류가 된다.
+3. **§결정 3 Ownership ≠ Mechanism + §결정 19 위임 토폴로지** — §결정 19 의 *"위임한 spawn 행위의 ownership identity = lead"*. workflow 스크립트가 spawn 하는 agent = Orchestrator 가 소유하는 delegate spawn 이며, §결정 19 의 depth 0→1 위임 슬롯과 같은 자리다. **보조 경험 근거** = 1회 probe run 의 per-agent meta 199/199 가 `agentType: 'workflow-subagent'` ∧ `spawnDepth: 1` `[verified — ArchitectPL firsthand]`. ★단 **플랫폼 내부 표현이 codeforge 정책 판정을 자동 결정하지 않는다**★ — 이 관측은 위 1·2 논거의 보강일 뿐 대체가 아니다(플랫폼이 내부 라벨을 바꿔도 §결정 2 fail-closed 룰의 판정은 불변).
+4. **범주 오류 회피 (8번째 whitelist entry 기각 근거)** — §결정 2 whitelist entry = "**inline 으로 해도 되는 것**" 의 목록이다. `Workflow` 를 8번째 entry 로 신설하면 **위임 mechanism 을 inline 예외로 오분류**한다(범주 오류). 더구나 entry 7 이 evidence-gate 통과 근거로 제시한 3-조건(monopoly 소형 구조화 append / free-form 0 / **판정 로직 부재**)을, free-form prompt + schema 를 싣는 workflow 스크립트가 **정면 미충족**해 ADR-058 §결정 5 evidence-gate 통과도 난망하다.
+
+### A1-2. 변경 표면 (정확히 3점 — 그 외 0)
+
+| # | 표면 | 처분 |
+|---|---|---|
+| 1 | §결정 1 **의무** 조항 | `"모든 work 을 \`Agent\` tool spawn (subagent) 으로 수행한다"` → **spawn 채널 집합(`Agent` tool ∪ `Workflow` tool) 경유 subagent 위임** (+ inline `Update` 주석) |
+| 2 | §결정 1 **금지** 조항 (inline 7-tool closed 열거) | **무변경** — `Workflow` 는 inline 이 아니므로 미추가 |
+| 3 | §결정 2 whitelist (7-entry closed) | **무변경** — 8번째 entry 신설 0, ratchet 무손상 |
+
+**§결정 19 무변경** — 본 amendment 는 위임 *채널명* 정정이지 2-level 토폴로지(lead 1 + teammate N / teammate→teammate spawn 불가) 변경이 아니다. **§결정 5 lane plugin 0 변경 invariant 무손상.**
+
+### A1-3. 집행 tier (정직 라벨 — ADR-119)
+
+본 amendment 가 낳는 강제력은 **문서 규범(prompt-mandate)** 뿐이다. `Workflow` 호출을 기계적으로 검증하는 표면은 본 amendment 가 신설하지 않는다 — 그 축은 **ADR-115 Amendment 2**(PreToolUse `Workflow` matcher 진입점 게이트)와 **ADR-172**(채택 거버넌스)가 담당하며, 그마저도 "진입점 1회 차단·기록까지"가 상한이다. *"`Workflow` 사용이 §결정 1 정합임을 기계 강제한다"* 는 서술 금지.
+
+### Cross-ref
+
+- **ADR-172** (신규 sibling) — Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식 INV-W1~W9. 본 amendment 는 "채널 정합"만, 채택 조건·철회·운영 규율은 ADR-172 소관 (disjoint).
+- **ADR-115 Amendment 2** (동일 carrier sibling) — PreToolUse `Workflow` matcher entry 신설.
+- **ADR-141 Amendment 8** (동일 carrier sibling) — workflow 채널 model tier negative 집행.
+- **ADR-058 §결정 5** — whitelist entry 신설 evidence-gate. 본 amendment 는 entry 신설 0 이므로 **미발동**.

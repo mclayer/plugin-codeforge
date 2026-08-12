@@ -273,6 +273,45 @@ amendment_log:
       ④ over-claim 회피 = advisory ceiling 정직 라벨(prompt-mandate normative +
       세션 실준수 비-PR-enforceable, hook backup 불성립). 3-tier 자동선택 부활 0
       (전순서 = slot enumeration + 확장 amendment 구조, 선택 함수 아님).
+  - amendment: 8
+    carrier_story: CFP-2948
+    date: 2026-08-13
+    reinterpretation: false
+    scope: >-
+      `Workflow` tool 채널(스크립트가 `agent()` 로 워커 spawn)에서의 ≤ ceiling(Amd 7) 집행
+      형태 확정 — ★**negative 집행**★. 규범 = *"workflow 채널에서는 `model` 미지정이 집행
+      형태(플랫폼 default = 세션 모델 위임)이며 **명시 지정이 금지**된다"*. **"집행점을
+      `opts.model` 로 확장" 이 아니다** — 정반대다. (a) **근거** — 플랫폼 default 가 세션
+      모델이므로 `opts` 에 `model` 키 **부재 = Orchestrator effective tier 와 동급(=)** ⇒
+      Amd 7 의 ≤ ceiling 이 **자동 충족**. (b) **명시안이 틀린 이유 3항**: ① workflow agent 는
+      **frontmatter 가 없다** — per-agent meta 는 `agentType`·`spawnDepth` 2키뿐 [verified —
+      ArchitectPL firsthand 199/199] ⇒ Amd 7 집행식 `min(frontmatter, orchestrator)` 의
+      frontmatter 항이 **∅** ② 스크립트는 세션 모델을 **조회할 수 없다**(순수 JS · 조회 API
+      부재) → 명시하려면 tier 를 `args` 로 주입받아야 하고 그 값은 **검증 불가한
+      self-assert** ③ 주입값이 틀리면 스크립트가 **≤ 위반을 능동 유발**한다. ⇒ 명시안은
+      위반 경로를 여는 유일한 수단이고 negative 안은 그 경로를 닫는다. (c) **lint 판별력** —
+      negative = "`model` 키 있으면 RED" = **fail-closed**; 명시 = "키 있으면 GREEN" =
+      **값-blind hollow**(opus 세션에 `model:'fable'` 명시해도 GREEN). (d) **정직 천장 3항**:
+      ① 계산 키(`{["mo"+"del"]:x}`)·spread 우회 가능 → **advisory, 리터럴 스팟체크 한정**
+      ② `CLAUDE_CODE_SUBAGENT_MODEL` 이 세션 모델·스크립트 라우팅을 **둘 다 override** →
+      정적 lint 정의역 밖이며 hook env 판독 사전차단 가능성은 **미확인** ③ ★**사후 검증
+      천장**★ — per-agent meta 에 `model` 필드 **부재** ⇒ per-agent 실행 tier 사후 검증
+      **불가**; 실재 유일 관측점 = run meta `defaultModel` **run-level 1점**
+      (`'claude-fable-5'` 2 run 모두 [verified — ArchitectPL firsthand]), 그 값이 세션 모델과
+      동일하다는 것은 **미확인(확실도 med)**. Amd 7 의 `Agent` tool 축 집행(runtime
+      `model:` min-override, fresh-spawn only) **무변경** — 본 amendment 는 workflow 채널
+      한정 additive. 정적 frontmatter 41 파일 byte 무접촉 유지. 상세 = 본문 `## Amendment 8`.
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 본 amendment 는
+      tier 정책 **약화 0**: ① 배정표(Amd1 haiku 7 / Amd2 sonnet 10 / Amd4 fable 10) 무접촉
+      ② Amd 7 ≤ ceiling invariant 무변경 — 신 채널에서 그 불변식을 **어떻게** 충족할지만
+      확정 ③ 방향 = **금지 추가**(명시 지정 금지)라 순 강화(ratchet-UP): 정정 전에는 workflow
+      채널에 규범이 없어 임의 `model` 명시가 가능했고 그것이 유일한 ≤ 위반 경로였다 ④ 검사
+      판별력 = fail-closed(키 존재 → RED)로, 대안(명시안)의 값-blind GREEN 보다 엄격
+      ⑤ over-claim 회피 = advisory 천장 3항 정직 declare(우회 가능·env override 정의역 밖·
+      per-agent 사후검증 불가). ADR-058 §결정 5 / ADR-064 §결정 7 강화 방향 — 약화 표면 0.
+      본 amendment 는 Workflow 채택 자체를 승인하지 않는다(채택 거버넌스 = sibling ADR-172,
+      5-premise stacked fail-closed 조건부).
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -908,3 +947,51 @@ opus Orchestrator 세션에서 fable 10역할이 opus 로 cap-down 되면 **Amd4
 - [ADR-042](ADR-042-agent-model-selection-policy.md) §결정 3 — "신규 agent / model 변경 시 ADR 의무" 승계(전순서 비열거 신규 모델 확장 = amendment 의무, A7-8)
 - [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 6 — overlay 확장-only(정적 축 down-tier 불허, A7-3 disjoint)
 - ADR-013 — change-plan 면제 근거(ADR carrier = 설계 SSOT, 별도 change-plan 없이 amendment 내 Phase 2 열거, A7-10)
+
+## Amendment 8 (CFP-2948 — `Workflow` 채널 tier 집행 = negative 형태 [`model` 미지정 의무])
+
+### A8-1. 대상 + 규범 (★집행 형태 = negative★)
+
+Amendment 7 이 세운 **≤ ceiling 불변식**("어떤 subagent 도 effective tier > Orchestrator effective tier 로 spawn 불가")을, 플랫폼 신기능 `Workflow` tool 채널(선언적 스크립트가 `agent(prompt, opts)` 로 워커 spawn)에서 **어떻게 충족할지**를 확정한다.
+
+> **규범** — workflow 채널에서는 `agent()` 의 `opts` 에 **`model` 키를 두지 않는 것이 집행 형태**다(플랫폼 default = 세션 모델 위임). **명시 지정은 금지**한다.
+
+★이것은 *"집행점을 `opts.model` 로 확장"* 이 **아니라 정반대**다.★ 키 **부재**가 곧 집행이다 — 플랫폼 default 가 세션 모델이므로, 키가 없으면 워커 tier = Orchestrator effective tier 와 **동급(=)** 이 되고 Amendment 7 의 ≤ ceiling(동급 허용, 초과만 금지)이 **자동 충족**된다.
+
+### A8-2. 명시 지정안이 틀린 이유 (3항 — 반증 시도 생존분)
+
+| # | 논거 | 근거 |
+|---|---|---|
+| (a) | **frontmatter 항이 ∅** | workflow agent 는 **frontmatter 가 없다**. per-agent meta 는 `agentType`·`spawnDepth` **2키뿐** `[verified — ArchitectPL firsthand 199/199]` ⇒ Amd 7 집행식 `min(frontmatter, orchestrator)` 의 좌항이 존재하지 않는다 |
+| (b) | **세션 모델 조회 불가** | 스크립트는 순수 JS 이고 세션 모델 **조회 API 가 없다**. 명시하려면 tier 를 `args` 로 **주입**받아야 하고, 그 값은 **검증 불가한 self-assert** 다 |
+| (c) | **위반 능동 유발** | 주입값이 틀리면 스크립트가 **≤ 위반을 능동적으로 만들어낸다** |
+
+⇒ **명시안은 ≤ 위반 경로를 여는 유일한 수단이고, negative 안은 그 경로를 닫는다.**
+
+### A8-3. lint 판별력 비교 (fail-closed vs hollow)
+
+| 안 | 검사식 | 판별력 |
+|---|---|---|
+| **negative (채택)** | `opts` 에 `model` 키 존재 → **RED** | **fail-closed** — 위반 형태 자체가 검출 대상 |
+| 명시 (기각) | `model` 키 존재 → GREEN | ★**값-blind hollow**★ — opus 세션에 `model:'fable'` 를 명시해도 GREEN (검사가 값의 적정성을 못 본다) |
+
+### A8-4. 정직 천장 3항 (ADR-119 — over-claim 금지)
+
+1. **정적 lint 우회 가능** — 계산 키(`{["mo"+"del"]: x}`)·spread(`{...cfg}`) 로 리터럴 검사를 피할 수 있다. ⇒ 본 검사는 **advisory** 이며 **리터럴 스팟체크 한정**이다. "기계 강제" 아님.
+2. **env override 는 정의역 밖** — `CLAUDE_CODE_SUBAGENT_MODEL` 이 세션 모델·스크립트 라우팅을 **둘 다 override** 한다. 정적 lint 는 이를 볼 수 없다. hook 이 env 를 판독해 사전 차단할 수 있는지는 **미확인**(가능성 미검증 — 확인 불가).
+3. ★**사후 검증 천장**★ — per-agent meta 에 `model` 필드가 **부재** ⇒ **per-agent 실행 tier 의 사후 검증이 불가능**하다. 실재하는 유일 관측점은 run meta `defaultModel` 이라는 **run-level 1점** (`'claude-fable-5'` — 2 run 모두 `[verified — ArchitectPL firsthand]`)뿐이고, **그 값이 세션 모델과 동일하다는 것 자체가 미확인**이다(확실도 **med**). ⇒ *"workflow 워커가 실제로 어느 tier 로 돌았는지 검증한다"* 는 서술 **금지**.
+
+### A8-5. 영향 경계
+
+- **Amd 7 의 `Agent` tool 축 집행 무변경** — runtime `model: min(frontmatter, orchestrator)` override + fresh-spawn only(SendMessage resume 금지). 본 amendment 는 **workflow 채널 한정 additive**.
+- **정적 배정 무접촉** — `plugins/**` frontmatter `model:` 41 파일 byte 무변경, `check-fable-roster-integrity` fable=10 GREEN 유지.
+- **Amd 6 failover 와 별개 축** — cap-down·본 negative 집행 모두 사전 tier 판정이며, `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**(telemetry 오염 방지).
+- **채택 승인 아님** — 본 amendment 는 Workflow 채택을 승인하지 않는다. 채택 조건·철회는 **ADR-172** 소관이며 5-premise stacked fail-closed 에 조건부다.
+
+### Cross-ref
+
+- ADR-141 Amendment 7 — ≤ ceiling invariant 원안(본 amendment 는 신 채널 집행 형태만 확정, 불변식 무변경) / A7-5 advisory ceiling 정직 라벨 동형
+- **ADR-172** (신규 sibling) — Workflow 채택 거버넌스 + INV-W9(모델 tier = 본 amendment 참조)
+- **ADR-170 Amendment 1** (동일 carrier sibling) — spawn 채널 집합 정합(`Agent` ∪ `Workflow`)
+- **ADR-115 Amendment 2** (동일 carrier sibling) — PreToolUse `Workflow` matcher 진입점 게이트
+- [ADR-143](ADR-143-agent-action-render-line-prefix.md) — advisory 천장 정직 라벨 선례(A8-4 동형)
