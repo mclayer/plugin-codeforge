@@ -53,7 +53,12 @@ Story §8.0.8 NG-14 행은 `[154-AC-3]` empty-target 을 ★RED★ 로 pin 한�
       무력화되는 경우는 미검출.
   (c) 문면이 참인지는 판정하지 않는다 — 코드가 실제로 무손실인지는 ★NG-15(실행 축)★
       소관이다. 본 게이트 단독 GREEN 은 "코드가 안전하다"를 의미하지 않는다.
-  (d) 자원 안전성: 줄 단위 선형 스캔이고 정규식 quantifier 는 전부 bounded(`{0,N}`) 이며
+  (d) ★자기참조 함정 (declare)★ — 본 모듈과 그 테스트는 판정 대상 문자열을 pattern·
+      fixture 로 ★verbatim 보유★한다. `DEFAULT_TARGETS` 가 파일 1개 allowlist 라
+      현재는 구조적으로 자기를 스캔하지 않지만, ★`--target` 을 `scripts/lib/**` 류로
+      넓히면 게이트가 자기 자신에 RED 를 낸다★. 자동 self-exclusion 은 ★넣지 않았다★ —
+      조용한 제외는 진짜 재도입까지 가리기 때문이다. 대상 확대 시 명시 판단 필요.
+  (e) 자원 안전성: 줄 단위 선형 스캔이고 정규식 quantifier 는 전부 bounded(`{0,N}`) 이며
       nested quantifier 를 쓰지 않는다. 이는 ★bounded degradation 선언★이지
       "임의 입력 무해(ReDoS-safe)" 단정이 ★아니다★ — 복잡도 회귀 self-test·wall-clock
       벤치마크 미동반 (ADR-168 §결정 16 honest-ceiling / ADR-151 §결정 7 상속).
