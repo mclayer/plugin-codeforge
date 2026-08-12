@@ -53,7 +53,8 @@ Codex 플러그인 미설치 시 **모든 리뷰 lane 진행 불가** — Orches
 
 **Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환, Codex 호출 자체 skip, generic fallback 금지 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) §결정 4번):
 
-1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` · `round_id` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+   - ★ **`round_id` 는 존재 + 형식 둘 다** (`^[A-Za-z0-9_-]{8,64}$`) — 부재 **또는 형식 위반**(치환되지 않은 `<packet round_id>` 리터럴 포함) = 즉시 `ESCALATE_PACKET_INCOMPLETE`, **dispatch 자체 skip**. 존재만 보는 검사는 미치환 placeholder 를 통과시키고, 그 값은 아래 §실행 패턴에서 manifest `round_id` 에 그대로 실려 collector 가 같은 정규식으로 **schema 축 fail-closed 거부**한다 (= 회수 가능한 verdict 를 100% 버린다). 발급·전달 규범 = [`../templates/review-pl-base.md`](../templates/review-pl-base.md) §10, 스키마 슬롯 = 동 §2 — 본 md 는 schema 재인용 금지 관례상 **검증 규칙만** 둔다.
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
 3. **lane-conditional 추가 검증**:
    - `lane=requirements-review` (CFP-2326 / ADR-125): `story_key` 필수. Story §1-§6 (요구사항 산출물 — use case / AC / edge / 암묵 가정) 을 `Read`로 열 수 없으면 ESCALATE. `scope_globs`에 요구사항 산출물 (Story §1-§6) ≥ 1 포함
@@ -196,9 +197,11 @@ else
   # manifest = **temp+rename 원자 write** — 평문 `>` 는 "write 중 사망 = 절단 JSON" 이라는 상태 자체를 만든다.
   #   보간 값 5종(`lane`·`round_id`·`out_json`·`promptfile`·`category_enum`)은 전건 `_json_esc` 통과 후 (미이스케이프 = malformed JSON → collector 오독·필드 주입).
   #   ★ codex **호출 이전**에 write — 호출 후에 쓰면 사망형에서 좌표가 남지 않는다.
-  # ★ `category_enum` = **additive 필드**(§4.2 "필드 추가 = 새 const 없이 additive 허용" — `schema` const 무변경, ArchitectPL 비준 대기).
-  #   근거: late-collect 가 **동일 AC-6 helper** 를 부르려면 3번째 인자가 필요한데(helper 는 인자 정확히 3개 요구),
-  #   collector argv 는 `<lane> <round_id>` 2개뿐이라 이 값 없이는 consumed 경로 자체에 도달할 수 없다. 값 = dispatch 가 helper 에 넘기는 것과 **같은 packet 유래**.
+  # ★ `category_enum` = **필수 필드**(§4.2 승격 — DeveloperPL 판정, ArchitectPL 비준 대기). "additive 선택 필드" 아니다
+  #   (`schema` const 는 무변경 — "새 const 없이 필드 추가"는 여전히 성립하나, 그것이 곧 *선택*을 뜻하지는 않는다).
+  #   승격 근거: late-collect 가 **동일 AC-6 helper** 를 부르려면 3번째 인자가 필요한데(helper 는 인자 정확히 3개 요구) collector argv 는
+  #   `<lane> <round_id>` 2개뿐이라 유일 조달처가 이 필드이고 ⊕ collector **step 2 schema 축**이 부재·빈 값을 fail-closed 로 거부하므로
+  #   ⊕ 이 printf 에서 키를 빼면 **전 회차가 schema 축 fail-closed** 로 죽는다. 값 = dispatch 가 helper 에 넘기는 것과 **같은 packet 유래**.
   printf '{"schema":"codex-dispatch-manifest-v1","lane":"%s","dispatch_id":"%s","round_id":"%s","out_json":"%s","promptfile":"%s","dispatch_start":%s,"timeout_n":%s,"kill_after_k":%s,"category_enum":"%s"}\n' \
     "$(_json_esc '<lane>')" "$(_json_esc "$TS")" "$(_json_esc "$ROUND_ID")" "$(_json_esc "$OUT_JSON")" "$(_json_esc "$PROMPTFILE")" \
     "$DISPATCH_START" "${CODEX_REVIEW_TIMEOUT_SEC:-300}" "${CODEX_REVIEW_KILL_AFTER_SEC:-30}" \
