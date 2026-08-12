@@ -21,7 +21,9 @@
 
 const HEADING_REGEX = /^## Lane evidence\s*$/gm;
 const ROW_REGEX_SOURCE = /^-\s*([^:]+):\s*(PASS|SKIPPED|FIX|ESCALATED|BYPASS)/.source;
-const REQUIRED_LANES = ['요구사항', '설계', '설계-리뷰', '구현', '구현-리뷰', '구현-테스트', '보안-테스트'];
+const REQUIRED_LANES = ['요구사항', '요구사항-리뷰', '설계', '설계-리뷰', '구현', '구현-리뷰', '구현-테스트', '보안-테스트'];
+
+export { REQUIRED_LANES };
 
 /**
  * PR body 안 `## Lane evidence` heading collision 을 분석한다.

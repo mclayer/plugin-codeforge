@@ -1,7 +1,7 @@
 name: Lane Evidence Check (CFP-126 / ADR-031)
 # Security: third-party actions are SHA-pinned per CFP-300 policy.
 
-# Phase 2 PR description 의 `## Lane evidence` 블록 + 7-row 의무 검증.
+# Phase 2 PR description 의 `## Lane evidence` 블록 + required lane row 의무 검증.
 # Story §14 Lane Evidence 와 cross-validate (lint script 별도 — scripts/check-lane-evidence.sh).
 #
 # Effective date: ADR-031 Accepted PR merge 직후 신규 Phase 2 PR 부터 (retroactive 미처리, ADR-031 §결정 5).
@@ -27,14 +27,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - name: Check Lane Evidence block + 7-row
+      - name: Check Lane Evidence block + required lane rows
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            const path = require('path');
+
             const pr = context.payload.pull_request;
             const body = pr.body || '';
             const labels = pr.labels.map(l => l.name);
+
+            // Save PR info for bash step
+            const tempDir = process.env.RUNNER_TEMP || '/tmp';
+            fs.writeFileSync(path.join(tempDir, 'pr-body.md'), body);
+            fs.writeFileSync(path.join(tempDir, 'pr-labels.txt'), labels.join('\n'));
 
             // 1. Fast-pass: type:epic / doc-only PR (CFP-106 정합)
             if (labels.includes('type:epic')) {
@@ -168,9 +176,9 @@ jobs:
               return;
             }
 
-            // 6. 7-row valid format check (lane: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>)
+            // 6. required lane row valid format check (lane: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>)
             const blockBody = blockMatch[1];
-            const requiredLanes = ['요구사항', '설계', '설계-리뷰', '구현', '구현-리뷰', '구현-테스트', '보안-테스트'];
+            const { REQUIRED_LANES: requiredLanes } = await import(mjsUrl);
             const rowRegex = /^-\s*([^:]+):\s*(PASS|SKIPPED|FIX|ESCALATED|BYPASS)/gm;
             const foundLanes = new Set();
             let m;
@@ -189,7 +197,7 @@ jobs:
                 conclusion: 'action_required',
                 output: {
                   title: 'Lane Evidence',
-                  summary: `7-row 검증 실패 — ${missing.length}/7 lane row 부재 또는 invalid format: ${missing.join(', ')}. valid format: \`- <lane>: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>\``
+                  summary: `${missing.length}/${requiredLanes.length}-row 검증 실패 — lane row 부재 또는 invalid format: ${missing.join(', ')}. valid format: \`- <lane>: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>\``
                 }
               });
               return;
@@ -205,6 +213,17 @@ jobs:
               conclusion: 'success',
               output: {
                 title: 'Lane Evidence',
-                summary: `7/7 lane row valid format. ${foundLanes.size} lanes detected: ${[...foundLanes].join(', ')}`
+                summary: `${requiredLanes.length}/${requiredLanes.length} lane row valid format. ${foundLanes.size} lanes detected: ${[...foundLanes].join(', ')}`
               }
             });
+      - name: Parallelization Check (observation channel — CFP-2914)
+        if: |
+          contains(github.event.pull_request.labels.*.name, 'phase:보안-테스트') ||
+          contains(github.event.pull_request.labels.*.name, 'phase:구현-테스트') ||
+          contains(github.event.pull_request.labels.*.name, 'phase:구현-리뷰') ||
+          contains(github.event.pull_request.labels.*.name, 'phase:구현')
+        run: |
+          bash scripts/check-lane-evidence.sh \
+            --check-parallelization \
+            --pr-block-file  "$RUNNER_TEMP/pr-body.md" \
+            --pr-labels-file "$RUNNER_TEMP/pr-labels.txt"

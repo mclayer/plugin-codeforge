@@ -546,17 +546,17 @@ CONDITIONAL trigger: Story 가 **real funds / live exchange API / production cre
 
 **Effective date**: ADR-031 Accepted 후 신규 Phase 2 PR 부터 (retroactive 미처리 — ADR-031 §결정 5).
 
-**의무 trigger**: 매 lane (요구사항/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트) spawn 시 wrapper Orchestrator (또는 Orchestrator-owned delegate subagent — ADR-031 §결정 1 Amendment 1) 가 row append (start) + return 직후 row update (end).
+**의무 trigger**: 매 lane (요구사항/요구사항-리뷰/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트) spawn 시 wrapper Orchestrator (또는 Orchestrator-owned delegate subagent — ADR-031 §결정 1 Amendment 1) 가 row append (start) + return 직후 row update (end).
 
 **Schema** (12 field YAML block, CFP-126-002 Codex review 정합):
 
 ```yaml
 lane_evidence:
-  - lane: 요구사항                    # 한국어 7종 중 하나
+  - lane: 요구사항                    # 한국어 8종 중 하나
     iteration: 1                     # 1+, lane local row index (FIX 시 multiple row)
     agent: RequirementsPLAgent (codeforge-requirements@mclayer)
-    spawned_at: 2026-MM-DD T HH:MM Z # ISO8601 UTC, spawn 직전 (contract field layer — ADR-079 §결정 9, UTC strict 보존)
-    returned_at: 2026-MM-DD T HH:MM Z # ISO8601 UTC, return 직후 (contract field layer — ADR-079 §결정 9, UTC strict 보존). output_status=spawned 시 empty
+    spawned_at: 2026-MM-DD T HH:MM:SS Z # ISO8601 UTC (초 필수 · TZ 필수), spawn 직전 (contract field layer — ADR-079 §결정 9, UTC strict 보존)
+    returned_at: 2026-MM-DD T HH:MM:SS Z # ISO8601 UTC (초 필수 · TZ 필수), return 직후 (contract field layer — ADR-079 §결정 9, UTC strict 보존). output_status=spawned 시 empty
     output_status: completed         # spawned | completed | failed | escalated | bypass
     outcome: PASS                    # PASS | FIX | SKIPPED — output_status=completed 시만 채움
     pr_ref: <org>/<repo>#NNN         # Phase 2 PR ref
@@ -572,7 +572,7 @@ lane_evidence:
 
 | # | Field | Required | 의미 |
 |---|---|---|---|
-| 1 | lane | yes | 요구사항/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트 |
+| 1 | lane | yes | 요구사항/요구사항-리뷰/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트 |
 | 2 | iteration | yes | Lane local 1+ (FIX 시 multiple row) |
 | 3 | agent | yes | PLAgent name + plugin |
 | 4 | spawned_at | yes | ISO8601 UTC (contract field layer — UTC strict 보존, ADR-079 §결정 9). **본문 markdown 표 Start column = KST `+09:00` (display layer, ADR-079 §결정 2) — 두 layer disjoint co-exist** |
@@ -595,7 +595,7 @@ lane_evidence:
 - 사용 시 row append (output_status=bypass) + Phase 2 PR description `BYPASS:` 명시 + audit Issue 자동 생성 (ADR-026 패턴)
 
 **Phase-gate-mergeable enforcement** (ADR-031 §결정 3):
-- Phase 2 PR (label `phase:보안-테스트`) → PR description regex `^## Lane evidence$` + 7-row valid 검증
+- Phase 2 PR (label `phase:보안-테스트`) → PR description regex `^## Lane evidence$` + 8-row valid 검증
 - 부재/invalid → `action_required` block
 - `type:epic` / doc-only fast-pass (CFP-106) 변경 없음
 
