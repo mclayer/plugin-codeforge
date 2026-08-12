@@ -49,7 +49,7 @@ codeforge PL agent 는 내부 worker(sub-agent) 를 spawn 할 때 다음 정보�
 
 **필수 필드 누락 시 게이트**: Orchestrator 가 Packet Incomplete 신호(`ESCALATE_PACKET_INCOMPLETE`) 감지 후 Story phase 진행 차단 — 예외 0, manual override 불가.
 
-## 2. Schema (필수 필드 5 + 선택 2)
+## 2. Schema (필수 필드 8 + 선택 1)
 
 ```yaml
 lane_dispatch_packet:
@@ -66,7 +66,7 @@ lane_dispatch_packet:
 
 ### 2.1 필수 필드 위반 게이트 (`ESCALATE_PACKET_INCOMPLETE`)
 
-PL 이 dispatch packet 작성 시 위 5 필수 필드 누락 또는 값 부재 = worker 에서 **ESCALATE 신호** 발화 + **Story phase 진행 차단**(manual override 불가). Orchestrator 가 신호 감지 후:
+PL 이 dispatch packet 작성 시 위 8 필수 필드 누락 또는 값 부재 = worker 에서 **ESCALATE 신호** 발화 + **Story phase 진행 차단**(manual override 불가). Orchestrator 가 신호 감지 후:
 1. Story frontmatter `status: escalate` + escalation reason 기재
 2. PL 경유 Architect → Story 반환 (재작성 의무)
 
