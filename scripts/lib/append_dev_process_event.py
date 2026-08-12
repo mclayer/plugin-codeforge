@@ -427,6 +427,15 @@ def build_row(**index_fields):
     time_to_detection = _norm_time_to_detection(index_fields.get("time_to_detection"))
     detecting_lane = _norm_enum(index_fields.get("detecting_lane"), _LANE_LABELS, None)
 
+    # ── CFP-2926 Amendment 1 additive (계약 §2 #19/#20 — writer_key / artifact_key) ──
+    # 두 필드의 값 유형 = **sha256 | null 단일** (계약 §2.1 "sha256-hash" 원소). raw agent_id /
+    # raw 경로는 index tier 진입 금지 — T-DPE-6(hash-only) · T-INFO-8(free-form 차단).
+    # ★_norm_hashed_id 재사용(ADR-140 reuse-before-write — defect_id/fix_id 와 동일 hash-only 규율):
+    #   64-hex → 그대로 / 그 외 raw 문자열 → sha256 / 빈 값·None → None.
+    #   caller 가 raw 를 넘겨도 원문이 row 에 도달하는 경로가 구조적으로 부재하다(정규화 단일 관문).
+    writer_key = _norm_hashed_id(index_fields.get("writer_key"))
+    artifact_key = _norm_hashed_id(index_fields.get("artifact_key"))
+
     # timestamp — caller 가 prev 주입 시 monotonic, 아니면 wall-clock UTC Z
     timestamp_utc = _utc_z_monotonic(index_fields.get("prev_timestamp_utc"))
 
@@ -454,6 +463,9 @@ def build_row(**index_fields):
         "defect_type": defect_type,
         "time_to_detection": time_to_detection,
         "detecting_lane": detecting_lane,
+        # ── CFP-2926 Amendment 1 additive (18 → 20, 계약 §2 #19/#20 순서 고정) ──
+        "writer_key": writer_key,
+        "artifact_key": artifact_key,
     }
     # 방어적 정합: row 키 == _ROW_KEYS (순서·멤버) — 구성 오류 조기 검출
     assert tuple(row.keys()) == _ROW_KEYS, "build_row key drift vs _ROW_KEYS"
@@ -513,8 +525,8 @@ def _self_test():
         if not cond:
             failures.append(msg)
 
-    # ── parity guard: build_row 키 순서 == _ROW_KEYS, 길이 18 ──
-    check(len(_ROW_KEYS) == 18, f"_ROW_KEYS 길이 {len(_ROW_KEYS)} != 18")
+    # ── parity guard: build_row 키 순서 == _ROW_KEYS, 길이 20 (CFP-2926 Amd1 additive 18→20) ──
+    check(len(_ROW_KEYS) == 20, f"_ROW_KEYS 길이 {len(_ROW_KEYS)} != 20")
     check(len(set(_ROW_KEYS)) == len(_ROW_KEYS), "_ROW_KEYS 중복 키 존재")
 
     tmpdir = tempfile.mkdtemp(prefix="dev-process-selftest-")
@@ -611,6 +623,38 @@ def _self_test():
     check(_is_sha256_hex(r5["defect_id"]), "[c5] raw defect_id 가 sha256 처리 안 됨")
     check(_is_sha256_hex(r5["fix_id"]), "[c5] raw fix_id 가 sha256 처리 안 됨")
 
+    # ── 케이스 7: writer_key / artifact_key (CFP-2926 Amd1 additive) — hash-only + null default ──
+    #   ★discriminating: raw agent_id·raw 경로 원문이 row 에 잔존하면 RED (T-DPE-6 / T-INFO-8).
+    RAW_AGENT = "DeveloperPLAgent"
+    RAW_PATH = "docs/stories/CFP-2926.md"
+    eid7 = append_event(
+        ledger_path=ledger, event_type="tool_call", emit_source="hook",
+        story_key="CFP-2926", lane_label="구현",
+        writer_key=RAW_AGENT, artifact_key=RAW_PATH,
+    )
+    check(eid7 is not None, "[c7] writer_key/artifact_key 동반 append 실패 (key drift 회귀?)")
+    with open(ledger, encoding="utf-8") as f:
+        rows = [json.loads(ln) for ln in f if ln.strip()]
+    r7 = rows[-1]
+    check(tuple(r7.keys()) == _ROW_KEYS, "[c7] row 키 순서 != _ROW_KEYS (additive 2필드 parity)")
+    check(_is_sha256_hex(r7["writer_key"]), f"[c7] writer_key sha256 미처리: {r7['writer_key']!r}")
+    check(_is_sha256_hex(r7["artifact_key"]), f"[c7] artifact_key sha256 미처리: {r7['artifact_key']!r}")
+    check(r7["writer_key"] == _sha256(RAW_AGENT) and r7["artifact_key"] == _sha256(RAW_PATH),
+          "[c7] hash 값이 sha256(raw) 와 불일치 (정규화 관문 우회)")
+    row7_json = json.dumps(r7, ensure_ascii=False)
+    check(RAW_AGENT not in row7_json and RAW_PATH not in row7_json,
+          "[c7] raw agent_id/경로 원문이 index row 에 잔존 (T-DPE-6/T-INFO-8 위반)")
+    # 64-hex 는 재해싱 없이 그대로(idempotent) / 미주입 event 는 null
+    pre = "c" * 64
+    append_event(ledger_path=ledger, event_type="verdict", emit_source="agent",
+                 story_key="CFP-2926", lane_label="구현-리뷰", writer_key=pre, seq="wk")
+    with open(ledger, encoding="utf-8") as f:
+        rows = [json.loads(ln) for ln in f if ln.strip()]
+    check(rows[-1]["writer_key"] == pre, "[c7] 이미 64-hex 인 writer_key 가 재해싱됨 (비멱등)")
+    check(rows[-1]["artifact_key"] is None, "[c7] 미주입 artifact_key != null")
+    check(r1["writer_key"] is None and r1["artifact_key"] is None,
+          "[c7] 미주입 event(c1) 의 additive 필드가 null 이 아님 (backward-compat 위반)")
+
     # ── 케이스 6: monotonic timestamp (prev 주입 시 MAX(prev+1ms) — design literal) ──
     ts = _utc_z_monotonic("2099-01-01T00:00:00.500Z")
     check(ts == "2099-01-01T00:00:00.501Z", f"[c6] monotonic +1ms 미보장: {ts}")
@@ -635,7 +679,7 @@ def _self_test():
         "[append_dev_process_event --self-test] PASS "
         f"(_ROW_KEYS={len(_ROW_KEYS)} fields; round-trip OK; content-blind OK; "
         f"event_id 결정성 OK; taxonomy+audit OK; invalid-enum→None OK; "
-        f"raw-id→sha256 OK; monotonic OK)"
+        f"raw-id→sha256 OK; writer/artifact_key hash-only+null-default OK; monotonic OK)"
     )
     return 0
 
