@@ -10,6 +10,10 @@
 #   (UTF-8 인코딩 env export presence) 합류. 축 2 (`scan_stdin_redirect`) 와 동형 shape (자체 라벨 진단
 #   + 독립 rc 반환 → `run_scan` max() 합성). warning tier 유지 · required 승격 0 (7일-green chicken-egg,
 #   ADR-130 §결정 6). 신규 mechanical action 0 — 기존 entry 내부 축 확장.
+# CFP-2929 §3.8 B-10 / §5.1 B-6·B-8 — **4번째 disjoint 축** `scan_output_path_dialect` (출력 경로 방언
+#   정규화 presence + `-o` 식별자 대조) 합류 ⊕ **사정권 확대** `DEFAULT_SCAN_DIRS`
+#   `('plugins/codeforge-review',)` → `('plugins',)` (discovery 기반 — 아래 상수 주석). 축 2·3 과 동형
+#   shape (자체 라벨 진단 + 독립 rc → max() 합성). warning tier 유지 · required 승격 0.
 # ADR-061 §결정 1 Python-SSOT 패턴 (thin wrapper = scripts/check-codex-companion-timeout-presence.sh)
 #
 # 목적:
@@ -45,21 +49,41 @@
 #      뜻하지 않는다. 1급 보증 = helper 코드계층 명시 `encoding='utf-8'`
 #      (scripts/lib/check_promptfile_utf8_roundtrip.py round-trip assert). 본 축은 presence 만 검사
 #      (presence ≠ 무결성 — over-claim 금지, ADR-119).
+#   8. 출력 경로 방언 정규화 (E6 4번째 disjoint 축 — CFP-2929 §3.8 **B-10**):
+#      `-o <출력경로>` 를 동반하는 codex exec dispatch 실행 발화를 보유한 파일은
+#      (a) `<IDENT>=$(cygpath …)` **정규화 대입**을 (주석 아닌 실행 줄에) 보유해야 하고,
+#      (b) `-o "$VAR"` 형 argv 의 `VAR` 가 그 정규화의 **대입 대상 식별자 집합**(직접 대입 ∪ 순수
+#          복사 대입 `X="$Y"` 폐포)에 속해야 한다. 위반 = RED.
+#      ★ **위치 비의존**(B-10): 정규화가 preflight 함수 내부(P-0)로 이동했으므로 "dispatch 라인 직전
+#        별도 줄" 로 정의하면 born-red 다. 판정 대상 = **변수 흐름**이지 줄 위치가 아니다.
+#      ★★ **정직 상한 (over-claim 금지 — ADR-119 / ADR-168 §결정 16)**: 본 축은 셸 **정적 리터럴
+#        대조**이며 데이터 흐름 분석이 아니다. 다음은 **잡지 못한다** —
+#          · 별칭·간접 재대입 (`eval`, `declare -n` nameref, `${!ref}` 간접 확장, 배열·`$@` 경유)
+#          · **정규화 이후의 재대입**(`OUT="$(cygpath …)"` 뒤 `OUT=/tmp/x` 로 되돌리기 — 본 축은
+#            줄 순서를 보지 않으므로 GREEN 을 유지한다)
+#          · 함수 인자·서브셸 경계를 넘는 전파, 외부 파일 source
+#        따라서 본 축 GREEN 은 "출력 경로가 런타임에 정규화된다"의 **보증이 아니라 presence 신호**다
+#        (warning tier). 런타임 진실의 결박 = §8.1 Windows 3-arm oracle (execution-backed).
 #
 # Ports&Adapters (CFP-2549 재배치): 검사 로직(runnable-form 판정 + 5-part scan driver)은 base 로 추출,
 #   본 파일은 codex-특정 dispatch 패턴 / DEFAULT_SCAN_DIRS / home_marker / 진단 메시지 어휘 + AC-4 redirect 축
-#   + AC-7 encoding env 축만 보유.
+#   + AC-7 encoding env 축 + E6 output-path dialect 축만 보유.
 #
 # Usage:
 #   check_codex_companion_timeout_presence.py [<path> ...]   # 인자 = 스캔 대상 (파일 또는 디렉터리)
 #   check_codex_companion_timeout_presence.py                # 인자 0개 = repo root 스캔
 #   check_codex_companion_timeout_presence.py --self-test    # inline fixture RED/GREEN 판별 (CI D3 step)
+#   check_codex_companion_timeout_presence.py --list-scope-dirs
+#                                                            # DEFAULT_SCAN_DIRS 열거 (사정권 side)
+#   check_codex_companion_timeout_presence.py --list-dispatch-surfaces [<path> ...]
+#                                                            # dispatch 발화 보유 파일 열거 (discovery side,
+#                                                            #   인자 0개 = repo root `.`) — AC-13 차집합 test 용
 #
 # Exit code:
 #   0 = PASS (모든 dispatch 발화에 timeout 가드 + `- <` redirect 존재, dispatch 보유 파일에 인코딩 env
-#       export 존재) 또는 honest no-op (대상 파일 부재)
+#       export + 출력 경로 정규화 존재) 또는 honest no-op (대상 파일 부재)
 #   1 = 위반 (가드/redirect 누락 dispatch 발화 ≥1, 인코딩 env export 누락 dispatch 파일 ≥1,
-#       또는 파일 존재하나 발화 0건 = hollow-gate)
+#       `-o` 경로 정규화 부재·식별자 불일치 dispatch 발화 ≥1, 또는 파일 존재하나 발화 0건 = hollow-gate)
 #   2 = setup error (인자 경로 미존재 등)
 #
 # ReDoS 관측: line-by-line bounded scan + anchored 고정 리터럴 + \d+ + zero-width lookahead `[^\n]*`
@@ -69,6 +93,11 @@
 #   임의 입력 총 작업량 무해성 절대단정 아님 (honest ceiling — ADR-168 §결정 16 (구 ADR-082 §결정 16, 재제정 CFP-2840) / ADR-151 §결정 7).
 #   재현 가능한 복잡도 회귀 self-test 부재 — 위 서술은 **구조 관측**이지 벤치마크 증거 아님 (bounded
 #   degradation 천장, 임의 입력 무해 아님).
+#   CFP-2929 추가분 (CYGPATH_ASSIGN / COPY_ASSIGN / DASH_O_ARG / VAR_ARG) 도 동일 형상 — 고정 리터럴
+#   (`=$(cygpath` / `-o`) + 단일 문자클래스 `+`/`*` + 선택적 그룹 (중첩 quantifier 0, 교대 backtrack
+#   분기 0). ★ 단 `_normalized_identifiers` 의 복사-대입 **폐포 루프**는 정규식이 아닌 **알고리즘** 축
+#   비용이다 — 최악 O(파일당 복사대입 수²) 이며 파일 크기로 bound 된다 (무한 루프 불가: 매 회차
+#   집합이 단조 증가하고 상한 = 후보 식별자 수). 이 역시 **구조 관측**이지 벤치마크 증거 아님.
 
 import contextlib
 import io
@@ -117,13 +146,42 @@ ENCODING_ENV_PATTERNS = (
      re.compile(r'^[ \t]*export[ \t]+PYTHONUTF8=1' + _ENV_LINE_TAIL, re.MULTILINE)),
 )
 
+# ── 출력 경로 방언 정규화 (E6 4번째 축 — CFP-2929 §3.8 B-10) ─────────────────────────
+# (a) 정규화 **대입** presence: `<IDENT>=$(cygpath …)` / `<IDENT>="$(cygpath …)"`.
+#     ★ 단순 `cygpath` **언급**(산문·주석)은 정규화가 아니다 — 대입 형태를 요구해 substring hollow 차단
+#       (주석 줄 자체는 아래 `_normalized_identifiers` 가 line-level 로 배제. AC-4 anti-substring).
+#     ★ 문(statement) 경계 앵커: 줄 시작 / 공백 / `;`·`&`·`|`·`(` 직후 — `local _n; _n="$(cygpath …)"`
+#       (CodexReviewAgent.md P-0 실형태) 처럼 한 줄에 2문이 있는 형태를 놓치지 않기 위함.
+_STMT_HEAD = r'(?:^|[;&|(]|[ \t])'
+_IDENT = r'([A-Za-z_][A-Za-z0-9_]*)'
+CYGPATH_ASSIGN = re.compile(
+    _STMT_HEAD + r'(?:local[ \t]+)?' + _IDENT + r'=(?:")?\$\((?:[ \t]*)cygpath\b', re.MULTILINE)
+# (b) 순수 복사 대입 `X="$Y"` / `X=$Y` / `X="${Y}"` — RHS 가 **변수 하나뿐**일 때만 (tail 앵커로 강제).
+#     P-0 실형태 `OUT_JSON="$_n"` 처럼 정규화 산출이 1-hop 을 거쳐 argv 변수에 도달하는 경로를 잇는다.
+COPY_ASSIGN = re.compile(
+    _STMT_HEAD + r'(?:local[ \t]+)?' + _IDENT + r'="?\$\{?' + _IDENT +
+    r'\}?"?(?=[ \t]*(?:$|[;&|)#]))', re.MULTILINE)
+# dispatch 발화 라인의 `-o <arg>` 추출. `--output-schema` 오탐 회피 = `-o` 앞이 시작/공백 (그 경우 앞
+#   문자가 `-` 라 unmatch) ∧ 뒤에 공백 필수 (`-outdir` 류 unmatch).
+DASH_O_ARG = re.compile(r'(?:^|[ \t])-o[ \t]+(\S+)')
+# `-o` argv 가 변수 참조 형인지 (그 경우에만 (b) 식별자 대조가 성립 — 리터럴 경로는 (a) 만 적용).
+VAR_ARG = re.compile(r'^"?\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?"?$')
+
 # 스캔 대상 파일 확장자 (dispatch 발화가 사는 markdown/shell)
 SCAN_EXTS = ('.md', '.sh', '.yml', '.yaml')
 
-# dispatch 발화 검색 스코프 (파일 목록 하드코딩 금지 — 디렉터리 prefix 기반, E4 차단)
-# codeforge 소유 Codex 리뷰 dispatch 발화가 사는 유일 위치 = codeforge-review agent md (origin/main 실측).
+# dispatch 발화 검색 스코프 (★ 파일 목록 하드코딩 금지 — 디렉터리 prefix 기반, B-8 / AC-13).
+# ★ CFP-2929 사정권 확대: `plugins/codeforge-review` → `plugins` (plugin 루트 1개).
+#   근거 = AC-13 은 **discovery 기반**이어야 한다 — 개별 파일·개별 plugin 열거는 born-stale 이며
+#   "제2 dispatch 표면이 영구 미탐지" (본 Story 가 고치려는 결함) 를 그대로 재생산한다.
+#   plugin 루트 1개만 두면 **신규 plugin·신규 파일이 자동으로 사정권 안**이라 목록 갱신 의무가 없다.
+#   [verified: 본 확대 직전 실측 — `python … <dir>` 를 docs/templates/.github/archive/scripts 에 각각
+#    실행 시 실행 dispatch 발화 0건(전부 prose/doc example) / `plugins` 실행 시 실 발화 2 표면
+#    (codeforge-review CodexReviewAgent.md · codeforge-requirements RequirementsAnalystAgent.md)]
+#   ★ `tests/` 미포함은 의도적 — 그 트리의 dispatch 리터럴은 lint 를 RED 로 만들기 위한 **음성 fixture**
+#     (heredoc 안 픽스처) 라 사정권에 넣으면 상시-RED. AC-13 차집합 test 는 이 캐리어를 명시 제외한다.
 DEFAULT_SCAN_DIRS = (
-    'plugins/codeforge-review',
+    'plugins',
 )
 
 # hollow-gate(I-3) vs consumer no-op 구분 기준 = codeforge-owned Codex 리뷰 dispatch 의 유일 home.
@@ -279,24 +337,159 @@ def scan_encoding_env_presence(paths):
     return 0
 
 
+def _is_comment_line(raw):
+    """주석 줄 판정 (정규화 대입 수집에서 배제 — AC-4 anti-substring).
+
+    ★ base 의 `_is_doc_example_line` 과 목적이 다르다: 저쪽은 "dispatch **실행** 라인인가"
+    (주석 write-mode 예외를 **포함**시키는 판정) 이고, 이쪽은 "이 줄이 런타임에 실제로 대입을
+    수행하는가" 다. 주석 안 `# OUT="$(cygpath -m "$OUT")"` 는 문면상 정규화처럼 보이지만 실행되지
+    않으므로 (a) 를 충족시켜선 안 된다.
+    """
+    return raw.lstrip().startswith('#')
+
+
+def _normalized_identifiers(text):
+    """`cygpath` 정규화 산출이 도달하는 식별자 집합 + 정규화 대입 presence 반환.
+
+    반환 = (identifiers:set, has_normalization:bool)
+
+    구성 = ① 직접 대입 `X=$(cygpath …)` 의 `X` ② 순수 복사 대입 `Y="$X"` 의 폐포(fixpoint).
+    ②가 필요한 이유 = P-0 실형태가 `_n="$(cygpath …)"` → 검사 → `OUT_JSON="$_n"` 의 **2-hop** 이라
+    직접 대입 대상만 보면 `-o "$OUT_JSON"` 이 born-red 가 된다 (B-10).
+
+    주석 줄은 양쪽 수집에서 배제 (`_is_comment_line`) — 문면만 갖춘 hollow 통과 차단.
+    폐포 루프는 단조 증가 + 후보 유한 → 종료 보장 (무한 루프 불가).
+    """
+    live = '\n'.join('' if _is_comment_line(raw) else raw for raw in text.splitlines())
+    direct = {m.group(1) for m in CYGPATH_ASSIGN.finditer(live)}
+    has_normalization = bool(direct)
+    copies = [(m.group(1), m.group(2)) for m in COPY_ASSIGN.finditer(live)]
+    ids = set(direct)
+    changed = True
+    while changed:                     # 복사 대입 폐포 (단조 증가 → 유한 종료)
+        changed = False
+        for dst, src in copies:
+            if src in ids and dst not in ids:
+                ids.add(dst)
+                changed = True
+    return ids, has_normalization
+
+
+def scan_output_path_dialect(paths):
+    """E6 4번째 축: `-o` 출력 경로가 방언 정규화를 거친 식별자인가 (CFP-2929 §3.8 B-10).
+
+    판정 granularity = **(a) 파일 단위 presence ⊗ (b) dispatch 발화 라인 단위 식별자 대조**:
+      (a) `-o <arg>` 를 동반한 dispatch 실행 발화를 보유한 파일은 주석 아닌 줄에
+          `<IDENT>=$(cygpath …)` 정규화 대입을 보유해야 한다.
+      (b) `-o "$VAR"` 형 argv 의 `VAR` 는 `_normalized_identifiers` 집합에 속해야 한다.
+          `-o <리터럴>` 형은 (b) 정의역 밖 → (a) 만 적용.
+      `-o` 를 아예 갖지 않는 dispatch 발화 = 본 축 vacuous (출력 경로 argv 부재).
+
+    ★ **위치 비의존** (B-10): 정규화가 preflight 함수 내부(P-0)로 이동했으므로 "dispatch 라인 직전
+    별도 줄" 로 정의하면 born-red 다. 판정 대상 = 변수 흐름이지 줄 위치가 아니다.
+
+    ★★ **정직 상한 (over-claim 금지 — ADR-119)**: 셸 정적 리터럴 대조이지 데이터 흐름 분석이 아니다.
+    **별칭·간접 재대입 우회는 잡지 못한다** — `eval` / `declare -n` nameref / `${!ref}` 간접 확장 /
+    배열·`$@` 경유 / 함수·서브셸 경계 전파 / 외부 파일 source / **정규화 이후의 재대입**(줄 순서
+    미검사). 본 축 GREEN = "런타임에 정규화된다"의 보증이 아니라 **presence 신호**다 (warning tier).
+    런타임 진실의 결박 = §8.1 Windows 3-arm oracle (execution-backed).
+
+    base 5-part(timeout 축) / 축 2(redirect) / 축 3(encoding) 과 disjoint additive — base 무변경
+    (composition). 파일 walk = base._iter_files 재사용 (4축 동일 파일 집합 보장). 위반 ≥1 → 1, 없으면 0.
+    """
+    violations = []
+    for f in base._iter_files(paths, SCAN_EXTS):
+        try:
+            with open(f, 'r', encoding='utf-8') as fh:
+                text = fh.read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        ids = None
+        has_norm = False
+        for i, raw in enumerate(text.splitlines(), start=1):
+            if base.detect_dispatch_utterance(raw, DISPATCH_PATTERNS) is None:
+                continue
+            if _is_doc_example_line(raw):
+                continue
+            out_args = DASH_O_ARG.findall(raw)
+            if not out_args:
+                continue          # 출력 경로 argv 부재 = 본 축 vacuous
+            if ids is None:       # 파일당 1회 수집 (dispatch 보유 파일에서만 — 불필요 비용 회피)
+                ids, has_norm = _normalized_identifiers(text)
+            if not has_norm:
+                violations.append(
+                    f'{f}:{i}: codex exec dispatch 표면에 출력 경로 방언 정규화 대입 부재 '
+                    f'(`<IDENT>=$(cygpath …)` 형 · 주석 줄 제외) — Windows Git Bash 에서 POSIX 형 '
+                    f'`-o /c/…` 는 `C:\\c\\…` 로 조용히 오해석된다 (exit 0 + 산출물 부재). '
+                    f'presence 신호일 뿐 런타임 보증 아님 (E6 / CFP-2929 §3.8 B-10)')
+                continue
+            for arg in out_args:
+                mv = VAR_ARG.match(arg)
+                if mv is None:
+                    continue      # 리터럴 경로 argv = (b) 정의역 밖 ((a) 는 위에서 충족 확인)
+                var = mv.group(1)
+                if var not in ids:
+                    violations.append(
+                        f'{f}:{i}: `-o "${var}"` 의 식별자가 정규화 대입 대상이 아님 '
+                        f'(정규화 도달 식별자: {", ".join(sorted(ids)) or "없음"}) — '
+                        f'정규화 산출을 `-o` 로 넘기지 않으면 정규화가 무의미하다. '
+                        f'별칭·간접 재대입은 본 축이 잡지 못함 (정직 상한, E6 / CFP-2929 §3.8 B-10)')
+    if violations:
+        print('[codex-companion-timeout-presence] FAIL (E6 — 출력 경로 방언 정규화 부재/불일치):\n'
+              + '\n'.join('  ' + v for v in violations))
+        return 1
+    return 0
+
+
+def list_dispatch_surfaces(paths):
+    """dispatch 실행 발화를 1건 이상 보유한 파일 목록 (정렬·repo-relative·`/` 구분자).
+
+    AC-13 차집합 test 의 **discovery side** 기계 인터페이스 — 검출기를 bash 로 재구현(=drift 표면)
+    하지 않게 하기 위한 read-only introspection. 스캔·판정·exit semantics 무변경.
+    """
+    found = set()
+    for f in base._iter_files(paths, SCAN_EXTS):
+        try:
+            with open(f, 'r', encoding='utf-8') as fh:
+                text = fh.read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for raw in text.splitlines():
+            if base.detect_dispatch_utterance(raw, DISPATCH_PATTERNS) is None:
+                continue
+            if _is_doc_example_line(raw):
+                continue
+            try:
+                rel = os.path.relpath(f)
+            except ValueError:
+                # Windows 교차 드라이브 (예: repo=C: · 인자=D:\tmp) 는 relpath 불가 → 절대경로 유지.
+                rel = f
+            found.add(rel.replace(os.sep, '/'))
+            break
+    return sorted(found)
+
+
 def run_scan(paths):
     # timeout 축 (base 5-part 소유: 가드 presence / hollow-gate I-3 / consumer no-op)
-    #   ∪ AC-4 redirect 축 ∪ AC-7 encoding env 축 — 3축 **무조건 순차 실행** (short-circuit 없음:
-    #   동시 위반 시 세 라벨 진단이 모두 stdout 에 잔존해야 함, ADR-081 §결정 D16 8항 / CFP-2884 §8.2B B-3).
+    #   ∪ AC-4 redirect 축 ∪ AC-7 encoding env 축 ∪ E6 output-path dialect 축 — 4축 **무조건 순차 실행**
+    #   (short-circuit 없음: 동시 위반 시 네 라벨 진단이 모두 stdout 에 잔존해야 함,
+    #   ADR-081 §결정 D16 8항 / CFP-2884 §8.2B B-3 / CFP-2929 §3.8 B-10).
     timeout_rc = base.check_liveness_presence(
         paths, DISPATCH_PATTERNS, SCAN_EXTS, HOME_MARKER, ADAPTER_NAME,
         KIND_LABELS, _is_doc_example_line, DIAG_MESSAGES, MESSAGES)
     redirect_rc = scan_stdin_redirect(paths)
     encoding_rc = scan_encoding_env_presence(paths)
-    return max(timeout_rc, redirect_rc, encoding_rc)
+    dialect_rc = scan_output_path_dialect(paths)
+    return max(timeout_rc, redirect_rc, encoding_rc, dialect_rc)
 
 
 # ── self-test (D3 inline fixture, CI step 호출) ────────────────────────────────
-# 3축 라벨 진단 리터럴 (동시위반 fixture B-3 가 stdout 실재를 축별로 assert — CFP-2884 §8.2B B-3).
+# 4축 라벨 진단 리터럴 (동시위반 fixture B-3 가 stdout 실재를 축별로 assert — CFP-2884 §8.2B B-3).
 _AXIS_LABELS = {
     'timeout': '[codex-companion-timeout-presence] FAIL — wall-clock 가드 누락',
     'redirect': '[codex-companion-timeout-presence] FAIL (AC-4 — stdin `- <` redirect 부재)',
     'encoding': '[codex-companion-timeout-presence] FAIL (AC-7 — UTF-8 인코딩 env export 부재)',
+    'dialect': '[codex-companion-timeout-presence] FAIL (E6 — 출력 경로 방언 정규화 부재/불일치)',
 }
 
 
@@ -314,32 +507,58 @@ def _run_scan_capture(paths):
 
 
 def _self_test_scan_axes():
-    """AC-7 encoding env 축 + AC-4 redirect 축 + timeout 축의 **scan 계층** discriminating self-test.
+    """AC-7 encoding env 축 + AC-4 redirect 축 + E6 dialect 축 + timeout 축의 **scan 계층**
+    discriminating self-test.
 
-    text-only `check_lines` 로는 축 2·3 (파일 walk 기반) 을 행사할 수 없어 tempfile fixture 를 쓴다
+    text-only `check_lines` 로는 축 2·3·4 (파일 walk 기반) 을 행사할 수 없어 tempfile fixture 를 쓴다
     (실 `run_scan` 합성 경로를 그대로 통과 — max() 합성·순차 실행 무-short-circuit 도 함께 검증).
     반환 = (failed 리스트, 총 case 수).
     """
     guarded = ('timeout --kill-after=30 300 codex exec '
-               '-s read-only --output-schema s.json -o out.json - < p.md\n')
+               '-s read-only --output-schema s.json -o "$OUT_JSON" - < p.md\n')
     env_block = ('export LC_ALL=C.UTF-8   # 별도 줄 export (inline env-prefix 는 first-token 판정 파괴)\n'
                  'export PYTHONUTF8=1\n')
+    # 정규화 대입 — P-0 실형태 동형 (직접 대입 `_n` → **1-hop 복사** → argv 변수 `OUT_JSON`).
+    norm_block = ('_n="$(cygpath -m "$OUT_JSON" 2>/dev/null)"\n'
+                  'OUT_JSON="$_n"\n')
+    norm_direct = 'OUT_JSON="$(cygpath -m "$OUT_JSON" 2>/dev/null)"\n'   # hop 없는 직접 대입 형
+    norm_commented = ('# _n="$(cygpath -m "$OUT_JSON" 2>/dev/null)"\n'   # 실행되지 않는 문면 (D4)
+                      '# OUT_JSON="$_n"\n')
     # (name, text, expect_rc, must_contain 축 set, must_not_contain 축 set)
     cases = [
-        ('E1 GREEN: env export 2종 별도 줄 + 가드 + redirect (AC-7 축 충족)',
-         env_block + guarded, 0, set(), {'timeout', 'redirect', 'encoding'}),
-        ('E2 RED: encoding env 부재 (AC-7 단독 발화 — 타 2축은 침묵해야 함)',
-         guarded, 1, {'encoding'}, {'timeout', 'redirect'}),
-        ('E3 GREEN: dispatch 발화 0건 파일 → AC-7 축 vacuous (env 부재라도 false-RED 금지)',
+        ('E1 GREEN: env export 2종 별도 줄 + 가드 + redirect + 정규화(1-hop) (4축 전부 충족)',
+         env_block + norm_block + guarded, 0, set(), {'timeout', 'redirect', 'encoding', 'dialect'}),
+        ('E2 RED: encoding env 부재 (AC-7 단독 발화 — 타 3축은 침묵해야 함)',
+         norm_block + guarded, 1, {'encoding'}, {'timeout', 'redirect', 'dialect'}),
+        ('E3 GREEN: dispatch 발화 0건 파일 → 축 2·3·4 vacuous (env·정규화 부재라도 false-RED 금지)',
          '이 파일에는 실행 dispatch 발화가 없다 — prose 서술만 존재.\n',
-         0, set(), {'timeout', 'redirect', 'encoding'}),
+         0, set(), {'timeout', 'redirect', 'encoding', 'dialect'}),
         ('E4 RED: inline env-prefix 는 별도 줄 export 아님 (substring 검사 hollow 구현 검출)',
          '# 아래 첫 발화는 인라인 env-prefix 형태 (금지) — 별도 줄 export 부재\n'
-         'LC_ALL=C.UTF-8 PYTHONUTF8=1 ' + guarded + guarded,
-         1, {'encoding'}, {'timeout', 'redirect'}),
-        ('B3 RED: 3축 동시위반 (timeout 제거 + redirect 제거 + env 부재) → 라벨 3종 전부 stdout 실재',
-         'codex exec -s read-only --output-schema s.json -o out.json\n',
-         1, {'timeout', 'redirect', 'encoding'}, set()),
+         + norm_block + 'LC_ALL=C.UTF-8 PYTHONUTF8=1 ' + guarded + guarded,
+         1, {'encoding'}, {'timeout', 'redirect', 'dialect'}),
+        # ── E6 dialect 축 (CFP-2929 §3.8 B-10) ──
+        ('D1 GREEN: 정규화 직접 대입(hop 0) + `-o "$OUT_JSON"` 동일 식별자 → dialect 축 충족',
+         env_block + norm_direct + guarded, 0, set(),
+         {'timeout', 'redirect', 'encoding', 'dialect'}),
+        ('D2 RED: 정규화 대입 전무 (mutant i — `cygpath` 0) → dialect 단독 발화',
+         env_block + guarded, 1, {'dialect'}, {'timeout', 'redirect', 'encoding'}),
+        ('D3 RED: `-o "$OTHER_VAR"` 식별자 불일치 (mutant ii — 정규화는 있으나 argv 가 그 산출이 아님)',
+         env_block + norm_block
+         + 'timeout --kill-after=30 300 codex exec -s read-only -o "$OTHER_VAR" - < p.md\n',
+         1, {'dialect'}, {'timeout', 'redirect', 'encoding'}),
+        ('D4 RED anti-substring: 정규화 대입이 **주석 안에만** 존재 (문면 hollow 통과 차단)',
+         env_block + norm_commented + guarded,
+         1, {'dialect'}, {'timeout', 'redirect', 'encoding'}),
+        ('D5 GREEN: `-o` 없는 dispatch 발화 → dialect 축 vacuous (출력 경로 argv 부재)',
+         env_block + 'timeout --kill-after=30 300 codex exec -s read-only - < p.md\n',
+         0, set(), {'timeout', 'redirect', 'encoding', 'dialect'}),
+        ('D6 RED: 리터럴 `-o out.json` 이어도 정규화 대입 부재면 (a) 위반 (리터럴 우회 차단)',
+         env_block + 'timeout --kill-after=30 300 codex exec -s read-only -o out.json - < p.md\n',
+         1, {'dialect'}, {'timeout', 'redirect', 'encoding'}),
+        ('B3 RED: 4축 동시위반 (timeout·redirect·env·정규화 전부 부재) → 라벨 4종 전부 stdout 실재',
+         'codex exec -s read-only --output-schema s.json -o "$OUT_JSON"\n',
+         1, {'timeout', 'redirect', 'encoding', 'dialect'}, set()),
     ]
     failed = []
     for name, text, expect_rc, want, unwanted in cases:
@@ -405,7 +624,8 @@ def self_test():
         if got != expect:
             failed.append((name, expect, got))
         print(f'  [{status}] {name} (expect {expect}, got {got})')
-    # ── scan 계층 축 (AC-4 redirect / AC-7 encoding env / 3축 동시위반) — CFP-2884 §8.2B B-3 ──
+    # ── scan 계층 축 (AC-4 redirect / AC-7 encoding env / E6 output-path dialect / 4축 동시위반)
+    #    — CFP-2884 §8.2B B-3 + CFP-2929 §3.8 B-10 ──
     scan_failed, scan_total = _self_test_scan_axes()
     failed.extend((name, 'scan-axis', detail) for name, detail in scan_failed)
     total = len(cases) + scan_total
@@ -415,7 +635,7 @@ def self_test():
             print(f'  - {entry}')
         return 1
     print(f'[self-test] PASS — {total}/{total} case '
-          f'(text 축 {len(cases)} RED→GREEN discriminating + scan 축 {scan_total} 3-axis 라벨 판별)')
+          f'(text 축 {len(cases)} RED→GREEN discriminating + scan 축 {scan_total} 4-axis 라벨 판별)')
     return 0
 
 
@@ -423,17 +643,33 @@ def main(argv):
     args = argv[1:]
     if '--self-test' in args:
         return self_test()
+    if '--list-scope-dirs' in args:
+        # AC-13 차집합 test 의 **사정권 side** (디렉터리 prefix — 파일 목록 아님, B-8).
+        for d in DEFAULT_SCAN_DIRS:
+            print(d)
+        return 0
+    if '--list-dispatch-surfaces' in args:
+        # AC-13 차집합 test 의 **discovery side**. 인자 미지정 = repo root `.` 전수 discovery
+        # (사정권과 **독립** 이어야 M-S 가 kill 된다 — 양변을 같은 목록에서 뽑으면 tautology).
+        rest = [a for a in args if a != '--list-dispatch-surfaces']
+        for a in rest:
+            if not os.path.exists(a):
+                print(f'[codex-companion-timeout-presence] setup error: 경로 미존재: {a}', file=sys.stderr)
+                return 2
+        for f in list_dispatch_surfaces(rest or ['.']):
+            print(f)
+        return 0
     if not args:
         # 인자 0개 = repo root 기준 default 스캔 디렉터리 (thin wrapper 가 repo root 로 cd)
         paths = [d for d in DEFAULT_SCAN_DIRS if os.path.isdir(d)]
         if not paths:
-            # DEFAULT_SCAN_DIRS(=codeforge 소유 Codex 리뷰 dispatch 가 사는 유일 위치) 전부 부재.
+            # DEFAULT_SCAN_DIRS(=codeforge plugin 배포 표면 루트) 부재.
             # 경로 부재 fail-safe (consumer no-op degradation): repo root 전체(`.`) 로 확장하면
             # consumer 에 dispatch 발화 0건 → hollow-gate(I-3) false-RED 유발 →
             # byte-identical template↔.github mirror(ADR-005, CONSUMER_ONLY 미등록) 상속이 깨진다.
             # 따라서 `.` 로 넓히지 않고 honest no-op (exit 0) — hollow-gate 는 "codeforge-owned
             # dispatch 경로가 실존할 때만" 발동 (Story §5 판정 / ADR-081 §결정 D15).
-            print('[codex-companion-timeout-presence] 스캔 대상 경로(plugins/codeforge-review) 부재 — '
+            print('[codex-companion-timeout-presence] 스캔 대상 경로(plugins/) 부재 — '
                   'honest no-op (PASS, consumer degradation). codeforge-owned Codex 리뷰 dispatch 부재.')
             return 0
     else:
