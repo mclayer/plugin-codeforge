@@ -41,7 +41,9 @@ amendment_log:
 
 codeforge PL agent 는 내부 worker(sub-agent) 를 spawn 할 때 다음 정보를 **structured packet** 형태로 전달해야 한다:
 - **story_key**: 계약 identity (freeze, cross-lane trace)
+- **lane**: worker 가 진입하는 lane context (10개 lane enum ∪ `없음` — §3 정합)
 - **role**: worker agent type (roster-derived subagent_type)
+- **snapshot_sha**: 변경 정책 snapshot 기준 40자 hex git commit SHA (이 SHA 시점의 코드 상태를 기준으로 변경 범위·영향 결정 — AC-10 S-1)
 - **scope_globs**: worker가 읽을 파일 범위 (ownership boundary — taint 아님)
 - **output_section**: worker가 쓸 Story section 번호 (소유권 disjoint 보장)
 - **allowed_spawn_roster**: worker가 spawn 가능한 nested subagent roster 제한 (depth-1 leaf 강제)

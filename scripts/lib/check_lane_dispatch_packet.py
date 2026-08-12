@@ -16,7 +16,9 @@ lane_dispatch_packet contract 필수 필드 8개 검증:
 unknown-input(packet 형식 자체 오류): verdict=RED + reason=UNKNOWN_INPUT
 정상: verdict=PASS
 
-exit codes: 0=PASS, 1=RED, 3=INCONCLUSIVE
+exit codes: 0=PASS, 1=RED, 3=INCONCLUSIVE (gate_verdict.py 3-state 값공간 — 이 셋 밖의 값 없음)
+  - `--help` 등 argparse 성공 종료 = 0 (검사 미수행 정상 종료)
+  - argparse 사용법 오류(필수 인자 누락·unknown flag) = [154-AC-4] unknown-input → RED(1)
 """
 
 import argparse
@@ -153,9 +155,11 @@ def main(argv=None):
       python check_lane_dispatch_packet.py --packet <path.yaml>
 
     Exit codes:
-      0 = PASS
-      1 = RED (validation fail)
+      0 = PASS (또는 `--help` 등 argparse 성공 종료 — 검사 미수행 정상 종료)
+      1 = RED (validation fail / argparse 사용법 오류 = unknown-input fail-closed)
       3 = INCONCLUSIVE (empty target)
+
+    ★반환값은 {0, 1, 3} 밖으로 나가지 않는다★ — gate_verdict.py 3-state 값공간.
     """
     parser = argparse.ArgumentParser(
         prog="check_lane_dispatch_packet.py",
@@ -164,10 +168,25 @@ def main(argv=None):
     parser.add_argument("--packet", required=True, help="Path to dispatch packet YAML file.")
     parser.add_argument("--repo-root", default=".", help="Repository root (default: .)")
 
+    cli_args = list(argv[1:]) if argv else []
     try:
-        args = parser.parse_args(argv[1:] if argv else [])
-    except SystemExit:
-        return 2
+        args = parser.parse_args(cli_args)
+    except SystemExit as exc:
+        # argparse 는 `--help` 성공 종료도 SystemExit(0) 으로 raise 한다.
+        # 이를 오류와 싸잡아 2 로 변환하면 게이트 3-state 값공간 {0,1,3} 밖으로 샌다.
+        argparse_code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 2)
+        if argparse_code == 0:
+            # `--help` / 정상 종료 — 검사 미수행, 값공간 안의 0 으로 통과.
+            return 0
+        # 사용법 오류(필수 인자 누락·unknown flag) = 호출자 입력 오류
+        # = [154-AC-4] unknown-input → fail-closed RED(1). 값공간 밖 2 를 반환하지 않는다.
+        result = unknown_input(
+            gate_id=GATE_ID,
+            reason="argparse_usage_error",
+            trace={"argparse_exit_code": argparse_code, "argv_count": len(cli_args)},
+            identity_probe={"argv": cli_args},
+        )
+        return emit(result)
 
     packet_path = args.packet
     repo_root = os.path.abspath(args.repo_root)
