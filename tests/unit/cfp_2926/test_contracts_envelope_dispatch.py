@@ -1,9 +1,14 @@
 """Contract parity + Envelope/DispatchPacket tests.
 
 Change Plan §8 contract SSOT 이행.
-  - envelope: return_envelope_handle 필드 (모든 return 에서 필수)
-  - dispatch_packet: lane_dispatch_packet snapshot_sha 필드 (모든 패킷에서 필수)
-  - AC-10: dispatch packet 구조
+  - NG-5 / AC-10: lane_dispatch_packet snapshot_sha (40자 hex) 강제
+  - NG-13: return_envelope artifact handle (meta.evidence_ref + artifact_path|rerun_command)
+
+★검증면 규율★: 아래 게이트 테스트는 **게이트 스크립트를 subprocess 로 실제 호출**한다.
+자기가 쓴 dict 를 자기가 다시 읽어 필드 presence 를 확인하는 동어반복(tautology)은
+게이트를 통째로 무력화해도 통과하므로 검증면이 될 수 없다 (CFP-2926 hollow-gate 봉합).
+`.github/workflows/cfp-2926-phase2-gates.yml` 의 NG-5·NG-13 스텝이 "실 검증면"으로
+지목하는 대상이 바로 이 파일의 테스트들이다 — 그 지목이 참이어야 한다.
 """
 
 from __future__ import annotations
@@ -13,85 +18,200 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 # gate_verdict.py 3-state 값공간 — 게이트 모듈은 이 밖의 exit code 를 내지 않는다.
 VALID_GATE_EXIT_CODES = {0, 1, 3}
 
+# check_lane_dispatch_packet._is_valid_sha 계약 = 40자 소문자 hex.
+VALID_SNAPSHOT_SHA = "3f6a1c9e0b7d248a5f13e6c802b94d7a1e5c0f83"
 
-def test_return_envelope_requires_handle(tmp_path):
-    """contract: return envelope 모든 행이 handle 필드 보유.
+# 필드 자체를 패킷에서 제거하기 위한 sentinel (None 은 "필드 존재 + null" 과 구별되어야 한다).
+_OMIT = object()
 
-    return_envelope_handle 스키마 요구: handle (UUID 또는 식별자).
 
-    [Mutant: handle 부재 허용 → RED]
-    [Discriminating: 모든 return 이 추적 가능해야 함]
+def _run_gate(capture_output, repo_root, script_name, *args):
+    """게이트 스크립트를 subprocess 로 실행 → (returncode, verdict JSON dict).
+
+    stdout 마지막 비어있지 않은 줄 = gate_verdict 단일 라인 JSON.
     """
-    return_ledger = tmp_path / "return-envelope.jsonl"
+    script = repo_root / "scripts" / "lib" / script_name
+    assert script.is_file(), f"gate module not found: {script}"
 
-    # 정상: handle 포함
-    rows = [
-        {"handle": "ret-001", "status": "success", "agent_type": "DeveloperAgent"},
-        {"handle": "ret-002", "status": "failure", "agent_type": "QADeveloperAgent"},
-    ]
-
-    return_ledger.write_text(
-        "\n".join(json.dumps(row) for row in rows),
-        encoding="utf-8",
+    proc = capture_output([sys.executable, str(script), *args])
+    assert proc.returncode in VALID_GATE_EXIT_CODES, (
+        f"{script_name} exit code {proc.returncode} ∉ {sorted(VALID_GATE_EXIT_CODES)} "
+        f"(args={args}) — gate 3-state 값공간 위반\nstderr: {proc.stderr[-500:]}"
     )
 
-    # 검증
-    lines = return_ledger.read_text(encoding="utf-8").splitlines()
-    for line in lines:
-        if line.strip():
-            row = json.loads(line)
-            assert "handle" in row, f"return envelope must have 'handle' field, got {row.keys()}"
-            assert row["handle"], "handle must not be empty"
+    lines = [ln for ln in proc.stdout.splitlines() if ln.strip()]
+    assert lines, (
+        f"{script_name} 가 verdict JSON 을 emit 하지 않았다 (rc={proc.returncode})"
+        f"\nstderr: {proc.stderr[-500:]}"
+    )
+    return proc.returncode, json.loads(lines[-1])
 
 
-def test_dispatch_packet_requires_snapshot_sha(tmp_path):
-    """AC-10 contract: dispatch packet 모든 행이 snapshot_sha 필드 보유.
+def _write_yaml(path, payload):
+    path.write_text(yaml.safe_dump(payload, allow_unicode=True), encoding="utf-8")
+    return str(path)
 
-    lane_dispatch_packet schema: snapshot_sha (git SHA, immutable).
 
-    [Mutant: snapshot_sha 제거 → ESCALATE_PACKET_INCOMPLETE]
-    [Discriminating: 패킷의 git 형상 추적이 필수]
+def _dispatch_packet(**overrides):
+    """lane-dispatch-packet-v1 §2 필수 8 필드 유효 패킷 (override 로 결함 주입)."""
+    packet = {
+        "contract_version": "lane-dispatch-packet-v1",
+        "lane": "구현",
+        "role": "DeveloperAgent",
+        "story_key": "CFP-2926",
+        "snapshot_sha": VALID_SNAPSHOT_SHA,
+        "scope_globs": ["scripts/lib/**"],
+        "output_section": "§8.1",
+        "allowed_spawn_roster": [],
+    }
+    packet.update(overrides)
+    return {k: v for k, v in packet.items() if v is not _OMIT}
+
+
+def _return_envelope(**meta_overrides):
+    """return-envelope-v1 유효 envelope (meta override 로 결함 주입)."""
+    meta = {
+        "evidence_ref": ["scripts/lib/check_return_envelope_handle.py:40"],
+        "artifact_path": "docs/stories/CFP-2926.md",
+        "rerun_command": "python -m pytest tests/unit/cfp_2926/ -q",
+    }
+    meta.update(meta_overrides)
+    return {"meta": {k: v for k, v in meta.items() if v is not _OMIT}}
+
+
+def test_return_envelope_requires_handle(tmp_path, repo_root, capture_output):
+    """NG-13: 게이트가 return_envelope artifact handle 을 실제로 강제한다.
+
+    ★check_return_envelope_handle.py 를 subprocess 로 호출한다★ — 이전 판본은 자기가 쓴
+    `{"handle": "ret-001"}` 을 자기가 다시 읽어 `assert "handle" in row` 하는 동어반복이었고,
+    게다가 검사하던 필드명 `handle` 은 스크립트가 실제로 보는 필드
+    (`meta.evidence_ref` / `meta.artifact_path` / `meta.rerun_command`)와 아예 달랐다.
+    그래서 `_check_handle` 을 통째로 무력화해도 통과했다 (CFP-2926 hollow-gate 봉합).
+
+    [Mutant: `_check_handle` 을 무조건 valid 로 무력화 → 이 테스트 RED]
+    [Discriminating: 양성 대조(PASS) + evidence_ref 공백(RED) + artifact handle 2종 부재(RED)]
     """
-    packet_ledger = tmp_path / "dispatch-packets.jsonl"
+    # ⓐ 양성 대조 — 유효 envelope 는 PASS(0). (게이트가 항상 RED 여서 통과하는 상황 배제)
+    ok_path = _write_yaml(tmp_path / "envelope-ok.yaml", _return_envelope())
+    rc, payload = _run_gate(
+        capture_output, repo_root, "check_return_envelope_handle.py", "--envelope", ok_path
+    )
+    assert rc == 0 and payload["verdict"] == "PASS", (
+        f"유효 envelope 가 PASS 가 아니다: rc={rc} payload={payload}"
+    )
+    assert payload["gate_id"] == "NG-13", f"gate_id mismatch: {payload}"
 
-    # 정상 packet
-    packets = [
-        {
-            "lane": "구현",
-            "snapshot_sha": "abc123def456",
-            "story_key": "CFP-2926",
-            "allowed_spawn_roster": [],
-        },
-        {
-            "lane": "테스트",
-            "snapshot_sha": "xyz789uvw012",
-            "story_key": "CFP-2926",
-            "allowed_spawn_roster": ["QADeveloperAgent"],
-        },
-    ]
-
-    packet_ledger.write_text(
-        "\n".join(json.dumps(p) for p in packets),
-        encoding="utf-8",
+    # ⓑ meta.evidence_ref 가 비어 있으면 RED(1) — reason=evidence_ref_empty
+    empty_ref_path = _write_yaml(
+        tmp_path / "envelope-no-evidence.yaml", _return_envelope(evidence_ref=[])
+    )
+    rc, payload = _run_gate(
+        capture_output, repo_root, "check_return_envelope_handle.py", "--envelope", empty_ref_path
+    )
+    assert rc == 1 and payload["verdict"] == "RED", (
+        f"evidence_ref 공백이 RED 가 아니다 (검사 무력화 의심): rc={rc} payload={payload}"
+    )
+    assert payload["reason"] == "evidence_ref_empty", (
+        f"reason 이 evidence_ref 축이 아니다 (다른 사유로 우연히 RED): {payload}"
     )
 
-    # 검증
-    lines = packet_ledger.read_text(encoding="utf-8").splitlines()
-    for line in lines:
-        if line.strip():
-            row = json.loads(line)
-            assert "snapshot_sha" in row, (
-                f"dispatch_packet must have 'snapshot_sha' field, got {row.keys()}"
-            )
-            assert row["snapshot_sha"], "snapshot_sha must not be empty"
-            # sha 형식 검증 (16진수)
-            assert len(row["snapshot_sha"]) >= 6, (
-                f"snapshot_sha should be git SHA (len≥6), got {row['snapshot_sha']}"
-            )
+    # ⓒ artifact handle 2종(artifact_path·rerun_command) 전부 부재면 RED(1)
+    no_handle_path = _write_yaml(
+        tmp_path / "envelope-no-handle.yaml",
+        _return_envelope(artifact_path=_OMIT, rerun_command=_OMIT),
+    )
+    rc, payload = _run_gate(
+        capture_output, repo_root, "check_return_envelope_handle.py", "--envelope", no_handle_path
+    )
+    assert rc == 1 and payload["verdict"] == "RED", (
+        f"artifact handle 전무가 RED 가 아니다 (검사 무력화 의심): rc={rc} payload={payload}"
+    )
+    assert payload["reason"] == "artifact_handle_missing", (
+        f"reason 이 artifact handle 축이 아니다: {payload}"
+    )
+
+    # ⓓ 2종 중 하나만 있어도 계약 충족 (§17 "둘 중 최소 1개") — 과잉 RED 방지 대조
+    for kept, dropped in (("artifact_path", "rerun_command"), ("rerun_command", "artifact_path")):
+        one_path = _write_yaml(
+            tmp_path / f"envelope-only-{kept}.yaml",
+            _return_envelope(**{dropped: _OMIT}),
+        )
+        rc, payload = _run_gate(
+            capture_output, repo_root, "check_return_envelope_handle.py", "--envelope", one_path
+        )
+        assert rc == 0 and payload["verdict"] == "PASS", (
+            f"{kept} 단독 envelope 가 PASS 가 아니다: rc={rc} payload={payload}"
+        )
+
+
+def test_dispatch_packet_requires_snapshot_sha(tmp_path, repo_root, capture_output):
+    """AC-10 / NG-5: 게이트가 snapshot_sha 를 실제로 강제한다.
+
+    ★check_lane_dispatch_packet.py 를 subprocess 로 호출한다★ — 이전 판본은 자기가 쓴
+    dict 를 tmp JSONL 로 썼다가 다시 읽어 `assert "snapshot_sha" in row` 하는 동어반복이라
+    게이트에서 snapshot_sha 요구·검증을 전부 제거해도 통과했다 (CFP-2926 hollow-gate 봉합).
+    부수적으로 그 fixture 의 sha 기준은 `len>=6` 이고 값(`xyz789uvw012`)은 hex 도 아니어서
+    게이트의 40자 hex 계약과 상충했다 — 이제 fixture 도 40자 hex 실값을 쓴다.
+
+    [Mutant: REQUIRED_FIELDS 의 snapshot_sha 제거 + _is_valid_sha 검사 삭제 → 이 테스트 RED]
+    [Discriminating: 양성 대조(PASS) + 필드 누락(RED) + 형식 위반 3종(RED)]
+    """
+    # ⓐ 양성 대조 — 유효 패킷은 PASS(0). (게이트가 항상 RED 여서 통과하는 상황 배제)
+    ok_path = _write_yaml(
+        tmp_path / "packet-ok.yaml", {"lane_dispatch_packet": _dispatch_packet()}
+    )
+    rc, payload = _run_gate(
+        capture_output, repo_root, "check_lane_dispatch_packet.py", "--packet", ok_path
+    )
+    assert rc == 0 and payload["verdict"] == "PASS", (
+        f"유효 패킷이 PASS 가 아니다: rc={rc} payload={payload}"
+    )
+    assert payload["gate_id"] == "NG-5", f"gate_id mismatch: {payload}"
+
+    # ⓑ snapshot_sha 필드 누락 → RED(1) + ESCALATE_PACKET_INCOMPLETE
+    missing_path = _write_yaml(
+        tmp_path / "packet-missing-sha.yaml",
+        {"lane_dispatch_packet": _dispatch_packet(snapshot_sha=_OMIT)},
+    )
+    rc, payload = _run_gate(
+        capture_output, repo_root, "check_lane_dispatch_packet.py", "--packet", missing_path
+    )
+    assert rc == 1 and payload["verdict"] == "RED", (
+        f"snapshot_sha 누락이 RED 가 아니다 (요구 자체가 소실): rc={rc} payload={payload}"
+    )
+    assert payload["reason"] == "ESCALATE_PACKET_INCOMPLETE", (
+        f"reason 이 필수필드 누락 축이 아니다: {payload}"
+    )
+    assert "snapshot_sha" in payload["identity_probe"].get("missing_fields", []), (
+        f"missing_fields 가 snapshot_sha 를 지목하지 않았다: {payload}"
+    )
+
+    # ⓒ 40자 hex 계약 위반 3종 → 전부 RED(1) + reason 이 snapshot_sha 축을 지목
+    bad_shas = {
+        "짧은 비-hex 12자 (구 fixture 값)": "xyz789uvw012",
+        "39자 hex (1자 부족)": VALID_SNAPSHOT_SHA[:-1],
+        "40자지만 비-hex": "z" * 40,
+    }
+    for label, bad in bad_shas.items():
+        bad_path = _write_yaml(
+            tmp_path / f"packet-bad-{len(bad)}-{bad[:3]}.yaml",
+            {"lane_dispatch_packet": _dispatch_packet(snapshot_sha=bad)},
+        )
+        rc, payload = _run_gate(
+            capture_output, repo_root, "check_lane_dispatch_packet.py", "--packet", bad_path
+        )
+        assert rc == 1 and payload["verdict"] == "RED", (
+            f"[{label}] snapshot_sha={bad!r} 가 RED 가 아니다 (형식 검증 소실): "
+            f"rc={rc} payload={payload}"
+        )
+        assert "snapshot_sha" in payload["reason"], (
+            f"[{label}] reason 이 snapshot_sha 축이 아니다 (다른 사유로 우연히 RED): {payload}"
+        )
 
 
 def test_dispatch_packet_gate_exit_code_domain(repo_root, capture_output):

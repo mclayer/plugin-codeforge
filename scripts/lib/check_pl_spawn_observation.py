@@ -42,6 +42,7 @@ import hashlib
 import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -286,6 +287,55 @@ def _self_test():
     check(res_lb["l_b_found"] and res_lb["l_b_supported"] is True,
           f"[L-B] L-B {res_lb['l_b_found']} != True | supported {res_lb['l_b_supported']}")
 
+    # ────────────────────── L-B 단독 (L-C 부재) → PASS 금지 ──────────────────────
+    # ★판정식 `L-A ∨ (L-B ∧ L-C)` 의 `∧ L-C` 항이 검사 정의역에 들어오는 지점★
+    # leg presence(l_b_found) 만 단언하고 verdict 를 보지 않으면 판정 분기를
+    # `elif l_b_found and l_c_found:` → `elif l_b_found:` 로 약화해도 self-test 가
+    # 죽지 않는다 (CFP-2926 hollow-gate 봉합 — 선언 판정식과 검사 정의역의 어긋남).
+    check(res_lb["l_c_found"] is False,
+          f"[L-B 단독] l_c_found {res_lb['l_c_found']} != False (fixture 무효)")
+    check(res_lb["verdict"] != "PASS",
+          f"[L-B 단독] L-C 없이 verdict == PASS ({res_lb['verdict']}) — `∧ L-C` 항 소실")
+
+    # ────────────────────── L-C 양성 fixture + L-B ∧ L-C 결합 ──────────────────────
+    # doc_queue_root·story_key 인자를 실제로 주는 유일한 경로 — 이 fixture 가 없으면
+    # l_c_found 는 어떤 케이스에서도 True 가 된 적이 없다 (L-C leg 커버리지 0).
+    with tempfile.TemporaryDirectory() as tmp_root:
+        dq_root = Path(tmp_root) / "doc-queue"
+        dq_story = "CFP-2926"
+        dq_dir = dq_root / dq_story
+        dq_dir.mkdir(parents=True)
+        # worker 별 disjoint 제출 2건 + 서로 다른 mtime (동일 mtime 이면 L-C 미성립)
+        for idx, fname in enumerate(("worker-a.md", "worker-b.md")):
+            fpath = dq_dir / fname
+            fpath.write_text("submission-%d\n" % idx, encoding="utf-8")
+            stamp = 1700000000 + idx * 60
+            os.utime(fpath, (stamp, stamp))
+
+        # L-C 단독 (L-A·L-B 부재) → PASS 금지
+        res_lc_only = check_pl_spawn_observation([], [], pl_agent_id, dq_root, dq_story)
+        check(res_lc_only["l_c_found"] is True,
+              "[L-C] doc-queue disjoint 제출 2건 미검출 (fixture 무효 — L-C leg 미커버)")
+        check(res_lc_only["verdict"] != "PASS",
+              f"[L-C 단독] L-B 없이 verdict == PASS ({res_lc_only['verdict']}) — `L-B ∧` 항 소실")
+
+        # L-B ∧ L-C 결합 → PASS (결합 leg 양성 커버리지)
+        res_lb_lc = check_pl_spawn_observation(
+            [], spawnevent_with_lineage, pl_agent_id, dq_root, dq_story
+        )
+        check(res_lb_lc["l_b_found"] and res_lb_lc["l_c_found"],
+              f"[L-B∧L-C] leg {res_lb_lc['l_b_found']}/{res_lb_lc['l_c_found']} != True/True")
+        check(res_lb_lc["verdict"] == "PASS",
+              f"[L-B∧L-C] verdict {res_lb_lc['verdict']} != PASS (결합 leg 소실)")
+
+        # L-C 음성: 제출 1건뿐 → ≥2 문턱 미달
+        solo_dir = dq_root / "CFP-0001"
+        solo_dir.mkdir(parents=True)
+        (solo_dir / "worker-a.md").write_text("solo\n", encoding="utf-8")
+        res_lc_neg = check_pl_spawn_observation([], [], pl_agent_id, dq_root, "CFP-0001")
+        check(res_lc_neg["l_c_found"] is False,
+              "[L-C 음성] 제출 1건인데 l_c_found True (≥2 문턱 소실)")
+
     # ────────────────────── L-B 미지원 (필드 부재) ──────────────────────
     spawnevent_no_lineage = [
         json.dumps({
@@ -310,7 +360,9 @@ def _self_test():
 
     print(
         "[check_pl_spawn_observation --self-test] PASS "
-        "(L-A=양성 OK; L-A=음성 OK; L-B=감지 OK; L-B=미지원 OK; 정상=PASS OK)"
+        "(L-A=양성 OK; L-A=음성 OK; L-B=감지 OK; L-B 단독=PASS 아님 OK; "
+        "L-C=양성 OK; L-C 단독=PASS 아님 OK; L-C=음성 OK; L-B∧L-C=PASS OK; "
+        "L-B=미지원 OK; 정상=PASS OK)"
     )
     return 0
 

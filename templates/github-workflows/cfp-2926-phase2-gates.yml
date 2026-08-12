@@ -39,6 +39,14 @@ name: CFP-2926 Phase 2 — Integrity Gates (NG-1~NG-21)
 #         (모듈 docstring §"Story 파일 접근 한계"). 따라서 본 workflow 가 cross-repo materialize
 #         책임을 진다. 미배선(=--story 미전달) 상태에서는 게이트가 영구 INCONCLUSIVE(exit 3)로
 #         정직 선언만 하고 bijection 을 ★검증하지 않는다★ — 그 구멍을 아래 gate-x16-bijection job 이 닫는다.
+#
+# 명명 테스트 job (phase2-unit-tests):
+#   ★여러 게이트의 실 검출력은 게이트 스크립트가 아니라 tests/unit/cfp_2926/ 명명 테스트에 있다★.
+#   예) NG-5·NG-13 은 caller-supplied predicate 라 CI 상시 호출 대상이 아니고(스텝은 exit 3),
+#       NG-12·NG-17 은 게이트 자신이 못 잡는 mutant 를 명명 테스트가 잡는다.
+#   그런데 이 디렉터리는 어느 workflow 에서도 실행되지 않았다 (lint.yml 의 hook-unit-tests 는
+#   `hooks/tests overlay/hooks/tests` 만 돈다 — tests/unit/ 미포함) ⇒ 회귀가 나도 붉어지지 않았다.
+#   그 구멍을 아래 phase2-unit-tests job 이 닫는다 (설치 패턴 선례 = lint.yml hook-unit-tests).
 
 on:
   push:
@@ -135,9 +143,15 @@ jobs:
         run: |
           set -u
           # NG-5 = AC-10 dispatch packet checker: caller-supplied predicate (identity_bearing: false)
-          # CI 상시 호출 대상 아님 — --packet 인자를 받아 snapshot_sha 유효성 검증
+          # CI 상시 호출 대상 아님 — 검사 대상 패킷을 --packet 으로 호출자가 줘야 하는데
+          # CI 에는 고정 대상 패킷이 없다. 따라서 이 스텝은 rc=3 INCONCLUSIVE 로 정직 선언한다.
+          #
           # 실 검증면 = tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_dispatch_packet_requires_snapshot_sha
-          # 따라서 CI 에서는 skip (rc=3 INCONCLUSIVE 명시)
+          #   ★그 테스트는 check_lane_dispatch_packet.py 를 subprocess 로 실제 호출한다★ —
+          #   양성 대조(유효 패킷=PASS) + snapshot_sha 누락(RED) + 40자 hex 위반 3종(RED).
+          #   이전 판본은 자기가 쓴 dict 를 자기가 다시 읽는 동어반복이어서 게이트에서
+          #   snapshot_sha 요구·검증을 전부 제거해도 통과했다 — 즉 이 지목이 거짓이었다 (CFP-2926 봉합).
+          #   ⇒ 그 테스트는 아래 phase2-unit-tests job 이 CI 에서 실제로 실행한다.
           exit 3
 
       - name: NG-6 | AC-14 write overlap
@@ -249,9 +263,17 @@ jobs:
         run: |
           set -u
           # NG-13 = return-envelope handle checker: caller-supplied predicate (identity_bearing: false)
-          # CI 상시 호출 대상 아님 — --envelope 인자를 받아 artifact handle 유효성 검증
+          # CI 상시 호출 대상 아님 — 검사 대상 envelope 를 --envelope 로 호출자가 줘야 하는데
+          # CI 에는 고정 대상 envelope 가 없다. 따라서 이 스텝은 rc=3 INCONCLUSIVE 로 정직 선언한다.
+          #
           # 실 검증면 = tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_return_envelope_requires_handle
-          # 따라서 CI 에서는 skip (rc=3 INCONCLUSIVE 명시)
+          #   ★그 테스트는 check_return_envelope_handle.py 를 subprocess 로 실제 호출한다★ —
+          #   양성 대조(PASS) + meta.evidence_ref 공백(RED evidence_ref_empty)
+          #   + artifact handle 2종(artifact_path·rerun_command) 전무(RED artifact_handle_missing).
+          #   이전 판본은 자기가 쓴 `{"handle": ...}` 을 자기가 다시 읽는 동어반복인 데다
+          #   검사하던 필드명(`handle`)이 스크립트가 실제로 보는 필드와 아예 달라서,
+          #   _check_handle 을 통째로 무력화해도 통과했다 — 즉 이 지목이 거짓이었다 (CFP-2926 봉합).
+          #   ⇒ 그 테스트는 아래 phase2-unit-tests job 이 CI 에서 실제로 실행한다.
           exit 3
 
       - name: NG-14 | AC-3 stop-event prose (false guarantee)
@@ -329,20 +351,54 @@ jobs:
             *) echo "::error::NG-17 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
           esac
 
-      - name: NG-18 | CI run completeness (expected vs actual)
+      - name: NG-18 | CI run completeness (expected vs actual) — INCONCLUSIVE 고정
         id: ng18
         env:
           GH_TOKEN: ${{ github.token }}
+          # PR 은 merge commit 이 아니라 head SHA 에 run 이 달린다.
+          NG18_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -u
+          # ────────── ① 배선 정정 (born-broken 해소) ──────────
+          # 이전 판본은 `--gh-token`·`--run-id` 를 넘겼는데 check_ci_run_completeness.py 의
+          # argparse 가 아는 인자는 `--repo-root` / `--commit` / `--expected` / `--actual` 4개뿐이다.
+          # ⇒ argparse 오류 → 스크립트가 exit 2 → 아래 case 의 `*)` 분기 → "undefined exit code 2"
+          #   후 exit 1. 즉 검사 로직에 ★도달조차 못 하고 항상 죽었다★ (born-broken).
+          #   이제 스크립트가 실제로 지원하는 인자만 넘긴다. (GH_TOKEN 은 스크립트가 내부에서
+          #   호출하는 `gh run list` 의 인증용이라 env 로 유지한다.)
+          #
+          # ────────── ② 정직 선언: 배선을 고쳐도 비교 의미가 부당하다 ──────────
+          #   ⓐ expected = `.github/workflows/*.yml` ★파일 개수★ 인데
+          #      actual   = 그 커밋이 실제 트리거한 ★run 수★ — 서로 다른 양을 비교한다
+          #      (모든 workflow 가 모든 커밋에 트리거되지는 않는다).
+          #   ⓑ check_ci_run_completeness.py 의 `gh run list --json name` 에 `--limit` 이 없어
+          #      기본 20 에 절단된다 (실측: 미지정 20 vs `--limit 100` 82).
+          #      ⇒ actual 은 구조적으로 20 을 넘지 못한다.
+          #   ⇒ 이 상태에서 나오는 RED 는 큐 drop 증거가 아니라 입력 정의 오류의 산물이다.
+          #     거짓 RED 로 PASS/FAIL 을 참칭하지 않고 exit 3(INCONCLUSIVE)로 고정 선언한다.
+          #     ★exit 0 으로 눕히지 않는다★ — INCONCLUSIVE ≠ GREEN (검사연극 금지).
+          #   ⇒ ★산술 코어 자체는 살아 있다★ (실측: `--expected 5 --actual 5` → exit 0
+          #     `ci_run_count_complete` / `--expected 5 --actual 2` → exit 1 `ci_run_count_mismatch`).
+          #     고쳐야 할 것은 코어가 아니라 ★입력 정의★다 (expected·actual 의 양 자체) —
+          #     그 정정은 본 스텝 소관 밖(스크립트 변경 필요)이라 후속 과제로 남긴다.
           python3 scripts/lib/check_ci_run_completeness.py \
             --repo-root . \
-            --gh-token "$GH_TOKEN" \
-            --run-id "${{ github.run_id }}" || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-18 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
-          esac
+            --commit "$NG18_COMMIT" > /tmp/ng18.json 2> /tmp/ng18.err || rc=$?
+          echo "NG-18 diagnostic rc=${rc:-0} (아래 verdict 는 ★진단용★ — 스텝 판정에 쓰지 않는다)"
+          cat /tmp/ng18.json
+          cat /tmp/ng18.err
+          {
+            echo "### NG-18 — INCONCLUSIVE (고정 선언)"
+            echo ""
+            echo "배선은 정정됐다(argparse 미지원 인자 제거 → 검사 로직 도달). 그러나 비교 의미가 아직 부당하다:"
+            echo ""
+            echo "- ⓐ \`expected\` = workflow **파일 개수**, \`actual\` = 커밋이 트리거한 **run 수** — 서로 다른 양."
+            echo "- ⓑ \`gh run list --json name\` 에 \`--limit\` 부재 → 기본 20 절단 ⇒ \`actual\` 은 20 을 못 넘는다."
+            echo ""
+            echo "⇒ 따라서 이 스텝의 verdict 는 **PASS 도 FAIL 도 주장하지 않는다**(exit 3). 위 rc/JSON 은 진단용."
+            echo "산술 코어는 판별력이 있다(5/5→PASS, 5/2→RED) — 결함은 **입력 정의**에 있다."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 3
 
       - name: NG-19 | AC-7 story diff ADR-064 untouched
         id: ng19
@@ -550,11 +606,45 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
+  phase2-unit-tests:
+    name: CFP-2926 named tests (pytest tests/unit/cfp_2926)
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    # ★continue-on-error 를 두지 않는다 (자매 gates job 과 의도적으로 다름)★
+    #   자매 job 들이 warning-tier 인 이유는 게이트가 INCONCLUSIVE(exit 3) 라는 ★정당한★
+    #   non-GREEN 을 내기 때문이다. pytest 에는 그 3-state 가 없다(pass/fail 이분) —
+    #   여기서의 red 는 해석 여지 없는 실제 회귀다. 본 workflow 자체가 required 8-tuple
+    #   미등재(ADR-171 warning-tier)라 red 여도 merge 를 차단하지 않는다.
+    #   목적은 차단이 아니라 ★가시화★ — 지금까지는 회귀가 나도 아무 것도 붉어지지 않았다.
+    # timeout: 이 디렉터리는 게이트 스크립트를 subprocess 로 다수 호출해 느리다
+    #   (형제 워커 측정: 일부 23 test 에 239초). 무한 대기는 막되 넉넉히 준다.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 설치 패턴 선례 = .github/workflows/lint.yml 의 hook-unit-tests job (동일 setup-python
+      # 버전·동일 `pip install -r requirements.txt`). 자매 gates job 의 인라인
+      # `pip install --quiet pyyaml ...` 과 다른 이유 = 테스트는 requirements.txt 가 SSOT.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      # exit code 를 삼키지 않는다 — `|| true` · `| tee` 금지 (실패는 실패로 남는다).
+      - name: Run CFP-2926 named tests
+        run: pytest tests/unit/cfp_2926 -q
+
   gates-summary:
     name: Gates Verdict Summary
     runs-on: ubuntu-latest
     if: github.repository == 'mclayer/plugin-codeforge' && always()
-    needs: [gates-ng1-ng9, gates-ng10-ng15, gates-ng16-ng21, gate-x16-bijection]
+    needs: [gates-ng1-ng9, gates-ng10-ng15, gates-ng16-ng21, gate-x16-bijection, phase2-unit-tests]
     steps:
       - name: Evaluate verdict
         env:
@@ -568,6 +658,8 @@ jobs:
           echo "- **NG-1~NG-9**: ${{ needs.gates-ng1-ng9.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **NG-10~NG-15**: ${{ needs.gates-ng10-ng15.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **NG-16~NG-21**: ${{ needs.gates-ng16-ng21.result }}" >> $GITHUB_STEP_SUMMARY
+          # 명명 테스트 job 은 warning-tier 가 아니다 (continue-on-error 없음) — result 를 그대로 읽어도 된다.
+          echo "- **명명 테스트 (pytest tests/unit/cfp_2926)**: ${{ needs.phase2-unit-tests.result }} — 여러 NG 게이트의 ★실 검출력★이 여기에 있다" >> $GITHUB_STEP_SUMMARY
           x16v="${X16_VERDICT:-}"
           if [ -z "$x16v" ]; then
             # 게이트 step 미도달(materialize 실패/job 중단) — 공백을 GREEN 으로 읽지 않는다.

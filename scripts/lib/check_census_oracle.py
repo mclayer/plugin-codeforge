@@ -11,9 +11,12 @@
 #     * X 소스 근거: repo-relative 스크립트 경로는 redaction 되지 않음 (dev-process-event-v1)
 #     * ⇒ 모델이 쓰지 않는 소스
 #   - 키 = (lane, check_class, target) — 3 성분 전건 보존
-#   - 2-leg 술어:
+#   - 술어 (선언 2-leg / 실효 1-leg):
 #     * L1 정합: D(after) ⊆ X(after) → M1 declared-but-not-executed 죽이기
-#     * L2 보존: X(before) ⊆ X(after) → M2 unit 삭제 죽이기
+#     * L2 보존: X(before) ⊆ X(after) — ★현 구현은 상수 fallback (l2_pass = True)★.
+#       before/after 시간축 입력이 없어 진실값 계산 불가 (:103-105 자인).
+#       ⇒ L2 는 M2(unit 통째 삭제)를 죽이지 못한다 — D={A}, X={A} 도 PASS.
+#       M2 는 선언 D 에 흔적이 남을 때만 L1 이 부수적으로 잡는다 (D·X 동시 삭제 = 미검출).
 #   - 5 mutant 축 귀속 (docstring 에 표 명시)
 #   - oracle self-test 5항 (ⓐ 항등성 / ⓑ-lane / ⓑ-check_class / ⓑ-target / ⓒ 빈입력)
 #   - empty-target: D·X 공집합 → INCONCLUSIVE (ⓒ)
