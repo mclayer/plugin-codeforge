@@ -7,8 +7,12 @@
 # tier 문서화 (본 파일 = 자기주제 정직성 명시):
 #   - vague-pause 정지 CLASS = tier: [advisory]  (명명·예방까지 — plain-text turn-end·tool-mediation 부재로
 #       runtime hard-deny 불가, ADR-144 §결정 1/2 축 A2 payload=0). NEVER block: 본 lint 은 관측/검사만.
-#   - 본 lint 기제 = [물리강제] doc-integrity  (ADR-025 문서에 taxonomy 등재가 존재하는지 검사하는
-#       정적 integrity lint 이지 behavior 강제가 아니다 — ADR-144 §결정 7 유일 [물리강제] = 문서 integrity).
+#   - 본 lint 기제 = tier: [정적]  (관측 tier — merge 무차단. CFP-2944 §7.9 U-1 정정: 종전 자기 선언이
+#       실 실행 채널 tier 와 불일치했다). 근거(firsthand): 유일 실행 채널
+#       `.github/workflows/orchestrator-autonomy-stop-taxonomy-check.yml` 이 job-level 및 step-level
+#       `continue-on-error: true` 이고 CLAUDE.md branch protection required contexts 8-tuple 에 미등재 →
+#       본 lint 의 RED 는 관측될 뿐 merge 를 막지 못한다. 승격 경로 = ADR-060 evidence-gate.
+#       (ADR-025 문서에 taxonomy 등재가 존재하는지 보는 정적 integrity lint 이지 behavior 강제가 아니다.)
 #
 # 목적:
 #   ADR-025 Phase 1 이 landed 시킨 vague-pause taxonomy 2 등재의 회귀(삭제/드리프트) 방어:
@@ -51,6 +55,15 @@ ADR025_BASENAME = "ADR-025-stop-discipline-non-whitelist-as-defect.md"
 HOME_MARKER = os.path.join("archive", "adr", ADR025_BASENAME)
 
 # 필수 taxonomy 리터럴 (anchored substring — ReDoS-safe)
+#
+# ★ 판정 축 정직 declare (CFP-2944 / ADR-025 §A4-6-4) — 본 lint 의 판정 축은 아래 3 리터럴 presence 이지
+#   **form 집합 동기화가 아니다**. 유일 named 예시를 전삭제해도 exit 0 으로 생존함이 firsthand mutation
+#   으로 확인됐다. 따라서 아래 self-test 의 GREEN(fence·form 행을 담은 fixture 포함)을 form-set
+#   acceptance 근거로 재사용하면 **동어반복**이다 — form 집합 판정 소관 =
+#   scripts/lib/check_form_set_parity.py (ADR-025 §결정 7 fence 파싱 기반, 리터럴 하드코딩 0).
+# ★ 확장 금지: 본 리스트에 form id 리터럴(over-halt · status-report-then-halt 류)을 **추가하지 않는다** —
+#   Story CFP-2944 §7.12.3 "채택 금지 2종" ①(리터럴 추가는 M-A1/M-M1 mutant 를 못 죽여 같은 병 재생산).
+#   본 3-리터럴 방식은 vague-pause taxonomy **회귀 방어** 목적으로만 보존한다.
 REQUIRED_TOKENS = [
     "vague-pause",                    # §결정 7 illegal 표 vague-pause 행
     "decision-null",                  # discriminant 문구 (decision-null pause)
@@ -101,11 +114,46 @@ def self_test():
         # §결정 10 subclass 소실 (vague-pause 행은 존치)
         '| "한 숨 쉬어가자" 류 (vague-pause — Amendment 3) | decision-null pause (verbalized) | `[advisory]` |\n'
     )
+    # ── fence 등재 form 축 fixture (CFP-2944 확장 — 기존 4 case 보존 위) ──
+    # ADR-025 Amendment 4 착지 후의 실 표면 shape(§결정 7 표 form 행 + form-set fence)을 fixture 로
+    # 재현한다. 요지 = **form 행·fence 가 아무리 풍부해도 본 lint 의 판정 축은 3 리터럴** 이라는 점을
+    # RED case 로 실증하는 것 (위 REQUIRED_TOKENS 정직 declare 의 실행 가능한 증거).
+    green_form_set = (
+        '| "한 숨 쉬어가자" 류 (vague-pause — Amendment 3) | decision-null pause (verbalized form) | `[advisory]` |\n'
+        "| 무발화 정지 (over-halt — Amendment 4) | 잔여작업 有 ∧ 결정 payload = 0 ∧ volitional | `[advisory]` |\n"
+        "| 보고 후 정지 (status-report-then-halt — Amendment 4) | 잔여작업 有 ∧ 결정 payload = 0 ∧ volitional | `[advisory]` |\n"
+        "```\n"
+        "over-halt | A2 | 무발화 정지\n"
+        "vague-pause | A2 | \"한 숨 쉬어가자\" 류\n"
+        "status-report-then-halt | A2 | 보고 후 정지\n"
+        "```\n"
+        "- `policy_violation_vague_pause` (subclass enum)\n"
+    )
+    red_form_set_discriminant_deleted = (
+        # form 행 3종 + fence 가 모두 존치하는데 discriminant 리터럴만 소실 → 여전히 RED.
+        # (form 행의 풍부함이 taxonomy 회귀를 구제하지 못함 = 두 검사의 판정 축이 disjoint 하다는 증거)
+        '| "한 숨 쉬어가자" 류 (vague-pause — Amendment 3) | (discriminant 소실) | `[advisory]` |\n'
+        "| 무발화 정지 (over-halt — Amendment 4) | 잔여작업 有 ∧ 결정 payload = 0 ∧ volitional | `[advisory]` |\n"
+        "| 보고 후 정지 (status-report-then-halt — Amendment 4) | 잔여작업 有 ∧ 결정 payload = 0 | `[advisory]` |\n"
+        "```\n"
+        "over-halt | A2 | 무발화 정지\n"
+        "vague-pause | A2 | \"한 숨 쉬어가자\" 류\n"
+        "status-report-then-halt | A2 | 보고 후 정지\n"
+        "```\n"
+        "- `policy_violation_vague_pause` (subclass enum)\n"
+    )
     cases = [
         ("GREEN: 3 taxonomy 리터럴 전부 존재", green, 0),
         ("RED: vague-pause 행 삭제 (vague-pause + decision-null 소실)", red_row_deleted, 1),
         ("RED: decision-null discriminant 삭제", red_discriminant_deleted, 1),
         ("RED: policy_violation_vague_pause subclass 삭제", red_subclass_deleted, 1),
+        ("GREEN: fence 등재 form 축 fixture (form 행 3종 + fence 동반) — 3 리터럴 존치", green_form_set, 0),
+        (
+            "RED: fence·form 행 존치하나 decision-null discriminant 소실 "
+            "(form 행 풍부함이 taxonomy 회귀를 구제 못 함)",
+            red_form_set_discriminant_deleted,
+            1,
+        ),
     ]
     failed = []
     for name, text, expect in cases:
