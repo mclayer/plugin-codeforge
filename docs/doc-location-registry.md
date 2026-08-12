@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.3  
-**Last regen**: 2026-08-05T06:19:17Z  
-**Registered doc types**: 20
+**Last regen**: 2026-08-12T14:15:05Z  
+**Registered doc types**: 21
 
 ## Summary table
 
@@ -32,6 +32,7 @@
 | 18 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
 | 19 | `system_invariants` | single_repo | `codeforge-design:ArchitectAgent` | CFP-2361 |
 | 20 | `runbook` | single_repo | `codeforge-develop:InfraEngineerAgent` | CFP-2591 |
+| 21 | `fanout_prose_axis_attestation` | single_repo | `orchestrator` | CFP-2926 |
 
 ## Per-doc-type details
 
@@ -430,4 +431,30 @@
   > 첫 entry = deferred-followup-reconcile enforce outage runbook (§7.2.3 (iv) 의무 선-충족, Stage 1+2
   > shadow 시점엔 self-block 불가 — 미래 flip PR 대비 사전 문서화).
   > owner = InfraEngineerAgent (배포·운영 자산). parallel-edit policy = append-only (게이트별 독립 추가).
+
+### `fanout_prose_axis_attestation`
+
+- **single_repo**: `<owner-repo>/docs/cfp2926-prose-axis-attestation.yaml`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-2926
+- **naming_pattern**: `cfp2926-prose-axis-attestation\.yaml`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/cfp2926-prose-axis-attestation.yaml (CFP-2926 / AC-5 NG-2 — fan-out 주체 문면 축 수동 attestation 원장, 첫 entry)
+
+  **notes**:
+  > CFP-2926 / AC-5 (NG-2) carrier — fan-out 주체 문면(prose) 축 수동 attestation 원장의 위치 SSOT.
+  > 소비자 게이트 = scripts/lib/check_fanout_subject_prose.py (`DEFAULT_ATTESTATION_REL` 기본값 = 본 경로,
+  > `--attestation` 로 override 가능). 스캐너가 주어 축을 자동 분류하지 못한 `unknown` site 만 수동
+  > 분류하며, 원장에 없는 불명 site 는 INCONCLUSIVE 로 떨어진다 (자동 GREEN 흡수 0).
+  > site 지목 = 줄번호가 아니라 그 줄의 verbatim 부분문자열 anchor (인접 줄 편집에 불변).
+  > 정직 천장: attestation 값의 진위는 기계 검사 불가 (자기신고 · 리뷰 판정 축). 게이트가 기계 거부하는
+  > 것은 스캐너가 `pl` 로 자동 분류한 site 를 `preserve` 로 신고하는 whitelist 남용 1종뿐
+  > (`attestation_cannot_whitelist_pl_axis`).
+  > owner_agent = orchestrator (wrapper governance 원장 — 단일 lane plugin 소유 아님).
+  > path_relocation_ledger / evidence_check_registry entry 와 동형 (lint 입력 원장 class).
+  > Write owner = carrier Story 구현 lane (DeveloperAgent).
+  > 단일 instance 고정 경로 (promotion_criteria_4tuple_artifact 선례 동형) — `<carrier-key>` 접두
+  > 다중 instance 로의 일반화는 본 Story 범위 밖 (필요 시 별 carrier + naming_pattern 확장).
+  > parallel-edit policy = append-only (site 별 독립 추가).
 

@@ -13,7 +13,8 @@
 #   - axis 값 공간: worker | teammate | team | pl | agent_specific | not_applicable
 #   - disposition 값 공간: preserve | remove
 #
-# 축 분포 (본 파일): worker 9 / agent_specific 5 / not_applicable 1 = 15.
+# 축 분포 (본 파일): worker 9 / agent_specific 4 / pl 1 / not_applicable 1 = 15.
+# disposition 분포: preserve 14 / remove 1 (remove = 위 pl 축 1건).
 
 version: "1.0"
 carrier_story: CFP-2926
