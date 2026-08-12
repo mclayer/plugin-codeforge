@@ -3,6 +3,11 @@
 # CFP-2944 / ADR-025 Amendment 4 §A4-2 — illegal-stop form-set parity 검사 (fence ↔ 4 전파면)
 # ADR-061 §결정 1 Python-SSOT 패턴 (thin wrapper = scripts/check-form-set-parity.sh)
 #   + §결정 11 ReDoS-safe (라인 단위 스캔 + 단일 char-class quantifier — nested quantifier 0)
+#     ↳ 근거 = ① 구조적: 사용 정규식 전건이 단일 char-class quantifier 이고 인접 quantifier·중첩 0,
+#       후보 토큰의 form-id 적격성은 정규식이 아니라 선형 시간 파이썬 검사로 판정한다
+#       ② 실측: --self-test 합성 fixture + 8193자 라인 fixture 통과.
+#       단 wall-clock 벤치마크·복잡도 회귀 self-test 는 **없다** → 본 서술은 bounded degradation 선언이지
+#       "임의 입력 무해" 단정이 아니다 (ADR-168 §결정 16 honest-ceiling).
 #
 # tier: [정적]  (관측 tier — merge 무차단)
 #   근거(firsthand 실측): 본 검사의 유일 실행 채널
