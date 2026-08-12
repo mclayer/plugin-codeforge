@@ -672,7 +672,7 @@ assert_eq "F4 전용 marker 실재 (stall/encoding marker 재사용 0)" "$F4_MAR
 # ★★ 설계 문면 정정 반영 (QADev 판정, DevPL 인계): §8.1 은 "실 CodexReviewAgent.md dispatch 블록 전체
 #    `bash -n` **rc=0**" 으로 적었으나 **그 요구는 달성 불가**다 — 펜스 안 `<조립 원본 emit> | …` 줄이
 #    placeholder 라 미치환 상태에서 `bash -n` 이 rc=2(`syntax error near unexpected token '|'`)를 낸다.
-#    그 줄은 **B-7 byte-frozen 구간(D17 층)** 안이라 수정 = B-7 위반이며, **편집 이전(origin/main)부터
+#    그 줄은 **B-7 byte-frozen 구간(D17 층)** 안이라 수정 = B-7 위반이며, **편집 이전(브랜치 base)부터
 #    rc=2** 였다 (본 스위트가 아래 G1-pre 로 그 사실을 실측 기록한다).
 #    → 정정된 test 정의 = **placeholder 정규화 후 rc=0** ⊕ **편집 전 ↔ 편집 후 대조로 "신규 문법 오류 0"**.
 #    근거 = 설계 §13 자신이 "신규 오류 0" 기준을 쓴다.
@@ -721,15 +721,46 @@ else
   bad "G1 t_dispatch_shell_syntax_bash_n (편집 후)" "rc=$G_RC" "$G_OUT"
 fi
 
-# 편집 전(origin/main) 대조 — "신규 문법 오류 0". origin ref 부재 환경은 명시 SKIP.
-if git -C "$REPO_ROOT" rev-parse --verify -q origin/main >/dev/null \
-   && git -C "$REPO_ROOT" cat-file -e "origin/main:plugins/codeforge-review/agents/CodexReviewAgent.md" 2>/dev/null; then
-  git -C "$REPO_ROOT" show "origin/main:plugins/codeforge-review/agents/CodexReviewAgent.md" \
+# 편집 전 대조 — "신규 문법 오류 0". **기준선 = 브랜치 base 고정** (`git merge-base HEAD origin/main`).
+#   ★ `origin/main` 을 기준선으로 직접 쓰면 **움직이는 ref** 다 — 이 repo 는 병렬 세션이 상시라, 남이
+#     main 에서 그 파일을 건드리는 순간 "신규 문법 오류 0" 의 기준면이 이동해 대조가 **우리 변경분이
+#     아닌 남의 변경분**을 재게 된다. 본 Story 가 관통 진단한 "기준면이 잘못된 측정" class 와 동형.
+#   ★ merge-base 는 브랜치 base 를 **동적 도출**하므로 rebase 를 따라간다 — 하드코딩 SHA 는 born-stale
+#     이라 금지(B-8 정신). ★ 이 대조 arm 은 기준선에 실측 민감하다: 동일 파일의 과거 리비전 중
+#     `154b6e692`·`4361a5de3` 은 raw rc=0 이라 아래 G1-pre(기대 2)가 **뒤집힌다** — 기준선 선택이
+#     판정을 바꾼다는 뜻이며, 따라서 기준선 고정은 vacuous 가 아니다.
+#   ★ 실패 처리 3단 — ① merge-base 산출 실패 → origin/main fallback 하되 **"기준선 열화" 명시 발화**
+#     (조용히 다른 기준으로 재는 것이 가장 나쁘다) ② ref/blob 자체 부재 → 기존 명시 SKIP.
+BASE_REF=""
+BASE_MB=""
+BASE_DESC=""
+BASE_DEGRADED=0
+if git -C "$REPO_ROOT" rev-parse --verify -q origin/main >/dev/null; then
+  if BASE_MB="$(git -C "$REPO_ROOT" merge-base HEAD origin/main 2>/dev/null)" && [ -n "$BASE_MB" ]; then
+    BASE_REF="$BASE_MB"
+    BASE_DESC="브랜치 base ${BASE_MB:0:9}"
+  else
+    BASE_REF="origin/main"
+    BASE_DESC="origin/main (★기준선 열화)"
+    BASE_DEGRADED=1
+  fi
+fi
+
+if [ -n "$BASE_REF" ] \
+   && git -C "$REPO_ROOT" cat-file -e "$BASE_REF:plugins/codeforge-review/agents/CodexReviewAgent.md" 2>/dev/null; then
+  if [ "$BASE_DEGRADED" -eq 1 ]; then
+    echo "⚠ 기준선 열화: merge-base(HEAD, origin/main) 산출 실패 → 움직이는 ref(origin/main)로 대조한다."
+    echo "    병렬 세션이 main 에서 대상 파일을 건드리면 '신규 오류 0' 의 기준면이 이동해 우리 변경분이"
+    echo "    아닌 남의 변경분을 재게 된다. FAIL 은 아니지만 **판정 신뢰도 저하**를 조용히 넘기지 않는다."
+  fi
+  # 기준선 provenance 실측 기록 — 움직이는 ref 와 지금 일치하는지까지 출력에 남긴다(감사 가능).
+  echo "  [기준선] $BASE_DESC / origin/main=$(git -C "$REPO_ROOT" rev-parse --short=9 origin/main)"
+  git -C "$REPO_ROOT" show "$BASE_REF:plugins/codeforge-review/agents/CodexReviewAgent.md" \
     > "$WORK/md_pre.md"
   extract_fence "$WORK/md_pre.md" > "$WORK/fence_pre.sh"
   normalize_placeholders < "$WORK/fence_pre.sh" > "$WORK/norm_pre.sh"
   P_RC=0; bash -n "$WORK/norm_pre.sh" >/dev/null 2>&1 || P_RC=$?
-  assert_eq "G2 편집 전(origin/main) 정규화 후 bash -n rc" "$P_RC" "0" \
+  assert_eq "G2 편집 전($BASE_DESC) 정규화 후 bash -n rc" "$P_RC" "0" \
     "대조 기준선 — 편집 전이 rc≠0 이면 '신규 오류 0' 판정이 성립하지 않는다"
   assert_eq "G3 신규 문법 오류 0 (편집 전 rc == 편집 후 rc)" "$G_RC" "$P_RC" \
     "AC-5 — B-7 byte-frozen 구간 무접촉 + 삽입분이 문법 회귀를 만들지 않았음"
@@ -742,7 +773,7 @@ if git -C "$REPO_ROOT" rev-parse --verify -q origin/main >/dev/null \
     "미정규화 축에서도 회귀 0 — 정정된 정의가 원 의도(무회귀)를 보존"
 else
   skip "G2/G3 편집 전 대조" \
-       "origin/main ref 또는 대상 blob 미존재 (shallow clone 등) — G1(편집 후 rc=0) 은 그대로 구동되어 문법 회귀는 여전히 차단"
+       "기준선 ref(브랜치 base ← merge-base HEAD origin/main, fallback origin/main) 또는 대상 blob 미존재 (shallow clone 등) — G1(편집 후 rc=0) 은 그대로 구동되어 문법 회귀는 여전히 차단"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
