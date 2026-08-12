@@ -75,7 +75,8 @@ out_path() { printf '%s/codex-review-out-%s-%s.json' "$CR_DIR" "$1" "$2"; }   # 
 out_json_body() { printf '{"verdict":"%s","counts":{"P0":0,"P1":0,"P2":0,"P3":0},"findings":[]}\n' "$1"; }
 write_out_json() { out_json_body "$2" > "$1"; }
 
-# manifest v1 (§4.2 8행 9키 ⊕ additive 선택 필드 `category_enum` — helper 3번째 인자 조달 경로)
+# manifest v1 (§4.2 8행 9키 ⊕ **필수 필드** `category_enum` — helper 3번째 인자 조달 경로.
+#   §4.2 승격 = DeveloperPL 판정, ArchitectPL 비준 대기. "additive 선택 필드" 아니다 — 강제점은 §H 참조)
 manifest_body() {   # <lane> <dispatch_id> <round_id> <out_json> <dispatch_start> [tn] [kk] [category_enum]
   local lane="$1" did="$2" rid="$3" oj="$4" ds="$5" tn="${6:-$TN}" kk="${7:-$KK}" ce="${8:-runtime-bug}"
   printf '{"schema":"codex-dispatch-manifest-v1","lane":"%s","dispatch_id":"%s","round_id":"%s","out_json":"%s","promptfile":"%s/codex-review-%s-%s.md","category_enum":"%s","dispatch_start":%s,"timeout_n":%s,"kill_after_k":%s}\n' \
@@ -257,6 +258,22 @@ elif MODE == 'RCGb':
   RC_STAMP_VALUE="${BASH_REMATCH[2]}"; return 0
 }
 ''')
+elif MODE == 'CE':
+    # step 2 `category_enum` 필수 검증 제거 (§H 은폐 회귀 재현용).
+    # ★ 줄 **삭제가 아니라 중화**: 삭제하면 `m_category_enum` 이 미결박돼 `set -u` 로 죽고, 그 죽음이
+    #   '관측 상이' 로 오독된다(변이본 born-broken). `_schema_reject` → `:` 치환은 대입은 남기고 처분만 없앤다.
+    # 앵커 = `category_enum` ∧ `_schema_reject` 를 **함께** 갖는 줄. step 7 의 category_enum 줄은
+    #   `_schema_reject` 를 갖지 않으므로 변이 표면이 step 2 로 한정된다(= step 7 잔여 검사는 그대로 살려둔 채
+    #   '검증이 step 2 에 있는가' 축만 변주 — 변이 귀속이 흐려지지 않는다).
+    lines = s.split('\n')
+    hit = 0
+    for idx, ln in enumerate(lines):
+        if 'category_enum' in ln and '_schema_reject' in ln:
+            lines[idx] = ln.replace('_schema_reject', ':')
+            hit += 1
+    if hit == 0:
+        sys.exit(4)
+    s = '\n'.join(lines)
 else:
     sys.exit(5)
 
@@ -1114,6 +1131,250 @@ m_MRCGb_cat_variant_parser() {
   done
 }
 m_MRCGb_cat_variant_parser
+
+# ════════════════════════════════════════════════════════════════════════════
+#  §H category_enum 필수 승격 (schema 축)
+#
+#  계약: `category_enum` 은 **manifest 필수 필드**이며 그 부재·빈값은 **step 2 schema 불일치 축**에서
+#        거부된다 (DeveloperPL 판정 — §4.2 표 반영은 ArchitectPL 비준 대기).
+#
+#  ★ 왜 신설하는가 (커버리지 공백 firsthand): 기존 `manifest_body()` 는 이 키를 **항상** emit 하고
+#    `ce="${8:-runtime-bug}"` 라 **빈 문자열조차 default 로 접힌다** → 부재/빈값 arm 이 스위트에 0 건이었다.
+#    즉 규약이 문면·코드에만 있고 fixture 가 늘 올바른 값을 쓰면 GREEN 인 채 배포되는 형상(M-RID 와 동형).
+#
+#  ★ 은폐 실증 (막아야 할 회귀): 승격 전에는 `category_enum` 부재 ∧ out.json 부재 ∧ elapsed 하한 미충족이면
+#    step 4 에서 `[codex-late-collect: outcome=in-flight]` 로 빠져나가 producer 계약 결함이 **전혀 발화하지
+#    않았다**. H1 이 그 가드이고, M-CE 변이 arm 이 그 은폐를 **매 실행 재현**한다.
+#
+#  관측 서명 계약 (step 2 거부): stdout marker **0** (`_schema_reject` 는 stdout 을 내지 않는다)
+#    ⊕ stderr `schema 불일치 축 fail-closed` ⊕ 소비 0.
+#
+#  ★ fork 진정성 (exit code·마커 부재 단독 판정 금지): 본 arm 들의 1차 기대는 "마커 **미**발화" 라
+#    SUT 를 fork 하지 못해도 공허 통과할 수 있다. 그 공백은 (a) rc 단일 기대(미 fork = 127 ≠ 1)와
+#    (b) **도메인 고유 stderr sentinel** `schema 불일치 축 fail-closed`(도메인 코드 경로에서만 방출)의
+#    **병행 assert** 가 막는다. firsthand 실증: 미 fork 조건(드라이버 REPO_ROOT 오유도 → SUT 경로 부재)을
+#    강제했더니 마커-부재 assert 4건은 전부 통과한 반면 rc assert 와 sentinel assert 는 genuine 실패했다
+#    (`rc=127` · `stderr=[bash: …: No such file or directory]`). = sentinel 이 vacuous 아님을 입증.
+# ════════════════════════════════════════════════════════════════════════════
+
+# stderr 관측 (stdout 전용 `has_out` 의 짝 — step 2 거부는 stdout 이 비어 stdout 만으로는 분별 불가).
+has_err() { printf '%s' "$ERR" | grep -qF -- "$1"; }
+
+H_SCHEMA_SIG='schema 불일치 축 fail-closed'   # `_schema_reject` 진단 서명 (step 2 축)
+H_STEP7_SIG='소비 조건 미충족'                 # step 7 말미 처분 서명 (도달 여부 관측용)
+
+assert_schema_axis() {   # <label> — step 2 schema 축 거부의 stderr 서명
+  if has_err "$H_SCHEMA_SIG"; then
+    pass "$1 — step 2 schema 축 거부 서명 (stderr '$H_SCHEMA_SIG')"
+  else
+    fail "$1 — step 2 schema 축 서명 미검출 | stderr=[${ERR//$'\n'/ }]"
+  fi
+}
+
+# ── §H 전용 fixture 경로: `category_enum` 축 **하나만** 변주한다 ──────────────────────
+# ★ 기존 `manifest_body`/`write_manifest` 의 시그니처·호출부 **무접촉** (286 PASS 무회귀).
+#   부재/빈값은 `manifest_body` 로 만들 수 없으므로(위 사유) 그 **산출물 후처리**로만 만들고,
+#   후처리가 no-op 이면 arm 이 성립하지 않은 것이므로 **그 자체를 FAIL** 로 낸다 (검사연극 금지).
+h_write_manifest_catenum() {   # <keep|nokey|empty> <lane> <dispatch_id> <round_id> <out_json> <dispatch_start>
+  local mode="$1"; shift
+  local lane="$1" body out
+  body="$(manifest_body "$@")"
+  case "$mode" in
+    keep)
+      out="$body"
+      ;;
+    nokey)
+      out="$(printf '%s' "$body" | sed -E 's/"category_enum":"[^"]*",//')"
+      if printf '%s' "$out" | grep -qF 'category_enum'; then
+        fail "§H fixture 결함 — category_enum 키 제거가 no-op (manifest 형상 변경 의심). arm 무효"
+        return 1
+      fi
+      ;;
+    empty)
+      out="$(printf '%s' "$body" | sed -E 's/"category_enum":"[^"]*"/"category_enum":""/')"
+      if ! printf '%s' "$out" | grep -qF '"category_enum":""'; then
+        fail "§H fixture 결함 — category_enum 빈값 치환이 no-op. arm 무효"
+        return 1
+      fi
+      ;;
+    *)
+      fail "§H fixture 결함 — 알 수 없는 mode=$mode"
+      return 1
+      ;;
+  esac
+  printf '%s\n' "$out" > "$CR_DIR/dispatch-${lane}.json"
+  return 0
+}
+
+# 산출 전역: H_TS / H_DS / H_OUT.  elapsed=under → OP-1 하한(300) **미만**(은폐 arm 성립 조건).
+h_fixture() {   # <keep|nokey|empty> <present|absent> <ok|missing> <under|over>
+  local ce="$1" oj_mode="$2" stamp_mode="$3" el="$4" lane=design
+  fx_reset
+  if [ "$el" = under ]; then H_DS="$(date +%s)"; else H_DS=$(( $(date +%s) - 400 )); fi
+  H_TS="${H_DS}-31337"
+  H_OUT="$(out_path "$lane" "$H_TS")"
+  if [ "$oj_mode" = present ]; then write_out_json "$H_OUT" PASS; fi
+  h_write_manifest_catenum "$ce" "$lane" "$H_TS" "$RID2" "$H_OUT" "$H_DS" || return 1
+  if [ "$stamp_mode" = ok ]; then write_rc_fmt "$lane" '%s 0\n' "$H_TS"; fi
+  return 0
+}
+
+section "§H t_h1_catenum_absent_hides_as_inflight (★ 은폐 회귀 가드)"
+
+t_h1_catenum_absent_hides_as_inflight() {
+  # 부재 ∧ out.json 부재 ∧ elapsed 하한 미만 = 승격 전 은폐가 정확히 성립하던 좌표.
+  h_fixture nokey absent missing under || return 0
+  run_collect design "$RID2"
+  assert_result "H1 (부재·out 부재·하한 미만)" 1 NONE
+  assert_schema_axis "H1"
+  if has_out '[codex-late-collect: outcome=in-flight]'; then
+    fail "H1 — ★은폐 회귀: producer 필수 필드 누락이 in-flight 로 흡수됨 (승격 전 형상 복귀)"
+  else
+    pass "H1 — outcome=in-flight 미발화 (은폐 회귀 가드)"
+  fi
+  if has_out '[codex-late-collect: outcome=consumed]'; then
+    fail "H1 — consumed 발화 (소비 0 위반)"
+  else
+    pass "H1 — outcome=consumed 0"
+  fi
+}
+t_h1_catenum_absent_hides_as_inflight
+
+section "§H t_h2_catenum_absent_rejects_before_helper (step 7 → step 2 이동)"
+
+t_h2_catenum_absent_rejects_before_helper() {
+  # out.json 실재 + 정상 rc stamp = 승격 전이라면 step 7 까지 내려가 helper_rc=2 로 처분되던 좌표.
+  # ★ 이 arm 이 실제로 사는 값(M-CE firsthand): 승격과 함께 step 7 의 중복 부재검사가 제거돼 **step 2 가
+  #   유일 강제점**이 됐다. 그래서 step 2 검증을 중화하면 collector 가 **빈 enum 을 들고 그대로 진행**하고,
+  #   `findings: []` 인 PASS out.json 에서는 검사 ⑤ 가 **순회 대상 0 이라 통과**하므로 `verdict=PASS` 로
+  #   **거짓 소비가 완주**한다(변이 실측: rc=0 · consumed · .consumed 봉인). 무력화되는 것은 *enum 대조
+  #   자체* 가 아니라 ***그 대조가 걸릴 지점의 부재*** 이며, 하필 그것이 PASS verdict 의 통상 형상이다.
+  #   ★ 반증된 오귀속 기록: "빈 enum 이 검사 ⑤ 를 공허 참으로 통과시킨다"는 **거짓**이다 — 빈 enum 은
+  #     오히려 **더 엄격**하다(빈 집합 ∌ 임의 category). 4-arm 실측 rc: (`findings: []`, 빈)=0 /
+  #     (`findings: []`, 정상)=0 / (finding 1개, 빈)=1 / (finding 1개, 정상)=1 → 빈 enum 축은 두 arm 을
+  #     가르지 않는다. [verified: DeveloperPL firsthand — helper 4-arm 직접 실행 / QADev 재현 + `_check_category_enum`
+  #     본문 판독(`for … in data['findings']` 순회형)]
+  #   즉 이 arm 이 막는 것은 사유 오라벨이 아니라 **거짓 PASS 승격(fail-open)** 이다.
+  h_fixture nokey present ok over || return 0
+  run_collect design "$RID2"
+  assert_result "H2 (부재·out 실재·stamp 정상)" 1 NONE
+  assert_schema_axis "H2"
+  # step 7 미도달 = 검증이 앞당겨졌다는 직접 증거.
+  # ★ 정직 상한: 이 부재-assert 는 **어휘 의존**이라 문구가 바뀌면 공허 통과할 수 있다.
+  #   어휘 비의존 증거는 H2b(마커 축) 와 M-CE(변이 축) 가 담당한다.
+  if has_err "$H_STEP7_SIG"; then
+    fail "H2 — step 7 처분 서명 '$H_STEP7_SIG' 관측 = 검증이 여전히 step 7 (앞당겨지지 않음)"
+  else
+    pass "H2 — step 7 미도달 (step 2 에서 종결)"
+  fi
+  if [ -e "${H_OUT}.consumed" ]; then
+    fail "H2 — .consumed rename 발생 (소비 0 위반)"
+  else
+    pass "H2 — .consumed rename 미발생"
+  fi
+  assert_pass0 "H2" "$H_OUT"
+  if [ -f "$H_OUT" ]; then pass "H2 — 원 좌표 잔존 (미소비)"; else fail "H2 — 원 좌표 소멸 = 소비됨"; fi
+}
+t_h2_catenum_absent_rejects_before_helper
+
+section "§H t_h2b_catenum_absent_precedes_rc_axis (★ 어휘 비의존 순서 증거 — 추가 arm)"
+
+t_h2b_catenum_absent_precedes_rc_axis() {
+  # ★ 지시 표 밖 **추가** arm. H2 의 '앞당겨짐' 을 stderr 문구가 아니라 **stdout 마커 축**으로 증명한다:
+  #   부재 ∧ rc stamp **부재** 좌표는 검증이 step 7 에 있으면 `reason=rc-unknown` 이 발화하고,
+  #   step 2 에 있으면 그 전에 종결돼 **마커가 없다**. 문구 변경에 면역인 순서 증거.
+  h_fixture nokey present missing over || return 0
+  run_collect design "$RID2"
+  assert_result "H2b (부재·stamp 부재)" 1 NONE
+  assert_schema_axis "H2b"
+  if has_out '[codex-collect-rejected: reason=rc-unknown]'; then
+    fail "H2b — rc-unknown 발화 = 필수 필드 검증이 rc 축(step 7) 뒤에 있음 (순서 계약 위반)"
+  else
+    pass "H2b — rc-unknown 미발화 = 필수 필드 검증이 rc 축보다 **앞**에서 종결 (어휘 비의존 증거)"
+  fi
+}
+t_h2b_catenum_absent_precedes_rc_axis
+
+section "§H t_h3_catenum_empty_equals_absent (빈 문자열 = 부재 등가)"
+
+t_h3_catenum_empty_equals_absent() {
+  # `_json_str_field` 는 `""` 에 대해 **rc=0 · 빈 값**을 돌려준다 → rc 만 보는 구현은 이 arm 을 통과시킨다.
+  # 즉 `-n` 검사가 load-bearing 인지 여기서만 갈린다.
+  h_fixture empty present ok over || return 0
+  run_collect design "$RID2"
+  assert_result "H3 (빈 문자열)" 1 NONE
+  assert_schema_axis "H3"
+  assert_pass0 "H3" "$H_OUT"
+}
+t_h3_catenum_empty_equals_absent
+
+section "§H t_h4_catenum_valid_consumes (★ 대조 arm — 거부의 category_enum 축 귀속 확정)"
+
+t_h4_catenum_valid_consumes() {
+  # H2 와 **완전히 동일한 fixture 구성 경로**에서 `category_enum` 만 정상값으로 되돌린다.
+  # 이 arm 이 없으면 H1~H3 의 거부가 다른 이유(경로·형상·환경) 때문일 가능성을 배제하지 못한다.
+  h_fixture keep present ok over || return 0
+  run_collect design "$RID2"
+  assert_result "H4 대조 (정상 category_enum)" 0 '[codex-late-collect: outcome=consumed]'
+  assert_consumed "H4 대조" "$H_OUT" PASS
+  if has_err "$H_SCHEMA_SIG"; then
+    fail "H4 대조 — 정상값인데 schema 축 거부 서명 관측 = H1~H3 의 거부가 category_enum 축 귀속이 아님"
+  else
+    pass "H4 대조 — schema 축 거부 미발생 = H1~H3 거부의 **유일 변인이 category_enum** 임을 확정"
+  fi
+}
+t_h4_catenum_valid_consumes
+
+section "§H t_h5_axis_disjoint_no_reason_collapse (§4.3 축 비혼동)"
+
+t_h5_axis_disjoint_no_reason_collapse() {
+  # producer 필수 필드 누락이 **잔재 축**(stale-manifest)·**rc 축**(rc-unknown) 카운터로 접히면
+  # 사유가 합쳐져 진단이 불가능해진다 — 이 Story 가 관통 진단한 실패 양식.
+  h_fixture nokey present ok over || return 0
+  run_collect design "$RID2"
+  if has_out '[codex-collect-rejected: reason=stale-manifest]'; then
+    fail "H5 — 필수 필드 누락이 stale-manifest(잔재·귀속 축)로 접힘 = 축 혼동"
+  else
+    pass "H5 — reason=stale-manifest 미발화 (귀속 축과 disjoint)"
+  fi
+  if has_out '[codex-collect-rejected: reason=rc-unknown]'; then
+    fail "H5 — 필수 필드 누락이 rc-unknown(rc 판독 축)으로 접힘 = 축 혼동"
+  else
+    pass "H5 — reason=rc-unknown 미발화 (rc 축과 disjoint)"
+  fi
+}
+t_h5_axis_disjoint_no_reason_collapse
+
+section "§H mutation M-CE (step 2 category_enum 검증 중화) — 은폐 재현 / kill 셀 H1·H2b"
+
+m_MCE_step2_catenum_check_removed() {
+  local mut; mk_mutant CE || return 0; mut="$MUT_PATH"
+  # (a) H1 좌표 — ★ 은폐 재현. 변이본에서는 producer 계약 결함이 `outcome=in-flight` 로 조용히 빠져나간다.
+  h_fixture nokey absent missing under || return 0
+  run_sut "$mut" design "$RID2"
+  if has_out '[codex-late-collect: outcome=in-flight]'; then
+    pass "M-CE 변이 (step 2 검증 중화) → H1 좌표가 outcome=in-flight 로 은폐 = RED 재현 (schema 거부 ↔ in-flight)"
+  else
+    fail "M-CE 변이 (a) 가 관측을 바꾸지 못함 (생존) — rc=$RC / [${OUT//$'\n'/ }]"
+  fi
+  # (b) H2b 좌표 — 어휘 비의존 kill. 변이본은 rc 축(step 7)까지 내려가 `rc-unknown` 을 발화한다.
+  h_fixture nokey present missing over || return 0
+  run_sut "$mut" design "$RID2"
+  if has_out '[codex-collect-rejected: reason=rc-unknown]'; then
+    pass "M-CE 변이 → H2b 좌표가 rc 축까지 내려가 rc-unknown 발화 = 검증 위치(step 2)가 load-bearing 임의 어휘 비의존 증거"
+  else
+    fail "M-CE 변이 (b) 가 관측을 바꾸지 못함 (생존) — rc=$RC / [${OUT//$'\n'/ }]"
+  fi
+  # (c) H4 좌표 — 변이본에서도 정상값은 소비된다 = 변이가 category_enum 축**만** 건드렸음(부작용 0).
+  h_fixture keep present ok over || return 0
+  run_sut "$mut" design "$RID2"
+  if has_out '[codex-late-collect: outcome=consumed]'; then
+    pass "M-CE 변이 대조 → 정상값 소비 유지 = 변이 표면이 category_enum 축에 한정 (부작용 0)"
+  else
+    fail "M-CE 변이 대조 실패 — 정상값도 소비 안 됨: 변이가 다른 축을 깨뜨림 (kill 귀속 무효) — rc=$RC / [${OUT//$'\n'/ }]"
+  fi
+}
+m_MCE_step2_catenum_check_removed
 
 # ════════════════════════════════════════════════════════════════════════════
 echo
