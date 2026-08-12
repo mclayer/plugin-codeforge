@@ -96,8 +96,8 @@ attribution:
 | 16 | `defect_type` | string (SEMI-OPEN) \| null | nullable | defect_finding / fix_transition | taxonomy — review-verdict-v4 type-derived ∪ `unknown-type`(fallback). 그 외 = null |
 | 17 | `time_to_detection` | number \| `"unattributed"` \| null | nullable | defect_finding | taxonomy — **DERIVED measure**(ordinal lane-distance ∨ ts-delta). 도입점 불명 = `unattributed`. 그 외 = null |
 | 18 | `detecting_lane` | enum (lane_label) \| null | nullable | defect_finding | taxonomy — 결점 검출 lane(lane_label enum, CLOSED). 그 외 = null |
-| 19 | `writer_key` | sha256 string \| null | nullable | rich payload 보유 event | **정규화한 repo-relative 경로의 sha256**. 경로 원문 저장 절대 금지(index tier free-form 금지, T-INFO-8 차단). 그 외 = null |
-| 20 | `artifact_key` | sha256 string \| null | nullable | rich payload 보유 event | `sha256(agent_id)`. agent_id 는 hook 입력에 실재(hooks/pretooluse-inline-write-gate firsthand). 그 외 = null |
+| 19 | `writer_key` | sha256 string \| null | nullable | rich payload 보유 event | **`sha256(agent_id)`**. agent_id 원문 저장 절대 금지(index tier hash-only, T-DPE-6). agent_id 는 hook 입력에 실재(hooks/pretooluse-inline-write-gate firsthand). 그 외 = null |
+| 20 | `artifact_key` | sha256 string \| null | nullable | rich payload 보유 event | **정규화한 repo-relative 경로의 sha256**. 경로 원문 저장 절대 금지(index tier free-form 금지, T-INFO-8 차단). 그 외 = null |
 
 > **Phase 2 = doc↔code parity SSOT**: 위 20 필드 순서·멤버 = `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS`(Python-hardcoded EXTERNAL code anchor)와 **byte-consistent** 해야 한다. wave-2 parity self-test = 본 §2 table(동적 파싱) vs `_ROW_KEYS`(동적 파싱) 대조 — **born-drift = FAIL**(doc vs code, `check_self_context_telemetry_allowlist.py` S1 external-anchor 구조 선례).
 
