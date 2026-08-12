@@ -173,9 +173,23 @@ amendment_log:
       ratchet 강화 방향 (declared scope 5→6 formalize — lint 실동작 이미 6-scope, doc 정합). is_transitional: false 정합. 약화 방향 (별 scope 축소 / archive/adr 제외) = ADR-058 §결정 5 sunset_justification 의무.
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (별 declared scope 5→6 formalize, lint 실동작 정합). scope 약화 0건
+  - amendment: 16
+    carrier_story: CFP-2914
+    date: 2026-08-09
+    reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 본 Amendment 는 `mechanical_enforcement_actions[0].binding`(Amendment 1 소산)이 단정하던 factual premise("이 lint 가 본 ADR 의 mechanical enforcement 로 집행 중")를 affirmatively-FALSE(4-piece 중 1/4 실재)로 판정하고 그 entry 의 지위를 "집행 사실 → 선언"으로 재규정(supersede-in-part)하며, Amendment 1 이 신설한 `parallel-dispatch-protocol-v1` 의 `worker_count_max` default 문면 7→13 을 실재에 정합시킨다. 선례 동형 = ADR-147 Amendment 4(선행 amendment 서술의 factual premise 가 affirmatively-FALSE 화 → 해당 clause supersede-in-part) + ADR-155 Amendment 1(over-claim posture 반전 정직 정정). §결정 4 본문 문언 자체는 무변경이며 (3) 관측 leg 신설은 순수 additive — true 는 위 2 축(binding 지위 재규정 · cap 문면 정합) 귀속. self-declared, 리뷰 판정 축 (parity lint 는 presence/type 만 검사). 재제정 트리거 = 독립 축인 임계 초과(effective_count > grandfathered_at)와 함께 follow-up #2937 로 분리 — §3.14.4 / §10.2 참조.
+    summary: |
+      §결정 4 (Trace 4) 의 mechanical enforcement 실이행 — Amendment 1 §Amendment 결정 4 가 선언한 `parallel-dispatch-prompt-check` 4-piece(shim `.sh` / workflow twin 2곳 / evidence-registry entry) 가 **1/4 만 실재**하고 나머지가 미이행 상태로 남아 있었음을 정직 declare 하고, 관측 축을 `check-lane-evidence.sh` + `lane-evidence-check.yml` 결속(이미 `templates/consumer-scripts.manifest` + `docs/evidence-checks-registry.yaml` 두 SSOT 가 독립 지시)의 완성으로 이행한다. **신규 표면 신설 0** — 기존 스크립트 안 형제 함수 + 기존 workflow 안 step.
+      (1) 미이행 정직 declare — Amendment 1 이 지칭한 shim 파일명 `scripts/check-parallel-dispatch-prompt.sh` 와 실물 `scripts/check_parallel_dispatch_prompt.py` 가 애초부터 불일치했고, 그 실물은 호출자 0 인 고아다. 처분 = **존치(retain, non-wired)** — 제거·비활성 아님(§결정 7 ratchet 미발동). 검사 대상 계층이 다르고(Story 문서 안 prompt-text presence ⊥ 실행 시각 동시성) repo 에 완결된 고아 sunset 선례가 없다.
+      (2) 2026-06 prune 의 §결정 7 위반 사후 기록 — `archive/prune-2026-06/` 5 파일 전수 `sunset_justification` grep 0건. warning tier 폐기에 의무화된 justification 이 남지 않았다. **소급 작성하지 않는다**(사후 창작 = ADR-119 위반). 재발 방지 = 본 Amendment 의 배선 완성.
+      (3) 리뷰 peer co-dispatch leg 신설 — `check_parallelization()`(설계 lane 6-deputy) 무손상 존치 + 형제 함수 `check_peer_codispatch()` 신설. 대상 lane = closed-set 명시 배열 4종(요구사항-리뷰/설계-리뷰/구현-리뷰/보안-테스트), substring 매칭 구조적 금지. C-7 정합 = **warning tier 출생**(required 승격 아님 — ADR-171 §결정 6 3-AND + evidence 6종 미충족).
+      (4) cap 문면 정합 — `parallel-dispatch-protocol-v1` `worker_count_max` default 7 → **13**(9 deputy + 4-tuple sub-tuple 4 roster 산술). 계약 MINOR(1.1.1→1.2, 순수 loosening). **런타임 행위 변화 0** — 해당 3 필드는 소비자 0 이고 §8 검사 5번은 고아 스크립트 안에만 있다. 따라서 "충돌을 집행한다"가 아니라 **"태생적 위반 상태인 문면을 실재와 일치시킨다"**.
+      정직 ceiling (ADR-143 동형) — 본 Amendment 가 도달하는 최고 강도는 **사후 검출 + advisory** 이며 그 검출은 **선언 기반**(§14 · PR body)이다. 보장하는 것 = "선언된 값들이 60초 이내로 선언되었다". 보장하지 않는 것 = "실제로 60초 이내에 spawn 되었다". spawn 사전 차단(hook deny)은 ADR-115 Wave 2 소관으로 본 Amendment 범위 밖이다.
+      ratchet 강화 방향 (검사 leg 순증 2, 감축 0 — lane 수·peer 수·FIX 상한·게이트 수·deputy mandate 수 전건 불변). is_transitional: false 정합. 약화 방향(peer leg 제거 / co-dispatch leg 제거 / cap 재하향 / 고아 스크립트 제거)은 ADR-058 §결정 5 sunset_justification 의무.
+    direction: strengthen
+    sunset_justification: null  # ratchet 강화 방향 (관측 leg 순증 2, 검사량 감축 0). scope 약화 0건
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
-    binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)
+    binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합). **현행 배선 상태 = 미이행 (Amendment 16 정직 declare)** — 선언된 4-piece 중 shim `scripts/check-parallel-dispatch-prompt.sh` 부재 · workflow twin 양쪽 부재 · evidence-registry entry 부재 = 1/4 실재. 실물 `scripts/check_parallel_dispatch_prompt.py` 는 호출자 0 (존치·non-wired). 본 entry 는 집행 사실이 아니라 **선언**이다.
   - action: autonomous-loop-idle-termination-reminder
     binding: 본 Amendment 12 §결정 12 (Trace 8) Wave 2A mechanical wire — PreToolUse matcher `ScheduleWakeup` advisory reminder hook (`hooks/schedule-wakeup-reminder` + `hooks/hooks.json` PreToolUse 두 번째 entry). 4-tuple AND gate self-check 평문 컨텍스트 주입 (advisory non-blocking, session-runtime layer — PR-time CI lint 아닌 turn-time gate, ADR-060 4-tier 영역 외, domain-knowledge `orchestrator-runtime-hook-enforcement` 정합)
 related_stories:
@@ -198,6 +212,7 @@ related_stories:
   - CFP-1755 # Amendment 12 carrier — §결정 12 Wave 2A mechanical wire activation (PreToolUse `ScheduleWakeup` advisory reminder hook, hooks/schedule-wakeup-reminder + hooks/hooks.json second PreToolUse entry, CFP-1738 reminder pattern 2nd instantiation)
   - CFP-2350 # Amendment 13 carrier — §결정 13 신설 (Trace 9 root-cause-decision 사다리 3rd rung = 문제정의 오류 → 요구사항 lane 재진입, ADR-119 §결정 10 ② instantiation, Epic #2346 진단축 C)
   - CFP-1561 # Amendment 15 carrier — §결정 2 Amd5 표 `별` scope 5→6 formalize (archive/adr union, CFP-2661 D1 lint 실동작 정합). cat-a 어휘 full-scope sweep governance. slot=15 (body Amendment 14=CFP-2374 충돌 회피)
+  - CFP-2914 # Amendment 16 carrier — §결정 4 Trace 4 mechanical enforcement 실이행 (리뷰 peer co-dispatch leg 신설 + cap 7→13 문면 정합 + parallel-dispatch-prompt-check 1/4 미이행 정직 declare + 2026-06 prune §결정 7 위반 사후 기록)
 related_adrs:
   - ADR-039
   - ADR-044  # CFP-609 Amendment 1 — agent teams enabled context (env=1) TeamCreate fan-out 자연 정합
@@ -1182,6 +1197,85 @@ CFP-2661 D1 이 ADR 실위치 이동(PR #1973 `docs/adr`→`archive/adr`) 후속
 ### Sunset justification
 
 강화 방향 (declared scope 5→6 formalize — lint 실동작 이미 6-scope, doc 정합). 약화 0건. 약화 방향(별 scope 축소 / archive/adr 제외)은 ADR-058 §결정 5 sunset_justification 의무. is_transitional: false 정합.
+
+## Amendment 16 — §결정 4 Trace 4 mechanical enforcement 실이행 + 미이행 정직 declare (CFP-2914, 2026-08-09 KST)
+
+### 컨텍스트
+
+Amendment 1 §Amendment 결정 4 가 `parallel-dispatch-prompt-check` warning tier lint 를 본 ADR 의 mechanical enforcement 로 선언하며 4-piece 를 명시했다 — shim `bash scripts/check-parallel-dispatch-prompt.sh` / workflow `templates/github-workflows/parallel-dispatch-prompt-check.yml` / bypass label / frontmatter entry.
+
+CFP-2914 요구사항 lane 전수 실측 결과 그 4-piece 중 **실재하는 것은 frontmatter entry 1개뿐**이다 `[verified: shim 파일 부재 · workflow twin 양쪽 부재 · `docs/evidence-checks-registry.yaml` grep 0건]`. 실재하는 `scripts/check_parallel_dispatch_prompt.py`(8,557B)는 **호출자가 0인 고아**이며, Amendment 1 이 지칭한 파일명(`.sh` shim)과 실물(`.py`)이 **애초부터 불일치**했다.
+
+동시에 병렬 default 규범 자체는 건강하다 — 6개 문면에 normative 로 존재하고 리뷰 peer·설계 deputy 를 이름까지 명시한다. 즉 결함은 **규범 공백이 아니라 관측 배선의 미이행**이다.
+
+### 결정
+
+#### 결정 16-1 — 미이행 정직 declare (declared-not-bound 정산)
+
+`mechanical_enforcement_actions[].binding` 에 **현행 배선 상태 = 미이행(1/4 실재)** 을 명기한다. 미배선을 집행으로 서술하는 것 자체가 ADR-119 위반이다.
+
+고아 스크립트 처분 = **존치(retain, non-wired)**. 제거·비활성이 **아니므로** §결정 7 ratchet 의 `sunset_justification` 의무는 발동하지 않는다. 근거 3:
+
+1. 검사 계층이 다르다 — 이 스크립트가 보는 것은 *Story 문서 안 prompt-text presence* 이고, lane-evidence 계열이 보는 것은 *실행 시각의 동시성* 이다.
+2. repo 에 완결된 "고아 스크립트 sunset 처분" 선례가 없다(ADR-151 bucket D 도 미집행). 본 Story 의 목적은 관측 복원이지 sunset 선례 제정이 아니다.
+3. 존치는 검사량 감축 0을 자명하게 보장한다(사용자 비협상 제약).
+
+파일명 불일치(`check-parallel-dispatch-prompt.sh` ↔ `check_parallel_dispatch_prompt.py`)는 본 Amendment 가 서술 차원에서 정합화한다.
+
+**존치의 필수 동반 조건 = 파일 자신 안의 정직 미배선 마커.** 이 스크립트의 모듈 docstring 은 검사 5종을 집행 서술로 적고 있으나 호출자가 0이다 — 마커 없는 존치는 본 Amendment 가 다른 site 에서 정정하기로 한 **바로 그 declared-not-bound 형상을 파일 안에 유지**하는 것이다. 따라서 docstring 선두에 "현행 배선 상태 = 미배선(호출자 0) · 검사 항목 삭제 0 · 재배선 시 declare 제거" 를 부착해 **declared-and-labeled 로 전이**시킨다. 판정 기준(정직 마커 보유 여부가 declared-not-bound 와 declared-and-labeled 를 가른다)을 남에게만 적용하고 자신에게 적용하지 않으면 self-exemption 이다.
+
+#### 결정 16-2 — 2026-06 prune 의 §결정 7 위반 사후 기록
+
+`archive/prune-2026-06/` 5 파일 전수 `sunset_justification` grep **0건** `[verified]`. 2026-06 prune 이 `parallel-dispatch-prompt-check` warning tier 를 절단하면서 §결정 7 이 의무화한 justification 을 남기지 않았다 — **ratchet 위반이 확정**된다.
+
+**소급 justification 을 작성하지 않는다** — 당시 근거를 지금 창작하는 것은 ADR-119 위반이다. 처분 = 위반 사실의 명시 기록 + 재발 방지(본 Amendment 의 배선 완성).
+
+#### 결정 16-3 — 리뷰 peer co-dispatch 관측 leg 신설
+
+`scripts/check-lane-evidence.sh` 에 형제 함수 `check_peer_codispatch()` 를 신설하고, `.github/workflows/lane-evidence-check.yml`(+ `templates/` byte-parity twin)에 이를 호출하는 bash step 을 배선한다.
+
+- **신규 표면 신설이 아니다.** `templates/consumer-scripts.manifest:27`(`scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml`)과 `docs/evidence-checks-registry.yaml:110-111`(`detect_command` + `workflow`)이 **독립적으로 같은 결속을 이미 지시**하는데 코드만 이를 어긴 상태였다. 본 결정은 그 미이행 결속의 완성이다.
+- 기존 `check_parallelization()`(설계 lane 6-deputy)은 **무손상 존치**한다 — 회귀 self-test 로 bit-identical 을 지킨다.
+- 대상 lane = **closed-set 명시 배열 4종**(`요구사항-리뷰` / `설계-리뷰` / `구현-리뷰` / `보안-테스트`) + 정확 일치 lookup. `*리뷰*` substring 매칭은 구조적으로 금지한다 — 그 실패 양식이 `보안-테스트` lane 3 그룹을 통째로 누락시킨 실물 오류의 원인이다.
+- **판정 불가 ≠ PASS.** peer 가 2종 미만이거나 산출이 0인 그룹은 위반이 아니라 **별개 상태(판정 불가)** 로 분리 집계하며 조용한 PASS 로 접지 않는다.
+- **"판정 불가" 는 두 축이며 소재가 다르다** — (A) *row 는 있으나 그 peer 가 산출을 냈는가* 는 원장 필드(`tool_call_count`·`termination_cause`)를 요구하므로 **local-only 진단 도구 전용**이다. Story §14 schema 는 12 field 이며 그 두 필드를 보유하지 않고, §14 `outcome` enum(`PASS/FIX/SKIPPED`)은 원장 `outcome` enum(`success/…/partial`)과 **동음이의로 충돌**한다 `[verified: templates/story-page-structure.md:573-586 (Field semantics 12-field 표) · docs/inter-plugin-contracts/spawn-event-v1.md:93]`. 따라서 실효 판정 사다리를 게이트 leg 에 얹으면 전건이 최종 규칙으로 낙하해 **판별력 0 인 검사가 GREEN 을 발화**한다(born-hollow) → 게이트 leg 에 배선하지 않는다. (B) *판정에 필요한 **distinct peer 신원이 2 미만인가*** 는 §14 의 `lane` ∧ `iteration` ∧ `agent` **3 field 로 계산**되므로 **게이트 leg 의 잔존 의무**다. 이 분리는 검사량 축소가 아니라 **소재 확정**이며, 검사 leg 계상 단위는 게이트+진단 **family 합산**이다(스크립트별 계상 시 이동이 감소로 오독된다).
+
+- **(B) 는 "§14 row 수" 로 계산되지 않는다 (2축 키잉 + 등식 가드).** row 수로 계산하면 두 축에서 동시에 틀린다 — **신원 축**(lane row 수를 peer 수로 오독) ∧ **그룹화 축**(서로 다른 FIX 라운드 row 를 한 batch 로 병합). 확정 키잉:
+  - **그룹 키 = `(lane 정확일치, iteration)`** — `iteration` 의 계약 의미가 dispatch round 식별자다 `[verified: templates/story-page-structure.md:576 "Lane local 1+ (FIX 시 multiple row)"]`.
+  - **신원 계수 = `agent` 선두 토큰 정확 일치**(좌측 trim 후 첫 `[공백 또는 '(']` 직전) ∈ `{ClaudeReviewAgent, CodexReviewAgent}`. **substring·토큰경계 regex 금지** — `*리뷰*` substring 금지와 **동형 실패**이며, 함정은 경계가 아니라 **한 row 의 `agent` 가 여러 신원을 서술**하는 데 있다.
+  - **등식 가드 `peer_ts_count == peer_rows` (blocking)** — 불성립 시 timing 분기 미도달, `evidence_absent` 낙하. 설계 leg 는 이 가드를 이미 보유한다 `[verified: scripts/check-lane-evidence.sh:352 "spawned_at_count == design_rows >= 6 보장 → timestamps 6+ 개, min/max index-0 안전"]`. 미승계 시 `peer_rows 2 ∧ 유효 spawned_at 1` 형상에서 `min == max` 로 **허위 CO-DISPATCH PASS** 가 발화한다.
+  - **정직 경계** — 2축 키잉이 고치는 것은 **오그룹화·오계수**이며, **자기단언의 진위는 어떤 keying scheme 으로도 고쳐지지 않는다**. 게이트 leg 의 PASS 는 *"선언된 값들이 서로 60초 안"* 이라는 뜻이지 *"실제로 60초 안에 spawn 됐다"* 는 뜻이 아니다.
+- **C-7 정합** — 신규 check 는 **warning tier 로 출생**한다. required 승격은 ADR-171 §결정 6 의 3-AND + evidence 6종을 선결로 두며 본 Amendment 범위 밖이다.
+
+#### 결정 16-4 — cap 문면 정합 (7 → 13)
+
+`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` 의 `worker_count_max` default 를 **7 → 13** 으로 상향한다(계약 MINOR `1.1.1` → `1.2`, 순수 loosening). 근거 = roster 산술 — 최대 batch = 9 deputy(6 permanent + 3 CONDITIONAL) + 4-tuple sub-tuple 4 = **13**. 계수 단위는 계약 `:213` 이 직접 정의한 "한 batch 의 task 수" 다.
+
+**반영면(값을 바꾸는 면) 4종** = 계약 2곳(`:214`·`:288`) + `templates/team-spec-*.yaml` 7 파일 + `skills/rate-limit-429-mitigation/SKILL.md:133` (429 발생 시 읽히는 skill 이라 stale cap 이 남으면 그 순간 잘못된 값을 준다) + **`scripts/check_parallel_dispatch_prompt.py:75` `WORKER_COUNT_MAX_DEFAULT`** (계약 §8 검사 5번의 유일 구현체 — 호출자 0 을 유지하므로 런타임 행위 변화는 여전히 0이나, 계약값과 어긋난 채 두면 stale 계약을 박제한다).
+
+**대조면(무접촉·모순 0 확인) 3종** = `ADR-042`(roster SSOT 이며 cap 미보유) + `skills/deputy-mandate/SKILL.md:13`(deputy 계수만 보유) + **`ADR-044:29`**. 마지막 항목은 문면 자신이 값의 SSOT 를 본 계약이라 선언하고 자기는 *derived* 기록임을 명시하므로, 계약이 13 이 되어도 제정 시점 파생값의 **byte-frozen 이력**이다 — **소급 편집 금지 · 별도 Amendment 불요**(규범 delta 0). 미래 독자가 "누락된 반영면" 으로 오인해 소급 편집하는 것을 차단하기 위해 본 Amendment 에 명시 등재한다.
+
+**정직 라벨 — 기계 소비자 0 ∧ advisory 소비자 1.** `parallel_spawn_cap` / `spawn_stagger_ms` / `cascade_circuit_breaker` 3필드를 **코드가 읽는 site 는 0건**이고, 계약 §8 검사 5번(`worker_count ≤ worker_count_max`)은 **호출자 0인 고아 스크립트 안에만** 존재한다 — 따라서 이 상향은 **기계 집행을 만들지 않는다**. 다만 "런타임 행위를 1도 바꾸지 않는다" 로 쓰면 과장이다: `skills/rate-limit-429-mitigation/SKILL.md` 는 429 사후 대응 전용이 아니라 **`## When to invoke` trigger 2 = Pre-burst preventive** 를 보유하며 그 하위 항목이 *"ArchitectPLAgent 6+3+1 deputy + 4-tuple sub-tuple 단일-메시지 multi-tool spawn 직전"* 이고, `intensity == 0`(직전 30분 429 0건 = 통상 경로) 분기가 `parallel_spawn_cap = 7  # default` + `spawn_stagger_ms = 0` 을 준다 → **통상 fan-out 직전 권고 동시 폭이 7 → 13 으로 바뀐다.** 이를 "미배선" 으로 선언하면 declared-vs-bound 오계상을 방향만 뒤집어 재생산한다.
+
+정확한 기술 = **"태생적 위반 상태인 문면을 실재와 일치시키며, 그 부수 효과로 advisory 권고값 1개가 바뀐다"** — "충돌을 집행한다" 도 "아무것도 바뀌지 않는다" 도 아니다. ⑤ 반영 시 값 옆에 **경험칙(F-14 동시 3~5 / 5~10) 초과 사실**과 **429 관측 의무** 포인터를 인라인 병기한다.
+
+batch 분할은 기각한다 — wall-clock 을 `max(batch1) + max(batch2)` 로 만들어 분 단위 새 직렬 구간을 도입하며, 이는 대기시간 단축이라는 목적과 정면 충돌한다.
+
+### 정직 ceiling (ADR-143 동형)
+
+본 Amendment 가 도달하는 최고 강도는 **사후 검출 + advisory** 이고, 그 검출은 **선언 기반**(§14 Lane Evidence · PR body)이다. 실행 이벤트 ground-truth 기반 검출은 0건이다(원장은 gitignored·CI 미도달·자기보고 채널).
+
+> 이 검사가 보장하는 것 = **"선언된 값들이 60초 이내로 선언되었다"**.
+> 보장하지 않는 것 = **"실제로 60초 이내에 spawn 되었다"**.
+> 즉 동시성 검사가 아니라 **선언 정합성(declaration consistency) 검사**다.
+
+나아가 이 채널에서 위반은 **anti-evidence** 구조를 갖는다 — 순차로 띄우면 row 자체가 생기지 않고, row 가 없으면 검사기는 위반이 아니라 판정 불가를 본다. **위반할수록 증거가 사라진다.** "판정 불가 ≠ PASS" 는 정확한 완화이나 은폐를 검출로 바꾸지 못하며 무지를 가시화할 뿐이다. 본 채널의 verdict 는 **저작자의 성실성을 가정한 조건부 진술**이며 준수의 증거가 아니다.
+
+spawn 사전 차단(PreToolUse `Agent` hook deny)은 ADR-115 Wave 2 소관으로 본 Amendment 범위 밖이다.
+
+### Sunset justification
+
+강화 방향 — 관측 leg 순증 2(peer co-dispatch 판정 · peer 커버리지 판정), 검사량 감축 0(lane 수 8 / 리뷰 peer 수 2 / FIX 상한 3 / required contexts 8 / deputy mandate 6+3+1 전건 불변). is_transitional: false 정합. 약화 방향(peer leg 제거 / co-dispatch leg 제거 / cap 재하향 / 고아 스크립트 제거)은 ADR-058 §결정 5 sunset_justification 의무.
 
 ## 해소 기준
 
