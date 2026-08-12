@@ -74,7 +74,9 @@ env:
   X16_STORY_URI: "https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-2926.md"
   # CI 에서 구조적으로 판정 불가(INCONCLUSIVE)임을 ★사전 선언★한 게이트.
   # 선언 = 면제가 아니라 "돌리지 않음"의 명시다. 각 항목의 실 검증면은 해당 step 주석에 있다.
-  CI_INCONCLUSIVE_DECLARED: "NG-5 NG-13 NG-16 NG-18"
+  # NG-17: no_comparison_worktree — fresh CI checkout 에는 비교 대상 sibling worktree 가
+  #        구조적으로 존재 불가 (실 검증면 = tests/unit/cfp_2926/test_ac16_lane_overlap.py).
+  CI_INCONCLUSIVE_DECLARED: "NG-5 NG-13 NG-16 NG-17 NG-18"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
