@@ -72,6 +72,9 @@ env:
   #   실행면이 존재한다 — 마커 입력경로를 쓰면 그 실행면에서 구조적으로 영구 INCONCLUSIVE 가 된다.
   #   `ref=main` = 선례가 명시 인정한 ★영구 ref★(L92 "story_uri = 영구 ref(internal-docs main / immutable commit SHA)").
   X16_STORY_URI: "https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-2926.md"
+  # CI 에서 구조적으로 판정 불가(INCONCLUSIVE)임을 ★사전 선언★한 게이트.
+  # 선언 = 면제가 아니라 "돌리지 않음"의 명시다. 각 항목의 실 검증면은 해당 step 주석에 있다.
+  CI_INCONCLUSIVE_DECLARED: "NG-5 NG-13 NG-16 NG-18"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -100,46 +103,75 @@ jobs:
 
       - name: NG-1 | AC-4 census oracle
         id: ng1
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_census_oracle.py --self-test || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-1 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-1 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-1 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-1 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-2 | AC-5 fan-out prose
         id: ng2
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_fanout_subject_prose.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-2 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-2 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-2 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-2 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-3 | AC-6 platform inherent + frozen anchor
         id: ng3
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_platform_inherent_prose.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-3 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-3 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-3 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-3 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-4 | AC-8 doc-queue SSOT
         id: ng4
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_doc_queue_ssot.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-4 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-4 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-4 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-4 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-5 | AC-10 dispatch packet snapshot_sha
         id: ng5
+        if: always()
         run: |
           set -u
           # NG-5 = AC-10 dispatch packet checker: caller-supplied predicate (identity_bearing: false)
@@ -152,61 +184,147 @@ jobs:
           #   이전 판본은 자기가 쓴 dict 를 자기가 다시 읽는 동어반복이어서 게이트에서
           #   snapshot_sha 요구·검증을 전부 제거해도 통과했다 — 즉 이 지목이 거짓이었다 (CFP-2926 봉합).
           #   ⇒ 그 테스트는 아래 phase2-unit-tests job 이 CI 에서 실제로 실행한다.
-          exit 3
+          rc=3
+          printf 'NG-5 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          echo "::notice::NG-5 INCONCLUSIVE — CI 에 caller packet 부재로 ★미실행★(PASS 아님). 실 검증면은 위 주석의 명명 테스트."
 
       - name: NG-6 | AC-14 write overlap
         id: ng6
+        if: always()
         run: |
           set -u
           python3 scripts/lib/compute_write_overlap.py --self-test || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-6 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-6 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-6 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-6 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-7 | AC-15 PL spawn observation
         id: ng7
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_pl_spawn_observation.py --self-test || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-7 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-7 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-7 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-7 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-8 | AC-16 lane overlap predicate
         id: ng8
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_lane_overlap_predicate.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-8 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-8 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-8 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-8 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-9 | AC-2b concurrency metric
         id: ng9
+        if: always()
         run: |
           set -u
           python3 scripts/lib/compute_concurrency_metric.py --self-test || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-9 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-9 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-9 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-9 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
-      - name: Summary ng1-ng9
+      - name: Reconcile ng1-ng9
         if: always()
+        env:
+          CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
         run: |
+          set -u
           echo "## NG-1 to NG-9 Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          # .gate-verdicts.txt 읽기
+          if [ ! -f "$GITHUB_WORKSPACE/.gate-verdicts.txt" ]; then
+            echo "::error::NG-1~9 .gate-verdicts.txt 미발생 — 게이트 step 이 실행되지 않았을 가능성"
+            exit 1
+          fi
+
+          # 담당 범위(NG-1~9)의 verdicts 읽기
+          declare -A verdicts
+          while read -r line; do
+            gate=$(echo "$line" | cut -d' ' -f1)
+            rc=$(echo "$line" | cut -d' ' -f2)
+            verdicts[$gate]=$rc
+          done < "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+
+          # 표 렌더 + 미실행 검출
           for i in 1 2 3 4 5 6 7 8 9; do
-            step="ng$i"
-            if [ -v STEPS_${step}_OUTCOME ]; then
-              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            gate="NG-$i"
+            if [ -z "${verdicts[$gate]:-}" ]; then
+              echo "::error::$gate verdict 줄 누락 — step 이 실행되지 않음 (D1 재발)"
+              exit 1
+            fi
+            rc="${verdicts[$gate]}"
+            case "$rc" in
+              0) status="PASS" ;;
+              1) status="RED" ;;
+              3) status="INCONCLUSIVE" ;;
+              *) status="UNKNOWN($rc)" ;;
+            esac
+            echo "| $gate | \`$status\` |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          # allowlist 양방향 bijection 검증
+          declare -A declared_gates
+          for gate in $CI_INCONCLUSIVE_DECLARED; do
+            declared_gates[$gate]=1
+          done
+
+          # 미선언 게이트가 3을 냈는지 검증
+          for i in 1 2 3 4 5 6 7 8 9; do
+            gate="NG-$i"
+            rc="${verdicts[$gate]}"
+            if [ "$rc" = "3" ] && [ -z "${declared_gates[$gate]:-}" ]; then
+              echo "::error::$gate 가 INCONCLUSIVE(3) 를 냈으나 CI_INCONCLUSIVE_DECLARED 에 없음 (미선언 INCONCLUSIVE)"
+              exit 1
             fi
           done
+
+          # 선언된 게이트가 0/1을 냈는지 검증 (ratchet-UP)
+          for gate in $(echo $CI_INCONCLUSIVE_DECLARED | tr ' ' '\n' | grep '^NG-[1-9]$'); do
+            rc="${verdicts[$gate]:-}"
+            if [ -n "$rc" ] && [ "$rc" != "3" ]; then
+              echo "::error::$gate 는 CI_INCONCLUSIVE_DECLARED 에 있으나 $rc 를 냈음 (판정 가능해졌으면 allowlist 에서 빼라 — ratchet-UP)"
+              exit 1
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✓ NG-1~9 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
 
   gates-ng10-ng15:
     name: NG-10 to NG-15 (contract integrity + AC-3)
@@ -230,36 +348,58 @@ jobs:
 
       - name: NG-10 | spawn-event 4-location parity
         id: ng10
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_spawn_event_location_parity.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-10 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-10 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-10 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-10 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-11 | dev-process-event 5-location parity
         id: ng11
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_dev_process_event_location_parity.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-11 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-11 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-11 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-11 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-12 | hook merge registration
         id: ng12
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_hook_merge_registration.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-12 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-12 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-12 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-12 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-13 | return-envelope handle
         id: ng13
+        if: always()
         run: |
           set -u
           # NG-13 = return-envelope handle checker: caller-supplied predicate (identity_bearing: false)
@@ -274,41 +414,113 @@ jobs:
           #   검사하던 필드명(`handle`)이 스크립트가 실제로 보는 필드와 아예 달라서,
           #   _check_handle 을 통째로 무력화해도 통과했다 — 즉 이 지목이 거짓이었다 (CFP-2926 봉합).
           #   ⇒ 그 테스트는 아래 phase2-unit-tests job 이 CI 에서 실제로 실행한다.
-          exit 3
+          rc=3
+          printf 'NG-13 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          echo "::notice::NG-13 INCONCLUSIVE — CI 에 caller envelope 부재로 ★미실행★(PASS 아님). 실 검증면은 위 주석의 명명 테스트."
 
       - name: NG-14 | AC-3 stop-event prose (false guarantee)
         id: ng14
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_stop_event_prose.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-14 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-14 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-14 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-14 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-15 | AC-3 stop-event concurrent append
         id: ng15
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_stop_event_concurrent_append.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-15 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-15 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-15 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-15 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
-      - name: Summary ng10-ng15
+      - name: Reconcile ng10-ng15
         if: always()
+        env:
+          CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
         run: |
+          set -u
           echo "## NG-10 to NG-15 Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          # .gate-verdicts.txt 읽기
+          if [ ! -f "$GITHUB_WORKSPACE/.gate-verdicts.txt" ]; then
+            echo "::error::NG-10~15 .gate-verdicts.txt 미발생 — 게이트 step 이 실행되지 않았을 가능성"
+            exit 1
+          fi
+
+          # 담당 범위(NG-10~15)의 verdicts 읽기
+          declare -A verdicts
+          while read -r line; do
+            gate=$(echo "$line" | cut -d' ' -f1)
+            rc=$(echo "$line" | cut -d' ' -f2)
+            verdicts[$gate]=$rc
+          done < "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+
+          # 표 렌더 + 미실행 검출
           for i in 10 11 12 13 14 15; do
-            step="ng$i"
-            if [ -v STEPS_${step}_OUTCOME ]; then
-              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            gate="NG-$i"
+            if [ -z "${verdicts[$gate]:-}" ]; then
+              echo "::error::$gate verdict 줄 누락 — step 이 실행되지 않음 (D1 재발)"
+              exit 1
+            fi
+            rc="${verdicts[$gate]}"
+            case "$rc" in
+              0) status="PASS" ;;
+              1) status="RED" ;;
+              3) status="INCONCLUSIVE" ;;
+              *) status="UNKNOWN($rc)" ;;
+            esac
+            echo "| $gate | \`$status\` |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          # allowlist 양방향 bijection 검증
+          declare -A declared_gates
+          for gate in $CI_INCONCLUSIVE_DECLARED; do
+            declared_gates[$gate]=1
+          done
+
+          # 미선언 게이트가 3을 냈는지 검증
+          for i in 10 11 12 13 14 15; do
+            gate="NG-$i"
+            rc="${verdicts[$gate]}"
+            if [ "$rc" = "3" ] && [ -z "${declared_gates[$gate]:-}" ]; then
+              echo "::error::$gate 가 INCONCLUSIVE(3) 를 냈으나 CI_INCONCLUSIVE_DECLARED 에 없음 (미선언 INCONCLUSIVE)"
+              exit 1
             fi
           done
+
+          # 선언된 게이트가 0/1을 냈는지 검증 (ratchet-UP)
+          for gate in $(echo $CI_INCONCLUSIVE_DECLARED | tr ' ' '\n' | grep -E '^NG-(1[0-5])$'); do
+            rc="${verdicts[$gate]:-}"
+            if [ -n "$rc" ] && [ "$rc" != "3" ]; then
+              echo "::error::$gate 는 CI_INCONCLUSIVE_DECLARED 에 있으나 $rc 를 냈음 (판정 가능해졌으면 allowlist 에서 빼라 — ratchet-UP)"
+              exit 1
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✓ NG-10~15 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
 
   gates-ng16-ng21:
     name: NG-16 to NG-21 (runtime + doc/config)
@@ -333,26 +545,41 @@ jobs:
 
       - name: NG-16 | AC-1 L1 SubagentStop auto emit
         id: ng16
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_subagent_stop_auto_emit.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-16 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-16 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-16 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-16 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-17 | sentinel fail-open removal (deprecation)
         id: ng17
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_parallel_work_sentinel.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-17 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-17 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-17 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-17 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-18 | CI run completeness (expected vs actual) — INCONCLUSIVE 고정
         id: ng18
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           # PR 은 merge commit 이 아니라 head SHA 에 run 이 달린다.
@@ -387,6 +614,8 @@ jobs:
           echo "NG-18 diagnostic rc=${rc:-0} (아래 verdict 는 ★진단용★ — 스텝 판정에 쓰지 않는다)"
           cat /tmp/ng18.json
           cat /tmp/ng18.err
+          rc=3
+          printf 'NG-18 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
           {
             echo "### NG-18 — INCONCLUSIVE (고정 선언)"
             echo ""
@@ -398,51 +627,128 @@ jobs:
             echo "⇒ 따라서 이 스텝의 verdict 는 **PASS 도 FAIL 도 주장하지 않는다**(exit 3). 위 rc/JSON 은 진단용."
             echo "산술 코어는 판별력이 있다(5/5→PASS, 5/2→RED) — 결함은 **입력 정의**에 있다."
           } >> "$GITHUB_STEP_SUMMARY"
-          exit 3
+          echo "::notice::NG-18 INCONCLUSIVE — 배선정정·but 입력정의부당 → CI패킷부재와 유사 상황(PASS 아님). ratchet대상."
 
       - name: NG-19 | AC-7 story diff ADR-064 untouched
         id: ng19
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_story_diff_adr064.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-19 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-19 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-19 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-19 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-20 | AC-9 K-list untouched (9 items)
         id: ng20
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_klist_untouched.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-20 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-20 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-20 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-20 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
       - name: NG-21 | AC-12 slot budget table sum
         id: ng21
+        if: always()
         run: |
           set -u
           python3 scripts/lib/check_slot_budget_table.py --repo-root . || rc=$?
-          case ${rc:-0} in
-            0|1|3) exit ${rc:-0} ;;
-            *) echo "::error::NG-21 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          rc=${rc:-0}
+          case $rc in
+            0|1|3) ;;
+            *) echo "::error::NG-21 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+          printf 'NG-21 %s\n' "$rc" >> "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+          case $rc in
+            1) exit 1 ;;
+            3) echo "::notice::NG-21 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
-      - name: Summary ng16-ng21
+      - name: Reconcile ng16-ng21
         if: always()
+        env:
+          CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
         run: |
+          set -u
           echo "## NG-16 to NG-21 Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          # .gate-verdicts.txt 읽기
+          if [ ! -f "$GITHUB_WORKSPACE/.gate-verdicts.txt" ]; then
+            echo "::error::NG-16~21 .gate-verdicts.txt 미발생 — 게이트 step 이 실행되지 않았을 가능성"
+            exit 1
+          fi
+
+          # 담당 범위(NG-16~21)의 verdicts 읽기
+          declare -A verdicts
+          while read -r line; do
+            gate=$(echo "$line" | cut -d' ' -f1)
+            rc=$(echo "$line" | cut -d' ' -f2)
+            verdicts[$gate]=$rc
+          done < "$GITHUB_WORKSPACE/.gate-verdicts.txt"
+
+          # 표 렌더 + 미실행 검출
           for i in 16 17 18 19 20 21; do
-            step="ng$i"
-            if [ -v STEPS_${step}_OUTCOME ]; then
-              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            gate="NG-$i"
+            if [ -z "${verdicts[$gate]:-}" ]; then
+              echo "::error::$gate verdict 줄 누락 — step 이 실행되지 않음 (D1 재발)"
+              exit 1
+            fi
+            rc="${verdicts[$gate]}"
+            case "$rc" in
+              0) status="PASS" ;;
+              1) status="RED" ;;
+              3) status="INCONCLUSIVE" ;;
+              *) status="UNKNOWN($rc)" ;;
+            esac
+            echo "| $gate | \`$status\` |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          # allowlist 양방향 bijection 검증
+          declare -A declared_gates
+          for gate in $CI_INCONCLUSIVE_DECLARED; do
+            declared_gates[$gate]=1
+          done
+
+          # 미선언 게이트가 3을 냈는지 검증
+          for i in 16 17 18 19 20 21; do
+            gate="NG-$i"
+            rc="${verdicts[$gate]}"
+            if [ "$rc" = "3" ] && [ -z "${declared_gates[$gate]:-}" ]; then
+              echo "::error::$gate 가 INCONCLUSIVE(3) 를 냈으나 CI_INCONCLUSIVE_DECLARED 에 없음 (미선언 INCONCLUSIVE)"
+              exit 1
             fi
           done
+
+          # 선언된 게이트가 0/1을 냈는지 검증 (ratchet-UP)
+          for gate in $(echo $CI_INCONCLUSIVE_DECLARED | tr ' ' '\n' | grep -E '^NG-(1[6-9]|2[0-1])$'); do
+            rc="${verdicts[$gate]:-}"
+            if [ -n "$rc" ] && [ "$rc" != "3" ]; then
+              echo "::error::$gate 는 CI_INCONCLUSIVE_DECLARED 에 있으나 $rc 를 냈음 (판정 가능해졌으면 allowlist 에서 빼라 — ratchet-UP)"
+              exit 1
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✓ NG-16~21 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
 
   gate-x16-bijection:
     name: X-16 registry NG rows to Story NG table bijection
@@ -670,4 +976,4 @@ jobs:
           echo "⚠️ **Warning-tier** (phase-gate required 8-tuple 미등재, ADR-171)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> 위 job 들은 \`continue-on-error: true\` (warning-tier) 다 — \`job=\` 값만으로 PASS 를 단정하지 말고" >> $GITHUB_STEP_SUMMARY
-          echo "> X-16 은 \`verdict\`/\`exit\` 를, NG-n 은 각 job 의 step summary 표를 근거로 읽어라." >> $GITHUB_STEP_SUMMARY
+          echo "> X-16 은 \`verdict\`/\`exit\` 를, NG-1~21 은 각 job 의 Reconcile step 이 렌더한 표(PASS/RED/INCONCLUSIVE 3-state)를 근거로 읽어라." >> $GITHUB_STEP_SUMMARY
