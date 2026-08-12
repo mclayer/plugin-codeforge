@@ -4,10 +4,10 @@
 
 목적:
   모든 turn 에 ADR-071 §결정 22 의 자명-진행 자율 norm 을 additionalContext 로 무조건(unconditional)
-  inject 한다. scope = 모든 자명-진행 지점 (Story 전환 + lane 경계 + 작업 완료-후 + vague-pause 금지)
-  — ADR-144 §결정 3 로 "Story 전환 한정"에서 일반화. 전환·lane 경계·완료-후 어느 지점에서든 부당하게
-  멈추거나(over-halt) 확인 질문(over-ask)하거나, 잔여작업 有 + 결정 payload=0 인 vague-pause
-  ("한 숨 쉬어가자")로 정지하는 것을 억제하는 reminder hook. 정당 멈춤 3종(ask-trigger)은 carve-out 보존.
+  inject 한다. scope = 모든 자명-진행 지점 (Story 전환 + lane 경계 + 작업 완료-후 + 기명 illegal-stop
+  form 금지) — ADR-144 §결정 3 로 "Story 전환 한정"에서 일반화. 전환·lane 경계·완료-후 어느 지점에서든
+  ADR-025 §결정 7 form-set fence 가 등재한 기명 illegal-stop form 으로 정지하는 것을 억제하는 reminder
+  hook (form 명 원본 = 그 fence, 본 파일 TEXT 는 전파면). 정당 멈춤 3종(ask-trigger)은 carve-out 보존.
 
   tier: [advisory / priming]
     (taxonomy 명명·priming; NEVER block — 본 reminder hook 은 절대 deny/block 안 함. ADR-144 §결정 3/7)
@@ -77,8 +77,11 @@ def _read_input() -> str:
 def _build_reminder() -> str:
     """ADR-071 §결정 22 / ADR-144 §결정 3 자명-진행 자율 규칙 정적 system-reminder 블록.
 
-    scope = 모든 자명-진행 지점 (전환 + lane 경계 + 완료-후 + vague-pause 금지). STATIC (runtime value
-    interpolation 금지, no PII) — 사용자 prompt echo 절대 금지.
+    scope = 모든 자명-진행 지점 (전환 + lane 경계 + 완료-후 + 기명 illegal-stop form 금지). STATIC
+    (runtime value interpolation 금지, no PII) — 사용자 prompt echo 절대 금지.
+
+    form 명 원본 = ADR-025 §결정 7 form-set fence (본 TEXT 는 전파면). fence 등재 id 는 backtick
+    anchor 표기로 둔다 (ADR-025 §A4-2 anchor 표기 규약).
     """
     return "\n".join(
         [
@@ -90,12 +93,26 @@ def _build_reminder() -> str:
             "- lane 경계(레인 전이)에서도 자동 진행이 default — 다음 lane 진입을 별도 확인 없이 이어서 진행.",
             "- 작업 완료-후 다음 자명 작업(backlog 후속 / 다음 자명 단계)으로도 자동 진행이 default — "
             "완료 보고 후 무발화 정지·확인 질문 금지.",
-            "- 전환·lane 경계·완료-후 어느 지점에서든 무발화로 멈추거나(over-halt) \"다음 진행할까요?\" 확인 "
-            "질문(over-ask) 하지 마라 — 둘 다 §결정 15(3-touchpoint)·§결정 20(ask-trigger 3종) 어디에도 미해당인 부당한 멈춤.",
-            "- vague-pause(\"한 숨 쉬어가자\" 류 = 잔여작업 有 + 결정 payload=0 + volitional 발화) 금지 — "
+            "- 전환·lane 경계·완료-후 어느 지점에서든 무발화로 멈추거나(`over-halt`) \"다음 진행할까요?\" 확인 "
+            "질문(`over-ask`) 하지 마라 — 둘 다 §결정 15(3-touchpoint)·§결정 20(ask-trigger 3종) 어디에도 미해당인 부당한 멈춤.",
+            "- `vague-pause`(\"한 숨 쉬어가자\" 류 = 잔여작업 有 + 결정 payload=0 + volitional 발화) 금지 — "
             "decision-null pause 는 ask-trigger 3종 미해당 부당 정지 (ADR-144 §결정 2 / ADR-025 §결정 7 Amendment 3).",
+            "- `status-report-then-halt`(\"다음은 X 단계입니다\" 류 정보성 보고 후 정지) 금지 — 같은 축의 보고-편승 "
+            "form. 보고 후 이어갈 잔여작업이 있으면 계속 진행이 default (ADR-025 §결정 7 Amendment 4).",
+            "- `limit-signal-halt`(\"세션 한도라 여기서 멈추겠습니다\" 류 한도류 신호 발 정지) 금지 — 한도류 신호는 "
+            "정지의 계기일 뿐 결정 payload 가 아니다. 세션 한도는 정당 멈춤 목록에 미등재이며 등재하지 않는다 "
+            "(사람이 해야 할 액션의 1회 통지는 정당 — 금지 대상은 통지 후 무기한 대기).",
+            "- 판별은 예시 문구가 아니라 discriminant 가 primary 다 — 잔여작업 有 + 결정 payload=0 + volitional "
+            "발화(payload>0 인 확인·승인 요구는 ask-trigger 3종 미해당일 때 부당). 표층 문구만 피하면 같은 축의 "
+            "다음 변형이 그대로 빠져나간다.",
+            "- 진행 보고 자체는 의무(ADR-038)이나 보고의 정당성이 뒤따르는 정지의 정당성으로 전이되지 않는다 — "
+            "보고를 근거로 정지를 정당화하지 마라.",
+            "- 축 경계(오분류 1순위): \"그 시점에 다음 tool call 을 할 수 있었는가\" — 할 수 있었는데 안 함만 위 form 이다. "
+            "할 수 없었던 정지(비의지적 stall / 세션 실제 사망)는 대상 밖이며 force-resume·복구 경로 소관.",
             "- 정당한 멈춤 3종만 전환 지점에서도 보존(억제 대상 아님): ① 요구 자체가 애매 / "
             "② 진짜 가치 trade-off(default 비자명) / ③ 비가역·고비용.",
+            "- form 명 원본 = ADR-025 §결정 7 form-set fence, 본 reminder 는 전파면. 강제력은 명명·priming "
+            "까지이고 runtime hard-deny 는 부재다 — 본 hook 은 절대 block 하지 않는다.",
             "- session-swap(\"context 가득 → 별 세션\")은 별 축(§결정 18) — 본 norm 과 disjoint, "
             "cross-ref only.",
             "</system-reminder>",

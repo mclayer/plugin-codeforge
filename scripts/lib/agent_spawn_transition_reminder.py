@@ -5,8 +5,9 @@
 목적:
   PreToolUse(Agent) hook(pretooluse-agent-spawn-gate)이 매 Agent spawn 직전 호출하는 self-contained
   stdlib python 모듈. Agent spawn = autonomous 전환 창 priming 이므로, ADR-071 §결정 22 / ADR-144 §결정 3
-  의 자명-진행 자율 norm ("Story 전환 + lane 경계 + 완료-후 자동 이어서 진행 default, over-halt/over-ask/
-  vague-pause 금지(정당 멈춤 3종 예외)")을 `hookSpecificOutput.additionalContext` 로 non-block inject 한다.
+  의 자명-진행 자율 norm ("Story 전환 + lane 경계 + 완료-후 자동 이어서 진행 default, ADR-025 §결정 7
+  form-set fence 등재 기명 illegal-stop form 금지(정당 멈춤 3종 예외)")을
+  `hookSpecificOutput.additionalContext` 로 non-block inject 한다.
   scope 는 ADR-144 §결정 3 로 "Story 전환 한정"에서 모든 자명-진행 지점으로 일반화.
 
   tier: [advisory / priming]
@@ -80,15 +81,28 @@ def _is_lane_pl(subagent_type: str) -> bool:
 
 
 def _build_context(subagent_type: str) -> str:
-    """전환-자율 priming 문자열 반환. SPAWN_MARKER 로 시작. lane-PL 이면 targeting 문장 1개 추가."""
+    """전환-자율 priming 문자열 반환. SPAWN_MARKER 로 시작. lane-PL 이면 targeting 문장 1개 추가.
+
+    form 명 원본 = ADR-025 §결정 7 form-set fence (본 TEXT 는 전파면). fence 등재 id 는 backtick
+    anchor 표기로 둔다 (ADR-025 §A4-2 anchor 표기 규약). STATIC — runtime value interpolation 0.
+    """
     base = (
         "[codeforge story-transition-autonomy] Agent spawn = autonomous 전환 창 priming "
         "(ADR-071 §결정 22 / ADR-144 §결정 3): Story 전환·lane 경계·작업 완료-후 어느 자명-진행 지점도 "
-        "자동 이어서 진행이 default. over-halt(무발화 정지)·over-ask(\"다음 진행할까요?\") 금지 + "
-        "vague-pause(\"한 숨 쉬어가자\" = 잔여작업 有 + 결정 payload=0 + volitional 발화) 금지 "
-        "(decision-null pause, ADR-144 §결정 2 / ADR-025 §결정 7 Amendment 3) — 정당 멈춤 3종"
-        "(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 만 예외. session-swap 은 "
-        "disjoint 축(§결정 18)."
+        "자동 이어서 진행이 default. 기명 illegal-stop form 금지 — `over-halt`(무발화 정지) · "
+        "`over-ask`(\"다음 진행할까요?\" 확인 질문) · `vague-pause`(\"한 숨 쉬어가자\") · "
+        "`status-report-then-halt`(\"다음은 X 단계입니다\" 류 정보성 보고 후 정지) · "
+        "`limit-signal-halt`(\"세션 한도라 여기서 멈추겠습니다\" 류 한도류 신호 발 정지). "
+        "판별은 예시 문구가 아니라 discriminant 가 primary 다 — 잔여작업 有 + 결정 payload=0 + "
+        "volitional 발화(payload>0 인 확인·승인 요구는 ask-trigger 3종 미해당일 때 부당) "
+        "(decision-null pause, ADR-144 §결정 2 / ADR-025 §결정 7 Amendment 3·4) — 정당 멈춤 3종"
+        "(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 만 예외. "
+        "진행 보고 자체는 의무(ADR-038)이나 보고의 정당성이 뒤따르는 정지의 정당성으로 전이되지 않는다. "
+        "한도류 신호는 정지의 계기일 뿐 payload 가 아니며, 사람이 해야 할 액션의 1회 통지만 정당하다"
+        "(금지 대상 = 통지 후 무기한 대기). 축 경계: \"그 시점에 다음 tool call 을 할 수 있었는가\" — "
+        "할 수 있었는데 안 함만 위 form 이고, 불가능했던 정지(비의지적 stall / 세션 실제 사망)는 대상 밖. "
+        "form 명 원본 = ADR-025 §결정 7 form-set fence, 본 문구는 전파면 — 강제력은 명명·priming 까지이고 "
+        "runtime hard-deny 는 부재다. session-swap 은 disjoint 축(§결정 18)."
     )
     if _is_lane_pl(subagent_type):
         base += (

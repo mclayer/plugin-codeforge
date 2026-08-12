@@ -2987,6 +2987,12 @@ Decider PASS / FIX / pick 결정 후 Orchestrator 가 사용자에게 "진행할
 
 ### 불법 stop 패턴 (반드시 회피)
 
+본 표는 wrapper 규범의 **mirror** 다 — 판정문 원본은 wrapper archive/adr/ADR-025-stop-discipline-non-whitelist-as-defect.md §결정 7 이고, **기명 form id 집합의 유일 원본은 그 안의 form-set fence** 다. 본 절은 전파면이므로 요지 + 참조만 두며 wrapper 판정문을 복사하지 않는다.
+
+**판별 규율 (예시가 아니라 discriminant 가 primary)**: 표층 문구 열거만 피하면 같은 축의 다음 변형이 그대로 빠져나간다. 축 A2 = 잔여작업 有 ∧ 결정 payload = 0 ∧ volitional 발화 / 축 A1 = 잔여작업 有 ∧ payload > 0 ∧ ask-trigger 3종(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 미해당.
+
+**축 경계 (오분류 1순위)**: "그 시점에 다음 tool call 을 할 수 있었는가" — 할 수 있었는데 안 함만 아래 form 이다. 할 수 없었던 정지(비의지적 stall / 세션 실제 사망)는 정의역 밖이며 대화 규칙이 아니라 force-resume·복구 경로 소관이다.
+
 | Pattern | Defect 사유 |
 |---|---|
 | "후보 A/B/C/D 중 어떤거?" | sub-decision 자동 처리 의무 — PL pl_recommendation / 직전 사용자 directive 자동 진행 (Amendment 2 정정 후, 이전 ~~"Codex+Sonnet 자동 처리 의무"~~) |
@@ -2994,6 +3000,13 @@ Decider PASS / FIX / pick 결정 후 Orchestrator 가 사용자에게 "진행할
 | "Phase 1 완료, Phase 2 시작할까요?" | 1 Story / Epic 안의 sub-step (decision unit 분리 violation) |
 | "5 sub-CFP 중 첫 번째 완료, 다음 진행할까요?" | backlog 단위면 5 모두 처리 |
 | "final report 후 다음 작업 후보 결정 받음" | backlog 안 끝났으면 자동 발굴 + 진행 |
+| 잔여작업 有인데 **무발화**로 정지 (`over-halt` — 축 A2) | decision-null pause 의 silent form. 무발화라 발화 유무로 평가할 수 없고 위 축 경계 판별자로 평가한다. 정당 구분선: 다음 tool call 이 불가능했던 정지 / 합법 whitelist 발동 / 작업 단위 완료 후 final report. `[advisory]` |
+| "다음 진행할까요?" 류 확인 질문 (`over-ask` — 축 A1) | 확인·승인을 요구하는 정지인데 ask-trigger 3종 어디에도 미해당. 위 확인-질문 예시 행들이 이 form 의 변형이다. 정당 구분선: ask-trigger 3종 해당 발화 / Decider escalation / User environment 변경 1회 통지 / 작업 단위 완료 후 final report. `[advisory]` |
+| "한 숨 쉬어가자" 류 (`vague-pause` — 축 A2) | decision-null pause 의 verbalized form. 잔여작업이 남았는데 사용자에게 요구하는 결정이 0 인 의지적 정지. 정당 구분선: ask-trigger 3종 해당 발화(payload > 0). `[advisory]` |
+| "다음은 X 단계입니다" 류 정보성 보고 후 정지 (`status-report-then-halt` — 축 A2) | decision-null pause 의 보고-편승 form. 진행 보고 자체는 의무이나 **보고의 정당성이 뒤따르는 정지의 정당성으로 전이되지 않는다**. 정당 구분선: 보고 후 즉시 다음 작업 계속 / 작업 단위 완료 후 final report(terminal). `[advisory]` |
+| "세션 한도라 여기서 멈추겠습니다" 류 한도류 신호 발 정지 (`limit-signal-halt` — 축 A2) | 한도류 신호는 정지의 *계기*일 뿐 결정 payload 가 아니다(신호를 인용해도 사용자에게 요구하는 결정은 0). 대상 = 선제적 정지 제안 / 자식 리밋을 작업 종료로 오처리 / 제어 회복 후 재확인 질문. 세션 한도는 합법 whitelist 에 **미등재이며 등재하지 않는다**. 정당 구분선: 사람이 해야 할 액션의 1회 통지(User environment 변경 의무) 후 이어갈 잔여작업이 실제로 0 / 세션이 실제로 사망한 비의지적 종료. `[advisory]` |
+
+**강제력 상한 (over-claim 0)**: 위 기명 form 은 전부 `[advisory]` 다 — 명명·예방·priming 까지이며 runtime hard-deny 는 부재한다. 어떤 정적 검사도 "실제로 안 멈췄는가"를 판정하지 못하며, wrapper 측 mirror 정합 검사도 관측 tier 라 merge 를 차단하지 않는다. 본 절이 얻는 것은 self-recognize 를 돕는 명명뿐이다.
 
 ### Result 보고 형식 (1번)
 
