@@ -68,16 +68,25 @@ def test_frozen_anchor_5state_coverage(repo_root):
     a1 = frozen_anchor.verify_anchor(repo_root, "A-1")
     assert a1.status == frozen_anchor.ANCHOR_OK
 
-    # NOT_FOUND: 존재하지 않는 파일 + 존재하는 파일
+    # ANCHOR_NOT_FOUND: 존재하는 파일 + 파일에 없는 텍스트 패턴
+    # (파일 "ADR-044-phase-scoped-sequential-team.md" 는 존재하지만 "nonexistent-pattern" 은 없음)
     adr_path = repo_root / "archive" / "adr"
     if adr_path.exists():
-        nonexistent_resolution = frozen_anchor.resolve_anchor(
-            repo_root, "nonexistent-text-pattern-xyz", "archive/adr/ADR-044.md"
+        not_found_resolution = frozen_anchor.resolve_anchor(
+            repo_root,
+            "nonexistent-text-pattern-xyz-not-in-file",
+            "archive/adr/ADR-044-phase-scoped-sequential-team.md"
         )
-        assert nonexistent_resolution.status == frozen_anchor.ANCHOR_NOT_FOUND
+        assert not_found_resolution.status == frozen_anchor.ANCHOR_NOT_FOUND, (
+            f"Expected ANCHOR_NOT_FOUND for non-existent pattern in existing file, "
+            f"got {not_found_resolution.status}"
+        )
 
-    # RESOLVE_FAILED: 존재하지 않는 파일
+    # ANCHOR_RESOLVE_FAILED: 존재하지 않는 파일 경로
     failed_resolution = frozen_anchor.resolve_anchor(
         repo_root, "any-text", "nonexistent-file.md"
     )
-    assert failed_resolution.status == frozen_anchor.ANCHOR_RESOLVE_FAILED
+    assert failed_resolution.status == frozen_anchor.ANCHOR_RESOLVE_FAILED, (
+        f"Expected ANCHOR_RESOLVE_FAILED for non-existent file path, "
+        f"got {failed_resolution.status}"
+    )
