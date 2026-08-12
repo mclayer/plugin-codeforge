@@ -233,65 +233,41 @@ def test_form_set_parity_mutation_kill():
             adr_copy.parent.mkdir(parents=True, exist_ok=True)
             adr_copy.write_text(mutant_content, encoding="utf-8")
 
-            # ── 2×2 네 값 모두 assert ──
-            # [row] = 검사 종류: form-set-parity, vague-pause-taxonomy
-            # [col] = regime: baseline (원본 repo), mutant (tmp repo)
-            # 직접 seam 함수 호출로 subprocess 경로 문제 회피
+            # ── 검사 스크립트 2종을 tmp 로 복제 ──
+            for rel in ("scripts/lib/check_form_set_parity.py",
+                        "scripts/lib/check_vague_pause_taxonomy_presence.py"):
+                src_s = root / rel
+                dst_s = tmpdir_p / rel
+                dst_s.parent.mkdir(parents=True, exist_ok=True)
+                dst_s.write_text(src_s.read_text(encoding="utf-8"), encoding="utf-8")
 
-            # (1,1) baseline parity check — subprocess 이용
-            exit_parity_baseline, stdout_parity_baseline, _ = run_parity_check(root)
-            assert exit_parity_baseline == 0, (
-                f"M-A1 (1,1) parity baseline: exit={exit_parity_baseline}"
+            # ── 2×2 네 값 (검사 2종 × regime 2) ──
+            # (1,1) 신규 검사 / baseline
+            exit_parity_base, stdout_parity_base, _ = run_parity_check(root)
+            assert exit_parity_base == 0, f"M-A1 (1,1): expected 0, got {exit_parity_base}"
+            assert cfsp.MARKER in stdout_parity_base, "M-A1 (1,1): marker 부재"
+
+            # (1,2) 신규 검사 / mutant — KILL
+            exit_parity_mut, stdout_parity_mut, _ = run_parity_check(tmpdir_p)
+            assert exit_parity_mut == 1, (
+                f"M-A1 (1,2): 신규 검사가 form 삭제 mutant 를 죽여야 한다 "
+                f"(expected exit 1, got {exit_parity_mut}). "
+                f"2 = setup error 이며 kill 이 아니다. stdout={stdout_parity_mut}"
             )
+            assert cfsp.MARKER in stdout_parity_mut, "M-A1 (1,2): marker 부재"
 
-            # (1,2) mutant parity check — 직접 seam API 호출 (in-memory)
-            # tmpdir_p 의 mutant ADR 을 직접 읽어서 seam 함수 호출
-            mutant_adr_file = tmpdir_p / "archive" / "adr" / "ADR-025-stop-discipline-non-whitelist-as-defect.md"
-            mutant_adr_read = mutant_adr_file.read_text(encoding="utf-8")
+            # (2,1) 현행 lint / baseline
+            exit_vague_base, _, _ = run_vague_pause_check(root)
+            assert exit_vague_base == 0, f"M-A1 (2,1): expected 0, got {exit_vague_base}"
 
-            # fence 체크: mutant 에서 target_form_id 가 없어야 함
-            try:
-                fence_mutant_check = cfsp.parse_fence(mutant_adr_read)
-            except Exception as e:
-                raise AssertionError(f"M-A1 (1,2) mutant fence parse failed: {e}")
-
-            # 핵심 판정: target_form_id 가 fence 에서 제거됨
-            assert not any(fid == target_form_id for fid, _ in fence_mutant_check), (
-                f"M-A1 (1,2): target form {target_form_id} should be removed from fence. "
-                f"fence={fence_mutant_check}"
+            # (2,2) 현행 lint / mutant — SURVIVE (판별력 0 대조군)
+            # 현행 lint 는 taxonomy 라벨 3 리터럴 presence 만 보고 named 예시(form id)는 보지 않는다.
+            # 따라서 같은 mutant 에서 살아남으며, 그 생존이 곧 "예시 축 판별력 0" 의 증거다.
+            exit_vague_mut, _, _ = run_vague_pause_check(tmpdir_p)
+            assert exit_vague_mut == 0, (
+                f"M-A1 (2,2): 현행 lint 는 이 mutant 에서 생존해야 한다 "
+                f"(expected exit 0, got {exit_vague_mut}) — 생존이 판별력 순증의 근거다"
             )
-
-            # 또한 다른 surface 들은 target_form_id 를 여전히 보유해야 함
-            # (4면 불일치 발생 → 검사기가 RED 판정할 근거)
-            hook_ch1_path = tmpdir_p / "hooks" / "story-transition-autonomy-reminder.py"
-            if hook_ch1_path.is_file():
-                hook_ch1_content = hook_ch1_path.read_text(encoding="utf-8")
-                assert target_form_id in hook_ch1_content or f"`{target_form_id}`" in hook_ch1_content, (
-                    f"M-A1: target_form_id should still be in hook ch1 (4면 검사가 불일치 검출)"
-                )
-
-            # (2,1) baseline vague-pause check
-            exit_vague_baseline, _, _ = run_vague_pause_check(root)
-            assert exit_vague_baseline == 0, (
-                f"M-A1 (2,1) vague baseline: exit={exit_vague_baseline}"
-            )
-
-            # (2,2) mutant row-structure check — 생존 기대
-            # 행 구조 검사는 fence 를 읽지 않으므로 mutant 에서도 정상 작동
-            # seam API 직접 호출: check_row_structure (이것도 form id 무관한 검사)
-            try:
-                violations_row_mutant = cfsp.check_row_structure(mutant_adr_read)
-                # 행 구조 검사는 mutant 에서도 PASS (form id 삭제는 영향 없음)
-                # 따라서 D2/D3 검사는 생존 → 신규 form-set-parity 만 이 mutant 를 검출
-                assert violations_row_mutant == [], (
-                    f"M-A1 (2,2): row_structure 는 form 삭제 mutant 에 영향 무 (생존). "
-                    f"violations={violations_row_mutant}"
-                )
-            except Exception as e:
-                raise AssertionError(f"M-A1 (2,2) row_structure check failed: {e}")
-
-            # 최종 설명: form id 삭제 mutant 는 form-set-parity 만 검출
-            # D2/D3 row-structure 는 생존 → 신규 검사의 판별력 증명
 
     # ── 4. M-A5': 알려진 생존자 박제 ──
     # anchor 규약 밖 bare 산문 토큰(form-id 형식이지만 backtick/괄호 없음)은 미탐됨
