@@ -49,7 +49,14 @@ true** 가 된다. base 를 오지정하거나(존재하지 않는 ref → 해�
   (d) base 를 **호출자가 공급**한다. 호출자가 head 와 동일한 base 를 주면 0 파일 →
       RED 로 떨어지므로 조용한 통과는 막지만, "옳은 base 인가"는 판정 밖이다
       (probe echo 로 **리뷰 가능**하게만 만든다).
-  (e) 자원 안전성: 경로 문자열 위 anchored 정규식 1개 + 선형 순회. 이는
+  (e) **net-diff 의미론** — `base…head` 는 range 안 중간 상태를 접는다. 따라서
+      "range 안에서 ADR-064 를 **새로 만들었다가** 다른 이름으로 rename 해 치운"
+      경우 net diff 에 `ADR-064` 경로가 남지 않아 미검출이다 `[verified: 본 게이트
+      합성 repo 실측 — base 에 파일 부재 시 create→rename 은 최종 이름만 노출]`.
+      실 형상에서는 ADR-064 가 base(main)에 **이미 존재**하므로 삭제·rename 은
+      구 경로가 delete 로 노출돼 검출된다(그 경로는 명명 테스트가 커버). 그럼에도
+      "모든 접촉 형태를 검출한다"는 주장은 하지 않는다.
+  (f) 자원 안전성: 경로 문자열 위 anchored 정규식 1개 + 선형 순회. 이는
       **bounded degradation 선언**이지 "임의 입력 무해(ReDoS-safe)" 단정이 아니다 —
       복잡도 회귀 self-test·wall-clock 벤치마크 미동반 (ADR-168 §결정 16
       honest-ceiling).
