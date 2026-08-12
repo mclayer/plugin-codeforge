@@ -358,9 +358,15 @@ note "TEST: GREEN-2 — marker declare (exit 0)"
 # TEST: F-4 Bijection — repo top-level 전수 분류 (명시 정의 enum)
 # ═════════════════════════════════════════════════════════════════════════════
 note "TEST: F-4 bijection — repo top-level enum matching"
-# 현재 repo 의 top-level 을 읽어 전수 분류 확인
+# 현재 repo 의 top-level 을 읽어 전수 분류 확인.
+# 아래 두 enum = production 분류 SSOT(scripts/lib/check_living_architecture_update.py 의
+# FAMILY_STRUCTURAL_PREFIXES/EXACT + NON_STRUCTURAL_PREFIXES/EXACT + root `*.md` 규칙)의
+# top-level 단위 hand-mirror 다. production 이 신규 top-level 을 분류에 편입하면 여기도 동기해야 한다
+# (미동기 = 실 위반 아닌 false RED — CFP-2926 pytest.ini 사례).
 enum_struct=("plugins" "scripts" "templates" ".github" ".claude" "hooks" "skills" "overlay" ".claude-plugin" "docs")
-enum_nonstruct=("archive" "tests" "examples" ".gitignore" ".gitattributes" "CLAUDE.md" "README.md" "CONTRIBUTING.md" "mark.toml" "requirements.txt")
+# pytest.ini = CFP-2889 도입 · production NON_STRUCTURAL_EXACT 에 이미 등재(테스트 러너 marker 선언 config,
+# requirements.txt 와 동류). 본 mirror 만 미동기라 F-4 가 false RED 였다 (CFP-2926 동기).
+enum_nonstruct=("archive" "tests" "examples" ".gitignore" ".gitattributes" "CLAUDE.md" "README.md" "CONTRIBUTING.md" "mark.toml" "requirements.txt" "pytest.ini")
 
 # origin/main 기준 top-level 읽기
 top_level_entries=$(git -C "$REPO_ROOT" ls-tree --name-only origin/main 2>/dev/null | sort || echo "")
