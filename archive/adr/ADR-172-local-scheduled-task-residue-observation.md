@@ -30,7 +30,7 @@ related_files:
   - docs/orchestrator-playbook.md  # 비대화형 호출 계약 서브섹션 + ADR-128 정의역 mirror 5 anchor
   - skills/worktree-lifecycle/SKILL.md  # 정본 절차 SSOT (부트스트랩 지목 대상)
 is_transitional: false
-mechanical_enforcement_actions: []  # Phase 2 이행 — scheduled_task_reconcile.py + §8 명명 테스트(normative 9건) + playbook/skill 편집. 본 ADR = 결정 SSOT.
+mechanical_enforcement_actions: []  # Phase 2 이행 — scheduled_task_reconcile.py + §8 명명 테스트(normative 8건, iter5 집계) + playbook/skill 편집. 본 ADR = 결정 SSOT.
 ---
 
 # ADR-172: 로컬 스케줄 작업 기반 세션-독립 잔재 관측 — 도입기 관측-only 와 승격 게이트
@@ -45,7 +45,7 @@ codeforge 의 로컬 잔재 수렴(worktree eager teardown · residue-clean · s
 
 여기에 **세션과 독립적으로 운영자 머신에서 세션을 자동 개시하는 실행 surface**(Claude Desktop 로컬 스케줄 작업)가 등장했다. 이 surface 는 로컬 FS 도달 · 최소 간격 1분 · 세션 독립을 **동시에** 만족하는 유일한 축이다(Actions 는 로컬 미도달, 관리 클라우드·self-hosted 는 운영자 홈이 기본 구성 밖).
 
-동시에 이 surface 는 codeforge 에 **신뢰 밖 입력을 신뢰 안 환경에서 처리하는 최초 노드**를 도입한다. 지금까지 모든 기계 주체(Actions 러너)는 신뢰 밖 입력을 신뢰 밖 환경에서 처리했다. 스케줄 작업 세션은 운영자 머신에서 사람 없이 개시되며 자격증명 5종을 **주입이 아니라 상속**한다.
+동시에 이 surface 는 codeforge 에 **신뢰 밖 입력을 신뢰 안 환경에서 처리하는 최초 노드**를 도입한다. 지금까지 모든 기계 주체(Actions 러너)는 신뢰 밖 입력을 신뢰 밖 환경에서 처리했다. 스케줄 작업 세션은 운영자 머신에서 사람 없이 개시되며 권한면 **6종**을 **주입이 아니라 상속·누적**한다 — 5종은 세션 시작 시점에 host 설정·인증 상태로부터 **상속**되고, 1종(태스크별 저장 승인 "Always allowed")은 운영자의 1회 승인이 이후 전 run 에 영구 적용되며 **누적**된다.
 
 실행 surface 선택은 2026-08-12T12:15:00+09:00 사용자 결정이며, 그 지위는 **가치 판단**이다(배제된 축들은 "도달 불가"라는 사실 주장이 아니라 비용·위험 판단으로 범위 밖).
 
@@ -93,7 +93,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 
 **host `~/.claude/settings.json` 을 방어 lever 로 계상하지 않는다** — 실측이 `allow` 40건 · `deny` 키 부재 · `defaultMode: bypassPermissions` 이므로 **넓히는 방향으로만 작동하며 제한 기여가 0** 이다. 제한 기여 0 인 항목을 lever 로 세는 것 자체가 검사연극이다.
 
-★ **계상 금지 조건**: 위 권한 층은 **`deny` 가 스케줄 작업 세션에 실제로 적용되는지를 live 실측하기 전까지 lever 로 계상하지 않는다.** 미실측 상태의 "안전하다"는 서술은 그 자체가 검사연극이다(ADR-119).
+★ **계상 금지 조건**: 위 권한 층은 **각 lever 의 실효성을 스케줄 작업 세션에서 live 실측하기 전까지 lever 로 계상하지 않는다** — 3축 전건이 대상이다: (V1) `deny` 가 태스크 세션에 적용되는가 (V2) 태스크 permission mode 가 host `defaultMode` 를 상속하는가(상속하면 born-at-max-privilege) (V3) `disableBypassPermissionsMode` 가 user-scope 설정에서 실효하는가. 미실측 상태의 "안전하다"는 서술은 그 자체가 검사연극이다(ADR-119). **이는 어느 lever 가 무효라는 판정이 아니라, 판정 이전에 계상하지 말라는 요구다.**
 
 ### §결정 5 — reconcile 은 **상태 무의존**이고 **결정론 코드**다
 
@@ -133,6 +133,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 6. **상속 자격증명은 회수 불가** — `deny` 는 도구층 차단이지 scope 축소가 아니다.
 7. **명의 귀속의 근본 해소는 별 identity 발급인데 그것은 "자격증명 주입 0" 원칙과 정면 충돌한다** — 진짜 trade-off 이며 본 ADR 은 마커 완화만 선택했다.
 8. **비대화형 호출 계약은 문서 = advisory.** 기계 강제는 §결정 4 두 층에만 있다.
+9. **플랫폼 계약은 벤더 소유이고 본 결정이 그 위에 서 있다 — 변경 감시 트리거가 0 이다.** 누락 실행 회수의 7일 창, 단일 catch-up 후 older 폐기, skip 사유 3형상, per-task permission 모델, 작업 프롬프트 파일 경로, 자기수정 도구명은 전부 **공식 문서가 서술하는 벤더 계약**이지 우리가 통제하는 불변식이 아니다. 특히 **이름·경로에 결박된 검사**는 벤더가 rename 하면 실패로 드러나지 않고 **조용히 항상 통과**한다(vacuous-pass). §결정 5 의 상태 무의존 설계가 catch-up 정책 변경에는 견고하지만 **그것은 의도된 완화가 아니라 다른 목적의 부수 효과**다. ⇒ 대응은 **승격 시점 재실측 1점**뿐이며 상시 감시는 없다.
 
 **승격은 본 결정의 범위 밖이다.** 본 ADR 이 정하는 것은 승격 게이트의 설계(조건 · 주체 = **사용자** · rollback 경로 3종)까지이며 승격 실행은 별 Story 다. 자동 승격은 금지된다.
 
@@ -148,4 +149,4 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 
 ## 해소 기준
 
-N/A — permanent policy. 단 **승격 시점에 §결정 1·4·5 의 전제가 재검사 대상**이 된다(관측-only 가 깨지면 §결정 5 의 경합 방어 근거인 "read-modify-write 부재"도 함께 깨진다). 실행 surface 가 폐지되거나 로컬 잔재 수렴이 다른 경로로 required 승격되면 본 ADR 은 재검토된다.
+N/A — permanent policy. 단 **승격 시점에 §결정 1·4·5 의 전제가 재검사 대상**이 된다(관측-only 가 깨지면 §결정 5 의 경합 방어 근거인 "read-modify-write 부재"도 함께 깨진다). **아울러 승격 시점의 플랫폼 문서 재실측이 선행 의무**다 — 7일 창 · 단일 catch-up · skip 3형상 · permission 모델 · 작업 프롬프트 파일 경로 · 자기수정 도구명의 무변경을 확인하고, 변경 시 §결정 5 를 재검사 대상으로 올린다(결과 9 의 유일한 대응점). 실행 surface 가 폐지되거나 로컬 잔재 수렴이 다른 경로로 required 승격되면 본 ADR 은 재검토된다.
