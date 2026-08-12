@@ -303,7 +303,7 @@ amendment_log:
       한정 additive. 정적 frontmatter 41 파일 byte 무접촉 유지. 상세 = 본문 `## Amendment 8`.
     sunset_justification: >-
       N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 본 amendment 는
-      tier 정책 **약화 0**: ① 배정표(Amd1 haiku 7 / Amd2 sonnet 10 / Amd4 fable 10) 무접촉
+      tier 정책 **약화 0**: ① 배정표(Amd1 haiku 7 / Amd2 sonnet 14[frozen dated 결정치] · live 10 / Amd4 fable 10) 무접촉
       ② Amd 7 ≤ ceiling invariant 무변경 — 신 채널에서 그 불변식을 **어떻게** 충족할지만
       확정 ③ 방향 = **금지 추가**(명시 지정 금지)라 순 강화(ratchet-UP): 정정 전에는 workflow
       채널에 규범이 없어 임의 `model` 명시가 가능했고 그것이 유일한 ≤ 위반 경로였다 ④ 검사
