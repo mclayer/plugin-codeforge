@@ -953,7 +953,7 @@ opus Orchestrator 세션에서 fable 10역할이 opus 로 cap-down 되면 **Amd4
 
 ### A8-2. 재개봉 3층 근거 (firsthand)
 
-1. **dangling reference** — "기존 대기"의 "유지"는 선행 규범의 존재를 전제하는 동사인데, 그 선행 규범은 **어느 ADR 에도 정의된 바 없다**. 전 repo grep 결과 동일 문구는 같은 문장의 3-site mirror(본 ADR:757 / `docs/orchestrator-playbook.md`:531 / `skills/rate-limit-429-mitigation/SKILL.md`:121)뿐이다(별건 `archive/adr/ADR-026-post-merge-automation.md`:413 은 Actions concurrency queue 문맥으로 무관). 존재하지 않는 선행 규범을 인용하는 서술이 3중 mirror 로 증폭됐다.
+1. **dangling reference** — "기존 대기"의 "유지"는 선행 규범의 존재를 전제하는 동사인데, 그 선행 규범은 **어느 ADR 에도 정의된 바 없다**. 재개봉 조사 시점(base `3a7cae2f3` — 본 Amendment 착지 **이전**의 immutable ref)에 전 repo `grep -rn '기존 대기'` 를 실행한 결과, 그 문구를 **현행 규범으로 서술하는** site 는 같은 문장의 mirror 3곳 — 본 ADR A6-3(a) 항 · `docs/orchestrator-playbook.md` §3.0.12b `비대상 3종` bullet · `skills/rate-limit-429-mitigation/SKILL.md` `비대상 3종` bullet — 뿐이었다(별건 `archive/adr/ADR-026-post-merge-automation.md` 의 Actions concurrency queue 문맥 `pending 안 기존 대기 run` 은 동음이의로 무관). 존재하지 않는 선행 규범을 인용하는 서술이 3중 mirror 로 증폭됐다. **행번호를 기재하지 않는 이유**: 본 Amendment 자신의 삽입이 A6-3(a) 항의 행번호를 이동시킴이 실측됐다(base 에서의 행번호 ≠ 착지 후 행번호) — 자기참조 절대 행번호는 저작 시점에 이미 stale 이므로 **위치는 절 anchor 로만 지시**하고 재현은 위 grep 규칙 + A8-5 제외 술어로 한다.
 2. **제품 사실 불일치** — 세션 한도는 usage credits 활성·잔액 보유 시 hard stop 이 아니다(`If usage credits are enabled and you have funds available, you can choose to continue working.` — support 12429409). "대기"는 credits 축이 존재하지 않던 시점의 기술이다. 다만 정책 문면은 `choose` 이므로 "무발화 자동 계속"으로 옮겨 쓰는 것은 over-claim 이다(§A8-6).
 3. **규범 공백에서의 유일 근거 표면화 + 층간 모순** — "세션 한도 도달"은 ADR-025 §결정 6 whitelist 5종에 **미등재**이고 §결정 7 illegal 표에도 미등재였다. 그 공백에서 "한도에서 어떻게 하나"를 찾으면 나오는 것이 이 3 site 뿐이라, **failover 비대상 선언(remedy 축)이 행위 규범(정지 적법성 축)의 자리를 차지**했다. 반대 증거로 계약·집계 층은 리밋발 정지를 이미 부당으로 분류하고 있다 — `docs/inter-plugin-contracts/stop-event-v1.md` `policy_violation_rate_limit_induced` + `scripts/lib/aggregate_stop_event.py` `_ILLEGIT = ("policy_violation", "policy_violation_rate_limit_induced")`. 산문 규범 층만 "대기 유지"로 읽히는 **층간 모순**이 실 기전이다.
 
@@ -981,7 +981,12 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 
 - **판정문 verbatim SSOT = 본 ADR A6-3 + A8-3** 1곳.
 - `docs/orchestrator-playbook.md` §3.0.12b / `skills/rate-limit-429-mitigation/SKILL.md` = **pointer 화**. 단 skill 은 한도 대응 중 즉시 참조되는 문서이므로 **"1줄 요약 + 명시 포인터"** 형태를 표준으로 유지한다(전면 삭제 시 사고 대응 중 맥락 손실).
-- 개정 시 **동기 sweep 의무**: `기존 대기` 3-site(본 ADR:757 · playbook:531 · SKILL.md:121, ADR-026:413 제외) 전건. 한 곳 누락 = born-broken.
+- 개정 시 **동기 sweep 의무 (전수 술어 — 절대 site 수·행번호 assert 금지)**: sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 repo 전체에 실행해 얻은 hit 중 **아래 제외 술어를 적용한 나머지 전건**이다. 한 곳 누락 = born-broken.
+  - **제외①(동음이의)** `archive/adr/ADR-026-post-merge-automation.md` 의 GitHub Actions concurrency queue 문맥(`pending 안 기존 대기 run`) — 본 규범과 무관한 오탐.
+  - **제외②(메타 표면)** 본 ADR **Amendment 8 절 내부**의 인용·판정 서술(A8-1 현행 문언 인용 블록 · A8-2 · A8-3 · 본 항) — 폐기 *대상* 문언을 기록하는 면이라 **verbatim 보존이 의무**이며 개정 대상이 아니다.
+  - **제외③(이력 기록면)** frontmatter `amendment_log` — 제외② 와 동일 사유.
+  - 나머지(= A6-3(a) 본문 및 그 문장을 **현행 규범으로 mirror 하는 타 문서 site**)가 sweep 대상이다.
+  - **술어화 근거**: 절대 행번호·site 개수를 기준으로 쓰면 개정이 진행될수록 기준 자체가 stale 해진다 — 본 Amendment 자신의 삽입으로 A6-3(a) 행번호가 이동함이 실측됐다(A8-2-1). 동형 규율 = CFP-2944 Story AC-5/AC-11 "전수 술어 · 절대 site 수 assert 금지"(INV-T6) + `ADR-026` 문맥 제외(INV-T8).
 
 ### A8-6. 정직 천장
 
@@ -995,7 +1000,7 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 2. `docs/orchestrator-playbook.md`:531 · `skills/rate-limit-429-mitigation/SKILL.md`:121 — pointer 화(skill 은 1줄 요약 유지).
 3. `docs/orchestrator-playbook.md`:528 에 미분류 정의 cross-ref 1줄 추가(`미분류 = 6-literal 미매칭 ∧ ADR-109 Amendment 2 판별식 D 미충족` — 열거 복제 아닌 정의 포인터, 재열거 0).
 4. `CLAUDE.md` 결정·대화 원칙 절 — 한도류 신호 정지 금지 bullet(ADR-025 Amendment 4 + 본 Amendment cross-ref).
-5. 누락 위험 위치 2건 점검: 본 ADR:199(Amendment 6 fm scope 안 mention) · `docs/domain-knowledge/domain/runtime/external-session-auto-resume.md`:116(cascade 관계 서술) — 둘 다 "타 문서 인용 문맥"이라 편집자가 건너뛰기 쉽다.
+5. 누락 위험 위치 2건 점검: ① 본 ADR frontmatter `amendment_log` 의 Amendment 6 항목 `scope` 안 `user manual resume only` mention(**자기참조라 행번호 미기재** — 재현 = `grep -n 'user manual resume only' archive/adr/ADR-141-all-opus-single-tier.md`) ② `docs/domain-knowledge/domain/runtime/external-session-auto-resume.md`:116(cascade 관계 서술 — 외부 파일 anchor) — 둘 다 "타 문서 인용 문맥"이라 편집자가 건너뛰기 쉽다.
 
 ### Cross-ref
 

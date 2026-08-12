@@ -266,7 +266,9 @@ discriminant tier 는 `[advisory]`(turn-end plain-text)라 매 turn 재적용을
 
 ### A4-5. consumer mirror 동기 (§결정 9 이행)
 
-§결정 9 는 consumer 적용 가이드를 `docs/consumer-guide.md` § "Stop discipline + Epic-level continuity" 로 지정한다. 실측 결과 그 mirror 는 **Amendment 3 이후 미동기화** 상태다 — `docs/consumer-guide.md` §7.1 불법 stop 표는 5행이고 wrapper §결정 7 은 6행이며, `vague-pause` · `over-halt` · `over-ask` · `decision-null` · `ask-trigger` **전 패턴이 0-hit** 이다. 본 amendment 는 §결정 7 을 확장하므로 동기화 없이 진행하면 drift 가 1행에서 3행으로 확대된다. 따라서 consumer mirror 동기화를 본 amendment 범위에 포함한다(신규 의무 창설이 아니라 §결정 9 가 이미 선언한 mirror 의무의 이행).
+§결정 9 는 consumer 적용 가이드를 `docs/consumer-guide.md` § "Stop discipline + Epic-level continuity" 로 지정한다. 실측 결과 그 mirror 는 **Amendment 3 이후 미동기화** 상태다 — `docs/consumer-guide.md` §7.1 불법 stop 표에는 §결정 7 이 Amendment 3 에서 등재한 `vague-pause` 행이 **부재**하고, `vague-pause` · `over-halt` · `over-ask` · `decision-null` · `ask-trigger` **전 패턴이 0-hit** 이다(패턴 grep 기준 — 행수 대조가 아니다). 즉 §결정 7 form-set fence 가 등재한 named form id 중 consumer mirror 에 존재하는 것은 **본 Phase 1 착지 시점 실측 기준 0 건**이다(Phase 2 §A4-7-2 동기화로 해소 예정). 본 amendment 는 §결정 7 을 확장하므로 동기화 없이 진행하면 drift 가 `vague-pause` **1 form 에서 신규 2 form 을 더한 form 집합 전체**로 확대된다. 따라서 consumer mirror 동기화를 본 amendment 범위에 포함한다(신규 의무 창설이 아니라 §결정 9 가 이미 선언한 mirror 의무의 이행).
+
+**행수 표기를 쓰지 않는 이유 (자기참조 절대수치 금지)**: 본 amendment **자신이** §결정 7 표에 행을 추가하므로 "wrapper §결정 7 은 N행" 류 현재시제 수치는 **착지 즉시 stale** 이 된다. 판정 기준은 **form 집합 술어**(fence ↔ §결정 7 표 ↔ priming TEXT 2채널 ↔ consumer mirror 의 id 집합 동일성)이며 행수·site 수 assert 가 아니다 — §A4-2 검사 방향 2 및 [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 8 A8-5 전수 술어와 동형이고, CFP-2944 Story INV-T6("자기참조 절대수치 assert 금지")의 정의역에 **본 amendment 문면 자체**가 포함됨을 여기서 명시한다.
 
 ### A4-6. 정직 천장 (강제력 상한 — over-claim 금지)
 
