@@ -7,6 +7,8 @@ name: Orchestrator autonomy stop taxonomy lint (warning mode)
 #   (D1) form-set parity — ADR-025 §결정 7 form-set fence ↔ 4 전파면(§결정 7 표 · hook priming TEXT 2채널 ·
 #        docs/consumer-guide.md §7.1) form id 집합 동일성(검사 방향 2) + 행 단위 구조 요건 + negative-control presence.
 #        CFP-2944 / ADR-025 Amendment 4 §A4-2. tier: [정적] (관측 tier — merge 무차단).
+#   (D4) mirror anchor parity — 개정 anchor 가 선언된 mirror 전 site 에 존재하는지(ADR-141 Amd 8 · ADR-109 Amd 2).
+#        D1/D2/D3/D4 의 QADev 실행 채널 = tests/scripts/test_cfp2944_*.py (pytest). tier: [정적] (관측 tier — merge 무차단).
 # Tier: warning (non-required, ADR-060 §결정 5) — advisory/measurement, blocking 승격 = ADR-060 evidence-gate.
 #   branch protection required contexts 미추가 (순수 warning, PR merge 무차단).
 # byte-identical template mirror (ADR-005): templates/github-workflows/ ↔ .github/workflows/ 동일 바이트.
@@ -21,6 +23,10 @@ on:
       - 'skills/**'
       - 'docs/orchestrator-playbook.md'
       - 'docs/consumer-guide.md'
+      # QADev pytest 산출물 자기 트리거 (선례 = codex-promptfile-roundtrip-test.yml — 실행 대상 test 파일을 개별 명시).
+      - 'tests/scripts/test_cfp2944_form_set_parity_mutation_kill.py'
+      - 'tests/scripts/test_cfp2944_form_record_structure.py'
+      - 'tests/scripts/test_cfp2944_stop_norm_mirror_parity.py'
       - '.github/workflows/**'
 
 permissions:
@@ -43,6 +49,9 @@ jobs:
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
+
+      - name: Install test deps (pytest — QADev pytest 산출물 실행 전제)
+        run: pip install --quiet -r requirements.txt
 
       - name: Self-test — vague-pause taxonomy presence (L1, RED→GREEN discriminating)
         run: bash scripts/check-vague-pause-taxonomy-presence.sh --self-test
@@ -72,9 +81,17 @@ jobs:
         if: hashFiles('tests/scripts/test_check-subagent-wait-liveness-presence.sh') != ''
         run: bash tests/scripts/test_check-subagent-wait-liveness-presence.sh
 
-      - name: QADev test — form-set parity (D1/D2/D3)
-        if: hashFiles('tests/scripts/test_check-form-set-parity.sh') != ''
-        run: bash tests/scripts/test_check-form-set-parity.sh
+      - name: QADev pytest — form-set parity mutation-kill (D1, AC-8)
+        if: hashFiles('tests/scripts/test_cfp2944_form_set_parity_mutation_kill.py') != ''
+        run: python3 -m pytest tests/scripts/test_cfp2944_form_set_parity_mutation_kill.py -q
+
+      - name: QADev pytest — form-record 구조 + negative-control (D2/D3, AC-7a)
+        if: hashFiles('tests/scripts/test_cfp2944_form_record_structure.py') != ''
+        run: python3 -m pytest tests/scripts/test_cfp2944_form_record_structure.py -q
+
+      - name: QADev pytest — stop-norm mirror anchor parity (D4, AC-5·AC-11)
+        if: hashFiles('tests/scripts/test_cfp2944_stop_norm_mirror_parity.py') != ''
+        run: python3 -m pytest tests/scripts/test_cfp2944_stop_norm_mirror_parity.py -q
 
       - name: Run vague-pause taxonomy presence lint
         run: bash scripts/check-vague-pause-taxonomy-presence.sh
