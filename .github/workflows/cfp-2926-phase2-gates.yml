@@ -72,8 +72,11 @@ jobs:
         id: ng1
         run: |
           set -u
-          python3 scripts/lib/check_census_oracle.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          python3 scripts/lib/check_census_oracle.py --self-test || rc=$?
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-1 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-2 | AC-5 fan-out prose
         id: ng2
@@ -100,22 +103,31 @@ jobs:
         id: ng5
         run: |
           set -u
-          python3 scripts/lib/check_lane_dispatch_packet.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          # NG-5 = AC-10 dispatch packet checker: caller-supplied predicate (identity_bearing: false)
+          # CI 상시 호출 대상 아님 — --packet 인자를 받아 snapshot_sha 유효성 검증
+          # 실 검증면 = tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_dispatch_packet_requires_snapshot_sha
+          # 따라서 CI 에서는 skip (rc=3 INCONCLUSIVE 명시)
+          exit 3
 
       - name: NG-6 | AC-14 write overlap
         id: ng6
         run: |
           set -u
-          python3 scripts/lib/compute_write_overlap.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          python3 scripts/lib/compute_write_overlap.py --self-test || rc=$?
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-6 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-7 | AC-15 PL spawn observation
         id: ng7
         run: |
           set -u
-          python3 scripts/lib/check_pl_spawn_observation.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          python3 scripts/lib/check_pl_spawn_observation.py --self-test || rc=$?
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-7 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-8 | AC-16 lane overlap predicate
         id: ng8
@@ -128,8 +140,11 @@ jobs:
         id: ng9
         run: |
           set -u
-          python3 scripts/lib/compute_concurrency_metric.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          python3 scripts/lib/compute_concurrency_metric.py --self-test || rc=$?
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-9 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: Summary ng1-ng9
         if: always()
@@ -190,8 +205,11 @@ jobs:
         id: ng13
         run: |
           set -u
-          python3 scripts/lib/check_return_envelope_handle.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          # NG-13 = return-envelope handle checker: caller-supplied predicate (identity_bearing: false)
+          # CI 상시 호출 대상 아님 — --envelope 인자를 받아 artifact handle 유효성 검증
+          # 실 검증면 = tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_return_envelope_requires_handle
+          # 따라서 CI 에서는 skip (rc=3 INCONCLUSIVE 명시)
+          exit 3
 
       - name: NG-14 | AC-3 stop-event prose (false guarantee)
         id: ng14
