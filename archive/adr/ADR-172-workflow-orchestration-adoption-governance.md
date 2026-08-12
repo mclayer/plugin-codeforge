@@ -211,7 +211,12 @@ workflow 스크립트의 `agent()` `opts` 에 **`model` 키를 두지 않는다*
 - **신규 required context 0** — branch-protection 8-tuple 무변경 (Phase 1 doc-only).
 - **inter-plugin 계약 무변경** — 신규 contract/registry 파일 0 (packet 선택 필드 `pipeline_output` 은 Phase 2 lane 파일 소관이며 verdict envelope 스키마 무접촉 — Change Plan §4.5).
 - **신규 category 0** — `orchestration-discipline` 재사용.
-- ADR-058 §결정 5 관점 = **강화(ratchet) 방향** — 신규 채택 거버넌스 + fail-closed 불변식의 additive 신설, 기존 규범 완화 표면 0. sunset_justification N/A.
+- ADR-058 §결정 5 관점 = **강화(ratchet) 방향** — 신규 채택 거버넌스 + fail-closed 불변식의 additive 신설. sunset_justification N/A.
+- ★**§결정 3 규범 5(U12 carve-out) ↔ "완화 표면 0" 정합 (설계리뷰 iter1 D-02)**★ — 규범 5 는 blanket 철회 문면을 **좁힌다**. 그럼에도 약화가 아닌 이유:
+  - **비교 기준선 = merged repo 상태**다. 그 baseline 에는 Workflow 거버넌스가 **아예 없다**(as-is 공백 4건 = Change Plan §2.4). 본 ADR 전체가 **0 → 조건부 거버넌스** 이므로 net 방향은 여전히 순 강화이며, 규범 5 는 그 신설물 **내부의 경계 획정**이지 기존 규범의 완화가 아니다.
+  - **좁혀진 대상은 같은 Story 안에서 저작된, 아직 착지하지 않은 문면**이다 — 규범 5 는 §결정 3 초안의 blanket 문면과 같은 Story 의 기착지 설계 판단(Change Plan §7.3 · §8.2-D) 사이 **내부 모순을 해소**한 것이지, 발효 중인 규범을 사후 완화한 것이 아니다.
+  - **3중 협착(α U12 단일 축 / β leg-1 전건 성립 조건 / γ 대체 처분 사전 확정)** 이 재량 완화 경로를 남기지 않으며, 대체 처분 (ii)(iii)는 **declare 의무를 추가**하므로 그 축에서는 오히려 ratchet-UP 이다.
+  - ⇒ ADR-058 §결정 5 **약화-evidence gate 미발동** 판정. ★단 이 판정 자체가 설계리뷰 명시 확인 대상임을 declare 한다★(자기 판정으로 gate 를 면제하지 않는다).
 
 ## 해소 기준
 
