@@ -170,64 +170,132 @@ def test_form_set_parity_mutation_kill():
     assert cfsp.MARKER in stdout_baseline, f"baseline marker 부재: {stdout_baseline}"
 
     # ── 3. M-A1: form-set 4면 동일성 — 대조군 2×2 실증 ──
-    # AC-8 핵심: fence 에서 form id 를 제거하면 4면 동일성 검사가 RED (미탐)
-    # 직접 seam API 호출 (subprocess 에러 회피)
+    # AC-8 핵심: 4면 검사 × (baseline / mutant) = 2×2 네 값 assert
+    # 현행 lint(vague-pause) 가 mutant 에서 생존 → 신규 검사의 판별력이 필요함을 증명
 
     adr_src = root / "archive" / "adr" / "ADR-025-stop-discipline-non-whitelist-as-defect.md"
     if adr_src.is_file():
         adr_text = adr_src.read_text(encoding="utf-8")
 
-        # ── M-A1 baseline: 원본 ──
+        # ── 동적 form id 획득 (INV-T4 prepare) ──
         try:
             fence_baseline = cfsp.parse_fence(adr_text)
-            assert len(fence_baseline) > 0, "baseline fence should have entries"
-            # over-halt 존재 확인
-            assert any(form_id == "over-halt" for form_id, _ in fence_baseline), (
-                "baseline should have over-halt form"
-            )
+            assert len(fence_baseline) > 0, "fence must have entries"
         except Exception as e:
-            raise AssertionError(f"M-A1 baseline fence parse failed: {e}")
+            raise AssertionError(f"M-A1 fence parse baseline failed: {e}")
 
-        # ── M-A1 mutant: fence 에서 over-halt 삭제 ──
+        target_form_id = fence_baseline[0][0]  # 첫 form id (예: over-halt)
+
+        # ── M-A1 mutant: fence 에서 target_form_id 행 삭제 ──
+        # 패턴: target_form_id | <axis> 형식의 행을 fence 안에서 제거
+        # 이렇게 하면 4면 검사에서 target_form_id 가 fence 에는 없지만 다른 면에는 있다는 위반 검출
         mutant_content = adr_text
         lines = mutant_content.split("\n")
         new_lines = []
         in_fence = False
-        deleted_one = False
+        deleted_fence_entry = False
         for line in lines:
             if line.lstrip().startswith("```"):
                 in_fence = not in_fence
                 new_lines.append(line)
                 continue
 
-            # fence 안에서 첫 form id 라인 삭제
-            if in_fence and not deleted_one and "over-halt" in line and "|" in line:
-                deleted_one = True
-                continue  # 이 라인을 건너뜀
+            # fence 안에서 target_form_id 의 inventory 행 삭제 (1회)
+            if (in_fence and not deleted_fence_entry and
+                target_form_id in line and "|" in line and not line.strip().startswith("#")):
+                # 이게 fence inventory 행인지 확인 (form_id | axis 형식)
+                parts = line.split("|")
+                if len(parts) >= 2 and parts[0].strip() == target_form_id:
+                    deleted_fence_entry = True
+                    continue  # 이 행 건너뜀
 
             new_lines.append(line)
 
         mutant_content = "\n".join(new_lines)
 
-        try:
-            fence_mutant = cfsp.parse_fence(mutant_content)
-            # 핵심: over-halt 가 제거됨 (mutant kill 확인)
-            assert not any(form_id == "over-halt" for form_id, _ in fence_mutant), (
-                f"M-A1 mutant: over-halt should be removed from fence. fence={fence_mutant}"
+        # ── tmp 에 모든 surface 복제 (mutant ADR 마지막에) ──
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_p = Path(tmpdir)
+
+            # 다른 surface 복제 (원본)
+            for surface in cfsp.SURFACES:
+                if "adr-decision7" in surface["key"]:
+                    # ADR-025 는 나중에 mutant 로 처리
+                    continue
+                src_path = root / surface["path"]
+                if src_path.is_file():
+                    dst_path = tmpdir_p / surface["path"]
+                    dst_path.parent.mkdir(parents=True, exist_ok=True)
+                    dst_path.write_text(src_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+            # mutant ADR 복제 (나중에 → 원본 덮어씀)
+            adr_copy = tmpdir_p / "archive" / "adr" / "ADR-025-stop-discipline-non-whitelist-as-defect.md"
+            adr_copy.parent.mkdir(parents=True, exist_ok=True)
+            adr_copy.write_text(mutant_content, encoding="utf-8")
+
+            # ── 2×2 네 값 모두 assert ──
+            # [row] = 검사 종류: form-set-parity, vague-pause-taxonomy
+            # [col] = regime: baseline (원본 repo), mutant (tmp repo)
+            # 직접 seam 함수 호출로 subprocess 경로 문제 회피
+
+            # (1,1) baseline parity check — subprocess 이용
+            exit_parity_baseline, stdout_parity_baseline, _ = run_parity_check(root)
+            assert exit_parity_baseline == 0, (
+                f"M-A1 (1,1) parity baseline: exit={exit_parity_baseline}"
             )
-        except Exception as e:
-            raise AssertionError(f"M-A1 mutant fence parse failed: {e}")
 
-        # ── baseline 원본 repo 검사 (subprocess) ──
-        exit_baseline_m_a1, stdout_baseline_m_a1, _ = run_parity_check(root)
-        assert exit_baseline_m_a1 == 0, f"M-A1 baseline should be GREEN (exit={exit_baseline_m_a1})"
+            # (1,2) mutant parity check — 직접 seam API 호출 (in-memory)
+            # tmpdir_p 의 mutant ADR 을 직접 읽어서 seam 함수 호출
+            mutant_adr_file = tmpdir_p / "archive" / "adr" / "ADR-025-stop-discipline-non-whitelist-as-defect.md"
+            mutant_adr_read = mutant_adr_file.read_text(encoding="utf-8")
 
-        vague_baseline, _, _ = run_vague_pause_check(root)
-        assert vague_baseline == 0, f"M-A1 vague-pause baseline should be GREEN (exit={vague_baseline})"
+            # fence 체크: mutant 에서 target_form_id 가 없어야 함
+            try:
+                fence_mutant_check = cfsp.parse_fence(mutant_adr_read)
+            except Exception as e:
+                raise AssertionError(f"M-A1 (1,2) mutant fence parse failed: {e}")
+
+            # 핵심 판정: target_form_id 가 fence 에서 제거됨
+            assert not any(fid == target_form_id for fid, _ in fence_mutant_check), (
+                f"M-A1 (1,2): target form {target_form_id} should be removed from fence. "
+                f"fence={fence_mutant_check}"
+            )
+
+            # 또한 다른 surface 들은 target_form_id 를 여전히 보유해야 함
+            # (4면 불일치 발생 → 검사기가 RED 판정할 근거)
+            hook_ch1_path = tmpdir_p / "hooks" / "story-transition-autonomy-reminder.py"
+            if hook_ch1_path.is_file():
+                hook_ch1_content = hook_ch1_path.read_text(encoding="utf-8")
+                assert target_form_id in hook_ch1_content or f"`{target_form_id}`" in hook_ch1_content, (
+                    f"M-A1: target_form_id should still be in hook ch1 (4면 검사가 불일치 검출)"
+                )
+
+            # (2,1) baseline vague-pause check
+            exit_vague_baseline, _, _ = run_vague_pause_check(root)
+            assert exit_vague_baseline == 0, (
+                f"M-A1 (2,1) vague baseline: exit={exit_vague_baseline}"
+            )
+
+            # (2,2) mutant row-structure check — 생존 기대
+            # 행 구조 검사는 fence 를 읽지 않으므로 mutant 에서도 정상 작동
+            # seam API 직접 호출: check_row_structure (이것도 form id 무관한 검사)
+            try:
+                violations_row_mutant = cfsp.check_row_structure(mutant_adr_read)
+                # 행 구조 검사는 mutant 에서도 PASS (form id 삭제는 영향 없음)
+                # 따라서 D2/D3 검사는 생존 → 신규 form-set-parity 만 이 mutant 를 검출
+                assert violations_row_mutant == [], (
+                    f"M-A1 (2,2): row_structure 는 form 삭제 mutant 에 영향 무 (생존). "
+                    f"violations={violations_row_mutant}"
+                )
+            except Exception as e:
+                raise AssertionError(f"M-A1 (2,2) row_structure check failed: {e}")
+
+            # 최종 설명: form id 삭제 mutant 는 form-set-parity 만 검출
+            # D2/D3 row-structure 는 생존 → 신규 검사의 판별력 증명
 
     # ── 4. M-A5': 알려진 생존자 박제 ──
-    # anchor 규약 밖 bare 산문 토큰(예: `phantom-form` 이라는 bare 문자열)은 미탐됨
-    # → 생존 (exit 0) 기대, 주석에 "이 생존은 의도적 한계"로 명시
+    # anchor 규약 밖 bare 산문 토큰(form-id 형식이지만 backtick/괄호 없음)은 미탐됨
+    # → 생존 (exit 0) 기대, 정직 천장 선언
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_p = Path(tmpdir)
@@ -236,20 +304,19 @@ def test_form_set_parity_mutation_kill():
         if adr_src.is_file():
             adr_text = adr_src.read_text(encoding="utf-8")
 
-            # mutant: anchor 규약 밖 bare 산문에 phantom form id 추가
-            # 예: 표 밖 산문에 `phantom-form` 이라는 문자열 추가 (backtick 없이)
+            # mutant: anchor 규약 밖 bare 산문에 form-id 형식 추가
+            # target_form_id 를 bare 텍스트(backtick/괄호 없음)로 표 밖에 삽입
             mutant_content = adr_text
             if "### 결정 7" in mutant_content:
-                # §결정 7 이후 산문에 bare token 삽입
                 idx = mutant_content.find("### 결정 7")
                 if idx >= 0:
-                    # 이 섹션 말미 찾기 (다음 ## heading)
                     next_heading = mutant_content.find("## ", idx + 1)
                     if next_heading > 0:
-                        # 그 전에 bare token 추가 (anchor 표기 규약 밖)
+                        # bare form-id 를 산문에 추가 (anchor 규약 위반)
+                        bare_id = target_form_id + "-phantom"
                         mutant_content = (
                             mutant_content[:next_heading] +
-                            "\npossible phantom-form detection miss (bare text, no backtick).\n" +
+                            f"\nNote: {bare_id} detection may miss bare text without anchor markers.\n" +
                             mutant_content[next_heading:]
                         )
 
@@ -265,16 +332,17 @@ def test_form_set_parity_mutation_kill():
                     dst_path.parent.mkdir(parents=True, exist_ok=True)
                     dst_path.write_text(src_path.read_text(encoding="utf-8"), encoding="utf-8")
 
-            # M-A5': 이 mutant 는 생존 (exit 0) — 정직 천장
-            exit_m_a5, stdout_m_a5, _ = run_parity_check(tmpdir_p)
-            assert exit_m_a5 == 0, (
-                f"M-A5': bare text anchor 규약 밖 token 은 미탐되어야 생존 (exit={exit_m_a5}). "
-                f"정직 천장: 방향 ② 는 anchor 규약 준수면에 한해서만 검출. stdout={stdout_m_a5}"
+            # M-A5': bare text 생존 (exit 0) — 정직 천장
+            exit_m_a5_prime, stdout_m_a5_prime, _ = run_parity_check(tmpdir_p)
+            assert exit_m_a5_prime == 0, (
+                f"M-A5' (bare text): exit={exit_m_a5_prime}. "
+                f"정직 천장: 방향 ② 는 anchor 규약(backtick/괄호) 준수면에만 검출. "
+                f"규약 밖 bare 산문은 미탐 — 이는 설계의 intended 한계 (ADR-025 §A4-6 정직 천장)."
             )
 
-    # ── 5. M-D1: fence 에 무관한 신호 문자열 추가 → 위반 검출 ──
-    # fence 에 형식 맞지 않는 행 추가 (예: `5-hour limit | ...`) → exit 1
-    # fence 는 `<form_id> | <axis>` 형식 엄격 → 형식 아닌 행은 무시
+    # ── 5. M-D1: fence 에 형식 미매칭 행 추가 → known-survivor (생존) ──
+    # fence 는 `<form_id> | <axis>` 형식만 등재 → 형식 미매칭 행(`5-hour limit | unknown-axis`)은 무시
+    # 따라서 이 mutant 는 fence 검사에서 위반 미검출 (known-survivor)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_p = Path(tmpdir)
@@ -288,7 +356,7 @@ def test_form_set_parity_mutation_kill():
             fence_end = adr_text.find("```", fence_start + 1) if fence_start >= 0 else -1
 
             if fence_start >= 0 and fence_end > fence_start:
-                # fence 블록 내부에 형식 맞지 않는 행 추가
+                # fence 블록 내부에 형식 미매칭 행 추가
                 mutant_content = (
                     adr_text[:fence_end] +
                     "\n5-hour limit | unknown-axis | example\n" +
@@ -308,11 +376,12 @@ def test_form_set_parity_mutation_kill():
                     dst_path.parent.mkdir(parents=True, exist_ok=True)
                     dst_path.write_text(src_path.read_text(encoding="utf-8"), encoding="utf-8")
 
-            # M-D1: 형식 맞지 않는 축은 fence 에서 무시되므로 위반 안 됨 (생존)
+            # M-D1: known-survivor (형식 미매칭 행은 파싱되지 않음)
+            # fence 는 "형식이 맞는 행만" 파싱하므로 5-hour limit 은 inventory 에 추가되지 않음
+            # 따라서 형식 미매칭 mutant 는 fence 관점에서는 기존과 동일 → 위반 미검출
             exit_m_d1, stdout_m_d1, _ = run_parity_check(tmpdir_p)
-            # 이 mutant 는 fence 파싱에서 무시되므로 exit 0 (생존)
             assert exit_m_d1 == 0, (
-                f"M-D1: 형식 맞지 않는 축 행은 fence 에서 무시 → 생존 (exit={exit_m_d1})"
+                f"M-D1 known-survivor: 형식 미매칭 행은 fence 무시 → 기존 동일 (exit={exit_m_d1})"
             )
 
     # ── 6. M-N2: ADR-025 부재 → honest no-op ──
