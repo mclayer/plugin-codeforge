@@ -75,7 +75,7 @@ Orchestrator 는 해당 레인 진입 직전 아래 스킬을 호출한다. 상�
 - 내부 식별자(ADR/CFP 번호·계약명)는 사용자에게 평문 한 줄 풀이 먼저.
 - 표·개조식으로 핵심을 앞에. 긴 평서문 덩어리 금지.
 - **원격 결정 채널 (CFP-2285, 판단 기반 라우팅)**: `decision_channel` 활성 시 — 가치판단 결정 fork에서 사용자가 **자리를 비운 듯하면**(장기 autonomous 실행 / 명시적 async 요청 / 응답 지연) `codeforge:jira-decision-channel` 경유(Jira control 이슈에 질문 post, **dual-input**: 세션/Jira 양쪽 답, 한 채널 응답을 **양 채널에 mirror 기록**). 자리에 있으면 세션 직접. **자동결정 절대 금지**(timeout=재알림만). 진행 가시화는 `codeforge:jira-progress-mirror`(ADR-038 6-point lane 마일스톤 미러).
-- **on-demand 깊은 조사 (CFP-2329)**: lane 이 작업 *중* 외부사실 의존 known-unknown 으로 막혀 얕은 자가조사(단계②)로 안 되면 — lane 은 요청만 올리고 Orchestrator 가 문지기로 `codeforge:research-request-gate` 경유(게이트 심사 → deep-research → cited 결과 주입). spawn=Orchestrator 전용 유지(lane 자가-spawn 불가), 검사연극 금지 상속. 근거 ADR-126 (외부지식 충당 3-단계 ADR-124 단계③ on-demand).
+- **on-demand 깊은 조사 (CFP-2329)**: lane 이 작업 *중* 외부사실 의존 known-unknown 으로 막혀 얕은 자가조사(단계②)로 안 되면 — lane 은 요청만 올리고 Orchestrator 가 문지기로 `codeforge:research-request-gate` 경유(게이트 심사 → deep-research → cited 결과 주입). **deep-research 실행 spawn = Orchestrator 전용 유지**(deep-research·codex-rescue = 어느 lane PL 의 design-time roster 에도 없는 **roster 외 agent** ⇒ ADR-044 Amendment 7 (1) 잔존 금지 clause 대상. PL 의 roster 내 fan-out 권한과 disjoint — 그 권한 축소 0), 검사연극 금지 상속. 근거 ADR-126 (외부지식 충당 3-단계 ADR-124 단계③ on-demand).
 
 ## 문서 위치
 - 결정 기록(ADR) = `archive/adr/ADR-NNN-<slug>.md`.
