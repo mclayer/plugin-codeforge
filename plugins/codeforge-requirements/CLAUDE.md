@@ -27,6 +27,8 @@ codeforge ζ arc Requirements lane plugin. 7 agent 병렬 (PL + 6 sub: Domain·A
 | `phase:요구사항` → `phase:요구사항-리뷰` transition 신호 (lane exit — verdict PASS) | RequirementsPLAgent (PASS 신호 산출) | `mcp__github__issue_write` |
 | Discussions Q&A category routing | DomainAgent (선택) | `Bash(gh api repos/*/discussions*)` |
 
+> **doc-queue 규약 = live (CFP-2926)**: 위 `.claude-work/doc-queue/` mechanism 은 **정본**이다. wrapper `docs/orchestrator-playbook.md` §11 의 "wrapper-side write queue 사용 안 함" 은 **wrapper repo 자신(agent 0)** 축 한정 서술이며 lane plugin agent 의 제출 규약을 폐기하지 않는다. 기계 강제 = `.github/workflows/invariant-check.yml` doc-queue permission parity (CFP-7, required 게이트).
+
 ## Sub-agent 7-way 병렬 패턴 (6 sub + PL)
 
 PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Story §1 + ADR 목록 §3 + 코드 §4 공통 입력). Each sub-agent 가 독립 관점 도출 — **dimension 분리** (서로 다른 input 축 reshape):

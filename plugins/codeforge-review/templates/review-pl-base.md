@@ -10,7 +10,7 @@ ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/arch
 
 - **상위**: Orchestrator
 - **하위**: ClaudeReviewAgent, CodexReviewAgent (워커 2종 통합 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md))
-- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL은 워커 packet만 작성·검증해 Orchestrator에 return — **워커 spawn은 Orchestrator가 한 메시지에 두 워커(Claude ∥ Codex)를 dispatch** (서브에이전트 재귀 spawn 금지 platform 제약 정합, [CFP-19 R3](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL은 워커 packet만 작성·검증해 Orchestrator에 return — **peer 워커 dispatch 는 lead 소유**: Orchestrator가 한 메시지에 두 워커(Claude ∥ Codex)를 dispatch (§1.6 적용 제외 (a) — codeforge **정책**이지 platform 제약 아님, [CFP-19 R3](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 - **평행 PL**: 다른 2개 리뷰 PL — 동일 종합 로직 공유, lane-specific 4가지만 다름
 
 ---
@@ -26,6 +26,21 @@ ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/arch
 5. **SSOT pointer**: 상세 = `design-info-read-protocol-v1` (kind:registry) + [ADR-166](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-166-design-info-read-protocol.md). 전문 복붙 금지 — 계약명 pointer + 본 요지만.
 
 > **Orchestrator 제외(T-1)**: 본 선행 read 강제는 **lane-agent 계층(리뷰 PL) 한정** — Orchestrator 는 대상 아님 (ADR-142 L1 정합).
+
+---
+
+## 1.6 spawn 위상 — U-1 적용 제외 4종 (CFP-2926 / ADR-170 §결정 19)
+
+spawn 위상 SSOT = [ADR-170](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 19 — `lead → Story-teammate → lane PL → SubAgent` (depth 0→1→2). 일반 lane PL 은 lead 가 confine 한 scope 안에서 자기 design-time roster worker 를 spawn 한다. **리뷰 4 lane 은 아래 4종 제외를 진다.**
+
+| # | 제외 | 판별 기준 | 근거 |
+|---|---|---|---|
+| (a) | **peer dispatch = lead 소유 유지** — 리뷰 4 lane(요구사항리뷰·설계리뷰·구현리뷰·보안테스트) | worker 가 `review-verdict-v4` envelope 를 산출하는가. **산출하면 lead dispatch**, 비-verdict worker(초안 작성·mechanical scan·집계)는 **PL spawn 허용** | K-5 SoD + [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) INV-L4 "대기 주체 ↔ 판정 주체 분리". **실이득 0** — peer 2 는 이미 lead 가 한 메시지에 co-dispatch |
+| (b) | **worker(depth-2) 자가-spawn 금지 유지** | worker 계층에서 `Agent` tool 호출 발생 여부 | ADR-139 INV-L4. canonical SSOT 문장 = `plugins/codeforge-review/CLAUDE.md` "워커는 직접 다른 subagent 스폰 불가" |
+| (c) | **nested TEAMS(teammate→teammate) 금지** | team 계층 중첩 생성 | **platform 강제 불변** (codeforge 정책 아님 — agent-teams Limitations) |
+| (d) | **liveness 게이트 소유 = lead 고정** | stall 판정 · force-resume · `TaskStop` 발화 주체 | PL 이 자기 자식을 띄워도 이 3 행위는 lead 소유 (ADR-139 INV-L4 / ADR-170 §결정 20) |
+
+> **INV-L4 인용 자격 한정 (오귀속 차단)**: ADR-139 INV-L4 의 자기 축은 **liveness 게이트 개입 주체 고정**(= Orchestrator/lead)이고, 그 조항이 명시적으로 금지하는 대상은 **worker 자가-spawn**(= (b))이다. 위 (a) 는 그 조항의 **분리 원리(대기 주체 ↔ 판정 주체)를 peer dispatch 축으로 유추 적용**한 것이지 — **"INV-L4 가 peer dispatch 를 금지한다" 가 아니다**. (a) 의 실 근거는 K-5 SoD + 실이득 0 이며, INV-L4 는 보강 유추일 뿐이다.
 
 ---
 
@@ -108,7 +123,7 @@ review_packet:
 
 PL 의 verdict 종합 발화(아래 dedup·severity·pl_recommendation 산출)는 **양 worker_outcomes 가 도달(reached)한 뒤**에만 한다 — spawn 후 background-yield 로 blind 하게 결과를 기다렸다가 미도달 상태로 PASS 를 내는 형상(**spawn-then-blind-wait**) 금지. worker 가 stall/미측정이면 그 outcome 은 `PASS` 가 아니라 **honest INCONCLUSIVE**(§10 `peer_degrade` / ADR-139 INV-L2 — 미측정 → inconclusive, PASS 자동승격 금지)로 표기한 뒤 종합한다. 즉 종합 입력 = {실제 도달한 worker_outcomes} ∪ {honest INCONCLUSIVE/degrade 로 표식된 미도달분} — 이 두 부류를 다 확정한 뒤에만 발화한다.
 
-**collect = LEAD 소유 (C1 / [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) INV-L4)**: worker 결과 수집(collect) 주체는 **auto-wake 되는 LEAD**(env=1 team-lead / env=0 Orchestrator) 다 — PL 이 자식을 spawn 하고 스스로 blind-wait 하지 않는다(PL self-spawn 금지 — ADR-009 wrapper-only + re-entrancy 3종). 본 절 = 신규 mechanism 0, ADR-139 §결정 7(spawn-then-blind-wait 금지, collect=LEAD) + INV-L2/L4 의 review-lane 종합-발화 면 명문화 (background-wait liveness gate cross-ref = §10 + `docs/orchestrator-playbook.md` §3.10.1).
+**collect = LEAD 소유 (C1 / [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) INV-L4)**: worker 결과 수집(collect) 주체는 **auto-wake 되는 LEAD**(env=1 team-lead / env=0 Orchestrator) 다 — PL 이 자기 자식을 띄우더라도 **stall 판정·force-resume/`TaskStop` 은 lead 소유**이며(§1.6 적용 제외 (d)), PL 이 spawn 후 background-yield 로 blind-wait 하는 형상은 금지된다. 본 절 = 신규 mechanism 0, ADR-139 §결정 7(spawn-then-blind-wait 금지, collect=LEAD) + INV-L2/L4 의 review-lane 종합-발화 면 명문화 (background-wait liveness gate cross-ref = §10 + `docs/orchestrator-playbook.md` §3.10.1).
 
 ### Dedup
 
@@ -616,7 +631,7 @@ discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제�
 
 **background-wait liveness gate 일반 cross-ref (CFP-2549 / ADR-139)**: 위 dispatch 상한은 첫 인스턴스일 뿐 — 모든 codeforge-owned background subagent 대기는 background-wait liveness gate (wall-clock ceiling INV-L1 / fail-open 금지 inconclusive INV-L2 / "0-byte ≠ stall" 3-state INV-L3 / Orchestrator·lead 게이트 소유 INV-L4) 를 따른다. SSOT = [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) + wrapper `docs/orchestrator-playbook.md` §3.10.1.
 
-**collect = LEAD 소유 · spawn-then-blind-wait 금지 (CFP-2597 / ADR-139 §결정 7, INV-L4)**: PL 은 worker 를 spawn 한 뒤 background-yield 로 **blind 하게 결과를 기다리지 않는다** — 수집(collect)은 auto-wake 되는 **LEAD**(env=1 team-lead / env=0 Orchestrator) 가 소유하거나 LEAD 로 handoff 한다(§3 "종합 발화 precondition" 정합, PL self-spawn 금지 — ADR-009 wrapper-only). 미도달 worker 는 `PASS` 아닌 honest INCONCLUSIVE/degrade (`peer_degrade` / INV-L2) 로 표식 후 종합. **★env=1 auto-wake-parent dispatcher 재제안 금지** — full auto-wake substrate 는 env=1 에서 부재라 [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 7(ii) 로 **DEFER** (≥2 Story 재제안 시 escalate, 자동 followup 발의 안 함). collect 을 blocking 물리강제로 요구하는 것 = [ADR-115](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-115-runtime-hook-enforcement.md) C2 위반 → **record-only**(`stop-event.jsonl`)만 (SubagentStop record-only 무손상, force-resume 는 lead-owned discretionary). 본 절 = 신규 mechanism 0, ADR-139 명문화만.
+**collect = LEAD 소유 · spawn-then-blind-wait 금지 (CFP-2597 / ADR-139 §결정 7, INV-L4)**: PL 은 worker 를 spawn 한 뒤 background-yield 로 **blind 하게 결과를 기다리지 않는다** — 수집(collect)은 auto-wake 되는 **LEAD**(env=1 team-lead / env=0 Orchestrator) 가 소유하거나 LEAD 로 handoff 한다(§3 "종합 발화 precondition" 정합; PL 이 자기 자식을 띄워도 **liveness 게이트 소유 = lead 고정** — §1.6 적용 제외 (d) / ADR-139 INV-L4). 미도달 worker 는 `PASS` 아닌 honest INCONCLUSIVE/degrade (`peer_degrade` / INV-L2) 로 표식 후 종합. **★env=1 auto-wake-parent dispatcher 재제안 금지** — full auto-wake substrate 는 env=1 에서 부재라 [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 7(ii) 로 **DEFER** (≥2 Story 재제안 시 escalate, 자동 followup 발의 안 함). collect 을 blocking 물리강제로 요구하는 것 = [ADR-115](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-115-runtime-hook-enforcement.md) C2 위반 → **record-only**(`stop-event.jsonl`)만 (SubagentStop record-only 무손상, force-resume 는 lead-owned discretionary). 본 절 = 신규 mechanism 0, ADR-139 명문화만.
 
 ---
 

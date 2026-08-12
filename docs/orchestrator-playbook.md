@@ -398,7 +398,7 @@ codeforge 수정 작업 = Orchestrator default **subagent spawn**. "inline 으�
 
 | # | Category | 설명 | Mechanism rationale |
 |---|---|---|---|
-| 1 | 사용자 dialog | `AskUserQuestion` / 확답 step / 정보 요청 답변 (Yes/No / 옵션 선택) | Subagent one-shot 이라 continuous dialog 자체 mechanism 불가능 (ADR-009 §결정 + "플랫폼 제약") |
+| 1 | 사용자 dialog | `AskUserQuestion` / 확답 step / 정보 요청 답변 (Yes/No / 옵션 선택) | subagent 는 사용자와 continuous dialog 를 이어갈 mechanism 이 없다 — **dialog 축**(재귀 spawn 축과 disjoint. 후자는 codeforge 정책이지 platform 제약 아님, ADR-170 §결정 19) |
 | 2 | TodoWrite scratchpad | progress visualization marker write | TodoWrite = file write 아님, Orchestrator scratchpad / meta progress channel — 수정 작업 enumeration 미포함 |
 | 3 | Read-only Q&A 답변 | 사용자 정보 요청 응답 (state report / option enumeration / 도메인 설명) | 수정 작업 아님 — codeforge orchestration scope 외 |
 | 4 | Status report | Phase 완료 / Story close / final report | 수정 작업 아님 (read-only synthesis) — ADR-025 Amendment 1 §결정 11 의 "1번 final report" |
@@ -831,7 +831,7 @@ FIX routing: DeveloperPL 1차 진단 (`gh run view` 출력 첨부) → Architect
 
 > **NORMATIVE.** 구현리뷰 PASS + CI gate PASS 이후 "merge gate 진입" 직후, merge_transition sentinel polling + `gh pr merge` **이전** 시점에 Orchestrator top-level inline 으로 발동하는 머지 직전 1패스 적대적 반증 게이트. 구현 주체(Claude)와 다른 모델 분포(Codex/GPT-5)의 독립 critic 이 PR diff + Story 컨텍스트(요구사항·설계의도·수용기준)를 받아 "이 PR 이 왜 틀렸거나 불완전한지" 반증한다. **critic = 신호원이지 차단 판정자 아님** — 모든 결함 주장 = `[hypothesis]`, Orchestrator falsify 통과 시만 `[verified]` 승격해 머지 보류 (개념 SSOT: [`merge-time-adversarial-verification-gate.md`](../docs/domain-knowledge/concept/merge-time-adversarial-verification-gate.md)).
 
-**dispatch 주체 = Orchestrator top-level inline 고정 (critical)**: sub-agent/PL 을 게이트 owner 로 두면 ADR-039 platform-inherent 재귀 가드("subagent → Agent tool 호출 금지")로 Codex dispatch 가 silent fallback skip (`subagent_recursion_blocked`) → 게이트 무발동 = 연극화. [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist **6번째 entry** (merge-time Codex adversarial gate dispatch — read-only, mutation 0) 가 이 inline 발동을 codify. dispatch 자체는 read-only adversarial check (verify-before-trust 무조건 적용, ADR-070 Amendment 9) 이라 §3.0.2 "수정 작업" 정의와 disjoint axis.
+**dispatch 주체 = Orchestrator top-level inline 고정 (critical)**: sub-agent/PL 을 게이트 owner 로 두면 **codeforge 정책상의 재귀 가드**(worker 계층 `Agent` tool 호출 금지 — ADR-170 §결정 19 / ADR-044 Amendment 7; **platform inherent 아님** — platform 은 nested subagent spawn 을 허용한다)로 Codex dispatch 가 silent fallback skip (`subagent_recursion_blocked`) → 게이트 무발동 = 연극화. **[확인 불가]** `subagent_recursion_blocked` 는 본 repo 의 어떤 registry·script 에도 정의된 enum 이 아니고 prose 서술로만 존재한다 — 어떤 조건에서 이 skip 이 관측됐는지 재현 근거 미확인 (라벨만 정정, 관측 서술은 보존). [ADR-039 Amendment 6](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist **6번째 entry** (merge-time Codex adversarial gate dispatch — read-only, mutation 0) 가 이 inline 발동을 codify. dispatch 자체는 read-only adversarial check (verify-before-trust 무조건 적용, ADR-070 Amendment 9) 이라 §3.0.2 "수정 작업" 정의와 disjoint axis.
 
 **8-step dispatch 흐름** (result-via-file 비블로킹 — synchronous block-wait 금지, CFP-2214 회귀 차단):
 
@@ -1960,7 +1960,7 @@ cross-module Story 의 ArchitectAgent 산출물 (Change Plan §3 / ADR / Story �
 설계 lane RefactorAgent 의 구조 리팩터링 advocacy(구조 3축 (a)decoupling/(b)pattern/(c)interface-separation + repo-분해 escalation)의 **반박·수용 판정(결정 방식)**을 Codex(발제·proponent)↔Claude(반대·opponent) adversarial debate 로 도출 — dispatch_mode `blanket_designrefactor` (설계-time per-Story 무조건 발동, divergence 감지 없이). Epic-close 구현-리팩터링 triage(§9.7.2 blanket_refactor, ADR-137)와 axis-disjoint(시점 설계-time per-Story vs Epic-close batch / 대상 설계 구조 축 vs 실코드 중복 / verdict judge ArchitectAgent chief vs PMOAgent / anchor `<설계 요소>::<구조 축>` per-Story vs `<file>:<line>` cross-Epic). 6-step:
 
 1. **발동 조건**: 설계 lane 진입 + RefactorAgent 구조 advocacy 산출 시 무조건(per-Story, cross_module_signal 불요). 별도 cross-module 판정 불요 — blanket.
-2. **dispatch 주체 = Orchestrator top-level inline** (ADR-039 §결정18 merge-time Codex adversarial 전용 whitelist + §결정19 lead 위임 per-Story dispatch topology). RefactorAgent·ArchitectPL **self-spawn 불가** (platform 재귀가드 `subagent_recursion_blocked` silent skip). Codex(proponent)↔Claude(opponent) min 3 / max 5 라운드, role_assignment={codex:proponent, claude:opponent}.
+2. **dispatch 주체 = Orchestrator top-level inline** (ADR-039 §결정18 merge-time Codex adversarial 전용 whitelist + §결정19 lead 위임 per-Story dispatch topology). RefactorAgent·ArchitectPL **self-spawn 불가** (**codeforge 정책** 재귀 가드 — platform inherent 아님; `subagent_recursion_blocked` silent skip 은 **[확인 불가]** 재현 근거 미확인 서술). Codex(proponent)↔Claude(opponent) min 3 / max 5 라운드, role_assignment={codex:proponent, claude:opponent}.
 3. **anchor**: `<설계 요소>::<구조 축>` (설계-time 은 실코드 line 없음). scope = **per-Story** — anchor-recurrence ≥2 는 Story §9 debate transcript 내 escalation(debate-protocol §3.4). **cross-Epic drop-ledger 불요** — 그건 ADR-137 Epic-close 실코드 중복 전용(content-hash cross-Epic 영속). 설계-time per-Story 는 매 Story 신규 설계라 cross-Epic 재발 개념 부적합(혼동 금지).
 4. **verdict judge = ArchitectAgent chief author** (Change Plan §3 착지 author 이자 multi-source synthesizer, transcript 수신·판정). ArchitectPL 아님(supervisor 검수). **RefactorAgent = 구조 advocacy input provider (verdict 주체 아님)** — verdict 를 스스로 내리지 않음. producer/consumer 분리(ADR-137 PMOAgent 동형, 주체만 교체 PMOAgent→ArchitectAgent, 배선 논리 동일).
 5. **3분기 verdict 착지**: now → 이번 Story Change Plan §3 반영(설계 결정 착지) / defer → 후속 Story(deferred-item-lifecycle narrative-recorded, 회수 강제) / drop → ADR-119 §결정9 발견≠필요 3문 게이트 기각("관찰됨·미조치" 1줄). |anchor|=0(구조 advocacy 없음) = debate skip.
@@ -2373,7 +2373,7 @@ codeforge family upgrade 의 선언적 reconciliation 실행 주체. **3 책임 
 사용자 → bash scripts/codeforge-upgrade.{sh|ps1} <mode>
   mode = --dry-run | --apply | --rollback <version>   # CLI argument fix, 사용자 결정 분기 0
   │
-  └─ Orchestrator → UpgradeAgent spawn (ADR-039 default subagent one-shot, 재귀 spawn 금지 platform inherent)
+  └─ Orchestrator → UpgradeAgent spawn (ADR-170 default subagent one-shot; worker 자가-spawn 금지 = codeforge 정책, ADR-170 §결정 19)
        │
        ├─ --dry-run  : 9 desired_state_domains diff preview (filesystem touch 0, network call 가능)
        ├─ --apply    : snapshot 생성 → 9 영역 reconcile → 사후 sanity check 단일 transaction
@@ -3230,7 +3230,11 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 
 ## 11. Cross-agent write coordination
 
-ζ arc decomposition (CFP-31~CFP-40) 후 wrapper repo 에는 agent 0개. write 책임은 6 lane plugin 으로 분산 (§5.1 표 참조). 결과적으로 wrapper-side `.claude-work/doc-queue/**` 기반 write queue 는 **사용 안 함**. 대신:
+ζ arc decomposition (CFP-31~CFP-40) 후 wrapper repo 에는 agent 0개. write 책임은 6 lane plugin 으로 분산 (§5.1 표 참조). 따라서 **wrapper repo 자신은** `.claude-work/doc-queue/**` write queue 를 쓰지 않는다 (wrapper agent 0 이라 제출 주체 부재).
+
+> **두 축 분리 (CFP-2926)**: "wrapper-self 미사용" ≠ "doc-queue 폐기". **lane plugin agent 의 doc-queue 제출 규약은 live** — 약 30개 agent md 가 `Edit/Write(.claude-work/doc-queue/**)` 권한을 보유하고, `.github/workflows/invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7)가 **required 게이트**로 이를 강제한다. lane 별 제출 경로 정본 = 각 lane `CLAUDE.md` 의 `Self-write 책임` 표 (예: `plugins/codeforge-requirements/CLAUDE.md` §4.1·§4.2·§4.3 row).
+
+wrapper-self write 는 대신:
 
 - **각 lane plugin 자기 owner section 직접 write** — `Edit` 또는 GitHub MCP 도구 호출 직접 수행
 - **Multi-writer 영역의 자연 직렬화** — `docs/stories/<KEY>.md` 의 §1 → §2-§6 → §7 → §8 → §9 → §11 등 phase 진행 순서가 자연 직렬화 보장. concurrent write 충돌은 phase-label-invariant.yml + branch protection 으로 차단
@@ -3420,7 +3424,7 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 #### (a) Orchestrator flat spawn (재귀 spawn 금지 / nested team 금지 / sub-lead 격상 0건)
 
 - spawn 주체 = **Orchestrator** (top-level Claude 세션). 4 component (chief author + Mapper + Refactor + ArchitectAnalyst) 모두 Orchestrator 가 직접 flat spawn. ArchitectPLAgent 는 PL synthesizer 역할 (산출물 통합 검수) — sub-agent 를 재귀 spawn 하지 않는다.
-- **재귀 spawn 금지** = platform inherent (Lead 와 teammate 모두 Agent tool 추가 spawn 불가, env=0 default subagent context). **nested team 금지** = team-of-teams 불가. **sub-lead 격상 0건** = 4-tuple 안 어느 component 도 다른 component 의 spawn 주체가 되지 않음.
+- **worker(depth-2) 자가-spawn 금지** = **codeforge 정책** (ADR-170 §결정 19 / ADR-044 Amendment 7) — platform inherent 아님. platform 은 nested subagent spawn 을 허용하며(depth ≤ 5), 본 설계 lane 의 flat spawn 은 정책 선택이다. **nested team 금지** = team-of-teams 불가 (이쪽은 **platform 강제**). **sub-lead 격상 0건** = 4-tuple 안 어느 component 도 다른 component 의 spawn 주체가 되지 않음.
 - 근거 SSOT: 본 nested team 금지 / flat spawn 원칙은 ADR-044 (phase-scoped sequential team — 대안검토표 + 결론 단락의 nested team 금지 SSOT) + ADR-009 §결정 1 (wrapper-only decomposition) + ADR-039 (Orchestrator subagent default) 정합. CFP-676 CX-676-TP4-3 reaffirm 정합 (S1 ADR-044 reaffirm 단락 cross-ref).
 
 #### (b) "4-tuple = 논리적 그룹핑" — 물리적 spawn 계층 아님
@@ -3557,7 +3561,7 @@ PMOAgent가 **하지 않는** 것:
 | `.claude-work/progress/index.md` | Orchestrator 단독 | Orchestrator (multi-Story 분기) |
 | `.claude-work/progress/_archive/<KEY>.md` | Orchestrator (Story 완료 시 mv) | PMOAgent (Cross-Story 패턴) |
 
-doc-queue (사용 안 함 — ζ arc 완료) / docs/stories/<KEY>.md 직접 write (lane plugin self-write) / GitHub Issue body: **progress file 과 무관**.
+doc-queue (**wrapper-self 미사용** — ζ arc 완료로 wrapper agent 0. lane plugin agent 제출 규약은 **live** — §11 두 축 분리 참조) / docs/stories/<KEY>.md 직접 write (lane plugin self-write) / GitHub Issue body: **progress file 과 무관**.
 
 ### 14.2 State source vs Derivative cache (핵심 invariant)
 

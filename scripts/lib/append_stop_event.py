@@ -27,12 +27,23 @@
 #   - ledger file 생성 시 0600 (Unix) — os.chmod 호출
 #   - Windows = ACL 영역 외, os.chmod no-op (declarative comment only)
 #
-# atomic append pattern (POSIX guarantee):
-#   os.replace(tmp_file, target) — write-then-rename pattern.
-#   단, POSIX 에서만 진정한 atomic. Windows 에서는 os.replace 가 rename semantics
-#   (동일 filesystem 안에서 atomic, cross-filesystem 시 copy+delete).
-#   multi-process concurrent append 는 이 패턴으로 보장.
-#   단일 jsonl 파일에 두 hook 이 동시 접근할 가능성이 있으므로 tmpfile rename 사용.
+# append pattern (kernel-atomic single-row append — 공유 primitive 재사용):
+#   [구 구현 = lost-update bug] 원장 전체 read → tmpfile 전체 재작성 → os.replace 의
+#   read-modify-write 였다. 두 프로세스가 같은 시점에 read 하면 나중 replace 가 앞 writer 의
+#   행을 통째로 덮어써 행이 소실됐다. os.replace 는 torn-write 는 막지만 lost-update 는
+#   못 막는다. 이 소실은 예외 없이 exit 0 으로 완주하므로 에러 로그로 탐지 불가 —
+#   검출 수단은 행 수 대조뿐이었다.
+#   [현 구현] append_spawn_event._append_jsonl_row (공유 write primitive, ADR-155
+#   Amendment 1) 에 위임 — 원장 read 0, row 당 단일 write:
+#     - POSIX: os.open(O_APPEND|O_CREAT|O_WRONLY) + os.write 단일-write = kernel-atomic
+#       (커널이 seek-to-EOF 와 write 를 분리 불가하게 직렬화 — POSIX.1-2017 write(), O_APPEND).
+#     - Windows: CreateFileW(FILE_APPEND_DATA — FILE_WRITE_DATA 불포함) + WriteFile
+#       (MSVCRT O_APPEND = lseek-then-write 비원자라 대체). open 불가 FS →
+#       msvcrt.locking(LK_NBLCK) non-blocking fallback + bounded retry + VISIBLE degrade.
+#   ★honest ceiling (primitive 의 2축 분리 천장 승계 — 무조건 보증 아님):
+#     clobber(lost-update) 축 무손실 범위 = local NTFS/POSIX 정규파일 + row 당 단일-write
+#     한정. network share(SMB/NFS)·redirected volume 제외. torn(multi-sector interleave)
+#     축은 별개 축으로 아무것도 주장하지 않는다 (row < 4KB 로 bounded 될 뿐).
 #
 # stop-event-v1 v1.0 row schema:
 #   {
@@ -48,11 +59,29 @@
 
 import argparse
 import datetime
-import json
 import os
 import sys
-import tempfile
 from pathlib import Path
+
+# ── 공유 write primitive 재사용 (ADR-140 hygiene: reuse-before-write) ──────────
+# append_spawn_event._append_jsonl_row = cross-platform kernel-atomic single-row append
+# (POSIX O_APPEND / Windows FILE_APPEND_DATA — ADR-155 Amendment 1). spawn-event-v1 ·
+# self-context-v1 · dev-process-event-v1 3 consumer 가 이미 동일 import 로 상속 중이며
+# stop-event-v1 이 4번째 consumer 다 — 코드 복제 금지(신규 중복 유입 0).
+# import 실패도 graceful — _IMPORT_ERROR 로 지연시켜 _atomic_append 가 VISIBLE degrade,
+# main() 이 WARN + exit 0 (ADR-115 §결정 5). read-modify-write 로의 silent fallback 절대 금지
+# — 그 패턴 자체가 되살리면 안 되는 lost-update bug 다.
+try:
+    from append_spawn_event import _append_jsonl_row
+    _IMPORT_ERROR = None
+except Exception:  # pragma: no cover — import path fallback (scripts/lib 미등재 컨텍스트)
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from append_spawn_event import _append_jsonl_row  # noqa: E402
+        _IMPORT_ERROR = None
+    except Exception as _exc2:
+        _append_jsonl_row = None
+        _IMPORT_ERROR = _exc2
 
 
 def _kst_now() -> str:
@@ -77,55 +106,33 @@ def _build_row(hook_source: str, stop_reason: str, session_id: str) -> dict:
 
 def _atomic_append(ledger_path: Path, row: dict) -> None:
     """
-    ledger file 에 JSON line atomic append.
+    ledger file 에 JSON line 1행 kernel-atomic append (원장 read 0).
 
-    POSIX atomic pattern: 기존 내용 읽기 + 새 row append → tmpfile write → os.replace.
-    ledger dir 부재 시 mkdir -p 동등 처리.
-    file mode: 0600 (Unix, Windows no-op).
+    공유 write primitive append_spawn_event._append_jsonl_row 에 위임한다 —
+    POSIX os.O_APPEND 단일-write / Windows CreateFileW(FILE_APPEND_DATA) + WriteFile
+    (open 불가 FS → msvcrt.locking(LK_NBLCK) non-blocking fallback + bounded retry).
+    ledger dir mkdir -p 동등 처리와 file mode 0600 (Unix; Windows = ACL 영역 외 no-op) 도
+    primitive 소관이다. 산출 bytes = json.dumps(row, ensure_ascii=False) + "\\n" (utf-8).
+
+    구 구현은 read-modify-write (원장 전체 read → tmpfile 전체 재작성 → os.replace) 였고,
+    이는 lost-update bug 였다 — 동시 append 시 나중 replace 가 앞 writer 의 행을 덮어써
+    소실시키면서도 예외 없이 exit 0 으로 완주해(에러 로그 탐지 불가) 행 수 대조로만 검출됐다.
+
+    honest ceiling (primitive 천장 승계 — 무조건 보증 아님):
+      clobber(lost-update) 축 무손실 범위 = local NTFS/POSIX 정규파일 + row 당 단일-write
+      한정. network share(SMB/NFS)·redirected volume 제외. torn(multi-sector interleave)
+      축은 별개 축으로 무주장.
+
+    primitive import 실패 시 RuntimeError raise (VISIBLE degrade) — caller 가 stderr WARN 후
+    exit 0. read-modify-write 로의 silent fallback 은 하지 않는다 (bug 복원 금지).
     """
-    # dir 보장
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # 기존 내용 읽기 (파일 부재 시 빈 문자열)
-    existing = ""
-    if ledger_path.exists():
-        existing = ledger_path.read_text(encoding="utf-8")
-
-    # 새 row JSON line
-    new_line = json.dumps(row, ensure_ascii=False)
-
-    # 합산 (trailing newline 보장)
-    if existing and not existing.endswith("\n"):
-        new_content = existing + "\n" + new_line + "\n"
-    else:
-        new_content = existing + new_line + "\n"
-
-    # tmpfile 에 write → os.replace (atomic rename)
-    tmp_fd, tmp_path = tempfile.mkstemp(
-        dir=str(ledger_path.parent),
-        prefix=".stop-event-tmp-",
-        suffix=".jsonl",
-    )
-    try:
-        with os.fdopen(tmp_fd, "w", encoding="utf-8") as tmp_f:
-            tmp_f.write(new_content)
-
-        # file mode 0600 (Unix; Windows = no-op, ACL 영역 외)
-        try:
-            os.chmod(tmp_path, 0o600)
-        except (OSError, AttributeError):
-            pass  # Windows no-op
-
-        # atomic replace
-        os.replace(tmp_path, str(ledger_path))
-
-    except Exception:
-        # cleanup tmp on error
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
-        raise
+    if _IMPORT_ERROR is not None:
+        raise RuntimeError(
+            "append_spawn_event._append_jsonl_row import 실패 — kernel-atomic append 불가 "
+            "(read-modify-write silent fallback 금지: lost-update bug). cause=%r"
+            % (_IMPORT_ERROR,)
+        )
+    _append_jsonl_row(ledger_path, row)
 
 
 def main() -> None:

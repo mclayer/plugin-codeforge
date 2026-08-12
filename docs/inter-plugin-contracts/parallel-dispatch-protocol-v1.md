@@ -1,7 +1,10 @@
 ---
 kind: registry
 registry: parallel-dispatch-protocol
-version: "1.1.1"
+version: "1.2.0"
+# CFP-2926 — merge 직전 origin/main version 재실측 후 다음 MINOR 로 조정 의무
+# (3-way bump 충돌: CFP-2914/2946 — git show origin/main:docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md | grep '^version')
+# 본 작업 시점 origin/main = 1.1.1 → 1.2.0 지정. merge 직전 재실측 필수.
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md
@@ -12,6 +15,7 @@ version_history:
   - { version: "1.0", date: 2026-05-13, carrier: CFP-609, change: "initial — Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator → PL dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기 + env=0/env=1 동등성 + idempotency invariant 6종 + dispatch packet schema. ADR-064 §결정 4 Trace 4 implementation contract — execution-time enforcement carrier. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합)." }
   - { version: "1.1", date: 2026-07-02, carrier: CFP-2549, change: "§6.3 worker_outcomes enum +INCONCLUSIVE + timeout/fail-mode protocol 섹션 (ADR-139 background-wait liveness gate 4 불변식 cross-ref) — §6.3 주석 'crash recovery/fail-mode = 별 CFP follow-up' defer 해소. kind:registry sibling_sync_exempt 유지." }
   - { version: "1.1.1", date: 2026-08-05, carrier: CFP-2875, change: "ADR-060 재제정(Superseded by ADR-171) live-normative cross-reference 재지향 PATCH — semantic 변경 0 · field 변경 0 (ADR-008 §결정 2 cross-reference 정정 category, CFP-2869 return-envelope v1.0.1 선례)." }
+  - { version: "1.2.0", date: 2026-08-12, carrier: CFP-2926, change: "§6.4 env_invariants recursive_spawn 라벨 정정 — 'platform inherent' 삭제 + 'codeforge 정책' + 근거 ADR 재지향 (ADR-044 Amendment 7 / ADR-170 §결정 19). Platform 은 nested spawn 허용하나 codeforge 는 ADR-009 wrapper-only 단일-lead 정책으로 회피 (정책 결정, platform 강제 아님). 기존 env_invariants 의도 무손상 + 문면 정확성 강화. MINOR bump (cross-reference 정정 아님, policy-clarification). kind:registry sibling_sync_exempt 유지. §8 mechanical enforcement 5항목 무영향(lint 무변경)." }
 owner_adr: ADR-064  # Amendment 1 carrier
 carrier_story: CFP-609
 sibling_sync_exempt: true
@@ -246,7 +250,7 @@ env_invariants:
   env_0_default_subagent_context:
     description: "Orchestrator round-trip polyfill — PL 이 batch N task multi-instance subagent dispatch 1 round trip 안에 spawn"
     forbidden:
-      - recursive_spawn       # platform inherent
+      - recursive_spawn       # codeforge 정책 (ADR-044 Amendment 7 / ADR-170 §결정 19 — platform 강제 아님, codeforge 체계적 위임 구조가 nested spawn 회피)
       - worker_to_worker_send_message  # codeforge policy
   env_1_agent_teams_enabled:
     description: "TeamCreate + SendMessage continuous dialog — Lead ↔ Worker"

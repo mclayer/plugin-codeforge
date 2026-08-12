@@ -109,14 +109,14 @@ Orchestrator 코드 실행 전 체크리스트:
 
 ### 비-적용 (inline 필수)
 
-- **사용자 dialog** — `AskUserQuestion` / 확답 step / 정보 요청 답변. subagent 는 one-shot 이라 dialog 불가능 (ADR-009 §결정 + CLAUDE.md "플랫폼 제약").
+- **사용자 dialog** — `AskUserQuestion` / 확답 step / 정보 요청 답변. subagent 는 사용자와 continuous dialog 를 이어갈 mechanism 이 없다 (**dialog 축** — 아래 spawn 축과 disjoint. 구 문면의 `CLAUDE.md "플랫폼 제약"` 인용은 dangling — 현 wrapper CLAUDE.md 에 해당 문구 부재, CFP-2926 실측).
 - **일반 Q&A / conversational 응답** — codeforge orchestration 외 영역.
-- **재귀 spawn** — Orchestrator (top-level) 가 직접 Agent tool 호출, subagent 가 다시 Agent tool 호출 금지 (platform inherent — CLAUDE.md "플랫폼 제약" 룰 무변).
+- **worker(depth-2) 자가-spawn** — worker 계층에서 `Agent` tool 재호출 금지. 이는 **codeforge 정책**이지 platform 제약이 아니다 — platform 은 nested subagent spawn 을 허용한다(depth ≤ 5). 위상 SSOT = ADR-170 §결정 19 (`lead → Story-teammate → lane PL → SubAgent`, depth 0→1→2) / ADR-044 Amendment 7. **lane PL(depth 1)의 roster fan-out 은 금지 대상이 아니라 정본 경로다.**
 
 ### 관련 용어 분류
 
 - **Orchestrator** (ADR-009): top-level Claude 세션. wrapper-only decomposition 후 codeforge core agent 0 개 — Orchestrator 가 6 lane plugin 의 agent 를 spawn.
-- **Subagent**: Agent tool 로 spawn 된 별도 Claude 세션. one-shot, Agent tool 재호출 금지 (재귀 spawn limit), 서브에이전트 간 직접 통신 불가 (default subagent context — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`).
+- **Subagent**: Agent tool 로 spawn 된 별도 Claude 세션. one-shot, 서브에이전트 간 직접 통신 불가 (default subagent context — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`). **`Agent` tool 재호출 가부는 계층별로 갈린다** — lane PL(depth 1) 은 자기 design-time roster worker 를 spawn 하고(ADR-170 §결정 19), worker(depth 2) 는 자가-spawn 금지(codeforge 정책, ADR-139 INV-L4).
 - **Agent teams enabled context** (ADR-035, CFP-137 deferred): `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 시 sibling teammate 간 SendMessage 가능 + continuous dialog 가능. 본 정책의 "subagent" 는 default context 의 one-shot subagent 를 가리킴.
 - **수정 작업 (modification work)**: 본 페이지 §"핵심 규칙 → 적용 범위" enumerated 행위.
 

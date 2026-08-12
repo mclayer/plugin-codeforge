@@ -476,6 +476,14 @@ git_ops_log:
     - `feedback_back_to_codeforge: <Issue link list or empty []>` — codeforge improvement 발견 시 Issue 링크 (label: `codeforge-improvement` 또는 `from-mctrader-debut` 등)
 - **Migration policy** (ADR-045 D-5, backward compat): 본 schema = 신규 Story (CFP-138 merge 이후 close) 부터 strict mode. 기존 close Story file 100+ 의 §11 = vague placeholder (`- 회고 (PMOAgent 작성)`) 유지 — retroactive 미처리 ([ADR-045](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) §결정 5 정합).
 
+#### §11.A 데이터 마이그레이션 (ArchitectAgent — CFP-2926 번호 정합)
+
+**§11 자체의 소유 = codeforge-pmo "참조/회고"** (위 schema). 설계 lane 의 데이터·계약 영향 mirror 는 `§11` 을 점유하지 않고 **named subsection `§11.A`** 로 편입한다 — 두 소유자가 같은 번호를 주장하던 충돌의 부모-자식 정합화.
+
+- **Owner**: ArchitectAgent (codeforge-design) — write 경계 SSOT = `plugins/codeforge-design/CLAUDE.md` `Self-write 책임` 표.
+- **내용**: schema / migration / rollback 등 Change Plan §11 의 Story-side mirror.
+- **Epic Story**: §11.A 는 CONDITIONAL — 데이터 마이그레이션 없는 Story 는 `N/A` 명시.
+
 ### §12. Sonnet Decision Log (CFP-59 / CFP-61 / ADR-022)
 
 Story 내 모든 substantive decision 의 Sonnet final pick 기록. per-Story append-only.

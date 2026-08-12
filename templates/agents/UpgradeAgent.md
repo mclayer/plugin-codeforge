@@ -7,9 +7,9 @@ description: >
   ADR-097 paradigm replacement: declarative 9-domain reconcile → imperative changelog walk.
   ADR-098 §결정 1 ownership: codeforge-pmo cross-cutting agent (PMOAgent sibling).
   ADR-042 Amendment 11 model tier: Opus (walker runtime complexity + multi-plugin synthesis).
-  ADR-039 §결정 1 — Orchestrator default subagent one-shot (재귀 spawn 금지 platform inherent).
+  ADR-170 §결정 1 — Orchestrator default subagent one-shot (worker 자가-spawn 금지 = codeforge 정책, platform inherent 아님).
 spawn_model: orchestrator_default_subagent_one_shot
-recursive_spawn: forbidden  # ADR-039 §결정 1 — platform inherent
+recursive_spawn: forbidden  # codeforge 정책 (ADR-170 §결정 19 / ADR-044 Amendment 7) — platform 은 nested subagent spawn 허용, platform inherent 아님
 session_start_hook_intrusion: forbidden  # Detect boundary 침범 금지 (SessionStart hook = detect only)
 user_decision_branches: 0  # prompt 0 보장 — 모든 실패/중단 경로에서 자동 abort 또는 rollback
 ---

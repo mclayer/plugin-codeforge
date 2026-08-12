@@ -136,9 +136,10 @@ _USAGE_FLOAT_FIELDS = ("elapsed_seconds",)
 # T-TAMP-2 전체 대상 (int ∪ float) — 검증 loop 의 단일 원본.
 _USAGE_FIELDS = _USAGE_INT_FIELDS + _USAGE_FLOAT_FIELDS
 
-# 23-field 정확 키 순서 (lint/dedup/replay 가 참조하는 SSOT).
+# 26-field 정확 키 순서 (lint/dedup/replay 가 참조하는 SSOT).
 # 기존 19-field 순서·의미 불변(additive) — CFP-2850 Amendment 4 로 하단 4 field append
-# (total_tokens·model·outcome·termination_cause). 전부 optional(v1.0 reader skip, ADR-008).
+# (total_tokens·model·outcome·termination_cause), CFP-2926 Amendment 5 로 3 field append
+# (agent_start_at·agent_stop_at·stop_time_source). 전부 optional(v1.0 reader skip, ADR-008).
 _ROW_KEYS = (
     "event_id", "schema_version", "timestamp", "story_key", "lane_label",
     "agent_type", "attribution_confidence", "input_tokens", "output_tokens",
@@ -147,6 +148,8 @@ _ROW_KEYS = (
     "consumer_scope", "event_type", "elapsed_seconds",
     # ── CFP-2850 Amendment 4 additive (19 → 23) ──
     "total_tokens", "model", "outcome", "termination_cause",
+    # ── CFP-2926 Amendment 5 additive (23 → 26) ──
+    "agent_start_at", "agent_stop_at", "stop_time_source",
 )
 
 _SCHEMA_VERSION = "spawn-event-v1"

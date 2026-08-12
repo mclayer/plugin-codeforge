@@ -130,7 +130,7 @@ except Exception:  # pragma: no cover — sibling 미착지 시 fidelity 보존 
         })
 
 
-# ─────────────────────── 19→18 index 필드 정확 키 순서 (parity SSOT) ───────────────────
+# ─────────────────────── 18→20 index 필드 정확 키 순서 (parity SSOT) ───────────────────
 # ★★ 계약 dev-process-event-v1.md §2 index schema table 과 EXACTLY 일치해야 한다.
 #     wave-2 parity self-test = 계약 §2(동적 파싱) vs 본 tuple(하드코딩 code anchor) 대조.
 #     순서·멤버 born-drift = FAIL. 필드 추가/삭제/순서변경 = 계약 amendment 의무.
@@ -153,6 +153,9 @@ _ROW_KEYS = (
     "defect_type",              # SEMI-OPEN (verdict-v4 ∪ unknown-type) | null (defect events)
     "time_to_detection",        # DERIVED measure (ordinal/ts-delta/unattributed) | null (defect events)
     "detecting_lane",           # enum (lane_label) | null (defect events)
+    # ── CFP-2926 Amendment 1 additive (18 → 20) ──
+    "writer_key",               # sha256(agent_id) | null — inline-write-gate sourcing (T-DPE-6 hash-only)
+    "artifact_key",             # sha256(repo-relative path) | null — evidence artifact identity (T-INFO-8 no raw path)
 )
 
 

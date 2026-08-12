@@ -93,6 +93,66 @@ amendment_log:
     direction: strengthening  # 축③ 추가 = 강화 방향 (peer-completion falsifiability)
     sunset_justification: |
       Epic CFP-2597 = mctrader 데뷔 감사 delivery-gap class (fidelity-critical PASS 가 peer 완료증거 없이 새는) 의 강제력 복구 3번째 축 — 축①(self-audit) / 축②(silent degrade) 에 이어 peer-completion falsifiability. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (축③ 추가 + verdict-v4 v4.16 optional array), 약화 0건. §결정 10 축①/② 무손상. warning-tier = 정직 상한 (full falsifiability 는 PL claim+proof 동시저작 한계로 불가 — blocking 승격 = false assurance). carrier_story CFP-2597 = ADR-044 Amendment 6 + ADR-060 Amendment 21 paired sibling amendment 2-set (axis disjoint — 본 ADR-044 = 축③ 결정 SSOT / ADR-060 = warning-tier check 등록).
+  - amendment: 7
+    date: 2026-08-12
+    cfp: CFP-2926
+    summary: |
+      §결정 11(d) "PL self-spawn 금지" 정합 정정 — 신규 결정이 아니라 ADR-170 §결정 19(live,
+      Accepted) 기결정의 전파다. §결정 19 는 "Orchestrator-only spawn" 불변식을 폐기가 아니라
+      "Story scope 단위 위임"으로 재정의하고, 그 2-level 토폴로지 안에서 `lane PL → SubAgent
+      fan-out`(depth 0→1→2)을 명시한다. 본 Amendment 는 §결정 11(d) 가 그 재정의 이전 문면에
+      정지해 ADR-170 과 직접 모순하던 것을 해소한다. 판정을 새로 내리지 않는다(제3 권위 회피).
+      (1) 금지 문면 개정 — "PL 은 worker 를 스스로 spawn 할 수 없다" →
+          "PL 은 lead 가 confine 한 Story/lane scope 안에서 자기 design-time roster 의 worker 를
+          spawn 한다(ADR-170 §결정 19 위임 topology). scope 밖 spawn · roster 외 agent spawn ·
+          teammate→teammate spawn 은 금지."
+      (2) 근거 오귀속 정정 — 구 문면은 금지 근거로 `ADR-009 wrapper-only` 를 인용했으나 ADR-009
+          전문 실측 결과 spawn 위상 규범 문면이 부재하다(전문 124줄 firsthand — `spawn`/`스폰`
+          토큰 매칭 0줄. ADR-009 실 내용축 = wrapper-only 패키지 분해 + DocsAgent 해체이며 런타임
+          spawn 위상과 disjoint). ADR-009 인용을 제거하고 근거를 ADR-170 §결정 19 로 교체.
+          ADR-009 본문 무변경(패키지 분해 축 ⊥ 런타임 spawn 위상 축).
+      (3) env 캐리어 표 정정 — env=0 행의 "PL work-request 반환 → Orchestrator read-worker
+          pre-spawn" 은 thin-PL READ 위임 축(§결정 11(a)~(c))으로 scope 축소 존치하고, worker
+          dispatch 축에서는 PL 직접 spawn 을 정본으로 한다. 두 축은 disjoint — (a)~(c) 의
+          read/compute 경계 mandate 는 무변경(PL 이 worker 를 띄운다고 해서 PL 이 raw 를 직접
+          읽어도 된다는 뜻이 아니다).
+      (4) "D1 prose 는 절대 'PL spawns workers' 로 쓰지 않는다" 문장 삭제 — ADR-170 §결정 19 와
+          정면 충돌하는 유일 문장.
+      (5) 적용 제외(본 Amendment 가 열지 않는 것) —
+          (a) 리뷰 4 lane(요구사항리뷰/설계리뷰/구현리뷰/보안테스트)의 peer dispatch = lead 소유
+              유지. 판별 기준 = worker 가 review-verdict-v4 envelope 를 산출하는가. 근거 =
+              K-5 SoD + ADR-139 INV-L4 "대기 주체 ↔ 판정 주체 분리", 실이득 0(peer 2 는 이미
+              lead 가 한 메시지에 co-dispatch — review-pl-base.md:13). 비-verdict worker 는 허용.
+          (b) worker(depth-2) 자가-spawn = 금지 유지 (ADR-139 INV-L4,
+              plugins/codeforge-review/CLAUDE.md:46 preserve).
+          (c) nested TEAMS(teammate→teammate) = platform 강제 불변.
+          (d) liveness 게이트 소유 = lead 고정(INV-L4/ADR-170 §결정 20) — PL 이 자기 자식을
+              띄워도 stall 판정·force-resume/TaskStop 은 lead 소유.
+      (6) 무접촉 declare — ADR-064(effective_count 45 = grandfathered_at 45 상한, Amd1 결정 2
+          `pl_autonomous_parallel_authority` 는 인용만) · ADR-139 · ADR-170 전부 byte 무변경.
+      (7) ADR-044 지위 무변경 — status: Proposed 유지(승격 안 함, CFP-2914 §7.14 선례). ADR-044
+          몸통(§결정 1-3 TeamCreate/TeamDelete lifecycle)이 platform 삭제 기능(v2.1.178) 위에
+          서 있는 사문화 문제는 본 Amendment 범위 밖 — 별건으로 declare.
+    affected_sections: ["§결정 11(d)"]
+    breaking: false
+    direction: weakening
+    reinterpretation: true  # §결정 11(d) 문면 supersede-in-part — 구 금지 clause 의 factual premise("ADR-009 wrapper-only 가 spawn 위상 규범") 가 실측으로 affirmatively-FALSE(전문 124줄, `spawn`/`스폰` 토큰 0줄) → 소급 재해석. ADR-147 Amendment 4 판정기준 동형(순수 additive 확장 = false / affirmatively-FALSE premise 의 supersede-in-part = true). additive-only 아님(기존 prose 개정 + 1문장 삭제 + verification-evidence 근거 철회) → ADR-154 Amendment 1 의 forward-only additive(false) 와 대조. 진위 = 리뷰 판정 축(presence/type 만 기계 검사)
+    sunset_justification: |
+      방향 정직 판정 = weakening. 금지 조항의 해제이므로 강화로 라벨하지 않는다(ADR-064 §결정 7
+      evidence-gated symmetric ratchet — 약화도 evidence 의무).
+      약화 evidence 4항:
+        (i)   사용자 확정 U-1 "허용 + 기록 복구 동시" (CFP-2926 §5.5.1 design-entry sign-off).
+        (ii)  ADR-170 §결정 19 — 후행 live 결정이 이미 같은 방향으로 결정 + depth 0→1→2 dogfood
+              실증. 본 Amendment 는 그 전파이지 독립 약화가 아니다.
+        (iii) 플랫폼 사실 — 공식 문서 "a subagent can spawn subagents of its own, up to three
+              layers below the main conversation"(code.claude.com/docs/en/sub-agents) +
+              Orchestrator firsthand depth-2 nonce 수신(에러 0).
+        (iv)  구 문면의 근거 자체가 오귀속(위 (2)) — 존재하지 않는 ADR-009 규범을 인용하고 있었다.
+      상쇄 강화 3항(동반 착지 의무):
+        (i)   적용 제외 4종 (5)(a)~(d) 명문화 — 종전에는 암묵이던 경계를 문면화.
+        (ii)  AC-3 원장 lost-update 선행 해소 — 권한 확대 이전에 감사 평면을 먼저 세운다.
+        (iii) 계보 provenance 라벨(lineage_source / stop_time_source) — 모델 주장 값의 측정 입력
+              자격을 구조적으로 박탈.
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
@@ -484,22 +544,30 @@ lane-PL 은 비-essential 경로(docs/stories 밖 `plugin.json` / `scripts/**` /
 
 위임 트리거 = read 결과가 **N+ 잔여 PL 턴 잔존(re-read persistence)** 인가이지 read 횟수가 아니다(R1 — 잔존 시 raw 가 누적 prefix 에 superlinear 비용으로 남음). **R5 trivial-read 면제 = LOCKED 비협상** — 1회성 trivial read(잔여 턴 미잔존)는 회피 재독 ≈ 0 이라 worker spawn 고정비 > 이득 → 순손실(hollow-gate). R5 누락 시 break-even 이 silently load-bearing. **면제 임계값 수치 = impl-measured lock(G1 deferred)** — worker 1-spawn `cache_creation_input_tokens` 실측(spawn-event-v1 또는 count_tokens).
 
-**(d) env 캐리어 divergence + PL self-spawn 금지**
+**(d) env 캐리어 divergence + PL worker dispatch 권한 — Amendment 7 (CFP-2926) 정정**
 
-PL 은 worker 를 **스스로 spawn 할 수 없다**(re-entrancy 3종: 재귀 spawn 금지·nested team 금지·one-team-per-lead — `DeveloperPLAgent.md:271` + ADR-009 wrapper-only). 위임의 실 mechanism:
+> **Amendment 7 정정 범위**: 본 (d) 는 Amendment 7 로 개정됐다. 신규 결정이 아니라 **ADR-170 §결정 19(live, Accepted) 기결정의 전파** — §결정 19 가 "Orchestrator-only spawn" 불변식을 폐기가 아니라 "Story scope 단위 위임"으로 재정의하고 그 2-level 토폴로지 안에서 `lane PL → SubAgent fan-out`(depth 0→1→2)을 명시했는데, 구 (d) 문면이 그 재정의 이전에 정지해 ADR-170 과 직접 모순하던 것을 해소한다(판정 신규 생성 0 — 제3 권위 회피).
+
+PL 은 **lead 가 confine 한 Story/lane scope 안에서 자기 design-time roster 의 worker 를 spawn 한다**(ADR-170 §결정 19 위임 topology). **scope 밖 spawn · roster 외 agent spawn · teammate→teammate spawn 은 금지.** 위임의 실 mechanism:
 
 | env | 위임 캐리어 |
 |---|---|
 | env=1(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) | PL → team worker **SendMessage** dispatch(self-contained — §결정 8 + DeveloperPLAgent.md:269) |
-| env=0(미활성) | PL **work-request 반환** → **Orchestrator read-worker pre-spawn**(PL self-spawn 금지 — ADR-009 + DeveloperPLAgent.md:269) |
+| env=0(미활성) | **worker dispatch 축(정본)** = PL 이 자기 roster worker 를 **직접 spawn**(ADR-170 §결정 19 위임 topology, Story/lane scope 안). **thin-PL READ 위임 축((a)~(c) 한정)** = PL **work-request 반환** → **Orchestrator read-worker pre-spawn**(DeveloperPLAgent.md:269) |
 
-D1 prose 는 절대 "PL spawns workers" 로 쓰지 않는다(env=0=ADR-009 위반). 동형 precedent = §결정 9/§결정 10 chief-author multi-step "env=0 = sequential Agent tool calls(Orchestrator)". **INV-1**: env=0 carrier 가 self-do escape-hatch 금지 — Orchestrator pre-spawn 이 더 많은 step 이라는 이유로 PL 이 비-essential inline-read 금지(carrier 만 다름, 의무 동일).
+**두 축은 disjoint** — worker dispatch 축(PL 직접 spawn)이 열렸다고 해서 (a)~(c) 의 read/compute 경계 mandate 가 약화되지 않는다(PL 이 worker 를 띄운다고 해서 PL 이 raw 를 직접 읽어도 된다는 뜻이 아니다). 동형 precedent = §결정 9/§결정 10 chief-author multi-step "env=0 = sequential Agent tool calls(Orchestrator)". **INV-1**: env=0 carrier 가 self-do escape-hatch 금지 — 캐리어가 무엇이든 PL 의 비-essential inline-read 금지 의무는 동일.
+
+**적용 제외(본 Amendment 7 이 열지 않는 것, closed 4종)**:
+- **(제외 a) 리뷰 4 lane peer dispatch = lead 소유 유지** — 요구사항리뷰/설계리뷰/구현리뷰/보안테스트. 판별 기준 = worker 가 **review-verdict-v4 envelope 를 산출하는가**. 근거 = K-5 SoD + ADR-139 INV-L4 "대기 주체 ↔ 판정 주체 분리", 실이득 0(peer 2 는 이미 lead 가 한 메시지에 co-dispatch — `review-pl-base.md:13`). **비-verdict worker 는 허용**.
+- **(제외 b) worker(depth-2) 자가-spawn = 금지 유지** — ADR-139 INV-L4, `plugins/codeforge-review/CLAUDE.md:46` preserve.
+- **(제외 c) nested TEAMS(teammate→teammate) = platform 강제 불변**.
+- **(제외 d) liveness 게이트 소유 = lead 고정** — INV-L4 / ADR-170 §결정 20. PL 이 자기 자식을 띄워도 stall 판정·force-resume/`TaskStop` 은 lead 소유.
 
 **(e) tier 비대칭 — CFP-1438 확장**
 
 CFP-1438(chief-author span 분할)은 RECOMMENDATION tier(§결정 9 + ADR-039 §결정 17 "monolithic span 채택 시 결격 0" = 미강제). 본 §결정 11 은 같은 family(fat-agent discipline)이나 DISJOINT mechanism(CFP-1438 = 시간-span 분해 / CFP-2521 = read/compute 경계) — 그 라인의 **확장(extends)**. tier = prompt-mandate(behavioral, permission 강제 불가) — enforcement 는 ADR-039 Amendment 8 §결정 9 D3 advisory + ADR-060 evidence-gate 로 deferred.
 
-**불변 보존 (약화 0건)**:
+**불변 보존 (Amendment 5 기준 — 아래 4항 약화 0건)**: ★ Amendment 7 (CFP-2926) 범위 표기 — (d) worker dispatch 축은 Amendment 7 로 **weakening**(금지 해제) 됐다. 아래 4항은 그 개정에도 **무손상**이며, "약화 0건" 은 아래 4항 한정 주장이지 §결정 11 전체 주장이 아니다.
 - §결정 1 phase-scoped sequential team lifecycle invariant 무변경.
 - §결정 8 env=0/env=1 분기 SSOT 무변경(재해석·정합·확장만).
 - **ADR-039 §결정 2 inline whitelist 4-entry closed enumeration 무변경** — **PL read/compute boundary = disjoint axis**(Orchestrator inline whitelist 과 다른 차원). 5번째 whitelist entry 신설 0(ADR-039 §결정 2 line 161 "5번째 카테고리 추가 = ADR-039 amendment 의무" — 본 amendment 은 그것을 하지 않음, disjoint 축이므로).
@@ -513,7 +581,7 @@ CFP-1438(chief-author span 분할)은 RECOMMENDATION tier(§결정 9 + ADR-039 �
 - §결정 1/§결정 8 본문 무변경 verify(lifecycle/env 분기 무손상).
 - ADR-039 §결정 2 4-entry 무변경 + disjoint-axis verify(archive/adr/ADR-039-...:150-161 직접 Read — line 161 "5번째 카테고리 추가 = amendment 의무").
 - essential carve-out anchor verify(DeveloperPLAgent.md:80-99/178/191/196-238/262-271 직접 Read).
-- env=0 self-spawn 금지 verify(DeveloperPLAgent.md:269/271 + ADR-009 re-entrancy 3종).
+- env=0 **thin-PL READ 위임 축((a)~(c) 한정)** verify(DeveloperPLAgent.md:269 — 비-essential read 의 worker 위임). ★ Amendment 7 (CFP-2926) 정정: 구 문면의 "env=0 self-spawn 금지 verify(… + ADR-009 re-entrancy 3종)" 는 **worker dispatch 축에서 폐기** — ADR-009 는 spawn 위상 규범 문면을 갖지 않고(전문 124줄 firsthand, `spawn`/`스폰` 토큰 매칭 0줄), dispatch 축 정본 근거는 ADR-170 §결정 19 다.
 - tier 비대칭 verify(ADR-039 §결정 17 "monolithic span 채택 시 결격 0" = recommendation tier 직접 Read).
 
 ### 결정 12 — check-verification-floor.sh 축③ (peer-completion falsifiability) — Amendment 6 (CFP-2597, Epic CFP-2597 review-PL delivery-gap 기계화 Phase 2)
