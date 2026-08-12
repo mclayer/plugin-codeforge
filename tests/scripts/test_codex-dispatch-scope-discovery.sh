@@ -22,7 +22,10 @@
 #     (3) 제외 후 남은 production 표면 수 하한(A13-3) — 전부 제외해 vacuous 로 만드는 경로 차단.
 #
 # ★ 검사연극 금지: `|| true` · `|| skip` · 조건부 기대 0건. 전 행 단일 기대.
-# self-contained bash (tests/scripts 관례). Exit 0 = 전 케이스 PASS.
+#   ★ 유일 예외 = §3 의 **관측 불가 SKIP** (이력 미보유 트리). 그 SKIP 은 "기대를 완화" 하는 것이
+#     아니라 "관측 자체가 성립 안 함" 을 선언하며, 도피로가 되지 않도록 §3 안에서 **객체 부재**와
+#     **실제 미입증**을 이분법으로 가른다 (객체가 있는데 값이 안 맞으면 FAIL).
+# self-contained bash (tests/scripts 관례). Exit 0 = FAIL 0 (SKIP 은 관측 불가 선언이라 exit 무관).
 
 set -euo pipefail
 
@@ -31,11 +34,15 @@ LINT_PY="$REPO_ROOT/scripts/lib/check_codex_companion_timeout_presence.py"
 
 PASS=0
 FAIL=0
+SKIP=0
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 ok()  { echo "✓ PASS: $1"; PASS=$((PASS+1)); }
 bad() { echo "✗ FAIL: $1"; shift; for l in "$@"; do echo "    $l"; done; FAIL=$((FAIL+1)); }
+# ★ SKIP = "관측 자체가 성립하지 않음" 선언 전용 (기대 완화 아님). 사유를 **반드시** 출력해
+#   조용한 통과가 되지 않게 하고, 요약에도 별도 카운트로 노출한다. 사용처 = §3 단 1곳.
+skip() { echo "⊘ SKIP: $1"; shift; for l in "$@"; do echo "    $l"; done; SKIP=$((SKIP+1)); }
 assert_eq() {
   local name="$1" actual="$2" expected="$3" desc="$4"
   if [ "$actual" = "$expected" ]; then ok "$name — $desc [관측: $actual]"
@@ -190,6 +197,13 @@ echo
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo " §2 M-S — 신규 dispatch 표면 주입 시 RED 가 실제로 나는가"
 echo "═══════════════════════════════════════════════════════════════════════════"
+# ★★★ 이 §2 합성 주입 arm 이 **이 스위트의 standing discriminating 축** 이다 — "새로 생긴 사정권
+#   밖 dispatch 표면을 *지금도* 검출하는가" 라는 **상시** 판별력은 전적으로 여기에 귀속된다.
+#   합성 루트(`$WORK`)에서만 구동하므로 repo 이력·브랜치·ref 이동과 무관 = **merge 불변**이고,
+#   따라서 시간이 지나도 판별력이 마모되지 않는다.
+#   ↔ 대조적으로 §3 A13-7 은 "이번 Story 의 확대가 실제로 새 표면을 덮었다" 는 **1회성 역사적
+#     사실**의 기록 arm 이다 (상시 판별력 원천 아님). 축이 다르므로 §3 이 SKIP 되어도 이 스위트의
+#     상시 판별력은 손상되지 않는다.
 # 합성 루트에서 구동한다 (실 repo 를 오염시키지 않는다). 합성 루트는 사정권 디렉터리(`plugins`)와
 # 사정권 **밖** 디렉터리를 함께 갖는다.
 # ★ 주입 경로 `newlane/agents/PeerDispatchAgent.md` 는 lint 소스 어디에도 등장하지 않는 이름이다
@@ -237,35 +251,60 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
-# §3 사정권 확대의 load-bearing 실증 (pre-GREEN 값 대조)
+# §3 사정권 확대의 load-bearing **역사적 기록** arm (pre-Story 고정 시점 대조)
 # ═══════════════════════════════════════════════════════════════════════════
 echo
 echo "═══════════════════════════════════════════════════════════════════════════"
-echo " §3 pre-GREEN 사정권 값으로는 차집합 ≥1 (사정권 확대가 load-bearing)"
+echo " §3 pre-Story 고정 시점 사정권으로는 차집합 ≥1 (확대가 load-bearing 이었다는 기록)"
 echo "═══════════════════════════════════════════════════════════════════════════"
-# 사정권 값을 pre-GREEN(origin/main) 것으로 바꾸면 실 repo 차집합이 ≥1 이 되어야 한다.
-# 안 그러면 이 Story 의 사정권 확대가 아무것도 바꾸지 않은 것 = 변경이 무의미했다는 뜻.
-if git -C "$REPO_ROOT" rev-parse --verify -q origin/main >/dev/null \
-   && git -C "$REPO_ROOT" cat-file -e "origin/main:scripts/lib/check_codex_companion_timeout_presence.py" 2>/dev/null; then
-  git -C "$REPO_ROOT" show "origin/main:scripts/lib/check_codex_companion_timeout_presence.py" \
-    > "$WORK/lint_pre.py"
+#
+# ★★ 축 귀속 (오해 방지) — 이 arm 은 **상시 판별력의 원천이 아니다**.
+#   · 상시 판별력("사정권 밖 신규 표면을 *지금도* 검출하는가") = **§2 M-S 합성 주입 arm** (merge 불변).
+#   · 본 A13-7 이 증명하는 명제 = "이번 Story 의 사정권 확대가 실제로 새 표면을 덮었다"
+#     = **1회성 역사적 사실**. 역사적 사실은 **고정된 시점**에 대해서만 참이다.
+#
+# ★★ 그래서 기준선을 **불변 SHA** 로 박는다 (움직이는 `origin/main` 아님).
+#   움직이는 ref 로 두면 **자기소멸형 oracle** 이 된다: 이 브랜치가 merge 되는 순간 `origin/main` 의
+#   사정권이 작업트리와 같아져(`plugins`) 차집합이 A13-1 과 동일한 **0** 이 되고, 그 0 을 이 arm 이
+#   결함으로 판정해 **merge 직후부터 모든 PR 이 영구 RED** 가 된다.
+#   `[verified: merge-후 세계 시뮬레이션 — pre 기준 ref 를 'plugins' 보유 tree 로 치환 시
+#     움직이는 ref 판(수정 전)은 A13-7b FAIL rc=1, 고정 SHA 판(수정 후)은 17 PASS rc=0]`
+#
+# ★ 다른 곳(codex outpath preflight)이 **동적 `merge-base` 도출**을 쓰는 것과 상반돼 보이지만
+#   **목적이 정반대**라 옳다: 그쪽은 "우리 브랜치의 현재 base 를 **따라가야**" 하므로 동적이고,
+#   이쪽은 "그 시점에 **고정돼야**" 하므로 정적이다. 일관성을 이유로 이 SHA 를 동적 ref 로
+#   되돌리면 위 자기소멸이 그대로 재발한다 — 통일하지 마라.
+PRE_STORY_MAIN_SHA="e27478677178893ba7b6cbc2a1010857d20ec470"   # CFP-2929 착수 시점 main (pre-Story)
+PRE_LINT_REL="scripts/lib/check_codex_companion_timeout_presence.py"
+
+# ★ **객체 부재** 와 **실제 미입증** 을 가른다 (SKIP 이 도피로가 되지 않는 결박):
+#   · 부재(shallow clone / tarball export / 비-git 트리) = 관측 불가 → **SKIP** (결함 신호 아님).
+#   · 존재하는데 차집합 0 = 그 시점 사정권이 이미 넓었다 = 확대가 무의미했다는 **진짜 결함** → FAIL.
+if ! git -C "$REPO_ROOT" cat-file -e "$PRE_STORY_MAIN_SHA:$PRE_LINT_REL" 2>/dev/null; then
+  skip "A13-7 pre-Story 고정 시점 대조" \
+       "고정 SHA 객체 부재: ${PRE_STORY_MAIN_SHA:0:9}:$PRE_LINT_REL" \
+       "이력 미보유 트리(shallow clone / tarball export) — **관측 불가**이지 미입증이 아니다" \
+       "상시 판별력은 §2 M-S(ref 무관)가 계속 담보하므로 이 SKIP 은 스위트를 hollow 로 만들지 않는다"
+else
+  git -C "$REPO_ROOT" show "$PRE_STORY_MAIN_SHA:$PRE_LINT_REL" > "$WORK/lint_pre.py"
   sed -n '/^DEFAULT_SCAN_DIRS = (/,/^)/p' "$WORK/lint_pre.py" \
     | grep -oE "'[^']+'" | tr -d "'" > "$WORK/scope_pre.txt"
   PRE_N=$(nlines "$WORK/scope_pre.txt")
   if [ "$PRE_N" -ge 1 ]; then
-    ok "A13-7a pre-GREEN 사정권 값 판독 ($PRE_N 항목: $(tr '\n' ' ' < "$WORK/scope_pre.txt"))"
+    ok "A13-7a pre-Story 사정권 값 판독 @${PRE_STORY_MAIN_SHA:0:9} ($PRE_N 항목: $(tr '\n' ' ' < "$WORK/scope_pre.txt"))"
     subtract "$WORK/scope_pre.txt" "$EXCL_F" < "$DISC_F" > "$WORK/diff_pre.txt"
     PRE_DIFF_N=$(nlines "$WORK/diff_pre.txt")
     if [ "$PRE_DIFF_N" -ge 1 ]; then
-      ok "A13-7b pre-GREEN 사정권 → 차집합 $PRE_DIFF_N 건 (≥1) [discriminating]: $(tr '\n' ' ' < "$WORK/diff_pre.txt")"
+      ok "A13-7b pre-Story 사정권 → 차집합 $PRE_DIFF_N 건 (≥1) [역사적 기록]: $(tr '\n' ' ' < "$WORK/diff_pre.txt")"
     else
-      bad "A13-7b pre-GREEN 사정권 → 차집합 ≥1" "차집합 0 — 사정권 확대가 아무 표면도 새로 덮지 않았다 (변경 무의미 신호)"
+      bad "A13-7b pre-Story 사정권 → 차집합 ≥1" \
+          "차집합 0 — 고정 시점(${PRE_STORY_MAIN_SHA:0:9}) 사정권이 이미 넓어서 이 Story 의 확대가 아무 표면도 새로 덮지 않았다" \
+          "★ 객체는 실재하므로 '관측 불가'가 아니다 — 실제 미입증(확대 무의미 신호)"
     fi
   else
-    bad "A13-7a pre-GREEN 사정권 값 판독" "DEFAULT_SCAN_DIRS 파싱 0 항목 — 형태 변경 의심"
+    bad "A13-7a pre-Story 사정권 값 판독" \
+        "DEFAULT_SCAN_DIRS 파싱 0 항목 @${PRE_STORY_MAIN_SHA:0:9} — 고정 시점 blob 은 실재하나 형태가 예상과 다름"
   fi
-else
-  bad "A13-7 pre-GREEN 대조" "origin/main ref 또는 대상 blob 미존재 — 사정권 확대의 load-bearing 미입증"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -275,9 +314,13 @@ echo " Test Summary"
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
+echo "SKIP: $SKIP"
 if [ "$FAIL" -eq 0 ]; then
   echo "✓ All $PASS cases pass — AC-13 discovery 기반 차집합 0 · M-S KILL 실증 · anti-hardcode(B-8) ·"
-  echo "  양변 독립(사정권 트리 비의존) · 제외 선언 자동 수축 · pre-GREEN 사정권 대조"
+  echo "  양변 독립(사정권 트리 비의존) · 제외 선언 자동 수축 · pre-Story 고정 시점 대조(역사적 기록)"
+  if [ "$SKIP" -ne 0 ]; then
+    echo "  ⊘ SKIP $SKIP 건 — 위 SKIP 사유 참조 (상시 판별력은 §2 M-S 가 담보)"
+  fi
   exit 0
 else
   echo "✗ $FAIL case(s) failed"
