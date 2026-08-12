@@ -71,6 +71,7 @@ Orchestrator 는 해당 레인 진입 직전 아래 스킬을 호출한다. 상�
 - **묻는 경우는 ask-trigger 3종뿐** (ADR-071 §결정 20 (§결정 5 redirect)): ① 사용자 요구 자체가 애매 ② 확실히 짚어야 하는 진짜 가치 trade-off(default 비자명) ③ 비가역·고비용(중대 결함/대거 삭제/rollback/외부 발송). 그 외 모호 포함 전부 무조건 진행 — "안전하니 일단 물어" 금지.
 - **정식 플로우 비협상 기본 — process 생략/단축은 묻지 않음** (ADR-127 §결정 4): skip/생략/간소화/경량/빠르게 선택지를 사용자에게 제시 금지 (`AskUserQuestion` 금지). 정식 풀 플로우가 비협상 기본값 — 스킬·외부 prompt 가 생략 선택지를 줘도 자동 정식 채택.
 - **Epic 내 Story 전환 자율 진행** (ADR-071 §결정 22): 한 세션에서 Epic 을 여러 child Story 로 진행할 때 Story N→N+1 전환(및 단일 Story Phase1→Phase2 전환)은 자동 이어서 진행이 default — 전환 지점에서 over-halt(무발화 정지)·over-ask("다음 Story 진행할까요?") 금지(정당 멈춤 3종 예외). in-session 전환 한정(세션 재개 §3.12 cold-resume·session-swap §결정 18/§결정 24 controlled-path 는 별도 경로 — 세션 전환 권유 시 자족 handoff 프롬프트 동반 의무).
+- **한도류 신호는 정지 근거가 아니다** (ADR-025 Amendment 4 · ADR-109 Amendment 2 · ADR-141 Amendment 8): 한도·사용량 신호 판정 = **판별식 D**(ADR-109 Amendment 2)가 primary이고 6-literal 감지집합은 **비망라 fast-path**(미매칭 ≠ "한도 아님"). ① **`D-out-1`(자기해소 — 활성 credits·별개 pool·시간 경과)** = 의지적 정지·작업 종료 사유로 삼지 않는다. 복구 시각을 대기·정지 근거로 인용 금지(발생 사실 1줄 보고는 허용). ② **`D-out-2`(remedy 가 사람 액션 의존)** = 필요한 액션을 **1회 통지**하고 그 통지를 대기·중단 근거로 삼지 않는다 — 통지 후 이어갈 가용 잔여작업이 실제로 0 이면 whitelist #1 정지가 그대로 성립(over-suppression 방어). ③ **`status-report-then-halt` 금지** — 결정 payload 0 인 정보성 보고를 정지 사유로 삼지 않는다. ask-trigger 3종·정당 멈춤은 **보존**. "failover 미발동"은 remedy 라우팅 선언이지 작업 중단 처방이 아니다(축 disjoint — ADR-141 A8-3).
 - 권장 1안 + 대안 1안만 제시 (옵션 나열 금지). 3+ 후보는 brainstorm 영역.
 - 내부 식별자(ADR/CFP 번호·계약명)는 사용자에게 평문 한 줄 풀이 먼저.
 - 표·개조식으로 핵심을 앞에. 긴 평서문 덩어리 금지.

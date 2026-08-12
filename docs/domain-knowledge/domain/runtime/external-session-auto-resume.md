@@ -113,7 +113,7 @@ Anthropic API rate limit 은 4축 독립 운영 (Researcher synthesis SSOT, [Ant
 - Story A = in-process Orchestrator memory + tool state 보존 영역 (model-tier substitution / exp-backoff / circuit breaker primitive)
 - Story B = OS-external new process spawn 영역 (별 OS process 가 별 session spawn → context 만 jsonl event log 에서 복원)
 
-**Cascade 관계** (운영 영역): Story A in-process retry 가 cascade depth ≥ 2 → ADR-109 §결정 5 "user manual resume only" 영역 진입 → user manual 영역에서 session 종료 → Story B wrapper 가 background 에서 reset 시간까지 대기 → 자동 resume.
+**Cascade 관계** (운영 영역): Story A in-process retry 가 cascade depth ≥ 2 → ADR-109 §결정 5 "user manual resume only" 영역 진입 → user manual 영역에서 session 종료 → Story B wrapper 가 background 에서 reset 시간까지 대기 → 자동 resume. **축 분리 cross-ref (오독 차단)**: 위 `user manual resume only` 의 정의역은 **재시도 축 한정**(ADR-109 Amendment 2 (i)) — cascade 상한은 실패한 호출의 **재발행**만 금지하며 살아 있는 Story A 세션의 남은 독립 작업 전진은 계속된다. 본 체인의 "reset 시간까지 대기"는 **session 이 실제로 종료된 이후**의 Story B(OS-external) 동작이므로, 계속 가능한 세션의 작업 중단·대기 근거로 인용 금지(ADR-141 A8-3 축 disjoint · ADR-110 = 사망 후 복구 축).
 
 ### 규칙 2 — Sonnet→Opus fallback amplification risk (ADR-057 cross-ref)
 
