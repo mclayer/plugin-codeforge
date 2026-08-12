@@ -43,7 +43,7 @@ mechanical_enforcement_actions: []  # Phase 1 doc-only. 기계 표면(hook 2종 
 
 # ADR-172: Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식
 
-> ★★**경고 — 본 ADR 전체가 1회 probe run 결과에 조건부다**★★ — §결정 3 의 5-premise(U13 · U11 · C-1 · C-2 · U12)는 저작 시점 현재 **전건 미해소/미확인**이며, **하나라도 부정으로 실측 확정되면 Workflow 채택은 철회**되고(`scope_redefinition_required` 회부) 본 ADR 의 §결정 1·4~7 은 규범 대상 자체를 잃는다. 5건은 1회 probe run 으로 동시 해소 가능하다. 본 문서의 어떤 §결정도 이 전제가 "성립한다" 고 서술하지 않는다(ADR-119).
+> ★★**경고 — 본 ADR 전체가 1회 probe run 결과에 조건부다**★★ — §결정 3 의 5-premise(U13 · U11 · C-1 · C-2 · U12)는 저작 시점 현재 **전건 미해소/미확인**이며, **하나라도 부정으로 실측 확정되면 Workflow 채택은 철회**되고(`scope_redefinition_required` 회부) ★단 **U12 단독 부정 ∧ leg-1 3-conjunct 전건 성립** 은 §결정 3 **규범 5** carve-out 대상이며 철회가 아니다★ 본 ADR 의 §결정 1·4~7 은 규범 대상 자체를 잃는다. 5건은 1회 probe run 으로 동시 해소 가능하다. 본 문서의 어떤 §결정도 이 전제가 "성립한다" 고 서술하지 않는다(ADR-119).
 
 ## 상태
 
@@ -80,7 +80,7 @@ Workflow 도구 채택의 opt-in 을 **세션 1회 선언**으로 규범화한�
 
 ### 결정 3 — 채택 철회 5-premise (fail-closed stacked) ★본 ADR 전체의 유효 조건★
 
-Workflow 채택은 아래 5-premise 가 **전건 긍정일 때만 유효**하다. **하나라도 부정으로 실측 확정되면 채택을 철회**하고 `scope_redefinition_required` 로 요구사항 층에 회부한다. 각 premise 의 정의·검증 방법·부정 시 상세 거동의 SSOT = **Change Plan §12.A**(저작 시점 스냅샷에서 §12.A 절 본문은 저작 진행 중 — 5건의 식별과 fail-closed 거동은 Change Plan 헤더·§7.1-b 및 Story §5.3 AC-1a/AC-5 fail-closed 조항·§6.5 U-목록에 이미 실재하며, 본 ADR 은 그 착지 지점을 §12.A 로 참조한다).
+Workflow 채택은 아래 5-premise 가 **전건 긍정일 때만 유효**하다. **하나라도 부정으로 실측 확정되면 채택을 철회**하고 `scope_redefinition_required` 로 요구사항 층에 회부한다. ★단 하나의 예외 = **규범 5**(U12 단일 carve-out) — 조건·대체 처분이 사전 확정돼 있다.★ 각 premise 의 정의·검증 방법·부정 시 상세 거동의 SSOT = **Change Plan §12.A**(저작 시점 스냅샷에서 §12.A 절 본문은 저작 진행 중 — 5건의 식별과 fail-closed 거동은 Change Plan 헤더·§7.1-b 및 Story §5.3 AC-1a/AC-5 fail-closed 조항·§6.5 U-목록에 이미 실재하며, 본 ADR 은 그 착지 지점을 §12.A 로 참조한다).
 
 | premise | 식별 (정의 SSOT = Change Plan §12.A) | 부정 시 붕괴 지점 | 현재 상태 |
 |---|---|---|---|
@@ -88,14 +88,26 @@ Workflow 채택은 아래 5-premise 가 **전건 긍정일 때만 유효**하다
 | **U11** | opt-in 마커 writer 표면(`UserPromptSubmit`)이 `/effort ultracode` 에서 실재 발화하는가 | AC-1a — 상시 deny 붕괴 또는 self-attest 구멍 재개봉 | 미검증 |
 | **C-1** | workflow agent 의 도구 호출이 PreToolUse 를 발화하는가 (구 U2) | AC-5 예방 leg | 미확인 |
 | **C-2** | 발화 시 hook 입력이 workflow agent 를 판별 가능한 값으로 주는가 | AC-5 예방 leg — deny 판정식 리터럴 확정 불가 | 미확인 |
-| **U12** | `agent()` 의 per-agent 도구 allowlist 축소 인터페이스가 존재하는가 | AC-5 leg-2 도구 축 | 미확인 (문서 침묵 — 반증 아님) |
+| **U12** | `agent()` 의 per-agent 도구 allowlist 축소 인터페이스가 존재하는가 | AC-5 leg-2 **도구 축 한정** (★규범 5 carve-out 대상 — leg-1 전건 성립 시 철회 아님★) | 미확인 (문서 침묵 — 반증 아님) |
 
 **철회 트리거 규범** (본 ADR 소유):
 
 1. **판정 기준 = 실측 확정** — 부정은 probe run(또는 동등 firsthand 실측)으로만 확정한다. 미측정·측정 불가는 부정이 아니라 **INCONCLUSIVE**(미측정→PASS 금지, ADR-139 INV-L2 준용)이며, INCONCLUSIVE 상태에서는 채택 실증도 철회도 선언하지 않는다.
 2. **완화 금지** — 부정 확정 시 "정직 declare 후 진행" / "deny 를 allow 로 완화" / premise 재정의로 회피하는 경로를 전부 금지한다(Story §5.3 AC-5 fail-closed 조항이 봉쇄한 경로의 ADR-tier 재확인).
-3. **철회 처분** — 채택 철회 = 본 ADR `status: Deprecated` 전이 + sibling 3 amendment 의 조건부 실현 조항 발화(각자의 문면이 이미 "부정 시 채택 철회 — ADR-172 §결정 3" 으로 본 결정을 지시한다) + `scope_redefinition_required` 회부. 부분 채택(일부 premise 만 성립한 축소 운용)은 **본 ADR amendment 없이 불가**.
+3. **철회 처분** — 채택 철회 = 본 ADR `status: Deprecated` 전이 + sibling 3 amendment 의 조건부 실현 조항 발화(각자의 문면이 이미 "부정 시 채택 철회 — ADR-172 §결정 3" 으로 본 결정을 지시한다) + `scope_redefinition_required` 회부. 부분 채택(일부 premise 만 성립한 축소 운용)은 **본 ADR amendment 없이 불가**. ★단 **U12 단일 축**의 부분 채택은 아래 **규범 5** 가 조건·처분을 고정해 사전 승인한다(별도 amendment 불요 — 본 조항이 요구한 승인 절차의 본문 내 이행).★
 4. **동시 해소 권고** — 5건은 1회 probe run 으로 동시 해소 가능하므로, 설계리뷰 진입 전(또는 병렬) 실행을 권고한다(Change Plan 헤더 동일 권고).
+5. **U12 단일 carve-out (부분 채택 사전 승인)** — ★**U12 단독 부정 확정** ∧ **leg-1 3-conjunct(C-1 · C-2 · C-3) 전건 성립**★ 인 경우에 한해, 처분은 채택 철회가 **아니라** 아래 3항 고정 처분이다:
+   - (i) AC-5 leg-2 를 `model` negative **단독 conjunct 로 축소**
+   - (ii) **도구 allowlist 축 미보장 declare**(§결정 8 로스터 6 *"파일 쓰기 차단 축"* 과 동일 성질의 정직 declare)
+   - (iii) AC-5 ① statement 정정 — *"파일 쓰기 능력 부재"* → *"`Write`/`Edit`/`MultiEdit` 축 차단 ∧ `Bash` 경유 쓰기 미보장 명시"*
+
+   상세 거동 SSOT = Change Plan §7.3 · §8.2-D · §12.A(U12 행).
+
+   **U12 에만 여는 이유** — 나머지 4 premise(U13 · U11 · C-1 · C-2) 부정은 **게이트 자체가 무대상**이 되어 as-is 공백(Change Plan §2.4)이 그대로 남는다 = 채택 전제의 붕괴. U12 부정은 성격이 다르다 — 예방 leg 의 주 담당은 **leg-1(C-3 신규 capability-gate hook)** 이고 U12 는 그 위에 얹는 **추가 축소 수단**이다. 그 추가분의 부재는 *"보호가 사라진다"* 가 아니라 *"보호 범위가 도구 축까지 넓어지지 못한다"* 이며, 잔여는 declare 로 관리된다.
+
+   ★**3중 협착 — 규범 2 무손상**★ — (α) 대상 = **U12 단일 premise**(타 premise 유추 적용 **금지**) (β) 조건 = **leg-1 전건 성립**(C-1·C-2·C-3 중 하나라도 부정이면 본 carve-out **미발동** → 규범 3 철회 그대로) (γ) 대체 처분이 위 (i)(ii)(iii) 로 **사전 확정**돼 발화 시점의 재량 완화가 불가능. ⇒ 본 carve-out 은 규범 2 *"완화 금지"* 의 예외가 **아니라**, 규범 3 이 요구한 승인 절차를 본문에서 미리 이행한 것이다.
+
+   ★**정직 declare**★ — 본 규범 5 는 §결정 3 저작 시점의 blanket 문면이 같은 Story 기착지 설계 판단(Change Plan §7.3 *"leg-1 만 성립하면 leg-2 를 축소"* · §8.2-D 처분 3)과 정면 충돌한 것을 **규범 층에서 해소**한 것이다(설계리뷰 iter1 D-02 택1 결과). 문면 해석으로 덮지 않았음을 명시한다.
 
 ### 결정 4 — 무신뢰 데이터 경계: 조립 주체 = 스크립트
 
