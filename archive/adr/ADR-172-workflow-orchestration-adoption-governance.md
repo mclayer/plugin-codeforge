@@ -133,11 +133,16 @@ Change Plan §7.4.0 로스터의 운영 불변식 9건을 본 ADR 규범으로 *
 | **INV-W6** | 세션 경계·수명 공백 | 봉쇄 |
 | **INV-W7** | 재시도 통제 (in-script 자동 재호출 금지) | 봉쇄 |
 | **INV-W8** | rate-limit 완화 미도달 declare | advisory (정직 declare) |
-| **INV-W9** | 모델 tier negative 집행 | 예방 (lint fail-closed — §결정 6) |
+| **INV-W9** | 모델 tier negative 집행 | 예방 — ★정의역 = "체크인 정본 스크립트에 `model` 키 부재" 축 한정★ (lint fail-closed — §결정 6). ★실행 tier ≤ ceiling **실현**의 보증 아님 — 아래 지위 선언★ |
 
 **INV-W1 지위 선언 (중복 규범 증식 차단)** — INV-W1 은 [ADR-139](ADR-139-background-wait-liveness-gate.md) **INV-L4**(대기 주체 ↔ 판정 주체 분리, worker self-attestation 차단 — `archive/adr/ADR-139-background-wait-liveness-gate.md:71`)의 **인스턴스이지 신규 규범이 아니다**. run 의 `status`/`agentCount`/`summary` 자기보고를 완결성 판정 근거로 쓰는 것 = worker self-attestation 의 workflow 채널 발현형이며, 상위 규범은 ADR-139 가 계속 소유한다.
 
-**INV-W9 지위 선언** — 규범 본문 = §결정 6 (ADR-141 Amendment 8 소비). 본 표의 row 는 tier 고정용 참조다.
+**INV-W9 지위 선언 + ★예방 tier 의 조건 병기 (설계리뷰 iter1 D-15)★** — 규범 본문 = §결정 6 (ADR-141 Amendment 8 소비). 본 표의 row 는 tier 고정용 참조다. ★단 "예방" 이 덮는 정의역을 아래로 협착한다★:
+
+- **덮는 것** = 체크인 정본 스크립트의 `agent()` `opts` 에 `model` 키가 **존재하면 RED**(fail-closed 정적 lint). 위반 형태 자체가 검출 대상이므로 예방으로 계상한다.
+- **덮지 않는 것** = *"워커가 실제로 ≤ ceiling tier 로 돌았다"*. 그 결론은 A8-1 의 **"플랫폼 default = 세션 모델 위임"** 전제 위에 서 있는데, ADR-141 **A8-4.3 자신이** 그 전제를 *"실재하는 유일 관측점은 run meta `defaultModel` 이라는 **run-level 1점**뿐이고, **그 값이 세션 모델과 동일하다는 것 자체가 미확인**이다(확실도 **med**)"* 로 자인한다(`archive/adr/ADR-141-all-opus-single-tier.md:982`). ⇒ 본 예방 tier 를 *"≤ ceiling 이 실현됨"* 의 근거로 인용하는 것을 **금지**한다(§결정 8 로스터 3 과 동일 처분).
+- ★**6번째 premise 로 등재하지 않는 이유**★ — 이 전제는 **probe run 으로 결판나지 않는다**(A8-4.3 = per-agent 실행 tier 사후 검증 **불가**). §결정 3 의 premise 값공간은 규범 1(실측 확정)과 규범 4(1회 probe 동시 해소)를 전제하므로, 구조적 미검증 항목을 등재하면 규범 1 에 의해 **영구 INCONCLUSIVE** 가 되어 채택 실증도 철회도 영원히 선언 불가해진다 — 로스터 자체가 死문이 된다. ⇒ premise 등재 대신 **본 tier 조건 병기 + §결정 8 로스터 3 재게시**로 처분한다. 이 처분의 성격 = 완화가 아니라 ★**보증 범위 축소(over-claim 제거)**★다.
+- **§7.6 자기적용** — Change Plan §7.6 검증 열 규약(*"성립 가정 위의 완화를 성립한 것처럼 쓰지 않는다"*)을 본 tier 표 자신에 적용한 결과다.
 
 ### 결정 6 — 모델 tier = negative 집행: `agent()` opts 에 `model` 키를 두지 않는다
 
