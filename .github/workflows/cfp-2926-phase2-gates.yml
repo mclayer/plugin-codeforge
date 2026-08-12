@@ -83,21 +83,30 @@ jobs:
         run: |
           set -u
           python3 scripts/lib/check_fanout_subject_prose.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-2 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-3 | AC-6 platform inherent + frozen anchor
         id: ng3
         run: |
           set -u
           python3 scripts/lib/check_platform_inherent_prose.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-3 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-4 | AC-8 doc-queue SSOT
         id: ng4
         run: |
           set -u
           python3 scripts/lib/check_doc_queue_ssot.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-4 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-5 | AC-10 dispatch packet snapshot_sha
         id: ng5
@@ -134,7 +143,10 @@ jobs:
         run: |
           set -u
           python3 scripts/lib/check_lane_overlap_predicate.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-8 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-9 | AC-2b concurrency metric
         id: ng9
@@ -185,21 +197,30 @@ jobs:
         run: |
           set -u
           python3 scripts/lib/check_spawn_event_location_parity.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-10 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-11 | dev-process-event 5-location parity
         id: ng11
         run: |
           set -u
           python3 scripts/lib/check_dev_process_event_location_parity.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-11 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-12 | hook merge registration
         id: ng12
         run: |
           set -u
           python3 scripts/lib/check_hook_merge_registration.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-12 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-13 | return-envelope handle
         id: ng13
@@ -216,14 +237,20 @@ jobs:
         run: |
           set -u
           python3 scripts/lib/check_stop_event_prose.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-14 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-15 | AC-3 stop-event concurrent append
         id: ng15
         run: |
           set -u
           python3 scripts/lib/check_stop_event_concurrent_append.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-15 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: Summary ng10-ng15
         if: always()
@@ -265,14 +292,20 @@ jobs:
         run: |
           set -u
           python3 scripts/lib/check_subagent_stop_auto_emit.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-16 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-17 | sentinel fail-open removal (deprecation)
         id: ng17
         run: |
           set -u
           python3 scripts/lib/check_parallel_work_sentinel.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-17 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-18 | CI run completeness (expected vs actual)
         id: ng18
@@ -284,28 +317,40 @@ jobs:
             --repo-root . \
             --gh-token "$GH_TOKEN" \
             --run-id "${{ github.run_id }}" || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-18 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-19 | AC-7 story diff ADR-064 untouched
         id: ng19
         run: |
           set -u
           python3 scripts/lib/check_story_diff_adr064.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-19 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-20 | AC-9 K-list untouched (9 items)
         id: ng20
         run: |
           set -u
           python3 scripts/lib/check_klist_untouched.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-20 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: NG-21 | AC-12 slot budget table sum
         id: ng21
         run: |
           set -u
           python3 scripts/lib/check_slot_budget_table.py --repo-root . || rc=$?
-          exit ${rc:-0}
+          case ${rc:-0} in
+            0|1|3) exit ${rc:-0} ;;
+            *) echo "::error::NG-21 returned undefined exit code ${rc:-0} (3-state must be 0/1/3)"; exit 1 ;;
+          esac
 
       - name: Summary ng16-ng21
         if: always()
