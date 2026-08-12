@@ -327,10 +327,10 @@ def test_hook_merge_worktree_guard_tier_env_is_load_bearing():
 
 
 # ═══════════════════════════════════════════════ ② T1 — M-F′ (등록면 축, 상시)
-def _run_ng12(hooks_json: Path):
+def _invoke_ng12(*extra_args: str):
+    """NG-12 모듈 1회 실행 → (rc, 단일라인 JSON payload). 인자 조합은 호출자가 정한다."""
     proc = subprocess.run(
-        [sys.executable, str(NG12_MODULE),
-         "--repo-root", str(REPO_ROOT), "--hooks-json", str(hooks_json)],
+        [sys.executable, str(NG12_MODULE), *extra_args],
         capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     payload = {}
@@ -338,6 +338,16 @@ def _run_ng12(hooks_json: Path):
         if line.strip().startswith("{"):
             payload = json.loads(line.strip())
     return proc.returncode, payload
+
+
+def _run_ng12(hooks_json: Path):
+    """★명시 지정(override) 경로★ — 사본/mutant 를 직접 겨눌 때."""
+    return _invoke_ng12("--repo-root", str(REPO_ROOT), "--hooks-json", str(hooks_json))
+
+
+def _run_ng12_by_repo_root(repo_root: Path):
+    """★resolve 경로★ — `--hooks-json` 없이 CI 배선(`--repo-root .`)과 동일 형상."""
+    return _invoke_ng12("--repo-root", str(repo_root))
 
 
 def test_hook_merge_matcher_registration_alive(tmp_path):
@@ -403,6 +413,54 @@ def test_hook_merge_matcher_registration_alive(tmp_path):
     path_d.write_text("{ not json", encoding="utf-8", newline="\n")
     rc_d, payload_d = _run_ng12(path_d)
     assert rc_d == EXIT_RED and payload_d["verdict"] == "RED"
+
+
+# ═══════════════════════════════════ ②′ born-inert 회귀 가드 (경로 되돌림 고정)
+def test_ng12_real_repo_registration_channel_reaches_actual_surface(tmp_path):
+    """★born-inert 회귀 가드★ — `--hooks-json` **없이** 실 repo 등록면에 도달하는지 고정.
+
+    ★왜 위의 ② 로는 못 잡았나★: `_run_ng12` 는 항상 `--hooks-json <사본>` 을 명시 지정해
+    override 분기만 탄다 ⇒ 모듈의 **기본 경로 resolve** 는 테스트 정의상 미관측이었다.
+    그 사이 종전 구현은 `<repo_root>/hooks.json` (실제는 `hooks/hooks.json`) 을 봐서
+    CI 배선(`--repo-root .`)에서 ★영구 `INCONCLUSIVE hooks_json_not_found`(exit 3)★ —
+    `hooks.json` 을 어떻게 훼손해도 결과가 불변인 ★판별력 0★ 상태였다
+    (sibling NG-16 `test_real_repo_registration_channel_reaches_actual_surface` 와 동종).
+
+    고정 대상 3:
+      ⓐ 기본 resolve 가 실 등록면(`hooks/hooks.json`)에 **도달**한다
+      ⓑ resolved 경로가 `identity_probe` 에 **echo** 된다 ([154-AC-13])
+      ⓒ trace 의 hook 식별자가 **실값**이다 (종전 `["unknown"]` = 정보량 0 회귀 차단)
+    + 음성 대조: 후보가 하나도 없는 repo-root 는 not-found 로 갈린다 ⇒ resolve 가 실
+      파일에 하드코딩된 것이 아님을 같은 테스트가 함께 편다(항상-PASS 와 구별).
+    """
+    rc, payload = _run_ng12_by_repo_root(REPO_ROOT)
+
+    # ⓐ 등록면 도달 — born-inert 였다면 여기서 exit 3 / not_found 로 실패한다
+    assert payload.get("reason") != "hooks_json_not_found", (
+        "기본 resolve 가 실 등록면에 미도달 (born-inert 회귀): %s" % payload
+    )
+    assert rc == EXIT_PASS, f"실 repo 기준선이 PASS 가 아니다: rc={rc}, {payload}"
+    assert payload["gate_id"] == "NG-12"
+    assert payload["reason"] == "bash_matcher_registered", payload
+
+    # ⓑ resolved 경로 echo
+    probe = payload["identity_probe"]
+    resolved = (probe.get("resolved_hooks_json") or "").replace("\\", "/")
+    assert resolved.endswith("hooks/hooks.json"), probe
+    assert (probe.get("resolved_via") or "").replace("\\", "/") == "hooks/hooks.json", probe
+    assert Path(resolved) == HOOKS_JSON.resolve(), probe
+
+    # ⓒ trace 실값 — `unknown` placeholder 가 아니고 차단 4종이 실제로 보인다
+    names = payload["trace"]["registered_hook_names"]
+    assert "unknown" not in names, f"vacuous trace 회귀: {names}"
+    assert set(BLOCKING_HOOKS) <= set(names), f"차단 4종 미관측: {names}"
+    assert payload["trace"]["registered_hook_count"] == len(names)
+
+    # 음성 대조 — 후보 전무 repo-root 는 not-found 로 갈린다(하드코딩 아님)
+    rc_empty, payload_empty = _run_ng12_by_repo_root(tmp_path)
+    assert rc_empty == EXIT_INCONCLUSIVE, payload_empty
+    assert payload_empty["reason"] == "hooks_json_not_found", payload_empty
+    assert payload_empty["identity_probe"]["resolved_hooks_json"] is None, payload_empty
 
 
 # ═══════════════════════════════════════════════ ③ ★migration★ — matcher union (1회성)
