@@ -678,4 +678,14 @@ owned_sections:
     owner_adr: ADR-113
     parallel_edit: append-only
 
+  - file: docs/inter-plugin-contracts/lane-dispatch-packet-v1.md
+    section: "§2 Schema (필수 필드 8 + 선택 1) + §3 항목 (필드별 정의)"
+    owner_adr: ADR-044  # 설계 SSOT — Amendment 7 (dispatch packet + roster constraint)
+    parallel_edit: append-only
+    # NOTE (CFP-2926): kind:registry 신설 계약 (version 1.0) — lane PL → worker dispatch packet
+    # 필수 필드 (snapshot_sha / scope_globs / output_section / allowed_spawn_roster) + review_packet
+    # 선례 재사용 + ESCALATE_PACKET_INCOMPLETE 게이트. append-only — §4 변경 규칙 additive-only v1.x
+    # (신 필드 추가 = MINOR bump + amendment, ADR-008 §결정 2 / 필드 삭제·순서변경 = MAJOR v2.0).
+    # kind:registry sibling sync 면제 (ADR-010 §결정 2) — wrapper canonical 단독 PR.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
