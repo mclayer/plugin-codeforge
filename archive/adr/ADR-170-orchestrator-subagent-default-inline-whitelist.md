@@ -554,5 +554,5 @@ N/A — permanent policy (Orchestrator subagent default + inline whitelist 상�
 
 - **ADR-173** (신규 sibling) — Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식 INV-W1~W9. 본 amendment 는 "채널 정합"만, 채택 조건·철회·운영 규율은 ADR-173 소관 (disjoint).
 - **ADR-115 Amendment 2** (동일 carrier sibling) — PreToolUse `Workflow` matcher entry 신설.
-- **ADR-141 Amendment 8** (동일 carrier sibling) — workflow 채널 model tier negative 집행.
+- **ADR-141 Amendment 9** (동일 carrier sibling) — workflow 채널 model tier negative 집행.
 - **ADR-058 §결정 5** — whitelist entry 신설 evidence-gate. 본 amendment 는 entry 신설 0 이므로 **미발동**.

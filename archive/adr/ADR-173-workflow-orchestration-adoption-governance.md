@@ -7,12 +7,12 @@ date: 2026-08-13
 carrier_story: CFP-2948
 parent_epic: null  # independent Story — 플랫폼 신기능 채택 backlog 4건 중 1건 (#2946/#2947/#2949 sibling backlog 와 번호 경합만 공유)
 supersedes: null
-amends: null  # new-sibling — ADR-170 Amendment 1 / ADR-141 Amendment 8 / ADR-115 Amendment 2 는 동일 carrier(CFP-2948)의 별도 amendment sibling 이며, 본 ADR 이 흡수하지 않는다.
+amends: null  # new-sibling — ADR-170 Amendment 1 / ADR-141 Amendment 9 / ADR-115 Amendment 2 는 동일 carrier(CFP-2948)의 별도 amendment sibling 이며, 본 ADR 이 흡수하지 않는다.
 reinterpretation: false  # ADR-167 §결정 1(b) — 신규 저작(기존 규범의 소급 재해석 아님)
 is_transitional: false  # 영구 거버넌스 정책. 채택 유효성이 §결정 3 의 5-premise 에 조건부인 것은 transitional 과 별개 축이다 — 철회는 "해소" 가 아니라 fail-closed 트리거(발화 시 처분 = 본문 해소 기준 절).
 related_adrs:
   - ADR-170  # Orchestrator subagent default + inline whitelist. Amendment 1(동일 carrier sibling) = §결정 1 spawn 채널 집합 기술정정. §결정 3(Ownership ≠ Mechanism) + §결정 19(위임 토폴로지 depth 0→1 슬롯) 포섭 논법 = 본 ADR 대안 (c) 채택 근거 — ★§결정 12 는 앵커 아님(writer monopoly 축 — 대안 표 아래 경계 문단 참조)★. §결정 2 whitelist 7-entry closed 무변경(대안 (b) 기각)
-  - ADR-141  # tier 정책. Amendment 7 = ≤ ceiling invariant / Amendment 8(동일 carrier sibling) = workflow 채널 negative 집행 형태 확정 — 본 ADR §결정 6 은 그 규범의 소비자(INV-W9 wiring, 중복 규범 아님)
+  - ADR-141  # tier 정책. Amendment 7 = ≤ ceiling invariant / Amendment 9(동일 carrier sibling) = workflow 채널 negative 집행 형태 확정 — 본 ADR §결정 6 은 그 규범의 소비자(INV-W9 wiring, 중복 규범 아님)
   - ADR-115  # runtime hook enforcement. Amendment 2(동일 carrier sibling) = PreToolUse(matcher:"Workflow") 진입점 게이트 — §결정 1 의 유일 기계 표면 축(상한 = 진입점 1회 차단·기록)
   - ADR-139  # background-wait liveness — INV-L4(워커 self-attestation 차단). INV-W1 은 그 인스턴스(본 ADR 은 인스턴스 선언만, 신규 규범 증식 0)
   - ADR-119  # research-before-claims + 정직 라벨 + §결정 9 제안 필요성 게이트 — §결정 8 정직 천장의 규율 원천
@@ -49,7 +49,7 @@ mechanical_enforcement_actions: []  # Phase 1 doc-only. 기계 표면(hook 2종 
 
 **Accepted** (2026-08-13 KST, CFP-2948 Phase 1 carrier). ★단 **조건부 Accepted** — 문서 최상단 경고 블록 + §결정 3 이 유효 조건을 고정한다. probe run 이전의 본 ADR 은 "발효된 규범" 이되 "실증된 채택" 이 아니다.★
 
-동일 carrier(CFP-2948)의 sibling 산출물 3건 — **ADR-170 Amendment 1**(spawn 채널 집합 기술정정) / **ADR-141 Amendment 8**(workflow 채널 tier negative 집행) / **ADR-115 Amendment 2**(PreToolUse `Workflow` matcher 진입점 게이트) — 은 각자의 모 ADR 에 귀속된 **별도 amendment 이며 본 ADR 이 흡수하지 않는다**. 본 ADR 은 그 셋이 다루지 않는 축(채택 조건·철회·운영 불변식·데이터 경계·정직 천장)만 소유한다.
+동일 carrier(CFP-2948)의 sibling 산출물 3건 — **ADR-170 Amendment 1**(spawn 채널 집합 기술정정) / **ADR-141 Amendment 9**(workflow 채널 tier negative 집행) / **ADR-115 Amendment 2**(PreToolUse `Workflow` matcher 진입점 게이트) — 은 각자의 모 ADR 에 귀속된 **별도 amendment 이며 본 ADR 이 흡수하지 않는다**. 본 ADR 은 그 셋이 다루지 않는 축(채택 조건·철회·운영 불변식·데이터 경계·정직 천장)만 소유한다.
 
 ## 컨텍스트
 
@@ -137,11 +137,11 @@ Change Plan §7.4.0 로스터의 운영 불변식 9건을 본 ADR 규범으로 *
 
 **INV-W1 지위 선언 (중복 규범 증식 차단)** — INV-W1 은 [ADR-139](ADR-139-background-wait-liveness-gate.md) **INV-L4**(대기 주체 ↔ 판정 주체 분리, worker self-attestation 차단 — `archive/adr/ADR-139-background-wait-liveness-gate.md:71`)의 **인스턴스이지 신규 규범이 아니다**. run 의 `status`/`agentCount`/`summary` 자기보고를 완결성 판정 근거로 쓰는 것 = worker self-attestation 의 workflow 채널 발현형이며, 상위 규범은 ADR-139 가 계속 소유한다.
 
-**INV-W9 지위 선언 + ★예방 tier 의 조건 병기 (설계리뷰 iter1 D-15)★** — 규범 본문 = §결정 6 (ADR-141 Amendment 8 소비). 본 표의 row 는 tier 고정용 참조다. ★단 "예방" 이 덮는 정의역을 아래로 협착한다★:
+**INV-W9 지위 선언 + ★예방 tier 의 조건 병기 (설계리뷰 iter1 D-15)★** — 규범 본문 = §결정 6 (ADR-141 Amendment 9 소비). 본 표의 row 는 tier 고정용 참조다. ★단 "예방" 이 덮는 정의역을 아래로 협착한다★:
 
 - **덮는 것** = 체크인 정본 스크립트의 `agent()` `opts` 에 `model` 키가 **존재하면 RED**(fail-closed 정적 lint). 위반 형태 자체가 검출 대상이므로 예방으로 계상한다.
-- **덮지 않는 것** = *"워커가 실제로 ≤ ceiling tier 로 돌았다"*. 그 결론은 A8-1 의 **"플랫폼 default = 세션 모델 위임"** 전제 위에 서 있는데, ADR-141 **A8-4.3 자신이** 그 전제를 *"실재하는 유일 관측점은 run meta `defaultModel` 이라는 **run-level 1점**뿐이고, **그 값이 세션 모델과 동일하다는 것 자체가 미확인**이다(확실도 **med**)"* 로 자인한다(`archive/adr/ADR-141-all-opus-single-tier.md:982`). ⇒ 본 예방 tier 를 *"≤ ceiling 이 실현됨"* 의 근거로 인용하는 것을 **금지**한다(§결정 8 로스터 3 과 동일 처분).
-- ★**6번째 premise 로 등재하지 않는 이유**★ — 이 전제는 **probe run 으로 결판나지 않는다**(A8-4.3 = per-agent 실행 tier 사후 검증 **불가**). §결정 3 의 premise 값공간은 규범 1(실측 확정)과 규범 4(1회 probe 동시 해소)를 전제하므로, 구조적 미검증 항목을 등재하면 규범 1 에 의해 **영구 INCONCLUSIVE** 가 되어 채택 실증도 철회도 영원히 선언 불가해진다 — 로스터 자체가 사문화된다. ⇒ premise 등재 대신 **본 tier 조건 병기 + §결정 8 로스터 3 재게시**로 처분한다. 이 처분의 성격 = 완화가 아니라 ★**보증 범위 축소(over-claim 제거)**★다.
+- **덮지 않는 것** = *"워커가 실제로 ≤ ceiling tier 로 돌았다"*. 그 결론은 A9-1 의 **"플랫폼 default = 세션 모델 위임"** 전제 위에 서 있는데, ADR-141 **A9-4.3 자신이** 그 전제를 *"실재하는 유일 관측점은 run meta `defaultModel` 이라는 **run-level 1점**뿐이고, **그 값이 세션 모델과 동일하다는 것 자체가 미확인**이다(확실도 **med**)"* 로 자인한다(`archive/adr/ADR-141-all-opus-single-tier.md` §A9-4.3). ⇒ 본 예방 tier 를 *"≤ ceiling 이 실현됨"* 의 근거로 인용하는 것을 **금지**한다(§결정 8 로스터 3 과 동일 처분).
+- ★**6번째 premise 로 등재하지 않는 이유**★ — 이 전제는 **probe run 으로 결판나지 않는다**(A9-4.3 = per-agent 실행 tier 사후 검증 **불가**). §결정 3 의 premise 값공간은 규범 1(실측 확정)과 규범 4(1회 probe 동시 해소)를 전제하므로, 구조적 미검증 항목을 등재하면 규범 1 에 의해 **영구 INCONCLUSIVE** 가 되어 채택 실증도 철회도 영원히 선언 불가해진다 — 로스터 자체가 사문화된다. ⇒ premise 등재 대신 **본 tier 조건 병기 + §결정 8 로스터 3 재게시**로 처분한다. 이 처분의 성격 = 완화가 아니라 ★**보증 범위 축소(over-claim 제거)**★다.
 - **§7.6 자기적용** — Change Plan §7.6 검증 열 규약(*"성립 가정 위의 완화를 성립한 것처럼 쓰지 않는다"*)을 본 tier 표 자신에 적용한 결과다.
 
 ### 결정 6 — 모델 tier = negative 집행: `agent()` opts 에 `model` 키를 두지 않는다
@@ -149,8 +149,8 @@ Change Plan §7.4.0 로스터의 운영 불변식 9건을 본 ADR 규범으로 *
 workflow 스크립트의 `agent()` `opts` 에 **`model` 키를 두지 않는다** — 키 부재가 곧 집행이다(플랫폼 default = 세션 모델 위임 ⇒ 워커 tier = Orchestrator effective tier 와 동급 ⇒ ADR-141 Amendment 7 의 ≤ ceiling 자동 충족). 명시 지정은 금지한다.
 
 - **근거 (관측 정합)** — probe run 의 per-agent meta 는 `agentType: 'workflow-subagent'`(고정) + `spawnDepth: 1` 2키이며 ★`model` 필드가 부재★한다 `[ArchitectPL firsthand 실측 보고(199/199) — 본 ADR 저작 세션 재현 미수행, 확실도 med-high]`. 즉 세션 모델 상속이 관측 사실과 정합하며, `opts.model` 지정은 ADR-141 Amendment 7 tier-cap 집행점(`min(frontmatter, orchestrator)` — frontmatter 항이 workflow agent 에 부재)을 **우회할 표면을 신설**하는 유일한 수단이다.
-- **규범 owner = [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 8** — 그 amendment 가 ≤ ceiling 의 집행 정의역을 workflow 채널(`agent()` opts)로 확장 확정했다(집행 형태 = negative: 키 부재 의무 + 명시 금지 — "집행점을 `opts.model` 로 확장" 한 것이 아니라 그 반대 형태임은 Amendment 8 자신의 문면이 고정한다). 본 결정은 **그 확장분의 소비자**로서 파이프라인 설계 계약(INV-W9 · Change Plan §4.2)에 wiring 하는 것이며 **중복 규범이 아니다** — 문면 상충 시 ADR-141 Amendment 8 이 우선한다.
-- **검사 형태** — 정적 lint 는 "`opts` 에 `model` 키 존재 → RED"(fail-closed). 판별력·천장(리터럴 스팟체크 한정 / env override 정의역 밖 / per-agent 실행 tier 사후 검증 불가)은 ADR-141 Amendment 8 A8-3/A8-4 가 SSOT — §결정 8 이 그 천장을 본 ADR 로스터에 재게시한다.
+- **규범 owner = [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 9** — 그 amendment 가 ≤ ceiling 의 집행 정의역을 workflow 채널(`agent()` opts)로 확장 확정했다(집행 형태 = negative: 키 부재 의무 + 명시 금지 — "집행점을 `opts.model` 로 확장" 한 것이 아니라 그 반대 형태임은 Amendment 9 자신의 문면이 고정한다). 본 결정은 **그 확장분의 소비자**로서 파이프라인 설계 계약(INV-W9 · Change Plan §4.2)에 wiring 하는 것이며 **중복 규범이 아니다** — 문면 상충 시 ADR-141 Amendment 9 이 우선한다.
+- **검사 형태** — 정적 lint 는 "`opts` 에 `model` 키 존재 → RED"(fail-closed). 판별력·천장(리터럴 스팟체크 한정 / env override 정의역 밖 / per-agent 실행 tier 사후 검증 불가)은 ADR-141 Amendment 9 A9-3/A9-4 가 SSOT — §결정 8 이 그 천장을 본 ADR 로스터에 재게시한다.
 
 ### 결정 7 — 호출 경로 강제: 체크인 정본 지정(named/scriptPath) 경유 + ad-hoc 경로 정의역 밖 declare
 
@@ -168,7 +168,7 @@ workflow 스크립트의 `agent()` `opts` 에 **`model` 키를 두지 않는다*
 |---|---|---|---|
 | 1 | opt-in 세션 선언 실준수 (§결정 1) | advisory (문서 규범) | Orchestrator 세션 = 비-PR-enforceable. 유일 기계 표면 = ADR-115 Amd 2 진입점 게이트이며 그 상한 = ★진입점 1회 차단·기록까지★(스폰된 agent 의 도구 호출은 정의역 밖 — "Workflow matcher 로 파이프라인을 감시한다" 서술 금지) |
 | 2 | lane confinement (D3) | 사후 검출 | mechanism 은 lane 미구분(§결정 1). audit `lane` 값 = ★orchestrator-asserted, hook-unverified★ 라벨 의무(ADR-143 동형 — 검증된 귀속 참칭 금지) |
-| 3 | `model` negative lint (§결정 6) | advisory — 리터럴 스팟체크 한정 | 계산 키·spread 우회 가능 + env override 는 정적 lint 정의역 밖 + per-agent 실행 tier 사후 검증 불가 (SSOT = ADR-141 Amd 8 A8-4) |
+| 3 | `model` negative lint (§결정 6) | advisory — 리터럴 스팟체크 한정 | 계산 키·spread 우회 가능 + env override 는 정적 lint 정의역 밖 + per-agent 실행 tier 사후 검증 불가 (SSOT = ADR-141 Amd 9 A9-4) |
 | 4 | wall-clock (INV-W5) | 검출·판정 — ★예방 없음★ | run 중단 채널 부재. *"wall-clock 상한을 건다"* 서술 금지 (상세 = Change Plan §7.4.3) |
 | 5 | injection 완화 (§결정 4) | delimiting tier 상한 | Spotlighting 계열 완화의 구조적 상한 — 완전 차단 아님 (상세 = Change Plan §7.2-a) |
 | 6 | 파일 쓰기 차단 축 | `Write`/`Edit`/`MultiEdit` 축 한정 — ★`Bash` 경유 쓰기 미보장★ | 기존 write-gate 가 자인한 공백의 상속 (상세 = Change Plan §7.1-b). "파일 쓰기 능력 부재" 서술 금지(달성 불가) |
@@ -198,7 +198,7 @@ workflow 스크립트의 `agent()` `opts` 에 **`model` 키를 두지 않는다*
 - as-is 공백 4건(Change Plan §2.4)에 규범이 착지한다 — 진입점 정책(§결정 1, 기계 표면 = ADR-115 Amd 2) / 능력 경계·tier(§결정 5·6) / injection 경계(§결정 4) / 완결성 ground truth(INV-W2 tier 고정).
 - **희망적 채택 차단** — §결정 3 이 "미확인 전제 위의 채택" 을 구조적으로 금지한다. 부정 확정 시 거동(철회 + 회부)이 사전에 규범화되어 있어, probe 결과가 나쁠 때 "정직 declare 후 진행" 으로 미끄러질 경로가 없다.
 - **Phase 2 구현 계약화** — INV tier 고정(§결정 5)과 negative lint 형태(§결정 6)가 구현 lane 의 판별 기준을 선확정한다(값-blind hollow 검사 유입 차단).
-- 신규 규범 증식 최소 — INV-W1 = ADR-139 인스턴스 선언, §결정 6 = ADR-141 Amd 8 소비자, 대안 (c) 포섭 논법으로 whitelist·writer 정의 무접촉.
+- 신규 규범 증식 최소 — INV-W1 = ADR-139 인스턴스 선언, §결정 6 = ADR-141 Amd 9 소비자, 대안 (c) 포섭 논법으로 whitelist·writer 정의 무접촉.
 
 ### 부정 · trade-off
 
@@ -226,7 +226,7 @@ N/A — permanent policy (`is_transitional: false`). 채택 철회(§결정 3)�
 
 - `archive/adr/ADR-RESERVATION.md` — row 173 (Phase 1, 기재 완료)
 - `archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md` — Amendment 1 (동일 carrier sibling)
-- `archive/adr/ADR-141-all-opus-single-tier.md` — Amendment 8 (동일 carrier sibling, §결정 6 규범 owner)
+- `archive/adr/ADR-141-all-opus-single-tier.md` — Amendment 9 (동일 carrier sibling, §결정 6 규범 owner)
 - `archive/adr/ADR-115-runtime-hook-enforcement.md` — Amendment 2 (동일 carrier sibling, §결정 1 기계 표면)
 - Change Plan: `wrapper/change-plans/cfp-2948-workflow-opt-in-verify-pipeline.md` (`mclayer/codeforge-internal-docs` — ADR-013 dogfood-out. §2.4 as-is / §7.2 데이터 경계 / §7.4.0 INV 로스터 / §12.A 5-premise 의 SSOT)
 - Phase 2 예정 표면 (본 문서는 링크하지 않고 경로 산문 표기만 — Phase 1 dangling 차단): `hooks/hooks.json` · `hooks/pretooluse-workflow-optin-gate` · `hooks/pretooluse-workflow-agent-capability-gate` · `plugins/codeforge-review/workflows/find-verify.js` · `scripts/check-review-pipeline-script.sh` · `scripts/lib/check_review_pipeline_script.py` · `CLAUDE.md` · `plugins/codeforge-review/templates/review-pl-base.md` · `plugins/codeforge-review/agents/CodeReviewPLAgent.md`
