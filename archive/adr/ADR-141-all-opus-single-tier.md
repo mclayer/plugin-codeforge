@@ -781,13 +781,13 @@ ADR-117 의 obsolete 외부 제약 서사 — 구 `## Amendment 1`(CFP-2241 임�
 
 ### A6-3. 비대상 3종 (AC-3)
 
-- **(a) Orchestrator 세션 자체 리밋** — launch 시점 모델 고정이라 자동 전환 구조 불가. 기존 대기 / 수동 세션 handoff 유지(ADR-110 축 disjoint).
+- (a) Orchestrator 세션 자체 리밋 — launch 시점 모델 고정이라 **자동 모델 전환 구조 불가**(본 failover 비대상). 정지 적법성 축은 본 절 소관이 아니다 — 한도류 신호를 근거로 한 의지적 정지의 적법성은 ADR-025 §결정 7 + ADR-109 Amendment 2 판별식 D 가 지배한다. 세션이 **실제로 사망**한 경우의 복구 경로는 ADR-110 / ADR-071 §결정 24(축 disjoint).
 - **(b) refusal**(`stop_reason: refusal` — cyber/reasoning_extraction 등) — 별개 축. 수동 opus 재spawn 방어(CFP-2803 / A4-4) 유지. 리밋 아님.
 - **(c) 비-fable tier subagent 리밋**(haiku 7 / sonnet 10 / opus) — 기존 "운영 관찰 대상" note(A1-6/A2-6/A4-6) 무변경. 본 failover 는 fable-리밋 한정.
 
 ### A6-4. cascade / §14 격리 / idempotency
 
-- **cascade_depth = fable→opus hop COUNT-IN(depth 1)** — opus 착지 후 opus 자기 within-model soak 은 미증가. opus soak 소진 후에도 리밋 = cascade ≥ 2 → **user manual resume only**(ADR-109 §결정 5). disjoint 카운터 금지(bound 약화 — count-in 이 "1-hop then manual" semantics 강제, AC-2 정합). opus 착지 **후** 비로소 §결정 2 exp-backoff / §결정 3 step1·3·4 가 opus 를 same-model 로 재정박.
+- **cascade_depth = fable→opus hop COUNT-IN(depth 1)** — opus 착지 후 opus 자기 within-model soak 은 미증가. opus soak 소진 후에도 리밋 = cascade ≥ 2 → **user manual resume only**(ADR-109 §결정 5). disjoint 카운터 금지(bound 약화 — count-in 이 "1-hop then manual" semantics 강제, AC-2 정합). opus 착지 **후** 비로소 §결정 2 exp-backoff / §결정 3 step1·3·4 가 opus 를 same-model 로 재정박. **축 분리 cross-ref** — 위 `user manual resume only` 의 정의역은 **재시도 축 한정**이다([ADR-109](ADR-109-in-process-429-mitigation-framework.md) Amendment 2 (i)): 실패 호출의 재발행만 금지되고 남은 독립 작업의 전진은 계속된다(작업 진행 중단 아님, 신규 재시도 예산 0).
 - **§14 전용 태그 격리** — `[rate-limit-failover:fable→opus]`. 기존 dead 태그(`[rate-limit-fallback:sonnet→opus]` / `[model-unavailable-fallback:fable→opus]`)와 **비합산·별도 이름·별도 measurement**("failover" token 이 "fallback" 과 분별). **§10 FIX Ledger row 금지**(ADR-109 §결정 9 / ADR-057 §결정 4 격리 동형 — failover = 운영 telemetry ≠ FIX). matched detection literal 기록 권고(auditability — false-positive[특히 `usage limit` negated-context] post-hoc audit). secret 금지(ADR-109 §결정 10 redaction matrix 상속 — account_id/org_id 임베드 금지; reset time KST 는 비밀 아님).
 - **idempotency(mid-run 재수행, E11)** — base_sha reconcile(입력 패킷 = idempotency contract) + owned-section replace-whole(fragment append 아님, last-writer-wins) + append-only 섹션 idempotency-key dedup. 구조적 안전판 = §10 Ledger append 는 Orchestrator 독점(§결정 9 + ADR-039)이라 mid-run fable 종료가 half-appended row 를 남길 수 없음. external non-idempotent side-effect = safe-replay 밖 → silent re-spawn 금지, task-failure escalation.
 
