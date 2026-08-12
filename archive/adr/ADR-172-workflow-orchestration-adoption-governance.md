@@ -11,7 +11,7 @@ amends: null  # new-sibling — ADR-170 Amendment 1 / ADR-141 Amendment 8 / ADR-
 reinterpretation: false  # ADR-167 §결정 1(b) — 신규 저작(기존 규범의 소급 재해석 아님)
 is_transitional: false  # 영구 거버넌스 정책. 채택 유효성이 §결정 3 의 5-premise 에 조건부인 것은 transitional 과 별개 축이다 — 철회는 "해소" 가 아니라 fail-closed 트리거(발화 시 처분 = 본문 해소 기준 절).
 related_adrs:
-  - ADR-170  # Orchestrator subagent default + inline whitelist. Amendment 1(동일 carrier sibling) = §결정 1 spawn 채널 집합 기술정정. §결정 12 포섭 논법 = 본 ADR 대안 (c) 채택 근거. §결정 2 whitelist 7-entry closed 무변경(대안 (b) 기각)
+  - ADR-170  # Orchestrator subagent default + inline whitelist. Amendment 1(동일 carrier sibling) = §결정 1 spawn 채널 집합 기술정정. §결정 3(Ownership ≠ Mechanism) + §결정 19(위임 토폴로지 depth 0→1 슬롯) 포섭 논법 = 본 ADR 대안 (c) 채택 근거 — ★§결정 12 는 앵커 아님(writer monopoly 축 — 대안 표 아래 경계 문단 참조)★. §결정 2 whitelist 7-entry closed 무변경(대안 (b) 기각)
   - ADR-141  # tier 정책. Amendment 7 = ≤ ceiling invariant / Amendment 8(동일 carrier sibling) = workflow 채널 negative 집행 형태 확정 — 본 ADR §결정 6 은 그 규범의 소비자(INV-W9 wiring, 중복 규범 아님)
   - ADR-115  # runtime hook enforcement. Amendment 2(동일 carrier sibling) = PreToolUse(matcher:"Workflow") 진입점 게이트 — §결정 1 의 유일 기계 표면 축(상한 = 진입점 1회 차단·기록)
   - ADR-139  # background-wait liveness — INV-L4(워커 self-attestation 차단). INV-W1 은 그 인스턴스(본 ADR 은 인스턴스 선언만, 신규 규범 증식 0)
@@ -166,7 +166,13 @@ workflow 스크립트의 `agent()` `opts` 에 **`model` 키를 두지 않는다*
 |---|---|---|
 | (a) | **채택 안 함** — Workflow 도구를 codeforge 가 쓰지 않는다 | 기각 — 구현리뷰 find 단계의 결정론적 fan-out·schema 수집 가치가 실재하고, 본 ADR 이 그 채택을 5-premise 조건부 + additive 로 좁혀 리스크를 봉쇄한다. 단 ★§결정 3 부정 확정 시 결과적으로 (a) 로 회귀한다★ — 그 경로가 열려 있는 것 자체가 본 채택안의 fail-closed 설계다 |
 | (b) | **ADR-170 §결정 2 에 8번째 inline whitelist entry 신설** — Workflow 호출을 inline 허용 목록에 등재 | 기각 — ① entry 7 이 evidence-gate 통과 근거로 제시한 3-조건(monopoly 소형 구조화 append / free-form 0 / 판정 로직 부재)을 free-form prompt + schema VERDICT 를 싣는 workflow 스크립트가 **정면 미충족** ② whitelist entry = "inline 으로 해도 되는 것" 목록이므로 위임 mechanism 을 inline 예외로 등재하는 **범주 오류** (ADR-170 Amendment 1 근거 4 동일 판정 — 7-entry closed 무손상) |
-| (c) | **채택 + ADR-170 §결정 12 포섭 논법 재사용** — workflow 스크립트가 spawn 하는 agent 를 Orchestrator-owned delegate subagent 로 포섭(Ownership ≠ Mechanism), whitelist·writer 정의 신설 0 | ★**채택**★ — 기존 규범(ADR-170 §결정 3/§결정 12/§결정 19)의 정의가 이미 이 형상을 담고, ADR-170 Amendment 1 이 채널 표기만 정정했다. 신규 규범 증식 최소(본 ADR 은 기존 규범이 다루지 않는 축만 저작) |
+| (c) | **채택 + ADR-170 §결정 3 + §결정 19 포섭 논법 재사용** — workflow 스크립트가 spawn 하는 agent 를 Orchestrator-owned delegate subagent 로 포섭(Ownership ≠ Mechanism), whitelist·writer 정의 신설 0 | ★**채택**★ — 기존 규범(ADR-170 §결정 3 / §결정 19)의 정의가 이미 이 형상을 담고, ADR-170 Amendment 1 이 채널 표기만 정정했다 — 그 amendment 의 **근거 4항** = §결정 2 fail-closed 룰 / 금지 조항 정의역 / §결정 3+§결정 19 / 범주 오류이며 ★§결정 12 는 **미사용**★ `[chief firsthand — ADR-170:532-537 실독]`. 신규 규범 증식 최소(본 ADR 은 기존 규범이 다루지 않는 축만 저작) |
+
+★**포섭 논법의 경계 (설계리뷰 iter1 D-05 — 앵커 협착)**★ — 대안 (c) 의 포섭은 ★**spawn 채널 정합 축 한정**★이다. workflow 스크립트가 spawn 하는 agent 는 §결정 1 의 **subagent 위임 의무를 충족하는 채널**로 포섭될 뿐이며, **writer 정의는 조금도 확장되지 않는다**.
+
+- **§결정 12 를 앵커로 쓰지 않는 이유** — ADR-170 §결정 12 의 실문면은 ADR-031 §14 lane evidence + fix-event-v1 §10 FIX Ledger 의 ★**writer monopoly**★ 를 "Orchestrator-owned delegate subagent 의 self-write" 로 확장 커버하는 조항이다. 그 조항으로 포섭하면 Change Plan §7.1.0 이 ★**반신뢰**★로 분류한 workflow agent 가 Story §10/§14 **self-write 자격자**가 된다 — 신뢰 등급과 write 권한이 정면 모순한다.
+- **경계 문면 (규범)** — workflow agent 는 Story **§9 verdict · §10 FIX Ledger · §14 Lane Evidence 에 write 하지 않는다**. 이 3면의 writer 정의는 본 ADR 로 **무변경**이며(ADR-031 / fix-event-v1 / ADR-170 §결정 12 문면 **무접촉**), 파이프라인 산출물은 §결정 2 대로 **PL 판정의 입력**일 뿐이다.
+- **정정 성격** — 본 ADR 이 기대는 **amendment 자체(ADR-170 Amendment 1)는 정합**하다. 정정 대상은 그 amendment 를 가리키는 **인용 앵커**뿐이며, 대안 (c) 채택 결론·§결정 1~8 문면은 무변경이다.
 
 ## 결과
 
