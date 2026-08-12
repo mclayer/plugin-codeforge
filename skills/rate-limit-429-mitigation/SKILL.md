@@ -97,7 +97,7 @@ attempts 3-6: 6 attempts soak (§결정 2 max 6 attempts cap)
 `cascade_depth` = 단일 user request 안 retry sequence nested cascade level. depth ≥ 2 (예: same-model 429 → Opus fallback → Opus 429 → 2차 retry burst) 시:
 
 - **자동 재시도 금지** (ADR-057 §결정 2 invariant verbatim 답습)
-- **`AskUserQuestion` escalation** 또는 **사용자 turn 대기**
+- **`AskUserQuestion` escalation** 또는 **사용자 turn 대기** — **재시도 축 한정**(ADR-109 Amendment 2 (i)): 이 조항은 실패한 호출의 **재발행**을 멈출 뿐, 남은 독립 작업의 전진까지 사용자 turn 을 기다리라는 뜻이 아니다(작업 진행 중단 아님, 신규 재시도 예산 0).
 - §14 marker `[429-auto-retry: count=N, final_status=failed]` write + KPI JSONL append-only event log row write (cascade_depth field)
 
 #### Step 3.3 — fable-리밋 branch (opus failover — ADR-141 Amendment 6)
@@ -118,7 +118,7 @@ fable subagent 리밋 감지 (error/termination notification 표면 한정)
 
 - **step1 bypass 근거 3층** (ADR-141 A6-2): reset long-horizon(실관측 `resets 10:20pm` ≫ §결정 2 backoff budget) / fable·opus **별 pool** / Retry-After trap(§결정 2 Retry-After-우선이 reset hint 존중 시 fable ~3h 대기 = "fable full-soak 대기 금지" 위반 → Option A 만 회피).
 - **cascade count-in** = fable→opus hop = `cascade_depth` **1(COUNTS)**. opus 착지 후 opus 자기 within-model soak 미증가. disjoint 카운터 금지("1-hop then manual" semantics 강제).
-- **비대상 3종**(failover 미발동) = Orchestrator 세션 자체 리밋(launch 고정 → 기존 대기/수동 handoff) / refusal(`stop_reason: refusal` — 수동 opus 재spawn 방어, CFP-2803) / 비-fable tier(haiku 7 / sonnet 10 / opus) subagent 리밋. 상세 = playbook §3.0.12b / ADR-141 A6-3.
+- **비대상 3종**(failover 미발동) = Orchestrator 세션 자체 리밋(launch 고정 → 자동 모델 전환 구조 불가) / refusal(`stop_reason: refusal` — 수동 opus 재spawn 방어, CFP-2803) / 비-fable tier(haiku 7 / sonnet 10 / opus) subagent 리밋. **1줄 요약 — "failover 미발동" ≠ "작업 중단"**: 비대상 판정은 재spawn 을 하지 않는다는 뜻일 뿐 멈출 근거가 아니다(정지 적법성 = `ADR-025` §결정 7 + `ADR-109` Amendment 2 판별식 D 소관). 상세·**판정문 verbatim SSOT = `ADR-141` A6-3 + `ADR-141 A8-3`**(본 skill 은 pointer — 여기서 remedy 처방 재서술 금지) / playbook §3.0.12b.
 - **감지집합 cross-ref (G1 — 중복 enum 정의 0)**: 이 branch trigger 감지집합 = base 4-tuple + `session limit` + `usage limit` = 6 literal. authoritative SSOT = ADR-109 §결정 1 Amendment 1 code-fence — 본 skill 재열거 금지.
 - **dead slot re-tenant (부활 아님)**: step2 slot 은 구 ADR-057 §결정 2(sonnet rate-limit→opus)를 cross-ref 했으나 ADR-141 로 moot/dead 라 구조적으로 비어 있다. fable 브랜치가 신규 trigger(fable 리밋)·신규 SSOT(ADR-141 Amendment 6)로 re-tenant — ADR-057 Superseded 유지, sonnet fallback machinery 부활 아님.
 
