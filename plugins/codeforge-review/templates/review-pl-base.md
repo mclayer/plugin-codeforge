@@ -49,6 +49,9 @@ review_packet:
     - rule: "ADR violation" → P0
     - rule: "credential hardcode" → P0
   story_key: <STORY_KEY>     # 필수 — Story file 참조용
+  round_id: <LEAD 발급 회차 토큰>   # 필수 — 형식 `^[A-Za-z0-9_-]{8,64}$` (미치환 placeholder = 형식 위반 → ESCALATE).
+                                    # 발급·전달 normative(4요소) · 판정 · 권장 도출 = §10 SSOT.
+                                    # ★ 본 절은 **스키마 슬롯(필수·형식)만** 둔다 — §10 문면 재인코딩 금지 (SSOT 이중화 = drift 표면 신설).
   related_adrs:              # 선택 — 정합성 교차 입력
     - docs/adr/ADR-NNN-<slug>.md
   pr_phase: phase1_docs | phase2_impl   # 선택 (CFP-2111) — PR 의 Phase 1(docs-only) vs Phase 2(impl) 구분.
@@ -94,6 +97,7 @@ review_packet:
 | scope_globs | ✅ | ✅ | ✅ | ✅ |
 | category_enum | ✅ | ✅ | ✅ | ✅ |
 | story_key | ✅ | ✅ | ✅ | ✅ |
+| **round_id** (CFP-2929) | ✅ | ✅ | ✅ | ✅ |
 | severity_overrides | ◯ | ◯ | ◯ | ◯ |
 | related_adrs | ◯ | ◯ | ◯ | ◯ |
 | **pr_phase** | ◯ | ◯ | ◯ | ◯ |
@@ -670,4 +674,4 @@ DesignReview lane 의 기존 `auto_on_divergence` (Amendment 1) 외에 wrapper r
 | v3.1 | 2026-05-07 | CFP-128 | §3: Container security severity rule append (SecurityTest lane only) — trivy CRITICAL/HIGH/mid + hadolint error/warning/info. ADR-033 §결정 4 sibling sync. |
 | v3.2 | 2026-05-13 | CFP-582 | §11.5: debate-protocol-v1 v1.2 cross-ref block 신설 (ADR-059 Amendment 2) — DesignReviewPL 의 3 marker pattern verification + convergence_quality_invariant_final 검증 책무 + Phase 2 mechanical lint cross-ref. |
 | v3.3 | 2026-06-10 | CFP-2111 | §2: review_packet `contract_version` v1.0→v1.1 MINOR bump (ADR-008 §결정 2) — `pr_phase: phase1_docs \| phase2_impl` optional 필드 신설 + lane 매트릭스 row 추가. 워커 enforcement `== "1.0"` → v1.x major 일치 허용 정합화 (ADR-008 §결정 4 compat 위반 해소). |
-| v3.4 | 2026-08-12 | CFP-2929 | §10: codex dispatch collect 을 **named routine**(`scripts/codex-late-collect.sh <lane> <round_id>`)으로 지목 + **`round_id` 발급·전달 normative 4요소** + **호출 의무(R-6)** + `degrade_reason` **정확성 계약**(marker 토큰 verbatim, 관측되지 않은 원인 대체 기재 금지 — 계약 좌표 `review-verdict-v4.md:348`, **계약 파일 무접촉·bump 불요**). ADR-139 §결정 7(i) 실현 / §결정 7(ii) auto-wake DEFER 유지 무변경. |
+| v3.4 | 2026-08-12 | CFP-2929 | **§2: `round_id` 공통 필수 필드 슬롯 신설** (형식 `^[A-Za-z0-9_-]{8,64}$` + lane 매트릭스 row + §10 cross-ref — 규범만 있고 채울 칸이 없어 packet 이 필드 없이 통과하던 결손 봉합. **`contract_version` bump 불요 판정** = 같은 Story §10 normative 가 이미 요구한 필드의 스키마 슬롯 반영이라 신규 의무 0이며, 워커 enforcement 는 `major == 1`(v1.x 전량 수용)이라 v1.x 내 판정 무영향 — **DeveloperPL 판정, ArchitectPL 비준 대기**). §10: codex dispatch collect 을 **named routine**(`scripts/codex-late-collect.sh <lane> <round_id>`)으로 지목 + **`round_id` 발급·전달 normative 4요소** + **호출 의무(R-6)** + `degrade_reason` **정확성 계약**(marker 토큰 verbatim, 관측되지 않은 원인 대체 기재 금지 — 계약 좌표 `review-verdict-v4.md:348`, **계약 파일 무접촉·bump 불요**). ADR-139 §결정 7(i) 실현 / §결정 7(ii) auto-wake DEFER 유지 무변경. |
