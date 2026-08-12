@@ -21,7 +21,8 @@
 # 절차 (8 step, **순서 고정** — §3.5 표가 SSOT):
 #   0   인자·환경 검증            → 미충족 = rc=2 usage 종료, **outcome marker 미발화**
 #   1   고정경로 manifest read     → 부재 = `outcome=no-dispatch`
-#   2   schema/lane/round_id 형식/dispatch_start 자릿수 → 위반 = **schema 불일치 축** fail-closed
+#   2   필수 10 키 검증 (schema/lane/round_id 형식/dispatch_start 자릿수/category_enum 실재)
+#       → 위반 = **schema 불일치 축** fail-closed
 #   2b  회차 귀속 결박(L3)         → `manifest.round_id != argv` = `reason=stale-manifest`
 #   3   elapsed = now − dispatch_start (극성 결박 — 비교 술어 rc 0/1/그 외 3분기)
 #   4   OP-1 하한 (부재 ∧ 하한 미충족) → `outcome=in-flight`, **재dispatch 금지**
@@ -296,8 +297,12 @@ if [ -z "$MANIFEST_JSON" ]; then
   exit 1
 fi
 
-# ── step 2: schema const · lane 일치 · round_id 형식 · dispatch_start 자릿수 ────────
-# ★ 필수 필드(§4.2 8 행 = 9 키) 중 1+ 부재·타입 불일치 = **전건 fail-closed**(부분 수용 금지).
+# ── step 2: schema const · lane 일치 · round_id 형식 · dispatch_start 자릿수 · category_enum ──
+# ★ 필수 필드 **10 키** 중 1+ 부재·타입 불일치 = **전건 fail-closed**(부분 수용 금지).
+#   내역 = §4.2 표 **8 행**(= **9 키** — `timeout_n`/`kill_after_k` 가 한 행에 2 키) ⊕ `category_enum` 1 키.
+#   ★ `category_enum` 은 아직 **§4.2 표에 미반영**이다(그 표는 8 행 = 9 키 그대로이며 본문은 "필수 8 필드"로
+#     적는다) — 본 줄의 10 은 **collector 가 실제로 강제하는 계수**이고, 표 반영은 ArchitectPL 비준 대기다.
+#     두 계수를 하나로 뭉뚱그려 "§4.2 가 10 키를 규정한다"고 쓰면 없는 문면을 인용하는 것이 된다.
 # ★ 이 축은 **`stale-manifest` 와 섞지 않는다** — 형식 위반 = producer 결함(schema 축) /
 #   값 불일치 = 잔재·caller 결함(귀속 축, step 2b).
 _schema_reject() { _diag "manifest schema 불일치 축 fail-closed — $1"; exit 1; }
@@ -322,6 +327,21 @@ m_out_json="$(_json_str_field "$MANIFEST_JSON" out_json)"       || _schema_rejec
 #   열면 §3.1 이 닫은 경로 방언 축이 재개봉된다 (§3.4 dialect 비대칭은 의도적).
 m_promptfile="$(_json_str_field "$MANIFEST_JSON" promptfile)"   || _schema_reject "promptfile 필드 부재/형식"
 [ -n "$m_promptfile" ]                                          || _schema_reject "promptfile 빈 값"
+
+# ★ `category_enum` = **필수 필드**(§4.2 승격 — DeveloperPL 판정, ArchitectPL 비준 대기). "additive 선택
+#   필드" 아니다. 승격 근거 2:
+#   ① step 7 의 AC-6 helper 는 인자를 **정확히 3개** 요구한다(`len(args) != 3 → rc=2` setup error) —
+#      collector argv 는 `<lane> <round_id>` 2개뿐이라 3번째 인자의 유일 조달처가 이 필드다. 즉 step 7
+#      **의무를 완료하는 데 없으면 안 되는 입력** = 정의상 필수지 선택이 아니다.
+#   ② 부재 검사를 step 7 에 두면 **결함이 은폐된다** — `category_enum` 부재 ∧ out.json 부재 ∧ OP-1 하한
+#      미충족 회차는 step 4 에서 `outcome=in-flight` 로 빠져나가 producer 계약 결함이 전혀 발화하지 않는다
+#      (firsthand 실측). 필수 필드 부재는 회차 진행 상태와 무관하게 **즉시** 드러나야 한다.
+#   ★ 축 = **schema 불일치 축**(필수 필드 부재·타입 불일치 = producer 결함). `rc-unknown`(rc stamp 판독 축)·
+#     `stale-manifest`(값 불일치 = 귀속 축)와 **섞지 않는다** — §4.3 4 reason 의 축 disjoint 규율.
+#   ★ `-n` 검사가 load-bearing — 빈 문자열을 helper 에 넘기면 allowed set 이 공집합이 되고, `findings: []`
+#     인 out.json 은 검사 ⑤ 를 **공허 참으로 통과**한다(= 판정 입력 위조와 등가의 fail-open).
+m_category_enum="$(_json_str_field "$MANIFEST_JSON" category_enum)" || _schema_reject "category_enum 필드 부재/형식"
+[ -n "$m_category_enum" ]                                           || _schema_reject "category_enum 빈 값"
 
 m_dispatch_start="$(_json_uint_field "$MANIFEST_JSON" dispatch_start)" || _schema_reject "dispatch_start 부재/타입/자릿수(^[0-9]{1,10}\$)"
 m_timeout_n="$(_json_uint_field "$MANIFEST_JSON" timeout_n)"           || _schema_reject "timeout_n 부재/타입/자릿수"
@@ -415,18 +435,18 @@ fi
 HELPER_SCHEMA="${CLAUDE_PLUGIN_ROOT}/schemas/codex-review-output-schema-v1.json"
 HELPER_PY="${CLAUDE_PLUGIN_ROOT}/../../scripts/lib/check_codex_review_output_schema.py"
 # helper 3번째 인자 `<category_enum>` 은 **packet 유래**이며 argv(2개)로는 오지 않는다 → manifest
-# **additive 선택 필드**(§4.2 "필드 추가 = 새 const 없이 additive 허용")로 받는다. `schema` const 무변경.
-#   ★ 이 필드는 **§4.2 additive 권한 안의 조달 경로**이며 ArchitectPL 비준 대기 중이다(DeveloperPL 판정 —
-#     처방 (a) 채택, producer 측 emit 은 dispatch 템플릿 소관).
-#   ★ 부재 시 **임의 값 생성 금지** — 지어내면 helper 검사 ⑤(`_check_category_enum`)의 판정 입력을
-#     위조하는 것이다. helper 자신의 setup-error 코드(2) 등가로 fail-closed 한다.
-CATEGORY_ENUM="$(_json_str_field "$MANIFEST_JSON" category_enum)" || CATEGORY_ENUM=''
+# **필수 필드** `category_enum`(§4.2 승격 — DeveloperPL 판정, ArchitectPL 비준 대기)에서 받는다.
+# producer(dispatch 템플릿)와 consumer(본 스크립트)는 같은 plugin·같은 버전으로 함께 배포되므로 skew 가
+# 구조적으로 불가능하다 → `schema` const 무변경(제거·의미 변경이 아니므로 새 const 의무 미발동).
+#   ★ **여기서 다시 파싱하지도, 부재를 다시 검사하지도 않는다** — step 2 가 실재·non-empty 를 이미 보증한다.
+#     종전의 `if [ -z "$CATEGORY_ENUM" ]` fail-closed 분기는 승격으로 **도달 불가**가 됐고, 도달 불가 분기는
+#     어떤 테스트로도 falsify 할 수 없는 "보호한다는 주장"만 남긴다(= 검사연극). 같은 필드를 2회 파싱하는
+#     것 또한 두 판정이 갈릴 수 있는 drift 표면이다. 단일 파싱·단일 강제점(step 2)으로 좁힌다.
+#   ★ 날조 금지는 그대로 유효 — 값은 manifest 원본 그대로이며, 부재 시 **임의 값 생성 없이** step 2 에서
+#     schema 축 fail-closed 로 종료된다(helper 검사 ⑤ 의 판정 입력을 위조하지 않는다).
 
 HELPER_RC=0
-if [ -z "$CATEGORY_ENUM" ]; then
-  _diag "manifest 에 additive 필드 category_enum 미기록 — producer(dispatch 템플릿) 가 이 필드를 emit 하지 않았다. AC-6 helper 3번째 인자 조달 불가(날조 금지) → setup error 등가(2) fail-closed"
-  HELPER_RC=2
-elif [ ! -f "$HELPER_PY" ]; then
+if [ ! -f "$HELPER_PY" ]; then
   # 배포본 helper 부재(#2934) = 정직한 열화. `rc=127 → fail-closed` 성질 보존 — 우회 금지.
   _diag "AC-6 helper 부재 — rc=127 fail-closed(소비 0). 우회(|| true 등) 금지"
   HELPER_RC=127
@@ -436,7 +456,7 @@ else
     _diag "python 인터프리터 부재 — helper 실행 불가, rc=127 fail-closed"
     HELPER_RC=127
   else
-    "$PYTHON_BIN" "$HELPER_PY" "$m_out_json" "$HELPER_SCHEMA" "$CATEGORY_ENUM" >&2
+    "$PYTHON_BIN" "$HELPER_PY" "$m_out_json" "$HELPER_SCHEMA" "$m_category_enum" >&2
     HELPER_RC=$?
   fi
 fi
