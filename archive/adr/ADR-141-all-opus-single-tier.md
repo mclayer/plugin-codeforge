@@ -982,8 +982,9 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 - **판정문 verbatim SSOT = 본 ADR A6-3 + A8-3** 1곳.
 - `docs/orchestrator-playbook.md` §3.0.12b / `skills/rate-limit-429-mitigation/SKILL.md` = **pointer 화**. 단 skill 은 한도 대응 중 즉시 참조되는 문서이므로 **"1줄 요약 + 명시 포인터"** 형태를 표준으로 유지한다(전면 삭제 시 사고 대응 중 맥락 손실).
 - 개정 시 **동기 sweep 의무 (전수 술어 — 절대 site 수·행번호 assert 금지)**: sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 repo 전체에 실행해 얻은 hit 중 **아래 제외 술어를 적용한 나머지 전건**이다. 한 곳 누락 = born-broken.
+  - **적용 기간 = 본 Amendment 의 Phase 2 이행 한정 (self-terminating — 명시)**: 위 술어의 anchor `기존 대기` 는 **본 Amendment 가 폐기하는 문자열 자신**이므로, Phase 2 완료 시점에 제외①②③ 을 뺀 정의역은 **정의상 공집합**이 된다. 이를 standing rule 로 읽으면 항상 vacuously true 인 무효 규범이 되므로 그렇게 읽지 않는다. **완료 후의 승계 규범**은 문자열 anchor 가 아니라 §A8-3 의 축 분리 판정문이다 — 즉 "A6-3 계열 remedy 라우팅 서술을 개정할 때, 그 서술을 **현행 규범으로 mirror 하는 타 문서 site** 전건을 동기화한다"가 잔존 의무이며, 그 site 집합은 §A8-3 판정문 문구로 재탐색한다(anchor 를 폐기 대상 문자열에 묶지 않는다 — 자기소멸 회피). 본 항은 [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) §A4-8 B-2 dry-run 으로 검출됐다.
   - **제외①(동음이의)** `archive/adr/ADR-026-post-merge-automation.md` 의 GitHub Actions concurrency queue 문맥(`pending 안 기존 대기 run`) — 본 규범과 무관한 오탐.
-  - **제외②(메타 표면)** 본 ADR `## Amendment 8` **절 내부 전체**의 인용·판정 서술 — 폐기 *대상* 문언을 기록하는 면이라 **verbatim 보존이 의무**이며 개정 대상이 아니다. 절 경계 = `## Amendment 8` heading 부터 다음 `## ` heading 직전까지(하위 절 목록을 정본으로 두지 않는다 — 열거는 증가·재배치로 stale 해진다).
+  - **제외②(메타 표면)** 본 ADR `## Amendment 8` **절 내부 전체**의 인용·판정 서술 — 폐기 *대상* 문언을 기록하는 면이라 **verbatim 보존이 의무**이며 개정 대상이 아니다. 절 경계 = `## Amendment 8` heading 부터 다음 `## ` heading 직전까지, **다음 `## ` heading 이 부재하면 파일 EOF 까지**(하위 절 목록을 정본으로 두지 않는다 — 열거는 증가·재배치로 stale 해진다). EOF 분기는 가상 케이스가 아니다 — 본 Amendment 는 착지 시점 기준 파일의 **최종 h2** 이므로 종단자가 실제로 부재하며, 그 상태에서 EOF 분기 없이 읽으면 절 경계가 미정의가 된다.
   - **제외③(이력 기록면)** frontmatter `amendment_log` — 제외② 와 동일 사유.
   - 나머지(= A6-3(a) 본문 및 그 문장을 **현행 규범으로 mirror 하는 타 문서 site**)가 sweep 대상이다.
   - **술어화 근거**: 절대 행번호·site 개수를 기준으로 쓰면 개정이 진행될수록 기준 자체가 stale 해진다 — 본 Amendment 자신의 삽입으로 A6-3(a) 행번호가 이동함이 실측됐다(A8-2-1). 동형 규율 = CFP-2944 Story AC-5/AC-11 "전수 술어 · 절대 site 수 assert 금지"(INV-T6) + `ADR-026` 문맥 제외(INV-T8).
@@ -996,6 +997,8 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 
 ### A8-7. Phase 2 실행 범위 (구현 PR — 본 Phase 1 ADR PR 밖, 열거만)
 
+> **행번호 취급**: 아래 타 문서 행번호는 본 Amendment 착지 시점 실측치이며 **acceptance 기준이 아니다**. 아래 항목들은 서로 같은 파일을 편집하므로 **먼저 실행한 항목이 뒤 항목의 행번호를 이동시킨다**(예: 항목 3 이 `playbook`:528 에 1줄을 추가하면 항목 2 의 :531 은 :532 로 밀린다). 따라서 **편집 직전 위치 재확인은 §A8-5 의 grep 술어를 우선 적용**하고 행번호는 보조 힌트로만 읽는다.
+
 1. 본 ADR A6-3(a) 문언을 A8-3 착지 문안으로 교체(전단 보존).
 2. `docs/orchestrator-playbook.md`:531 · `skills/rate-limit-429-mitigation/SKILL.md`:121 — pointer 화(skill 은 1줄 요약 유지).
 3. `docs/orchestrator-playbook.md`:528 에 미분류 정의 cross-ref 1줄 추가(`미분류 = 6-literal 미매칭 ∧ ADR-109 Amendment 2 판별식 D 미충족` — 열거 복제 아닌 정의 포인터, 재열거 0).
@@ -1007,6 +1010,6 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 - Amendment 6 A6-3 — 본 Amendment 의 유일 개정 대상(후단), A6-1/2/4/6 무변경.
 - Amendment 7 A7-5 — 예방층 advisory 자기선언(A8-4 이중화 근거).
 - [ADR-109](ADR-109-in-process-429-mitigation-framework.md) Amendment 2 — 감지·재시도 축(본 Amendment = 행위 규범 축, disjoint).
-- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 정지 적법성 착지(§결정 7 illegal 표).
+- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 정지 적법성 착지(§결정 7 illegal 표). **§A4-8 = 본 carrier 저작물 전체의 자기적용 결박 총칙(정의역 총칙 · dry-run · 전제 검증 · 정직 상한)** — 판정문 verbatim SSOT 는 그 1곳이고 본 Amendment 는 pointer 만 둔다(§A8-5 mirror 정책 자기적용). 본 Amendment 의 술어(§A8-5 sweep · 절 경계)도 그 dry-run 대상이며 결과는 Story `CFP-2944` §7.16 에 기록된다.
 - [ADR-110](ADR-110-external-runtime-wrapper-ssot-boundary.md) — 세션 **사망 후** OS-외부 재개 축(계속 가능한 상태의 대체재로 오용 금지).
 - [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) §결정 24 — session-swap controlled-path(사망 후 복구 경로, 무손상).

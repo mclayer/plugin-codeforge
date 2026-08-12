@@ -473,6 +473,6 @@ D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 
 - §결정 5 — (i) 축 한정 개정 대상. §결정 2/3/4/6 = 무변경.
 - §결정 10 — (g) redaction matrix 확장(비-enum 신호 기록 규약).
 - [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 6 A6-3(a) / Amendment 8 — Orchestrator 세션 축 재개봉(본 Amendment 는 감지·재시도 축, Amendment 8 은 행위 규범 축).
-- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 한도류 신호 발 의지적 정지의 stop-discipline 착지(본 Amendment = 판정, ADR-025 = 정지 적법성).
+- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 한도류 신호 발 의지적 정지의 stop-discipline 착지(본 Amendment = 판정, ADR-025 = 정지 적법성). **§A4-8 = 본 carrier 저작물 전체의 자기적용 결박 총칙** — 판정문 verbatim SSOT 1곳, 본 Amendment 는 pointer 만 둔다. 본 Amendment 의 문면 축 술어((i) full-block 인용 규율 · (j) 천장 서술)도 그 dry-run 대상이며 결과는 Story `CFP-2944` §7.16 에 기록된다(런타임 축 술어 — D-0 · 판별식 D · remedy 사다리 — 는 정의역이 신호·행동이라 문면 자기적용 대상이 아니다).
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) §결정 4 / `docs/orchestrator-playbook.md:528` — 미분류 remedy 라우팅 **배타 지배**(인용만, 개정 0).
 - [ADR-119](ADR-119-research-before-claims.md) — 외부 제품 사실 인용 규율(공식 anchor 미확보 항목의 `[미검증]` 표기).
