@@ -30,6 +30,15 @@ name: CFP-2926 Phase 2 — Integrity Gates (NG-1~NG-21)
 #   NG-19 (AC-7): check_story_diff_adr064.py [신규]
 #   NG-20 (AC-9): check_klist_untouched.py [신규]
 #   NG-21 (AC-12): check_slot_budget_table.py [신규]
+#
+# 메타-게이트 (NG 인벤토리 밖 — 규칙 R 의 세 번째 대조축, §9.8 (5) 승계 X-16):
+#   X-16: check_ng_registry_bijection.py — docs/evidence-checks-registry.yaml NG 행 집합
+#         ↔ Story §8.0.8 (1) NG 표 bijection assert.
+#         ★대조 상대(Story SSOT)는 별 repo(mclayer/codeforge-internal-docs)에 있다★ —
+#         모듈은 fetch 하지 않고 caller 가 materialize 한 로컬 경로만 --story 로 받는다
+#         (모듈 docstring §"Story 파일 접근 한계"). 따라서 본 workflow 가 cross-repo materialize
+#         책임을 진다. 미배선(=--story 미전달) 상태에서는 게이트가 영구 INCONCLUSIVE(exit 3)로
+#         정직 선언만 하고 bijection 을 ★검증하지 않는다★ — 그 구멍을 아래 gate-x16-bijection job 이 닫는다.
 
 on:
   push:
@@ -42,6 +51,19 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
+
+env:
+  # cross-repo Story materialize venue 화이트리스트 (zero-trust anchor, strict match — 미일치 = fail-closed).
+  #   선례 `.github/workflows/ac-traceability-matrix.yml` L44 와 ★동일 리터럴★.
+  ALLOWED_HUB_REPOS: "mclayer/codeforge-internal-docs"
+  # X-16 대조 상대(Story SSOT) URI. 선례 fetchDoc 이 파싱하는 것과 ★같은 형태★
+  #   (`github.com/<owner>/<repo>/blob/<ref>/<path>`, 선례 L147) — 같은 정규식·같은 화이트리스트 가드 재사용.
+  #   ★왜 PR body `story_uri` 마커가 아닌 상수인가★: 선례가 마커를 파싱하는 이유(L102-104)는 임의 Story 를
+  #   PR 마다 해석해야 하기 때문이다. 본 workflow 는 ★단일 Story 전용★(파일명·모듈 STORY_KEY 모두
+  #   CFP-2926 고정)이고 트리거에 `push: main` 과 `workflow_dispatch` 가 포함돼 PR body 자체가 없는
+  #   실행면이 존재한다 — 마커 입력경로를 쓰면 그 실행면에서 구조적으로 영구 INCONCLUSIVE 가 된다.
+  #   `ref=main` = 선례가 명시 인정한 ★영구 ref★(L92 "story_uri = 영구 ref(internal-docs main / immutable commit SHA)").
+  X16_STORY_URI: "https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-2926.md"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -366,18 +388,194 @@ jobs:
             fi
           done
 
+  gate-x16-bijection:
+    name: X-16 registry NG rows to Story NG table bijection
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    continue-on-error: true  # warning-tier (ADR-171) — NG-1~21 3 job 과 동일 tier (required 8-tuple 미등재)
+    timeout-minutes: 10
+    outputs:
+      # ★값공간 = {PASS, RED, INCONCLUSIVE, UNKNOWN} 4-token 으로 sanitize 된 것만 내보낸다★
+      #   (게이트 reason 자유문자열은 job output 으로 전파하지 않는다 — summary job run: 보간 injection 면 0).
+      #   materialize 실패로 게이트 step 에 도달하지 못하면 출력이 ★빈 문자열★ 이고,
+      #   summary 가 이를 'NOT-EMITTED (★PASS 아님★)' 으로 렌더한다 (공백 → 무언의 GREEN 오독 차단).
+      verdict: ${{ steps.x16.outputs.verdict }}
+      exit_code: ${{ steps.x16.outputs.exit_code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # fetch-depth 기본(shallow) — 본 게이트는 registry yaml + materialize 된 Story 파일만 읽는다(git 이력 미사용).
+
+      - name: Setup Python
+        # ★siblings(NG job 3종)는 @v4 지만 여기는 @v5★ — actionlint v1.7.12 가 setup-python@v4 를
+        #   "runner too old"(node16 EOL)로 지목한다. 기존 3건은 본 Story 소유 밖이라 손대지 않고,
+        #   ★신규 violation 을 새로 유입시키지 않는다★ 는 원칙으로 신규 job 만 @v5 로 태어난다.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet pyyaml
+
+      - name: Materialize Story SSOT (cross-repo, fail-closed)
+        id: materialize
+        # SHA-pin (CFP-300 policy) — 선례 ac-traceability-matrix.yml L66 과 ★동일 SHA★ (v7.1.0).
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          # ★새 secret 발명 0★ — 선례 L69 와 동일한 secret 이름(CODEFORGE_CROSS_REPO_PAT, read-only 사용).
+          CROSS_REPO_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          ALLOWED_HUB_REPOS: ${{ env.ALLOWED_HUB_REPOS }}
+          STORY_URI: ${{ env.X16_STORY_URI }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            // 로그엔 사유만 — 토큰/응답 본문 미출력(secret masking, 선례 L79 관용구).
+            const fail = (reason) => { core.setFailed(`X-16 Story materialize fail-closed: ${reason}`); };
+
+            const token = process.env.CROSS_REPO_TOKEN;
+            // 선례 L144 동형 fail-closed. ★fork PR 거동★: fork PR 에는 secret 이 주입되지 않으므로
+            //   여기서 멈춘다 = job 실패(미검증). degrade 해서 exit 0 으로 흡수하는 경로는 없다.
+            if (!token) {
+              fail('CODEFORGE_CROSS_REPO_PAT secret 부재 (fork PR 이거나 secret 미등록) — '
+                 + 'Story 를 못 받았으므로 bijection 미검증. 선례 ac-traceability-matrix.yml L144 와 동일하게 degraded=FAIL.');
+              return;
+            }
+
+            const allowedHubs = (process.env.ALLOWED_HUB_REPOS || '')
+              .split(',').map(h => h.trim()).filter(Boolean);
+            const uri = process.env.STORY_URI || '';
+            // 선례 L147 과 동일 파싱 규약.
+            const m = uri.match(/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)/);
+            if (!m) { fail('X16_STORY_URI 파싱 실패 (github.com/<owner>/<repo>/blob/<ref>/<path> 형식 아님)'); return; }
+            const [, owner, repo, ref, path] = m;
+            const hubKey = `${owner}/${repo}`;
+            // whitelist strict match (선례 L152) — 미일치 = FAIL (fetch spoof 차단).
+            if (!allowedHubs.some(h => h === hubKey)) { fail(`venue '${hubKey}' 화이트리스트 미일치`); return; }
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${ref}`;
+            let resp;
+            try {
+              resp = await fetch(url, {
+                headers: {
+                  'Authorization': `token ${token}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'cfp-2926-x16-bijection-action'
+                }
+              });
+            } catch (e) { fail('Story fetch 네트워크 실패'); return; }
+            // resp.ok 가드 (선례 L166) — 403(auth-masking)/404(ref-missing)/5xx 모두 "판정불가 = FAIL".
+            if (!resp.ok) { fail(`Story fetch HTTP ${resp.status} (403/404/5xx 판정불가=FAIL — 영구 ref·PAT scope 확인)`); return; }
+
+            const file = await resp.json();
+            // >1MB 파일은 Contents API 가 content:"" / encoding:"none" 을 준다 —
+            //   ★빈 파일을 materialize 한 뒤 게이트를 돌리면 STORY 미해석이 RED 로 둔갑★ 하므로 여기서 명시 차단.
+            if (file.encoding !== 'base64' || !file.content) {
+              fail(`Story 본문 미수신 (encoding=${file.encoding}, size=${file.size}) — Contents API 1MB 상한 의심`);
+              return;
+            }
+            const text = Buffer.from(file.content, 'base64').toString('utf-8');
+            if (!text.trim()) { fail('Story 본문이 공백 — materialize 결과 0 byte'); return; }
+            fs.writeFileSync('x16-story.md', text);
+            // 본문/토큰 미출력 — 좌표와 길이만 echo.
+            core.info(`X-16 Story materialized: ${hubKey}@${ref}:${path} (${text.length} chars)`);
+
+      - name: X-16 | registry NG rows <-> Story 8.0.8 (1) NG table bijection
+        id: x16
+        env:
+          STORY_URI: ${{ env.X16_STORY_URI }}
+        run: |
+          set -u
+          rc=0
+          # ★파이프 뒤 $? 금지★ — 파일 리다이렉트로 게이트 exit code 를 원본 그대로 포획한다.
+          #   `|| true` / `| tee` 로 exit 를 삼키는 경로 없음.
+          python3 scripts/lib/check_ng_registry_bijection.py \
+            --repo-root . \
+            --story x16-story.md > x16-gate.out 2>&1 || rc=$?
+          cat x16-gate.out
+
+          # verdict 토큰 추출(라벨) — ★권위 신호는 exit code(rc)★ 이고 토큰은 그 라벨이다.
+          verdict=$(grep -o '"verdict": "[A-Z]*"' x16-gate.out | head -1 | sed 's/.*"\([A-Z]*\)"$/\1/')
+          case "${verdict:-}" in
+            PASS|RED|INCONCLUSIVE) ;;
+            *) verdict=UNKNOWN ;;
+          esac
+          case "$rc" in
+            0) expect=PASS ;;
+            1) expect=RED ;;
+            3) expect=INCONCLUSIVE ;;
+            *) expect=UNDEFINED ;;
+          esac
+
+          {
+            echo "## X-16 — registry NG rows <-> Story 8.0.8 (1) NG table bijection"
+            echo ""
+            echo "| item | value |"
+            echo "|---|---|"
+            echo "| verdict | \`$verdict\` |"
+            echo "| exit code | \`$rc\` (0=PASS / 1=RED / 3=INCONCLUSIVE) |"
+            echo "| story source | \`$STORY_URI\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+
+          # verdict 토큰 ↔ exit code 불일치 = 게이트 자기모순(예: PASS 를 인쇄하고 non-zero 로 종료).
+          #   판정 근거가 무너진 상태이므로 GREEN 을 만들지 않는다.
+          if [ "$verdict" != "$expect" ]; then
+            echo "::error::X-16 verdict/exit 불일치 — verdict=$verdict, exit=$rc (기대 $expect). 게이트 자기모순 = fail-closed"
+            echo "| ★verdict/exit 불일치★ | verdict=\`$verdict\` vs exit=\`$rc\` (기대 \`$expect\`) — fail-closed |" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          # exit passthrough (NG-1~21 step 과 동일 관용구) — INCONCLUSIVE(3) 도 non-zero 로 남긴다.
+          case "$rc" in
+            0|1|3) exit "$rc" ;;
+            *) echo "::error::X-16 returned undefined exit code $rc (3-state must be 0/1/3)"; exit 1 ;;
+          esac
+
+      - name: X-16 materialize failure notice (NOT VERIFIED, not PASS)
+        if: always() && steps.materialize.outcome != 'success'
+        env:
+          MATERIALIZE_OUTCOME: ${{ steps.materialize.outcome }}
+        run: |
+          set -u
+          {
+            echo "## X-16 — ★미검증(NOT VERIFIED)★"
+            echo ""
+            echo "Story materialize 결과 = \`$MATERIALIZE_OUTCOME\` → 대조 상대가 없어 bijection 을 ★실행하지 않았다★."
+            echo ""
+            echo "★이 상태는 PASS 가 아니다★ — job 은 실패로 남는다(exit 1). 흔한 원인:"
+            echo "fork PR(secret 미주입) / CODEFORGE_CROSS_REPO_PAT 미등록·scope 부족 / cross-repo 403·404 / Story 경로 변경."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
   gates-summary:
     name: Gates Verdict Summary
     runs-on: ubuntu-latest
     if: github.repository == 'mclayer/plugin-codeforge' && always()
-    needs: [gates-ng1-ng9, gates-ng10-ng15, gates-ng16-ng21]
+    needs: [gates-ng1-ng9, gates-ng10-ng15, gates-ng16-ng21, gate-x16-bijection]
     steps:
       - name: Evaluate verdict
+        env:
+          X16_RESULT: ${{ needs.gate-x16-bijection.result }}
+          X16_VERDICT: ${{ needs.gate-x16-bijection.outputs.verdict }}
+          X16_EXIT: ${{ needs.gate-x16-bijection.outputs.exit_code }}
         run: |
+          set -u
           echo "## CFP-2926 Phase 2 Integrity Gates — Verdict" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **NG-1~NG-9**: ${{ needs.gates-ng1-ng9.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **NG-10~NG-15**: ${{ needs.gates-ng10-ng15.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- **NG-16~NG-21**: ${{ needs.gates-ng16-ng21.result }}" >> $GITHUB_STEP_SUMMARY
+          x16v="${X16_VERDICT:-}"
+          if [ -z "$x16v" ]; then
+            # 게이트 step 미도달(materialize 실패/job 중단) — 공백을 GREEN 으로 읽지 않는다.
+            x16v="NOT-EMITTED (게이트 미실행 — ★PASS 아님★)"
+          fi
+          echo "- **X-16 (bijection, 메타-게이트)**: job=\`$X16_RESULT\` / verdict=\`$x16v\` / exit=\`${X16_EXIT:-n/a}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "⚠️ **Warning-tier** (phase-gate required 8-tuple 미등재, ADR-171)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 위 job 들은 \`continue-on-error: true\` (warning-tier) 다 — \`job=\` 값만으로 PASS 를 단정하지 말고" >> $GITHUB_STEP_SUMMARY
+          echo "> X-16 은 \`verdict\`/\`exit\` 를, NG-n 은 각 job 의 step summary 표를 근거로 읽어라." >> $GITHUB_STEP_SUMMARY
