@@ -4,6 +4,9 @@ name: Orchestrator autonomy stop taxonomy lint (warning mode)
 #   (L1) vague-pause taxonomy presence — ADR-025 §결정 7 행 + §결정 10 subclass 회귀 방어.
 #   (L3) subagent-wait liveness + delivery-gap discipline presence (self-test 확장 자기검증).
 #   (AC-6) tier 정직 meta-gate — measurement/advisory lever 가 자기 tier 만 주장하는지(긍정 enforcement 언어 0) 검사.
+#   (D1) form-set parity — ADR-025 §결정 7 form-set fence ↔ 4 전파면(§결정 7 표 · hook priming TEXT 2채널 ·
+#        docs/consumer-guide.md §7.1) form id 집합 동일성(검사 방향 2) + 행 단위 구조 요건 + negative-control presence.
+#        CFP-2944 / ADR-025 Amendment 4 §A4-2. tier: [정적] (관측 tier — merge 무차단).
 # Tier: warning (non-required, ADR-060 §결정 5) — advisory/measurement, blocking 승격 = ADR-060 evidence-gate.
 #   branch protection required contexts 미추가 (순수 warning, PR merge 무차단).
 # byte-identical template mirror (ADR-005): templates/github-workflows/ ↔ .github/workflows/ 동일 바이트.
@@ -15,7 +18,9 @@ on:
       - 'archive/adr/**'
       - 'scripts/**'
       - 'hooks/**'
+      - 'skills/**'
       - 'docs/orchestrator-playbook.md'
+      - 'docs/consumer-guide.md'
       - '.github/workflows/**'
 
 permissions:
@@ -48,6 +53,9 @@ jobs:
       - name: Self-test — subagent wait liveness + delivery-gap discipline (L3 확장 자기검증)
         run: bash scripts/check-subagent-wait-liveness-presence.sh --self-test
 
+      - name: Self-test — form-set parity (D1/D2/D3, RED→GREEN discriminating)
+        run: bash scripts/check-form-set-parity.sh --self-test
+
       - name: QADev test — vague-pause taxonomy presence
         if: hashFiles('tests/scripts/test_check-vague-pause-taxonomy-presence.sh') != ''
         run: bash tests/scripts/test_check-vague-pause-taxonomy-presence.sh
@@ -64,10 +72,18 @@ jobs:
         if: hashFiles('tests/scripts/test_check-subagent-wait-liveness-presence.sh') != ''
         run: bash tests/scripts/test_check-subagent-wait-liveness-presence.sh
 
+      - name: QADev test — form-set parity (D1/D2/D3)
+        if: hashFiles('tests/scripts/test_check-form-set-parity.sh') != ''
+        run: bash tests/scripts/test_check-form-set-parity.sh
+
       - name: Run vague-pause taxonomy presence lint
         run: bash scripts/check-vague-pause-taxonomy-presence.sh
         continue-on-error: true
 
       - name: Run tier honesty meta-gate lint
         run: python3 scripts/check-tier-honesty.py
+        continue-on-error: true
+
+      - name: Run form-set parity lint (D1/D2/D3)
+        run: bash scripts/check-form-set-parity.sh
         continue-on-error: true
