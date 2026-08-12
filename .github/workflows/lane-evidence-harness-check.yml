@@ -9,6 +9,7 @@ on:
     paths:
       - 'scripts/check-lane-evidence.sh'
       - 'scripts/test-check-lane-evidence.sh'
+      - 'tests/scripts/test_cfp2914_peer_codispatch.py'
       - 'templates/scripts/detect-repo-kind.py'
       - '.github/workflows/lane-evidence-harness-check.yml'
   push:
