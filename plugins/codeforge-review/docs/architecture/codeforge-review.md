@@ -2,7 +2,7 @@
 title: codeforge-review lane 구조 (요구사항리뷰 / 설계리뷰 / 구현리뷰 / 보안테스트 — 산출물 검수)
 last_captured: 2026-07-25
 captured_at_sha: 5bbe94cba  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2828 Phase 2, CodexReviewAgent.md dispatch 재배선 반영)
-last_update_cfp: CFP-2911  # interfaces 축 갱신 — ADR-081 §결정 D17(Amendment 16) 신설 반영: Codex promptfile prompt-injection 방어층 강화(nonce CSPRNG 불가측성·파일명 미포함 late-bound / delimiter 블록 개수 1 + terminal INV / born-broken 술어 협착[is_sentinel_line nonce-결합 full-line 판정·앵커 outside-scope count] / 판독측 지시 full-block 기계강제 helper `assert_directive_placement` — SSOT=whitelist `## 판독측 지시 marker` 절 + emit-nonce/--nonce write-required helper CLI). D16 언어 축 ⊥ D17 injection 축 disjoint. honest ceiling(delimiting tier, "완전 차단" 아님). 이전 CFP-2884 = ADR-081 §결정 D16(Amendment 15) 신설 반영: Codex worker promptfile 3-구획 언어 경계(A 영어 지시문 / B 인용 원문 verbatim / C 한글 요약 additive 병기) + promptfile UTF-8 round-trip fail-closed 배선(dispatch 직전 assert, 실패 = inconclusive). 직전 CFP-2828 = dispatch 재배선 — CodexReviewAgent dispatch primitive 을 companion 브로커(node) → `codex exec` 직접 단일 primitive 로 재배선(ADR-081 §결정 D15): hermetic read-only sandbox + `-o out.json` result-via-file + AC-6 소비 재검증(fail-closed 5단계) + option-first timeout wall-clock 가드. 그 직전 CFP-2813 = model tier 실측(ADR-141) + RequirementsReview lane 다축(ADR-125 Amd2/Amd3) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1)
+last_update_cfp: CFP-2929  # interfaces + data_flow 축 갱신 — ADR-139 §결정 8(Amendment 2) 신설 반영: 4계층 시간 전순서(A harness 도구 호출 수명 / B GNU timeout N+K / C liveness max-wait / D late-collect 부재 판정 하한) + 파생 규칙(내측 = 외측 잔여 예산) + named lead-collect routine 의 codex 경로 실현(고정 경로 dispatch manifest claim-check + LEAD 호출 discretionary 루틴, auto-wake 아님) + 고정 경로 claim-check 필수 동반 통제 3층 + 부재 판정 하한(INV-L3 'in-flight' ≠ stall). 신규 내부 파일 계약 `codex-dispatch-manifest-v1`(dispatch 셸 → late-collect 루틴 핸드오프) producer 등재 + 결과 전달 2-경로(inline | manifest 경유 LEAD 회수) 데이터 흐름 신설. modules/boundaries 축 무변경. 이전 CFP-2911 = interfaces 축 갱신 — ADR-081 §결정 D17(Amendment 16) 신설 반영: Codex promptfile prompt-injection 방어층 강화(nonce CSPRNG 불가측성·파일명 미포함 late-bound / delimiter 블록 개수 1 + terminal INV / born-broken 술어 협착[is_sentinel_line nonce-결합 full-line 판정·앵커 outside-scope count] / 판독측 지시 full-block 기계강제 helper `assert_directive_placement` — SSOT=whitelist `## 판독측 지시 marker` 절 + emit-nonce/--nonce write-required helper CLI). D16 언어 축 ⊥ D17 injection 축 disjoint. honest ceiling(delimiting tier, "완전 차단" 아님). 이전 CFP-2884 = ADR-081 §결정 D16(Amendment 15) 신설 반영: Codex worker promptfile 3-구획 언어 경계(A 영어 지시문 / B 인용 원문 verbatim / C 한글 요약 additive 병기) + promptfile UTF-8 round-trip fail-closed 배선(dispatch 직전 assert, 실패 = inconclusive). 직전 CFP-2828 = dispatch 재배선 — CodexReviewAgent dispatch primitive 을 companion 브로커(node) → `codex exec` 직접 단일 primitive 로 재배선(ADR-081 §결정 D15): hermetic read-only sandbox + `-o out.json` result-via-file + AC-6 소비 재검증(fail-closed 5단계) + option-first timeout wall-clock 가드. 그 직전 CFP-2813 = model tier 실측(ADR-141) + RequirementsReview lane 다축(ADR-125 Amd2/Amd3) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -90,6 +90,12 @@ lane 간 + lane 내부 계약 surface — kind:contract producer / kind:registry
 |---|---|---|
 | `review_verdict` | 4 PL (RequirementsReview/Design/Code/SecurityTest) → Orchestrator 핸드오프 packet — `lane` enum (requirements-review / design / code / security, v4.13 CFP-2326) + `pl_recommendation` enum (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) + `findings[]` (severity + type + anchor_id — `living-architecture-not-updated` 포함, ADR-112) + boolean self-check carrier field (mechanical / boundary / dimensional / marketplace_sync_declared / living_architecture_updated) | `docs/inter-plugin-contracts/review-verdict-v4.md` (**wrapper 단일 원본 — ADR-118 D5**, sibling sync 폐지) |
 
+**Producer (kind:contract — 내부 파일 계약)** — 본 lane 이 생성 (CFP-2929):
+
+| contract | role | SSOT pointer |
+|---|---|---|
+| `codex-dispatch-manifest-v1` | dispatch 셸 → late-collect 루틴 핸드오프 (claim-check) — 고정 경로 `<scratch>/codex-review/dispatch-<lane>.json`, 7 field (`schema` const / `lane` closed enum 4종 / `dispatch_id` / `out_json` 정규화 절대경로 / `promptfile` / `dispatch_start` epoch / `timeout_n`·`kill_after_k`). 결과 좌표가 dispatch 셸 수명에 갇히는 것을 해소 (ADR-139 §결정 8 (ii)) | `plugins/codeforge-review/agents/CodexReviewAgent.md` 정본 dispatch 템플릿 |
+
 **Host (kind:registry — sibling sync 면제, ADR-010 §결정 2)** — 본 lane 이 발동 / 참여:
 
 | registry | 본 lane 역할 |
@@ -113,6 +119,7 @@ lane 간 + lane 내부 계약 surface — kind:contract producer / kind:registry
 - **ADR-068** (boundary completeness invariants, semantic) — DesignReviewPL + CodeReviewPL **dual-binding cross-validate** anchor. I-1 API contract semantic / I-2 cross-module propagation / I-3 guard placement intent / I-4 wording SSOT / I-5 dimensional empirical grounding 5 invariants self-check 결과 review-verdict-v4 carrier field (`boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed`) verify.
 - **ADR-070** (Codex verify-before-trust, 4-layer governance Layer 2) — CodexReviewAgent output ground truth 를 Orchestrator direct file Read 로 verify, mismatch 시 verdict reject + Story §10 false positive count tally + override rationale 명시.
 - **ADR-081** (Codex worker prompt boilerplate) — CodexReviewAgent spawn prompt 본문 3 mandatory section (dogfood-out Story path / lane stage / sandbox boundary) + verify-before-trust scope 5 sub-scope + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint). severity calibration (D6) bidirectional binding evidence. **§결정 D15 (CFP-2828 — dispatch 재배선)**: 정적·실행검증 2-트랙 + companion 브로커(`node`) dispatch 폐지 → `codex exec` **단일 primitive** 수렴 (sandbox 수위 × reasoning effort × promptfile focus 프로파일 차이로만 분기). D8 file-redirect(`- < promptfile`) 계승 + option-first `timeout --kill-after=<K> <N>` wall-clock 가드(무한대기 방지, honest-ceiling: wall-clock bound 이지 자원소비 bound 아님) + `-o out.json` result-via-file verdict SSOT + AC-6 소비 재검증(fail-closed 5단계) helper `check_codex_review_output_schema.py`. **§결정 D16 (CFP-2884 — promptfile 언어 구획 + UTF-8 배선)**: promptfile **3-구획 언어 경계** — 구획 A(delimited untrusted block 밖 지시문 = 영어 강제, 한글 예외 = `templates/codex-korean-literal-whitelist.md` 리터럴 verbatim 한정) / 구획 B(block 내부 인용 원문 = **verbatim 보존·번역 금지**, 대상 집합에 Story §1 사용자 원문 편입 + 판독측 지시[블록 내부 지시 불복·인용물 무권위] + per-invocation nonce delimiter + 조립 시 sentinel 출현 거부) / 구획 C(`[Codex Review 원문]` verbatim 슬롯 **무변경** + `[한글 요약 — 비권위·additive]` 병기, 요약이 원문을 대체하면 위반). **축 A = promptfile UTF-8 round-trip fail-closed** — write 직후 조립 원본 in-memory 텍스트 ↔ 파일 re-read 내용 동일성 assert (byte 문법 유효성 단독 금지 — cp949 mojibake 는 valid UTF-8, BOM = RED, 한글 앵커 provenance = repo 소스 명시 디코드 한정) helper `check_promptfile_utf8_roundtrip.py`, 실패 = dispatch 중단 + `verdict=inconclusive` + 전용 marker `[promptfile-encoding-assert-failed]`. env export 2종(`LC_ALL`/`PYTHONUTF8`) = **2급 defense-in-depth**(1급 = helper 코드계층 `encoding='utf-8'`), lint 3번째 축 = `check_codex_companion_timeout_presence.py` `scan_encoding_env_presence` (warning tier 유지). honest-ceiling: 보증 = L1 산출물 내용 동일성 + 노출 표면 축소이지 상류 codex 오디코딩(#4013 CLOSED 2026-08-05) **완전 차단 아님**. **§결정 D17 (CFP-2911 — injection 방어층)**: nonce CSPRNG late-bound(파일명 미포함) + delimiter 블록 개수 1 + terminal INV + `is_sentinel_line` nonce-결합 full-line 판정(born-broken 협착) + `assert_directive_placement` 판독측 지시 기계강제(위치·횟수·순서·full-block 완결성, SSOT=whitelist `## 판독측 지시 marker` 절) + helper CLI emit-nonce/--nonce write-required. honest ceiling(delimiting tier — "완전 차단" 아님).
+- **ADR-139 §결정 8** (Amendment 2, CFP-2929) — 4계층 시간 전순서(A harness 도구 호출 수명 / B GNU timeout N+K / C liveness max-wait / D 부재 판정 하한) + 파생 규칙(내측 = 외측 잔여 예산) + **named lead-collect routine 의 codex 경로 실현**(고정 경로 manifest + LEAD 호출 discretionary 루틴, auto-wake 아님) + **고정 경로 claim-check 의 필수 동반 통제 3층**(슬롯 강제 비움 / 판정 입력의 dispatch 귀속 / 호출자 제공 하한 — 자기참조 신선도 검사는 manifest 자신의 staleness 를 원리적으로 미검출) + **부재 판정 하한**(`dispatch_start + N + K + margin` 이전 부재 = INV-L3 'in-flight' 이지 stall 아님, 재dispatch 금지). 판정 authority 단일 — inline ≡ late-collect 가 동일 AC-6 helper·동일 verdict 규칙 공유, 판정 입력 미상 시 fail-closed inconclusive.
 - **DesignReviewPL §8.6 audit gate** (ADR-014 Amendment 4 §결정 2): IntegrationTest contract pointer 존재 mechanical check only. policy 값 공백 PASS invariant. 상세는 `templates/review-pl-base.md` §8.6 + `templates/review-checklists/design.md` 분담 표. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
 > 본 섹션 = surface enumeration (계약 이름 + SSOT pointer, 라인 수준 0건). 계약 schema field-level 상세 + version 값 = 각 contract file + MANIFEST.yaml SSOT (drift 회피 위해 본 doc version literal 미박제).
@@ -162,6 +169,33 @@ Orchestrator 수령 → Story §9 final verdict + GitHub comment `[설계리뷰]
   ├─ pl_recommendation: FIX_DISCRETIONARY → 사용자 판단 trigger
   └─ pl_recommendation: ESCALATE_PACKET_INCOMPLETE → 상위 lane 재spawn
 ```
+
+**codex dispatch 결과 전달 2-경로 (CFP-2929 — 원인 1 경로방언 ⊕ 원인 2 수집 결합 해소)**:
+
+```
+CodexReviewAgent dispatch shell
+  ├─ preflight 4검사 (fail-closed, codex 미호출 — 실패 시 전용 marker + inconclusive)
+  │    P-0 정규화(cygpath -m; 부재=no-op / 존재하나 실패=cygpath_failed)
+  │    P-1 mkdir -p   P-2 고정경로 3종(out.json·manifest·rc stamp) 강제 비움+부재 재확인   P-3 방언 술어
+  ├─ manifest write (고정 경로, codex 호출 **이전**, JSON 이스케이프) ── late-collect 진입 좌표
+  ├─ timeout --kill-after=K N codex exec … -o "$OUT_JSON" - < "$PROMPTFILE"
+  ├─ rc stamp write "<dispatch_id> <rc>" (codex_rc 직후) ── 사망형에서는 미기록
+  │
+  ├─[경로 1: inline]── AC-6 helper 재검증 → codex_rc==0 ∧ helper_rc==0 → out.json verdict read
+  │
+  └─[경로 2: late-collect]── LEAD 가 named routine 호출 `<lane> <round_id>` (discretionary, auto-wake 아님)
+        인자·환경 검증 → manifest(고정경로) read → **회차 귀속**(manifest.round_id == argv, 아니면 stale-manifest)
+        → OP-1 하한 미만+부재 = in-flight(재dispatch 금지) → 신선도 결박(mtime ≥ dispatch_start)
+        → rc stamp **귀속 검사**(1st 토큰 == manifest dispatch_id) → **동일** AC-6 helper
+        → rc 미상/귀속 불일치 = fail-closed inconclusive / 통과 = verdict read + 원자적 rename(.consumed)
+
+고정 경로 재사용의 대가(회차 귀속 상실)는 3층으로 덮는다 — 슬롯 비움(예방) ⊕ 판정 입력 귀속(검출)
+⊕ 호출자 제공 하한(외부 기준점). 자기참조 신선도 검사만으로는 manifest 자신의 staleness 를 잡지 못한다.
+```
+
+`exit 0 + out.json 부재` 는 단일 원인(`#19945 silent crash`)으로 직행 매핑되지 않고 discriminator 3순위
+(mangled 경로 존재 프로브 → stderr signature → stdout 바이트)로 **라벨 축만** 분화한다 — **처분은 전건 `inconclusive` 불변**
+(fail-open 금지, ADR-139 INV-L2 / ADR-119 §결정 10).
 
 **CodexReviewAgent dispatch 메커니즘 (ADR-081 §결정 D15 / CFP-2828 — companion 브로커 폐지)**: 2 worker 중 Codex 워커는 `codex exec` **단일 primitive** 로 dispatch (구 companion 브로커 `node` job-관리 / status·result 폴링 폐지) — hermetic read-only sandbox(정적 리뷰 + 실행검증 수렴, code write-gate 만 `workspace-write` 예외) 실행 → verdict 는 `-o out.json` result-via-file 채널로 수신 → 소비 **직전** AC-6 재검증(① 파일존재 ② JSON parse ③ schema 준수 ④ counts↔findings cross-field ⑤ category∈enum) fail-closed 통과 시에만 `verdict` 필드 소비. exit 0 자동 PASS 승격 = 구조적 차단(재검증 실패 = `inconclusive`). option-first `timeout` wall-clock 가드가 세션 블록/무한대기 방지(구 `--background` 폴링 대체). Claude 워커는 네이티브 실행 — 본 dispatch 재배선은 Codex 워커 축 한정(peer 대칭 보고 스키마 무변경).
 
