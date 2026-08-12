@@ -434,10 +434,13 @@ D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 
 
 ### (i) §결정 5 축 한정 개정 — 재시도 중단 ⊥ 작업 중단
 
-§결정 5 의 현행 문언은 다음과 같다 — 생략 없는 인용:
+§결정 5 의 현행 문언은 다음과 같다 — **생략 없는 인용**(§결정 5 본문 전건 = intro 조건절 1 + bullet 3):
 
+> `cascade_depth` 정의 = 단일 user request 안 retry sequence 의 nested cascade level. depth ≥ 2 (예: same-model 429 → Opus fallback → Opus 429 → 2차 retry burst) 시:
+>
 > - **자동 재시도 금지** (ADR-057 §결정 2 invariant verbatim 답습)
 > - **user manual resume only** — `AskUserQuestion` escalation 또는 사용자 turn 대기
+> - **`docs/kpi/429-incident-history.jsonl` `cascade_depth` field append-only event log** (ADR-106 운영 metric → PMOAgent input 회로 정합)
 
 **보존(무변경)**: `cascade_depth` 정의 · depth ≥ 2 판정 · **자동 재시도 금지**(bounded retry 상한 = 비용 폭주·429 cascade 증폭 가드) · `AskUserQuestion` escalation 경로 · KPI append.
 
