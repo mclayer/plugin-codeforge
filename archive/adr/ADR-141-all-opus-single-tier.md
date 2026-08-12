@@ -310,7 +310,7 @@ amendment_log:
       판별력 = fail-closed(키 존재 → RED)로, 대안(명시안)의 값-blind GREEN 보다 엄격
       ⑤ over-claim 회피 = advisory 천장 3항 정직 declare(우회 가능·env override 정의역 밖·
       per-agent 사후검증 불가). ADR-058 §결정 5 / ADR-064 §결정 7 강화 방향 — 약화 표면 0.
-      본 amendment 는 Workflow 채택 자체를 승인하지 않는다(채택 거버넌스 = sibling ADR-172,
+      본 amendment 는 Workflow 채택 자체를 승인하지 않는다(채택 거버넌스 = sibling ADR-173,
       5-premise stacked fail-closed 조건부).
 related_files:
   - CLAUDE.md
@@ -986,12 +986,12 @@ Amendment 7 이 세운 **≤ ceiling 불변식**("어떤 subagent 도 effective 
 - **Amd 7 의 `Agent` tool 축 집행 무변경** — runtime `model: min(frontmatter, orchestrator)` override + fresh-spawn only(SendMessage resume 금지). 본 amendment 는 **workflow 채널 한정 additive**.
 - **정적 배정 무접촉** — `plugins/**` frontmatter `model:` 41 파일 byte 무변경, `check-fable-roster-integrity` fable=10 GREEN 유지.
 - **Amd 6 failover 와 별개 축** — cap-down·본 negative 집행 모두 사전 tier 판정이며, `[rate-limit-failover:fable→opus]` 태그를 **사용하지 않는다**(telemetry 오염 방지).
-- **채택 승인 아님** — 본 amendment 는 Workflow 채택을 승인하지 않는다. 채택 조건·철회는 **ADR-172** 소관이며 5-premise stacked fail-closed 에 조건부다.
+- **채택 승인 아님** — 본 amendment 는 Workflow 채택을 승인하지 않는다. 채택 조건·철회는 **ADR-173** 소관이며 5-premise stacked fail-closed 에 조건부다.
 
 ### Cross-ref
 
 - ADR-141 Amendment 7 — ≤ ceiling invariant 원안(본 amendment 는 신 채널 집행 형태만 확정, 불변식 무변경) / A7-5 advisory ceiling 정직 라벨 동형
-- **ADR-172** (신규 sibling) — Workflow 채택 거버넌스 + INV-W9(모델 tier = 본 amendment 참조)
+- **ADR-173** (신규 sibling) — Workflow 채택 거버넌스 + INV-W9(모델 tier = 본 amendment 참조)
 - **ADR-170 Amendment 1** (동일 carrier sibling) — spawn 채널 집합 정합(`Agent` ∪ `Workflow`)
 - **ADR-115 Amendment 2** (동일 carrier sibling) — PreToolUse `Workflow` matcher 진입점 게이트
 - [ADR-143](ADR-143-agent-action-render-line-prefix.md) — advisory 천장 정직 라벨 선례(A8-4 동형)

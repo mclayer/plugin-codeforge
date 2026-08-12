@@ -37,7 +37,7 @@ amendment_log:
       변경 표면 = 정확히 3점: 의무 조항 정정 / **금지 조항 무변경** / **§결정 2 whitelist
       7-entry closed 무변경(8번째 entry 신설 0 → ratchet 무손상)**. §결정 19 토폴로지 ·
       §결정 5 lane plugin 0 변경 invariant 무손상. 집행 tier = **문서 규범(prompt-mandate)
-      한정** — 기계 검증 표면 신설 0(그 축 = ADR-115 Amd 2 진입점 게이트 + ADR-172, 그마저
+      한정** — 기계 검증 표면 신설 0(그 축 = ADR-115 Amd 2 진입점 게이트 + ADR-173, 그마저
       "진입점 1회 차단·기록까지"가 상한). 상세 = 본문 `## Amendment 1`.
     direction: technical-correction
     sunset_justification: >-
@@ -49,7 +49,7 @@ amendment_log:
       closed 7-tool 열거 무변경 = 금지 범위 축소 0 ③ 신규 허용 = 없음(Workflow 는 정정 전
       규범 하에서도 §결정 2 fail-closed 룰상 이미 적합) ④ over-claim 회피 = 집행 tier
       prompt-mandate 정직 라벨(기계강제 참칭 0). 신규 채택 조건·철회·운영 규율은 본 ADR 이
-      아니라 sibling ADR-172 소관(disjoint) — 본 amendment 로 Workflow 채택이 승인되는 것이
+      아니라 sibling ADR-173 소관(disjoint) — 본 amendment 로 Workflow 채택이 승인되는 것이
       아니다.
 reinterpretation: false  # ADR-167 §결정 1(b) — 본 ADR 은 ADR-039 실효 규범의 의미 무변경 재제정(restatement)이지 소급 재해석이 아니다. 신규 저작(재해석 marker false).
 is_transitional: false
@@ -548,11 +548,11 @@ N/A — permanent policy (Orchestrator subagent default + inline whitelist 상�
 
 ### A1-3. 집행 tier (정직 라벨 — ADR-119)
 
-본 amendment 가 낳는 강제력은 **문서 규범(prompt-mandate)** 뿐이다. `Workflow` 호출을 기계적으로 검증하는 표면은 본 amendment 가 신설하지 않는다 — 그 축은 **ADR-115 Amendment 2**(PreToolUse `Workflow` matcher 진입점 게이트)와 **ADR-172**(채택 거버넌스)가 담당하며, 그마저도 "진입점 1회 차단·기록까지"가 상한이다. *"`Workflow` 사용이 §결정 1 정합임을 기계 강제한다"* 는 서술 금지.
+본 amendment 가 낳는 강제력은 **문서 규범(prompt-mandate)** 뿐이다. `Workflow` 호출을 기계적으로 검증하는 표면은 본 amendment 가 신설하지 않는다 — 그 축은 **ADR-115 Amendment 2**(PreToolUse `Workflow` matcher 진입점 게이트)와 **ADR-173**(채택 거버넌스)가 담당하며, 그마저도 "진입점 1회 차단·기록까지"가 상한이다. *"`Workflow` 사용이 §결정 1 정합임을 기계 강제한다"* 는 서술 금지.
 
 ### Cross-ref
 
-- **ADR-172** (신규 sibling) — Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식 INV-W1~W9. 본 amendment 는 "채널 정합"만, 채택 조건·철회·운영 규율은 ADR-172 소관 (disjoint).
+- **ADR-173** (신규 sibling) — Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식 INV-W1~W9. 본 amendment 는 "채널 정합"만, 채택 조건·철회·운영 규율은 ADR-173 소관 (disjoint).
 - **ADR-115 Amendment 2** (동일 carrier sibling) — PreToolUse `Workflow` matcher entry 신설.
 - **ADR-141 Amendment 8** (동일 carrier sibling) — workflow 채널 model tier negative 집행.
 - **ADR-058 §결정 5** — whitelist entry 신설 evidence-gate. 본 amendment 는 entry 신설 0 이므로 **미발동**.

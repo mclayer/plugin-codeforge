@@ -1,8 +1,8 @@
 ---
-adr_number: 172
+adr_number: 173
 title: Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식 (opt-in 세션 선언 / non-substitution / 채택 철회 5-premise / INV-W1~W9 tier 고정 / 무신뢰 데이터 경계 / 정직 천장)
 status: Accepted
-category: orchestration-discipline  # 신규 category 0 — 기존 재사용 (ADR-RESERVATION row 172 선언 정합)
+category: orchestration-discipline  # 신규 category 0 — 기존 재사용 (ADR-RESERVATION row 173 선언 정합)
 date: 2026-08-13
 carrier_story: CFP-2948
 parent_epic: null  # independent Story — 플랫폼 신기능 채택 backlog 4건 중 1건 (#2946/#2947/#2949 sibling backlog 와 번호 경합만 공유)
@@ -28,7 +28,7 @@ related_adrs:
 related_stories:
   - CFP-2948
 related_files:
-  - archive/adr/ADR-RESERVATION.md  # row 172 — Phase 1(본 Story) 기재 완료. claim 채널 stale 실측 + 복구 기록 포함
+  - archive/adr/ADR-RESERVATION.md  # row 173 — Phase 1(본 Story) 기재 완료. claim 채널 stale 실측 + 복구 기록 포함
   - hooks/hooks.json  # Phase 2 — PreToolUse `Workflow` entry append + capability-gate sibling append (처분 SSOT = ADR-115 Amendment 2)
   - hooks/pretooluse-workflow-optin-gate  # Phase 2 신설 — 진입점 게이트 (deny-at-birth, exit 2)
   - hooks/pretooluse-workflow-agent-capability-gate  # Phase 2 신설 — 파이프라인 내부 능력 경계 (판정 리터럴 = C-2 probe 실측 후 확정)
@@ -41,7 +41,7 @@ related_files:
 mechanical_enforcement_actions: []  # Phase 1 doc-only. 기계 표면(hook 2종 + 정적 lint)은 Phase 2 carrier 소관이며, evidence-checks registry 등록(warning 출생 — ADR-171 §결정 5)도 Phase 2. 그마저 상한 = "진입점 1회 차단·기록까지"(§결정 8) — 본 frontmatter 에 선등록하면 선언-실물 불일치가 된다.
 ---
 
-# ADR-172: Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식
+# ADR-173: Workflow 오케스트레이션 채택 거버넌스 + 운영 불변식
 
 > ★★**경고 — 본 ADR 전체가 1회 probe run 결과에 조건부다**★★ — §결정 3 의 5-premise(U13 · U11 · C-1 · C-2 · U12)는 저작 시점 현재 **전건 미해소/미확인**이며, **하나라도 부정으로 실측 확정되면 Workflow 채택은 철회**되고(`scope_redefinition_required` 회부) 본 ADR 의 §결정 1·4~7 은 규범 대상 자체를 잃는다. ★단 **U12 단독 부정 ∧ leg-1 3-conjunct(C-1·C-2·C-3) 전건 성립** 은 §결정 3 **규범 5** carve-out 대상이며 철회가 아니다.★ 5건은 1회 probe run 으로 동시 해소 가능하다. 본 문서의 어떤 §결정도 이 전제가 "성립한다" 고 서술하지 않는다(ADR-119).
 
@@ -94,7 +94,7 @@ Workflow 채택은 아래 5-premise 가 **전건 긍정일 때만 유효**하다
 
 1. **판정 기준 = 실측 확정** — 부정은 probe run(또는 동등 firsthand 실측)으로만 확정한다. 미측정·측정 불가는 부정이 아니라 **INCONCLUSIVE**(미측정→PASS 금지, ADR-139 INV-L2 준용)이며, INCONCLUSIVE 상태에서는 채택 실증도 철회도 선언하지 않는다.
 2. **완화 금지** — 부정 확정 시 "정직 declare 후 진행" / "deny 를 allow 로 완화" / premise 재정의로 회피하는 경로를 전부 금지한다(Story §5.3 AC-5 fail-closed 조항이 봉쇄한 경로의 ADR-tier 재확인).
-3. **철회 처분** — 채택 철회 = 본 ADR `status: Deprecated` 전이 + sibling 3 amendment 의 조건부 실현 조항 발화(각자의 문면이 이미 "부정 시 채택 철회 — ADR-172 §결정 3" 으로 본 결정을 지시한다) + `scope_redefinition_required` 회부. 부분 채택(일부 premise 만 성립한 축소 운용)은 **본 ADR amendment 없이 불가**. ★단 **U12 단일 축**의 부분 채택은 아래 **규범 5** 가 조건·처분을 고정해 사전 승인한다(별도 amendment 불요 — 본 조항이 요구한 승인 절차의 본문 내 이행).★
+3. **철회 처분** — 채택 철회 = 본 ADR `status: Deprecated` 전이 + sibling 3 amendment 의 조건부 실현 조항 발화(각자의 문면이 이미 "부정 시 채택 철회 — ADR-173 §결정 3" 으로 본 결정을 지시한다) + `scope_redefinition_required` 회부. 부분 채택(일부 premise 만 성립한 축소 운용)은 **본 ADR amendment 없이 불가**. ★단 **U12 단일 축**의 부분 채택은 아래 **규범 5** 가 조건·처분을 고정해 사전 승인한다(별도 amendment 불요 — 본 조항이 요구한 승인 절차의 본문 내 이행).★
 4. **동시 해소 권고** — 5건은 1회 probe run 으로 동시 해소 가능하므로, 설계리뷰 진입 전(또는 병렬) 실행을 권고한다(Change Plan 헤더 동일 권고).
 5. **U12 단일 carve-out (부분 채택 사전 승인)** — ★**U12 단독 부정 확정** ∧ **leg-1 3-conjunct(C-1 · C-2 · C-3) 전건 성립**★ 인 경우에 한해, 처분은 채택 철회가 **아니라** 아래 3항 고정 처분이다:
    - (i) AC-5 leg-2 를 `model` negative **단독 conjunct 로 축소**
@@ -224,7 +224,7 @@ N/A — permanent policy (`is_transitional: false`). 채택 철회(§결정 3)�
 
 ## 관련 파일
 
-- `archive/adr/ADR-RESERVATION.md` — row 172 (Phase 1, 기재 완료)
+- `archive/adr/ADR-RESERVATION.md` — row 173 (Phase 1, 기재 완료)
 - `archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md` — Amendment 1 (동일 carrier sibling)
 - `archive/adr/ADR-141-all-opus-single-tier.md` — Amendment 8 (동일 carrier sibling, §결정 6 규범 owner)
 - `archive/adr/ADR-115-runtime-hook-enforcement.md` — Amendment 2 (동일 carrier sibling, §결정 1 기계 표면)
