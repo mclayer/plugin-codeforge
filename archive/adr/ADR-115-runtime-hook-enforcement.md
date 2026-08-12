@@ -8,7 +8,17 @@ carrier_story: CFP-1740
 parent_epic: CFP-1740
 supersedes: null
 amends: null
-amendments: [1, 2]
+amendments:
+  - amendment_id: 1
+    carrier_story: CFP-2544
+    date: 2026-07-02
+    reinterpretation: false
+    summary: '§결정 6 inline-write detect hook Write/Edit/MultiEdit 축 이관·이행 (Wave1) — 상세 SSOT = amendment_log'
+  - amendment_id: 2
+    carrier_story: CFP-2948
+    date: 2026-08-13
+    reinterpretation: false
+    summary: '§결정 6 scope 5번째 hook 종 PreToolUse(matcher:"Workflow") opt-in 게이트 편입 — 상세 SSOT = amendment_log'
 amendment_log:
   - amendment: 1
     date: 2026-07-02
@@ -21,6 +31,7 @@ amendment_log:
   - amendment: 2
     date: 2026-08-13
     carrier_story: CFP-2948
+    reinterpretation: false
     summary: |
       §결정 6 scope 열거에 **5번째 hook 종 `PreToolUse(matcher:"Workflow")` 편입**. 플랫폼 신기능 `Workflow` tool 채택의 **opt-in 세션 선언 게이트**(진입점 1회 차단·기록) carrier. 처분 = `hooks/hooks.json` PreToolUse 배열에 **신규 독립 entry append**(matcher = `Workflow` **단일 토큰**, alternation 없음) + **기존 5 entries byte 무변경**(`Bash`/`ScheduleWakeup`/`Agent`/`Write|Edit|MultiEdit`/`Agent|Bash|Write|Edit|MultiEdit` — firsthand 실측). amend 대상이 §결정 6 인 이유 = 그 조항이 ADR-115 의 **scope 열거를 닫는 표면**이며, Amendment 1(CFP-2544)이 동일하게 §결정 6 을 대상으로 삼은 **선례 답습**. ★**§결정 1 4-hook tier 표는 무변경(4 row 유지)**★ — 그 표는 hook 스크립트 인벤토리가 아니라 **event 종별 차단능력 tier 분류**이고 `PreToolUse` blocking tier 는 이미 1행이 확립(Amendment 1 도 5번째 PreToolUse entry 추가 시 표에 행 미추가 — verified). **deny-at-birth**(warning-first 미경유) 정당화 = §결정 4 warning-first 는 *"PreToolUse(**Agent**) spawn-format gate"* **한정** 조항이고 사유가 spawn deadlock 회피인데 본 게이트는 spawn-format 검증이 아닌 **opt-in 선언 유무 이진 확인**이라 실패 양태 비공유 + §결정 1 표 각주가 `cross-repo-gh-safety` **deny 선례** 명시 인정 + 양성 대조 `hooks/cross-repo-gh-safety:93` 실 `exit 2` 존재(`:27` block contract) [verified — firsthand] + ADR-171 warning-first 는 **CI check tier 축**이라 hooks.json 존재 lint 에만 적용·런타임 deny 미적용(disjoint). ★정직 라벨★ = 보장 범위는 **진입점 1회 차단·기록까지**이며 스크립트가 스폰하는 agent 의 도구 호출은 **정의역 밖** — *"Workflow matcher 로 파이프라인을 감시한다"* 서술 금지. **deny 도메인 declare** = matcher 는 도구 축에서만 disjoint 하고 `Workflow` 안에서는 disjoint 하지 않음(선언 없는 세션의 **모든** Workflow 호출이 deny 대상 — hook 은 lane 판별 수단 부재) → 의도된 거동 + bypass `BYPASS_WORKFLOW_OPTIN_GATE=1`(audit 1줄, 전역 export 금지). 5-part hook-frame 재사용(structural novelty 0) + §결정 5 graceful degradation 5-layer 정합. ★**조건부**★ — 실현이 **C-1**(workflow agent 도구 호출의 PreToolUse 발화)·**U13**(P3 경로의 `Workflow` 도구 호출 표면화) 미검증 전제에 조건부(부정 시 채택 철회, ADR-172 §결정 3). sibling = ADR-170 Amd 1 / ADR-141 Amd 8 / 신규 ADR-172.
     direction: strengthening

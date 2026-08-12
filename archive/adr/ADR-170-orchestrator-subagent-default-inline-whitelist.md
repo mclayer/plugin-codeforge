@@ -8,7 +8,6 @@ carrier_story: CFP-2869
 supersedes:
   - ADR-039
 amends: null
-amendments: [1]
 amendment_log:
   - amendment: 1
     carrier_story: CFP-2948
