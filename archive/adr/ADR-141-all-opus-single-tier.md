@@ -273,6 +273,33 @@ amendment_log:
       ④ over-claim 회피 = advisory ceiling 정직 라벨(prompt-mandate normative +
       세션 실준수 비-PR-enforceable, hook backup 불성립). 3-tier 자동선택 부활 0
       (전순서 = slot enumeration + 확장 amendment 구조, 선택 함수 아님).
+  - amendment: 8
+    carrier_story: CFP-2944
+    date: 2026-08-12
+    reinterpretation: true   # A6-3(a) **후단**("기존 대기 / 수동 세션 handoff 유지")의 규범 지위를 소급 재해석 — failover 비대상 *사실 선언* 이지 Orchestrator 행위 처방이 아님을 명시하고 후단을 폐기. 전단(launch 시점 모델 고정 = 자동 전환 구조 불가)은 byte·의미 무변경. self-declared — 의미 판정은 리뷰 lane 축.
+    scope: >-
+      Amendment 6 A6-3(a) **후단만** 재개봉한다. (i) 후단 "기존 대기 / 수동 세션
+      handoff 유지" = **dangling reference** — "기존 대기" 가 인용하는 선행 규범이 어느
+      ADR 에도 정의된 바 없고(전 repo grep 실측: 동일 문장 3-site mirror 뿐, 별건
+      ADR-026:413 은 Actions queue 문맥 무관) (ii) usage credits 로 계속 가능한 현실과
+      불일치 (iii) whitelist 미등재·illegal 표 미등재의 규범 공백에서 **유일 근거
+      표면**으로 작동해 한도발 의지적 정지를 사실상 정당화했다 — 반대 증거 = 계약·집계
+      층이 리밋발 정지를 이미 부당 분류(`policy_violation_rate_limit_induced` ∈
+      `_ILLEGIT`). **전단은 보존**(failover 비대상 사실 선언으로 정확). 축 분리 codify =
+      "failover 미발동"(remedy 라우팅 사실) ⊥ "작업 중단"(행위 규범). 예방층
+      (Amendment 7 cap-down, A7-5 자기선언 advisory) ⊕ 반응층(Amendment 6 failover)
+      **이중화 유지** — A7-5 의 "fable-branch 도달 0(dormant)" 서술을 반응층 약화 근거로
+      사용 금지. mirror 정책 = 판정문 verbatim 은 본 ADR 1곳, playbook §3.0.12b /
+      skill SKILL.md 는 pointer(+1줄 요약). 상세 = 본문 `## Amendment 8`.
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 방향 =
+      **강화**(부당 정지 승인 표면 제거, 약화 0): 본 Amendment 는 합법 stop whitelist 에
+      항목을 추가하지 않으며(ADR-025 §결정 6 무변경) 오히려 "한도라서 멈춘다"의 유일
+      근거 표면을 제거한다. Amendment 6 failover 절차(1-hop·per-spawn 1회·감지집합·
+      cascade count-in)와 Amendment 7 cap-down 은 **무변경** — 본 Amendment 는 A6-3(a)
+      후단 1개 문장의 규범 지위만 정정한다. ADR-064 §결정 7 evidence-gated symmetric
+      ratchet: 재개봉 evidence = ① dangling reference grep 실측 ② 공식 usage credits
+      실재(support 12429409) ③ 계약층 `_ILLEGIT` 분류와의 층간 모순 실측.
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -908,3 +935,73 @@ opus Orchestrator 세션에서 fable 10역할이 opus 로 cap-down 되면 **Amd4
 - [ADR-042](ADR-042-agent-model-selection-policy.md) §결정 3 — "신규 agent / model 변경 시 ADR 의무" 승계(전순서 비열거 신규 모델 확장 = amendment 의무, A7-8)
 - [ADR-127](ADR-127-mandatory-full-flow-no-exemption.md) §결정 6 — overlay 확장-only(정적 축 down-tier 불허, A7-3 disjoint)
 - ADR-013 — change-plan 면제 근거(ADR carrier = 설계 SSOT, 별도 change-plan 없이 amendment 내 Phase 2 열거, A7-10)
+
+## Amendment 8 (CFP-2944 — A6-3(a) 후단 재개봉: dangling "기존 대기" 폐기 + failover 비대상 ⊥ 작업 중단 축 분리)
+
+**날짜**: 2026-08-12 KST · **carrier**: CFP-2944 · **status**: Proposed (Phase 1 draft — 착지 전) · **방향**: **강화**(부당 정지의 유일 근거 표면 제거, whitelist 확대 0).
+
+**대상 = A6-3(a) 후단 1문장뿐**. Amendment 6 의 failover 절차(A6-1·A6-2·A6-4·A6-6) 및 Amendment 7 cap-down 은 **무변경**이다.
+
+### A8-1. 현행 문언 (생략 없는 인용) + 개정 경계
+
+> - **(a) Orchestrator 세션 자체 리밋** — launch 시점 모델 고정이라 자동 전환 구조 불가. 기존 대기 / 수동 세션 handoff 유지(ADR-110 축 disjoint).
+
+| 부분 | 문언 | 판정 |
+|---|---|---|
+| **전단** | "launch 시점 모델 고정이라 자동 전환 구조 불가" | **보존** — Amendment 6 failover(모델 tier 전환)의 비대상 **사실 선언**으로 정확하다. Orchestrator 세션 모델은 사용자 launch 시점 선택이라 runtime 전환 표면이 없다 |
+| **후단** | "기존 대기 / 수동 세션 handoff 유지(ADR-110 축 disjoint)" | **폐기 (재개봉 대상)** — 아래 3층 근거 |
+
+### A8-2. 재개봉 3층 근거 (firsthand)
+
+1. **dangling reference** — "기존 대기"의 "유지"는 선행 규범의 존재를 전제하는 동사인데, 그 선행 규범은 **어느 ADR 에도 정의된 바 없다**. 전 repo grep 결과 동일 문구는 같은 문장의 3-site mirror(본 ADR:757 / `docs/orchestrator-playbook.md`:531 / `skills/rate-limit-429-mitigation/SKILL.md`:121)뿐이다(별건 `archive/adr/ADR-026-post-merge-automation.md`:413 은 Actions concurrency queue 문맥으로 무관). 존재하지 않는 선행 규범을 인용하는 서술이 3중 mirror 로 증폭됐다.
+2. **제품 사실 불일치** — 세션 한도는 usage credits 활성·잔액 보유 시 hard stop 이 아니다(`If usage credits are enabled and you have funds available, you can choose to continue working.` — support 12429409). "대기"는 credits 축이 존재하지 않던 시점의 기술이다. 다만 정책 문면은 `choose` 이므로 "무발화 자동 계속"으로 옮겨 쓰는 것은 over-claim 이다(§A8-6).
+3. **규범 공백에서의 유일 근거 표면화 + 층간 모순** — "세션 한도 도달"은 ADR-025 §결정 6 whitelist 5종에 **미등재**이고 §결정 7 illegal 표에도 미등재였다. 그 공백에서 "한도에서 어떻게 하나"를 찾으면 나오는 것이 이 3 site 뿐이라, **failover 비대상 선언(remedy 축)이 행위 규범(정지 적법성 축)의 자리를 차지**했다. 반대 증거로 계약·집계 층은 리밋발 정지를 이미 부당으로 분류하고 있다 — `docs/inter-plugin-contracts/stop-event-v1.md` `policy_violation_rate_limit_induced` + `scripts/lib/aggregate_stop_event.py` `_ILLEGIT = ("policy_violation", "policy_violation_rate_limit_induced")`. 산문 규범 층만 "대기 유지"로 읽히는 **층간 모순**이 실 기전이다.
+
+### A8-3. 축 분리 codify (본 Amendment 의 핵심 명제)
+
+**"failover 미발동" ≠ "작업 중단"**. A6-3 은 *어떤 신호에 fable→opus 재spawn 을 하지 않는가* 를 규정하는 **remedy 라우팅** 목록이며, *Orchestrator 가 자기 작업을 계속하는가* 를 규정하지 않는다. 두 축은 disjoint 다:
+
+| 축 | 질문 | 소관 |
+|---|---|---|
+| remedy 라우팅 | 이 신호에 재spawn·failover 를 발동하는가 | 본 ADR Amendment 6 · [ADR-109](ADR-109-in-process-429-mitigation-framework.md) §결정 3/5 · `docs/orchestrator-playbook.md`:528(미분류 배타 지배) |
+| 정지 적법성 | 이 신호를 근거로 **의지적으로 멈추는 것**이 정당한가 | [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) §결정 6/7 (+ Amendment 4) · [ADR-144](ADR-144-orchestrator-autonomy-stop-taxonomy.md) §결정 1/2 |
+
+**개정 후 (a) 착지 문안 (Phase 2 반영 대상)**: "(a) Orchestrator 세션 자체 리밋 — launch 시점 모델 고정이라 **자동 모델 전환 구조 불가**(본 failover 비대상). 정지 적법성 축은 본 절 소관이 아니다 — 한도류 신호를 근거로 한 의지적 정지의 적법성은 ADR-025 §결정 7 + ADR-109 Amendment 2 판별식 D 가 지배한다. 세션이 **실제로 사망**한 경우의 복구 경로는 ADR-110 / ADR-071 §결정 24(축 disjoint)."
+
+### A8-4. 예방층 ⊕ 반응층 이중화 (반응층 약화 금지)
+
+Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기계 backup 불성립(Orchestrator 세션모델 ground-truth env 부재)"로 선언한다. 따라서 **"cap-down 이 실행되므로 fable-branch 도달 자체가 0(dormant)"는 cap-down 이 실제 실행될 때만 참**이며 그 실행은 기계 보장되지 않는다.
+
+- **live 반증(조건부)**: CFP-2944 진행 중 fable subagent 한도 사망 2회 관측. 세션이 opus 였다면 cap-down 미준수의 live 실증이고, 세션이 fable 이었다면 cap-down 은 설계상 no-op 이므로 fable PL 이 fable 로 뜬 것이 정상이다 — **두 분기 모두 반응층 필요로 수렴**한다(세션 모델의 ground-truth 관측 표면이 없어 분기 확정은 불가, 정직 declare).
+- **규범**: "도달 0 / dormant" 서술을 근거로 반응층(Amendment 6 failover · Amendment 2 판별식)을 약화·삭제하는 설계를 **차단**한다. 예방층(정적 tier 배정 + cap-down)과 반응층(runtime failover)은 대체재가 아니라 이중화다.
+
+### A8-5. mirror 정책 — 판정문 verbatim 1곳
+
+3-site 병리의 구조적 원인은 **remedy 서술문의 verbatim 복사**다(감지집합은 이미 `cross-ref only` 규율이 있었으나 바로 옆 remedy 산문에는 없었다). 본 Amendment 는 다음을 규약한다:
+
+- **판정문 verbatim SSOT = 본 ADR A6-3 + A8-3** 1곳.
+- `docs/orchestrator-playbook.md` §3.0.12b / `skills/rate-limit-429-mitigation/SKILL.md` = **pointer 화**. 단 skill 은 한도 대응 중 즉시 참조되는 문서이므로 **"1줄 요약 + 명시 포인터"** 형태를 표준으로 유지한다(전면 삭제 시 사고 대응 중 맥락 손실).
+- 개정 시 **동기 sweep 의무**: `기존 대기` 3-site(본 ADR:757 · playbook:531 · SKILL.md:121, ADR-026:413 제외) 전건. 한 곳 누락 = born-broken.
+
+### A8-6. 정직 천장
+
+1. Orchestrator 세션 모델·한도는 harness 소관이라 본 Amendment 가 (d) **한도 순간 토큰 발화 불가 구간**을 제거하지 않는다 — OOS.
+2. 규범 도달 상한 = prompt-mandate + hook priming + 정적 lint. runtime hard-deny lever 부재(Stop/SubagentStop block 금지 — ADR-115, pre-utterance 차단 불가 — ADR-144 §결정 7). "한도 도달 시 무중단 100%" 주장 0.
+3. 정책 문면이 `choose to continue working` 이므로 "무발화 자동 계속"은 **미문서 영역**이다 — 본 Amendment 는 "발화 가능한 최초 시점부터 계속"만 규범화한다.
+
+### A8-7. Phase 2 실행 범위 (구현 PR — 본 Phase 1 ADR PR 밖, 열거만)
+
+1. 본 ADR A6-3(a) 문언을 A8-3 착지 문안으로 교체(전단 보존).
+2. `docs/orchestrator-playbook.md`:531 · `skills/rate-limit-429-mitigation/SKILL.md`:121 — pointer 화(skill 은 1줄 요약 유지).
+3. `docs/orchestrator-playbook.md`:528 에 미분류 정의 cross-ref 1줄 추가(`미분류 = 6-literal 미매칭 ∧ ADR-109 Amendment 2 판별식 D 미충족` — 열거 복제 아닌 정의 포인터, 재열거 0).
+4. `CLAUDE.md` 결정·대화 원칙 절 — 한도류 신호 정지 금지 bullet(ADR-025 Amendment 4 + 본 Amendment cross-ref).
+5. 누락 위험 위치 2건 점검: 본 ADR:199(Amendment 6 fm scope 안 mention) · `docs/domain-knowledge/domain/runtime/external-session-auto-resume.md`:116(cascade 관계 서술) — 둘 다 "타 문서 인용 문맥"이라 편집자가 건너뛰기 쉽다.
+
+### Cross-ref
+
+- Amendment 6 A6-3 — 본 Amendment 의 유일 개정 대상(후단), A6-1/2/4/6 무변경.
+- Amendment 7 A7-5 — 예방층 advisory 자기선언(A8-4 이중화 근거).
+- [ADR-109](ADR-109-in-process-429-mitigation-framework.md) Amendment 2 — 감지·재시도 축(본 Amendment = 행위 규범 축, disjoint).
+- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 정지 적법성 착지(§결정 7 illegal 표).
+- [ADR-110](ADR-110-external-runtime-wrapper-ssot-boundary.md) — 세션 **사망 후** OS-외부 재개 축(계속 가능한 상태의 대체재로 오용 금지).
+- [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) §결정 24 — session-swap controlled-path(사망 후 복구 경로, 무손상).
