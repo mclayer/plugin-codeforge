@@ -1,0 +1,320 @@
+name: CFP-2926 Phase 2 — Integrity Gates (NG-1~NG-21)
+
+# CFP-2926 Phase 2 구현 — ADR-154 규정 신규 게이트 21종 배선.
+#
+# NG-1~21 전부 ci-편입 (warning-tier, required context 미등재 — ADR-171).
+# 게이트별 4-item ADR-154 번들(empty-target/unknown-input/execution-trace/identity_bearing)
+# 전건 회귀 테스트는 Phase 2 self-test 스크립트 책임 (selftest-execution-liveness-inventory.yaml).
+#
+# 축 분리(§7.16): 자원/실패모드/SSOT disjoint — 21개 gates job 병렬도 max=8.
+#
+# 게이트 매핑:
+#   NG-1 (AC-4): check_census_oracle.py
+#   NG-2 (AC-5): check_fanout_subject_prose.py
+#   NG-3 (AC-6): check_platform_inherent_prose.py + frozen_anchor.py
+#   NG-4 (AC-8): check_doc_queue_ssot.py [신규]
+#   NG-5 (AC-10): check_lane_dispatch_packet.py
+#   NG-6 (AC-14): compute_write_overlap.py
+#   NG-7 (AC-15): check_pl_spawn_observation.py
+#   NG-8 (AC-16): check_lane_overlap_predicate.py
+#   NG-9 (AC-2b): compute_concurrency_metric.py
+#   NG-10 (contract): check_spawn_event_location_parity.py [신규]
+#   NG-11 (contract): check_dev_process_event_location_parity.py [신규]
+#   NG-12 (H-2): check_hook_merge_registration.py
+#   NG-13 (return-envelope): check_return_envelope_handle.py
+#   NG-14 (AC-3 문면): check_stop_event_prose.py [신규]
+#   NG-15 (AC-3 동시): check_stop_event_concurrent_append.py [신규]
+#   NG-16 (AC-1 L1): check_subagent_stop_auto_emit.py
+#   NG-17 (sentinel): check_parallel_work_sentinel.py [개정]
+#   NG-18 (CI 유실): check_ci_run_completeness.py
+#   NG-19 (AC-7): check_story_diff_adr064.py [신규]
+#   NG-20 (AC-9): check_klist_untouched.py [신규]
+#   NG-21 (AC-12): check_slot_budget_table.py [신규]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gates-ng1-ng9:
+    name: NG-1 to NG-9 (AC/AC-2b metrics)
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    continue-on-error: true  # warning-tier (ADR-171)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet pyyaml jsonschema
+
+      - name: NG-1 | AC-4 census oracle
+        id: ng1
+        run: |
+          set -u
+          python3 scripts/lib/check_census_oracle.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-2 | AC-5 fan-out prose
+        id: ng2
+        run: |
+          set -u
+          python3 scripts/lib/check_fanout_subject_prose.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-3 | AC-6 platform inherent + frozen anchor
+        id: ng3
+        run: |
+          set -u
+          python3 scripts/lib/check_platform_inherent_prose.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-4 | AC-8 doc-queue SSOT
+        id: ng4
+        run: |
+          set -u
+          python3 scripts/lib/check_doc_queue_ssot.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-5 | AC-10 dispatch packet snapshot_sha
+        id: ng5
+        run: |
+          set -u
+          python3 scripts/lib/check_lane_dispatch_packet.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-6 | AC-14 write overlap
+        id: ng6
+        run: |
+          set -u
+          python3 scripts/lib/compute_write_overlap.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-7 | AC-15 PL spawn observation
+        id: ng7
+        run: |
+          set -u
+          python3 scripts/lib/check_pl_spawn_observation.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-8 | AC-16 lane overlap predicate
+        id: ng8
+        run: |
+          set -u
+          python3 scripts/lib/check_lane_overlap_predicate.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-9 | AC-2b concurrency metric
+        id: ng9
+        run: |
+          set -u
+          python3 scripts/lib/compute_concurrency_metric.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: Summary ng1-ng9
+        if: always()
+        run: |
+          echo "## NG-1 to NG-9 Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          for i in 1 2 3 4 5 6 7 8 9; do
+            step="ng$i"
+            if [ -v STEPS_${step}_OUTCOME ]; then
+              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  gates-ng10-ng15:
+    name: NG-10 to NG-15 (contract integrity + AC-3)
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    continue-on-error: true  # warning-tier
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet pyyaml jsonschema
+
+      - name: NG-10 | spawn-event 4-location parity
+        id: ng10
+        run: |
+          set -u
+          python3 scripts/lib/check_spawn_event_location_parity.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-11 | dev-process-event 5-location parity
+        id: ng11
+        run: |
+          set -u
+          python3 scripts/lib/check_dev_process_event_location_parity.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-12 | hook merge registration
+        id: ng12
+        run: |
+          set -u
+          python3 scripts/lib/check_hook_merge_registration.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-13 | return-envelope handle
+        id: ng13
+        run: |
+          set -u
+          python3 scripts/lib/check_return_envelope_handle.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-14 | AC-3 stop-event prose (false guarantee)
+        id: ng14
+        run: |
+          set -u
+          python3 scripts/lib/check_stop_event_prose.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-15 | AC-3 stop-event concurrent append
+        id: ng15
+        run: |
+          set -u
+          python3 scripts/lib/check_stop_event_concurrent_append.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: Summary ng10-ng15
+        if: always()
+        run: |
+          echo "## NG-10 to NG-15 Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          for i in 10 11 12 13 14 15; do
+            step="ng$i"
+            if [ -v STEPS_${step}_OUTCOME ]; then
+              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  gates-ng16-ng21:
+    name: NG-16 to NG-21 (runtime + doc/config)
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    continue-on-error: true  # warning-tier
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet pyyaml jsonschema PyGithub
+
+      - name: NG-16 | AC-1 L1 SubagentStop auto emit
+        id: ng16
+        run: |
+          set -u
+          python3 scripts/lib/check_subagent_stop_auto_emit.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-17 | sentinel fail-open removal (deprecation)
+        id: ng17
+        run: |
+          set -u
+          python3 scripts/lib/check_parallel_work_sentinel.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-18 | CI run completeness (expected vs actual)
+        id: ng18
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          python3 scripts/lib/check_ci_run_completeness.py \
+            --repo-root . \
+            --gh-token "$GH_TOKEN" \
+            --run-id "${{ github.run_id }}" || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-19 | AC-7 story diff ADR-064 untouched
+        id: ng19
+        run: |
+          set -u
+          python3 scripts/lib/check_story_diff_adr064.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-20 | AC-9 K-list untouched (9 items)
+        id: ng20
+        run: |
+          set -u
+          python3 scripts/lib/check_klist_untouched.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: NG-21 | AC-12 slot budget table sum
+        id: ng21
+        run: |
+          set -u
+          python3 scripts/lib/check_slot_budget_table.py --repo-root . || rc=$?
+          exit ${rc:-0}
+
+      - name: Summary ng16-ng21
+        if: always()
+        run: |
+          echo "## NG-16 to NG-21 Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          for i in 16 17 18 19 20 21; do
+            step="ng$i"
+            if [ -v STEPS_${step}_OUTCOME ]; then
+              echo "| NG-$i | \`$STEPS_${step}_OUTCOME\` |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  gates-summary:
+    name: Gates Verdict Summary
+    runs-on: ubuntu-latest
+    if: github.repository == 'mclayer/plugin-codeforge' && always()
+    needs: [gates-ng1-ng9, gates-ng10-ng15, gates-ng16-ng21]
+    steps:
+      - name: Evaluate verdict
+        run: |
+          echo "## CFP-2926 Phase 2 Integrity Gates — Verdict" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **NG-1~NG-9**: ${{ needs.gates-ng1-ng9.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NG-10~NG-15**: ${{ needs.gates-ng10-ng15.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NG-16~NG-21**: ${{ needs.gates-ng16-ng21.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Warning-tier** (phase-gate required 8-tuple 미등재, ADR-171)" >> $GITHUB_STEP_SUMMARY
