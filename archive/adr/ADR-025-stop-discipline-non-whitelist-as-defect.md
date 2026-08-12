@@ -157,10 +157,10 @@ ADR-025 §결정 1 trust model invariant 명시 후에도 Orchestrator session �
 |---|---|
 | "후보 A/B/C/D 중 어떤거?" | sub-decision 자동 처리 의무 — PL pl_recommendation / 직전 사용자 directive 로 자동 진행 (Amendment 2 정정 후, 이전 ~~"Codex+Sonnet 자동 처리 의무"~~) |
 | "큰 작업이라 확인 받겠습니다" | token cost 추정 = 사용자 의도 아님 |
-| "Phase 1 완료, Phase 2 시작할까요?" | 1 Story / Epic 안의 sub-step (decision unit 분리 violation) |
+| "Phase 1 완료, Phase 2 시작할까요?" | 1 Story / Epic 안의 sub-step (decision unit 분리 violation). 확인 질문 form = `over-ask` (fence 등재 id — 본 표의 다른 확인-질문 행들도 동 form 의 변형이며, 전파면 anchor 요건은 **id 당 최소 1곳**이다: §A4-2) |
 | "5 sub-CFP 중 첫 번째 완료, 다음 진행할까요?" | backlog 단위면 5 모두 처리 |
 | "final report 후 다음 작업 후보 결정 받음" | backlog 안 끝났으면 자동 발굴 + 진행 |
-| "한 숨 쉬어가자" 류 (vague-pause — Amendment 3, CFP-2573) | **decision-null pause (verbalized form)** — 잔여작업 有 + 결정 payload = 0 + volitional 발화, ask-trigger 3종(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 어디에도 미해당 → 정당 사유 부재. `[advisory]` — plain-text turn-end·tool-mediation 부재로 runtime hard-deny 불가(ADR-144 §결정 1/2 축 A2 payload=0), 명명·예방까지만. over-halt(무발화 silent form)의 발화판 (GAP-3) |
+| "한 숨 쉬어가자" 류 (vague-pause — Amendment 3, CFP-2573) | **decision-null pause (verbalized form)** — 잔여작업 有 + 결정 payload = 0 + volitional 발화, ask-trigger 3종(① 요구 애매 / ② 진짜 가치 trade-off / ③ 비가역·고비용) 어디에도 미해당 → 정당 사유 부재. `[advisory]` — plain-text turn-end·tool-mediation 부재로 runtime hard-deny 불가(ADR-144 §결정 1/2 축 A2 payload=0), 명명·예방까지만. `over-halt`(무발화 silent form)의 발화판 (GAP-3) |
 | "다음은 X 단계입니다" 류 정보성 보고 후 정지 (status-report-then-halt — Amendment 4, CFP-2944) | **decision-null pause (보고-편승 form)** — vague-pause 와 동일 축(A2)의 미명명 표층형. **판별은 discriminant 3항이 primary**(잔여작업 有 ∧ 결정 payload = 0 ∧ volitional 발화)이고 위 예시는 **보조·비망라**다 — 열거를 primary 로 쓰면 6번째 form 이 또 빠져나간다. 진행 보고 자체는 의무(§결정 8 · ADR-038)이므로 **보고의 정당성이 뒤따르는 정지의 정당성으로 전이되지 않는다**(halo 차단). negative control(정당 구분선): 보고 후 즉시 다음 작업 계속 / 작업 단위 완료보고(terminal — whitelist 5번) / ask-trigger 3종 해당 발화(payload > 0). `[advisory]` — turn-end plain-text 라 runtime hard-deny 불가, 명명·예방까지만 |
 | "세션 한도라 여기서 멈추겠습니다" 류 한도류 신호 발 정지 (limit-signal-halt — Amendment 4, CFP-2944) | **한도류 신호를 근거로 한 의지적 정지** — vague-pause 와 동일 축(A2, payload = 0). 대상 = 선제적 정지 제안("리셋 후 재개하시죠") · 자식 리밋을 Story 종료로 오처리 · 제어 회복 후 재확인 질문·무발화 정지. 신호 판정 = ADR-109 Amendment 2 판별식 D(`D-out-1`·`D-out-2`), 6-literal 열거는 비망라 fast-path. 세션 한도는 §결정 6 whitelist 5종에 **미등재이며 등재하지 않는다**(합법화 방지). negative control(정당 구분선): `D-out-2` 의 **1회 통지**(whitelist #1 User environment 변경 의무 — 통지는 정당, "통지 후 무기한 대기"만 부당) / 통지 후 이어갈 가용 잔여작업이 실제로 0(whitelist #1 정지 성립) / 세션이 **실제로 사망**한 비의지적 종료(축 C — ADR-110 · ADR-071 §결정 24 복구 경로). `[advisory]` — runtime hard-deny 불가(한도 순간 토큰 발화 불가 구간은 정의역 밖) |
 
@@ -249,6 +249,12 @@ discriminant tier 는 `[advisory]`(turn-end plain-text)라 매 turn 재적용을
 - **검사 스크립트는 form id 리터럴을 하드코딩하지 않는다** — fence 를 파싱해 집합을 얻고 다른 3면과 대조한다. 하드코딩 사본 = 경쟁 SSOT ∧ hollow 재생산(ADR-109 Amendment 1 (c) 동형 규율).
 - fence 는 id 와 축만 담고 **tier 라벨을 담지 않는다** — tier 선언면은 §결정 7 표 1곳으로 유지한다.
 
+**form id anchor 표기 규약 (신설 — 검사 방향 2 의 성립 전제)**: 방향 ②(면→fence 초과 검출)는 "면에서 form id 후보를 추출"할 수 있어야 성립하는데, 한글 산문 안 bare kebab 토큰은 일반 어휘와 구별되지 않아 추출 자체가 불가능하다. 따라서 **전파면**(§결정 7 표 · priming TEXT 2채널 · consumer mirror)에서 form id 는 다음 둘 중 하나로 표기한다 — ① backtick 감싼 형태 ② `(<form-id> — …)` 형태(dash 구분 동반). 요건은 **id 당 전파면마다 최소 1 anchor** 이며, 같은 form 의 모든 인스턴스 문장에 anchor 를 붙일 의무는 없다(렌더 가독성 보존).
+
+- **fence 자신은 규약 대상 밖**이다 — fence 는 `<form-id> | <축> | <anchor 예시>` 파서 원본이라 backtick 을 넣으면 파싱 값이 오염된다.
+- **규약은 본 amendment 가 신설**하며 착지 상태는 면마다 다르다: §결정 7 표 = 본 Phase 1 에서 전 id anchor 충족. priming TEXT 2채널 · consumer mirror = **현행 미준수**(전자는 bare 괄호 표기, 후자는 form id 자체가 0) → Phase 2 §A4-7-1/2 착지 대상. **착지 전까지 그 2면에 대한 방향 ② 실검출은 0** 이다(추정 아닌 실측 — §A4-6-5).
+- **검사 어휘 분별 의무**: 추출기는 fence 등재 form id 와 **taxonomy class 명**(`decision-null` · `ask-trigger` 등 — ADR-144 §결정 2 소유)을 구분해야 한다. 후자는 form id 가 아니므로 anchor 표기로 등장해도 방향 ② 위반이 아니다.
+
 ### A4-3. 신규 2 form 의 축 배정 (ADR-144 taxonomy 무손상)
 
 | form id | 축 | 근거 |
@@ -276,14 +282,31 @@ discriminant tier 는 `[advisory]`(turn-end plain-text)라 매 turn 재적용을
 2. **검출 sufficiency 는 원리적으로 미결정** — form-set 검사는 *등재된* form 의 4면 동기화만 본다. "6번째 form 을 미리 등재하게" 만들 수는 없다. 그래서 각 행이 **discriminant primary + 예시 보조**로 쓰여야 하며, 이 구조 요구는 review-tier 책임이다.
 3. **검사 verdict 의 실 tier** — 현행 실행 채널(`orchestrator-autonomy-stop-taxonomy-check.yml`)은 job-level 및 step-level `continue-on-error: true` 이고 branch protection required contexts 에 미등재다. 즉 위반이 관측되어도 **merge 를 차단하지 않는다**. "이 검사로 차단한다" 류 표현을 쓰지 않는다. 승격 경로 = ADR-060 evidence-gate.
 4. 현행 `check_vague_pause_taxonomy_presence.py` 는 taxonomy **라벨** 3 리터럴 presence 만 보고 **예시(named form)는 보지 않는다** — 유일 named 예시를 전삭제해도 `exit 0` 으로 생존함이 firsthand mutation 으로 확인됐다. 그 GREEN 을 본 amendment 의 acceptance 근거로 재사용하면 동어반복이다.
+5. **방향 ② 는 anchor 규약 준수면에 한해서만 검출한다** — §A4-2 규약 밖 표기(한글 산문 안 bare kebab 토큰)로 신규 form id 를 심으면 **미탐**이다. 이는 장래 가능성이 아니라 **현행 실측**이다: priming TEXT 2채널의 현행 form id 3종은 전건 규약 밖 표기라 그 2면의 방향 ② 실검출은 **0** 이다(Phase 2 착지로 해소 예정). "방향 ② 완전 검출" 주장을 금지하며, 규약 준수 후에도 규약 밖 신설 표기는 미탐으로 남는다 — 그 잔여를 산문 고백으로 두지 않고 **생존 기대 mutant 로 박제**한다(CFP-2944 Story §7.12.3 `M-A5'`). 방향 ①(fence→면)만 표기 규약과 무관하게 완전하다.
 
 ### A4-7. Phase 2 실행 범위 (구현 PR — 본 Phase 1 PR 밖, 열거만)
 
-1. hook priming TEXT 2채널 동형 확장(신규 hook 신설 0 · cross-hook 공유 helper 모듈 0 — ADR-144 §결정 3 + ADR-071 §22.7 CODE abstraction 금지).
-2. `docs/consumer-guide.md` §7.1 mirror 동기(vague-pause 행 + 신규 2행).
+**완료 bar 는 열거가 아니라 술어다** — 아래 1·2 의 판정 기준은 "몇 행을 추가했는가"가 아니라 **"판정 시점 fence 가 등재한 전 id 가 해당 면에 §A4-2 anchor 표기로 존재하는가"** 다. 열거를 bar 로 쓰면 fence 가 자라거나 선행 drift 가 있을 때 계획이 조용히 미달한다 — 본 amendment 자신이 그 미달을 실증했다(초안의 "vague-pause 행 + 신규 2행" 3행 열거는 fence 5 id 중 2 id 를 누락시켜, 계획을 완수해도 §A4-2 방향 ① 이 RED 로 착지하는 상태였다. 설계리뷰 iter2 F-A 지적 + §A4-8 dry-run 으로 검출).
+
+1. hook priming TEXT 2채널 동형 확장 — **fence 전 id 가 §A4-2 anchor 표기로 존재**하도록. 현행 3 id 는 규약 밖 bare 표기이므로 **신규 2 id 추가 + 기존 3 id anchor 화**가 함께 요구된다(신규 hook 신설 0 · cross-hook 공유 helper 모듈 0 — ADR-144 §결정 3 + ADR-071 §22.7 CODE abstraction 금지).
+2. `docs/consumer-guide.md` §7.1 mirror 동기 — 동일 술어. 현행 form id 존재 0 이므로 **fence 전 id 착지**가 요구된다(§A4-5 실측: 전 패턴 0-hit).
 3. form-set parity 검사 신설(fence 파싱 기반) + `check_vague_pause_taxonomy_presence.py` self-test fixture 확장. 검사 스크립트의 자기 tier 선언 문구를 실 실행 채널 tier 와 일치하도록 정정(현행 자기 선언과 §A4-6-3 실측이 불일치).
 4. workflow `paths:` 에 `skills/**` 추가(현재 부재 — mirror sweep 대상 누락) + `templates/github-workflows/` twin **byte-parity 동시 반영**(`invariant-check` required `diff -q`).
 5. `CLAUDE.md` 결정·대화 원칙 절 bullet 추가.
+
+### A4-8. 저작 자기적용 결박 (self-application binding — 정의역 총칙 + dry-run 의무)
+
+**왜 조항별 확장이 아니라 총칙인가 (재발 계보 — firsthand)**: CFP-2944 는 "저작한 규범을 자기 산출물에 적용하지 않음"이라는 **단일 axis** 로 요구사항 lane 2회 · 설계리뷰 lane 2회, 총 4회전 연속 결함을 냈다. 1회전 처방은 문제가 표면화한 **조항 2개**(T5 인용 규율 · INV-T6 자기참조 수치 금지)에 각각 "정의역에 본 문면 포함" 한 줄을 붙이는 것이었다. 그 처방은 **같은 axis 의 다른 조항들에서 즉시 재발**했다 — 검사 계약(§A4-2 방향 ①)이 자기 Phase 2 계획으로 충족 불가한 상태로 착지했고, 방향 ② 는 전제가 거짓이라 실검출이 0 이었으며, 열거 drift 는 그 정정을 담은 FIX 안에서 다시 나왔다. 조항별 확장은 **∀ 를 사람이 손으로 전개**하므로 신설 조항이 자동 누락되고, 조항 수가 회전마다 늘어 O(n) 편집을 매번 요구한다. 따라서 quantifier 를 **한 곳에 두는 총칙**으로 대체한다.
+
+**적용 주체 = CFP-2944 carrier 가 저작하는 전 문면**: 본 amendment · [ADR-109](ADR-109-in-process-429-mitigation-framework.md) Amendment 2 · [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 8 · Story `CFP-2944` §7. 본 규약의 **판정문 verbatim SSOT 는 본 절 1곳**이며 나머지 3 문면은 pointer 만 둔다 — 이는 ADR-141 §A8-5 가 규정한 mirror 정책의 적용이다(결박의 배치 자체를 본 carrier 자신의 규범으로 결정함으로써 자기적용을 실증한다).
+
+**B-1. 정의역 총칙 (∀ — 조항별 예외 0)**: 위 주체가 저작하는 **모든 규범 술어·검사 계약**의 정의역에는 **그 술어를 저작한 문면 자체**가 포함된다. 조항마다 정의역 확장을 재선언할 의무는 없으며, **재선언이 없다는 사실을 정의역 밖 근거로 쓰는 것을 금지한다**. 장래 신설되는 조항도 별도 문구 없이 자동 포섭된다.
+
+**B-2. dry-run 의무 (선언 ≠ 적용)**: 술어를 저작·개정할 때 그 술어를 **자기 산출물 전체에 1회 평가**하고 결과를 남긴다. RED 면 착지 전에 **(a) 산출물 수정** 또는 **(b) 술어 정의역의 명시 축소 + 축소 근거** 중 하나를 이행한다 — 둘 다 없이 착지 금지. **"정의역에 포함된다고 선언했으므로 적용됐다"는 추론을 금지한다**: 설계리뷰 iter2 F-A 는 정의역 *안*이면서 RED 였고 B-1 만으로는 잡히지 않았다. dry-run 결과는 Story `CFP-2944` §7.16 표에 **술어 단위**로 기록하며, **표에 행이 없는 술어는 미평가로 간주**한다 — 누락이 침묵하지 않고 표면화하는 것이 본 항의 실효 기전이다.
+
+**B-3. 전제 검증 의무**: 술어가 다른 표기·구조 규약을 **전제**하면(예: §A4-2 anchor 표기), 그 전제가 **현행 대상면에서 성립하는지 실측**하고, 불성립이면 "규약은 신설 대상 · 현행 미준수 · 그 면의 실검출 0" 으로 declare 한다. 전제를 성립 가정한 채 검출력을 주장하지 않는다(iter2 F-B — 전제가 거짓이라 mutant 가 생존했고 천장 서술은 실상을 과소진술했다). **대응 mutant 는 전제를 만족하는 형태로 구성하되, 전제를 벗어난 형태를 별도 생존-기대 mutant 로 함께 박제**한다 — 검출 가능한 mutant 만 두면 검사연극이고, 산문 고백만 두면 잔여가 falsifiable 하지 않다.
+
+**B-4. 정직 상한 (over-claim 0)**: B-1~B-3 은 **저작 규율**이다. 저작 시점에 문면을 대상으로 도는 lint 는 부재하고(Story Z-11), 정적 검사는 착지 후 CI 에서만 돌며 그마저 merge 무차단(§A4-6-3)이다. 따라서 본 절은 자기적용 실패를 **차단하지 않는다** — 누락을 **가시화**할 뿐이며 표를 부실하게 채우면 그대로 빠져나간다. 실 backstop 은 리뷰 lane 의 대조이고, 위 4회전 결함을 잡아낸 것도 정확히 그 경로다. "자기적용 봉인" · "기계 강제" 주장을 금지한다.
 
 ### Cross-references
 
