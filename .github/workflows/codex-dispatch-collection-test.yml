@@ -1,0 +1,138 @@
+name: codex-dispatch-collection-test
+# CFP-2929 Phase 2(구현) — codex dispatch 경로 방언 preflight · 결과 수거(late-collect) ·
+#   dispatch 사정권 discovery 3 스위트의 **CI 실행 채널**.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 신설인가 (본 Story 병리의 자기 재생산 차단)
+#   본 Story 가 고치는 결함 = "검사가 존재하는데 실효 0"(제2 dispatch 표면이 영구 미탐지).
+#   그런데 신설 3 스위트(396 케이스)가 어느 workflow 에서도 호출되지 않아 **CI 영구 미실행**이었다
+#   [verified: 구현리뷰 iter1 — `.github/workflows/` 전수 grep, test_codex-late-collect /
+#    test_codex-dispatch-scope-discovery 0 hit, test_codex-outpath-preflight 은
+#    codex-outpath-windows-oracle.yml:30-36 **주석 산문**뿐 = 실행 아님].
+#   본 workflow 가 그 3 스위트를 실 CI red/green 으로 승격한다 (ADR-151 execution-liveness).
+#
+# 왜 **별도 workflow** 인가 (기존 workflow 에 step 을 얹지 않는 이유)
+#   가장 가까운 도메인 이웃 codex-companion-timeout-check.yml 은 **job-level `continue-on-error: true`**
+#   (warning tier — 해당 파일 42행) 라 그 안에 step 을 얹으면 실패가 job 성공에 삼켜져 hollow 가 된다.
+#   → 그 workflow 는 무접촉으로 두고 본 전용 **day-1 hard-fail** job 을 신설한다.
+#   선례 = codex-promptfile-roundtrip-test.yml (CFP-2884, 동일 사유로 분리) /
+#          ac-traceability-self-test.yml / selftest-execution-liveness-test.yml.
+#
+# Tier (정직 declare)
+#   **non-required** — branch protection wrapper 8-tuple(CLAUDE.md 문서 SSOT) **무변경**.
+#     본 job name 을 required contexts 에 등재하지 않는다 (required 승격 = 7일-green 재적립
+#     chicken-egg, ADR-130 §결정6 → 별 carrier 소관).
+#   **step-level `continue-on-error` 0건** — job 이 비-required 인 것과 step fail-open 은 전혀 다르다.
+#     후자는 검사연극이므로 금지. 3 스위트 중 하나라도 exit != 0 이면 job red.
+#
+# **wrapper-self-only**: job-level `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** · plugins/codeforge-review/** 부재 → job skip = inert).
+#   ADR-130 job-level `if:` graceful no-op 정합.
+#
+# **.github-only (templates/github-workflows twin 미생성)** — B-5 판단
+#   invariant-check.yml 의 Workflow parity step 은 `templates/github-workflows/*.yml` 을 **source 로
+#   순회**해 `.github/workflows/<base>.yml` 를 대조하는 **단방향** walk 이므로, template 짝이 없는
+#   wrapper-only workflow 는 parity 검사 정의역 밖 = 자동 parity-safe
+#   [verified: .github/workflows/invariant-check.yml:53-80 — `for f in templates/github-workflows/*.yml`].
+#   ★ 판단 근거(twin 을 만들지 **않는** 이유) = 본 3 스위트가 **wrapper-self 산출물**이라는 사실:
+#     피검 대상이 `plugins/codeforge-review/**`(SUT `codex-late-collect.sh` · `CodexReviewAgent.md` ·
+#     `schemas/codex-review-output-schema-v1.json`) 와 `scripts/lib/**`(wrapper 저장소 내부 경로),
+#     그리고 스위트 자신이 `tests/scripts/**` 다. consumer repo 에는 이 세 트리가 존재하지 않으므로
+#     twin 을 만들면 consumer 로 상속돼 (a) 영구 skip 하는 inert job 이 되거나 (b) 경로 부재로 born-red 다.
+#     ubuntu 러너라 플랫폼 사유는 없지만(codex-outpath-windows-oracle.yml 의 Windows 사유와 다름),
+#     **산출물 귀속 사유**로 동일하게 wrapper-only 가 옳다.
+#   선례 = ac-traceability-self-test.yml / selftest-execution-liveness-test.yml /
+#          codex-promptfile-roundtrip-test.yml / actionlint-workflows-test.yml (전부 template copy 없음).
+#
+# `paths:` 필터 설계 — **under-inclusion 이 결함이다** (over-inclusion 은 비용일 뿐)
+#   ① 스위트 자신 3종 ② 피검 production 자산 ③ **AC-13 discovery 축**.
+#   ③ 이 넓은 이유: `test_codex-dispatch-scope-discovery.sh` 는 lint 사정권(디렉터리 상수)과 **독립**
+#   하도록 repo **전수 walk**(`--list-dispatch-surfaces` 인자 없음 = `.`)로 dispatch 표면을 찾고
+#   차집합 0 을 강제한다. 그 walk 의 확장자 정의역 = `SCAN_EXTS = ('.md','.sh','.yml','.yaml')`
+#   [verified: scripts/lib/check_codex_companion_timeout_presence.py:171,444-469].
+#   즉 **repo 어느 위치의 .md/.sh/.yml/.yaml 에도 신규 dispatch 표면이 생길 수 있다** — 필터를
+#   `plugins/**` 로 좁히면 "사정권 밖 신규 표면"(=이 Story 가 막으려는 바로 그 결함)이 트리거를
+#   비껴간다. 그래서 4 확장자를 repo-wide 로 넣는다. 그 결과 본 워크플로는 사실상 대부분의 PR 에서
+#   구동되며, 이는 의도된 교환(정확도 > 러너 시간)이다. wrapper 는 public repo → hosted 러너 무료분
+#   이라 예산 축 충돌 없음(ADR-147 §결정 2: public = `CI_RUNS_ON_LINUX_JSON` 미설정 → hosted coalesce,
+#   그래서 본 파일도 `runs-on: ubuntu-latest` 리터럴).
+#   ★ 필터 축소 시 동반 의무: ③ 을 좁히면 AC-13 의 실효가 함께 좁아진다는 점을 PR 에 명시할 것.
+#
+# 실행 시간: `test_codex-late-collect.sh` 는 로컬(Git Bash) 실측 10분+ 이므로 `timeout-minutes: 30`.
+#   무한 대기 금지 — 상한을 두되 정상 완주 여지를 남긴다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      # ① 스위트 자신 (③ 에 포섭되지만 의도를 문서화하려 명시 유지)
+      - 'tests/scripts/test_codex-outpath-preflight.sh'
+      - 'tests/scripts/test_codex-late-collect.sh'
+      - 'tests/scripts/test_codex-dispatch-scope-discovery.sh'
+      # ② 피검 production 자산 (SUT · 추출 원본 · 스키마 · helper)
+      - 'plugins/codeforge-review/scripts/codex-late-collect.sh'
+      - 'plugins/codeforge-review/agents/CodexReviewAgent.md'
+      - 'plugins/codeforge-review/schemas/codex-review-output-schema-v1.json'
+      - 'scripts/lib/check_codex_review_output_schema.py'
+      - 'scripts/lib/check_codex_companion_timeout_presence.py'
+      - 'scripts/lib/liveness_check_base.py'
+      # ③ AC-13 discovery 축 — 신규 dispatch 표면은 repo 어디에도 생길 수 있다 (SCAN_EXTS 4종)
+      - '**/*.md'
+      - '**/*.sh'
+      - '**/*.yml'
+      - '**/*.yaml'
+      # ④ 본 workflow 자신 (③ 의 '**/*.yml' 에 포섭 — 명시로 의도 고정)
+      - '.github/workflows/codex-dispatch-collection-test.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  codex-dispatch-collection-test:
+    name: codex-dispatch-collection-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # ★ fetch-depth: 0 필수 — scope-discovery §3(A13-7) 이 `origin/main` ref **와** 그 시점
+          #   blob(`origin/main:scripts/lib/check_codex_companion_timeout_presence.py`)으로 pre-GREEN
+          #   사정권 값을 판독해 "사정권 확대가 load-bearing" 임을 대조한다. 부재 시 **skip 이 아니라
+          #   FAIL** 이다 [verified: tests/scripts/test_codex-dispatch-scope-discovery.sh:248-269 —
+          #   else 분기 = `bad "A13-7 pre-GREEN 대조" "origin/main ref 또는 대상 blob 미존재 …"`].
+          #   기본 fetch-depth: 1 은 remote-tracking `origin/main` 을 만들지 않아 born-red 가 된다.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      # 3 스위트는 stdlib 만 쓴다 (check_codex_review_output_schema.py = json/os/sys,
+      # check_codex_companion_timeout_presence.py = contextlib/io/os/re/sys/tempfile + liveness_check_base
+      # [os/re/sys]) → pip 설치 step 없음. 외부 바이너리 의존 = git · python3 · mktemp · timeout (러너 기본).
+
+      - name: Verify pre-GREEN 대조 사전조건 (origin/main ref + blob, fail-closed)
+        # A13-7 이 왜 RED 인지 로그에서 즉시 분별되도록 하는 **fail-closed** 사전 확인.
+        # 실패를 삼키지 않는다 — 여기서 죽으면 checkout 배선(fetch-depth) 회귀 신호다.
+        run: |
+          set -euo pipefail
+          git rev-parse --verify origin/main
+          git cat-file -e origin/main:scripts/lib/check_codex_companion_timeout_presence.py
+          echo "origin/main = $(git rev-parse origin/main)"
+
+      # ── 3 스위트 실행 (fast-fail 순서: 저비용 → 고비용) ─────────────────────────
+      - name: Run codex dispatch scope discovery self-test (AC-13 차집합 0 / M-S kill)
+        run: bash tests/scripts/test_codex-dispatch-scope-discovery.sh
+
+      - name: Run codex outpath preflight self-test (E1/E2/E3 방언 preflight · R1~R7 결정표)
+        run: bash tests/scripts/test_codex-outpath-preflight.sh
+
+      - name: Run codex late-collect self-test (§3.5 8-step · manifest v1 · TTL sweep · replay)
+        run: bash tests/scripts/test_codex-late-collect.sh
