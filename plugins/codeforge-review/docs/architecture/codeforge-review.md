@@ -94,7 +94,7 @@ lane 간 + lane 내부 계약 surface — kind:contract producer / kind:registry
 
 | contract | role | SSOT pointer |
 |---|---|---|
-| `codex-dispatch-manifest-v1` | dispatch 셸 → late-collect 루틴 핸드오프 (claim-check) — 고정 경로 `<scratch>/codex-review/dispatch-<lane>.json`, 7 field (`schema` const / `lane` closed enum 4종 / `dispatch_id` / `out_json` 정규화 절대경로 / `promptfile` / `dispatch_start` epoch / `timeout_n`·`kill_after_k`). 결과 좌표가 dispatch 셸 수명에 갇히는 것을 해소 (ADR-139 §결정 8 (ii)) | `plugins/codeforge-review/agents/CodexReviewAgent.md` 정본 dispatch 템플릿 |
+| `codex-dispatch-manifest-v1` | dispatch 셸 → late-collect 루틴 핸드오프 (claim-check) — 고정 경로 `<scratch>/codex-review/dispatch-<lane>.json`, **10 field** (`schema` const / `lane` closed enum 4종 / `dispatch_id` / `round_id` 회차 귀속 / `out_json` 정규화 절대경로 / `promptfile` audit 전용·미정규화 / `dispatch_start` epoch / `timeout_n` / `kill_after_k` / `category_enum` 쉼표구분 — collector step 7 의 AC-6 helper 3번째 인자 유일 조달처라 **필수**, 선택 필드 아님). 계수 근거 = producer 정본 템플릿 printf 키 ≡ collector `_json_str_field`/`_json_uint_field` 판독 키 **실측 집합 일치** (양측 10, 이름 집합 동일). 결과 좌표가 dispatch 셸 수명에 갇히는 것을 해소 (ADR-139 §결정 8 (ii)) | `plugins/codeforge-review/agents/CodexReviewAgent.md` 정본 dispatch 템플릿 |
 
 **Host (kind:registry — sibling sync 면제, ADR-010 §결정 2)** — 본 lane 이 발동 / 참여:
 

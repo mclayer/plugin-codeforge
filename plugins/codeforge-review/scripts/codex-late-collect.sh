@@ -165,6 +165,10 @@ _json_unesc() {   # $1=raw → stdout = 언이스케이프 값 / rc=1 = producer
   local s="$1" out='' c n
   while [ -n "$s" ]; do
     c=${s:0:1}
+    # ★ 오탐 억제(사유) — `'\'` 는 **리터럴 백슬래시 1자**이지 작은따옴표 이스케이프 시도(SC1003 이 가정하는
+    #   `'\''` 관용구)가 아니다. JSON escape 선행자를 판별·소비하는 것이 이 루프의 목적이라 백슬래시 자체가
+    #   대상 문자다(§3.4 producer 2-치환 계약). 코드 의미 변경 0 → **이 if 블록 한정** 억제.
+    # shellcheck disable=SC1003
     if [ "$c" = '\' ]; then
       n=${s:1:1}
       case "$n" in
@@ -247,6 +251,10 @@ _mangled_probe_path() {   # $1=out_json → stdout = 프로브 후보 경로 / r
   local p="$1" drive rest posix
   case "$p" in
     [A-Za-z]:/*|[A-Za-z]:\\*)
+      # ★ 오탐 억제(사유) — 정의역이 위 case 패턴으로 **ASCII 드라이브 문자 1자**에 이미 협착돼 있고,
+      #   `LC_ALL=C` 가 로케일 독립을 의도적으로 고정한다. `[:upper:]`/`[:lower:]` 제안은 accent·외국어
+      #   알파벳 입력을 위한 것인데 그런 입력은 이 분기에 도달할 수 없다 → 치환 이득 0, 의도만 흐려진다.
+      # shellcheck disable=SC2018,SC2019
       drive="$(printf '%s' "${p:0:1}" | LC_ALL=C tr 'A-Z' 'a-z')"
       rest="${p:2}"
       rest="${rest//\\//}"
