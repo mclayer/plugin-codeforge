@@ -1,5 +1,5 @@
 {
-  "max_adr_number": 156,
+  "max_adr_number": 171,
   "claims": [
     {
       "adr_number": 142,
@@ -91,6 +91,20 @@
       "claimant": "ArchitectAgent:CFP-2948:run-20260813-0019",
       "status": "claimed",
       "claimed_at": "2026-08-12T15:23:33Z"
+    },
+    {
+      "adr_number": 156,
+      "claimant": "ArchitectAgent:CFP-2948:run-20260813-0019",
+      "status": "void_collision",
+      "claimed_at": "2026-08-12T15:23:33Z",
+      "note": "VOID — 이 claim 은 stale ledger(max=155, 2026-07-15 동결) 때문에 156 을 반환했으나 archive/adr/ADR-156-dev-process-metric-aggregation-escalation-feed.md (carrier CFP-2688) 가 실재하여 collision. ADR 파일 write 0 (미사용). 상태 row 는 append-only 라 삭제 대신 void 표기. 동일 ledger stale 을 ADR-RESERVATION.md:625 (CFP-2689, 2026-07-16) 가 이미 'reservation-state ledger max_adr_number 는 stale/racy → ADR-133 §결정 4 ls-tree+open-PR authoritative' 로 기록했고 ADR-156~171 16건이 전부 §결정 4 fallback 경유였다."
+    },
+    {
+      "adr_number": 171,
+      "claimant": "ArchitectAgent:CFP-2948:ledger-reconcile",
+      "status": "reconciled_ground_truth",
+      "claimed_at": "2026-08-12T15:30:00Z",
+      "note": "RECONCILE — max_adr_number 를 실 repo ground truth 로 정렬 (156 → 171, 단조 증가). firsthand 근거: (a) ls archive/adr/ADR-*.md numeric max = 171 (171 파일, ADR-149 결번) (b) ADR-RESERVATION.md 요약표 max row = 171 (CFP-2875) (c) wrapper open PR = #2952 1건, archive/adr 신규 번호 0 (ADR-044 Amendment 만 touch). 점유 아님 — 이후 claim 이 172 부터 발급되도록 하는 상태 정렬. ADR-133 §결정 5 '번호 되돌림 금지' 정합 (증가 방향)."
     }
   ]
 }
