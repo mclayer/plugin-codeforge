@@ -11,7 +11,9 @@ name: Story Section Schema Self-Test (CFP-2831)
 #
 # .github-only (templates/ 미복사) — parity walk 는 template→.github 단방향이라 자동 parity-safe.
 # NO path-filter (required permanent-pending 함정 회피 — hard-gate-self-verification-test.yml:12-14 관례).
-#   path-filter 미사용 — 실행 억제 없이 매 PR 비용을 수용한다(A4.1'). `if:` 는 억제 장치가 아니라
+#   path-filter 미사용 — 실행 억제 없이 매 PR 비용을 수용한다(A4.1'). 비용은 A4.2 초안 대비
+#   **pytest 호출 2회분**이다(T3 직접 + tests/ 계층 2파일). 정직 고지 — A4.1' 비용표 갱신 대상.
+#   `if:` 는 억제 장치가 아니라
 #   **consumer 복사 시 no-op 보장용**이며 wrapper 에서는 항상 참이다(ADR-130:198 graceful no-op 정합).
 #   ⇒ 승격은 branch protection 에 context 를 추가하는 **단일 동작**이며 워크플로 편집이 불요하다.
 # non-required (day-1). required 8-tuple 무변경 ⇒ ADR-125 anchor 무손상.
@@ -70,5 +72,15 @@ jobs:
           assert tot == N, f"수집 {tot} != AST 산출 {N} — under-collection/조기종료"
           PY
 
-      - name: Run tests/ 진입 계층 (RTM Hop3 심볼 소재)
-        run: python -m pytest tests/scripts/test_story_section_schema_harness.py -q
+      - name: Run tests/ 진입 계층 + AC 명명 테스트 (RTM Hop3 심볼 소재 — 실행 lane 확보)
+        # ★ 두 파일을 **명시 경로**로 지정한다. 이 repo 는 tests/scripts 를 glob 하는 lane 이 0개이고
+        #   모든 self-test workflow 가 파일을 명시 열거하는 관례이므로, RTM 심볼 파일이 늘면
+        #   여기에 명시적으로 추가해야 한다. 빠뜨리면 그 파일의 명명 테스트는 Hop3(AST 심볼 존재)만
+        #   통과하고 **실행 lane 0 = dead-test** 가 된다(CP §8.5.1 이 봉인 대상으로 지목한 형태).
+        #   비용: 두 번째 pytest 호출분이 추가된다(AC-9 가 구판 뮤턴트를 격리 주입해 T3 를 1회 더 돌린다).
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            tests/scripts/test_story_section_schema_harness.py \
+            tests/scripts/test_cfp2831_convergence.py \
+            -q
