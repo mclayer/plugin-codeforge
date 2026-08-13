@@ -10,7 +10,7 @@
 | before 트리 | `561da632d` (S0/S1 착지 직후 — production 코드 변경 0 시점) |
 | after 트리 | `b71c0c04c` (S2·S3·S4·S6·S7·S8·S10 착지, Wave 3 테스트 포함) |
 | `hooks/hooks.json` sha256 (after) | `e866aef3385eb5b5aef2313309606b440f0f6aad894c492b9bfbb86dd3a6b7d2` |
-| plugin 버전 (측정 시점 repo) | `6.128.2` (`.claude-plugin/plugin.json`) — 본 리포트 측정은 **repo 트리 직접 실행**(플러그인 캐시 비경유) |
+| plugin 버전 (측정 시점 repo) | `6.128.2` (`.claude-plugin/plugin.json`) — 본 리포트 측정은 **repo 트리 직접 실행**(플러그인 캐시 비경유). 측정 직후 `6.129.0` 으로 bump (버전 문자열만 변경 — 측정 대상 코드 동일). Plane B after 창은 **6.129.0 캐시 반영 이후**에만 유효 |
 | 측정 창 (KST) | 2026-08-14 05:45 ~ 06:15 |
 | 호스트 | Intel i9-9900K / 논리 코어 16 / 프로세스 수 473 |
 | Defender 실시간 보호 | **ON** (`DisableRealtimeMonitoring=False` 실측) — S1 baseline 측정 창(OFF 정황)과 상이 |
