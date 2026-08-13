@@ -59,16 +59,20 @@ jobs:
       - name: Run T3 suite via pytest (2-axis assertion — CP §8.1.1)
         run: |
           set -euo pipefail
+          # ★ junit 산출물을 repo 루트에 두지 마라 — .gitignore 대상이 아니라서
+          #   후행 step 의 AC-11b `git grep --untracked` 코퍼스에 들어간다(가짜 매치 위험).
+          T3_JUNIT="${RUNNER_TEMP:-/tmp}/t3-results.xml"
+          export T3_JUNIT
           python -m pytest scripts/lib/test_check_story_section_schema.py \
-            -q --junitxml=t3-results.xml
+            -q --junitxml="$T3_JUNIT"
           python - <<'PY'
-          import ast, xml.etree.ElementTree as ET
+          import ast, os, xml.etree.ElementTree as ET
           # N 은 상수 금지 — AST 산출 (CP §8.1)
           src = open('scripts/lib/test_check_story_section_schema.py', encoding='utf-8').read()
           N = sum(1 for n in ast.walk(ast.parse(src))
                   if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
                   and n.name.startswith('test'))
-          r = ET.parse('t3-results.xml').getroot()
+          r = ET.parse(os.environ['T3_JUNIT']).getroot()
           r = r.find('testsuite') if r.tag == 'testsuites' else r
           tot  = int(r.get('tests', 0));    fail = int(r.get('failures', 0))
           err  = int(r.get('errors', 0));   skip = int(r.get('skipped', 0))

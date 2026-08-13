@@ -687,7 +687,8 @@ Link path 작성 가이드:
 
 본 CFP-84 Phase 1 = doc only. Phase 2 (별도 follow-up CFP) lint script `scripts/check-story-section-schema.sh` 강화:
 - `type: epic` frontmatter detect → condensed mode allowed
-- `type: story` strict mode (§1-§11 의무 · §12-§13 은 CONDITIONAL — 위 §13 정의 및 섹션별 의무 표와 정합. N/A 도 명시)
+- `type: story` strict mode — **린터 동작**: §1-§11 만 강제(`STRICT_REQUIRED`), §12-§13 은 **optional(린터 비검사)**. N/A 도 명시
+  - **저작 의무**는 별개 축이다: §12 는 발생 시, §13 은 CONDITIONAL(위 §13 정의 및 섹션별 의무 표). 린터가 검사하지 않는다고 저작 의무가 사라지는 것은 아니다
 - 결합 허용 / N/A 형식 검증
 
 ---

@@ -11,14 +11,15 @@ Per §8.3 P0-B: Do NOT call full manifest gate for AC-2 (use git ls-tree mode on
 RTM normative: Change Plan §8.1 only (§5.3 Story is placeholder, not parsed by gate).
 """
 
+import ast
 import subprocess
+import sys
 import tempfile
 import shutil
 import os
 import re
 import pytest
 from pathlib import Path
-from typing import Optional, Tuple
 
 
 def resolve_bash():
@@ -66,6 +67,7 @@ PATH_T1 = "scripts/lib/check_story_section_schema.py"
 PATH_T2 = "templates/github-workflows/story-section-schema.yml"
 PATH_T2_PRIME = ".github/workflows/story-section-schema.yml"
 PATH_T3 = "scripts/lib/test_check_story_section_schema.py"
+WORKFLOW_BASENAME = "story-section-schema.yml"
 
 
 def run_git_cmd(args, cwd=None, capture_stderr=False):
@@ -127,7 +129,6 @@ class TestCFP2831Convergence:
     def setup_class(cls):
         """Pre-flight: verify test files can reach git repo."""
         cls.repo_root = Path(__file__).resolve().parent.parent.parent
-        cls.hub_root = Path('/c/workspace/mclayer/mctrader')
 
         assert cls.repo_root.is_dir(), f"Plugin repo not found: {cls.repo_root}"
 
@@ -293,7 +294,19 @@ class TestCFP2831Convergence:
         Per Change Plan §8.2 E-5: Use git object fetch, not file embedding (avoid self-match).
         Per §8.3: `git cat-file -e` failure → pytest.fail() (not skip).
         """
-        n = 21  # AST count of T3 test defs (from setup_class)
+        # ★ N 은 **상수 금지**(CP §8.1) — T3 소스를 ast 로 파싱해 산출한다.
+        #   harness(:42-49) · T3-CI(:66-70) 와 동일 산출식이어야 3좌표가 대칭이다.
+        #   (종전 판은 `n = 21` 상수였고 "from setup_class" 주석도 거짓이었다 — setup_class 는 N 을 산출하지 않는다.)
+        t3_src_path = self.repo_root / PATH_T3
+        assert t3_src_path.exists(), f"T3 not found for AST count: {t3_src_path}"
+        with open(t3_src_path, encoding='utf-8') as _fh:
+            _t3_tree = ast.parse(_fh.read())
+        n = sum(
+            1 for _node in ast.walk(_t3_tree)
+            if isinstance(_node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and _node.name.startswith('test')
+        )
+        assert n > 0, "AST 로 T3 test def 0건 — 하네스 파손"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             fixture_scripts = Path(tmpdir) / "scripts/lib"
@@ -325,7 +338,7 @@ class TestCFP2831Convergence:
 
             # Run T3 with old T1 mutant
             result = subprocess.run(
-                ['python', '-m', 'pytest', str(t3_file),
+                [sys.executable, '-m', 'pytest', str(t3_file),
                  '-q', '--tb=no', '-p', 'no:cacheprovider'],
                 capture_output=True,
                 text=True,
@@ -362,111 +375,137 @@ class TestCFP2831Convergence:
                 f"output: {output}"
             )
 
+    def _run_reconcile_hermetic(self, tmpdir, consumer_bytes):
+        """격리 fixture 에서 `reconcile-overlay.sh --dry-run` 을 돌리고 stdout+stderr 를 반환한다.
+
+        ★ seam 을 **전부** 주입한다. 하나라도 빠지면 스크립트가 기본값으로
+          **실 repo 의 templates/github-workflows(88 파일)** 와 **$HOME/.claude/_snapshots**
+          를 걷는다. 그 결과:
+            (i) 개발자 홈의 실 snapshot 유무가 `_base_state` 분기를 바꿔 **판정이 환경의 함수**가 된다
+                (= 비-hermetic. 성능 문제가 아니라 격리 문제다)
+            (ii) walk 가 O(88) 로 커져 이 호스트에서 900s 를 넘겼다
+          선례 = `tests/scripts/test_reconcile-overlay-workflow-channel.sh:57-61` 동형 주입.
+        """
+        base = Path(tmpdir)
+        wrapper_overlay = base / "wrapper/.claude/_overlay"
+        src_dir = base / "wrapper/templates/github-workflows"
+        wl_dir = base / "wrapper/templates/scripts"
+        consumer = base / "consumer"
+        overlay = consumer / ".claude/_overlay"
+        dst_dir = consumer / ".github/workflows"
+        snapshot = base / "snapshots"
+        for d in (wrapper_overlay, src_dir, wl_dir, overlay, dst_dir, snapshot):
+            d.mkdir(parents=True, exist_ok=True)
+
+        # wrapper SSOT = 우리 파일 1건만 넣어 walk 를 O(1) 로 만든다
+        wrapper_ssot = self.repo_root / PATH_T2
+        assert wrapper_ssot.exists(), f"wrapper SSOT not found: {wrapper_ssot}"
+        shutil.copyfile(wrapper_ssot, src_dir / WORKFLOW_BASENAME)
+
+        whitelist = wl_dir / "consumer_applicable_workflows.txt"
+        whitelist.write_text(WORKFLOW_BASENAME + "\n", encoding="utf-8")
+        (overlay / "project.yaml").write_text(
+            "name: cfp2831-test-consumer\n", encoding="utf-8")
+        (dst_dir / WORKFLOW_BASENAME).write_bytes(consumer_bytes)
+
+        # ★ POSIX(forward-slash) 경로로 넘긴다 — `str(Path)` 은 Windows 에서 역슬래시를 주고,
+        #   그러면 스크립트의 rel_path 접두 제거(`${p#$base/}`)가 실패해 rel_path 가 **절대경로**가
+        #   된다. 그 결과 consumer_file 을 못 찾아 `had_consumer_diff=false` 로 떨어지고
+        #   **divergent 인데 loss 0** 이 나온다(= 수렴본과 구별 불가 = 판별력 0).
+        #   실측 증상: `MARKER_NONE wholesale: C:\...\github-workflows/story-section-schema.yml`
+        #   converged 쪽도 "내용이 같아서" 가 아니라 "파일을 못 찾아서" 통과하는 공허 GREEN 이었다.
+        env = {
+            **os.environ,
+            'RECONCILE_OVERLAY_WORKFLOW_SRC_DIR': src_dir.as_posix(),
+            'RECONCILE_OVERLAY_WORKFLOW_DST_DIR': dst_dir.as_posix(),
+            'RECONCILE_OVERLAY_SNAPSHOT_DIR': snapshot.as_posix(),
+            'RECONCILE_OVERLAY_WRAPPER_DIR': wrapper_overlay.as_posix(),
+            'RECONCILE_OVERLAY_CONSUMER_OVERLAY_DIR': overlay.as_posix(),
+            'CONSUMER_APPLICABLE_WHITELIST': whitelist.as_posix(),
+            'CONSUMER_ROOT': consumer.as_posix(),
+        }
+        proc = subprocess.run(
+            [resolve_bash(),
+             str(self.repo_root / "scripts/reconcile-overlay.sh"), '--dry-run'],
+            capture_output=True, text=True, encoding='utf-8', errors='replace',
+            cwd=self.repo_root, env=env, timeout=300
+        )
+        return proc.stdout + proc.stderr
+
     def test_ac10_declarative_reconcile_reports_no_loss(self):
         """
-        AC-10 (declarative path): reconcile --dry-run reports zero loss for story-section-schema.yml.
+        AC-10 (선언적 경로): reconcile --dry-run 이 대상 workflow 에 loss 를 보고하지 않는다.
 
-        Per Change Plan §8.3: loss detection via LOSS REPORT block parsing.
-        2-conjunct oracle:
-          1. reachability: workflow is processed (repo-kind OK + MARKER_NONE mention)
-          2. result: LOSS REPORT block contains zero file-specific loss for target workflow
+        Change Plan §8.1 / §8.3. 2-conjunct + 판별력:
+          1. reachability — 채널이 그 파일을 **실제로 처리**했다는 관측
+                            (repo-kind 해소 ∧ 대상 파일 언급). 이게 없으면 2번이 공허 통과한다
+                            (hollow-gate ③ 트리거 미도달 — 실제로 겪었다: repo-kind unknown
+                             fail-closed abort 상태에서는 "loss 없음" 이 vacuous true 였다)
+          2. 결과        — `=== LOSS REPORT ===` 블록 **안**에 대상 파일 지목 0건
+          3. 판별력      — DIVERGENT fixture 에서 2번이 뒤집혀 1건 이상
 
-        Executes real reconcile with consumer fixture (project.yaml critical for repo-kind detection).
+        ※ 블록 **밖** 전역 'loss 발생' 문구는 술어로 쓰지 않는다 — overlay 채널 전반 신호라
+          대상 파일과 무관하게 항상 뜨고, 채널이 abort 한 fixture 에서도 떴다(실측).
         """
         reconcile_script = self.repo_root / "scripts/reconcile-overlay.sh"
         assert reconcile_script.exists(), "reconcile-overlay.sh not found"
 
+        ssot_bytes = (self.repo_root / PATH_T2).read_bytes()
+
+        # ── CONVERGED: consumer 사본 == wrapper SSOT (byte 동일) ──────────
         with tempfile.TemporaryDirectory() as tmpdir:
-            # **CONVERGED CASE**: consumer overlay == wrapper SSOT (no loss expected)
-            overlay_dir = Path(tmpdir) / ".claude/_overlay"
-            overlay_dir.mkdir(parents=True, exist_ok=True)
+            output = self._run_reconcile_hermetic(tmpdir, ssot_bytes)
 
-            # project.yaml: CRITICAL — signals this is a consumer (repo-kind detection)
-            project_yaml = overlay_dir / "project.yaml"
-            with open(project_yaml, 'w', encoding='utf-8') as f:
-                f.write("project_name: test\n")
+        assert 'repo-kind unknown' not in output, (
+            f"repo-kind 미해소 — 채널이 fail-closed abort 해서 결과 conjunct 가 공허해진다:\n"
+            f"{output[-1500:]}"
+        )
+        # ※ CONVERGED 는 파일이 동일하면 스크립트가 **per-file 흔적을 출력하지 않는다**(실측:
+        #   MARKER_NONE 행 0건). 따라서 reachability 는 여기서 잴 수 없고 **DIVERGENT 쪽에서**
+        #   잰다 — 아래 divergent 블록이 "채널이 이 파일에 실제로 도달하며 rel_path 도 정확하다"
+        #   를 증명하므로, 그와 동일 fixture 형상인 여기의 'loss 없음' 이 공허하지 않게 된다.
 
-            # Consumer workflow copy == wrapper SSOT (진짜 CONVERGED).
-            # ★ 스텁 문자열을 쓰면 wrapper 정본과 diff 가 생겨 이 fixture 는 사실상 DIVERGENT 가 되고,
-            #   "loss 0" 단언이 의미를 잃는다. 반드시 wrapper 의 templates/ 정본을 그대로 복사한다.
-            wrapper_ssot = self.repo_root / "templates/github-workflows/story-section-schema.yml"
-            assert wrapper_ssot.exists(), f"wrapper SSOT not found: {wrapper_ssot}"
-            workflows_dir = Path(tmpdir) / ".github/workflows"
-            workflows_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(wrapper_ssot, workflows_dir / "story-section-schema.yml")
+        loss_match = re.search(
+            r'=== LOSS REPORT ===\n(.*?)\n=== END LOSS REPORT ===', output, re.DOTALL)
+        loss_block = loss_match.group(1) if loss_match else ''
+        assert WORKFLOW_BASENAME not in loss_block, (
+            f"CONVERGED fixture 인데 대상 workflow 가 LOSS REPORT 에 등장:\n{loss_block}"
+        )
 
-            result = subprocess.run(
-                [resolve_bash(), str(reconcile_script), '--dry-run'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
-                cwd=self.repo_root,
-                env={**os.environ, 'RECONCILE_OVERLAY_CONSUMER_OVERLAY_DIR': str(overlay_dir)},
-                timeout=900
-            )
-
-            output = result.stdout + result.stderr
-
-            # Conjunct 1: reachability (workflow processed, repo-kind OK)
-            assert 'repo-kind unknown' not in output, "repo-kind detection failed"
-            assert 'story-section-schema.yml' in output, "target workflow not in output"
-
-            # Conjunct 2: result (zero loss for target in LOSS REPORT block)
-            # ★ `if loss_match:` 로 감싸면 블록 부재 시 단언이 통째로 skip 되어 fail-open 이 된다.
-            #   블록 부재 = "우리 파일 loss 0" 이므로 빈 문자열로 환원해 **항상 단언**한다.
-            loss_match = re.search(r'=== LOSS REPORT ===\n(.*?)\n=== END LOSS REPORT ===', output, re.DOTALL)
-            loss_block = loss_match.group(1) if loss_match else ''
-            assert 'story-section-schema.yml' not in loss_block, (
-                f"CONVERGED fixture 인데 target workflow 가 LOSS REPORT 에 등장:\n{loss_block}"
-            )
-
-        # **DIVERGENT CASE**: prove discriminating power (divergent shows loss)
+        # ── DIVERGENT: CONVERGED + 1줄 (판별 원인을 content diff 로 고정) ──
+        divergent_bytes = ssot_bytes + \
+            b"\n# synthetic consumer customization (AC-10 discrimination probe)\n"
         with tempfile.TemporaryDirectory() as tmpdir_div:
-            overlay_dir_div = Path(tmpdir_div) / ".claude/_overlay"
-            overlay_dir_div.mkdir(parents=True, exist_ok=True)
+            output_div = self._run_reconcile_hermetic(tmpdir_div, divergent_bytes)
 
-            project_yaml_div = overlay_dir_div / "project.yaml"
-            with open(project_yaml_div, 'w', encoding='utf-8') as f:
-                f.write("project_name: test-divergent\n")
+        assert 'repo-kind unknown' not in output_div, (
+            "DIVERGENT fixture 에서 repo-kind 미해소 — 판별력 증명이 공허해진다"
+        )
 
-            workflows_dir_div = Path(tmpdir_div) / ".github/workflows"
-            workflows_dir_div.mkdir(parents=True, exist_ok=True)
-            # DIVERGENT = CONVERGED fixture + 1줄. 두 fixture 가 **정확히 한 줄만** 다르게 해서
-            # loss 유무를 가르는 것이 content diff 임을 보인다(스텁끼리 비교하면 무엇이 원인인지 흐려진다).
-            wrapper_ssot_div = self.repo_root / "templates/github-workflows/story-section-schema.yml"
-            divergent_target = workflows_dir_div / "story-section-schema.yml"
-            shutil.copyfile(wrapper_ssot_div, divergent_target)
-            with open(divergent_target, 'a', encoding='utf-8') as f:
-                f.write("\n# synthetic consumer customization (AC-10 discrimination probe)\n")
-
-            result_div = subprocess.run(
-                [resolve_bash(), str(reconcile_script), '--dry-run'],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='replace',
-                cwd=self.repo_root,
-                env={**os.environ, 'RECONCILE_OVERLAY_CONSUMER_OVERLAY_DIR': str(overlay_dir_div)},
-                timeout=900
-            )
-
-            output_div = result_div.stdout + result_div.stderr
-
-            # Divergent: 반드시 loss 가 기록돼야 한다 = 이 술어의 RED 절반(판별력 증명).
-            # ★ 여기를 `if` 로 감싸면 블록 부재 시 **판별력 증명이 통째로 사라진다** — 절대 금지.
-            #   블록 부재 자체가 실패다(수렴본과 구별을 못 한다는 뜻).
-            assert 'repo-kind unknown' not in output_div, (
-                "DIVERGENT fixture 에서 repo-kind 미해소 — 채널 미실행이라 판별력 증명이 공허해진다"
-            )
-            loss_match_div = re.search(r'=== LOSS REPORT ===\n(.*?)\n=== END LOSS REPORT ===', output_div, re.DOTALL)
-            assert loss_match_div is not None, (
-                f"DIVERGENT fixture 인데 LOSS REPORT 블록이 없다 — 판별력 0.\noutput:\n{output_div[-2000:]}"
-            )
-            loss_block_div = loss_match_div.group(1)
-            assert 'story-section-schema.yml' in loss_block_div, (
-                f"DIVERGENT: target workflow 가 loss 로 잡혀야 한다:\n{loss_block_div[:500]}"
-            )
+        # ── reachability (여기서 잰다) ────────────────────────────────────
+        # ★ 단순 `basename in output` 으로는 부족하다 — rel_path 가 절대경로로 깨져도
+        #   basename 이 부분문자열로 들어 있어 통과한다(실제로 그렇게 통과했었다:
+        #   `MARKER_NONE wholesale: C:\...\github-workflows/story-section-schema.yml`).
+        #   그 상태면 consumer_file 을 못 찾아 had_consumer_diff=false → divergent 인데 loss 0.
+        #   rel_path 가 **정확히 basename** 인지 단정해야 그 경로 계산 파손을 잡는다.
+        assert re.search(
+            r'MARKER_NONE wholesale:\s*' + re.escape(WORKFLOW_BASENAME) + r'\s*$',
+            output_div, re.MULTILINE
+        ), (
+            f"reachability 실패: 'MARKER_NONE wholesale: {WORKFLOW_BASENAME}' 행이 없다 "
+            f"= 채널이 그 파일에 도달하지 않았거나 rel_path 가 깨졌다.\n{output_div[-1500:]}"
+        )
+        loss_match_div = re.search(
+            r'=== LOSS REPORT ===\n(.*?)\n=== END LOSS REPORT ===', output_div, re.DOTALL)
+        # ★ 여기를 `if` 로 감싸면 블록 부재 시 **판별력 증명이 통째로 사라진다** — 절대 금지.
+        assert loss_match_div is not None, (
+            f"DIVERGENT fixture 인데 LOSS REPORT 블록이 없다 = 수렴본과 구별을 못 한다(판별력 0):\n"
+            f"{output_div[-1500:]}"
+        )
+        assert WORKFLOW_BASENAME in loss_match_div.group(1), (
+            f"DIVERGENT: 대상 workflow 가 loss 로 잡혀야 한다:\n"
+            f"{loss_match_div.group(1)[:500]}"
+        )
 
     def test_ac10_imperative_apply_is_noop(self):
         """
@@ -479,15 +518,9 @@ class TestCFP2831Convergence:
 
         Validates via synthetic fixture (wrapper == consumer, no MARKER_NONE delta).
         """
-        import sys
-        from pathlib import Path as PathlibPath
-
-        # Ensure walk_plan module is importable
+        # sys.path 주입 불요 — tests/conftest.py:16-21 이 이미 scripts/ + scripts/lib 를 주입한다.
         walk_plan_path = self.repo_root / "scripts/lib/walk_plan.py"
         assert walk_plan_path.exists(), "walk_plan.py not found"
-
-        # Add to sys.path for import
-        sys.path.insert(0, str(walk_plan_path.parent))
 
         try:
             import walk_plan
@@ -585,20 +618,45 @@ class TestCFP2831Convergence:
         needle_2_part1 = 'Story file §1' + chr(0x2d) + '§13'
         needle_2 = needle_2_part1  # Complete needle (see Story :536 for context)
 
-        # **POSITIVE CONTROL**: Verify needle is well-formed by matching against fixture
-        fixture_content = f"Old constraint: {needle_1}\nOld header: {needle_2}\n"
-
-        # Verify needle_1 matches fixture (simple string matching)
-        assert needle_1 in fixture_content, (
-            f"Needle 1 construction failed: needle not found in fixture\n"
-            f"needle_1={repr(needle_1)}\nfixture={repr(fixture_content)}"
-        )
-
-        # Verify needle_2 matches fixture
-        assert needle_2 in fixture_content, (
-            f"Needle 2 construction failed: needle not found in fixture\n"
-            f"needle_2={repr(needle_2)}\nfixture={repr(fixture_content)}"
-        )
+        # **POSITIVE CONTROL** — 독립 대조원 의무.
+        #
+        # ★ 종전 판은 `fixture = f"...{needle}..."` 를 만든 뒤 `needle in fixture` 를 단언했다.
+        #   이는 needle 값과 무관하게 **항상 참**(항진)이라 판별력 0 이었다 — 깨진 needle 을
+        #   막으려고 둔 장치가 정작 깨진 needle 을 통과시킨다(방어 장치가 방어 대상과 동일 결함).
+        #   오타/쓰레기/빈 문자열 뮤턴트 4종이 전부 PASS 함이 실측으로 확인됐다.
+        #
+        # 교체: needle 로부터 **유도되지 않은** 대조원 = 수렴 *이전* 의 git 문면.
+        #   각 needle 을 "그 needle 이 잡아내야 했던 바로 그 파일의 수렴 전 내용" 에 대조한다.
+        #   ⇒ needle 이 조금이라도 어긋나면 여기서 즉시 FAIL 하고, 동시에 "이 needle 이
+        #      실제로 구판 문면을 검출한다" 는 것까지 증명된다.
+        BASE_REF = "3a7cae2f"  # Phase 2 브랜치 base (수렴 전 = 구판 문면 잔존 시점)
+        positive_sources = [
+            (needle_1, 'P-11b', f"{BASE_REF}:templates/story-page-structure.md"),
+            (needle_2, 'P-11c', f"{BASE_REF}:docs/consumer-guide.md"),
+        ]
+        for needle, name, ref in positive_sources:
+            # 빈 문자열/과단축 needle 은 어떤 대조원에도 자명하게 포함되므로 길이 하한을 건다.
+            assert len(needle) >= 8, (
+                f"{name} needle 이 비었거나 너무 짧다 (len={len(needle)}) — "
+                f"빈 문자열은 모든 대조원에 자명 포함이라 positive control 이 공허해진다"
+            )
+            probe = subprocess.run(
+                ['git', 'show', ref],
+                cwd=self.repo_root, capture_output=True, text=True,
+                encoding='utf-8', errors='replace', timeout=60
+            )
+            if probe.returncode != 0:
+                pytest.fail(
+                    f"{name} positive control 대조원 취득 실패: git show {ref} "
+                    f"(rc={probe.returncode}) — fetch-depth:0 필요. skip 아니라 FAIL.\n"
+                    f"{probe.stderr[:300]}"
+                )
+            assert needle in probe.stdout, (
+                f"{name} POSITIVE CONTROL 실패: 조립된 needle 이 수렴 전 문면({ref})에 "
+                f"매치되지 않는다 ⇒ needle 이 깨졌다(오타/조립 오류). "
+                f"이 상태면 아래 negative control 은 0 매치로 **항상 통과**한다.\n"
+                f"needle={repr(needle)}"
+            )
 
         # **NEGATIVE CONTROL**: Verify needles do NOT match repo (including untracked)
         # Use --untracked to catch files not yet committed
@@ -649,9 +707,16 @@ class TestCFP2831Convergence:
             f"found {len(p11d_matches)} times, expected >= 1"
         )
 
-        # P-11e: manifest bootstrap mention
-        p11e_matches = re.findall(r'(manifest).*(수동|bootstrap)', guide_content)
+        # P-11e: 실배달 경로 명시 (D4-b 고유 문면으로 앵커)
+        #
+        # ★ 종전 패턴 `(manifest).*(수동|bootstrap)` 은 **base 3a7cae2f 에서 이미 2건 매치**했다
+        #   (consumer-guide.md:1220 bootstrap Stage 7 · :1754 subissue-from-impl-manifest).
+        #   ⇒ D4-b 문면을 전부 지워도 통과 = hollow-gate ⑥(baseline 이미 GREEN). 진행 게이트가 아니었다.
+        #   좁힌 패턴 실측: base=0 / HEAD=1 ⇒ D4-b 문면이 사라지면 즉시 RED (판별력 실재).
+        p11e_pattern = r'(실배달 경로).*(manifest).*(수동|bootstrap)'
+        p11e_matches = re.findall(p11e_pattern, guide_content)
         assert len(p11e_matches) >= 1, (
-            f"P-11e failed: pattern '(manifest).*(수동|bootstrap)' "
-            f"found {len(p11e_matches)} times, expected >= 1"
+            f"P-11e failed: pattern {p11e_pattern!r} "
+            f"found {len(p11e_matches)} times, expected >= 1 "
+            f"(D4-b 실배달 경로 문면이 사라졌다)"
         )

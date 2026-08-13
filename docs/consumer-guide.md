@@ -1752,7 +1752,7 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `story-section-1-immutable.yml` | §1 변조 금지 | PR diff 의 `## §1` line range manual review |
 | `fix-ledger-sync.yml` | §10 row append → Issue label mirror + comment | §10 row 추가 commit 시 수동 `[FIX #N]` Issue comment + `fix:<lane>-retry` label 부착 |
 | `subissue-from-impl-manifest.yml` | §8.5 Impl Manifest → file-level sub-issue 자동 생성 | §8.5 commit 후 수동 `gh sub-issue create` per file |
-| `story-section-schema.yml` (CFP-94) | Story file section schema lint (Implementation strict — §1-§11 의무 · §12-§13 CONDITIONAL / Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 (CFP-97 manifest 경유 copy) |
+| `story-section-schema.yml` (CFP-94) | Story file section schema lint (Implementation strict — 린터는 §1-§11 만 강제하고 §12-§13 은 optional(비검사) / Epic condensed). 저작 의무는 별개 축 — §13 은 CONDITIONAL | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 (CFP-97 manifest 경유 copy) |
 
 **mctrader-hub 현재 상태 (2026-05-04 audit)**:
 - ✅ `phase-gate-mergeable.yml`
