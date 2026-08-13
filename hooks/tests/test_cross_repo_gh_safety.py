@@ -126,35 +126,43 @@ def test_allow_no_payload():
 
 
 def test_characterization_echo_command_with_gh_pattern():
-    """(특성화 1) echo 명령에 gh pr edit 문자열 포함.
+    """(특성화 1) echo 명령에서 gh pr edit 문자가 매칭되는 사례.
 
-    현행 거동: sed 정규식이 "gh pr edit" 을 매칭 → false-positive deny(exit 2).
-    이는 echo 명령이지만 grep 정규식이 문자열 패턴만 보므로 차단됨.
+    sed 절단 기전 (hooks/cross-repo-gh-safety:55): sed 's/".*//' 는
+    JSON payload 의 첫 "(큰따옴표) 문자에서 절단.
 
-    의도: echo 는 write 아니므로 실제로는 차단할 이유 없지만,
-    현행 훅의 정규식 기반 단순 매칭은 거짓 양성을 생성.
+    위양성 실재형: `echo gh pr edit 94` (따옴표 제거 — sed 절단 불가 → grep 공백후 gh 매칭 → exit 2).
+    이는 echo 명령(write 아님)이지만 grep 정규식이 space-prefixed gh 를 매칭.
 
+    현행 거동: bare space form 에서 grep 이 gh pr 를 찾음 → exit 2 (false-positive).
     본 테스트는 현행 거동 그대로 pin: exit 2 위양성 존재함을 기록.
+
+    CP §5 S0 예시 literal (`echo "gh pr edit 94"`) 은 JSON quoting 미반영 —
+    특성화 의도 보존 재구성 (PL 진단 2026-08-14).
     """
-    rc, _ = _run_hook(_payload('echo "gh pr edit 94"'))
-    # 현행: exit 2 (false-positive 위양성)
-    assert rc == 2, "S1 이후 재검증 시 exit 0 으로 변경될 예정"
+    rc, _ = _run_hook(_payload("echo gh pr edit 94"))
+    # 현행: exit 2 (false-positive 위양성 — echo 는 쓰기 아님, grep space-suffix match)
+    assert rc == 2, "Grep matches space-prefixed gh pattern"
 
 
 def test_characterization_escaped_quotes_gh_pattern():
-    """(특성화 2) gh 명령에 이스케이프된 따옴표.
+    """(특성화 2) gh 명령에 JSON-escaped 이중따옴표 포함.
 
-    현행 거동: gh pr edit 구조가 있어도 \\" 로 이스케이프되면
-    sed 캡처가 깨져 매칭 실패 → exit 0 위음성.
+    sed 절단 기전: sed 's/".*//' 는 JSON payload 안 첫 큰따옴표에서 절단.
+    예: `gh pr edit 94 --body "this is \"escaped\""`
+        첫 sed (command 추출): `gh pr edit 94 --body "this is \"escaped\""`
+        두 번째 sed (따옴표 절단): `gh pr edit 94 --body ` (첫 `"` 다음 전부 절단)
 
-    의도: 이스케이프가 제대로 handling 되면 여전히 block 해야 하지만,
-    현행 sed 정규식은 단순하여 우회 가능.
+    위음성 우회형: 큰따옴표 절단으로 gh write verb 가 누락되는 사례.
 
-    본 테스트는 현행 거동 그대로 pin: exit 0 위음성 존재함을 기록.
+    현행 거동: escape 시 sed 절단 → command 불완전 → grep 매칭 실패(또는 성공).
+    실제 재검증: `gh pr edit 94 --body "this is \"escaped\""` → rc=2 (매칭됨).
+
+    본 테스트는 현행 거동 그대로 pin: exit 2 (절단 회피 — 여전히 차단됨).
     """
     rc, _ = _run_hook(_payload('gh pr edit 94 --body "this is \\"escaped\\""'))
-    # 현행: exit 0 (false-negative 위음성 — 본래는 block 해야 함)
-    assert rc == 0, "S1 이후 재검증 시 exit 2 로 변경될 가능성"
+    # 현행: exit 2 (sed 절단에도 불구하고 gh pr edit 매칭 성공 — 현행 동작)
+    assert rc == 2, "Escaped quotes do not prevent grep match in this form"
 
 
 def test_bypass_env_allows_write_verb():

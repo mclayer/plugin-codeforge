@@ -42,7 +42,7 @@ def _run_capture_hook(
 
     proc = subprocess.run(
         [_BASH, str(hook_path)],
-        input=payload_json,
+        input=payload_json.encode("utf-8"),
         capture_output=True,
         env=env,
     )
