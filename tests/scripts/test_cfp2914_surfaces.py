@@ -115,26 +115,50 @@ class TestDeclaredNotBoundAbsenceAxis:
         assert re.search(r'현행\s+배선\s+상태\s*=\s*.*미배선.*호출자\s+0', prompt_text), \
             f"AC-5 실패: {prompt_check}에 정직 미배선 마커 부재"
 
-        # **Negative control: dangling + sunset_justification 주입 감지**
-        # temp에 dangling 참조 추가 → 실제 검출되는지 확인
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as tmp:
-            tmp_path = Path(tmp.name)
-            # registry YAML 복사
-            tmp.write(registry_text)
-            # dangling 참조 추가
-            tmp.write("\n  - name: dangling-entry-test\n")
-            tmp.write("    description: Dangling reference for testing\n")
-            tmp.write("    reference: undefined-check\n")  # 존재하지 않는 참조
+        # **Negative control: registry entry 구조 검증 + 필수 필드 presence**
+        # F-CR-004: 실제 검사기(registry 파싱) 호출로 정정
+        import yaml
 
         try:
-            # dangling 참조가 있는 파일 로드 → 파싱 실패하거나 경고해야 함
-            tmp_content = tmp_path.read_text(encoding='utf-8')
-            # 간단한 검증: dangling 항목이 파일에 있으면 검출되는지 확인
-            # (실제 로직은 더 복잡하지만, 여기서는 부재 축 기본 검증)
-            assert 'dangling-entry-test' in tmp_content, \
-                "AC-5 negative control: 주입된 항목을 감지하지 못함"
-        finally:
-            tmp_path.unlink()
+            registry_data = yaml.safe_load(registry_text)
+        except yaml.YAMLError as e:
+            pytest.fail(f"AC-5 registry YAML 파싱 실패: {e}")
+
+        # entry 별 구조 및 필수 필드 검증
+        # ★ fail-closed: shape 를 assert 로 확정한 뒤 순회한다. `if 'entries' in ...` 로 감싸면
+        #   registry 최상위 shape 가 바뀌는 순간 루프가 0회 돌고 missing_fields 가 빈 채로
+        #   assert 를 통과해 검사가 조용히 사라진다(vacuous pass). 그 침묵 경로를 차단한다.
+        assert isinstance(registry_data, dict), \
+            f"AC-5 실패: registry 최상위가 dict 가 아니다 — {type(registry_data).__name__}"
+        assert 'entries' in registry_data, \
+            f"AC-5 실패: registry 에 'entries' 키 부재 — 최상위 키 {list(registry_data)}"
+        entries = registry_data.get('entries') or []
+        assert len(entries) > 0, "AC-5 실패: registry entries 가 비어 있다 — 검사 정의역 0"
+
+        missing_fields = []
+        for entry_idx, entry in enumerate(entries):
+                entry_name = entry.get('name', f'entry[{entry_idx}]')
+
+                # 필수 필드 확인
+                if not entry.get('name'):
+                    missing_fields.append(f"{entry_name}:name(required)")
+                if not entry.get('description'):
+                    missing_fields.append(f"{entry_name}:description(required)")
+                if not entry.get('current_tier'):
+                    missing_fields.append(f"{entry_name}:current_tier(required)")
+
+                # detect_command 가 있으면 empty 이면 안됨 (bash scripts/... 형태)
+                detect_cmd = entry.get('detect_command')
+                if detect_cmd == '':  # 명시적 빈 문자열 = 선언했지만 구현 X
+                    missing_fields.append(f"{entry_name}:detect_command(empty)")
+
+                # workflow 가 있으면 (null 아니면) empty 이면 안됨
+                workflow = entry.get('workflow')
+                if workflow == '':  # 명시적 빈 문자열
+                    missing_fields.append(f"{entry_name}:workflow(empty)")
+
+        assert len(missing_fields) == 0, \
+            f"AC-5 negative control: 다음 entry 들의 필수 필드 부재/공백: {missing_fields}"
 
 
 class TestOverclaimLexiconTwoLayer:
@@ -234,36 +258,64 @@ class TestInspectionVolumeFiveMetrics:
             f"AC-10a 실패(검사량 축소): 리뷰 peer {len(peer_ids)}종 < 2 — {peer_ids}"
 
         # ③ FIX 루프: 3 (repo에서 명시 확인)
+        # F-CR-010: 파일 부재를 실패로 승격 (fail-closed)
         claude_md = worktree_root / "CLAUDE.md"
-        if claude_md.exists():
-            claude_text = claude_md.read_text(encoding='utf-8')
-            # "FIX" 키워드와 숫자 3 조합 확인
-            if not re.search(r'FIX.*3|3.*FIX', claude_text, re.IGNORECASE):
-                pytest.skip("AC-10a: FIX 루프 상한 명시 부재")
+        assert claude_md.exists(), f"AC-10a 실패: {claude_md} 부재 — FIX 루프 명시 검증 불가"
+        claude_text = claude_md.read_text(encoding='utf-8')
+        # "FIX" 키워드와 숫자 3 조합 확인
+        assert re.search(r'FIX.*3|3.*FIX', claude_text, re.IGNORECASE), \
+            "AC-10a 실패: CLAUDE.md에 'FIX 루프 상한 3' 명시 부재"
 
         # ④ 게이트 수: 8 (CLAUDE.md의 required_status_checks contexts)
-        if claude_md.exists():
-            claude_text = claude_md.read_text(encoding='utf-8')
-            # 8-tuple contexts 확인
-            if 'required_status_checks' in claude_text:
-                contexts_match = re.search(
-                    r'required_status_checks.*?contexts.*?\[(.*?)\]',
-                    claude_text,
-                    re.DOTALL | re.IGNORECASE
-                )
-                if contexts_match:
-                    contexts_str = contexts_match.group(1)
-                    # 쉼표 개수로 항목 추정 (7개 쉼표 = 8개 항목)
-                    context_count = contexts_str.count(',') + 1
-                    assert context_count >= 8, \
-                        f"AC-10a 실패: 게이트 수 {context_count} < 8"
+        # F-CR-006: JSON 파싱 + 등식 강화 (쉼표 오계수 제거)
+        # F-CR-010: 파일 부재를 실패로 승격 (이미 위에서 확인했으므로 조건 제거)
+        # ★ fail-closed: `if 'required_status_checks' in ...` / `if contexts_match:` 로 감싸면
+        #   CLAUDE.md 표 서식이 바뀌는 순간 매칭이 실패해 아래 등식 assert 가 통째로 건너뛰어지고
+        #   테스트는 초록으로 남는다(vacuous pass). 그러면 8→7 축소 검출이라는 본 검사의 목적이
+        #   정확히 무력화되므로, 앵커 존재와 매칭 성공 자체를 assert 로 확정한다.
+        assert 'required_status_checks' in claude_text, \
+            "AC-10a 실패: CLAUDE.md 에 'required_status_checks' 앵커 부재 — 게이트 수 검증 불가"
+        contexts_match = re.search(
+            r'required_status_checks\s+contexts.*?\[(.*?)\]',
+            claude_text,
+            re.DOTALL | re.IGNORECASE
+        )
+        assert contexts_match, \
+            "AC-10a 실패: required_status_checks contexts 배열 매칭 실패 — 표 서식 변경 의심"
+        contexts_json_str = '[' + contexts_match.group(1) + ']'
+        import json
+        try:
+            contexts_list = json.loads(contexts_json_str)
+        except json.JSONDecodeError as e:
+            pytest.fail(f"AC-10a: contexts JSON 파싱 실패: {e}")
+        # 등식으로 강화: 정확히 8개여야 함 (>= 에서 == 로 변경 — 쉼표 계수는
+        # "css structural lint (stylelint, warning-tier)" 처럼 항목 내부 쉼표를
+        # 항목 구분자로 오인해 8 을 9 로 세었고, 그 결과 `>= 8` 이 8→7 축소를 통과시켰다)
+        # CLAUDE.md 브랜치 보호 표 SSOT: 8개 contexts
+        expected_contexts = {
+            "phase-gate-mergeable",
+            "invariant-check",
+            "doc frontmatter schema (CFP-28 — strict)",
+            "doc section schema (CFP-28 — strict)",
+            "check-gate",
+            "ac-traceability-matrix",
+            "css structural lint (stylelint, warning-tier)",
+            "css-lint discriminating test (mutation 생존 0)"
+        }
+        actual_set = set(contexts_list)
+        assert len(actual_set) == 8, \
+            f"AC-10a 실패: 게이트 수 {len(actual_set)} ≠ 8 (실측 JSON 파싱)"
+        # 각 항목까지 집합 비교 (교체 감지)
+        assert actual_set == expected_contexts, \
+            f"AC-10a 실패: 게이트 항목 불일치. expected={expected_contexts}, actual={actual_set}"
 
         # ⑤ deputy: 6 permanent + 3+1 CONDITIONAL (skills/deputy-mandate/SKILL.md)
+        # F-CR-010: 파일 부재를 실패로 승격 (fail-closed)
         deputy_skill = worktree_root / "skills/deputy-mandate/SKILL.md"
-        if deputy_skill.exists():
-            deputy_text = deputy_skill.read_text(encoding='utf-8')
-            assert re.search(r'6\s+permanent', deputy_text, re.IGNORECASE), \
-                "AC-10a 실패: 6 permanent deputy 명시 부재"
+        assert deputy_skill.exists(), f"AC-10a 실패: {deputy_skill} 부재 — deputy mandate 검증 불가"
+        deputy_text = deputy_skill.read_text(encoding='utf-8')
+        assert re.search(r'6\s+permanent', deputy_text, re.IGNORECASE), \
+            "AC-10a 실패: SKILL.md에 '6 permanent deputy' 명시 부재"
 
         # 결론: 검사량 5종 모두 확인됨 (증가/무변경, 감소 0)
         # 이것이 C-4 준수 입증

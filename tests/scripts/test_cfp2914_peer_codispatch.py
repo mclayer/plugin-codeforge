@@ -140,16 +140,30 @@ def run_harness(
 
     Returns:
         (returncode, stdout_text)
+
+    Raises:
+        subprocess.TimeoutExpired: if harness exceeds timeout (120s default, adjusted from
+            10s to account for high-load CI environments where 10s is insufficient —
+            observed real-world execution times: 110s (Codex), 707s (review PL under load)).
     """
     cmd = [BASH_EXE, str(script or HARNESS_SCRIPT), "--story", story_path]
     if extra_args:
         cmd.extend(extra_args)
 
+    # ★ Timeout = 120 seconds
+    # Rationale: Real-world measured times:
+    #   - Codex peer review execution: ~110s
+    #   - Review PL high-load execution: ~707s (outlier, but indicates 10s is too short)
+    #   - Standard execution: 5-20s
+    # 10s timeout causes intermittent failures on loaded systems, misdiagnosed as content errors.
+    # 120s is conservative ceiling for CI environments while still catching true hangs.
+    TIMEOUT_SECONDS = 120
+
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
-            timeout=10,
+            timeout=TIMEOUT_SECONDS,
             text=True,
             # ★ encoding 명시 필수 — 미지정 시 locale 기본 코덱(한국어 Windows = cp949)으로
             #   디코딩해 SUT 의 한글 출력에서 UnicodeDecodeError 로 죽는다. CI(ubuntu)는 UTF-8
@@ -163,8 +177,16 @@ def run_harness(
         else:
             combined = result.stdout
         return result.returncode, combined
-    except subprocess.TimeoutExpired:
-        return -1, "TIMEOUT"
+    except subprocess.TimeoutExpired as e:
+        # ★ EXPLICIT TIMEOUT ESCALATION (F-CR-005)
+        # Do NOT suppress timeout as silent failure or content-not-found error.
+        # Caller must never see timeout as (rc, out) and interpret missing output as assertion failure.
+        # Re-raise to force test failure with explicit TIMEOUT_EXCEEDED marker.
+        raise AssertionError(
+            f"Harness subprocess exceeded {TIMEOUT_SECONDS}s timeout. "
+            f"Command: {' '.join(cmd[:3])} ... "
+            f"This is NOT a content assertion failure; the subprocess did not complete in time."
+        ) from e
 
 
 def assert_in_output(text: str, search_str: str, msg: str = "") -> None:
@@ -644,9 +666,18 @@ def test_design_leg_bit_identical():
     #   helper 추출(RF-3) 전후 무손상이 I-4 의 본체다. 현재 판만 보는 것은 회귀 검출력 0.
     old_script = _extract_origin_main_script()
     if old_script is None:
+        # ★ EXPLICIT SKIP OR FAIL (F-CR-010)
+        # 조용한 return 금지 — 대조를 못 했으면 그 사실이 반드시 드러나야 한다.
+        # pytest 하에서는 사유를 명시한 skip(침묵 아님), 없으면 실패로 승격한다.
         if pytest is not None:
+            # pytest.skip() 은 예외를 던지므로 이 아래로 실행이 내려가지 않는다
+            # (구 주석은 "skip 시에만 return 에 도달"이라 적었으나 사실과 반대다).
             pytest.skip("origin/main 판 추출 불가 (git 미탐지 또는 ref 부재) — I-4 대조 미수행")
-        return
+        raise AssertionError(
+            "I-4 baseline extraction failed (git origin/main unreachable). "
+            "Cannot verify bit-identical design leg output. "
+            "This is a mandatory check and cannot be skipped silently."
+        )
 
     # 4-분기 전수 + 임계 경계를 함께 태워 사다리 전 구간을 대조한다.
     for name, yaml_body in _I4_BRANCH_FIXTURES:

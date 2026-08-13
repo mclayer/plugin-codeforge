@@ -3,7 +3,7 @@
 # Purpose: AC-1 codispatch denominator axes + AC-12a effective-3-state ladder
 #
 # Schema version: spawn-event-v1 (§2.1 contract)
-# Physical line count: 27 (synthetic, reduced from real 139 for test clarity)
+# Physical line count: 47 (20 comment/metadata + 27 JSON data rows; synthetic, reduced from real 139)
 # Key field preservation: duration_ms, tool_call_count, termination_cause, outcome, timestamp, story_key, lane_label, agent_type
 # Sensitive field removal: None (no credentials in test data)
 # Real data shapes preserved (CP §8.7):

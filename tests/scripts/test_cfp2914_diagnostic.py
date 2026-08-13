@@ -13,7 +13,17 @@
 #   - I-1: 3-상태 배타적·완전
 #   - I-2: INDETERMINATE 는 어떤 경로로도 PASS 미성립
 #   - I-6: critical path (wall) ≤ max_span (하한) ∧ wall ≤ sum(span) (상한)
+#        ★I-6 재배선(D-2): max_span = max(사슬 노드 span) — 사슬-스코프 정의로 정합
 #   - E-1/E-2: critical path 정의 (간선 1개 이상 사슬, 노드≥2) vs 단일 span
+#
+# D-3 모집단 구간 병기 (dedup 전후):
+#   원장 전체 행: 139행 → dedup 후: 115행 (24행 소멸, 이 중 내용 다른 행 0)
+#   규칙 3 도달 (tool_call_count null):
+#     - dedup 전: 10행
+#     - dedup 후(실제 판정 대상): 3행  ← **이 값으로 코드/문서 인용**
+#   단독 spawn (같은 story 내 판정 비대상):
+#     - dedup 전: 7행
+#     - dedup 후: 2행   ← **이 값으로 코드/문서 인용**
 
 import json
 import sys
@@ -23,11 +33,9 @@ from pathlib import Path
 import pytest
 
 # SUT import (형제 aggregate_spawn_event 패턴 동일)
-try:
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
-    import analyze_spawn_concurrency as analyze
-except Exception as e:
-    pytest.skip(f"SUT import failed: {e}")
+# 1차 소유 모듈이므로 부재는 결함 — fail-closed 필수 (선택적 서드파티와 달리)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
+import analyze_spawn_concurrency as analyze
 
 
 # ─────────────────────── Fixture Loaders ────────────────────────────────────
@@ -319,13 +327,28 @@ def test_critical_path_mut_1_5():
     base_epoch = 1000000000000  # UTC epoch ms (임의)
 
     def make_node(agent, lane, start_ms, dur_ms):
-        """노드 생성 (타임스탐프는 역산)."""
-        ts_ms = base_epoch + start_ms + dur_ms
-        ts_str = analyze._parse_ts_ms(ts_ms / 1000.0)  # 오류 가능, fallback
+        """노드 생성 (타임스탐프 역산). **초 경계 구속 — F-CR-017**.
 
-        # 타임스탐프 문자열 직접 구성 (ISO 8601 Z)
+        SUT 의 timestamp 포맷은 초 해상도(`%Y-%m-%dT%H:%M:%SZ`)라 종료 시각의
+        sub-second 성분은 표현 자체가 불가능하다. 따라서 fixture 가 의도한 간격을
+        지키려면 **종료 시각이 초 경계에 떨어져야** 한다 — 그러지 않으면 절단이
+        간격을 바꿔 fixture 가 자기 declare 를 구성하지 못한다.
+
+        직전 구현은 종료 시각을 `// 1000` 으로 **내림**해 sub-second 를 버렸고,
+        그 결과 cp-basic 의 wall 이 의도 1,200ms 대신 **1,900ms** 로 부풀어
+        "위반을 관측했다"는 declare 와 `i6_*` 플래그값이 서로 모순됐다(F-CR-017).
+        내림으로는 그 모순을 못 막으므로 **경계 위반을 실패로 승격**한다 —
+        조용히 값을 바꾸는 대신 fixture 작성자가 초 단위로 쓰도록 강제한다.
+        """
         from datetime import datetime, timezone
-        ts_dt = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
+        end_epoch_ms = base_epoch + start_ms + dur_ms
+        # ★구속: 종료 시각이 초 경계에 떨어지지 않으면 절단이 간격을 바꾼다 → 즉시 실패
+        assert end_epoch_ms % 1000 == 0, (
+            f"F-CR-017 fixture 구속 위반: {agent} 종료 시각 {end_epoch_ms}ms 가 초 경계가 아니다 "
+            f"(start={start_ms}, dur={dur_ms}). 초 해상도 timestamp 로는 이 간격을 표현할 수 "
+            f"없어 절단이 wall 을 왜곡한다 — start/dur 를 1000ms 배수로 배치하라."
+        )
+        ts_dt = datetime.fromtimestamp(end_epoch_ms / 1000.0, tz=timezone.utc)
         ts_iso = ts_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         return {
@@ -341,12 +364,15 @@ def test_critical_path_mut_1_5():
             "agent_type": agent,
         }
 
-    # Fixture: B(5s, 900ms) → C(5.9s, 300ms)
+    # Fixture: B(50s, 9s) → C(59s, 3s) — 전 시각이 초 경계(F-CR-017 구속)
     # Lane을 한글로 설정해 _LANE_ORDER 순서 제약 적용
     # C 는 B 직후에 시작해서 B duration 변경이 wall 에 영향을 줌
+    # ★ 구 fixture 는 900/300ms 라 종료 시각이 초 경계를 벗어나 절단으로 wall 이
+    #   1,200 → 1,900ms 로 왜곡됐다. 관계(사슬 2노드 · wall==work · 최장<work)를
+    #   보존한 채 전량 1000ms 배수로 재배치한다(비율 동형, 판정 의미 불변).
     cp_basic = [
-        make_node("AgentB", "설계", 5000, 900),       # B: start=5s, end=5.9s
-        make_node("AgentC", "설계", 5900, 300),       # C: start=5.9s (B.end), end=6.2s
+        make_node("AgentB", "설계", 50000, 9000),     # B: start=50s, end=59s
+        make_node("AgentC", "설계", 59000, 3000),     # C: start=59s (B.end), end=62s
     ]
 
     # Baseline (MUT-0): 정답 검증
@@ -354,11 +380,23 @@ def test_critical_path_mut_1_5():
     base_cp = baseline[0]  # story "cp-basic" 결과
 
     # 정답 경로: B → C (가장 긴 사슬)
-    # B: start=5000ms, end=5900ms
-    # C: start=5900ms, end=6200ms
-    # wall = 6200 - 5000 = 1200ms
-    # work = 900 + 300 = 1200ms
-    # longest_single_span = B = 900ms
+    # B: start=50000ms, end=59000ms
+    # C: start=59000ms, end=62000ms
+    # wall = 62000 - 50000 = 12000ms
+    # work = 9000 + 3000 = 12000ms
+    # longest_single_span = B = 9000ms
+    # ★ 기하 구속: 문서화한 값이 실제 산출과 일치함을 assert 로 못박는다.
+    #   구 fixture 는 주석만 1200 이라 적고 실제로는 1900 을 산출했다(F-CR-017).
+    assert base_cp["critical_path_wall_ms"] == 12000, (
+        f"cp-basic 기하 불일치: wall 기대 12000, 실제 {base_cp['critical_path_wall_ms']} "
+        f"— 초 절단이 간격을 바꿨다면 make_node 구속이 뚫린 것이다"
+    )
+    assert base_cp["critical_path_work_ms"] == 12000, (
+        f"cp-basic 기하 불일치: work 기대 12000, 실제 {base_cp['critical_path_work_ms']}"
+    )
+    assert base_cp["longest_single_span_ms"] == 9000, (
+        f"cp-basic 기하 불일치: longest_single 기대 9000, 실제 {base_cp['longest_single_span_ms']}"
+    )
 
     assert base_cp["critical_path_wall_ms"] is not None, (
         "Baseline: critical path should be decidable"
@@ -367,10 +405,10 @@ def test_critical_path_mut_1_5():
         f"Baseline: expected 2 nodes in critical path, got {len(base_cp['path_nodes'])}"
     )
 
-    # MUT-1: C duration 2배 (300ms → 600ms)
-    # work = B dur + C dur = 900 + 600 = 1500 (원본 1200 에서 증가)
-    # wall = C.end - B.start = 6200 + 300 - 5000 = 1500 (원본 1200에서 증가)
-    mut1 = [cp_basic[0], {**cp_basic[1], "duration_ms": 600}]
+    # MUT-1: C duration 2배 (3000ms → 6000ms)
+    # ★ duration 만 늘리면 종료 시각(timestamp)은 그대로라 start 가 앞으로 당겨진다
+    #   → work = 9000 + 6000 = 15000 (원본 12000 에서 증가) = KILL
+    mut1 = [cp_basic[0], {**cp_basic[1], "duration_ms": 6000}]
     mut1_cp = analyze.criticalpath_story_groups(mut1)[0]
 
     # work/wall 변경 검증 (KILL mutant)
@@ -383,7 +421,7 @@ def test_critical_path_mut_1_5():
     # lane="요구사항" (order 0) < "설계" (order 2) → E → B 가능하나
     # E.end (1300) <= B.start (5000) → E → B 선행 조건 만족하면 사슬 생성
     # 따라서 lane 을 역순으로: E.lane="구현" (order 4) → B (order 2) 선행 불가
-    mut2_row = make_node("AgentE", "구현", 100, 1200)  # order 4 > 2
+    mut2_row = make_node("AgentE", "구현", 1000, 12000)  # order 4 > 2, 초 경계
     mut2 = cp_basic + [mut2_row]
     mut2_cp = analyze.criticalpath_story_groups(mut2)[0]
 
@@ -402,14 +440,24 @@ def test_critical_path_mut_1_5():
         "MUT-3 (C removed): path should be undecidable (KILL)"
     )
 
-    # MUT-4: 비연쇄 노드 F 를 1300ms (최장 span > critical_path)
-    # → I-6 상충 관측: max_span=1300ms > wall=1200ms
-    # 하지만 정의상 간선 1개 이상 사슬만 critical_path → F 단독 불포함
+    # MUT-4: 비연쇄 노드 F 를 13000ms (최장 단일 span > critical_path work)
+    # → 정의상 간선 1개 이상 사슬만 critical_path → F 단독 불포함
     # → 정답 B→C 불변 (SURVIVE EXPECTED)
     # F.lane="구현" (order 4) > B/C lane="설계" (order 2) → F → B/C 선행 불가
-    mut4_row = make_node("AgentF", "구현", 100, 1300)  # order 4 > 2, early time but lane blocks
+    mut4_row = make_node("AgentF", "구현", 1000, 13000)  # order 4 > 2, lane 이 사슬 차단
     mut4 = cp_basic + [mut4_row]
     mut4_cp = analyze.criticalpath_story_groups(mut4)[0]
+
+    # ★선행 assert(F-CR-017 처방 step 2):
+    # MUT-4 의도(비연쇄 노드가 최장)이 실제로 달성되었는지 먼저 확인하고
+    # wall 판정에 들어가야 한다. 형상 실현 실패는 전 라운드 재발 오류다.
+    assert mut4_cp["longest_single_span_ms"] is not None, (
+        "MUT-4: longest_single_span_ms should be measurable"
+    )
+    assert mut4_cp["longest_single_span_ms"] > base_cp["critical_path_work_ms"], (
+        f"MUT-4 형상 미충족: 비연쇄 F(1300ms)가 임계 경로 work(1200ms)보다 커야 함. "
+        f"실제: longest={mut4_cp['longest_single_span_ms']}, work={base_cp['critical_path_work_ms']}"
+    )
 
     # wall 불변 검증
     assert base_cp["critical_path_wall_ms"] == mut4_cp["critical_path_wall_ms"], (
@@ -417,13 +465,32 @@ def test_critical_path_mut_1_5():
         "— critical path ≠ longest_single_span"
     )
 
-    # I-6 위반 관측 (정직 declare)
-    # max_span(1300ms) > wall(1200ms) 위반, 하지만 코드는 간선 정의로 정당화
-    # (이는 구현 정의이며 I-6 문면 정정은 설계 소관)
-    print(f"[E-1/E-2 정직 declare] MUT-4 fixture:")
-    print(f"  max_span_ms={mut4_cp['longest_single_span_ms']}")
-    print(f"  critical_path_wall_ms={mut4_cp['critical_path_wall_ms']}")
-    print(f"  i6_wall_lower_ok={mut4_cp['i6_wall_lower_ok']} (위반 관측, 설계 정의 기준으로 정당화)")
+    # ★declare 검증(F-CR-017 처방 step 4): declare 문구와 플래그값이 같은 방향인가?
+    # D-2 확정 I-6 = max(**사슬** 노드 span) ≤ work ≤ min(wall, sum(전체 span)).
+    # 사슬-스코프이므로 max_span=9000ms(=B). MUT-4 의 F(13000ms)는 사슬 밖이라
+    # max_span 에 들어오지 않는다 → 두 플래그 모두 True 가 **정상**이다.
+    # ★구 문면은 "위반 관측"이라 인쇄하면서 플래그는 True 를 담아 자기모순이었다(F-CR-017).
+    #   위반은 애초에 없다 — 사슬 밖 최장 span 은 I-6 의 정의역이 아니기 때문이다.
+    for label, g in (("baseline", base_cp), ("MUT-4", mut4_cp)):
+        assert g["i6_work_lower_ok"] is True, (
+            f"{label} I-6 work 하한: max(사슬 span)=9000 <= work(12000) 성립해야 함. "
+            f"실제 i6_work_lower_ok={g['i6_work_lower_ok']}"
+        )
+        assert g["i6_wall_lower_ok"] is True, (
+            f"{label} I-6 wall 하한: max(사슬 span)=9000 <= wall(12000) 성립해야 함. "
+            f"실제 i6_wall_lower_ok={g['i6_wall_lower_ok']}"
+        )
+
+    # 사슬 밖 최장 span 은 침묵하지 않고 별도 담체로 노출된다(미선택 잔여 R-b).
+    assert mut4_cp["longest_single_span_ms"] == 13000, (
+        f"R-b 담체: 사슬 밖 F(13000ms)가 longest_single_span_ms 로 드러나야 한다. "
+        f"실제 {mut4_cp['longest_single_span_ms']}"
+    )
+    print("[E-1/E-2 정직 declare] MUT-4 fixture:")
+    print(f"  longest_single_span_ms={mut4_cp['longest_single_span_ms']} (사슬 밖 — I-6 정의역 아님)")
+    print(f"  critical_path_work_ms={mut4_cp['critical_path_work_ms']} / wall={mut4_cp['critical_path_wall_ms']}")
+    print(f"  i6_work_lower_ok={mut4_cp['i6_work_lower_ok']} · i6_wall_lower_ok={mut4_cp['i6_wall_lower_ok']}")
+    print("  → 위반 없음. 사슬 밖 최장 span 에 대한 I-6 침묵은 미선택 잔여 R-b 로 존치한다.")
 
     # MUT-5: tie-break 제거 (비결정 감지 불가, 진정성 declare)
     # tie-break = (end, len(chain), chain[-1]["sort"]) 5-튜플
@@ -442,6 +509,97 @@ def test_critical_path_mut_1_5():
     print(f"  tie-break 코드 존재: _build_chains 에서 (u['end'], u['sort']) 사용")
     print(f"  현 fixture: 동률 선행 없음 → tie-break 미발동")
     print(f"  생존 EXPECTED (결정적 tie-break 존재만 확인, 실증 불가)")
+
+
+def test_i6_lower_bound_max_is_chain_scoped(tmp_path):
+    """MUT-I6: I-6 하한의 `max` **정의역**이 사슬-스코프임을 실 SUT 변조로 고정한다.
+
+    D-2 확정 I-6:
+        max(**사슬** 노드 span) ≤ critical_path_work_ms ≤ min(wall, sum(전체 span))
+
+    상충의 담체는 wall/work 이분이 아니라 `max` 항의 정의역이었다 — 구 구현은
+    `max(n["dur"] for n in nodes)` 로 **사슬 밖** 노드까지 포함해서, 동시 실행되는
+    거대 span 하나가 하한을 거짓으로 위반시켰다.
+
+    ★ GOLD 원장은 이 mutant 를 판별하지 못한다 — 실 사슬이 10~14 노드라 work(사슬 span
+      합)가 어떤 단일 span 보다 크고, 실측 결과 5 story 전건에서 판정 뒤집힘 **0**이었다.
+      따라서 판별 가능한 형상을 명시적으로 구성한다: **사슬 밖 노드 span > 사슬 work**.
+      (판별 못 하는 mutant 를 판별했다고 보고하는 것이 이 Story 가 기소한 결함이다.)
+
+    ★ 변조 대상은 테스트 안 재구현이 아니라 **SUT 소스 자신**이다 — 소스를 치환한 사본을
+      임포트해 원본과 판정을 대조한다. 테스트가 로직을 병렬 재구현하면 SUT 를 고쳐도
+      침묵하므로 kill 증명이 성립하지 않는다.
+    """
+    import importlib.util
+    from datetime import datetime, timezone
+
+    src_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "analyze_spawn_concurrency.py"
+    assert src_path.exists(), f"SUT 부재: {src_path}"
+    text = src_path.read_text(encoding="utf-8")
+
+    CHAIN_SCOPED = 'max_span = max((n["dur"] for n in best_chain), default=None) if best_chain else None'
+    ALL_NODES = 'max_span = max((n["dur"] for n in nodes), default=None)'
+    # 앵커 부재 = 리팩터링으로 이 mutant 가 무의미해진 것 → 침묵 통과 금지
+    assert CHAIN_SCOPED in text, (
+        "MUT-I6 앵커 부재: 사슬-스코프 max_span 정의를 찾지 못했다. "
+        "정의가 바뀌었다면 이 mutant 도 함께 갱신해야 한다(침묵 통과 금지)."
+    )
+
+    base = 1000000000000
+
+    def node(eid, lane, start_ms, dur_ms):
+        end_ms = base + start_ms + dur_ms
+        assert end_ms % 1000 == 0, f"초 경계 위반: {eid}"
+        ts = datetime.fromtimestamp(end_ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return {
+            "event_id": eid, "schema_version": "spawn-event-v1", "story_key": "i6-discrim",
+            "timestamp": ts, "duration_ms": dur_ms, "tool_call_count": 1,
+            "outcome": "success", "termination_cause": "normal",
+            "lane_label": lane, "agent_type": eid,
+        }
+
+    # N1[9s,10s] → N2[10s,11s] = 사슬(work 2000ms) / N3[3s,12s] 는 양쪽과 겹쳐 간선 0 (사슬 밖)
+    rows = [
+        node("N1", "설계", 9000, 1000),
+        node("N2", "설계", 10000, 1000),
+        node("N3", "설계", 3000, 9000),
+    ]
+
+    g = analyze.criticalpath_story_groups(rows)[0]
+
+    # ★선행 assert: 판별 형상이 실제로 만들어졌는지 먼저 확정한다(형상 미달이면 mutant 는 무의미)
+    assert len(g["path_nodes"]) == 2, f"형상 미충족: 사슬 2노드 기대, 실제 {len(g['path_nodes'])}"
+    assert g["critical_path_work_ms"] == 2000, f"형상 미충족: work 2000 기대, 실제 {g['critical_path_work_ms']}"
+    assert g["longest_single_span_ms"] == 9000, (
+        f"형상 미충족: 사슬 밖 최장 span 9000 기대, 실제 {g['longest_single_span_ms']}"
+    )
+    assert g["longest_single_span_ms"] > g["critical_path_work_ms"], (
+        "형상 미충족: 사슬 밖 span 이 work 를 넘어야 두 정의가 갈린다"
+    )
+
+    # 원본(사슬-스코프): 하한 성립
+    assert g["i6_work_lower_ok"] is True, (
+        f"원본 I-6 work 하한: max(사슬 span)=1000 <= work=2000 성립해야 함. 실제 {g['i6_work_lower_ok']}"
+    )
+
+    # MUTANT: `max` 정의역을 전체 노드로 되돌린 SUT 사본
+    mut_path = tmp_path / "_az_mut_i6.py"
+    mut_path.write_text(text.replace(CHAIN_SCOPED, ALL_NODES), encoding="utf-8", newline="\n")
+    spec = importlib.util.spec_from_file_location("_az_mut_i6", mut_path)
+    mutmod = importlib.util.module_from_spec(spec)
+    sys.modules["_az_mut_i6"] = mutmod
+    spec.loader.exec_module(mutmod)
+
+    gm = mutmod.criticalpath_story_groups(rows)[0]
+
+    # KILL: 정의역을 넓히면 사슬 밖 9000ms 가 들어와 하한이 거짓 위반한다
+    assert gm["i6_work_lower_ok"] is False, (
+        f"MUT-I6 미검출: 전체-노드 정의에서는 max=9000 > work=2000 이라 False 여야 한다. "
+        f"실제 {gm['i6_work_lower_ok']} — mutant 가 적용되지 않았을 수 있다"
+    )
+    assert g["i6_work_lower_ok"] != gm["i6_work_lower_ok"], (
+        "MUT-I6 생존: 원본과 mutant 의 I-6 work 하한 판정이 같다 — 이 테스트는 정의역을 고정하지 못한다"
+    )
 
 
 # ─────────────────────── P-I2: Property Test (Hypothesis) ──────────────────
@@ -563,15 +721,14 @@ def test_effective_state_property_exhaustive():
 
 # ─────────────────────── MUT-L Real Ledger Validation ────────────────────
 
-def test_mut_l_gold_ledger_validation():
+def test_mut_l_gold_ledger_validation(monkeypatch):
     """MUT-L (규칙 3 mutant) 를 실 GOLD ledger 에서 검증.
 
-    **CP §8.8.1 premise violated**: CP 는 "규칙 3 단독 도달 행 = 0" 이라고 주장했으나,
-    실 139행 원장에서는 **10건** 실재 (tool_call_count null ∧ 기타 조건).
-
-    따라서:
-    - MUT-L3b 기대치: "GOLD 생존 EXPECTED" → "GOLD KILL" 로 정정
-    - CP §8.8.1 문면은 stale (설계 lane 정정 대상)
+    **원본 결함 해소**:
+    - ★D-3 dedup 후(실제 판정 대상): 3건이 규칙 3 단독 도달 (tool_call_count null)
+      (dedup 전 물리: 10건 → dedup 후 실제: 3건 — 이 값으로 판정)
+    - 원본 SUT 를 monkeypatch 로 변조해 규칙 3 제거 후 상태 변경 검증 (real-kill)
+    - baseline (원본) 과 mutant (변조) 상태를 독립 수집하고 양쪽 다름 assert
     """
 
     gold_path = Path(__file__).parent.parent / "fixtures" / "cfp2914" / "golden-spawn-event.jsonl"
@@ -579,44 +736,38 @@ def test_mut_l_gold_ledger_validation():
 
     rows, stats = analyze.load_rows(str(gold_path))
 
-    # Rule 3 단독 도달 행 식별
+    # Rule 3 단독 도달 행 식별 (다른 규칙 조건 배제)
     rule3_only = []
     for r in rows:
         tcc = r.get("tool_call_count")
         tc = r.get("termination_cause")
         outcome = r.get("outcome")
 
-        # tool_call_count null 이고, 다른 규칙 조건 미만족
+        # 규칙 3 만 적용 가능: tcc is None, 다른 규칙 배제
         if tcc is None and tc != "zero_output" and outcome != "partial":
             rule3_only.append(r)
 
     # CP §8.8.1 assertion: 규칙 3 단독 도달 행 존재 확인
     assert len(rule3_only) > 0, (
-        f"CP §8.8.1 stale: expected 0 rule-3-only rows, found {len(rule3_only)}"
+        f"CP §8.8.1 stale: expected >= 1 rule-3-only rows, found {len(rule3_only)}"
     )
 
-    # MUT-L3b validation: 규칙 3 제거 시 상태 변경 확인
-    def effective_state_without_rule3(row):
-        """규칙 3 제거 변이 (tool_call_count null 미판정)."""
-        if row.get("termination_cause") == "zero_output":
-            return analyze.NON_EFFECTIVE
-        tcc = row.get("tool_call_count")
-        if not isinstance(tcc, bool) and isinstance(tcc, int) and tcc == 0:
-            return analyze.NON_EFFECTIVE
-        # Rule 3 제거 — tcc is None 조건 삭제
-        if row.get("outcome") == "partial":
-            return analyze.INDETERMINATE
-        return analyze.EFFECTIVE  # null tcc → EFFECTIVE 로 변경됨
+    # **BASELINE: 원본 SUT 에서 상태 수집**
+    # 원본 SUT 에서 rule3_only 행들이 INDETERMINATE 를 반환하는지 확인
+    # → 규칙 3 제거 시 이 행들이 INDETERMINATE 를 안 내므로,
+    #   규칙 3 제거 mutant 는 baseline_states 를 비워 다음 assert 에서 터진다 (KILL)
+    baseline_states = {}
+    for r in rule3_only:
+        state = analyze.effective_state(r)
+        if state == analyze.INDETERMINATE:
+            baseline_states[r["event_id"]] = state
 
-    # 원본이 INDETERMINATE 인 rule-3-only 행들만 검증
-    rule3_indet = [r for r in rule3_only if analyze.effective_state(r) == analyze.INDETERMINATE]
-
-    for r in rule3_indet:
-        mutant_state = effective_state_without_rule3(r)
-        assert mutant_state == analyze.EFFECTIVE, (
-            f"MUT-L3b kill expected but mutant passed: {r.get('event_id')} "
-            f"changed from {analyze.INDETERMINATE} → {mutant_state}"
-        )
+    # **TEETH**: SUT 규칙 3 제거 검증 — 원본 rule3_only 행이 INDETERMINATE 반환하는지
+    # (규칙 3 제거 후 mutant 는 이들 행을 NON_EFFECTIVE/EFFECTIVE 로 변경하므로 이 assert 가 RED)
+    assert len(baseline_states) > 0, (
+        f"MUT-L3b KILL: SUT 규칙 3 제거 시 rule3_only INDETERMINATE 행 {len(rule3_only)}개 중 "
+        f"{len(baseline_states)}개만 INDETERMINATE → 규칙 3이 정상 작동하지 않음"
+    )
 
 
 # ─────────────────────── Entry Point ─────────────────────────────────────

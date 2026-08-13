@@ -615,7 +615,10 @@ def criticalpath_story_groups(rows):
         wall_ms = (best_chain[-1]["end"] - best_chain[0]["start"]) if best_chain else None
         work_ms = sum(n["dur"] for n in best_chain) if best_chain else None
         sum_span = sum(n["dur"] for n in nodes)
-        max_span = max((n["dur"] for n in nodes), default=None)
+        # ★I-6 재배선(D-2 확정): max_span = max(사슬 노드 span) — 사슬-스코프로 좁혀 I-6 정의에 정합
+        # 미선택 잔여 R-b: 사슬 밖 최장 span 은 `longest_single_span_ms` 로 따로 낸다
+        max_span = max((n["dur"] for n in best_chain), default=None) if best_chain else None
+        longest_single_span = max((n["dur"] for n in nodes), default=None)  # 전체 노드
 
         by_agent = defaultdict(lambda: {"ms": 0, "n": 0})
         by_lane = defaultdict(lambda: {"ms": 0, "n": 0})
@@ -645,7 +648,7 @@ def criticalpath_story_groups(rows):
             ],
             "critical_path_wall_ms": wall_ms,
             "critical_path_work_ms": work_ms,
-            "longest_single_span_ms": max_span,
+            "longest_single_span_ms": longest_single_span,  # 미선택 R-b: 전체 노드 max
             "sum_span_ms": sum_span,
             "i6_wall_lower_ok": (wall_ms is not None and max_span is not None
                                  and max_span <= wall_ms),

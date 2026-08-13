@@ -348,7 +348,7 @@ extract_pr_lanes() {
 #   SPAWN_TIMING_EXPECTED  기대 하한 (설계 leg 6 / peer leg 2)
 #
 #   구현 메모: ts_array 는 nameref (bash 4.3+) 로 받는다. 이 파일은 이미 declare -A / ${var^^}
-#   로 bash 4+ 에 의존하므로 신규 하한 도입이 아니다.
+#   로 bash 4+ 에 의존하며, local -n 사용으로 bash 4.3+ 하한을 명시한다.
 _evaluate_spawn_timing() {
     local expected_min="$1" row_count="$2" valid_ts_count="$3"
     local -n _sts_ref="$4"
