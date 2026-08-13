@@ -12,16 +12,28 @@ CFP-2944 Phase 2 (구현) — D4 mirror anchor parity 검증 (AC-5 · AC-11).
 
 규범 SSOT: ADR-025 Amendment 4 (mirror 정책) + ADR-141 Amendment 8 + ADR-109 Amendment 2
 
+정의역 산출 (F-CL-002 · F-CR-003): 세 축 전부 **동적 산출**이다 — 파일·디렉터리 열거 0.
+  축 1-a·축 2 = repo 전체 walk 의 `*.md` 전건, 축 1-b = 트리거 리터럴 보유 파일 스캔 후 SSOT 제외.
+  근거 = ADR-141 §A8-5 "sweep 대상 = repo 전체 grep hit − 제외 술어 = 나머지 전건".
+  절대 site 수·행번호 assert 0 (INV-T6) — 집합·함의 술어로만 판정한다.
+
 RED 진정성 입증:
-  - AC-5 축 1-a mutant: "기존 대기" 를 mirror 에 되살림 → 위반 검출 확인
-  - AC-5 축 1-b mutant: mirror 의 `ADR-141 A8-3` 리터럴 제거 → 위반 검출 확인
+  - AC-5 축 1-a mutant(M-C1): "기존 대기" 를 mirror 에 되살림 → 위반 검출 확인
+  - AC-5 축 1-b mutant(M-C1b): mirror 의 `ADR-141 A8-3` 리터럴 제거 → 위반 검출 확인
+  - AC-5 축 1-b mutant(M-C1c): **구 열거 정의역 밖**에 신규 mirror site 를 pointer 없이 추가
+    → 검출 확인 (정의역이 정적이면 무검출인 케이스 — F-CR-003 판별)
+  - AC-5 축 1-a mutant(M-CL2a): `plugins/**` 에 폐기 문안 심기 → 검출 확인 (F-CL-002 판별)
   - AC-11 mutant: "재시도 축 한정" 제거 → 위반 검출 확인
+  - AC-11 mutant(M-CL2b): `templates/**` 에 함의 위반 심기 → 검출 확인 (F-CL-002 판별)
+
+변이 미적용 방어 (F-CL-007): 모든 mutant 구성 직후 `mutant != original` 을 못박는다.
+  특히 "리터럴 제거" 계열은 이 assert 가 load-bearing 이다 — 리터럴이 원래 없었다면
+  `replace` 가 no-op 이 되고 "제거해서 잡혔다" 가 "원래 없었다" 로 조용히 바뀐다(거짓 kill).
 
 EXIT 계약:
   - 0 = PASS / 1 = 위반 / 2 = setup error
   - stdout distinct marker = `[stop-norm-mirror-parity] PASS|FAIL|setup error:…`
 """
-import re
 import os
 import sys
 import tempfile
@@ -53,28 +65,38 @@ def repo_root() -> Path:
     return candidate
 
 
-def _find_section_line_bounds(lines, start_heading):
-    """lines 리스트에서 start_heading 으로 시작하는 섹션의 (start_line_idx, end_line_idx) 반환.
+# ── sweep 정의역 산출 (F-CL-002) ───────────────────────────────────────────────
+# 규범 SSOT = `archive/adr/ADR-141-all-opus-single-tier.md` §A8-5:
+#   "sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 **repo 전체**에 실행해 얻은 hit 중
+#    아래 제외 술어를 적용한 나머지 **전건**이다. 한 곳 누락 = born-broken."
+#   같은 절이 그 '나머지' 를 "A6-3(a) 본문 및 그 문장을 현행 규범으로 mirror 하는
+#    **타 문서 site**" 로 정의한다.
+#
+# ① 정의역 = repo **전체** 를 walk 한 `*.md` 전건. 디렉터리 allowlist 를 두지 않는다 —
+#    구 구현은 `[archive/adr, docs, skills, CLAUDE.md]` 4-entry 열거였고 그 결과
+#    `plugins/**` · `templates/**` 가 정의역 밖이었다(방향 = fail-open). 같은 ADR 이 tier 규범
+#    mirror 로 `plugins/*/CLAUDE.md` 를 열거하므로 가상의 표면도 아니었다.
+# ② **문서면 한정(`*.md`)** — 위 규범 자신의 잔여 정의("타 **문서** site")를 따른 것이다.
+#    비문서 파일은 규범이 말하는 mirror 면이 아니며, 특히 **본 검사 자신의 소스(.py)** 가
+#    트리거 리터럴을 보유하므로 포함하면 검사가 자기 자신을 위반으로 계상한다.
+#    이 한정은 Story §8.12 residual 에 정직 기재한다("repo 전체 = 전 디렉터리, 단 문서면 한정").
+# ③ 아래 skip 집합은 **규범 제외 술어가 아니다** — `.git` 등 비문서·생성물 경로를 walk 에서
+#    빼는 성능·잡음 목적의 기계적 제외이며, 규범 제외①②③(ADR-026 동음이의 / Amendment 8 절 /
+#    frontmatter)과는 층이 다르다. 두 층을 섞지 않으려고 여기 따로 둔다.
+_MECHANICAL_SKIP_DIRS = frozenset(
+    {".git", "node_modules", "__pycache__", ".venv", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+)
 
-    반환: (start_idx, end_idx) — end_idx 는 exclusive (슬라이싱용)
-    부재: (None, None)
-    """
-    start_idx = None
-    end_idx = len(lines)
 
-    for i, line in enumerate(lines):
-        if start_idx is None and line.strip().startswith(start_heading):
-            start_idx = i
-            continue
-        if start_idx is not None:
-            # 다음 h2/h3 heading 찾기
-            if line.startswith("## ") or line.startswith("### "):
-                end_idx = i
-                break
-
-    if start_idx is None:
-        return None, None
-    return start_idx, end_idx
+def iter_doc_files(root: Path):
+    """repo **전체** 를 walk 해 `*.md` 파일 전건을 반환 (디렉터리 allowlist 0 — F-CL-002)."""
+    found = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _MECHANICAL_SKIP_DIRS]
+        for name in filenames:
+            if name.endswith(".md"):
+                found.append(Path(dirpath) / name)
+    return sorted(found)
 
 
 def check_axis1_mirror_parity(root: Path) -> dict:
@@ -89,18 +111,11 @@ def check_axis1_mirror_parity(root: Path) -> dict:
     violations_1b = []
 
     # ── 조건 1-a: "기존 대기" 잔여 검증 ──
-    # 정의역: archive/adr, docs, skills, CLAUDE.md
-    # 제외:
-    #   - archive/adr/ADR-026-post-merge-automation.md 전체
-    #   - archive/adr/ADR-141-all-opus-single-tier.md 의 frontmatter (선두 --- ~ 다음 ---)
-    #   - archive/adr/ADR-141-all-opus-single-tier.md 의 Amendment 8 ~ EOF
-
-    scan_targets = [
-        (root / "archive" / "adr", "*.md"),
-        (root / "docs", "**/*.md"),
-        (root / "skills", "**/*.md"),
-        (root / "CLAUDE.md", None),  # 단일 파일
-    ]
+    # 정의역: repo 전체 walk 의 `*.md` 전건 (F-CL-002 — 디렉터리 allowlist 폐기)
+    # 규범 제외 술어 3종 (ADR-141 §A8-5):
+    #   제외① archive/adr/ADR-026-post-merge-automation.md 전체 (동음이의)
+    #   제외③ archive/adr/ADR-141-all-opus-single-tier.md 의 frontmatter (선두 --- ~ 다음 ---)
+    #   제외② archive/adr/ADR-141-all-opus-single-tier.md 의 Amendment 8 ~ EOF (메타 표면)
 
     target_literal = "기존 대기"
     adr_026_path = root / "archive" / "adr" / "ADR-026-post-merge-automation.md"
@@ -129,19 +144,8 @@ def check_axis1_mirror_parity(root: Path) -> dict:
                 adr_141_amd8_start_line = i
                 break
 
-    # 정의역 파일 스캔
-    files_to_scan = []
-    for target_dir, pattern in scan_targets:
-        if target_dir.name == "CLAUDE.md":
-            # 단일 파일
-            if target_dir.is_file():
-                files_to_scan.append(target_dir)
-        else:
-            if target_dir.is_dir():
-                if pattern == "*.md":
-                    files_to_scan.extend(target_dir.glob(pattern))
-                else:
-                    files_to_scan.extend(target_dir.glob(pattern))
+    # 정의역 파일 스캔 (repo 전체 `*.md`)
+    files_to_scan = iter_doc_files(root)
 
     for file_path in files_to_scan:
         try:
@@ -175,31 +179,41 @@ def check_axis1_mirror_parity(root: Path) -> dict:
                 f"{file_path.relative_to(root)}: '{target_literal}' 잔여 (제외 후에도 발견)"
             )
 
-    # ── 조건 1-b: mirror 파일의 pointer 검증 ──
-    # mirror 파일: docs/orchestrator-playbook.md, skills/rate-limit-429-mitigation/SKILL.md
-    # 각 파일이 "ADR-141 A8-3" 리터럴 보유 (SSOT 제외)
-
-    mirror_files = [
-        root / "docs" / "orchestrator-playbook.md",
-        root / "skills" / "rate-limit-429-mitigation" / "SKILL.md",
-    ]
-
+    # ── 조건 1-b: mirror pointer 검증 — 정의역 **동적 산출** (F-CR-003) ──
+    # 관측점(§8.1.1 AC-5) = "`비대상 3종` 보유 mirror 면(SSOT 파일 제외) **전건**이
+    #   `ADR-141 A8-3` 보유". 이는 파일 열거가 아니라 **함의 술어**다.
+    # 구 구현은 mirror 파일 2개를 하드코딩해 두었다. 오늘의 실제 보유 집합과 우연히 일치해
+    # 잘못된 verdict 는 내지 않았지만, **신규 mirror site 가 생기면 무검출**이다 —
+    # AC-5 본문이 "절대 site 수 assert 금지(INV-T6) … 절대수치를 기준으로 쓰면 개정이
+    # 진행될수록 기준 자체가 stale" 이라고 못박은 바로 그 병의 리스트 형태였다.
+    # 축 1-a·축 2 와 동형으로 리터럴 보유 파일을 스캔해 산출하고 SSOT 만 뺀다.
+    mirror_trigger_literal = "비대상 3종"
     pointer_literal = "ADR-141 A8-3"
 
-    for mirror_path in mirror_files:
-        if not mirror_path.is_file():
-            violations_1b.append(f"{mirror_path.relative_to(root)}: 파일 부재")
+    mirror_domain = []
+    for file_path in files_to_scan:
+        # SSOT(판정문 verbatim 1곳)는 §A8-5 "타 문서 site" 문언에 따라 정의역 밖.
+        if file_path == adr_141_path:
             continue
-
         try:
-            mirror_content = mirror_path.read_text(encoding="utf-8")
+            mirror_content = file_path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
-            violations_1b.append(f"{mirror_path.relative_to(root)}: 읽기 실패")
             continue
+        if mirror_trigger_literal in mirror_content:
+            mirror_domain.append((file_path, mirror_content))
 
+    # vacuity 방어: 정의역이 공집합이면 함의가 vacuously true 라 검사가 조용히 무력화된다.
+    # 이것은 개수 assert(INV-T1 위반)가 아니라 **공집합 여부** 술어다 — 절대수치 0.
+    if not mirror_domain:
+        violations_1b.append(
+            f"정의역 공집합 — `{mirror_trigger_literal}` 보유 mirror 면이 하나도 없다(SSOT 제외 후). "
+            f"함의 판정이 vacuous 해져 축 1-b 가 무력화된다"
+        )
+
+    for file_path, mirror_content in mirror_domain:
         if pointer_literal not in mirror_content:
             violations_1b.append(
-                f"{mirror_path.relative_to(root)}: '{pointer_literal}' 리터럴 부재 (mirror 동기화 미실행)"
+                f"{file_path.relative_to(root)}: '{pointer_literal}' 리터럴 부재 (mirror 동기화 미실행)"
             )
 
     return {
@@ -210,13 +224,44 @@ def check_axis1_mirror_parity(root: Path) -> dict:
     }
 
 
+def _write_into(tmpdir_p: Path, rel: str, text: str) -> Path:
+    """tmpdir 안 상대경로에 파일 생성 (mutant fixture 구성용)."""
+    dst = tmpdir_p / rel
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(text, encoding="utf-8", newline="\n")
+    return dst
+
+
+def _copy_into(root: Path, tmpdir_p: Path, rels) -> None:
+    """실 repo 파일 여러 개를 tmpdir 로 원본 그대로 복제."""
+    for rel in rels:
+        src = root / rel
+        if src.is_file():
+            _write_into(tmpdir_p, rel, src.read_text(encoding="utf-8"))
+
+
+# mirror 정의역 확장 실증에 쓰는 경로 — **구 하드코딩 정의역 밖**이어야 의미가 있다.
+# ADR-141 자신이 tier 규범 mirror 로 `plugins/*/CLAUDE.md` 를 열거하므로 가상의 표면이 아니다.
+_OUT_OF_OLD_DOMAIN_MIRROR = "plugins/codeforge-develop/CLAUDE.md"
+_OUT_OF_OLD_DOMAIN_DOC = "plugins/codeforge-design/CLAUDE.md"
+_OUT_OF_OLD_DOMAIN_TEMPLATE = "templates/github-pr-template.md"
+
+_PLAYBOOK_REL = "docs/orchestrator-playbook.md"
+_SKILL_REL = "skills/rate-limit-429-mitigation/SKILL.md"
+_ADR141_REL = "archive/adr/ADR-141-all-opus-single-tier.md"
+_ADR109_REL = "archive/adr/ADR-109-in-process-429-mitigation-framework.md"
+
+
 def check_axis2_mirror_parity(root: Path) -> dict:
     """AC-11: ADR-109 §결정 5 축 분리 mirror 검증.
 
     함의: "사용자 turn 대기" ∨ "user manual resume only" 를 보유한 파일 →
     전건이 "재시도 축 한정" 을 보유해야 함.
 
-    정의역: archive/adr, docs, skills (tests, scripts, .github, templates 제외)
+    정의역: repo 전체 walk 의 `*.md` 전건 (F-CL-002 — 축 1 과 동일 산출기).
+      구 구현은 `[archive/adr, docs, skills, CLAUDE.md]` 4-entry 열거 + `parts` 기반
+      디렉터리 배제(tests/scripts/.github/templates)였다. 규범은 정의역을 디렉터리로
+      한정하지 않으므로 열거를 폐기하고 walk 로 대체한다.
 
     반환: {"violations": [list], "ok": bool}
     """
@@ -225,30 +270,11 @@ def check_axis2_mirror_parity(root: Path) -> dict:
     trigger_literals = ["사용자 turn 대기", "user manual resume only"]
     required_literal = "재시도 축 한정"
 
-    scan_targets = [
-        (root / "archive" / "adr", "**/*.md"),
-        (root / "docs", "**/*.md"),
-        (root / "skills", "**/*.md"),
-        (root / "CLAUDE.md", None),
-    ]
-
-    files_to_scan = []
-    for target_path, pattern in scan_targets:
-        if target_path.name == "CLAUDE.md":
-            if target_path.is_file():
-                files_to_scan.append(target_path)
-        else:
-            if target_path.is_dir():
-                if pattern:
-                    files_to_scan.extend(target_path.glob(pattern))
+    files_to_scan = iter_doc_files(root)
 
     # 트리거 보유 파일 수집
     files_with_trigger = []
     for file_path in files_to_scan:
-        # 제외 디렉토리 필터링
-        if any(part in file_path.parts for part in ["tests", "scripts", ".github", "templates", "__pycache__"]):
-            continue
-
         try:
             content = file_path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
@@ -326,14 +352,15 @@ def test_stop_norm_mirror_parity():
             playbook_dst.parent.mkdir(parents=True, exist_ok=True)
             playbook_content = playbook_src.read_text(encoding="utf-8")
 
-            # mutant: "기존 대기" 문구 추가 (현재 없다면 추가)
-            if "기존 대기" not in playbook_content:
-                mutant_content = playbook_content + "\n기존 대기가 존재한다.\n"
-            else:
-                # 이미 있으면 비율 증가
-                mutant_content = playbook_content
+            # mutant: "기존 대기" 문구 되살림. 분기 없이 무조건 append 한다 —
+            # 구 구현의 `else: mutant = original` 가지는 앵커 상태에 따라 변이가 조용히
+            # 사라지는 경로였다 (F-CL-007).
+            mutant_content = playbook_content + "\n기존 대기가 존재한다.\n"
+            assert mutant_content != playbook_content, (
+                "M-C1: 변이 미적용(앵커 drift) — 검사 정의역 이탈"
+            )
 
-            playbook_dst.write_text(mutant_content, encoding="utf-8")
+            playbook_dst.write_text(mutant_content, encoding="utf-8", newline="\n")
 
             # 다른 필수 파일들도 복제
             for src in [
@@ -365,7 +392,12 @@ def test_stop_norm_mirror_parity():
 
             # mutant: ADR-141 A8-3 리터럴 제거
             mutant_content = skill_content.replace("ADR-141 A8-3", "ADR-XXX placeholder")
-            skill_dst.write_text(mutant_content, encoding="utf-8")
+            # 이 assert 는 load-bearing 이다 — pointer 가 애초에 없었다면 replace 가 no-op 이 되고
+            # 아래 `not ok_1b` 는 "제거해서 잡혔다" 가 아니라 "원래 없었다" 로 통과한다 (거짓 kill).
+            assert mutant_content != skill_content, (
+                "M-C1b: 변이 미적용 — pointer 리터럴이 원래 부재했거나 앵커 drift. 검사 정의역 이탈"
+            )
+            skill_dst.write_text(mutant_content, encoding="utf-8", newline="\n")
 
             # 다른 파일들도 복제
             for src in [
@@ -384,6 +416,86 @@ def test_stop_norm_mirror_parity():
                 f"M-C1b: pointer 리터럴을 제거한 후에도 축 1-b 위반이 검출되지 않음 (kill 실패)"
             )
             assert len(result_m_c1b["violations_1b"]) > 0, "M-C1b: violations 비어있음"
+
+    # ── M-C1c mutant (F-CR-003): **신규** mirror site 가 pointer 없이 등장 → 축 1-b 검출 ──
+    # 정의역이 하드코딩 파일 열거였을 때는 이 site 가 애초에 보이지 않아 무검출이었다.
+    # 동적 산출로 바꾼 뒤에는 리터럴 보유만으로 정의역에 들어오므로 잡힌다.
+    # 경로는 구 열거 정의역 **밖**을 쓴다 — 그래야 "열거→스캔" 전환이 실제로 검출을 낳았음이 증명된다.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_p = Path(tmpdir)
+        _copy_into(root, tmpdir_p, [_PLAYBOOK_REL, _SKILL_REL, _ADR141_REL])
+
+        new_site = _write_into(
+            tmpdir_p,
+            _OUT_OF_OLD_DOMAIN_MIRROR,
+            "# 신규 mirror site (M-C1c fixture)\n\n"
+            "failover 비대상 3종 을 여기서도 서술하지만 정본 포인터를 달지 않았다.\n",
+        )
+        assert new_site.is_file(), "M-C1c: 신규 site fixture 미생성 — 변이 미적용"
+        assert "비대상 3종" in new_site.read_text(encoding="utf-8"), (
+            "M-C1c: 트리거 리터럴 부재 — 정의역에 들어가지 않아 검사가 성립하지 않는다"
+        )
+        assert "ADR-141 A8-3" not in new_site.read_text(encoding="utf-8"), (
+            "M-C1c: pointer 가 이미 있으면 위반이 생기지 않는다 — 변이 무효"
+        )
+
+        result_m_c1c = check_axis1_mirror_parity(tmpdir_p)
+        assert not result_m_c1c["ok_1b"], (
+            "M-C1c: 구 열거 정의역 밖의 신규 mirror site 가 pointer 없이 추가됐는데 축 1-b 가 "
+            "검출하지 못했다 (정의역이 여전히 정적이라는 뜻)"
+        )
+        assert any(_OUT_OF_OLD_DOMAIN_MIRROR.split("/")[-2] in v for v in result_m_c1c["violations_1b"]), (
+            f"M-C1c: 위반이 신규 site 를 지목하지 않는다 (다른 사유로 우연히 RED). "
+            f"violations={result_m_c1c['violations_1b']}"
+        )
+
+    # ── M-CL2a mutant (F-CL-002): 구 디렉터리 열거 **밖** 경로의 `기존 대기` 잔여 → 축 1-a 검출 ──
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_p = Path(tmpdir)
+        _copy_into(root, tmpdir_p, [_PLAYBOOK_REL, _SKILL_REL, _ADR141_REL])
+
+        clean = check_axis1_mirror_parity(tmpdir_p)
+        assert clean["ok_1a"], (
+            f"M-CL2a baseline: 변이 전 정의역이 이미 RED 면 flip 이 성립하지 않는다. "
+            f"violations={clean['violations_1a']}"
+        )
+
+        planted = _write_into(
+            tmpdir_p,
+            _OUT_OF_OLD_DOMAIN_DOC,
+            "# plugin 문서 (M-CL2a fixture)\n\n폐기 대상 문안인 기존 대기 서술이 남아 있다.\n",
+        )
+        assert "기존 대기" in planted.read_text(encoding="utf-8"), "M-CL2a: 변이 미적용"
+
+        result_m_cl2a = check_axis1_mirror_parity(tmpdir_p)
+        assert not result_m_cl2a["ok_1a"], (
+            "M-CL2a: 구 4-entry 디렉터리 열거 밖(plugins/**)에 심은 폐기 문안을 축 1-a 가 "
+            "검출하지 못했다 — 정의역이 여전히 열거라는 뜻 (규범은 repo 전체)"
+        )
+
+    # ── M-CL2b mutant (F-CL-002): 구 배제 디렉터리(templates/**) 의 함의 위반 → 축 2 검출 ──
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_p = Path(tmpdir)
+        _copy_into(root, tmpdir_p, [_PLAYBOOK_REL, _ADR109_REL])
+
+        clean2 = check_axis2_mirror_parity(tmpdir_p)
+        assert clean2["ok"], (
+            f"M-CL2b baseline: 변이 전 축 2 가 이미 RED 면 flip 이 성립하지 않는다. "
+            f"violations={clean2['violations']}"
+        )
+
+        _write_into(
+            tmpdir_p,
+            _OUT_OF_OLD_DOMAIN_TEMPLATE,
+            "# PR template (M-CL2b fixture)\n\n"
+            "재시도 실패 시 사용자 turn 대기 로 넘어간다.\n",  # 트리거 보유 ∧ 필수 리터럴 부재
+        )
+
+        result_m_cl2b = check_axis2_mirror_parity(tmpdir_p)
+        assert not result_m_cl2b["ok"], (
+            "M-CL2b: 구 구현이 parts 필터로 배제하던 templates/** 의 함의 위반을 축 2 가 "
+            "검출하지 못했다 — 배제 술어가 규범보다 넓다는 뜻"
+        )
 
     # ── M-C2 mutant: ADR-026 동음이의 문맥만 존재 → 위반 0 (overkill 방어) ──
     # ADR-026 자체는 정의역 밖이므로, ADR-026 에만 "기존 대기" 가 있고 다른 곳엔 없으면 OK
@@ -410,7 +522,12 @@ def test_stop_norm_mirror_parity():
 
             # mutant: "재시도 축 한정" 제거
             mutant_content = adr_109_content.replace("재시도 축 한정", "REMOVED-axis-constraint")
-            adr_109_dst.write_text(mutant_content, encoding="utf-8")
+            # load-bearing: 필수 리터럴이 애초에 없었다면 replace 가 no-op 이고 아래 `not ok` 는
+            # "제거해서 잡혔다" 가 아니라 "원래 없었다" 로 통과한다 (거짓 kill).
+            assert mutant_content != adr_109_content, (
+                "AC-11 mutant: 변이 미적용 — 필수 리터럴이 원래 부재했거나 앵커 drift. 검사 정의역 이탈"
+            )
+            adr_109_dst.write_text(mutant_content, encoding="utf-8", newline="\n")
 
             # 다른 파일들 (트리거 보유)
             for src in [
