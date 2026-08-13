@@ -61,6 +61,34 @@ amendments:
       정확 이행이자 ratchet 강화 방향(감지 집합 확대, 약화 0). ADR-109 §해소 기준
       "N/A permanent policy — sunset_justification 면제" 상속(ADR-058 §결정 5 / ADR-064
       §결정 7 evidence-gated symmetric ratchet 강화 방향 정합).
+  - amendment: 2
+    carrier_story: CFP-2944
+    date: 2026-08-12
+    reinterpretation: true   # §결정 1/Amd1 감지집합의 *지위* 를 "판정 primary"에서 "비망라 fast-path"로 재해석 (문면·code-fence byte 무변경, 열거 내용 무변경) + §결정 5 "user manual resume only"의 정의역을 재시도 축 한정으로 재해석. self-declared — 의미 판정은 리뷰 lane 축.
+    scope: >-
+      한도류 신호 판정의 primary 를 §결정 1/Amendment 1 closed-set 열거에서 **의미론적
+      판별식 D** 로 이관한다(열거는 비망라 fast-path 로 강등, code-fence byte 무변경 ·
+      재열거 0 · 경쟁 enum 0). 구성: (b) **D-0 발신자 전제** — 판정 정의역 = 본 세션
+      harness agent 실행 계층이 발신한 종료·오류 신호 한정, 타 벤더 API 한도(GitHub 등)는
+      정의역 밖(firsthand: GitHub `API rate limit exceeded for user ID 12345.` = 6-literal
+      1/6 매칭 → 전제 없이는 Anthropic 축 처방이 오착지). (c) 입력 표면 scope 불변식을
+      판별식 본체에 부착(playbook §3.0.12b 문언을 fast-path 절에서 판정 절차 전체로 승격).
+      (d)(e) D-i~D-iii 3항 + **4치 출력**(D-out-1 자기해소 / D-out-2 액션의존 /
+      D-out-3 확정 부정 / D-indeterminate 평가 불확정). (f) negative control 2방향
+      (N-a 비한도류 · N-b 자기해소 아님). (g) **판정 신호 원문 verbatim 기록 금지**
+      (§결정 10 redaction matrix 확장 — 분류 결과·limb·근거 1줄만). (h) D-out-1
+      자기확증 반증 축. (i) **§결정 5 축 한정 개정** — "자동 재시도 금지"(bounded retry
+      상한) 보존, "작업 진행 중단"만 분리 + remedy 단조 비용 사다리 R0~R4(신규 재시도
+      예산 0). 상세 = 본문 `## Amendment 2`.
+    sunset_justification: >-
+      N/A — is_transitional: false permanent policy 유지(§해소 기준 무변경). 방향 =
+      **양방향 ratchet, 각 방향 firsthand evidence 동반**(ADR-064 §결정 7 evidence-gated
+      symmetric ratchet): ① 감지 *대상 클래스* 확대(강화) 근거 = 현행 제품 문면 4/4
+      6-literal 미매칭 firsthand 반증 ② 감지 *정의역* 축소(D-0 발신자 전제 = 오탐 제거)
+      근거 = 타 벤더 문자열 1/6 매칭 firsthand reproducer + ADR-141 A6-6 "오탐 = 더 높은
+      리스크(opus 낭비 + 실결함 은폐)" 자기선언. §결정 1 closed-set invariant("5번째
+      pattern 추가 = Amendment 의무")는 **미발동** — 본 Amendment 는 literal 을 추가하지
+      않는다(열거 무증감).
 ---
 
 # ADR-109: in-process Anthropic infra 429 surgical mitigation framework
@@ -324,3 +352,127 @@ ADR-141 Amendment 6(규범 SSOT)의 fable-리밋 opus failover 를 본 framework
 - **`usage limit` = 추정·미실측** — 실관측 runtime 문자열은 `session limit` 뿐(`usage limit` 관측 0건, discriminating check 무기여). 유일 firsthand 등장 = 본 ADR §컨텍스트 §1(L54)의 **부정 문맥** `Server is temporarily limiting requests (not your usage limit)`. 부정 문맥 substring 매칭은 무해하나(fail-open bounded) literal 선정 근거는 부실 — 요구사항-named 개념(사용량 한도, CFP-2823 §1 intake 결정 3) 커버용으로 유지(over-inclusion 무해·bounded). 설계리뷰/구현 lane corroborate 대상.
 - **`429` bare-substring over-match** — `429` 는 무관 문자열(예: `error 10429`)에 substring 매칭될 수 있는 bounded wart. no-regex-wildcard invariant 와 tension(좁히려면 word-boundary 필요하나 wildcard 금지)이나, 현재는 fail-open bounded 로 수용(§결정 1 base 이미 동일 성질). 좁힐지는 설계 재량.
 - **case-sensitivity gap** — closed-set 대소문자 구분 substring 이라 `Session Limit`(대문자) 형태는 miss 가능. 실관측은 소문자 `session limit` 이라 현 위험 낮음 — literal 선정·case-fold 여부는 설계리뷰 escalate 후보(CFP-2823 §5.7).
+
+## Amendment 2 (CFP-2944 — 한도류 신호 판별식 D primary 이관 + 발신자 전제(D-0) + §결정 5 축 분리)
+
+**날짜**: 2026-08-12 KST · **carrier**: CFP-2944 · **status**: Proposed (Phase 1 draft — 착지 전) · **방향**: **양방향 ratchet**(감지 대상 클래스 확대[강화] ⊕ 감지 정의역 축소[오탐 제거], 각 방향 firsthand evidence 동반 — ADR-064 §결정 7).
+
+**본 Amendment 가 하지 않는 것 (선언 우선)**: §결정 1 base 4-tuple 및 **Amendment 1 (b) 6-literal code-fence = byte 무변경**. literal 추가·삭제·순서 변경 0, 재열거 0, 경쟁 enum 신설 0. 따라서 §결정 1 closed-set invariant("5번째 pattern 추가 시 Amendment 의무")는 **미발동**이다. 본 Amendment 는 열거를 건드리지 않고 **판정 primary 를 열거 밖 상위 규칙으로 이관**한다.
+
+### (a) 문제 — 열거 완전성 가정의 firsthand 반증
+
+Amendment 1 은 감지집합을 4→6 literal 로 확장했으나 "열거로 닫힌다"는 가정 자체는 유지했다. CFP-2944 요구사항 lane 이 본 ADR code-fence 를 **파싱해**(하드코딩 사본 0) `any(p in s for p in lits)` 를 실행한 결과:
+
+| 문자열 | 출처 | 6-literal any-match |
+|---|---|---|
+| `You've reached your Fable 5 limit. Run /usage-credits to continue` | CFP-2944 리뷰 PL 실사망 문구 (firsthand) | **0/6** |
+| `Approaching 5-hour limit.` | 공식 support 12466728 | **0/6** |
+| `5-hour limit reached - resets [time].` | 공식 support 12466728 (`blocking error message` 로 규정) | **0/6** |
+| `5-hour limit resets [time] - continuing with usage credits.` | 공식 support 12466728 | **0/6** |
+| `You've hit your session limit · resets 10:20pm (Asia/Seoul)` | 2026-07-24 실관측 (**대조군**) | 1/6 (`session limit`) |
+
+제품 문면은 모델명·한도 창 길이·플랜에 따라 변하는 **가변 표층**이고 열거는 그 표층의 과거 스냅샷이다. 열거가 primary 인 한 §결정 3·ADR-141 Amendment 6 의 remedy 는 **실사례에서 점화되지 않는다**. 이는 같은 SSOT 의 같은 병리 3번째 발현(3→4→6 확장)이며, 4번째 확장(7번째 literal)으로는 닫히지 않는다.
+
+### (b) D-0 발신자 전제 — 판정 정의역 (신설)
+
+**D-0 (전제)**: 본 판정 절차의 정의역 = **본 세션 harness 가 실행하는 agent 계층이 발신한 종료·오류 신호**(Anthropic API/harness 발). 타 서비스·타 벤더 API 의 한도 신호(GitHub·외부 SaaS 등)는 **정의역 밖**이며 각자의 소관 통제로 라우팅된다.
+
+- **firsthand reproducer (정의역 없이 발생하는 오착지)**: GitHub REST primary 한도 문면 `API rate limit exceeded for user ID 12345.` 은 6-literal 중 `rate limit` 에 **1/6 매칭**한다. §결정 1/Amendment 1 의 매칭은 즉시 확정이므로, D-0 이 없으면 **GitHub 한도가 Anthropic 축 처방**(fable→opus failover · usage credits · §결정 2 backoff)으로 착지한다 — 무효 조치 + 실결함 은폐.
+- **D-0 은 fast-path 에도 소급 적용된다** — 즉 §결정 1/Amendment 1 감지집합의 **적용 전제**다. code-fence 는 무변경이며(전제는 fence 밖 prose), 열거는 D-0 을 통과한 신호에 대해서만 평가된다.
+- **방향 정직**: 이는 감지 **정의역의 축소**(오탐 제거)다. 약화가 아니라 정확도 강화로 판정하는 근거 = ADR-141 A6-6 자기선언 — "오탐 = 더 높은 리스크(opus 낭비 + 실결함 은폐)".
+
+### (c) 입력 표면 scope 불변식 — 판정 절차 전체에 부착
+
+`docs/orchestrator-playbook.md` §3.0.12b 의 scope 문언은 현재 **6-literal fast-path 절에만** 소속되어 판별식을 덮지 못한다. 본 Amendment 는 이를 판정 절차 전체(fast-path ∪ 판별식 D)의 불변식으로 승격한다 — 원문 생략 없는 full-block 인용:
+
+> **감지** = ADR-109 §결정1 Amendment 1 감지집합 any-match(6 literal — base 4-tuple + `session limit` + `usage limit`). enum authoritative SSOT = ADR-109 §결정1 Amendment 1 code-fence(**cross-ref only — 재열거 금지, 중복 정의 0**). scope 불변식 = error/termination notification 표면 한정(subagent substantive output 본문 NOT — false-positive hazard). 발동 표면 2종 = (a) spawn-시점 거부 ∪ (b) mid-run 조기종료(`Agent terminated early ...` task-notification).
+
+**승격 후 scope (판정 절차 전체 적용)**: 판정 입력으로 허용되는 표면 = (a) spawn-시점 거부 ∪ (b) mid-run 조기종료 task-notification **2종 한정**. **비허용 표면**: subagent substantive output 본문 / 도구 반환 텍스트(PR·Issue 본문·WebFetch·외부 워커 출력·repo 파일) / 사용자 외 제3자가 내용을 통제할 수 있는 임의 텍스트. 본 scope 는 판별식 D 가 열거보다 **넓은 문면**을 받아들이기 때문에 오히려 더 엄격히 요구된다 — 넓은 판정면 ⊕ 무경계 입력면 = 분류 입력 주입 취약(CFP-2944 §7 T6).
+
+### (d) 판별식 D (primary)
+
+D-0 을 충족하고 (c) scope 표면에서 도착한 종료·오류 신호가 다음 3항을 **전부** 충족하면 한도류로 분류한다:
+
+| 항 | 내용 |
+|---|---|
+| **D-i 자원 소진 지시** | 신호가 사용량·한도·요금제 자원의 소진 또는 경계 도달을 지시한다. 모델명·한도 창 길이·플랜명은 **가변 표층**(`Fable 5 limit` / `5-hour limit` / `session limit`) — 특정 문면에 의존하지 않는다. 여기서 "창" = **한도 리셋 창**(5시간 rolling·주간)이며 **컨텍스트 창(context window)과 무관**하다(컨텍스트 창 초과 = D-i 불충족, 요청 형상 축) |
+| **D-ii 작업 결함 무관** | 원인이 요청 내용의 결함(로직 오류·입력 오류·권한 오류·모델 미존재)이 아니라 **자원 가용성**이다 |
+| **D-iii 회복 가능** | 시간 경과 또는 대체 자원(usage credits · 별개 모델 pool · 과금 전환)으로 해소 가능한 class 다 |
+
+**fast-path 의 지위 (강등 — 폐지 아님)**: §결정 1/Amendment 1 6-literal = **비망라 기계 fast-path**. 매칭 = 한도류 **확정**(D-i~iii 재평가 불요, 단 D-0·(c) scope 는 여전히 전제) → 착지 분기는 (e) 로 재판정. **미매칭은 "한도 아님"을 의미하지 않는다** — 미매칭 시 판별식 D 로 판정을 계속한다.
+
+### (e) D 의 출력 = 4치 (라우팅 표)
+
+| 출력 | 성립 조건 | 라우팅 | 그 입력 클래스를 이미 지배하는 통제 |
+|---|---|---|---|
+| **D-out-1 한도류·자기해소** | D 충족 ∧ remedy 가 **이미 활성화된 대체 자원**(활성 credits 잔액·별개 모델 pool)이거나 Orchestrator 액션 없이 배경에서 해소 | 의지적 정지 사유 아님 — 계속 | 없음 (본 축이 채우는 공백) |
+| **D-out-2 한도류·액션의존** | D 충족 ∧ remedy 실행이 **사용자·관리자 액션**(활성화·결제·cap 인상)에 의존 | 1회 통지 → 대기·중단 금지 → 제어 회복 시 계속 | ADR-025 §결정 6 whitelist #1(User environment 변경 의무 = 정당 통지) — 통지는 **보존**, "통지 후 무기한 대기"만 금지 |
+| **D-out-3 한도류 아님 (확정된 부정)** | N-a 해당 **또는** D 3항 중 1+ 가 **명확히** 미충족 | 본 축 무개입 — 각 축 기존 소관 | ADR-057 §결정 4 · §결정 6(529 cooldown) · ADR-117 §결정 3 |
+| **D-indeterminate 평가 불확정** | fast-path 미매칭 ∧ D 3항을 확정 평가할 수 없음(정보 부족·문면 모호) ∧ N-a 미해당 | **미분류** — remedy 라우팅 무개입(아래 배타 지배 인용), 의지적 정지 사유로도 삼지 않음 | `docs/orchestrator-playbook.md:528` / `ADR-057:149` — 미분류 → **failover 미발동 + task-failure 분류**(silent fallback 금지) |
+
+**`시간 경과` 의 위치 (외연 겹침 해소)**: `시간 경과` 는 remedy **선택지**가 아니라 Orchestrator 액션 없이 흐르는 **배경 해소 사실**이다. 따라서 D-out-1 의 성립 조건에 배경 사실로 기술되며 D-out-2 의 "액션 의존" limb 과 겹치지 않는다("고른다"는 행위가 없으므로 remedy 선택 축에 등장하지 않는다).
+
+**D-out-3 ⊥ D-indeterminate (disjoint 못박기)**: 전자는 "한도류가 아님"이 **확정**된 상태, 후자는 **판정 자체가 확정되지 않은** 상태다. 둘을 합치면 "모르는 것"이 "아니라고 확정된 것"으로 흘러 자동 처방이 붙는다 — 이 경계가 본 Amendment 가 여는 유일한 신규 상태이며, 그 상태의 remedy 라우팅은 위 표의 배타 지배 통제가 그대로 유지한다(본 Amendment 는 인용만 하고 개정하지 않는다).
+
+### (f) negative control — 2 방향
+
+- **(N-a) 한도류 자체가 아님 → D-out-3**: model-unavailable · floor 미달(버전 문제 — 시간·credits 로 해소 불가, D-iii 불충족) / `stop_reason: refusal`(D-ii 불충족) / 로직·입력·권한 오류(D-ii 불충족) / **컨텍스트 창 초과**(요청 형상 축 — D-i 불충족) / `529`·`overloaded`(별개 축 — §결정 6 cooldown) / **타 벤더 API 한도**(D-0 정의역 밖 — GitHub primary·secondary rate limit 등). (N-a) 가 있어야 판별식이 "모든 실패를 한도로 읽는" 반대 방향 오분류로 번지지 않는다.
+- **(N-b) 한도류이나 자기해소 아님 → D-out-2 필수(D-out-1 금지)**: usage credits **미활성**/활성화 액션 필요(`Enable usage credits to continue using Claude` — support 11145838)가 유일한 공식 anchor 보유 사례. 구조 동형 후보(결제 수단 실패 · 구독 만료 · 조직 spend cap 도달 · **주간 한도**)는 `[미검증 — 구조 동형 후보, 공식 anchor 미확보]` 로 표기하며 제품 사실로 단정하지 않는다(ADR-119). 판정 기준은 문면이 아니라 **구조적 술어** — "remedy 실행 주체가 Orchestrator 인가, 사람인가". 사람이면 D-out-2.
+
+### (g) 기록 규약 — 판정 신호 원문 verbatim 기록 금지 (§결정 10 확장)
+
+§결정 10 redaction matrix 는 `error_message` 를 `verbatim (4-tuple enum match only, ...)` 로 규정한다. 판별식 D 로 분류된 신호는 정의상 **matched literal 이 부재**하므로 그 규정의 정의역 밖이며, 감사를 유지하려 원문 기록으로 흐르면 §결정 10 과 충돌한다. 본 Amendment 는 다음을 규약한다:
+
+- **기록 허용 3요소**: ① 분류 결과(`D-out-1|D-out-2|D-out-3|D-indeterminate`) ② 판정 limb(어느 항이 성립/불성립인지) ③ 근거 요약 **1줄**(모델-클래스·자원 축의 추상 서술).
+- **금지**: 신호 **원문 verbatim** / plan·model tier 문면(`Fable 5 limit` → "모델-클래스 한도 도달" 로 추상화) / credits 잔액·금액 / 결제·과금 식별자 / `org_id`·`account_id`(§결정 10 기존 금지 승계).
+- **근거**: 본 규약이 늘리는 기록 트래픽의 착지면에는 **공개 표면**이 포함된다(§14 lane evidence → PR body 미러, `docs/kpi/*.jsonl` 커밋). 기존 deny-list regex 는 로컬 원장 경로에만 적용되므로 공개 착지면에는 redact 층이 부재하다 — 자동 redaction 층 신설 대신 **저작 규율**로 막고 그 한계를 (l) 에 정직 declare 한다.
+- matched literal(6중 1)은 닫힌 값공간이라 기록 허용(Amendment 1 auditability 권고 무손상).
+
+### (h) D-out-1 자기확증 반증 축
+
+D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 무한 자기확증한다. 다음을 재판정 의무로 둔다: **동일 신호가 연속 2회 이상 D-out-1 로 판정됐는데 작업이 전진하지 않으면** 자기해소 가정이 반증된 것으로 보고 D-iii 불충족을 재평가한다(→ D-out-2 또는 D-out-3/D-indeterminate). `연속 2회` 임계는 **임의 선택**이다 — 반증 축의 *존재* 가 요구사항이고 값은 운영 관측으로 조정 가능하다(정직 declare).
+
+### (i) §결정 5 축 한정 개정 — 재시도 중단 ⊥ 작업 중단
+
+§결정 5 의 현행 문언은 다음과 같다 — **생략 없는 인용**(§결정 5 본문 전건 = intro 조건절 1 + bullet 3):
+
+> `cascade_depth` 정의 = 단일 user request 안 retry sequence 의 nested cascade level. depth ≥ 2 (예: same-model 429 → Opus fallback → Opus 429 → 2차 retry burst) 시:
+>
+> - **자동 재시도 금지** (ADR-057 §결정 2 invariant verbatim 답습)
+> - **user manual resume only** — `AskUserQuestion` escalation 또는 사용자 turn 대기
+> - **`docs/kpi/429-incident-history.jsonl` `cascade_depth` field append-only event log** (ADR-106 운영 metric → PMOAgent input 회로 정합)
+
+**보존(무변경)**: `cascade_depth` 정의 · depth ≥ 2 판정 · **자동 재시도 금지**(bounded retry 상한 = 비용 폭주·429 cascade 증폭 가드) · `AskUserQuestion` escalation 경로 · KPI append.
+
+**축 분리(개정)**: `user manual resume only` 의 정의역은 **재시도(동일 호출 재발행) 축 한정**이다. 이 조항은 "그 시점 이후 Orchestrator 의 모든 작업 진행이 사용자 turn 을 기다려야 한다"는 뜻이 **아니다**. cascade 상한 소진 후에도 — ① 실패한 호출의 재발행은 금지되고 ② **남은 독립 작업으로의 전진은 계속**된다. "사용자 turn 대기"는 재시도 재개의 조건이지 작업 진행의 조건이 아니다.
+
+**remedy 단조 비용 사다리 (예산 곱셈 차단)**: 한도 축이 미확정인 상태에서 유비용 remedy 를 순차로 여러 개 시도하면 예산이 곱해진다. 따라서 remedy 는 다음 사다리로만 진행한다:
+
+| rung | 내용 | 비용 | 진입 조건 |
+|---|---|---|---|
+| R0 축 재판정 | fast-path → 판별식 D → 4치 출력 | 0 | 항상 첫 단계 |
+| **R1 전진(forward)** | 실패 호출을 재발행하지 않고 **남은 독립 작업**으로 진행 | 0 | 항상 |
+| R2 1회 통지 | remedy 주체가 사람이면 whitelist #1 통지 1회 후 R1 복귀 | 0 | D-out-2 |
+| R3 canonical remedy | 축이 **확정된 경우에만** 그 축 고유 remedy **정확히 1종** | 유비용 (기존 상한 내) | 축 확정 ∧ 해당 축에 remedy 실재 |
+| R4 낙하 | R3 실패 시 두 번째 유비용 remedy 로 가지 **않고** R0→R1/R2 로 낙하 | 0 | R3 소진 |
+
+- **I-1 예산 곱셈 차단**: 유비용 rung(R3) 진입은 **축 확정이 전제조건**이다. 축이 확정되면 remedy 는 1종으로 결정되므로 "여러 개 시도"가 구조적으로 불가하고, 미확정(D-indeterminate)이면 R3 자체가 닫힌다(위 (e) 배타 지배 통제).
+- **I-2 전진 ≠ 재시도**: 재시도 counter 는 **동일 호출 재발행**을 센다. R1 전진은 다른 작업이므로 backoff·cascade·per-spawn 어느 counter 도 증가시키지 않는다. 본 Amendment 는 **어떤 경로에도 신규 재시도 예산을 추가하지 않는다**(신규 counter 0).
+- 무변경 확인: §결정 2 backoff max 6/60s/≤75s · Retry-After override · §결정 3 sequential composition · §결정 4 CB 3-window · §결정 6 529 cooldown · ADR-141 Amendment 6 per-spawn 1회 · 미분류 재spawn 0 · Amendment 7 cap-down.
+
+### (j) 정직 천장 (over-claim 금지)
+
+1. **D 는 모델 판정이다** — 기계 검증 표면이 없다. fast-path 만 기계적이고 D-0·D-i~D-iii·4치 라우팅은 prompt-mandate(advisory)다. "판별식 도입 = 감지 100%" 주장 금지.
+2. 본 Amendment 는 **비의지적 종료를 0 으로 만들지 않는다** — 한도 순간 토큰 발화 불가 구간·in-flight 즉사는 정의역 밖(OOS)이다.
+3. 감지 미탐(D 미충족 낙하)의 안전 방향 = **failover 미발동**(현행 동작 degrade) 유지 — fail-open bounded, 회귀 0.
+4. (g) 기록 규약은 **저작 규율**이며 공개 착지면의 자동 redaction 층이 아니다. 규율 미준수 시 유출 가능성은 잔존한다(수용 리스크, 명시 declare).
+
+### Cross-ref
+
+- §결정 1 / Amendment 1 (b) — 감지집합 code-fence(**byte 무변경 · cross-ref only**). 본 Amendment 는 그 열거의 *지위* 만 재해석한다.
+- §결정 5 — (i) 축 한정 개정 대상. §결정 2/3/4/6 = 무변경.
+- §결정 10 — (g) redaction matrix 확장(비-enum 신호 기록 규약).
+- [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 6 A6-3(a) / Amendment 8 — Orchestrator 세션 축 재개봉(본 Amendment 는 감지·재시도 축, Amendment 8 은 행위 규범 축).
+- [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 한도류 신호 발 의지적 정지의 stop-discipline 착지(본 Amendment = 판정, ADR-025 = 정지 적법성). **§A4-8 = 본 carrier 저작물 전체의 자기적용 결박 총칙** — 판정문 verbatim SSOT 1곳, 본 Amendment 는 pointer 만 둔다. 본 Amendment 의 문면 축 술어((i) full-block 인용 규율 · (j) 천장 서술)도 그 dry-run 대상이며 결과는 Story `CFP-2944` §7.16 에 기록된다(런타임 축 술어 — D-0 · 판별식 D · remedy 사다리 — 는 정의역이 신호·행동이라 문면 자기적용 대상이 아니다).
+- [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) §결정 4 / `docs/orchestrator-playbook.md:528` — 미분류 remedy 라우팅 **배타 지배**(인용만, 개정 0).
+- [ADR-119](ADR-119-research-before-claims.md) — 외부 제품 사실 인용 규율(공식 anchor 미확보 항목의 `[미검증]` 표기).
