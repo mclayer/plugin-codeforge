@@ -4697,7 +4697,7 @@ entries:
     description: |
       NG-8 (AC-16) — AC-16 lane 겹침 판별기 (C1/C2/C3) — read_set ∩ write_set 겹침 술어
       ADR-154 번들 4항목:
-        [154-AC-3]  empty-target: read_set/write_set 미선언 → non-GREEN ∧ write_set 추출 결과 0행 → EXTRACTION_EMPTY fail-closed (선언은 됐고 추출만 0 인 경우가 종전 미분류 — 실패 방향이 permissive 였다)
+        [154-AC-3]  empty-target: read_set/write_set 미선언 → non-GREEN ∧ write_set 추출 결과 0행 → EXTRACTION_EMPTY fail-closed (선언은 됐고 추출만 0 인 경우가 종전 미분류 — 실패 방향이 permissive 였다) (유일 예외 = allowlist 등재 lane 의 명시 sentinel 선언 declared_empty — allowlist 밖 sentinel 은 sentinel_not_allowlisted RED)
         [154-AC-4]  unknown-input: 미지 glob → fail-closed ∧ lane CLAUDE.md self-write 표 unparseable → exit 1
         [154-AC-5]  execution-trace(numeric): 대조 lane 쌍 수 · 추출 lane 수 · write_set 원소 수
         [154-AC-13] identity_bearing: true — 채널 = 각 lane CLAUDE.md self-write 표 (기계 추출, §7.10)

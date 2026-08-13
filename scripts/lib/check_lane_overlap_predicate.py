@@ -100,7 +100,8 @@ _NEXT_H2_RE = re.compile(r"(?m)^##\s")
 _TABLE_ROW_RE = re.compile(r"^\|\s*(.+?)\s*\|\s*(.+?)\s*\|", re.MULTILINE)
 _BACKTICK_RE = re.compile(r"`")
 
-#: ★명시적 empty write-set sentinel★ — self-write 표 안에 이 토큰이 있어야만
+#: ★명시적 empty write-set sentinel★ — self-write 표 안에 이 토큰이 있고
+#: ★그 lane 이 `_DECLARED_EMPTY_ALLOWLIST` 에 등재돼 있어야만★
 #: "write_set = ∅" 이 **정당 선언**으로 인정된다 (`declared_empty`).
 #:
 #: 왜 필요한가: write set 이 빈 lane(= 파일 write 권한이 구조적으로 부재한 lane)은
@@ -108,8 +109,20 @@ _BACKTICK_RE = re.compile(r"`")
 #: `extraction_empty` RED(표가 깨져 추출 0행)와 구별되지 않아 **처벌**당한다.
 #: 반대로 sentinel 없이 0행을 GREEN 으로 승격하면 표 파손이 조용히 통과한다
 #: (공허참 승격 = fail-closed teeth 상실). ⇒ ★적극적 토큰이 있을 때만 GREEN★.
+#:
+#: ★토큰 단독으로는 승격되지 않는다★ — 토큰은 피검사자(untrusted lane doc)의
+#: **주장 표식**이고, 승격 권한은 아래 allowlist(검사자 측)에 있다.
 _EMPTY_WRITE_SET_SENTINEL = "EMPTY-WRITE-SET(synthesis-only)"
 _EMPTY_SENTINEL_RE = re.compile(re.escape(_EMPTY_WRITE_SET_SENTINEL))
+
+#: ★sentinel 사용 자격 allowlist★ — 토큰은 피검사자(untrusted lane doc)의 **주장 표식**일 뿐이고,
+#: 그 주장을 GREEN 으로 **승격시키는 권한은 검사자 측(본 코드)** 에 있다.
+#: allowlist 밖 lane 이 토큰을 달면 RED — "실 write 행을 지우고 토큰을 넣는" 우회로 봉인.
+#: 선례 형상 = check_ng_registry_bijection.py NON_NG_REGISTRY_NAMES frozenset
+#:            / cfp-2926-phase2-gates.yml CI_RC3_FROZEN (확장하려면 코드 diff 필수).
+#: ★정직 천장★: 코드 diff 권한자는 여전히 명단을 늘릴 수 있다 — 본 장치는 "봉인"이 아니라
+#:   ★자기선언 승격 경로 제거(승격을 리뷰 표면으로 강제)★ 까지가 보증 범위다.
+_DECLARED_EMPTY_ALLOWLIST = frozenset({"codeforge-review"})
 
 
 # ---------------------------------------------------------------------------
@@ -253,14 +266,17 @@ def _extract_self_write_table(claude_text):
     "target 0건 = 정당 no-op" vs "target 존재하나 unparseable = fail-closed" 경계):
       - `has_section=False`                        → **미선언** (별 상태 — non-GREEN)
       - `has_section=True, ∅, sentinel=False`      → ★추출만 0★ = `EXTRACTION_EMPTY` fail-closed
-      - `has_section=True, ∅, sentinel=True`       → ★정당 공집합★ = `declared_empty` (PASS 적격)
+      - `has_section=True, ∅, sentinel=True`       → ★공집합 **주장**★ (승격 여부는 caller 판정 —
+        `_DECLARED_EMPTY_ALLOWLIST` 등재 lane 만 `declared_empty`, 밖이면 RED)
       - `has_section=True, 비어있지 않음, sentinel=True` → ★모순★ (caller 가 RED 처리)
 
     ★왜 세 번째 상태가 필요한가★: write set 이 빈 lane 은 겹침이 원천 불가능한 **최선**
     사례다. 그런데 sentinel 없이 "없음" 이라고 표를 쓰면 셀에 `/`·`*` 가 없어 추출 0행이
     되고 `extraction_empty` RED 로 **처벌**된다 (설계 역전). 그렇다고 0행을 무조건
-    GREEN 으로 올리면 표 파손이 조용히 통과한다. ⇒ **적극적 sentinel 토큰이 있을 때만**
-    GREEN 으로 승격하고, 토큰 없는 0행은 종전대로 RED 를 유지한다.
+    GREEN 으로 올리면 표 파손이 조용히 통과한다. ⇒ **적극적 sentinel 토큰이 있고**
+    ★그 lane 이 검사자 측 allowlist 에 등재돼 있을 때만★ GREEN 으로 승격하고,
+    토큰 없는 0행은 종전대로 RED 를 유지한다. ★토큰 자체는 피검사자 본문(untrusted)이라
+    자기 verdict 를 승격시킬 권한이 없다★ — 승격 권한은 `main()` 의 allowlist 조회에 있다.
 
     grep-oracle(presence 만 확인)이 아니라 **실제 표 parsing** 이므로 표 포맷
     변화에 민감하다 — 그 민감성이 곧 채널 생존 검출력이다.
@@ -311,9 +327,15 @@ def main(argv=None):
            - 개수 같고 집합 다름 → `lane_roster_mismatch`  (swap 형상)
       3. lane `CLAUDE.md` 읽기 실패             → RED   (unknown-input)
       4. self-write 표 존재 + 추출 0행 + ★sentinel 부재★ → RED `extraction_empty`
-         (sentinel 이 있으면 `declared_empty` = 정당 공집합 → 4번 우회, PASS 적격)
+         (sentinel 이 있고 lane 이 allowlist 등재면 `declared_empty` = 정당 공집합 →
+          4번 우회, PASS 적격)
       4b. sentinel 이 있는데 write_set 이 ★비어있지 않음★ → RED `empty_sentinel_contradiction`
           (실제로 쓰는 lane 에 sentinel 을 붙여 검사를 무력화하는 경로 봉인)
+      4c. sentinel 이 있는데 lane 이 ★`_DECLARED_EMPTY_ALLOWLIST` 밖★ → RED
+          `sentinel_not_allowlisted` — 피검사자 본문의 토큰이 자기 verdict 를 GREEN 으로
+          승격시키는 경로 제거(승격 권한 = 검사자 측 코드). ★순서 고정★: 4b → 4c →
+          `extraction_empty`. 4c 를 4b 앞에 두면 "allowlist 밖 lane 의 실경로+sentinel"
+          모순이 4c 로 새어 `empty_sentinel_contradiction` 이 관측 불가가 된다.
       5. lane 간 `write_set` 겹침               → RED   `lane_write_set_overlap`
       6. self-write 표 **미선언** lane 존재     → INCONCLUSIVE `write_set_undeclared`
                                                   (non-GREEN — 4번과 **별 상태**)
@@ -393,8 +415,9 @@ def main(argv=None):
     write_sets = {}          # lane → write_set (표 존재 ∧ 1행 이상, 또는 정당 공집합)
     undeclared_lanes = []    # self-write 표 자체 부재 (미선언)
     extraction_empty = []    # 표는 있는데 추출 0행 ∧ sentinel 부재 (채널 사망)
-    declared_empty = []      # 표 존재 ∧ 추출 0행 ∧ ★sentinel 있음★ = 정당 공집합
+    declared_empty = []      # 표 존재 ∧ 추출 0행 ∧ sentinel ∧ ★allowlist 등재★ = 정당 공집합
     sentinel_contradiction = []  # sentinel 있는데 write_set 비어있지 않음
+    sentinel_not_allowlisted = []  # sentinel 있는데 lane 이 allowlist 밖 (자기선언 승격 시도)
     read_errors = {}
 
     for lane in sorted(observed):
@@ -413,9 +436,14 @@ def main(argv=None):
             sentinel_contradiction.append(lane)
         elif not write_set:
             if empty_sentinel:
-                # ★정당 공집합★ — 겹침 판정에는 ∅ 로 참여한다 (trivially disjoint).
-                declared_empty.append(lane)
-                write_sets[lane] = set()
+                # ★승격 권한은 검사자 측★ — 토큰(피검사자 본문)은 "∅ 를 주장한다" 는
+                #   표식일 뿐이고, GREEN 승격은 allowlist 등재 lane 에만 부여한다.
+                if lane in _DECLARED_EMPTY_ALLOWLIST:
+                    # ★정당 공집합★ — 겹침 판정에는 ∅ 로 참여한다 (trivially disjoint).
+                    declared_empty.append(lane)
+                    write_sets[lane] = set()
+                else:
+                    sentinel_not_allowlisted.append(lane)
             else:
                 extraction_empty.append(lane)
         else:
@@ -434,6 +462,7 @@ def main(argv=None):
         "extraction_empty_lane_count": len(extraction_empty),
         "declared_empty_lane_count": len(declared_empty),
         "sentinel_contradiction_lane_count": len(sentinel_contradiction),
+        "sentinel_not_allowlisted_lane_count": len(sentinel_not_allowlisted),
     })
     full_probe = dict(base_probe)
     full_probe["write_set_size_by_lane"] = {k: len(v) for k, v in sorted(write_sets.items())}
@@ -463,10 +492,25 @@ def main(argv=None):
             trace=trace, identity_probe=probe,
         ))
 
+    if sentinel_not_allowlisted:
+        # ★자기선언 승격 봉인★ — 피검사자 lane doc(untrusted body)에 토큰만 달아서
+        #   자기 verdict 를 GREEN 으로 올리는 경로. 승격 자격은 검사자 측 allowlist 소관이며
+        #   확장하려면 본 코드 diff(=리뷰 표면)를 거쳐야 한다.
+        #   ★정직 천장★: 코드 diff 권한자는 명단을 늘릴 수 있다 — "봉인" 아님.
+        probe = dict(full_probe)
+        probe["sentinel_not_allowlisted_lanes"] = sorted(sentinel_not_allowlisted)
+        probe["declared_empty_allowlist"] = sorted(_DECLARED_EMPTY_ALLOWLIST)
+        trace = dict(full_trace)
+        return emit(GateResult(
+            gate_id=GATE_ID, verdict=RED, reason="sentinel_not_allowlisted",
+            trace=trace, identity_probe=probe,
+        ))
+
     if extraction_empty:
         # ★설계리뷰 iter2 P1-B★ — 선언은 됐고 추출만 0. 미선언과 **별 상태**.
-        # ★sentinel 이 있는 lane 은 여기 오지 않는다★ (declared_empty 로 분기) —
-        #   그러나 sentinel 없는 0행은 종전대로 RED 다 (표 파손의 조용한 통과 봉인).
+        # ★sentinel 이 있는 lane 은 여기 오지 않는다★ (allowlist 등재면 declared_empty,
+        #   밖이면 위 `sentinel_not_allowlisted` 로 분기) — 그러나 sentinel 없는 0행은
+        #   종전대로 RED 다 (표 파손의 조용한 통과 봉인).
         probe = dict(full_probe)
         probe["extraction_empty_lanes"] = extraction_empty
         return emit(unknown_input(

@@ -51,10 +51,11 @@ GitHub comment, gate label, phase transition 전부 Orchestrator 소관이다.
 > (`scripts/lib/check_lane_overlap_predicate.py`) 의 lane write_set 겹침 검사가 이 토큰으로
 > "정당 공집합(`declared_empty`)" 과 "표가 깨져 추출 0행(`extraction_empty`, RED)" 을 구별한다.
 > ★토큰을 지우면 본 lane 이 RED 로 떨어진다★ (문면 장식이 아니라 load-bearing).
-> 반대로 이 토큰을 두고 실 경로를 **함께 나열**하면 `empty_sentinel_contradiction` RED 다.
-> ★단 이 RED 가 막는 형상은 "sentinel + 실 경로 **동시 나열**" 하나뿐이다★ — 실제로 write 하는
-> lane 이 경로를 **아예 적지 않고** sentinel 만 두면 `declared_empty` 분기로 빠져 ∅ 로 겹침
-> 비교에 참여하고 PASS 적격이 된다. 즉 이 검사가 봉인하는 것은 *나열* 이지 *생략* 이 아니다.
+> 반대로 이 토큰을 두고 실 경로를 나열하면 `empty_sentinel_contradiction` RED 이고,
+> **allowlist(`_DECLARED_EMPTY_ALLOWLIST`) 밖 lane 이 토큰을 달면 `sentinel_not_allowlisted` RED** 다.
+> ★정직 천장★: 토큰 자체는 "무엇도 막지 못한다" — 막는 것은 코드측 allowlist 이며,
+> 그 명단 확장은 **코드 diff(리뷰 표면)** 를 반드시 거친다. "escape-hatch 불가"가 아니라
+> **"자기선언만으로는 승격 불가"** 가 정확한 주장이다.
 
 Story §10 FIX Ledger append 는 **Orchestrator 단독** (CFP-32 monopoly).
 

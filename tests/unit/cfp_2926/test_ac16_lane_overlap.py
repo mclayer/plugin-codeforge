@@ -24,9 +24,17 @@ Story §8.0.8 (1) NG-8 규격:
   - self-write 표 **행 내용**의 정합(경로 실재·glob 의미론) — 미검증.
   - 선언 SSOT 2곳 + 디렉토리를 **한꺼번에 일관되게** 바꾼 경우 — 검출 불가(정당 변경과
     기계적 구별 불가). 이는 결함이 아니라 설계상 상한이다.
-  - 실 repo 의 `codeforge-review` 는 self-write 표가 **부재**하여 실 repo 판정은
-    `INCONCLUSIVE(write_set_undeclared)` 다 — 본 파일의 mutant 왕복은 그 사실에
-    의존하지 않도록 **합성 fixture**(tmp_path) 위에서 수행한다.
+  - 실 repo 판정은 **본 파일의 검증 대상이 아니다** — mutant 왕복은 실 repo 상태에
+    의존하지 않도록 전부 **합성 fixture**(tmp_path) 위에서 수행한다.
+    (실측 2026-08-13: `plugins/codeforge-review/CLAUDE.md` 가 self-write 표 + sentinel
+     을 보유해 실 repo 는 `PASS(declared_empty=codeforge-review)` 다. 종전 이 자리에
+     적혀 있던 "표 부재 → INCONCLUSIVE" 서술은 실측과 불일치해 정정했다.)
+
+★sentinel 승격 자격 (구현리뷰 iter2 F-CR2-002)★
+  `EMPTY-WRITE-SET(synthesis-only)` 토큰은 피검사자 lane doc(**untrusted body**)의
+  "∅ 를 주장한다" 는 **표식**일 뿐이고, GREEN 승격 권한은 검사자 측
+  `_DECLARED_EMPTY_ALLOWLIST` 에 있다. `TestNG8SentinelAllowlist` 가 그 분리를
+  falsify 한다 (allowlist 밖 lane 의 토큰 → RED `sentinel_not_allowlisted`).
 """
 
 from __future__ import annotations
@@ -59,6 +67,30 @@ def _write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
+#: ★sentinel 리터럴은 모듈에서 import 하지 않는다★ — import 하면 토큰 값이 바뀔 때
+#: fixture 가 따라 움직여 그 축이 tautology 가 된다. 기대 문자열은 테스트가 직접 든다
+#: (`test_expected_roster_echoes_declared_ssot_paths` 가 SSOT 경로를 직접 드는 것과 동형).
+SENTINEL_TOKEN = "EMPTY-WRITE-SET(synthesis-only)"
+SENTINEL_ROW = "| `%s` | 없음 — 직접 write 공집합 |\n" % SENTINEL_TOKEN
+
+
+def default_write_rows(lane: str) -> str:
+    """baseline lane 의 self-write 표 데이터 행 2개."""
+    return "| `docs/%s/a.md` | Agent1 |\n| `docs/%s/b.md` | Agent2 |\n" % (lane, lane)
+
+
+def lane_doc(lane: str, rows: str) -> str:
+    """lane `CLAUDE.md` 본문 형판 — baseline 과 mutant 가 **같은 형판**을 쓴다.
+
+    (표 heading·헤더·구분선은 고정하고 데이터 행만 갈아끼운다 — mutant 마다 새 문서
+    형판을 발명하면 "형판이 달라서 RED" 인지 "행 내용 때문에 RED" 인지 분리되지 않는다.)
+    """
+    return ("# CLAUDE.md (codeforge-%s)\n\n## Self-write 책임\n\n"
+            "| Path | 책임 agent |\n|---|---|\n"
+            "%s\n"
+            "## 다음 섹션\n\n본문.\n" % (lane, rows))
+
+
 def build_lane_repo(root: Path, lanes=None, roster_skill=None, roster_claude=None) -> Path:
     """6 lane 전건이 self-write 표를 보유한 baseline repo 를 만든다 (기본 = PASS)."""
     lanes = list(LANES if lanes is None else lanes)
@@ -73,10 +105,7 @@ def build_lane_repo(root: Path, lanes=None, roster_skill=None, roster_claude=Non
            % ",".join(roster_skill))
     for lane in lanes:
         _write(root / "plugins" / ("codeforge-" + lane) / "CLAUDE.md",
-               "# CLAUDE.md (codeforge-%s)\n\n## Self-write 책임\n\n"
-               "| Path | 책임 agent |\n|---|---|\n"
-               "| `docs/%s/a.md` | Agent1 |\n| `docs/%s/b.md` | Agent2 |\n\n"
-               "## 다음 섹션\n\n본문.\n" % (lane, lane, lane))
+               lane_doc(lane, default_write_rows(lane)))
     return root
 
 
@@ -299,6 +328,117 @@ class TestNG8ExtractionChannel:
 
 
 # ===========================================================================
+# ★sentinel 승격 자격★ — 토큰(피검사자 주장) ↔ allowlist(검사자 승격권) 분리
+# ===========================================================================
+
+class TestNG8SentinelAllowlist:
+    """`EMPTY-WRITE-SET(synthesis-only)` 토큰의 **승격 권한 소재**를 falsify 한다.
+
+    ★결함의 정체★ (구현리뷰 iter2 F-CR2-002): 문제는 "공집합에 GREEN 을 준 것" 이
+    아니다 — `ADR-154` §결정 6 은 "target 0건 = 정당 honest no-op" 을 승인한다.
+    위반된 것은 같은 절 **§7.3-crit**: "repo-local 파일 body = **untrusted**".
+    즉 ★피검사자 본문(lane `CLAUDE.md`)의 토큰이 자기 verdict 를 GREEN 으로 승격★
+    시킨 것이 결함이며, 수리는 토큰 폐기가 아니라 **marker(피검사자) ↔ grant(검사자)
+    분리** 다. 토큰은 "∅ 를 주장한다" 는 표식으로 남고, 승격은 검사자 측
+    `_DECLARED_EMPTY_ALLOWLIST` 등재 lane 에만 부여된다.
+
+    ★본 클래스가 보증하지 **않는** 것★: allowlist 는 "봉인" 이 아니다 — 코드 diff
+    권한자는 명단을 늘릴 수 있다. 보증 범위는 ★자기선언 승격 경로 제거(승격을 코드
+    리뷰 표면으로 강제)★ 까지다.
+    """
+
+    def test_allowlisted_lane_declared_empty_is_pass(self, lane_repo):
+        """allowlist 등재 lane 이 토큰으로 ∅ 를 선언 → PASS `declared_empty`.
+
+        ADR-154 §결정 6 이 승인한 "정당 honest no-op" 방향이 살아 있어야 한다
+        (봉합이 이 방향까지 죽이면 과교정이다).
+        """
+        assert run_gate(lane_repo)[0] == EXIT_PASS  # negative control
+
+        victim = lane_repo / "plugins" / "codeforge-review" / "CLAUDE.md"
+        _write(victim, lane_doc("review", SENTINEL_ROW))
+
+        exit_code, payload = run_gate(lane_repo)
+        assert exit_code == EXIT_PASS, payload
+        assert payload["reason"] == "roster_matched_and_no_overlap", payload
+        assert payload["identity_probe"]["declared_empty_lanes"] == ["codeforge-review"]
+        assert payload["trace"]["declared_empty_lane_count"] == 1, payload
+        # ∅ 도 겹침 판정에 **참여**한다 (trivially disjoint) — 추출 lane 에서 빠지지 않는다
+        assert payload["trace"]["extracted_lane_count"] == 6, payload
+        assert payload["trace"]["write_set_element_total"] == 10, payload  # 12 - 2
+
+    def test_non_allowlisted_lane_sentinel_is_red(self, lane_repo):
+        """★본 봉합의 판별력 증거★ — allowlist **밖** lane 의 토큰 → RED.
+
+        형상 = "실 write 행을 전부 지우고 토큰을 넣는" 우회. 이것이 GREEN 이면
+        어떤 lane 이든 자기 문서 한 줄로 겹침 검사에서 스스로를 제외할 수 있다.
+
+        ★`codeforge-design` 은 하드코딩이다★ — 모듈의 allowlist 를 import 해서
+        "밖에 있는 lane 을 골라 쓰면" allowlist 를 넓혀도 테스트가 따라 움직여
+        이 축이 tautology 가 된다.
+        """
+        assert run_gate(lane_repo)[0] == EXIT_PASS  # negative control
+
+        victim = lane_repo / "plugins" / "codeforge-design" / "CLAUDE.md"
+        _write(victim, lane_doc("design", SENTINEL_ROW))
+
+        exit_code, payload = run_gate(lane_repo)
+        assert exit_code == EXIT_RED, payload
+        assert payload["reason"] == "sentinel_not_allowlisted", payload
+        assert payload["identity_probe"]["sentinel_not_allowlisted_lanes"] == \
+            ["codeforge-design"], payload
+        assert payload["trace"]["sentinel_not_allowlisted_lane_count"] == 1, payload
+        # ★승격되지 않았음★ — declared_empty 로 새지 않는다
+        assert "codeforge-design" not in \
+            payload["identity_probe"].get("declared_empty_lanes", []), payload
+
+        # revert 왕복 (negative control — "항상 RED" 와 구별)
+        build_lane_repo(lane_repo)
+        assert run_gate(lane_repo)[0] == EXIT_PASS
+
+    def test_allowlisted_lane_sentinel_removed_is_extraction_empty(self, lane_repo):
+        """allowlist 등재 lane 이라도 **토큰이 없으면** 0행은 RED `extraction_empty`.
+
+        allowlist 등재가 "이 lane 은 무조건 GREEN" 이 되면 표 파손이 조용히 통과한다
+        — 등재는 *토큰의 승격 자격*이지 *검사 면제*가 아니다.
+        """
+        victim = lane_repo / "plugins" / "codeforge-review" / "CLAUDE.md"
+        _write(victim, lane_doc("review", SENTINEL_ROW))
+        assert run_gate(lane_repo)[0] == EXIT_PASS  # negative control (승격 상태)
+
+        _write(victim, lane_doc("review", ""))  # ★sentinel 행 삭제★ → 표는 있고 0행
+
+        exit_code, payload = run_gate(lane_repo)
+        assert exit_code == EXIT_RED, payload
+        assert payload["reason"] == "extraction_empty", payload
+        assert payload["reason"] != "sentinel_not_allowlisted"
+        assert payload["identity_probe"]["extraction_empty_lanes"] == ["codeforge-review"]
+        assert payload["trace"]["declared_empty_lane_count"] == 0, payload
+
+    def test_sentinel_with_nonempty_write_set_is_contradiction(self, lane_repo):
+        """실경로 + 토큰 동시 → RED `empty_sentinel_contradiction` (★분기 순서 oracle★).
+
+        `codeforge-develop` 은 allowlist **밖**이므로, 4c(allowlist)를 4b(모순)보다
+        앞에 두면 이 형상이 `sentinel_not_allowlisted` 로 새어 모순 분기가 **관측
+        불가**가 된다. 판정 순서 4b → 4c → `extraction_empty` 를 고정한다.
+        """
+        victim = lane_repo / "plugins" / "codeforge-develop" / "CLAUDE.md"
+        _write(victim, lane_doc("develop",
+                                default_write_rows("develop") + SENTINEL_ROW))
+
+        exit_code, payload = run_gate(lane_repo)
+        assert exit_code == EXIT_RED, payload
+        assert payload["reason"] == "empty_sentinel_contradiction", payload
+        assert payload["reason"] != "sentinel_not_allowlisted", "4b 가 4c 보다 앞이어야 한다"
+        assert payload["identity_probe"]["sentinel_contradiction_lanes"] == \
+            ["codeforge-develop"], payload
+        assert payload["trace"]["sentinel_contradiction_lane_count"] == 1, payload
+
+        build_lane_repo(lane_repo)
+        assert run_gate(lane_repo)[0] == EXIT_PASS
+
+
+# ===========================================================================
 # 선언 SSOT 축 — unknown-input fail-closed ([154-AC-4])
 # ===========================================================================
 
@@ -444,10 +584,11 @@ class TestNG8Hygiene:
 def test_real_repo_channel_resolves_all_declared_lanes(repo_root):
     """실 repo 에서 선언 roster ↔ 디렉토리가 일치함을 실측한다 (verdict 무관).
 
-    ★실 repo 판정은 PASS 가 아니다★ — `plugins/codeforge-review/CLAUDE.md` 에
-    `Self-write 책임` 표가 **부재**하여 `INCONCLUSIVE(write_set_undeclared)` 다.
-    이는 게이트 결함이 아니라 실 repo 의 상태이며, 본 테스트는 그 사실을
-    **verdict 가 아니라 trace 로** 확인해 게이트 상태에 종속되지 않게 한다.
+    ★실 repo verdict 를 단정하지 않는다★ — 실 repo 판정은 lane doc 편집에 따라
+    움직이는 값이라 여기에 박아두면 곧 stale 이 된다(종전 이 자리의
+    "`codeforge-review` 표 부재 → INCONCLUSIVE" 서술이 실제로 stale 이 됐다 —
+    실측 2026-08-13 은 `PASS(declared_empty=codeforge-review)`). 따라서 본 테스트는
+    **verdict 가 아니라 trace 로** 채널 해석 결과만 확인한다.
     """
     _, payload = run_gate(Path(repo_root))
     trace = payload["trace"]
