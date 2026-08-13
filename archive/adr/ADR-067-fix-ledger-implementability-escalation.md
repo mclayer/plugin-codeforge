@@ -31,11 +31,19 @@ amendment_log:
     scope_change: "ratchet 강화 only — 기존 §결정 1-7 의미 invariant 변경 0. fix-event-v1 v1.4 additive-optional column (v1.1~v1.3 선례 4회 정합) + max-FIX disjoint 명문화(약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A (강화 방향)."
     breaking: false
     backward_compat: true
+  - date: 2026-08-13
+    amendment: 4
+    cfp: CFP-2946
+    summary: "round-continuation dispatch 채널(ADR-173 신설) 접점 codify — 신규 §Amendment 4 절. (1) §결정 1/3 재평가 스폰 = round-continuation 적용 제외(fresh-only carve-out). 근거 = §결정 5 가 회피하는 해악의 실체는 anchoring(이전 framing 고정)이지 transcript 물리 이동이 아니며(transcript_ref 명세의 수단-목적 구조 + motivation vector 3 의 '새 framing 가능성' co-equal 목표), agent 인스턴스 존속은 packet 규율을 완전 준수해도 동일 해악을 packet 우회 채널(잔존 컨텍스트)로 실현 ⇒ 층위 분리는 '재평가 trigger 미도달 회차'로 정의역을 좁힐 때만 성립. 명문화 위치가 본 ADR 인 이유 = 채널 도입으로 §결정 1 문구 'ArchitectPLAgent re-spawn' 이 중의적(fresh vs continuation)이 되므로 ADR-173 단독 기재 시 §결정 1 독자가 carve-out 미인지. (2) 통상 회차(trigger 미도달) 재개는 §결정 5 정의역 밖 — 현행 규범이 carry 를 의무화하므로 재개는 기존 의무의 더 싼 구현(무손상 확인). (3) 재개 회차도 Iter 정상 소비(max-FIX 우회 차단) + append 시점 = dispatch 시점이 아니라 outcome 확정 시점 ⇒ 재개/fresh 어느 경로 수렴이든 회차당 정확히 1 row, parallel-dispatch I-6.5 idempotency 정합. (4) Iter 오염 차단 2항 — ADR-109 '429 retry ≠ FIX' 이므로 429 원인분 Iter 미소비 / re-dispatch max-retry cap=2 에 재개 시도 계상 명시(미명시 시 재개→fresh 반복으로 cap 무력화). (5) Iter(회차 축) ↔ fix_id(per-defect 시도 축) 1:1 금지 — 재개 실패+fresh 성공 = §10 1 row / dev-process-event 2 attempt 가 정합이며 이 비대칭이 ADR-173 dispatch_mode 판별 축의 관측 근거."
+    scope_change: "ratchet 강화 only — 기존 §결정 1-8 + Amendment 1/2/3 본문 의미 변경 0건. 신규 제약 추가(재평가 fresh-only carve-out) + 우회 차단 명문화(Iter 소비) + 부당소진 차단(429 carve-out, Amendment 3 §8.3 flaky false-RED 동형 정신). 약화 0. is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A (강화 방향). mechanical_enforcement_actions [] retain — A4.1 실준수는 advisory ceiling(SendMessage PreToolUse matcher 부재 + payload tier/trigger 정보 구조적 부재), 'hard-gate' over-claim 금지(ADR-143 선례 / ADR-119). A4.3 Iter 소비는 §10 row 로 사후 감사 가능."
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
   - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
   - CFP-2480  # Amendment 3 — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR carrier (Epic CFP-2476 E3)
+  - CFP-2946  # Amendment 4 — 재평가 스폰 fresh-only carve-out + 재개 회차 Iter 소비 규칙 (ADR-173 round-continuation 채널 짝)
 related_adrs:
   - ADR-008
   - ADR-024
@@ -50,6 +58,10 @@ related_adrs:
   - ADR-064
   - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
   - ADR-119   # Amendment 3 — §결정 10② close-time wire 실현 ("수정됨=반증 후 단언")
+  - ADR-173   # Amendment 4 — round-continuation dispatch 채널 (재평가 스폰 fresh-only carve-out 의 짝)
+  - ADR-109   # Amendment 4 — "429 retry ≠ FIX" (Iter 오염 차단 A4.4-1)
+  - ADR-141   # Amendment 4 — tier override 인스턴스 재개 부적격 (ADR-173 §결정 2 축 A)
+  - ADR-170   # Amendment 4 — "dispatch 토폴로지 변경 ≠ ownership 변경" (§10 append 독점 무손상 근거)
 related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
@@ -371,6 +383,56 @@ replay close-gate 는 §결정 4 cross-lane RESET semantics 와 disjoint — rep
 
 - `mechanical_enforcement_actions: []` retain (replay close-time 자동 wire = Phase 2 / 후속 carrier, ADR-064 §결정 1 unitary). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test, CI 미배선 — Story A/B 선례 동형 helper).
 - ratchet 강화 방향 (max-FIX disjoint 명문화 + replay fail-mode 2축 + reproducer security invariant codify, 약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A. ADR-070 Amendment 12 + ADR-119 §결정 10② + fix-event-v1 v1.4 sibling cross-ref.
+
+## Amendment 4 (CFP-2946 carrier) — 재평가 스폰 fresh-only carve-out + 재개 회차 `Iter` 소비 규칙
+
+ADR-173 이 `round-continuation`(회차-연속 dispatch 채널)을 신설한다 — 종료한 named subagent 를 `SendMessage` 로 **transcript 째 이어서** 재개하는 경로다. 이 채널이 본 ADR 의 두 지점과 직접 만나므로 그 경계를 codify 한다. 기존 §결정 1-8 + Amendment 1/2/3 **본문 의미 변경 0건** — 신규 carve-out 선언 + `Iter` 소비 규칙 명문화 only.
+
+### A4.1 §결정 1/3 재평가 스폰 = round-continuation 적용 제외 (fresh-only carve-out)
+
+**§결정 1 의 `current_count == 3` trigger 로 발동하는 ArchitectPLAgent re-spawn** 과 **§결정 3 의 RESET vs escalation 재량 판정 스폰**은 ★**반드시 fresh spawn 으로 수행**★ 하며 round-continuation 채널을 사용하지 않는다.
+
+**근거 (층위 분리가 이 지점에서 불성립)**:
+
+- 본 ADR §결정 5 가 회피하는 해악의 실체는 ★**anchoring(이전 framing 고정)**★ 이지 전체 transcript 의 물리적 이동이 아니다. `transcript_ref` 명세(내용 앵커 = *"Full transcript verbatim 회피"*)가 *"회피 수단 ← 근거(anchoring 차단)"* 의 **수단-목적 구조**이고, motivation vector 3(내용 앵커 = *"Codex D6 적대적 검토 발견"*)이 *"reasoning trail 보존 + **새 framing 가능성** 양립"* 을 **co-equal 목표**로 명시한다. ⇒ "transcript 를 나르지 않는다"는 **기법**이지 목적이 아니다.
+- 목적이 anchoring 차단이라면, **agent 인스턴스 존속은 packet 규율을 완전히 준수하더라도 동일 해악을 packet 을 우회하는 별 채널(agent 자신의 잔존 컨텍스트)로 실현**한다. ⇒ "packet 은 요약, agent 는 살아있다"는 **packet 축에서 참이나 해악 축에서 거짓**이며 disjoint 축이 아니다.
+- **명문화 위치가 본 ADR 인 이유**: 채널 도입으로 §결정 1 의 문구 *"ArchitectPLAgent re-spawn"* 이 ★**중의적(fresh 인가 continuation 인가)**★ 이 된다. carve-out 을 ADR-173 에만 두면 §결정 1 독자가 이를 모른다.
+
+**대체 불가 확인 (침묵 아닌 명시 판정)**: ADR-173 의 판독면-stale 가드는 *원인 코드* 축이나 본 §결정 1 trigger 는 **원인 코드와 무관하게 FIX 3회 누적으로 발동**한다. 독립 peer 최소 1 fresh 보존은 *dual-peer 리뷰 회차* 대상이나 **ArchitectPL 재평가는 peer 구조가 아니다**. ⇒ **별 축이 필요**하다.
+
+**부수 사실 취급 규율**: `reasoning_carryover` 소비자는 문서 계약층 3 site 뿐이며 `.py`/`.sh`/`.js` 소비자는 **0건**이다. 이 사실은 *"1세대 처방이 기계 배선되지 않았다"* 만 입증하며 ★**처방 실패 ≠ 미배선**★ — §결정 5 의 논거(anchoring 차단) 자체를 반증하지 않는다. **본 carve-out 판정은 이 미배선 사실에 의존하지 않는다.**
+
+### A4.2 통상 회차 재개는 §결정 5 정의역 **밖** (무손상 확인)
+
+**재평가 trigger 미도달 회차**(`current_count < 3`)의 재개는 §결정 5 가 결정을 내린 영역이 **아니다**. 오히려 현행 규범이 `reasoning_carryover` full-text 전달·debate transcript verbatim 주입으로 **carry 를 의무화**하므로, 통상 회차의 재개는 **기존 의무의 더 싼 구현**이다. §결정 5 의 3-part packet 규율은 **fresh 경로에서 그대로 유지**된다.
+
+### A4.3 재개 회차의 `Iter` 소비 규칙 — 회차당 정확히 1 row
+
+**재개로 수행된 FIX 회차도 fresh 회차와 동일하게 `Iter` 를 소비한다.** 재개가 max-FIX 3/3 카운터를 우회하지 않는다 — 우회를 허용하면 비용 최적화가 **안전 카운터를 무력화**한다.
+
+★**append 시점 = dispatch 시점이 아니라 outcome 확정 시점**★ (재개 성공 판정과 동일 시점 = 재개된 agent 의 **실산출 수신**). 이 규칙의 귀결:
+
+- 재개/fresh 어느 경로로 수렴하든 ★**회차당 정확히 1 row**★ 가 append 된다. dispatch 시점에 append 하면 "재개 dispatch → 실패 → fresh dispatch" 가 **2 row 를 만들어** `Iter` 를 이중 소비한다.
+- `parallel-dispatch-protocol-v1` I-6.5(crash recovery idempotency)와 정합한다 — at-least-once 재시도 시 `(story_key, Iter)` 가 idempotency key 다.
+
+### A4.4 `Iter` 오염 차단 2항
+
+1. **429 원인분은 `Iter` 소비 대상이 아니다.** ADR-109 상 *"429 retry ≠ FIX"* 이므로, 재개 실패의 원인이 rate limit 인 경우 그 시도는 `Iter` 를 소비하지 않는다. 미명시 시 인프라 사유가 max-FIX 카운터를 잠식해 **부당 소진**이 발생한다(Amendment 3 §8.3 flaky false-RED 의 부당소진 차단과 동일 정신).
+2. **`re-dispatch max-retry cap = 2` 에 재개 시도가 계상되는지 명시한다.** `parallel-dispatch-protocol-v1` (내용 앵커 = *"max-retry cap = 2 (restart-storm 차단)"*) 의 cap 에 대해 — ★재개 시도 1회는 그 cap 을 **소비**한다★. 미명시 시 `재개→fresh→재개→fresh` 로 cap 이 무력화된다.
+
+### A4.5 `Iter` ↔ `fix_id` 를 1:1 로 맞추지 않는다
+
+`Iter`(회차 축, Story 단조 증가) 와 `fix_id`(per-defect **시도** 축, lane 재진입 단위 아님)는 **원래 다른 축**이며 본 채널 도입으로 그 비대칭이 관측면에 드러난다.
+
+- **재개 실패 + fresh 성공** = §10 FIX Ledger **1 row**(A4.3) / dev-process-event **2 attempt** 가 **정합**이다.
+- ★이 비대칭이 곧 ADR-173 §결정 5 `dispatch_mode` 판별 축의 **관측 근거**★ 다 — 두 축이 1:1 이라면 재개/fresh 대조 자체가 불가능하다.
+- **§10 Orchestrator append 독점 무손상**: 재개는 dispatch 기제이지 ownership 변경이 아니다(ADR-170 §결정 19 *"dispatch 토폴로지 변경 ≠ ownership 변경"* 동형).
+
+### A4.6 ratchet 정합
+
+- **강화 방향 only** — 재평가 스폰 fresh-only carve-out(신규 제약) + `Iter` 소비 명문화(우회 차단) + 오염 차단 2항. **약화 0건**이며 §결정 1-8 의 trigger 범위·escalation 의무·RESET 권한 본문 의미 변경 0.
+- `is_transitional: false` 유지. ADR-058 §결정 5 `sunset_justification` N/A(강화 방향).
+- `mechanical_enforcement_actions: []` retain — A4.1 carve-out 의 실준수는 **advisory ceiling** 이다(`SendMessage` PreToolUse matcher 부재 + payload 에 tier·trigger 정보 구조적 부재). ★"100% 기계강제/hard-gate" 표현을 사용하지 않는다★(ADR-143 선례 형식 / ADR-119 over-claim 금지). A4.3 `Iter` 소비는 §10 row 로 관측 가능하므로 **사후 감사는 가능**하다.
 
 ## 관련 파일
 

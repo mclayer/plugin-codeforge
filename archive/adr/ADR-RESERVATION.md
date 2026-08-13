@@ -681,6 +681,17 @@ amendments_reserved:
     reserved_by_cfp: CFP-2840
     reservation_date: 2026-07-26 KST
     status: active   # DeveloperPLAgent commit time 점유 (CFP-2840 Phase 2 구현 PR carrier — ADR-167 Amendment 1: §결정 5 Superseded-skip semantics 명문화. amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-167-adr-amendment-compaction-ratchet.md frontmatter amendments[]/amendment_log[] 부재(현재 0) → next slot = 1 collision 0 (dual-block 신설). status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — 재제정 realization 게이트 Superseded-skip 명문화, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 173
+    reserved_by_cfp: CFP-2946
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2946 Phase 1 설계 PR carrier — ADR-173 신규 발급: round-continuation dispatch 채널 (FIX 회차 named agent 재개의 명칭·적격 6축·메시지 계약 5요소·관측 dispatch_mode·발신 주체 한정·동시성 계상 축 C·advisory ceiling 4표면 SSOT)). adr_number claim (신규 ADR — ADR-133 §결정 4 fallback: GH_TOKEN 부재 → OCC claim primitive 미실행, firsthand max 검증 경유). verified-via 3-leg firsthand: (1) `git fetch origin main` 후 `git ls-tree --name-only origin/main archive/adr/` numeric max = 172 (ADR-172-local-scheduled-task-residue-observation.md) — ★로컬 브랜치가 origin/main 보다 3 커밋 뒤라 `ls archive/adr/` 는 171 을 주며 그 값은 틀렸다(채번 gotcha)★ (2) ADR-RESERVATION.md 전수 max adr_number = 172 (3) 열린 PR 3건(#2956/#2955/#2952) 신규 ADR 파일 0건 → next = 173 collision 0. dual-key 3-leg: filename `ADR-173-round-continuation-dispatch-channel.md` ∧ frontmatter `adr_number: 173` ∧ 본 row 173. status reserved 미경유 직접 active (ArchitectAgent chief author Phase 1 carrier — ADR-165 CFP-2810 new-ADR row precedent 답습). sunset_justification: null (신규 dispatch 채널 governance 정책 — permanent policy, is_transitional: false, ADR-058 §결정 5 강화 방향). paired sibling = ADR-067 Amendment 4 (아래 row).
+
+  - adr_number: 67
+    amendment_id: 4
+    reserved_by_cfp: CFP-2946
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectAgent commit time 점유 (CFP-2946 Phase 1 설계 PR carrier — ADR-067 Amendment 4: §결정 1/3 재평가 스폰 round-continuation 적용 제외(fresh-only carve-out) + 재개 회차 Iter 소비 규칙(outcome 확정 시점 append, 회차당 1 row) + Iter 오염 차단 2항(429 미소비 / re-dispatch max-retry cap=2 계상) + Iter↔fix_id 1:1 금지). amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-067-fix-ledger-implementability-escalation.md frontmatter amendment_log[] max amendment = 3 (Amendment 3 = CFP-2480) → next slot = 4 collision 0 + amendments_reserved[] ADR-067 기존 row 부재 → collision 0. dual-block sync (frontmatter amendment_log[] amendment:4 + 본문 `## Amendment 4` 절). status reserved 미경유 직접 active (ArchitectAgent chief author scope — ADR-085 Amendment 2 / ADR-073 Amendment 21 row precedent 답습). sunset_justification: null (강화 방향 — 신규 제약 추가(재평가 fresh-only) + 우회 차단 명문화(Iter 소비), 약화 0건, §결정 1-8 본문 의미 변경 0, ADR-058 §결정 5 강화 방향). paired sibling = ADR-173 (위 row).
 ```
 
 ## 해소 기준
