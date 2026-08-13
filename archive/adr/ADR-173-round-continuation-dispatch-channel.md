@@ -281,4 +281,3 @@ ADR-143 선례 형식을 따라, 본 채널에서 **기계 강제가 원리적�
 ## 해소 기준
 
 N/A — permanent policy (dispatch 채널 규범). 단 §결정 2 축 A(tier 보수 제약)는 **재검토 조건을 보유**한다: codeforge 가 재개 시 tier 유지 거동을 **자기 게이트로 직접 검증**하게 되면 제약 완화를 재검토할 수 있다. 그 재검토는 별도 Story 소관이며 본 ADR 의 sunset 이 아니다(§결정 2 의 fail-closed 술어는 어떤 경우에도 안전 방향이다).
-</content>
