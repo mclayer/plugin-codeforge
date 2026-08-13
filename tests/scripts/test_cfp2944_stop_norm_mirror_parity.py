@@ -67,10 +67,11 @@ def repo_root() -> Path:
 
 # ── sweep 정의역 산출 (F-CL-002) ───────────────────────────────────────────────
 # 규범 SSOT = `archive/adr/ADR-141-all-opus-single-tier.md` §A8-5:
-#   "sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 **repo 전체**에 실행해 얻은 hit 중
-#    아래 제외 술어를 적용한 나머지 **전건**이다. 한 곳 누락 = born-broken."
-#   같은 절이 그 '나머지' 를 "A6-3(a) 본문 및 그 문장을 현행 규범으로 mirror 하는
-#    **타 문서 site**" 로 정의한다.
+#   "sweep 대상 = 판정 시점에 `grep -rn '기존 대기'` 를 repo 전체에 실행해 얻은 hit 중
+#    **아래 제외 술어를 적용한 나머지 전건**이다. 한 곳 누락 = born-broken."
+#   같은 절이 그 '나머지' 를 다음으로 정의한다:
+#   "나머지(= A6-3(a) 본문 및 그 문장을 **현행 규범으로 mirror 하는 타 문서 site**)가 sweep 대상이다."
+#   (두 인용 모두 생략 0 — 문장 단위 full block, 강조 표기도 원문 그대로.)
 #
 # ① 정의역 = repo **전체** 를 walk 한 `*.md` 전건. 디렉터리 allowlist 를 두지 않는다 —
 #    구 구현은 `[archive/adr, docs, skills, CLAUDE.md]` 4-entry 열거였고 그 결과
