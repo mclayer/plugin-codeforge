@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# hooks/session-start-scheduled-task-watchdog — SessionStart 스케줄 작업 생존 감시
+#
+# Carrier: CFP-2949 Phase 2 — SessionStart heartbeat 판독 hook
+#
+# 동작:
+#   - 스케줄 작업(별도 CLI)이 매일 1회 기동해 heartbeat 파일을 남긴다.
+#   - 본 hook 은 claudecode 세션 시작 시 그 heartbeat 를 판독해 경과를 측정한다.
+#   - heartbeat 파일이 부재하거나, 내용이 파싱불능하거나, age > threshold 이면 사실 1줄만 stderr 발화.
+#   - 그 외(heartbeat 신선) 무발화.
+#   - 어떤 경우든 조용히 종료(부수효과 0, 판독만).
+#
+# Bypass:
+#   BYPASS_SCHEDULED_TASK_WATCHDOG=1 → 즉시 audit 1줄 + 종료
+#
+# Tunable:
+#   SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS — 임계값(초). 기본 = 172800 (2일)
+#
+set -uo pipefail
+trap 'exit 0' ERR
+
+# ── Bypass ──
+if [[ "${BYPASS_SCHEDULED_TASK_WATCHDOG:-}" == "1" ]]; then
+  >&2 printf '[scheduled-task-watchdog] bypass env BYPASS_SCHEDULED_TASK_WATCHDOG=1\n'
+  exit 0
+fi
+
+# ── 설정 ──
+GC_STATE_DIR="${HOME:-/tmp}/.claude/worktree-gc-state"
+HEARTBEAT_FILE="${GC_STATE_DIR}/scheduled-task-last-run.epoch"
+THRESHOLD_SECONDS="${SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS:-172800}"
+
+# 임계값이 숫자가 아니면 기본값 적용
+[[ "$THRESHOLD_SECONDS" =~ ^[0-9]+$ ]] || THRESHOLD_SECONDS=172800
+
+# ── heartbeat 판독 ──
+_now() { date +%s 2>/dev/null || echo ""; }
+
+now="$(_now)"
+last_epoch=""
+age_seconds="unknown"
+
+if [[ -f "$HEARTBEAT_FILE" ]]; then
+  last_epoch="$(cat "$HEARTBEAT_FILE" 2>/dev/null || echo "")"
+
+  # 파싱 검증: 정수인지 확인
+  if [[ "$last_epoch" =~ ^[0-9]+$ ]]; then
+    # 유효한 epoch 값
+    if [[ -n "$now" ]]; then
+      age_seconds=$(( now - last_epoch ))
+      # 음수 보정 (시계 이상 또는 미래 값)
+      (( age_seconds < 0 )) && age_seconds=0
+    fi
+  else
+    # 파싱불능 → stale 취급
+    last_epoch="invalid"
+    age_seconds="unknown"
+  fi
+else
+  # 파일 부재
+  last_epoch="absent"
+fi
+
+# ── 판정 및 발화 ──
+should_report=false
+
+if [[ "$last_epoch" == "absent" ]]; then
+  # 파일 부재 → 보고
+  should_report=true
+elif [[ "$last_epoch" == "invalid" ]]; then
+  # 파싱불능 → 보고
+  should_report=true
+elif [[ "$age_seconds" != "unknown" ]]; then
+  # age 를 알 수 있으면 비교
+  if (( age_seconds > THRESHOLD_SECONDS )); then
+    should_report=true
+  fi
+fi
+
+# 발화: 사실만 (verdict 어휘 금지: PASS/FAIL/OK/정상/문제없음)
+if [[ "$should_report" == "true" ]]; then
+  >&2 printf '[scheduled-task-watchdog] last_run_epoch=%s age_seconds=%s threshold_seconds=%s\n' \
+    "$last_epoch" "$age_seconds" "$THRESHOLD_SECONDS"
+fi
+
+exit 0
