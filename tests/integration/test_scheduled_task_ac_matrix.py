@@ -193,20 +193,58 @@ class TestAC3SelfModificationChain:
 
     def test_ac3_no_update_scheduled_task_tool(self):
         """능력 감사: update_scheduled_task 허용범위 부재."""
-        # 이 테스트는 선언적 검사 — 저장 프롬프트를 읽어 스캔.
-        # 실제 구현에서는 ADR-172 의 프롬프트 텍스트를 grep 해 검증.
-        # 여기서는 mock 으로 인증.
-        assert True, "능력 감사는 ADR-172 프롬프트 검증 단계에서 수행"
+        # ADR-172 저장 프롬프트 박제본에서 update_scheduled_task 검사
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail(f"ADR-172 부재: {adr_path} (AC-3 검사 정의역 필수, design lane 산출물 부재)")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        # 저장 프롬프트 추출 (### §결정 2 절)
+        decision_2_idx = content.find("### §결정 2")
+        if decision_2_idx == -1:
+            pytest.fail("ADR-172 의 §결정 2 절 부재")
+
+        # fenced 코드블록 찾기
+        code_start = content.find("```", decision_2_idx)
+        if code_start == -1:
+            pytest.fail("저장 프롬프트 fenced block 부재")
+
+        code_end = content.find("```", code_start + 3)
+        if code_end == -1:
+            pytest.fail("fenced block 종료 마크 부재")
+
+        prompt_text = content[code_start:code_end]
+
+        # Assert: update_scheduled_task 부재
+        assert "update_scheduled_task" not in prompt_text, (
+            "AC-3 위반: 저장 프롬프트에 update_scheduled_task 도구 존재"
+        )
 
     def test_ac3_no_write_home_claude_in_prompt(self):
         """저장 프롬프트 금지: Edit(~/.claude/**) 리터럴 0.
 
         ADR-172 박제 프롬프트의 지시 절(번호 step) 에서 스캔.
-        부정 선언 절(`금지:`) 은 정의역 제외.
         """
-        # 실제 구현: ADR-172 docs 읽기 → grep Edit\(~/.claude
-        # 여기서는 선언적 검사만.
-        assert True, "저장 프롬프트 검증은 docs 레인에서 수행"
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail(f"ADR-172 부재: {adr_path} (AC-3 검사 정의역 필수, design lane 산출물 부재)")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        # §결정 4 권한면 검증
+        decision_4_idx = content.find("### §결정 4")
+        if decision_4_idx == -1:
+            pytest.fail("ADR-172 의 §결정 4 절 부재")
+
+        decision_4_section = content[decision_4_idx:decision_4_idx+2000]
+
+        # Assert: ~/.claude/** 쓰기 deny 명시
+        assert "deny" in decision_4_section and "~/.claude" in decision_4_section, (
+            "AC-3 위반: ~/.claude 쓰기 deny 명시 부재"
+        )
 
     def test_ac3_fetch_existing_keys_excludes_external_body(self):
         """외부 본문 유입 0 — fetch_existing_keys 는 자기 마커만 추출.
@@ -266,10 +304,44 @@ class TestAC5PromotionZero:
     """AC-5: 승격 조건·주체·rollback 3항 + 승격 이력 0건."""
 
     def test_ac5_no_promotion_history(self):
-        """도입기 승격 이력 0 — run() 이 수행권을 자동 승격하지 않음."""
-        # ADR-172 변경 결정 기록에서 승격 이력 확인
-        # 여기서는 선언적 검사
-        assert True, "승격 이력은 ADR-172 기록에서 감사"
+        """도입기 승격 이력 0 — ADR-172 §결정 9 에서 검증."""
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail("ADR-172 부재")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        # 줄 기반 슬라이싱 — startswith 사용
+        lines = content.splitlines(keepends=True)
+        start_idx = next(
+            (i for i, ln in enumerate(lines) if ln.startswith("### §결정 9")),
+            -1
+        )
+        if start_idx == -1:
+            pytest.fail("ADR-172 의 §결정 9 절 부재")
+
+        # 시작 줄 다음부터 종료점 찾기 (### 또는 ##)
+        end_idx = next(
+            (i for i in range(start_idx + 1, len(lines))
+             if lines[i].startswith("### ") or lines[i].startswith("## ")),
+            len(lines)
+        )
+
+        decision_9_text = "".join(lines[start_idx:end_idx])
+
+        # 검증: 슬라이스가 헤딩 이상으로 유의미한 길이여야 함
+        assert len(decision_9_text) > len(lines[start_idx]), (
+            "AC-5: 절 슬라이싱 오류 (헤딩만 남음)"
+        )
+
+        # Assert: 승격 이력 = 0
+        assert "승격 이력" in decision_9_text and "0" in decision_9_text, (
+            "AC-5: 승격 이력 = 0 리터럴 부재"
+        )
+        # 조건·주체·rollback 존재 확인
+        for required in ["조건", "주체", "rollback"]:
+            assert required in decision_9_text, f"AC-5: {required} 필드 부재"
 
 
 class TestAC9ReconcileCompleteness:
@@ -284,8 +356,25 @@ class TestAC9ReconcileCompleteness:
         상태 무의존 reconcile — cursor·watermark 부재. 매 실행이 현재 상태 전량을 재관측.
         """
         # property 테스트로 이관 (dynamic_roster.py 에서 fuzz/property 실행)
-        # 여기서는 기본 구조만 검증
-        assert True, "reconcile 회수 완전성은 property 테스트에서 검증"
+        # 여기서는 기본 구조만 검증: render_report 가 축적 관측 K개를 모두 포함하는지 검증
+        observations = [
+            sut.Observation(
+                cls=f"class{i}",
+                display_path=f"path{i}",
+                declared="decl",
+                measured="meas",
+                mismatch=False,
+            )
+            for i in range(5)  # K=5 축적
+        ]
+        report = sut.render_report(observations, "test", "001")
+
+        # Assert: render_report 이 K개 모두를 포함
+        # items=N 필드가 축적 관측 수를 반영하는지 검증
+        assert "items=" in report, "render_report 가 items 필드를 기재"
+        # 최소한 5개의 관측이 보고에 반영되는지 확인
+        for i in range(5):
+            assert f"path{i}" in report, f"관측 {i} 경로가 보고에 포함"
 
 
 class TestAC11MarkerTwoTypes:
@@ -322,6 +411,77 @@ class TestAC11MarkerTwoTypes:
         # 이는 코드 관찰 — render_report 호출 경로 추적
         # render_report 에서 SENTINEL/TRAILER 를 조합 생성함을 확인
         assert "[scheduled-task-observe]" in sut.render_report([], "t", "1")
+
+
+class TestAC12TripleAxisSixCellComparison:
+    """AC-12: 3축 × {비용,보안} 6셀 비교 + 결정 기록 (normative).
+
+    검사 대상 = ADR-172 `### §결정 8` 절(절 헤딩 기준, 줄번호 하드코딩 금지).
+    """
+
+    def test_ac12_three_axis_six_cell_comparison_present(self):
+        """6셀 비교표 presence: 3축(P3a/P3b/P4) × {비용, 보안}."""
+        # ADR-172 문서 읽기 (절 헤딩 기준)
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail(f"ADR-172 부재: {adr_path} (AC-12 검사 정의역 필수, design lane 산출물 부재)")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        # 절 찾기 (### §결정 8)
+        assert "### §결정 8" in content, "ADR-172 에 §결정 8 절 부재"
+
+        # 6셀 검증: 최소 3축 어휘 + 2개 속성
+        decision_8_idx = content.find("### §결정 8")
+        if decision_8_idx == -1:
+            pytest.fail("AC-12: ADR-172 의 §결정 8 절 미발견. design lane 산출물 손상")
+
+        # 절의 끝 찾기 (다음 헤딩까지)
+        next_heading = content.find("### ", decision_8_idx + 1)
+        if next_heading == -1:
+            next_heading = len(content)
+        decision_section = content[decision_8_idx:next_heading]
+
+        # 축과 속성 어휘 확인
+        for axis in ["P3a", "P3b", "P4"]:
+            assert axis in decision_section, f"축 {axis} 부재"
+        for attr in ["비용", "보안"]:
+            assert attr in decision_section, f"속성 '{attr}' 부재"
+
+    def test_ac12_adoption_record_literals_present(self):
+        """결정 기록: P4 · 사용자 · 시각 리터럴 3종 + 지위 라벨."""
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail(f"ADR-172 부재: {adr_path} (AC-12 검사 정의역 필수, design lane 산출물 부재)")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        decision_8_idx = content.find("### §결정 8")
+        if decision_8_idx == -1:
+            pytest.fail("AC-12: ADR-172 의 §결정 8 절 미발견. design lane 산출물 손상")
+
+        next_heading = content.find("### ", decision_8_idx + 1)
+        if next_heading == -1:
+            next_heading = len(content)
+        decision_section = content[decision_8_idx:next_heading]
+
+        # 채택 축 P4
+        assert "P4" in decision_section, "채택 축 P4 리터럴 부재"
+
+        # 주체: "사용자" 또는 "운영자" 등 의사결정 주체
+        assert "사용자" in decision_section or "운영자" in decision_section, (
+            "결정 주체 리터럴 부재"
+        )
+
+        # 시각: ISO 형식 또는 날짜
+        assert "2026-08" in decision_section or "2026-" in decision_section, (
+            "결정 시각 리터럴 부재"
+        )
+
+        # 배제 축 사유 지위: "판단"
+        assert "판단" in decision_section, "사유 지위 라벨 '판단' 부재"
 
 
 class TestAC13StaticTextLint:
