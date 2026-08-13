@@ -7,22 +7,26 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" stale-local-main-checkout",
-            "async": false
+            "async": false,
+            "timeout": 30
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" stray-scratch-leak",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start-gc-catchup",
-            "async": false
+            "async": false,
+            "timeout": 30
           }
         ]
       }
@@ -34,27 +38,32 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" cross-repo-gh-safety",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" repo-confinement",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" git-branch-delete-merge-gate",
-            "async": false
+            "async": false,
+            "timeout": 60
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" worktree-location-guard",
-            "async": false
+            "async": false,
+            "timeout": 15
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pretooluse-bash-description-inject",
-            "async": false
+            "async": false,
+            "timeout": 5
           }
         ]
       },
@@ -64,7 +73,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" schedule-wakeup-reminder",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       },
@@ -74,7 +84,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pretooluse-agent-spawn-gate",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       },
@@ -84,7 +95,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pretooluse-inline-write-gate",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       },
@@ -94,7 +106,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" pretooluse-dev-process-capture",
-            "async": false
+            "async": false,
+            "timeout": 5
           }
         ]
       }
@@ -106,7 +119,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" posttooluse-dev-process-capture",
-            "async": false
+            "async": false,
+            "timeout": 5
           }
         ]
       }
@@ -117,32 +131,38 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" korean-english-recovery",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" bootstrap-first-gate",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" skip-offer-reminder",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" deferred-recovery-reminder",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" story-transition-autonomy-reminder",
-            "async": false
+            "async": false,
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-swap-handoff-reminder",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       }
@@ -153,7 +173,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" stop",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       }
@@ -164,7 +185,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-end",
-            "async": true
+            "async": true,
+            "timeout": 1
           }
         ]
       }
@@ -175,7 +197,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-start-render-discipline",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       }
@@ -186,7 +209,8 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-stop",
-            "async": false
+            "async": false,
+            "timeout": 10
           }
         ]
       }
