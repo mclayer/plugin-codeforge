@@ -1,7 +1,7 @@
 """test_repo_confinement.py — CFP-2965 S0 특성화 테스트 (N-2).
 
 변경 0 시점의 repo-confinement 훅 현행 거동을 특성화.
-deny/allow/carve-out/exit 2 전파/fail-open 은닉 + G-6 pin (python3 부재).
+deny/allow/carve-out/exit 2 전파/fail-open 은닉 + G-6 pin (인터프리터 부재 — S7 재-pin 반영).
 
 계약: repo 밖(홈 루트) 스크래치 누출 패턴 차단 (exit 2).
 """
@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 WORKTREE_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -111,42 +112,85 @@ def test_deny_home_root_mkdir():
     assert rc == 0, "Current: mkdir format not detected for home-root block"
 
 
-# ============================================================ G-6: python3 부재 특성화 pin
+# ============================================================ G-6: 인터프리터 정규화 재-pin (S7)
+#
+# 재-pin 선언 (의도 변경 — Change Plan §3.1 판정 2 / SecArch R-19):
+#   구 pin = "python3 부재 → rc=127 미작동" 특성화. S7 이 check-repo-confinement.sh 의
+#   `exec python3` 단일 의존을 sibling 패턴(command -v python3 → python → exit 0)으로 정규화
+#   → 같은 커밋에서 의도 변경으로 재-pin.
+#     ① 정의역 분리 — python3 존재 호스트 delta 0 / 부재+python 존재 = inactive→active (강화 방향)
+#     ② §1 보존 대상 = deny·fail-open 방향 — 바뀌는 것은 종료 코드 127→0 이지 방향 아님
+#     ③ rc=127 은 선언된 계약(hook exit ∈ {0,2}) 부재 — AC-13 충족
+#     ④ 커밋 위생 = 성능 hunk 와 분리된 독립 커밋
 
 
-def test_characterization_g6_python3_absent():
-    """(특성화 G-6) python3 부재 시 현행 거동.
+def _bash_bin_dirs() -> list[str]:
+    """Git-Bash 실행에 필요한 최소 PATH 구성 (python 계열 디렉터리 제외)."""
+    bash_dir = Path(_BASH).parent                       # .../Git/bin
+    return [str(bash_dir), str(bash_dir.parent / "usr" / "bin")]
 
-    check-repo-confinement.sh 는 `exec python3` 을 호출.
-    PATH 에서 python3 을 제거하면 shell 이 rc=127 (command not found) 를 반환.
-    현행 훅 구조는 이를 처리하지 않으므로 → rc=127 미작동(조용히 통과).
 
-    이는 G-6 결함: python3 단일 의존으로 python 부재 호스트에서 게이트 무력화.
-    S7 에서 정규화(`command -v python3 → python fallback`)로 수정될 예정.
+def _probe_interpreters(path_value: str) -> tuple[bool, bool]:
+    """주어진 PATH 하 (python3 존재, python 존재) 실측 — mock seam 자체를 검증 (ADR-171).
 
-    본 테스트는 현행 거동 그대로 pin: rc=127 부작동을 기록.
-    독립 함수로 분리하여 S7 재-pin 시 비교 용이.
+    seam 이 실제로 원하는 상태를 만들었는지 확인하지 않으면 "게이트가 작동해서 통과"와
+    "seam 이 안 걸려서 통과"가 구별되지 않는다.
     """
+    proc = subprocess.run(
+        [_BASH, "-c",
+         "command -v python3 >/dev/null 2>&1 && echo Y || echo N; "
+         "command -v python >/dev/null 2>&1 && echo Y || echo N"],
+        capture_output=True, text=True, env={**os.environ, "PATH": path_value},
+    )
+    lines = proc.stdout.split()
+    assert len(lines) == 2, f"probe 실패: {proc.stdout!r} {proc.stderr!r}"
+    return lines[0] == "Y", lines[1] == "Y"
+
+
+def test_repin_g6_python3_absent_python_present_gate_active(tmp_path):
+    """(재-pin G-6) python3 부재 + python 존재 → 게이트 **정상 작동** (exit 2).
+
+    구 거동은 `exec python3` 단일 의존이라 rc=127 (게이트 무력화 + transcript error notice).
+    정규화 후에는 python fallback 으로 판정이 살아난다 (inactive → active 강화).
+    """
+    shim = tmp_path / "python"
+    shim.write_text('#!/bin/sh\nexec "%s" "$@"\n' % sys.executable.replace("\\", "/"),
+                    encoding="utf-8", newline="\n")
+    shim.chmod(0o755)
+
+    path_value = os.pathsep.join([str(tmp_path)] + _bash_bin_dirs())
+    has_py3, has_py = _probe_interpreters(path_value)
+    assert not has_py3, "seam 무효 — python3 가 여전히 PATH 에 있음"
+    assert has_py, "seam 무효 — python shim 이 PATH 에서 안 잡힘"
+
     payload = {
         "tool_name": "Bash",
         "tool_input": {"command": "echo test > ~/tempfile.txt"},
     }
-    # PATH 에서 python3 제거 (python 도 제거해 단수로 격리)
-    restricted_env = dict(os.environ)
-    # PATH 에서 python3/python 제거
-    path_list = restricted_env.get("PATH", "").split(os.pathsep)
-    # git bash python / usr/bin 제거
-    path_list = [p for p in path_list
-                 if "python" not in p.lower() and "usr" not in p]
-    restricted_env["PATH"] = os.pathsep.join(path_list)
+    rc, stderr = _run_hook(payload, env_overrides={"PATH": path_value})
 
-    rc, stderr = _run_hook(payload, env_overrides=restricted_env)
+    assert rc == 2, f"python fallback 미작동 — rc={rc} (기대 2). stderr: {stderr[:200]}"
+    assert "BLOCKED" in stderr, f"deny 메시지 부재: {stderr[:200]}"
 
-    # 현행: python3 command not found → rc=127
-    # 게이트가 작동하지 않으므로 위양성 allow(exit 0) 또는 rc=127 미작동
-    assert rc == 127 or rc == 0, f"Current behavior: rc={rc} (G-6 defect — python3 missing)"
 
-    # S7 에서 이 테스트는 재-pin: exit 2 로 변경될 것 (python fallback 정규화 후)
+def test_repin_g6_both_interpreters_absent_fail_open(tmp_path):
+    """(재-pin G-6) python3·python 둘 다 부재 → fail-open **exit 0** (127 아님).
+
+    hook 계약 정의역 {0, 2} 밖 종료 코드(127)를 내지 않는 것이 본 재-pin 의 핵심.
+    게이트 미작동 자체는 현행과 동일 (델타 = 종료 코드 정규화 · ModuleArch 이의 2 잔존 declare).
+    """
+    path_value = os.pathsep.join(_bash_bin_dirs())
+    has_py3, has_py = _probe_interpreters(path_value)
+    assert not has_py3 and not has_py, f"seam 무효 — python3={has_py3}, python={has_py}"
+
+    payload = {
+        "tool_name": "Bash",
+        "tool_input": {"command": "echo test > ~/tempfile.txt"},
+    }
+    rc, stderr = _run_hook(payload, env_overrides={"PATH": path_value})
+
+    assert rc == 0, f"인터프리터 부재 fail-open 위반 — rc={rc} (기대 0, 특히 127 금지)"
+    assert rc != 127, "rc=127 = hook 계약 정의역 밖 (transcript error notice 가시)"
 
 
 def test_bypass_env_suppresses_guard():

@@ -24,4 +24,12 @@ if [ ! -f "${PYTHON_SSOT}" ]; then
   exit 0
 fi
 
-exec python3 "${PYTHON_SSOT}" "$@"
+if command -v python3 >/dev/null 2>&1; then
+  exec python3 "${PYTHON_SSOT}" "$@"
+elif command -v python >/dev/null 2>&1; then
+  exec python "${PYTHON_SSOT}" "$@"
+fi
+# python 부재 → fail-open (guard 미차단). 구 `exec python3` 단일 의존은 python3 부재 호스트에서
+# rc=127 (hook 계약 정의역 {0,2} 밖 + transcript error notice 가시) 을 냈다 — sibling 패턴
+# (check-worktree-location-guard.sh) 과 동일 형태로 정규화 (CFP-2965 판정 2 / R-19).
+exit 0
