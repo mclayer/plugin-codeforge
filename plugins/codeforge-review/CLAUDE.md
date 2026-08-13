@@ -35,9 +35,13 @@ Story §9 / GitHub comment / gate label / phase transition 은 전부 **Orchestr
 | EMPTY-WRITE-SET(synthesis-only) | 없음 — repo 트리 내 code·docs 직접 write 공집합 |
 
 > **위 공집합은 "어떤 파일도 write 하지 않는다" 가 아니다** — 본 lane `agents/` 의 6 agent md
-> (4 PL + 2 worker) 는 **전부** `Edit/Write(.claude-work/doc-queue/**)` 제출 권한을 보유하고,
-> 이 규약은 live 다 (`invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7) = required
-> 게이트. wrapper 측 서술 = `docs/orchestrator-playbook.md` "두 축 분리"). 다만 그 제출 경로는
+> (4 PL + 2 worker) 는 **전부** `Edit/Write(.claude-work/doc-queue/**)` 제출 권한을 보유한다.
+> 이 규약은 **각 agent frontmatter 선언 층에서 참**이다 (6/6 실측). 단 ★기계 집행은 아니다★:
+> `invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7)는 정의역이
+> **wrapper 루트 `agents/*.md`** 인데(`:136`) wrapper 는 0 core 에이전트라 그 스텝은
+> `exit 0` 으로 **skip** 한다 `[실측]` — plugin 하위 `agents/` 는 검사 대상이 아니다.
+> ⇒ "required 게이트로 live 집행"이 아니라 ★**"선언은 참, 집행 채널 부재"**★ 가 정확하다.
+> (wrapper 측 서술 = `docs/orchestrator-playbook.md` "두 축 분리".) 다만 그 제출 경로는
 > `.gitignore:6` (`.claude-work/`) 로 무시되는 in-flight 큐(추적 파일 0)이지 repo 트리의
 > code·docs 가 아니다. 또 위 표는 NG-8 겹침 검사가 읽는 **정의역**인데, doc-queue 는 agent
 > frontmatter 권한 축에만 선언될 뿐 6 lane 표 어디에도 등재돼 있지 않아 겹침 비교 대상이 아니다.
@@ -54,8 +58,12 @@ GitHub comment, gate label, phase transition 전부 Orchestrator 소관이다.
 > 반대로 이 토큰을 두고 실 경로를 나열하면 `empty_sentinel_contradiction` RED 이고,
 > **allowlist(`_DECLARED_EMPTY_ALLOWLIST`) 밖 lane 이 토큰을 달면 `sentinel_not_allowlisted` RED** 다.
 > ★정직 천장★: 토큰 자체는 "무엇도 막지 못한다" — 막는 것은 코드측 allowlist 이며,
-> 그 명단 확장은 **코드 diff(리뷰 표면)** 를 반드시 거친다. "escape-hatch 불가"가 아니라
-> **"자기선언만으로는 승격 불가"** 가 정확한 주장이다.
+> 그 명단 확장은 **코드 diff(리뷰 표면)** 를 거친다. 정확한 주장은
+> ★**"sentinel 토큰 축에서 자기선언만으로는 `declared_empty` 승격 불가"**★ 이며 그 범위를 넘지 않는다.
+> ★표 행의 *내용*은 검사되지 않으므로★, lane 이 실 경로 행을 지우고 슬래시·별표를 포함한
+> 임의 행 1개(`N/A` · `docs/` · **실재하는 무관 경로**까지)를 남기면 그 lane 의 write_set 은
+> 1원소로 줄고 게이트는 `PASS` 한다 `[실측 확인]`. 즉 "자기 doc 편집만으로 유리한 판정을
+> 얻을 수 없다"가 **아니라**, "sentinel 경로로는 승격할 수 없다" 까지가 보증 범위다.
 
 Story §10 FIX Ledger append 는 **Orchestrator 단독** (CFP-32 monopoly).
 
