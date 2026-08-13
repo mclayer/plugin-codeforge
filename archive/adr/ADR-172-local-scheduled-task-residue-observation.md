@@ -116,7 +116,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 | worktree 격리 토글 | **OFF** | ON 은 실행마다 worktree 를 만드는데 **생성 위치·회수 주체가 둘 다 미확인**이다. 잔재 스캔 도메인에 생기면 매 보고가 자기 소음이 되고, workspace root 에 생기면 유일한 삭제 허용 root 에 자기 발밑을 넣는다. **미확인은 안전 근거가 아니다** |
 | 작업 디렉터리 | **기존 main 체크아웃** | **INV-OBS: 관측자는 자기 관측 도메인에 새 객체를 추가하지 않는다.** 이미 존재하는 객체라 신규 0 |
 | 긴급 정지 | **2-플래그 OR, fail-closed** | 기존 repo-resident 플래그는 **활성화에 커밋이 필요**해 즉시성이 없다. 신규 로컬 플래그를 **scratch 밖**(`~/.claude/worktree-gc-state/`)에 둔다 — scratch 에 두면 TTL purge 가 7일 뒤 **정지 장치를 조용히 삭제**한다 |
-| 생존 감시 | **로컬 세션 시작 축 watchdog** | 클라우드 역구조는 성립하나 **겨냥이 틀리다** — 승인 대기 정지와 앱 미상주를 구별할 정보가 없어 머신 오프 구간을 전부 오탐한다 |
+| 생존 감시 | **로컬 세션 시작 축 watchdog** — heartbeat 기록 주체·시점은 **결정론 CLI 의 정상 종료**로 고정 | 클라우드 역구조는 성립하나 **겨냥이 틀리다** — 승인 대기 정지와 앱 미상주를 구별할 정보가 없어 머신 오프 구간을 전부 오탐한다. **기록 주체는 결정의 load-bearing 부분이다** — 세션이 heartbeat 를 기록하면 CLI 를 기동조차 못한 실행도 fresh 기록을 남겨 watchdog 이 **구조적 false-negative**(관측자가 죽었는데 살아 있다고 보고)가 된다 |
 
 ### §결정 7 — 선행 결정과의 관계
 
@@ -149,6 +149,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 - `scripts/lib/check_codeforge_scratch_ttl.py` — `GC_DRY_RUN` 게이트 2
 - `scripts/lib/check_harness_temp_residue.py` — `TEMP_GC_DELETE_ENABLED` default-off 게이트 3
 - `scripts/lib/scheduled_task_reconcile.py` — **Phase 2 신설.** 결정론 reconcile·dedup·마커·**보고 채널 발화** 배선 (§결정 5). 발화 주체는 본 CLI 단일이며 세션은 채널에 쓰지 않는다
+- `hooks/session-start-scheduled-task-watchdog` — **Phase 2 신설.** 생존 감시 hook(기존 `hooks/session-start-gc-catchup` 복제 형상). heartbeat 는 본 hook 이 **판독**만 하고 **기록은 위 CLI 의 정상 종료 시점**이 담당한다 (§결정 6)
 - `docs/orchestrator-playbook.md` — 비대화형 호출 계약 서브섹션 + ADR-128 정의역 mirror 5 anchor (§결정 7)
 - `skills/worktree-lifecycle/SKILL.md` — 정본 절차 SSOT, 부트스트랩 지목 대상 (§결정 2)
 - `~/.claude/scheduled-tasks/<task-name>/SKILL.md` — 작업 프롬프트. **repo 밖 user-level**
