@@ -3,6 +3,11 @@
 # PreToolUse(Bash) hook for codeforge plugin — self-agent description INJECTION
 #
 # Carrier: CFP-2587 Phase 2 (ADR-143 §결정 4 render-line prefix + ADR-115 §결정 3 sibling disjoint)
+# 경량화: CFP-2965 S4 (Change Plan §3.3 ①) — python 3회 → 1회 통합.
+#   구 구조는 payload parse 용 `python -c` ×2 + `bash scripts/kst-render-stamp.sh` fork(그 안의
+#   dirname·date) + checker python 1회 = 프로세스 9/호출. 판정 3종(tool_name guard / TOP-LEVEL
+#   agent_type 추출·EXCLUDE / KST stamp)을 checker 의 `--inject-bash` 모드로 흡수해 4/호출.
+#   판정 규칙·산출 계약(G1-G5)은 무변경 — 호출 계보만 축약.
 #
 # 책임 경계 (SRP = description injection ONLY):
 #   - 책임: subagent 안 Bash 호출의 tool_input.description 에 렌더-줄 프리픽스
@@ -15,7 +20,7 @@
 #           branch delete/merge gate (git-branch-delete-merge-gate). 본 hook 은 deny 안 함 (updatedInput only).
 #           reminder(additionalContext) 미emit — Bash = §7.3 reminder 비대상 (Agent spawn 창만 전환-priming).
 #
-# EXCLUDE (§7.7-3): top-level Bash (payload TOP-LEVEL agent_type 부재) → exit 0.
+# EXCLUDE (§7.7-3): top-level Bash (payload TOP-LEVEL agent_type 부재) → 무방출 (checker 판정).
 #   dispatcher/Orchestrator 이름은 절대 주입 금지. agent_type 은 subagent 안 Bash 호출에만 present
 #   (spike fixtures 실측: bash-in-subagent.json=agent_type present / bash-top-level.json=absent).
 #
@@ -28,10 +33,10 @@
 #   (a) set -uo pipefail + trap 'exit 0' ERR — 어떤 fail 도 Bash tool block 금지
 #   (b) filesystem touch 0 (stdin/stdout/stderr 만 — no >, >>, mkdir, rm, mv, cp)
 #   (c) network call 0
-#   (d) Python 호출 — 외부 .py 파일 (heredoc 금지, ADR-061 Amendment 3)
+#   (d) Python 호출 — 외부 .py 파일 1회 (heredoc·`python -c` 금지, ADR-061 Amendment 3)
 #
 # Graceful degradation (전부 exit 0, no stdout):
-#   payload 부재 / Python 부재 / tool_name≠Bash / agent_type 부재 / kst 부재 / helper 부재 / parse 실패.
+#   payload 부재 / Python 부재 / tool_name≠Bash / agent_type 부재 / KST 산출 실패 / helper 부재 / parse 실패.
 #
 # Bypass:
 #   BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT=1 → stderr audit echo + exit 0
@@ -65,42 +70,8 @@ if [ -z "$PYTHON_CMD" ]; then
   exit 0
 fi
 
-# ── tool_name==Bash guard (아니면 exit 0 — matcher 안전망) ─────────────────────
-TOOL_NAME="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
-import json, sys
-try:
-    print(json.load(sys.stdin).get('tool_name', ''), end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-if [ "$TOOL_NAME" != "Bash" ]; then
-  exit 0
-fi
-
-# ── AGENT_TYPE = payload TOP-LEVEL agent_type (NOT tool_input) ────────────────
-# §7.7-3 EXCLUDE: agent_type 부재/빈값 → exit 0 (top-level Bash = dispatcher/Orchestrator, 주입 금지).
-AGENT_TYPE="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
-import json, sys
-try:
-    v = json.load(sys.stdin).get('agent_type', '')
-    print(v if isinstance(v, str) else '', end='')
-except Exception:
-    pass
-" 2>/dev/null || true)"
-if [ -z "$AGENT_TYPE" ]; then
-  exit 0
-fi
-
-# ── KST render stamp (fallback empty — 실패 시 build_injected_description 이 skip) ──
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
-STAMP=""
-if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" ]; then
-  STAMP="$(bash "${PLUGIN_ROOT}/scripts/kst-render-stamp.sh" 2>/dev/null || true)"
-elif [ -f "scripts/kst-render-stamp.sh" ]; then
-  STAMP="$(bash "scripts/kst-render-stamp.sh" 2>/dev/null || true)"
-fi
-
 # ── check_spawn_description_prefix.py resolve (PLUGIN_ROOT path with cwd fallback) ──
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
 DESC_CHECKER=""
 if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py" ]; then
   DESC_CHECKER="${PLUGIN_ROOT}/scripts/lib/check_spawn_description_prefix.py"
@@ -118,6 +89,8 @@ fi
 #   줄(model-emitted 원본)에 미도달 → 본 주입 목적 = 실행-계층 정확성(backup). 로직 무변경.
 # 출력 = updatedInput 병합 JSON (또는 skip 시 no stdout). fail-open: 어떤 실패도 exit 0.
 # ★ F5 (CFP-2587 FIX-2): --bypass-env = Bash 표면 전용 env (Agent env 와 disjoint — bleed 방지).
-printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject --subject "$AGENT_TYPE" --kst-stamp "$STAMP" --bypass-env BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT 2>/dev/null || true
+# ★ CFP-2965 S4: --inject-bash = tool_name guard + TOP-LEVEL agent_type subject + KST stamp
+#   in-process 산출까지 흡수한 Bash 표면 모드 (구 python -c ×2 + kst bash fork 대체).
+printf '%s' "$PAYLOAD" | "$PYTHON_CMD" "$DESC_CHECKER" --inject-bash --bypass-env BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT 2>/dev/null || true
 
 exit 0

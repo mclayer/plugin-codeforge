@@ -4,7 +4,8 @@
 (exit_code, stdout_bytes, stderr_nonempty) triple 로 pin.
 
 목적: 훅 리팩터링 이전 기준선 확정 (S0 특성화와 동일 강도).
-비-ASCII 특성화: 한글 description payload → 현행 mojibake updatedInput 산출 pin.
+비-ASCII pin: 한글 description·command payload → UTF-8 무손상 updatedInput (S4 재-pin —
+  구 특성화 "현행 mojibake 산출" 은 의도된 결함 수정으로 폐기, 아래 재-pin 블록 참조).
 
 계약: exit code + stdout bytes (정확 비교) + stderr 유무 (boolean).
 """
@@ -12,7 +13,6 @@
 from __future__ import annotations
 
 import json
-import locale
 import os
 import re
 import shutil
@@ -58,6 +58,25 @@ def _run_hook(
     proc = subprocess.run(
         [_BASH, str(hook_path)],
         input=payload_json.encode("utf-8"),
+        capture_output=True,
+        env=env,
+    )
+    return proc.returncode, proc.stdout, len(proc.stderr) > 0
+
+
+def _run_hook_utf8_raw(hook_name: str, payload: dict) -> tuple[int, bytes, bool]:
+    """비-ASCII pin 전용 실행기 — payload 를 **raw UTF-8 바이트**로 stdin 에 투입.
+
+    `_run_hook` 은 json.dumps(ensure_ascii=True) 이라 비-ASCII 가 \\uXXXX 로 이스케이프되어
+    stdin 바이트가 순수 ASCII 가 된다 → 훅의 stdin 디코딩 결함(locale cp949)을 **관측 불가**.
+    본 helper 는 ensure_ascii=False + UTF-8 인코딩으로 실제 한글 바이트를 흘려 판별력을 확보한다
+    (ASCII 계약 축 corpus 는 `_run_hook` 그대로 — 기존 pin 입력 바이트 무변경).
+    """
+    env = dict(os.environ)
+    env["CLAUDE_PLUGIN_ROOT"] = str(WORKTREE_ROOT)
+    proc = subprocess.run(
+        [_BASH, str(HOOKS_DIR / hook_name)],
+        input=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
         capture_output=True,
         env=env,
     )
@@ -147,66 +166,83 @@ def test_golden_corpus_posttooluse_capture_ascii():
     assert stdout == b""
 
 
-# ============================================================ 비-ASCII 특성화 pin
+# ============================================================ 비-ASCII pin (S4 재-pin)
+#
+# 재-pin 선언 (의도 변경 — 사고 아님, Change Plan §3.1 판정 6 / §8.1 P2-1):
+#   구 pin = "한글 description → 현행 mojibake updatedInput" 특성화 (cp949 locale skipif).
+#   S4 가 checker 의 stdin/stdout 을 raw-byte UTF-8 로 명시 강제해 mojibake wrong-value 를 제거
+#   → 같은 커밋에서 "한글 무손상" 으로 재-pin. 틀린 값이 계약이었던 적이 없으므로 §1 byte-계약
+#   저촉 0 (ADR-143 INV-B4 "never wrong-value" 로의 복귀 = 강화 방향).
+#   skipif 제거 근거: UTF-8 을 코드에서 명시하므로 결과가 host locale 무관 (platform-invariant).
 
 
-@pytest.mark.skipif(
-    locale.getpreferredencoding(False).lower() not in ("cp949", "euc-kr"),
-    reason="mojibake 기전 = cp949/euc-kr preferred encoding 한정 (Windows 한국어 locale) — 타 locale은 현행도 UTF-8 정상",
-)
-def test_characterization_inject_korean_description_mojibake():
-    """(특성화) 비-ASCII: 한글 description → 현행 mojibake updatedInput pin (cp949 locale 한정).
+def test_repin_inject_korean_description_utf8_lossless():
+    """(재-pin, S4) 비-ASCII description: 한글 무손상 UTF-8 updatedInput.
 
-    payload-noprefix.json 의 description: "[DeveloperAgent] 08/14 HH:MM:SS - git status 확인"
-    한글 "확인" 이 포함됨.
-
-    현행 거동 (cp949 locale): inject 훅이 cp949 stdin decode → updatedInput 의 description 이
-    mojibake 로 오염 (예: "확인" → "?솗?씤" — UTF-8 "확인" 을 cp949 decode한 결과).
-
-    본 테스트는 현행 거동 그대로 pin: mojibake suffix 가 발생함을 구조적으로 기록.
-    S4 에서 UTF-8 io 강제 후 재-pin 시 한글 무손상으로 변경될 예정.
+    payload-noprefix.json 의 description = "git status 확인" (한글 포함).
+    raw UTF-8 바이트로 stdin 투입 (_run_hook_utf8_raw) — 판별력 확보.
 
     구조적 assert (timestamp 비결정성 대응):
-    - description regex: `^\[DeveloperAgent\] \d{2}/\d{2} \d{2}:\d{2}:\d{2} - git status \?솗\?씤$`
-      (timestamp 형상만 검증, 정확 시각 무시 — 실행마다 달라짐)
-    - command: verbatim unchanged (ASCII 무손상, P1-5 관측 한계 명기)
-    - rc: 0
-
-    Platform 조건성 (PL 판정 2026-08-14):
-    - Windows 한국어 locale (cp949): mojibake 발현 — skip 아닌 PASS
-    - Linux/macOS 또는 타 locale (UTF-8): 정상 처리 — skip
+    - description = `[DeveloperAgent] MM/DD HH:MM:SS - git status 확인` (끝 = 한글 원문 그대로)
+    - mojibake 부재 (구 산출 "?솗?씤" / U+FFFD replacement 문자 0)
+    - command verbatim (G3 whole-echo)
     """
     payload = _load_payload("payload-noprefix.json")  # 한글 description
-    rc, stdout, has_stderr = _run_hook("pretooluse-bash-description-inject", payload)
+    rc, stdout, has_stderr = _run_hook_utf8_raw("pretooluse-bash-description-inject", payload)
 
     assert rc == 0, f"Expected exit 0, got {rc}"
     assert stdout != b"", "Expected stdout JSON"
 
-    # stdout 파싱
-    out_json = json.loads(stdout)
+    out_json = json.loads(stdout)  # bytes → UTF-8 로 파싱
     ui = out_json["hookSpecificOutput"]["updatedInput"]
     desc = ui.get("description", "")
     cmd = ui.get("command", "")
 
-    # 구조적 assert: description 형상 + mojibake suffix 또는 정상 UTF-8
-    # PL 재현(2026-08-14): cp949 locale 에서 mojibake 발현 ("?솗?씤")
-    # 현행 동작: description 유지, 정상 UTF-8 또는 mojibake suffix 둘 다 가능
-    # assert regex: timestamp 형상만 검증, 정확 시각 무시 (실행마다 다름)
-    #
-    # 패턴: `[DeveloperAgent] MM/DD HH:MM:SS - git status [확인|?솗?씤|(other)]`
-    description_pattern = r"^\[DeveloperAgent\] \d{2}/\d{2} \d{2}:\d{2}:\d{2} - git status"
-    assert re.match(description_pattern, desc), \
-        f"Expected description prefix pattern, got: {desc}"
+    original_desc = payload["tool_input"]["description"]          # "git status 확인"
+    assert re.match(r"^\[DeveloperAgent\] \d{2}/\d{2} \d{2}:\d{2}:\d{2} - ", desc), \
+        f"Expected render prefix, got: {desc}"
+    assert desc.endswith(" - " + original_desc), \
+        f"한글 손실 — description 이 원문으로 끝나지 않음: {desc!r}"
+    assert "?솗?씤" not in desc, f"구 mojibake 재발: {desc!r}"
+    assert "�" not in desc, f"replacement 문자 오염: {desc!r}"
 
-    # mojibake 또는 정상 UTF-8 확인 (둘 다 현행 유효)
-    # PL 호스트: mojibake ("?솗?씤" suffix)
-    # 본 호스트: 정상 UTF-8 ("확인" suffix) 또는 이들의 조합
-    assert ("확인" in desc or "?솗?씤" in desc or "?" in desc), \
-        f"Expected Korean characters or mojibake in description: {desc}"
-
-    # command 는 전체 payload command verbatim (현행 whole-echo G3 무손상)
+    # command 는 payload command verbatim (whole-echo G3 무손상)
     assert cmd == payload["tool_input"]["command"], \
         f"Command should be unchanged: got {cmd}, expected {payload['tool_input']['command']}"
+
+
+def test_repin_inject_non_ascii_command_field_lossless():
+    """(재-pin, S4 / P1-5) 비-ASCII **command** 필드 무손상.
+
+    구 특성화의 "command 무손상" 관측은 ASCII-한정이었다 (재현 payload 의 command 가 ASCII).
+    whole-echo 구조상 stdin 디코딩이 깨지면 실행 입력(command)도 동일하게 오염되므로,
+    비-ASCII command 를 실제로 흘려 전 필드 무손상을 pin 한다 (과일반화 철회 후 실검증).
+    """
+    payload = {
+        "tool_name": "Bash",
+        "agent_type": "DeveloperAgent",
+        "tool_input": {
+            "command": "echo '한글 인자 テスト' # 주석",
+            "description": "설명 확인",
+            "extra_field": "보존 대상 필드",
+        },
+    }
+    rc, stdout, has_stderr = _run_hook_utf8_raw("pretooluse-bash-description-inject", payload)
+
+    assert rc == 0, f"Expected exit 0, got {rc}"
+    assert stdout != b"", "Expected stdout JSON"
+
+    hso = json.loads(stdout)["hookSpecificOutput"]
+    ui = hso["updatedInput"]
+
+    assert ui["command"] == payload["tool_input"]["command"], \
+        f"비-ASCII command 손실: {ui['command']!r}"
+    assert ui["extra_field"] == payload["tool_input"]["extra_field"], \
+        f"비-ASCII 잔여 필드 손실: {ui['extra_field']!r}"
+    assert ui["description"].endswith(" - " + payload["tool_input"]["description"]), \
+        f"비-ASCII description 손실: {ui['description']!r}"
+    assert "�" not in json.dumps(ui, ensure_ascii=False), "replacement 문자 오염"
+    assert "permissionDecision" not in hso, "G4 위반"
 
 
 # ============================================================ 체인 동형성 (7종 all path)
