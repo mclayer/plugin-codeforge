@@ -1,0 +1,33 @@
+# fuzz corpus for scheduled_task_reconcile — input_surface 7 class
+# Seed 2949: fixed-seed corpus for deterministic regression testing
+# Each line is a test case (path string)
+
+# Class ① UNC (Windows network path)
+\\?\UNC\server\share\folder\file.txt
+\\server\share\resource
+
+# Class ② Unicode (NFC/NFD, combining characters, surrogate pairs)
+~/.claude/worktrees/café-NFC
+~/.claude/worktrees/cafe-NFD
+~/.claude/worktrees/日本語経路
+~/.claude/worktrees/한글경로/중첩
+
+# Class ③ Username in path middle
+~/AppData/Local/mccho/claude/worktrees/oldstale
+~/.local/share/username/temp/cache
+
+# Class ④ Drive letter (Windows)
+C:\Users\alice\.claude\worktrees\project
+D:\data\archive\workspace\orphan
+
+# Class ⑤ Symbolic link (represented as path with → or traversal)
+~/.claude/worktrees/symlink→target
+~/.claude/worktrees/../worktrees/parent-escape
+
+# Class ⑥ Length 260+ (Windows path limit boundary)
+~/.claude/codeforge-scratch/very_long_directory_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+# Class ⑦ Embedded newline, pipe, control chars (escaped for corpus format)
+~/.claude/worktrees/has-pipe|symbol
+~/.claude/worktrees/trailing-space
+~/.claude/worktrees/	tab-indent
