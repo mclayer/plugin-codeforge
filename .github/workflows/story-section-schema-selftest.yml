@@ -33,7 +33,11 @@ jobs:
   story-section-schema-selftest:
     if: github.repository == 'mclayer/plugin-codeforge'
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
-    timeout-minutes: 10
+    # CP §7.4.4 초안은 10 이었다. 실행 lane 확보(AC 명명 테스트 추가)로 실측 비용이 늘어 20 으로 상향한다:
+    #   T3 직접 ~30s + harness(T3 재실행) ~50s + AC-9 뮤턴트(T3 재실행) ~20s
+    #   + AC-10 선언적 reconcile --dry-run 2 fixture × 약 2분 = 약 4분  ⇒ 합계 약 6~7분(로컬 실측 기준).
+    # 10 은 느린 러너에서 timeout-RED 여지가 있어 상한만 넓힌다(억제 아님). A4.1' 비용표 갱신 대상.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
