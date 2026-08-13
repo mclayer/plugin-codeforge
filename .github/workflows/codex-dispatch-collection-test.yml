@@ -101,12 +101,25 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          # ★ fetch-depth: 0 필수 — scope-discovery §3(A13-7) 이 `origin/main` ref **와** 그 시점
-          #   blob(`origin/main:scripts/lib/check_codex_companion_timeout_presence.py`)으로 pre-GREEN
-          #   사정권 값을 판독해 "사정권 확대가 load-bearing" 임을 대조한다. 부재 시 **skip 이 아니라
-          #   FAIL** 이다 [verified: tests/scripts/test_codex-dispatch-scope-discovery.sh:248-269 —
-          #   else 분기 = `bad "A13-7 pre-GREEN 대조" "origin/main ref 또는 대상 blob 미존재 …"`].
-          #   기본 fetch-depth: 1 은 remote-tracking `origin/main` 을 만들지 않아 born-red 가 된다.
+          # ★ fetch-depth: 0 — **소비처 2곳**이 서로 다른 과거 객체를 읽는다. 어느 쪽도 부재 시
+          #   born-red 가 아니라 **SKIP / 기준선 열화**로 조용히 판정력만 잃는다 (green 인데 안 본다).
+          #   그 침묵을 막는 것이 이 설정의 실제 값이다.
+          #   ① scope-discovery §3(A13-7) = **불변 SHA 객체**
+          #      `e27478677…:scripts/lib/check_codex_companion_timeout_presence.py` 로 pre-Story 사정권
+          #      값을 읽어 "사정권 확대가 load-bearing 이었다"를 대조한다. `origin/main` 은 **읽지 않는다**
+          #      (움직이는 ref 로 두면 merge 직후 자기소멸형 oracle → 영구 RED, 그래서 SHA 고정).
+          #      객체 부재 = **SKIP**(FAIL 아님 — 관측 불가와 미입증을 가르는 의도된 결박)
+          #      [verified: tests/scripts/test_codex-dispatch-scope-discovery.sh:277-278 상수 /
+          #       :283-287 `cat-file -e` 실패 → `skip "A13-7 pre-Story 고정 시점 대조"` /
+          #       `origin/main` 은 :266-267 **주석 2줄뿐, 실행행 0**].
+          #   ② outpath-preflight G2/G3 = `git merge-base HEAD origin/main` 으로 브랜치 base 를 도출해
+          #      편집 전 blob 과 대조 → **remote-tracking `origin/main` 이 필요**하다. ref 부재 = G2/G3
+          #      **SKIP**, ref 는 있고 merge-base 산출만 실패 = 움직이는 ref 로 **기준선 열화**(경고 발화,
+          #      FAIL 아님) [verified: tests/scripts/test_codex-outpath-preflight.sh:734-747 base 도출 /
+          #       :743-745 열화 fallback / :775-776 `skip "G2/G3 편집 전 대조"`].
+          #   ⇒ 기본 fetch-depth: 1 은 ① 의 고정 SHA 객체도 ② 의 remote-tracking ref 도 주지 않는다.
+          #   ★ 바로 아래 `Verify …` step 은 **② 축(origin/main ref + blob)만** fail-closed 로 덮는다 —
+          #     ① 의 고정 SHA 객체 부재는 그 guard 를 통과해 SKIP 으로 흘러가므로, A13-7 은 로그 확인 축.
           fetch-depth: 0
 
       - name: Set up Python
