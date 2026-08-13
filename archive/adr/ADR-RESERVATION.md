@@ -687,6 +687,24 @@ amendments_reserved:
     reserved_by_cfp: CFP-2949
     reservation_date: 2026-08-13 KST
     status: active   # ArchitectPLAgent commit time 점유 (CFP-2949 Phase 1 설계 PR carrier — ADR-172 신규 발급: 로컬 스케줄 작업 기반 세션-독립 잔재 관측 — 도입기 관측-only 와 승격 게이트). adr_number claim (신규 ADR — ADR-133 §결정 4 fallback: OCC primitive 미실행, firsthand max 검증 경유). verified-via `git ls-tree origin/main archive/adr/` numeric max = ADR-171 (총 171 entry) + ADR-RESERVATION.md 전수 max adr_number = 171 → next = 172 collision 0. 병렬 plugin-codeforge open PR 2건 firsthand 실측 = #2952(cfp-2926 → archive/adr/ADR-044) · #2917(cfp-2914 → archive/adr/ADR-031·ADR-064) 로 **전부 기존 번호 amendment, 신규 adr_number claim 0** → 충돌 0. dual-key 3-leg: filename `ADR-172-local-scheduled-task-residue-observation.md` ∧ frontmatter `adr_number: 172` ∧ 본 row 172. worktree base SHA = 3a7cae2f3 (origin/main firsthand, branch cfp-2949-routines). status reserved 미경유 직접 active (ArchitectPLAgent Phase 1 설계 carrier — ADR-038 Amendment 6 row (CFP-2702) ArchitectPL 직접 active 선례 정합). sunset_justification: null (신규 governance 정책 ADR — permanent policy, ADR-058 §결정 5 강화 방향: 관측-only 게이트 + lever 계상 금지 조건 신설로 통제 강화, 약화 0).
+
+  - adr_number: 115
+    amendment_id: 2
+    reserved_by_cfp: CFP-2948
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectPLAgent 설계리뷰 iter2 FIX 회차 **소급 append** (CFP-2948 Phase 1 설계 PR carrier — ADR-115 Amendment 2: §결정 6 scope 5번째 hook 종 `PreToolUse(matcher:"Workflow")` 편입). ★**1-G 준수 상태 = 미이행(소급 기록)**★ — ADR-082 Amd 17 sub-scope 1-G 행위의무 4-tuple 중 (a) `pre`-append 는 시점상 충족 불가능하며(amendment 실물이 커밋 `a42b305a5` 로 선착지), (b) spawn prompt `pre_reserved_amendment_slots` field 도 미발행이었다. ★본 row 는 의무 이행이 아니라 **레지스트리가 실 점유 상태를 반영하게 만드는 기록 복구**★이며, 효력은 **장래 세션의 동명 slot race 차단**(forward-looking)에 한정된다 — 사후 append 는 이미 발생한 창을 소급해 닫지 못한다. (c) cross-verify = carrier_story CFP-2948 ↔ 실 write 매핑 확인 / (d) `pre_reservation_verified: false` (정직 값 — true 로 적지 않는다). verified-via firsthand: `grep -nE "^  - amendment_id: [0-9]+" archive/adr/ADR-115-runtime-hook-enforcement.md` → max = 2 ∧ 본문 `### Amendment 2 (CFP-2948)` 절 실재 ∧ 본 registry 전수 `adr_number: 115` row 0건(중복 append 0). 처분 근거 SSOT = Change Plan §12.B `CP-8`.
+
+  - adr_number: 141
+    amendment_id: 9
+    reserved_by_cfp: CFP-2948
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectPLAgent 설계리뷰 iter2 FIX 회차 **소급 append** (CFP-2948 Phase 1 설계 PR carrier — ADR-141 Amendment 9: `Workflow` 채널 tier 집행 = negative 형태[`model` 미지정 의무]). ★**재채번 이력 병기**★ — 저작 시점 번호는 `Amendment 8` 이었으나 CFP-2944 가 동명 번호를 origin/main 에 선착지시켜 **9 로 재채번**됐다 — ★본 row 가 막았어야 했을 정확히 그 race 가 실제로 발생한 사례★(1-G 미이행의 실측 대가, 추정 아님). ★**1-G 준수 상태 = 미이행(소급 기록)**★ — (a) pre-append 미충족 ∧ (b) spawn prompt field 미발행 ∧ (d) `pre_reservation_verified: false`. verified-via firsthand: `grep -nE "^## Amendment [0-9]+" archive/adr/ADR-141-all-opus-single-tier.md | tail -1` → `## Amendment 9 (CFP-2948 …)` ∧ 본 registry 전수 `adr_number: 141` row 0건. 처분 근거 SSOT = Change Plan §12.B `CP-8`.
+
+  - adr_number: 170
+    amendment_id: 1
+    reserved_by_cfp: CFP-2948
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectPLAgent 설계리뷰 iter2 FIX 회차 **소급 append** (CFP-2948 Phase 1 설계 PR carrier — ADR-170 Amendment 1: §결정 1 spawn 채널 집합 기술정정 [`Agent` ∪ `Workflow`]). ★**1-G 준수 상태 = 미이행(소급 기록)**★ — (a) pre-append 미충족 ∧ (b) spawn prompt field 미발행 ∧ (d) `pre_reservation_verified: false`. ★**원자적 OCC 미적용 정직 기술**★ — ADR-133 A1-5 가 *"amendment_id slot deferred — adr_number only"* 로 두었으므로 본 3 row 는 **수기 append 경로**이며 Contents API OCC 로 직렬화되지 않는다 — 즉 본 append 는 ★동시 세션 race 를 기계적으로 차단하지 못하고 선언적 점유 표시에 그친다★(이 사실을 강화된 것처럼 쓰지 않는다). verified-via firsthand: `grep -nE "^## Amendment [0-9]+" archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md` → `## Amendment 1 (CFP-2948, 2026-08-13)` 단일 ∧ 본 registry 전수 `adr_number: 170` row 0건. 처분 근거 SSOT = Change Plan §12.B `CP-8`.
 ```
 
 ## 해소 기준
