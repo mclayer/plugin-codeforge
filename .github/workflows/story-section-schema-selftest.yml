@@ -37,7 +37,12 @@ jobs:
     #   T3 직접 ~30s + harness(T3 재실행) ~50s + AC-9 뮤턴트(T3 재실행) ~20s
     #   + AC-10 선언적 reconcile --dry-run 2 fixture × 약 2분 = 약 4분  ⇒ 합계 약 6~7분(로컬 실측 기준).
     # 10 은 느린 러너에서 timeout-RED 여지가 있어 상한만 넓힌다(억제 아님). A4.1' 비용표 갱신 대상.
-    timeout-minutes: 20
+    #
+    # ★ 45 로 재상향: AC-10 선언적 경로가 `reconcile-overlay.sh --dry-run` 을 2 fixture 로 실제
+    #   실행하는데, 이 호스트(Windows/MSYS)에서 1회 런타임이 **약 2분~9분+ 로 변동**했다(실측).
+    #   ubuntu 러너는 MSYS fork 오버헤드가 없어 더 빠를 것으로 보이나 **측정하지 않았다** —
+    #   추정으로 상한을 좁히지 않고 넉넉히 잡는다(상한 확대는 실행 억제가 아니다).
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
