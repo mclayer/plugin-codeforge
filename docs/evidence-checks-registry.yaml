@@ -4458,6 +4458,12 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★CI 판정 범위 정직 declare (구현리뷰 FIX iter1 / F-CR-003)★: CI 호출은 `--self-test` 단일이며
+      `--executed-before` (X(before) 스냅샷) 를 전달하지 않는다 ⇒ CI 경로의 실효 술어는 ★L1 1-leg★ 이고
+      L2 보존은 `not_measured` (게이트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
+      ⇒ M2(검사 unit 을 선언·실행 양쪽에서 통째 삭제)는 CI 에서 미검출이다. 미설계가 아니라 ★미배선★ —
+      공급자는 Story AC-4 가 이미 지명(before = 순차 대조군 1회, AC-2a 와 공유). L2 CI 배선 carrier:
+      deferred_followup_cfp: CFP-2960
     detect_command: python3 scripts/lib/check_census_oracle.py --repo-root .
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
@@ -5019,6 +5025,15 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★CI 스텝 판정 = INCONCLUSIVE 고정 (범주 B — 수정 가능·이연)★: 배선은 살아 있으나 입력 정의가
+      부당하다. 결함은 ★3축★ 이며 ⓑ 만 고치면 거짓 RED 가 옮겨갈 뿐이다 (Orchestrator firsthand 실측):
+        ⓐ expected 집합 정의 — workflow 파일 수 ≠ 그 커밋이 트리거하는 run 집합
+        ⓑ `gh run list` 기본 20 절단 (`--limit 100` → 87)
+        ⓒ workflow 1개가 run 2개를 낳는다 (87 run / 고유 이름 84) — count 대 count 비교 자체가 불성립
+      산술 코어는 판별력이 있다(5/5 → exit 0, 5/2 → exit 1) — 고칠 것은 코어가 아니라 입력 정의다.
+      범주 A(구조적 판정 불가: NG-5/13/16/17)와 구별해 `CI_INCONCLUSIVE_FIXABLE_DEFERRED` 로 분리 등재했고,
+      carrier 없이 그 목록에 올리는 것을 금지한다(결함의 면제 둔갑 차단). 입력 정의 3축 정정 carrier:
+      deferred_followup_cfp: CFP-2958
     detect_command: python3 scripts/lib/check_ci_run_completeness.py --repo-root .
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0

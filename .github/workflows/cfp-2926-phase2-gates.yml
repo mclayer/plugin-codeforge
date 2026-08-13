@@ -76,6 +76,15 @@ env:
   # 선언 = 면제가 아니라 "돌리지 않음"의 명시다. 각 항목의 실 검증면은 해당 step 주석에 있다.
   # NG-17: no_comparison_worktree — fresh CI checkout 에는 비교 대상 sibling worktree 가
   #        구조적으로 존재 불가 (실 검증면 = tests/unit/cfp_2926/test_ng17_sentinel.py).
+  # ── 범주 A: ★구조적 판정 불가★ — CI 에 입력이 존재할 수 ★없다★. 해소 경로 없음.
+  #   NG-5/NG-13 = caller-supplied predicate (고정 대상 패킷·envelope 부재)
+  #   NG-16/NG-17 = fresh CI checkout 에 비교 대상이 구조적으로 부재
+  CI_INCONCLUSIVE_STRUCTURAL: "NG-5 NG-13 NG-16 NG-17"
+  # ── 범주 B: ★수정 가능·이연★ — 입력은 존재하나 검사기의 ★입력 정의★ 가 부당하다.
+  #   해소 경로가 있으므로 A 와 같은 통에 두면 "결함이 면제로 둔갑" 한다 ⇒ 범주 분리.
+  #   ★carrier 없이 본 목록 등재 금지★ (등재하려면 CFP 번호를 동반해야 한다)
+  CI_INCONCLUSIVE_FIXABLE_DEFERRED: "NG-18"   # deferred_followup_cfp: CFP-2958
+  # ── A ∪ B = 기존 bijection 대상 (reconcile 3곳 무변경 — 값 동일)
   CI_INCONCLUSIVE_DECLARED: "NG-5 NG-13 NG-16 NG-17 NG-18"
   # ★ratchet 사망 명시 (정직 천장 — F-CR-002)★
   # 위 5종 중 ★step 안에 `rc=3` 을 리터럴로 박은★ 게이트 목록. 이들은 스크립트 rc 를
@@ -122,6 +131,14 @@ jobs:
         if: always()
         run: |
           set -u
+          # ★CI 판정 범위 정직 declare★ — 본 호출은 `--self-test` 단일이고
+          #   `--executed-before` (X(before) 스냅샷) 를 전달하지 않는다.
+          #   ⇒ CI 경로의 실효 술어 = ★L1 1-leg★ 이며 L2 보존은 `not_measured` 다
+          #     (스크립트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
+          #   ⇒ M2(검사 unit 을 선언·실행 양쪽에서 통째 삭제)는 ★CI 에서 미검출★ 이다.
+          #   미설계가 아니라 ★미배선★ 이다 (공급자는 Story AC-4 가 이미 지명: before =
+          #   순차 대조군 1회, AC-2a 와 공유). 배선 carrier:
+          #     deferred_followup_cfp: CFP-2960
           python3 scripts/lib/check_census_oracle.py --self-test || rc=$?
           rc=${rc:-0}
           case $rc in
@@ -693,7 +710,16 @@ jobs:
           #   ⇒ ★산술 코어 자체는 살아 있다★ (실측: `--expected 5 --actual 5` → exit 0
           #     `ci_run_count_complete` / `--expected 5 --actual 2` → exit 1 `ci_run_count_mismatch`).
           #     고쳐야 할 것은 코어가 아니라 ★입력 정의★다 (expected·actual 의 양 자체) —
-          #     그 정정은 본 스텝 소관 밖(스크립트 변경 필요)이라 후속 과제로 남긴다.
+          #     그 정정은 본 스텝 소관 밖(스크립트 변경 필요)이라 명명 carrier 로 이연한다:
+          #       deferred_followup_cfp: CFP-2958
+          #   ★입력 정의 결함은 위 ⓐ·ⓑ 2축이 아니라 3축이다★ (Orchestrator firsthand 실측):
+          #     ⓐ expected 집합 정의 (workflow 파일 수 ≠ 그 커밋이 트리거하는 run 집합)
+          #     ⓑ `gh run list` 기본 20 절단 (`--limit 100` → 87)
+          #     ⓒ ★workflow 1개가 run 2개를 낳는다★ (87 run / 고유 이름 84) —
+          #       count 대 count 비교 자체가 성립하지 않는다. ⓑ 만 고치면 거짓 RED 가
+          #       `20 < 117` 에서 `87 < 117` 로 ★옮겨갈 뿐★ 게이트는 여전히 틀린다.
+          #   ⇒ 그래서 "1-file 수정" 이 아니며 본 FIX 범위 밖이다. 범주 = B(수정 가능·이연,
+          #     `CI_INCONCLUSIVE_FIXABLE_DEFERRED`) — 범주 A(구조적 판정 불가)와 구별된다.
           python3 scripts/lib/check_ci_run_completeness.py \
             --repo-root . \
             --commit "$NG18_COMMIT" > /tmp/ng18.json 2> /tmp/ng18.err || rc=$?

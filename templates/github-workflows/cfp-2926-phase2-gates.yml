@@ -76,7 +76,30 @@ env:
   # 선언 = 면제가 아니라 "돌리지 않음"의 명시다. 각 항목의 실 검증면은 해당 step 주석에 있다.
   # NG-17: no_comparison_worktree — fresh CI checkout 에는 비교 대상 sibling worktree 가
   #        구조적으로 존재 불가 (실 검증면 = tests/unit/cfp_2926/test_ng17_sentinel.py).
+  # ── 범주 A: ★구조적 판정 불가★ — CI 에 입력이 존재할 수 ★없다★. 해소 경로 없음.
+  #   NG-5/NG-13 = caller-supplied predicate (고정 대상 패킷·envelope 부재)
+  #   NG-16/NG-17 = fresh CI checkout 에 비교 대상이 구조적으로 부재
+  CI_INCONCLUSIVE_STRUCTURAL: "NG-5 NG-13 NG-16 NG-17"
+  # ── 범주 B: ★수정 가능·이연★ — 입력은 존재하나 검사기의 ★입력 정의★ 가 부당하다.
+  #   해소 경로가 있으므로 A 와 같은 통에 두면 "결함이 면제로 둔갑" 한다 ⇒ 범주 분리.
+  #   ★carrier 없이 본 목록 등재 금지★ (등재하려면 CFP 번호를 동반해야 한다)
+  CI_INCONCLUSIVE_FIXABLE_DEFERRED: "NG-18"   # deferred_followup_cfp: CFP-2958
+  # ── A ∪ B = 기존 bijection 대상 (reconcile 3곳 무변경 — 값 동일)
   CI_INCONCLUSIVE_DECLARED: "NG-5 NG-13 NG-16 NG-17 NG-18"
+  # ★ratchet 사망 명시 (정직 천장 — F-CR-002)★
+  # 위 5종 중 ★step 안에 `rc=3` 을 리터럴로 박은★ 게이트 목록. 이들은 스크립트 rc 를
+  # 받지 않으므로 ★영원히 0/1 이 될 수 없고★, 각 reconcile 의 역방향 ratchet-UP 루프
+  # ("선언됐는데 0/1 을 냈으면 allowlist 에서 빼라")가 ★구조적으로 발화 불가★ 하다.
+  #   ⇒ 그 루프의 "통과" 는 이 3종에 한해 ★동어반복★ 이다. 각 reconcile 요약이 이를 자백한다.
+  # 왜 각각 ratchet 밖인가:
+  #   NG-5  : caller-supplied packet 부재 (CI 에 고정 대상 패킷 없음) — 실검증면 = 명명 테스트
+  #   NG-13 : caller-supplied envelope 부재 (동상) — 실검증면 = 명명 테스트
+  #   NG-18 : 배선은 살아 있으나 expected/actual 이 서로 다른 양 → 거짓 RED 회피용 고정 선언
+  # ★대조군★: NG-16·NG-17 은 같은 allowlist 에 있으나 실제 스크립트 rc 를 받는다 —
+  #   판정 가능해지면 0/1 이 나오고 ratchet-UP 이 실제로 발화한다 (이 축은 살아 있다).
+  # 목록의 ★조용한 확장★ 은 'Frozen rc=3 subset assert' 스텝이 막는다 (코드 diff 강제).
+  #   선례 형상 = scripts/lib/check_ng_registry_bijection.py 의 NON_NG_REGISTRY_NAMES frozenset.
+  CI_RC3_FROZEN: "NG-5 NG-13 NG-18"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -108,6 +131,14 @@ jobs:
         if: always()
         run: |
           set -u
+          # ★CI 판정 범위 정직 declare★ — 본 호출은 `--self-test` 단일이고
+          #   `--executed-before` (X(before) 스냅샷) 를 전달하지 않는다.
+          #   ⇒ CI 경로의 실효 술어 = ★L1 1-leg★ 이며 L2 보존은 `not_measured` 다
+          #     (스크립트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
+          #   ⇒ M2(검사 unit 을 선언·실행 양쪽에서 통째 삭제)는 ★CI 에서 미검출★ 이다.
+          #   미설계가 아니라 ★미배선★ 이다 (공급자는 Story AC-4 가 이미 지명: before =
+          #   순차 대조군 1회, AC-2a 와 공유). 배선 carrier:
+          #     deferred_followup_cfp: CFP-2960
           python3 scripts/lib/check_census_oracle.py --self-test || rc=$?
           rc=${rc:-0}
           case $rc in
@@ -258,10 +289,62 @@ jobs:
             3) echo "::notice::NG-9 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
+      - name: Frozen rc=3 subset assert (ratchet 사망 명시 — workflow 전역)
+        if: always()
+        env:
+          CI_RC3_FROZEN: ${{ env.CI_RC3_FROZEN }}
+          CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
+        run: |
+          set -u
+          # ★무엇을 막는가★: 리터럴 `rc=3` 게이트는 역방향 ratchet-UP 이 영구 발화 불가라
+          #   자동 승격 감지가 없다. 그렇다면 최소한 ★그 집합이 조용히 커지는 것★ 은 막아야 한다.
+          #   선례 형상 = check_ng_registry_bijection.py NON_NG_REGISTRY_NAMES frozenset
+          #   (조용한 skip 경로 부재 — 확장하려면 코드 diff 로 이름을 명시해야 한다).
+          # ★무엇을 못 막는가 (정직 천장)★: 이 스텝은 ★승격을 감지하지 못한다★.
+          #   NG-5/13/18 이 판정 가능해져도 리터럴이 남아 있는 한 아무도 붉어지지 않는다.
+          #   또한 추출은 `^ *rc=3$` 앵커 기반이라 `rc=3  # 주석` / 변수 경유 같은 변형은 놓친다.
+          WF=".github/workflows/cfp-2926-phase2-gates.yml"
+          if [ ! -f "$WF" ]; then
+            echo "::error::frozen rc=3 assert — workflow 파일 부재 ($WF). ★fail-closed★"
+            exit 1
+          fi
+          extracted=$(awk '
+            /^      - name: NG-[0-9]+/ { match($0, /NG-[0-9]+/); g = substr($0, RSTART, RLENGTH) }
+            /^ *rc=3$/ { if (g != "") print g }
+          ' "$WF" | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          frozen=$(echo "$CI_RC3_FROZEN" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          echo "extracted(리터럴 rc=3 실측) = [$extracted]"
+          echo "frozen   (CI_RC3_FROZEN 선언) = [$frozen]"
+          # 0건 추출 = 앵커 변형으로 검사가 무력화된 상태 ⇒ vacuous pass 금지 (RED)
+          if [ -z "$extracted" ]; then
+            echo "::error::리터럴 rc=3 추출 0건 — step 이름/들여쓰기 앵커 변형으로 본 검사가 무력화됐다. ★0 == 0 을 통과로 읽지 않는다★"
+            exit 1
+          fi
+          if [ "$extracted" != "$frozen" ]; then
+            echo "::error::frozen rc=3 subset 불일치 — 실측[$extracted] vs 선언[$frozen]. 리터럴 rc=3 의 추가/제거는 CI_RC3_FROZEN 코드 diff 를 반드시 동반해야 한다 (조용한 확장 봉인)."
+            exit 1
+          fi
+          # frozen ⊆ declared — 리터럴 rc=3 인데 INCONCLUSIVE 선언이 없으면 자기모순
+          for g in $frozen; do
+            case " $CI_INCONCLUSIVE_DECLARED " in
+              *" $g "*) ;;
+              *) echo "::error::$g 는 리터럴 rc=3 인데 CI_INCONCLUSIVE_DECLARED 에 부재 (자기모순)"; exit 1 ;;
+            esac
+          done
+          {
+            echo "### Frozen rc=3 subset — ratchet 사망 게이트"
+            echo ""
+            echo "리터럴 \`rc=3\` = 역방향 ratchet-UP 이 **구조적으로 발화 불가**한 게이트: \`$frozen\`"
+            echo ""
+            echo "- ✓ 실측 집합 == 선언 집합 (조용한 확장 0 — 확장하려면 \`CI_RC3_FROZEN\` 코드 diff 필요)"
+            echo "- ★못 하는 것★: 이 assert 는 **승격을 감지하지 않는다**. 위 게이트들이 판정 가능해져도 리터럴이 남아 있는 한 CI 는 침묵한다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Reconcile ng1-ng9
         if: always()
         env:
           CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
+          CI_RC3_FROZEN: ${{ env.CI_RC3_FROZEN }}
         run: |
           set -u
           echo "## NG-1 to NG-9 Results" >> $GITHUB_STEP_SUMMARY
@@ -325,8 +408,17 @@ jobs:
             fi
           done
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✓ NG-1~9 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "✓ NG-1~9 reconcile — **미선언 INCONCLUSIVE 0건**."
+            echo ""
+            echo "★판별 범위 정정 (구 문구 \"allowlist 양방향 bijection 통과\" 의 over-claim 철회)★"
+            echo ""
+            echo "- **정방향**(미선언 게이트가 3 을 냈는가) = 살아 있다."
+            echo "- **역방향**(선언 게이트가 0/1 로 승격했는가) = **NG-5 에 대해서는 동어반복**이다."
+            echo "  NG-5 는 step 안에 \`rc=3\` 을 **리터럴**로 박아 구조적으로 0/1 이 될 수 없다(\`CI_RC3_FROZEN\`)."
+            echo "  ⇒ 이 범위에서 역방향 통과는 NG-5 의 승격 여부에 대해 **아무것도 말하지 않는다**."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   gates-ng10-ng15:
     name: NG-10 to NG-15 (contract integrity + AC-3)
@@ -521,8 +613,17 @@ jobs:
             fi
           done
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✓ NG-10~15 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "✓ NG-10~15 reconcile — **미선언 INCONCLUSIVE 0건**."
+            echo ""
+            echo "★판별 범위 정정 (구 문구 \"allowlist 양방향 bijection 통과\" 의 over-claim 철회)★"
+            echo ""
+            echo "- **정방향**(미선언 게이트가 3 을 냈는가) = 살아 있다."
+            echo "- **역방향**(선언 게이트가 0/1 로 승격했는가) = **NG-13 에 대해서는 동어반복**이다."
+            echo "  NG-13 은 step 안에 \`rc=3\` 을 **리터럴**로 박아 구조적으로 0/1 이 될 수 없다(\`CI_RC3_FROZEN\`)."
+            echo "  ⇒ 이 범위에서 역방향 통과는 NG-13 의 승격 여부에 대해 **아무것도 말하지 않는다**."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   gates-ng16-ng21:
     name: NG-16 to NG-21 (runtime + doc/config)
@@ -609,7 +710,16 @@ jobs:
           #   ⇒ ★산술 코어 자체는 살아 있다★ (실측: `--expected 5 --actual 5` → exit 0
           #     `ci_run_count_complete` / `--expected 5 --actual 2` → exit 1 `ci_run_count_mismatch`).
           #     고쳐야 할 것은 코어가 아니라 ★입력 정의★다 (expected·actual 의 양 자체) —
-          #     그 정정은 본 스텝 소관 밖(스크립트 변경 필요)이라 후속 과제로 남긴다.
+          #     그 정정은 본 스텝 소관 밖(스크립트 변경 필요)이라 명명 carrier 로 이연한다:
+          #       deferred_followup_cfp: CFP-2958
+          #   ★입력 정의 결함은 위 ⓐ·ⓑ 2축이 아니라 3축이다★ (Orchestrator firsthand 실측):
+          #     ⓐ expected 집합 정의 (workflow 파일 수 ≠ 그 커밋이 트리거하는 run 집합)
+          #     ⓑ `gh run list` 기본 20 절단 (`--limit 100` → 87)
+          #     ⓒ ★workflow 1개가 run 2개를 낳는다★ (87 run / 고유 이름 84) —
+          #       count 대 count 비교 자체가 성립하지 않는다. ⓑ 만 고치면 거짓 RED 가
+          #       `20 < 117` 에서 `87 < 117` 로 ★옮겨갈 뿐★ 게이트는 여전히 틀린다.
+          #   ⇒ 그래서 "1-file 수정" 이 아니며 본 FIX 범위 밖이다. 범주 = B(수정 가능·이연,
+          #     `CI_INCONCLUSIVE_FIXABLE_DEFERRED`) — 범주 A(구조적 판정 불가)와 구별된다.
           python3 scripts/lib/check_ci_run_completeness.py \
             --repo-root . \
             --commit "$NG18_COMMIT" > /tmp/ng18.json 2> /tmp/ng18.err || rc=$?
@@ -749,8 +859,18 @@ jobs:
             fi
           done
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✓ NG-16~21 reconcile 완료 (allowlist 양방향 bijection 통과)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "✓ NG-16~21 reconcile — **미선언 INCONCLUSIVE 0건**."
+            echo ""
+            echo "★판별 범위 정정 (구 문구 \"allowlist 양방향 bijection 통과\" 의 over-claim 철회)★"
+            echo ""
+            echo "- **정방향**(미선언 게이트가 3 을 냈는가) = 살아 있다."
+            echo "- **역방향**(선언 게이트가 0/1 로 승격했는가) = **NG-18 에 대해서는 동어반복**이다."
+            echo "  NG-18 은 step 안에 \`rc=3\` 을 **리터럴**로 박아 구조적으로 0/1 이 될 수 없다(\`CI_RC3_FROZEN\`)."
+            echo "- ★대조군★ **NG-16·NG-17 은 다르다** — 같은 allowlist 에 있으나 실제 스크립트 rc 를 받으므로"
+            echo "  판정 가능해지면 0/1 이 나오고 역방향 ratchet 이 **실제로 발화한다**. 이 축은 살아 있다."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   gate-x16-bijection:
     name: X-16 registry NG rows to Story NG table bijection
