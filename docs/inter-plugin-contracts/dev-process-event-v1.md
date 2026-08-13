@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: dev-process-event
-version: "1.0"
+version: "1.1"
 schema_version: dev-process-event-v1
 status: Active
 canonical_repo: mclayer/plugin-codeforge
@@ -34,6 +34,11 @@ related_files:
   - scripts/lib/redact_dev_process_content.py         # capture-time redaction (redact — sibling)
 amendment_log:
   - id: A1
+    date: 2026-08-12
+    carrier: CFP-2926
+    class: version_bump  # v1.0 → v1.1 MINOR
+    change: "§2 index-tier 2 신규 optional field 추가 (18→20): writer_key(sha256 agent_id) · artifact_key(sha256 repo-relative normalized path). 경로 원문 저장 금지 (T-INFO-8 index tier free-form 차단 불변식 무손상, redacted-blob tier 만 문자열 허용). actor/session_id raw 미저장 선례 REUSE (T-DPE-6 hash-only 불변식). additive optional 필드만 추가 (backward-compat, ADR-008 §결정 2). SSOT = ADR-155 설계(§6 redacted-blob-store) + inline-write-gate 검증 sourcing(AC-10)."
+  - id: A0
     date: 2026-07-25
     carrier: CFP-2817 (Epic #2814 W1 P0-1)
     class: amendment_log-only  # no version bump — 18필드·event_id 산식·allow-list 무변경
@@ -67,9 +72,9 @@ attribution:
 
 **상충 지점 명시(AC-18)**: index=content-free ↔ Story 가 요구하는 rich content(프롬프트·diff·findings·산출물)는 index row 스키마로는 수용 불가 — 이 긴장을 2계층으로 화해한다(index 는 여전히 content-free, blob 은 redaction-후 산물 → no-conflict).
 
-## 2. Schema (index tier — 18 필드 Allow-list ONLY)
+## 2. Schema (index tier — 20 필드 Allow-list ONLY)
 
-각 index-tier row = **18 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §6 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
+각 index-tier row = **20 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §6 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
 
 | # | 필드 | 타입 | nullable | 적용 event_type | 설명 |
 |---|---|---|---|---|---|
@@ -91,8 +96,10 @@ attribution:
 | 16 | `defect_type` | string (SEMI-OPEN) \| null | nullable | defect_finding / fix_transition | taxonomy — review-verdict-v4 type-derived ∪ `unknown-type`(fallback). 그 외 = null |
 | 17 | `time_to_detection` | number \| `"unattributed"` \| null | nullable | defect_finding | taxonomy — **DERIVED measure**(ordinal lane-distance ∨ ts-delta). 도입점 불명 = `unattributed`. 그 외 = null |
 | 18 | `detecting_lane` | enum (lane_label) \| null | nullable | defect_finding | taxonomy — 결점 검출 lane(lane_label enum, CLOSED). 그 외 = null |
+| 19 | `writer_key` | sha256 string \| null | nullable | rich payload 보유 event | **`sha256(agent_id)`**. agent_id 원문 저장 절대 금지(index tier hash-only, T-DPE-6). agent_id 는 hook 입력에 실재(hooks/pretooluse-inline-write-gate firsthand). 그 외 = null |
+| 20 | `artifact_key` | sha256 string \| null | nullable | rich payload 보유 event | **정규화한 repo-relative 경로의 sha256**. 경로 원문 저장 절대 금지(index tier free-form 금지, T-INFO-8 차단). 그 외 = null |
 
-> **Phase 2 = doc↔code parity SSOT**: 위 18 필드 순서·멤버 = `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS`(Python-hardcoded EXTERNAL code anchor)와 **byte-consistent** 해야 한다. wave-2 parity self-test = 본 §2 table(동적 파싱) vs `_ROW_KEYS`(동적 파싱) 대조 — **born-drift = FAIL**(doc vs code, `check_self_context_telemetry_allowlist.py` S1 external-anchor 구조 선례).
+> **Phase 2 = doc↔code parity SSOT**: 위 20 필드 순서·멤버 = `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS`(Python-hardcoded EXTERNAL code anchor)와 **byte-consistent** 해야 한다. wave-2 parity self-test = 본 §2 table(동적 파싱) vs `_ROW_KEYS`(동적 파싱) 대조 — **born-drift = FAIL**(doc vs code, `check_self_context_telemetry_allowlist.py` S1 external-anchor 구조 선례).
 
 ### 2.1 declared allow-list (permitted index field names)
 
@@ -102,7 +109,8 @@ index tier 에 저장 가능한 필드명 allow-list(닫힌 목록). **§2 필�
 event_id · schema_version · event_type · emit_source · timestamp_utc ·
 story_key · lane_label · consumer_scope · defect_id · fix_id · blob_ref ·
 redaction_applied · redaction_count · redaction_rules_fired ·
-defect_family · defect_type · time_to_detection · detecting_lane
+defect_family · defect_type · time_to_detection · detecting_lane ·
+writer_key · artifact_key
 ```
 
 각 원소의 값 유형은 enum / numeric / sha256-hash / 상관 ID / blob-ref / emit_source discriminator 중 하나로만 제한된다(free-form content = 0, AC-7). append primitive 는 이 allow-list 밖 kwarg 를 **drop** 한다(content-blind — `append_dev_process_event.build_row`).

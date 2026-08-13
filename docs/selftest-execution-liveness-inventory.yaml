@@ -34,6 +34,25 @@
 #   직전 CFP-2635 test_check-shell-test-masking.sh shell-test masking self-test) = 39 레코드. dead 레코드 0
 #   (silent-un-run 봉인 — bucket A backfill / bucket B agent_runtime / bucket C·D manual_registered 로 전수 enroll).
 #   ★ 메타-게이트는 count 상수를 강제하지 않음 — tests/scripts/*.sh ↔ 레코드 bijection(AC-1a)으로 전수 enroll 검증.
+#
+# ── CFP-2926 §11.A.9 (i) 판정 기록 (2026-08-12) — ★신규 레코드 0건, 사유 명시★ ──────────────
+#   요구: ADR-154 §결정 8 "신규 게이트 self-test 를 ADR-151 인벤토리에 1행 enroll(8-field REUSE)".
+#   본 인벤토리의 ★정의역★(scripts/lib/check_selftest_execution_liveness.py `_check_corpus`
+#   실독 — `tests_dir = repo_root/"tests"/"scripts"` + `tests_dir.glob("*.sh")`)은
+#   ★`tests/scripts/*.sh` 단독★ 이며 bijection 은 ★양방향★ 이다:
+#     · 파일 있는데 레코드 없음 → AC-1a RED (silent-un-run root)
+#     · ★레코드 있는데 파일 없음 → AC-1a RED (record→missing file)★
+#   CFP-2926 이 실제로 착지시킨 신규 게이트 21종(NG-1~NG-21)의 self-test 는
+#   ★`tests/unit/cfp_2926/test_*.py` (pytest)★ 로 착지했고, ADR-154 §결정 8 5-piece chain ⑤
+#   (`tests/scripts/test_*.sh`)는 ★본 Story 에서 미구축★ 이다. 커밋 시점 실측 =
+#   `ls tests/scripts/*.sh | wc -l` → 76 ∧ 본 파일 레코드 76 ⇒ bijection 균형.
+#   ⇒ 여기에 pytest 경로나 미존재 `.sh` 경로를 1행이라도 넣으면 ★record→missing file 로 즉시
+#   AC-1a RED★ 가 되어, (i) 가 막으려던 "본 Story 가 남의 게이트를 RED 로 만든다"를 ★정확히
+#   그대로 실현★ 한다(실증 = 본 Story mutant M-D, exit 1).
+#   ⇒ ★판정 = 부분 이행(레코드 0) + 잔여 명시★. 잔여 = 5-piece chain ⑤ 미구축이므로 enroll 대상이
+#   존재하지 않음. `.sh` self-test 가 뒤늦게 착지하면 ★그 시점에 본 파일에 1행 enroll 의무★가
+#   되살아난다(그 전까지는 enroll 할 대상이 없다는 사실이지 면제가 아니다).
+#   ★조용한 미이행이 아니라 문면 기록★ — 다음 독자가 "왜 CFP-2926 은 0행인가"를 여기서 판정 가능.
 
 self_tests:
 

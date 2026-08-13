@@ -1,0 +1,120 @@
+# CFP-2926 / AC-5 (NG-2) — fan-out 주체 문면 축 수동 attestation.
+#
+# 소비자 = scripts/lib/check_fanout_subject_prose.py.
+# 스캐너가 주어 축을 자동 분류하지 못한(`unknown`) site 만 여기에 수동 분류한다.
+# ★여기 없는 불명 site 는 스캐너가 INCONCLUSIVE 를 낸다 — 자동 GREEN 흡수 0.★
+#
+# 규약:
+#   - `anchor` 는 그 줄의 **verbatim 부분문자열**이다. ★줄번호 금지★ — 인접 줄 편집으로
+#     번호가 밀려도 앵커는 살아있어야 한다.
+#   - attestation 은 **자기신고**다. 진위는 기계 검사 불가(리뷰 판정 축). 단 스캐너가
+#     `pl` 로 자동 분류한 site 를 `preserve` 로 신고하는 whitelist 남용은 기계 거부된다
+#     (`attestation_cannot_whitelist_pl_axis`).
+#   - axis 값 공간: worker | teammate | team | pl | agent_specific | not_applicable
+#   - disposition 값 공간: preserve | remove
+#
+# 축 분포 (본 파일): worker 9 / agent_specific 4 / pl 1 / not_applicable 1 = 15.
+# disposition 분포: preserve 14 / remove 1 (remove = 위 pl 축 1건).
+
+version: "1.0"
+carrier_story: CFP-2926
+
+attestations:
+  # ── worker 축 (에이전트 자기-제약 = "이 워커는 직접 subagent 를 못 띄운다") ──
+  # P-1 canonical(`plugins/codeforge-review/CLAUDE.md`)과 같은 class. preserve.
+  - file: plugins/codeforge-pmo/agents/GitOpsAgent.md
+    anchor: "**제약**: 본 에이전트는 직접 sub-agent spawn 불가"
+    axis: worker
+    disposition: preserve
+    rationale: 주어 = 본 에이전트(GitOpsAgent, worker) 자기-제약. INV-L4 worker 축 preserve.
+
+  - file: plugins/codeforge-pmo/agents/GitOpsAgent.md
+    anchor: "- **직접 sub-agent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: 같은 파일 `## 제약` 목록의 worker 자기-제약 재기술. preserve.
+
+  - file: plugins/codeforge-pmo/agents/PMOAgent.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: PMOAgent `## 제약` 목록의 worker 자기-제약. dispatch 주체 분리 근거라 preserve.
+
+  - file: plugins/codeforge-pmo/docs/architecture/codeforge-pmo.md
+    anchor: "> 2 agent 간 직접 sub-agent spawn 불가"
+    axis: worker
+    disposition: preserve
+    rationale: GitOpsAgent↔PMOAgent sibling worker 간 상호 spawn 금지 서술. worker 축 preserve.
+
+  - file: plugins/codeforge-requirements/agents/ChangeImpactAgent.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: ChangeImpactAgent = worker. 자기-제약 preserve.
+
+  - file: plugins/codeforge-requirements/agents/ContinuityAgent.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: ContinuityAgent = worker. 자기-제약 preserve.
+
+  - file: plugins/codeforge-requirements/agents/DomainAgent.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: DomainAgent = worker. 자기-제약 preserve.
+
+  - file: plugins/codeforge-requirements/agents/FeasibilityAgent.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: FeasibilityAgent = worker. 자기-제약 preserve.
+
+  - file: plugins/codeforge-requirements/agents/codex-proactive-check.md
+    anchor: "- 직접 스폰 불가"
+    axis: worker
+    disposition: preserve
+    rationale: codex-proactive-check = 외부위임 worker. 자기-제약 preserve.
+
+  # ── agent_specific 축 (특정 named 에이전트 한정 서술) ──
+  - file: docs/orchestrator-playbook.md
+    anchor: "verdict judge** 로 transcript 수신·판정만(self-spawn 불가"
+    axis: agent_specific
+    disposition: preserve
+    rationale: 주어 = PMOAgent 개별 지정(verdict judge 역할 한정). 일반 PL 규범 아님 — preserve.
+
+  - file: plugins/codeforge-pmo/CLAUDE.md
+    anchor: "Orchestrator inline(ADR-170 §결정18 재귀 가드, self-spawn 불가"
+    axis: agent_specific
+    disposition: preserve
+    rationale: 주어 = PMOAgent(dispatch 주체 아님 서술). named agent 한정 — preserve.
+
+  - file: plugins/codeforge-requirements/agents/RequirementsPLAgent.md
+    anchor: "- 직접 스폰 불가"
+    axis: agent_specific
+    disposition: preserve
+    rationale: >-
+      주어 = RequirementsPLAgent(PL-host). 축은 PL 계열이나 본 Story 의 ⓐ 제거 목록 밖 —
+      처분 변경은 CFP-2926 범위 아님(범위 확대 = 설계 결정, Architect 소관). 현 상태 preserve 로 기록.
+
+  - file: plugins/codeforge-review/templates/review-pl-base.md
+    anchor: "- **직접 subagent 스폰 불가"
+    axis: agent_specific
+    disposition: preserve
+    rationale: >-
+      주어 = review lane PL(PL-host `## 제약` 목록). 위 RequirementsPLAgent 와 동일 class —
+      ⓐ 제거 목록 밖이라 범위 확대 금지, 현 상태 preserve 로 기록.
+
+  # ── pl 축 (제거 대상 — W7 문면 편집 소관) ──
+  - file: plugins/codeforge-design/CLAUDE.md
+    anchor: "top-level inline(ADR-170 §결정18/19, self-spawn 불가"
+    axis: pl
+    disposition: remove
+    rationale: Story ⓐ 제거 목록 등재 site. 주어 = ArchitectPL/lane PL 일반 — 제거 대상.
+
+  # ── not_applicable 축 (규범 서술 아님) ──
+  - file: plugins/codeforge-design/.claude-plugin/plugin.json
+    anchor: "dispatch 절의 '(ADR-039 §결정18/19, self-spawn 불가"
+    axis: not_applicable
+    disposition: preserve
+    rationale: plugin.json changelog 문자열(과거 변경 이력 인용). 현재 규범 서술 아님 — 편집 대상 아님.

@@ -2,7 +2,7 @@
 title: codeforge-requirements lane 구조 (요구사항 레인 — 사용자 요구 접수 → 통합 요구사항 명세)
 last_captured: 2026-07-24
 captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
-last_update_cfp: CFP-2884  # interfaces 축 갱신 — ADR-081 §결정 D16(Amendment 15) 의 본 lane 적용분 반영: RequirementsAnalystAgent heredoc 표면에 축 A env 2종(LC_ALL/PYTHONUTF8 별도 줄 export) + 구획 규약(heredoc 실값 슬롯 = 구획 B verbatim 보존 / 지시문 프레임 = 구획 A 이나 본 표면 한글 유지 — 영어화 의무는 CodexReviewAgent 한정) 배선. heredoc = promptfile class 아님(write 산출물 부재) → round-trip helper 내용 동일성 assert 비대상 = 보증 등급 차이 정직 공개. modules=N·boundaries=N·interfaces=Y·data_flow=N. 이전: CFP-2813  # stale 해소 실갱신 — 요구사항리뷰 lane 후행 삽입(ADR-125/159: lane exit = phase:요구사항-리뷰 + 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전) + PL·Researcher fable tier(ADR-141 Amd4) + ADR-166 read protocol G2 소비자 관점(요구 4종 mandatory 선행 read) + 본 doc 자신 = living-architecture-update per-PR 게이트 대상(ADR-078 Amd3/ADR-112 Amd1)
+last_update_cfp: CFP-2926  # boundaries 축 갱신 — self-write 표의 `.claude-work/doc-queue/` mechanism 을 **live 정본**으로 명시(CFP-2926 이 본 lane CLAUDE.md 에 동일 문면 추가). wrapper `docs/orchestrator-playbook.md` §11 "wrapper-side write queue 사용 안 함" 과 상반돼 보이던 것은 적용 대상 축이 disjoint(전자 = wrapper repo 자신 agent 0 축 / 후자 = lane plugin agent 제출 규약)이기 때문이며, 폐기 관계가 아니다. 기계 강제 = `.github/workflows/invariant-check.yml` doc-queue permission parity(CFP-7, required 게이트) — 산문 정합 + permission 층 결박 2중. NG-4 doc-queue 5-SSOT 교차 스캐너가 5 표면 간 미전파를 검출한다. modules=N·boundaries=Y·interfaces=N·data_flow=N. 이전: CFP-2884  # interfaces 축 갱신 — ADR-081 §결정 D16(Amendment 15) 의 본 lane 적용분 반영: RequirementsAnalystAgent heredoc 표면에 축 A env 2종(LC_ALL/PYTHONUTF8 별도 줄 export) + 구획 규약(heredoc 실값 슬롯 = 구획 B verbatim 보존 / 지시문 프레임 = 구획 A 이나 본 표면 한글 유지 — 영어화 의무는 CodexReviewAgent 한정) 배선. heredoc = promptfile class 아님(write 산출물 부재) → round-trip helper 내용 동일성 assert 비대상 = 보증 등급 차이 정직 공개. modules=N·boundaries=N·interfaces=Y·data_flow=N. 이전: CFP-2813  # stale 해소 실갱신 — 요구사항리뷰 lane 후행 삽입(ADR-125/159: lane exit = phase:요구사항-리뷰 + 사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전) + PL·Researcher fable tier(ADR-141 Amd4) + ADR-166 read protocol G2 소비자 관점(요구 4종 mandatory 선행 read) + 본 doc 자신 = living-architecture-update per-PR 게이트 대상(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -39,6 +39,8 @@ codeforge-requirements lane = **사용자 요구 접수 → 통합 요구사항 
 | ChangeImpactAgent · FeasibilityAgent · ContinuityAgent | Story §4.1 / §4.2 / §4.3 (code-context 3-row) | `.claude-work/doc-queue/` (write queue drain — PL 통합 시점) |
 | DomainAgent | `docs/domain-knowledge/domain/<area>/<topic>.md` (CFP-26 Phase 0a — owner direct write) | `Edit(docs/domain-knowledge/domain/**)` |
 | ResearcherAgent | `docs/domain-knowledge/concept/<slug>.md` (ADR-161) | `Edit(docs/domain-knowledge/concept/**)` |
+
+> **doc-queue 규약 = live 정본 (CFP-2926)**: 위 표의 `.claude-work/doc-queue/` mechanism(ChangeImpact·Feasibility·Continuity 3 sub 의 §4.1/§4.2/§4.3 제출 → PL 통합 시점 drain)은 **정본**이다. wrapper `docs/orchestrator-playbook.md` §11 의 "wrapper-side write queue 사용 안 함" 은 **wrapper repo 자신(agent 0)** 축 한정 서술이며, lane plugin agent 의 제출 규약을 폐기하지 않는다 — 두 문장이 같은 mechanism 을 두고 상반돼 보이던 것은 **적용 대상 축이 disjoint** 였기 때문이다. 기계 강제 = `.github/workflows/invariant-check.yml` 의 doc-queue permission parity(CFP-7, required 게이트) — 산문 정합에 더해 permission 층에서 결박된다.
 
 **scope partition** (lane 책임 경계):
 

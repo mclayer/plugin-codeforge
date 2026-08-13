@@ -24,7 +24,7 @@ codeforge core (>= 5.0.0) 의존.
 | `docs/adr/ADR-NNN-<slug>.md` | ArchitectAgent |
 | `docs/stories/<KEY>.md §3 ADR list mirror` | ArchitectAgent |
 | `docs/stories/<KEY>.md §7 보안 + §7.4 운영 리스크 mirror` | ArchitectAgent |
-| `docs/stories/<KEY>.md §11 데이터 마이그레이션 mirror` | ArchitectAgent |
+| `docs/stories/<KEY>.md §11.A 데이터 마이그레이션 mirror` (§11 자체 = pmo 소유 "참조/회고" — design 은 named subsection §11.A 만 write, CFP-2926) | ArchitectAgent |
 | GitHub comment `[설계]` prefix | ArchitectPLAgent |
 | `phase:설계` → `phase:설계-리뷰` transition | ArchitectPLAgent |
 | `docs/architecture/<path>.md` | ArchitectAgent (lane gate — ADR-078 §결정 1 4 영역 갱신 의무, 매 Change Plan merge 시) |
@@ -80,9 +80,9 @@ ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapp
 
 **충돌 해소**: 관점 충돌 시 ArchitectAgent (chief author) 가 결정 근거와 함께 Change Plan §2 · §3 · §7 · §7.4 · §11 에 명시. **chief tie-break ladder 3 단계**: (1) RACI lookup → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment carrier 발의.
 
-**설계 리팩터링 결정 방식 (CFP-2543 / ADR-138)**: RefactorAgent 구조 advocacy(구조 3축 (a)decoupling/(b)pattern/(c)interface-separation + repo-분해 escalation)의 반박·수용 판정 = Codex(proponent·발제)↔Claude(opponent·반대) `blanket_designrefactor` debate(설계-time per-Story 무조건 발동, min3/max5). dispatch = Orchestrator top-level inline(ADR-170 §결정18/19, self-spawn 불가). verdict judge = ArchitectAgent chief(3분기: now→§3 / defer→후속 Story / drop→ADR-119 §결정9 3문 게이트). RefactorAgent = advocacy input provider(verdict 주체 아님). `blanket_designrefactor` 는 `blanket_cross_module_designlane`(cross-module Story 전면 검증, 대칭)과 **disjoint** — 전자는 설계 리팩터 구조 축 per-Story + role_assignment 방향배정, 후자는 cross-module 산출물 blanket. 구현 리팩터링(blanket_refactor, verdict judge=PMOAgent, ADR-137)과도 axis-disjoint.
+**설계 리팩터링 결정 방식 (CFP-2543 / ADR-138)**: RefactorAgent 구조 advocacy(구조 3축 (a)decoupling/(b)pattern/(c)interface-separation + repo-분해 escalation)의 반박·수용 판정 = Codex(proponent·발제)↔Claude(opponent·반대) `blanket_designrefactor` debate(설계-time per-Story 무조건 발동, min3/max5). dispatch = Orchestrator top-level inline(ADR-170 §결정18/19) — **verdict-산출 adversarial peer dispatch = lead 소유 유지**(review-pl-base §1.6 적용 제외 (a) 동형: 대기 주체 ↔ 판정 주체 분리). lane PL 의 roster fan-out(ADR-170 §결정 19)과는 **disjoint 축**이다. verdict judge = ArchitectAgent chief(3분기: now→§3 / defer→후속 Story / drop→ADR-119 §결정9 3문 게이트). RefactorAgent = advocacy input provider(verdict 주체 아님). `blanket_designrefactor` 는 `blanket_cross_module_designlane`(cross-module Story 전면 검증, 대칭)과 **disjoint** — 전자는 설계 리팩터 구조 축 per-Story + role_assignment 방향배정, 후자는 cross-module 산출물 blanket. 구현 리팩터링(blanket_refactor, verdict judge=PMOAgent, ADR-137)과도 axis-disjoint.
 
-**DesignReviewPL 교차 체크**: ArchitectAgent 통합 판정 + ArchitectPLAgent 검수가 각 변호 근거를 근거 있게 일축·수용했는가 / 요건 범위를 넘지 않았는가 / §7 보안 설계와 §7.4 운영 리스크와 §11 데이터 마이그레이션이 충실히 반영되었는가 / ModuleArch (aggregate-level) ↔ DataArch cross-layer boundary 명시했는가.
+**DesignReviewPL 교차 체크**: ArchitectAgent 통합 판정 + ArchitectPLAgent 검수가 각 변호 근거를 근거 있게 일축·수용했는가 / 요건 범위를 넘지 않았는가 / §7 보안 설계와 §7.4 운영 리스크와 §11.A 데이터 마이그레이션이 충실히 반영되었는가 / ModuleArch (aggregate-level) ↔ DataArch cross-layer boundary 명시했는가.
 
 ## RACI 3-way overlap zone (wrapper SSOT mirror)
 

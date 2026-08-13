@@ -316,16 +316,15 @@ Layer 1 (thin) — role:dev / QADev spawn prompt 에 아래 2항 anchor 를 포�
 - **R5 trivial-read 면제 = LOCKED 비협상** — 1회성 trivial read(잔여 턴 미잔존)는 회피 재독 ≈ 0 이라 worker spawn 고정비 > 이득 → 순손실(hollow-gate). R5 누락 시 break-even 이 silently load-bearing.
 - 면제 임계값 수치 = impl-measured lock (G1 deferred — worker 1-spawn `cache_creation_input_tokens` 실측, spawn-event-v1).
 
-### env 캐리어 divergence + PL self-spawn 금지 (INV-1)
+### env 캐리어 divergence + PL roster spawn 권한 (INV-1)
 
-PL 은 worker 를 **스스로 spawn 할 수 없다** (re-entrancy 3종: 재귀 spawn 금지·nested team 금지·one-team-per-lead — 본 파일 "Operating environment" 섹션 + ADR-009 wrapper-only). 위임 mechanism:
+PL 은 lead 가 confine 한 **Story/lane scope 안에서 자기 design-time roster 의 worker 를 spawn 한다** ([ADR-170](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 19 — `lead → Story-teammate → lane PL → SubAgent`, depth 0→1→2 / ADR-044 Amendment 7). 금지되는 것은 **scope 밖 spawn · roster 외 agent spawn · teammate→teammate spawn** 이며, PL 의 roster fan-out 자체는 정본 경로다. 위임 mechanism:
 
 | env | 위임 캐리어 |
 |---|---|
 | env=1 (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) | PL → team worker **SendMessage** dispatch (self-contained) |
-| env=0 (미활성) | PL **work-request 반환** → **Orchestrator read-worker pre-spawn** (PL self-spawn 금지) |
+| env=0 (미활성) | worker dispatch 축의 정본 = **PL 직접 spawn**(ADR-170 §결정 19). **thin-PL READ 위임 축 한정**으로 PL work-request 반환 → Orchestrator read-worker pre-spawn 경로도 유효 |
 
-- 본 규약 prose 는 절대 "PL spawns workers" 로 표현하지 않는다 (env=0 = ADR-009 위반).
 - **INV-1**: env=0 carrier 가 self-do escape-hatch 가 되지 않는다 — Orchestrator pre-spawn 이 더 많은 step 이라는 이유로 PL 이 비-essential inline-read 를 하지 않는다 (carrier 만 다르고 의무 동일).
 
 ### 불변 보존 명문
@@ -339,9 +338,9 @@ enforcement = ADR-039 Amendment 8 §결정 9 D3 **advisory/warning-tier** + ADR-
 
 ## Operating environment (ADR-044)
 
-본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = Orchestrator가 PL 하위 agent 직접 spawn (PL은 synthesizer 유지, ADR-039).
+본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = PL 이 자기 design-time roster worker 를 직접 spawn (ADR-170 §결정 19; PL 은 synthesizer 역할 유지 — spawn 권한 보유 ≠ raw 직접 read 허용).
 
-**Re-entry 제약 3종** (env=0/1 공통 — ADR-039/ADR-044): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.
+**Re-entry 제약 3종** (env=0/1 공통 — ADR-170/ADR-044): **worker(depth-2) 자가-spawn 금지**(ADR-139 INV-L4 — PL 자신의 roster spawn 은 ADR-170 §결정 19 로 허용) · nested team 금지 · one-team-per-lead.
 
 ## 자율 병렬 결정 tree (parallel-dispatch-protocol-v1 §5)
 

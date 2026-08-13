@@ -2,7 +2,7 @@
 title: codeforge-design lane 구조 (설계 레인 — Change Plan + ADR 확정)
 last_captured: 2026-07-24
 captured_at_sha: 14ac6b9b3  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2813 §3.4)
-last_update_cfp: CFP-2813  # stale 해소 실갱신 — roster 6+3+1 정합(CFP-1126/ADR-042 Amd10: AggregateArch deprecated → ModuleArch boundary axis unified, agents/ 실측 14 file) + model tier 실측 반영(ADR-141: opus default + fable 2[PL·chief] + sonnet 4 + haiku 1) + inter-plugin 계약 wrapper 단일 원본(ADR-118 D5 — sibling sync 폐지) + ADR 경로 archive/adr(wrapper, CFP-2661 D13) + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1 — 본 lane 이 write 주체) + ADR-166 read protocol(G1 ArchitectAnalyst·G2 CodebaseMapper). 이전 = CFP-2539 (RefactorAgent (d)reusability 측정 축 → 구현 리팩터링(Story C) 이관 + repo-분해 구조 escalation 존치, ADR-042 Amendment 18)
+last_update_cfp: CFP-2926  # boundaries 축 갱신 — (a) Lane self-write 표 `Story §11` → `§11.A`(§11 자체 = codeforge-pmo 참조/회고 소유 — 두 소유자가 같은 번호를 주장하던 충돌의 부모-자식 정합화, 소유 이전 아닌 granularity 분리. Change Plan 내부 번호 §11.1-§11.6 은 별 축이라 무접촉) (b) spawn 위임 topology 절 신설 — ADR-170 §결정 19 / ADR-044 Amendment 7 의 `lead → Story-teammate → lane PL → SubAgent`(depth 0→1→2) 위상에서 본 lane 은 리뷰 4 lane 이 아니라 verdict-산출 peer dispatch 제외 비대상, 단 RefactorAgent `blanket_designrefactor` debate(Codex↔Claude)는 verdict-산출 adversarial peer dispatch 라 Orchestrator top-level inline 소유 존치(본 lane CLAUDE.md 명시). ★정직 declare★ — §데이터 흐름 flow 블록 및 lane CLAUDE.md 산문은 여전히 `ADR-039 flat spawn` 세대 서술이며 CFP-2926 은 위상 **허용**만 열었을 뿐 본 lane 실 dispatch 주체 전환은 미landing(허용 ≠ 전환, 전환 = 별 carrier). modules=N·boundaries=Y·interfaces=N(본 lane producer 계약 무변경 — lane-dispatch-packet-v1 신설·4종 bump 는 family doc 축)·data_flow=N. 이전: CFP-2813  # stale 해소 실갱신 — roster 6+3+1 정합(CFP-1126/ADR-042 Amd10: AggregateArch deprecated → ModuleArch boundary axis unified, agents/ 실측 14 file) + model tier 실측 반영(ADR-141: opus default + fable 2[PL·chief] + sonnet 4 + haiku 1) + inter-plugin 계약 wrapper 단일 원본(ADR-118 D5 — sibling sync 폐지) + ADR 경로 archive/adr(wrapper, CFP-2661 D13) + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1 — 본 lane 이 write 주체) + ADR-166 read protocol(G1 ArchitectAnalyst·G2 CodebaseMapper). 이전 = CFP-2539 (RefactorAgent (d)reusability 측정 축 → 구현 리팩터링(Story C) 이관 + repo-분해 구조 escalation 존치, ADR-042 Amendment 18)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -65,10 +65,14 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 | `archive/adr/ADR-NNN-<slug>.md` (wrapper dogfood — CFP-2661 D13) / `docs/adr/` (consumer) | ArchitectAgent (direct write, CFP-26 Phase 0a) |
 | Story §3 (ADR list mirror) | ArchitectAgent |
 | Story §7 (보안 + §7.4 운영 리스크 mirror) | ArchitectAgent |
-| Story §11 (데이터 마이그레이션 mirror) | ArchitectAgent |
+| Story **§11.A** (데이터 마이그레이션 mirror — CFP-2926 번호 정합) | ArchitectAgent |
 | `docs/architecture/<path>.md` (본 doc 영역) | ArchitectAgent (**per-PR 현행화 write monopoly** — ADR-078 Amd3 / ADR-112 Amd1: 구조 표면 변경 PR 마다 대응 doc 본문 갱신 OR `[living-arch-no-impact]` declare closed-binary, `living-architecture-update` 게이트가 기계 강제 — CFP-2813) |
 | GitHub comment `[설계]` prefix | ArchitectPLAgent |
 | `phase:설계` → `phase:설계-리뷰` transition | ArchitectPLAgent |
+
+> **§11 부모-자식 정합 (CFP-2926)**: `Story §11` **자체**의 소유는 codeforge-pmo("참조/회고")다. 설계 lane 의 데이터 마이그레이션 mirror 는 §11 번호를 점유하지 않고 **named subsection §11.A** 로 편입한다 — 두 소유자가 같은 번호를 주장하던 충돌의 해소이며 소유 이전이 아닌 granularity 분리다. Change Plan `§11.1`-`§11.6`(deputy mandate 표) 는 **별 축**(Change Plan 문서 내부 번호)이라 무접촉.
+
+**spawn 위임 topology (ADR-170 §결정 19 / ADR-044 Amendment 7 — CFP-2926)**: family 공통 위상 = `lead → Story-teammate → lane PL → SubAgent`(depth 0→1→2). 본 lane 은 리뷰 4 lane 이 아니므로 **verdict-산출 peer dispatch 제외에 해당하지 않는다** — ArchitectPLAgent 는 lead 가 confine 한 Story/lane scope 안에서 자기 design-time roster(6 permanent + 3+1 CONDITIONAL + 4-tuple sub-tuple)를 직접 spawn 할 수 있다. **단 RefactorAgent 구조 advocacy 의 `blanket_designrefactor` debate(Codex↔Claude)는 verdict-산출 adversarial peer dispatch 라 Orchestrator top-level inline 소유로 존치**(CFP-2926 이 본 lane CLAUDE.md 에 명시). **정직 declare (doc↔SSOT 잔여 gap)**: 아래 §데이터 흐름 의 flow 블록은 여전히 `Orchestrator parallel spawn (ADR-039 flat spawn)` 세대의 서술이고, 본 lane plugin CLAUDE.md 의 대응 산문도 CFP-2926 에서 갱신되지 않았다 — Amendment 7 은 위상 **허용**을 열었을 뿐 본 lane 의 실 dispatch 주체 전환은 landing 되지 않았다(허용 ≠ 전환, 전환은 별 carrier 소관).
 
 **Deputy mandate matrix** (§3 / §7 / §11 / §13 sub-section ownership) — `codeforge:deputy-mandate` skill SSOT 요약 (CFP-1026 S1):
 

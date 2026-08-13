@@ -4,12 +4,12 @@ type: domain-knowledge
 slug: context-offloading-to-ephemeral-workers
 title: Context offloading to ephemeral workers (장수명 context-holder ↔ 단수명 worker 비용 비대칭)
 status: Active
-updated: 2026-06-30
+updated: 2026-08-12
 carrier_story: CFP-2521
 related_adrs:
   - ADR-039  # Orchestrator subagent default — read/compute offload 의 root mechanism (rule-of-three 1st instance)
   - ADR-044  # Phase-scoped sequential team — lane-PL synthesizer lifecycle + §결정 11 thin-PL context boundary mandate (3rd instance carrier)
-  - ADR-009  # wrapper-only decomposition — PL self-spawn 금지 (env=0 위임 = Orchestrator 경유)
+  - ADR-170  # spawn 위상 SSOT (§결정 19) — lane PL 의 roster worker spawn 권한 축 (본 concept 의 READ/COMPUTE 위임 축과 disjoint)
   - ADR-043  # spawn-event-v1 ledger — delegation-ratio proxy 측정 substrate (opt-in default-false)
   - ADR-060  # evidence-gated promotion — advisory→blocking 승격 경로
 tags:
@@ -47,24 +47,25 @@ CFP-2521 비용 진단(2026-06-30 로컬 세션 로그): DeveloperPL 비용 94%=
 
 - **In scope**: 장수명 context-holder(PL / Orchestrator)의 read/compute 를 ephemeral worker 로 offload 하는 governance 규약. 비용 비대칭의 메커니즘 서술.
 - **Out of scope**:
-  - **worker spawn 권한**(누가 worker 를 spawn 하나) — env 별로 분리(env=1 = holder SendMessage / env=0 = Orchestrator pre-spawn). lane-PL 은 **self-spawn 불가**(re-entrancy 3종 + ADR-009 wrapper-only) — offload 의 "위임"은 PL self-spawn 이 아니라 work-request 반환 + Orchestrator pre-spawn(env=0).
+  - **worker spawn 권한**(누가 worker 를 spawn 하나) — 위상 SSOT = [ADR-170](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 19 (`lead → Story-teammate → lane PL → SubAgent`, depth 0→1→2). lane PL 은 lead 가 confine 한 Story/lane scope 안에서 **자기 design-time roster 의 worker 를 spawn 한다**(ADR-044 Amendment 7). 그 권한 축과 본 concept 의 READ/COMPUTE 위임 축은 **disjoint** — PL 이 worker 를 직접 띄울 수 있다는 사실이 "PL 이 raw 를 직접 읽어도 된다"를 함의하지 않는다(thin-PL 경계 무손상).
   - **WRITE 경계**(누가 어느 경로를 write 하나) — `lane-self-write-boundary` 영역(disjoint axis). 본 concept = READ/COMPUTE 경계.
   - **parallel-exploration 토큰 증가**(Anthropic "multi-agent ~15× more tokens") — 그것은 **새 work** 발생(disjoint). 본 concept = read **재배치**(같은 work 를 holder prefix 밖으로 이동, 새 탐색 0).
 - **Anti-pattern**:
   - open-ended carve-out(essential read 무한 예외) = hollow-gate.
   - 무조건 offload(trivial read 포함) = spawn 고정비 순손실.
-  - "PL spawns workers"(env=0) = ADR-009 wrapper-only 위반(self-spawn 금지).
+  - **spawn 권한 축 ↔ READ 위임 축 혼동** — "lane PL 이 자기 roster worker 를 spawn 한다"(ADR-170 §결정 19 = 정상 경로)를 근거로 thin-PL READ 경계를 완화하는 것. 두 축 disjoint — spawn 권한 보유 ≠ raw 직접 read 허용.
   - magnitude floor `박제`(예: "40-85% 보장") = estimate lock-in(upper-bound 모델 위반).
 
 ## 관련 ADR
 
 - **ADR-039** Orchestrator subagent default — read/compute 를 main 세션 밖으로 offload 하는 root mechanism(rule-of-three 1st instance). §결정 9 deferred slot 에 thin-PL self-read advisory detection(CFP-2521 Amendment 8).
 - **ADR-044** Phase-scoped sequential team — lane-PL synthesizer lifecycle + env 분기 SSOT. §결정 11(thin-PL context boundary mandate, CFP-2521 Amendment 5) = 본 concept 의 3rd instance carrier.
-- **ADR-009** wrapper-only decomposition — PL self-spawn 금지(env=0 offload = Orchestrator 경유).
+- **ADR-170** Orchestrator subagent default — §결정 19 spawn 위상 SSOT(`lead → Story-teammate → lane PL → SubAgent`, depth 0→1→2). lane PL 의 roster worker spawn 권한 축은 본 concept 의 READ/COMPUTE 위임 축과 disjoint(ADR-044 Amendment 7 정합).
 - **ADR-043** spawn-event-v1 ledger — delegation-ratio proxy 측정 substrate(opt-in default-false).
 - **ADR-060** evidence-gated promotion — offload 위반 검출 advisory→blocking 승격 경로(PR≥20 + bypass외 failure=0 + sibling merged).
 - **CFP-2521**(carrier_story) — DeveloperPL thin-synthesizer 컨텍스트 경계 강제(본 concept 의 first codified case).
 
 ## 변경 이력
 
+- 2026-08-12 KST — spawn 권한 축 재귀속(CFP-2926). ADR-009 인용 4 site 제거 — ADR-009 본문에 spawn 위상 규범 문면이 **부재**함을 firsthand 실측(`grep -in spawn` = 0 hit). 근거를 ADR-170 §결정 19 + ADR-044 Amendment 7 로 교체하고, spawn 권한 축 ↔ READ/COMPUTE 위임 축의 disjoint 관계를 명시(thin-PL READ 경계 서술 자체는 무손상 보존).
 - 2026-06-30 KST — 초기 작성(CFP-2521 Phase 1 설계 lane). rule-of-three 도달(ADR-039 + DeveloperPLAgent.md + CFP-2521) + D2 carrier 결정 잠김 후 작성(`박제` 회피 — Story §6.2 보류 조건 해소).

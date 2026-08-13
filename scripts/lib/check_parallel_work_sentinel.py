@@ -1,11 +1,49 @@
 """
 scripts/lib/check_parallel_work_sentinel.py
 CFP-967 / ADR-073 Amendment 2 — Parallel work sentinel 3 polling mode SSOT
+CFP-2926 NG-17 (개정) — sentinel fail-open 제거 (§7.8 S-2 / §8.0.8 (1) NG-17 행)
 
 기능:
   3 polling mode dispatch — parallel race detection mechanical wire.
   memory rule 6 (title-based search, CFP-953 incident) + rule 7 (Epic state poll,
   CFP-946 incident) + HEAD compare sibling commits (self-demo lane evidence).
+  + NG-17 gate mode (--mode 생략 시 default) — 대조 worktree · 원격 fetch rc 3-state 판정.
+
+═══════════════════════════════════════════════════════════════════════════════
+NG-17 (CFP-2926) — ★타 게이트와 다른 판정 semantics: 명시 divergence declare★
+═══════════════════════════════════════════════════════════════════════════════
+Story §8.0.8 (1) NG-17 행 verbatim:
+    empty:   대조 worktree 0개 → INCONCLUSIVE
+    unknown: ★divergence declare★ — `git fetch` rc 미지 · 출력 파싱 실패 →
+             `degraded=true` → INCONCLUSIVE.
+             ★`[154-AC-4]` 의 "fail-closed" 를 **"조용한 통과 금지"로만 이행하고
+             "차단"으로는 이행하지 않는다**★
+             (§7.8 S-2 가 fail-closed 전환을 **명시 금지** —
+              가드가 작업을 막으면 우회가 규범이 된다)
+    trace:   대조 worktree 수 · fetch rc · `degraded` 플래그
+    probe:   true — 채널 = 공유 `.git/shallow` · 원격 fetch 결과
+
+★다른 CFP-2926 게이트(NG-4·NG-10·NG-11·NG-14·NG-19·NG-20·NG-21 등)는 unknown-input
+  을 fail-closed **RED (exit 1)** 로 사상한다. NG-17 만 **INCONCLUSIVE (exit 3)** 다.★
+  ⇒ 이는 구현 누락도 일관성 위반도 아니라 §7.8 S-2 의 **명시 금지 조항** 이행이다.
+  본 게이트에는 ★RED 경로가 존재하지 않는다★ (PASS ∨ INCONCLUSIVE 2-state).
+  근거: §7.8 S-2 = "`check_parallel_work_sentinel` 의 fail-open 제거 — 실패를 값으로
+  승격(`degraded=true` → `INCONCLUSIVE`). ★fail-closed 전환은 금지★
+  (가드가 작업을 막으면 우회가 규범이 된다)".
+
+제거된 fail-open (본 개정의 실물 — §7.8 말미가 지목한 바로 그 경로):
+  (F1) `_run_git_log` 의 `subprocess.run(["git","fetch","origin"])` ★rc 완전 무시★
+       → N-way spawn 시 동시 fetch 가 공유 `.git/shallow` 락에서 실패해도 무증상.
+       ⇒ fetch rc 를 **값으로 승격**(반환·trace·payload 노출).
+  (F2) `mode_head_compare` 의 git log rc!=0 → `git_fetch_failed` payload + ★exit 0★
+       ⇒ 동일 payload 유지 + `degraded=true` + verdict INCONCLUSIVE + ★exit 3★.
+
+★NG-17 이 손대지 않는 축 (정직 declare)★:
+  - title-search / epic-state-poll 의 gh honest-degrade(exit 0) — 채널이 gh API 라
+    NG-17 선언 채널(공유 `.git/shallow` · 원격 fetch)과 disjoint. CFP-2723 이 의도
+    설계한 계약이며 기존 회귀 스위트가 exit 0 을 고정한다. 본 개정 대상 아님.
+  - `BYPASS_PARALLEL_WORK_SENTINEL=1` 무조건 exit 0 — audit-trailed 명시 bypass
+    (ADR-024 hotfix-bypass family). fail-open 이 아니라 declared bypass.
 
 Mode enum (argparse --mode):
   title-search:
@@ -17,6 +55,10 @@ Mode enum (argparse --mode):
   head-compare-sibling-commits:
     Input:  env CFP_PRIOR_SHA (required) + optional --branch (default origin/main)
     Output: exit 0 + stdout JSON {"delta_commits": [...], "parallel_detected": bool}
+            실패 시 (F2) exit 3 + {"degraded": true, "verdict": "INCONCLUSIVE", ...}
+  (--mode 생략) = NG-17 gate mode:
+    Input:  --repo-root (default ".") + --remote (default origin) + --skip-fetch
+    Output: gate_verdict.GateResult 단일 라인 JSON — exit 0(PASS) / 3(INCONCLUSIVE)
 
 BYPASS:
   BYPASS_PARALLEL_WORK_SENTINEL=1 — unconditional skip, exit 0 + audit marker
@@ -28,14 +70,17 @@ Graceful degradation fail-mode (DEGRADATION_LABELS 상수 렌더 — 어휘 단�
                        + stderr marker + stderr_excerpt 보존
   gh_command_failed:   그 외 gh 실패 (rc!=0, 비-quota stderr) + stderr_excerpt 보존
   gh_payload_invalid:  rc==0 이나 빈/파싱불능/형 불일치/필수키 결핍 payload
-  git_fetch_failed:    head-compare inline git fetch/log 실패 (본 모드 전용 — 등재만)
+  git_fetch_failed:    head-compare inline git fetch/log 실패 (본 모드 전용).
+                       ★CFP-2926 NG-17 (F2): 종전 exit 0 → exit 3 (INCONCLUSIVE)★
   (advisory tier — degradation 필드값 아님) stale_label_grace: 5min grace 경계 stderr 마커
 
-Exit-code 2-tier (로컬 계약):
-  0: PASS 또는 honest-degrade (stdout JSON degradation 필드로 식별)
+Exit-code 계약 (로컬 — CFP-2926 NG-17 로 3 추가):
+  0: PASS 또는 gh honest-degrade (stdout JSON degradation 필드로 식별)
   2: SETUP error (stderr JSON error_kind: gh_not_installed / gh_not_authenticated / setup)
   2 (argparse native): usage 오류 (무효 --mode 등) — stderr = argparse usage 텍스트,
      error_kind JSON 부재 (exit 2 내부 판별 = stderr 의 error_kind JSON 유무)
+  3: INCONCLUSIVE (NG-17) — 대조 worktree 0 / fetch rc 미지·비0 / 출력 파싱 실패.
+     ★exit 1(RED) 은 NG-17 에 존재하지 않는다 — 위 divergence declare 참조★
 
 Test seam:
   CFP967_GH_MOCK_RESPONSE=<fixture path> — gh CLI stdout mock
@@ -54,6 +99,17 @@ import sys
 import time
 from typing import Any, Optional
 
+# CFP-2926 NG-17 — 신규 verdict 체계 발명 금지, 공유 3-state 헬퍼 재사용.
+#   scripts/lib/ 는 스크립트 직접 실행 시 sys.path[0] 이므로 평면 import 가 성립한다
+#   (sibling 게이트 모듈 check_hook_merge_registration.py 와 동일 패턴).
+from gate_verdict import (  # noqa: E402  (module docstring 뒤 표준 위치)
+    GateResult,
+    emit,
+    empty_target,
+    PASS,
+    INCONCLUSIVE,
+)
+
 # Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -65,6 +121,8 @@ if hasattr(sys.stderr, "reconfigure"):
 # Constants
 # ---------------------------------------------------------------------------
 SCRIPT_NAME = "check_parallel_work_sentinel"
+# CFP-2926 NG-17 — 게이트 식별자 (부록 A pin 표: NG-17 ↔ 본 파일).
+GATE_ID = "NG-17"
 # Story KEY prefix 파라미터화 (CFP-2451) — consumer 전파 wire 가 동작하려면
 # prefix 가 하드코딩되면 안 됨 (consumer prefix 가 "CFP" 가 아닌 곳에서 inert 검사).
 # workflow 가 .claude/_overlay/project.yaml github.story_key_prefix 를 STORY_KEY_PREFIX
@@ -224,17 +282,31 @@ def _run_gh(args: list[str], mock_env: str = GH_MOCK_ENV) -> tuple[int, str, str
     return result.returncode, result.stdout, result.stderr
 
 
-def _run_git_log(prior_sha: str, branch: str = "origin/main") -> tuple[int, str]:
-    """Run git log or return mock fixture."""
+def _run_git_log(
+    prior_sha: str, branch: str = "origin/main"
+) -> tuple[int, str, Optional[int]]:
+    """Run git log or return mock fixture. 반환 (log_rc, stdout, fetch_rc).
+
+    ★CFP-2926 NG-17 (F1) — fail-open 제거★: 종전 구현은 선행 `git fetch origin` 의
+    returncode 를 ★완전히 버렸다★(`subprocess.run(...)` 결과 미바인딩). §7.8 말미가
+    지목한 실물이 정확히 이 줄이다 — N-way spawn 시 N개 동시 fetch 가 공유
+    `.git/shallow` 락에서 실패해도 sentinel 은 무증상으로 통과했다.
+    ⇒ fetch rc 를 **값으로 승격**해 세 번째 반환값으로 노출한다(호출자가 판정).
+
+    fetch_rc 의미: int = 실측 returncode / None = ★미지★ (mock seam 경유로 fetch 를
+    실행하지 않았거나 git 자체를 기동하지 못함). None 은 "성공"이 아니라 "미지"다.
+    """
     mock_path = os.environ.get(GIT_LOG_MOCK_ENV)
     if mock_path:
+        # mock seam — git 채널 전체를 대체하므로 fetch 는 실행되지 않는다(rc 미지 = None).
+        # 은닉이 아니라 노출: 호출자가 payload 의 fetch_rc/fetch_source 로 렌더한다.
         try:
             with open(mock_path, "r", encoding="utf-8") as f:
-                return 0, f.read()
+                return 0, f.read(), None
         except FileNotFoundError:
-            return 2, f"mock file not found: {mock_path}"
-    # git fetch origin first (sustained polling §결정 1-C)
-    subprocess.run(["git", "fetch", "origin"], capture_output=True)
+            return 2, f"mock file not found: {mock_path}", None
+    # git fetch origin first (sustained polling §결정 1-C) — rc 보존 (NG-17 F1)
+    fetch_rc = _git_fetch_rc(remote="origin")
     result = subprocess.run(
         ["git", "log", "--format=%H %ci %s", f"{prior_sha}..{branch}"],
         capture_output=True,
@@ -242,7 +314,7 @@ def _run_git_log(prior_sha: str, branch: str = "origin/main") -> tuple[int, str]
         encoding="utf-8",
         errors="replace",
     )
-    return result.returncode, result.stdout
+    return result.returncode, result.stdout, fetch_rc
 
 
 def _check_gh_auth() -> Optional[str]:
@@ -269,6 +341,149 @@ def _check_gh_auth() -> Optional[str]:
     if result.returncode != 0:
         return "gh_not_authenticated"
     return None
+
+
+# ---------------------------------------------------------------------------
+# CFP-2926 NG-17 — 대조 worktree · 원격 fetch rc (공유 .git/shallow 채널)
+# ---------------------------------------------------------------------------
+def _git_capture(args: list[str], repo_root: Optional[str] = None) -> tuple[Optional[int], str]:
+    """git 실행 → (rc, stdout). git 기동 자체 실패 시 rc=None (★미지★, 0 아님)."""
+    cmd = ["git"]
+    if repo_root:
+        cmd += ["-C", repo_root]
+    cmd += args
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
+    except Exception:
+        return None, ""  # git 부재/기동 실패 = 미지 (조용한 0 승격 금지)
+    return result.returncode, result.stdout
+
+
+def _git_fetch_rc(remote: str = "origin", repo_root: Optional[str] = None) -> Optional[int]:
+    """`git fetch <remote>` 의 returncode 를 값으로 반환. None = 미지 (git 기동 실패)."""
+    rc, _ = _git_capture(["fetch", remote], repo_root=repo_root)
+    return rc
+
+
+def _enumerate_comparison_worktrees(repo_root: str) -> tuple[Optional[int], list[str]]:
+    """공유 `.git` common-dir 을 쓰는 ★대조★ worktree 열거 (self 제외).
+
+    반환 (count, paths). count=None = ★열거 불가/파싱 실패★ (0 아님 — 0 은 "대조 대상
+    없음"이라는 별개 상태이고 §8.0.8 이 그것도 INCONCLUSIVE 로 규정한다).
+
+    `git worktree list --porcelain` 의 `worktree <path>` 행을 센 뒤 self(toplevel) 를
+    제외한다. §7.8 S-3 이 지목한 형상 = worktree 3개의 `--git-common-dir` 이 전부 동일
+    ⇒ `.git/shallow` 단일 공유.
+    """
+    rc, out = _git_capture(["worktree", "list", "--porcelain"], repo_root=repo_root)
+    if rc is None or rc != 0:
+        return None, []
+    paths = [
+        line[len("worktree ") :].strip()
+        for line in out.splitlines()
+        if line.startswith("worktree ")
+    ]
+    if not paths:
+        # rc==0 인데 `worktree ` 행이 하나도 없음 = ★출력 파싱 실패★ (정상 git 은
+        # 최소 self 1행을 낸다). 0 으로 붕괴시키지 않고 미지로 승격한다.
+        return None, []
+    self_rc, self_out = _git_capture(["rev-parse", "--show-toplevel"], repo_root=repo_root)
+    self_path = self_out.strip() if self_rc == 0 else ""
+
+    def _norm(p: str) -> str:
+        return os.path.normcase(os.path.abspath(p)).replace("\\", "/").rstrip("/")
+
+    self_norm = _norm(self_path) if self_path else ""
+    others = [p for p in paths if not self_norm or _norm(p) != self_norm]
+    return len(others), others
+
+
+def _shallow_probe(repo_root: str) -> dict:
+    """identity_probe — 판정 채널의 resolved-target echo (공유 `.git/shallow` 실경로)."""
+    rc, out = _git_capture(["rev-parse", "--git-common-dir"], repo_root=repo_root)
+    common_dir = out.strip() if rc == 0 and out.strip() else ""
+    if common_dir and not os.path.isabs(common_dir):
+        common_dir = os.path.abspath(os.path.join(repo_root, common_dir))
+    common_dir = common_dir.replace("\\", "/")
+    shallow_path = os.path.join(common_dir, "shallow").replace("\\", "/") if common_dir else ""
+    return {
+        "repo_root": os.path.abspath(repo_root).replace("\\", "/"),
+        "git_common_dir": common_dir or "unresolved",
+        "shallow_file": shallow_path or "unresolved",
+        "shallow_exists": bool(shallow_path) and os.path.exists(shallow_path),
+    }
+
+
+def mode_ng17_gate(repo_root: str, remote: str = "origin", skip_fetch: bool = False) -> int:
+    """NG-17 게이트 판정 — PASS(0) ∨ INCONCLUSIVE(3). ★RED 경로 없음★.
+
+    판정 순서 (전건 exit 0 흡수 금지):
+      ① worktree 열거 실패/파싱 실패 → degraded=true → INCONCLUSIVE
+      ② fetch rc 미지(None, --skip-fetch 포함) 또는 비-0 → degraded=true → INCONCLUSIVE
+      ③ 대조 worktree 0개 → INCONCLUSIVE (empty_target — `0 == 0` 을 "충돌 없음"으로
+         읽지 않는다)
+      ④ 잔여 → PASS
+
+    ★fail-closed(RED/차단) 로 사상하지 않는 이유★ = §7.8 S-2 명시 금지
+    ("가드가 작업을 막으면 우회가 규범이 된다"). 상세 = 모듈 docstring divergence declare.
+    """
+    probe = _shallow_probe(repo_root)
+    wt_count, wt_paths = _enumerate_comparison_worktrees(repo_root)
+
+    fetch_rc: Optional[int]
+    if skip_fetch:
+        fetch_rc = None  # 미지 — "성공"으로 승격하지 않는다
+    else:
+        fetch_rc = _git_fetch_rc(remote=remote, repo_root=repo_root)
+
+    degraded = (wt_count is None) or (fetch_rc is None) or (fetch_rc != 0)
+    trace = {
+        "comparison_worktree_count": wt_count,   # numeric 검사량 [154-AC-5]
+        "fetch_rc": fetch_rc,
+        "degraded": degraded,
+        "remote": remote,
+        "fetch_skipped": bool(skip_fetch),
+        "comparison_worktrees": wt_paths[:5],
+    }
+
+    if degraded:
+        if wt_count is None:
+            reason = "worktree_enumeration_unparseable"
+        elif fetch_rc is None:
+            reason = "fetch_rc_unknown"
+        else:
+            reason = f"fetch_rc_nonzero:{fetch_rc}"
+        return emit(
+            GateResult(
+                gate_id=GATE_ID,
+                verdict=INCONCLUSIVE,   # ★RED 아님 — §7.8 S-2 fail-closed 금지★
+                reason=reason,
+                trace=trace,
+                identity_probe=probe,
+            )
+        )
+
+    if wt_count == 0:
+        return emit(
+            empty_target(
+                gate_id=GATE_ID,
+                reason="no_comparison_worktree",
+                trace=trace,
+                identity_probe=probe,
+            )
+        )
+
+    return emit(
+        GateResult(
+            gate_id=GATE_ID,
+            verdict=PASS,
+            reason="comparison_worktrees_resolved_fetch_ok",
+            trace=trace,
+            identity_probe=probe,
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -404,19 +619,28 @@ def mode_head_compare(branch: str = "origin/main") -> None:
             "CFP_PRIOR_SHA env var required for head-compare-sibling-commits mode"
         )
 
-    rc, raw = _run_git_log(prior_sha, branch)
+    rc, raw, fetch_rc = _run_git_log(prior_sha, branch)
 
-    if rc != 0:
-        # git fetch/log failure — graceful degradation
+    if rc != 0 or (fetch_rc is not None and fetch_rc != 0):
+        # ★CFP-2926 NG-17 (F2) — fail-open 제거★
+        #   종전: git fetch/log 실패 → 위 payload + `sys.exit(0)` ⇒ 성공과 구별 불가.
+        #   개정: 동일 payload 키 전건 보존(하위 parser 무손상) + `degraded`/`verdict`/
+        #        `fetch_rc` 승격 + ★exit 3 (INCONCLUSIVE)★.
+        #   ★exit 1(RED)/차단이 아니다★ — §7.8 S-2 fail-closed 전환 명시 금지.
         print(
             json.dumps({
                 "delta_commits": [],
                 "parallel_detected": False,
                 "degradation": "git_fetch_failed",
-                "marker": "[parallel-work-sentinel-api-failed]",
+                "marker": MARKER_API_FAILED,
+                "degraded": True,
+                "verdict": INCONCLUSIVE,
+                "gate_id": GATE_ID,
+                "fetch_rc": fetch_rc,
+                "log_rc": rc,
             })
         )
-        sys.exit(0)
+        sys.exit(3)
 
     delta_commits = []
     parallel_detected = False
@@ -439,6 +663,9 @@ def mode_head_compare(branch: str = "origin/main") -> None:
     _exit_pass({
         "delta_commits": delta_commits,
         "parallel_detected": parallel_detected,
+        # NG-17 — fetch rc 를 성공 경로에서도 노출 (값 승격의 대칭. None = mock seam 경유)
+        "fetch_rc": fetch_rc,
+        "degraded": False,
     })
 
 
@@ -582,9 +809,27 @@ def main() -> None:
     )
     parser.add_argument(
         "--mode",
-        required=True,
+        # CFP-2926 NG-17: required=True → optional. 생략 = NG-17 gate mode.
+        #   무효 --mode 는 여전히 argparse native exit 2 (기존 계약 무손상).
+        default=None,
         choices=["title-search", "epic-state-poll", "head-compare-sibling-commits"],
-        help="Polling mode (ADR-073 Amendment 2 §결정 1-A transition trigger enum)",
+        help="Polling mode (ADR-073 Amendment 2 §결정 1-A transition trigger enum). "
+             "생략 시 CFP-2926 NG-17 gate mode.",
+    )
+    parser.add_argument(
+        "--repo-root",
+        default=".",
+        help="NG-17 gate mode 대상 repo 루트 (default: .)",
+    )
+    parser.add_argument(
+        "--remote",
+        default="origin",
+        help="NG-17 gate mode fetch 대상 remote (default: origin)",
+    )
+    parser.add_argument(
+        "--skip-fetch",
+        action="store_true",
+        help="NG-17 gate mode 에서 fetch 미실행 — fetch rc ★미지★ 로 남아 INCONCLUSIVE",
     )
     parser.add_argument(
         "--epic-id",
@@ -598,6 +843,16 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    if args.mode is None:
+        # CFP-2926 NG-17 gate mode — PASS(0) ∨ INCONCLUSIVE(3), RED 경로 없음.
+        sys.exit(
+            mode_ng17_gate(
+                repo_root=args.repo_root,
+                remote=args.remote,
+                skip_fetch=args.skip_fetch,
+            )
+        )
 
     if args.mode == "title-search":
         mode_title_search(epic_id=args.epic_id)

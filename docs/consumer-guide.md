@@ -201,8 +201,8 @@ agent teams enabled context 의 SendMessage 는 **sibling teammate 끼리 system
 **Re-entrancy 제약 3종 (codeforge 정책 SSOT)**:
 
 agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md` SSOT):
-1. 재귀 spawn 금지 (Lead 와 teammate 모두 — platform inherent)
-2. Nested team 금지 (no team-of-teams)
+1. worker(depth-2) 자가-spawn 금지 (**codeforge 정책** — platform inherent 아님. platform 은 nested subagent spawn 을 허용한다. 근거 = ADR-170 §결정 19 / ADR-044 Amendment 7. lane PL 의 roster fan-out 은 정본 경로)
+2. Nested team 금지 (no team-of-teams — 이쪽은 **platform 강제**)
 3. One-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무
 
 **Disable / rollback**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 unset → ADR-170 default subagent context fallback. hook 3종 install 되어도 trigger 미발화. Phase-scoped sequential team 은 자연 무효화 — 기존 one-shot Agent tool spawn 패턴.

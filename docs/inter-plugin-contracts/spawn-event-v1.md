@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: spawn-event
-version: "1.2.1"
+version: "1.3.0"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/spawn-event-v1.md
@@ -26,6 +26,7 @@ related_files:
 amendment_log:
   - "Amendment 3 (CFP-2572, 2026-07-05) — self-context-v1 6-field record type 추가 (§2.1 신설, L7 Orchestrator self-context proxy). 동일 spawn-event.jsonl channel 공유 + schema_version discriminator 구분. version 1.0 → 1.1 MINOR (additive record type, ADR-008 §결정 2). SSOT = ADR-043 Amendment 3 / ADR-142 §결정 4. 19-field spawn row schema 무변경 (별 record type)."
   - "Amendment 4 (CFP-2850, 2026-07-27) — spawn-event 실측 append 활성화(P0-2) + agent outcome 분류(N9). version 1.1 → 1.2 MINOR (4 additive optional field, ADR-008 §결정2). (i) §2 신규 optional field 4종: total_tokens(int|null, task-notification subagent_tokens aggregate) · model(enum semi-open, pricing-table roster ∪ unknown-model fallback) · outcome(enum {success,inconclusive,failure,partial}) · termination_cause(enum {normal,timeout,zero_output,error,cancelled}) — 전부 numeric/enum(T-INFO-8 free-form 0 보존). 19-field → 23-field. (ii) §3 writer topology: SubagentStop hook single-write(option i) → Orchestrator task-notification 수신 시점 single-write. hook spawn-append(hooks/subagent-stop L199-237) retire (self-context append disjoint 잔존). (iii) §3 writer mechanism: inline via UTF-8 args-file (ADR-039 §결정2 7th inline-whitelist entry 동반). (iv) lane_context_limitation superseded 재기술 (lane-context writer 로 non-vacuous reconcile 실현 — ADR-163 §결정13 realization). (v) §3 idempotency: spawn_seq = Orchestrator causal-state 파생 4-불변식 (ledger-read/primitive-internal/random-UUID 금지). (vi) §4 writer-topology 변경 카테고리 신설 (append_rules/writer 변경 = amendment + MINOR). (vii) degrade ladder + total_tokens granularity caveat (aggregate ≠ 4-way, aggregate-only 시 4-way null·cost null). (viii) N9 outcome/termination_cause enum harmonize note (stop-event-v1 outcome 3값 REUSE + inconclusive additive / recovery_action REUSE by reference / record-only). (ix) §2 attribution_confidence field-def clarify (attributed = 측정 aggregate 확보 — 4-way 분해 OR aggregate-only, degrade ladder 참조; F-A tier-2 desync 해소). SSOT = ADR-043 Amendment(Allow-list 4 field) + ADR-039 §결정2 Amendment(inline-whitelist) + ADR-163 §결정13."
+  - "Amendment 5 (CFP-2926, 2026-08-12) — subagent completion time tracking (hook-sourced agent_start_at/agent_stop_at 3-field) 추가. version 1.2.1 → 1.3.0 MINOR (additive 3 optional field, ADR-008 §결정 2). (i) §2 신규 optional field 3종: agent_start_at(ISO8601 UTC ms, millisecond 3-digit enforce) · agent_stop_at(동일 형식) · stop_time_source(enum {hook_stamped, notification_receipt, backfilled, unknown}) — numeric/enum only (T-INFO-8 free-form 0 보존). 23-field → 26-field. (ii) read rule 확장 = hook_stamped 행만 시간축 산출 입력 자격 (완전성 게이트 기대값 수 ∧ hook_stamped 행수 일치 둘 다). (iii) 구간 산출 = `agent_stop_at IS NOT NULL ∧ stop_time_source == 'hook_stamped'` 행만 (append-only, backfill/mutate 금지). (iv) 기입 주체 = SubagentStop hook 단독. 모델 기입 경로는 시간축 산출 입력 자격 없음 (writer discriminator). (v) 종전 행(필드 부재) → 읽기 시 `unknown` → 산출 입력 제외(하위호환). (vi) 시간축 read rule ↔ 토큰축(spawner 행) disjoint — `stop_time_source` discriminator 이므로 별도 writer 필드 불요. SSOT = ADR-163 Amendment 3 (Tier-3 measurement harmonization, subagent lifecycle completion-time append-only substrate)."
 attribution:
   source: oh-my-claudecode (MIT, https://github.com/Yeachan-Heo/oh-my-claudecode)
   scope: "per-agent registry 개념(token_usage/cost_usd/tool_usage field 구조) + replay event 종류(agent_start/agent_stop/tool/file_touch/mode_change) + 경과시간 keyed 패턴 차용. enforcement(COST_LIMIT_USD intervention) / HUD UI / model routing 은 비-차용 (측정·관측만, ADR-163 §결정 10 measurement-vs-fix boundary)."
@@ -63,9 +64,9 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 
 §14.12 는 spawn-event land 이후에도 **Tier-1 quota-only 채널로 잔존**한다 (deprecate 안 함 — playbook §14.12 "관계" note). 두 채널의 disjoint = playbook §15.2 **4번째 boundary invariant** 로 명문화. cross-write 금지 — 한쪽이 다른 쪽을 읽거나 mirror 하지 않는다(50ms ceiling + cross-channel coupling 회피, §3 append_rules).
 
-## 2. Schema (23개 필드 Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
+## 2. Schema (26개 필드 Allow-list ONLY — enum / numeric / hash 만, free-form string 부재)
 
-각 spawn-event ledger row entry = **23개 필드 Allow-list** (19 core + CFP-2850 Amendment 4 additive 4 field: total_tokens·model·outcome·termination_cause, §4 변경 규칙 SSOT). **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
+각 spawn-event ledger row entry = **26개 필드 Allow-list** (19 core + CFP-2850 Amendment 4 additive 4 field: total_tokens·model·outcome·termination_cause + CFP-2926 Amendment 5 additive 3 field: agent_start_at·agent_stop_at·stop_time_source, §4 변경 규칙 SSOT). **free-form string field 0개** (T-INFO-8 SecurityArch — Deny-list 가 no-op 이 되도록 구조적 차단; Deny-list inherit 는 defense-in-depth 로 선언만, §4):
 
 | 필드 | 타입 | 필수 | 설명 | Sanitize |
 |---|---|---|---|---|
@@ -92,8 +93,11 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `model` | enum (semi-open) \| null | optional | spawn 모델 (pricing-table model roster ∪ `unknown-model` fallback — agent_type semi-open 패턴). **현행 pricing arg 였으나 row 미저장 → 신설**(AC-9 role·model grouping key). model 은 per-spawn roster override 결정이라 `agent_type→tier` 파생 불가(동일 agent_type 이 다른 model 로 spawn 가능). free-form leak 차단 (fallback bucket) | non-sensitive |
 | `outcome` | enum \| null | optional | subagent completion-quality — `{success, inconclusive, failure, partial}` (closed-set, open_extension:false, SUCCESS-hardcode 금지 — ADR-093). stop-event-v1 outcome 3값 REUSE + inconclusive(false/hallucinated completion) additive. record-only (gate 아님) | non-sensitive |
 | `termination_cause` | enum \| null | optional | subagent termination mechanism — `{normal, timeout, zero_output, error, cancelled}` (closed-set). timeout = 시간·context·turn·**budget/credit-exhaustion** 통합 상위 (CREDIT-EXHAUSTED = sub-case, 독립 top-level 아님). zero_output = tool_uses=0 silent failure. record-only | non-sensitive |
+| `agent_start_at` | ISO8601 UTC | optional | subagent 시작 시각. `%Y-%m-%dT%H:%M:%S.%fZ` **millisecond 3-digit 강제** (dev-process-event-v1 `timestamp_utc` 규약 재사용 — 신규 규약 0) | non-sensitive |
+| `agent_stop_at` | ISO8601 UTC | optional | subagent 종료 시각. 동일 형식 | non-sensitive |
+| `stop_time_source` | enum | optional | **CLOSED enum** `{hook_stamped, notification_receipt, backfilled, unknown}` | non-sensitive |
 
-**Allow-list ONLY enforcement**: 위 23 field 외 capture 금지. 추가 field = BREAKING (ADR-043 §결정 2 Amendment 의무, §4). **free-form string field 부재** = T-INFO-8 구조적 mitigation (Deny-list 적용 대상 0건, 단 §4 에 inherit 선언 — defense in depth).
+**Allow-list ONLY enforcement**: 위 26 field 외 capture 금지. 추가 field = BREAKING (ADR-043 §결정 2 Amendment 의무, §4). **free-form string field 부재** = T-INFO-8 구조적 mitigation (Deny-list 적용 대상 0건, 단 §4 에 inherit 선언 — defense in depth).
 
 §2 row markdown 형식 예시 (attribution 가능 case + 불가능 case 양쪽):
 

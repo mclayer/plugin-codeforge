@@ -4423,3 +4423,759 @@ entries:
     carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active
+
+  # ── CFP-2926 Phase 2 §11.A.9 (h) — ADR-154 신규 hard gate 21종 warning-tier row (NG-1~NG-21) ──
+  #
+  # 행 집합 출처 = Story CFP-2926 §8.0.8 (1) 표 (도출 규칙 R = S1[§7.14 G2∈{✔,부분}] ∪ S2[§8.0.2 RTM tier=T1]).
+  #   ★ 자기 열거 아님 — 두 SSOT 기계 도출. §7.14 또는 §8.0.2 편집 시 본 21행 재도출 의무.
+  # owner_adr = ADR-154 (신규 게이트 출생 계약 — §결정 3 self-verification 번들 / §결정 8 배선 의무).
+  # carrier_adr = ADR-171 (evidence-enforceable warning-tier framework). 두 축 disjoint·대체 불가:
+  #   ADR-171 = 승격 조건 축(warning→required 언제 올리나) / ADR-154 = 출생 시 번들 축(무엇을 갖춰야 태어나나).
+  # tier = warning 전건 (ADR-154 §결정 8 — 0 신규 required context, branch protection 8-tuple 무변경).
+  # 배선 = templates/github-workflows/cfp-2926-phase2-gates.yml + .github/workflows/ 동명 byte-identical mirror.
+  #
+  # 각 entry description 의 4-item 블록 = ADR-154 self-verification 번들 (전건 의무, 누락 = born-non-compliant):
+  #   [154-AC-3] empty-target → non-GREEN  /  [154-AC-4] unknown-input → fail-closed
+  #   [154-AC-5] execution-trace(numeric)  /  [154-AC-13] identity_bearing(+probe 채널)
+  # identity_bearing 집계 = true 19 / false 2 (NG-5 · NG-13 — caller 공급 입력 위 순수 술어).
+  #   ★ false 도 명시 기입한다 — 필드 부재 = 미대상 취급(ADR-154 §결정 5)이 되는 silent-skip 회피.
+  #
+  # ★ 본 21행과 Story §8.0.8 (1) NG 표의 bijection = scripts/lib/check_ng_registry_bijection.py 가 assert
+  #   (X-16 완화 ⒝ — 규칙 R 완전성의 세 번째 대조축). ★ 그 bijection 게이트 자신은 NG 행이 아니며 registry
+  #   에 등록되지 않는다 — 규칙 R(S1 ∪ S2) 어디에서도 파생되지 않는 메타-게이트이고, 등록하면 자기 때문에
+  #   bijection 이 깨진다. 이 제외는 조용한 제외가 아니라 명시 declare 다 (모듈 docstring + 매 run
+  #   identity_probe.self_exclusion echo + 본 주석 3중 기록).
+
+  - name: cfp2926-ng-1-census-oracle
+    description: |
+      NG-1 (AC-4) — AC-4 content-level 검사량 oracle — 선언 검사량과 실제 content-level 검사량 대조
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: D·X 공집합 → INCONCLUSIVE (F-6' 형판)
+        [154-AC-4]  unknown-input: 미분류 검사단위 → exit != 0 (축 불명 자동 제거 금지)
+        [154-AC-5]  execution-trace(numeric): 대조 검사단위 수 · lane 수
+        [154-AC-13] identity_bearing: true — 채널 = tool_call blob
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★CI 판정 범위 정직 declare (구현리뷰 FIX iter1 / F-CR-003 · iter2 결손 귀속 정정 / F-CR2-004)★:
+      CI 호출은 `--self-test` ★단일★ 이다 — `--declared-spec`·`--executed-manifest`·`--executed-before`
+      셋 다 미전달이다. `--self-test` 는 ★내장 fixture★ 위 자가검증(키 항등성 / lane·check_class·target
+      성분 탈락 / 빈 입력 INCONCLUSIVE)이라 실 repo 데이터를 읽지 않는다 ⇒ CI 경로의 실효 술어는
+      ★oracle self-test 통과★ 뿐이고, 실 repo census(D·X) 대조는 ★L1·L2 양쪽 모두 미배선★ 이다.
+      ★L1 은 실효★ 라고 읽히는 표기(구 iter1 문면 "실효 술어 = L1 1-leg")는 결손을 L2 1-leg 로 좁혀
+      ★과소 귀속★ 하므로 폐기한다 — L1 도 실 census 위에서 돌지 않는다. L2 보존은 `not_measured`
+      (게이트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
+      ⇒ M2(검사 unit 을 선언·실행 양쪽에서 통째 삭제)는 CI 에서 미검출이다. 미설계가 아니라 ★미배선★ —
+      공급자는 Story AC-4 가 이미 지명(before = 순차 대조군 1회, AC-2a 와 공유). 실 census(L1·L2) 배선 carrier:
+      deferred_followup_cfp: CFP-2960
+    detect_command: python3 scripts/lib/check_census_oracle.py --self-test
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-2-fanout-subject-prose
+    description: |
+      NG-2 (AC-5) — AC-5 fan-out 주체 문면 스캐너 — 문서 fan-out 주체 표기 정합
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 스캔 대상 0 파일 → non-GREEN
+        [154-AC-4]  unknown-input: unparseable doc → exit 1 (2>/dev/null masking 금지)
+        [154-AC-5]  execution-trace(numeric): 스캔 파일 수 · 매치 수
+        [154-AC-13] identity_bearing: true — 채널 = active-doc 집합
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_fanout_subject_prose.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-3-platform-inherent-prose
+    description: |
+      NG-3 (AC-6) — AC-6 'platform inherent' 문면 스캐너 + frozen 내용앵커 (scripts/lib/frozen_anchor.py 공용)
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 스캔 대상 0 파일 → non-GREEN ∧ 앵커 미발견 → ANCHOR_NOT_FOUND RED
+        [154-AC-4]  unknown-input: unparseable doc → exit 1 ∧ 앵커 resolve rc >= 2 → ANCHOR_RESOLVE_FAILED RED
+        [154-AC-5]  execution-trace(numeric): 스캔 파일 수 · 앵커 해석 결과
+        [154-AC-13] identity_bearing: true — 앵커 resolved-target echo 가 곧 probe (§8.0.9 5-state)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_platform_inherent_prose.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-4-doc-queue-ssot
+    description: |
+      NG-4 (AC-8) — AC-8 doc-queue 5-SSOT 교차 스캐너 — 5 site 전수 대조
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 대조 site < 5 → non-GREEN (4 site 만 읽고 통과 금지)
+        [154-AC-4]  unknown-input: site 문서 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 대조한 site 수(=5)
+        [154-AC-13] identity_bearing: true — 채널 = 5 site 경로
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_doc_queue_ssot.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-5-lane-dispatch-packet
+    description: |
+      NG-5 (AC-10) — AC-10 lane-dispatch packet snapshot_sha 필수 — packet 계약 필드 검증
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: packet 부재 → ESCALATE_PACKET_INCOMPLETE (non-GREEN)
+        [154-AC-4]  unknown-input: 미지 필드 → fail-closed
+        [154-AC-5]  execution-trace(numeric): 검사 필드 수
+        [154-AC-13] identity_bearing: false — caller 가 값을 직접 건네는 순수 술어라 죽을 수 있는 별도 채널 부재 (정직 applicability 선언)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★detect_command 지정 근거 (구현리뷰 FIX iter2)★: 본 검사기는 caller-supplied 입력(`--packet`)을
+      요구해 무인자 직접 호출이 불가하다(필수 인자 부재 → rc=1). CI 스텝(`NG-5 | AC-10 dispatch packet
+      snapshot_sha`)은 리터럴 rc=3 INCONCLUSIVE 정직 선언이라 스크립트 직접 호출이 CI 에 존재하지 않는다.
+      ⇒ ★실 검증면은 아래 명명 테스트★ 이고 detect_command 는 스크립트가 아니라 그 테스트를 가리킨다
+      (그 테스트가 check_lane_dispatch_packet.py 를 subprocess 로 실호출 — 양성 대조 + RED 4종).
+    detect_command: python3 -m pytest tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_dispatch_packet_requires_snapshot_sha -q
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-6-write-overlap
+    description: |
+      NG-6 (AC-14) — AC-14 쓰기 겹침 산출기 (P1/P2) — writer_key 별 쓰기 경로 겹침 판정
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 쓰기 0행 → INCONCLUSIVE (F-6' 동형)
+        [154-AC-4]  unknown-input: unknown provenance → 입력 제외 후 카운트 emit (조용한 제외 금지)
+        [154-AC-5]  execution-trace(numeric): 판독 행 수 · writer_key distinct 수
+        [154-AC-13] identity_bearing: true — 채널 = dev-process-event
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/compute_write_overlap.py --self-test
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-7-pl-spawn-observation
+    description: |
+      NG-7 (AC-15) — AC-15 L-A/L-C 관측 파서 — PL spawn 관측면 판독
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 관측 0행 → INCONCLUSIVE (L-C fallback 명시)
+        [154-AC-4]  unknown-input: 파싱 불가 관측 행 → exit 1
+        [154-AC-5]  execution-trace(numeric): 판독 행 수
+        [154-AC-13] identity_bearing: true — 채널 = 원장/파일 관측
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_pl_spawn_observation.py --self-test
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-8-lane-overlap-predicate
+    description: |
+      NG-8 (AC-16) — AC-16 lane 겹침 판별기 (C1/C2/C3) — read_set ∩ write_set 겹침 술어
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: read_set/write_set 미선언 → non-GREEN ∧ write_set 추출 결과 0행 → EXTRACTION_EMPTY fail-closed (선언은 됐고 추출만 0 인 경우가 종전 미분류 — 실패 방향이 permissive 였다) (유일 예외 = allowlist 등재 lane 의 명시 sentinel 선언 declared_empty — allowlist 밖 sentinel 은 sentinel_not_allowlisted RED)
+        [154-AC-4]  unknown-input: 미지 glob → fail-closed ∧ lane CLAUDE.md self-write 표 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 대조 lane 쌍 수 · 추출 lane 수 · write_set 원소 수
+        [154-AC-13] identity_bearing: true — 채널 = 각 lane CLAUDE.md self-write 표 (기계 추출, §7.10)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_lane_overlap_predicate.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-9-concurrency-metric
+    description: |
+      NG-9 (AC-2b) — AC-2b 동시성 산출기 — provenance(hook_stamped) + 완전성 연접
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 기대 spawn 수 > 0 연접 미충족 → INCONCLUSIVE (F-6' 본체, §7.5.2)
+        [154-AC-4]  unknown-input: stop_time_source enum 밖 → 입력 제외 ∧ 제외 수 카운트 emit
+        [154-AC-5]  execution-trace(numeric): hook_stamped 행 수 · 기대 spawn 수
+        [154-AC-13] identity_bearing: true — 채널 = spawn-event
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/compute_concurrency_metric.py --self-test
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-10-spawn-event-location-parity
+    description: |
+      NG-10 (계약) — spawn-event 4-location parity lint — 계약 문면 4 location 동일성
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: resolve 된 location < 4 → RED
+        [154-AC-4]  unknown-input: location 파일 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 대조 location 수(=4)
+        [154-AC-13] identity_bearing: true — 경로 오타 = vacuous pass 고전형 (resolved-target echo 필수)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_spawn_event_location_parity.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-11-dev-process-event-location-parity
+    description: |
+      NG-11 (계약) — dev-process-event 5-location parity lint — 계약 문면 5 location 동일성
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: resolve 된 location < 5 → RED
+        [154-AC-4]  unknown-input: location 파일 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 대조 location 수(=5)
+        [154-AC-13] identity_bearing: true — 경로 오타 = vacuous pass 고전형 (resolved-target echo 필수)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_dev_process_event_location_parity.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-12-hook-merge-registration
+    description: |
+      NG-12 (H-2) — hook 병합 게이트 — 검사 축 + 등록면 축 (H-2' 병합 후 각 게이트 여전히 차단)
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: matcher 해석 결과 0 → RED (§7.7.2 H-2')
+        [154-AC-4]  unknown-input: hooks.json unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 등록 hook 수 · 발화 회차
+        [154-AC-13] identity_bearing: true — 채널 = hooks.json 등록면 (등록 블록 누락 = 전건 침묵)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_hook_merge_registration.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-13-return-envelope-handle
+    description: |
+      NG-13 (§7.12) — return-envelope handle 검사 — handle 형식·해석 가능성
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: envelope 0건 → INCONCLUSIVE
+        [154-AC-4]  unknown-input: handle 미지 형식 → 거부 (수용 금지)
+        [154-AC-5]  execution-trace(numeric): 검사 envelope 수
+        [154-AC-13] identity_bearing: false — caller 가 값을 직접 건네는 순수 술어라 죽을 수 있는 별도 채널 부재 (정직 applicability 선언)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★detect_command 지정 근거 (구현리뷰 FIX iter2)★: 본 검사기는 caller-supplied 입력(`--envelope`)을
+      요구해 무인자 직접 호출이 불가하다(필수 인자 부재 → rc=2). CI 스텝(`NG-13 | return-envelope handle`)
+      은 리터럴 rc=3 INCONCLUSIVE 정직 선언이라 스크립트 직접 호출이 CI 에 존재하지 않는다.
+      ⇒ ★실 검증면은 아래 명명 테스트★ 이고 detect_command 는 스크립트가 아니라 그 테스트를 가리킨다
+      (그 테스트가 check_return_envelope_handle.py 를 subprocess 로 실호출 — 양성 대조 + RED 3종).
+    detect_command: python3 -m pytest tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_return_envelope_requires_handle -q
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-14-stop-event-prose
+    description: |
+      NG-14 (AC-3) — AC-3 원장 문면 grep — stop-event 거짓 보증문(:34) 부재 검사 (P-5 의 1번째 진입점 = 문면 축)
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 대상 파일 미발견 → RED (0 매치를 '정정 완료'로 읽지 않음)
+        [154-AC-4]  unknown-input: 대상 파일 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): 스캔 파일 수
+        [154-AC-13] identity_bearing: true — 경로 오타 = vacuous pass (resolved-target echo 필수)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_stop_event_prose.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-15-stop-event-concurrent-append
+    description: |
+      NG-15 (AC-3) — AC-3 동시 append 무손실 (N=8) — P-5 의 2번째 진입점 = 실행 축 (NG-14 = 문면 축)
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 기대 writer 수 0 ∨ 관측 행 0 → INCONCLUSIVE (0 == 0 을 '무손실'로 읽지 않음, F-6' 형판)
+        [154-AC-4]  unknown-input: 파싱 불가 원장 행 → exit 1 (행 조용히 제외 후 통과 금지)
+        [154-AC-5]  execution-trace(numeric): 기대 writer 수 · 실제 append 행 수 · 손실 행 수
+        [154-AC-13] identity_bearing: true — 채널 = 원장 파일 경로 (경로 오타 → 0행 → vacuous pass 고전형)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_stop_event_concurrent_append.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-16-subagent-stop-auto-emit
+    description: |
+      NG-16 (AC-1) — AC-1 L1 SubagentStop 자동 emit (P-6) — hook 자동 emit 실재
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 세션 내 subagent 종료 0건 → INCONCLUSIVE (row diff 0 을 '자동 emit 정상'으로 읽지 않음 — mutant M-E 의 기대값이 정확히 diff 0 이라 양성/공백 구분 필수)
+        [154-AC-4]  unknown-input: hook payload 필수 필드 부재 → fail-closed (기본값 대체 금지)
+        [154-AC-5]  execution-trace(numeric): 기대 종료 이벤트 수 · emit 된 row 수
+        [154-AC-13] identity_bearing: true — 채널 = hooks.json SubagentStop 등록면 (NG-12 와 동형 단일 실패점)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_subagent_stop_auto_emit.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-17-parallel-work-sentinel
+    description: |
+      NG-17 (계약) — parallel-work sentinel fail-open 제거 (P-13b / §7.8 S-2) — 판정 semantics 변경 진입점 (신규 진입점 아님, 규칙 R 포함범위 2항)
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 대조 worktree 0개 → INCONCLUSIVE
+        [154-AC-4]  unknown-input: divergence declare — git fetch rc 미지 · 출력 파싱 실패 → degraded=true → INCONCLUSIVE. [154-AC-4] 의 fail-closed 를 '조용한 통과 금지'로만 이행하고 '차단'으로는 이행하지 않는다 (§7.8 S-2 가 fail-closed 전환을 명시 금지 — 가드가 작업을 막으면 우회가 규범이 된다)
+        [154-AC-5]  execution-trace(numeric): 대조 worktree 수 · fetch rc · degraded 플래그
+        [154-AC-13] identity_bearing: true — 채널 = 공유 .git/shallow · 원격 fetch 결과
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_parallel_work_sentinel.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-18-ci-run-completeness
+    description: |
+      NG-18 (계약) — CI 기대 run 수 ↔ 실제 run 수 대조 (P-17 / §7.16) — run 유실 검출
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 기대 run 수 미해석(0) → INCONCLUSIVE (F-6' 형판 — 0 == 0 GREEN 금지)
+        [154-AC-4]  unknown-input: run 목록 조회 응답 파싱 실패 → exit 1 (2>/dev/null masking 금지)
+        [154-AC-5]  execution-trace(numeric): 기대 run 수 · 실제 run 수 · 차분
+        [154-AC-13] identity_bearing: true — 채널 = Actions run 목록 조회 범위 (조회 범위 오지정 = 전건 vacuous)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+      ★CI 스텝 판정 = INCONCLUSIVE 고정 (범주 B — 수정 가능·이연)★: 배선은 살아 있으나 입력 정의가
+      부당하다. 결함은 ★3축★ 이며 ⓑ 만 고치면 거짓 RED 가 옮겨갈 뿐이다 (Orchestrator firsthand 실측):
+        ⓐ expected 집합 정의 — workflow 파일 수 ≠ 그 커밋이 트리거하는 run 집합
+        ⓑ `gh run list` 기본 20 절단 (`--limit 100` → 87)
+        ⓒ workflow 1개가 run 2개를 낳는다 (87 run / 고유 이름 84) — count 대 count 비교 자체가 불성립
+      산술 코어는 판별력이 있다(5/5 → exit 0, 5/2 → exit 1) — 고칠 것은 코어가 아니라 입력 정의다.
+      범주 A(구조적 판정 불가: NG-5/13/16/17)와 구별해 `CI_INCONCLUSIVE_FIXABLE_DEFERRED` 로 분리 등재했다.
+      ★강제 강도 정직 declare (구현리뷰 FIX iter2 / F-CR2-003)★: "carrier 없이 그 목록에 올리지 말라" 는
+      ★prose-only 규범★ 이지 기계 강제가 아니다 — 구 문면의 "금지한다 / 차단" 은 기계 강제로 오독된다:
+        · carrier 동반 여부를 검사하는 기계 검사가 ★없다★. `deferred_followup_cfp` 를 파싱하는 lint 는
+          따로 있으나(`scripts/lib/check_deferral_carrier_declared.py`) 그것은 미해결 placeholder
+          (`TBD` / `CFP-TBD`) 검출용이고 `CI_INCONCLUSIVE_*` 를 읽지 않는다 ⇒ carrier 를 아예 적지 않으면
+          검출할 토큰 자체가 없어 침묵한다.
+        · 목록 ★크기 상한 검사 0★ — 몇 건을 이연 등재하든 CI 는 반응하지 않는다.
+        · ⇒ ★2단계 gaming 경로는 여전히 열려 있다★: 입력 정의를 부당하게 두어 rc=3 을 만든 뒤 그 항목을
+          목록에 등재하면 통과한다. 이 경로를 닫는 것은 리뷰·carrier 소관이지 본 게이트가 아니다.
+      (workflow 의 `A ∪ B == DECLARED` 집합 동등 assert 는 ★범주 미지정 등재★ 만 막는다 — 그 스텝 자신이
+       선언하듯 A↔B 오분류 검출력은 0 이고, carrier 유무·목록 크기는 그 assert 의 검사 범위 밖이다.)
+      입력 정의 3축 정정 carrier:
+      deferred_followup_cfp: CFP-2958
+    detect_command: python3 scripts/lib/check_ci_run_completeness.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-19-story-diff-adr064
+    description: |
+      NG-19 (AC-7) — AC-7 story diff ADR-064 무접촉 스캐너 — diff 대상 안 ADR-064 접촉 부재
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: diff 해석 결과 0 파일 → RED (0 매치를 'ADR-064 미포함'으로 읽으면 vacuous 참)
+        [154-AC-4]  unknown-input: diff base 미해석 / 경로 unparseable → exit 1
+        [154-AC-5]  execution-trace(numeric): diff 대상 파일 수 · base SHA
+        [154-AC-13] identity_bearing: true — 채널 = diff base 해석(경로·SHA). base 오지정 = 전건 vacuous
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_story_diff_adr064.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-20-klist-untouched
+    description: |
+      NG-20 (AC-9) — AC-9 K-list 무접촉 스캐너 — K 항목 9종 무접촉
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 스캔 대상 0 파일 → RED
+        [154-AC-4]  unknown-input: unparseable doc → exit 1
+        [154-AC-5]  execution-trace(numeric): 스캔 파일 수 · 대조 K 항목 수(=9)
+        [154-AC-13] identity_bearing: true — 채널 = K-list 9항 정의 + 스캔 경로 집합
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_klist_untouched.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
+
+  - name: cfp2926-ng-21-slot-budget-table
+    description: |
+      NG-21 (AC-12) — AC-12 슬롯 예산 표 합 검사 — 표 행 합계 = 20
+      ADR-154 번들 4항목:
+        [154-AC-3]  empty-target: 표 미발견 ∨ 파싱 행 0 → RED ('합 0 != 20 이라 우연히 RED' 에 의존 금지 — 명시 분기로 분리)
+        [154-AC-4]  unknown-input: 표 셀 비수치 → exit 1
+        [154-AC-5]  execution-trace(numeric): 파싱 행 수 · 합계
+        [154-AC-13] identity_bearing: true — 채널 = 대상 문서 경로 + 표 heading (heading rename → 0행 vacuous)
+      3-state verdict 공유 SSOT = scripts/lib/gate_verdict.py (PASS exit 0 / RED exit 1 /
+      INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
+      정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
+      기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
+    detect_command: python3 scripts/lib/check_slot_budget_table.py --repo-root .
+    workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
+    current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
+    # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-171 §결정 6 (a) velocity-normalized STANDARD
+      failure_threshold: 0           # ADR-171 §결정 6 (b)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - gate_verdict_json_trace    # 게이트 stdout 단일 라인 JSON (verdict/reason/trace/identity_probe)
+    introduced_by: CFP-2926
+    introduced_date: 2026-08-12      # KST (Phase 2 mechanical wire delivery)
+    owner_adr: ADR-154               # declaration source — 신규 hard gate self-verification 출생 계약
+    carrier_adr: ADR-171             # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                       # preventive ratchet — 도입 시점 실측 위반 0
+      threshold: 3                   # ADR-171 §결정 19 standard default
+      promotion_trigger: none        # sentinel-driven 아님 (carrier 실존 → deferred-followup-reconcile 미발화)
+    status: Active
