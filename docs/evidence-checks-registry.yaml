@@ -4458,13 +4458,18 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-      ★CI 판정 범위 정직 declare (구현리뷰 FIX iter1 / F-CR-003)★: CI 호출은 `--self-test` 단일이며
-      `--executed-before` (X(before) 스냅샷) 를 전달하지 않는다 ⇒ CI 경로의 실효 술어는 ★L1 1-leg★ 이고
-      L2 보존은 `not_measured` (게이트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
+      ★CI 판정 범위 정직 declare (구현리뷰 FIX iter1 / F-CR-003 · iter2 결손 귀속 정정 / F-CR2-004)★:
+      CI 호출은 `--self-test` ★단일★ 이다 — `--declared-spec`·`--executed-manifest`·`--executed-before`
+      셋 다 미전달이다. `--self-test` 는 ★내장 fixture★ 위 자가검증(키 항등성 / lane·check_class·target
+      성분 탈락 / 빈 입력 INCONCLUSIVE)이라 실 repo 데이터를 읽지 않는다 ⇒ CI 경로의 실효 술어는
+      ★oracle self-test 통과★ 뿐이고, 실 repo census(D·X) 대조는 ★L1·L2 양쪽 모두 미배선★ 이다.
+      ★L1 은 실효★ 라고 읽히는 표기(구 iter1 문면 "실효 술어 = L1 1-leg")는 결손을 L2 1-leg 로 좁혀
+      ★과소 귀속★ 하므로 폐기한다 — L1 도 실 census 위에서 돌지 않는다. L2 보존은 `not_measured`
+      (게이트 JSON 이 `l2_pass: null` + `l2_status` 로 매 run 자백).
       ⇒ M2(검사 unit 을 선언·실행 양쪽에서 통째 삭제)는 CI 에서 미검출이다. 미설계가 아니라 ★미배선★ —
-      공급자는 Story AC-4 가 이미 지명(before = 순차 대조군 1회, AC-2a 와 공유). L2 CI 배선 carrier:
+      공급자는 Story AC-4 가 이미 지명(before = 순차 대조군 1회, AC-2a 와 공유). 실 census(L1·L2) 배선 carrier:
       deferred_followup_cfp: CFP-2960
-    detect_command: python3 scripts/lib/check_census_oracle.py --repo-root .
+    detect_command: python3 scripts/lib/check_census_oracle.py --self-test
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -4596,7 +4601,12 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-    detect_command: python3 scripts/lib/check_lane_dispatch_packet.py --repo-root .
+      ★detect_command 지정 근거 (구현리뷰 FIX iter2)★: 본 검사기는 caller-supplied 입력(`--packet`)을
+      요구해 무인자 직접 호출이 불가하다(필수 인자 부재 → rc=1). CI 스텝(`NG-5 | AC-10 dispatch packet
+      snapshot_sha`)은 리터럴 rc=3 INCONCLUSIVE 정직 선언이라 스크립트 직접 호출이 CI 에 존재하지 않는다.
+      ⇒ ★실 검증면은 아래 명명 테스트★ 이고 detect_command 는 스크립트가 아니라 그 테스트를 가리킨다
+      (그 테스트가 check_lane_dispatch_packet.py 를 subprocess 로 실호출 — 양성 대조 + RED 4종).
+    detect_command: python3 -m pytest tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_dispatch_packet_requires_snapshot_sha -q
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -4629,7 +4639,7 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-    detect_command: python3 scripts/lib/compute_write_overlap.py --repo-root .
+    detect_command: python3 scripts/lib/compute_write_overlap.py --self-test
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -4662,7 +4672,7 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-    detect_command: python3 scripts/lib/check_pl_spawn_observation.py --repo-root .
+    detect_command: python3 scripts/lib/check_pl_spawn_observation.py --self-test
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -4728,7 +4738,7 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-    detect_command: python3 scripts/lib/compute_concurrency_metric.py --repo-root .
+    detect_command: python3 scripts/lib/compute_concurrency_metric.py --self-test
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -4860,7 +4870,12 @@ entries:
       INCONCLUSIVE exit 3 — INCONCLUSIVE 는 GREEN 이 아니다).
       정직 천장(ADR-154 §결정 4 INV-5 / ADR-151 §결정 7 상속): 번들 presence/shape/fail-closed 까지가
       기계 보증이며 detection sufficiency 는 review-tier — "완전 봉인"·"전부 검출" 주장 부재.
-    detect_command: python3 scripts/lib/check_return_envelope_handle.py --repo-root .
+      ★detect_command 지정 근거 (구현리뷰 FIX iter2)★: 본 검사기는 caller-supplied 입력(`--envelope`)을
+      요구해 무인자 직접 호출이 불가하다(필수 인자 부재 → rc=2). CI 스텝(`NG-13 | return-envelope handle`)
+      은 리터럴 rc=3 INCONCLUSIVE 정직 선언이라 스크립트 직접 호출이 CI 에 존재하지 않는다.
+      ⇒ ★실 검증면은 아래 명명 테스트★ 이고 detect_command 는 스크립트가 아니라 그 테스트를 가리킨다
+      (그 테스트가 check_return_envelope_handle.py 를 subprocess 로 실호출 — 양성 대조 + RED 3종).
+    detect_command: python3 -m pytest tests/unit/cfp_2926/test_contracts_envelope_dispatch.py::test_return_envelope_requires_handle -q
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)
     current_tier: warning            # ADR-154 §결정 8 — day-1 warning-tier, 신규 required context 0
     # bypass_label: omit — warning tier 비차단 (evidence-check-registry-v1 §3 warning = omit 권고)
@@ -5031,8 +5046,19 @@ entries:
         ⓑ `gh run list` 기본 20 절단 (`--limit 100` → 87)
         ⓒ workflow 1개가 run 2개를 낳는다 (87 run / 고유 이름 84) — count 대 count 비교 자체가 불성립
       산술 코어는 판별력이 있다(5/5 → exit 0, 5/2 → exit 1) — 고칠 것은 코어가 아니라 입력 정의다.
-      범주 A(구조적 판정 불가: NG-5/13/16/17)와 구별해 `CI_INCONCLUSIVE_FIXABLE_DEFERRED` 로 분리 등재했고,
-      carrier 없이 그 목록에 올리는 것을 금지한다(결함의 면제 둔갑 차단). 입력 정의 3축 정정 carrier:
+      범주 A(구조적 판정 불가: NG-5/13/16/17)와 구별해 `CI_INCONCLUSIVE_FIXABLE_DEFERRED` 로 분리 등재했다.
+      ★강제 강도 정직 declare (구현리뷰 FIX iter2 / F-CR2-003)★: "carrier 없이 그 목록에 올리지 말라" 는
+      ★prose-only 규범★ 이지 기계 강제가 아니다 — 구 문면의 "금지한다 / 차단" 은 기계 강제로 오독된다:
+        · carrier 동반 여부를 검사하는 기계 검사가 ★없다★. `deferred_followup_cfp` 를 파싱하는 lint 는
+          따로 있으나(`scripts/lib/check_deferral_carrier_declared.py`) 그것은 미해결 placeholder
+          (`TBD` / `CFP-TBD`) 검출용이고 `CI_INCONCLUSIVE_*` 를 읽지 않는다 ⇒ carrier 를 아예 적지 않으면
+          검출할 토큰 자체가 없어 침묵한다.
+        · 목록 ★크기 상한 검사 0★ — 몇 건을 이연 등재하든 CI 는 반응하지 않는다.
+        · ⇒ ★2단계 gaming 경로는 여전히 열려 있다★: 입력 정의를 부당하게 두어 rc=3 을 만든 뒤 그 항목을
+          목록에 등재하면 통과한다. 이 경로를 닫는 것은 리뷰·carrier 소관이지 본 게이트가 아니다.
+      (workflow 의 `A ∪ B == DECLARED` 집합 동등 assert 는 ★범주 미지정 등재★ 만 막는다 — 그 스텝 자신이
+       선언하듯 A↔B 오분류 검출력은 0 이고, carrier 유무·목록 크기는 그 assert 의 검사 범위 밖이다.)
+      입력 정의 3축 정정 carrier:
       deferred_followup_cfp: CFP-2958
     detect_command: python3 scripts/lib/check_ci_run_completeness.py --repo-root .
     workflow: templates/github-workflows/cfp-2926-phase2-gates.yml  # templates + .github byte-identical mirror (ADR-005)

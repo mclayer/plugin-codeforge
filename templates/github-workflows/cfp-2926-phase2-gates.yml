@@ -289,6 +289,59 @@ jobs:
             3) echo "::notice::NG-9 INCONCLUSIVE — 판정 없음(PASS 아님). allowlist 대조는 reconcile 스텝이 수행." ;;
           esac
 
+      - name: 범주 A ∪ B == DECLARED 집합 동등 assert (범주 분리 기계 소비처 — workflow 전역)
+        if: always()
+        env:
+          CI_INCONCLUSIVE_STRUCTURAL: ${{ env.CI_INCONCLUSIVE_STRUCTURAL }}
+          CI_INCONCLUSIVE_FIXABLE_DEFERRED: ${{ env.CI_INCONCLUSIVE_FIXABLE_DEFERRED }}
+          CI_INCONCLUSIVE_DECLARED: ${{ env.CI_INCONCLUSIVE_DECLARED }}
+        run: |
+          set -u
+          # ★무엇을 막는가★: 범주 A(구조적 판정 불가) / B(수정 가능·이연) 분리는 env 정의부에만
+          #   존재했고 ★기계 소비처가 0★ 이었다 — reconcile 3곳(ng1-9 / ng10-15 / ng16-21)이 실제로
+          #   읽는 변수는 `CI_INCONCLUSIVE_DECLARED` 단 하나다. 그 상태에서는 DECLARED 만 늘려도
+          #   A·B 어느 쪽도 반응하지 않아 범주 분리가 ★문면 장식★ 으로 전락한다
+          #   (= "결함이 면제로 둔갑" 을 막으려던 분리 자체가 무력화되고, env 주석의
+          #     "A ∪ B = 기존 bijection 대상 (값 동일)" 단언은 아무도 검사하지 않는 자기신고가 된다).
+          #   ⇒ 본 스텝이 `A ∪ B == DECLARED` 를 ★매 run★ 강제해 세 변수를 하나의 계약으로 묶는다.
+          #     이후 DECLARED 단독 편집은 A 또는 B 의 동반 diff 없이는 RED 다 (범주 미지정 등재 봉인).
+          # ★무엇을 못 막는가 (정직 천장)★: 이 assert 는 ★분류가 옳은지★ 는 모른다. 구조적 판정 불가
+          #   항목을 B 에 넣거나 그 반대로 넣어도 합집합은 동일하므로 통과한다 — A↔B 오분류 검출력은 0
+          #   이고, 그 타당성은 리뷰·carrier(CFP 번호 동반) 소관이다.
+          norm() {
+            echo "$1" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+          }
+          a=$(norm "$CI_INCONCLUSIVE_STRUCTURAL")
+          b=$(norm "$CI_INCONCLUSIVE_FIXABLE_DEFERRED")
+          union=$(norm "$CI_INCONCLUSIVE_STRUCTURAL $CI_INCONCLUSIVE_FIXABLE_DEFERRED")
+          declared=$(norm "$CI_INCONCLUSIVE_DECLARED")
+          echo "A 범주(구조적 판정 불가)      = [$a]"
+          echo "B 범주(수정 가능·이연)        = [$b]"
+          echo "A ∪ B (실측 합집합)           = [$union]"
+          echo "DECLARED (reconcile 3곳 소비) = [$declared]"
+          # 대조 대상 0건 = vacuous pass ⇒ RED (형판 = 아래 'Frozen rc=3' 스텝의 0건 추출 가드)
+          if [ -z "$declared" ]; then
+            echo "::error::CI_INCONCLUSIVE_DECLARED 공백 — 대조 대상 0건. ★0 == 0 을 통과로 읽지 않는다★ (allowlist 가 통째로 비면 본 계약이 무의미해지고 범주 분리는 다시 검사 밖으로 나간다)."
+            exit 1
+          fi
+          if [ "$union" != "$declared" ]; then
+            echo "::error::범주 합집합 불일치 — A[$a] ∪ B[$b] = [$union] vs CI_INCONCLUSIVE_DECLARED[$declared]. 세 변수는 하나의 계약이다: DECLARED 에 항목을 넣거나 빼려면 같은 diff 에서 A(구조적 판정 불가) 또는 B(수정 가능·이연, carrier CFP 동반) 중 정확히 한 쪽을 갱신해야 한다."
+            exit 1
+          fi
+          {
+            echo "### 범주 A ∪ B == DECLARED — 범주 분리 기계 계약"
+            echo ""
+            echo "| 범주 | 값 |"
+            echo "|---|---|"
+            echo "| A 구조적 판정 불가 | \`$a\` |"
+            echo "| B 수정 가능·이연 (carrier 동반) | \`$b\` |"
+            echo "| A ∪ B | \`$union\` |"
+            echo "| DECLARED (reconcile 3곳 소비) | \`$declared\` |"
+            echo ""
+            echo "- ✓ 집합 동등(양방향 — subset 아님). DECLARED 단독 편집은 A/B 동반 diff 없이 RED."
+            echo "- ★못 하는 것★: **분류의 타당성**은 검사하지 않는다. A↔B 오분류는 합집합이 같아 통과한다."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Frozen rc=3 subset assert (ratchet 사망 명시 — workflow 전역)
         if: always()
         env:
@@ -321,7 +374,7 @@ jobs:
             exit 1
           fi
           if [ "$extracted" != "$frozen" ]; then
-            echo "::error::frozen rc=3 subset 불일치 — 실측[$extracted] vs 선언[$frozen]. 리터럴 rc=3 의 추가/제거는 CI_RC3_FROZEN 코드 diff 를 반드시 동반해야 한다 (조용한 확장 봉인)."
+            echo "::error::frozen rc=3 집합 불일치 — 실측[$extracted] vs 선언[$frozen]. 리터럴 rc=3 의 추가/제거는 CI_RC3_FROZEN 코드 diff 를 반드시 동반해야 한다 (조용한 확장 봉인)."
             exit 1
           fi
           # frozen ⊆ declared — 리터럴 rc=3 인데 INCONCLUSIVE 선언이 없으면 자기모순
