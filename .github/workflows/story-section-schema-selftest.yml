@@ -1,0 +1,74 @@
+name: Story Section Schema Self-Test (CFP-2831)
+# T3(scripts/lib/test_check_story_section_schema.py) 를 실행하는 유일한 CI 채널.
+#
+# ★ runner 는 반드시 pytest 다. 대상 파일을 직접 실행하면 구판 py 뮤턴트에서 import 시점
+#   module-level 종료 부작용이 프로세스를 죽여 exit 0 = 위양성 GREEN 이 된다(CP §3.4 실측).
+#   kill 18/21 은 pytest 경로에서만 관측된다. 이 줄을 바꾸려면 뮤턴트 재측정이 선행 조건.
+#
+# ★ pull_request_target 전환 금지. 이 repo 는 PUBLIC 이고 본 workflow 는 wrapper 최초의
+#   상시-활성 fork 도달 경로다. `if: github.repository == …` 는 fork 방어가 아니다
+#   (pull_request 는 base repo 컨텍스트라 fork PR 도 통과) — 실 방어는 이벤트 선택 자체.
+#
+# .github-only (templates/ 미복사) — parity walk 는 template→.github 단방향이라 자동 parity-safe.
+# NO path-filter (required permanent-pending 함정 회피 — hard-gate-self-verification-test.yml:12-14 관례).
+#   path-filter 미사용 — 실행 억제 없이 매 PR 비용을 수용한다(A4.1'). `if:` 는 억제 장치가 아니라
+#   **consumer 복사 시 no-op 보장용**이며 wrapper 에서는 항상 참이다(ADR-130:198 graceful no-op 정합).
+#   ⇒ 승격은 branch protection 에 context 를 추가하는 **단일 동작**이며 워크플로 편집이 불요하다.
+# non-required (day-1). required 8-tuple 무변경 ⇒ ADR-125 anchor 무손상.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  story-section-schema-selftest:
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0   # AC-9 뮤턴트 주입에 구판 blob 필요 — depth-1 이면 취득 불가
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install test deps (pytest only — 공급망 표면 최소화)
+        run: python -m pip install --quiet pytest
+
+      - name: Run T3 suite via pytest (2-axis assertion — CP §8.1.1)
+        run: |
+          set -euo pipefail
+          python -m pytest scripts/lib/test_check_story_section_schema.py \
+            -q --junitxml=t3-results.xml
+          python - <<'PY'
+          import ast, xml.etree.ElementTree as ET
+          # N 은 상수 금지 — AST 산출 (CP §8.1)
+          src = open('scripts/lib/test_check_story_section_schema.py', encoding='utf-8').read()
+          N = sum(1 for n in ast.walk(ast.parse(src))
+                  if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                  and n.name.startswith('test'))
+          r = ET.parse('t3-results.xml').getroot()
+          r = r.find('testsuite') if r.tag == 'testsuites' else r
+          tot  = int(r.get('tests', 0));    fail = int(r.get('failures', 0))
+          err  = int(r.get('errors', 0));   skip = int(r.get('skipped', 0))
+          print(f"N={N} collected={tot} failed={fail} errors={err} skipped={skip}")
+          assert N > 0, "AST 로 test def 0건 — 하네스 파손"
+          # 축 A (결과) — 구판 회귀 · 전량 skip 을 죽인다
+          assert fail == 0 and err == 0, f"T3 실패: failed={fail} errors={err}"
+          assert skip == 0, "skip 발생 — 전량 skip 도 pytest exit 0 이라 GREEN 오독"
+          # 축 B (수집 완결성) — under-collection / 조기 종료를 죽인다. A 가 못 잡는 축.
+          assert tot == N, f"수집 {tot} != AST 산출 {N} — under-collection/조기종료"
+          PY
+
+      - name: Run tests/ 진입 계층 (RTM Hop3 심볼 소재)
+        run: python -m pytest tests/scripts/test_story_section_schema_harness.py -q
