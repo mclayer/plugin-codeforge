@@ -34,7 +34,13 @@ sources:
 
 **gha-runner-scale-set** = GitHub 공식 지원 ARC(Actions Runner Controller) 모드. VM/컨테이너 상주(persistent) 러너가 아니라 **1 job = 1 ephemeral pod** 실행 모델 — compose 기반 상주 러너의 "이관"은 lift-and-shift 가 아니라 **실행 모델 전환**이다.
 
-## 핵심 구조 (2026-08 검증)
+## 컨텍스트
+
+compose 기반 상주 self-hosted 러너(ADR-147 표준)를 K8s 로 옮기는 축을 검토할 때, "러너를 어디서 돌리느냐"가 아니라 "러너 수명·매칭·캐시 계약이 무엇이냐"가 먼저 갈린다. 본 개념은 CFP-2963 요구사항 lane 이 GitHub 공식 문서·릴리스 노트·chart values 를 2026-08 시점에 검증해 정립했다 (변경 이력 참조).
+
+## 핵심 규칙
+
+### 핵심 구조 (2026-08 검증)
 
 1. **2 Helm chart**: `gha-runner-scale-set-controller`(controller manager) + `gha-runner-scale-set`(scale-set 단위, OCI `ghcr.io/actions/actions-runner-controller-charts`). GitHub 지원 = "latest Autoscaling Runner Sets version only" — legacy community chart 비지원.
 2. **이벤트 기반 autoscale**: listener pod 이 GitHub Actions Service 에 HTTPS long-poll → `Job Available` 수신 시 EphemeralRunnerSet replica patch → JIT 토큰으로 러너 등록. **HPA/metrics-server 비의존** — metrics-server 미설치 클러스터에서도 스케일링 동작 (관측 도구 `kubectl top` 만 제한).
@@ -49,7 +55,7 @@ sources:
 5. **인증**: GitHub App 권장 (`github_app_id`/`github_app_installation_id`/`github_app_private_key` k8s Secret). PAT 는 enterprise-level 러너에만 필수.
 6. **min/maxRunners**: minRunners = idle 최소 (할당 job 수와 합산), maxRunners = 상한. 둘 다 0 = 큐 drain.
 
-## 콜드캐시 외부화 (ephemeral 파생 속성)
+### 콜드캐시 외부화 (ephemeral 파생 속성)
 
 pod 소멸 = 로컬 캐시 소멸이 구조적 기본값. 표준 대책 4종:
 - **image pre-bake** (toolchain 을 러너 이미지에 소결 → 노드 이미지 캐시가 실질 캐시층, @sha256 digest pin 병행)
@@ -57,6 +63,23 @@ pod 소멸 = 로컬 캐시 소멸이 구조적 기본값. 표준 대책 4종:
 - **registry pull-through mirror** (Docker Hub 캐시 로컬화)
 - **PVC tool cache** (RWX 스토리지 요구 — provisioner 는 GitHub 지원 범위 밖)
 
-## 버전 이력 앵커
+### 버전 이력 앵커
 
 0.12.1(2024-06) → 0.13.x → 0.14.0(2026-03-19 GA, multilabel + actions/scaleset 공개 Go client) → 0.14.2(최신 patch). 0.12.0 에 CRD 전면 재설치 요구 이력 — CRD 는 cluster-scoped 공유라 **동일 클러스터 내 구버전 pin scale-set 과 신버전 공존 시 CRD skew 검증 필수**.
+
+## 경계
+
+- 본 개념 = GitHub 공식 문서·릴리스 노트·chart values 기반 **외부 사실 모델** (요구사항 lane Researcher 소유, 2026-08 시점 검증). 특정 클러스터에 실제로 적용할지·어떤 값으로 설정할지 판단은 설계 lane 실측 영역.
+- 본문에 명시한 **미확인 2건**은 확정 사실이 아니다 — ① multilabel 로 `self-hosted` 등 예약 라벨을 할당할 수 있는지(문서 미명시 → PoC 필요) ② `kubernetes` containerMode 가 요구하는 RWX PV 의 provisioner 선택(GitHub 지원 범위 밖).
+- **자원·스케줄링 격리 축은 본 개념 범위 밖** — 운영 클러스터 동거 시의 우선순위·quota·디스크 가드레일은 짝 개념 `production-cluster-ci-cohabitation-guardrails` 소관.
+
+## 관련 ADR
+
+- **ADR-147 (CI runner topology — mclayer org self-hosted 이관 표준)** — compose 기반 self-hosted 러너 표준. 본 개념은 그 후속 K8s 이관 축의 실행 모델.
+
+## 변경 이력
+
+| 일자 | 변경 | carrier |
+|---|---|---|
+| 2026-08-13 | 신규 작성 — CFP-2963 요구사항 lane Researcher 산출 (ARC gha-runner-scale-set 실행 모델 외부 사실 조사) | CFP-2963 |
+| 2026-08-14 | 헤딩 구조 재배치 — concept doc-section-schema 필수 헤딩(컨텍스트·핵심 규칙·경계·관련 ADR·변경 이력) 정합. 내용 무손실 (기존 3개 절을 핵심 규칙 하위 `###` 로 강등 + frontmatter 인용 ADR·짝 개념·본문 미확인 2건을 경계/관련 ADR 로 목록화) | CFP-2963 |
