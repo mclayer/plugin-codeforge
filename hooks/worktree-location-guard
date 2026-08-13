@@ -53,5 +53,10 @@ if [ ! -f "${SCRIPT}" ]; then
 fi
 
 # Run guard — stdin (payload) 상속, exit code 그대로 전파.
-bash "${SCRIPT}"
+# ★ CFP-2965 S10 (④a): `bash "${SCRIPT}"` fork 제거 — 같은 셸에서 source.
+#   guard 스크립트의 `exit`/`exec` 가 곧 본 훅의 종료가 되어 exit code 가 그대로
+#   전파된다 (INV-A1 의도 동작 — deny exit 2 보존). 프로세스 1개 감소.
+#   argv: 본 훅은 인자 없이 호출되므로 `$@` 는 비어 있고, python SSOT 는 잉여 argv 를
+#   무시한다 (firsthand rc=0) — 인자 표면 델타 무해.
+source "${SCRIPT}"
 exit $?
