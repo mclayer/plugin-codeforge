@@ -128,8 +128,13 @@ amendment_log:
           (c) nested TEAMS(teammate→teammate) = platform 강제 불변.
           (d) liveness 게이트 소유 = lead 고정(INV-L4/ADR-170 §결정 20) — PL 이 자기 자식을
               띄워도 stall 판정·force-resume/TaskStop 은 lead 소유.
-      (6) 무접촉 declare — ADR-064(effective_count 45 = grandfathered_at 45 상한, Amd1 결정 2
-          `pl_autonomous_parallel_authority` 는 인용만) · ADR-139 · ADR-170 전부 byte 무변경.
+      (6) 무접촉 declare — ADR-064(Amd1 결정 2 `pl_autonomous_parallel_authority` 는 인용만) ·
+          ADR-139 · ADR-170 전부 byte 무변경 (`git diff origin/main...HEAD` 0줄 실측 — 이 주장은 유효).
+          ★수치 단정 철회★ — 구 문면의 "effective_count 45 = grandfathered_at 45 상한" 은
+          저작 시점(`bd1acf992`)에는 참이었으나, 브랜치가 main 을 흡수하며 ADR-064
+          Amendment 16 이 유입돼 상한 초과 상태가 됐다. 개별 수치는 병렬 세션 머지로
+          계속 변하므로 여기에 스냅샷을 다시 기입하지 않는다 —
+          현재값 SSOT = `bash scripts/check-adr-amendment-threshold.sh` 실행.
       (7) ADR-044 지위 무변경 — status: Proposed 유지(승격 안 함, CFP-2914 §7.14 선례). ADR-044
           몸통(§결정 1-3 TeamCreate/TeamDelete lifecycle)이 platform 삭제 기능(v2.1.178) 위에
           서 있는 사문화 문제는 본 Amendment 범위 밖 — 별건으로 declare.
@@ -565,10 +570,10 @@ PL 은 **lead 가 confine 한 Story/lane scope 안에서 자기 design-time rost
 
 **★ 재제정 의무 판정 (Amendment 7 / CFP-2926) — ADR-167 §결정 1 이원 트리거 명시 검토**
 
-- **축 1 (기계 count 축, [ADR-167](ADR-167-adr-amendment-compaction-ratchet.md):68 / §결정 2:73) = 미트리거.** effective_count = max(본문 Amendment 헤딩 정규식 매치 **0건**, frontmatter `amendment_log` **7** + `amendments` **0**) = **7** < THRESHOLD_N=**10** (`scripts/lib/check_adr_amendment_threshold.py:76`). 이 7 은 **Amendment 7 entry append 이후** 값이다(현재 파일 상태 = post-append 상태). `bash scripts/check-adr-amendment-threshold.sh` 실측 violation 목록에 ADR-044 부재(유일 violation = ADR-081 선재 부채, 본 Story 미소관). `docs/adr-amendment-threshold-baseline.yaml` 에도 ADR-044 미등재(도입 시점 <N) → grandfather 축 무관.
+- **축 1 (기계 count 축, [ADR-167](ADR-167-adr-amendment-compaction-ratchet.md):68 / §결정 2:73) = 미트리거.** effective_count = max(본문 Amendment 헤딩 정규식 매치 **0건**, frontmatter `amendment_log` **7** + `amendments` **0**) = **7** < THRESHOLD_N=**10** (`scripts/lib/check_adr_amendment_threshold.py:76`). 이 7 은 **Amendment 7 entry append 이후** 값이다(현재 파일 상태 = post-append 상태). `bash scripts/check-adr-amendment-threshold.sh` 실측 violation 목록에 ADR-044 부재(본 Story 미소관). ★violation 개수·명단 단정은 철회한다★ — 병렬 세션이 main 을 통해 타 ADR 의 amendment 를 계속 유입시키므로 어떤 스냅샷도 즉시 stale 이 된다(구 문면 "유일 violation = ADR-081" 이 실제로 그렇게 무너졌다). 현재값 SSOT = 위 스크립트 실행. 목록에 남는 violation 이 본 PR 기여 0 의 선재 부채라는 사실만 독립 확인됐다. `docs/adr-amendment-threshold-baseline.yaml` 에도 ADR-044 미등재(도입 시점 <N) → grandfather 축 무관.
 - **축 2 (리뷰 판정 축, ADR-167:69) = 트리거 성립 · 이행은 별 carrier.** frontmatter Amendment 7 entry 의 `reinterpretation: true` 는 §결정 1 (b) 의 저작-시점 self-declare marker 다. 게이트는 이를 violation 이 아니라 `::warning`(`check_adr_amendment_threshold.py:613-617` — "재제정 의무 트리거 (리뷰 판정 축)") 로만 내며 parity 는 exit 0 이다 — 즉 marker presence = **판정 호출**이지 의무 확정이 아니고, 확정 권위 = 리뷰 lane 인간 판정(ADR-167 §결정 7:97 honest ceiling).
 - **본 Story 에서 재제정을 수행하지 않는 사유 (3항 전부 ADR-167 문면)**:
-  - (i) **재제정 = 의미 무변경 재작성**(§결정 4 (a):85 — "의미 변경이 필요하면 재제정이 아니라 신규 결정으로 분리"). 본 Amendment 7 은 `direction: weakening`(금지 해제) 인 **substantive** 개정이라 재제정 vehicle 로 성립하지 않는다. 재제정은 이 개정 **이후** 상태를 의미 무변경으로 옮기는 별 행위다.
+  - (i) **재제정 = 의미 무변경 재작성**(§결정 4 (a):85 — "의미 변경이 필요하면 재제정이 아니라 신규 결정으로 분리"). 본 Amendment 7 은 `direction: weakening`(금지 해제) 인 **substantive** 개정이라 재제정 vehicle 로 성립하지 않는다. 재제정은 이 개정 **이후** 상태를 의미 무변경으로 옮기는 별개 행위다.
   - (ii) **재제정 실행 = 6단계**(§결정 3:77-78 — 신규 ADR 번호 claim / 본문 재작성 / 구본 `status: Superseded by ADR-Y` 전이 / G3 역참조 / RESERVATION archive / baseline 항목 제거). CFP-2926(읽기·쓰기 병렬화) scope 와 disjoint.
   - (iii) **재제정 의무 1건 = full 8-lane Story 1건 비용**(§결과:103, ADR-127) — ADR-167 자신이 실제 재제정을 "후속 Story" 로 배치한다.
 - **후속 carrier 승계 2건**: ① ADR-044 재제정(amendment 7건 + 본 Amendment 7 의 supersede-in-part 를 접은 신규 record) ② 위 (7) 이 이미 별건 declare 한 **몸통 사문화**(§결정 1-3 TeamCreate/TeamDelete 가 platform 삭제 기능 위에 존재). 사문화 미해소 상태에서는 "의미 무변경 재작성" 자체가 성립하지 않으므로 두 건은 같은 carrier 에서 함께 다뤄야 한다.

@@ -3253,7 +3253,7 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 
 ζ arc decomposition (CFP-31~CFP-40) 후 wrapper repo 에는 agent 0개. write 책임은 6 lane plugin 으로 분산 (§5.1 표 참조). 따라서 **wrapper repo 자신은** `.claude-work/doc-queue/**` write queue 를 쓰지 않는다 (wrapper agent 0 이라 제출 주체 부재).
 
-> **두 축 분리 (CFP-2926)**: "wrapper-self 미사용" ≠ "doc-queue 폐기". **lane plugin agent 의 doc-queue 제출 규약은 live** — 약 30개 agent md 가 `Edit/Write(.claude-work/doc-queue/**)` 권한을 보유하고, `.github/workflows/invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7)가 **required 게이트**로 이를 강제한다. lane 별 제출 경로 정본 = 각 lane `CLAUDE.md` 의 `Self-write 책임` 표 (예: `plugins/codeforge-requirements/CLAUDE.md` §4.1·§4.2·§4.3 row).
+> **두 축 분리 (CFP-2926)**: "wrapper-self 미사용" ≠ "doc-queue 폐기". **lane plugin agent 의 doc-queue 제출 규약은 live** — 약 30개 agent md 가 `Edit/Write(.claude-work/doc-queue/**)` 권한을 보유하고, `.github/workflows/invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7)가 **required 게이트**로 이를 강제한다. 각 lane 의 제출 경로 정본 = 그 lane `CLAUDE.md` 의 `Self-write 책임` 표 (예: `plugins/codeforge-requirements/CLAUDE.md` §4.1·§4.2·§4.3 row).
 
 wrapper-self write 는 대신:
 
