@@ -1,0 +1,62 @@
+---
+kind: concept_definition
+type: domain-knowledge
+slug: arc-ephemeral-scale-set-runner-model
+title: ARC ephemeral scale-set runner model — gha-runner-scale-set 실행 모델 (name/multilabel 매칭 + containerMode 3종 + 이벤트 기반 autoscale + 콜드캐시 외부화)
+status: Active
+updated: 2026-08-13
+carrier_story: CFP-2963
+related_adrs:
+  - ADR-147  # CI runner topology (compose 기반 self-hosted) — 본 개념은 그 후속 K8s 이관 축의 실행 모델
+related_files:
+  - archive/adr/ADR-147-ci-runner-topology-selfhosted-migration.md
+  - docs/domain-knowledge/concept/production-cluster-ci-cohabitation-guardrails.md   # 짝 개념 (운영 클러스터 동거 가드레일)
+tags:
+  - codeforge
+  - ci
+  - kubernetes
+  - actions-runner-controller
+  - self-hosted-runner
+sources:
+  - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller           # 아키텍처 (controller/listener/ephemeral)
+  - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/deploying-runner-scale-sets-with-actions-runner-controller  # containerMode·인증·min/maxRunners·runnerGroup
+  - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/using-actions-runner-controller-runners-in-a-workflow      # runs-on 매칭 (name + multilabel)
+  - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-support-for-actions-runner-controller               # 지원 정책 (latest only)
+  - https://github.blog/changelog/2026-03-19-actions-runner-controller-release-0-14-0/   # 0.14.0 GA — multilabel 도입
+  - https://github.com/actions/actions-runner-controller/releases                        # 버전 timeline (최신 patch 0.14.2)
+  - https://raw.githubusercontent.com/actions/actions-runner-controller/master/charts/gha-runner-scale-set/values.yaml  # scaleSetLabels·containerMode(dind/kubernetes/kubernetes-novolume)
+  - https://runs-on.com/benchmarks/github-actions-cache-performance/                     # actions/cache = self-hosted 에서도 GitHub 클라우드 저장소 왕복
+---
+
+# ARC ephemeral scale-set runner model
+
+## 정의
+
+**gha-runner-scale-set** = GitHub 공식 지원 ARC(Actions Runner Controller) 모드. VM/컨테이너 상주(persistent) 러너가 아니라 **1 job = 1 ephemeral pod** 실행 모델 — compose 기반 상주 러너의 "이관"은 lift-and-shift 가 아니라 **실행 모델 전환**이다.
+
+## 핵심 구조 (2026-08 검증)
+
+1. **2 Helm chart**: `gha-runner-scale-set-controller`(controller manager) + `gha-runner-scale-set`(scale-set 단위, OCI `ghcr.io/actions/actions-runner-controller-charts`). GitHub 지원 = "latest Autoscaling Runner Sets version only" — legacy community chart 비지원.
+2. **이벤트 기반 autoscale**: listener pod 이 GitHub Actions Service 에 HTTPS long-poll → `Job Available` 수신 시 EphemeralRunnerSet replica patch → JIT 토큰으로 러너 등록. **HPA/metrics-server 비의존** — metrics-server 미설치 클러스터에서도 스케일링 동작 (관측 도구 `kubectl top` 만 제한).
+3. **runs-on 매칭 2 경로**:
+   - (기본) `runnerScaleSetName` **이름** 매칭 — 이름은 runner group 내 유일. classic self-hosted 의 `self-hosted`/OS 라벨 부재.
+   - (0.14.0+, 2026-03-19 GA) **multilabel** — `scaleSetLabels` 로 복수 라벨 부여 + `runs-on: [label1, label2, ...]` 배열 타게팅. `self-hosted` 등 예약 라벨 할당 가능 여부는 문서 미명시 (PoC 필요).
+4. **containerMode 3종** (values.yaml 실측: `dind` / `kubernetes` / `kubernetes-novolume`):
+   - 기본(미지정) = docker 없음, template 수동 구성.
+   - `dind` = **privileged 필수** ("The Docker-in-Docker container requires privileged mode"). `docker:dind-rootless` 변형도 `--privileged` 요구.
+   - `kubernetes` = privileged 불요, runner container hooks 로 job pod 생성. RWX PV 요구, container job 아닌 워크플로는 `ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER=false` 없이는 fail. `kubernetes-novolume` = PV 없이 hooks.
+   - **DooD(호스트 docker.sock mount)는 containerMode 목록에 없음** — containerd 런타임 노드에는 docker 소켓 자체가 없어 DooD 전제 워크플로는 재편 대상.
+5. **인증**: GitHub App 권장 (`github_app_id`/`github_app_installation_id`/`github_app_private_key` k8s Secret). PAT 는 enterprise-level 러너에만 필수.
+6. **min/maxRunners**: minRunners = idle 최소 (할당 job 수와 합산), maxRunners = 상한. 둘 다 0 = 큐 drain.
+
+## 콜드캐시 외부화 (ephemeral 파생 속성)
+
+pod 소멸 = 로컬 캐시 소멸이 구조적 기본값. 표준 대책 4종:
+- **image pre-bake** (toolchain 을 러너 이미지에 소결 → 노드 이미지 캐시가 실질 캐시층, @sha256 digest pin 병행)
+- **actions/cache** — self-hosted 러너에서도 GitHub 클라우드 저장소 왕복 (repo 당 10GB 무료, 7일 미접근 evict, 초과 증설 = 유료)
+- **registry pull-through mirror** (Docker Hub 캐시 로컬화)
+- **PVC tool cache** (RWX 스토리지 요구 — provisioner 는 GitHub 지원 범위 밖)
+
+## 버전 이력 앵커
+
+0.12.1(2024-06) → 0.13.x → 0.14.0(2026-03-19 GA, multilabel + actions/scaleset 공개 Go client) → 0.14.2(최신 patch). 0.12.0 에 CRD 전면 재설치 요구 이력 — CRD 는 cluster-scoped 공유라 **동일 클러스터 내 구버전 pin scale-set 과 신버전 공존 시 CRD skew 검증 필수**.
