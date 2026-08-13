@@ -33,6 +33,12 @@ ADR-154 번들 4항목 (Story §8.0.8 (1) NG-10 행 verbatim):
         갈라져 있음 — 더 엄격한 쪽). ★`0 == 0` 을 "통과"로 읽는 경로 0★
   - `[154-AC-4]` unknown: location 파일 unparseable → **fail-closed RED (exit 1)**
   - `[154-AC-5]` trace  : numeric — 대조 location 수(=4) · resolve 수 · match 수 · 파싱 행 수
+  - ★셀 완전성 (F-CR-007 봉합)★: L3 은 이름·타입 2셀만 보던 정규식 파싱에 더해
+    §2 표의 **header 열 수 ↔ 각 data row 셀 수** 를 별도로 센다. 5열 헤더에 4셀만 있는
+    행(= 마지막 `Sanitize` 열 누락)이 본 Story 에서 3건 출생했는데 구 판본은 PASS 를 냈다.
+    셀 수 불일치 = RED / §2 재추출 실패 = RED (fail-closed).
+    ★한계★: 셀 *개수*만 본다 — 셀 *내용*의 정확성(예: `non-sensitive` 가 맞는 분류인가)은
+    여전히 관측면 밖이다.
   - `[154-AC-13]` probe : resolved-target echo (실제로 무엇을 봤는지 — 경로·anchor·관측값).
       추출 수 0 → `EXTRACTION_EMPTY` fail-closed
 
@@ -64,6 +70,7 @@ import argparse
 import importlib.util
 import json
 import os
+import re
 import sys
 
 if os.path.dirname(os.path.abspath(__file__)) not in sys.path:
@@ -213,7 +220,65 @@ def _check_heading_declared_count(body, contract_path):
     )
 
 
-def _check_field_table(parsed_fields, contract_path):
+def _split_md_cells(row):
+    r"""markdown 표 한 줄 → 셀 리스트. ``\|`` (escaped pipe) 는 구분자로 세지 않는다."""
+    inner = row.strip()
+    inner = inner[1:] if inner.startswith("|") else inner
+    inner = inner[:-1] if inner.endswith("|") else inner
+    cells, buf, esc = [], "", False
+    for ch in inner:
+        if esc:
+            buf += ch
+            esc = False
+        elif ch == "\\":
+            esc = True
+            buf += ch
+        elif ch == "|":
+            cells.append(buf)
+            buf = ""
+        else:
+            buf += ch
+    cells.append(buf)
+    return cells
+
+
+_MD_SEPARATOR_RE = re.compile(r"^\|[\s:|-]+\|?$")
+
+
+def scan_section2_cell_counts(body):
+    """§2 표의 header 셀 수 ↔ 각 data row 셀 수 대조 → (header_n, [(row_no, first_cell, n), ...]).
+
+    ★왜 필요한가 (F-CR-007)★: 기존 파싱(`parse_section2_fields`)은 정규식으로 ``| `name` |
+    타입 |`` 앞 2 셀만 떠서 ★행이 5열 헤더에 4셀만 갖고 있어도 PASS★ 였다. 실제로 본
+    Story 가 그 형상의 행 3개(`termination_cause`/`agent_start_at`/`agent_stop_at`)를
+    출생시켰고 게이트는 침묵했다. 셀 완전성은 별 축이므로 별도로 센다.
+
+    반환 2번째 원소 = ★헤더와 셀 수가 다른 행만★ (정상 행은 담지 않는다).
+    header 를 못 찾으면 (None, []) — caller 가 fail-closed 처리.
+    """
+    section2 = ses._extract_section(body, r"(?m)^##\s*2\.\s", r"(?m)^##\s*2\.1")
+    if section2 is None:
+        return None, []
+    section2 = ses._strip_fenced_blocks(section2)
+    header_n = None
+    mismatches = []
+    for row_no, line in enumerate(section2.split("\n"), 1):
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        if _MD_SEPARATOR_RE.match(s):
+            continue
+        cells = _split_md_cells(s)
+        if header_n is None:
+            header_n = len(cells)
+            continue
+        if len(cells) != header_n:
+            first = cells[0].strip() if cells else ""
+            mismatches.append((row_no, first, len(cells)))
+    return header_n, mismatches
+
+
+def _check_field_table(parsed_fields, contract_path, body=None):
     if not parsed_fields:
         return _loc(
             "L3_section2_field_table", "§2 필드 표", contract_path,
@@ -224,6 +289,20 @@ def _check_field_table(parsed_fields, contract_path):
     problems = []
     if len(names) != _TARGET_FIELD_COUNT:
         problems.append("표 실측 %d행 ≠ 기대 %d행" % (len(names), _TARGET_FIELD_COUNT))
+    # ★셀 완전성★ (F-CR-007) — header 열 수와 다른 data row = RED.
+    if body is not None:
+        header_n, mismatches = scan_section2_cell_counts(body)
+        if header_n is None:
+            problems.append("§2 섹션 재추출 실패 — 셀 완전성 미검사 (fail-closed)")
+        elif mismatches:
+            problems.append(
+                "셀 수 불일치 %d행 (header %d열): %s"
+                % (
+                    len(mismatches),
+                    header_n,
+                    ", ".join("%s=%d셀" % (name or "?", n) for _r, name, n in mismatches),
+                )
+            )
     for field in _ADDITIVE_FIELDS:
         if field not in types:
             problems.append("additive field `%s` 미착지" % field)
@@ -304,7 +383,7 @@ def evaluate(contract_path, append_path):
         locations = [
             _check_frontmatter_version(fm, contract_path),
             _check_heading_declared_count(body, contract_path),
-            _check_field_table(parsed_fields, contract_path),
+            _check_field_table(parsed_fields, contract_path, body),
             _check_row_keys(row_keys, rk_status, append_path),
         ]
         amendment = _check_amendment_log(fm, contract_path)

@@ -92,9 +92,9 @@ playbook §14.12 "Spawn-level token telemetry mini-table"(Issue #300) 와 본 ch
 | `total_tokens` | int \| null | optional | task-notification `<usage>` 단일 `subagent_tokens` aggregate 실측 (계약 4-way 분해와 별개 — **granularity caveat**: aggregate-only payload 는 4-way field 를 채우지 못하고 total_tokens 만 채운다). `attribution != attributed` 시 null. numeric only | non-sensitive (count) |
 | `model` | enum (semi-open) \| null | optional | spawn 모델 (pricing-table model roster ∪ `unknown-model` fallback — agent_type semi-open 패턴). **현행 pricing arg 였으나 row 미저장 → 신설**(AC-9 role·model grouping key). model 은 per-spawn roster override 결정이라 `agent_type→tier` 파생 불가(동일 agent_type 이 다른 model 로 spawn 가능). free-form leak 차단 (fallback bucket) | non-sensitive |
 | `outcome` | enum \| null | optional | subagent completion-quality — `{success, inconclusive, failure, partial}` (closed-set, open_extension:false, SUCCESS-hardcode 금지 — ADR-093). stop-event-v1 outcome 3값 REUSE + inconclusive(false/hallucinated completion) additive. record-only (gate 아님) | non-sensitive |
-| `termination_cause` | enum \| null | optional | subagent termination mechanism — `{normal, timeout, zero_output, error, cancelled}` (closed-set). timeout = 시간·context·turn·**budget/credit-exhaustion** 통합 상위 (CREDIT-EXHAUSTED = sub-case, 독립 top-level 아님). zero_output = tool_uses=0 silent failure. record-only |
-| `agent_start_at` | ISO8601 UTC | optional | subagent 시작 시각. `%Y-%m-%dT%H:%M:%S.%fZ` **millisecond 3-digit 강제** (dev-process-event-v1 `timestamp_utc` 규약 재사용 — 신규 규약 0) |
-| `agent_stop_at` | ISO8601 UTC | optional | subagent 종료 시각. 동일 형식 |
+| `termination_cause` | enum \| null | optional | subagent termination mechanism — `{normal, timeout, zero_output, error, cancelled}` (closed-set). timeout = 시간·context·turn·**budget/credit-exhaustion** 통합 상위 (CREDIT-EXHAUSTED = sub-case, 독립 top-level 아님). zero_output = tool_uses=0 silent failure. record-only | non-sensitive |
+| `agent_start_at` | ISO8601 UTC | optional | subagent 시작 시각. `%Y-%m-%dT%H:%M:%S.%fZ` **millisecond 3-digit 강제** (dev-process-event-v1 `timestamp_utc` 규약 재사용 — 신규 규약 0) | non-sensitive |
+| `agent_stop_at` | ISO8601 UTC | optional | subagent 종료 시각. 동일 형식 | non-sensitive |
 | `stop_time_source` | enum | optional | **CLOSED enum** `{hook_stamped, notification_receipt, backfilled, unknown}` | non-sensitive |
 
 **Allow-list ONLY enforcement**: 위 26 field 외 capture 금지. 추가 field = BREAKING (ADR-043 §결정 2 Amendment 의무, §4). **free-form string field 부재** = T-INFO-8 구조적 mitigation (Deny-list 적용 대상 0건, 단 §4 에 inherit 선언 — defense in depth).

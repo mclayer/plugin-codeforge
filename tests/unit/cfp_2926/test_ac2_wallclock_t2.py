@@ -8,7 +8,26 @@ T2 = live A/B (수동 프로토콜, CI 미편입):
 
 Carrier: CFP-2926 Phase 2 (구현) / Story NG-9
 
-[Note: 실 T2 파일 없으면 skip]
+★정직 declare — 본 파일의 CI 검증력 = 0 (F-CR-009)★
+
+  Story 간판 성능 주장(AC-2a wall-clock: "병렬이 순차보다 2σ 이상 빠르다")을 이름으로
+  달고 있으나, **CI 에서 이 단언이 검사되는 일은 구조적으로 없다**:
+
+  - 판정 입력 = ``.t2-wallclock-improvement-result.jsonl`` (수동 live A/B 프로토콜 산출물).
+  - 이 파일은 **repo 에 커밋되지 않고 CI 러너에도 생성되지 않는다** (동일 SHA·동일 tier
+    조건의 수동 3+3 회 실측이 필요 — CI job 이 만들 수 있는 물건이 아니다).
+  - ⇒ CI 에서 이 테스트는 **항상 skip** 이고, skip 은 pytest 에서 **green** 이다.
+    즉 ``phase2-unit-tests`` job 의 통과는 AC-2a 에 대해 **아무것도 말하지 않는다**.
+
+  ★"상시 skip = 상시 green" 을 검증으로 오독하지 말 것★. 이 파일이 보증하는 것은
+  "T2 산출물이 **주어졌을 때** 판정 규칙이 무엇인가" 뿐이며(판정 로직의 실행 가능성),
+  "그 판정이 실제로 내려졌는가" 는 보증하지 않는다.
+
+  해소 경로 = ① 수동 T2 프로토콜 실행 후 산출물을 게이트 입력으로 배선하거나
+  ② AC-2a 를 CI 로 검증 가능한 대리 지표로 재정의 — 둘 다 본 파일 소관 밖(설계 축).
+  그때까지 이 테스트는 **검증면이 아니라 규칙 기록면**이다.
+
+[Note: 실 T2 파일 없으면 skip — 위 정직 declare 참조]
 """
 
 from __future__ import annotations
@@ -51,6 +70,8 @@ def test_wallclock_improvement_exceeds_2sigma(tmp_path):
         pytest.skip(
             reason=(
                 f"T2 result file not found ({T2_RESULT_PATTERN}). "
+                "★이 skip 은 PASS 가 아니다 — CI 러너에 이 산출물이 구조적으로 부재하므로 "
+                "CI 에서 AC-2a wall-clock 주장의 검증력은 0 이다 (모듈 docstring 정직 declare 참조).★ "
                 "AC-2a T2 requires live A/B protocol — "
                 "identical SHA / identical tier / sequential 3-run σ + parallel 3-run σ. "
                 "Result path: ~/.t2-results/<exp-id>.jsonl or CI output. "
