@@ -687,7 +687,7 @@ Link path 작성 가이드:
 
 본 CFP-84 Phase 1 = doc only. Phase 2 (별도 follow-up CFP) lint script `scripts/check-story-section-schema.sh` 강화:
 - `type: epic` frontmatter detect → condensed mode allowed
-- `type: story` strict mode (§1-§13 모두 의무, N/A 도 명시)
+- `type: story` strict mode (§1-§11 의무 · §12-§13 은 CONDITIONAL — 위 §13 정의 및 섹션별 의무 표와 정합. N/A 도 명시)
 - 결합 허용 / N/A 형식 검증
 
 ---

@@ -1752,12 +1752,21 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `story-section-1-immutable.yml` | §1 변조 금지 | PR diff 의 `## §1` line range manual review |
 | `fix-ledger-sync.yml` | §10 row append → Issue label mirror + comment | §10 row 추가 commit 시 수동 `[FIX #N]` Issue comment + `fix:<lane>-retry` label 부착 |
 | `subissue-from-impl-manifest.yml` | §8.5 Impl Manifest → file-level sub-issue 자동 생성 | §8.5 commit 후 수동 `gh sub-issue create` per file |
-| `story-section-schema.yml` (CFP-94) | Story file §1-§13 schema lint (Implementation strict + Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 (CFP-97 manifest 경유 copy) |
+| `story-section-schema.yml` (CFP-94) | Story file section schema lint (Implementation strict — §1-§11 의무 · §12-§13 CONDITIONAL / Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 (CFP-97 manifest 경유 copy) |
 
 **mctrader-hub 현재 상태 (2026-05-04 audit)**:
 - ✅ `phase-gate-mergeable.yml`
 - ✅ `phase-label-invariant.yml`
 - ❌ 4 workflow 부재 (Path B 운영 중) — 수동 compensating check 가 자율적
+
+##### `story-section-schema` 배포 규약 + baseline bootstrap (CFP-2831)
+
+`story-section-schema.yml` 은 검사 로직을 `scripts/lib/check_story_section_schema.py` 에 두고, `scripts/check-story-section-schema.sh` 가 `exec … "$@"` 로 인자를 그대로 넘긴다. 따라서 py 확정본이 새 플래그를 얻어도 sh 래퍼는 무변경으로 관통한다. 이 py 파일의 배포·갱신 규약은 워크플로 yml 과 **다르므로** 별도로 명시한다.
+
+- **reconcile 채널 비대상**: `reconcile-overlay.sh` 가 순회하는 채널은 `overlay` + `workflow` 2종뿐이라 `scripts/lib/*.py` 는 어느 채널에도 속하지 않는다 — py 는 reconcile drift 검출 채널의 비대상이며, 워크플로 yml 이 갱신돼도 py 가 자동으로 따라오지 않는다. yml 만 최신이고 py 는 구판인 **세대 불일치**가 조용히 성립할 수 있다.
+- **실배달 경로 2종뿐**: ① `templates/consumer-scripts.manifest` 경유 수동 루프(§2c manifest-driven loop) 재실행 ② 신규 consumer 의 `bootstrap-consumer.sh` Stage 7 mirror. 이 둘 밖의 자동 전파 채널은 없으므로, py 갱신 시 기존 consumer 는 ①을 **명시적으로 재실행**해야 한다.
+- **baseline bootstrap**: 확정본 py 는 3 모드다 — 무인자(전량 raw lint) / `--pr-base REF`(PR 변경파일 귀속 + baseline ratchet) / `--write-baseline`(전량 실측 → baseline 재생성). consumer 최초 도입 시 `bash scripts/check-story-section-schema.sh --write-baseline` 를 1회 실행해 `docs/stories/schema-baseline.txt` 를 생성한다. 이것이 기존 위반을 기준선으로 동결하고 이후 **신규 위반만** RED 로 잡는 감소-단조 ratchet 의 출발점이다. 이 단계를 건너뛰면 baseline 부재로 전량이 즉시 RED 가 된다.
+- **baseline 파일은 manifest 비등재**: `docs/stories/schema-baseline.txt` 는 consumer 소유 산출물(자기 repo 실측값)이지 wrapper 배포물이 아니다. `templates/consumer-scripts.manifest` 에 등재하지 않는다 — 등재하면 wrapper 의 기준선이 consumer 를 덮어쓴다.
 
 ##### Path A ↔ Path B cutover 절차
 
