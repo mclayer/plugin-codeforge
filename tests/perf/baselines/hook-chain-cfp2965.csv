@@ -1,0 +1,60 @@
+hook_id,exec_class,median_ms,p90_ms,exec_census,notes
+cross-repo-gh-safety,T2 Gate,348,432,7,"sed/grep/cat pipe; pure exec count — subshell $(dirname) 미포함"
+repo-confinement,T2 Gate,485,629,5,"bash fork + python exec (direct pathsubshell)"
+git-branch-delete-merge-gate,T3 Gate Network,369,380,3,"exec python direct (유일 exec 직결); gh call conditional"
+worktree-location-guard,T3 Gate,477,509,5,"bash fork + python exec + conditional 내부 bash"
+pretooluse-bash-description-inject,B Advisory Backup,1088,1257,9,"python ×3 최중량; kst bash fork + 2× python -c"
+pretooluse-dev-process-capture,C Record-Only,375,426,4,"dirname + python3 fork (|| true 뒤 exit 0)"
+posttooluse-dev-process-capture,C Record-Only,372,425,4,"dirname + python3 fork"
+chain_wall_ms,,,,"체인 sequential wall (7훅 직렬 합계) ≈2800ms; parallel observed ≈1200ms (M3 실측)"
+chain_total_exec_count,,,,"total pure exec = 37 (S0 변경 전 baseline); S1 최적화 후 ≤25 target"
+
+[AC-1 정적 계수 근거]
+cross-repo-gh-safety|cmd,1
+cross-repo-gh-safety|bash,1
+cross-repo-gh-safety|sed,2
+cross-repo-gh-safety|head,1
+cross-repo-gh-safety|grep,1
+cross-repo-gh-safety|cat,1
+repo-confinement|cmd,1
+repo-confinement|bash,1
+repo-confinement|bash fork "${SCRIPT}",1
+repo-confinement|exec python3,1
+repo-confinement|dirname,1
+git-branch-delete-merge-gate|cmd,1
+git-branch-delete-merge-gate|bash,1
+git-branch-delete-merge-gate|exec python3,1
+worktree-location-guard|cmd,1
+worktree-location-guard|bash,1
+worktree-location-guard|bash fork,1
+worktree-location-guard|dirname,1
+worktree-location-guard|exec python3,1
+pretooluse-bash-description-inject|cmd,1
+pretooluse-bash-description-inject|bash,1
+pretooluse-bash-description-inject|cat,1
+pretooluse-bash-description-inject|python -c,2
+pretooluse-bash-description-inject|bash kst fork,1
+pretooluse-bash-description-inject|dirname,1
+pretooluse-bash-description-inject|date (kst-render-stamp.sh:16 UTC+9 산술),1
+pretooluse-bash-description-inject|python inject,1
+pretooluse-dev-process-capture|cmd,1
+pretooluse-dev-process-capture|bash,1
+pretooluse-dev-process-capture|dirname,1
+pretooluse-dev-process-capture|python3 fork,1
+posttooluse-dev-process-capture|cmd,1
+posttooluse-dev-process-capture|bash,1
+posttooluse-dev-process-capture|dirname,1
+posttooluse-dev-process-capture|python3 fork,1
+
+[환경 메타데이터]
+measurement_date_utc=2026-08-13T12:58:20Z
+repo_head=d5572640523f29bb1ea41637f05bcfe295b50ce4
+hooks_json_sha256=19e28ec6d19ab1c6e52ca2aa1f6a9fcd224c179d5d7260d3855b1ac777fa5881
+bash_version=5.2.37(1)-release
+python3_path=/c/Users/mccho/AppData/Local/Microsoft/WindowsApps/python3
+python3_version=3.14.4
+host_cpu=Intel Core i9-9900K @ 3.60GHz
+host_logical_cpus=16
+host_os=Windows 11 Pro 10.0.26200
+measurement_method=Plane A paired interleaved ABAB (n≥30 쌍)
+notes_platform=Windows + Git Bash (run-hook.cmd polyglot dispatch); median/p90 = M1 실측 산출물 집계

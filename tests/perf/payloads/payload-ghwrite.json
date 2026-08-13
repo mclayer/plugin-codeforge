@@ -1,0 +1,1 @@
+{"session_id":"cfp2965-measure","transcript_path":"C:/tmp/none.jsonl","cwd":"C:/workspace/mclayer/plugin-codeforge","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"gh pr comment 1 --body sanity-block-check","description":"sanity"},"agent_type":"DeveloperAgent"}
