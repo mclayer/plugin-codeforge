@@ -30,8 +30,4 @@ jobs:
             tests/integration/test_scheduled_task_ac_matrix.py \
             tests/integration/test_scheduled_task_dynamic_roster.py \
             tests/integration/test_scheduled_task_stateful.py \
-            -v -m "not requires_golden"
-
-      - name: Report test results
-        if: success()
-        run: python -m pytest --tb=short -q tests/test_scheduled_task_stop_flag.py tests/unit/test_scheduled_task_reconcile_unit.py tests/integration/test_scheduled_task_ac_matrix.py tests/integration/test_scheduled_task_dynamic_roster.py tests/integration/test_scheduled_task_stateful.py -m "not requires_golden"
+            -v -ra -m "not requires_golden"
