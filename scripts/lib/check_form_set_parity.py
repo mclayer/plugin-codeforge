@@ -83,6 +83,13 @@
 #   3. **방향 ② 는 anchor 규약 준수면에 한해서만 검출한다** — 규약 밖 bare 산문 토큰
 #      (한글 산문 안 kebab 토큰)으로 신규 form id 를 심으면 **미탐**이다. "방향 ② 완전 검출" 주장 금지.
 #      방향 ①(fence→면)만 표기 규약과 무관하게 완전하다.
+#   3-b. **오탐(over-detection) 여유 = 0** — 위 3항이 *미탐* 축만 고백하고 있었으므로 반대 축도 적는다.
+#      방향 ② 는 4면 지정 region 에서 추출한 anchored kebab 토큰 중 fence 미등재 ∧
+#      `TAXONOMY_CLASS_NAMES` 밖이면 **전부** 위반으로 계상한다. 현재 4면 추출 토큰은 정확히 fence
+#      등재 id 집합뿐이고 allowlist 는 2개라, form 과 무관한 backtick kebab 토큰이 그 region 에
+#      **하나만** 새로 들어와도 FAIL 이다. 이는 좁은 정의역(4면의 지정 region 한정)의 귀결이지
+#      "무해" 가 아니다. allowlist 증설·방향 ② 좁힘은 검출력을 깎으므로 **거동을 바꾸지 않는다**
+#      (관측 tier 라 blast radius 도 제한적 — 정직 선언으로만 남긴다).
 #   4. hook 면 텍스트는 대상 FunctionDef 의 **모든 str 상수**(docstring 포함)를 concat 한 것이다.
 #      따라서 anchor 가 priming TEXT 본문이 아니라 docstring 에만 있어도 방향 ① 은 충족된다 — 검출 한계.
 #   5. 본 검사 RED 는 merge 를 막지 못한다 (위 tier 절).
@@ -265,8 +272,13 @@ def decision7_table_region(adr_text):
 
     fence 를 제외하지 않으면 방향 ① 이 tautological 이 된다(원본이 자기 자신을 증명).
     §결정 7 heading 부재 시 빈 문자열 (호출측이 fail-closed 위반으로 처리).
+
+    **연산 순서 고정 (F-CL-003)**: fence 제거를 region 절단 **이전**에 수행한다. 순서가 반대면
+    fence *내부*의 `## `/`### ` 로 시작하는 라인이 region 종단자로 오인돼 fence 뒤에 오는 표 행이
+    region 에서 조용히 소실되고(→ 그 행에만 자기 anchor 를 둔 id 가 D2 자기 행 부재로 오검출),
+    fail-open 방향이 아니라 **오검출** 방향으로 샌다. self-test 의 `F-CL-003` case 가 이 순서를 고정한다.
     """
-    lines = (adr_text or "").split("\n")
+    lines = _strip_fenced_blocks(adr_text or "").split("\n")
     start = None
     end = len(lines)
     for i, line in enumerate(lines):
@@ -279,7 +291,7 @@ def decision7_table_region(adr_text):
             break
     if start is None:
         return ""
-    return _strip_fenced_blocks("\n".join(lines[start:end]))
+    return "\n".join(lines[start:end])
 
 
 def consumer_guide_region(guide_text):
@@ -347,9 +359,42 @@ def _table_rows(region_text):
     return rows
 
 
+def _split_row_cells(row):
+    """표 행을 셀 목록으로 분해 — escape(`\\|`)·inline code(백틱 span) 인지 분할 (F-CL-004).
+
+    단순 `row.split("|")` 은 escaped pipe 와 inline-code 안 파이프를 셀 경계로 오인해 첫 셀을
+    조기 절단한다 → 그 절단면 뒤에 있던 id anchor 가 사라져 D2 자기 행 부재로 **오검출**된다.
+    문자 단위 선형 스캔이며 정규식 backtracking 0 (ADR-061 §결정 11 ReDoS-safe 성질 유지).
+    """
+    cells = []
+    buf = []
+    in_code = False
+    escaped = False
+    for ch in row:
+        if escaped:
+            buf.append(ch)
+            escaped = False
+            continue
+        if ch == "\\":
+            buf.append(ch)
+            escaped = True
+            continue
+        if ch == "`":
+            in_code = not in_code
+            buf.append(ch)
+            continue
+        if ch == "|" and not in_code:
+            cells.append("".join(buf))
+            buf = []
+            continue
+        buf.append(ch)
+    cells.append("".join(buf))
+    return cells
+
+
 def _first_cell(row):
-    """표 행의 첫 셀(Pattern 열) 텍스트."""
-    parts = row.split("|")
+    """표 행의 첫 셀(Pattern 열) 텍스트 — escape·inline-code 인지 분할 (F-CL-004)."""
+    parts = _split_row_cells(row)
     return parts[1] if len(parts) > 1 else ""
 
 
@@ -599,6 +644,41 @@ def _synthetic_files():
     }
 
 
+def _synthetic_adr_fence_internal_heading():
+    """F-CL-003 회귀 fixture — fence **내부**에 heading-형 라인 ∧ fence **뒤**에 표 행 1개.
+
+    region 절단이 fence 제거보다 먼저 일어나면 fence 안의 `### ` 라인이 종단자로 오인돼
+    fence 뒤 `beta-form` 자기 행이 region 밖으로 떨어지고 D2 자기 행 부재가 오검출된다.
+    올바른 순서(fence 제거 선행)에서는 두 행 모두 region 안이라 GREEN 이다.
+    (fence 안의 `#` 시작 라인은 `_parse_fence_block` 이 주석으로 건너뛰므로 inventory 는 불변.)
+    """
+    return "\n".join(
+        [
+            "# 합성 ADR (self-test fixture — F-CL-003)",
+            "",
+            _SYN_ADR_HEAD,
+            "",
+            "| Pattern | Defect 사유 |",
+            "|---|---|",
+            "| 합성 무발화 정지 (alpha-form — 합성, CFP-2944) | 잔여작업 有 ∧ 결정 payload = 0 ∧ "
+            "volitional. negative control: 다음 tool call 이 불가능했던 정지. `[advisory]` |",
+            "",
+            "```",
+            "# 합성 inventory (self-test fixture)",
+            "### 합성 fence 내부 heading-형 라인 (F-CL-003 회귀 앵커)",
+            "alpha-form | A2 | 합성 무발화 정지",
+            "beta-form | A1 | 합성 확인 질문",
+            "```",
+            "",
+            "| 합성 확인 질문 (beta-form — 합성, CFP-2944) | 잔여작업 有 ∧ payload > 0 ∧ "
+            "ask-trigger 3종 미해당. negative control: decider escalation. `[advisory]` |",
+            "",
+            "### 결정 8 — 합성 후행 섹션",
+            "",
+        ]
+    )
+
+
 def _materialize(files, root):
     for rel, content in files.items():
         path = os.path.join(root, rel)
@@ -674,6 +754,23 @@ def _self_test_cases():
             "RED: 면 대상 함수 부재 fail-closed (hook ch1 함수명 드리프트 — INV-T3)",
             _mut(base, HOOK_CH1_PATH, "def _build_reminder(", "def _build_reminder_renamed("),
             1,
+        ),
+        (
+            "GREEN: F-CL-003 — fence 내부 heading-형 라인이 region 을 조기 종료시키지 않는다 "
+            "(fence 제거 선행 순서 고정; 순서를 되돌리면 fence 뒤 자기 행 소실로 RED)",
+            dict(base, **{HOME_MARKER: _synthetic_adr_fence_internal_heading()}),
+            0,
+        ),
+        (
+            "GREEN: F-CL-004 — 첫 셀 anchor 앞의 escaped pipe 가 셀 경계로 오인되지 않는다 "
+            "(단순 split 이면 첫 셀이 조기 절단돼 anchor 소실 → RED)",
+            _mut(base, HOME_MARKER, "| 합성 무발화 정지 (alpha-form", "| 합성 A\\|B 무발화 정지 (alpha-form"),
+            0,
+        ),
+        (
+            "GREEN: F-CL-004 — 첫 셀 anchor 앞의 inline-code 내부 파이프도 셀 경계 아님",
+            _mut(base, HOME_MARKER, "| 합성 무발화 정지 (alpha-form", "| 합성 `A|B` 무발화 정지 (alpha-form"),
+            0,
         ),
     ]
 

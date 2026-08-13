@@ -81,17 +81,25 @@ jobs:
         if: hashFiles('tests/scripts/test_check-subagent-wait-liveness-presence.sh') != ''
         run: bash tests/scripts/test_check-subagent-wait-liveness-presence.sh
 
+      # 아래 pytest step 3종은 `continue-on-error: true` 다 (F-CL-006). 이유 = 이 job 의 하류에
+      # 있는 관측 lint 3종(vague-pause / tier-honesty / form-set-parity)이 이 게이트의 존재 목적인
+      # **관측면**인데, 앞선 step 이 중단되면 그 관측면이 함께 skip 돼 소실된다. job-level
+      # `continue-on-error: true` 는 merge 무차단만 보장할 뿐 step skip 은 막지 못한다.
+      # 관측 tier 유지 — 이 step 들의 RED 는 로그로 관측될 뿐이다.
       - name: QADev pytest — form-set parity mutation-kill (D1, AC-8)
         if: hashFiles('tests/scripts/test_cfp2944_form_set_parity_mutation_kill.py') != ''
         run: python3 -m pytest tests/scripts/test_cfp2944_form_set_parity_mutation_kill.py -q
+        continue-on-error: true
 
       - name: QADev pytest — form-record 구조 + negative-control (D2/D3, AC-7a)
         if: hashFiles('tests/scripts/test_cfp2944_form_record_structure.py') != ''
         run: python3 -m pytest tests/scripts/test_cfp2944_form_record_structure.py -q
+        continue-on-error: true
 
       - name: QADev pytest — stop-norm mirror anchor parity (D4, AC-5·AC-11)
         if: hashFiles('tests/scripts/test_cfp2944_stop_norm_mirror_parity.py') != ''
         run: python3 -m pytest tests/scripts/test_cfp2944_stop_norm_mirror_parity.py -q
+        continue-on-error: true
 
       - name: Run vague-pause taxonomy presence lint
         run: bash scripts/check-vague-pause-taxonomy-presence.sh
