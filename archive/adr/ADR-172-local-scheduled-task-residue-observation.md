@@ -124,6 +124,58 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 - **ADR-169 본문은 amendment 하지 않는다** — 본문에 "클라우드 러너" 표현이 없다(그 표현은 playbook 전용). playbook mirror 만 수정한다.
 - **★ ADR-169 §결정 4 판례를 승계한다** — 그 결정은 **같은 문제 도메인(로컬 잔재 GC)에서 이미** OS 스케줄러를 "**opt-in 보조이며 주 트리거가 아님**"으로 격하했다. 본 ADR 의 도입기 관측-only 는 이 판례와 정합이나, **주 트리거·required 로 승격하려면 그 판례의 재검토가 선행 의무**다.
 
+### §결정 8 — 실행환경 3축 비교와 결정 기록
+
+채택에 앞서 후보 실행환경을 **3축 × {비용, 보안} = 6셀**로 비교했다. 아래 표가 그 6셀이며 본 결정의 근거 기록이다.
+
+| 축 | 비용 축 | 보안 축 |
+|---|---|---|
+| **P3a Anthropic 관리 클라우드** | 구독 usage 소진 + 일일 run cap(Team·Enterprise 25/day — 시간당 schedule 시 예산 96% 소비). usage credits 활성 시 metered overage 라 하드 벽은 아니다. 인프라 신설 0 | 전용 secret store **부재**(환경변수가 환경 사용자 전원 열람) + 승인 프롬프트·permission-mode picker **부재** + 커넥터가 write 포함 무승인 ⇒ **기계 강제 lever 0**. 발화가 운영자 개인 계정 명의 |
+| **P3b self-hosted 러너** | P3a 와 동일 cap + **인프라 신설 비용**(Linux/macOS 호스트 · public beta · admin 토글 · fleet 운영·유지) | 능력은 최상(`--disallowed-tools` deny-wins + 호스트 `~/.claude/` seed + 세션 범위 단기 자격증명). **단 운영자 홈을 마운트하면 세션 children 이 같은 UID 를 공유해 운영자 홈 전권** = 미평가 위험 |
+| **P4 Desktop 로컬 (채택)** | 인프라 신설 0. 구독 usage 소진은 불가피. **일일 run cap 소비 여부 = 미확인**(공식 문서 미기재). 실 비용은 금전이 아니라 **앱 상주 + 머신 각성 요구** | 기계 lever 실재(per-task permission mode Manual 시 미승인 도구 호출에서 run 이 승인까지 정지 + worktree 격리 토글 + Active/Paused + Delete). **단 lever 는 그뿐**이며 host `settings.json` 은 제한 기여 0. 자격증명 주입 0 이지만 **상속 최대**. 1회 승인이 이후 run 에 영구 확대 |
+
+**결정 기록**
+
+- **채택 축** = **P4 — Desktop 로컬 스케줄 작업**
+- **결정 주체** = **사용자** (Orchestrator 가 선택지 4개와 각 대가를 제시해 직접 질의)
+- **결정 시각** = **2026-08-12T12:15:00+09:00**
+- **선택의 지위** = **가치 판단** (기술 판정으로 좁혀지지 않는 trade-off)
+
+**배제 축별 사유의 지위**
+
+| 배제 축 | 사유 | 지위 |
+|---|---|---|
+| **P3a** | 로컬 FS 미도달 조각은 사실이나, 축 **전체**의 배제는 그 사실 단독이 아니라 가치 대비 비용 판단이다 — 기계 강제 lever 0 + 기존 Actions workflow 116 과 거의 겹침 + 일일 run cap | **판단** |
+| **P3b** | 미평가 위험(운영자 홈 마운트 시 세션 에이전트가 운영자 홈 전권) + 인프라 신설 비용. ★ **"운영자 홈 도달 불가" 는 사실 주장으로 미성립**(금지 근거 0건 + 경로 미평가)이므로 배제 근거로 인용하지 않는다 | **판단** |
+
+**재논의 조건**: Linux/macOS 러너 호스트 상시화 · self-hosted GA 전환 · 운영자 홈 마운트 위험 평가 완료 중 하나라도 성립하면 P3b 를 재논의할 수 있다.
+
+### §결정 9 — 승격 게이트 (조건 · 주체 · rollback 경로)
+
+**본 Story 는 게이트 *설계*까지이며 승격 실행은 범위 밖이다.** 아래는 도입기 관측-only 를 넘어 집행·주 트리거·required 로 올릴 때 충족해야 하는 게이트의 설계다.
+
+**승격 조건 7항**
+
+1. 도입기 연속 운용에서 **오보 0**
+2. **V1**(`permissions.deny` 가 태스크 세션에 적용되는가) · **V2**(태스크 permission mode 가 host `defaultMode` 를 상속하는가) **해소** (§결정 4 계상 금지 조건)
+3. 로컬·GitHub 상태 델타 **0 유지**
+4. prompt-injection 완화가 **실측으로** 확인
+5. **"read-modify-write 부재" 전제 재검사** — 승격은 이 전제를 깬다
+6. **ADR-169 §결정 4 재검토 선행** — 그 결정이 같은 도메인에서 "OS 스케줄러 = opt-in 보조, 주 트리거 아님" 으로 이미 격하 판정했으므로, P4 를 주 트리거·required 로 올리는 것은 기존 판례와 정면 배치된다
+7. **승격 시점 플랫폼 문서 재실측** — catch-up 7일 창 · 단일 catch-up 후 older 폐기 · skip 3형상 · per-task permission 모델 · 작업 프롬프트 파일 경로 · 자기수정 도구명이 무변경임을 재확인한다. 이것이 승격 판단이 stale 한 벤더 계약 위에 서지 않게 하는 유일한 장치이며 **상시 감시 트리거는 없다**(결과 9)
+
+**승격 주체** = **사용자**. 자동 승격은 금지한다 (기결정 "자동결정 절대 금지" 의 직접 상속).
+
+**rollback 경로 — P4 lever 3종 실물**
+
+- **(가)** Manual permission mode 에서 미승인 도구 호출 시 **run 이 승인까지 정지**한다
+- **(나)** 태스크 Status **Active / Paused** 토글
+- **(다)** **Delete** ("Also delete files on disk" 체크박스 포함)
+
+**승격 이력 = 0건** (도입기 상태).
+
+**미확인 1건 (정직 기재)**: (나)·(다)가 **진행 중인 run** 을 중단시키는지는 **확인 불가**다 ⇒ "즉시 정지된다" 고 쓰지 않는다. 진행 중 run 에 대한 정지는 **정지 플래그 판독 시점**에 의존한다.
+
 ## 결과
 
 **얻는 것**: ADR-169 잔여 4클래스 중 **1건(crash 미발화 = observer-death)** 에 대해, 세션과 독립된 관측자가 사실을 보고한다. 나머지 3건은 본 ADR 이 해소하지 않는다(advisory ceiling 은 승격 이후 영역, fail-safe 보수성은 orthogonal, per-repo 협소는 ADR-169 §결정 2 가 이미 독자 해소).
@@ -150,6 +202,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 - `scripts/lib/check_harness_temp_residue.py` — `TEMP_GC_DELETE_ENABLED` default-off 게이트 3
 - `scripts/lib/scheduled_task_reconcile.py` — **Phase 2 신설.** 결정론 reconcile·dedup·마커·**보고 채널 발화** 배선 (§결정 5). 발화 주체는 본 CLI 단일이며 세션은 채널에 쓰지 않는다
 - `hooks/session-start-scheduled-task-watchdog` — **Phase 2 신설.** 생존 감시 hook(기존 `hooks/session-start-gc-catchup` 복제 형상). heartbeat 는 본 hook 이 **판독**만 하고 **기록은 위 CLI 의 정상 종료 시점**이 담당한다 (§결정 6)
+- `hooks/hooks.json` — 위 watchdog hook 의 SessionStart 등록 파일 (등록이 없으면 hook 파일은 존재해도 발화하지 않는다)
 - `docs/orchestrator-playbook.md` — 비대화형 호출 계약 서브섹션 + ADR-128 정의역 mirror 5 anchor (§결정 7)
 - `skills/worktree-lifecycle/SKILL.md` — 정본 절차 SSOT, 부트스트랩 지목 대상 (§결정 2)
 - `~/.claude/scheduled-tasks/<task-name>/SKILL.md` — 작업 프롬프트. **repo 밖 user-level**
