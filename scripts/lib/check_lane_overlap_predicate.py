@@ -100,6 +100,17 @@ _NEXT_H2_RE = re.compile(r"(?m)^##\s")
 _TABLE_ROW_RE = re.compile(r"^\|\s*(.+?)\s*\|\s*(.+?)\s*\|", re.MULTILINE)
 _BACKTICK_RE = re.compile(r"`")
 
+#: ★명시적 empty write-set sentinel★ — self-write 표 안에 이 토큰이 있어야만
+#: "write_set = ∅" 이 **정당 선언**으로 인정된다 (`declared_empty`).
+#:
+#: 왜 필요한가: write set 이 빈 lane(= 파일 write 권한이 구조적으로 부재한 lane)은
+#: 겹침이 원천 불가능한 ★최선★ 사례인데, sentinel 이 없으면 그 lane 이
+#: `extraction_empty` RED(표가 깨져 추출 0행)와 구별되지 않아 **처벌**당한다.
+#: 반대로 sentinel 없이 0행을 GREEN 으로 승격하면 표 파손이 조용히 통과한다
+#: (공허참 승격 = fail-closed teeth 상실). ⇒ ★적극적 토큰이 있을 때만 GREEN★.
+_EMPTY_WRITE_SET_SENTINEL = "EMPTY-WRITE-SET(synthesis-only)"
+_EMPTY_SENTINEL_RE = re.compile(re.escape(_EMPTY_WRITE_SET_SENTINEL))
+
 
 # ---------------------------------------------------------------------------
 # (a) 순수 술어 축 — §7.10 C1/C2/C3. caller 공급 입력 위에서만 평가한다.
@@ -236,22 +247,30 @@ def _extract_self_write_table(claude_text):
     """lane `CLAUDE.md` 의 self-write 표에서 `write_set` 을 기계 추출한다.
 
     Returns:
-        (has_section: bool, write_set: set)
+        (has_section: bool, write_set: set, empty_sentinel: bool)
 
-    ★두 상태를 분리해서 돌려준다★ (§8.0.8 NG-8 / `ADR-154:149` 의
+    ★세 상태를 분리해서 돌려준다★ (§8.0.8 NG-8 / `ADR-154:149` 의
     "target 0건 = 정당 no-op" vs "target 존재하나 unparseable = fail-closed" 경계):
-      - `has_section=False`               → **미선언** (별 상태 — non-GREEN)
-      - `has_section=True, write_set=∅`   → ★추출만 0★ = `EXTRACTION_EMPTY` fail-closed
+      - `has_section=False`                        → **미선언** (별 상태 — non-GREEN)
+      - `has_section=True, ∅, sentinel=False`      → ★추출만 0★ = `EXTRACTION_EMPTY` fail-closed
+      - `has_section=True, ∅, sentinel=True`       → ★정당 공집합★ = `declared_empty` (PASS 적격)
+      - `has_section=True, 비어있지 않음, sentinel=True` → ★모순★ (caller 가 RED 처리)
+
+    ★왜 세 번째 상태가 필요한가★: write set 이 빈 lane 은 겹침이 원천 불가능한 **최선**
+    사례다. 그런데 sentinel 없이 "없음" 이라고 표를 쓰면 셀에 `/`·`*` 가 없어 추출 0행이
+    되고 `extraction_empty` RED 로 **처벌**된다 (설계 역전). 그렇다고 0행을 무조건
+    GREEN 으로 올리면 표 파손이 조용히 통과한다. ⇒ **적극적 sentinel 토큰이 있을 때만**
+    GREEN 으로 승격하고, 토큰 없는 0행은 종전대로 RED 를 유지한다.
 
     grep-oracle(presence 만 확인)이 아니라 **실제 표 parsing** 이므로 표 포맷
     변화에 민감하다 — 그 민감성이 곧 채널 생존 검출력이다.
     """
     if not claude_text:
-        return False, set()
+        return False, set(), False
 
     heading = _SELF_WRITE_HEADING_RE.search(claude_text)
     if not heading:
-        return False, set()
+        return False, set(), False
 
     section_start = heading.end()
     next_heading = _NEXT_H2_RE.search(claude_text[section_start:])
@@ -260,15 +279,23 @@ def _extract_self_write_table(claude_text):
     )
     section_text = claude_text[section_start:section_end]
 
+    # ★sentinel 은 반드시 ★표 행 셀★ 안에 있어야 한다★ — 섹션 산문(설명 blockquote 등)에
+    #   토큰이 등장하는 것만으로는 인정하지 않는다. 산문 전역 검색으로 두면 표 행을 지워도
+    #   설명 문장만 남아 GREEN 이 유지되는 우회로가 생긴다 (실측으로 확인된 구멍).
+    empty_sentinel = False
+
     write_set = set()
     for cell1, cell2 in _TABLE_ROW_RE.findall(section_text):
         for cell in (cell1.strip(), cell2.strip()):
+            if _EMPTY_SENTINEL_RE.search(cell):
+                empty_sentinel = True
+                continue  # sentinel 행은 write_set 원소가 아니다
             if "/" in cell or "*" in cell:
                 cell = _BACKTICK_RE.sub("", cell).strip()
                 if cell:
                     write_set.add(cell)
 
-    return True, write_set
+    return True, write_set, empty_sentinel
 
 
 def main(argv=None):
@@ -283,7 +310,10 @@ def main(argv=None):
            - 개수 불일치        → `lane_count_mismatch`   (6 → 5 형상)
            - 개수 같고 집합 다름 → `lane_roster_mismatch`  (swap 형상)
       3. lane `CLAUDE.md` 읽기 실패             → RED   (unknown-input)
-      4. self-write 표 존재하나 추출 0행        → RED   `extraction_empty`
+      4. self-write 표 존재 + 추출 0행 + ★sentinel 부재★ → RED `extraction_empty`
+         (sentinel 이 있으면 `declared_empty` = 정당 공집합 → 4번 우회, PASS 적격)
+      4b. sentinel 이 있는데 write_set 이 ★비어있지 않음★ → RED `empty_sentinel_contradiction`
+          (실제로 쓰는 lane 에 sentinel 을 붙여 검사를 무력화하는 경로 봉인)
       5. lane 간 `write_set` 겹침               → RED   `lane_write_set_overlap`
       6. self-write 표 **미선언** lane 존재     → INCONCLUSIVE `write_set_undeclared`
                                                   (non-GREEN — 4번과 **별 상태**)
@@ -360,9 +390,11 @@ def main(argv=None):
         ))
 
     # --- 3-4. 추출 ----------------------------------------------------------
-    write_sets = {}          # lane → write_set (표 존재 ∧ 1행 이상)
+    write_sets = {}          # lane → write_set (표 존재 ∧ 1행 이상, 또는 정당 공집합)
     undeclared_lanes = []    # self-write 표 자체 부재 (미선언)
-    extraction_empty = []    # 표는 있는데 추출 0행 (채널 사망)
+    extraction_empty = []    # 표는 있는데 추출 0행 ∧ sentinel 부재 (채널 사망)
+    declared_empty = []      # 표 존재 ∧ 추출 0행 ∧ ★sentinel 있음★ = 정당 공집합
+    sentinel_contradiction = []  # sentinel 있는데 write_set 비어있지 않음
     read_errors = {}
 
     for lane in sorted(observed):
@@ -373,11 +405,19 @@ def main(argv=None):
             read_errors[lane] = str(e)[:60]
             continue
 
-        has_section, write_set = _extract_self_write_table(text)
+        has_section, write_set, empty_sentinel = _extract_self_write_table(text)
         if not has_section:
             undeclared_lanes.append(lane)
+        elif empty_sentinel and write_set:
+            # ★모순★ — "쓰는 게 없다" 고 선언해 놓고 실제 경로를 나열했다.
+            sentinel_contradiction.append(lane)
         elif not write_set:
-            extraction_empty.append(lane)
+            if empty_sentinel:
+                # ★정당 공집합★ — 겹침 판정에는 ∅ 로 참여한다 (trivially disjoint).
+                declared_empty.append(lane)
+                write_sets[lane] = set()
+            else:
+                extraction_empty.append(lane)
         else:
             write_sets[lane] = write_set
 
@@ -392,9 +432,13 @@ def main(argv=None):
         "lane_pairs_compared": lane_pairs_compared,
         "undeclared_lane_count": len(undeclared_lanes),
         "extraction_empty_lane_count": len(extraction_empty),
+        "declared_empty_lane_count": len(declared_empty),
+        "sentinel_contradiction_lane_count": len(sentinel_contradiction),
     })
     full_probe = dict(base_probe)
     full_probe["write_set_size_by_lane"] = {k: len(v) for k, v in sorted(write_sets.items())}
+    if declared_empty:
+        full_probe["declared_empty_lanes"] = sorted(declared_empty)
 
     if read_errors:
         probe = dict(full_probe)
@@ -408,8 +452,21 @@ def main(argv=None):
             identity_probe=probe,
         ))
 
+    if sentinel_contradiction:
+        # ★sentinel 오남용 봉인★ — 실제로 쓰는 lane 이 "쓰는 게 없다" 를 선언해
+        #   겹침 검사에서 자기를 빼는 경로. 조용히 넘기면 sentinel 이 escape-hatch 가 된다.
+        probe = dict(full_probe)
+        probe["sentinel_contradiction_lanes"] = sorted(sentinel_contradiction)
+        trace = dict(full_trace)
+        return emit(GateResult(
+            gate_id=GATE_ID, verdict=RED, reason="empty_sentinel_contradiction",
+            trace=trace, identity_probe=probe,
+        ))
+
     if extraction_empty:
         # ★설계리뷰 iter2 P1-B★ — 선언은 됐고 추출만 0. 미선언과 **별 상태**.
+        # ★sentinel 이 있는 lane 은 여기 오지 않는다★ (declared_empty 로 분기) —
+        #   그러나 sentinel 없는 0행은 종전대로 RED 다 (표 파손의 조용한 통과 봉인).
         probe = dict(full_probe)
         probe["extraction_empty_lanes"] = extraction_empty
         return emit(unknown_input(

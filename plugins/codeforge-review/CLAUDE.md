@@ -22,6 +22,31 @@ Orchestrator(core)
 - **공통 base** [templates/review-pl-base.md](templates/review-pl-base.md) — 4 PL이 공유하는 severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성 SSOT. 각 PL md는 lane-specific 4가지(checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트)만 본문에 명시.
 - **4 lane checklist** (`templates/review-checklists/{requirements,design,code,security}.md`) — 각 lane의 항목·자동 P0 룰. PL이 packet의 `checklist_path`로 워커에 전달.
 
+## Self-write 책임
+
+★본 lane 의 정직한 write set = **공집합**★ — 4 PL 은 전부 **synthesis only** 이고
+"**Code/docs 직접 수정 금지**"(위 Architecture 절 verbatim)라 파일 write 경로가 **구조적으로 부재**하다.
+Story §9 / GitHub comment / gate label / phase transition 은 전부 **Orchestrator** 가 PL packet 을
+받아 최종 write 한다 (CFP-61 / ADR-022).
+
+| Path | 책임 agent |
+|---|---|
+| EMPTY-WRITE-SET(synthesis-only) | 없음 — 본 lane agent 는 어떤 파일도 write 하지 않는다 |
+
+본 lane 이 **산출하는 것**은 파일이 아니라 in-memory `review_verdict v4` packet 이며,
+그 packet 을 받아 실제로 write 하는 주체는 **Orchestrator** 다 — Story §9 섹션,
+GitHub comment, gate label, phase transition 전부 Orchestrator 소관이다.
+따라서 위 표의 공집합은 누락이 아니라 **정확한 사실**이다.
+
+> **`EMPTY-WRITE-SET(synthesis-only)` 는 기계 판독 sentinel 이다** — NG-8
+> (`scripts/lib/check_lane_overlap_predicate.py`) 의 lane write_set 겹침 검사가 이 토큰으로
+> "정당 공집합(`declared_empty`)" 과 "표가 깨져 추출 0행(`extraction_empty`, RED)" 을 구별한다.
+> ★토큰을 지우면 본 lane 이 RED 로 떨어진다★ (문면 장식이 아니라 load-bearing).
+> 반대로 이 토큰을 두고 실 경로를 나열하면 `empty_sentinel_contradiction` RED 다 —
+> 즉 sentinel 은 검사를 피하는 escape-hatch 로 쓸 수 없다.
+
+Story §10 FIX Ledger append 는 **Orchestrator 단독** (CFP-32 monopoly).
+
 ## Drift-avoidance discipline (수정 시 반드시 지키세)
 
 본 repo는 SSOT 분리를 명시적으로 강제. **공통 로직을 PL md에 다시 인라이닝하지 말 것** — 항상 base 템플릿 참조.
