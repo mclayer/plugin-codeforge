@@ -24,16 +24,25 @@ Orchestrator(core)
 
 ## Self-write 책임
 
-★본 lane 의 정직한 write set = **공집합**★ — 4 PL 은 전부 **synthesis only** 이고
-"**Code/docs 직접 수정 금지**"(위 Architecture 절 verbatim)라 파일 write 경로가 **구조적으로 부재**하다.
+★본 lane 의 정직한 write set = **repo 트리 내 code·docs 에 대해 공집합**★ — 4 PL 은 전부
+**synthesis only** 이고 "**Code/docs 직접 수정 금지**"(위 Architecture 절 verbatim)라
+repo 에 추적되는 파일을 직접 고치는 경로가 없다.
 Story §9 / GitHub comment / gate label / phase transition 은 전부 **Orchestrator** 가 PL packet 을
 받아 최종 write 한다 (CFP-61 / ADR-022).
 
 | Path | 책임 agent |
 |---|---|
-| EMPTY-WRITE-SET(synthesis-only) | 없음 — 본 lane agent 는 어떤 파일도 write 하지 않는다 |
+| EMPTY-WRITE-SET(synthesis-only) | 없음 — repo 트리 내 code·docs 직접 write 공집합 |
 
-본 lane 이 **산출하는 것**은 파일이 아니라 in-memory `review_verdict v4` packet 이며,
+> **위 공집합은 "어떤 파일도 write 하지 않는다" 가 아니다** — 본 lane `agents/` 의 6 agent md
+> (4 PL + 2 worker) 는 **전부** `Edit/Write(.claude-work/doc-queue/**)` 제출 권한을 보유하고,
+> 이 규약은 live 다 (`invariant-check.yml` 의 doc-queue permission parity 검사(CFP-7) = required
+> 게이트. wrapper 측 서술 = `docs/orchestrator-playbook.md` "두 축 분리"). 다만 그 제출 경로는
+> `.gitignore:6` (`.claude-work/`) 로 무시되는 in-flight 큐(추적 파일 0)이지 repo 트리의
+> code·docs 가 아니다. 또 위 표는 NG-8 겹침 검사가 읽는 **정의역**인데, doc-queue 는 agent
+> frontmatter 권한 축에만 선언될 뿐 6 lane 표 어디에도 등재돼 있지 않아 겹침 비교 대상이 아니다.
+
+본 lane 의 **1차 산출물**은 repo 파일이 아니라 in-memory `review_verdict v4` packet 이며,
 그 packet 을 받아 실제로 write 하는 주체는 **Orchestrator** 다 — Story §9 섹션,
 GitHub comment, gate label, phase transition 전부 Orchestrator 소관이다.
 따라서 위 표의 공집합은 누락이 아니라 **정확한 사실**이다.
@@ -42,8 +51,10 @@ GitHub comment, gate label, phase transition 전부 Orchestrator 소관이다.
 > (`scripts/lib/check_lane_overlap_predicate.py`) 의 lane write_set 겹침 검사가 이 토큰으로
 > "정당 공집합(`declared_empty`)" 과 "표가 깨져 추출 0행(`extraction_empty`, RED)" 을 구별한다.
 > ★토큰을 지우면 본 lane 이 RED 로 떨어진다★ (문면 장식이 아니라 load-bearing).
-> 반대로 이 토큰을 두고 실 경로를 나열하면 `empty_sentinel_contradiction` RED 다 —
-> 즉 sentinel 은 검사를 피하는 escape-hatch 로 쓸 수 없다.
+> 반대로 이 토큰을 두고 실 경로를 **함께 나열**하면 `empty_sentinel_contradiction` RED 다.
+> ★단 이 RED 가 막는 형상은 "sentinel + 실 경로 **동시 나열**" 하나뿐이다★ — 실제로 write 하는
+> lane 이 경로를 **아예 적지 않고** sentinel 만 두면 `declared_empty` 분기로 빠져 ∅ 로 겹침
+> 비교에 참여하고 PASS 적격이 된다. 즉 이 검사가 봉인하는 것은 *나열* 이지 *생략* 이 아니다.
 
 Story §10 FIX Ledger append 는 **Orchestrator 단독** (CFP-32 monopoly).
 
