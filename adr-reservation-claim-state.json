@@ -1,5 +1,5 @@
 {
-  "max_adr_number": 173,
+  "max_adr_number": 174,
   "claims": [
     {
       "adr_number": 142,
@@ -126,6 +126,12 @@
       "superseded_at": "2026-08-12T19:00:19Z",
       "superseded_by_adr_number": 173,
       "note": "SUPERSEDED — CFP-2948 이 172 를 claim(2026-08-12T15:29:45Z)했으나 CFP-2949 가 3분 42초 앞선 2026-08-13 00:34:18 +0900 (커밋 faa02c103, branch cfp-2949-routines, 원격 push 완료) 에 archive/adr/ADR-172-local-scheduled-task-residue-observation.md 로 172 를 선점. CFP-2949 는 claim 채널을 경유하지 않고 ADR-133 §결정 4 fallback(ls-tree+open-PR authoritative)으로 점유해 본 ledger 가 점유를 인지하지 못한 채 172 를 재발급함(ledger 는 §결정 4 대비 non-authoritative 라는 ADR-RESERVATION.md CFP-2689 기록의 재현). 해소 = 선점 사실·상대 브랜치 원격 push 완료·타 Story 브랜치 수정은 scope 침범 이라는 근거로 CFP-2948 이 173 으로 재채번(claimant ArchitectPLAgent:CFP-2948:renumber-20260813-0400). 172 는 CFP-2949 귀속. 번호 되돌림 0 — max_adr_number 는 173 으로 단조 증가 유지(ADR-133 §결정 5)."
+    },
+    {
+      "adr_number": 174,
+      "claimant": "ArchitectAgent:CFP-2963:20260814-053700",
+      "status": "claimed",
+      "claimed_at": "2026-08-13T20:40:24Z"
     }
   ]
 }
