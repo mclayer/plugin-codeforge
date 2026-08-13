@@ -682,6 +682,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-2840
     reservation_date: 2026-07-26 KST
     status: active   # DeveloperPLAgent commit time 점유 (CFP-2840 Phase 2 구현 PR carrier — ADR-167 Amendment 1: §결정 5 Superseded-skip semantics 명문화. amendment_id slot 예약 (adr_number space 아님 → ADR-133 claim primitive 대상 아님; ADR-082 Amd17 §결정 1-G strict pre-claim 정합 amendments_reserved[] inline append). verified-via Read worktree archive/adr/ADR-167-adr-amendment-compaction-ratchet.md frontmatter amendments[]/amendment_log[] 부재(현재 0) → next slot = 1 collision 0 (dual-block 신설). status reserved 미경유 직접 active. sunset_justification: null (강화 방향 — 재제정 realization 게이트 Superseded-skip 명문화, ADR-058 §결정 5 강화 방향).
+
+  - adr_number: 172
+    reserved_by_cfp: CFP-2949
+    reservation_date: 2026-08-13 KST
+    status: active   # ArchitectPLAgent commit time 점유 (CFP-2949 Phase 1 설계 PR carrier — ADR-172 신규 발급: 로컬 스케줄 작업 기반 세션-독립 잔재 관측 — 도입기 관측-only 와 승격 게이트). adr_number claim (신규 ADR — ADR-133 §결정 4 fallback: OCC primitive 미실행, firsthand max 검증 경유). verified-via `git ls-tree origin/main archive/adr/` numeric max = ADR-171 (총 171 entry) + ADR-RESERVATION.md 전수 max adr_number = 171 → next = 172 collision 0. 병렬 plugin-codeforge open PR 2건 firsthand 실측 = #2952(cfp-2926 → archive/adr/ADR-044) · #2917(cfp-2914 → archive/adr/ADR-031·ADR-064) 로 **전부 기존 번호 amendment, 신규 adr_number claim 0** → 충돌 0. dual-key 3-leg: filename `ADR-172-local-scheduled-task-residue-observation.md` ∧ frontmatter `adr_number: 172` ∧ 본 row 172. worktree base SHA = 3a7cae2f3 (origin/main firsthand, branch cfp-2949-routines). status reserved 미경유 직접 active (ArchitectPLAgent Phase 1 설계 carrier — ADR-038 Amendment 6 row (CFP-2702) ArchitectPL 직접 active 선례 정합). sunset_justification: null (신규 governance 정책 ADR — permanent policy, ADR-058 §결정 5 강화 방향: 관측-only 게이트 + lever 계상 금지 조건 신설로 통제 강화, 약화 0).
 ```
 
 ## 해소 기준
