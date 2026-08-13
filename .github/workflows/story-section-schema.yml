@@ -2,11 +2,13 @@ name: Story Section Schema (CFP-91 / CFP-94)
 # Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 # Validates docs/stories/*.md against templates/story-page-structure.md schema:
-# - Implementation Story (type: story OR no type field) = strict mode (§1-§13 모두 의무)
+# - Implementation Story (type: story OR no type field) = strict mode (§1-§11 의무, §12-§13 optional)
 # - Epic Story (type: epic) = condensed mode allowed
 #
 # Source: scripts/check-story-section-schema.sh (CFP-91)
 # Workflow: CFP-94 (Phase 3 follow-up of audit batch 1 P1-4)
+# MTD-1326: pull_request = 변경파일-only lint(three-dot merge-base 귀속 + baseline ratchet)
+#           workflow_dispatch = 전량 raw (baseline 미적용 — 부채 전량 관측)
 #
 # Consumer distribution: 본 workflow + scripts/check-story-section-schema.sh 둘 다 copy 의무.
 # 후자는 CFP-97 templates/consumer-scripts.manifest 의 entry — consumer-guide §2c 의 manifest-driven loop 가 처리.
@@ -15,19 +17,26 @@ on:
   pull_request:
     paths:
       - 'docs/stories/**'
+  workflow_dispatch:  # AC-5 전량 raw 모드 (무인자 경로) — MTD-1326
+
+# MTD-1325 D2 — PR 단위 중복 런 회수. pull_request 이벤트 런만 PR-번호 그룹을 공유한다.
+# 그 외 전 이벤트(push/schedule/issues/pull_request_review/workflow_dispatch/workflow_run)는
+# github.run_id 고유 그룹 = running-취소·pending-대체 모두 사정권 밖 (AC-6 · §4.2-D2 제약 1~3).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   story-section-schema:
     runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    timeout-minutes: 10   # MTD-1325 D3 — tier: 경량 체크 (hung-잡 360분 슬롯 점유 차단)
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # three-dot merge-base 귀속 (AC-8, MTD-1326) — full history
 
       - name: Run story section schema lint
         run: |
@@ -35,4 +44,8 @@ jobs:
             echo "::warning::scripts/check-story-section-schema.sh 부재 — consumer-scripts manifest copy 누락 (CFP-97). consumer-guide §2c 참조."
             exit 0
           fi
-          bash scripts/check-story-section-schema.sh
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            bash scripts/check-story-section-schema.sh --pr-base "origin/${GITHUB_BASE_REF}"
+          else
+            bash scripts/check-story-section-schema.sh
+          fi
