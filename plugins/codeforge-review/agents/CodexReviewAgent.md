@@ -53,7 +53,8 @@ Codex 플러그인 미설치 시 **모든 리뷰 lane 진행 불가** — Orches
 
 **Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환, Codex 호출 자체 skip, generic fallback 금지 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) §결정 4번):
 
-1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` · `round_id` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+   - ★ **`round_id` 는 존재 + 형식 둘 다** (`^[A-Za-z0-9_-]{8,64}$`) — 부재 **또는 형식 위반**(치환되지 않은 `<packet round_id>` 리터럴 포함) = 즉시 `ESCALATE_PACKET_INCOMPLETE`, **dispatch 자체 skip**. 존재만 보는 검사는 미치환 placeholder 를 통과시키고, 그 값은 아래 §실행 패턴에서 manifest `round_id` 에 그대로 실려 collector 가 같은 정규식으로 **schema 축 fail-closed 거부**한다 (= 회수 가능한 verdict 를 100% 버린다). 발급·전달 규범 = [`../templates/review-pl-base.md`](../templates/review-pl-base.md) §10, 스키마 슬롯 = 동 §2 — 본 md 는 schema 재인용 금지 관례상 **검증 규칙만** 둔다.
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
 3. **lane-conditional 추가 검증**:
    - `lane=requirements-review` (CFP-2326 / ADR-125): `story_key` 필수. Story §1-§6 (요구사항 산출물 — use case / AC / edge / 암묵 가정) 을 `Read`로 열 수 없으면 ESCALATE. `scope_globs`에 요구사항 산출물 (Story §1-§6) ≥ 1 포함
@@ -113,7 +114,7 @@ shell state가 유지되지 않으므로 promptfile 조립 + `codex exec` 실행
 
 > **dispatch primitive — `codex exec` 직접 (companion 브로커 우회, CFP-2828 / ADR-081 §결정 D15)** [verified: `codex exec` default sandbox=read-only / `-o`=최종 메시지 파일 / `--output-schema`=request(강제 아님), 공식 non-interactive docs + 1st-party cookbook `codex exec --output-schema … --sandbox read-only - < prompt.md`]: 정적 리뷰 + 실행 검증 모두 **`codex exec` 단일 primitive** 로 dispatch (sandbox 수위 × reasoning effort × promptfile 내용 프로파일 차이로 수렴 — 구 2-트랙/브로커 커맨드 폐지). 실행 검증이 repo 수정을 요구하는 게이트(fixture/temp/lockfile)는 **`-s workspace-write` 예외** + 명시 marker `[exec-verify-write-mode: <check>]`. ADR-081 §결정 D8 file-redirect(`- <`) 계승 + §결정 D15 direct-CLI dispatch.
 
-> **wall-clock 가드 의무 (ADR-081 §결정 D15 / CFP-2828 — D14 re-scope)** — stall 축은 companion 제거로 "소멸" 아닌 **"이동"**: CLI 고유 hang(#20919/#19945) 대비 wall-clock 가드는 잔존 1급. 모든 `codex exec` dispatch 발화는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행 명령으로 오인 → exit 127 가드 무효 [verified: coreutils 8.32 실측]. option 은 duration 앞에 와야 함). **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap 900s). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL — hermetic `--ignore-user-config` 로 grandchild 미생성 → single-process 트리 완전 reap). **N 값은 추정값 — empirical 미실증** (실 리뷰 규모 1차 실측 출처 없음 — lock-in 금지, env-override 유지). ★ honest-ceiling: `timeout` 은 wall-clock bound 이지 **총 작업량/자원 소비 bound 아님** ("DoS-safe" 서술 금지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
+> **wall-clock 가드 의무 (ADR-081 §결정 D15 / CFP-2828 — D14 re-scope)** — stall 축은 companion 제거로 "소멸" 아닌 **"이동"**: CLI 고유 hang(#20919/#19945) 대비 wall-clock 가드는 잔존 1급. 모든 `codex exec` dispatch 발화는 **option-first** `timeout --kill-after=<K> <N>` prefix 로 감싼다 (GNU coreutils 는 duration-first `timeout <N> --kill-after=<K>` 에서 `--kill-after` 를 실행 명령으로 오인 → exit 127 가드 무효 [verified: coreutils 8.32 실측]. option 은 duration 앞에 와야 함). **N** = `${CODEX_REVIEW_TIMEOUT_SEC:-300}` (초, 전역 default) + lane override `CODEX_REVIEW_TIMEOUT_SEC_<LANE>` (예 `_SECURITY=420` / `_DESIGN=240`, consumer overlay hardcap **540s** — `A_max = 600s` 하에서 `540 + K30 + margin30 = 600` 으로 정확히 포화하며, 구 `900s` 는 `N + K = 930 > A_max` 라 **harness 도구 호출 수명 안에서 도달 불가**였다. 4계층 전순서 SSOT = ADR-139 §결정 8(Amendment 2) `N < N+K ≤ A_eff ≤ 600s`, 값 정본 = `docs/orchestrator-playbook.md` §3.10 / §3.10.1). **K** = `${CODEX_REVIEW_KILL_AFTER_SEC:-30}` (TERM→KILL — hermetic `--ignore-user-config` 로 grandchild 미생성 → single-process 트리 완전 reap). **N 값은 추정값 — empirical 미실증** (실 리뷰 규모 1차 실측 출처 없음 — lock-in 금지, env-override 유지). ★ honest-ceiling: `timeout` 은 wall-clock bound 이지 **총 작업량/자원 소비 bound 아님** ("DoS-safe" 서술 금지). 이 Story 목적 = 무한→유한 전환이라 특정 유한값이면 AC 충족.
 
 정본 dispatch 템플릿 (§3.1). `codex exec` = **단일 실행 라인**(option-first timeout prefix + `- <` file-redirect). `<EFFORT>` = 아래 lane 프로파일 표:
 
@@ -123,8 +124,44 @@ shell state가 유지되지 않으므로 promptfile 조립 + `codex exec` 실행
 # ── 정본 dispatch 템플릿 (CFP-2828 — ADR-081 Amd14 §결정 D15) ──
 # PROMPTFILE/OUT_JSON = per-invocation unique + git-tracked 경로 금지 (I-6 + §7.5)
 TS="$(date +%s)-$$"                                       # <ts> = epoch+PID — **파일명 유일성 전용** (I-6 per-invocation unique · 4-lane 병렬 안전). 보안 nonce 아님 (아래 NONCE 로 분리 — ADR-081 §결정 D17 R-A/F1-c)
-PROMPTFILE="<scratch>/codex-review-<lane>-${TS}.md"       # packet + lane focus + diff 조립
-OUT_JSON="<scratch>/codex-review-out-<lane>-${TS}.json"   # verdict 정본 채널 (-o)
+CR_DIR="<scratch>/codex-review"                           # 전용 아티팩트 디렉터리 (scratch 루트 비열거 — 결과 파일 격리)
+PROMPTFILE="${CR_DIR}/codex-review-<lane>-${TS}.md"       # packet + lane focus + diff 조립
+OUT_JSON="${CR_DIR}/codex-review-out-<lane>-${TS}.json"   # verdict 정본 채널 (-o) — P-0 에서 정규화(drive-form)
+MANIFEST="${CR_DIR}/dispatch-<lane>.json"                 # 고정 경로(lane 당 1) — late-collect 진입점 (AC-11 2-hop 간접)
+RC_STAMP="${CR_DIR}/dispatch-<lane>.rc"                   # 귀속 rc stamp `"<dispatch_id> <rc>"` — 내용 귀속(L2)
+ROUND_ID="<packet round_id>"                              # ★ LEAD 발급 회차 토큰(L3) — packet placeholder 치환, **셸 생성 금지**
+# JSON 값 보간 이스케이프 (순서 고정: 역슬래시 먼저, 그다음 큰따옴표).
+# ★ 패턴·치환을 반드시 **인용된 변수**로 쓴다 — 리터럴 축약형(`${1//\\/\\\\}` 류)은 역슬래시를 전혀
+#   이스케이프하지 못한다(firsthand 실측 무동작). "더 짧게" 리팩터링 금지 — 축약이 곧 무동작.
+_json_esc() { local bs='\' q='"' s="$1"; s=${s//"$bs"/"$bs$bs"}; s=${s//"$q"/"$bs$q"}; printf '%s' "$s"; }
+# ── 슬롯 preflight 4검사 (fail-closed, codex 미호출) — 순서 고정 P-0 → P-1 → P-2 → P-3 ──
+# P-0 정규화는 argv 소비 site 2개(`-o` · AC-6 helper 1번째 인자)의 **공통 상류 1지점**.
+#   call-site 별 교정 금지 — "2개 중 1개만 고침" 실패 형태를 그대로 재생산한다.
+codex_outpath_preflight() {
+  outpath_reason=""
+  # P-0 경로 방언 정규화: cygpath **부재 = no-op 통과**(비-Windows 경로 byte 무변형) / **존재하나 실패 = fail-closed**
+  #   (rc≠0 또는 빈 출력을 통과시키면 `OUT_JSON=""` 로 P-3 을 조용히 우회하고 `-o ""` 로 dispatch 한다)
+  if command -v cygpath >/dev/null 2>&1; then
+    local _n; _n="$(cygpath -m "$OUT_JSON" 2>/dev/null)" || { outpath_reason=cygpath_failed; return 1; }
+    [ -n "$_n" ] || { outpath_reason=cygpath_failed; return 1; }
+    OUT_JSON="$_n"
+  fi
+  # P-1 아티팩트 디렉터리 보장 (부재 시 codex 는 `exit 0 + out.json 부재` 로 수렴 — 플랫폼 무관)
+  mkdir -p "$CR_DIR" 2>/dev/null || { outpath_reason=dir_create_failed; return 1; }
+  # P-2 고정경로 3종(+manifest `.tmp`) 강제 비움 + **부재 재확인**
+  #   ★ `[ -e ]` 단독은 dangling symlink 에 false 를 반환해 비움 무력화를 놓친다 → `[ -L ]` 동반 필수.
+  rm -f "$OUT_JSON" "$MANIFEST" "$MANIFEST.tmp" "$RC_STAMP" 2>/dev/null
+  for _f in "$OUT_JSON" "$MANIFEST" "$MANIFEST.tmp" "$RC_STAMP"; do
+    if [ -e "$_f" ] || [ -L "$_f" ]; then outpath_reason=slot_clear_failed; return 1; fi
+  done
+  # P-3 방언 술어 — env 술어는 **set-ness**(`+x`). 값 비교(`= "1"`) 금지: `MSYS_NO_PATHCONV=0` 도 변환을 해제한다.
+  #   실 발화 정의역 = **cygpath 부재 ∧ env set** (cygpath 존재 시 P-0 산출이 drive-form 이라 구조적 미발화).
+  #   `is_windows` = templates/scripts/worktree-path-util.sh 의 **인라인 사본** (파일 전체 source 금지 — 역방향 `to_posix_path` 오재사용 함정).
+  if [[ "$(uname -s)" =~ ^(MINGW|MSYS|CYGWIN) ]] && [ -n "${MSYS_NO_PATHCONV+x}" ]; then
+    case "$OUT_JSON" in /*) outpath_reason=dialect_reject; return 1;; esac
+  fi
+  DISPATCH_START="$(date +%s)"; return 0   # 신선도 결박·OP-1 하한의 기준점
+}
 SCHEMA="${CLAUDE_PLUGIN_ROOT}/schemas/codex-review-output-schema-v1.json"
 WHITELIST="${CLAUDE_PLUGIN_ROOT}/templates/codex-korean-literal-whitelist.md"   # 구획 A 한글 예외 + 한글 앵커 + 판독측 지시 marker SSOT (oracle 런타임 read)
 NONCE="$(check_promptfile_utf8_roundtrip.py --mode emit-nonce)"   # delimiter 보안토큰 = CSPRNG 128-bit hex, **late-bound·파일명 미포함** (TS=파일명 유일성 ↔ NONCE=delimiter 보안토큰 역할 분리, CWE-330 해소 — ADR-081 §결정 D17 R-A/F1-c)
@@ -151,22 +188,53 @@ if [ "$assert_rc" -ne 0 ]; then
 elif ! command -v timeout >/dev/null 2>&1; then
   # GNU timeout 부재 (Windows Git Bash 등) = dispatch skip (제어흐름 단절 필수 — fall-through 시 부재 timeout 호출 exit 127).
   echo "[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]"; verdict=inconclusive
+elif ! codex_outpath_preflight; then
+  # 경로 슬롯 preflight fail-closed: codex 미호출 (at-most-once 안전). ★ **전용 marker** — stall/encoding marker 재사용 금지.
+  # ★ 분기 **순서가 load-bearing**: encoding assert → timeout 부재 → outpath precheck → dispatch.
+  echo "[codex-outpath-precheck-failed: reason=${outpath_reason}]"; verdict=inconclusive
 else
-  export MSYS_NO_PATHCONV=1   # 별도 줄 export (inline env-prefix 는 lint execution_first_tokens first-token 판정 파괴 → 금지)
   # CWD = 리뷰 대상 repo(worktree) 안 (trusted-dir, --skip-git-repo-check 금지). read-only 기본 (code write-gate 만 workspace-write).
+  # manifest = **temp+rename 원자 write** — 평문 `>` 는 "write 중 사망 = 절단 JSON" 이라는 상태 자체를 만든다.
+  #   보간 값 5종(`lane`·`round_id`·`out_json`·`promptfile`·`category_enum`)은 전건 `_json_esc` 통과 후 (미이스케이프 = malformed JSON → collector 오독·필드 주입).
+  #   ★ codex **호출 이전**에 write — 호출 후에 쓰면 사망형에서 좌표가 남지 않는다.
+  # ★ `category_enum` = **필수 필드**(§4.2 승격 — DeveloperPL 판정, ArchitectPL 비준 대기). "additive 선택 필드" 아니다
+  #   (`schema` const 는 무변경 — "새 const 없이 필드 추가"는 여전히 성립하나, 그것이 곧 *선택*을 뜻하지는 않는다).
+  #   승격 근거: late-collect 가 **동일 AC-6 helper** 를 부르려면 3번째 인자가 필요한데(helper 는 인자 정확히 3개 요구) collector argv 는
+  #   `<lane> <round_id>` 2개뿐이라 유일 조달처가 이 필드이고 ⊕ collector **step 2 schema 축**이 부재·빈 값을 fail-closed 로 거부하므로
+  #   ⊕ 이 printf 에서 키를 빼면 **전 회차가 schema 축 fail-closed** 로 죽는다. 값 = dispatch 가 helper 에 넘기는 것과 **같은 packet 유래**.
+  printf '{"schema":"codex-dispatch-manifest-v1","lane":"%s","dispatch_id":"%s","round_id":"%s","out_json":"%s","promptfile":"%s","dispatch_start":%s,"timeout_n":%s,"kill_after_k":%s,"category_enum":"%s"}\n' \
+    "$(_json_esc '<lane>')" "$(_json_esc "$TS")" "$(_json_esc "$ROUND_ID")" "$(_json_esc "$OUT_JSON")" "$(_json_esc "$PROMPTFILE")" \
+    "$DISPATCH_START" "${CODEX_REVIEW_TIMEOUT_SEC:-300}" "${CODEX_REVIEW_KILL_AFTER_SEC:-30}" \
+    "$(_json_esc '<packet category_enum, 쉼표구분>')" > "$MANIFEST.tmp" \
+    && mv -f "$MANIFEST.tmp" "$MANIFEST"
   timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s read-only -c model_reasoning_effort=<EFFORT> --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"
   codex_rc=$?   # codex exit 즉시 캡처 (helper exit 과 별 채널 — 2-변수 구조; L103 append-only 무접촉)
+  printf '%s %s\n' "$TS" "$codex_rc" > "$RC_STAMP"   # 귀속 stamp `"<dispatch_id> <rc>"` (L2) — 사망형 = 미기록 → late-collect 가 `rc-unknown` fail-closed
   # code lane write 필요 게이트만 sandbox 교체 (동형 wall-clock 가드 + 명시 marker):
   # timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec --ignore-user-config -m "${CODEX_REVIEW_MODEL:-gpt-5.6-terra}" --ephemeral -s workspace-write -c model_reasoning_effort=medium --output-schema "$SCHEMA" -o "$OUT_JSON" - < "$PROMPTFILE"   # [exec-verify-write-mode: <check>]
   # ── AC-6 소비 재검증: codex exit 0 이어도 out.json 재검증 (fail-closed 2-단계 게이트, I-3/I-7) ──
   check_codex_review_output_schema.py "$OUT_JSON" "$SCHEMA" "<packet category_enum, 쉼표구분>"; helper_rc=$?
   if [ "$codex_rc" -eq 0 ] && [ "$helper_rc" -eq 0 ]; then
     verdict=<out.json `verdict` 필드 read>   # I-7 SSOT — verdict 정본=out.json field, exit→severity 매핑 금지. read 명령 = 기존 AC-6 재검증 form 계승(실행표면 무확대); exhaustive exit universe = §exit-code 판정표 SSOT
+    # ★ inline 소비도 **동일 원자적 rename** (late-collect 과 두 경로 공통 — 같은 artifact 2회 소비 차단).
+    # ★ rename **rc 미검사 금지**: 실패 = verdict 는 읽었으나 at-most-once 봉인 실패 → fail-closed.
+    if ! mv -f "$OUT_JSON" "${OUT_JSON}.consumed"; then
+      echo "[codex-collect-rejected: reason=consume-seal-failed]"; verdict=inconclusive
+    fi
   else
-    verdict=inconclusive                       # codex 비-0 OR 재검증 실패(helper exit 1/2) → fail-closed (상세=판정표 참조)
+    verdict=inconclusive                       # codex 비-0 OR 재검증 실패(helper exit 1/2) → fail-closed (상세=판정표 참조 — discriminator 가 원인 라벨 emit)
   fi
 fi
 ```
+
+### 출력 경로 전제 (AC-6 계약 절 — 경로 방언 지식 **단일 anchor**)
+
+> **정직 등급 = advisory ceiling** — 본 절은 presence(문면) 계약이지 런타임 준수 보증이 아니다. **정의역 한정**: "단일 anchor" 는 **경로 방언 지식 축** 한정 주장이다 (exit-code **판정표** 축은 1차 = 아래 판정표 + 2차 = ADR-081 처분 축 요약의 **이중 기록**이며, 그 축에 단일성을 주장하지 않는다).
+
+1. **판별 가능한 술어** — 출력 경로(`<scratch>` 플레이스홀더가 해소된 실경로)는 **codex.exe 가 해석 가능한 형식**이어야 한다. Windows Git Bash 에서 POSIX 형(`/c/…`)은 **드라이브-상대(`C:\c\…`)로 오해석**되며, 그 실패는 **조용하다**(`exit 0` + out.json 부재 — 리뷰가 성공한 것처럼 보인다). 배선 = 정본 템플릿의 preflight **P-0**(`cygpath -m` 정규화 — **부재 = no-op 통과** / **존재하나 rc≠0·빈 출력 = fail-closed**) ⊕ **P-3**(방언 술어 — env 판정은 **set-ness** `${MSYS_NO_PATHCONV+x}`, 값 비교 금지: `=0` 도 변환을 해제한다).
+2. **argv 축 서술 정정** — `-o` 는 §결정 D8 **result-via-file 요건의 구현**이므로 D8 사정권 **안**이다. 다만 D8 이 차단하는 것은 **"프롬프트를 argv 로 넘기는 것"(입력 축 invocation 형식)** 이지 **"출력 경로 argv 의 경로 방언"** 이 아니다. 방언 축에는 D8 을 포함해 **어떤 술어도 걸려 있지 않았으며**, 본 계약의 **P-3 이 그 무술어 구간을 처음 덮는다**. ★ **D8 무력화 서술 금지**(과잉 정정) — D8 의 입력 축 차단(`- < "$PROMPTFILE"`)은 무손상이다.
+3. **외부 이슈 인용 위생** — 판정표·주석이 외부 이슈를 근거로 인용할 때는 **상태(open/closed)와 signature 를 재대조할 의무**를 진다. signature 가 우리 형상과 disjoint 하면 그 이슈를 원인 근거로 쓰지 않는다 (판정표에서 `exit 0 + out.json 부재` ↔ `#19945` 하드코딩을 제거하고 **stdout-바이트 축**으로 대체한 것이 이 규칙의 적용례).
+4. **흩어진 선행 지식 3 site 가 이 좌표를 가리킨다** — `tests/scripts/test_check-worktree-self-ownership.sh`(env 전역 export 가 `/c/Users/…` 까지 **깨뜨리는** 쪽) · `scripts/lib/check_orphan_worktree_classify.py`(env 를 **켜야 하는** 쪽) · `scripts/check-fable-roster-integrity.sh`(동일 진단 + `cygpath` 교정 idiom). 세 기록이 서로를 인용하지 않아 dispatch 표면에 도달하지 못한 것이 재발 조건이었다 (각 site 주석 정정은 **선택** — 본 절이 좌표를 제공한다).
 
 | lane | `<EFFORT>` | sandbox (기본) | N override (기존 값 유지) | PROMPTFILE focus 원천 |
 |---|---|---|---|---|
@@ -184,13 +252,40 @@ fi
 |---|---|---|
 | **124** | GNU timeout wall-clock kill | `inconclusive` + marker `[codex-sandbox-fallback: dispatch_stall_or_stream_timeout]` → substitution |
 | **0 + out.json valid** | 정상 완료 | AC-6 재검증 통과 → out.json `verdict` **read** (I-7) |
-| **0 + out.json 부재/empty** | silent crash (#19945) / no-output | `inconclusive` (PASS 금지 — empty 는 crash 강신호) |
+| **0 + out.json 부재/empty** | **관측 ⊗ 원인 2겹 분화** — 관측(부재/empty)만으로 원인이 확정되지 않는다. 원인 집합 = {출력 경로 방언, 실 crash, 디스크·권한, 사후 삭제} 다중 | `inconclusive` (PASS 금지) + **아래 discriminator 가 산출한 라벨**. ★ **처분은 전건 불변** — 라벨 축만 분화한다 |
 | **0 + schema 비정합/free-form** | silent 강등 (#15451/#19816) | `inconclusive` (fail-closed, 재검증 실패 declare) |
 | **1** | CLI 자체 오류 (trusted-dir 거부/auth 실패 — 모델 미호출 fast-fail) | `inconclusive` — **독립 bucket: stderr 진단 보존·surface** (env/CWD 교정 신호 = verification-constraint, 제품결함 아님) |
 | **2** | arg-parse conflict | `inconclusive` (dispatch 배선 버그 회귀 신호) |
 | **125/126/127** | timeout 자체 실패 / 실행 불가 / 바이너리 부재 | `inconclusive` (127 = preflight `command -v` 선차단) |
 | **기타 >0** | codex 비정상 종료 | `inconclusive` |
 | **(pre-dispatch) `assert_rc` ≠ 0** | promptfile UTF-8 round-trip assert 실패 — **codex 미호출** (codex exit 과 별 채널: helper enum `1`=검증 위반 / `2`=setup error / pipefail 하 상류 emit rc — F-CR-7) | `inconclusive` + **전용** marker `[promptfile-encoding-assert-failed: rc=<n>]` → re-assemble **≤1회**, 초과 = ESCALATE (자동 재시도 금지 — 입력 결함은 재시도로 낫지 않고, 중단이 codex 호출 이전이라 at-most-once 안전). stall/sandbox-fallback marker 재사용 금지 (stall 통계 오염·원인 오귀속 방지) |
+| **(pre-dispatch) 경로 슬롯 preflight 실패** | `codex_outpath_preflight` 4검사(P-0 정규화 / P-1 디렉터리 / P-2 고정경로 3종+`.tmp` 비움 / P-3 방언 술어) 중 1+ 실패 — **codex 미호출** | `inconclusive` + **전용** marker `[codex-outpath-precheck-failed: reason=<enum4>]`. at-most-once 안전(호출 이전 중단). ★ P-2 실패 = "이번 회차의 좌표 슬롯을 우리가 소유한다고 단언할 수 없음" → **경고가 아니라 차단**. stall/encoding marker 재사용 금지 |
+
+**`exit 0 + out.json 부재/empty` discriminator (순서 고정 — 처분은 전건 `inconclusive` 불변)**
+
+| 순위 | 관측 | 산출 라벨 |
+|:-:|---|---|
+| **1** | **mangled 경로 프로브** — `C:\c\<posix-path>` 위치에 파일이 **실재하는가**(★ **존재 확인만** — read·consume 절대 금지) | `[codex-outpath-dialect-mangled: basename=<name>]` |
+| 2 | **stderr signature** — `Failed to write last message file` ∨ `os error 3` | 동일 라벨 |
+| 3 | **stdout 바이트 수** | `[codex-output-absent-unclassified: stdout_bytes=<n>]` — `n=0` = 상류 crash **강신호** / `n>0` = 원인 미상. **단정 금지** |
+
+- ★ **순서가 load-bearing — stderr 를 1순위로 두지 마라**: mangled 경로의 **부모 디렉터리가 실재하면** codex 는 `exit 0` · **stderr 0줄** 로 조용히 오위치에 기록한다. 그 상태에서 stderr signature 는 **아무것도 산출하지 못한다**.
+- ★ **mangled probe 는 판정 입력이지 verdict 채널이 아니다** — 그 파일을 **절대 읽지 않는다**(오위치 산출물을 verdict 로 승격하면 write-confinement 와 소비 봉인이 동시에 깨진다).
+- ★ **외부 이슈 하드코딩 제거** — 구 문면의 `#19945` 귀속은 signature 가 disjoint 하다(우리 형상 = stdout 정상·Windows / `#19945` = stdout 0바이트·Linux·TTY 미부착). 이슈 인용은 **상태·signature 재대조** 후에만 (위 「출력 경로 전제」 3항).
+- **정직 상한**: 부재만으로 "리뷰 성공"을 **확정할 수 없다**. 본 분화의 목적은 성공 판정이 아니라 **두 상태를 표현할 분류 공간 + 가르는 관측을 계약에 명시**하는 것이다.
+
+**dispatch-outcome marker 어휘 (신규 4종 — Family B)**
+
+| marker | payload | 발화 지점 | 처분 |
+|---|---|---|---|
+| `[codex-outpath-precheck-failed: reason=<enum4>]` | `cygpath_failed` \| `dir_create_failed` \| `slot_clear_failed` \| `dialect_reject` | pre-dispatch (codex 미호출) | `inconclusive` |
+| `[codex-outpath-dialect-mangled: basename=<name>]` | **basename only** (절대경로·사용자명 금지) | post-dispatch / collect | `inconclusive` |
+| `[codex-output-absent-unclassified: stdout_bytes=<n>]` | 정수 | post-dispatch / collect | `inconclusive` |
+| `[codex-collect-rejected: reason=<enum4>]` | `stale-artifact` \| `rc-unknown` \| `stale-manifest` \| `consume-seal-failed` | collect **∨ inline 소비** | `inconclusive` |
+
+- **4 reason enum 의 축 disjoint (오귀속 방지)** — `stale-artifact` = *artifact* 가 manifest 기준보다 오래됨 / `stale-manifest` = *manifest 의 회차 귀속*(`round_id`)이 이번 호출과 다름 = **잔재 축** / `rc-unknown` = *판정 입력*(rc stamp)이 미상·프로세스 귀속 불일치·바이트 형식 위반 / `consume-seal-failed` = *소비 봉인*(원자적 rename) 실패 = **트랜잭션 축**. 사유를 합치면 네 실패 경로가 하나의 카운터로 접혀 진단이 불가능해진다.
+- ★ **`[codex-sandbox-fallback: …]` 재사용 절대 금지** — stall 통계 오염·원인 오귀속 방지 (위 판정표 `assert_rc` 행의 자기 선례 동형).
+- ★ **`codex_sandbox_path_blocked` 이름 재사용 절대 금지** — 그 이름의 실체는 **codex sandbox 의 의도적 절대경로 read 거부(권한 거부)** 이고, 본 결함은 **Windows `ERROR_PATH_NOT_FOUND`(경로 자체 부재)** 다 — **disjoint signature**. 혼동 시 두 원인이 하나의 카운터로 합쳐진다.
 
 **AC-6 소비 재검증 (fail-closed 5단계 — out.json 소비 직전)**: exit 0 이어도 out.json 을 신뢰 전 재검증. helper `scripts/lib/check_codex_review_output_schema.py "$OUT_JSON" "$SCHEMA" "<packet category_enum, 쉼표구분>"` — ① 파일 존재 ② JSON parse ③ schema 준수(required/additionalProperties/enum) ④ cross-field(`counts.Px` ↔ `findings[]` severity별 실개수 일치) ⑤ `findings[].category` ∈ packet `category_enum`. helper exit 0 = 통과(out.json `verdict` read) / exit 1 = 하나라도 실패 → **inconclusive** (PASS 승격 0 — unclassified 강등 개념은 schema 경로에서 소멸, 재검증 fail-closed 로 대체). 3번째 인자 = dispatch 시점 워커가 packet `category_enum` 을 쉼표로 join 해 전달.
 
@@ -205,7 +300,7 @@ fi
 
 ### Lane별 focus prompt 템플릿
 
-워커가 packet `lane` 값에 따라 아래 prompt를 **promptfile** 로 조립 (`- < "$PROMPTFILE"` 주입 — inline argv 아님). 근거 anchor = **ADR-081 §결정 D16 + ADR-170 §결정 21 (= §결정 2 표 entry 7) 동형 승계** — "argv 는 ASCII path 만, 한국어 실값·content 는 UTF-8 파일 내부". argv 축은 §결정 D8 file-redirect 가 기차단하고, 파일 **내용** 축은 D16 축 A (round-trip assert) 가 완결한다. prompt 내용은 lane 별 아래 verbatim.
+워커가 packet `lane` 값에 따라 아래 prompt를 **promptfile** 로 조립 (`- < "$PROMPTFILE"` 주입 — inline argv 아님). 근거 anchor = **ADR-081 §결정 D16 + ADR-170 §결정 21 (= §결정 2 표 entry 7) 동형 승계** — "argv 는 ASCII path 만, 한국어 실값·content 는 UTF-8 파일 내부". **입력** argv 축(프롬프트를 argv 로 넘기는 invocation 형식)은 §결정 D8 file-redirect 가 기차단하고, 파일 **내용** 축은 D16 축 A (round-trip assert) 가 완결한다. ★ **정정 — argv 축 전체가 D8 로 닫힌 것이 아니다**: `-o` 는 D8 **result-via-file 요건의 구현**이므로 D8 사정권 **안**이되, D8 이 차단하는 축은 **입력 invocation 형식**이지 **출력 경로 argv 의 경로 *방언*** 이 아니다. 방언 축은 **무술어 구간**이었고 preflight P-3 이 그것을 처음 덮는다 (SSOT = 위 「출력 경로 전제」 절 2항 — D8 무력화 서술 금지). prompt 내용은 lane 별 아래 verbatim.
 
 > 아래 5 블록 = **구획 A (영어 강제, floor = 한글 0)** — 판정·예외·oracle scope 규칙 SSOT = §언어 구획 규약 (재인용 금지). 한글 pointer 산문은 `#### lane=` 헤딩 직하 **fenced 블록 밖**(본 줄 · 블록 사이 산문)에만 둔다 — 블록 **안**에 두면 oracle 판정 표면을 오염시킨다.
 

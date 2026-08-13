@@ -27,6 +27,27 @@ amendments:
     summary: |
       §결정 4 (1안 강제층) delivery-gap 규율 강화 (§결정 7 신설) — ADR-144 §결정 4(L3) realization. delivery-gap(P10) = stop taxonomy 축 B(liveness, 비의지적 mechanical stall)로 재확인(대화 축 아님, ADR-144 §결정 1 ★핵심 경고). 강화 내용: (i) 구조 규율 "PL 은 spawn-then-blind-wait 금지 — 수집(collect)은 auto-wake 되는 LEAD 가 소유하거나 LEAD 로 handoff" + named lead-collect routine(interface seam) + PL-background-yield idle detection marker. observer = LEAD(hook 아님). stall = wall-clock ceiling AND no-progress-marker(mtime + content + task-notification), 0-byte 단독 ≠ stall(INV-L3 재확인), INV-L2 fail-open 금지(stall ≠ PASS). (ii) full auto-wake-parent dispatcher(env=1)는 substrate 부재 + ADR-142 §결정 6 fresh DEFER + /resume in-process teammate 미복원 → narrative DEFER-escalate(recurrence anchor L3-delivery-gap::(a), ≥2 Story 재-제안 시 escalate, 자동 followup 발의 안 함). 정직 앵커 — 본 Story 세션 delivery-gap force-resume 5~6회 재현(falsifiable), 자동 교정 주장 안 함. 인프라 신규 불요(CFP-2549 substrate 기배선, 문구 강화만). tier = detection [measurement] + recovery [advisory](lead-owned discretionary), [물리강제] 아님(SubagentStop record-only ADR-115 §결정 2 + INV-L4 lead 판정). 강화(ratchet↑) 방향 — INV-L1~L4 · detection≠recovery · 2안 presence lint 전부 무변경, 신규 §결정 1개 추가만.
     sunset_justification: null   # 강화 방향 (background-yield 규율 강화 = forcing function 추가 ratchet) — ADR-058 §결정 5 약화 evidence-gate 비대상. INV-L1~L4 무손상.
+  - amendment_id: 2
+    date: "2026-08-11"
+    carrier_story: CFP-2929
+    issue: https://github.com/mclayer/plugin-codeforge/issues/2929
+    summary: |
+      §결정 8 신설 — (i) INV-L4 값 순서 불변식의 정의역을 2-timer(timeout N / liveness max-wait)에서
+      4계층(harness 도구 호출 수명 A / GNU timeout N+K / liveness max-wait C / late-collect 부재 판정 하한 D)으로
+      확장하고 "내측이 외측 잔여 예산에서 파생" 규칙을 명문화 (Google SRE Book Ch.22 deadline propagation (b)(c) 앵커).
+      ★ A 는 고정 상한이 아니라 호출별 파라미터(default 120s / max 600s)임을 정정 기재 — 내측 가드는 도달 불가가 아니라
+      A_eff 를 명시 전달하지 않은 것이 결함이다. (ii) §결정 7(i) 의 "named lead-collect routine(interface seam)" 을
+      codex dispatch 경로에 실현 — 고정 경로 dispatch manifest(claim-check) + LEAD 호출 named routine.
+      §결정 7(ii) full auto-wake-parent dispatcher DEFER 무변경(recurrence anchor L3-delivery-gap::(a) 유지) —
+      본 routine 은 LEAD 가 호출하는 discretionary seam 이지 자동 기상 장치가 아니다. ADR-115 C2 record-only 무손상.
+      (iii) OP-1 부재 판정 하한 신설 — dispatch_start + N + K + margin 이전의 산출물 부재는 INV-L3 3-state 의
+      '미획득(in-flight)' 이지 stall 이 아니며 재dispatch 를 금지한다(2-state 접기 = false-positive 조기 회수, §결정 3 정합).
+      (ii-b) 고정 경로 claim-check 의 필수 동반 통제 3층 명문화 — 좌표 고정은 회차 귀속을 상실시키므로
+      (1) 슬롯 강제 비움 (2) 판정 입력의 dispatch 귀속 (3) 호출자 제공 하한 을 함께 요구한다. 자기참조 신선도 검사는
+      manifest 자신의 staleness 를 원리적으로 검출하지 못한다(외부 기준점 필수).
+      INV-L1~L4 문면·detection≠recovery·2안 presence lint 전부 무변경 — 신규 §결정 1개 추가 + 정의역 확장만.
+    sunset_justification: null   # 강화 방향 (정의역 확장 + seam 실현 + false-positive 하한 추가 = ratchet↑) — ADR-058 §결정 5 약화 evidence-gate 비대상. INV-L1~L4 무손상.
+    reinterpretation: false  # ADR-167 §결정 1(b) parity marker (신규 entry 필수 필드) — INV-L1~L4 문면·detection≠recovery·2안 presence lint 무변경, 신규 §결정 8 append + INV-L4 정의역 확장(적용 대상 추가)이지 §결정 1-7 본문 의미의 소급 재해석 아님. self-declared, 진위 = 리뷰 판정 축(parity lint 는 presence/type 만 검사). effective_count(heading 0 / fm entry 2) = 2 < N=10 → 재제정 트리거 무발동.
 ---
 
 # ADR-139: background-wait liveness gate
@@ -121,6 +142,101 @@ source: Envoy/Akka idle vs max timeout 2축 표준 (false-positive 오kill 방�
 
 **정직 앵커(hollow-gate 금지)**: 본 Story(CFP-2573) 실행 세션에서 delivery-gap force-resume 를 **5~6회 재현**(요구사항 lane 4회 + 리뷰 lane 1~2회, falsifiable 실증 — Story §9.0). ADR-139 기배선에도 parent PL auto-resume 부재 재현 = 본 §결정 7 필요성의 same-session 실증. 본 §결정은 delivery-gap 을 **자동 교정한다고 주장하지 않는다** — force-resume 는 lead-owned discretionary 로 유지된다.
 
+### 결정 8 — 4계층 시간 전순서 + named lead-collect seam 실현 + 부재 판정 하한 (Amendment 2, CFP-2929)
+
+> **[Amendment 2 / CFP-2929, 2026-08-11 KST]** §결정 1 INV-L4 의 **정의역 확장**(2-timer → 4계층)과 §결정 7(i)
+> named lead-collect routine 의 **codex dispatch 경로 실현**. INV-L1~L4 문면 무변경 — 본 §결정은 그 위 append 강화다.
+
+**(i) 4계층 전순서 + 파생 규칙 (INV-L4 정의역 확장)**
+
+| 층 | 기호 | 정의 | 소유 |
+|---|---|---|---|
+| A | `A_eff` | harness 도구 호출 수명 (호출별 파라미터, default 120s / **max 600s**) | 호출자 |
+| B | `N`, `K` | GNU `timeout --kill-after=K N` | dispatch 셸 |
+| C | `C` | liveness max-wait (stall 판정) | Orchestrator/lead |
+| D | `D` | late-collect **부재 판정 하한** | lead collect 루틴 |
+
+전순서: `N < N+K ≤ A_eff ≤ 600s` **∧** `N+K < D = N+K+margin ≤ C`.
+
+**파생 규칙(독립 하드코딩 금지)**: 내측 상한은 외측 잔여 예산에서 파생한다 — `A_eff := N + K + assembly_margin` 을
+**호출 시점에 명시 전달**하고, `C := N + K + margin` 으로 도출한다. `N` 을 상수로 두고 `A_eff` 를 방치하면
+"명시된 가드가 도달 전에 수집이 끊기는" 형상이 된다.
+[source: Google SRE Book Ch.22 Addressing Cascading Failures — Deadline Propagation (b) 내측 = 외측 잔여 예산 파생,
+(c) 잔여 부족 시 착수 금지]
+
+★ **정정 기재**: A 를 "고정 120초 상한"으로 읽으면 "내측 가드는 구조적으로 도달 불가" 라는 **거짓 결론**이 나온다.
+A 는 호출별 파라미터이며 상한은 600s 다 — 결함은 도달 불가가 아니라 **A_eff 를 전달하지 않은 것**이다.
+
+★ **정직 등급**: `A_eff` 전달은 **도구 호출 인자**이므로 파일 검사로 런타임 준수를 강제할 수 없다 —
+**advisory ceiling**(ADR-143 동형). 기계 검증 가능 범위 = 문면 presence + **값 정합**(`N+K+margin ≤ 600` ∧ `N < C`).
+
+**(ii) named lead-collect seam 의 실현 형태**
+
+§결정 7(i) 이 선언한 "named lead-collect routine(interface seam)" 은 **선언만으로는 배선되지 않는다**(declared-not-bound).
+실현 형태를 다음으로 고정한다:
+
+- **고정 경로 dispatch manifest** (claim-check) — dispatch 는 **codex 호출 이전에** 자기 산출물 좌표(결과 경로 · 시작 시각 ·
+  상한 값)를 lead 가 알 수 있는 **고정 경로**에 기록한다. 셸 내부에서만 생성되는 값(예: `epoch-PID` 파일명)에 결과 좌표가
+  갇히면 lead 는 완성된 결과를 **찾을 수 없다**.
+- ★ **고정 경로의 대가 = 회차 귀속 상실 (필수 동반 통제)** — 좌표를 고정하는 순간 그 자리의 파일이 **이번 dispatch 것이라는
+  보장이 사라진다**(이전 회차 자기 산출물이 잔존). "그 자리에 있으니 이번 것"은 **무근거 등식**이며, 잔재 삼중조가 서로
+  내부정합이면 **자기참조 신선도 검사(기준 시각을 그 manifest 에서 읽는 형태)는 원리적으로 무력**하다. 따라서 고정 경로
+  claim-check 를 채택하는 구현은 다음 3층을 **함께** 배선해야 한다:
+  **(1) dispatch 직전 고정 좌표 슬롯 강제 비움** (실패 = fail-closed, dispatch 미착수)
+  **(2) 판정 입력의 dispatch 귀속** (예: exit-code stamp 에 dispatch 식별자 동반 — 불일치·부재 = 판정 입력 미상 = fail-closed)
+  **(3) 호출자 제공 회차 토큰의 동등 비교** (lead 가 dispatch 기동 **전에 1회 발급**한 회차 유일 토큰을 **dispatch 와
+  collect 양쪽에 같은 값으로** 넘기고, manifest 에 기록된 값과 **일치하지 않으면 거부**) — manifest **자신의**
+  staleness 는 manifest 내부 값으로 검출할 수 없으므로 **외부 기준점이 필수**다.
+  ★ **기준점은 *시각 하한* 이 아니라 *회차 토큰* 으로 둘 것** — 시각 하한(`dispatch_start ≥ caller 값`) 형태는
+  ① 판정이 **순서 추론**이라 "얼마나 이른 값인가"에 좌우되고 ② 그 자유도를 메우려 floor·skew·discriminator 등
+  **미실증 상수 군**을 달아야 하며 ③ 호출자가 *그럴듯한 다른 과거값* 을 넘기면 **수락(fail-open)** 된다.
+  동등 비교는 셋을 동시에 없앤다 — 위반 시 **불일치 → 거부(fail-closed)** 로 방향이 역전되고 상수가 0 이 된다.
+  ★ **토큰 규약을 normative 로 규정할 것** — (a) **dispatch 기동 전 1회 발급** (b) **dispatch 주입값과 collect
+  인자가 동일 값** (c) 재호출(replay) 시 **원 회차 값 유지** (d) **회차 간 재사용·collect 시점 재발급 금지**.
+  (b)(d) 위반은 수집을 **전건 거부**로 붕괴시키는데, fixture 가 올바른 값을 쓰면 **GREEN 인 채 배포**된다 —
+  따라서 **규약 위반을 모사하는 mutant 를 반드시 둘 것**.
+  세 층이 덮는 시나리오는 **서로 다르며 대체 불가**다: (1) = 토큰 **규약 위반**(동일 값 재사용) ∧ 비움 이후 사망 /
+  (2) = 동일 좌표 경쟁(비움이 이미 지나간 뒤의 뒤늦은 stamp — **같은 회차 두 프로세스라 (3)으로는 못 가름**) /
+  (3) = **비움 이전 사망**(비움이 아예 안 돈 경우).
+  ★ **정직 declare 의무** — 토큰 **재사용 ∧ 비움 이전 사망** 이 겹친 조합은 **세 층 어느 것도 덮지 못한다**.
+  토큰 값의 회차 유일성은 호출자 책임이며 **기계 강제 불가(advisory)** 다(형식 검증은 값의 *신선함* 을 보지 못한다).
+  동등 비교로 **위반형이 "verbatim 재사용" 하나로 좁아지지만 제거되지는 않는다** — 이 잔여를 "완전 봉인" 이나
+  "구성적 폐쇄" 라 적지 않는다.
+- **LEAD 호출 named routine** — 수집은 이름 붙은 lead-owned 루틴으로 표면화한다. 이 루틴은 **discretionary** 이며
+  **자동 기상 장치가 아니다**. §결정 7(ii) full auto-wake-parent dispatcher 는 **DEFER 유지**
+  (recurrence anchor `L3-delivery-gap::(a)`, ≥2 Story 재제안 시 escalate).
+- **소비의 멱등성** — 결과 소비는 원자적 rename 등으로 **최대 1회**임이 구조적으로 보장돼야 한다.
+  ★ **그 rename 의 반환값을 검사할 것** — 미검사 rename 위에 세운 "최대 1회" 는 **실패 시 조용히 거짓**이 되며,
+  봉인되지 않은 산출물은 다음 회차의 잔재 전건이 된다. 실패에 **명명된 fail-closed 처분**을 둔다.
+- **좌표 파일의 write 는 원자적일 것** — 고정 좌표 manifest 를 평문 리다이렉트로 쓰면 "write 중 사망 = 절단 레코드"
+  상태를 **스스로 만든다**. temp+rename 으로 그 상태를 애초에 만들지 않는다(상태를 만든 뒤 분기를 늘리는 것보다 낫다).
+- **collector 가 소비하는 수치 필드는 *첫 산술 이전* 에 타입·자릿수를 결박할 것** — 상한 없는 정수 술어는
+  셸 비교(`[ -lt ]`/`[ -gt ]`)에서 **rc=2 를 내고 `else` 로 흘러 fail-open** 이 되며, 산술 확장 대안은 **silent wrap** 한다.
+- **판정 authority 단일** — inline 경로와 late-collect 경로는 **동일한 재검증 helper·동일한 verdict 판정 규칙**을 공유한다.
+  두 벌 구현은 fail-open 우회로가 된다. 판정 입력(예: 자식 exit code)이 late-collect 시점에 **미상**이면
+  **fail-closed inconclusive** — 미상을 PASS 로 해석하지 않는다(INV-L2 상속).
+- tier = detection `[measurement]` + recovery `[advisory]`, **`[물리강제]` 아님** (ADR-115 §결정 2 record-only 무손상).
+  collect 을 blocking 물리강제로 요구하는 것은 ADR-115 C2 위반이다.
+
+**(iii) 부재 판정 하한 (false-positive 조기 회수 방지 — §결정 3 정합)**
+
+산출물 **부재**를 stall 로 판정할 수 있는 최소 시각을 명시한다:
+
+```
+부재-stall 판정 하한 D = dispatch_start + N + K + margin
+```
+
+- `D` **이전**의 부재는 INV-L3 3-state 의 **'미획득(in-flight)'** 이며 **stall 이 아니다** → **재dispatch 금지**.
+- 근거: 호출부 `timeout` 이 자식의 **직접 부모**일 때 `--kill-after=K` 경과 시점에 종료가 보장되므로,
+  late-write 지평은 `N+K` 로 유계다.
+- ★ 3-state 를 2-state("실재 → 수집 / 부재 → stall")로 접는 절차는 **INV-L3 위반**이며,
+  §결정 3 이 막으려던 false-positive 조기 회수를 그대로 재생산한다.
+
+**정직 앵커(hollow-gate 금지)**: 본 Amendment 의 (ii)(iii)은 실 사례로 발동됐다 — CFP-2929 요구사항 lane 에서
+리뷰 워커의 **비자발적 백그라운드 이동이 4회** 발생했고 **그중 1회가 그 워커의 오단정을 유발**했다(결과가 실재하는데
+소비되지 않아 판정까지 오염). 본 §결정은 delivery-gap 을 **자동 교정한다고 주장하지 않는다** —
+collect 은 lead-owned discretionary 로 유지된다.
+
 ## 거절된 대안
 
 - **(A) ADR-039 Amendment 10 (§결정 20) carrier**: §결정 19(lead-intervention)는 spawn-topology 축이고 liveness 정량 게이트는 별도 축 → §결정 20 신설해도 ADR-039 scope(subagent-default spawn) 초과. spawn-권한 기반으로만 cross-ref (Amendment 10 은 sibling 으로 채택 — 아래).
@@ -146,3 +262,6 @@ source: Envoy/Akka idle vs max timeout 2축 표준 (false-positive 오kill 방�
 - `archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md` §결정 19 — lead-intervention anchor
 - `archive/adr/ADR-119-research-before-claims.md` §결정 10 — fail-open 금지 origin SSOT (상속)
 - `docs/orchestrator-communication-incidents.md` Iter 4/5 — #763 재발 arc evidence
+- `plugins/codeforge-review/agents/CodexReviewAgent.md` — dispatch manifest + rc stamp (§결정 8 (ii) claim-check 실현, CFP-2929)
+- `plugins/codeforge-review/scripts/codex-late-collect.sh` — named lead-collect routine (§결정 8 (ii), CFP-2929)
+- `plugins/codeforge-review/templates/review-pl-base.md` §10 — collect = LEAD 소유 규범이 named routine 을 지목 (CFP-2929)

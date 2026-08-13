@@ -75,6 +75,7 @@ permissions:
 review_packet:
   contract_version: "1.1"
   lane: requirements-review
+  round_id: <이번 회차 dispatch 기동 전 1회 발급한 토큰>   # 필수 — `^[A-Za-z0-9_-]{8,64}$`. 발급·전달 규범 = review-pl-base §10 / 슬롯 = 동 §2
   checklist_path: templates/review-checklists/requirements.md
   scope_globs:
     - docs/stories/<STORY_KEY>.md     # §1-§6 요구사항 산출물 (use cases / AC / edge / 암묵 가정)
@@ -111,6 +112,7 @@ review_packet:
 review_packet:
   contract_version: "1.1"
   lane: requirements-review
+  round_id: <이번 회차 dispatch 기동 전 1회 발급한 토큰>   # 필수 — `^[A-Za-z0-9_-]{8,64}$`. 발급·전달 규범 = review-pl-base §10 / 슬롯 = 동 §2
   checklist_path: templates/review-checklists/requirements-runtime-failure.md   # 변종 checklist
   variant: runtime-failure                  # internal-invariant falsification 축 식별
   hypothesis_withheld: true                  # 기존 진단(prohibited prior) 숨김 — 확증 편향 차단

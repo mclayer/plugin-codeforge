@@ -27,6 +27,19 @@
 #     Python-on-Windows 파일 I/O 무효 실측). 1급 보증 = helper 코드계층 명시 encoding='utf-8'
 #     round-trip assert (tests/scripts/test_cfp2884_promptfile_encoding_roundtrip.*).
 #
+# CFP-2929 §3.8 B-10 / §5.1 B-6·B-8 — lint 에 **4번째 disjoint 축** E6 (`scan_output_path_dialect`:
+#   `-o` 출력 경로가 `<IDENT>=$(cygpath …)` 정규화를 거친 식별자인가) 합류 ⊕ 사정권 확대
+#   (`plugins/codeforge-review` → `plugins`). 본 suite 대응:
+#   ① dispatch 보유 fixture 전건에 **정규화 대입 2줄 상재**(`NORM_PREFIX`) → E6 축 GREEN 고정
+#      (RED 귀속 단일화 — ENV_PREFIX 가 AC-7 축에 하는 일과 동형),
+#   ② E6 축 자체의 load-bearing 짝 X1~X5 신설. 그 중 **X1 = AC-4 anti-substring** (정규화가
+#      주석·산문 리터럴에만 있으면 GREEN 이 되면 안 된다 — E1 동형 강도).
+#   ★ NORM_PREFIX 삽입은 **검사 우회가 아니다**: 넣는 것은 "정상 배선이면 당연히 있어야 할 정규화
+#     블록" 이며, 넣은 뒤에도 X1(주석 전용)·X2(식별자 불일치)·X5(정규화 부재)가 RED 를 유지한다
+#     (= 축이 약화되지 않았음의 실증. G1 ↔ X5 가 단일 변수 diff 짝).
+#   ★ E6 GREEN 은 "런타임에 정규화된다" 의 보증이 아니라 **presence 신호** 다 — 별칭·간접 재대입·
+#     정규화 이후 재대입은 정적 리터럴 대조가 잡지 못한다 (정직 상한, ADR-119).
+#
 # ★ R1 load-bearing 자기검출 (§8.4): R1 = timeout 제거 `codex exec` (column 0) → exit 1 을 요구.
 #   lint 의 execution_first_tokens 가 ('timeout','node') → ('timeout','codex') 로 재타겟되지 않으면,
 #   `codex exec` 첫-토큰 라인이 doc-example 로 오분류되어 스킵 → dispatch 발화 0건 → 단일 fixture no-op
@@ -63,6 +76,16 @@ FAIL=0
 ENV_PREFIX='export LC_ALL=C.UTF-8
 export PYTHONUTF8=1'
 
+# 전 fixture 공통 출력 경로 정규화 서두 (CFP-2929 E6 축 GREEN 고정 — 실 P-0 형태와 동형 2-hop).
+# ★ 이 2줄이 없으면 `-o` 를 가진 dispatch fixture 는 E6 축에서 RED 가 되어 다른 축의 RED 귀속이
+#   흐려진다 (봉인 (1) 과 동일 취지). 아래 X5 가 "이 2줄이 실제로 load-bearing" 임을 짝으로 실증.
+NORM_PREFIX='_n="$(cygpath -m "$OUT_JSON" 2>/dev/null)"
+OUT_JSON="$_n"'
+
+# 3축 GREEN 고정 서두 (timeout 축은 각 fixture 의 dispatch 라인 형태가 결정).
+FIXTURE_PREFIX="$ENV_PREFIX
+$NORM_PREFIX"
+
 run_case() {
   local name="$1" fixture_text="$2" expected_exit="$3" description="$4" expect_label_pat="${5:-}"
   local exit_code=0 out fixture_file
@@ -93,6 +116,7 @@ run_case() {
 LBL_TIMEOUT='FAIL — wall-clock 가드 누락'
 LBL_REDIRECT='FAIL \(AC-4 — stdin `- <` redirect 부재\)'
 LBL_ENCODING='FAIL \(AC-7 — UTF-8 인코딩 env export 부재\)'
+LBL_DIALECT='FAIL \(E6 — 출력 경로 방언 정규화 부재/불일치\)'
 
 # home-present 트리 케이스 (hollow-gate I-3 / consumer no-op 판별용)
 run_tree_case() {
@@ -127,13 +151,13 @@ echo
 
 # G1: GREEN — option-first (env-default) read-only dispatch 가드 존재 (§8.4 G1)
 run_case "G1: GREEN option-first (env-default) read-only" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
   0 "runnable option-first 가드 + stdin - < redirect + 인코딩 env export 2종 → 3축 전부 GREEN (정본 dispatch 형태)"
 
 # G2: GREEN — option-first (리터럴) write-mode 예외 (§8.4 G2)
 run_case "G2: GREEN option-first (리터럴) write-mode 예외" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout --kill-after=30 300 codex exec -s workspace-write --output-schema s.json -o out.json - < p.md' \
   0 "write-gate 예외(-s workspace-write)도 runnable option-first 가드 + redirect + 인코딩 env export 필수"
 
@@ -141,28 +165,28 @@ timeout --kill-after=30 300 codex exec -s workspace-write --output-schema s.json
 #   ★ execution_first_tokens 재타겟('node'→'codex') 미갱신 시: dispatch 발화 0건 → timeout 축 no-op
 #     ∧ AC-7 축 vacuous → exit 0 ≠ 기대 1 → MISMATCH 로 회귀 자기검출 (env export 상재 상태에서도 보존).
 run_case "R1: RED mutation — timeout 제거 (codex exec column0, 재타겟 자기검출)" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
   1 "가드 load-bearing: timeout 제거 → timeout 축 단독 RED (G1 ↔ R1 diff). execution_first_tokens=('timeout','codex') 검증" \
   "$LBL_TIMEOUT"
 
 # R2: RED — duration-first 오배열 (broken, GNU timeout exit 127) (§8.4 R2)
 run_case "R2: RED duration-first 오배열 (broken)" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout 300 --kill-after=30 codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
   1 "duration-first = GNU timeout exit 127 가드 무효 → timeout 축 단독 RED (runnable 강제)" \
   "$LBL_TIMEOUT"
 
 # R3: RED — N=0 (option-first 형태이나 무한대기 미방지) (§8.4 R3)
 run_case "R3: RED N=0 (무한대기 미방지)" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout --kill-after=30 0 codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
   1 "N(duration)=0 → 양수 의무 위반 → timeout 축 단독 RED" \
   "$LBL_TIMEOUT"
 
 # R4: RED — --kill-after 누락 (option 부재) (§8.4 R4)
 run_case "R4: RED --kill-after 누락" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout 300 codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
   1 "--kill-after 부재 = codex 프로세스 미reap 위험 + 가드 불완전 → timeout 축 단독 RED" \
   "$LBL_TIMEOUT"
@@ -170,7 +194,7 @@ timeout 300 codex exec -s read-only --output-schema s.json -o out.json - < p.md'
 # AC-4: RED — stdin - < redirect 부재 (inline positional prompt) (§8.2 D-6 positive 구조 계약)
 #   가드는 정상이나 promptfile 을 inline positional 로 전달 → redirect 축이 RED (D8 계승 위반).
 run_case "AC4: RED stdin - < redirect 부재 (inline positional prompt)" \
-  "$ENV_PREFIX"'
+  "$FIXTURE_PREFIX"'
 timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json -o out.json p.md' \
   1 "inline positional prompt (- < 부재) → AC-4 positive 구조 계약 위반 → redirect 축 단독 RED (한글 실값 argv 노출 회피 superset)" \
   "$LBL_REDIRECT"
@@ -178,8 +202,9 @@ timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json -o ou
 # AC-7 (E1): RED — 인코딩 env export 부재 (CFP-2884 3번째 disjoint 축, ADR-081 §결정 D16 8항)
 #   G1 과 dispatch 라인 byte-동일, 차이는 env export 2줄 유무뿐 → G1 ↔ E1 이 AC-7 축의 load-bearing pair.
 run_case "E1: RED AC-7 인코딩 env export 부재 (G1 ↔ E1 단일 변수 diff)" \
-  'timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
-  1 "가드·redirect 정상이나 export LC_ALL/PYTHONUTF8 별도 줄 부재 → AC-7 축 단독 RED (2급 defense-in-depth presence)" \
+  "$NORM_PREFIX"'
+timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
+  1 "가드·redirect 정상이나 export LC_ALL/PYTHONUTF8 별도 줄 부재 → AC-7 축 단독 RED (2급 defense-in-depth presence). ★ E6 축은 NORM_PREFIX 로 GREEN 고정 — RED 귀속 단일" \
   "$LBL_ENCODING"
 
 # ★ inline env-prefix mutant (`LC_ALL=… PYTHONUTF8=1 timeout … codex exec …`) 은 본 suite 에 두지
@@ -192,6 +217,59 @@ run_case "E1: RED AC-7 인코딩 env export 부재 (G1 ↔ E1 단일 변수 diff
 #   아니라 doc-example 로 분류 → 발화 0건 → 3축 전부 vacuous → exit 0. 즉 그 형태는 timeout 축까지
 #   포함해 통째로 미검출이다 (AC-7 도입 전부터 동일). presence lint 의 declared 천장 —
 #   '완전 봉인' 아님 (ADR-151 §결정 7).
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CFP-2929 E6 — 4번째 disjoint 축 (출력 경로 방언 정규화) load-bearing 짝 X1~X5
+# ═══════════════════════════════════════════════════════════════════════════
+# 전 케이스 `$ENV_PREFIX` 상재 → AC-7 축 GREEN 고정. timeout·redirect 축도 정상 형태로 고정.
+#   ⇒ 아래 RED 는 **E6 축 단독** 이며 `$LBL_DIALECT` 로 귀속을 직접 assert 한다.
+
+# X1: ★★ RED — AC-4 anti-substring. 정규화가 **주석·산문 리터럴에만** 존재.
+#   이 케이스가 GREEN 이 되면 E6 축은 hollow 다 (문면만 갖추면 통과 = 검사 우회 자유).
+#   기존 `E4 RED: inline env-prefix…`(python self-test) 및 E1 과 **동형 강도**의 결박.
+run_case "X1: RED E6 anti-substring (정규화가 주석·산문에만 존재)" \
+  "$ENV_PREFIX"'
+# _n="$(cygpath -m "$OUT_JSON" 2>/dev/null)"   <- 주석: 실행되지 않는다
+#   OUT_JSON="$_n"
+산문 언급: 출력 경로는 cygpath -m 으로 drive-form 정규화한다고 문서에 적어만 둔다.
+timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json -o "$OUT_JSON" - < p.md' \
+  1 "주석·산문 리터럴은 런타임에 대입을 수행하지 않는다 → E6 축 단독 RED (substring hollow 차단)" \
+  "$LBL_DIALECT"
+
+# X2: RED — 정규화는 실재하나 `-o "$VAR"` 의 VAR 가 **정규화 도달 식별자 집합 밖**.
+#   E-2 가 보여준 실패 형태("2개 중 1개만 고침")의 정적 대응물 — 정규화 산출을 argv 로 안 넘기면
+#   정규화가 무의미하다.
+run_case "X2: RED E6 식별자 불일치 (정규화 산출을 -o 로 안 넘김)" \
+  "$ENV_PREFIX"'
+NORMALIZED="$(cygpath -m "$SOMETHING_ELSE")"
+timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json -o "$OUT_JSON" - < p.md' \
+  1 "정규화 대입은 있으나 -o 의 식별자가 그 폐포에 없음 → E6 축 단독 RED (presence 만으로 통과 불가)" \
+  "$LBL_DIALECT"
+
+# X3: GREEN — 2-hop 복사 대입 (실 P-0 형태 `_n=$(cygpath …)` → `OUT_JSON="$_n"` → `-o "$OUT_JSON"`).
+#   ★ born-red 방지 결박: 실 production 형태가 RED 가 되면 축 자체가 배포 불가다.
+run_case "X3: GREEN E6 2-hop 복사 대입 (실 P-0 형태)" \
+  "$ENV_PREFIX"'
+_n="$(cygpath -m "$OUT_JSON" 2>/dev/null)"
+OUT_JSON="$_n"
+timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json -o "$OUT_JSON" - < p.md' \
+  0 "정규화 산출이 1-hop 복사를 거쳐 argv 변수에 도달 — 위치 비의존(B-10) 변수 흐름 판정이 실 형태를 통과시킨다"
+
+# X4: GREEN — `-o` 부재 dispatch = 본 축 vacuous (출력 경로 argv 자체가 없다).
+#   ★ 축의 정의역을 못 박는다 — 무관한 dispatch 를 무차별 RED 로 만들면 상시-RED 가 된다.
+run_case "X4: GREEN E6 vacuous (-o 부재 dispatch)" \
+  "$ENV_PREFIX"'
+timeout --kill-after=30 300 codex exec -s read-only --output-schema s.json - < p.md' \
+  0 "출력 경로 argv 부재 = E6 정의역 밖 → vacuous GREEN (정의역 초과 적용 0)"
+
+# X5: ★ RED — G1 ↔ X5 **단일 변수 diff** (NORM_PREFIX 2줄 유무뿐). 리터럴 `-o out.json` 형.
+#   G1 이 GREEN 인 이유가 "NORM_PREFIX 상재" 임을 짝으로 실증한다 = NORM_PREFIX 삽입이 검사
+#   우회가 아니라 **load-bearing 배선**이라는 증거.
+run_case "X5: RED E6 정규화 부재 (G1 ↔ X5 단일 변수 diff)" \
+  "$ENV_PREFIX"'
+timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec -s read-only --output-schema s.json -o out.json - < p.md' \
+  1 "가드·redirect·인코딩 정상이나 정규화 대입 전무 → E6 축 단독 RED. G1 과의 차이는 NORM_PREFIX 2줄뿐" \
+  "$LBL_DIALECT"
 
 # R5: RED — hollow-gate I-3 (home 실존 + dispatch 발화 0건) (§8.4 R5)
 run_tree_case "R5: RED hollow-gate I-3 (home 실존 + 발화 0건)" \
@@ -327,7 +405,7 @@ echo "════════════════════════�
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
 if [ "$FAIL" -eq 0 ]; then
-  echo "✓ All $PASS cases pass — codex exec dispatch: option-first 가드 + stdin redirect + AC-7 인코딩 env export 3축 load-bearing(RED 축 귀속 라벨 assert 포함) + 실행 축 결박 + 실 agent md grep-presence(AC-1 참조0 / I-5 -s read-only) 입증"
+  echo "✓ All $PASS cases pass — codex exec dispatch: option-first 가드 + stdin redirect + AC-7 인코딩 env export + E6 출력경로 방언 정규화 **4축** load-bearing(RED 축 귀속 라벨 assert 포함, X1 = AC-4 anti-substring) + 실행 축 결박 + 실 agent md grep-presence(AC-1 참조0 / I-5 -s read-only) 입증"
   exit 0
 else
   echo "✗ $FAIL case(s) failed"

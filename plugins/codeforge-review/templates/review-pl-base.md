@@ -49,6 +49,9 @@ review_packet:
     - rule: "ADR violation" → P0
     - rule: "credential hardcode" → P0
   story_key: <STORY_KEY>     # 필수 — Story file 참조용
+  round_id: <LEAD 발급 회차 토큰>   # 필수 — 형식 `^[A-Za-z0-9_-]{8,64}$` (미치환 placeholder = 형식 위반 → ESCALATE).
+                                    # 발급·전달 normative(4요소) · 판정 · 권장 도출 = §10 SSOT.
+                                    # ★ 본 절은 **스키마 슬롯(필수·형식)만** 둔다 — §10 문면 재인코딩 금지 (SSOT 이중화 = drift 표면 신설).
   related_adrs:              # 선택 — 정합성 교차 입력
     - docs/adr/ADR-NNN-<slug>.md
   pr_phase: phase1_docs | phase2_impl   # 선택 (CFP-2111) — PR 의 Phase 1(docs-only) vs Phase 2(impl) 구분.
@@ -94,6 +97,7 @@ review_packet:
 | scope_globs | ✅ | ✅ | ✅ | ✅ |
 | category_enum | ✅ | ✅ | ✅ | ✅ |
 | story_key | ✅ | ✅ | ✅ | ✅ |
+| **round_id** (CFP-2929) | ✅ | ✅ | ✅ | ✅ |
 | severity_overrides | ◯ | ◯ | ◯ | ◯ |
 | related_adrs | ◯ | ◯ | ◯ | ◯ |
 | **pr_phase** | ◯ | ◯ | ◯ | ◯ |
@@ -618,6 +622,23 @@ discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제�
 
 **collect = LEAD 소유 · spawn-then-blind-wait 금지 (CFP-2597 / ADR-139 §결정 7, INV-L4)**: PL 은 worker 를 spawn 한 뒤 background-yield 로 **blind 하게 결과를 기다리지 않는다** — 수집(collect)은 auto-wake 되는 **LEAD**(env=1 team-lead / env=0 Orchestrator) 가 소유하거나 LEAD 로 handoff 한다(§3 "종합 발화 precondition" 정합, PL self-spawn 금지 — ADR-009 wrapper-only). 미도달 worker 는 `PASS` 아닌 honest INCONCLUSIVE/degrade (`peer_degrade` / INV-L2) 로 표식 후 종합. **★env=1 auto-wake-parent dispatcher 재제안 금지** — full auto-wake substrate 는 env=1 에서 부재라 [ADR-139](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 7(ii) 로 **DEFER** (≥2 Story 재제안 시 escalate, 자동 followup 발의 안 함). collect 을 blocking 물리강제로 요구하는 것 = [ADR-115](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-115-runtime-hook-enforcement.md) C2 위반 → **record-only**(`stop-event.jsonl`)만 (SubagentStop record-only 무손상, force-resume 는 lead-owned discretionary). 본 절 = 신규 mechanism 0, ADR-139 명문화만.
 
+**codex dispatch 의 collect = named routine (CFP-2929 / ADR-139 §결정 7(i) 실현)**: 위 "collect = LEAD 소유" 는 codex 경로에서 **이름 붙은 루틴 1개**로 실현된다 — LEAD 는 다음을 **직접 호출**한다.
+
+```
+"${CLAUDE_PLUGIN_ROOT}/scripts/codex-late-collect.sh" <lane> <round_id>
+```
+
+- `<lane>` = closed enum 4종 (`requirements-review|design|code|security`) / `<round_id>` = 아래 회차 토큰. **인자 2개 필수** — 누락·형식 불일치 = `rc=2` usage 종료이며 이때 outcome marker 는 발화하지 않는다(호출 불성립을 "dispatch 없었음"으로 위조하지 않는다).
+- **bare-name 호출 금지** — 위 형태(플러그인루트 기준 절대 해소 가능형) 그대로 쓴다.
+- ★ **호출 의무 (R-6 — 인계된 잔여 위험)**: 루틴이 존재하기만 하고 **LEAD 가 실제로 호출하지 않으면 결과 회수는 일어나지 않는다.** Codex peer 가 도구 호출 반환 시점에 결과를 내지 않았고 `[codex-sandbox-fallback: …]`·`[promptfile-encoding-assert-failed: …]`·`[codex-outpath-precheck-failed: …]` 중 어느 marker 도 관측되지 않았다면, **종합 발화 전에 본 루틴을 1회 호출**하고 그 산출 marker 를 degrade 판정 입력으로 삼는다. 호출 없이 "미도달" 로 종합하면 회수 가능한 결과를 버리는 것이다.
+- ★ **auto-wake 아님** — 본 루틴은 **LEAD 가 호출하는 named routine**(discretionary)이며 **타이머가 부모를 깨우지 않는다**. 위 ADR-139 §결정 7(ii) full auto-wake-parent dispatcher **DEFER 유지** 는 그대로다(본 루틴은 그 DEFER 를 해제하지 않는다).
+
+> **`round_id` 발급·전달 의무 (normative)** — `round_id` = LEAD 가 **이번 회차 dispatch 를 기동하기 전에 1회 발급**하는 **회차 유일 토큰**. 형식 = `^[A-Za-z0-9_-]{8,64}$`.
+> ① **dispatch 기동 전 1회 발급** ② **dispatch packet 과 collect 인자에 *같은 값*** (소비처 2개: dispatch packet placeholder → 셸 `ROUND_ID` → manifest `round_id` 필드 / collector 2번째 인자) ③ **재호출 시 원 회차 값 유지** — `round_id` 는 **회차 상수이지 호출 상수가 아니다**. 재수집마다 새로 발급하면 전건 불일치가 되어 결과를 100% 버린다 ④ **회차 간 재사용·collect 시점 재발급 금지** (직전 회차 값·상수 리터럴 배선 금지, 두 소비처에 서로 다른 값 전달 금지).
+> 판정 = `manifest.round_id == <argv round_id>` **동등 비교** 1개(시계·순서 추론 0). 불일치 = `[codex-collect-rejected: reason=stale-manifest]` 거부. 권장 도출 = LEAD 셸 `date +%s-%N` 등 회차-유일 문자열 1회 실측.
+
+**`degrade_reason` 정확성 (CFP-2929 E8)**: Codex peer 미도달 원인이 위 dispatch-outcome marker 로 **관측된 경우**, `peer_degrade.degrade_reason` 은 **그 marker 토큰을 verbatim 포함**해야 한다. "stall" / "unavailable" 등 **관측되지 않은 원인으로 대체 기재 금지** — 현행 병리는 리뷰가 성공했거나 다른 원인으로 막혔는데 원장에 "stall/미가용" 이 적혀 **degrade 원장 자체가 오염**되는 것이다. 계약 SSOT 좌표 = [`review-verdict-v4.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/review-verdict-v4.md) `:348` (`degrade_reason: <string>` — `peer_degrade` 3-key object, v4.15). ★ **계약 파일 무접촉 · bump 불요** — 신규 필드 0 · 타입 변경 0 · 필드 삭제 0이며, 달라지는 것은 **기존 string 에 실리는 값의 정확성**뿐이다(ADR-008 §결정 2 기준 스키마 변경 아님). **secret 금지 승계**(ADR-044 §결정 7): 절대경로·nonce·사용자명 금지 — 경로는 **basename 까지만**. 등급 = **advisory**(문자열 내용의 진실성은 기계 검증 불가, 게이트 가능 범위 = "degrade 시 reason non-empty").
+
 ---
 
 ## 11. 문서화 표준
@@ -653,3 +674,4 @@ DesignReview lane 의 기존 `auto_on_divergence` (Amendment 1) 외에 wrapper r
 | v3.1 | 2026-05-07 | CFP-128 | §3: Container security severity rule append (SecurityTest lane only) — trivy CRITICAL/HIGH/mid + hadolint error/warning/info. ADR-033 §결정 4 sibling sync. |
 | v3.2 | 2026-05-13 | CFP-582 | §11.5: debate-protocol-v1 v1.2 cross-ref block 신설 (ADR-059 Amendment 2) — DesignReviewPL 의 3 marker pattern verification + convergence_quality_invariant_final 검증 책무 + Phase 2 mechanical lint cross-ref. |
 | v3.3 | 2026-06-10 | CFP-2111 | §2: review_packet `contract_version` v1.0→v1.1 MINOR bump (ADR-008 §결정 2) — `pr_phase: phase1_docs \| phase2_impl` optional 필드 신설 + lane 매트릭스 row 추가. 워커 enforcement `== "1.0"` → v1.x major 일치 허용 정합화 (ADR-008 §결정 4 compat 위반 해소). |
+| v3.4 | 2026-08-12 | CFP-2929 | **§2: `round_id` 공통 필수 필드 슬롯 신설** (형식 `^[A-Za-z0-9_-]{8,64}$` + lane 매트릭스 row + §10 cross-ref — 규범만 있고 채울 칸이 없어 packet 이 필드 없이 통과하던 결손 봉합. **`contract_version` bump 불요 판정** = 같은 Story §10 normative 가 이미 요구한 필드의 스키마 슬롯 반영이라 신규 의무 0이며, 워커 enforcement 는 `major == 1`(v1.x 전량 수용)이라 v1.x 내 판정 무영향 — **DeveloperPL 판정, ArchitectPL 비준 대기**). §10: codex dispatch collect 을 **named routine**(`scripts/codex-late-collect.sh <lane> <round_id>`)으로 지목 + **`round_id` 발급·전달 normative 4요소** + **호출 의무(R-6)** + `degrade_reason` **정확성 계약**(marker 토큰 verbatim, 관측되지 않은 원인 대체 기재 금지 — 계약 좌표 `review-verdict-v4.md:348`, **계약 파일 무접촉·bump 불요**). ADR-139 §결정 7(i) 실현 / §결정 7(ii) auto-wake DEFER 유지 무변경. |

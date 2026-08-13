@@ -70,7 +70,18 @@ export LC_ALL=C.UTF-8   # 별도 줄 export (inline env-prefix 금지 — first-
 export PYTHONUTF8=1     # 우리 Python 조립·검증 계층 한정 (codex 실행 사슬 = node→Rust native 라 codex 자신엔 무효)
 OUT=/tmp/req-analysis-$$.md
 mkdir -p /tmp
-codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
+# 출력 경로 방언 정규화 (CFP-2929 §3.8 P-0 동형 · **정규화 1지점**) — Windows Git Bash 에서 POSIX 형
+#   `-o /tmp/…` 는 codex.exe 가 드라이브-상대 `C:\tmp\…` 로 조용히 오해석한다 (exit 0 + 산출물 부재).
+#   cygpath **부재 = no-op 통과** (비-Windows 경로 byte 무변형) / **존재하나 rc≠0·빈 출력 = fail-closed**
+#   (빈 문자열을 통과시키면 `-o ""` 로 dispatch 한다).
+if command -v cygpath >/dev/null 2>&1; then
+  _OUT_N="$(cygpath -m "$OUT" 2>/dev/null)" && [ -n "$_OUT_N" ] || { echo "ERROR: 출력 경로 정규화 실패 (cygpath)"; exit 1; }
+  OUT="$_OUT_N"
+fi
+# wall-clock 가드 = **option-first** `timeout --kill-after=<K> <N>` (duration-first 는 GNU coreutils 가
+#   `--kill-after` 를 실행 명령으로 오인 → exit 127 = 가드 무효). ★ dispatch 라인 **첫 토큰이 `timeout`**
+#   이어야 한다 — inline env-prefix·명령치환 선행은 first-token 판정을 파괴한다 (ADR-081 §결정 D15).
+timeout --kill-after=${CODEX_REVIEW_KILL_AFTER_SEC:-30} ${CODEX_REVIEW_TIMEOUT_SEC:-300} codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 당신은 요구사항 분석 전문가다. 아래 사용자 요구사항을 면밀·확장 해석해 암묵 가정·유스케이스·AC·엣지·제외 범위를 도출하라.
 
 본 에이전트는 DomainAgent·Researcher와 병렬 실행되는 요구사항 레인의 **ambiguity 관점 담당**. 도메인 사실·외부 기술 조사는 다른 에이전트가 병렬 수행하므로 본 분석은 요구사항 텍스트의 모호성·내부 일관성·AC 도출에 집중한다.

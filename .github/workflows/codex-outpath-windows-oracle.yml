@@ -1,0 +1,407 @@
+name: codex outpath windows oracle (CFP-2929 / AC-1)
+# CFP-2929 T5 — Windows 경로 방언(MSYS argv 변환) primary oracle.
+# Change Plan SSOT: wrapper/change-plans/cfp-2929-codex-dispatch-path-dialect-and-result-collection.md
+#   §8.1 통합 테스트 범위 T-A / §8.2 D-1·D-2 관측표 / §8.2 mutant M8 / §5.1 oracle 결박 (a) / §4.5 helper 호출 형태
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 왜 windows-latest + shell: bash 인가 (★ 이전 금지 — mutant M8)
+#   재현 대상 기전은 **MSYS 런타임이 native Windows 프로그램에 argv 를 넘길 때 수행하는 POSIX→drive
+#   경로 변환**과, 그 변환이 해제됐을 때 **Windows 가 `/c/x` 를 현재 드라이브 루트 기준 `C:\c\x` 로
+#   해석**하는 두 단계다. 이 기전은 `ubuntu-latest` 에 **존재하지 않는다** — 거기서는
+#   `MSYS_NO_PATHCONV` 가 아무 의미 없는 평범한 환경변수라 CTRL-NEG 와 CTRL-POS 가 **동일 관측**으로
+#   붕괴하고, oracle 은 무엇을 바꾸든 GREEN 인 **검사연극**이 된다.
+#   → M8(Windows job → ubuntu-latest 이전)은 아래 두 독립 지점에서 RED 를 낸다:
+#       (1) G1 MSYS shell identity 가드      → `oracle-inert` 즉시 FAIL
+#       (2) Axis A 비교 CTRL-NEG == CTRL-POS → `oracle-inert` FAIL
+#
+# ★ `oracle-inert` 판정 방향 (hollow-gate 회피 — §8.1 / §5.1 (a))
+#   "두 arm 이 같으면 통과" 가 **아니다**. CTRL-NEG 관측 == CTRL-POS 관측 이면 **FAIL** 이다.
+#   환경(러너 image drift)이 더 이상 이 현상을 보이지 않는데 조용히 GREEN 이 되는 것을 차단한다.
+#   `dispatch_count >= 1` hollow-gate 의 구조적 동형.
+#
+# ★ codex CLI 는 러너에 없다 — stand-in 의 정직한 범위
+#   본 oracle 은 codex 를 호출하지 않는다. 대체물 = **native Windows python** 으로 구동되는 stand-in
+#   (argv 기록 + `-o` 경로 write 시도 + 실패해도 exit 0 = codex 관측 형상).
+#   ★ stand-in 이 대체하는 것은 **피호출자의 정체(identity)** 뿐이고, **경로 방언 기전 자체는 실물**이다:
+#     MSYS 변환은 "피호출자가 native Windows 실행파일인가" 에만 의존하고 그 프로그램이 무엇인지에
+#     의존하지 않으므로, python.exe 와 codex.exe 는 동일 변환 경로를 탄다. G3 가드가 그 전제
+#     (`sys.platform == win32` = native 피호출자)를 매 run 마다 기계 확인하며, MECH 검사가 변환이
+#     실제로 일어났음을 argv 실측으로 증명한다. 둘 중 하나라도 깨지면 `oracle-inert` FAIL.
+#   ★ 재현되지 않는 것(정직 declare): codex 고유의 write 타이밍·재시도·부분 flush 거동, 그리고
+#     `[codex-outpath-dialect-mangled]` / `[codex-output-absent-unclassified]` **라벨 산출 자체**.
+#     본 oracle 이 증명하는 것은 D-1/D-2 가 **실 Windows 위에서 물리적으로 구별 가능한 관측 상태**
+#     라는 것까지이며, 그 관측→라벨 매핑은 tests/scripts/test_codex-outpath-preflight.sh 소관이다.
+#
+# Tier (정직 declare — §8.1)
+#   AC-1 은 normative 이나 본 job 은 **warning tier**: branch protection required contexts
+#   (wrapper 8-tuple) **미등재** → merge 를 막지 못한다. 이것은 정직한 상한이지 결함 은폐가 아니다.
+#   ★ 본 Story 는 required contexts 무변경 — 본 job name 을 branch protection 에 등재하지 않는다.
+#   ★ job 이 비-required 인 것과 step 에 `continue-on-error` 를 붙이는 것은 전혀 다르다 — 후자는
+#     step 레벨 fail-open = 검사연극이므로 **금지**. 그래서 이 파일에는 `continue-on-error` 가 없다.
+#
+# ★ twin 미생성이 정답 (§8.1 / B-5)
+#   `templates/github-workflows/codex-outpath-windows-oracle.yml` 을 **만들지 않는다**.
+#   invariant-check 의 parity 루프는 `templates/github-workflows/*.yml` 을 **source 로 순회**하므로
+#   template 짝이 없는 wrapper-only workflow 는 검사 정의역 밖이다
+#   [verified: .github/workflows/invariant-check.yml:66-77 — `target=".github/workflows/${base}"`].
+#   twin 을 만들면 (1) parity 루프에 편입되고 (2) consumer 로 상속돼 macOS/Linux consumer 에서
+#   무의미한 Windows job 이 된다. 선례 = windows-bootstrap-smoke.yml (twin 없이 존재).
+#
+# 비용 결박: Windows 러너는 분당 과금 → `paths:` 필터로 관련 파일 변경 시에만 구동.
+#   `push: main` 트리거는 의도적으로 제외(비용 절반). 필요 시 workflow_dispatch 로 수동 구동.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/codex-outpath-windows-oracle.yml'
+      - 'plugins/codeforge-review/agents/CodexReviewAgent.md'
+      - 'plugins/codeforge-review/scripts/codex-late-collect.sh'
+      - 'plugins/codeforge-review/schemas/codex-review-output-schema-v1.json'
+      - 'scripts/lib/check_codex_review_output_schema.py'
+  workflow_dispatch: {}
+
+permissions: {}  # top-level deny-all (ADR-060 Amendment 8 §결정 21 / CFP-300 least-privilege)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  codex-outpath-windows-oracle:
+    name: codex outpath dialect oracle (windows, negative-control)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash    # ★ Git for Windows bash (MSYS 실계층) — 이 oracle 의 무대. pwsh 로 바꾸면 무의미.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Setup Python (native Windows interpreter)
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: '3.12'
+
+      # ── G1~G4 fixture validity 가드 ──────────────────────────────────────────
+      # 전부 fail-closed. "환경이 안 맞으면 skip" 은 금지 — skip 은 oracle 을 조용히 무력화한다.
+      - name: Oracle preflight guards (G1-G4, fail-closed)
+        run: |
+          set +e                      # 판정은 명시 누적으로만 (아래 exit $fail)
+          set -u
+          fail=0
+          ok()  { printf 'OK   %s\n' "$*"; }
+          bad() { printf 'FAIL %s\n' "$*"; fail=1; }
+
+          # G1 — MSYS shell identity. M8(ubuntu 이전)이 여기서 먼저 걸린다.
+          uname_s="$(uname -s)"
+          case "$uname_s" in
+            MINGW*|MSYS*|CYGWIN*) ok "G1 MSYS-family shell = $uname_s" ;;
+            *) bad "G1 oracle-inert: shell 이 MSYS 계열이 아님 ($uname_s). 경로 방언 기전이 존재하지 않는 플랫폼에서는 CTRL 두 arm 이 붕괴해 always-GREEN 검사연극이 된다 (mutant M8)." ;;
+          esac
+
+          # G2 — cygpath (P-0 정규화 수단). 부재 = TREAT arm 구성 불가.
+          if command -v cygpath >/dev/null 2>&1; then
+            ok "G2 cygpath = $(command -v cygpath)"
+          else
+            bad "G2 oracle-inert: cygpath 부재 — TREAT arm(P-0 정규화)을 구성할 수 없다."
+          fi
+
+          # G3 — 피호출자가 **native Windows** 인터프리터여야 MSYS argv 변환이 발동한다.
+          #      MSYS python 이 잡히면 변환이 일어나지 않아 oracle 이 통째로 무력화된다.
+          plat="$(python -c 'import sys; print(sys.platform)' 2>/dev/null)"
+          if [ "$plat" = "win32" ]; then
+            ok "G3 native python (sys.platform=win32) = $(python -c 'import sys; print(sys.executable)')"
+          else
+            bad "G3 oracle-inert: python sys.platform='$plat' != win32 — 피호출자가 native Windows 가 아니면 MSYS argv 변환이 발동하지 않아 전 arm 이 동일 관측으로 붕괴한다."
+          fi
+
+          # G4 — 실 helper + schema 실재. ★ 부재 = AC-1 FAIL (skip 금지, §8.1 항목 2 fail-open 금지).
+          #      배포본 helper 부재(#2934)라면 그것은 oracle 이 정직하게 표면화한 별건이지 우회 대상이 아니다.
+          ws="$(cygpath -u "$GITHUB_WORKSPACE")"
+          for f in "scripts/lib/check_codex_review_output_schema.py" \
+                   "plugins/codeforge-review/schemas/codex-review-output-schema-v1.json"; do
+            if [ -f "$ws/$f" ]; then ok "G4 present: $f"; else bad "G4 부재: $f — AC-1 FAIL (skip 금지)"; fi
+          done
+
+          exit "$fail"
+
+      # ── codex stand-in 작성 ──────────────────────────────────────────────────
+      - name: Build codex stand-in (native callee)
+        run: |
+          set -eu
+          tmp="$(cygpath -u "$RUNNER_TEMP")"
+          cat > "$tmp/cfp2929-standin.py" <<'PY'
+          # CFP-2929 codex stand-in — codex 관측 형상 모사(§8.1 T-A).
+          #   1) 받은 argv 를 그대로 기록한다 (MSYS 변환 발생 여부의 실측 증거).
+          #   2) `-o <path>` 위치에 out.json write 를 시도한다.
+          #   3) write 가 실패해도 **stderr 0줄 · exit 0** (= E-6 에서 관측된 codex 형상).
+          # ★ 모사하는 것은 '피호출자의 관측 형상' 뿐이다. 경로 변환·경로 해석은 OS/MSYS 실물이 한다.
+          import os
+          import sys
+
+          argv = sys.argv[1:]
+          out = None
+          for i, a in enumerate(argv):
+              if a == "-o" and i + 1 < len(argv):
+                  out = argv[i + 1]
+
+          log = os.environ.get("STANDIN_ARGV_LOG")
+          if log:
+              try:
+                  with open(log, "w", encoding="utf-8") as fh:
+                      fh.write((out if out is not None else "") + "\n")
+              except OSError:
+                  pass
+
+          payload = (
+              '{"verdict":"PASS","counts":{"P0":0,"P1":0,"P2":1,"P3":0},'
+              '"findings":[{"severity":"P2","category":"runtime-bug",'
+              '"location":"stand-in:1","title":"[runtime-bug] stand-in payload",'
+              '"body":"CFP-2929 oracle stand-in"}]}'
+          )
+          try:
+              with open(out, "w", encoding="utf-8") as fh:
+                  fh.write(payload)
+          except (OSError, TypeError):
+              pass  # swallow -> codex 관측 형상: exit 0, stderr 0줄
+          sys.exit(0)
+          PY
+          printf 'stand-in written: %s\n' "$tmp/cfp2929-standin.py"
+
+      # ── 5 arm 구동 + 판정 ────────────────────────────────────────────────────
+      - name: Run arms and judge (Axis A oracle-inert / Axis B D-1,D-2 / AC-1 / INV-C / MR-1)
+        env:
+          CATEGORY_ENUM: 'runtime-bug,layer-violation,naming'
+        run: |
+          set +e
+          set -u
+          fail=0
+          ok()  { printf 'OK   %s\n' "$*"; }
+          bad() { printf 'FAIL %s\n' "$*"; fail=1; }
+
+          tmp="$(cygpath -u "$RUNNER_TEMP")"
+          STANDIN_M="$(cygpath -m "$tmp/cfp2929-standin.py")"   # 피호출자 스크립트 경로는 검사 대상이 아니다
+          LOGDIR_M="$(cygpath -m "$tmp")"                       #   → 항상 Windows form (변환 멱등)
+          WS_M="$(cygpath -m "$GITHUB_WORKSPACE")"
+          HELPER="$WS_M/scripts/lib/check_codex_review_output_schema.py"
+          SCHEMA="$WS_M/plugins/codeforge-review/schemas/codex-review-output-schema-v1.json"
+
+          BASE="$tmp/cfp2929-oracle"
+          rm -rf "$BASE"; mkdir -p "$BASE"
+
+          # 현재 드라이브 = Windows 가 rooted 경로(`/c/x`)를 해석할 때 쓰는 기준.
+          CURDRIVE="$(cygpath -m "$(pwd)" | cut -c1-2)"
+          case "$CURDRIVE" in
+            [A-Za-z]:) ok "current drive = $CURDRIVE" ;;
+            *) bad "드라이브 문자 도출 실패 ('$CURDRIVE') — mangled 좌표를 계산할 수 없다"; exit "$fail" ;;
+          esac
+
+          # mangled 좌표: POSIX `/d/a/_temp/x` 를 미변환 전달하면 Windows 는 `<CURDRIVE>\d\a\_temp\x` 로 해석한다.
+          # 판정·생성은 전부 mixed form(`D:/d/...`)으로 한다 — MSYS 도 Windows 도 함께 이해하는 표기.
+          BASE_MANGLED="${CURDRIVE}${BASE}"
+          MANGLED_ROOT="${CURDRIVE}/$(printf '%s' "${BASE#/}" | cut -d/ -f1)"
+          printf 'BASE          = %s\n' "$BASE"
+          printf 'BASE_MANGLED  = %s\n' "$BASE_MANGLED"
+          printf 'MANGLED_ROOT  = %s\n' "$MANGLED_ROOT"
+          if [ "$BASE_MANGLED" = "$BASE" ]; then
+            bad "fixture 무효: mangled 좌표가 기대 좌표와 동일 — 두 위치를 구별할 수 없다"; exit "$fail"
+          fi
+          rm -rf "$BASE_MANGLED" 2>/dev/null
+
+          # run_arm <arm> <env:set|unset> <corrected:yes|no> <premangle:yes|no>
+          #   결과는 LAST_* 전역에 싣는다(eval 금지).
+          run_arm() {
+            a_arm="$1"; a_env="$2"; a_corr="$3"; a_pre="$4"
+            a_dir="$BASE/$a_arm"; mkdir -p "$a_dir"
+            LAST_OUT_POSIX="$a_dir/out.json"
+            LAST_OUT_MANGLED="${CURDRIVE}${LAST_OUT_POSIX}"
+            a_parent="${BASE_MANGLED}/${a_arm}"
+
+            case "$a_parent" in
+              "$BASE_MANGLED"/*) rm -rf "$a_parent" 2>/dev/null ;;
+              *) bad "guard: mangled 부모 좌표가 base 밖 ($a_parent)"; return 1 ;;
+            esac
+            if [ "$a_pre" = "yes" ]; then
+              mkdir -p "$a_parent" || bad "$a_arm: mangled 부모 사전 생성 실패 ($a_parent)"
+            fi
+
+            STANDIN_ARGV_LOG="$LOGDIR_M/argv-$a_arm.txt"; export STANDIN_ARGV_LOG
+            rm -f "$tmp/argv-$a_arm.txt"
+
+            if [ "$a_corr" = "yes" ]; then
+              LAST_SENT="$(cygpath -m "$LAST_OUT_POSIX")"   # P-0 정규화 (교정 배선)
+            else
+              LAST_SENT="$LAST_OUT_POSIX"                   # 미교정 = 날 POSIX
+            fi
+
+            # ★ bash 가 **직접** native 피호출자를 spawn 해야 한다 — 변환은 "MSYS 프로세스가 non-MSYS
+            #   프로세스를 spawn 하는 경계"에서 일어난다. 중간에 `env` 같은 MSYS 프로그램을 끼우면
+            #   경계가 한 겹 옮겨간다. 프로덕션 dispatch 셸의 형태(bash → codex)와도 일치시킨다.
+            a_err="$a_dir/stderr.txt"
+            if [ "$a_env" = "set" ]; then
+              ( export MSYS_NO_PATHCONV=1; python "$STANDIN_M" exec --arm "$a_arm" -o "$LAST_SENT" ) 2>"$a_err"
+            else
+              ( unset MSYS_NO_PATHCONV; python "$STANDIN_M" exec --arm "$a_arm" -o "$LAST_SENT" ) 2>"$a_err"
+            fi
+            LAST_RC=$?
+
+            LAST_EXPECTED=ABSENT; [ -f "$LAST_OUT_POSIX" ]   && LAST_EXPECTED=PRESENT
+            LAST_MANGLED=ABSENT;  [ -f "$LAST_OUT_MANGLED" ] && LAST_MANGLED=PRESENT
+            LAST_ERRN="$(wc -l <"$a_err" | tr -d ' ')"
+            LAST_RECV="$(tail -1 "$tmp/argv-$a_arm.txt" 2>/dev/null)"
+            LAST_OBS="rc=$LAST_RC expected=$LAST_EXPECTED mangled=$LAST_MANGLED"
+
+            printf -- '--- arm %s (env=%s corrected=%s premangle=%s)\n' "$a_arm" "$a_env" "$a_corr" "$a_pre"
+            printf '      obs        : %s stderr_lines=%s\n' "$LAST_OBS" "$LAST_ERRN"
+            printf '      sent -o    : %s\n' "$LAST_SENT"
+            printf '      recv -o    : %s\n' "$LAST_RECV"
+            return 0
+          }
+
+          echo "==================== arms ===================="
+
+          # CTRL-POS — 미교정 ∧ MSYS_NO_PATHCONV unset → MSYS 자연 변환 → 기대 경로에 write 성공.
+          run_arm CTRL-POS unset no no
+          POS_OBS="$LAST_OBS"; POS_RECV="$LAST_RECV"; POS_SENT="$LAST_SENT"
+
+          # CTRL-NEG — 미교정 ∧ env set ∧ mangled 부모 부재 → 기대 경로 부재 ∧ mangled 위치도 부재.
+          #            = §8.2 D-2 사전조건과 동일 형상 (미교정 arm 에서 구동 — §8.2 arm 귀속).
+          run_arm CTRL-NEG set no no
+          NEG_OBS="$LAST_OBS"; NEG_RECV="$LAST_RECV"; NEG_SENT="$LAST_SENT"; NEG_ERRN="$LAST_ERRN"
+
+          # D-1 — 미교정 ∧ env set ∧ mangled 부모 **사전 생성** → exit 0 · stderr 0줄 ·
+          #       mangled 위치에 파일 실재 · 기대 경로 부재.
+          run_arm D-1 set no yes
+          D1_OBS="$LAST_OBS"; D1_ERRN="$LAST_ERRN"; D1_MANGLED_PATH="$LAST_OUT_MANGLED"
+
+          # ── INV-C 기준선: TREAT 직전 스냅샷 (D-1 의 의도적 stray 는 여기 포함되어 delta 에서 제외된다)
+          find "$MANGLED_ROOT" -type f 2>/dev/null | sort > "$tmp/stray-before.txt"
+
+          # TREAT — 교정 배선(P-0 정규화). env unset / env set(ambient) 두 벌 = MR-1 + R3 (a) 정당화.
+          run_arm TREAT unset yes no
+          TREAT_OBS="$LAST_OBS"; TREAT_OUT="$LAST_OUT_POSIX"
+          run_arm TREAT-AMBIENT set yes no
+          AMB_OBS="$LAST_OBS"; AMB_OUT="$LAST_OUT_POSIX"
+
+          find "$MANGLED_ROOT" -type f 2>/dev/null | sort > "$tmp/stray-after.txt"
+
+          echo
+          echo "============ MECH: 방언 기전이 실제로 살아 있는가 ============"
+          # 변환이 정말 일어났는지를 **피호출자가 받은 argv 실측**으로 증명한다.
+          # 이 두 항목이 깨지면 stand-in 이 실 기전을 재현하지 못하는 것이므로 oracle 은 무효다.
+          case "$POS_RECV" in
+            [A-Za-z]:*) ok "MECH-1 CTRL-POS: MSYS 가 POSIX argv 를 drive-form 으로 변환함 → $POS_RECV" ;;
+            *) bad "MECH-1 oracle-inert: CTRL-POS 에서 변환이 관측되지 않음 (recv='$POS_RECV', sent='$POS_SENT'). MSYS argv 변환 계층이 부재하거나 피호출자가 native 가 아니다." ;;
+          esac
+          if [ "$NEG_RECV" = "$NEG_SENT" ]; then
+            ok "MECH-2 CTRL-NEG: MSYS_NO_PATHCONV set → argv 가 POSIX 그대로 전달됨 → $NEG_RECV"
+          else
+            bad "MECH-2 oracle-inert: CTRL-NEG 에서 argv 가 변형됨 (sent='$NEG_SENT' recv='$NEG_RECV') — env set-ness 가 변환을 해제하지 못한다."
+          fi
+          case "$D1_OBS" in
+            *"mangled=PRESENT"*) ok "MECH-3 D-1: Windows 가 rooted POSIX 경로를 <drive> 루트 기준으로 해석해 오위치 write → $D1_MANGLED_PATH" ;;
+            *) bad "MECH-3 oracle-inert: D-1 에서 mangled 위치 write 가 관측되지 않음 — rooted-path 해석 기전 미재현." ;;
+          esac
+
+          echo
+          echo "============ Axis A: negative control (mutant M8 표적) ============"
+          printf '  CTRL-NEG obs = %s\n' "$NEG_OBS"
+          printf '  CTRL-POS obs = %s\n' "$POS_OBS"
+          # ★★ 판정 방향 주의: 같으면 FAIL 이다 (같으면 통과 아님).
+          if [ "$NEG_OBS" = "$POS_OBS" ]; then
+            bad "oracle-inert: CTRL-NEG 관측 == CTRL-POS 관측 — 이 환경은 더 이상 경로 방언 현상을 보이지 않는다. 이 상태의 GREEN 은 무의미하므로 FAIL 로 처리한다 (PASS 아님). mutant M8(Windows job → ubuntu-latest 이전)이 정확히 이 상태를 만든다."
+          else
+            ok "oracle live: CTRL-NEG != CTRL-POS (env set-ness 단독으로 관측이 갈린다)"
+          fi
+          # 두 arm 의 개별 기대 관측도 고정한다 — "다르기만 하면 통과" 는 drift 를 놓친다.
+          [ "$POS_OBS" = "rc=0 expected=PRESENT mangled=ABSENT" ] \
+            && ok "CTRL-POS 기대 관측 일치" || bad "CTRL-POS 기대 관측 불일치: $POS_OBS"
+          [ "$NEG_OBS" = "rc=0 expected=ABSENT mangled=ABSENT" ] \
+            && ok "CTRL-NEG 기대 관측 일치" || bad "CTRL-NEG 기대 관측 불일치: $NEG_OBS"
+          [ "$NEG_ERRN" = "0" ] \
+            && ok "CTRL-NEG stderr 0줄 (조용한 실패 = E-6 형상)" || bad "CTRL-NEG stderr $NEG_ERRN 줄 (0 기대)"
+
+          echo
+          echo "============ Axis B: D-1 / D-2 분별 (§8.2 discriminator 사전조건) ============"
+          printf '  D-1 obs = %s\n' "$D1_OBS"
+          printf '  D-2 obs = %s   (D-2 = CTRL-NEG 구성: mangled 부모 부재)\n' "$NEG_OBS"
+          if [ "$D1_OBS" = "$NEG_OBS" ]; then
+            bad "oracle-inert: D-1 == D-2 — 두 형상이 물리적으로 구별되지 않으므로 §3.3 discriminator 는 어떤 구현이든 분별할 수 없다 (AC-3a 미충족)."
+          else
+            ok "D-1 != D-2: 두 형상이 서로 다른 관측을 낸다 → discriminator 가 가를 입력이 실재"
+          fi
+          [ "$D1_OBS" = "rc=0 expected=ABSENT mangled=PRESENT" ] \
+            && ok "D-1 기대 관측 일치 (기대 경로 부재 ∧ mangled 위치 실재)" || bad "D-1 기대 관측 불일치: $D1_OBS"
+          [ "$D1_ERRN" = "0" ] \
+            && ok "D-1 stderr 0줄 (1순위 mangled probe 로만 도달 가능 — stderr 축은 무산출)" || bad "D-1 stderr $D1_ERRN 줄 (0 기대)"
+
+          echo
+          echo "============ AC-1: TREAT 3-관측 AND ============"
+          # 판정은 exit code 가 아니다. (1) 기대 경로 실재 (2) 실 helper exit 0 (3) mangled stray 0.
+          [ "$TREAT_OBS" = "rc=0 expected=PRESENT mangled=ABSENT" ] \
+            && ok "AC-1 (1) 기대 경로에 out.json 실재" || bad "AC-1 (1) 실패: $TREAT_OBS"
+
+          # (2) 실 helper — 인터프리터 명시 + repo-root 앵커 (§4.5). bare-name 금지(= exit 127 born-red).
+          #     ★ rc 를 삼키지 않는다: `|| true` · `|| skip` · `2>/dev/null; rc=0` 전부 §3.5 불가침 위반.
+          python "$HELPER" "$(cygpath -m "$TREAT_OUT")" "$SCHEMA" "$CATEGORY_ENUM"
+          helper_rc=$?
+          [ "$helper_rc" -eq 0 ] \
+            && ok "AC-1 (2) 실 check_codex_review_output_schema.py exit 0" \
+            || bad "AC-1 (2) helper rc=$helper_rc (0 기대). rc=127 이면 호출 형태가 bare-name 으로 회귀한 것이고, rc=2 면 배포 배선 문제다 — 어느 쪽도 우회 대상이 아니다."
+
+          # (2') helper 단정이 hollow 하지 않음을 대조로 증명 — 고의 결손 입력에 rc != 0 이어야 한다.
+          #      (counts.P2=0 인데 P2 finding 1개 = ④ cross-field 위반)
+          printf '%s' '{"verdict":"PASS","counts":{"P0":0,"P1":0,"P2":0,"P3":0},"findings":[{"severity":"P2","category":"runtime-bug","location":"x:1","title":"t","body":"b"}]}' > "$BASE/bad.json"
+          python "$HELPER" "$(cygpath -m "$BASE/bad.json")" "$SCHEMA" "$CATEGORY_ENUM" >/dev/null 2>&1
+          bad_rc=$?
+          [ "$bad_rc" -ne 0 ] \
+            && ok "AC-1 (2') discriminating: 결손 out.json 에 helper rc=$bad_rc != 0 (검사연극 아님)" \
+            || bad "AC-1 (2') helper 가 결손 입력을 통과시켰다 (rc=0) — 항목 (2) 는 hollow 하다."
+
+          # (3) INV-C write confinement — TREAT 구간에서 mangled 루트에 신규 파일 0 (P5).
+          new_stray="$(comm -13 "$tmp/stray-before.txt" "$tmp/stray-after.txt")"
+          if [ -z "$new_stray" ]; then
+            ok "AC-1 (3) / INV-C: TREAT 구간 mangled 루트($MANGLED_ROOT) 신규 파일 0"
+          else
+            bad "AC-1 (3) / INV-C 위반: 교정 배선인데 mangled 루트에 신규 write 가 발생했다:"
+            printf '%s\n' "$new_stray" | sed 's|^|       stray: |'
+          fi
+
+          echo
+          echo "============ R3 / MR-1: 교정 배선의 set-ness 불변 ============"
+          # R3 — ambient export 환경에서도 (a) 정규화가 단독으로 방어한다((b) 만으로는 못 막는 행).
+          [ "$AMB_OBS" = "rc=0 expected=PRESENT mangled=ABSENT" ] \
+            && ok "R3: ambient MSYS_NO_PATHCONV=1 에서도 정규화가 write 를 성립시킴" \
+            || bad "R3 실패: $AMB_OBS"
+          # MR-1 — set-ness 만 바꿨을 때 교정 배선 하에서 out.json 내용 동일.
+          if cmp -s "$TREAT_OUT" "$AMB_OUT"; then
+            ok "MR-1: set-ness 만 변경해도 out.json 내용 byte 동일"
+          else
+            bad "MR-1 위반: 교정 배선인데 set-ness 에 따라 out.json 내용이 달라진다"
+          fi
+
+          echo
+          if [ "$fail" -ne 0 ]; then
+            echo "RESULT: FAIL — 위 FAIL 항목 참조 (AC-1 / oracle-inert)"
+          else
+            echo "RESULT: PASS — 5 arm 관측이 설계 예측과 일치하고 negative control 이 살아 있다"
+          fi
+          exit "$fail"
+
+      - name: Cleanup mangled fixture (오위치 잔재 회수)
+        if: always()
+        run: |
+          set +e
+          set -u
+          tmp="$(cygpath -u "$RUNNER_TEMP")"
+          base="$tmp/cfp2929-oracle"
+          curdrive="$(cygpath -m "$(pwd)" | cut -c1-2)"
+          case "$curdrive" in
+            [A-Za-z]:) rm -rf "${curdrive}${base}" 2>/dev/null ;;
+            *) : ;;
+          esac
+          rm -rf "$base" 2>/dev/null
+          exit 0

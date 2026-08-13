@@ -124,6 +124,7 @@ trivy / hadolint 는 **`infra_strategy: docker_first` consumer 만 active**. pro
 review_packet:
   contract_version: "1.0"
   lane: security
+  round_id: <이번 회차 dispatch 기동 전 1회 발급한 토큰>   # 필수 — `^[A-Za-z0-9_-]{8,64}$`. 발급·전달 규범 = review-pl-base §10 / 슬롯 = 동 §2
   checklist_path: templates/review-checklists/security.md
   scope_globs:
     - src/**

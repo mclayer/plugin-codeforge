@@ -1542,6 +1542,39 @@ dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8.
 
 본 dispatch(codex exec)의 wall-clock ceiling 본문 SSOT = ADR-081 §결정 D15 (§결정 D14 = companion 브로커 경로 re-scope — mutation peer touchpoint #8 `node codex-companion.mjs review` 잔존 채널(§3.9-ter)에 여전히 유효).
 
+**4계층 시간 전순서 + lane 별 파생값** (CFP-2929 / [ADR-139 Amendment 2](../archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 8 (i) — 위 3번 "값 순서 정합(AC-5)" 의 **정의역 확장**):
+
+위 3번의 2-timer 순서(`timeout N` < liveness max-wait)는 **4계층**으로 확장된다. **A 는 고정 120초 상한이 아니라 호출별 파라미터**(harness Bash 도구 호출 `timeout`, default 120s / **max 600s**) 이므로, 내측 가드는 "구조적으로 도달 불가" 한 것이 아니라 **`A_eff` 를 명시 전달하지 않은 것**이 결함이다.
+
+| 층 | 기호 | 정의 | 소유 | 값 |
+|---|---|---|---|---|
+| A | `A_eff` | harness Bash 도구 호출 `timeout` 파라미터 (ms) | 호출자(워커/LEAD) | **명시 전달 의무**, `A_max = 600s` |
+| B | `N`, `K` | GNU `timeout --kill-after=K N` | dispatch 셸 | lane 별 (아래 표) |
+| C | `C` | liveness max-wait (stall 판정) | Orchestrator/LEAD | 파생 |
+| D | `D` | late-collect **부재 판정 하한** | LEAD collect 루틴 | 파생 |
+
+전순서:
+
+```text
+K ⊂ B
+N  <  N+K  ≤  A_eff  ≤  A_max(600s)          ← A 는 독립 상수가 아니라 N 에서 파생해 명시 전달
+N+K  <  D = N + K + margin  ≤  C  ≤  600s     ← C 가 D 보다 이르면 OP-1 위반
+```
+
+- **파생 규칙(독립 하드코딩 금지)** — `A_eff := N + K + assembly_margin` 을 **호출 시점에 명시 전달**하고, `C := N + K + margin`(margin default 30s) 으로 도출한다. `N` 만 상수로 두고 `A_eff` 를 방치하면 "명시된 가드가 도달하기 전에 수집이 끊기는" 형상이 된다 [source: Google SRE Book Ch.22 Addressing Cascading Failures — Deadline Propagation (b) 내측 = 외측 잔여 예산 파생 / (c) 잔여 부족 시 착수 금지].
+
+| lane | `N` | `K` | margin | `D` = `C` | `A_eff` (ms) | §3.10.1 review-class band(300-600) 안 |
+|---|--:|--:|--:|--:|--:|:-:|
+| design | 240 | 30 | 30 | **300** | 300000 | 예 |
+| requirements-review / code | 300 | 30 | 30 | **360** | 360000 | 예 |
+| security | 420 | 30 | 30 | **480** | 480000 | 예 |
+
+- **밴드 적용 = 표 값 무변경** — 전 lane 의 파생 `C` 가 **§3.10.1 max-wait 표의 review-class band(300-600) 안**에 착지하므로 그 표의 값·밴드는 **재설계·개정 불요**다. 본 문단은 "밴드 안에 든다" 는 사실의 명시이지 밴드 값 변경이 아니다.
+- **consumer overlay hardcap = 540s** — `A_max = 600` 하에서 `N = 900` 은 `N + K > A_max` 라 harness 도구 호출 수명 안에서 **도달 불가**다. `540 + 30 + 30 = 600 = A_max` 로 정확히 포화하므로 hardcap 상한은 **540s** 다 (env `CODEX_REVIEW_TIMEOUT_SEC*` 계열 lane override 포함).
+- **`D` 이전의 부재 = in-flight** — `dispatch_start + N + K + margin` 이전에 산출물이 없는 것은 INV-L3 3-state 의 **'미획득'** 이지 stall 이 아니다 → **재dispatch 금지** (2-state 로 접으면 §결정 3 이 막으려던 false-positive 조기 회수를 재생산).
+- **정직 등급 = advisory ceiling** (ADR-143 렌더 프리픽스 동형) — `A_eff` 전달은 **도구 호출 인자**이므로 파일 검사로 런타임 준수를 강제할 수 없다. 기계 검증 가능 범위는 ① 본 문면 presence ② **값 정합**(`N + K + margin ≤ 600` ∧ `N < C` ∧ hardcap ≤ 540) 뿐이다. "100% 기계강제 / hard-gate" 서술 금지.
+- ★ **잔여 축 = 대체 불가** — `A_eff` 를 옳게 설정해도 **사망형 · 설정 누락 · 예외적 초장기 리뷰**에서 백그라운드 이동은 여전히 일어난다. 그 잔여를 덮는 **유일 방어는 late-collect(E5 collector) 경로** (`plugins/codeforge-review/scripts/codex-late-collect.sh` — LEAD 소유 named routine, ADR-139 §결정 8 (ii)/(iii)) 이며, 4계층 상한 순서는 그 **대체재가 아니다**. 이 collect 루틴은 discretionary·advisory 이지 **auto-wake 장치가 아니다**(§결정 7(ii) full auto-wake-parent dispatcher = DEFER 유지).
+
 > **일반화 cross-ref (CFP-2549 / [ADR-139](../archive/adr/ADR-139-background-wait-liveness-gate.md))**: 위 wall-clock ceiling 은 **background-wait liveness gate 의 first instance**(CFP-2545 companion → CFP-2828 codex exec 직접)에서 출발한다. 동일 원리(wall-clock 상한 + progress-marker 관측 + fail-open 금지 + Orchestrator 소유)가 **모든 codeforge-owned background subagent 대기**에 성립해야 한다 — 공통 규약 = 아래 §3.10.1 "background-wait liveness gate". codex exec dispatch 는 그 규약의 codex-특정 인스턴스.
 
 ### §3.10.1 background-wait liveness gate (모든 codeforge-owned subagent 대기)
@@ -1566,6 +1599,13 @@ Orchestrator/lane-PL 이 codeforge-owned background subagent/worker 응답을 `r
 
 - **re-dispatch max-retry cap = 2** — stall → 해당 task re-dispatch 는 최대 2회 (restart-storm 차단). cap 초과 시 inconclusive marker 고정 + 다음 step 진행.
 - consumer overlay 는 **보수 방향(max-wait 축소)만** 허용 — 무한대 재정의 차단 hardcap 권고.
+
+**INV-L4 값 순서의 정의역 확장 + review-class band 적용** (CFP-2929 / [ADR-139 Amendment 2](../archive/adr/ADR-139-background-wait-liveness-gate.md) §결정 8 (i)):
+
+- **INV-L1~L4 문면 무변경** — 아래는 그 위 append 강화다. INV-L4 의 2-timer 순서(`timeout N < liveness max-wait`)는 **4계층 전순서**(A `A_eff` harness 도구 호출 수명 / B `N`,`K` GNU timeout / C max-wait / D late-collect 부재 판정 하한)의 **부분식**이며, 4계층 표 · 파생 규칙 · lane 별 값의 SSOT = **위 §3.10 "4계층 시간 전순서"** 문단이다.
+- **본 max-wait 표 값 무변경** — codex 리뷰 dispatch 의 lane 별 파생 `C`(= `N + K + margin`) = design **300** / requirements-review·code **360** / security **480** 로 **전부 위 review-class band(300-600) 안**에 든다. 밴드 밖 신규 값 0 → 본 표 재설계·밴드 개정 불요.
+- **consumer overlay hardcap ≤ 540s** — 위 "보수 방향만 허용" 규약의 codex dispatch 인스턴스. `N` hardcap 은 `N + K + margin ≤ A_max(600s)` 를 만족해야 하므로 **540s** 가 상한이다 (`540 + 30 + 30 = 600`). 900s 류 값은 `N + K > A_max` 라 harness 도구 호출 수명 안에서 **도달 불가**다.
+- **정직 등급 = advisory ceiling** — `A_eff` 명시 전달은 도구 호출 인자라 파일 검사로 런타임 준수를 강제할 수 없다. 기계 검증 가능 범위 = 문면 presence + 값 정합(`N + K + margin ≤ 600` ∧ `N < C` ∧ hardcap ≤ 540). 상한 순서를 옳게 잡아도 **백그라운드 이동 잔여 축은 남으며**, 그 잔여의 유일 방어는 late-collect named routine 이다(§3.10 참조 — 대체재 아님).
 
 **bg-dispatch 실행 형태 (option-first 필수)**: background subagent 대기 발화는 wall-clock 상한을 **option-first** runnable 형태로 감싼다 —
 

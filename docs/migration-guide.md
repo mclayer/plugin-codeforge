@@ -305,7 +305,7 @@ exit=0 이어야 통과. 16 assertion check.
 1. **Codex 플러그인 인증 확인**: 3 리뷰 lane 전부 진입 불가가 되므로 `codex@openai-codex` 플러그인 미설치 시 즉시 설치
 2. **6 워커 오버라이드 제거**: `.claude/_overlay/agents/`에 `Claude{Design,Code,SecurityTest}ReviewAgent.md` 또는 Codex 동등 파일이 있다면 제거. 도메인 특화 체크는 lane checklist (`templates/review-checklists/<lane>.md`)로 이동
 3. **GitHub 토큰 권한 확인**: SecurityTestPL이 `gh api repos/*/dependabot/alerts` 등을 호출하므로 Dependabot/CodeQL/Secret Scanning alerts read 권한 필요
-4. **첫 리뷰 lane 실행 시 검증**: PL이 `review_packet` 필수 필드(lane / checklist_path / scope_globs / category_enum / story_key, security 추가 시 first_layer_findings) 누락 시 워커가 `ESCALATE_PACKET_INCOMPLETE` 반환 — generic fallback 없음
+4. **첫 리뷰 lane 실행 시 검증**: PL이 `review_packet` 필수 필드(lane / checklist_path / scope_globs / category_enum / story_key / round_id(CFP-2929 — `^[A-Za-z0-9_-]{8,64}$`, 미치환 placeholder = 형식 위반), security 추가 시 first_layer_findings) 누락 시 워커가 `ESCALATE_PACKET_INCOMPLETE` 반환 — generic fallback 없음
 5. **CHANGELOG·코멘트의 historical 인용 유지**: 과거 `Codex<Domain>ReviewAgent` 명칭은 historical로 보존 (변경 금지)
 
 ### Backward compatibility

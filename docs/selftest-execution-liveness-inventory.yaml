@@ -813,3 +813,33 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "promptfile UTF-8 round-trip fixture suite (AC-4 fixture 5종 + AC-6 공존 oracle + whitelist mutation) 의 pytest 위임 wrapper — 단발 실행, soak=G2·DAST=G5·real-render=§8.7 runtime 축 무침범."
+  # -- CFP-2929 (Phase 2 구현 — codex dispatch 경로 방언 preflight + 결과 수거 + dispatch 사정권 discovery) — 신규 3 스위트 enroll --
+  # bijection: tests/scripts/*.sh +3 (신규 enroll). 실행 채널 = codex-dispatch-collection-test.yml:codex-dispatch-collection-test
+  #   (신규 전용 workflow, day-1 hard-fail·non_required·wrapper-self-only·templates twin 미생성).
+  #   ★ 전용 workflow 사유: 최근접 이웃 codex-companion-timeout-check.yml 은 job-level continue-on-error(warning tier)
+  #     라 step 을 얹으면 실패가 삼켜져 hollow — codex-promptfile-roundtrip-test.yml 선례 동형 분리.
+  #   ★ 3 레코드 모두 동일 job 을 가리키며 각 self_test basename 이 그 job 의 별 run: line 에 1:1 등장한다(AC-2).
+  - self_test: "tests/scripts/test_codex-outpath-preflight.sh"
+    execution_channel: "workflow:codex-dispatch-collection-test.yml:codex-dispatch-collection-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "codex 출력경로 방언 preflight discriminating self-test — 실 CodexReviewAgent.md dispatch 펜스에서 codex_outpath_preflight() 본문을 텍스트 추출해 평가(재구현 0) + cygpath 존재/실패/빈출력·MSYS 정체성 stub 으로 R1~R7 결정표 단일기대 + M3/M5/MA sed 변이 kill. soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (정적 텍스트 추출 + 셸 함수 stub 평가, 장기 실행 데몬·공격표면·렌더 축 무침범). honest-ceiling(ADR-151 §결정7): presence(추출 술어 평가 변별) != truth(실 Windows MSYS argv 변환 물리 = codex-outpath-windows-oracle.yml windows job 소관, 본 스위트 밖), 검출력=G3 미강제."
+  - self_test: "tests/scripts/test_codex-dispatch-scope-discovery.sh"
+    execution_channel: "workflow:codex-dispatch-collection-test.yml:codex-dispatch-collection-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "AC-13 dispatch 표면 차집합 0 discriminating self-test — discovery side(repo 전수 walk, SCAN_EXTS .md/.sh/.yml/.yaml) 대 사정권 side(DEFAULT_SCAN_DIRS 상수) 를 구조적으로 독립 유지해 M-S(양변 동일 목록 tautology) kill + 제외 선언 stale 자동 수축 + pre-GREEN(origin/main) 사정권 대조. ★ 실행 채널은 checkout fetch-depth: 0 필수(§3 A13-7 이 origin/main ref+blob 요구, 부재=FAIL). soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (파일시스템 walk 1회, 시간축 soak 아님). honest-ceiling(ADR-151 §결정7): presence(차집합 0 판정) != truth(dispatch 발화 검출기 자체의 정확도=lint 소관), 검출력=G3 미강제."
+  - self_test: "tests/scripts/test_codex-late-collect.sh"
+    execution_channel: "workflow:codex-dispatch-collection-test.yml:codex-dispatch-collection-test"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "codex-late-collect.sh 결과 수거 discriminating self-test — 3층 셀매트릭스(C1~C10) · rc stamp · 8-step · manifest v1 · marker 어휘 · round_id 동등비교 + TTL sweep 경계(§8.5.1) · restart recovery(§8.5.2) · replay idempotency(§8.5.3/§11.6) 를 매 실행 재생성 변이 fixture 로 재입증. ★ 시간축 케이스는 **논리적 시간 주입**(TTL 임계값 파라미터·상태 파일 재구성)이며 wall-clock soak(G2) 아님 — 러너 장기 점유 0(job timeout-minutes 30 상한). DAST=G5·real-render=§8.7 도 disjoint. honest-ceiling(ADR-151 §결정7): presence(단계·마커·멱등 판정 변별) != truth(실 codex 프로세스 write 타이밍·부분 flush 거동), 검출력=G3 미강제."

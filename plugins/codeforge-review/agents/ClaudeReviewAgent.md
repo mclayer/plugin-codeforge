@@ -35,11 +35,12 @@ re-entry: 상위 = lane PL (Design/Code/SecurityTest) 중 하나 / 형제 = Code
 
 ## 입력: review packet (PL 주입)
 
-**Schema SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) §2 — 공통 필드 (`lane` · `checklist_path` · `scope_globs` · `category_enum` · `severity_overrides`(선택) · `story_key` · `related_adrs`(선택)) + lane-specific 확장 (security lane은 `first_layer_findings` 필수). 본 md는 schema 자체를 재인용하지 않는다 — drift 회피.
+**Schema SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) §2 — 공통 필드 (`lane` · `checklist_path` · `scope_globs` · `category_enum` · `story_key` · `round_id` · `severity_overrides`(선택) · `related_adrs`(선택)) + lane-specific 확장 (security lane은 `first_layer_findings` 필수). 본 md는 schema 자체를 재인용하지 않는다 — drift 회피.
 
 **Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환, generic fallback 금지 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md) §결정 4번):
 
-1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` · `round_id` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+   - ★ **`round_id` 는 존재 + 형식 둘 다** (`^[A-Za-z0-9_-]{8,64}$`) — 부재 **또는 형식 위반**(치환되지 않은 `<packet round_id>` 리터럴 포함) = 즉시 `ESCALATE_PACKET_INCOMPLETE`. 본 워커는 `round_id` 를 **소비하지 않지만**(소비처 = Codex dispatch manifest ⊕ collector argv), 회차 토큰은 **회차 단위**로 발급되는 packet 공통 필수 필드이며(§2 매트릭스 4 lane 전부 ✅), **항상 존재하는 floor peer** 가 검사해야 Codex 미가용·degrade 회차에서도 누락이 조용히 통과하지 않는다. 발급·전달 규범 = [`templates/review-pl-base.md`](../templates/review-pl-base.md) §10, 스키마 슬롯 = 동 §2.
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
 3. **lane-conditional 추가 검증**:
    - `lane=requirements-review` (CFP-2326 / ADR-125): `story_key` 필수. Story §1-§6 (요구사항 산출물) 을 `Read`로 열 수 없으면 ESCALATE. `scope_globs`에 요구사항 산출물 (Story §1-§6) ≥ 1 포함

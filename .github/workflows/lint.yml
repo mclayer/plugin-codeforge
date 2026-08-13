@@ -20,8 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # ★ 사정권 = **명시 열거**(discovery 아님). 정직 declare — 본 job 은 repo 전 shell 을 덮지 않는다:
+      #   아래 열거 밖 shell 은 여전히 **무검사**이며, 그 잔여는 이 변경으로 해소되지 않았다.
+      #   CFP-2929 판정(DeveloperPL): 신규 배포 표면 `codex-late-collect.sh` 1건만 좁게 추가한다.
+      #   discovery 전환(`git ls-files '*.sh'`)은 **의도적 기각/이월** — repo 전 shell 이 일시에 사정권에
+      #   들어와 본 PR 과 무관한 대량 RED 를 만든다(비용>이득, 본 Story 범위 밖). "shellcheck 사정권을
+      #   고쳤다"가 아니라 "이번에 만든 shell 을 무검사로 내보내지 않는다"가 이 줄의 정확한 주장이다.
       - name: Run shellcheck
-        run: shellcheck overlay/hooks/regen-agents.sh
+        run: shellcheck overlay/hooks/regen-agents.sh plugins/codeforge-review/scripts/codex-late-collect.sh
 
   script-exec-bit:
     name: script exec bit (CFP-74 invariant)
