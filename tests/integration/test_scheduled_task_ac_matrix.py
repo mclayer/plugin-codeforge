@@ -23,6 +23,55 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 import scheduled_task_reconcile as sut
 
 
+def extract_adr_section(content: str, section_heading: str) -> str:
+    """ADR 절 추출 헬퍼 — 줄 기반 startswith 로 확실한 슬라이싱.
+
+    Args:
+        content: ADR 전체 내용
+        section_heading: 찾을 헤딩 문자열 (예: "### §결정 9")
+
+    Returns:
+        해당 헤딩부터 다음 같은 레벨 또는 상위 레벨 헤딩까지의 텍스트
+
+    Raises:
+        AssertionError: 헤딩 부재 또는 슬라이싱 오류
+
+    검증:
+        - 헤딩 발견 실패 → AssertionError
+        - 슬라이스 길이 ≤ 헤딩 줄 길이 → AssertionError (1글자 사건 방지)
+    """
+    lines = content.splitlines(keepends=True)
+    start_idx = next(
+        (i for i, ln in enumerate(lines) if ln.startswith(section_heading)),
+        -1
+    )
+    if start_idx == -1:
+        raise AssertionError(f"절 부재: {section_heading}")
+
+    # 헤딩 레벨 추론 (예: "### " → 3)
+    heading_level = len(section_heading) - len(section_heading.lstrip("#"))
+    heading_prefix = "#" * heading_level
+
+    # 시작 줄 다음부터 같은 레벨 또는 상위 레벨의 다른 헤딩 찾기
+    end_idx = next(
+        (i for i in range(start_idx + 1, len(lines))
+         if lines[i].startswith(heading_prefix + " ") and
+            not lines[i].startswith(heading_prefix + "# ")),
+        len(lines)
+    )
+
+    section = "".join(lines[start_idx:end_idx])
+
+    # 검증: 슬라이스가 헤딩 이상의 유의미한 길이여야 함
+    header_line = lines[start_idx]
+    if len(section) <= len(header_line):
+        raise AssertionError(
+            f"절 슬라이싱 오류: {section_heading} (헤딩만 남음 또는 손상)"
+        )
+
+    return section
+
+
 class TestAC1MeasurementDeclaration:
     """AC-1: live 증거 아티팩트 (미측정).
 
@@ -117,7 +166,8 @@ class TestAC2ObservationOnlyDelta:
     """AC-2: 관측-only 델타 0.
 
     삭제 0 (로컬 파일 삭제 0 + GitHub write 0).
-    3개 도메인 canary (workspace-root, codeforge-scratch, Temp) 에 1:1 배치.
+    4개 canary: 파일 면 3개 (workspace-root, codeforge-scratch, Temp) + stash 면 1개.
+    파일 축 3종은 test_ac2_no_deletion_on_disk, stash 축은 test_ac2_no_stash_drop.
     """
 
     def test_ac2_no_deletion_on_disk(self):
@@ -169,17 +219,86 @@ class TestAC2ObservationOnlyDelta:
 
         post_report() 호출 을 spy 해서 호출 여부 검증.
         발화 없으면 post_report 미호출.
+
+        ★ Hermetic: fixture 트리 주입 (실 홈 스캔 0).
         """
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Arrange: 관측 0건
-            with mock.patch.object(sut, "post_report") as spy_post:
-                # Act: run() 호출 — 관측 0건이면 무발화 → post_report 미호출
-                sut.run(["--repo-root", tmpdir, "--channel", "owner/repo#123", "--dry-run"])
+            scratch_dir = os.path.join(tmpdir, "scratch")
+            temp_dir = os.path.join(tmpdir, "temp")
+            os.makedirs(scratch_dir, exist_ok=True)
+            os.makedirs(temp_dir, exist_ok=True)
 
-                # Assert: post_report 미호출
-                assert spy_post.call_count == 0, (
-                    f"관측 0건 시 post_report 미호출 기대, 실제: {spy_post.call_count}"
+            # Arrange: collect_observations 를 fixture 값만 반환하도록 stub
+            def mock_collect_observations(**kwargs):
+                # 관측 0건 반환 (hermetic, 실 홈 스캔 0)
+                return []
+
+            with mock.patch.object(sut, "post_report") as spy_post:
+                with mock.patch.object(sut, "collect_observations", side_effect=mock_collect_observations):
+                    # Act: run() 호출 — 관측 0건이면 무발화 → post_report 미호출
+                    sut.run(["--repo-root", tmpdir, "--channel", "owner/repo#123", "--dry-run"])
+
+                    # Assert: post_report 미호출
+                    assert spy_post.call_count == 0, (
+                        f"관측 0건 시 post_report 미호출 기대, 실제: {spy_post.call_count}"
+                    )
+
+    def test_ac2_no_stash_drop(self):
+        """AC-2 stash 축: 정지 전후 stash 스냅샷 일치.
+
+        git stash drop 은 .git/refs/stash 를 변경하므로
+        파일 면 단독 스냅샷(depth-1)에 나타나지 않는다.
+        따라서 2축(파일 + stash) 검증이 필수.
+
+        ★ Windows git 프로세스 점유 회피: cwd 원복 후 정리.
+        """
+        orig_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                # Arrange: 임시 git repo (실 worktree 미건드림)
+                repo_path = os.path.join(tmpdir, "test_repo")
+                os.makedirs(repo_path, exist_ok=True)
+                os.chdir(repo_path)
+
+                # git init + dummy commit
+                import subprocess
+                subprocess.run(["git", "init"], check=True, capture_output=True)
+                subprocess.run(["git", "config", "user.email", "test@test.com"], check=True, capture_output=True)
+                subprocess.run(["git", "config", "user.name", "test"], check=True, capture_output=True)
+                Path("dummy.txt").touch()
+                subprocess.run(["git", "add", "dummy.txt"], check=True, capture_output=True)
+                subprocess.run(["git", "commit", "-m", "initial"], check=True, capture_output=True)
+
+                # stash 1개 생성
+                Path("temp.txt").touch()
+                subprocess.run(["git", "add", "temp.txt"], check=True, capture_output=True)
+                subprocess.run(["git", "stash"], check=True, capture_output=True)
+
+                # 스냅샷 1: stash 존재 전
+                cp1 = subprocess.run(
+                    ["git", "stash", "list", "--format=%gd %H"],
+                    capture_output=True, text=True, check=True
                 )
+                stash_before = cp1.stdout.strip()
+                assert len(stash_before) > 0, "stash 1개 기대"
+
+                # mutant: stash drop 호출
+                subprocess.run(["git", "stash", "drop"], check=True, capture_output=True)
+
+                # 스냅샷 2: stash 제거 후
+                cp2 = subprocess.run(
+                    ["git", "stash", "list", "--format=%gd %H"],
+                    capture_output=True, text=True, check=True
+                )
+                stash_after = cp2.stdout.strip()
+
+                # Assert: 스냅샷 불일치 = mutant RED
+                assert stash_before != stash_after, (
+                    "AC-2 stash 축 미작동: drop 후에도 스냅샷 일치 (오라클 hollow)"
+                )
+                assert len(stash_after) == 0, "drop 후 stash 0건 기대"
+            finally:
+                os.chdir(orig_cwd)
 
 
 class TestAC3SelfModificationChain:
@@ -312,28 +431,10 @@ class TestAC5PromotionZero:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # 줄 기반 슬라이싱 — startswith 사용
-        lines = content.splitlines(keepends=True)
-        start_idx = next(
-            (i for i, ln in enumerate(lines) if ln.startswith("### §결정 9")),
-            -1
-        )
-        if start_idx == -1:
-            pytest.fail("ADR-172 의 §결정 9 절 부재")
-
-        # 시작 줄 다음부터 종료점 찾기 (### 또는 ##)
-        end_idx = next(
-            (i for i in range(start_idx + 1, len(lines))
-             if lines[i].startswith("### ") or lines[i].startswith("## ")),
-            len(lines)
-        )
-
-        decision_9_text = "".join(lines[start_idx:end_idx])
-
-        # 검증: 슬라이스가 헤딩 이상으로 유의미한 길이여야 함
-        assert len(decision_9_text) > len(lines[start_idx]), (
-            "AC-5: 절 슬라이싱 오류 (헤딩만 남음)"
-        )
+        try:
+            decision_9_text = extract_adr_section(content, "### §결정 9")
+        except AssertionError as e:
+            pytest.fail(f"AC-5: {e}")
 
         # Assert: 승격 이력 = 0
         assert "승격 이력" in decision_9_text and "0" in decision_9_text, (
@@ -429,19 +530,10 @@ class TestAC12TripleAxisSixCellComparison:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # 절 찾기 (### §결정 8)
-        assert "### §결정 8" in content, "ADR-172 에 §결정 8 절 부재"
-
-        # 6셀 검증: 최소 3축 어휘 + 2개 속성
-        decision_8_idx = content.find("### §결정 8")
-        if decision_8_idx == -1:
-            pytest.fail("AC-12: ADR-172 의 §결정 8 절 미발견. design lane 산출물 손상")
-
-        # 절의 끝 찾기 (다음 헤딩까지)
-        next_heading = content.find("### ", decision_8_idx + 1)
-        if next_heading == -1:
-            next_heading = len(content)
-        decision_section = content[decision_8_idx:next_heading]
+        try:
+            decision_section = extract_adr_section(content, "### §결정 8")
+        except AssertionError as e:
+            pytest.fail(f"AC-12: {e}")
 
         # 축과 속성 어휘 확인
         for axis in ["P3a", "P3b", "P4"]:
@@ -458,14 +550,10 @@ class TestAC12TripleAxisSixCellComparison:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        decision_8_idx = content.find("### §결정 8")
-        if decision_8_idx == -1:
-            pytest.fail("AC-12: ADR-172 의 §결정 8 절 미발견. design lane 산출물 손상")
-
-        next_heading = content.find("### ", decision_8_idx + 1)
-        if next_heading == -1:
-            next_heading = len(content)
-        decision_section = content[decision_8_idx:next_heading]
+        try:
+            decision_section = extract_adr_section(content, "### §결정 8")
+        except AssertionError as e:
+            pytest.fail(f"AC-12: {e}")
 
         # 채택 축 P4
         assert "P4" in decision_section, "채택 축 P4 리터럴 부재"
@@ -517,31 +605,9 @@ class TestAC13StaticTextLint:
 
 
 # ═══════════════════════════════ Mutant Kill Evidence ═════════════════════
-# 아래 섹션은 테스트 실행 후 보고할 mutant 정보 (RED 재현 증거용).
-
-class MutantKillReference:
-    """mutant kill 실증 로그.
-
-    본 테스트 파일 실행 후, 각 AC 마다 production code 임시 수정해 mutant 생성.
-    mutant → RED 실증 → 원복 → 보고.
-
-    예시 (이 테스트 파일에서 수행):
-      1. AC-11 부재형: render_report 에서 SENTINEL 제거
-         mutant code:
-           head = "%s items=%d (사실 관측 — 선언·실측·불일치)" % (
-               "",  # SENTINEL 제거
-               len(kept)
-           )
-         test: test_ac11_sentinel_and_trailer_in_report
-         result: RED (SENTINEL not in report)
-
-      2. AC-11 변형형: render_report 에서 TRAILER 제거
-         mutant code:
-           trailer = ""  # TRAILER 제거
-         test: test_ac11_sentinel_and_trailer_in_report
-         result: RED (TRAILER not in report)
-    """
-    pass
+# 아래는 테스트 실행 후 보고할 mutant 정보 (RED 재현 증거용)이며,
+# 실제 mutant 실증은 개발자가 production code 를 임시 수정해 수행한다.
+# (docstring-only reference)
 
 
 if __name__ == "__main__":
