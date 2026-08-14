@@ -34,12 +34,27 @@ class TestLongRunningInvariant:
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
+            scratch_root = os.path.join(tmpdir, "scratch")
+            temp_root = os.path.join(tmpdir, "temp")
+            os.makedirs(scratch_root, exist_ok=True)
+            os.makedirs(temp_root, exist_ok=True)
             durations = []
 
             for i in range(200):
                 # Act: collect_observations 호출 (스캐너 3종 observe-only)
+                # ★ tmpdir 격리: scan_roots 명시적 주입 (실제 홈 스캔 0)
                 start = time.time()
-                obs = sut.collect_observations(repo_root=repo_root)
+                scan_roots = [
+                    {"path": os.path.join(tmpdir, "worktrees"), "mode": "cross-check-only", "source": "worktrees-base"},
+                    {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
+                    {"path": os.path.join(tmpdir, "home"), "mode": "discover+classify", "source": "home-direct"},
+                ]
+                obs = sut.collect_observations(
+                    repo_root=repo_root,
+                    scan_roots=scan_roots,
+                    scratch_root=scratch_root,
+                    temp_root=temp_root,
+                )
                 elapsed = time.time() - start
                 durations.append(elapsed)
 
@@ -68,24 +83,45 @@ class TestRestartRecovery:
         """재기동 후 누적 잔재 K개 보고."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
+            scratch_root = os.path.join(tmpdir, "scratch")
+            temp_root = os.path.join(tmpdir, "temp")
+            worktree_root = os.path.join(tmpdir, "worktrees")
+            home_root = os.path.join(tmpdir, "home")
+            os.makedirs(scratch_root, exist_ok=True)
+            os.makedirs(temp_root, exist_ok=True)
+            os.makedirs(worktree_root, exist_ok=True)
+            os.makedirs(home_root, exist_ok=True)
 
             # Arrange: 1차 스캔 (관측 0)
-            obs1 = sut.collect_observations(repo_root=repo_root)
+            scan_roots = [
+                {"path": worktree_root, "mode": "cross-check-only", "source": "worktrees-base"},
+                {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
+                {"path": home_root, "mode": "discover+classify", "source": "home-direct"},
+            ]
+            obs1 = sut.collect_observations(
+                repo_root=repo_root,
+                scan_roots=scan_roots,
+                scratch_root=scratch_root,
+                temp_root=temp_root,
+            )
             assert len(obs1) == 0
 
             # "K회 건너뛴" 시뮬레이션은 실제 tick 대신 잔재 추가
             # (본 축은 상태 무의존이므로 현재 상태만 재관측)
 
             # Arrange: 잔재 K개 생성 (worktree 시뮬레이션)
-            worktree_base = os.path.join(tmpdir, "worktrees")
-            os.makedirs(worktree_base, exist_ok=True)
             for i in range(5):
-                old_dir = os.path.join(worktree_base, f"old-stale-{i}")
+                old_dir = os.path.join(worktree_root, f"old-stale-{i}")
                 os.makedirs(old_dir, exist_ok=True)
                 Path(os.path.join(old_dir, "marker.txt")).touch()
 
             # Act: 재기동 후 1회 호출
-            obs2 = sut.collect_observations(repo_root=repo_root)
+            obs2 = sut.collect_observations(
+                repo_root=repo_root,
+                scan_roots=scan_roots,
+                scratch_root=scratch_root,
+                temp_root=temp_root,
+            )
 
             # Assert: 누적 5개 보고
             # (실제 orphan 판정은 base 스캐너에 의존하므로 여기선 호출만 검증)
@@ -101,11 +137,30 @@ class TestRestartRecovery:
             lock_path = os.path.join(tmpdir, ".scheduled_task.lock")
             Path(lock_path).touch()
 
+            scratch_root = os.path.join(tmpdir, "scratch")
+            temp_root = os.path.join(tmpdir, "temp")
+            worktree_root = os.path.join(tmpdir, "worktrees")
+            home_root = os.path.join(tmpdir, "home")
+            os.makedirs(scratch_root, exist_ok=True)
+            os.makedirs(temp_root, exist_ok=True)
+            os.makedirs(worktree_root, exist_ok=True)
+            os.makedirs(home_root, exist_ok=True)
+
             # Act: collect_observations 호출
             # lock 파일이 있으면 skip 되거나 빠르게 반환해야 함
             # (구현이 lock 을 존재 확인한다고 가정)
             start = time.time()
-            obs = sut.collect_observations(repo_root=tmpdir)
+            scan_roots = [
+                {"path": worktree_root, "mode": "cross-check-only", "source": "worktrees-base"},
+                {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
+                {"path": home_root, "mode": "discover+classify", "source": "home-direct"},
+            ]
+            obs = sut.collect_observations(
+                repo_root=tmpdir,
+                scan_roots=scan_roots,
+                scratch_root=scratch_root,
+                temp_root=temp_root,
+            )
             elapsed = time.time() - start
 
             # Assert: lock 파일이 존재하므로 빠른 반환 기대 (또는 observe 0)
@@ -152,12 +207,31 @@ class TestPerfBaseline:
         """p95 실행소요 < 43200s (한계) — 측정값 기록."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
+            scratch_root = os.path.join(tmpdir, "scratch")
+            temp_root = os.path.join(tmpdir, "temp")
+            worktree_root = os.path.join(tmpdir, "worktrees")
+            home_root = os.path.join(tmpdir, "home")
+            os.makedirs(scratch_root, exist_ok=True)
+            os.makedirs(temp_root, exist_ok=True)
+            os.makedirs(worktree_root, exist_ok=True)
+            os.makedirs(home_root, exist_ok=True)
             durations = []
+
+            scan_roots = [
+                {"path": worktree_root, "mode": "cross-check-only", "source": "worktrees-base"},
+                {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
+                {"path": home_root, "mode": "discover+classify", "source": "home-direct"},
+            ]
 
             # 기본 성능 샘플: 100회
             for i in range(100):
                 start = time.time()
-                obs = sut.collect_observations(repo_root=repo_root)
+                obs = sut.collect_observations(
+                    repo_root=repo_root,
+                    scan_roots=scan_roots,
+                    scratch_root=scratch_root,
+                    temp_root=temp_root,
+                )
                 elapsed = time.time() - start
                 durations.append(elapsed)
 
@@ -191,6 +265,20 @@ class TestPerfBaseline:
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
+            scratch_root = os.path.join(tmpdir, "scratch")
+            temp_root = os.path.join(tmpdir, "temp")
+            worktree_root = os.path.join(tmpdir, "worktrees")
+            home_root = os.path.join(tmpdir, "home")
+            os.makedirs(scratch_root, exist_ok=True)
+            os.makedirs(temp_root, exist_ok=True)
+            os.makedirs(worktree_root, exist_ok=True)
+            os.makedirs(home_root, exist_ok=True)
+
+            scan_roots = [
+                {"path": worktree_root, "mode": "cross-check-only", "source": "worktrees-base"},
+                {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
+                {"path": home_root, "mode": "discover+classify", "source": "home-direct"},
+            ]
 
             # 5개 batch × 40 iteration = 200 총
             batches = []
@@ -198,7 +286,12 @@ class TestPerfBaseline:
                 durations_batch = []
                 for i in range(40):
                     start = time.time()
-                    obs = sut.collect_observations(repo_root=repo_root)
+                    obs = sut.collect_observations(
+                        repo_root=repo_root,
+                        scan_roots=scan_roots,
+                        scratch_root=scratch_root,
+                        temp_root=temp_root,
+                    )
                     elapsed = time.time() - start
                     durations_batch.append(elapsed)
                 p50_batch = sorted(durations_batch)[20]
