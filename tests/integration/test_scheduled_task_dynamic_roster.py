@@ -581,6 +581,79 @@ class TestPropertyDedupRoundtrip:
             f"D3 라운드트립 파괴 {len(failures)}건 — (label, path, expected, extracted): {failures}"
         )
 
+    def test_property_scrub_is_injective_over_corpus(self, corpus_paths):
+        """verdict 어휘 변환의 **단사성** — 서로 다른 잔재가 한 키로 붕괴하지 않는다.
+
+        ★ 계기 (구현리뷰 iter5 F-CR5-03, production 런타임 결함):
+          구판 `_scrub_verdict_tokens` 는 매치 토큰을 `<제거>` 로 **삭제 치환**했다.
+          삭제는 정보를 잃으므로 단사가 아니고, `_safe_text` 가 `dedup_key` 에도 걸리므로
+          경로가 `pass`/`fail` 로만 다른 **두 잔재가 같은 키**를 갖는다 —
+          한쪽이 먼저 발화되면 다른 쪽은 "기보고" 로 분류돼 **영구 억제**된다.
+          공격자 없이 경로 문자열만으로 성립하며 어디에도 선언돼 있지 않았다.
+
+        검사 2축:
+          (ㄱ) **좌역원 존재** — `unscrub(scrub(x)) == x` 가 corpus 전량 + 어휘 케이스에서
+               성립한다. 좌역원이 있으면 단사가 따라온다(구성적 증명).
+          (ㄴ) **키 분리 실증** — 어휘만 다른 경로 쌍이 서로 다른 `dedup_key` 를 갖는다.
+               (ㄱ)만으로도 함의되지만, 결함이 실제로 나타났던 층(키)에서 직접 잰다.
+          (ㄷ) **구성상 lexicon-free** — 산출에 어휘 매치가 0 (INV-E 는 약화되지 않았다).
+
+        mutant kill: 가역 변환을 삭제 변환으로 되돌리기
+          (`_LEXICON_RE.sub(lambda m: m.group(0)[0] + "%-" + m.group(0)[1:], s)`
+           → `_LEXICON_RE.sub("<제거>", s)`) ⇒ (ㄱ)·(ㄴ) 동시 RED.
+
+        ★ 정직 천장: 여기서 재는 것은 **어휘 변환** 축의 단사성이다. `_safe_text` 전체는
+          단사가 **아니다** — `_normalize_paths` 의 fail-closed 경로가 여러 입력을
+          `<미정규화-경로-제거>` 하나로 접는다. 그 붕괴는 "정규화 실패 = 위치 미공개"
+          라는 **선언된 보안 선택**이지 본 결함과 다른 축이며, 본 테스트는 그 축을
+          단사라고 주장하지 않는다.
+        """
+        lexicon_cases = []
+        for tok in sut.VERDICT_LEXICON:
+            lexicon_cases += [
+                "~/.claude/worktrees/cfp-100-%s" % tok,
+                "~/.claude/worktrees/cfp-100-%s" % tok.lower(),
+                "~/w/%s-머리" % tok,
+                "~/w/꼬리-%s" % tok,
+            ]
+        esc_cases = ["100%", "%%", "%-", "a%-b", "%%-%", "~/w/50%-off", ""]
+        cases = list(corpus_paths) + lexicon_cases + esc_cases
+        assert len(cases) >= len(corpus_paths) + 4 * len(sut.VERDICT_LEXICON) + 7
+
+        # (ㄱ) 좌역원
+        broken = [c for c in cases if sut.unscrub_verdict_tokens(sut._scrub_verdict_tokens(c)) != c]
+        assert broken == [], (
+            "가역성 파괴 %d건 — 좌역원이 없으면 단사성이 무너지고 키 붕괴가 되살아난다: %r"
+            % (len(broken), [b[:60] for b in broken[:5]])
+        )
+
+        # (ㄱ') 서로 다른 입력 → 서로 다른 산출 (corpus 전량 pairwise, 실 단사 관측)
+        seen = {}
+        collisions = []
+        for c in cases:
+            out = sut._scrub_verdict_tokens(c)
+            if out in seen and seen[out] != c:
+                collisions.append((seen[out][:50], c[:50], out[:50]))
+            seen[out] = c
+        assert collisions == [], f"스크럽 충돌 {len(collisions)}건: {collisions[:3]}"
+
+        # (ㄴ) 어휘만 다른 경로 쌍의 키 분리 — 결함이 나타났던 층에서 직접
+        pairs = [
+            ("~/.claude/worktrees/cfp-100-pass", "~/.claude/worktrees/cfp-100-fail"),
+            ("~/.claude/worktrees/run-ok", "~/.claude/worktrees/run-OK"),
+            ("~/w/작업-정상", "~/w/작업-문제없음"),
+        ]
+        for left, right in pairs:
+            kl = sut.dedup_key({"cls": "worktree", "display_path": left})
+            kr = sut.dedup_key({"cls": "worktree", "display_path": right})
+            assert kl != kr, (
+                "키 붕괴: %r 와 %r 이 같은 키 %r — 한쪽 잔재가 영구 억제된다" % (left, right, kl)
+            )
+
+        # (ㄷ) INV-E 무손상 — 산출에 어휘 매치 0
+        leaked = [c for c in cases if sut.contains_verdict_lexicon(sut._scrub_verdict_tokens(c))]
+        assert leaked == [], f"INV-E 위반(산출 어휘 잔존) {len(leaked)}건: {leaked[:3]!r}"
+
     def test_property_roundtrip_survives_fetch_existing_keys(self):
         """end-to-end: 렌더 본문을 채널 코멘트로 되먹여 `fetch_existing_keys` 로 회수 →
         `dedup_key` 재유도값이 **전량 멤버십 성립**(= 재발화 0).

@@ -122,7 +122,38 @@ _LEXICON_RE = re.compile(
     ),
     re.IGNORECASE,
 )
-_LEXICON_PLACEHOLDER = "<제거>"
+# ── verdict 어휘 변환: **손실 삭제 → 무손실 가역 이스케이프** (구현리뷰 iter5 F-CR5-03) ──
+#   구판은 매치 토큰을 `<제거>` 로 **삭제 치환**했다. 이 변환은 단사가 아니라서
+#   `…/cfp-100-pass` 와 `…/cfp-100-fail` 이 **같은 문자열**(`…/cfp-100-<제거>`)로 붕괴했고,
+#   `_safe_text` 가 `dedup_key` 에도 걸리므로 두 잔재가 **한 키**를 공유해 한쪽이 영구
+#   억제됐다(공격자 없이 경로 문자열만으로 성립하는 런타임 결함). 표시 축도 같이 뭉개져
+#   운영자가 잔재 위치를 특정할 수 없었다.
+#
+#   식별 축과 표시 축을 **분리하지 않는다** — 분리하면 D3 라운드트립 계약(키가 채널 본문에
+#   실려 `fetch_existing_keys` 가 되추출)이 깨진다. 대신 변환 자체를 무손실로 바꾼다.
+#
+#   변환 규칙 (2단, 결정론):
+#     ① 이스케이프 도입자 자신을 먼저 이스케이프: `%` → `%%`
+#     ② 매치 토큰의 첫 글자와 나머지 사이에 `%-` 삽입: `PASS` → `P%-ASS` / `정상` → `정%-상`
+#   성질:
+#     (a) **단사** — `unscrub_verdict_tokens` 가 좌역원이다(왕복 property 검사로 결박).
+#     (b) **구성상 lexicon-free** — ②가 모든 매치를 쪼개고, ①②는 문자를 **삽입만** 하므로
+#         새 substring 매치를 만들 수 없다. ASCII 토큰의 `\b` 경계도 새로 만들지 못한다:
+#         삽입된 `%`·`-` 는 토큰 첫 글자 **바로 뒤**에 오는데, 어느 토큰도 `[1:]` 가
+#         다른 토큰으로 시작하지 않는다(ASS/AIL/K/상/제없음).
+#     (c) **결정론** — 정규식 스캔 순서만으로 결정된다(상태·난수 0).
+#   대가 (선언 — 은폐 금지):
+#     · 도입기 채널의 기존 키 중 어휘를 포함하던 것은 **1회 바뀌어 그 항목이 1회 재발화**한다
+#       (`_MAX_KEY_LEN` 경계화 도입 때와 동형 대가, 도입기 채널 이력이 사실상 비어 수용).
+#     · 영향 경로의 가독성이 소폭 떨어진다(`cfp-100-p%%-ass`). 단 **위치 특정은 가능**해졌다 —
+#       구판은 `<제거>` 라 어떤 어휘였는지조차 복원 불가였다.
+#     · `_safe_text` 가 scrub 를 sanitize 앞뒤로 **두 번** 걸므로 `%` 가 두 번 escape 돼
+#       `%%-` 형태가 된다(합성도 단사이므로 계약은 유지, 되돌리려면 unscrub 2회).
+#   실측 확인: `base.sanitize` 는 `%`·`-` 를 재변형하지 않는다(9 케이스 왕복 동일 — 확인 안
+#   됐다면 이 방식을 쓰지 않고 키 해시 접미 폴백으로 갔어야 한다).
+_ESC_CHAR = "%"
+_ESC_DOUBLED = "%%"
+_LEXICON_ESCAPE = "%-"
 
 # ── 경로 정규화 마스크 (AC-13 "홈·workspace 상대 표기") ─────────────────────────────
 #   base.relativize_path 는 (a) HOME 접두 (b) 현 사용자명 세그먼트만 처리한다 —
@@ -192,13 +223,50 @@ def _field(obs, name, default=""):
 
 
 def _scrub_verdict_tokens(s):
-    """verdict 어휘 토큰을 placeholder 로 치환 (INV-E 산출 강제).
+    """verdict 어휘를 **무손실·가역 이스케이프**로 무력화 (INV-E 산출 강제).
 
     줄 제거(filter_verdict_lines)와 달리 관측 사실을 잃지 않으면서 어휘만 없앤다 —
-    경로·태스크명 등 우리가 통제하지 못하는 입력에 어휘가 섞여도 산출 어휘 0 을 보장."""
+    경로·태스크명 등 우리가 통제하지 못하는 입력에 어휘가 섞여도 산출 어휘 0 을 보장.
+
+    ★ 구판의 삭제 치환(`<제거>`)은 **비단사**였다 — `…-pass` / `…-fail` 이 같은 문자열로
+      붕괴해 `dedup_key` 가 두 잔재를 한 키로 합쳤다(F-CR5-03). 규칙·성질·대가는 모듈
+      상단 `_LEXICON_ESCAPE` 주석이 SSOT. 좌역원 = `unscrub_verdict_tokens`."""
     if not isinstance(s, str):
         s = "" if s is None else str(s)
-    return _LEXICON_RE.sub(_LEXICON_PLACEHOLDER, s)
+    s = s.replace(_ESC_CHAR, _ESC_DOUBLED)
+    return _LEXICON_RE.sub(
+        lambda m: m.group(0)[0] + _LEXICON_ESCAPE + m.group(0)[1:], s
+    )
+
+
+def unscrub_verdict_tokens(s) -> str:
+    """`_scrub_verdict_tokens` 의 **좌역원** — 단사성의 실행 가능한 증거.
+
+    `unscrub(scrub(x)) == x` 가 모든 문자열에서 성립한다(fuzz 코퍼스 property 로 결박).
+    좌역원이 존재하므로 scrub 는 단사이며, 따라서 서로 다른 두 잔재 경로가 같은
+    `dedup_key` 로 붕괴할 수 없다.
+
+    스캔 계약: scrub 산출에서 `%` 는 **항상 2글자 단위의 첫 글자**다
+    (`%%` = 원문 `%` / `%-` = 삽입된 분리자). 그래서 좌→우 단일 스캔이 모호하지 않다.
+    임의 입력(스크럽 산출이 아닌 문자열)에 대해서는 짝 없는 `%` 를 그대로 보존한다."""
+    if not isinstance(s, str):
+        s = "" if s is None else str(s)
+    out = []
+    i, n = 0, len(s)
+    while i < n:
+        c = s[i]
+        if c == _ESC_CHAR and i + 1 < n:
+            nxt = s[i + 1]
+            if nxt == _ESC_CHAR:
+                out.append(_ESC_CHAR)
+                i += 2
+                continue
+            if nxt == _LEXICON_ESCAPE[1]:
+                i += 2
+                continue
+        out.append(c)
+        i += 1
+    return "".join(out)
 
 
 # ── 경로 정규화층 (AC-13 이행 — 홈 축은 base 재사용, workspace/타사용자/드라이브 축만 지역) ──

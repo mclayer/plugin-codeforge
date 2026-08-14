@@ -38,16 +38,27 @@ class TestDedupKey:
         assert key == "worktree:~/.claude/worktrees/foo"
 
     def test_dedup_key_sanitizes_verdict_lexicon(self):
-        """key 는 _safe_text 를 통과 — verdict 어휘 제거 + secret redact + 제어문자 strip.
+        """key 는 _safe_text 를 통과 — verdict 어휘 무력화 + secret redact + 제어문자 strip.
 
-        ★ roundtrip 계약: 채널에 실린 key 문자열 = 다음 실행의 재유도값."""
+        ★ roundtrip 계약: 채널에 실린 key 문자열 = 다음 실행의 재유도값.
+        ★ 변환 정정 (구현리뷰 iter5 F-CR5-03): 어휘 무력화가 **삭제 치환**(`<제거>`)에서
+          **가역 이스케이프**로 바뀌었다. 구판은 비단사라 `…-PASS-…` 와 `…-FAIL-…` 이
+          같은 키로 붕괴했다. 단언을 그 계약에 맞춰 재조준한다 —
+          (a) 어휘 매치 0 (b) 주변 사실 보존 (c) 가역."""
         obs = {
             "cls": "orphan",
             "display_path": "~/.claude/worktrees/stale-PASS-component",  # 경로에 PASS 포함
         }
         key = sut.dedup_key(obs)
-        # verdict 어휘 PASS -> <제거>
-        assert "<제거>" in key, f"verdict 어휘 제거 기대, 실제: {key}"
+        assert not sut.contains_verdict_lexicon(key), f"verdict 어휘 잔존: {key}"
+        assert "stale-" in key and "-component" in key, (
+            f"어휘 주변 경로 사실이 손실됐다 (삭제 변환 회귀 의심): {key}"
+        )
+        # 가역 — 두 번 스크럽되므로(_safe_text) 좌역원도 두 번
+        restored = sut.unscrub_verdict_tokens(sut.unscrub_verdict_tokens(key))
+        assert restored == "orphan:~/.claude/worktrees/stale-PASS-component", (
+            f"가역성 파괴: {restored!r}"
+        )
 
     def test_dedup_key_empty_fields(self):
         """빈 필드 처리."""
@@ -209,10 +220,12 @@ class TestRenderFactTuple:
             mismatch=False,
         )
         result = sut.render_fact_tuple(obs)
-        # verdict 어휘 제거
+        # verdict 어휘 무력화 (F-CR5-03: 삭제 → 가역 이스케이프)
         assert "OK" not in result
         assert "PASS" not in result
-        assert "<제거>" in result
+        assert not sut.contains_verdict_lexicon(result), f"어휘 매치 잔존: {result!r}"
+        # 사실 보존 — 어휘 자리가 통째 사라지지 않는다 (삭제 변환 회귀 검출)
+        assert "state=" in result and "status=" in result, f"필드가 손실됨: {result!r}"
 
 
 class TestRenderReport:
@@ -265,8 +278,11 @@ class TestRenderReport:
 
         # (ㄱ) verdict 어휘는 산출에 0 (INV-E)
         assert "PASS" not in result, f"verdict 어휘 PASS 잔존: {result!r}"
-        # (ㄴ) 어휘 자리에 placeholder 치환
-        assert "<제거>" in result, f"placeholder 치환 미검출: {result!r}"
+        assert not sut.contains_verdict_lexicon(result), f"어휘 매치 잔존: {result!r}"
+        # (ㄴ) 어휘 자리는 **가역 이스케이프**로 남는다 (F-CR5-03: 삭제 치환 폐기).
+        #      `[capture-gate] PASS:` → `[capture-gate] P%-ASS:` — 어휘는 죽었고 자리는 산다.
+        assert sut._LEXICON_ESCAPE in result, f"이스케이프 마커 미검출: {result!r}"
+        assert "capture-gate" in result, f"어휘 주변 사실이 손실됨: {result!r}"
         # (ㄷ) 사실은 보존 — 줄 제거가 아니라 어휘 치환 (관측 손실 0)
         assert "captured=1" in result, f"관측 사실이 손실됨: {result!r}"
         assert "items=1" in result, f"사실 줄이 통째 사라짐: {result!r}"
