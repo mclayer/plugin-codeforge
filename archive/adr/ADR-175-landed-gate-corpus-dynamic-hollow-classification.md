@@ -73,7 +73,13 @@ Accepted (2026-08-15 KST) — CFP-2963 carrier. *"검사처럼 보이나 어떤 
 - **ADR-154 Amendment 2 = 축소 존치** — A2-2(적용 대상 확장 = landed-gate) + A1-3 조건 해제 명시 + 본 ADR 로의 포인터. SSOT 귀속 보존.
 - **본 ADR = 신규 normative 본체(M-1·M-2) + 경계·opt-in·manifest·천장·결속** 이관.
 
-이 분할은 **normative 본체 2벌 저작(DR-M8)도 동시에 해소**한다 — 결정면 정본 = 본 ADR 단독, 배선면 = Change Plan §8.QC-MECH 이며 중복 표 0 이다. 따라서 *"천장 동시-변경 불변식"* 의 양단은 이제 **본 ADR §결정 9 ↔ §8.QC-MECH MECH-9** 다.
+이 분할로 *"천장 동시-변경 불변식"* 의 양단은 **본 ADR §결정 9 ↔ §8.QC-MECH MECH-9** 가 된다.
+
+> ★★**정정 — 구 문면의 *"normative 본체 2벌 저작(DR-M8) 동시 해소 · 중복 표 0"* 은 거짓이었다(설계리뷰 DR2-M3 · 문면 철회)**: 분할이 옮긴 것은 **그릇**이고 **2벌 구조는 불변**이다(분할 전 = ADR-154 A2-4/A2-5 ⊕ CP MECH-4/MECH-5 **2벌** / 분할 후 = 본 ADR §결정 4·5 ⊕ CP MECH-4/MECH-5 **2벌**). 실제로 **divergence 1건이 발생**했다 — §결정 4 ④ 가 적격 식을 `diagnostic_line_set` 으로 적어 정본 `observed_line_set` 과 갈렸다(**DR2-M4**, 본 Tranche 정정). ⇒ 거짓 주장을 제거하고 아래 규칙으로 대체한다:
+> - **결정면 정본 = 본 ADR 단독.** 계약 문언(verdict 함수 · `I-1`~`I-11` · `D-1`~`D-5` · census 7축 · exit 3 조건 · W · manifest 4블록 · 적격 3-conjunct · hollowing recipe · `IC-1`~`IC-6` · 금지키 denylist)의 원본은 본 ADR 이다.
+> - **Change Plan §8.QC-MECH = 배선면 단독** — ID cross-ref + 배선 귀결(파일·경로·형판·실측 앵커·평가 절차)만 적는다.
+> - **불일치 시 본 ADR 이 우선**한다. 배선면이 갈리면 배선면을 고친다(역방향 금지).
+> - ★**정직 declare**: **중복 채널은 제거되지 않았다.** 위 우선순위 규칙은 drift 를 *막는* 장치가 아니라 drift 발생 시 **해소를 결정 가능하게** 만드는 장치다. *"중복 0"* 이라 쓰지 않는다.
 
 **경쟁 home 배제(무언 폐기 금지)**: **ADR-151** = self-test 코퍼스 execution-liveness(채널 alive) — subject disjoint, 본 ADR 은 인벤토리 8-field 스키마를 확장하지 않는다. **ADR-171** = 승격 evidence-gate 축 — 등급/승격 축 ⊥ 검출보장 축. **ADR-130** = 배선 제약이지 계약 소유자 아님. **ADR-157** = 형판 제공자이며 본 ADR 이 그 문서를 개정하지 않는다.
 
@@ -112,9 +118,24 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 
 *"게이트 로직이 판정 지점에 도달했는가"* 는 **주입이 아니라 상속으로** 얻는다. sed 파생 표본은 FAIL 분기만 중화되고 **PASS 경로 종단 emit 은 원본에서 그대로 물려받으므로**, arm-H 에 도달 마커를 새로 손저작할 필요가 없다 — ADR-154 §결정 7 *"손저작 금지"* 및 §결정 6 *"신규 0"* 과 **무충돌**이다.
 
-> **`DELIVERED ⟺ terminal_line(kill-fixture) ≠ terminal_line(empty-fixture)`**
+> ★★**`DELIVERED ⟺ observed_line_set(kill-fixture) ≠ observed_line_set(empty-fixture)`** (설계리뷰 DR2-M1 처방 ⓑ — 구 `terminal_line` 판정식 **폐기**)
 
-**empty-fixture** = 투입이 전달되지 않은 상태(대상 root 부재가 아니라 **대상 0건**). 종단 문면이 두 투입에서 **같으면** 게이트는 투입을 실제로 소비하지 않은 것이므로 `¬DELIVERED` → **INDETERMINATE**(아래 I-7).
+**empty-fixture (★단일 구성 확정 — DR2-M1 처방 ⓐ)** = **대상 0건 ∧ 게이트의 나머지 필수 입력은 `clean` 과 동일**. 관측 라인 집합이 두 투입에서 **같으면** 게이트는 투입을 실제로 소비하지 않은 것이므로 `¬DELIVERED` → **INDETERMINATE**(아래 I-7).
+
+**②-c ★★ 도달 축 비교 대상 통일 + `empty-fixture` 단일 구성 확정 (설계리뷰 DR2-M1 — 구 문면이 두 구성을 허용했고 그중 하나가 born-RED 였다. 무언 정정 금지)**
+
+> **배치 주의** — ②-c 는 **도달 축**의 확정이라 ② 바로 뒤에 둔다. 아래 **②-b 는 적격 축**의 분리이며, 라벨 순서(b→c)가 아니라 **축 순서(도달 → 적격)** 로 읽는다.
+
+구 정의 *"대상 root 부재가 아니라 대상 0건"* 은 **나머지 필수 입력 축을 미규정**해 두 구성을 허용했다 — **①** 나머지 입력 정상 ∧ 대상 0건 / **②** 나머지 입력 결손 ∧ 대상 0건. `check_hard_gate_self_verification` 실측에서 **② 는 kill 과 종단 라인이 byte 동일**(양쪽 `::error::[SUMMARY] … 위반 1건 (fail-closed, exit1)`, rc 도 양쪽 1)이라 구 식으로 `¬DELIVERED` → I-7 → `INDETERMINATE` 가 되고, **그 게이트가 §결정 9 가 지정한 day-1 arm-L base** 이므로 corpus 가 **day-1 born-RED** 가 된다 `[ArchitectPL firsthand 2026-08-15 — scratchpad 3-fixture, repo 무수정, `python3 scripts/lib/check_hard_gate_self_verification.py --repo-root <fixture>`]`.
+
+| 처방 | 내용 | 성격 |
+|---|:-:|---|
+| **ⓐ** | `empty-fixture` **단일 구성 확정**(위 정의) — 구성 ② 배제 | 정의 모호 제거. **표본 저자의 준수에 의존**하는 규약 |
+| ★**ⓑ** | 도달 축 비교 대상을 `terminal_line` → **`observed_line_set`** 통일 | **판정식 자체** — 구성과 무관하게 성립. 구성 ② 에서도 `{[AC-6],[SUMMARY]}` ↔ `{[AC-8],[SUMMARY]}` 로 갈린다 `[ArchitectPL firsthand]` |
+
+★**ⓐ·ⓑ 는 각각 독립적으로 충분하며 병치는 defense-in-depth 다. 1급은 ⓑ 다** — 규약(ⓐ)을 유일 방어로 두면 표본 저작 오류가 그대로 통과하며, 그것이 본 ADR 이 겨냥하는 *"규약 선언에 의존하는 봉합"* class 다.
+★**정직 한정(일반화 금지)** — ⓑ 의 강건성 실증은 **HGSV 1 게이트**에서다. *"`observed_line_set` 이 모든 게이트의 empty ↔ kill 을 가른다"* 로 일반화하지 않는다. 성립 **선결 = 적격 3-conjunct (a)**(단계 scoping 된 fail-marker)이며 (a) 미충족 게이트에서는 성립하지 않는다.
+★**비교 *상대* 는 여전히 분리**한다 — 도달 축 = `kill ↔ **empty**` / 적격 축 = `kill ↔ **clean**`. ②-b 가 금지한 것은 `empty` 를 **적격 축**에 쓰는 것이지 관측면 공유가 아니다. **비교 대상(무엇을 보는가) 통일 · 비교 상대(무엇과 대는가) 분리.**
 
 **②-b ★★ 이 식의 용도는 둘로 갈린다 — 하나는 유효하고 하나는 무효다 (10-게이트 회차 실측 반증)**
 
@@ -128,7 +149,8 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 **폐기 근거 (양방향 실측)**
 
 - **위양성** — 10-게이트 회차에서 **9/10 이 이 식을 통과했으나 실제 결함 검출은 2/10** 이었다. `empty` leg 은 **data-absence 경로**를 밟아 문면이 갈릴 뿐이며, 그 갈림은 *"정상 입력 vs 결함 입력"* 의 판별과 **무관**하다. 즉 이 식으로 적격을 재면 **부적격 게이트 7개가 적격으로 계상**된다.
-- **위음성** — `check_hard_gate_self_verification` 은 kill 에서 `::error::[AC-8]`(결함) · empty 에서 `::error::[AC-6]`(부재)를 내어 **두 입력을 완전히 판별**한다. 그런데 **두 leg 이 똑같이 `[SUMMARY]` 상수 footer 로 종단**하므로(`scripts/lib/check_hard_gate_self_verification.py:394` `_error("SUMMARY", …)` — `:155` 가 `::error::[{ac_id}]` 로 emit) `terminal_line` 이 **같아져 탈락**한다 `[firsthand]`. ⇒ **가장 모범적인 게이트가 이 식에서 떨어진다.**
+- **위음성** — `check_hard_gate_self_verification` 은 kill 에서 `::error::[AC-8]`(결함) · empty 에서 `::error::[AC-6]`(부재)를 내어 **두 입력을 완전히 판별**한다. 그런데 **두 leg 이 똑같이 `[SUMMARY]` 상수 footer 로 종단**하므로(`scripts/lib/check_hard_gate_self_verification.py:394` `_error("SUMMARY", …)` — `:155` 가 `::error::[{ac_id}]` 로 emit) `terminal_line` 이 **같아져 탈락**한다. ⇒ **가장 모범적인 게이트가 이 식에서 떨어진다.**
+  ★**측정 fixture 구성 병기 + 앵커 강도 정정(DR2-M1 처방 ⓒ — 구 `[firsthand]` 단독 표기는 제3자 재현 불가였다)** `[ArchitectPL firsthand 2026-08-15]`: 이 AC-8/AC-6 pair 는 **empty 구성 ②**(위 ②-c 가 배제한 *나머지 필수 입력 결손* 구성 — 구체적으로 concept-doc **부재** ∧ 대상 0건)에서 측정됐다. kill = concept-doc 에서 `presence ≠ truth` 토큰 제거(AC-8 단일 위반) ∧ 대상 0건. **rc 는 양 leg 모두 1**. ★★**본 앵커는 구성 ② 한정이며 ⓐ 가 구성 ② 를 배제한 뒤에는 보조 앵커로 강등된다** — 정본 구성 ① 에서 empty leg 종단은 `✓ … honest-degrade — enrolled=0 …`(rc=0)라 kill 과 **갈리므로** 구 식이 HGSV 를 탈락시키지 않는다. ⇒ **비교 대상 교체(`terminal_line` → `observed_line_set`)의 load-bearing 앵커는 본 항이 아니라 아래 ★ `check_living_architecture_update` 앵커**(census 라인 축 — 구성 무관)이며, **대조 상대 교체(`empty` → `clean`)의 앵커는 위 위양성**(구성 무관)이다. 두 다리는 무손상이고 본 항만 조건부로 강등된다.
 
 **★ 확정 대체 (적격/판별력 축 전용)**
 
@@ -139,7 +161,7 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 - ★**`observed_line_set` 의 정의역 = 선언 stream 위 관측 라인 전체** — `::error::[<STAGE-ID>]` **∪** `::notice::` **∪ census 라인**(`scanned-N: …` 형). `::error::` 집합으로 좁히면 안 된다: `check_living_architecture_update` 는 leg 간 `scanned-N: changed=0 structural_surface=0 derived_docs=0` ↔ `changed=2 structural_surface=1 derived_docs=1` 로 **입력 의존 관측을 내지만 그 줄은 종단 라인도 `::error::` 도 아니며**, 좁은 정의역은 이 게이트를 **판별력 보유에도 부적격으로 오분류**한다 `[ArchitectPL firsthand — 동적 2-leg]`.
 
 ★**rc 무관 3번째 앵커(⑦ 보강)** — 위 2-leg 관측은 **`::error::` 를 내고도 rc=0** 이다(meta-error leg 포함) `[ArchitectPL firsthand]`. ⑦ 이 든 2-앵커(FAIL 축 12-leg 전건 rc=1 · PASS 축 우회 mutant rc=0)에 이어 **rc 가 단독 판별자가 아님을 보이는 3번째 독립 재현**이며, 이번 앵커는 **`::error::` 관측과 rc 가 서로 어긋나는** 형태라 앞 둘과 다른 방향에서 같은 결론을 지지한다.
-- **두 식을 한 문면에서 분리 유지할 의무** — 하나로 뭉쳐 적으면 구현자가 적격 판정에 `empty` leg 을 쓰고, 그 순간 위 위양성 7 이 그대로 재현된다. **§8.QC-MECH MECH-4 와 동일 문면을 양쪽에 보유한다.**
+- **두 식을 한 문면에서 분리 유지할 의무** — 하나로 뭉쳐 적으면 구현자가 적격 판정에 `empty` leg 을 쓰고, 그 순간 위 위양성 7 이 그대로 재현된다. ★**분리되는 것은 「비교 상대」**(도달 = `empty` / 적격 = `clean`)이며 **「비교 대상」은 ②-c 로 `observed_line_set` 통일**이다. **본 항의 계약 문언 정본 = 본 ADR** 이고 §8.QC-MECH MECH-4 는 이 ID 를 cross-ref 한다(구 *"동일 문면을 양쪽에 보유한다"* 문면은 §결정 1 DR2-M3 처분으로 **철회** — 중복 저작 의무화가 divergence 채널을 재생산했다).
 
 **③ 판정기 계약은 arm-invariant 다 (역산 채널 3개를 닫는다)**
 
@@ -155,7 +177,9 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 - **`HOLLOW` ⟺** `kill.fail=0 ∧ kill.term=1 ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
 - **그 외 = `INDETERMINATE`**
 
-★**`DELIVERED` 의 정의역 = 도달 축 한정**(②-b). verdict 함수가 소비하는 `DELIVERED` 는 `term(kill) ≠ term(empty)` 로 계산한 **도달 판정**이며, **적격 판정과 같은 좌표가 아니다**. 적격(`diagnostic_line_set(kill) ≠ diagnostic_line_set(clean)`)은 **§결정 7 적격 전제**에서 **corpus 진입 전에** 판정되므로 verdict 함수의 입력이 아니다. **두 좌표를 한 변수로 합치면 ②-b 위양성 7 이 verdict 함수 내부로 이전한다.**
+★**`DELIVERED` 의 정의역 = 도달 축 한정**(②-b). verdict 함수가 소비하는 `DELIVERED` 는 **`observed_line_set(kill) ≠ observed_line_set(empty)`** 로 계산한 **도달 판정**이며, **적격 판정과 같은 좌표가 아니다**. 적격(**`observed_line_set(kill) ≠ observed_line_set(clean)`**)은 **§결정 7 적격 전제**에서 **corpus 진입 전에** 판정되므로 verdict 함수의 입력이 아니다. **두 좌표를 한 변수로 합치면 ②-b 위양성 7 이 verdict 함수 내부로 이전한다.** 두 좌표를 가르는 것은 **비교 상대**(`empty` ↔ `clean`)이지 관측면이 아니다.
+
+> ★**정정 기록(설계리뷰 DR2-M4 — 무언 정정 금지)**: 본 항의 구 문면은 적격 식을 **`diagnostic_line_set(kill) ≠ diagnostic_line_set(clean)`** 으로 적었다. 이는 정본(위 ②-b `observed_line_set`)이 **명시적으로 금지한 좁힘**(*"`::error::` 집합으로 좁히면 안 된다 — `check_living_architecture_update` 를 판별력 보유에도 부적격으로 오분류한다"*) 그 자체였고, 0-context 구현자가 이 식을 채택하면 **적격 하한이 내려가** day-1 born-RED 압력이 커진다. **`diagnostic_line_set` 은 본 ADR 의 값공간에서 폐기**하며 전 site 정본은 `observed_line_set` 이다. 이 divergence 는 §결정 1 이 *"중복 표 0"* 이라 주장했던 그 채널의 **실 발현**이며, 그 거짓 주장도 본 Tranche 에서 함께 철회됐다(DR2-M3).
 
 **⑤ INDETERMINATE 11 조건 전수 + 계상 규율**
 
@@ -452,7 +476,7 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 - **강화 방향 유지(약화 surface 0)**: 신규 required context **0** · branch-protection **8-tuple 무변경** · inter-plugin 계약 **무변경** · 신규 category **0**. ★**신규 workflow = 1**(wrapper-self-only · non-required · day-1 hard-fail) — 이를 은폐하지 않는다. required 등재 0 이므로 약화 surface 는 여전히 0.
 - **`continue-on-error` 금지** — warning-tier 는 *"required context 아님"* 이지 *"job 이 초록으로 흘러감"* 이 아니다. 도입기 무력화는 게이트를 태어날 때부터 hollow 로 만든다.
 - **`on: paths:` 금지 · `runs-on: ubuntu-latest` 리터럴 고정** — 전자는 ADR-130 required check permanent-pending 함정 상속. ★**후자의 근거는 정정됐다(InfraOp firsthand 반증)**: 구 문면은 리터럴이 *"fork 제출 셸의 호스트 실행을 구조적으로 막는다"* 고 적었으나 **거짓**이다. `pull_request` 이벤트는 workflow·코드를 **PR merge commit 에서** 취하므로(base default branch 기준은 `pull_request_target` 뿐 [source: docs.github.com — "Securely using pull_request_target"]) **fork PR 은 자기 PR 안에서 그 리터럴을 편집할 수 있다 — 리터럴은 fork 를 구속하지 못한다.** 실 격리는 다른 층이 만든다: **L1** fork PR **secrets 미전달** + `GITHUB_TOKEN` read-only [source: docs.github.com — "Managing GitHub Actions settings"] · **L2** public repo 는 `CI_RUNS_ON_LINUX_JSON` 미설정 → coalesce `["ubuntu-latest"]`(ADR-147 §결정 2) · **L3** runner group **2개 전건** `allows_public_repositories=false` ⇒ GitHub 이 거부 · **L4** first-time contributor 실행 승인 · **L5 = 리터럴 고정(최약 보조층)**. ⇒ **리터럴은 유지하되 근거를 L5 로 정정**하며, *"이것이 fork 실행을 막는다"* 는 서술을 **금지**한다. 부수: 리터럴은 repo 관행(`vars.` 형 **42 workflow**)에서의 **이탈**이므로 workflow 에 **주석 1행 declare** 의무(미declare 시 장래 일괄 정규화가 되돌린다). 선례 = 리터럴 job **110**(`css-lint.yml` `css-lint-test` · `hard-gate-self-verification-test.yml` · `selftest-execution-liveness-test.yml`) `[firsthand]`.
-- **carrier 결속(계약면 ⊥ 구현면)**: **계약면 = 본 ADR**(Phase 1) ⊥ **구현면 = CFP-2963 Phase 2 산출물**. 구현면 산출물 **9개**(sidecar manifest 1 + corpus fixture 디렉터리 1 + 5-piece chain 5 + `docs/evidence-checks-registry.yaml` warning-tier entry 1행 + `docs/selftest-execution-liveness-inventory.yaml` enroll 1행)는 Change Plan **§5 파일 단위 변경 계획에 개별 행으로 결속**되고 **§8.AC `G1-mech-corpus` 독립 설계 게이트**가 그 분모를 검사한다. 배선 상세 SSOT = internal-docs `wrapper/change-plans/cfp-2963-mclats-arc-ci-runner.md` **§8.QC-MECH**. ADR-154 §결정 8 의 *"Phase 1 = ADR + Change Plan NARRATIVE only"* **무손상**.
+- **carrier 결속(계약면 ⊥ 구현면)**: **계약면 = 본 ADR**(Phase 1) ⊥ **구현면 = CFP-2963 Phase 2 산출물**. 구현면 산출물 **10개**(sidecar manifest 1 + corpus fixture 디렉터리 1 + 5-piece chain 5 + `docs/evidence-checks-registry.yaml` warning-tier entry 1행 + `docs/selftest-execution-liveness-inventory.yaml` enroll 1행 + **`docs/hollow-gate-corpus-baseline.yaml` census baseline 1**)는 Change Plan **§5 파일 단위 변경 계획에 개별 행으로 결속**되고 **§8.AC `G1-mech-corpus` 독립 설계 게이트**가 그 분모를 검사한다. ★**정정 기록(설계리뷰 DR2-M5 — 무언 정정 금지)**: 구 표기는 **9개**였고 **§결정 5 가 확정 신설한 census baseline 파일이 열거에서 누락**돼 있었다. 그 파일은 **D-2(축별 `N < baseline` = FAIL)·D-3(비감소 ratchet)의 소비 대상 전체**이므로, 누락 상태에서는 *"구현이 이걸 안 만들면 RED 가 나는가"* 라는 §결정 10 자신의 결속 판정 기준이 **그 산출물에 대해서만 성립하지 않았다**(corpus 게이트 자신의 exit 3 조건 ⓶ 로만 사후 검출). 배선 상세 SSOT = internal-docs `wrapper/change-plans/cfp-2963-mclats-arc-ci-runner.md` **§8.QC-MECH**. ADR-154 §결정 8 의 *"Phase 1 = ADR + Change Plan NARRATIVE only"* **무손상**.
 - ★**천장 동시-변경 불변식**: 본 ADR **§결정 9** 의 정직 천장과 §8.QC-MECH **MECH-9** 의 정직 천장은 **같은 문면을 양쪽에 보유**한다 — **한쪽에서만 천장을 완화해 인용하는 것을 금지**하며 바꾸려면 **두 문서가 함께** 바뀌어야 한다. 한쪽만 완화하는 것 자체가 본 ADR 이 겨냥하는 class(*선언과 실상태의 조용한 괴리*)의 문서-축 발현이다. (분할 이관으로 normative 본체 중복은 해소됐으므로 이 불변식의 적용 범위는 **천장 문면 + 계수** 로 한정된다.)
 - ★**AC 결속의 잔여 — 요구사항 lane 회부 계류**: 신설 harness 의 self-test 는 `tests/scripts/test_check-*.sh`(셸)이고, Change Plan §8.1.1 RTM 머리말이 *"명명 테스트 열에 셸 함수·스크립트 경로를 백틱으로 적지 않는다 — 적으면 파서가 식별자로 오인해 born-missing"* 을 비협상으로 못박는다. ⇒ AC 신설·tier 판정은 **요구사항 lane 소유**이며 설계가 대행하지 않는다. **회부 종결 전까지 본 산출물군은 `ac-traceability-matrix` 정의역 밖**이다(§8.AC 회부 packet SSOT).
 - ★**mandate 편차 정직 기재**: 본 계약의 초판은 설계 lane 6 permanent deputy 중 **4 미수령** 상태에서 통합됐고, 그 결과 **회부한 축에서 실제로 P0 가 발생**했다. 1차 개정이 APIContractArchitectAgent 수령분(판별자 계약 · sidecar manifest — **실행 재현 기반**)을, 2차 개정이 **ModuleArchitectAgent**(corpus 경로·형상·dependency direction) + **InfraOperationalArchitectAgent**(운영 리스크 6-sub · §11.6 멱등)를 반영했다. 3차 개정이 **TestContractArchitectAgent**(blinded 섭동 IC · census 7축 · arm-L 타당성)를 반영했다. ⇒ ★**4 미수령 전건 수령·반영 완료 — 미수령 잔여 0.** 단 **수령 완료는 천장 해소가 아니다**(HC-1·HC-2 + U-2~U-5 존치). ★**미수령이 실제로 P0 를 낳았다는 사실은 사후에도 확증됐다** — ModuleArch 수령분이 **required 게이트 정의역 침범**(`check_ac_traceability_matrix` 가 corpus `.py` 심볼을 편입해 AC↔named-test 판정을 fail-open 시키는 경로 — Change Plan MECH-8)을, InfraOp 수령분이 §결정 10 리터럴 근거의 오류를 각각 반증했다. *"수령 전 통합" 은 회부 표기로 갈음되지 않는다.*
@@ -495,6 +519,7 @@ N/A — permanent policy (`is_transitional: false`). 단 **§결정 9 의 미확
 - [ADR-171](ADR-171-evidence-enforceable-promotion-framework.md) — warning → required 승격 evidence-gate(§결정 6 3-AND · §결정 10 증거 기한)
 - [ADR-133](ADR-133-adr-reservation-atomic-claim.md) — 번호 claim primitive(§결정 11)
 - `docs/hollow-gate-corpus-manifest.yaml` — 본 ADR §결정 8 sidecar manifest (Phase 2 산출)
+- `docs/hollow-gate-corpus-baseline.yaml` — 본 ADR §결정 5 census baseline(7축 high-water mark · `content_digest` 결박). **D-2/D-3 의 소비 대상 전체** (Phase 2 산출 — ★설계리뷰 DR2-M5 로 본 목록에 신설)
 - `docs/evidence-checks-registry.yaml` — warning-tier entry 1행 (Phase 2 산출)
 - `docs/selftest-execution-liveness-inventory.yaml` — 신설 harness self-test 1행 enroll (Phase 2 산출)
 - `docs/inter-plugin-contracts/evidence-check-registry-v1.md` — versioning 규약 cross-ref(`:197-199` SemVer · `:139` MINOR 선례)
