@@ -552,3 +552,147 @@ def test_adr147_transitional_disposition_recorded_nonvacuous():
         "ADR-147 R1~R9 처분을 9/9 비공허하게 기록한 문서가 "
         f"{ADR_ROOT} 안에 없음 (AC-15 미이행).\n" + ("\n".join(diagnostics) or "- 후보 문서 0건")
     )
+
+
+# ==================================== AC-15 부정 대조 (oracle 판별력 회귀 가드)
+#
+# ★ RTM §8.1.1 매핑 대상이 **아니다**. AC-15 의 명명 테스트 매핑은 위
+#   `test_adr147_transitional_disposition_recorded_nonvacuous` 1 심볼로 이미 충족된다
+#   (`scripts/check-ac-traceability-matrix.sh --phase 2` 실측 exit 0). 본 절은 매핑을
+#   늘리지 않고, 그 oracle 이 **선언한 판별 속성**(항별 비공허 9/9)을 고정한다.
+#
+# 왜 필요한가 (Story §5.3.2 "비공허 대조 필수 — 9항 중 1항을 제거한 fixture 에서 RED"):
+#   위 AC-15 테스트는 **실 `archive/adr/` 를 읽는 양성 leg 단독**이다. 실 문서에는
+#   R1~R9 처분이 모두 기록돼 있으므로, `_collect_r_dispositions` 가 훗날 단순
+#   presence-grep(항 번호가 파일 어딘가 있으면 OK)으로 퇴화해도 그 테스트는 계속
+#   GREEN 이다 — 선언된 속성을 붙잡아 두는 회귀 수단이 없었다.
+#   ※ 판별력이 지금 없다는 뜻이 아니다(외부 mutation 3종 kill 실측됨). 없는 것은
+#     **그 속성을 고정하는 테스트**이고, 본 절이 그 공백만 메운다.
+#
+# ★ 대조 설계의 요점 — 아래 3 변형은 **전부 문서에 `R9` 문자열을 그대로 보유한다**
+#   (행 삭제 변형조차 표 밖 서술 문장에 `R9` 를 남긴다). 따라서 presence-grep 퇴화본은
+#   3 변형을 모두 통과시키고, 헤더에서 `처분` 열 위치를 해석해 **그 항의 셀**을 읽는
+#   구조 추출본만 RED 를 낸다. 이 대조가 겨냥하는 mutant 가 정확히 그것이다.
+#
+# ★ 로직 사본 0 — 판정 코드를 재작성하지 않고 **실 oracle 함수 자신**을 호출한다
+#   (파일 상단 anti-theater 규칙: "로직 사본을 만들어 사본을 검사하지 않는다").
+#   대상 치환은 부정 대조 전용 통로인 `ADR_ROOT` 를 monkeypatch 로 임시 대체한다.
+
+# R1~R8 = 고정 배경(단일 축 변형 보장). 처분 문면은 실 문서
+# (`archive/adr/ADR-174-mclats-arc-ci-runner-topology.md` §결정 7) 형태의 축약본.
+_AC15_FIXTURE_ROWS_R1_R8: tuple[tuple[str, str, str], ...] = (
+    ("R1", "과도기 hosted 의 ADR 정합화", "**채택 — 시한부 transitional 기록**"),
+    ("R2", "Amd5 C1③④ 재정의", "**채택 — 정의역 분기**"),
+    ("R3", "C3(ㄱ) 값 공간 폐쇄 재정의", "**채택 — additive 확장**"),
+    ("R4", "Amd3 extra_hosts 대체", "**채택 — 정의역 자연 축소 기록**"),
+    ("R5", "Amd4 volume/pre-bake 이식", "**채택 — ARC 등가 재정의**"),
+    ("R6", "Amd1/Amd2 credential 재평가", "**채택 — 강화 2축 + 신규 노출 1축의 교환**"),
+    ("R7", "preinstall 소유자 재지정", "**채택 — 러너 이미지 소유로 재지정**"),
+    ("R8", "DooD 위협모델 재작성", "**채택 — ARC 위협모델로 재작성**"),
+)
+_AC15_R9_TARGET = "capacity-overflow-roster 존폐"
+_AC15_R9_VALID = "**이월 — CFP-2913 완결 후 후속 amendment 범위**"
+
+
+def _ac15_fixture_doc(*, r9_disposition: str | None) -> str:
+    """R1~R8 배경 고정 + **R9 만** 변형한 AC-15 fixture 문서를 만든다 (단일 축 대조).
+
+    r9_disposition:
+      - `str`  : R9 행을 그 처분 셀 값으로 기록 (`""` = 공백 셀, `"TBD"` = 미정 placeholder)
+      - `None` : R9 **표 행 자체를 삭제** (9항 zero-drop 위반)
+
+    ★ 어느 변형이든 표 **밖** 서술 문장이 `R9` 문자열을 보유한다 — presence-grep 미끼.
+    ★ 표 안에 빈 줄을 넣지 않는다: 빈 줄은 행 스캔을 조기 종료시켜(파서 계약)
+      "행 삭제"와 구별되지 않는 오염 변형을 만든다.
+    """
+    lines = [
+        "# ADR-147 축별 처분 (테스트 전용 fixture — 실 문서 아님)",
+        "",
+        "본 fixture 는 AC-15 oracle 의 판별력 회귀 가드 전용이다. 부수 항 R12~R15 는",
+        "AC-15 분모 밖이며, R9(capacity-overflow-roster 존폐)는 후속 amendment 로 이월한다.",
+        "★ 이 서술 문장이 표 밖에서 `R9` 문자열을 보유한다 — 표 행이 사라져도 파일 전역",
+        "  presence-grep 은 여전히 `R9` 를 찾아낸다(대조 설계상 필수인 미끼).",
+        "",
+        "| 항 | 대상 | 처분 | 근거·형태 |",
+        "|---|---|---|---|",
+    ]
+    for key, target, disposition in _AC15_FIXTURE_ROWS_R1_R8:
+        lines.append(f"| **{key}** | {target} | {disposition} | 근거 문면(고정) |")
+    if r9_disposition is not None:
+        lines.append(
+            f"| **R9** | {_AC15_R9_TARGET} | {r9_disposition} | 근거 문면(고정) |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _run_ac15_oracle(monkeypatch, tmp_path: Path, leg: str, doc_text: str) -> None:
+    """실 AC-15 oracle 함수를 fixture 문서 하나만 담은 임시 ADR 루트에 겨눠 그대로 호출.
+
+    판정 로직 재작성 0 — `test_adr147_transitional_disposition_recorded_nonvacuous` 를
+    직접 부른다. 따라서 이 대조는 **그 함수(및 그것이 쓰는 `_collect_r_dispositions`)의
+    현재 판별력**을 검사하며, 사본이 퇴화 없이 남는 위양성이 원리적으로 불가능하다.
+    """
+    root = tmp_path / f"adr-{leg}"
+    root.mkdir()
+    _write_text_lf(root / "ADR-147-amendment-fixture.md", doc_text)
+    monkeypatch.setitem(globals(), "ADR_ROOT", root)
+    test_adr147_transitional_disposition_recorded_nonvacuous()
+
+
+def test_adr147_disposition_oracle_discriminates_vacuous_records(monkeypatch, tmp_path: Path):
+    """AC-15 부정 대조: 위 AC-15 oracle 이 **공허 기록을 실제로 죽이는지** fixture 로 고정.
+
+    Story §5.3.2 요건("9항 중 1항을 제거한 fixture 에서 RED")의 in-test 이행. 같은 파일의
+    AC-8(`:311` 부근 visibility 분기 대조)·AC-13(`:369` 부근 플래그 미지정 대조)이 이미
+    갖춘 부정 대조를 AC-15 에도 대칭으로 채운다.
+
+    ★ 판별 구조 4-leg (양성 대조 동반 — "무조건 RED" 오라클과의 구별):
+      (a) 9/9 비공허 fixture = PASS
+      (b) R9 **행 삭제** = RED (zero-drop 위반) — 표 밖 `R9` 서술은 잔존
+      (c) R9 처분 셀 **공백** = RED (항 번호만 남은 공허 기록)
+      (d) R9 처분 셀 `TBD` = RED (닫힌 처분 어휘 부재 — 미정 placeholder 통과 금지)
+      (b)(c)(d) 는 모두 `R9` 문자열을 보유하므로 presence-grep 퇴화본에서는 전부 통과한다.
+
+    ★ RED 사유까지 검사한다: `pytest.raises(AssertionError)` 만으로는 "다른 이유로 죽은
+      것"(예: ADR 루트 부재)과 구별되지 않아 그 자체가 공허 대조가 된다. 진단 문면에
+      `R9` + 사유 조각이 있고, **R1~R8 은 문제로 잡히지 않음**(단일 축 변형)까지 함께
+      행사한다.
+
+    ★ 정직 천장: 본 대조가 실증하는 것은 **문서 판정 함수의 판별력**뿐이다. ADR-147 처분
+      **내용의 타당성**도, 컷오버 준비 상태(M-18/M-26/M-27/BV-1~8 등 미실행)도 아니다.
+    """
+    # (a) 양성 대조 — 9/9 비공허면 통과해야 한다 (상시-RED mutant kill).
+    _run_ac15_oracle(
+        monkeypatch, tmp_path, "positive",
+        _ac15_fixture_doc(r9_disposition=_AC15_R9_VALID),
+    )
+
+    # (b)(c)(d) 부정 대조 — 공허 기록 3형은 전부 RED.
+    negatives = (
+        ("row-dropped", None, "처분 표 행 부재"),
+        ("cell-blank", "", "처분 셀 공백"),
+        ("cell-tbd", "TBD", "닫힌 처분 어휘"),
+    )
+    for leg, r9_disposition, reason_fragment in negatives:
+        doc = _ac15_fixture_doc(r9_disposition=r9_disposition)
+
+        # 미끼 보유 확인 — 이게 깨지면 대조가 presence-grep 을 겨누지 못한다.
+        assert "R9" in doc, (
+            f"[{leg}] fixture 가 `R9` 문자열을 잃음 — presence-grep 퇴화본도 죽어버려 "
+            f"본 대조의 판별 대상이 사라진다.\n{doc}"
+        )
+
+        with pytest.raises(AssertionError) as exc_info:
+            _run_ac15_oracle(monkeypatch, tmp_path, leg, doc)
+
+        message = str(exc_info.value)
+        assert "R9" in message and reason_fragment in message, (
+            f"[{leg}] RED 이긴 하나 사유가 R9 공허 기록이 아님 — 다른 이유로 죽은 "
+            f"위양성 대조.\n기대 조각={reason_fragment!r}\n실제 진단:\n{message}"
+        )
+        collateral = [f"R{i}" for i in range(1, 9) if f"R{i}: " in message]
+        assert not collateral, (
+            f"[{leg}] R9 외 항목까지 문제로 잡힘 {collateral} — fixture 가 단일 축 변형이 "
+            f"아니거나 파서가 표를 조기 종료했다.\n진단:\n{message}"
+        )
