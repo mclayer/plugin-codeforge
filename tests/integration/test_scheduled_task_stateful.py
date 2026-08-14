@@ -147,7 +147,7 @@ class TestRestartRecovery:
         """축 격리(axis isolation): 한 축 예외 해도 다른 축 관측 살아남음.
 
         실재 계약: collect_observations 는 3축 독립 관측 모델.
-        각 축(worktree/workspace/home) 이 예외를 던져도 exit 하지 않고
+        각 축(workspace/scratch/temp) 이 예외를 던져도 exit 하지 않고
         정상 축의 관측은 반환된다(fail-safe 설계).
 
         ★ 계약 교체 사유: SUT 에 lock 기능 없음 (존재하지 않는 계약 폐지).
@@ -156,40 +156,78 @@ class TestRestartRecovery:
             scratch_root = os.path.join(tmpdir, "scratch")
             temp_root = os.path.join(tmpdir, "temp")
             worktree_root = os.path.join(tmpdir, "worktrees")
-            home_root = os.path.join(tmpdir, "home")
+            workspace_root = os.path.join(tmpdir, "workspace")
             os.makedirs(scratch_root, exist_ok=True)
             os.makedirs(temp_root, exist_ok=True)
             os.makedirs(worktree_root, exist_ok=True)
-            os.makedirs(home_root, exist_ok=True)
+            os.makedirs(workspace_root, exist_ok=True)
 
-            # Arrange: 정상 축들 생성
-            # worktree_root 는 정상, home_root 는 읽기 불가로 변경 (축 격리 테스트)
+            # Arrange: 정상 worktree 축 잔재 주입 (살아남을 축)
             os.makedirs(os.path.join(worktree_root, "normal"), exist_ok=True)
             Path(os.path.join(worktree_root, "normal", "marker.txt")).touch()
 
-            # Act: 한 축(home)이 읽기 불가여도 다른 축은 정상 관측
+            # Arrange: temp 축을 예외 발생하도록 monkeypatch
+            # (다른 정상 축들은 정상 호출 → 관측 살아남음)
+            def failing_observe_temp(*args, **kwargs):
+                """temp 관측 축을 의도적으로 실패."""
+                raise RuntimeError("temp 축 관측 의도적 실패 (축 격리 테스트)")
+
             scan_roots = [
                 {"path": worktree_root, "mode": "cross-check-only", "source": "worktrees-base"},
-                {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify", "source": "workspace-root"},
-                {"path": home_root, "mode": "discover+classify", "source": "home-direct"},
+                {"path": workspace_root, "mode": "discover+classify", "source": "workspace-root"},
+                {"path": os.path.join(tmpdir, "home"), "mode": "discover+classify", "source": "home-direct"},
             ]
 
-            try:
-                obs = sut.collect_observations(
-                    repo_root=tmpdir,
-                    scan_roots=scan_roots,
-                    scratch_root=scratch_root,
-                    temp_root=temp_root,
-                )
-            except Exception as e:
-                pytest.fail(
-                    f"축 격리 위반: 한 축 예외가 전 collect_observations 를 중단 "
-                    f"(fail-safe 설계 위반). 예외: {e}"
-                )
+            # Act: temp 축 예외 + worktree/workspace/scratch 축 정상 → 부분 관측 반환
+            with mock.patch.object(sut, "_observe_temp", side_effect=failing_observe_temp):
+                try:
+                    obs = sut.collect_observations(
+                        repo_root=tmpdir,
+                        scan_roots=scan_roots,
+                        scratch_root=scratch_root,
+                        temp_root=temp_root,
+                    )
+                except Exception as e:
+                    pytest.fail(
+                        f"축 격리 위반: workspace 축 예외가 전 collect_observations 를 중단 "
+                        f"(fail-safe 설계 위반). 예외: {e}"
+                    )
 
-            # Assert: 축 격리 성공 (결과 반환됨)
+            # Assert (ㄱ): 축 격리 성공 — 예외가 전파되지 않고 결과 반환
             assert isinstance(obs, (list, tuple)), (
-                "축 격리: collect_observations 는 항상 list|tuple 반환 (axis failure 해도)"
+                "축 격리 (ㄱ): collect_observations 는 항상 list|tuple 반환 (axis failure 해도)"
+            )
+
+            # Assert (ㄴ): 살아남은 축의 관측이 실제로 반환됨 (non-empty)
+            # ★ 핵심: temp 축이 죽어도 worktree/scratch 축의 관측은 살아남음
+            worktree_obs = [o for o in obs if o.cls == "worktree"]
+            scratch_obs = [o for o in obs if o.cls == "scratch"]
+            temp_obs = [o for o in obs if o.cls == "temp"]
+
+            # worktree 축은 정상 호출 → 주입한 "normal" 잔재 보고됨
+            assert len(worktree_obs) > 0, (
+                f"축 격리 (ㄴ-worktree): temp 실패해도 worktree 관측 살아나야 함, "
+                f"실제: {len(worktree_obs)}"
+            )
+
+            # worktree 관측에 주입한 "normal" 디렉터리명 포함 확인
+            reported_paths = [o.display_path for o in worktree_obs]
+            found_normal = any("normal" in path for path in reported_paths)
+            assert found_normal, (
+                f"축 격리 (ㄴ-worktree-content): worktree 'normal' 디렉터리 미발견, "
+                f"보고됨: {reported_paths}"
+            )
+
+            # scratch 축도 정상 호출 → 정보성 행 포함
+            assert len(scratch_obs) >= 1, (  # scratch 는 항상 최소 정보성 1행
+                f"축 격리 (ㄴ-scratch): scratch 관측 부재 (축 격리 불완전), "
+                f"실제: {len(scratch_obs)}"
+            )
+
+            # temp 축은 실패 → 관측 부재 (기대)
+            assert len(temp_obs) == 0, (
+                f"축 격리 (ㄷ-temp-excluded): temp 축 실패로 temp 관측 0 기대, "
+                f"실제: {len(temp_obs)}"
             )
 
 

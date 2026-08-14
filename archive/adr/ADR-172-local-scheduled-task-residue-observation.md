@@ -187,6 +187,28 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 
 **승격 이력 = 0건** (도입기 상태).
 
+### §결정 10 — 상속·누적 권한면 6종 (AC-4 하한 정본 전사)
+
+본 절은 Change Plan §7.3 의 전사이며 새 결정 0.
+
+스케줄 작업 세션이 상속·누적하는 권한면은 다음 6종이다. 이 테이블은 각 면의 **실효 범위**, **제한 수단**을 식별한다.
+
+| # | 면 | 실효 범위 | 제한 수단 |
+|---|---|---|---|
+| 1 | `gh` CLI 인증 | 운영자 GitHub 전 권한 | 도구층 deny 만 (scope 축소 불가) |
+| 2 | MCP `github` 서버 | `mcp__github__*` write 포함 | deny 필요. **실효 도달 범위 미확인(U10)** |
+| 3 | `~/.claude/settings.json` allow 40 | **넓히는 방향 전용** | **제한 기여 0 — lever 계상 금지** |
+| 4 | repo-local / global git config | 커밋 identity | folder 설정 의존 |
+| 5 | **`additionalDirectories`** | **PRIVATE repo + live 트레이딩 20+ repo 를 무프롬프트 개방** | **미완화** |
+| 6 | **태스크별 저장 승인 — "Always allowed" (상속형 아닌 누적형)** | **미측정.** 1회 `always allow` 가 그 태스크의 이후 전 run 에 영구 적용되며 승인 도구 집합이 시간에 따라 단조 확대된다 | 태스크 상세 페이지의 review·revoke("Always allowed" 패널). **회수 입도 미확인(U11)** |
+
+**★ 완결성 미보증 declare**: 이 열거는 닫힌 집합이 아니다. 미확인 권한면이 새로 발견되면 본 표에 편입되어야 한다. 신규 면 발견 시 해당 §결정 amendment 와 함께 테스트 AC-4 의 검사 대상을 확대해야 한다.
+
+**근거**:
+- 1–4번 면: ADR-172 §결정 4 기존 기술 (host setting · git config)
+- 5번 면: 로컬 스케줄 작업의 고유 권한 위험
+- 6번 면: code.claude.com/docs/en/desktop-scheduled-tasks — "Permissions for scheduled tasks" / "Manage scheduled tasks" (2026-08-13 실측)
+
 **미확인 1건 (정직 기재)**: (나)·(다)가 **진행 중인 run** 을 중단시키는지는 **확인 불가**다 ⇒ "즉시 정지된다" 고 쓰지 않는다. 진행 중 run 에 대한 정지는 **정지 플래그 판독 시점**에 의존한다.
 
 ## 결과

@@ -405,54 +405,59 @@ class TestAC4AuthorityFacets:
         """repo 자산에서 권한면 6종 열거표 presence 검증.
 
         self-referential 자기충족 동어반복(test 안에서 dict 만들기) 대신
-        repo 자산(ADR-172 또는 Change Plan §13)에서 6종 열거표를 읽음.
+        repo 자산(ADR-172 §결정 10)에서 6종 열거표를 읽음.
+
+        6종 = gh CLI · MCP github · settings.json · git config · additionalDirectories · 태스크별 저장 승인
         """
         # ADR-172 권한면 절 찾기
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
-        if not adr_path.exists():
-            pytest.fail("ADR-172 부재 (AC-4 검사 정의역 필수)")
+        assert adr_path.exists(), "ADR-172 부재 (AC-4 검사 정의역 필수)"
 
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # §결정 4 권한면 절 찾기
-        decision_4_idx = content.find("### §결정 4")
-        if decision_4_idx == -1:
-            pytest.skip(
-                "AC-4: ADR-172 에 권한면 열거표 §결정 4 없음 "
-                "(design phase 산출물 부재 — Change Plan §13 참고)"
-            )
+        # §결정 10 권한면 절 찾기 (새로 추가된 절)
+        decision_10_idx = content.find("### §결정 10")
+        assert decision_10_idx != -1, (
+            "AC-4: ADR-172 §결정 10 부재 (권한면 6종 열거표 정본 필수)"
+        )
 
-        decision_4_section = content[decision_4_idx:decision_4_idx+5000]
+        # §결정 10 섹션 추출 (다음 섹션까지)
+        decision_10_end = content.find("### ", decision_10_idx + 4)
+        decision_10_section = content[decision_10_idx:decision_10_end if decision_10_end != -1 else None]
 
-        # 6종 권한면 어휘 확인 (순서 무관)
+        # 6종 권한면 검사 — 식별 가능한 고유 리터럴 (한글 키워드 OR 매칭 폐지)
+        # 각 면은 [면#, 검사대상 리터럴 리스트] 형식
         facets_to_check = [
-            ("basePermissions", "기본"),
-            ("additionalTools", "도구"),
-            ("resourceAccess", "자원"),
-            ("dataAccess", "데이터"),
-            ("externalServices", "외부"),
-            ("sessionState", "세션"),
+            ("1", ["gh", "CLI", "인증"]),        # 1번 면: gh CLI 인증
+            ("2", ["MCP", "github", "서버"]),      # 2번 면: MCP `github` 서버
+            ("3", ["`~/.claude/settings.json`"]),  # 3번 면: `~/.claude/settings.json`
+            ("4", ["git config", "커밋 identity"]),  # 4번 면: git config
+            ("5", ["`additionalDirectories`"]),   # 5번 면: `additionalDirectories` 핵심
+            ("6", ["태스크별 저장 승인", "Always allowed"]),  # 6번 면: 태스크별 저장 승인
         ]
 
         found_facets = []
-        for facet_name, kr_keyword in facets_to_check:
-            # 영어 형식 또는 한글 키워드 중 하나라도 있으면 인정
-            if facet_name in decision_4_section or kr_keyword in decision_4_section:
-                found_facets.append(facet_name)
+        missing_facets = []
+        for facet_num, facet_literals in facets_to_check:
+            # 각 면마다 최소 1개 리터럴이 존재하면 인정
+            if any(lit in decision_10_section for lit in facet_literals):
+                found_facets.append(facet_num)
+            else:
+                missing_facets.append((facet_num, facet_literals))
 
-        # 최소 6종 모두 존재 여부 검증 (complete enumeration)
-        if len(found_facets) < 6:
-            missing = [f for f, _ in facets_to_check if f not in found_facets]
-            # 설계 산출물 부재: 변경 불가 상황
-            pytest.skip(
-                f"AC-4: 설계 산출물 부재 — 권한면 열거표 6종 미설정 "
-                f"({len(missing)}건 누락: {missing}). "
-                f"Change Plan §13 권한면 section 설계 필요."
-            )
+        # Assert (ㄱ): 6종 모두 존재 (완전 열거)
+        assert len(found_facets) == 6, (
+            f"AC-4: 권한면 6종 완결성 미충족. 발견: {len(found_facets)}건/6, "
+            f"미발견: {[(n, lits) for n, lits in missing_facets]}"
+        )
 
-        # 설계 산출물 존재 시 완결성 확인
-        assert len(found_facets) >= 6, f"AC-4: 6종 권한면 완결성 미충족 ({found_facets})"
+        # Assert (ㄴ): 완결성 미보증 declare 존재 (AD-172 §결정 10 정책)
+        declare_keywords = ["★ 완결성 미보증", "닫힌 집합이 아니다", "미확인 권한면"]
+        has_declare = any(kw in decision_10_section for kw in declare_keywords)
+        assert has_declare, (
+            "AC-4: 완결성 미보증 declare 부재 (ADR-172 §결정 10 정책 위반)"
+        )
 
 
 class TestAC5PromotionZero:
