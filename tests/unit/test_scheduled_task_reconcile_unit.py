@@ -15,6 +15,7 @@
 #   - 빈 잔재 0건 → 무발화 (render_report 의 if kept)
 #   - 거대 잔재 절단
 
+import os
 import pytest
 from pathlib import Path
 from unittest import mock
@@ -449,6 +450,128 @@ class TestVerdictLexiconCarrier:
         filtered = sut.filter_verdict_lines(output)
         # OK 어휘로 줄 제거
         assert filtered.strip() == "", f"OK 줄 제거 기대, 실제: {filtered!r}"
+
+
+class TestHeartbeatTempFileIsWriterUnique:
+    """`write_heartbeat` 의 **임시파일 이름**을 정의역으로 삼는 오라클 (iter6 F-CR6-03).
+
+    ★ 왜 새로 필요했나 — 기존 동시성 oracle ④(`..._heartbeat_atomic_write`)는 이 축을
+      **재지 못한다**. 그 오라클이 죽는 것은 `os.replace` 를 지웠을 때뿐이고, 임시명을
+      공유(`"%s.tmp" % target`)로 되돌려도 **현행판·수정판 둘 다 GREEN** 이다. 즉
+      "동시 writer 전원이 같은 임시파일을 연다" 는 결함이 스위트 아래에서 생존했다.
+      실측(로컬 Windows, 폴러 0 = 판독 경합 배제): W=8·4000 write 에서 기록 실패
+      3425건 → 611건, W=4·600 write 에서 247건 → 48건.
+
+    ★ 여기서 재는 것은 **이름의 고유성**이지 동시성 자체가 아니다(정의역 한정).
+      경쟁 스케줄에 의존하지 않으므로 결정론이고, 그래서 CI 에서 flaky 하지 않다.
+      cross-process 고유성은 `mkstemp` 의 O_EXCL 성질에서 따라오지만 **본 테스트가
+      그것을 실행해 보이지는 않는다** — 그 축은 위 실측이 근거다.
+
+    mutant kill: `tempfile.mkstemp(...)` → `tmp = "%s.tmp" % target` 복원
+      ⇒ leg A(호출 간 동일 경로) · leg B(고정 이름 파일 소멸) **동시 RED**.
+    """
+
+    def _spy_replace(self, recorded):
+        real = os.replace
+
+        def _spy(src, dst):
+            recorded.append(src)
+            return real(src, dst)
+        return _spy
+
+    def test_temp_path_differs_per_call(self, tmp_path):
+        """leg A: 연속 두 호출이 **서로 다른** 임시 경로를 쓴다 (target 자신도 아니다)."""
+        target = str(tmp_path / "state" / "heartbeat.epoch")
+        recorded = []
+        with mock.patch.object(sut.os, "replace", side_effect=self._spy_replace(recorded)):
+            sut.write_heartbeat(now=1700000001, path=target)
+            sut.write_heartbeat(now=1700000002, path=target)
+
+        assert len(recorded) == 2, f"os.replace 2회 기대(write 경로 미도달?): {recorded}"
+        assert len(set(recorded)) == 2, (
+            f"임시 경로가 호출 간 동일하다 — 동시 writer 전원이 같은 파일을 연다: {recorded}"
+        )
+        for src in recorded:
+            assert src != target, f"임시 경로가 target 과 같다: {src!r}"
+            assert os.path.dirname(src) == os.path.dirname(target), (
+                f"임시파일이 target 과 다른 디렉터리다 — os.replace 가 cross-device 가 된다: {src!r}"
+            )
+        # 성공 경로에서는 임시파일이 소비된다 (자기 잔재 0)
+        assert sorted(p.name for p in (tmp_path / "state").iterdir()) == ["heartbeat.epoch"], (
+            f"임시파일 잔재: {sorted(p.name for p in (tmp_path / 'state').iterdir())}"
+        )
+        assert (tmp_path / "state" / "heartbeat.epoch").read_text(
+            encoding="utf-8").strip() == "1700000002"
+
+    def test_fixed_shared_temp_name_is_never_touched(self, tmp_path):
+        """leg B: `<target>.tmp` **고정 이름** 파일이 write 후에도 무손상.
+
+        구판은 정확히 이 이름을 열어 잘라 썼고(`open(tmp, "w")`) 성공하면 rename 으로
+        **없애 버렸다**. 그래서 이 leg 은 "다른 writer 의 진행 중 파일을 건드리지
+        않는다" 를 파일 하나로 직접 관측한다.
+        """
+        state = tmp_path / "state"
+        state.mkdir()
+        target = state / "heartbeat.epoch"
+        shared = state / "heartbeat.epoch.tmp"          # 구판이 쓰던 고정 이름
+        shared.write_text("다른 writer 가 쓰는 중\n", encoding="utf-8", newline="\n")
+
+        sut.write_heartbeat(now=1700000003, path=str(target))
+
+        assert shared.exists(), (
+            "고정 이름 임시파일이 사라졌다 — 구판처럼 공유 임시명을 쓰고 있다"
+        )
+        assert shared.read_text(encoding="utf-8") == "다른 writer 가 쓰는 중\n", (
+            f"고정 이름 임시파일이 덮여 썼다: {shared.read_text(encoding='utf-8')!r}"
+        )
+        assert target.read_text(encoding="utf-8").strip() == "1700000003"
+
+
+class TestWarnFieldSeparation:
+    """`_warn` 의 **정적 사실 문구 생존**을 정의역으로 삼는 오라클 (iter6 F-CR6-06).
+
+    ★ 결함 형상: 한 문자열로 합쳐 넘기면 `_normalize_paths` 의 fail-closed 가 **필드
+      통째**를 접어 사실 문구까지 지운다. 실측(8워커): 경고 3694줄 전부가
+      `[scheduled-task] <미정규화-경로-제거>` 였고 "무엇이 왜 실패했는지" 가 0 이었다.
+
+    ★ 정의역 한정: 이 오라클은 **마스킹 정책을 약화하지 않았음**도 같이 잰다 —
+      가변 부분은 여전히 접힌다(leg A 두 번째 단언). 즉 "접기를 껐다" 가 아니라
+      "접는 단위를 필드로 좁혔다" 를 재는 것이다.
+
+    mutant kill: `_warn` 를 단일 필드(`_safe_text(msg + ": " + detail)`)로 되돌리기
+      ⇒ leg A RED.
+    """
+
+    # 사용자명 무관 결정론 트리거: 2단이 소비하지 못하는 `/home/`(뒤 세그먼트 없음)를
+    #   3단 후 잔여 가드가 잡아 **필드 전체**를 접는다.
+    _COLLAPSING = "[Errno 13] denied: /srv/home/"
+
+    def test_static_prefix_survives_when_detail_collapses(self, capsys):
+        """leg A: detail 이 통째로 접혀도 정적 사실 문구는 남는다."""
+        sut._warn("heartbeat 기록 실패 (non-blocking)", self._COLLAPSING)
+        err = capsys.readouterr().err
+
+        assert "heartbeat 기록 실패 (non-blocking)" in err, (
+            f"정적 사실 문구가 사라졌다 — 진단 신호 0: {err!r}"
+        )
+        assert sut._MASK_UNNORMALIZED in err, (
+            f"가변 부분이 접히지 않았다 — 마스킹 정책이 약화됐다: {err!r}"
+        )
+        assert "/srv/home/" not in err, f"미정규화 경로가 그대로 실렸다: {err!r}"
+
+    def test_single_field_form_erases_prefix(self, capsys):
+        """leg B (**대조군**): 같은 내용을 한 필드로 넘기면 사실 문구가 사라진다.
+
+        결함이 실재했음을 같은 프로세스에서 보여 주는 앵커다 — leg A 의 GREEN 이
+        "원래 안 지워졌다" 가 아니라 "필드를 나눠서 살아남았다" 임을 귀속시킨다.
+        """
+        sut._warn("heartbeat 기록 실패 (non-blocking): " + self._COLLAPSING)
+        err = capsys.readouterr().err
+
+        assert "heartbeat 기록 실패" not in err, (
+            f"대조군 전제 붕괴: 단일 필드인데 문구가 살아남았다 — leg A 가 공허해진다: {err!r}"
+        )
+        assert sut._MASK_UNNORMALIZED in err, f"대조군 전제 붕괴: 접힘이 없다: {err!r}"
 
 
 if __name__ == "__main__":

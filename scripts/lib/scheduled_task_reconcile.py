@@ -359,9 +359,25 @@ def _safe_text(s):
     return _scrub_verdict_tokens(_normalize_paths(base.sanitize(_scrub_verdict_tokens(s))))
 
 
-def _warn(msg):
-    """advisory stderr 보고 (non-blocking). 본문과 동일 정규화 통과 — INV-E."""
-    print("[%s] %s" % (SCRIPT_NAME, _safe_text(msg)), file=sys.stderr)
+def _warn(msg, detail=None):
+    """advisory stderr 보고 (non-blocking). 본문과 동일 정규화 통과 — INV-E.
+
+    ★ 두 인자를 **각각 따로** `_safe_text` 에 통과시킨다 (구현리뷰 iter6 F-CR6-06).
+      한 문자열로 합쳐 넘기면 `_normalize_paths` 의 fail-closed 가 **필드 통째**를
+      `<미정규화-경로-제거>` 로 접기 때문에, 가변 경로 한 조각이 정적 사실 문구까지
+      같이 지운다 — 실측: 8워커 실행에서 경고 3694줄이 전부 `[scheduled-task]
+      <미정규화-경로-제거>` 였고, "heartbeat 기록 실패" 라는 **사실도 사유도** 남지
+      않았다(하필 그 실패가 F-CR6-03 진단의 유일 신호였다).
+      필드를 나누면 경로 없는 `msg` 는 정규화를 그대로 통과하고 `detail` 만 접힌다.
+
+    ★ INV-E 는 약화되지 않는다 — **두 필드 모두** 어휘 스크럽·경로 정규화를 통과한다.
+      `msg` 를 마스킹 면제하는 것이 아니라 **별도 필드로 재는** 것뿐이다. 따라서
+      `msg` 에 경로를 넣으면 여전히 통째로 접힌다(호출부는 정적 문구만 넣는다).
+    """
+    line = "[%s] %s" % (SCRIPT_NAME, _safe_text(msg))
+    if detail is not None:
+        line = "%s: %s" % (line, _safe_text(detail))
+    print(line, file=sys.stderr)
 
 
 def _emit_done(observed, new, posted, halted):
@@ -625,8 +641,10 @@ def collect_observations(repo_root=None, scan_roots=None, scratch_root=None,
         try:
             collected.extend(fn() or [])
         except Exception as e:   # noqa: BLE001 — advisory, 축 격리
-            _warn("관측 축 실패 (non-blocking, axis=%s): %s"
-                  % (name, base.strip_control(str(e))[:160]))
+            # 정적 사실 문구 + axis(폐쇄 식별자)는 msg, 예외 원문은 detail —
+            #   예외에 경로가 섞여도 "어느 축이 실패했다" 는 사실은 남는다(F-CR6-06).
+            _warn("관측 축 실패 (non-blocking, axis=%s)" % name,
+                  base.strip_control(str(e))[:160])
 
     seen = set()
     unique = []
@@ -734,7 +752,22 @@ def post_report(channel, body, gh=None) -> bool:
 # ═══════════════════════════════ heartbeat ═══════════════════════════════════════
 def write_heartbeat(now=None, path=None) -> None:
     """★ 기록 조건 = **`collect_observations()` 가 실제로 호출·반환된 종료 경로**에서만 호출.
-    원자적 write(임시파일 → os.replace).
+
+    ── write 가 보장하는 것 / 보장하지 않는 것 (구현리뷰 iter6 F-CR6-03 로 축소) ──────
+    보장 O:
+      · **판독자가 보는 파일은 항상 완결된 값** — 임시파일에 전량 기록 후 `os.replace`
+        (같은 디렉터리 rename). 부분 기록 상태가 target 이름으로 노출되지 않는다.
+      · **동시 writer 간 임시파일 충돌 0** — 임시명을 `tempfile.mkstemp` 로 **호출마다
+        고유**하게 딴다. 구판은 `"%s.tmp" % target` 라 대상 경로만으로 결정됐고, 그래서
+        동시 writer 전원이 **같은 임시파일**을 열어 서로의 기록을 덮었다(실측: 8워커
+        4000 write 중 3694건이 OSError 로 실패, W=4·폴러 0 에서도 600 중 247건 실패).
+    보장 X (over-claim 금지):
+      · **write 성공 자체는 보장하지 않는다.** Windows 에서 판독 핸들이 열려 있으면
+        `os.replace` 가 여전히 실패할 수 있고, 그 경우 예외를 삼키고 **이전 값을 유지**한다
+        (advisory 계약 — 호출자를 막지 않는다). 즉 "원자적" 은 *일단 바뀌면 통째로
+        바뀐다* 는 뜻이지 *반드시 바뀐다* 는 뜻이 아니다.
+      · mkstemp 의 고유성은 **같은 디렉터리 안**에서 성립한다(O_EXCL). 대상 디렉터리를
+        여러 호스트가 공유하는 형상은 정의역 밖이다.
 
     ★ 조건이 "정상 종료" 가 아니라 "관측을 실제로 돌았는가" 인 이유 (load-bearing):
       heartbeat 는 **관측자 생존 신호**다. 스캐너를 한 번도 부르지 않고 끝난 실행이
@@ -753,18 +786,22 @@ def write_heartbeat(now=None, path=None) -> None:
       기존과 동일하다."""
     target = path or (os.environ.get(ENV_HEARTBEAT_FILE) or "").strip() or HEARTBEAT_FILE
     n = base.now_epoch() if now is None else int(now)
-    tmp = "%s.tmp" % target
+    tmp = None
     try:
         parent = os.path.dirname(target)
         if parent:
             os.makedirs(parent, exist_ok=True)
-        with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        # ★ 임시명은 **writer 고유** — `dir` 를 target 과 같은 디렉터리로 고정해야
+        #   `os.replace` 가 같은 파일시스템 안 rename 으로 성립한다(EXDEV 회피).
+        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(target) + ".",
+                                   suffix=".tmp", dir=parent or ".")
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
             fh.write("%d\n" % n)
         os.replace(tmp, target)
     except OSError as e:
-        _warn("heartbeat 기록 실패 (non-blocking): %s" % base.strip_control(str(e))[:120])
+        _warn("heartbeat 기록 실패 (non-blocking)", base.strip_control(str(e))[:120])
         try:
-            if os.path.exists(tmp):
+            if tmp and os.path.exists(tmp):
                 os.unlink(tmp)     # 자기 잔재 0 (임시파일 회수)
         except OSError:
             pass
@@ -888,7 +925,7 @@ def main(argv=None) -> int:
         # (scratch-ttl GAP3 선례 — argparse exit(2) 가 fail-open 불변식을 깨지 않게).
         return 0
     except Exception as e:   # noqa: BLE001 — 어떤 실패도 DONE 마커 + exit 0
-        _warn("최상위 예외 (non-blocking): %s" % base.strip_control(str(e))[:160])
+        _warn("최상위 예외 (non-blocking)", base.strip_control(str(e))[:160])
         _emit_done(0, 0, 0, 0)
     return 0
 
