@@ -15,6 +15,7 @@
 | 호스트 | Intel i9-9900K / 논리 코어 16 / 프로세스 수 473 |
 | Defender 실시간 보호 | **ON** (`DisableRealtimeMonitoring=False` 실측) — S1 baseline 측정 창(OFF 정황)과 상이 |
 | 동시 세션 | 측정 전용 창 (외부 claude 프로세스 0 실측) |
+| 부하 스냅샷 (CPU) | 부하 대리치 = 위 호스트 행의 프로세스 수 473 · 외부 claude 프로세스 0 · 전용 창 — **CPU 사용률(%) 는 본 창에서 미수집** (미기록을 수치로 대체하지 않는다) |
 | bash / python | 5.2.37(1) / CPython 3.14.4 |
 
 **AC-17 규율 적용 상태**: 본 Plane A 는 repo 트리 직접 실행이므로 플러그인 캐시 신선도와 무관(캐시 미개입).
@@ -30,6 +31,13 @@
 - 원장 오염 격리: arm 별 `CLAUDE_PROJECT_DIR` sandbox 분리 · bypass env 전부 unset · warmup 2회 폐기.
 - **음성 대조군 내장**: 이번 Story 가 건드리지 않은 훅 3종(cross-repo-gh-safety / dev-process-capture 2종)이
   Δ≈0 을 보여야 측정계가 신뢰 가능 — 아래 표에서 충족 확인.
+- **측정 방법 라벨 (AC-14/AC-6)**: **도구** = `tests/perf/paired-ab.py` · **표본** = 대상당 n 30 쌍
+  (arm 별 warmup 2회는 측정에서 폐기) · **비교 지표** = 쌍차 median · 쌍차 p90 · p90 델타
+  (단위 ms — csv 열 `diff_median` / `diff_p90` / `p90_delta`) · **계수 규칙** = §4 exec census
+  계수 규칙(baseline 규칙 + 정정 규칙 병기).
+- **wall-clock(실지연) 선언 (AC-5)**: 기록된 소요(ms)는 전부 **실지연(wall-clock)** 이다 —
+  `time.perf_counter()` 기반 벽시계 경과라 프로세스 기동 비용과 **직렬화 대기**를 포함하며 CPU time 이 아니다.
+  체인 wall 은 7종 **순차** 1회 통과 경과다.
 
 ## 3. Plane A 결과 (before `561da632d` → after `b71c0c04c`, n=30 쌍)
 
@@ -147,3 +155,10 @@ S10 은 fork 1개씩 제거 — 양 방향 모두 감소. 증가 site 0.
    본 리포트의 판정은 전부 **동일 창 paired** 수치로만 수행했다.
 3. exec census 계수 규칙 불일치(§4) — 설계 회부.
 4. 병렬/순차 실행 모순(문서 vs 관측)은 본 리포트 범위 밖 (§8.8 판별 실험 소관). 체인 wall 은 순차 측정치.
+
+**조건부 수치·비교쌍 유효성 선언**
+
+- **−26.4% = Defender ON 조건부 수치** — 위 2번의 귀결이다. Defender OFF 창(S1 baseline)의 수치와
+  직접 비교 금지이며, 이 값은 Defender ON 조건에서만 의미를 갖는다.
+- **비교쌍 = 동일 창·동일 환경값에서만 유효** — 본 리포트의 모든 판정은 동일 창 안에서 인접 실행한
+  paired(ABAB) 수치로만 수행했다. 창이 다르거나 환경값(Defender·부하)이 다른 쌍의 비교는 무효다.
