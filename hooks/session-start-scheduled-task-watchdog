@@ -7,18 +7,46 @@
 # 동작:
 #   - 스케줄 작업(별도 CLI)이 매일 1회 기동해 heartbeat 파일을 남긴다.
 #   - 본 hook 은 claudecode 세션 시작 시 그 heartbeat 를 판독해 경과를 측정한다.
-#   - 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정):
-#       heartbeat 파일 부재 = 스케줄 작업 **미채택** = 정상 상태 → 무발화.
-#       내용 파싱불능(invalid) 또는 age > threshold(stale) → 사실 1줄만 stderr 발화.
-#     본 hook 은 전 consumer 세션에 등록되므로, 부재를 사망으로 읽으면 미채택 환경
-#     전체가 매 세션 1줄을 받는다 — 그것은 관측 대상의 **부재**를 관측의 **실패**로
-#     오분류하는 것이다. "채택했는데 죽었다" 는 stale/invalid 분기가 이미 담당한다.
+#   - 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정).
+#     본 hook 은 전 consumer 세션에 등록되므로, heartbeat 부재를 무조건 사망으로 읽으면
+#     미채택 환경 전체가 매 세션 1줄을 받는다 — 관측 **대상의 부재**를 관측의 **실패**로
+#     오분류하는 것이다.
+#
+#   - heartbeat 부재는 **채택 표식으로 2분기**한다 (Orchestrator 지시 1 — 탐지 손실 0):
+#       (ㄱ) 표식 **부재** + heartbeat 부재 → **미채택 = 정상 침묵**, 무발화.
+#       (ㄴ) 표식 **존재** + heartbeat 부재 → **"채택했는데 한 번도 안 돌았다" = 실 이상**,
+#            사실 1줄 발화(`last_run_epoch=absent`).
+#     ★ 무조건 침묵으로 두면 (ㄴ) class 가 구조적 무음이 되어 **false-negative 를 하나
+#       늘린다**. 표식 판별자가 그 손실을 되돌린다 — 침묵은 미채택에만 적용된다.
+#   - 내용 파싱불능(invalid) 또는 age > threshold(stale) → 사실 1줄 발화.
+#     (heartbeat 가 존재한다 = 최소 1회 돌았다 = 채택했다 ⇒ 표식 검사 불요.)
 #   - 그 외(heartbeat 신선) 무발화.
 #   - 어떤 경우든 조용히 종료(부수효과 0, 판독만).
 #
-# 구조적 무음 (선언 — 은폐 금지):
-#   "채택했으나 1회도 실행되지 않음" class 는 heartbeat 부재만으로 판별 불가 —
-#   **채택 표식**이 유일 근거이며 표식 부재 시 구조적 무음이다.
+# 채택 표식 (신규 파일 0건 — **기존 산물**을 표식으로 쓴다):
+#   `~/.claude/scheduled-tasks/**` 안에 우리 CLI 를 지목하는 태스크 정의가 있으면 채택.
+#     · 이 디렉터리는 스케줄 작업을 저장하면 **반드시 생기는 앱 산물**이다 — 우리가 만드는
+#       파일이 아니다(ADR-172 "관련 파일": `~/.claude/scheduled-tasks/<task-name>/SKILL.md`,
+#       repo 밖 user-level). 신규 플래그·신규 파일 0건.
+#     · **scratch 밖**이라 codeforge-scratch TTL purge 대상이 아니다(§결정 6 이 F2 를
+#       scratch 밖에 둔 것과 같은 이유).
+#     · 판별자를 디렉터리 **존재**가 아니라 **sentinel 내용**으로 둔다 — 운영자가 우리와
+#       무관한 다른 스케줄 작업만 갖고 있을 때 오탐하지 않기 위해서다. sentinel 은
+#       ADR-172 §결정 2 박제 프롬프트가 지목하는 우리 CLI 모듈명이다.
+#
+# 정직 천장 (탐지 손실 0 의 정의역 — 은폐 금지):
+#   "탐지 손실 0" 은 **표식이 관측 가능한 정의역 안에서만** 성립한다. 다음은 잔여다.
+#     (i)  벤더가 `~/.claude/scheduled-tasks` 를 rename·이전하면 표식이 영원히 부재가 되어
+#          (ㄴ) class 가 조용히 구조적 무음으로 되돌아간다(ADR-172 결과 9 의 vacuous-pass
+#          class — 이름·경로 결박 검사의 알려진 성질).
+#     (ii) 운영자가 프롬프트를 바꿔 써 sentinel 이 사라지면 같은 결과가 된다.
+#     (iii) 앱이 태스크 정의를 파일이 아닌 형태로 보관하거나 다른 HOME 에 두면 안 보인다.
+#   세 경우 모두 **침묵(fail-safe) 방향**이며 거짓 발화를 만들지는 않는다.
+#
+# 자원 안전 (ADR-168 §결정 16 — 무증거 안전성 단정 금지):
+#   표식 탐색은 `-maxdepth 3` · 최대 200 파일 · 리터럴 grep 으로 **작업량을 bound** 한다
+#   (정규식 backtracking 없음 — 고정 문자열). 이는 **bounded degradation** 이지
+#   "임의 입력 무해" 단정이 아니다. 회귀 가드 = 아래 테스트 파일의 6 케이스.
 #
 # Bypass:
 #   BYPASS_SCHEDULED_TASK_WATCHDOG=1 → 즉시 audit 1줄 + 종료
@@ -42,6 +70,26 @@ THRESHOLD_SECONDS="${SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS:-172800}"
 
 # 임계값이 숫자가 아니면 기본값 적용
 [[ "$THRESHOLD_SECONDS" =~ ^[0-9]+$ ]] || THRESHOLD_SECONDS=172800
+
+# 채택 표식 — 앱이 만드는 태스크 정의 (신규 파일 0건, scratch 밖). 위 헤더 참조.
+TASK_DEF_ROOT="${HOME:-/tmp}/.claude/scheduled-tasks"
+ADOPTION_SENTINEL="scheduled_task_reconcile"
+ADOPTION_MAX_FILES=200
+ADOPTION_MAX_DEPTH=3
+
+_adoption_marker_present() {
+  [[ -d "$TASK_DEF_ROOT" ]] || return 1
+  local f
+  # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep.
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    if grep -qsF -- "$ADOPTION_SENTINEL" "$f" 2>/dev/null; then
+      return 0
+    fi
+  done < <(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f 2>/dev/null \
+             | head -n "$ADOPTION_MAX_FILES")
+  return 1
+}
 
 # ── heartbeat 판독 ──
 _now() { date +%s 2>/dev/null || echo ""; }
@@ -75,10 +123,14 @@ fi
 should_report=false
 
 if [[ "$last_epoch" == "absent" ]]; then
-  # 파일 부재 = **미채택** → 무발화 (발화 정의역 = 채택자 한정, F-CR5-06).
-  # ★ "채택했으나 1회도 실행되지 않음" class 는 heartbeat 부재만으로 판별 불가 —
-  #   채택 표식이 유일 근거이며 표식 부재 시 구조적 무음이다.
-  should_report=false
+  # heartbeat 부재를 **채택 표식으로 2분기** (Orchestrator 지시 1 — 탐지 손실 0).
+  #   표식 부재 → 미채택 = 정상 침묵 / 표식 존재 → "채택했는데 한 번도 안 돌았다" = 실 이상.
+  # ★ 무조건 침묵은 후자를 구조적 무음으로 만들어 false-negative 를 하나 늘린다.
+  if _adoption_marker_present; then
+    should_report=true
+  else
+    should_report=false
+  fi
 elif [[ "$last_epoch" == "invalid" ]]; then
   # 파싱불능 → 보고
   should_report=true

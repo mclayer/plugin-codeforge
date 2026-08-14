@@ -5,24 +5,35 @@
 # 대상 SUT: hooks/session-start-scheduled-task-watchdog (bash, SessionStart hook)
 #
 # 계약 5 케이스 (구현리뷰 iter2 F-6 — ArchitectPL 이 §8.1 커버리지 정의역 결손으로 판정):
-#   ① absent   (heartbeat 파일 부재 = **미채택**) → 발화 **0**  (F-CR5-06 판정 반영)
-#   ② invalid  (정수 파싱 불능 내용)         → 발화 1줄
-#   ③ stale    (age > threshold, 기본 172800) → 발화 1줄
-#   ④ fresh    (age <= threshold)           → 발화 **0**  ← 대조군(비공허성의 핵심)
-#   ⑤ bypass   (BYPASS_SCHEDULED_TASK_WATCHDOG=1) → audit 1줄 + 판독 미수행
+#   ①a absent + 채택 표식 **부재** (미채택)   → 발화 **0**
+#   ①b absent + 채택 표식 **존재** (채택했는데 한 번도 안 돎) → 발화 1줄
+#   ②  invalid  (정수 파싱 불능 내용)         → 발화 1줄
+#   ③  stale    (age > threshold, 기본 172800) → 발화 1줄
+#   ④  fresh    (age <= threshold)           → 발화 **0**  ← 대조군(비공허성의 핵심)
+#   ⑤  bypass   (BYPASS_SCHEDULED_TASK_WATCHDOG=1) → audit 1줄 + 판독 미수행
 #   공통: exit 0 (SessionStart hook 이 세션을 죽이지 않는다)
 #
 # ★ 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정):
-#   본 hook 은 전 consumer 세션에 등록되므로 `absent → 발화` 는 **미채택 환경 전체**가
-#   매 세션 1줄을 받는다는 뜻이었다. 미채택 환경의 heartbeat 부재는 사망이 아니라
-#   정상이며, 그것을 사망 신호로 읽는 것은 관측 **대상의 부재**를 관측의 **실패**로
-#   오분류하는 것이다. "채택했는데 죽었다" 는 ②③ 이 이미 담당한다.
-#   ☞ 대가(구조적 무음): "채택했으나 1회도 실행되지 않음" class 는 heartbeat 부재만으로
-#     판별 불가다 — 채택 표식이 유일 근거이며 표식 부재 시 무음이다(hook 주석에도 기재).
+#   본 hook 은 전 consumer 세션에 등록되므로 `absent → 무조건 발화` 는 **미채택 환경
+#   전체**가 매 세션 1줄을 받는다는 뜻이었다. 미채택 환경의 heartbeat 부재는 사망이
+#   아니라 정상이며, 그것을 사망 신호로 읽는 것은 관측 **대상의 부재**를 관측의
+#   **실패**로 오분류하는 것이다.
 #
-# ★ ①④ 두 무발화 케이스만으로는 "항상 무발화" 구현이 통과한다 — 그래서 ②③⑤ 의 발화
-#   단언이 짝으로 필요하고, 반대로 ①④ 가 없으면 "항상 발화" 구현이 통과한다.
-#   양방향 대조군이 둘 다 있어야 오라클에 판별력이 있다.
+# ★ 케이스 5 → 6 분화 (Orchestrator 지시 1 — **탐지 손실 0**):
+#   `absent → 무조건 무발화` 로 두면 "채택했으나 1회도 실행되지 않음" class 가 구조적
+#   무음이 되어 **false-negative 를 하나 늘린다**(3-conjunct (ㄴ) 완화 방향 0 미충족).
+#   채택 표식을 판별자로 넣어 침묵을 **미채택에만** 적용한다 ⇒ 실 탐지 손실 0.
+#   표식 = `~/.claude/scheduled-tasks/**` 안에 우리 CLI 를 지목하는 태스크 정의
+#   (앱이 만드는 **기존 산물**, 신규 파일 0건, scratch 밖 = TTL purge 비대상).
+#   ☞ 정의역 한정(정직): "탐지 손실 0" 은 **표식이 관측 가능한 정의역 안에서** 성립한다.
+#     벤더 경로 rename / 프롬프트 리라이트 / 파일 아닌 저장형태 3 경우는 표식이 부재가
+#     되어 (ㄴ) class 가 침묵으로 되돌아간다(전부 fail-safe 방향, 거짓 발화 0).
+#     hook 헤더의 "정직 천장" 절이 SSOT.
+#
+# ★ 판별력 구조: ①a④ 두 **무발화** 케이스만으로는 "항상 무발화" 구현이 통과하고,
+#   ①b②③⑤ 두 **발화** 케이스만으로는 "항상 발화" 구현이 통과한다. 양방향 대조군이
+#   둘 다 있어야 오라클에 판별력이 있다. ①a/①b 는 **같은 heartbeat 상태(absent)** 에서
+#   표식만 다르므로, 둘의 결과가 갈린다는 것이 곧 표식 판별자가 살아 있다는 증거다.
 #
 # ★ 격리: hook 은 `GC_STATE_DIR="${HOME:-/tmp}/.claude/…"` 를 **런타임에** 평가하므로
 #   env HOME override 로 격리가 실제 성립한다(ArchitectPL 실측). python
@@ -134,42 +145,77 @@ def _marker_lines(cp):
     return [ln.strip() for ln in (cp.stderr or "").splitlines() if MARKER in ln]
 
 
-def _prepare_home(tmp_path, content=None):
-    """tmp HOME + 상태 디렉터리 생성. content 가 None 이면 heartbeat 파일을 만들지 않는다."""
+def _prepare_home(tmp_path, content=None, adopted=False):
+    """tmp HOME + 상태 디렉터리 생성.
+
+    Args:
+        content: None 이면 heartbeat 파일을 만들지 않는다(absent 형상).
+        adopted: True 면 **채택 표식**(태스크 정의 + sentinel)을 심는다.
+    """
     state_dir = tmp_path / ".claude" / "worktree-gc-state"
     state_dir.mkdir(parents=True, exist_ok=True)
     hb = state_dir / "scheduled-task-last-run.epoch"
     if content is not None:
         hb.write_text(content, encoding="utf-8", newline="\n")
+    if adopted:
+        _plant_adoption_marker(tmp_path)
     return tmp_path, hb
 
 
-# ══════════════════════════ ① absent (미채택 = 무발화) ═══════════════════════
+def _plant_adoption_marker(home_dir, task_name="codeforge-local-residue-observe"):
+    """채택 표식 = 앱이 만드는 태스크 정의 산물 (ADR-172 '관련 파일' 형상 그대로).
+
+    `~/.claude/scheduled-tasks/<task-name>/SKILL.md` 안에 ADR-172 §결정 2 박제 프롬프트가
+    지목하는 우리 CLI 경로를 담는다 — hook 의 sentinel 이 그 모듈명이다.
+    ★ tmp HOME 안에서만 만든다(실 사용자 `~/.claude/scheduled-tasks` 무접촉).
+    """
+    task_dir = Path(home_dir) / ".claude" / "scheduled-tasks" / task_name
+    task_dir.mkdir(parents=True, exist_ok=True)
+    prompt = task_dir / "SKILL.md"
+    prompt.write_text(
+        "codeforge 로컬 잔재 관측 (관측-only · 보고 전용)\n"
+        "3. scripts/lib/scheduled_task_reconcile.py 를 실행한다.\n",
+        encoding="utf-8", newline="\n",
+    )
+    return prompt
+
+
+def _plant_unrelated_task(home_dir, task_name="someone-elses-task"):
+    """**우리와 무관한** 스케줄 작업 정의 (sentinel 없음) — 오탐 배제 대조군."""
+    task_dir = Path(home_dir) / ".claude" / "scheduled-tasks" / task_name
+    task_dir.mkdir(parents=True, exist_ok=True)
+    other = task_dir / "SKILL.md"
+    other.write_text("매일 아침 뉴스 요약을 만든다.\n", encoding="utf-8", newline="\n")
+    return other
+
+
+# ══════════════════ ①a absent + 표식 부재 (미채택 = 무발화) ═══════════════════
 @_SKIP_NO_BASH
-def test_watchdog_absent_heartbeat_reports_zero_lines(tmp_path):
-    """① heartbeat 파일 부재 = **미채택** → 발화 **0** · exit 0 (F-CR5-06 판정).
+def test_watchdog_absent_without_adoption_marker_reports_zero_lines(tmp_path):
+    """①a heartbeat 부재 + 채택 표식 **부재** = 미채택 → 발화 **0** · exit 0.
 
-    ★ 기대가 뒤집힌 케이스다. 직전 판본은 `absent → 발화 1줄` 이었고, 그 형상은 본 hook 이
-      **전 consumer 세션에 등록**되므로 스케줄 작업을 채택하지 않은 환경 전부가 매 세션
-      1줄을 받는다는 뜻이었다(blast radius 미선언). 미채택 환경의 heartbeat 부재는
-      사망이 아니라 정상이며, "채택했는데 죽었다" 는 ②(invalid)·③(stale)이 담당한다.
+    ★ 직전 판본은 `absent → 발화 1줄` 이었고, 그 형상은 본 hook 이 **전 consumer 세션에
+      등록**되므로 스케줄 작업을 채택하지 않은 환경 전부가 매 세션 1줄을 받는다는
+      뜻이었다(blast radius 미선언). 미채택 환경의 heartbeat 부재는 사망이 아니라 정상이다.
 
-    ★ 구조적 무음(대가, 은폐 금지): "채택했으나 1회도 실행되지 않음" class 는 heartbeat
-      부재만으로 판별 불가다 — 채택 표식이 유일 근거이고 표식이 없으면 무음이다.
-      이 테스트의 GREEN 을 "미실행이 없다" 로 읽어서는 안 된다.
+    ★ 이 침묵은 **미채택에만** 적용된다 — 표식이 있으면 ①b 가 발화한다. 그래서 이
+      테스트의 GREEN 은 "미실행 탐지를 포기했다" 는 뜻이 **아니다**(직전 판본과의 차이).
 
     mutant kill: `absent → should_report=true` 복원 ⇒ **이 테스트만 RED**
-      (②③⑤ 는 무손상 — 그 분기를 건드리지 않으므로).
+      (①b②③⑤ 는 무손상 — 그 분기를 건드리지 않으므로).
     """
-    home, hb = _prepare_home(tmp_path, content=None)
+    home, hb = _prepare_home(tmp_path, content=None, adopted=False)
     assert not hb.exists(), f"전제 붕괴: heartbeat 파일이 존재한다 ({hb})"
+    assert not (Path(home) / ".claude" / "scheduled-tasks").exists(), (
+        "전제 붕괴: 미채택 형상인데 태스크 정의 디렉터리가 있다"
+    )
 
     cp = _run_hook(home)
 
     assert cp.returncode == 0, f"SessionStart hook 은 exit 0 이어야 한다: rc={cp.returncode}"
     lines = _marker_lines(cp)
     assert lines == [], (
-        f"미채택(heartbeat 부재) 환경은 무발화여야 한다, 실제: {lines}"
+        f"미채택(표식·heartbeat 모두 부재) 환경은 무발화여야 한다, 실제: {lines}"
     )
     # 비공허 앵커: 무발화가 "hook 이 아예 안 돌아서" 가 아님을 같은 홈에서 확증한다 —
     #   같은 형상에 stale heartbeat 만 심으면 1줄이 나온다(판독·판정은 살아 있다).
@@ -180,6 +226,61 @@ def test_watchdog_absent_heartbeat_reports_zero_lines(tmp_path):
         "대조 실패: 같은 홈에 stale heartbeat 를 심었는데 발화가 없다 — 위 무발화가 "
         f"'미채택 판정' 이 아니라 'hook 무동작' 이었을 수 있다. 실제: {lines2}"
     )
+
+
+@_SKIP_NO_BASH
+def test_watchdog_absent_with_unrelated_task_reports_zero_lines(tmp_path):
+    """①a' **오탐 배제 대조군** — 우리와 무관한 스케줄 작업만 있으면 여전히 무발화.
+
+    ★ 표식을 "디렉터리 존재" 로 두면 이 형상이 거짓 발화한다(운영자가 다른 용도의
+      스케줄 작업을 쓰는 것은 흔하다). 그래서 판별자를 **sentinel 내용**으로 뒀고,
+      이 케이스가 그 선택의 판별력을 짊어진다.
+
+    mutant kill: 표식 술어를 `[[ -d "$TASK_DEF_ROOT" ]]`(존재만) 로 완화 ⇒ RED.
+    """
+    home, hb = _prepare_home(tmp_path, content=None, adopted=False)
+    other = _plant_unrelated_task(home)
+    assert other.exists(), "전제 붕괴: 무관 태스크 정의 미생성"
+    assert "scheduled_task_reconcile" not in other.read_text(encoding="utf-8"), (
+        "전제 붕괴: 무관 태스크에 sentinel 이 섞였다 — 대조군이 성립하지 않는다"
+    )
+
+    cp = _run_hook(home)
+
+    assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+    assert _marker_lines(cp) == [], (
+        f"우리 CLI 를 지목하지 않는 태스크만 있는 환경은 무발화여야 한다: {_marker_lines(cp)}"
+    )
+
+
+# ═══════════ ①b absent + 표식 존재 (채택했는데 한 번도 안 돎 = 실 이상) ═══════════
+@_SKIP_NO_BASH
+def test_watchdog_absent_with_adoption_marker_reports_one_line(tmp_path):
+    """①b heartbeat 부재 + 채택 표식 **존재** → 사실 1줄 발화 · exit 0.
+
+    ★ 이 케이스가 **탐지 손실 0** 을 짊어진다. `absent → 무조건 무발화` 로 두면
+      "채택했으나 1회도 실행되지 않음" class 가 구조적 무음이 되어 false-negative 를
+      하나 늘린다. 표식 판별자가 그 손실을 되돌린다.
+
+    ★ ①a 와 **heartbeat 상태가 동일**(absent)하고 표식만 다르다 — 두 결과가 갈린다는
+      사실 자체가 판별자가 살아 있다는 증거다(공통 원인으로 둘 다 통과할 수 없다).
+
+    mutant kill: 표식 판별자 제거(`absent → 무조건 false` 복원) ⇒ **이 테스트만 RED**.
+    """
+    home, hb = _prepare_home(tmp_path, content=None, adopted=True)
+    assert not hb.exists(), f"전제 붕괴: heartbeat 파일이 존재한다 ({hb})"
+    marker = Path(home) / ".claude" / "scheduled-tasks"
+    assert marker.is_dir(), "전제 붕괴: 채택 표식 미생성"
+
+    cp = _run_hook(home)
+
+    assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+    lines = _marker_lines(cp)
+    assert len(lines) == 1, f"발화 1줄 기대, 실제 {len(lines)}줄: {lines}"
+    m = FACT_RE.match(lines[0])
+    assert m is not None, f"사실 줄 형식 불일치: {lines[0]!r}"
+    assert m.group(1) == "absent", f"last_run_epoch=absent 기대, 실제 {m.group(1)!r}"
+    assert m.group(2) == "unknown", f"age_seconds=unknown 기대, 실제 {m.group(2)!r}"
 
 
 # ══════════════════════════ ② invalid ════════════════════════════════════════
