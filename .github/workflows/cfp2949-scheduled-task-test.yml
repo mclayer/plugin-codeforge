@@ -14,6 +14,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # §8.7 Impl Manifest 검사기가 `git diff --numstat origin/main...HEAD` 를
+          # 실측한다 — shallow(기본 depth 1) 체크아웃에서는 origin/main 이 없어
+          # git 축이 통째로 미가용이 된다(검사가 조용히 반쪽이 됨).
+          fetch-depth: 0
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
@@ -28,6 +33,7 @@ jobs:
             tests/test_scheduled_task_stop_flag.py \
             tests/unit/test_scheduled_task_reconcile_unit.py \
             tests/integration/test_scheduled_task_ac_matrix.py \
+            tests/integration/test_scheduled_task_impl_manifest.py \
             tests/integration/test_scheduled_task_dispatch_path.py \
             tests/integration/test_scheduled_task_dynamic_roster.py \
             tests/integration/test_scheduled_task_stateful.py \
