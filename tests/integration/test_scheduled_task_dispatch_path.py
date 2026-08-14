@@ -21,11 +21,33 @@
 #   · production 표면(신규 CLI 플래그·env) 신설 **0**
 #     (§5.1 "신규 플래그 0건" · ADR-172 §결정 4 lever 계상 규율).
 #
-# ── 실 GitHub 무접촉 (구조적) ─────────────────────────────────────────────────────
-#   `run()` 이 도달할 수 있는 subprocess 호출 site 는 `_gh` **하나뿐**이다
-#   (`--repo-root` 지정으로 `_git_toplevel` 미도달, `collect_observations` 는 fixture).
-#   그 하나를 in-process 객체로 치환하므로 gh 바이너리·네트워크 도달 경로가 0 이다.
-#   채널 문자열도 실재하지 않는 더미(`qadev-harness/none#1`)다.
+# ── 실 subprocess 표면 (실측치 — 서술 아님) ───────────────────────────────────────
+#   결론: gh 바이너리·네트워크 도달 경로 0. `_gh` 를 in-process 객체로 치환하고
+#   채널 문자열도 실재하지 않는 더미(`qadev-harness/none#1`)를 쓴다.
+#
+#   ★ 이전 판본은 그 결론의 **근거**로 *"`run()` 이 도달할 수 있는 subprocess 호출
+#     site 는 `_gh` 하나뿐"* 이라고 썼다 — **거짓이었다**(구현리뷰 iter4 F-CR-401).
+#     `subprocess.run`/`Popen` 을 가로채 실측하면 `_gh` **밖**에 실 subprocess 가 1건 있다:
+#         `git -C . worktree list --porcelain`
+#       ← `render_report` → `_safe_text` → `_normalize_paths` → `_mask_workspace_prefix`
+#         → `_workspace_prefixes()` 의 **lazy 해소**. `collect_observations` 를 fixture 로
+#           대체하면 권위값 주입 지점(`_observe_workspace_residue` 의
+#           `_set_workspace_prefixes()`)이 통째로 건너뛰어지기 때문이다.
+#     무너진 건 "단일 site" 라는 **근거 명제**이고, 결론(네트워크 도달 0)은 유지된다
+#     — 위 1건은 로컬 git 조회이지 gh·네트워크가 아니다.
+#
+#   봉합 2단 (F-CR-401):
+#     ① **캐시 순서 의존 제거** — `invoke_run` 이 workspace 접두를 **명시 주입**해 lazy
+#        해소를 없앤다 ⇒ 실 subprocess **0건**. (`_workspace_prefix_cache` 는 모듈 전역인데
+#        이를 리셋하는 test/conftest 가 repo 전체 **0건**이라, 주입이 없으면 pytest 세션의
+#        **최초 해소자 승리** 순서 의존이 된다.) 주입 전 값은 `finally` 로 복원해 본 harness
+#        가 형제 스위트에 캐시를 흘리지도 않는다 — 순서 의존을 **양방향**으로 끊는다.
+#     ② **서술을 단언으로 승격** — `invoke_run` 이 `subprocess.run`/`Popen` 을 가로채
+#        실행을 **차단**하고 argv 를 기록한 뒤 허용집합(`ALLOWED_SUBPROCESS`)과 `==` 로
+#        대조한다. 이 명제가 다음에 틀리면 스위트가 **RED** 가 된다(서술은 절대 RED 가
+#        되지 않는다 — 그게 F-CR-401 의 본질이었다). production 표면 신설 **0**.
+#     비공허성: 기록기 자체가 죽은 계측이 아님은 `TestSubprocessSurface` 의 lazy-해소
+#        케이스가 **비어있지 않은** 기록을 단언해 증명한다.
 #
 # ── 비공허성 앵커 (mock-seam 규율) ────────────────────────────────────────────────
 #   매 호출에서 (a) `[scheduled-task] DONE: observed=N new=M posted=P halted=H` 를
@@ -52,11 +74,35 @@ import scheduled_task_reconcile as sut
 
 # 실재하지 않는 더미 채널 — 실 repo·Issue 금지(발화가 실 GitHub 로 나가지 않게).
 CHANNEL = "qadev-harness/none#1"
+# ★ 분해 기대값은 **리터럴 고정**이다 — production `_parse_channel()` 로 유도하면
+#   그 분해가 뒤바뀌는 mutant 에서 기대값도 함께 뒤집혀 오라클이 조용히 죽는다
+#   (F-CR-406 이 잡은 위치 판별력 0 과 동종의 함정). 손으로 분해해 박아둔다.
+CHANNEL_REPO = "qadev-harness/none"
+CHANNEL_NUMBER = "1"
+
+# ── 실 subprocess 허용집합 (F-CR-401 ② — 서술이 아니라 단언) ──────────────────────
+#   `invoke_run` 은 `subprocess.run`/`Popen` 을 가로채 **실행을 차단**하고 argv 를 기록한
+#   뒤 이 집합과 `==` 로 대조한다. 기본 형상(workspace 접두 명시 주입)의 실측치 = **0건**.
+ALLOWED_SUBPROCESS = frozenset()
+#   접두를 주입하지 **않으면** `_workspace_prefixes()` lazy 해소가 내는 유일한 site.
+#   (git 바이너리명은 production override 상수에서 취한다 — 본 단언의 load-bearing 부분은
+#    "worktree list --porcelain 이 정확히 1건" 이지 바이너리명이 아니다.)
+LAZY_WORKSPACE_SITE = frozenset({
+    (sut.base.GC_GIT_BIN, "-C", ".", "worktree", "list", "--porcelain"),
+})
 
 _DONE_RE = re.compile(
     r"\[scheduled-task\] DONE: observed=(\d+) new=(\d+) posted=(\d+) halted=(\d+)"
 )
 _FACT_LINE_PREFIX = "- 선언="
+
+
+def _argv_tuple(args, kwargs):
+    """`subprocess.run(...)` / `Popen(...)` 의 첫 인자를 비교 가능한 tuple 로."""
+    raw = args[0] if args else kwargs.get("args")
+    if isinstance(raw, (list, tuple)):
+        return tuple(str(x) for x in raw)
+    return (str(raw),)
 
 
 # ═══════════════════════ 실 사용자 상태 무접촉 검사 헬퍼 ═══════════════════════════
@@ -195,22 +241,39 @@ class RunOutcome:
         return int(m.group(1)) if m else None
 
 
-def invoke_run(tmp_path, observations, chan, channel=CHANNEL, argv_extra=(),
-               task="qadev-harness", run_id="r-001", expect_heartbeat=True):
+def invoke_run(tmp_path, observations, chan, channel=CHANNEL,
+               task="qadev-harness", run_id="r-001",
+               seal_workspace_prefixes=True, allow_subprocess=ALLOWED_SUBPROCESS):
     """`sut.run()` 을 **완주**시키고 산출을 구조화해 반환한다.
 
-    격리 3중:
+    격리 4중:
       ① `ENV_HEARTBEAT_FILE` → tmp (실 사용자 생존 신호 무접촉 — 사후 단언)
       ② `STOP_FLAG_LOCAL` → tmp 의 **부재 경로** (실 F2 플래그가 존재하면 전 케이스가
          정지 분기로 새어 조용히 거짓통과한다 — 그 함정 차단)
       ③ `tempfile.tempdir` → tmp (`post_report` 의 `--body-file` 임시파일까지 tmp 안)
+      ④ `subprocess.run`/`Popen` → **기록 후 차단** (실행 0). 아래 참조.
+
+    workspace 접두 캐시 봉인 (`seal_workspace_prefixes`, F-CR-401 ①):
+      `sut._workspace_prefix_cache` 는 **모듈 전역**이고 이를 리셋하는 test/conftest 가
+      repo 전체 0건이라, 손대지 않으면 pytest 세션의 **최초 해소자 승리** 순서 의존이
+      된다(= 실 subprocess 발생 여부가 테스트 실행 순서에 좌우된다). 기본값은 tmp 접두를
+      **명시 주입**해 lazy 해소를 제거하고, 종료 시 **원래 값으로 복원**해 형제 스위트로
+      캐시가 새지 않게 한다 — 순서 의존을 양방향으로 끊는다.
+      ★ production 측 "lazy 폴백 허용 여부"는 설계 판정 대상이며 여기서 손대지 않는다.
+
+    실 subprocess 단언 (`allow_subprocess`, F-CR-401 ②):
+      가로챈 `subprocess.run`/`Popen` 은 **실행하지 않고** argv 만 기록한다(차단 = 실
+      gh·git 도달 0 의 구조적 보증). 기록 집합을 `allow_subprocess` 와 `==` 로 대조하므로,
+      허용집합 밖 subprocess 가 하나라도 늘면 **RED** 가 된다.
 
     사후 보편 단언 (공허 통과 차단):
       · `rc == 0` (INV-F)
       · 실 heartbeat 파일 무변화
       · `collect_observations` 정확히 1회 호출 (fixture seam 실효)
       · 채널 지정 시 gh 포트 **호출 기록 비어있지 않음**
-      · tmp 하위 파일 = heartbeat 뿐 (**로컬 dedup 상태 파일 0** — INV-C)
+      · 실 subprocess argv 집합 == `allow_subprocess`
+      · tmp **root** 하위 파일 = heartbeat 뿐 — `GC_STATE_DIR` 축은 본 harness **미측정**
+        (임시파일 누수 mutant 4건 kill 은 유효). 정의역 상세는 본문 주석 참조.
       · `DONE:` 마커 실재 + 파싱 성공
     """
     root = str(tmp_path)
@@ -222,22 +285,44 @@ def invoke_run(tmp_path, observations, chan, channel=CHANNEL, argv_extra=(),
     argv = ["--repo-root", repo_root, "--task-name", task, "--run-id", run_id]
     if channel:
         argv += ["--channel", channel]
-    argv += list(argv_extra)
 
     posted_before = len(chan.posted)
     real_before = real_heartbeat_state()
     out, err = io.StringIO(), io.StringIO()
 
-    with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}):
-        for k in (sut.ENV_CHANNEL, sut.ENV_TASK_NAME, sut.ENV_RUN_ID, sut.GH_BIN_ENV):
-            os.environ.pop(k, None)      # 앰비언트 설정 유입 차단 (patch.dict 가 복원)
-        with mock.patch.object(sut, "STOP_FLAG_LOCAL", stop_local), \
-                mock.patch.object(tempfile, "tempdir", root), \
-                mock.patch.object(sut, "collect_observations",
-                                  return_value=list(observations)) as spy_collect, \
-                mock.patch.object(sut, "_gh", chan):
-            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-                rc = sut.run(argv)
+    seen_subprocess = []
+
+    def _spy_run(*args, **kwargs):
+        seen_subprocess.append(_argv_tuple(args, kwargs))
+        return subprocess.CompletedProcess(
+            args[0] if args else kwargs.get("args"), 127,
+            stdout="", stderr="[qadev-harness] subprocess 차단",
+        )
+
+    def _spy_popen(*args, **kwargs):
+        seen_subprocess.append(_argv_tuple(args, kwargs))
+        raise OSError("[qadev-harness] Popen 차단")
+
+    prev_prefix_cache = sut._workspace_prefix_cache
+    try:
+        with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}):
+            for k in (sut.ENV_CHANNEL, sut.ENV_TASK_NAME, sut.ENV_RUN_ID, sut.GH_BIN_ENV):
+                os.environ.pop(k, None)      # 앰비언트 설정 유입 차단 (patch.dict 가 복원)
+            if seal_workspace_prefixes:
+                sut._set_workspace_prefixes([root])   # 권위값 명시 주입 (lazy 해소 제거)
+            else:
+                sut._workspace_prefix_cache = None    # lazy 해소 경로 강제 (site 실측용)
+            with mock.patch.object(sut, "STOP_FLAG_LOCAL", stop_local), \
+                    mock.patch.object(tempfile, "tempdir", root), \
+                    mock.patch.object(sut, "collect_observations",
+                                      return_value=list(observations)) as spy_collect, \
+                    mock.patch.object(sut, "_gh", chan), \
+                    mock.patch.object(subprocess, "run", _spy_run), \
+                    mock.patch.object(subprocess, "Popen", _spy_popen):
+                with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    rc = sut.run(argv)
+    finally:
+        sut._workspace_prefix_cache = prev_prefix_cache   # 형제 스위트로 캐시 누수 0
 
     stdout, stderr = out.getvalue(), err.getvalue()
 
@@ -255,11 +340,26 @@ def invoke_run(tmp_path, observations, chan, channel=CHANNEL, argv_extra=(),
             "stdout=%r stderr=%r" % (stdout, stderr)
         )
 
+    assert set(seen_subprocess) == set(allow_subprocess), (
+        "실 subprocess 호출 집합이 허용집합과 불일치 (F-CR-401 단언).\n"
+        "  실측: %r\n  허용: %r\n"
+        "허용집합 밖 site 가 늘었다면 `_gh` 치환만으로는 실 바이너리·네트워크 도달 0 이 "
+        "더 이상 보장되지 않는다 — 헤더의 근거 명제부터 다시 실측하라."
+        % (sorted(seen_subprocess), sorted(allow_subprocess))
+    )
+
+    # 정의역 주의 (F-CR-403 1차): 아래 단언의 정의역은 **tmp root 하위뿐**이다.
+    #   production `GC_STATE_DIR`(`~/.claude/worktree-gc-state`) 축은 본 harness 가
+    #   측정하지 않는다 — `ENV_HEARTBEAT_FILE` 로 heartbeat 만 tmp 로 돌렸을 뿐,
+    #   그 디렉터리에 다른 파일이 생기는지는 여기서 알 수 없다. 따라서 이 단언이
+    #   봉인하는 것은 "로컬 dedup 상태 파일 0(INV-C)" **전칭**이 아니라
+    #   "tmp root 하위 임시파일 누수 0"(`--body-file` 임시파일 미삭제 등 4건 kill) 이다.
     residue = files_under(root)
-    expected_files = {"heartbeat.epoch"} if expect_heartbeat else set()
+    expected_files = {"heartbeat.epoch"}
     assert residue == expected_files, (
-        "tmp 하위 파일이 %r (기대 %r) — 로컬 dedup 상태 파일이 생겼거나(INV-C 위반) "
-        "heartbeat 기록 경로가 소실됐다" % (sorted(residue), sorted(expected_files))
+        "tmp root 하위 파일이 %r (기대 %r) — 임시파일이 누수됐거나 heartbeat 기록 경로가 "
+        "소실됐다 (정의역 = tmp root 한정, GC_STATE_DIR 축 미측정)"
+        % (sorted(residue), sorted(expected_files))
     )
 
     m = _DONE_RE.search(stdout)
@@ -304,11 +404,24 @@ class TestFirePathReached:
         assert r.items_field() == 2, "items=%r (기대 2)" % r.items_field()
         assert len(r.fact_lines()) == 2, "사실 줄 %d (기대 2)" % len(r.fact_lines())
 
-        # 채널 인자가 그대로 전달됐는가 (owner/repo#N 분해)
+        # 채널 인자가 **올바른 위치**로 전달됐는가 (owner_repo ↔ number 뒤바꿈 kill)
+        #   ★ 이전 판본은 `"qadev-harness/none" in argv and "1" in argv` 였다 — 리스트
+        #     **멤버십**이라 두 값이 서로 자리를 바꿔도 둘 다 여전히 리스트에 있어
+        #     통과했다(판별력 0, 구현리뷰 iter4 F-CR-406). 형상 `==` 로 교체한다.
         comment_argv = chan.commented()[0]
-        assert "qadev-harness/none" in comment_argv and "1" in comment_argv, (
-            "채널 인자 전달 불일치: %r" % comment_argv
+        assert comment_argv[:6] == [
+            "issue", "comment", CHANNEL_NUMBER, "--repo", CHANNEL_REPO, "--body-file",
+        ], "gh comment argv 형상 불일치 (number↔repo 위치 확인): %r" % comment_argv
+        assert len(comment_argv) == 7, (
+            "gh comment argv 길이 %d (기대 7 — 말미는 --body-file 경로): %r"
+            % (len(comment_argv), comment_argv)
         )
+
+        # 형제 축: 조회 argv 도 같은 위치 계약을 진다 (분해가 뒤바뀌면 양쪽이 함께 깨진다)
+        view_argv = chan.viewed()[0]
+        assert view_argv == [
+            "issue", "view", CHANNEL_NUMBER, "--repo", CHANNEL_REPO, "--json", "comments",
+        ], "gh view argv 형상 불일치 (number↔repo 위치 확인): %r" % view_argv
 
         # DONE 앵커
         assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 1, 0), (
@@ -370,9 +483,13 @@ class TestFirePathMaxFactLinesTruncation:
     def test_truncates_and_remainder_reobserved_next_run(self, tmp_path):
         """mutant kill: `to_post = fresh[:MAX_FACT_LINES]` → `to_post = fresh` ⇒ RED.
 
-        ★ 상태 무저장(INV-B/INV-C) 확증: 두 실행 사이에 **로컬 상태 파일이 하나도 생기지
-          않는데** 잔여분이 정확히 회수된다 — 회수 근거가 로컬 커서가 아니라 채널 자신임.
-          (`invoke_run` 이 매 호출마다 tmp 하위 파일 = heartbeat 뿐임을 단언한다.)
+        ★ 상태 무저장(INV-B/INV-C) **정황**: 두 실행 사이에 tmp root 하위 상태 파일이
+          하나도 생기지 않는데 잔여분이 정확히 회수된다 — 회수 근거가 로컬 커서가 아니라
+          채널 자신이라는 쪽에 무게가 실린다.
+          ☞ 정의역 한정 (F-CR-403 1차): `invoke_run` 이 단언하는 것은 **tmp root 하위**
+            파일 = heartbeat 뿐이다. production `GC_STATE_DIR` 축은 미측정이므로 이것은
+            "로컬 상태 저장소 0" **전칭의 증명이 아니다**. 이 케이스가 실제로 kill 하는
+            것은 상한 절단 제거 mutant 이고, 상태 무저장은 그 정의역 안의 정황이다.
         """
         total = sut.MAX_FACT_LINES + 7
         obs = make_obs_list(total)
@@ -474,11 +591,81 @@ class TestFirePathPostFailureNonBlocking:
         )
 
 
+# ═══════════════════════ 실 subprocess 표면 (F-CR-401 승격 단언) ═════════════════
+class TestSubprocessSurface:
+    """헤더의 "실 subprocess 표면" 명제를 **서술이 아니라 오라클**로 둔다.
+
+    이전 판본의 결함은 문면 오류가 **아니라** 구조였다 — 어떤 오라클도 서술층을
+    정의역으로 삼지 않아, 명제가 틀려도 스위트가 RED 가 될 방법이 없었다.
+    """
+
+    def test_run_executes_zero_real_subprocess(self, tmp_path):
+        """기본 형상(접두 명시 주입)에서 실 subprocess **0건**.
+
+        mutant kill: 허용집합 밖 subprocess 를 1건이라도 도입 ⇒ RED
+          (예: `_normalize_paths` 에 임의 `subprocess.run` 삽입).
+        비공허 앵커: 조기 반환이 아니라 **발화까지 완주**한 실행에서 0건이어야 한다 —
+          gh 포트 호출 2회(view+comment)와 `posted=1` 로 완주를 확증한다.
+        """
+        chan = FakeChannel()
+
+        r = invoke_run(tmp_path, make_obs_list(2), chan)   # 내부에서 == ALLOWED 단언
+
+        assert len(chan.calls) == 2, "gh 포트 호출 %d회 (기대 2: view+comment)" % len(chan.calls)
+        assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 1, 0), (
+            "완주 앵커 불일치: observed=%d new=%d posted=%d halted=%d"
+            % (r.observed, r.new, r.posted, r.halted)
+        )
+
+    def test_lazy_workspace_prefix_resolution_is_the_remaining_site(self, tmp_path):
+        """접두를 주입하지 **않으면** lazy 해소가 실 subprocess 를 정확히 1건 낸다.
+
+        ★ 이 케이스가 두 가지를 동시에 한다:
+          (a) **기록기 비공허성 증명** — 허용집합이 비어있지 않은 쪽으로도 `==` 가 맞는지
+              보이므로, 기록기가 "아무것도 못 잡는 죽은 계측" 이 아님이 확정된다.
+              (이게 없으면 `== frozenset()` 단언은 기록기가 고장나도 항상 통과한다.)
+          (b) 헤더가 주장하는 **실측 site 를 그 자리에서 재현** — 문면이 낡으면 RED.
+
+        실행은 차단되므로 실제 `git` 은 돌지 않는다(기록만). 해소 실패 시 production 은
+        `except Exception → ()` 로 떨어지고 3단 가드가 불변식을 유지하므로 `run()` 은
+        정상 완주한다 — 그래서 이 케이스도 발화까지 간다.
+        """
+        chan = FakeChannel()
+
+        r = invoke_run(tmp_path, make_obs_list(2), chan,
+                       seal_workspace_prefixes=False,
+                       allow_subprocess=LAZY_WORKSPACE_SITE)
+
+        assert len(chan.posted) == 1, "발화 개체 %d (기대 1 — 이 축도 완주한다)" % len(chan.posted)
+        assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 1, 0)
+
+    def test_prefix_cache_is_restored_so_sibling_order_is_free(self, tmp_path):
+        """캐시 봉인이 **양방향**인가 — harness 가 세션 전역 캐시를 남기지 않는다.
+
+        남기면 형제 스위트의 실 subprocess 발생 여부가 본 파일의 실행 순서에 좌우된다
+        (`_workspace_prefix_cache` 리셋 fixture 는 repo 전체 0건).
+        """
+        before = sut._workspace_prefix_cache
+
+        invoke_run(tmp_path, make_obs_list(1), FakeChannel())
+
+        assert sut._workspace_prefix_cache is before, (
+            "harness 가 workspace 접두 캐시를 세션에 흘렸다: before=%r after=%r"
+            % (before, sut._workspace_prefix_cache)
+        )
+
+
 # ═══════════════════════ 정직 천장 (본 harness 가 봉인하지 않는 것) ═══════════════
 # · 본 harness 는 `_gh` **아래**(실 gh 바이너리 argv 수용성 · GitHub API 응답 형상 ·
 #   rate limit · 권한)를 검증하지 않는다. 그 축은 live 실측(AC-1) 소관이며 미측정이다.
 # · `--body-file` 경유 한글 라운드트립은 여기서 UTF-8 로 읽어 확인하지만, 실 gh 의
 #   Windows argv mangling 은 대상 밖이다.
+# · subprocess 기록기의 정의역은 `subprocess.run` / `subprocess.Popen` **두 진입점**이다.
+#   `os.system` · `os.popen` · `os.spawn*` · C 확장이 직접 내는 프로세스는 잡지 못한다.
+#   따라서 "실 subprocess 0" 은 **그 두 진입점에 한한 실측**이지 프로세스 생성 전칭
+#   봉인이 아니다 (`subprocess` 고수준 API 인 `call`/`check_call`/`check_output` 은 내부적으로
+#   이 둘을 거치므로 커버된다 — ADR-119 검사연극 금지).
+# · `GC_STATE_DIR` 축의 파일 잔여는 `invoke_run` 정의역 밖이다 (F-CR-403 1차 참조).
 # · 따라서 본 파일의 GREEN 은 "발화가 실 채널에 착지한다" 를 봉인하지 않는다 —
 #   봉인 대상은 `run()` 의 발화 **분기 로직**뿐이다 (ADR-119 검사연극 금지).
 
