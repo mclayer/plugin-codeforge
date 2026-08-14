@@ -38,6 +38,40 @@ class TestDedupKey:
         key = sut.dedup_key(obs)
         assert key == "worktree:~/.claude/worktrees/foo"
 
+    def test_dedup_key_collapses_unnormalizable_paths_by_design(self):
+        """fail-closed 정규화가 **서로 다른 경로를 한 키로 접는다** (선언된 보안 선택).
+
+        ★ 이 테스트가 있는 이유 (구현리뷰 iter6 F-CR6-04): `unscrub_verdict_tokens`
+          docstring 이 좌역원 존재로부터 *"서로 다른 두 잔재 경로가 같은 `dedup_key` 로
+          붕괴할 수 없다"* 를 연역했는데, `dedup_key` 가 통과하는 것은 `_safe_text`
+          (= scrub∘_normalize_paths∘sanitize∘scrub)이고 `_normalize_paths` 의
+          fail-closed 는 **임의 개수의 입력을 상수 하나로 접는다**. 선언이 코드보다
+          넓었다.
+
+        ★ 붕괴 자체는 결함이 아니다 — "정규화 실패 = 위치 미공개" 라는 선언된 선택이다.
+          이 테스트는 그 선택을 **고정**해, docstring 이 다시 넓어지면(= 붕괴 불가를
+          주장하면) 문면과 실측이 어긋난 상태로 남지 않게 한다.
+
+        ★ 대가도 같이 기록한다: 접힌 세 잔재는 dedup 상 **한 건**이라 하나가 발화되면
+          나머지는 "기보고" 로 억제된다. 정규화 불능 경로가 여럿일 때의 알려진 손실이다.
+        """
+        # 사용자명 무관 결정론 트리거 — 2단(`/home/<seg>`)이 소비 못 하는 형태를
+        #   3단 후 잔여 가드가 잡아 필드 전체를 접는다.
+        paths = ["/srv/home/", "/var/home/", "/a/Users/"]
+        keys = [sut.dedup_key({"cls": "orphan", "display_path": p}) for p in paths]
+
+        assert len(set(keys)) == 1, (
+            f"전제 붕괴: fail-closed 붕괴가 관측되지 않는다 — 이 테스트가 고정하려는 "
+            f"성질이 사라졌다(선언 정정 필요): {dict(zip(paths, keys))}"
+        )
+        assert keys[0] == "orphan:" + sut._MASK_UNNORMALIZED, (
+            f"붕괴 결과가 예상 마스크와 다르다: {keys[0]!r}"
+        )
+        # 대조군: 정규화 가능한 서로 다른 경로는 **접히지 않는다**(붕괴가 무조건이 아님)
+        ok = [sut.dedup_key({"cls": "orphan", "display_path": p})
+              for p in ["~/.claude/worktrees/a", "~/.claude/worktrees/b"]]
+        assert len(set(ok)) == 2, f"정규화 가능한 경로까지 접혔다: {ok}"
+
     def test_dedup_key_sanitizes_verdict_lexicon(self):
         """key 는 _safe_text 를 통과 — verdict 어휘 무력화 + secret redact + 제어문자 strip.
 
