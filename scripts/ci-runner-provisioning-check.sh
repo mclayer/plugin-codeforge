@@ -44,7 +44,8 @@ set -uo pipefail
 
 LINUX_VAR="CI_RUNS_ON_LINUX_JSON"
 WINDOWS_VAR="CI_RUNS_ON_WINDOWS_JSON"
-SELF_HOSTED_LINUX_LABELS='["self-hosted","X64","Linux","docker"]'
+# CFP-2963/ADR-174 §결정 1 — Linux 안내값 = ARC scale-set 이름 매칭(mclats-ci-linux). 값공간 3-domain SSOT = mclayer/ci-runner-infra ci-runner-arc/scale-set-registry.yaml (참고 복사본).
+SELF_HOSTED_LINUX_LABELS='["mclats-ci-linux"]'
 SELF_HOSTED_WINDOWS_LABELS='["self-hosted","Windows","X64"]'
 
 REPO=""
