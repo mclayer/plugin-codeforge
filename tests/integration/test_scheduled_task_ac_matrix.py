@@ -423,7 +423,13 @@ class TestAC5PromotionZero:
     """AC-5: 승격 조건·주체·rollback 3항 + 승격 이력 0건."""
 
     def test_ac5_no_promotion_history(self):
-        """도입기 승격 이력 0 — ADR-172 §결정 9 에서 검증."""
+        """도입기 승격 이력 0 — ADR-172 §결정 9 에서 정규식 검증.
+
+        부재형 mutant: 승격 이력 제거
+        변형형 mutant: 승격 이력 = 1건 또는 다른 숫자
+
+        golden 출처: ADR-172 §결정 9 "승격 이력 = 0건" (도입기 상태).
+        """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
             pytest.fail("ADR-172 부재")
@@ -436,13 +442,21 @@ class TestAC5PromotionZero:
         except AssertionError as e:
             pytest.fail(f"AC-5: {e}")
 
-        # Assert: 승격 이력 = 0
-        assert "승격 이력" in decision_9_text and "0" in decision_9_text, (
-            "AC-5: 승격 이력 = 0 리터럴 부재"
+        # Assert: 승격 이력 = 0 앵커된 정규식
+        import re
+        # golden: "**승격 이력 = 0건** (도입기 상태)."
+        promotion_pattern = r"\*\*승격\s*이력\s*=\s*0건\*\*"
+        assert re.search(promotion_pattern, decision_9_text), (
+            "AC-5: 승격 이력 = 0건 리터럴 미검출 (정규식)"
         )
+
         # 조건·주체·rollback 존재 확인
         for required in ["조건", "주체", "rollback"]:
             assert required in decision_9_text, f"AC-5: {required} 필드 부재"
+
+        # 추가 검증: rollback 경로 3종 (가/나/다)
+        for lever in ["가", "나", "다"]:
+            assert lever in decision_9_text, f"AC-5: rollback 경로 {lever} 부재"
 
 
 class TestAC9ReconcileCompleteness:
