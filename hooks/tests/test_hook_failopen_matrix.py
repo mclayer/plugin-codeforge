@@ -30,10 +30,13 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import os
 import pytest
-from pathlib import Path
+
+from conftest import requires_bash, run_hook_bash
+
+# 훅 실행은 bash 직접 호출로 통일 (구 `cmd.exe /c run-hook.cmd` 하드코딩은 Linux CI 에서
+# FileNotFoundError → 전건 FAIL). fail-open 판정 축은 OS 무관 — conftest.run_hook_bash SSOT.
+pytestmark = requires_bash
 
 
 # 7훅 목록
@@ -57,27 +60,15 @@ JUDGEMENT_DENY_HOOKS = {
 
 
 def _run_hook(hook_name: str, payload: dict | str | None) -> tuple[int, str]:
-    """훅 실행."""
-    run_hook_cmd = Path(__file__).parent.parent / "run-hook.cmd"
+    """훅 실행 → (rc, stderr)."""
+    stdin_data = None
+    if isinstance(payload, dict):
+        stdin_data = json.dumps(payload).encode("utf-8")
+    elif isinstance(payload, str):
+        stdin_data = payload.encode("utf-8")
 
-    try:
-        stdin_data = None
-        if isinstance(payload, dict):
-            stdin_data = json.dumps(payload).encode("utf-8")
-        elif isinstance(payload, str):
-            stdin_data = payload.encode("utf-8")
-
-        result = subprocess.run(
-            ["cmd.exe", "/c", str(run_hook_cmd), hook_name],
-            input=stdin_data,
-            capture_output=True,
-            timeout=30,
-        )
-        return result.returncode, result.stderr.decode("utf-8", errors="ignore")
-    except subprocess.TimeoutExpired:
-        return -1, "TIMEOUT"
-    except Exception as e:
-        return -1, str(e)
+    rc, _stdout, stderr = run_hook_bash(hook_name, stdin_data)
+    return rc, stderr
 
 
 @pytest.mark.parametrize("hook_name", HOOKS)

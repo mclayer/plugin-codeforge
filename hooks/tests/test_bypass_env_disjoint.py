@@ -47,6 +47,12 @@ import sys
 import pytest
 from pathlib import Path
 
+from conftest import requires_bash, run_hook_bash
+
+# 훅 실행은 bash 직접 호출로 통일 (구 `cmd.exe /c run-hook.cmd` 하드코딩은 Linux CI 에서
+# FileNotFoundError → 전건 FAIL). bypass disjoint 판정 축은 OS 무관 — conftest SSOT.
+pytestmark = requires_bash
+
 
 # Deny payloads per gate (S0/corpus 검증분 재사용)
 DENY_PAYLOADS = {
@@ -171,8 +177,6 @@ def _run_hook_with_env(hook_name: str, payload: dict, env_override: dict) -> tup
 
     특별 처리: worktree-location-guard 는 TIER=block 동반 필수 (deny 판정 경로).
     """
-    run_hook_cmd = Path(__file__).parent.parent / "run-hook.cmd"
-
     # 환경 변수 설정
     env = os.environ.copy()
     # 모든 bypass env 초기화
@@ -187,19 +191,10 @@ def _run_hook_with_env(hook_name: str, payload: dict, env_override: dict) -> tup
     if hook_name == "worktree-location-guard":
         env["WORKTREE_LOCATION_GUARD_TIER"] = "block"
 
-    try:
-        result = subprocess.run(
-            ["cmd.exe", "/c", str(run_hook_cmd), hook_name],
-            input=json.dumps(payload).encode("utf-8"),
-            capture_output=True,
-            env=env,
-            timeout=30,
-        )
-        return result.returncode, result.stderr.decode("utf-8", errors="ignore")
-    except subprocess.TimeoutExpired:
-        return -1, "TIMEOUT"
-    except Exception as e:
-        return -1, str(e)
+    rc, _stdout, stderr = run_hook_bash(
+        hook_name, json.dumps(payload).encode("utf-8"), env=env
+    )
+    return rc, stderr
 
 
 def test_gh_shim_seam_standalone(tmp_path):
