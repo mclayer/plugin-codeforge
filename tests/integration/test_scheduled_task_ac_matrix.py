@@ -603,33 +603,67 @@ class TestAC12TripleAxisSixCellComparison:
 class TestAC13StaticTextLint:
     """AC-13: 정적 텍스트면 secret 0 + 미정규화 절대경로 0.
 
-    부재형 mutant: 리터럴 lint 미실행
-    변형형 mutant: 미정규화 절대경로 주입 / secret 패턴 주입 → RED
+    부재형 mutant: 정규화 미실행 (결과에 절대경로 그대로)
+    변형형 mutant: redact 미실행 (결과에 토큰 문자열 그대로)
+
+    행동 단언: 예시 입력 5종 정규화 확인
     """
 
     def test_ac13_no_unredacted_absolute_path_in_output(self):
-        """산출 문자열에 미정규화 절대경로 0.
+        """산출 문자열에 미정규화 절대경로 0 — 정규화 행동 검증.
 
         _safe_text → base.sanitize 경로 정규화 통과.
+        mutant: _normalize_paths 를 return s 로 무력화 → RED
         """
-        # sanitize 는 경로를 홈 상대로 변환 (relativize_path 외부 호출)
+        # 1. /Users/alice 절대경로 → <user-home> 치환 확인
         text = "/Users/alice/.claude/worktrees/foo"
         result = sut._safe_text(text)
-        # sanitize 가 정규화를 담당
-        # 여기서는 _safe_text 호출 확인만
-        assert isinstance(result, str)
+        assert "/Users/alice" not in result, (
+            f"AC-13: 미정규화 절대경로 /Users/alice 검출: {result}"
+        )
+        assert "<user-home>" in result, (
+            f"AC-13: <user-home> 정규화 미검출: {result}"
+        )
+
+        # 2. /home/bob 절대경로 → <user-home> 또는 유사 치환
+        text = "/home/bob/x"
+        result = sut._safe_text(text)
+        assert "/home/bob" not in result, (
+            f"AC-13: 미정규화 절대경로 /home/bob 검출: {result}"
+        )
 
     def test_ac13_no_secret_literals_in_static_text(self):
-        """정적 텍스트에 secret 패턴 0.
+        """정적 텍스트에 secret 패턴 0 — redact 행동 검증.
 
         base.sanitize 가 redact 담당 (credential redact 등).
+        mutant: sanitize 를 pass-through 로 무력화 → RED
         """
-        # sanitize 는 known secret 패턴 제거
+        # 1. GitHub PAT 토큰 redact 확인
         text = "token=ghp_1234567890abcdefghij"
         result = sut._safe_text(text)
-        # redact 됨 또는 원문 유지 (정책에 따라)
-        # 여기서는 호출 정상 작동만 확인
-        assert isinstance(result, str)
+        assert "ghp_1234567890abcdefghij" not in result, (
+            f"AC-13: 미redact 토큰 ghp_* 검출: {result}"
+        )
+        # redact 마커는 대괄호 형태일 것으로 예상
+        # (구체 형태는 base.sanitize 구현에 의존)
+
+    def test_ac13_no_false_positive_redaction(self):
+        """비위반 토큰 오탐 금지 회귀.
+
+        정규화 경로·마커 리터럴은 위반으로 잡히면 안 됨.
+        """
+        # 정규화 경로 형태들이 redact 되면 안 됨
+        test_cases = [
+            "~/.claude/worktrees/foo",  # 홈 상대 경로
+            "<workspace>/plugin-codeforge",  # 마커 경로
+            "<user-home>/.claude",  # 정규화된 경로
+        ]
+        for text in test_cases:
+            result = sut._safe_text(text)
+            # 정규화된 형태는 그대로 유지되어야 함
+            assert text in result, (
+                f"AC-13 오탐: 비위반 {text} 가 손상됨: {result}"
+            )
 
 
 # ═══════════════════════════════ Mutant Kill Evidence ═════════════════════
