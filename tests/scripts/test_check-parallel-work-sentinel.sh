@@ -620,6 +620,69 @@ set -e
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary + mutation 문서화
 # ─────────────────────────────────────────────────────────────────────────────
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2976 — 정의역 확대: CFP-2451 테스트가 검증하지 않던 경로
+#
+# ★배경(§2.4): CFP-2451 은 "파라미터화되어 있는가"(코드 속성)를 정확히 지켰다.
+#   그러나 "파라미터가 실제로 주입되는가"(배선 속성)는 정의역 밖이었고,
+#   세션 훅이 지시하는 수동 실행 경로에는 아무도 주입하지 않아 실사고가 났다.
+#   아래 3 케이스가 그 정의역을 닫는다.
+# ★set -e 안전: fail-closed 를 기대하는 케이스가 있으므로 모든 실행을 `|| true` 로 감싼다.
+# ═════════════════════════════════════════════════════════════════════════════
+echo ""
+echo "── CFP-2976: env 미주입 경로 / fail-closed / determined 계약 ──"
+
+C2976="$(mktemp -d)"
+# portable path — Git Bash(MSYS)의 /c/... 는 Windows python 이 해석 못 한다.
+# cygpath 부재(Linux CI)면 원 경로 그대로 = 정상 동작.
+LIB2976="$(cygpath -w "$REPO_ROOT/scripts/lib" 2>/dev/null || echo "$REPO_ROOT/scripts/lib")"
+
+# T-2976-A — env 미주입 + overlay 존재 → overlay 에서 유도 (구 코드는 조용히 "CFP")
+#   kill-mutant: resolve_prefix() 를 os.environ.get(...,"CFP") 로 되돌리면 ZZT 대신 CFP → FAIL
+mkdir -p "$C2976/consumer/.claude/_overlay"
+( cd "$C2976/consumer" && git init -q ) || true
+printf 'github:\n  story_key_prefix: "ZZT"\n' > "$C2976/consumer/.claude/_overlay/project.yaml"
+OUT="$( cd "$C2976/consumer" && env -u STORY_KEY_PREFIX python3 -c "
+import sys; sys.path.insert(0, r'$LIB2976')
+import check_parallel_work_sentinel as m
+print(m.resolve_prefix())
+" 2>&1 || true )"
+ok=0; [ "$OUT" = "ZZT" ] && ok=1
+report "T-2976-A-derive-from-overlay" "$ok" "env 미주입 → overlay(ZZT) 유도 (구 코드는 'CFP' 조용한 fallback)" "$OUT"
+
+# T-2976-B — env 미주입 + overlay 부재 → fail-closed (exit!=0 + prefix_undetermined)
+#   kill-mutant: 조용한 기본값 복귀 시 exit 0 + 값 반환 → FAIL
+mkdir -p "$C2976/bare"
+( cd "$C2976/bare" && git init -q ) || true
+OUT="$( cd "$C2976/bare" && env -u STORY_KEY_PREFIX python3 -c "
+import sys; sys.path.insert(0, r'$LIB2976')
+import check_parallel_work_sentinel as m
+m.resolve_prefix()
+" 2>&1 || true )"
+ok=0
+printf '%s' "$OUT" | grep -q "prefix_undetermined" && ok=1
+report "T-2976-B-fail-closed" "$ok" "overlay·env 모두 부재 → prefix_undetermined 로 차단 (조용한 통과 봉인)" "$OUT"
+
+# T-2976-C — determined 계약: 성공 payload 에 determined:true 명시
+#   kill-mutant: _exit_pass 의 setdefault 제거 시 키 부재 → FAIL
+OUT="$( python3 -c "
+import io, sys
+sys.path.insert(0, r'$LIB2976')
+import check_parallel_work_sentinel as m
+buf = io.StringIO(); real = sys.stdout; sys.stdout = buf
+try:
+    m._exit_pass({'matches': []})
+except SystemExit:
+    pass
+finally:
+    sys.stdout = real
+print(buf.getvalue().strip())
+" 2>&1 || true )"
+ok=0; printf '%s' "$OUT" | grep -q '"determined": true' && ok=1
+report "T-2976-C-determined-contract" "$ok" "성공 payload 에 determined:true 명시 (no_match 와 undetermined 구분 가능)" "$OUT"
+
+rm -rf "$C2976" || true
+
 echo ""
 echo "============================================================"
 echo "Test Summary (CFP-2451 prefix + CFP-2490 tier-flip + CFP-2723 epic-state-poll 로스터 N1-N13)"
@@ -628,6 +691,7 @@ echo "PASS: $PASS"
 echo "FAIL: $FAIL"
 echo "TOTAL: $((PASS + FAIL))"
 echo ""
+
 
 if [ "$FAIL" -eq 0 ]; then
   echo "✓ All fixtures passed"
