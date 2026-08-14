@@ -7,13 +7,20 @@
 
 정의역:
   WORKTREE_LOCATION_GUARD_TIER 값:
-    - "block" (default): 표준 밖 worktree add → exit 2 (deny)
-    - "warn": 표준 밖 worktree add → exit 0 (경고만, 통과)
+    - "block": 표준 밖 worktree add → exit 2 (deny)
+    - "warn" (**default**): 표준 밖 worktree add → exit 0 (경고만, 통과)
+
+  ★ default 정정 (CFP-2965 F5-4): 구 docstring·함수명은 default=block 이라고
+    문서화했으나 실물은 warn 이다 —
+    `scripts/lib/check_worktree_location_guard.py`: `os.environ.get(TIER_ENV) or "warn"`
+    (실측 2026-08-14: TIER 미설정 + 표준 밖 payload → rc=0 + WARN 진단).
+    구 테스트는 `assert rc in (0, 2)` 전-수용이라 이 어긋남을 검출할 수 없었다.
+    도입기 warn → 승격기 block 은 CLAUDE.md / ADR-169 가 선언한 의도된 상태다.
 
 테스트:
   - TIER=block + 표준 밖 path → exit 2 (discriminating)
   - TIER=warn + 표준 밖 path → exit 0 (discriminating vs block)
-  - TIER 미설정 → 기본값 (block 예상)
+  - TIER 미설정 → warn 과 동치 (rc 0 + WARN 진단 고정)
 
 Discriminating:
   - block-tier 와 warn-tier 의 exit code 분화 확인
@@ -77,17 +84,41 @@ def test_warn_tier_allows_nonstandard_worktree():
     )
 
 
-def test_default_tier_is_block():
-    """TIER 미설정 → 기본값 (block 예상)."""
+def test_default_tier_is_warn():
+    """TIER 미설정 → **warn** (실물 default, 도입기).
+
+    구 `assert rc in (0, 2)` 는 가능한 두 값을 모두 수용하는 전-수용 assert 라
+    default 가 어느 쪽이든 통과했다 — 문서(block)와 실물(warn)의 어긋남을
+    원리적으로 검출할 수 없는 판정이었다. 실물 default 를 고정한다.
+    """
     rc, stderr = _run_worktree_location_guard(None)
 
-    # 기본값이 block 이면 exit 2
-    # 기본값이 warn 이면 exit 0
-    # 구현에 따라 달라질 수 있음 — 타당성 기준 defer
-    assert rc in (0, 2), (
-        f"Default tier should produce consistent result, got {rc}\n"
+    assert rc == 0, (
+        f"default tier 는 warn(통과) 여야 함 — got rc={rc}\n"
+        f"(승격기 block 전환 시 이 테스트와 위 docstring 을 함께 갱신할 것)\n"
         f"stderr: {stderr}"
     )
+    assert "WARN" in stderr, (
+        f"default warn 은 경고 진단을 남겨야 한다 (조용한 통과 = 관측 소실)\n"
+        f"stderr: {stderr}"
+    )
+    assert "BLOCKED" not in stderr, f"warn 인데 차단 진단이 나왔다\nstderr: {stderr}"
+    assert "WORKTREE_LOCATION_GUARD_TIER=block" in stderr, (
+        f"승격 경로 안내(block 승격 시 차단) 부재 — 도입기 warn 계약 미표기\n"
+        f"stderr: {stderr}"
+    )
+
+
+def test_default_tier_equals_explicit_warn():
+    """미설정 == TIER=warn 명시 (default 가 제3의 거동이 아님)."""
+    rc_default, err_default = _run_worktree_location_guard(None)
+    rc_warn, err_warn = _run_worktree_location_guard("warn")
+
+    assert rc_default == rc_warn == 0, (
+        f"미설정({rc_default}) 과 warn({rc_warn}) 이 갈렸다"
+    )
+    assert "WARN" in err_default and "WARN" in err_warn
+    assert "BLOCKED" not in err_default and "BLOCKED" not in err_warn
 
 
 @requires_windows

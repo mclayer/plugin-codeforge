@@ -9,6 +9,12 @@ AC-4: 테스트 내 rationale 표 (24행) ↔ hooks.json bijection 확인.
 AC-16: fail-open 계상 3항 (게이트 4종 fail-open / 내부 subprocess 하한 / SessionEnd 특례)
         이 표에 필드로 실재.
 
+AC-16 판정 정의역 = **행** (CFP-2965 F5-1):
+  구 판정은 표 전체 연결 문자열에 대한 `A or B` 단락 평가라 게이트별 누락을 못 잡았고
+  (#2 는 assert 없는 dead var 였다), 게이트 4종이 모두 무계상이어도 통과했다.
+  현재는 게이트 4종을 행 단위로 각각 판정하고, #2 는 표의 선언값을 실물 상수
+  (git_branch_delete_merge_gate.GH_TOTAL_BUDGET_SEC) 와 대조한다.
+
 세부:
   - hooks.json 의 24개 hook 별로 timeout 값 + empirical_source 기술
   - source 는 "Change Plan §3.2 설명" 형태로 명시
@@ -23,6 +29,7 @@ AC-16: fail-open 계상 3항 (게이트 4종 fail-open / 내부 subprocess 하�
 from __future__ import annotations
 
 import json
+import re
 import pytest
 from pathlib import Path
 
@@ -56,25 +63,36 @@ TIMEOUT_RATIONALE_TABLE = [
         "§3.2 SessionStart #3: orphan worktree cleanup (file ops 30s cap)",
     ),
     # PreToolUse Bash (5개)
+    # ↓ 게이트 4종은 AC-16 #1 fail-open 손실을 행 자체에 계상한다 (표 밖 산문 아님).
     (
         "cross-repo-gh-safety",
         10,
-        "§3.2 PreToolUse cross-repo gate: regex+deny 로직 (no network, ≤10s)",
+        "§3.2 PreToolUse cross-repo gate: regex+deny 로직 (no network, ≤10s). "
+        "AC-16 #1 fail-open 계상: timeout 초과 = 훅 kill → deny 미발화 → 통과 수렴 "
+        "(차단 손실 = cross-repo gh 오작동 유입, 흔적 0)",
     ),
     (
         "repo-confinement",
         10,
-        "§3.2 PreToolUse repo confine gate: path check + deny (≤10s local)",
+        "§3.2 PreToolUse repo confine gate: path check + deny (≤10s local). "
+        "AC-16 #1 fail-open 계상: timeout 초과 = 훅 kill → deny 미발화 → 통과 수렴 "
+        "(차단 손실 = repo 경계 밖 write 유입, 흔적 0)",
     ),
     (
         "git-branch-delete-merge-gate",
         60,
-        "§3.2 PreToolUse gh-query gate: PR list 조회 (GH_TOTAL_BUDGET_SEC=50 + margin)",
+        "§3.2 PreToolUse gh-query gate: PR list 조회 (GH_TOTAL_BUDGET_SEC=50 + margin). "
+        "AC-16 #1 fail-open 계상: gh 부재·오류·JSON 파싱 실패·예산 소진·timeout kill 이 "
+        "전부 통과 수렴 (차단 손실 = 미머지 PR branch 선삭제 유입). "
+        "AC-16 #2 내부 subprocess 하한: GH_TOTAL_BUDGET_SEC=50 < timeout 60 — "
+        "'죽어서 통과'(kill, 흔적 0) 를 '돌아서 통과'(진단 stderr, 흔적 有) 로 전환",
     ),
     (
         "worktree-location-guard",
         15,
-        "§3.2 PreToolUse worktree guard: standard path check + deny (≤15s)",
+        "§3.2 PreToolUse worktree guard: standard path check + deny (≤15s). "
+        "AC-16 #1 fail-open 계상: timeout 초과 = 훅 kill → deny 미발화 → 통과 수렴 "
+        "(차단 손실 = 표준 밖 worktree 생성 유입, 흔적 0)",
     ),
     (
         "pretooluse-bash-description-inject",
@@ -165,6 +183,16 @@ TIMEOUT_RATIONALE_TABLE = [
 ]
 
 
+# AC-16 #1 정의역 — PreToolUse deny 게이트 4종 (fail-open 손실 계상 대상).
+# 이 목록의 임의 축소는 test_ac16_fail_open_gate_set_matches_bypass_gates 가 잡는다.
+FAIL_OPEN_GATES = (
+    "cross-repo-gh-safety",
+    "repo-confinement",
+    "git-branch-delete-merge-gate",
+    "worktree-location-guard",
+)
+
+
 def _load_hooks_json() -> dict:
     """hooks.json 로드."""
     hooks_path = Path(__file__).parent.parent / "hooks.json"
@@ -234,39 +262,87 @@ def test_hook_timeout_rationale_all_nonempty():
         assert isinstance(source, str) and len(source) > 0
 
 
-def test_ac16_special_cases_documented():
-    """AC-16: fail-open 3항 + SessionEnd 특례가 표에 명시.
+def _row(hook_name: str) -> tuple[str, int, str]:
+    """rationale 표에서 hook 행 1건 조회 (부재 = FAIL)."""
+    for row in TIMEOUT_RATIONALE_TABLE:
+        if row[0] == hook_name:
+            return row
+    raise AssertionError(f"rationale 표에 '{hook_name}' 행이 없다")
 
-    AC-16 3항:
-      #1: 게이트 4종 fail-open 계상
-      #2: 내부 subprocess 하한 계상
-      #3: SessionEnd async timeout 특례 명시
+
+@pytest.mark.parametrize("gate_name", FAIL_OPEN_GATES)
+def test_ac16_fail_open_accounted_per_gate(gate_name: str):
+    """AC-16 #1: 게이트 4종 **각 행**이 fail-open 손실을 계상한다.
+
+    구 판정은 표 전체를 이어붙인 뒤 `"fail-open" in text or "AC-16" in text` 로
+    단락 평가했다 — 표 어딘가에 "AC-16" 한 글자만 있으면(예: SessionEnd 특례 행)
+    게이트 4종이 전부 무계상이어도 통과한다. 즉 정의역이 "표 전체"라 게이트별
+    누락을 원리적으로 검출하지 못했다. 여기서 정의역을 **행**으로 좁힌다.
     """
-    source_text = "\n".join(source for _, _, source in TIMEOUT_RATIONALE_TABLE)
+    _name, _timeout, source = _row(gate_name)
 
-    # #1: fail-open 계상
-    assert "fail-open" in source_text.lower() or "AC-16" in source_text, (
-        "AC-16 #1 fail-open not documented in rationale table"
+    assert "AC-16 #1" in source, (
+        f"{gate_name}: AC-16 #1 fail-open 계상 태그 부재 — 행 자체에 계상되어야 한다.\n"
+        f"현재 source: {source}"
+    )
+    assert "fail-open" in source.lower(), (
+        f"{gate_name}: 'fail-open' 표기 부재 (source: {source})"
+    )
+    assert "손실" in source, (
+        f"{gate_name}: 손실 계상(무엇이 통과로 새는가) 부재 — "
+        f"'fail-open 이다'만 적고 대가를 안 적으면 계상이 아니다. (source: {source})"
     )
 
-    # #3: SessionEnd 특례 명시
-    session_end_found = False
-    for hook_name, timeout, source in TIMEOUT_RATIONALE_TABLE:
-        if hook_name == "session-end":
-            assert (
-                "async" in source.lower() and "AC-16" in source
-            ), "AC-16 #3 SessionEnd special case not documented"
-            session_end_found = True
-            break
-    assert session_end_found, "session-end hook not found in rationale table"
 
-    # #2: 내부 subprocess 하한 (예시: pretooluse-bash-description-inject ≤5s)
-    subprocess_haul_found = False
-    for hook_name, timeout, source in TIMEOUT_RATIONALE_TABLE:
-        if "subprocess" in source.lower() or "sed" in source.lower():
-            subprocess_haul_found = True
-            break
-    # Optional: subprocess 하한이 명시되지 않으면 SKIP 허용 (다른 형태로 계상될 수 있음)
+def test_ac16_fail_open_gate_set_matches_bypass_gates():
+    """AC-16 #1 정의역 고정: 게이트 4종 목록이 bypass disjoint 축과 동일.
+
+    FAIL_OPEN_GATES 를 임의로 줄이면(예: branch-gate 제외) 위 per-gate 테스트가
+    조용히 축소된다. 독립 SSOT(bypass env 축)와 대조해 그 축소를 검출한다.
+    """
+    from test_bypass_env_disjoint import BYPASS_ENVS
+
+    assert set(FAIL_OPEN_GATES) == set(BYPASS_ENVS.keys()), (
+        f"게이트 4종 정의역 불일치: rationale={sorted(FAIL_OPEN_GATES)} "
+        f"vs bypass축={sorted(BYPASS_ENVS.keys())}"
+    )
+
+
+def test_ac16_internal_subprocess_floor_accounted():
+    """AC-16 #2: 내부 subprocess 하한이 계상 + **실물 상수와 정합**.
+
+    구 코드는 `subprocess_haul_found` 를 세팅만 하고 assert 하지 않는 dead var 였다
+    (어떤 표 내용이든 통과). 여기서는 표가 선언한 하한값을 실제 훅 모듈 상수와
+    대조하고, 그 하한이 hooks.json timeout 미만인지(= timeout 이 hollow 가 아닌지)
+    까지 판정한다.
+    """
+    import git_branch_delete_merge_gate as branch_gate
+
+    hook_name, timeout, source = _row("git-branch-delete-merge-gate")
+
+    assert "AC-16 #2" in source, f"AC-16 #2 내부 subprocess 하한 미계상 (source: {source})"
+
+    m = re.search(r"GH_TOTAL_BUDGET_SEC=(\d+)", source)
+    assert m, f"표에 GH_TOTAL_BUDGET_SEC=<값> 형태의 하한 선언 부재 (source: {source})"
+    declared = int(m.group(1))
+
+    assert declared == branch_gate.GH_TOTAL_BUDGET_SEC, (
+        f"표가 선언한 하한({declared}) 이 실물 상수"
+        f"({branch_gate.GH_TOTAL_BUDGET_SEC}) 와 불일치 — 표가 stale"
+    )
+    assert declared < timeout, (
+        f"내부 subprocess 하한({declared}) 이 hook timeout({timeout}) 이상 — "
+        f"timeout 이 hollow (예산 소진 진단 전에 kill 된다)"
+    )
+
+
+def test_ac16_session_end_special_case_documented():
+    """AC-16 #3: SessionEnd async timeout 특례가 그 행에 명시."""
+    _name, timeout, source = _row("session-end")
+
+    assert "AC-16 #3" in source, f"AC-16 #3 태그 부재 (source: {source})"
+    assert "async" in source.lower(), f"async 특례 표기 부재 (source: {source})"
+    assert timeout == 1, f"SessionEnd 특례 timeout 은 1s (got {timeout})"
 
 
 def test_hook_timeout_rationale_complete_24rows():

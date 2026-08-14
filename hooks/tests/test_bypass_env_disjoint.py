@@ -294,8 +294,13 @@ def test_bypass_env_other_gate_denies(gate_key: str, other_bypass_idx: int, tmp_
     gate_keys = list(BYPASS_ENVS.keys())
     other_gates = [k for k in gate_keys if k != gate_key]
 
-    if other_bypass_idx >= len(other_gates):
-        pytest.skip(f"Not enough other gates for index {other_bypass_idx}")
+    # 구 코드는 여기서 pytest.skip 했다 — 게이트 4종 ⇒ other_gates 는 항상 3, idx 는
+    # 항상 {0,1,2} 이므로 **도달 불가** 분기였고, 만에 하나 축이 줄면 cell 을 조용히
+    # 삼켜 12 cell 이 소리 없이 축소된다. fail-closed assert 로 전환한다.
+    assert other_bypass_idx < len(other_gates), (
+        f"타 게이트 {len(other_gates)}종 < idx {other_bypass_idx} — 비대각 축 정의 오류 "
+        f"(cell 을 skip 으로 삼키지 않고 실패시킨다)"
+    )
 
     other_gate = other_gates[other_bypass_idx]
     other_bypass_env = BYPASS_ENVS[other_gate]
@@ -369,28 +374,85 @@ def test_precondition_deny_without_bypass_env(tmp_path):
             )
 
 
+def _parametrize_argvalues(func, argnames: str) -> list:
+    """테스트 함수에 **실제로 붙은** @pytest.mark.parametrize 의 argvalues 를 꺼낸다.
+
+    구 커버리지 assert 는 기대값을 BYPASS_ENVS 에서 재유도한 뒤 BYPASS_ENVS 와
+    비교했다 — 자기 자신을 비교하는 항진명제라, parametrize 목록에서 게이트를
+    빼도(과거 branch-gate 제외 회귀 그대로) 늘 통과한다. 실 파라미터 소스를
+    데코레이터에서 직접 읽어야 축소가 검출된다.
+    """
+    marks = [m for m in getattr(func, "pytestmark", []) if m.name == "parametrize"]
+    for m in marks:
+        if m.args and m.args[0] == argnames:
+            return list(m.args[1])
+    raise AssertionError(
+        f"{func.__name__} 에 parametrize({argnames!r}) 가 없다 — "
+        f"현재 마크 argnames: {[m.args[0] for m in marks if m.args]}"
+    )
+
+
 def test_16cell_matrix_coverage_complete():
     """16-cell 커버리지 완결 assert (제외 0 — AC-20).
 
-    문서용 print 가 아니라, cell 이 조용히 빠지는 것을 막는 구조 assert.
-    파라미터 목록에서 게이트를 제외하면(과거 branch-gate 처럼) 이 assert 가 깨진다.
+    판정 소스 = 두 테스트 함수에 붙은 parametrize 데코레이터 **실물**.
+    어느 축에서든 게이트를 빼면 여기서 깨진다 (조용한 cell 축소 불가).
     """
-    gates = list(BYPASS_ENVS.keys())
+    gates = set(BYPASS_ENVS.keys())
     assert len(gates) == 4, f"게이트 4종 기대, 실제 {len(gates)}"
 
-    # 대각 4 cell — 전 게이트가 파라미터에 포함돼야 한다
-    diagonal_params = [g for g in BYPASS_ENVS.keys()]
-    assert set(diagonal_params) == set(gates), "대각 cell 에서 빠진 게이트 존재"
+    # --- 대각 4 cell: (gate, own_env) 쌍을 실 파라미터에서 회수
+    diagonal = _parametrize_argvalues(
+        test_bypass_env_own_gate_exits_zero, "gate_key,bypass_env_name"
+    )
+    assert len(diagonal) == 4, f"대각 4 cell 기대, 실제 {len(diagonal)}"
+    diagonal_gates = {g for g, _ in diagonal}
+    assert diagonal_gates == gates, (
+        f"대각 cell 에서 빠진 게이트 존재: {sorted(gates - diagonal_gates)}"
+    )
+    for gate_key, env_name in diagonal:
+        assert env_name == BYPASS_ENVS[gate_key], (
+            f"대각 cell env 오배선: {gate_key} → {env_name} "
+            f"(기대 {BYPASS_ENVS[gate_key]})"
+        )
 
-    # 비대각 12 cell — 4 게이트 × 타 env 3
-    off_diagonal = [(g, i) for g in gates for i in (0, 1, 2)]
-    assert len(off_diagonal) == 12, f"비대각 12 기대, 실제 {len(off_diagonal)}"
+    # --- 비대각 12 cell: gate 축 × other_bypass_idx 축 (둘 다 실 파라미터)
+    off_gates = _parametrize_argvalues(test_bypass_env_other_gate_denies, "gate_key")
+    off_idx = _parametrize_argvalues(
+        test_bypass_env_other_gate_denies, "other_bypass_idx"
+    )
+    assert set(off_gates) == gates, (
+        f"비대각 축에서 빠진 게이트 존재: {sorted(gates - set(off_gates))}"
+    )
+    assert sorted(off_idx) == [0, 1, 2], f"타 env 3종 축이 아님: {off_idx}"
+    off_diagonal_count = len(off_gates) * len(off_idx)
+    assert off_diagonal_count == 12, f"비대각 12 기대, 실제 {off_diagonal_count}"
 
-    total_cells = len(diagonal_params) + len(off_diagonal)
-    assert total_cells == 16, f"16-cell 기대, 실제 {total_cells}"
+    assert len(diagonal) + off_diagonal_count == 16, "16-cell 미완결"
 
     # branch-gate 가 어느 축에서도 제외되지 않았는지 명시 확인 (AC-20 회귀 방지)
-    assert "git-branch-delete-merge-gate" in diagonal_params
-    assert any(g == "git-branch-delete-merge-gate" for g, _ in off_diagonal), (
+    assert "git-branch-delete-merge-gate" in diagonal_gates
+    assert "git-branch-delete-merge-gate" in set(off_gates), (
         "branch-gate 가 비대각 축에서 제외됨 — AC-20 회귀 (gh seam 배선 확인)"
+    )
+
+
+def test_coverage_assert_is_not_tautological():
+    """위 커버리지 assert 가 **실 파라미터**를 읽는다는 것의 실증 (판별력 self-test).
+
+    parametrize 가 축소된 가짜 함수를 넣으면 반드시 깨져야 한다. 구현이 다시
+    BYPASS_ENVS 재유도(항진)로 퇴행하면 이 테스트가 잡는다.
+    """
+
+    @pytest.mark.parametrize(
+        "gate_key,bypass_env_name",
+        [(g, BYPASS_ENVS[g]) for g in BYPASS_ENVS if g != "git-branch-delete-merge-gate"],
+    )
+    def _shrunk(gate_key, bypass_env_name):  # pragma: no cover - 실행 대상 아님
+        pass
+
+    recovered = _parametrize_argvalues(_shrunk, "gate_key,bypass_env_name")
+    assert len(recovered) == 3, "introspect 가 실 파라미터를 읽지 못함"
+    assert "git-branch-delete-merge-gate" not in {g for g, _ in recovered}, (
+        "축소된 파라미터인데 게이트가 살아있다 — introspect 아닌 재유도 의심"
     )

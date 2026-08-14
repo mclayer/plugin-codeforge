@@ -89,9 +89,18 @@ def test_all_24_hooks_counted():
 
 
 def test_plugin_root_only_reference():
-    """AC-11: 다른 환경 변수 참조 검출 (plugin 경계 검증)."""
+    """AC-11: ${CLAUDE_PLUGIN_ROOT} 외 환경변수 참조 0 — print 경고 → FAIL 승격.
+
+    구 코드는 위반을 print 로만 흘렸다. pytest 는 통과를 찍고, 그 경고는 `-s` 로
+    stdout 을 들여다볼 때만 보인다 — 게이트로서 판별력 0(위반이 있어도 GREEN).
+    plugin 경계 참조는 AC-11 이 판정하겠다고 선언한 대상이므로 FAIL 로 승격한다.
+
+    승격 안전성 실측 (2026-08-14 firsthand): 현행 hooks.json 24 command 의
+    external env var 참조 = 0건 → 승격해도 GREEN (born-red 아님).
+    """
     hooks_data = _load_hooks_json()
     external_refs = []
+    scanned = 0
 
     for event_name, matchers in hooks_data["hooks"].items():
         if not isinstance(matchers, list):
@@ -101,6 +110,7 @@ def test_plugin_root_only_reference():
             hooks_list = matcher_entry.get("hooks", [])
             for hook in hooks_list:
                 cmd = hook.get("command", "")
+                scanned += 1
 
                 # ${...} 형태 찾기 (${CLAUDE_PLUGIN_ROOT} 외)
                 other_vars = re.findall(r"\$\{[^}]+\}", cmd)
@@ -110,8 +120,11 @@ def test_plugin_root_only_reference():
                             f"Event={event_name}: external env var {var} in: {cmd}"
                         )
 
-    # external env var 참조는 경고만 (차단 아님 — compliance ceiling)
+    # 정의역 비공허 — 0건을 훑고 "위반 없음" 을 말하면 공허한 통과다.
+    assert scanned == 24, f"검사 대상 command 24 기대, 실제 {scanned} (AC-11 scope)"
+
     if external_refs:
-        print(f"\nWarning: External env var references found (AC-11 audit):")
-        for ref in external_refs:
-            print(f"  - {ref}")
+        pytest.fail(
+            "AC-11 위반 — ${CLAUDE_PLUGIN_ROOT} 밖 환경변수 참조:\n"
+            + "\n".join(f"  - {ref}" for ref in external_refs)
+        )
