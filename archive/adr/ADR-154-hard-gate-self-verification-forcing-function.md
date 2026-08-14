@@ -36,36 +36,33 @@ amendment_log:
     carrier_story: CFP-2963
     date: 2026-08-14
     scope: >-
-      적용 대상 확장(landed 셸 게이트) + 검사 modality 확장(정적 presence/shape → 동적 corpus
-      실행-분류). §결정 3(mechanical floor)의 검사 modality 에 "커밋된 2-arm corpus 를 **실행**해
-      kill 여부로 분류"를 추가하고, §결정 5(2-control)·§결정 6(fail-direction)·§결정 7(born-hollow
+      **적용 대상 확장 ONLY** — §결정 5(2-control)·§결정 6(fail-direction)·§결정 7(born-hollow
       금지)의 적용 대상에 "lane 산출물로 저작돼 repo 에 landed 된 게이트 스크립트"(**안정 좌표
-      보유**)를 추가한다. 신규 normative = M-1(2-arm corpus 동적 kill 분류 — arm-H/arm-L 전건 AND
-      + 표본 binding stamp) · M-2(분모 단조 하한 — 항목별 census emit / N<baseline=FAIL /
-      baseline 단조 seal / non-applicable 미제공 / 항목별 kill emit) **2 축 ONLY**.
-      그 외(super-class·3-way taxonomy·2-control·honest-ceiling·fail-direction·T-TRAVERSE·ReDoS)는
-      **신규 0** — §결정 9 재codify 0 준수 cross-ref.
-      ★핵심 = **A1-3 조건부 유보의 해제 조건 명시**: A1-3 이 하네스에 landed 계약을 걸지 않은
-      유일 사유("임시 산출물이라 스캔할 안정 좌표가 없다")가 landed 셸 게이트에는 성립하지 않는다.
-      배치 = wrapper 자기 게이트 한정(cross-repo fetch 미채택 — PUBLIC/PRIVATE 비대칭에서 게이트가
-      최저신뢰 모집단에서 조용히 degrade 하는 자기모순 회피). day-1 warning-tier + hard-fail
-      (continue-on-error 금지), required 승격 = ADR-171 §결정 6 3-AND 별 carrier defer.
-      ADR-152/151/168 무접촉(ADR-151 인벤토리 8-field 스키마 REUSE — 신규 필드 0, 확장은 sidecar
-      manifest + foreign key join).
-      ★형태 판정 정직 기재: §결정 1 3-prong 자기적용 = **1/3**((iii) distinct result **성립 자인** —
-      신규 fail-closed 메타-게이트 1). Amendment 채택 근거는 (iii) 부정이 아니라 §결정 9/§결정 2
-      재codify 금지 + A1-3 조건절의 SSOT 귀속 + Amendment 1 선례이며, **반대 판정 가능성을 A2-1 에
-      명시 등재**한다(설계리뷰가 뒤집을 수 있는 판정).
+      보유**, 이하 landed-gate)를 추가한다(A2-2). 그 실질은 **A1-3 조건부 유보의 해제 조건 명시**다:
+      A1-3 이 하네스에 landed 계약을 걸지 않은 유일 사유("임시 산출물이라 스캔할 안정 좌표가 없다")가
+      landed-gate 에는 성립하지 않는다. **이 조건절의 SSOT 는 ADR-154 이므로 본 Amendment 로 존치**한다.
+      ★**신규 normative 0 — 본 Amendment 는 새 계약을 만들지 않는다.** 초판이 담았던 M-1(2-arm corpus
+      동적 kill 분류) · M-2(분모 단조 하한) 및 경계·opt-in·sidecar manifest·정직 천장·carrier 결속은
+      **ADR-175 로 이관**됐다(아래 형태 판정). 본 Amendment 는 그 ADR 로의 **포인터**만 보유한다.
+      ★**형태 판정 전환 정직 기재(무언 폐기 금지)**: 초판 A2-1 은 §결정 1 3-prong 자기적용 **1/3** 로
+      Amendment 를 채택했고 **반대 판정 가능성을 스스로 등재**했다. **설계리뷰(CFP-2963 Story §9.12
+      DR-M5)가 그 판정을 뒤집었다** — 리트머스 재적용 = **2~3/3**((ii) 는 같은 문서 A2-6 이 "신규
+      normative 는 M-1·M-2 둘뿐"이라 선언하므로 "1 점뿐" 이 자기 계수와 모순 / (iii) 는 초판이 이미
+      자인), ADR-151 §결정 1 신규 ADR prong 3-conjunct = **3/3**. 채택 근거 3 중 2 가 반증됐고
+      (근거 1 = 거짓 딜레마[§결정 1 자신이 "cross-ref/재사용만, supersede/rewrite 0" 으로 착지] /
+      근거 3 = A1-1 선례 부적용[A1-1 은 0/3 · 신규 workflow 0, 본 건은 workflow 1 + 메타-게이트 1 +
+      스키마 1 로 결정적 prong 이 반전]), **잔존 견고 근거는 근거 2(A1-3 조건절 SSOT 귀속) 1건뿐**이라
+      그 1건만 본 Amendment 에 남긴다.
     sunset_justification: >-
       N/A — ADR-154 = is_transitional:false permanent governance ratchet → ADR-058 §결정 5 sunset
-      trigger 미해당. 본 Amendment = 강화 방향(약화 surface 0): 신규 required context **0** ·
-      branch-protection 8-tuple **무변경** · inter-plugin 계약 무변경 · 신규 category 0.
-      (신규 workflow 는 **1**(wrapper-self-only · non-required · day-1 hard-fail) — Amendment 1 의
-      "신규 workflow 0"과 다른 점을 은폐하지 않는다. required 승격 0 이므로 약화 surface 는 여전히 0.)
-      INV-5(ceiling immutable) 무손상 — M-1 은 "**저자가 선언한 mutant 에 대한 kill 판정**"이지
-      임의 게이트의 detection sufficiency 판정이 아니다(A1-4 declared-unit 절제 논거 상속).
-    reinterpretation: false  # 본문 §결정 1-10 및 Amendment 1 의 landed 대상 의미 불변 — 적용 대상 추가 + 전방 normative 추가이며 forward-only ratchet(기존 76 self-test 소급 무효화 0, retrofit = 별 carrier defer). 판정 근거 = 본문 A2-2·A2-3·A2-7 4중 봉인 절. 진위 = 리뷰 판정 축(honest-ceiling)
+      trigger 미해당. 본 Amendment(축소 후) = 강화 방향(약화 surface 0): 신규 required context **0** ·
+      branch-protection 8-tuple **무변경** · inter-plugin 계약 무변경 · 신규 category 0 ·
+      **신규 workflow 0**(초판이 declare 했던 workflow 1 은 ADR-175 로 이관 — 은폐 아닌 귀속 이동).
+      INV-5(ceiling immutable) 무손상 — 본 Amendment 는 적용 대상만 넓히고 detection sufficiency
+      판정을 도입하지 않는다.
+    reinterpretation: false  # 본문 §결정 1-10 및 Amendment 1 의 landed 대상 의미 불변 — 적용 대상 추가(A2-2)이며 forward-only ratchet(기존 76 self-test 소급 무효화 0, retrofit = 별 carrier defer). A1-3 은 무변경 유지(재해석 아닌 조건 해제 명시). 진위 = 리뷰 판정 축(honest-ceiling)
 related_adrs:
+  - ADR-175  # 파생 신규 ADR(CFP-2963) — Amendment 2 초판이 담았던 M-1(2-arm corpus 동적 kill 분류) · M-2(분모 단조 하한) normative 본체 + 경계·opt-in·sidecar manifest·정직 천장·carrier 결속의 착지점. 설계리뷰(Story §9.12 DR-M5)가 Amendment 착지 판정을 뒤집은 결과이며, 본 ADR 은 ADR-175 에 의해 **무수정 cross-ref** 된다(supersede/rewrite 0 — §결정 2/4/5/6/7/8/9 authoritative 유지). Amendment 2 는 A2-2 적용 대상(landed-gate) + A1-3 조건 해제 SSOT 귀속만 축소 존치
   - ADR-082  # 재사용/super-class kin(amend 아님) — §결정11.A red-green-stash-proof(RED proof, carrier CFP-1330/1025) 는 REUSE(재codify 금지, cross-ref). super-class(write-time semantic truth verify) 는 kin 이나 §결정11 = "Wave 1 = declaration-only, 2 sub-decisions 모두 behavioral directive"(L939 verbatim) → CFP-2684 의 normative+phase-2+fail-closed 메타-게이트+재귀 자기적용 = 신규 mechanism → ADR-082 = cross-ref home 아님(§결정1 A2-5 Amendment prong 기각)
   - ADR-151  # 형제/증분(amend 아님) — self-test 채널 execution-liveness(L1) 봉인 + 8-field 인벤토리 스키마(REUSE — 신규 스키마 0). subject disjoint(self-test 코퍼스 ↔ 임의 게이트 core). AC-4 는 검출력을 G3/review 로 명시 DEFER(§결정7). axis-(ii) shape-scan = ADR-151 AC-4 enum→shape 1단계 증분(cross-ref, ADR-151 Amendment 아님 — landed self-tested `check_selftest_execution_liveness.py` 무침습). 신규 메타-게이트 self-test 는 ADR-151 인벤토리 1행 enroll(bijection cross-seal)
   - ADR-152  # 동형(cross-ref, 재codify 금지) — §결정1 discriminating-A(self-test)/B(product activation) 어휘 SSOT + §결정3/INV-G3-4 presence/구조 fail-closed·검출력 미강제 honest-ceiling 구조 + §결정8 born-hollow 금지(positive-leak 단정). CFP-2684 는 honest-ceiling 구조·discriminating 어휘를 상속(super-class 명명만 신규)
@@ -424,7 +421,9 @@ L-1 은 **저자가 선언한 단위**에 대한 델타 assert 만 강제한다(
 
 ---
 
-## Amendment 2 (CFP-2963, 2026-08-14) — 적용 대상 확장: landed 셸 게이트. 검사 modality 확장: **정적 presence/shape → 동적 corpus 실행-분류**. 신규 normative = M-1(2-arm corpus kill 분류) · M-2(분모 단조 하한) **2 축 ONLY**. INV-5 무손상
+## Amendment 2 (CFP-2963, 2026-08-14 · **2026-08-15 축소 개정**) — 적용 대상 확장: landed 셸 게이트 **ONLY**. **신규 normative 0** — M-1·M-2 본체는 **[ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) 로 이관**(설계리뷰가 Amendment 착지 판정을 뒤집음). INV-5 무손상
+
+> ★**본 Amendment 의 현재 범위 = 2 절뿐**: **배경**(A1-3 조건부 유보의 해제 조건) + **A2-2**(적용 대상 = landed-gate). 초판의 A2-1 은 **판정 전환 기록**으로 재작성됐고, **A2-3~A2-9 는 ADR-175 로 이관**됐다(A2-3 자리 = 포인터). 이관 경위·근거는 A2-1 참조.
 
 ### 배경 — A1-3 의 유보는 **무조건이 아니라 조건부**였다 (그 조건이 본 건에서 성립하지 않는다)
 
@@ -432,29 +431,35 @@ A1-3 은 instrument-side 하네스에 landed 계약(§결정 8 5-piece chain · 
 
 **본 Amendment 의 대상은 그 사실 명제가 성립하지 않는 모집단**이다 — **lane 산출물로 저작돼 repo 에 landed 된 게이트 스크립트**는 경로·커밋·해시라는 **안정 좌표를 보유**한다. 따라서 본 Amendment 는 **새 원리를 도입하는 것이 아니라 A1-3 의 조건부 유보가 해제되는 정확한 조건을 문면에 명시**한다. ★그리고 이 문장은 **ADR-154 문면 안에서만 의미를 갖는다** — A1-3 의 조건절을 남의 문서가 해제하면 SSOT 가 갈린다.
 
-**발생 근거(CFP-2963 arc 실측)**: 같은 batch 의 산출물 검토에서 *"검사처럼 보이나 아무것도 막지 않는 것"* 이 **11 인스턴스**로 발현했고, 그중 대표 형상이 **fail-open 셸 술어**(게이트 판정이 `if` 조건절 안에 있어 `set -e` 면제 → rc≠0 을 삼키는 fallback → 정수 비교 실패 rc=2 → else 로 흐름 = **어떤 입력으로도 FAIL 하지 않는 게이트**)다. **기존 3층 어느 것도 이 모집단을 정의역에 담지 않는다** — 층 B 의 subject 발견 계약이 `<DIR>/tests/scripts/*.sh` **∧** inline enrollment marker(`hard-gate-self-verification: enrolled` | `hgsv-enroll`)로 **구조적으로 한정**돼 있기 때문이다(`scripts/lib/check_hard_gate_self_verification.py:57`·`:106`) `[ArchitectAgent firsthand 2026-08-14]`.
+**발생 근거(CFP-2963 arc 실측)**: 같은 batch 의 산출물 검토에서 *"검사처럼 보이나 아무것도 막지 않는 것"* 이 **20 인스턴스**로 발현했고(계수 기준 = **인스턴스** — 전건 열거·재계수 SSOT = [ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) §결정 9. 초판이 적었던 *"11 인스턴스"* 는 기준 혼재 상태의 미도출 수치였다), 그중 대표 형상이 **fail-open 셸 술어**(게이트 판정이 `if` 조건절 안에 있어 `set -e` 면제 → rc≠0 을 삼키는 fallback → 정수 비교 실패 rc=2 → else 로 흐름 = **어떤 입력으로도 FAIL 하지 않는 게이트**)다. **기존 3층 어느 것도 이 모집단을 정의역에 담지 않는다** — 층 B 의 subject 발견 계약이 `<DIR>/tests/scripts/*.sh` **∧** inline enrollment marker(`hard-gate-self-verification: enrolled` | `hgsv-enroll`)로 **구조적으로 한정**돼 있기 때문이다(`scripts/lib/check_hard_gate_self_verification.py:57`·`:106`) `[ArchitectAgent firsthand 2026-08-14]`.
 
 ★**침묵이 아니라 명시적 유보였다** — 그래서 처방이 *"감사 강화"* 가 아니라 **조건 명시**다(A1-1 의 *"문면 갭의 처방은 문면 갱신"* 과 같은 형).
 
-### A2-1 — 형태 판정: Amendment 채택 · 신규 ADR 기각 (§결정 1 3-prong 자기적용 = **1/3 · (iii) 성립 자인**)
+### A2-1 — 형태 판정: **초판 판정(Amendment 채택)은 설계리뷰가 뒤집었다 — 신규 ADR([ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md)) 채택**
 
-★**A1-1 과 달리 본 판정은 0/3 이 아니다. 그 사실을 숨기지 않는다** — 은폐하면 본 ADR 이 codify 하는 규율(*"단언 ≠ 판별"*)을 자기 판정에서 어긴다.
+★**판정 이력을 무언 폐기하지 않는다.** 초판 A2-1 은 §결정 1 3-prong 자기적용 **1/3** 로 Amendment 를 채택했고, 그 자리에서 **반대 판정 가능성을 스스로 등재**하며 *"설계리뷰가 이 판정을 뒤집을 수 있다"*, *"뒤집힐 경우 normative 내용은 그대로 신규 ADR 로 이관 가능하도록 저작했다(내용 ⊥ 그릇)"* 라고 적었다. **CFP-2963 설계리뷰(Story §9.12 DR-M5)가 그 조건을 발동시켰다.** 아래는 초판 판정과 재판정을 **나란히** 남긴 것이다 — 초판 근거를 지우지 않고 결론만 전환한다.
 
-| prong | 판정 | 근거 |
-|---|---|---|
-| (i) distinct context | **부분 성립 → 기각** | 셸 게이트 · 타 repo · lane 산출물 = 다른 모집단이다. 그러나 **Amendment 1 이 이미 "instrument-side" 라는 다른 모집단을 Amendment 로 흡수한 선례**를 세웠다 ⇒ 모집단 상이만으로는 신규 ADR 근거 불충분 |
-| (ii) distinct decisions | **기각** | 신규 결정은 **1 점뿐** — *"정적 presence/shape → 동적 corpus 실행-분류"* 라는 **modality 교체**. taxonomy · super-class · 2-control · honest-ceiling · fail-direction 은 **§결정 9 재codify 0 에 의해 cross-ref only** 다. 신규 *결정 블록* 이 아니라 **§결정 3 의 modality leg** |
-| (iii) distinct result | ★**성립(자인)** | 신규 fail-closed 메타-게이트 **1** 을 낳는다 ⇒ §결정 1 이 인용한 ADR-151 §결정 1 test(*"신규 fail-closed 메타-게이트 = 신규 ADR"*)가 **문자 그대로 발화**한다. A1-1 이 (iii) 를 기각할 때 든 사유(*"결과가 남의 carrier"*)는 본 건에 **없다** |
+| prong | **초판 A2-1 판정** | **재판정(설계리뷰)** | 전환 사유 |
+|---|---|---|---|
+| (i) distinct context | 부분 성립 → **기각** | **부분 성립** | 기각은 *"A1-1 이 다른 모집단을 Amendment 로 흡수한 선례"* 에 의존했는데, **A1-1 은 0/3 이고 (iii) 를 결정적으로 기각**하며 그 사유가 *"결과가 남의 carrier"* 였다. 초판 자신이 *"그 사유는 본 건에 **없다**"* 라고 자인했다 ⇒ **결정적 prong 이 반전된 사안에 선례를 확장**한 것. 또 A1-1 은 declaration-only · **신규 workflow 0**, 본 건은 **workflow 1** |
+| (ii) distinct decisions | **기각** (*"신규 결정 1 점뿐"*) | **부분 성립 — 자기 계수와 모순이었다** | 같은 Amendment 의 **초판 A2-6**(→ 현 [ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) §결정 6)이 ***"신규 normative 는 M-1 · M-2 둘뿐"*** 을 선언했다. (ii) 기각은 자기 문서가 **2** 라 한 수를 **1** 로 세워야 성립하므로 불가. 게다가 M-2(분모 단조 하한)는 modality 가 아니라 **census 불변식** |
+| (iii) distinct result | ★**성립(자인)** | **성립** | 초판이 이미 자인. 재판정에서 **신규 workflow 1**(A2-9 자인) + **신규 sidecar manifest 스키마 1**(A2-8 (b) 가 *"필드 정의 + versioning 미확정"* 으로 실재를 자인) 이 추가 확정 |
 
-**⇒ 1/3 임에도 Amendment 를 채택하는 근거 3(그리고 그 반대 판정 가능성)**:
+**⇒ 리트머스 = 1/3 → 2~3/3.** 나아가 §결정 1 이 인용한 **ADR-151 §결정 1 신규 ADR prong 3-conjunct**(*(i) 신규 fail-closed 메타-게이트 (ii) 신규 인벤토리 스키마 (iii) 메타-게이트 자신의 재귀 L3 자기적용*)가 본 건에 **3/3** 성립한다.
 
-1. **§결정 9 + §결정 2 가 신규 ADR 을 구조적으로 막는다.** 신규 ADR 을 쓰면 super-class·taxonomy·2-control·honest-ceiling 을 **다시 정의**해야 하고, 그것이 §결정 9(*"재codify 0"*) 와 §결정 2(*"신규 가치 = super-class 명명 + silent-fallback taxonomy + identity-probe codify **ONLY**"*)를 정면으로 어긴다. A1-1 의 **독립 근거 2** 가 그대로 적용된다.
-2. **A1-3 조건절의 SSOT 귀속.** 본 Amendment 의 실질은 *"A1-3 의 유보 조건이 언제 풀리는가"* 이며, 그 조건절의 소유자는 ADR-154 다. 남의 ADR 이 A1-3 의 조건을 해제하면 **A1-3 의 의미가 두 문서에 갈린다**.
-3. **(iii) test 의 방향성.** A1-1 은 (iii) 를 ***"결과가 없으면 신규 ADR 이 아니다"*** 라는 **필요조건 방향의 falsifier** 로 사용했다(*"결과가 남의 carrier 인 ADR 은 distinct result 가 없다"*). 반면 §결정 1 원문은 (iii) 를 **충분조건 방향**으로도 썼다 — ★**이 비대칭은 본 ADR 문면 안에 실재하는 미해소 긴장이며, 본 Amendment 가 그것을 새로 만든 것이 아니다.**
+**초판이 든 채택 근거 3 중 2 가 반증됐다**:
 
-★**반대 판정 등재(무언 폐기 금지)**: (iii) 를 **충분조건**으로 읽으면 본 건은 **신규 ADR** 이 정답이다. 그 경우의 처분은 *"신규 ADR + ADR-154 전면 cross-ref(재codify 0 유지)"* 이며, **설계리뷰가 이 판정을 뒤집을 수 있다**. 본 Amendment 는 그 판정을 **선점하지 않고 근거만 남긴다** — 뒤집힐 경우 A2-2~A2-9 의 normative 내용은 **그대로 신규 ADR 로 이관 가능**하도록 저작했다(내용 ⊥ 그릇).
+1. ~~**§결정 9 + §결정 2 가 신규 ADR 을 구조적으로 막는다**~~ → **거짓 딜레마(반증됨)**. 신규 ADR 이 super-class·taxonomy·2-control 을 *다시 정의해야 한다* 는 명제가 성립하지 않는다 — **§결정 1 자신이** *"본 ADR 은 cross-ref/재사용만 하고 supersede/rewrite 하지 않는다"* 로 착지했고 ADR-151 §결정 1 도 동문을 보유하며, Epic CFP-2602 G-family(ADR-145/146/148/150/151/152/153)가 전부 그 형태다. 결정적으로 **초판이 스스로 등재한 반대 처분**(*"신규 ADR + ADR-154 전면 cross-ref(재codify 0 유지)"*)이 이 근거를 자기 무력화한다.
+2. ★**A1-3 조건절의 SSOT 귀속** → **견고 · 유지**. *"A1-3 의 유보 조건이 언제 풀리는가"* 의 소유자는 ADR-154 이며, 남의 ADR 이 그 조건을 해제하면 **A1-3 의 의미가 두 문서에 갈린다**. **이것이 본 Amendment 를 축소 존치하는 유일 근거다.**
+3. ~~**(iii) test 의 방향성**~~ → **본 건에 부적용(반증됨)**. 위 표 (i) 열 참조 — A1-1 선례의 결정적 prong 이 반전된 사안이라 선례 확장 불가. (다만 *"(iii) 를 필요조건으로도 충분조건으로도 쓴"* §결정 1 문면 내부의 비대칭 자체는 **실재하는 미해소 긴장**이며, 본 Amendment 가 그것을 새로 만든 것이 아니라는 초판 진술은 **유효**하다.)
 
-**경쟁 home 배제(무언 폐기 금지)**: **ADR-151** = self-test 코퍼스 execution-liveness(채널 alive) — subject disjoint, 그리고 본 건은 인벤토리 스키마를 **확장하지 않는다**(A2-9). **ADR-171** = 승격 evidence-gate 축 — 등급/승격 축 ⊥ 검출보장 축(§결과 경계 그대로). **ADR-130** = 7일 green / path-filter 금지 — 배선 제약이지 계약 소유자 아님.
+**⇒ 처분 = 분할(설계리뷰 권고 채택)**:
+
+- **본 Amendment = 축소 존치** — **배경**(A1-3 조건 해제) + **A2-2**(적용 대상 = landed-gate) + 본 절(판정 전환 기록) + A2-3(포인터). SSOT 귀속 보존.
+- **ADR-175 = 이관 착지점** — M-1·M-2 normative 본체 + 경계·opt-in·sidecar manifest·정직 천장·carrier 결속. 초판이 *"내용 ⊥ 그릇"* 으로 저작한 덕에 **이관 비용 ≈ 0** 이었다.
+- 이 분할은 설계리뷰 **DR-M8**(동일 normative 표 2벌 저작 + divergence 1건 실발생)도 **동시 해소**한다 — 결정면 정본이 ADR-175 단독이 되어 중복 표가 0 이 된다.
+
+**경쟁 home 배제(무언 폐기 금지 — 재판정 후에도 유효)**: **ADR-151** = self-test 코퍼스 execution-liveness(채널 alive) — subject disjoint이며 인벤토리 **8-field 스키마는 확장하지 않는다**(확장분은 ADR-175 §결정 8 sidecar 분리). **ADR-171** = 승격 evidence-gate 축 — 등급/승격 축 ⊥ 검출보장 축. **ADR-130** = 7일 green / path-filter 금지 — 배선 제약이지 계약 소유자 아님.
 
 ### A2-2 — 적용 대상 확장 (스코프 — 안정 좌표 보유 모집단)
 
@@ -466,114 +471,24 @@ A1-3 은 instrument-side 하네스에 landed 계약(§결정 8 5-piece chain · 
 
 **§경계 갱신(침묵 제거)** — 기존 §경계 + A1-2 갱신분에 다음을 더한다: **landed-gate(셸 포함) = ⊥ 아님(본 ADR 대상)**. **L3 detection-power 는 여전히 ⊥**(§결정 4 무손상).
 
-★**광역 정적 스캔은 여전히 기각 상태다(§결정 3 무변경).** 본 Amendment 는 modality 를 **동적 corpus 실행**으로 추가할 뿐, §결정 3 이 기각한 **archetype-B 광역 silent-fallback scan**(honest-degrade FP 26 script / 127 occurrence)을 되살리지 **않는다**. 어휘 열거로 관용구를 잡는 설계는 본 Amendment 하에서도 채택 불가다.
+★**광역 정적 스캔은 여전히 기각 상태다(§결정 3 무변경).** §결정 3 이 기각한 **archetype-B 광역 silent-fallback scan**(honest-degrade FP 26 script / 127 occurrence)을 되살리지 **않는다**. 어휘 열거로 관용구를 잡는 설계는 본 Amendment 하에서도 채택 불가다.
 
-### A2-3 — ★경계: 무엇을 끌어들이지 않는가 (born-broken · 무한후퇴 방지)
+★**이 정의를 소비하는 normative 계약은 [ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) 가 보유한다.** 본 절은 **모집단 정의와 그 정의가 성립하는 조건(A1-3 해제)** 까지만 소유하며, 그 모집단에 무엇을 강제하는가(M-1 동적 kill 분류 · M-2 분모 단조 하한)는 ADR-175 §결정 4·5 소관이다. ADR-175 는 본 절을 **재정의하지 않고 참조만** 한다(§결정 9 재codify 0 동형) — 따라서 landed-gate 정의의 SSOT 는 **본 절 단독**이다.
 
-- **⊥ cross-repo fetch** — 본 계약의 배선은 **wrapper 자기 게이트 한정**이다. PUBLIC repo 의 CI 가 PRIVATE repo 를 읽으려면 토큰이 필요하고, fork PR 은 secrets 미전달이므로 **가장 낮은 신뢰 모집단에서 정확히 게이트가 조용히 degrade** 한다 — 게이트가 자기 목적을 배반하는 형태다. 타 repo 커버리지는 **그 repo 자체 CI 의 별 carrier** 소관.
-- **⊥ 3번째 메타 층** — 신설 게이트의 무결성은 **§결정 7 inventory bijection cross-seal 에 편입**하는 것으로 닫는다(A2-4 ⑤). *"게이트를 검증하는 게이트를 검증하는 게이트"* 를 만들지 않는다 — 무한후퇴 차단점은 **이미 §결정 7 이 소유**한다.
-- **⊥ ADR-151 인벤토리 스키마 확장** — 신설 게이트 self-test 는 인벤토리에 **1행 enroll** 하되(bijection 유지), 게이트 manifest 는 **sidecar 분리 + foreign key join** 이다. 근거: 키스페이스가 다르다(인벤토리 키 = self-test 경로 **76** / 게이트 키 ≈ 118) — 한 테이블을 넓히면 sparse-wide + 다중 키 혼재로 **bijection 이 새 키를 검증하지 못한 채 형식만 통과**한다. 부가 근거: `scripts/lib/check_selftest_execution_liveness.py:267` 이 필수 필드 부재 시 **early return** 하므로 required 필드 확장은 그 레코드의 잔여 검사를 통째로 침묵시키는 **blind window** 를 만든다 `[firsthand]`.
-- **⊥ 신규 required context** — day-1 등재 0(A2-8).
+### A2-3 — 이관 포인터: A2-3~A2-9 는 [ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) 로 이관됐다
 
-### A2-4 — 신규 normative ① **M-1 = 2-arm corpus 동적 kill 분류** (§결정 3 의 modality leg + §결정 5 의 corpus 축 instance)
+**본 Amendment 는 여기서 끝난다.** 초판이 보유했던 아래 7 절은 A2-1 의 판정 전환에 따라 **ADR-175 로 이관**됐다. 여기에 요약본을 남기지 않는다 — 요약을 남기면 그 자체가 §결정 9(재codify 0)가 금지하는 *"같은 규칙 두 벌"* 이고, 설계리뷰 **DR-M8** 이 지적한 divergence 채널을 다시 여는 것이다.
 
-**현 조항**: §결정 3 mechanical floor 는 신규 hard gate 의 self-verification 번들을 **정적 presence/shape** 로 검사한다.
-
-**정적 축의 구조적 한계(본 arc 실측)**: fail-open 셸 술어(T1)·index-pin 정의역 누락(T2)은 **정적 형태가 정상**이다 — 위반은 *형태* 가 아니라 *어떤 입력에서도 FAIL 하지 않는다* 는 **행위** 에 있다. 그리고 광역 정적 스캔은 §결정 3 이 이미 기각했다. ⇒ 남는 통로는 **실행 관측** 하나다.
-
-⇒ **신규 normative M-1**: landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다. 구성 5:
-
-**① 2-arm 전건 AND (한쪽만 있으면 그 판정기가 hollow 다)**
-
-| arm | 표본 | 기대 verdict | 없으면 무엇이 통과하는가 |
-|---|---|---|---|
-| **arm-H** | 어떤 입력에서도 FAIL 하지 않는 게이트 표본 | `HOLLOW` | *"아무것도 잡지 못하는 판정기"* 와 **구별 불가** |
-| **arm-L** | 결함 입력에서 FAIL 하고 정상 입력에서 PASS 하는 표본(**대조군**) | `LIVE` | ***"전부 HOLLOW 로 찍는 무조건-true 판정기"*** 가 arm-H 만으로 만점 |
-
-**arm-H 전건 `HOLLOW` ∧ arm-L 전건 `LIVE`** 일 때만 PASS. 이는 **§결정 5 2-control 계약의 corpus 축 instance** 이며 **재정의가 아니라 상속**이다(§결정 9 재codify 0).
-
-**② 표본 = 커밋된 산출물** — 즉석 생성(`mktemp -d` 류) 금지. 근거: 표본이 실행 시점에 생성되면 **표본 자체가 검토 대상이 되지 못하고**, 표본 변경이 리뷰 없이 통과한다. 선례 형판 = `tests/fixtures/codex-review-output/`(커밋된 pos/neg 표본 7 파일) `[firsthand]`.
-
-**③ 투입 = parse 가 아니라 execute** — 표본마다 최소 2 입력(**kill-fixture** = 정상 게이트라면 FAIL 해야 하는 결함 형상 / **clean-fixture** = PASS 해야 하는 정상 형상)을 실행하고, `FAIL(kill) ∧ PASS(clean)` → `LIVE` / `PASS(kill)` → `HOLLOW` / **그 외 → `INDETERMINATE`(kill 로 계상 금지)** 로 분류한다.
-
-**④ 판별자는 rc 가 아니다** — 다수의 서로 다른 실패 경로가 **동일 rc** 를 낸다(§결정 6 fail-direction 이 fail-closed 를 요구할수록 rc 는 더 축약된다). ⇒ 판별자는 **표본이 출력하는 마커 문면**이어야 하며, **rc 단독 분류를 금지**한다. **구체 스키마는 본 Amendment 가 확정하지 않는다**(계약면만 — A2-8 미확정 등재).
-
-**⑤ 표본 binding stamp** — 표본마다 **(대상 게이트 id · 저작시점 content hash · 기대 실패 시그니처)** 를 stamp 하고, **해시 불일치 = FAIL(자동 갱신 금지)** · **기대 시그니처 일치일 때만 kill 로 계상**한다. 근거: bijection 은 **파일 존재만** 보므로, 표본이 대상의 현행 형상과 drift 하면 *"적용 실패"* 가 *"hollow 표본을 잡았다(PASS)"* 로 **오계상**된다 — 본 ADR 이 겨냥하는 결함의 자기 재현이다.
-
-**★왜 더 강하게 쓰지 않았는가 (rationale — 약하게 쓴 이유가 계약의 일부다)**
-
-M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한다. ***"임의 게이트가 hollow 인지 판정한다" 로 쓰지 않는다 — 금지다.***
-
-- 후자는 임의 프로그램의 detection sufficiency 일반 판정 = equivalent-mutant = halting 동치이며 **§결정 4 INV-5(ceiling immutable) 정면 위반** + over-claim P0 다.
-- 따라서 M-1 은 **corpus 에 없는 형상의 hollow 는 잡지 못한다.** 이 약함은 결함이 아니라 **천장**이다.
-- **형판** = A1-4 의 declared-unit assertion 절제 논거를 **그대로 상속**한다(cross-ref, 재codify 0).
-- ★**다음 저자에게**: 이 문면을 *"약하게 쓴 실수"* 로 읽고 *"모든 hollow 게이트를 검출한다"* 로 강화하지 말 것. **강화 시도가 곧 INV-5 위반이다.**
-
-### A2-5 — 신규 normative ② **M-2 = 분모 단조 하한** (§결정 7 born-hollow 금지의 corpus 축 leg)
-
-**gap**: census-floor 는 `0` 만 막고 bijection 은 drift 만 막는다 ⇒ **corpus 표본과 그 레코드를 함께 지우면 둘 다 통과**한다. 분모가 조용히 줄어든 게이트는 여전히 green 이며, 이것이 §결정 2 의 **silent-green** 정의에 정확히 해당한다.
-
-⇒ **신규 normative M-2 = 5 술어 전건**:
-
-| ID | 술어 | 왜 필요한가 |
+| 초판 절 | 이관처 | 이관 시 변경 |
 |---|---|---|
-| **D-1** | **항목별 census emit** | 총합만 emit 하면 **N 축소와 구별 불가** |
-| **D-2** | **`N < baseline` = FAIL** | 동반 삭제 경로를 닫는 유일 술어(비협상) |
-| **D-3** | **baseline 단조 seal**(감소 방향 갱신 금지) — 형판 = `docs/adr-amendment-threshold-baseline.yaml` | baseline 이 따라 내려가면 D-2 가 공허 |
-| **D-4** | 본 게이트에 **`non-applicable` opt-in 미제공** | **면제 칸이 곧 우회로**다 |
-| **D-5** | **항목별 kill 개별 emit** | 합계 kill 만으로는 arm 별 결손이 상계돼 보이지 않는다 |
+| A2-3 경계(cross-repo / 3번째 메타 층 / 인벤토리 스키마 확장 배제) | **ADR-175 §결정 3** | 무한후퇴 차단점의 **축 병기** 추가(닫는 것 = 미enroll 회귀 · 위조 판정기 축은 별도 소관) |
+| A2-4 신규 normative M-1(2-arm corpus 동적 kill 분류) | **ADR-175 §결정 4** | 2-control **거짓 상속 주장 정정** + 도달 판정 differential delivery probe 신설 + **arm-invariant 판정기 계약** + verdict 함수 3종 + INDETERMINATE 11 조건 + 판별자 형식 확정 + rc 문면 통일 |
+| A2-5 신규 normative M-2(분모 단조 하한) | **ADR-175 §결정 5** | **D-3 형판 교체**(`adr-amendment-threshold-baseline.yaml` → `infra-resource-baseline.yaml`) + 단조 **방향 반전** + *"방향은 선례 0"* 정직 declare |
+| A2-6 신규 0 명시 | **ADR-175 §결정 6** | 도달 판정 probe 행 추가(§결정 5 internal-control instance = 신규 0) |
+| A2-7 opt-in selector | **ADR-175 §결정 7** | **적격 전제 신설**(단계 scoping fail-marker ∧ 입력 의존 종단 emit — 미보유 = 부적격) + opt-in 취소의 분모 축소 경로 명시 계상 |
+| A2-8 정직 천장 + 미확정 3 | **ADR-175 §결정 9** | 계수 기준을 **인스턴스**로 통일해 재계수(구 5/11 → **7/20**, 하향) + 라벨 역산 **잔여 3** 명시 + opt-in 적격 모집단 미측정 declare. 미확정 3 → **1**(판별자 스키마·manifest 확정, 경로만 잔존) |
+| A2-9 접촉 경계 + carrier 결속 | **ADR-175 §결정 10** | Phase 2 산출물 **9개** 결속 명시(Change Plan §5 개별 행 + §8.AC `G1-mech-corpus`) + AC 결속의 요구사항 lane 회부 declare |
 
-**born-hollow 가드 승계**: 분모 0 → PASS 는 §결정 7 이 금지한 형태의 재현이므로 **`exit 3` fail-closed** 로 처리한다 — 선례 `scripts/check-infra-resource-drift.sh:18`(*"3 = fail-closed: census born-hollow (candidates==0 ∧ inert==0)"*) · `scripts/check-path-relocation-consistency.sh:14` `[firsthand]`. **신규 exit 값공간 0**(기존 선례 재사용).
+★**천장 동시-변경 불변식의 양단이 이동했다** — 이제 **ADR-175 §결정 9 ↔ Change Plan §8.QC-MECH MECH-9** 이며, 본 Amendment 는 그 불변식의 당사자가 아니다.
 
-**INV-5 무관**: **표본 건수 계수와 baseline 대소 비교**는 concrete 케이스에서 decidable 하다 — detection sufficiency 판정이 아니다(A1-5 의 site 계수 논거와 동형).
-
-**★M-1 · M-2 공통 — 적용 범위 + forward-only ratchet (`reinterpretation: false` 의 근거)**
-
-- **적용 = 신규·개정 landed-gate**. **이미 착지한 산출물(76 self-test 포함)을 소급 위반으로 재분류하지 않는다.** retrofit 은 **review-tier + 별 carrier defer**(ADR-171 evidence-gate 형판 · §결정 8 required 승격 defer 와 동형).
-- ★**4중 봉인**: **A2-2**(대상 = landed-gate 로 한정) ⊕ **A2-3**(cross-repo·3번째 메타 층·인벤토리 스키마 확장을 모두 배제) ⊕ **A2-7**(opt-in selector — 미선언 = 미대상) ⊕ **forward-only**(위). 그중 하나라도 풀리면 `reinterpretation` **재판정 대상**이다.
-- ★**미측정 정직 고지**: **landed 76 self-test 가 실제로 M-1·M-2 결함을 보유하는지는 재지 않았다.** 그래서 소급 강제도 하지 않고 *"landed 는 안전하다"* 는 단정도 하지 않는다 — 둘 다 근거가 없다.
-
-### A2-6 — ★신규 0 명시: 나머지는 전부 기존 조항 재사용 (과대주장 절제)
-
-본 arc 가 낳은 처방 중 **다음은 신규 leg 을 만들지 않는다**:
-
-| 처방 | 처분 | 커버하는 **기존** 조항 |
-|---|---|---|
-| 표본이 실 게이트에서 파생돼야 함(손저작 금지) | **신규 0** | **§결정 7** `sed-mutation on REAL gate copy`(inline hand-copy = tautology = born-hollow) |
-| corpus 표본 실행 실패·판독 불가 = 통과 금지 | **신규 0** | **§결정 6** fail-direction(unparseable subject = fail-closed, 침묵 skip 금지) |
-| 신설 게이트 자신이 마커 부착 + 2-exit shape + 인벤토리 enroll | **신규 0** | **§결정 7** self-application(AC-7) + inventory bijection cross-seal |
-| corpus 파일 open 경로 제한 · regex bound | **신규 0** | **§결정 6** T-TRAVERSE + CFP-2635/2646 born-safe REUSE |
-| day-1 warning-tier · 5-piece chain · required 승격 defer | **신규 0** | **§결정 8** |
-| silent-green ≠ silent-fallback ≠ honest-degrade 판정 | **신규 0** | **§결정 2** 3-way taxonomy |
-
-★**과대주장 절제가 본 Amendment 의 신뢰성이다.** 위를 "신규" 로 계상하면 §결정 9(재codify 0)를 어기고 *"같은 규칙 두 벌"* 을 생산한다. **본 Amendment 의 신규 normative 는 M-1 · M-2 둘뿐이다.**
-
-### A2-7 — applicability = **self-declared opt-in** (§결정 5 `identity_bearing` / A1-7 `mutation_harness` 형판 재사용 — 재codify 0)
-
-- landed-gate 가 **corpus 대상임을 선언**하면(선언 필드명·표면은 sidecar manifest 소관) M-1·M-2 가 대상이 된다. **미선언 = 미대상(정직 no-op).** semantic 추론으로 대상을 확정하지 않는다(비결정·gameable — §결정 5 가 AC-13 에서 이미 기각한 방식).
-- **형판 = §결정 5 `identity_bearing: true/false` · A1-7 `mutation_harness: true`** 구조. **신규 메커니즘 0.**
-- ★**단, D-4 와 충돌하지 않는다** — opt-in 은 *"어떤 게이트가 대상인가"* 를 가르는 **applicability selector** 이고, D-4 가 금지한 것은 *"대상으로 확정된 뒤 개별 항목을 면제하는 칸"* 이다. **대상 선정 축 ⊥ 대상 내 면제 축.** 이 구분이 흐려지면 opt-in 이 곧 우회로가 된다.
-- ★**이 절은 normative 계수에 들어가지 않는다** — §결정 5 자신의 어휘가 가른다(*"applicability = self-declared(opt-in), probe presence = normative"*). 따라서 A2-6 의 *"신규 normative = M-1 · M-2 둘뿐"* 은 본 절에도 불구하고 유지된다.
-
-**잔여 상속(신규 저작 0)**: *"모든 진짜 landed-gate 가 실제로 self-declare 했는가"*(열거 완결성)는 **기계 강제 불가 — self-declared 의존이라 declared 완결성**이다. §결과의 **AC-13 열거-완결성 residual 문단과 동일 형식**이므로 그 처분을 그대로 상속한다(AC-8 honest-ceiling 공개 + AC-9 review-tier 판정). 새 잔여 문법을 만들지 않는다.
-
-### A2-8 — 정직 천장 (본 Amendment 자신의 잔여)
-
-- ★**커버리지는 부분집합이다.** 본 arc 11 인스턴스 중 기계 강제 가능은 **5**(fail-open 셸 술어 · index-pin 정의역 누락 · 비집행 표면의 fail-closed 운반 · 열거↔검사 대응 결손[좁힘] · 부정 대조 미실행)이고, **6 은 불가**(조건부 사실의 무조건 서술 4건 = 의미 축 paraphrase 무한 · 문서 검증계약 4요건 미비 = presence-lint 자신이 같은 class). **이 비율을 상향 인용하는 서술을 금지한다.**
-- ★**day-1 강제 대상 = wrapper 자기 게이트 한정**(A2-3). 본 carrier Story 가 낳은 타 repo 게이트 스크립트는 **이 계약으로 즉시 강제되지 않는다** — 그 repo 는 CI 자체가 부재하며 커버는 별 carrier 다. **재발 채널을 하나 닫았을 뿐 carrier 자신의 산출물은 아직 그 채널 밖**이다.
-- ★**arm-L 대조군의 정당성을 판정하는 상위 심급은 없다.** 표본이 잘못 저작되면 게이트는 그것을 알 수 없다. binding stamp(A2-4 ⑤)는 **drift 를 막을 뿐 최초 저작 오류를 막지 않는다.**
-- ★**day-1 warning-tier = 자기 RED 가 merge 를 막지 못한다**(*governance-tier dark* quasi-pattern — §결과의 동명 문단 상속). 완화 = 게이트가 **stdout 에 그 사실을 직접 emit** 하고, 승격 trigger 를 **증거 기한(PR 누적 20 도달, ADR-171 §결정 6/§결정 10)** 으로 확정해 무기한 defer 를 막는 것뿐이다. **문서 선언은 읽는 쪽이 없으면 0 이다.**
-- ★**본 수리가 남긴 미확정 3건**: **(a)** 판별자 스키마(exit code vs 구조화 stdout vs 마커 문면 · 다단 게이트 단계별 판정 분해 · 마커 문면 drift 시 fail-direction) **미확정** — 계약면만(A2-4 ④). **(b)** sidecar manifest 의 필드 정의 + versioning **미확정**. **(c)** corpus 배치 경로 규칙 **미확정**(후보만). 셋 다 **계약면 확정 / 구현면 미착지**로 정직 공개한다.
-- ★**형태 판정 자체가 contestable** — A2-1 이 (iii) 성립을 자인했고 반대 판정 경로를 등재했다.
-- ★**어휘 금지 재확인**: 본 Amendment 에 대해 *"universal / 완전 봉인 / class 봉쇄 / 근절"* 류 framing 금지 — §결정 4 + **INV-5 무손상**이며, 위반 시 설계리뷰 P0. 본 Amendment 가 주장하는 것은 **"기계 강제가 실재하는 부분집합을 만들었다"** 뿐이다.
-
-### A2-9 — 접촉 경계 + carrier 결속
-
-- **ADR-154 단독 amend.** **ADR-152 무접촉**(§관련 파일이 `cross-ref(재사용, amend 금지)` 로 못 박음) · **ADR-151 인벤토리 8-field 스키마 무접촉**(1행 enroll 은 기존 스키마 사용 — 신규 필드 0, 확장은 sidecar) · **ADR-168 무접촉**.
-- **강화 방향 유지(약화 surface 0)**: 신규 required context **0** · branch-protection **8-tuple 무변경** · inter-plugin 계약 **무변경** · 신규 category **0**. ★**신규 workflow = 1**(wrapper-self-only · non-required · day-1 hard-fail) — Amendment 1 의 *"신규 workflow 0"* 과 다르며 이를 은폐하지 않는다. required 등재 0 이므로 **약화 surface 는 여전히 0**.
-- **`continue-on-error` 금지** — warning-tier 는 *"required context 아님"* 이지 *"job 이 초록으로 흘러감"* 이 아니다. 도입기 무력화는 게이트를 태어날 때부터 hollow 로 만든다(§결정 7 born-hollow 금지 정합).
-- **`on: paths:` 금지 · `runs-on: ubuntu-latest` 리터럴 고정** — 전자는 ADR-130(required check permanent-pending 함정) 상속, 후자는 **fork 제출 셸을 실행**하는 게이트이므로 self-hosted 로의 조용한 전환을 구조적으로 막기 위함이다.
-- **carrier 결속(계약면 ⊥ 구현면)**: **계약면 = 본 Amendment**(Phase 1) ⊥ **구현면 = CFP-2963 Phase 2 산출물**(5-piece chain + corpus + registry warning-tier row + 인벤토리 1행 enroll). 배선 상세 SSOT = Change Plan `wrapper/change-plans/cfp-2963-mclats-arc-ci-runner.md` **§8.QC-MECH**. §결정 8 의 *"Phase 1 = ADR + Change Plan NARRATIVE only"* **무손상**.
-- ★**상호 참조 대응표(배선면 = Change Plan §8.QC-MECH)** — 대응표 정본은 **§8.QC-MECH 의 `MECH-X` 절**이 보유한다(중복 표 2벌 금지 · §결정 9 재codify 0 동형). 요지: **A2-2↔MECH-2** / **A2-3↔MECH-7·MECH-1** / **A2-4(M-1)↔MECH-4 ①~⑤** / **A2-5(M-2)↔MECH-5 D-1~D-5** / **A2-6↔MECH-8·MECH-4⑥** / **A2-7↔MECH-5 D-4·MECH-9** / **A2-8↔MECH-3·MECH-7·MECH-9** / **A2-9↔MECH-6**. **A2-1(형태 판정)은 배선면 대응 없음**(ADR 단독).
-- ★**천장 동시-변경 불변식**: A2-8 의 정직 천장과 §8.QC-MECH MECH-9 의 정직 천장은 **같은 문면을 양쪽에 보유**한다 — **한쪽에서만 천장을 완화해 인용하는 것을 금지**하며, 바꾸려면 **두 문서가 함께** 바뀌어야 한다. 한쪽만 완화하는 것 자체가 본 ADR 이 겨냥하는 class(*선언과 실상태의 조용한 괴리*)의 문서-축 발현이다.
-- ★**mandate 편차 정직 기재**: 본 Amendment 는 설계 lane 6 permanent deputy 중 **4 미수령**(APIContractArch · ModuleArch = 세션 한도 사망 / TestContractArch · InfraOperationalArch = 미도착) 상태에서 chief 통합됐다. A2-8 (a)(b)(c) 미확정 3건이 정확히 그 미수령 축과 대응한다.
+★**본 Amendment 축소 후 재확인**: 신규 normative **0** · 신규 workflow **0** · 신규 required context **0** · branch-protection **8-tuple 무변경** · ADR-152/151/168 **무접촉** · **INV-5 무손상**. 초판이 declare 했던 *"신규 workflow 1"* 은 은폐된 것이 아니라 **ADR-175 §결정 10 으로 귀속 이동**했다.
