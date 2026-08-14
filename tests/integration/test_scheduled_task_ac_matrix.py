@@ -111,14 +111,14 @@ def _md_table_rows(section: str, header_cells: list):
 
 
 def extract_adr_section(content: str, section_heading: str) -> str:
-    """ADR 절 추출 헬퍼 — 줄 기반 startswith 로 확실한 슬라이싱.
+    """ADR 절 추출 헬퍼 — 줄 기반 슬라이싱. 종료 = **레벨 ≤ 현재 레벨**인 다음 헤딩.
 
     Args:
         content: ADR 전체 내용
         section_heading: 찾을 헤딩 문자열 (예: "### §결정 9")
 
     Returns:
-        해당 헤딩부터 다음 같은 레벨 또는 상위 레벨 헤딩까지의 텍스트
+        해당 헤딩부터 **같은 레벨 또는 상위 레벨** 헤딩 직전까지의 텍스트
 
     Raises:
         AssertionError: 헤딩 부재 또는 슬라이싱 오류
@@ -126,6 +126,24 @@ def extract_adr_section(content: str, section_heading: str) -> str:
     검증:
         - 헤딩 발견 실패 → AssertionError
         - 슬라이스 길이 ≤ 헤딩 줄 길이 → AssertionError (1글자 사건 방지)
+
+    ★ 종료조건 정정 (구현리뷰 iter5 F-CR5-02 — 헬퍼 자신이 h2 맹인이었다):
+      구판 종료조건은 `startswith("### ") and not startswith("#### ")` 였다. 이름은
+      "같은 레벨" 인데 실제로는 **정확히 같은 레벨만** 종료로 봤고 `## `·`# ` 상위 레벨은
+      종료로 보지 않았다 — 즉 docstring 이 선언한 "또는 상위 레벨" 이 코드에 없었다.
+      귀결: 한 문서의 **마지막** `###` 절은 이후 h2 절 전부를 흡수한다. ADR-172 의
+      `### §결정 10` 이 정확히 그 자리라 슬라이스가 `## 결과` · `## 관련 파일` ·
+      `## 해소 기준` · `## Amendment 1` **h2 4절**을 삼키고 `### A1-1` 에서야 멈췄다.
+      이 결함은 **헬퍼를 쓰는 5 site 전부가 상속**한다(오늘 §결정 2·4·8·9 가 무해한
+      유일한 이유는 그 뒤에 같은 레벨 헤딩이 곧바로 오기 때문 — 구조가 아니라 배치다).
+      ⇒ 종료조건을 **레벨 ≤ 현재 레벨**로 정정한다(정규식 `^#{1,N} `).
+
+      mutant kill (AC-4 정의역에서 실측):
+        · M-SURVIVE   — §결정 10 권한면 행 1개를 `## 결과` 절로 **이동** ⇒ 본 판본 RED /
+                        구판 **생존**(슬라이스가 `## 결과` 까지 흘러 행을 여전히 셌다.
+                        구판 오라클이 잰 것은 "§결정 10 에 열거"가 아니라 "문서 어딘가 존재")
+        · M-FALSE-RED — `## 결과` 에 무관한 표 행 주입 ⇒ 본 판본 GREEN / 구판 **거짓 RED**
+                        (§결정 10 과 무관한 행을 데이터 행으로 셌다)
     """
     lines = content.splitlines(keepends=True)
     start_idx = next(
@@ -137,13 +155,15 @@ def extract_adr_section(content: str, section_heading: str) -> str:
 
     # 헤딩 레벨 추론 (예: "### " → 3)
     heading_level = len(section_heading) - len(section_heading.lstrip("#"))
-    heading_prefix = "#" * heading_level
+    if heading_level < 1:
+        raise AssertionError(f"헤딩 형식 오류(선두 '#' 부재): {section_heading!r}")
 
-    # 시작 줄 다음부터 같은 레벨 또는 상위 레벨의 다른 헤딩 찾기
+    # 종료 = 레벨 1..heading_level 의 다음 헤딩 (= 같은 레벨 **또는 상위 레벨**).
+    #   `^#{1,N} ` 는 `#### ` 를 매치하지 않는다 — 4번째 문자가 공백이 아니므로
+    #   backtrack 해도 `#{1,3}` + ' ' 가 성립하지 않는다(하위 레벨은 절의 일부로 보존).
+    end_re = re.compile(r"^#{1,%d} " % heading_level)
     end_idx = next(
-        (i for i in range(start_idx + 1, len(lines))
-         if lines[i].startswith(heading_prefix + " ") and
-            not lines[i].startswith(heading_prefix + "# ")),
+        (i for i in range(start_idx + 1, len(lines)) if end_re.match(lines[i])),
         len(lines)
     )
 
@@ -748,6 +768,22 @@ class TestAC4AuthorityFacets:
         4. 각 행을 | split해서 첫 셀 = 면 번호, 둘째 셀 = 면 이름
         5. 면 번호 1~6 각각 정확히 한 행씩 존재 확인
         6. 각 면의 이름 셀을 그 행 안에서만 고유 리터럴로 검사
+
+        ★ 정의역 폐쇄 (구현리뷰 iter5 F-CR5-02 — D-1 정의역 전수의 마지막 site):
+          구판은 helper 조차 쓰지 않는 raw `content.find("### ", idx+4)` 였다. FIX5 가
+          §8.0-c D-1("고정 창·상한 없는 find 금지, 절 경계로 정의역을 닫는다")을 신설한
+          바로 그 라운드에 이 site 를 놓쳤다. 실측 귀결: `### §결정 10` 다음의 `### ` 는
+          **`### A1-1`**(Amendment 1 하위 절)이라 슬라이스가 `## 결과` · `## 관련 파일` ·
+          `## 해소 기준` · `## Amendment 1` **h2 4절을 흡수**했다.
+          ⇒ helper 로 회수한다. 단 helper 자신도 같은 h2 맹인 결함을 갖고 있었으므로
+            (b) 회수만으로는 **닫히지 않는다** — `extract_adr_section` 의 종료조건
+            정정(a)과 **둘 다** 있어야 정의역이 §결정 10 으로 닫힌다.
+
+        mutant kill (2종 실측 — 구판 대조군 동반):
+          · M-SURVIVE   — 권한면 행 1개를 `## 결과` 절로 **이동** ⇒ 본 판본 RED(6→5) /
+                          구판 **생존**(정의역이 문서 꼬리까지 열려 있어 여전히 6행)
+          · M-FALSE-RED — `## 결과` 에 무관한 표 행 주입 ⇒ 본 판본 GREEN /
+                          구판 **거짓 RED**(6→7)
         """
         # ADR-172 권한면 절 찾기
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
@@ -756,15 +792,12 @@ class TestAC4AuthorityFacets:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # §결정 10 권한면 절 찾기 (새로 추가된 절)
-        decision_10_idx = content.find("### §결정 10")
-        assert decision_10_idx != -1, (
-            "AC-4: ADR-172 §결정 10 부재 (권한면 6종 열거표 정본 필수)"
-        )
-
-        # §결정 10 섹션 추출 (다음 섹션까지)
-        decision_10_end = content.find("### ", decision_10_idx + 4)
-        decision_10_section = content[decision_10_idx:decision_10_end if decision_10_end != -1 else None]
+        # §결정 10 권한면 절 — 헤딩 기준 **정확 슬라이싱**(raw find 금지, D-1)
+        try:
+            decision_10_section = extract_adr_section(content, "### §결정 10")
+        except AssertionError as e:
+            pytest.fail(f"AC-4: ADR-172 §결정 10 정의역 붕괴 — {e} "
+                        "(권한면 6종 열거표 정본 필수)")
 
         # 절 내에서 | 로 시작하는 줄 = 테이블 행 추출
         lines = decision_10_section.split('\n')
