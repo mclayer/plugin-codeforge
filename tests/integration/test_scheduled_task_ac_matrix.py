@@ -558,10 +558,50 @@ class TestAC11MarkerTwoTypes:
         assert sut.SENTINEL != sut.TRAILER, "마커 구분"
 
     def test_ac11_markers_not_in_normal_text(self):
-        """마커는 render_report 가 소유 (CLI 내에서 부착)."""
-        # 이는 코드 관찰 — render_report 호출 경로 추적
-        # render_report 에서 SENTINEL/TRAILER 를 조합 생성함을 확인
-        assert "[scheduled-task-observe]" in sut.render_report([], "t", "1")
+        """마커는 render_report 가 소유 (CLI 내에서 부착).
+
+        도입기 마커 정확히 2종:
+        - sentinel: [scheduled-task-observe] (고정)
+        - trailer: [scheduled-task-run] (태스크·run 참조)
+
+        부착 주체 = render_report (CLI 결정론 함수).
+        """
+        obs = [
+            sut.Observation(
+                cls="test",
+                display_path="path",
+                declared="decl",
+                measured="meas",
+                mismatch=False,
+            ),
+        ]
+        report = sut.render_report(obs, "test_task", "run_123")
+
+        # 1. sentinel 정확히 1회 출현
+        sentinel_count = report.count(sut.SENTINEL)
+        assert sentinel_count == 1, (
+            f"AC-11 sentinel 횟수 오류: 기대 1회, 실제 {sentinel_count}회. "
+            f"sentinel={sut.SENTINEL}"
+        )
+
+        # 2. trailer 정확히 1회 출현
+        trailer_count = report.count(sut.TRAILER)
+        assert trailer_count == 1, (
+            f"AC-11 trailer 횟수 오류: 기대 1회, 실제 {trailer_count}회. "
+            f"trailer={sut.TRAILER}"
+        )
+
+        # 3. 마커 총 2종 (3종째 부재 — 도입기는 branch prefix 미포함)
+        # branchprefix 로 시작하는 마커 미검출 확인 (도입기 설계)
+        assert "[cfp-" not in report, (
+            "AC-11 도입기 위반: branch prefix 마커 미포함 조건 (ADR-172 §결정 9)"
+        )
+
+        # 4. 부착 주체 = render_report (테스트 함수가 아님)
+        # 즉 보고 마커는 CLI 에서만 생성 (LLM 이 운반 금지 — AC-3 와 무관)
+        assert sut.SENTINEL in report and sut.TRAILER in report, (
+            "AC-11: render_report 가 2종 마커 모두 부착하지 않음"
+        )
 
 
 class TestAC12TripleAxisSixCellComparison:
