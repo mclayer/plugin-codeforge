@@ -179,6 +179,67 @@ def extract_adr_section(content: str, section_heading: str) -> str:
     return section
 
 
+# ══════════ 헬퍼 자신의 직접 오라클 (구현리뷰 iter6 F-CR6-05) ═══════════════════
+# ★ 왜 필요했나: iter5 가 종료조건을 `^#{1,N} ` 로 정정한 것은 **진짜 봉합**이었지만
+#   (M-SURVIVE 재현으로 확인) 그 실험이 **기계화되지 않았다** — 종료조건을 구판
+#   (`^#{N} ` = 정확히 같은 레벨만)으로 되돌려도 이 파일의 스위트가 전건 GREEN 이었다.
+#   AC 표 검사들은 §결정 10 뒤에 곧바로 같은 레벨 헤딩이 오는 **배치**에 기대고 있어
+#   h2 흡수 형상을 만들지 못한다. 아래는 그 형상을 fixture 로 직접 만든다.
+_SLICE_FIXTURE = """# 문서 제목
+
+## 상위 절 A
+
+### 대상 절
+대상 본문 1
+#### 하위 절
+하위 본문
+## 상위 절 B
+상위 본문 B
+"""
+
+_SLICE_EXPECTED = """### 대상 절
+대상 본문 1
+#### 하위 절
+하위 본문
+"""
+
+
+class TestExtractAdrSectionTerminator:
+    """`extract_adr_section` 의 **종료 지점을 값으로** 고정한다.
+
+    mutant kill: 종료조건 `^#{1,N} ` → `^#{N} ` (정확히 같은 레벨만) 되돌리기
+      ⇒ `test_stops_before_higher_level_heading` RED (슬라이스가 `## 상위 절 B` 를 흡수).
+    """
+
+    def test_stops_before_higher_level_heading(self):
+        """`### X` 다음에 `## Y` 가 오면 **`## Y` 직전**에서 끝난다 (h2 흡수 0)."""
+        got = extract_adr_section(_SLICE_FIXTURE, "### 대상 절")
+        assert got == _SLICE_EXPECTED, (
+            "종료 지점이 어긋났다 — 상위 레벨 헤딩을 흡수했거나 하위 레벨에서 잘렸다.\n"
+            f"기대:\n{_SLICE_EXPECTED!r}\n실제:\n{got!r}"
+        )
+        # 값 고정을 두 방향으로 재확인 (문자열 비교가 우연히 맞는 일 방지)
+        assert "## 상위 절 B" not in got, "상위 레벨 절을 삼켰다"
+        assert "#### 하위 절" in got, "하위 레벨 절이 잘렸다 — 절의 일부여야 한다"
+
+    def test_stops_before_h1(self):
+        """상위 레벨은 h2 만이 아니다 — `# Z` 도 종료다."""
+        text = "### 대상 절\n본문\n# 최상위\n뒤\n"
+        got = extract_adr_section(text, "### 대상 절")
+        assert got == "### 대상 절\n본문\n", f"h1 에서 멈추지 않았다: {got!r}"
+
+    def test_stops_at_same_level_sibling(self):
+        """**회귀 가드**: 같은 레벨 형제에서 멈추는 기존 동작은 그대로다."""
+        text = "### 대상 절\n본문\n### 형제 절\n뒤\n"
+        got = extract_adr_section(text, "### 대상 절")
+        assert got == "### 대상 절\n본문\n", f"같은 레벨 종료가 깨졌다: {got!r}"
+
+    def test_runs_to_eof_when_no_terminator(self):
+        """종료 헤딩이 없으면 문서 끝까지 (경계)."""
+        text = "### 대상 절\n본문\n#### 하위\n더\n"
+        assert extract_adr_section(text, "### 대상 절") == text
+
+
 class TestAC1MeasurementDeclaration:
     """AC-1: live 증거 아티팩트 (미측정).
 

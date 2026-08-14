@@ -430,5 +430,64 @@ def test_impl_manifest_live_story_declaration_matches(live_manifest):
     )
 
 
+# ══════════ 헬퍼 자신의 직접 오라클 (구현리뷰 iter6 F-CR6-05) ═══════════════════
+# ★ `man.extract_section` 은 형제 헬퍼(`test_scheduled_task_ac_matrix.py::
+#   extract_adr_section`)와 **같은 종료조건**을 쓰는데, 그 종료조건을 구판
+#   (`^#{N} ` = 정확히 같은 레벨만)으로 되돌려도 이 파일의 스위트가 전건 GREEN 이었다 —
+#   §8.7 fixture 들이 절 뒤에 곧바로 같은 레벨 헤딩을 두는 **배치**라서 h2 흡수 형상이
+#   만들어지지 않는다. 아래는 그 형상을 직접 만들어 종료 지점을 **값으로** 고정한다.
+_SLICE_FIXTURE = """# 문서 제목
+
+## 상위 절 A
+
+### 8.7 Impl Manifest
+- 총계: 1 파일
+#### 하위 절
+하위 본문
+## 8.8 다음 절
+다음 절 본문
+"""
+
+_SLICE_EXPECTED = """### 8.7 Impl Manifest
+- 총계: 1 파일
+#### 하위 절
+하위 본문
+"""
+
+
+class TestExtractSectionTerminator:
+    """`man.extract_section` 의 **종료 지점을 값으로** 고정한다.
+
+    mutant kill: `end_re = re.compile(r"^#{1,%d} " % max(level, 1))` →
+      `r"^#{%d} "` (정확히 같은 레벨만) 되돌리기 ⇒ 아래 첫 테스트 RED.
+    """
+
+    def test_stops_before_higher_level_heading(self):
+        """`### X` 다음에 `## Y` 가 오면 **`## Y` 직전**에서 끝난다 (h2 흡수 0)."""
+        got = man.extract_section(_SLICE_FIXTURE)
+        assert got == _SLICE_EXPECTED, (
+            "종료 지점이 어긋났다 — 상위 레벨 헤딩을 흡수했거나 하위 레벨에서 잘렸다.\n"
+            f"기대:\n{_SLICE_EXPECTED!r}\n실제:\n{got!r}"
+        )
+        assert "## 8.8 다음 절" not in got, "상위 레벨 절을 삼켰다"
+        assert "#### 하위 절" in got, "하위 레벨 절이 잘렸다 — 절의 일부여야 한다"
+
+    def test_stops_before_h1(self):
+        """상위 레벨은 h2 만이 아니다 — `# Z` 도 종료다."""
+        text = "### 8.7 Impl Manifest\n본문\n# 최상위\n뒤\n"
+        got = man.extract_section(text)
+        assert got == "### 8.7 Impl Manifest\n본문\n", f"h1 에서 멈추지 않았다: {got!r}"
+
+    def test_stops_at_same_level_sibling(self):
+        """**회귀 가드**: 같은 레벨 형제에서 멈추는 기존 동작은 그대로다."""
+        text = "### 8.7 Impl Manifest\n본문\n### 8.8 형제\n뒤\n"
+        got = man.extract_section(text)
+        assert got == "### 8.7 Impl Manifest\n본문\n", f"같은 레벨 종료가 깨졌다: {got!r}"
+
+    def test_absent_heading_returns_none(self):
+        """헤딩 부재 → None (형제 헬퍼는 AssertionError — 계약이 다르다는 사실을 고정)."""
+        assert man.extract_section("## 다른 문서\n본문\n") is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
