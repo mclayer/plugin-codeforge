@@ -18,6 +18,8 @@ from pathlib import Path
 from unittest import mock
 import sys
 import json
+import gc
+import tracemalloc
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 
@@ -28,9 +30,21 @@ class TestLongRunningInvariant:
     """§8.5.1 long-running invariant: 반복 실행 시 자원·시간 단조 무증가."""
 
     def test_long_running_200_iterations_no_resource_growth(self):
-        """200-iteration sustained loop — duration/RSS 무증가.
+        """200-iteration sustained loop — 메모리 누수·파일 디스크립터 누적 미검증.
 
         loop 이 메모리 누수·파일 디스크립터 누적을 하지 않는지 검증.
+
+        ★ 실측 기준 (Orchestrator 3-trial 평균):
+          wall-clock p95: 전반=0.3608s, 후반=0.2796s (ratio=0.77)
+          gc 객체 Δ: 전반=1009개, 후반=927개 (ratio=0.92, 누적 아님)
+          tracemalloc Δ: 전반=58.7KB, 후반=50.3KB (ratio=0.86, 누적 아님)
+
+        ★ 임계값 설정:
+          - wall-clock: p95_second <= p95_first * 1.5 (실측 0.77 << 1.5, 여유 → 부하 변동 흡수)
+          - gc 객체: second_half_delta <= first_half_delta * 1.2 (실측 0.92 << 1.2, 여유)
+          - tracemalloc: second_half_delta <= first_half_delta * 1.8 (실측 0.86 << 1.8, 여유 → 노이즈 흡수)
+
+          임계값은 노이즈·캐시 워밍 자연변동 흡수하되, 실 누수(구간별 지속 증가) 감지.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -38,11 +52,20 @@ class TestLongRunningInvariant:
             temp_root = os.path.join(tmpdir, "temp")
             os.makedirs(scratch_root, exist_ok=True)
             os.makedirs(temp_root, exist_ok=True)
+
             durations = []
+            gc_deltas = []  # 각 iteration의 gc 객체 변화
+            tracemalloc_deltas = []  # 각 iteration의 tracemalloc 변화
+
+            tracemalloc.start()
 
             for i in range(200):
                 # Act: collect_observations 호출 (스캐너 3종 observe-only)
                 # ★ tmpdir 격리: scan_roots 명시적 주입 (실제 홈 스캔 0)
+                gc.collect()  # 측정 전 정리
+                gc_before = len(gc.get_objects())
+                tracemalloc.reset_peak()
+
                 start = time.time()
                 scan_roots = [
                     {"path": os.path.join(tmpdir, "worktrees"), "mode": "cross-check-only", "source": "worktrees-base"},
@@ -56,10 +79,19 @@ class TestLongRunningInvariant:
                     temp_root=temp_root,
                 )
                 elapsed = time.time() - start
-                durations.append(elapsed)
 
-            # Assert: 자원 누적 0
-            # 단조성: 후반부의 p95 < 전반부의 p95
+                gc_after = len(gc.get_objects())
+                _, peak_tracemalloc = tracemalloc.get_traced_memory()
+
+                durations.append(elapsed)
+                gc_deltas.append(gc_after - gc_before)
+                tracemalloc_deltas.append(peak_tracemalloc / 1024)  # KB로 변환
+
+            tracemalloc.stop()
+
+            # ─────────────────────────────────────────────────────────────
+            # Assert 1: wall-clock 단조성 (보조 축, 부하 민감)
+            # ─────────────────────────────────────────────────────────────
             first_half = sorted(durations[:100])
             second_half = sorted(durations[100:])
 
@@ -67,10 +99,58 @@ class TestLongRunningInvariant:
             p95_second = second_half[int(len(second_half) * 0.95)]
 
             # 정직 ceiling: 판별력 제한, 단조 무증가만 검증
-            # (실제 자원 누수 확인은 커널-level profiling 필요)
+            # wall-clock 축은 부하 민감하므로 실측 표본으로 정당화된 임계값 사용
             assert p95_second <= p95_first * 1.5, (
-                f"후반부 p95 급증: 전반부={p95_first:.3f}s, 후반부={p95_second:.3f}s"
+                f"wall-clock 후반부 p95 급증 (부하 민감): 전반부={p95_first:.3f}s, 후반부={p95_second:.3f}s, "
+                f"비율={p95_second/p95_first:.2f}"
             )
+
+            # ─────────────────────────────────────────────────────────────
+            # Assert 2: gc 객체 수 단조성 (실 teeth 1/2)
+            # ─────────────────────────────────────────────────────────────
+            # 전반부(0-99)와 후반부(100-199) gc 증가분 비교
+            first_half_gc_delta = sum(gc_deltas[:100]) / 100  # 평균
+            second_half_gc_delta = sum(gc_deltas[100:]) / 100  # 평균
+
+            # 후반부 평균 증가가 전반부 평균 증가를 크게 초과하지 않아야 함
+            # (지속 누적 = gc_delta_second > gc_delta_first 지속)
+            assert second_half_gc_delta <= first_half_gc_delta * 1.2, (
+                f"gc 객체 후반부 누적 (누수 신호): 전반부 Δ={first_half_gc_delta:.1f}, "
+                f"후반부 Δ={second_half_gc_delta:.1f}, 비율={second_half_gc_delta/first_half_gc_delta:.2f}"
+            )
+
+            # ─────────────────────────────────────────────────────────────
+            # Assert 3: tracemalloc 메모리 단조성 (실 teeth 2/2)
+            # ─────────────────────────────────────────────────────────────
+            first_half_tracemalloc_delta = sum(tracemalloc_deltas[:100]) / 100  # 평균, KB
+            second_half_tracemalloc_delta = sum(tracemalloc_deltas[100:]) / 100  # 평균, KB
+
+            # 후반부 평균 증가가 전반부 평균 증가를 크게 초과하지 않아야 함
+            assert second_half_tracemalloc_delta <= first_half_tracemalloc_delta * 1.8, (
+                f"tracemalloc 후반부 누적 (누수 신호): 전반부 Δ={first_half_tracemalloc_delta:.1f}KB, "
+                f"후반부 Δ={second_half_tracemalloc_delta:.1f}KB, 비율={second_half_tracemalloc_delta/first_half_tracemalloc_delta:.2f}"
+            )
+
+            # 측정값 기록 (분석용)
+            perf_record = {
+                "test": "test_long_running_200_iterations_no_resource_growth",
+                "wall_clock": {
+                    "p95_first_half_seconds": f"{p95_first:.4f}",
+                    "p95_second_half_seconds": f"{p95_second:.4f}",
+                    "ratio": f"{p95_second/p95_first:.3f}",
+                },
+                "gc_objects": {
+                    "first_half_avg_delta": f"{first_half_gc_delta:.1f}",
+                    "second_half_avg_delta": f"{second_half_gc_delta:.1f}",
+                    "ratio": f"{second_half_gc_delta/first_half_gc_delta:.3f}",
+                },
+                "tracemalloc_kb": {
+                    "first_half_avg_delta_kb": f"{first_half_tracemalloc_delta:.1f}",
+                    "second_half_avg_delta_kb": f"{second_half_tracemalloc_delta:.1f}",
+                    "ratio": f"{second_half_tracemalloc_delta/first_half_tracemalloc_delta:.3f}",
+                },
+            }
+            print(f"\n[Long-Running Invariant] {json.dumps(perf_record, indent=2)}")
 
 
 class TestRestartRecovery:
