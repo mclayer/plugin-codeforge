@@ -158,7 +158,16 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 
 - **대조 상대 교체** — `empty` → **`clean`**. 적격은 *"결함 입력 ↔ 정상 입력"* 의 판별력이지 *"투입 있음 ↔ 투입 없음"* 이 아니다. `empty` 는 **도달 축 전용**으로 남는다.
 - **비교 대상 교체** — **마지막 줄 하나(`terminal_line`)가 아니라 관측 라인 집합(`observed_line_set`)**. 상수 종단 footer 를 갖는 게이트가 판별력을 갖고도 탈락하는 위음성 경로를 닫는다.
-- ★**`observed_line_set` 의 정의역 = 선언 stream 위 관측 라인 전체** — `::error::[<STAGE-ID>]` **∪** `::notice::` **∪ census 라인**(`scanned-N: …` 형). `::error::` 집합으로 좁히면 안 된다: `check_living_architecture_update` 는 leg 간 `scanned-N: changed=0 structural_surface=0 derived_docs=0` ↔ `changed=2 structural_surface=1 derived_docs=1` 로 **입력 의존 관측을 내지만 그 줄은 종단 라인도 `::error::` 도 아니며**, 좁은 정의역은 이 게이트를 **판별력 보유에도 부적격으로 오분류**한다 `[ArchitectPL firsthand — 동적 2-leg]`.
+- ★**`observed_line_set` 의 정의역 = 선언 stream 위 관측 라인 전체** — `::error::[<STAGE-ID>]` **∪** `::notice::` **∪ census 라인**(`scanned-N: …` 형) **∪ terminal-marker**(`✓ <gate>: …` — ★설계리뷰 DR3-M1 로 **4번째 항 편입**). `::error::` 집합으로 좁히면 안 된다: `check_living_architecture_update` 는 leg 간 `scanned-N: changed=0 structural_surface=0 derived_docs=0` ↔ `changed=2 structural_surface=1 derived_docs=1` 로 **입력 의존 관측을 내지만 그 줄은 종단 라인도 `::error::` 도 아니며**, 좁은 정의역은 이 게이트를 **판별력 보유에도 부적격으로 오분류**한다 `[ArchitectPL firsthand — 동적 2-leg]`.
+
+★**terminal-marker 편입 근거 (설계리뷰 DR3-M1 — 무언 정정 금지. DR3-M2 협착과 동시 처분)**
+
+구 정의는 **closed 3-part union** 이라 종단 라인을 원소에서 배제했고, 그 결과 **day-1 arm-H 의 두 leg(kill · empty ①)이 둘 다 `∅`** 이 된다 — HGSV 의 PASS leg 은 `::notice::` 도 census 라인도 내지 않기 때문이다(`scanned-N:` 은 repo 전역에서 `check_living_architecture_update` 1 게이트의 리터럴). ⇒ `observed_line_set(kill) = observed_line_set(empty) = ∅` ⇒ `¬DELIVERED` → **I-7 → `INDETERMINATE` → `exit 1`** 로 **day-1 arm-H 가 born-RED** 가 된다 `[설계리뷰 DR3-M1 — 3자(PL·Claude·Codex) 독립 9-leg 실행 수렴]`. **arm-L 은 무영향**(`{[AC-1],[SUMMARY]} ≠ ∅`)이므로 깨지는 것은 **arm-H·probe 축 한정**이었다.
+
+- ★**§결정 7 적격 전제 (b) 의 대비 취지는 무효화되지 않는다.** (b) 가 배제한 것은 ***"종단 emit 한 줄만으로 판정"***(구 `terminal_line` **단일 좌표**)이지 *"종단 라인을 관측 집합에서 제외"* 가 아니었다. 편입 후에도 종단 라인은 **집합의 한 원소**일 뿐 단독 비교 대상이 아니며, ②-b 가 폐기한 단일-좌표 식 `term(kill) ≠ term(empty)` 는 **여전히 폐기 상태**다. (b) 문면도 그 취지대로 정정한다(아래 §결정 7).
+- ★**정의역 확장은 판별력에 대해 단조(monotone)다** — `D₀ ⊂ D₁` 일 때 `A∩D₀ ≠ B∩D₀` 이면 `A∩D₁ ≠ B∩D₁` 이다(차집합 원소가 넓은 정의역에도 그대로 남는다). ⇒ 확장은 ②-b 의 위양성·위음성 결론을 **되돌리지 않으며** 기존에 갈리던 pair 는 전부 계속 갈린다. 확장이 바꾸는 것은 **종단 라인에서만 갈리던 pair** 뿐이고, 그런 게이트는 실제로 **입력 의존 관측을 보유**하므로 (b) 의 원 취지에 부합한다.
+- ★**verdict 함수의 좌표 분리 무손상** — ④ 는 `kill.term`·`clean.term` 을 **별 좌표**(마커 boolean)로 소비한다. 같은 사실이 `observed_line_set` 의 원소이기도 한 것은 **중복 소비이지 결함이 아니다** — 집합 비교 축(도달·적격)과 마커 boolean 축(verdict)은 **다른 축**이다.
+- ★**정직 기재 — 확장의 부수 효과**: (b) 적격 하한이 **넓어진다**(입력 의존이 종단 라인에만 있는 게이트가 적격으로 이동). day-1 정의역은 **적격 실증분 한정**(§결정 7)이라 born-RED 압력은 늘지 않으나, **적격 「하한 4」는 동적 재판정 시 더 커질 수 있다** — 그 값은 여전히 미확정이다(§결정 9).
 
 ★**rc 무관 3번째 앵커(⑦ 보강)** — 위 2-leg 관측은 **`::error::` 를 내고도 rc=0** 이다(meta-error leg 포함) `[ArchitectPL firsthand]`. ⑦ 이 든 2-앵커(FAIL 축 12-leg 전건 rc=1 · PASS 축 우회 mutant rc=0)에 이어 **rc 가 단독 판별자가 아님을 보이는 3번째 독립 재현**이며, 이번 앵커는 **`::error::` 관측과 rc 가 서로 어긋나는** 형태라 앞 둘과 다른 방향에서 같은 결론을 지지한다.
 - **두 식을 한 문면에서 분리 유지할 의무** — 하나로 뭉쳐 적으면 구현자가 적격 판정에 `empty` leg 을 쓰고, 그 순간 위 위양성 7 이 그대로 재현된다. ★**분리되는 것은 「비교 상대」**(도달 = `empty` / 적격 = `clean`)이며 **「비교 대상」은 ②-c 로 `observed_line_set` 통일**이다. **본 항의 계약 문언 정본 = 본 ADR** 이고 §8.QC-MECH MECH-4 는 이 ID 를 cross-ref 한다(구 *"동일 문면을 양쪽에 보유한다"* 문면은 §결정 1 DR2-M3 처분으로 **철회** — 중복 저작 의무화가 divergence 채널을 재생산했다).
@@ -195,7 +204,24 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 | **I-8** | fail-marker 단계 id 불일치(엉뚱한 단계에서 실패) |
 | **I-9** | `clean.term = 0`(정상 입력에서 종단 미도달) |
 | **I-10** | 선언한 stream 이 아닌 곳에서 마커 관측 |
-| **I-11** | kill·clean 관측이 동일 |
+| **I-11** | ★**`¬LIVE ∧ ¬HOLLOW` 조건부** — 두 정의식 **어느 것도 성립하지 않으면서** kill·clean 관측이 동일 (설계리뷰 DR3-M2 협착) |
+
+★**`I-11` 협착 + 평가 순서 (설계리뷰 DR3-M2 — 무언 정정 금지. DR3-M1 편입과 동시 처분)**
+
+구 `I-11`(*"kill·clean 관측이 동일"*)은 **`HOLLOW` 정의식과 동치**였다 — `HOLLOW ⟺ kill.fail=0 ∧ kill.term=1 ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED` 는 곧 **kill 관측 벡터 `(0,1)` == clean 관측 벡터 `(0,1)`** 이다. day-1 실행 산출도 `H-1 × kill(AC-1)` stdout ≡ `H-1 × clean` stdout(문자열 동일 · stderr 양쪽 공백 · rc 양쪽 0)이라 **마커 벡터·`observed_line_set` 어느 해석에서도 성립**한다 `[설계리뷰 DR3-M2 — peer 2 독립 확인]`. 판정기에 arm 이 미투입(③ ⓒ)이므로 *"arm-H 니 면제"* 도 할 수 없다. ⇒ 좁히지 않으면 **`arm-H 전건 HOLLOW` 가 도달 불가**(HOLLOW 사문)이거나 **`I-11` 이 사문**이 된다. ★**DR3-M1 단독 정정은 이 충돌을 키운다** — 넓어진 정의역에서 arm-H 의 kill·clean 이 더 확실히 동일해지므로 두 처분은 **함께 적용**되어야 한다.
+
+★**협착 형태 = `I-11` 술어 자체의 한정**(위 표). ★**전역 평가 순서를 *"verdict 선행 → 미해당분만 `I-*`"* 로 바꾸지 않는다** — 그 형태는 `I-1`~`I-4`·`I-10` 과 충돌한다. 전건 대사:
+
+| ID | verdict 정의식과 **동시 성립** 가능? | 귀결 |
+|---|:-:|---|
+| **I-1** anchor 매치 ≠ 1 · **I-2** syntax invalid · **I-3** 기동 실패·timeout · **I-4** rc ∉ exit_space · **I-10** 비선언 stream 관측 | **가능** | **관측 무결성 선행 조건** — verdict 가 표면상 성립해도 그 관측을 신뢰할 근거가 없다. ⇒ **선행 평가 유지.** 근거 = landed 형판 `run_mutation_exit` 도 baseline sanity·`NOT_RUN`(sed 미치환) 을 flip assert **전에** 판정한다 `[firsthand]`. *"verdict 선행"* 을 채택하면 예컨대 **rc=137 로 죽은 leg 이 마커만 맞아 `LIVE` 로 계상**되고, **anchor 2 site 치환된 오파생 표본이 `HOLLOW = detected` 로 계상**된다 |
+| **I-5** 양쪽 FAIL · **I-6** 마커 전무 · **I-7** `¬DELIVERED` · **I-8** 단계 불일치 · **I-9** `clean.term=0` | **불가(정의상 배타)** | I-5 ⇒ `clean.fail=1` 이라 양 정의식 불성립 / I-6 ⇒ `kill.term=0` / I-7 ⇒ 양 정의식이 `DELIVERED` 요구 / I-8 ⇒ `kill.fail=1` 인데 단계 불일치라 `LIVE` 실패 ∧ `HOLLOW`(`kill.fail=0`) 실패 / I-9 ⇒ 양 정의식이 `clean.term=1` 요구. ⇒ **순서 무관 · 협착 불요** |
+| ★**I-11** | **가능 — `HOLLOW` 와 동치** | ⇒ **유일한 협착 대상.** 위 표대로 `¬LIVE ∧ ¬HOLLOW` 한정 |
+
+★**협착으로 약해지는 축 (정직 기재 — 무언 약화 금지)**: **실효 검출력 손실 0 · 명목 이중 방어 1 상실.**
+
+- **손실 0 의 근거** — 협착이 제거하는 발동 집합 = `(kill ≡ clean) ∧ (LIVE ∨ HOLLOW)`. `LIVE` 는 `kill.fail=1 ∧ clean.fail=0` 을 요구해 **관측이 정의상 갈리므로** 교집합이 공집합이고, 남는 것은 `HOLLOW ∧ (kill ≡ clean)` = **정상 arm-H 전부**다. ⇒ 협착이 잃는 발동은 **전부 오발동**이며 결함 표본의 발동은 하나도 잃지 않는다.
+- ★**상실 1(명목)** — `I-11` 의 원 취지(*"판정기가 두 leg 을 실제로 구별했는가"*)를 **arm-H 축에서** challenge 하던 이중 방어가 사라지고, 그 축의 잔여 challenge 는 **`I-7`(`DELIVERED`) 단일 축**에 집중된다. ★단 그 이중 방어는 **성립하는 순간 arm-H 를 도달 불가로 만들었으므로 실효로 존재한 적이 없다** — 상실은 명목이다. **집중 자체는 천장**이며 §결정 9 에 기재한다.
 
 ★**계상 규율 = 분모 N 에 포함 · `detected` 에 불포함.** INDETERMINATE 를 분모에서 제외하면 *"표본을 깨뜨려 N 을 줄이는"* 경로가 열린다. **corpus 에 INDETERMINATE 가 1건 이상이면 exit 1** 이다.
 
@@ -352,7 +378,7 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
   | # | 전제 | 내용 |
   |---|---|---|
   | **(a)** | **단계 scoping 된 fail-marker** 보유 | `::error::[<STAGE-ID>]` — I-8 단계 판정의 성립 조건 |
-  | **(b)** | **입력 의존 관측** 보유 | `observed_line_set` 이 kill ↔ clean 에서 갈린다(§결정 4 ②-b — *종단* emit 이 아니라 **관측 라인 집합**) |
+  | **(b)** | **입력 의존 관측** 보유 | `observed_line_set` 이 kill ↔ clean 에서 갈린다(§결정 4 ②-b — *종단 emit **한 줄만**이 아니라* **관측 라인 집합**. ★설계리뷰 DR3-M1 정정: 원 취지는 `terminal_line` **단일 좌표** 배제이지 종단 라인의 **집합 원소 자격** 배제가 아니었다 — 종단 라인은 정의역 4번째 항으로 편입되되 **단독 비교 대상이 되지 않는다**) |
   | **(c)** | ★**drivability**(신설) | *"게이트가 자기 정의역을 **명시 인자로** 받아 주입된 트리를 실제로 채점하는가"* |
 
   미보유 = **부적격(정직 no-op)** 이며 선언해도 대상이 되지 않는다. 판정 불가능한 게이트가 corpus 에 들어와 born-broken 을 만드는 경로를 사전에 닫는다.
