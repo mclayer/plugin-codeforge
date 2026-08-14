@@ -908,6 +908,22 @@ class TestConcurrencyDedup:
           ④ 비공허성 앵커 2종 — present 표본 수 하한 + **서로 다른 값 2개 이상 관측**
              (= 폴러가 파일이 바뀌는 동안 실제로 표집했다는 증거).
 
+        ★ 앵커 하한(present >= 50 / distinct >= 2)의 근거 — **실측 1환경뿐, CI 미확인**:
+          · 로컬 Windows 실측(무돌연변이): `samples=8211 present=1772 distinct=40 torn=0`
+            ⇒ 하한은 실측의 각각 **1/35 · 1/20** 수준이라 여유가 크다.
+          · 구조적 하한: 워커의 쓰기 구간이 `ROUNDS * INTERVAL` = **최소 150ms** 로 고정돼
+            있고 폴러는 그 전 구간을 훑는다 — 하한 미달은 폴러가 150ms 를 통째로 놓친
+            경우뿐이다.
+          · **ubuntu CI 실측치는 없다.** 낮출 근거가 없으므로 **하한을 유지한다** —
+            임의 완화는 근거 없이 검출력을 깎는 일이다. 하한 미달 시의 실패 방향은
+            거짓 GREEN 이 아니라 **거짓 RED**(안전측)이며, 그때는 CI 실측치를 근거로
+            재조정한다(추정으로 미리 낮추지 않는다).
+
+        ★ Windows 한정 관측(판정 무영향): 폴러의 읽기 핸들과 `os.replace` 가 경합해
+          `heartbeat 기록 실패 (non-blocking)` 경고가 600 write 중 약 14회 났다. SUT 가
+          `OSError` 를 삼키고 **이전 값을 유지**하므로 표본은 계속 유효 상태이고 오라클
+          판정에는 영향이 없다 — 이 경고는 테스트(폴러)가 만든 것이다.
+
         mutant kill: `write_heartbeat` 의 `os.replace` 원자 write 를 비원자 write
           (open+write 직접)로 교체 ⇒ RED. 형제 negative control =
           `TestConcurrencyNegativeControl.test_concurrency_oracle4_nonatomic_writer_is_torn`

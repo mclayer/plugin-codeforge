@@ -30,4 +30,5 @@ jobs:
             tests/integration/test_scheduled_task_ac_matrix.py \
             tests/integration/test_scheduled_task_dynamic_roster.py \
             tests/integration/test_scheduled_task_stateful.py \
+            tests/integration/test_scheduled_task_watchdog_hook.py \
             -v -ra -m "not requires_golden"
