@@ -556,8 +556,28 @@ class TestAC3SelfModificationChain:
     """
 
     def test_ac3_no_update_scheduled_task_tool(self):
-        """능력 감사: update_scheduled_task 허용범위 부재."""
-        # ADR-172 저장 프롬프트 박제본에서 update_scheduled_task 검사
+        """능력 감사: 저장 프롬프트 안 `update_scheduled_task` 부재.
+
+        ★ 정의역 폐쇄 (구현리뷰 iter4 F-CR-402 회수 site 3, 신규 발견):
+          구판은 `code_start = content.find("```", decision_2_idx)` 로 **상한 없이**
+          앞으로 훑었다. 오늘 무해한 유일한 이유는 ADR-172 의 fenced block 이 정확히
+          1쌍(L66/L82)이라 표류할 대상이 0 이기 때문이다 — 구조가 아니라 우연이다.
+          다른 절이 코드블록을 하나라도 얻는 순간 §결정 2 의 프롬프트를 삭제한 mutant 가
+          **RED 가 아니라 vacuous-pass** 로 넘어간다: 부정 단언(`not in`)은 정의역이
+          비거나 엉뚱하면 **자동으로 참**이 되기 때문이다.
+
+        봉합 (CP §8.0-c D-1 + D-2):
+          · D-1 절 경계 폐쇄 — `extract_adr_section("### §결정 2")` 로 정의역을 닫는다
+            (고정 창·상한 없는 `find()` 금지). 신규 자산 0(이미 4 site 가 쓰는 헬퍼).
+          · D-2 부정 단언 전 **정의역 non-empty 선행 단언** — fenced block 실재 +
+            프롬프트 본문 실재(선두 리터럴)를 먼저 세운 뒤에 부정 단언을 놓는다.
+
+        mutant kill (2종 실측):
+          · discriminating — §결정 2 fence 삭제 ∧ §결정 5 에 더미 코드블록 추가
+            ⇒ 본 판본 RED / 구판 **vacuous-pass**(더미 블록으로 표류)
+          · regression-guard — §결정 5 에 더미 코드블록만 추가(§결정 2 온전)
+            ⇒ 본 판본 GREEN (정의역이 §결정 2 로 닫혀 있음을 확인)
+        """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
             pytest.fail(f"ADR-172 부재: {adr_path} (AC-3 검사 정의역 필수, design lane 산출물 부재)")
@@ -565,29 +585,46 @@ class TestAC3SelfModificationChain:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # 저장 프롬프트 추출 (### §결정 2 절)
-        decision_2_idx = content.find("### §결정 2")
-        if decision_2_idx == -1:
-            pytest.fail("ADR-172 의 §결정 2 절 부재")
+        # D-1: 정의역을 §결정 2 절로 **닫는다** (절 밖 fence 로 표류 불가)
+        try:
+            decision_2_section = extract_adr_section(content, "### §결정 2")
+        except AssertionError as e:
+            pytest.fail(f"AC-3: {e}")
 
-        # fenced 코드블록 찾기
-        code_start = content.find("```", decision_2_idx)
-        if code_start == -1:
-            pytest.fail("저장 프롬프트 fenced block 부재")
+        # D-2: 부정 단언 앞에 정의역 non-empty 를 **선행 단언**한다.
+        code_start = decision_2_section.find("```")
+        assert code_start != -1, (
+            "AC-3 정의역 붕괴: §결정 2 절 안에 fenced block 이 없다 — 저장 프롬프트 박제본이 "
+            "사라졌거나 절 밖으로 이동했다. 이 상태에서 부정 단언을 놓으면 vacuous-pass 다."
+        )
+        code_end = decision_2_section.find("```", code_start + 3)
+        assert code_end != -1, (
+            "AC-3 정의역 붕괴: §결정 2 절 안 fenced block 의 종료 마크 부재 (절 경계에서 잘렸다)."
+        )
+        prompt_text = decision_2_section[code_start:code_end]
 
-        code_end = content.find("```", code_start + 3)
-        if code_end == -1:
-            pytest.fail("fenced block 종료 마크 부재")
+        assert prompt_text.strip("` \n\r\t"), (
+            "AC-3 정의역 붕괴: §결정 2 fenced block 이 비어 있다 — 부정 단언이 자동 참이 된다."
+        )
+        # 정의역이 **실제로 그 프롬프트인지** 양성 결박 (빈 블록·엉뚱한 블록 차단)
+        assert "codeforge 로컬 잔재 관측" in prompt_text, (
+            "AC-3 정의역 붕괴: §결정 2 의 첫 fenced block 이 저장 프롬프트 박제본이 아니다 "
+            f"(선두 리터럴 미검출). 블록 선두 80자: {prompt_text[:80]!r}"
+        )
 
-        prompt_text = content[code_start:code_end]
-
-        # Assert: update_scheduled_task 부재
+        # Assert(부정): update_scheduled_task 부재 — 위에서 정의역을 세운 뒤에만 유효하다
         assert "update_scheduled_task" not in prompt_text, (
             "AC-3 위반: 저장 프롬프트에 update_scheduled_task 도구 존재"
         )
 
     def test_ac3_no_write_home_claude_in_prompt(self):
-        """권한면: §결정 4 **안에** `~/.claude` 쓰기 deny 명시 실재.
+        """권한면: §결정 4 **안에** 권한 층 lever 2항 + 계상 금지 3축 명제 실재.
+
+        ★ 선언 명제 정정 (구현리뷰 iter4 F-CR-402): 구판 선언은 "`~/.claude` 쓰기 deny
+          명시 실재" 였는데, §결정 4 는 그런 문장을 담지 않는다 — 담은 것은 (a) 규범
+          lever 2항(`permissions.deny` 키 **신설** + `disableBypassPermissionsMode`)과
+          (b) 그 lever 들을 live 실측 전까지 **계상하지 말라**는 3축 요구다. 선언을
+          본문 사실에 맞춰 정정하고 단언을 그 명제에 결박한다.
 
         ★ F-B 봉합 (구현리뷰 iter4 P1): 직전 판본은 `content[idx : idx+2000]` **고정 창**
           으로 잘랐다. §결정 4 실제 길이는 915자라 창이 **2.19배 초과**해 §결정 5·6 을
@@ -606,12 +643,17 @@ class TestAC3SelfModificationChain:
           │ A 부재형 §결정 4 본문 삭제           │  RED   │ **생존**      │
           │ B 변형형 `~/.claude`→`<home>/.claude`│  RED   │  RED          │
           │ C 판별형 `deny` 만 제거(경로는 잔존) │  RED   │ **생존**      │
+          │ D lever 2항+계상금지 3축 삭제        │  RED   │ **생존**      │
+          │   (host settings 문장만 잔존)        │        │  ↑ G0 결격    │
           └──────────────────────────────────────┴────────┴──────────────┘
           · B 는 구판도 잡았다 — 즉 B 단독으로는 이 봉합의 판별 근거가 되지 못한다
             (regression-guard case). 실 판별 근거는 A·C 다.
           · C 는 리뷰 진단("2 conjunct 중 `deny` 쪽 판별력 0")을 **정확히 격리**한다:
             §결정 4 에서 `deny` 만 지우고 `~/.claude` 를 남기면 구판은 이웃 §결정 5 의
             `deny` 로 충족돼 통과했다.
+          · D 는 **정의역을 §결정 4 로 닫은 뒤에도 남은** 결함이다(F-CR-402). 절 경계
+            문제가 아니라 **술어 등급** 문제라 창을 좁혀도 못 잡는다 — 잔존 carrier 가
+            같은 절·같은 줄 안에서 두 토큰을 공급하기 때문이다. G1 명제 앵커로만 죽는다.
         """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
@@ -623,9 +665,36 @@ class TestAC3SelfModificationChain:
         # §결정 4 권한면 검증 — 헤딩 기준 **정확 슬라이싱**(고정 창 금지, 위 docstring)
         decision_4_section = extract_adr_section(content, "### §결정 4")
 
-        # Assert: ~/.claude/** 쓰기 deny 명시
-        assert "deny" in decision_4_section and "~/.claude" in decision_4_section, (
-            "AC-3 위반: ~/.claude 쓰기 deny 명시 부재"
+        # ── G1 명제 앵커 (구현리뷰 iter4 F-CR-402 / CP §8.0-c) ────────────────────
+        #   구판 `"deny" in s and "~/.claude" in s` 는 **G0 결격**이었다: 짧은 일반 토큰
+        #   2개의 독립 공존이라, 규범 lever 2항과 계상 금지 3축을 전부 지우고 host
+        #   settings 문장만 남긴 mutant D 가 **생존**했다. 잔존 carrier 가
+        #     "host `~/.claude/settings.json` 을 방어 lever 로 계상하지 **않는다** — `deny` 키 부재"
+        #   로 **선언 명제와 정반대 취지**인데 두 토큰을 한 줄 안에 갖기 때문이다.
+        #   창을 좁히는(locality) 방향으로는 원리적으로 못 잡는다 — 같은 줄에 있으므로.
+        #   ⇒ 토큰 공존이 아니라 **명제 앵커**로 승격한다.
+        #   ☞ 대가: G1 승격은 이 오라클을 ADR 본문 **리터럴에 결박**한다 — 문안을 다듬기만
+        #     해도 RED 가 된다. 이는 결함이 아니라 CP §8.0-c 정직 천장 3번이 이미 선언한
+        #     성질(리워딩 내성 없음 = 검출력의 대가)이며, 앵커 갱신은 ADR 편집과 같은
+        #     Story 안에서 처리한다.
+        anchors = {
+            "권한 층 lever — permissions.deny 키 신설":
+                "`permissions.deny` 키 신설",
+            "권한 층 lever — bypass 차단 토글":
+                "disableBypassPermissionsMode",
+            "계상 금지 3축 (V1) deny 적용 여부": "(V1)",
+            "계상 금지 3축 (V2) permission mode 상속": "(V2)",
+            "계상 금지 3축 (V3) 토글 user-scope 실효": "(V3)",
+            # 구판 conjunct 의 **의도**(host settings 를 lever 로 세지 않는다)를 G1 등급
+            # 문장 전문으로 승계한다 — 토큰 `~/.claude` 단독 공존이 아니라 명제로.
+            "host settings 계상 금지 명제":
+                "host `~/.claude/settings.json` 을 방어 lever 로 계상하지 않는다",
+        }
+        missing = [name for name, lit in anchors.items() if lit not in decision_4_section]
+        assert not missing, (
+            "AC-3 위반: §결정 4 권한면 명제 앵커 누락 — %s\n"
+            "(G0 토큰 공존이 아니라 명제 앵커 동시 presence 를 요구한다. "
+            "규범 lever 2항 또는 계상 금지 3축이 절에서 사라졌는지 확인하라.)" % missing
         )
 
     def test_ac3_fetch_existing_keys_excludes_external_body(self):
@@ -1071,9 +1140,17 @@ class TestAC12TripleAxisSixCellComparison:
         except AssertionError as e:
             pytest.fail(f"AC-12: {e}")
 
-        # 1. 채택 축 라벨 + P4 리터럴 (3축 구분)
-        assert "**채택 축**" in decision_section and "P4" in decision_section, (
-            "AC-12: 채택 축 라벨 또는 P4 리터럴 부재"
+        # 1. 채택 축 — **필드 전문**으로 결박한다 (G1).
+        #    ★ 구판 `"**채택 축**" in s and "P4" in s` 는 **G0 결격**이었다
+        #      (구현리뷰 iter4 F-CR-402 회수 site 2, 신규 발견):
+        #      같은 §결정 8 슬라이스 안 6셀 비교표가 `| **P4 Desktop 로컬 (채택)** | ...`
+        #      행으로 `P4` 를 **독립 공급**하므로, 결정 기록의 채택 축을 `P3b` 로 바꾼
+        #      mutant 에서도 두 토큰이 각각 충족돼 통과했다. 즉 이 단언은 "무엇을
+        #      채택했는가" 를 전혀 판별하지 못했다 — 비교표 존재만 확인하고 있었다.
+        assert "- **채택 축** = **P4 — Desktop 로컬 스케줄 작업**" in decision_section, (
+            "AC-12: 채택 축 필드 전문('- **채택 축** = **P4 — Desktop 로컬 스케줄 작업**') "
+            "미검출. 채택 축이 바뀌었거나 결정 기록 필드가 사라졌다 "
+            "(비교표의 P4 셀은 이 명제의 근거가 되지 못한다 — 표는 후보 나열이다)."
         )
 
         # 2. 주체 — 필드 전문으로 검사한다.

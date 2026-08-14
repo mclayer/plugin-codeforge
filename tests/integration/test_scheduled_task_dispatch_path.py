@@ -130,6 +130,39 @@ def files_under(root):
     return out
 
 
+# 이 모듈이 실 상태 디렉터리에 만들 수 있는 파일의 소유 접두 (HEARTBEAT_FILE·STOP_FLAG_LOCAL 공통)
+OWNED_STATE_PREFIX = "scheduled-task"
+
+
+def owned_gc_state_files():
+    """실 `GC_STATE_DIR` 안 **모듈 소유 접두**(`scheduled-task*`) 파일 상대경로 집합.
+
+    ★ **읽기 전용 walk 만** 한다 — 생성·삭제·수정 0 (실 사용자 상태 무접촉).
+    ★ 소유 접두 한정 이유(판정 3): `~/.claude/worktree-gc-state` 는
+      `session-start-gc-catchup` 등이 공유하는 **가변 디렉터리**라, 전면 스냅샷 동등
+      단언은 병렬 세션·다른 훅의 정상 활동만으로도 깨지는 flaky 오라클이 된다.
+      본 모듈이 만들 수 있는 이름 공간으로 좁혀야 신호가 남는다.
+    ★ 홈 접근 불가(디렉터리 부재·권한) → `None` (graceful skip — 단언을 건너뛴다).
+    """
+    state_dir = getattr(sut, "GC_STATE_DIR", None)
+    if not state_dir:
+        return None
+    try:
+        if not os.path.isdir(state_dir):
+            return set()          # 디렉터리 자체가 없으면 소유 파일도 0 (정상 정의역)
+        out = set()
+        for dirpath, _dirnames, filenames in os.walk(str(state_dir)):
+            for fn in filenames:
+                rel = os.path.relpath(os.path.join(dirpath, fn), str(state_dir))
+                rel = rel.replace(os.sep, "/")
+                if rel.split("/")[0].startswith(OWNED_STATE_PREFIX) or \
+                        os.path.basename(rel).startswith(OWNED_STATE_PREFIX):
+                    out.add(rel)
+        return out
+    except OSError:
+        return None               # 권한 등 접근 불가 — 판정 불가로 정직 처리
+
+
 # ═══════════════════════ gh 포트 대역 (유일 주입점) ═══════════════════════════════
 class FakeChannel:
     """`sut._gh` 대역 — append-only 보고 채널을 in-process 로 재현한다 (INV-C).
@@ -272,8 +305,12 @@ def invoke_run(tmp_path, observations, chan, channel=CHANNEL,
       · `collect_observations` 정확히 1회 호출 (fixture seam 실효)
       · 채널 지정 시 gh 포트 **호출 기록 비어있지 않음**
       · 실 subprocess argv 집합 == `allow_subprocess`
-      · tmp **root** 하위 파일 = heartbeat 뿐 — `GC_STATE_DIR` 축은 본 harness **미측정**
-        (임시파일 누수 mutant 4건 kill 은 유효). 정의역 상세는 본문 주석 참조.
+      · 상태 잔여 2축 (F-CR-403: 1차 축소 → 판정 3 부분 확장)
+          ① tmp **root** 하위 파일 = heartbeat 뿐 (임시파일 누수 4건 kill)
+          ② 실 `GC_STATE_DIR` 안 **소유 접두**(`scheduled-task*`) 신규 파일 0
+             — 읽기 전용 walk, 홈 접근 불가 시 graceful skip.
+        ☞ 두 축 합쳐도 "로컬 상태 저장 0" **전칭**은 아니다: 소유 접두 밖 이름이나
+          제3의 경로에 쓰면 여전히 안 보인다 (아래 정직 천장 참조).
       · `DONE:` 마커 실재 + 파싱 성공
     """
     root = str(tmp_path)
@@ -288,6 +325,7 @@ def invoke_run(tmp_path, observations, chan, channel=CHANNEL,
 
     posted_before = len(chan.posted)
     real_before = real_heartbeat_state()
+    owned_before = owned_gc_state_files()      # 읽기 전용 스냅샷 (판정 3 — 실 상태 무접촉)
     out, err = io.StringIO(), io.StringIO()
 
     seen_subprocess = []
@@ -348,19 +386,33 @@ def invoke_run(tmp_path, observations, chan, channel=CHANNEL,
         % (sorted(seen_subprocess), sorted(allow_subprocess))
     )
 
-    # 정의역 주의 (F-CR-403 1차): 아래 단언의 정의역은 **tmp root 하위뿐**이다.
-    #   production `GC_STATE_DIR`(`~/.claude/worktree-gc-state`) 축은 본 harness 가
-    #   측정하지 않는다 — `ENV_HEARTBEAT_FILE` 로 heartbeat 만 tmp 로 돌렸을 뿐,
-    #   그 디렉터리에 다른 파일이 생기는지는 여기서 알 수 없다. 따라서 이 단언이
-    #   봉인하는 것은 "로컬 dedup 상태 파일 0(INV-C)" **전칭**이 아니라
-    #   "tmp root 하위 임시파일 누수 0"(`--body-file` 임시파일 미삭제 등 4건 kill) 이다.
+    # 정의역 축 ①: tmp root 하위 임시파일 누수 0 (`--body-file` 미삭제 등 4건 kill).
     residue = files_under(root)
     expected_files = {"heartbeat.epoch"}
     assert residue == expected_files, (
         "tmp root 하위 파일이 %r (기대 %r) — 임시파일이 누수됐거나 heartbeat 기록 경로가 "
-        "소실됐다 (정의역 = tmp root 한정, GC_STATE_DIR 축 미측정)"
-        % (sorted(residue), sorted(expected_files))
+        "소실됐다" % (sorted(residue), sorted(expected_files))
     )
+
+    # 정의역 축 ②: 실 `GC_STATE_DIR` 안 **모듈 소유 접두** 신규 파일 0 (판정 3 확장).
+    #   축 ① 단독이면 dedup 캐시를 `GC_STATE_DIR/scheduled-task-*` 에 쓰는 mutant 가
+    #   **생존**한다 — tmp root 밖이라 안 보이기 때문이다. 그 사각을 여기서 덮는다.
+    #   ★ seam 신설(GC_STATE_DIR 리디렉트)은 **기각**됐다: 그 경로를 env 로 옮기면
+    #     F2 긴급 정지 플래그(`STOP_FLAG_LOCAL`)가 **함께 이동**해 env 만으로 정지
+    #     장치를 무력화할 수 있게 되는 fail-unsafe flip 이다. 그래서 리디렉트 대신
+    #     **읽기 전용 walk 로 실 디렉터리를 관측**한다.
+    if owned_before is not None:
+        owned_after = owned_gc_state_files()
+        if owned_after is not None:
+            new_owned = owned_after - owned_before
+            assert not new_owned, (
+                "실 GC_STATE_DIR 에 모듈 소유(`%s*`) 신규 파일이 생겼다: %r\n"
+                "  dir=%s\n"
+                "로컬 상태 저장은 INV-C 위반이다 (dedup 상태 저장소 = append-only 채널 자신). "
+                "tmp root 정의역(축 ①)만으로는 이 축이 보이지 않는다."
+                % (OWNED_STATE_PREFIX, sorted(new_owned),
+                   getattr(sut, "GC_STATE_DIR", "?"))
+            )
 
     m = _DONE_RE.search(stdout)
     assert m is not None, "DONE 마커 부재 (경로 미완주): stdout=%r stderr=%r" % (stdout, stderr)
@@ -665,7 +717,19 @@ class TestSubprocessSurface:
 #   따라서 "실 subprocess 0" 은 **그 두 진입점에 한한 실측**이지 프로세스 생성 전칭
 #   봉인이 아니다 (`subprocess` 고수준 API 인 `call`/`check_call`/`check_output` 은 내부적으로
 #   이 둘을 거치므로 커버된다 — ADR-119 검사연극 금지).
-# · `GC_STATE_DIR` 축의 파일 잔여는 `invoke_run` 정의역 밖이다 (F-CR-403 1차 참조).
+# · 상태 잔여 단언의 정의역은 (tmp root 전량) ∪ (실 `GC_STATE_DIR` 안 `scheduled-task*`)
+#   두 축뿐이다. 소유 접두 **밖** 이름으로 쓰거나 제3의 경로(레지스트리·다른 홈 하위·
+#   원격)에 쓰는 상태 저장은 여전히 관측되지 않는다. 접두 한정은 그 디렉터리가 다른
+#   훅과 공유되는 가변 디렉터리라 전면 스냅샷이 flaky 하기 때문에 택한 **의도된 좁힘**
+#   이며, 따라서 "로컬 상태 저장 0(INV-C)" 을 전칭으로 봉인하지 않는다.
+#   - 축 ② 는 **delta 오라클**이다: 파일이 한 번 생기면 이후 호출의 before 스냅샷에
+#     포함되므로, 한 세션 안에서 같은 위반을 **반복 검출하지는 않는다**(실측: 위반
+#     mutant 에서 첫 테스트 1건만 RED). 스위트를 붉게 만들기엔 충분하지만 "발생 횟수"
+#     를 세는 계측은 아니다.
+#   - 축 ② 는 실 디렉터리를 보므로, 테스트 실행 중 **다른 프로세스**가 `scheduled-task*`
+#     를 새로 만들면 원리적으로 거짓 RED 가 가능하다(실 스케줄 작업 동시 구동 등).
+#     이는 기존 `real_heartbeat_state()` 단언이 이미 지고 있던 노출과 같은 종류이며,
+#     접두 한정이 그 표면을 최소화한 결과다(전면 스냅샷 대비).
 # · 따라서 본 파일의 GREEN 은 "발화가 실 채널에 착지한다" 를 봉인하지 않는다 —
 #   봉인 대상은 `run()` 의 발화 **분기 로직**뿐이다 (ADR-119 검사연극 금지).
 
