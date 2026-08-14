@@ -202,11 +202,18 @@ class TestPropertyStdinJsonParser:
         st.one_of(st.integers(), st.text(), st.booleans(), st.none()),
         min_size=1, max_size=20
     ))
-    @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=1000)
+    @settings(max_examples=50, suppress_health_check=[HealthCheck.too_slow], deadline=None)
     def test_property_whole_echo_preservation(self, random_dict: dict):
         """Property 2: whole-echo 보존 (비-ASCII 포함 dict 무손실).
 
         tool_input 전체가 변경 없이 updatedInput으로 돌아옴.
+
+        deadline=None 사유: 각 예제가 훅을 서브프로세스로 fork 하므로 예제당 소요가 호스트
+          부하에 좌우된다 — 포화 시 1338~1659 ms, 여유 시 371 ms 로 관측돼 hypothesis 가
+          `FlakyFailure: Unreliable test timings` 로 자기 판정했다(구 deadline=1000 초과).
+          본 property 의 검증 대상은 **whole-echo 보존 성질**이지 지연이 아니므로 deadline 을
+          해제한다. 타이밍 회귀 감시는 tests/perf/ Plane A(paired ABAB) 소관으로 분리돼 있어
+          여기서 deadline 을 놓아도 성능 감시 공백은 생기지 않는다.
         """
         payload = {
             "tool_name": "Bash",
