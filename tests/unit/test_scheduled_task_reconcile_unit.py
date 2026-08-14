@@ -310,14 +310,51 @@ class TestBoundaryUnicode:
 
 
 class TestBoundaryPathLength:
-    """경계: 긴 경로 (260+ 초과)."""
+    """경계: 긴 경로 (260+ 초과) + dedup 키 길이 상한 **대칭 적용**."""
 
     def test_dedup_key_long_path(self):
-        """긴 경로도 key 에 포함."""
-        long_path = "~/.claude/" + "a" * 500
+        """상한 초과 경로는 **경계화 키**가 되고 상한 이내 경로는 원문 그대로다.
+
+        ★ 계약 변경 이력 (ArchitectPL 설계 판정 이행 — D3 라운드트립 봉합):
+          이전 판본은 `assert len(key) > 500` 이었다. 그러나 역추출
+          (`fetch_existing_keys`)이 `_MAX_KEY_LEN` 초과 키를 폐기하므로, 정방향이 상한을
+          넘는 키를 발화하면 그 잔재는 **영원히 재수집되지 않아 매 실행 중복 발화**가
+          된다(비대칭 상한). 이제 정방향도 같은 상한을 지킨다.
+
+        검사 축 4종:
+          ① 상한 초과 → len(key) <= _MAX_KEY_LEN (대칭)
+          ② 경계화 형상 = 앞 480자 원문 + `~` + 8-hex
+          ③ 앞부분이 동일하고 뒤만 다른 두 장문 경로가 **서로 다른 키** (digest 판별)
+          ④ 상한 이내 경로는 경계화하지 않는다 (원문 보존 — 무차별 해싱 금지)
+        """
+        long_path = "~/.claude/" + "a" * 500        # raw = 8 + 510 = 518 > 512
         obs = {"cls": "scratch", "display_path": long_path}
         key = sut.dedup_key(obs)
-        assert len(key) > 500
+
+        # ① 대칭 상한
+        assert len(key) <= sut._MAX_KEY_LEN, (
+            f"상한 초과 키 발화 (역추출이 폐기 → 무한 중복 발화): len={len(key)}"
+        )
+        # ② 경계화 형상
+        assert len(key) == sut._KEY_BOUND_PREFIX + 1 + sut._KEY_BOUND_DIGEST, (
+            f"경계화 형상 불일치: len={len(key)}"
+        )
+        assert key.startswith("scratch:~/.claude/aaa"), f"앞부분 원문 미보존: {key[:40]!r}"
+        prefix, sep, digest = key.rpartition("~")
+        assert sep == "~" and len(digest) == sut._KEY_BOUND_DIGEST, f"digest 접미 부재: {key[-20:]!r}"
+        assert all(c in "0123456789abcdef" for c in digest), f"digest 가 hex 가 아님: {digest!r}"
+
+        # ③ 앞 480자 동일 + 뒤만 다른 장문 → 서로 다른 키
+        other = {"cls": "scratch", "display_path": long_path + "-DIFFERENT-TAIL"}
+        assert sut.dedup_key(other) != key, (
+            "앞부분 동일 장문 경로가 같은 키로 합쳐짐 — digest 판별 실패"
+        )
+
+        # ④ 상한 이내는 원문 그대로 (무차별 해싱 금지)
+        short = {"cls": "scratch", "display_path": "~/.claude/short"}
+        assert sut.dedup_key(short) == "scratch:~/.claude/short", (
+            f"상한 이내 키가 경계화됨: {sut.dedup_key(short)!r}"
+        )
 
 
 class TestBoundaryEmptyObservations:

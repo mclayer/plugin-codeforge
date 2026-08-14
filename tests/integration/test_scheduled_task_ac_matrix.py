@@ -864,7 +864,15 @@ class TestAC12TripleAxisSixCellComparison:
     """
 
     def test_ac12_three_axis_six_cell_comparison_present(self):
-        """6셀 비교표 presence: 3축(P3a/P3b/P4) × {비용, 보안} table row."""
+        """6셀 비교표: 3축(P3a/P3b/P4) × {비용, 보안} 을 **표 구조**로 파싱해 검증.
+
+        ★ honest ceiling — 헤더 문안 결합 (선언된 trade-off, 검출력 아님):
+          표 식별을 헤더 셀 문자열(`축`/`비용 축`/`보안 축`) 일치로 하므로 **헤더 변형**
+          (예: `비용 축` → `비용`)이 "표 통째 삭제" 와 같은 RED 를 낸다. 그 RED 는
+          검출력이 아니라 ADR 문안에 대한 **결합 부작용**이다. 위치(첫 번째 표) 로만
+          식별하면 같은 §결정 8 안의 "배제 축별 사유의 지위" 표와 구별할 수 없어
+          더 나쁘므로 수용한 trade-off다.
+        """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
             pytest.fail(f"ADR-172 부재: {adr_path} (AC-12 검사 정의역 필수, design lane 산출물 부재)")

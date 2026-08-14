@@ -418,6 +418,116 @@ class TestFuzzPathNormalization:
         )
 
 
+# ══════════════════ D3 라운드트립 계약 property (§8.8.2 — 신설) ══════════════════
+class TestPropertyDedupRoundtrip:
+    """D3: `역추출(render_fact_tuple(o)) == dedup_key(o)` 항등.
+
+    이 항등이 깨지면 채널에 실린 키와 다음 실행의 재유도값이 달라져 **dedup 이 무력화**
+    되고(매 실행 중복 발화) 최악의 경우 **임의 키 주입**이 성립한다. 실측으로 파괴된
+    3형상을 회귀 고정한다 (ArchitectPL 설계 판정 (c)/(d) 이행):
+
+      형상 ① 후행 공백 절단   — 역추출 정규식의 후행 `\\s*$` anchor 가 키 끝 공백을 삼킴
+      형상 ② 임의 키 주입     — greedy `.*` 가 **마지막** `· key=` 를 골라, 관측 경로에
+                                `· key=` 를 매립하면 추출값이 공격자 지정 문자열이 됨
+      형상 ③ 길이 상한 비대칭 — 정방향은 상한 무제한, 역추출만 `_MAX_KEY_LEN` 초과 폐기
+                                → 장문 키가 영원히 재수집되지 않아 무한 중복 발화
+
+    ★ 이 property 는 SUT 의 **역추출 정규식 자신**(`sut._FACT_KEY_RE`)을 사용한다 —
+      테스트가 별도 파서를 재구현하면 SUT 의 실 추출 경로를 재지 못한다.
+    """
+
+    @pytest.fixture
+    def corpus_paths(self):
+        """§8.8.1 fuzz corpus (input_surface 7 class) 재사용."""
+        corpus_file = Path(__file__).parent.parent / "fixtures" / "cfp_2949" / "fuzz-corpus" / "paths.txt"
+        if not corpus_file.exists():
+            pytest.fail(f"corpus 부재: {corpus_file} (D3 정의역 입력 필수)")
+        paths = []
+        with open(corpus_file, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    paths.append(line)
+        return paths
+
+    @staticmethod
+    def _extract(line):
+        """SUT 역추출 경로 그대로 (fetch_existing_keys 가 쓰는 정규식)."""
+        m = sut._FACT_KEY_RE.match(line)
+        return None if m is None else m.group(1)
+
+    def test_property_dedup_key_roundtrip_over_corpus(self, corpus_paths):
+        """corpus 7 class 전량 + 3형상 회귀 케이스에 대해 라운드트립 항등."""
+        # 형상별 회귀 케이스 (corpus 에 없는 축 — 실측 파괴 형상 그대로)
+        shape_cases = [
+            ("① 후행 공백", "~/.claude/worktrees/trailing-space   "),
+            ("① 후행 탭", "~/.claude/worktrees/trailing-tab\t"),
+            ("② 키 주입 · key=", "~/.claude/worktrees/x · key=INJECTED-EVIL"),
+            ("② 키 주입 다중", "~/a · key=E1 · key=E2"),
+            ("③ 상한 초과", "~/.claude/codeforge-scratch/" + "z" * 600),
+            ("③ 상한 경계 직하", "~/" + "y" * (sut._MAX_KEY_LEN - 10)),
+        ]
+        cases = [("corpus", p) for p in corpus_paths] + shape_cases
+        assert len(cases) >= len(corpus_paths) + 6, "케이스 구성 붕괴"
+
+        failures = []
+        for label, path in cases:
+            obs = sut.Observation(
+                cls="worktree", display_path=path,
+                declared="완결 직후 정리", measured="age=9d 보존사유=none",
+                mismatch=True,
+            )
+            expected = sut.dedup_key(obs)
+            line = sut.render_fact_tuple(obs)
+            extracted = self._extract(line)
+            if extracted != expected:
+                failures.append((label, path[:60], expected[:60],
+                                 None if extracted is None else extracted[:60]))
+            # 상한 대칭: 발화 키는 역추출 폐기 문턱을 넘지 않아야 한다
+            if len(expected) > sut._MAX_KEY_LEN:
+                failures.append((label + " [상한 비대칭]", path[:60], str(len(expected)), "-"))
+
+        assert failures == [], (
+            f"D3 라운드트립 파괴 {len(failures)}건 — (label, path, expected, extracted): {failures}"
+        )
+
+    def test_property_roundtrip_survives_fetch_existing_keys(self):
+        """end-to-end: 렌더 본문을 채널 코멘트로 되먹여 `fetch_existing_keys` 로 회수 →
+        `dedup_key` 재유도값이 **전량 멤버십 성립**(= 재발화 0).
+
+        위 단위 항등이 `fetch_existing_keys` 의 실 경로(sentinel 필터 + 길이 폐기 +
+        set 수집)까지 살아남는지 확인한다 — 정규식만 고치고 상한을 비대칭으로 두면
+        여기서 RED (장문 키가 회수 집합에서 빠져 재발화).
+        """
+        observations = [
+            sut.Observation(cls="worktree", display_path=p, declared="d",
+                            measured="m", mismatch=False)
+            for p in (
+                "~/.claude/worktrees/normal",
+                "~/.claude/worktrees/trailing   ",
+                "~/.claude/worktrees/x · key=INJECTED-EVIL",
+                "~/.claude/codeforge-scratch/" + "z" * 600,
+            )
+        ]
+        body = sut.render_report(observations, "d3-task", "d3-run")
+
+        fake_gh = mock.Mock(return_value=mock.Mock(
+            returncode=0, stdout=json.dumps({"comments": [{"body": body}]})))
+        recovered = sut.fetch_existing_keys("owner/repo#1", gh=fake_gh)
+
+        assert recovered is not None, "채널 회수 실패"
+        missing = [sut.dedup_key(o) for o in observations
+                   if sut.dedup_key(o) not in recovered]
+        assert missing == [], (
+            f"기보고 키 {len(missing)}건이 회수 집합에서 누락 — 매 실행 중복 발화. "
+            f"누락(앞 60자): {[k[:60] for k in missing]}"
+        )
+        # 비공허성: 주입한 EVIL 문자열이 **독립 키**로 회수되지 않았는가 (키 주입 0)
+        assert "INJECTED-EVIL" not in recovered, (
+            f"임의 키 주입 성립 — 공격자 지정 문자열이 독립 키로 회수됨: {recovered}"
+        )
+
+
 # ═══════════════════════════════ Property Tests §8.8.2 ═══════════════════
 class TestPropertyDedupIdempotence:
     """§8.8.2 property P1: dedup 멱등.

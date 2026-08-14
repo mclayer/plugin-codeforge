@@ -48,6 +48,56 @@ def _isolated_env(heartbeat_path):
     return env
 
 
+def make_sandbox(root):
+    """`run()` 을 **완전 격리**하는 subprocess 샌드박스를 만들고 `(env, repo_root)` 반환.
+
+    ★ P1-3b 이행 (ArchitectPL 판정: 신규 CLI 플래그·env **신설 0**).
+      `discovery.default_scan_roots(repo_root)` 4종의 해소 원천은 딱 3가지다:
+        · worktrees-base = `expanduser("~")/.claude/worktrees`        → HOME/USERPROFILE
+        · workspace-root = `dirname(abspath(repo_root))`               → --repo-root
+        · home-direct    = `expanduser("~")`                           → HOME/USERPROFILE
+        · temp           = `tempfile.gettempdir()/claude`              → TMP/TEMP/TMPDIR
+      셋을 샌드박스로 주면 4종이 전부 샌드박스 안으로 떨어진다. scratch 축
+      (`_scratch_root()`)과 F2 정지 플래그(`STOP_FLAG_LOCAL`)도 같은 HOME 파생이라 함께 격리된다.
+
+    ★ 제약 (declare 됨 — 지켜야 하는 전제):
+      ① **subprocess 전용**. in-process 는 `HEARTBEAT_FILE`·`STOP_FLAG_LOCAL` 등이 import
+         시점 `expanduser("~")` 로 확정돼 HOME override 가 듣지 않는다.
+      ② `STR_GH_BIN` 은 `shlex.split(posix=(os.name != "nt"))` 를 거치므로 stub 경로에 공백 금지.
+      ③ F2 의 run()-레벨 격리도 HOME override 로만 유도된다(`run()` 은 `local_flag` 미전달).
+
+    Returns:
+        (env, repo_root) — repo_root 는 `<sandbox>/repo` (그 부모 `<sandbox>` 가 workspace-root).
+    """
+    root = str(root)
+    repo_root = os.path.join(root, "repo")
+    temp_root = os.path.join(root, "tmp")
+    for d in (repo_root, temp_root,
+              os.path.join(root, ".claude", "worktrees"),
+              os.path.join(root, ".claude", "codeforge-scratch"),
+              os.path.join(root, ".claude", "worktree-gc-state")):
+        os.makedirs(d, exist_ok=True)
+
+    env = dict(os.environ)
+    env["HOME"] = root              # POSIX expanduser
+    env["USERPROFILE"] = root       # Windows expanduser (ntpath 는 이쪽이 우선)
+    env.pop("HOMEDRIVE", None)      # USERPROFILE 부재 시 fallback 경로 차단
+    env.pop("HOMEPATH", None)
+    env["TMP"] = temp_root
+    env["TEMP"] = temp_root
+    env["TMPDIR"] = temp_root       # POSIX tempfile.gettempdir()
+    # 앰비언트 채널·태스크 설정이 새어들어 실 GitHub 로 나가지 않게 제거
+    for k in (sut.ENV_CHANNEL, sut.ENV_TASK_NAME, sut.ENV_RUN_ID):
+        env.pop(k, None)
+    return env, repo_root
+
+
+def real_home_tokens():
+    """산출에 절대 등장하면 안 되는 실 사용자 경로 토큰 (샌드박스 누출 검사용)."""
+    home = os.path.expanduser("~")
+    return [t for t in (home, os.path.basename(home)) if t]
+
+
 def _write_gh_stub(dirpath):
     """`STR_GH_BIN` 로 주입할 gh stub 을 만들고 `(명령문자열, 호출로그 경로)` 반환.
 
@@ -114,6 +164,13 @@ class TestLongRunningInvariant:
             누수 대조군(호출당 객체 1000개): gc net=179개, tracemalloc net=4400.4KB
           - 임계값: gc net <= 100 개 / tracemalloc net <= 512 KB
             (정상 실측 대비 각각 +100 / 10배 여유, 누수 대조군은 각각 1.8배 / 8.6배 초과)
+
+        ★ honest ceiling — tracemalloc 계측 사각 (실측 확인, 이 축의 선언된 상한):
+          `tracemalloc.get_traced_memory()[0]` 은 **raw byte buffer 누수를 계상하지
+          않는다**. 독립 재현: `b"x" * 4096` 을 179회 누적(=716KB 실할당)했는데 net
+          14.0KB 만 계측됐다. gc-tracked 컨테이너 할당은 정상 계측된다. 따라서 본
+          누적 상한 2종은 **컨테이너 축 누수만 덮고 raw buffer 누수는 놓친다** —
+          "메모리 누수 없음" 을 봉인하지 않는다(ADR-119 검사연극 금지).
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -579,16 +636,25 @@ class TestLongRunningCLIInvocation:
           본 테스트의 목적은 반복수 자체가 아니라 **subprocess 경계에서의 exit code
           계약(INV-F)과 실 사용자 상태 무접촉**이다.
 
-        ★ 격리: heartbeat 기록 대상을 tmpdir 로 주입한다. 주입이 없으면 이 테스트가
-          실 사용자 파일(~/.claude/worktree-gc-state/scheduled-task-last-run.epoch)의
-          mtime 을 갱신한다(실측 확인 결함) — 스케줄 작업이 미설치인 머신에서 유일한
-          기록자가 테스트가 되어 관측자 생존 신호를 위조한다.
+        ★ 격리 2중 (P1-3b 이행):
+          ① heartbeat 기록 대상을 tmpdir 로 주입 — 주입이 없으면 이 테스트가 실 사용자
+             파일(~/.claude/worktree-gc-state/scheduled-task-last-run.epoch)의 mtime 을
+             갱신한다(실측 확인 결함) — 스케줄 작업 미설치 머신에서 유일한 기록자가
+             테스트가 되어 관측자 생존 신호를 위조한다.
+          ② **샌드박스 HOME/TMP + --repo-root** 로 `default_scan_roots` 4종을 전부
+             샌드박스로 해소 — 이전 판본은 매 호출 실 홈을 스캔했다(observed=30).
         """
         ITERATIONS = 10
         with tempfile.TemporaryDirectory() as tmpdir:
-            repo_root = tmpdir
+            env, repo_root = make_sandbox(tmpdir)
             hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            env[sut.ENV_HEARTBEAT_FILE] = hb_path
             real_before = _real_heartbeat_state()
+
+            # Arrange: 샌드박스 안에만 잔재를 심는다 (관측 대상 결정론)
+            probe = os.path.join(tmpdir, ".claude", "worktrees", "sandbox-probe")
+            os.makedirs(probe, exist_ok=True)
+            Path(probe, "marker.txt").write_text("x\n", encoding="utf-8")
 
             # Arrange: CLI 진입점 파일 경로
             script_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "scheduled_task_reconcile.py"
@@ -596,15 +662,17 @@ class TestLongRunningCLIInvocation:
                 pytest.fail(f"script 부재: {script_path} (requires_golden 마커, 미충족)")
 
             exit_codes = []
+            stdouts = []
             for i in range(ITERATIONS):
-                # Act: subprocess 호출 (실 상태 격리 env 주입)
+                # Act: subprocess 호출 (샌드박스 env 주입 — 실 홈 스캔 0)
                 result = subprocess.run(
                     [sys.executable, str(script_path), "--repo-root", repo_root, "--dry-run"],
-                    capture_output=True,
-                    timeout=10,
-                    env=_isolated_env(hb_path),
+                    capture_output=True, text=True, encoding="utf-8", errors="replace",
+                    timeout=30,
+                    env=env,
                 )
                 exit_codes.append(result.returncode)
+                stdouts.append(result.stdout or "")
 
             # Assert: INV-F (항상 0) — 선언한 반복수만큼 실제로 돌았는지도 함께 구속
             assert len(exit_codes) == ITERATIONS, (
@@ -612,6 +680,16 @@ class TestLongRunningCLIInvocation:
             )
             for code in exit_codes:
                 assert code == 0, f"exit code 항상 0 기대 (INV-F), 실제: {code}"
+
+            # Assert: 샌드박스가 실효 — 심은 잔재를 관측(공허 아님) ∧ 실 홈 경로 문자열 0
+            assert "sandbox-probe" in stdouts[0], (
+                f"샌드박스 잔재 미관측 — 스캔이 샌드박스에 도달하지 않았다: {stdouts[0]!r}"
+            )
+            for tok in real_home_tokens():
+                for out in stdouts:
+                    assert tok not in out, (
+                        f"실 사용자 홈 경로 문자열 누출: {tok!r} in {out!r}"
+                    )
 
             # Assert: 실 사용자 heartbeat 무접촉 (부재면 부재인 채로 — 존재/mtime/size 불변)
             assert _real_heartbeat_state() == real_before, (
@@ -622,48 +700,64 @@ class TestLongRunningCLIInvocation:
     def test_cli_invocation_heartbeat_isolated_from_real_state(self):
         """CLI 가 heartbeat 를 **기록하는** 경로에서도 실 사용자 상태는 무접촉.
 
-        ★ teeth 설계: 정지 플래그(F1)를 tmpdir repo-root 에 두어 heartbeat 기록 경로를
-          결정론적으로 태운다. --dry-run 경로는 설계상 heartbeat 를 기록하지 않으므로
-          그 경로만으로는 "기록이 어디로 가는가" 를 판별할 수 없다 —
-          ambient 잔재 유무에 따라 단언이 공허해진다.
+        ★ teeth 설계 (기록 경로 재조준 — 설계 판정 (a) 이행):
+          이전 판본은 F1 정지 플래그로 기록 경로를 결정론화했다. (a) 로 정지 경로가
+          비-기록으로 바뀌었으므로, **채널 미지정**(사이클 완주 + 발화 0) 경로로
+          재조준한다 — `--channel` 없이 돌면 관측 후 `write_heartbeat()` 로 끝난다.
           ① 주입 경로에 실제로 기록됨(seam 실효) ∧ ② 실 경로 불변 — 두 단언이 쌍이다.
+
+        ★ hermetic (P1-3b): 샌드박스 HOME/TMP + `--repo-root` 로 실 홈 스캔 0.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Arrange: F1 정지 플래그 (halted 종료 경로 = heartbeat 기록 경로)
-            os.makedirs(os.path.join(tmpdir, ".codeforge"), exist_ok=True)
-            Path(os.path.join(tmpdir, sut.STOP_FLAG_REPO_RELPATH)).touch()
+            env, repo_root = make_sandbox(tmpdir)
             hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            env[sut.ENV_HEARTBEAT_FILE] = hb_path
             real_before = _real_heartbeat_state()
+
+            # Arrange: 샌드박스 잔재 1건 (관측 0건 경로가 아니라 정상 사이클을 태운다)
+            probe = os.path.join(tmpdir, ".claude", "worktrees", "sandbox-probe")
+            os.makedirs(probe, exist_ok=True)
+            Path(probe, "marker.txt").write_text("x\n", encoding="utf-8")
 
             script_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "scheduled_task_reconcile.py"
             if not script_path.exists():
                 pytest.fail(f"script 부재: {script_path}")
 
-            # Act
+            # Act: --channel 미지정 (채널 미접촉 ∧ 사이클 완주 → heartbeat 기록 경로)
             result = subprocess.run(
-                [sys.executable, str(script_path), "--repo-root", tmpdir],
+                [sys.executable, str(script_path), "--repo-root", repo_root],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=30,
-                env=_isolated_env(hb_path),
+                timeout=60,
+                env=env,
             )
 
-            # Assert: 정지 경로 진입 확인 (기록 경로 결정론)
+            # Assert: 기록 경로 진입 확인 (halted 아님 ∧ 발화 0)
             assert result.returncode == 0, f"INV-F 위반: {result.returncode}"
-            assert "halted=1" in (result.stdout or ""), (
-                f"정지 경로 미진입 — 기록 경로가 결정론적이지 않다: {result.stdout!r}"
+            assert "halted=0" in (result.stdout or "") and "posted=0" in (result.stdout or ""), (
+                f"기록 경로 미진입 (채널 미지정 정상 사이클 기대): {result.stdout!r}"
             )
             # Assert ①: 주입 경로에 실제로 기록됨 (env seam 이 살아 있음)
             assert os.path.exists(hb_path), (
                 f"주입 경로에 heartbeat 미기록 — 격리 seam 무효: {hb_path}"
             )
-            # Assert ②: 실 사용자 경로 불변
+            # Assert ①-b: HOME 파생 기본 경로가 아니라 **주입 경로**로 갔는가
+            sandbox_default = os.path.join(tmpdir, ".claude", "worktree-gc-state",
+                                           "scheduled-task-last-run.epoch")
+            assert not os.path.exists(sandbox_default), (
+                f"env seam 이 무시되고 HOME 파생 기본 경로로 기록됨: {sandbox_default}"
+            )
+            # Assert ②: 실 사용자 경로 불변 + 실 홈 문자열 누출 0
             assert _real_heartbeat_state() == real_before, (
                 f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE} "
                 f"(before={real_before}, after={_real_heartbeat_state()})"
             )
+            for tok in real_home_tokens():
+                assert tok not in (result.stdout or "") and tok not in (result.stderr or ""), (
+                    f"실 사용자 홈 경로 문자열 누출: {tok!r}"
+                )
 
 
 # ═══════════════════════ --dry-run 부수효과 0 (생존 신호 위조 금지) ═══════════════
@@ -708,11 +802,16 @@ class TestDryRunSideEffectZero:
                 f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE}"
             )
 
-    def test_halted_path_still_writes_heartbeat(self):
-        """비-공허성 대조군: heartbeat 를 기록하는 종료 경로(F1 정지)는 여전히 기록한다.
+    def test_halted_path_does_not_write_heartbeat(self):
+        """M-HALT 오라클: 정지(F1) 종료 경로에서 heartbeat 파일 생성·갱신 0.
 
-        위 M-DRY 단언이 "env seam 이 죽어서 항상 통과" 하는 게 아님을 보이는 짝.
-        (이 짝이 없으면 `not os.path.exists` 는 어떤 이유로든 항상 참이 될 수 있다.)
+        ★ 계약 변경 (ArchitectPL 설계 판정 (a) 이행 — 이전 판본은 정반대를 단언했다):
+          heartbeat 기록 조건이 "정상 종료" → **`collect_observations()` 가 실제로
+          호출·반환된 종료 경로**로 좁혀졌다. 정지 경로는 스캐너를 아예 부르지 않으므로
+          관측자 생존의 근거가 없다 — 여기서 기록하면 정지된 관측자가 매 tick fresh
+          생존 신호를 남겨 watchdog 이 구조적 false-negative 가 된다(ADR-172 §결정 6).
+
+        mutant kill: `run()` 정지 분기에 `write_heartbeat()` 재삽입 ⇒ RED.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             os.makedirs(os.path.join(tmpdir, ".codeforge"), exist_ok=True)
@@ -724,8 +823,52 @@ class TestDryRunSideEffectZero:
                 rc = sut.run(["--repo-root", tmpdir])
 
             assert rc == 0, f"INV-F 위반: {rc}"
+            assert not os.path.exists(hb_path), (
+                f"정지 경로가 heartbeat 를 기록했다 — 스캐너 미호출 실행이 관측자 생존 "
+                f"신호를 위조(watchdog false-negative): {hb_path}"
+            )
+            assert _real_heartbeat_state() == real_before, (
+                f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE}"
+            )
+
+    def test_no_channel_path_writes_heartbeat(self):
+        """비-공허성 대조군: **사이클을 완주한** 종료 경로(보고 채널 미지정)는 기록한다.
+
+        ★ 대조군 재조준 사유 (설계 판정 (b) 이행):
+          위 M-DRY·M-HALT 두 오라클은 모두 `not os.path.exists(...)` 형태다. 기록하는
+          경로가 **하나도 남지 않으면** 두 단언은 "env seam 이 죽어서" 도 참이 되어
+          공허해진다. 종전 대조군이던 정지 경로가 (a) 로 비-기록 쪽으로 넘어갔으므로,
+          대조군을 **채널 미지정 경로**로 재조준한다 — 그 경로는 `collect_observations()`
+          를 실제로 돌고 끝나므로 기록 자격을 유지한다.
+
+        ★ hermetic: `collect_observations` 를 fixture 로 stub (실 홈 스캔 0).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            real_before = _real_heartbeat_state()
+            fixture = [sut.Observation(
+                cls="temp",
+                display_path="~/fixture/only",
+                declared="선언 fixture",
+                measured="실측 fixture",
+                mismatch=False,
+            )]
+
+            with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}):
+                os.environ.pop(sut.ENV_CHANNEL, None)     # 앰비언트 채널 설정 차단
+                with mock.patch.object(sut, "collect_observations", return_value=fixture):
+                    with mock.patch.object(sut, "post_report") as spy_post:
+                        rc = sut.run(["--repo-root", tmpdir])   # --channel 미지정
+
+            assert rc == 0, f"INV-F 위반: {rc}"
+            # 대조군 본체: 기록 경로가 살아 있다 (M-DRY·M-HALT 가 공허하지 않음의 증거)
             assert os.path.exists(hb_path), (
-                f"정지 종료 경로에서 heartbeat 미기록 — 기존 기록 경로가 소실됐다: {hb_path}"
+                f"사이클 완주 경로(채널 미지정)에서 heartbeat 미기록 — 기록 경로가 "
+                f"통째로 소실됐다(그러면 M-DRY·M-HALT 단언이 공허해진다): {hb_path}"
+            )
+            # 채널 미지정이므로 발화는 0 (경로 식별 확증)
+            assert spy_post.call_count == 0, (
+                f"채널 미지정인데 발화 발생: {spy_post.call_count}회"
             )
             assert _real_heartbeat_state() == real_before, (
                 f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE}"
@@ -760,51 +903,72 @@ class TestHeartbeatFileIsolation:
         )
 
     def test_heartbeat_isolation_run_does_not_create_real_file(self, tmp_path):
-        """(ㄴ) sut.run() 실행 후 실 경로 불변 ∧ 주입 경로에만 기록됨.
+        """(ㄴ) CLI 실행 후 실 경로 불변 ∧ conftest fixture 주입 경로에만 기록됨.
 
-        Arrangement:
-          - 실 heartbeat 파일의 초기 mtime 저장
-          - sut.run() 호출 전 env 값 저장
+        ★ in-process → **subprocess 전환** 사유 (P1-3b 제약 ①):
+          `HEARTBEAT_FILE`·`STOP_FLAG_LOCAL`·`GC_STATE_DIR` 는 import 시점
+          `expanduser("~")` 로 확정되므로 **in-process 에서는 HOME override 가 듣지
+          않는다**. 실 홈 스캔을 없애려면 subprocess 로 돌리는 수밖에 없다.
+          fixture 판별 역할은 그대로다 — subprocess env 는 `dict(os.environ)` 상속이라
+          conftest autouse fixture 가 설정한 `SCHEDULED_TASK_HEARTBEAT_FILE` 을 **명시
+          주입 없이** 물려받는다. 그 경로에 기록되는지가 fixture 실효의 증거다.
 
-        Act:
-          - sut.run(["--repo-root", tmpdir, "--channel", "test/repo#1"]) 호출
-            ★ `--channel` 지정이라 채널 축이 실제로 발동한다. `STR_GH_BIN` seam 에
-              stub 을 주입해 **실 GitHub 네트워크 호출 0** 으로 만든다(P1-3a).
-              이전 판본은 이 주입이 없어 실 `gh issue view` 가 나갔다.
+        ★ 3중 격리:
+          ① HOME/USERPROFILE + TMP/TEMP/TMPDIR + --repo-root 샌드박스 → 실 홈 스캔 0
+             (이전 판본 observed=30 → 샌드박스 잔재만)
+          ② `STR_GH_BIN` stub → 실 GitHub 네트워크 호출 0 (P1-3a)
+          ③ `SCHEDULED_TASK_HEARTBEAT_FILE`(conftest fixture) → 실 상태 파일 무접촉
 
         Assert:
-          - 실 경로 파일이 **존재하지 않음** (또는 초기 mtime 유지)
-          - 주입 경로(env 값)에 파일이 **실제로 기록됨** (size > 0)
-          - gh stub **호출 기록이 비어있지 않음** — seam 이 죽어서 조용히 통과하는 게
-            아니라 채널 축이 실제로 stub 을 거쳤다는 증거 (mock-seam 규율)
+          - 실 경로 파일 **존재/mtime 불변**
+          - fixture 주입 경로에 파일이 **실제로 기록됨** (size > 0)
+          - gh stub **호출 기록이 비어있지 않음** (mock-seam 규율 — seam 이 죽어서 조용히
+            통과하는 게 아니라 채널 축이 실제로 stub 을 거쳤다는 증거)
+          - 샌드박스 잔재를 관측 ∧ 실 홈 경로 문자열 누출 0
         """
         env_key = "SCHEDULED_TASK_HEARTBEAT_FILE"
         env_value = os.environ.get(env_key)
+        assert env_value is not None, f"{env_key} 이 conftest fixture 로 설정되어야 함"
 
         # 실 heartbeat 파일 경로
         real_gc_state = os.path.expanduser("~/.claude/worktree-gc-state")
         real_heartbeat_file = os.path.join(real_gc_state, "scheduled-task-last-run.epoch")
-
-        # 실 경로의 초기 상태 저장 (부재 또는 mtime)
         real_file_existed_before = os.path.exists(real_heartbeat_file)
         real_mtime_before = os.path.getmtime(real_heartbeat_file) if real_file_existed_before else None
 
-        # Act: sut.run() 호출 (주입 경로에 heartbeat 기록하도록)
-        # scheduled_task_reconcile 모듈은 conftest 상단에서 sys.path 주입됨
-        import scheduled_task_reconcile as sut_module
+        # Arrange: 샌드박스 (HOME/TMP/--repo-root) — ENV_HEARTBEAT_FILE 은 fixture 값 상속
+        env, repo_root = make_sandbox(tmp_path)
+        assert env.get(env_key) == env_value, (
+            "subprocess env 가 conftest fixture 의 heartbeat 경로를 상속하지 않았다"
+        )
+
+        # Arrange: 샌드박스 잔재 (관측 대상 결정론 — 관측 0건 경로로 새지 않게)
+        probe = os.path.join(str(tmp_path), ".claude", "worktrees", "sandbox-probe")
+        os.makedirs(probe, exist_ok=True)
+        Path(probe, "marker.txt").write_text("x\n", encoding="utf-8")
 
         # Arrange: gh stub 주입 (네트워크 0)
         gh_cmd, gh_log = _write_gh_stub(str(tmp_path))
         assert not os.path.exists(gh_log), "stub 로그 초기 상태는 부재여야 한다"
+        env[sut.GH_BIN_ENV] = gh_cmd
 
-        # run() 호출 — heartbeat 기록 강제 (repo 여러 번 스캔)
-        with mock.patch.dict(os.environ, {sut_module.GH_BIN_ENV: gh_cmd}):
-            result = sut_module.run(["--repo-root", str(tmp_path), "--channel", "test/repo#1"])
-        assert result == 0, "run() 항상 0 반환"
+        script_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "scheduled_task_reconcile.py"
+        if not script_path.exists():
+            pytest.fail(f"script 부재: {script_path}")
+
+        # Act: subprocess CLI 호출 (--channel 지정 → 채널 축 발동, 단 stub 으로)
+        result = subprocess.run(
+            [sys.executable, str(script_path), "--repo-root", repo_root,
+             "--channel", "test/repo#1"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=60, env=env,
+        )
+        assert result.returncode == 0, f"INV-F 위반: {result.returncode} / {result.stderr!r}"
 
         # Assert: gh stub 이 실제로 호출됨 (seam 실효 — 네트워크 0 이 '공허'가 아님)
         assert os.path.exists(gh_log), (
-            f"gh stub 호출 기록 부재 — STR_GH_BIN seam 미작동 또는 채널 축 미진입: {gh_log}"
+            f"gh stub 호출 기록 부재 — STR_GH_BIN seam 미작동 또는 채널 축 미진입: "
+            f"{gh_log} / stdout={result.stdout!r}"
         )
         with open(gh_log, encoding="utf-8") as fh:
             gh_calls = [ln.strip() for ln in fh if ln.strip()]
@@ -813,10 +977,15 @@ class TestHeartbeatFileIsolation:
             f"gh stub 이 issue 서브커맨드로 호출되지 않음: {gh_calls}"
         )
 
+        # Assert: 샌드박스 실효 — 심은 잔재를 관측 ∧ 실 홈 경로 문자열 누출 0
+        combined = (result.stdout or "") + (result.stderr or "")
+        assert "observed=" in combined, f"DONE 마커 부재: {combined!r}"
+        for tok in real_home_tokens():
+            assert tok not in combined, f"실 사용자 홈 경로 문자열 누출: {tok!r}"
+
         # Assert: 실 경로 무변화
         real_file_exists_after = os.path.exists(real_heartbeat_file)
         real_mtime_after = os.path.getmtime(real_heartbeat_file) if real_file_exists_after else None
-
         if real_file_existed_before:
             assert real_mtime_after == real_mtime_before, (
                 f"실 heartbeat 파일({real_heartbeat_file})이 변경되었음: "
@@ -827,15 +996,21 @@ class TestHeartbeatFileIsolation:
                 f"실 heartbeat 파일이 생성되었음 (fixture 격리 실패): {real_heartbeat_file}"
             )
 
-        # Assert: 주입 경로에 파일이 실제로 기록됨 (discriminating marker)
-        assert env_value is not None, f"{env_key} 이 설정되어야 함"
+        # Assert: fixture 주입 경로에 파일이 실제로 기록됨 (discriminating marker)
         assert os.path.exists(env_value), (
             f"주입 경로({env_value})에 파일이 기록되어야 함. "
-            f"fixture env 설정이 무시되었거나 sut.run() 이 heartbeat를 호출하지 않음"
+            f"fixture env 설정이 무시되었거나 CLI 가 heartbeat 를 호출하지 않음. "
+            f"stdout={result.stdout!r}"
         )
         assert os.path.getsize(env_value) > 0, (
             f"주입 경로({env_value})에 파일이 비어있음. "
             f"sentinel 값(distinct marker)이 부재해 exit-code 단독 판정 함정 방지 안 됨"
+        )
+        # Assert: HOME 파생 기본 경로가 아니라 **주입 경로**로 갔는가 (seam 판별)
+        sandbox_default = os.path.join(str(tmp_path), ".claude", "worktree-gc-state",
+                                       "scheduled-task-last-run.epoch")
+        assert not os.path.exists(sandbox_default), (
+            f"env seam 이 무시되고 HOME 파생 기본 경로로 기록됨: {sandbox_default}"
         )
 
 

@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -93,8 +94,13 @@ MAX_FACT_LINES = 50
 # gh 서브프로세스 timeout (초) — base._gh(30) 대비 채널 왕복 여유.
 GH_TIMEOUT = 60
 
-# 외부 저작 코멘트에서 취하는 dedup 키 길이 상한 (INV-D 읽기 표면 축소 — 비정상 장문 폐기).
+# dedup 키 길이 상한 (INV-D 읽기 표면 축소 — 비정상 장문 폐기).
+#   ★ **대칭 적용**(D3 라운드트립): 역추출(fetch_existing_keys)에서만 상한을 걸면 상한
+#     초과 키는 채널에 실려도 절대 재수집되지 않아 **매 실행 중복 발화**가 된다(무한 재발화).
+#     그래서 정방향 렌더(dedup_key)도 같은 상한을 지켜 **경계화한 키**를 발화한다.
 _MAX_KEY_LEN = 512
+_KEY_BOUND_PREFIX = 480        # 경계화 키의 앞부분 보존 길이 (식별 가독성 유지)
+_KEY_BOUND_DIGEST = 8          # 전체 키 sha256 앞 8-hex (앞부분 동일 장문 구별)
 
 # 보존 사유 중 "규약이 기대하는 상태"(= 불일치 아님)로 계산하는 enum.
 #   unregistered-location / None 은 정당 사유가 아니다(잔존 자체가 규약 이탈 신호).
@@ -139,9 +145,19 @@ _DRIVE_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:([\\/])")
 _RESIDUAL_DRIVE_RE = re.compile(r"[A-Za-z]:[\\/]")
 _RESIDUAL_USERROOT_RE = re.compile(r"(?i)[\\/](?:Users|home)[\\/]")
 
-# 사실 줄에서 dedup 키 추출 — key= 는 줄 끝 필드라 EOL 까지 포획(경로에 구분자가 섞여도
-#   재유도값과 일치). greedy `.*` 가 마지막 ` · key=` 를 고르게 한다.
-_FACT_KEY_RE = re.compile(r"^\s*-\s.*·\s*key=(.+?)\s*$")
+# 사실 줄에서 dedup 키 추출 — key= 는 줄 끝 필드라 **EOL 까지 원문 그대로** 포획한다.
+#   ★ D3 라운드트립 계약 (역추출(render_fact_tuple(o)) == dedup_key(o)) 봉합 — 이전 판본
+#     `^\s*-\s.*·\s*key=(.+?)\s*$` 의 두 결함:
+#     ① 후행 `\s*$` 가 키의 **후행 공백을 절단**했다 → 공백으로 끝나는 키가 라운드트립 실패
+#        (매 실행 중복 발화). → 후행 anchor 제거, `(.+)$` 로 EOL 까지 원문 포획.
+#     ② greedy `.*` 가 **마지막** ` · key=` 를 골랐다 → 관측 경로에 `· key=` 를 매립하면
+#        추출값이 그 뒤 문자열로 바뀌어 **임의 키 주입**이 성립했다(그 형상이 실 discover 를
+#        통과함이 실측 확인됨). → non-greedy `.*?` 로 **첫** ` · key=` (= 렌더가 붙인 진짜
+#        필드)를 고정한다.
+#   ★ 정직 잔여: 첫 매치 고정이라 `선언`·`실측` 필드 자체에 `· key=` 가 섞이면 추출이
+#     그 지점을 잡는다. 본 모듈이 채우는 두 필드는 도메인 enum·수치 서술이라 현 경로에는
+#     유입원이 없으나, "임의 입력 무해" 를 단정하지 않는다(ADR-168 §결정 16 bounded degradation).
+_FACT_KEY_RE = re.compile(r"^\s*-\s.*?·\s*key=(.+)$")
 
 # 보고 채널 지정 형식: owner/repo#N (anchored, bounded).
 _CHANNEL_RE = re.compile(r"^([A-Za-z0-9._-]{1,100}/[A-Za-z0-9._-]{1,100})#(\d{1,9})$")
@@ -346,10 +362,25 @@ def dedup_key(obs) -> str:
     """dedup 키 = class + 홈-상대 경로. 저장하지 않고 대상에서 유도한다 (INV-C).
 
     ★ 렌더와 **동일 정규화**(_safe_text)를 통과시킨다 — 그래야 채널에 실린 key 문자열과
-      다음 실행의 재유도값이 정확히 일치해 dedup 이 성립한다(roundtrip 계약)."""
+      다음 실행의 재유도값이 정확히 일치해 dedup 이 성립한다(roundtrip 계약).
+
+    ★ 길이 상한 **대칭 적용** (D3 라운드트립 봉합): 역추출(fetch_existing_keys)이
+      `_MAX_KEY_LEN` 초과 키를 폐기하므로, 정방향도 같은 상한 안의 **경계화 키**를
+      발화해야 계약이 성립한다. 초과 시 `앞 480자 + '~' + 전체 키 sha256 8-hex`
+      (총 489자 ≤ 상한). 앞부분이 같고 뒤만 다른 장문 경로는 8-hex 가 구별한다.
+
+    ★ 대가 (선언된 상한, 결함 아님):
+      · 8-hex 이므로 앞 480자 동일 + 해시 충돌 시 두 잔재가 한 키로 합쳐질 확률이 0 은
+        아니다(≈2^-32 per collision pair).
+      · 본 규칙 도입으로 **상한 초과 잔재의 키가 바뀐다** → 그 항목만 1회 재발화한다.
+        도입기 채널 이력이 사실상 비어 있어 수용한 대가다."""
     cls = _safe_text(_field(obs, "cls"))
     path = _safe_text(_field(obs, "display_path"))
-    return "%s:%s" % (cls, path)
+    raw = "%s:%s" % (cls, path)
+    if len(raw) <= _MAX_KEY_LEN:
+        return raw
+    digest = hashlib.sha256(raw.encode("utf-8", "replace")).hexdigest()[:_KEY_BOUND_DIGEST]
+    return "%s~%s" % (raw[:_KEY_BOUND_PREFIX], digest)
 
 
 def contains_verdict_lexicon(text) -> bool:
@@ -634,8 +665,16 @@ def post_report(channel, body, gh=None) -> bool:
 
 # ═══════════════════════════════ heartbeat ═══════════════════════════════════════
 def write_heartbeat(now=None, path=None) -> None:
-    """★ CLI 가 관측 사이클을 실제로 돌고 정상 종료한 경로에서만 호출.
+    """★ 기록 조건 = **`collect_observations()` 가 실제로 호출·반환된 종료 경로**에서만 호출.
     원자적 write(임시파일 → os.replace).
+
+    ★ 조건이 "정상 종료" 가 아니라 "관측을 실제로 돌았는가" 인 이유 (load-bearing):
+      heartbeat 는 **관측자 생존 신호**다. 스캐너를 한 번도 부르지 않고 끝난 실행이
+      fresh 기록을 남기면 watchdog 이 구조적 false-negative(관측자가 죽었는데 살아
+      있다고 보고)가 된다 — ADR-172 §결정 6.
+      · 기록 O (5경로, 전부 관측 사이클 완주): 관측 0건 · 채널 미지정 · 채널 조회 실패 ·
+        신규 0건 · 정상 발화
+      · 기록 X (2경로, 관측 미도달·사이클 미완결): 정지(F1∨F2∨판독실패) · --dry-run
 
     상태 디렉터리는 codeforge-scratch **밖**(worktree-gc-state)이라 자기 TTL 대상이 아니다.
     이 파일은 dedup 상태가 아니라 생존 신호다(INV-C 무손상 — 관측 대상 판정에 미사용).
@@ -687,17 +726,24 @@ def run(argv=None) -> int:
       2) 관측 — 0건이면 무발화가 정답(빈 보고 금지).
       3) 채널 조회 — None(조회 실패) 이면 fail-closed 무발화(누락은 다음 실행이 자기치유).
       4) 신규 키만 필터 → 렌더 → 발화.
-      5) heartbeat 는 관측 사이클을 실제로 돈 종료 경로에서만 기록 — **--dry-run 제외**.
-         (dry-run 은 부수효과 0 계약이며 보고 사이클 미완결이라 생존 신호 근거가 없다.)"""
+      5) heartbeat 는 **collect_observations() 가 실제로 호출·반환된 종료 경로**에서만
+         기록한다 — **정지(F1∨F2∨판독실패) 제외 · --dry-run 제외**.
+         · 정지: 스캐너를 아예 부르지 않으므로(위 1) 관측자 생존의 근거가 없다.
+           정지 중 기록하면 watchdog 이 "관측자 생존" 으로 오독한다(ADR-172 §결정 6).
+         · dry-run: 부수효과 0 계약이며 보고 사이클 미완결이라 생존 신호 근거가 없다.
+         · 나머지 5경로(관측 0건 · 채널 미지정 · 채널 조회 실패 · 신규 0건 · 정상 발화)는
+           사이클을 완주했으므로 그대로 기록한다."""
     args = _build_parser().parse_args(argv)
     repo_root = args.repo_root or _git_toplevel() or os.getcwd()
 
     # (1) 정지 플래그 — 스캐너 호출 전 (halted ⇒ 채널 발화 0 ∧ 스캐너 미호출)
     stop = read_stop_flags(repo_root=repo_root)
     if stop.halted:
-        _warn("정지 플래그 감지 (%s) — 스캐너 미호출 · 채널 미접촉"
+        _warn("정지 플래그 감지 (%s) — 스캐너 미호출 · 채널 미접촉 · heartbeat 미기록"
               % ",".join(stop.reasons or ["unknown"]))
-        write_heartbeat()
+        # ★ heartbeat 미기록 — 스캐너를 부르지 않았으므로 관측자 생존의 근거가 없다.
+        #   여기서 기록하면 정지된 관측자가 매 tick fresh 생존 신호를 남겨 watchdog 이
+        #   구조적 false-negative 가 된다 (ADR-172 §결정 6 / ArchitectPL 설계 판정).
         _emit_done(0, 0, 0, 1)
         return 0
 
