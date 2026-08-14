@@ -78,6 +78,14 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 **design-info read protocol 계약 (ADR-166 / CFP-2813)**: 신규 kind:registry 계약 `design-info-read-protocol-v1` (Phase 2 실 파일 + MANIFEST registries row — ADR-166 = 설계 SSOT). 표면 = G1-G5 소비자 분류 + G1+G2 mandatory 선행 read + `[Living-Arch-Read: <doc>, anchors=<list>, read_at=<sha|ts>]` traceability marker 스키마. 소비 = spawn packet / agent .md **in-band 주입** (파일 참조 아님 — marketplace 배포 시 lane plugin 패키지에 wrapper-root 파일 미포함이라 파일 참조는 consumer resolve 불가, 기존 계약 소비 방식과 동형). 짝 게이트 CLI exit-code 계약 (`check_living_architecture_update.py`): `0` PASS(명시 Success·honest no-op 포함) / `1` 위반 4-범주(missing-update / invalid-declare / mapping-miss / unknown-surface — 구조/비구조 양측 closed enum 미매칭 fail-closed [설계리뷰 F-1]) / `2` meta-error(unparseable 입력 fail-closed). review-verdict-v4 무변경 (`living_architecture_updated_self_check_passed` + `living-architecture-not-updated` v4.11 기존재 — bump 0, Phase 2 = DesignReviewPLAgent 소비 로직 배선만).
 
+**parallel-work sentinel CLI 계약 (ADR-073 Amendment 2 / CFP-967 → CFP-2451 → CFP-2976)**: `scripts/lib/check_parallel_work_sentinel.py`(Python SSOT, thin wrapper `scripts/check-parallel-work-sentinel.sh`). 표면 = **mode 4종** — `title-search` / `epic-state-poll` / `head-compare-sibling-commits` / **`resource-scan`(CFP-2976 신설)**.
+
+- **prefix 해석 계약 (CFP-2976 D-1)**: `STORY_KEY_PREFIX` env → `.claude/_overlay/project.yaml` `github.story_key_prefix` 유도 → **둘 다 실패 시 fail-closed(exit 2, `error_kind=prefix_undetermined`)**. ★구 계약의 조용한 `"CFP"` 기본값은 **제거**됐다 — consumer(prefix≠CFP)에서 정의상 공집합을 반환해 **판별력 0 게이트**가 되고, 그 빈 결과가 착수 통행증으로 소비되는 실사고를 냈다.
+- **반환 계약 (CFP-2976 D-3)**: 성공 payload 에 `determined: true` 명시. 판정 불가 경로는 `determined: false` + `reason`. ⇒ **`matches: []` 단독으로는 "부재"를 주장할 수 없다** — 호출자는 `determined` 를 함께 읽어야 하며, `false` 인 실행은 통행증이 아니다(presence-only 오라클 구조적 차단).
+- **`resource-scan` (CFP-2976 축4 · 어휘 무관)**: `--repo <owner/name> [--path <부분일치>]` → `branches` / `recent_commits` / `open_prs`. 어휘 검색은 *호출자가 고른 단어*에 의존해 선행 작업이 다른 어휘를 쓰면 원리적으로 미검출이나, 자원 지정 열거는 그 의존이 0 이다. **`excluded_self`(자기 브랜치·repo) 제외 필수** — 미제외 시 항상 1건 이상 반환되어 항진이 되고, 항진 게이트는 무시되어 판별력 0 과 동치가 된다. 절단은 `truncated[]` 로 표기(silent truncation 금지).
+
+> 짝 테스트 = `tests/scripts/test_check-parallel-work-sentinel.sh`. CFP-2451 이 **코드 속성**("파라미터화됐나")을, CFP-2976 이 **배선 속성**("실제로 주입되나")을 각각 mutation-RED 로 고정한다 — 후자가 비어 실사고가 났다.
+
 ## 데이터 흐름
 
 **Story lane spawn flow** (Orchestrator 가 lane 진입 시 해당 lane plugin PL 1개 spawn — non-skippable. 8 lane (요구사항리뷰 CFP-2326 / ADR-125; deploy·deploy-review 2 lane = ADR-121 / CFP-2782 물리 제거)):
