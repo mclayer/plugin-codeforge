@@ -30,6 +30,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 
 import scheduled_task_reconcile as sut
 
+# 발화 계층 harness 재사용 (F-C 봉합분). §8.8.2 P1/P2 계약이 명명한 대상은 **채널 발화
+#   개체 수**이므로 `run()` 을 완주시키는 harness 가 있어야 같은 계층에서 잴 수 있다.
+#   sys.path 명시 주입 — pytest import mode 에 의존하지 않는다.
+sys.path.insert(0, str(Path(__file__).parent))
+from test_scheduled_task_dispatch_path import (   # noqa: E402
+    FakeChannel, invoke_run, keys_of, make_obs_list,
+)
+
 try:
     from hypothesis import given, settings, strategies as st
     HYPOTHESIS_AVAILABLE = True
@@ -614,7 +622,14 @@ class TestPropertyDedupRoundtrip:
 class TestPropertyDedupIdempotence:
     """§8.8.2 property P1: dedup 멱등.
 
-    동일 잔재 집합에 N회(2≤N≤5) 실행 → 채널 발화 개체 수 = 1.
+    동일 잔재 집합에 N회(2≤N≤5) 실행 → **채널 발화 개체 수 = 1**.
+
+    ★ 계층 정정 (구현리뷰 iter4 F-C 부속 — ArchitectPL 신규 확인):
+      직전 판본은 서로 다른 키를 로컬 `set` 에 넣고 `len == num_observations` 를 쟀다.
+      그건 **로컬 키 집합의 원소 수**이지 Change Plan `:944` 가 계약한 **채널 발화
+      개체 수**가 아니다 — 바깥 N회 루프가 단언에 **완전 무영향**이라 루프를 통째로
+      지워도 결과가 같았다(멱등을 전혀 재지 않는 오라클). 여기서 `run()` 을 N회
+      **완주**시켜 채널에 착지한 발화 개체를 직접 센다.
     """
 
     @given(
@@ -623,39 +638,52 @@ class TestPropertyDedupIdempotence:
     )
     @settings(max_examples=500, deadline=None)  # §8.8.2: 500 sample (계약 준수)
     def test_property_dedup_idempotent(self, count, num_observations):
-        """같은 관측 N회 → 발화 개체 1"""
+        """같은 관측 N회 실행 → 채널 발화 개체 1
+
+        mutant kill: `fresh = [o for o in observations if dedup_key(o) not in existing]`
+        → `fresh = list(observations)` (dedup 필터 제거) ⇒ 발화 개체 = N ⇒ RED.
+
+        ★ hypothesis 는 function-scoped fixture 를 거부하므로 tmp 는 본문에서 만든다.
+        """
         if not HYPOTHESIS_AVAILABLE:
             pytest.fail("hypothesis 설치 필수 (§8.8.2 계약 이행 불가)")
-        obs_list = [
-            sut.Observation(
-                cls=f"class{i}",
-                display_path=f"path{i}",
-                declared="decl",
-                measured="meas",
-                mismatch=False,
-            )
-            for i in range(num_observations)
-        ]
+        obs_list = make_obs_list(num_observations)
+        chan = FakeChannel()
 
-        # N회 반복 호출 시 dedup 키 중복 제거
-        all_keys = set()
-        for _ in range(count):
-            for obs in obs_list:
-                key = sut.dedup_key(obs)
-                all_keys.add(key)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for i in range(count):
+                r = invoke_run(tmpdir, obs_list, chan, run_id="r-%03d" % i)
+                # 1회차만 신규, 이후 전량 기보고 (경로 식별 앵커)
+                expected_new = num_observations if i == 0 else 0
+                assert r.new == expected_new, (
+                    f"{i + 1}회차 신규 {r.new} (기대 {expected_new}) — dedup 멱등 붕괴"
+                )
 
-        # 멱등: 반복 횟수와 무관하게 고유 키 개수는 동일
-        unique_count = len(all_keys)
-        assert unique_count == num_observations, (
-            f"고유 키 개수: {unique_count}, 관측: {num_observations}"
+        # 멱등 본체: 반복 횟수와 무관하게 채널 발화 개체는 1
+        assert len(chan.posted) == 1, (
+            f"발화 개체 {len(chan.posted)} (기대 1) — {count}회 실행에 중복 발화"
         )
+        for k in keys_of(obs_list):
+            assert f"key={k}" in chan.posted[0], (
+                f"관측 {k!r} 가 유일 발화 본문에 미등재"
+            )
 
 
 class TestPropertyReconcileCompleteness:
     """§8.8.2 property P2: 회수 완전성.
 
-    tick K회 건너뛰고 잔재 K개 추가 후 1회 호출 → 보고 개체 = K.
+    tick K회 건너뛰고 잔재 K개 축적 후 **1회 실행** → 채널 발화 개체 = K.
     cursor 면 RED (K 중 일부만).
+
+    ★ 계층 정정 (구현리뷰 iter4 F-C 부속 — ArchitectPL 신규 확인):
+      직전 판본은 `render_report()` 를 **직접** 호출해 `items=K` 를 쟀다. 그런데
+      Change Plan `:958` 이 명명한 mutant 는 **cursor**(= `run()` 의 필터·절단 계층)다
+      — render 계층을 겨눈 오라클은 그 mutant 를 **원리적으로 죽일 수 없다**
+      (`render_report` 는 받은 목록을 전부 렌더하므로 상류가 잘려도 items 는 항상
+      입력과 일치한다). 여기서 `run()` 을 완주시켜 **채널에 착지한 본문**을 잰다.
+
+    ★ K ≤ 30 < MAX_FACT_LINES(50) — 정당한 상한 절단과 겹치지 않는 정의역이다
+      (상한 절단 자체의 오라클은 dispatch_path harness ④가 따로 진다).
     """
 
     @given(
@@ -663,41 +691,47 @@ class TestPropertyReconcileCompleteness:
     )
     @settings(max_examples=500, deadline=None)  # §8.8.2: 500 sample (계약 준수)
     def test_property_reports_all_accumulated(self, accumulated_count):
-        """축적 K개 → 보고 K개"""
+        """축적 K개 → 채널 발화 K개
+
+        mutant kill: `to_post = fresh[:MAX_FACT_LINES]` → `to_post = fresh[:2]`
+        (cursor·절단) ⇒ K>2 에서 RED. 직전 render 계층 판본은 이 mutant 에 전량 통과했다.
+        """
         if not HYPOTHESIS_AVAILABLE:
             pytest.fail("hypothesis 설치 필수 (§8.8.2 계약 이행 불가)")
-        # Arrange: K개의 관측 생성
-        observations = [
-            sut.Observation(
-                cls=f"class{i}",
-                display_path=f"path{i}",
-                declared="decl",
-                measured="meas",
-                mismatch=False,
-            )
-            for i in range(accumulated_count)
-        ]
+        assert accumulated_count <= sut.MAX_FACT_LINES, (
+            "정의역 전제 위반: K 가 상한을 넘으면 정당한 절단과 구별 불가"
+        )
+        observations = make_obs_list(accumulated_count)
+        chan = FakeChannel()
 
-        # Act: render_report 로 본문 생성
-        # (실제 reconcile 은 부분 발화 가능하지만, 이 테스트는
-        #  상태 무의존 원칙 검증)
-        report = sut.render_report(observations, "test", "001")
+        # Act: 축적분 전량을 1회 실행으로 회수 (빈 채널 = tick 건너뜀 재현)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            r = invoke_run(tmpdir, observations, chan)
 
-        # Assert ①: items 는 **정수값**이 축적 개수와 같아야 한다.
-        #   ★ 이전 판본은 `assert "items=" in report` 뿐이라 500 examples 전량이
-        #     항진명제로 통과했다(개수를 전혀 재지 않음). 값을 파싱해 구속한다.
+        # Assert ①: 발화 개체 1 + DONE 앵커가 축적 개수 전량을 신규로 계상
+        assert len(chan.posted) == 1, f"발화 개체 {len(chan.posted)} (기대 1)"
+        assert (r.observed, r.new, r.posted) == (accumulated_count, accumulated_count, 1), (
+            f"P2 회수 완전성 위반: DONE observed={r.observed} new={r.new} posted={r.posted} "
+            f"(기대 {accumulated_count}/{accumulated_count}/1)"
+        )
+
+        # Assert ②: 채널 본문의 items 정수값 = 축적 개수 (cursor·절단이면 여기서 RED)
+        report = chan.posted[0]
         m = re.search(r"items=(\d+)", report)
         assert m is not None, f"items 필드 부재: {report!r}"
         assert int(m.group(1)) == accumulated_count, (
-            f"P2 회수 완전성 위반: 축적 {accumulated_count}건, 보고 items={m.group(1)} "
-            f"(cursor·절단 구현이면 여기서 RED)"
+            f"P2 회수 완전성 위반: 축적 {accumulated_count}건, 발화 items={m.group(1)}"
+        )
+        fact_lines = [ln for ln in report.splitlines() if ln.startswith("- 선언=")]
+        assert len(fact_lines) == accumulated_count, (
+            f"P2 회수 완전성 위반: 발화 사실 줄 {len(fact_lines)}, 축적 {accumulated_count}"
         )
 
-        # Assert ②: 각 관측의 식별자(dedup key)가 본문에 실제로 실렸는가
+        # Assert ③: 각 관측의 식별자(dedup key)가 **채널에 착지한** 본문에 실렸는가
         for obs in observations:
             key = sut.dedup_key(obs)
             assert f"key={key}" in report, (
-                f"P2 회수 완전성 위반: 관측 {key!r} 가 본문에 미등재"
+                f"P2 회수 완전성 위반: 관측 {key!r} 가 발화 본문에 미등재"
             )
 
 

@@ -36,6 +36,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 
 import scheduled_task_reconcile as sut
 
+# 발화 계층 harness 재사용 (F-C 봉합분) — §8.5.3 idempotency 계약이 명명한 대상은
+#   **채널 발화 개체 수**이므로 `run()` 완주 harness 로 잰다.
+sys.path.insert(0, str(Path(__file__).parent))
+from test_scheduled_task_dispatch_path import (   # noqa: E402
+    FakeChannel, invoke_run, keys_of, make_obs_list,
+)
+
 
 # ═══════════════════════ 실 사용자 상태 격리 헬퍼 (테스트 seam) ═══════════════════
 def _real_heartbeat_state():
@@ -491,26 +498,42 @@ class TestRestartRecovery:
 
 
 class TestIdempotencyReplay:
-    """§8.5.3 idempotency replay: 같은 잔재 2-3회 반복 → 보고 1개."""
+    """§8.5.3 idempotency replay: 같은 잔재 3회 반복 실행 → **채널 발화 개체 1**.
 
-    def test_idempotency_same_observations_single_report(self):
-        """동일 관측 N회(2-3회) → 발화 1개 (dedup)."""
-        obs = sut.Observation(
-            cls="test",
-            display_path="~/.claude/worktrees/same",
-            declared="decl",
-            measured="meas",
-            mismatch=False,
+    ★ 계층 정정 (구현리뷰 iter4 F-C 부속 — ArchitectPL 신규 확인):
+      직전 판본은 **같은** 키를 로컬 `set` 에 3회 넣고 `len == 1` 을 쟀다. 그건
+      집합 자료구조의 성질이지 SUT 의 성질이 아니다 — `dedup_key` 가 **상수 함수여도
+      통과**하는 완전 항진명제였다. §8.5.3 계약이 명명한 대상은 **채널 발화 개체
+      수**이므로 `run()` 을 3회 완주시켜 그것을 직접 센다.
+    """
+
+    def test_idempotency_same_observations_single_report(self, tmp_path):
+        """동일 관측 3회 실행 → 채널 발화 개체 1 (dedup).
+
+        mutant kill: `fresh = [o for o in observations if dedup_key(o) not in existing]`
+        → `fresh = list(observations)` (dedup 필터 제거) ⇒ 발화 3개 ⇒ RED.
+        """
+        obs = make_obs_list(2)
+        chan = FakeChannel()
+
+        # Act: 같은 관측을 3회 **실행** (렌더가 아니라 발화 경로 완주)
+        results = [invoke_run(tmp_path, obs, chan, run_id="replay-%d" % i) for i in range(3)]
+
+        # Assert ①: 채널 발화 개체 = 1
+        assert len(chan.posted) == 1, (
+            f"발화 개체 {len(chan.posted)} (기대 1) — 3회 replay 에 중복 발화: "
+            f"{[b[:60] for b in chan.posted]}"
         )
-
-        # Act: 같은 관측 3회 렌더
-        key_set = set()
-        for _ in range(3):
-            key = sut.dedup_key(obs)
-            key_set.add(key)
-
-        # Assert: 고유 key = 1 (발화 1개 기대)
-        assert len(key_set) == 1, f"고유 key 는 1개 기대, 실제: {len(key_set)}"
+        # Assert ②: 1회차만 신규, 2·3회차는 전량 기보고 (경로 식별 앵커 — 조기 반환 배제)
+        assert [r.new for r in results] == [2, 0, 0], (
+            f"replay 신규 계상 {[r.new for r in results]} (기대 [2, 0, 0])"
+        )
+        assert [r.posted for r in results] == [1, 0, 0], (
+            f"replay 발화 계상 {[r.posted for r in results]} (기대 [1, 0, 0])"
+        )
+        # Assert ③: 유일 발화 본문이 관측 전량을 담았는가
+        for k in keys_of(obs):
+            assert f"key={k}" in chan.posted[0], f"관측 {k!r} 가 유일 발화 본문에 미등재"
 
 
 # ═══════════════════════════════ Perf Baseline §8.3 ═══════════════════════
