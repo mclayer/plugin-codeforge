@@ -206,7 +206,14 @@ class TestStopFlagIntegrationWithRun:
     """정지 플래그 ON 시 run() 가 스캐너를 호출하지 않음 (간접 검증)."""
 
     def test_halted_run_does_not_call_scanners(self):
-        """run() 이 정지 시 collect_observations() 호출 0 ∧ 발화 0."""
+        """정지 fail-closed 계약 = **스캐너 미호출 ∧ 발화 0** — 두 conjunct 를 모두 측정.
+
+        ★ 이전 판본은 함수 docstring 이 "∧ 발화 0" 을 주장하면서 `collect_observations`
+          spy 만 두어 **절반이 무측정**이었다 — 정지 경로에서 `post_report` 가 호출돼도
+          GREEN 이었다. 여기서 post_report spy 를 추가해 나머지 절반을 잰다.
+
+        mutant kill: `run()` 의 halted 분기에 `post_report(channel, "...")` 삽입 ⇒ RED.
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
 
@@ -218,14 +225,21 @@ class TestStopFlagIntegrationWithRun:
             with tempfile.TemporaryDirectory() as local_state:
                 f2_path = os.path.join(local_state, "scheduled-task.disabled")
 
-                # collect_observations 호출을 spy 해서 호출 여부 검증
-                with mock.patch.object(sut, "collect_observations", return_value=[]) as spy_collect:
+                # 스캐너 축 + 발화 축 양쪽 spy (post_report 는 실 GitHub 미접촉)
+                with mock.patch.object(sut, "collect_observations", return_value=[]) as spy_collect, \
+                     mock.patch.object(sut, "post_report", return_value=True) as spy_post:
                     # Act: run() 호출 — 정지 플래그로 인해 스캐너 미호출 기대
                     result = sut.run(["--repo-root", repo_root, "--channel", "owner/repo#123"])
 
-                    # Assert
+                    # Assert (ㄱ): 스캐너 미호출
                     assert result == 0, "run() 항상 0 반환"
                     assert spy_collect.call_count == 0, f"collect_observations 호출 0 기대, 실제: {spy_collect.call_count}"
+
+                    # Assert (ㄴ): 발화 0 (docstring 이 주장하던 나머지 conjunct)
+                    assert spy_post.call_count == 0, (
+                        f"정지 시 채널 발화 0 기대, 실제: {spy_post.call_count}회 "
+                        f"(호출 인자: {spy_post.call_args_list})"
+                    )
 
 
 if __name__ == "__main__":

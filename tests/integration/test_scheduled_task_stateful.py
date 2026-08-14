@@ -48,25 +48,72 @@ def _isolated_env(heartbeat_path):
     return env
 
 
+def _write_gh_stub(dirpath):
+    """`STR_GH_BIN` 로 주입할 gh stub 을 만들고 `(명령문자열, 호출로그 경로)` 반환.
+
+    ★ 실 GitHub 네트워크 호출 차단용 mock-seam. SUT 는 `STR_GH_BIN`(공백분리 명령)을
+      이미 지원하는데 tests/** 에서 그 seam 을 쓰는 곳이 0건이라 `run(--channel ...)`
+      경로가 실 `gh issue view` 를 발사하고 있었다 — 그 봉합.
+
+    ★ UTF-8 못박기(load-bearing): Windows 기본 인코딩(cp949)으로 stub 을 쓰면 한글이
+      깨지거나 조용히 빈 결과가 나와 오판을 유발한 전례가 있다. 파일 저작·stub 자신의
+      stdout·호출 로그를 모두 UTF-8 로 고정한다.
+
+    Returns:
+        (gh_cmd, log_path) — gh_cmd 는 `"<python> <stub.py>"` 형태(공백분리 1개 스페이스).
+    """
+    log_path = os.path.join(dirpath, "gh-stub-calls.log")
+    stub_path = os.path.join(dirpath, "gh_stub.py")
+    stub_src = (
+        "#!/usr/bin/env python3\n"
+        "# QADev gh stub — 네트워크 호출 0. 호출 기록 후 최소 JSON 응답.\n"
+        "import json, sys\n"
+        "if hasattr(sys.stdout, 'reconfigure'):\n"
+        "    sys.stdout.reconfigure(encoding='utf-8', errors='replace')\n"
+        "LOG = %r\n"
+        "with open(LOG, 'a', encoding='utf-8', newline='\\n') as fh:\n"
+        "    fh.write('\\t'.join(sys.argv[1:]) + '\\n')\n"
+        "args = sys.argv[1:]\n"
+        "if 'view' in args and '--json' in args:\n"
+        "    print(json.dumps({'comments': []}))\n"
+        "sys.exit(0)\n"
+    ) % (log_path,)
+    with open(stub_path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(stub_src)
+
+    # SUT `_gh` 는 shlex.split(posix=(os.name != 'nt')) 로 토큰화한다 — 공백 포함 경로는
+    #   Windows 에서 인용부호가 토큰에 남아 깨진다. 전제 위반 시 조용한 오판 대신 즉시 실패.
+    assert " " not in sys.executable and " " not in stub_path, (
+        f"stub 주입 전제 위반(경로에 공백): python={sys.executable!r} stub={stub_path!r}"
+    )
+    return "%s %s" % (sys.executable, stub_path), log_path
+
+
 class TestLongRunningInvariant:
     """§8.5.1 long-running invariant: 반복 실행 시 자원·시간 단조 무증가."""
 
     def test_long_running_200_iterations_no_resource_growth(self):
-        """200-iteration sustained loop — 메모리 누수·파일 디스크립터 누적 미검증.
+        """200-iteration sustained loop — 자원 누적(누수) 부재를 **자원 축으로** 검증.
 
-        loop 이 메모리 누수·파일 디스크립터 누적을 하지 않는지 검증.
+        ★ 축 지위 (Story §8.2-F 정직 강등 이행):
+          - **wall-clock = 비차단 기록**. 이 축은 호스트 부하에 민감해 전체 스위트 동시
+            실행 시 ratio 3.05 로 재현 FAIL 한다. Story §8.2-F 는 이 축을 "보조로 정직
+            강등" 한다고 **선언**했는데 코드는 bare assert(=blocking)로 남아 선언↔코드가
+            불일치였다. 여기서 선언 쪽으로 통일한다 — 측정값은 반드시 기록하되 판정하지
+            않는다(측정 삭제 아님).
+          - **자원 축(gc / tracemalloc) = blocking teeth**. 약화 없음(기존 비율 단언 유지)
+            + **누적 성장 상한**을 추가한다. 비율 단언은 per-iteration Δ 비교라 *일정
+            속도* 누수(매 호출 동일량 누적)에 ratio≈1.0 이 되어 눈이 먼다 — 누적 축이
+            그 사각을 덮는다.
 
-        ★ 실측 기준 (Orchestrator 3-trial 평균):
-          wall-clock p95: 전반=0.3608s, 후반=0.2796s (ratio=0.77)
-          gc 객체 Δ: 전반=1009개, 후반=927개 (ratio=0.92, 누적 아님)
-          tracemalloc Δ: 전반=58.7KB, 후반=50.3KB (ratio=0.86, 누적 아님)
-
-        ★ 임계값 설정:
-          - wall-clock: p95_second <= p95_first * 1.5 (실측 0.77 << 1.5, 여유 → 부하 변동 흡수)
-          - gc 객체: second_half_delta <= first_half_delta * 1.2 (실측 0.92 << 1.2, 여유)
-          - tracemalloc: second_half_delta <= first_half_delta * 1.8 (실측 0.86 << 1.8, 여유 → 노이즈 흡수)
-
-          임계값은 노이즈·캐시 워밍 자연변동 흡수하되, 실 누수(구간별 지속 증가) 감지.
+        ★ 실측 기준:
+          - 비율 축 (Orchestrator 3-trial): gc Δ ratio=0.92, tracemalloc Δ ratio=0.86
+          - 누적 축 (QADev 3-trial, warmup 20 이후 net):
+              gc 객체 net = 0 / 0 / 0 개      (spread 0)
+              tracemalloc net = 50.4 / 50.1 / 51.7 KB  (측정 루프 자체의 누적 리스트분)
+            누수 대조군(호출당 객체 1000개): gc net=179개, tracemalloc net=4400.4KB
+          - 임계값: gc net <= 100 개 / tracemalloc net <= 512 KB
+            (정상 실측 대비 각각 +100 / 10배 여유, 누수 대조군은 각각 1.8배 / 8.6배 초과)
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -78,6 +125,8 @@ class TestLongRunningInvariant:
             durations = []
             gc_deltas = []  # 각 iteration의 gc 객체 변화
             tracemalloc_deltas = []  # 각 iteration의 tracemalloc 변화
+            gc_levels = []  # 각 iteration 종료 시 gc 객체 **절대 수준** (누적 축)
+            mem_levels = []  # 각 iteration 종료 시 traced memory **절대 수준** KB (누적 축)
 
             tracemalloc.start()
 
@@ -109,23 +158,33 @@ class TestLongRunningInvariant:
                 gc_deltas.append(gc_after - gc_before)
                 tracemalloc_deltas.append(peak_tracemalloc / 1024)  # KB로 변환
 
+                # 누적 축 표본 — 수집 후 gc.collect() 로 회수 가능분을 걷어낸 **잔존** 수준
+                gc.collect()
+                gc_levels.append(len(gc.get_objects()))
+                current_tracemalloc, _ = tracemalloc.get_traced_memory()
+                mem_levels.append(current_tracemalloc / 1024)
+
             tracemalloc.stop()
 
             # ─────────────────────────────────────────────────────────────
-            # Assert 1: wall-clock 단조성 (보조 축, 부하 민감)
+            # 기록 1: wall-clock — **비차단**(Story §8.2-F 정직 강등). 판정하지 않는다.
             # ─────────────────────────────────────────────────────────────
             first_half = sorted(durations[:100])
             second_half = sorted(durations[100:])
 
             p95_first = first_half[int(len(first_half) * 0.95)]
             p95_second = second_half[int(len(second_half) * 0.95)]
+            wall_ratio = (p95_second / p95_first) if p95_first > 0 else float("nan")
 
-            # 정직 ceiling: 판별력 제한, 단조 무증가만 검증
-            # wall-clock 축은 부하 민감하므로 실측 표본으로 정당화된 임계값 사용
-            assert p95_second <= p95_first * 1.5, (
-                f"wall-clock 후반부 p95 급증 (부하 민감): 전반부={p95_first:.3f}s, 후반부={p95_second:.3f}s, "
-                f"비율={p95_second/p95_first:.2f}"
-            )
+            # ★ 이 축은 호스트 부하에 종속이라 blocking 단언의 근거가 없다(전체 스위트
+            #   동시 실행에서 ratio 3.05 재현 FAIL). 측정은 유지하고 판정만 뗀다 —
+            #   blocking teeth 는 아래 자원 축이 전담한다.
+            print(f"\n[wall-clock advisory · 비차단] p95_first={p95_first:.4f}s "
+                  f"p95_second={p95_second:.4f}s ratio={wall_ratio:.3f} "
+                  f"(참고 기준 1.5 — 초과해도 FAIL 아님, 부하 민감 축)")
+            if wall_ratio > 1.5:
+                print(f"[wall-clock advisory] 참고 기준 초과 (ratio={wall_ratio:.3f}) — "
+                      f"호스트 부하 신호. 판정 축 아님.")
 
             # ─────────────────────────────────────────────────────────────
             # Assert 2: gc 객체 수 단조성 (실 teeth 1/2)
@@ -153,13 +212,44 @@ class TestLongRunningInvariant:
                 f"후반부 Δ={second_half_tracemalloc_delta:.1f}KB, 비율={second_half_tracemalloc_delta/first_half_tracemalloc_delta:.2f}"
             )
 
+            # ─────────────────────────────────────────────────────────────
+            # Assert 4·5: 자원 **누적 성장 상한** (실 teeth — 일정 속도 누수 사각 봉합)
+            # ─────────────────────────────────────────────────────────────
+            # ★ 위 비율 단언(Assert 2/3)은 per-iteration Δ 비교라 매 호출 동일량을
+            #   누적하는 누수에서 ratio≈1.0 이 되어 눈이 먼다. 워밍업(20) 이후의
+            #   **절대 수준 순증**을 상한으로 구속해 그 사각을 덮는다.
+            WARMUP = 20                 # 캐시 워밍(_workspace_prefix_cache 등) 정착 구간
+            GC_NET_LIMIT = 100          # 실측 net=0 (3-trial, spread 0) / 누수 대조군 179
+            MEM_NET_LIMIT_KB = 512      # 실측 net≈50KB (3-trial) / 누수 대조군 4400KB
+
+            gc_net = gc_levels[-1] - gc_levels[WARMUP]
+            mem_net = mem_levels[-1] - mem_levels[WARMUP]
+
+            assert gc_net <= GC_NET_LIMIT, (
+                f"gc 객체 **누적** 순증 {gc_net}개 > 상한 {GC_NET_LIMIT}개 (누수 신호). "
+                f"level[{WARMUP}]={gc_levels[WARMUP]} → level[-1]={gc_levels[-1]}"
+            )
+            assert mem_net <= MEM_NET_LIMIT_KB, (
+                f"traced memory **누적** 순증 {mem_net:.1f}KB > 상한 {MEM_NET_LIMIT_KB}KB "
+                f"(누수 신호). level[{WARMUP}]={mem_levels[WARMUP]:.1f}KB → "
+                f"level[-1]={mem_levels[-1]:.1f}KB"
+            )
+
             # 측정값 기록 (분석용)
             perf_record = {
                 "test": "test_long_running_200_iterations_no_resource_growth",
-                "wall_clock": {
+                "wall_clock_advisory_nonblocking": {
                     "p95_first_half_seconds": f"{p95_first:.4f}",
                     "p95_second_half_seconds": f"{p95_second:.4f}",
-                    "ratio": f"{p95_second/p95_first:.3f}",
+                    "ratio": f"{wall_ratio:.3f}",
+                    "verdict_role": "none — 비차단 기록 (Story §8.2-F 정직 강등)",
+                },
+                "cumulative_net_growth": {
+                    "warmup_index": WARMUP,
+                    "gc_objects_net": gc_net,
+                    "gc_objects_limit": GC_NET_LIMIT,
+                    "tracemalloc_net_kb": f"{mem_net:.1f}",
+                    "tracemalloc_limit_kb": MEM_NET_LIMIT_KB,
                 },
                 "gc_objects": {
                     "first_half_avg_delta": f"{first_half_gc_delta:.1f}",
@@ -475,14 +565,26 @@ class TestPerfBaseline:
 class TestLongRunningCLIInvocation:
     """§8.5 long-running: CLI 반복 호출 (subprocess 기반)."""
 
-    def test_cli_invocation_sustained_200_iterations(self):
-        """CLI 200회 반복 호출 — 자원·exit code 안정.
+    def test_cli_invocation_sustained_10_iterations(self):
+        """CLI **10회** 반복 호출 — exit code 안정(INV-F) ∧ 실 heartbeat 무접촉.
+
+        ★ 반복수 10 의 근거 (선언면 승격 — P1-5):
+          이전 판본은 함수명이 `..._200_iterations` 인데 본문은 `range(10)` 이었고,
+          그 차이는 인라인 주석(`# 실제는 200이지만 CI 시간 제약`)에만 있었다. 이름과
+          docstring 은 **선언면**이므로 실제와 어긋나면 그 자체가 결함이다.
+          여기서는 실제(10)에 맞춰 이름을 정정하고, 근거를 선언면으로 올린다:
+          이 테스트의 1회 호출은 subprocess 기동 + 관측 1사이클이라 200회면 CI wall-clock
+          예산을 초과한다. **in-process 200-iteration 축은
+          `test_long_running_200_iterations_no_resource_growth` 가 이미 전담**하므로
+          본 테스트의 목적은 반복수 자체가 아니라 **subprocess 경계에서의 exit code
+          계약(INV-F)과 실 사용자 상태 무접촉**이다.
 
         ★ 격리: heartbeat 기록 대상을 tmpdir 로 주입한다. 주입이 없으면 이 테스트가
           실 사용자 파일(~/.claude/worktree-gc-state/scheduled-task-last-run.epoch)의
           mtime 을 갱신한다(실측 확인 결함) — 스케줄 작업이 미설치인 머신에서 유일한
           기록자가 테스트가 되어 관측자 생존 신호를 위조한다.
         """
+        ITERATIONS = 10
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
             hb_path = os.path.join(tmpdir, "heartbeat.epoch")
@@ -494,7 +596,7 @@ class TestLongRunningCLIInvocation:
                 pytest.fail(f"script 부재: {script_path} (requires_golden 마커, 미충족)")
 
             exit_codes = []
-            for i in range(10):  # 실제는 200이지만 CI 시간 제약
+            for i in range(ITERATIONS):
                 # Act: subprocess 호출 (실 상태 격리 env 주입)
                 result = subprocess.run(
                     [sys.executable, str(script_path), "--repo-root", repo_root, "--dry-run"],
@@ -504,7 +606,10 @@ class TestLongRunningCLIInvocation:
                 )
                 exit_codes.append(result.returncode)
 
-            # Assert: INV-F (항상 0)
+            # Assert: INV-F (항상 0) — 선언한 반복수만큼 실제로 돌았는지도 함께 구속
+            assert len(exit_codes) == ITERATIONS, (
+                f"선언 반복수 {ITERATIONS} ≠ 실행 {len(exit_codes)}"
+            )
             for code in exit_codes:
                 assert code == 0, f"exit code 항상 0 기대 (INV-F), 실제: {code}"
 
@@ -663,10 +768,15 @@ class TestHeartbeatFileIsolation:
 
         Act:
           - sut.run(["--repo-root", tmpdir, "--channel", "test/repo#1"]) 호출
+            ★ `--channel` 지정이라 채널 축이 실제로 발동한다. `STR_GH_BIN` seam 에
+              stub 을 주입해 **실 GitHub 네트워크 호출 0** 으로 만든다(P1-3a).
+              이전 판본은 이 주입이 없어 실 `gh issue view` 가 나갔다.
 
         Assert:
           - 실 경로 파일이 **존재하지 않음** (또는 초기 mtime 유지)
           - 주입 경로(env 값)에 파일이 **실제로 기록됨** (size > 0)
+          - gh stub **호출 기록이 비어있지 않음** — seam 이 죽어서 조용히 통과하는 게
+            아니라 채널 축이 실제로 stub 을 거쳤다는 증거 (mock-seam 규율)
         """
         env_key = "SCHEDULED_TASK_HEARTBEAT_FILE"
         env_value = os.environ.get(env_key)
@@ -683,9 +793,25 @@ class TestHeartbeatFileIsolation:
         # scheduled_task_reconcile 모듈은 conftest 상단에서 sys.path 주입됨
         import scheduled_task_reconcile as sut_module
 
+        # Arrange: gh stub 주입 (네트워크 0)
+        gh_cmd, gh_log = _write_gh_stub(str(tmp_path))
+        assert not os.path.exists(gh_log), "stub 로그 초기 상태는 부재여야 한다"
+
         # run() 호출 — heartbeat 기록 강제 (repo 여러 번 스캔)
-        result = sut_module.run(["--repo-root", str(tmp_path), "--channel", "test/repo#1"])
+        with mock.patch.dict(os.environ, {sut_module.GH_BIN_ENV: gh_cmd}):
+            result = sut_module.run(["--repo-root", str(tmp_path), "--channel", "test/repo#1"])
         assert result == 0, "run() 항상 0 반환"
+
+        # Assert: gh stub 이 실제로 호출됨 (seam 실효 — 네트워크 0 이 '공허'가 아님)
+        assert os.path.exists(gh_log), (
+            f"gh stub 호출 기록 부재 — STR_GH_BIN seam 미작동 또는 채널 축 미진입: {gh_log}"
+        )
+        with open(gh_log, encoding="utf-8") as fh:
+            gh_calls = [ln.strip() for ln in fh if ln.strip()]
+        assert gh_calls, f"gh stub 호출 기록이 비어 있음: {gh_log}"
+        assert any("issue" in c for c in gh_calls), (
+            f"gh stub 이 issue 서브커맨드로 호출되지 않음: {gh_calls}"
+        )
 
         # Assert: 실 경로 무변화
         real_file_exists_after = os.path.exists(real_heartbeat_file)
