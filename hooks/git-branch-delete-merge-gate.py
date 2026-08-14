@@ -46,8 +46,16 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 
 _GH_TIMEOUT_SEC = 10
+
+# per-invocation gh 누적 예산 (CFP-2965 F-3 (b) — Change Plan §3.2 #7 / §4).
+#   hooks.json 의 본 훅 timeout(60s) 이 hollow 가 되지 않도록 "N×_GH_TIMEOUT_SEC" 무한 누적을
+#   호출당 총량으로 bound. 누적 소진 시 잔여 branch 검사 skip + stderr 진단 1줄 + fail-open(0)
+#   = "죽어서 통과"(timeout kill, 흔적 0 — T-2) 대신 "돌아서 통과"(debug log 흔적) 로 전환.
+#   INV-T3: timeout(60) ≥ GH_TOTAL_BUDGET_SEC(50) + margin ∧ GH_TOTAL_BUDGET_SEC > _GH_TIMEOUT_SEC.
+GH_TOTAL_BUDGET_SEC = 50
 
 
 def _read_input() -> dict:
@@ -169,12 +177,19 @@ def _parse_delete_branches(command: str) -> list[str]:
     return uniq
 
 
-def _open_prs_for_branch(branch: str) -> list[dict]:
+def _open_prs_for_branch(branch: str, budget_remaining_sec: float = _GH_TIMEOUT_SEC) -> list[dict]:
     """`gh pr list --head <branch> --state open` → 열린 PR list.
 
     어떤 오류(gh 부재 FileNotFoundError / non-zero returncode / timeout /
     JSON 파싱 실패)든 [] 반환 (그 branch 는 fail-open — 차단 안 함).
+
+    budget_remaining_sec: 호출 시점의 잔여 gh 총예산(GH_TOTAL_BUDGET_SEC 기준).
+      per-call in-flight deadline = min(_GH_TIMEOUT_SEC, 잔여) — 누적 사전검사만으로는
+      예산 경계 직전에 발사된 call 이 최악 wall(기동 + 49.9 + 10)로 총예산을 관통하므로
+      개별 call 의 상한 자체를 잔여로 조인다 (Change Plan §4 P0-2).
+      default = _GH_TIMEOUT_SEC (단독 호출 시 기존 거동 그대로).
     """
+    call_timeout = min(_GH_TIMEOUT_SEC, budget_remaining_sec)
     try:
         result = subprocess.run(
             [
@@ -190,7 +205,7 @@ def _open_prs_for_branch(branch: str) -> list[dict]:
             ],
             capture_output=True,
             text=True,
-            timeout=_GH_TIMEOUT_SEC,
+            timeout=call_timeout,
             shell=False,
         )
     except Exception:
@@ -255,8 +270,17 @@ def main() -> int:
         if not branches:
             return 0  # 삭제 패턴 아님 → 통과
 
-        for branch in branches:
-            prs = _open_prs_for_branch(branch)
+        started = time.monotonic()
+        for idx, branch in enumerate(branches):
+            remaining = GH_TOTAL_BUDGET_SEC - (time.monotonic() - started)
+            if remaining <= 0:
+                # 총예산 소진 — 잔여 branch 검사 skip + 진단 1줄 + fail-open (return 0).
+                sys.stderr.write(
+                    f"[branch-delete-merge-gate] gh 총예산 {GH_TOTAL_BUDGET_SEC}s 소진 — "
+                    f"잔여 branch {len(branches) - idx}건 미검사, fail-open\n"
+                )
+                return 0
+            prs = _open_prs_for_branch(branch, remaining)
             if prs:
                 sys.stderr.write(_build_block_message(branch, prs) + "\n")
                 return 2  # 유일한 차단 경로

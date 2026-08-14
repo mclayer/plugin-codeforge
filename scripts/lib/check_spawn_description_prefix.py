@@ -14,6 +14,20 @@
 #   stdout JSON: {"description_prefix_conformant": <bool>, "empty": <bool>, "checked": "<앞 80자>"}
 #   exit 0: ALWAYS (conformant 든 아니든). nonconformant 시 stderr 에 warning 1줄.
 #
+#   python3 check_spawn_description_prefix.py --inject ...            (Agent 표면 — 하위호환 유지)
+#   python3 check_spawn_description_prefix.py --inject-bash [--bypass-env <NAME>]   (Bash 표면 통합)
+#     stdin: PreToolUse payload JSON (raw-byte UTF-8)
+#     Bash 표면 end-to-end 1-call 모드 (CFP-2965 S4 — 프로세스 9→4):
+#       tool_name==Bash guard + payload TOP-LEVEL agent_type subject 추출 + KST stamp in-process
+#       산출을 흡수 (구 shell 의 `python -c` ×2 + `bash kst-render-stamp.sh` fork 제거).
+#     stdout: {"hookSpecificOutput": {"hookEventName": "PreToolUse", "updatedInput": {...}}} 또는 무방출.
+#     exit 0: ALWAYS (G5 fail-open).
+#
+# UTF-8 io 강제 (CFP-2965 판정 6 — mojibake 결함 수정):
+#   stdin 은 raw-byte 로 읽어 UTF-8 로 명시 디코드, stdout 은 UTF-8 로 명시 인코드해 방출한다.
+#   locale preferred encoding(Windows 한국어 = cp949) 이나 PYTHONIOENCODING env 에 의존하지 않는다
+#   — 한글 description 이 mojibake 로 치환되던 wrong-value(ADR-143 INV-B4 저촉) 봉합.
+#
 # Bypass (surface-specific — F5/CFP-2587 FIX-2): --inject 모드는 `--bypass-env <NAME>` 로 표면별
 #   bypass env 를 수령(Agent=BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE / Bash=BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT;
 #   disjoint — cross-surface bleed 없음). --description-stdin 모드는 아래 유지:
@@ -33,6 +47,7 @@ import sys
 import re
 import os
 import json
+import datetime
 
 # Windows console 호환 — UTF-8 강제 (check_spawn_prompt_format.py 관례 답습)
 if hasattr(sys.stdout, "reconfigure"):
@@ -73,6 +88,61 @@ UNKNOWN_AGENT = "unknown-agent"
 
 # subject 최대 길이 (RE_PREFIX `[^\]]{1,64}` bound 정합)
 SUBJECT_MAX_LEN = 64
+
+
+# stdin 상한 (bounded ≤1 MiB — payload 폭주 방어)
+STDIN_LIMIT_BYTES = 1 << 20
+
+# Bash 표면 bypass env (--bypass-env 미전달 시 --inject-bash 기본값)
+BASH_SURFACE_BYPASS_ENV = "BYPASS_CODEFORGE_BASH_DESCRIPTION_INJECT"
+
+
+# ── UTF-8 io (CFP-2965 판정 6 — locale/PYTHONIOENCODING 비의존 명시 강제) ──────
+
+def _read_stdin_text(limit: int = STDIN_LIMIT_BYTES) -> str:
+    """stdin 을 raw-byte 로 읽어 UTF-8 로 디코드한 문자열 반환.
+
+    텍스트 계층(sys.stdin.read)은 호스트 locale(Windows 한국어 = cp949)로 디코드하므로
+    한글 payload 가 mojibake wrong-value 로 오염된다 → raw-byte + 명시 UTF-8 로 봉합.
+    buffer 부재(테스트 seam 등) 시 텍스트 read 로 degrade, 실패 시 "" (상위 fail-open).
+    """
+    buf = getattr(sys.stdin, "buffer", None)
+    try:
+        if buf is not None:
+            return buf.read(limit).decode("utf-8")
+        return sys.stdin.read(limit)
+    except Exception:
+        return ""
+
+
+def _emit_json(obj) -> None:
+    """stdout 에 JSON 1줄을 UTF-8 로 명시 인코드해 방출 (G1: json.dumps SSOT)."""
+    data = json.dumps(obj, ensure_ascii=False)
+    buf = getattr(sys.stdout, "buffer", None)
+    if buf is None:
+        print(data)
+        return
+    try:
+        sys.stdout.flush()
+    except Exception:
+        pass
+    buf.write(data.encode("utf-8") + b"\n")
+    buf.flush()
+
+
+def _compute_kst_stamp() -> str:
+    """KST 렌더 스탬프 `MM/DD HH:MM:SS` 를 in-process 산출 (subprocess 0).
+
+    시각원 SSOT = scripts/lib/kst_render_stamp.py 의 KST(고정 +9 offset)·RENDER_FMT 상수를
+    그대로 재사용 — 해당 파일 CLI 진입점 byte-불변(sibling 소비자 2종 보호). 실패 시 ""
+    → build_injected_description 의 KST-fail skip(degradation rung 4).
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import kst_render_stamp
+        return datetime.datetime.now(kst_render_stamp.KST).strftime(kst_render_stamp.RENDER_FMT)
+    except Exception:
+        return ""
 
 
 # ── 핵심 검증 함수 ────────────────────────────────────────────────────────────
@@ -178,10 +248,16 @@ def build_injected_description(subject: str, kst_stamp: str, original: str):
 #   BOOL_FLAGS 는 flag-위치에서만 present 마킹. subject 값이 sibling flag 리터럴과
 #   문자열이 같아도 값-위치로 소비돼 flag 오인 부재 — first-match value-shadow +
 #   position-blind 멤버십 2 shadowing 클래스 동시 봉합. argparse 기각(flag-like 값에
-#   sys.exit(2) → G5 exit-0-always 위반). scope = run_inject argv 파싱 한정 (main() dispatch
-#   모드 selector 는 caller-고정 leading flag → subject 미도달, non-realizable — §7.2 F3).
+#   sys.exit(2) → G5 exit-0-always 위반).
+#   ★ CFP-2965 F6 — 구 주석 논거 갱신: 구 문구는 scope 를 run_inject argv 파싱으로 한정하며
+#     "main() dispatch 모드 selector 는 caller-고정 leading flag → subject 미도달,
+#     non-realizable (§7.2 F3)" 이라 했다. 그 non-realizable 은 **호출자 관행**에만 근거해
+#     계약이 아니었다 — `--inject --subject "--inject-bash"` 처럼 subject 값이 모드 리터럴과
+#     같으면 position-blind 멤버십 dispatch 가 실제로 오분기한다. 값-위치 shadowing 은 본
+#     스캐너가 봉합했으나 dispatch 는 그 밖이었으므로, main() dispatch 도 leading-position
+#     판정으로 전환해 관행 의존을 제거했다 (아래 main() 참조).
 VALUE_FLAGS = ("--subject", "--kst-stamp", "--bypass-env")
-BOOL_FLAGS = ("--inject", "--transition-reminder", "--subject-absent", "--description-stdin")
+BOOL_FLAGS = ("--inject", "--inject-bash", "--transition-reminder", "--subject-absent", "--description-stdin")
 
 
 def _scan_argv(argv: list):
@@ -217,6 +293,16 @@ def _inject_arg_value(argv: list, flag: str) -> str:
     """argv 에서 flag 값 반환, 없으면 '' — positional-safe(_scan_argv SSOT 위임, CFP-2599).
     값-위치 리터럴이 flag 로 오인되지 않음(first-match value-shadow 봉합). VALUE_FLAGS 용."""
     return _scan_argv(argv)[0].get(flag, "")
+
+
+def _whole_echo_with_description(tool_input: dict, injected: str) -> dict:
+    """G3 whole-echo: tool_input 전체 복사 + description 만 교체 (REPLACE-safe 단일 SSOT).
+
+    부분 updatedInput 은 schema HARD-FAIL (spike BARE01) — 전 필드(비-ASCII 포함) 무손상 복사.
+    """
+    updated = dict(tool_input)
+    updated["description"] = injected
+    return updated
 
 
 def _load_build_context():
@@ -265,10 +351,7 @@ def run_inject(argv: list) -> int:
         injected = None
         tool_input = {}
         if not bypass and not subject_absent:
-            try:
-                raw = sys.stdin.read(1 << 20)  # bounded ≤1 MiB
-            except Exception:
-                raw = ""
+            raw = _read_stdin_text()           # bounded ≤1 MiB, raw-byte UTF-8
             payload = json.loads(raw) if raw else {}
             if not isinstance(payload, dict):
                 payload = {}
@@ -280,9 +363,8 @@ def run_inject(argv: list) -> int:
 
         hso = {"hookEventName": "PreToolUse"}
         if injected is not None:
-            updated = dict(tool_input)         # G3 whole-echo of ENTIRE tool_input
-            updated["description"] = injected
-            hso["updatedInput"] = updated      # G4: NO permissionDecision
+            # G3 whole-echo of ENTIRE tool_input / G4: NO permissionDecision
+            hso["updatedInput"] = _whole_echo_with_description(tool_input, injected)
 
         if reminder_requested:
             ctx = _load_build_context()
@@ -291,7 +373,7 @@ def run_inject(argv: list) -> int:
                 hso["additionalContext"] = ctx(subject)
 
         if "updatedInput" in hso or "additionalContext" in hso:
-            print(json.dumps({"hookSpecificOutput": hso}, ensure_ascii=False))  # G1
+            _emit_json({"hookSpecificOutput": hso})  # G1
         return 0
     except Exception:
         # fail-open — 어떤 예외도 tool block 안 함. reminder 요청 시 reminder-only emit.
@@ -299,14 +381,69 @@ def run_inject(argv: list) -> int:
             try:
                 ctx = _load_build_context()
                 if ctx is not None:
-                    print(json.dumps({
+                    _emit_json({
                         "hookSpecificOutput": {
                             "hookEventName": "PreToolUse",
                             "additionalContext": ctx(values.get("--subject", "")),
                         }
-                    }, ensure_ascii=False))
+                    })
             except Exception:
                 pass
+        return 0
+
+
+def run_inject_bash(argv: list) -> int:
+    """--inject-bash 모드 (CFP-2965 S4): Bash 표면 end-to-end 1-call.
+
+    구 shell 이 하던 3 판정(tool_name==Bash guard / TOP-LEVEL agent_type 추출·EXCLUDE /
+    KST stamp 산출)을 python 1회 안으로 흡수 — `python -c` ×2 + `bash kst-render-stamp.sh`
+    fork(+그 안의 dirname·date) 제거. 판정 규칙·산출 계약은 --inject 모드와 동일:
+
+      · tool_name != "Bash"           → 무방출 (matcher 안전망)
+      · TOP-LEVEL agent_type 부재/빈값 → 무방출 (§7.7-3 EXCLUDE — dispatcher 명 주입 금지)
+      · bypass env(=1)                → 무방출
+      · G3 whole-echo / G4 bare updatedInput(permissionDecision 미emit) / G5 exit 0 ALWAYS
+      · RE_PREFIX 멱등 (이미 conformant → 무방출) — build_injected_description SSOT 재사용
+
+    catch-all 은 본 모드 국소 유지 (전역 승격 금지 — R-13). 판정 실패 = 무방출 fail-open
+    이지 deny 삼킴이 아니다 (본 파일은 deny 표면 0 — advisory injection 전용).
+    """
+    try:
+        values, _bools = _scan_argv(argv)
+        bypass_env = values.get("--bypass-env", "") or BASH_SURFACE_BYPASS_ENV
+        if os.environ.get(bypass_env, "") == "1":
+            return 0
+
+        raw = _read_stdin_text()               # raw-byte UTF-8 (mojibake 차단)
+        if not raw:
+            return 0
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            return 0
+
+        if payload.get("tool_name") != "Bash":
+            return 0
+
+        agent_type = payload.get("agent_type", "")
+        if not isinstance(agent_type, str) or agent_type == "":
+            return 0                           # §7.7-3 EXCLUDE (top-level Bash)
+
+        tool_input = payload.get("tool_input", {})
+        if not isinstance(tool_input, dict):
+            tool_input = {}
+        injected = build_injected_description(
+            agent_type, _compute_kst_stamp(), tool_input.get("description", "")
+        )
+        if injected is None:
+            return 0                           # skip 조건 (빈/멱등/KST-fail/post-check)
+
+        _emit_json({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "updatedInput": _whole_echo_with_description(tool_input, injected),
+        }})
+        return 0
+    except Exception:
+        # fail-open (G5) — 어떤 예외도 Bash tool block 금지, 부분 emit 0.
         return 0
 
 
@@ -318,9 +455,25 @@ def main(argv: list) -> int:
     stdout JSON. exit 0 ALWAYS (warning-tier, non-mutation).
 
     --inject 모드 (CFP-2587 Phase 2): stdin=PreToolUse payload → updatedInput 주입 (run_inject).
+    --inject-bash 모드 (CFP-2965 S4): Bash 표면 end-to-end 1-call (run_inject_bash).
     """
-    # --inject 모드 우선 dispatch (자체 bypass·fail-open 규약 — run_inject 참조)
-    if "--inject" in argv:
+    # 모드 selector = **leading position** 판정 (CFP-2965 F6).
+    #   구: `"--inject-bash" in argv` / `"--inject" in argv` — position-blind 멤버십이라
+    #   **값 위치**에 같은 리터럴이 오면 오분기한다. 실현 경로: Agent spawn 게이트가
+    #   `--inject --subject "<subagent_type>"` 로 부르는데 subject 값이 "--inject-bash" 면
+    #   Bash 표면 경로(run_inject_bash)로 새어, subject 를 payload 의 agent_type 에서
+    #   다시 뽑는 다른 계약을 타게 된다. 값-위치 shadowing 은 _scan_argv 가 봉합했지만
+    #   dispatch 는 그 밖이었다.
+    #   실 호출자 전수 확인 (2026-08-14): hooks/pretooluse-bash-description-inject =
+    #   `--inject-bash ...`, hooks/pretooluse-agent-spawn-gate = `--inject ...`,
+    #   detect 모드 = `--description-stdin` — 전부 모드 flag 가 argv[0] 이라 거동 무변화.
+    mode = argv[0] if argv else ""
+
+    if mode == "--inject-bash":
+        return run_inject_bash(argv)
+
+    # --inject 모드 dispatch (자체 bypass·fail-open 규약 — run_inject 참조)
+    if mode == "--inject":
         return run_inject(argv)
 
     # Bypass check (--description-stdin 모드 전용)

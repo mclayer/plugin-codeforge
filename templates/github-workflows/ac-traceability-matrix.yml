@@ -216,21 +216,21 @@ jobs:
           #   injection 가드(§결정9 G): 사유는 env-var "$NONE_REASON" 로만 참조 — GHA 이중중괄호 표현식→run: 보간 금지.
           if [ "$BOTH_ABSENT" = "true" ]; then
             # 둘 다 부재(story_uri·ac_applicability:none 마커 0개) — 두 flag 모두 미전달(core distinct default guard).
-            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --tests-root tests
+            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --tests-root tests --tests-root hooks/tests
           elif [ -f ac-gate-source.md ]; then
             # story_uri present(source fetched, 신호 C). none 마커 병존 시 함께 forward(precedence=core arbitrate).
             if [ "$APPLICABILITY_NONE" = "true" ] && [ "$RTM_NOT_YET" = "true" ]; then
-              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests --tests-root hooks/tests
             elif [ "$APPLICABILITY_NONE" = "true" ]; then
-              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests --tests-root hooks/tests
             elif [ "$RTM_NOT_YET" = "true" ]; then
-              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --tests-root tests
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm-not-yet --tests-root tests --tests-root hooks/tests
             else
-              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --tests-root tests
+              bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-source ac-gate-source.md --rtm ac-gate-rtm.md --tests-root tests --tests-root hooks/tests
             fi
           elif [ "$APPLICABILITY_NONE" = "true" ]; then
             # story_uri 부재 + 비적용 선언 — source 없이 none forward(reason=env-var, injection 가드).
-            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests
+            bash scripts/check-ac-traceability-matrix.sh --phase "$PHASE" --ac-applicability-none --none-reason "$NONE_REASON" --tests-root tests --tests-root hooks/tests
           else
             echo "::error::check-ac-traceability-matrix: 예상외 라우팅(source 부재 ∧ none 미선언 ∧ 둘다부재 아님) — fail-closed"; exit 1
           fi

@@ -1,0 +1,13 @@
+experiment,arm_a,arm_b,target,pairs,a_median,b_median,a_p90,b_p90,diff_median,diff_p90,p90_delta,neg,pos,p_sign,wilcoxon_z,p_wilcoxon
+planeA,before,final,cross-repo-gh-safety,30,218.5,219.1,281.8,247.2,-0.3,30.6,-34.6,15,15,1.0,-0.494,0.62156
+planeA,before,final,repo-confinement,30,357.9,318.0,370.1,398.7,-37.8,32.0,28.6,26,4,5.9e-05,-3.126,0.00177
+planeA,before,final,git-branch-delete-merge-gate,30,254.0,257.9,264.2,266.4,2.1,12.0,2.2,10,20,0.098737,-1.584,0.113248
+planeA,before,final,worktree-location-guard,30,385.4,342.1,406.3,363.4,-42.0,-19.2,-42.8,27,3,8e-06,-3.785,0.000154
+planeA,before,final,pretooluse-bash-description-inject,30,885.6,280.9,934.5,307.2,-595.6,-572.4,-627.3,30,0,0.0,-4.772,2e-06
+planeA,before,final,pretooluse-dev-process-capture,30,312.8,311.0,331.9,325.6,0.5,6.4,-6.3,14,16,0.855536,-0.514,0.607106
+planeA,before,final,posttooluse-dev-process-capture,30,311.2,310.5,319.4,325.7,-0.3,7.4,6.3,18,12,0.361595,-0.514,0.607106
+planeA,before,final,CHAIN-seq7,30,2845.2,2106.1,2952.0,2176.6,-751.9,-610.9,-775.3,30,0,0.0,-4.772,2e-06
+s10-source,base,src,repo-confinement,30,369.4,322.6,394.7,346.4,-46.7,-12.5,-48.3,28,2,1e-06,-4.217,2.5e-05
+s10-source,base,src,worktree-location-guard,30,386.7,342.5,457.9,395.5,-45.5,-10.6,-62.3,27,3,8e-06,-3.702,0.000214
+s10-exec,base,exec,repo-confinement,30,369.9,353.5,382.6,371.7,-12.0,12.5,-10.9,25,5,0.000325,-2.838,0.004534
+s10-exec,base,exec,worktree-location-guard,30,386.5,376.1,404.5,452.6,-10.1,61.1,48.2,23,7,0.005223,-1.831,0.067163

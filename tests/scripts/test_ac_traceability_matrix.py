@@ -425,3 +425,113 @@ def test_this_story_section5_dogfood_surface_present():
     assert normative_ids == {"AC-1", "AC-2", "AC-3", "AC-11"}, (
         f"normative id set={normative_ids}, 기대 {{AC-1, AC-2, AC-3, AC-11}}"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CFP-2965 CR-203② — `--tests-root` 다중화 (append · union · ∀-dangling)
+#
+# 배경: 모노레포에서 §8 명명 테스트가 `tests/` 와 `hooks/tests/` 로 나뉘어 있으면,
+#   단일 루트만 해석하는 게이트는 다른 루트의 실재 테스트를 born-missing 으로 뒤집는다
+#   (own-PR 은 GREEN 인데 이후 Story 가 잠복 born-broken — ADR-145 :293 계보).
+#
+# 함정 (리뷰 확정): 구 argparse 는 `--tests-root` 를 **단일값 store** 로 받아, flag 를
+#   두 번 주면 last-wins 로 **선행 루트가 조용히 탈락**한다. 따라서 `action="append"`
+#   전환이 다중 루트 지원의 선행 조건이며, 아래 (a) 가 그 사살 구조를 고정한다:
+#   last-wins 로 되돌리면 마지막 루트(hooks/tests-측)만 살아 **tests-측 심볼이 확정 RED**.
+#
+# 판별력 실증 (mutation kill, 2026-08-15 firsthand — **실측값 그대로**):
+#   core 의 `action="append"` 를 구 단일값 store 로 임시 되돌림 ⇒ `2 failed, 13 passed`.
+#     (a) test_tests_root_multi_union_resolves_both_roots FAIL —
+#         "Hop3: AC-1 명명 테스트 'test_symbol_only_in_tests_root' born-missing"
+#         (2-root 지정인데 last-wins 로 선행 tests-측이 탈락 = 예측대로 사살).
+#     (c) test_tests_root_missing_root_is_failclosed_regardless_of_position 도 FAIL —
+#         last-wins 가 ghost 를 아예 삼켜(마지막 루트만 생존) **부재 진단이 발화하지 않고**
+#         엉뚱한 born-missing 으로 떨어진다. 즉 ∀-dangling 계약도 append 전환에 업혀 있다.
+#         (착수 시 "(c) 는 GREEN 유지" 로 예상했으나 실행이 이를 반증 — 예상이 아닌 실측을 기록한다.)
+#     (b) legacy 단일 지정만 GREEN 유지 — 단일 경로는 last-wins 와 구별되지 않으므로 정상.
+#   원복 후 3케이스 전부 GREEN (15 passed).
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ROOT_A_SYM = "test_symbol_only_in_tests_root"        # `tests/` 배타 심볼
+_ROOT_B_SYM = "test_symbol_only_in_hooks_tests_root"  # `hooks/tests/` 배타 심볼
+
+
+def _make_two_exclusive_roots(d):
+    """두 tmp 루트에 **배타** 심볼 1개씩 배치 → (root_a, root_b, ac, rtm).
+
+    배타(각 심볼이 오직 한 루트에만 실재)라야 "어느 루트가 해석됐는가"를 결과로
+    역추적할 수 있다 — 양쪽에 다 있으면 단일 루트로도 통과해 판별력이 0 이 된다.
+    """
+    root_a = os.path.join(d, "tests")
+    root_b = os.path.join(d, "hooks", "tests")
+    make_tests_root(root_a, [_ROOT_A_SYM])
+    make_tests_root(root_b, [_ROOT_B_SYM])
+    ac, rtm = os.path.join(d, "ac.md"), os.path.join(d, "rtm.md")
+    write_ac_source(ac, [("AC-1", "user", "normative"), ("AC-2", "user", "normative")])
+    write_rtm(rtm, [("AC-1", "normative", _ROOT_A_SYM), ("AC-2", "normative", _ROOT_B_SYM)])
+    return root_a, root_b, ac, rtm
+
+
+def test_tests_root_multi_union_resolves_both_roots():
+    """(a) 2-root 배타 discriminating — **양방향**.
+
+    2-root 반복 지정 = 양쪽 GREEN / 단일 지정 = **각각** RED (빠진 쪽 심볼이 born-missing).
+    단방향(한쪽만 확인)이면 union 이 아니라 "둘 중 하나만 읽는" 구현도 통과한다.
+    """
+    with tempfile.TemporaryDirectory() as d:
+        root_a, root_b, ac, rtm = _make_two_exclusive_roots(d)
+
+        # 2-root 반복 지정 → union resolve → PASS
+        assert_gate_pass(*run_gate(2, ac, rtm, tests_root=[root_a, root_b]))
+
+        # 단일 root A → B-측 심볼만 born-missing (A-측은 정상 resolve)
+        rc, out = run_gate(2, ac, rtm, tests_root=root_a)
+        assert_gate_fail(rc, out)
+        assert _ROOT_B_SYM in out, f"root A 단독인데 B-측 심볼 born-missing 미보고\n{out}"
+        assert _ROOT_A_SYM not in out, f"root A 단독인데 A-측 심볼까지 미해결 — 루트 해석 오류\n{out}"
+
+        # 단일 root B → A-측 심볼만 born-missing (대칭 — last-wins 회귀 사살 지점)
+        rc, out = run_gate(2, ac, rtm, tests_root=root_b)
+        assert_gate_fail(rc, out)
+        assert _ROOT_A_SYM in out, f"root B 단독인데 A-측 심볼 born-missing 미보고\n{out}"
+        assert _ROOT_B_SYM not in out, f"root B 단독인데 B-측 심볼까지 미해결 — 루트 해석 오류\n{out}"
+
+
+def test_tests_root_single_legacy_call_unchanged():
+    """(b) legacy 단일 지정 = 기존 거동 GREEN (backward-compatible additive).
+
+    str 1회 지정과 1-원소 list 지정이 동등해야 한다 (append 결과 1-원소 = 기존 호출면 무손상).
+    """
+    with tempfile.TemporaryDirectory() as d:
+        ac, rtm = os.path.join(d, "ac.md"), os.path.join(d, "rtm.md")
+        tests = os.path.join(d, "tests")
+        make_tests_root(tests, [_ROOT_A_SYM])
+        write_ac_source(ac, [("AC-1", "user", "normative")])
+        write_rtm(rtm, [("AC-1", "normative", _ROOT_A_SYM)])
+
+        assert_gate_pass(*run_gate(2, ac, rtm, tests_root=tests))      # 구 호출면(str 1회)
+        assert_gate_pass(*run_gate(2, ac, rtm, tests_root=[tests]))    # 1-원소 list 동등
+
+
+def test_tests_root_missing_root_is_failclosed_regardless_of_position():
+    """(c) dangling — 부재 루트 **선행 배치** → exit 1 (∀-실재, 관용 union 금지).
+
+    부재 루트를 건너뛰고 나머지로 union 하는 관용 구현이면, 실재 루트 2개가 모든 심볼을
+    resolve 해 **PASS 로 뒤집힌다** — 그래서 부재 루트를 존재 루트보다 **앞**에 둔다.
+    ADR-145 §결정8(C) "판정불가 ≠ 비적용": 해석 루트가 하나라도 없으면 판정불가로 끊는다.
+    """
+    with tempfile.TemporaryDirectory() as d:
+        root_a, root_b, ac, rtm = _make_two_exclusive_roots(d)
+        ghost = os.path.join(d, "no_such_root")
+        assert not os.path.isdir(ghost), "픽스처 전제 위반 — ghost 루트가 실재"
+
+        # 부재 루트 **선행** — 뒤의 실재 루트로 관용 union 하지 않는다
+        rc, out = run_gate(2, ac, rtm, tests_root=[ghost, root_a, root_b])
+        assert_gate_fail(rc, out)
+        assert "부재" in out, f"부재 진단 문면 부재\n{out}"
+        assert ghost in out, f"부재 루트 이름이 진단에 미지목\n{out}"
+
+        # 순서 무관(∀) — 후행 배치도 동일하게 exit 1
+        rc2, out2 = run_gate(2, ac, rtm, tests_root=[root_a, root_b, ghost])
+        assert_gate_fail(rc2, out2)
+        assert ghost in out2, f"후행 배치 시 부재 루트 미지목\n{out2}"

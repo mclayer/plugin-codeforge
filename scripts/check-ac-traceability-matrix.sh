@@ -8,12 +8,18 @@
 #   NO logic). check-venue-shape-fidelity-presence.sh 동형.
 #
 # CLI 계약 (고정 — QADev 가 이 시그니처를 소비; 임의 변경 금지):
-#   scripts/check-ac-traceability-matrix.sh --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]
+#   scripts/check-ac-traceability-matrix.sh --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]...
 #     --phase       (required) EXPLICIT phase 신호 (1=문서·명명 / 2=구현·born-missing). diff 추론 금지.
 #     --ac-source   (optional) AC 목록 문서(§5 AC 표 포함) 경로. story_uri present PR 필수 —
 #                   story_uri-absent 비적용 선언(--ac-applicability-none) 시 생략(ADR-145 §결정9).
 #     --rtm         (required) RTM 문서(§8 Test Contract). wrapper-self=Change Plan §8 / consumer=Story §8.
-#     --tests-root  (optional) born-missing 해석 루트 (phase 2 필수).
+#     --tests-root  (optional) born-missing 해석 루트 (phase 2 필수). **반복 지정 가능**
+#                   (CFP-2965 CR-203②) — 지정 루트들의 symbol 을 union 해 해석한다.
+#                   예: --tests-root tests --tests-root hooks/tests
+#                   1회 지정 = 기존 거동 그대로(1-원소 union — backward-compatible additive).
+#                   지정 루트는 ∀ 실재 필수: 1개라도 부재 = 판정불가 exit 1 (부재 루트를
+#                   건너뛴 관용 union 금지 — ADR-145 §결정8(C) "판정불가 ≠ 비적용").
+#                   본 wrapper 는 argv 순수 passthrough("$@")라 반복 flag 를 그대로 전달한다.
 #     --ac-applicability-none (optional) story_uri-absent 비적용 선언(ac_applicability: none 마커) EXPLICIT
 #                   신호 (ADR-145 §결정9). adapter-routed INPUT — verdict=core 단일소유.
 #     --none-reason (optional) 비적용 선언 사유(free-text). 빈/공백 = FAIL(AC-2 auditability). injection
@@ -27,11 +33,14 @@
 # Usage:
 #   bash scripts/check-ac-traceability-matrix.sh --phase 1 --ac-source STORY.md --rtm CHANGEPLAN.md
 #   bash scripts/check-ac-traceability-matrix.sh --phase 2 --ac-source STORY.md --rtm CHANGEPLAN.md --tests-root tests
+#   bash scripts/check-ac-traceability-matrix.sh --phase 2 --ac-source STORY.md --rtm CHANGEPLAN.md \
+#     --tests-root tests --tests-root hooks/tests        # 다중 루트 union (CFP-2965)
 #
 # Exit codes (fail-closed — AC-7 no-optout):
 #   0 = PASS only (유일 success — 전 hop 통과).
 #   그 외 모든 non-zero exit = fail-closed FAIL (전부 차단):
-#     1 = 위반(Hop1/2/3) OR 판정불가(입력 부재·파싱 실패·RTM 미해결·tests-root 부재·python3 미설치).
+#     1 = 위반(Hop1/2/3) OR 판정불가(입력 부재·파싱 실패·RTM 미해결·tests-root 부재[지정 루트
+#         ∀-실재 필수]·python3 미설치).
 #     2 = argparse 인자오류(예: `--phase 3` = choices 위반) — 여전히 non-zero=차단.
 #   skip-PASS / opt-out / default-green 경로 부재.
 #

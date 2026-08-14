@@ -5,9 +5,14 @@ bootstrap_first_gate 모듈명으로 노출하는 패턴. overlay/hooks/tests/co
 패턴 답습.
 """
 
+import os
+import shutil
+import subprocess
 import sys
 import importlib.util
 from pathlib import Path
+
+import pytest
 
 # sys.path 에 hooks/ 디렉터리 주입
 HOOKS_DIR = Path(__file__).resolve().parent.parent
@@ -88,3 +93,38 @@ _csdp_spec = importlib.util.spec_from_file_location(
 check_spawn_description_prefix = importlib.util.module_from_spec(_csdp_spec)
 _csdp_spec.loader.exec_module(check_spawn_description_prefix)
 sys.modules["check_spawn_description_prefix"] = check_spawn_description_prefix
+
+
+# ============================================================ 공용 테스트 인프라 (CFP-2965 G1)
+#
+# 공용 심볼(BASH / requires_bash / run_hook_bash / …)은 **conftest 가 아니라**
+# 고유 basename 모듈 `hook_runner_cfp2965.py` 에 있다.
+#
+#   사유 (CR-201 실측): CI 실 run-line 은 2-dir (`pytest hooks/tests overlay/hooks/tests`).
+#   top-level 모듈명 `conftest` 는 두 디렉터리가 공유하는 이름이라
+#   `overlay/hooks/tests/conftest.py`(6줄·공용 심볼 0)가 sys.modules["conftest"] 를
+#   선점하면 bare `from conftest import requires_bash` 가 그 빈 모듈로 해석돼
+#   ImportError → collection ERROR 4 → Interrupted(전체 미실행). 단일 dir 실행은
+#   GREEN 이라 로컬에서 안 보였다. conftest 의 자동 로드 성질은 fixture/플러그인
+#   side effect 에만 필요하고 공용 상수·헬퍼에는 불필요하므로 분리한다.
+#
+# 로드 방식: sys.path 무가정 — 명시 경로 importlib 로 읽고 sys.modules 에 등록한다
+#   (위 하이픈-파일 로더와 동일 관례). 테스트 파일의 bare
+#   `from hook_runner_cfp2965 import ...` 는 sys.modules 를 먼저 맞히므로
+#   수집 구성(단일 dir / 2-dir)과 무관하게 동일 객체로 해석된다.
+
+_hr_spec = importlib.util.spec_from_file_location(
+    "hook_runner_cfp2965", Path(__file__).resolve().parent / "hook_runner_cfp2965.py"
+)
+hook_runner_cfp2965 = importlib.util.module_from_spec(_hr_spec)
+_hr_spec.loader.exec_module(hook_runner_cfp2965)
+sys.modules["hook_runner_cfp2965"] = hook_runner_cfp2965
+
+# 하위호환 재노출 (conftest 를 직접 참조하는 외부 소비자 대비 — hooks/tests 내부
+# 테스트는 전부 hook_runner_cfp2965 를 직접 import 한다).
+BASH = hook_runner_cfp2965.BASH
+RUN_HOOK_CMD = hook_runner_cfp2965.RUN_HOOK_CMD
+HOOKS_DIR_FOR_RUNNER = hook_runner_cfp2965.HOOKS_DIR_FOR_RUNNER
+requires_bash = hook_runner_cfp2965.requires_bash
+requires_windows = hook_runner_cfp2965.requires_windows
+run_hook_bash = hook_runner_cfp2965.run_hook_bash
