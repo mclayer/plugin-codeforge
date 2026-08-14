@@ -330,6 +330,10 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 - ★**(c) 의 기계 판독** — 3-fixture 예비 실행 **+ 정의역 주입 확인**: *"주입 트리에서만 나올 수 있는 관측이 실제로 나오는가"*. 예 = `check_doc_locations` core 가 주입 yaml 에 대해 `OK [5/7] no absolute paths` · `OK [6/7] doc_type name uniqueness` 를 내는 것 `[ArchitectPL firsthand]`. 이 확인 없이는 *"통과"* 가 **채점 대상이 실 repo 였다**는 사실과 구별되지 않는다.
 - ★**이 절은 normative 계수에 들어가지 않는다** — §결정 5 자신의 어휘가 가른다(*"applicability = self-declared(opt-in), probe presence = normative"*). 따라서 §결정 6 의 *"신규 normative = M-1 · M-2 둘뿐"* 은 본 절에도 불구하고 유지된다.
 
+- ★★**day-1 corpus 정의역 = 적격 실증분 한정 (U-1 처분 ⓐ — 확정)**. 부적격 base 를 편입하면 `INDETERMINATE` 가 쌓여 `≥1 = exit 1` 로 **corpus born-RED** 가 된다. ⇒ ⓐ **적격 실증분만 day-1 편입** ⓑ 미편입분은 **`"base 부적격으로 day-1 미편입 — 적격화 후 편입"`** 을 사유와 함께 **명시**(삭제·은폐 금지 — 파생 설계는 보존하고 편입 시점만 이월) ⓒ ★**`N_gates ≥ 2` 형 상수 하한을 day-1 에 걸지 않는다**(실증 base 가 1 이면 그 자체로 born-RED) — baseline 은 **실착지 값에서 출발하는 forward-only ratchet**(§결정 5 D-3).
+  - **소급 부여안 기각 근거**: *"부적격 base 에 마커 계약을 소급 부여한다"* 는 **A안으로 이미 기각된 retrofit 과 동일 종류**(가동 중 production 게이트의 출력 형식 변경)다. **같은 ADR 안에서 같은 처방을 한쪽은 기각·한쪽은 채택하면 일관성이 파손**되고 §결정 2 **forward-only ratchet** 과도 모순이다.
+  - ★**프레이밍 동반 의무**: *"day-1 corpus 가 작다"* 는 **결함이 아니라 ratchet 의 출발점**이며 **신규·개정 게이트가 3-conjunct 를 충족하며 착지할 때마다 단조 증가**한다. **둘 중 하나만 쓰면 각각 과대·과소**이므로 병기한다. 정의 site = Change Plan **MECH-4 ⑫**(중복 저작 회피 — 나머지는 cross-ref).
+
 **잔여 상속(신규 저작 0)**: *"모든 진짜 landed-gate 가 실제로 self-declare 했는가"*(열거 완결성)는 **기계 강제 불가 — self-declared 의존**이다. ADR-154 §결과의 AC-13 열거-완결성 residual 처분을 그대로 상속한다(honest-ceiling 공개 + review-tier 판정). 새 잔여 문법을 만들지 않는다.
 
 ### 결정 8 — sidecar manifest 계약 (신규 durable 스키마 — 형태 판정 (ii) 의 실체)
@@ -372,6 +376,11 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
   > **계수 기준 정정 기록(무언 폐기 금지)**: 초판 headline 은 *"가능 5 / 불가 6 / 분모 11"* 이었으나 **기준이 혼재**했다 — `가능 5` 는 **유형** 수(T1~T5), `불가 6` 은 **인스턴스** 계상이었고 **분모 11 은 도출이 문서 어디에도 없었다**. 기준을 **인스턴스** 로 통일해 전건 열거·재계수한 결과가 **7/20** 이다. **7/20 = 0.350 < 5/11 = 0.455** 이므로 재계수는 비율을 **하향**한다(즉 구 headline 이 이미 비율을 상향하고 있었다 — 자기 규칙 위반의 자진 정정). 유형 기준(5/7 = 0.714)은 상향이므로 **채택 불가**.
 - ★**day-1 강제 대상 = wrapper 자기 게이트 한정**(§결정 3). 본 carrier Story 가 낳은 타 repo 게이트 스크립트는 **이 계약으로 즉시 강제되지 않는다** — 그 repo 는 CI 자체가 부재하며 커버는 별 carrier 다. **재발 채널을 하나 닫았을 뿐 carrier 자신의 산출물은 아직 그 채널 밖**이다.
 - ★**arm-L 대조군의 정당성을 판정하는 상위 심급은 없다.** 표본이 잘못 저작되면 게이트는 그것을 알 수 없다. binding stamp 는 **drift 를 막을 뿐 최초 저작 오류를 막지 않는다.**
+
+- ★★**arm-L 은 메타-게이트 2 에서 파생되므로 인식론적으로 결합돼 있다 (논리적 무순환이 이것을 상쇄하지 않는다).** arm-L base 후보 3 이 전건 부적격(`::error::[` = 0)이라 arm-L 은 **적격 실증 2**(`check_hard_gate_self_verification` · `check_selftest_execution_liveness`)에서 취해지는데, **그 2 가 곧 §결정 3 이 인용하는 cross-seal 의 두 층**이다. 논리적 순환은 없다(코드 import 0 · 발견 정의역 disjoint · 결속 단방향). **그러나 결합 2건이 남는다**: ⓐ **공통-모드** — 그 2 가 hollow 화되면 **봉인과 대조군이 동시에 열화**하며 corpus 는 RED 를 내되 *"표본 오저작 ↔ 원 게이트 hollow 화 ↔ recipe drift"* **3자를 미분별**한다 ⓑ **변경 증폭** — 그 2 를 **정당하게** 편집할 때마다 stamp 불일치 → `exit 3` → 같은 PR 에서 corpus 재파생이 강제되는데, 하필 **거버넌스 Story 가 가장 자주 건드리는 2 파일**이다.
+  > **천장 문면**: **arm-L 은 메타-게이트 2 에서 파생되므로 그 2 게이트에 대한 독립 상위 심급이 아니다** — corpus 의 arm-L 관측은 **동결 사본의 합성 fixture 위 거동**에 관한 것이지 **CI 상 live 거동의 증거가 아니다.**
+
+  완화(해소 아님) = **reconciler 3-way 진단 의무**(위 3자 분별 보고) · **판정기 미투입**(`classification[]` 규약 동형).
 - ★**day-1 warning-tier = 자기 RED 가 merge 를 막지 못한다**(*governance-tier dark* quasi-pattern). 완화 = 게이트가 **stdout 에 그 사실을 직접 emit** 하고, 승격 trigger 를 **증거 기한**(PR 누적 20 도달 — ADR-171 §결정 6/§결정 10)으로 확정해 무기한 defer 를 막는 것뿐이다. **문서 선언은 읽는 쪽이 없으면 0 이다.**
 - ★★**arm-invariant 판정기 계약은 역산 채널을 3개 닫지만 라벨 역산을 해결하지 않는다.** 잔여 3 을 명시한다 — ⓐ `build[]`·`classification[]` projection 배제는 **프로세스 경계 규약**이지 격리 보증이 아니다 ⓑ 표본 **개수·순서 통계**로부터의 추측은 차단되지 않는다 ⓒ **본 계약 단독으로 역산 판정기를 배제할 수 없다**. 완전 배제는 **blinded 섭동**(경로·파일명·arm 배정·stamp 좌표를 고정한 채 알려진 hollowing 변형을 주입해 `LIVE → HOLLOW` 뒤집힘을 전건 요구)을 요구하며 그 설계는 **별 축 소관**이다. 판정기 계약 `classify(sample_artifact, fixtures{kill,clean,empty}, gate_markers)` 는 **3항 전부 arm-invariant** 이므로 blinded 섭동과 **정면 양립**한다.
 - ★★**day-1 적격 모집단은 「미확정」이다 — 1차 census 는 방법 결함으로 폐기됐고, 그 수치를 인용하는 것을 금지한다.**
