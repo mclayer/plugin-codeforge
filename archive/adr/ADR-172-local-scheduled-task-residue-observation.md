@@ -187,6 +187,8 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 
 **승격 이력 = 0건** (도입기 상태).
 
+**미확인 1건 (정직 기재)**: (나)·(다)가 **진행 중인 run** 을 중단시키는지는 **확인 불가**다 ⇒ "즉시 정지된다" 고 쓰지 않는다. 진행 중 run 에 대한 정지는 **정지 플래그 판독 시점**에 의존한다.
+
 ### §결정 10 — 상속·누적 권한면 6종 (AC-4 하한 정본 전사)
 
 본 절은 Change Plan §7.3 의 전사이며 새 결정 0.
@@ -204,12 +206,7 @@ codeforge 로컬 잔재 관측 (관측-only · 보고 전용)
 
 **★ 완결성 미보증 declare**: 이 열거는 닫힌 집합이 아니다. 미확인 권한면이 새로 발견되면 본 표에 편입되어야 한다. 신규 면 발견 시 해당 §결정 amendment 와 함께 테스트 AC-4 의 검사 대상을 확대해야 한다.
 
-**근거**:
-- 1–4번 면: ADR-172 §결정 4 기존 기술 (host setting · git config)
-- 5번 면: 로컬 스케줄 작업의 고유 권한 위험
-- 6번 면: code.claude.com/docs/en/desktop-scheduled-tasks — "Permissions for scheduled tasks" / "Manage scheduled tasks" (2026-08-13 실측)
-
-**미확인 1건 (정직 기재)**: (나)·(다)가 **진행 중인 run** 을 중단시키는지는 **확인 불가**다 ⇒ "즉시 정지된다" 고 쓰지 않는다. 진행 중 run 에 대한 정지는 **정지 플래그 판독 시점**에 의존한다.
+**근거**: 본 표 전체 = Change Plan §7.3 전사. 5번 면(`additionalDirectories`)은 요구사항 lane iter5 에서 실측 발견돼 AC-4 문면이 닫힌 4종 → 6종으로 정정된 근거이며, 6번 면은 공식 문서 firsthand 실측(2026-08-13)이다 [source: code.claude.com/docs/en/desktop-scheduled-tasks — "Permissions for scheduled tasks" / "Manage scheduled tasks"].
 
 ## 결과
 

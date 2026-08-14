@@ -408,6 +408,14 @@ class TestAC4AuthorityFacets:
         repo 자산(ADR-172 §결정 10)에서 6종 열거표를 읽음.
 
         6종 = gh CLI · MCP github · settings.json · git config · additionalDirectories · 태스크별 저장 승인
+
+        알고리즘:
+        1. §결정 10 섹션 추출 (헤딩 기준)
+        2. | 로 시작하는 줄 = 데이터 행 추출 (헤더/구분행 제외)
+        3. assert len(데이터 행) == 6 → 행 개수 구속
+        4. 각 행을 | split해서 첫 셀 = 면 번호, 둘째 셀 = 면 이름
+        5. 면 번호 1~6 각각 정확히 한 행씩 존재 확인
+        6. 각 면의 이름 셀을 그 행 안에서만 고유 리터럴로 검사
         """
         # ADR-172 권한면 절 찾기
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
@@ -426,33 +434,69 @@ class TestAC4AuthorityFacets:
         decision_10_end = content.find("### ", decision_10_idx + 4)
         decision_10_section = content[decision_10_idx:decision_10_end if decision_10_end != -1 else None]
 
-        # 6종 권한면 검사 — 식별 가능한 고유 리터럴 (한글 키워드 OR 매칭 폐지)
-        # 각 면은 [면#, 검사대상 리터럴 리스트] 형식
-        facets_to_check = [
-            ("1", ["gh", "CLI", "인증"]),        # 1번 면: gh CLI 인증
-            ("2", ["MCP", "github", "서버"]),      # 2번 면: MCP `github` 서버
-            ("3", ["`~/.claude/settings.json`"]),  # 3번 면: `~/.claude/settings.json`
-            ("4", ["git config", "커밋 identity"]),  # 4번 면: git config
-            ("5", ["`additionalDirectories`"]),   # 5번 면: `additionalDirectories` 핵심
-            ("6", ["태스크별 저장 승인", "Always allowed"]),  # 6번 면: 태스크별 저장 승인
-        ]
+        # 절 내에서 | 로 시작하는 줄 = 테이블 행 추출
+        lines = decision_10_section.split('\n')
+        data_rows = []
+        for line in lines:
+            line_stripped = line.strip()
+            # | 로 시작하고 |---| 구분행이 아닌 행만 추출 (헤더도 제외)
+            if line_stripped.startswith('|') and '---|' not in line_stripped:
+                # 첫 번째는 헤더행 (# | 면 | 실효 ...)
+                # 그 다음부터는 데이터행 (| 1 | gh ... |)
+                if not line_stripped.startswith('| #'):
+                    data_rows.append(line_stripped)
 
-        found_facets = []
-        missing_facets = []
-        for facet_num, facet_literals in facets_to_check:
-            # 각 면마다 최소 1개 리터럴이 존재하면 인정
-            if any(lit in decision_10_section for lit in facet_literals):
-                found_facets.append(facet_num)
-            else:
-                missing_facets.append((facet_num, facet_literals))
-
-        # Assert (ㄱ): 6종 모두 존재 (완전 열거)
-        assert len(found_facets) == 6, (
-            f"AC-4: 권한면 6종 완결성 미충족. 발견: {len(found_facets)}건/6, "
-            f"미발견: {[(n, lits) for n, lits in missing_facets]}"
+        # Assert (ㄱ): 정확히 6개 데이터 행 존재
+        assert len(data_rows) == 6, (
+            f"AC-4: 데이터 행 개수 오류. 기대 6개, 실제 {len(data_rows)}개. "
+            f"행 내용: {data_rows}"
         )
 
-        # Assert (ㄴ): 완결성 미보증 declare 존재 (AD-172 §결정 10 정책)
+        # 각 데이터 행을 파싱해서 면 번호와 이름 추출
+        facet_numbers_found = set()
+        facet_checks = {
+            "1": ("gh", "CLI"),  # 1번 면: gh, CLI 둘 다
+            "2": ("MCP", "github"),  # 2번 면: MCP, github 둘 다
+            "3": ("settings.json",),  # 3번 면: settings.json (단독)
+            "4": ("git config",),  # 4번 면: git config (단독)
+            "5": ("additionalDirectories",),  # 5번 면: additionalDirectories (단독)
+            "6": ("태스크별 저장 승인", "Always allowed"),  # 6번 면: 둘 다
+        }
+
+        for row in data_rows:
+            # | 로 split해서 셀 추출
+            cells = [c.strip() for c in row.split('|')]
+            # | row | num | name | ... | 형태 → cells[1]=num, cells[2]=name
+            if len(cells) < 4:
+                continue
+
+            facet_num = cells[1].strip()
+            facet_name = cells[2].strip()
+
+            # 면 번호가 1~6 범위인지 확인
+            if facet_num not in ["1", "2", "3", "4", "5", "6"]:
+                continue
+
+            facet_numbers_found.add(facet_num)
+
+            # 해당 면 번호의 고유 리터럴을 그 행 안에서만 검사
+            if facet_num in facet_checks:
+                required_literals = facet_checks[facet_num]
+                # facet_name 셀 안에서 모든 required_literals 확인
+                for lit in required_literals:
+                    assert lit in facet_name, (
+                        f"AC-4: 면 {facet_num} 리터럴 미검출: '{lit}'. "
+                        f"행 이름 셀: {facet_name}"
+                    )
+
+        # Assert (ㄴ): 면 번호 1~6이 각각 정확히 한 번씩 존재
+        expected_numbers = {"1", "2", "3", "4", "5", "6"}
+        assert facet_numbers_found == expected_numbers, (
+            f"AC-4: 면 번호 완결성 미충족. 발견: {facet_numbers_found}, "
+            f"기대: {expected_numbers}, 누락: {expected_numbers - facet_numbers_found}"
+        )
+
+        # Assert (ㄷ): 완결성 미보증 declare 존재 (ADR-172 §결정 10 정책)
         declare_keywords = ["★ 완결성 미보증", "닫힌 집합이 아니다", "미확인 권한면"]
         has_declare = any(kw in decision_10_section for kw in declare_keywords)
         assert has_declare, (
