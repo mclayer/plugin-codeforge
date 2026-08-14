@@ -62,6 +62,16 @@ NON_VIOLATING_TOKENS = (
     "/<user>/temp/cache",
     "<미정규화-경로-제거>",
     "- 선언=test · 실측=test · 불일치=N · key=test:<drive>\\data\\archive",
+)
+
+# ★ **정의역 밖** — Change Plan §8.8.1 각주는 UNC(`\\server\share`)를 SUT 정규화 3축의
+#   *검사 대상 자체가 아님*(검사 안 함)으로 규정한다. 아래 토큰을 NON_VIOLATING_TOKENS
+#   에 두고 `hits == []` 를 단언하면 "검사해서 정상" 으로 지위가 뒤바뀌어 고착되고,
+#   향후 UNC 마스킹이 도입되면 그 봉합이 오히려 이 오라클을 RED 로 만든다(ratchet).
+#   그래서 여기로 분리하고 **단언하지 않는다** — 기록만 남기는 참조 상수다.
+#   (구현리뷰 iter2 F-5. 시각 실측: 토큰 유입 `e80dc27a6` 12:53:24 → 각주 `c774f00e`
+#    13:24:51 — 코드가 먼저이고 정당화가 31분 뒤였다.)
+OUT_OF_DOMAIN_TOKENS = (
     "- 선언=test · 실측=test · 불일치=N · key=test:\\\\server\\share\\resource",
 )
 
@@ -120,12 +130,81 @@ def _worker_dedup_concurrent(idx, barrier, sink_path, lock, worker_count, rounds
                 f.write(f"{idx}\t{key}\n")
 
 
-def _worker_heartbeat(idx, hb_path, barrier, base_epoch):
-    """Worker: barrier 정렬 후 heartbeat write (oracle ④ 용)."""
+def _worker_heartbeat(idx, hb_path, barrier, base_epoch, rounds=1, interval=0.0):
+    """Worker: barrier 정렬 후 heartbeat 를 `rounds` 회 write (oracle ④ 용).
+
+    ★ rounds/interval 이 있는 이유: oracle ④ 는 **쓰기 중(in-flight) 표집**으로
+      원자성을 재므로 관측창이 필요하다. 1회 write 는 창이 없어 부모가 찢어진 중간
+      상태를 구조적으로 볼 수 없다(이전 판본의 판별력 0 원인).
+    """
     sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
     import scheduled_task_reconcile as sut
     barrier.wait()  # 동시 진입
-    sut.write_heartbeat(now=base_epoch + idx, path=hb_path)
+    for r in range(rounds):
+        sut.write_heartbeat(now=base_epoch + idx * 1000 + r, path=hb_path)
+        if interval:
+            time.sleep(interval)
+
+
+def _worker_heartbeat_nonatomic(idx, hb_path, barrier, base_epoch, rounds, torn_pause):
+    """MUTANT worker (negative control): **비원자** write — 절단 후 분할 기록.
+
+    production 을 건드리지 않고 `write_heartbeat` 의 `os.replace` 원자 write 를 잃은
+    writer 를 테스트면에서 재현한다. 관측창을 결정론으로 넓히려 중간에 pause 한다
+    (실제 비원자 write 의 창은 수십 µs 라 표집 확률이 호스트 의존이 된다).
+    """
+    barrier.wait()
+    for r in range(rounds):
+        value = "%d" % (base_epoch + idx * 1000 + r)
+        with open(hb_path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(value[:5])       # ★ 절단 상태 노출 (유효 정수지만 기대집합 밖)
+            fh.flush()
+            time.sleep(torn_pause)
+            fh.write(value[5:] + "\n")
+
+
+def _read_heartbeat_sample(path):
+    """heartbeat 파일 1회 표집 → (kind, raw). kind = absent | present | unreadable."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return ("present", fh.read())
+    except FileNotFoundError:
+        return ("absent", None)          # 첫 write 이전 = 유효 상태
+    except OSError:
+        return ("unreadable", None)      # 공유 위반 등 — 판정 불가 표본(집계에서 제외)
+
+
+def _poll_heartbeat(path, procs, deadline_s=60.0, max_samples=200000):
+    """워커 **join 전에** 돌면서 heartbeat 파일을 반복 판독해 표본을 모은다.
+
+    ★ 이것이 oracle ④ 의 판별력 원천이다. 전건 join 후 1회 판독은 정지 시점만 보므로
+      비원자 writer 도 통과한다(정지 시점엔 어떤 writer 도 완전한 값을 남긴다).
+    """
+    samples = []
+    end = time.time() + deadline_s
+    while any(p.is_alive() for p in procs):
+        samples.append(_read_heartbeat_sample(path))
+        if len(samples) >= max_samples or time.time() > end:
+            break
+    return samples
+
+
+def _torn_samples(samples, expected_values):
+    """표본 중 **찢어진 상태**를 열거한다 (빈 리스트 = 부분 기록 0).
+
+    찢어짐 판정 = 파일이 존재하는데 내용이 **기록된 적 없는 값**인 경우.
+      · 빈 문자열(절단 직후) · 자릿수 절단 prefix(`17551`) 모두 여기 걸린다.
+      · `int()` 파싱 성공만 보는 판정은 prefix 절단을 놓친다 — prefix 도 유효 정수다.
+    """
+    expected = {str(v) for v in expected_values}
+    torn = []
+    for kind, raw in samples:
+        if kind != "present":
+            continue
+        body = (raw or "").strip()
+        if body not in expected:
+            torn.append(raw)
+    return torn
 
 
 def _worker_dedup_bypass_mutant(idx, barrier, sink_path, lock, worker_count, rounds):
@@ -205,6 +284,9 @@ class TestFuzzPathNormalization:
         import hashlib
 
         # 자기 건전성(negative control): 정규화 **성공** 토큰을 위반으로 잡지 않는다.
+        #   ★ OUT_OF_DOMAIN_TOKENS(UNC)는 여기서 단언하지 않는다 — Change Plan §8.8.1
+        #     각주가 "정의역 밖(검사 안 함)" 으로 규정한 축이라 어느 쪽으로도 고착시키지
+        #     않는다(구현리뷰 iter2 F-5).
         for tok in NON_VIOLATING_TOKENS:
             assert unnormalized_path_hits(tok) == [], (
                 f"oracle ① 자해: 비위반 토큰을 위반으로 오탐 — {tok!r}"
@@ -809,38 +891,88 @@ class TestConcurrencyDedup:
                 sut.STOP_FLAG_LOCAL = original_flag
 
     def test_concurrency_oracle4_heartbeat_atomic_write(self):
-        """Oracle ④: 4워커 동시 heartbeat write 시 부분 기록 0 (파일 항상 완전한 정수).
+        """Oracle ④: 4워커 동시 heartbeat write 중 **쓰기 중 표집**으로 부분 기록 0.
 
-        Concurrency: 4개 프로세스가 동시에 write_heartbeat 호출
+        ★ 이전 판본의 판별력 0 (구현리뷰 iter2 F-4 — 여기서 봉합):
+          4 프로세스를 `p.join()` 으로 **전건 완료시킨 뒤 1회 판독**했기 때문에 찢어진
+          중간 상태가 구조적으로 관측 불가였다. 인라인 주석은 *"파일이 유효한 정수라는
+          것 자체가 부분 기록 0 증명"* 이라 적었으나 이는 비-sequitur 다 — 비원자 writer
+          도 **정지 시점엔** 완전한 값을 남긴다. 그 주석은 삭제했다.
+
+        ★ 여기서의 형상:
+          ① 워커는 `rounds` 회 반복 write 해 관측창을 만든다.
+          ② 부모는 **join 전에** 폴러(`_poll_heartbeat`)로 파일을 반복 판독해 표본을 모은다.
+          ③ 모든 표본이 유효 상태임을 단언 — 유효 = 파일 부재(첫 write 이전) ∨ 내용이
+             **실제 기록된 값 집합의 원소**. `int()` 파싱 성공만 보면 자릿수 절단
+             prefix(`17551`)를 놓치므로 기대집합 소속으로 잰다.
+          ④ 비공허성 앵커 2종 — present 표본 수 하한 + **서로 다른 값 2개 이상 관측**
+             (= 폴러가 파일이 바뀌는 동안 실제로 표집했다는 증거).
+
+        mutant kill: `write_heartbeat` 의 `os.replace` 원자 write 를 비원자 write
+          (open+write 직접)로 교체 ⇒ RED. 형제 negative control =
+          `TestConcurrencyNegativeControl.test_concurrency_oracle4_nonatomic_writer_is_torn`
+          (production 무접촉으로 폴러의 검출력 자체를 상시 입증).
         """
+        WORKERS = 4
+        ROUNDS = 150
+        INTERVAL = 0.001          # 관측창 확보 (총 쓰기 구간 ≈ 150ms 이상)
+
         with tempfile.TemporaryDirectory() as tmpdir:
             hb_path = os.path.join(tmpdir, "heartbeat.epoch")
             mp.set_start_method("spawn", force=True)
-            barrier = mp.Barrier(4)
-            base_epoch = int(time.time())
+            barrier = mp.Barrier(WORKERS)
+            base_epoch = 1700000000      # 고정 10자리 (prefix 절단이 기대집합에 없게)
+            expected = {base_epoch + i * 1000 + r
+                        for i in range(WORKERS) for r in range(ROUNDS)}
 
-            # Act: 4개 프로세스 동시 write (모듈 레벨 함수 사용)
             procs = [
-                mp.Process(target=_worker_heartbeat, args=(i, hb_path, barrier, base_epoch))
-                for i in range(4)
+                mp.Process(target=_worker_heartbeat,
+                           args=(i, hb_path, barrier, base_epoch, ROUNDS, INTERVAL))
+                for i in range(WORKERS)
             ]
+            start = time.time()
             for p in procs:
                 p.start()
+
+            # Act: ★ join **전에** 쓰기 중 표집
+            samples = _poll_heartbeat(hb_path, procs)
+
             for p in procs:
                 p.join()
+            elapsed = time.time() - start
+            samples.append(_read_heartbeat_sample(hb_path))     # 정지 시점 1건 추가
 
-            # Assert: 파일 내용이 유효한 정수 에포크 (부분 기록 0)
+            present = [s for s in samples if s[0] == "present"]
+            distinct = {(raw or "").strip() for _, raw in present}
+
+            # Assert (ㄱ) — 비공허성 1/2: 폴러가 쓰기 구간에서 실제로 표집했다
+            assert len(present) >= 50, (
+                f"비공허성 붕괴: present 표본 {len(present)}건 (총 {len(samples)}) — "
+                "폴러가 쓰기 중 파일을 거의 보지 못했다. 이 상태의 '부분 기록 0' 은 공허하다"
+            )
+            # Assert (ㄴ) — 비공허성 2/2: 파일이 폴러 밑에서 실제로 바뀌었다
+            assert len(distinct) >= 2, (
+                f"비공허성 붕괴: 관측된 서로 다른 값 {len(distinct)}종 — 폴러가 쓰기 중이 아니라 "
+                f"정지 상태만 봤다(이전 판본과 동일한 사각). 관측값={sorted(distinct)[:5]}"
+            )
+
+            # Assert (ㄷ) — oracle ④ 본체: 모든 표본이 유효 상태 (부분 기록 0)
+            torn = _torn_samples(samples, expected)
+            assert torn == [], (
+                f"oracle ④ 위반: 찢어진 표본 {len(torn)}건 관측 (원자 write 아님). "
+                f"예: {torn[:3]!r}"
+            )
+
+            # Assert (ㄹ) — 최종 상태도 기록된 값 (전건 완료 후 정지 시점)
             assert os.path.exists(hb_path), f"heartbeat 파일 부재: {hb_path}"
             with open(hb_path, encoding="utf-8") as f:
                 content = f.read().strip()
+            assert content in {str(v) for v in expected}, (
+                f"oracle ④: 최종 내용이 기록된 값 집합 밖: {content!r}"
+            )
 
-            try:
-                epoch_val = int(content)
-                assert epoch_val > 0, f"유효한 에포크 기대, 실제: {epoch_val}"
-                # Oracle ④: 파일이 유효한 정수라는 것 자체가 부분 기록 0 증명
-            except ValueError:
-                pytest.fail(f"oracle ④: heartbeat 파일이 유효한 정수 아님: {content!r} "
-                           f"(부분 기록 또는 손상 의심)")
+            print(f"\nConcurrency oracle ④: samples={len(samples)} present={len(present)} "
+                  f"distinct={len(distinct)} torn={len(torn)} wall_clock={elapsed:.2f}s")
 
 
 class TestConcurrencyNegativeControl:
@@ -903,6 +1035,56 @@ class TestConcurrencyNegativeControl:
                 f"negative control: WORKERS=1 에서 interleaving={interleaving_count}, "
                 f"기대: 0 (순차 실행이므로 교차 없음, assert4 는 RED — 정상)"
             )
+
+    def test_concurrency_oracle4_nonatomic_writer_is_torn(self):
+        """Negative control (oracle ④ 대칭): **비원자 writer** 를 넣으면 폴러가 찢어짐을 잡는다.
+
+        oracle ④ 의 판별력은 "쓰기 중 표집" 에서 나온다. 그 표집이 실제로 찢어진 상태를
+        구별하는지를 **production 무접촉**으로 상시 입증한다 —
+        `_worker_heartbeat_nonatomic` 은 `os.replace` 원자 write 없이 절단 후 분할
+        기록하는 writer 이며, 폴러가 그 중간 상태를 표본으로 잡아야 한다.
+
+        ★ 이 테스트가 GREEN 이라는 것은 "찢어짐이 관측됐다" 는 뜻이고, 그것이
+          oracle ④ 의 `torn == []` 단언이 genuine 하다는 증거다(형제 oracle ① 의
+          `WORKERS=1 → interleaving 0` 과 같은 구조).
+        """
+        ROUNDS = 15
+        TORN_PAUSE = 0.008        # 결정론적 관측창 (총 ≈120ms)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hb_path = os.path.join(tmpdir, "heartbeat-nonatomic.epoch")
+            mp.set_start_method("spawn", force=True)
+            barrier = mp.Barrier(1)
+            base_epoch = 1700000000
+            expected = {base_epoch + r for r in range(ROUNDS)}
+
+            procs = [
+                mp.Process(target=_worker_heartbeat_nonatomic,
+                           args=(0, hb_path, barrier, base_epoch, ROUNDS, TORN_PAUSE))
+            ]
+            for p in procs:
+                p.start()
+
+            samples = _poll_heartbeat(hb_path, procs)
+
+            for p in procs:
+                p.join()
+
+            present = [s for s in samples if s[0] == "present"]
+            assert len(present) >= 10, (
+                f"negative control 자체가 공허: present 표본 {len(present)}건 — "
+                "폴러가 파일을 보지 못했다(검출력 판정 불가)"
+            )
+
+            torn = _torn_samples(samples, expected)
+            assert len(torn) >= 1, (
+                "negative control 실패: 비원자 writer 인데 찢어진 표본 0건 — "
+                f"폴러의 검출력이 없다(oracle ④ 의 torn==[] 이 공허해진다). "
+                f"present={len(present)}"
+            )
+
+            print(f"\nNegative control oracle ④: present={len(present)} torn={len(torn)} "
+                  f"예시={torn[0]!r}")
 
     def test_concurrency_oracle1_discriminates_dedup_bypass(self):
         """Mutant: dedup_key 를 무시하고 unique suffix 추가 → oracle ① RED 입증.
