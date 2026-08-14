@@ -37,6 +37,21 @@ amendment_log:
       사정거리를 rust-ci 경로 한정으로 정정(docker-build 경로 0). 검증계약·게이트·실측의 4요건
       정본은 Change Plan 위임 유지(이중 SSOT 금지).
     sunset_justification: 'N/A — is_transitional: false (permanent policy). 정정 2건은 완화 주장의 과대 사정거리를 좁히는 방향이라 통제 약화 아님. 빌더 rail 은 §해소 기준 약화-발의 차단 목록에 편입(강화 방향).'
+  - amendment: 2
+    carrier_story: CFP-2963
+    date: 2026-08-14
+    reinterpretation: true
+    scope: >-
+      설계 escalation 2차 — 문면 정정 2건(신규 결정 0). (1) Amendment 1 §2 의 PGPORT 단일
+      파생 "배치 축" 정정 — job-level env 는 job context 를 제공하지 않아(가용 목록에 job 부재,
+      값 = null) 빈 PGPORT = 포트 소실 재생산(무증상)이므로 step-level $GITHUB_ENV 단일
+      파생으로 정정한다. 표현식·단일 파생·2-변수 동기화 금지 불변식은 무변경. (2) §결정 8 의
+      12-site 회계 문면을 재편 전 이력 사실로 시제 전환하고, smoke 이설로 소비처가 0 이 된
+      docker-build.yml 의 RDB_NET_HOST 선언 제거를 명기(사어 제거 — AC-20 term 집합 밖이라
+      분모 무영향). E2(과도기 hosted 축 성립 조건)·E3(smoke 순위 S1→S3 전환·--layers rail·
+      BV-8 아티팩트 동일성)는 ADR 에 대응 문장이 없어 Amendment 미발생 — Amendment 1 §5 위임
+      구조대로 Change Plan 단독 계약(§3.8a (5)/(8) · §8.BV BV-8 · §11.4b M-26/M-27).
+    sunset_justification: 'N/A — is_transitional: false (permanent policy). 정정 2건은 (1) born-broken 배치 지시의 제거 (2) 사어(소비처 0 선언)의 제거 방향이라 통제 약화 0 — 어떤 rail·게이트·검증 축도 완화하지 않는다.'
 ---
 
 # ADR-174: MCLATS ARC CI 러너 topology — 운영 클러스터 동거 CI 실행면 + ADR-147 축별 처분
@@ -144,6 +159,14 @@ ADR-147 Amd5 C1/C3 의 값공간을 **3rd 도메인 "ARC scale-set 이름" addit
 3. **§결정 4 서술 정정(1급)** — "DiskPressure eviction … CI 음수 priority 가 축출 순서를 확정한다(운영 pod 보호의 **결정적** 완화)" → **"축출 순서 한정 완화 — 스케줄 차단·image GC 축은 미지배"**. 근거: eviction **이전 단계**에서 이미 운영 파급 2종이 발생한다 — ⓐ DiskPressure taint 가 신규 pod 스케줄링을 차단 ⓑ imagefs 부족 시 kubelet 이 pod 축출 **이전에** 미사용 이미지를 **노드 전역 GC**(운영 이미지 소거 → pull 재발). 추가로 hard threshold 초과 시 kubelet 은 **0s grace 로 축출**하며 PDB·`terminationGracePeriodSeconds` 를 무시한다 [source: https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/]. ⇒ priority 는 *순서*를 정할 뿐 *유예*를 주지 않는다. 컷오버 관측도 "Evicted 0" 만으로는 불충분(Change Plan §11.2 G5 leg⑦ 확장).
 4. **§결정 7 R5 사정거리 정정** — rust pre-bake 이득은 **rust-ci 경로 한정이고 docker-build 경로에서는 0** 이다: Dockerfile 이 `FROM rust:${RUST_VERSION}-slim` 으로 **빌드 내부에서** rust 를 조달하므로 러너·toolbox 이미지의 rust 소결이 docker-build 빌드 시간을 줄이지 않는다 [verified — 4 Dockerfile `FROM` 실측]. 구 문면이 전 경로 이득으로 읽힐 여지를 닫는다.
 5. **위임 구조 유지 명기** — 본 ADR 은 **결정**만 담고, Change Plan 이 **구체화 계약**(§7 보안 / §8 Test Contract·§8.BV / §11 마이그레이션·게이트·실측)을 소유한다. Amendment 1 이 신설한 검증계약(BV-1~BV-7)·게이트(G1-daemonless · G1-routing-hardcode · G4-dns · G4-disk-budget · G4-limitrange-service · G5 leg⑦ 확장 · G8-6)·선결 실측(M-18~M-25, P-12~P-16)의 4요건 정본은 **전부 Change Plan** 이며 본 ADR 은 이를 재기술하지 않는다(이중 SSOT 금지).
+
+### Amendment 2 — 문면 정정 2건 (CFP-2963 설계 escalation **2차**, 2026-08-14)
+
+> 신규 결정 0. 구현 lane 이 회부한 E1·E4 에 대응하는 **ADR 내부 반증·수정 문장이 실재**하여 발의한다(반증 문장 부재 항목은 편입하지 않는다 — 하기 §3).
+
+1. **Amendment 1 §2 배치 축 정정 — "job-level env 단일 파생" 은 부정 확정**: `PGPORT` 단일 파생을 **step-level(`$GITHUB_ENV` 경유)** 로 정정한다. 근거 = GitHub Actions 공식 context 가용성 표에서 `jobs.<job_id>.env` 의 가용 context = `github, needs, strategy, matrix, vars, secrets, inputs` 로 **`job` 이 부재**하고 `jobs.<job_id>.steps.env`·`steps.run` 에만 포함되며, 산문이 "only available within the execution `steps` of a job. **Otherwise, the value of this property will be `null`.**" 로 명시한다 [source: raw.githubusercontent.com/github/docs/main/content/actions/reference/workflows-and-actions/contexts.md]. ⇒ **`job` 은 에러가 아니라 null** 로 평가되므로 job-level 배치는 빈 `PGPORT` → `postgres://…@host:/mctrader` = **Amendment 1 §2 자신이 지목한 포트 소실 결함의 재생산**이며 **무증상 파손 채널**이다(Change Plan §7.4 F-21 동형). **무변경 부분(축소 독해 금지)**: 표현식 자체 · **단일 파생 1곳** · **2-변수 동기화 드리프트 신설 금지**(§결정 8 형태 A 판정 근거) · 고정 5432 상수화 금지 · BV-6 실측 의무는 **전부 유지**된다 — 정정 대상은 **배치 축 단독**이다. BV-6 의 예측(빈 문자열)은 **파손 0**이며 그 근거는 hook 코드(`hostPort` 미설정)이지 context 가용성이 아니다(다른 null 채널) — 단 관측 귀속을 위해 같은 step 에서 `job` 의 다른 필드 non-empty 실증을 conjunct 로 요구한다(4요건 정본 = Change Plan §8.BV).
+2. **§결정 8 12-site 회계 문면 시제 전환 + 사어 제거**: "`rust-ci.yml` rdb-e2e 11 site + `docker-build.yml` smoke 1 site" 는 **재편 *전* 이력 사실**로 읽는다. 재편 후 실측 = **rust-ci 소비 11 · docker-build 소비 0**(`SMOKE_HEALTH_HOST` = 전 repo 0건) — smoke 가 빌더 내부(stage / working container)로 이설되며 curl 대상이 **동일 프로세스 트리 내 `localhost`** 가 되어 host 치환 축 자체가 발생하지 않기 때문이다. ⇒ **`docker-build.yml` job env `RDB_NET_HOST` 선언은 제거**한다(주석 포함, 무언 삭제 금지 = 본 항이 기록). **회계 영향 = 없음**: `RDB_NET_HOST` 는 AC-20 ① term 집합(`docker build`/`docker run`/`docker buildx`/`services:`) **밖**이라 AC-20 분모·ND-1(재편 전 RED 재현) 어느 쪽에도 영향이 없다.
+3. **Amendment 미발생 declare(억지 편입 금지)**: 2차 escalation 의 **E2**(과도기 hosted 축 빌더 성립 조건) 와 **E3**(smoke S1→S3 순위 전환 · `--layers` 채택 rail · 검사↔push 아티팩트 동일성 BV-8) 는 **본 ADR 에 대응 문장이 존재하지 않는다** — Amendment 1 §5 가 빌더 spec 상세·검증계약·게이트·실측의 4요건 정본을 **전부 Change Plan 에 위임**한다고 명기했기 때문이다. 따라서 두 건은 **Change Plan 단독 계약**(§3.8a (5) 순위 3단·(8) hosted 성립 조건 / §8.BV BV-8 / §11.4b M-26·M-27)으로 두고 본 ADR 은 재기술하지 않는다(이중 SSOT 금지). `--layers` rail 은 **약화-발의 차단 성격이 아니라 예산-선행 조건**이라 §해소 기준 목록에도 편입하지 않는다.
 
 ## 결과
 
