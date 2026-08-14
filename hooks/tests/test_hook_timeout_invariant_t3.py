@@ -26,10 +26,40 @@ INV-T3 (Change Plan §4 #7):
 
 from __future__ import annotations
 
-import ast
 import re
 import pytest
 from pathlib import Path
+
+import check_stale_local_main_checkout as cslmc
+from test_hook_timeout_contract import _load_hooks_json
+
+BRANCH_GATE_HOOK = "git-branch-delete-merge-gate"
+STALE_FETCH_ENV = "CODEFORGE_STALE_FETCH_TIMEOUT_SEC"
+
+
+def _leaf_timeout(hook_name: str) -> int:
+    """hooks.json 에서 `<hook_name>` leaf handler 의 timeout 실파싱.
+
+    구 코드는 `HOOK_TIMEOUT = 60` 을 테스트에 하드코딩했다 — hooks.json 의 timeout 이
+    바뀌어도 불변식이 옛 값으로 계속 "검증"되는 결속 없는 상수였다. 실물 파싱으로 묶어
+    hooks.json 이 움직이면 INV-T3 가 그 값으로 재판정되게 한다.
+    """
+    data = _load_hooks_json()
+    found = [
+        handler
+        for entries in data["hooks"].values()
+        for entry in entries
+        for handler in entry.get("hooks", [])
+        if hook_name in handler.get("command", "")
+    ]
+    assert len(found) == 1, (
+        f"hooks.json 에 {hook_name} leaf handler 가 정확히 1개여야 함 (실측 {len(found)})"
+    )
+    timeout = found[0].get("timeout")
+    assert isinstance(timeout, int) and timeout > 0, (
+        f"{hook_name} timeout 이 양의 int 가 아님: {timeout!r}"
+    )
+    return timeout
 
 
 def _parse_python_constants(file_path: Path) -> dict[str, int]:
@@ -77,8 +107,8 @@ def test_inv_t3_budget_invariant():
     assert gh_budget is not None, "GH_TOTAL_BUDGET_SEC not defined"
 
     # INV-T3 조건
-    MARGIN = 10  # fail-open margin (Change Plan §3.2)
-    HOOK_TIMEOUT = 60  # hooks.json timeout for git-branch-delete-merge-gate
+    MARGIN = 10  # fail-open margin (Change Plan §3.2 — 설계 상수)
+    HOOK_TIMEOUT = _leaf_timeout(BRANCH_GATE_HOOK)  # hooks.json 실파싱 (하드코딩 금지)
 
     # 조건 1: timeout >= budget + margin
     assert (
@@ -96,20 +126,46 @@ def test_inv_t3_budget_invariant():
     )
 
 
-def test_stale_fetch_env_clamp_constants():
-    """S3 code: STALE_FETCH env clamp constants (26→10 / 7→7 / default→10).
+@pytest.mark.parametrize(
+    "env_value,expected",
+    [
+        (None, 10),   # 미설정   → default 10
+        ("7", 7),     # 상한 이하 → 그대로 (하향 전용이라 손대지 않음)
+        ("26", 10),   # 상한 초과 → 10 으로 하향 clamp
+        ("0", 10),    # 하한 미만 → default 10 (0 초 fetch 금지)
+        ("abc", 10),  # 파싱 불가 → default 10 (fail-safe)
+    ],
+)
+def test_stale_fetch_env_clamp_constants(monkeypatch, env_value, expected):
+    """S3: STALE_FETCH env clamp 를 **실호출**로 검증 (표 5케이스).
 
-    check_stale_local_main_checkout.py 에서 clamp 로직이 존재하는지 확인.
+    구 코드는 (a) 존재하지 않는 경로(`hooks/../check-stale-local-main-checkout.py`)를 보고
+    (b) 파일이 없으면 skip 했으며 (c) 있더라도 `"clamp" in content or "min(" in content`
+    라는 문자열 검사였다 — 주석에 `min(` 한 조각만 있어도 통과하는 준항진이었다.
+    실물은 `scripts/lib/check_stale_local_main_checkout.py` 이며, 여기서는 clamp 함수를
+    직접 호출해 입력→출력 표를 고정한다.
+
+    함수명은 RTM 수집 키라 유지하고 몸통만 교체했다.
     """
-    clamp_file = Path(__file__).parent.parent / "check-stale-local-main-checkout.py"
-    if not clamp_file.exists():
-        pytest.skip(f"Clamp script not found at {clamp_file} — deferred to integration")
-        return
+    if env_value is None:
+        monkeypatch.delenv(STALE_FETCH_ENV, raising=False)
+    else:
+        monkeypatch.setenv(STALE_FETCH_ENV, env_value)
 
-    with open(clamp_file) as f:
-        content = f.read()
+    actual = cslmc._get_fetch_timeout()
+    assert actual == expected, (
+        f"{STALE_FETCH_ENV}={env_value!r} → {actual} (기대 {expected})"
+    )
 
-    # Clamp logic 존재 확인 (명시적으로 min/max/clamp 호출 확인)
-    assert (
-        "clamp" in content.lower() or "min(" in content
-    ), "Clamp logic not found in check-stale-local-main-checkout.py"
+
+def test_stale_fetch_clamp_is_downward_only(monkeypatch):
+    """clamp 는 **하향 전용** — 어떤 env 값으로도 상한을 넘길 수 없다.
+
+    표 5케이스는 고른 점만 고정하므로, 상한 돌파 가능성 자체를 별도로 막는다
+    (SessionStart 훅 timeout 하한 불변식을 env 로 위반 못 하게 하는 것이 이 clamp 의 목적).
+    """
+    cap = cslmc.FETCH_TIMEOUT_CLAMP_SEC
+    for raw in ("1", "9", "10", "11", "60", "3600", "999999", "-5", "", " 7 "):
+        monkeypatch.setenv(STALE_FETCH_ENV, raw)
+        got = cslmc._get_fetch_timeout()
+        assert 1 <= got <= cap, f"{STALE_FETCH_ENV}={raw!r} → {got} (허용 1..{cap} 이탈)"
