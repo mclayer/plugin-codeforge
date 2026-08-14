@@ -29,12 +29,25 @@
 #     site 는 `_gh` 하나뿐"* 이라고 썼다 — **거짓이었다**(구현리뷰 iter4 F-CR-401).
 #     `subprocess.run`/`Popen` 을 가로채 실측하면 `_gh` **밖**에 실 subprocess 가 1건 있다:
 #         `git -C . worktree list --porcelain`
-#       ← `render_report` → `_safe_text` → `_normalize_paths` → `_mask_workspace_prefix`
-#         → `_workspace_prefixes()` 의 **lazy 해소**. `collect_observations` 를 fixture 로
-#           대체하면 권위값 주입 지점(`_observe_workspace_residue` 의
-#           `_set_workspace_prefixes()`)이 통째로 건너뛰어지기 때문이다.
+#       ← **`run()` (4) dedup 필터** → `dedup_key` → `_safe_text` → `_normalize_paths`
+#         → `_mask_workspace_prefix` → `_workspace_prefixes()` 의 **lazy 해소**.
+#         `collect_observations` 를 fixture 로 대체하면 권위값 주입 지점
+#         (`_observe_workspace_residue` 의 `_set_workspace_prefixes()`)이 통째로
+#         건너뛰어지기 때문이다.
 #     무너진 건 "단일 site" 라는 **근거 명제**이고, 결론(네트워크 도달 0)은 유지된다
 #     — 위 1건은 로컬 git 조회이지 gh·네트워크가 아니다.
+#
+#   ★ 귀속 정정 (구현리뷰 iter5 F-CR5-04): FIX4 봉합은 이 자리에 lazy 해소 site 를
+#     `render_report → …` 로 적었다. **실측 콜스택은 `dedup_key → …`** 다 —
+#     `run()` 은 (4) 단계에서 `fresh = [o for o in observations if dedup_key(o) not in
+#     existing]` 로 `dedup_key` 를 **먼저** 부르고, `render_report` 는 그 뒤 (4) 말미다.
+#     iter4 finding 이 옳게 지목했던 함수를 봉합이 틀린 함수로 바꿔 적은 것이며,
+#     실측치(스택 프레임 판독)로 되돌린다:
+#       run:792 `fresh = [...dedup_key(o)...]` → dedup_key:377 `cls = _safe_text(...)`
+#       → _safe_text:291 → _normalize_paths:269 → _mask_workspace_prefix:252
+#       → _workspace_prefixes()
+#     (`render_report` 도 같은 경로를 타지만 **최초 해소자가 아니다** — 최초 1회에서만
+#      lazy 해소가 일어나므로 site 귀속은 첫 호출자에게 간다.)
 #
 #   봉합 2단 (F-CR-401):
 #     ① **캐시 순서 의존 제거** — `invoke_run` 이 workspace 접두를 **명시 주입**해 lazy
@@ -678,9 +691,17 @@ class TestSubprocessSurface:
               (이게 없으면 `== frozenset()` 단언은 기록기가 고장나도 항상 통과한다.)
           (b) 헤더가 주장하는 **실측 site 를 그 자리에서 재현** — 문면이 낡으면 RED.
 
-        실행은 차단되므로 실제 `git` 은 돌지 않는다(기록만). 해소 실패 시 production 은
-        `except Exception → ()` 로 떨어지고 3단 가드가 불변식을 유지하므로 `run()` 은
-        정상 완주한다 — 그래서 이 케이스도 발화까지 간다.
+        실행은 차단되므로 실제 `git` 은 돌지 않는다(기록만).
+
+        ★ fallback 서술 정정 (구현리뷰 iter5 F-CR5-05): 직전 판본은 *"해소 실패 시
+          production 은 `except Exception → ()` 로 떨어지고 3단 가드가 불변식을 유지"*
+          라고 적었다 — **실측과 다르다**. 기록기는 예외를 던지지 않고 `returncode=127` 의
+          `CompletedProcess` 를 돌려주므로 `_workspace_prefixes()` 의 `except` 절은
+          **한 번도 타지 않는다**(`default_scan_roots` 실측: 예외 0). 결과 캐시도 `()` 가
+          아니라 **비어있지 않은 접두 tuple**이며, 즉 이 케이스에서 lazy 해소는 **성공**한다.
+          `run()` 이 완주하는 이유는 fallback 이 작동해서가 아니라 **해소가 그냥 성공하기
+          때문**이다. (`except → ()` 경로는 production 에 실재하지만 이 케이스의 정의역이
+          아니며, 여기서 그 경로가 검증됐다고 읽어서는 안 된다.)
         """
         chan = FakeChannel()
 
