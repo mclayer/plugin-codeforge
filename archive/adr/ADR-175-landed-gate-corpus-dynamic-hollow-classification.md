@@ -132,10 +132,13 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 
 **★ 확정 대체 (적격/판별력 축 전용)**
 
-> **적격 판정 = `diagnostic_line_set(kill-fixture) ≠ diagnostic_line_set(clean-fixture)`**
+> **적격 판정 = `observed_line_set(kill-fixture) ≠ observed_line_set(clean-fixture)`**
 
 - **대조 상대 교체** — `empty` → **`clean`**. 적격은 *"결함 입력 ↔ 정상 입력"* 의 판별력이지 *"투입 있음 ↔ 투입 없음"* 이 아니다. `empty` 는 **도달 축 전용**으로 남는다.
-- **비교 대상 교체** — **마지막 줄 하나(`terminal_line`)가 아니라 진단 라인 집합(`diagnostic_line_set`)**. 상수 종단 footer 를 갖는 게이트가 판별력을 갖고도 탈락하는 위음성 경로를 닫는다. 진단 라인 = **선언 stream 위 `::error::[<STAGE-ID>]` 관측 집합**(⑥ 판별자 형식).
+- **비교 대상 교체** — **마지막 줄 하나(`terminal_line`)가 아니라 관측 라인 집합(`observed_line_set`)**. 상수 종단 footer 를 갖는 게이트가 판별력을 갖고도 탈락하는 위음성 경로를 닫는다.
+- ★**`observed_line_set` 의 정의역 = 선언 stream 위 관측 라인 전체** — `::error::[<STAGE-ID>]` **∪** `::notice::` **∪ census 라인**(`scanned-N: …` 형). `::error::` 집합으로 좁히면 안 된다: `check_living_architecture_update` 는 leg 간 `scanned-N: changed=0 structural_surface=0 derived_docs=0` ↔ `changed=2 structural_surface=1 derived_docs=1` 로 **입력 의존 관측을 내지만 그 줄은 종단 라인도 `::error::` 도 아니며**, 좁은 정의역은 이 게이트를 **판별력 보유에도 부적격으로 오분류**한다 `[ArchitectPL firsthand — 동적 2-leg]`.
+
+★**rc 무관 3번째 앵커(⑦ 보강)** — 위 2-leg 관측은 **`::error::` 를 내고도 rc=0** 이다(meta-error leg 포함) `[ArchitectPL firsthand]`. ⑦ 이 든 2-앵커(FAIL 축 12-leg 전건 rc=1 · PASS 축 우회 mutant rc=0)에 이어 **rc 가 단독 판별자가 아님을 보이는 3번째 독립 재현**이며, 이번 앵커는 **`::error::` 관측과 rc 가 서로 어긋나는** 형태라 앞 둘과 다른 방향에서 같은 결론을 지지한다.
 - **두 식을 한 문면에서 분리 유지할 의무** — 하나로 뭉쳐 적으면 구현자가 적격 판정에 `empty` leg 을 쓰고, 그 순간 위 위양성 7 이 그대로 재현된다. **§8.QC-MECH MECH-4 와 동일 문면을 양쪽에 보유한다.**
 
 **③ 판정기 계약은 arm-invariant 다 (역산 채널 3개를 닫는다)**
@@ -249,7 +252,29 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 - landed-gate 가 **corpus 대상임을 선언**하면 M-1·M-2 가 대상이 된다. **미선언 = 미대상(정직 no-op).** semantic 추론으로 대상을 확정하지 않는다(비결정·gameable).
 - ★**단, D-4 와 충돌하지 않는다** — opt-in 은 *"어떤 게이트가 대상인가"* 를 가르는 **applicability selector** 이고, D-4 가 금지한 것은 *"대상으로 확정된 뒤 개별 항목을 면제하는 칸"* 이다. **대상 선정 축 ⊥ 대상 내 면제 축.**
 - ★**opt-in 취소는 D-4 정의역 밖의 분모 축소 경로다** — `true → false` 되돌림은 *대상 이탈* 이라 D-4(대상 내 면제)가 잡지 못한다. ⇒ **opt-in 취소를 D-2 분모 감소 사유로 명시 계상**하고, 그것을 근거로 한 baseline 재산정을 금지한다.
-- ★**적격 전제(신설) — 부적격 게이트는 opt-in 할 수 없다.** (a) **단계 scoping 된 fail-marker** 보유 ∧ (b) **입력에 따라 변하는 종단 emit** 보유. 미보유 게이트는 **부적격(정직 no-op)** 이며 선언해도 대상이 되지 않는다. 이 전제는 **3-fixture 예비 실행으로 기계 판독 가능**하므로, 판정 불가능한 게이트가 corpus 에 들어와 born-broken 을 만드는 경로를 사전에 닫는다.
+- ★**적격 전제(신설) — 부적격 게이트는 opt-in 할 수 없다. 3-conjunct.**
+
+  | # | 전제 | 내용 |
+  |---|---|---|
+  | **(a)** | **단계 scoping 된 fail-marker** 보유 | `::error::[<STAGE-ID>]` — I-8 단계 판정의 성립 조건 |
+  | **(b)** | **입력 의존 관측** 보유 | `observed_line_set` 이 kill ↔ clean 에서 갈린다(§결정 4 ②-b — *종단* emit 이 아니라 **관측 라인 집합**) |
+  | **(c)** | ★**drivability**(신설) | *"게이트가 자기 정의역을 **명시 인자로** 받아 주입된 트리를 실제로 채점하는가"* |
+
+  미보유 = **부적격(정직 no-op)** 이며 선언해도 대상이 되지 않는다. 판정 불가능한 게이트가 corpus 에 들어와 born-broken 을 만드는 경로를 사전에 닫는다.
+
+- ★★**(c) drivability 가 1급 전제인 이유 — 하네스 자신이 hollow 가 되는 직행 경로다.** 게이트 다수가 repo-root 를 **자기 위치에서 유도**하거나(래퍼의 `cd "$SCRIPT_DIR/.."` — `scripts/check-doc-locations.sh:15` `[firsthand]`) 변경 집합을 **git diff 로 수집**한다(`scripts/check-living-architecture-update.sh:38` `collect_changed_files '.' | python3 … --changed-from-stdin` `[firsthand]`). ⇒ `cd <fixture>` **+ bare 호출** 방식으로 하네스를 짜면 게이트가 **fixture 를 아예 읽지 않고 실 repo(또는 git 컨텍스트)를 채점하고 항상 통과**한다. **1차 census 측정자 자신이 이 함정에 빠져 거짓 0 을 냈다** — 본 arc 거짓-0 의 4번째 재현이다.
+
+- ★**harness 계약(비협상)**: 게이트 정의역은 **명시 인자 주입**(`--repo-root <fixture>` · `--changed-from-stdin` 형)으로만 지정한다. **`cd <fixture>` + bare 호출 금지.** (c) 미충족 = **부적격(정직 no-op)** 이며, 미확인 상태로 corpus 에 넣는 것은 **harness 자기 hollow** 다.
+
+- ★**평가 규약 3항 (신설 — 순서·단위·방법)**
+
+  | 항 | 규약 | 근거 |
+  |---|---|---|
+  | **ⓐ 평가 순서** | **(c) → (a) → (b)** 순으로만 평가한다 | **(b) 는 (c) 충족을 전제로만 유효**하다 — 잘못 구동하면 산출이 입력 무관해지고 그것이 *"(b) 실패"* 로 오분류된다(실 결함은 (c)). 순서를 뒤집으면 (c) 결함이 (b) 결함으로 계상돼 **적격 모집단이 체계적으로 과소계상**된다 `[ArchitectPL firsthand]` |
+  | **ⓑ 적격 단위** | 적격은 게이트 단위가 아니라 **(게이트, invocation surface) 쌍**에 부여된다. harness 는 **core 면**을 명시 인자·CWD 주입으로 구동하며 **래퍼면 기준 판정을 금지**한다 | `check-doc-locations.sh` 는 `cd "$SCRIPT_DIR/.."` 로 repo root 를 강제해 **래퍼면은 구동 불가**이나, core 는 `Path("docs/doc-locations.yaml")` = **CWD 상대**(`scripts/lib/check_doc_locations.py:33`)라 **구동 가능**하다 `[firsthand]`. 래퍼면 기준 판정은 (c) 를 체계적으로 과소계상한다 |
+  | **ⓒ 판정 방법** | 판정은 **동적 2-leg 실행으로만** 확정한다. **정적 grep 은 후보 선별까지만**이며 확정 근거로 쓰지 않는다 | (a)·(b) 는 **정적 판정 불가**다 — 단계 id 가 f-string 변수 안에 들어가면 형식문자열 grep 이 놓친다(`check_doc_locations.py` 는 `errors.append(f"[1/7] …")` 후 `::error::{e}` 로 emit — `:71,78`; 이 파일이 정적 grep 에 잡힌 것은 **무관한 `:228` `::error::[7/7]` 리터럴 덕분인 우연**이라 파일 단위 hit 조차 신뢰할 수 없다) `[firsthand]` |
+
+- ★**(c) 의 기계 판독** — 3-fixture 예비 실행 **+ 정의역 주입 확인**: *"주입 트리에서만 나올 수 있는 관측이 실제로 나오는가"*. 예 = `check_doc_locations` core 가 주입 yaml 에 대해 `OK [5/7] no absolute paths` · `OK [6/7] doc_type name uniqueness` 를 내는 것 `[ArchitectPL firsthand]`. 이 확인 없이는 *"통과"* 가 **채점 대상이 실 repo 였다**는 사실과 구별되지 않는다.
 - ★**이 절은 normative 계수에 들어가지 않는다** — §결정 5 자신의 어휘가 가른다(*"applicability = self-declared(opt-in), probe presence = normative"*). 따라서 §결정 6 의 *"신규 normative = M-1 · M-2 둘뿐"* 은 본 절에도 불구하고 유지된다.
 
 **잔여 상속(신규 저작 0)**: *"모든 진짜 landed-gate 가 실제로 self-declare 했는가"*(열거 완결성)는 **기계 강제 불가 — self-declared 의존**이다. ADR-154 §결과의 AC-13 열거-완결성 residual 처분을 그대로 상속한다(honest-ceiling 공개 + review-tier 판정). 새 잔여 문법을 만들지 않는다.
