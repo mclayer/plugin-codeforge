@@ -479,15 +479,19 @@ A1-3 은 instrument-side 하네스에 landed 계약(§결정 8 5-piece chain · 
 
 **본 Amendment 는 여기서 끝난다.** 초판이 보유했던 아래 7 절은 A2-1 의 판정 전환에 따라 **ADR-175 로 이관**됐다. 여기에 요약본을 남기지 않는다 — 요약을 남기면 그 자체가 §결정 9(재codify 0)가 금지하는 *"같은 규칙 두 벌"* 이고, 설계리뷰 **DR-M8** 이 지적한 divergence 채널을 다시 여는 것이다.
 
-| 초판 절 | 이관처 | 이관 시 변경 |
-|---|---|---|
-| A2-3 경계(cross-repo / 3번째 메타 층 / 인벤토리 스키마 확장 배제) | **ADR-175 §결정 3** | 무한후퇴 차단점의 **축 병기** 추가(닫는 것 = 미enroll 회귀 · 위조 판정기 축은 별도 소관) |
-| A2-4 신규 normative M-1(2-arm corpus 동적 kill 분류) | **ADR-175 §결정 4** | 2-control **거짓 상속 주장 정정** + 도달 판정 differential delivery probe 신설 + **arm-invariant 판정기 계약** + verdict 함수 3종 + INDETERMINATE 11 조건 + 판별자 형식 확정 + rc 문면 통일 |
-| A2-5 신규 normative M-2(분모 단조 하한) | **ADR-175 §결정 5** | **D-3 형판 교체**(`adr-amendment-threshold-baseline.yaml` → `infra-resource-baseline.yaml`) + 단조 **방향 반전** + *"방향은 선례 0"* 정직 declare |
-| A2-6 신규 0 명시 | **ADR-175 §결정 6** | 도달 판정 probe 행 추가(§결정 5 internal-control instance = 신규 0) |
-| A2-7 opt-in selector | **ADR-175 §결정 7** | **적격 전제 신설**(단계 scoping fail-marker ∧ 입력 의존 종단 emit — 미보유 = 부적격) + opt-in 취소의 분모 축소 경로 명시 계상 |
-| A2-8 정직 천장 + 미확정 3 | **ADR-175 §결정 9** | 계수 기준을 **인스턴스**로 통일해 재계수(구 5/11 → **7/20**, 하향) + 라벨 역산 **잔여 3** 명시 + opt-in 적격 모집단 미측정 declare. 미확정 3 → **1**(판별자 스키마·manifest 확정, 경로만 잔존) |
-| A2-9 접촉 경계 + carrier 결속 | **ADR-175 §결정 10** | Phase 2 산출물 **9개** 결속 명시(Change Plan §5 개별 행 + §8.AC `G1-mech-corpus`) + AC 결속의 요구사항 lane 회부 declare |
+> ★★**3열 축소(설계리뷰 DR2-M8 처분 — 무언 정정 금지)**: 구 표의 3열은 *"이관 시 변경"* 이라는 이름으로 **ADR-175 내용을 요약**하고 있었고, 그것이 바로 이 절 머리말이 금지한 *"같은 규칙 두 벌"* 이었다. **실제로 drift 2건이 발생**했다 — ⓐ **row A2-7** 이 적격 전제를 *"입력 의존 **종단 emit**"* 으로 적었는데 이는 ADR-175 §결정 4 ②-b 가 **폐기한 기준**이고(정본 = `observed_line_set` = **관측 라인 집합**), 나아가 **3-conjunct 를 2-conjunct 로** 기술해 **(c) drivability 를 누락**했다 ⓑ **row A2-8** 이 *"잔여 3 … 미확정 3 → 1"* 이라 적었으나 ADR-175 실문면은 **잔여 HC-1·HC-2 2 · 미결 U-2~U-5 4 · 경로는 확정**이다. ⇒ **3열을 「절 제목 + 이관 사실」만으로 축소**하고 내용 요약을 삭제한다. **이관분의 내용을 알려면 이관처 §결정을 읽는다** — 그것이 본 절 머리말의 원래 취지다.
+
+| 초판 절 | 이관처 |
+|---|---|
+| A2-3 경계(cross-repo / 3번째 메타 층 / 인벤토리 스키마 확장 배제) | **[ADR-175](ADR-175-landed-gate-corpus-dynamic-hollow-classification.md) §결정 3** |
+| A2-4 신규 normative M-1(2-arm corpus 동적 kill 분류) | **ADR-175 §결정 4** |
+| A2-5 신규 normative M-2(분모 단조 하한) | **ADR-175 §결정 5** |
+| A2-6 신규 0 명시 | **ADR-175 §결정 6** |
+| A2-7 opt-in selector | **ADR-175 §결정 7** |
+| A2-8 정직 천장 | **ADR-175 §결정 9** |
+| A2-9 접촉 경계 + carrier 결속 | **ADR-175 §결정 10** |
+
+★**본 표는 이관 *사실* 만 기록한다** — 이관 시 무엇이 어떻게 바뀌었는가(정정·신설·재계수)는 **각 이관처 §결정이 자기 안에 정직 기재**하고 있으며, 본 절이 그것을 복사하면 divergence 채널이 다시 열린다(위 drift 2건이 그 실증이다).
 
 ★**천장 동시-변경 불변식의 양단이 이동했다** — 이제 **ADR-175 §결정 9 ↔ Change Plan §8.QC-MECH MECH-9** 이며, 본 Amendment 는 그 불변식의 당사자가 아니다.
 
