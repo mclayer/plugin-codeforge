@@ -116,6 +116,28 @@ landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다
 
 **empty-fixture** = 투입이 전달되지 않은 상태(대상 root 부재가 아니라 **대상 0건**). 종단 문면이 두 투입에서 **같으면** 게이트는 투입을 실제로 소비하지 않은 것이므로 `¬DELIVERED` → **INDETERMINATE**(아래 I-7).
 
+**②-b ★★ 이 식의 용도는 둘로 갈린다 — 하나는 유효하고 하나는 무효다 (10-게이트 회차 실측 반증)**
+
+구 문면은 위 식을 **단일 용도**로 적었고, 그 결과 0-context 구현자가 **적격/판별력 판정에도** 같은 식을 쓰게 된다. **10-게이트 회차 실측이 그 사용을 양방향으로 반증**했다.
+
+| 용도 | 식 | 판정 |
+|---|---|---|
+| **도달(delivery) 판정** — *"투입이 게이트에 전달됐는가"* | `term(kill) ≠ term(empty)` | ★**유효 — 유지**(§결정 5 internal-control 3형 중 *unknown-input negative* 의 instance) |
+| **적격/판별력 판정** — *"게이트가 정상 입력과 결함 입력을 가르는가"* | `term(kill) ≠ term(empty)` | ★★**무효 — 폐기** |
+
+**폐기 근거 (양방향 실측)**
+
+- **위양성** — 10-게이트 회차에서 **9/10 이 이 식을 통과했으나 실제 결함 검출은 2/10** 이었다. `empty` leg 은 **data-absence 경로**를 밟아 문면이 갈릴 뿐이며, 그 갈림은 *"정상 입력 vs 결함 입력"* 의 판별과 **무관**하다. 즉 이 식으로 적격을 재면 **부적격 게이트 7개가 적격으로 계상**된다.
+- **위음성** — `check_hard_gate_self_verification` 은 kill 에서 `::error::[AC-8]`(결함) · empty 에서 `::error::[AC-6]`(부재)를 내어 **두 입력을 완전히 판별**한다. 그런데 **두 leg 이 똑같이 `[SUMMARY]` 상수 footer 로 종단**하므로(`scripts/lib/check_hard_gate_self_verification.py:394` `_error("SUMMARY", …)` — `:155` 가 `::error::[{ac_id}]` 로 emit) `terminal_line` 이 **같아져 탈락**한다 `[firsthand]`. ⇒ **가장 모범적인 게이트가 이 식에서 떨어진다.**
+
+**★ 확정 대체 (적격/판별력 축 전용)**
+
+> **적격 판정 = `diagnostic_line_set(kill-fixture) ≠ diagnostic_line_set(clean-fixture)`**
+
+- **대조 상대 교체** — `empty` → **`clean`**. 적격은 *"결함 입력 ↔ 정상 입력"* 의 판별력이지 *"투입 있음 ↔ 투입 없음"* 이 아니다. `empty` 는 **도달 축 전용**으로 남는다.
+- **비교 대상 교체** — **마지막 줄 하나(`terminal_line`)가 아니라 진단 라인 집합(`diagnostic_line_set`)**. 상수 종단 footer 를 갖는 게이트가 판별력을 갖고도 탈락하는 위음성 경로를 닫는다. 진단 라인 = **선언 stream 위 `::error::[<STAGE-ID>]` 관측 집합**(⑥ 판별자 형식).
+- **두 식을 한 문면에서 분리 유지할 의무** — 하나로 뭉쳐 적으면 구현자가 적격 판정에 `empty` leg 을 쓰고, 그 순간 위 위양성 7 이 그대로 재현된다. **§8.QC-MECH MECH-4 와 동일 문면을 양쪽에 보유한다.**
+
 **③ 판정기 계약은 arm-invariant 다 (역산 채널 3개를 닫는다)**
 
 stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누설해 역산 채널을 하나 더 열기 때문이다. 마커는 **arm 의 속성이 아니라 대상 게이트의 속성**이므로 **게이트에 keying** 한다. 그 결과 stamp 가 arm-invariant 가 되고 arm 분기는 verdict 함수에서 자동으로 떨어진다.
@@ -129,6 +151,8 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 - **`LIVE` ⟺** `kill.fail=1 ∧ fail_stage = kill_target_stage ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
 - **`HOLLOW` ⟺** `kill.fail=0 ∧ kill.term=1 ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
 - **그 외 = `INDETERMINATE`**
+
+★**`DELIVERED` 의 정의역 = 도달 축 한정**(②-b). verdict 함수가 소비하는 `DELIVERED` 는 `term(kill) ≠ term(empty)` 로 계산한 **도달 판정**이며, **적격 판정과 같은 좌표가 아니다**. 적격(`diagnostic_line_set(kill) ≠ diagnostic_line_set(clean)`)은 **§결정 7 적격 전제**에서 **corpus 진입 전에** 판정되므로 verdict 함수의 입력이 아니다. **두 좌표를 한 변수로 합치면 ②-b 위양성 7 이 verdict 함수 내부로 이전한다.**
 
 **⑤ INDETERMINATE 11 조건 전수 + 계상 규율**
 
