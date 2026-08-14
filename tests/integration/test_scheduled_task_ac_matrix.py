@@ -587,9 +587,31 @@ class TestAC3SelfModificationChain:
         )
 
     def test_ac3_no_write_home_claude_in_prompt(self):
-        """저장 프롬프트 금지: Edit(~/.claude/**) 리터럴 0.
+        """권한면: §결정 4 **안에** `~/.claude` 쓰기 deny 명시 실재.
 
-        ADR-172 박제 프롬프트의 지시 절(번호 step) 에서 스캔.
+        ★ F-B 봉합 (구현리뷰 iter4 P1): 직전 판본은 `content[idx : idx+2000]` **고정 창**
+          으로 잘랐다. §결정 4 실제 길이는 915자라 창이 **2.19배 초과**해 §결정 5·6 을
+          통째로 삼켰고, 그 두 절이 `deny`·`~/.claude` 를 각각 보유한다 ⇒ §결정 4 본문을
+          전부 지워도 두 conjunct 가 **이웃 절에서** 충족돼 mutant 가 생존했다.
+          이 오라클의 정의역이 §결정 4 가 아니었던 것이다(2 conjunct 중 `deny` 쪽 판별력 0).
+
+        교체: 같은 파일의 `extract_adr_section()` — 헤딩부터 같은 레벨 다음 헤딩까지만
+        자르고, 본문이 사라지면 그 자리에서 AssertionError("헤딩만 남음")로 착지한다.
+        이미 3 site(§결정 8 ×2, §결정 9)가 쓰는 헬퍼라 신규 자산 0.
+
+        mutant kill (3종 실측 — 구판 대조군 동반, 정직 기록):
+          ┌──────────────────────────────────────┬────────┬──────────────┐
+          │ mutant                               │ 본 판본 │ 구판(고정 창) │
+          ├──────────────────────────────────────┼────────┼──────────────┤
+          │ A 부재형 §결정 4 본문 삭제           │  RED   │ **생존**      │
+          │ B 변형형 `~/.claude`→`<home>/.claude`│  RED   │  RED          │
+          │ C 판별형 `deny` 만 제거(경로는 잔존) │  RED   │ **생존**      │
+          └──────────────────────────────────────┴────────┴──────────────┘
+          · B 는 구판도 잡았다 — 즉 B 단독으로는 이 봉합의 판별 근거가 되지 못한다
+            (regression-guard case). 실 판별 근거는 A·C 다.
+          · C 는 리뷰 진단("2 conjunct 중 `deny` 쪽 판별력 0")을 **정확히 격리**한다:
+            §결정 4 에서 `deny` 만 지우고 `~/.claude` 를 남기면 구판은 이웃 §결정 5 의
+            `deny` 로 충족돼 통과했다.
         """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
@@ -598,12 +620,8 @@ class TestAC3SelfModificationChain:
         with open(adr_path, encoding="utf-8") as f:
             content = f.read()
 
-        # §결정 4 권한면 검증
-        decision_4_idx = content.find("### §결정 4")
-        if decision_4_idx == -1:
-            pytest.fail("ADR-172 의 §결정 4 절 부재")
-
-        decision_4_section = content[decision_4_idx:decision_4_idx+2000]
+        # §결정 4 권한면 검증 — 헤딩 기준 **정확 슬라이싱**(고정 창 금지, 위 docstring)
+        decision_4_section = extract_adr_section(content, "### §결정 4")
 
         # Assert: ~/.claude/** 쓰기 deny 명시
         assert "deny" in decision_4_section and "~/.claude" in decision_4_section, (
