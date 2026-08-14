@@ -244,7 +244,7 @@ FLIP: LIVE -> HOLLOW => PASS
 라벨 역산 판정기: PRE=LIVE POST=LIVE => 뒤집힘 없음 => RED
 ```
 
-**falsify 되는 판정기 class 6종 (전건 RED — 실행 기반만 GREEN) · ★H-1 경로 실증 — §결정 9 *hollowing recipe 실증 부분성* 참조**
+**falsify 되는 판정기 class 6종 (전건 RED — 실행 기반만 GREEN) · ★H-1 경로 실증 — §결정 9 *hollowing recipe 실증 부분성* 참조. 설계리뷰 DR2-M10 = 무한정 인용 site 전수 병기**
 
 | # | 판정기 class | RED 가 되는 기전 |
 |---|---|---|
