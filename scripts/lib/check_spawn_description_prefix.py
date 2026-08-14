@@ -248,8 +248,14 @@ def build_injected_description(subject: str, kst_stamp: str, original: str):
 #   BOOL_FLAGS 는 flag-위치에서만 present 마킹. subject 값이 sibling flag 리터럴과
 #   문자열이 같아도 값-위치로 소비돼 flag 오인 부재 — first-match value-shadow +
 #   position-blind 멤버십 2 shadowing 클래스 동시 봉합. argparse 기각(flag-like 값에
-#   sys.exit(2) → G5 exit-0-always 위반). scope = run_inject argv 파싱 한정 (main() dispatch
-#   모드 selector 는 caller-고정 leading flag → subject 미도달, non-realizable — §7.2 F3).
+#   sys.exit(2) → G5 exit-0-always 위반).
+#   ★ CFP-2965 F6 — 구 주석 논거 갱신: 구 문구는 scope 를 run_inject argv 파싱으로 한정하며
+#     "main() dispatch 모드 selector 는 caller-고정 leading flag → subject 미도달,
+#     non-realizable (§7.2 F3)" 이라 했다. 그 non-realizable 은 **호출자 관행**에만 근거해
+#     계약이 아니었다 — `--inject --subject "--inject-bash"` 처럼 subject 값이 모드 리터럴과
+#     같으면 position-blind 멤버십 dispatch 가 실제로 오분기한다. 값-위치 shadowing 은 본
+#     스캐너가 봉합했으나 dispatch 는 그 밖이었으므로, main() dispatch 도 leading-position
+#     판정으로 전환해 관행 의존을 제거했다 (아래 main() 참조).
 VALUE_FLAGS = ("--subject", "--kst-stamp", "--bypass-env")
 BOOL_FLAGS = ("--inject", "--inject-bash", "--transition-reminder", "--subject-absent", "--description-stdin")
 
@@ -451,12 +457,23 @@ def main(argv: list) -> int:
     --inject 모드 (CFP-2587 Phase 2): stdin=PreToolUse payload → updatedInput 주입 (run_inject).
     --inject-bash 모드 (CFP-2965 S4): Bash 표면 end-to-end 1-call (run_inject_bash).
     """
-    # --inject-bash 우선 dispatch (--inject 와 리터럴 상이 — exact 멤버십이라 상호 오인 0)
-    if "--inject-bash" in argv:
+    # 모드 selector = **leading position** 판정 (CFP-2965 F6).
+    #   구: `"--inject-bash" in argv` / `"--inject" in argv` — position-blind 멤버십이라
+    #   **값 위치**에 같은 리터럴이 오면 오분기한다. 실현 경로: Agent spawn 게이트가
+    #   `--inject --subject "<subagent_type>"` 로 부르는데 subject 값이 "--inject-bash" 면
+    #   Bash 표면 경로(run_inject_bash)로 새어, subject 를 payload 의 agent_type 에서
+    #   다시 뽑는 다른 계약을 타게 된다. 값-위치 shadowing 은 _scan_argv 가 봉합했지만
+    #   dispatch 는 그 밖이었다.
+    #   실 호출자 전수 확인 (2026-08-14): hooks/pretooluse-bash-description-inject =
+    #   `--inject-bash ...`, hooks/pretooluse-agent-spawn-gate = `--inject ...`,
+    #   detect 모드 = `--description-stdin` — 전부 모드 flag 가 argv[0] 이라 거동 무변화.
+    mode = argv[0] if argv else ""
+
+    if mode == "--inject-bash":
         return run_inject_bash(argv)
 
     # --inject 모드 dispatch (자체 bypass·fail-open 규약 — run_inject 참조)
-    if "--inject" in argv:
+    if mode == "--inject":
         return run_inject(argv)
 
     # Bypass check (--description-stdin 모드 전용)
