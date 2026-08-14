@@ -52,6 +52,23 @@ amendment_log:
       BV-8 아티팩트 동일성)는 ADR 에 대응 문장이 없어 Amendment 미발생 — Amendment 1 §5 위임
       구조대로 Change Plan 단독 계약(§3.8a (5)/(8) · §8.BV BV-8 · §11.4b M-26/M-27).
     sunset_justification: 'N/A — is_transitional: false (permanent policy). 정정 2건은 (1) born-broken 배치 지시의 제거 (2) 사어(소비처 0 선언)의 제거 방향이라 통제 약화 0 — 어떤 rail·게이트·검증 축도 완화하지 않는다.'
+  - amendment: 3
+    carrier_story: CFP-2963
+    date: 2026-08-14
+    reinterpretation: true
+    scope: >-
+      설계 escalation 3차 — 문면 정정 2건(신규 결정 0, 인수 결정 무변경). 자기 자산 실측(HT-1:
+      ci-runner-arc hook pod-template 이 runAsNonRoot/runAsUser 1001/seccompProfile
+      RuntimeDefault/allowPrivilegeEscalation false/capabilities.drop ALL 을 자발 선언)이
+      Amendment 1 의 두 문장과 충돌한다. (1) Amendment 1 §2 의 "ESC-2 인수 근거가 hook 축 ∧
+      빌더 축 2축으로 확대" 중 빌더 축(restricted 하 CAP_SYS_CHROOT 소멸)은 template 이
+      baseline 하에서도 drop ALL 을 선언하므로 두 팔의 delta 0 = 비-차등(non-discriminating)
+      임을 기록 — 거짓이 아니라 인수 판단을 가르지 못함. (2) rail 문장의 "컨테이너 내 root
+      허용" 은 PSA 정책 상한·ESC-2 인수 범위 진술이지 job pod 실 형상 단정이 아님을 명시.
+      ESC-2 인수 결정·선택지·권고·결정자·시점 전건 무변경, 빌더 rail 무손상. 회부 1(§8.QC
+      충족 정의역·실행-tier 원장)·회부 2(netns 정의역)는 ADR 에 대응 문장이 없어 Amendment
+      미발생 — Amendment 1 §5 위임 구조대로 Change Plan 단독 계약.
+    sunset_justification: 'N/A — is_transitional: false (permanent policy). 정정 2건은 (1) 비-차등 근거의 인수-입력 제외 (2) 정책 상한 ↔ 실 형상 혼동 차단 방향이라 통제 약화 0 — rail·게이트·검증 축 어느 것도 완화하지 않으며, template 하드닝(runAsNonRoot·drop ALL) 완화 발의는 본 Amendment 가 명시 금지한다(강화 방향).'
 ---
 
 # ADR-174: MCLATS ARC CI 러너 topology — 운영 클러스터 동거 CI 실행면 + ADR-147 축별 처분
@@ -167,6 +184,16 @@ ADR-147 Amd5 C1/C3 의 값공간을 **3rd 도메인 "ARC scale-set 이름" addit
 1. **Amendment 1 §2 배치 축 정정 — "job-level env 단일 파생" 은 부정 확정**: `PGPORT` 단일 파생을 **step-level(`$GITHUB_ENV` 경유)** 로 정정한다. 근거 = GitHub Actions 공식 context 가용성 표에서 `jobs.<job_id>.env` 의 가용 context = `github, needs, strategy, matrix, vars, secrets, inputs` 로 **`job` 이 부재**하고 `jobs.<job_id>.steps.env`·`steps.run` 에만 포함되며, 산문이 "only available within the execution `steps` of a job. **Otherwise, the value of this property will be `null`.**" 로 명시한다 [source: raw.githubusercontent.com/github/docs/main/content/actions/reference/workflows-and-actions/contexts.md]. ⇒ **`job` 은 에러가 아니라 null** 로 평가되므로 job-level 배치는 빈 `PGPORT` → `postgres://…@host:/mctrader` = **Amendment 1 §2 자신이 지목한 포트 소실 결함의 재생산**이며 **무증상 파손 채널**이다(Change Plan §7.4 F-21 동형). **무변경 부분(축소 독해 금지)**: 표현식 자체 · **단일 파생 1곳** · **2-변수 동기화 드리프트 신설 금지**(§결정 8 형태 A 판정 근거) · 고정 5432 상수화 금지 · BV-6 실측 의무는 **전부 유지**된다 — 정정 대상은 **배치 축 단독**이다. BV-6 의 예측(빈 문자열)은 **파손 0**이며 그 근거는 hook 코드(`hostPort` 미설정)이지 context 가용성이 아니다(다른 null 채널) — 단 관측 귀속을 위해 같은 step 에서 `job` 의 다른 필드 non-empty 실증을 conjunct 로 요구한다(4요건 정본 = Change Plan §8.BV).
 2. **§결정 8 12-site 회계 문면 시제 전환 + 사어 제거**: "`rust-ci.yml` rdb-e2e 11 site + `docker-build.yml` smoke 1 site" 는 **재편 *전* 이력 사실**로 읽는다. 재편 후 실측 = **rust-ci 소비 11 · docker-build 소비 0**(`SMOKE_HEALTH_HOST` = 전 repo 0건) — smoke 가 빌더 내부(stage / working container)로 이설되며 curl 대상이 **동일 프로세스 트리 내 `localhost`** 가 되어 host 치환 축 자체가 발생하지 않기 때문이다. ⇒ **`docker-build.yml` job env `RDB_NET_HOST` 선언은 제거**한다(주석 포함, 무언 삭제 금지 = 본 항이 기록). **회계 영향 = 없음**: `RDB_NET_HOST` 는 AC-20 ① term 집합(`docker build`/`docker run`/`docker buildx`/`services:`) **밖**이라 AC-20 분모·ND-1(재편 전 RED 재현) 어느 쪽에도 영향이 없다.
 3. **Amendment 미발생 declare(억지 편입 금지)**: 2차 escalation 의 **E2**(과도기 hosted 축 빌더 성립 조건) 와 **E3**(smoke S1→S3 순위 전환 · `--layers` 채택 rail · 검사↔push 아티팩트 동일성 BV-8) 는 **본 ADR 에 대응 문장이 존재하지 않는다** — Amendment 1 §5 가 빌더 spec 상세·검증계약·게이트·실측의 4요건 정본을 **전부 Change Plan 에 위임**한다고 명기했기 때문이다. 따라서 두 건은 **Change Plan 단독 계약**(§3.8a (5) 순위 3단·(8) hosted 성립 조건 / §8.BV BV-8 / §11.4b M-26·M-27)으로 두고 본 ADR 은 재기술하지 않는다(이중 SSOT 금지). `--layers` rail 은 **약화-발의 차단 성격이 아니라 예산-선행 조건**이라 §해소 기준 목록에도 편입하지 않는다.
+
+### Amendment 3 — 문면 정정 2건 (CFP-2963 설계 escalation **3차**, 2026-08-14)
+
+> 신규 결정 0 · **인수 결정 무변경**. 3차 회부 중 **자체검출 HT-1**(자기 자산 실측)에 대응하는 **ADR 내부 문장이 실재**하여 발의한다. 회부 1·2 는 대응 문장 부재로 미편입(하기 §3).
+
+**앵커 사실(HT-1)** — `ci-runner-infra` `ci-runner-arc/manifests/hook-configmap.yaml` 의 `data["pod-template.json"]` 이 job pod 에 대해 `runAsNonRoot: true`(L40) · `runAsUser: 1001`(L41) · `fsGroup: 1001`(L42) · `seccompProfile.type: RuntimeDefault`(L43-45) · `allowPrivilegeEscalation: false`(L55) · `capabilities.drop: ["ALL"]`(L57-59) 를 **자발 선언**한다 [verified]. 배선 실재 — `ci-runner-arc/install.sh:86` 이 apply 하고 `ci-runner-arc/values/scale-set-values.yaml:84-88` 이 `ACTIONS_RUNNER_CONTAINER_HOOK_TEMPLATE` 로 주입한다 [verified]. **★ 조건부 등급**: container hook 이 이 선언을 그대로 적용하는지 override·병합하는지는 **벤더 문면 미확보 = 확인 불가** ⇒ 이하 두 정정은 **"선언대로 적용되면"** 조건부이며 **실행 결과 단정이 아니다**. 실확정 = Change Plan §11.4b **M-18 L0** 의 job pod `-o yaml` — **미실행**.
+
+1. **Amendment 1 §2 "빌더 축" 근거의 비-차등 기록 (근거 개수 정직 표기 — 인수 결정 무변경)**: Amendment 1 §2 는 ESC-2 의 baseline 인수 근거가 "hook fs-init 축 **단독** → **hook 축 ∧ 빌더 축 2축**" 으로 확대됐다고 기록했다. 빌더 축의 형식은 **차등 논거**("baseline 팔에는 `CAP_SYS_CHROOT` 가 있고 restricted 팔에는 없다")인데, HT-1 조건 하에서는 template 이 **baseline 팔에서도 `capabilities.drop: ["ALL"]` 을 자발 선언**하므로 `CAP_SYS_CHROOT` 가 **양 팔 모두 부재**이고 delta 는 **0** 이다 ⇒ 이 leg 는 **거짓이 아니라 비-차등(non-discriminating)** — 인수 판단을 가르지 못하므로 **인수 판단 입력에서 제외**한다. restricted 가 `drop: ALL` 을 강제한다는 **물리 자체는 참** [source: kubernetes.io Pod Security Standards — Restricted 의 `capabilities.drop` 허용값 = `ALL`, `capabilities.add` = Undefined/nil]. **정직 잔여 1구**: baseline 은 `capabilities.add` 에 `SYS_CHROOT` 를 허용하고 restricted 는 불허하므로 [source: 동일], 이 leg 는 **다른 template 에 대해서는** 차등력을 보유한다 — 무력화는 **정책 차이의 소멸이 아니라 자기 자산 선택의 귀결**이다. ⇒ 기재를 **"hook 축(유효 — 단 아래 §2 조건부) ∧ 빌더 축(HT-1 조건 하 비-차등 — 인수 입력 제외)"** 으로 정정한다. **무변경(축소 독해 금지)**: **ESC-2 인수 결정·선택지·권고·결정자·시점 전건 무변경** · **빌더 rail 무손상**(§해소 기준 목록 그대로) · hook fs-init 축의 restricted-enforce 불가 판정 무변경. **★ 본 Amendment 는 template 변경을 제안하지 않는다** — HT-1 모순 해소를 위한 `runAsNonRoot`/`drop: ALL` 완화 발의는 **rail 침범으로 금지**한다.
+2. **"컨테이너 내 root 허용" = 정책 상한 진술임을 명시 (실 형상 단정 아님)**: Amendment 1 §1 rail 문장과 §결정 3 계열의 "ESC-2 로 인수한 것은 **컨테이너 내 root 허용**이지 커널 표면 개방이 아니다" 는 **PSA 정책이 허용하는 상한 ∧ 사용자 인수 범위**에 대한 진술로 읽는다 — **job pod 의 실 형상 단정이 아니다**. HT-1 조건 하 실 형상은 **비루트(uid 1001)** 일 수 있으며, 그 경우 "root 로 돈다" 계열 서술은 **위협 과대 기재**가 된다. **양 분기 모두 1급**: 미적용 분기면 구 서술이 참이 되는 **동시에** 선언된 하드닝 5 종이 실제로는 **부재**라는 별개의 1급 결함이 확정된다 — **어느 분기도 무해가 아니다**. **rail 문장 자체는 무변경**(rail 은 허용 상한을 넘지 말라는 보수적 제약이라 실 형상이 더 좁아도 약화되지 않는다). 4요건 정본·site 별 문면 정정(§3.8a·§3.9 ESC-2·§7.1 B3·§7.2)은 **Change Plan 소유**(Amendment 1 §5 위임 유지 — 이중 SSOT 금지).
+3. **Amendment 미발생 declare(억지 편입 금지)**: 3차 회부의 **회부 1**(§8.QC "충족" 정의역 명시 + §8.QC-EXEC 실행-tier 4-state 원장 + PC-8 해소 경로 — 구현 lane 의 `139→138` 제안은 **반려**: `138+12=150≠151` 합계 규약 파손 ∧ 실행-tier 일관 적용 시 ≤91 ∧ 미배선 7 건 잔존 비대칭)과 **회부 2**(netns bind TOCTOU 정의역 못박기 — 미발의 결론 유지·근거 교체)는 **본 ADR 에 대응 문장이 존재하지 않는다**(Amendment 1 §5 가 검증계약·게이트·실측의 4요건 정본을 전부 Change Plan 에 위임). ⇒ 두 건은 **Change Plan 단독 계약**(§8.QC 정의역 명시 · §8.QC-EXEC + .PC8 · §3.8a 별건 ③ 각주)으로 두고 본 ADR 은 재기술하지 않는다. **§8.QC 3차 delta = 0/0/0 — 151/139/12 무변**(검산 `139+12=151`).
 
 ## 결과
 
