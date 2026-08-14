@@ -69,8 +69,82 @@ SCRIPT_NAME = "check_parallel_work_sentinel"
 # prefix 가 하드코딩되면 안 됨 (consumer prefix 가 "CFP" 가 아닌 곳에서 inert 검사).
 # workflow 가 .claude/_overlay/project.yaml github.story_key_prefix 를 STORY_KEY_PREFIX
 # env 로 주입. 미주입(wrapper self-app / overlay 부재) 시 기본값 "CFP" → wrapper 동작 무변경(하위호환).
-_PREFIX = os.environ.get("STORY_KEY_PREFIX", "CFP")
-KEY_PATTERN = re.compile(rf"\b{re.escape(_PREFIX)}-\d+\b")
+# CFP-2976 D-1 — 하드코딩 fallback 제거 (판별력 0 근인).
+#   구 코드: os.environ.get("STORY_KEY_PREFIX", "CFP")
+#   → env 미주입(세션 훅이 지시하는 수동 실행 경로)에서 consumer(prefix != CFP)가
+#     정의상 공집합을 받고, 그 빈 결과가 착수 통행증으로 소비됐다(실사고).
+#   신 규약: env → project.yaml 유도 → 둘 다 실패 시 fail-closed(exit 2).
+#   조용한 기본값 없음 — "안 찾음"과 "없음"을 구분 불가하게 만든 유일한 원인이었다.
+_PREFIX_OVERLAY_PATH = ".claude/_overlay/project.yaml"
+_PREFIX_CACHE = None
+
+
+def _repo_root():
+    """git toplevel (로컬 경로 해석 전용)."""
+    try:
+        r = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, text=True, timeout=10)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+
+
+def _prefix_from_overlay():
+    """.claude/_overlay/project.yaml 의 github.story_key_prefix 추출.
+
+    pyyaml 의존 금지 (러너/훅 환경 미보장 — MTD-1595 동형 회피). github: 블록 2단 스캔.
+    """
+    root = _repo_root()
+    if not root:
+        return None
+    try:
+        with open(os.path.join(root, _PREFIX_OVERLAY_PATH), "r", encoding="utf-8") as f:
+            lines_ = f.read().splitlines()
+    except (FileNotFoundError, OSError):
+        return None
+    in_github = False
+    for line in lines_:
+        if re.match(r"^github:\s*$", line):
+            in_github = True
+            continue
+        if in_github and re.match(r"^\S", line):
+            in_github = False
+        if in_github:
+            m = re.match(r"""^\s+story_key_prefix:\s*["']?([A-Za-z][A-Za-z0-9_]*)["']?\s*$""", line)
+            if m:
+                return m.group(1)
+    return None
+
+
+def resolve_prefix():
+    """Story KEY prefix 확정 — env → overlay → fail-closed.
+
+    fail-closed 근거: 유도 실패 시 임의 기본값을 쓰면 그 실행의 GREEN 이 정보 0 이 된다.
+    호출자는 그걸 "중복 없음" 으로 읽으므로 조용한 통과가 오판을 생산한다.
+    """
+    global _PREFIX_CACHE
+    if _PREFIX_CACHE is not None:
+        return _PREFIX_CACHE
+    env = os.environ.get("STORY_KEY_PREFIX", "").strip()
+    if env:
+        _PREFIX_CACHE = env
+        return _PREFIX_CACHE
+    derived = _prefix_from_overlay()
+    if derived:
+        _PREFIX_CACHE = derived
+        return _PREFIX_CACHE
+    _exit_setup_error(
+        "STORY_KEY_PREFIX 미주입 이고 " + _PREFIX_OVERLAY_PATH +
+        " 에서 github.story_key_prefix 유도 실패 — 조용한 기본값(구 'CFP')은 "
+        "CFP-2976 에서 제거됐다(판별력 0 근인). env 주입 또는 overlay 정비 후 재실행하라.",
+        kind="prefix_undetermined",
+    )
+    raise AssertionError("unreachable")  # pragma: no cover
+
+
+def key_pattern():
+    """whole-word <PREFIX>-<digits> 패턴 (lazy — import 시점 exit 회피)."""
+    return re.compile(r"\b" + re.escape(resolve_prefix()) + r"-\d+\b")
 BYPASS_ENV = "BYPASS_PARALLEL_WORK_SENTINEL"
 GH_MOCK_ENV = "CFP967_GH_MOCK_RESPONSE"
 GIT_LOG_MOCK_ENV = "CFP967_GIT_LOG_MOCK"
@@ -101,7 +175,14 @@ _TOKEN_MASK_RE = re.compile(r"(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-
 # Exit helpers
 # ---------------------------------------------------------------------------
 def _exit_pass(payload: dict) -> None:
-    print(json.dumps(payload))
+    """성공 종료. CFP-2976 D-3 — `determined` 미지정 시 True 로 명시 주입.
+
+    ★`{"matches": []}` 만으로는 "없음"과 "판정 불가"가 구분되지 않는다.
+      호출자(Orchestrator)는 `determined == False` 를 **부재로 읽어선 안 되며**,
+      그 실행은 착수 통행증이 될 수 없다.
+    """
+    payload.setdefault("determined", True)
+    print(json.dumps(payload, ensure_ascii=False))
     sys.exit(0)
 
 
@@ -293,7 +374,7 @@ def mode_title_search(epic_id: Optional[str] = None) -> None:
     # Build gh issue list args
     gh_args = [
         "issue", "list",
-        "--search", f'"{search_fragment}" in:title' if search_fragment else f"{_PREFIX}- in:title",
+        "--search", f'"{search_fragment}" in:title' if search_fragment else f"{resolve_prefix()}- in:title",
         "--state", "all",
         "--json", GH_FIELDS_TITLE_SEARCH,
         "--limit", "50",
@@ -319,12 +400,138 @@ def mode_title_search(epic_id: Optional[str] = None) -> None:
         title = issue.get("title", "")
         number = issue.get("number", 0)
         labels = [lbl.get("name", "") if isinstance(lbl, dict) else str(lbl) for lbl in issue.get("labels", [])]
-        if search_fragment and not KEY_PATTERN.search(title):
+        if search_fragment and not key_pattern().search(title):
             # If context given, ensure title has a <PREFIX>-\d+ pattern
             continue
         matches.append({"number": number, "title": title, "labels": labels})
 
     _exit_pass({"matches": matches})
+
+
+# ---------------------------------------------------------------------------
+# CFP-2976 D-2 / 축4 — 어휘 무관 자원 열거 + cross-repo 정의역
+# ---------------------------------------------------------------------------
+def _current_owner() -> Optional[str]:
+    """현재 repo 의 owner (org) 유도. 실패 시 None → 호출자가 fail-closed 판단."""
+    rc, out, _ = _run_gh(["repo", "view", "--json", "owner", "-q", ".owner.login"])
+    if rc != 0:
+        return None
+    owner = out.strip()
+    return owner or None
+
+
+def _self_refs() -> tuple[Optional[str], Optional[str]]:
+    """자기 자신(현 브랜치·현 repo) — EC-4 항진 방지용 제외 키."""
+    try:
+        r = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                           capture_output=True, text=True, timeout=10)
+        branch = r.stdout.strip() if r.returncode == 0 else None
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        branch = None
+    rc, out, _ = _run_gh(["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
+    repo = out.strip() if rc == 0 and out.strip() else None
+    return branch, repo
+
+
+def mode_resource_scan(target_repo: Optional[str], path: Optional[str]) -> None:
+    """자원 열거 — 어휘 0. 내가 만질 repo 에 붙은 in-flight 를 그대로 나열한다.
+
+    ★설계 근거 (CFP-2976 §7.2): 어휘 검색은 *내가 고른 단어*에 의존하므로
+      선행 작업이 다른 어휘를 쓰면 원리적으로 못 잡는다(실사고). 자원(repo)을 지정하면
+      브랜치·최근 커밋·열린 PR 은 **어휘와 무관하게** 전부 열거된다.
+      실사고 재현: --repo mclayer/ci-runner-infra → 브랜치 4개 중 cfp-2963-phase2 반환.
+
+    ★EC-4: 자기 브랜치·자기 PR 을 제외하지 않으면 항상 1건 이상 잡혀 **항진**이 된다
+      (항진 게이트는 곧 무시되고, 무시되면 판별력 0 과 동치).
+    """
+    err = _check_gh_auth()
+    if err:
+        _exit_setup_error(
+            "gh CLI not installed — install: https://cli.github.com" if err == "gh_not_installed"
+            else "gh CLI not authenticated — run: gh auth login",
+            kind=err,
+        )
+
+    self_branch, self_repo = _self_refs()
+    repo = target_repo or self_repo
+    if not repo:
+        _exit_setup_error(
+            "--repo 미지정 ∧ 현재 repo 유도 실패 — 자원 열거는 대상이 확정돼야 한다(fail-closed).",
+            kind="resource_target_undetermined",
+        )
+
+    truncated = []
+
+    rc, out, stderr = _run_gh(["api", f"repos/{repo}/branches?per_page=100", "-q", ".[].name"])
+    if rc != 0:
+        _exit_pass({
+            "determined": False,
+            "reason": "branch_enumeration_failed",
+            "repo": repo,
+            "stderr_excerpt": _stderr_excerpt(stderr),
+        })
+    branches = [b for b in out.strip().splitlines() if b and b != self_branch]
+    if len(branches) >= 100:
+        truncated.append("branches")
+
+    rc, out, _ = _run_gh([
+        "api", f"repos/{repo}/commits?per_page=10",
+        "-q", '.[] | (.commit.author.date[0:10]) + " " + .commit.message',
+    ])
+    # jq 안에서 개행 이스케이프를 쓰지 않는다(셸/heredoc 다중 이스케이프 함정).
+    # 전문을 받아 Python 에서 커밋 경계(날짜 prefix)로 첫 줄만 취한다.
+    # jq 안에서 개행 이스케이프를 쓰지 않는다(셸/heredoc 다중 이스케이프 함정).
+    # 전문을 받아 Python 에서 커밋 경계(날짜 prefix)로 첫 줄만 취한다.
+    #
+    # ★한계 정직 declare (Windows): gh 는 UTF-8 을 내지만 Windows subprocess 캡처가
+    #   콘솔 코드페이지를 타 비-ASCII 커밋 메시지가 깨진다(선재 환경 이슈 — 본 Story 도입분 아님).
+    #   깨진 surrogate 를 JSON 으로 내보내면 출력 계약 자체가 파손되므로 여기서 봉인한다.
+    #   ⇒ **branches / open_prs 가 load-bearing 필드**이고 recent_commits 는 보조다.
+    #      비-ASCII 커밋 메시지 가독성은 follow-up (§11.4).
+    commits = []
+    if rc == 0:
+        for ln in out.splitlines():
+            if re.match(r"^\d{4}-\d{2}-\d{2} ", ln):
+                safe = ln.encode("utf-8", "replace").decode("utf-8", "replace")
+                commits.append(safe[:100])
+
+    rc, out, _ = _run_gh([
+        "pr", "list", "--repo", repo, "--state", "open", "--limit", "100",
+        "--json", "number,title,headRefName",
+    ])
+    prs: list = []
+    if rc == 0:
+        payload, defect = _parse_gh_payload(out, list)
+        if not defect and payload is not None:
+            prs = [
+                {"number": pr.get("number"), "title": pr.get("title", ""),
+                 "head": pr.get("headRefName", "")}
+                for pr in payload
+                if pr.get("headRefName") != self_branch
+            ]
+            if path:
+                filtered = []
+                for pr in prs:
+                    frc, fout, _ = _run_gh([
+                        "api", f"repos/{repo}/pulls/{pr['number']}/files?per_page=100",
+                        "-q", ".[].filename",
+                    ])
+                    if frc == 0 and any(path in ln for ln in fout.splitlines()):
+                        filtered.append(pr)
+                prs = filtered
+    if len(prs) >= 100:
+        truncated.append("open_prs")
+
+    _exit_pass({
+        "determined": True,
+        "repo": repo,
+        "path_filter": path,
+        "excluded_self": {"branch": self_branch, "repo": self_repo},
+        "branches": branches,
+        "recent_commits": commits,
+        "open_prs": prs,
+        "truncated": truncated,   # EC-3: silent truncation 금지
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +589,7 @@ def _parse_siblings_from_body(body: str) -> list[dict]:
     """Extract sibling Story references from Epic body scope_manifest block."""
     siblings = []
     # Look for <!-- scope_manifest --> block or plain <PREFIX>-\d+ references
-    cfp_matches = KEY_PATTERN.findall(body)
+    cfp_matches = key_pattern().findall(body)
     seen = set()
     for cfp_ref in cfp_matches:
         if cfp_ref not in seen:
@@ -430,7 +637,7 @@ def mode_head_compare(branch: str = "origin/main") -> None:
         msg = parts[2] if len(parts) > 2 else ""
         delta_commits.append({"sha": sha, "time": ci, "msg": msg})
         # parallel detection: any commit message containing <PREFIX>-\d+ pattern
-        if KEY_PATTERN.search(msg):
+        if key_pattern().search(msg):
             parallel_detected = True
 
     # stale_label_grace: check if prior_sha is older than STALE_GRACE_SEC
@@ -504,7 +711,7 @@ def _emit_degrade_marker(mode: str, context: str) -> None:
 def _degrade_title_search(label: str, context: str, stderr_excerpt: str = "") -> None:
     """title-search honest-degrade — 마커 → git-log -50 fallback → matches 스키마 보존 → exit 0."""
     _emit_degrade_marker("title-search", context)
-    # Local fallback: git log -50 | grep <PREFIX>-\d+ (KEY_PATTERN 경유 유지 = CFP-2451)
+    # Local fallback: git log -50 | grep <PREFIX>-\d+ (key_pattern() 경유 = CFP-2451 · CFP-2976 lazy 화)
     try:
         result = subprocess.run(
             ["git", "log", "-50", "--format=%s"],
@@ -516,7 +723,7 @@ def _degrade_title_search(label: str, context: str, stderr_excerpt: str = "") ->
         if result.returncode == 0:
             cfp_refs = []
             for line in result.stdout.splitlines():
-                cfp_refs.extend(KEY_PATTERN.findall(line))
+                cfp_refs.extend(key_pattern().findall(line))
             print(
                 json.dumps({
                     "matches": [{"cfp": ref} for ref in set(cfp_refs)],
@@ -583,7 +790,8 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         required=True,
-        choices=["title-search", "epic-state-poll", "head-compare-sibling-commits"],
+        choices=["title-search", "epic-state-poll", "head-compare-sibling-commits",
+                 "resource-scan"],
         help="Polling mode (ADR-073 Amendment 2 §결정 1-A transition trigger enum)",
     )
     parser.add_argument(
@@ -596,6 +804,17 @@ def main() -> None:
         default="origin/main",
         help="Branch for head-compare mode (default: origin/main)",
     )
+    # CFP-2976 축4 — 자원 열거 (어휘 무관)
+    parser.add_argument(
+        "--repo",
+        default=None,
+        help="resource-scan 대상 repo (owner/name). 미지정 시 현재 repo",
+    )
+    parser.add_argument(
+        "--path",
+        default=None,
+        help="resource-scan 시 이 경로를 건드리는 열린 PR 만 남김 (부분 일치)",
+    )
 
     args = parser.parse_args()
 
@@ -607,6 +826,8 @@ def main() -> None:
         mode_epic_state_poll(epic_id=args.epic_id)
     elif args.mode == "head-compare-sibling-commits":
         mode_head_compare(branch=args.branch)
+    elif args.mode == "resource-scan":
+        mode_resource_scan(target_repo=args.repo, path=args.path)
     else:
         _exit_setup_error(f"unknown mode: {args.mode}")
 

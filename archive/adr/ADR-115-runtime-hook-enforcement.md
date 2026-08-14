@@ -8,8 +8,16 @@ carrier_story: CFP-1740
 parent_epic: CFP-1740
 supersedes: null
 amends: null
-amendments: [1]
+amendments: [1, 2]
 amendment_log:
+  - amendment: 2
+    date: 2026-08-14
+    carrier_story: CFP-2965
+    summary: |
+      ① §결정 3 판독 확인 문장 codify — "단일 dispatcher 통합·parallel dispatcher 신설 금지" = **등록 채널 단일화** (one-channel rule 축)이며 프로세스 실행 모델(훅 내부 프로세스 수·상주 여부) 제약이 아님. §결정 6 scope("본 ADR scope = **4 hook 종**") 대칭 적용 — Bash-매칭 훅은 §결정 3~6 규율 대상 밖. ② PreToolUse(Bash) 훅 timeout 예산 신설 + §결정 5 degradation enum("hook 실행 timeout (> 5s) → warning 후 turn 계속") 의 실배선 (hooks.json 전 24 entry 명시 timeout — 산정 규칙 3종 codify: 하한 불변식 / fail-open 계상 의무 / 차등 tier. 값 = CFP-2965 Change Plan §3.2 산정표 소관). ③ §검증표 TBD 3-entry(latency PreToolUse(Agent) / latency UserPromptSubmit·Stop·SubagentStop / rate PreToolUse(Bash) deny) 청산 — CFP-2965 실측 연결 (목표값 무변경, empirical-source 채움 + rate 행 "exit code 1" 오기 정정 → 실코드 exit 2). 자기 인용 앵커 = §결정 번호 + verbatim (행번호 불사용 — 파일 성장 drift 면역, CFP-2965 설계리뷰 Iter 1 P2-5).
+    direction: strengthening
+    sunset_justification: |
+      기존 선언값(§검증표 <500ms / <200ms) 완화 0 (목표값 무접촉 — 미달 사실의 실측 기록만). 신규 배선(24 entry timeout)·예산 규칙 = 최초 선언 = ADR-058 §결정 5 역-ratchet 정의역 밖 (strengthening — 선언-배선 불일치(결과 부정적 결과 1 "timeout fail-open 보장" 선언 vs hooks.json timeout 0건) 해소). §결정 3~6 골격 byte-frozen 무손상 — 본 Amendment 절만 추가.
   - amendment: 1
     date: 2026-07-02
     carrier_story: CFP-2544
@@ -21,9 +29,11 @@ amendment_log:
 related_stories:
   - CFP-1740  # carrier_story (원안)
   - CFP-2544  # Amendment 1 — §결정 6 inline-write detect hook Write/Edit/MultiEdit 축 이관·이행 (Wave1)
+  - CFP-2965  # Amendment 2 — PreToolUse(Bash) timeout 예산 신설 + TBD 3-entry 청산 + §결정 3 판독 확인
 related_cfps:
   - CFP-1740
   - CFP-2544
+  - CFP-2965
 is_transitional: false
 mechanical_enforcement_actions:
   - runtime-hook-presence
@@ -306,3 +316,32 @@ frontmatter `related_files` 의 narrative companion (markdown link 형식):
 ## 시각 표시 (ADR-079 KST `+09:00` colon-offset 정합)
 
 본 ADR 작성 시점 = 2026-05-26 KST. governance display layer 모든 시각 표기 = KST `+09:00` ISO 8601 zoned. contract field layer (stop-event-v1 timestamp field) = UTC strict 0건 변경 invariant (ADR-079 layer-bounded 정합).
+
+## Amendment 2 — PreToolUse(Bash) timeout 예산 신설 + §검증표 TBD 3-entry 청산 + §결정 3 판독 확인 (CFP-2965, 2026-08-14)
+
+> carrier = CFP-2965 (Epic #2964 child 1 — Bash PreToolUse 훅 체인 지연세 감축). 본문 §결정 1~6 byte-frozen — 본 절이 wording 을 보충·정정하되 원문 무변경. 설계 상세·수치 SSOT = CFP-2965 Change Plan (`codeforge-internal-docs` `wrapper/change-plans/2026-08-14-cfp-2965-bash-hook-latency-tax-timeout.md`).
+
+### A2.1 §결정 3 판독 확인 문장 (원의도 codify)
+
+§결정 3 "4 hook 전부 **기존 단일 dispatcher** 에 통합. **parallel dispatcher 신설 금지**" 는 **등록 채널 단일화**다 — hooks.json 진입점 이중화 방지, 같은 §결정 3 의 "**one-channel rule** (consumer overlay 이중 발화 차단)" 절과 동일 축. **프로세스 실행 모델(훅 내부 프로세스 수·상주 프로세스 여부)에 대한 제약이 아니다** (본문에 프로세스-모델 어휘 0건 — spawn/daemon/캐스케이드 미출현). §결정 6 scope("본 ADR scope = **4 hook 종**: UserPromptSubmit / PreToolUse(matcher:"Agent") / Stop / SubagentStop")의 대칭 적용상 **Bash-매칭 훅은 §결정 3~6 규율 대상 밖** (§결정 1 의 cross-repo-gh-safety 인용은 "plugin 경로 작동 선례" 인용). 따라서 상주 데몬 등 실행 모델 선택지를 본 ADR 문면이 사전 배제하지 않는다 — CFP-2965 설계는 데몬을 **별도 실질 근거** (신규 trust boundary 신설 요건 D-1~D-4 비용 + 실측 이득 상한 소[병렬 wall ≈ 최중량 수렴] + ADR-169 세션 잔재 정의역 밖 상주 리스너)로 기각했다 (Change Plan §3 판정 1 — "§결정 3 문면 금지" 를 기각 근거로 쓰지 않는다).
+
+### A2.2 PreToolUse(Bash) timeout 예산 신설 — §결정 5 degradation enum 의 실배선
+
+§결정 5 degradation enum 의 verbatim "hook 실행 timeout (> 5s) → warning 후 turn 계속" + 결과(Consequences) 부정적 결과 1 의 "graceful degradation 5-layer (§결정 5) 가 timeout fail-open 보장" 은 선언만 존재했고 `hooks/hooks.json` 24 entry 전부 `timeout` 필드 0건이었다 (CFP-2965 §2 C3 — 선언-배선 불일치). 본 Amendment 로 **전 24 entry 명시 `timeout` 배선을 의무화**하고 산정 규칙 3종을 codify 한다 (구체 값 = CFP-2965 Change Plan §3.2 산정표 + Phase 2 실측 리포트 소관 — ADR 은 규칙만):
+
+1. **하한 불변식**: `timeout(h) ≥ Σ(훅 내부 subprocess timeout 예산) + 기동 여유`. 위반 = 해당 분기 상시 만료 = hollow gate (가장 파괴적 형태 = git-branch-delete-merge-gate 의 multi-branch delete N×10s — 하한이 상수가 아닌 훅은 내부 subprocess 총예산 bound 화를 동반한다). **균일값 일괄 부여 금지.**
+2. **fail-open 계상 의무**: PreToolUse timeout 만료 = 플랫폼-강제 fail-open (공식 hooks reference verbatim: "don't count on a stalled hook to act as a gate") — deny 게이트 값 산정은 만료 = 게이트 미적용 창의 결과(손실 심각도 × 만료 확률)를 계상·기록한 판정을 동반한다 (판정 없는 부여 금지). timeout 부여는 세션 brick 벡터가 아니다 (fail-open 방향 확정).
+3. **차등 tier**: record-only·advisory(최단) < 게이트·무네트워크 < 게이트·내부예산(≥ 내부예산+여유) < SessionStart 중량(내부 예산 누적 상한 반영) < SessionEnd 특례(공유 1.5s 예산 — ≤1.5s 값은 예산 무변경, 초과 설정 시 최대 60s 상향 = 종료 지연 동작 변경으로 계상).
+
+### A2.3 §검증표 TBD 3-entry 청산 (latency 2행 + rate 1행)
+
+| entry | 청산 (목표값 무변경 — empirical-source 채움) |
+|---|---|
+| §검증표 latency — PreToolUse(Agent) < 500ms | **목표 예산(실행 시간)과 timeout(kill 상한)의 2축 분리** codify. 실측 [empirical-source: CFP-2965 M5 — 실세션 Slow-log Agent 체인 절단-p50 14,128ms (n=30, ≥2,000ms 절단 프레임, 체인 wall)]: <500ms 목표는 현행 Windows 프로세스 캐스케이드 구조에서 미달 상태 (미달 사실의 실측 기록). timeout 배선 = Change Plan §3.2 (10s). 목표 재접근 = CFP-2965 감축 패턴(내부 python 통합)의 Agent 축 전개 — 후속 판단 |
+| §검증표 latency — UserPromptSubmit/Stop/SubagentStop < 200ms | [empirical-source: CFP-2965 M2 — python3 콜드스타트 median 200ms · cascade noop 122ms (측정 호스트 i9-9900K, Defender OFF)]: python 경유 훅은 콜드스타트 단독으로 목표를 소진 — bash-only 바닥 ≈122ms 만 목표 내. 목표값 무변경 (달성 경로 = in-process 최소화 축). timeout 배선 = Change Plan §3.2 |
+| §검증표 rate — PreToolUse(Bash) deny rate | [empirical-source: CFP-2965 §4.1 ⑤ — deny rate 전용 측정 채널 부재 실측 (dev-process-event-v1 원장에 duration/exit 판별자 0건)]. baseline 채널 = CFP-2965 Phase 2 run-local 측정 리포트 (1회성 — ADR-163 신규 채널 비발동). **부수 정정**: rate 행 원문의 "exit code 1 (deny)" 표기는 오기 — 실코드 = `exit 2` (`hooks/cross-repo-gh-safety:93`). 원문 byte-frozen 존중 — 본 절이 정정 SSOT |
+
+### A2.4 방향 + 경계
+
+- **strengthening** — 기존 선언값 완화 0. 신규 배선·규칙 = 최초 선언 (ADR-058 §결정 5 역-ratchet 정의역 밖). 향후 §검증표 latency 목표값(<500ms/<200ms) 자체를 실측 실패치에 맞춰 완화할 때만 §결정 5 evidence 의무 발동.
+- timeout 만료 창의 운영 리스크(로드 상관 fail-open — 부하 최고 순간에 게이트가 꺼지는 상관)는 **완화 불가 declare 대상** — CFP-2965 Change Plan §7.4 소관. "100% 기계 차단" 참칭 금지 (ADR-119 정합).

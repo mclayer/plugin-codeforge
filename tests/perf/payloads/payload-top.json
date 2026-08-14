@@ -1,0 +1,1 @@
+{"session_id":"cfp2965-measure","transcript_path":"C:/tmp/none.jsonl","cwd":"C:/workspace/mclayer/plugin-codeforge","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git -C C:/workspace/mclayer/plugin-codeforge status --porcelain # CFP2965LIVE1786625900","description":"[Orchestrator] 08/13 21:40:00 - git status 확인 (CFP2965LIVE1786625900)"}}

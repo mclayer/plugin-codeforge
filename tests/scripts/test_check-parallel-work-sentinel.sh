@@ -620,7 +620,16 @@ set -e
 # ─────────────────────────────────────────────────────────────────────────────
 # Summary + mutation 문서화
 # ─────────────────────────────────────────────────────────────────────────────
-echo ""
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2976 — 3속성(prefix 유도 / fail-closed / determined 계약)은 본 harness 가 아니라
+#   tests/scripts/test_cfp2976_sentinel_prefix.py 가 SSOT 다.
+#
+# ★분업 근거: 본 harness = CLI 계층(gh mock seam). 그 3속성은 Python SSOT **내부 함수**
+#   (resolve_prefix / _prefix_from_overlay / _exit_pass) 검증이라 Python 이 자연 계층이다.
+#   양쪽에 같은 케이스를 두면 "같은 규칙 두 벌 = 한쪽만 고쳐진다" 가 된다 — 의도적 단일화.
+#   (부수: ADR-145 Hop3 가 tests-root 아래 *.py ast 심볼만 인정하므로 RTM 명명 테스트도 그쪽이 정본.)
+# ═════════════════════════════════════════════════════════════════════════════
+
 echo "============================================================"
 echo "Test Summary (CFP-2451 prefix + CFP-2490 tier-flip + CFP-2723 epic-state-poll 로스터 N1-N13)"
 echo "============================================================"
@@ -628,6 +637,7 @@ echo "PASS: $PASS"
 echo "FAIL: $FAIL"
 echo "TOTAL: $((PASS + FAIL))"
 echo ""
+
 
 if [ "$FAIL" -eq 0 ]; then
   echo "✓ All fixtures passed"

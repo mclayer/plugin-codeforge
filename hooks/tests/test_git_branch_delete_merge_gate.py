@@ -13,11 +13,13 @@ CI: lint.yml hook-unit-tests job (ubuntu-latest) 에서 실행. fake `gh` 스텁
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import stat
 import subprocess
 import sys
+from collections import namedtuple
 from pathlib import Path
 
 import pytest
@@ -271,3 +273,197 @@ def test_inv_delete_no_open_pr_exit_zero(tmp_path):
     empty = _write_gh_stub(tmp_path, "[]")
     rc, _ = _run_hook("git push origin --delete foo", _path_with(empty))
     assert rc == 0
+
+
+# ============================================================ gh 총예산 거동 (CFP-2965 F4 / P1-4)
+#
+# 검증 축 2 (실물 = git-branch-delete-merge-gate.py 의 GH_TOTAL_BUDGET_SEC 배선):
+#   (a) 총예산 소진 → 잔여 branch 검사 skip + 진단 stderr + rc 0 (fail-open)
+#         — "죽어서 통과"(hooks.json timeout kill, 흔적 0) 대신 "돌아서 통과"(흔적 有).
+#   (b) 경계 직전 발사되는 call 의 in-flight deadline == min(_GH_TIMEOUT_SEC, 잔여)
+#         — 누적 사전검사만으로는 경계 직전 call 이 (49.9 + 10) 로 총예산을 관통한다.
+#
+# 네트워크 0 · 실 gh 프로세스 기동 0: seam 은 프로세스 경계 **바로 안쪽**(subprocess.run)
+#   1곳뿐이고, 그 위의 `_open_prs_for_branch` / `main()` / 파서는 전부 실물이다.
+#   전역 모듈(time / subprocess) 은 건드리지 않는다 — gate 모듈이 들고 있는 **참조만**
+#   교체하므로 pytest 내부·타 테스트로 누수되지 않는다.
+#
+# ADR-171 mock-seam 동반 assertion (seam 을 깔았으면 "실제로 물렸다"를 증명할 것):
+#   모든 케이스가 (1) seam 호출 기록 비어있지 않음 (2) 기록된 argv 가 실 gh 조회 형태
+#   (`gh pr list --head <b> --state open --json number,title`, shell=False) 와 일치함을
+#   assert 한다. seam 이 안 물리면 기록이 비어 **FAIL** 한다 (조용한 거짓 PASS 불가).
+#
+# 판별력 실증 (mutation kill, 2026-08-14 firsthand):
+#   M1 `call_timeout = min(_GH_TIMEOUT_SEC, budget_remaining_sec)` → `= _GH_TIMEOUT_SEC`
+#      ⇒ test_per_call_deadline_clamped_to_remaining_budget FAIL (5.0 기대 vs 10).
+#   M2 `if remaining <= 0:` → `if False:` (소진 분기 무력화)
+#      ⇒ test_gh_total_budget_exhaustion_skips_rest_and_fails_open FAIL (b3 까지 조회).
+#   둘 다 원복 확인.
+
+_Call = namedtuple("_Call", "argv timeout shell at")
+
+
+class _FakeClock:
+    """monotonic 대체 — 명시 advance 로만 흐른다 (벽시계·부하 비의존 = 결정적)."""
+
+    def __init__(self, start: float = 1000.0):
+        self.start = float(start)
+        self.now = float(start)
+
+    def __call__(self) -> float:
+        return self.now
+
+    def advance(self, sec: float) -> None:
+        self.now += float(sec)
+
+
+class _ModuleShim:
+    """gate 가 들고 있는 모듈 참조만 갈아끼우는 최소 shim (전역 모듈 무접촉)."""
+
+    def __init__(self, **attrs):
+        self.__dict__.update(attrs)
+
+
+class _GhSeam:
+    """subprocess.run seam — gh argv 를 가로채 canned 응답 + 소요시간 시뮬레이션."""
+
+    def __init__(self, clock: _FakeClock, elapsed_per_call: float, stdout: str = "[]"):
+        self.clock = clock
+        self.elapsed_per_call = float(elapsed_per_call)
+        self.stdout = stdout
+        self.calls: list[_Call] = []
+
+    def __call__(self, argv, **kwargs):
+        self.calls.append(
+            _Call(list(argv), kwargs.get("timeout"), kwargs.get("shell"), self.clock.now)
+        )
+        self.clock.advance(self.elapsed_per_call)
+        return subprocess.CompletedProcess(argv, 0, self.stdout, "")
+
+
+def _install_gh_seam(monkeypatch, command: str, elapsed_per_call: float, stdout: str = "[]"):
+    """gate 의 time/subprocess 참조 + stdin 을 교체하고 seam 반환."""
+    clock = _FakeClock()
+    seam = _GhSeam(clock, elapsed_per_call, stdout)
+    monkeypatch.setattr(gate, "time", _ModuleShim(monotonic=clock))
+    monkeypatch.setattr(gate, "subprocess", _ModuleShim(run=seam))
+    payload = {"tool_name": "Bash", "tool_input": {"command": command}}
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+    return seam
+
+
+def _assert_seam_engaged(seam: _GhSeam) -> None:
+    """ADR-171 동반 assertion — seam 이 실제로 물렸고, 실 gh 조회 형태인가."""
+    assert seam.calls, (
+        "gh seam 미사용 — subprocess.run 이 가로채지지 않았다. "
+        "관측 대상이 실물 gh 경로가 아니므로 이 테스트의 통과는 무효다."
+    )
+    for c in seam.calls:
+        assert c.argv[:3] == ["gh", "pr", "list"], f"gh 조회 argv 아님: {c.argv}"
+        assert "--head" in c.argv, f"--head 부재: {c.argv}"
+        assert c.argv[c.argv.index("--state") + 1] == "open", f"열린 PR 조회 아님: {c.argv}"
+        assert c.argv[c.argv.index("--json") + 1] == "number,title", f"json 필드 불일치: {c.argv}"
+        assert c.shell is False, f"shell=False 아님: {c.shell}"
+
+
+def _heads(seam: _GhSeam) -> list[str]:
+    """seam 기록에서 실제 조회된 branch 이름 순서 추출."""
+    return [c.argv[c.argv.index("--head") + 1] for c in seam.calls]
+
+
+def test_gh_total_budget_exhaustion_skips_rest_and_fails_open(monkeypatch, capsys):
+    """(a) 총예산 소진 → 잔여 branch 미검사 + 진단 1줄 + rc 0.
+
+    branch 3건 × call 당 30s → b1(0→30) b2(30→60) 검사 후 잔여 -10s → b3 skip.
+    """
+    seam = _install_gh_seam(
+        monkeypatch, "git push origin --delete b1 b2 b3", elapsed_per_call=30.0
+    )
+
+    rc = gate.main()
+    err = capsys.readouterr().err
+
+    _assert_seam_engaged(seam)
+    assert rc == 0, f"예산 소진은 fail-open(0) 이어야 함 (got {rc})"
+    assert _heads(seam) == ["b1", "b2"], (
+        f"예산 소진 이후 branch 가 계속 조회됐다: {_heads(seam)}"
+    )
+    assert f"총예산 {gate.GH_TOTAL_BUDGET_SEC}s 소진" in err, f"소진 진단 부재: {err!r}"
+    assert "잔여 branch 1건 미검사" in err, f"미검사 건수 진단 부재: {err!r}"
+    assert "fail-open" in err, f"fail-open 표기 부재: {err!r}"
+
+
+def test_gh_budget_exhaustion_does_not_swallow_earlier_block(monkeypatch, capsys):
+    """(a-대조군): 예산이 남아 있는 동안 열린 PR 을 만나면 여전히 exit 2.
+
+    소진 경로(rc 0)가 차단 경로를 삼키지 않음을 고정한다 — 이게 없으면 (a) 는
+    "언제나 0" 과 구별되지 않는다.
+    """
+    seam = _install_gh_seam(
+        monkeypatch,
+        "git push origin --delete b1 b2 b3",
+        elapsed_per_call=30.0,
+        stdout=json.dumps([{"number": 42, "title": "WIP"}]),
+    )
+
+    rc = gate.main()
+    err = capsys.readouterr().err
+
+    _assert_seam_engaged(seam)
+    assert rc == 2, f"열린 PR 확인 = 유일 차단 경로 (got {rc})"
+    assert _heads(seam) == ["b1"], f"첫 차단 후 조회가 계속됐다: {_heads(seam)}"
+    assert "BLOCKED" in err and "#42" in err
+
+
+def test_per_call_deadline_clamped_to_remaining_budget(monkeypatch, capsys):
+    """(b) 각 call 의 in-flight deadline == min(_GH_TIMEOUT_SEC, 발사시점 잔여).
+
+    b1 이 45s 소비 → b2 발사 시점 잔여 5s < _GH_TIMEOUT_SEC(10) → b2 deadline = 5.
+    clamp 가 없으면 b2 는 10s 를 받아 최악 wall 55s 로 총예산 50s 를 관통한다.
+    """
+    seam = _install_gh_seam(
+        monkeypatch, "git push origin --delete b1 b2", elapsed_per_call=45.0
+    )
+
+    rc = gate.main()
+    capsys.readouterr()
+
+    _assert_seam_engaged(seam)
+    assert rc == 0
+    assert _heads(seam) == ["b1", "b2"], f"두 branch 모두 조회돼야 함: {_heads(seam)}"
+
+    timeouts = [c.timeout for c in seam.calls]
+    assert timeouts[0] == gate._GH_TIMEOUT_SEC, (
+        f"잔여 충분(50s) 시 per-call 상한 = _GH_TIMEOUT_SEC 여야 함: {timeouts[0]}"
+    )
+    assert timeouts[1] == pytest.approx(5.0), (
+        f"경계 직전 call 은 잔여(5s)로 조여져야 함 (clamp 부재 시 10): {timeouts[1]}"
+    )
+
+    # 총예산 미관통 invariant: 발사시점 경과 + 그 call 의 deadline ≤ 총예산.
+    for c in seam.calls:
+        elapsed = c.at - seam.clock.start
+        remaining = gate.GH_TOTAL_BUDGET_SEC - elapsed
+        assert c.timeout == pytest.approx(min(gate._GH_TIMEOUT_SEC, remaining)), (
+            f"deadline != min(_GH_TIMEOUT_SEC, 잔여): timeout={c.timeout}, 잔여={remaining}"
+        )
+        assert elapsed + c.timeout <= gate.GH_TOTAL_BUDGET_SEC + 1e-9, (
+            f"최악 wall 이 총예산 관통: 경과={elapsed} + deadline={c.timeout} "
+            f"> {gate.GH_TOTAL_BUDGET_SEC}"
+        )
+
+
+def test_open_prs_default_budget_is_per_call_timeout(monkeypatch):
+    """단독 호출(budget 인자 생략) = 기존 거동 그대로 (_GH_TIMEOUT_SEC).
+
+    docstring 이 선언한 default 를 실측으로 고정 — 기본값이 바뀌면 여기서 깨진다.
+    """
+    clock = _FakeClock()
+    seam = _GhSeam(clock, elapsed_per_call=0.0)
+    monkeypatch.setattr(gate, "subprocess", _ModuleShim(run=seam))
+
+    assert gate._open_prs_for_branch("foo") == []
+
+    _assert_seam_engaged(seam)
+    assert seam.calls[0].timeout == gate._GH_TIMEOUT_SEC
+    assert _heads(seam) == ["foo"]

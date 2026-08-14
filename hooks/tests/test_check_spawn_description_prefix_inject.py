@@ -264,6 +264,57 @@ def test_inject_subject_arg_verbatim_after_sanitize():
     assert ui["command"] == "ls"
 
 
+# ── dispatch 위치 인식 (CFP-2965 F6) ─────────────────────────────────────────
+
+def test_dispatch_position_aware_subject_equal_to_mode_literal():
+    """subject 값이 모드 리터럴("--inject-bash") 과 같아도 --inject 경로를 유지한다.
+
+    구 dispatch 는 `"--inject-bash" in argv` (position-blind 멤버십) 라
+    `--inject --subject "--inject-bash"` 호출이 Bash 표면(run_inject_bash)으로 새고,
+    Agent payload 는 그 쪽 tool_name/agent_type 가드에 걸려 **주입이 통째로 소실**됐다.
+    값-위치 shadowing 은 _scan_argv 가 봉합했지만 dispatch 는 그 밖이었다.
+
+    판별 지표 2:
+      (1) additionalContext 존재 — run_inject(Agent 표면)만 emit (bash 모드엔 경로 부재)
+      (2) updatedInput 이 subject 프리픽스로 stamped + 원 인자 verbatim (주입 소실 0)
+    """
+    payload = _load_fixture("agent-spawn.json")
+    orig_prompt = payload["tool_input"]["prompt"]
+
+    obj = _run_inject(payload, "--inject-bash", KST_STAMP, reminder=True)
+    assert obj is not None, "stdout 부재 — --inject-bash 로 오분기해 주입이 소실됐다"
+    hso = obj["hookSpecificOutput"]
+
+    # (1) Agent 표면 경로 확정
+    assert "additionalContext" in hso, (
+        "run_inject 경로가 아니다 — subject 값이 모드 리터럴이라 오분기 "
+        "(position-blind dispatch 회귀)"
+    )
+    # (2) 주입 소실 0 + whole-echo 보존
+    ui = hso["updatedInput"]
+    assert ui["prompt"] == orig_prompt
+    assert ui["description"].startswith("[--inject-bash] %s - " % KST_STAMP)
+    assert csdp.RE_PREFIX.match(ui["description"]) is not None
+    assert "permissionDecision" not in hso  # G4 무손상
+
+
+def test_detect_mode_not_hijacked_by_mode_literal_in_value_position():
+    """detect 모드(--description-stdin) 가 뒤따르는 모드 리터럴에 납치되지 않는다.
+
+    구 코드: `"--inject" in argv` 멤버십이 참이 되어 run_inject 로 새고, stdin 이
+    PreToolUse JSON 이 아니라 fail-open(무출력) → detect 산출이 사라진다.
+    """
+    proc = subprocess.run(
+        [sys.executable, str(CHECKER), "--description-stdin", "--subject", "--inject"],
+        input="[X] 07/09 19:30:00 - ok", capture_output=True, text=True, encoding="utf-8")
+    assert proc.returncode == 0
+    out = proc.stdout.strip()
+    assert out, "detect 산출 부재 — --inject 로 오분기 (position-blind dispatch 회귀)"
+    obj = json.loads(out)
+    assert "description_prefix_conformant" in obj, f"detect 산출이 아니다: {obj}"
+    assert "hookSpecificOutput" not in obj, "inject 산출이 섞였다 (모드 오분기)"
+
+
 # ── T-3 merge (Agent surface — single JSON, both keys) ───────────────────────
 
 def test_inject_reminder_merge_single_json_both_keys():

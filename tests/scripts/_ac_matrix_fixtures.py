@@ -149,7 +149,10 @@ def _invoke(core, phase, ac_source=None, rtm=None, tests_root=None, rtm_not_yet=
     elif rtm is not None:
         argv += ["--rtm", rtm]
     if tests_root is not None:
-        argv += ["--tests-root", tests_root]
+        # tests_root: str(단일 — 기존 호출면) 또는 list/tuple(다중 — CFP-2965 CR-203②).
+        # 다중이면 `--tests-root` 를 **반복 지정**해 전달한다 (core argparse action="append").
+        for _root in ([tests_root] if isinstance(tests_root, str) else tests_root):
+            argv += ["--tests-root", _root]
     proc = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8")
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 

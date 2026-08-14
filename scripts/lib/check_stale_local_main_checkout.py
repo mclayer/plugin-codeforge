@@ -18,7 +18,7 @@ Exit-code 3-tier (ADR-060 §결정 15):
 
 환경 변수:
   CODEFORGE_STALE_THRESHOLD        — divergence 판정 임계값 (default: 1)
-  CODEFORGE_STALE_FETCH_TIMEOUT_SEC — git fetch timeout 초 (default: 10)
+  CODEFORGE_STALE_FETCH_TIMEOUT_SEC — git fetch timeout 초 (default: 10, 상한 clamp 10 — 하향 전용)
   BYPASS_STALE_LOCAL_MAIN_CHECKOUT  — bypass flag
 
 Test seam:
@@ -47,6 +47,11 @@ BYPASS_ENV = "BYPASS_STALE_LOCAL_MAIN_CHECKOUT"
 DEFAULT_THRESHOLD = 1
 DEFAULT_FETCH_TIMEOUT_SEC = 10
 
+# fetch timeout env 상한 clamp (CFP-2965 / Change Plan §3.2 #2 — InfraOp P1② + P0-1).
+#   SessionStart 훅 timeout(30s) 하한 불변식: rev-parse 5 + fetch F + rev-list 10 + 기동여유 5 ≤ 30
+#   → F ≤ 10. env 상향(fetch>10s) 수요 실증 0 이므로 **하향 전용** clamp = min(env, 10).
+FETCH_TIMEOUT_CLAMP_SEC = 10
+
 # Test seam env keys
 MOCK_REV_LIST_ENV = "STALE_LOCAL_GIT_MOCK_REV_LIST"
 MOCK_BRANCH_ENV = "STALE_LOCAL_GIT_MOCK_BRANCH"
@@ -68,13 +73,19 @@ def _get_threshold() -> int:
 
 
 def _get_fetch_timeout() -> int:
-    """CODEFORGE_STALE_FETCH_TIMEOUT_SEC 환경 변수 (default 10)."""
+    """CODEFORGE_STALE_FETCH_TIMEOUT_SEC 환경 변수 (default 10, 상한 clamp 10).
+
+    clamp = min(env, FETCH_TIMEOUT_CLAMP_SEC) — **하향 전용** (env 26 → 10 / env 7 → 7 /
+    env 부재 → default 10). SessionStart 훅 timeout(30s) 의 하한 불변식을 env 로 위반할 수
+    없게 조인다 (CFP-2965 §3.2 #2). default 경로 의미 무변경.
+    """
     raw = os.environ.get("CODEFORGE_STALE_FETCH_TIMEOUT_SEC", str(DEFAULT_FETCH_TIMEOUT_SEC))
     try:
         val = int(raw)
-        return val if val >= 1 else DEFAULT_FETCH_TIMEOUT_SEC
+        val = val if val >= 1 else DEFAULT_FETCH_TIMEOUT_SEC
     except ValueError:
-        return DEFAULT_FETCH_TIMEOUT_SEC
+        val = DEFAULT_FETCH_TIMEOUT_SEC
+    return min(val, FETCH_TIMEOUT_CLAMP_SEC)
 
 
 def _get_current_branch() -> Optional[str]:
