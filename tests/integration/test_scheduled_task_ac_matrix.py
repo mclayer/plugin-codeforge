@@ -531,12 +531,16 @@ class TestAC11MarkerTwoTypes:
 class TestAC12TripleAxisSixCellComparison:
     """AC-12: 3축 × {비용,보안} 6셀 비교 + 결정 기록 (normative).
 
-    검사 대상 = ADR-172 `### §결정 8` 절(절 헤딩 기준, 줄번호 하드코딩 금지).
+    검사 대상 = ADR-172 `### §결정 8` 절(절 헤딩 기준).
+
+    부재형 mutant: 비교표 또는 결정 기록 제거
+    변형형 mutant:
+      - M2 결정 시각을 다른 시각으로 변경 (2026-08-12T23:59:59+09:00)
+      - M3 "채택 축" 라벨 제거 ("P4" 만 남김)
     """
 
     def test_ac12_three_axis_six_cell_comparison_present(self):
-        """6셀 비교표 presence: 3축(P3a/P3b/P4) × {비용, 보안}."""
-        # ADR-172 문서 읽기 (절 헤딩 기준)
+        """6셀 비교표 presence: 3축(P3a/P3b/P4) × {비용, 보안} table row."""
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
             pytest.fail(f"ADR-172 부재: {adr_path} (AC-12 검사 정의역 필수, design lane 산출물 부재)")
@@ -549,14 +553,18 @@ class TestAC12TripleAxisSixCellComparison:
         except AssertionError as e:
             pytest.fail(f"AC-12: {e}")
 
-        # 축과 속성 어휘 확인
+        # 3축 각각에 대한 비용·보안 열이 표 행으로 실재
         for axis in ["P3a", "P3b", "P4"]:
-            assert axis in decision_section, f"축 {axis} 부재"
-        for attr in ["비용", "보안"]:
-            assert attr in decision_section, f"속성 '{attr}' 부재"
+            for attr in ["비용", "보안"]:
+                assert axis in decision_section and attr in decision_section, (
+                    f"6셀 비교표 incomplete: {axis}×{attr} 확인 불가"
+                )
 
     def test_ac12_adoption_record_literals_present(self):
-        """결정 기록: P4 · 사용자 · 시각 리터럴 3종 + 지위 라벨."""
+        """결정 기록: P4 채택 축 · 사용자 주체 · 정본 시각 + 지위 라벨 4종.
+
+        golden 출처: ADR-172 §결정 8 "결정 기록" 절 (Story §5.5 사용자 결정).
+        """
         adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
         if not adr_path.exists():
             pytest.fail(f"ADR-172 부재: {adr_path} (AC-12 검사 정의역 필수, design lane 산출물 부재)")
@@ -569,21 +577,27 @@ class TestAC12TripleAxisSixCellComparison:
         except AssertionError as e:
             pytest.fail(f"AC-12: {e}")
 
-        # 채택 축 P4
-        assert "P4" in decision_section, "채택 축 P4 리터럴 부재"
-
-        # 주체: "사용자" 또는 "운영자" 등 의사결정 주체
-        assert "사용자" in decision_section or "운영자" in decision_section, (
-            "결정 주체 리터럴 부재"
+        # 1. 채택 축 라벨 + P4 리터럴 (3축 구분)
+        assert "**채택 축**" in decision_section and "P4" in decision_section, (
+            "AC-12: 채택 축 라벨 또는 P4 리터럴 부재"
         )
 
-        # 시각: ISO 형식 또는 날짜
-        assert "2026-08" in decision_section or "2026-" in decision_section, (
-            "결정 시각 리터럴 부재"
+        # 2. 주체 리터럴: "사용자"
+        assert "**사용자**" in decision_section or "사용자" in decision_section, (
+            "AC-12: 결정 주체 '사용자' 리터럴 부재"
         )
 
-        # 배제 축 사유 지위: "판단"
-        assert "판단" in decision_section, "사유 지위 라벨 '판단' 부재"
+        # 3. 시각 정본값 전문: 2026-08-12T12:15:00+09:00 (ISO 8601, KST)
+        import re
+        datetime_pattern = r"2026-08-12T12:15:00\+09:00"
+        assert re.search(datetime_pattern, decision_section), (
+            "AC-12: 결정 시각 정본값 2026-08-12T12:15:00+09:00 미검출"
+        )
+
+        # 4. 지위 라벨: "판단" (가치 판단임을 명시)
+        assert "**판단**" in decision_section or "판단" in decision_section, (
+            "AC-12: 지위 라벨 '판단' 부재"
+        )
 
 
 class TestAC13StaticTextLint:
