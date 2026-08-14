@@ -4,14 +4,19 @@
 #
 # 대상 SUT: hooks/session-start-scheduled-task-watchdog (bash, SessionStart hook)
 #
-# 계약 5 케이스 (구현리뷰 iter2 F-6 — ArchitectPL 이 §8.1 커버리지 정의역 결손으로 판정):
-#   ①a absent + 채택 표식 **부재** (미채택)   → 발화 **0**
+# 계약 케이스 (구현리뷰 iter2 F-6 — ArchitectPL 이 §8.1 커버리지 정의역 결손으로 판정):
+#   ①a absent + 채택 표식 **부재 확정** (미채택) → 발화 **0**
 #   ①b absent + 채택 표식 **존재** (채택했는데 한 번도 안 돎) → 발화 1줄
+#   ①c absent + **스캔 bound 도달**(파일 상한 소진 ∨ 깊이 상한 밖 내용) = 판정 불가
+#       → 발화 1줄 (구현리뷰 iter6 F-CR6-01)
 #   ②  invalid  (정수 파싱 불능 내용)         → 발화 1줄
 #   ③  stale    (age > threshold, 기본 172800) → 발화 1줄
 #   ④  fresh    (age <= threshold)           → 발화 **0**  ← 대조군(비공허성의 핵심)
 #   ⑤  bypass   (BYPASS_SCHEDULED_TASK_WATCHDOG=1) → audit 1줄 + 판독 미수행
 #   공통: exit 0 (SessionStart hook 이 세션을 죽이지 않는다)
+#   ★ 케이스 **개수는 적지 않는다** — 수기 사본이라 늘 때마다 stale 이 된다
+#     (구현리뷰 iter6 F-CR6-07 실물: "5 케이스"·"6 케이스" 표기가 실제 7 과 어긋나 있었다).
+#     같은 이유로 스캔 bound 상수도 베끼지 않고 `_hook_int_const` 로 hook 에서 판독한다.
 #
 # ★ 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정):
 #   본 hook 은 전 consumer 세션에 등록되므로 `absent → 무조건 발화` 는 **미채택 환경
@@ -19,21 +24,27 @@
 #   아니라 정상이며, 그것을 사망 신호로 읽는 것은 관측 **대상의 부재**를 관측의
 #   **실패**로 오분류하는 것이다.
 #
-# ★ 케이스 5 → 6 분화 (Orchestrator 지시 1 — **탐지 손실 0**):
+# ★ 표식 판별자 도입 (Orchestrator 지시 1 — **탐지 손실 0**):
 #   `absent → 무조건 무발화` 로 두면 "채택했으나 1회도 실행되지 않음" class 가 구조적
 #   무음이 되어 **false-negative 를 하나 늘린다**(3-conjunct (ㄴ) 완화 방향 0 미충족).
-#   채택 표식을 판별자로 넣어 침묵을 **미채택에만** 적용한다 ⇒ 실 탐지 손실 0.
+#   채택 표식을 판별자로 넣어 침묵을 **미채택에만** 적용한다.
 #   표식 = `~/.claude/scheduled-tasks/**` 안에 우리 CLI 를 지목하는 태스크 정의
 #   (앱이 만드는 **기존 산물**, 신규 파일 0건, scratch 밖 = TTL purge 비대상).
 #   ☞ 정의역 한정(정직): "탐지 손실 0" 은 **표식이 관측 가능한 정의역 안에서** 성립한다.
 #     벤더 경로 rename / 프롬프트 리라이트 / 파일 아닌 저장형태 3 경우는 표식이 부재가
 #     되어 (ㄴ) class 가 침묵으로 되돌아간다(전부 fail-safe 방향, 거짓 발화 0).
 #     hook 헤더의 "정직 천장" 절이 SSOT.
+#   ☞ **스캔 bound 는 그 정의역을 또 한 번 자른다**(iter6 F-CR6-01): 표식이 실재해도
+#     스캔 순서가 파일 상한 밖이거나 깊이 상한 밖이면 못 본다. hook 은 이제 그 경우를
+#     "표식 없음" 이 아니라 **판정 불가 → 발화**로 결론짓는다. 대가는 **발화 방향의 오탐**
+#     이며(태스크 정의가 많거나 깊으면 미채택 환경도 1줄), hook 헤더 (iv) 가 SSOT.
 #
-# ★ 판별력 구조: ①a④ 두 **무발화** 케이스만으로는 "항상 무발화" 구현이 통과하고,
-#   ①b②③⑤ 두 **발화** 케이스만으로는 "항상 발화" 구현이 통과한다. 양방향 대조군이
+# ★ 판별력 구조: **무발화** 케이스(①a·④)만으로는 "항상 무발화" 구현이 통과하고,
+#   **발화** 케이스(①b·①c·②·③·⑤)만으로는 "항상 발화" 구현이 통과한다. 양방향 대조군이
 #   둘 다 있어야 오라클에 판별력이 있다. ①a/①b 는 **같은 heartbeat 상태(absent)** 에서
 #   표식만 다르므로, 둘의 결과가 갈린다는 것이 곧 표식 판별자가 살아 있다는 증거다.
+#   ①c 는 ①a 와 **표식도 heartbeat 도 같고**(둘 다 부재) 스캔 bound 도달 여부만 다르다 —
+#   그 둘이 갈린다는 것이 bound 판별자(판정 불가 ≠ 없음)가 살아 있다는 증거다.
 #
 # ★ 격리: hook 은 `GC_STATE_DIR="${HOME:-/tmp}/.claude/…"` 를 **런타임에** 평가하므로
 #   env HOME override 로 격리가 실제 성립한다(ArchitectPL 실측). python
@@ -189,6 +200,73 @@ def _plant_unrelated_task(home_dir, task_name="someone-elses-task"):
     return other
 
 
+# ═══════════════════ 스캔 bound 상수 — hook 에서 **직접 판독** ════════════════════
+def _hook_int_const(name):
+    """hook 의 `NAME=<정수>` 대입을 판독한다.
+
+    ★ 수기 사본을 두지 않는 이유(구현리뷰 iter6 F-CR6-07 class): 상수를 테스트에 베껴
+      적으면 hook 이 값을 바꿨을 때 테스트가 **다른 bound 를 조용히 시험**한다. 판독
+      실패는 fail-closed(예외) — 상수가 rename 되면 테스트가 시끄럽게 죽는다.
+    """
+    text = HOOK_PATH.read_text(encoding="utf-8")
+    m = re.search(r"^%s=(\d+)\s*$" % re.escape(name), text, re.MULTILINE)
+    if m is None:
+        raise AssertionError(
+            f"hook 에서 상수 {name} 판독 실패 — bound 오라클이 다른 값을 시험하게 되므로 "
+            f"fail-closed 로 중단한다 ({HOOK_PATH})"
+        )
+    return int(m.group(1))
+
+
+ADOPTION_MAX_FILES = _hook_int_const("ADOPTION_MAX_FILES")
+ADOPTION_MAX_DEPTH = _hook_int_const("ADOPTION_MAX_DEPTH")
+
+
+def _plant_filler_files(home_dir, count, sub="filler"):
+    """sentinel 을 **포함하지 않는** 태스크 정의 파일 `count` 개 (깊이 2, bound 안).
+
+    반환 = 생성 경로 목록. 어느 파일도 sentinel 을 담지 않는다(전제 단언에서 재확인).
+    """
+    task_dir = Path(home_dir) / ".claude" / "scheduled-tasks" / sub
+    task_dir.mkdir(parents=True, exist_ok=True)
+    made = []
+    for i in range(count):
+        p = task_dir / ("f%04d.md" % i)
+        p.write_text("뉴스 요약 태스크 %d\n" % i, encoding="utf-8", newline="\n")
+        made.append(p)
+    return made
+
+
+def _plant_adoption_marker_deep(home_dir, depth=None):
+    """채택 표식을 **깊이 상한 밖**(기본 = MAX_DEPTH + 1)에 심는다.
+
+    `find -maxdepth N -type f` 는 이 파일을 열거하지 않는다 — 즉 sentinel 이 실재하지만
+    스캔 정의역 밖이다. 이것이 F-CR6-01 반례 2형상 중 하나다.
+    """
+    file_depth = (ADOPTION_MAX_DEPTH + 1) if depth is None else depth
+    d = Path(home_dir) / ".claude" / "scheduled-tasks"
+    for i in range(file_depth - 1):        # 파일이 file_depth 가 되도록 디렉터리를 쌓는다
+        d = d / ("d%d" % i)
+    d.mkdir(parents=True, exist_ok=True)
+    prompt = d / "SKILL.md"
+    prompt.write_text(
+        "codeforge 로컬 잔재 관측 (관측-only · 보고 전용)\n"
+        "3. scripts/lib/scheduled_task_reconcile.py 를 실행한다.\n",
+        encoding="utf-8", newline="\n",
+    )
+    return prompt
+
+
+def _visible_to_scan(home_dir):
+    """hook 의 `find -maxdepth N -type f` 가 실제로 열거하는 파일 목록(전제 검증용)."""
+    root = Path(home_dir) / ".claude" / "scheduled-tasks"
+    out = []
+    for p in root.rglob("*"):
+        if p.is_file() and len(p.relative_to(root).parts) <= ADOPTION_MAX_DEPTH:
+            out.append(p)
+    return out
+
+
 # ══════════════════ ①a absent + 표식 부재 (미채택 = 무발화) ═══════════════════
 @_SKIP_NO_BASH
 def test_watchdog_absent_without_adoption_marker_reports_zero_lines(tmp_path):
@@ -281,6 +359,131 @@ def test_watchdog_absent_with_adoption_marker_reports_one_line(tmp_path):
     assert m is not None, f"사실 줄 형식 불일치: {lines[0]!r}"
     assert m.group(1) == "absent", f"last_run_epoch=absent 기대, 실제 {m.group(1)!r}"
     assert m.group(2) == "unknown", f"age_seconds=unknown 기대, 실제 {m.group(2)!r}"
+
+
+# ═══════ ①c 스캔 bound 도달 = 판정 불가 (구현리뷰 iter6 F-CR6-01) ═══════════════
+@_SKIP_NO_BASH
+def test_watchdog_absent_beyond_file_cap_reports_one_line(tmp_path):
+    """①c-1 **파일 상한 소진** → 판정 불가 → 발화 1줄.
+
+    ★ 이 오라클의 정의역은 **bound 그 자체**다. iter6 이전 판본에서는 `-maxdepth`·
+      `head -200`·`grep -F` 를 전부 지워도 스위트가 GREEN 이었다 — bound 를 정의역으로
+      삼는 검사가 **0건**이었기 때문이다.
+
+    ★ 실측 반례(iter6): sentinel 이 **실재하는데** 스캔 순서 251번째면 hook 이 침묵했다.
+      "못 찾음" 을 "없음" 으로 결론지었기 때문이고, 그 결과 (ㄴ) class(채택했는데
+      한 번도 안 돎)가 bound 밖에서 조용히 되살아났다.
+
+    3 leg 구성 — 판별력 귀속을 분리해 둔다:
+      · leg A (**mutant kill 담당 · 완전 결정론**): 상한 초과 파일 + sentinel **전무**
+        → 발화. 여기엔 표식이 어디에도 없으므로 발화의 유일한 근거가 "cap 소진 =
+        판정 불가" 다. 파일 열거 순서에 전혀 의존하지 않는다.
+      · leg B (**반례 형상 재현**): 상한 초과 파일 + sentinel 존재 → 발화. 단 이 leg 은
+        **결과만** 고정한다 — 발화 경로가 "sentinel 발견" 인지 "cap 소진" 인지는
+        `find` 의 열거 **순서**에 달렸고 그 순서는 파일시스템 의존이라 여기서 pin 하지
+        않는다(로컬 NTFS 실측은 251번째 = cap 밖이었다).
+      · leg C (**대조군 · 오탐 0**): bound **안**에서 전량 확인 + sentinel 전무 → 침묵.
+        leg A 와 형상이 같고 파일 수만 다르므로, 둘이 갈린다는 사실이 곧 "무조건 발화"
+        구현이 아님을 보증한다.
+
+    mutant kill: hook 의 `(( scanned >= ADOPTION_MAX_FILES )) → return 0` 를 제거해
+      bound 도달을 다시 "표식 없음" 으로 결론짓기 ⇒ **leg A RED**(leg C 는 GREEN 유지).
+    """
+    # ── leg A: cap 초과 + sentinel 전무 (결정론) ──
+    home_a, hb_a = _prepare_home(tmp_path / "a", content=None, adopted=False)
+    made = _plant_filler_files(home_a, ADOPTION_MAX_FILES + 50)
+    assert not hb_a.exists(), "전제 붕괴: heartbeat 가 존재한다"
+    assert len(_visible_to_scan(home_a)) > ADOPTION_MAX_FILES, (
+        "전제 붕괴: 스캔 가시 파일 수가 상한을 넘지 않는다 — cap 이 소진되지 않는다"
+    )
+    for p in made[:5] + made[-5:]:
+        assert "scheduled_task_reconcile" not in p.read_text(encoding="utf-8"), (
+            f"전제 붕괴: filler 에 sentinel 이 섞였다 ({p})"
+        )
+
+    cp_a = _run_hook(home_a)
+    assert cp_a.returncode == 0, f"exit 0 기대: rc={cp_a.returncode}"
+    lines_a = _marker_lines(cp_a)
+    assert len(lines_a) == 1, (
+        f"cap 소진 = 판정 불가 → 발화 1줄 기대, 실제 {len(lines_a)}줄: {lines_a}. "
+        "bound 도달을 '표식 없음' 으로 결론지으면 채택 환경이 bound 밖에서 무음이 된다"
+    )
+    assert FACT_RE.match(lines_a[0]), f"사실 줄 형식 불일치: {lines_a[0]!r}"
+
+    # ── leg B: cap 초과 + sentinel 존재 (iter6 반례 형상) ──
+    home_b, _ = _prepare_home(tmp_path / "b", content=None, adopted=False)
+    _plant_filler_files(home_b, ADOPTION_MAX_FILES + 50)
+    sentinel_file = _plant_adoption_marker(home_b, task_name="zzz-ours")
+    assert "scheduled_task_reconcile" in sentinel_file.read_text(encoding="utf-8"), (
+        "전제 붕괴: sentinel 미기재 — 반례 형상이 성립하지 않는다"
+    )
+
+    cp_b = _run_hook(home_b)
+    assert cp_b.returncode == 0, f"exit 0 기대: rc={cp_b.returncode}"
+    lines_b = _marker_lines(cp_b)
+    assert len(lines_b) == 1, (
+        f"sentinel 이 실재하는 환경은 발화해야 한다(스캔 순서와 무관하게), "
+        f"실제 {len(lines_b)}줄: {lines_b}"
+    )
+
+    # ── leg C: bound 안 + sentinel 전무 → 침묵 (오탐 0) ──
+    home_c, _ = _prepare_home(tmp_path / "c", content=None, adopted=False)
+    _plant_filler_files(home_c, 5)
+    assert len(_visible_to_scan(home_c)) < ADOPTION_MAX_FILES, "전제 붕괴: 대조군이 cap 을 넘었다"
+
+    cp_c = _run_hook(home_c)
+    assert cp_c.returncode == 0, f"exit 0 기대: rc={cp_c.returncode}"
+    assert _marker_lines(cp_c) == [], (
+        f"bound 안에서 전량 확인한 미채택 환경은 침묵해야 한다(오탐 0): {_marker_lines(cp_c)}"
+    )
+
+
+@_SKIP_NO_BASH
+def test_watchdog_absent_beyond_max_depth_reports_one_line(tmp_path):
+    """①c-2 **깊이 상한 밖 내용 존재** → 판정 불가 → 발화 1줄.
+
+    ★ 실측 반례(iter6): sentinel 이 depth 4 에 있으면 hook 이 침묵했다(depth 3 대조군은
+      발화). `-maxdepth 3` 이 스캔 정의역을 자르는데 그 밖을 "없음" 으로 결론지었기 때문이다.
+
+    2 leg — 두 홈의 차이는 **깊이 상한 밖 내용의 유무 하나**다:
+      · leg A: sentinel 을 MAX_DEPTH+1 에 심는다(스캔 정의역 밖) → 발화.
+      · leg B (대조군): 같은 홈에서 그 깊은 서브트리만 제거 → 침묵. 깊이 probe 가
+        발화의 원인이었음을 이 대조가 귀속시킨다(다른 변수는 동일).
+
+    mutant kill: hook 의 `-mindepth N+1 -maxdepth N+1 -print -quit` 존재 확인 블록 제거
+      ⇒ **leg A RED**(leg B 는 GREEN 유지).
+    """
+    # ── leg A: 깊이 상한 밖 sentinel ──
+    home, hb = _prepare_home(tmp_path / "deep", content=None, adopted=False)
+    deep = _plant_adoption_marker_deep(home)
+    assert not hb.exists(), "전제 붕괴: heartbeat 가 존재한다"
+    assert deep not in _visible_to_scan(home), (
+        f"전제 붕괴: 깊은 sentinel 이 스캔 정의역 **안**에 있다 — 반례 형상이 아니다 ({deep})"
+    )
+    assert _visible_to_scan(home) == [], (
+        f"전제 붕괴: 깊이 {ADOPTION_MAX_DEPTH} 이하에 파일이 있다 — "
+        f"발화 원인이 깊이 probe 로 귀속되지 않는다: {_visible_to_scan(home)}"
+    )
+
+    cp = _run_hook(home)
+    assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+    lines = _marker_lines(cp)
+    assert len(lines) == 1, (
+        f"깊이 상한 밖 내용 존재 = 판정 불가 → 발화 1줄 기대, 실제 {len(lines)}줄: {lines}"
+    )
+    assert FACT_RE.match(lines[0]), f"사실 줄 형식 불일치: {lines[0]!r}"
+
+    # ── leg B: 같은 홈에서 깊은 서브트리만 제거 → 침묵 ──
+    shutil.rmtree(Path(home) / ".claude" / "scheduled-tasks" / "d0")
+    assert (Path(home) / ".claude" / "scheduled-tasks").is_dir(), (
+        "전제 붕괴: 대조군에서 태스크 루트까지 지웠다 — 변수가 둘이 된다"
+    )
+
+    cp2 = _run_hook(home)
+    assert cp2.returncode == 0, f"exit 0 기대: rc={cp2.returncode}"
+    assert _marker_lines(cp2) == [], (
+        f"깊이 상한 밖 내용이 사라지면 침묵해야 한다(변수 1개 대조): {_marker_lines(cp2)}"
+    )
 
 
 # ══════════════════════════ ② invalid ════════════════════════════════════════

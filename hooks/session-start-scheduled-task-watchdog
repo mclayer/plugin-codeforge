@@ -12,12 +12,19 @@
 #     미채택 환경 전체가 매 세션 1줄을 받는다 — 관측 **대상의 부재**를 관측의 **실패**로
 #     오분류하는 것이다.
 #
-#   - heartbeat 부재는 **채택 표식으로 2분기**한다 (Orchestrator 지시 1 — 탐지 손실 0):
-#       (ㄱ) 표식 **부재** + heartbeat 부재 → **미채택 = 정상 침묵**, 무발화.
+#   - heartbeat 부재는 **채택 표식으로 3분기**한다 (구현리뷰 iter6 F-CR6-01 — 못 찾음 ≠ 없음):
+#       (ㄱ) 표식 **부재 확정**(bound 안에서 전량 확인) + heartbeat 부재
+#            → **미채택 = 정상 침묵**, 무발화.
 #       (ㄴ) 표식 **존재** + heartbeat 부재 → **"채택했는데 한 번도 안 돌았다" = 실 이상**,
 #            사실 1줄 발화(`last_run_epoch=absent`).
+#       (ㄷ) **판정 불가**(스캔 bound 도달 — 파일 상한 소진 ∨ 깊이 상한 밖 내용 존재)
+#            → 사실 1줄 발화. (ㄴ)와 **같은 줄**을 낸다.
 #     ★ 무조건 침묵으로 두면 (ㄴ) class 가 구조적 무음이 되어 **false-negative 를 하나
 #       늘린다**. 표식 판별자가 그 손실을 되돌린다 — 침묵은 미채택에만 적용된다.
+#     ★ (ㄷ) 를 (ㄱ) 에 합치면 그 손실이 **bound 밖에서 그대로 되살아난다** — iter6 실측:
+#       sentinel 이 실재하는데 스캔 순서 251번째면 침묵, depth 4 에 있으면 침묵이었다.
+#       "못 찾음" 과 "없음" 을 가르면 작업량 bound(비용 축)를 유지한 채 손실이 사라진다.
+#       대가는 발화 방향의 오탐이며, 아래 "정직 천장" (iv) 에 선언한다.
 #   - 내용 파싱불능(invalid) 또는 age > threshold(stale) → 사실 1줄 발화.
 #     (heartbeat 가 존재한다 = 최소 1회 돌았다 = 채택했다 ⇒ 표식 검사 불요.)
 #   - 그 외(heartbeat 신선) 무발화.
@@ -41,12 +48,25 @@
 #          class — 이름·경로 결박 검사의 알려진 성질).
 #     (ii) 운영자가 프롬프트를 바꿔 써 sentinel 이 사라지면 같은 결과가 된다.
 #     (iii) 앱이 태스크 정의를 파일이 아닌 형태로 보관하거나 다른 HOME 에 두면 안 보인다.
-#   세 경우 모두 **침묵(fail-safe) 방향**이며 거짓 발화를 만들지는 않는다.
+#   위 **세 경우**(i·ii·iii)는 **침묵(fail-safe) 방향**이며 거짓 발화를 만들지 않는다.
+#     (iv) **스캔 bound 도달 = 판정 불가**(파일 상한 소진 ∨ 깊이 상한 밖 내용 존재)는
+#          위 셋과 **반대 방향**이다 — 미채택 환경이라도 발화한다. 즉 태스크 정의가
+#          200 파일을 넘거나 depth 4 이상에 무엇이든 있으면, sentinel 이 전혀 없어도
+#          heartbeat 부재 시 매 세션 1줄이 나간다(**거짓 발화 가능 = 선언된 대가**).
+#          이 방향을 택한 이유는 반대 선택(bound 도달 → 침묵)이 (ㄴ) class 를 bound
+#          밖에서 되살리기 때문이다. 오탐은 시끄럽고 무음은 보이지 않는다.
 #
 # 자원 안전 (ADR-168 §결정 16 — 무증거 안전성 단정 금지):
-#   표식 탐색은 `-maxdepth 3` · 최대 200 파일 · 리터럴 grep 으로 **작업량을 bound** 한다
-#   (정규식 backtracking 없음 — 고정 문자열). 이는 **bounded degradation** 이지
-#   "임의 입력 무해" 단정이 아니다. 회귀 가드 = 아래 테스트 파일의 6 케이스.
+#   [비용 축] 표식 탐색은 `-maxdepth 3` · 최대 200 파일 · 리터럴 grep 으로 **작업량을
+#   bound** 한다(정규식 backtracking 없음 — 고정 문자열). 판정 불가 판별용 깊이 probe 도
+#   `-print -quit` 로 **첫 항목에서 중단**한다. 이는 **bounded degradation** 이지
+#   "임의 입력 무해" 단정이 아니다.
+#   [탐지 축 — 비용 축과 별개 명제] 위 bound 는 **탐지를 깎지 않는다**: bound 도달은
+#   "표식 없음" 이 아니라 "판정 불가" 로 결론되어 발화측에 붙기 때문이다(위 (ㄷ)).
+#   단 이 명제는 **본 hook 이 보는 정의역 안**에서만 성립하며, (i)(ii)(iii) 은 여전히
+#   잔여다 — "탐지 손실 0" 을 무조건 명제로 읽어서는 안 된다.
+#   회귀 가드 = `tests/integration/test_scheduled_task_watchdog_hook.py`
+#   (bound 축 = 그 파일의 `..._beyond_file_cap_...` · `..._beyond_max_depth_...`).
 #
 # Bypass:
 #   BYPASS_SCHEDULED_TASK_WATCHDOG=1 → 즉시 audit 1줄 + 종료
@@ -77,18 +97,38 @@ ADOPTION_SENTINEL="scheduled_task_reconcile"
 ADOPTION_MAX_FILES=200
 ADOPTION_MAX_DEPTH=3
 
-_adoption_marker_present() {
+# 반환 0 = "표식 있음 **또는** 판정 불가" / 반환 1 = "표식 없음이 **확정**".
+#   ★ 이름이 `_present` 가 아닌 이유: 반환 0 은 표식 존재를 뜻하지 않는다. bound 도달로
+#     스캔이 전량을 보지 못한 경우도 0 이다("못 찾음" 을 "없음" 으로 결론짓지 않는다).
+_adoption_present_or_undecidable() {
   [[ -d "$TASK_DEF_ROOT" ]] || return 1
-  local f
+  local f scanned=0
   # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep.
   while IFS= read -r f; do
     [[ -n "$f" ]] || continue
+    scanned=$(( scanned + 1 ))
     if grep -qsF -- "$ADOPTION_SENTINEL" "$f" 2>/dev/null; then
-      return 0
+      return 0                       # 표식 있음
     fi
   done < <(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f 2>/dev/null \
              | head -n "$ADOPTION_MAX_FILES")
-  return 1
+
+  # (a) 파일 상한 소진 → 스캔 밖에 파일이 남아 있을 수 있다 = 판정 불가.
+  if (( scanned >= ADOPTION_MAX_FILES )); then
+    return 0
+  fi
+
+  # (b) 깊이 상한 **밖** 내용 존재 → 판정 불가. `-print -quit` 로 첫 항목에서 중단하므로
+  #     존재 확인 비용은 상수에 가깝다(내용을 읽지 않는다 — grep 를 걸지 않는다).
+  #     depth N+1 만 봐도 충분하다: 더 깊은 곳에 무언가 있으면 그 조상이 depth N+1 에 있다.
+  local beyond=""
+  beyond="$(find "$TASK_DEF_ROOT" -mindepth "$(( ADOPTION_MAX_DEPTH + 1 ))" \
+                 -maxdepth "$(( ADOPTION_MAX_DEPTH + 1 ))" -print -quit 2>/dev/null)"
+  if [[ -n "$beyond" ]]; then
+    return 0
+  fi
+
+  return 1                           # 표식 없음 — bound **안에서 전량 확인**한 뒤의 결론
 }
 
 # ── heartbeat 판독 ──
@@ -123,10 +163,11 @@ fi
 should_report=false
 
 if [[ "$last_epoch" == "absent" ]]; then
-  # heartbeat 부재를 **채택 표식으로 2분기** (Orchestrator 지시 1 — 탐지 손실 0).
-  #   표식 부재 → 미채택 = 정상 침묵 / 표식 존재 → "채택했는데 한 번도 안 돌았다" = 실 이상.
-  # ★ 무조건 침묵은 후자를 구조적 무음으로 만들어 false-negative 를 하나 늘린다.
-  if _adoption_marker_present; then
+  # heartbeat 부재를 **채택 표식으로 3분기** (구현리뷰 iter6 F-CR6-01 — 못 찾음 ≠ 없음).
+  #   표식 부재 **확정** → 미채택 = 정상 침묵 / 표식 존재 → "채택했는데 한 번도 안 돌았다"
+  #   / 스캔 bound 도달 → **판정 불가**, 발화(fail-safe over-report).
+  # ★ 무조건 침묵은 후자 둘을 구조적 무음으로 만들어 false-negative 를 늘린다.
+  if _adoption_present_or_undecidable; then
     should_report=true
   else
     should_report=false
