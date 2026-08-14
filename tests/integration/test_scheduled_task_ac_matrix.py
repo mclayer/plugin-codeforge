@@ -343,34 +343,150 @@ class TestAC2ObservationOnlyDelta:
             assert os.path.exists(temp_canary), "temp canary 삭제되지 않음"
             assert os.path.exists(stale_loose), "age>TTL loose 파일 삭제되지 않음"
 
-    def test_ac2_github_write_zero(self):
-        """GitHub 상태 write 0.
+    def test_ac2_github_write_zero(self, capsys):
+        """AC-2 ① GitHub 측 델타 0 (normative) — **비공허 관측 + `--dry-run`** 형상.
 
-        post_report() 호출 을 spy 해서 호출 여부 검증.
-        발화 없으면 post_report 미호출.
+        ★ 이전 판본의 구조적 공허 (구현리뷰 iter2 F-1 — 여기서 봉합):
+          `collect_observations` 를 **빈 목록**으로 stub 했기 때문에 `run()` 이
+          `if not observations:` 조기반환 경로만 탔고, 그 경로에서 `post_report` 는
+          **도달 불가**라 `call_count == 0` 이 *어떤 구현에서도* 참이었다. 실증
+          (DeveloperPL firsthand, 2회 반복 + 무돌연변이 대조):
+            · Arm A — `if args.dry_run:` 분기에 `post_report(...)` 주입 ⇒ **아무도 안 죽음**
+            · Arm B — `if not observations:` 분기에 주입 ⇒ 그 테스트만 RED
+          즉 `--dry-run` 인자를 넘기면서도 dry-run 경로를 **한 줄도 태우지 않았다**.
 
-        ★ Hermetic: fixture 트리 주입 (실 홈 스캔 0).
+        ★ 여기서의 형상 (3항):
+          ① `collect_observations` stub = **fixture Observation ≥1** (빈 목록 금지)
+          ② `--dry-run` 으로 `run()` 을 태우고 **`post_report` + `fetch_existing_keys`
+             양쪽** spy 로 `call_count == 0` — Change Plan §8.0·§8.2-E 의
+             *"채널 미접촉 = 조회조차 하지 않는다"* **2 conjunct 를 모두** 잰다.
+          ③ **비공허성 앵커** — stdout DONE 줄의 `observed=N` 이 실제로 ≥1 임을 확인.
+             이게 없으면 다음 hermetic 화가 같은 자리를 다시 빈 목록으로 되돌려도
+             RED 가 나지 않는다(이번 결함의 재발 경로 자체를 막는 앵커다).
+
+        mutant kill:
+          · `if args.dry_run:` 분기에 `post_report(...)` 주입 ⇒ RED (Arm A — 이전 판본 GREEN)
+          · `--dry-run` 분기에 `fetch_existing_keys(...)` 주입 ⇒ RED (조회 conjunct)
+          · `collect_observations` stub 이 빈 목록으로 회귀 ⇒ RED (앵커 ③)
+
+        ★ Hermetic 3중: fixture 관측 주입(실 홈 스캔 0) · 정지 플래그 tmpdir 주입
+          (실 사용자 F2 파일에 종속되면 정지 경로로 새어 단언이 다시 공허해진다) ·
+          heartbeat 경로 tmpdir 주입(실 사용자 상태 무접촉 — dry-run 은 미기록이지만
+          경로 회귀 시에도 실 파일을 건드리지 않도록 봉인).
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             scratch_dir = os.path.join(tmpdir, "scratch")
             temp_dir = os.path.join(tmpdir, "temp")
             os.makedirs(scratch_dir, exist_ok=True)
             os.makedirs(temp_dir, exist_ok=True)
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            f2_path = os.path.join(tmpdir, "no-such-stop-flag.disabled")   # 부재 = 정지 아님
 
-            # Arrange: collect_observations 를 fixture 값만 반환하도록 stub
+            # Arrange ①: 비공허 관측 — fixture Observation 2건 (빈 목록 금지)
+            fixture_obs = [
+                sut.Observation(cls="worktree", display_path="~/.claude/worktrees/fixture-a",
+                                declared="정리됨", measured="잔존", mismatch=True),
+                sut.Observation(cls="scratch", display_path="~/.claude/codeforge-scratch/fixture-b",
+                                declared="TTL초과=0", measured="TTL초과=1", mismatch=True),
+            ]
+
             def mock_collect_observations(**kwargs):
-                # 관측 0건 반환 (hermetic, 실 홈 스캔 0)
+                return list(fixture_obs)
+
+            original_flag = sut.STOP_FLAG_LOCAL
+            try:
+                sut.STOP_FLAG_LOCAL = f2_path
+                with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}), \
+                     mock.patch.object(sut, "post_report") as spy_post, \
+                     mock.patch.object(sut, "fetch_existing_keys") as spy_fetch, \
+                     mock.patch.object(sut, "collect_observations",
+                                       side_effect=mock_collect_observations):
+                    # Act: --dry-run — 채널 미접촉 계약 경로를 **실제로** 태운다
+                    rc = sut.run(["--repo-root", tmpdir,
+                                  "--channel", "owner/repo#123", "--dry-run"])
+            finally:
+                sut.STOP_FLAG_LOCAL = original_flag
+
+            out = capsys.readouterr().out
+
+            # Assert (ㄱ) — **비공허성 앵커**: 관측이 실제로 ≥1 로 dry-run 경로에 도달
+            m = re.search(r"DONE: observed=(\d+)", out)
+            assert m is not None, (
+                f"DONE 줄 부재 — run() 이 dry-run 경로를 완주하지 않았다. stdout={out!r}"
+            )
+            observed = int(m.group(1))
+            assert observed == len(fixture_obs) and observed > 0, (
+                "비공허성 붕괴: dry-run 경로가 관측 %d건이 아니라 %d건으로 실행됐다 "
+                "(0 이면 조기반환 경로 — 이 테스트의 채널 단언이 공허해진다). stdout=%r"
+                % (len(fixture_obs), observed, out)
+            )
+            assert rc == 0, f"advisory 계약(INV-F) 위반: rc={rc}"
+
+            # Assert (ㄴ) — conjunct 1/2: 발화 0
+            assert spy_post.call_count == 0, (
+                f"AC-2 ① 위반: --dry-run 인데 post_report 호출 {spy_post.call_count}회"
+            )
+            # Assert (ㄷ) — conjunct 2/2: **조회조차 0** (§8.0·§8.2-E "채널 미접촉")
+            assert spy_fetch.call_count == 0, (
+                f"AC-2 ① 위반: --dry-run 인데 fetch_existing_keys 호출 {spy_fetch.call_count}회 "
+                "(미접촉 = 조회조차 하지 않는다)"
+            )
+
+    def test_ac2_github_write_zero_on_empty_observation(self, capsys):
+        """AC-2 ① 의 **0건 경로** 축 — 관측 0건 조기반환에서도 채널 델타 0.
+
+        위 `test_ac2_github_write_zero` 가 dry-run 경로를 전담하게 되면서 비게 되는
+        경로를 그대로 덮는 형제 오라클이다. 두 테스트는 `run()` 의 **서로 다른
+        종료 경로**를 태운다 — 하나가 다른 하나를 대체하지 않는다.
+
+        mutant kill: `if not observations:` 분기에 `post_report(...)` 주입 ⇒ RED
+          (Arm B — 이전 판본이 유일하게 죽이던 mutant. 여기서 승계한다.)
+
+        ★ 이 경로는 `write_heartbeat()` 를 호출하므로 heartbeat 경로 주입이
+          **필수**다 — 주입이 없으면 이 테스트가 실 사용자 파일
+          (`~/.claude/worktree-gc-state/scheduled-task-last-run.epoch`)을 갱신해
+          관측자 생존 신호를 위조한다(이전 판본의 실 결함).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            f2_path = os.path.join(tmpdir, "no-such-stop-flag.disabled")
+
+            def mock_collect_observations(**kwargs):
                 return []
 
-            with mock.patch.object(sut, "post_report") as spy_post:
-                with mock.patch.object(sut, "collect_observations", side_effect=mock_collect_observations):
-                    # Act: run() 호출 — 관측 0건이면 무발화 → post_report 미호출
-                    sut.run(["--repo-root", tmpdir, "--channel", "owner/repo#123", "--dry-run"])
+            original_flag = sut.STOP_FLAG_LOCAL
+            try:
+                sut.STOP_FLAG_LOCAL = f2_path
+                with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}), \
+                     mock.patch.object(sut, "post_report") as spy_post, \
+                     mock.patch.object(sut, "fetch_existing_keys") as spy_fetch, \
+                     mock.patch.object(sut, "collect_observations",
+                                       side_effect=mock_collect_observations):
+                    rc = sut.run(["--repo-root", tmpdir, "--channel", "owner/repo#123"])
+            finally:
+                sut.STOP_FLAG_LOCAL = original_flag
 
-                    # Assert: post_report 미호출
-                    assert spy_post.call_count == 0, (
-                        f"관측 0건 시 post_report 미호출 기대, 실제: {spy_post.call_count}"
-                    )
+            out = capsys.readouterr().out
+
+            # Assert (ㄱ): 실제로 0건 경로였다 (경로 앵커 — 이 테스트의 정의역 고정)
+            assert re.search(r"DONE: observed=0 ", out) is not None, (
+                f"0건 경로 미진입 — 이 테스트의 정의역이 아니다. stdout={out!r}"
+            )
+            assert rc == 0, f"advisory 계약(INV-F) 위반: rc={rc}"
+
+            # Assert (ㄴ·ㄷ): 발화 0 ∧ 조회 0
+            assert spy_post.call_count == 0, (
+                f"AC-2 ① 위반: 관측 0건인데 post_report 호출 {spy_post.call_count}회"
+            )
+            assert spy_fetch.call_count == 0, (
+                f"AC-2 ① 위반: 관측 0건인데 fetch_existing_keys 호출 {spy_fetch.call_count}회"
+            )
+
+            # Assert (ㄹ): heartbeat 는 tmpdir 로만 기록 (실 사용자 상태 무접촉)
+            assert os.path.exists(hb_path), (
+                "0건 경로는 관측 사이클을 완주하므로 heartbeat 기록 대상이다 "
+                "(§8.10.1 기록 O 5경로) — 주입 경로에 기록이 없다"
+            )
 
     def test_ac2_no_stash_drop(self):
         """AC-2 stash 축: **SUT 관측 사이클 전후** stash 스냅샷 일치 (집합 동일).
