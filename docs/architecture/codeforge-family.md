@@ -381,6 +381,15 @@ graph TB
 
     subgraph "codeforge (wrapper infrastructure)"
         ReconcileOverlay["reconcile-overlay.sh<br/>ongoing-sync: overlay + workflow dual-channel<br/>(CFP-2440 Phase 2)"]
+        ScriptsManifest["templates/consumer-scripts.manifest<br/>scripts 전파 <b>선언면</b> (asset:dep_workflow)"]
+        BootstrapStage7["bootstrap-consumer.sh Stage 7<br/>scripts <b>초기 배포</b> — create-only<br/>(L440 `[ ! -f target ]`)"]
+        RegenScripts["regen-agents.sh scripts 루프<br/>세션별 <b>자동</b> 배포 — create-only<br/>(L195 `cp -n` no-clobber)"]
+        BootstrapWorkflows["bootstrap-consumer.sh workflow 루프<br/>(L297 templates/github-workflows/*)"]
+        CurrencyGate["consumer-side currency 게이트<br/>pin + Q1 로컬 ⊥ Q2 상류(blob sha)<br/>(ADR-176, CFP-2978)"]
+        ScriptsManifest --> BootstrapStage7
+        ScriptsManifest --> RegenScripts
+        BootstrapStage7 -.->|"갱신 불가 (기존 file skip)"| CurrencyGate
+        RegenScripts -.->|"갱신 불가 (기존 file skip)"| CurrencyGate
     end
 ```
 
@@ -391,6 +400,7 @@ graph TB
 - **worker peer 필수** = review lane 의 Claude + Codex 양 worker 모두 spawn 의무 (단독 fallback 0, ADR-001)
 - **CONDITIONAL deputy** = Live touching / production cutover Story 만 active (Backtest/Paper-only Story = 미spawn)
 - **Cross-cutting boundary** = PMO / GitOps 는 Story lane gate 비개입 (sibling 책임 영역 disjoint)
+- **consumer 자산 전파 채널의 3축 비대칭** (ADR-176 / CFP-2978, 전건 firsthand `ecfe62d63`) — 하나의 "consumer 전파"가 아니라 **채널·기전·검사 정의역이 서로 다른 3개**다. (i) **overlay·workflow 채널**은 `reconcile-overlay.sh` 로 **지속 sync 가능**하나 (ii) **scripts 채널**은 `bootstrap-consumer.sh` Stage 7(L440 `[ ! -f "$target" ]`)과 `regen-agents.sh`(L195 `cp -n`) 둘 다 **create-only** 라 배포 후 갱신이 원리적으로 불가하고, `reconcile-overlay.sh` 에 `consumer-scripts.manifest` 참조가 **0건**이라 수렴 대상도 아니다 (iii) **workflow 는 `bootstrap-consumer.sh`(L297) 경유로만 도달**한다 — `regen-agents.sh` 에는 workflow 배포 로직이 **0건**이라 세션별 자동 채널이 스크립트에만 걸려 있다. ⇒ 선언(manifest)·존재(closure)만 검사하는 기존 게이트는 이 채널의 **currency** 를 구조적으로 볼 수 없으며, 그 공백을 consumer-side currency 게이트(ADR-176 §결정 2, pin + Q1⊥Q2)가 수령한다. **정직 한계**: 그 게이트의 실강제 정의역은 CFP-2978 §5.5 확정으로 py 1개 파일이며 workflow 계층 drift 는 미포착이다 (ADR-176 §결정 6 H4)
 
 ### Open Decisions Pending
 
@@ -400,6 +410,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 |---|---|---|
 | **Mega-Epic CFP-1415 (Confluence-as-derived-mirror governance standardization) 진행 중** | 4 Sub-Epic split (Sub-A/B/C/D) — 본 Sub-C S3.3 = wrapper family.md 5-anchor expand carrier | Issue #1415 (Epic) + Sub-Epic #1418 (Sub-C) |
 | **6 lane plugin self-owned arch doc 5-anchor expand** | 6 active plugin (CFP-949 baseline) = 4 H2 schema 보유 / 5-anchor section 미반영 — 모노레포 `plugins/` in-tree follow-up | follow-up sub-CFP 6 (codeforge-{requirements,design,develop,review,test,pmo} 각자 self-owned arch doc 5-anchor expand) |
+| **consumer 자산 currency 강제 정의역** — 축은 일반, 강제는 py 1개 파일 | ADR-176 이 currency 축을 3번째 직교 축으로 정의(Proposed). 실강제 = `scripts/lib/check_parallel_work_sentinel.py` 단일 (§5.5 사용자 확정, manifest 81 자산 전면 적용 기각). **미해소 잔여** = workflow 계층 drift 영구 미검출 / 미도달 12 consumer repo 신규 배포 / composite action 추출 재논의 | CFP-2978 (Phase 1 = ADR-176) |
 | **ArchitectAnalystAgent dual-read path 실 wire** | ADR-078 Amd 2 §결정 1 declared (git primary + Confluence fallback) — 실 wire = codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 | follow-up Sub-C S3.4 (다른 sub-CFP carrier) |
 | **mechanical wire — review-verdict-v4 v4.10 `living_architecture_updated: bool`** | ADR-078 Amd 2 §결정 6 declared (Wave 1 declaration-only) — lint workflow + bats fixture + evidence-checks-registry row + hotfix-bypass label family member | follow-up Sub-C S3.5 / CFP-1429 carrier |
 | **5 follow-up CFP (HIGH 2 + MEDIUM 2 + LOW-DEFER 1)** | Mega-Epic CFP-1415 진행 중 5 follow-up declared — defer / immediate split | (다른 CFP 발의 후 status 갱신) |
