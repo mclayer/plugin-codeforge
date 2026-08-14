@@ -40,13 +40,19 @@ offline (네트워크 0 — 입력 전부 로컬 파일; cross-repo fetch·fs I/
 read-only (verifier — write 0). 표준 라이브러리(ast/re/argparse/pathlib)만.
 
 Usage:
-  python3 check_ac_traceability_matrix.py --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]
+  python3 check_ac_traceability_matrix.py --phase <1|2> --ac-source <FILE> --rtm <FILE> [--tests-root <DIR>]...
   python3 check_ac_traceability_matrix.py --phase 1 --ac-source <FILE> --rtm-not-yet   # Phase-1 RTM not-yet
+
+  `--tests-root` 는 **반복 지정 가능**(CFP-2965 CR-203②) — 지정 루트들의 symbol 을 union 해
+  born-missing 을 해석한다. 예: `--tests-root tests --tests-root hooks/tests`.
+  1회 지정 = 기존 거동 그대로(1-원소 union). `.` 단일 확대 해석은 **명시 배제**
+  (repo 전체를 루트로 삼으면 Hop3 born-missing 판별력이 희석된다).
 
 Exit codes (fail-closed):
   0 = PASS only (유일 success — 전 hop 통과).
   그 외 모든 non-zero exit = fail-closed FAIL (전부 차단):
-    1 = 위반(Hop1/2/3) OR 판정불가(입력 부재·unreadable·파싱 실패·RTM 미해결·tests-root 부재).
+    1 = 위반(Hop1/2/3) OR 판정불가(입력 부재·unreadable·파싱 실패·RTM 미해결·tests-root 부재
+        [지정 루트 ∀-실재 필수 — 1개라도 부재면 관용 union 없이 판정불가]).
     2 = argparse 인자오류(예: `--phase 3` = choices 위반) — 여전히 non-zero=차단.
 
 ADR refs: ADR-145 (결정 SSOT) / ADR-006 Amd2 L266 (검사연극 isomorphic 선례) /
@@ -455,19 +461,59 @@ def hop2_coverage(records, rtm_mapping):
     return violations
 
 
+def normalize_tests_roots(tests_root):
+    """`--tests-root` 인자 정규화 → list[str].
+
+    backward-compatible: 단일 str 지정 = 1-원소 list (기존 호출면 무손상 — argparse
+    `action="append"` 전환 이전의 직접 호출자·자체 테스트가 str 을 넘겨도 동일 거동).
+    None → 빈 list (미지정).
+    """
+    if tests_root is None:
+        return []
+    if isinstance(tests_root, str):
+        return [tests_root]
+    return [r for r in tests_root]
+
+
+def missing_tests_roots(tests_root):
+    """지정 루트 중 **부재**(디렉터리 아님)인 것들을 지정 순서대로 반환.
+
+    ∀-실재 규약 (ADR-145 §결정8(C) "판정불가 ≠ 비적용" 정합): 지정 루트는 전부 실재해야
+    한다. 1개라도 부재하면 나머지로 관용 union 하지 않고 판정불가로 끊는다 — 부재 루트를
+    조용히 건너뛰면 그 루트에 있어야 할 명명 테스트가 "없는데 있다"로 통과한다.
+    """
+    return [r for r in normalize_tests_roots(tests_root) if not os.path.isdir(r)]
+
+
 def collect_test_symbols(tests_root):
-    """tests_root 아래 `*.py` 를 `ast` 로 파싱해 정의된 함수/클래스 이름 집합 수집 (**grep 금지**).
+    """지정 루트(들) 아래 `*.py` 를 `ast` 로 파싱해 정의된 함수/클래스 이름 집합 수집 (**grep 금지**).
+
+    tests_root: str(단일 루트, 기존 계약) 또는 list[str](다중 루트 — CFP-2965 CR-203②).
+      다중 지정 시 각 루트의 symbol 집합을 **union** 한다 (모노레포에서 명명 테스트가
+      `tests/` 와 `hooks/tests/` 로 나뉘어 있어도 born-missing 오탐이 없도록).
 
     Returns:
-      set[str]  — 정의된 def/class/async-def node 이름 (nested·메서드 포함).
-      None      — tests_root 부재(디렉터리 아님) → 판정불가 (호출자 fail-closed).
+      set[str]  — 정의된 def/class/async-def node 이름 (nested·메서드 포함), 전 루트 union.
+      None      — 루트 미지정 OR 지정 루트 중 1개라도 부재 → 판정불가 (호출자 fail-closed).
 
     grep(문자열 매칭)이 아닌 ast node 확인이므로 주석/docstring/문자열 안 함수명은 매칭 안 됨
     (F-ORACLE-GUARD — CFP-2545 false-oracle 방어). 개별 파일 SyntaxError/IOError 는 skip
     (해당 파일 symbol 미수집 → 그 명명 테스트는 born-missing 판정, fail-closed 방향).
     """
-    if not os.path.isdir(tests_root):
+    roots = normalize_tests_roots(tests_root)
+    if not roots:
         return None
+    # ∀-실재 (부재 루트 관용 union 금지) — 1개라도 부재면 판정불가.
+    if any(not os.path.isdir(r) for r in roots):
+        return None
+    symbols = set()
+    for root in roots:
+        symbols |= _collect_symbols_one_root(root)
+    return symbols
+
+
+def _collect_symbols_one_root(tests_root):
+    """단일 루트 walk → symbol set (collect_test_symbols 의 per-root 내부 헬퍼)."""
     symbols = set()
     for dirpath, _dirnames, filenames in os.walk(tests_root):
         for name in filenames:
@@ -681,12 +727,25 @@ def run(phase, ac_source_path, rtm_path, tests_root=None, rtm_not_yet=False,
     violations.extend(hop2_coverage(records, rtm_mapping))  # R3 / R8 (미매핑 → FAIL)
 
     if phase == 2:
-        if tests_root is None:
+        roots = normalize_tests_roots(tests_root)
+        if not roots:
             _error("--phase 2 인데 --tests-root 미지정 — born-missing 판정불가 (fail-closed).")
             return EXIT_FAIL
-        symbols = collect_test_symbols(tests_root)
+        # ∀-실재 먼저 판정 — 부재 루트를 **이름으로** 지목한다 (지정 순서 무관: 선행
+        # 배치돼도 후행 배치돼도 동일하게 exit 1). 부재 루트 관용 union 금지.
+        missing = missing_tests_roots(roots)
+        if missing:
+            _error(
+                f"--tests-root 부재(디렉터리 아님): {', '.join(missing)} — "
+                f"born-missing 판정불가 (fail-closed). 지정 {len(roots)}개 중 {len(missing)}개 부재 "
+                f"(∀-실재 필수 — 부재 루트를 건너뛴 관용 union 은 born-missing 을 '없는데 있다'로 뒤집는다)."
+            )
+            return EXIT_FAIL
+        symbols = collect_test_symbols(roots)
         if symbols is None:
-            _error(f"--tests-root 부재(디렉터리 아님): {tests_root} — born-missing 판정불가 (fail-closed).")
+            _error(
+                f"--tests-root symbol 수집 실패: {', '.join(roots)} — born-missing 판정불가 (fail-closed)."
+            )
             return EXIT_FAIL
         violations.extend(hop3_born_missing(records, rtm_mapping, symbols))  # R5 (born-missing → FAIL)
 
@@ -725,8 +784,15 @@ def main(argv=None):
     parser.add_argument("--rtm-not-yet", dest="rtm_not_yet", action="store_true",
                         help="Phase-1 RTM not-yet-applicable EXPLICIT 신호 (rtm_uri 마커 부재 ∧ phase 1). "
                              "적용 PR 이면 Hop1 only(Hop2 skip). placeholder fallback 흡수 아님. phase 2 = FAIL.")
-    parser.add_argument("--tests-root", default=None,
-                        help="born-missing 해석 루트(phase 2 필수). 명명 테스트 실 symbol ast resolve.")
+    # action="append" — **반복 지정 가능** (CFP-2965 CR-203②). 구 단일값 store 는 flag 를
+    # 두 번 주면 last-wins 로 **선행 루트가 조용히 탈락**해, 그 루트의 명명 테스트가
+    # born-missing 으로 뒤집히거나(오탐) 반대로 검사 대상에서 빠진다. append 전환이
+    # 다중 루트 지원의 선행 조건이다. 1회 지정 = 1-원소 list = 기존 거동 그대로.
+    parser.add_argument("--tests-root", default=None, action="append", metavar="DIR",
+                        help="born-missing 해석 루트(phase 2 필수). 명명 테스트 실 symbol ast resolve. "
+                             "반복 지정 시 각 루트의 symbol 을 union (예: --tests-root tests "
+                             "--tests-root hooks/tests). 지정 루트는 ∀ 실재 필수(1개라도 부재 = exit 1). "
+                             "`.` 단일 확대 해석은 명시 배제 — born-missing 판별력 희석.")
     parser.add_argument("--ac-applicability-none", dest="ac_applicability_none", action="store_true",
                         help="story_uri-absent 비적용 선언(ac_applicability: none 마커) EXPLICIT 신호 "
                              "(ADR-145 §결정9). adapter-routed INPUT. verdict=core 단일소유.")
