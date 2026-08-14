@@ -264,13 +264,29 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 
 | ID | 술어 | 왜 필요한가 |
 |---|---|---|
-| **D-1** | **항목별 census emit** | 총합만 emit 하면 **N 축소와 구별 불가** |
-| **D-2** | **`N < baseline` = FAIL** | 동반 삭제 경로를 닫는 유일 술어(비협상) |
+| **D-1** | **census 7축 개별 emit** | 총합만 emit 하면 **N 축소와 구별 불가** |
+| **D-2** | **축별 `N < baseline` = FAIL** — ★**집계 비교 금지** | 동반 삭제 경로를 닫는 유일 술어(비협상) |
 | **D-3** | **baseline = 비감소 high-water mark** (아래 별도 상술) | baseline 이 따라 내려가면 D-2 가 공허 |
 | **D-4** | 본 게이트에 **`non-applicable` opt-in 미제공** | **면제 칸이 곧 우회로**다 |
-| **D-5** | **항목별 `detected` 개별 emit** | 합계만으로는 arm 별 결손이 상계돼 보이지 않는다 |
+| **D-5** | **축별 `detected` 개별 emit** | 합계만으로는 arm 별 결손이 상계돼 보이지 않는다 |
+
+**★ census 7축 확정**: `N_gates` · `N_armL` · `N_armH` · `N_probe` · `N_detected` · `N_flip` · `N_indeterminate` — **전건 개별 emit + 개별 baseline 대조**.
+
+★★**D-2 는 축별 비교이며 *"총합 N"* 단일 대조를 금지한다.** 총 N 이 불변인 채 **arm-H ↔ arm-L 이 상계**되는 경로가 집계 비교에서 열리며, 그 경로를 닫는 것이 본 술어의 실 목적이다.
+
+★**`N_indeterminate` 는 상한 축이다** — 나머지 6축은 *"이보다 작아지면 FAIL"* 인 하한이나 이 축은 **`≥ 1 = exit 1`**(§결정 4 ⑤ 계상 규율 승계).
+
+**★ exit 3 조건 최종형 (6)**: ⓵ `N_gates`·`N_armL`·`N_armH`·`N_probe` 중 하나라도 `== 0` ⓶ baseline 부재·`content_digest` 불일치·parse 실패 ⓷ stamp drift ⓸ bijection 파손 ⓹ ★**exec-tree blinding 파손**(신규 — IC-4) ⓺ recipe 대상이 `samples[]` 밖.
+
+**★ opt-in 취소 계상 (W — 수령 3항. 선언 3 = 열거 3)**: **W-1** `ever_declared` high-water mark(취소가 **D-2 를 자동 트립**) · **W-4** 취소는 하한을 면제하지 않는다(**두 겹 차단**) · **W-5** `withdrawn[]` **판정기 미투입**(reconciler 전용).
+
+> ★**§결정 7 opt-in ⊥ D-4 문면 정정**: 둘은 disjoint 하다. ★단 ***"disjoint 하므로 안전"* 이라 쓰지 않는다** — disjoint 이기 때문에 **효과 중첩의 틈**(취소를 통한 분모 축소)이 생기고, 그 틈은 **별 술어 W 로 회수**된다. disjoint 는 안전의 근거가 아니라 **별 술어가 필요한 이유**다.
+
+**★ D-4 축 positive-control fixture 의무**: denylist 금지키 현행 hit **0**(§결정 8)이므로 *"0 hit ⇒ 항상 green"* 은 **공허**하다. **denylist 키 1개를 주입한 manifest 에서 RED 실증**이 없으면 D-4 는 선언만 있고 그것을 강제하는 관측이 0 이다.
 
 **★ D-3 상술 — 기전은 차용하되 단조 방향은 반전한다**
+
+**★ baseline 파일 = `docs/hollow-gate-corpus-baseline.yaml` 확정** — **7축 각각의 high-water mark** 보유 · `content_digest` 결박 대상.
 
 **형판 = `docs/infra-resource-baseline.yaml` + `scripts/lib/check_infra_resource_drift.py`.**
 
