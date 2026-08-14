@@ -246,7 +246,12 @@ class TestRenderReport:
         assert sut.TRAILER in lines[-1]
 
     def test_render_report_filters_verdict_from_body(self):
-        """본문에서 verdict 줄 제거 backstop."""
+        """본문의 verdict 어휘는 **치환**되고 관측 사실은 **보존**된다 (INV-E).
+
+        ★ 이전 판본 `assert A not in r or B in r` 은 B("captured=1")가 A("[capture-gate]
+          PASS: captured=1")의 **부분문자열**이라 논리 항진명제였다: A 가 남으면 B 도 남고,
+          A 가 사라지면 좌항이 참 — 어느 쪽이든 통과. 실 산출을 직접 단언한다.
+        """
         obs = [
             sut.Observation(
                 cls="temp",
@@ -257,17 +262,36 @@ class TestRenderReport:
             ),
         ]
         result = sut.render_report(obs, "test", "001")
-        # verdict 줄이 필터되어 빈 본문 (items=0 이 될 수도)
-        assert "[capture-gate] PASS: captured=1" not in result or "captured=1" in result
+
+        # (ㄱ) verdict 어휘는 산출에 0 (INV-E)
+        assert "PASS" not in result, f"verdict 어휘 PASS 잔존: {result!r}"
+        # (ㄴ) 어휘 자리에 placeholder 치환
+        assert "<제거>" in result, f"placeholder 치환 미검출: {result!r}"
+        # (ㄷ) 사실은 보존 — 줄 제거가 아니라 어휘 치환 (관측 손실 0)
+        assert "captured=1" in result, f"관측 사실이 손실됨: {result!r}"
+        assert "items=1" in result, f"사실 줄이 통째 사라짐: {result!r}"
 
     def test_render_report_with_timestamp(self):
-        """timestamp 포함 (KST ISO 8601)."""
-        now = 1723555245  # 2024-08-13 12:00:45 UTC
+        """trailer `at=` 는 **KST(+09:00)** ISO 8601 정본값이다 — 로컬 TZ 무관 결정론.
+
+        ★ 이전 판본 `assert "+09:00" in result or "T" in result` 은 우변이 상시 참이었다
+          (ISO 8601 은 어느 TZ 든 항상 'T' 를 포함) → KST 축을 전혀 재지 않았다.
+          여기서는 `at=` 값을 뽑아 **정본 문자열 동일성**으로 단언한다.
+
+        mutant kill: `_kst_iso` 의 `timezone(timedelta(hours=9))` → `timezone.utc` ⇒ RED.
+        """
+        import re
+        now = 1723555245           # epoch → KST 2024-08-13T22:20:45+09:00
         obs = []
         result = sut.render_report(obs, "test", "123", now=now)
-        assert "at=" in result
-        # KST 시간대 확인
-        assert "+09:00" in result or "T" in result
+
+        m = re.search(r"at=(\S+)", result)
+        assert m is not None, f"trailer at= 필드 부재: {result!r}"
+        at_value = m.group(1)
+        assert at_value == "2024-08-13T22:20:45+09:00", (
+            f"KST 정본값 불일치 (UTC 등 타 TZ 로 렌더되면 여기서 RED): {at_value!r}"
+        )
+        assert at_value.endswith("+09:00"), f"KST offset 부재: {at_value!r}"
 
 
 class TestBoundaryUnicode:
