@@ -12,7 +12,11 @@
 
 import os
 import json
+import re
+import shutil
+import subprocess
 import tempfile
+import time
 import pytest
 from pathlib import Path
 from unittest import mock
@@ -21,6 +25,89 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 
 import scheduled_task_reconcile as sut
+
+
+# ═══════════════════════════════ 공통 헬퍼 ═══════════════════════════════════
+def _git(repo, *args, check=True):
+    """cwd 변경 없이 repo 에 git 명령 실행 (Windows chdir 점유 회피)."""
+    return subprocess.run(
+        ["git", "-C", str(repo), *args],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        check=check,
+    )
+
+
+def _stash_snapshot(repo):
+    """`git stash list --format=%gd %H` 결과를 **집합**으로. 순서 무관 동일성 비교용."""
+    cp = _git(repo, "stash", "list", "--format=%gd %H")
+    return {ln.strip() for ln in (cp.stdout or "").splitlines() if ln.strip()}
+
+
+def _make_repo_with_stash(repo_path):
+    """dummy commit 1 + stash 1 을 가진 임시 git repo 생성 (전역 git identity 무의존)."""
+    os.makedirs(repo_path, exist_ok=True)
+    _git(repo_path, "init", "-q")
+    _git(repo_path, "config", "user.email", "qadev@example.invalid")
+    _git(repo_path, "config", "user.name", "qadev")
+    Path(repo_path, "dummy.txt").write_text("base\n", encoding="utf-8")
+    _git(repo_path, "add", "dummy.txt")
+    _git(repo_path, "commit", "-q", "-m", "initial")
+    Path(repo_path, "temp.txt").write_text("stashed\n", encoding="utf-8")
+    _git(repo_path, "add", "temp.txt")
+    _git(repo_path, "stash")
+
+
+def _scan_roots_for(tmpdir, worktrees_dir):
+    """production scan_roots 형상 그대로의 tmpdir 주입본 (실 홈 스캔 0, hermetic)."""
+    return [
+        {"path": worktrees_dir, "mode": "cross-check-only", "source": "worktrees-base"},
+        {"path": os.path.join(tmpdir, "workspace"), "mode": "discover+classify",
+         "source": "workspace-root"},
+        {"path": os.path.join(tmpdir, "home"), "mode": "discover+classify",
+         "source": "home-direct"},
+    ]
+
+
+def _md_table_rows(section: str, header_cells: list):
+    """마크다운 섹션에서 **헤더 셀이 정확히 일치하는 표 1개**의 데이터 행을 파싱한다.
+
+    substring 검사(도입 문장·배제 축 표·산문에서 리터럴이 공급되는 hollow oracle)를
+    구조 파싱으로 대체하기 위한 헬퍼 — test_ac4_six_facet_enumeration 이 쓰는 방식의 추출본.
+
+    Returns:
+        list[list[str]] — 각 데이터 행의 셀 목록 (선행/후행 빈 셀 제거)
+
+    Raises:
+        AssertionError: 헤더 행 부재 (= 표 통째 삭제)
+    """
+    def _cells(line):
+        parts = [c.strip() for c in line.strip().split("|")]
+        # `| a | b |` → ['', 'a', 'b', ''] — 양끝 빈 셀 제거
+        if parts and parts[0] == "":
+            parts = parts[1:]
+        if parts and parts[-1] == "":
+            parts = parts[:-1]
+        return parts
+
+    lines = section.split("\n")
+    start = -1
+    for i, ln in enumerate(lines):
+        if ln.strip().startswith("|") and _cells(ln) == header_cells:
+            start = i
+            break
+    if start == -1:
+        raise AssertionError(
+            f"표 헤더 부재: {header_cells} (표 통째 삭제 또는 헤더 변형)"
+        )
+    rows = []
+    for ln in lines[start + 1:]:
+        s = ln.strip()
+        if not s.startswith("|"):
+            break                       # 표 종료
+        if set(s.replace("|", "").replace(" ", "")) <= {"-", ":"}:
+            continue                    # 구분행
+        rows.append(_cells(ln))
+    return rows
 
 
 def extract_adr_section(content: str, section_heading: str) -> str:
@@ -171,13 +258,25 @@ class TestAC2ObservationOnlyDelta:
     """
 
     def test_ac2_no_deletion_on_disk(self):
-        """제거 방향 집합차 = 0 — 로컬 파일 삭제 0.
+        """INV-A: 삭제 프리미티브 호출 0 — **SUT 가 스스로** `GC_DRY_RUN=1` 을 강제한다.
 
-        부재형 mutant: 삭제 수행 (run_scan(dry_run=False) 호출)
-        변형형 mutant: 경로 조작 후 canary 소멸
+        ★ 이 오라클의 load-bearing 설계 (이전 판본의 결함 봉합):
+          이전 판본은 **테스트가 먼저** `GC_DRY_RUN=1` 을 설정해 SUT 의 의무를 대신
+          이행했다. 그래서 `_observe_scratch` 의 `os.environ["GC_DRY_RUN"] = "1"` 줄을
+          `pass` 로 지워도 전 스위트가 GREEN 이었다(무커버). 본 판본은
+          ① env 에서 `GC_DRY_RUN` 을 **제거**한 채 호출하고
+          ② 삭제 프리미티브(`os.remove` / `shutil.rmtree`)를 spy 로 가로채
+          ③ 호출 수 0 을 단언한다 — 강제 책임이 SUT 에 남는다.
 
-        이 테스트는 collect_observations 가 스캐너를 observe-only 로 호출함을
-        간접 검증. dry_run=False 면 RED.
+        ★ 안전: 실 홈·실 scratch 미접촉 (tmpdir 주입) ∧ spy 가 실 삭제를 대체하므로
+          mutant 재현 중에도 파일이 실제로 지워지지 않는다.
+
+        비공허성(vacuous 아님) 짝: 심은 loose 파일이 실제로 age>TTL 판정에 도달했음을
+          scratch 관측의 `TTL초과=1` 로 확인한다. 이 짝이 없으면 "삭제 0" 은
+          "삭제 후보 자체가 0" 으로도 참이 된다.
+
+        mutant kill: `scheduled_task_reconcile.py` `_observe_scratch` 의
+          `os.environ["GC_DRY_RUN"] = "1"` → `pass` ⇒ RED (spy 호출 1 ∧ TTL초과=0).
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             # Arrange: canary 파일 3종
@@ -189,30 +288,60 @@ class TestAC2ObservationOnlyDelta:
             scratch_canary = os.path.join(scratch_dir, "scratch_sentinel.txt")
             Path(scratch_canary).touch()
 
+            # age > TTL loose 파일 (삭제 후보 — 이게 있어야 삭제 경로가 실제로 발동)
+            stale_loose = os.path.join(scratch_dir, "stale-loose.txt")
+            Path(stale_loose).write_text("stale\n", encoding="utf-8")
+            old = time.time() - 30 * 86400
+            os.utime(stale_loose, (old, old))
+
             temp_dir = os.path.join(tmpdir, "temp")
             os.makedirs(temp_dir)
             temp_canary = os.path.join(temp_dir, "temp_sentinel.txt")
             Path(temp_canary).touch()
 
-            # Act: collect_observations (dry_run 경로만 호출 — GC_DRY_RUN=1)
-            orig_env = os.environ.get("GC_DRY_RUN")
-            try:
-                os.environ["GC_DRY_RUN"] = "1"  # 실 삭제 차단
-                obs = sut.collect_observations(
-                    repo_root=tmpdir,
-                    scratch_root=scratch_dir,
-                    temp_root=temp_dir,
-                )
-            finally:
-                if orig_env is None:
-                    os.environ.pop("GC_DRY_RUN", None)
-                else:
-                    os.environ["GC_DRY_RUN"] = orig_env
+            # 삭제 프리미티브 spy — 호출만 기록하고 **실제 삭제는 하지 않는다**
+            delete_calls = []
 
-            # Assert: canary 파일 모두 존재 (삭제 0)
+            def spy_remove(path, *a, **kw):
+                delete_calls.append(("os.remove", str(path)))
+
+            def spy_rmtree(path, *a, **kw):
+                delete_calls.append(("shutil.rmtree", str(path)))
+
+            # Act: 테스트는 GC_DRY_RUN 을 **설정하지 않는다** (SUT 의 의무)
+            with mock.patch.dict(os.environ):
+                os.environ.pop("GC_DRY_RUN", None)
+                os.environ["CODEFORGE_SCRATCH_TTL_DAYS"] = "1"   # 판정 결정론화
+                with mock.patch("os.remove", side_effect=spy_remove), \
+                     mock.patch("shutil.rmtree", side_effect=spy_rmtree):
+                    obs = sut.collect_observations(
+                        repo_root=tmpdir,
+                        scan_roots=_scan_roots_for(tmpdir, os.path.join(tmpdir, "worktrees")),
+                        scratch_root=scratch_dir,
+                        temp_root=temp_dir,
+                    )
+
+            # Assert (ㄱ): 삭제 프리미티브 호출 0 (INV-A)
+            assert delete_calls == [], (
+                f"INV-A 위반: 삭제 프리미티브가 호출됐다 (GC_DRY_RUN 강제 실패): {delete_calls}"
+            )
+
+            # Assert (ㄴ): 비공허성 — 심은 파일이 실제로 TTL 초과 판정에 도달
+            scratch_obs = [o for o in obs if o.cls == "scratch"]
+            assert len(scratch_obs) == 1, f"scratch 관측 1행 기대, 실제: {len(scratch_obs)}"
+            assert "TTL초과=1" in scratch_obs[0].measured, (
+                "삭제 후보가 판정에 도달하지 않았다 — '삭제 0' 단언이 공허해진다. "
+                f"실측: {scratch_obs[0].measured!r}"
+            )
+            assert "삭제집행=0" in scratch_obs[0].measured, (
+                f"dry-run 경로 미진입 (삭제집행 != 0): {scratch_obs[0].measured!r}"
+            )
+
+            # Assert (ㄷ): canary 파일 + stale 파일 모두 존재 (삭제 0)
             assert os.path.exists(workspace_canary), "workspace canary 삭제되지 않음"
             assert os.path.exists(scratch_canary), "scratch canary 삭제되지 않음"
             assert os.path.exists(temp_canary), "temp canary 삭제되지 않음"
+            assert os.path.exists(stale_loose), "age>TTL loose 파일 삭제되지 않음"
 
     def test_ac2_github_write_zero(self):
         """GitHub 상태 write 0.
@@ -244,61 +373,61 @@ class TestAC2ObservationOnlyDelta:
                     )
 
     def test_ac2_no_stash_drop(self):
-        """AC-2 stash 축: 정지 전후 stash 스냅샷 일치.
+        """AC-2 stash 축: **SUT 관측 사이클 전후** stash 스냅샷 일치 (집합 동일).
 
-        git stash drop 은 .git/refs/stash 를 변경하므로
-        파일 면 단독 스냅샷(depth-1)에 나타나지 않는다.
-        따라서 2축(파일 + stash) 검증이 필수.
+        `git stash drop` 은 `.git/refs/stash` 만 바꾸므로 파일 면 depth-1 스냅샷에
+        나타나지 않는다 — 파일 축(test_ac2_no_deletion_on_disk)과 **별개 축**이 필요하다.
 
-        ★ Windows git 프로세스 점유 회피: cwd 원복 후 정리.
+        ★ 오라클 형상 (Change Plan §8.2):
+          임시 git repo 를 **scan root 로 주입** → `sut.collect_observations` 호출
+          **전후**로 `git stash list --format=%gd %H` 스냅샷 채취 → **집합 동일** 단언.
+          ★ 테스트 자신은 stash 를 조작하지 않는다 — 사이클 안의 유일 행위자가 SUT 다.
+          (이전 판본은 테스트가 스스로 `git stash drop` 을 실행하고 `!=` 를 단언해
+           SUT 참조가 0건이었다 — 선언은 '일치'인데 단언은 극성까지 반대였다.)
+
+        mutant kill:
+          ① `_observe_workspace_residue` 가 후보 디렉터리에 `git stash drop` 실행 ⇒ RED
+          ② `collect_observations` 가 raise ⇒ RED (예외 전파로 오라클이 SUT 에 결박)
         """
-        orig_cwd = os.getcwd()
         with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                # Arrange: 임시 git repo (실 worktree 미건드림)
-                repo_path = os.path.join(tmpdir, "test_repo")
-                os.makedirs(repo_path, exist_ok=True)
-                os.chdir(repo_path)
+            # Arrange: worktrees-base scan root 아래에 stash 보유 임시 git repo
+            worktrees_dir = os.path.join(tmpdir, "worktrees")
+            os.makedirs(worktrees_dir, exist_ok=True)
+            repo_path = os.path.join(worktrees_dir, "stash_repo")
+            _make_repo_with_stash(repo_path)
 
-                # git init + dummy commit
-                import subprocess
-                subprocess.run(["git", "init"], check=True, capture_output=True)
-                subprocess.run(["git", "config", "user.email", "test@test.com"], check=True, capture_output=True)
-                subprocess.run(["git", "config", "user.name", "test"], check=True, capture_output=True)
-                Path("dummy.txt").touch()
-                subprocess.run(["git", "add", "dummy.txt"], check=True, capture_output=True)
-                subprocess.run(["git", "commit", "-m", "initial"], check=True, capture_output=True)
+            scratch_dir = os.path.join(tmpdir, "scratch")
+            temp_dir = os.path.join(tmpdir, "temp")
+            os.makedirs(scratch_dir, exist_ok=True)
+            os.makedirs(temp_dir, exist_ok=True)
 
-                # stash 1개 생성
-                Path("temp.txt").touch()
-                subprocess.run(["git", "add", "temp.txt"], check=True, capture_output=True)
-                subprocess.run(["git", "stash"], check=True, capture_output=True)
+            stash_before = _stash_snapshot(repo_path)
+            assert len(stash_before) == 1, (
+                f"전제 붕괴: stash 1건 기대, 실제 {len(stash_before)}건 ({stash_before})"
+            )
 
-                # 스냅샷 1: stash 존재 전
-                cp1 = subprocess.run(
-                    ["git", "stash", "list", "--format=%gd %H"],
-                    capture_output=True, text=True, check=True
-                )
-                stash_before = cp1.stdout.strip()
-                assert len(stash_before) > 0, "stash 1개 기대"
+            # Act: SUT 관측 사이클 (테스트는 git 상태를 건드리지 않는다)
+            obs = sut.collect_observations(
+                repo_root=tmpdir,
+                scan_roots=_scan_roots_for(tmpdir, worktrees_dir),
+                scratch_root=scratch_dir,
+                temp_root=temp_dir,
+            )
 
-                # mutant: stash drop 호출
-                subprocess.run(["git", "stash", "drop"], check=True, capture_output=True)
+            stash_after = _stash_snapshot(repo_path)
 
-                # 스냅샷 2: stash 제거 후
-                cp2 = subprocess.run(
-                    ["git", "stash", "list", "--format=%gd %H"],
-                    capture_output=True, text=True, check=True
-                )
-                stash_after = cp2.stdout.strip()
+            # Assert (ㄱ): SUT 가 실제로 그 repo 에 도달했다 (오라클 결박 — 비공허성)
+            worktree_paths = [o.display_path for o in obs if o.cls == "worktree"]
+            assert any("stash_repo" in p for p in worktree_paths), (
+                "SUT 가 주입한 stash repo 를 관측하지 않았다 — stash 단언이 공허해진다. "
+                f"worktree 관측: {worktree_paths}"
+            )
 
-                # Assert: 스냅샷 불일치 = mutant RED
-                assert stash_before != stash_after, (
-                    "AC-2 stash 축 미작동: drop 후에도 스냅샷 일치 (오라클 hollow)"
-                )
-                assert len(stash_after) == 0, "drop 후 stash 0건 기대"
-            finally:
-                os.chdir(orig_cwd)
+            # Assert (ㄴ): stash 스냅샷 **집합 동일** (제거·추가 0)
+            assert stash_after == stash_before, (
+                "AC-2 stash 축 위반: 관측 사이클이 stash 상태를 변경했다. "
+                f"before={sorted(stash_before)} after={sorted(stash_after)}"
+            )
 
 
 class TestAC3SelfModificationChain:
@@ -497,6 +626,11 @@ class TestAC4AuthorityFacets:
         )
 
         # Assert (ㄷ): 완결성 미보증 declare 존재 (ADR-172 §결정 10 정책)
+        #   ★ `any` 완화 유지 근거: 검사 대상은 "declare 의 **존재**"이지 특정 문안이
+        #     아니다. 세 키워드는 동일 declare 의 서로 다른 표현면(제목 라벨 / 명제 본문 /
+        #     확장 조건)이며 셋 중 하나라도 남아 있으면 정책이 문서에 살아 있다. 문안
+        #     고정(all)로 좁히면 ADR 문장 다듬기마다 무의미 RED 가 나므로 의도적 완화다.
+        #     — 대신 declare 를 **통째 삭제**하면 세 키워드가 동시에 사라져 RED 가 된다.
         declare_keywords = ["★ 완결성 미보증", "닫힌 집합이 아니다", "미확인 권한면"]
         has_declare = any(kw in decision_10_section for kw in declare_keywords)
         assert has_declare, (
@@ -539,9 +673,20 @@ class TestAC5PromotionZero:
         for required in ["조건", "주체", "rollback"]:
             assert required in decision_9_text, f"AC-5: {required} 필드 부재"
 
-        # 추가 검증: rollback 경로 3종 (가/나/다)
-        for lever in ["가", "나", "다"]:
-            assert lever in decision_9_text, f"AC-5: rollback 경로 {lever} 부재"
+        # 추가 검증: rollback lever 3종 — **문장 전문**으로 검사한다.
+        #   ★ 이전 판본은 한글 단음절 "가"/"나"/"다" 를 검사했다. 그 음절들은 §결정 9
+        #     산문에 각각 11/2/14 회 등장하므로 lever 3항을 **전량 삭제해도 통과**하는
+        #     공허 오라클이었다. lever 별 고유 문장 전문이라야 1항 삭제가 곧 RED 다.
+        levers = [
+            "**(가)** Manual permission mode 에서 미승인 도구 호출 시 "
+            "**run 이 승인까지 정지**한다",
+            "**(나)** 태스크 Status **Active / Paused** 토글",
+            '**(다)** **Delete** ("Also delete files on disk" 체크박스 포함)',
+        ]
+        for lever in levers:
+            assert lever in decision_9_text, (
+                f"AC-5: rollback lever 전문 미검출 — {lever!r}"
+            )
 
 
 class TestAC9ReconcileCompleteness:
@@ -575,6 +720,61 @@ class TestAC9ReconcileCompleteness:
         # 최소한 5개의 관측이 보고에 반영되는지 확인
         for i in range(5):
             assert f"path{i}" in report, f"관측 {i} 경로가 보고에 포함"
+
+    def test_ac9_scan_pipeline_reports_all_synthesized_residue(self):
+        """AC-9 회수 완전성 — **관측 파이프라인**(`_observe_workspace_residue`)을 태운다.
+
+        ★ 신설 사유 (RTM mutant 귀속 오류 봉합):
+          위 `test_ac9_reports_all_accumulated_observations` 는 Observation 을 직접
+          만들어 `render_report` 만 호출하므로 **스캐너 파이프라인에 도달하지 않는다**.
+          그래서 RTM 이 AC-9 mutant 로 지목한 `verdicts = discovery.judge(classified)[:2]`
+          (관측 절단)이 그 테스트에서 **도달 불가**였다. 본 테스트는 scan_roots 를 주입해
+          discover→classify→judge 를 실제로 태우고 합성 잔재 전량 보고를 단언한다.
+
+        mutant kill: `_observe_workspace_residue` 의
+          `verdicts = discovery.judge(classified)` → `...[:2]` ⇒ RED.
+        """
+        K = 4      # ≥3 (절단 mutant `[:2]` 와 판별되도록 여유 1)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            worktrees_dir = os.path.join(tmpdir, "worktrees")
+            scratch_dir = os.path.join(tmpdir, "scratch")
+            temp_dir = os.path.join(tmpdir, "temp")
+            for d in (worktrees_dir, scratch_dir, temp_dir):
+                os.makedirs(d, exist_ok=True)
+
+            # Arrange: 합성 잔재 K개 (tick K회 건너뛴 상태의 등가물)
+            for i in range(K):
+                leaf = os.path.join(worktrees_dir, f"synth-residue-{i}")
+                os.makedirs(leaf, exist_ok=True)
+                Path(leaf, "marker.txt").write_text("x\n", encoding="utf-8")
+
+            # Act: 상태 무의존 reconcile 1회 (cursor·watermark 부재)
+            obs = sut.collect_observations(
+                repo_root=tmpdir,
+                scan_roots=_scan_roots_for(tmpdir, worktrees_dir),
+                scratch_root=scratch_dir,
+                temp_root=temp_dir,
+            )
+            report = sut.render_report(obs, "ac9-task", "ac9-run")
+
+            # Assert (ㄱ): worktree 축 관측 개수 == K (절단 0)
+            worktree_obs = [o for o in obs if o.cls == "worktree"]
+            assert len(worktree_obs) == K, (
+                f"AC-9: 합성 잔재 {K}개 전량 관측 기대, 실제 {len(worktree_obs)}개 — "
+                f"{[o.display_path for o in worktree_obs]}"
+            )
+
+            # Assert (ㄴ): 발화 본문에도 K개 전량 등재 (보고 단계 절단 0)
+            for i in range(K):
+                assert f"synth-residue-{i}" in report, (
+                    f"AC-9: 합성 잔재 synth-residue-{i} 가 보고 본문에 미등재"
+                )
+
+            # Assert (ㄷ): 각 관측의 dedup key 가 본문 key= 필드로 라운드트립
+            for o in worktree_obs:
+                assert f"key={sut.dedup_key(o)}" in report, (
+                    f"AC-9: key 라운드트립 실패 — {sut.dedup_key(o)!r}"
+                )
 
 
 class TestAC11MarkerTwoTypes:
@@ -640,16 +840,15 @@ class TestAC11MarkerTwoTypes:
             f"trailer={sut.TRAILER}"
         )
 
-        # 3. 마커 총 2종 (3종째 부재 — 도입기는 branch prefix 미포함)
-        # branchprefix 로 시작하는 마커 미검출 확인 (도입기 설계)
-        assert "[cfp-" not in report, (
-            "AC-11 도입기 위반: branch prefix 마커 미포함 조건 (ADR-172 §결정 9)"
-        )
-
-        # 4. 부착 주체 = render_report (테스트 함수가 아님)
-        # 즉 보고 마커는 CLI 에서만 생성 (LLM 이 운반 금지 — AC-3 와 무관)
-        assert sut.SENTINEL in report and sut.TRAILER in report, (
-            "AC-11: render_report 가 2종 마커 모두 부착하지 않음"
+        # 3. 마커 **종수 == 2** — 산출에 등장하는 `[토큰]` 전량을 열거해 집합 동일 단언.
+        #    ★ 이전 판본 `assert "[cfp-" not in report` 는 fixture 가 애초에 "[cfp-" 를
+        #      공급하지 않아 SUT 행동과 무관하게 항상 참인 구조적 항진명제였다.
+        #      여기서는 "SUT 가 실제로 무엇을 붙였는가" 를 열거해 3종째를 배제한다
+        #      (승격 후 브랜치 prefix 가 도입기에 새면 RED — ADR-172 §결정 9).
+        emitted_markers = set(re.findall(r"\[[^\[\]\s]+\]", report))
+        assert emitted_markers == {sut.SENTINEL, sut.TRAILER}, (
+            f"AC-11 도입기 마커 종수 위반: 기대 {{{sut.SENTINEL}, {sut.TRAILER}}}, "
+            f"실제 {sorted(emitted_markers)} (ADR-172 §결정 9 — 도입기 정확히 2종)"
         )
 
 
@@ -678,12 +877,40 @@ class TestAC12TripleAxisSixCellComparison:
         except AssertionError as e:
             pytest.fail(f"AC-12: {e}")
 
-        # 3축 각각에 대한 비용·보안 열이 표 행으로 실재
-        for axis in ["P3a", "P3b", "P4"]:
-            for attr in ["비용", "보안"]:
-                assert axis in decision_section and attr in decision_section, (
-                    f"6셀 비교표 incomplete: {axis}×{attr} 확인 불가"
+        # ★ 구조 파싱 (이전 판본 봉합):
+        #   이전 판본은 `axis in section and attr in section` 이라는 **독립 substring**
+        #   검사였다. 리터럴이 도입 문장·배제 축 표·결정 기록에서 공급되므로 §결정 8 의
+        #   6셀 표를 **통째 삭제해도 통과**했다(hollow). 여기서는 헤더가 정확히
+        #   `축 | 비용 축 | 보안 축` 인 표 1개를 찾아 행 개수·축·셀 텍스트를 구속한다.
+        rows = _md_table_rows(decision_section, ["축", "비용 축", "보안 축"])
+
+        # (ㄱ) 데이터 행 개수 == 3 (행 1개 삭제 = RED)
+        assert len(rows) == 3, (
+            f"AC-12: 6셀 비교표 데이터 행 3개 기대, 실제 {len(rows)}개. 행: {rows}"
+        )
+
+        # (ㄴ) 각 행의 첫 셀이 축 라벨 — 3축이 각각 정확히 한 행씩
+        axes_found = []
+        for cells in rows:
+            assert len(cells) == 3, (
+                f"AC-12: 표 행 셀 3개(축/비용/보안) 기대, 실제 {len(cells)}: {cells}"
+            )
+            axis_cell, cost_cell, sec_cell = cells
+            matched = [a for a in ("P3a", "P3b", "P4") if a in axis_cell]
+            assert len(matched) == 1, (
+                f"AC-12: 축 셀이 P3a/P3b/P4 중 정확히 1종이어야 함 — {axis_cell!r}"
+            )
+            axes_found.append(matched[0])
+
+            # (ㄷ) 3×2 = 6셀 텍스트 non-empty (마크다운 강조 문자만 남은 셀 배제)
+            for attr, cell in (("비용", cost_cell), ("보안", sec_cell)):
+                assert cell.strip(" *_-"), (
+                    f"AC-12: {matched[0]}×{attr} 셀이 비어 있음 — 행: {cells}"
                 )
+
+        assert sorted(axes_found) == ["P3a", "P3b", "P4"], (
+            f"AC-12: 3축 완결성 미충족. 발견: {axes_found}"
+        )
 
     def test_ac12_adoption_record_literals_present(self):
         """결정 기록: P4 채택 축 · 사용자 주체 · 정본 시각 + 지위 라벨 4종.
@@ -707,21 +934,22 @@ class TestAC12TripleAxisSixCellComparison:
             "AC-12: 채택 축 라벨 또는 P4 리터럴 부재"
         )
 
-        # 2. 주체 리터럴: "사용자"
-        assert "**사용자**" in decision_section or "사용자" in decision_section, (
-            "AC-12: 결정 주체 '사용자' 리터럴 부재"
+        # 2. 주체 — 필드 전문으로 검사한다.
+        #    ★ 이전 판본 `"**사용자**" in s or "사용자" in s` 는 앞 항이 사문(死文)이었다:
+        #      뒤 항이 앞 항의 부분문자열이라 or 전체가 산문 어디의 "사용자" 로도 참이 됐다.
+        assert "**결정 주체** = **사용자**" in decision_section, (
+            "AC-12: 결정 주체 필드 전문('**결정 주체** = **사용자**') 미검출"
         )
 
         # 3. 시각 정본값 전문: 2026-08-12T12:15:00+09:00 (ISO 8601, KST)
-        import re
         datetime_pattern = r"2026-08-12T12:15:00\+09:00"
         assert re.search(datetime_pattern, decision_section), (
             "AC-12: 결정 시각 정본값 2026-08-12T12:15:00+09:00 미검출"
         )
 
-        # 4. 지위 라벨: "판단" (가치 판단임을 명시)
-        assert "**판단**" in decision_section or "판단" in decision_section, (
-            "AC-12: 지위 라벨 '판단' 부재"
+        # 4. 지위 라벨 — 필드 전문 (동일 사문 봉합)
+        assert "**선택의 지위** = **가치 판단**" in decision_section, (
+            "AC-12: 지위 라벨 필드 전문('**선택의 지위** = **가치 판단**') 미검출"
         )
 
 
