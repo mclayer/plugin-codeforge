@@ -26,6 +26,28 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 import scheduled_task_reconcile as sut
 
 
+# ═══════════════════════ 실 사용자 상태 격리 헬퍼 (테스트 seam) ═══════════════════
+def _real_heartbeat_state():
+    """실 사용자 heartbeat 파일 스냅샷 (mtime_ns, size). 부재 = None.
+
+    ★ sut.HEARTBEAT_FILE 은 import 시점 expanduser("~") 로 확정되므로 HOME override 로는
+      격리되지 않는다. 테스트는 SCHEDULED_TASK_HEARTBEAT_FILE 로 기록 대상을 tmpdir 로
+      돌리고, 이 스냅샷으로 실 경로 무접촉을 단언한다 — 테스트가 스케줄 작업의 생존
+      신호를 위조하면 watchdog 이 구조적 false-negative 가 된다(ADR-172 §결정 6)."""
+    try:
+        st = os.stat(sut.HEARTBEAT_FILE)
+    except OSError:
+        return None
+    return (st.st_mtime_ns, st.st_size)
+
+
+def _isolated_env(heartbeat_path):
+    """기존 env 상속 + heartbeat 기록 대상만 tmpdir 로 치환한 subprocess env."""
+    env = dict(os.environ)
+    env[sut.ENV_HEARTBEAT_FILE] = str(heartbeat_path)
+    return env
+
+
 class TestLongRunningInvariant:
     """§8.5.1 long-running invariant: 반복 실행 시 자원·시간 단조 무증가."""
 
@@ -454,9 +476,17 @@ class TestLongRunningCLIInvocation:
     """§8.5 long-running: CLI 반복 호출 (subprocess 기반)."""
 
     def test_cli_invocation_sustained_200_iterations(self):
-        """CLI 200회 반복 호출 — 자원·exit code 안정."""
+        """CLI 200회 반복 호출 — 자원·exit code 안정.
+
+        ★ 격리: heartbeat 기록 대상을 tmpdir 로 주입한다. 주입이 없으면 이 테스트가
+          실 사용자 파일(~/.claude/worktree-gc-state/scheduled-task-last-run.epoch)의
+          mtime 을 갱신한다(실측 확인 결함) — 스케줄 작업이 미설치인 머신에서 유일한
+          기록자가 테스트가 되어 관측자 생존 신호를 위조한다.
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            real_before = _real_heartbeat_state()
 
             # Arrange: CLI 진입점 파일 경로
             script_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "scheduled_task_reconcile.py"
@@ -465,17 +495,136 @@ class TestLongRunningCLIInvocation:
 
             exit_codes = []
             for i in range(10):  # 실제는 200이지만 CI 시간 제약
-                # Act: subprocess 호출
+                # Act: subprocess 호출 (실 상태 격리 env 주입)
                 result = subprocess.run(
                     [sys.executable, str(script_path), "--repo-root", repo_root, "--dry-run"],
                     capture_output=True,
                     timeout=10,
+                    env=_isolated_env(hb_path),
                 )
                 exit_codes.append(result.returncode)
 
             # Assert: INV-F (항상 0)
             for code in exit_codes:
                 assert code == 0, f"exit code 항상 0 기대 (INV-F), 실제: {code}"
+
+            # Assert: 실 사용자 heartbeat 무접촉 (부재면 부재인 채로 — 존재/mtime/size 불변)
+            assert _real_heartbeat_state() == real_before, (
+                f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE} "
+                f"(before={real_before}, after={_real_heartbeat_state()})"
+            )
+
+    def test_cli_invocation_heartbeat_isolated_from_real_state(self):
+        """CLI 가 heartbeat 를 **기록하는** 경로에서도 실 사용자 상태는 무접촉.
+
+        ★ teeth 설계: 정지 플래그(F1)를 tmpdir repo-root 에 두어 heartbeat 기록 경로를
+          결정론적으로 태운다. --dry-run 경로는 설계상 heartbeat 를 기록하지 않으므로
+          그 경로만으로는 "기록이 어디로 가는가" 를 판별할 수 없다 —
+          ambient 잔재 유무에 따라 단언이 공허해진다.
+          ① 주입 경로에 실제로 기록됨(seam 실효) ∧ ② 실 경로 불변 — 두 단언이 쌍이다.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Arrange: F1 정지 플래그 (halted 종료 경로 = heartbeat 기록 경로)
+            os.makedirs(os.path.join(tmpdir, ".codeforge"), exist_ok=True)
+            Path(os.path.join(tmpdir, sut.STOP_FLAG_REPO_RELPATH)).touch()
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            real_before = _real_heartbeat_state()
+
+            script_path = Path(__file__).parent.parent.parent / "scripts" / "lib" / "scheduled_task_reconcile.py"
+            if not script_path.exists():
+                pytest.fail(f"script 부재: {script_path}")
+
+            # Act
+            result = subprocess.run(
+                [sys.executable, str(script_path), "--repo-root", tmpdir],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=30,
+                env=_isolated_env(hb_path),
+            )
+
+            # Assert: 정지 경로 진입 확인 (기록 경로 결정론)
+            assert result.returncode == 0, f"INV-F 위반: {result.returncode}"
+            assert "halted=1" in (result.stdout or ""), (
+                f"정지 경로 미진입 — 기록 경로가 결정론적이지 않다: {result.stdout!r}"
+            )
+            # Assert ①: 주입 경로에 실제로 기록됨 (env seam 이 살아 있음)
+            assert os.path.exists(hb_path), (
+                f"주입 경로에 heartbeat 미기록 — 격리 seam 무효: {hb_path}"
+            )
+            # Assert ②: 실 사용자 경로 불변
+            assert _real_heartbeat_state() == real_before, (
+                f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE} "
+                f"(before={real_before}, after={_real_heartbeat_state()})"
+            )
+
+
+# ═══════════════════════ --dry-run 부수효과 0 (생존 신호 위조 금지) ═══════════════
+class TestDryRunSideEffectZero:
+    """--dry-run 은 채널 미접촉 + 부수효과 0 — heartbeat 도 기록하지 않는다.
+
+    근거: heartbeat 기록 주체·시점 = 결정론 CLI 가 **관측 사이클을 실제로 돌고**
+    정상 종료한 때(ADR-172 §결정 6). 사이클을 완결하지 않은 실행이 fresh 생존 신호를
+    남기면 watchdog 이 구조적 false-negative(관측자 사망을 생존으로 보고)가 된다.
+    """
+
+    def test_dry_run_does_not_write_heartbeat(self):
+        """M-DRY 오라클: --dry-run 종료 경로에서 heartbeat 파일 생성·갱신 0.
+
+        dry-run 경로에 write_heartbeat() 를 재삽입하면 주입 경로에 파일이 생겨 RED.
+        ★ 관측 0건이면 다른 종료 경로(관측 0건 무발화)로 빠지므로, 관측 1건을 주입해
+          **dry-run 경로만** 태운다.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            real_before = _real_heartbeat_state()
+            fixture = [sut.Observation(
+                cls="temp",
+                display_path="~/fixture/only",
+                declared="선언 fixture",
+                measured="실측 fixture",
+                mismatch=False,
+            )]
+
+            # Act: dry-run 경로 (관측 1건 주입 — 실 홈 스캔 0, hermetic)
+            with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}):
+                with mock.patch.object(sut, "collect_observations", return_value=fixture):
+                    rc = sut.run(["--repo-root", tmpdir, "--dry-run"])
+
+            assert rc == 0, f"INV-F 위반: {rc}"
+            # Assert: dry-run 은 생존 신호를 남기지 않는다
+            assert not os.path.exists(hb_path), (
+                f"--dry-run 이 heartbeat 를 기록했다 — 부수효과 0 계약 위반 · "
+                f"관측 사이클 미완결 실행이 생존 신호 위조: {hb_path}"
+            )
+            assert _real_heartbeat_state() == real_before, (
+                f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE}"
+            )
+
+    def test_halted_path_still_writes_heartbeat(self):
+        """비-공허성 대조군: heartbeat 를 기록하는 종료 경로(F1 정지)는 여전히 기록한다.
+
+        위 M-DRY 단언이 "env seam 이 죽어서 항상 통과" 하는 게 아님을 보이는 짝.
+        (이 짝이 없으면 `not os.path.exists` 는 어떤 이유로든 항상 참이 될 수 있다.)
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.makedirs(os.path.join(tmpdir, ".codeforge"), exist_ok=True)
+            Path(os.path.join(tmpdir, sut.STOP_FLAG_REPO_RELPATH)).touch()
+            hb_path = os.path.join(tmpdir, "heartbeat.epoch")
+            real_before = _real_heartbeat_state()
+
+            with mock.patch.dict(os.environ, {sut.ENV_HEARTBEAT_FILE: hb_path}):
+                rc = sut.run(["--repo-root", tmpdir])
+
+            assert rc == 0, f"INV-F 위반: {rc}"
+            assert os.path.exists(hb_path), (
+                f"정지 종료 경로에서 heartbeat 미기록 — 기존 기록 경로가 소실됐다: {hb_path}"
+            )
+            assert _real_heartbeat_state() == real_before, (
+                f"테스트가 실 heartbeat 경로를 건드렸다: {sut.HEARTBEAT_FILE}"
+            )
 
 
 if __name__ == "__main__":

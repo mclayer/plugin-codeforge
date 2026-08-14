@@ -81,6 +81,11 @@ ENV_CHANNEL = "SCHEDULED_TASK_CHANNEL"
 ENV_TASK_NAME = "SCHEDULED_TASK_NAME"
 ENV_RUN_ID = "SCHEDULED_TASK_RUN_ID"
 
+# heartbeat 경로 override 키 — **테스트 격리 seam**(신규 기능 아님).
+#   HEARTBEAT_FILE 은 import 시점 expanduser("~") 로 확정되므로 HOME override 로는 격리 불가.
+#   subprocess 로 CLI 를 호출하는 테스트가 실 사용자 상태를 오염시키지 않도록 이 키를 준다.
+ENV_HEARTBEAT_FILE = "SCHEDULED_TASK_HEARTBEAT_FILE"
+
 # 1회 발화 본문에 싣는 사실 줄 상한 (코멘트 크기 bound). 초과분은 무손실 —
 #   다음 실행이 현재 상태를 재관측해 남은 신규분을 발화한다(INV-B 상태 무의존 자기치유).
 MAX_FACT_LINES = 50
@@ -629,11 +634,17 @@ def post_report(channel, body, gh=None) -> bool:
 
 # ═══════════════════════════════ heartbeat ═══════════════════════════════════════
 def write_heartbeat(now=None, path=None) -> None:
-    """★ CLI 종료 경로에서만 호출. 원자적 write(임시파일 → os.replace).
+    """★ CLI 가 관측 사이클을 실제로 돌고 정상 종료한 경로에서만 호출.
+    원자적 write(임시파일 → os.replace).
 
     상태 디렉터리는 codeforge-scratch **밖**(worktree-gc-state)이라 자기 TTL 대상이 아니다.
-    이 파일은 dedup 상태가 아니라 생존 신호다(INV-C 무손상 — 관측 대상 판정에 미사용)."""
-    target = path or HEARTBEAT_FILE
+    이 파일은 dedup 상태가 아니라 생존 신호다(INV-C 무손상 — 관측 대상 판정에 미사용).
+
+    ★ 대상 경로는 **호출 시점** 판독 — path 인자 → env ENV_HEARTBEAT_FILE → HEARTBEAT_FILE.
+      HEARTBEAT_FILE 은 import 시점 상수라 그것만 쓰면 subprocess 테스트가 실 사용자 파일을
+      갱신한다(= 관측자 생존 신호 위조). env 축은 그 격리 seam 이며, 둘 다 부재 시 동작은
+      기존과 동일하다."""
+    target = path or (os.environ.get(ENV_HEARTBEAT_FILE) or "").strip() or HEARTBEAT_FILE
     n = base.now_epoch() if now is None else int(now)
     tmp = "%s.tmp" % target
     try:
@@ -676,7 +687,8 @@ def run(argv=None) -> int:
       2) 관측 — 0건이면 무발화가 정답(빈 보고 금지).
       3) 채널 조회 — None(조회 실패) 이면 fail-closed 무발화(누락은 다음 실행이 자기치유).
       4) 신규 키만 필터 → 렌더 → 발화.
-      5) heartbeat 는 종료 경로에서 기록."""
+      5) heartbeat 는 관측 사이클을 실제로 돈 종료 경로에서만 기록 — **--dry-run 제외**.
+         (dry-run 은 부수효과 0 계약이며 보고 사이클 미완결이라 생존 신호 근거가 없다.)"""
     args = _build_parser().parse_args(argv)
     repo_root = args.repo_root or _git_toplevel() or os.getcwd()
 
@@ -704,9 +716,12 @@ def run(argv=None) -> int:
         return 0
 
     # --dry-run: 채널 미접촉 (조회조차 하지 않는다) — 렌더 본문만 stdout
+    #   ★ heartbeat 미기록 — dry-run 은 부수효과 0 계약이고, 보고 사이클을 완결하지
+    #     않으므로 생존 신호의 산출 근거가 없다. 여기서 기록하면 관측 사이클을 돌지
+    #     않은 실행이 fresh 생존 신호를 남겨 watchdog 이 구조적 false-negative
+    #     (관측자가 죽었는데 살아 있다고 보고)가 된다 — ADR-172 §결정 6.
     if args.dry_run:
         print(render_report(observations, task_name, run_id))
-        write_heartbeat()
         _emit_done(observed, observed, 0, 0)
         return 0
 
