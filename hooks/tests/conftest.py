@@ -95,65 +95,36 @@ _csdp_spec.loader.exec_module(check_spawn_description_prefix)
 sys.modules["check_spawn_description_prefix"] = check_spawn_description_prefix
 
 
-# ============================================================ 공용 훅 러너 (CFP-2965 F1)
+# ============================================================ 공용 테스트 인프라 (CFP-2965 G1)
 #
-# 배경: 일부 테스트가 훅을 `["cmd.exe", "/c", run-hook.cmd, <hook>]` 로 하드코딩해
-#   실행했다. Windows 에서만 성립하는 형태라 Linux CI(ubuntu-latest)에서는
-#   FileNotFoundError → 전건 FAIL 한다. 훅의 **판정 축**(deny / fail-open 거동)은 OS 와
-#   무관하므로 bash 직접 호출로 통일한다 (test_golden_corpus.py 동형).
+# 공용 심볼(BASH / requires_bash / run_hook_bash / …)은 **conftest 가 아니라**
+# 고유 basename 모듈 `hook_runner_cfp2965.py` 에 있다.
 #
-#   등가성 실측(2026-08-14, Windows): worktree-location-guard TIER={block, warn, 미설정}
-#   3케이스에서 cmd.exe 경유와 bash 직접 호출의 rc·stderr 가 완전 일치.
+#   사유 (CR-201 실측): CI 실 run-line 은 2-dir (`pytest hooks/tests overlay/hooks/tests`).
+#   top-level 모듈명 `conftest` 는 두 디렉터리가 공유하는 이름이라
+#   `overlay/hooks/tests/conftest.py`(6줄·공용 심볼 0)가 sys.modules["conftest"] 를
+#   선점하면 bare `from conftest import requires_bash` 가 그 빈 모듈로 해석돼
+#   ImportError → collection ERROR 4 → Interrupted(전체 미실행). 단일 dir 실행은
+#   GREEN 이라 로컬에서 안 보였다. conftest 의 자동 로드 성질은 fixture/플러그인
+#   side effect 에만 필요하고 공용 상수·헬퍼에는 불필요하므로 분리한다.
 #
-#   run-hook.cmd 경유가 *본질*인 축(배치 런처의 exit code 전파 등)은 훅의 판정이 아니라
-#   런처 자체의 계약이므로, 그 축만 `requires_windows` 로 명시 분리한다.
-#
-# 중복 정직 기록: `shutil.which("bash")` 사본이 hooks/tests/ 에 이미 7개 존재한다
-#   (test_cross_repo_gh_safety / test_dev_process_capture_wrappers / test_dynamic_contracts_c /
-#    test_golden_corpus / test_pretooluse_agent_spawn_gate / test_pretooluse_bash_description_inject /
-#    test_repo_confinement). 본 helper 는 그 정본 자리이며, 신규 유입을 막는다.
-#   기존 7개의 수렴은 본 FIX 범위 밖(무관 테스트 회귀 위험) — 별건 기계적 정리 대상.
+# 로드 방식: sys.path 무가정 — 명시 경로 importlib 로 읽고 sys.modules 에 등록한다
+#   (위 하이픈-파일 로더와 동일 관례). 테스트 파일의 bare
+#   `from hook_runner_cfp2965 import ...` 는 sys.modules 를 먼저 맞히므로
+#   수집 구성(단일 dir / 2-dir)과 무관하게 동일 객체로 해석된다.
 
-HOOKS_DIR_FOR_RUNNER = HOOKS_DIR
-RUN_HOOK_CMD = HOOKS_DIR / "run-hook.cmd"
-
-BASH = shutil.which("bash") or (
-    r"C:\Program Files\Git\bin\bash.exe"
-    if os.name == "nt" and Path(r"C:\Program Files\Git\bin\bash.exe").exists()
-    else None
+_hr_spec = importlib.util.spec_from_file_location(
+    "hook_runner_cfp2965", Path(__file__).resolve().parent / "hook_runner_cfp2965.py"
 )
+hook_runner_cfp2965 = importlib.util.module_from_spec(_hr_spec)
+_hr_spec.loader.exec_module(hook_runner_cfp2965)
+sys.modules["hook_runner_cfp2965"] = hook_runner_cfp2965
 
-requires_bash = pytest.mark.skipif(BASH is None, reason="bash interpreter 부재")
-requires_windows = pytest.mark.skipif(
-    os.name != "nt",
-    reason="run-hook.cmd(cmd.exe) 런처 경유가 본질인 축 — Windows 전용",
-)
-
-
-def run_hook_bash(
-    hook_name: str,
-    stdin_bytes: bytes | None = None,
-    env: dict | None = None,
-    timeout: int = 30,
-) -> tuple[int, str, str]:
-    """`hooks/<hook_name>` 을 bash 로 직접 실행 → (rc, stdout, stderr).
-
-    타임아웃·기동 실패는 rc=-1 + 사유 문자열로 환원한다 (호출부가 rc 로 단정하도록).
-    """
-    try:
-        proc = subprocess.run(
-            [BASH, str(HOOKS_DIR / hook_name)],
-            input=stdin_bytes,
-            capture_output=True,
-            env=env,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired:
-        return -1, "", "TIMEOUT"
-    except Exception as exc:  # 기동 실패 (bash 부재 등)
-        return -1, "", f"{type(exc).__name__}: {exc}"
-    return (
-        proc.returncode,
-        proc.stdout.decode("utf-8", errors="replace"),
-        proc.stderr.decode("utf-8", errors="replace"),
-    )
+# 하위호환 재노출 (conftest 를 직접 참조하는 외부 소비자 대비 — hooks/tests 내부
+# 테스트는 전부 hook_runner_cfp2965 를 직접 import 한다).
+BASH = hook_runner_cfp2965.BASH
+RUN_HOOK_CMD = hook_runner_cfp2965.RUN_HOOK_CMD
+HOOKS_DIR_FOR_RUNNER = hook_runner_cfp2965.HOOKS_DIR_FOR_RUNNER
+requires_bash = hook_runner_cfp2965.requires_bash
+requires_windows = hook_runner_cfp2965.requires_windows
+run_hook_bash = hook_runner_cfp2965.run_hook_bash

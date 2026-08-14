@@ -28,14 +28,13 @@ import pytest
 from pathlib import Path
 
 
-def _load_hooks_json() -> dict:
-    """hooks.json 로드 (실패는 FAIL)."""
-    hooks_path = Path(__file__).parent.parent / "hooks.json"
-    assert hooks_path.exists(), f"hooks.json not found at {hooks_path}"
-    with open(hooks_path) as f:
-        data = json.load(f)
-    assert isinstance(data, dict) and "hooks" in data, "Invalid hooks.json structure"
-    return data
+from hook_runner_cfp2965 import load_hooks_json
+
+# 정본 로더는 hook_runner_cfp2965.load_hooks_json (부재·구조 이상 = FAIL 계약 승계).
+#   구 코드는 이 함수를 여기 사본으로 두고 test_hook_timeout_invariant_t3 가 **테스트
+#   모듈 경유**로 끌어 썼다 — 수집 구성에 따라 이름 해석이 흔들리는 표면이라(CR-201)
+#   인프라 심볼 출처로 부적합. 고유명 모듈로 이설하고 여기서는 별칭만 유지한다.
+_load_hooks_json = load_hooks_json
 
 
 def test_every_hook_handler_has_explicit_timeout():

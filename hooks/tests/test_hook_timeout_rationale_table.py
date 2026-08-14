@@ -299,8 +299,13 @@ def test_ac16_fail_open_gate_set_matches_bypass_gates():
 
     FAIL_OPEN_GATES 를 임의로 줄이면(예: branch-gate 제외) 위 per-gate 테스트가
     조용히 축소된다. 독립 SSOT(bypass env 축)와 대조해 그 축소를 검출한다.
+
+    출처: 구 코드는 `from test_bypass_env_disjoint import BYPASS_ENVS` 로 **테스트
+    모듈**을 import 했다 — 테스트 모듈명은 수집 구성에 따라 해석이 흔들리는 표면이라
+    (CR-201: overlay conftest 선점 사례) 인프라 심볼 출처로 부적합하다.
+    고유명 모듈 `hook_runner_cfp2965` 를 공통 출처로 삼는다.
     """
-    from test_bypass_env_disjoint import BYPASS_ENVS
+    from hook_runner_cfp2965 import BYPASS_ENVS
 
     assert set(FAIL_OPEN_GATES) == set(BYPASS_ENVS.keys()), (
         f"게이트 4종 정의역 불일치: rationale={sorted(FAIL_OPEN_GATES)} "

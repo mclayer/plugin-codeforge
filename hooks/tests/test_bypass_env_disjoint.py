@@ -47,7 +47,7 @@ import sys
 import pytest
 from pathlib import Path
 
-from conftest import requires_bash, run_hook_bash
+from hook_runner_cfp2965 import BYPASS_ENVS, parametrize_argvalues, requires_bash, run_hook_bash
 
 # 훅 실행은 bash 직접 호출로 통일 (구 `cmd.exe /c run-hook.cmd` 하드코딩은 Linux CI 에서
 # FileNotFoundError → 전건 FAIL). bypass disjoint 판정 축은 OS 무관 — conftest SSOT.
@@ -82,13 +82,10 @@ DENY_PAYLOADS = {
     },
 }
 
-# Bypass env names (1:1 map to gates)
-BYPASS_ENVS = {
-    "cross-repo-gh-safety": "BYPASS_CROSS_REPO_GH_SAFETY",
-    "repo-confinement": "BYPASS_REPO_CONFINEMENT",
-    "git-branch-delete-merge-gate": "BYPASS_BRANCH_DELETE_MERGE_GATE",
-    "worktree-location-guard": "BYPASS_WORKTREE_LOCATION_GUARD",
-}
+# Bypass env names (1:1 map to gates) — 정의는 hook_runner_cfp2965 (공용 정의역).
+#   timeout rationale 표의 AC-16 #1 정의역과 **같은 게이트 4종**을 가리켜야 하므로
+#   두 테스트가 서로를 import 하지 않고 고유명 모듈을 공통 출처로 삼는다
+#   (테스트-간 import 는 수집 구성에 따라 이름 해석이 흔들리는 표면 — CR-201).
 
 # Hook names (from hooks.json)
 HOOK_NAMES = {
@@ -374,22 +371,12 @@ def test_precondition_deny_without_bypass_env(tmp_path):
             )
 
 
-def _parametrize_argvalues(func, argnames: str) -> list:
-    """테스트 함수에 **실제로 붙은** @pytest.mark.parametrize 의 argvalues 를 꺼낸다.
-
-    구 커버리지 assert 는 기대값을 BYPASS_ENVS 에서 재유도한 뒤 BYPASS_ENVS 와
-    비교했다 — 자기 자신을 비교하는 항진명제라, parametrize 목록에서 게이트를
-    빼도(과거 branch-gate 제외 회귀 그대로) 늘 통과한다. 실 파라미터 소스를
-    데코레이터에서 직접 읽어야 축소가 검출된다.
-    """
-    marks = [m for m in getattr(func, "pytestmark", []) if m.name == "parametrize"]
-    for m in marks:
-        if m.args and m.args[0] == argnames:
-            return list(m.args[1])
-    raise AssertionError(
-        f"{func.__name__} 에 parametrize({argnames!r}) 가 없다 — "
-        f"현재 마크 argnames: {[m.args[0] for m in marks if m.args]}"
-    )
+#   parametrize introspect 헬퍼는 hook_runner_cfp2965.parametrize_argvalues (공용).
+#   구 커버리지 assert 는 기대값을 BYPASS_ENVS 에서 재유도한 뒤 BYPASS_ENVS 와
+#   비교했다 — 자기 자신을 비교하는 항진명제라, parametrize 목록에서 게이트를
+#   빼도(과거 branch-gate 제외 회귀 그대로) 늘 통과한다. 실 파라미터 소스를
+#   데코레이터에서 직접 읽어야 축소가 검출된다.
+_parametrize_argvalues = parametrize_argvalues
 
 
 def test_16cell_matrix_coverage_complete():

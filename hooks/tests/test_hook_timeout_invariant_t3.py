@@ -31,7 +31,10 @@ import pytest
 from pathlib import Path
 
 import check_stale_local_main_checkout as cslmc
-from test_hook_timeout_contract import _load_hooks_json
+
+# 정본 로더 = 고유 basename 인프라 모듈 (구 `from test_hook_timeout_contract import
+# _load_hooks_json` 테스트-간 import 대체 — CR-201 이름 해석 흔들림 표면 제거).
+from hook_runner_cfp2965 import load_hooks_json as _load_hooks_json
 
 BRANCH_GATE_HOOK = "git-branch-delete-merge-gate"
 STALE_FETCH_ENV = "CODEFORGE_STALE_FETCH_TIMEOUT_SEC"

@@ -45,7 +45,16 @@ import pytest
 
 # 정본 census (동일 디렉터리 sibling — pytest prepend import mode 로 hooks/tests 가 sys.path 에 든다).
 # T-1b 교차 대조용: 리포트 §4 의 "정정 규칙 after" 가 계수기 정본과 같은 수인지 본다.
-from test_hook_spawn_census import CANONICAL_TOTAL
+#
+# ★ 출처 보증 (CFP-2965 G1 / P2ⓐ): CANONICAL_TOTAL 은 census **결과 상수**라 census
+#   테스트가 정당한 소유자다 (인프라 모듈로 이설 대상 아님). 다만 테스트 모듈명은
+#   수집 구성에 따라 해석이 흔들리는 표면이므로(CR-201: overlay conftest 선점 실측)
+#   실제 로드 출처가 hooks/tests 하위인지 fail-closed 로 확인한 뒤 쓴다.
+import test_hook_spawn_census as _census
+from hook_runner_cfp2965 import assert_module_origin as _assert_module_origin
+
+_assert_module_origin(_census)
+CANONICAL_TOTAL = _census.CANONICAL_TOTAL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 REPORT_MD = REPO_ROOT / "tests" / "perf" / "reports" / "cfp2965-comparison.md"

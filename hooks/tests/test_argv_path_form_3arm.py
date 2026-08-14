@@ -33,7 +33,7 @@ import subprocess
 
 import pytest
 
-from conftest import BASH, HOOKS_DIR, requires_bash
+from hook_runner_cfp2965 import BASH, HOOKS_DIR, requires_bash
 
 pytestmark = requires_bash
 

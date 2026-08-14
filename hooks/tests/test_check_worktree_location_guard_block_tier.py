@@ -33,7 +33,7 @@ import json
 import os
 import subprocess
 
-from conftest import RUN_HOOK_CMD, requires_bash, requires_windows, run_hook_bash
+from hook_runner_cfp2965 import RUN_HOOK_CMD, requires_bash, requires_windows, run_hook_bash
 
 # 훅 실행은 bash 직접 호출로 통일 (구 `cmd.exe /c run-hook.cmd` 하드코딩은 Linux CI 에서
 # FileNotFoundError → 전건 FAIL). tier 판정 축은 OS 무관 — conftest.run_hook_bash SSOT.

@@ -32,10 +32,15 @@ from __future__ import annotations
 import json
 import pytest
 
-from conftest import requires_bash, run_hook_bash
+from hook_runner_cfp2965 import (
+    HOOKS_DIR,
+    parametrize_argvalues,
+    requires_bash,
+    run_hook_bash,
+)
 
 # 훅 실행은 bash 직접 호출로 통일 (구 `cmd.exe /c run-hook.cmd` 하드코딩은 Linux CI 에서
-# FileNotFoundError → 전건 FAIL). fail-open 판정 축은 OS 무관 — conftest.run_hook_bash SSOT.
+# FileNotFoundError → 전건 FAIL). fail-open 판정 축은 OS 무관 — hook_runner_cfp2965 SSOT.
 pytestmark = requires_bash
 
 
@@ -118,10 +123,44 @@ def test_hook_failopen_non_bash_tool(hook_name: str):
     )
 
 
-def test_hook_failopen_matrix_summary():
-    """fail-open matrix 요약 (AC-N5 documentation)."""
-    print(f"\nFail-open matrix:")
-    print(f"  Hooks: {len(HOOKS)}")
-    print(f"  Judgement deny: {len(JUDGEMENT_DENY_HOOKS)}")
-    print(f"  Fail-open only: {len(HOOKS) - len(JUDGEMENT_DENY_HOOKS)}")
-    print(f"  Invariant: exit 2 = judgement deny only, else exit 0")
+def test_hook_failopen_matrix_completeness():
+    """fail-open matrix 정의역 completeness — 구 print-only 요약의 구조 assert 승격.
+
+    구 `test_hook_failopen_matrix_summary` 는 print 5줄뿐이라 정의역이 어떻게 줄어들든
+    통과했다 (판별력 0 — 게이트가 아니라 주석). 정의역이 **조용히 축소**되는 것을 막는
+    구조 assert 로 승격한다. 판정 소스 = parametrize 데코레이터 **실물**
+    (test_bypass_env_disjoint 의 16-cell coverage assert 동형).
+    """
+    # (1) 훅 정의역 = 7 (Change Plan §8.2), 중복 0
+    assert len(HOOKS) == 7, f"7훅 기대, 실제 {len(HOOKS)}"
+    assert len(set(HOOKS)) == len(HOOKS), f"HOOKS 에 중복 존재: {HOOKS}"
+
+    # (2) 판정 deny 훅 4종 ⊆ HOOKS (matrix 밖 훅을 deny 로 분류하지 않음)
+    assert JUDGEMENT_DENY_HOOKS <= set(HOOKS), (
+        f"HOOKS 에 없는 deny 훅: {sorted(JUDGEMENT_DENY_HOOKS - set(HOOKS))}"
+    )
+    assert len(JUDGEMENT_DENY_HOOKS) == 4, (
+        f"판정 deny 4종 기대, 실제 {len(JUDGEMENT_DENY_HOOKS)}"
+    )
+
+    # (3) 훅 목록이 실물 파일과 결속 (오타·삭제된 훅이 조용히 남지 않게)
+    for hook_name in HOOKS:
+        assert (HOOKS_DIR / hook_name).exists(), (
+            f"HOOKS 에 있으나 실물 부재: hooks/{hook_name}"
+        )
+
+    # (4) 장애 주입 3축 **전부**가 HOOKS 전건을 parametrize 하는가 (실 데코레이터 판독)
+    injection_axes = (
+        test_hook_failopen_broken_json,
+        test_hook_failopen_empty_payload,
+        test_hook_failopen_non_bash_tool,
+    )
+    for fn in injection_axes:
+        argvalues = parametrize_argvalues(fn, "hook_name")
+        assert list(argvalues) == HOOKS, (
+            f"{fn.__name__} 의 정의역이 HOOKS 와 불일치 — cell 축소.\n"
+            f"  parametrize: {list(argvalues)}\n  HOOKS: {HOOKS}"
+        )
+
+    # (5) 총 cell = 7훅 × 장애 3축 = 21
+    assert len(injection_axes) * len(HOOKS) == 21, "fail-open matrix cell 수 변동"
