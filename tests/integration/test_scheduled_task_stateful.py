@@ -2,12 +2,23 @@
 # SPDX-License-Identifier: MIT
 # tests/integration/test_scheduled_task_stateful.py — §8.5 Stateful + §8.3 Perf Baseline
 #
-# §8.5.1 long-running invariant: 200-iteration sustained loop (duration/RSS 무증가)
+# §8.5.1 long-running invariant: 200-iteration sustained loop (자원 축 gc/tracemalloc 무증가)
+#   ★ RSS 는 계측하지 않는다 — 이 파일의 계측 import 는 `gc` · `tracemalloc` 뿐이다.
+#     (이전 판본이 `duration/RSS 무증가` 라 적었으나 RSS 측정 코드는 존재한 적이 없다.)
 # §8.5.2 restart recovery: tick K회 건너뛰고 K개 추가 → 1회 호출 → K 전부 보고
 # §8.5.3 idempotency replay: 같은 잔재 2-3회 → 보고 1개
 #
 # §8.3 Perf Baseline: wall-clock 축 = **비차단 기록**(판정 없음 — 부하 민감 + 구조적 항진)
-#   → 실측 p50/p95/max/min 기록만 남기고, 실 teeth 는 §8.5.1 자원 축(gc/tracemalloc)
+#   → 실측 p50/p95/max/min 기록만 남긴다.
+#
+# ★ 자원 축은 시간 축의 대체재가 **아니다** — 두 축은 disjoint (구현리뷰 iter2 F-3.
+#   *"실 teeth = §8.5.1 자원 축이 무접촉으로 전담"* 은 **거짓이며 철회됐다**).
+#     실증 ①(ArchitectPL): 할당 0 인 CPU-burn 주입 → 소요 1504배인데 `gc_net` 0 ·
+#       `tracemalloc_net` 불변.
+#     실증 ②(DeveloperPL): 50ms 지연 주입 → p50 2.4배인데 자원 축 3 passed 전건 생존.
+#   ⇒ 시간 축의 정확한 상태 = (i) 정지·사망 class 는 운영 watchdog 이 **사후 탐지만**
+#     하고 (ii) 완주하되 주기 절반(43200s) 초과 class 는 **테스트·운영 양쪽 미판정**이며
+#     (iii) 비례 회귀는 **계약 대상이 아니다**. (Change Plan §8.3 class 표 / §9.5 행 14)
 
 import time
 import os
@@ -144,10 +155,15 @@ class TestLongRunningInvariant:
             강등" 한다고 **선언**했는데 코드는 bare assert(=blocking)로 남아 선언↔코드가
             불일치였다. 여기서 선언 쪽으로 통일한다 — 측정값은 반드시 기록하되 판정하지
             않는다(측정 삭제 아님).
-          - **자원 축(gc / tracemalloc) = blocking teeth**. 약화 없음(기존 비율 단언 유지)
+          - **자원 축(gc / tracemalloc) = blocking**. 약화 없음(기존 비율 단언 유지)
             + **누적 성장 상한**을 추가한다. 비율 단언은 per-iteration Δ 비교라 *일정
             속도* 누수(매 호출 동일량 누적)에 ratio≈1.0 이 되어 눈이 먼다 — 누적 축이
             그 사각을 덮는다.
+          - ★ **두 축은 disjoint** (구현리뷰 iter2 F-3 — 거짓 주장 철회). 자원 축은
+            wall-clock 축이 놓는 판정을 **대신 받지 않는다**: 할당 0 CPU-burn 에 소요
+            1504배인데 `gc_net` 0 · `tracemalloc_net` 불변이었고, 50ms 지연 주입에
+            p50 2.4배인데 자원 축 단언은 전건 생존했다. 여기서 강등된 시간 축의 판정은
+            **아무도 승계하지 않는다** — 파일 헤더의 (i)/(ii)/(iii) class 를 보라.
 
         ★ 실측 기준:
           - 비율 축 (Orchestrator 3-trial): gc Δ ratio=0.92, tracemalloc Δ ratio=0.86
@@ -227,8 +243,9 @@ class TestLongRunningInvariant:
             wall_ratio = (p95_second / p95_first) if p95_first > 0 else float("nan")
 
             # ★ 이 축은 호스트 부하에 종속이라 blocking 단언의 근거가 없다(전체 스위트
-            #   동시 실행에서 ratio 3.05 재현 FAIL). 측정은 유지하고 판정만 뗀다 —
-            #   blocking teeth 는 아래 자원 축이 전담한다.
+            #   동시 실행에서 ratio 3.05 재현 FAIL). 측정은 유지하고 판정만 뗀다.
+            #   ★ 아래 자원 축이 이 판정을 **전담·승계하지 않는다**(축 disjoint —
+            #     iter2 F-3). 시간 축 미판정 잔여는 파일 헤더 (ii) class 에 선언돼 있다.
             print(f"\n[wall-clock advisory · 비차단] p95_first={p95_first:.4f}s "
                   f"p95_second={p95_second:.4f}s ratio={wall_ratio:.3f} "
                   f"(참고 기준 1.5 — 초과해도 FAIL 아님, 부하 민감 축)")
@@ -237,7 +254,7 @@ class TestLongRunningInvariant:
                       f"호스트 부하 신호. 판정 축 아님.")
 
             # ─────────────────────────────────────────────────────────────
-            # Assert 2: gc 객체 수 단조성 (실 teeth 1/2)
+            # Assert 2: gc 객체 수 단조성 (자원 축 blocking 1/2 — 시간 축 대리 아님)
             # ─────────────────────────────────────────────────────────────
             # 전반부(0-99)와 후반부(100-199) gc 증가분 비교
             first_half_gc_delta = sum(gc_deltas[:100]) / 100  # 평균
@@ -251,7 +268,7 @@ class TestLongRunningInvariant:
             )
 
             # ─────────────────────────────────────────────────────────────
-            # Assert 3: tracemalloc 메모리 단조성 (실 teeth 2/2)
+            # Assert 3: tracemalloc 메모리 단조성 (자원 축 blocking 2/2 — 시간 축 대리 아님)
             # ─────────────────────────────────────────────────────────────
             first_half_tracemalloc_delta = sum(tracemalloc_deltas[:100]) / 100  # 평균, KB
             second_half_tracemalloc_delta = sum(tracemalloc_deltas[100:]) / 100  # 평균, KB
@@ -263,7 +280,7 @@ class TestLongRunningInvariant:
             )
 
             # ─────────────────────────────────────────────────────────────
-            # Assert 4·5: 자원 **누적 성장 상한** (실 teeth — 일정 속도 누수 사각 봉합)
+            # Assert 4·5: 자원 **누적 성장 상한** (자원 축 blocking — 일정 속도 누수 사각 봉합)
             # ─────────────────────────────────────────────────────────────
             # ★ 위 비율 단언(Assert 2/3)은 per-iteration Δ 비교라 매 호출 동일량을
             #   누적하는 누수에서 ratio≈1.0 이 되어 눈이 먼다. 워밍업(20) 이후의
@@ -505,8 +522,17 @@ class TestPerfBaseline:
         없다. 측정은 유지하고 **판정만 뗀다** — §8.3 계약이 요구하는 기록
         (p50 / p95 / max / min / samples + 한계값 + note)은 그대로 남긴다.
         강등은 판정 제거이지 측정 제거가 아니다.
-      - **실 teeth = §8.5.1 자원 축**(gc / tracemalloc 비율 2종 + 누적 상한 2종,
-        `TestLongRunningInvariant`). 본 클래스는 판정자가 아니라 **기록자**다.
+      - 본 클래스는 판정자가 아니라 **기록자**다.
+      - ★ 직전 판본이 이 자리에 적었던 *"실 teeth = §8.5.1 자원 축이 무접촉으로
+        전담한다"* 는 **거짓이며 철회한다**(구현리뷰 iter2 F-3). 자원 축(gc /
+        tracemalloc)은 **할당량**을 재지 **지연**을 재지 않는다 — 할당 0 CPU-burn 에
+        소요 1504배인데 `gc_net` 0 · `tracemalloc_net` 불변이었고(ArchitectPL 실증),
+        50ms 지연 주입에 p50 2.4배인데 자원 축 3 passed 전건 생존이었다(DeveloperPL
+        재현). 두 축은 disjoint 이며, 여기서 강등된 wall-clock 판정을 **승계하는 축은
+        없다**. 정확한 서술 = (i) 정지·사망은 운영 watchdog 사후 탐지만 · (ii) 완주하되
+        주기 절반 초과는 테스트·운영 양쪽 **미판정** · (iii) 비례 회귀는 계약 대상 아님.
+        따라서 이 클래스의 GREEN 을 "wall-clock 축이 검증됐다" 로도, "자원 축이 대신
+        검증했다" 로도 읽어서는 안 된다(Change Plan §9.5 행 14 = 판정자 부재 선언).
 
     ★ 강등 근거 (실측 — 선언↔코드 불일치 해소):
       ① `test_perf_baseline_sustained_p50_stability` 의 `ratio < 2.0`
@@ -528,7 +554,8 @@ class TestPerfBaseline:
         ★ 강등: 이전 판본의 `assert p95 < 43200` 은 구조적 항진(실측 p95 ≪ 1s vs
           한계 43200s = 반주기)이라 falsify 가능한 반례가 사실상 없었다. 판정을
           떼고 기록만 남긴다 — 이 테스트의 산출물은 verdict 가 아니라 baseline
-          수치다. blocking teeth 는 §8.5.1 자원 축이 전담한다.
+          수치다. ★ 그 판정을 §8.5.1 자원 축이 **전담·승계하지 않는다**(축 disjoint —
+          iter2 F-3). 이 class 의 미판정 잔여는 클래스 docstring 에 선언돼 있다.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -578,7 +605,8 @@ class TestPerfBaseline:
                 "baseline_threshold_seconds": 43200,
                 "verdict_role": "none — 비차단 기록 (구조적 항진 단언 강등)",
                 "note": ("wall-clock 한계(반주기 43200s) 대비 실측 p95 ≪ 1s 라 판별력 0. "
-                         "실 teeth = §8.5.1 자원 축(gc/tracemalloc)."),
+                         "이 판정을 승계하는 축은 없다 — 자원 축(gc/tracemalloc)은 할당량 축이라 "
+                         "시간 축과 disjoint. 미판정 잔여 = 완주하되 반주기 초과 class."),
             }
 
             # 로그 출력 (실제 보고에 포함)
@@ -592,9 +620,11 @@ class TestPerfBaseline:
           FAIL/PASS/PASS(Orchestrator 표집) · FAIL/FAIL/PASS(다른 작업자 표집),
           **관측 ratio 최대 3.02**(임계 2.0). 즉 이 단언은 SUT 의 회귀가 아니라
           **호스트 부하**를 판정하고 있었다.
-        ★ wall-clock 축은 부하 민감이라 **판별력 보조**이며, 실 teeth 는 §8.5.1
-          자원 축(gc / tracemalloc 비율 2종 + 누적 상한 2종)이다. 측정은 유지하고
-          판정만 뗀다 — 강등은 판정 제거이지 측정 제거가 아니다.
+        ★ wall-clock 축은 부하 민감이라 **판별력 보조**다. 측정은 유지하고 판정만
+          뗀다 — 강등은 판정 제거이지 측정 제거가 아니다.
+        ★ 그 판정을 §8.5.1 자원 축(gc / tracemalloc)이 **대신 받지 않는다**(축 disjoint
+          — iter2 F-3, 50ms 지연 주입에 p50 2.4배인데 자원 축 전건 생존). 강등으로 생긴
+          미판정은 잔여로 남으며(클래스 docstring (ii) class), 승계자는 없다.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -659,8 +689,9 @@ class TestPerfBaseline:
                 "reference_ratio_threshold": REFERENCE_RATIO,
                 "verdict_role": "none — 비차단 기록 (부하 민감 간헐 FAIL 로 강등)",
                 "note": ("관측 ratio 최대 3.02, 단독 재실행에서도 FAIL/PASS 혼재 "
-                         "(FAIL/PASS/PASS · FAIL/FAIL/PASS). wall-clock = 판별력 보조, "
-                         "실 teeth = §8.5.1 자원 축(gc/tracemalloc)."),
+                         "(FAIL/PASS/PASS · FAIL/FAIL/PASS). wall-clock = 판별력 보조. "
+                         "자원 축(gc/tracemalloc)은 할당량 축이라 이 판정을 승계하지 않는다 "
+                         "(축 disjoint) — 미판정 잔여."),
             }
             print(f"\n[Perf Baseline · sustained · 비차단 기록] {json.dumps(perf_record, indent=2)}")
 
