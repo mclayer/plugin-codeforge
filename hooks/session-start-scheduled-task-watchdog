@@ -7,9 +7,18 @@
 # 동작:
 #   - 스케줄 작업(별도 CLI)이 매일 1회 기동해 heartbeat 파일을 남긴다.
 #   - 본 hook 은 claudecode 세션 시작 시 그 heartbeat 를 판독해 경과를 측정한다.
-#   - heartbeat 파일이 부재하거나, 내용이 파싱불능하거나, age > threshold 이면 사실 1줄만 stderr 발화.
+#   - 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정):
+#       heartbeat 파일 부재 = 스케줄 작업 **미채택** = 정상 상태 → 무발화.
+#       내용 파싱불능(invalid) 또는 age > threshold(stale) → 사실 1줄만 stderr 발화.
+#     본 hook 은 전 consumer 세션에 등록되므로, 부재를 사망으로 읽으면 미채택 환경
+#     전체가 매 세션 1줄을 받는다 — 그것은 관측 대상의 **부재**를 관측의 **실패**로
+#     오분류하는 것이다. "채택했는데 죽었다" 는 stale/invalid 분기가 이미 담당한다.
 #   - 그 외(heartbeat 신선) 무발화.
 #   - 어떤 경우든 조용히 종료(부수효과 0, 판독만).
+#
+# 구조적 무음 (선언 — 은폐 금지):
+#   "채택했으나 1회도 실행되지 않음" class 는 heartbeat 부재만으로 판별 불가 —
+#   **채택 표식**이 유일 근거이며 표식 부재 시 구조적 무음이다.
 #
 # Bypass:
 #   BYPASS_SCHEDULED_TASK_WATCHDOG=1 → 즉시 audit 1줄 + 종료
@@ -66,8 +75,10 @@ fi
 should_report=false
 
 if [[ "$last_epoch" == "absent" ]]; then
-  # 파일 부재 → 보고
-  should_report=true
+  # 파일 부재 = **미채택** → 무발화 (발화 정의역 = 채택자 한정, F-CR5-06).
+  # ★ "채택했으나 1회도 실행되지 않음" class 는 heartbeat 부재만으로 판별 불가 —
+  #   채택 표식이 유일 근거이며 표식 부재 시 구조적 무음이다.
+  should_report=false
 elif [[ "$last_epoch" == "invalid" ]]; then
   # 파싱불능 → 보고
   should_report=true
