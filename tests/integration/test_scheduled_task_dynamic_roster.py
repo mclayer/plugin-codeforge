@@ -15,6 +15,7 @@
 import time
 import os
 import json
+import re
 import tempfile
 import pytest
 import subprocess
@@ -34,6 +35,51 @@ try:
     HYPOTHESIS_AVAILABLE = True
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
+
+
+# ══════════ oracle ① 술어: 미정규화 절대경로 검출 (§8.8.1 / AC-13) ══════════════
+#   SUT 가 **선언한** 정규화 3축과 정확히 같은 축만 잰다. SUT 가 보장하지 않는 축까지
+#   재면 정상 코드에서 false RED 가 나므로(오라클이 계약을 넘어서면 안 된다) 축을 맞춘다:
+#     ① 드라이브 문자 `X:\` / `X:/`      (SUT `_RESIDUAL_DRIVE_RE`)
+#     ② `/Users/` · `/home/` 루트 세그먼트 (SUT `_RESIDUAL_USERROOT_RE`)
+#     ③ 현 사용자명 경로 세그먼트          (SUT `_current_user_residual_re`)
+#   ★ 드라이브 검사는 SUT `_DRIVE_RE` 와 동일한 negative lookbehind 를 쓴다 —
+#     사실 줄 조립 seam(`key=test:` + 경로)의 `t:` 를 드라이브로 오탐하지 않기 위해서다.
+_UNNORM_DRIVE_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:[\\/]")
+_UNNORM_USERROOT_RE = re.compile(r"(?i)[\\/](?:Users|home)[\\/]")
+_CURRENT_USER = os.path.basename(os.path.expanduser("~"))
+_UNNORM_USERNAME_RE = (
+    re.compile(r"(?i)(?:^|[\\/])%s(?:$|[\\/])" % re.escape(_CURRENT_USER))
+    if _CURRENT_USER else None
+)
+
+# 오탐 금지 대상 — 정규화가 **성공한** 결과물 토큰. 위반으로 잡히면 오라클이 자해다.
+NON_VIOLATING_TOKENS = (
+    "~/.claude/worktrees/foo",
+    "<workspace>/plugin-codeforge",
+    "<user-home>/.claude",
+    "<drive>\\data\\archive",
+    "/<user>/temp/cache",
+    "<미정규화-경로-제거>",
+    "- 선언=test · 실측=test · 불일치=N · key=test:<drive>\\data\\archive",
+    "- 선언=test · 실측=test · 불일치=N · key=test:\\\\server\\share\\resource",
+)
+
+
+def unnormalized_path_hits(text):
+    """산출 문자열의 미정규화 절대경로 위반을 열거 (위반 0 = 빈 리스트)."""
+    hits = []
+    m = _UNNORM_DRIVE_RE.search(text)
+    if m:
+        hits.append(("drive", m.group(0)))
+    m = _UNNORM_USERROOT_RE.search(text)
+    if m:
+        hits.append(("user-root", m.group(0)))
+    if _UNNORM_USERNAME_RE is not None:
+        m = _UNNORM_USERNAME_RE.search(text)
+        if m:
+            hits.append(("current-user", m.group(0)))
+    return hits
 
 
 # ═══════════════════════════════ Multiprocessing Worker Module-level §8.8.4 ════
@@ -142,10 +188,27 @@ class TestFuzzPathNormalization:
           - swapcase: 대소문자 전환
           - reverse: 역순
 
-        ★ 정직 천장: 정규화는 base.sanitize (경로 재상대화) 에 위임.
+        ★ 오라클 봉합 (이전 판본):
+          이전 판본은 `render_fact_tuple`·`dedup_key` 를 호출만 하고 **산출을 폐기**한 뒤
+          `crash_count == 0` 과 wall-clock 만 단언했다 — 함수명·docstring 은 oracle ①
+          (미정규화 절대경로 0)을 주장하는데 실제로는 oracle ③(crash 0)과 동일했다.
+          여기서는 매 mutation case 의 **렌더 산출과 dedup 키 양쪽**에 대해 미정규화
+          절대경로 부재를 단언한다.
+
+        ★ 정직 천장: 검사 축은 SUT 가 **선언한** 3축(드라이브 / Users·home 루트 /
+          현 사용자명)뿐이다. 타 사용자명 단독 세그먼트처럼 SUT 가 보장하지 않는 축은
+          재지 않는다 — 계약을 넘는 단언은 정상 코드에 대한 false RED 다.
+
+        mutant kill: `_normalize_paths` 를 항등함수(`return s`)로 ⇒ RED.
         """
         import random
         import hashlib
+
+        # 자기 건전성(negative control): 정규화 **성공** 토큰을 위반으로 잡지 않는다.
+        for tok in NON_VIOLATING_TOKENS:
+            assert unnormalized_path_hits(tok) == [], (
+                f"oracle ① 자해: 비위반 토큰을 위반으로 오탐 — {tok!r}"
+            )
 
         # Arrange: fixed seed 2949 + corpus SHA 기록
         rng = random.Random(2949)
@@ -182,6 +245,8 @@ class TestFuzzPathNormalization:
         start_time = time.time()
         FUZZ_CASES = 10000
         crash_count = 0
+        violations = []          # (case_idx, 표면, 위반 종류, 발췌, 산출)
+        checked = 0              # 실제로 oracle 술어를 통과시킨 산출 개수 (비공허성)
 
         for case_idx in range(FUZZ_CASES):
             base_path = corpus_paths[case_idx % len(corpus_paths)]
@@ -197,17 +262,39 @@ class TestFuzzPathNormalization:
                     mismatch=False,
                 )
                 result = sut.render_fact_tuple(obs)
-                # Oracle: dedup 도 호출 (crash 검증)
                 key = sut.dedup_key(obs)
             except Exception as e:
                 crash_count += 1
                 # ★ 비전파: 계속 진행
+                continue
+
+            # ★ Oracle ①: 렌더 산출·dedup 키 **양쪽**에 미정규화 절대경로 부재
+            for surface, text in (("render_fact_tuple", result), ("dedup_key", key)):
+                checked += 1
+                hits = unnormalized_path_hits(text)
+                if hits and len(violations) < 5:      # 표본 5건만 보관(로그 폭주 방지)
+                    violations.append((case_idx, surface, hits, text[:200]))
+                elif hits:
+                    violations.append((case_idx, surface, hits, "<생략>"))
 
         elapsed = time.time() - start_time
         print(f"\nFuzz oracle ①: SHA8={corpus_sha}, seed=2949, cases={FUZZ_CASES}, "
-              f"wall_clock={elapsed:.2f}s, crashes={crash_count}")
+              f"checked_outputs={checked}, wall_clock={elapsed:.2f}s, "
+              f"crashes={crash_count}, unnormalized_hits={len(violations)}")
 
-        # Oracle ①: crash 0 (안정성 검증, AC-13 경로 정규화는 단위테스트에 위임)
+        # 비공허성: 산출 검사가 실제로 수행됐는가 (crash 로 전량 skip 되면 공허)
+        assert checked == FUZZ_CASES * 2, (
+            f"oracle ①: 검사 산출 {checked}건, 기대 {FUZZ_CASES * 2}건 "
+            f"(crash {crash_count}건으로 검사 자체가 건너뛰어짐)"
+        )
+
+        # Oracle ①: 미정규화 절대경로 0
+        assert violations == [], (
+            f"oracle ①: 미정규화 절대경로 누출 {len(violations)}건 (10,000 case, 6-op). "
+            f"표본: {violations[:5]}"
+        )
+
+        # 부수 oracle: 예외 비전파 (oracle ③ 과 중복이나 crash 시 조기 진단 신호)
         assert crash_count == 0, (
             f"oracle ①: 예외 {crash_count}건 (10,000 case, 6-op mutation)"
         )
@@ -404,9 +491,22 @@ class TestPropertyReconcileCompleteness:
         #  상태 무의존 원칙 검증)
         report = sut.render_report(observations, "test", "001")
 
-        # Assert: render_report 의 "items=" 필드에 개수 기재
-        # items 는 filter_verdict_lines 후 남은 줄 개수
-        assert "items=" in report
+        # Assert ①: items 는 **정수값**이 축적 개수와 같아야 한다.
+        #   ★ 이전 판본은 `assert "items=" in report` 뿐이라 500 examples 전량이
+        #     항진명제로 통과했다(개수를 전혀 재지 않음). 값을 파싱해 구속한다.
+        m = re.search(r"items=(\d+)", report)
+        assert m is not None, f"items 필드 부재: {report!r}"
+        assert int(m.group(1)) == accumulated_count, (
+            f"P2 회수 완전성 위반: 축적 {accumulated_count}건, 보고 items={m.group(1)} "
+            f"(cursor·절단 구현이면 여기서 RED)"
+        )
+
+        # Assert ②: 각 관측의 식별자(dedup key)가 본문에 실제로 실렸는가
+        for obs in observations:
+            key = sut.dedup_key(obs)
+            assert f"key={key}" in report, (
+                f"P2 회수 완전성 위반: 관측 {key!r} 가 본문에 미등재"
+            )
 
 
 # ═══════════════════════════════ Concurrency Tests §8.8.4 ═══════════════
