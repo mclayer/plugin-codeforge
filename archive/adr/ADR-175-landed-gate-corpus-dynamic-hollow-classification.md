@@ -179,7 +179,7 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 
 | 축 | 확정 형식 | 실측 근거 |
 |---|---|---|
-| **fail-marker** | `::error::[<STAGE-ID>] <msg>` — **stderr** | landed lib py **35** / sh **21** |
+| **fail-marker** | `::error::[<STAGE-ID>] <msg>` — **stderr** | `::error::` 보유 — **명시 분모 기준**: lib py **27**/83 · top-level `scripts/check_*.py` **0**/6 · sh **20**/118 (합 **47**) `[firsthand]`. ★구 표기 *"landed lib py 35 / sh 21"* 은 **넓은 glob**(`scripts/lib/*.py` **147** · `scripts/*.sh` **176**) 기준이라 **다른 모집단**이었다 — 전수 교체 |
 | **terminal-marker** | `✓ <gate>: <입력 의존 문면>` — **stdout** | 종단 성공 emit **34/83** |
 | **매칭** | **고정문자열 포함(`grep -qF`) — 정규식 금지** | 판정기 자신의 ReDoS·오탐 채널 차단 |
 | **다단 분해** | `[<STAGE-ID>]` 대괄호 값 | 단계 id 로 I-8 판정 |
@@ -321,8 +321,28 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 - ★**arm-L 대조군의 정당성을 판정하는 상위 심급은 없다.** 표본이 잘못 저작되면 게이트는 그것을 알 수 없다. binding stamp 는 **drift 를 막을 뿐 최초 저작 오류를 막지 않는다.**
 - ★**day-1 warning-tier = 자기 RED 가 merge 를 막지 못한다**(*governance-tier dark* quasi-pattern). 완화 = 게이트가 **stdout 에 그 사실을 직접 emit** 하고, 승격 trigger 를 **증거 기한**(PR 누적 20 도달 — ADR-171 §결정 6/§결정 10)으로 확정해 무기한 defer 를 막는 것뿐이다. **문서 선언은 읽는 쪽이 없으면 0 이다.**
 - ★★**arm-invariant 판정기 계약은 역산 채널을 3개 닫지만 라벨 역산을 해결하지 않는다.** 잔여 3 을 명시한다 — ⓐ `build[]`·`classification[]` projection 배제는 **프로세스 경계 규약**이지 격리 보증이 아니다 ⓑ 표본 **개수·순서 통계**로부터의 추측은 차단되지 않는다 ⓒ **본 계약 단독으로 역산 판정기를 배제할 수 없다**. 완전 배제는 **blinded 섭동**(경로·파일명·arm 배정·stamp 좌표를 고정한 채 알려진 hollowing 변형을 주입해 `LIVE → HOLLOW` 뒤집힘을 전건 요구)을 요구하며 그 설계는 **별 축 소관**이다. 판정기 계약 `classify(sample_artifact, fixtures{kill,clean,empty}, gate_markers)` 는 **3항 전부 arm-invariant** 이므로 blinded 섭동과 **정면 양립**한다.
-- ★**opt-in 적격 게이트 모집단 크기가 미측정이다.** 적격 전제(§결정 7)를 충족하는 landed-gate 가 몇 개인지는 재지 않았다(실행 실측은 1 게이트 표본에 한정됐다). ⇒ **day-1 corpus 규모는 이 미측정 수에 상한된다** — 규모를 근거로 커버리지를 인용하지 말 것.
-- ★**본 수리가 남긴 미확정 1건 = TestContractArch 축**: **대조군 blinded 섭동 설계 · arm 별 분모 하한 분해**(exit 3 조건 `N_armH == 0 ∨ N_armL == 0` 의 최종 술어 포함) · **arm-L 표본 타당성 판정**. 판별자 스키마와 sidecar manifest 필드·versioning 은 **본 ADR 에서 확정**됐고(§결정 4 ⑥ / §결정 8), **corpus 배치 경로·형상**(확정 = `tests/fixtures/hollow-gate-corpus/`, 형상 = **표본별 opaque 서수 단일 tier** · arm 어휘·결함유형 접미 **양쪽 미채택** · arm tier 금지) 및 **운영 리스크 6-sub·§11.6 멱등**은 **배선면 Change Plan §8.QC-MECH 에서 확정**됐다(결정면 ⊥ 배선면 분리 유지 — §해소 기준). ★**회부 축의 종결은 위 천장 항목들의 해소가 아니다** — 커버리지 7/20 · day-1 wrapper 한정 · arm-L 상위심급 부재 · warning-tier dark · 역산 잔여 3 · 적격 모집단 미측정은 **전건 존치**한다.
+- ★★**day-1 적격 모집단은 「미확정」이다 — 1차 census 는 방법 결함으로 폐기됐고, 그 수치를 인용하는 것을 금지한다.**
+
+  1차 census 는 **정적 grep + 래퍼면 구동**으로 산출됐고 **두 방향으로 틀렸다**: ⓐ **(c) 미충족을 (b) 실패로 오분류**한다(잘못 구동하면 산출이 입력 무관해지고 그것이 *"(b) 없음"* 으로 보인다 — 실 결함은 (c)) ⓑ **f-string 변수 안 단계 id 를 놓친다**(형식문자열 grep 의 정의상 한계). ⇒ **동적 2-leg 재판정이 2 게이트를 적격으로 뒤집었다** `[ArchitectPL firsthand]`:
+
+  | 게이트 | 1차 census | 동적 재판정 | 뒤집힌 근거 |
+  |---|---|---|---|
+  | `check_living_architecture_update` | 부적격(*"(b) 성공 문면 상수"*) | ★**적격** | leg 간 `scanned-N: changed=0 structural_surface=0 derived_docs=0` ↔ `changed=2 structural_surface=1 derived_docs=1` — **종단 라인도 `::error::` 도 아닌 census 라인**이 입력 의존 |
+  | `check_doc_locations` | 부적격(*"(b) 성공 문면 상수"*) | ★**적격** | 주입 yaml 에서만 나오는 `OK [5/7] no absolute paths` · `OK [6/7] doc_type name uniqueness` ⇒ (b) ∧ (c) 동시 충족. 그 `[5/7]` 이 **정적 grep 미검출 (a) 의 실증**이기도 하다 |
+
+  ⇒ **적격은 「하한 4」이며 확정치가 아니다.** 정확한 census 는 **`(c)→(a)→(b)` 순 동적 3-conjunct 평가**(§결정 7 평가 규약 ⓐ~ⓒ)로만 산출된다. ★**본 천장에 적격/분모 비율을 기재하지 않는다** — 방법이 확정되기 전의 비율은 그 자체가 본 ADR 이 겨냥하는 class(*선언과 실상태의 조용한 괴리*)의 발현이다.
+
+- ★**모집단 분모 자체가 술어 의존이다(단일 확정치 인용 금지).** *"`check_*.py` 83 + `check-*.sh` 118"* 형 단순 합은 **틀렸다** — sh 다수가 lib py 코어로 위임하는 **thin wrapper** 라 구현 단위가 중복 계상된다. 중복제거 분모 = **lib py 83 + top-level `scripts/check_*.py` 6 + 독립 shell N** 이며, **N 은 thin-wrapper 판별 술어에 민감**하다 `[firsthand — 술어 4종 실측]`:
+
+  | thin-wrapper 판별 술어 | thin | 독립 sh | 분모 |
+  |---|---|---|---|
+  | 비주석 줄에 임의 `.py` 호출 | 86 | 32 | **121** |
+  | 비주석 줄에 `check_[a-z_]*\.py` 참조 | 72 | 46 | **135** |
+  | 5-piece chain 1:1 미러(`check-X.sh` ↔ `check_X.py`) | 68 | 50 | **139** |
+  | `exec python3` ∨ `python3 …scripts/lib/` | 62 | 56 | **145** |
+
+  ⇒ **분모 band = 121~145.** 술어를 명기하지 않은 분모는 **재현 불가**이며, 그런 분모 위에 세운 비율은 인용하지 않는다.
+- ★**본 수리가 남긴 미확정 1건 = TestContractArch 축**: **대조군 blinded 섭동 설계 · arm 별 분모 하한 분해**(exit 3 조건 `N_armH == 0 ∨ N_armL == 0` 의 최종 술어 포함) · **arm-L 표본 타당성 판정**. 판별자 스키마와 sidecar manifest 필드·versioning 은 **본 ADR 에서 확정**됐고(§결정 4 ⑥ / §결정 8), **corpus 배치 경로·형상**(확정 = `tests/fixtures/hollow-gate-corpus/`, 형상 = **표본별 opaque 서수 단일 tier** · arm 어휘·결함유형 접미 **양쪽 미채택** · arm tier 금지) 및 **운영 리스크 6-sub·§11.6 멱등**은 **배선면 Change Plan §8.QC-MECH 에서 확정**됐다(결정면 ⊥ 배선면 분리 유지 — §해소 기준). ★**회부 축의 종결은 위 천장 항목들의 해소가 아니다** — 커버리지 7/20 · day-1 wrapper 한정 · arm-L 상위심급 부재 · warning-tier dark · 역산 잔여 3 · 적격 모집단 미확정(1차 census 폐기)은 **전건 존치**한다.
   > ★**형상 제약 문면 정정(구 "게이트별 평면 서브디렉터리")**: 한 게이트에서 표본이 여럿 파생되므로(실측 — `check_confirmation_record_schema_resume.py` 하나에서 3) 게이트 keying 은 디렉터리 **안에서** 표본을 다시 명명하게 만들어 ⓐ 가 닫은 명명 채널을 재개방한다. ⇒ **표본별 단일 tier** 로 정정한다. *"평면(arm tier 금지)"* 제약은 **무손상**이다. 또한 표본 식별자에서 **결함유형 접미도 배제**한다 — T1~T5 유형명이 전부 hollow-측 어휘라 denylist 리터럴을 피해도 동일한 arm 추론 채널이 복원되기 때문이며, ⓐ 의 목적은 토큰 제거가 아니라 **arm 추론 차단**이다.
 - ★**어휘 금지**: 본 ADR 에 대해 *"universal / 완전 봉인 / class 봉쇄 / 근절"* 류 framing 금지 — ADR-154 §결정 4 + **INV-5 무손상**이며 위반 시 설계리뷰 P0. 본 ADR 이 주장하는 것은 **"기계 강제가 실재하는 부분집합(20 중 7)을 만들었다"** 와 **"day-1 커버리지는 wrapper 자기 게이트 한정"** 뿐이다.
 
