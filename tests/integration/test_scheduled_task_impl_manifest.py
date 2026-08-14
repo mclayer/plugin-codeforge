@@ -53,6 +53,7 @@ FROZEN_DECLARED = {
     "collect_selected": 98,
     "collect_deselected": 1,
     "suite_passed": 98,
+    "suite_skipped": 0,      # 2-슬롯 선언 → 미기재 슬롯은 0 (FIX6-b 하위호환)
     "suite_deselected": 1,
 }
 
@@ -96,6 +97,13 @@ def test_impl_manifest_parser_reads_frozen_snapshot(declared):
     assert rows.get(".claude-plugin/plugin.json") is None, (
         "행수 미기재 행은 None 으로 남아야 한다 (계약 밖 — 잘못된 0 계상 금지)"
     )
+
+    # 스위트 선언 정의역 (FIX6-b) — 절 안 canonical span 은 **2개**(현재 98 · 선행 84),
+    # 값 판정은 **첫** 선언만. 이력 서술 `83 passed, 1 failed` 는 `deselected` 슬롯이
+    # 없어 canonical 정의역 밖이며 미인식으로 올라오지 **않는다**(선언된 천장).
+    decls = declared.get("suite_declarations") or []
+    assert [d["passed"] for d in decls] == [98, 84], decls
+    assert declared.get("suite_unparsed") is None, declared.get("suite_unparsed")
 
     aliases = declared.get("collect_per_alias") or {}
     assert aliases == {
@@ -190,6 +198,130 @@ def test_impl_manifest_comparator_is_silent_when_declaration_is_current(declared
     }
     viol = man.compare_manifest(generated, declared)
     assert viol == [], "일치 자료인데 위반이 나왔다 (무차별 위반 비교기):\n" + "\n".join(viol)
+
+
+# ═══════════ ①-b skip 슬롯 층 — 미주입(= wrapper CI 기본) 형상을 읽는가 ══════════
+#
+#   계기(FIX6-b): 설계 lane 이 비교기를 실사용하다 사각 2건을 실측 발견했다.
+#     ① `_SUITE_RE` 에 `skipped` 슬롯이 없어 미주입 실행 결과
+#        (`112 passed, 1 skipped, 1 deselected`)를 **조용히 건너뛴다**
+#     ② 파생 불변식이 `passed == collect_selected` 로 **skip 0 을 가정**한다
+#   ⇒ §8.7 에 skip 을 포함한 **stale** 선언을 적어도 위반 0 이 나오는 형상이었다.
+#
+#   ★ 미주입 실행에 skip 이 생기는 이유는 결함이 아니다 —
+#     `test_impl_manifest_live_story_declaration_matches` 가 Story 경로 부재를
+#     **자기 정의역 밖으로 선언하며** skip 하는 것이다(실패 아님).
+
+_SUITE_SECTION_TMPL = man.SECTION_HEADING + """
+
+**테스트 수집** (`pytest --collect-only -q` 파일별 실측, 동결 HEAD `deadbee`): \
+1 파일 **%(total)d건** = stop_flag %(total)d. CI 인자 `-m "not requires_golden"` 적용 시 \
+**선택 %(sel)d / deselected %(desel)d**.
+
+스위트 실행: %(decl)s
+
+## 다음 절
+"""
+
+
+def _suite_case(declaration, collect_selected=113, collect_deselected=1):
+    """스위트 선언 줄 하나만 바꾼 §8.7 축소본 → (generated, declared) 쌍.
+
+    ★ 수집 축 수치는 generated 와 **일치시킨다** — 교란 제거. 어긋나게 두면 위반이
+      나와도 그 원인이 수집 축인지 스위트 축인지 갈리지 않아, 스위트 축이 죽어도
+      테스트가 통과할 수 있다.
+    """
+    total = collect_selected + collect_deselected
+    declared = man.parse_manifest_section(_SUITE_SECTION_TMPL % {
+        "decl": declaration, "sel": collect_selected,
+        "desel": collect_deselected, "total": total,
+    })
+    generated = {
+        "collect_total": total,
+        "collect_selected": collect_selected,
+        "collect_deselected": collect_deselected,
+    }
+    return generated, declared
+
+
+def test_impl_manifest_parser_reads_skipped_slot():
+    """`N passed, M skipped, K deselected` 를 **값으로** 읽는다 (구판은 못 읽었다)."""
+    _, declared = _suite_case("`112 passed, 1 skipped, 1 deselected`")
+    assert declared.get("suite_passed") == 112, declared
+    assert declared.get("suite_skipped") == 1, declared
+    assert declared.get("suite_deselected") == 1, declared
+    assert declared.get("suite_unparsed") is None, (
+        "canonical 선언인데 미인식으로 분류됐다: %r" % declared.get("suite_unparsed")
+    )
+
+
+def test_impl_manifest_parser_keeps_legacy_two_slot_declaration():
+    """**하위호환** — `skipped` 미기재 선언은 그대로 읽히고 skip 은 0 으로 간주된다."""
+    _, declared = _suite_case("`113 passed, 1 deselected`")
+    assert declared.get("suite_passed") == 113, declared
+    assert declared.get("suite_skipped") == 0, "미기재 슬롯은 0 이어야 한다"
+    assert declared.get("suite_deselected") == 1, declared
+
+
+def test_impl_manifest_comparator_accepts_skip_bearing_declaration():
+    """**대조군 + M-SKIP-INVARIANT kill** — 정직한 skip 선언은 위반 **0**.
+
+    `선택 113 = 112 passed + 1 skipped` (skip 은 deselected 와 달리 selected 에 포함).
+
+    mutant kill: 불변식을 `suite_passed == collect_selected` 로 되돌리면
+    `112 != 113` 이라 위반이 나온다 ⇒ RED.
+    """
+    generated, declared = _suite_case("`112 passed, 1 skipped, 1 deselected`")
+    viol = man.compare_manifest(generated, declared)
+    assert viol == [], (
+        "정직한 skip-포함 선언이 구조적 위반이 됐다 (skip 0 가정 잔존):\n"
+        + "\n".join(viol)
+    )
+
+
+def test_impl_manifest_comparator_flags_stale_skip_bearing_declaration():
+    """**M-SUITE-BLIND kill (판별 케이스)** — skip 을 포함한 **stale** 선언을 잡는다.
+
+    ★ 이 케이스가 사각 ①의 실물이다. `_SUITE_RE` 에 `skipped` 슬롯이 없으면 파서가
+      이 줄을 통째로 건너뛰어 `suite_passed` 키가 안 생기고, 키가 없으면 비교기가
+      비교를 건너뛰어 **위반 0 으로 조용히 통과**한다(= mutant 생존).
+    """
+    generated, declared = _suite_case("`112 passed, 1 skipped, 1 deselected`",
+                                      collect_selected=999)
+    viol = man.compare_manifest(generated, declared)
+    assert any(v.startswith("suite_passed:") for v in viol), (
+        "stale 한 skip-포함 선언이 조용히 통과했다:\n" + "\n".join(viol)
+    )
+    # 교란 없음 — 어긋난 축은 스위트 하나뿐이므로 위반도 하나뿐이어야 한다
+    assert len(viol) == 1, "스위트 축 외 위반이 섞였다 (통제 실패):\n" + "\n".join(viol)
+
+
+def test_impl_manifest_comparator_flags_unparsed_suite_line():
+    """**M-SUITE-UNPARSED kill** — 스위트 줄이 있는데 **못 읽으면** 그 자체가 위반.
+
+    ★ 구판은 **미인식**과 **부재**가 같은 경로였다(둘 다 키 부재 → 비교 skip →
+      무결 통과). 검사기가 "선언 없음" 과 "선언 불일치" 를 구분하지 못하는 형상이다.
+    """
+    for corrupted in ("`112 passed / 1 skipped / 1 deselected`",
+                      "`113 passed, 1 deselected, 2 xfailed`",
+                      "`113 passed,1deselected`"):
+        generated, declared = _suite_case(corrupted)
+        viol = man.compare_manifest(generated, declared)
+        assert any("미인식" in v for v in viol), (
+            "못 읽는 스위트 줄이 무결로 통과했다 (%s):\n%s" % (corrupted, "\n".join(viol))
+        )
+
+
+def test_impl_manifest_comparator_flags_absent_suite_line():
+    """**부재 경로 분리** — 스위트 줄을 통째로 지워도 조용히 통과하지 않는다."""
+    declared = man.parse_manifest_section(
+        _SUITE_SECTION_TMPL.replace("스위트 실행: %s", "(스위트 줄 없음)")
+    )
+    assert declared.get("suite_passed") is None
+    viol = man.compare_manifest({"collect_selected": 113}, declared)
+    assert any(v.startswith("suite_passed: 선언 부재") for v in viol), viol
+    # 부재와 미인식은 **다른 메시지**여야 한다 (같은 경로로 뭉개지 않는다)
+    assert not any("미인식" in v for v in viol), viol
 
 
 def test_impl_manifest_comparator_flags_missing_section():

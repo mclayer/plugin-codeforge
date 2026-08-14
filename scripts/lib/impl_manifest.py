@@ -19,9 +19,14 @@
 #   · 본 모듈은 "선언이 실측과 같은가" 까지만 판정한다. §8.7 의 **서술**(역할 설명·
 #     정직 천장 문단)이 옳은지는 판정하지 않는다 — 그 축은 리뷰 소관이다.
 #   · 스위트 **실행 결과**(passed 수)는 기본 경로에서 실행하지 않는다. 대신
-#     "Story 가 전건 통과를 선언하므로 declared passed == 수집 선택 수" 라는
-#     **파생 불변식**으로 잰다(§compare 규칙 7). 실 실행 대조가 필요하면
+#     "Story 가 전건 통과를 선언하므로 declared **passed + skipped** == 수집 선택 수"
+#     라는 **파생 불변식**으로 잰다(§compare ③-b). skip 은 deselected 와 달리
+#     selected 에 **포함**되므로 skip 0 을 가정하면 정직한 skip-포함 선언이 구조적
+#     위반이 된다 — 그 가정은 FIX6-b 에서 제거했다. 실 실행 대조가 필요하면
 #     `generate --with-suite` 로 실행 축까지 채운다.
+#   · 스위트 줄이 **있는데 파서가 못 읽는** 경우(canonical 형식 이탈)는 무결이 아니라
+#     **위반**이다(§compare ①). 단 canonical 이 아닌 shape 전부를 잡는다고 주장하지
+#     않는다 — 탐지 정의역은 `_SUITE_SPANLIKE_RE` 주석에 명시했다.
 #   · Story 파일은 **다른 repo**(codeforge-internal-docs)에 있다. 따라서 CI 에서
 #     live 대조는 Story 경로가 주입될 때만 성립한다 — 그 조건부성은 아래
 #     `resolve_story_path()` 의 계약이며 은폐하지 않는다.
@@ -52,7 +57,26 @@ _TOTALS_RE = re.compile(
 )
 _COLLECT_HEAD_RE = re.compile(r"(\d+)\s*파일\s*\*\*(\d+)\s*건\*\*")
 _COLLECT_SELECT_RE = re.compile(r"\*\*선택\s*(\d+)\s*/\s*deselected\s*(\d+)\*\*")
-_SUITE_RE = re.compile(r"`(\d+)\s+passed,\s*(\d+)\s+deselected`")
+# 스위트 결과 선언 — **canonical 형식** = 생성기(`render_markdown`) 산출과 동형:
+#   `N passed[, M skipped], K deselected`
+# `skipped` 슬롯은 optional 이다(미기재 = 0) — 기존 2-슬롯 선언 **하위호환**.
+# ★ 슬롯이 필요한 이유(FIX6-b 계기): `CFP2949_STORY_FILE` **미주입**(= wrapper CI 기본)
+#   실행은 live 대조 층이 자기 정의역 밖을 선언하며 skip 하므로 스위트 결과가
+#   `N passed, 1 skipped, K deselected` 형상이 된다. 슬롯이 없으면 그 형상을 파서가
+#   **조용히 건너뛰고**, §8.7 에 stale 한 skip-포함 선언을 적어도 위반이 0 이 된다.
+_SUITE_RE = re.compile(
+    r"`(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?,\s*(\d+)\s+deselected`"
+)
+# **미인식 탐지**용 느슨한 형태 — "스위트 줄처럼 생겼는데 canonical 이 아닌" span.
+#   정의역 = 한 백틱 span 안에 `숫자+passed` 와 `deselected` 가 함께 있는 것.
+#   ★ 이 정의역이 필요한 이유: 구판은 **미인식**과 **부재**가 같은 경로였다(둘 다
+#     `suite_passed` 키 부재 → 비교 skip → 무결 통과). 아래 span 이 잡히는데 위
+#     canonical 이 안 잡히면 그 자체를 위반으로 올린다.
+#   ★ 정직 천장 — 정의역 밖 2종은 여전히 산문으로 남는다:
+#     (a) `deselected` 토큰이 없는 결과 줄(예: `83 passed, 1 failed` — 동결 스냅샷의
+#         **이력 서술**이 실물이다). (b) `passed` 단어 자체가 없는 표기(예: `113 통과`).
+#     canonical 이 아닌 shape 전체를 잡는다고 주장하지 않는다.
+_SUITE_SPANLIKE_RE = re.compile(r"`([^`\n]*?\d+\s*passed[^`\n]*?deselected[^`\n]*)`")
 # 표 행: 첫 셀 백틱 경로 + 마지막 셀 어딘가의 `NNN행`
 _ROW_PATH_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|")
 _ROW_LINES_RE = re.compile(r"\((\d+)\s*행")
@@ -62,7 +86,9 @@ _ALIAS_RE = re.compile(r"([A-Za-z][A-Za-z0-9_]*)\s+(\d+)")
 # pytest 수집 요약 줄
 _COLLECT_PLAIN_RE = re.compile(r"^(\d+)\s+tests?\s+collected")
 _COLLECT_DESEL_RE = re.compile(r"^(\d+)/(\d+)\s+tests?\s+collected\s*\((\d+)\s+deselected\)")
-_SUITE_RESULT_RE = re.compile(r"(\d+)\s+passed(?:,\s*(\d+)\s+deselected)?")
+_SUITE_RESULT_RE = re.compile(
+    r"(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?(?:,\s*(\d+)\s+deselected)?"
+)
 
 
 # ═══════════════════════════ 공통 ═══════════════════════════════════════════════
@@ -228,7 +254,8 @@ def suite_axis(repo_root, files, mark=CI_MARK_EXPR, python=None):
         return None
     return {
         "suite_passed": int(m.group(1)),
-        "suite_deselected": int(m.group(2) or 0),
+        "suite_skipped": int(m.group(2) or 0),
+        "suite_deselected": int(m.group(3) or 0),
     }
 
 
@@ -271,6 +298,33 @@ def extract_section(text, heading=SECTION_HEADING):
     end_re = re.compile(r"^#{1,%d} " % max(level, 1))
     end = next((i for i in range(start + 1, len(lines)) if end_re.match(lines[i])), len(lines))
     return "".join(lines[start:end])
+
+
+def parse_suite_declarations(sec):
+    """§8.7 텍스트 → (canonical 선언 목록, **미인식** span 목록).
+
+    두 목록을 **분리해서** 돌려주는 것이 이 함수의 전부다 — 구판은 미인식을 부재와
+    합쳐 버려(둘 다 `suite_passed` 키 부재) 호출자가 구분할 수 없었다.
+
+    ── 판정 정의역 (over-claim 금지) ─────────────────────────────────────────────
+    · **인식 가능성**은 절 안 canonical-shaped span **전부**에 적용된다.
+    · **값 정합**은 **첫** 선언에만 적용된다(호출자 `compare_manifest` 소관). §8.7 은
+      기계 판독 줄을 하나만 두고, 이후 등장은 **선행 baseline 이력·대비 서술**이기
+      때문이다(동결 스냅샷의 `84 passed, 1 deselected` 가 그 실물). ⇒ 두 번째 이후
+      선언의 **값**은 판정하지 않는다 — 거기 모순된 수치를 적으면 이 검사기는 못 잡는다.
+    """
+    decls, unparsed = [], []
+    for m in _SUITE_SPANLIKE_RE.finditer(sec):
+        strict = _SUITE_RE.fullmatch(m.group(0))
+        if strict is None:
+            unparsed.append(m.group(1).strip())
+            continue
+        decls.append({
+            "passed": int(strict.group(1)),
+            "skipped": int(strict.group(2) or 0),      # 슬롯 미기재 = 0 (하위호환)
+            "deselected": int(strict.group(3)),
+        })
+    return decls, unparsed
 
 
 def parse_manifest_section(story_text, heading=SECTION_HEADING):
@@ -318,10 +372,15 @@ def parse_manifest_section(story_text, heading=SECTION_HEADING):
         declared["collect_selected"] = int(ms.group(1))
         declared["collect_deselected"] = int(ms.group(2))
 
-    mu = _SUITE_RE.search(sec)
-    if mu:
-        declared["suite_passed"] = int(mu.group(1))
-        declared["suite_deselected"] = int(mu.group(2))
+    decls, unparsed = parse_suite_declarations(sec)
+    if decls:
+        declared["suite_declarations"] = decls
+        declared["suite_passed"] = decls[0]["passed"]
+        declared["suite_skipped"] = decls[0]["skipped"]
+        declared["suite_deselected"] = decls[0]["deselected"]
+    if unparsed:
+        # ★ 값이 아니라 **인식 실패 사실**을 싣는다. 비교기가 이걸 위반으로 올린다.
+        declared["suite_unparsed"] = unparsed
 
     return declared
 
@@ -392,22 +451,38 @@ def compare_manifest(generated, declared):
         for path in sorted(set(files) - seen):
             viol.append("수집 선언 누락: %s (CI 인자에 있으나 §8.7 별칭 목록에 없다)" % path)
 
-    # 스위트 결과 — 실행 축이 없으면 **파생 불변식**으로 잰다.
-    if "suite_passed" in declared:
-        if "suite_passed" in generated:
-            _cmp(viol, "suite_passed", generated, declared)
-            _cmp(viol, "suite_deselected", generated, declared)
-        elif "collect_selected" in generated:
-            if declared["suite_passed"] != generated["collect_selected"]:
-                viol.append(
-                    "suite_passed: 선언 %d ≠ 수집 선택 %d — §8.7 은 전건 통과를 "
-                    "선언하므로 passed 는 선택 수와 같아야 한다"
-                    % (declared["suite_passed"], generated["collect_selected"])
-                )
-            if "collect_deselected" in generated and \
-                    declared.get("suite_deselected") != generated["collect_deselected"]:
-                viol.append("suite_deselected: 선언 %r ≠ 수집 제외 %r"
-                            % (declared.get("suite_deselected"), generated["collect_deselected"]))
+    # ── 스위트 결과 — 경로 **3분할** (FIX6-b) ────────────────────────────────────
+    #   ① 미인식  ② 부재  ③ 값 불일치
+    #   구판은 ①과 ②가 **같은 경로**였다: 스위트 줄이 있어도 파서가 못 읽으면
+    #   `suite_passed` 키가 안 생기고, 키가 없으면 비교를 통째로 건너뛰어 **무결로
+    #   통과**했다. ⇒ §8.7 에 skip 을 포함한 stale 선언을 적어도 위반 0.
+    unparsed = declared.get("suite_unparsed") or []
+    for raw in unparsed:                                                    # ①
+        viol.append(
+            "스위트 줄 미인식: `%s` — canonical 형식(`N passed[, M skipped], "
+            "K deselected`)이 아니다 (미인식 ≠ 무결)" % raw
+        )
+    decls = declared.get("suite_declarations") or []
+    if not decls:                                                           # ②
+        if not unparsed and ("suite_passed" in generated or "collect_selected" in generated):
+            viol.append("suite_passed: 선언 부재 (§8.7 에 스위트 실행 결과 줄이 없다)")
+    elif "suite_passed" in generated:                                       # ③-a 실행 축 대조
+        _cmp(viol, "suite_passed", generated, declared)
+        _cmp(viol, "suite_skipped", generated, declared)
+        _cmp(viol, "suite_deselected", generated, declared)
+    elif "collect_selected" in generated:                                   # ③-b 파생 불변식
+        d0 = decls[0]
+        run = d0["passed"] + d0["skipped"]
+        if run != generated["collect_selected"]:
+            viol.append(
+                "suite_passed: 선언 %d passed + %d skipped = %d ≠ 수집 선택 %d — §8.7 은 "
+                "전건 통과를 선언하므로 **passed + skipped** 가 선택 수와 같아야 한다 "
+                "(skipped 는 deselected 와 달리 selected 에 포함된다)"
+                % (d0["passed"], d0["skipped"], run, generated["collect_selected"])
+            )
+        if "collect_deselected" in generated and d0["deselected"] != generated["collect_deselected"]:
+            viol.append("suite_deselected: 선언 %r ≠ 수집 제외 %r"
+                        % (d0["deselected"], generated["collect_deselected"]))
     return viol
 
 
@@ -417,7 +492,7 @@ def render_manifest(man):
     out = ["# " + man.get("version", MANIFEST_VERSION)]
     for k in ("base_ref", "head", "files_changed", "insertions", "deletions",
               "ci_files", "collect_total", "collect_selected", "collect_deselected",
-              "suite_passed", "suite_deselected",
+              "suite_passed", "suite_skipped", "suite_deselected",
               "git_axis_unavailable", "collect_axis_unavailable", "suite_axis_unavailable"):
         if k in man:
             out.append("%s\t%s" % (k, man[k]))
@@ -448,8 +523,11 @@ def render_markdown(man):
                CI_MARK_EXPR, man["collect_selected"], man["collect_deselected"])
         )
     if "suite_passed" in man:
-        lines.append("스위트 실행: `%d passed, %d deselected`"
-                     % (man["suite_passed"], man["suite_deselected"]))
+        # skip 0 이면 슬롯을 쓰지 않는다 — 기존 2-슬롯 선언과 **byte 동형**(하위호환).
+        skipped = man.get("suite_skipped", 0)
+        slot = (", %d skipped" % skipped) if skipped else ""
+        lines.append("스위트 실행: `%d passed%s, %d deselected`"
+                     % (man["suite_passed"], slot, man.get("suite_deselected", 0)))
     return "\n\n".join(lines)
 
 
