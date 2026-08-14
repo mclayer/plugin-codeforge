@@ -20,6 +20,23 @@ related_files:
 related_stories:
   - CFP-2963
   - CFP-2913  # 순차 제약 (Q-2) — ADR-147 파일 amendment 착수 gate
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-2963
+    date: 2026-08-14
+    reinterpretation: true
+    scope: >-
+      빌더 재편 결정 + 운영 파급 정정 (설계 escalation FIX). §결정 8 확장 2건 —
+      (a) rootless 빌더 = buildah --isolation chroot --storage-driver vfs (권고 1안,
+      M-18 GREEN 조건부) + kaniko·rootless BuildKit 배제 근거 + rail(SYS_ADMIN add /
+      privileged / PSA enforce 완화 / Unconfined 명시 금지) + ESC-4 pointer
+      (b) services: 존치하되 hook 이 동적 host port context 를 제공하지 않음이 확정 사실이므로
+      port indirection 제거가 컷오버 선결 편집. 정정 2건 — §결정 4 의 "음수 priority = 운영 pod
+      보호의 결정적 완화" 를 "축출 순서 한정 완화(스케줄 차단·image GC 축 미지배)" 로 재기술
+      (reinterpretation 축 — 기존 완화 주장의 사정거리 축소) / §결정 7 R5 rust pre-bake 이득
+      사정거리를 rust-ci 경로 한정으로 정정(docker-build 경로 0). 검증계약·게이트·실측의 4요건
+      정본은 Change Plan 위임 유지(이중 SSOT 금지).
+    sunset_justification: 'N/A — is_transitional: false (permanent policy). 정정 2건은 완화 주장의 과대 사정거리를 좁히는 방향이라 통제 약화 아님. 빌더 rail 은 §해소 기준 약화-발의 차단 목록에 편입(강화 방향).'
 ---
 
 # ADR-174: MCLATS ARC CI 러너 topology — 운영 클러스터 동거 CI 실행면 + ADR-147 축별 처분
@@ -115,6 +132,19 @@ ADR-147 Amd5 C1/C3 의 값공간을 **3rd 도메인 "ARC scale-set 이름" addit
 - **12-site 존재-truthiness 조건식 → 값-shape 판별 승격(형태 A)**: job-level env 1곳 집약(`rust-ci.yml` rdb-e2e 11 site + `docker-build.yml` smoke 1 site) 후 `(vars.CI_RUNS_ON_LINUX_JSON && contains(vars.CI_RUNS_ON_LINUX_JSON, 'self-hosted')) && 'host.docker.internal' || 'localhost'` — DooD 라벨 값만 host.docker.internal, ARC 이름/unset = localhost(kubernetes mode 는 services 가 job pod sidecar 라 localhost 도달). 신규 변수(형태 B, CI_NETWORK_MODE)는 컷오버·롤백 시 2-변수 동기화 실패라는 신규 드리프트 축을 만들어 기각 — 단일 변수에서 파생하는 A 가 동기화 리스크 0. magic-string 결합('self-hosted' substring)은 §결정 1 (ii)(`self-hosted` substring 금지 — ARC 이름에 구조적 미출현 보장)가 결박. DooD fleet 폐기(Q-8) 후 후속 Story 에서 localhost 고정(조건식 제거) 단순화 가능 — defer 기록. B 승격 재평가 = C1 값검증 배선 Story 시점.
 - **docker-build 계열 4 workflow**: composite action `.github/actions/docker-build-push`(build+push 골격) 추출을 **kaniko/buildkit 재편(AC-20)과 동일 변경 단위로 결합 실행** — 재편이 4파일 골격을 어차피 재작성하므로 그 시점 1곳 추출이 최소 침습(선행 분리 시 2회 편집). smoke step 은 `docker-build.yml` 자체 step 존치(구조 차이 억지 통일 금지). reusable workflow(workflow_call)는 caller 재작성 비용 대비 이득 부족으로 기각.
 
+### Amendment 1 — 빌더 재편 결정 + 운영 파급 정정 (CFP-2963 설계 escalation FIX, 2026-08-14)
+
+설계리뷰 escalation(D-a 빌더 재편 spec 공백 / D-b AC-20 oracle ↔ §결정 8 `services:` 모순 / D-c 파일명 드리프트) + 그 과정에서 발견된 신규 P0 2건을 반영한다. 상세 구체화 계약 = Change Plan(§3.8a 빌더 spec · §3.8b services 처분 · §8.BV 검증계약 · §11.2 신규 gate · §11.4b M-18~M-25).
+
+1. **§결정 8 확장 — rootless 빌더 확정 절차(빌더 후보 판정)**: docker-build 4 workflow 의 빌더는 **buildah `--isolation chroot --storage-driver vfs`(권고 1안 — M-18 GREEN 조건부)** 다. **kaniko 배제(확정)** = 2025-06-03 archived ∧ `RUN --mount=type=secret` 미구현(요청 이슈 #3028 open 동결 = 해소 경로 영구 부재) [source: https://api.github.com/repos/GoogleContainerTools/kaniko , https://github.com/GoogleContainerTools/kaniko/issues/3028]. **rootless BuildKit 배제(확정)** = 공식 K8s 매니페스트가 `seccompProfile: Unconfined` + `appArmorProfile: Unconfined` 를 요구하나 PSA baseline 이 둘 다 명시 금지 [source: https://github.com/moby/buildkit/blob/master/examples/kubernetes/deployment%2Bservice.rootless.yaml , https://kubernetes.io/docs/concepts/security/pod-security-standards/] — 정직 잔여 = `seccompProfile` 미지정 시 baseline 통과 가능하나 AppArmor 축이 남아 클러스터 구성 종속(M-20). **buildah 채택 근거의 결정타 = `RUN --mount=type=secret`/`--secret` 정식 지원 ⇒ Dockerfile credential 구조 무편집 ⇒ credential 표면 회귀 0** [source: https://github.com/containers/buildah/blob/main/docs/buildah-build.1.md].
+   - **★ 등급 고정(승격 인용 금지)**: buildah chroot 는 "private mount and UTS namespaces" 를 생성하며 `CLONE_NEWNS` 의 실제 요구 capability 집합이 **확인 불가**다 → **"권고 1안 — M-18 GREEN 조건부"**. "확정"으로 쓰지 않는다.
+   - **★ rail(약화 방향 발의 차단 — 본 ADR §해소 기준 목록에 편입)**: M-18 이 NG 여도 `SYS_ADMIN` capability add / `privileged: true` / PSA `enforce` 완화 / seccomp·AppArmor `Unconfined` 명시는 **금지**다. ESC-2 로 사용자가 인수한 것은 **"컨테이너 내 root 허용"**이지 **"커널 표면 개방"이 아니다**. 해소는 rail 침범이 아니라 **ESC-4 회부**(제약 집합 재조정 — 결정자 = 사용자)로 한다.
+   - **ESC-2 인수 근거 확대**: PSA **restricted** 는 capability 를 사실상 전부 drop 하므로 `CAP_SYS_CHROOT` 소멸 → **buildah chroot 빌드 자체가 불가**. ESC-2 의 baseline 인수 근거가 기존 hook fs-init 축 **단독**에서 **hook 축 ∧ 빌더 축 2축**으로 확대됐다(사용자 인수 판단 입력 변경 → 통지 의무).
+2. **§결정 8 확장 — `services:` 처분**: `services:` 는 **존치**한다(kubernetes mode 에서 hook 이 job pod sidecar 로 생성 — docker daemon·`docker.sock`·privileged 불요 [source: https://github.com/actions/actions-runner-controller/issues/3073 — CLOSED 2023-11-15]). **단 hook 은 동적 host port context 를 제공하지 않는다**(`ports: - N` 단일 형태 → `hostPort` 미설정 → `job.services.<id>.ports[...]` 빈 문자열) [source: https://raw.githubusercontent.com/actions/runner-container-hooks/main/packages/k8s/src/k8s/index.ts , .../hooks/prepare-job.ts] ⇒ **port indirection 제거가 컷오버 선결 편집**이다(`rust-ci.yml` 11 site 지배). §결정 8 의 "kubernetes mode 는 services 가 job pod sidecar 라 localhost 도달" 서술은 **host 축 한정으로 참**이며 **port 축은 미해소**임을 정정 명기한다. 치환은 hosted 과도기에서도 성립해야 하므로 **고정 5432 상수화 금지** — job-level env 단일 파생(형태 A 동형)이며 표현식 문법 성립은 `[hypothesis]` → Change Plan BV-6 실측으로 확정한다.
+3. **§결정 4 서술 정정(1급)** — "DiskPressure eviction … CI 음수 priority 가 축출 순서를 확정한다(운영 pod 보호의 **결정적** 완화)" → **"축출 순서 한정 완화 — 스케줄 차단·image GC 축은 미지배"**. 근거: eviction **이전 단계**에서 이미 운영 파급 2종이 발생한다 — ⓐ DiskPressure taint 가 신규 pod 스케줄링을 차단 ⓑ imagefs 부족 시 kubelet 이 pod 축출 **이전에** 미사용 이미지를 **노드 전역 GC**(운영 이미지 소거 → pull 재발). 추가로 hard threshold 초과 시 kubelet 은 **0s grace 로 축출**하며 PDB·`terminationGracePeriodSeconds` 를 무시한다 [source: https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/]. ⇒ priority 는 *순서*를 정할 뿐 *유예*를 주지 않는다. 컷오버 관측도 "Evicted 0" 만으로는 불충분(Change Plan §11.2 G5 leg⑦ 확장).
+4. **§결정 7 R5 사정거리 정정** — rust pre-bake 이득은 **rust-ci 경로 한정이고 docker-build 경로에서는 0** 이다: Dockerfile 이 `FROM rust:${RUST_VERSION}-slim` 으로 **빌드 내부에서** rust 를 조달하므로 러너·toolbox 이미지의 rust 소결이 docker-build 빌드 시간을 줄이지 않는다 [verified — 4 Dockerfile `FROM` 실측]. 구 문면이 전 경로 이득으로 읽힐 여지를 닫는다.
+5. **위임 구조 유지 명기** — 본 ADR 은 **결정**만 담고, Change Plan 이 **구체화 계약**(§7 보안 / §8 Test Contract·§8.BV / §11 마이그레이션·게이트·실측)을 소유한다. Amendment 1 이 신설한 검증계약(BV-1~BV-7)·게이트(G1-daemonless · G1-routing-hardcode · G4-dns · G4-disk-budget · G4-limitrange-service · G5 leg⑦ 확장 · G8-6)·선결 실측(M-18~M-25, P-12~P-16)의 4요건 정본은 **전부 Change Plan** 이며 본 ADR 은 이를 재기술하지 않는다(이중 SSOT 금지).
+
 ## 결과
 
 - **긍정**: (a) 호스트 Linux CI 부하 철수 경로 확정(사용자 1차 동기) (b) 라우팅 계약(D1~D3) 무변경 — workflow 파일 delta 0 유지 (c) 배포용 ARC CRD 무접촉(0.12.1 pin) — helm uninstall 이 배포용 무영향(ARC 철회 전체 잔재 제거 = Change Plan §11.3b teardown) (d) ephemeral 1 job = 1 pod 로 T4/T5 cross-job 잔재 구조 소거.
@@ -123,7 +153,7 @@ ADR-147 Amd5 C1/C3 의 값공간을 **3rd 도메인 "ARC scale-set 이름" addit
 
 ## 해소 기준
 
-N/A — permanent policy (is_transitional: false). CI 러너 topology 의 영구 invariant. 단 **§결정 6 의 과도기 조항은 자체 bounded**(복귀 조건 = 컷오버 완료 시 자동 소멸 — 조항 단위 시한부, ADR 전체 sunset 아님). 약화 방향(예약 토큰 2단 금지 룰 완화[exact-match 허용 또는 `self-hosted` substring 허용 — §결정 1 (i)(ii)] / REQUIRE_JOB_CONTAINER=false 전환 / PSA enforce 해제 / 신규 group public 허용 / 값공간 미분류 통과) 발의 차단 — supersede ADR 필수.
+N/A — permanent policy (is_transitional: false). CI 러너 topology 의 영구 invariant. 단 **§결정 6 의 과도기 조항은 자체 bounded**(복귀 조건 = 컷오버 완료 시 자동 소멸 — 조항 단위 시한부, ADR 전체 sunset 아님). 약화 방향(예약 토큰 2단 금지 룰 완화[exact-match 허용 또는 `self-hosted` substring 허용 — §결정 1 (i)(ii)] / REQUIRE_JOB_CONTAINER=false 전환 / PSA enforce 해제 / 신규 group public 허용 / 값공간 미분류 통과 / **빌더 rail 침범 = `SYS_ADMIN` capability add · `privileged: true` · seccomp·AppArmor `Unconfined` 명시**[Amendment 1 §1]) 발의 차단 — supersede ADR 필수. 빌더 rail 은 M-18 실측 결과와 **무관하게** 유지되며, NG 시 해소 경로는 rail 완화가 아니라 **ESC-4 사용자 재조정**이다.
 
 ## 관련 파일
 

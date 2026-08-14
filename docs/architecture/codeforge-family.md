@@ -273,7 +273,7 @@ graph TB
 
     subgraph "Cloud Services"
         GHAPI[GitHub API<br/>Issue/PR/comment/label/milestone]
-        GHActions[GitHub Actions CI runner<br/>public: GitHub-hosted ubuntu-latest<br/>private/internal: self-hosted default + 예산-bounded hosted 넘침<br/>실행면 이관 진행 — 호스트 compose fleet(MCCHO-DESKTOP, Q-8 폐기 예정) → MCLATS ARC scale-set(mclats-ci-linux, containerMode kubernetes, 0.12.1 pin) — ADR-174/CFP-2963<br/>과도기 실측 2026-08-14: group6 Linux 9대(online 4 재가동/offline 5) / group5 Windows×1]
+        GHActions[GitHub Actions CI runner<br/>public: GitHub-hosted ubuntu-latest<br/>private/internal: self-hosted default + 예산-bounded hosted 넘침<br/>실행면 이관 진행 — 호스트 compose fleet(MCCHO-DESKTOP, Q-8 폐기 예정) → MCLATS ARC scale-set(mclats-ci-linux, containerMode kubernetes, 0.12.1 pin) — ADR-174/CFP-2963<br/>과도기 실측 2026-08-14 11:03 KST(chief firsthand 재확인 — 값 무변경): group6 Linux 9대(online 4 재가동/offline 5) / group5 Windows×1<br/>★휘발 상태 경고: 이 카운트는 F-A 재가동으로 반복 flap 한다 — 본 노드 값은 기록 시점 스냅샷이지 판정 원본이 아니다. 판정 원본 = Change Plan §11.2 G0/G8-1 재실행. 근거 = 같은 값이 2회 stale 로 오보고된 이력]
         ConfluenceAPI[Confluence Cloud API<br/>readable mirror sync]
     end
 
