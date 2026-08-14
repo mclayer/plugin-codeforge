@@ -6,8 +6,8 @@
 # §8.5.2 restart recovery: tick K회 건너뛰고 K개 추가 → 1회 호출 → K 전부 보고
 # §8.5.3 idempotency replay: 같은 잔재 2-3회 → 보고 1개
 #
-# §8.3 Perf Baseline: p95 < 주기 × 0.5 (wall-clock 한계 43200s, 판별력 0)
-#   → 실측 p95 기록 + §8.5.1 단조 무증가를 실 teeth 로 삼음
+# §8.3 Perf Baseline: wall-clock 축 = **비차단 기록**(판정 없음 — 부하 민감 + 구조적 항진)
+#   → 실측 p50/p95/max/min 기록만 남기고, 실 teeth 는 §8.5.1 자원 축(gc/tracemalloc)
 
 import time
 import os
@@ -39,13 +39,6 @@ def _real_heartbeat_state():
     except OSError:
         return None
     return (st.st_mtime_ns, st.st_size)
-
-
-def _isolated_env(heartbeat_path):
-    """기존 env 상속 + heartbeat 기록 대상만 tmpdir 로 치환한 subprocess env."""
-    env = dict(os.environ)
-    env[sut.ENV_HEARTBEAT_FILE] = str(heartbeat_path)
-    return env
 
 
 def make_sandbox(root):
@@ -505,17 +498,38 @@ class TestIdempotencyReplay:
 
 # ═══════════════════════════════ Perf Baseline §8.3 ═══════════════════════
 class TestPerfBaseline:
-    """§8.3 Perf Baseline: p95 < 주기 × 0.5.
+    """§8.3 Perf Baseline: 실행소요 baseline **측정값 기록** (판정 없음).
 
-    ★ 정직 천장:
-      - 주기 = Daily (86400s)
-      - 한계 = 43200s (반주기)
-      - 실제 p95 ≪ 한계 (판별력 사실상 0)
-      - 실 teeth = §8.5.1 단조 무증가 + 명시 측정값 기록
+    ★ 축 지위 (Story §8.2-F 정직 강등의 형제 적용 — 본 클래스 2 단언 모두 강등):
+      - **wall-clock = 판별력 보조**. 호스트 부하에 종속이라 blocking 단언의 근거가
+        없다. 측정은 유지하고 **판정만 뗀다** — §8.3 계약이 요구하는 기록
+        (p50 / p95 / max / min / samples + 한계값 + note)은 그대로 남긴다.
+        강등은 판정 제거이지 측정 제거가 아니다.
+      - **실 teeth = §8.5.1 자원 축**(gc / tracemalloc 비율 2종 + 누적 상한 2종,
+        `TestLongRunningInvariant`). 본 클래스는 판정자가 아니라 **기록자**다.
+
+    ★ 강등 근거 (실측 — 선언↔코드 불일치 해소):
+      ① `test_perf_baseline_sustained_p50_stability` 의 `ratio < 2.0`
+         — 전체 스위트 동시 실행에서 FAIL 재현. 단독 재실행 표집도 혼재
+           (FAIL/PASS/PASS · FAIL/FAIL/PASS), 관측 ratio 최대 **3.02**(임계 2.0).
+           SUT 회귀가 아니라 호스트 부하를 판정하고 있었다 — 부하 민감 간헐 실패.
+           그 단언의 인라인 주석은 이미 "느슨한 검증(실제 판별력은 §8.5.1)" 이라
+           자인했고 본 docstring 도 "판별력 사실상 0" 이라 선언했는데, 코드만
+           bare assert(=blocking)로 남아 선언↔코드가 어긋나 있었다.
+      ② `test_perf_baseline_p95_within_limit` 의 `p95 < 43200`
+         — 한계 43200s(Daily 주기 86400s 의 반주기) vs 실측 p95 ≪ 1s. 자기
+           docstring 이 "판별력 0" 이라 자인한 **구조적 항진**이다. 항상 참인
+           단언은 통과 신호를 위조하므로 남기지 않는다(ADR-119 검사연극 금지).
     """
 
     def test_perf_baseline_p95_within_limit(self):
-        """p95 실행소요 < 43200s (한계) — 측정값 기록."""
+        """§8.3 baseline 측정값 기록 — p50/p95/max/min/samples + 한계값 (**판정 없음**).
+
+        ★ 강등: 이전 판본의 `assert p95 < 43200` 은 구조적 항진(실측 p95 ≪ 1s vs
+          한계 43200s = 반주기)이라 falsify 가능한 반례가 사실상 없었다. 판정을
+          떼고 기록만 남긴다 — 이 테스트의 산출물은 verdict 가 아니라 baseline
+          수치다. blocking teeth 는 §8.5.1 자원 축이 전담한다.
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
             scratch_root = os.path.join(tmpdir, "scratch")
@@ -550,10 +564,9 @@ class TestPerfBaseline:
             p95 = sorted_dur[int(len(sorted_dur) * 0.95)]
             p50 = sorted_dur[int(len(sorted_dur) * 0.50)]
 
-            # Assert: 한계 (명시 이유: 판별력 0)
-            assert p95 < 43200, f"p95 한계 exceed (판별력 부재), 실측: {p95:.3f}s"
-
-            # 측정값 기록 (분석용)
+            # ─────────────────────────────────────────────────────────────
+            # 기록 (§8.3 계약) — **비차단**. 한계값은 참고 수치로만 남기고 판정하지 않는다.
+            # ─────────────────────────────────────────────────────────────
             perf_record = {
                 "test": "collect_observations",
                 "samples": len(durations),
@@ -563,16 +576,25 @@ class TestPerfBaseline:
                 "min_seconds": min(durations),
                 "daily_period_seconds": 86400,
                 "baseline_threshold_seconds": 43200,
-                "note": "wall-clock 한계로 인해 판별력 = 0. 실 teeth = §8.5.1 단조 무증가.",
+                "verdict_role": "none — 비차단 기록 (구조적 항진 단언 강등)",
+                "note": ("wall-clock 한계(반주기 43200s) 대비 실측 p95 ≪ 1s 라 판별력 0. "
+                         "실 teeth = §8.5.1 자원 축(gc/tracemalloc)."),
             }
 
             # 로그 출력 (실제 보고에 포함)
-            print(f"\n[Perf Baseline] {json.dumps(perf_record, indent=2)}")
+            print(f"\n[Perf Baseline · 비차단 기록] {json.dumps(perf_record, indent=2)}")
 
     def test_perf_baseline_sustained_p50_stability(self):
-        """Sustained p50 안정성 — 반복 샘플링에서 variance 낮음.
+        """Sustained p50 추세 — batch 간 p50 비율 **비차단 기록** (판정 없음).
 
-        단조 무증가 검증 (§8.5.1 에서도 수행).
+        ★ 강등 근거 (실측 표집): 이전 판본의 `assert ratio < 2.0` 은 전체 스위트
+          동시 실행에서 FAIL 하고, 단독 재실행에서도 결과가 혼재했다 —
+          FAIL/PASS/PASS(Orchestrator 표집) · FAIL/FAIL/PASS(다른 작업자 표집),
+          **관측 ratio 최대 3.02**(임계 2.0). 즉 이 단언은 SUT 의 회귀가 아니라
+          **호스트 부하**를 판정하고 있었다.
+        ★ wall-clock 축은 부하 민감이라 **판별력 보조**이며, 실 teeth 는 §8.5.1
+          자원 축(gc / tracemalloc 비율 2종 + 누적 상한 2종)이다. 측정은 유지하고
+          판정만 뗀다 — 강등은 판정 제거이지 측정 제거가 아니다.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = tmpdir
@@ -593,6 +615,7 @@ class TestPerfBaseline:
 
             # 5개 batch × 40 iteration = 200 총
             batches = []
+            all_durations = []
             for batch_idx in range(5):
                 durations_batch = []
                 for i in range(40):
@@ -605,17 +628,41 @@ class TestPerfBaseline:
                     )
                     elapsed = time.time() - start
                     durations_batch.append(elapsed)
+                all_durations.extend(durations_batch)
                 p50_batch = sorted(durations_batch)[20]
                 batches.append(p50_batch)
 
-            # Assert: batch 간 p50 무증가 추세
-            for i in range(1, len(batches)):
-                # 허용 오차: 1.2배 이내 증가 허용 (자연 변동)
-                ratio = batches[i] / batches[i-1] if batches[i-1] > 0 else 1.0
-                # 느슨한 검증 (실제 판별력은 §8.5.1)
-                assert ratio < 2.0, (
-                    f"batch {i} p50 급증: {batches[i]:.3f}s (이전: {batches[i-1]:.3f}s)"
-                )
+            # ─────────────────────────────────────────────────────────────
+            # 기록: batch 간 p50 비율 — **비차단**(판정 없음). 측정만 남긴다.
+            # ─────────────────────────────────────────────────────────────
+            REFERENCE_RATIO = 2.0   # 구 임계 = 이제 참고 기준. 초과해도 FAIL 아님.
+            ratios = [
+                (batches[i] / batches[i - 1]) if batches[i - 1] > 0 else float("nan")
+                for i in range(1, len(batches))
+            ]
+            for i, ratio in enumerate(ratios, start=1):
+                print(f"[sustained p50 advisory · 비차단] batch {i}: {batches[i]:.4f}s "
+                      f"(이전 {batches[i-1]:.4f}s) ratio={ratio:.3f} "
+                      f"(참고 기준 {REFERENCE_RATIO} — 초과해도 FAIL 아님, 부하 민감 축)")
+
+            # §8.3 계약 기록 (p50 / p95 / max / min / samples + 한계값 + note)
+            sorted_all = sorted(all_durations)
+            perf_record = {
+                "test": "collect_observations · sustained p50 stability",
+                "samples": len(all_durations),
+                "p50_seconds": sorted_all[int(len(sorted_all) * 0.50)],
+                "p95_seconds": sorted_all[int(len(sorted_all) * 0.95)],
+                "max_seconds": max(all_durations),
+                "min_seconds": min(all_durations),
+                "batch_p50_seconds": [f"{b:.4f}" for b in batches],
+                "batch_p50_ratios": [f"{r:.3f}" for r in ratios],
+                "reference_ratio_threshold": REFERENCE_RATIO,
+                "verdict_role": "none — 비차단 기록 (부하 민감 간헐 FAIL 로 강등)",
+                "note": ("관측 ratio 최대 3.02, 단독 재실행에서도 FAIL/PASS 혼재 "
+                         "(FAIL/PASS/PASS · FAIL/FAIL/PASS). wall-clock = 판별력 보조, "
+                         "실 teeth = §8.5.1 자원 축(gc/tracemalloc)."),
+            }
+            print(f"\n[Perf Baseline · sustained · 비차단 기록] {json.dumps(perf_record, indent=2)}")
 
 
 # ═══════════════════════════════ Integration: Long-running CLI Invocation
