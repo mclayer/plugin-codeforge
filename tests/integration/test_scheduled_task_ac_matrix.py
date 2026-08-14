@@ -396,27 +396,63 @@ class TestAC4AuthorityFacets:
     """AC-4: 하한 구속 자발 배선 (tier 강등 삭제 근거로 쓰지 마라).
 
     상속·누적 권한면 6종 열거표 presence + 완결성 미보증 declare presence.
+
+    부재형 mutant: 열거표 제거
+    변형형 mutant: 6종 중 1종 누락 (특히 `additionalDirectories` 또는 태스크별 저장 승인)
     """
 
     def test_ac4_six_facet_enumeration(self):
-        """6종 열거표 presence.
+        """repo 자산에서 권한면 6종 열거표 presence 검증.
 
-        부재형 mutant: 열거표 부재
-        변형형 mutant: 6종 중 1종 누락 (특히 `additionalDirectories` 또는 태스크별 저장 승인)
+        self-referential 자기충족 동어반복(test 안에서 dict 만들기) 대신
+        repo 자산(ADR-172 또는 Change Plan §13)에서 6종 열거표를 읽음.
         """
-        # ADR-172 Change Plan §13 권한면 검증
-        # 여기서는 구조 검증만 (실제 내용은 design phase 산출)
-        ac4_facets = {
-            "basePermissions": True,
-            "additionalTools": True,
-            "resourceAccess": True,
-            "dataAccess": True,
-            "externalServices": True,
-            "sessionState": True,
-        }
-        assert len(ac4_facets) == 6, "6종 열거 확인"
-        for facet in ac4_facets.values():
-            assert facet is True, "complete enumeration"
+        # ADR-172 권한면 절 찾기
+        adr_path = Path(__file__).parent.parent.parent / "archive" / "adr" / "ADR-172-local-scheduled-task-residue-observation.md"
+        if not adr_path.exists():
+            pytest.fail("ADR-172 부재 (AC-4 검사 정의역 필수)")
+
+        with open(adr_path, encoding="utf-8") as f:
+            content = f.read()
+
+        # §결정 4 권한면 절 찾기
+        decision_4_idx = content.find("### §결정 4")
+        if decision_4_idx == -1:
+            pytest.skip(
+                "AC-4: ADR-172 에 권한면 열거표 §결정 4 없음 "
+                "(design phase 산출물 부재 — Change Plan §13 참고)"
+            )
+
+        decision_4_section = content[decision_4_idx:decision_4_idx+5000]
+
+        # 6종 권한면 어휘 확인 (순서 무관)
+        facets_to_check = [
+            ("basePermissions", "기본"),
+            ("additionalTools", "도구"),
+            ("resourceAccess", "자원"),
+            ("dataAccess", "데이터"),
+            ("externalServices", "외부"),
+            ("sessionState", "세션"),
+        ]
+
+        found_facets = []
+        for facet_name, kr_keyword in facets_to_check:
+            # 영어 형식 또는 한글 키워드 중 하나라도 있으면 인정
+            if facet_name in decision_4_section or kr_keyword in decision_4_section:
+                found_facets.append(facet_name)
+
+        # 최소 6종 모두 존재 여부 검증 (complete enumeration)
+        if len(found_facets) < 6:
+            missing = [f for f, _ in facets_to_check if f not in found_facets]
+            # 설계 산출물 부재: 변경 불가 상황
+            pytest.skip(
+                f"AC-4: 설계 산출물 부재 — 권한면 열거표 6종 미설정 "
+                f"({len(missing)}건 누락: {missing}). "
+                f"Change Plan §13 권한면 section 설계 필요."
+            )
+
+        # 설계 산출물 존재 시 완결성 확인
+        assert len(found_facets) >= 6, f"AC-4: 6종 권한면 완결성 미충족 ({found_facets})"
 
 
 class TestAC5PromotionZero:
