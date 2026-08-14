@@ -109,7 +109,8 @@ exit code 의 의미는 **호출 mode 별로** 정의되며, 소비층(shell wra
 
 - **(E1) rc 단독 판정 금지 — 전 소비층 구속.** rc=0 은 (i) 판정 완료·형제 있음 (ii) 판정 완료·형제 없음 = **유일한 정당 통행증** (iii) `determined: false` 판정 실패 (iv) bypass 산출(`determined` 키 부재) (v) degrade 산출(`determined` 키 부재) 를 모두 덮는다 [verified firsthand]. `rc == 0` 은 필요조건으로만 쓰고 단독 충분조건으로 쓰지 않는다.
 - **(E2) 통행증 자격 = `determined == true` 인 산출뿐.** bypass 산출은 verdict 가 아니며 하류가 부재 증명으로 읽어선 안 된다.
-- **(E3) 소비층은 판정을 은폐하지 않는다.** shell 층이 callee 의 최종 분기에 도달하지 못하게 막는 선주입(예: 유도 실패 시 조용한 기본값 대입)을 **금지**한다. shell 층의 역할은 *best-effort 유도 시도*이고, 유도 실패 시 아무것도 주입하지 않아 py 의 정책 authority 에 위임한다. 흡수(OR-true, `continue-on-error`)로 인해 verdict 가 비차단에 머무는 경우, 그 **비차단성은 명시 선언 대상**이며 "통과"로 계상할 수 없다.
+- **(E3) 소비층은 판정을 은폐하지 않는다.** **shell 층 및 workflow 선언 층(`env:` 매핑 포함)**이 callee 의 최종 분기에 도달하지 못하게 막는 선주입(예: 유도 실패 시 조용한 기본값 대입)을 **금지**한다. 이들 층의 역할은 *best-effort 유도 시도*이고, 유도 실패 시 아무것도 주입하지 않아 py 의 정책 authority 에 위임한다. 흡수(OR-true, `continue-on-error`)로 인해 verdict 가 비차단에 머무는 경우, 그 **비차단성은 명시 선언 대상**이며 "통과"로 계상할 수 없다.
+  - **선언 층 포함 근거 (정의역 확장 — 결정 반전 아님).** 정본 `scripts/lib/check_parallel_work_sentinel.py` L128 (`resolve_prefix()`) 이 `os.environ.get("STORY_KEY_PREFIX", "")` 로 **주입 출처를 구분하지 않고** 읽으므로, shell 대입 0줄이어도 workflow 의 `env:` 매핑(정본 `.github/workflows/parallel-work-sentinel-check.yml` L44 workflow-level / L65 step-level)에 같은 키를 넣으면 shell 선주입과 **동일한 은폐 효과**가 성립한다. "shell 층" 한정 문면은 그 경로를 narrow-reading 우회로 남기므로, 층을 선언 층까지 확장해 의도와 문면을 일치시킨다. [verified firsthand — 좌표는 `origin/main` 커밋 `ecfe62d6378a64de6f644ca1919386504ae4f469` 기준 실측]
 - **(E4) warning-tier 게이트에 bypass 우회로를 신설하지 않는다.** bypass 의 존재 이유는 merge 를 막는 게이트를 hotfix 로 뚫는 것인데, 차단하지 못하는 게이트에 대한 우회로는 운영 이득 0 + 공격 표면 순증이다. 향후 blocking 승격(ADR-171 evidence-gated 별 carrier) 시점에 도입한다면 `determined: false` **명시 emit**(부재 금지) + workflow/runner env 에서만 수령(PR 통제면 파생 금지) + 감사 마커 + "bypass 는 판정을 대체하지 않음(원장 충족 계상 금지)"를 동반한다.
 
 ### §결정 6 — 게이트 자기무결성의 정직 천장 (over-claim 금지)
