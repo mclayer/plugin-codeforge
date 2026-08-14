@@ -95,7 +95,7 @@ Accepted (2026-08-15 KST) — CFP-2963 carrier. *"검사처럼 보이나 어떤 
 
 ### 결정 4 — 신규 normative ① **M-1 = 2-arm corpus 동적 kill 분류 + arm-invariant 판정기 계약**
 
-landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다. 구성 9:
+landed-gate 의 hollow 여부를 **커밋된 corpus 를 실행해 분류**한다. 구성 10:
 
 **① 2-arm 전건 AND**
 
@@ -200,6 +200,59 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 **⑨ 표본 = 커밋된 산출물 · 실 게이트 파생**
 
 즉석 생성(`mktemp -d` 류) 금지 — 표본이 실행 시점에 생성되면 표본 자체가 검토 대상이 되지 못하고 표본 변경이 리뷰 없이 통과한다. 선례 형판 = `tests/fixtures/codex-review-output/`(커밋된 표본 **7 파일**). 파생은 **실 게이트 사본에서**(ADR-154 §결정 7 `sed-mutation on REAL gate copy`, inline hand-copy = tautology = born-hollow **금지**).
+
+**⑩ ★★ blinded 섭동 probe — 라벨 역산 판정기 배제 (DR-M1 봉합 · 실행 실증 완료)**
+
+§결정 9 가 *"별 축 소관"* 으로 회부했던 **blinded 섭동**을 본 항이 확정한다. TestContractArch 수령분 · **실행 RED→GREEN 실증 완료**.
+
+**IC-1 좌표 충돌 불변식 (본 장치의 성립 근거)**
+
+> **probe 는 모든 커밋 좌표에서 arm-L 과 일치한다** — 같은 게이트 id · 같은 stamp · 같은 원 표본 · 같은 fixture 3종. **기대 verdict 만 반대**다.
+
+⇒ 출력이 **커밋 좌표만의 함수**인 판정기는 두 입력에 **같은 답을 낼 수밖에 없고, 정의상 한쪽에서 틀린다.** ★**arm-H/arm-L 2-arm 만으로는 성립 불가**다 — 그 둘은 좌표가 갈리므로 좌표 함수 판정기가 둘을 구별해 맞힐 수 있다. **좌표를 고정한 채 기대값만 뒤집는 세 번째 입력**이 있어야 역산이 falsify 된다.
+
+**IC-2 flip assert** — `PRE(arm-L 무변형) = LIVE` → `POST(in-place 섭동) = HOLLOW` **뒤집힘을 전건 요구**한다. 실행 실증 원문:
+
+```
+PRE  (arm-L 무변형)   verdict=LIVE   kill: rc=1 stages=['AC-1','SUMMARY']
+POST (in-place 섭동)  verdict=HOLLOW kill: rc=0 stages=[] term=1
+FLIP: LIVE -> HOLLOW => PASS
+라벨 역산 판정기: PRE=LIVE POST=LIVE => 뒤집힘 없음 => RED
+```
+
+**falsify 되는 판정기 class 6종 (전건 RED — 실행 기반만 GREEN)**
+
+| # | 판정기 class | RED 가 되는 기전 |
+|---|---|---|
+| **1** | **tautology**(무조건 통과) | flip 미발생 ⇒ IC-2 전건 요구 위반 |
+| **2** | **경로·파일명의 함수** | probe·arm-L 경로 동일(IC-1) ⇒ 같은 답 ⇒ 뒤집힘 0 |
+| **3** | **stamp 의 함수** | stamp 동일(IC-1) ⇒ 같은 답 ⇒ 뒤집힘 0 |
+| **4** | **`manifest.classification[]` 의 함수** | classification 판정기 미투입(③ ⓒ) ∧ 좌표 동일 ⇒ 같은 답 |
+| **5** | **전부 `HOLLOW` 로 찍음** | PRE(arm-L 무변형)이 `HOLLOW` ⇒ baseline sanity 위반 |
+| **6** | **전부 `LIVE` 로 찍음** | POST 가 `LIVE` ⇒ flip 0 |
+
+**IC-3 posture — recipe 는 커밋, 산출물은 run-time materialize (오해 차단)**
+
+★**⑨ *"즉석 생성 금지"* 와 무충돌**이다. ⑨ 가 금지한 것은 **리뷰 불가 표본**이지 **커밋된 recipe 의 materialize** 가 아니다. probe 의 **섭동 recipe 자체가 커밋되어 리뷰 대상**이며, 산출물만 실행 시 만들어진다 — **ADR-154 §결정 7 `sed-mutation on REAL gate copy` 및 §11.6 복제본 확정과 동형**이다(그 선례도 recipe 는 커밋·mutant 는 런타임 `cp`+`sed`).
+
+> ★**deputy 자기 반증(승계 의무)**: probe 를 **9번째 커밋 표본**으로 두면 평범한 arm-H 와 구별 불가가 되어 **IC-1 좌표 충돌 성질이 소멸**한다. 커밋 표본이 아니라 materialize 인 이유가 이것이며, 이는 취향이 아니라 **장치의 성립 조건**이다.
+
+**IC-4 exec-tree blinding** — exec dir 에 `manifest` · `stamp` · `baseline` · `probe[]` **부재** ∧ exec dir 명 **실행별 재배정** ∧ **전 표본 동일 절차** materialize. (파손 = `exit 3` — §결정 5 exit 3 조건.)
+
+**IC-5 resolved target echo** — 판정기가 **자기가 연 artifact 의 해시를 emit** 하고 `sha(S_L) ≠ sha(P)` ∧ **좌표 일치**를 assert 한다. §결정 5 internal-control 3형 중 **resolved target echo 의 직접 instance** ⇒ **신규 mechanism 0**.
+
+**IC-6 recipe ↔ kill-fixture 1:1 pairing** — landed 선례 시그니처를 답습한다. ★**정확한 landed 시그니처는 `run_mutation_exit <label> <red_builder> <FROM> <TO>` (4항 — recipe 는 `FROM`/`TO` **쌍**)**이며 `run_mutation_stdout` 은 assert token 을 더한 5항이다 `[firsthand — tests/scripts/test_check-hard-gate-self-verification.sh:415 정의 · :443 stdout 변형 · :557-562 호출부]`. *(3항 형 `run_mutation_kill <label> <builder> <desc>` 도 repo 에 있으나(`tests/scripts/test-check-doc-section-8-8.sh:519`) 그것은 **fixture builder 형**이라 실 게이트 사본 sed 축의 형판이 아니다 — 형판은 4항 쪽이다.)*
+
+**★ 신규 mechanism 0 논증 (실측)** — landed `run_mutation_exit` 이 이미 다음을 구현한다 `[firsthand]`: **baseline sanity**(`base_ec != 1` → *"대조 무의미 — fixture 부정확"*) · **실 게이트 사본**(`cp "$GATE_PY" "$mut"`) · **1:1 sed**(`sed_neutralize`) · **미적용 시 `NOT_RUN`**(*"sed 미치환 … false PASS 금지"*) · **double-guard**(`py_valid` 실패 = NOT_RUN) · **flip assert**(`base_ec=1 ∧ mut_ec=0` → KILLED). ⇒ **본 설계가 바꾼 것은 판별 축 하나뿐**이다 — **rc → 마커 문면**(⑦).
+
+**hollowing recipe = landed 재사용 (4종)**
+
+| recipe | 상태 | 처분 |
+|---|---|---|
+| **H-1** `FROM_M1`/`TO_M1` — `if not any(a in text for a in _POSITIVE_CONTROL_ANCHORS):` → `if False:` | ★**실증 완료** | **채택** — FAIL 분기만 중화하고 종단 emit 은 보존 ⇒ `HOLLOW` shape 정합 |
+| **H-2~H-4** | **미실증** | liveness 축 후보로 존치. 실증 전 day-1 계상 금지 |
+
+★**`FROM_M4`/`TO_M4` 는 부적합 — 기각 사유 기재**: `FROM_M4` 는 **종단 마커 자체**(`print(f"✓ check-hard-gate-self-verification: enrolled={enrolled} subject scanned …")`)이고 `TO_M4` 가 그것을 `print("neutralized-m4-trace")` 로 치환한다 `[firsthand — :406-412]`. ⇒ **`clean.term = 0` 이 되어 I-9 발동 → `HOLLOW` 가 아니라 `INDETERMINATE`** 를 만든다. hollowing recipe 는 **FAIL 분기를 중화하되 종단 emit 을 보존**해야 하므로 M4 축은 정의상 부적합이다.
 
 **★왜 더 강하게 쓰지 않았는가 (rationale — 약하게 쓴 이유가 계약의 일부다)**
 
