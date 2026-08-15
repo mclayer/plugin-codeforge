@@ -24,6 +24,11 @@ on:
   pull_request:
     branches: [main]
 
+# repo 관례 (실측 118 workflow 중 115 보유) — 같은 PR 의 앞선 실행을 취소한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

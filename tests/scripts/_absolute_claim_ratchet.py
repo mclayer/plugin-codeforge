@@ -17,27 +17,48 @@
     을 쓴다. 두 번째 기준을 정의하지 않는다.
 
 ── 판정 (줄 단위, 우선순위 순) ─────────────────────────────────────────────────
-  ① `[ceiling: <사유>]` 마커 + 사유 유의미  → `ceiling`          (통과)
-  ② `[ceiling:]` 마커 + 사유 공백           → `empty-ceiling`    (위반)
-  ③ 마커 없음 + 같은 diff 에 `tests/**` 변경 → `test-accompanied` (통과)
-  ④ 그 외                                    → `unbound`          (위반)
+  ① `[ceiling:]` 마커 + 사유 공백            → `empty-ceiling`    (위반)
+  ② `[bound: <test-symbol>]` + 심볼 실재     → `bound`            (통과 — 강한 해소)
+     같은 마커 + 심볼 미해소                  → `unresolved-bound` (위반)
+  ③ `[ceiling: <사유>]` 마커 + 사유 유의미   → `ceiling`          (통과)
+  ④ 마커 없음 + 같은 diff 에 `tests/**` 변경 → `test-accompanied` (통과 — 약함)
+  ⑤ 그 외                                    → `unbound`          (위반)
 
-  ②가 ③보다 **앞선다**. 빈 마커는 "천장을 선언하겠다"는 의사표시를 해놓고 내용을
-  비운 것이라 미선언보다 나쁘고, 동반 완화로 씻겨나가면 ②가 사문이 된다.
+  ①이 ④보다 **앞선다**. 빈 마커는 "천장을 선언하겠다"는 의사표시를 해놓고 내용을
+  비운 것이라 미선언보다 나쁘고, 동반 완화로 씻겨나가면 ①이 사문이 된다.
+  ②의 **미해소도 ④가 씻지 못한다** — 실재하지 않는 테스트 이름을 적어 넣는 것이
+  가장 값싼 우회이기 때문이다.
+
+  `[bound:]` 의 심볼 실재 판정은 `tests/**` 를 `ast` 로 파싱해 정의된 함수/클래스
+  이름을 모아 대조한다. 문자열 매칭(grep)이면 주석·docstring 안 이름이 통과하므로
+  쓰지 않는다. 수집기는 새로 만들지 않고 같은 문제를 이미 푼
+  `scripts/lib/check_ac_traceability_matrix.py:collect_test_symbols`(Hop3 born-missing,
+  ADR-136 Amd3 L3 "born-missing = ast, grep-only = false-oracle")를 import 해 쓴다.
 
 ── 정직 천장 (ADR-119 — 이 검사가 **못 하는** 것) ───────────────────────────────
-  · ③은 **결박이 아니라 동반 강제**다. `tests/**` 의 *어떤* 변경이든 통과시키며,
+  · ④는 **결박이 아니라 동반 강제**다. `tests/**` 의 *어떤* 변경이든 통과시키며,
     그 변경이 해당 명제를 정의역으로 삼는지 판정하지 않는다. Story PR 은 대개
-    `tests/**` 를 건드리므로 ③ 경로에서 이 검사의 실효 판별력은 낮다. 이 사실을
-    은폐하지 않기 위해 리포트는 ③으로 통과한 줄도 **전량 열거**한다(무증상 GREEN 금지).
+    `tests/**` 를 건드리므로 ④ 경로에서 이 검사의 실효 판별력은 낮다. 이 사실을
+    은폐하지 않기 위해 리포트는 ④로 통과한 줄도 **전량 열거**한다(무증상 GREEN 금지).
+    ④를 없애지는 않았다 — 없애면 기존 저작 흐름이 막히므로, 대신 저자가 고를 수 있는
+    강한 해소 경로로 ②를 뒀다.
+  · ②도 **심볼이 실재하는지**까지만 본다. 그 테스트가 해당 명제를 실제로 반증하는지
+    (정의역·강도)는 판정하지 않는다 — 이름만 맞는 무관한 테스트를 대면 통과한다.
+    ⇒ 이 검사가 세우는 것은 "신규 선언이 오라클에 결박된다"가 **아니라**
+      「천장 마커 결박 ⊕ 테스트 동반(판별력 낮음) ⊕ `[bound:]` 심볼 실재 검증」이다.
   · **패러프레이즈 우회**를 막지 못한다. `TOKENS` 는 어휘 목록이지 의미 판정기가
-    아니다 — 같은 절대주장을 목록 밖 표현으로 쓰면 통과한다.
+    아니다 — 같은 절대주장을 목록 밖 표현으로 쓰면 통과한다. 이 천장은 산문으로만
+    두지 않고 `test_paraphrased_absolute_claim_is_outside_detection_domain` 이
+    **assert 로 각인**한다(검사기를 의미 축으로 넓히면 그 테스트가 RED 가 되어
+    천장 문서 갱신이 강제된다).
   · **use 와 mention 을 구분하지 못한다.** 토큰을 *언급*하는 줄(어휘 정의·합성
-    fixture·검사 자신을 설명하는 산문)도 걸린다. 그 줄들은 ①로 정직하게 처리한다.
+    fixture·검사 자신을 설명하는 산문)도 걸린다. 그 줄들은 ③으로 정직하게 처리한다.
   · 기존 재고(정의역 밖)와 **다른 repo**(codeforge-internal-docs 의 Story 문서)에는
     도달하지 않는다.
   · 어휘는 **한글만** 담는다. 영문 등가어(`always`/`atomic` 등)는 이 repo 에서
     오탐원이다 — `.github/workflows/**` 의 `always()` 16 site 가 실측 근거다.
+  · 판정은 **커밋된 내용**(HEAD) 기준이다. 워킹트리의 미커밋 수정은 3-dot diff 에
+    나타나지 않으므로 로컬 선실행은 마지막 커밋 상태를 잰다.
 """
 
 import argparse
@@ -56,8 +77,12 @@ TOKENS = ("손실 0", "잔여 0", "무손상", "무조건", "항상", "전건", 
 
 # `[ceiling: <사유>]` — 대괄호 안, 콜론 뒤 전체를 사유로 본다.
 CEILING_RE = re.compile(r"\[ceiling:([^\]]*)\]")
+# `[bound: <test-symbol>]` — 강한 해소. 심볼이 tests/** 아래 실재해야 통과한다.
+BOUND_RE = re.compile(r"\[bound:([^\]]*)\]")
 # 사유 "유의미" 판정: 글자/숫자가 하나라도 있어야 한다 (`[ceiling: -]` 류 우회 차단).
 _MEANINGFUL_RE = re.compile(r"[0-9A-Za-z가-힣]")
+# 파이썬 식별자 — `[bound:]` 값은 심볼명 하나여야 한다.
+_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 _HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 _DIFF_GIT_RE = re.compile(r"^diff --git ")
@@ -68,7 +93,7 @@ AddedLine = namedtuple("AddedLine", "path lineno text")
 Claim = namedtuple("Claim", "path lineno text tokens disposition reason")
 
 # 위반으로 계상하는 disposition
-FAIL_DISPOSITIONS = ("empty-ceiling", "unbound")
+FAIL_DISPOSITIONS = ("empty-ceiling", "unresolved-bound", "unbound")
 
 EXIT_OK = 0
 EXIT_VIOLATION = 1
@@ -175,12 +200,71 @@ def ceiling_reason(text):
     return ""
 
 
+def bound_symbol(text):
+    """`[bound: <symbol>]` 파싱 → 심볼명 / `""`(마커는 있으나 심볼로 못 읽음) / `None`.
+
+    값이 식별자 형태가 아니면 `""` 로 접어 미해소(위반) 쪽으로 보낸다."""
+    found = BOUND_RE.findall(text)
+    if not found:
+        return None
+    for raw in found:
+        sym = raw.strip()
+        if _IDENT_RE.match(sym):
+            return sym
+    return ""
+
+
+def _load_symbol_collector():
+    """Hop3(born-missing)의 `ast` 수집기를 **재사용**한다 — 새로 만들지 않는다.
+
+    같은 문제(명명 테스트가 실재하는가)를 이미 푼 구현이 있고, grep 기반 재작성은
+    주석·docstring 안 이름을 통과시키는 false-oracle 이 된다(ADR-136 Amd3 L3)."""
+    lib = os.path.join(repo_root_from(), "scripts", "lib")
+    if lib not in sys.path:
+        sys.path.insert(0, lib)
+    from check_ac_traceability_matrix import collect_test_symbols
+    return collect_test_symbols
+
+
+def collect_bound_symbols(repo_root=None, tests_root=None):
+    """`tests/**` 아래 정의된 함수/클래스 이름 집합. 루트 부재 시 `None`(판정불가)."""
+    root = repo_root_from(repo_root)
+    target = tests_root or os.path.join(root, TEST_PATH_PREFIX.rstrip("/"))
+    return _load_symbol_collector()(target)
+
+
 def match_tokens(text, tokens=TOKENS):
     return [t for t in tokens if t in text]
 
 
 # ═══════════════════════════ 판정 ═══════════════════════════════════════════════
-def evaluate(diff_text, tokens=TOKENS, allow_test_accompaniment=True, only_prefixes=None):
+_R_UNRESOLVED = "결박 심볼 미해소 — tests/** 아래 ast 로 확인되지 않는다"
+
+
+def classify_line(text, tests_touched=False, allow_test_accompaniment=True, symbol_index=()):
+    """줄 하나 → `(disposition, 사유)`. 우선순위 SSOT = 모듈 docstring §판정.
+
+    `symbol_index` 기본값은 **빈 집합**이다 — 미제공 상태에서 `[bound:]` 를 통과시키면
+    검증 없는 해소가 되므로 fail-closed 로 둔다."""
+    symbols = symbol_index or ()
+    reason = ceiling_reason(text)
+    bound = bound_symbol(text)
+
+    if reason is not None and not reason:
+        return "empty-ceiling", "ceiling 마커 사유 공백 (빈 마커 우회 차단)"
+    if bound is not None:
+        if bound and bound in symbols:
+            return "bound", "결박 심볼 실재 — %s" % bound
+        return "unresolved-bound", "%s (%s)" % (_R_UNRESOLVED, bound or "심볼 미기재")
+    if reason:
+        return "ceiling", "ceiling 사유 기재 — %s" % reason
+    if allow_test_accompaniment and tests_touched:
+        return "test-accompanied", "같은 diff 에 tests/** 변경 동반 (동반 강제 — 결박 아님)"
+    return "unbound", "결박 부재 — tests/** 변경 미동반 · 마커 없음"
+
+
+def evaluate(diff_text, tokens=TOKENS, allow_test_accompaniment=True, only_prefixes=None,
+             symbol_index=()):
     """diff 텍스트 → 판정 결과 dict (순수 — git 호출 없음)."""
     added = parse_added_lines(diff_text)
     touched = changed_paths(diff_text)
@@ -193,16 +277,7 @@ def evaluate(diff_text, tokens=TOKENS, allow_test_accompaniment=True, only_prefi
         hits = match_tokens(a.text, tokens)
         if not hits:
             continue
-        reason = ceiling_reason(a.text)
-        if reason is not None:
-            if reason:
-                disp, why = "ceiling", "ceiling 사유 기재 — %s" % reason
-            else:
-                disp, why = "empty-ceiling", "ceiling 마커 사유 공백 (빈 마커 우회 차단)"
-        elif allow_test_accompaniment and tests_touched:
-            disp, why = "test-accompanied", "같은 diff 에 tests/** 변경 동반 (동반 강제 — 결박 아님)"
-        else:
-            disp, why = "unbound", "결박 부재 — tests/** 변경 미동반 · ceiling 마커 없음"
+        disp, why = classify_line(a.text, tests_touched, allow_test_accompaniment, symbol_index)
         claims.append(Claim(a.path, a.lineno, a.text, hits, disp, why))
 
     return {
@@ -218,18 +293,22 @@ def evaluate(diff_text, tokens=TOKENS, allow_test_accompaniment=True, only_prefi
 def format_report(result, show_passed=True):
     """판정 결과 → 사람이 읽는 줄 목록. ③(동반 통과)도 열거해 느슨함을 드러낸다."""
     lines = []
-    order = {"unbound": 0, "empty-ceiling": 1, "ceiling": 2, "test-accompanied": 3}
+    order = {"unbound": 0, "unresolved-bound": 1, "empty-ceiling": 2,
+             "bound": 3, "ceiling": 4, "test-accompanied": 5}
     for c in sorted(result["claims"], key=lambda c: (order.get(c.disposition, 9), c.path, c.lineno)):
         fail = c.disposition in FAIL_DISPOSITIONS
         if not fail and not show_passed:
             continue
         lines.append("%-4s %s:%d  [토큰: %s]  %s"
                      % ("FAIL" if fail else "ok", c.path, c.lineno, ", ".join(c.tokens), c.reason))
-    n_ceiling = sum(1 for c in result["claims"] if c.disposition == "ceiling")
-    n_accomp = sum(1 for c in result["claims"] if c.disposition == "test-accompanied")
-    lines.append("요약: 위반 %d · ceiling %d · test-accompanied %d (추가줄 %d 중 claim %d)"
-                 % (len(result["violations"]), n_ceiling, n_accomp,
-                    result["added_lines"], len(result["claims"])))
+    tally = {}
+    for c in result["claims"]:
+        tally[c.disposition] = tally.get(c.disposition, 0) + 1
+    n_accomp = tally.get("test-accompanied", 0)
+    lines.append("요약: 위반 %d · bound %d · ceiling %d · test-accompanied %d "
+                 "(추가줄 %d 중 claim %d)"
+                 % (len(result["violations"]), tally.get("bound", 0), tally.get("ceiling", 0),
+                    n_accomp, result["added_lines"], len(result["claims"])))
     if n_accomp:
         lines.append("주의: test-accompanied %d 줄은 **동반 강제**로 통과했다 — 해당 명제가 "
                      "테스트 정의역에 들어갔는지 이 검사는 판정하지 않는다." % n_accomp)
@@ -285,10 +364,17 @@ def main(argv=None):
               "(shallow clone 이면 fetch-depth: 0 필요)" % (RATCHET_VERSION, args.base_ref))
         return EXIT_BASE_UNRESOLVED
 
-    result = evaluate(diff, allow_test_accompaniment=not args.strict, only_prefixes=args.only)
+    symbols = collect_bound_symbols(root)
+    if symbols is None:
+        print("[%s] tests/** 루트 미해소 — `[bound:]` 판정불가라 **미판정**으로 종료한다"
+              % RATCHET_VERSION)
+        return EXIT_BASE_UNRESOLVED
+
+    result = evaluate(diff, allow_test_accompaniment=not args.strict, only_prefixes=args.only,
+                      symbol_index=symbols)
     head = _run(["git", "rev-parse", "--short", "HEAD"], root).stdout.strip()
-    print("[%s] base=%s head=%s strict=%s"
-          % (RATCHET_VERSION, args.base_ref, head, bool(args.strict)))
+    print("[%s] base=%s head=%s strict=%s tests-symbols=%d"
+          % (RATCHET_VERSION, args.base_ref, head, bool(args.strict), len(symbols)))
     for ln in format_report(result, show_passed=not args.quiet_passed):
         print(ln)
     return EXIT_VIOLATION if result["violations"] else EXIT_OK
