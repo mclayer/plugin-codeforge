@@ -228,6 +228,24 @@ def test_forbidden_halt_form_absent_in_normative_region(adr178_content: str):
     if quoted:
         search_region = normative.replace(quoted, "")
 
+    # AC-4-B precondition (CFP-2966 구현리뷰 Iter1 F-1 / CP §8.2.5(a)):
+    #   아래 "토큰 부재" assert 는 search_region 이 **비공허할 때만** 의미가 있다.
+    #   마커를 지우지 않고 재배치해 인용 절이 normative 전체를 덮으면 search_region 이
+    #   빈 문자열이 되고, 그러면 실 금지 조항이 규범에 실재해도 for 루프가 전건 vacuous
+    #   통과한다 (lint 와 동시 vacuous GREEN — 리뷰·DevPL 이중 재현된 실제 경로).
+    #   따라서 정의역 비공허를 **먼저** 단언해 오라클이 공허해지는 것을 막는다.
+    #   ★ 주의: `normative.replace(quoted, "")` 는 인용 절 **본문**만 지우고 마커 주석
+    #     (`<!-- forbidden-form-quotation:start/end -->`) 은 남긴다. 따라서 raw
+    #     `search_region.strip()` 으로 판정하면 마커 문자열 때문에 항상 truthy 가 되어
+    #     가드 자신이 vacuous 해진다 (실측 확인 — 이 형태로는 m4b mutant 가 27 passed 생존).
+    #     마커를 제거한 잔여 문면으로 판정한다.
+    domain_probe = re.sub(
+        r"<!--\s*forbidden-form-quotation:(?:start|end)\s*-->", "", search_region).strip()
+    assert domain_probe, (
+        "검사 정의역(normative-region − quotation)이 공허하다 — 인용 절 재배치로 정의역이 "
+        "덮이면 이하 금지 토큰 부재 assert 가 vacuous 통과한다 (ADR-178 §결정 7 무력화)."
+    )
+
     # 4 금지 토큰 (AC-4-B 검증 대상)
     forbidden_tokens = [
         "한도 임박 시 커밋",
