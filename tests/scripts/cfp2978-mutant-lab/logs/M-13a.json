@@ -1,7 +1,7 @@
 {
-  "mutant": "M-13h",
-  "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "정적 GREEN (declared) | 중첩 runtime: delta 소멸 (rc 흡수)",
+  "mutant": "M-13a",
+  "target": "scripts/lib/check_parallel_work_sentinel.py",
+  "expected": "RED (런타임 kill — determined 부재)",
   "pytest_face": {
     "returncode": 0,
     "failed_legs": [],
@@ -43,14 +43,18 @@
     }
   },
   "runtime_face": {
-    "verdict": "GREEN",
-    "returncode": 0,
-    "rc_after_coe": 0,
-    "stdout_lines": 24,
-    "failed_tests": [],
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 123,
+    "failed_tests": [
+      "test_2976_c_determined_contract",
+      "test_c1_currency_match_current_blob",
+      "test_d2_born_broken_old_blob_paired_observation"
+    ],
     "stderr_excerpt": ""
   },
-  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13h",
+  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13a",
   "w13_raw": {
     "ownership": {
       "coe_paths": [
@@ -67,7 +71,7 @@
       "bare_misclassifies": false
     },
     "sentinel_shape": {
-      "path": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13h\\tests\\fixtures\\cfp2978\\mctrader-sentinel.yml",
+      "path": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13a\\tests\\fixtures\\cfp2978\\mctrader-sentinel.yml",
       "job_ids": [
         "parallel-work-sentinel",
         "parallel-work-sentinel-test"

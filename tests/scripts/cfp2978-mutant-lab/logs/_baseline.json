@@ -130,5 +130,13 @@
         "parallel-work-sentinel-test": "ubuntu-latest"
       }
     }
+  },
+  "runtime": {
+    "verdict": "GREEN",
+    "returncode": 0,
+    "rc_after_coe": 0,
+    "stdout_lines": 24,
+    "failed_tests": [],
+    "stderr_excerpt": ""
   }
 }

@@ -46,6 +46,12 @@ import sys
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
+# Windows stdout encoding fix (UTF-8 for Korean characters)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 # ── 경로 ─────────────────────────────────────────────────────────────────────
 LAB_DIR = Path(__file__).resolve().parent
 REPO_ROOT = LAB_DIR.parents[2]
@@ -382,26 +388,50 @@ def _job2_run(repl: str, label: str) -> Callable[[str], str]:
     return fn
 
 
-# ★ `run: cmd || :` 를 **평문 스칼라**로 쓰면 줄 끝 `: ` 가 YAML 매핑 키로 읽혀
-#   parse error 가 난다(1차 실행에서 실측 — 그 RED 는 rc 흡수 검출이 아니라 하네스
-#   결함이었다). 실제 우회자가 쓸 형태 = 블록 스칼라. 그 형태로 교정한다.
-m_13h = _job2_run(
-    "      - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n"
-    "        run: |\n"
-    "          bash tests/scripts/test_check-parallel-work-sentinel.sh || :\n", "M-13h")
-m_13i = _job2_run(
-    "      - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n"
-    "        run: bash tests/scripts/test_check-parallel-work-sentinel.sh ; true\n", "M-13i")
-m_13j = _job2_run(
-    "      - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n"
-    "        run: |\n"
-    "          set +e\n"
-    "          bash tests/scripts/test_check-parallel-work-sentinel.sh\n"
-    "          exit 0\n", "M-13j")
-m_13k = _job2_run(
-    "      - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n"
-    "        shell: bash {0}\n"
-    "        run: bash tests/scripts/test_check-parallel-work-sentinel.sh\n", "M-13k")
+# ★ M-13h~l: wrapper workflow 의 "Run pytest tests (W-3b)" step 의 run block 변이.
+#   Step name 앵커로 안전하게 위치 고정. 평문 스칼라 `run: cmd || :` 는 YAML 파싱 에러 → 블록 스칼라.
+
+def m_13h(t: str) -> str:
+    """'Run pytest tests (W-3b)' step 의 run block 을 `|| :` 우회로 변경."""
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = (
+        "        run: |\n"
+        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q || :\n"
+    )
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13h")
+
+
+def m_13i(t: str) -> str:
+    """'Run pytest tests (W-3b)' step 의 run block 을 `; true` 형태로 변경."""
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i")
+
+
+def m_13j(t: str) -> str:
+    """'Run pytest tests (W-3b)' step 의 run block 을 `set +e` + `exit 0` 으로 변경 (둘 다)."""
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = (
+        "        run: |\n"
+        "          set +e\n"
+        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+        "          exit 0\n"
+    )
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13j")
+
+
+def m_13k(t: str) -> str:
+    """'Run pytest tests (W-3b)' step 에 step-level shell 주입."""
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = (
+        "        shell: bash {0}\n"
+        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    )
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13k")
 
 
 def m_13l(t: str) -> str:
@@ -409,6 +439,18 @@ def m_13l(t: str) -> str:
     return _replace_once(
         t, "permissions:\n",
         "defaults:\n  run:\n    shell: bash {0}\n\npermissions:\n", "M-13l")
+
+
+def m_13a(t: str) -> str:
+    """scripts/lib/check_parallel_work_sentinel.py 의 _exit_pass 에서
+    payload.setdefault("determined", True) 줄 제거 (L184 상당).
+    기대값 = 런타임 RED (M-13a 단독 killer). 정적 피드백 불가.
+    test_cfp2976_sentinel_prefix.py 의 test_2976_c_determined_contract 가
+    setdefault 부재를 assert 해 RED 를 관측.
+    """
+    # 앵커: "    payload.setdefault" 4칸 들여쓰기 줄 (docstring 무관)
+    anchor = '    payload.setdefault("determined", True)'
+    return _replace_once(t, anchor, '', "M-13a")
 
 
 def m_13e_empty(t: str) -> str:
@@ -424,11 +466,12 @@ def m_13e_delete(t: str) -> str:
 
 
 MUTANTS: Dict[str, Tuple[str, Callable[[str], str], str]] = {
-    "M-13h":            ("mctrader-sentinel.yml", m_13h,           "정적 GREEN (declared — 완결=M-13a 런타임)"),
-    "M-13i":            ("mctrader-sentinel.yml", m_13i,           "정적 GREEN (declared)"),
-    "M-13j":            ("mctrader-sentinel.yml", m_13j,           "정적 GREEN (declared)"),
-    "M-13k":            ("mctrader-sentinel.yml", m_13k,           "RED (step_shell 신설로 관측)"),
-    "M-13l":            ("mctrader-sentinel.yml", m_13l,           "RED (defaults_run_shell 신설로 관측)"),
+    "M-13a":            ("scripts/lib/check_parallel_work_sentinel.py", m_13a, "RED (런타임 kill — determined 부재)"),
+    "M-13h":            (".github/workflows/parallel-work-sentinel-check.yml", m_13h, "정적 GREEN (declared) | 중첩 runtime: delta 소멸 (rc 흡수)"),
+    "M-13i":            (".github/workflows/parallel-work-sentinel-check.yml", m_13i, "정적 GREEN (declared) | 중첩 runtime: delta 소멸"),
+    "M-13j":            (".github/workflows/parallel-work-sentinel-check.yml", m_13j, "정적 GREEN (declared) | 중첩 runtime: delta 소멸 (set +e + exit 0)"),
+    "M-13k":            (".github/workflows/parallel-work-sentinel-check.yml", m_13k, "정적 RED (step_shell 신설) | 중첩 runtime: delta 소멸"),
+    "M-13l":            (".github/workflows/parallel-work-sentinel-check.yml", m_13l, "정적 RED (defaults_run_shell 신설) | 중첩 runtime: delta 소멸"),
     "M-13e-empty":      ("mctrader-sentinel.yml", m_13e_empty,     "exit 2 (P-3 not_mapping)"),
     "M-13e-malformed":  ("mctrader-sentinel.yml", m_13e_malformed, "exit 2 (P-2 parse_error)"),
     "M-13e-delete":     ("mctrader-sentinel.yml", m_13e_delete,    "exit 2 (P-1 file_missing)"),
@@ -610,6 +653,114 @@ def run_w13_face(fixdir: Path) -> Dict[str, object]:
     }
 
 
+# ── (d) 런타임 오라클 실행 ─────────────────────────────────────────────────
+def run_runtime_face(run_dir: Path) -> Dict[str, object]:
+    """run tree 의 workflow 를 W-13 으로 파싱해 job2 의 pytest step 을 실제 실행.
+
+    기대값: M-13a 단독 → rc=1 (determined 부재 → killer test 실패)
+           M-13a+rc흡수 → rc=0 (흡수가 오류도 먹음)
+    """
+    import yaml
+    try:
+        from workflow_shape import load_workflow_shape
+    except ImportError:
+        sys.path.insert(0, str(run_dir / "scripts" / "lib"))
+        from workflow_shape import load_workflow_shape
+
+    workflow_path = run_dir / ".github" / "workflows" / "parallel-work-sentinel-check.yml"
+    if not workflow_path.exists():
+        return {"verdict": "ERROR", "reason": "workflow file not found"}
+
+    # workflow YAML 파싱
+    with open(workflow_path, encoding="utf-8") as f:
+        doc = yaml.safe_load(f) or {}
+
+    jobs = doc.get("jobs", {})
+    job2_def = jobs.get(JOB2, {})
+    if not job2_def:
+        return {"verdict": "ERROR", "reason": f"job {JOB2} not found"}
+
+    steps = job2_def.get("steps", [])
+    if not steps:
+        return {"verdict": "ERROR", "reason": "no steps"}
+
+    # Run pytest step 찾기 (id: run-pytest)
+    pytest_step = None
+    for s in steps:
+        if s.get("id") == "run-pytest":
+            pytest_step = s
+            break
+
+    if not pytest_step or not pytest_step.get("run"):
+        return {"verdict": "ERROR", "reason": "pytest step not found"}
+
+    # effective shell 결정
+    wf_shell = doc.get("defaults", {}).get("run", {}).get("shell", "bash -e {0}")
+    job_shell = job2_def.get("defaults", {}).get("run", {}).get("shell")
+    step_shell = pytest_step.get("shell")
+
+    eff_shell = step_shell or job_shell or wf_shell
+
+    # shell 옵션 파싱
+    shell_cmd = "bash"
+    shell_args = []
+    if "{0}" in eff_shell:
+        parts = eff_shell.replace("{0}", "").split()
+        shell_cmd = parts[0]
+        shell_args = parts[1:] if len(parts) > 1 else []
+
+    # pytest step run — Git Bash 로 실행 (셸 연산자 지원)
+    try:
+        run_cmd = pytest_step["run"]
+
+        # Git Bash 명시 경로 (WSL bash 회피)
+        BASH = os.environ.get("CFP2978_BASH", r"C:\Program Files\Git\bin\bash.exe")
+
+        # run 본문을 임시 .sh 파일에 작성
+        script_path = run_dir / ".cfp2978_run.sh"
+        script_path.write_text(run_cmd, encoding="utf-8")
+
+        # errexit 옵션 결정 (defaults.run.shell에 명시된 경우 제외)
+        errexit = True
+        if doc.get("defaults", {}).get("run", {}).get("shell"):
+            # "bash {0}" 형태 = errexit 없음 (M-13k/M-13l 테스트용)
+            if "bash {0}" in doc.get("defaults", {}).get("run", {}).get("shell"):
+                errexit = False
+        if step_shell and "bash {0}" in step_shell:
+            errexit = False
+
+        # Git Bash 로 실행
+        args = [BASH] + (["-e"] if errexit else []) + [str(script_path)]
+        result = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(run_dir), timeout=60)
+        rc = result.returncode
+
+        # pytest stdout 파싱: "FAILED <test_name>" 패턴 추출
+        failed_tests = []
+        for line in result.stdout.splitlines():
+            if line.startswith("FAILED"):
+                # FAILED tests/scripts/test_xxx.py::test_name - ...
+                parts = line.split("::")
+                if len(parts) >= 2:
+                    test_name = parts[-1].split()[0]  # test_name 까지만
+                    failed_tests.append(test_name)
+
+        # continue-on-error 적용
+        coe = pytest_step.get("continue-on-error", False)
+        if rc != 0 and coe:
+            rc = 0
+
+        return {
+            "verdict": "GREEN" if rc == 0 else "RED",
+            "returncode": result.returncode,
+            "rc_after_coe": rc,
+            "stdout_lines": len(result.stdout.splitlines()),
+            "failed_tests": failed_tests,
+            "stderr_excerpt": result.stderr[:200] if result.stderr else "",
+        }
+    except Exception as e:
+        return {"verdict": "ERROR", "reason": str(type(e).__name__)}
+
+
 # ── straw 대조군 (T-taut 짝 관측) ────────────────────────────────────────────
 def run_straw_face(fixdir: Path) -> Dict[str, object]:
     """밀짚 오라클 — W-14 `test_oracle_taut_*` 이 쓰는 형태 그대로.
@@ -634,13 +785,54 @@ def build_run_tree(mid: str) -> Path:
     (run_dir / "tests" / "scripts").mkdir(parents=True)
     (run_dir / "tests" / "fixtures" / "cfp2978").mkdir(parents=True)
     (run_dir / "scripts" / "lib").mkdir(parents=True)
-    shutil.copy2(TEST_FILE, run_dir / "tests" / "scripts" / TEST_FILE.name)
+    (run_dir / ".github" / "workflows").mkdir(parents=True)
+
+    # ── tests/scripts: pytest test 파일 4개 + conftest
     shutil.copy2(CONFTEST, run_dir / "tests" / "scripts" / "conftest.py")
-    # W-13 원본은 **변이 대상이 아니다** — 변이는 fixture 에만 가한다.
+    for test_file in [
+        "test_cfp2976_sentinel_prefix.py",
+        "test_cfp2978_workflow_shape.py",
+        "test_cfp2978_resource_scan_shape.py",
+        "test_consumer_asset_currency.py",
+    ]:
+        src = REPO_ROOT / "tests" / "scripts" / test_file
+        if src.exists():
+            shutil.copy2(src, run_dir / "tests" / "scripts" / test_file)
+
+    # ── scripts/lib: W-13 + wrapper lib 파일들
     shutil.copy2(W13_MODULE, run_dir / "scripts" / "lib" / W13_MODULE.name)
+    for lib_file in [
+        "check_parallel_work_sentinel.py",
+        "check_consumer_asset_currency.py",
+    ]:
+        src = REPO_ROOT / "scripts" / "lib" / lib_file
+        if src.exists():
+            shutil.copy2(src, run_dir / "scripts" / "lib" / lib_file)
+
+    # ── .github/workflows: 2개 workflow 파일
+    for wf_file in [
+        "parallel-work-sentinel-check.yml",
+        "consumer-asset-currency-check.yml",
+    ]:
+        src = REPO_ROOT / ".github" / "workflows" / wf_file
+        if src.exists():
+            shutil.copy2(src, run_dir / ".github" / "workflows" / wf_file)
+
+    # ── tests/fixtures: fixture yml + manifest
     for f in FIXTURES:
         shutil.copy2(FIXTURE_DIR / f, run_dir / "tests" / "fixtures" / "cfp2978" / f)
+    # fixtures_manifest.md
+    manifest_src = FIXTURE_DIR / "fixtures_manifest.md"
+    if manifest_src.exists():
+        shutil.copy2(manifest_src, run_dir / "tests" / "fixtures" / "cfp2978" / "fixtures_manifest.md")
+    # 벤더 fixture sentinel-old-07d1127a.py.txt
+    vendor_src = FIXTURE_DIR / "sentinel-old-07d1127a.py.txt"
+    if vendor_src.exists():
+        shutil.copy2(vendor_src, run_dir / "tests" / "fixtures" / "cfp2978" / "sentinel-old-07d1127a.py.txt")
+
     return run_dir
+
+
 
 
 def run_one(mid: str) -> Dict[str, object]:
@@ -649,18 +841,27 @@ def run_one(mid: str) -> Dict[str, object]:
     fixdir = run_dir / "tests" / "fixtures" / "cfp2978"
 
     # 변이 적용 (앵커 적중 강제)
-    src = (fixdir / target).read_text(encoding="utf-8")
+    # target 이 fixture 파일명이면 fixdir / target, 아니면 run_dir / target 해석
+    if "/" in target or target.startswith("."):
+        # run tree 상대경로 (e.g., "scripts/lib/check_parallel_work_sentinel.py")
+        target_path = run_dir / target
+    else:
+        # fixture 파일명 (e.g., "mctrader-sentinel.yml")
+        target_path = fixdir / target
+
+    src = target_path.read_text(encoding="utf-8")
     mutated = fn(src)
     if mutated == src:
         raise SystemExit(f"[NO-OP] {mid}: 변이 결과가 원본과 동일 — 관측 무효")
     if mutated == "__DELETE__":
-        (fixdir / target).unlink()            # P-1 축 (파일 소실)
+        target_path.unlink()            # P-1 축 (파일 소실)
     else:
-        (fixdir / target).write_text(mutated, encoding="utf-8", newline="")
+        target_path.write_text(mutated, encoding="utf-8", newline="")
 
     pytest_res = run_pytest_face(run_dir)
     w13_res = run_w13_face(fixdir)
     straw_res = run_straw_face(fixdir)
+    runtime_res = run_runtime_face(run_dir)
 
     result = {
         "mutant": mid,
@@ -669,6 +870,7 @@ def run_one(mid: str) -> Dict[str, object]:
         "pytest_face": {k: v for k, v in pytest_res.items() if k != "raw"},
         "w13_face": {k: v for k, v in w13_res.items() if k != "raw"},
         "straw_face": straw_res,
+        "runtime_face": runtime_res,
         "run_dir": str(run_dir),
     }
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -680,21 +882,72 @@ def run_one(mid: str) -> Dict[str, object]:
     return result
 
 
+def run_composite(mids: List[str]) -> Dict[str, object]:
+    """★중첩 변이 — 여러 mutant 를 **한 run tree 에 순차 적용**한 뒤 면을 측정한다.
+
+    존재 이유 (§8.B 처방 3):
+      rc 흡수 mutant(M-13h~l)는 **단독으로는 판별되지 않는다** — 원래 GREEN 인
+      job 이 GREEN 으로 남을 뿐이라 관측이 무정보다. 판별은 오직 대조에서 선다:
+
+          delta(M-13a) != ∅   ∧   delta(M-13h + M-13a) == ∅
+
+      좌항은 "런타임 축에 teeth 가 있다", 우항은 "rc 흡수가 그 teeth 를 삼킨다"
+      를 뜻한다. 둘을 **같은 실행 계열**에서 내야 "런타임 축이 상위 방어이고
+      흡수 표면이 실재 위협"이라는 결론이 성립한다. 한쪽만 내면 논증이 아니다.
+
+    ★본 함수는 **실행**한다. 추론으로 대체하지 않는다 — 중첩 결과를 논리로
+      유도해 적으면 그것은 관측이 아니라 전방 참조다.
+    """
+    label = "+".join(mids)
+    run_dir = build_run_tree(label.replace("+", "_plus_"))
+    fixdir = run_dir / "tests" / "fixtures" / "cfp2978"
+
+    for mid in mids:
+        if mid not in MUTANTS:
+            raise SystemExit(f"unknown mutant in composite: {mid}")
+        target, fn, _ = MUTANTS[mid]
+        tp = (run_dir / target) if ("/" in target or target.startswith(".")) \
+            else (fixdir / target)
+        src = tp.read_text(encoding="utf-8")
+        mutated = fn(src)
+        # 앵커 적중 강제 — 중첩에서 앞선 변이가 뒤 변이의 앵커를 깨뜨렸는데
+        # 조용히 no-op 이 되면 "흡수 때문에 GREEN" 을 거짓 주장하게 된다.
+        if mutated == src:
+            raise SystemExit(f"[NO-OP] {mid} in composite {label}: 변이 무효 — 관측 폐기")
+        tp.write_text(mutated, encoding="utf-8", newline="")
+
+    runtime_res = run_runtime_face(run_dir)
+    w13_res = run_w13_face(fixdir)
+
+    result = {
+        "composite": label,
+        "applied": mids,
+        "runtime_face": runtime_res,
+        "w13_face": {k: v for k, v in w13_res.items() if k != "raw"},
+        "run_dir": str(run_dir),
+    }
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    (LOG_DIR / f"COMPOSITE_{label.replace('+', '_plus_')}.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    return result
+
+
 def baseline() -> Dict[str, object]:
-    """변이 0 기준선 — 두 면 모두 GREEN 이어야 관측이 성립한다."""
+    """변이 0 기준선 — 네 면 모두 GREEN 이어야 관측이 성립한다."""
     run_dir = build_run_tree("_baseline")
     fixdir = run_dir / "tests" / "fixtures" / "cfp2978"
     p = run_pytest_face(run_dir)
     w = run_w13_face(fixdir)
     s = run_straw_face(fixdir)
+    rt = run_runtime_face(run_dir)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     (LOG_DIR / "_baseline.pytest.txt").write_text(p["raw"], encoding="utf-8")
     (LOG_DIR / "_baseline.json").write_text(
         json.dumps({"pytest": {k: v for k, v in p.items() if k != "raw"},
-                    "w13": w, "straw": s}, ensure_ascii=False, indent=2, default=str),
+                    "w13": w, "straw": s, "runtime": rt}, ensure_ascii=False, indent=2, default=str),
         encoding="utf-8",
     )
-    return {"pytest": {k: v for k, v in p.items() if k != "raw"}, "w13": w, "straw": s}
+    return {"pytest": {k: v for k, v in p.items() if k != "raw"}, "w13": w, "straw": s, "runtime": rt}
 
 
 def main() -> int:
@@ -703,6 +956,11 @@ def main() -> int:
     ap.add_argument("--baseline", action="store_true")
     ap.add_argument("--run", nargs="*", default=None)
     ap.add_argument("--run-all", action="store_true")
+    # ★중첩 변이 — rc 흡수의 판별은 대조(delta 소멸)에서만 선다 (§8.B 처방 3).
+    ap.add_argument("--compose", nargs="+", default=None,
+                    metavar="MID",
+                    help="여러 mutant 를 한 run tree 에 겹쳐 적용 후 런타임 면 측정 "
+                         "(예: --compose M-13h M-13a)")
     a = ap.parse_args()
 
     if a.list:
@@ -712,8 +970,15 @@ def main() -> int:
     if a.baseline:
         print(json.dumps(baseline(), ensure_ascii=False, indent=2, default=str))
         return 0
+    if a.compose:
+        print(json.dumps(run_composite(a.compose), ensure_ascii=False, indent=2, default=str))
+        return 0
 
     ids = list(MUTANTS) if a.run_all else (a.run or [])
+    # 결함 C: 무인자 호출 가드 — summary.json 무손상 유지
+    if not ids:
+        ap.print_usage()
+        return 1
     out = []
     for mid in ids:
         if mid not in MUTANTS:
