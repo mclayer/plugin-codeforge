@@ -30,8 +30,20 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 import importlib.util
+
+import pytest
+
+# ── A8 idiom 단일 출처 결속 (D-3 (b) — CR-3) ─────────────────────────────────
+# ★ 6종 집합을 **복사하지 않는다**. 두 테스트 파일이 같은 열거를 각자 들고 있으면
+#   그 순간 드리프트가 시작된다(한쪽만 공백 관용화되는 사고 = CR-1 이 고친 결함의
+#   재발 경로). 유일 정의처 = `test_cfp2978_workflow_shape.py`.
+_TESTS_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_TESTS_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_TESTS_SCRIPTS_DIR))
+
+from test_cfp2978_workflow_shape import _A8_DOMAIN, _A8_IDIOMS  # noqa: E402
 
 
 # 게이트 절대경로
@@ -745,49 +757,178 @@ def test_gate_not_applicable_wrapper_ssot():
 
 
 # ============================================================================
-# D-3: Static shape analysis (workflow 구조 검증)
+# D-3: Static shape analysis (workflow 구조 검증) — (a) + (b)
 # ============================================================================
-def test_d3_consumer_execution_gate_static_shape():
+# ★ FIX Iter 4 (CR-3) — 구 판은 Change Plan §8.3 D-3 행의 **(a) 절만** 옮기고
+#   **(b) 절을 통째로 빠뜨렸다** (`coe_paths`·`step_shell`·`defaults_run_shell`
+#   전건 부재, 자기 docstring 도 "job_id, step_if, job_if 구조 검증" 만 적었다).
+#   그 결과 **게이트의 유일 차단 step 에 `continue-on-error: true` 를 양 면 주입해도
+#   `100 passed`** 였다 (firsthand). 양면 동일 주입이라 byte-parity 검사도 무반응.
+#   구 판은 단면(`.github/`)만 봤으므로 twin 은 애초에 정의역 밖이었다.
+#
+# 구 판의 부수 결격 2건도 함께 정리한다:
+#   · `if "currency" in job_id` = **bare 부분문자열** 소속 판정. §8.A P2-d 가
+#     금지한 형태다(job id prefix 충돌). → `require_job()` + 핀 리터럴 동일성.
+#   · `for … break` = 첫 매치만 보고 종결. job 이 늘어나도 관측되지 않는다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ★★ 설계 회부 중 (ArchitectPL 판정 대기) — 아래 2개 핀의 값이 `∅` 가 아닌 이유
+# ─────────────────────────────────────────────────────────────────────────────
+# Change Plan §8.3 D-3 (b) 문면은 두 축을 **∅** 로 요구한다:
+#   (i) "`coe_paths` 중 게이트 job **소속** 경로 **∅**"
+#   (ii) "마커 assert step `run` 문면에 rc 흡수 관용구 **6종 부재**"
+# 그런데 as-built production workflow 는 두 축 모두 **1건씩 보유**한다 [firsthand]:
+#   (i)  `jobs.consumer-asset-currency.steps[1].continue-on-error: true`
+#        — warning-tier 설계상 의도된 흡수(스크립트 rc 가 아니라 **마커 존재**를
+#          판정축으로 삼기 위한 것). 이걸 지우는 것은 workflow 변경이다.
+#   (ii) 마커 step 의 `if ! grep -q …; then … exit 1; fi`
+#        — A8 6종 중 `if …; then` 에 정확히 걸린다. 그런데 그 if-then 이야말로
+#          이 step 을 fail-closed 로 만드는 구조다. 6종 열거는 **단일 명령 step**
+#          (W-3b pytest step) 맥락에서 도출됐고 이 step 에 그대로 전사됐다.
+# ⇒ ∅ 로 그대로 구현하면 **baseline 이 RED** 가 되어 오라클이 성립하지 않는다.
+#   해소는 (설계 수정) 또는 (workflow 수정) 둘 중 하나이며 **둘 다 본 lane 범위 밖**
+#   이다 (구현 lane 변경 대상 = 테스트 3파일).
+# ⇒ 잠정 조치 = **핀 집합 동일성**(∅ 가 아니라 "관측된 그 집합 정확히"). 판정 보존:
+#   · 주입(새 coe / 새 A8 관용구) → 집합이 커져 RED  ← 놓쳤던 사고를 지금 잡는다
+#   · 제거·이동(relocation)      → 집합이 달라져 RED  ← ∅ 형은 오히려 못 잡는다
+#   · ArchitectPL 이 ∅ 로 판정하면 아래 핀 값을 `[]` / `()` 로 바꾸는 **한 줄**이다.
+#   즉 어느 판정이 나와도 되돌릴 비용이 최소이고, 그 사이에도 검출력이 살아 있다.
+CURRENCY_WORKFLOWS = {
+    "wrapper-canonical": ".github/workflows/consumer-asset-currency-check.yml",
+    "wrapper-twin": "templates/github-workflows/consumer-asset-currency-check.yml",
+}
+CURRENCY_FACES = tuple(CURRENCY_WORKFLOWS)
+
+GATE_JOB_ID = "consumer-asset-currency"
+GATE_MARKER_STEP_NAME = "Verify marker present (fail-closed gate)"
+
+# 핀 출처 = pristine workflow 실측 (`python scripts/lib/workflow_shape.py <face>`)
+PIN_GATE_JOB_IDS: List[str] = [GATE_JOB_ID]
+PIN_GATE_STEP_COUNT = 3
+PIN_GATE_JOB_IF: Dict[str, Any] = {GATE_JOB_ID: None}
+PIN_GATE_STEP_IF: Dict[str, List[Any]] = {GATE_JOB_ID: [None, None, None]}
+PIN_GATE_STEP_SHELL: Dict[str, List[Any]] = {GATE_JOB_ID: [None, None, None]}
+PIN_GATE_JOB_DEFAULTS_RUN_SHELL: Dict[str, Any] = {GATE_JOB_ID: None}
+# ★ 설계 회부 중 (위 주석) — CP 문면은 `[]`
+PIN_GATE_COE_PATHS: List[str] = [f"jobs.{GATE_JOB_ID}.steps[1].continue-on-error"]
+# ★ 설계 회부 중 (위 주석) — CP 문면은 `()`
+PIN_MARKER_A8_PRESENT = ("if …; then",)
+
+
+@pytest.mark.parametrize("face", CURRENCY_FACES)
+def test_d3_consumer_execution_gate_static_shape(face):
     """
-    D-3 (AC-5): 게이트가 consumer CI 에서 실행됨을 static 검증.
+    D-3 (AC-5): 게이트가 consumer CI 에서 **실제로 판정에 도달**함을 static 검증.
 
-    존재-lint 는 금지. 대신:
-      1. workflow YAML 파싱
-      2. job_id, step_if, job_if 구조 검증
-      3. currency job 이 조건부 실행 없음 확인
+    정의역 = W-13 파싱 산출(구조) + 마커 step `run` 문면(텍스트). 존재-lint 금지.
+
+    (a) 활성화 정의역 — 게이트 job 이 positive 하게 실재(P-5) ∧ job-level·step-level
+        `if` 전건 부재. 표기 변형·조건 반전·step 이동에 정의상 불변.
+    (b) rc 흡수 정의역 — 게이트 job 소속 `continue-on-error` 경로 집합 ∧
+        `step_shell`/`defaults_run_shell`/`job_defaults_run_shell` 의 `-e` 보존형
+        (A3·A4·A5·A7 봉인) ∧ 마커 assert step `run` 의 A8 관용구 집합.
+
+    ★ 양 면 parametrize — canonical(.github/) 과 twin(templates/) 은 byte-identical
+      이어야 하지만, **동일 mutant 를 양쪽에 주입하면 parity 검사는 무반응**이다.
+      따라서 면별로 독립 관측해야 한다.
+
+    ★ 정직 천장 (CP §8.3 D-3 declared): 본 leg 은 **정적 선언 검사**다.
+      "consumer 에서 실제로 실행됐다" 의 ground truth 는 consumer PR run 로그에
+      게이트 run-marker 가 찍힌 것을 1회 관측하는 것뿐이며 wrapper CI 로 기계 강제
+      불가(cross-repo). 본 leg 의 GREEN 은 그 관측을 대체하지 않는다.
     """
-    from scripts.lib import workflow_shape
+    import workflow_shape  # ★ 단일 경로 — 형제 파일과 **같은 모듈 객체**
 
-    workflow_path = (
-        Path(__file__).resolve().parents[2] / ".github" / "workflows" / "consumer-asset-currency-check.yml"
-    )
+    workflow_path = Path(__file__).resolve().parents[2] / CURRENCY_WORKFLOWS[face]
+    assert workflow_path.is_file(), f"D-3 [{face}]: workflow 부재 — {workflow_path}"
 
-    assert workflow_path.exists(), f"Workflow not found: {workflow_path}"
-
-    # workflow 로드 (WorkflowShape dataclass)
     shape = workflow_shape.load_workflow_shape(str(workflow_path))
 
-    # 게이트 job 을 찾는다
-    gate_job_found = False
-    for job_id in shape.job_ids:
-        if "currency" in job_id:
-            gate_job_found = True
-            # job 이 조건부 실행 없어야 한다 (job_if[job_id] == None)
-            assert shape.job_if.get(job_id) is None, \
-                f"Job {job_id} should not have job-level if condition"
+    # ── 양성 앵커 (§8.D rule 2) — 부재-assert 가 공허 참이 되는 경로 차단 ──────
+    # P-5 결속: job id 오타·rename 이면 ShapeError -> RED (skip 아님, INV-5).
+    shape.require_job(GATE_JOB_ID)
+    assert shape.job_ids == PIN_GATE_JOB_IDS, (
+        f"D-3 [{face}]: job_ids 불일치 — {shape.job_ids}, 기대={PIN_GATE_JOB_IDS}"
+    )
+    assert len(shape.step_if[GATE_JOB_ID]) == PIN_GATE_STEP_COUNT, (
+        f"D-3 [{face}]: step 수 불일치 — {len(shape.step_if[GATE_JOB_ID])}, "
+        f"기대={PIN_GATE_STEP_COUNT} (step 을 열거했다는 양성 앵커)"
+    )
 
-            # step 수준 if 도 없어야 한다
-            # shape.step_if[job_id] 는 list of step if 값들
-            step_ifs = shape.step_if.get(job_id, [])
-            for i, step_if_value in enumerate(step_ifs):
-                assert step_if_value is None, \
-                    f"Job {job_id} step[{i}] should not have if condition, got {step_if_value}"
+    # ── (a) 활성화 정의역 ────────────────────────────────────────────────────
+    assert shape.job_if == PIN_GATE_JOB_IF, (
+        f"D-3 [{face}] (a): job-level `if` 검출 — {shape.job_if}. "
+        "정본 job2(L107 `github.repository == …`)가 consumer 에서 영구 skip 되는 "
+        "함정을 신설 게이트가 재생산하면 Story 목적이 무효다."
+    )
+    assert shape.step_if == PIN_GATE_STEP_IF, (
+        f"D-3 [{face}] (a): step-level `if` 검출 — {shape.step_if}"
+    )
 
-            break
+    # ── (b1) continue-on-error 경로 집합 (엄격 소속 판정) ─────────────────────
+    # ★ `coe_paths_of()` = W-13 `_owned_by` 엄격형. bare `startswith` 금지(P2-d) —
+    #   재구현하지 않고 모듈 접근자를 호출한다.
+    gate_coe = shape.coe_paths_of(GATE_JOB_ID)
+    assert gate_coe == PIN_GATE_COE_PATHS, (
+        f"D-3 [{face}] (b1): 게이트 job 소속 continue-on-error 경로 집합 불일치\n"
+        f"  실측: {gate_coe}\n"
+        f"  기대: {PIN_GATE_COE_PATHS}\n"
+        "  주입=흡수 신설 / 제거·이동=차단 구조 변경. 둘 다 관측 대상이다."
+    )
 
-    assert gate_job_found, f"Currency gate job not found in workflow. Available: {shape.job_ids}"
-    print(f"\n[D-3 Static] Currency gate job found in workflow shape")
-    print(f"  Job IDs: {shape.job_ids}")
+    # ── (b2) `-e` 보존형 (A3·A4·A5·A7 봉인) ──────────────────────────────────
+    actual_step_shell = {k: list(v) for k, v in shape.step_shell.items()}
+    assert actual_step_shell == PIN_GATE_STEP_SHELL, (
+        f"D-3 [{face}] (b2): step `shell:` 기입 검출 — {actual_step_shell}. "
+        "명시 `shell: bash {0}` 는 GitHub 기본(`bash -e {0}`)의 errexit 를 떨군다."
+    )
+    assert shape.defaults_run_shell is None, (
+        f"D-3 [{face}] (b2): workflow-level defaults.run.shell 검출 — "
+        f"{shape.defaults_run_shell!r}"
+    )
+    assert shape.job_defaults_run_shell == PIN_GATE_JOB_DEFAULTS_RUN_SHELL, (
+        f"D-3 [{face}] (b2): job defaults.run.shell 검출 — "
+        f"{shape.job_defaults_run_shell}"
+    )
+
+    # ── 마커 assert step 조회 (★ 명 기반 — 인덱스 고정 금지) ──────────────────
+    with open(workflow_path, encoding="utf-8") as fh:
+        data = workflow_shape.dup_safe_load(fh.read())
+    steps = data["jobs"][GATE_JOB_ID]["steps"]
+    hits = [i for i, s in enumerate(steps) if s.get("name") == GATE_MARKER_STEP_NAME]
+    assert len(hits) == 1, (
+        f"D-3 [{face}]: 마커 assert step 을 명으로 정확히 1개 찾지 못함 — "
+        f"hits={hits}, 명={GATE_MARKER_STEP_NAME!r}. "
+        "이 앵커가 없으면 이하 부재-assert 가 전부 공허 참이 된다."
+    )
+    marker_idx = hits[0]
+    marker_step = steps[marker_idx]
+
+    # ── (b1-축 명시) 유일 차단 step 자신은 흡수되지 않는다 ────────────────────
+    marker_coe_path = f"jobs.{GATE_JOB_ID}.steps[{marker_idx}].continue-on-error"
+    assert marker_coe_path not in shape.coe_paths, (
+        f"D-3 [{face}] (b1-축): **fail-closed 차단 step 자신**이 "
+        f"continue-on-error 로 흡수됐다 — {marker_coe_path}. "
+        "이 게이트에 이빨을 주는 유일한 step 이다."
+    )
+
+    # ── (b3) 마커 step `run` 의 A8 rc 흡수 관용구 집합 ────────────────────────
+    run_text = marker_step.get("run", "")
+    assert run_text.strip(), (
+        f"D-3 [{face}] (b3): 마커 step `run` 이 비었다 — {marker_step!r} "
+        "(스캔 대상 실재 앵커)"
+    )
+    present = tuple(d for pat, d in _A8_IDIOMS if re.search(pat, run_text))
+    assert present == PIN_MARKER_A8_PRESENT, (
+        f"D-3 [{face}] (b3): 마커 step `run` 의 A8 관용구 집합 불일치\n"
+        f"  실측: {present}\n"
+        f"  기대: {PIN_MARKER_A8_PRESENT}\n"
+        f"  run: {run_text!r}\n{_A8_DOMAIN}"
+    )
+
+    print(f"\n[D-3 Static {face}] gate={GATE_JOB_ID} marker_step_idx={marker_idx}")
+    print(f"  job_if={shape.job_if} step_if={shape.step_if}")
+    print(f"  coe(gate)={gate_coe}  A8(marker)={present}")
 
 
 # ============================================================================
