@@ -12,9 +12,13 @@
 #
 # 정적 properties (ADR-115 Amd2 §결정 5 graceful degradation closed-set):
 #   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 hook block 금지
-#   (b) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp
+#   (b) 영속 filesystem 변경 0 — 파일 생성·수정·삭제 0 (mkdir/rm/mv/cp/tee 0, 일반 파일로의
+#       리다이렉트 0). 단 `>` 자체가 없는 것은 아니다: `2>/dev/null` · `>/dev/null` (널 디바이스
+#       폐기) 와 `2>&1` 만 사용한다 — "no >" 가 아니라 "영속 대상 write 0" 이 정확한 진술이다.
 #   (c) network call 0
-#   (d) Python 호출 optional (정적 텍스트이므로 불필수)
+#   (d) Python 필수 (fail-open degrade) — additionalContext emit 경로 전체가 python 의존이라
+#       python 부재 시 **무출력 + exit 0** 으로 degrade 한다. 세션은 막지 않으나 priming 기능은
+#       결손된다 ("정적 텍스트이므로 불필수" 아님 — JSON 직렬화·emit 이 python 단일 경로).
 #   (e) exit 0 ALWAYS (fail-open)
 #
 # Graceful degradation 2층:
@@ -57,20 +61,8 @@ elif command -v python >/dev/null 2>&1; then
   PYTHON_CMD="python"
 fi
 
-JSON_VALID="0"
-if [ -n "$PYTHON_CMD" ]; then
-  JSON_VALID="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
-import json, sys
-try:
-    json.load(sys.stdin)
-    sys.stdout.write('1')
-except Exception:
-    sys.stdout.write('0')
-" 2>/dev/null || true)"
-fi
-
-# JSON parse 실패 → 무출력 + exit 0
-if [ "$JSON_VALID" != "1" ]; then
+# python 부재 = emit 경로 부재 → 무출력 + exit 0 (fail-open degrade, 헤더 (d))
+if [ -z "$PYTHON_CMD" ]; then
   exit 0
 fi
 
@@ -85,13 +77,15 @@ Subject: [CFP-NNN][WIP] <의미 단위 요약>, 정본: archive/adr/ADR-178-suba
 # ── JSON 출력 구성 (§결정 12 primary reach ③d) ───────────────────────────────
 #   형식: {"hookSpecificOutput": {"hookEventName": "SubagentStart", "additionalContext": "<TEXT>"}}
 #   요구사항: stdout 전체 = 유효 JSON 1건, fail-open exit 0.
+#   ★ 단일 python 스폰 (CFP-2966 구현리뷰 Iter1 P2 ③): 이전 판은 parse 검증용 probe 와 emit 을
+#     각각 스폰해 동일 `json.load` 를 2회 수행했다 (동치 작업 중복 = 매 서브에이전트 스폰마다
+#     인터프리터 기동 1회분 순손실). parse 실패 시 emit 을 건너뛰는 것은 같은 try 안에서 처리된다.
 
-if [ -n "$PYTHON_CMD" ]; then
-  export CFP2966_ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT"
-  printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+export CFP2966_ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT"
+printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
 import json, os, sys
 try:
-    json.load(sys.stdin)
+    json.load(sys.stdin)          # JSON 유효성 — 실패 시 except 로 낙하해 무출력
     additional_context = os.environ.get('CFP2966_ADDITIONAL_CONTEXT', '')
     output = {
         'hookSpecificOutput': {
@@ -103,6 +97,5 @@ try:
 except Exception:
     pass
 " 2>/dev/null || true
-fi
 
 exit 0
