@@ -61,9 +61,11 @@ ADR-058 §결정 5 가 count cap 을 "정당한 사례까지 차단할 위험" �
 
 ### §결정 1 — 목적함수는 파일 크기가 아니라 lane 진입당 실읽기 바이트다
 
-측정 단위는 **처방이 줄이겠다고 선언한 양과 동일**해야 한다. **줄수 · heading 수 · 섹션 수 · 파일 총 바이트를 판정 단위로 채택 금지.**
+측정 단위는 **처방이 줄이겠다고 선언한 양과 동일**해야 한다. **줄수 · heading 수 · 섹션 수 · 자식 포함 총 바이트를 판정 단위로 채택 금지.**
 
-근거는 `claude-md-line-cap` 의 실패가 "줄수라서" 가 아니라 **"선언한 양과 재는 양이 달라서"** 라는 데 있다. 파일 총 크기도 같은 함정이다 — 우리가 줄이겠다고 선언한 것은 저장량이 아니라 읽기 단가다.
+> **금지 단위의 정확한 외연 (협착 — 설계리뷰 R1 P1-2)**: 금지 대상은 **`bytes(parent) + Σ bytes(children)`(자식 포함 총 바이트)** 이지 `bytes(parent)` 가 아니다. 자식 포함 총량은 **pure move 하에서 항등**이므로(분할은 바이트를 부모에서 자식으로 옮길 뿐 총합을 보존한다) 처방의 효과를 원리적으로 0 으로 계상한다 — 섹션 단위 집계를 기각한 것과 **정확히 같은 사유**다. 반면 `bytes(parent)` 는 아래 `read_cost` 의 **주항**이며 정당한 피연산자다. AC-21 이 열거하는 3종(줄수·heading 수·섹션 수)에 본 항목을 더한 4종이 금지 집합이고, 확대분은 자기 공식의 주항이 아니라 **총합 형태**에 한정된다.
+
+근거는 `claude-md-line-cap` 의 실패가 "줄수라서" 가 아니라 **"선언한 양과 재는 양이 달라서"** 라는 데 있다. 자식 포함 총 크기도 같은 함정이다 — 우리가 줄이겠다고 선언한 것은 저장량이 아니라 읽기 단가다.
 
 ```
 read_cost(story) = Σ_{r ∈ readers} [ bytes(parent) + Σ_{c ∈ children : opens(r,c)} bytes(c) ]
@@ -77,6 +79,10 @@ opens(r,c)  ⟺  r 이 read-declaration registry 에 미등재      (보수 defa
 ⇒ **단위를 바이트로 맞추는 것만으로는 부족하고 집계 경계가 집행 경계와 같아야 한다.** 이것이 본 결정의 핵심이며, 어긋나면 `claude-md-line-cap` 과 같은 class 의 실패가 한 층 안쪽에서 재발한다(게이트가 항상 0 을 보고).
 
 **보수 default**: 미등재 reader 는 모든 자식을 여는 것으로 계상한다 ⇒ 레지스트리 불완전은 비용을 과대 계상할 뿐 과소 계상하지 않으며, 불완전성이 거짓 "개선" 판정을 만들 수 없다.
+
+> **따름정리 — 빈 레지스트리에서는 채택 공식도 항등이다 (설계리뷰 R1 P1-1)**: 보수 default 는 미등재 reader 에 대해 `opens(r,c) = true` 이므로, 레지스트리가 비면 `d = N` 이 되고 `read_cost = N × (bytes(parent) + Σ bytes(children))` = **자식 포함 총 바이트의 N 배** 다. pure move 는 그 총합을 보존하므로 **모든 분할 개입에 대해 Δ = 0** — Phase 1 에서 기각한 섹션 단위 공식과 같은 자리로 퇴화한다. 절감량은 커버리지의 함수이며 정확히 `Δ = −(N − d) × bytes(child)` 다 (PL firsthand 실행 확인: `N=8, child=50,000` 에서 `d=8` → Δ=0 / `d=4` → −200,000 / `d=1` → −350,000).
+>
+> ⇒ **레지스트리는 술어의 부속물이 아니라 술어의 정의역이다.** 커버리지 하한 미달 시 게이트는 "절감 0"(= 판정) 이 아니라 **`UNDETERMINED`(= 판정 불가)** 를 방출해야 하며, 이 구별이 없으면 day-1 에 AC-1 이 공허 통과하고 AC-5 는 충족 불가가 된다. 하한과 방출 규약은 §결정 8 Phase 2 산출물의 **필수 동반 항목**이다 (하한 미정의 상태로 배선 금지).
 
 **정직 상한**: 이것은 **선언된** 읽기 비용이다. 선언과 실제 agent 거동의 일치는 `Read` 에 집행면이 없어 기계 검증 불가 — **attested, not verified**. "실제 읽기량을 잰다"고 주장하지 않는다.
 
@@ -129,14 +135,51 @@ heading 기반 암묵 경계("다음 heading 까지")를 금지한다.
 
 | ID | 변형 | 비용 | 결과 |
 |---|---|---:|---|
-| E-1 | heading `##` → `###` 강등 | +2 B | §9 = 0 B → **GREEN** |
+| E-1 | heading `##` → `###` 강등 | **+1 B** | §9 = 0 B → **GREEN** |
 | E-2 | `## ` 뒤 U+200B 1자 삽입 (렌더 동일) | +3 B | §9 = 0 B → **GREEN** |
 | E-3 | §9 선두에 코드펜스로 `## 11.` 인용 → 슬라이서 조기 종결 | +65 B | §9 = 39 B → **GREEN** |
-| **E-4** | §9 본문 전량을 §4 말미로 보상 이동 | **0 B** | §9 = 82 B → **GREEN**, 총량 완전 보존 |
+| **E-4** | §9 본문 전량을 §4 말미로 보상 이동 | **0 B** | §9 = **30 B**(heading 줄 잔여) → **GREEN**, 총량 완전 보존 |
 
 **E-4 가 결정적이다**: read-cold §9 를 read-hot §4 로 옮기면 §4 가 53,653 → **104,590 B** 가 된다. **실읽기량은 악화되는데 섹션 cap 은 GREEN 이고 비용은 0 이다.** 악의를 가정할 필요도 없다 — 섹션 간 재배치는 저작자가 우연히 할 수 있는 정상 편집이다.
 
-⇒ **섹션 cap 단독 설계는 born-broken 이다.** §결정 1 의 실읽기량 목적함수는 E-4 를 자동으로 RED 로 만든다 (§4 는 전 독자가 읽으므로).
+⇒ **섹션 cap 단독 설계는 born-broken 이다.**
+
+> **정정 (설계리뷰 R1 P0-1) — E-4 를 막는 것은 §결정 1 의 목적함수가 아니다.** 종전 기재("§결정 1 의 실읽기량 목적함수는 E-4 를 자동으로 RED 로 만든다 — §4 는 전 독자가 읽으므로")를 **철회한다.** 채택한 file-granular `read_cost` 는 자식이 없는 파일에서 `N × bytes(parent)` 이고 E-4 는 `bytes(parent)` 를 **정확히 보존**하므로 `Δ = 0` — **E-4 에 대해 중립**이다 (구성상 항등이며 실측 일치: `fe43c9f0` 총량 184,477 → 184,477, Δ=+0 [verified — PL firsthand, `git archive` LF, CR=0]). 철회 사유는 2중이다 — ① 괄호 안 근거("§4 는 전 독자가 읽으므로")는 **섹션×독자 가중** 논법인데 §결정 1 이 바로 그 집계를 기각했다(같은 ADR 안 배타). ② 그 문장은 §결정 8 의 자기 구속("술어 배선 전 게이트가 있다고 선언하지 않는다")을 정면으로 깬다.
+>
+> **E-4 의 실 방어 = 본 결정의 앵커 쌍 ∧ §8.4 INV-S2.** 앵커 쌍은 구간 경계를 문서 구조 우연에서 떼어내 E-1~E-3 계열을 차단하고, INV-S2 는 **앵커 델타 없는 총량 보존 하의 섹션 간 대량 이동**을 직접 검출한다. 정보 무손실 축은 INV-S1(pure-move digest)이 담당한다.
+
+#### 불변식 발화 술어 — INV-S1 ∧ INV-S2 는 발화 조건이 상보적이다 (설계리뷰 R1 P1-5)
+
+`digest(before.§n) == digest(after.§n ∪ children[n])` 을 **무스코프**로 적용하면 분할 이후의 정상 append 가 전부 `before ≠ after` 로 false RED 가 된다(born-broken). 이를 피하려 "분할 커밋 한정" 으로 좁히면 E-4 는 분할 커밋이 아니므로 **유일한 실 방어가 발화하지 않는다.** 양자택일이 모두 파손이므로 **판별 술어**를 명시한다:
+
+```
+anchor_delta(PR) = anchors(before) Δ anchors(after)        # cfp-split 마커 대칭차
+
+INV-S1  발화 ⟺ anchor_delta ≠ ∅                            # 분할 / 역분할 / 앵커 재배치 커밋
+        판정  for each section n ∈ sections(anchor_delta):
+                 digest(before.§n) == digest(strip_stub(after.§n) ∪ children[n])
+
+INV-S2  발화 ⟺ anchor_delta = ∅  ∧  |Δ bytes(parent)| ≤ θ_total
+        판정  RED ⟺ ∃ i≠j :  Δ§i ≤ −θ_move  ∧  Δ§j ≥ +θ_move
+              (θ_total = 64 B, θ_move = 4,096 B — Phase 2 에서 코퍼스 분포로 재정)
+              reason_code ∈ 폐쇄 enum 선언 시 RED → **신호**로 강등 (§결정 7 비차단 축)
+```
+
+두 발화 조건이 `anchor_delta` 를 기준으로 **상보 분할**이므로 어떤 PR 도 양쪽 모두에서 빠져나가는 사각이 없다. 정상 저작(총량 증가 동반 append)은 `|Δ| > θ_total` 로 INV-S2 미발화, 앵커 불변으로 INV-S1 미발화 — 둘 다 조용하다.
+
+**실행 확인 (PL firsthand 반증 하네스, 기준 `fe43c9f0` / LF / V1)** — 술어를 문면 그대로 구현해 배터리 투입:
+
+| 변형 | INV-S1 | INV-S2 |
+|---|---|---|
+| M0 무변경 (대조군) | NOT_FIRED | GREEN |
+| M-SPLIT 정상 분할 (pure move) | **GREEN** | NOT_FIRED |
+| M-LOSS 분할 중 500 B 소실 | **RED** | NOT_FIRED |
+| **M-APPEND 분할된 섹션 정상 append (대조군)** | NOT_FIRED | **GREEN** — false RED 0 |
+| **M-E4 §9→§4 보상 이동 (0 B)** | NOT_FIRED | **RED** |
+| M-E4′ 동일 + `reason_code` 선언 | NOT_FIRED | SIGNAL (비차단) |
+| M-NORMAL 정상 §9 append (+3,946 B) | NOT_FIRED | NOT_FIRED |
+
+7/7 기대 일치. **정직 한계**: 이 하네스는 설계 술어의 반증 도구이지 Phase 2 게이트 코드가 아니다 — "게이트가 배선됐다" 고 주장하지 않는다 (§결정 8 자기 구속).
 
 앵커 3속성 = **명시**(주석 마커, 구조 우연 비결합) ∧ **쌍**(시작/종료, 미쌍 = FAIL) ∧ **유일**(파일 내·코퍼스 내, 중복 = FAIL — "첫 매칭 사용" 금지).
 
@@ -151,6 +194,17 @@ heading 기반 암묵 경계("다음 heading 까지")를 금지한다.
 - **Tricorder 동결형** ratchet (전수 선수정 후 활성화 + ratchet up 영구 고정). 확장은 `--allow-baseline-growth --reason` 경유만 (monotonic shrink)
 - **touched 판정 = diff 는 스캔 대상 선별에만 쓰고 위반 판정에는 쓰지 않는다.** `violation(f) ⟺ metric(f, HEAD) > ceiling(f)`. "touched = 임의 diff" 로 두면 오타 수정과 무손실 재구조화가 위반을 신규 생성해 **규칙이 장려할 행동을 처벌한다**
 - **backfill = 영구적으로 안 한다** (deferred TODO 아님, 채택한 설계). 근거 = Clean-as-You-Code / Tricorder 선례 + 650건 일괄 편집은 §1 immutable 게이트를 전건 트립 + 감사 기록 대량 재작성은 정보 삭제 금지 역행
+- **신규 Story 의 ceiling 산출 규칙** (설계리뷰 R1 P2 — `entries` 는 baseline 등재분만 보유하므로 신규는 조회 실패가 아니라 **정의된 경로**여야 한다):
+
+```
+ceiling(key) = entries[key].ceiling        if key ∈ entries        # grandfather
+             = DEFAULT_CEILING             otherwise               # 신규 — 면제 아님
+
+DEFAULT_CEILING = baseline 동결 트리 코퍼스의 read_cost 분포 p50 (Phase 2 산출 정수, 동결)
+ratchet(touched) : ceiling ← min(ceiling, metric(HEAD))            # monotonic shrink
+```
+
+  **CFP-2986 자신이 첫 신규 대상**이므로 자기 면제 없이 `DEFAULT_CEILING` 을 적용받는다. `entries` 미등재를 "제한 없음" 으로 읽는 구현은 금지한다 — 그것이 확정 1("신규 + touched ratchet")을 신규 축에서 공허하게 만든다.
 
 ### §결정 6 — 배선은 internal-docs checkout 형이며 승격은 수동 절차다
 
@@ -185,7 +239,7 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 
 1. 실읽기량 술어는 **lane → 섹션 읽기 선언 레지스트리**를 입력으로 요구한다. 선언은 현재 agent 정의에 **산문으로** 존재한다 (`§1-7` 선언 6 파일 / `ArchitectPLAgent.md:187` = `§1-7·§9` / `review-pl-base.md:284` = 매 DesignReview 진입 §9 scan). 이를 레지스트리로 승격하는 것이 술어 기계화의 실체이며 코드·스키마 산출물이다 → Phase 2 범위.
 2. **Phase 1 이 공허하지 않다.** 구조 불변식은 술어 없이도 기계 검증 가능하다 — 자식 파일 존재 ∧ 앵커 쌍 ∧ pure-move digest ∧ 깊이 ≤ 1. §결정 2 의 실측이 보인 대로 **분할 후 잔여가 트리 불변**이므로 구조 자체가 검증 대상이 된다.
-3. (a) 를 택하면 대리 metric 이 필요한데, 유일한 후보인 파일 크기가 §결정 4 의 E-4 로 **이미 반증**됐다.
+3. (a) 를 택하면 대리 metric 이 필요한데, 유일한 후보인 **자식 포함 총 바이트가 pure move 하에서 항등**이라 처방의 효과를 원리적으로 측정할 수 없다 — 섹션 단위 집계를 §결정 1 에서 기각한 것과 같은 사유이고, count cap 계열은 ADR-058 §결정 5 가 이미 거부했다. (종전 근거였던 "E-4 로 이미 반증" 은 **범주 오류라 철회**한다 — E-4 는 총 바이트를 완전 보존하므로 총량 metric 을 반증하지 못한다. §결정 4 정정 참조.)
 
 > **금지 (자기 구속)**: 술어가 배선되기 전에 "실읽기량 게이트가 있다" 고 선언하지 않는다. 그것이 정확히 본 Story 가 4 라운드에 걸쳐 잡아낸 hollow oracle 형상이다. **Phase 1 은 작동하는 게이트를 주장하지 않는다.**
 
@@ -206,6 +260,8 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 - **R-2 day-1 merge 차단력 0.** internal-docs `required_status_checks` 키가 부재하므로 도입기 게이트는 LOUD warning 이다. "기계 강제" 라 부르지 않는다.
 - **R-3 §9 는 최대 레버인데 최약 경계다.** `MONOPOLY_SECTIONS = {"10","10.5","13","14"}` 에 **§9 가 없고** `SECTION_OWNERS["9"]` 는 4 lane = 사실상 any.
 - **R-4 GREEN 축적은 배선 증거가 아니다.** grandfather 가 전건 면제하므로 도입 당일 기대 RED = 0. **의도적 위반 PR 1건으로 RED 능력을 실증**하지 않으면 미배선 게이트를 승격하게 된다.
+- **R-6 mutation harness 미선언 (정직 등재 — Phase 2 이행 항목).** `wrapper/spikes/cfp-2986-s0/` 에 `mutation_harness` 선언이 **없다**(grep 0건). ADR-154 A1-7 선언 의무는 Phase 2 이행 항목으로 등재하며, 본 ADR·Change Plan §8.11·Story §7.11 **3면 모두**에 기록해 Phase 2 시야 이탈 경로를 닫는다. 위 §결정 4 의 반증 하네스는 ad-hoc 이며 이 선언을 대체하지 않는다.
+- **R-7 ModuleArch 의 실질 우려는 metric 교체로 소멸하지 않는다.** deputy 가 `T=130,000 B` 로 표현한 것의 실질은 "**carrier 가 자기 규칙을 자기 파일에서 못 지키는 상태**" 였다. 임계값 형태는 §결정 1 이 폐기했으나 우려 자체는 `read_cost` 축으로 이전한다 — 판정면 = 자기적용(AC-10)이고, 판정 시점 = 술어 배선 후(Phase 2)다. **Phase 1 에서 이 우려는 미해소이며 "무효화" 라벨이 "해소" 를 뜻하지 않는다.**
 - **R-5 처방의 수신자가 lane 이 아니다.** 직전 라운드 총 증가 +33,253 B 중 **Orchestrator 의 §9 verdict 쓰기가 +19,827 B**(약 60%). §9 는 Orchestrator·리뷰 write monopoly 면이므로 lane 저작 규약으로 설계하면 최대 기여자를 안 건드린다.
 
 ### 정량 인용 규약 (본 Story 에서 틀린 수가 넘어간 경로의 봉합)
@@ -217,12 +273,15 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 | "586개 Story" | 트리별 **576**(`4ce40368`) / 587(`a78d8c88`) / 588(`7e3127a8`), 게이트 실 정의역 `*/stories/*.md` = **650** |
 | "§9 유일 tree-invariant 1위" | **delta base 한정.** 정적 base 3위 |
 | "§1 잔여 136" | **120** |
+| E-1 비용 "+2 B" | **+1 B** (`##`→`###` = 1자, 실행 확인) |
+| E-4 행 "§9 = 82 B" | **30 B** (heading 줄 `## 9. 품질 게이트 이력\n` 단독; 같은 행 §4 = 104,590 과 산술 정합) |
+| "E-4 가 파일 크기 metric 을 반증" | **범주 오류 — 철회.** E-4 는 총 바이트를 완전 보존한다 |
 
 특히 "§1 잔여 136" 은 R4 에서 리뷰 PL 과 Codex 가 **둘 다 독립 "재현됨"** 으로 확증했던 값이다. **3자가 같은 틀린 값을 확증했다** — 관측면이 같으면 다중화 이득이 0 이라는 것의 실물이다.
 
 ## 대안 검토
 
-- **파일 크기 hard cap** — ADR-058 §결정 5 가 거부. 게다가 E-4(비용 0 보상 이동)로 반증됐다.
+- **자식 포함 총 바이트 hard cap** — ADR-058 §결정 5 가 count cap 을 "정당한 사례까지 차단할 위험" 으로 거부했고, 더해 **pure move 하에서 항등**이라 본 처방의 효과를 0 으로 계상한다(측정 수단으로 실격). *E-4 를 기각 근거로 인용하지 않는다* — E-4 는 총 바이트를 완전 보존하므로 이 metric 을 반증하지 못한다(설계리뷰 R1 P0-1 정정).
 - **줄수 cap** — `claude-md-line-cap` 이 GREEN 인 채 +82.4% 성장을 허용한 실증이 있다.
 - **4번째 reader-side 읽기 규약** — 축 A 실패 3건의 반복.
 - **일회성 압축 후 방치** — CFP-2211 이 2개월 만에 +31.8% 복귀.
@@ -230,7 +289,8 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 
 ## 미해결 (설계리뷰 회부)
 
-1. **AC-19 해석** — 규칙 층 일반성으로 읽는 것이 타당한가 (§결정 3 정직 고지).
-2. **`check_story_section_schema.py` 순회가 `.glob` 인지 `.rglob` 인지 미확인** — `rglob` 이면 consumer 에서 자식 배치 판정이 뒤집힌다.
-3. **repo 설정 "Send secrets to workflows from pull requests" 상태 미조회** — fork PR PAT 노출 판정 입력.
-4. **AC-21 (측정 단위 정합) 민팅 후 RO-1 재확인** — R4 PASS 이후 추가되는 AC 이므로 AC 분해 완결성 재검증이 필요하다.
+1. **AC-19 해석** — 규칙 층 일반성으로 읽는 것이 타당한가 (§결정 3 정직 고지). **설계리뷰 R1 미처분 — 잔존.**
+2. ~~`check_story_section_schema.py` 순회가 `.glob` 인지 `.rglob` 인지 미확인~~ → **종결**: `:70` = `.glob`(비재귀) 확인. 평면 배치 판정 무손상.
+3. ~~repo 설정 "Send secrets to workflows from pull requests" 상태 미조회~~ → **종결(favorable, 단 간접)**: internal-docs `allow_forking: false` · `forks_count: 0` ⇒ **fork 자체가 불가하므로 도달 가능한 효과 0**. *정직 한계* — 토글 값을 직접 read 한 것이 아니라 **전제조건(forkability)이 거짓임**을 측정했다. `pull_request_target` 금지 명문화는 이와 무관하게 유지한다.
+4. ~~AC-21 민팅 후 RO-1 재확인~~ → **종결**: AC 21행 / normative 15 / declared 6, §8.1 RTM 15행 전건 매핑 + named test 15개 유일 — zero-drop 성립. 잔여는 AC-21 provenance 뿐이며 §5.5 원장 갱신은 요구사항 lane owned 라 Orchestrator scoped write 로 회부.
+5. **Phase 1 normative AC 7건에 Phase 1 검증수단이 0 이다** (신규 — 설계리뷰 R1 P2). 해당 = **AC-2 · AC-4 · AC-8 · AC-10 · AC-12 · AC-15 · AC-19** [PL 전수 재계수 확인, §5.3 표 21행]. `phase` 컬럼은 **요건의 착지 phase** 이지 검증수단의 배선 phase 가 아니며, §8.1 RTM 의 named test 15건은 전부 Phase 2 산출물이다. Phase 1 에 `rtm_uri` 를 부착하지 않는 이유가 정확히 이것이다(부착 시 Hop2 가 발동해 미배선 매핑을 전건 위반으로 잡는다). **Phase 1 은 이 7건에 대해 "검증됐다" 고 주장하지 않는다** — 표기 정합을 위해 phase 컬럼을 사후 변경하는 것도 금지한다(요구사항 lane owned ∧ 값 조작).
