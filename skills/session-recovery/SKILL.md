@@ -188,6 +188,23 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 
 - **부분 기록 번들은 유효 번들로 판독하지 않는다** — 절단된 번들은 `suspect` 이며 완결 산출로 승격하지 않는다.
 
+#### 3.3.1 ★ 착지 명령 — raw `git push` 금지 (L2 배선, 비협상)
+
+salvage 번들·진행 커밋을 원격으로 올릴 때는 **raw `git push` 를 쓰지 않는다.** 단일 경로만 쓴다:
+
+```bash
+python3 scripts/lib/check_salvage_bundle.py --land \
+  --worktree <worktree 절대경로> --branch <cfp-NNN[-slug]> --remote <remote>
+```
+
+| 왜 | 근거 |
+|---|---|
+| `--land` 는 **스캔과 push 를 한 경로로 흡수**한다 — 스캔 미통과면 push 에 도달하지 않는다 | 착지 산출물 = 스캔 산출물 항등 (SHA 고정 push) |
+| baseline 을 **push 대상과 동일 remote** 로 묶고 `fetch --prune` 로 원격 실보유를 반영한다 | raw push 는 이 정의역 일치를 **전혀 보장하지 않는다** (S-P1-1 실증: 다른 remote·phantom ref 두 형태에서 secret 무검사 전송) |
+| 스캔 결과·판정 불가를 **fail-closed** 로 종료 코드에 싣는다 | `SCAN_RESULT` / `PUSH` 토큰이 사후 감사면이 된다 |
+
+> **정직 천장 (over-claim 금지)**: 본 지시는 **advisory** 다 — 문서 규율이지 기계 강제가 아니다. raw `git push` 를 직접 실행하는 경로는 **여전히 열려 있고** 본 절이 그것을 막지 못한다. 막는 것은 "`--land` 를 경유한 착지" 뿐이다. 이 잔여는 [Story §7.12-C](../../../) L2/L3 층 판정에 declare 돼 있다.
+
 ### 3.4 salvage 결과 기록
 
 회수를 했는지 안 했는지가 사후에 남아야 다음 세션이 같은 손실을 두 번 겪지 않는다. 회수 시도 1건당 아래 항목을 기록한다.
