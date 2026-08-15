@@ -6,7 +6,10 @@
 # (bootstrap 이 side-effect: .github/workflows/ 생성).
 #
 # discriminating fixture 의무:
-#  - TC-1: whitelist iterate 전환 (34-entry dry-run vs 고정 7-element fallback)
+#  - TC-1: whitelist iterate 전환 (whitelist SSOT 유도 N-entry dry-run vs 고정 7-element fallback)
+#          ★기대값 하드코딩 금지 (CFP-2978) — whitelist 는 성장하는 SSOT 라 리터럴 고정은
+#           entry 추가 때마다 born-broken 을 재생산한다. 유도값 ≤ fallback(7) 이면 판별 구조가
+#           무너지므로 meta-guard 로 별도 FAIL 시킨다(조용한 퇴화 → 항진 통과 차단).
 #  - TC-2: idempotent 2회 실행 byte-identical
 #  - TC-3: fail-safe degrade (whitelist 부재 → 7종 fallback + WARN + exit 0)
 #  - TC-4: parity (dry-run 산출 basename == whitelist entry)
@@ -20,7 +23,7 @@
 #  - Mutation-idempotent     ($dst 가드 제거) → TC-2 RED
 #  - Mutation-degrade-warn   ([WARN] 마커 제거) → TC-3 RED (exit0만으로 non-discriminating)
 #  - Mutation-no-parity-check(basename set 비교 로직 제거) → TC-4 RED
-#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 34 ≠ ps1산출 7)
+#  - Mutation-ps1-skip       (.ps1 whitelist 구동 제거 or pwsh fork 무효화) → TC-6 RED (pwsh 가용시 동적: sh산출 N(=whitelist entry 수) ≠ ps1산출 7)
 #  - Mutation-no-degrade     (whitelist 1개 추가 → 미포함) → TC-7 RED
 #  - Mutation-empty-check    (empty-check 제거 → 0종 fallback 미실행) → TC-8 RED
 
@@ -31,6 +34,17 @@ BOOTSTRAP_SH="$REPO_ROOT/scripts/bootstrap-consumer.sh"
 BOOTSTRAP_PS1="$REPO_ROOT/scripts/bootstrap-consumer.ps1"
 WHITELIST="$REPO_ROOT/templates/scripts/consumer_applicable_workflows.txt"
 PLUGIN_ROOT_REAL="$REPO_ROOT"
+
+# degrade fallback 배열 크기 (SSOT = scripts/bootstrap-consumer.sh `fallback_workflows`, 7종).
+# TC-3/TC-8 이 이 값을 기대값으로 직접 쓰고(코드 상수라 하드코딩이 정당), TC-1/TC-2 는
+# "유도 기대값 > FALLBACK_COUNT" meta-guard 의 하한으로 쓴다 — 두 값이 같아지면
+# "whitelist iterate ≠ 고정 fallback" 판별 자체가 성립하지 않기 때문이다.
+# ★유도값이 이 하한 이하로 내려가는 상태는 정당한 운영 상태가 아니다 — whitelist 축소는
+#   ADR-116 never-reduce 가 금지한다(bootstrap 자신도 0종 degrade 를 그 근거로 차단).
+#   따라서 "유도값 ≤ 7 = 실측 퇴화" 로 fail-closed 하는 것이 안전한 방향이다.
+#   [실증 2026-08-15: whitelist 를 5 entry 로 축소하면 bootstrap 도 5 를 방출해
+#    유도 assert 만으로는 GREEN(hollow) — meta-guard 가 그 hollow 를 FAIL 로 전환]
+FALLBACK_COUNT=7
 
 PASS=0
 FAIL=0
@@ -89,9 +103,16 @@ make_fixture_plugin_root() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-1: whitelist iterate 전환 (34개 기대 vs 고정 7종 fallback)
-# Assertion: dry-run stdout 에 정확히 34개 "cp .github/workflows/" 의도 라인 포함 (CFP-2784 rebase-staleness-detection.yml 등재로 33→34)
-# Mutation-hardcode-7: 고정 배열 복귀 시 7종만 출력 → RED
+# TC-1: whitelist iterate 전환 (whitelist 유도 N개 기대 vs 고정 7종 fallback)
+# Assertion: dry-run stdout 의 "cp .github/workflows/" 의도 라인 수 == whitelist 실 entry 수
+#   ★기대값 = whitelist SSOT 유도 (count_whitelist_entries). 리터럴 고정 금지 —
+#     33→34→35 마다 테스트가 born-broken 이 됐고(CFP-2504·CFP-2784·CFP-2978 3회 발현),
+#     그때마다 숫자만 갱신하는 것은 같은 함정의 재생산이다.
+#   ★유도가 판별력을 잃지 않는 근거: 좌변은 bootstrap 의 *산출*(자체 파서 경로), 우변은
+#     whitelist *파일*을 테스트가 독립 파싱한 값이다. 같은 SSOT 를 두 경로로 읽어 대조하므로
+#     항진(tautology)이 아니라 parity 다. 단 "whitelist 자체가 오염된" 경우는 양변이 함께
+#     움직여 검출되지 않는다 — 그 축은 whitelist-manifest-3way 게이트 소관(honest ceiling).
+# Mutation-hardcode-7: 고정 배열 복귀 시 7종만 출력 → RED (유도 기대값 N > 7 이 meta-guard 로 보증됨)
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc1_whitelist_iterate_count() {
   local test_name="TC-1-whitelist-iterate-count"
@@ -112,20 +133,33 @@ test_tc1_whitelist_iterate_count() {
   local output
   output=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
 
-  # 기대: "[dry-run] cp" + ".github/workflows" 정확히 33개 라인 (CFP-2504 venue-shape-fidelity-presence-check.yml 등재로 32→33)
+  # 기대: "[dry-run] cp" + ".github/workflows" 라인 수 == whitelist entry 수 (SSOT 유도)
   local cp_count
   cp_count=$( echo "$output" | grep -c '\[dry-run\] cp.*\.github/workflows' || echo 0 )
   cp_count=$(echo "$cp_count" | tr -d '\r\n')
 
-  local expected_count=34
+  local expected_count
+  expected_count=$( count_whitelist_entries "$WHITELIST" )
+  expected_count=$(echo "$expected_count" | tr -d '\r\n')
+
+  # meta-guard: 유도 기대값이 fallback 크기 이하면 (whitelist read 실패 / 파싱 붕괴 / SSOT 퇴화)
+  # 본 TC 의 판별 대상인 "iterate vs 고정 7종" 구분이 무너진다 → 조용한 GREEN 대신 명시 FAIL.
+  if [ "$expected_count" -le "$FALLBACK_COUNT" ]; then
+    echo "✗ FAIL: $test_name (meta) — whitelist 유도 기대값=$expected_count ≤ fallback=$FALLBACK_COUNT"
+    echo "  판별 구조 붕괴: whitelist($WHITELIST) 읽기/파싱 경로를 확인하라"
+    FAIL=$((FAIL+1))
+    rm -rf "$fixture_root"
+    return 1
+  fi
+
   if [ "$cp_count" -eq "$expected_count" ]; then
-    echo "✓ PASS: $test_name (count=$cp_count) — dry-run 에 34개 workflow cp 의도"
+    echo "✓ PASS: $test_name (count=$cp_count == whitelist entries=$expected_count) — dry-run 이 whitelist 전 entry 를 cp 의도로 방출"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
   else
     echo "✗ FAIL: $test_name"
-    echo "  Expected $expected_count cp lines, got $cp_count"
+    echo "  Expected $expected_count cp lines (whitelist SSOT 유도), got $cp_count"
     echo "  Output excerpt (first 10 cp lines):"
     echo "$output" | grep '\[dry-run\] cp .github/workflows/' | head -10 || echo "  (no cp lines found)"
     FAIL=$((FAIL+1))
@@ -135,10 +169,10 @@ test_tc1_whitelist_iterate_count() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TC-2: idempotent (dry-run 기반: 31 stub 파일 존재 시 copy 의도 라인 0개)
+# TC-2: idempotent (dry-run 기반: whitelist entry 전건 stub 존재 시 copy 의도 라인 0개)
 # Assertion: 2회차 dry-run 에서도 "cp .github/workflows/" 의도 라인 == 0개
 #           (모든 dst 가 이미 존재하므로 guard "if [ ! -f $dst ]" 가 skip → copy 안 함)
-# Mutation-idempotent: $dst guard 제거 시 2회차에도 31개 cp 의도 라인 출력 → RED (discriminating)
+# Mutation-idempotent: $dst guard 제거 시 2회차에도 N개(= whitelist entry 수) cp 의도 라인 출력 → RED (discriminating)
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc2_idempotent() {
   local test_name="TC-2-idempotent"
@@ -155,7 +189,7 @@ test_tc2_idempotent() {
   git config user.name "Test User"
   git remote add origin https://github.com/test/test-repo.git
 
-  # 1회차 dry-run: 31개 workflow cp 의도 출력 (all dst 미존재)
+  # 1회차 dry-run: whitelist entry 수만큼 workflow cp 의도 출력 (all dst 미존재)
   local output1
   output1=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
 
@@ -163,7 +197,7 @@ test_tc2_idempotent() {
   cp_count_1=$( echo "$output1" | grep -c '\[dry-run\] cp.*\.github/workflows' || echo 0 )
   cp_count_1=$(echo "$cp_count_1" | tr -d '\r\n')
 
-  # 1회차 dry-run 에서 나온 31개 stub 파일을 실제로 생성 (idempotency 테스트)
+  # 1회차 dry-run 에서 나온 stub 파일 전건을 실제로 생성 (idempotency 테스트)
   mkdir -p .github/workflows
   while IFS= read -r line; do
     line="${line%%$'\r'}"
@@ -173,7 +207,7 @@ test_tc2_idempotent() {
     touch ".github/workflows/$line"
   done < "$WHITELIST"
 
-  # 2회차 dry-run: 31개 workflow 모두 미리 존재하므로 copy 의도 라인 == 0개
+  # 2회차 dry-run: 전 workflow 가 미리 존재하므로 copy 의도 라인 == 0개
   local output2
   output2=$( PLUGIN_ROOT="$PLUGIN_ROOT_REAL" bash "$BOOTSTRAP_SH" --dry-run 2>&1 ) || true
 
@@ -181,23 +215,37 @@ test_tc2_idempotent() {
   cp_count_2=$( echo "$output2" | grep -c '\[dry-run\] cp.*\.github/workflows' || echo 0 )
   cp_count_2=$(echo "$cp_count_2" | tr -d '\r\n')
 
+  # 1회차 기대값 = whitelist SSOT 유도 (TC-1 과 동일 근거 — 리터럴 고정 금지)
+  local expected_count
+  expected_count=$( count_whitelist_entries "$WHITELIST" )
+  expected_count=$(echo "$expected_count" | tr -d '\r\n')
+
+  # meta-guard (TC-1 동형): 유도값이 fallback 이하면 idempotency 판별 전제가 무너진다.
+  if [ "$expected_count" -le "$FALLBACK_COUNT" ]; then
+    echo "✗ FAIL: $test_name (meta) — whitelist 유도 기대값=$expected_count ≤ fallback=$FALLBACK_COUNT"
+    echo "  판별 구조 붕괴: whitelist($WHITELIST) 읽기/파싱 경로를 확인하라"
+    FAIL=$((FAIL+1))
+    rm -rf "$fixture_root"
+    return 1
+  fi
+
   local ok=1
-  # Assertion 1: 1회차 dry-run 에서 34개 출력 (CFP-2784 rebase-staleness-detection.yml 등재로 33→34)
-  [ "$cp_count_1" -eq 34 ] || ok=0
+  # Assertion 1: 1회차 dry-run 에서 whitelist entry 수만큼 출력
+  [ "$cp_count_1" -eq "$expected_count" ] || ok=0
   # Assertion 2: 2회차 dry-run 에서 0개 출력 (guard skip)
   [ "$cp_count_2" -eq 0 ] || ok=0
 
   if [ "$ok" -eq 1 ]; then
-    echo "✓ PASS: $test_name (1st=34, 2nd=0) — dry-run 기반 idempotency: guard skip 검증"
+    echo "✓ PASS: $test_name (1st=$cp_count_1 == whitelist entries=$expected_count, 2nd=0) — dry-run 기반 idempotency: guard skip 검증"
     PASS=$((PASS+1))
     rm -rf "$fixture_root"
     return 0
   else
     echo "✗ FAIL: $test_name"
-    echo "  Expected: 1st dry-run cp count=34, 2nd dry-run cp count=0"
+    echo "  Expected: 1st dry-run cp count=$expected_count (whitelist SSOT 유도), 2nd dry-run cp count=0"
     echo "  Got: 1st=$cp_count_1, 2nd=$cp_count_2"
-    if [ "$cp_count_1" -ne 34 ]; then
-      echo "  1st dry-run excerpt (expected 34 cp lines):"
+    if [ "$cp_count_1" -ne "$expected_count" ]; then
+      echo "  1st dry-run excerpt (expected $expected_count cp lines):"
       echo "$output1" | grep '\[dry-run\] cp .github/workflows/' | head -5
     fi
     if [ "$cp_count_2" -ne 0 ]; then
@@ -290,7 +338,7 @@ test_tc3_degrade_warn() {
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-4: parity (bootstrap 산출 basename set == whitelist non-comment non-blank set)
 # Assertion: dry-run stdout 의 cp basename set == whitelist 파싱 set
-# Mutation-no-whitelist: whitelist 읽기 제거 → 7종만 출력 vs 31종 기대 → RED
+# Mutation-no-whitelist: whitelist 읽기 제거 → 7종만 출력 vs whitelist 전 entry 기대 → RED
 # ─────────────────────────────────────────────────────────────────────────────
 test_tc4_parity() {
   local test_name="TC-4-parity"

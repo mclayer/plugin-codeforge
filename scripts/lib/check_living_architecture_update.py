@@ -120,7 +120,15 @@ NON_STRUCTURAL_PREFIXES = (
     ".claude/",    # .claude/agents/** 는 위 구조 side 소속(structural 이 먼저 매칭)
     ".github/",    # .github/workflows·scripts 는 위 구조 side 소속(structural 이 먼저 매칭)
 )
-NON_STRUCTURAL_EXACT = (".gitignore", ".gitattributes", "mark.toml", "requirements.txt", "pytest.ini")  # CFP-2889: pytest.ini = 테스트 러너 marker 선언 config — requirements.txt 와 동류(빌드/테스트 의존 선언, family.md 도출 표면 아님). closed enum 분류 확정(unknown-surface fail-closed 해소).
+#   ★CFP-2978 신규 entry `.codeforge-asset-pins.json` 분류 근거 (구조 side 아님):
+#     (a) family.md 도출 표면 아님 — 실측: docs/architecture/codeforge-family.md 내 `asset-pins` 문자열 0 hit.
+#     (b) 게이트 본체(scripts/check-consumer-asset-currency.sh · scripts/lib/check_consumer_asset_currency.py ·
+#         .github/workflows/consumer-asset-currency-check.yml · templates/**)가 이미 STRUCTURAL_FAMILY 이므로
+#         "게이트 신설" 이라는 아키텍처 델타의 doc-coupling 은 그 표면들에서 이미 발동한다(본 파일이 추가로 기여할 신호 0).
+#     (c) 내용 = pin 데이터 스냅샷(40-hex blob sha 목록)이며 §5.3 절차상 머지 직전마다 재스냅샷된다 —
+#         구조로 분류하면 값만 바뀌는 pin refresh 전건이 family.md touch/no-op declare 를 강요하는 noise 가 된다.
+#     선례 = 같은 tuple 의 requirements.txt · pytest.ini(루트 선언/설정 파일, 빌드·검사 도구가 소비하는 데이터).
+NON_STRUCTURAL_EXACT = (".gitignore", ".gitattributes", "mark.toml", "requirements.txt", "pytest.ini", ".codeforge-asset-pins.json")  # CFP-2889: pytest.ini = 테스트 러너 marker 선언 config — requirements.txt 와 동류(빌드/테스트 의존 선언, family.md 도출 표면 아님). closed enum 분류 확정(unknown-surface fail-closed 해소). CFP-2978: `.codeforge-asset-pins.json` = consumer 자산 currency 게이트 pin 스냅샷 — 위 (a)(b)(c) 근거.
 
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 
