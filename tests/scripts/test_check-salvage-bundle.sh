@@ -36,6 +36,32 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   오라클·변이체가 예외로 죽어서 난 rc≠0 은 **검출이 아니다**. 크래시를 RED(=kill) 로 세면
+#   mutant 원장 전체가 거짓이 된다("GREEN 아래 결함 생존" 의 거울상).
+#   ★ 실사건: AC-11b 오라클에 무효 정규식이 들어가 전 케이스가 크래시했는데 mutant 7종이
+#     전부 "RED"= killed 로 계상될 뻔했다.
+#   ★ 본 파일의 mutant 는 **SUT 소스를 치환해 만든 변이체**다. 치환이 소스를 깨뜨리면
+#     mutant 는 detection 이 아니라 SyntaxError/re.error 로 rc=1 을 낸다 — want_mutant=1 인
+#     행은 그것을 그대로 "KILLED" 로 계상한다. 그래서 mutant 측 검사가 필수다.
+#   ★ SyntaxError·IndentationError 는 **Traceback 머리글 없이** 출력된다(실측: 컴파일 오류
+#     stderr 에 'Traceback' 부재) — Traceback 단독 grep 으로는 못 잡는다.
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
+# fail_crash <label> <where> <output> — 크래시를 판정으로 접지 않고 크게 실패시킨다.
+fail_crash() {
+  echo "X FAIL: $1 — $2 크래시(오라클 예외). rc≠0 을 검출로 셀 수 없다"
+  printf '%s\n' "$3" | sed 's/^/    ! /'
+  FAIL=$((FAIL + 1))
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # assert_rc: SUT 를 실 실행해 종료코드를 **수치로** 대조 (문면 자칭 금지).
 # ─────────────────────────────────────────────────────────────────────────────
 assert_rc() {
@@ -43,6 +69,7 @@ assert_rc() {
   shift 2
   local out rc=0
   out=$(bash "$WRAPPER" "$@" 2>&1) || rc=$?
+  if crash_marker "$out"; then fail_crash "$name" "SUT" "$out"; return; fi
   if [ "$rc" -eq "$want" ]; then
     echo "OK PASS: $name (rc=$rc)"
     PASS=$((PASS + 1))
@@ -58,6 +85,7 @@ assert_contains() {
   shift 2
   local out rc=0
   out=$(bash "$WRAPPER" "$@" 2>&1) || rc=$?
+  if crash_marker "$out"; then fail_crash "$name" "SUT" "$out"; return; fi
   case "$out" in
     *"$needle"*)
       echo "OK PASS: $name (기록 존재: $needle)"
@@ -101,6 +129,8 @@ assert_kill_rc() {
   fi
   bout=$(bash "$WRAPPER" "$@" 2>&1) || brc=$?
   mout=$(python3 "$m" "$@" 2>&1) || mrc=$?
+  if crash_marker "$bout"; then fail_crash "$label" "baseline(대조군 무효 — INV-T4)" "$bout"; return; fi
+  if crash_marker "$mout"; then fail_crash "$label" "mutant(치환이 소스를 깨뜨림 = 거짓 kill)" "$mout"; return; fi
   if [ "$brc" -eq "$wb" ] && [ "$mrc" -eq "$wm" ]; then
     echo "OK KILLED: $label (baseline rc=$brc → mutant rc=$mrc)"
     PASS=$((PASS + 1))
@@ -125,6 +155,9 @@ assert_kill_absent() {
   fi
   bout=$(bash "$WRAPPER" "$@" 2>&1) || true
   mout=$(python3 "$m" "$@" 2>&1) || true
+  if crash_marker "$bout"; then fail_crash "$label" "baseline(대조군 무효 — INV-T4)" "$bout"; return; fi
+  # ★ 크래시한 mutant 는 needle 을 못 내므로 '기록 無' = killed 로 오독된다. 여기서 끊는다.
+  if crash_marker "$mout"; then fail_crash "$label" "mutant(치환이 소스를 깨뜨림 = 거짓 kill)" "$mout"; return; fi
   case "$bout" in *"$needle"*) bhit=1 ;; esac
   case "$mout" in *"$needle"*) mhit=1 ;; esac
   if [ "$bhit" -eq 1 ] && [ "$mhit" -eq 0 ]; then
