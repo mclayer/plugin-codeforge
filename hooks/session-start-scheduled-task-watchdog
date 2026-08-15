@@ -50,6 +50,8 @@
 #          class — 이름·경로 결박 검사의 알려진 성질).
 #     (ii) [탐지 축] 운영자가 프롬프트를 바꿔 써 sentinel 이 사라지면 같은 결과가 된다.
 #     (iii) [탐지 축] 앱이 태스크 정의를 파일 아닌 형태로 보관하거나 다른 HOME 에 두면 안 보인다.
+#          ★ 단 **HOME↔USERPROFILE 축 어긋남**은 (iii) 에서 분리됐다 — 그 갈래는 이제
+#            writer 동형화로 닫혔고(아래 `_state_base` 절), 남은 잔여는 (v)(vi) 다.
 #   위 **세 경우**(i·ii·iii)는 **탐지 축의 손실 경로**다 — 진짜 채택자가 heartbeat 부재
 #   상태일 때 pre-FIX6 은 발화했고 현행은 침묵한다(A4-1 실측 E·F). 거짓 발화를 만들지
 #   않는다는 것은 **다른 축의 사실**이며 탐지 손실이 없다는 뜻이 아니다 — 종전 문면은 이
@@ -88,8 +90,62 @@ if [[ "${BYPASS_SCHEDULED_TASK_WATCHDOG:-}" == "1" ]]; then
   exit 0
 fi
 
+# ── 상태 경로 base 유도: **writer 동형화** (ADR-172 Amendment 6 / A6-7 F-SEC-5) ──
+#   writer(CLI)는 python `expanduser("~")` 로 상태 경로를 정한다. Windows 의 `ntpath` 는
+#   **HOME 을 보지 않는다** — USERPROFILE → HOMEDRIVE+HOMEPATH 순으로만 본다.
+#   종전 reader(이 hook)는 heartbeat 와 채택 표식을 **둘 다 `${HOME}`** 으로 유도했다.
+#   두 env 가 갈리면 그 둘이 **함께 이동**해 "표식 부재 + heartbeat 부재" = 미채택으로
+#   떨어져 **침묵**한다 — 채택자인데 감시가 조용히 무장해제된다(적대자 없이도 성립).
+#
+#   실측 (동일 호스트, HOME=A · USERPROFILE=B 로 갈라 세움):
+#     · python `expanduser("~")`          → **B** (USERPROFILE)
+#     · bash `${HOME}`                    → **A**
+#     · CLI 가 heartbeat 를 실제로 쓴 위치 → **B**  ⇒ reader 는 A 를 보고 침묵했다
+#     · ntpath 우선순위 3-leg 실측: USERPROFILE 우선 / 부재 시 HOMEDRIVE+HOMEPATH /
+#       셋 다 부재면 `~` 미확장 (어느 경우에도 **HOME 미참조**)
+#
+#   ⇒ reader 의 base 유도를 writer 와 **동형화**한다(플랫폼별 우선순위 일치).
+#     이는 계획서 §8.12 제약 4 가 기각한 *env 축 신설*이 아니다 — 신규 env·신규 파일 0건이며
+#     이미 존재하는 축을 writer 와 **같은 규칙으로 읽을 뿐**이다.
+#
+#   정직 잔여 (선언 — 은폐 금지):
+#     (v) [탐지 축] reader 와 writer 가 **서로 다른 런타임**일 때(예: hook 은 Git Bash,
+#         CLI 는 WSL python) 플랫폼 판별이 갈려 다시 어긋날 수 있다. 동형화는 *같은
+#         플랫폼 규칙을 쓰는 짝*에서 성립하며, 런타임이 갈리는 형상까지 덮지 않는다.
+#     (vi) [탐지 축] Windows 축이 전부 부재하면 writer 는 `~` 를 확장하지 못하는데
+#         reader 는 `${HOME}` 으로 폴백한다(실용 하한). 그 코너에서는 두 축이 다시 갈린다.
+_is_windows_like() {
+  case "${OSTYPE:-}" in
+    msys*|cygwin*|win32*) return 0 ;;
+  esac
+  case "$(uname -s 2>/dev/null || echo)" in
+    MINGW*|MSYS*|CYGWIN*|Windows*) return 0 ;;
+  esac
+  return 1
+}
+
+_state_base() {
+  local base=""
+  if _is_windows_like; then
+    if [[ -n "${USERPROFILE:-}" ]]; then
+      base="${USERPROFILE}"                      # ntpath 1순위
+    elif [[ -n "${HOMEDRIVE:-}" && -n "${HOMEPATH:-}" ]]; then
+      base="${HOMEDRIVE}${HOMEPATH}"             # ntpath 2순위
+    else
+      base="${HOME:-/tmp}"                       # 잔여 (vi) — writer 와 갈릴 수 있다
+    fi
+  else
+    base="${HOME:-/tmp}"                         # POSIX: posixpath 는 HOME
+  fi
+  # MSYS 형식 변환 — USERPROFILE 은 Windows 형(`C:\Users\x`)으로 온다.
+  base="${base//\\//}"
+  base="${base%/}"
+  printf '%s' "${base:-/tmp}"
+}
+
 # ── 설정 ──
-GC_STATE_DIR="${HOME:-/tmp}/.claude/worktree-gc-state"
+STATE_BASE="$(_state_base)"
+GC_STATE_DIR="${STATE_BASE}/.claude/worktree-gc-state"
 HEARTBEAT_FILE="${GC_STATE_DIR}/scheduled-task-last-run.epoch"
 THRESHOLD_SECONDS="${SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS:-172800}"
 
@@ -97,7 +153,9 @@ THRESHOLD_SECONDS="${SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS:-172800}"
 [[ "$THRESHOLD_SECONDS" =~ ^[0-9]+$ ]] || THRESHOLD_SECONDS=172800
 
 # 채택 표식 — 앱이 만드는 태스크 정의 (신규 파일 0건, scratch 밖). 위 헤더 참조.
-TASK_DEF_ROOT="${HOME:-/tmp}/.claude/scheduled-tasks"
+#   ★ heartbeat 와 **같은 base** 를 쓴다. 둘이 다른 base 를 쓰면 "표식은 있는데
+#     heartbeat 는 없다"(ㄴ)와 "둘 다 없다"(ㄱ)의 구별이 축 어긋남으로 오염된다.
+TASK_DEF_ROOT="${STATE_BASE}/.claude/scheduled-tasks"
 ADOPTION_SENTINEL="scheduled_task_reconcile"
 ADOPTION_MAX_FILES=200
 ADOPTION_MAX_DEPTH=3

@@ -57,10 +57,17 @@
 #   ①c 는 ①a 와 **표식도 heartbeat 도 같고**(둘 다 부재) 스캔 bound 도달 여부만 다르다 —
 #   그 둘이 갈린다는 것이 bound 판별자(판정 불가 ≠ 없음)가 살아 있다는 증거다.
 #
-# ★ 격리: hook 은 `GC_STATE_DIR="${HOME:-/tmp}/.claude/…"` 를 **런타임에** 평가하므로
-#   env HOME override 로 격리가 실제 성립한다(ArchitectPL 실측). python
-#   `expanduser()` 가 import 시점에 실 홈을 확정하는 함정(§8.3 실 채널 사고의 근인)과
-#   **disjoint** 한 성질이다. 실 `~/.claude/worktree-gc-state/` 는 읽지도 쓰지도 않는다.
+# ★ 격리: hook 은 상태 경로를 **런타임에** 유도하므로 env override 로 격리가 실제
+#   성립한다(ArchitectPL 실측). python `expanduser()` 가 import 시점에 실 홈을 확정하는
+#   함정(§8.3 실 채널 사고의 근인)과 **disjoint** 한 성질이다.
+#   ★ 단 유도 축이 **HOME 하나가 아니다** (FIX13 / F-SEC-5 writer 동형화 이후) —
+#     Windows 에서는 `USERPROFILE` → `HOMEDRIVE`+`HOMEPATH` 순이다. `_run_hook` 이
+#     tmp 를 두 축에 모두 세우고 HOMEDRIVE/HOMEPATH 를 제거하는 이유이며, 그래야
+#     실 `~/.claude/worktree-gc-state/` 를 읽지도 쓰지도 않는다는 성질이 유지된다.
+#
+# ★ 축 어긋남 케이스 (⑥ — FIX13 신설): heartbeat/표식이 writer 축(USERPROFILE)에 있고
+#   HOME 이 다른 곳을 가리킬 때 hook 이 **침묵하지 않는지**를 잰다. 종전에는 두 경로가
+#   함께 HOME 으로 이동해 "미채택" 으로 떨어져 조용히 무장해제됐다(보안 lane F-SEC-5).
 #
 # ★ 상한 (over-claim 차단): 이 오라클이 검사하는 것은 **판독 로직뿐**이다.
 #   실 스케줄 작업의 사망·stall 재현은 §8.0-b **L1 = SUT 아님**이라 정의역 밖이며,
@@ -141,16 +148,24 @@ _SKIP_NO_BASH = pytest.mark.skipif(
 
 # ══════════════════════════ 실행 헬퍼 ═════════════════════════════════════════
 def _run_hook(home_dir, extra_env=None, timeout=60):
-    """tmp HOME 으로 격리해 hook 실행 → CompletedProcess.
+    """tmp 홈으로 격리해 hook 실행 → CompletedProcess.
 
-    ★ HOME 은 forward-slash 로 넘긴다 — Git Bash 가 `C:/...` 를 그대로 다루기 때문이며,
+    ★ 경로는 forward-slash 로 넘긴다 — Git Bash 가 `C:/...` 를 그대로 다루기 때문이며,
       backslash 경로는 bash 문자열에서 escape 로 오독될 여지가 있다.
+
+    ★ 격리 축이 **HOME 하나가 아니다** (FIX13 / F-SEC-5 — writer 동형화 이후):
+      hook 은 이제 writer(python `expanduser`)와 같은 규칙으로 base 를 유도하므로
+      Windows 에서는 `USERPROFILE` → `HOMEDRIVE`+`HOMEPATH` 를 본다. HOME 만 tmp 로
+      돌리고 나머지를 그대로 두면 hook 이 **실 사용자 홈**을 읽는다(격리 붕괴 +
+      실 상태 판독). 그래서 tmp 를 **두 축에 모두** 세우고 HOMEDRIVE/HOMEPATH 는 제거한다.
+      ⇒ 어느 유도 규칙이 적용되든 결과 base 는 tmp 다(플랫폼 판별에 의존하지 않는 격리).
     """
     assert WORKING_BASH is not None
     env = dict(os.environ)
-    # 실 사용자 상태로 새는 축을 전부 차단 (HOME 만이 hook 의 상태 경로 결정자다)
-    env["HOME"] = str(home_dir).replace("\\", "/")
-    for leak in ("USERPROFILE", "BYPASS_SCHEDULED_TASK_WATCHDOG",
+    home_s = str(home_dir).replace("\\", "/")
+    env["HOME"] = home_s
+    env["USERPROFILE"] = home_s
+    for leak in ("HOMEDRIVE", "HOMEPATH", "BYPASS_SCHEDULED_TASK_WATCHDOG",
                  "SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS"):
         env.pop(leak, None)
     if extra_env:
@@ -617,3 +632,199 @@ def test_watchdog_bypass_emits_audit_and_skips_read(tmp_path):
     assert "last_run_epoch=" not in (cp.stderr or ""), (
         f"bypass 인데 판독·판정 산출이 나왔다: {cp.stderr!r}"
     )
+
+
+# ═══════ ⑥ base 유도 축 어긋남 = writer 동형화 (F-SEC-5, ADR-172 Amd 6 / A6-7) ═══════
+def _run_hook_axes(home_dir, userprofile_dir, extra_env=None, timeout=60):
+    """HOME 과 USERPROFILE 을 **다르게** 세워 hook 실행 (축 어긋남 재현).
+
+    ★ 설계 판정(A6-7)이 요구한 형상: *"판별 테스트는 두 env 를 **다르게** 세운 격리에서
+      발화를 보여야 한다"*. `_run_hook` 은 두 축을 같은 tmp 로 맞추므로 이 축을 못 잰다.
+    ★ 격리: 두 축 모두 tmp 이고 HOMEDRIVE/HOMEPATH 는 제거한다 — 어느 유도 규칙이
+      적용되든 실 사용자 홈에 닿지 않는다.
+    """
+    assert WORKING_BASH is not None
+    env = dict(os.environ)
+    env["HOME"] = str(home_dir).replace("\\", "/")
+    env["USERPROFILE"] = str(userprofile_dir).replace("\\", "/")
+    for leak in ("HOMEDRIVE", "HOMEPATH", "BYPASS_SCHEDULED_TASK_WATCHDOG",
+                 "SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS"):
+        env.pop(leak, None)
+    if extra_env:
+        env.update(extra_env)
+    return subprocess.run(
+        [WORKING_BASH, str(HOOK_PATH)],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env=env, timeout=timeout,
+    )
+
+
+def _writer_base(home_dir, userprofile_dir):
+    """writer(python `expanduser`)가 **실제로** 고르는 축을 그 자리에서 잰다.
+
+    ★ 상수로 박지 않는다 — 이 오라클의 전제는 "writer 는 USERPROFILE 을 고른다" 이고,
+      그 전제가 플랫폼에 따라 다르면 테스트가 **다른 것을 재게 된다**. 실측으로 고정한다.
+    """
+    env = dict(os.environ)
+    env["HOME"] = str(home_dir).replace("\\", "/")
+    env["USERPROFILE"] = str(userprofile_dir).replace("\\", "/")
+    for leak in ("HOMEDRIVE", "HOMEPATH"):
+        env.pop(leak, None)
+    cp = subprocess.run(
+        [sys.executable, "-c", "import os;print(os.path.expanduser('~'))"],
+        capture_output=True, text=True, encoding="utf-8", env=env, timeout=60,
+    )
+    assert cp.returncode == 0, f"writer 축 실측 실패: {cp.stderr!r}"
+    return cp.stdout.strip().replace("\\", "/").rstrip("/")
+
+
+def _norm(p):
+    return str(p).replace("\\", "/").rstrip("/")
+
+
+@_SKIP_NO_BASH
+@pytest.mark.skipif(sys.platform != "win32",
+                    reason="HOME↔USERPROFILE 분기는 Windows(ntpath) 축에서만 성립 — "
+                           "POSIX 에서는 두 축이 정의상 갈리지 않는다(정의역 밖)")
+class TestWriterBaseHomomorphism:
+    """⑥ reader 의 base 유도가 **writer 와 동형**인가 (F-SEC-5).
+
+    ★ 결함 형상(실측): CLI 는 heartbeat 를 **USERPROFILE 축**에 쓰고(Windows `ntpath` 는
+      HOME 을 보지 않는다), hook 은 heartbeat 와 채택 표식을 **둘 다 `${HOME}`** 으로
+      읽었다. 두 env 가 갈리면 그 둘이 **함께 이동**해 "표식 부재 + heartbeat 부재" =
+      미채택으로 떨어져 **침묵**한다 — 채택자인데 감시가 조용히 무장해제된다.
+      적대자 없이도 성립하며(툴체인이 HOME 을 다르게 세우면 그만), env 통제자는 이
+      방향을 **침묵 쪽으로** 무기화할 수 있다.
+
+    ★ 판별 구조 (한 방향만으로는 귀속되지 않는다):
+      leg A  writer 축에 표식 · heartbeat 부재      → **발화** (종전 침묵 = 결함)
+      leg B  writer 축에 fresh heartbeat            → **침묵** (반대 방향 — "항상 발화"
+             구현 배제. 이 leg 이 없으면 leg A 를 무조건 발화로 통과시킬 수 있다)
+      leg C  표식이 **비-writer 축(HOME)에만** 존재 → **침묵** (base 가 실제로 writer 축
+             으로 **이동**했음의 증거. 종전 코드는 여기서 발화했다)
+      ⇒ A 와 C 는 종전/현행이 **정확히 뒤집히는** 쌍이라, 둘이 동시에 성립하는 구현은
+        "base 를 writer 축으로 옮긴" 구현뿐이다.
+
+    mutant kill: `_state_base` 를 `printf '%s' "${HOME:-/tmp}"` 로 되돌리기
+      ⇒ leg A RED (leg B 는 GREEN 유지 — 균일 실패가 아니다).
+    """
+
+    def test_writer_axis_is_userprofile_precondition(self, tmp_path):
+        """전제 실측: 이 호스트에서 writer 는 **USERPROFILE 축**을 고른다.
+
+        ★ 이 전제가 깨지면 아래 leg 들이 재는 대상이 달라진다. 그래서 별도 테스트로
+          앞세워, 전제 붕괴가 **다른 테스트의 실패로 위장되지 않게** 한다.
+        """
+        a, b = tmp_path / "axis-home", tmp_path / "axis-profile"
+        a.mkdir(); b.mkdir()
+        assert _norm(a) != _norm(b), "정의역 붕괴: 두 축이 같은 경로다"
+        assert _writer_base(a, b) == _norm(b), (
+            f"전제 붕괴: writer 가 USERPROFILE 축을 고르지 않는다 — "
+            f"실측 {_writer_base(a, b)!r}, 기대 {_norm(b)!r}"
+        )
+
+    def test_legA_adopted_on_writer_axis_reports(self, tmp_path):
+        """leg A: 표식이 **writer 축**에 있고 heartbeat 부재 → 발화 1줄.
+
+        종전 구현은 여기서 **침묵**했다(HOME 축만 봤으므로 표식도 heartbeat 도 못 봤다).
+        """
+        home, profile = tmp_path / "axis-home", tmp_path / "axis-profile"
+        (home / ".claude").mkdir(parents=True)          # HOME 축은 비어 있다
+        profile.mkdir()
+        marker = _plant_adoption_marker(profile)
+
+        # 전제: 표식은 writer 축에만 있고, 어느 축에도 heartbeat 가 없다
+        assert marker.exists(), "전제 붕괴: 표식 미생성"
+        assert not (home / ".claude" / "scheduled-tasks").exists(), (
+            "전제 붕괴: HOME 축에도 표식이 있다 — 축 귀속이 안 된다"
+        )
+        for base in (home, profile):
+            hb = base / ".claude" / "worktree-gc-state" / "scheduled-task-last-run.epoch"
+            assert not hb.exists(), f"전제 붕괴: heartbeat 가 존재한다 ({hb})"
+
+        cp = _run_hook_axes(home, profile)
+
+        assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+        lines = _marker_lines(cp)
+        assert len(lines) == 1, (
+            f"축이 갈린 채택 환경은 발화해야 한다(침묵 = 감시 무장해제), 실제 {len(lines)}줄: "
+            f"{lines}. stderr={cp.stderr[:300]!r}"
+        )
+        m = FACT_RE.match(lines[0])
+        assert m is not None, f"사실 줄 형식 불일치: {lines[0]!r}"
+        assert m.group(1) == "absent", f"last_run_epoch=absent 기대: {m.group(1)!r}"
+
+    def test_legB_fresh_heartbeat_on_writer_axis_is_silent(self, tmp_path):
+        """leg B (**대조군**): fresh heartbeat 가 **writer 축**에 있으면 침묵.
+
+        ★ 이 leg 이 짊어지는 것: heartbeat 판독도 같은 base 로 이동했는가.
+          표식만 옮기고 heartbeat 를 HOME 에 남기면 여기서 RED 다 —
+          writer 가 쓴 fresh heartbeat 를 못 보고 **매 세션 거짓 발화**하기 때문이다
+          (지시의 "한쪽만 고치면 반대 방향으로 어긋난다" 가 정확히 이 leg).
+        """
+        home, profile = tmp_path / "axis-home", tmp_path / "axis-profile"
+        home.mkdir(); profile.mkdir()
+        state = profile / ".claude" / "worktree-gc-state"
+        state.mkdir(parents=True)
+        hb = state / "scheduled-task-last-run.epoch"
+        hb.write_text("%d\n" % int(time.time()), encoding="utf-8", newline="\n")
+        _plant_adoption_marker(profile)
+
+        assert hb.exists(), "전제 붕괴: fresh heartbeat 미생성"
+        assert not (home / ".claude").exists(), "전제 붕괴: HOME 축에 상태가 있다"
+
+        cp = _run_hook_axes(home, profile)
+
+        assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+        assert _marker_lines(cp) == [], (
+            f"writer 축의 fresh heartbeat 를 못 읽어 거짓 발화했다: {_marker_lines(cp)}"
+        )
+
+    def test_legC_marker_on_non_writer_axis_is_silent(self, tmp_path):
+        """leg C: 표식이 **비-writer 축(HOME)에만** 있으면 침묵 — base 이동의 증거.
+
+        ★ 종전 구현은 여기서 **발화**했다. leg A 와 정확히 뒤집힌 쌍이라, 둘이 동시에
+          성립하는 구현은 base 를 writer 축으로 옮긴 구현뿐이다("항상 발화"·"항상 침묵"
+          어느 쪽도 두 leg 을 함께 만족시키지 못한다).
+        ★ 선언된 대가: writer 가 쓰지 않는 축의 표식은 이제 보이지 않는다. 그 축에는
+          heartbeat 도 생기지 않으므로 관측 대상 자체가 그 축에 없다 — 동형화가 뜻하는
+          바가 이것이다(정본 축 = writer 축).
+        """
+        home, profile = tmp_path / "axis-home", tmp_path / "axis-profile"
+        home.mkdir(); profile.mkdir()
+        marker = _plant_adoption_marker(home)          # 비-writer 축에만 표식
+
+        assert marker.exists(), "전제 붕괴: 표식 미생성"
+        assert not (profile / ".claude").exists(), (
+            "전제 붕괴: writer 축에도 상태가 있다 — 축 귀속이 안 된다"
+        )
+
+        cp = _run_hook_axes(home, profile)
+
+        assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+        assert _marker_lines(cp) == [], (
+            f"base 가 writer 축으로 이동하지 않았다(HOME 축 표식으로 발화): "
+            f"{_marker_lines(cp)}"
+        )
+
+    def test_real_user_state_is_never_read(self, tmp_path):
+        """격리 회귀: 실 사용자 홈을 읽지 않는다 (규율 5).
+
+        ★ writer 동형화로 유도 축이 늘었으므로(USERPROFILE·HOMEDRIVE+HOMEPATH), 격리가
+          HOME 하나로는 부족해졌다. 그 격리가 실제로 성립하는지 **산출로** 확인한다:
+          실 홈에는 heartbeat 가 있을 수 있고, 그것을 읽었다면 fresh/stale 판정이
+          tmp 형상과 달라진다. 여기서는 두 축 모두 빈 tmp 이므로 **침묵**이 정답이다.
+        """
+        home, profile = tmp_path / "h", tmp_path / "p"
+        home.mkdir(); profile.mkdir()
+        cp = _run_hook_axes(home, profile)
+        assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+        assert _marker_lines(cp) == [], (
+            f"빈 tmp 두 축인데 발화했다 — 실 사용자 상태를 읽었을 가능성: "
+            f"{_marker_lines(cp)}"
+        )
+        # 부수효과 0 — 어느 축에도 파일을 만들지 않는다
+        for base in (home, profile):
+            assert list(base.rglob("*")) == [], (
+                f"hook 이 상태를 생성했다(판독 전용 위반): {list(base.rglob('*'))}"
+            )
