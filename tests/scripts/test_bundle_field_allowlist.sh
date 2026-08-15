@@ -34,11 +34,32 @@ FAIL=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   오라클·변이체가 예외로 죽어서 난 rc≠0 은 **검출이 아니다**. mutant 는 SUT 소스를 치환해
+#   만들므로, 치환이 소스를 깨뜨리면 detection 이 아니라 SyntaxError/re.error 로 rc=1 을 낸다
+#   — want_mutant=1 인 행은 그것을 그대로 "KILLED" 로 계상한다.
+#   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
+fail_crash() {
+  echo "X FAIL: $1 — $2 크래시(오라클 예외). rc≠0 을 검출로 셀 수 없다"
+  printf '%s\n' "$3" | sed 's/^/    ! /'
+  FAIL=$((FAIL + 1))
+}
+
 assert_rc() {
   local name="$1" want="$2"
   shift 2
   local out rc=0
   out=$(bash "$WRAPPER" "$@" 2>&1) || rc=$?
+  if crash_marker "$out"; then fail_crash "$name" "SUT" "$out"; return; fi
   if [ "$rc" -eq "$want" ]; then
     echo "OK PASS: $name (rc=$rc)"
     PASS=$((PASS + 1))
@@ -73,6 +94,8 @@ assert_kill_rc() {
   fi
   bout=$(bash "$WRAPPER" "$@" 2>&1) || brc=$?
   mout=$(python3 "$m" "$@" 2>&1) || mrc=$?
+  if crash_marker "$bout"; then fail_crash "$label" "baseline(대조군 무효 — INV-T4)" "$bout"; return; fi
+  if crash_marker "$mout"; then fail_crash "$label" "mutant(치환이 소스를 깨뜨림 = 거짓 kill)" "$mout"; return; fi
   if [ "$brc" -eq "$wb" ] && [ "$mrc" -eq "$wm" ]; then
     echo "OK KILLED: $label (baseline rc=$brc → mutant rc=$mrc)"
     PASS=$((PASS + 1))

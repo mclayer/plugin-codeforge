@@ -58,6 +58,28 @@ count_attempts() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   오라클·변이체가 예외로 죽어서 난 rc≠0 / 마커 부재는 **검출이 아니다**.
+#   ★ assert_kill_absent 의 kill 판정은 "mutant 출력에 needle 부재" 다 — 크래시한 mutant 는
+#     아무것도 못 내므로 **자동으로 killed 로 오독**된다.
+#   ★ assert_kill_attempts(시도 ≥2 요구) · assert_kill_wait(Δ≥2500ms 요구) 는 kill 조건이
+#     **양(positive) 산출**이라 크래시로는 충족 불가 — 구조적으로 crash-safe (가드 불요).
+#   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
+fail_crash() {
+  echo "X FAIL: $1 — $2 크래시(오라클 예외). rc≠0·마커 부재를 검출로 셀 수 없다"
+  printf '%s\n' "$3" | sed 's/^/    ! /'
+  FAIL=$((FAIL + 1))
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # assert_attempts: 실패 경로 / 성공 경로 각각 시도 마커가 **정확히 1** 이어야 한다.
 # ─────────────────────────────────────────────────────────────────────────────
 assert_attempts() {
@@ -65,6 +87,7 @@ assert_attempts() {
   shift 2
   local out n
   out=$(bash "$WRAPPER" "$@" 2>&1) || true
+  if crash_marker "$out"; then fail_crash "$name" "SUT" "$out"; return; fi
   n=$(count_attempts "$out")
   if [ "$n" -eq "$want" ]; then
     echo "OK PASS: $name (시도 $n 회)"
@@ -81,6 +104,7 @@ assert_contains() {
   shift 2
   local out
   out=$(bash "$WRAPPER" "$@" 2>&1) || true
+  if crash_marker "$out"; then fail_crash "$name" "SUT" "$out"; return; fi
   case "$out" in
     *"$needle"*)
       echo "OK PASS: $name"
@@ -128,6 +152,9 @@ assert_kill_absent() {
   fi
   bout=$(bash "$WRAPPER" "${FAIL_ARGS[@]}" 2>&1) || true
   mout=$(python3 "$m" "${FAIL_ARGS[@]}" 2>&1) || true
+  if crash_marker "$bout"; then fail_crash "$label" "baseline(대조군 무효 — INV-T4)" "$bout"; return; fi
+  # ★ 크래시한 mutant 는 needle 을 못 내므로 '기록 無' = killed 로 오독된다. 여기서 끊는다.
+  if crash_marker "$mout"; then fail_crash "$label" "mutant(치환이 소스를 깨뜨림 = 거짓 kill)" "$mout"; return; fi
   case "$bout" in *"$needle"*) bhit=1 ;; esac
   case "$mout" in *"$needle"*) mhit=1 ;; esac
   if [ "$bhit" -eq 1 ] && [ "$mhit" -eq 0 ]; then
