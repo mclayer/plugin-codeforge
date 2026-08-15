@@ -4444,3 +4444,35 @@ entries:
     carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active
+  - name: correction-pointer-cochange
+    description: |
+      신규 정정 블록이 지목한 선행 절의 co-change 검사 (diff-scoped, 관계 축) —
+      `origin/main...HEAD` 추가 줄 중 `## Amendment` 절 안에서 같은 문서의 절 ID
+      (`A<n>-<m>` · `§결정 N`)를 지목한 줄에 대해, 그 **선행** 절이 같은 diff 에서
+      편집됐는지 요구한다. 전방 참조(뒤 절 지목)는 그 자체가 정정 포인터라 요구 밖.
+      형제 게이트 absolute-claim-ratchet(어휘 축)과 **정의역이 disjoint** 하다 —
+      이쪽이 보는 것은 한 줄 안의 어휘가 아니라 편집 사이의 관계다.
+      honest ceiling: co-change 는 pointer 가 아니다(피인용 절의 어떤 편집이든 통과).
+      절 ID 없는 뒤집기 · 참조와 뒤집기의 구분 · 행번호(`:NNN`) 포인터의 stale ·
+      cross-repo 문서(Story·Change Plan)는 미커버이며, 위반 목록은 사람이 읽어야 하는
+      **후보 목록**이지 확정 결함 목록이 아니다(실측 오발화 있음).
+      판정·천장 SSOT = tests/scripts/_correction_pointer_cochange.py 모듈 docstring.
+    detect_command: python tests/scripts/_correction_pointer_cochange.py
+    workflow: .github/workflows/correction-pointer-cochange.yml
+    current_tier: warning
+    # bypass_label: omit — warning tier 비차단이라 막을 merge 가 없다. required 승격 carrier 에서 신설 의무
+    # bypass_audit_lint: omit — bypass_label 미정의
+    # ★ 등재 누락은 기계가 알려주지 않는다 (정직 기재 — 구현리뷰 iter7 F-CR7-06):
+    #   `scripts/lib/check_evidence_registry.py` 는 YAML 구조 · 최상위 allowlist ·
+    #   name 유일성 · current_tier enum 만 본다. `.github/workflows/**` → 이 registry
+    #   **역방향 대조는 부재**한다(firsthand 실측: 그 파일에 워크플로 디렉터리 스캔 site 없음).
+    #   그래서 본 entry 는 형제(absolute-claim-ratchet) 등재 때 함께 빠졌고, 기계가 아니라
+    #   사람 리뷰가 잡았다. 다음 게이트도 같은 방식으로 빠질 수 있다.
+    # ★ owner_adr = 최근친 표기다. 관계 축 게이트 전용 ADR 은 없고, 판정 규칙과 정직 천장의
+    #   SSOT 는 위 모듈 docstring 이다(ADR-177 은 같은 Story 의 어휘 축 형제 ADR).
+    introduced_by: CFP-2949
+    introduced_date: 2026-08-15
+    owner_adr: ADR-177
+    carrier_adr: ADR-171
+    promotion_trigger: advisory
+    status: Active
