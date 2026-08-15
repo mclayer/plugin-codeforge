@@ -186,24 +186,97 @@ PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS = {
     "Run pytest tests (W-3b)": 1,
 }
 
-# W-16 A8 idioms (bash rc 흡수 관용구) — 6종
-# W-13 파서로는 관측 불가(composite action/여러 줄 리다이렉트 미포섭)이므로
-# 텍스트 스캔으로 정의역 보완
+# ── W-16 A8 idioms (bash rc 흡수 관용구) — 6종 ───────────────────────────────
 #
-# ★ (2) 정직한 표기: 튜플 원소가 regex 인지 리터럴 문자열인지 명시.
-#   "set +e" 는 regex 가 아니라 리터럴이다 (정규식에서 + 는 수량자).
-#   반례) re.search("set +e", "set e") -> match (조용한 무력화).
-#   따라서 리터럴 needle 을 쓸 때는 `in` 연산자로만 검사하거나, 명시적으로
-#   "regex 아님" 을 자료구조에 표기해야 한다 (다음 사람이 re.search 로 바꾸는
-#   순간 무력화 차단).
-_A8_IDIOMS = (
-    (r"\|\| true", "|| true"),    # regex, display
-    (r"\|\| :", "|| :"),
-    (r"\|\| exit 0", "|| exit 0"),
-    (r"; true", "; true"),
-    ("set +e", "set +e"),         # ★ literal (not regex) — `in` 연산자로만 검사
-    (r"\bif\b[^\n]*;\s*then\b", "if …; then"),  # ★ (1) 좁혀짐: if 문만 (주석 제외)
+# W-13 파서로는 관측 불가(composite action/여러 줄 리다이렉트 미포섭)이므로
+# 텍스트 스캔으로 정의역 보완.
+#
+# ★ FIX Iter 4 (CR-1) — **공백 관용 regex 로 전환**. 구 판은 needle 을 공백 1개
+#   고정 리터럴 바이트열로 두어, 셸이 동일하게 해석하는 표기 변형이 전부 샜다.
+#   firsthand 실측 (`-q <idiom>` 을 W-3b step 에 주입, `bash -e` rc 는 3종 모두 0):
+#       `-q || true`   -> pytest 2 failed  (검출)
+#       `-q ||  true`  -> pytest 75 passed (BYPASS)   ← 공백 2
+#       `-q||true`     -> pytest 75 passed (BYPASS)   ← 공백 0
+#   즉 셸은 셋을 구별하지 않는데 검출기는 정확히 한 바이트열에만 반응했다.
+#   ⇒ 6종 전건을 regex 로 통일하고 공백을 `\s` 로 관용한다 (리터럴 `in` 분기 소멸).
+#
+# ★ `set` 항목만 `\b` 배치가 비대칭인 이유 (의도적):
+#     - **선두** `\b` 필요: 없으면 `offset +e` 가 오검출된다.
+#     - **말미** `\b` 금지: 붙이면 `set +ex`(errexit+xtrace 동시 해제 — 실 흡수형)를
+#       놓친다. 구 판 리터럴 `in` 검사는 `set +ex` 를 잡았으므로 말미 `\b` 는
+#       검출력 **회귀**다. 두 probe 가 이 비대칭을 각각 고정한다.
+#
+# 정의역 (§8.D rule 3 — 정직 선언). 아래 문면은 실패 메시지에 실려 나간다.
+_A8_DOMAIN = (
+    "A8 정의역 = **단일 step `run` 문면의 공백 관용 텍스트 스캔**. "
+    "행 계속(`\\` 줄바꿈 이음)·변수 간접(`$X`/`${X}` 로 관용구를 우회 조립)·"
+    "here-doc 내부 은닉은 **정의역 밖**이며 본 스캔이 GREEN 을 내는 것은 "
+    "검출 성공이 아니다. 또한 6종은 **열거이지 전수가 아니다** — "
+    "`! false` · `set +o errexit` · `trap ... ERR` 등 rc 흡수 표면은 "
+    "애초에 열거에 없다(이 사실 자체를 선언으로 남긴다)."
 )
+
+_A8_IDIOMS = (
+    (r"\|\|\s*true\b", "|| true"),
+    (r"\|\|\s*:", "|| :"),
+    (r"\|\|\s*exit\s+0\b", "|| exit 0"),
+    (r";\s*true\b", "; true"),
+    (r"\bset\s+\+e", "set +e"),
+    (r"\bif\b[^\n]*;\s*then\b", "if …; then"),
+)
+
+# ★ 술어 자기판별 probe — **자기 display 만 되먹이면 순환 확인**이다.
+#   구 판 probe 는 `f"echo hello {idiom_display} world"` 로 공백 1 변형만 시험해
+#   위 BYPASS 2종을 원리적으로 발견할 수 없었다. 공백 0 / 2 / tab 을 명시 등재한다.
+_A8_PROBE_POSITIVES: Dict[str, List[str]] = {
+    "|| true": [
+        "python3 -m pytest -q || true",     # 공백 1
+        "python3 -m pytest -q ||  true",    # 공백 2  ← 구 판 BYPASS
+        "python3 -m pytest -q||true",       # 공백 0  ← 구 판 BYPASS
+        "python3 -m pytest -q ||\ttrue",    # tab
+    ],
+    "|| :": [
+        "python3 -m pytest -q || :",
+        "python3 -m pytest -q ||  :",
+        "python3 -m pytest -q||:",
+        "python3 -m pytest -q ||\t:",
+    ],
+    "|| exit 0": [
+        "python3 -m pytest -q || exit 0",
+        "python3 -m pytest -q ||  exit  0",
+        "python3 -m pytest -q||exit 0",
+        "python3 -m pytest -q ||\texit\t0",
+    ],
+    "; true": [
+        "python3 -m pytest -q ; true",
+        "python3 -m pytest -q ;  true",
+        "python3 -m pytest -q;true",
+        "python3 -m pytest -q ;\ttrue",
+    ],
+    "set +e": [
+        "set +e",
+        "set  +e",
+        "set\t+e",
+        "set +ex",                          # ★ 말미 `\b` 를 붙이면 여기서 놓친다
+    ],
+    "if …; then": [
+        "if false; then :; fi",
+        "if false ;  then :; fi",
+        "if false;then :; fi",
+        "if false ;\tthen :; fi",
+    ],
+}
+
+# ★ 음성 probe — 술어가 **아무거나 잡는 항진 needle** 이 아님을 고정한다.
+#   (양성 probe 만 있으면 `re.compile(".")` 도 전 probe 를 통과한다.)
+_A8_PROBE_NEGATIVES: Dict[str, List[str]] = {
+    "|| true": ["python3 -m pytest -q || truexyz", "echo trueish"],
+    "|| :": ["python3 -m pytest -q | : "],          # 단일 파이프는 rc 흡수 관용구 아님
+    "|| exit 0": ["python3 -m pytest -q || exit 1"],
+    "; true": ["python3 -m pytest -q ; truexyz"],
+    "set +e": ["offset +e", "set -e"],              # ★ 선두 `\b` 를 빼면 offset 오검출
+    "if …; then": ["verify if present"],
+}
 
 
 # ── 로딩 (W-13 단일 진입점) ──────────────────────────────────────────────────
@@ -881,49 +954,42 @@ def test_w16_e_pytest_step_run_free_of_a8_idioms(face):
 
     assert run_text, f"W-16.e [{face}]: W-3b step run 부재 — {w3b_step}"
 
-    # 술어 비공허 통제 — 합성 문자열로 needle 이 실제로 작동하는지 확인
-    for idiom_pattern, idiom_display in _A8_IDIOMS:
-        # 술어 확인용 probe
-        if idiom_pattern == "set +e":
-            # ★ (2) 리터럴 needle: `in` 연산자로만 검사
-            probe = f"echo hello {idiom_display} world"
-            assert idiom_pattern in probe, (
-                f"W-16.e 술어 고장: needle `{idiom_display}` 이 합성 문자열을 못 잡음"
-            )
-        else:
-            # ★ (1) regex idiom — `if …; then` 패턴은 두 방향 probe 로 정직성 확인
-            if idiom_display == "if …; then":
-                # 양성 probe: if false; then :; fi 는 매치되어야 함
-                probe_positive = "if false; then :; fi"
-                match_positive = re.search(idiom_pattern, probe_positive)
-                assert match_positive, (
-                    f"W-16.e 술어 고장: regex `{idiom_pattern}` 이 `{probe_positive}` 를 못 잡음 (양성)"
-                )
-                # 음성 probe: verify if present 는 매치되면 안 됨 (주석)
-                probe_negative = "verify if present"
-                match_negative = re.search(idiom_pattern, probe_negative)
-                assert not match_negative, (
-                    f"W-16.e 술어 고장: regex `{idiom_pattern}` 이 `{probe_negative}` 를 잘못 잡음 (음성)"
-                )
-            else:
-                # 다른 regex idioms: display 값을 실제 문자열로 만들어 probe
-                probe = f"echo hello {idiom_display} world"
-                assert re.search(idiom_pattern, probe), (
-                    f"W-16.e 술어 고장: needle regex `{idiom_pattern}` 이 `{idiom_display}` 를 못 잡음"
-                )
+    # ── 술어 자기판별 통제 (CR-1) ────────────────────────────────────────────
+    # probe 표 자체의 양성 앵커: 6종 전건이 양·음 probe 를 보유해야 한다.
+    # (이 앵커 없이는 idiom 을 추가하고 probe 를 빠뜨려도 조용히 GREEN 이 된다.)
+    _displays = {d for _, d in _A8_IDIOMS}
+    assert set(_A8_PROBE_POSITIVES) == _displays, (
+        f"W-16.e probe 표 결손(양성) — 미등재={_displays - set(_A8_PROBE_POSITIVES)}, "
+        f"잉여={set(_A8_PROBE_POSITIVES) - _displays}"
+    )
+    assert set(_A8_PROBE_NEGATIVES) == _displays, (
+        f"W-16.e probe 표 결손(음성) — 미등재={_displays - set(_A8_PROBE_NEGATIVES)}, "
+        f"잉여={set(_A8_PROBE_NEGATIVES) - _displays}"
+    )
 
-    # 실제 스캔 — A8 idiom 부재
     for idiom_pattern, idiom_display in _A8_IDIOMS:
-        if idiom_pattern == "set +e":
-            # ★ (2) 리터럴 needle: `in` 연산자로만 검사
-            assert idiom_pattern not in run_text, (
-                f"W-16.e [{face}]: A8 idiom `{idiom_display}` 검출 — W-3b step run 문면에 부재해야 함"
+        positives = _A8_PROBE_POSITIVES[idiom_display]
+        negatives = _A8_PROBE_NEGATIVES[idiom_display]
+        assert positives and negatives, (
+            f"W-16.e 술어 고장: `{idiom_display}` probe 가 비었다 (공허 통제)"
+        )
+        for probe in positives:
+            assert re.search(idiom_pattern, probe), (
+                f"W-16.e 술어 고장(양성 probe): regex `{idiom_pattern}` 이 "
+                f"{probe!r} 를 못 잡음 — 셸은 이 표기를 `{idiom_display}` 과 동일 해석한다"
             )
-        else:
-            # ★ (1) regex idiom (포함 새로운 `if …; then` 패턴)
-            assert not re.search(idiom_pattern, run_text), (
-                f"W-16.e [{face}]: A8 idiom regex `{idiom_display}` 검출 — W-3b step run 문면"
+        for probe in negatives:
+            assert not re.search(idiom_pattern, probe), (
+                f"W-16.e 술어 고장(음성 probe): regex `{idiom_pattern}` 이 "
+                f"{probe!r} 를 잘못 잡음 — 항진 needle"
             )
+
+    # ── 실제 스캔 — A8 idiom 부재 (양성 앵커 = 위 step 명 재확인 + run 비공백) ──
+    for idiom_pattern, idiom_display in _A8_IDIOMS:
+        assert not re.search(idiom_pattern, run_text), (
+            f"W-16.e [{face}]: A8 idiom `{idiom_display}` (regex `{idiom_pattern}`) 검출 — "
+            f"W-3b step run 문면에 부재해야 함. run={run_text!r}\n{_A8_DOMAIN}"
+        )
 
 
 @pytest.mark.parametrize("face", WRAPPER_FACES)
