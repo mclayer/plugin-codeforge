@@ -1,5 +1,5 @@
 {
-  "max_adr_number": 179,
+  "max_adr_number": 180,
   "claims": [
     {
       "adr_number": 142,
@@ -162,6 +162,12 @@
       "claimant": "ArchitectAgent:CFP-2984:20260815-141531",
       "status": "claimed",
       "claimed_at": "2026-08-15T05:17:26Z"
+    },
+    {
+      "adr_number": 180,
+      "claimant": "ArchitectPLAgent:CFP-2986:run-20260815T144913Z",
+      "status": "claimed",
+      "claimed_at": "2026-08-15T06:01:05Z"
     }
   ]
 }
