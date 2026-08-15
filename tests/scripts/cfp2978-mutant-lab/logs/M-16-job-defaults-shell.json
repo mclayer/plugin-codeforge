@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-job-defaults-shell",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "w16_d RED (A5 축)",
+  "expected": "w16_d RED (A5 축 — job defaults.run.shell)",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [

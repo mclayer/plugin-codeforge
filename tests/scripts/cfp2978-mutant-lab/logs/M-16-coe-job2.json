@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-coe-job2",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "w16_b RED",
+  "expected": "w16_b RED (leg③ — job2 coe 주입)",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [

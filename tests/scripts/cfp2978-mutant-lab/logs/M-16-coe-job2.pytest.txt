@@ -9,4 +9,4 @@ E   AssertionError: W-16.b [wrapper-canonical]: job2 continue-on-error \uac80\uc
 C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-coe-job2\\tests\\scripts\\test_cfp2978_workflow_shape.py:798: AssertionError: W-16.b [wrapper-canonical]: job2 continue-on-error \uac80\ucd9c \u2014 ['jobs.parallel-work-sentinel-test.steps[4].continue-on-error']
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_b_job2_coe_paths_empty_strict[wrapper-canonical]
-1 failed, 74 passed in 0.86s
+1 failed, 74 passed in 0.95s

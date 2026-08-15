@@ -1,4 +1,5 @@
-FFFFFF.......F...F...F....F...F...F...F...F...F...F...F....FF            [100%]
+FFFFFF.......F...F...F....F...F...F...F...F...F...F...F................. [ 96%]
+.FF                                                                      [100%]
 ================================== FAILURES ===================================
 E   workflow_shape.ShapeError: workflow root is not a mapping: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13e-empty\tests\fixtures\cfp2978\mctrader-sentinel.yml (type=NoneType)
 C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13e-empty\scripts\lib\workflow_shape.py:336: workflow_shape.ShapeError: workflow root is not a mapping: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13e-empty\tests\fixtures\cfp2978\mctrader-sentinel.yml (type=NoneType)
@@ -58,4 +59,4 @@ FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f9_defaults_run_shell_
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f10_job_defaults_run_shell_absent[mctrader]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
-19 failed, 42 passed in 0.80s
+19 failed, 56 passed in 0.78s

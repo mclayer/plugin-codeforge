@@ -9,4 +9,4 @@ E   AssertionError: W-16.g [wrapper-canonical] 'Run pytest tests (W-3b)': ��
 C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-trailing-cmd\tests\scripts\test_cfp2978_workflow_shape.py:992: AssertionError: W-16.g [wrapper-canonical] 'Run pytest tests (W-3b)': ������� ���� �� �� ����ġ
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_g_step_command_shape_pinned[wrapper-canonical]
-1 failed, 74 passed in 0.98s
+1 failed, 74 passed in 1.15s

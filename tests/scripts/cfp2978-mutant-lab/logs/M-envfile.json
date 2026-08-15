@@ -32,7 +32,7 @@
       "leg3-own1": "RED: ['jobs.parallel-work-sentinel.steps[3].continue-on-error']",
       "leg3-own2": "GREEN",
       "env-file": "RED: {'parallel-work-sentinel': ['STORY_KEY_PREFIX']} (base={})",
-      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[3]': {'base': None, 'mutant': ['PR_TITLE', 'GH_TOKEN']}, 'jobs.parallel-work-sentinel.steps[2]': {'base': ['PR_TITLE', 'GH_TOKEN'], 'mutant': None}}",
+      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[2]': {'base': ['PR_TITLE', 'GH_TOKEN'], 'mutant': None}, 'jobs.parallel-work-sentinel.steps[3]': {'base': None, 'mutant': ['PR_TITLE', 'GH_TOKEN']}}",
       "env-ctr": "GREEN",
       "shell-step": "RED: {'parallel-work-sentinel': {'base': [None, None, None], 'mutant': [None, None, None, None]}}",
       "shell-defaults": "GREEN",

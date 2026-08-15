@@ -24,7 +24,7 @@
       "leg3-own1": "GREEN",
       "leg3-own2": "GREEN",
       "env-file": "GREEN",
-      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[1]': {'base': None, 'mutant': ['INJECTED_STEP_KEY']}, 'jobs.parallel-work-sentinel': {'base': None, 'mutant': ['INJECTED_JOB_KEY']}, 'workflow': {'base': ['SENTINEL_TIER'], 'mutant': ['INJECTED_WF_KEY', 'SENTINEL_TIER']}}",
+      "env-keys": "RED: {'workflow': {'base': ['SENTINEL_TIER'], 'mutant': ['INJECTED_WF_KEY', 'SENTINEL_TIER']}, 'jobs.parallel-work-sentinel.steps[1]': {'base': None, 'mutant': ['INJECTED_STEP_KEY']}, 'jobs.parallel-work-sentinel': {'base': None, 'mutant': ['INJECTED_JOB_KEY']}}",
       "env-ctr": "GREEN",
       "shell-step": "GREEN",
       "shell-defaults": "GREEN",

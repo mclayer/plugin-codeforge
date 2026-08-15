@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-trailing-cmd",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "w16_g RED (1→2 스칼라화)",
+  "expected": "w16_g RED (run 블록 다중화)",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [

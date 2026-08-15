@@ -1,10 +1,11 @@
-.....F.......................................................            [100%]
+.....F.................................................................. [ 96%]
+...                                                                      [100%]
 ================================== FAILURES ===================================
 E   Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
       �ҽ�: ['jobs.parallel-work-sentinel-test.timeout-minutes']
       �ű�: []
       ������: []
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-4\tests\scripts\test_cfp2978_workflow_shape.py:325: Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-4\tests\scripts\test_cfp2978_workflow_shape.py:394: Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_paths_pinned
-1 failed, 60 passed in 1.09s
+1 failed, 74 passed in 1.05s

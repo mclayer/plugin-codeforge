@@ -51,4 +51,4 @@ FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_d_defaults_run_she
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_e_pytest_step_run_free_of_a8_idioms[wrapper-canonical]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_f_job2_step_names_pinned[wrapper-canonical]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_g_step_command_shape_pinned[wrapper-canonical]
-7 failed, 68 passed in 1.40s
+7 failed, 68 passed in 0.91s

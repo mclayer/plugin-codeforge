@@ -47,4 +47,4 @@ FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_c_job2_step_shell_
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_d_defaults_run_shell_absent[wrapper-canonical]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_f_job2_step_names_pinned[wrapper-canonical]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_g_step_command_shape_pinned[wrapper-canonical]
-6 failed, 69 passed in 0.85s
+6 failed, 69 passed in 0.84s

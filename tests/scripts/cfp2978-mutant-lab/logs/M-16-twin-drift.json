@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-twin-drift",
   "target": "templates/github-workflows/parallel-work-sentinel-check.yml",
-  "expected": "[wrapper-twin] RED ∧ [wrapper-canonical] GREEN",
+  "expected": "[wrapper-twin] RED ∧ [wrapper-canonical] GREEN (독립성)",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [

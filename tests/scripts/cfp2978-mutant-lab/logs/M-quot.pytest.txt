@@ -1,9 +1,10 @@
-......F......................................................            [100%]
+......F................................................................. [ 96%]
+...                                                                      [100%]
 ================================== FAILURES ===================================
 E   AssertionError: E6 [mctrader-backtest]: top_concurrency \uac00 \uc874\uc7ac \u2014 {'group': 'injected-quoted-key', 'cancel-in-progress': True}
     assert {'cancel-in-progress': True, 'group': 'injected-quoted-key'} is None
      +  where {'cancel-in-progress': True, 'group': 'injected-quoted-key'} = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
-C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-quot\\tests\\scripts\\test_cfp2978_workflow_shape.py:339: AssertionError: E6 [mctrader-backtest]: top_concurrency \uac00 \uc874\uc7ac \u2014 {'group': 'injected-quoted-key', 'cancel-in-progress': True}
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-quot\\tests\\scripts\\test_cfp2978_workflow_shape.py:408: AssertionError: E6 [mctrader-backtest]: top_concurrency \uac00 \uc874\uc7ac \u2014 {'group': 'injected-quoted-key', 'cancel-in-progress': True}
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e6_backtest_no_top_concurrency[mctrader-backtest]
-1 failed, 60 passed in 1.12s
+1 failed, 74 passed in 0.91s

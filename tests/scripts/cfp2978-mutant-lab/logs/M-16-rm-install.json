@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-rm-install",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "TBD (install step 제거)",
+  "expected": "w16_a, b, c, d, f, g RED (w16_e 미포함)",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [

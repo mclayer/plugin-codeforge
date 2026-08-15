@@ -1,4 +1,5 @@
-..........................................F..................            [100%]
+..........................................F............................. [ 96%]
+...                                                                      [100%]
 ================================== FAILURES ===================================
 E   AssertionError: F7 [mctrader]: $GITHUB_ENV \uc778\ub77c\uc778 \uae30\uc785 \uac80\ucd9c \u2014 {'parallel-work-sentinel': ['STORY_KEY_PREFIX']}
     assert {'parallel-wo..._KEY_PREFIX']} == {}
@@ -6,7 +7,7 @@ E   AssertionError: F7 [mctrader]: $GITHUB_ENV \uc778\ub77c\uc778 \uae30\uc785 \
       Left contains 1 more item:
       {'parallel-work-sentinel': ['STORY_KEY_PREFIX']}
       Use -v to get more diff
-C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile-inplace\\tests\\scripts\\test_cfp2978_workflow_shape.py:553: AssertionError: F7 [mctrader]: $GITHUB_ENV \uc778\ub77c\uc778 \uae30\uc785 \uac80\ucd9c \u2014 {'parallel-work-sentinel': ['STORY_KEY_PREFIX']}
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile-inplace\\tests\\scripts\\test_cfp2978_workflow_shape.py:622: AssertionError: F7 [mctrader]: $GITHUB_ENV \uc778\ub77c\uc778 \uae30\uc785 \uac80\ucd9c \u2014 {'parallel-work-sentinel': ['STORY_KEY_PREFIX']}
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f7_env_file_keys_absent[mctrader]
-1 failed, 60 passed in 0.83s
+1 failed, 74 passed in 0.92s

@@ -3,10 +3,12 @@
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
   "expected": "정적 RED (w16_c: step_shell 신설) | 중첩 runtime: delta 소멸",
   "pytest_face": {
-    "returncode": 0,
-    "failed_legs": [],
+    "returncode": 1,
+    "failed_legs": [
+      "test_w16_c_job2_step_shell_all_none[wrapper-canonical]"
+    ],
     "errored_legs": [],
-    "verdict": "GREEN"
+    "verdict": "RED"
   },
   "w13_face": {
     "verdict": "GREEN",
@@ -43,11 +45,13 @@
     }
   },
   "runtime_face": {
-    "verdict": "GREEN",
-    "returncode": 0,
-    "rc_after_coe": 0,
-    "stdout_lines": 24,
-    "failed_tests": [],
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 58,
+    "failed_tests": [
+      "test_w16_c_job2_step_shell_all_none[wrapper-canonical]"
+    ],
     "stderr_excerpt": ""
   },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13k",

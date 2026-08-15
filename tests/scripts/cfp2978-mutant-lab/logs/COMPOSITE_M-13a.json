@@ -1,27 +1,23 @@
 {
-  "composite": "M-13k+M-13a",
+  "composite": "M-13a",
   "applied": [
-    "M-13k",
     "M-13a"
   ],
   "pytest_face": {
-    "returncode": 1,
-    "failed_legs": [
-      "test_w16_c_job2_step_shell_all_none[wrapper-canonical]"
-    ],
+    "returncode": 0,
+    "failed_legs": [],
     "errored_legs": [],
-    "verdict": "RED"
+    "verdict": "GREEN"
   },
   "runtime_face": {
     "verdict": "RED",
     "returncode": 1,
     "rc_after_coe": 1,
-    "stdout_lines": 155,
+    "stdout_lines": 123,
     "failed_tests": [
       "test_2976_c_determined_contract",
       "test_c1_currency_match_current_blob",
-      "test_d2_born_broken_old_blob_paired_observation",
-      "test_w16_c_job2_step_shell_all_none[wrapper-canonical]"
+      "test_d2_born_broken_old_blob_paired_observation"
     ],
     "stderr_excerpt": ""
   },
@@ -50,5 +46,5 @@
       "E8": "GREEN"
     }
   },
-  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13k_plus_M-13a"
+  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13a"
 }
