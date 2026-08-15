@@ -425,20 +425,28 @@ for probe_path, expected in CONTROLS:
 
 
 def top_level(ref):
-    """`git ls-tree <ref>` → [(type, name)] · 실패 = None (ref 미접근)."""
+    """`git ls-tree -z <ref>` → [(type, name)] · 실패 = None (ref 미접근).
+
+    ★`-z` 필수: 기본 출력은 비ASCII 경로를 `"\\355\\225\\234...".` 형태로 **인용 이스케이프**
+    한다(실측: 한글 top-level 파일 → 인용형). 인용형은 `classify()` 에서 UNKNOWN 이 되어
+    정상 파일이 false RED 를 낸다 — 본 repo 는 한글이 주 언어라 개연적이다.
+    `-z` 는 NUL 종단 + 무인용이라 원본 바이트가 그대로 온다.
+    """
     proc = subprocess.run(
-        ["git", "-C", root, "ls-tree", ref],
+        ["git", "-C", root, "ls-tree", "-z", ref],
         capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if proc.returncode != 0:
         return None
     rows = []
-    for line in proc.stdout.splitlines():
-        meta, _, name = line.partition("\t")
-        cols = meta.split()
-        if len(cols) < 2 or not name.strip():
+    for record in proc.stdout.split("\0"):
+        if not record:
             continue
-        rows.append((cols[1], name.strip()))
+        meta, _, name = record.partition("\t")
+        cols = meta.split()
+        if len(cols) < 2 or not name:
+            continue
+        rows.append((cols[1], name))
     return rows
 
 
