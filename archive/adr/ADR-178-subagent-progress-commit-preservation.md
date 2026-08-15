@@ -165,7 +165,7 @@ Phase 2 lint 계약: 위 `FORBIDDEN_TOKENS` 배열(closed set 4 리터럴)의 �
 
 1. **tier = advisory (ceiling).** 본 규범의 준수는 저작 규율이며, 규범 문구 presence 는 prompt-mandate (grep testable) 이나 실준수는 비-PR-enforceable 이다.
 2. 근거 3층: (a) **경로 불일치** — 한도류 종료 경로(StopFailure)는 observe-only 라 저장-유발 lever 부재 (b) **자체 정책** — ADR-115 "block 금지 + exit 0" 이 hook 강제 lever 화를 이미 금지 (c) **권한 선언면 비집행** — agent frontmatter allow 선언은 `defaultMode: bypassPermissions` 하에서 discipline SSOT 일 뿐 gate 가 아니다 [verified — ADR-099:352]. "100% 기계강제" · "hard-gate" 를 표방하는 서술을 금지한다 (ADR-141 Amd7 · ADR-143 동형). "규범 도입 = 소실 0" over-claim 도 금지한다 — 마지막 의미 단위 경계 이후분은 구조적으로 미완충이다.
-3. **권한 선언면 판정 (P6 갈림길 — 무판정 통과 금지 의무의 이행)**: **판정 = 41 agent 파일 `git commit` allow 선언 추가 기각 + 무접촉, non-bypass consumer 환경은 disclosed residual 로 명시 선언.** 근거: 선언면은 비집행이라 (위 (c)) 선언 추가 = 집행력 0 인 drift 표면 41개 신설이고, 실행 환경(bypassPermissions)에서는 현행 그대로 작동한다. **disclosed residual**: non-bypass consumer 세션에서는 40/41 agent 가 commit tier 를 실행하지 못할 수 있다 — 그 정의역에서도 cheap tier(Write, §결정 4)는 권한면과 무관하게 작동하므로 최소 보존 경로는 잔존한다. 이 residual 은 결함 은폐가 아니라 정직 선언이며, consumer 측 해소는 consumer overlay 의 권한 정책 소관이다.
+3. **권한 선언면 판정 (P6 갈림길 — 무판정 통과 금지 의무의 이행)**: **판정 = 41 agent 파일 `git commit` allow 선언 추가 기각 + 무접촉, non-bypass consumer 환경은 disclosed residual 로 명시 선언.** 근거: 선언면은 비집행이라 (위 (c)) 선언 추가 = 집행력 0 인 drift 표면 41개 신설이고, 현행 wrapper 실행 환경(`defaultMode: bypassPermissions` [verified — ADR-099:352])에서는 현행 그대로 작동한다. **disclosed residual (폭 정직 확대)**: Write/Edit 도 Bash 와 동일한 권한 선언 표면이다 (agent allow 선언에 `Write(...)` 패턴 실재 [verified — plugins/codeforge-test/agents/IntegrationTestAgent.md 의 `Write(tests/integration/**)`]) — non-bypass consumer 세션에서는 commit tier(Bash)뿐 아니라 **cheap tier(Write, §결정 4)도 영향권일 수 있고**, 그 환경에서의 Write 실동작 = [fact-check-pending]. 따라서 "최소 보존 경로 잔존" 주장의 근거는 **현행 wrapper bypassPermissions 실측에 한정**하며, non-bypass consumer 의 보존 경로 성립 여부와 해소는 consumer overlay 의 권한 정책 소관으로 명시 이관한다. 이 residual 은 결함 은폐가 아니라 정직 선언이다.
 4. Phase 2 에서 본 라벨을 `scripts/check-tier-honesty.py` lever REGISTRY 에 1행 등재한다 (Axis1 라벨 presence + Axis2 enforcement 토큰 금지 — 기존 mutation oracle 로 AC-11 기계 커버).
 
 ### §결정 9 — 비용 계상: latency ⊥ quota 2축 분리 + 빈도 상한
@@ -219,7 +219,7 @@ Phase 2 lint 계약: 위 `FORBIDDEN_TOKENS` 배열(closed set 4 리터럴)의 �
 
 **긍정**: ① 강제 종료 창 안에서 잃는 양이 "마지막 의미 단위 경계 이후분" 으로 유계화 ② 발견 채널 동반으로 durability 가 reachability 로 이어짐 (F8 차단) ③ 의미 단위 빈도 채택이 clock 축을 구조적으로 소거 (§결정 9-5) ④ git census 의 자기 기록성 — 신규 관측 표면 0.
 
-**부정·잔여 위험 (정직 표기)**: ① advisory ceiling — 마지막 의미 단위 경계 이후분 = 구조적 미완충, 준수는 기계 강제되지 않음 ② latency 잠식 13~28 % [empirical-source: §결정 9-2] — CFP-2965 이득의 부분 소비 ③ closed-set 금지 토큰 검사는 자연어 회피 표현에 우회 가능 ④ 미머지 브랜치 누적 (F6) — ADR-169 §결정 7 흡수 경로 의존 ⑤ non-bypass consumer 세션의 commit tier 불능 = disclosed residual (§결정 8-3) ⑥ 호스트 소실 시나리오는 in-repo 사례 기록 0 [fact-check-pending 승계] — P1 조건부 판단은 그 저빈도 가정 위 ⑦ SubagentStop 의 한도-경로 발화 여부 = 미해소 잔존 — 본 규범은 전 조항이 그 답에 의존하지 않도록 구성됨 (zero-notice 완결).
+**부정·잔여 위험 (정직 표기)**: ① advisory ceiling — 마지막 의미 단위 경계 이후분 = 구조적 미완충, 준수는 기계 강제되지 않음 ② latency 잠식 13~28 % [empirical-source: §결정 9-2] — CFP-2965 이득의 부분 소비 ③ closed-set 금지 토큰 검사는 자연어 회피 표현에 우회 가능 ④ 미머지 브랜치 누적 (F6) — ADR-169 §결정 7 흡수 경로 의존 ⑤ non-bypass consumer 세션의 commit tier(Bash)·cheap tier(Write) 영향권 = disclosed residual (§결정 8-3 — Write 도 동일 선언 표면, 실동작 [fact-check-pending]) ⑥ 호스트 소실 시나리오는 in-repo 사례 기록 0 [fact-check-pending 승계] — P1 조건부 판단은 그 저빈도 가정 위 ⑦ SubagentStop 의 한도-경로 발화 여부 = 미해소 잔존 — 본 규범은 전 조항이 그 답에 의존하지 않도록 구성됨 (zero-notice 완결).
 
 ## 해소 기준
 
