@@ -80,7 +80,11 @@ echo "===== E4 — phantom remote-tracking ref ====="
 git init -q --bare "$TMP/e4_origin.git"
 mkwt "$TMP/e4_wt"
 git -C "$TMP/e4_wt" remote add origin "$TMP/e4_origin.git"
-git -C "$TMP/e4_wt" fetch -q origin || true
+# 셋업 실패 = 테스트 무효. `|| true` 로 삼키면 phantom 전제가 안 선 채 GREEN 이 나온다
+# (이 Story 가 문서화한 **공허 통과** 그 자체).
+if ! git -C "$TMP/e4_wt" fetch -q origin; then
+  note "E4 셋업 실패 — fetch rc!=0" "테스트 무효 (공허 통과 방지)"; FAIL=1
+fi
 # 원격에 없는 phantom ref 를 로컬에만 세워 baseline 이 secret 객체를 제외하게 만든다
 git -C "$TMP/e4_wt" update-ref refs/remotes/origin/phantom "$(git -C "$TMP/e4_wt" rev-parse HEAD)"
 R4="$(run_land "$TMP/e4_wt" origin salvage-e4)"
@@ -109,7 +113,11 @@ printf '%s
 ' "$SECRET2" > "$TMP/r3_wt/leak2.txt"
 git -C "$TMP/r3_wt" add -A; git -C "$TMP/r3_wt" commit -qm r3wip
 git -C "$TMP/r3_wt" update-ref refs/remotes/origin/phantom "$(git -C "$TMP/r3_wt" rev-parse HEAD)"
-git -C "$TMP/r3_wt" fetch --prune -q origin || true
+# ★ R3 시나리오의 **핵심 셋업** — 이 fetch 가 실패하면 "prune 이 phantom 을 못 지운다" 는
+# 전제 자체가 성립하지 않아 뒤 assert 가 무의미해진다. 실패는 반드시 테스트를 무효화한다.
+if ! git -C "$TMP/r3_wt" fetch --prune -q origin; then
+  note "R3 셋업 실패 — fetch --prune rc!=0" "테스트 무효 (전제 미성립)"; FAIL=1
+fi
 PH="$(git -C "$TMP/r3_wt" for-each-ref --format='%(refname)' refs/remotes/origin/phantom | wc -l)"
 note "fetch --prune 후 phantom 잔존" "$PH  (1 = prune 정의역 밖)"
 R3="$(run_land "$TMP/r3_wt" origin salvage-r3)"
