@@ -146,9 +146,20 @@ durability 단독으로는 회수가 보장되지 않는다 ("커밋은 됐는�
 
 <!-- forbidden-form-quotation:start -->
 > ① "한도 임박 시 커밋 (후 정지)" 형 — 한도 신호를 trigger 로 결박 = `limit-signal-halt` 재도입 + ADR-109 축 혼선. ② "커밋 후 정지" 형 — 정지 선택지화 = ADR-025 whitelist 간접 확대. ③ "한도 신호 수신 시 저장" 형 — 반응형 의존 = zero-notice 위반 (신호 도착은 보장되지 않음). ④ "종료 시점에 저장한다" 형 — 종료-시점 의존 조항 = F4 born-broken (in-flight 즉사 구간에서 정의 불가).
+>
+> **closed-set 금지 토큰 배열 (본 배열 = Phase 2 lint 의 SSOT — 검사 정의역은 이 리터럴 4개가 전부이며 의미 기반 확장 금지)**:
+>
+> ```
+> FORBIDDEN_TOKENS = [
+>     "한도 임박 시 커밋",      # ①형
+>     "커밋 후 정지",           # ②형
+>     "한도 신호 수신 시 저장",  # ③형
+>     "종료 시점에 저장한다",    # ④형
+> ]
+> ```
 <!-- forbidden-form-quotation:end -->
 
-Phase 2 lint 계약: 위 4형의 closed-set 토큰 부재 검사의 정의역 = `progress-commit-normative-region` 마커 내부 **−** `forbidden-form-quotation` 블록 (인용 절 = 정의역 제외 — self-RED 함정 회피). closed set 밖 자연어 회피 표현은 미검출 — "기계적으로 봉인된다" 는 주장을 금지한다.
+Phase 2 lint 계약: 위 `FORBIDDEN_TOKENS` 배열(closed set 4 리터럴)의 부재 검사 정의역 = `progress-commit-normative-region` 마커 내부 **−** `forbidden-form-quotation` 마커 블록 (인용 절·배열 박제 자체 = 정의역 제외 — self-RED 함정 회피. 제외 규칙의 마커명 = `forbidden-form-quotation` 로 본 절에 고정). 정의역 내 4 토큰 출현 = **0 [실측 — 본 커밋 시점 grep: 전 출현이 quotation 블록 내부]**. closed set 밖 자연어 회피 표현은 미검출 — "기계적으로 봉인된다" 는 주장을 금지한다.
 
 ### §결정 8 — advisory ceiling 정직 라벨 + 권한 선언면 판정
 
@@ -179,7 +190,7 @@ Phase 2 lint 계약: 위 4형의 closed-set 토큰 부재 검사의 정의역 = 
 ### §결정 11 — 관측층: git census (기존 표면 재사용 — 신규 채널 0)
 
 1. **채택 = (c′) git census.** 진행 커밋은 정의상 커밋이므로 자기 기록적(self-recording)이다 — 관측면 = git 자체 + 기존 술어 (`dirty`·`unpushed-N`) + ADR-172 세션-독립 스케줄 관측. 신규 이벤트 채널·신규 표면 = 0.
-2. **기각 2건 (근거 명시)**: (a) stop-event-v1 필드 확장 — 계약 = 18-field Allow-list ONLY, 추가 field = BREAKING (ADR-163 §결정 2 + ADR-043 §결정 2 이중 amendment 의무) 이며 런타임은 `outcome` 을 한 번도 기록한 적 없다 (0/15,398 [verified — 원장 전수 스캔]). "재사용 = 신규 표면 0" 은 거짓 — write-path 신규 구현 + 선언된 3-way drift 정합 판정을 동반한다. (b) StopFailure record-only hooks.json entry — 현행 0 entry [verified] 이고, 답하는 질문("세션이 죽었나")이 보존 질문("무엇이 남았나")과 오정렬이며, 신설 시 ADR-115 Amd2 3규칙 판정 비용을 동반한다. 지금 신설하지 않는 것이 그 판정 비용도 회피한다.
+2. **기각 2건 (근거 명시)**: (a) stop-event-v1 필드 확장 — 계약 = 18-field Allow-list ONLY, 추가 field = BREAKING (ADR-163 §결정 2 + ADR-043 §결정 2 이중 amendment 의무) 이며 런타임은 `outcome` 을 한 번도 기록한 적 없다 (0/15,398 [empirical-source: `.claude/ledger/stop-event.jsonl` 원장 전수 스캔 — InfraOp deputy firsthand, 2026-08-15]). "재사용 = 신규 표면 0" 은 거짓 — write-path 신규 구현 + 선언된 3-way drift 정합 판정을 동반한다. (b) StopFailure record-only hooks.json entry — 현행 0 entry [verified] 이고, 답하는 질문("세션이 죽었나")이 보존 질문("무엇이 남았나")과 오정렬이며, 신설 시 ADR-115 Amd2 3규칙 판정 비용을 동반한다. 지금 신설하지 않는 것이 그 판정 비용도 회피한다.
 3. **계약 상속**: 관측 산출 = `선언값 · 실측값 · 불일치` 사실 3-tuple — `PASS`/`FAIL`/`OK` 등 verdict 어휘 금지, 주 트리거·required 승격은 ADR-169 §결정 4 판례 재검토 선행 (ADR-172 §결정 1·7 그대로 상속). 관측층은 **사후 발견** 층이며 소실 창 축소 기여 = 0 이다 — "예방" 프레이밍을 금지한다.
 4. 보조층 (조건부): dev-process-event-v1 `final_artifact` (closed enum 기존 원소) — 단 Port-B emit = Orchestrator(-owned delegate) 독점이라 생존자가 있을 때만 발화 가능. 동시 전멸 시 무발화 = 정직 한계로 명기하고 보존 판정의 근거로 삼지 않는다.
 
@@ -213,3 +224,11 @@ Phase 2 lint 계약: 위 4형의 closed-set 토큰 부재 검사의 정의역 = 
 ## 해소 기준
 
 N/A — permanent policy (is_transitional: false). future-work 재개 조건: §결정 7-3 (유예 창 실측 시 opportunistic 보조 경로 additive) / §결정 9-3 (B 실측 후 빈도 상한 재산출).
+
+## 관련 파일
+
+- `docs/orchestrator-playbook.md` — §3.5 step 3: I-3 (커밋 트리거 return 종속) 공백의 문면 위치, Phase 2 정정 대상 (실측 앵커 = :1296 [worktree 8eeda0aa2 기준] — Story 인용 시점 표기 :1286 은 base 전진분 차이)
+- `hooks/hooks.json` — SubagentStart 채널: Phase 2 priming 2번째 entry 후보 (ADR-115 Amd2 3규칙 판정 동반, §결정 12)
+- `skills/session-recovery/SKILL.md` — 축 C 회수 3-step runbook pointer 착지 대상 (Phase 2) — 현행 salvage·미커밋 관련 0-hit (§결정 5-4)
+- `scripts/lib/check_workspace_residue_discovery.py` — 발견 술어 `dirty|unpushed-N` (§결정 5-1 / §결정 11 git census 기존 표면)
+- `scripts/check-tier-honesty.py` — Phase 2 lever REGISTRY 1행 등재 대상 (AC-11 기계 커버, §결정 8-4)
