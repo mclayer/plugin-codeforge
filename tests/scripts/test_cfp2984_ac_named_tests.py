@@ -25,12 +25,16 @@
 ★ 정직 천장 (over-claim 금지 — 숨기지 않고 적는다)
   (i) 본 모듈이 **required tier 에서 소비되는 방식은 `ast` 정적 파싱**이다(매 PR, `ac-traceability-matrix`).
       즉 파일 자체는 dead 가 아니지만, 그 소비는 심볼 존재 확인까지다.
-  (ii) 함수 **본문의 실 실행**(pytest run)을 수행하는 workflow step 은 현재 **0 건**이다. AC 판별력의
-      실행 보장은 `.sh` 쪽 채널(required `invariant-check` corpus step)이 진다. 본 모듈을 실행 채널로도
-      닫으려면 `ac-traceability-self-test.yml`(non-required, Hop3 명명 suite 4종의 기존 홈)에
-      `python3 -m pytest tests/scripts/test_cfp2984_ac_named_tests.py -q` 1 step 추가로 충분하나,
-      그 파일은 본 작업 단위의 배선 소유 밖이라 **DevPL 경유 회부**한다. 이 문단을 지우고 "실행된다" 로
-      바꿔 쓰는 것이 곧 over-claim 이다.
+  (ii) 함수 **본문의 실 실행**(pytest run)을 수행하는 workflow step 은 **0 건이며, 이는 미착수가 아니라
+      의도된 결정이다** (Story §8.6-6 과 동일 사유 — P2-7 정합).
+      사유: 본 모듈의 각 함수는 대응 `.sh` 를 subprocess 로 돌려 rc=0 을 assert 한다. 그런데 그 25본
+      `.sh` 는 이미 required `invariant-check` corpus step 이 **직접** 실행한다. 따라서 pytest 채널을
+      더하면 **같은 `.sh` 를 두 번 돌릴 뿐 새로 검증되는 것이 없다** — 러너 시간만 2배가 된다.
+      본 모듈의 존재 이유는 실행이 아니라 **Hop3(`ac-traceability-matrix`)가 `ast` 로 읽을 Python 심볼
+      제공**이다(Hop3 정의역 = `*.py` 한정, bash 함수 비가시 — Story §7 Hop3 정의역 실측).
+      ★ 잔여(정직 declare): 그 대가로 **본 모듈의 본문은 어떤 채널에서도 실행되지 않는다.** 즉 여기
+      경로가 틀어지거나 assert 가 항진식으로 썩어도 아무도 잡지 못한다 — **심볼 존재 ≠ 본문 실행**.
+      이 잔여를 "실행된다" 로 바꿔 쓰는 것이 곧 over-claim 이다.
   (iii) 여기서 `rc == 0` 이 참이라는 것은 해당 `.sh` 가 자기 오라클을 통과했다는 뜻이지, 그 오라클이
       discriminating 하다는 뜻이 아니다(검출력 = G3 축, mutant 원장 소관).
 
