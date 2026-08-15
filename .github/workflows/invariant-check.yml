@@ -616,6 +616,7 @@ jobs:
             tests/scripts/test_bundle_field_allowlist.sh \
             tests/scripts/test_salvage_no_retry_reapply.sh \
             tests/scripts/test_bundle_pre_push_redaction.sh \
+            tests/scripts/test_salvage_land_scan_domain.sh \
             tests/scripts/test_nontest_script_execution_liveness.sh \
             tests/scripts/test_retry_after_derivation.sh \
             tests/scripts/test_retry_layer_overlap.sh \

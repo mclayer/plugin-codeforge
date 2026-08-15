@@ -654,8 +654,26 @@ def cmd_land(worktree, remote, branch, sha, do_push):
             return EXIT_VIOLATION
         sha = out.decode("utf-8", "replace").strip()
 
-    # 3 — OID 목록 1회 고정 (4·5 가 **동일 집합**을 본다). baseline = --not --remotes=origin
-    rc, out, err = _git(wt, ["rev-list", "--objects", sha, "--not", "--remotes=origin"])
+    # 2.5 — ★ 비협상 ② (S-P1-1): 스캔 정의역 ⊇ push 전송 집합.
+    #   baseline 을 push 대상과 **동일 remote** 로 묶고, remote-tracking ref 를 원격 실보유와
+    #   맞춘다. 둘 중 하나라도 어긋나면 스캔이 제외한 객체가 그대로 전송된다:
+    #     E5 = baseline(origin) ≠ push(pub)      → origin 에만 있던 객체 무검사 전송
+    #     E4 = phantom refs/remotes/<r>/* 잔존   → 로컬 ref 가 원격 실보유와 괴리
+    #   `--prune` 이 필수다. 평범한 `fetch` 는 phantom 을 제거하지 못한다(실측).
+    #   fetch 실패 = baseline 확정 불가 ⇒ **fail-closed**(무검사 통과 금지). `--land` 는
+    #   어차피 push 하므로 네트워크를 전제해도 정의역이 좁아지지 않는다.
+    rc, out, err = _git(wt, ["fetch", "--prune", remote])
+    if rc != 0:
+        print("SCAN_RESULT: integrity-unresolved")
+        print("PUSH: skipped")
+        print("::salvage-violation:: baseline 확정 불가 — `git fetch --prune %s` 실패 (rc=%d). "
+              "remote-tracking ref 가 원격 실보유를 반영한다고 단정할 수 없어 fail-closed."
+              % (remote, rc))
+        return EXIT_VIOLATION
+
+    # 3 — OID 목록 1회 고정 (4·5 가 **동일 집합**을 본다).
+    #     baseline = --not --remotes=<push 대상과 동일 remote> (origin 하드코딩 금지)
+    rc, out, err = _git(wt, ["rev-list", "--objects", sha, "--not", "--remotes=%s" % remote])
     if rc != 0:
         print("SCAN_RESULT: integrity-unresolved")
         print("PUSH: skipped")
