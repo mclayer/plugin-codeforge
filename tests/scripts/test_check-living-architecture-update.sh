@@ -44,9 +44,11 @@
 #   INV-5: bypass label 시에도 audit comment 없이는 skip 금지
 #
 # ── 저작시점 repo-root 전수 분류 self-test (F-4 bijection) ────────────────────────────
-#   현재 repo top-level 을 `git ls-tree --name-only HEAD` 로 열거
-#   → 전 entry 가 구조 ∪ 비구조 enum 에 매칭됨 assert
-#   미매칭 = self-test FAIL (enum 갱신 신호)
+#   repo top-level 을 `git ls-tree`(ref = origin/main ∪ HEAD)로 열거
+#   → 전 entry 가 분류됨 assert. 판정 = python SSOT `classify()` **직접 호출 유도**이며
+#     bash 측 enum 사본은 0 이다 (CFP-2978 — 사본 드리프트가 pytest.ini 위양성 + 신규
+#     top-level entry 의 머지-후 지연 발현을 만들었다)
+#   미분류(UNKNOWN) = self-test FAIL (SSOT enum 갱신 신호)
 #   층위 구분: 저작-시점 전수성(본 self-test) + 미래 신규 표면(runtime gate unknown-surface FAIL)
 #
 # ── 4-범주 실발화 fixture ────────────────────────────────────────────────────────────
@@ -355,48 +357,137 @@ note "TEST: GREEN-2 — marker declare (exit 0)"
 # NOTE: marker 테스트는 PR body 입력 방식이 필요 (현재 게이트 wrapper 확인 후 구현)
 
 # ═════════════════════════════════════════════════════════════════════════════
-# TEST: F-4 Bijection — repo top-level 전수 분류 (명시 정의 enum)
+# TEST: F-4 Bijection — repo top-level 전수 분류 (분류 SSOT **유도**, 사본 0)
 # ═════════════════════════════════════════════════════════════════════════════
-note "TEST: F-4 bijection — repo top-level enum matching"
-# 현재 repo 의 top-level 을 읽어 전수 분류 확인
-enum_struct=("plugins" "scripts" "templates" ".github" ".claude" "hooks" "skills" "overlay" ".claude-plugin" "docs")
-enum_nonstruct=("archive" "tests" "examples" ".gitignore" ".gitattributes" "CLAUDE.md" "README.md" "CONTRIBUTING.md" "mark.toml" "requirements.txt")
+note "TEST: F-4 bijection — repo top-level 전수 분류 (classify() SSOT 유도)"
+# ★기대 enum 하드코딩 금지 (CFP-2978). 구 구현은 top-level 분류 enum 을 bash 배열 2개
+#   (enum_struct / enum_nonstruct)로 **복제**해 뒀고, python SSOT
+#   (check_living_architecture_update.py 의 FAMILY_STRUCTURAL_PREFIXES/_EXACT ·
+#    NON_STRUCTURAL_PREFIXES/_EXACT + `plugins/<X>` · root `*.md` 규칙)가 갱신돼도
+#   사본은 따라오지 않았다. 실측상 이 이중화 자체가 위양성 원천이었다 —
+#   `pytest.ini`(CFP-2889 가 SSOT 에는 등재)는 **사본 누락만으로** 본 leg 을 RED 로
+#   만들었고, `.codeforge-asset-pins.json`(CFP-2978 이 SSOT 에 등재)은 origin/main 에
+#   아직 없다는 이유로 **머지 직후에야** 같은 위양성을 낼 예정이었다(지연 발현).
+#   ⇒ 판정을 SSOT 함수 `classify()` 직접 호출로 유도한다. 사본 0 = 드리프트 0.
+#
+# ★유도가 항진(tautology)이 아닌 근거: 입력(좌변)은 git 이 열거한 **실 repo top-level**,
+#   판정(우변)은 게이트 SSOT 의 분류 함수다. 두 출처가 독립이므로 원 명제 —
+#   "분류 enum 이 실 repo 표면을 전부 덮는가" — 가 그대로 남는다(X ⊆ X 아님).
+#   신규 top-level entry 를 SSOT 에 등재하지 않으면 `classify()` 가 UNKNOWN 을 내고
+#   본 leg 이 FAIL 한다(구 사본판과 동일한 forcing, 지연 없이 저작시점에).
+#   ★honest ceiling: 유도가 못 잡는 축 = SSOT 가 **잘못 분류**한 경우(구조↔비구조 오귀속)
+#   — 양변이 같은 SSOT 를 쓰므로 함께 움직인다. 그 축은 M8(classify-degrade) mutation +
+#   리뷰 판정 소관이며, 본 leg 이 커버한다고 주장하지 않는다.
+#
+# ★probe 형태: git tree(디렉토리)는 그 자체가 변경 경로가 아니므로 `<dir>/__f4_probe__`
+#   합성 경로로 질의한다. 대표 실파일 1개로 질의하면 하위 특정 sub-prefix 만 등재된
+#   디렉토리가 통과해(catch-all 부재 은폐) 구멍이 남는다 — 합성 probe 가 더 엄격하다.
+#
+# ★열거 ref = origin/main ∪ HEAD. origin/main 단독이면 **본 브랜치가 신설한 top-level
+#   entry 가 머지 이후에야 발현**해, 헤더가 선언한 "저작시점 전수 분류"가 성립하지 않는다
+#   (그 지연이 정확히 위 시한폭탄의 기전이었다). origin/main 미접근 시엔 HEAD 단독으로
+#   honest-degrade 하고 그 사실을 출력한다 — 조용한 SKIP 금지(구 `skip_case` 는 정의조차
+#   되지 않은 미정의 명령이라 그 경로는 rc 127 사망이었다).
+#
+# ★판별자 = 마커 문면(META_OK / META_FAIL / UNKNOWN)이지 프로세스 rc 가 아니다.
+f4_out=$(
+  F4_REPO_ROOT="$REPO_ROOT" "$PY" - <<'F4_PY' 2>&1 || true
+import os
+import subprocess
+import sys
 
-# origin/main 기준 top-level 읽기
-top_level_entries=$(git -C "$REPO_ROOT" ls-tree --name-only origin/main 2>/dev/null | sort || echo "")
-if [ -z "$top_level_entries" ]; then
-  skip_case "F-4-bijection — origin/main 미접근 (local-only 개발, SKIP)"
+root = os.environ["F4_REPO_ROOT"]
+sys.path.insert(0, os.path.join(root, "scripts", "lib"))
+try:
+    from check_living_architecture_update import SurfaceClass, classify
+except Exception as exc:  # import 실패 = 유도 경로 붕괴 → 조용한 GREEN 금지
+    print("META_FAIL import:%s" % type(exc).__name__)
+    raise SystemExit(0)
+
+UNK = SurfaceClass.UNKNOWN
+
+# internal-control (ADR-154 AC-13 identity-probe): 유도 경로가 실제로 verdict 를
+# 구분하는지 known-answer 로 선확인. 전부 UNKNOWN / 전부 분류됨 류의 조용한 퇴화가
+# 항진 GREEN 이 되는 것을 차단한다 (양성 3 + 음성 2, 두 verdict 모두 도달 증명).
+CONTROLS = (
+    ("scripts/__f4_probe__", SurfaceClass.STRUCTURAL_FAMILY),
+    ("plugins/x/__f4_probe__", SurfaceClass.STRUCTURAL_PLUGIN),
+    ("archive/__f4_probe__", SurfaceClass.NON_STRUCTURAL),
+    ("__f4_negative_control__/x", UNK),
+    ("__f4_negative_control__.bin", UNK),
+)
+for probe_path, expected in CONTROLS:
+    actual = classify(probe_path)
+    if actual is not expected:
+        print("META_FAIL control:%s expected=%s actual=%s"
+              % (probe_path, expected.value, actual.value))
+        raise SystemExit(0)
+
+
+def top_level(ref):
+    """`git ls-tree <ref>` → [(type, name)] · 실패 = None (ref 미접근)."""
+    proc = subprocess.run(
+        ["git", "-C", root, "ls-tree", ref],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    if proc.returncode != 0:
+        return None
+    rows = []
+    for line in proc.stdout.splitlines():
+        meta, _, name = line.partition("\t")
+        cols = meta.split()
+        if len(cols) < 2 or not name.strip():
+            continue
+        rows.append((cols[1], name.strip()))
+    return rows
+
+
+used = []
+universe = {}
+for ref in ("origin/main", "HEAD"):
+    rows = top_level(ref)
+    if rows is None:
+        print("REF_UNAVAILABLE %s" % ref)
+        continue
+    used.append(ref)
+    for entry_type, name in rows:
+        universe[name] = entry_type
+
+if not used or not universe:
+    print("META_FAIL enumeration:refs=%s entries=%d"
+          % (",".join(used) or "none", len(universe)))
+    raise SystemExit(0)
+
+print("REFS %s" % ",".join(used))
+print("ENTRIES %d" % len(universe))
+for name in sorted(universe):
+    probe = name + "/__f4_probe__" if universe[name] == "tree" else name
+    if classify(probe) is UNK:
+        print("UNKNOWN %s (probe=%s)" % (name, probe))
+print("META_OK")
+F4_PY
+)
+
+if ! printf '%s\n' "$f4_out" | grep -q '^META_OK$'; then
+  log "$f4_out"
+  fail_case "F-4-bijection (meta) — classify() SSOT 유도 경로 붕괴 (META_OK 마커 부재, 위 META_FAIL 사유 참조)"
 else
-  mismatch=0
-  while IFS= read -r entry; do
-    [ -z "$entry" ] && continue
-    matched=0
-    # struct enum 확인
-    for s in "${enum_struct[@]}"; do
-      if [ "$entry" = "$s" ]; then
-        matched=1
-        break
-      fi
-    done
-    # nonstruct enum 확인
-    if [ $matched -eq 0 ]; then
-      for n in "${enum_nonstruct[@]}"; do
-        if [ "$entry" = "$n" ]; then
-          matched=1
-          break
-        fi
-      done
-    fi
-    if [ $matched -eq 0 ]; then
-      log "  ✗ Unclassified entry: $entry"
-      mismatch=$((mismatch+1))
-    fi
-  done <<< "$top_level_entries"
-
-  if [ $mismatch -eq 0 ]; then
-    pass_case "F-4-bijection — 전 top-level 분류됨"
+  # ★`|| true` 필수: 무매칭 grep(rc 1) 이 `set -o pipefail` + `set -e` 조합에서 스크립트를
+  #   조기 종료시킨다(무매칭 = 정상 경로인데 종료). 현재 본 파일은 L214 `set +e` 덕에
+  #   우연히 생존하나 그 우연에 의존하지 않는다 — 실측 재현: `set -euo pipefail; printf x |
+  #   grep ^NOPE | while read l; do :; done; echo B` → B 미출력·rc 1.
+  printf '%s\n' "$f4_out" | grep '^REF_UNAVAILABLE ' | while IFS= read -r l; do
+    log "  ! $l — honest-degrade (해당 ref 미열거, 잔여 ref 로 계속)"
+  done || true
+  f4_refs=$(printf '%s\n' "$f4_out" | sed -n 's/^REFS //p')
+  f4_count=$(printf '%s\n' "$f4_out" | sed -n 's/^ENTRIES //p')
+  f4_unknown=$(printf '%s\n' "$f4_out" | grep -c '^UNKNOWN ' || true)
+  f4_unknown=$(printf '%s' "${f4_unknown:-0}" | tr -d '\r\n ')
+  if [ "${f4_unknown:-0}" -eq 0 ]; then
+    pass_case "F-4-bijection — top-level $f4_count entry 전수 분류됨 (refs=$f4_refs, classify() SSOT 유도)"
   else
-    fail_case "F-4-bijection — $mismatch 항목 미분류 (enum 갱신 필요)"
+    printf '%s\n' "$f4_out" | grep '^UNKNOWN ' | while IFS= read -r l; do log "  ✗ Unclassified entry: $l"; done || true
+    fail_case "F-4-bijection — $f4_unknown 항목 미분류 (classify()=UNKNOWN → python SSOT enum 갱신 필요)"
   fi
 fi
 
