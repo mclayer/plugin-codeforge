@@ -80,7 +80,10 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
 ━━ INDETERMINATE 11 조건 + 평가 순서 ━━
   I-1 anchor 매치 ≠ 1 **(정의역 = run-time recipe unit(probe) 한정 — 커밋 sample unit 은 units
       구성에서 recipe=None 이라 I-1 가드에 구조적으로 미도달; 커밋 `build[].sample` 파생은 ⓺
-      provenance 검사 소관)** / I-2 표본 syntax invalid / I-3 기동 실패·timeout / I-4 rc ∉ exit_space /
+      provenance 검사 소관)** / I-2 표본 syntax invalid **(정의역 = `entry` 가 `.py` 로 끝나는 leg
+      한정 — 비-`.py` entry 는 compile 검사 자체에 미도달하여 I-2 가 구조적으로 성립하지 않는다.
+      day-1 entry 는 전건 `gate.py` 라 현재는 공허-무해이나, 비-`.py` 게이트 편입 시 무고지로 I-2 가
+      소실된다)** / I-3 기동 실패·timeout / I-4 rc ∉ exit_space /
   I-5 kill·clean 양쪽 FAIL / I-6 마커 전무 / I-7 ¬DELIVERED /
   I-8 kill.fail=1 ∧ kill_target_stage ∉ fail_stage(kill) / I-9 clean.term=0 /
   I-10 선언한 stream 이 아닌 곳에서 마커 관측 / I-11 ¬LIVE ∧ ¬HOLLOW ∧ (kill 관측 ≡ clean 관측).
