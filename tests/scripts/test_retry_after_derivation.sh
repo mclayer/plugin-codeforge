@@ -128,6 +128,14 @@ PYRUN
 expect() {
   local out="$1" name="$2" want="$3" label="$4"
   local line
+  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
+  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  case "$out" in
+    *Traceback*)
+      echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
+      FAIL=$((FAIL + 1))
+      return ;;
+  esac
   line=$(printf '%s\n' "$out" | grep "^$name|" || true)
   if [ "$line" = "$name|$want" ]; then
     echo "OK PASS: $label ($line)"
@@ -143,6 +151,14 @@ expect() {
 expect_not() {
   local out="$1" name="$2" forbidden="$3" label="$4"
   local line
+  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
+  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  case "$out" in
+    *Traceback*)
+      echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
+      FAIL=$((FAIL + 1))
+      return ;;
+  esac
   line=$(printf '%s\n' "$out" | grep "^$name|" || true)
   if [ "$line" != "$name|$forbidden" ]; then
     echo "OK PASS: $label (got '$line')"

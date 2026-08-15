@@ -343,6 +343,16 @@ run_case() {
   local name="$1" expected_exit="$2" expect_substr="$3" skill_path="$4" legs="$5"
   local out exit_code=0 ok=1
   out=$("$PY" "$ORACLE" --skill "$skill_path" --adr109 "$ADR109" --legs "$legs" 2>&1) || exit_code=$?
+  # ★ crash-as-RED 차단 (형제 워커 실사건 회귀 방지): 오라클이 예외로 죽어서 난 rc!=0 은
+  #   "검출" 이 아니다. 정규식 컴파일 오류 하나로 전 mutant 가 RED 로 보이는 하네스 사망을 막는다.
+  case "$out" in
+    *Traceback*)
+      echo "X FAIL: $name — 오라클 크래시(Traceback). RED 를 검출로 셀 수 없다"
+      printf '%s
+' "$out" | sed 's/^/       /'
+      FAIL=$((FAIL + 1))
+      return ;;
+  esac
   [ "$exit_code" -eq "$expected_exit" ] || ok=0
   if [ -n "$expect_substr" ]; then
     case "$out" in *"$expect_substr"*) : ;; *) ok=0 ;; esac
