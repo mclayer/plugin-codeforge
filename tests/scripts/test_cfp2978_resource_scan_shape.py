@@ -116,14 +116,25 @@ def _check_leg2_branch_names_regex(branches: List[str]) -> Tuple[bool, str]:
 
     정규식: `^[A-Za-z0-9._/@+-]{1,255}$` ∧ `..` 미포함 ∧ 선두 `-` 아님
 
+    ★ FIX Iter 4 (CR-2) — **개수 floor 를 본 술어에서 제거**했다.
+      구 판은 여기에 `if len(branches) < 2: return False, …` 를 두었는데, 그것이
+      **판별 축보다 먼저 종결**해 음성 대조군이 정규식에 **닿지도 못했다**.
+      firsthand: M-4b 의 실 종결 문면 =
+        `[M-4b] PASS: JSON text rejected. reason=branches should have >= 2 elements, got 1`
+      ⇒ 아래 3검사(정규식 · `..` · 선두 `-`)를 **통째로 삭제해도 `7 passed`** 였다.
+         실 판별자는 magic floor `2` 하나였고 3검사는 장식이었다.
+
+      ★ 가드 약화가 아니라 **중복 제거**다: 같은 floor 가 **호출부**
+        (`test_ac4_leg2_branch_names_match_corpus_regex` 의 `len(branches) >= 2`
+        양성 비공허성 앵커)에 이미 있고 거기 존치한다. 양성 leg 에선 잉여였고,
+        음성 leg 에선 유해했다 — 술어 내부에서만 걷어낸다.
+      ⇒ **본 술어의 정의역 = 원소별 형태 판정뿐**. 카디널리티는 호출부 책임.
+
     성공: (True, "")
     실패: (False, 원인 설명)
     """
     if not isinstance(branches, list):
         return False, f"branches is not a list: {type(branches)}"
-
-    if len(branches) < 2:
-        return False, f"branches should have >= 2 elements, got {len(branches)}"
 
     for branch in branches:
         if not isinstance(branch, str):
@@ -370,22 +381,25 @@ def test_ac4_m4a_degraded_payload_omits_lists():
 
 
 # ============================================================================
-# M-4b 대조군: 음성 fixture (JSON 원문)
+# leg② 음성 대조군 공용 하네스 (M-4b · M-4d · M-4e — 축 격리)
 # ============================================================================
-def test_ac4_m4b_json_text_branches_rejected():
-    """
-    M-4b 대조군: leg② 음성 — JSON 원문이 branch 로 해석되는 경우.
-
-    fixture: gh branches 응답이 아닌 JSON 원문 문자열 반환
-    - resource-scan 파싱 실패 또는 branches 에 JSON 텍스트 포함
-    - leg② 정규식 미충족 → RED 기대
-    """
+# ★ 대조군 설계 규칙 (CR-2 가 준 교훈): 대조군은 **판별 축 이외의 모든 선행 가드를
+#   충족**해야 한다. 그렇지 않으면 축에 닿기 전에 다른 가드가 먼저 답을 내버리고,
+#   그 통과를 "축이 작동했다" 로 오독하게 된다 (구 판 M-4b 가 정확히 그랬다).
+#   ⇒ 세 대조군 모두 (i) 원소 **2건** (호출부 floor 충족) (ii) 전부 `str`
+#      (iii) 첫 원소 `main` 은 3검사 전건 통과 — 위반은 **둘째 원소 1건, 축 1개뿐**.
+#   ⇒ 그리고 종결 **사유 문면을 축별로 assert** 한다. "RED 였다" 로는 부족하다 —
+#      어느 assert 에서 종결됐는지가 판별력의 실체다.
+def _run_leg2_negative_control(
+    ctl: str,
+    fixture_text: str,
+    expected_branches: List[str],
+    expected_reason: str,
+) -> str:
+    """leg② 음성 대조군 1건 실행. 종결 사유 문면 반환."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-        fixture_path = tmpdir_path / "bad-branches.json"
-
-        # fixture: JSON 원문 (parsin 오류 유도)
-        fixture_path.write_text('{"error": "invalid"}')
+        fixture_path = Path(tmpdir) / "branches.txt"
+        fixture_path.write_text(fixture_text, encoding="utf-8")
 
         rc, payload, stderr = _invoke_resource_scan(
             repo="example/repo",
@@ -393,15 +407,96 @@ def test_ac4_m4b_json_text_branches_rejected():
         )
 
         # ★무조건 assert — print 만 하는 경로를 두지 않는다 (unfailable 차단).
-        assert rc == 0, f"M-4b: 대조군은 rc=0 경로여야 한다 (got {rc}). stderr: {stderr}"
+        assert rc == 0, f"{ctl}: 대조군은 rc=0 경로여야 한다 (got {rc}). stderr: {stderr}"
 
         branches = payload.get("branches", [])
+
+        # ── 선행 가드 충족 앵커 (축 격리의 전제) ──────────────────────────────
+        assert branches == expected_branches, (
+            f"{ctl} 하네스 결격 — SSOT 가 기대 branches 를 내지 않았다. "
+            f"실측={branches!r}, 기대={expected_branches!r}. "
+            "대조군이 의도한 축에 닿지 못한다."
+        )
+        assert len(branches) >= 2, (
+            f"{ctl} 하네스 결격 — 호출부 floor(>=2)를 대조군이 충족해야 "
+            f"개수 축이 아닌 형태 축을 시험한다. branches={branches!r}"
+        )
+
+        # ── 판별 축 ────────────────────────────────────────────────────────
         ok, reason = _check_leg2_branch_names_regex(branches)
         assert not ok, (
-            "M-4b 결격 — JSON 원문 줄이 leg② 를 통과했다. "
+            f"{ctl} 결격 — 위반 원소가 leg② 를 통과했다. "
             f"branches={branches!r} (검사기가 이 입력을 잡지 못하면 판별력 0)"
         )
-        print(f"[M-4b] PASS: JSON text rejected. reason={reason}")
+        # ★ 종결 지점 고정 — 다른 가드가 먼저 답을 내면 여기서 잡힌다.
+        assert reason == expected_reason, (
+            f"{ctl} 축 어긋남 — 기대한 축이 아닌 곳에서 종결됐다.\n"
+            f"  실측 사유: {reason!r}\n"
+            f"  기대 사유: {expected_reason!r}"
+        )
+        print(f"[{ctl}] PASS: rejected at expected axis. reason={reason}")
+        return reason
+
+
+# ============================================================================
+# M-4b 대조군: 음성 fixture (JSON 원문) — 축 = 정규식
+# ============================================================================
+def test_ac4_m4b_json_text_branches_rejected():
+    """
+    M-4b 대조군: leg② 음성 — JSON 원문이 branch 로 해석되는 경우 (축 = **정규식**).
+
+    ★ FIX Iter 4 (CR-2): fixture 를 1줄 → **2줄**로 교체했다. 구 판 fixture
+      (`{"error": "invalid"}` 1줄)는 branches 를 **1원소**로 만들었고, 술어 내부
+      floor(`>= 2`)가 정규식보다 **먼저** 종결해 정규식은 실행조차 되지 않았다
+      (firsthand: `reason=branches should have >= 2 elements, got 1`).
+      ⇒ 첫 원소를 유효 branch(`main`)로 두어 개수·형(型) 가드를 통과시키고,
+        **둘째 원소만** 정규식을 위반하게 한다.
+    """
+    _run_leg2_negative_control(
+        ctl="M-4b",
+        fixture_text='main\n{"error": "invalid"}',
+        expected_branches=["main", '{"error": "invalid"}'],
+        expected_reason="branch '{\"error\": \"invalid\"}' doesn't match regex",
+    )
+
+
+# ============================================================================
+# M-4d 대조군: `..` 포함 branch — 축 = dotdot (신설, CR-2)
+# ============================================================================
+def test_ac4_m4d_dotdot_branch_rejected():
+    """
+    M-4d 대조군 (신설): leg② 음성 — `..` 포함 (축 = **dotdot**).
+
+    ★ 축 격리 근거: `feat/a..b` 는 정규식 `^[A-Za-z0-9._/@+-]{1,255}$` 를
+      **통과**한다(`.` 와 `/` 가 값공간 안). 선두 `-` 도 아니다. 따라서 이 입력을
+      잡는 검사는 `".." in branch` **하나뿐**이며, 그 검사를 지우면 이 대조군만
+      단독으로 RED 가 된다. (git refname 규칙상 `..` 는 실 금칙이다.)
+    """
+    _run_leg2_negative_control(
+        ctl="M-4d",
+        fixture_text="main\nfeat/a..b",
+        expected_branches=["main", "feat/a..b"],
+        expected_reason="branch 'feat/a..b' contains '..' (invalid)",
+    )
+
+
+# ============================================================================
+# M-4e 대조군: 선두 `-` branch — 축 = leading-dash (신설, CR-2)
+# ============================================================================
+def test_ac4_m4e_leading_dash_branch_rejected():
+    """
+    M-4e 대조군 (신설): leg② 음성 — 선두 `-` (축 = **leading-dash**).
+
+    ★ 축 격리 근거: `-rf` 는 정규식을 **통과**한다(`-` 가 값공간 안). `..` 도 없다.
+      따라서 이 입력을 잡는 검사는 `branch.startswith("-")` **하나뿐**이다.
+      (선두 `-` 는 하류에서 옵션으로 오해석되는 argv injection 표면이라 실 금칙이다.)
+    """
+    _run_leg2_negative_control(
+        ctl="M-4e",
+        fixture_text="main\n-rf",
+        expected_branches=["main", "-rf"],
+        expected_reason="branch '-rf' starts with '-' (invalid)",
+    )
 
 
 # ============================================================================
