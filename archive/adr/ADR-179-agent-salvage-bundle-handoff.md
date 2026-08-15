@@ -150,7 +150,42 @@ harness `2.1.199` 가 **rate-limit / server-error 축의 부분 산출 반환**�
 2. **스캔 결과는 필드가 아니다** — AC-32 스캔의 verdict·SHA 는 **커밋 trailer 와 별도 원장**에 기록하고 번들 필드로 승격하지 않는다. 승격하면 allowlist 가 흔들려 AC-31 앵커가 깨진다.
 3. **③ 은 유일한 원문형 예외이며 그 사실을 여기서 명시한다** — ★ **단 ③ 의 '폐쇄' 는 저작 규율이지 기계 강제가 아니다**: 출처 `ADR-178:135` 는 구조 열거 + 4항 denylist 이지 텍스트 allowlist 가 아니고 구성요소에 "의미 단위 요약 1줄(추상)" 이라는 자유 산문이 있으며, 같은 절 `:136` 이 **"완화 전건 = 저작 규율(기계 강제 0)"** 을 자기선언한다. ⇒ **③ 에 대한 AC-31 의 기계 보장 = 0 이며 ③ 내용 통제는 AC-32 단독에 위임**된다. — 아래 (b) 채택으로 ⑩ 이 신설되어 진행 노트가 참조형으로 내려갔고, 남은 원문형은 ③ 1건뿐이다. ③ 은 이미 ADR-178 §결정 6-4 가 값공간을 폐쇄한 필드라 자유 본문이 아니다.
 
+   ★★ **정정 (CFP-2984 Phase 2 firsthand 실측 — 위임의 실 내용 재기술)**: 위 "③ 내용 통제는 AC-32 단독에 위임" 이라는 **위임 자체는 철회하지 않는다**. 다만 **위임받은 AC-32 가 실제로 무엇을 보장하는지**가 Phase 1 서술과 다르다. 구 주장을 지우지 않고 근인·재현과 함께 존치한다(오류를 삭제하지 않고 근인과 같이 남기는 본 문서의 정정 방식 동형).
+
+   - **구 주장 (Phase 1)**: ③ 을 AC-32 에 위임하면 secret 과 함께 **PII 도 덮인다** — Story `§7.12-F` F-2 의 "닫힌 14-rule 이 PII 2종(`kr_rrn` · `email`)을 덮는다" 를 **차단 축**으로 읽은 결과.
+   - **근인 (구조적 — 픽스처 조정으로 회피 불가)**: Story `§7.12-D` 처방(`audit["redaction_applied"] is True ⇒ 스캔 미통과`)을 문자 그대로 배선하면 **secret 을 담지 않은 clean 번들까지 전량 차단**된다(born-RED = 정상 착지 전면 봉쇄). 발화원 3종이 전부 **본 절 allowlist 가 요구하는 값** 또는 git 객체의 고유 형태다 — ⓐ `_RE_EMAIL`(`scripts/lib/redact_dev_process_content.py:115`) ← 모든 commit 객체의 author 줄 ⓑ `_RE_HEX`(`[a-f0-9]{32,}`, `:116`) ← ② `last_commit_sha`(40hex) · ⑩ `notes_ref`(`blob:sha256:<64hex>`) ⓒ `_RE_KR_RRN`(`:114`) ← sha256 안의 13자리 연속 숫자 런. ⇒ **스키마가 요구하는 필드 값이 자기 게이트를 막는다.** ⓒ 때문에 대상을 blob 참조로 좁혀도 닫히지 않는다.
+
+   **재현 — 착지 객체 형태별 발화 (firsthand 실측 4 행)**
+
+   | 입력 (전부 본 절이 요구·수반하는 형태) | `redaction_applied` | 발화 룰 |
+   |---|---|---|
+   | ② `last_commit_sha` = 40hex | `True` | `hex_high_entropy` |
+   | ⑩ `notes_ref` = `blob:sha256:<64hex>` | `True` | `hex_high_entropy` |
+   | commit 객체 author 줄 | `True` | `email` |
+   | 평범한 clean 산문 | `False` | 없음 |
+
+   - **처분 (Phase 2 착지 완료)**: 차단 판정을 **secret-class 9룰**(`private_key_block` · `authorization_header` · `cookie_header` · `github_pat` · `github_fine_grained_pat` · `cloud_key` · `api_key_credential` · `env_dump_excluded` · `credential_subprocess_excluded`)로 협착했다. 나머지 5룰(**`kr_rrn` · `email`** · `hex_high_entropy` · `abs_or_home_path` · `session_id`)은 `::salvage-scan-advisory::` **비차단 관측** 라인으로 계속 출력한다 — 관측 정보를 버리지는 않는다. 협착은 대조군 3종(clean 번들 · 참조형 값 · benign `missing` 문면)에 결박돼 되돌리면 즉시 RED 다.
+   - **⇒ 정정 후 문면 (아래가 정본)**:
+     1. AC-32 스캔이 **보장하는 것** = "착지 객체에서 **secret-class 9룰 미발화**".
+     2. **보장하지 않는 것** = **PII 부재**. `kr_rrn` · `email` 은 차단이 아니라 **비차단 관측**으로만 발화한다.
+     3. ⇒ **③ `wip_summary` 에 PII 가 실려도 차단되지 않는다.** ③ 에 대한 차단 표면 = secret-class 축 1층, 잔여 = **PII 축 전량(관측만) — 차단력 실측 0**.
+     4. 아래 (b) 채택 근거의 "sidecar 도 반드시 검사된다" 는 **정의역 주장으로는 그대로 유지**되나, **검사 도달 ≠ 차단**이다 — ⑩ sidecar 산문의 PII 도 같은 이유로 차단되지 않는다. 이 곱을 여기 적어 둔다(다른 절에 흩어 놓으면 독자가 계산하지 않는다 — 아래 F-12 가 진단한 분산 판본 그대로다).
+
    ★★ **위임의 합성 결과 (F-12 — 각 항은 기재됐으나 곱이 미기재였다)**: 위 문장은 ③ 의 내용 통제를 **AC-32 단독**에 넘긴다. 그런데 AC-32 의 탐지 엔진(`scripts/lib/redact_dev_process_content.py`)에는 **독립 천장 2종**이 있다 — (i) `:303-305` **parse-timeout 시 남은 룰 중단**(`audit` 3키에 **timeout 도달 플래그 없음** ⇒ `redaction_applied == False` 가 "안전" 이 아니라 "**검사 미완**" 일 수 있다), (ii) **닫힌 14-rule 밖 PII 미커버**(전화번호·주소·실명·카드번호 등). 두 사실은 각각 Story `§7.12-F` 의 F-3·F-2 에 적혀 있으나 **그 곱이 어디에도 적혀 있지 않았다**. 곱을 명시하면: **번들에 남은 유일한 원문형 필드(③)의 유일한 방어가, 열화 가능하고 자기 열화를 보고하지 않는 best-effort 스캐너다.** 개별 항으로 읽으면 "천장이 있지만 관리된다" 로 읽히고, 합성해서 읽으면 **단일 실패점**이다 — 이것이 본 Story 가 §7.12-B2 에서 진단한 "두 명제를 한 문장에 묶으면 검증되지 않은 쪽이 검증된 쪽의 신뢰를 빌린다" 의 **분산 판본**(명제를 서로 다른 절에 흩어 놓으면 독자가 곱을 계산하지 않는다)이다. 완화가 아니라 **declare** 로 남긴다 — Phase 2 에서 timeout 포화 검사(`elapsed >= PARSE_TIMEOUT_S`, `§7.12-F` F-3 처방)가 배선되면 (i) 은 **관측 가능**해지나 (ii) 는 남는다.
+
+   ★★ **Phase 2 갱신 — 합성은 2중이 아니라 3중이다 (구 열거를 지우지 않고 재기술)**: 위 단락은 천장을 두 종으로 셌다. Phase 2 실측이 구 (i) 을 **독립된 두 사실**로 쪼개고, 바로 위 정정이 **별도 사실 하나**를 더한다. 갱신된 합성 = 번들에 남은 유일한 원문형 필드(③)의 유일한 방어가, 아래를 **동시에** 지닌 **best-effort secret 스캐너**라는 것이다.
+
+   **갱신 후 합성 = 아래 3 종 동시 성립**
+
+   | 천장 | 내용 | 실측 근거 (줄번호 = `f93d708c2` 기준) |
+   |---|---|---|
+   | (i) **열화 가능** | `PARSE_TIMEOUT_S = 2.0` coarse deadline 도달 시 **남은 룰 중단** | `scripts/lib/redact_dev_process_content.py:303-305`. ★ 열화면은 8-룰 루프보다 **넓다** — `:345`(headers) · `:347`(session_id) · `:350`(cloud_generic) 도 같은 deadline 으로 gate 되어 포화 시 함께 탈락한다 |
+   | (ii) **자기 열화를 보고하지 않음** | 반환 `audit` 3키(`redaction_applied` · `redaction_count` · `redaction_rules_fired`)에 **timeout 도달 플래그가 없다** ⇒ `redaction_applied == False` 가 "안전" 이 아니라 "**검사 미완**" 일 수 있다 | 같은 파일 `redact()` 반환 계약 |
+   | (iii) **PII 차단력 0** | 닫힌 14-rule **안**의 PII 2종(`kr_rrn` · `email`)이 위 정정으로 **비차단 관측**으로 강등됐다 — 관측만 남고 차단 기여는 없다 | 바로 위 정정 블록 + `SCAN_BLOCKING_RULES` |
+
+   **구 (ii) 는 흡수되지 않고 존치**: "닫힌 14-rule **밖** PII 미커버(전화번호·주소·실명·카드번호 등)" 는 신 (iii) 과 **별개 사실**이다. 신 (iii) 은 rule **안**의 2종이 차단 축에서 빠졌다는 것이고, 구 (ii) 는 rule **밖**은 애초에 안 본다는 것이다. ⇒ PII 축은 **밖은 미커버 · 안은 비차단**이라 어느 쪽에서도 차단 기여가 없다.
+
+   **호출부 완화 (Phase 2 착지 완료) — (ii) 를 부분 상쇄하되 해소하지 않는다**: L1 스캔 호출부는 상한 검사가 아니라 **포화 검사** `elapsed >= PARSE_TIMEOUT_S`(하한 대조)를 수행하고, 참이면 **판정 불가**(`undecidable`)로 접는다 — **통과가 아니다**. 입력 크기 `BYTE_CAP`(1 MiB, `:56`) · `LINE_CAP`(20,000, `:57`) 초과도 같은 판정 불가로 접힌다(`scripts/lib/check_salvage_bundle.py` `_scan_blob`). **잔여 declare(완전 해소 아님)**: ⓐ 탐지 엔진의 `audit` 는 여전히 열화를 보고하지 않는다 — 상쇄 주체가 **호출부 자체 계측**이지 엔진 자기보고가 아니다 ⓑ 따라서 같은 엔진을 쓰는 다른 소비자(capture-time hook 경로)는 이 상쇄를 받지 못한다 ⓒ 어느 룰이 탈락했는지는 여전히 알 수 없다(rule 단위 해상도 없음) ⓓ 포화 판정은 판정 불가 쪽으로 접히는 보수 방향이라 정상 완료도 `undecidable` 로 셀 수 있다(가용성 비용) ⓔ 신 (iii) 은 이 완화와 **무관하게** 남는다. ⇒ 구 단락 말미의 예고("배선되면 (i) 은 관측 가능")는 **부분만 실현**됐다 — 관측 주체가 엔진이 아니라 L1 호출부라, 관측 범위는 **L1 경유 착지 경로 한정**이다.
 
 **진행 노트 처분 = 경로 (b) 참조형 강제 (채택)**
 
