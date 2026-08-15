@@ -332,8 +332,12 @@ def _validate_manifest(manifest):
 
 
 # ── ⓸ bijection: corpus 하위 전 파일이 정확히 1개 samples[] 를 참조 ────────────────
-def _check_bijection(repo_root, samples):
-    """corpus 파일 ↔ samples[] 1:1. (오류메시지 리스트, 검사 파일 수)."""
+def _check_bijection(repo_root, samples, gates_by_id):
+    """corpus 파일 ↔ samples[] 1:1. (오류메시지 리스트, 검사 파일 수).
+
+    표본 루트 직속으로 인정하는 파일 = 그 표본 gate 의 `entry` + `.sample` 과 stamp 뿐이다
+    (entry 이름은 manifest 에서 파생 — 하드코딩 금지).
+    """
     errs = []
     corpus_root = repo_root / CORPUS_ROOT_REL
     if not corpus_root.is_dir():
@@ -341,7 +345,7 @@ def _check_bijection(repo_root, samples):
     claims = {}
     for s in samples:
         s_path = (repo_root / s["path"]).resolve()
-        entry_names = {"gate.py" + SAMPLE_SUFFIX, "stamp.yaml" + SAMPLE_SUFFIX}
+        entry_names = {gates_by_id[s["gate"]]["entry"] + SAMPLE_SUFFIX, "stamp.yaml" + SAMPLE_SUFFIX}
         claims[s["id"]] = (s_path, set(s["fixtures"].values()), entry_names)
     n = 0
     for p in sorted(corpus_root.rglob("*")):
@@ -690,7 +694,7 @@ def run(args):
     samples_by_id = {s["id"]: s for s in samples}
 
     # ⓸ bijection
-    berrs, n_files = _check_bijection(repo_root, samples)
+    berrs, n_files = _check_bijection(repo_root, samples, gates_by_id)
     if berrs:
         for m in berrs:
             _error(STAGE_SUBSTRATE, f"bijection 파손: {m}")
