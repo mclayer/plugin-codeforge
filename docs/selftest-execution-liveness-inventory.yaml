@@ -813,3 +813,17 @@ self_tests:
     l2_full_scope: "N/A"
     manual_reason: ""
     g_boundary_check: "promptfile UTF-8 round-trip fixture suite (AC-4 fixture 5종 + AC-6 공존 oracle + whitelist mutation) 의 pytest 위임 wrapper — 단발 실행, soak=G2·DAST=G5·real-render=§8.7 runtime 축 무침범."
+
+  # ── CFP-2963 (ADR-175) — hollow-gate-corpus 메타-게이트 재귀 self-test (dedicated workflow step, alive) ──
+  # 인벤토리 bijection: tests/scripts/*.sh 76 → 77 (신규 self-test enroll, firsthand 실측 pre-append = 76 ↔ 76 balanced).
+  #   이 self-test 파일은 동 PR sibling 워커(엔진 lane)가 동시 착지 중 — enroll 은 선행하되 파일 생성 전까지
+  #   selftest-execution-liveness 게이트가 record→missing-file 로 AC-1a FAIL 하는 것이 정상(중간 상태)이며,
+  #   DevPL 이 워커 합류 후 최종 검증한다. two-meta-gate mutual cross-seal(ADR-151 인벤토리 ↔ ADR-175 corpus).
+  - self_test: "tests/scripts/test_check-hollow-gate-corpus.sh"
+    execution_channel: "workflow:hollow-gate-corpus-test.yml:hollow-gate-corpus-selftest"
+    channel_status: "alive"
+    blocking_tier: "non_required"
+    discriminating_fixture: "present"
+    l2_full_scope: "N/A"
+    manual_reason: ""
+    g_boundary_check: "corpus 표본 동적 실행 분류 메타-게이트(landed 셸/py 게이트의 LIVE vs HOLLOW 판정)의 self-test — soak=G2·DAST=G5·real-render=§8.7 runtime 축 disjoint (wrapper-self plugin-meta-na; 본 채널은 corpus 표본 1회 실행 분류이지 지속-liveness·부하·실렌더 축이 아님). 판별력 결박 5축: ① 2-arm 전건 AND(arm-L LIVE ∧ arm-H HOLLOW 동시 성립 시에만 PASS — arm-L 대조군을 빼면 '전부 HOLLOW 로 찍는 무조건-true 판정기'가 만점을 받으므로 대조군 leg 자체가 판별력의 일부) ② blinded probe flip(모든 커밋 좌표에서 arm-L 과 일치하고 기대 verdict 만 반대인 run-time materialize 입력 — 커밋 좌표만의 함수인 판정기는 정의상 한쪽에서 틀린다) ③ 축-disjoint 대조 leg(arm 라벨 역산 채널 차단: classification[] 판정기 미투입 + 표본 식별자 arm 어휘 denylist + 평면 배치 + exec-tree blinding) ④ census 축별 하한(N_gates/N_armL/N_armH/N_probe/N_detected/N_flip 감소 = RED, N_indeterminate 만 상한 — 축별 대조라 총 N 불변인 채 arm 간 상계로 판별력이 빠지는 경로가 닫힌다) ⑤ mutation-kill(판정 경로 변이 주입 시 RED 도달 실증). honest-ceiling(ADR-151 §결정 7 / ADR-175 상속): corpus 표본에 대한 관측 기반 verdict 까지만 보장 — corpus 밖 게이트 일반으로 외삽하지 않음(표본 밖 hollow 게이트 = 미검출 잔존, declared FN). 판별자 = 마커 문면이지 프로세스 rc 아님. presence ≠ truth."
