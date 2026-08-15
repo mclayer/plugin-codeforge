@@ -155,6 +155,58 @@ _ESC_CHAR = "%"
 _ESC_DOUBLED = "%%"
 _LEXICON_ESCAPE = "%-"
 
+# ── 마크다운 무해화 (보안테스트 F-SEC-4 — 방어심층) ────────────────────────────────
+#   실측(보안 lane): `` `rm -rf ~` `` · `@mclayer` · `](evil.example)` 가 채널 본문에
+#   **원문 그대로** 착지했고, `@name` 은 **실 알림**을, `#NNNN` 은 **역참조 백링크**를
+#   만들었다. 즉 관측 대상의 *이름*이 보고 채널의 **구조**를 바꿀 수 있었다.
+#
+#   ★ 도달성 정직 표기 (과장 금지): 현 입력원은 `~/.claude/worktrees/<repo>` 1-level
+#     listdir(= repo 명)과 로컬 temp 슬러그뿐이라 **원격 공격자 통제 불가**다 — HOME 쓰기
+#     권한자만 심을 수 있고 그는 이미 동일 신뢰도메인이다. **지금은 방어심층**이며,
+#     branch 명(depth 2)·PR 제목 등 덜 신뢰되는 이름원이 유입되면 즉시 live 가 된다.
+#
+#   변환 2종 (둘 다 **삽입만** 한다 — 삭제 0, 따라서 단사):
+#     ① 활성 구성자 백슬래시 이스케이프: ``\ ` * _ [ ] < > & !``
+#        (도입자 `\` 를 **먼저** 이스케이프해야 `\[` 입력이 `\\[` 로 되살아나지 않는다.)
+#     ② 인접 파괴: `@`+영숫자 / `#`+숫자 사이에 `%-` 삽입 — `@%-name` · `#%-2949`.
+#        mention·이슈참조는 **인접**이 조건이므로, 렌더러의 이스케이프 해석에 기대지 않고
+#        인접 자체를 끊는다(렌더러 무관하게 성립하는 축). 알파벳은 `_LEXICON_ESCAPE` 와
+#        같은 것을 쓴다 — 이미 `%` 는 ①단계 scrub 가 `%%` 로 doubling 해 두므로 `%-` 는
+#        **삽입 표식으로만** 등장한다(모호성 0).
+#
+#   호출 위치 = `_safe_text` 의 **맨 끝** (load-bearing):
+#     · `_mask_workspace_prefix` 는 workspace 루트를 **리터럴 find** 한다. 앞에서
+#       `\`→`\\` 를 걸면 Windows 경로가 어긋나 그 마스킹이 통째로 실패한다.
+#     · `_DRIVE_RE`/잔여 가드는 `[\\/]` 를 본다. 앞에서 `\` 를 삽입하면 `X:[` 같은
+#       무관한 형상이 드라이브로 **오탐**돼 필드가 통째 접힌다(가드가 아니라 자해).
+#     ⇒ 정규화가 **원문 경로**를 보고 끝낸 뒤에 무해화한다.
+#
+#   D3 라운드트립 무손상: 무해화는 `_safe_text` **안**에 있으므로 `dedup_key` 와 렌더
+#     본문의 key 필드가 **같은 값**을 쓴다. 식별 축과 표시 축을 분리하지 않는다는 기존
+#     결정(위 `_LEXICON_ESCAPE` 절)과 같은 이유다.
+#
+#   대가 (선언 — 은폐 금지):
+#     · 도입기 채널의 기존 키 중 활성 구성자를 포함하던 것은 1회 바뀌어 **그 항목이 1회
+#       재발화**한다(`_MAX_KEY_LEN` 경계화·어휘 이스케이프 도입 때와 동형 대가).
+#     · stderr 경고도 같은 파이프라인을 타므로 `\[Errno 13\]` 처럼 보인다. 파이프라인을
+#       둘로 쪼개면 `dedup_key` 와 본문이 갈라질 위험이 생기므로 단일 경로를 유지한다.
+#
+#   무해화하지 **않는** 것 (선언된 잔여 — "전부 막았다" 금지):
+#     · `~` — `~~` 짝이 있어야 strikethrough 가 되고, 홈-상대 표기(`~/.claude/...`)의
+#       가독성이 load-bearing 이다. 표시 축 cosmetic 잔여.
+#     · `|` — 본문에 표 구분행이 없어 표가 성립하지 않는다. 표시 축 cosmetic 잔여.
+#     · `(` `)` — 링크는 `]` 가 이스케이프되면 성립하지 않는다(짝 구성자 제거로 무력화).
+#     · 줄머리 구성자(`-` `+` `.` `#` 표제) — 필드는 제어문자 strip 으로 **단일 줄**이고
+#       본문 중간에 삽입되므로 줄머리에 설 수 없다.
+#     · 렌더러가 실제로 무엇을 그리는지는 **단정하지 않는다**(ADR-119). 본 모듈이 재는
+#       것은 산출 문자열의 형상뿐이다 — 활성 구성자를 남기지 않았는가.
+#     · Windows 는 `*` `:` `<` `>` `|` 를 파일명에서 거부한다 ⇒ 그 문자군은 **이 호스트의
+#       실 파일명 축에서 미측정**이다. POSIX consumer 에서는 전부 합법이라 표면이 넓다.
+_MD_ACTIVE_CHARS = "\\`*_[]<>&!"
+_MD_ACTIVE_RE = re.compile(r"[\\`*_\[\]<>&!]")
+_MD_MENTION_RE = re.compile(r"@(?=[A-Za-z0-9])")     # mention 은 `@`+영숫자 인접이 조건
+_MD_ISSUEREF_RE = re.compile(r"#(?=[0-9])")          # 이슈 참조는 `#`+숫자 인접이 조건
+
 # ── 경로 정규화 마스크 (AC-13 "홈·workspace 상대 표기") ─────────────────────────────
 #   base.relativize_path 는 (a) HOME 접두 (b) 현 사용자명 세그먼트만 처리한다 —
 #   HOME **밖** 경로(workspace-root / 타 사용자 홈 / 타 드라이브)는 무처리로 남는다.
@@ -280,6 +332,63 @@ def unscrub_verdict_tokens(s) -> str:
     return "".join(out)
 
 
+def _neutralize_markdown(s):
+    """마크다운 활성 구성자 무해화 (F-SEC-4). 규칙·상한 SSOT = 모듈 상단 `_MD_ACTIVE_CHARS` 절.
+
+    삽입만 하고 삭제하지 않는다. 좌역원 = `unneutralize_markdown`.
+    (단사성이 load-bearing 인 이유: 이 함수는 `_safe_text` 안에 있어 `dedup_key` 에도
+     걸린다. 비단사 변환이면 서로 다른 두 잔재가 한 키로 붕괴해 한쪽이 영구 억제된다 —
+     F-CR5-03 이 정확히 그 형상이었다.)
+
+    ★ 단사성의 **정의역** (선언을 코드보다 넓게 쓰지 않는다 — 이 Story 의 반복 결함 class):
+      단사는 **어휘 스크럽 산출**(= 실 파이프라인에서 이 함수가 받는 값) 위에서 성립하며
+      임의 문자열 위에서는 **성립하지 않는다**. 반례: `#1` 과 `#%-1` 은 둘 다 `#%-1` 로
+      간다(전자는 삽입, 후자는 `#` 뒤가 숫자가 아니라 무삽입).
+      실 경로에서 그 반례가 불가능한 이유: `@%-`·`#%-` 는 스크럽 산출에 존재할 수 없다 —
+      스크럽은 `%-` 를 lexicon 토큰 **첫 글자 뒤**에만 넣고(앞 글자는 P/F/O/정/문),
+      원문의 `%` 는 같은 단계에서 `%%` 로 doubling 된다(입력 `#%-1` → 스크럽 `#%%-1`).
+      결박 = `test_scheduled_task_output_hardening.py::…::test_neutralization_is_injective_over_corpus`
+      (그 반례 쌍을 케이스에 명시적으로 포함해 정의역 경계를 고정한다)."""
+    if not isinstance(s, str):
+        s = "" if s is None else str(s)
+    s = _MD_ACTIVE_RE.sub(lambda m: "\\" + m.group(0), s)
+    s = _MD_MENTION_RE.sub("@" + _LEXICON_ESCAPE, s)
+    s = _MD_ISSUEREF_RE.sub("#" + _LEXICON_ESCAPE, s)
+    return s
+
+
+def unneutralize_markdown(s) -> str:
+    """`_neutralize_markdown` 의 **좌역원** — 단사성의 실행 가능한 증거.
+
+    `unneutralize(neutralize(x)) == x` (property 로 결박). 좌역원이 존재하므로 단사다.
+
+    ★ 정의역: **`_neutralize_markdown` 의 산출**이다(`unscrub_verdict_tokens` 와 동일한
+      정직 표기). 임의 문자열에 대한 전역 역함수를 주장하지 않는다 — 예컨대 손으로 쓴
+      `#%-5` 는 무해화가 만든 삽입이 아니지만 여기서는 삽입으로 읽힌다. 실 파이프라인에서
+      그 형상이 무해화 **이전**에 존재할 수 없는 이유: `%-` 는 어휘 스크럽이 lexicon 토큰
+      첫 글자 뒤에만 넣고, 원문의 `%` 는 그 단계에서 이미 `%%` 로 doubling 된다.
+
+    용도: (a) 단사성 property (b) 경로 누출 오라클이 **무해화 이전 문자열**을 정의역으로
+      삼을 수 있게 한다 — 이스케이프가 만든 `\\` 를 경로 구분자로 오독하지 않도록."""
+    if not isinstance(s, str):
+        s = "" if s is None else str(s)
+    out = []
+    i, n = 0, len(s)
+    while i < n:
+        c = s[i]
+        if c == "\\" and i + 1 < n and s[i + 1] in _MD_ACTIVE_CHARS:
+            out.append(s[i + 1])
+            i += 2
+            continue
+        if c in "@#" and s[i + 1:i + 3] == _LEXICON_ESCAPE:
+            out.append(c)
+            i += 3
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
 # ── 경로 정규화층 (AC-13 이행 — 홈 축은 base 재사용, workspace/타사용자/드라이브 축만 지역) ──
 _workspace_prefix_cache = None       # None = 미해소 (tuple = 해소 완료, () 포함)
 
@@ -366,8 +475,12 @@ def _safe_text(s):
     ★ 제어문자 strip 이 개행까지 제거하므로 **단일 필드에만** 적용한다
       (조립된 여러 줄 본문에 적용하면 줄이 뭉개짐 — render_report 는 필드 단위 적용).
     ★ 경로 정규화가 이 파이프라인 **안**에 있어야 dedup_key 와 렌더 본문이 같은 값을
-      쓴다(D3 라운드트립 계약). 정규화층을 호출부로 빼면 그 계약이 깨진다."""
-    return _scrub_verdict_tokens(_normalize_paths(base.sanitize(_scrub_verdict_tokens(s))))
+      쓴다(D3 라운드트립 계약). 정규화층을 호출부로 빼면 그 계약이 깨진다.
+    ★ 마크다운 무해화(F-SEC-4)는 **맨 끝**이다 — 앞에 두면 삽입된 `\\` 가 경로 정규화의
+      리터럴 find 와 `[\\/]` 매칭을 교란해 마스킹이 실패하거나 과잉 접힘이 된다.
+      같은 이유로 무해화도 이 파이프라인 **안**에 있어야 D3 계약이 유지된다."""
+    return _neutralize_markdown(
+        _scrub_verdict_tokens(_normalize_paths(base.sanitize(_scrub_verdict_tokens(s)))))
 
 
 def _warn(msg, detail=None):

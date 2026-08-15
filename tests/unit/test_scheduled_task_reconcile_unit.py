@@ -25,6 +25,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "lib"))
 
 import scheduled_task_reconcile as sut
 
+# 산출면(`_safe_text` 통과 후)에서 본 정규화 실패 마스크 — 마크다운 무해화(F-SEC-4)가
+#   `<`·`>` 를 이스케이프하므로 **원 상수와 형상이 다르다**.
+#   ★ SUT 로 계산(`sut._neutralize_markdown(...)`)하지 않고 **리터럴로 박는다** — 계산하면
+#     무해화를 지운 mutant 아래에서도 기대치가 함께 변해 항진명제가 된다.
+MASK_UNNORM_RENDERED = "\\<미정규화-경로-제거\\>"
+
 
 class TestDedupKey:
     """dedup_key = class:홈-상대-경로 유도 (§8.1)."""
@@ -64,8 +70,9 @@ class TestDedupKey:
             f"전제 붕괴: fail-closed 붕괴가 관측되지 않는다 — 이 테스트가 고정하려는 "
             f"성질이 사라졌다(선언 정정 필요): {dict(zip(paths, keys))}"
         )
-        assert keys[0] == "orphan:" + sut._MASK_UNNORMALIZED, (
-            f"붕괴 결과가 예상 마스크와 다르다: {keys[0]!r}"
+        assert keys[0] == "orphan:" + MASK_UNNORM_RENDERED, (
+            f"붕괴 결과가 예상 마스크와 다르다: {keys[0]!r} "
+            f"(산출면 마스크는 마크다운 무해화를 통과한 형상 — F-SEC-4)"
         )
         # 대조군: 정규화 가능한 서로 다른 경로는 **접히지 않는다**(붕괴가 무조건이 아님)
         ok = [sut.dedup_key({"cls": "orphan", "display_path": p})
@@ -588,7 +595,7 @@ class TestWarnFieldSeparation:
         assert "heartbeat 기록 실패 (non-blocking)" in err, (
             f"정적 사실 문구가 사라졌다 — 진단 신호 0: {err!r}"
         )
-        assert sut._MASK_UNNORMALIZED in err, (
+        assert MASK_UNNORM_RENDERED in err, (
             f"가변 부분이 접히지 않았다 — 마스킹 정책이 약화됐다: {err!r}"
         )
         assert "/srv/home/" not in err, f"미정규화 경로가 그대로 실렸다: {err!r}"
@@ -605,7 +612,7 @@ class TestWarnFieldSeparation:
         assert "heartbeat 기록 실패" not in err, (
             f"대조군 전제 붕괴: 단일 필드인데 문구가 살아남았다 — leg A 가 공허해진다: {err!r}"
         )
-        assert sut._MASK_UNNORMALIZED in err, f"대조군 전제 붕괴: 접힘이 없다: {err!r}"
+        assert MASK_UNNORM_RENDERED in err, f"대조군 전제 붕괴: 접힘이 없다: {err!r}"
 
 
 class TestTopLevelExceptionAbsorbedIntoZeroExit:
@@ -762,9 +769,16 @@ class TestResidualDriveGuardIsFailClosed:
             assert got != sut._MASK_UNNORMALIZED
 
     def test_safe_text_pipeline_carries_the_guard(self):
-        """산출 파이프라인(`_safe_text`)까지 같은 결론인지 — 렌더 본문이 실제로 쓰는 경로."""
+        """산출 파이프라인(`_safe_text`)까지 같은 결론인지 — 렌더 본문이 실제로 쓰는 경로.
+
+        ★ 기대치는 **산출면 형상**(`MASK_UNNORM_RENDERED`)이다 — `_safe_text` 말미의
+          마크다운 무해화가 마스크의 `<`·`>` 도 이스케이프한다(F-SEC-4 는 우리 자신의
+          토큰을 예외로 두지 않는다: 예외를 두면 그 문면이 그대로 우회 표면이 된다).
+        """
         for sample in self.LEAK_SAMPLES:
-            assert sut._MASK_UNNORMALIZED in sut._safe_text(sample), sample
+            assert MASK_UNNORM_RENDERED in sut._safe_text(sample), (
+                f"{sample!r} → {sut._safe_text(sample)!r}"
+            )
 
 
 if __name__ == "__main__":

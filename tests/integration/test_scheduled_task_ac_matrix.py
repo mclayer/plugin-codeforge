@@ -1287,8 +1287,12 @@ class TestAC13StaticTextLint:
         assert "/Users/alice" not in result, (
             f"AC-13: 미정규화 절대경로 /Users/alice 검출: {result}"
         )
-        assert "<user-home>" in result, (
-            f"AC-13: <user-home> 정규화 미검출: {result}"
+        # ★ 기대 형상 = **산출면**(`_safe_text` 통과 후). 마크다운 무해화(F-SEC-4)가
+        #   마스크 토큰의 `<`·`>` 도 이스케이프한다 — 우리 자신의 토큰을 예외로 두면
+        #   그 예외 문면이 그대로 우회 표면이 되므로 예외를 두지 않았다.
+        #   리터럴로 박아 둔다(SUT 로 계산하면 무해화 제거 mutant 아래 항진명제가 된다).
+        assert "\\<user-home\\>" in result, (
+            f"AC-13: <user-home> 정규화 미검출(산출면 형상): {result}"
         )
 
         # 2. /home/bob 절대경로 → <user-home> 또는 유사 치환
@@ -1317,18 +1321,27 @@ class TestAC13StaticTextLint:
         """비위반 토큰 오탐 금지 회귀.
 
         정규화 경로·마커 리터럴은 위반으로 잡히면 안 됨.
+
+        ★ 기대치 = (입력, **산출면 기대 문자열**) 쌍. 마크다운 무해화(F-SEC-4)는 마스크
+          토큰의 `<`·`>` 를 이스케이프하지만 **경로 사실은 하나도 지우지 않는다** —
+          이 테스트가 재는 것("비위반 토큰이 손상되지 않는다")은 그대로다.
+          `~` 는 무해화 대상이 아니다(선언된 잔여: `~~` 짝이 있어야 발동 + 홈-상대
+          표기 가독성이 load-bearing).
         """
-        # 정규화 경로 형태들이 redact 되면 안 됨
         test_cases = [
-            "~/.claude/worktrees/foo",  # 홈 상대 경로
-            "<workspace>/plugin-codeforge",  # 마커 경로
-            "<user-home>/.claude",  # 정규화된 경로
+            ("~/.claude/worktrees/foo", "~/.claude/worktrees/foo"),          # 홈 상대 경로
+            ("<workspace>/plugin-codeforge", "\\<workspace\\>/plugin-codeforge"),  # 마커 경로
+            ("<user-home>/.claude", "\\<user-home\\>/.claude"),              # 정규화된 경로
         ]
-        for text in test_cases:
+        for text, expected in test_cases:
             result = sut._safe_text(text)
-            # 정규화된 형태는 그대로 유지되어야 함
-            assert text in result, (
-                f"AC-13 오탐: 비위반 {text} 가 손상됨: {result}"
+            assert expected in result, (
+                f"AC-13 오탐: 비위반 {text!r} 가 손상됨: {result!r}"
+            )
+            # 무해화가 **사실을 지우지 않았는가** — 역무해화하면 입력이 정확히 복원된다.
+            assert sut.unneutralize_markdown(result) == text, (
+                f"AC-13: 비위반 토큰이 가역 복원되지 않는다 — 무해화가 정보를 잃었다: "
+                f"{text!r} → {result!r} → {sut.unneutralize_markdown(result)!r}"
             )
 
 

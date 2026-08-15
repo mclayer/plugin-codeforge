@@ -83,9 +83,35 @@ OUT_OF_DOMAIN_TOKENS = (
     "- 선언=test · 실측=test · 불일치=N · key=test:\\\\server\\share\\resource",
 )
 
+# ★ **양성 대조군** (FIX13/F-SEC-4 동반 — 아래 `_predicate_text` 가 오라클을 멀게 하지
+#   않았음을 매 실행 확인한다). 이 토큰은 SUT 3축 중 드라이브·Users 루트에 정확히
+#   걸리는 실 누출 형상이며, 무해화→역무해화 왕복 **후에도** 반드시 검출돼야 한다.
+VIOLATING_CONTROL_TOKENS = (
+    "key=test:C:\\Users\\alice\\x",
+    "key=test:/home/bob/x",
+)
+
+
+def _predicate_text(text):
+    """경로 누출 술어의 **정의역 정렬** — 마크다운 무해화 이전 문자열로 되돌린다.
+
+    ★ 왜 필요한가 (FIX13 / 보안 F-SEC-4 봉합의 형제 영향):
+      `_safe_text` 말미의 마크다운 무해화는 활성 구성자 앞에 `\\` 를 **삽입**한다.
+      그런데 이 술어의 드라이브 축(`[A-Za-z]:[\\/]`)과 사용자명 축(`[\\/]<user>`)은
+      `\\` 를 **경로 구분자**로 읽는다 ⇒ `D:<drive>` 처럼 SUT 3축 어디에도 걸리지 않는
+      형상이 `D:\\<drive\\>` 로 바뀌면서 **거짓 위반**이 된다(실측: 10,000 case 중 14건,
+      전부 `duplicate_expand` 가 만든 `D:D:\\…` 형상).
+      SUT 는 무해화 **이전**에 정규화를 끝내므로, 정규화 계약의 정의역도 그 시점 문자열이다.
+      `unneutralize_markdown` 은 `_neutralize_markdown` 의 좌역원(정확 복원)이라 이
+      되돌림은 검출력을 깎지 않는다 — 실 누출(`C:\\Users\\x` → `C:\\\\Users\\\\x`)은
+      되돌리면 그대로 다시 걸린다. 그 사실을 `VIOLATING_CONTROL_TOKENS` 가 매 실행 고정한다.
+    """
+    return sut.unneutralize_markdown(text)
+
 
 def unnormalized_path_hits(text):
     """산출 문자열의 미정규화 절대경로 위반을 열거 (위반 0 = 빈 리스트)."""
+    text = _predicate_text(text)
     hits = []
     m = _UNNORM_DRIVE_RE.search(text)
     if m:
@@ -298,6 +324,18 @@ class TestFuzzPathNormalization:
         for tok in NON_VIOLATING_TOKENS:
             assert unnormalized_path_hits(tok) == [], (
                 f"oracle ① 자해: 비위반 토큰을 위반으로 오탐 — {tok!r}"
+            )
+
+        # 자기 건전성(**양성 대조군**): 실 누출 형상은 마크다운 무해화 왕복 **후에도**
+        #   반드시 검출된다. `_predicate_text` 의 역무해화가 술어를 멀게 했다면 여기서
+        #   RED — 아래 `violations == []` 이 공허해지는 경로를 이 단언이 닫는다.
+        assert len(VIOLATING_CONTROL_TOKENS) >= 2, "양성 대조군 정의역 붕괴"
+        for tok in VIOLATING_CONTROL_TOKENS:
+            assert unnormalized_path_hits(tok) != [], (
+                f"oracle ① 자해: 실 누출 형상을 놓친다 — {tok!r}"
+            )
+            assert unnormalized_path_hits(sut._neutralize_markdown(tok)) != [], (
+                f"oracle ① 자해: 무해화된 실 누출 형상을 놓친다(역무해화 실패) — {tok!r}"
             )
 
         # Arrange: fixed seed 2949 + corpus SHA 기록
