@@ -19,8 +19,15 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
   game-able residual 정직 공개: (a) 표본 제작자가 kill-fixture 를 게이트가 이미 잡는 축으로만
   고르면 corpus 는 LIVE 를 내지만 그 게이트의 다른 축은 여전히 미검증이다(축 선택 = 사람 판단,
   기계강제 불가) — xkill 축-disjoint 대조가 "상수 footer 자동적중"만 막을 뿐 축 대표성은 못 막는다.
-  (b) IC-4 blinding 은 exec tree 표면의 arm 누설(stamp/manifest/baseline/probe)만 닫으며,
-  artifact 내용 자체로부터의 역산(예: 중화 주석 문자열 read)은 닫지 않는다.
+  (b) IC-4 blinding 이 닫는 표면은 **열거된 5종뿐**이다: exec tree 표면의 arm 누설 4종
+  (stamp / manifest / baseline / probe basename 토큰) + **실행 순번(형제 디렉터리 수)**.
+  순번 표면은 원래 이 열거에 없었다 — 깨진 선언이 아니라 **미열거 공백**이었고(F-CR18-9),
+  leg 별 즉시 정리 + `exec_root` 직속 디렉터리 수 == 1 assert 로 이제 닫는다.
+  여전히 **열려 있는 것**(닫혔다고 읽지 말 것): ① artifact 내용 자체로부터의 역산(예: 중화 주석
+  문자열 read) ② basename 토큰 매칭 회피 — 금지 토큰 없는 이름으로 개명하면 통과(내용 검사 아님)
+  ③ `_run_leg` 이 `env=` 를 주지 않아 자식이 부모 env 전체를 상속 — `GITHUB_WORKSPACE` 등을 경유한
+  repo 도달(따라서 manifest/stamp/baseline 원본 read)은 막지 않는다 ④ 시계·파일시스템 mtime 등
+  미열거 side-channel 일반. IC-4 는 격리 경계가 아니라 **표면 위생 assert** 다.
 
 ━━ SCOPE disjoint ━━
   ⊥ ADR-154(hard-gate self-verification 번들 presence/shape 정적 lint — 본 하네스의 day-1 표본
@@ -138,7 +145,9 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
   M2: I-11 `¬LIVE ∧ ¬HOLLOW` 가드                  — 제거 시 arm-H(kill 관측 ≡ clean 관측)가 전멸.
   M3: exit_space 검사 (I-4 + T-2ⓐ loud 실패)        — 제거 시 rc 이탈이 조용히 통과.
   M4: census 개별 emit (7축 축별)                   — 제거 시 축 축소가 총합에 숨는다.
-  M5: IC-4 exec-tree blinding assert                — 제거 시 stamp 등 arm 누설 표면이 exec dir 에 잔존.
+  M5: IC-4 exec-tree blinding assert                — 제거 시 stamp 등 arm 누설 표면 + 형제 unit
+      (= 실행 순번 누설 채널)이 exec dir 에 잔존. 형제 부재 conjunct 는 M5 가 덮는 같은 함수
+      안에 있다(신규 M 번호 없음).
   M6: xkill 축-disjoint 검사                        — 제거 시 상수 footer stage 선언이 공허하게 통과.
 
 ADR refs: ADR-175 (결정 SSOT — 동적 hollow 분류 · arm-invariant 판정기 계약 · 분모 단조 하한 ·
@@ -533,16 +542,22 @@ def _materialize(exec_root, repo_root, source_sample, fixture_dirname, gate_entr
 
     exec dir 명은 실행별 재배정(uuid4) — 표본 id·leg 이름은 경로에 남기지 않는다(IC-4).
     at-rest `.sample` 확장자는 **벗겨서** materialize 한다.
+    오류 반환 시 **자기가 만든 unit_dir 을 스스로 정리**한다 — 남기면 그 잔재가 다음 leg 의
+    형제 디렉터리로 세어져 "실행 순번 누설 0"(IC-4) 불변식을 오염시킨다.
     """
     unit_dir = exec_root / uuid.uuid4().hex[:16]
     fx_dir = unit_dir / "fx"
     fx_dir.mkdir(parents=True, exist_ok=False)
 
+    def _fail(msg):
+        shutil.rmtree(unit_dir, ignore_errors=True)
+        return None, None, None, msg
+
     src_entry = repo_root / source_sample["path"] / (gate_entry + SAMPLE_SUFFIX)
     try:
         entry_bytes = src_entry.read_bytes()
     except OSError as exc:
-        return None, None, None, f"entry '{src_entry}' 읽기 불가: {exc}"
+        return _fail(f"entry '{src_entry}' 읽기 불가: {exc}")
     (unit_dir / gate_entry).write_bytes(entry_bytes)
 
     src_fx = repo_root / source_sample["path"] / fixture_dirname
@@ -561,18 +576,35 @@ def _materialize(exec_root, repo_root, source_sample, fixture_dirname, gate_entr
             recipe["target"], source_sample["fixtures"], unit_dir, fx_dir, gate_entry
         )
         if rt is None or not rt.is_file():
-            return None, None, None, f"recipe target '{recipe['target']}' 런타임 미해석"
+            return _fail(f"recipe target '{recipe['target']}' 런타임 미해석")
         patched, _n = _apply_recipe(rt.read_bytes(), recipe)
         if patched is None:
-            return None, None, None, f"recipe anchor 매치 ≠ 1 (런타임): {recipe['target']}"
+            return _fail(f"recipe anchor 매치 ≠ 1 (런타임): {recipe['target']}")
         rt.write_bytes(patched)
 
     entry_sha = _sha256_file(unit_dir / gate_entry)
     return unit_dir, fx_dir, entry_sha, None
 
 
-def _blinding_violations(unit_dir):
-    """IC-4: exec dir 에 manifest/stamp/baseline/probe 부재 ∧ `.sample` 잔재 0."""
+def _blinding_violations(unit_dir, exec_root):
+    """IC-4: exec dir 에 manifest/stamp/baseline/probe 부재 ∧ `.sample` 잔재 0 ∧ 형제 unit 0.
+
+    ━━ 정직 기재 — IC-4 는 격리 경계가 **아니다** (F-CR18-3, P2 관측-only) ━━
+      본 함수는 **표면 위생 assert** 이지 sandbox·격리 경계가 아니다. 구체적으로:
+       · basename **토큰 매칭**이라 금지 토큰이 없는 이름으로 개명하면 그대로 통과한다
+         (예: `stamp.yaml` → `meta.yaml`). 내용 기반 검사가 아니다.
+       · `_run_leg` 의 `subprocess.run(...)` 에 **`env=` 인자가 없어** 자식이 부모 env 전체를
+         상속한다 — `GITHUB_WORKSPACE` 등을 경유해 자식이 repo(따라서 manifest/stamp/baseline)
+         에 도달할 수 있다. 본 회차 처분 = **정직 기재**이며 `env=` 를 추가하지 않았다.
+      즉 IC-4 가 닫는 것은 "exec tree 표면에 arm 신호가 놓여있음"까지이고, 표면 밖 역산 채널
+      (내용 read / env 경유 repo 도달 / 개명 회피)은 열려 있다.
+
+    ━━ 형제 부재 불변식 (F-CR18-9) ━━
+      `exec_root` 직속 하위 디렉터리 수 != 1 = violation. 자식 표본이
+      `Path(__file__).resolve().parent.parent.iterdir()` 로 형제 수를 세면 그 값이
+      **실행 순번**(kill→clean→empty→xkill)이 되어, fixture 를 한 번도 열지 않고 순번만으로
+      기대 마커를 위조할 수 있다 = 실행 순번 누설 채널. leg 별 즉시 정리(caller)의 기계 대조.
+    """
     bad = []
     for p in sorted(unit_dir.rglob("*")):
         name = p.name.lower()
@@ -581,6 +613,12 @@ def _blinding_violations(unit_dir):
                 bad.append(f"{p.name} (금지 토큰 '{tok}')")
         if p.name.endswith(SAMPLE_SUFFIX):
             bad.append(f"{p.name} (`.sample` 확장자 잔재 — materialize 절차 파손)")
+    siblings = sorted(d.name for d in exec_root.iterdir() if d.is_dir())
+    if len(siblings) != 1:
+        bad.append(
+            f"exec-root 직속 디렉터리 {len(siblings)}개 (정확히 1 필요) — 자식이 형제 수를 세어 "
+            f"실행 순번을 역산하는 **실행 순번 누설 채널**. leg 별 즉시 정리 파손."
+        )
     return bad
 
 
@@ -952,47 +990,54 @@ def run(args):
                         integrity.append("I-3")
                         _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: materialize 실패 — {merr} (I-3).")
                         break
-                    entry_sha = sha
-                    # MUTATION-SENTINEL M5: IC-4 exec-tree blinding assert
-                    # (manifest/stamp/baseline/probe 부재 ∧ `.sample` 잔재 0). 파손 = exit 3 (⓹).
-                    bad = _blinding_violations(unit_dir)
-                    if bad:
-                        _error(STAGE_SUBSTRATE, f"unit={uid} leg={role}: exec-tree blinding 파손 {bad} (⓹).")
-                        return EXIT_SUBSTRATE
+                    # ★ leg 별 즉시 정리 (F-CR18-9): unit_dir 을 누적하면 그 개수가 곧 실행
+                    #   순번이 되어 자식이 fixture 를 열지 않고 leg 을 역산할 수 있다. 정상 종료·
+                    #   break·return·예외 전 경로에서 반드시 정리되도록 try/finally 로 감싼다.
+                    #   entry_sha·obs 는 정리 전에 확보되므로 이후 사용에 지장 없다.
+                    try:
+                        entry_sha = sha
+                        # MUTATION-SENTINEL M5: IC-4 exec-tree blinding assert (manifest/stamp/
+                        # baseline/probe 부재 ∧ `.sample` 잔재 0 ∧ 형제 unit 0). 파손 = exit 3 (⓹).
+                        bad = _blinding_violations(unit_dir, exec_root)
+                        if bad:
+                            _error(STAGE_SUBSTRATE, f"unit={uid} leg={role}: exec-tree blinding 파손 {bad} (⓹).")
+                            return EXIT_SUBSTRATE
 
-                    # I-2: 표본 syntax invalid
-                    if entry.endswith(".py"):
-                        try:
-                            compile((unit_dir / entry).read_text(encoding="utf-8", errors="replace"),
-                                    str(unit_dir / entry), "exec")
-                        except SyntaxError as exc:
-                            integrity.append("I-2")
-                            _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: 표본 syntax invalid — {exc} (I-2).")
+                        # I-2: 표본 syntax invalid
+                        if entry.endswith(".py"):
+                            try:
+                                compile((unit_dir / entry).read_text(encoding="utf-8", errors="replace"),
+                                        str(unit_dir / entry), "exec")
+                            except SyntaxError as exc:
+                                integrity.append("I-2")
+                                _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: 표본 syntax invalid — {exc} (I-2).")
+                                break
+
+                        rc, out, errtxt, rerr = _run_leg(unit_dir, fx_dir, entry, gate["invoke_args"])
+                        if rerr:
+                            integrity.append("I-3")
+                            _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: {rerr}")
                             break
-
-                    rc, out, errtxt, rerr = _run_leg(unit_dir, fx_dir, entry, gate["invoke_args"])
-                    if rerr:
-                        integrity.append("I-3")
-                        _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: {rerr}")
-                        break
-                    obs, wrong = _observe(out, errtxt, gate)
-                    # MUTATION-SENTINEL M3: exit_space 검사 (I-4 — rc 는 여기에만 쓴다).
-                    if rc not in gate["exit_space"]:
-                        integrity.append("I-4")
-                        _error(
-                            STAGE_INDETERMINATE,
-                            f"unit={uid} leg={role}: rc={rc} ∉ 선언 exit_space {gate['exit_space']} (I-4).",
+                        obs, wrong = _observe(out, errtxt, gate)
+                        # MUTATION-SENTINEL M3: exit_space 검사 (I-4 — rc 는 여기에만 쓴다).
+                        if rc not in gate["exit_space"]:
+                            integrity.append("I-4")
+                            _error(
+                                STAGE_INDETERMINATE,
+                                f"unit={uid} leg={role}: rc={rc} ∉ 선언 exit_space {gate['exit_space']} (I-4).",
+                            )
+                        if wrong:
+                            integrity.append("I-10")
+                            for w in sorted(set(wrong)):
+                                _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: {w} (I-10).")
+                        legs[role] = obs
+                        _emit(
+                            f"obs-digest: unit={uid} leg={role} rc={rc} n={len(obs.observed)} "
+                            f"fail={int(obs.fail)} term={int(obs.term)} "
+                            f"stages={sorted(obs.fail_stages)} sha256={_observed_digest(obs)}"
                         )
-                    if wrong:
-                        integrity.append("I-10")
-                        for w in sorted(set(wrong)):
-                            _error(STAGE_INDETERMINATE, f"unit={uid} leg={role}: {w} (I-10).")
-                    legs[role] = obs
-                    _emit(
-                        f"obs-digest: unit={uid} leg={role} rc={rc} n={len(obs.observed)} "
-                        f"fail={int(obs.fail)} term={int(obs.term)} "
-                        f"stages={sorted(obs.fail_stages)} sha256={_observed_digest(obs)}"
-                    )
+                    finally:
+                        shutil.rmtree(unit_dir, ignore_errors=True)
 
             if integrity or len(legs) != len(LEG_ROLES):
                 verdict = "INDETERMINATE"
