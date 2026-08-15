@@ -118,8 +118,43 @@ harness `2.1.199` 가 **rate-limit / server-error 축의 부분 산출 반환**�
 - tracked diff = `branch@SHA` + 파일 목록. **원문 미동봉** — git 이 이미 내구 보관 중이므로 복사본은 노출면만 추가한다.
 - **untracked 파일 = 경로만, 내용 금지 (비협상)**. `.gitignore` 는 커밋만 막고 read·수동 add 는 막지 않으며, `.env`·`.mcp.json`·`settings.local.json` 이 정확히 그 공간에 산다.
 - 도구 출력 = `blob_ref`(content-address) + `redaction_rules_fired` audit. 원문 동봉은 capture-time redaction 층을 **우회**하는 행위다.
-- 진행 노트 = 포함하되 **사용자 프롬프트 verbatim 인용 금지 · 도구 출력 붙여넣기 금지 · 절대경로 금지** (ADR-109 §결정 10 `error_message` 행의 "no user prompt verbatim" 상속).
+- 진행 노트 = **sidecar 파일로 포함하고 번들 필드에는 `notes_ref` 참조만 싣는다** (아래 §결정 2-U 경로 (b)). 노트 본문 규율은 그대로 — **사용자 프롬프트 verbatim 인용 금지 · 도구 출력 붙여넣기 금지 · 절대경로 금지** (ADR-109 §결정 10 `error_message` 행의 "no user prompt verbatim" 상속). 노트가 sidecar 로 나가도 **AC-32 스캔 정의역은 착지 delta 전체**라 검사에서 빠지지 않는다.
 - 실패 신호 원문 = **금지**. ① 분류 결과 ② 판정 limb ③ 근거 1줄만 (ADR-109 Amendment 2 (g) 상속 — 본 ADR 은 그 규약을 **인용**하며 재서술하지 않는다).
+
+#### §결정 2-U — **상한: 번들 필드 allowlist (닫힌 집합)** ★ 신설
+
+**왜 신설하는가**: 위 하한(3-tuple 승계)과 신설분(④~⑨)만 있으면 필드 집합이 **위로 열려 있다.** 열린 집합 위에서는 `bundle_fields − allowlist` **차집합의 정의역이 성립하지 않아** AC-31 오라클이 born-invalid 다. 하한은 allowlist 가 아니다 — 이 구별을 놓치면 "필드 통제가 있다" 는 착시만 남는다.
+
+**allowlist = 아래 10 필드가 전부다. 열거 밖 필드가 1건이라도 있으면 위반이다.**
+
+| # | 필드 | 형태 |
+|---|---|---|
+| ① | `branch` | 참조형 |
+| ② | `last_commit_sha` | 참조형 |
+| ③ | `wip_summary` | **제한 원문** — `[WIP]` 미완 표식 요약 1줄 (ADR-178 §결정 5-2 승계, 값공간 = §결정 6-4 폐쇄 집합) |
+| ④ | `unfinished[]` | 항목 목록 |
+| ⑤ | `resume_point` | 참조형 |
+| ⑥ | `side_effect_ledger[]` | 닫힌 스키마 (자유 텍스트 0) |
+| ⑦ | `integrity_tag` | enum `usable`\|`suspect` |
+| ⑧ | `empty_reason` + `failed_at` | enum + 시각 (조건부 required) |
+| ⑨ | `producer` | roster 실명 + `story_key` + KST 실측 시각 |
+| ⑩ | `notes_ref` | 참조형 — 진행 노트 sidecar 포인터 (**본 절 신설**) |
+
+**닫힘 규칙 3항**:
+
+1. **확장 = 본 ADR amendment 의무.** 필드 추가는 문서 편집이 아니라 결정 변경이다.
+2. **스캔 결과는 필드가 아니다** — AC-32 스캔의 verdict·SHA 는 **커밋 trailer 와 별도 원장**에 기록하고 번들 필드로 승격하지 않는다. 승격하면 allowlist 가 흔들려 AC-31 앵커가 깨진다.
+3. **③ 은 유일한 원문형 예외이며 그 사실을 여기서 명시한다** — 아래 (b) 채택으로 ⑩ 이 신설되어 진행 노트가 참조형으로 내려갔고, 남은 원문형은 ③ 1건뿐이다. ③ 은 이미 ADR-178 §결정 6-4 가 값공간을 폐쇄한 필드라 자유 본문이 아니다.
+
+**진행 노트 처분 = 경로 (b) 참조형 강제 (채택)**
+
+| 경로 | 판정 | 근거 |
+|---|---|---|
+| (a) 원문형 허용 필드로 열거 | **기각** | AC-31 문면 변경(요구사항 lane 왕복)을 요구하고, **예외 열거는 오라클 구멍의 상시 원천**이다 — 한 번 열면 다음 필드가 같은 논리로 들어온다 |
+| **(b) sidecar 파일 + `notes_ref` 참조** | **채택** | ① **AC-31 문면 무변경** ② 산문 내용 보호가 상실되지 않는다 — AC-32 스캔 정의역이 **glob 아닌 착지 delta 전체**라 sidecar 도 반드시 검사된다 ③ 번들 필드가 사실상 전건 참조형이 되어 **오라클이 단순·견고**해진다 |
+| (c) 진행 노트 제거 | **기각** | 노트는 축1 인계의 실 정보원이다. 제거는 요구를 축소하는 방향 |
+
+> **(b) 의 잔여**: sidecar 간접이 인계 비용(재spawn 이 파일을 한 번 더 읽어야 함)을 올린다. Phase 2 에서 그 비용이 실측으로 과다하면 (a) 로 전환하되, **그때는 AC-31 문면 변경을 escalation 으로 올린다** — 조용히 원문형을 필드에 넣는 경로는 금지한다.
 
 **참조 모델의 정직한 한계 (declare 의무 — 미declare 시 커버리지 착시)**:
 
