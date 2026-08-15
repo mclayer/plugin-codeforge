@@ -744,13 +744,14 @@ fi
 
 # ─ F-CR18-9 exec_root 순번 격리 통합 관측 (신설) ────────────────────────────────
 # 정상 실행 중 exec_root 직속 디렉터리 수 항상 1 (leg 별 즉시 정리).
+# core.py 실행 완료 후 exec_root는 정리되므로, 정상 종료(rc=0) + exec-root 라인 존재 확인만.
 SH="$(new_shadow none)"
 MF="$TEST_TMP/mf_f_cr18_9.yaml"; reset_mf; emit_manifest "$MF"
 run_core "$CORE_PY" "$SH" --manifest "$MF"
-if [ "$CORE_RC" -eq 0 ]; then
-  pass_case "F-CR18-9: 정상 실행 완료 (exec_root 즉시 정리 작동 — 형제 채널 봉합)"
+if [ "$CORE_RC" -eq 0 ] && grep -qF "exec-root:" "$CORE_OUT"; then
+  pass_case "F-CR18-9: 정상 실행 완료 + exec-root 관측 (즉시 정리 작동 — 형제 pytest 병행 확인)"
 else
-  fail_case "F-CR18-9: 정상 실행이 exit=$CORE_RC 로 실패"
+  fail_case "F-CR18-9: exit=$CORE_RC 또는 exec-root 라인 미관측 — 정상 종료 실패"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════

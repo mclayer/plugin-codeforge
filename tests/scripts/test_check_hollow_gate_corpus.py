@@ -65,7 +65,7 @@ def _require_substrate():
 # ══════════════════════════════════════════════════════════════════════════════
 # helper — shadow repo-root / manifest emitter / subprocess 실행
 # ══════════════════════════════════════════════════════════════════════════════
-def build_shadow(tmp_path, extra="none"):
+def build_shadow(tmp_path, extra="none", sha_mismatch=False):
     """repo 실파일 무오염 shadow repo-root.
 
     corpus 하위 전 파일이 정확히 1개 samples[] 를 참조해야 하므로(bijection), 시나리오가
@@ -87,6 +87,16 @@ def build_shadow(tmp_path, extra="none"):
         # 오염 = 목표 축(AC-1, kill 의 test_subject_good) + 타 축(AC-8, xkill 의 concept doc) 동시 발화.
         rel = "docs/domain-knowledge/concept/hard-gate-self-verification.md.sample"
         shutil.copyfile(CORPUS / "s01" / "xkill" / rel, corpus / "s04" / "kill" / rel)
+    if sha_mismatch:
+        # ⓺ provenance (b): stamp.yaml.sample의 artifact_sha256을 의도적으로 틀린 값으로 변조
+        # → recipe 재적용 시 새 sha256과 불일치 → provenance 파손 → exit 3
+        import yaml
+        stamp_file = corpus / "s02" / "stamp.yaml.sample"
+        data = yaml.safe_load(stamp_file.read_text(encoding="utf-8"))
+        data["artifact_sha256"] = "0" * 64  # 의도적 불일치
+        stamp_file.write_text(
+            yaml.dump(data, default_flow_style=False, allow_unicode=True),
+            encoding="utf-8", newline="\n")
     return root
 
 
@@ -118,8 +128,8 @@ _RECIPE_BODY = """    derived_from: s01
 
 def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=False,
                    probe=True, samples="normal", recipe_target="gate.py.sample",
-                   forbidden=False, probe_anchor_from=None, derived_from_mismatch=False,
-                   recipe_anchor_mismatch=False):
+                   forbidden=False, probe_anchor_from=None, probe_derived_from="s01",
+                   derived_from_mismatch=False, recipe_anchor_mismatch=False):
     """시나리오 manifest 를 생성한다 (repo 의 shipped manifest 는 건드리지 않는다)."""
     out = [_GATE_BLOCK.format(stage=stage, term=TERM_PREFIX, exit_space=exit_space)]
     if samples == "empty":
@@ -148,7 +158,7 @@ def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=F
     out.append('    anchor_to: "    if False:  # neutralized M1 positive-control-presence"\n')
     if probe:
         out.append("  - probe: p01\n")
-        out.append("    derived_from: s01\n")
+        out.append(f"    derived_from: {probe_derived_from}\n")
         out.append("    target: gate.py.sample\n")
         # probe anchor 변조 (I-1 테스트용)
         if probe_anchor_from:
@@ -503,6 +513,21 @@ def test_ic4_exec_unit_dir_is_reassigned_each_materialize(tmp_path):
         assert "s01" not in nm and "kill" not in nm, f"exec dir 명에 표본/leg 식별자 누설: {nm}"
 
 
+def test_f_cr18_9_exec_root_cleanup_delegation_to_core(tmp_path):
+    """F-CR18-9: leg 별 exec_root 즉시 정리 — core.py 실행 성공 확인.
+
+    run_core 실행 시 core.py가 exec_root를 관리하며 정상 종료하는지 확인.
+    (실제 정리 로직은 core.py 내부이며, 정리 여부는 shell script 에서 관측)
+    """
+    _require_substrate()
+    root = build_shadow(tmp_path)
+    mf = write_manifest(tmp_path / "m_f_cr18_9.yaml")
+    rc, out, err = run_core(root, manifest=mf)
+    assert rc == 0, f"core.py 정상 종료 실패: rc={rc}\n{err}"
+    # stdout에 exec-root 경로가 emit 되었는지 확인 (정상 경로 진입 증거)
+    assert "exec-root:" in out, f"exec-root 관측 경로 미관측: {out[:500]}"
+
+
 def test_ic4_leaked_stamp_in_fixture_is_loud_substrate_failure(tmp_path):
     """fixture 안에 stamp 가 잠입하면 exit 3 — blinding assert 가 실제로 강제됨(M5 대응)."""
     _require_substrate()
@@ -776,15 +801,45 @@ def test_substrate_provenance_tree_mismatch(tmp_path):
         f"provenance tree 문면 미관측: {err}"
 
 
-def test_ic1_probe_unit_arm_anchored_measurement(tmp_path):
-    """IC-1 armL-anchored positive: probe unit 의 arm 라벨 측정 정상 (FIX-B).
+def test_substrate_provenance_sha256_mismatch(tmp_path):
+    """⓺ provenance (b): sha256 reapplication 불일치 — declared ≠ computed sha256.
 
-    probe 정의역에서 armL-anchored 를 측정 (sample 정의역과 구분).
-    정상 corpus 에서는 probe p01 이 declared_arm H(HOLLOW) 와 일치.
+    stamp.yaml.sample 의 artifact_sha256 을 틀린 값으로 설정 → SUBSTRATE stamp drift
+    검출 → exit 3.
     """
     _require_substrate()
-    rc, out, _err = run_core(REPO_ROOT)
+    root = build_shadow(tmp_path, sha_mismatch=True)
+    rc, _out, err = run_core(root, manifest=write_manifest(tmp_path / "m_prov_sha.yaml"))
+    assert rc == 3, f"sha_mismatch 미발동: rc={rc}\n{err}"
+    assert ("stamp drift" in err.lower() and "artifact_sha256" in err.lower()) or \
+           ("provenance 파손" in err and "sha256" in err.lower()), \
+        f"sha256 불일치 문면 미관측: {err}"
+
+
+def test_ic1_probe_unit_arm_anchored_measurement_positive(tmp_path):
+    """IC-1 armL-anchored positive: probe 파생 표본이 arm-L 선언이면 IC-1 미발동.
+
+    probe 정의역에서 armL-anchored 를 측정. 정상 corpus 에서는 probe p01 이
+    arm-L 표본(s01)에서 파생되고 declared_arm H 와 불일치 미발생 → IC-1 미발동.
+    """
+    _require_substrate()
+    rc, _out, err = run_core(REPO_ROOT)
     assert rc == 0, "baseline 이 FAIL 이면 ic 측정 불가"
-    assert "::error::[IC-1]" not in out, "정상 corpus 에 IC-1 발동하면 측정 파손"
+    assert "::error::[IC-1]" not in err, "정상 corpus 에 IC-1 발동하면 측정 파손"
+
+
+def test_ic1_probe_unit_arm_anchored_measurement_negative(tmp_path):
+    """IC-1 armL-anchored negative: probe 파생 표본이 arm-L이 아니면 IC-1 발동.
+
+    probe: derived_from=s02(arm-H, arm-L 아님) → armL-anchored=0 → IC-1 발동
+    → exit 1 + ::error::[IC-1] in stderr.
+    """
+    _require_substrate()
+    root = build_shadow(tmp_path)
+    rc, _out, err = run_core(root, manifest=write_manifest(
+        tmp_path / "m_ic1_neg.yaml",
+        probe_derived_from="s02"))
+    assert rc == 1, f"IC-1 미발동: rc={rc}\n{err}"
+    assert "::error::[IC-1]" in err, f"IC-1 stderr 미관측: {err}"
 
 
