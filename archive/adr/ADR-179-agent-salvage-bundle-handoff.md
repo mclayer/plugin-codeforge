@@ -127,6 +127,10 @@ harness `2.1.199` 가 **rate-limit / server-error 축의 부분 산출 반환**�
 
 **allowlist = 아래 10 필드가 전부다. 열거 밖 필드가 1건이라도 있으면 위반이다.**
 
+**선언 열거 수 = 10** — allowlist 필드 수의 정형 선언 라인. 아래 표의 실 row 수와 기계 대조된다
+(CFP-2984 AC-6 / `tests/scripts/test_declared_count_vs_actual.sh`). 위 산문 선언은 사람용이고 이 줄은
+파서용이다 — 둘이 어긋나면 표 row 수를 정본으로 삼아 본 줄을 고친다.
+
 | # | 필드 | 형태 |
 |---|---|---|
 | ① | `branch` | 참조형 |
