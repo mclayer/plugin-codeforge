@@ -37,8 +37,11 @@ ADR-061 §결정 1 Python-SSOT 패턴 (thin wrapper = scripts/check-adr178-forbi
 
 자원 사용 (bounded degradation — 임의 입력 무해 아님, ADR-151 §결정 7 정직 천장):
   per-file 라인 cap(PER_FILE_SCAN_CAP) x per-line 길이 truncate(MAX_PHYSICAL_LINE_LEN) 로 총 작업량을
-  유계화하고, 토큰 매칭은 리터럴 substring `in`(O(n)) 만 쓴다. 사용 regex 3종은 anchored + bounded
-  quantifier(`{0,N}`) 로 nested/인접-무제한 quantifier 를 두지 않는다. 라인 cap 초과로 마커가 잘리면
+  유계화하고, 토큰 매칭은 리터럴 substring `in`(O(n)) 만 쓴다. 사용 regex 3종은 전부 bounded
+  quantifier(`{0,N}`)라 nested/인접-무제한 quantifier 가 0 이다. **anchored 는 그중 1종**
+  (`_BLOCKQUOTE_PREFIX_RE` 의 `^`)이고 `_ARRAY_OPEN_RE`·`_QUOTED_RE` 는 비anchored 리터럴 탐색이다
+  (bound 의 근거는 anchor 가 아니라 quantifier 상한 — "3종 anchored" 로 뭉뚱그리지 않는다).
+  라인 cap 초과로 마커가 잘리면
   구조 실패(exit 2) 로 착지한다(fail-closed). 실측 회귀가드 배선 = tests/scripts/ (QADev 소관).
 
 Usage:

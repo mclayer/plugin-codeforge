@@ -8,7 +8,7 @@
 정의역:
   - leaf handler = PostToolUse/PreToolUse/SessionStart/UserPromptSubmit/... entry 안의
     각 hook (type="command", command=..., timeout=...)
-  - 복합 matcher (Agent|Bash|Write|Edit|MultiEdit) 를 포함한 전체 24개 entry 대상
+  - 복합 matcher (Agent|Bash|Write|Edit|MultiEdit) 를 포함한 전체 25개 entry 대상
   - AC-12: 순회 정의역이 PostToolUse + 복합 matcher entry를 포함함을 명시 검증
 
 INV-T1: ∀ handler, timeout ∈ int AND timeout > 0
@@ -38,7 +38,7 @@ _load_hooks_json = load_hooks_json
 
 
 def test_every_hook_handler_has_explicit_timeout():
-    """INV-T1 + INV-T2: 전 24개 leaf handler 에 timeout int > 0 이 명시.
+    """INV-T1 + INV-T2: 전 25개 leaf handler 에 timeout int > 0 이 명시.
 
     AC-12: PostToolUse entry 및 복합 matcher entry (Agent|Bash|Write|Edit|MultiEdit)
     를 포함함을 명시 검증.

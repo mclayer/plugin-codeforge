@@ -37,12 +37,35 @@ def _get_adr_path() -> Path:
     return repo_root / "archive" / "adr" / "ADR-178-subagent-progress-commit-preservation.md"
 
 
+def _is_wrapper_home() -> bool:
+    """wrapper home 판별 — ADR 저장 디렉터리(`archive/adr/`) 실재 여부.
+
+    tier-honesty lint 의 home_marker 선례 동형 (`check-tier-honesty.py` run_lint —
+    lever artifact 전부 부재 = consumer degradation no-op / 실재 = 검사 강제).
+    """
+    return (Path(__file__).resolve().parent.parent / "archive" / "adr").is_dir()
+
+
 @pytest.fixture
 def adr178_content() -> str:
-    """ADR-178 전문을 메모리에 로드."""
+    """ADR-178 전문을 메모리에 로드.
+
+    부재 처리 (CFP-2966 구현리뷰 Iter1 P2 ⑧ — 무조건 skip 은 false-negative 채널):
+      · `ADR178_PATH` 명시 지정인데 부재 → **fail** (명시 요청의 setup error)
+      · wrapper home(`archive/adr/` 실재)인데 부재 → **fail** (여기서 부재 = 결함.
+        skip 하면 27 케이스가 조용히 소멸해 "전건 통과" 와 구분되지 않는다)
+      · `archive/adr/` 자체가 없음 = consumer 환경 → skip (정직한 degradation)
+    """
     adr_path = _get_adr_path()
     if not adr_path.exists():
-        pytest.skip(f"ADR-178 파일 부재: {adr_path}")
+        if os.environ.get("ADR178_PATH"):
+            pytest.fail(f"ADR178_PATH 로 지정된 경로가 부재: {adr_path}")
+        if _is_wrapper_home():
+            pytest.fail(
+                f"ADR-178 파일 부재: {adr_path} — wrapper home(archive/adr/ 실재)에서 "
+                "부재 = 결함이다 (skip 은 27 케이스를 조용히 소멸시킨다)."
+            )
+        pytest.skip(f"consumer degradation — archive/adr/ 부재: {adr_path}")
     return adr_path.read_text(encoding="utf-8")
 
 
@@ -71,18 +94,13 @@ def _extract_region(content: str, start_marker: str, end_marker: str) -> str:
 
 
 def _extract_quoted_region(content: str, start_marker: str, end_marker: str) -> str:
-    """금지 토큰 배열 같은 인용 블록 추출."""
-    start_pattern = f"<!-- {re.escape(start_marker)} -->"
-    end_pattern = f"<!-- {re.escape(end_marker)} -->"
+    """금지 토큰 배열 같은 인용 블록 추출.
 
-    match = re.search(
-        f"{start_pattern}(.*?){end_pattern}",
-        content,
-        re.DOTALL
-    )
-    if not match:
-        return ""
-    return match.group(1)
+    `_extract_region` 과 추출 규칙이 동일하다 (마커 쌍 사이 DOTALL 캡처) — 이전 판은 본문을
+    통째로 복제해 두 벌이 따로 표류할 수 있었다 (CFP-2966 구현리뷰 Iter1 P2 ⑥, dup-local).
+    호출부 가독성을 위해 이름은 유지하고 구현만 위임한다.
+    """
+    return _extract_region(content, start_marker, end_marker)
 
 
 # ============================================================================
