@@ -358,6 +358,26 @@ def test_bypass_shape_does_not_discharge_unbound_claim():
     assert result["violations"][0].disposition == "unbound"
 
 
+def test_changed_paths_still_collects_deleted_file_from_minus_side():
+    """회귀 가드 — 삭제된 파일은 `+++ /dev/null` 이라 `--- a/<path>` 쪽에서 건진다.
+
+    ★ 이 leg 은 판별 테스트가 아니다(순진 스캔 판본에서도 통과한다). walk 를 바꾸면서
+      **기존 동작을 깎지 않았다**는 것을 재는 보존 축이다."""
+    diff = "\n".join([
+        "diff --git a/%s b/%s" % (SRC_FILE, SRC_FILE),
+        "deleted file mode 100644",
+        "index 1111111..0000000",
+        "--- a/%s" % SRC_FILE,
+        "+++ /dev/null",
+        "@@ -1,2 +0,0 @@",
+        "-x = 1",
+        "-y = 2",
+        "",
+    ])
+    assert ACR.changed_paths(diff) == {SRC_FILE}
+    assert ACR.parse_added_lines(diff) == []
+
+
 def test_changed_paths_agrees_with_cochange_walk():
     """형제 모듈(`_correction_pointer_cochange.walk_diff`)과 경로 축이 일치하는지 대조.
 
