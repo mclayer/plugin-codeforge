@@ -20,8 +20,16 @@ ADR-061 §결정 1 Python-SSOT 패턴 (thin wrapper = scripts/check-adr178-forbi
      사용한다. 배열이 SSOT 이며 본 lint 은 토큰 리터럴을 하드코딩하지 않는다 (drift 차단).
      의미 기반 확장·정규화·유사도 매칭 금지 — 리터럴 substring 매칭만 한다.
   3. 판정: 정의역 내 토큰 출현 >=1 → exit 1 (출현 위치 열거) / 출현 0 → exit 0.
-     구조 실패(마커 부재·중복·역순 / 배열 파싱 실패 / 토큰 수 != 4) → exit 2 + 별도 메시지.
-     구조 실패를 exit 0 으로 흡수하지 않는다 (마커를 지우면 조용히 무력화되는 경로 차단).
+     구조 실패 → exit 2 + 별도 메시지. 구조 실패 축 (CFP-2966 구현리뷰 Iter1 F-1 로 2축 추가):
+       (i) 마커 부재·중복·역순  (ii) 배열 파싱 실패·토큰 수 != 4
+       (iii) **포함관계 파괴** — 인용 절이 정의역 내부가 아님
+       (iv) **정의역 0행 (vacuous-domain)** — 마커를 지우지 않고 **재배치**해 인용 절이 정의역
+            전체를 덮으면 감산 결과가 공허해져 실 금지 조항이 있어도 "출현 0" 으로 PASS 한다.
+     구조 실패를 exit 0 으로 흡수하지 않는다 (지우는 경로 + **옮기는 경로** 모두 차단).
+     축별 검출력 정직 구분: (iv) 는 **조용한** 실패(vacuous GREEN)를 막는 축이고,
+       (iii) 은 가드 부재 시에도 exit 1 로 시끄럽게 실패하던 것을 **올바른 사유**의 구조 실패로
+       승격하는 정밀도 축이다 (신규 검출이 아님 — falsify 실측: 가드 제거 시 (iv)=exit 0 생존 /
+       (iii)=exit 1 오사유). 과대 선언 금지.
 
 정직 한계 (ADR-151 §결정 7 상속 — 모든 출력에 1줄 동반):
   closed set 4 리터럴 밖의 자연어 회피 표현(같은 뜻 다른 문장)은 미검출이다. 본 lint 은
@@ -139,6 +147,14 @@ def collect_domain_lines(lines):
             errors.append("구조 실패 — 정의역 end 마커가 start 마커보다 앞선다 (region 역순).")
         if first_idx[QUOTE_END] <= first_idx[QUOTE_START]:
             errors.append("구조 실패 — 인용 절 end 마커가 start 마커보다 앞선다 (quotation 역순).")
+        # 포함관계 축 (CFP-2966 구현리뷰 Iter1 F-1 / CP §8.2.5(a)) — 인용 절은 정의역 **내부**여야
+        # 한다. 밖으로 나가면 감산 대상이 어긋나 정의역 의미가 바뀐다 (마커 개수·순서는 정상인 채).
+        if not (first_idx[REGION_START] < first_idx[QUOTE_START]
+                and first_idx[QUOTE_END] < first_idx[REGION_END]):
+            errors.append(
+                "구조 실패 — 인용 절이 정의역 내부에 포함되지 않는다 (포함관계 파괴: "
+                f"region {first_idx[REGION_START]}~{first_idx[REGION_END]} vs "
+                f"quotation {first_idx[QUOTE_START]}~{first_idx[QUOTE_END]}).")
     if errors:
         return [], [], errors
 
@@ -163,6 +179,19 @@ def collect_domain_lines(lines):
             quote_lines.append((i, line))
         elif in_region:
             domain_lines.append((i, line))
+
+    # ── vacuous-domain 가드 (CFP-2966 구현리뷰 Iter1 F-1 / CP §8.2.5(a) ①) ──────────────
+    # 마커를 **지우지 않고 재배치**해 인용 절이 정의역 전체를 덮으면 domain_lines == 0 이 되고,
+    # 그러면 실 금지 조항이 규범에 실재해도 "출현 0" 으로 PASS 한다 (lint + 계약 테스트 동시
+    # vacuous GREEN — 리뷰·DevPL 이중 재현). 부재·중복·역순 가드와 **동렬**로 구조 실패 처리한다.
+    # 정직 상한: 정의역에 비공백 1행만 남기는 축소는 본 가드를 통과한다 (임계 N 은 임의수라
+    #   도입하지 않는다 — 숫자 게이트 연극 회피). "정의역 붕괴가 봉인된다" 를 주장하지 않는다.
+    if not any(text.strip() for _, text in domain_lines):
+        errors.append(
+            "구조 실패 — 검사 정의역(normative-region − quotation)에 비공백 라인이 0행이다. "
+            "마커 개수·순서가 정상이어도 인용 절 재배치로 정의역이 덮이면 모든 금지 form 이 "
+            "감산돼 vacuous GREEN 이 된다 (ADR-178 §결정 7 negative control 무력화).")
+        return [], quote_lines, errors
     return domain_lines, quote_lines, errors
 
 
@@ -257,29 +286,54 @@ def scan_file(path):
 
 # ── self-test (inline fixture mutation oracle — 실 scan_text 호출, presence-grep oracle 금지) ──
 def _fixture(domain_extra="", token_count=EXPECTED_TOKEN_COUNT,
-             region_start=True, quote_start=True):
-    """합성 fixture 생성. 금지 토큰 리터럴은 fixture 자체가 선언(합성 토큰) — 실 ADR 토큰 하드코딩 0."""
+             region_start=True, quote_start=True, layout="normal"):
+    """합성 fixture 생성. 금지 토큰 리터럴은 fixture 자체가 선언(합성 토큰) — 실 ADR 토큰 하드코딩 0.
+
+    layout (CFP-2966 F-1 — 마커 **삭제 0·개수 1·짝 정상** 인 채 배치만 바꾸는 축):
+      "normal"      = 인용 절이 정의역 내부의 일부 (정상)
+      "quote_wraps" = 인용 절이 정의역 전체를 감쌈 → 정의역 0행 (vacuous-domain)
+      "quote_outside" = 인용 절이 정의역 밖에 위치 → 포함관계 파괴
+    """
     synth = [f"금지형-{n}" for n in ("A", "B", "C", "D", "E")][:token_count]
     array_body = "\n".join(f'>     "{t}",  # 합성' for t in synth)
+    quote_block = [
+        "> 다음 형태는 규범으로 존재하지 않는다 (인용 절 — 정의역 제외):",
+        ">", "> ```", "> FORBIDDEN_TOKENS = [", array_body, "> ]", "> ```",
+    ]
     parts = []
     parts.append("# fixture 서두 (정의역 밖 — 여기 토큰이 있어도 위반 아님)")
     parts.append(f"{synth[0]} (정의역 밖 출현 — 무시되어야 한다)")
+
+    if layout == "quote_outside":
+        # 인용 절을 정의역 **앞**에 통째로 배치 (마커 4개 각 1회·짝 정상 유지)
+        parts.append(QUOTE_START)
+        parts.extend(quote_block)
+        parts.append(QUOTE_END)
+        parts.append(REGION_START)
+        parts.append("### 규범 본체 — 정의역 안 정상 문면")
+        if domain_extra:
+            parts.append(domain_extra)
+        parts.append(REGION_END)
+        parts.append("# fixture 말미")
+        return "\n".join(parts) + "\n", synth
+
     if region_start:
         parts.append(REGION_START)
+    if layout == "quote_wraps":
+        # 정의역 시작 직후 인용 절 시작 / 정의역 끝 직전 인용 절 끝 → 감산 후 0행
+        parts.append(QUOTE_START)
     parts.append("### 규범 본체 — 정의역 안 정상 문면")
     if domain_extra:
         parts.append(domain_extra)
-    if quote_start:
-        parts.append(QUOTE_START)
-    parts.append("> 다음 형태는 규범으로 존재하지 않는다 (인용 절 — 정의역 제외):")
-    parts.append(">")
-    parts.append("> ```")
-    parts.append("> FORBIDDEN_TOKENS = [")
-    parts.append(array_body)
-    parts.append("> ]")
-    parts.append("> ```")
-    parts.append(QUOTE_END)
-    parts.append("### 정의역 잔여 문면")
+    if layout != "quote_wraps":
+        if quote_start:
+            parts.append(QUOTE_START)
+        parts.extend(quote_block)
+        parts.append(QUOTE_END)
+        parts.append("### 정의역 잔여 문면")
+    else:
+        parts.extend(quote_block)
+        parts.append(QUOTE_END)
     parts.append(REGION_END)
     parts.append("# fixture 말미")
     return "\n".join(parts) + "\n", synth
@@ -312,6 +366,22 @@ def self_test():
     noarray_text = green_text.replace("FORBIDDEN_TOKENS = [", "TOKENS_LIST = [")
     cases.append(("STRUCT: 배열 이름 변형 (파싱 실패) → 구조 실패", noarray_text, 2))
 
+    # ── CFP-2966 구현리뷰 Iter1 F-1 / CP §8.2.5(a) — 마커 삭제 0·개수 1·짝 정상 인 채 **재배치** ──
+    # 두 케이스 모두 실 금지 토큰을 규범 문면에 주입한 상태다. 가드가 없으면 감산 결과가
+    # 공허해져 exit 0(vacuous GREEN)으로 생존한다 — 즉 expect 2 는 가드가 살아있을 때만 성립.
+    wrap_text, wsynth = _fixture(
+        domain_extra="규범 문면에 금지 조항이 실재한다.", layout="quote_wraps")
+    wrap_text = wrap_text.replace("규범 문면에 금지 조항이 실재한다.",
+                                  f"규범 문면에 {wsynth[1]} 조항이 실재한다.")
+    cases.append(("STRUCT: 인용 절이 정의역 전체를 감쌈 → 정의역 0행 vacuous 차단 "
+                  "(가드 제거 시 exit 0 으로 생존 = falsify 앵커)", wrap_text, 2))
+
+    outside_text, osynth = _fixture(
+        domain_extra="규범 문면에 금지 조항이 실재한다.", layout="quote_outside")
+    outside_text = outside_text.replace("규범 문면에 금지 조항이 실재한다.",
+                                        f"규범 문면에 {osynth[1]} 조항이 실재한다.")
+    cases.append(("STRUCT: 인용 절이 정의역 밖에 위치 → 포함관계 파괴 차단", outside_text, 2))
+
     failed = []
     for name, text, expect in cases:
         violations, errors, _tokens = scan_text(text, "<fixture>")
@@ -325,7 +395,8 @@ def self_test():
         print(f"[self-test] FAIL — {len(failed)} case mismatch")
         return 1
     print(f"[self-test] PASS — {len(cases)}/{len(cases)} case "
-          "(정의역 주입 RED / 인용 절 GREEN / 마커 제거·배열 변형·원소 수 불일치 STRUCT discriminating).")
+          "(정의역 주입 RED / 인용 절 GREEN / 마커 제거·배열 변형·원소 수 불일치 STRUCT / "
+          "마커 재배치 2축 [정의역 0행·포함관계 파괴] STRUCT discriminating).")
     print(HONEST_LIMIT_LINE)
     return 0
 
