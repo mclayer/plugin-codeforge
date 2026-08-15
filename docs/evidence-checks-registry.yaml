@@ -4435,15 +4435,23 @@ entries:
       ④ 종료-시점 저장)이 규범으로 재유입됐는지 검사. 인용 절 제외 = self-RED 함정(금지 form 을 박제한
       인용 자체를 위반으로 오판) 회피의 keystone. 토큰 리터럴은 ADR 인용 절의 `FORBIDDEN_TOKENS`
       배열을 런타임 파싱해 사용 — lint 은 토큰을 하드코딩하지 않는다(배열 = SSOT, drift 차단).
-      구조 실패(마커 부재·중복·역순 / 배열 파싱 실패 / 원소 수 != 4) = exit 2 로 착지하며 exit 0 으로
-      흡수하지 않는다(마커를 지우면 조용히 무력화되는 경로 차단, fail-closed). honest ceiling: closed
-      set 밖 자연어 회피 표현(같은 뜻 다른 문장)은 미검출 — 금지 form 의 기계적 봉인을 주장하지 않는다
+      구조 실패 = exit 2 로 착지하며 exit 0 으로 흡수하지 않는다 (fail-closed). 축 4종 — (i) 마커
+      부재·중복·역순 (ii) 배열 파싱 실패·원소 수 != 4 (iii) 포함관계 파괴(인용 절이 정의역 내부가
+      아님) (iv) **정의역 0행(vacuous-domain)**. 즉 마커를 **지우는 경로뿐 아니라 옮기는 경로**도
+      차단한다 — (iii)(iv) 는 CFP-2966 구현리뷰 Iter1 F-1 로 추가된 축이다(마커 4개가 각 1회·짝
+      정상인 채 재배치되면 감산 결과가 공허해져 실 금지 조항이 있어도 PASS 하던 vacuous GREEN 경로).
+      검출력 정직 구분: (iv) 는 조용한 실패를 막는 축, (iii) 은 이미 시끄럽게 실패하던 것을 올바른
+      사유로 승격하는 정밀도 축(신규 검출 아님). honest ceiling: closed set 밖 자연어 회피 표현(같은
+      뜻 다른 문장)은 미검출 + 정의역에 비공백 1행만 남기는 축소는 (iv) 를 통과(임계 N 미도입 —
+      숫자 게이트 연극 회피) — 금지 form 의 기계적 봉인도 정의역 붕괴의 봉인도 주장하지 않는다
       (presence ≠ truth, ADR-151 §결정 7 상속). 자원 bound: per-file 라인 cap x per-physical-line
-      truncate + 리터럴 substring 매칭(O(n)), regex 3종 anchored + bounded quantifier (nested
-      quantifier 0). execution-backed self-test 8 case — 정의역 주입 RED / 인용 절 GREEN / closed set
-      밖 회피 표현 GREEN(선언된 상한 실증) / 마커 제거·배열 이름 변형·원소 수 3·5 STRUCT — 실
-      scan_text 호출 후 판정 대조(presence-grep oracle 아님). Python SSOT + thin wrapper (ADR-061
-      §결정 1). warning tier (ADR-060 §결정 5 default — required 미등록).
+      truncate + 리터럴 substring 매칭(O(n)), regex 3종 전부 bounded quantifier(`{0,N}` — nested/
+      인접-무제한 quantifier 0), 그중 **anchored 는 1종**(blockquote prefix `^…`)이고 나머지 2종은
+      비anchored 리터럴 탐색이다. execution-backed self-test **10 case** — 정의역 주입 RED / 인용 절
+      GREEN / closed set 밖 회피 표현 GREEN(선언된 상한 실증) / 마커 제거·배열 이름 변형·원소 수 3·5
+      STRUCT / **마커 재배치 2축(정의역 0행·포함관계 파괴) STRUCT** — 실 scan_text 호출 후 판정
+      대조(presence-grep oracle 아님). Python SSOT + thin wrapper (ADR-061 §결정 1). warning tier
+      (ADR-060 §결정 5 default — required 미등록).
     detect_command: bash scripts/check-adr178-forbidden-form-presence.sh
     workflow: .github/workflows/orchestrator-autonomy-stop-taxonomy-check.yml  # templates+.github byte-identical (ADR-005)
     current_tier: warning
