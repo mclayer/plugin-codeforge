@@ -131,6 +131,20 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 - (DialogFidelityAgent — Orchestrator ↔ 사용자 dialog 3-anchor read-only verify = CFP-2236 sunset, ADR-071 Amendment 9. 검증 ground = Codex TP#2/TP#3 + ADR-064 Q-3check 보존.)
 - **branch-liveness watchdog** (ADR-164 / CFP-2772 — Phase 2 배선) — 병렬 브랜치가 coarse per-branch heartbeat(seq) emit → jira-progress-mirror Arc B-2 relay(per-branch pinned 코멘트, addComment 1종) → 외부 watchdog(GitHub Actions cron, ubuntu-latest hosted, session/host fault-independent) read-only poll → 3-state(신선/정체/미상, monotonic seq clock-무관, fail-open 금지) → verdict = GitHub durable(CI-native). observer-death(Orchestrator 자기사망) 외부 감지 = dead-man's-switch(meta-observer 자기 last-run marker). **경계 신규**: watchdog read-only Jira credential = infra-resource-baseline.yaml 선언 의무(ADR-157 drift gate). dev-process-event-v1 무접촉(new-sibling, liveness ⊥ granularity).
 
+**축 C 산출물 보존·회수 흐름** (ADR-178 / CFP-2966 — Phase 1 규범, Phase 2 배선) — 세션 한도 등 비의지적 종료(축 C)에서 서브에이전트 진행 산출물이 소실되지 않도록 하는 handoff 흐름. 축 A(정지 적법성, CFP-2944)·축 B(생존 재개, CFP-2946)와 disjoint:
+
+```
+워커 작업 중 (상시)
+  → 의미 단위 경계마다 progress-commit (P0 local commit, 단일 Bash 호출 — sub-worktree 보유 시)
+  → D2 분석 텍스트 = cheap tier (Write, 파일-per-워커 — 공유 checkout lane · Bash 세금 0)
+[세션 사망 후 — zero-notice]
+  → 발견: 브랜치 네임스페이스 열거 + 잔재 스캐너 dirty|unpushed-N + ADR-172 세션-독립 관측 (git census — 신규 채널 0)
+  → 판정: [WIP] 미완 표식 → inconclusive 취급 (ADR-170 §결정 20 INV-L2)
+  → 인계: fresh 재스폰 packet 에 (브랜치·SHA·미완 표식) 3-tuple 주입 (ADR-141 Amd6 fresh-spawn only)
+```
+
+> tier = advisory (ceiling) — 종료 시점 lever 부재(StopFailure observe-only) + ADR-115 block 금지 + 권한 선언면 비집행. 마지막 의미 단위 경계 이후분 = 구조적 미완충 (정직 한계).
+
 **artifact propagation**:
 - Story file (`internal-docs/<plugin>/stories/<KEY>.md`) = lane 간 컨텍스트 SSOT (각 lane self-fetch)
 - Change Plan (`docs/change-plans/<slug>.md`) = Story 단위 변경 델타 (1회, Story key 종속)
