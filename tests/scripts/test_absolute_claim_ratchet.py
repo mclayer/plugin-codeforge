@@ -17,6 +17,8 @@ watchdog bound). 그래서 여기서는 통과 경로만이 아니라
 "mutant 통과"로 계상되는 가짜 RED 를 막기 위해서다.
 """
 
+import subprocess
+import sys
 import types
 from pathlib import Path
 
@@ -324,6 +326,56 @@ def test_changed_paths_collects_both_sides():
     assert ACR.changed_paths(diff) == {SRC_FILE, TEST_FILE}
 
 
+# ═══════════════════════════ 경로 축 우회 차단 (iter7 F-CR7-05) ══════════════════
+#
+# ★ 실증된 우회: `tests/**` 를 건드리지 않는 문서 PR 이 **본문**에 `++ tests/anything`
+#   한 줄만 넣으면, 접두 스캔 파서가 그 줄(diff 렌더상 `+++ tests/anything`)을 파일
+#   헤더로 읽어 `tests_touched` 가 뒤집힌다. 그러면 판정 ④(동반 완화)가 성립해 그 PR 의
+#   미결박 절대주장이 씻겨나간다 — 문서 PR 에서 이 게이트의 유일한 teeth 가 무력화된다.
+#   같은 모듈의 `parse_added_lines` 는 그 오인을 docstring 으로 경고하고 행수 소진으로
+#   피했는데, 경로 축만 순진한 스캔이었다(같은 PR 안 정확도 비대칭).
+DOC_FILE = "archive/adr/ADR-999-synthetic.md"
+BYPASS_CONTENT_LINE = "++ tests/anything"
+
+
+def bypass_diff():
+    """`tests/**` 미접촉 문서 diff + 본문 한 줄이 파일 헤더처럼 렌더되는 형상."""
+    return make_file_diff(DOC_FILE, added=[claim_line(T_A), BYPASS_CONTENT_LINE])
+
+
+def test_hunk_body_line_is_not_counted_as_changed_path():
+    """본문 줄이 경로 집합을 오염시키지 않는다."""
+    paths = ACR.changed_paths(bypass_diff())
+    assert paths == {DOC_FILE}, paths
+    assert "tests/anything" not in paths
+
+
+def test_bypass_shape_does_not_discharge_unbound_claim():
+    """우회 형상에서도 절대주장이 동반 완화로 씻기지 않는다 (판정 ④ 정의역 사수)."""
+    result = ACR.evaluate(bypass_diff(), symbol_index=KNOWN)
+    assert result["tests_touched"] is False
+    assert len(result["violations"]) == 1, ACR.format_report(result)
+    assert result["violations"][0].disposition == "unbound"
+
+
+def test_changed_paths_agrees_with_cochange_walk():
+    """형제 모듈(`_correction_pointer_cochange.walk_diff`)과 경로 축이 일치하는지 대조.
+
+    그 모듈은 처음부터 한 번의 walk 로 추가 줄과 경로를 함께 냈다. 두 축이 갈리면 두
+    게이트가 서로 다른 diff 를 보게 되므로, 재수렴 후에도 갈라지지 않게 대조로 묶는다.
+    (import 를 함수 안에 두어 형제 모듈 부재가 이 스위트 수집을 통째로 깨지 않게 한다.)"""
+    import _correction_pointer_cochange as CPC
+
+    cases = (
+        bypass_diff(),
+        make_file_diff(SRC_FILE, added=["x = 1"]) + make_file_diff(TEST_FILE, added=["y = 2"]),
+        make_file_diff(SRC_FILE, removed=["-- 옛 구분선"], added=["++ 새 구분선"]),
+        make_file_diff(SRC_FILE, context=["a = 1"], removed=["b = 2"], added=["c = 3"]),
+    )
+    for diff in cases:
+        assert ACR.changed_paths(diff) == CPC.walk_diff(diff)[2], diff
+
+
 # ═══════════════════════════ mutant 하네스 ═══════════════════════════════════════
 def load_mutant(replacements):
     """원본 소스를 텍스트 변형해 메모리 안에서만 적재한다.
@@ -392,6 +444,176 @@ def test_mutant_e_accompaniment_washes_unresolved_bound_is_red():
             + make_file_diff(TEST_FILE, added=["def test_x():", "    assert True"]))
     assert len(ACR.evaluate(diff, symbol_index=KNOWN)["violations"]) == 1
     assert mutant.evaluate(diff, symbol_index=KNOWN)["violations"] == []
+
+
+# 구판 `changed_paths` 본문 — 접두만 보고 갈라내는 순진한 스캔(우회가 성립하던 판본).
+NAIVE_CHANGED_PATHS_BODY = """    paths = set()
+    prev_minus = None
+    for raw in diff_text.splitlines():
+        if raw.startswith("--- "):
+            prev_minus = _strip_ab_prefix(raw[4:])
+            continue
+        if raw.startswith("+++ "):
+            p = _strip_ab_prefix(raw[4:])
+            if p:
+                paths.add(p)
+            elif prev_minus:
+                paths.add(prev_minus)
+            prev_minus = None
+            continue
+        prev_minus = None
+    return paths"""
+
+
+def test_mutant_f_naive_path_scan_reopens_bypass_is_red():
+    """(f) 경로 축을 순진한 접두 스캔으로 되돌리면 실증된 우회가 다시 성립한다."""
+    mutant = load_mutant([("    return _walk_diff(diff_text)[1]", NAIVE_CHANGED_PATHS_BODY)])
+    diff = bypass_diff()
+    assert len(ACR.evaluate(diff, symbol_index=KNOWN)["violations"]) == 1   # 원본: 잡는다
+    assert "tests/anything" in mutant.changed_paths(diff)                   # mutant: 본문을 헤더로
+    m = mutant.evaluate(diff, symbol_index=KNOWN)
+    assert m["tests_touched"] is True
+    assert m["violations"] == []                                           # 우회 성립 → RED
+
+
+# ═══════════════════════ 종료코드 결박 (CI 가 소비하는 유일 신호) ════════════════
+#
+# ★ 계기 (iter7 F-CR7-02): `main()` 의 마지막 줄을 `return EXIT_OK` 로 고정한 mutant 가
+#   이 스위트에서 **살아남았다**(34 passed). 그 판본은 리포트에 `FAIL … 요약: 위반 1` 을
+#   출력하면서 프로세스 종료코드 0 을 낸다 — 로그는 FAIL 인데 CI step 은 green 이다.
+#   판정 결과(`evaluate`)만 재고 rc 를 재지 않으면 게이트의 **출력 계약**이 미검증으로
+#   남는다. 아래 오라클의 정의역은 `main()` 반환값과 **프로세스 rc** 다.
+def _stub_sources(module, monkeypatch, diff, symbols=KNOWN):
+    """git 실측 두 축을 합성값으로 고정 — rc 축만 남긴다(hermetic)."""
+    monkeypatch.setattr(module, "diff_text_from_git", lambda root, base: diff)
+    monkeypatch.setattr(module, "collect_bound_symbols",
+                        lambda root=None, tests_root=None: set(symbols))
+
+
+RC_CASES = (
+    ("unbound", [claim_line(T_A)], "violation"),
+    ("empty-ceiling", [claim_line(T_A, "  # [ceiling:]")], "violation"),
+    ("unresolved-bound", [claim_line(T_A, "  # [bound: %s]" % GHOST)], "violation"),
+    ("ceiling", [claim_line(T_A, "  # [ceiling: 실측 수단 부재 — 리뷰 판정]")], "ok"),
+    ("bound", [claim_line(T_A, "  # [bound: test_real_symbol]")], "ok"),
+    ("no-claim", ["def resolve(path):", "    return os.path.abspath(path)"], "ok"),
+)
+
+
+@pytest.mark.parametrize("label,added,expect", RC_CASES)
+def test_main_exit_code_follows_verdict(label, added, expect, monkeypatch, capsys):
+    """판정 → rc 매핑을 직접 단언한다. 리포트의 FAIL 표기와 rc 가 어긋나면 실패."""
+    _stub_sources(ACR, monkeypatch, make_file_diff(SRC_FILE, added=added))
+    rc = ACR.main(["--repo-root", str(REPO_ROOT), "--strict"])
+    out = capsys.readouterr().out
+    if expect == "violation":
+        assert rc == ACR.EXIT_VIOLATION, "%s: 위반인데 rc=%r" % (label, rc)
+        assert rc != ACR.EXIT_OK
+        assert "FAIL" in out, label
+    else:
+        assert rc == ACR.EXIT_OK, "%s: 통과인데 rc=%r (%s)" % (label, rc, out)
+        assert "FAIL" not in out, label
+
+
+def test_main_exit_code_is_base_unresolved_when_base_missing(monkeypatch, capsys):
+    """base 미해소는 통과(0)가 아니라 미판정 코드다 — 조용한 green 차단."""
+    monkeypatch.setattr(ACR, "diff_text_from_git", lambda root, base: None)
+    rc = ACR.main(["--repo-root", str(REPO_ROOT)])
+    assert rc == ACR.EXIT_BASE_UNRESOLVED
+    assert "미판정" in capsys.readouterr().out
+
+
+def test_main_exit_code_is_base_unresolved_when_symbols_unresolved(monkeypatch, capsys):
+    """`tests/**` 루트 미해소도 마찬가지 — `[bound:]` 판정불가를 0 으로 흘리지 않는다."""
+    _stub_sources(ACR, monkeypatch, make_file_diff(SRC_FILE, added=[claim_line(T_A)]))
+    monkeypatch.setattr(ACR, "collect_bound_symbols", lambda root=None, tests_root=None: None)
+    rc = ACR.main(["--repo-root", str(REPO_ROOT)])
+    assert rc == ACR.EXIT_BASE_UNRESOLVED
+    assert "미판정" in capsys.readouterr().out
+
+
+def test_mutant_g_exit_code_decoupled_from_verdict_is_red(monkeypatch, capsys):
+    """(g) rc 를 판정에서 떼어내면(`return EXIT_OK` 고정) 위 rc 오라클이 RED.
+
+    이 mutant 는 iter7 시점 스위트 34 건을 그대로 통과했다 — rc 를 정의역으로 삼는
+    오라클이 없었기 때문이다. 두 판본의 **리포트 문면은 같고 rc 만 갈린다**는 것을
+    같은 테스트 안에서 보여, 로그를 근거로 삼는 판독이 왜 부족한지 남긴다."""
+    mutant = load_mutant([('    return EXIT_VIOLATION if result["violations"] else EXIT_OK',
+                           "    return EXIT_OK")])
+    diff = make_file_diff(SRC_FILE, added=[claim_line(T_A)])
+    _stub_sources(ACR, monkeypatch, diff)
+    _stub_sources(mutant, monkeypatch, diff)
+
+    assert ACR.main(["--repo-root", str(REPO_ROOT)]) == ACR.EXIT_VIOLATION
+    assert mutant.main(["--repo-root", str(REPO_ROOT)]) == mutant.EXIT_OK
+    assert capsys.readouterr().out.count("FAIL") >= 2, \
+        "두 판본 모두 FAIL 을 출력해야 이 대조가 rc 축을 격리한 것이 된다"
+
+
+# ═══════════════════════ 프로세스 rc — CI step 이 실제로 읽는 값 ═════════════════
+#
+# `main()` 반환값 오라클만으로는 `sys.exit(main())` 배선이 끊긴 판본을 잡지 못한다.
+# CI step 은 프로세스 종료코드만 읽으므로, 로컬 임시 git repo(원격 미접촉)에서 CLI 를
+# 그대로 실행해 그 값을 잰다.
+GIT_ID = ("-c", "user.email=qa@example.invalid", "-c", "user.name=qa-fixture",
+          "-c", "commit.gpgsign=false")
+
+
+def _git_in(repo, *args):
+    cp = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True,
+                        encoding="utf-8", errors="replace")
+    assert cp.returncode == 0, "git %s 실패: %s" % (" ".join(args), cp.stderr)
+    return cp.stdout
+
+
+def _seed_two_commit_repo(tmp_path, head_lines):
+    """base 커밋(테스트 자산 포함) + head 커밋(문서 한 파일)짜리 로컬 repo.
+
+    원격을 두지 않는다 — 네트워크 미접촉. head 커밋이 `tests/**` 를 건드리지 않으므로
+    동반 완화(판정 ④)가 성립하지 않고, 판정은 줄 내용만으로 갈린다."""
+    repo = tmp_path / "repo"
+    (repo / "tests").mkdir(parents=True)
+    (repo / "tests" / "test_seed.py").write_text(
+        "def test_real_symbol():\n    pass\n", encoding="utf-8", newline="\n")
+    hooks = tmp_path / "nohooks"          # 사용자 전역 hook 이 fixture 커밋에 끼어들지 않게
+    hooks.mkdir()
+    _git_in(repo, "init", "-q")
+    _git_in(repo, "checkout", "-q", "-b", "base")
+    _git_in(repo, "add", "-A")
+    _git_in(repo, *GIT_ID, "-c", "core.hooksPath=%s" % hooks, "commit", "-q", "-m", "base")
+    _git_in(repo, "checkout", "-q", "-b", "work")
+    (repo / "doc.md").write_text("\n".join(head_lines) + "\n", encoding="utf-8", newline="\n")
+    _git_in(repo, "add", "-A")
+    _git_in(repo, *GIT_ID, "-c", "core.hooksPath=%s" % hooks, "commit", "-q", "-m", "head")
+    return repo
+
+
+def _run_cli(repo):
+    return subprocess.run(
+        [sys.executable, str(SRC_PATH), "--repo-root", str(repo), "--base-ref", "base"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+
+def test_cli_process_exit_code_is_nonzero_on_violation(tmp_path):
+    """★ rc 단독 판정 금지 — 도메인 고유 요약 문면을 **함께** 단언한다.
+
+    rc 1 은 파이썬 인터프리터 오류(스크립트 경로 오타 등)로도 나온다. 그 경우 stdout 은
+    비어 있으므로, 요약 줄을 짝으로 걸어야 이 테스트가 실제로 게이트를 돌렸음이 선다."""
+    repo = _seed_two_commit_repo(tmp_path, ["# 문서", claim_line(T_A)])
+    cp = _run_cli(repo)
+    assert "요약: 위반 1 " in cp.stdout, cp.stdout + cp.stderr
+    assert "FAIL" in cp.stdout, cp.stdout
+    assert cp.returncode == ACR.EXIT_VIOLATION, \
+        "리포트는 FAIL 인데 프로세스 rc=%d — CI step 이 green 으로 읽는다:\n%s" % (
+            cp.returncode, cp.stdout)
+
+
+def test_cli_process_exit_code_is_zero_when_clean(tmp_path):
+    repo = _seed_two_commit_repo(tmp_path, ["# 문서", "평범한 서술 한 줄."])
+    cp = _run_cli(repo)
+    assert "요약: 위반 0 " in cp.stdout, cp.stdout + cp.stderr
+    assert cp.returncode == ACR.EXIT_OK, cp.stdout + cp.stderr
+    assert "FAIL" not in cp.stdout
 
 
 # ═══════════════════════════ live: 브랜치 diff 실측 ══════════════════════════════

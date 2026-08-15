@@ -112,18 +112,27 @@ def _strip_ab_prefix(spec):
     return spec or None
 
 
-def parse_added_lines(diff_text):
-    """unified diff → 추가 줄 목록 `[AddedLine(path, lineno, text)]`.
+def _walk_diff(diff_text):
+    """unified diff → `(added, touched)` **한 번의 walk**.
 
     ★ hunk 헤더의 **행수 카운트를 소진**하며 읽는다. `+`/`-` 접두만 보고 갈라내면
       hunk **본문**에 있는 `--- x` / `+++ y` 내용 줄을 파일 헤더로 오인한다
       (내용이 `--`/`++` 로 시작하는 추가 줄은 diff 상에서 `---`/`+++` 로 렌더된다).
       카운트 소진 방식은 헤더와 본문을 상태로 분리하므로 그 혼동이 생기지 않는다.
 
-    삭제 줄(`-`)과 문맥 줄(` `)은 결과에 담지 않는다 — 문맥 줄은 새 파일의 행번호를
-    전진시키는 역할만 한다."""
+    ★ 추가 줄과 경로 집합을 **같은 walk 에서** 낸다 (구현리뷰 iter7 F-CR7-05).
+      전에는 경로 집합만 접두 스캔으로 따로 걷었고, 그래서 위 주의가 경고한 바로 그
+      오인을 경로 축에서 저질렀다 — 같은 모듈 안에서 정확도가 갈렸다. 형제 모듈
+      `_correction_pointer_cochange.py::walk_diff` 는 처음부터 이 형태였고, 두 walk 의
+      결과 일치는 `test_changed_paths_agrees_with_cochange_walk` 가 대조한다.
+
+    삭제 줄(`-`)과 문맥 줄(` `)은 `added` 에 담지 않는다 — 문맥 줄은 새 파일의 행번호를
+    전진시키는 역할만 한다. 삭제된 파일은 `+++ /dev/null` 이라 `--- a/<path>` 쪽에서
+    건진다."""
     out = []
+    touched = set()
     path = None
+    prev_minus = None
     new_lineno = 0
     old_rem = new_rem = 0
     in_hunk = False
@@ -157,33 +166,35 @@ def parse_added_lines(diff_text):
             continue
         if _DIFF_GIT_RE.match(raw):
             path = None
+            prev_minus = None
             continue
-        if raw.startswith("+++ "):
-            path = _strip_ab_prefix(raw[4:])
-            continue
-    return out
-
-
-def changed_paths(diff_text):
-    """diff 가 건드린 경로 집합 (`+++`/`---` 헤더 기준, `/dev/null` 제외).
-
-    삭제된 파일은 `+++ /dev/null` 이라 `--- a/<path>` 쪽에서 건진다."""
-    paths = set()
-    prev_minus = None
-    for raw in diff_text.splitlines():
         if raw.startswith("--- "):
             prev_minus = _strip_ab_prefix(raw[4:])
             continue
         if raw.startswith("+++ "):
-            p = _strip_ab_prefix(raw[4:])
-            if p:
-                paths.add(p)
+            path = _strip_ab_prefix(raw[4:])
+            if path:
+                touched.add(path)
             elif prev_minus:
-                paths.add(prev_minus)
+                touched.add(prev_minus)
             prev_minus = None
             continue
-        prev_minus = None
-    return paths
+    return out, touched
+
+
+def parse_added_lines(diff_text):
+    """unified diff → 추가 줄 목록 `[AddedLine(path, lineno, text)]`. walk = `_walk_diff`."""
+    return _walk_diff(diff_text)[0]
+
+
+def changed_paths(diff_text):
+    """diff 가 건드린 경로 집합 (`/dev/null` 제외). walk = `_walk_diff`.
+
+    ★ 이 집합이 `tests/**` 동반 완화(판정 ④)의 입력이라, 여기서 경로를 하나 헛집으면
+      그 diff 의 절대주장이 통째로 씻겨나간다. 실증된 우회(iter7 F-CR7-05): `tests/**`
+      를 건드리지 않는 문서 PR 이 본문에 `++ tests/anything` 한 줄만 넣으면 접두 스캔이
+      그것을 파일 헤더로 읽어 동반 완화가 성립했다."""
+    return _walk_diff(diff_text)[1]
 
 
 def ceiling_reason(text):
