@@ -608,5 +608,164 @@ class TestWarnFieldSeparation:
         assert sut._MASK_UNNORMALIZED in err, f"대조군 전제 붕괴: 접힘이 없다: {err!r}"
 
 
+class TestTopLevelExceptionAbsorbedIntoZeroExit:
+    """`main()` 의 **최상위 예외 흡수**를 정의역으로 삼는 오라클 (iter7 F-CR7-03).
+
+    ★ 왜 필요했나 — 모듈 헤더가 선언한 INV-F(*"exit code 를 오라클로 쓰지 않는 관례
+      상속 — 항상 0"*)는 정상 경로에서만 재고 있었다. 최상위 예외 경로는 미결박이라
+      `except Exception` → `except ZeroDivisionError` 변이가 8파일 스위트 **133 passed
+      로 생존**했다(firsthand 재현). 그 판본에서는 임의 예외가 그대로 프로세스 밖으로
+      나가 advisory 계약(호출자를 막지 않는다)이 깨진다.
+
+    ★ 정의역 한정: 재는 것은 `Exception` 계열의 흡수다. `KeyboardInterrupt`·`SystemExit`
+      같은 `BaseException` 은 SUT 가 흡수 대상으로 선언하지 않았고(SystemExit 은 별도
+      분기로 명시 처리), 이 오라클도 그 축을 넓히지 않는다.
+
+    mutant kill: `except Exception as e:` → `except ZeroDivisionError as e:`
+      ⇒ leg A(임의 예외) RED — 예외가 테스트 밖으로 전파된다.
+    """
+
+    def test_arbitrary_exception_yields_zero_exit_and_done_marker(self, monkeypatch, capsys):
+        """leg A: `run()` 이 임의 예외로 죽어도 rc 0 · DONE 마커가 남는다."""
+        def boom(argv=None):
+            raise RuntimeError("합성 최상위 실패")
+
+        monkeypatch.setattr(sut, "run", boom)
+        rc = sut.main([])
+        cap = capsys.readouterr()
+
+        assert rc == 0, f"최상위 예외가 rc={rc!r} 로 새어 나갔다 (advisory 계약 위반)"
+        assert "DONE:" in cap.out, f"예외 경로에서 DONE 마커가 사라졌다: {cap.out!r}"
+        assert "최상위 예외" in cap.err, f"예외 흡수 경고가 없다 — 다른 경로로 빠졌다: {cap.err!r}"
+
+    def test_systemexit_from_argparse_yields_zero_exit(self, monkeypatch):
+        """leg B: argparse 의 usage 종료(SystemExit)도 0 으로 흡수된다."""
+        def bail(argv=None):
+            raise SystemExit(2)
+
+        monkeypatch.setattr(sut, "run", bail)
+        assert sut.main([]) == 0
+
+    def test_control_clean_run_returns_zero_without_exception_marker(self, monkeypatch, capsys):
+        """대조군: 예외가 없으면 흡수 경고도 없다 — leg A 의 경고 단언이 공허하지 않다."""
+        monkeypatch.setattr(sut, "run", lambda argv=None: 0)
+        assert sut.main([]) == 0
+        assert "최상위 예외" not in capsys.readouterr().err
+
+
+class TestHeartbeatTempFileReclaimedOnFailurePath:
+    """`write_heartbeat` **실패 경로의 임시파일 회수**를 정의역으로 삼는 오라클 (iter7 F-CR7-04).
+
+    ★ 왜 필요했나 — 성공 경로의 잔재 부재는 `TestHeartbeatTempFileIsWriterUnique` 가
+      이미 재지만, `os.replace` 가 실패한 뒤의 회수(`os.unlink(tmp)`)는 미결박이라 그
+      호출을 지운 변이가 8파일 스위트 **133 passed 로 생존**했다(firsthand 재현).
+      잔재 관측이 주제인 Story 에서 관측자 자신이 잔재를 쌓는 형상이고, iter6 F-CR6-08
+      실측대로 이 OSError 분기는 드문 경로가 아니다(8워커 실행에서 다수 발화).
+
+    ★ 공허 차단: "임시파일이 없다" 는 애초에 만들어지지 않아도 성립한다. 그래서
+      `mkstemp` 를 감싸 **생성된 경로를 포획**하고, 그 경로가 사라졌음을 직접 잰다.
+
+    mutant kill: `os.unlink(tmp)` 제거 ⇒ leg A RED (포획한 경로가 살아남는다).
+    """
+
+    def _spy_mkstemp(self, recorded):
+        real = sut.tempfile.mkstemp
+
+        def _spy(*args, **kwargs):
+            fd, path = real(*args, **kwargs)
+            recorded.append(path)
+            return fd, path
+        return _spy
+
+    def test_failure_path_leaves_no_temp_residue(self, tmp_path, capsys):
+        """leg A: `os.replace` 실패 후 임시파일이 회수된다."""
+        state = tmp_path / "state"
+        target = state / "heartbeat.epoch"
+        created = []
+
+        with mock.patch.object(sut.tempfile, "mkstemp", side_effect=self._spy_mkstemp(created)), \
+                mock.patch.object(sut.os, "replace",
+                                  side_effect=OSError(13, "합성 rename 실패")):
+            sut.write_heartbeat(now=1700000010, path=str(target))
+
+        err = capsys.readouterr().err
+        assert len(created) == 1, f"실패 경로가 임시파일을 만들지 않았다 — 이 오라클이 공허해진다: {created}"
+        assert "heartbeat 기록 실패" in err, f"실패 분기에 도달하지 않았다: {err!r}"
+        assert not os.path.exists(created[0]), f"임시파일 잔재: {created[0]!r}"
+        leftovers = sorted(p.name for p in state.iterdir()) if state.is_dir() else []
+        assert leftovers == [], f"상태 디렉터리에 잔재가 남았다: {leftovers}"
+        assert not target.exists(), "실패했는데 target 이 갱신됐다"
+
+    def test_control_success_path_consumes_temp_file(self, tmp_path):
+        """대조군: 성공 경로에서도 포획한 임시 경로가 남지 않는다(rename 으로 소비)."""
+        state = tmp_path / "state"
+        target = state / "heartbeat.epoch"
+        created = []
+
+        with mock.patch.object(sut.tempfile, "mkstemp", side_effect=self._spy_mkstemp(created)):
+            sut.write_heartbeat(now=1700000011, path=str(target))
+
+        assert len(created) == 1
+        assert not os.path.exists(created[0])
+        assert target.read_text(encoding="utf-8").strip() == "1700000011"
+
+
+class TestResidualDriveGuardIsFailClosed:
+    """`_normalize_paths` **최종 잔여 가드(드라이브 축)**를 정의역으로 삼는 오라클 (F-CLA-03).
+
+    ★ 왜 필요했나 — `_RESIDUAL_DRIVE_RE` 를 무매치로 바꾼 변이가 8파일 스위트
+      **133 passed 로 생존**했다(firsthand 재현). 기존 §8.8.1 fuzz 오라클
+      (`test_scheduled_task_dynamic_roster.py::_UNNORM_DRIVE_RE`)은 SUT **3단**
+      (`_DRIVE_RE`)과 같은 negative lookbehind 를 쓰므로, 잔여 가드가 홀로 잡는 구간
+      (드라이브 문자 앞이 영숫자라 3단이 지나치는 형상)이 그 오라클의 정의역 밖이다.
+      ⇒ 그 축을 fuzz 오라클로 넓히면 `key=test:/...` 같은 조립 seam 이 거짓 위반이 되므로
+        (그 lookbehind 가 존재하는 이유다) 넓히지 않고, 여기 **단위 층**에 결박한다.
+
+    ★ 판별 전제를 표본마다 먼저 단언한다 — 3단·userroot·현 사용자명 어느 갈래도 매치하지
+      않아야 「마스킹됨」이 **드라이브 잔여 가드의 공로**로 귀속된다.
+
+    mutant kill: `_RESIDUAL_DRIVE_RE` → 무매치 패턴 ⇒ leg A 4 표본 전부 RED.
+    """
+
+    # 드라이브 문자 앞이 영숫자라 3단(`_DRIVE_RE`)이 지나치는 형상 — 잔여 가드만 잡는다.
+    LEAK_SAMPLES = (
+        r"보존사유=tempD:\zzq1\zzq2",
+        r"선언=aE:/zzq3/zzq4",
+        r"실측=7F:\zzq5",
+        r"key=abcG:/zzq6",
+    )
+    # 3단이 정상 처리하는 형상 — 마스킹이 아니라 `<drive>` 치환이어야 한다(과잉 차단 대조군).
+    STAGE3_SAMPLES = (
+        (r"보존사유=D:\zzq1\zzq2", r"보존사유=<drive>\zzq1\zzq2"),
+        ("선언=E:/zzq3", "선언=<drive>/zzq3"),
+    )
+
+    def test_stage3_missed_drive_is_masked_field_wide(self):
+        """leg A: 3단이 놓친 드라이브 잔존은 필드 통째 마스킹으로 간다(fail-closed)."""
+        user_re = sut._current_user_residual_re()
+        for sample in self.LEAK_SAMPLES:
+            assert not sut._DRIVE_RE.search(sample), f"3단이 잡는 표본이면 판별 전제가 붕괴한다: {sample!r}"
+            assert not sut._RESIDUAL_USERROOT_RE.search(sample), sample
+            assert user_re is None or not user_re.search(sample), (
+                f"현 사용자명 갈래가 잡으면 드라이브 축 귀속이 안 된다: {sample!r}"
+            )
+            assert sut._RESIDUAL_DRIVE_RE.search(sample), sample
+            assert sut._normalize_paths(sample) == sut._MASK_UNNORMALIZED, (
+                f"잔여 드라이브가 그대로 새어 나갔다: {sut._normalize_paths(sample)!r}"
+            )
+
+    def test_control_stage3_handled_drive_is_not_over_masked(self):
+        """대조군: 3단이 처리한 경로까지 뭉개지 않는다 — leg A 가 「전량 마스킹」이 아님을 귀속."""
+        for sample, expected in self.STAGE3_SAMPLES:
+            got = sut._normalize_paths(sample)
+            assert got == expected, f"{sample!r} → {got!r}"
+            assert got != sut._MASK_UNNORMALIZED
+
+    def test_safe_text_pipeline_carries_the_guard(self):
+        """산출 파이프라인(`_safe_text`)까지 같은 결론인지 — 렌더 본문이 실제로 쓰는 경로."""
+        for sample in self.LEAK_SAMPLES:
+            assert sut._MASK_UNNORMALIZED in sut._safe_text(sample), sample
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-m", "not requires_golden"])
