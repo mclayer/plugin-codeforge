@@ -177,7 +177,8 @@ TIMEOUT_RATIONALE_TABLE = [
     (
         "subagent-start-progress-commit-priming",
         10,
-        "§3.2 SubagentStart progress: git commit priming (worktree state snapshot + git commit initial_state marker for cross-session progress validation, ≤10s)",
+        "§3.2 SubagentStart priming: pointer-only additionalContext emit (정적 3줄 규범 pointer — "
+        "filesystem/network touch 0, git 조작 0, JSON parse 후 stdout 1건), fail-open exit 0 (≤10s)",
     ),
     # SubagentStop
     (
