@@ -589,9 +589,9 @@ def _git(worktree, args, stdin_bytes=None):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-    except OSError as exc:
+    except OSError as spawn_exc:  # 변수명 구별 — 기존 self-test 앵커(`as exc:`) 유일성 보존
         # rc=EXIT_PROC_SPAWN_FAILED 는 git 이 낼 수 없는 값 — 호출부가 "판정 불가"로 접는다.
-        return EXIT_PROC_SPAWN_FAILED, b"", ("프로세스 기동 실패: %s" % exc).encode("utf-8")
+        return EXIT_PROC_SPAWN_FAILED, b"", ("프로세스 기동 실패: %s" % spawn_exc).encode("utf-8")
     return proc.returncode, proc.stdout, proc.stderr
 
 
