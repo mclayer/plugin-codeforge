@@ -6,6 +6,13 @@ on:
   push:
     branches: [main]
 
+# 형제 게이트 workflow(absolute-claim-ratchet / correction-pointer-cochange)와 같은
+# 최소 권한. 이 스위트는 체크아웃된 작업트리와 로컬 git 이력만 읽는다 — 실측 범위에서
+# GitHub API 를 호출하는 step 이 없어 `contents: read` 를 넘길 근거가 없다.
+# 아래 job-level 블록은 상위가 넓어져도 이 job 이 읽기로 남게 하는 이중 좁힘이라 남긴다.
+permissions:
+  contents: read
+
 jobs:
   test:
     if: github.repository == 'mclayer/plugin-codeforge'
