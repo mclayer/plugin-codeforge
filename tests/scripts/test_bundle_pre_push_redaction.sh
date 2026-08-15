@@ -339,6 +339,23 @@ else
      "            S-NONREPO(비-repo CWD) SM-1(스캔 제거) SM-2(TOCTOU) SM-3(glob) SM-4(primitive 퇴화)"
 fi
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   본 파일의 **kill 판정**은 ground truth(착지 SHA·원격 secret 유입)라서 크래시로는 충족
+#   불가 — mutant 축은 구조적으로 crash-safe 다.
+#   그러나 **차단 계열 baseline**(S-M4 · S-UNDEC · S-NONREPO)은 `rc≠0 ∧ 착지 0` 을 성공으로
+#   읽는다. SUT 가 예외로 죽어도 정확히 그 모양이 되므로 **크래시가 '차단됨' 으로 위장**한다.
+#   그 상태에서는 스캔이 한 줄도 돌지 않았는데 전 차단 케이스가 GREEN 이 된다.
+#   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
+#   ★ 여기서 FAIL 을 세면 하류 판정이 무엇을 내든 스위트는 반드시 RED 가 된다(fail-loud).
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
 # sut_land <cwd> <wt> <branch> [sha] — SUT 를 CWD≠wt 에서 실행. 결과: 전역 SUT_RC / SUT_OUT
 sut_land() {
   local cwd="$1" wt="$2" branch="$3" sha="${4:-}" root="$5"
@@ -346,6 +363,9 @@ sut_land() {
   [ -z "$sha" ] || args+=(--sha "$sha")
   SUT_RC=0
   SUT_OUT="$(cd "$cwd" && bash "$root/scripts/check-salvage-bundle.sh" "${args[@]}" 2>&1)" || SUT_RC=$?
+  if crash_marker "$SUT_OUT"; then
+    ng "SUT 크래시(오라클 예외) — branch=$branch. rc≠0 을 '차단됨' 으로 읽을 수 없다" "$SUT_OUT"
+  fi
 }
 
 origin_landed() { # <origin> <branch> → 착지한 SHA (없으면 빈 문자열)

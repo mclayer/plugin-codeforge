@@ -219,12 +219,36 @@ ng() {
   FAIL=$((FAIL+1))
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   프로브가 예외로 죽으면 rc=1 이 되는데, want=1 인 케이스(M1·M2·EQ-c·EQ-d·DJ-2)는 그것을
+#   그대로 "검출했다" 로 계상한다 — 아무것도 안 보고 만점. 크래시는 검출이 아니다.
+#   ★ 실사건: AC-11b 오라클의 무효 정규식으로 전 케이스가 크래시했는데 mutant 7종이 전부
+#     "RED"= killed 로 계상될 뻔했다.
+#   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
 # probe_case <name> <expected_rc> <repo-root> <target...>
 probe_case() {
   local name="$1" want="$2" root="$3"; shift 3
   local args=() t out rc=0
   for t in "$@"; do args+=(--target "$t"); done
   out=$(python3 "$PROBE" --repo-root "$root" "${args[@]}" 2>&1) || rc=$?
+  if crash_marker "$out"; then
+    ng "$name — 프로브 크래시(예외). rc≠0 을 검출로 셀 수 없다" "$out"
+    return
+  fi
+  # 무증거 RED 차단 — rc≠0 인데 실행자 집계(EXECUTORS) 근거 라인이 없으면 판정 불가.
+  if [ "$rc" -ne 0 ] && ! printf '%s' "$out" | grep -q '^EXECUTORS'; then
+    ng "$name — RED 인데 판정 근거(EXECUTORS 집계)가 없다 (무증거 RED)" "$out"
+    return
+  fi
   if [ "$rc" -eq "$want" ]; then
     ok "$name (rc=$rc) — $(printf '%s' "$out" | grep '^EXECUTORS' | tr '\n' ';')"
   else
