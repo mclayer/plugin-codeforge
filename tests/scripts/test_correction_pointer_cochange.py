@@ -152,9 +152,8 @@ def test_frozen_fixture_matches_live_git(sha, expect_red):
     """동결본이 실물 git 출력에서 떨어져 나가지 않았는지 대조 (drift 오라클).
 
     SHA 가 없는 환경(squash-merge 이후 main 등)에서는 이 대조만 건너뛴다 — 반사실
-    판정 자체는 위 두 테스트가 동결본으로 **항상** 수행하므로 커버리지가 새지 않는다.
-    [ceiling: 이 줄의 '항상' 은 동결 경로가 skip 조건을 갖지 않는다는 구조 서술이며,
-     그 사실은 위 두 테스트에 skip 마커가 없다는 것으로 확인된다]"""
+    판정 자체는 위 두 테스트가 동결본으로 **항상** 수행한다 [ceiling: 그 두 테스트에 skip 분기가 없다는 구조 서술 — 같은 파일에서 확인되는 mention 이다]
+    (그러므로 SHA 소멸이 커버리지 손실로 이어지지 않는다)."""
     if not sha_available(sha):
         pytest.skip("SHA %s 미해소 — drift 대조만 생략(반사실 판정은 동결본이 수행)" % sha)
     live_diff = _git("diff", "--no-color", "--no-ext-diff", "-U0",
@@ -434,8 +433,7 @@ def test_mutants_are_not_vacuous():
     """대조군 — mutant 를 걸지 않은 상태에서는 위 반사실 테스트가 모두 통과한다.
 
     이것이 없으면 `_flips_to_red` 가 mutant 때문에 RED 인지, 원래부터 RED 인지
-    구분되지 않는다(무조건-true 오라클 차단). [ceiling: '무조건' 은 이 대조군이
-    막는 실패 양태의 이름이며 주장이 아니다 — mention]"""
+    구분되지 않는다(무조건-true 오라클 차단). [ceiling: '무조건-true' 는 이 대조군이 막는 실패 양태의 이름이며 주장이 아니다 — mention]"""
     assert not _flips_to_red(test_counterfactual_amendment4_authoring_is_red)
     assert not _flips_to_red(test_counterfactual_pointer_repair_is_green)
     assert not _flips_to_red(test_control_citation_outside_amendment_scope_is_out_of_domain)
@@ -575,7 +573,7 @@ def test_ceiling7_reference_only_citation_over_triggers():
     어휘·의미 판정을 요구하므로 하지 않는다 — 대신 위반 목록을 **후보 목록**으로
     읽어야 한다는 사실을 여기 각인한다."""
     post, diff = synth(amendment_body=[
-        "이 정정은 §결정 1 의 「신규 플래그 0건」 정신을 그대로 따른다.",  # 뒤집기가 아님
+        "이 정정은 §결정 1 의 「신규 플래그 0건」 정신을 그대로 따른다.",  # 뒤집기가 아님 [ceiling: 합성 fixture 문자열 리터럴 — 실측 §결정 4 오발화를 재현하려 ADR-172 어투를 모사한 mention]
     ])
     result = run(post, diff)
     assert violated_ids(result) == ["§결정 1"], "천장 ⑦ 이 해소됐다면 문서를 갱신하라"
