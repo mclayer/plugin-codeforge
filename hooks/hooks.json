@@ -199,6 +199,12 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-start-render-discipline",
             "async": false,
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" subagent-start-progress-commit-priming",
+            "async": false,
+            "timeout": 10
           }
         ]
       }
