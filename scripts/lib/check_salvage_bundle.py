@@ -662,18 +662,46 @@ def cmd_land(worktree, remote, branch, sha, do_push):
     #   `--prune` 이 필수다. 평범한 `fetch` 는 phantom 을 제거하지 못한다(실측).
     #   fetch 실패 = baseline 확정 불가 ⇒ **fail-closed**(무검사 통과 금지). `--land` 는
     #   어차피 push 하므로 네트워크를 전제해도 정의역이 좁아지지 않는다.
-    rc, out, err = _git(wt, ["fetch", "--prune", remote])
+    #   ★ R3 정정: `fetch --prune` 에 기대지 않는다. prune 은 `remote.<r>.fetch` refspec 의
+    #   **destination 범위**만 청소하는데(`--single-branch` clone 이면 그게 ref 하나),
+    #   `--not --remotes=<r>` 은 `refs/remotes/<r>/*` **전체**를 센다 — 정적 정의역 불일치라
+    #   prune 이 rc=0 으로 성공해도 손대지 못한 ref 가 baseline 에 계상돼 그 객체가 스캔에서
+    #   빠진다. "명령의 성공"을 "속성의 성립"으로 추론하는 형태를 여기서 끊는다.
+    #   ⇒ baseline 을 **원격 실 ref**(`ls-remote`)에서 직접 구성한다 — 로컬 스냅샷 추론 제거.
+    rc, lsr, err = _git(wt, ["ls-remote", remote])
     if rc != 0:
         print("SCAN_RESULT: integrity-unresolved")
         print("PUSH: skipped")
-        print("::salvage-violation:: baseline 확정 불가 — `git fetch --prune %s` 실패 (rc=%d). "
-              "remote-tracking ref 가 원격 실보유를 반영한다고 단정할 수 없어 fail-closed."
-              % (remote, rc))
+        print("::salvage-violation:: baseline 확정 불가 — `git ls-remote %s` 실패 (rc=%d). "
+              "원격 실보유 ref 를 확인할 수 없어 fail-closed." % (remote, rc))
         return EXIT_VIOLATION
 
-    # 3 — OID 목록 1회 고정 (4·5 가 **동일 집합**을 본다).
-    #     baseline = --not --remotes=<push 대상과 동일 remote> (origin 하드코딩 금지)
-    rc, out, err = _git(wt, ["rev-list", "--objects", sha, "--not", "--remotes=%s" % remote])
+    remote_oids = []
+    _seen = set()
+    for ln in lsr.decode("utf-8", "replace").splitlines():
+        tok = ln.split("\t", 1)[0].strip()
+        if len(tok) == 40 and all(c in "0123456789abcdef" for c in tok) and tok not in _seen:
+            _seen.add(tok)
+            remote_oids.append(tok)
+
+    # 로컬에 없는 원격 OID 는 제외 대상에서 뺀다 — `--not <unknown>` 은 rev-list 를 죽인다.
+    # 덜 제외 = 더 많이 스캔 = **안전 방향**(놓침이 아니라 과검사).
+    present = []
+    if remote_oids:
+        rc, chk, err = _git(wt, ["cat-file", "--batch-check"],
+                            ("\n".join(remote_oids) + "\n").encode("utf-8"))
+        if rc == 0:
+            for ln in chk.decode("utf-8", "replace").splitlines():
+                parts = ln.split()
+                if len(parts) >= 2 and parts[1] != "missing":
+                    present.append(parts[0])
+
+    # 3 — OID 목록 1회 고정 (4·5 가 **동일 집합**을 본다). baseline = 원격 실보유분만 제외.
+    rl_args = ["rev-list", "--objects", sha]
+    if present:
+        rl_args.append("--not")
+        rl_args.extend(present)
+    rc, out, err = _git(wt, rl_args)
     if rc != 0:
         print("SCAN_RESULT: integrity-unresolved")
         print("PUSH: skipped")

@@ -27,6 +27,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 SUT="$REPO/scripts/lib/check_salvage_bundle.py"
 SECRET='AKIAIOSFODNN7EXAMPLE'
+SECRET2='AKIAQQQQZZZZ7WWWWEXA'   # R3 전용 — seed 와 분리해야 leak assert 가 판별력을 갖는다
 
 TMP="$(mktemp -d)"
 # CWD ≠ worktree 강제 (다른 git repo) — `-C` 누락 fail-open 이 숨지 않게
@@ -88,6 +89,35 @@ chk "E4 스캔이 secret 를 검출해야" "finding" "$(printf '%s' "$R4" | cut 
 chk "E4 push 미도달이어야" "skipped" "$(printf '%s' "$R4" | cut -d'|' -f3)"
 E4LEAK="$(git -C "$TMP/e4_origin.git" rev-list --all --objects 2>/dev/null | awk '{print $1}' | git -C "$TMP/e4_origin.git" cat-file --batch 2>/dev/null | grep -ac "$SECRET" || true)"
 chk "E4 origin 원격에 secret 미착지" "0" "$E4LEAK"
+
+echo
+echo "===== R3 — 좁은 refspec(--single-branch) + phantom ref ====="
+# fetch --prune 은 remote.<r>.fetch destination 범위만 prune 한다. 좁은 clone 에선
+# refs/remotes/origin/main 하나뿐인데 baseline(--not --remotes=origin)은 refs/remotes/origin/* 전체를
+# 센다 ⇒ prune 이 손대지 못한 ref 가 baseline 에 계상돼 그 객체가 스캔에서 빠진다.
+git init -q --bare "$TMP/r3_origin.git"
+mkwt "$TMP/r3_seed"
+git -C "$TMP/r3_seed" remote add origin "$TMP/r3_origin.git"
+git -C "$TMP/r3_seed" push -q origin HEAD:refs/heads/main
+R3SEC="$(git -C "$TMP/r3_seed" rev-parse HEAD)"
+git clone -q --single-branch --branch main "$TMP/r3_origin.git" "$TMP/r3_wt"
+git -C "$TMP/r3_wt" config user.email t@t; git -C "$TMP/r3_wt" config user.name t
+note "refspec" "$(git -C "$TMP/r3_wt" config --get-all remote.origin.fetch | tr '
+' ' ')"
+# 새 secret 커밋(원격 미보유) + 그것을 가리키는 phantom ref
+printf '%s
+' "$SECRET2" > "$TMP/r3_wt/leak2.txt"
+git -C "$TMP/r3_wt" add -A; git -C "$TMP/r3_wt" commit -qm r3wip
+git -C "$TMP/r3_wt" update-ref refs/remotes/origin/phantom "$(git -C "$TMP/r3_wt" rev-parse HEAD)"
+git -C "$TMP/r3_wt" fetch --prune -q origin || true
+PH="$(git -C "$TMP/r3_wt" for-each-ref --format='%(refname)' refs/remotes/origin/phantom | wc -l)"
+note "fetch --prune 후 phantom 잔존" "$PH  (1 = prune 정의역 밖)"
+R3="$(run_land "$TMP/r3_wt" origin salvage-r3)"
+note "관측 rc|scan|push" "$R3"
+chk "R3 스캔이 secret 를 검출해야" "finding" "$(printf '%s' "$R3" | cut -d'|' -f2)"
+chk "R3 push 미도달이어야" "skipped" "$(printf '%s' "$R3" | cut -d'|' -f3)"
+R3LEAK="$(git -C "$TMP/r3_origin.git" rev-list --all --objects 2>/dev/null | awk '{print $1}' | git -C "$TMP/r3_origin.git" cat-file --batch 2>/dev/null | grep -ac "$SECRET2" || true)"
+chk "R3 origin 에 신규 secret 미착지 (판별 대상 = SECRET2)" "0" "$R3LEAK"
 
 echo
 echo "===== 대조군 C1 — clean 입력은 통과해야 (무조건-RED 아님) ====="

@@ -520,7 +520,10 @@ KINDS = {
     #     로 죽고, 그러면 mutant 가 "탐지돼서" 가 아니라 "터져서" kill 되는 hollow kill 이 된다.
     "glob": [(r"--not(['\"\s,]+)--remotes=origin",
               r"--not\1--remotes=origin\1--\1README.md"),
-             (r"(\"--remotes=%s\"\s*%\s*remote)\]", r'\1, "--", "README.md"]')],
+             (r"(\"--remotes=%s\"\s*%\s*remote)\]", r'\1, "--", "README.md"]'),
+             # (c) R3 봉합 후 형태 — baseline 이 ls-remote 산출이라 rl_args 조립부가 앵커다.
+             (r'(rl_args\s*=\s*\["rev-list", "--objects", sha)\]',
+              r'\1, "--", "README.md"]')],
     # ④ primitive 퇴화 — 최종 tree 만 보게 만들어 중간 커밋을 놓치게 한다(2-tree 차분 등가).
     "degrade": [(r"rev-list(['\"\s,]+)--objects",
                  r"rev-list\1--objects\1--max-count=1")],
