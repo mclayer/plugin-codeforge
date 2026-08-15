@@ -55,6 +55,9 @@ EXIT_VIOLATION = 1
 EXIT_USAGE = 2
 # 저장 실패 종료코드 — **성공을 보고하지 않는다** (AC-4 / §8.2-E INV-T2).
 STORE_FAILURE_EXIT = EXIT_VIOLATION
+# 프로세스 기동 실패 sentinel — git 이 낼 수 없는 값. `_git()` 이 OSError 를 이 rc 로 접어
+# 호출부가 **designed fail-closed**(SCAN_RESULT/PUSH 토큰 출력)로 처리하게 한다 (S-10).
+EXIT_PROC_SPAWN_FAILED = 199
 
 # ─────────────────────── ADR-179 §결정 2-U — allowlist (닫힌 집합) ────────────────────
 # ⑧ 은 `empty_reason` + `failed_at` 2 키가 한 entry 이므로 실 키 수 = 11.
@@ -573,13 +576,22 @@ def _git(worktree, args, stdin_bytes=None):
     """★ 비협상 ① — `git` **모든** 호출에 `-C <worktree>`.
     `cat-file` 이 CWD object DB 를 읽으면 다른 repo CWD 에서 rc=0 · hit 0 으로 조용히 통과한다
     (Story §7.12-B1 G2/G3 실측). 첫 명령에 `-C` 를 쓴다는 것 자체가 CWD ≠ worktree 전제의 증거다.
+    ★ 비협상 ② — **프로세스 기동 실패(`OSError`)를 designed fail-closed 로 접는다.**
+    미포착이면 예외가 호출부를 뚫고 나가 `SCAN_RESULT`/`PUSH` 토큰이 **하나도 출력되지 않는다**.
+    그때 종료코드 1 은 Python 미처리 예외 값이 `EXIT_VIOLATION` 과 **우연히 같은 것**이지
+    "차단했다"는 판정이 아니다 — **"막았다"와 "터졌다"가 출력으로 구별돼야 한다**
+    (S-10 실측: 실 worktree argv 56,478 B > Windows CreateProcess ≈32 KB → WinError 206).
     """
-    proc = subprocess.run(
-        ["git", "-C", str(worktree)] + list(args),
-        input=stdin_bytes,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(worktree)] + list(args),
+            input=stdin_bytes,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        # rc=EXIT_PROC_SPAWN_FAILED 는 git 이 낼 수 없는 값 — 호출부가 "판정 불가"로 접는다.
+        return EXIT_PROC_SPAWN_FAILED, b"", ("프로세스 기동 실패: %s" % exc).encode("utf-8")
     return proc.returncode, proc.stdout, proc.stderr
 
 
@@ -697,11 +709,13 @@ def cmd_land(worktree, remote, branch, sha, do_push):
                     present.append(parts[0])
 
     # 3 — OID 목록 1회 고정 (4·5 가 **동일 집합**을 본다). baseline = 원격 실보유분만 제외.
-    rl_args = ["rev-list", "--objects", sha]
-    if present:
-        rl_args.append("--not")
-        rl_args.extend(present)
-    rc, out, err = _git(wt, rl_args)
+    #   ★ S-10: 제외 집합을 **argv 가 아니라 stdin** 으로 넘긴다. 실 repo 는 원격 ref 가
+    #   1000+ 라 `--not <OID×N>` argv 가 56 KB 를 넘겨 Windows CreateProcess(≈32 KB)를 깨뜨렸고,
+    #   그때 예외가 탈출해 SCAN_RESULT/PUSH 토큰이 **0개** 출력됐다(감사면 사망).
+    #   `rev-list --stdin` 은 `<sha>` 와 `^<oid>` 를 개행 구분으로 받으므로 argv 가 상수 크기다.
+    rl_stdin = sha + "\n" + "".join("^%s\n" % o for o in present)
+    rc, out, err = _git(wt, ["rev-list", "--objects", "--stdin"],
+                        rl_stdin.encode("utf-8"))
     if rc != 0:
         print("SCAN_RESULT: integrity-unresolved")
         print("PUSH: skipped")

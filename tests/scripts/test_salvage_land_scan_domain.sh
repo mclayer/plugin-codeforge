@@ -120,6 +120,38 @@ R3LEAK="$(git -C "$TMP/r3_origin.git" rev-list --all --objects 2>/dev/null | awk
 chk "R3 origin 에 신규 secret 미착지 (판별 대상 = SECRET2)" "0" "$R3LEAK"
 
 echo
+echo "===== S10 — 고유 OID 1000+ (argv transport 회귀) ====="
+# 실 repo 는 원격 ref 가 1000+ 라 `--not <OID*N>` argv 가 Windows CreateProcess(~32KB)를 넘긴다.
+# 그때 예외가 탈출하면 SCAN_RESULT/PUSH 토큰이 0개가 되어 감사면이 사망한다.
+# 소형 픽스처는 이 결함을 **구조적으로** 못 잡는다 — 그래서 대형 픽스처를 상주시킨다.
+git init -q --bare "$TMP/s10_origin.git"
+git init -q "$TMP/s10_wt"
+git -C "$TMP/s10_wt" config user.email t@t; git -C "$TMP/s10_wt" config user.name t
+# fast-import 스트림 생성 — awk 로 (LF 고정. Windows 에서 CRLF 가 섞이면 git 이
+# `refs/heads/b1?` 로 거부한다 — 이 repo 기지 gotcha)
+awk 'BEGIN{
+  for (i = 1; i <= 1000; i++) {
+    msg = "c" i "\n"; body = "content-" i "\n";
+    printf "commit refs/heads/b%d\nmark :%d\ncommitter t <t@t> 0 +0000\ndata %d\n%s", i, i, length(msg), msg;
+    printf "M 100644 inline f.txt\ndata %d\n%s\n", length(body), body;
+  }
+}' > "$TMP/s10_wt/fi.stream"
+git -C "$TMP/s10_wt" fast-import --quiet < "$TMP/s10_wt/fi.stream"
+rm -f "$TMP/s10_wt/fi.stream"
+git -C "$TMP/s10_wt" remote add origin "$TMP/s10_origin.git"
+git -C "$TMP/s10_wt" push -q origin --all
+git -C "$TMP/s10_wt" checkout -q -b work refs/heads/b1
+printf '%s' "$SECRET" > "$TMP/s10_wt/leak.txt"; git -C "$TMP/s10_wt" add -A; git -C "$TMP/s10_wt" commit -qm s10wip
+S10N="$(git -C "$TMP/s10_wt" ls-remote origin | awk '{print $1}' | sort -u | wc -l)"
+note "고유 OID" "$S10N  (argv 환산 ~$((S10N*41)) B, 32KB 한계 초과)"
+set +e
+S10OUT="$(cd "$TMP/cwd" && python3 "$SUT" --pre-push-scan --worktree "$TMP/s10_wt" --branch work --remote origin 2>&1)"
+set -e
+chk "S10 SCAN_RESULT 토큰이 출력돼야 (감사면 생존)" "1" "$(printf '%s' "$S10OUT" | grep -c 'SCAN_RESULT:')"
+chk "S10 미처리 예외 0 (터진 게 아니라 판정한 것)" "0" "$(printf '%s' "$S10OUT" | grep -c 'Traceback')"
+chk "S10 대형 원격에서도 secret 검출" "finding" "$(printf '%s' "$S10OUT" | sed -n 's/^SCAN_RESULT: //p' | head -1)"
+
+echo
 echo "===== 대조군 C1 — clean 입력은 통과해야 (무조건-RED 아님) ====="
 git init -q --bare "$TMP/c1_origin.git"
 git init -q "$TMP/c1_wt"; git -C "$TMP/c1_wt" config user.email t@t; git -C "$TMP/c1_wt" config user.name t
