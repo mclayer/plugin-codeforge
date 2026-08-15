@@ -185,6 +185,26 @@ harness `2.1.199` 가 **rate-limit / server-error 축의 부분 산출 반환**�
 
    **구 (ii) 는 흡수되지 않고 존치**: "닫힌 14-rule **밖** PII 미커버(전화번호·주소·실명·카드번호 등)" 는 신 (iii) 과 **별개 사실**이다. 신 (iii) 은 rule **안**의 2종이 차단 축에서 빠졌다는 것이고, 구 (ii) 는 rule **밖**은 애초에 안 본다는 것이다. ⇒ PII 축은 **밖은 미커버 · 안은 비차단**이라 어느 쪽에서도 차단 기여가 없다.
 
+   ★★ **구 (ii) 의 '밖' 은 PII 축에 한정되지 않는다 — secret class 도 밖에 있다 (Phase 2 실측 · 구 열거 존치 후 재기술)**: 위 열거는 '밖' 의 예시를 PII(전화번호·주소·실명·카드번호)로만 들어, **secret 은 안에 다 있다** 는 인상을 준다. 실측하면 그렇지 않다. 아래는 `scripts/lib/redact_dev_process_content.py` 의 `redact()` 에 페이로드를 직접 물려 발화 룰과 `SCAN_BLOCKING_RULES` 교집합을 관측한 결과다 (정의역 = 탐지 엔진 단독 호출, `fbec549d6` 기준).
+
+   | 페이로드 | 발화 룰 | 차단 교집합 | 판정 |
+   |---|---|---|---|
+   | `https://user:pass@host/x` — URL basic-auth 자격증명 | `email` | 없음 | **통과** |
+   | `https://user:pass@localhost/x` — dot 없는 host | 없음 | 없음 | **통과 (룰 0 발화)** |
+   | raw 32 / 40 / 64 hex secret — HMAC 키·세션 키 표기 | `hex_high_entropy` | 없음 | **통과** |
+   | JWT — `alg=none` 또는 서명 39자 이하 | 없음 | 없음 | **통과 (룰 0 발화)** |
+   | JWT — 표준 HS256, 서명 43자 | `cloud_key` | `cloud_key` | 차단 (단 **우발적** — 아래 ①) |
+   | `token: <JWT>` | `api_key_credential` · `cloud_key` | 둘 다 | 차단 |
+   | `Authorization: Bearer <JWT>` | `authorization_header` | 해당 | 차단 |
+
+   ⇒ 두 사실을 분리해 적는다.
+   ① **표준 JWT 는 차단된다 — 그러나 JWT 를 아는 룰이 있어서가 아니다.** `_RE_CLOUD_GENERIC` 의 **40자 이상 연속 토큰 + 엔트로피 게이트**(`_redact_cloud_generic`)에 HS256 서명 세그먼트(43자)가 걸릴 뿐이다. 경계 실측: 서명 **40자에서 발화 시작, 39자에서 룰 0 발화**. 즉 서명이 짧아지거나(`alg=none`) 절단되면 **아무 룰도 발화하지 않는다**. 차단의 근거가 secret 의 **의미**가 아니라 문자열 **길이** 라는 뜻이다.
+   ② **URL basic-auth 자격증명과 raw hex secret 은 통과한다.** 전자는 `email` 만, 후자는 `hex_high_entropy` 만 발화하고 둘 다 위 정정으로 **비차단 관측**이다. host 에 dot 이 없으면 `email` 조차 안 걸려 **룰 0 발화**다.
+
+   ⇒ 구 (ii) 를 "밖 = PII" 로 읽으면 안 된다. 정정된 문면: **밖 = PII 축 전량 + secret class 중 URL basic-auth 자격증명 · raw hex secret · 짧은 서명 JWT**. 그리고 **안에 있는 것 중 일부는 우발적 길이 매칭에 기대고 있다**. 이는 완화가 아니라 **declare** 다 — 아래 잔여 회부 참조.
+
+   **잔여 회부 (Phase 2 미해소 · DevPL → ArchitectPL)**: 위 ② 의 `hex_high_entropy` **전면 강등**이 raw hex secret 통과의 직접 원인이다. 리뷰 처방 = **위치 조건부 강등**(스키마가 40hex SHA · `blob:sha256:<64hex>` 를 요구하는 참조형 필드에서만 강등하고 그 밖에서는 차단 유지). 이 처방은 위 **처분 블록의 "차단 판정을 secret-class 9룰로 협착" 이라는 §결정 2 판정 자체를 바꾸므로 구현 lane 단독 결정 대상이 아니다** — Change Plan 갱신 경유로 회부한다. 현행 9룰 집합은 `tests/scripts/test_bundle_pre_push_redaction.sh` Part 5 `S-BR-SET` 이 멤버십으로 결박하고 있어, 집합을 바꾸면 그 테스트가 RED 로 전환된다(의도된 결합 — 설계 갱신과 테스트 갱신을 같이 하게 만든다).
+
    **호출부 완화 (Phase 2 착지 완료) — (ii) 를 부분 상쇄하되 해소하지 않는다**: L1 스캔 호출부는 상한 검사가 아니라 **포화 검사** `elapsed >= PARSE_TIMEOUT_S`(하한 대조)를 수행하고, 참이면 **판정 불가**(`undecidable`)로 접는다 — **통과가 아니다**. 입력 크기 `BYTE_CAP`(1 MiB, `:56`) · `LINE_CAP`(20,000, `:57`) 초과도 같은 판정 불가로 접힌다(`scripts/lib/check_salvage_bundle.py` `_scan_blob`). **잔여 declare(완전 해소 아님)**: ⓐ 탐지 엔진의 `audit` 는 여전히 열화를 보고하지 않는다 — 상쇄 주체가 **호출부 자체 계측**이지 엔진 자기보고가 아니다 ⓑ 따라서 같은 엔진을 쓰는 다른 소비자(capture-time hook 경로)는 이 상쇄를 받지 못한다 ⓒ 어느 룰이 탈락했는지는 여전히 알 수 없다(rule 단위 해상도 없음) ⓓ 포화 판정은 판정 불가 쪽으로 접히는 보수 방향이라 정상 완료도 `undecidable` 로 셀 수 있다(가용성 비용) ⓔ 신 (iii) 은 이 완화와 **무관하게** 남는다. ⇒ 구 단락 말미의 예고("배선되면 (i) 은 관측 가능")는 **부분만 실현**됐다 — 관측 주체가 엔진이 아니라 L1 호출부라, 관측 범위는 **L1 경유 착지 경로 한정**이다.
 
 **진행 노트 처분 = 경로 (b) 참조형 강제 (채택)**
