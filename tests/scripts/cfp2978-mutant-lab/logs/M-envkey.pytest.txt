@@ -1,2 +1,10 @@
-..........                                                               [100%]
-10 passed in 0.48s
+..................................F..........................            [100%]
+================================== FAILURES ===================================
+E   Failed: F5 [mctrader]: env_keys 불일치 (위반 경로 열거)
+      소실 경로: []
+      신규 경로: ['jobs.parallel-work-sentinel', 'jobs.parallel-work-sentinel.steps[1]']
+      키 변동: ["workflow: ['SENTINEL_TIER'] -> ['INJECTED_WF_KEY', 'SENTINEL_TIER']"]
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-envkey\tests\scripts\test_cfp2978_workflow_shape.py:518: Failed: F5 [mctrader]: env_keys 불일치 (위반 경로 열거)
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f5_env_keys_pinned[mctrader]
+1 failed, 60 passed in 0.68s

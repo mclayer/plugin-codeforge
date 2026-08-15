@@ -5,7 +5,7 @@
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [
-      "test_e5_mctrader_timeout_exactly_2"
+      "test_e5_mctrader_timeout_paths_pinned"
     ],
     "errored_legs": [],
     "verdict": "RED"
@@ -26,6 +26,8 @@
       "env-file": "GREEN",
       "env-keys": "GREEN",
       "env-ctr": "GREEN",
+      "shell-step": "GREEN",
+      "shell-defaults": "GREEN",
       "E6[backtest]": "GREEN",
       "E7[backtest]": "GREEN",
       "E6[engine]": "GREEN",

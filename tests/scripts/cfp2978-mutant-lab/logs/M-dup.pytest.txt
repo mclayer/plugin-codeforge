@@ -1,17 +1,384 @@
-.F.......F                                                               [100%]
+FFFFFF.......F...F...F....F...F...F...F...F...F...F...F....FF            [100%]
 ================================== FAILURES ===================================
-E   AssertionError: E2 failed: group mismatch
-      Expected: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-      Got:      injected-duplicate
-    assert 'injected-duplicate' == '${{ github.w...hub.run_id }}'
-      
-      - ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
-      + injected-duplicate
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\scripts\test_cfp2978_workflow_shape.py:233: AssertionError: E2 failed: group mismatch
-E   AssertionError: Real oracle should pass (E2 holds)
-    assert False
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\scripts\test_cfp2978_workflow_shape.py:410: AssertionError: Real oracle should pass (E2 holds)
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+E   yaml.constructor.ConstructorError: while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^
+
+During handling of the above exception, another exception occurred:
+E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
+      in "<unicode string>", line 1, column 1:
+        name: Parallel Work Sentinel Che ... 
+        ^
+    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+      in "<unicode string>", line 40, column 1:
+        concurrency:
+        ^)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\scripts\lib\workflow_shape.py:331: workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-dup\tests\fixtures\cfp2978\mctrader-sentinel.yml (while constructing a mapping
 =========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f0_oracle_bound_to_w13_not_reimplemented
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e4_mctrader_no_job_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_paths_pinned
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f1_job_ids_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2a_coe_paths_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2b_coe_ownership_partition_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f3_job_if_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f4_step_if_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f5_env_keys_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f6_container_env_keys_absent[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f7_env_file_keys_absent[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f8_step_shell_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f9_defaults_run_shell_absent[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f10_job_defaults_run_shell_absent[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
-2 failed, 8 passed in 0.39s
+19 failed, 42 passed in 0.70s

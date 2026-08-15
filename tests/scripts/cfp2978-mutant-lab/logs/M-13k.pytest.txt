@@ -1,2 +1,13 @@
-..........                                                               [100%]
-10 passed in 0.35s
+..............................................F..............            [100%]
+================================== FAILURES ===================================
+E   AssertionError: F8 [mctrader]: step `shell:` 지정 변동 — 실측={'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, 'bash {0}']}, 기대={'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None]}
+    assert {'parallel-wo..., 'bash {0}']} == {'parallel-wo..., None, None]}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': [None, None, 'bash {0}']} != {'parallel-work-sentinel-test': [None, None, None]}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13k\tests\scripts\test_cfp2978_workflow_shape.py:570: AssertionError: F8 [mctrader]: step `shell:` 지정 변동 — 실측={'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, 'bash {0}']}, 기대={'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None]}
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f8_step_shell_pinned[mctrader]
+1 failed, 60 passed in 0.71s

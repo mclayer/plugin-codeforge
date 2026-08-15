@@ -1,2 +1,25 @@
-..........                                                               [100%]
-10 passed in 0.38s
+.................F...F.......................................            [100%]
+================================== FAILURES ===================================
+E   AssertionError: F2a [mctrader]: coe_paths 불일치 (위반 경로 열거)
+        실측: ['jobs.parallel-work-sentinel.continue-on-error', 'jobs.parallel-work-sentinel.steps[2].continue-on-error']
+        기대: ['jobs.parallel-work-sentinel.steps[2].continue-on-error']
+    assert ['jobs.parall...nue-on-error'] == ['jobs.parall...nue-on-error']
+      
+      At index 0 diff: 'jobs.parallel-work-sentinel.continue-on-error' != 'jobs.parallel-work-sentinel.steps[2].continue-on-error'
+      Left contains one more item: 'jobs.parallel-work-sentinel.steps[2].continue-on-error'
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-own1\tests\scripts\test_cfp2978_workflow_shape.py:400: AssertionError: F2a [mctrader]: coe_paths 불일치 (위반 경로 열거)
+E   AssertionError: F2b [mctrader]: continue-on-error 소속 분할 변동
+        실측: {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.continue-on-error', 'jobs.parallel-work-sentinel.steps[2].continue-on-error'], 'parallel-work-sentinel-test': []}
+        기대: {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[2].continue-on-error'], 'parallel-work-sentinel-test': []}
+    assert {'parallel-wo...nel-test': []} == {'parallel-wo...nel-test': []}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.continue-on-error', 'jobs.parallel-work-sentinel.steps[2].continue-on-error']} != {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[2].continue-on-error']}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-own1\tests\scripts\test_cfp2978_workflow_shape.py:422: AssertionError: F2b [mctrader]: continue-on-error 소속 분할 변동
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2a_coe_paths_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2b_coe_ownership_partition_pinned[mctrader]
+2 failed, 59 passed in 0.65s

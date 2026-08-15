@@ -1,20 +1,28 @@
-FFF......F                                                               [100%]
+.FFFF......................................................F.            [100%]
 ================================== FAILURES ===================================
-E   AssertionError: E1 failed: top_concurrency is None
+E   AssertionError: E1: top_concurrency 가 None
     assert None is not None
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:220: AssertionError: E1 failed: top_concurrency is None
-E   AssertionError: E2 prerequisite: top_concurrency missing
+     +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:253: AssertionError: E1: top_concurrency 가 None
+E   AssertionError: E2 전제: top_concurrency 부재
     assert None is not None
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:230: AssertionError: E2 prerequisite: top_concurrency missing
-E   AssertionError: E3 prerequisite: top_concurrency missing
+     +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:263: AssertionError: E2 전제: top_concurrency 부재
+E   AssertionError: E3 전제: top_concurrency 부재
     assert None is not None
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:251: AssertionError: E3 prerequisite: top_concurrency missing
-E   AssertionError: Real oracle should pass (E2 holds)
-    assert False
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:410: AssertionError: Real oracle should pass (E2 holds)
+     +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:280: AssertionError: E3 전제: top_concurrency 부재
+E   AssertionError: E4 양성 앵커 실패: top-level concurrency 부재 — []
+    assert 'concurrency' in []
+     +  where [] = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).concurrency_paths
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:298: AssertionError: E4 양성 앵커 실패: top-level concurrency 부재 — []
+E   AssertionError: R-1: 앵커 미적중 — 변이 무효. fixture 문면이 바뀌었다면 앵커를 갱신하라.
+    assert "concurrency:\n  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: true\n" in 'name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)\n# Security: third-party actions are SHA-pinned pe...eck-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n        run: bash tests/scripts/test_check-parallel-work-sentinel.sh\n'
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:662: AssertionError: R-1: 앵커 미적중 — 변이 무효. fixture 문면이 바뀌었다면 앵커를 갱신하라.
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent
-FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
-4 failed, 6 passed in 0.44s
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e4_mctrader_no_job_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
+5 failed, 56 passed in 0.66s

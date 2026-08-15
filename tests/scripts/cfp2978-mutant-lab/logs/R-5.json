@@ -26,6 +26,8 @@
       "env-file": "GREEN",
       "env-keys": "GREEN",
       "env-ctr": "GREEN",
+      "shell-step": "GREEN",
+      "shell-defaults": "GREEN",
       "E6[backtest]": "GREEN",
       "E7[backtest]": "GREEN",
       "E6[engine]": "GREEN",

@@ -6,14 +6,19 @@
 ----
 Change Plan §8.A mutant roster 를 **실행**해 두 오라클면의 verdict 를 나란히 낸다.
 
-  (a) 테스트면 오라클  = tests/scripts/test_cfp2978_workflow_shape.py (W-14) 의 E1~E8 leg
+  (a) 테스트면 오라클  = tests/scripts/test_cfp2978_workflow_shape.py (W-14) 의 pytest leg
   (b) 실 모듈 오라클   = scripts/lib/workflow_shape.py (W-13) 의 `load_workflow_shape` 파생 leg
 
-두 면을 분리 측정하는 이유: W-14 는 W-13 을 **import 하지 않고** 자체 추출기를
-재구현하고 있다(firsthand: `grep -n "import" test_cfp2978_workflow_shape.py` 에
-`workflow_shape` 없음). 따라서 "mutant 미검출" 이 관측되면 그것이
-① W-13 구현 결함인지 ② W-14 오라클 계약(leg 부재) 결함인지 **판별이 필요**하며,
-두 면을 같은 입력에 나란히 걸어야만 그 판별이 선다.
+두 면을 분리 측정하는 이유: **추출기가 같아도 leg 집합은 다를 수 있다**. 두 면이
+갈리면 그것은 ① W-13 구현 결함이 아니라 ② W-14 의 **leg 부재**(계산은 되는데
+assert 하지 않는 사문 필드)를 가리킨다 — 두 면을 같은 입력에 나란히 걸어야만
+그 판별이 선다.
+
+★ 이력(수리 완료): 초판 W-14 는 W-13 을 import 하지 않고 자체 추출기 +
+  bare `yaml.safe_load` 를 재구현했고, 그 상태에서 mutant 11 종이 pytest 면에서
+  조용히 통과했다. 현재 W-14 는 W-13 을 import 해 호출하며 사문 필드 10 종에
+  assert leg(F1~F10)을 보유한다. 본 하네스는 그 수리의 **전/후 대조 측정기**이자
+  회귀 감시기로 남는다.
 
 규율
 ----
@@ -47,6 +52,10 @@ REPO_ROOT = LAB_DIR.parents[2]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "cfp2978"
 TEST_FILE = REPO_ROOT / "tests" / "scripts" / "test_cfp2978_workflow_shape.py"
 CONFTEST = REPO_ROOT / "tests" / "scripts" / "conftest.py"
+# W-14 는 W-13 을 import 해 호출한다 ⇒ run tree 도 repo 배치를 그대로 재현해야
+# 테스트면이 실행된다. (미배치 시 W-14 는 skip 이 아니라 수집 ERROR 로 죽는다 —
+# 그 RED 는 mutant 검출이 아니라 하네스 결함이므로 여기서 미리 막는다.)
+W13_MODULE = REPO_ROOT / "scripts" / "lib" / "workflow_shape.py"
 SCRATCH = Path(
     os.environ.get(
         "CFP2978_LAB_SCRATCH",
@@ -624,8 +633,11 @@ def build_run_tree(mid: str) -> Path:
         shutil.rmtree(run_dir)
     (run_dir / "tests" / "scripts").mkdir(parents=True)
     (run_dir / "tests" / "fixtures" / "cfp2978").mkdir(parents=True)
+    (run_dir / "scripts" / "lib").mkdir(parents=True)
     shutil.copy2(TEST_FILE, run_dir / "tests" / "scripts" / TEST_FILE.name)
     shutil.copy2(CONFTEST, run_dir / "tests" / "scripts" / "conftest.py")
+    # W-13 원본은 **변이 대상이 아니다** — 변이는 fixture 에만 가한다.
+    shutil.copy2(W13_MODULE, run_dir / "scripts" / "lib" / W13_MODULE.name)
     for f in FIXTURES:
         shutil.copy2(FIXTURE_DIR / f, run_dir / "tests" / "fixtures" / "cfp2978" / f)
     return run_dir

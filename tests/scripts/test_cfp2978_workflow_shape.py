@@ -1,415 +1,749 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""CFP-2978 AC-10 workflow 구조 오라클 — W-14 (pytest 배선면).
+
+★ 본 파일은 구조 술어를 **재구현하지 않는다**. 유일한 추출기는
+  `scripts/lib/workflow_shape.py` (W-13) 이고, 본 파일은 그 `load_workflow_shape()`
+  가 돌려준 `WorkflowShape` 위에 **assert leg 만** 세운다.
+
+  구 판 이력(수리 대상): 본 파일은 자체 `extract_workflow_shape()` + bare
+  `yaml.safe_load()` 를 재구현하고 있었다. bare `safe_load` 는 W-13 비협상 계약 (2)
+  가 금지한 형태이며(중복 키 silent last-wins), 그 판의 GREEN 은 W-13 오라클이
+  아니라 **그 흉내**를 검증했다. 결과로 mutant 11 종(M-envfile / M-envfile-inplace /
+  M-envfile-blk / M-envkey / M-envctr / M-own1 / M-own2 / R-7 / M-dup-same / M-13k /
+  M-13l)이 pytest 면에서 조용히 통과했다 — 그 결함의 수리가 본 판이다.
+
+────────────────────────────────────────────────────────────────────────────
+정의역 선언 (§8.D rule 3)
+────────────────────────────────────────────────────────────────────────────
+전 leg 의 정의역 = **구조(structure)**. 관측 채널 = W-13 `DupSafeLoader` 파싱 산출
+(`WorkflowShape` 필드). text-grep 정의역 leg 은 본 파일에 없다.
+유일 예외 = `test_f0_*` (본 파일 소스 자기 점검, 정의역 = text).
+
+────────────────────────────────────────────────────────────────────────────
+leg 인벤토리 — shape 14 필드 전건 피복
+────────────────────────────────────────────────────────────────────────────
+AC-10 은 "4 repo backfill 을 거쳐 로컬 개조가 보존되는가" 를 묻는다. 실측 결과
+shape 14 필드는 정확히 두 부류로 갈린다:
+
+  (가) **repo 별 차등 필드 4종** — `top_concurrency` · `concurrency_paths` ·
+       `timeout_paths` · `runs_on`.  → E1~E8 leg (로컬 개조 자체)
+  (나) **4 repo 불변 필드 10종** — `job_ids` · `coe_paths` · `job_if` · `step_if` ·
+       `env_keys` · `container_env_keys` · `env_file_keys` · `step_shell` ·
+       `defaults_run_shell` · `job_defaults_run_shell`.  → F1~F10 leg (보존 불변식)
+
+(나) 는 구 판에서 **계산만 되고 조회 0** 이었다(사문 필드). 주입·이동 mutant 가
+전부 이 집합에 착지했으므로 사문 = 미검출과 1:1 대응이었다. 본 판은 (나) 를
+**4 fixture 전건에 대해 핀 리터럴 동일성**으로 못박는다 — 핀 값의 출처는
+pristine fixture 실측(`python scripts/lib/workflow_shape.py <fixture>`)이다.
+
+────────────────────────────────────────────────────────────────────────────
+술어형 규칙 준수 (§8.D)
+────────────────────────────────────────────────────────────────────────────
+* rule 1 (카디널리티) — 개수는 **경로 집합의 파생값**으로만 쓰고, 실패 보고는 항상
+  위반 **경로를 열거**한다. E5 는 `len(...) == 2` 가 아니라 경로→값 매핑 전문
+  동일성으로 판정하므로 relocation(R-6)이 카디널리티 불변인 채로도 관측된다.
+* rule 2 (부재-assert) — `== {}` / `is None` leg 은 전부 양성 앵커(`_anchor_*`)와
+  AND 로만 성립한다. 앵커 없는 부재-assert 는 미파싱 상태에서 공허 참이 된다.
+* rule 4 (관측 가능성) — 관측 채널은 W-13 이 실제로 emit 하는 필드뿐이다.
+  W-13 이 emit 하지 않는 축(예: composite action 내부 `continue-on-error`,
+  여러 줄 블록 리다이렉트 `$GITHUB_ENV` 기입)은 **declared 잔여**이며 본 파일이
+  GREEN 을 내는 것은 검출 성공이 아니다 — W-13 docstring "알려진 실패 모드" 참조.
 """
-CFP-2978 AC-10 workflow structure oracle — W-14
 
-Tests the AC-10 normative requirement: conservation of workflow local customizations
-(concurrency, timeout-minutes, runs-on) across consumer 4-repo backfill.
+from __future__ import annotations
 
-AC-10 binds wrapper template + 4 consumer repos. Elements E1-E8 define what must
-be preserved/absent. This test file operationalizes the W-13 `scripts/lib/workflow_shape.py`
-oracle as pytest fixtures + mutant harness.
-
-Change Plan §8.A specifies:
-- Elements E1-E8 (preservation inventory per §8.A line 593-602)
-- Mutation roster (§8.A line 606-627):
-  - Removal direction (R-1 through R-5): each mutant targets single element, observe RED ∧ siblings GREEN
-  - Relocation direction (R-6, R-7): path-set predicates catch structural shifts undetectable by cardinality
-  - Tautological control (T-taut): straw oracle (text-only assertions) vs. real oracle (PyYAML structure parser)
-- Predicate form rules (§8.D general rules 1-5):
-  - Cardinality only as derived from path set (never 1st-order input)
-  - Absence assertions require positive anchor ∧
-  - Domain declaration mandatory (text / structure / output / mixed)
-"""
-
-import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List
 
-# Fixture blob references (§8.A pinned literals — immutable)
-PIN_MCTRADER_GROUP = (
-    "${{ github.workflow }}-"
-    "${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}"
+import pytest
+
+# ── W-13 결속 (자체 재구현 금지 — 본 파일의 존재 이유) ───────────────────────
+# `scripts/lib/workflow_shape.py` 를 보유한 조상 디렉터리를 찾아 sys.path 에 넣는다.
+# (tests/scripts/conftest.py 도 같은 주입을 하지만, 본 파일이 conftest 없이 단독
+#  실행될 때도 성립해야 하므로 자족 해결한다.)
+# 미발견 = **fail-closed**. skip 이 아니다 — "오라클 본체를 못 읽은 상태"는 GREEN 이
+# 아니라는 INV-5 를 pytest 수집 ERROR 로 종결한다.
+def _locate_w13_root() -> Path:
+    here = Path(__file__).resolve()
+    for cand in here.parents:
+        if (cand / "scripts" / "lib" / "workflow_shape.py").is_file():
+            return cand
+    raise RuntimeError(
+        "W-13 모듈 미발견: scripts/lib/workflow_shape.py 를 보유한 조상 디렉터리가 없다. "
+        f"(탐색 기점={here}) — 본 오라클은 W-13 없이 성립하지 않으며 자체 재구현하지 않는다."
+    )
+
+
+_W13_ROOT = _locate_w13_root()
+if str(_W13_ROOT / "scripts" / "lib") not in sys.path:
+    sys.path.insert(0, str(_W13_ROOT / "scripts" / "lib"))
+
+from workflow_shape import (  # noqa: E402  (sys.path 주입 이후여야 함)
+    ShapeError,
+    WorkflowShape,
+    load_workflow_shape,
+    runs_on_local_delta,
 )
-CANON_RUNS_ON = (
-    "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || "
-    '[\"ubuntu-latest\"]'
-    ") }}"
-)
 
-# Fixture directory (repo-relative)
-FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures/cfp2978"
+# ── fixture 결속 ─────────────────────────────────────────────────────────────
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "cfp2978"
 
-# Consumer fixture references (immutable blob versions)
 CONSUMER_FIXTURES = {
     "mctrader": "mctrader-sentinel.yml",
     "mctrader-backtest": "mctrader-backtest.yml",
     "mctrader-market": "mctrader-market.yml",
     "mctrader-engine": "mctrader-engine.yml",
 }
+ALL_REPOS = tuple(CONSUMER_FIXTURES)
+
+JOB1 = "parallel-work-sentinel"
+JOB2 = "parallel-work-sentinel-test"
+
+# ── 핀 리터럴 (§8.A — 출처 = pristine fixture 실측) ──────────────────────────
+PIN_MCTRADER_GROUP = (
+    "${{ github.workflow }}-"
+    "${{ github.event_name == 'pull_request' && github.event.pull_request.number "
+    "|| github.run_id }}"
+)
+# wrapper 정본 template 표현식 (github.ref 축) — mctrader 로컬 개조가 이것으로
+# 되돌아가면 AC-10 위반. E3 의 부동등 대상.
+TEMPLATE_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+
+# 정본 runs-on (wrapper template 상속값)
+CANON_RUNS_ON_JOB1 = "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}"
+CANON_RUNS_ON_JOB2 = "ubuntu-latest"
+CANON_RUNS_ON = {JOB1: CANON_RUNS_ON_JOB1, JOB2: CANON_RUNS_ON_JOB2}
+
+# (가) repo 별 차등 — mctrader 전용
+PIN_MCTRADER_TIMEOUT_PATHS: Dict[str, Any] = {
+    f"jobs.{JOB1}.timeout-minutes": 10,
+    f"jobs.{JOB2}.timeout-minutes": 10,
+}
+
+# (나) 4 repo 불변 — F1~F10 핀
+PIN_JOB_IDS: List[str] = [JOB1, JOB2]
+PIN_COE_PATHS: List[str] = [f"jobs.{JOB1}.steps[2].continue-on-error"]
+PIN_COE_OWNED = {JOB1: PIN_COE_PATHS, JOB2: []}
+
+_IF_BYPASS = (
+    "${{ contains(github.event.pull_request.labels.*.name, "
+    "'hotfix-bypass:parallel-work-sentinel-pickup') }}"
+)
+_IF_NOT_BYPASS = (
+    "${{ !contains(github.event.pull_request.labels.*.name, "
+    "'hotfix-bypass:parallel-work-sentinel-pickup') }}"
+)
+PIN_JOB_IF: Dict[str, Any] = {
+    JOB1: None,
+    JOB2: "github.repository == 'mclayer/plugin-codeforge'",
+}
+PIN_STEP_IF: Dict[str, List[Any]] = {
+    JOB1: [None, _IF_BYPASS, _IF_NOT_BYPASS],
+    JOB2: [None, None, None],
+}
+# job1.steps[2] = sentinel 실행 step (PR_TITLE/GH_TOKEN 주입 + 큰 run 블록 보유)
+RUN_STEP_ENV_PATH = f"jobs.{JOB1}.steps[2]"
+PIN_ENV_KEYS: Dict[str, List[str]] = {
+    "workflow": ["SENTINEL_TIER"],
+    RUN_STEP_ENV_PATH: ["PR_TITLE", "GH_TOKEN"],
+}
+PIN_CONTAINER_ENV_KEYS: Dict[str, List[str]] = {}
+PIN_ENV_FILE_KEYS: Dict[str, List[str]] = {}
+PIN_STEP_SHELL: Dict[str, List[Any]] = {JOB1: [None, None, None], JOB2: [None, None, None]}
+PIN_DEFAULTS_RUN_SHELL = None
+PIN_JOB_DEFAULTS_RUN_SHELL: Dict[str, Any] = {JOB1: None, JOB2: None}
 
 
-def load_workflow_yaml(file_path: str) -> Optional[dict]:
+# ── 로딩 (W-13 단일 진입점) ──────────────────────────────────────────────────
+def shape_of(repo: str) -> WorkflowShape:
+    """`repo` fixture 의 `WorkflowShape` (W-13 `load_workflow_shape` 단일 경로).
+
+    전제 위반(P-1~P-6)은 `ShapeError` 로 전파돼 pytest FAILED = RED 가 된다.
+    삼키지 않는다 — 읽지 못한 상태의 종결은 GREEN 이 아니다 (INV-5).
     """
-    Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    return load_workflow_shape(str(FIXTURE_DIR / CONSUMER_FIXTURES[repo]))
 
-    Fails closed with exit 2 on:
-    - P-1: File missing
-    - P-2: YAML parse error
-    - P-3: Root not dict
-    - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+
+# ── 양성 앵커 (§8.D rule 2 — 부재-assert 전용) ───────────────────────────────
+def _anchor_jobs(shape: WorkflowShape, repo: str) -> None:
+    """"job 을 실제로 파싱해 관측했다" 양성 앵커."""
+    assert shape.job_ids == PIN_JOB_IDS, (
+        f"[{repo}] 양성 앵커 실패 — job_ids={shape.job_ids}, 기대={PIN_JOB_IDS}. "
+        "이 앵커 없이는 뒤따르는 부재-assert 가 공허 참이 된다 (§8.D rule 2)."
+    )
+
+
+def _anchor_steps(shape: WorkflowShape, repo: str) -> None:
+    """"step 을 실제로 열거했다" 양성 앵커 (step 수 3/3)."""
+    _anchor_jobs(shape, repo)
+    counts = {jid: len(shape.step_if.get(jid, [])) for jid in PIN_JOB_IDS}
+    assert counts == {JOB1: 3, JOB2: 3}, (
+        f"[{repo}] 양성 앵커 실패 — step 수={counts}, 기대={{'{JOB1}': 3, '{JOB2}': 3}}"
+    )
+
+
+def _anchor_run_step(shape: WorkflowShape, repo: str) -> None:
+    """"`run:` 문면을 보유한 step 을 실제로 스캔했다" 양성 앵커.
+
+    `env_file_keys` 부재 leg 전용. 스캔 대상 step 자체가 사라지거나 인덱스가 밀리면
+    "기입 없음" 이 공허 참이 되므로, 그 step 의 실재를 먼저 세운다.
     """
-    try:
-        import yaml
-    except ImportError:
-        pytest.skip("PyYAML not available (P-6 fail-closed guard)")
-
-    file_path_obj = Path(file_path)
-    if not file_path_obj.exists():
-        raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
-
-    try:
-        with open(file_path_obj, encoding='utf-8') as f:
-            content = yaml.safe_load(f)
-    except yaml.YAMLError as e:
-        raise ValueError(f"P-2 YAML parse error: {e}")
-
-    if content is None:
-        raise ValueError("P-3 workflow not mapping (empty/comment-only)")
-
-    if not isinstance(content, dict):
-        raise ValueError(f"P-3 workflow root type {type(content).__name__}, expected dict")
-
-    return content
+    _anchor_steps(shape, repo)
+    assert RUN_STEP_ENV_PATH in shape.env_keys, (
+        f"[{repo}] 양성 앵커 실패 — 스캔 대상 run step {RUN_STEP_ENV_PATH} 부재 "
+        f"(env_keys 경로={sorted(shape.env_keys)}). env_file_keys 부재 판정이 공허해진다."
+    )
 
 
-def extract_workflow_shape(workflow_yaml: dict) -> dict:
+# ════════════════════════════════════════════════════════════════════════════
+# F0 — 오라클 결속 자기 점검 (born-broken 가드)
+#      정의역 = text (본 파일 소스) + 모듈 동일성
+# ════════════════════════════════════════════════════════════════════════════
+def test_f0_oracle_bound_to_w13_not_reimplemented():
+    """W-14 가 W-13 을 **실제로 호출**하는지 (자체 재구현 회귀 차단).
+
+    구 판 결함의 직접 회귀 가드다. 이 leg 이 없으면 누군가 다시 로컬 추출기를
+    심어도 나머지 leg 이 전부 GREEN 인 채 "흉내를 검증" 하는 상태로 되돌아간다.
     """
-    Extract structural shape from parsed workflow.
+    # (1) 추출기 모듈 동일성 — W-13 파일에서 왔는가
+    assert load_workflow_shape.__module__ == "workflow_shape", (
+        f"load_workflow_shape 의 모듈이 workflow_shape 가 아님: {load_workflow_shape.__module__}"
+    )
+    w13_file = Path(sys.modules["workflow_shape"].__file__).resolve()
+    assert w13_file.parts[-3:] == ("scripts", "lib", "workflow_shape.py"), (
+        f"W-13 모듈 경로가 scripts/lib/workflow_shape.py 가 아님: {w13_file}"
+    )
 
-    Returns dict with fields matching W-13 signature (§8.A line 530-544):
-    - job_ids: list[str]
-    - top_concurrency: dict | None
-    - concurrency_paths: list[str]
-    - coe_paths: list[str]  (§8.B leg ③)
-    - timeout_paths: dict[str, int]
-    - job_if, step_if, env_keys, etc. (full set)
-    """
-    shape = {
-        "job_ids": [],
-        "top_concurrency": workflow_yaml.get("concurrency"),
-        "concurrency_paths": [],
-        "coe_paths": [],
-        "timeout_paths": {},
-        "job_if": {},
-        "step_if": {},
-        "env_keys": {"workflow": list(workflow_yaml.get("env", {}).keys())},
-        "container_env_keys": {},
-        "env_file_keys": {},
-        "step_shell": {},
-        "defaults_run_shell": workflow_yaml.get("defaults", {}).get("run", {}).get("shell"),
-        "job_defaults_run_shell": {},
-        "runs_on": {},
-    }
+    # (2) 본 파일 안에 로컬 추출기 재구현이 없는가 (text 정의역)
+    #
+    # ★ 금지 패턴은 **조각으로 조립**한다. 리터럴로 적으면 이 leg 자신의 소스를
+    #   검출해 무조건 RED 가 된다 (자기참조 함정 — firsthand 실측으로 확인).
+    #   그 결과 본 스캔의 정의역에서 **자기 자신은 구조적으로 제외**된다:
+    #   "재구현이 전혀 없다" 의 증명이 아니라 "구 판 형태로의 회귀가 없다" 의 가드다.
+    _DEF = "def "
+    banned_names = ("extract_workflow_shape", "load_workflow_yaml")
 
-    # Add top-level concurrency to paths if present
-    if "concurrency" in workflow_yaml:
-        shape["concurrency_paths"].append("concurrency")
+    # 술어 비공허 통제 — 조립된 needle 이 실제 def 문면을 잡는지 (오타·조립 실패 차단).
+    # 이 통제가 없으면 needle 철자가 틀려도 스캔이 조용히 항상 통과한다.
+    for name in banned_names:
+        probe = f"{_DEF}{name}(workflow_yaml: dict) -> dict:\n    return {{}}\n"
+        assert (_DEF + name) in probe, f"스캔 술어 고장: needle `{_DEF}{name}` 이 합성 def 를 못 잡음"
 
-    # Extract job-level structures
-    jobs = workflow_yaml.get("jobs", {})
-    if not isinstance(jobs, dict):
-        raise ValueError(f"P-4: jobs not dict, got {type(jobs).__name__}")
+    src = Path(__file__).read_text(encoding="utf-8")
+    for name in banned_names:
+        assert (_DEF + name) not in src, (
+            f"로컬 추출기 재구현 검출: `{_DEF}{name}` — W-13 단일 추출기 계약 위반"
+        )
 
-    if not jobs:
-        raise ValueError("P-4: jobs missing or empty")
-
-    for job_id, job_spec in jobs.items():
-        if not isinstance(job_spec, dict):
-            continue
-
-        shape["job_ids"].append(job_id)
-
-        # Concurrency paths
-        if "concurrency" in job_spec:
-            shape["concurrency_paths"].append(f"jobs.{job_id}.concurrency")
-
-        # Timeout paths (job-level and step-level)
-        if "timeout-minutes" in job_spec:
-            shape["timeout_paths"][f"jobs.{job_id}"] = job_spec["timeout-minutes"]
-
-        # Job-level if condition
-        shape["job_if"][job_id] = job_spec.get("if")
-
-        # runs-on
-        if "runs-on" in job_spec:
-            shape["runs_on"][job_id] = job_spec["runs-on"]
-
-        # env at job level
-        shape["env_keys"][f"jobs.{job_id}"] = list(job_spec.get("env", {}).keys())
-
-        # Job-level defaults
-        if "defaults" in job_spec and "run" in job_spec["defaults"]:
-            shape["job_defaults_run_shell"][job_id] = job_spec["defaults"]["run"].get("shell")
-
-        # Step-level structures
-        steps = job_spec.get("steps", [])
-        shape["step_if"][job_id] = []
-        shape["step_shell"][job_id] = []
-
-        for i, step in enumerate(steps):
-            if not isinstance(step, dict):
-                continue
-
-            # continue-on-error paths
-            if "continue-on-error" in step:
-                shape["coe_paths"].append(f"jobs.{job_id}.steps[{i}].continue-on-error")
-
-            # Step-level if
-            shape["step_if"][job_id].append(step.get("if"))
-
-            # Step-level shell
-            shape["step_shell"][job_id].append(step.get("shell"))
-
-            # Step-level env
-            if "env" in step:
-                step_env_key = f"jobs.{job_id}.steps[{i}]"
-                shape["env_keys"][step_env_key] = list(step.get("env", {}).keys())
-
-            # Timeout at step level
-            if "timeout-minutes" in step:
-                shape["timeout_paths"][f"jobs.{job_id}.steps[{i}]"] = step["timeout-minutes"]
-
-        # Container env (§8.A line 540 — future-proof)
-        if "container" in job_spec and "env" in job_spec["container"]:
-            shape["container_env_keys"][job_id] = list(job_spec["container"]["env"].keys())
-
-        # $GITHUB_ENV detection (inline only — §8.F C-3)
-        # This is a simplified version; full implementation in W-13
-        env_file_keys = []
-        for i, step in enumerate(steps):
-            if "run" in step:
-                run_text = step["run"]
-                # Naive check for $GITHUB_ENV writes (text domain only)
-                if "$GITHUB_ENV" in run_text and ">>" in run_text:
-                    env_file_keys.append(f"jobs.{job_id}.steps[{i}]")
-        if env_file_keys:
-            shape["env_file_keys"][job_id] = env_file_keys
-
-    # Add job-level continue-on-error paths
-    for job_id, job_spec in jobs.items():
-        if not isinstance(job_spec, dict):
-            continue
-        if "continue-on-error" in job_spec:
-            shape["coe_paths"].append(f"jobs.{job_id}.continue-on-error")
-
-    # Sort paths for deterministic comparison
-    shape["concurrency_paths"].sort()
-    shape["coe_paths"].sort()
-
-    return shape
+    # (3) fixture 로딩이 W-13 경로를 타는가 (실호출 산출로 확인)
+    shape = shape_of("mctrader")
+    assert isinstance(shape, WorkflowShape), f"shape 형이 WorkflowShape 가 아님: {type(shape)}"
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# E1~E8 — repo 별 차등 필드 (로컬 개조 자체).  정의역 = 구조
+# ════════════════════════════════════════════════════════════════════════════
 def test_e1_mctrader_top_concurrency_exists():
-    """E1 (AC-10): mctrader top-level `concurrency` exists"""
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
+    """E1 (AC-10): mctrader top-level `concurrency` 존재 (경로 ∧ 매핑 둘 다)."""
+    shape = shape_of("mctrader")
 
-    assert shape["top_concurrency"] is not None, "E1 failed: top_concurrency is None"
-    assert "concurrency" in shape["concurrency_paths"], "E1 failed: concurrency path absent"
+    assert shape.top_concurrency is not None, "E1: top_concurrency 가 None"
+    assert "concurrency" in shape.concurrency_paths, (
+        f"E1: 'concurrency' 경로 부재 — concurrency_paths={shape.concurrency_paths}"
+    )
 
 
 def test_e2_mctrader_group_equals_pin():
-    """E2 (AC-10): mctrader group == PIN_MCTRADER_GROUP (string equality, not regex)"""
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
+    """E2 (AC-10): mctrader `group` == 핀 리터럴 (문자열 동일성, 부분일치 아님)."""
+    shape = shape_of("mctrader")
 
-    assert shape["top_concurrency"] is not None, "E2 prerequisite: top_concurrency missing"
-    group_value = shape["top_concurrency"].get("group")
-
+    assert shape.top_concurrency is not None, "E2 전제: top_concurrency 부재"
+    group_value = shape.top_concurrency.get("group")
     assert group_value == PIN_MCTRADER_GROUP, (
-        f"E2 failed: group mismatch\n"
-        f"Expected: {PIN_MCTRADER_GROUP}\n"
-        f"Got:      {group_value}"
+        "E2: group 불일치\n"
+        f"  기대: {PIN_MCTRADER_GROUP}\n"
+        f"  실측: {group_value}"
     )
 
 
 def test_e3_mctrader_template_group_absent():
+    """E3 (AC-10): mctrader group 이 wrapper 정본 표현식으로 되돌아가지 않았다.
+
+    §8.D rule 2 — 순수 부재-assert 단독 금지. 양성 앵커(E2 동일성)와 **AND** 로만
+    성립시킨다.
     """
-    E3 (AC-10): mctrader group does NOT use wrapper template expression
+    shape = shape_of("mctrader")
 
-    Standalone: pure absence-assert (§8.D rule 2: must AND with E2).
-    Here we verify E2 is true before checking E3 doesn't hold.
-    """
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
+    assert shape.top_concurrency is not None, "E3 전제: top_concurrency 부재"
+    group_value = shape.top_concurrency.get("group")
 
-    assert shape["top_concurrency"] is not None, "E3 prerequisite: top_concurrency missing"
-    group_value = shape["top_concurrency"].get("group")
-
-    # Wrapper template expression (has github.ref, not github.run_id)
-    template_expr = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
-
-    assert group_value != template_expr, (
-        f"E3 failed: group should NOT be template expression\n"
-        f"Got: {group_value}"
+    # 양성 앵커 (존재 + 값 확정)
+    assert group_value == PIN_MCTRADER_GROUP, (
+        f"E3 양성 앵커 실패: group={group_value!r} != 핀 리터럴"
+    )
+    # 부재 (정본 표현식 아님)
+    assert group_value != TEMPLATE_GROUP, (
+        f"E3: group 이 wrapper 정본 표현식으로 복귀함 — {group_value}"
     )
 
 
 def test_e4_mctrader_no_job_concurrency():
-    """E4 (AC-10): mctrader jobs.*.concurrency == ∅ (empty set)"""
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
+    """E4 (AC-10): mctrader `jobs.*.concurrency == ∅` (양성 앵커 = top-level 실재)."""
+    shape = shape_of("mctrader")
 
-    job_concurrency_paths = [p for p in shape["concurrency_paths"] if p.startswith("jobs.")]
-
-    assert len(job_concurrency_paths) == 0, (
-        f"E4 failed: found job-level concurrency paths: {job_concurrency_paths}"
+    _anchor_jobs(shape, "mctrader")
+    assert "concurrency" in shape.concurrency_paths, (
+        f"E4 양성 앵커 실패: top-level concurrency 부재 — {shape.concurrency_paths}"
     )
+    job_paths = shape.job_concurrency_paths()
+    assert job_paths == [], f"E4: job 하위 concurrency 경로 검출 — {job_paths}"
 
 
-def test_e5_mctrader_timeout_exactly_2():
+def test_e5_mctrader_timeout_paths_pinned():
+    """E5 (AC-10): mctrader `timeout-minutes` 경로→값 매핑 전문 동일성.
+
+    §8.D rule 1 — 카디널리티를 1차 입력으로 쓰지 않는다. `len(...) == 2` 대신
+    **경로 집합 자체**를 핀과 대조하므로, 카디널리티를 유지한 채 job-level →
+    step-level 로 옮기는 relocation(R-6)이 정의상 관측된다. 실패 보고는 위반
+    경로를 열거한다.
     """
-    E5 (AC-10): mctrader timeout-minutes: 10 at job-level, exactly 2 occurrences
+    shape = shape_of("mctrader")
 
-    §8.D rule 1: Cardinality as derived path-set predicate (not raw count).
-    Assertion: path set cardinality must be 2, not just count.
-    """
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
-
-    # Path-set predicate: job-level timeout paths (no "[" = no step-level)
-    timeout_paths = [
-        k for k in shape["timeout_paths"].keys()
-        if not "[" in k  # Exclude step-level (have [...])
-    ]
-
-    assert len(timeout_paths) == 2, (
-        f"E5 failed: expected 2 job-level timeout paths, got {len(timeout_paths)}\n"
-        f"Paths: {timeout_paths}"
-    )
-
-    # Verify each path's value is 10 (query paths, not count)
-    for path in timeout_paths:
-        value = shape["timeout_paths"][path]
-        assert value == 10, f"E5 failed: {path} timeout value is {value}, expected 10"
-
-
-def test_e6_backtest_no_top_concurrency():
-    """E6 (AC-10): backtest/engine/market top-level concurrency == ∅"""
-    for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
-        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES[repo_name])
-        yaml_doc = load_workflow_yaml(yaml_path)
-        shape = extract_workflow_shape(yaml_doc)
-
-        assert shape["top_concurrency"] is None, (
-            f"E6 failed for {repo_name}: top_concurrency should be None, got {shape['top_concurrency']}"
+    _anchor_jobs(shape, "mctrader")
+    actual = dict(shape.timeout_paths)
+    if actual != PIN_MCTRADER_TIMEOUT_PATHS:
+        missing = sorted(set(PIN_MCTRADER_TIMEOUT_PATHS) - set(actual))
+        extra = sorted(set(actual) - set(PIN_MCTRADER_TIMEOUT_PATHS))
+        changed = sorted(
+            f"{p}: {PIN_MCTRADER_TIMEOUT_PATHS[p]!r} -> {actual[p]!r}"
+            for p in set(actual) & set(PIN_MCTRADER_TIMEOUT_PATHS)
+            if actual[p] != PIN_MCTRADER_TIMEOUT_PATHS[p]
+        )
+        pytest.fail(
+            "E5: timeout 경로 집합 불일치 (위반 경로 열거)\n"
+            f"  소실: {missing}\n"
+            f"  신규: {extra}\n"
+            f"  값변경: {changed}"
         )
 
 
-def test_e7_backtest_no_job_concurrency():
-    """E7 (AC-10): backtest/engine/market jobs.*.concurrency == ∅"""
-    for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
-        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES[repo_name])
-        yaml_doc = load_workflow_yaml(yaml_path)
-        shape = extract_workflow_shape(yaml_doc)
+@pytest.mark.parametrize("repo", ["mctrader-backtest", "mctrader-engine", "mctrader-market"])
+def test_e6_backtest_no_top_concurrency(repo):
+    """E6 (AC-10): backtest/engine/market top-level `concurrency == ∅`."""
+    shape = shape_of(repo)
 
-        job_concurrency_paths = [p for p in shape["concurrency_paths"] if p.startswith("jobs.")]
+    _anchor_jobs(shape, repo)  # §8.D rule 2 양성 앵커
+    assert shape.top_concurrency is None, (
+        f"E6 [{repo}]: top_concurrency 가 존재 — {shape.top_concurrency}"
+    )
+    assert "concurrency" not in shape.concurrency_paths, (
+        f"E6 [{repo}]: top-level concurrency 경로 검출 — {shape.concurrency_paths}"
+    )
 
-        assert len(job_concurrency_paths) == 0, (
-            f"E7 failed for {repo_name}: found job-level concurrency: {job_concurrency_paths}"
-        )
+
+@pytest.mark.parametrize("repo", ["mctrader-backtest", "mctrader-engine", "mctrader-market"])
+def test_e7_backtest_no_job_concurrency(repo):
+    """E7 (AC-10): backtest/engine/market `jobs.*.concurrency == ∅`."""
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)  # §8.D rule 2 양성 앵커
+    job_paths = shape.job_concurrency_paths()
+    assert job_paths == [], f"E7 [{repo}]: job 하위 concurrency 경로 검출 — {job_paths}"
 
 
 def test_e8_market_job2_runs_on_custom():
+    """E8 (AC-10): market job2 `runs-on` 로컬 개조 보존.
+
+    ★ 판정은 파생 접근자 `runs_on_local_delta(shape, CANON)` **위에서만** 한다
+      (W-13 docstring 명시). 원시 `shape.runs_on` 위의 assert 는 정본 상속값을
+      포함하므로 항진 = 판별력 0 이며, 그 형태는 T-taut 대조군 전용이다.
     """
-    E8 (AC-10): market job2 runs-on uses custom variable expression (not canonical ubuntu-latest).
+    shape = shape_of("mctrader-market")
 
-    Uses derived accessor runs_on_local_delta (§8.A P1-c) to detect deviations from
-    canonical template value.
-    """
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader-market'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
-
-    # Market should have job2 with different runs-on than template
-    job2_runs_on = shape["runs_on"].get("parallel-work-sentinel-test")
-
-    assert job2_runs_on is not None, "E8 failed: parallel-work-sentinel-test job not found"
-    assert job2_runs_on != "ubuntu-latest", (
-        f"E8 failed: market job2 runs-on should be customized, got {job2_runs_on}"
+    _anchor_jobs(shape, "mctrader-market")
+    delta = runs_on_local_delta(shape, CANON_RUNS_ON)
+    assert JOB2 in delta, (
+        f"E8: market job2 의 로컬 개조가 소실됨 (정본으로 복귀) — delta={delta}, "
+        f"runs_on={shape.runs_on}"
     )
-    assert "fromJSON" in job2_runs_on, (
-        f"E8 failed: market job2 should use fromJSON expression, got {job2_runs_on}"
+    assert delta[JOB2] == CANON_RUNS_ON_JOB1, (
+        f"E8: market job2 runs-on 값이 기대 개조값과 다름 — {delta[JOB2]!r}"
     )
 
 
-# Mutation tests — verify oracle has teeth (§8.A mutant roster)
-# These are skeleton tests; full implementation includes mutant generators
+# ════════════════════════════════════════════════════════════════════════════
+# F1~F10 — 4 repo 불변 필드 (backfill 보존 불변식).  정의역 = 구조
+#          구 판에서 계산만 되고 조회 0 이던 **사문 필드 10종**이 여기 대응한다.
+# ════════════════════════════════════════════════════════════════════════════
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f1_job_ids_pinned(repo):
+    """F1 — `job_ids` (선언 순 job id) 4 repo 불변."""
+    shape = shape_of(repo)
+    assert shape.job_ids == PIN_JOB_IDS, (
+        f"F1 [{repo}]: job_ids 불일치 — 실측={shape.job_ids}, 기대={PIN_JOB_IDS}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f2a_coe_paths_pinned(repo):
+    """F2a — `coe_paths` 경로 집합 전문 불변 (§8.B leg ③ 표면).
+
+    카디널리티가 아니라 경로 집합 자체를 핀과 대조하므로, 총 개수를 유지한 채
+    job1.step → job2 로 옮기는 relocation(R-7)도 관측된다.
+    """
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)
+    assert shape.coe_paths == PIN_COE_PATHS, (
+        f"F2a [{repo}]: coe_paths 불일치 (위반 경로 열거)\n"
+        f"  실측: {shape.coe_paths}\n"
+        f"  기대: {PIN_COE_PATHS}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f2b_coe_ownership_partition_pinned(repo):
+    """F2b — `continue-on-error` 의 **job 소속 분할** 불변.
+
+    ★ F2a 와 **분리된 leg** 이다. 한 함수 안에 두면 경로 집합 assert 가 먼저
+      터져 소속 assert 가 영영 실행되지 않는다 — 소속 축이 assert 는 있으나
+      RED 방향으로 한 번도 구동되지 않는 **장식 assert** 가 된다
+      (firsthand: 분리 전 M-own1 / M-own2 / R-7 셋 다 경로 집합 assert 에서 종결).
+
+    소속 판정은 W-13 `coe_paths_of()` (= `_owned_by`) 로만 한다 — 비협상 계약 (1).
+    """
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)
+    owned = {jid: shape.coe_paths_of(jid) for jid in PIN_JOB_IDS}  # P-5 강제
+    assert owned == PIN_COE_OWNED, (
+        f"F2b [{repo}]: continue-on-error 소속 분할 변동\n"
+        f"  실측: {owned}\n"
+        f"  기대: {PIN_COE_OWNED}"
+    )
+
+
+# job id 진부분 문자열 충돌을 재현하는 최소 합성 workflow.
+# `parallel-work-sentinel` ⊂ `parallel-work-sentinel-test` 이고, coe 는 **job2 에만** 있다.
+_OWNERSHIP_PROBE_DOC = (
+    "name: ownership-probe\n"
+    "jobs:\n"
+    f"  {JOB1}:\n"
+    "    runs-on: ubuntu-latest\n"
+    "    steps:\n"
+    "      - run: echo job1\n"
+    f"  {JOB2}:\n"
+    "    runs-on: ubuntu-latest\n"
+    "    continue-on-error: true\n"
+    "    steps:\n"
+    "      - run: echo job2\n"
+)
+
+
+def test_f2c_ownership_is_not_bare_startswith():
+    """F2c — 비협상 계약 (1): 소속 판정이 bare `startswith` 가 **아님**을 실증.
+
+    두 판정 형태가 실제로 갈리는 입력(job id 진부분 문자열 충돌)을 만들어, 결격
+    형태였다면 무엇이 되는지를 같은 산출 위에서 대조한다. 이 대조가 없으면
+    `coe_paths_of()` 를 호출한다는 사실만으로 계약 준수를 **주장만** 하게 된다.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        probe = Path(td) / "ownership-probe.yml"
+        probe.write_text(_OWNERSHIP_PROBE_DOC, encoding="utf-8", newline="")
+        shape = load_workflow_shape(str(probe))
+
+    job2_coe = f"jobs.{JOB2}.continue-on-error"
+    assert shape.coe_paths == [job2_coe], (
+        f"F2c 전제 붕괴: 합성 probe 의 coe_paths={shape.coe_paths}, 기대=[{job2_coe!r}]"
+    )
+
+    owned_job1 = shape.coe_paths_of(JOB1)
+    bare_job1 = [p for p in shape.coe_paths if p.startswith(f"jobs.{JOB1}")]
+
+    # 정본 판정: job1 은 coe 를 보유하지 않는다
+    assert owned_job1 == [], f"F2c: `_owned_by` 판정이 오분류 — job1 소속={owned_job1}"
+    # 결격 판정: bare startswith 는 job2 경로를 job1 소속으로 끌어온다
+    assert bare_job1 == [job2_coe], (
+        f"F2c 대조 전제 붕괴: bare startswith 가 job2 경로를 안 잡음 — {bare_job1}"
+    )
+    # 두 형태가 실제로 갈린다 = 계약 (1) 이 load-bearing
+    assert owned_job1 != bare_job1, (
+        "F2c: 두 판정 형태가 같은 결과를 냈다 — 이 입력은 계약 (1) 을 실증하지 못한다"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f3_job_if_pinned(repo):
+    """F3 — `job_if` (job-level `if` 원문) 4 repo 불변."""
+    shape = shape_of(repo)
+    assert dict(shape.job_if) == PIN_JOB_IF, (
+        f"F3 [{repo}]: job_if 불일치 — 실측={dict(shape.job_if)}, 기대={PIN_JOB_IF}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f4_step_if_pinned(repo):
+    """F4 — `step_if` (step 순서별 `if` 원문) 4 repo 불변.
+
+    step 순서 자체가 계약이다 — step 삽입·삭제로 인덱스가 밀리면 리스트가 달라져
+    관측된다.
+    """
+    shape = shape_of(repo)
+    assert {k: list(v) for k, v in shape.step_if.items()} == PIN_STEP_IF, (
+        f"F4 [{repo}]: step_if 불일치\n"
+        f"  실측: {dict(shape.step_if)}\n"
+        f"  기대: {PIN_STEP_IF}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f5_env_keys_pinned(repo):
+    """F5 — `env_keys` (workflow / job / step 3 레벨 전건) 4 repo 불변.
+
+    §8.F 주입 채널 — YAML `env:` 로의 키 주입이 3 레벨 어디에 들어와도 관측된다.
+    """
+    shape = shape_of(repo)
+    actual = {k: list(v) for k, v in shape.env_keys.items()}
+    if actual != PIN_ENV_KEYS:
+        missing = sorted(set(PIN_ENV_KEYS) - set(actual))
+        extra = sorted(set(actual) - set(PIN_ENV_KEYS))
+        changed = sorted(
+            f"{p}: {PIN_ENV_KEYS[p]} -> {actual[p]}"
+            for p in set(actual) & set(PIN_ENV_KEYS)
+            if actual[p] != PIN_ENV_KEYS[p]
+        )
+        pytest.fail(
+            f"F5 [{repo}]: env_keys 불일치 (위반 경로 열거)\n"
+            f"  소실 경로: {missing}\n"
+            f"  신규 경로: {extra}\n"
+            f"  키 변동: {changed}"
+        )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f6_container_env_keys_absent(repo):
+    """F6 — `container_env_keys == ∅` (§8.F 주입 채널 #6, 양성 앵커 AND).
+
+    `container.env` 는 job 실행 컨테이너에 환경변수를 심는 별개 주입 표면이다.
+    """
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)  # §8.D rule 2
+    assert dict(shape.container_env_keys) == PIN_CONTAINER_ENV_KEYS, (
+        f"F6 [{repo}]: container.env 키 주입 검출 — {dict(shape.container_env_keys)}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f7_env_file_keys_absent(repo):
+    """F7 — `env_file_keys == ∅` (§8.F 주입 채널 #5, 양성 앵커 AND).
+
+    ★ **정의역 = 인라인 `$GITHUB_ENV` 기입 표기 한정 · 전수 아님** (§8.F C-3,
+      W-13 `_scan_env_file_keys` docstring 이 포섭/미포섭 축의 SSOT).
+      여러 줄 블록 리다이렉트 · heredoc · `exec` 재지정 · 변수 간접화 · 타 언어
+      writer · 간접 스크립트 호출은 **declared 미포섭 잔여**다. 본 leg 의 GREEN 을
+      "환경변수 주입 없음" 으로 인용하면 over-claim 이다.
+    """
+    shape = shape_of(repo)
+
+    _anchor_run_step(shape, repo)  # §8.D rule 2 — 스캔 대상 step 실재
+    assert dict(shape.env_file_keys) == PIN_ENV_FILE_KEYS, (
+        f"F7 [{repo}]: $GITHUB_ENV 인라인 기입 검출 — {dict(shape.env_file_keys)}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f8_step_shell_pinned(repo):
+    """F8 — `step_shell` (step 순서별 `shell:` 원문) 4 repo 불변 (전건 미지정).
+
+    §8.B rc 흡수 표면 — step 단위 `shell: bash {0}` 지정은 셸의 `-e` 를 떨궈
+    run 블록 중간 실패를 흡수한다(GitHub Actions 기본은 `bash -e`). 그 1줄 주입이
+    여기서 관측된다.
+    """
+    shape = shape_of(repo)
+
+    _anchor_steps(shape, repo)  # §8.D rule 2
+    actual = {k: list(v) for k, v in shape.step_shell.items()}
+    assert actual == PIN_STEP_SHELL, (
+        f"F8 [{repo}]: step `shell:` 지정 변동 — 실측={actual}, 기대={PIN_STEP_SHELL}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f9_defaults_run_shell_absent(repo):
+    """F9 — workflow-level `defaults.run.shell` 부재 (§8.B 원거리 1줄 우회 표면).
+
+    workflow 최상단 `defaults: run: shell: bash {0}` 한 줄은 **전 job·전 step** 의
+    셸을 한꺼번에 바꾼다. 주입 지점이 검사 대상 job 에서 멀어 눈에 띄지 않는다.
+    """
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)  # §8.D rule 2
+    assert shape.defaults_run_shell == PIN_DEFAULTS_RUN_SHELL, (
+        f"F9 [{repo}]: workflow-level defaults.run.shell 주입 검출 — "
+        f"{shape.defaults_run_shell!r}"
+    )
+
+
+@pytest.mark.parametrize("repo", ALL_REPOS)
+def test_f10_job_defaults_run_shell_absent(repo):
+    """F10 — job-level `jobs.<id>.defaults.run.shell` 부재 (§8.B 우회 표면)."""
+    shape = shape_of(repo)
+
+    _anchor_jobs(shape, repo)  # §8.D rule 2
+    assert dict(shape.job_defaults_run_shell) == PIN_JOB_DEFAULTS_RUN_SHELL, (
+        f"F10 [{repo}]: job-level defaults.run.shell 주입 검출 — "
+        f"{dict(shape.job_defaults_run_shell)}"
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# F11 — 비협상 계약 (2): DupSafeLoader (중복 키 silent last-wins 차단)
+# ════════════════════════════════════════════════════════════════════════════
+_DUP_DOC = (
+    "name: dup-probe\n"
+    "concurrency:\n"
+    "  group: A\n"
+    "concurrency:\n"
+    "  group: B\n"
+    "jobs:\n"
+    "  only-job:\n"
+    "    runs-on: ubuntu-latest\n"
+    "    steps:\n"
+    "      - run: echo hi\n"
+)
+
+
+def test_f11_duplicate_key_fail_closed():
+    """F11 — 같은 레벨 중복 키는 `ShapeError(workflow_parse_error)` 로 fail-closed.
+
+    대조 실증(같은 입력, 두 파서): bare `yaml.safe_load` 는 **에러 0 으로 마지막
+    값만 남긴다**. 그 파서 위에 세운 "top-level concurrency 개수 == 1" 류 leg 은
+    중복 주입에 구조적으로 눈이 먼다. 본 leg 은 W-13 이 그 경로를 차단함을
+    firsthand 로 확정한다 (W-13 비협상 계약 (2)).
+    """
+    yaml = pytest.importorskip("yaml", reason="PyYAML 부재 — W-13 P-6 정의역 밖")
+
+    # 대조군: bare safe_load = silent last-wins (에러 0)
+    silent = yaml.safe_load(_DUP_DOC)
+    assert silent["concurrency"] == {"group": "B"}, (
+        f"대조 전제 붕괴: bare safe_load 가 last-wins 를 내지 않음 — {silent['concurrency']}"
+    )
+
+    # 본군: W-13 = fail-closed
+    with tempfile.TemporaryDirectory() as td:
+        probe = Path(td) / "dup.yml"
+        probe.write_text(_DUP_DOC, encoding="utf-8", newline="")
+        with pytest.raises(ShapeError) as exc:
+            load_workflow_shape(str(probe))
+    assert exc.value.error_kind == "workflow_parse_error", (
+        f"F11: error_kind 불일치 — {exc.value.error_kind!r}, 기대 'workflow_parse_error'"
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# 오라클 판별력 실증 — in-test mutant (§8.A mutant roster)
+# ════════════════════════════════════════════════════════════════════════════
+# 원본 fixture 는 읽기 전용. 변이는 tempdir 사본에만 가하고, 앵커 미적중은
+# **하네스 결함**이므로 fail-closed 로 죽인다 (no-op 변이의 가짜 GREEN 차단).
+A_TOP_CONCURRENCY_BLOCK = (
+    "concurrency:\n"
+    "  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' "
+    "&& github.event.pull_request.number || github.run_id }}\n"
+    "  cancel-in-progress: true\n"
+)
+
+
+def _mutate_to_tempfile(repo: str, anchor: str, repl: str, label: str, td: str) -> Path:
+    src = (FIXTURE_DIR / CONSUMER_FIXTURES[repo]).read_text(encoding="utf-8")
+    assert anchor in src, (
+        f"{label}: 앵커 미적중 — 변이 무효. fixture 문면이 바뀌었다면 앵커를 갱신하라."
+    )
+    mutated = src.replace(anchor, repl, 1)
+    assert mutated != src, f"{label}: 치환 후 문면 불변 — 변이 무효 (no-op)"
+    out = Path(td) / CONSUMER_FIXTURES[repo]
+    out.write_text(mutated, encoding="utf-8", newline="")
+    return out
 
 
 def test_oracle_mutation_r1_remove_mctrader_top_concurrency():
+    """R-1 (§8.A): mctrader top-level `concurrency` 블록 제거 → E1 축 RED.
+
+    형제 독립성도 함께 실증한다 — E5(timeout) 축은 이 변이에 **영향받지 않아야**
+    한다. 한 변이가 무관한 leg 까지 무너뜨리면 원인 귀속이 불가능해진다.
+
+    ★ 형제 비교의 기준은 핀 상수가 아니라 **같은 파일의 변이 전 산출**이다
+      (self-referential). 핀을 기준으로 삼으면 바깥에서 이미 fixture 를 건드린
+      상황에서 "R-1 이 E5 를 깼다" 는 **틀린 귀속**이 보고된다.
     """
-    R-1 mutant (§8.A line 608): Remove mctrader top-level concurrency block.
-    Expected: E1 RED ∧ (E2, E3, E4, E5 each report independently).
+    base = shape_of("mctrader")
+    with tempfile.TemporaryDirectory() as td:
+        mutant = _mutate_to_tempfile("mctrader", A_TOP_CONCURRENCY_BLOCK, "", "R-1", td)
+        shape = load_workflow_shape(str(mutant))
 
-    This test verifies the oracle *can* detect the removal (discriminating capability).
-    """
-    # Create a mutant by removing top_concurrency
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-
-    # Mutant: delete concurrency
-    if "concurrency" in yaml_doc:
-        del yaml_doc["concurrency"]
-
-    shape = extract_workflow_shape(yaml_doc)
-
-    # E1 should fail
-    assert shape["top_concurrency"] is None, "R-1 oracle failed: E1 should be RED"
-
-    # E2, E3 should independently report (not silently pass because E1 failed)
-    # This is the §8.D rule 2 check: absence + positive anchor
-    assert "concurrency" not in shape["concurrency_paths"], "R-1 oracle: concurrency_paths should be empty"
+    # E1 축이 실제로 무너지는가 (판별력)
+    assert shape.top_concurrency is None, (
+        f"R-1: E1 축이 여전히 GREEN — top_concurrency={shape.top_concurrency}"
+    )
+    assert "concurrency" not in shape.concurrency_paths, (
+        f"R-1: concurrency 경로가 남아있음 — {shape.concurrency_paths}"
+    )
+    # 형제 축 독립 — 변이 전(base) 대비 불변이어야 (기준 = 같은 파일 자신)
+    assert dict(shape.timeout_paths) == dict(base.timeout_paths), (
+        f"R-1: 무관한 E5 축이 동반 변동 — 변이전={dict(base.timeout_paths)}, "
+        f"변이후={dict(shape.timeout_paths)}"
+    )
 
 
 def test_oracle_taut_template_vs_mctrader_runs_on():
+    """T-taut (§8.A): 항진 대조군 — 밀짚 오라클 vs 실 오라클.
+
+    밀짚 = 원시 `runs_on` 위의 "두 job 에 runs-on 이 존재하는가". 정본 상속값을
+    포함하므로 로컬 개조가 전멸해도 GREEN 이다 (판별력 ~0).
+    실 오라클 = 파생값(`runs_on_local_delta`) + 값 동일성(E2).
+
+    본 leg 은 **두 오라클이 같은 입력쌍에서 실제로 갈리는지**를 확정한다. 갈리지
+    않으면 T-taut 는 대조군 역할을 못 한다.
+
+    ★ 판정은 핀 상수가 아니라 **mctrader as-found ↔ backtest 덮어쓰기 두 산출의
+      대조**로만 한다 (self-referential). 핀을 기준으로 삼으면 이 leg 이 E2·E5 를
+      중복 판정해 무관한 변이에서까지 동반 RED 를 내고 원인 귀속을 흐린다.
+      "mctrader 가 핀과 같은가" 는 E2·E5 의 몫이다.
     """
-    T-taut (§8.A line 623): Tautological control — straw oracle vs. real oracle.
+    base = shape_of("mctrader")
 
-    Straw oracle: Only check runs_on inheritance (always GREEN when values inherited).
-    Real oracle: Detect structural differences (E2, E5, etc.).
+    # T-taut mutant — backtest 정본 형상으로 통째 덮어쓰기 (로컬 개조 전멸)
+    with tempfile.TemporaryDirectory() as td:
+        overwritten = Path(td) / CONSUMER_FIXTURES["mctrader"]
+        overwritten.write_text(
+            (FIXTURE_DIR / CONSUMER_FIXTURES["mctrader-backtest"]).read_text(encoding="utf-8"),
+            encoding="utf-8",
+            newline="",
+        )
+        mutant = load_workflow_shape(str(overwritten))
 
-    This demonstrates why text-only assertions (bare runs_on comparison) are insufficient.
-    """
-    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
-    yaml_doc = load_workflow_yaml(yaml_path)
-    shape = extract_workflow_shape(yaml_doc)
-
-    # Straw oracle (insufficient): just check runs-on exists
-    straw_passes = all(
-        jid in shape["runs_on"]
-        for jid in ["parallel-work-sentinel", "parallel-work-sentinel-test"]
+    # (1) 밀짚 오라클은 **양쪽 다** GREEN = 판별력 0 (이것이 대조군의 요점)
+    straw_base = all(jid in base.runs_on for jid in PIN_JOB_IDS)
+    straw_mutant = all(jid in mutant.runs_on for jid in PIN_JOB_IDS)
+    assert straw_base and straw_mutant, (
+        "T-taut 대조 전제 붕괴: 밀짚 오라클이 한쪽에서 RED — "
+        f"base={straw_base}, mutant={straw_mutant}"
     )
 
-    # Real oracle (sufficient): must also verify E2 (group matches PIN)
-    real_oracle_passes = (
-        shape["top_concurrency"] is not None and
-        shape["top_concurrency"].get("group") == PIN_MCTRADER_GROUP
+    # (2) 실 오라클(구조 술어)은 두 입력을 **구별한다**
+    real_divergent = (
+        base.top_concurrency != mutant.top_concurrency
+        or dict(base.timeout_paths) != dict(mutant.timeout_paths)
     )
-
-    # Both should pass for mctrader, but the point is that straw oracle alone
-    # is weaker (would pass even if other elements were corrupted)
-    assert straw_passes, "Straw oracle should pass (runs-on present)"
-    assert real_oracle_passes, "Real oracle should pass (E2 holds)"
+    assert real_divergent, (
+        "T-taut: 실 오라클이 두 입력을 구별하지 못했다 — 밀짚과 판별력이 같아졌고, "
+        "mctrader 의 로컬 개조가 정본 형상과 구분되지 않는다는 뜻이다 "
+        f"(top_concurrency={mutant.top_concurrency}, timeout_paths={dict(mutant.timeout_paths)})"
+    )
 
 
 if __name__ == "__main__":
-    import pytest
-    pytest.main([__file__, "-v"])
+    sys.exit(pytest.main([__file__, "-v"]))
