@@ -328,12 +328,36 @@ io.open(path, "w", encoding="utf-8", newline="\n").write(raw.replace(old, new, 1
 PY
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ crash-as-RED 차단 (CFP-2984 G7 감사 — 실사건 회귀 방지)
+#   `rc≠0 → RED` 단독 판정은 **크래시와 검출을 구별하지 못한다**. 오라클이 예외로 죽으면
+#   expect=RED 인 전 케이스가 "잡았다" 로 계상되고 mutant 원장이 통째로 거짓이 된다.
+#   ★ baseline 대조군은 **조건부 크래시**(검출 경로에서만 죽는 경우)를 못 잡는다 — G7 실증.
+#   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
+# ─────────────────────────────────────────────────────────────────────────────
+crash_marker() { # <output> → 0 = 크래시 흔적 있음
+  case "$1" in
+    *Traceback*|*SyntaxError*|*IndentationError*|*TabError*) return 0 ;;
+  esac
+  return 1
+}
+
 assert_verdict() {
   local name="$1" expect="$2" story="$3" verdict
   set +e
   CHECK_OUT="$(python3 "$WORK/checker.py" "$story" "$CLAUDE_MD" 2>&1)"
   CHECK_RC=$?
   set -e
+  if crash_marker "$CHECK_OUT"; then
+    echo "X   FAIL: $name — 오라클 크래시(예외). rc≠0 을 검출(RED)로 셀 수 없다"
+    echo "$CHECK_OUT" | sed 's/^/    ! /'
+    FAIL=$((FAIL+1)); return
+  fi
+  if [ "$CHECK_RC" -ne 0 ] && ! printf '%s' "$CHECK_OUT" | grep -q "VIOLATION"; then
+    echo "X   FAIL: $name — RED 인데 판정 근거 마커(VIOLATION)가 없다 (무증거 RED)"
+    echo "$CHECK_OUT" | sed 's/^/    ! /'
+    FAIL=$((FAIL+1)); return
+  fi
   verdict="PASS"; [ "$CHECK_RC" -eq 0 ] || verdict="RED"
   if [ "$verdict" = "$expect" ]; then
     echo "OK  $name (expect=$expect got=$verdict)"
