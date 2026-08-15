@@ -62,6 +62,7 @@ cat > "$PROBE" <<'PYEOF'
 "실제로 매 PR 에서 실행됨" 의 증명이 아니다.
 """
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -118,6 +119,14 @@ def triggers_of(raw):
     return set()
 
 
+_SCRIPT_REF = re.compile(r"(?:tests|scripts)/[A-Za-z0-9_./-]+\.(?:sh|py)")
+
+
+def _referenced_scripts(body):
+    """workflow 본문(주석 제거 후)이 직접 언급하는 repo 스크립트 경로 — 2-hop 진단 전용."""
+    return _SCRIPT_REF.findall(body)
+
+
 def expand_local_actions(stripped, repo_root):
     """`uses: ./<path>` 복합 액션 1-hop 확장 — 액션 내부 run: 도 실행자 본문으로 계상."""
     parts = [stripped]
@@ -169,6 +178,22 @@ def main(argv=None):
         hits = [name for name, body in live if tn in body]
         print(f"EXECUTORS {tn} {len(hits)} {','.join(hits) if hits else '-'}")
         if not hits:
+            # 진단 전용(verdict 무영향) — workflow 가 직접 실행하는 repo 스크립트가 target 을
+            # 간접 호출하는가(2-hop). 판정은 **직접 실행자**로만 한다(설계 §5.3.2 3형태 = hop-1).
+            # 이 줄은 "왜 0 인가" 를 구분해 준다: 완전 미실행 vs 자가-테스트 경유 간접 실행.
+            indirect = []
+            for name, body in live:
+                for cand in sorted(set(_referenced_scripts(body))):
+                    p = root / cand
+                    if not p.is_file() or cand == tn:
+                        continue
+                    try:
+                        inner = strip_comments(p.read_text(encoding="utf-8", errors="replace"))
+                    except OSError:
+                        continue
+                    if tn in inner:
+                        indirect.append(f"{name}→{cand}")
+            print(f"INDIRECT {tn} {len(indirect)} {','.join(indirect) if indirect else '-'}")
             print(f"::error::[AC-12b] {tn}: 실행 workflow step 0건 "
                   f"(silent-un-run — 주석 언급·dead workflow 는 실행자 아님)", file=sys.stderr)
             rc = 1
