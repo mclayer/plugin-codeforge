@@ -1,0 +1,9 @@
+{
+  "empty_reason": "no_recoverable_fragment",
+  "failed_at": "2026-08-15T21:41:00+09:00",
+  "producer": {
+    "agent_type": "DeveloperAgent",
+    "produced_at": "2026-08-15T21:57:29+09:00",
+    "story_key": "CFP-2984"
+  }
+}

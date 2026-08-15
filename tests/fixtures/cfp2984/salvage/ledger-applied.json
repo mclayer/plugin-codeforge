@@ -1,0 +1,17 @@
+{
+  "rows": [
+    {
+      "body_digest": "f52b9a20d28628d8547552b124295d784c322845bd1e5c38122b0b1a57c8d4f6",
+      "executed_at": "2026-08-15T21:40:00+09:00",
+      "op": "comment_add",
+      "status": "applied",
+      "target_ref": "mclayer/plugin-codeforge#2984"
+    },
+    {
+      "executed_at": "2026-08-15T21:42:00+09:00",
+      "op": "label_add",
+      "status": "intended",
+      "target_ref": "mclayer/plugin-codeforge#4242"
+    }
+  ]
+}
