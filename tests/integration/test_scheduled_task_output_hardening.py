@@ -407,7 +407,8 @@ class TestMarkdownNeutralizationKeepsD3Roundtrip:
         )
 
         fake_gh = mock.Mock(return_value=mock.Mock(
-            returncode=0, stdout=json.dumps({"comments": [{"body": body}]})))
+            returncode=0,
+            stdout=json.dumps({"comments": [{"body": body, "viewerDidAuthor": True}]})))
         recovered = sut.fetch_existing_keys("owner/repo#1", gh=fake_gh)
 
         assert recovered, f"채널 회수 실패(빈 집합) — dedup 무력화: {recovered!r}"
@@ -471,6 +472,217 @@ class TestMarkdownNeutralizationKeepsD3Roundtrip:
         # (ㄷ) INV-E 무손상 — 무해화가 verdict 어휘를 되살리지 않는다
         leaked = [c for c in cases if sut.contains_verdict_lexicon(sut._safe_text(c))]
         assert leaked == [], f"INV-E 위반 {len(leaked)}건: {leaked[:3]!r}"
+
+
+# ═════════ F-SEC-1: 코멘트 저작 신뢰 = viewerDidAuthor ∧ SENTINEL ═══════════════
+# 설계 판정 SSOT = ADR-172 Amendment 6 / A6-2. 종전 술어는 `SENTINEL in body` 단독이라
+#   **아무 인증 계정**이나 sentinel + `· key=` 줄을 흉내내면 그 키가 dedup 집합에 들어갔다.
+#   결과는 중복 제거 실패가 아니라 **1차 탐지 false-negative** — 아직 한 번도 보고된 적
+#   없는 잔재가 "기보고" 로 분류돼 **영구 억제**된다(채널이 append-only 라 영속하고,
+#   억제가 일어났다는 신호는 산출 어디에도 남지 않는다).
+def _channel_payload(comments):
+    """`gh issue view --json comments` 응답 대역. comments = [(body, authored|None)]."""
+    import json
+    out = []
+    for body, authored in comments:
+        c = {"body": body}
+        if authored is not None:
+            c["viewerDidAuthor"] = authored
+        out.append(c)
+    return json.dumps({"comments": out})
+
+
+def _gh_returning(payload, rc=0):
+    from unittest import mock
+    return mock.Mock(return_value=mock.Mock(returncode=rc, stdout=payload))
+
+
+def _forged_body(key):
+    """타인이 우리 산출물 형식을 **그대로 흉내낸** 본문 (sentinel + 사실 줄)."""
+    return "%s items=1 (사실 관측)\n- 선언=x · 실측=y · 불일치=N · key=%s\n%s task=t run=r" % (
+        sut.SENTINEL, key, sut.TRAILER)
+
+
+class TestCommentAuthorTrust:
+    """F-SEC-1 — 타인 저작 코멘트의 키는 dedup 집합에 진입하지 못한다.
+
+    ★ 비공허 앵커: **같은 본문**을 저작 플래그만 바꿔 두 번 통과시킨다. 하나는 채택되고
+      하나는 배제된다는 사실이 곧 판별자가 살아 있다는 증거다(본문·형식 변수 고정).
+
+    mutant kill:
+      ① `viewerDidAuthor` 판정 제거(SENTINEL 단독 복귀) ⇒ 위조 키가 진입 → RED
+      ② `c.get("viewerDidAuthor", True)`(필드 부재 default-true) ⇒ 부재 픽스처 진입 → RED
+    """
+
+    FORGED_KEY = "worktree:~/.claude/worktrees/forged-by-stranger"
+    OURS_KEY = "worktree:~/.claude/worktrees/ours"
+
+    def test_foreign_authored_comment_keys_are_rejected(self):
+        """타인 저작(`viewerDidAuthor=false`) 위조 코멘트의 키는 회수되지 않는다."""
+        payload = _channel_payload([
+            (_forged_body(self.FORGED_KEY), False),
+            (_forged_body(self.OURS_KEY), True),
+        ])
+        recovered = sut.fetch_existing_keys("owner/repo#1", gh=_gh_returning(payload))
+
+        assert recovered is not None, "조회 실패 — 이 오라클이 공허해진다"
+        assert self.OURS_KEY in recovered, (
+            f"자기 저작 키가 회수되지 않았다(과잉 차단): {recovered}"
+        )
+        assert self.FORGED_KEY not in recovered, (
+            f"타인 저작 위조 키가 dedup 집합에 진입 — 그 잔재는 한 번도 보고되지 않은 채 "
+            f"영구 억제된다: {recovered}"
+        )
+
+    def test_missing_or_nonbool_author_field_is_distrusted(self):
+        """필드 **부재**·비-bool 은 불신 (fail-closed).
+
+        ★ `get(..., True)` 형상이 방어를 조용히 무효화하는 것을 여기서 결박한다.
+        ★ 정의역 non-empty 선행 단언: 부정 단언 전에 **채택 대조군**이 실제로 회수되는지
+          먼저 확인한다(전부 배제하는 구현으로도 통과하는 공허 차단).
+        """
+        variants = [
+            ("필드 부재", None),
+            ("문자열 'true'", "true"),
+            ("정수 1", 1),
+            ("명시 false", False),
+        ]
+        assert len(variants) >= 3, "정의역 붕괴"
+
+        # 대조군: 같은 형식·같은 코드 경로에서 True 는 회수된다
+        ok = sut.fetch_existing_keys(
+            "owner/repo#1", gh=_gh_returning(_channel_payload([(_forged_body(self.OURS_KEY), True)])))
+        assert ok == {self.OURS_KEY}, f"대조군 붕괴: 자기 저작 키 미회수 — {ok}"
+
+        for label, value in variants:
+            payload = _channel_payload([(_forged_body(self.FORGED_KEY), value)])
+            recovered = sut.fetch_existing_keys("owner/repo#1", gh=_gh_returning(payload))
+            assert recovered == set(), (
+                f"[{label}] 불신되어야 할 코멘트의 키가 진입했다(fail-closed 위반): {recovered}"
+            )
+
+    def test_self_quotation_residue_is_declared_not_closed(self):
+        """**봉합이 닫지 못하는 것**을 고정한다 (A6-2 대가 2항 — 자기 저작 인용 잔여).
+
+        같은 자격증명으로 저작된 코멘트가 sentinel 과 key 줄을 포함하면 **여전히 채택**된다.
+        운영자·에이전트가 같은 채널에 보고 본문을 인용하면 그 인용이 억제로 작동한다
+        (CFP-2884 의 자기 SENTINEL 인용 무력화와 동형).
+
+        ★ 이 테스트는 결함을 고발하는 것이 아니라 **정의역 경계를 고정**한다 — 이 성질이
+          조용히 바뀌면(닫히든 넓어지든) 선언 문면과 코드가 어긋난 상태로 남지 않게.
+        """
+        quoted = "인용합니다:\n" + _forged_body(self.FORGED_KEY)
+        recovered = sut.fetch_existing_keys(
+            "owner/repo#1", gh=_gh_returning(_channel_payload([(quoted, True)])))
+        assert recovered == {self.FORGED_KEY}, (
+            f"자기 저작 인용 잔여의 형상이 바뀌었다 — 선언(A6-2 대가 2항) 갱신 필요: "
+            f"{recovered}"
+        )
+
+
+# ═════════ F-SEC-2: 발화 직전 채널 가시성 preflight (fail-closed) ═══════════════
+class TestChannelVisibilityPreflight:
+    """F-SEC-2 — 공개 채널에는 발화하지 않는다 (ADR-172 A6-3).
+
+    보고 키에는 private repo 명·디렉터리 규모가 실리는데 그 슬러그는 사용자명도 드라이브도
+    secret 패턴도 아니라 **어떤 마스크에도 걸리지 않는다**. 마스킹·해시는 기각됐다(A6-4:
+    슬러그가 곧 식별 payload — 지우면 "위치 특정 불능" 을 자발적으로 재생산). ⇒ 유일한
+    통제는 **채널 가시성**이고, 채널 값은 런타임 인자라 리뷰 판독면에 없으므로 집행을
+    **값을 쥔 프로세스**로 옮긴다.
+
+    mutant kill: ① preflight 제거 ② 허용집합에 `public` 추가 ③ 조회 실패 시 fail-open
+      (`return (True, None)`) ⇒ 각각 RED.
+    """
+
+    BLOCKED = (
+        ("공개", "public"),
+        ("판정 불가 — 조회 실패", None),
+        ("미지의 신규 값", "semi-public-2049"),
+    )
+    ALLOWED = (("비공개", "private"), ("내부", "internal"))
+
+    def _gh_vis(self, visibility, rc=0):
+        from unittest import mock
+        import json
+        payload = "{}" if visibility is None else json.dumps({"visibility": visibility})
+        return mock.Mock(return_value=mock.Mock(returncode=rc, stdout=payload))
+
+    def test_allowed_and_blocked_partition(self):
+        """허용/차단 분할 — 양방향 대조군(한 방향만이면 상수 구현이 통과한다)."""
+        assert len(self.BLOCKED) >= 3 and len(self.ALLOWED) >= 2, "정의역 붕괴"
+        for label, vis in self.ALLOWED:
+            allowed, got = sut.channel_disclosure_allowed("o/r#1", gh=self._gh_vis(vis))
+            assert allowed is True, f"[{label}] 비공개 계열인데 차단됐다 (got={got!r})"
+        for label, vis in self.BLOCKED:
+            allowed, got = sut.channel_disclosure_allowed("o/r#1", gh=self._gh_vis(vis))
+            assert allowed is False, f"[{label}] 차단돼야 하는데 통과했다 (got={got!r})"
+        # 조회 자체가 실패(rc≠0)해도 차단 — 판정 불가는 안전이 아니다
+        allowed, got = sut.channel_disclosure_allowed("o/r#1", gh=self._gh_vis("private", rc=1))
+        assert allowed is False and got is None, f"조회 실패 fail-open: allowed={allowed} got={got!r}"
+
+    def test_public_channel_run_posts_nothing_but_keeps_exit_and_marker(self, tmp_path):
+        """공개 채널에서 `run()` 은 **발화 0** · rc 0 · DONE 마커 유지 (INV-F 무손상).
+
+        ★ 비공허 앵커: 같은 형상을 `private` 로만 바꾸면 **발화 1** 이 관측된다(아래 대조군).
+          그 대조가 없으면 "발화 0" 이 preflight 때문인지 관측 0건 때문인지 구별되지 않는다.
+        """
+        sys.path.insert(0, str(Path(__file__).parent))
+        from test_scheduled_task_dispatch_path import (       # noqa: E402
+            FakeChannel, invoke_run, make_obs_list,
+        )
+
+        chan = FakeChannel(visibility="public")
+        r = invoke_run(tmp_path, make_obs_list(2), chan)
+
+        assert r.rc == 0, f"INV-F 위반: rc={r.rc}"
+        assert len(chan.posted) == 0, (
+            f"공개 채널에 발화했다 — 조직 topology 공표: {chan.posted}"
+        )
+        assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 0, 0), (
+            f"DONE 값 불일치(관측은 했고 발화만 막혔어야 한다): observed={r.observed} "
+            f"new={r.new} posted={r.posted} halted={r.halted}"
+        )
+        assert len(chan.repo_viewed()) == 1, (
+            f"가시성 preflight 미도달 — 차단 근거가 다른 데 있다: {chan.calls}"
+        )
+
+    def test_control_private_channel_posts(self, tmp_path):
+        """대조군: 같은 형상 + `private` → 발화 1 (판별력 귀속)."""
+        sys.path.insert(0, str(Path(__file__).parent))
+        from test_scheduled_task_dispatch_path import (       # noqa: E402
+            FakeChannel, invoke_run, make_obs_list,
+        )
+
+        chan = FakeChannel(visibility="private")
+        r = invoke_run(tmp_path, make_obs_list(2), chan)
+
+        assert len(chan.posted) == 1, f"비공개 채널인데 발화 0: {chan.calls}"
+        assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 1, 0), (
+            f"대조군 DONE 불일치: {r.observed}/{r.new}/{r.posted}/{r.halted}"
+        )
+
+    def test_preflight_leaves_no_local_state(self, tmp_path):
+        """INV-C 무손상 — preflight 가 로컬 상태 파일을 만들지 않는다(캐시 0).
+
+        ★ A6-3 이 요구한 실측: 캐시를 넣었다면 그 파일이 dedup 외 상태가 되어 INV-C 를
+          깬다. 여기서는 **소유 상태 파일 집합의 순증 0** 으로 잰다.
+        """
+        sys.path.insert(0, str(Path(__file__).parent))
+        from test_scheduled_task_dispatch_path import (       # noqa: E402
+            FakeChannel, invoke_run, make_obs_list, owned_gc_state_files,
+        )
+
+        before = owned_gc_state_files()
+        chan = FakeChannel(visibility="public")
+        invoke_run(tmp_path, make_obs_list(2), chan)
+        after = owned_gc_state_files()
+
+        assert before is not None and after is not None, (
+            "상태 파일 판정 불가 — 이 오라클이 공허해진다"
+        )
+        assert after - before == set(), (
+            f"preflight 가 로컬 상태를 남겼다(INV-C 위반 — 캐시 의심): {after - before}"
+        )
 
 
 if __name__ == "__main__":

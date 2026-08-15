@@ -188,20 +188,40 @@ class FakeChannel:
         view_rc: `issue view` 반환 코드 (0 아님 ⇒ `fetch_existing_keys` → None).
         comment_rc: `issue comment` 반환 코드 (0 아님 ⇒ `post_report` → False).
         view_stdout: `issue view` stdout 강제 치환 (형식 위반 주입용, None 이면 정상 JSON).
+        visibility: `repo view --json visibility` 가 돌려줄 값 (F-SEC-2 preflight 대역).
+            기본 `"private"` = 발화 허용. `"public"` 이면 SUT 가 fail-closed 로 막는다.
+        repo_view_rc: `repo view` 반환 코드 (0 아님 ⇒ 가시성 **판정 불가** → fail-closed).
+
+    ★ 코멘트 저작 축 (F-SEC-1, ADR-172 A6-2): 응답의 각 코멘트에 `viewerDidAuthor` 를
+      싣는다. `seed()` = 우리 저작(True), `seed_foreign()` = **타인 저작**(False).
+      이 필드가 없으면 SUT 가 fail-closed 로 전량 불신하므로 픽스처 갱신이 필수다
+      (미갱신은 조용히 통과하지 않고 RED 로 드러난다 — 그게 fail-closed 의 부수 이득).
     """
 
-    def __init__(self, view_rc=0, comment_rc=0, view_stdout=None):
+    def __init__(self, view_rc=0, comment_rc=0, view_stdout=None,
+                 visibility="private", repo_view_rc=0):
         self.comments = []      # 채널에 실재하는 코멘트 본문 전량 (seed + posted)
+        self.authored = []      # comments 와 **같은 길이**의 viewerDidAuthor 플래그
         self.posted = []        # 이번 harness 실행들이 **실제로 착지시킨** 본문만
         self.calls = []         # gh argv 기록 (비공허성 앵커)
         self.view_rc = view_rc
         self.comment_rc = comment_rc
         self.view_stdout = view_stdout
+        self.visibility = visibility
+        self.repo_view_rc = repo_view_rc
 
-    def seed(self, body):
-        """채널에 이미 실려 있는 코멘트를 심는다 (기보고분 재현)."""
+    def seed(self, body, authored=True):
+        """채널에 이미 실려 있는 **우리 저작** 코멘트를 심는다 (기보고분 재현)."""
         self.comments.append(body)
+        self.authored.append(authored)
         return self
+
+    def seed_foreign(self, body):
+        """**타인 저작** 코멘트를 심는다 (`viewerDidAuthor=false`).
+
+        위조 시나리오 재현용 — 아무 인증 계정이나 sentinel + `· key=` 줄을 흉내낼 수 있다.
+        SUT 는 이 코멘트의 키를 dedup 집합에 넣어서는 안 된다(F-SEC-1)."""
+        return self.seed(body, authored=False)
 
     def seed_report(self, observations, task="seed", run_id="seed"):
         """production 렌더러로 기보고 코멘트를 심는다 — 키 라운드트립이 실물이 되게."""
@@ -212,12 +232,25 @@ class FakeChannel:
         argv = [str(a) for a in args]
         self.calls.append(argv)
 
+        # ★ `repo view` 를 **먼저** 가른다 — 아래 `issue view` 분기가 `"view" in argv`
+        #   로만 판별하므로 순서를 뒤집으면 가시성 조회가 코멘트 JSON 을 받는다.
+        if "repo" in argv and "view" in argv:
+            if self.repo_view_rc != 0:
+                return subprocess.CompletedProcess(argv, self.repo_view_rc, stdout="", stderr="")
+            if self.visibility is None:          # 필드 부재 형상 (판정 불가)
+                return subprocess.CompletedProcess(argv, 0, stdout="{}", stderr="")
+            return subprocess.CompletedProcess(
+                argv, 0, stdout=json.dumps({"visibility": self.visibility}), stderr="")
+
         if "view" in argv and "--json" in argv:
             if self.view_rc != 0:
                 return subprocess.CompletedProcess(argv, self.view_rc, stdout="", stderr="")
             payload = self.view_stdout
             if payload is None:
-                payload = json.dumps({"comments": [{"body": b} for b in self.comments]})
+                payload = json.dumps({"comments": [
+                    {"body": b, "viewerDidAuthor": a}
+                    for b, a in zip(self.comments, self.authored)
+                ]})
             return subprocess.CompletedProcess(argv, 0, stdout=payload, stderr="")
 
         if "comment" in argv:
@@ -229,6 +262,7 @@ class FakeChannel:
             if self.comment_rc != 0:
                 return subprocess.CompletedProcess(argv, self.comment_rc, stdout="", stderr="")
             self.comments.append(body)
+            self.authored.append(True)     # 우리가 방금 쓴 코멘트 = 우리 저작 (F-SEC-1)
             self.posted.append(body)
             return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
 
@@ -236,7 +270,13 @@ class FakeChannel:
 
     # --- 조회 편의 ---
     def viewed(self):
-        return [c for c in self.calls if "view" in c]
+        """**채널 코멘트 조회**(`issue view`)만. 가시성 조회(`repo view`)는 제외한다 —
+        섞으면 "채널 조회 1회" 를 세는 형제 단언이 preflight 도입만으로 조용히 어긋난다."""
+        return [c for c in self.calls if "view" in c and "repo" not in c]
+
+    def repo_viewed(self):
+        """가시성 preflight 조회(`repo view`) 호출만 (F-SEC-2 비용·도달 앵커)."""
+        return [c for c in self.calls if "repo" in c and "view" in c]
 
     def commented(self):
         return [c for c in self.calls if "comment" in c]
@@ -670,13 +710,25 @@ class TestSubprocessSurface:
         mutant kill: 허용집합 밖 subprocess 를 1건이라도 도입 ⇒ RED
           (예: `_normalize_paths` 에 임의 `subprocess.run` 삽입).
         비공허 앵커: 조기 반환이 아니라 **발화까지 완주**한 실행에서 0건이어야 한다 —
-          gh 포트 호출 2회(view+comment)와 `posted=1` 로 완주를 확증한다.
+          gh 포트 호출 3회와 `posted=1` 로 완주를 확증한다.
+
+        ★ 3회의 내역 (FIX13 / F-SEC-2 비용 실측): `issue view`(dedup 조회) +
+          **`repo view`(가시성 preflight — 신규 1회)** + `issue comment`(발화).
+          이 단언이 곧 A6-3 이 선언한 *"조회 1회 추가"* 의 **측정 지점**이다 — 비용이
+          2회를 넘어 늘면(캐시 부재로 중복 조회 등) 여기서 RED 다.
         """
         chan = FakeChannel()
 
         r = invoke_run(tmp_path, make_obs_list(2), chan)   # 내부에서 == ALLOWED 단언
 
-        assert len(chan.calls) == 2, "gh 포트 호출 %d회 (기대 2: view+comment)" % len(chan.calls)
+        assert len(chan.calls) == 3, (
+            "gh 포트 호출 %d회 (기대 3: issue view + repo view preflight + issue comment)"
+            % len(chan.calls)
+        )
+        assert len(chan.repo_viewed()) == 1, (
+            "가시성 preflight 조회 %d회 (기대 정확히 1 — 발화당 1회를 넘으면 예산 선언 위반)"
+            % len(chan.repo_viewed())
+        )
         assert (r.observed, r.new, r.posted, r.halted) == (2, 2, 1, 0), (
             "완주 앵커 불일치: observed=%d new=%d posted=%d halted=%d"
             % (r.observed, r.new, r.posted, r.halted)

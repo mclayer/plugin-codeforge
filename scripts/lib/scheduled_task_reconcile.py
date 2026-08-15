@@ -831,7 +831,29 @@ def fetch_existing_keys(channel, gh=None):
 
     keys = set()
     for c in comments:
-        body = c.get("body") if isinstance(c, dict) else None
+        if not isinstance(c, dict):
+            continue
+        # ── 저작 신뢰 (ADR-172 Amendment 6 / A6-2 — F-SEC-1) ──────────────────────
+        #   `viewerDidAuthor` 는 **서버가 요청 자격증명 기준으로 계산**하므로 위조 표면이
+        #   코멘트 본문에 없다. 종전에는 `SENTINEL in body` 단독이라 **아무 인증 계정이나**
+        #   sentinel + `· key=` 줄을 흉내내면 그 키가 dedup 집합에 들어가, 아직 **한 번도
+        #   보고된 적 없는** 잔재가 "기보고" 로 분류돼 **영구 억제**됐다(append-only 라 영속).
+        #   이는 dedup 실패가 아니라 **1차 탐지 false-negative** 다(A6-1 분류 정정).
+        #   ★ fail-closed: 필드 부재·비-bool·false 는 전부 **불신**. `get(..., True)` 형상은
+        #     방어를 조용히 무효화하므로 금지한다(mutant 로 결박). 오작동 방향은 **중복
+        #     보고(소음)** 이지 침묵이 아니다.
+        #   ★ SENTINEL 을 남기는 이유: 그것은 **형식 식별자**(우리 산출물 줄인가)이고
+        #     `viewerDidAuthor` 는 **저작 신뢰**(우리가 썼는가)다. 축이 달라 서로를 대체하지
+        #     못하며 AND 로 결합할 때만 위조·오식별 두 축이 함께 닫힌다.
+        #   ★ 추가 API 호출 0 — 이미 받는 `--json comments` 응답 안에 있는 필드다.
+        #     결함은 정보 부재가 아니라 **가진 정보를 안 쓴 것**이었다.
+        #   ★ 정의역 (닫지 못하는 것 — 은폐 금지): **같은 자격증명**으로 저작된 코멘트가
+        #     sentinel 과 key 줄을 포함하면 여전히 채택된다. 운영자·에이전트가 같은 채널에
+        #     보고 본문을 **인용**하면 그 인용이 억제로 작동한다(CFP-2884 의 자기 SENTINEL
+        #     인용 무력화와 동형). 본 봉합의 정의역은 **타인 저작**이다.
+        if c.get("viewerDidAuthor") is not True:
+            continue
+        body = c.get("body")
         if not isinstance(body, str) or SENTINEL not in body:
             continue     # 자기 마커 미보유 = 외부 저작 → 본문 즉시 폐기 (INV-D)
         for line in body.splitlines():
@@ -843,6 +865,61 @@ def fetch_existing_keys(channel, gh=None):
                 keys.add(k)
         # body 지역 참조는 여기서 소멸 — 반환값은 키 집합뿐(멤버십 판정 전용).
     return keys
+
+
+# ── 채널 가시성 preflight (ADR-172 Amendment 6 / A6-3 — F-SEC-2) ────────────────────
+#   보고 키에는 `worktree:~/.claude/worktrees/<repo명>` 형태로 **private repo 명**과
+#   디렉터리 규모가 실린다. 그 슬러그는 사용자명도 드라이브 문자도 secret 패턴도 아니라
+#   **어떤 마스크에도 걸리지 않는다** — AC-13 의 실패가 아니라 분류표에 그 등급(조직
+#   topology)이 없던 것이 결함이다. 마스킹·해시는 기각됐다(A6-4): 슬러그가 곧 식별
+#   payload 라, 지우면 T-SUP-2 가 결함이라 판정한 "위치 특정 불능" 을 자발적으로 재생산한다.
+#   ⇒ 내용 축 통제는 성립하지 않으며 **유일한 통제는 채널 가시성**이다.
+#
+#   집행 지점이 **실행 축**인 이유: 채널 값은 `--channel` / env 로 **런타임에만 존재**해
+#   PR·코드리뷰·CI 판독면에 도달하지 않는다. 문서 계약만 두면 검사 주체가 없는 규범이 된다
+#   ⇒ 리뷰가 볼 수 없는 값을 리뷰로 지키려 하지 말고 **값을 쥔 프로세스에게 검사시킨다**
+#   (A6-2 가 저작 신뢰를 응답 자신에서 계산한 것과 같은 이동).
+#
+#   비용·상태 (선언):
+#     · 조회 **1회**가 추가된다. 단 **발화 직전**에만 부른다 — 관측 0건·신규 0건·정지·
+#       dry-run 경로에서는 호출 0 이므로 Daily 주기 예산 영향은 미미하다.
+#     · **캐시를 두지 않는다** ⇒ 로컬 상태 파일 0 (INV-C 무손상). 캐시를 두면 그 파일이
+#       곧 자기 잔재가 되고 dedup 외 상태를 만든다.
+#     · **묵음 우회 env 를 두지 않는다** — 우회 경로를 만들면 본 통제가 무효가 된다(A6-3 ③).
+#     · 판정은 **조회 시점의 값**이다. 채널이 나중에 공개로 전환되면 다음 실행이 그것을
+#       본다는 뜻이며, 전환과 다음 실행 사이 구간은 덮이지 않는다(A6-8).
+_ALLOWED_VISIBILITY = frozenset({"private", "internal"})
+
+
+def channel_visibility(channel, gh=None):
+    """채널 repo 가시성(소문자 문자열). **판정 불가는 None** (조회 실패·형식 위반 포함)."""
+    parsed = _parse_channel(channel)
+    if parsed is None:
+        return None
+    owner_repo, _number = parsed
+    runner = gh or _gh
+    cp = runner(["repo", "view", owner_repo, "--json", "visibility"])
+    if cp is None or getattr(cp, "returncode", 1) != 0:
+        return None
+    try:
+        data = json.loads(getattr(cp, "stdout", "") or "")
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    vis = data.get("visibility")
+    if not isinstance(vis, str) or not vis.strip():
+        return None
+    return vis.strip().lower()
+
+
+def channel_disclosure_allowed(channel, gh=None):
+    """발화 허용 여부 — `(allowed, visibility)`.
+
+    **fail-closed**: 허용 집합에 **명시적으로** 들 때만 True. 공개(public)·판정 불가(None)·
+    미지의 신규 가시성 값은 전부 False 다(알 수 없는 값을 안전으로 읽지 않는다)."""
+    vis = channel_visibility(channel, gh=gh)
+    return (vis in _ALLOWED_VISIBILITY, vis)
 
 
 def post_report(channel, body, gh=None) -> bool:
@@ -1023,6 +1100,19 @@ def run(argv=None) -> int:
         _warn("신규 0건 — 무발화 (관측 %d건 전량 기보고)" % observed)
         write_heartbeat()
         _emit_done(observed, 0, 0, 0)
+        return 0
+
+    # (4-a) 가시성 preflight — **발화 직전** fail-closed (§A6-3 / F-SEC-2)
+    #   공개 채널이거나 판정 불가면 발화하지 않는다. rc 는 0 이고 DONE 마커도 낸다
+    #   (INV-F 무손상 — 멈추되 관측 신호는 남긴다). heartbeat 는 기록한다: 관측 사이클을
+    #   완주했으므로 관측자 생존의 근거가 있다(§결정 6 의 기록 조건 그대로).
+    allowed, visibility = channel_disclosure_allowed(channel)
+    if not allowed:
+        _warn("채널 가시성 preflight 차단 — 비공개 채널만 허용 (가시성=%s) · 발화 0 "
+              "(내용 축 마스킹으로는 조직 topology 를 가릴 수 없다)"
+              % (visibility or "판정불가"))
+        write_heartbeat()
+        _emit_done(observed, len(fresh), 0, 0)
         return 0
 
     to_post = fresh[:MAX_FACT_LINES]

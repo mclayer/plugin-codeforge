@@ -712,8 +712,11 @@ class TestPropertyDedupRoundtrip:
         ]
         body = sut.render_report(observations, "d3-task", "d3-run")
 
+        # 픽스처 갱신 (FIX13 / F-SEC-1): 채택 술어에 `viewerDidAuthor is True` 가 추가돼
+        #   필드 없는 구 픽스처는 fail-closed 로 불신된다(= 여기서 RED 로 드러났다).
         fake_gh = mock.Mock(return_value=mock.Mock(
-            returncode=0, stdout=json.dumps({"comments": [{"body": body}]})))
+            returncode=0,
+            stdout=json.dumps({"comments": [{"body": body, "viewerDidAuthor": True}]})))
         recovered = sut.fetch_existing_keys("owner/repo#1", gh=fake_gh)
 
         assert recovered is not None, "채널 회수 실패"

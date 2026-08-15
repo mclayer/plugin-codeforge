@@ -782,6 +782,12 @@ class TestAC3SelfModificationChain:
         """외부 본문 유입 0 — fetch_existing_keys 는 자기 마커만 추출.
 
         mutant: 미매치 코멘트의 본문을 반환값에 실음 → 외부 문자열 등장 → RED
+
+        ★ 픽스처 갱신 (FIX13 / F-SEC-1, ADR-172 A6-2 대가 5항): 채택 술어가
+          `SENTINEL in body` 단독에서 **`viewerDidAuthor is True` ∧ SENTINEL** 로 좁혀졌다.
+          필드 없는 구 픽스처는 fail-closed 로 전량 불신되어 이 테스트가 RED 로 드러났다
+          (조용히 통과하지 않는다 — fail-closed 기본값의 부수 이득). 타인 저작 축의
+          판별은 형제 파일(`test_scheduled_task_output_hardening.py`)이 전담한다.
         """
         fake_gh = mock.Mock()
         fake_gh.return_value = mock.Mock(
@@ -789,10 +795,12 @@ class TestAC3SelfModificationChain:
             stdout=json.dumps({
                 "comments": [
                     {
-                        "body": "사용자가 작성한 코멘트입니다 (마커 미부착)"
+                        "body": "사용자가 작성한 코멘트입니다 (마커 미부착)",
+                        "viewerDidAuthor": False,
                     },
                     {
-                        "body": f"{sut.SENTINEL} 자기 마커\n- 선언=test · 실측=test · key=test:path"
+                        "body": f"{sut.SENTINEL} 자기 마커\n- 선언=test · 실측=test · key=test:path",
+                        "viewerDidAuthor": True,
                     },
                 ]
             }),
