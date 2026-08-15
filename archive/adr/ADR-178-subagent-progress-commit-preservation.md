@@ -227,7 +227,7 @@ N/A — permanent policy (is_transitional: false). future-work 재개 조건: §
 
 ## 관련 파일
 
-- `docs/orchestrator-playbook.md` — §3.5 step 3: I-3 (커밋 트리거 return 종속) 공백의 문면 위치, Phase 2 정정 대상 (실측 앵커 = :1296 [worktree 8eeda0aa2 기준] — Story 인용 시점 표기 :1286 은 base 전진분 차이)
+- `docs/orchestrator-playbook.md` — §3.5 step 3: I-3 (커밋 트리거 return 종속) 공백의 문면 위치, Phase 2 정정 대상 (실측 앵커 = :1296 [worktree 8eeda0aa2 기준 — Story 저작 기준 ecfe62d63 에서도 :1296. 구 표기 :1286 = 저작 시점 표기 오류])
 - `hooks/hooks.json` — SubagentStart 채널: Phase 2 priming 2번째 entry 후보 (ADR-115 Amd2 3규칙 판정 동반, §결정 12)
 - `skills/session-recovery/SKILL.md` — 축 C 회수 3-step runbook pointer 착지 대상 (Phase 2) — 현행 salvage·미커밋 관련 0-hit (§결정 5-4)
 - `scripts/lib/check_workspace_residue_discovery.py` — 발견 술어 `dirty|unpushed-N` (§결정 5-1 / §결정 11 git census 기존 표면)
