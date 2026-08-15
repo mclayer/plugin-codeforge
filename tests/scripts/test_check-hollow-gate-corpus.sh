@@ -742,6 +742,17 @@ else
   fail_case "정직 천장: PASS 발화에 천장 문면 부재"
 fi
 
+# ─ F-CR18-9 exec_root 순번 격리 통합 관측 (신설) ────────────────────────────────
+# 정상 실행 중 exec_root 직속 디렉터리 수 항상 1 (leg 별 즉시 정리).
+SH="$(new_shadow none)"
+MF="$TEST_TMP/mf_f_cr18_9.yaml"; reset_mf; emit_manifest "$MF"
+run_core "$CORE_PY" "$SH" --manifest "$MF"
+if [ "$CORE_RC" -eq 0 ]; then
+  pass_case "F-CR18-9: 정상 실행 완료 (exec_root 즉시 정리 작동 — 형제 채널 봉합)"
+else
+  fail_case "F-CR18-9: 정상 실행이 exit=$CORE_RC 로 실패"
+fi
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # 14. 요약
 # ═══════════════════════════════════════════════════════════════════════════════

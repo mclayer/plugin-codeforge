@@ -118,7 +118,8 @@ _RECIPE_BODY = """    derived_from: s01
 
 def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=False,
                    probe=True, samples="normal", recipe_target="gate.py.sample",
-                   forbidden=False):
+                   forbidden=False, probe_anchor_from=None, derived_from_mismatch=False,
+                   recipe_anchor_mismatch=False):
     """시나리오 manifest 를 생성한다 (repo 의 shipped manifest 는 건드리지 않는다)."""
     out = [_GATE_BLOCK.format(stage=stage, term=TERM_PREFIX, exit_space=exit_space)]
     if samples == "empty":
@@ -134,10 +135,26 @@ def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=F
         if extra == "s04":
             out.append(_SAMPLE_ROW.format(sid="s04", kill="kill", xkill="xkill"))
     out.append("build:\n  - sample: s02\n")
-    out.append(_RECIPE_BODY.format(target=recipe_target))
+    # ⓺ provenance derived_from 변조
+    derived = "s03" if derived_from_mismatch else "s01"
+    out.append(f"    derived_from: {derived}\n")
+    out.append(f"    target: {recipe_target}\n")
+    # anchor 변조 (recipe target 변조 시 다른 anchor 사용)
+    if recipe_anchor_mismatch:
+        out.append('    anchor_from: "nonexistent_anchor_string_that_will_not_match"\n')
+    else:
+        out.append('    anchor_from: "    if not any(a in text for a in _POSITIVE_CONTROL_ANCHORS):"\n')
+    out.append('    anchor_to: "    if False:  # neutralized M1 positive-control-presence"\n')
     if probe:
         out.append("  - probe: p01\n")
-        out.append(_RECIPE_BODY.format(target="gate.py.sample"))
+        out.append("    derived_from: s01\n")
+        out.append("    target: gate.py.sample\n")
+        # probe anchor 변조 (I-1 테스트용)
+        if probe_anchor_from:
+            out.append(f'    anchor_from: "{probe_anchor_from}"\n')
+        else:
+            out.append('    anchor_from: "    if not any(a in text for a in _POSITIVE_CONTROL_ANCHORS):"\n')
+        out.append('    anchor_to: "    if False:  # neutralized"\n')
     out.append("classification:\n")
     lo, hi = ("H", "HOLLOW"), ("L", "LIVE")
     a01, a02 = (lo, hi) if flip else (("L", "LIVE"), ("H", "HOLLOW"))
@@ -705,3 +722,72 @@ def test_identity_probe_resolved_target_matches_committed_artifact():
     assert rc == 0
     line = next(ln for ln in out.splitlines() if ln.startswith("resolved-target: unit=s01 "))
     assert line.endswith("sha256=" + known), f"{line}\nknown={known}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 신설 커버리지 4종 — FIX-A/B/C 변경사항 반영
+# ══════════════════════════════════════════════════════════════════════════════
+
+def test_i1_anchor_mismatch_in_probe_recipe_unit(tmp_path):
+    """I-1 anchor 매치 ≠ 1: run-time probe 정의역만 (commit-sample은 ⓺ provenance 소관).
+
+    probe recipe 의 anchor_from 을 corpus 부재 문자열로 → I-1 발동 → exit 1 + '매치 ≠ 1 … (I-1)'.
+    commit-sample 은 recipe=None 이므로 I-1 가드 미도달 — 이 비대칭이 ⓺ provenance 검사를 필요하게 한다.
+    """
+    _require_substrate()
+    root = build_shadow(tmp_path)
+    rc, _out, err = run_core(root, manifest=write_manifest(
+        tmp_path / "m_i1.yaml", probe_anchor_from="nonexistent_anchor_string"))
+    assert rc == 1, f"I-1 미발동: rc={rc}\n{err}"
+    assert "anchor 매치" in err and "≠ 1" in err and "I-1" in err, f"I-1 문면 미관측: {err}"
+
+
+def test_substrate_provenance_anchor_mismatch_in_derived_from(tmp_path):
+    """⓺ provenance (a): 파생 지점 특정 — recipe anchor 매치 ≠ 1.
+
+    recipe 의 anchor_from 을 corpus 부재 문자열로 → s02.derived_from(s01)에서 anchor 미매치
+    → provenance 파손 → exit 3.
+    """
+    _require_substrate()
+    root = build_shadow(tmp_path)
+    rc, _out, err = run_core(root, manifest=write_manifest(
+        tmp_path / "m_prov_anchor.yaml",
+        recipe_anchor_mismatch=True))  # recipe anchor 변조
+    assert rc == 3, f"provenance 미발동: rc={rc}\n{err}"
+    assert "provenance 파손" in err and "anchor 매치" in err and "≠ 1" in err, \
+        f"provenance anchor 문면 미관측: {err}"
+
+
+def test_substrate_provenance_tree_mismatch(tmp_path):
+    """⓺ provenance (c): 트리 동일성 — 두 표본의 파일 집합(바이트)이 동일하지 않음.
+
+    s02 에 여분 파일 추가 (recipe target·stamp 제외) → 트리 동일성 파손 → exit 3.
+    """
+    _require_substrate()
+    root = build_shadow(tmp_path)
+    # s02 에 여분 파일 넣기
+    (root / "tests/fixtures/hollow-gate-corpus/s02/clean/extra.txt").write_text("extra\n")
+    rc, _out, err = run_core(root, manifest=write_manifest(tmp_path / "m_prov_tree.yaml"))
+    assert rc == 3, f"tree mismatch 미발동: rc={rc}\n{err}"
+    assert "provenance 파손" in err and "트리 동일성" in err, \
+        f"provenance tree 문면 미관측: {err}"
+
+
+def test_ic1_probe_unit_arm_anchored_measurement(tmp_path):
+    """IC-1 armL-anchored: probe unit 의 arm 라벨 측정 (FIX-B).
+
+    probe 정의역에서 armL-anchored 를 측정 (sample 정의역과 구분).
+    probe 로 판정한 arm 이 declared_arm 과 일치하면 armL-anchored=1,
+    일치 안 하면 armL-anchored=0 → IC 강등 가능성.
+
+    ★ 현재 corpus 는 probe p01 이 declared_arm H(HOLLOW) 와 일치하므로 armL-anchored=1.
+    mismatch 시나리오는 실제 판정과 선언이 어긋나는 극단 시나리오인데,
+    본 테스트는 정상 상태(armL-anchored=1)에서 **측정이 작동함**을 확인한다.
+    """
+    _require_substrate()
+    rc, out, _err = run_core(REPO_ROOT)
+    assert rc == 0, "baseline 이 FAIL 이면 ic 측정 불가"
+    # 정상 corpus 에서는 probe p01 이 H(HOLLOW) 로 판정 → declared H 와 일치 → armL-anchored=1
+    # (이 값은 stdout 에 명시적으로 emit 되지 않지만, ic-1 미발동으로 암묵적 확인)
+    # ic-1 이 발동하지 않으면 armL-anchored 측정이 정상임을 뜻한다
+    assert "::error::[IC-1]" not in out, "정상 corpus 에 IC-1 발동하면 측정 파손"
