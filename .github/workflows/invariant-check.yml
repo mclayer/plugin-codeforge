@@ -640,3 +640,12 @@ jobs:
             echo "── $t"
             bash "$t"
           done
+
+      # AC-12b 실행자 해소: 위 corpus step 은 self-test 를 통한 **간접** 참조라 실행자로 세지
+      #   않는다(그 술어를 넓히면 RED 를 없애려 정의역을 넓히는 것 = 본 Story 표적 결함).
+      #   설계가 이미 요구한 직접 실행자(Change Plan §5 Phase 2 항목 7 · §8.1 RTM AC-1 행의
+      #   실행 채널 = invariant-check.yml:invariant-check)를 배선으로 충족한다.
+      # ★ CLI 계약 실측: `--validate` 는 `--bundle <path>` 를 요구한다(위치인자 형태는 exit 2
+      #   usage error). scripts/check-salvage-bundle.sh 헤더 + argparse 산출로 확인.
+      - name: CFP-2984 salvage 번들 검증기 직접 실행 (AC-1 검증수단 · AC-12b 실행자)
+        run: bash scripts/check-salvage-bundle.sh --validate --bundle tests/fixtures/cfp2984/salvage/bundle-valid.json
