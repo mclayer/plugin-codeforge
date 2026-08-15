@@ -1,0 +1,4 @@
+gate_id: check-hard-gate-self-verification
+source_path: scripts/lib/check_hard_gate_self_verification.py
+source_sha256: "fc019424e01bbbb3da9e454c0e60c1b8563035e93d86783e047c787dc22b1e2a"
+artifact_sha256: "fc019424e01bbbb3da9e454c0e60c1b8563035e93d86783e047c787dc22b1e2a"

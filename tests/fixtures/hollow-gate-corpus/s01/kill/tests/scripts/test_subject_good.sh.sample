@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# hgsv-enroll (hard gate self-test fixture subject)
+run_gate clean; rc=$?
+run_gate mutant; mrc=$?
+if [ "$rc" -eq 0 ]; then echo clean-ok; fi
+if [ "$mrc" -ne 0 ]; then echo mutant-red; fi

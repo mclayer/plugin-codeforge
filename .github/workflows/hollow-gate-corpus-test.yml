@@ -1,0 +1,91 @@
+name: hollow-gate-corpus-test
+# CFP-2963 Phase 2 / ADR-175 — landed-gate corpus 동적 hollow 분류 하네스의 CI 실행 채널.
+#   corpus 표본을 동일 절차로 exec dir 에 materialize 한 뒤 실행해, "게이트가 kill 표본에서 실제로
+#   검출 마커를 내는가"를 관측 라인 집합만으로 판정한다 (verdict = LIVE / HOLLOW / INDETERMINATE).
+#   declared arm 은 판정기에 투입되지 않는다 — 판정 입력은 관측면뿐이다.
+#
+# 형판: .github/workflows/hard-gate-self-verification-test.yml (동류 메타-게이트 self-test) 복제.
+#
+# 2-job 분리 근거: 하네스 job 과 discriminating self-test job 을 별 job 으로 둔다. 하네스 자신이
+#   판별력을 잃은 채 초록을 내는 경우에도 self-test 가 그 사실을 독립적으로 드러내야 하므로, 두
+#   증거를 같은 job 의 순차 step 으로 묶어 선행 실패에 가려지게 하지 않는다.
+#
+# 정직 천장 (ADR-175 / ADR-151 §결정7 상속): 본 채널은 corpus 에 담긴 표본에 대한 관측-기반 verdict
+#   까지만 보장한다 — corpus 밖 게이트 일반으로 외삽하지 않는다(표본 밖 미검출 잔존). 승격 전까지
+#   하네스는 stdout 으로 "본 게이트는 현재 merge 를 막지 못한다" 취지를 자기 emit 한다.
+#
+# wrapper-self-only (consumer red 회피 — hard-gate-self-verification-test.yml 선례):
+#   job-level `if: github.repository == 'mclayer/plugin-codeforge'` — wrapper self-CI 에서만 실행
+#   (consumer 는 corpus fixture·스크립트 부재 → job skip = inert). ADR-130 job-level `if:` graceful
+#   no-op 정합. NO path-filter(required permanent-pending 함정 회피) / NO job-level hashFiles.
+#
+# byte-identical parity: templates/github-workflows/hollow-gate-corpus-test.yml ↔
+#   .github/workflows/hollow-gate-corpus-test.yml 는 byte-identical(ADR-005, invariant-check parity).
+#
+# day-1 hard-fail (continue-on-error 금지 — ADR-154 §결정8 / ADR-151 §결정5 모델): 하네스·self-test
+#   실패 = job red. warning-tier 는 "required context 미부착"을 뜻하지 "job 이 초록으로 흘러감"을
+#   뜻하지 않는다.
+# non-required (branch-protection 8-tuple[문서 SSOT] 무변경 — 신규 required context 0).
+#   required 승격 = docs/evidence-checks-registry.yaml 의 promotion_criteria 3-AND 충족 후 별 carrier.
+#
+# env 미선언 (표본 실행 결정성): 본 workflow 는 workflow/job/step 어느 층에도 `env:` 를 두지 않는다.
+#   job env 가 표본 프로세스로 상속되어 verdict 를 흔드는 경로를 애초에 만들지 않기 위함이다.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  hollow-gate-corpus:
+    name: hollow-gate-corpus
+    if: github.repository == 'mclayer/plugin-codeforge'
+    # runs-on 리터럴 고정 — 본 repo 의 vars 경유 배정(`fromJSON(vars.CI_RUNS_ON_LINUX_JSON ...)`,
+    #   42 workflow)에서의 의도적 이탈이다. corpus verdict 는 표본이 도는 실행 환경에 의존하므로
+    #   러너 배정을 조직 변수에 위임하지 않는다. 이 고정은 하네스 방어 5층 중 최약 보조층(L5)일
+    #   뿐이며, 장래 일괄 정규화가 본 줄을 되돌리지 않도록 여기에 declare 한다.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps (pyyaml + pytest)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run hollow-gate corpus harness (2-arm verdict + census 7축 baseline 대조, day-1 hard-fail)
+        run: bash scripts/check-hollow-gate-corpus.sh
+
+  hollow-gate-corpus-selftest:
+    name: hollow-gate-corpus-selftest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    # runs-on 리터럴 고정 — 위 job 과 동일 근거(L5 최약 보조층 / vars 경유 관행에서의 의도적 이탈
+    #   declare, 장래 일괄 정규화 되돌림 방지).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps (pyyaml + pytest)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run corpus harness discriminating self-test (T-1 양방향 + T-3 축-disjoint, day-1 hard-fail)
+        run: bash tests/scripts/test_check-hollow-gate-corpus.sh

@@ -1,0 +1,24 @@
+# hard gate self-verification concept (fixture)
+
+## 3-way taxonomy (antonym)
+- silent-green — 게이트 green 이나 검출력 0 = 결함(위양성)
+- silent-fallback — 검증 경로 우회/흡수 = 결함(위양성)
+- honest-degrade — 의도적 fail-open + 정직 공개 = 정상
+  honest-degrade 는 결함 아님 (오탐 방지 codify 필수 — 무차별 검출 = 위양성).
+
+## ceiling
+검출 sufficiency = undecidable — 정직 천장(honest-ceiling). L3 review-tier(AC-9).
+presence ≠ truth. bounded degradation.
+
+## named cross-ref (super-class compose, 재정의 0)
+- red-green-stash-proof — RED proof (ADR-082 §11.A)
+- vacuous-pass — 검출력 0 green 상위 class
+- execution-liveness — self-test 채널 alive L1 (ADR-151)
+- discriminating-fixture — clean↔mutant 구별 (ADR-006 §8.7)
+- discriminating-A/B — self-test / product activation (ADR-152)
+- mutation-hollow-gate — meta-hollow 차단
+- honest-degrade — 정직 공개 cross-ref
+
+## 신규 정의 3영역
+super-class 명명 + taxonomy codify
++ internal-control identity-probe.
