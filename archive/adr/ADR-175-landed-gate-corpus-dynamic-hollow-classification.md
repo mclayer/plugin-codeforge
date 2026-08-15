@@ -182,9 +182,16 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 
 **④ verdict 함수 (arm 미투입)**
 
-- **`LIVE` ⟺** `kill.fail=1 ∧ fail_stage = kill_target_stage ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
+- **`LIVE` ⟺** `kill.fail=1 ∧ kill_target_stage ∈ fail_stage(kill) ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
 - **`HOLLOW` ⟺** `kill.fail=0 ∧ kill.term=1 ∧ clean.fail=0 ∧ clean.term=1 ∧ DELIVERED`
 - **그 외 = `INDETERMINATE`**
+
+★**`fail_stage` = leg 당 stage id 집합 · 판정 = 멤버십 (설계리뷰 DR4-M1 — 무언 정정 금지)**: 구 문면은 `fail_stage = kill_target_stage` **스칼라 등식**이었으나 한 leg 이 내는 stage id 개수는 **고정이 아니다** — 실측 **1**(`--repo-root` 미존재 → `_error("AC-4")` 직후 early return, `[AC-4]` 단독) · **2**(`kill(AC-1)` = `[AC-1]`+`[SUMMARY]`) · **3**(`[AC-1]`+`[AC-2]`+`[SUMMARY]`) `[ArchitectAgent firsthand 2026-08-15 — check_hard_gate_self_verification.py 3 leg 실행]`. 구조 근거 = `if violations:` 경로가 `_error("SUMMARY", …)` 를 **항상** append 한 뒤 `return EXIT_FAIL` 한다(`:393-398` 직독) — 축 마커와 상수 footer 가 **공존**한다. ⑪ 실증 원문도 `stages=['AC-1','SUMMARY']` **리스트**다. ⇒ **스칼라 등식은 이 관측에 대해 미정의**이고, `last`/`all` 독법을 취하면 day-1 arm-L 이 `I-8 → INDETERMINATE → exit 1`(born-RED)로 간다.
+
+- **확정 형태** — `fail_stage(leg)` = **`observed_line_set(leg)` 의 `::error::[<STAGE-ID>]` 항에서 취한 stage id 집합**(⑥ *"다단 분해"* 가 파싱하는 그 값 — **신규 추출 규칙 0**)이며 판정은 `kill_target_stage ∈ fail_stage(kill)`. 같은 관측이 도달 축(`DELIVERED`)과 stage 축에 함께 쓰이는 것은 위 *"중복 소비이지 결함이 아니다 — 다른 축"* 선언의 적용이다.
+- **새 정의 표면을 만들지 않는다** — ⓐ **집계 footer 제외 목록 불요**: 멤버십은 `[SUMMARY]` 형 상수 footer 의 **공존을 문제 삼지 않는다**(제외 목록은 *"무엇이 집계 마커인가"* 라는 새 정의 표면을 연다) ⓑ **순서 의존 0**: *"첫 마커를 취한다"* 류는 emit 순서를 load-bearing 하게 만든다 — 멤버십은 순서도 개수도 읽지 않으므로 위 1·2·3 관측 전건에 **같은 규칙**이 적용된다.
+- **판별력 무손실 ∧ `I-8` 무모순** — 멤버십은 **배타성을 요구하지 않을 뿐 적중 요구는 그대로**다(축이 어긋난 파생 — `kill_target_stage = AC-1` 인데 관측 `{AC-8, SUMMARY}` — 은 여전히 불성립). `I-8`(단계 불일치)은 이 conjunct 의 **정확한 부정**이므로 교체와 함께 부정도 `≠`→`∉` 로 이동하며, 아래 배타성 논증(*"I-8 ⇒ `kill.fail=1` 인데 `LIVE` 실패 ∧ `HOLLOW` 실패"*)은 **문언 그대로 유지**된다.
+- ★**잔여 (정직 기재 — 본 교체가 새로 load-bearing 하게 만든 표면)**: 멤버십은 `kill_target_stage` **선언값이 실 검사 축의 id 일 것**을 전제한다 — 상수 footer id(`SUMMARY`)를 선언하면 실패 leg 마다 자동 적중해 공허해진다. 이 전제를 지는 것은 **IC-6 축 짝짓기**(상수 footer 는 검사 축이 아니다)와 **day-1 최소 구성 확정표**(Change Plan MECH-4 ⑫ — `kill_target_stage = AC-1` 확정)이며 **기계 검사는 없다**. 새 제외 규칙을 신설하지 않고 이 잔여를 그대로 declare 한다.
 
 ★**`DELIVERED` 의 정의역 = 도달 축 한정**(②-b). verdict 함수가 소비하는 `DELIVERED` 는 **`observed_line_set(kill) ≠ observed_line_set(empty)`** 로 계산한 **도달 판정**이며, **적격 판정과 같은 좌표가 아니다**. 적격(**`observed_line_set(kill) ≠ observed_line_set(clean)`**)은 **§결정 7 적격 전제**에서 **corpus 진입 전에** 판정되므로 verdict 함수의 입력이 아니다. **두 좌표를 한 변수로 합치면 ②-b 위양성 7 이 verdict 함수 내부로 이전한다.** 두 좌표를 가르는 것은 **비교 상대**(`empty` ↔ `clean`)이지 관측면이 아니다.
 
@@ -201,7 +208,7 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 | **I-5** | 양쪽(kill·clean) 모두 FAIL |
 | **I-6** | 마커 전무 = **판정 지점 미도달** |
 | **I-7** | `¬DELIVERED`(② probe 실패) |
-| **I-8** | fail-marker 단계 id 불일치(엉뚱한 단계에서 실패) |
+| **I-8** | fail-marker 단계 id 불일치 = `kill_target_stage ∉ fail_stage(kill)`(엉뚱한 단계에서 실패) |
 | **I-9** | `clean.term = 0`(정상 입력에서 종단 미도달) |
 | **I-10** | 선언한 stream 이 아닌 곳에서 마커 관측 |
 | **I-11** | ★**`¬LIVE ∧ ¬HOLLOW` 조건부** — 두 정의식 **어느 것도 성립하지 않으면서** kill·clean 관측이 동일 (설계리뷰 DR3-M2 협착) |
@@ -214,14 +221,15 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 
 | ID | verdict 정의식과 **동시 성립** 가능? | 귀결 |
 |---|:-:|---|
-| **I-1** anchor 매치 ≠ 1 · **I-2** syntax invalid · **I-3** 기동 실패·timeout · **I-4** rc ∉ exit_space · **I-10** 비선언 stream 관측 | **가능** | **관측 무결성 선행 조건** — verdict 가 표면상 성립해도 그 관측을 신뢰할 근거가 없다. ⇒ **선행 평가 유지.** 근거 = landed 형판 `run_mutation_exit` 도 baseline sanity·`NOT_RUN`(sed 미치환) 을 flip assert **전에** 판정한다 `[firsthand]`. *"verdict 선행"* 을 채택하면 예컨대 **rc=137 로 죽은 leg 이 마커만 맞아 `LIVE` 로 계상**되고, **anchor 2 site 치환된 오파생 표본이 `HOLLOW = detected` 로 계상**된다 |
-| **I-5** 양쪽 FAIL · **I-6** 마커 전무 · **I-7** `¬DELIVERED` · **I-8** 단계 불일치 · **I-9** `clean.term=0` | **불가(정의상 배타)** | I-5 ⇒ `clean.fail=1` 이라 양 정의식 불성립 / I-6 ⇒ `kill.term=0` / I-7 ⇒ 양 정의식이 `DELIVERED` 요구 / I-8 ⇒ `kill.fail=1` 인데 단계 불일치라 `LIVE` 실패 ∧ `HOLLOW`(`kill.fail=0`) 실패 / I-9 ⇒ 양 정의식이 `clean.term=1` 요구. ⇒ **순서 무관 · 협착 불요** |
+| **I-1** anchor 매치 ≠ 1 · **I-3** 기동 실패·timeout · **I-4** rc ∉ exit_space · **I-10** 비선언 stream 관측 | **가능** | **관측 무결성 선행 조건** — verdict 가 표면상 성립해도 그 관측을 신뢰할 근거가 없다. ⇒ **선행 평가 유지.** 근거 = landed 형판 `run_mutation_exit` 도 baseline sanity·`NOT_RUN`(sed 미치환) 을 flip assert **전에** 판정한다 `[firsthand]`. *"verdict 선행"* 을 채택하면 예컨대 **rc=137 로 죽은 leg 이 마커만 맞아 `LIVE` 로 계상**되고, **anchor 2 site 치환된 오파생 표본이 `HOLLOW = detected` 로 계상**된다 |
+| **I-2** syntax invalid · **I-5** 양쪽 FAIL · **I-6** 마커 전무 · **I-7** `¬DELIVERED` · **I-8** 단계 불일치 · **I-9** `clean.term=0` | **불가(정의상 배타)** | I-5 ⇒ `clean.fail=1` 이라 양 정의식 불성립 / I-6 ⇒ `kill.term=0` / I-7 ⇒ 양 정의식이 `DELIVERED` 요구 / I-8 ⇒ `kill.fail=1` 인데 단계 불일치라 `LIVE` 실패 ∧ `HOLLOW`(`kill.fail=0`) 실패 / I-9 ⇒ 양 정의식이 `clean.term=1` 요구. ★**I-2 정정(설계리뷰 DR4-M5 — 구 표는 이 행이 아니라 위 *"가능"* 행에 두었다)** ⇒ syntax-invalid 표본은 **마커 전무**라 `LIVE`(`kill.fail=1` 요구)·`HOLLOW`(`kill.term=1` 요구) **둘 다 불성립**이며 관측 서명이 `I-6` 와 같다 `[ArchitectPL firsthand — 실행 재현]`. **단 평가 위치는 선행 유지** — 배치 근거가 동시 성립이 아니라 **정적 선-검사 시점**(`py_valid` = landed 형판 double-guard b)이기 때문이며, `I-1`~`I-4`·`I-10` 선행 범위 표기는 **무변경**이다. ⇒ **순서 무관 · 협착 불요** |
 | ★**I-11** | **가능 — `HOLLOW` 와 동치** | ⇒ **유일한 협착 대상.** 위 표대로 `¬LIVE ∧ ¬HOLLOW` 한정 |
 
 ★**협착으로 약해지는 축 (정직 기재 — 무언 약화 금지)**: **실효 검출력 손실 0 · 명목 이중 방어 1 상실.**
 
-- **손실 0 의 근거** — 협착이 제거하는 발동 집합 = `(kill ≡ clean) ∧ (LIVE ∨ HOLLOW)`. `LIVE` 는 `kill.fail=1 ∧ clean.fail=0` 을 요구해 **관측이 정의상 갈리므로** 교집합이 공집합이고, 남는 것은 `HOLLOW ∧ (kill ≡ clean)` = **정상 arm-H 전부**다. ⇒ 협착이 잃는 발동은 **전부 오발동**이며 결함 표본의 발동은 하나도 잃지 않는다.
+- **손실 0 의 근거** — 협착이 제거하는 발동 집합 = `(kill ≡ clean) ∧ (LIVE ∨ HOLLOW)`. `LIVE` 는 `kill.fail=1 ∧ clean.fail=0` 을 요구해 **관측이 정의상 갈리므로** 교집합이 공집합이고, 남는 것은 `HOLLOW ∧ (kill ≡ clean)` ⊇ **정상 arm-H 전부**다. ★**정정(설계리뷰 DR4-M4 — 구 문면은 `=` 로 적었다)**: `HOLLOW ⇒ (kill ≡ clean)` 이 항진이므로 좌변은 **전 `HOLLOW` 판정**(판정기에 arm 미투입 — ③ ⓒ)이고 **잘못 저작된 arm-L 도 포함**한다. ⇒ 등식이 아니라 포함이다. ★**그럼에도 실효 손실은 0 이며, 그 근거는 `I-11` 이 아니다** — 퇴화한 arm-L 표본은 corpus PASS 조건의 **arm-L 전건 `LIVE`** AND 조건(본 §결정 ① *"arm-H 전건 `HOLLOW` ∧ arm-L 전건 `LIVE` 일 때만 PASS"*)으로 **여전히 FAIL** 한다. 손실 0 을 지탱하는 것은 그 AND 조건이다.
 - ★**상실 1(명목)** — `I-11` 의 원 취지(*"판정기가 두 leg 을 실제로 구별했는가"*)를 **arm-H 축에서** challenge 하던 이중 방어가 사라지고, 그 축의 잔여 challenge 는 **`I-7`(`DELIVERED`) 단일 축**에 집중된다. ★단 그 이중 방어는 **성립하는 순간 arm-H 를 도달 불가로 만들었으므로 실효로 존재한 적이 없다** — 상실은 명목이다. **집중 자체는 천장**이며 §결정 9 에 기재한다.
+- ★**협착 후 `I-11` 은 독립 verdict 효과가 없다 (설계리뷰 DR4-M4 — 미명명 금지)**: 협착 술어 `¬LIVE ∧ ¬HOLLOW ∧ (kill ≡ clean)` 의 발동 영역은 마커 벡터 4상태 전수 대사에서 **`I-5`·`I-6`·`I-7` 에 전건 포함**된다 — `(0,0)` → `I-6`(마커 전무) / `(1,0)`·`(1,1)` → 양 leg `fail=1` ⇒ `I-5` / `(0,1)` → `DELIVERED` 면 `HOLLOW` 라 전건 거짓, `¬DELIVERED` 면 `I-7` `[설계리뷰 DR4-M4 — 상태 전수 + 반례 실행]`. ⇒ **`I-11` 은 진단 라벨로만 존치**하며 어떤 상태에서도 단독으로 verdict 를 바꾸지 못한다. 이것이 위 *"명목"* 의 정확한 형태다.
 
 ★**계상 규율 = 분모 N 에 포함 · `detected` 에 불포함.** INDETERMINATE 를 분모에서 제외하면 *"표본을 깨뜨려 N 을 줄이는"* 경로가 열린다. **corpus 에 INDETERMINATE 가 1건 이상이면 exit 1** 이다.
 
@@ -232,7 +240,7 @@ stamp 를 arm 별로 분기하지 **않는다** — 필드 shape 이 arm 을 누
 | **fail-marker** | `::error::[<STAGE-ID>] <msg>` — **stderr** | `::error::` 보유 — **명시 분모 기준**: lib py **27**/83 · top-level `scripts/check_*.py` **0**/6 · sh **20**/118 (합 **47**) `[firsthand]`. ★구 표기 *"landed lib py 35 / sh 21"* 은 **넓은 glob**(`scripts/lib/*.py` **147** · `scripts/*.sh` **176**) 기준이라 **다른 모집단**이었다 — 전수 교체 |
 | **terminal-marker** | `✓ <gate>: <입력 의존 문면>` — **stdout** | 종단 성공 emit **34/83** |
 | **매칭** | **고정문자열 포함(`grep -qF`) — 정규식 금지** | 판정기 자신의 ReDoS·오탐 채널 차단 |
-| **다단 분해** | `[<STAGE-ID>]` 대괄호 값 | 단계 id 로 I-8 판정 |
+| **다단 분해** | `[<STAGE-ID>]` 대괄호 값 — **leg 당 집합**(다수 관측 시 전건 수집 · 단일 값 투영 금지) | 단계 id **멤버십**으로 I-8 판정(④) |
 | **INDETERMINATE emit 토큰** | landed **`NOT_RUN`** 재사용 | 신규 값공간 0 |
 
 ★**baseline sanity 선행** — mutant 실행 **전에** 원본이 기대 관측을 내는지 확인한다. 원본이 기대 관측을 못 내면 *"대조 무의미"* 로 **FAIL** 한다(대조군 없는 오라클 = hollow).
@@ -522,7 +530,7 @@ M-1 은 **저자가 선언한 표본 집합에 대한 kill 판정**만 강제한
 - **`on: paths:` 금지 · `runs-on: ubuntu-latest` 리터럴 고정** — 전자는 ADR-130 required check permanent-pending 함정 상속. ★**후자의 근거는 정정됐다(InfraOp firsthand 반증)**: 구 문면은 리터럴이 *"fork 제출 셸의 호스트 실행을 구조적으로 막는다"* 고 적었으나 **거짓**이다. `pull_request` 이벤트는 workflow·코드를 **PR merge commit 에서** 취하므로(base default branch 기준은 `pull_request_target` 뿐 [source: docs.github.com — "Securely using pull_request_target"]) **fork PR 은 자기 PR 안에서 그 리터럴을 편집할 수 있다 — 리터럴은 fork 를 구속하지 못한다.** 실 격리는 다른 층이 만든다: **L1** fork PR **secrets 미전달** + `GITHUB_TOKEN` read-only [source: docs.github.com — "Managing GitHub Actions settings"] · **L2** public repo 는 `CI_RUNS_ON_LINUX_JSON` 미설정 → coalesce `["ubuntu-latest"]`(ADR-147 §결정 2) · **L3** runner group **2개 전건** `allows_public_repositories=false` ⇒ GitHub 이 거부 · **L4** first-time contributor 실행 승인 · **L5 = 리터럴 고정(최약 보조층)**. ⇒ **리터럴은 유지하되 근거를 L5 로 정정**하며, *"이것이 fork 실행을 막는다"* 는 서술을 **금지**한다. 부수: 리터럴은 repo 관행(`vars.` 형 **42 workflow**)에서의 **이탈**이므로 workflow 에 **주석 1행 declare** 의무(미declare 시 장래 일괄 정규화가 되돌린다). 선례 = 리터럴 job **110**(`css-lint.yml` `css-lint-test` · `hard-gate-self-verification-test.yml` · `selftest-execution-liveness-test.yml`) `[firsthand]`.
 - **carrier 결속(계약면 ⊥ 구현면)**: **계약면 = 본 ADR**(Phase 1) ⊥ **구현면 = CFP-2963 Phase 2 산출물**. 구현면 산출물 **10개**(sidecar manifest 1 + corpus fixture 디렉터리 1 + 5-piece chain 5 + `docs/evidence-checks-registry.yaml` warning-tier entry 1행 + `docs/selftest-execution-liveness-inventory.yaml` enroll 1행 + **`docs/hollow-gate-corpus-baseline.yaml` census baseline 1**)는 Change Plan **§5 파일 단위 변경 계획에 개별 행으로 결속**되고 **§8.AC `G1-mech-corpus` 독립 설계 게이트**가 그 분모를 검사한다. ★**정정 기록(설계리뷰 DR2-M5 — 무언 정정 금지)**: 구 표기는 **9개**였고 **§결정 5 가 확정 신설한 census baseline 파일이 열거에서 누락**돼 있었다. 그 파일은 **D-2(축별 `N < baseline` = FAIL)·D-3(비감소 ratchet)의 소비 대상 전체**이므로, 누락 상태에서는 *"구현이 이걸 안 만들면 RED 가 나는가"* 라는 §결정 10 자신의 결속 판정 기준이 **그 산출물에 대해서만 성립하지 않았다**(corpus 게이트 자신의 exit 3 조건 ⓶ 로만 사후 검출). 배선 상세 SSOT = internal-docs `wrapper/change-plans/cfp-2963-mclats-arc-ci-runner.md` **§8.QC-MECH**. ADR-154 §결정 8 의 *"Phase 1 = ADR + Change Plan NARRATIVE only"* **무손상**.
 - ★**천장 동시-변경 불변식**: 본 ADR **§결정 9** 의 정직 천장과 §8.QC-MECH **MECH-9** 의 정직 천장은 **같은 문면을 양쪽에 보유**한다 — **한쪽에서만 천장을 완화해 인용하는 것을 금지**하며 바꾸려면 **두 문서가 함께** 바뀌어야 한다. 한쪽만 완화하는 것 자체가 본 ADR 이 겨냥하는 class(*선언과 실상태의 조용한 괴리*)의 문서-축 발현이다.
-  > ★**적용 범위 정정 (설계리뷰 DR3-M3 — 철회된 전제가 이 한 곳에 살아남아 범위를 축소하고 있었다)**: 구 괄호는 *"분할 이관으로 normative 본체 중복은 **해소됐으므로** 적용 범위는 천장 문면 + 계수 로 한정된다"* 였다. **그 전제는 §결정 1 이 이미 철회**했다 — *"분할이 옮긴 것은 **그릇**이고 **2벌 구조는 불변**"*(`:78`). ⇒ **적용 범위 = 천장 문면 + 계수 ∪ 잔존 중복 normative 표**(census 7축 · exit 3 6조건 · W · 적격 3-conjunct · manifest 4블록). 구 범위가 배제하던 바로 그 채널에서 **DR2-M4(`diagnostic_line_set`) divergence 가 이미 실발생**했고, 본 회차의 계약 문언 축소는 **1건만 실행**되고 5블록이 미실행으로 남아 있다(`:1048` 자진 기재). 축소된 범위를 유지하면 **실발생한 divergence 채널이 어떤 동시-변경 의무에도 걸리지 않는다.**
+  > ★**적용 범위 정정 (설계리뷰 DR3-M3 — 철회된 전제가 이 한 곳에 살아남아 범위를 축소하고 있었다)**: 구 괄호는 *"분할 이관으로 normative 본체 중복은 **해소됐으므로** 적용 범위는 천장 문면 + 계수 로 한정된다"* 였다. **그 전제는 §결정 1 이 이미 철회**했다 — *"분할이 옮긴 것은 **그릇**이고 **2벌 구조는 불변**"*(`:78`). ⇒ **적용 범위 = 천장 문면 + 계수 ∪ 잔존 중복 normative 표**(census 7축 · exit 3 6조건 · W · 적격 3-conjunct · manifest 4블록). 구 범위가 배제하던 바로 그 채널에서 **DR2-M4(`diagnostic_line_set`) divergence 가 이미 실발생**했고, 본 회차의 계약 문언 축소는 **1건만 실행**되고 5블록이 미실행으로 남아 있다(§8.QC-MECH 서두 *"결정면 정본 = ADR-175 단독"* declare 표의 **「본 Tranche 미실행분」 행**에 자진 기재 — ★**설계리뷰 DR4-M6**: 구 표기는 절대 줄번호 `:1048` 이었고 3회차 삽입으로 이미 밀려 다른 행을 가리켰다. 두 문서가 금지하는 줄번호 앵커 관행이라 구조 앵커로 교체한다). 축소된 범위를 유지하면 **실발생한 divergence 채널이 어떤 동시-변경 의무에도 걸리지 않는다.**
 - ★**AC 결속의 잔여 — 요구사항 lane 회부 계류**: 신설 harness 의 self-test 는 `tests/scripts/test_check-*.sh`(셸)이고, Change Plan §8.1.1 RTM 머리말이 *"명명 테스트 열에 셸 함수·스크립트 경로를 백틱으로 적지 않는다 — 적으면 파서가 식별자로 오인해 born-missing"* 을 비협상으로 못박는다. ⇒ AC 신설·tier 판정은 **요구사항 lane 소유**이며 설계가 대행하지 않는다. **회부 종결 전까지 본 산출물군은 `ac-traceability-matrix` 정의역 밖**이다(§8.AC 회부 packet SSOT).
 - ★**mandate 편차 정직 기재**: 본 계약의 초판은 설계 lane 6 permanent deputy 중 **4 미수령** 상태에서 통합됐고, 그 결과 **회부한 축에서 실제로 P0 가 발생**했다. 1차 개정이 APIContractArchitectAgent 수령분(판별자 계약 · sidecar manifest — **실행 재현 기반**)을, 2차 개정이 **ModuleArchitectAgent**(corpus 경로·형상·dependency direction) + **InfraOperationalArchitectAgent**(운영 리스크 6-sub · §11.6 멱등)를 반영했다. 3차 개정이 **TestContractArchitectAgent**(blinded 섭동 IC · census 7축 · arm-L 타당성)를 반영했다. ⇒ ★**4 미수령 전건 수령·반영 완료 — 미수령 잔여 0.** 단 **수령 완료는 천장 해소가 아니다**(HC-1·HC-2 + U-2~U-5 존치). ★**미수령이 실제로 P0 를 낳았다는 사실은 사후에도 확증됐다** — ModuleArch 수령분이 **required 게이트 정의역 침범**(`check_ac_traceability_matrix` 가 corpus `.py` 심볼을 편입해 AC↔named-test 판정을 fail-open 시키는 경로 — Change Plan MECH-8)을, InfraOp 수령분이 §결정 10 리터럴 근거의 오류를 각각 반증했다. *"수령 전 통합" 은 회부 표기로 갈음되지 않는다.*
 
