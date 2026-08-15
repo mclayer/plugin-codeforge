@@ -348,6 +348,12 @@ fi
 #   그 상태에서는 스캔이 한 줄도 돌지 않았는데 전 차단 케이스가 GREEN 이 된다.
 #   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
 #   ★ 여기서 FAIL 을 세면 하류 판정이 무엇을 내든 스위트는 반드시 RED 가 된다(fail-loud).
+#
+#   ★ P2-6 보강 — 스위트 RED 와 **케이스 판정**은 다른 축이다.
+#     기존에는 sut_land 가 ng 로 FAIL 을 세어 스위트는 RED 였지만, 하류 케이스식
+#     `rc≠0 ∧ 착지 0` 은 크래시 상태에서도 그대로 참이라 S-M4·S-UNDEC·S-NONREPO 가
+#     **케이스 수준에서는 `OK PASS`** 를 찍었다. SUT 100% 크래시에서 "차단됨" 3줄이 출력되는
+#     화면은 그 자체로 거짓 증거다(리뷰가 실증). → SUT_CRASHED 플래그를 케이스식에 AND 한다.
 # ─────────────────────────────────────────────────────────────────────────────
 crash_marker() { # <output> → 0 = 크래시 흔적 있음
   case "$1" in
@@ -356,17 +362,23 @@ crash_marker() { # <output> → 0 = 크래시 흔적 있음
   return 1
 }
 
-# sut_land <cwd> <wt> <branch> [sha] — SUT 를 CWD≠wt 에서 실행. 결과: 전역 SUT_RC / SUT_OUT
+# sut_land <cwd> <wt> <branch> [sha] — SUT 를 CWD≠wt 에서 실행.
+#   결과: 전역 SUT_RC / SUT_OUT / SUT_CRASHED(1 = 크래시 — 케이스 판정에서 AND 로 소거)
 sut_land() {
   local cwd="$1" wt="$2" branch="$3" sha="${4:-}" root="$5"
   local args=(--land --worktree "$wt" --remote origin --branch "$branch")
   [ -z "$sha" ] || args+=(--sha "$sha")
   SUT_RC=0
+  SUT_CRASHED=0
   SUT_OUT="$(cd "$cwd" && bash "$root/scripts/check-salvage-bundle.sh" "${args[@]}" 2>&1)" || SUT_RC=$?
   if crash_marker "$SUT_OUT"; then
+    SUT_CRASHED=1
     ng "SUT 크래시(오라클 예외) — branch=$branch. rc≠0 을 '차단됨' 으로 읽을 수 없다" "$SUT_OUT"
   fi
 }
+
+# 차단 계열 케이스 전용 전제 — 크래시면 그 케이스의 '차단됨' 판정 자체를 성립시키지 않는다.
+sut_ran() { [ "${SUT_CRASHED:-0}" -eq 0 ]; }
 
 origin_landed() { # <origin> <branch> → 착지한 SHA (없으면 빈 문자열)
   git -C "$1" rev-parse --verify -q "refs/heads/$2" 2>/dev/null || true
@@ -429,11 +441,11 @@ if [ "$SUT_PRESENT" -eq 1 ]; then
   read -r A2_WT A2_ORIGIN A2_SHA A2_C1 <<< "$(fx_secret_mid "$FXA2")"
   sut_land "$OTHER" "$A2_WT" salvage-secret "" "$REPO_ROOT"
   LANDED="$(origin_landed "$A2_ORIGIN" salvage-secret)"
-  if [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ] && ! origin_has_secret "$A2_ORIGIN"; then
+  if sut_ran && [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ] && ! origin_has_secret "$A2_ORIGIN"; then
     ok "S-M4 중간 커밋 전용 secret: rc=$SUT_RC(≠0) ∧ 착지 0 ∧ 원격 secret 0 — 차단됨"
   else
-    ng "S-M4 실패 — 중간 커밋 secret 이 스캔을 통과했거나 착지했다" \
-       "rc=$SUT_RC landed='$LANDED'" "$SUT_OUT"
+    ng "S-M4 실패 — 중간 커밋 secret 이 스캔을 통과했거나 착지했다(또는 SUT 크래시)" \
+       "rc=$SUT_RC landed='$LANDED' crashed=${SUT_CRASHED:-0}" "$SUT_OUT"
   fi
   assert_marker "S-M4 마커" "SCAN_RESULT: finding"
   assert_marker "S-M4 마커" "PUSH: skipped"
@@ -449,11 +461,11 @@ if [ "$SUT_PRESENT" -eq 1 ]; then
   U_SHA="$(git -C "$FXU/wt" rev-parse HEAD)"
   sut_land "$OTHER" "$FXU/wt" salvage-undec "" "$REPO_ROOT"
   LANDED="$(origin_landed "$FXU/origin.git" salvage-undec)"
-  if [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ]; then
+  if sut_ran && [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ]; then
     ok "S-UNDEC 입력 cap 초과(판정 불가): rc=$SUT_RC ∧ 착지 0 — 통과로 접지 않음 (SHA $U_SHA)"
   else
-    ng "S-UNDEC 실패 — 판정 불가가 통과로 접혔다(fail-open)" \
-       "rc=$SUT_RC landed='$LANDED'" "$SUT_OUT"
+    ng "S-UNDEC 실패 — 판정 불가가 통과로 접혔다(fail-open) 또는 SUT 크래시" \
+       "rc=$SUT_RC landed='$LANDED' crashed=${SUT_CRASHED:-0}" "$SUT_OUT"
   fi
   assert_marker "S-UNDEC 마커" "SCAN_RESULT: undecidable"
 
@@ -462,11 +474,16 @@ if [ "$SUT_PRESENT" -eq 1 ]; then
   read -r A3_WT A3_ORIGIN A3_SHA A3_C1 <<< "$(fx_secret_mid "$FXA3")"
   sut_land "$NONREPO" "$A3_WT" salvage-secret "" "$REPO_ROOT"
   LANDED="$(origin_landed "$A3_ORIGIN" salvage-secret)"
-  if [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ]; then
+  if sut_ran && [ "$SUT_RC" -ne 0 ] && [ -z "$LANDED" ]; then
     ok "S-NONREPO 비-repo CWD 에서도 검출 ∧ 착지 0 (rc=$SUT_RC) — CWD 의존 제거 확인"
   else
-    ng "S-NONREPO 실패" "rc=$SUT_RC landed='$LANDED'" "$SUT_OUT"
+    ng "S-NONREPO 실패(또는 SUT 크래시)" \
+       "rc=$SUT_RC landed='$LANDED' crashed=${SUT_CRASHED:-0}" "$SUT_OUT"
   fi
+  # ★ P2-6: rc≠0 은 '스캔이 돌아 finding 이 났다' 와 '아무것도 못 하고 죽었다' 를 구별 못 한다.
+  #   마커를 요구해 **검출 경로를 실제로 통과했다** 는 양(positive) 증거를 남긴다.
+  assert_marker "S-NONREPO 마커" "SCAN_RESULT: finding"
+  assert_marker "S-NONREPO 마커" "PUSH: skipped"
 
   # S-TOCTOU-BASE — baseline: 스캔한 그 SHA(C2)만 나간다. HEAD(C3)의 secret 은 원격에 없어야.
   FXE="$TMPROOT/fx-toctou"; mkdir -p "$FXE"
@@ -612,6 +629,195 @@ if [ "$SUT_PRESENT" -eq 1 ]; then
   mutant_case "SM-2 ②재기록 TOCTOU(고정 SHA→HEAD push)" toctou toctou
   mutant_case "SM-3 ③glob 배제(객체 목록에 pathspec 주입)" glob secret
   mutant_case "SM-4 ④primitive 퇴화(--max-count=1 = 최종 tree 만)" degrade secret
+fi
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Part 5 — SCAN_BLOCKING_RULES 9룰 결박 (구현리뷰 P1-3)
+#
+# 결함: `SCAN_BLOCKING_RULES` (check_salvage_bundle.py:555-565) 는 SUT 정의부 밖에서
+#   참조하는 테스트가 0 이었다. 스캔 픽스처의 secret 페이로드가 1종
+#   (`AKIAIOSFODNN7EXAMPLE` = cloud_key)뿐이라, 차단집합을 `("cloud_key",)` 로
+#   **9→1 축소해도 self-test 전건이 GREEN** 이었다(리뷰 실증).
+#   → 넓힘 방향은 대조군 3종(S-E/S-REF/S-BEN)이 이미 결박한다(되돌리면 즉시 RED).
+#     **축소 방향만 열려 있었다.** 여기서 닫는다.
+#
+# 관측면 2층:
+#   ① S-BR-SET   — 집합 멤버십 정확 일치(축소·확대 양방향 즉시 검출). 싸다.
+#   ② S-BR-FIRE  — 9룰 **각각**에 전용 페이로드를 물려 실제로 차단 판정이 나는지.
+#                  ①만 두면 "이름은 있는데 발화하지 않는 룰" 을 못 본다 — 그 천장을 ②가 닫는다.
+#   ③ S-BR-DROP  — 룰 1종씩 제거한 변이 9개. 해당 페이로드가 차단→통과로 **전환**해야 killed.
+#                  ②가 "발화한다" 를 보이면 ③은 "그 발화가 차단에 load-bearing 하다" 를 보인다.
+#   ④ S-BR-1     — 9→1 전면 축소. 나머지 8종이 전부 통과로 전환돼야 killed.
+#
+#   ★ 전용 페이로드 9종은 각각 **정확히 1룰만** 발화함을 실측 확인했다(룰 간 중복 발화 0).
+#     이 격리 덕분에 ③의 per-rule 전환 판정이 성립한다.
+#   ★ 정직 천장: 관측 대상은 "차단집합 멤버십 + 각 멤버의 차단 기여" 다.
+#     탐지기 정규식 자체의 재현율(어떤 실 secret 형태를 놓치는가)은 본 축 밖 —
+#     예: URL basic-auth · raw hex · 짧은 서명 JWT 는 9룰 어디에도 안 걸린다(ADR-179 §7 F-12).
+# ═════════════════════════════════════════════════════════════════════════════
+echo
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo " Part 5 — SCAN_BLOCKING_RULES 9룰 결박 (P1-3)"
+echo "═══════════════════════════════════════════════════════════════════════════"
+
+BR_PROBE="$TMPROOT/br_probe.py"
+cat >"$BR_PROBE" <<'PYEOF'
+"""차단집합 + 룰별 차단 기여 관측 probe.
+
+크래시하면 `::br-done::` 을 내지 않는다 — 상류 bash 가 그 부재를 harness FAIL 로 끊으므로
+'출력 없음' 이 조용히 kill 로 오독되지 않는다.
+"""
+import importlib.util
+import sys
+import traceback
+
+target = sys.argv[1]
+
+# 룰별 전용 페이로드 — 각각 정확히 1룰만 발화(실측). 실 자격증명 0.
+#   ★ `ghp_`·`github_pat_` 접두는 런타임 결합으로 만든다(소스에 리터럴 토큰 패턴을 남기지 않음).
+G36 = "a1b2c3d4e5" * 3 + "f6g7h8"
+G82 = ("A" * 41) + ("b" * 41)
+ENVD = "\n".join("VAR%d=value%d" % (i, i) for i in range(10))
+
+CASES = [
+    ("private_key_block",
+     "-----BEGIN RSA PRIVATE KEY-----\nZZZZ\n-----END RSA PRIVATE KEY-----"),
+    ("authorization_header", "Authorization: Bearer tokvalue123456"),
+    ("cookie_header", "Cookie: sid=abc123xyz"),
+    ("github_pat", "ghp" + "_" + G36),
+    ("github_fine_grained_pat", "github" + "_pat_" + G82),
+    ("cloud_key", "AKIA" + "IOSFODNN7EXAMPLE"),
+    ("api_key_credential", "api_key: XXXXYYYYZZZZWWWW"),
+    ("env_dump_excluded", ENVD),
+    ("credential_subprocess_excluded", "aws_secret_access_key present here"),
+]
+
+try:
+    spec = importlib.util.spec_from_file_location("_sut_br", target)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["_sut_br"] = mod
+    spec.loader.exec_module(mod)
+    red = mod._import_redactor()
+    print("::br-set:: %s" % ",".join(sorted(mod.SCAN_BLOCKING_RULES)))
+    for label, text in CASES:
+        verdict, blocking, advisory = mod._scan_blob(text, red)
+        print("::br-case:: %s %s blocking=%s advisory=%s"
+              % (label, verdict, ",".join(sorted(blocking)) or "-",
+                 ",".join(sorted(advisory)) or "-"))
+except BaseException:
+    traceback.print_exc()
+    raise SystemExit(3)
+
+print("::br-done::")
+PYEOF
+
+BR_MUT="$TMPROOT/br_mutate.py"
+cat >"$BR_MUT" <<'PYEOF'
+"""차단집합 **축소** 변이기. rc 3 = 앵커 drift(튜플 형태가 바뀌었다)."""
+import re
+import sys
+
+src, out, drop = sys.argv[1], sys.argv[2], sys.argv[3]
+s = open(src, encoding="utf-8").read()
+m = re.search(r"SCAN_BLOCKING_RULES = \(\n(.*?)\n\)\n", s, re.S)
+if not m:
+    sys.stderr.write("ANCHOR-DRIFT: SCAN_BLOCKING_RULES 튜플 형태 변경\n")
+    sys.exit(3)
+names = re.findall(r'"([a-z_]+)"', m.group(1))
+if drop == "ALL_BUT_CLOUD":
+    keep = ["cloud_key"]
+else:
+    if drop not in names:
+        sys.stderr.write("ANCHOR-DRIFT: %s 부재\n" % drop)
+        sys.exit(3)
+    keep = [n for n in names if n != drop]
+new = "SCAN_BLOCKING_RULES = (\n" + "".join('    "%s",\n' % n for n in keep) + ")\n"
+open(out, "w", encoding="utf-8", newline="\n").write(s[:m.start()] + new + s[m.end():])
+PYEOF
+
+# 9룰 — SUT 정의 순서. BR_EXPECT 는 정렬형(집합 비교용).
+BR_RULES=(private_key_block authorization_header cookie_header github_pat
+          github_fine_grained_pat cloud_key api_key_credential
+          env_dump_excluded credential_subprocess_excluded)
+BR_EXPECT="api_key_credential,authorization_header,cloud_key,cookie_header,credential_subprocess_excluded,env_dump_excluded,github_fine_grained_pat,github_pat,private_key_block"
+
+br_run() { BR_OUT="$(python3 "$BR_PROBE" "$1" 2>&1)" || true; }
+br_done() { case "$BR_OUT" in *"::br-done::"*) return 0 ;; esac; return 1; }
+br_verdict() { printf '%s\n' "$BR_OUT" | sed -n "s/^::br-case:: $1 \([a-z]*\) .*/\1/p" | tail -1; }
+
+br_mutant() { # <rule|ALL_BUT_CLOUD> → stdout: 변이 SUT 경로. rc3 = 앵커 drift
+  local drop="$1" d="$TMPROOT/br-mut-$RANDOM$RANDOM"
+  mkdir -p "$d"
+  cp "$REPO_ROOT/scripts/lib/"*.py "$d/" 2>/dev/null || true
+  python3 "$BR_MUT" "$REPO_ROOT/scripts/lib/check_salvage_bundle.py" \
+    "$d/check_salvage_bundle.py" "$drop" >/dev/null 2>"$TMPROOT/br-mut.err" || return 3
+  printf '%s\n' "$d/check_salvage_bundle.py"
+}
+
+if [ "$SUT_PRESENT" -eq 1 ]; then
+  br_run "$REPO_ROOT/scripts/lib/check_salvage_bundle.py"
+  if ! br_done; then
+    ng "S-BR baseline probe 크래시 — 하류 전건 판정 무효(INV-T4)" "$BR_OUT"
+  else
+    BR_GOT="$(printf '%s\n' "$BR_OUT" | sed -n 's/^::br-set:: //p' | tail -1)"
+    assert_eq "S-BR-SET 차단집합 멤버십 9룰 정확 일치" "$BR_EXPECT" "$BR_GOT" \
+      "축소·확대 양방향 결박. 변경이 정당하면 ADR-179 §결정 2 와 함께 갱신할 것."
+    for r in "${BR_RULES[@]}"; do
+      v="$(br_verdict "$r")"
+      if [ "$v" = "finding" ]; then
+        ok "S-BR-FIRE $r — 전용 페이로드가 차단 판정(발화 실증)"
+      else
+        ng "S-BR-FIRE $r — 전용 페이로드가 차단되지 않음(verdict='$v')" \
+           "이름만 있고 발화하지 않는 룰 = 차단집합의 죽은 원소" "$BR_OUT"
+      fi
+    done
+  fi
+
+  # ③ per-rule 축소 변이 — 룰 1종 제거 시 그 페이로드가 차단→통과로 전환해야 killed.
+  for r in "${BR_RULES[@]}"; do
+    BR_MRC=0
+    BR_MPATH="$(br_mutant "$r")" || BR_MRC=$?
+    if [ "$BR_MRC" -ne 0 ]; then
+      ng "S-BR-DROP $r — 축소 변이 앵커 drift" "$(cat "$TMPROOT/br-mut.err" 2>/dev/null)"
+      continue
+    fi
+    br_run "$BR_MPATH"
+    if ! br_done; then
+      ng "S-BR-DROP $r — mutant probe 크래시(거짓 kill 차단)" "$BR_OUT"
+      continue
+    fi
+    v="$(br_verdict "$r")"
+    if [ "$v" = "clean" ]; then
+      ok "S-BR-DROP $r — 축소 mutant killed (차단→통과 전환 실증)"
+    else
+      ng "S-BR-DROP $r — 축소 mutant survived (verdict='$v')" \
+         "이 룰을 지워도 차단이 유지된다 = 차단 기여 미실증" "$BR_OUT"
+    fi
+  done
+
+  # ④ 9→1 전면 축소 — 리뷰가 실증한 바로 그 변이. 나머지 8종이 전부 통과로 전환돼야 killed.
+  BR_MRC=0
+  BR_MPATH="$(br_mutant ALL_BUT_CLOUD)" || BR_MRC=$?
+  if [ "$BR_MRC" -ne 0 ]; then
+    ng "S-BR-1 9→1 전면 축소 — 변이 앵커 drift" "$(cat "$TMPROOT/br-mut.err" 2>/dev/null)"
+  else
+    br_run "$BR_MPATH"
+    if ! br_done; then
+      ng "S-BR-1 9→1 전면 축소 — mutant probe 크래시(거짓 kill 차단)" "$BR_OUT"
+    else
+      BR_FLIP=0
+      for r in "${BR_RULES[@]}"; do
+        [ "$r" = "cloud_key" ] && continue
+        [ "$(br_verdict "$r")" = "clean" ] && BR_FLIP=$((BR_FLIP + 1))
+      done
+      if [ "$BR_FLIP" -eq 8 ] && [ "$(br_verdict cloud_key)" = "finding" ]; then
+        ok "S-BR-1 9→1 전면 축소 mutant killed (8종 차단→통과 전환, cloud_key 만 잔존)"
+      else
+        ng "S-BR-1 9→1 전면 축소 mutant survived — 리뷰 실증 결함 미봉합" \
+           "통과 전환 $BR_FLIP/8, cloud_key verdict='$(br_verdict cloud_key)'" "$BR_OUT"
+      fi
+    fi
+  fi
 fi
 
 echo
