@@ -18,9 +18,11 @@
   (동결이 실물에서 떨어져 나가는 것을 막는 drift 오라클).
 
 ── 천장 각인 ──────────────────────────────────────────────────────────────────
-  모듈 docstring 의 정직 천장 ①②⑤⑦ 은 산문으로만 두지 않고 아래
+  모듈 docstring 의 정직 천장 ①②⑤⑦⑧ 은 산문으로만 두지 않고 아래
   `test_ceiling_*` 가 assert 로 각인한다. 검사기를 그 방향으로 넓히면 해당 테스트가
-  RED 가 되어 천장 문서 갱신이 강제된다.
+  RED 가 되어 천장 문서 갱신이 강제된다. ⑧(행번호 포인터 stale)은 각인이 공허해지지
+  않도록 **선확인**(표본이 절 ID 문법에 0 match)과 **대조군**(같은 뒤집기를 절 ID 로
+  앵커하면 잡힌다)을 함께 건다.
 """
 
 import importlib.util
@@ -577,6 +579,57 @@ def test_ceiling7_reference_only_citation_over_triggers():
     ])
     result = run(post, diff)
     assert violated_ids(result) == ["§결정 1"], "천장 ⑦ 이 해소됐다면 문서를 갱신하라"
+
+
+# 행번호 앵커 표본 — 어느 것도 절 ID 문법(`A<n>-<m>` · `§결정 N`)의 문자열을 담지 않는다.
+LINE_POINTERS = (
+    "위 표의 근거는 `:289`-`:306` 과 `:416` 에 있다 — 그 전제를 뒤집는다.",
+    "앞의 `:117` 이 세운 결론을 여기서 대체한다.",
+    "정정 대상 = 이 파일 :412 · :585 두 줄.",
+)
+
+
+def test_ceiling8_line_number_pointer_is_outside_detection_domain():
+    """★ 이 테스트는 **결함을 잡지 않는다 — 천장 ⑧ 을 각인한다.**
+
+    정정 포인터를 행번호로 앵커하면 후속 커밋이 앞쪽에 문단을 넣을 때 좌표가 밀려
+    썩는데, 이 검사는 그 좌표를 **읽지 못한다** — `_SEC_ID_ALT` 의 값 공간이
+    `A<n>-<m>` · `§결정 N` 두 형태뿐이라 `:NNN` 이 아예 들어 있지 않다.
+
+    각인을 공허하지 않게 하는 두 장치:
+      · **선확인** — 표본이 절 ID 문법에 0 match 임을 먼저 assert 한다. 표본이 우연히
+        절 ID 를 담고 있었다면 아래 「위반 0」은 천장이 아니라 그냥 오류였을 것이다.
+      · **대조군** — 같은 뒤집기를 *절 ID* 로 앵커하면 위반으로 잡힌다. 대조군이 없으면
+        「위반 0」이 천장 때문인지 합성 케이스가 애초에 무해해서인지 구분되지 않는다.
+
+    ⇒ 누군가 검사기를 좌표 축으로 넓히면 이 테스트가 **RED** 가 된다. 그때 할 일은 이
+      테스트를 지우는 게 아니라 모듈 docstring 의 천장 ⑧ 을 함께 갱신하는 것이다.
+      각인은 검출이 아니라 **넓힐 때 알려주는 장치**다."""
+    # ① 선확인 — 표본 어느 줄도 절 ID 문법에 걸리지 않는다.
+    assert len(LINE_POINTERS) >= 2
+    for p in LINE_POINTERS:
+        assert sut._SECTION_ID_RE.findall(p) == [], \
+            "행번호 표본이 절 ID 문법에 걸리면 이 각인은 무의미하다: %r" % p
+        assert sut.cited_ids(p, own_adr=999) == [], p
+
+    # ② 대조군 — 같은 뒤집기를 절 ID 로 앵커하면 검사기가 잡는다.
+    ctl_post, ctl_diff = synth(amendment_body=["§결정 1 의 결론을 뒤집는다."])
+    assert violated_ids(run(ctl_post, ctl_diff)) == ["§결정 1"], \
+        "대조군이 안 잡히면 아래 「위반 0」은 천장의 증거가 아니다"
+
+    # ③ 각인 — 좌표가 **지금은 정확해도** 검사기 눈에 보이지 않는다.
+    #    포인터 `:N` 은 합성 문서에서 실제 `§결정 1` 헤딩 줄을 가리키도록 계산한다
+    #    (저작 시점엔 옳았던 실물 좌표의 재현).
+    probe_post, _ = synth(amendment_body=list(LINE_POINTERS))
+    sec1_lineno = next(i for i, l in enumerate(probe_post.splitlines(), start=1)
+                       if l.startswith("### §결정 1"))
+    post, diff = synth(amendment_body=list(LINE_POINTERS)
+                       + ["앞 절(`:%d`)의 결론을 뒤집는다." % sec1_lineno])
+    assert post.splitlines()[sec1_lineno - 1].startswith("### §결정 1"), \
+        "포인터가 실제 §결정 1 헤딩을 가리키지 않으면 실물 재현이 아니다"
+    result = run(post, diff)
+    assert result["citations"] == [], sut.format_report(result)
+    assert result["violations"] == []
 
 
 def test_ceiling_domain_excludes_cross_repo_paths():
