@@ -461,7 +461,7 @@ def test_ic4_exec_tree_carries_no_arm_leaking_surface(tmp_path):
     for tok in hgc.BLINDING_FORBIDDEN_TOKENS:
         assert not any(tok in n.lower() for n in names), f"exec dir 에 '{tok}' 누설: {names}"
     assert not any(n.endswith(".sample") for n in names), f".sample 잔재: {names}"
-    assert hgc._blinding_violations(unit_dir) == []
+    assert hgc._blinding_violations(unit_dir, exec_root) == []
 
 
 def test_ic4_exec_unit_dir_is_reassigned_each_materialize(tmp_path):
@@ -487,10 +487,12 @@ def test_ic4_leaked_stamp_in_fixture_is_loud_substrate_failure(tmp_path):
     """fixture 안에 stamp 가 잠입하면 exit 3 — blinding assert 가 실제로 강제됨(M5 대응)."""
     _require_substrate()
     root = build_shadow(tmp_path)
+    # s01·s02 양쪽에 동일하게 주입 (한쪽에만 넣으면 provenance 검사가 트리 동일성 파손으로 먼저 발화)
     (root / "tests/fixtures/hollow-gate-corpus/s01/clean/stamp_leak.txt").write_text("leak\n")
+    (root / "tests/fixtures/hollow-gate-corpus/s02/clean/stamp_leak.txt").write_text("leak\n")
     rc, _out, err = run_core(root, manifest=write_manifest(tmp_path / "m_leak.yaml"))
     assert rc == 3, err
-    assert "blinding 파손" in err and "stamp_leak.txt" in err
+    assert "exec-tree blinding 파손" in err and "stamp_leak.txt" in err
 
 
 # ══════════════════════════════════════════════════════════════════════════════

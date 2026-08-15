@@ -487,10 +487,12 @@ mutation_kill_stdout "M4 (census 축별 개별 emit)" \
 
 # M5 = IC-4 exec-tree blinding assert. 오염 shadow(fixture 안에 stamp 잠입)로 baseline=3 을 만든 뒤 중화.
 SH_M5="$(new_shadow none)"
+# s01·s02 양쪽에 동일하게 주입 (한쪽에만 넣으면 provenance 검사가 트리 동일성 파손으로 먼저 발화)
 echo "leaked-arm-signal" > "$SH_M5/tests/fixtures/hollow-gate-corpus/s01/kill/stamp_leak.txt"
+echo "leaked-arm-signal" > "$SH_M5/tests/fixtures/hollow-gate-corpus/s02/kill/stamp_leak.txt"
 MF_M5="$TEST_TMP/manifest_m5.yaml"; reset_mf; emit_manifest "$MF_M5"
 mutation_kill_exit "M5 (IC-4 exec-tree blinding assert)" \
-  's/                    bad = _blinding_violations(unit_dir)/                    bad = []  # M5-neutralized/' \
+  's/                        bad = _blinding_violations(unit_dir, exec_root)/                        bad = []  # M5-neutralized/' \
   "M5-neutralized" "$SH_M5" 3 --manifest "$MF_M5"
 
 # M6 = xkill 축-disjoint 검사. 중화 시 §4 T-1ⓑ 가 통과해버린다 = 판별력 사망.
@@ -544,10 +546,13 @@ run_core "$CORE_PY" "$SH" --manifest "$MF"
 expect_exit "exit3 ⓸ bijection orphan" 3 "$CORE_RC" "samples[] 참조 0개"
 
 # ⓹ exec-tree blinding 파손 — fixture 안에 stamp 잠입 (IC-4)
-SH="$(new_shadow none)"; echo "leak" > "$SH/tests/fixtures/hollow-gate-corpus/s01/clean/stamp_probe_leak.txt"
+# s01·s02 양쪽에 동일하게 주입 (한쪽에만 넣으면 provenance 검사가 트리 동일성 파손으로 먼저 발화)
+SH="$(new_shadow none)"
+echo "leak" > "$SH/tests/fixtures/hollow-gate-corpus/s01/clean/stamp_probe_leak.txt"
+echo "leak" > "$SH/tests/fixtures/hollow-gate-corpus/s02/clean/stamp_probe_leak.txt"
 MF="$TEST_TMP/mf_blind.yaml"; reset_mf; emit_manifest "$MF"
 run_core "$CORE_PY" "$SH" --manifest "$MF"
-expect_exit "exit3 ⓹ exec-tree blinding 파손 (stamp 잠입)" 3 "$CORE_RC" "blinding 파손"
+expect_exit "exit3 ⓹ exec-tree blinding 파손 (stamp 잠입)" 3 "$CORE_RC" "exec-tree blinding 파손"
 
 # ⓺ recipe 대상이 samples[] 밖
 SH="$(new_shadow none)"; MF="$TEST_TMP/mf_recipe_out.yaml"
@@ -671,7 +676,9 @@ echo "── IC-4 exec-tree blinding / exec dir 재배정 ───────�
 #   _materialize 를 in-process 로 불러 수행한다 (tests/scripts/test_check_hollow_gate_corpus.py).
 for tok in stamp manifest baseline probe; do
   SH="$(new_shadow none)"
+  # s01·s02 양쪽에 동일하게 주입 (한쪽에만 넣으면 provenance 검사가 트리 동일성 파손으로 먼저 발화)
   echo "leak" > "$SH/tests/fixtures/hollow-gate-corpus/s01/clean/${tok}_leak.txt"
+  echo "leak" > "$SH/tests/fixtures/hollow-gate-corpus/s02/clean/${tok}_leak.txt"
   MF="$TEST_TMP/mf_blind_${tok}.yaml"; reset_mf; emit_manifest "$MF"
   run_core "$CORE_PY" "$SH" --manifest "$MF"
   if [ "$CORE_RC" -eq 3 ] && grep -qF "금지 토큰 '${tok}'" "$CORE_ERR"; then
