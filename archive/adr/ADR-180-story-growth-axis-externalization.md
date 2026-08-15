@@ -140,7 +140,9 @@ heading 기반 암묵 경계("다음 heading 까지")를 금지한다.
 | E-3 | §9 선두에 코드펜스로 `## 11.` 인용 → 슬라이서 조기 종결 | +65 B | §9 = 39 B → **GREEN** |
 | **E-4** | §9 본문 전량을 §4 말미로 보상 이동 | **0 B** | §9 = **30 B**(heading 줄 잔여) → **GREEN**, 총량 완전 보존 |
 
-**E-4 가 결정적이다**: read-cold §9 를 read-hot §4 로 옮기면 §4 가 53,653 → **104,590 B** 가 된다. **실읽기량은 악화되는데 섹션 cap 은 GREEN 이고 비용은 0 이다.** 악의를 가정할 필요도 없다 — 섹션 간 재배치는 저작자가 우연히 할 수 있는 정상 편집이다.
+**E-4 가 결정적이다**: read-cold §9 를 read-hot §4 로 옮기면 §4 가 53,653 → **104,590 B** 가 된다. **독자가 지는 읽기 부담은 악화되는데 섹션 cap 은 GREEN 이고 비용은 0 이다.** 악의를 가정할 필요도 없다 — 섹션 간 재배치는 저작자가 우연히 할 수 있는 정상 편집이다.
+
+> **용어 주의 (설계리뷰 R2 P2-b)**: 위 문장의 "읽기 부담" 은 **비형식 서술**이며 §결정 1 의 형식 용어 `read_cost` 가 **아니다.** 채택 metric 은 file-granular 이라 E-4 에 대해 `Δ read_cost = 0`(아래 정정 주석) — 따라서 "실읽기량(=`read_cost`)이 악화된다" 고 쓰면 **문서 자기 정의어로 거짓**이 된다. 두 층을 분리 표기한다: 독자 체감(§4 를 읽는 사람이 실제로 넘겨야 하는 분량)은 악화되고, 선언된 목적함수 값은 불변이다. 이 괴리가 곧 E-4 의 방어를 목적함수가 아닌 **앵커 쌍 ∧ INV-S2** 에 귀속시켜야 하는 이유다.
 
 ⇒ **섹션 cap 단독 설계는 born-broken 이다.**
 
@@ -159,29 +161,61 @@ INV-S1  발화 ⟺ anchor_delta ≠ ∅                            # 분할 / �
         판정  for each section n ∈ sections(anchor_delta):
                  digest(before.§n) == digest(strip_stub(after.§n) ∪ children[n])
 
-INV-S2  발화 ⟺ anchor_delta = ∅  ∧  |Δ bytes(parent)| ≤ θ_total
+INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건 없음 (R2 P0-A 봉합)
         판정  RED ⟺ ∃ i≠j :  Δ§i ≤ −θ_move  ∧  Δ§j ≥ +θ_move
-              (θ_total = 64 B, θ_move = 4,096 B — Phase 2 에서 코퍼스 분포로 재정)
+              (θ_move = 4,096 B — Phase 2 에서 코퍼스 분포로 재정)
               reason_code ∈ 폐쇄 enum 선언 시 RED → **신호**로 강등 (§결정 7 비차단 축)
 ```
 
-두 발화 조건이 `anchor_delta` 를 기준으로 **상보 분할**이므로 어떤 PR 도 양쪽 모두에서 빠져나가는 사각이 없다. 정상 저작(총량 증가 동반 append)은 `|Δ| > θ_total` 로 INV-S2 미발화, 앵커 불변으로 INV-S1 미발화 — 둘 다 조용하다.
+> **봉합 (설계리뷰 R2 P0-A) — `∧ |Δ bytes(parent)| ≤ θ_total` conjunct 를 제거한다.** 종전 술어는 `anchor_delta = ∅` 반쪽 **안에서 다시** 총량으로 좁혀, **E-4 회피 비용이 정확히 65 바이트**가 되는 사각을 만들었다(경계 ±1 반전 실증: append 64 B → RED / **65 B → NOT_FIRED**). 정상 라운드 append 가 +19,167 B 이므로 **사각은 예외가 아니라 기본 경로**였다. θ_total 게이팅은 born-broken 회피에 **불필요**하다 — 순수 append 는 감소 섹션이 없어 `∃i: Δ§i ≤ −θ_move` 가 **정의상 거짓**이라 판정식만으로 이미 GREEN 이고, 게이팅은 검출력만 파괴했다. `θ_total` 상수는 본 결정에서 소멸한다.
 
-**실행 확인 (PL firsthand 반증 하네스, 기준 `fe43c9f0` / LF / V1)** — 술어를 문면 그대로 구현해 배터리 투입:
+두 발화 조건은 `anchor_delta` 를 기준으로 **상보 분할**이다 — **단 이 상보성은 `anchor_delta` 한 축에서만 참이며, 어느 한쪽 발화 조건에 다른 축의 conjunct 를 추가하는 순간 그 반쪽 안에 사각이 생긴다** (종전 `θ_total` 이 정확히 그 사례였다 — 설계리뷰 R2 P0-A). 봉합 후에는 `anchor_delta` 가 유일 판별자이므로 어떤 PR 도 양쪽 모두에서 빠져나가지 않는다 [실행 확인 — 아래 배터리, 봉합안 열]. 정상 저작(총량 증가 동반 append)은 감소 섹션 부재로 INV-S2 가 **발화하되 GREEN**, 앵커 불변으로 INV-S1 미발화다.
 
-| 변형 | INV-S1 | INV-S2 |
-|---|---|---|
-| M0 무변경 (대조군) | NOT_FIRED | GREEN |
-| M-SPLIT 정상 분할 (pure move) | **GREEN** | NOT_FIRED |
-| M-LOSS 분할 중 500 B 소실 | **RED** | NOT_FIRED |
-| **M-APPEND 분할된 섹션 정상 append (대조군)** | NOT_FIRED | **GREEN** — false RED 0 |
-| **M-E4 §9→§4 보상 이동 (0 B)** | NOT_FIRED | **RED** |
-| M-E4′ 동일 + `reason_code` 선언 | NOT_FIRED | SIGNAL (비차단) |
-| M-NORMAL 정상 §9 append (+3,946 B) | NOT_FIRED | NOT_FIRED |
+> **종전 단언의 철회 (R2 P0-A)**: 종전 기재 *"어떤 PR 도 양쪽 모두에서 빠져나가는 사각이 없다"* 는 **`θ_total` conjunct 가 존재하는 한 명시적으로 거짓**이었다. 위 재선언은 conjunct 제거 **후** 배터리를 실행해 확인한 뒤에만 발화한 것이다(AC-17 자기적용 — mutant falsify 후 선언).
 
-7/7 기대 일치. **정직 한계**: 이 하네스는 설계 술어의 반증 도구이지 Phase 2 게이트 코드가 아니다 — "게이트가 배선됐다" 고 주장하지 않는다 (§결정 8 자기 구속).
+**실행 확인 (PL firsthand 반증 하네스, 기준 트리 `8307618d` / 매체 LF raw CR=0 / 슬라이서 V1 / 정의역 = Story 파일 1건 229,897 B)** — 술어를 문면 그대로 구현해 봉합 **전·후** 를 같은 배터리로 대조했다. `Δbytes` 는 parent 총량 증분:
+
+| 변형 | Δbytes | INV-S1 | INV-S2 (종전) | **INV-S2 (봉합)** |
+|---|---:|---|---|---|
+| M0 무변경 (대조군) | +0 | NOT_FIRED | GREEN | **GREEN** |
+| M-SPLIT 정상 분할 (pure move) | −8,539 | **GREEN** | NOT_FIRED | NOT_FIRED |
+| M-LOSS 분할 중 500 B 소실 | −8,539 | **RED** | NOT_FIRED | NOT_FIRED |
+| **M-APPEND 정상 append 1,000 B (대조군)** | +1,000 | NOT_FIRED | *NOT_FIRED* | **GREEN** — false RED 0 |
+| **M-APPEND 정상 append 50,000 B (대조군)** | +50,000 | NOT_FIRED | *NOT_FIRED* | **GREEN** — false RED 0 |
+| **M-DELETE 8,620 B 삭제 (대조군)** | −8,620 | NOT_FIRED | *NOT_FIRED* | **GREEN** |
+| M-NORMAL 정상 §9 append | +3,946 | NOT_FIRED | *NOT_FIRED* | **GREEN** |
+| **M-E4 §9→§4 보상 이동 (0 B)** | +0 | NOT_FIRED | **RED** | **RED** `[(9,4)]` |
+| M-E4′ 동일 + `reason_code` 선언 | +0 | NOT_FIRED | SIGNAL (비차단) | SIGNAL (비차단) |
+| M-MIX-64 이동 + append 64 B | +64 | NOT_FIRED | **RED** | **RED** `[(9,4)]` |
+| **M-MIX-min 이동 + append 65 B** | **+65** | NOT_FIRED | ***NOT_FIRED* ← 사각** | **RED** `[(9,4)]` |
+| M-MIX 이동 + append 1,000 B | +1,000 | NOT_FIRED | *NOT_FIRED* ← 사각 | **RED** `[(9,4)]` |
+| M-MIX-SPLIT §9→§7 + append 1,000 B | +1,000 | NOT_FIRED | *NOT_FIRED* ← 사각 | **RED** `[(9,7)]` |
+
+**라벨 규약 (설계리뷰 R2 P1-E 정정)**: 종전 표는 M-APPEND 를 `GREEN`, M-NORMAL 을 `NOT_FIRED` 로 적어 **같은 성질(미발화)에 다른 라벨**을 부여했다 — 미발화를 통과로 계상한 것이며 §8.2 M-MARGIN 절이 금지한 형상의 자기 재발이었다. 위 표는 *기울임* `NOT_FIRED` = 미발화(통과 아님) / `GREEN` = 발화 후 통과로 **판정 상태를 문자 그대로** 표기한다. 봉합안에서는 이 대조군들이 실제로 발화 후 GREEN 이므로 **라벨과 실판정이 일치한다**(이중 이득).
+
+**검출 정의역 비축소 (R2 Iter 5 가설 — 봉합 부작용 축)**: 봉합 전 RED 였던 변형이 봉합 후 non-RED 로 바뀐 건수 = **0**. 봉합 후 신규 RED = **3**(M-MIX-min · M-MIX · M-MIX-SPLIT). 즉 이번 봉합은 검출 정의역을 **순확대**했고 축소분이 없다 [전수 대조 실행 확인].
+
+13/13 기대 일치. **정직 한계**: 이 하네스는 설계 술어의 반증 도구이지 Phase 2 게이트 코드가 아니다 — "게이트가 배선됐다" 고 주장하지 않는다 (§결정 8 자기 구속). **하네스 자체의 아티팩트 1건을 자체 발견·정정**했다: 섹션 말미 절단을 줄 경계에 정렬하지 않으면 다음 h2 앞의 개행이 사라져 그 heading 이 무효화되고 §10 이 §9 에 흡수된다(섹션 Δ 가 `(10,4)` 로 거짓 산출). 위 표는 전부 정렬 후 값이며 `(9,4)` 가 정본이다.
+
+**봉합안도 못 잡는 것 (§8.12 등재)**: ① **이동 출처에 이동량 이상 재-append** — §9→§4 로 8,000 B 이동 후 §9 에 9,000 B 재-append 하면 §9 의 순 Δ 가 **양수**라 `∃i: Δ§i ≤ −θ_move` 가 거짓 → **GREEN** [실행 확인] ② **θ_move 미만 분산 이동** — §9→§4/§5/§6 으로 3,673 / 3,353 / 3,879 B(총 10,905 B, 총량 완전 보존)를 쪼개 옮기면 개별 Δ 가 전부 임계 미만이라 **GREEN** [실행 확인]. 두 회피는 종전·봉합안 **양쪽 모두** 통과하므로 봉합의 회귀가 아니라 **잔존 한계**로 정직 등재한다.
 
 앵커 3속성 = **명시**(주석 마커, 구조 우연 비결합) ∧ **쌍**(시작/종료, 미쌍 = FAIL) ∧ **유일**(파일 내·코퍼스 내, 중복 = FAIL — "첫 매칭 사용" 금지).
+
+#### INV-S3 발화 조건은 무조건이며 판정은 3항 AND 다 (설계리뷰 R2 P0-B · P1-C)
+
+```
+INV-S3  발화 ⟺ 항상                                        # 발화 조건 없음 (R2 P0-B 봉합)
+        판정  for each domain D ∈ DOMAINS:  leg1 ∧ leg2 ∧ leg3
+              leg1  집합 동일성   : ids(declared_D) == ids(extract_D(after))
+              leg2  절대 cardinality : |extract_D(after)| == card(declared_D)   # 원시 행 수 기준
+              leg3  per-cell 값 동일성: ∀k ∈ declared_D : extract_D(after)[k] == declared_D[k]
+```
+
+**P0-B 봉합 — `anchor_delta ≠ ∅` 게이팅 제거.** Iter 4 는 전역 집합 → 정의역별 분해로 **양화는 고쳤으나** 같은 봉합에서 발화 조건 `anchor_delta ≠ ∅` 를 **새로 붙였다.** C-13(정의역 간 상쇄)은 분할과 무관한 위협인데 검사가 **분할 커밋 전용**이 된 것이다 — 형식 해소·실질 축소. 실증: RTM 에서만 `AC-7` 을 삭제한 mutant 를 **분할 없는 일반 편집 PR** 로 주입하면 `anchor_delta = ∅` 라 **NOT_FIRED**. 게이팅 제거 후 동일 mutant 는 **RED 로 복귀**하고, 정상 산문 편집 대조군은 **GREEN**(false RED 0)이다 [양쪽 실행 확인].
+
+**P1-C 봉합 — leg3(per-cell 값 동일성) 신설 + 판정면 이전.** Story 자기 문면이 요구한 제품 게이트 요건은 *"per-cell identity 고정 ∧ 정의역별 분해"* 인데 Iter 4 는 **두 번째 연언지만** 착지시켰다. 종전 2항 AND(집합 동일성 · 절대 cardinality)는 **둘 다 값을 보지 않으므로** C-7 원형 공격(식별자·개수 온전, **값**만 오염)이 그대로 통과한다 [실증: `12.29 KB` → `9.85 KB` 치환 mutant 가 2항 AND 에서 **GREEN**, leg3 추가 시 **RED**. leg 제거 실험으로 **leg3 가 단독 검출자**임을 확인].
+
+봉합에는 **판정면 이전**이 함께 필요하다 — 세 leg 의 비교 기준을 `before` 가 아니라 **baseline artifact 선언값**으로 둔다. `before` 대조는 공격자가 같은 PR 안에서 before 를 함께 옮길 수 있어 무력하다 [실증: Story L1588 이 기술한 C-7 실형상(은폐 −2셀 + 무관 위치 정확 행 복제 +2셀)은 before/after 비교에서 **GREEN**, 선언값 대조 + **정의역 위치 앵커 추출**에서 **RED**]. 따라서 (a) `cells` 선언을 개수 → **(셀ID → 값) 매핑**으로 확장하고 (b) 정의역 추출은 선언된 위치에 앵커해 **무관 위치 복제가 결손을 복원하지 못하게** 하며 (c) 정의역 내 **파싱 실패는 조용한 skip 이 아니라 결손**으로 드러나야 한다. 상세 = Change Plan §8.4 · §11.5.
 
 ### §결정 5 — grandfather baseline 키는 **안정 식별자**이지 파일 경로가 아니다
 
