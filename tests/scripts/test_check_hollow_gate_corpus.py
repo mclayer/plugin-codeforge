@@ -128,9 +128,10 @@ def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=F
         out.append("samples:\n")
         out.append(_SAMPLE_ROW.format(sid="s01", kill="kill", xkill="xkill"))
         out.append(_SAMPLE_ROW.format(sid="s02", kill="kill", xkill="xkill"))
-        if extra == "s03":
+        if extra == "s03" or derived_from_mismatch:
             # 축 어긋남: kill 자리에 xkill(AC-8 축) fixture 를 앉힌다 — 선언 stage 는 AC-1 인데
             # 관측 stage 는 {AC-8, SUMMARY} 라 짝이 맞지 않는다.
+            # OR derived_from_mismatch 테스트용 s03 (IC-1 negative)
             out.append(_SAMPLE_ROW.format(sid="s03", kill="xkill", xkill="kill"))
         if extra == "s04":
             out.append(_SAMPLE_ROW.format(sid="s04", kill="kill", xkill="xkill"))
@@ -161,7 +162,9 @@ def write_manifest(path, stage="AC-1", exit_space="[0, 1]", extra="none", flip=F
     if samples != "empty":
         out.append(f"  - sample: s01\n    declared_arm: {a01[0]}\n    expected_verdict: {a01[1]}\n")
         out.append(f"  - sample: s02\n    declared_arm: {a02[0]}\n    expected_verdict: {a02[1]}\n")
-        if extra in ("s03", "s04"):
+        if extra == "s03" or derived_from_mismatch:
+            out.append(f"  - sample: s03\n    declared_arm: L\n    expected_verdict: LIVE\n")
+        if extra == "s04":
             out.append(f"  - sample: {extra}\n    declared_arm: L\n    expected_verdict: LIVE\n")
     if probe:
         arm = ("L", "LIVE") if flip else ("H", "HOLLOW")
@@ -774,20 +777,14 @@ def test_substrate_provenance_tree_mismatch(tmp_path):
 
 
 def test_ic1_probe_unit_arm_anchored_measurement(tmp_path):
-    """IC-1 armL-anchored: probe unit 의 arm 라벨 측정 (FIX-B).
+    """IC-1 armL-anchored positive: probe unit 의 arm 라벨 측정 정상 (FIX-B).
 
     probe 정의역에서 armL-anchored 를 측정 (sample 정의역과 구분).
-    probe 로 판정한 arm 이 declared_arm 과 일치하면 armL-anchored=1,
-    일치 안 하면 armL-anchored=0 → IC 강등 가능성.
-
-    ★ 현재 corpus 는 probe p01 이 declared_arm H(HOLLOW) 와 일치하므로 armL-anchored=1.
-    mismatch 시나리오는 실제 판정과 선언이 어긋나는 극단 시나리오인데,
-    본 테스트는 정상 상태(armL-anchored=1)에서 **측정이 작동함**을 확인한다.
+    정상 corpus 에서는 probe p01 이 declared_arm H(HOLLOW) 와 일치.
     """
     _require_substrate()
     rc, out, _err = run_core(REPO_ROOT)
     assert rc == 0, "baseline 이 FAIL 이면 ic 측정 불가"
-    # 정상 corpus 에서는 probe p01 이 H(HOLLOW) 로 판정 → declared H 와 일치 → armL-anchored=1
-    # (이 값은 stdout 에 명시적으로 emit 되지 않지만, ic-1 미발동으로 암묵적 확인)
-    # ic-1 이 발동하지 않으면 armL-anchored 측정이 정상임을 뜻한다
     assert "::error::[IC-1]" not in out, "정상 corpus 에 IC-1 발동하면 측정 파손"
+
+
