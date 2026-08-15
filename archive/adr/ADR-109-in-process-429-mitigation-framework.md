@@ -95,6 +95,7 @@ amendments:
   - amendment: 3
     carrier_story: CFP-2984
     date: 2026-08-15
+    reinterpretation: true   # 순수 additive 아님 — 개정 6건 중 4건이 기존 조항의 *지위·정의역* 을 소급 재규정한다. ① §결정 4 CB threshold 를 "telemetry 실채움 전까지 **미발동(non-firing)**" 으로 재선언 — 수치 무변경인 채 조항의 규범 지위가 live control → 구조적 발동 불가 declare 로 바뀐다(Amd2 marker 와 동형 축: 문면 무변경 + 지위 재해석). ② §결정 2 `Retry-After` 대기원의 **정의역 축소** — 구 문면이 `anthropic-ratelimit-*-reset` 과 `Retry-After` 를 "또는" 으로 묶던 것을 `retry-after` **한정**으로 좁히고 reset 계열을 대기원에서 배제. 기존 override rule 의 발동 조건이 달라지므로 additive 아님(단 이 건은 문면 편집 동반 — 재해석 ∧ 개정). ③ §결정 3 step2 / §결정 1 SSOT consumer 열거 / §결과 3곳에서 cross-model slot 의 tenant 를 `ADR-057 §결정 2` → `ADR-141 Amendment 6` 로 교체하며 구 tenant 의 지위를 "live 지시 대상" → "prior tenant, moot/dead" 로 재규정. ④ `mechanical_enforcement_actions` 3종 중 2종을 "선언된 기계 강제" → "승격 기각(always-green hollow)" 로 지위 강등. 방향 = 전건 **강화**(완화 0) 이나 지위 재규정이 실재하므로 `false` 로 적을 수 없다. self-declared — 의미 판정은 리뷰 lane 축.
     scope: >-
       **Amendment 2 절(본문 `## Amendment 2` ~ 파일 끝) 무접촉** — Proposed 조항 위 normative
       스택 금지(Orchestrator 판정 C). 본 Amendment 는 Accepted 본체(§결정 1~10) 와 frontmatter

@@ -303,6 +303,7 @@ amendment_log:
   - amendment: 10
     carrier_story: CFP-2984
     date: 2026-08-15
+    reinterpretation: true   # byte 는 순수 additive(131 insert / 0 delete, A6-1~A6-6 무접촉)이나 **의미상 additive 아님** — 2곳에서 기존 조항을 소급 재해석한다. ① A10-1 이 A6-2 step2 "동일 입력 패킷" 을 *패킷 불변* 아닌 ***멱등 계약*** 으로 재규정(A6-4 "입력 패킷 = idempotency contract" 원용). 이 재해석은 load-bearing — 원 문구가 *패킷 불변* 이면 A10-2 step4(번들 동봉)가 A6-2 와 정면 충돌하므로, A10-2 의 성립 자체가 이 재규정에 의존한다. ② A10-4 가 A6-2·A7-2·frontmatter 3곳의 `SendMessage resume 금지` root cause 인용 `CFP-2236` 의 근거를 "Story 본문" 에서 "sibling retro 앵커(2026-06-14-cfp-2238-...:127)" 로 재정박 — **행 자체는 무접촉**이라 문면 변경 0 인 채 인용의 의미가 바뀐다. `A6-2 조항 무변경`(scope) 과 무모순: 무변경 = byte 축 / 재해석 = 의미 축(ADR-167 §결정 (b) 리뷰 판정 축). 완화 방향 0 — A6-2 금지 자체는 유지·강화. self-declared — 의미 판정은 리뷰 lane 축.
     scope: >-
       **A6 failover 경로에 salvage 인계 절차를 additive 로 결합**한다. 범위 = **Orchestrator
       생존 ∧ fable 워커 사망** 한정(A6 trigger 정의역과 동일) — 전원 공멸 경로는
