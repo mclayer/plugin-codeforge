@@ -29,6 +29,7 @@
 #     판정하지 않는다(리뷰 소관).
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -487,6 +488,317 @@ class TestExtractSectionTerminator:
     def test_absent_heading_returns_none(self):
         """헤딩 부재 → None (형제 헬퍼는 AssertionError — 계약이 다르다는 사실을 고정)."""
         assert man.extract_section("## 다른 문서\n본문\n") is None
+
+
+# ════════ 스위트 실패 삼킴 (FIX14) — 생성 축이 자기 실패를 기록하는가 ════════════
+#
+# ── 계기 (실물, 합성 아님) ────────────────────────────────────────────────────────
+#   본 Story 의 9파일 스위트를 CI 인자 그대로 돌린 실행이 rc=1 로 끝나며
+#       `1 failed, 163 passed, 1 skipped, 1 deselected in 471.16s (0:07:51)`
+#   를 냈는데, 생성기의 §8.7 스위트 줄은 `163 passed, 1 skipped, 1 deselected` 였다.
+#   원인 2개가 겹쳤다 — (a) `suite_axis` 가 `cp.returncode` 를 보지 않았다 (b) 요약 줄
+#   정규식에 `failed` 슬롯이 없어 `search` 가 선두 `1 failed,` 를 건너뛰었다.
+#   ⇒ **수기 사본을 없애려고 만든 장치가 자기 산출에서 실패를 삼켰다.**
+#
+# ── 그물 3겹 (한 겹이 뚫려도 다른 겹이 잡게) ──────────────────────────────────────
+#   ⓪   실측 비-green(failed/error) → 선언 값이 맞아떨어져도 위반
+#   ⓪-b 실행 outcome 합 ≠ 수집 선택 수 → 요약 줄을 일부만 읽었다는 신호
+#   ⓪-c rc≠0 인데 실패 토큰 부재 → 설명되지 않은 비정상 종료(pytest rc 2/3/4/5)
+#
+# ── 이 절이 세우지 **않는** 것 ────────────────────────────────────────────────────
+#   실패가 **기록**되는지까지다. 그 실패의 원인, 스위트가 옳은 것을 재는지는 판정하지
+#   않는다 — 그 축은 리뷰·해당 오라클 소관이다.
+
+FAILING_RUN_TAIL = REPO_ROOT / "tests" / "fixtures" / "cfp_2949" / "pytest-failing-run-tail.txt"
+
+# 동결 자료가 담은 **실측 사실** (자료 헤더와 같은 값 — 여기 박은 건 기대치다)
+REAL_FAILING_RC = 1
+REAL_FAILING_LINE = "1 failed, 163 passed, 1 skipped, 1 deselected in 471.16s (0:07:51)"
+REAL_COLLECT_SELECTED = 165          # 163 passed + 1 skipped + 1 failed (deselected 는 밖)
+
+
+@pytest.fixture(scope="module")
+def failing_stdout():
+    assert FAILING_RUN_TAIL.is_file(), f"동결 자료 부재: {FAILING_RUN_TAIL}"
+    return FAILING_RUN_TAIL.read_text(encoding="utf-8")
+
+
+class TestSuiteAxisDoesNotSwallowFailure:
+    """생성 축이 **자기 실패를 기록**하는가 (FIX14).
+
+    mutant kill 3종:
+      ① rc 판정 제거 (`summarize_suite_run` 의 `suite_rc_unexplained` 분기 삭제)
+         ⇒ `test_nonzero_rc_without_failure_tokens_is_a_violation` RED
+      ② `failed` 슬롯 제거 (`_SUITE_KNOWN_OUTCOMES` 에서 failed/error 제거)
+         ⇒ `test_captured_real_failing_run_is_read_as_failing` RED
+      ③ 미인식을 무결로 (`suite_axis_unavailable` 를 빈 dict 로 대체)
+         ⇒ `test_unrecognized_summary_is_not_treated_as_clean` RED
+    """
+
+    # ── 반사실: **현재 실물** 입력이 위반으로 올라오는가 ──────────────────────────
+    def test_captured_real_failing_run_is_read_as_failing(self, failing_stdout):
+        """**M-② kill** — 실 실행 산출에서 실패 1건을 값으로 읽어낸다."""
+        got = man.summarize_suite_run(failing_stdout, REAL_FAILING_RC)
+
+        assert got.get("suite_failed") == 1, f"실패가 산출에서 사라졌다: {got!r}"
+        assert got.get("suite_errors") == 0, got
+        assert got.get("suite_passed") == 163, got
+        assert got.get("suite_skipped") == 1, got
+        assert got.get("suite_deselected") == 1, got
+        assert got.get("suite_returncode") == REAL_FAILING_RC, got
+        assert got.get("suite_summary_line") == REAL_FAILING_LINE, got
+        assert "suite_axis_unavailable" not in got, got
+
+    def test_legacy_regex_read_the_same_input_as_green(self, failing_stdout):
+        """이 동결 자료가 **판별 자료**임을 귀속한다 — 구판은 여기서 초록이었다.
+
+        ★ 이 테스트가 없으면 위 케이스가 "원래도 통과하던 입력" 을 시험하는 공허한
+          단언일 수 있다. 구판 형상을 그 자리에서 재현해, 자료가 두 판본을 실제로
+          **가른다**는 것을 값으로 고정한다.
+        """
+        legacy = re.compile(
+            r"(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?(?:,\s*(\d+)\s+deselected)?"
+        )
+        hit = None
+        for ln in reversed([l.strip() for l in failing_stdout.splitlines() if l.strip()]):
+            hit = legacy.search(ln)
+            if hit:
+                break
+
+        assert hit is not None, "구판 정규식이 아무것도 못 읽었다 — 재현 형상이 아니다"
+        assert (int(hit.group(1)), int(hit.group(2) or 0), int(hit.group(3) or 0)) \
+            == (163, 1, 1), hit.groups()
+        assert "failed" not in hit.group(0), (
+            "구판 정규식이 실패를 포착했다면 이 자료는 판별 자료가 아니다: %r" % hit.group(0)
+        )
+
+    def test_summary_line_finder_anchors_on_line_shape(self, failing_stdout):
+        """트레이스백 줄을 요약 줄로 오인하지 않는다.
+
+        ★ 반례가 자료 안에 있다: `... timed out after 60 seconds` 는 `60 seconds` 라는
+          `N word` 토큰을 갖는다. 줄 형상을 앵커하지 않고 토큰만 훑으면 이 줄이 잡힌다.
+        """
+        assert "timed out after 60 seconds" in failing_stdout, (
+            "전제 붕괴: 반례 줄이 동결 자료에 없다 — 이 케이스가 공허해진다"
+        )
+        counts, line, unknown = man.parse_suite_summary(failing_stdout)
+
+        assert line == REAL_FAILING_LINE, f"요약 줄 오인: {line!r}"
+        assert unknown == [], f"화이트리스트 밖 토큰이 잡혔다: {unknown!r}"
+        assert "seconds" not in counts, counts
+
+    # ── ⓪ 실측 비-green 은 선언과 무관하게 위반 ─────────────────────────────────
+    def test_generated_failure_is_a_violation_even_when_declaration_matches(
+            self, failing_stdout):
+        """**⓪ kill — FIX14 결함의 정확한 형상**.
+
+        구판 생성기가 뱉은 초록 줄을 §8.7 에 그대로 붙이면 **값이 서로 맞는다**. 그래서
+        값 대조 축은 조용하고, 이 케이스를 잡는 것은 비-green 판정 하나뿐이다.
+        아래 두 번째 단언이 그 귀속을 고정한다(다른 축이 잡아 준 것이 아니다).
+        """
+        generated, declared = _suite_case("`163 passed, 1 skipped, 1 deselected`",
+                                          collect_selected=REAL_COLLECT_SELECTED,
+                                          collect_deselected=1)
+        generated.update(man.summarize_suite_run(failing_stdout, REAL_FAILING_RC))
+
+        viol = man.compare_manifest(generated, declared)
+        joined = "\n".join(viol)
+
+        assert any(v.startswith("suite_failed:") for v in viol), (
+            "실패 1건이 있는 실행이 무결로 통과했다:\n" + joined
+        )
+        assert not any(v.startswith("suite_passed:") for v in viol), (
+            "값 대조 축이 잡아 준 것이라면 ⓪ 의 판별력이 귀속되지 않는다:\n" + joined
+        )
+
+    def test_partially_read_summary_is_caught_by_run_total_invariant(self):
+        """**⓪-b kill (독립 그물)** — 실행 outcome 합이 수집 선택 수에 못 미치면 위반.
+
+        ★ 구판 파서가 돌려주던 dict 를 그대로 먹인다. 파싱을 고치지 않았더라도 이 그물
+          하나로 FIX14 형상이 잡힌다(163 + 1 = 164 ≠ 165).
+        """
+        generated, declared = _suite_case("`163 passed, 1 skipped, 1 deselected`",
+                                          collect_selected=REAL_COLLECT_SELECTED,
+                                          collect_deselected=1)
+        generated.update({"suite_passed": 163, "suite_skipped": 1, "suite_deselected": 1,
+                          "suite_failed": 0, "suite_errors": 0, "suite_returncode": 0})
+
+        viol = man.compare_manifest(generated, declared)
+        assert any(v.startswith("suite_run_total:") for v in viol), (
+            "요약 줄을 일부만 읽은 실행 축이 무결로 통과했다:\n" + "\n".join(viol)
+        )
+
+    def test_nonzero_rc_without_failure_tokens_is_a_violation(self):
+        """**M-① kill** — rc≠0 인데 요약 줄이 초록이면 그 자체가 위반.
+
+        pytest rc 2(중단)·3(내부 오류)·4(사용법)·5(수집 0)가 이 형상이다. 요약 줄만
+        믿으면 중단된 실행이 완주한 실행으로 기록된다.
+        """
+        got = man.summarize_suite_run("163 passed, 1 skipped, 1 deselected in 10.00s\n", 2)
+        assert "suite_rc_unexplained" in got, got
+
+        generated, declared = _suite_case("`163 passed, 1 skipped, 1 deselected`",
+                                          collect_selected=164, collect_deselected=1)
+        generated.update(got)
+
+        viol = man.compare_manifest(generated, declared)
+        assert any(v.startswith("suite_returncode:") for v in viol), (
+            "rc≠0 실행이 무결로 통과했다:\n" + "\n".join(viol)
+        )
+
+    def test_unrecognized_summary_is_not_treated_as_clean(self):
+        """**M-③ kill** — 요약 줄을 못 읽으면 무결이 아니라 위반이다.
+
+        (이 모듈이 선언 축에서 이미 지는 규율의 생성 축 확장 — 미인식 ≠ 무결.)
+        """
+        for stdout, rc in (("no tests ran in 0.01s\n", 5),
+                           ("ERROR: file or directory not found: tests/nope.py\n", 4),
+                           ("", 3)):
+            got = man.summarize_suite_run(stdout, rc)
+            assert "suite_axis_unavailable" in got, (stdout, got)
+            assert "suite_passed" not in got, (
+                "읽지 못한 실행에 passed 값이 생겼다: %r" % (got,)
+            )
+
+            viol = man.compare_manifest(dict(got), {"section_present": True})
+            assert any(v.startswith("suite_axis_unavailable:") for v in viol), (
+                "미인식 요약이 조용히 통과했다 (%r):\n%s" % (stdout, "\n".join(viol))
+            )
+
+    def test_unknown_outcome_token_is_reported(self):
+        """화이트리스트 밖 outcome 토큰은 계상 정의역 밖임을 밝힌다.
+
+        ★ 슬롯 열거식의 알려진 실패 양태: pytest 가 토큰을 하나 늘리면 조용히 눈이 먼다.
+          모르는 토큰을 만나면 합계를 신뢰할 수 없다고 **말한다**.
+        """
+        got = man.summarize_suite_run("163 passed, 2 flaked, 1 deselected in 3.00s\n", 0)
+        assert got.get("suite_unknown_tokens") == ["2 flaked"], got
+
+        generated, declared = _suite_case("`163 passed, 1 deselected`",
+                                          collect_selected=163, collect_deselected=1)
+        generated.update(got)
+
+        viol = man.compare_manifest(generated, declared)
+        assert any(v.startswith("suite_unknown_tokens:") for v in viol), (
+            "모르는 토큰이 섞인 요약이 조용히 통과했다:\n" + "\n".join(viol)
+        )
+
+    # ── 대조군 — 새 그물이 "무차별 위반" 이 아님 ────────────────────────────────
+    def test_green_run_reports_zero_violations(self):
+        """**대조군** — 실패 없는 실행 + 일치 선언 = 위반 없음.
+
+        ★ 이 케이스가 위 판별 케이스들의 비공허성을 짊어진다. 없으면 비-green 판정을
+          모든 입력에 대해 발화시켜도 판별 테스트가 전부 통과한다.
+        """
+        got = man.summarize_suite_run(
+            "164 passed, 1 skipped, 1 deselected in 300.00s (0:05:00)\n", 0)
+        assert got["suite_failed"] == 0 and got["suite_errors"] == 0, got
+        assert "suite_rc_unexplained" not in got, got
+        assert "suite_unknown_tokens" not in got, got
+
+        generated, declared = _suite_case("`164 passed, 1 skipped, 1 deselected`",
+                                          collect_selected=165, collect_deselected=1)
+        generated.update(got)
+
+        viol = man.compare_manifest(generated, declared)
+        assert viol == [], "실패 없는 일치 자료인데 위반이 나왔다:\n" + "\n".join(viol)
+
+    # ── 파생 불변식 재검토: 선언 축에는 failed 슬롯이 없다 ──────────────────────
+    def test_declared_shortfall_from_a_failing_run_is_flagged(self):
+        """**파생 불변식 (FIX14 재검토)** — 실행 축이 없는 대조에서 실패는 **부족분**이다.
+
+        선언 축 canonical 형식(`N passed[, M skipped], K deselected`)에는 failed 슬롯이
+        없다. 그래서 `check` 기본 경로(실행 축 미수집)에서는 `passed + skipped` 가 수집
+        선택 수에 **못 미치는 것**으로 실패가 드러난다 — 164 ≠ 165 가 실물 수치다.
+        선언 축 정규식을 넓히지 않은 이유이기도 하다(기존 §8.7 선언 하위호환 보존).
+        """
+        generated, declared = _suite_case("`163 passed, 1 skipped, 1 deselected`",
+                                          collect_selected=REAL_COLLECT_SELECTED,
+                                          collect_deselected=1)
+
+        viol = man.compare_manifest(generated, declared)      # 실행 축 없음 → 파생 경로
+        joined = "\n".join(viol)
+        assert any(v.startswith("suite_passed:") for v in viol), joined
+        assert any("failed/error" in v for v in viol), (
+            "부족분의 원인 후보로 실패를 지목하지 않는다:\n" + joined
+        )
+
+    # ── 렌더 — 하위호환 ⊕ 거짓 초록 거부 ───────────────────────────────────────
+    def test_render_markdown_green_line_is_byte_identical_to_legacy_form(self):
+        """**하위호환** — 실패 없는 실행의 §8.7 줄은 FIX14 이전과 byte 동형이다.
+
+        두 번째 자료는 `suite_returncode` 키가 **없는** 구 dict 다 — 새 키를 갖추지 않은
+        호출자도 같은 줄을 얻는다는 것을 고정한다.
+        """
+        cases = (
+            ({"suite_passed": 164, "suite_skipped": 1, "suite_deselected": 1,
+              "suite_failed": 0, "suite_errors": 0, "suite_returncode": 0},
+             "스위트 실행: `164 passed, 1 skipped, 1 deselected`"),
+            ({"suite_passed": 98, "suite_skipped": 0, "suite_deselected": 1},
+             "스위트 실행: `98 passed, 1 deselected`"),
+        )
+        for src, expected in cases:
+            assert man.render_markdown(src) == expected, (
+                "초록 렌더가 바뀌었다 — 기존 §8.7 선언과의 하위호환이 깨진다: %r"
+                % man.render_markdown(src)
+            )
+
+    def test_render_markdown_refuses_to_render_failure_as_green(self, failing_stdout):
+        """실패한 실행을 붙여넣을 수 있는 초록 줄로 렌더하지 않는다.
+
+        ★ 구판은 그 줄을 뱉었고, 그 줄이 §8.7 에 들어갔다. 렌더가 거짓 초록을 만들지
+          않는지까지 봐야 대조기 수정이 실효를 갖는다(생성기가 계속 거짓을 뱉으면
+          사람이 그것을 붙이고 대조는 통과한다).
+        """
+        got = man.summarize_suite_run(failing_stdout, REAL_FAILING_RC)
+        md = man.render_markdown(got)
+
+        assert "`163 passed" not in md, f"실패 실행이 canonical 초록 줄로 렌더됐다: {md!r}"
+        assert "비-green" in md and "failed 1" in md, md
+
+        # 그대로 붙여넣어도 선언 파서가 초록으로 읽지 못한다
+        back = man.parse_manifest_section(
+            man.SECTION_HEADING + "\n\n" + md + "\n\n## 다음 절\n")
+        assert back is not None and back.get("suite_passed") is None, (
+            "비-green 렌더가 초록 선언으로 되읽혔다: %r" % (back,)
+        )
+
+    # ── 종단 (실 프로세스) ──────────────────────────────────────────────────────
+    def test_suite_axis_end_to_end_on_a_real_failing_pytest_run(self, tmp_path):
+        """**종단** — 실제로 실패하는 pytest 를 띄워 rc 경로까지 지난다.
+
+        ★ 위 케이스들은 동결 산출을 먹인다. 이 케이스만이 `suite_axis` 가 프로세스를
+          띄우고 그 **종료코드를 실제로 받아 오는** 경로를 지난다 — 파싱만 고치고 rc 를
+          계속 버리는 구현을 배제한다.
+        ★ 격리: repo 밖 tmp 에 자기 rootdir(`pytest.ini`)을 세운다.
+        """
+        (tmp_path / "pytest.ini").write_text(
+            "[pytest]\nmarkers =\n    requires_golden: golden 의존\n",
+            encoding="utf-8", newline="\n")
+        (tmp_path / "test_e2e_suite_axis.py").write_text(
+            "import pytest\n"
+            "def test_ok_1(): pass\n"
+            "def test_ok_2(): pass\n"
+            "def test_boom(): assert 1 == 2\n"
+            "def test_skipped(): pytest.skip('정의역 밖')\n"
+            "@pytest.mark.requires_golden\n"
+            "def test_deselected(): pass\n",
+            encoding="utf-8", newline="\n")
+
+        got = man.suite_axis(str(tmp_path), ["test_e2e_suite_axis.py"])
+
+        assert got.get("suite_returncode") not in (None, 0), (
+            f"실패하는 스위트인데 rc 가 0 이다 (rc 미수집 의심): {got!r}"
+        )
+        assert got.get("suite_failed") == 1, got
+        assert got.get("suite_passed") == 2, got
+        assert got.get("suite_skipped") == 1, got
+        assert got.get("suite_deselected") == 1, got
+
+        viol = man.compare_manifest(dict(got, collect_selected=4), {"section_present": True})
+        assert any(v.startswith("suite_failed:") for v in viol), (
+            "실 프로세스 실패가 대조에서 무결로 통과했다:\n" + "\n".join(viol)
+        )
 
 
 if __name__ == "__main__":

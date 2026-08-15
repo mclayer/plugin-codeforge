@@ -24,6 +24,11 @@
 #     selected 에 **포함**되므로 skip 0 을 가정하면 정직한 skip-포함 선언이 구조적
 #     위반이 된다 — 그 가정은 FIX6-b 에서 제거했다. 실 실행 대조가 필요하면
 #     `generate --with-suite` 로 실행 축까지 채운다.
+#   · 스위트를 **실 실행**하는 경로(`--with-suite`)는 pytest 의 **종료코드**와 실패-계열
+#     토큰(`failed`/`error`)을 함께 읽는다. 둘 중 하나라도 비면 실패가 산출에서 조용히
+#     사라진다 — FIX14 이전 판이 그 상태였고, rc=1 인 실행이 초록 줄로 기록됐다.
+#     단 이 층이 세우는 것은 "실패가 **기록**된다" 까지다. 그 실패가 무엇 때문인지,
+#     스위트가 옳은 것을 재는지는 판정하지 않는다.
 #   · 스위트 줄이 **있는데 파서가 못 읽는** 경우(canonical 형식 이탈)는 무결이 아니라
 #     **위반**이다(§compare ①). 단 canonical 이 아닌 shape 전부를 잡는다고 주장하지
 #     않는다 — 탐지 정의역은 `_SUITE_SPANLIKE_RE` 주석에 명시했다.
@@ -86,9 +91,42 @@ _ALIAS_RE = re.compile(r"([A-Za-z][A-Za-z0-9_]*)\s+(\d+)")
 # pytest 수집 요약 줄
 _COLLECT_PLAIN_RE = re.compile(r"^(\d+)\s+tests?\s+collected")
 _COLLECT_DESEL_RE = re.compile(r"^(\d+)/(\d+)\s+tests?\s+collected\s*\((\d+)\s+deselected\)")
-_SUITE_RESULT_RE = re.compile(
-    r"(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?(?:,\s*(\d+)\s+deselected)?"
+# ── pytest **실행** 요약 줄 (생성 축 — 위 §8.7 **선언** 축 정규식과 별개다) ──────
+#   ★ FIX14 계기 (실물 재현, 합성 아님): 구판은
+#       `(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?(?:,\s*(\d+)\s+deselected)?`
+#     하나를 `search` 했고, `cp.returncode` 는 어디서도 보지 않았다. pytest 는 실패가
+#     섞이면
+#         `1 failed, 163 passed, 1 skipped, 1 deselected in 471.16s (0:07:51)`
+#     를 내는데 `search` 는 선두 `1 failed,` 를 건너뛰고 `163 passed` 부터 잡는다.
+#     ⇒ rc=1 인 실행에서 생성기가 `163 passed, 1 skipped, 1 deselected` 라는 **초록 줄**을
+#       뱉었다. 수기 사본을 없애려고 만든 이 장치가 자기 산출에서 실패를 삼킨 형상이다.
+#       동결 자료 = `tests/fixtures/cfp_2949/pytest-failing-run-tail.txt` (그 실행의 꼬리).
+#   ⇒ 슬롯 열거 대신 outcome 토큰을 **화이트리스트로 전량 수확**한다. 열거식은 pytest 가
+#     토큰을 하나 늘릴 때마다 조용히 눈이 머는 반면, 화이트리스트 밖 토큰은
+#     `parse_suite_summary` 가 **미인식으로 올린다**(미인식 ≠ 무결 — 이 모듈의 기존 규율).
+_SUITE_KNOWN_OUTCOMES = (
+    "passed", "failed", "error", "errors", "skipped", "deselected",
+    "xfailed", "xpassed", "warning", "warnings", "rerun", "reruns",
 )
+_SUITE_RESULT_RE = re.compile(
+    r"(\d+)\s+(%s)\b" % "|".join(sorted(_SUITE_KNOWN_OUTCOMES, key=len, reverse=True))
+)
+# 요약 줄 **형상** — `N word[, N word]*[ in <초>s ...]`. 줄 전체를 앵커해 트레이스백이
+#   잡히지 않게 한다: 실물 fixture 의 `... timed out after 60 seconds` 줄이 그 반례다
+#   (토큰만 훑으면 `60 seconds` 를 요약으로 오인할 여지가 생긴다).
+_SUITE_SUMMARY_LINE_RE = re.compile(
+    r"^\d+\s+[A-Za-z][A-Za-z-]*(?:\s*,\s*\d+\s+[A-Za-z][A-Za-z-]*)*"
+    r"(?:\s+in\s+[\d.]+s.*)?$"
+)
+# 줄 안의 `N word` 토큰 전량 (화이트리스트 판정 전 단계)
+_SUITE_TOKEN_RE = re.compile(r"(\d+)\s+([A-Za-z][A-Za-z-]*)")
+# 요약 줄 꼬리의 소요시간 절 — 토큰 수확 정의역에서 잘라낸다
+_SUITE_ELAPSED_RE = re.compile(r"\s+in\s+[\d.]+s")
+# `selected` 정의역에 계상되는 **실행** outcome.
+#   `deselected` 는 selected 밖이고, `error` 는 setup/teardown 에서 같은 항목이 겹쳐
+#   셀 수 있어 항등에서 뺀다 — 겹침을 항등에 넣으면 정직한 실행이 구조적 위반이 된다.
+#   error 가 누락되는 것이 아니다: 비-green 판정(`compare_manifest` ⓪)이 따로 잡는다.
+_SUITE_RUN_OUTCOMES = ("passed", "failed", "skipped", "xfailed", "xpassed")
 
 
 # ═══════════════════════════ 공통 ═══════════════════════════════════════════════
@@ -240,23 +278,74 @@ def collect_axis(repo_root, files, mark=CI_MARK_EXPR, python=None):
     }
 
 
+def parse_suite_summary(stdout):
+    """pytest `-q` 산출 → `(카운트 dict, 요약 줄, 미인식 토큰 목록)` — **pure**.
+
+    요약 줄을 못 찾으면 `(None, None, [])`. 호출자가 그 사실을 명시적으로 다룬다
+    (조용한 통과 금지 — `_SUITE_SPANLIKE_RE` 가 선언 축에서 지는 규율과 같은 방향).
+
+    ★ 순수 함수로 떼어낸 이유: 구판은 subprocess 실행과 파싱이 한 덩어리라 **파싱만**
+      시험할 방법이 없었다. 그래서 "실패를 삼키는가" 를 묻는 오라클을 붙일 자리가
+      없었고, 결함이 실 실행에서 산출을 오염시킨 뒤에야 드러났다.
+    """
+    for raw in reversed([l for l in (stdout or "").splitlines() if l.strip()]):
+        line = raw.strip().strip("=").strip()
+        if not _SUITE_SUMMARY_LINE_RE.match(line):
+            continue
+        head = _SUITE_ELAPSED_RE.split(line)[0]
+        counts, unknown = {}, []
+        for m in _SUITE_TOKEN_RE.finditer(head):
+            n, word = int(m.group(1)), m.group(2).lower()
+            if word in _SUITE_KNOWN_OUTCOMES:
+                counts[word] = counts.get(word, 0) + n
+            else:
+                unknown.append("%d %s" % (n, word))
+        if not counts and not unknown:
+            continue
+        return counts, line, unknown
+    return None, None, []
+
+
+def summarize_suite_run(stdout, returncode):
+    """pytest 산출 + **종료코드** → 스위트 축 dict — **pure**.
+
+    ★ 종료코드가 판정에 들어가는 이유: 요약 줄만 읽으면 rc≠0 인 실행이 초록으로 기록될
+      수 있다. 구판이 정확히 그랬다(rc 미참조 ∧ `failed` 슬롯 부재 — 두 결손이 겹쳐
+      실패가 산출에서 사라졌다).
+    """
+    counts, line, unknown = parse_suite_summary(stdout)
+    out = {"suite_returncode": returncode}
+    if counts is None:
+        out["suite_axis_unavailable"] = (
+            "pytest 요약 줄 미인식 (rc=%s) — 미인식은 무결이 아니다" % returncode
+        )
+        return out
+    out["suite_summary_line"] = line
+    for word in ("passed", "skipped", "deselected", "xfailed", "xpassed"):
+        out["suite_" + word] = counts.get(word, 0)
+    out["suite_failed"] = counts.get("failed", 0)
+    out["suite_errors"] = counts.get("error", 0) + counts.get("errors", 0)
+    if unknown:
+        out["suite_unknown_tokens"] = unknown
+    # rc≠0 인데 실패-계열 토큰이 없다 = **설명되지 않은 비정상 종료**.
+    #   pytest rc 2=사용자 중단 / 3=내부 오류 / 4=사용법 오류 / 5=수집 0 이 여기 걸린다.
+    if returncode not in (0, None) and not out["suite_failed"] and not out["suite_errors"]:
+        out["suite_rc_unexplained"] = (
+            "pytest rc=%s 인데 요약 줄에 failed/error 토큰이 없다: %r" % (returncode, line)
+        )
+    return out
+
+
 def suite_axis(repo_root, files, mark=CI_MARK_EXPR, python=None):
-    """스위트 **실 실행** 축 (opt-in). 기본 생성 경로에서는 부르지 않는다."""
+    """스위트 **실 실행** 축 (opt-in). 기본 생성 경로에서는 부르지 않는다.
+
+    ★ 반환에 **종료코드**와 실패-계열 카운트가 들어간다 — 구판은 둘 다 없어 rc=1 인
+      실행을 초록 dict 로 돌려줬다(FIX14 실물).
+    """
     py = python or sys.executable
     cp = _run([py, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-m", mark] + list(files),
               repo_root, timeout=1800)
-    m = None
-    for ln in reversed([l.strip() for l in (cp.stdout or "").splitlines() if l.strip()]):
-        m = _SUITE_RESULT_RE.search(ln)
-        if m:
-            break
-    if not m:
-        return None
-    return {
-        "suite_passed": int(m.group(1)),
-        "suite_skipped": int(m.group(2) or 0),
-        "suite_deselected": int(m.group(3) or 0),
-    }
+    return summarize_suite_run(cp.stdout, cp.returncode)
 
 
 def generate_manifest(repo_root=None, base_ref="origin/main", with_suite=False):
@@ -456,6 +545,37 @@ def compare_manifest(generated, declared):
     #   구판은 ①과 ②가 **같은 경로**였다: 스위트 줄이 있어도 파서가 못 읽으면
     #   `suite_passed` 키가 안 생기고, 키가 없으면 비교를 통째로 건너뛰어 **무결로
     #   통과**했다. ⇒ §8.7 에 skip 을 포함한 stale 선언을 적어도 위반 0.
+    # ── ⓪ 실측 스위트가 green 이 아니면 **선언과 무관하게** 위반 (FIX14) ─────────
+    #   §8.7 은 실패 없는 실행을 적는 절이다. 실패를 뺀 초록 줄(`163 passed, ...`)은
+    #   선언과 **일치해 버리므로** 값 대조만으로는 rc=1 인 실행이 통과한다 — FIX14 실물이
+    #   그 형상이었다. 실측 쪽 비-green 은 선언 대조 이전에 잡는다.
+    if generated.get("suite_failed") or generated.get("suite_errors"):
+        viol.append(
+            "suite_failed: 실측 스위트 비-green — failed %d · error %d [%s]"
+            % (generated.get("suite_failed", 0), generated.get("suite_errors", 0),
+               generated.get("suite_summary_line") or "요약 줄 미기록")
+        )
+    if generated.get("suite_rc_unexplained"):
+        viol.append("suite_returncode: " + generated["suite_rc_unexplained"])
+    if generated.get("suite_axis_unavailable"):
+        viol.append("suite_axis_unavailable: " + generated["suite_axis_unavailable"])
+    if generated.get("suite_unknown_tokens"):
+        viol.append(
+            "suite_unknown_tokens: 요약 줄에 화이트리스트 밖 토큰 %r — 계상 정의역 밖이라 "
+            "실행 축 합계를 신뢰할 수 없다" % (generated["suite_unknown_tokens"],)
+        )
+    # ⓪-b 실행 축 ↔ 수집 축 자기정합 — 요약 줄을 **일부만** 읽었는지 잡는 독립 그물.
+    #   구판 파서를 그대로 두고 이 검사만 있어도 FIX14 형상이 잡힌다(163+1 ≠ 165).
+    if "suite_passed" in generated and "collect_selected" in generated:
+        run_sum = sum(generated.get("suite_" + k, 0) or 0 for k in _SUITE_RUN_OUTCOMES)
+        if run_sum != generated["collect_selected"]:
+            viol.append(
+                "suite_run_total: 실행 outcome 합 %d ≠ 수집 선택 %d — 요약 줄을 일부만 "
+                "읽었거나(구판 결함 형상) 계상 정의역 밖 outcome 이 섞였다 [%s]"
+                % (run_sum, generated["collect_selected"],
+                   generated.get("suite_summary_line") or "요약 줄 미기록")
+            )
+
     unparsed = declared.get("suite_unparsed") or []
     for raw in unparsed:                                                    # ①
         viol.append(
@@ -477,7 +597,9 @@ def compare_manifest(generated, declared):
             viol.append(
                 "suite_passed: 선언 %d passed + %d skipped = %d ≠ 수집 선택 %d — §8.7 은 "
                 "전건 통과를 선언하므로 **passed + skipped** 가 선택 수와 같아야 한다 "
-                "(skipped 는 deselected 와 달리 selected 에 포함된다)"
+                "(skipped 는 deselected 와 달리 selected 에 포함된다). 합이 **모자라면** "
+                "선언이 stale 이거나 실행에 failed/error 가 있었다는 뜻이다 — 선언 축 "
+                "canonical 형식에는 failed 슬롯이 없으므로 실패는 이 부족분으로 드러난다"
                 % (d0["passed"], d0["skipped"], run, generated["collect_selected"])
             )
         if "collect_deselected" in generated and d0["deselected"] != generated["collect_deselected"]:
@@ -493,6 +615,10 @@ def render_manifest(man):
     for k in ("base_ref", "head", "files_changed", "insertions", "deletions",
               "ci_files", "collect_total", "collect_selected", "collect_deselected",
               "suite_passed", "suite_skipped", "suite_deselected",
+              # ★ 실패 축을 렌더에서 빼면 TSV 를 보는 사람에게 실패가 다시 안 보인다
+              "suite_failed", "suite_errors", "suite_xfailed", "suite_xpassed",
+              "suite_returncode", "suite_summary_line", "suite_unknown_tokens",
+              "suite_rc_unexplained",
               "git_axis_unavailable", "collect_axis_unavailable", "suite_axis_unavailable"):
         if k in man:
             out.append("%s\t%s" % (k, man[k]))
@@ -526,8 +652,24 @@ def render_markdown(man):
         # skip 0 이면 슬롯을 쓰지 않는다 — 기존 2-슬롯 선언과 **byte 동형**(하위호환).
         skipped = man.get("suite_skipped", 0)
         slot = (", %d skipped" % skipped) if skipped else ""
-        lines.append("스위트 실행: `%d passed%s, %d deselected`"
-                     % (man["suite_passed"], slot, man.get("suite_deselected", 0)))
+        failed = man.get("suite_failed", 0) or 0
+        errors = man.get("suite_errors", 0) or 0
+        rc = man.get("suite_returncode")
+        if failed or errors or (rc not in (None, 0)):
+            # ★ 비-green 을 canonical 초록 줄로 렌더하지 않는다 (FIX14). 그 줄을 §8.7 에
+            #   붙이면 대조가 통과하는 **거짓 초록**이 된다 — 구판이 실제로 그 줄을
+            #   뱉었다. 형식도 canonical 과 다르게(백틱 span 밖) 두어, 그대로 붙여넣어도
+            #   선언 파서가 초록으로 읽지 못하게 한다.
+            lines.append(
+                "스위트 실행: **비-green** — failed %d · error %d · rc %s "
+                "(passed %d%s, deselected %d). §8.7 은 실패 없는 실행을 적는 절이므로 "
+                "이것은 붙여넣을 선언이 아니라 고쳐야 할 실패다."
+                % (failed, errors, rc, man["suite_passed"], slot,
+                   man.get("suite_deselected", 0))
+            )
+        else:
+            lines.append("스위트 실행: `%d passed%s, %d deselected`"
+                         % (man["suite_passed"], slot, man.get("suite_deselected", 0)))
     return "\n\n".join(lines)
 
 
