@@ -89,3 +89,11 @@ jobs:
 
       - name: Run corpus harness discriminating self-test (T-1 양방향 + T-3 축-disjoint, day-1 hard-fail)
         run: bash tests/scripts/test_check-hollow-gate-corpus.sh
+
+      # .py RTM suite 를 별 step 으로 명시 배선 — 이 repo 의 pytest 실행은 전부 파일명 명시이고
+      #   `tests/scripts/test_*.py` 를 훑는 glob 러너가 없다(실측). 배선하지 않으면 본 suite 는
+      #   착지만 하고 CI 에서 한 번도 돌지 않는 dead artifact 가 되며, 그것이 곧 본 Story 가
+      #   겨냥한 "새 게이트가 검증망 밖에 남는" 결함 class 의 인스턴스다.
+      #   형판 hard-gate-self-verification-test.yml 의 3번째 step 과 동형.
+      - name: Run corpus harness RTM pytest self-test (.py — §8 RTM AC born-missing resolve, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_check_hollow_gate_corpus.py -q
