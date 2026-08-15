@@ -530,6 +530,175 @@ def test_exit_codes_are_distinct():
     assert len({sut.EXIT_OK, sut.EXIT_VIOLATION, sut.EXIT_BASE_UNRESOLVED}) == 3
 
 
+# ═══════════════════════ 종료코드 결박 (CI 가 소비하는 유일 신호) ════════════════
+#
+# ★ 계기 (구현리뷰 iter7 F-CR7-02): `main()` 의 마지막 줄을 `return EXIT_OK` 로 고정한
+#   mutant 가 이 스위트에서 **살아남았다**(44 passed). 그 판본은 리포트에
+#   `FAIL … 요약: 위반 1` 을 출력하면서 프로세스 종료코드 0 을 낸다 — 로그는 FAIL 인데
+#   CI step 은 green 이다. 아래 두 층의 정의역은 `main()` 반환값과 **프로세스 rc** 이며,
+#   판정 결과(`evaluate`)를 재는 위쪽 테스트들과 겹치지 않는다.
+SRC_PATH = Path(sut.__file__).resolve()
+
+STALE_BODY = ["§결정 1 의 결론을 뒤집는다."]
+POINTER_LINE = "> ★ 후속 A1-1 이 이 절을 정정한다."
+
+
+def _stub_run_git(monkeypatch, module, result):
+    monkeypatch.setattr(module, "run_git",
+                        lambda root=None, base=None, head=None, only=None: result)
+
+
+def test_main_exit_code_is_violation_on_stale_pointer(monkeypatch, capsys):
+    post, diff = synth(amendment_body=STALE_BODY)
+    _stub_run_git(monkeypatch, sut, run(post, diff))
+    rc = sut.main(["--repo-root", str(REPO_ROOT)])
+    out = capsys.readouterr().out
+    assert "FAIL" in out, out
+    assert rc == sut.EXIT_VIOLATION, "위반을 열거하고도 rc=%r 로 끝났다:\n%s" % (rc, out)
+    assert rc != sut.EXIT_OK
+
+
+def test_main_exit_code_is_ok_when_pointer_present(monkeypatch, capsys):
+    post, diff = synth(
+        sec1_body=[("ctx", "첫 결정 본문."), ("add", POINTER_LINE)],
+        amendment_body=STALE_BODY)
+    _stub_run_git(monkeypatch, sut, run(post, diff))
+    rc = sut.main(["--repo-root", str(REPO_ROOT)])
+    out = capsys.readouterr().out
+    assert rc == sut.EXIT_OK, out
+    assert "FAIL" not in out
+
+
+def test_main_exit_code_is_base_unresolved_on_undecidable(monkeypatch, capsys):
+    """post-image 미해소는 통과가 아니라 미판정 코드로 나가야 한다."""
+    _post, diff = synth(amendment_body=STALE_BODY)
+    _stub_run_git(monkeypatch, sut, sut.evaluate(diff, {}))
+    rc = sut.main(["--repo-root", str(REPO_ROOT)])
+    assert rc == sut.EXIT_BASE_UNRESOLVED
+    assert "미판정" in capsys.readouterr().out
+
+
+def load_mutant(replacements):
+    """원본 소스를 텍스트 변형해 메모리 안에서만 적재한다 (ADR-177 스위트 선례 재사용).
+
+    anchor 가 정확히 1회 등장하지 않으면 실패시킨다 — 조용히 미적용된 변형이
+    "mutant 통과" 로 계상되는 가짜 판정을 막는다."""
+    src = SRC_PATH.read_text(encoding="utf-8")
+    for old, new in replacements:
+        assert src.count(old) == 1, "mutation anchor 가 %d 회 등장: %r" % (src.count(old), old)
+        src = src.replace(old, new)
+    import types
+    mod = types.ModuleType("cpc_mutant")
+    mod.__file__ = str(SRC_PATH)
+    exec(compile(src, str(SRC_PATH), "exec"), mod.__dict__)
+    return mod
+
+
+def test_mutant_exit_code_decoupled_from_verdict_is_killed(monkeypatch, capsys):
+    """rc 를 판정에서 떼어내면(`return EXIT_OK` 고정) 위 rc 오라클이 RED.
+
+    두 판본의 **리포트 문면은 같고 rc 만 갈린다** — 로그를 근거로 삼는 판독이 왜
+    부족한지 같은 테스트 안에 남긴다."""
+    mutant = load_mutant([('    return EXIT_VIOLATION if result["violations"] else EXIT_OK',
+                           "    return EXIT_OK")])
+    post, diff = synth(amendment_body=STALE_BODY)
+    result = run(post, diff)
+    assert result["violations"], "대조 전제 붕괴 — 합성 케이스가 위반을 내지 않는다"
+    _stub_run_git(monkeypatch, sut, result)
+    _stub_run_git(monkeypatch, mutant, result)
+
+    assert sut.main(["--repo-root", str(REPO_ROOT)]) == sut.EXIT_VIOLATION
+    assert mutant.main(["--repo-root", str(REPO_ROOT)]) == mutant.EXIT_OK
+    assert capsys.readouterr().out.count("FAIL") >= 2, \
+        "두 판본 모두 FAIL 을 출력해야 이 대조가 rc 축을 격리한 것이 된다"
+
+
+# ═══════════════════════ 프로세스 rc — CI step 이 실제로 읽는 값 ═════════════════
+#
+# `main()` 반환값 오라클만으로는 `sys.exit(main())` 배선이 끊긴 판본을 잡지 못한다.
+# CI step 은 프로세스 종료코드만 읽으므로, 로컬 임시 git repo(원격 미접촉)에서 CLI 를
+# 그대로 실행해 그 값을 잰다.
+GIT_ID = ("-c", "user.email=qa@example.invalid", "-c", "user.name=qa-fixture",
+          "-c", "commit.gpgsign=false")
+ADR_REL = "archive/adr/ADR-999-synthetic.md"
+
+ADR_BASE = """# ADR-999: 합성 대조 문서
+
+## 결정
+
+### §결정 1 — 첫 결정
+
+첫 결정 본문.
+
+### §결정 2 — 둘째 결정
+
+둘째 결정 본문.
+"""
+
+ADR_STALE = ADR_BASE + """
+## Amendment 1 (합성) — 정정
+
+### A1-1 — 정정 절
+
+§결정 1 의 결론을 뒤집는다.
+"""
+
+ADR_REPAIRED = ADR_STALE.replace(
+    "첫 결정 본문.\n", "첫 결정 본문.\n\n%s\n" % POINTER_LINE)
+
+
+def _git_in(repo, *args):
+    cp = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True,
+                        encoding="utf-8", errors="replace")
+    assert cp.returncode == 0, "git %s 실패: %s" % (" ".join(args), cp.stderr)
+    return cp.stdout
+
+
+def _seed_adr_repo(tmp_path, head_text):
+    """base 커밋(ADR 원문) + head 커밋(정정 블록)짜리 로컬 repo. 원격 미접촉."""
+    repo = tmp_path / "repo"
+    adr = repo / ADR_REL
+    adr.parent.mkdir(parents=True)
+    hooks = tmp_path / "nohooks"      # 사용자 전역 hook 이 fixture 커밋에 끼어들지 않게
+    hooks.mkdir()
+    adr.write_text(ADR_BASE, encoding="utf-8", newline="\n")
+    _git_in(repo, "init", "-q")
+    _git_in(repo, "checkout", "-q", "-b", "base")
+    _git_in(repo, "add", "-A")
+    _git_in(repo, *GIT_ID, "-c", "core.hooksPath=%s" % hooks, "commit", "-q", "-m", "base")
+    _git_in(repo, "checkout", "-q", "-b", "work")
+    adr.write_text(head_text, encoding="utf-8", newline="\n")
+    _git_in(repo, "add", "-A")
+    _git_in(repo, *GIT_ID, "-c", "core.hooksPath=%s" % hooks, "commit", "-q", "-m", "head")
+    return repo
+
+
+def _run_cli(repo):
+    return subprocess.run(
+        [sys.executable, str(SRC_PATH), "--repo-root", str(repo), "--base-ref", "base"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+
+def test_cli_process_exit_code_is_nonzero_on_stale_pointer(tmp_path):
+    """★ rc 단독 판정 금지 — 도메인 고유 요약 문면을 **함께** 단언한다.
+
+    rc 1 은 파이썬 인터프리터 오류(스크립트 경로 오타 등)로도 나온다. 그 경우 stdout 은
+    비어 있으므로, 요약 줄을 짝으로 걸어야 이 테스트가 실제로 게이트를 돌렸음이 선다."""
+    cp = _run_cli(_seed_adr_repo(tmp_path, ADR_STALE))
+    assert "요약: 위반 1 " in cp.stdout, cp.stdout + cp.stderr
+    assert "FAIL" in cp.stdout, cp.stdout
+    assert cp.returncode == sut.EXIT_VIOLATION, \
+        "리포트는 FAIL 인데 프로세스 rc=%d — CI step 이 green 으로 읽는다:\n%s" % (
+            cp.returncode, cp.stdout)
+
+
+def test_cli_process_exit_code_is_zero_when_pointer_present(tmp_path):
+    cp = _run_cli(_seed_adr_repo(tmp_path, ADR_REPAIRED))
+    assert "요약: 위반 0 " in cp.stdout, cp.stdout + cp.stderr
+    assert cp.returncode == sut.EXIT_OK, cp.stdout + cp.stderr
+    assert "FAIL" not in cp.stdout
+
+
 # ═══════════════════════ 정직 천장 각인 (모듈 docstring ①②⑤⑦) ══════════════════
 def test_ceiling1_any_edit_in_cited_section_passes():
     """천장 ① — co-change 는 pointer 가 아니다.
