@@ -203,7 +203,9 @@ python3 scripts/lib/check_salvage_bundle.py --land \
 | baseline 을 **push 대상과 동일 remote** 로 묶고 `fetch --prune` 로 원격 실보유를 반영한다 | raw push 는 이 정의역 일치를 **전혀 보장하지 않는다** (S-P1-1 실증: 다른 remote·phantom ref 두 형태에서 secret 무검사 전송) |
 | 스캔 결과·판정 불가를 **fail-closed** 로 종료 코드에 싣는다 | `SCAN_RESULT` / `PUSH` 토큰이 사후 감사면이 된다 |
 
-> **정직 천장 (over-claim 금지)**: 본 지시는 **advisory** 다 — 문서 규율이지 기계 강제가 아니다. raw `git push` 를 직접 실행하는 경로는 **여전히 열려 있고** 본 절이 그것을 막지 못한다. 막는 것은 "`--land` 를 경유한 착지" 뿐이다. 이 잔여는 [Story §7.12-C](../../../) L2/L3 층 판정에 declare 돼 있다.
+> **정직 천장 (over-claim 금지)**: 본 지시는 **advisory** 다 — 문서 규율이지 기계 강제가 아니다. raw `git push` 를 직접 실행하는 경로는 **여전히 열려 있고** 본 절이 그것을 막지 못한다. 막는 것은 "`--land` 를 경유한 착지" 뿐이다. 이 잔여는 **CFP-2984 Story §7.12-C**(internal-docs `wrapper/stories/CFP-2984.md` — cross-repo 라 상대 링크 불가, 경로로만 지시) L2/L3 층 판정에 declare 돼 있다.
+>
+> ★ **R3 교훈 (보안 FIX iter2)**: 한때 `--land` 의 baseline 이 로컬 remote-tracking ref 추론에 의존해, 좁은 refspec(`git clone --single-branch`) 환경에서는 **이 지시를 정확히 따를수록** `SCAN_RESULT: clean` 표시와 함께 유출됐다. 지시 자체는 옳았지만 **하류 구현이 열려 있으면 올바른 지시가 잘못된 안심을 배급한다.** 현재는 baseline 을 `git ls-remote` 원격 실 ref 로 구성해 그 추론을 제거했다 — 이 지시를 신뢰하려면 **그 구현 속성이 회귀로 고정돼 있어야** 한다(`tests/scripts/test_salvage_land_scan_domain.sh` R3 케이스).
 
 ### 3.4 salvage 결과 기록
 
