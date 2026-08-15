@@ -22,11 +22,13 @@ related_stories:
 related_cfps:
   - CFP-2949  # carrier — 구현리뷰 6 라운드가 같은 class 를 반복 지적한 것이 계기
 related_files:
-  - tests/scripts/_absolute_claim_ratchet.py  # 검사 SSOT (구현 lane 소관 — 본 ADR 은 착지를 선언하지 않는다)
+  - tests/scripts/_absolute_claim_ratchet.py  # 검사 SSOT (wrapper 3183cef1b 착지 — ArchitectPL firsthand 실행 확인)
   - tests/scripts/test_absolute_claim_ratchet.py  # 판별력·대조군·mutant 하네스
-  - docs/evidence-checks-registry.yaml  # warning-tier entry 등록 대상 (ADR-171 §결정 5)
+  - docs/evidence-checks-registry.yaml  # warning-tier entry `absolute-claim-ratchet` 등록 완료 (ADR-171 §결정 5)
+  - .github/workflows/absolute-claim-ratchet.yml  # warning-tier job (비-required)
 is_transitional: false
-mechanical_enforcement_actions: []  # 본 ADR = 결정 SSOT. 실 배선(검사 모듈·워크플로 job·registry entry)은 CFP-2949 Phase 2 구현 lane 소관이며 본 문면이 그 착지를 선언하지 않는다.
+mechanical_enforcement_actions:
+  - absolute-claim-ratchet  # warning-tier. 배선 = tests/scripts/_absolute_claim_ratchet.py + .github/workflows/absolute-claim-ratchet.yml + evidence-checks-registry entry (wrapper 3183cef1b 착지). required 승격 없음 — branch protection 8-tuple 무변경.
 ---
 
 # ADR-177: 절대주장 저작 결박 ratchet — 신규 선언 줄에 정직 천장 마커 또는 테스트 동반 의무 (diff-scoped)
@@ -66,18 +68,22 @@ ADR-154 §결정 1 의 both-prong 판정 구조를 답습한다("신규 ADR 없�
 - **신규 ADR prong = 채택.** (i) **distinct context** — 구현리뷰 4 사이클 연속 재발(threshold N=2 초과) + 재발면이 수치→산문으로 이동한 실측. (ii) **distinct decisions** — diff-scoped 정의역(코퍼스 열거자 회피) · co-change 결박 · `[ceiling:]` 마커 문법과 빈 마커 우선순위 · 어휘 한글 한정. (iii) **distinct result** — 신규 warning-tier check + registry entry + 자기적용. G-family 선례(ADR-145/146/148/150/151/152/153/154 = 각 신규 게이트 = 신규 ADR)와 정합.
 - **ADR-119/168/171/172 무수정.** 본 ADR 은 cross-ref 만 하고 supersede·rewrite 하지 않는다.
 
-### §결정 2 — 결박 규칙 (줄 단위, 우선순위 순)
+### §결정 2 — 결박 규칙 (줄 단위, 우선순위 순 — 5 tier)
 
 커밋이 절대주장 어휘를 포함한 줄을 **추가**하면 다음 판정을 받는다:
 
 | 우선순위 | 조건 | disposition | 처분 |
 |---|---|---|---|
-| ① | 같은 줄에 `[ceiling: <사유>]` + 사유 유의미 | `ceiling` | 통과 |
-| ② | `[ceiling:]` 마커 + 사유 공백·구두점만 | `empty-ceiling` | **위반** |
-| ③ | 마커 없음 + 같은 diff 에 `tests/**` 변경 존재 | `test-accompanied` | 통과 |
-| ④ | 그 외 | `unbound` | **위반** |
+| ① | `[ceiling:]` 마커 + 사유 공백·구두점만 | `empty-ceiling` | **위반** |
+| ② | `[bound: <test-symbol>]` + 심볼 실재 | `bound` | 통과 — **강한 해소** |
+| ② | 같은 마커 + 심볼 미해소 | `unresolved-bound` | **위반** |
+| ③ | `[ceiling: <사유>]` + 사유 유의미 | `ceiling` | 통과 |
+| ④ | 마커 없음 + 같은 diff 에 `tests/**` 변경 존재 | `test-accompanied` | 통과 — **약함** |
+| ⑤ | 그 외 | `unbound` | **위반** |
 
-**②가 ③보다 앞선다.** 빈 마커는 "천장을 선언하겠다"는 의사표시를 해놓고 내용을 비운 것이라 미선언보다 나쁘고, 동반 통과로 씻겨나가면 ②가 사문이 된다.
+**①이 ④보다 앞선다.** 빈 마커는 "천장을 선언하겠다"는 의사표시를 해놓고 내용을 비운 것이라 미선언보다 나쁘고, 동반 통과로 씻겨나가면 ①이 사문이 된다. **②의 미해소도 ④가 씻지 못한다** — 실재하지 않는 테스트 이름을 적어 넣는 것이 가장 값싼 우회이기 때문이다.
+
+**`[bound:]` 심볼 실재 판정은 AST 기반이다.** `tests/**` 를 `ast` 로 파싱해 정의된 함수·클래스 이름을 모아 대조한다. 문자열 매칭(grep)이면 주석·docstring 안 이름이 통과하므로 쓰지 않는다(ADR-136 Amd 3 L3 *"born-missing = ast, grep-only = false-oracle"*). 수집기는 신설하지 않고 같은 문제를 이미 푼 `scripts/lib/check_ac_traceability_matrix.py:collect_test_symbols`(Hop3 born-missing)를 **import 재사용**한다. `symbol_index` 기본값 = 빈 집합(fail-closed)이며 tests 루트 부재는 **판정 불가**로 다룬다(통과 아님).
 
 **마커는 같은 줄에 있어야 한다.** 앞줄에 달아둔 마커는 그 줄을 풀어주지 않는다(줄 단위 판정).
 
@@ -97,20 +103,46 @@ ADR-154 §결정 1 의 both-prong 판정 구조를 답습한다("신규 ADR 없�
 
 **기각 사유** = 310줄 일괄 retrofit 은 **blanket `[ceiling:]` 스탬핑을 유인**한다. 그것은 정확히 본 Story 가 4 사이클 반복한 실패 — *선언으로 검사를 대신하기* — 의 재생산이며, 게이트가 그 유인을 만들면 게이트 자신이 결함 생성기가 된다. **단계 도입**(신규 결박 정착 → 재고 확장)을 채택한다. 재고 확장은 별 Story 의 판단 사항으로 남긴다.
 
-### §결정 5 — 천장을 산문이 아니라 테스트로 각인 (미착지 결정)
+### §결정 5 — 천장을 산문이 아니라 테스트로 각인 (착지 — 심볼 인용)
 
 본 게이트의 최대 우회는 **패러프레이즈**다. 어휘 목록은 의미 판정기가 아니므로, 같은 절대주장을 목록 밖 표현으로 쓰면 통과한다.
 
-이 false-negative 를 **산문 천장이 아니라 테스트 assert 로 박는다** — 목록 밖 등가 표현을 담은 diff 에 대해 `violations == []` 를 단언하는 테스트를 둔다. 그러면 나중에 검사기를 의미 축으로 넓히는 순간 **그 테스트가 RED 가 되어 천장 문서 갱신이 강제**된다. 천장을 문서에만 적으면 검사기가 넓어져도 문서는 stale 로 남고, 그 stale 이 본 ADR 이 겨냥하는 class 다.
+이 false-negative 를 **산문 천장이 아니라 테스트 assert 로 박는다** — 목록 밖 등가 표현을 담은 diff 에 대해 위반이 나오지 않음을 단언하는 테스트를 둔다. 그러면 나중에 검사기를 의미 축으로 넓히는 순간 **그 테스트가 RED 가 되어 천장 문서 갱신이 강제**된다. 천장을 문서에만 적으면 검사기가 넓어져도 문서는 stale 로 남고, 그 stale 이 본 ADR 이 겨냥하는 class 다.
 
-★ **본 결정은 저작 시점 기준 미착지다 (착지 선취 금지).** 2026-08-15 실측에서 `tests/scripts/test_absolute_claim_ratchet.py` 의 test 함수 22개를 전수 열거했고 패러프레이즈 FN 을 assert 로 박은 것은 그중 없었다 — 해당 천장은 검사 모듈 docstring **산문**에만 존재했다. 즉 이 시점의 게이트는 **자기 천장을 자기 규칙으로 결박하지 않은 상태**다. 본 ADR 은 이 결정을 기록하되 그 이행을 선언하지 않으며, 착지 확인은 구현 lane 과 다음 리뷰 라운드 소관이다.
+★ **착지 (2026-08-15, wrapper `3183cef1b`)**: 각인 심볼 = **`test_paraphrased_absolute_claim_is_outside_detection_domain`** (`tests/scripts/test_absolute_claim_ratchet.py`). 등가 표현 3종을 쓰며, 각 표현에 대해 **먼저 어휘 매칭이 비었음을 확인**한 뒤 claim 이 잡히지 않음을 단언한다 — 그 선행 확인이 없으면 어휘가 나중에 확장됐을 때 각인이 조용히 무의미해진다.
 
-### §결정 6 — 정직 천장 (over-claim 차단 — 4항)
+★ **저작 이력 (은폐 금지)**: 본 ADR 초판(`8266e0e82`)은 이 결정을 **미착지**로 기록했다. 당시 실측에서 같은 테스트 파일의 test 함수 22개를 전수 열거했고 해당 각인은 부재였으며, 천장은 검사 모듈 docstring **산문**에만 있었다 — 즉 게이트가 자기 천장을 자기 규칙으로 결박하지 않은 상태였다. ArchitectPL 이 그 사실을 회부했고 구현 lane 이 각인을 신설해 닫았다(테스트 22 → 34). **초판의 "미착지" 기재를 삭제하지 않고 이력으로 남긴다.**
 
-1. **결박 조건 ③ 은 결박이 아니라 동반 강제다.** `tests/**` 의 *어떤* 변경이든 통과시키며, 그 변경이 해당 명제를 정의역으로 삼는지 판정하지 않는다. Story PR 은 대개 `tests/**` 를 건드리므로 **③ 경로에서 실효 판별력은 낮다.** ⇒ *"신규 선언이 오라클에 결박된다"* 로 기술하지 말 것. 결박되는 것은 **`[ceiling:]` 마커를 쓴 줄**이고, ③ 은 그보다 약한 동반 요구다. 완화책 = 리포트가 ③ 통과 줄도 **전량 열거**한다(무증상 통과 금지).
-2. **패러프레이즈 false-negative 잔존.** 토큰 기반이므로 어휘 목록 밖 표현은 통과한다. ⇒ *"산문이 기계에 결박됐다"* 로 기술하지 말 것. 결박 대상은 **목록 어휘를 쓴 선언**뿐이다.
-3. **cross-repo 공백.** 재고 310줄 중 245줄은 `codeforge-internal-docs`(Change Plan · Story) 소재라 wrapper CI 에 경로가 없고, 그 repo 의 기본 브랜치는 required check 를 보유하지 않는다. 그쪽 결박은 별도 작업이다.
-4. **본 게이트가 잡지 못하는 결함 class 를 명시한다.** CFP-2949 iter6 F-CR6-01 형 결함 — *자원 bound(작업량 상한)가 만든 탐지 공백* — 은 선언↔오라클 결박 문제가 아니라 **bound 의미론**("못 찾음"을 "없음"으로 결론짓는가) 문제다. 본 게이트는 그 class 를 검출하지 않는다.
+### §결정 6 — 정직 천장 (over-claim 차단 — 7항) + 실측 정량치
+
+**★ 본 게이트가 세우는 것은 *"신규 선언이 오라클에 결박된다"* 가 아니라 「천장 마커 결박 ⊕ 테스트 동반(판별력 낮음) ⊕ `[bound:]` 심볼 실재 검증」이다.** 이 문면보다 넓게 기술하지 말 것.
+
+**실측 정량치 (wrapper `3183cef1b`, 브랜치 diff 전수)**:
+
+| 모드 | 결과 |
+|---|---|
+| 기본 | 위반 없음 · `bound` 0 · `ceiling` 7 · `test-accompanied` **132** (추가줄 9915 중 claim 139) |
+| strict (④ 동반 해소를 무효화) | **위반 132** |
+
+⇒ **④ 가 얼마나 약한지를 주장이 아니라 수치로 남긴다.** claim 139 중 **132(약 95%)** 가 ④ 로 통과했다. 리포트는 ④ 통과 줄을 **전량 열거**한다(무증상 통과 금지).
+
+**천장 7항**:
+
+1. **④ 는 결박이 아니라 동반 강제다.** `tests/**` 의 *어떤* 변경이든 통과시키며, 그 변경이 해당 명제를 정의역으로 삼는지 판정하지 않는다. 실효 판별력의 정량치가 위 132/139 다. ④ 를 제거하지는 않았다 — 제거하면 기존 저작 흐름이 막히므로, 대신 저자가 고를 수 있는 **강한 해소 경로로 ②(`[bound:]`)** 를 뒀다.
+2. **`[bound:]` 도 심볼 실재까지만 본다.** 그 테스트가 해당 명제를 실제로 반증하는지는 판정하지 않는다 — 이름만 맞는 무관한 테스트여도 통과한다.
+3. **패러프레이즈 false-negative 잔존.** 어휘 목록 밖 표현은 통과한다(§결정 5 가 이 범위를 테스트로 각인).
+4. **use 와 mention 을 구분하지 못한다.** 어휘를 *언급*하는 줄(어휘 정의 · 합성 fixture · 검사 자신을 설명하는 산문)도 걸린다. 그 줄들은 `[ceiling:]` 로 정직하게 처리한다.
+5. **기존 재고 미커버 + cross-repo 미도달.** 재고 310줄 중 245줄은 `codeforge-internal-docs`(Change Plan · Story) 소재라 wrapper CI 에 경로가 없고, 그 repo 의 기본 브랜치는 required check 를 보유하지 않는다.
+6. **커밋 기준이다.** 워킹트리에만 있고 커밋되지 않은 줄은 검사 대상이 아니다.
+7. **마커는 같은 줄만 · 비-required · 어휘는 한글 한정.** bypass env 는 **두지 않았다** — 비-required 라 막을 merge 가 없어 완화 대상이 성립하지 않기 때문이다. **required 승격 시 bypass 채널 신설이 의무**가 된다(§결정 7).
+
+**본 게이트가 잡지 못하는 결함 class (명시)**: CFP-2949 iter6 F-CR6-01 형 — *자원 bound(작업량 상한)가 만든 탐지 공백* — 은 선언↔오라클 결박 문제가 아니라 **bound 의미론**("못 찾음"을 "없음"으로 결론짓는가) 문제다. 같은 Story 의 잔여 **축 오분류**(ADR-172 A4-3 — 잔여를 열거해도 축을 틀리게 붙이면 모순이 검출되지 않는다) 역시 어휘 결박의 정의역 밖이다.
+
+### §결정 6.1 — 자기적용이 형식이 아니었다는 증거 (실측 이력)
+
+게이트 **첫 실행에서 게이트가 자기 자신을 잡았다** — `tests/scripts/_absolute_claim_ratchet.py:54` 가 rc=1 로 FAIL 했고, 원인은 저자가 마커를 **앞줄 주석**에 달아 둔 것이었다. 처분은 규칙 완화(앞줄 마커 허용)가 아니라 **같은 줄 trailing 으로 이동**이었고, 그 형상을 `test_ceiling_marker_on_preceding_line_does_not_discharge` 로 고정했다.
+
+**교차 검증**: 같은 게이트가 ArchitectPL 이 ADR-172 Amendment 4 에 단 `[ceiling:]` **5줄**을 정상 해소했다 — 즉 자기 파일만 통과시키는 자기정합이 아니다.
 
 ### §결정 7 — required 승격 금지 (branch protection 무변경)
 
@@ -118,7 +150,7 @@ ADR-154 §결정 1 의 both-prong 판정 구조를 답습한다("신규 ADR 없�
 
 승격 경로는 ADR-171 §결정 6 승격 gate(binary AND condition)를 따르며, 신 job 이름으로 green 을 재적립하는 기간이 선행해야 한다(ADR-130 §결정 6 이 정확히 그 chicken-egg 로 rename 을 deferred 시킨 선례). ⇒ 승격은 **별 Story** 의 사안이고 본 Story 에서 수행하지 않는다.
 
-registry 등록은 ADR-171 §결정 5(신규 entry = warning mode continue-on-error) 절차를 따른다.
+registry 등록은 ADR-171 §결정 5(신규 entry = warning mode continue-on-error) 절차를 따른다. **등록 완료** — `docs/evidence-checks-registry.yaml` entry `absolute-claim-ratchet`(`current_tier: warning` · `owner_adr: ADR-177` · `carrier_adr: ADR-171` · `promotion_trigger: advisory`). ★ **정직 기재**: registry 미등록을 FAIL 시키는 **역방향 스캔 게이트는 부재**로 실측됐다 — 즉 *"registry 등재가 기계로 강제된다"* 로 쓰면 안 되며, 이 등록은 **저작 규율 준수**의 산물이다. `bypass_label` 은 omit 했다(warning tier 라 막을 merge 가 없어 완화 대상이 성립하지 않는다). **required 승격 carrier 가 bypass 채널 신설 의무를 승계**한다.
 
 ### §결정 8 — 자기적용 (dogfood)
 
@@ -140,7 +172,8 @@ registry 등록은 ADR-171 §결정 5(신규 entry = warning mode continue-on-er
 
 - `tests/scripts/_absolute_claim_ratchet.py` — 검사 SSOT (어휘·판정 우선순위·리포트)
 - `tests/scripts/test_absolute_claim_ratchet.py` — 판별력 · 대조군(오탐) · mutant 하네스 · live 자기적용
-- `docs/evidence-checks-registry.yaml` — warning-tier entry (ADR-171 §결정 5)
+- `docs/evidence-checks-registry.yaml` — warning-tier entry `absolute-claim-ratchet` (ADR-171 §결정 5, 등록 완료)
+- `.github/workflows/absolute-claim-ratchet.yml` — warning-tier job (비-required)
 - `archive/adr/ADR-119-research-before-claims.md` — 규범 원본 (§결정 3 이접 · §결정 8 위임)
 - `archive/adr/ADR-168-write-time-self-write-verification-mandate.md` — 최근친 (§결정 16 presence-lint class)
 
