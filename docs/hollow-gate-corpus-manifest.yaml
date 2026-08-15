@@ -69,8 +69,11 @@ samples:
 #     stamp.yaml.sample 2개를 제외하고 전 파일 byte-identical.
 #   - `probe:` 항목 = **커밋되지 않는** blinded 섭동. run-time 에 materialize 한다.
 #     (커밋 표본으로 두면 평범한 arm-H 와 구별 불가가 되어 IC-1 좌표 충돌 성질이 소멸한다.)
-#     IC-1: probe 는 모든 커밋 좌표(gate id / stamp / 원 표본 / fixture 집합)에서 s01 과 일치하고
+#     설계 의도: probe 는 커밋 좌표(gate id / stamp / 원 표본 / fixture 집합)에서 s01 과 일치하고
 #     기대 verdict 만 반대다 — 출력이 커밋 좌표만의 함수인 판정기는 정의상 한쪽에서 틀린다.
+#     ★ core 가 IC-1 로 **실제 측정하는 것** = `derived_from` 이 arm-L 선언 표본인가(armL-anchored).
+#     좌표 동일성 자체는 units 구성상 항진(probe 는 derived_from 표본을 그대로 원본으로 쓴다)이라
+#     측정 대상이 아니다 — 항진명제를 측정한 것처럼 emit 하지 않는다 (F-CR18-10 정정).
 build:
   - sample: s02
     derived_from: s01

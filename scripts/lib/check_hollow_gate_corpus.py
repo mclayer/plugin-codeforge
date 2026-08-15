@@ -1034,6 +1034,9 @@ def run(args):
         shutil.rmtree(exec_root, ignore_errors=True)
 
     # ── IC-1 / IC-2 / IC-5 / IC-6 (probe 계열) ────────────────────────────────
+    # IC-1 측정 대상 = probe 의 파생 원점(derived_from)이 **arm-L 선언 표본**인가 (falsifiable).
+    armL_sample_ids = {uid for uid, d in declared.items()
+                       if d["kind"] == "sample" and d["arm"] == "L"}
     n_flip = 0
     for pid in probe_ids:
         pre_id = recipes[pid]["derived_from"]
@@ -1043,15 +1046,24 @@ def run(args):
             violations.append("ic-missing")
             _error("IC-2", f"probe={pid}: PRE/POST 결과 부재 — flip assert 불가.")
             continue
-        # IC-1: probe 는 모든 커밋 좌표에서 arm-L 표본과 일치 (기대 verdict 만 반대).
-        coord_ok = (post["gate"]["id"] == pre["gate"]["id"] and post["src"] == pre["src"])
+        # IC-1: probe 의 파생 원점이 **arm-L 선언 표본**인가 (기대 verdict 만 반대).
+        # ★ 측정 대상 = derived_from 의 선언 arm(L 필수). probe 의 커밋 좌표 동일성은 `units`
+        #   구성상 참이므로 **측정 대상이 아니다** (F-CR18-10 — 이전 구현은 이 항진명제를
+        #   `coords-match` 로 측정한 것처럼 emit 했다: post["src"] 와 pre["src"] 가 둘 다
+        #   derived_from 에서 나온 같은 출처라 어떤 manifest 로도 False 가 될 수 없었다).
+        pre_arm = declared[pre_id]["arm"]
+        armL_ok = pre_id in armL_sample_ids
         _emit(
-            f"ic1: probe={pid} derived_from={pre_id} gate={post['gate']['id']} "
-            f"coords-match={int(coord_ok)} (커밋 좌표 일치 ∧ 기대 verdict 반대)"
+            f"ic1: probe={pid} derived_from={pre_id} derived_arm={pre_arm} "
+            f"gate={post['gate']['id']} armL-anchored={int(armL_ok)}"
         )
-        if not coord_ok:
+        if not armL_ok:
             violations.append("ic1")
-            _error("IC-1", f"probe={pid}: 커밋 좌표가 derived_from '{pre_id}' 과 불일치.")
+            _error(
+                "IC-1",
+                f"probe={pid}: derived_from '{pre_id}' 이 arm-L 선언 표본이 아님 "
+                f"(선언 arm={pre_arm}) — probe 는 arm-L 표본에서 파생되고 기대 verdict 만 반대여야 한다.",
+            )
         # IC-5: resolved target echo — 판정기가 연 artifact 해시가 실제로 다름.
         _emit(f"ic5: probe={pid} sha_armL={pre['entry_sha']} sha_probe={post['entry_sha']}")
         if pre["entry_sha"] == post["entry_sha"]:
