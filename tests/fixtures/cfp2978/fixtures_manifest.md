@@ -40,7 +40,7 @@
 
 - **왜 벤더링했나**: `.github/workflows/parallel-work-sentinel-check.yml` 의 `actions/checkout` 이 `fetch-depth` 미지정 = **depth 1 shallow** 라 역사 blob 이 CI 에 **없다**. `git cat-file` 로 읽으면 born-broken RED 가 된다.
 - **무결성 leg**: `test_consumer_asset_currency.py` 가 `git hash-object -t blob --no-filters` 로 위 SHA 동일성을 assert 한다 (fixture 훼손 시 즉시 RED, skip 없음).
-- 대응 신세대 = `scripts/lib/check_parallel_work_sentinel.py` 현재 내용 = blob `c372d0521db5d996ea9288bd362b83486e1e2553` (35814→35718 B, `HEAD` = `origin/main`) — 벤더링 불요.
+- 대응 신세대 = `scripts/lib/check_parallel_work_sentinel.py` 현재 내용 = blob `c372d0521db5d996ea9288bd362b83486e1e2553` (35718 B, `HEAD` = `origin/main`) — 벤더링 불요.
 
 ## Pin Literals (AC-10 Elements)
 
