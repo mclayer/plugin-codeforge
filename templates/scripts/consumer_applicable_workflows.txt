@@ -47,6 +47,12 @@ bypass-label-counter.yml
 bypass-justification-marker.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Asset currency / vendor management (consumer 필수)
+# CFP-2978: consumer 자산(센티널 py 등) currency 게이트. blob sha 일치 감시.
+# ─────────────────────────────────────────────────────────────────────────────
+consumer-asset-currency-check.yml
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Worktree-first (consumer 필수 — blocking-on-pr)
 # ─────────────────────────────────────────────────────────────────────────────
 worktree-first-pre-checkout.yml

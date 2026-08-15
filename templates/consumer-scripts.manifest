@@ -212,6 +212,12 @@ scripts/lib/check_semantic_staleness_sentinel.py:templates/github-workflows/sema
 scripts/check-living-architecture-update.sh:templates/github-workflows/living-architecture-update.yml
 scripts/lib/check_living_architecture_update.py:templates/github-workflows/living-architecture-update.yml
 
+# CFP-2978 (센티널 consumer 전파 + currency 검출) — consumer 자산 currency 게이트 전파 closure.
+# consumer-asset-currency-check.yml run-block 1-hop = .sh (ADR-061 thin wrapper),
+# .sh->python3 lib/*.py = depth-2 SSOT. 둘 다 chmod +x(100755).
+scripts/check-consumer-asset-currency.sh:templates/github-workflows/consumer-asset-currency-check.yml
+scripts/lib/check_consumer_asset_currency.py:templates/github-workflows/consumer-asset-currency-check.yml
+
 # CFP-2822 (ADR-169 §결정2/6 — 세션 잔재 수명 규약) — ② scratch TTL purge + ③ 잔재 발견(discovery)
 # 스캐너 consumer 전파 closure. 둘 다 로컬 스캐너(SessionStart/on-demand/SessionEnd 트리거이지
 # CI workflow-invoke 아님) → :dep_workflow 미부착(worktree-*.sh / build-local.sh / codeforge-upgrade.sh

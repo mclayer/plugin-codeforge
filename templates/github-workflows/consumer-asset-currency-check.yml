@@ -1,0 +1,47 @@
+name: consumer-asset-currency-check
+# CFP-2978 — consumer 자산(센티널 py 등) currency 검출 게이트 (warning-tier).
+# wrapper 정본과 consumer 사본의 blob sha 일치 여부를 Q1(로컬) + Q2(원격) 2단으로 비교하고,
+# drift 시 fail-closed 신호를 emit 한다. Pin 파일 `.codeforge-asset-pins.json` 을 정본으로 삼아
+# 스냅샷 방식 관리(§3.4).
+#
+# graceful-degradation (2-tier):
+#   verified(determined=true) = 정상 판정 (in-sync / drifted / not-applicable)
+#   undetermined(determined=false, degradation 레이블) = honest degrade (rate-limit 등)
+#   error(exit 2) = SETUP error (pin 부재 / schema 무효 등) — exit 에만 표현
+#
+# 정직 한계: 본 workflow 는 day-1 **비-required**(ADR-171)라 마커 부재 FAIL 이 job 을
+#   red 로 만들되 **머지를 막지 않는다**. fail-closed=신호 계층, 차단 권위 아님.
+#
+# injection-safe: on: pull_request + permissions: contents:read (write 0).
+#   스크립트는 repo 내 pin + HEAD 만 read, 외부 입력 0 (gh 호출 없음).
+#
+# consumer-self-hosted-compatible: python3 stdlib only (pip install 절대 금지).
+#
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  consumer-asset-currency:
+    name: consumer-asset-currency (warning-tier)
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-consumer-asset-currency.sh (currency 검출, warning 비차단)
+        continue-on-error: true
+        run: bash scripts/check-consumer-asset-currency.sh | tee /tmp/currency_check_output.txt
+      - name: Verify marker present (fail-closed gate)
+        run: |
+          # Marker 부재는 스크립트 오동작 시그널 — 명시적 FAIL
+          if ! grep -q '^\[consumer-asset-currency\]' /tmp/currency_check_output.txt; then
+            echo "ERROR: consumer-asset-currency marker absent from output"
+            exit 1
+          fi
