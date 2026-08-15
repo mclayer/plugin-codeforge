@@ -131,8 +131,14 @@ PYRUN
 expect() {
   local out="$1" name="$2" want="$3" label="$4"
   local line
-  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
-  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  # ★ crash-as-RED / crash-as-diff 차단 — **2단 방어**이며 각 층의 담당 class 가 다르다.
+  #   1차 `set -e`: 러너가 rc≠0 으로 죽으면 캡처 지점(`OUT=$(...)`)에서 스크립트가 즉시
+  #      abort 하므로 이 함수는 호출조차 되지 않는다. 컴파일오류(SyntaxError /
+  #      IndentationError — **Traceback 머리글이 없다**) class 가 여기서 걸린다.
+  #   2차 아래 `*Traceback*` 가드: `set -e` 가 못 잡는 **rc=0 인데 stderr 로 크래시 흔적만
+  #      뱉는** 잔여 class 전담. 이 층이 죽은 코드가 되지 않으려면 캡처에 `2>&1` 이 있어야
+  #      한다 — 없으면 `$out` 이 stdout 전용이라 가드에 영원히 미도달한다(실측 확인함).
+  #   크래시를 놓치면 grep 이 빈 줄을 내고 expect_not 이 "달라졌다" 며 통과해버린다.
   case "$out" in
     *Traceback*)
       echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
@@ -153,8 +159,14 @@ expect() {
 expect_not() {
   local out="$1" name="$2" forbidden="$3" label="$4"
   local line
-  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
-  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  # ★ crash-as-RED / crash-as-diff 차단 — **2단 방어**이며 각 층의 담당 class 가 다르다.
+  #   1차 `set -e`: 러너가 rc≠0 으로 죽으면 캡처 지점(`OUT=$(...)`)에서 스크립트가 즉시
+  #      abort 하므로 이 함수는 호출조차 되지 않는다. 컴파일오류(SyntaxError /
+  #      IndentationError — **Traceback 머리글이 없다**) class 가 여기서 걸린다.
+  #   2차 아래 `*Traceback*` 가드: `set -e` 가 못 잡는 **rc=0 인데 stderr 로 크래시 흔적만
+  #      뱉는** 잔여 class 전담. 이 층이 죽은 코드가 되지 않으려면 캡처에 `2>&1` 이 있어야
+  #      한다 — 없으면 `$out` 이 stdout 전용이라 가드에 영원히 미도달한다(실측 확인함).
+  #   크래시를 놓치면 grep 이 빈 줄을 내고 expect_not 이 "달라졌다" 며 통과해버린다.
   case "$out" in
     *Traceback*)
       echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
@@ -337,7 +349,7 @@ PYMUT
 echo "── AC-24: 강도 판정 분기 — 데이터원 부재 silent-zero 금지"
 
 # ── [계산축] baseline (clean-input 대조군 포함) ─────────────────────────────
-BASE=$("$PY" "$RUNNER" "$SUT")
+BASE=$("$PY" "$RUNNER" "$SUT" 2>&1)
 expect "$BASE" "A1-missing-file"  "absent|reported" "TC-A1 부재①파일 없음 → absent + 명시 보고"
 expect "$BASE" "A2-empty-file"    "absent|reported" "TC-A2 부재②빈 파일 → absent + 명시 보고"
 expect "$BASE" "A3-empty-array"   "absent|reported" "TC-A3 부재③빈 배열 → absent + 명시 보고"
@@ -349,7 +361,7 @@ expect "$BASE" "D2-two-incidents" "high|silent"     "TC-D2 대조군 정상 2건
 
 # ── [계산축] ① 제거 mutant: 부재 보고 분기 삭제 → silent-zero ──────────────
 M1="$WORK/m1.py"; mutate_sut "$M1" "silent_zero"
-M1_OUT=$("$PY" "$RUNNER" "$M1")
+M1_OUT=$("$PY" "$RUNNER" "$M1" 2>&1)
 expect_not "$M1_OUT" "A1-missing-file" "absent|reported" "TC-M1a ①제거 → A1 RED (부재가 low 로 낙하)"
 expect_not "$M1_OUT" "A2-empty-file"   "absent|reported" "TC-M1b ①제거 → A2 RED"
 expect_not "$M1_OUT" "A3-empty-array"  "absent|reported" "TC-M1c ①제거 → A3 RED"
@@ -358,12 +370,12 @@ expect "$M1_OUT" "D2-two-incidents" "high|silent" "TC-M1d 형제 회귀 — sile
 
 # ── [계산축] ② 주입 mutant: bucket 은 구분하되 보고를 침묵 ─────────────────
 M2="$WORK/m2.py"; mutate_sut "$M2" "silent_but_distinct"
-M2_OUT=$("$PY" "$RUNNER" "$M2")
+M2_OUT=$("$PY" "$RUNNER" "$M2" 2>&1)
 expect_not "$M2_OUT" "A1-missing-file" "absent|reported" "TC-M2 ②주입 보고 침묵 → A1 RED (부분 이행 = 미이행)"
 
 # ── [계산축] ③ 등가변형 저항 제거: 부재 3형태 중 하나만 정규화에서 뺀다 ────
 M3="$WORK/m3.py"; mutate_sut "$M3" "partial_normalization"
-M3_OUT=$("$PY" "$RUNNER" "$M3")
+M3_OUT=$("$PY" "$RUNNER" "$M3" 2>&1)
 expect "$M3_OUT" "A1-missing-file" "absent|reported" "TC-M3a 형제 회귀 — 다른 부재 형태는 여전히 정상"
 expect_not "$M3_OUT" "A3-empty-array" "absent|reported" "TC-M3b ③등가변형 빈 배열 정규화 제거 → A3 RED"
 

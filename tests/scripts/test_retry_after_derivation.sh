@@ -128,8 +128,14 @@ PYRUN
 expect() {
   local out="$1" name="$2" want="$3" label="$4"
   local line
-  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
-  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  # ★ crash-as-RED / crash-as-diff 차단 — **2단 방어**이며 각 층의 담당 class 가 다르다.
+  #   1차 `set -e`: 러너가 rc≠0 으로 죽으면 캡처 지점(`OUT=$(...)`)에서 스크립트가 즉시
+  #      abort 하므로 이 함수는 호출조차 되지 않는다. 컴파일오류(SyntaxError /
+  #      IndentationError — **Traceback 머리글이 없다**) class 가 여기서 걸린다.
+  #   2차 아래 `*Traceback*` 가드: `set -e` 가 못 잡는 **rc=0 인데 stderr 로 크래시 흔적만
+  #      뱉는** 잔여 class 전담. 이 층이 죽은 코드가 되지 않으려면 캡처에 `2>&1` 이 있어야
+  #      한다 — 없으면 `$out` 이 stdout 전용이라 가드에 영원히 미도달한다(실측 확인함).
+  #   크래시를 놓치면 grep 이 빈 줄을 내고 expect_not 이 "달라졌다" 며 통과해버린다.
   case "$out" in
     *Traceback*)
       echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
@@ -151,8 +157,14 @@ expect() {
 expect_not() {
   local out="$1" name="$2" forbidden="$3" label="$4"
   local line
-  # ★ crash-as-RED / crash-as-diff 차단: 러너가 크래시하면 grep 이 빈 줄을 내고
-  #   expect_not 이 "달라졌다" 며 통과해버린다. 크래시는 무조건 FAIL 이다.
+  # ★ crash-as-RED / crash-as-diff 차단 — **2단 방어**이며 각 층의 담당 class 가 다르다.
+  #   1차 `set -e`: 러너가 rc≠0 으로 죽으면 캡처 지점(`OUT=$(...)`)에서 스크립트가 즉시
+  #      abort 하므로 이 함수는 호출조차 되지 않는다. 컴파일오류(SyntaxError /
+  #      IndentationError — **Traceback 머리글이 없다**) class 가 여기서 걸린다.
+  #   2차 아래 `*Traceback*` 가드: `set -e` 가 못 잡는 **rc=0 인데 stderr 로 크래시 흔적만
+  #      뱉는** 잔여 class 전담. 이 층이 죽은 코드가 되지 않으려면 캡처에 `2>&1` 이 있어야
+  #      한다 — 없으면 `$out` 이 stdout 전용이라 가드에 영원히 미도달한다(실측 확인함).
+  #   크래시를 놓치면 grep 이 빈 줄을 내고 expect_not 이 "달라졌다" 며 통과해버린다.
   case "$out" in
     *Traceback*)
       echo "X FAIL: $label — 러너 크래시(Traceback). 산출 차이를 검출로 셀 수 없다"
@@ -203,7 +215,7 @@ PYMUT
 echo "── AC-5a: Retry-After 대기 유도 (순수 함수 + 헤더 픽스처 4종 + BVA)"
 
 # ── baseline (clean-input 대조군) ───────────────────────────────────────────
-BASE_OUT=$("$PY" "$RUNNER" "$SUT")
+BASE_OUT=$("$PY" "$RUNNER" "$SUT" 2>&1)
 expect "$BASE_OUT" "F1-retry-after-only" "retry-after|15" "TC-C1 F1 retry-after 단독 → 그 값에서 유도"
 expect "$BASE_OUT" "F2-reset-only"       "none|None"      "TC-C2 F2 reset 단독 → 헤더 유래 대기 미산출 (★ keystone)"
 expect "$BASE_OUT" "F3-both"             "retry-after|15" "TC-C3 F3 둘 다 → retry-after 가 대기원"
@@ -218,12 +230,12 @@ expect "$BASE_OUT" "E3-reset-case-variant" "none|None"    "TC-E3 ③등가변형
 
 # ── ① 제거 mutant ──────────────────────────────────────────────────────────
 M1="$WORK/m1.py"; mutate_sut "$M1" "no_derivation"
-M1_OUT=$("$PY" "$RUNNER" "$M1")
+M1_OUT=$("$PY" "$RUNNER" "$M1" 2>&1)
 expect_not "$M1_OUT" "F1-retry-after-only" "retry-after|15" "TC-M1 ①제거 대기 산출식 삭제 → F1 RED"
 
 # ── ② 주입 mutant (reset 을 대기원으로 되돌림) ─────────────────────────────
 M2="$WORK/m2.py"; mutate_sut "$M2" "reset_as_wait"
-M2_OUT=$("$PY" "$RUNNER" "$M2")
+M2_OUT=$("$PY" "$RUNNER" "$M2" 2>&1)
 expect_not "$M2_OUT" "F2-reset-only" "none|None" "TC-M2 ②주입 reset 을 대기원으로 → F2 RED (4종 중 최소 1종)"
 expect_not "$M2_OUT" "E3-reset-case-variant" "none|None" "TC-M2b ②주입 + 표기 변형 reset → E3 도 RED"
 # 형제 회귀: 같은 mutant 아래에서도 F1/F3 은 여전히 정본과 동일 → 검출이 F2 축에서만 발생함을 확인
@@ -231,12 +243,12 @@ expect "$M2_OUT" "F1-retry-after-only" "retry-after|15" "TC-M2c 형제 회귀 �
 
 # ── ③ 등가변형 저항 제거 mutant ────────────────────────────────────────────
 M3="$WORK/m3.py"; mutate_sut "$M3" "no_case_norm"
-M3_OUT=$("$PY" "$RUNNER" "$M3")
+M3_OUT=$("$PY" "$RUNNER" "$M3" 2>&1)
 expect_not "$M3_OUT" "E1-case-variant" "retry-after|15" "TC-M3 ③등가변형 헤더 정규화 제거 → E1 RED"
 
 # ── 경계 붕괴 mutant (0 을 부재로 접음) ────────────────────────────────────
 M4="$WORK/m4.py"; mutate_sut "$M4" "zero_is_absent"
-M4_OUT=$("$PY" "$RUNNER" "$M4")
+M4_OUT=$("$PY" "$RUNNER" "$M4" 2>&1)
 expect_not "$M4_OUT" "B0-zero" "retry-after|0" "TC-M4 경계 붕괴 0→부재 → B0 RED"
 expect "$M4_OUT" "F1-retry-after-only" "retry-after|15" "TC-M4b 형제 회귀 — 경계 mutant 는 F1 산출을 바꾸지 않는다"
 

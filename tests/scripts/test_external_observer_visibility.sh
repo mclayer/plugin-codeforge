@@ -56,7 +56,9 @@ import sys
 VACUOUS = {"", "null", "nil", "none-specified", "unspecified", "unknown", "n/a", "na", "-"}
 STATE_ENUM = {"observed", "unobserved"}
 # state == unobserved 일 때 허용되는 구체 사유 — "왜 관측하지 못했는가" 를 지시해야 한다.
-CONCRETE_REASONS = {"credential-absent", "fetch-error", "fetch-status-missing"}
+#   parse-error = P2-3(CFP-2984) 봉합분. 응답은 왔으나 파싱이 깨져 셀 수 없었던 경우 —
+#   구 구현에서 이 상태가 "관측했고 0건" 으로 접히던 것이 silent-zero 자기모순이었다.
+CONCRETE_REASONS = {"credential-absent", "fetch-error", "fetch-status-missing", "parse-error"}
 
 
 def load(path):
@@ -332,6 +334,20 @@ assert_case "형제/fetch-failed 도 구체 사유로 해소" PASS record "$WORK
 run_emitter "$WORKFLOW" "" "" "" "$WORK/sib_missing"
 assert_case "형제/fetch_status 소실도 미관측·사유 명시" PASS record "$WORK/sib_missing/out.txt" "sibling-status-missing"
 assert_rc0  "형제/fetch_status 소실 emitter exit 0" "$WORK/sib_missing"
+
+# ── P2-3 봉합 결박: parse-degraded (CFP-2984 구현리뷰) ──────────────────────
+#   구 fetch step 은 bare `except: json.dump([])` 로 401 오류 바디·HTML 오류 페이지를
+#   빈 배열로 접고 `fetch_status=ok` 를 찍어, 하류가 "관측했고 0건"(observed/0/none)을
+#   방출했다 — AC-29 가 구별하려던 두 상태의 혼동이자 AC-24 위반.
+#   봉합 = fetch_status 에 parse-degraded 분기 신설. 여기서 그 분기가
+#   **unobserved + 구체 사유** 로 해소되는지 결박한다(exit code 무접촉).
+run_emitter "$WORKFLOW" "parse-degraded" "" "" "$WORK/sib_parse"
+assert_case "P2-3/parse-degraded 는 미관측·구체 사유로 해소" PASS record "$WORK/sib_parse/out.txt" "sibling-parse-degraded"
+assert_rc0  "P2-3/parse-degraded emitter exit 0 (ADR-157 accepted-risk 무접촉)" "$WORK/sib_parse"
+# ★ 핵심 구별: parse-degraded 가 '관측됨 0'(ok 경로) 과 **같은 record 로 접히면** 봉합이 무효다.
+run_emitter "$WORKFLOW" "ok" "0" "none" "$WORK/sib_parse_ok"
+assert_case "P2-3/parse-degraded ≠ 관측됨 0 (구별 유지)" PASS distinguish \
+  "$WORK/sib_parse/out.txt" "$WORK/sib_parse_ok/out.txt"
 
 echo "── 결과: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
