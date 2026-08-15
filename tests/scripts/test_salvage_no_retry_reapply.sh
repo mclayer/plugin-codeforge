@@ -16,7 +16,8 @@
 #   시도 마커 `::salvage-store-attempt::` 를 **시도 함수 본문 안에서** emit 하므로,
 #   재시도를 어떤 제어 흐름으로 표현하든(직접 재호출 / 대기 루프 / 재귀) 마커가 그 횟수만큼
 #   증가한다. 즉 "재시도 0" 을 자기 선언(`retry_budget: 0` 문자열)으로 믿지 않는다.
-#   대기(재시도 없는 sleep)는 마커로 안 잡히므로 **경과시간 상대 대조** leg 를 따로 둔다.
+#   대기(재시도 없는 sleep)는 시도 마커로 안 잡히므로 **`time.sleep` 호출 계수** leg 를 따로 둔다
+#   (벽시계 아님 — 아래 assert_kill_sleep 주석의 flake 근인 참조).
 #
 # INV-T3 순수 픽스처: 네트워크 0 · 실 `~/.claude/**` 0 · 실 git 원격 0 · 쓰기는 mktemp -d 내부만.
 #   저장 실패 주입 = `--out` 을 **기존 디렉터리**로 지정(open(...,"w") → OSError). 권한 조작 없음.
@@ -62,8 +63,10 @@ count_attempts() {
 #   오라클·변이체가 예외로 죽어서 난 rc≠0 / 마커 부재는 **검출이 아니다**.
 #   ★ assert_kill_absent 의 kill 판정은 "mutant 출력에 needle 부재" 다 — 크래시한 mutant 는
 #     아무것도 못 내므로 **자동으로 killed 로 오독**된다.
-#   ★ assert_kill_attempts(시도 ≥2 요구) · assert_kill_wait(Δ≥2500ms 요구) 는 kill 조건이
-#     **양(positive) 산출**이라 크래시로는 충족 불가 — 구조적으로 crash-safe (가드 불요).
+#   ★ assert_kill_attempts(시도 ≥2 요구) · assert_kill_sleep(sleep 호출 ≥1 요구) 는 kill 조건이
+#     **양(positive) 산출**이라 크래시로는 충족 불가 — 구조적으로 crash-safe.
+#     단 assert_kill_sleep 은 baseline 쪽이 `0` 을 요구하므로 baseline 크래시가 조건을 만족시킬
+#     수 있다 → 완주 마커 `::probe-complete::` 부재를 양 팔 모두에서 harness FAIL 로 끊는다.
 #   ★ SyntaxError·IndentationError 는 Traceback 머리글 없이 출력된다(실측) — 함께 본다.
 # ─────────────────────────────────────────────────────────────────────────────
 crash_marker() { # <output> → 0 = 크래시 흔적 있음
@@ -167,29 +170,91 @@ assert_kill_absent() {
   fi
 }
 
-# assert_kill_wait: **상대** 경과시간 대조 — 절대 임계는 느린 러너에서 flake 라 쓰지 않는다.
-#   killed ⟺ mutant 경과 − baseline 경과 ≥ 2500ms (주입 대기 5.0s 대비 2× 여유).
-assert_kill_wait() {
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ '대기' 축 관측면 = **`time.sleep` 호출 계수** (벽시계 아님).
+#
+#   구 구현(`mutant 경과 − baseline 경과 ≥ 2500ms`)의 flake 근인 2건:
+#     (a) **양 팔 스택 비대칭** — baseline `bash "$WRAPPER"`(bash+python 2단) vs
+#         mutant `python3 "$m"`(python 단독). "상대 대조" 라면서 두 팔이 다른 스택이었다.
+#     (b) **노이즈 대역 ≈ 임계** — 리뷰 실측 Δ=2321(RED)/1999(RED)/4600(GREEN)ms, 임계 2500ms.
+#   이 본은 invariant-check.yml 의 required corpus 라 flake 1회 = repo 전체 PR 차단이었다.
+#   → 시간축을 버리고 결정론으로 바꾼다. 러너 부하 종속성 0, 실제 대기 0(테스트 5초 단축).
+#
+#   probe 는 대상 모듈 로드 **전에** `time.sleep` 을 계수 함수로 치환하므로
+#   `time.sleep(5.0)` 과 `from time import sleep` 양 표기를 모두 포착한다(둘 다 실측 확인).
+#
+#   ★ 정직한 천장 — 관측면은 `time.sleep` 호출 **1종**이다. busy-wait 루프 ·
+#     `select`/`socket` timeout · 외부 `sleep 5` 프로세스로 표현된 대기는 **미검출**.
+#     구 벽시계 오라클은 원리상 그것들도 봤으나 임계에서 판정 불가였다(위 (b)) —
+#     "판정 못 하는 넓은 관측면" 을 "판정하는 좁은 관측면" 으로 바꾼 교환임을 명시한다.
+# ─────────────────────────────────────────────────────────────────────────────
+PROBE="$TMP/sleep_probe.py"
+cat >"$PROBE" <<'PY'
+import importlib.util
+import sys
+import time
+import traceback
+
+target = sys.argv[1]
+argv = sys.argv[2:]
+
+_calls = []
+_real_sleep = time.sleep
+
+
+def _counting_sleep(secs, *a, **k):
+    # 실제로 자지 않는다 — 계수만 한다(벽시계 비의존).
+    _calls.append(float(secs))
+    return None
+
+
+# ★ 대상 로드 **전에** 치환 → `from time import sleep` 바인딩도 계수 함수를 집는다.
+time.sleep = _counting_sleep
+
+try:
+    spec = importlib.util.spec_from_file_location("_sut_under_probe", target)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["_sut_under_probe"] = mod
+    spec.loader.exec_module(mod)
+    rc = mod.main(argv)
+except SystemExit as e:
+    rc = e.code
+except BaseException:
+    # 완주 마커를 내지 않고 죽는다 — 크래시가 'sleep 0' 으로 오독될 여지를 없앤다.
+    traceback.print_exc()
+    raise SystemExit(3)
+finally:
+    time.sleep = _real_sleep
+
+print("::probe-complete:: sleep_calls=%d sleep_total=%.3f rc=%s"
+      % (len(_calls), sum(_calls), rc))
+PY
+
+probe_sleep_calls() { # <output> → sleep 호출 수. 완주 마커 부재 시 빈 문자열(= 크래시).
+  printf '%s\n' "$1" | sed -n 's/.*::probe-complete:: sleep_calls=\([0-9][0-9]*\) .*/\1/p' | tail -1
+}
+
+# assert_kill_sleep: baseline sleep 호출 0 → mutant ≥1 이어야 killed.
+#   양 팔 모두 동일 스택(`python3 "$PROBE" <target>`) — (a) 비대칭 제거.
+assert_kill_sleep() {
   local label="$1" old="$2" new="$3"
-  local m="$TMP/mutant_$((RANDOM)).py" s e bms mms
+  local m="$TMP/mutant_$((RANDOM)).py" bout mout bn mn
   if ! make_mutant "$m" "$old" "$new" 2>"$TMP/anchor.err"; then
     echo "X FAIL: $label — ANCHOR-DRIFT: $(cat "$TMP/anchor.err")"
     FAIL=$((FAIL + 1))
     return
   fi
-  s=$(date +%s%N)
-  bash "$WRAPPER" "${FAIL_ARGS[@]}" >/dev/null 2>&1 || true
-  e=$(date +%s%N)
-  bms=$(((e - s) / 1000000))
-  s=$(date +%s%N)
-  python3 "$m" "${FAIL_ARGS[@]}" >/dev/null 2>&1 || true
-  e=$(date +%s%N)
-  mms=$(((e - s) / 1000000))
-  if [ $((mms - bms)) -ge 2500 ]; then
-    echo "OK KILLED: $label (baseline ${bms}ms → mutant ${mms}ms, Δ=$((mms - bms))ms)"
+  bout=$(python3 "$PROBE" "$SSOT_PY" "${FAIL_ARGS[@]}" 2>&1) || true
+  mout=$(python3 "$PROBE" "$m" "${FAIL_ARGS[@]}" 2>&1) || true
+  bn=$(probe_sleep_calls "$bout")
+  mn=$(probe_sleep_calls "$mout")
+  if [ -z "$bn" ]; then fail_crash "$label" "baseline(대조군 무효 — INV-T4)" "$bout"; return; fi
+  if [ -z "$mn" ]; then fail_crash "$label" "mutant(치환이 소스를 깨뜨림 = 거짓 kill)" "$mout"; return; fi
+  if [ "$bn" -eq 0 ] && [ "$mn" -ge 1 ]; then
+    echo "OK KILLED: $label (baseline sleep 호출 ${bn}회 → mutant ${mn}회)"
     PASS=$((PASS + 1))
   else
-    echo "X SURVIVED: $label — Δ=$((mms - bms))ms (want ≥2500ms; baseline ${bms}ms mutant ${mms}ms)"
+    echo "X SURVIVED: $label — baseline sleep=$bn(want 0) mutant sleep=$mn(want ≥1)"
     echo "    ⇒ AC-33 의 '대기' 축은 advisory 강등 대상 (Story :649)"
     FAIL=$((FAIL + 1))
   fi
@@ -233,10 +298,18 @@ assert_kill_attempts "AC-33 ③등가변형·값 표현 (재시도를 직접 호
         else:
             raise OSError("wait-loop exhausted")'
 
-assert_kill_wait "AC-33 ④추가 (재시도 없이 **대기만** 주입 — 마커로는 안 잡히는 축)" \
+assert_kill_sleep "AC-33 ④주입 (재시도 없이 **대기만** — 시도 마커로는 안 잡히는 축)" \
   '    except OSError as exc:' \
   '    except OSError as exc:
         time.sleep(5.0)'
+
+# ★ ④ 의 등가변형: 같은 대기를 다른 표기로 쓴다. `time.sleep` 속성 조회를 우회하는
+#   `from time import sleep` 바인딩에도 관측면이 버티는지 — 오라클 자기 자문(표기 등가변형).
+assert_kill_sleep "AC-33 ⑤등가변형 (같은 대기를 from-import 표기로 — 관측면 우회 시도)" \
+  '    except OSError as exc:' \
+  '    except OSError as exc:
+        from time import sleep as _s
+        _s(5.0)'
 
 echo "── 결과: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
