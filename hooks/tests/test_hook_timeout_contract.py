@@ -112,6 +112,6 @@ def test_every_hook_handler_has_explicit_timeout():
 
     # 성공 보고
     assert (
-        handler_count == 24
-    ), f"Expected 24 leaf handlers, found {handler_count} (FYI, count-agnostic but verifying)"
+        handler_count == 25
+    ), f"Expected 25 leaf handlers, found {handler_count} (FYI, count-agnostic but verifying)"
     print(f"✓ All {handler_count} leaf handlers have explicit timeout int > 0")

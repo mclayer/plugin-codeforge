@@ -174,6 +174,11 @@ TIMEOUT_RATIONALE_TABLE = [
         10,
         "§3.2 SubagentStart render: subject/time injection (≤10s)",
     ),
+    (
+        "subagent-start-progress-commit-priming",
+        10,
+        "§3.2 SubagentStart progress: git commit priming (worktree state snapshot + git commit initial_state marker for cross-session progress validation, ≤10s)",
+    ),
     # SubagentStop
     (
         "subagent-stop",
@@ -351,8 +356,8 @@ def test_ac16_session_end_special_case_documented():
 
 
 def test_hook_timeout_rationale_complete_24rows():
-    """Table 이 정확히 24행임을 확인."""
-    assert len(TIMEOUT_RATIONALE_TABLE) == 24, (
-        f"Expected 24 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
+    """Table 이 정확히 25행임을 확인."""
+    assert len(TIMEOUT_RATIONALE_TABLE) == 25, (
+        f"Expected 25 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
     )
-    print(f"✓ Rationale table has complete 24 rows with bijection to hooks.json")
+    print(f"✓ Rationale table has complete 25 rows with bijection to hooks.json")

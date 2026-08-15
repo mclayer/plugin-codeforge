@@ -85,7 +85,7 @@ def test_all_24_hooks_counted():
                 hooks_list = entry.get("hooks", [])
                 count += len(hooks_list)
 
-    assert count == 24, f"Expected 24 hooks, got {count} (AC-11 scope)"
+    assert count == 25, f"Expected 25 hooks, got {count} (AC-11 scope)"
 
 
 def test_plugin_root_only_reference():
@@ -121,7 +121,7 @@ def test_plugin_root_only_reference():
                         )
 
     # 정의역 비공허 — 0건을 훑고 "위반 없음" 을 말하면 공허한 통과다.
-    assert scanned == 24, f"검사 대상 command 24 기대, 실제 {scanned} (AC-11 scope)"
+    assert scanned == 25, f"검사 대상 command 25 기대, 실제 {scanned} (AC-11 scope)"
 
     if external_refs:
         pytest.fail(
