@@ -267,9 +267,13 @@ YAML
 # 3. mutation helper — 실 core 파일 사본만 변형 (double-guard)
 # ═══════════════════════════════════════════════════════════════════════════════
 # mutate_core <label> <sed_expr> <sentinel> — 성공 시 변형본 경로 echo, 실패 시 빈 문자열 + rc 1.
+#   파일명은 순번으로만 만든다 (label 에 공백·수식기호가 들어가므로 경로에 쓰지 않는다).
+MUT_SEQ=0
+MUT_PATH=""
 mutate_core() {
   local label="$1" expr="$2" sentinel="$3"
-  local mut="$TEST_TMP/mut_${label}.py"
+  MUT_SEQ=$((MUT_SEQ+1))
+  local mut="$TEST_TMP/mut_${MUT_SEQ}.py"
   cp "$CORE_PY" "$mut"
   sed -i "$expr" "$mut"
   if ! grep -qF "$sentinel" "$mut"; then
@@ -280,6 +284,7 @@ mutate_core() {
     echo ""
     return 1
   fi
+  MUT_PATH="$mut"
   echo "$mut"
   return 0
 }
@@ -289,17 +294,20 @@ mutate_core() {
 mutation_kill_exit() {
   local label="$1" expr="$2" sentinel="$3" root="$4" expect="$5"; shift 5
   local mut base_rc mut_rc
-  run_core "$CORE_PY" "$root" "$@"; base_rc=$?
+  run_core "$CORE_PY" "$root" "$@"
   base_rc=$CORE_RC
   if [ "$base_rc" -ne "$expect" ]; then
     fail_case "$label: baseline 기대 exit=$expect 인데 실제 $base_rc — 대조군 성립 불가(무효 kill)"
     return 1
   fi
+  # ★ mutate_core 는 명령치환(서브셸)에서 돌므로 그 안의 전역 대입은 살아남지 않는다.
+  #   변형본 경로는 반드시 여기(부모 셸)에서 MUT_PATH 로 옮긴다. (최초 실행에서 실측 검출된 함정.)
   mut="$(mutate_core "$label" "$expr" "$sentinel")"
   if [ -z "$mut" ]; then
     fail_case "$label: NOT_RUN — sed 미치환 또는 변형본 syntax invalid (false PASS 금지)"
     return 1
   fi
+  MUT_PATH="$mut"
   run_core "$mut" "$root" "$@"
   mut_rc=$CORE_RC
   if [ "$mut_rc" -ne "$base_rc" ]; then
@@ -464,8 +472,8 @@ mutation_kill_exit "M3-siteB (런타임 I-4 · rc ∉ exit_space)" \
   "M3b-neutralized" "$SH_M3" 1 --manifest "$ES_NARROW"
 
 # ★ site 독립성: siteB 만 중화해도 siteA 는 살아있어야 한다 (한 번에 둘 다 지우면 분리 불가).
-mut_m3b="$TEST_TMP/mut_M3-siteB (런타임 I-4 · rc ∉ exit_space).py"
-if [ -f "$mut_m3b" ]; then
+mut_m3b="$MUT_PATH"
+if [ -n "$mut_m3b" ] && [ -f "$mut_m3b" ]; then
   run_core "$mut_m3b" "$SH_M3" --manifest "$ES_EMPTY"
   expect_exit "M3 site 독립성: siteB 중화본도 빈 exit_space 는 여전히 loud 실패" 3 "$CORE_RC" "T-2ⓐ loud 실패"
 else
