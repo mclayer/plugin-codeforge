@@ -300,6 +300,37 @@ amendment_log:
       후단 1개 문장의 규범 지위만 정정한다. ADR-064 §결정 7 evidence-gated symmetric
       ratchet: 재개봉 evidence = ① dangling reference grep 실측 ② 공식 usage credits
       실재(support 12429409) ③ 계약층 `_ILLEGIT` 분류와의 층간 모순 실측.
+  - amendment: 10
+    carrier_story: CFP-2984
+    date: 2026-08-15
+    reinterpretation: true   # byte 는 순수 additive(131 insert / 0 delete, A6-1~A6-6 무접촉)이나 **의미상 additive 아님** — 2곳에서 기존 조항을 소급 재해석한다. ① A10-1 이 A6-2 step2 "동일 입력 패킷" 을 *패킷 불변* 아닌 ***멱등 계약*** 으로 재규정(A6-4 "입력 패킷 = idempotency contract" 원용). 이 재해석은 load-bearing — 원 문구가 *패킷 불변* 이면 A10-2 step4(번들 동봉)가 A6-2 와 정면 충돌하므로, A10-2 의 성립 자체가 이 재규정에 의존한다. ② A10-4 가 A6-2·A7-2·frontmatter 3곳의 `SendMessage resume 금지` root cause 인용 `CFP-2236` 의 근거를 "Story 본문" 에서 "sibling retro 앵커(2026-06-14-cfp-2238-...:127)" 로 재정박 — **행 자체는 무접촉**이라 문면 변경 0 인 채 인용의 의미가 바뀐다. `A6-2 조항 무변경`(scope) 과 무모순: 무변경 = byte 축 / 재해석 = 의미 축(ADR-167 §결정 (b) 리뷰 판정 축). 완화 방향 0 — A6-2 금지 자체는 유지·강화. self-declared — 의미 판정은 리뷰 lane 축.
+    scope: >-
+      **A6 failover 경로에 salvage 인계 절차를 additive 로 결합**한다. 범위 = **Orchestrator
+      생존 ∧ fable 워커 사망** 한정(A6 trigger 정의역과 동일) — 전원 공멸 경로는
+      [ADR-178](ADR-178-subagent-progress-commit-preservation.md) §결정 5-4 소유이며 본
+      Amendment 는 그 조항을 **pointer 로만** 인용한다. 신설 근거 = A6-4 가 이미
+      "idempotency(mid-run 재수행, **E11**)" 로 이 문제를 **명명·부분 처방**했고 빠진 것은
+      "부분 산출을 재spawn 패킷에 **넣는** 절차" 뿐이라는 것(신규 축 개설이 아니라 A6 자신이
+      연 자리의 충전). **A6-1·A6-2·A6-3·A6-4·A6-5·A6-6 조항 무변경** — 특히 A6-2
+      `fresh-spawn only` · `SendMessage resume 금지` 는 **완화하지 않는다**(금지 대상은
+      *죽은 인스턴스 재개*이고 salvage 는 *입력 패킷 내용 확장*이라 두 조항은 애초 충돌하지
+      않는다; A6-4 가 "입력 패킷 = idempotency contract" 로 명시하므로 '동일 입력 패킷'은
+      불변 패킷이 아니라 멱등 계약을 뜻한다). 동반 = **CFP-2236 인용 근거 재정박** —
+      해당 식별자는 오귀속이 아니라 **세션 식별자**이며 원 관측 기록은 sibling retro 에
+      실재한다(firsthand 추적 완료). 상세 = 본문 `## Amendment 10`.
+    sunset_justification: >-
+      N/A — `is_transitional: false` permanent policy 유지(§해소 기준 무변경). 방향 =
+      **강화**: 기존 제약 완화 0 + 폐기되던 부분 산출을 회수하는 additive 절차 신설. 특히
+      A6-2 완화 제안 **0** — upstream CHANGELOG `2.1.211` 이 override-resume 결함을 Fixed
+      로 표기하나 (a) 본 repo firsthand 재현 부재 (b) upstream 기술 기전(**parent's model**
+      로 revert)과 본 ADR 기술 기전(**frontmatter `model: fable`** 재해석) 불일치가
+      미해소이므로 완화 근거로 불성립하며, ADR-119 제안 필요성 3문 게이트 미통과로
+      "관찰됨·미조치" note 로만 기록한다. amendment_id **10**(9 아님) — 미머지 브랜치
+      `cfp-2948` 이 9 를 선점(firsthand 확인)해 결번 1개를 의도적으로 남긴다(레지스트리
+      선례 `adr_number 173` 동형, ADR-082 Amd36 1-Y ascending 은 결번 미금지).
+      ADR-064 §결정 7 evidence-gated symmetric ratchet: 강화 evidence = ① A6-4 E11
+      자기 명명 ② fresh-spawn ∧ 산출 승계 양립 실증 1건(CFP-2840) ③ 미회수 소각 실측
+      (CFP-2926 salvage 46파일이 규범·감사면에 0건 기록).
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -1013,3 +1044,104 @@ Amendment 7 A7-5 는 cap-down 의 강제력을 스스로 `advisory` + "hook 기�
 - [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 정지 적법성 착지(§결정 7 illegal 표). **§A4-8 = 본 carrier 저작물 전체의 자기적용 결박 총칙(정의역 총칙 · dry-run · 전제 검증 · 정직 상한)** — 판정문 verbatim SSOT 는 그 1곳이고 본 Amendment 는 pointer 만 둔다(§A8-5 mirror 정책 자기적용). 본 Amendment 의 술어(§A8-5 sweep · 절 경계)도 그 dry-run 대상이며 결과는 Story `CFP-2944` §7.16 에 기록된다.
 - [ADR-110](ADR-110-external-runtime-wrapper-ssot-boundary.md) — 세션 **사망 후** OS-외부 재개 축(계속 가능한 상태의 대체재로 오용 금지).
 - [ADR-071](ADR-071-orchestrator-user-dialog-convergence.md) §결정 24 — session-swap controlled-path(사망 후 복구 경로, 무손상).
+
+## Amendment 10 (CFP-2984 — A6 failover 경로의 salvage 인계 결합 + CFP-2236 근거 재정박)
+
+**날짜**: 2026-08-15 KST · **carrier**: CFP-2984 · **status**: Proposed (Phase 1 draft) · **방향**: **강화**(폐기되던 부분 산출 회수, 기존 제약 완화 0).
+
+> **amendment_id 가 9 가 아닌 10 인 이유**: 미머지 브랜치 `cfp-2948`(phase:설계-리뷰)이 `amendment_id: 9` 를 선점했음을 firsthand 확인했다(`git show cfp-2948:archive/adr/ADR-RESERVATION.md` 에 `adr_number: 141 / amendment_id: 9 / reserved_by_cfp: CFP-2948` row 실재, 해당 브랜치가 본 ADR 에 +87행 추가). 9 를 두고 경쟁하면 머지 순서에 따라 한쪽이 renumber 를 강제당한다 — **결번 1개 비용 < 충돌 비용**. 레지스트리 자신이 브랜치 경합 결번을 정상으로 기록한 선례(`adr_number 173`)가 있고 ADR-082 Amendment 36 1-Y 의 ascending ordering 은 결번을 금지하지 않는다.
+
+### A10-0. 정의역 (범위 한정 — 비협상)
+
+본 Amendment 는 **Amendment 6 의 trigger 정의역 안에서만** 작동한다:
+
+| 조건 | 값 |
+|---|---|
+| Orchestrator | **생존** (spawn 주체가 살아 있어 인계를 수행할 수 있다) |
+| 워커 | **사망** (fable-리밋 감지 → A6-1 trigger) |
+| 전원 공멸 | **정의역 밖** — [ADR-178](ADR-178-subagent-progress-commit-preservation.md) §결정 5-4 재개자 runbook 소유. 본 Amendment 는 그 조항을 **pointer 로만** 인용하고 재서술하지 않는다 |
+| lead 생존 · 워커 생존(통지 오배송 등) | **정의역 밖** — [ADR-170](ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 19 소관 (ADR-178 §결정 5-6 이 그렇게 라우팅했다) |
+
+### A10-1. A6-2 와 충돌하지 않는 근거 (조항별 대조)
+
+| A6-2 조항 | salvage 인계와의 관계 |
+|---|---|
+| step 1 — fable same-model 재시도 SKIP (Option A 즉시전환) | 무관 (타이밍 축) |
+| step 2 — **fresh re-spawn 1회** (`model: opus` override, **SendMessage resume 금지**) | ★ **금지 대상 = 죽은 인스턴스의 resume**. salvage 는 **새 spawn 의 입력 패킷 내용을 확장**하는 것이지 resume 이 아니다 |
+| step 2 — "동일 입력 패킷" | A6-4 가 "**입력 패킷 = idempotency contract**" 로 명시하므로, 이 문구는 *패킷 불변*이 아니라 *멱등 계약*을 뜻한다 |
+| step 2 — max 1회 per-spawn-attempt | 무관 (횟수 축). salvage 는 재시도 counter 를 증가시키지 않는다 |
+| step 3 — §14 태그 | 무관. salvage 성공 여부 기록은 A10-3 참조 |
+
+**결정적 근거 — A6 자신이 이미 이 자리를 열어놨다**: A6-4 는 "**idempotency(mid-run 재수행, E11)** — base_sha reconcile(입력 패킷 = idempotency contract) + owned-section replace-whole + append-only 섹션 idempotency-key dedup" 을 규정한다. E11 은 **A6 안에서 이미 명명·부분 처방**됐고, 빠진 것은 "부분 산출을 재spawn 패킷에 **넣는** 절차" 하나다. 본 Amendment 는 신규 축을 개설하지 않고 그 공백만 채운다.
+
+**독립 수렴 note**: [ADR-178](ADR-178-subagent-progress-commit-preservation.md) §결정 5-4 step3 도 "fresh 재스폰 packet 에 3-tuple 주입(ADR-141 Amd6 fresh-spawn only 정합 — SendMessage resume 금지 경로와 무충돌)" 으로 동일 형태를 채택했다 — 두 결정이 독립적으로 같은 결론에 도달했다.
+
+**실증 (n=1, over-claim 금지)**: CFP-2840 에서 opus PL 이 **fresh spawn 으로** lane 을 이어받아 완결했고 선행 lane 산출은 재작성 0 으로 보존됐다. fresh-spawn ∧ salvage 양립은 실증 1건이며, 이를 회수율 일반화 근거로 쓰지 않는다.
+
+### A10-2. failover 경로의 salvage 인계 절차 (A6-2 step 2 에 부착)
+
+fable 워커 사망 감지 후 fresh re-spawn 을 발행하기 **전에**:
+
+1. **census** — 사망 워커의 브랜치·worktree 에서 잔존물을 read-only 로 열거한다. 이 관측은 [ADR-178](ADR-178-subagent-progress-commit-preservation.md) §결정 5-1·§결정 5-4 step1 이 정의한 발견 술어를 **재사용**한다(신규 관측 채널 0). liveness 관측은 여기에 포함되지 않는다 — detection 은 ADR-139/164 소유이며 recovery 가 자기 detector 를 갖지 않는다.
+2. **번들 구성** — [ADR-179](ADR-179-agent-salvage-bundle-handoff.md) §결정 2 스키마. 조각별 무결성 태깅은 §결정 3(무결성 축 ⊥ 처분 축), side-effect 원장은 §결정 4 술어를 따른다.
+3. **salvage-vs-redo 판정** — ADR-179 §결정 5 의 5문 게이트. 전건 YES 가 아니면 **redo**(번들 미동봉)로 낙하하며, 이 낙하는 실패가 아니라 정상 경로다.
+4. **인계** — fresh `Agent` spawn 의 입력 패킷에 번들을 동봉한다. **`SendMessage` resume 은 여전히 금지**(A6-2 무변경). 번들 조각은 delimited untrusted block 안에 넣고 `inconclusive` 로 소비한다(ADR-179 §결정 3 / ADR-178 §결정 5-3) — **PASS·완료 자동 승격 금지**.
+5. **실패 시** — salvage 가 실패해도 **failover 자체는 계속 진행**한다. 번들 없는 fresh re-spawn 은 현행 A6-2 동작 그대로이며 회귀 0이다. salvage 실패는 failover 를 보류·중단시키는 근거가 **아니다**.
+
+**재시도 예산 불변 (A6-4 정합)**: salvage 는 실패 호출의 재발행이 아니므로 `cascade_depth` · per-spawn 카운터 · backoff 어느 counter 도 증가시키지 않는다. **salvage 경로 자체에 재시도 예산을 부여하지 않는다** — 복구 절차가 스스로 예산을 곱하는 것을 금지한다(ADR-179 §결정 8).
+
+### A10-3. 기록 — 기존 채널 상한 안에서만
+
+- **§14 태그**: 기존 `[rate-limit-failover:fable→opus]` 를 그대로 쓴다. **신규 태그 신설 0.**
+- **§10 FIX Ledger row 금지** — A6-4 규율 무변경(failover = 운영 telemetry ≠ governance FIX).
+- **원장 기록**: [ADR-170](ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 2 entry 7 범위(record-only · free-form 0 · numeric/enum/hash only · 0-API) 안에서만. **8번째 entry 신설 0.**
+- **★ 기록 불가의 정직 declare**: 현행 계약 필드에 **"salvage 성공 여부" 는 부재**하고 "재spawn 여부" 는 `recovery_action` enum 의 `retry` 값으로 **부분 표현만** 가능하다. 스키마 확장은 BREAKING 이라 본 Amendment 정의역 밖이므로, **기존 enum 재해석까지가 상한이며 그 이상은 기록 불가**다. 이 한계를 "기록된다" 로 옮겨 쓰지 않는다.
+
+### A10-4. CFP-2236 인용 근거 재정박
+
+본 ADR 은 A6-2·A7-2·frontmatter 3곳에서 `SendMessage resume 금지` 의 root cause 로 **CFP-2236** 을 인용한다. 그 Story 파일 본문에는 해당 실측이 없다(제목 = DialogFidelityAgent 은퇴, `fable`/`SendMessage`/`resume` 0-hit). 그러나 **원 관측 기록은 실재한다** — firsthand 추적 결과:
+
+> `codeforge-internal-docs` `wrapper/retros/2026-06-14-cfp-2238-fable-opus-fallback-codify.md:127` verbatim:
+> `| CFP-2236 (sunset) | fable spawn 실패 3번째(arch-pl resume 2회 fable 재실패 — resume 가 무한 재실패 root cause 실측) | root_cause_class N=3 → escalate_user, Epic #2134 carrier 축적 |`
+> (동 retro `:59` 에 재기술. 최초 발화점 = `wrapper/stories/CFP-2238.md:59`)
+
+**재정박 판정**: "CFP-2236" 은 **오귀속이 아니라 세션 식별자**다. 관측 사건은 CFP-2236 Story 를 진행하던 **세션 중** 발생한 운영 사건이고, 기록면이 Story file 이 아니라 **sibling retro** 였을 뿐이다(Story file 이 자기 주제만 담은 것은 정상). 따라서 인용 처분은 다음과 같다:
+
+- **"근거 미상" 표기 = 기각** — 근거가 실재하므로 사실과 다르고, ADR-119 abstention 은 확인에 *실패*했을 때의 규율이지 확인에 *성공*했을 때 쓰는 것이 아니다.
+- **채택 = 근거 재정박** — 이후 본 ADR 의 CFP-2236 인용은 위 retro 앵커를 동반 근거로 읽는다. A6-2·A7-2 문면의 **행 자체는 무접촉**(자기참조 행번호 stale 회피 — 위치는 절 anchor 로 지시).
+- **부수 확인**: 이 건은 "작업 소각 사건의 정본 기록면이 Story 가 아니다" 라는 명제의 **2번째 독립 실증**이다(1번째 = CFP-2926 salvage 커밋이 MEMORY 에만 기록). 본 Amendment 가 결합하는 salvage 절차의 기록 착지면 지정이 왜 필요한지에 대한 직접 근거다.
+
+### A10-5. upstream note (관찰됨·미조치 — 제약 완화 아님)
+
+A6-2 의 `SendMessage resume 금지` 가 방어하는 upstream 결함은 Claude Code `2.1.211` 에서 다음으로 수정 표기됐다:
+
+> `Fixed subagents spawned with an explicit model override reverting to the parent's model when resumed or sent a follow-up message`
+> [source: anthropics/claude-code CHANGELOG — **버전 헤딩 앵커** `## 2.1.211`. 줄번호 단독 인용 금지(상단 추가형이라 신 릴리스마다 이동). 재현 = 버전 헤딩부터 다음 `## ` 직전까지 슬라이스]
+
+**그럼에도 제약은 무변경으로 유지한다**:
+
+1. **firsthand 재현 0** — 본 repo·본 세션에서 수정본 harness 의 override-resume 을 재현 시험하지 않았다.
+2. **★ 기전 불일치 미해소 `[hypothesis]`** — upstream 은 override 가 **parent's model 로** revert 한다고 적고, 본 ADR 은 **원본 frontmatter `model: fable` 가** 재해석된다고 적는다. **되돌아가는 목적지가 다르다.** 당시 Orchestrator 가 opus 였다면 upstream 기전으로는 resume 시 opus 가 되어 fable 재실패가 재현되지 않았어야 하는데, 실측(A10-4 retro `:127`)은 "**2회 fable 재실패**" 다. 둘 중 하나가 부정확하거나 제3의 기전이며 본 Amendment 는 이를 해소하지 못한다.
+3. **비대칭 비용** — 완화 오판의 결과는 cap 무력화 + fable 무한 재실패이고, A7-2 가 이 shape 를 cap-down 에까지 상속시켜 blast radius 가 넓다.
+
+⇒ **완화 검토의 선행 조건** = (a) 수정본 harness 에서 override-resume 재현 시험 1회 (b) 기전 불일치 해소. **본 Story 는 이 둘을 작업으로 발의하지 않는다** — ADR-119 §결정 9 3문 게이트 ①(깨졌나 = NO, 현행 fresh-spawn 은 정상 작동하며 비용은 부분산출 폐기뿐인데 그것은 본 Amendment 의 salvage 로 해소된다) 미통과. **"관찰됨·미조치" 로만 기록.**
+
+### A10-6. 정직 천장
+
+1. **tier = advisory.** salvage 인계의 실제 수행(번들을 만들었는가, 패킷에 넣었는가)은 런타임 에이전트 행위라 PR diff 위 CI 가 RED 를 낼 수 없다. hook 강제도 불가(ADR-115 Stop/SubagentStop block 금지). 기계 강제 가능한 것은 문서·스키마 자기정합뿐이다.
+2. **회수율 미측정** — 실증 n=1. "부분 산출이 보존된다" 를 확률 주장으로 읽지 말 것. 다중 파일·도구호출 중간 사망의 회수율은 미측정이다.
+3. **A6 감지 미탐 시 동작 불변** — 감지가 안 되면 failover 도 salvage 도 발동하지 않고 현행 동작으로 degrade 한다(A6-6 fail-open bounded 상속, 회귀 0).
+4. **"손실 0" 주장 금지.** 본 Amendment 가 줄이는 것은 *한 실패 유형(fable-리밋 워커 사망)에서* 폐기되는 부분 산출량이며, 소실 창 자체를 없애지 않는다.
+
+### Cross-ref
+
+- **Amendment 6 A6-1~A6-6 — 전건 무변경.** 본 Amendment 는 A6-2 step 2 에 절차를 **부착**하고 A6-4 E11 의 공백을 채울 뿐이다.
+- Amendment 7 A7-2 — `fresh-spawn only` shape 상속. 본 Amendment 가 그 shape 를 완화하지 않으므로 cap-down 무손상.
+- Amendment 8 A8-3 — "failover 미발동 ≠ 작업 중단" 축 분리. 본 Amendment 는 그 축을 건드리지 않는다(salvage 실패도 작업 중단 근거가 아니다 — A10-2.5 가 같은 방향).
+- **Amendment 8 A8-5 절 경계 note (구조적 부작용 declare)**: A8-5 제외②는 Amendment 8 의 절 경계를 "`## Amendment 8` heading 부터 **다음 `## ` heading 직전**까지, 다음 heading 이 부재하면 **EOF 까지**" 로 정의하며, 그 EOF 분기를 둔 이유로 "본 Amendment 는 착지 시점 기준 파일의 최종 h2 이므로 종단자가 실제로 부재" 를 명시했다. 본 Amendment 10 이 append 되면서 **그 종단자가 실재하게 되어 EOF 분기가 더는 발동하지 않는다** — A8-5 는 두 분기를 모두 규정했으므로 규범 위반은 아니고, 절 경계 판정은 오히려 **더 명확**해진다(Amendment 8 = 77 content line, 신규 heading 직전에서 종료). Amendment 8 본문 **content byte 변경 0** [verified — 신규 heading 앞 blank 1줄이 유일 델타]. 또한 본 Amendment 는 **A8-5 가 폐기 대상으로 지정한 그 anchor 문자열을 한 번도 재기재하지 않으므로**(literal 을 여기 옮겨 적으면 그 자체가 sweep 대상 site 를 신설하는 자기모순이 되므로 의도적으로 인용하지 않는다) sweep 정의역을 확대하지 않는다. 재현 = A8-5 의 grep 술어를 본 절에 적용 → 0-hit.
+- [ADR-179](ADR-179-agent-salvage-bundle-handoff.md) — 번들 스키마·무결성 축·side-effect 술어·5문 게이트 SSOT. 본 Amendment 는 그 규약을 **소비**하고 재서술하지 않는다.
+- [ADR-178](ADR-178-subagent-progress-commit-preservation.md) §결정 5-1/5-3/5-4/5-6 — 발견 술어·`inconclusive` 처분·전원 공멸 runbook·lead 생존 라우팅. **pointer only.**
+- [ADR-109](ADR-109-in-process-429-mitigation-framework.md) §결정 3 step2 slot(현 tenant = 본 ADR Amendment 6) / §결정 9(§10 ⊥ §14). **Amendment 3**(CFP-2984 동반)이 그 slot 의 dead tenant 표기를 정정했다.
+- [ADR-170](ADR-170-orchestrator-subagent-default-inline-whitelist.md) §결정 2 entry 7 — 기록 채널 상한 / §결정 19 — lead 생존 경로(본 Amendment 정의역 밖).
+- [ADR-115](ADR-115-runtime-hook-enforcement.md) — hook block 금지(본 Amendment 를 기계 강제 lever 로 설계 금지).
+- [ADR-119](ADR-119-research-before-claims.md) §결정 9 — A10-5 "관찰됨·미조치" 처분 근거.
