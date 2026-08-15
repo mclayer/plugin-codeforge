@@ -53,7 +53,9 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
       kill_target_stage ∈ fail_stage(xkill) / IC assert 미성립 / pyyaml 부재(판정불가).
   3 = substrate-failure — ⓵ N_gates·N_armL·N_armH·N_probe 中 0 / ⓶ baseline 부재·digest 불일치·
       parse 실패 / ⓷ stamp drift / ⓸ bijection 파손 / ⓹ exec-tree blinding 파손(IC-4) /
-      ⓺ recipe 대상이 samples[] 밖. 추가: exit_space 미선언·빈 리스트(T-2ⓐ),
+      ⓺ recipe 정합 파손 — 대상이 samples[] 밖 / `build[].sample` 파생 provenance 불일치
+      (커밋 표본 ≠ derived_from + recipe: anchor 매치 ≠ 1 · 재적용 sha256 불일치 · 트리 동일성 파손).
+      추가: exit_space 미선언·빈 리스트(T-2ⓐ),
       금지키 ∩ manifest 키공간 ≠ ∅, manifest 부재·parse 실패(판정 기반 부재 = substrate, in-file 확장 declare),
       classification 정합 파손(선언 arm ↔ expected_verdict 불일치 / 미분류 unit).
   2 = argparse usage 전용 (argparse 기본 동작).
@@ -69,7 +71,9 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
   (`scanned-N:` 형) ④terminal-marker(선언 stream). corpus PASS ⟺ arm-L 전건 LIVE ∧ arm-H 전건 HOLLOW.
 
 ━━ INDETERMINATE 11 조건 + 평가 순서 ━━
-  I-1 anchor 매치 ≠ 1 / I-2 표본 syntax invalid / I-3 기동 실패·timeout / I-4 rc ∉ exit_space /
+  I-1 anchor 매치 ≠ 1 **(정의역 = run-time recipe unit(probe) 한정 — 커밋 sample unit 은 units
+      구성에서 recipe=None 이라 I-1 가드에 구조적으로 미도달; 커밋 `build[].sample` 파생은 ⓺
+      provenance 검사 소관)** / I-2 표본 syntax invalid / I-3 기동 실패·timeout / I-4 rc ∉ exit_space /
   I-5 kill·clean 양쪽 FAIL / I-6 마커 전무 / I-7 ¬DELIVERED /
   I-8 kill.fail=1 ∧ kill_target_stage ∉ fail_stage(kill) / I-9 clean.term=0 /
   I-10 선언한 stream 이 아닌 곳에서 마커 관측 / I-11 ¬LIVE ∧ ¬HOLLOW ∧ (kill 관측 ≡ clean 관측).
@@ -238,6 +242,17 @@ def _sha256_file(path):
         return _sha256_bytes(path.read_bytes())
     except OSError:
         return None
+
+
+def _rel_file_map(root):
+    """디렉터리 하위 전 파일 → {상대 posix 경로: Path}. (트리 동일성 대조 어댑터)"""
+    out = {}
+    if not root.is_dir():
+        return out
+    for p in sorted(root.rglob("*")):
+        if p.is_file():
+            out[p.relative_to(root).as_posix()] = p
+    return out
 
 
 def _load_yaml(path, what):
@@ -432,6 +447,84 @@ def _apply_recipe(data_bytes, recipe):
     if n != 1:
         return None, n
     return text.replace(recipe["anchor_from"], recipe["anchor_to"], 1).encode("utf-8"), n
+
+
+# ── ⓺(확장) 커밋 `build[].sample` 파생 provenance ─────────────────────────────────
+def _check_sample_provenance(repo_root, build, samples_by_id):
+    """커밋 표본이 정말 `derived_from + recipe` 의 산물인지 검사. 오류메시지 리스트 반환.
+
+    정의역 = **커밋 표본**(`build[]` 항목 中 `sample:` 키를 가진 것). run-time probe 는 대상이
+    아니다(그쪽은 I-1 이 본다). 검사 3항:
+      ① 파생 지점 특정 — derived_from 원본 target 에서 anchor 매치 수 == 1.
+      ② 파생 일치 — recipe 재적용 결과 bytes 의 sha256 == 커밋 표본 target 의 sha256.
+      ③ 트리 동일성 — 두 표본 하위 전 파일이 상대경로 집합·바이트 모두 동일. 예외 2개뿐:
+         (a) recipe target(=②가 검사) (b) `stamp.yaml.sample`(표본별 메타 — ⓷ stamp drift 소관).
+    위반 = ⓺ substrate-failure(exit 3). 신규 조건 번호를 만들지 않고 ⓺ 문면을 확장 재사용한다.
+
+    배경(F-CR18-1): 커밋 sample unit 은 `units` 에 recipe=None 으로 실려 I-1(anchor 매치 ≠ 1)
+    가드에 **구조적으로 도달하지 못한다**. 그래서 이 함수 이전에는 "커밋 s02 가 s01+recipe 파생인가"
+    를 검사하는 경로가 **전무**했다(manifest 는 파생을 선언만 하고 아무도 대조하지 않았다).
+    ⓷ stamp drift 와 disjoint: stamp 는 `<표본 자신의 현재 파일> ↔ <자신의 선언 해시>` 를 보고,
+    본 검사는 `<표본> ↔ <다른 표본 + recipe>` 관계를 본다(stamp 를 함께 위조하면 ⓷ 는 통과한다).
+    """
+    errs = []
+    for b in build:
+        if not isinstance(b, dict) or not b.get("sample"):
+            continue
+        sid = b["sample"]
+        src = samples_by_id.get(b.get("derived_from"))
+        dst = samples_by_id.get(sid)
+        if src is None or dst is None:
+            continue   # 미지 id = build[] 정합 루프(⓺)가 이미 loud 실패로 잡는다
+        src_root = repo_root / src["path"]
+        dst_root = repo_root / dst["path"]
+        target_rel = str(b.get("target", "")).replace("\\", "/").strip("/")
+
+        # ① 파생 지점 특정
+        try:
+            src_bytes = (src_root / target_rel).read_bytes()
+        except OSError as exc:
+            errs.append(f"build[{sid}]: derived_from target '{src['path']}/{target_rel}' 읽기 불가: {exc}")
+            continue
+        patched, n_match = _apply_recipe(src_bytes, b)
+        if patched is None:
+            errs.append(
+                f"build[{sid}]: 커밋 표본 파생 지점 특정 실패 — derived_from '{src['id']}' 의 "
+                f"'{target_rel}' 에서 anchor 매치 {n_match} ≠ 1 (파생 관계 선언이 대조 불가)."
+            )
+            continue
+
+        # ② 파생 일치
+        dst_sha = _sha256_file(dst_root / target_rel)
+        if dst_sha is None:
+            errs.append(f"build[{sid}]: 커밋 표본 target '{dst['path']}/{target_rel}' 읽기 불가.")
+        elif dst_sha != _sha256_bytes(patched):
+            errs.append(
+                f"build[{sid}]: 파생 불일치 — 커밋 '{dst['path']}/{target_rel}' sha256={dst_sha} "
+                f"≠ derived_from '{src['id']}' + recipe 재적용 sha256={_sha256_bytes(patched)} "
+                f"(커밋 표본이 선언된 파생물이 아니다 — 자유 편집분 유입)."
+            )
+
+        # ③ 트리 동일성 (예외 = recipe target + stamp 2개뿐)
+        exempt = {target_rel, "stamp.yaml" + SAMPLE_SUFFIX}
+        src_files = _rel_file_map(src_root)
+        dst_files = _rel_file_map(dst_root)
+        for rel in sorted((set(src_files) | set(dst_files)) - exempt):
+            if rel not in dst_files:
+                errs.append(
+                    f"build[{sid}]: 트리 동일성 파손 — '{rel}' 이 derived_from '{src['id']}' 에만 "
+                    f"존재(커밋 표본 누락)."
+                )
+            elif rel not in src_files:
+                errs.append(
+                    f"build[{sid}]: 트리 동일성 파손 — '{rel}' 이 커밋 표본 '{sid}' 에만 존재(잉여)."
+                )
+            elif _sha256_file(src_files[rel]) != _sha256_file(dst_files[rel]):
+                errs.append(
+                    f"build[{sid}]: 트리 동일성 파손 — '{rel}' 바이트 불일치 "
+                    f"(recipe target·stamp 외 전 파일 byte-identical 요구 — 축 대표성 위조 차단)."
+                )
+    return errs
 
 
 # ── materialize (전 표본 동일 절차 + IC-4 blinding) ───────────────────────────────
@@ -741,6 +834,15 @@ def run(args):
         recipes[uid] = b
         if b.get("probe"):
             probe_ids.append(uid)
+
+    # ── ⓺(확장) 커밋 build[].sample 파생 provenance ────────────────────────────
+    #   I-1 은 probe 정의역 전용이라 커밋 표본에 도달하지 못한다(F-CR18-1) — 커밋 표본이
+    #   선언된 파생물인지는 여기서만 검사된다. 위반 = substrate-failure(exit 3).
+    perrs = _check_sample_provenance(repo_root, manifest["build"], samples_by_id)
+    if perrs:
+        for m in perrs:
+            _error(STAGE_SUBSTRATE, f"provenance 파손: {m}")
+        return EXIT_SUBSTRATE
 
     # ── classification (reconciler 전용 — 판정기 미투입) ──────────────────────
     ARM_EXPECT = {"L": "LIVE", "H": "HOLLOW"}

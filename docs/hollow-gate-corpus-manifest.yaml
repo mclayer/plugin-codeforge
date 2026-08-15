@@ -60,8 +60,13 @@ samples:
     fixtures: { kill: kill, clean: clean, empty: empty, xkill: xkill }
 
 # ── build: 파생 recipe (판정기 projection 제외 — verdict 함수 미투입) ──────────────
-#   - `sample:` 항목 = 커밋 표본의 파생 provenance 기록. core 는 derived_from 원본에서
-#     anchor_from 매치 수 == 1 을 검사한다(I-1 — 파생 지점 특정 실패 = INDETERMINATE).
+#   - `sample:` 항목 = 커밋 표본의 파생 provenance 기록. **I-1 의 정의역이 아니다** —
+#     I-1(anchor 매치 != 1 = INDETERMINATE)은 run-time recipe unit(`probe:`)에만 도달한다.
+#     커밋 sample unit 은 core 의 units 구성에서 recipe=None 으로 실려 I-1 가드에 구조적으로
+#     미도달이기 때문이다. 커밋 `sample:` 파생은 core 의 **provenance 검사(⓺ 확장, exit 3
+#     substrate-failure)** 소관이다 — ① derived_from 원본 target 의 anchor 매치 수 == 1
+#     ② recipe 재적용 결과 sha256 == 커밋 표본 target ③ 두 표본 트리가 recipe target 과
+#     stamp.yaml.sample 2개를 제외하고 전 파일 byte-identical.
 #   - `probe:` 항목 = **커밋되지 않는** blinded 섭동. run-time 에 materialize 한다.
 #     (커밋 표본으로 두면 평범한 arm-H 와 구별 불가가 되어 IC-1 좌표 충돌 성질이 소멸한다.)
 #     IC-1: probe 는 모든 커밋 좌표(gate id / stamp / 원 표본 / fixture 집합)에서 s01 과 일치하고
