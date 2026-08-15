@@ -3626,11 +3626,14 @@ entries:
       CFP-2573 / ADR-144 §결정 7 — tier 정직 meta-gate lint (AC-6). measurement/advisory tier lever 가
       자기 tier 만 주장하는지 검사: (Axis1) 각 lever artifact 에 expected_tier 라벨 verbatim 존재 /
       (Axis2) lever tier-선언 라인에 긍정 enforcement 토큰(closed set) 출현 시 RED. 부정 서술(block 금지 /
-      deny 안 함)은 closed-set 미매칭(false-positive 방지 — 단순 block/deny grep 아님). 5 lever REGISTRY
-      (vague-pause / reminder / aggregate / presence-lint / tier-honesty-self). home_marker = 5 lever
-      artifact; 전부 부재 시 no-op(consumer). hollow 금지 = mutation oracle self-test (GREEN + RED 3:
-      라벨 strip / measurement lever 물리 enforcement 긍정주입 / advisory lever blocking-on-pr 긍정주입 —
-      실제 scan_lever_content 호출 후 판정 대조). scripts/ 루트 self-contained .py (thin wrapper 불요).
+      deny 안 함)은 closed-set 미매칭(false-positive 방지 — 단순 block/deny grep 아님). 6 lever REGISTRY
+      (vague-pause / reminder / aggregate / presence-lint / tier-honesty-self / progress-commit).
+      home_marker = 6 lever artifact; 전부 부재 시 no-op(consumer). hollow 금지 = mutation oracle self-test
+      (9 case — GREEN 4: measurement / advisory-priming(부정 서술 포함) / vague-pause 행 / progress-commit
+      ceiling 라벨(같은 문서의 hard-gate 금지 서술 무영향) · RED 5: 라벨 strip / measurement lever 물리
+      enforcement 긍정주입 / advisory lever blocking-on-pr 긍정주입 / progress-commit ceiling 라벨 strip /
+      동 라벨 라인 물리강제 긍정주입 — 실제 scan_lever_content 호출 후 판정 대조).
+      scripts/ 루트 self-contained .py (thin wrapper 불요).
       tier: measurement (self-lever, free-ride 금지). ReDoS-safe (라인 단위 단일 리터럴-tail). warning tier.
     detect_command: python3 scripts/check-tier-honesty.py
     workflow: .github/workflows/orchestrator-autonomy-stop-taxonomy-check.yml  # templates+.github byte-identical (ADR-005)

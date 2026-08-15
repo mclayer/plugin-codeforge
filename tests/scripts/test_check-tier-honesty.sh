@@ -29,11 +29,12 @@ fail() { echo "✗ FAIL: $1"; echo "    $2"; FAIL=$((FAIL+1)); }
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# 5 lever artifact 미러 sandbox 구축 (실 artifact 복사 — check-tier-honesty 는 text 스캔만, import 없음)
+# 6 lever artifact 미러 sandbox 구축 (실 artifact 복사 — check-tier-honesty 는 text 스캔만, import 없음)
 build_sandbox() {  # build_sandbox <dir>
   local d="$1"
   mkdir -p "$d/archive/adr" "$d/hooks" "$d/scripts/lib"
   cp "$REAL_ADR025" "$d/archive/adr/"
+  cp "$REPO_ROOT/archive/adr/ADR-178-subagent-progress-commit-preservation.md" "$d/archive/adr/"
   cp "$REPO_ROOT/hooks/story-transition-autonomy-reminder.py"          "$d/hooks/"
   cp "$REPO_ROOT/scripts/lib/aggregate_stop_event.py"                  "$d/scripts/lib/"
   cp "$REPO_ROOT/scripts/lib/check_subagent_wait_liveness_presence.py" "$d/scripts/lib/"
@@ -86,7 +87,7 @@ echo " CFP-2573 AC-6: tier 정직 meta-gate — mutation oracle (execution-backe
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo
 
-# ── GREEN: 현 lever set (5 lever 전부 자기 tier + 긍정 enforcement 0) ──────────────────
+# ── GREEN: 현 lever set (6 lever 전부 자기 tier + 긍정 enforcement 0) ──────────────────
 SB="$WORK/green"; build_sandbox "$SB"
 run_lint "$SB"
 assert_case "GREEN: 현 lever set 정직" 0 "PASS"
@@ -116,10 +117,10 @@ inject_on_line "$SB/scripts/lib/aggregate_stop_event.py" "$MEAS_LINE" "(NEVER bl
 run_lint "$SB"
 assert_case "GREEN: 정직 부정 서술('block 금지'류)은 GREEN 유지 (false-positive 방어)" 0 "PASS"
 
-# ── consumer no-op: 5 lever 전부 부재 → honest no-op exit 0 ────────────────────────────
+# ── consumer no-op: 6 lever 전부 부재 → honest no-op exit 0 ────────────────────────────
 SB="$WORK/consumer"; mkdir -p "$SB"
 run_lint "$SB"
-assert_case "consumer no-op: 5 lever 부재 → honest no-op" 0 "no-op"
+assert_case "consumer no-op: 6 lever 부재 → honest no-op" 0 "no-op"
 
 echo
 echo "═══════════════════════════════════════════════════════════════════════════"
