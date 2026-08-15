@@ -149,14 +149,14 @@ def test_d1_fetch_failure_no_determined_key():
     result = {
         "asset": "scripts/lib/check_parallel_work_sentinel.py",
         "status_code": 429,  # Rate limit
-        "determined": None,  # **Absent** (not False)
+        # **Absent determined key** (not False, not None)
         "degradation": "rate_limit_exceeded",
         "marker": "currency_gate_degrade",
         "rc": 0,
     }
 
     # Verify determined is truly absent (not just falsy)
-    assert "determined" not in str(json.dumps(result)), (
+    assert "determined" not in result, (
         "D-1 failed: determined key should be absent on degrade"
     )
     assert result["rc"] == 0, "D-1 failed: degrade must not error (rc=0)"
@@ -201,15 +201,15 @@ def test_d3_consumer_execution_gate_runs():
     Actual verification requires cross-repo CI run log inspection.
     """
     # Check that the gate script exists
-    gate_script = Path("/c/workspace/mclayer/plugin-codeforge/scripts/lib/check_consumer_asset_currency.py")
+    gate_script = Path(__file__).resolve().parents[2] / "scripts/lib/check_consumer_asset_currency.py"
 
     assert gate_script.exists(), f"D-3 failed: gate script missing at {gate_script}"
     assert gate_script.stat().st_size > 0, "D-3 failed: gate script empty"
 
     # Check wrapper CI integration
-    gate_workflow = Path("/c/workspace/mclayer/plugin-codeforge/.github/workflows/parallel-work-sentinel-check.yml")
+    gate_workflow = Path(__file__).resolve().parents[2] / ".github/workflows/parallel-work-sentinel-check.yml"
     if gate_workflow.exists():
-        with open(gate_workflow) as f:
+        with open(gate_workflow, encoding='utf-8') as f:
             workflow_text = f.read()
             # Should reference the gate somehow (actual binding depends on W-4/W-5 implementation)
             # For now, just verify the file is syntactically present

@@ -1,0 +1,424 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\mccho\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2
+configfile: pytest.ini
+plugins: hypothesis-6.161.2, anyio-4.13.0, asyncio-1.3.0, cov-7.1.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 21 items
+
+tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists FAILED [  4%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin FAILED [  9%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent FAILED [ 14%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e4_mctrader_no_job_concurrency FAILED [ 19%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_exactly_2 FAILED [ 23%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e6_backtest_no_top_concurrency FAILED [ 28%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e7_backtest_no_job_concurrency FAILED [ 33%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_e8_market_job2_runs_on_custom FAILED [ 38%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency FAILED [ 42%]
+tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on FAILED [ 47%]
+tests/scripts/test_consumer_asset_currency.py::test_c1_currency_match_current_blob PASSED [ 52%]
+tests/scripts/test_consumer_asset_currency.py::test_c2_currency_mismatch_old_blob PASSED [ 57%]
+tests/scripts/test_consumer_asset_currency.py::test_d1_fetch_failure_no_determined_key FAILED [ 61%]
+tests/scripts/test_consumer_asset_currency.py::test_d2_born_broken_old_blob_RED PASSED [ 66%]
+tests/scripts/test_consumer_asset_currency.py::test_d3_consumer_execution_gate_runs FAILED [ 71%]
+tests/scripts/test_consumer_asset_currency.py::test_failure_pin_missing PASSED [ 76%]
+tests/scripts/test_consumer_asset_currency.py::test_failure_pin_schema_invalid PASSED [ 80%]
+tests/scripts/test_consumer_asset_currency.py::test_failure_empty_assets_without_ssot PASSED [ 85%]
+tests/scripts/test_consumer_asset_currency.py::test_failure_not_git_repo PASSED [ 90%]
+tests/scripts/test_consumer_asset_currency.py::test_gate_not_applicable_wrapper_ssot PASSED [ 95%]
+tests/scripts/test_consumer_asset_currency.py::test_output_field_structure PASSED [100%]
+
+================================== FAILURES ===================================
+___________________ test_e1_mctrader_top_concurrency_exists ___________________
+
+    def test_e1_mctrader_top_concurrency_exists():
+        """E1 (AC-10): mctrader top-level `concurrency` exists"""
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:213: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+______________________ test_e2_mctrader_group_equals_pin ______________________
+
+    def test_e2_mctrader_group_equals_pin():
+        """E2 (AC-10): mctrader group == PIN_MCTRADER_GROUP (string equality, not regex)"""
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:223: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+___________________ test_e3_mctrader_template_group_absent ____________________
+
+    def test_e3_mctrader_template_group_absent():
+        """
+        E3 (AC-10): mctrader group does NOT use wrapper template expression
+    
+        Standalone: pure absence-assert (¡×8.D rule 2: must AND with E2).
+        Here we verify E2 is true before checking E3 doesn't hold.
+        """
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:244: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+_____________________ test_e4_mctrader_no_job_concurrency _____________________
+
+    def test_e4_mctrader_no_job_concurrency():
+        """E4 (AC-10): mctrader jobs.*.concurrency == \u2205 (empty set)"""
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:262: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+_____________________ test_e5_mctrader_timeout_exactly_2 ______________________
+
+    def test_e5_mctrader_timeout_exactly_2():
+        """
+        E5 (AC-10): mctrader timeout-minutes: 10 at job-level, exactly 2 occurrences
+    
+        ¡×8.D rule 1: Cardinality as derived path-set predicate (not raw count).
+        Assertion: path set cardinality must be 2, not just count.
+        """
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:280: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+_____________________ test_e6_backtest_no_top_concurrency _____________________
+
+    def test_e6_backtest_no_top_concurrency():
+        """E6 (AC-10): backtest/engine/market top-level concurrency == \u2205"""
+        for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
+>           yaml_path = f"{CONSUMER_REPOS[repo_name]}/{WORKFLOW_PATH}"
+                           ^^^^^^^^^^^^^^
+E           NameError: name 'CONSUMER_REPOS' is not defined
+
+tests\scripts\test_cfp2978_workflow_shape.py:303: NameError
+_____________________ test_e7_backtest_no_job_concurrency _____________________
+
+    def test_e7_backtest_no_job_concurrency():
+        """E7 (AC-10): backtest/engine/market jobs.*.concurrency == \u2205"""
+        for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
+>           yaml_path = f"{CONSUMER_REPOS[repo_name]}/{WORKFLOW_PATH}"
+                           ^^^^^^^^^^^^^^
+E           NameError: name 'CONSUMER_REPOS' is not defined
+
+tests\scripts\test_cfp2978_workflow_shape.py:315: NameError
+_____________________ test_e8_market_job2_runs_on_custom ______________________
+
+    def test_e8_market_job2_runs_on_custom():
+        """
+        E8 (AC-10): market job2 runs-on uses custom variable expression (not canonical ubuntu-latest).
+    
+        Uses derived accessor runs_on_local_delta (¡×8.A P1-c) to detect deviations from
+        canonical template value.
+        """
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader-market'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:334: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-market.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-market.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+___________ test_oracle_mutation_r1_remove_mctrader_top_concurrency ___________
+
+    def test_oracle_mutation_r1_remove_mctrader_top_concurrency():
+        """
+        R-1 mutant (¡×8.A line 608): Remove mctrader top-level concurrency block.
+        Expected: E1 RED ¡ü (E2, E3, E4, E5 each report independently).
+    
+        This test verifies the oracle *can* detect the removal (discriminating capability).
+        """
+        # Create a mutant by removing top_concurrency
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:362: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+________________ test_oracle_taut_template_vs_mctrader_runs_on ________________
+
+    def test_oracle_taut_template_vs_mctrader_runs_on():
+        """
+        T-taut (\xa78.A line 623): Tautological control \u2014 straw oracle vs. real oracle.
+    
+        Straw oracle: Only check runs_on inheritance (always GREEN when values inherited).
+        Real oracle: Detect structural differences (E2, E5, etc.).
+    
+        This demonstrates why text-only assertions (bare runs_on comparison) are insufficient.
+        """
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
+>       yaml_doc = load_workflow_yaml(yaml_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\scripts\test_cfp2978_workflow_shape.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_path = 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2978-phase2\\fixtures\\cfp2978\\mctrader-sentinel.yml'
+
+    def load_workflow_yaml(file_path: str) -> Optional[dict]:
+        """
+        Load workflow YAML using PyYAML. Return None if file missing or parse error.
+    
+        Fails closed with exit 2 on:
+        - P-1: File missing
+        - P-2: YAML parse error
+        - P-3: Root not dict
+        - P-6: yaml module import failure (shouldn't happen in test env, but guard)
+        """
+        try:
+            import yaml
+        except ImportError:
+            pytest.skip("PyYAML not available (P-6 fail-closed guard)")
+    
+        file_path_obj = Path(file_path)
+        if not file_path_obj.exists():
+>           raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
+E           FileNotFoundError: P-1 workflow file missing: C:\Users\mccho\.claude\worktrees\plugin-codeforge\cfp-2978-phase2\fixtures\cfp2978\mctrader-sentinel.yml
+
+tests\scripts\test_cfp2978_workflow_shape.py:70: FileNotFoundError
+___________________ test_d1_fetch_failure_no_determined_key ___________________
+
+    def test_d1_fetch_failure_no_determined_key():
+        """
+        D-1 (AC-5): Fetch fails (network error, 403, 429, etc.) ¡æ
+        output **lacks determined key** + rc=0 (graceful degrade).
+    
+        This is the INV-2 violation path: bypass output = status only, no verdict.
+        """
+        result = {
+            "asset": "scripts/lib/check_parallel_work_sentinel.py",
+            "status_code": 429,  # Rate limit
+            "determined": None,  # **Absent** (not False)
+            "degradation": "rate_limit_exceeded",
+            "marker": "currency_gate_degrade",
+            "rc": 0,
+        }
+    
+        # Verify determined is truly absent (not just falsy)
+>       assert "determined" not in str(json.dumps(result)), (
+            "D-1 failed: determined key should be absent on degrade"
+        )
+E       AssertionError: D-1 failed: determined key should be absent on degrade
+E       assert 'determined' not in '{"asset": "...e", "rc": 0}'
+E         
+E         'determined' is contained here:
+E           {"asset": "scripts/lib/check_parallel_work_sentinel.py", "status_code": 429, "determined": null, "degradation": "rate_limit_exceeded", "marker": "currency_gate_degrade", "rc": 0}
+E         ?                                                                               ++++++++++
+
+tests\scripts\test_consumer_asset_currency.py:159: AssertionError
+____________________ test_d3_consumer_execution_gate_runs _____________________
+
+    def test_d3_consumer_execution_gate_runs():
+        """
+        D-3 (AC-5): Gate actually runs in consumer CI context.
+    
+        This is a lane-time manual observation (¡×8.3 D-3 truth condition):
+        "wrapper PR Phase 2 ¡æ consumer PR merge ¡æ CI job runs ¡æ marker appears"
+    
+        For test purposes, we verify the gate structure exists (W-4/W-5 present).
+        Actual verification requires cross-repo CI run log inspection.
+        """
+        # Check that the gate script exists
+        gate_script = Path(__file__).resolve().parents[2] / "scripts/lib/check_consumer_asset_currency.py"
+    
+        assert gate_script.exists(), f"D-3 failed: gate script missing at {gate_script}"
+        assert gate_script.stat().st_size > 0, "D-3 failed: gate script empty"
+    
+        # Check wrapper CI integration
+        gate_workflow = Path(__file__).resolve().parents[2] / ".github/workflows/parallel-work-sentinel-check.yml"
+        if gate_workflow.exists():
+            with open(gate_workflow) as f:
+>               workflow_text = f.read()
+                                ^^^^^^^^
+E               UnicodeDecodeError: 'cp949' codec can't decode byte 0xed in position 179: illegal multibyte sequence
+
+tests\scripts\test_consumer_asset_currency.py:213: UnicodeDecodeError
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e4_mctrader_no_job_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_exactly_2
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e6_backtest_no_top_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e7_backtest_no_job_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e8_market_job2_runs_on_custom
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
+FAILED tests/scripts/test_consumer_asset_currency.py::test_d1_fetch_failure_no_determined_key
+FAILED tests/scripts/test_consumer_asset_currency.py::test_d3_consumer_execution_gate_runs
+======================== 12 failed, 9 passed in 0.57s =========================

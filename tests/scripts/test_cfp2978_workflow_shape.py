@@ -38,15 +38,16 @@ CANON_RUNS_ON = (
     ") }}"
 )
 
-# Consumer worktree references (local immutable blob locations)
-CONSUMER_REPOS = {
-    "mctrader": "/c/workspace/mclayer/mctrader",
-    "mctrader-backtest": "/c/workspace/mclayer/mctrader-backtest",
-    "mctrader-market": "/c/workspace/mclayer/mctrader-market",
-    "mctrader-engine": "/c/workspace/mclayer/mctrader-engine",
-}
+# Fixture directory (repo-relative)
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures/cfp2978"
 
-WORKFLOW_PATH = ".github/workflows/parallel-work-sentinel-check.yml"
+# Consumer fixture references (immutable blob versions)
+CONSUMER_FIXTURES = {
+    "mctrader": "mctrader-sentinel.yml",
+    "mctrader-backtest": "mctrader-backtest.yml",
+    "mctrader-market": "mctrader-market.yml",
+    "mctrader-engine": "mctrader-engine.yml",
+}
 
 
 def load_workflow_yaml(file_path: str) -> Optional[dict]:
@@ -69,7 +70,7 @@ def load_workflow_yaml(file_path: str) -> Optional[dict]:
         raise FileNotFoundError(f"P-1 workflow file missing: {file_path}")
 
     try:
-        with open(file_path_obj) as f:
+        with open(file_path_obj, encoding='utf-8') as f:
             content = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ValueError(f"P-2 YAML parse error: {e}")
@@ -111,6 +112,10 @@ def extract_workflow_shape(workflow_yaml: dict) -> dict:
         "job_defaults_run_shell": {},
         "runs_on": {},
     }
+
+    # Add top-level concurrency to paths if present
+    if "concurrency" in workflow_yaml:
+        shape["concurrency_paths"].append("concurrency")
 
     # Extract job-level structures
     jobs = workflow_yaml.get("jobs", {})
@@ -208,7 +213,7 @@ def extract_workflow_shape(workflow_yaml: dict) -> dict:
 
 def test_e1_mctrader_top_concurrency_exists():
     """E1 (AC-10): mctrader top-level `concurrency` exists"""
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -218,7 +223,7 @@ def test_e1_mctrader_top_concurrency_exists():
 
 def test_e2_mctrader_group_equals_pin():
     """E2 (AC-10): mctrader group == PIN_MCTRADER_GROUP (string equality, not regex)"""
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -239,7 +244,7 @@ def test_e3_mctrader_template_group_absent():
     Standalone: pure absence-assert (§8.D rule 2: must AND with E2).
     Here we verify E2 is true before checking E3 doesn't hold.
     """
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -257,7 +262,7 @@ def test_e3_mctrader_template_group_absent():
 
 def test_e4_mctrader_no_job_concurrency():
     """E4 (AC-10): mctrader jobs.*.concurrency == ∅ (empty set)"""
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -275,7 +280,7 @@ def test_e5_mctrader_timeout_exactly_2():
     §8.D rule 1: Cardinality as derived path-set predicate (not raw count).
     Assertion: path set cardinality must be 2, not just count.
     """
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -299,7 +304,7 @@ def test_e5_mctrader_timeout_exactly_2():
 def test_e6_backtest_no_top_concurrency():
     """E6 (AC-10): backtest/engine/market top-level concurrency == ∅"""
     for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
-        yaml_path = f"{CONSUMER_REPOS[repo_name]}/{WORKFLOW_PATH}"
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES[repo_name])
         yaml_doc = load_workflow_yaml(yaml_path)
         shape = extract_workflow_shape(yaml_doc)
 
@@ -311,7 +316,7 @@ def test_e6_backtest_no_top_concurrency():
 def test_e7_backtest_no_job_concurrency():
     """E7 (AC-10): backtest/engine/market jobs.*.concurrency == ∅"""
     for repo_name in ["mctrader-backtest", "mctrader-engine", "mctrader-market"]:
-        yaml_path = f"{CONSUMER_REPOS[repo_name]}/{WORKFLOW_PATH}"
+        yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES[repo_name])
         yaml_doc = load_workflow_yaml(yaml_path)
         shape = extract_workflow_shape(yaml_doc)
 
@@ -329,7 +334,7 @@ def test_e8_market_job2_runs_on_custom():
     Uses derived accessor runs_on_local_delta (§8.A P1-c) to detect deviations from
     canonical template value.
     """
-    yaml_path = f"{CONSUMER_REPOS['mctrader-market']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader-market'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
@@ -357,7 +362,7 @@ def test_oracle_mutation_r1_remove_mctrader_top_concurrency():
     This test verifies the oracle *can* detect the removal (discriminating capability).
     """
     # Create a mutant by removing top_concurrency
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
 
     # Mutant: delete concurrency
@@ -383,7 +388,7 @@ def test_oracle_taut_template_vs_mctrader_runs_on():
 
     This demonstrates why text-only assertions (bare runs_on comparison) are insufficient.
     """
-    yaml_path = f"{CONSUMER_REPOS['mctrader']}/{WORKFLOW_PATH}"
+    yaml_path = str(FIXTURE_DIR / CONSUMER_FIXTURES['mctrader'])
     yaml_doc = load_workflow_yaml(yaml_path)
     shape = extract_workflow_shape(yaml_doc)
 
