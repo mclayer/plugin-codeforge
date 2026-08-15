@@ -1,0 +1,11 @@
+[
+  {
+    "body": "새 PR 본문",
+    "op": "pr_create",
+    "target": {
+      "kind": "pr",
+      "number": 9001,
+      "repo": "mclayer/plugin-codeforge"
+    }
+  }
+]
