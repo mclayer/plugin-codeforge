@@ -1,0 +1,20 @@
+FFF......F                                                               [100%]
+================================== FAILURES ===================================
+E   AssertionError: E1 failed: top_concurrency is None
+    assert None is not None
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:220: AssertionError: E1 failed: top_concurrency is None
+E   AssertionError: E2 prerequisite: top_concurrency missing
+    assert None is not None
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:230: AssertionError: E2 prerequisite: top_concurrency missing
+E   AssertionError: E3 prerequisite: top_concurrency missing
+    assert None is not None
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:251: AssertionError: E3 prerequisite: top_concurrency missing
+E   AssertionError: Real oracle should pass (E2 holds)
+    assert False
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-1\tests\scripts\test_cfp2978_workflow_shape.py:410: AssertionError: Real oracle should pass (E2 holds)
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
+4 failed, 6 passed in 0.44s

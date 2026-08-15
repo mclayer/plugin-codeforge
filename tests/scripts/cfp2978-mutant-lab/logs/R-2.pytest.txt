@@ -1,0 +1,17 @@
+.F.......F                                                               [100%]
+================================== FAILURES ===================================
+E   AssertionError: E2 failed: group mismatch
+      Expected: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+      Got:      ${{ github.sha }}
+    assert '${{ github.sha }}' == '${{ github.w...hub.run_id }}'
+      
+      - ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+      + ${{ github.sha }}
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-2\tests\scripts\test_cfp2978_workflow_shape.py:233: AssertionError: E2 failed: group mismatch
+E   AssertionError: Real oracle should pass (E2 holds)
+    assert False
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-2\tests\scripts\test_cfp2978_workflow_shape.py:410: AssertionError: Real oracle should pass (E2 holds)
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
+2 failed, 8 passed in 0.47s

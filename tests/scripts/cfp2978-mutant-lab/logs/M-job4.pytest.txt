@@ -1,0 +1,9 @@
+......F...                                                               [100%]
+================================== FAILURES ===================================
+E   AssertionError: E7 failed for mctrader-backtest: found job-level concurrency: ['jobs.parallel-work-sentinel.concurrency']
+    assert 1 == 0
+     +  where 1 = len(['jobs.parallel-work-sentinel.concurrency'])
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-job4\tests\scripts\test_cfp2978_workflow_shape.py:325: AssertionError: E7 failed for mctrader-backtest: found job-level concurrency: ['jobs.parallel-work-sentinel.concurrency']
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e7_backtest_no_job_concurrency
+1 failed, 9 passed in 0.37s

@@ -1,0 +1,8 @@
+.....F....                                                               [100%]
+================================== FAILURES ===================================
+E   AssertionError: E6 failed for mctrader-backtest: top_concurrency should be None, got {'group': 'injected-quoted-key', 'cancel-in-progress': True}
+    assert {'cancel-in-progress': True, 'group': 'injected-quoted-key'} is None
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-quot\tests\scripts\test_cfp2978_workflow_shape.py:311: AssertionError: E6 failed for mctrader-backtest: top_concurrency should be None, got {'group': 'injected-quoted-key', 'cancel-in-progress': True}
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e6_backtest_no_top_concurrency
+1 failed, 9 passed in 0.44s

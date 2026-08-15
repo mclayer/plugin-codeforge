@@ -1,0 +1,10 @@
+....F.....                                                               [100%]
+================================== FAILURES ===================================
+E   AssertionError: E5 failed: expected 2 job-level timeout paths, got 1
+      Paths: ['jobs.parallel-work-sentinel-test']
+    assert 1 == 2
+     +  where 1 = len(['jobs.parallel-work-sentinel-test'])
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-6\tests\scripts\test_cfp2978_workflow_shape.py:293: AssertionError: E5 failed: expected 2 job-level timeout paths, got 1
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_exactly_2
+1 failed, 9 passed in 0.42s
