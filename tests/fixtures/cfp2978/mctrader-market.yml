@@ -70,7 +70,6 @@ jobs:
           # 읽어 sentinel 에 주입한다. read 관례 = story-init.yml prefix-read step 차용(yq 우선 + python fallback).
           # warning-tier 비차단 정합: 파일/키 부재 시 기본값 "CFP" 로 degrade (story-init 의 exit 1 과 달리 비차단).
           cfg=".claude/_overlay/project.yaml"
-          STORY_KEY_PREFIX="CFP"
           if [ -f "$cfg" ]; then
             if command -v yq >/dev/null 2>&1; then
               _prefix="$(yq -r '.github.story_key_prefix // ""' "$cfg" 2>/dev/null || true)"

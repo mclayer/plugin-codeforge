@@ -4435,8 +4435,6 @@ entries:
     detect_command: bash scripts/check-consumer-asset-currency.sh
     workflow: templates/github-workflows/consumer-asset-currency-check.yml
     current_tier: warning
-    bypass_label: hotfix-bypass:consumer-asset-currency
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     introduced_by: CFP-2978
     introduced_date: 2026-08-15
     owner_adr: ADR-176
