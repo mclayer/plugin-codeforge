@@ -33,7 +33,7 @@ related_stories:
 
 `Proposed` (2026-08-15 KST) — CFP-2986 Phase 1 설계 lane draft. ArchitectPLAgent 직접 작성 (chief author spawn 이 산출물 미착지 → PL synthesizer 통합 저작, env=0 fallback 동형). adr_number = ADR-133 claim primitive 반환값 **180** (state branch `adr-reservation-state` OCC — 175~179 는 CFP-2963 / CFP-2978 / CFP-2949 / CFP-2966 / CFP-2984 가 선점 실측, 파일시스템 max+1(175) 사용 시 충돌).
 
-## 맥락
+## 컨텍스트
 
 Story file 이 lane 마다 반복 읽히는데 비대해져 읽기 단가가 오른다. 요구사항 lane 이 4 라운드 리뷰를 거쳐 확정한 실측 (기준 트리 `4ce40368`, 매체 LF `git archive`, 정의역 `wrapper/stories/*.md` 576건):
 
@@ -374,3 +374,27 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 3. ~~repo 설정 "Send secrets to workflows from pull requests" 상태 미조회~~ → **종결(favorable, 단 간접)**: internal-docs `allow_forking: false` · `forks_count: 0` ⇒ **fork 자체가 불가하므로 도달 가능한 효과 0**. *정직 한계* — 토글 값을 직접 read 한 것이 아니라 **전제조건(forkability)이 거짓임**을 측정했다. `pull_request_target` 금지 명문화는 이와 무관하게 유지한다.
 4. ~~AC-21 민팅 후 RO-1 재확인~~ → **종결**: AC 21행 / normative 15 / declared 6, §8.1 RTM 15행 전건 매핑 + named test 15개 유일 — zero-drop 성립. 잔여는 AC-21 provenance 뿐이며 §5.5 원장 갱신은 요구사항 lane owned 라 Orchestrator scoped write 로 회부.
 5. **Phase 1 normative AC 7건에 Phase 1 검증수단이 0 이다** (신규 — 설계리뷰 R1 P2). 해당 = **AC-2 · AC-4 · AC-8 · AC-10 · AC-12 · AC-15 · AC-19** [PL 전수 재계수 확인, §5.3 표 21행]. `phase` 컬럼은 **요건의 착지 phase** 이지 검증수단의 배선 phase 가 아니며, §8.1 RTM 의 named test 15건은 전부 Phase 2 산출물이다. Phase 1 에 `rtm_uri` 를 부착하지 않는 이유가 정확히 이것이다(부착 시 Hop2 가 발동해 미배선 매핑을 전건 위반으로 잡는다). **Phase 1 은 이 7건에 대해 "검증됐다" 고 주장하지 않는다** — 표기 정합을 위해 phase 컬럼을 사후 변경하는 것도 금지한다(요구사항 lane owned ∧ 값 조작).
+
+## 해소 기준
+
+N/A — permanent policy (`is_transitional: false`). 읽기 표면 분할 원칙(§결정 1·2·7)은 영구 invariant 이고, 약화 방향 발의 — 섹션×독자 가중 집계 부활 / 인덱싱 깊이 > 1 / count·줄수 cap 회귀 / `on.paths` 필터 배선 / auto-commit-back / fail-closed 무결성 축(§결정 7)의 비차단 강등 — 는 supersede ADR 을 요구한다.
+
+단 **§결정 8 의 Phase 1↔Phase 2 분리 조항만 자체 bounded** — 아래 4 사전조건이 전건 충족되고 별도 carrier 가 승격을 명시 결정하면 그 조항이 소멸하고 ADR 본체는 잔존한다. **현 시점 4건 전부 미이행이며, 본 ADR 은 실읽기량 게이트가 배선됐다고 주장하지 않는다** (§결정 8 자기 구속).
+
+1. internal-docs open PR **CONFLICTING 8건** 정리 — 충돌 PR 은 merge ref 부재로 workflow 가 아예 안 돌아 required 가 영구 Pending (§결정 6)
+2. **O5 `scanned_count` 3항** 충족 — 분할 자식 경로 fixture 에 대해 (a) workflow 기동 (b) 실제 스캔 대상 포함 (c) 트리거 매치 집합 == 검사 매치 집합 을 **따로** assert (Change Plan §7.4a — 미충족 = 승격 금지)
+3. 정량 레지스트리 **전 정의역 `status: enforced` 전환** — `deferred` 잔존분의 방출값은 GREEN 이 아니라 `UNDETERMINED` 다 (§결정 4 registry shape)
+4. ADR-171 §결정 6 **3-AND** 승격 게이트 + ADR-130 §결정 6 **7일-green 창**(repository 단위) 충족 — 승격은 자동이 아니며 이를 측정·집행하는 코드는 현재 0건이다 (§결정 6)
+
+## 관련 파일
+
+- `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2986-story-growth-axis-externalization.md` — 본 ADR 의 구체화 계약(§7.4a O5 판정법 / §8 Test Contract / §8.2 mutant 실증). Phase 1 PR 미머지 — 현 위치 = 브랜치 `feat/CFP-2986-Story-0-FIX`
+- `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-2986.md` — 부모 Story(§1-7 요구사항 / §5.3 AC 21행 / §8.1 RTM). 동일 브랜치
+- `mclayer/codeforge-internal-docs` `wrapper/spikes/cfp-2986-s0/leg_b_oracle.py` · `wrapper/spikes/cfp-2986-s0/mutant_battery.py` — §결정 4 술어의 반증 하네스. **Phase 2 게이트 코드가 아니다**(§결정 8 자기 구속). 동일 브랜치
+- `docs/domain-knowledge/concept/read-surface-projection.md` — §결정 1 실읽기량 목적함수 · §결정 3 섹션 성질 술어의 개념 SSOT
+- `docs/doc-locations.yaml` — `story_child_file` entry(21번째). §결정 2 성장축 이전 목적지의 위치 SSOT. **위치 등록뿐이며 게이트·baseline·읽기선언 레지스트리는 전부 Phase 2 미배선**
+- `archive/adr/ADR-058-adr-sunset-criteria-mandate.md` — §결정 5 count cap 거부 선례(본 ADR 이 우회하지 않고 ADR-167 통로를 사용하는 근거)
+- `archive/adr/ADR-167-adr-amendment-compaction-ratchet.md` — §결정 6 "차단이 아닌 재제정 의무 신호" — 본 ADR 이 사용하는 유일 통로
+- `archive/adr/ADR-171-evidence-enforceable-promotion-framework.md` — §결정 6 3-AND 승격 게이트(위 해소 기준 4번의 출처)
+- `scripts/check-claude-md-line-cap.sh` — `CAP=320`(줄수) 게이트 GREEN 인 채 +82.4% 성장을 허용한 축 B 실증 대상
+- `.github/workflows/ac-traceability-matrix.yml` — §결정 6 배선 형상 제약(`on.paths` 필터 금지 / 트리거 glob ↔ 검사 glob 깊이 일치)의 참조 선례
