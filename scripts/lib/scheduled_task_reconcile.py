@@ -928,12 +928,27 @@ def run(argv=None) -> int:
 
 
 def main(argv=None) -> int:
-    """항상 0 반환 (exit code 를 오라클로 쓰지 않는 관례 상속 — INV-F)."""
+    """항상 0 반환 (exit code 를 오라클로 쓰지 않는 관례 상속 — INV-F).
+
+    ★ 종료 신호 계약: **모든 종료 경로가 DONE 줄 정확히 1개**를 남긴다.
+      INV-F 가 rc 를 오라클에서 배제했으므로 관측 가능한 종료 신호는 DONE 줄 하나뿐이다.
+      그 줄이 없는 종료 경로는 "돌았는데 아무것도 못 봤다" 와 "기동조차 못 했다" 가
+      구별되지 않는다 — 관측자 자신이 무음이 되는 형상이다."""
     try:
         run(argv)
     except SystemExit:
         # argparse 의 usage/에러 종료도 advisory 계약(항상 0)으로 흡수
         # (scratch-ttl GAP3 선례 — argparse exit(2) 가 fail-open 불변식을 깨지 않게).
+        #
+        # ★ DONE 마커를 **이 경로에서도** 낸다 (보안테스트 F-SEC-3).
+        #   실측: `--nonexistent-flag` · `--channel`(값 누락) 은 rc=0 인데 stdout 이 빈
+        #   문자열이었다 — 유일 오라클인 DONE 마커가 사라져 호출자(스케줄 작업 러너)가
+        #   "관측 0건" 과 "인자 오류로 미기동" 을 분별할 수 없었다. rc 는 0 그대로 둔다
+        #   (INV-F 무손상 — rc 를 신호로 승격하지 않는다).
+        #   `--help`(SystemExit(0)) 도 같은 줄을 낸다: 분기를 code 로 가르면 "DONE 은
+        #   항상 1줄" 이라는 단순 불변식이 깨져 오라클이 다시 조건부가 된다.
+        _warn("인자 파싱 단계에서 종료 — 관측 미수행 (advisory, 항상 exit 0)")
+        _emit_done(0, 0, 0, 0)
         return 0
     except Exception as e:   # noqa: BLE001 — 어떤 실패도 DONE 마커 + exit 0
         _warn("최상위 예외 (non-blocking)", base.strip_control(str(e))[:160])
