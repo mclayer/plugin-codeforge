@@ -315,6 +315,23 @@ run_case() {
   local rc=0 out verdict
   out=$("$PYBIN" "$WORK/oracle.py" "$skill" "$adr" 2>&1) || rc=$?
   if [ "$rc" -eq 0 ]; then verdict="GREEN"; else verdict="RED"; fi
+  # ★ crash-as-RED 차단: 오라클이 예외로 죽어서 난 rc!=0 은 "검출"이 아니다.
+  #   (실사건: 정규식 컴파일 오류로 전 케이스가 크래시했는데 mutant 는 전부 RED 로 보였다.)
+  case "$out" in
+    *Traceback*)
+      echo "FAIL $name — 오라클 크래시(Traceback). RED 를 검출로 셀 수 없다"
+      printf '%s
+' "$out" | sed 's/^/       /'
+      FAIL=$((FAIL+1))
+      return ;;
+  esac
+  if [ "$verdict" = "RED" ] && ! printf '%s' "$out" | grep -q "VIOL"; then
+    echo "FAIL $name — RED 인데 판정 근거 마커(VIOL)가 없다 (무증거 RED)"
+    printf '%s
+' "$out" | sed 's/^/       /'
+    FAIL=$((FAIL+1))
+    return
+  fi
   if [ "$verdict" = "$expected" ]; then
     echo "OK   $name — expected=$expected got=$verdict (rc=$rc)"
     PASS=$((PASS+1))
