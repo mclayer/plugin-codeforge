@@ -74,6 +74,9 @@ jobs:
             echo "[]" > comments.json  # empty feed
             echo "comments_file=comments.json" >> "$GITHUB_OUTPUT"
             echo "fetch_status=dry-run" >> "$GITHUB_OUTPUT"
+            # AC-29 (CFP-2984): 수집 0 "사실" + 그 "사유" 를 구조화 필드로 동반 방출 (exit 0 무접촉).
+            echo "collected_count=0" >> "$GITHUB_OUTPUT"
+            echo "unobserved_reason=credential-absent" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -94,6 +97,9 @@ jobs:
             echo "[branch-liveness-watchdog] ERROR: Jira fetch failed (check connectivity/token scope)" >&2
             echo "[]" > comments.json
             echo "fetch_status=fetch-failed" >> "$GITHUB_OUTPUT"
+            # AC-29 (CFP-2984): 동상 — 수집 0 사실 + 사유(fetch 실패) 구조화 방출.
+            echo "collected_count=0" >> "$GITHUB_OUTPUT"
+            echo "unobserved_reason=fetch-error" >> "$GITHUB_OUTPUT"
             exit 0
           }
 
@@ -116,6 +122,11 @@ jobs:
 
           echo "comments_file=comments.json" >> "$GITHUB_OUTPUT"
           echo "fetch_status=ok" >> "$GITHUB_OUTPUT"
+          # AC-29 (CFP-2984): 실 수집 성공 경로 — 실측 건수 + 사유 없음(none) 을 구조화 방출.
+          #   이 경로의 count=0 은 "관측했는데 0 건"(observed) 이며 위 dry-run 의 "미관측"(unobserved) 과 다르다.
+          OBSERVED_COUNT=$(python3 -c "import json;print(len(json.load(open('comments.json'))))" 2>/dev/null || echo 0)
+          echo "collected_count=${OBSERVED_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "unobserved_reason=none" >> "$GITHUB_OUTPUT"
           set -e
 
       - name: Restore watchdog state cache (durable cursor, cross-run persistence)
@@ -204,6 +215,86 @@ jobs:
           echo "**Note:** Watchdog runs every 15 minutes (GH cron 5min floor + jitter)." >> "$GITHUB_STEP_SUMMARY"
           echo "Meta-observer (Tier 2) marker file absence >2× cron = alarm signal." >> "$GITHUB_STEP_SUMMARY"
 
+          set -e
+
+      - name: Emit structured observation state (AC-29 — 수집 0 사실·사유 가시화)
+        id: observation
+        if: always()
+        env:
+          FETCH_STATUS: ${{ steps.fetch-comments.outputs.fetch_status }}
+          RAW_COLLECTED_COUNT: ${{ steps.fetch-comments.outputs.collected_count }}
+          RAW_UNOBSERVED_REASON: ${{ steps.fetch-comments.outputs.unobserved_reason }}
+        run: |
+          set +e
+          # ── AC-29 (CFP-2984) 구조화 가시화 ──────────────────────────────────────────
+          # 목적: 후속 조회가 "관측됨 0"(observed, count=0) 과 "미관측"(unobserved) 을 구별.
+          # exit code 무접촉 — ADR-157 §결정 8 accepted-risk(secret 부재 → graceful dry-run,
+          #   exit 0)를 역전하지 않는다. 본 step 은 가시성만 추가한다(차단력 0).
+          # 판정축 재사용: 신규 enum 신설 0 — 기존 fetch_status 3-enum(ok / dry-run /
+          #   fetch-failed)에서 observation_state 를 파생한다.
+          # vacuous 3형태 정규화: 빈 문자열 / null / unknown 은 전부 "값 없음" 으로 접는다
+          #   — 셋 중 아무거나로 사유를 적어도 "사유 가시화" 로 계상되지 않게 하기 위함.
+          norm_vacuous() {
+            local v
+            v="$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+            case "$v" in
+              ""|null|nil|none-specified|unspecified|unknown|n/a|na|-) printf '' ;;
+              *) printf '%s' "$v" ;;
+            esac
+          }
+
+          FETCH_STATUS_N="$(norm_vacuous "${FETCH_STATUS:-}")"
+          REASON_N="$(norm_vacuous "${RAW_UNOBSERVED_REASON:-}")"
+          COUNT_N="$(printf '%s' "${RAW_COLLECTED_COUNT:-}" | tr -cd '0-9')"
+
+          case "$FETCH_STATUS_N" in
+            ok)
+              OBS_STATE="observed"
+              [ -n "$COUNT_N" ] || COUNT_N=0
+              [ -n "$REASON_N" ] || REASON_N="none"
+              ;;
+            dry-run)
+              OBS_STATE="unobserved"
+              COUNT_N=0
+              [ -n "$REASON_N" ] || REASON_N="credential-absent"
+              ;;
+            fetch-failed)
+              OBS_STATE="unobserved"
+              COUNT_N=0
+              [ -n "$REASON_N" ] || REASON_N="fetch-error"
+              ;;
+            *)
+              # fetch step 자체가 status 를 못 남긴 경우도 "미관측" 이며 그 사유를 명시한다.
+              OBS_STATE="unobserved"
+              COUNT_N=0
+              [ -n "$REASON_N" ] || REASON_N="fetch-status-missing"
+              ;;
+          esac
+
+          # 구조화 필드 방출 (후속 조회 표면 ①: step output)
+          {
+            echo "observation_state=${OBS_STATE}"
+            echo "collected_count=${COUNT_N}"
+            echo "unobserved_reason=${REASON_N}"
+          } >> "${GITHUB_OUTPUT:-/dev/null}"
+
+          # 구조화 필드 방출 (후속 조회 표면 ②: durable STEP_SUMMARY 블록)
+          {
+            echo ""
+            echo "### Observation state (AC-29 구조화 가시화)"
+            echo ""
+            echo '```'
+            echo "observation_state: ${OBS_STATE}"
+            echo "collected_count: ${COUNT_N}"
+            echo "unobserved_reason: ${REASON_N}"
+            echo "fetch_status: ${FETCH_STATUS_N:-fetch-status-missing}"
+            echo '```'
+            echo ""
+            echo "> \`observed\` + \`collected_count: 0\` = 관측했고 대상이 0건."
+            echo "> \`unobserved\` = 관측 자체가 없었음 — 사유는 \`unobserved_reason\` 참조."
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+          echo "[branch-liveness-watchdog] observation_state=${OBS_STATE} collected_count=${COUNT_N} unobserved_reason=${REASON_N}" >&2
           set -e
 
       - name: Save watchdog state cache (durable cursor persistence for next run)
