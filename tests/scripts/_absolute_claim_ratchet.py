@@ -50,8 +50,9 @@ from collections import namedtuple
 RATCHET_VERSION = "absolute-claim-ratchet v1"
 
 # 절대주장 어휘. 문자열 **포함**(substring) 매칭이다.
-# [ceiling: 어휘 정의 리터럴 — 주장이 아니라 검사 대상 목록의 mention 이다]
-TOKENS = ("손실 0", "잔여 0", "무손상", "무조건", "항상", "전건", "원자적", "불가능", "0건")
+# ★ 마커는 **같은 줄**에 있어야 판정에 쓰인다. 앞줄에 달아둔 마커는 그 줄을 풀어주지
+#   않는다(줄 단위 판정) — 이 검사를 만들면서 저자가 먼저 걸렸던 지점이다.
+TOKENS = ("손실 0", "잔여 0", "무손상", "무조건", "항상", "전건", "원자적", "불가능", "0건")  # [ceiling: 어휘 정의 리터럴 — 주장이 아니라 검사 대상 목록의 mention 이다]
 
 # `[ceiling: <사유>]` — 대괄호 안, 콜론 뒤 전체를 사유로 본다.
 CEILING_RE = re.compile(r"\[ceiling:([^\]]*)\]")

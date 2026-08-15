@@ -147,6 +147,19 @@ def test_punctuation_only_ceiling_reason_is_violation():
     assert result["violations"][0].disposition == "empty-ceiling"
 
 
+def test_ceiling_marker_on_preceding_line_does_not_discharge():
+    """마커는 **같은 줄**에만 적용된다 — 앞줄 마커로 아랫줄을 풀어주지 않는다.
+
+    저자가 이 검사를 만들면서 실제로 먼저 걸린 형상이라 회귀로 고정한다."""
+    diff = make_file_diff(SRC_FILE, added=[
+        "# [ceiling: 앞줄에 달아둔 사유]",
+        claim_line(T_A),
+    ])
+    result = ACR.evaluate(diff, allow_test_accompaniment=False)
+    assert len(result["violations"]) == 1
+    assert result["violations"][0].disposition == "unbound"
+
+
 def test_empty_ceiling_outranks_test_accompaniment():
     """빈 마커는 tests/** 동반으로 씻겨나가지 않는다 — 아니면 규칙 ②가 사문이 된다."""
     diff = (make_file_diff(SRC_FILE, added=[claim_line(T_A, "  # [ceiling: ]")])
