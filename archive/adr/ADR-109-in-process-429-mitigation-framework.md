@@ -10,7 +10,7 @@ related_files:
   - mclayer/codeforge-internal-docs/plugin-codeforge/change-plans/cfp-1354-in-process-429-mitigation.md
   - docs/kpi/429-incident.json
   - docs/kpi/429-incident-history.jsonl
-  - templates/github-workflows/429-incident-telemetry.yml
+  # templates/github-workflows/429-incident-telemetry.yml — Amendment 3 청산: 파일 부재(삭제 커밋 `017926df4` "prune 2단계"). 3년 가까이 "(Phase 2 scope)" 로 표기된 채 dangling 이었다. 재도입 시 신규 carrier 로 재등재할 것 — 본 주석은 삭제 이력 보존용
   - templates/team-spec-decompose.yaml
   - templates/team-spec-requirements.yaml
   - templates/team-spec-design.yaml
@@ -21,6 +21,8 @@ related_files:
 related_stories:
   - CFP-1354
   - CFP-2823   # Amendment 1 carrier — §결정 1 감지집합 session/usage-limit class 편입 + fable-리밋 failover 합성
+  - CFP-2944   # Amendment 2 carrier — 한도류 신호 판별식 D primary 이관 (본 ADR 소유 아님, 침범 금지)
+  - CFP-2984   # Amendment 3 carrier — dead tenant 참조 정정 + 대기원 헤더 의미 정정 + dangling related_files 청산 + CB threshold telemetry-gated 재선언 + declaration-only 처분 + §결정 2 backoff single-SSOT
 related_adrs:
   - ADR-039
   - ADR-044
@@ -34,10 +36,11 @@ related_adrs:
   - ADR-106
   - ADR-108
   - ADR-141   # Amendment 1 — fable-리밋 opus failover override carrier (§결정 3 step2 dead slot re-tenant)
+  - ADR-179   # Amendment 3 — salvage 번들 회수·인계 규약. 본 ADR = 신호 감지·재시도 remedy 축 / ADR-179 = remedy 발동 후 회수 판정 축 (disjoint)
 mechanical_enforcement_actions:
-  - 429-retry-evidence-presence
-  - debate-parallel-cap-check
-  - deputy-stagger-check
+  - 429-retry-evidence-presence   # Amendment 3 처분 = **승격 후보 유지**(3종 중 유일). 대상 = §결정 8.1 marker regex — 구체 정본이 실재하고 marker 제거 mutant 가 discriminating. 승격 실행은 Phase 2 이며 discriminating mutant 실증 동반 의무(ADR-171 §결정 6), warning-first 로 태어난다(ADR-171 §결정 5)
+  # debate-parallel-cap-check   — Amendment 3 처분 = **승격 기각 (always-green hollow)**. 대상 field `parallel_spawn_cap` 이 team-spec 7 file 에 전건 실재(3-hit/파일 실측)라 presence 검사가 구조적 항상-GREEN. 선언만 남기면 "기계 강제가 있다" 는 over-claim
+  # deputy-stagger-check        — Amendment 3 처분 = **승격 기각 (동상)**. 대상 field `spawn_stagger_ms` 동일 사유. 두 항목은 삭제가 아니라 주석으로 보존 — 발의 이력과 기각 사유를 같은 자리에 남긴다(재발의 시 이 근거를 반증할 것)
 amendments:
   - amendment: 1
     carrier_story: CFP-2823
@@ -89,6 +92,47 @@ amendments:
       리스크(opus 낭비 + 실결함 은폐)" 자기선언. §결정 1 closed-set invariant("5번째
       pattern 추가 = Amendment 의무")는 **미발동** — 본 Amendment 는 literal 을 추가하지
       않는다(열거 무증감).
+  - amendment: 3
+    carrier_story: CFP-2984
+    date: 2026-08-15
+    scope: >-
+      **Amendment 2 절(본문 `## Amendment 2` ~ 파일 끝) 무접촉** — Proposed 조항 위 normative
+      스택 금지(Orchestrator 판정 C). 본 Amendment 는 Accepted 본체(§결정 1~10) 와 frontmatter
+      만 개정하고, Amendment 2 블록 안의 바이트는 하나도 바꾸지 않는다. 개정 6건:
+      (1) **dead tenant 참조 정정** — §결정 3 step2 등이 지시하던 `ADR-057 §결정 2`(Sonnet→Opus)
+      는 ADR-141 로 moot/dead 다. 그 사실은 이미 `:54`·`:341` 메타 절에 적혀 있었으나 **규범 본문에
+      전파되지 않았다**(결함 class = "못 봤다" 가 아니라 "자기 인식을 규범면에 전파 안 함"). tenant
+      만 교체하고 **slot ordinal 1..4 는 frozen** — 번호 재정렬은 ADR-141 A6-2(Accepted)의
+      "step1 bypass → step2 직행" 을 **의미 반전**시키며(문법·참조가 멀쩡해 검출 불가) slot-번호
+      의존 표면 26행/4파일 동기 수정을 강제한다. 구 tenant 는 `prior tenant … moot` 로 인접
+      표기 보존(ADR-141 A6-6 dead-mark 보존 동형).
+      (2) **§결정 2 `Retry-After` 대기원 헤더 의미 정정** — 현행 문면이 `anthropic-ratelimit-*-reset`
+      과 `Retry-After` 를 "또는" 으로 묶고 RFC 7231 포맷 서술을 두 헤더에 공통 적용하는 구조라,
+      절대시각 헤더가 초 단위 대기원으로 오독된다. 대기원 = `retry-after`(초 단위 상대값) **한정**,
+      reset 계열은 절대시각이라 대기원에서 제외하고 잔여 창 계산에만 쓴다.
+      (3) **dangling `related_files` 청산** — `templates/github-workflows/429-incident-telemetry.yml`
+      파일 부재(삭제 커밋 `017926df4`). 삭제 아닌 주석 보존.
+      (4) **§결정 4 CB threshold telemetry-gated 재선언** — 값 확정이 아니라 **미발동 선언**.
+      3 window 전부 `docs/kpi/429-incident*` 의존인데 그 데이터원의 기계 append 경로가 0건이라
+      breaker 는 구조적으로 open 될 수 없다. hollow-gate 를 GREEN 으로 위장하지 않기 위해
+      "telemetry 실채움 전까지 미발동" 을 문면화한다. threshold 수치 변경 0.
+      (5) **declaration-only 3종 처분** — `429-retry-evidence-presence` 1종만 승격 후보 유지,
+      `debate-parallel-cap-check`·`deputy-stagger-check` 2종은 always-green hollow 로 승격 기각
+      (대상 field 가 team-spec 7 file 에 전건 실재 → presence 검사가 항진). 주석 보존.
+      (6) **§결정 2 backoff single-SSOT 조항 신설** — detection enum 에는 `:148` single-SSOT
+      규율이 있어 skill 이 재열거를 거부하는데 backoff 곡선에는 동형 조항이 없어 skill 이 값을
+      옮겨 적었고 이미 divergence 가 발생했다(SSOT 는 cap 위치를 열어뒀고 사본이 그것을 결정).
+      규율의 정의역을 backoff 파라미터로 확장한다. **수치 자체는 무변경.**
+      상세 = 본문 `## Amendment 3`.
+    sunset_justification: >-
+      N/A — `is_transitional: false` permanent policy 유지(§해소 기준 무변경). 방향 = **강화**:
+      (a) 죽은 참조 제거 (b) 오독 유발 문면 정정 (c) hollow gate 의 GREEN 위장 차단
+      (d) over-claim(기계 강제 3종 선언) 을 1종으로 축소 — 어느 항목도 기존 통제를 완화하지
+      않는다. §결정 1 closed-set invariant 미발동(literal 무증감). §결정 2 backoff 수치·
+      §결정 4 threshold 수치·§결정 3 slot ordinal 전건 무변경 — 본 Amendment 는 **참조 대상과
+      선언 지위**만 정정한다. ADR-064 §결정 7 evidence-gated symmetric ratchet: 강화 evidence =
+      ① `:54`·`:341` 자기 인식 ↔ 규범 본문 불일치 firsthand ② telemetry 데이터원 기계 append
+      0건 firsthand ③ team-spec 7 file 3-field 전건 실재 firsthand.
 ---
 
 # ADR-109: in-process Anthropic infra 429 surgical mitigation framework
@@ -112,7 +156,7 @@ amendments:
 
 기존 SSOT cover:
 
-- **ADR-057 §결정 2** — Sonnet → Opus model substitution fallback (max 1회, cross-model axis). 본 ADR 와 **disjoint axis** (within-model timing axis).
+- **cross-model substitution axis** (§결정 3 step2 slot) — 현 tenant = **ADR-141 Amendment 6** (fable-리밋 → opus failover, max 1회 per-spawn). 본 ADR 와 **disjoint axis** (within-model timing axis). *prior tenant: ADR-057 §결정 2 (Sonnet → Opus) — ADR-141 로 **moot/dead**, dead-mark 보존* [Amendment 3 정정].
 - **ADR-039 §결정 2** — Inline whitelist closed 4-entry enumeration (L99-L110). 5번째 entry "429 retry inline allowed" 신설 압박 명시 차단.
 - **ADR-064 §결정 4 Trace 4** — multi-task spawn default = parallel (amendment_log L14-L15 + L97-L98 parallel-dispatch-prompt-check binding).
 - **ADR-067** — max FIX 3/3 cap (§10 FIX Ledger). 429 retry ≠ FIX (운영 phase telemetry axis disjoint).
@@ -145,7 +189,7 @@ amendments:
 "Server is temporarily limiting"
 ```
 
-- **Single SSOT**: 본 §결정 1 = detection enum 단일 source. ADR-057 §결정 2 / `codeforge:rate-limit-429-mitigation` skill body / `docs/orchestrator-playbook.md` §3.0.12 = consumer cross-ref only (중복 정의 차단).
+- **Single SSOT**: 본 §결정 1 = detection enum 단일 source. **ADR-141 Amendment 6** / `codeforge:rate-limit-429-mitigation` skill body / `docs/orchestrator-playbook.md` §3.0.12 = consumer cross-ref only (중복 정의 차단). *prior 열거의 `ADR-057 §결정 2` 는 moot/dead 라 소비자 목록에서 교체* [Amendment 3 정정].
 - **4-tuple expansion rationale**: 사용자 발화 verbatim `"Server is temporarily limiting"` (Story §1) = 기존 3-pattern SSOT 미커버 (ArchitectAnalyst gap closure verified Grep — `"Server is temporarily limiting"` = 기존 SSOT 어디에도 등장 0).
 - **closed-set invariant**: 5번째 pattern 추가 시 본 ADR Amendment 의무 (ratchet 강화 방향, ADR-064 §결정 7 정합).
 
@@ -153,19 +197,29 @@ amendments:
 
 - **Backoff curve**: full jitter `random_uniform(0, base * 2^attempt)` with `base=1s`, single attempt cap = 60s, total max attempts = 6 (1s → 2s → 4s → 8s → 16s → 32s nominal, jittered)
   - **empirical-source** (ADR-068 I-5 dimensional empirical grounding 정합): [verified-via: AWS Architecture Blog "Exponential Backoff And Jitter" Marc Brooker 2015-03-04, https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/] — full jitter algorithm verbatim 답습 (no-overlap retry distribution, contention avoidance proven)
-- **Retry-After header 우선**: Anthropic `anthropic-ratelimit-*-reset` header 또는 `Retry-After` header presence 시 exp-backoff override
-  - **empirical-source**: [verified-via: RFC 7231 §7.1.3 + Anthropic public docs https://docs.anthropic.com/en/api/rate-limits] — delta-seconds 또는 HTTP-date format
+- **Retry-After header 우선**: **`retry-after` header presence 시에만** exp-backoff override. 값 = 초 단위 상대값이므로 그대로 대기시간으로 유도한다.
+  - **empirical-source**: [verified-via: RFC 7231 §7.1.3 — `Retry-After` = delta-seconds 또는 HTTP-date]
+  - **★ `anthropic-ratelimit-*-reset` 은 대기원이 아니다 (Amendment 3 정정)**: 해당 계열 헤더는 **RFC 3339 절대시각**이라 초 단위 대기값이 아니며, 쓰임은 "창이 언제 리셋되는가" 의 정보 제공이다. 두 헤더를 `또는` 으로 묶고 RFC 7231 포맷 서술을 공통 적용하던 구 문면은 **절대시각을 초 단위 대기원으로 오독**시킨다. 잔여 창 계산에 reset 시각을 참고하는 것은 허용하되, **대기원(wait source) 명명 대상에서는 제외**한다. 두 헤더의 의미 클래스가 다르다는 사실이 정정의 근거이며, 대기 산출 함수는 `retry-after` 부재 시 header 유래 대기를 산출하지 않는다.
+  - **empirical-source**: [verified-via: Anthropic public docs https://platform.claude.com/docs/en/api/rate-limits — `anthropic-ratelimit-*-reset` = RFC 3339 절대시각 / `retry-after` = 초 단위]
+
+> **★ Single SSOT — backoff 파라미터 (Amendment 3 신설)**: 본 §결정 2 = backoff 파라미터(formula · base · single-attempt cap · max attempts · nominal 계열 · 누적 budget) **단일 source**. `codeforge:rate-limit-429-mitigation` skill body / `docs/orchestrator-playbook.md` = **cross-ref only, 수치 재기재 금지**. §결정 6(529 cooldown 값)도 동형이다.
+>
+> 근거 = 규율의 정의역이 좁았다는 실측: detection enum 에는 `§결정 1` single-SSOT 조항이 있어 skill 이 실제로 재열거를 거부하는데(“확장 literal 재열거 금지(단일 SSOT)”), 바로 옆 backoff 에는 동형 조항이 없어 skill 이 값을 그대로 옮겨 적었다. 그리고 **이미 divergence 가 발생했다** — 본 §결정 2 는 `random_uniform(0, base * 2^attempt)` + 별도 진술 "single attempt cap = 60s" 로 cap 을 **표본 밖**에 두었는데, skill 사본은 `random_uniform(0, min(60, base * 2^attempt))` 로 cap 을 **상한 안**으로 옮겼다. SSOT 가 열어둔 자유도를 사본이 결정한 것이며, 두 문서를 읽은 두 사람이 서로 다른 구현을 얻는다. 이는 "장래 drift 위험" 이 아니라 **관측된 divergence** 다.
+>
+> **수치 무변경** — 본 Amendment 는 값을 바꾸지 않고 **소유권만** 고정한다. 사본 pointer 화(수치 8행 제거)는 Phase 2. Amendment 절 안의 dated 감사 기록(“무변경 확인 …”)은 **무접촉 보존** — 규범면 정정이 감사면 이력을 덮어쓰지 않는다.
 
 ### §결정 3 — Sequential composition (same-model retry → cross-model fallback)
 
 429 detection 시 retry sequence:
 
 1. **Same-model retry 1회** (within-model timing axis, 본 ADR 신설) — §결정 2 exp-backoff 적용
-2. **실패 시 → ADR-057 §결정 2 model fallback** (Sonnet → Opus, max 1회, cross-model substitution axis disjoint cross-ref)
-3. **Opus 도 429 → 6 attempts soak** (§결정 2 max 6 attempts cap) → §결정 4 circuit breaker open
-4. **Cascade depth ≥ 2 → §결정 5 user manual resume only** (ADR-057 §결정 2 "자동 재시도 금지" invariant 정합)
+2. **실패 시 → cross-model substitution (step2 slot)** — 현 tenant = **ADR-141 Amendment 6** (fable-리밋 → opus failover, max 1회 per-spawn-attempt, cross-model substitution axis disjoint cross-ref). *prior tenant: ADR-057 §결정 2 (Sonnet → Opus) — moot/dead, `:341` re-tenant note 참조* [Amendment 3 정정]
+3. **opus 도 429 → 6 attempts soak** (§결정 2 max 6 attempts cap) → §결정 4 circuit breaker open
+4. **Cascade depth ≥ 2 → §결정 5 user manual resume only** ("자동 재시도 금지" invariant 정합 — 현 정박 = 본 §결정 5 자신 + ADR-141 A6-4 cascade count-in) [Amendment 3 정정]
 
-**ADR-057 §결정 2 invariant 보존 cross-ref**: 본 §결정 3 = within-model timing axis (same-model retry 우선) — ADR-057 §결정 2 cross-model substitution axis 와 sequential composition 정합. ADR-057 amendment 0 (cross-ref only).
+> **★ slot ordinal frozen (Amendment 3, 비협상)**: 위 step 번호 `1..4` 는 **재정렬 금지**다. step2 는 빈 slot 이 아니라 **ADR-141 Amendment 6 가 점유 중인 live slot** 이며(구 tenant 만 dead), 번호를 당기면 ADR-141 A6-2(Accepted)의 "§결정 3 **step1**(same-model exp-backoff soak)을 bypass 하고 **step2**(cross-model substitution)로 직행" 이 *"soak 을 bypass 하고 soak 으로 직행"* 이라는 자기모순 지시로 읽힌다. 이 실패 양태는 stale pointer(링크 끊김, 검출 가능)가 아니라 **의미 반전**(문법·참조 모두 유효 → 검출 불가)이다. slot-번호 의존 표면 실측 = **26행 / 4파일**(ADR-109 · ADR-141 · playbook · rate-limit SKILL) — 1행만 놓쳐도 조용한 규범 변조가 된다. 참조는 서수 대신 **경로 키**(`same-model-timing` / `cross-model-substitution` / `soak` / `manual-resume`)로 옮기는 것을 권장한다.
+
+**cross-model axis invariant 보존 cross-ref**: 본 §결정 3 = within-model timing axis (same-model retry 우선) — cross-model substitution axis(현 tenant ADR-141 Amendment 6) 와 sequential composition 정합. **ADR-057 amendment 0** — ADR-057 은 `Superseded`(by ADR-141) 이며 본 ADR 이 그 문서를 개정하지 않는다. 단 ADR-057 **§결정 4 / §결정 6(529 cooldown)** 은 미분류 remedy 라우팅의 **배타 지배 참조**로 여전히 유효하며 본 Amendment 의 정정 대상이 **아니다**(치환 시 미분류 사건 라우팅이 끊긴다).
 
 ### §결정 4 — Circuit breaker 3-window AND
 
@@ -179,6 +233,10 @@ Circuit breaker open trigger = 3 window 모두 충족 (AND):
 
 - **[hypothesis]**: 본 3-window threshold = baseline 추정. Phase 2 telemetry refine 의무 (post-deploy actual incident rate 측정 후 사용자 확인 — ADR-068 I-5 dimensional empirical grounding 정합).
 - **circuit breaker open 후**: §결정 5 cascade depth ≥ 2 처리 (user manual resume only).
+- **★ telemetry-gated 재선언 (Amendment 3 — 값 확정 아님)**: 위 3 window 는 전부 `docs/kpi/429-incident-history.jsonl` / `docs/kpi/429-incident.json` 에 의존하는데, **그 데이터원의 기계 append 경로가 0건**이다 — 계량 스크립트의 호출자를 repo 전수 검색하면 문서 언급 2줄뿐이고 실행 표면이 없으며(`templates/github-workflows/` 에 429 telemetry workflow 부재), history 파일의 DATA 행은 **2행**(수기 기입, 2026-05-26 · 2026-07-02)이다. 30분·1분·5분 rolling window count 는 항구적으로 0 이므로 **breaker 는 구조적으로 open 될 수 없다.**
+  - 따라서 본 §결정 4 는 **telemetry 실채움 전까지 미발동(non-firing) 상태임을 명시 선언**한다. threshold 수치는 무변경이며, 이 선언은 값 확정이 아니라 **지위 정직화**다 — 발동 불가 게이트를 발동 가능한 것처럼 두면 hollow gate 가 GREEN 으로 위장된다.
+  - **동일 데이터원 공유 표면 declare**: `codeforge:rate-limit-429-mitigation` skill body 의 intensity 분기(`count_429_incidents_last_30min()`) 도 같은 파일에 걸려 있어 **동일 결함을 공유**한다 — intensity 는 상시 `0` 으로 낙하한다. 데이터원 부재를 침묵으로 삼키지 말고 **명시 보고**할 것.
+  - **telemetry 실채움 = 본 Amendment scope 밖**(계측 채널 실채움은 병렬 Story 소관). 본 Amendment 는 미발동 사실의 **declare 까지만** 한다.
 
 ### §결정 5 — Cascade depth ≥ 2 → user manual resume only
 
@@ -254,7 +312,7 @@ Retry sequence 자체 implementation 위치 = `codeforge:rate-limit-429-mitigati
 
 - **사용자 발화 cover**: `"Server is temporarily limiting"` 4-tuple detection + 5 sub-area surgical mitigation framework 신설 (Story §1 verbatim 영역 정합)
 - **ADR-039 closed 4-entry invariant 보존**: 5번째 entry 신설 0 (RefactorAgent pattern 2 권고 + chief 결정)
-- **ADR-057 §결정 2 invariant 보존**: cross-model substitution axis 무변경, within-model timing axis disjoint cross-ref
+- **cross-model substitution axis invariant 보존**: 해당 axis 무변경, within-model timing axis disjoint cross-ref (현 tenant = ADR-141 Amendment 6; *prior: ADR-057 §결정 2 — moot/dead*) [Amendment 3 정정]
 - **ADR-067 RESET contamination 차단**: §결정 9 §10 vs §14 boundary 명시 의무
 - **ADR-068 I-5 dimensional empirical grounding 정합**: backoff curve empirical-source = AWS Marc Brooker 2015 + threshold 3건 [hypothesis] Phase 2 refine
 - **ADR-082 §결정 6 retain pattern 답습**: `mechanical_enforcement_actions: []` declaration-only Wave 1 (pattern_count ≥ 2 재발 시 follow-up CFP MUST promote)
@@ -286,7 +344,7 @@ N/A — permanent policy
 - `mclayer/codeforge-internal-docs/plugin-codeforge/change-plans/cfp-1354-in-process-429-mitigation.md` — Phase 1 Change Plan carrier (dogfood-out per ADR-013, `doc-locations.yaml change_plan dogfood variant` 정합)
 - `docs/kpi/429-incident.json` (Phase 2 scope) — §결정 8.2 weekly aggregate KPI
 - `docs/kpi/429-incident-history.jsonl` (Phase 2 scope) — §결정 8.2 append-only event log
-- `templates/github-workflows/429-incident-telemetry.yml` (Phase 2 scope) — telemetry workflow warning tier
+- ~~`templates/github-workflows/429-incident-telemetry.yml` (Phase 2 scope) — telemetry workflow warning tier~~ → **Amendment 3 청산**: 파일 부재(삭제 커밋 `017926df4`). dangling 상태로 존치되며 "Phase 2 에 있다" 는 인상을 주었다. 재도입 시 신규 carrier 로 재등재
 - `templates/team-spec-*.yaml` (7 file) — ADR-044 Amendment N `parallel_spawn_cap` + `spawn_stagger_ms` + `cascade_circuit_breaker` field 신설
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 7 closed 4-entry 보호 + Amendment N §결정 9 carryover sunset_justification
 - [ADR-044](ADR-044-phase-scoped-sequential-team.md) — Amendment N team-spec yaml schema 확장
@@ -476,3 +534,81 @@ D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 
 - [ADR-025](ADR-025-stop-discipline-non-whitelist-as-defect.md) Amendment 4 — 한도류 신호 발 의지적 정지의 stop-discipline 착지(본 Amendment = 판정, ADR-025 = 정지 적법성). **§A4-8 = 본 carrier 저작물 전체의 자기적용 결박 총칙** — 판정문 verbatim SSOT 1곳, 본 Amendment 는 pointer 만 둔다. 본 Amendment 의 문면 축 술어((i) full-block 인용 규율 · (j) 천장 서술)도 그 dry-run 대상이며 결과는 Story `CFP-2944` §7.16 에 기록된다(런타임 축 술어 — D-0 · 판별식 D · remedy 사다리 — 는 정의역이 신호·행동이라 문면 자기적용 대상이 아니다).
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) §결정 4 / `docs/orchestrator-playbook.md:528` — 미분류 remedy 라우팅 **배타 지배**(인용만, 개정 0).
 - [ADR-119](ADR-119-research-before-claims.md) — 외부 제품 사실 인용 규율(공식 anchor 미확보 항목의 `[미검증]` 표기).
+
+## Amendment 3 (CFP-2984 — dead tenant 참조 정정 + 대기원 헤더 의미 정정 + dangling 청산 + CB telemetry-gated 재선언 + declaration-only 처분 + backoff single-SSOT)
+
+**날짜**: 2026-08-15 KST · **carrier**: CFP-2984 · **status**: Proposed (Phase 1 draft) · **방향**: **강화**(죽은 참조 제거 · 오독 유발 문면 정정 · hollow gate 위장 차단 · over-claim 축소, 약화 0).
+
+### A3-0. 정의역 — Amendment 2 무접촉 (비협상)
+
+**Amendment 2(`## Amendment 2` 절 전체) 는 본 Amendment 의 정의역 밖이다.** Amendment 2 는 `status: Proposed` 이고 CFP-2944 소유이며, Proposed 조항 위에 normative 를 쌓으면 (a) 착지 실패 시 본 조항이 참조 대상 부재로 born-stale 이 되고 (b) 타 Story 소유 구조를 개변하게 된다. 본 Amendment 는 그 절 안의 **바이트를 하나도 바꾸지 않는다**.
+
+- **본 Amendment 가 Amendment 2 에 요구하는 변경 = 0건.** Amendment 2 착지 여부와 무관하게 본 Amendment 는 완전하게 성립한다.
+- **절 경계 note (정직)**: 본 Amendment 를 파일 말미에 append 함으로써 Amendment 2 의 **암묵 종단자가 EOF 에서 `## Amendment 3` heading 으로 바뀐다**. Amendment 2 는 자기 절 경계를 EOF 로 정의하는 조항을 두지 않으므로 규범 영향은 없으나, 절 경계를 파일 끝에 결박해 읽는 도구가 있다면 이 사실이 입력이다.
+- **금지 확인**: Amendment 2 흡수·재정의·착지 0 / Amendment 2 문면 인라인 복제 0 / Amendment 2 고유 식별자(판별식·출력값·rung 번호)를 본 Amendment normative 문면에 사용 0.
+
+### A3-1. dead tenant 참조 정정 — 실행분과 **보류분**
+
+결함 class 는 "못 봤다" 가 아니다. `:54`(frontmatter amendment 1 scope) 와 §결정 3 하단 re-tenant note 는 step2 slot 이 dead tenant 를 cross-ref 한다는 사실을 **이미 기록**하고 있었다. 그 자기 인식이 **규범 본문에 전파되지 않은 것**이 결함이다.
+
+**정정 실행 (7행)**
+
+| 파일 | 위치 | 조치 |
+|---|---|---|
+| 본 ADR | §컨텍스트 인접 ADR 열거 | tenant 교체 + prior dead-mark 인접 보존 |
+| 본 ADR | §결정 1 Single SSOT consumer 열거 | 동상 |
+| 본 ADR | §결정 3 step 2 | 동상 + **slot ordinal frozen 규범 신설** |
+| 본 ADR | §결정 3 step 4 | invariant 정박 대상을 §결정 5 자신 + ADR-141 A6-4 로 교체 |
+| 본 ADR | §결정 3 하단 invariant 보존 cross-ref | 동상 + ADR-057 §결정 4/6 배타 지배 **유효** 명시 |
+| 본 ADR | §결과 > 긍정 | 동상 |
+| `skills/rate-limit-429-mitigation/SKILL.md` | 사다리 attempt 2 rung | 동상 (slot ordinal 무변경) |
+
+**정정 보류 3행 (★ 판정 C 와 (A) 분류가 직접 충돌하는 지점 — 발견 사항)**
+
+원 분류는 정정 대상을 10행으로 셌으나, 그중 **3행은 정정하면 다른 것이 깨진다**:
+
+| 위치 | 보류 사유 |
+|---|---|
+| 본 ADR §결정 5 첫 bullet ("자동 재시도 금지 (ADR-057 §결정 2 invariant verbatim 답습)") | Amendment 2 (i) 가 이 bullet 을 **"생략 없는 인용"** 으로 verbatim 인용하고 있고, 같은 절이 그 bullet 을 **"보존(무변경)"** 으로 declare 한다. 원본을 고치면 그 인용이 stale 이 되는데 **인용면은 Amendment 2 소속이라 판정 C 로 수정 불가**하다. 즉 원본과 인용을 동시에 맞출 수 있는 편집이 존재하지 않는다 → **원본 보존이 유일한 무결 선택** |
+| Amendment 2 (i) 안의 위 인용 블록 | 정의역 밖(A3-0) + 인용 메타면(폐기·개정 대상 문언을 기록하는 면은 verbatim 보존이 의무) |
+| `skills/rate-limit-429-mitigation/SKILL.md` cascade bullet ("자동 재시도 금지 …") | 위 §결정 5 bullet 의 **mirror** — SSOT 와 함께 이동해야 하므로 SSOT 가 보류인 동안 mirror 도 보류. 부수 사실: 해당 위치는 미머지 인접 브랜치가 바로 다음 줄을 수정 중이라 접촉 시 hunk 충돌을 만든다 |
+
+- **보류의 실 손실**: 위 3행은 `Superseded` 문서의 §결정을 invariant 근거로 계속 인용한다. 다만 인용된 명제("자동 재시도 금지") **자체는 살아 있고**, 본 §결정 5 와 ADR-141 A6-4 가 독립적으로 같은 invariant 를 보유하므로 **행동 영향은 0** 이다. 끊긴 것은 귀속(attribution)이지 규범이 아니다.
+- **해소 경로**: Amendment 2 착지 후, 그 소유 Story 가 인용 블록과 원본을 **같은 커밋에서** 동기 정정하는 것이 유일한 무결 경로다. 본 Amendment 는 그 의무를 상대에게 요구하지 않고 **여기 기록만** 한다.
+
+### A3-2. 주간 한도 anchor — **부분 보강 (태그 해소 아님)**
+
+세션 진행 중 주간 한도 도달이 firsthand 관측됐다(제품 표면 문자열 실관측 — carrier Story §9.2 dogfood datapoint). 이는 "주간 한도" 가 실재 제품 상태임을 보이는 **제품표면 anchor** 다.
+
+- **그러나 `[미검증 — 구조 동형 후보, 공식 anchor 미확보]` 표기는 해소되지 않는다.** 그 표기가 요구하는 것은 **공식 문서 anchor**(벤더 문서·support article)이고, 세션 관측 문자열은 그 등급이 아니다. 등급이 다른 증거로 태그를 지우면 ADR-119 위반이다.
+- **또한 그 표기 자체가 Amendment 2 (f) 소속**이라 본 Amendment 가 문면을 고칠 수 없다(A3-0).
+- ⇒ 본 항은 **관측 사실의 기록**이며, 태그 해소는 공식 anchor 확보 후 Amendment 2 소유 Story 소관이다. **부분 보강으로만 계상**한다.
+
+### A3-3. declaration-only 3종 처분
+
+| action | 처분 | 근거 |
+|---|---|---|
+| `429-retry-evidence-presence` | **승격 후보 유지 (1종)** | §결정 8.1 marker regex 라는 구체 정본이 실재하고, marker 제거가 discriminating mutant 로 성립한다. 승격 실행 = Phase 2, **discriminating mutant 실증 동반 의무**, warning-first 로 태어난다 |
+| `debate-parallel-cap-check` | **승격 기각** | 대상 field `parallel_spawn_cap` 이 `templates/team-spec-*.yaml` **7 file 전건**에 실재(3-field/파일 실측) → presence 검사가 **구조적 항상-GREEN** = always-green hollow |
+| `deputy-stagger-check` | **승격 기각** | 대상 field `spawn_stagger_ms` 동일 사유 |
+
+- **부수 실측 (정직 기록)**: 세 field(`parallel_spawn_cap` · `spawn_stagger_ms` · `cascade_circuit_breaker`) 를 **파싱·소비하는 실행 코드는 repo 내 0건**이다(정의역 = git-tracked `*.py *.sh *.js *.ts *.yml *.bats *.json *.toml`, 매칭 파일 0). 선언면과 산문 인용면만 존재한다. 런타임에서 모델이 yaml 을 prompt-level 로 읽는 행위는 이 정적 grep 의 정의역 **밖**이며 **확인 불가**다 — "소비자 0" 을 기계 소비자 축으로만 한정해 읽을 것.
+- 기각 2종은 **삭제하지 않고 frontmatter 주석으로 보존**한다 — 발의 이력과 기각 사유를 같은 자리에 남겨야 재발의자가 이 근거를 반증하고 들어올 수 있다.
+
+### A3-4. 정직 천장
+
+1. 본 Amendment 는 **참조 대상과 선언 지위만** 정정한다 — §결정 2 backoff 수치 · §결정 4 threshold 수치 · §결정 3 slot ordinal · §결정 1 detection literal 전건 **무변경**(closed-set invariant 미발동).
+2. **CB telemetry-gated 재선언은 breaker 를 고치지 않는다.** 데이터원을 채우는 것은 본 Amendment scope 밖이며, 선언은 "지금 발동 불가" 라는 사실의 가시화일 뿐이다. 이 선언으로 게이트가 작동하게 됐다고 읽으면 안 된다.
+3. **backoff single-SSOT 는 문면 규율이지 기계 강제가 아니다.** 사본의 수치 재기재를 막는 lint 는 Phase 2 이며, 그 lint 도 리터럴 스캔 층에서는 우회 가능하다 — "수치 복제가 봉인된다" 주장 금지.
+4. **A3-1 보류 3행은 미해소 잔여다.** "10행 전부 정정했다" 로 계상하지 말 것 — 실행 7 / 보류 3 이 정확한 회계다.
+
+### Cross-ref
+
+- §결정 2 / §결정 3 / §결정 4 / §결정 8.1 / §결과 — 본 Amendment 의 개정 대상.
+- §결정 5 — **무접촉 보존**(A3-1 보류 사유). §결정 1 detection closed-set — 무접촉(literal 무증감).
+- `## Amendment 2` — **무접촉**(A3-0). 본 Amendment 는 그 조항에 normative 의존 0.
+- [ADR-141](ADR-141-all-opus-single-tier.md) Amendment 6 — §결정 3 step2 slot 의 현 tenant. **Amendment 10**(CFP-2984 동반) = 그 failover 경로의 salvage 인계.
+- [ADR-179](ADR-179-agent-salvage-bundle-handoff.md) — remedy 발동 후 회수 판정 축(본 ADR = 감지·재시도 축, disjoint). §결정 7 skill body 3-step 이 ADR-179 §결정 7 의 산출 고정 착지면이다.
+- [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — `Superseded`(by ADR-141). §결정 2 = moot/dead(본 Amendment 정정 대상) / **§결정 4 · §결정 6 = 유효**(미분류 remedy 라우팅 배타 지배 — 정정 대상 아님, 치환 시 라우팅 단절).
+- [ADR-171](ADR-171-evidence-enforceable-promotion-framework.md) §결정 5·6 — declaration-only 승격은 warning-first + evidence-gate.
+- [ADR-119](ADR-119-research-before-claims.md) — A3-2 태그 비해소 근거(증거 등급 불일치 시 abstention 유지).

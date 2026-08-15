@@ -73,9 +73,11 @@ attempt 1: same-model retry (within-model timing axis, 본 ADR 신설)
   ├── success → §14 Lane Evidence marker write [429-auto-retry: count=1, final_status=success] → return
   └── failure → attempt 2
 
-attempt 2: ADR-057 §결정 2 model fallback (Sonnet → Opus, max 1회, cross-model substitution axis cross-ref)
+attempt 2: cross-model substitution (step2 slot) — 현 tenant = ADR-141 Amendment 6
+           (fable-리밋 → opus failover, max 1회 per-spawn-attempt, cross-model axis cross-ref)
+           prior tenant: ADR-057 §결정 2 (Sonnet → Opus) — ADR-141 로 moot/dead (dead-mark 보존)
   ├── success → §14 marker [429-auto-retry: count=2, final_status=success] → return
-  └── failure (Opus 도 429) → attempt 3..6 (soak 6 attempts)
+  └── failure (opus 도 429) → attempt 3..6 (soak 6 attempts)
 
 attempts 3-6: 6 attempts soak (§결정 2 max 6 attempts cap)
   ├── any success → §14 marker → return
