@@ -88,8 +88,9 @@ def build_shadow(tmp_path, extra="none", sha_mismatch=False):
         rel = "docs/domain-knowledge/concept/hard-gate-self-verification.md.sample"
         shutil.copyfile(CORPUS / "s01" / "xkill" / rel, corpus / "s04" / "kill" / rel)
     if sha_mismatch:
-        # ⓺ provenance (b): stamp.yaml.sample의 artifact_sha256을 의도적으로 틀린 값으로 변조
-        # → recipe 재적용 시 새 sha256과 불일치 → provenance 파손 → exit 3
+        # ⓷ stamp drift: stamp.yaml.sample 의 artifact_sha256 을 의도적으로 틀린 값으로 변조
+        # → 표본 자신의 선언 해시 ≠ 현행 파일 해시 → `_check_stamps`(⓷) 발화 → exit 3.
+        #   (⓺ provenance ② 재적용 sha 대조에는 도달하지 않는다 — ⓷ 가 먼저 return 한다.)
         import yaml
         stamp_file = corpus / "s02" / "stamp.yaml.sample"
         data = yaml.safe_load(stamp_file.read_text(encoding="utf-8"))
@@ -801,19 +802,23 @@ def test_substrate_provenance_tree_mismatch(tmp_path):
         f"provenance tree 문면 미관측: {err}"
 
 
-def test_substrate_provenance_sha256_mismatch(tmp_path):
-    """⓺ provenance (b): sha256 reapplication 불일치 — declared ≠ computed sha256.
+def test_substrate_stamp_drift_declared_sha_mismatch(tmp_path):
+    """⓷ stamp drift: 표본 자신의 선언 artifact_sha256 ≠ 현행 파일 sha256 → exit 3.
 
-    stamp.yaml.sample 의 artifact_sha256 을 틀린 값으로 설정 → SUBSTRATE stamp drift
-    검출 → exit 3.
+    stamp.yaml.sample 의 artifact_sha256 을 0×64 로 변조 → `_check_stamps`(⓷) 가
+    `::error::[SUBSTRATE] stamp drift: ... artifact_sha256 drift` 를 발화하고 exit 3.
+
+    ★ 정직 한정 — ⓺ provenance ②(재적용 sha 대조)는 본 케이스가 도달하지 않는다: 해당 분기
+      커버리지 0(미해결). ⓷ 가 ⓺ 보다 먼저 평가되어 return 하므로 여기서 관측되는 것은 언제나
+      ⓷ 이다. ② 를 실제로 때리려면 stamp 를 함께 재각인한(= ⓷ 를 통과하는) 표본이 필요한데
+      본 회차는 그 시나리오를 구성하지 않았다.
     """
     _require_substrate()
     root = build_shadow(tmp_path, sha_mismatch=True)
     rc, _out, err = run_core(root, manifest=write_manifest(tmp_path / "m_prov_sha.yaml"))
-    assert rc == 3, f"sha_mismatch 미발동: rc={rc}\n{err}"
-    assert ("stamp drift" in err.lower() and "artifact_sha256" in err.lower()) or \
-           ("provenance 파손" in err and "sha256" in err.lower()), \
-        f"sha256 불일치 문면 미관측: {err}"
+    assert rc == 3, f"stamp drift 미발동: rc={rc}\n{err}"
+    assert "stamp drift" in err.lower() and "artifact_sha256" in err.lower(), \
+        f"stamp drift 문면 미관측: {err}"
 
 
 def test_ic1_probe_unit_arm_anchored_measurement_positive(tmp_path):
