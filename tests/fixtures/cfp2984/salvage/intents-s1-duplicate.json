@@ -1,18 +1,18 @@
 [
   {
+    "op": "comment_add",
+    "target": {
+      "repo": "mclayer/plugin-codeforge",
+      "kind": "issue",
+      "number": 2984
+    },
     "body": {
-      "created_at": "2026-08-15T21:00:00+09:00",
+      "title": "salvage 인계 요약",
       "labels": [
         "phase:구현"
       ],
       "note": "재개점 고정",
-      "title": "salvage 인계 요약"
-    },
-    "op": "comment_add",
-    "target": {
-      "kind": "issue",
-      "number": 2984,
-      "repo": "mclayer/plugin-codeforge"
+      "created_at": "2026-08-15T21:00:00+09:00"
     }
   }
 ]

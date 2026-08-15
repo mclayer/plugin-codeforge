@@ -53,6 +53,8 @@ if hasattr(sys.stderr, "reconfigure"):
 EXIT_PASS = 0
 EXIT_VIOLATION = 1
 EXIT_USAGE = 2
+# 저장 실패 종료코드 — **성공을 보고하지 않는다** (AC-4 / §8.2-E INV-T2).
+STORE_FAILURE_EXIT = EXIT_VIOLATION
 
 # ─────────────────────── ADR-179 §결정 2-U — allowlist (닫힌 집합) ────────────────────
 # ⑧ 은 `empty_reason` + `failed_at` 2 키가 한 entry 이므로 실 키 수 = 11.
@@ -377,7 +379,7 @@ def cmd_store(bundle_path, out_path):
         }
         print("::salvage-incident:: %s" % json.dumps(record, ensure_ascii=False, sort_keys=True))
         print("SALVAGE_STORE: FAIL (stored=false)")
-        return EXIT_VIOLATION
+        return STORE_FAILURE_EXIT
     print("SALVAGE_STORE: PASS")
     return EXIT_PASS
 
