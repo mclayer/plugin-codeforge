@@ -1,6 +1,6 @@
 ---
 name: session-recovery
-description: 세션 재개(resume) 복원 절차 + 운영 트러블슈팅 lookup (활성 Story resume / 사용자 최종 확정 상태 복원 / 에이전트 스폰 실패 / GitHub MCP 장애 / Codex CLI 미설치 / Story file·Mapper stale). 세션 개시 시 활성 Story 존재 또는 위 장애 발생 시 호출. gate 명제 (§7.4 FIX 카운터 복원 / §9.6-§9.7.1 label 매핑) 는 playbook 잔류 — 본 skill 은 guide 절차만.
+description: 세션 재개(resume) 복원 절차 + 중단 이후 회수 라우팅 + 운영 트러블슈팅 lookup (활성 Story resume / 사용자 최종 확정 상태 복원 / mid-run 사망·stall·세션 한도 도달·429 계열 4-class 회수 진입점 / 미완결 상태 산출 고정 · salvage 결과 기록 · 판별 원장 freshness / 장수명 lane 작업 분할 계획 / 에이전트 스폰 실패 / GitHub MCP 장애 / Codex CLI 미설치 / Story file·Mapper stale). 세션 개시 시 활성 Story 존재 또는 위 장애·중단 발생 시 호출. gate 명제 (§7.4 FIX 카운터 복원 / §9.6-§9.7.1 label 매핑) 는 playbook 잔류 — 본 skill 은 guide 절차만.
 tools: Read
 ---
 
@@ -138,3 +138,105 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 - 재사용 감지 시 ArchitectAgent (chief author) 단독 설계 결정 금지 (§2 설계 공동작업자 부재 상태)
 
 > **§9.6-§9.7.1 = gate, playbook 잔류** — Phase 1/2 PR keyword 정책 + phase×gate label 매핑 + transition timing 은 `docs/orchestrator-playbook.md` §9.6-§9.7.1 원문 참조 (본 skill 미수록).
+
+## 3부 — 중단 이후 회수 라우팅 · salvage 결과 기록 (CFP-2984 / ADR-179)
+
+> **본 3부가 답하는 질문** = "세션·에이전트가 중간에 끊겼을 때 **어디서 무엇을 들고** 다시 시작하나". 1부 §7.3 재진입 매핑의 **누락된 선행 단계**다 — §7.3 은 "어느 에이전트를 재스폰할지"만 말하고 그 재스폰에 **무엇을 인계할지**는 말하지 않는다.
+>
+> **본 절 내부 번호 = 3.1~3.7.** 1부 §7.x · 2부 §9.x 는 playbook 원본 번호 mirror 이고, 본 3부는 playbook 대응 절이 없는 신설분이라 별 번호계를 쓴다.
+>
+> **§9.1 표와 disjoint** — §9.1 은 **pre-run 호출 실패**(subagent_type 철자 오류 · 권한 거부 · 무한 스폰)이고 본 3부는 **mid-run 중단 이후**다. 두 표를 섞지 말 것 (조직 원리가 다르다).
+>
+> **모듈 의존 방향 = 하향 단방향 1 edge.** 본 3부는 429 rung 을 [`codeforge:rate-limit-429-mitigation`](../rate-limit-429-mitigation/SKILL.md) 로 참조한다. 역방향(rate-limit → session-recovery) 참조는 **신설하지 않는다** — 필요 시 sibling 이 아니라 L0 정책([ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md))을 지목한다 (더 안정된 모듈로의 참조 = SDP 정합, 2-cycle 금지).
+>
+> **★ 4-class closed set 은 본 skill 이 정의하지 않는다.** closed set SSOT = [ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md) **단일**이며, 그 집합의 회수-라우팅 view 는 [ADR-179 §결정 7](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) 이 소유한다. 아래 §3.1 표는 **그 집합의 소비자 view** 이지 독립 정의가 아니다 — **class 추가·삭제는 ADR amendment 로만** 하고 본 파일 편집으로 집합을 바꾸지 않는다 (두 skill 이 각자 열거하면 검사기가 두 정의역에서 상이 판정을 낸다).
+
+### 3.1 실패 class → 회수 경로 진입점
+
+| class | 회수 경로 진입점 | 재시도 예산 | 산출 고정 시점 |
+|---|---|---|---|
+| 429 계열 (rate limit) | [`codeforge:rate-limit-429-mitigation`](../rate-limit-429-mitigation/SKILL.md) 3-step 절차 안 — **탐지 직후·대기 진입 전 산출 고정** 후 대기 진입 ([ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md) §결정 7) | 사다리 소관 | 대기 진입 **전** |
+| 세션·주간 한도 | [ADR-141](../../archive/adr/ADR-141-all-opus-single-tier.md) Amendment 6 fresh re-spawn + Amendment 10 salvage 인계 | 1 (per-spawn) | 재spawn packet 구성 **전** |
+| stall (무출력 정체) | [ADR-139](../../archive/adr/ADR-139-background-wait-liveness-gate.md) `inconclusive` 기록 → **비파괴 recovery 만** (kill · TaskStop · 기산출 폐기 동반 재spawn 금지) | 0 | `inconclusive` 기록 시점 |
+| mid-run 사망 | [ADR-178 §결정 5-4](../../archive/adr/ADR-178-subagent-progress-commit-preservation.md) 3-step runbook (census → 무결성 판정 → 인계 3-tuple) + [ADR-179 §결정 2](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) 번들 | 0 | 진행 커밋 시점 (상시 선행 적재) |
+
+- **진입점 셀이 빈 행은 커버로 세지 않는다** — class 는 있는데 갈 곳이 없으면 미커버다. 그 경우 §3.2 에 명시 열거한다.
+- **재시도 예산 0 의 의미**: 회수 경로 자신은 재시도를 발행하지 않는다 ([ADR-179 §결정 8](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) — 복구가 스스로 예산을 곱하면 손실 감축이 발생 증가로 되돌아온다).
+
+### 3.2 미커버 class 선언 (차집합 착지면)
+
+**현재 미커버 = 0건.** §3.1 표가 정본 4-class 전건에 진입점을 지정한다.
+
+정본 집합에는 있는데 §3.1 이 커버하지 못하는 class 가 생기면 **침묵하지 말고** 아래 3열 표로 이 절에 명시 열거한다 — 열 = `미커버 class` / `사유` / `임시 진입점`. **임시 진입점 없는 미커버 선언은 선언이 아니다** (어디로 가라는 말이 없으면 운영자는 멈춘다).
+
+### 3.3 미완결 상태 산출 고정 경로
+
+완결 경로만 있는 문서는 중단 상황에서 쓸모가 없다. **완결 · 미완결 · 미완결(저장 실패) 3 상태 전건에 산출 고정 행위와 종료 표식을 지정한다.**
+
+| 상태 | 산출 고정 행위 | 종료 표식 | 근거 |
+|---|---|---|---|
+| 완결 | 의미 단위 완결 커밋 (미완 표식 제거) | `[WIP]` 토큰 **제거** | [ADR-178 §결정 5-2](../../archive/adr/ADR-178-subagent-progress-commit-preservation.md) |
+| 미완결 | 진행 커밋 선행 적재 → salvage 번들(참조형 인덱스) 생성 → 재spawn packet 에 3-tuple 주입 | `[WIP]` 토큰 + 본문 `Remaining:` 1줄 | [ADR-178 §결정 5-2·5-4](../../archive/adr/ADR-178-subagent-progress-commit-preservation.md) / [ADR-179 §결정 2](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) |
+| 미완결 (저장 실패) | degrade 사다리 F1(dirty 유지) → F2(scratch + 보존 마커) → F3(손실 범위 사고 레코드) | `empty_reason` + `failed_at` (빈 번들 ≠ 생성 실패) | [ADR-179 §결정 8](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) |
+
+**무효 전이 (금지 — 관측되면 결함)**:
+
+| 무효 전이 | 왜 금지인가 |
+|---|---|
+| 저장 실패 → 성공 보고 | 저장에 실패하면 종료 코드가 `0` 이 아니어야 하고 회수 불가 범위를 기록해야 한다. 실패를 성공으로 접으면 상류가 없는 번들을 있다고 믿는다 |
+| 번들 미생성 → 재spawn 인계 | 인계 3-tuple 이 없는 재spawn 은 처음부터 다시 하는 것과 같다. 번들 부재 시에는 **부재 사실**을 packet 에 명시하고 인계한다 (조용한 빈손 인계 금지) |
+
+- **부분 기록 번들은 유효 번들로 판독하지 않는다** — 절단된 번들은 `suspect` 이며 완결 산출로 승격하지 않는다.
+
+### 3.4 salvage 결과 기록
+
+회수를 했는지 안 했는지가 사후에 남아야 다음 세션이 같은 손실을 두 번 겪지 않는다. 회수 시도 1건당 아래 항목을 기록한다.
+
+| 항목 | 값공간 | 비고 |
+|---|---|---|
+| `class` | §3.1 정본 4-class 중 1 | 정규화 후 정확히 1개에 사상되지 않으면 기록 불가(모호) |
+| `bundle_ref` | `branch@SHA` 또는 `없음` | 원문 동봉 금지 (참조형) |
+| `resume_spawn` | `stop-event-v1` `recovery_action` enum 의 `retry` 로 **부분 표현 가능** | 완전 표현 아님 — 계약 확장은 별 lane 소관 |
+| `salvage_outcome` | **양 계약에 부재** | 신규 필드 배선은 본 절 경계 밖. 현재는 **미배선 사실을 그대로 적는다** (있는 척 금지) |
+| `burn` | 소각량(재작업 span) 추정 1줄 | 추정임을 명시 |
+
+- **기록은 계약 수정 없이 수행한다** — `spawn-event-v1` · `stop-event-v1` 스키마는 읽기만 한다.
+
+### 3.5 판별 원장 freshness 가드
+
+사후 판별(§3.4 기록 · 종료 레코드 조회)은 **원장이 최신일 때만** 신뢰할 수 있다. 최신 레코드 시각과 기준 시각의 격차가 임계를 넘으면 `stale` 로 판정하고, 그 판별 결과를 근거로 삼지 않는다.
+
+| 항목 | 값 | 근거 |
+|---|---|---|
+| 기대 기록 주기 상한 (C) | **15분** | 외부 관측 poll 의 jitter 상한 — GH Actions cron 5분 base + peak jitter 15~30분 ([ADR-164 §결정 6](../../archive/adr/ADR-164-parallel-branch-liveness-heartbeat-watchdog.md)) |
+| 유도 규칙 | **T = 2 × C** | 기존 규칙 재사용 — `scripts/lib/check_branch_liveness.py` `_FLOOR_MIN` 주석 "floor ≈ 2× poller-jitter-upper(GH cron 5min base + peak jitter 15~30min) → 30~60min" |
+| 임계 (T) | **30분 = 1800초** | 위 두 줄에서 유도된 값 (임의 상수 아님) |
+| 경계 포함/배타 | `격차 > T` 일 때만 `stale`. **`격차 = T` 는 `fresh`** (배타적 stale) | [ADR-164 §결정 5](../../archive/adr/ADR-164-parallel-branch-liveness-heartbeat-watchdog.md) 의 `observer-elapsed > 임계` 부등호 승계 |
+
+- **임계를 임의로 키우면 가드가 영구 미발화한다** — T 는 위 유도 규칙의 산출값이어야 하며, C 를 바꾸지 않고 T 만 키우는 편집은 위반이다.
+- **정직 천장**: C·T 는 proposal 이다 (empirical calibration 미완 — ADR-164 §결정 6 상속). "정확한 임계" 를 단정하지 않는다.
+
+### 3.6 장수명 lane 작업 분할 계획 구조
+
+장수명·고복잡도 lane 은 착수 **전에** 독립 재개 가능 단위로 쪼개고, 단위가 끝날 때마다 부분 산출을 확정한다. 계획서는 아래 **3요소 스키마**를 채운다 — 셋 중 하나라도 결손이면 계획이 아니라 의향서다.
+
+| 분할 단위 | 단위별 재개 입력 | 단위 간 확정 경계 |
+|---|---|---|
+| 독립 재개 가능한 최소 작업 덩어리 1개 (예: "3부 문서 신설") | 그 단위를 0-context 에서 다시 시작하는 데 필요한 입력 (예: 대상 파일 경로 + 정본 앵커 ADR 목록) | 단위 종료 시 확정되는 산출과 표식 (예: 커밋 1건 + `[WIP]` 제거) |
+| 다음 덩어리 (예: "self-test 7본") | (예: 위 3부 문서 커밋 SHA + AC 표 행) | (예: 테스트별 커밋 + 실행 출력 rc 첨부) |
+
+- **한계 (정직 라벨)**: 본 스키마는 **구조 결손만** 잡는다. 분할이 실제로 컨텍스트 압박을 줄이는지 = **내용 타당성은 사람 검토** 소관이며 기계 판정하지 않는다.
+
+### 3.7 stall 판정 (오조기회수 방지)
+
+| wall-clock 상한 | 진행신호 | 판정 |
+|---|---|---|
+| 초과 | 부재 | **stall** |
+| 초과 | 존재 | stall 아님 (느리지만 진행 중) |
+| 미초과 | 부재 | stall 아님 (짧은 무응답 — 조기 회수 금지) |
+| 미초과 | 존재 | stall 아님 |
+
+- **두 조건이 동시 성립할 때만 stall** 이다. 한쪽만으로 stall 을 단정하면 살아있는 에이전트를 죽인다.
+- **진행신호 값공간 = 3원소** — output mtime · content grep · task-notification ([ADR-139](../../archive/adr/ADR-139-background-wait-liveness-gate.md) 결정 1 INV-L3). **3원소 중 1개만 도착해도 "부재 아님"** 이다.
+- **판정불가는 stall 이 아니다** — 경과시간이 음수·비수치·`NaN` 이면 `indeterminate` 를 반환한다. 판정불가를 stall 로 접으면 오탐이 폭증한다.
+- **stall ≠ PASS ≠ 사망** — stall 은 outcome 미측정(`inconclusive`)이며, 후속 조치는 §3.1 의 stall 행(비파괴 recovery 만)을 따른다.
