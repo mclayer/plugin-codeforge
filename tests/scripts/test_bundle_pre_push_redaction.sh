@@ -515,8 +515,12 @@ from pathlib import Path
 
 KINDS = {
     # ③ glob 배제 — 객체 목록에 pathspec 을 주입해 번들 경로를 스캔 대상에서 제외.
+    # (a) 구 bash/리터럴 형태  (b) S-P1-1 봉합 후 python 형태 `"--remotes=%s" % remote`
+    #     (b) 는 **리스트 원소 뒤**에 pathspec 을 넣는다 — `% remote` 앞에 끼우면 SyntaxError/TypeError
+    #     로 죽고, 그러면 mutant 가 "탐지돼서" 가 아니라 "터져서" kill 되는 hollow kill 이 된다.
     "glob": [(r"--not(['\"\s,]+)--remotes=origin",
-              r"--not\1--remotes=origin\1--\1README.md")],
+              r"--not\1--remotes=origin\1--\1README.md"),
+             (r"(\"--remotes=%s\"\s*%\s*remote)\]", r'\1, "--", "README.md"]')],
     # ④ primitive 퇴화 — 최종 tree 만 보게 만들어 중간 커밋을 놓치게 한다(2-tree 차분 등가).
     "degrade": [(r"rev-list(['\"\s,]+)--objects",
                  r"rev-list\1--objects\1--max-count=1")],
