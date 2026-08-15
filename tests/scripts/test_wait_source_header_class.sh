@@ -214,9 +214,15 @@ run_case() {
       return ;;
   esac
   [ "$exit_code" -eq "$expected_exit" ] || ok=0
-  if [ -n "$expect_substr" ]; then
-    case "$out" in *"$expect_substr"*) : ;; *) ok=0 ;; esac
+  # ★ P2-5 (CFP-2984): 빈 substr = 판정을 exit code 단독에 맡기는 것이다.
+  #   크래시는 그 코드를 위조할 수 있으므로(rc≠0 을 ‘검출’ 로 오독), 산출 대조 없는 케이스를
+  #   harness 결함으로 끈는다. 현행 호출부는 전건 비어있지 않음(신규 RED 0) — 향후 유입만 차단하는 ratchet.
+  if [ -z "$expect_substr" ]; then
+    echo "X FAIL: $name — harness 결함: expect_substr 가 비었다(판정이 exit code 단독)"
+    FAIL=$((FAIL + 1))
+    return
   fi
+  case "$out" in *"$expect_substr"*) : ;; *) ok=0 ;; esac
   if [ "$ok" -eq 1 ]; then
     echo "OK PASS: $name (exit $exit_code)"
     PASS=$((PASS + 1))
