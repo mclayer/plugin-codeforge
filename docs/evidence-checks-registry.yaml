@@ -4429,19 +4429,25 @@ entries:
 
   - name: adr178-forbidden-form-presence
     description: |
-      ADR-178 risk axis (Axis-P: positive-claim / Axis-N: negative-prohibition) closed-set
-      4 리터럴 (MUST / MUST NOT / SHALL / SHALL NOT) scanning — docstring + inline 주석 +
-      선언 영역에서 유효한 모달 어휘 정합 검증. honest ceiling: 정적 리터럴 매칭만 보증
-      (의미론적 모달성 판정 불가, ADR-151 §결정7 상속). home_marker enroll 대상(ADR-178
-      SSOT). execution-backed self-test: ReDoS-safe per-line scan + bounded nested quantifier
-      0 + truncated-read I/O bound(ADR-082 resource-safety-claim proof-reference 선례 동형,
-      CFP-2966 P2 discriminating self-test enroll mandatory). warning tier (ADR-060 §결정 5
-      default — required 미등록).
+      CFP-2966 / ADR-178 §결정 7 — progress-commit negative-control presence lint. ADR-178 규범
+      정의역(`progress-commit-normative-region` 마커 내부 **−** `forbidden-form-quotation` 블록) 안에
+      금지 form closed-set 4 리터럴(① 한도 임박 trigger / ② 커밋 후 정지 / ③ 신호 반응형 저장 /
+      ④ 종료-시점 저장)이 규범으로 재유입됐는지 검사. 인용 절 제외 = self-RED 함정(금지 form 을 박제한
+      인용 자체를 위반으로 오판) 회피의 keystone. 토큰 리터럴은 ADR 인용 절의 `FORBIDDEN_TOKENS`
+      배열을 런타임 파싱해 사용 — lint 은 토큰을 하드코딩하지 않는다(배열 = SSOT, drift 차단).
+      구조 실패(마커 부재·중복·역순 / 배열 파싱 실패 / 원소 수 != 4) = exit 2 로 착지하며 exit 0 으로
+      흡수하지 않는다(마커를 지우면 조용히 무력화되는 경로 차단, fail-closed). honest ceiling: closed
+      set 밖 자연어 회피 표현(같은 뜻 다른 문장)은 미검출 — 금지 form 의 기계적 봉인을 주장하지 않는다
+      (presence ≠ truth, ADR-151 §결정 7 상속). 자원 bound: per-file 라인 cap x per-physical-line
+      truncate + 리터럴 substring 매칭(O(n)), regex 3종 anchored + bounded quantifier (nested
+      quantifier 0). execution-backed self-test 8 case — 정의역 주입 RED / 인용 절 GREEN / closed set
+      밖 회피 표현 GREEN(선언된 상한 실증) / 마커 제거·배열 이름 변형·원소 수 3·5 STRUCT — 실
+      scan_text 호출 후 판정 대조(presence-grep oracle 아님). Python SSOT + thin wrapper (ADR-061
+      §결정 1). warning tier (ADR-060 §결정 5 default — required 미등록).
     detect_command: bash scripts/check-adr178-forbidden-form-presence.sh
-    workflow: templates/github-workflows/orchestrator-autonomy-stop-taxonomy-check.yml
+    workflow: .github/workflows/orchestrator-autonomy-stop-taxonomy-check.yml  # templates+.github byte-identical (ADR-005)
     current_tier: warning
-    bypass_label: hotfix-bypass:adr178-forbidden-form-presence
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    # bypass_label: omit — warning-tier advisory presence lint, continue-on-error merge 무차단 (신규 label 0 — ArchitectPL 판정 "bypass_label omit (vague-pause 선례)", CP §5 registry 행). bypass_audit_lint 도 생략.
     promotion_criteria:
       pr_cumulative_min: 20
       failure_threshold: 0
