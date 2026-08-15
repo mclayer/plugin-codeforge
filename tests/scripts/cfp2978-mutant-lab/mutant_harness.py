@@ -441,6 +441,138 @@ def m_13l(t: str) -> str:
         "defaults:\n  run:\n    shell: bash {0}\n\npermissions:\n", "M-13l")
 
 
+# ── W-16 신규 mutant (정의역 확장 축) ────────────────────────────────────────
+# W-16 leg 는 `.github/workflows/` ∧ `templates/github-workflows/` 양쪽을 본다.
+# 단독 변이는 canonical 을 주로 겨냥하고, twin-drift 는 template 만 변경한다.
+
+
+def m_16_rm_w3b(t: str) -> str:
+    """'Run pytest tests (W-3b)' step 통째 제거 (job2 에서)."""
+    return _replace_once(
+        t,
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n"
+        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n",
+        "",
+        "M-16-rm-w3b"
+    )
+
+
+def m_16_rm_install(t: str) -> str:
+    """'Install test dependencies' step 제거 (job2 에서)."""
+    return _replace_once(
+        t,
+        "      - name: Install test dependencies\n"
+        "        run: python -m pip install --quiet pytest pyyaml\n",
+        "",
+        "M-16-rm-install"
+    )
+
+
+def m_16_rm_collect(t: str) -> str:
+    """'Collect pytest tests (W-3b-1, ...)' step 통째 제거 (job2 에서)."""
+    anchor = (
+        "      - name: Collect pytest tests (W-3b-1, verify node IDs present)\n"
+        "        id: collect\n"
+        "        run: |\n"
+        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py --collect-only -q > /tmp/pytest_collected.txt 2>&1\n"
+        "          cat /tmp/pytest_collected.txt\n"
+        "          grep -q \"test_2976_a_derive_from_overlay\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_a_derive_from_overlay not found\"; exit 1; }\n"
+        "          grep -q \"test_2976_b_fail_closed\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_b_fail_closed not found\"; exit 1; }\n"
+        "          grep -q \"test_2976_c_determined_contract\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_c_determined_contract not found\"; exit 1; }\n"
+        "          grep -q \"test_ac4_leg1_determined_is_true_and_lists_present\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg1_determined_is_true_and_lists_present not found\"; exit 1; }\n"
+        "          grep -q \"test_ac4_leg2_branch_names_match_corpus_regex\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg2_branch_names_match_corpus_regex not found\"; exit 1; }\n"
+        "          grep -q \"test_ac4_leg3_excluded_self_repo_is_slug\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found\"; exit 1; }\n"
+    )
+    return _replace_once(t, anchor, "", "M-16-rm-collect")
+
+
+def m_16_coe_job2(t: str) -> str:
+    """job2 pytest step 에 continue-on-error: true 주입 (leg③)."""
+    return _replace_once(
+        t,
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n",
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n"
+        "        continue-on-error: true\n",
+        "M-16-coe-job2"
+    )
+
+
+def m_16_trailing_cmd(t: str) -> str:
+    """W-3b run block 에 후행 명령 1줄 추가 (W-3b 블록 스칼라화 축)."""
+    return _replace_once(
+        t,
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n"
+        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n",
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n"
+        "        run: |\n"
+        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+        "          echo \"Pytest completed\"\n",
+        "M-16-trailing-cmd"
+    )
+
+
+def m_16_job_defaults_shell(t: str) -> str:
+    """job2 에 defaults.run.shell 주입 (A5 축 — job 레벨 reach)."""
+    return _replace_once(
+        t,
+        "  parallel-work-sentinel-test:\n",
+        "  parallel-work-sentinel-test:\n"
+        "    defaults:\n"
+        "      run:\n"
+        "        shell: bash {0}\n",
+        "M-16-job-defaults-shell"
+    )
+
+
+def m_16_twin_drift(t: str) -> str:
+    """twin 정의역만: step shell 주입 (독립성 검증용)."""
+    # 이 함수는 templates/github-workflows/… 에만 적용된다.
+    # 실제 변이는 run_one 호출 시 target 이 "templates/…" 로 지정되면 작동.
+    return _replace_once(
+        t,
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n",
+        "      - name: Run pytest tests (W-3b)\n"
+        "        id: run-pytest\n"
+        "        shell: bash {0}\n",
+        "M-16-twin-drift"
+    )
+
+
+# ── 복합 mutant 함수 (독립적 순차 적용 불가능한 쌍) ───────────────────────────
+# M-13i 와 M-13k 는 같은 step 의 다른 부분을 변경하므로, 순차 적용하면
+# 앵커 미적중이 발생한다. 복합 변이 함수를 별도로 작성한다.
+
+
+def m_composite_13i_13k(t: str) -> str:
+    """복합: '; true' 추가 + step 'shell: bash {0}' (동시 적용)."""
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = (
+        "        shell: bash {0}\n"
+        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
+    )
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i+M-13k")
+
+
+def m_composite_13i_13l(t: str) -> str:
+    """복합: '; true' 추가 + workflow 'defaults.run.shell' (동시 적용, A4 축)."""
+    # 먼저 workflow 레벨 defaults 추가
+    t = _replace_once(
+        t, "permissions:\n",
+        "defaults:\n  run:\n    shell: bash {0}\n\npermissions:\n", "M-13i+M-13l/defaults")
+    # 그 후 pytest step에 '; true' 추가
+    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
+    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
+    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i+M-13l/run")
+
+
 def m_13a(t: str) -> str:
     """scripts/lib/check_parallel_work_sentinel.py 의 _exit_pass 에서
     payload.setdefault("determined", True) 줄 제거 (L184 상당).
@@ -470,8 +602,8 @@ MUTANTS: Dict[str, Tuple[str, Callable[[str], str], str]] = {
     "M-13h":            (".github/workflows/parallel-work-sentinel-check.yml", m_13h, "정적 GREEN (declared) | 중첩 runtime: delta 소멸 (rc 흡수)"),
     "M-13i":            (".github/workflows/parallel-work-sentinel-check.yml", m_13i, "정적 GREEN (declared) | 중첩 runtime: delta 소멸"),
     "M-13j":            (".github/workflows/parallel-work-sentinel-check.yml", m_13j, "정적 GREEN (declared) | 중첩 runtime: delta 소멸 (set +e + exit 0)"),
-    "M-13k":            (".github/workflows/parallel-work-sentinel-check.yml", m_13k, "정적 RED (step_shell 신설) | 중첩 runtime: delta 소멸"),
-    "M-13l":            (".github/workflows/parallel-work-sentinel-check.yml", m_13l, "정적 RED (defaults_run_shell 신설) | 중첩 runtime: delta 소멸"),
+    "M-13k":            (".github/workflows/parallel-work-sentinel-check.yml", m_13k, "정적 RED (w16_c: step_shell 신설) | 중첩 runtime: delta 소멸"),
+    "M-13l":            (".github/workflows/parallel-work-sentinel-check.yml", m_13l, "정적 RED (w16_d: defaults_run_shell 신설) | 중첩 runtime: delta 소멸"),
     "M-13e-empty":      ("mctrader-sentinel.yml", m_13e_empty,     "exit 2 (P-3 not_mapping)"),
     "M-13e-malformed":  ("mctrader-sentinel.yml", m_13e_malformed, "exit 2 (P-2 parse_error)"),
     "M-13e-delete":     ("mctrader-sentinel.yml", m_13e_delete,    "exit 2 (P-1 file_missing)"),
@@ -498,6 +630,31 @@ MUTANTS: Dict[str, Tuple[str, Callable[[str], str], str]] = {
     "R-6":           ("mctrader-sentinel.yml", r6_timeout_job_to_step, "E5 RED (relocation)"),
     "R-7":           ("mctrader-sentinel.yml", r7_coe_step_to_job2,  "leg③ RED (relocation)"),
     "T-taut":        ("mctrader-sentinel.yml", t_taut_overwrite,     "straw GREEN ∧ real RED"),
+    # W-16 신규 — 정의역 확장 축
+    "M-16-rm-w3b":       (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_w3b,        "모든 w16 leg RED (W-3b 임계)"),
+    "M-16-rm-install":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_install,    "w16_a, b, c, d, f, g RED (w16_e 미포함)"),
+    "M-16-rm-collect":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_collect,    "w16_a, b, c, d, f, g RED (w16_e 미포함)"),
+    "M-16-coe-job2":     (".github/workflows/parallel-work-sentinel-check.yml", m_16_coe_job2,      "w16_b RED (leg③ — job2 coe 주입)"),
+    "M-16-trailing-cmd": (".github/workflows/parallel-work-sentinel-check.yml", m_16_trailing_cmd,  "w16_g RED (run 블록 다중화)"),
+    "M-16-job-defaults-shell": (".github/workflows/parallel-work-sentinel-check.yml", m_16_job_defaults_shell, "w16_d RED (A5 축 — job defaults.run.shell)"),
+    "M-16-twin-drift":   ("templates/github-workflows/parallel-work-sentinel-check.yml", m_16_twin_drift, "[wrapper-twin] RED ∧ [wrapper-canonical] GREEN (독립성)"),
+}
+
+
+# ── 복합 mutant 로스터 (구성 + 기대값) ──────────────────────────────────────────
+# rc 흡수 판별은 대조(delta 소멸)에서만 선다. 단독은 RED, 복합은 GREEN 이어야
+# 흡수가 성립함을 입증한다. 이를 "같은 실행 계열"에서 보여야 논증이 성립.
+COMPOSITES: Dict[str, Tuple[List[str], Callable[[str], str], str]] = {
+    "M-13i+M-13k": (
+        ["M-13i", "M-13k"],
+        m_composite_13i_13k,
+        "정적 RED(w16_c ∧ w16_e) ∧ 런타임 GREEN(흡수 성립)"
+    ),
+    "M-13i+M-13l": (
+        ["M-13i", "M-13l"],
+        m_composite_13i_13l,
+        "정적 RED(w16_d ∧ w16_e) ∧ 런타임 GREEN(흡수 성립, A4 축)"
+    ),
 }
 
 
@@ -726,6 +883,9 @@ def run_runtime_face(run_dir: Path) -> Dict[str, object]:
             # "bash {0}" 형태 = errexit 없음 (M-13k/M-13l 테스트용)
             if "bash {0}" in doc.get("defaults", {}).get("run", {}).get("shell"):
                 errexit = False
+        if job_shell and "bash {0}" in job_shell:
+            # A5 축 — job 레벨 defaults.run.shell (M-16-job-defaults-shell)
+            errexit = False
         if step_shell and "bash {0}" in step_shell:
             errexit = False
 
@@ -786,6 +946,7 @@ def build_run_tree(mid: str) -> Path:
     (run_dir / "tests" / "fixtures" / "cfp2978").mkdir(parents=True)
     (run_dir / "scripts" / "lib").mkdir(parents=True)
     (run_dir / ".github" / "workflows").mkdir(parents=True)
+    (run_dir / "templates" / "github-workflows").mkdir(parents=True)
 
     # ── tests/scripts: pytest test 파일 4개 + conftest
     shutil.copy2(CONFTEST, run_dir / "tests" / "scripts" / "conftest.py")
@@ -817,6 +978,14 @@ def build_run_tree(mid: str) -> Path:
         src = REPO_ROOT / ".github" / "workflows" / wf_file
         if src.exists():
             shutil.copy2(src, run_dir / ".github" / "workflows" / wf_file)
+
+    # ── templates/github-workflows: workflow template 파일들
+    for wf_file in [
+        "parallel-work-sentinel-check.yml",
+    ]:
+        src = REPO_ROOT / "templates" / "github-workflows" / wf_file
+        if src.exists():
+            shutil.copy2(src, run_dir / "templates" / "github-workflows" / wf_file)
 
     # ── tests/fixtures: fixture yml + manifest
     for f in FIXTURES:
@@ -916,12 +1085,14 @@ def run_composite(mids: List[str]) -> Dict[str, object]:
             raise SystemExit(f"[NO-OP] {mid} in composite {label}: 변이 무효 — 관측 폐기")
         tp.write_text(mutated, encoding="utf-8", newline="")
 
+    pytest_res = run_pytest_face(run_dir)
     runtime_res = run_runtime_face(run_dir)
     w13_res = run_w13_face(fixdir)
 
     result = {
         "composite": label,
         "applied": mids,
+        "pytest_face": {k: v for k, v in pytest_res.items() if k != "raw"},
         "runtime_face": runtime_res,
         "w13_face": {k: v for k, v in w13_res.items() if k != "raw"},
         "run_dir": str(run_dir),
@@ -929,6 +1100,51 @@ def run_composite(mids: List[str]) -> Dict[str, object]:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     (LOG_DIR / f"COMPOSITE_{label.replace('+', '_plus_')}.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    return result
+
+
+def run_composite_registered(label: str) -> Dict[str, object]:
+    """COMPOSITES 로스터에 등재된 복합 mutant 를 실행.
+
+    COMPOSITES[label] = ([실제 mutant ID], 복합변이함수, 기대값)
+    """
+    if label not in COMPOSITES:
+        raise SystemExit(f"unknown composite: {label}")
+
+    mids, fn, expected = COMPOSITES[label]
+    run_dir = build_run_tree(label.replace("+", "_plus_"))
+    fixdir = run_dir / "tests" / "fixtures" / "cfp2978"
+
+    # 복합 변이 함수 사용 (M-13i + M-13k 등 동시 적용)
+    target, _, _ = MUTANTS[mids[0]]  # 첫 번째 mutant의 target 사용
+    tp = (run_dir / target) if ("/" in target or target.startswith(".")) \
+        else (fixdir / target)
+    src = tp.read_text(encoding="utf-8")
+    mutated = fn(src)
+    if mutated == src:
+        raise SystemExit(f"[NO-OP] {label}: 변이 무효 — 관측 폐기")
+    tp.write_text(mutated, encoding="utf-8", newline="")
+
+    pytest_res = run_pytest_face(run_dir)
+    runtime_res = run_runtime_face(run_dir)
+    w13_res = run_w13_face(fixdir)
+
+    result = {
+        "composite": label,
+        "composed_from": mids,
+        "expected": expected,
+        "pytest_face": {k: v for k, v in pytest_res.items() if k != "raw"},
+        "runtime_face": runtime_res,
+        "w13_face": {k: v for k, v in w13_res.items() if k != "raw"},
+        "run_dir": str(run_dir),
+    }
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    (LOG_DIR / f"COMPOSITE_{label.replace('+', '_plus_')}.pytest.txt").write_text(
+        pytest_res["raw"], encoding="utf-8")
+    (LOG_DIR / f"COMPOSITE_{label.replace('+', '_plus_')}.json").write_text(
+        json.dumps({**result, "w13_raw": w13_res["raw"]}, ensure_ascii=False, indent=2, default=str),
+        encoding="utf-8",
+    )
     return result
 
 
@@ -961,17 +1177,32 @@ def main() -> int:
                     metavar="MID",
                     help="여러 mutant 를 한 run tree 에 겹쳐 적용 후 런타임 면 측정 "
                          "(예: --compose M-13h M-13a)")
+    ap.add_argument("--run-all-composites", action="store_true",
+                    help="COMPOSITES 로스터의 모든 복합 mutant 실행")
     a = ap.parse_args()
 
     if a.list:
         for k, (t, _, e) in MUTANTS.items():
             print(f"{k:16} target={t:24} expected={e}")
+        print("\n=== COMPOSITES ===")
+        for label, (mids, _, e) in COMPOSITES.items():
+            print(f"{label:16} composed_from={'+'.join(mids):16} expected={e}")
         return 0
     if a.baseline:
         print(json.dumps(baseline(), ensure_ascii=False, indent=2, default=str))
         return 0
     if a.compose:
         print(json.dumps(run_composite(a.compose), ensure_ascii=False, indent=2, default=str))
+        return 0
+    if a.run_all_composites:
+        out = []
+        for label in COMPOSITES:
+            r = run_composite_registered(label)
+            out.append(r)
+            print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
+            print("-" * 78)
+        (LOG_DIR / "composites_summary.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
         return 0
 
     ids = list(MUTANTS) if a.run_all else (a.run or [])

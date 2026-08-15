@@ -4,7 +4,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -14,7 +14,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -23,7 +23,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -33,7 +33,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -42,7 +42,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -52,7 +52,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -61,7 +61,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -71,7 +71,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -80,7 +80,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -90,7 +90,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -99,7 +99,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -109,7 +109,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -118,7 +118,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -128,7 +128,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -137,7 +137,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -147,7 +147,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -156,7 +156,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -166,7 +166,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -175,7 +175,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -185,7 +185,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -194,7 +194,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -204,7 +204,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -213,7 +213,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -223,7 +223,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -232,7 +232,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -242,7 +242,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -251,7 +251,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -261,7 +261,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -270,7 +270,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -280,7 +280,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -289,7 +289,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -299,7 +299,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -308,7 +308,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -318,7 +318,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -327,7 +327,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -337,7 +337,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -346,7 +346,7 @@ E   yaml.constructor.ConstructorError: while constructing a mapping
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^
@@ -356,7 +356,7 @@ E   workflow_shape.ShapeError: YAML parse failed: C:\Users\mccho\AppData\Local\T
       in "<unicode string>", line 1, column 1:
         name: Parallel Work Sentinel Che ... 
         ^
-    duplicate key 'concurrency' (silent last-wins 차단 — DupSafeLoader)
+    duplicate key 'concurrency' (silent last-wins \ucc28\ub2e8 \u2014 DupSafeLoader)
       in "<unicode string>", line 40, column 1:
         concurrency:
         ^)
@@ -381,4 +381,4 @@ FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f9_defaults_run_shell_
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f10_job_defaults_run_shell_absent[mctrader]
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
-19 failed, 42 passed in 0.71s
+19 failed, 42 passed in 0.79s

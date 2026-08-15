@@ -24,7 +24,7 @@
       "leg3-own1": "GREEN",
       "leg3-own2": "GREEN",
       "env-file": "GREEN",
-      "env-keys": "RED: {'workflow': {'base': ['SENTINEL_TIER'], 'mutant': ['INJECTED_WF_KEY', 'SENTINEL_TIER']}, 'jobs.parallel-work-sentinel': {'base': None, 'mutant': ['INJECTED_JOB_KEY']}, 'jobs.parallel-work-sentinel.steps[1]': {'base': None, 'mutant': ['INJECTED_STEP_KEY']}}",
+      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[1]': {'base': None, 'mutant': ['INJECTED_STEP_KEY']}, 'jobs.parallel-work-sentinel': {'base': None, 'mutant': ['INJECTED_JOB_KEY']}, 'workflow': {'base': ['SENTINEL_TIER'], 'mutant': ['INJECTED_WF_KEY', 'SENTINEL_TIER']}}",
       "env-ctr": "GREEN",
       "shell-step": "GREEN",
       "shell-defaults": "GREEN",
@@ -45,6 +45,16 @@
         "parallel-work-sentinel-test": "ubuntu-latest"
       }
     }
+  },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 59,
+    "failed_tests": [
+      "test_f5_env_keys_pinned[mctrader]"
+    ],
+    "stderr_excerpt": ""
   },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envkey",
   "w13_raw": {

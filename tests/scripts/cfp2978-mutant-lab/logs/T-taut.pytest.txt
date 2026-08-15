@@ -1,32 +1,33 @@
-.FFFFF.....................................................FF            [100%]
+.FFFFF.................................................................. [ 96%]
+.FF                                                                      [100%]
 ================================== FAILURES ===================================
-E   AssertionError: E1: top_concurrency 가 None
+E   AssertionError: E1: top_concurrency �� None
     assert None is not None
      +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:253: AssertionError: E1: top_concurrency 가 None
-E   AssertionError: E2 전제: top_concurrency 부재
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:322: AssertionError: E1: top_concurrency �� None
+E   AssertionError: E2 ����: top_concurrency ����
     assert None is not None
      +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:263: AssertionError: E2 전제: top_concurrency 부재
-E   AssertionError: E3 전제: top_concurrency 부재
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:332: AssertionError: E2 ����: top_concurrency ����
+E   AssertionError: E3 ����: top_concurrency ����
     assert None is not None
      +  where None = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).top_concurrency
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:280: AssertionError: E3 전제: top_concurrency 부재
-E   AssertionError: E4 양성 앵커 실패: top-level concurrency 부재 — []
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:349: AssertionError: E3 ����: top_concurrency ����
+E   AssertionError: E4 \uc591\uc131 \uc575\ucee4 \uc2e4\ud328: top-level concurrency \ubd80\uc7ac \u2014 []
     assert 'concurrency' in []
      +  where [] = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).concurrency_paths
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:298: AssertionError: E4 양성 앵커 실패: top-level concurrency 부재 — []
-E   Failed: E5: timeout 경로 집합 불일치 (위반 경로 열거)
-      소실: ['jobs.parallel-work-sentinel-test.timeout-minutes', 'jobs.parallel-work-sentinel.timeout-minutes']
-      신규: []
-      값변경: []
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:325: Failed: E5: timeout 경로 집합 불일치 (위반 경로 열거)
-E   AssertionError: R-1: 앵커 미적중 — 변이 무효. fixture 문면이 바뀌었다면 앵커를 갱신하라.
-    assert "concurrency:\n  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: true\n" in 'name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)\n# Security: third-party actions are SHA-pinned pe...eck-parallel-work-sentinel.sh (회귀 시 exit 1 차단)\n        run: bash tests/scripts/test_check-parallel-work-sentinel.sh\n'
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:662: AssertionError: R-1: 앵커 미적중 — 변이 무효. fixture 문면이 바뀌었다면 앵커를 갱신하라.
-E   AssertionError: T-taut: 실 오라클이 두 입력을 구별하지 못했다 — 밀짚과 판별력이 같아졌고, mctrader 의 로컬 개조가 정본 형상과 구분되지 않는다는 뜻이다 (top_concurrency=None, timeout_paths={})
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\T-taut\\tests\\scripts\\test_cfp2978_workflow_shape.py:367: AssertionError: E4 \uc591\uc131 \uc575\ucee4 \uc2e4\ud328: top-level concurrency \ubd80\uc7ac \u2014 []
+E   Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
+      �ҽ�: ['jobs.parallel-work-sentinel-test.timeout-minutes', 'jobs.parallel-work-sentinel.timeout-minutes']
+      �ű�: []
+      ������: []
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:394: Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
+E   AssertionError: R-1: \uc575\ucee4 \ubbf8\uc801\uc911 \u2014 \ubcc0\uc774 \ubb34\ud6a8. fixture \ubb38\uba74\uc774 \ubc14\ub00c\uc5c8\ub2e4\uba74 \uc575\ucee4\ub97c \uac31\uc2e0\ud558\ub77c.
+    assert "concurrency:\n  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: true\n" in 'name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)\n# Security: third-party actions are SHA-pinned pe...eck-parallel-work-sentinel.sh (ȸ�� �� exit 1 ����)\n        run: bash tests/scripts/test_check-parallel-work-sentinel.sh\n'
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\T-taut\\tests\\scripts\\test_cfp2978_workflow_shape.py:1015: AssertionError: R-1: \uc575\ucee4 \ubbf8\uc801\uc911 \u2014 \ubcc0\uc774 \ubb34\ud6a8. fixture \ubb38\uba74\uc774 \ubc14\ub00c\uc5c8\ub2e4\uba74 \uc575\ucee4\ub97c \uac31\uc2e0\ud558\ub77c.
+E   AssertionError: T-taut: \uc2e4 \uc624\ub77c\ud074\uc774 \ub450 \uc785\ub825\uc744 \uad6c\ubcc4\ud558\uc9c0 \ubabb\ud588\ub2e4 \u2014 \ubc00\uc9da\uacfc \ud310\ubcc4\ub825\uc774 \uac19\uc544\uc84c\uace0, mctrader \uc758 \ub85c\uceec \uac1c\uc870\uac00 \uc815\ubcf8 \ud615\uc0c1\uacfc \uad6c\ubd84\ub418\uc9c0 \uc54a\ub294\ub2e4\ub294 \ub73b\uc774\ub2e4 (top_concurrency=None, timeout_paths={})
     assert False
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\T-taut\tests\scripts\test_cfp2978_workflow_shape.py:741: AssertionError: T-taut: 실 오라클이 두 입력을 구별하지 못했다 — 밀짚과 판별력이 같아졌고, mctrader 의 로컬 개조가 정본 형상과 구분되지 않는다는 뜻이다 (top_concurrency=None, timeout_paths={})
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\T-taut\\tests\\scripts\\test_cfp2978_workflow_shape.py:1094: AssertionError: T-taut: \uc2e4 \uc624\ub77c\ud074\uc774 \ub450 \uc785\ub825\uc744 \uad6c\ubcc4\ud558\uc9c0 \ubabb\ud588\ub2e4 \u2014 \ubc00\uc9da\uacfc \ud310\ubcc4\ub825\uc774 \uac19\uc544\uc84c\uace0, mctrader \uc758 \ub85c\uceec \uac1c\uc870\uac00 \uc815\ubcf8 \ud615\uc0c1\uacfc \uad6c\ubd84\ub418\uc9c0 \uc54a\ub294\ub2e4\ub294 \ub73b\uc774\ub2e4 (top_concurrency=None, timeout_paths={})
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e1_mctrader_top_concurrency_exists
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
@@ -35,4 +36,4 @@ FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e4_mctrader_no_job_con
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_paths_pinned
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_taut_template_vs_mctrader_runs_on
-7 failed, 54 passed in 0.80s
+7 failed, 68 passed in 1.07s

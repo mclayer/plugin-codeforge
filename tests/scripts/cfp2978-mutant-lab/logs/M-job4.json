@@ -46,6 +46,16 @@
       }
     }
   },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 46,
+    "failed_tests": [
+      "test_e7_backtest_no_job_concurrency[mctrader-backtest]"
+    ],
+    "stderr_excerpt": ""
+  },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-job4",
   "w13_raw": {
     "ownership": {

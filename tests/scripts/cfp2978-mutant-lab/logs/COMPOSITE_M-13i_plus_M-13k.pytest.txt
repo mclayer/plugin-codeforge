@@ -1,0 +1,22 @@
+...............................................................F...F.... [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.c [wrapper-canonical]: step_shell ����ġ
+        ����: {'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None, None, 'bash {0}', None]}
+        ���: {'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None, None, None, None]}
+    assert {'parallel-wo...h {0}', None]} == {'parallel-wo..., None, None]}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': [None, None, None, None, 'bash {0}', None]} != {'parallel-work-sentinel-test': [None, None, None, None, None, None]}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13i_plus_M-13k\tests\scripts\test_cfp2978_workflow_shape.py:820: AssertionError: W-16.c [wrapper-canonical]: step_shell ����ġ
+E   AssertionError: W-16.e [wrapper-canonical]: A8 idiom regex `; true` \uac80\ucd9c \u2014 W-3b step run \ubb38\uba74
+    assert not <re.Match object; span=(208, 214), match='; true'>
+     +  where <re.Match object; span=(208, 214), match='; true'> = <function search at 0x0000016C658C7690>('; true', 'python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true')
+     +    where <function search at 0x0000016C658C7690> = re.search
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13i_plus_M-13k\\tests\\scripts\\test_cfp2978_workflow_shape.py:924: AssertionError: W-16.e [wrapper-canonical]: A8 idiom regex `; true` \uac80\ucd9c \u2014 W-3b step run \ubb38\uba74
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_c_job2_step_shell_all_none[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_e_pytest_step_run_free_of_a8_idioms[wrapper-canonical]
+2 failed, 73 passed in 0.89s

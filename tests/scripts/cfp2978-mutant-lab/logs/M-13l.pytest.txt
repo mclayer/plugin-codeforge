@@ -1,9 +1,2 @@
-..................................................F..........            [100%]
-================================== FAILURES ===================================
-E   AssertionError: F9 [mctrader]: workflow-level defaults.run.shell 주입 검출 — 'bash {0}'
-    assert 'bash {0}' == None
-     +  where 'bash {0}' = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).defaults_run_shell
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13l\tests\scripts\test_cfp2978_workflow_shape.py:585: AssertionError: F9 [mctrader]: workflow-level defaults.run.shell 주입 검출 — 'bash {0}'
-=========================== short test summary info ===========================
-FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f9_defaults_run_shell_absent[mctrader]
-1 failed, 60 passed in 1.26s
+.............................................................            [100%]
+61 passed in 1.02s

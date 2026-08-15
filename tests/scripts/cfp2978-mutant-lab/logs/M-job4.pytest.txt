@@ -1,11 +1,11 @@
 .........F...................................................            [100%]
 ================================== FAILURES ===================================
-E   AssertionError: E7 [mctrader-backtest]: job 하위 concurrency 경로 검출 — ['jobs.parallel-work-sentinel.concurrency']
+E   AssertionError: E7 [mctrader-backtest]: job \ud558\uc704 concurrency \uacbd\ub85c \uac80\ucd9c \u2014 ['jobs.parallel-work-sentinel.concurrency']
     assert ['jobs.parall....concurrency'] == []
       
       Left contains one more item: 'jobs.parallel-work-sentinel.concurrency'
       Use -v to get more diff
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-job4\tests\scripts\test_cfp2978_workflow_shape.py:354: AssertionError: E7 [mctrader-backtest]: job 하위 concurrency 경로 검출 — ['jobs.parallel-work-sentinel.concurrency']
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-job4\\tests\\scripts\\test_cfp2978_workflow_shape.py:354: AssertionError: E7 [mctrader-backtest]: job \ud558\uc704 concurrency \uacbd\ub85c \uac80\ucd9c \u2014 ['jobs.parallel-work-sentinel.concurrency']
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e7_backtest_no_job_concurrency[mctrader-backtest]
-1 failed, 60 passed in 0.66s
+1 failed, 60 passed in 1.16s

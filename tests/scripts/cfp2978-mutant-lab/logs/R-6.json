@@ -46,6 +46,16 @@
       }
     }
   },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 61,
+    "failed_tests": [
+      "test_e5_mctrader_timeout_paths_pinned"
+    ],
+    "stderr_excerpt": ""
+  },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\R-6",
   "w13_raw": {
     "ownership": {

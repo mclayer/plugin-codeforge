@@ -17,8 +17,9 @@
 정의역 선언 (§8.D rule 3)
 ────────────────────────────────────────────────────────────────────────────
 전 leg 의 정의역 = **구조(structure)**. 관측 채널 = W-13 `DupSafeLoader` 파싱 산출
-(`WorkflowShape` 필드). text-grep 정의역 leg 은 본 파일에 없다.
-유일 예외 = `test_f0_*` (본 파일 소스 자기 점검, 정의역 = text).
+(`WorkflowShape` 필드). text-grep 정의역 leg 은 본 파일에 **부분 존재**한다.
+예외 = `test_f0_*` (본 파일 소스 자기 점검, 정의역 = text) + `test_w16_e_*`
+(wrapper step run 문면 스캔) + `test_w16_g_*` (wrapper step 명령 수 핀).
 
 ────────────────────────────────────────────────────────────────────────────
 leg 인벤토리 — shape 14 필드 전건 피복
@@ -53,6 +54,7 @@ pristine fixture 실측(`python scripts/lib/workflow_shape.py <fixture>`)이다.
 
 from __future__ import annotations
 
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -84,6 +86,7 @@ if str(_W13_ROOT / "scripts" / "lib") not in sys.path:
 from workflow_shape import (  # noqa: E402  (sys.path 주입 이후여야 함)
     ShapeError,
     WorkflowShape,
+    dup_safe_load,
     load_workflow_shape,
     runs_on_local_delta,
 )
@@ -98,6 +101,13 @@ CONSUMER_FIXTURES = {
     "mctrader-engine": "mctrader-engine.yml",
 }
 ALL_REPOS = tuple(CONSUMER_FIXTURES)
+
+# ── W-16 wrapper 정의역 확장 ──────────────────────────────────────────────────
+WRAPPER_WORKFLOWS = {
+    "wrapper-canonical": ".github/workflows/parallel-work-sentinel-check.yml",
+    "wrapper-twin": "templates/github-workflows/parallel-work-sentinel-check.yml",
+}
+WRAPPER_FACES = tuple(WRAPPER_WORKFLOWS)
 
 JOB1 = "parallel-work-sentinel"
 JOB2 = "parallel-work-sentinel-test"
@@ -156,6 +166,45 @@ PIN_STEP_SHELL: Dict[str, List[Any]] = {JOB1: [None, None, None], JOB2: [None, N
 PIN_DEFAULTS_RUN_SHELL = None
 PIN_JOB_DEFAULTS_RUN_SHELL: Dict[str, Any] = {JOB1: None, JOB2: None}
 
+# ── W-16 wrapper 핀 리터럴 (§8.A — 출처 = pristine wrapper 실측, commit 8a9cbf944) ──
+# wrapper job_ids = consumer 와 동일 (PIN_JOB_IDS 재사용)
+# wrapper coe_paths = consumer 와 동일 (PIN_COE_PATHS 재사용)
+# wrapper step_shell: job1=[None]*3, job2=[None]*6
+PIN_WRAPPER_STEP_SHELL: Dict[str, List[Any]] = {JOB1: [None, None, None], JOB2: [None] * 6}
+
+# W-16 job2 step 명 (텍스트 정의역)
+PIN_WRAPPER_JOB2_STEP_NAMES = {
+    2: "Install test dependencies",
+    3: "Collect pytest tests (W-3b-1, verify node IDs present)",
+    4: "Run pytest tests (W-3b)",
+}
+
+# W-16 job2 step 명령 수 (텍스트 정의역)
+PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS = {
+    "Install test dependencies": 1,
+    "Collect pytest tests (W-3b-1, verify node IDs present)": 8,
+    "Run pytest tests (W-3b)": 1,
+}
+
+# W-16 A8 idioms (bash rc 흡수 관용구) — 6종
+# W-13 파서로는 관측 불가(composite action/여러 줄 리다이렉트 미포섭)이므로
+# 텍스트 스캔으로 정의역 보완
+#
+# ★ (2) 정직한 표기: 튜플 원소가 regex 인지 리터럴 문자열인지 명시.
+#   "set +e" 는 regex 가 아니라 리터럴이다 (정규식에서 + 는 수량자).
+#   반례) re.search("set +e", "set e") -> match (조용한 무력화).
+#   따라서 리터럴 needle 을 쓸 때는 `in` 연산자로만 검사하거나, 명시적으로
+#   "regex 아님" 을 자료구조에 표기해야 한다 (다음 사람이 re.search 로 바꾸는
+#   순간 무력화 차단).
+_A8_IDIOMS = (
+    (r"\|\| true", "|| true"),    # regex, display
+    (r"\|\| :", "|| :"),
+    (r"\|\| exit 0", "|| exit 0"),
+    (r"; true", "; true"),
+    ("set +e", "set +e"),         # ★ literal (not regex) — `in` 연산자로만 검사
+    (r"\bif\b[^\n]*;\s*then\b", "if …; then"),  # ★ (1) 좁혀짐: if 문만 (주석 제외)
+)
+
 
 # ── 로딩 (W-13 단일 진입점) ──────────────────────────────────────────────────
 def shape_of(repo: str) -> WorkflowShape:
@@ -165,6 +214,14 @@ def shape_of(repo: str) -> WorkflowShape:
     삼키지 않는다 — 읽지 못한 상태의 종결은 GREEN 이 아니다 (INV-5).
     """
     return load_workflow_shape(str(FIXTURE_DIR / CONSUMER_FIXTURES[repo]))
+
+
+def wrapper_shape_of(face: str) -> WorkflowShape:
+    """`face` wrapper workflow 의 `WorkflowShape` (W-13 `load_workflow_shape` 단일 경로).
+
+    W-16 정의역 확장. wrapper 자신의 workflow 2 면(canonical + twin template).
+    """
+    return load_workflow_shape(str(_W13_ROOT / WRAPPER_WORKFLOWS[face]))
 
 
 # ── 양성 앵커 (§8.D rule 2 — 부재-assert 전용) ───────────────────────────────
@@ -195,6 +252,18 @@ def _anchor_run_step(shape: WorkflowShape, repo: str) -> None:
     assert RUN_STEP_ENV_PATH in shape.env_keys, (
         f"[{repo}] 양성 앵커 실패 — 스캔 대상 run step {RUN_STEP_ENV_PATH} 부재 "
         f"(env_keys 경로={sorted(shape.env_keys)}). env_file_keys 부재 판정이 공허해진다."
+    )
+
+
+def _anchor_wrapper_steps(shape: WorkflowShape, face: str) -> None:
+    """"wrapper job2 의 step 을 실제로 열거했다" 양성 앵커 (step 수 6).
+
+    W-16 wrapper 전용. job2 (parallel-work-sentinel-test) 는 6 step을 보유.
+    """
+    _anchor_jobs(shape, face)
+    counts = {jid: len(shape.step_if.get(jid, [])) for jid in PIN_JOB_IDS}
+    assert counts == {JOB1: 3, JOB2: 6}, (
+        f"[{face}] 양성 앵커 실패 — step 수={counts}, 기대={{'{JOB1}': 3, '{JOB2}': 6}}"
     )
 
 
@@ -642,6 +711,290 @@ def test_f11_duplicate_key_fail_closed():
     assert exc.value.error_kind == "workflow_parse_error", (
         f"F11: error_kind 불일치 — {exc.value.error_kind!r}, 기대 'workflow_parse_error'"
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# W-16 — wrapper 정의역 확장 (§8.B leg③ 표면 보호).  정의역 = 구조 + 텍스트
+#        wrapper 자신의 workflow 2 면(canonical + twin template) 을 정의역에 편입
+# ════════════════════════════════════════════════════════════════════════════
+#
+# ★ (6-a) 과잉 RED 오독 차단 + 곱 실측표
+# ───────────────────────────────────────────────────────────────────────────
+# A8 6종 중 단독으로 흡수하는 것은 5종이고, `; true` 만 `bash {0}` (A3·A4·A5)
+# **곱**에서만 흡수한다 (단독은 휴면). 따라서 본 leg 이 `; true` 에 RED 를 내는
+# 것은 fail-closed 방향의 **과잉 RED**이며, "정적 RED = 실 흡수"로 읽으면 오독이다.
+#
+# | 관용구 | `bash -e` (정본 기본) | `bash {0}` (A3/A4/A5 주입) |
+# |---|---|---|
+# | `false` | 1 | 1 |
+# | `false \|\| true` | 0 | 0 |
+# | `false \|\| :` | 0 | 0 |
+# | `false \|\| exit 0` | 0 | 0 |
+# | **`false ; true`** | **1** | **0** |  ← 곱에서만 흡수
+# | `set +e` / `exit 0` | 0 | 0 |
+# | `if false; then :; fi` | 0 | 0 |
+#
+# ★ (6-b) Change Plan 문면 오류 + W-3b-1 활성 표면
+# ───────────────────────────────────────────────────────────────────────────
+# CP §5.1 W-16 행 괄호는 "W-3b·W-3b-1 = 단일 명령 step" 이라 쓰지만, **W-3b-1
+# 은 거짓**이다 — 실측 **8 줄** (비어있지 않은 줄 수). 단일 명령인 것은 **W-3b 뿐**
+# 이고, A3·A4·A5 의 휴면은 rc 를 나르는 **W-3b 가 단일 명령**이라는 사실에 근거.
+#
+# 더 중요한 사실: **W-3b-1 은 휴면이 아니라 활성 흡수 표면**이다. W-3b-1 에 `shell:`
+# 이 주입되면 수집 실패가 조용히 삼켜진다. 이것이 `test_w16_c` 가 job2 6 step 전건
+# 의 `step_shell` 을 `[None]*6` 으로 못박는 실질 근거다 — W-3b 만 지키면 충분하다는
+# 읽기는 틀렸다.
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_a_wrapper_face_anchor(face):
+    """W-16.a — wrapper workflow 양성 앵커 (파일 실재, job 수, step 수, dup_safe_load).
+
+    W-13 결속 자기 점검과 동형. wrapper 2 면 모두 W-13 으로 로드되고, 기본 형상을
+    반복적으로 확인한다.
+    """
+    shape = wrapper_shape_of(face)
+
+    # 파일 실재
+    wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
+    assert wf_path.is_file(), f"W-16.a [{face}]: workflow 파일 부재 — {wf_path}"
+
+    # W-13 로드 확인
+    assert isinstance(shape, WorkflowShape), (
+        f"W-16.a [{face}]: shape 형이 WorkflowShape 아님 — {type(shape)}"
+    )
+    assert load_workflow_shape.__module__ == "workflow_shape", (
+        f"W-16.a [{face}]: 모듈이 workflow_shape 아님 — {load_workflow_shape.__module__}"
+    )
+
+    # 기본 형상
+    assert shape.job_ids == PIN_JOB_IDS, (
+        f"W-16.a [{face}]: job_ids 불일치 — {shape.job_ids}"
+    )
+    assert len(shape.step_if[JOB1]) == 3, (
+        f"W-16.a [{face}]: job1 step 수 불일치 — {len(shape.step_if[JOB1])}"
+    )
+    assert len(shape.step_if[JOB2]) == 6, (
+        f"W-16.a [{face}]: job2 step 수 불일치 — {len(shape.step_if[JOB2])}"
+    )
+
+    # dup_safe_load 모듈 동일성
+    assert dup_safe_load.__module__ == "workflow_shape", (
+        f"W-16.a [{face}]: dup_safe_load 모듈이 workflow_shape 아님 — {dup_safe_load.__module__}"
+    )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_b_job2_coe_paths_empty_strict(face):
+    """W-16.b — wrapper job2 `coe_paths_of` 공정 (§8.B leg③ 표면).
+
+    §8.D rule 2 — 부재-assert 양성 앵커와 AND. job2 는 continue-on-error 를 보유하지
+    않는다는 것을 직접 확인하고, job1 은 기대 핀과 일치함을 동시 보증한다.
+    """
+    shape = wrapper_shape_of(face)
+
+    _anchor_wrapper_steps(shape, face)
+
+    # job2 는 coe 부재 (엄격한 판정)
+    job2_coe = shape.coe_paths_of(JOB2)
+    assert job2_coe == [], (
+        f"W-16.b [{face}]: job2 continue-on-error 검출 — {job2_coe}"
+    )
+
+    # job1 은 기대 핀 일치 (양성 앵커)
+    job1_coe = shape.coe_paths_of(JOB1)
+    assert job1_coe == PIN_COE_PATHS, (
+        f"W-16.b [{face}]: job1 coe_paths_of 불일치 — {job1_coe}"
+    )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_c_job2_step_shell_all_none(face):
+    """W-16.c — wrapper job2 `step_shell` 전문 [None]*6 (A3 봉인).
+
+    job1 도 동시 검증해 형제 독립성을 보장한다.
+    """
+    shape = wrapper_shape_of(face)
+
+    _anchor_wrapper_steps(shape, face)
+
+    actual = {k: list(v) for k, v in shape.step_shell.items()}
+    assert actual == PIN_WRAPPER_STEP_SHELL, (
+        f"W-16.c [{face}]: step_shell 불일치\n"
+        f"  실측: {actual}\n"
+        f"  기대: {PIN_WRAPPER_STEP_SHELL}"
+    )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_d_defaults_run_shell_absent(face):
+    """W-16.d — wrapper `defaults.run.shell` 및 job defaults 부재 (A4·A5 봉인).
+
+    양성 앵커 (job 확정)와 AND.
+    """
+    shape = wrapper_shape_of(face)
+
+    _anchor_wrapper_steps(shape, face)
+
+    assert shape.defaults_run_shell is None, (
+        f"W-16.d [{face}]: defaults_run_shell 존재 — {shape.defaults_run_shell!r}"
+    )
+    assert dict(shape.job_defaults_run_shell) == PIN_JOB_DEFAULTS_RUN_SHELL, (
+        f"W-16.d [{face}]: job_defaults_run_shell 불일치 — {dict(shape.job_defaults_run_shell)}"
+    )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_e_pytest_step_run_free_of_a8_idioms(face):
+    """W-16.e — wrapper job2 W-3b step `run` 문면에 A8 idioms 6종 부재 (텍스트 정의역).
+
+    A8 = bash rc 흡수 관용구: `|| true` · `|| :` · `|| exit 0` · `; true` ·
+    `set +e` · `if …; then` 등 6종. W-13 파서는 composite action / 여러 줄
+    리다이렉트를 미포섭하므로 **텍스트 스캔으로 보완 정의역**.
+
+    정의역: W-3b step ("Run pytest tests (W-3b)") 의 `run` 문면.
+
+    ★ (3) 명 기반 조회: step 인덱스 고정(`steps[4]`) 금지. step 이 하나 삽입되면
+      엉뚱한 step 을 스캔하고도 GREEN 이 된다. `test_w16_g` 처럼 명으로 찾아야 한다.
+    """
+    wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
+    with open(wf_path, "r", encoding="utf-8") as f:
+        data = dup_safe_load(f.read())  # ★ (4) dup_safe_load(f) → dup_safe_load(f.read())
+
+    jobs = data.get("jobs", {})
+    job2 = jobs.get(JOB2, {})
+    steps = job2.get("steps", [])
+
+    # W-3b step 을 명으로 찾기
+    w3b_step_name = "Run pytest tests (W-3b)"
+    w3b_step = None
+    for s in steps:
+        if s.get("name") == w3b_step_name:
+            w3b_step = s
+            break
+    assert w3b_step is not None, (
+        f"W-16.e [{face}]: W-3b step 명 미검출 — {w3b_step_name}"
+    )
+    # 찾은 step 의 name 을 다시 assert 해 자기 앵커를 세우기
+    assert w3b_step.get("name") == w3b_step_name, (
+        f"W-16.e [{face}]: W-3b step name 재확인 실패 — {w3b_step.get('name')}"
+    )
+    run_text = w3b_step.get("run", "")
+
+    assert run_text, f"W-16.e [{face}]: W-3b step run 부재 — {w3b_step}"
+
+    # 술어 비공허 통제 — 합성 문자열로 needle 이 실제로 작동하는지 확인
+    for idiom_pattern, idiom_display in _A8_IDIOMS:
+        # 술어 확인용 probe
+        if idiom_pattern == "set +e":
+            # ★ (2) 리터럴 needle: `in` 연산자로만 검사
+            probe = f"echo hello {idiom_display} world"
+            assert idiom_pattern in probe, (
+                f"W-16.e 술어 고장: needle `{idiom_display}` 이 합성 문자열을 못 잡음"
+            )
+        else:
+            # ★ (1) regex idiom — `if …; then` 패턴은 두 방향 probe 로 정직성 확인
+            if idiom_display == "if …; then":
+                # 양성 probe: if false; then :; fi 는 매치되어야 함
+                probe_positive = "if false; then :; fi"
+                match_positive = re.search(idiom_pattern, probe_positive)
+                assert match_positive, (
+                    f"W-16.e 술어 고장: regex `{idiom_pattern}` 이 `{probe_positive}` 를 못 잡음 (양성)"
+                )
+                # 음성 probe: verify if present 는 매치되면 안 됨 (주석)
+                probe_negative = "verify if present"
+                match_negative = re.search(idiom_pattern, probe_negative)
+                assert not match_negative, (
+                    f"W-16.e 술어 고장: regex `{idiom_pattern}` 이 `{probe_negative}` 를 잘못 잡음 (음성)"
+                )
+            else:
+                # 다른 regex idioms: display 값을 실제 문자열로 만들어 probe
+                probe = f"echo hello {idiom_display} world"
+                assert re.search(idiom_pattern, probe), (
+                    f"W-16.e 술어 고장: needle regex `{idiom_pattern}` 이 `{idiom_display}` 를 못 잡음"
+                )
+
+    # 실제 스캔 — A8 idiom 부재
+    for idiom_pattern, idiom_display in _A8_IDIOMS:
+        if idiom_pattern == "set +e":
+            # ★ (2) 리터럴 needle: `in` 연산자로만 검사
+            assert idiom_pattern not in run_text, (
+                f"W-16.e [{face}]: A8 idiom `{idiom_display}` 검출 — W-3b step run 문면에 부재해야 함"
+            )
+        else:
+            # ★ (1) regex idiom (포함 새로운 `if …; then` 패턴)
+            assert not re.search(idiom_pattern, run_text), (
+                f"W-16.e [{face}]: A8 idiom regex `{idiom_display}` 검출 — W-3b step run 문면"
+            )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_f_job2_step_names_pinned(face):
+    """W-16.f — wrapper job2 3 step 명 pin (텍스트 정의역).
+
+    W-3b-1·W-3b 등 공식 명이 step 이름으로 반영되도록 정의역 핀.
+    """
+    wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
+    with open(wf_path, "r", encoding="utf-8") as f:
+        data = dup_safe_load(f.read())  # ★ (4) dup_safe_load(f) → dup_safe_load(f.read())
+
+    jobs = data.get("jobs", {})
+    job2 = jobs.get(JOB2, {})
+    steps = job2.get("steps", [])
+
+    for idx, expected_name in PIN_WRAPPER_JOB2_STEP_NAMES.items():
+        assert len(steps) > idx, f"W-16.f [{face}]: step 인덱스 {idx} 부족"
+        actual_name = steps[idx].get("name", "<unnamed>")
+        assert actual_name == expected_name, (
+            f"W-16.f [{face}] step[{idx}]: 명 불일치\n"
+            f"  기대: {expected_name!r}\n"
+            f"  실측: {actual_name!r}"
+        )
+
+
+@pytest.mark.parametrize("face", WRAPPER_FACES)
+def test_w16_g_step_command_shape_pinned(face):
+    """W-16.g — wrapper job2 3 step 비어있지 않은 줄 수 pin (텍스트 정의역).
+
+    ★ (5) 문면 정직화: 계산값은 **명령 줄의 개수가 아니라 비어있지 않은 줄의 개수**.
+      주석 줄도 세고, 줄 연속(백슬래시로 이음)으로 이어진 한 명령은 2로 센다.
+      이것이 "명령 수"의 근사이다.
+
+    W-3b-1 에는 8개 비어있지 않은 줄, W-3b 에는 1개. 각 step 의 `run` 문면에서
+    계산한다.
+    """
+    wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
+    with open(wf_path, "r", encoding="utf-8") as f:
+        data = dup_safe_load(f.read())  # ★ (4) dup_safe_load(f) → dup_safe_load(f.read())
+
+    jobs = data.get("jobs", {})
+    job2 = jobs.get(JOB2, {})
+    steps = job2.get("steps", [])
+
+    for step_name, expected_count in PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS.items():
+        # step 찾기
+        step = None
+        for s in steps:
+            if s.get("name") == step_name:
+                step = s
+                break
+        assert step is not None, (
+            f"W-16.g [{face}]: step 명 미검출 — {step_name}"
+        )
+
+        run_text = step.get("run", "")
+        assert run_text, (
+            f"W-16.g [{face}] {step_name!r}: run 부재"
+        )
+
+        # 비어있지 않은 줄 수 계산 (공백 제거 후 줄 필터)
+        lines = [line.strip() for line in run_text.split("\n") if line.strip()]
+        actual_count = len(lines)
+
+        assert actual_count == expected_count, (
+            f"W-16.g [{face}] {step_name!r}: 비어있지 않은 줄 수 불일치\n"
+            f"  기대: {expected_count}\n"
+            f"  실측: {actual_count}\n"
+            f"  줄 목록: {lines}"
+        )
 
 
 # ════════════════════════════════════════════════════════════════════════════

@@ -1,8 +1,8 @@
 [
   {
-    "mutant": "M-13a",
-    "target": "scripts/lib/check_parallel_work_sentinel.py",
-    "expected": "RED (런타임 kill — determined 부재)",
+    "mutant": "M-13l",
+    "target": ".github/workflows/parallel-work-sentinel-check.yml",
+    "expected": "정적 RED (w16_d: defaults_run_shell 신설) | 중첩 runtime: delta 소멸",
     "pytest_face": {
       "returncode": 0,
       "failed_legs": [],
@@ -44,17 +44,13 @@
       }
     },
     "runtime_face": {
-      "verdict": "RED",
-      "returncode": 1,
-      "rc_after_coe": 1,
-      "stdout_lines": 123,
-      "failed_tests": [
-        "test_2976_c_determined_contract",
-        "test_c1_currency_match_current_blob",
-        "test_d2_born_broken_old_blob_paired_observation"
-      ],
+      "verdict": "GREEN",
+      "returncode": 0,
+      "rc_after_coe": 0,
+      "stdout_lines": 24,
+      "failed_tests": [],
       "stderr_excerpt": ""
     },
-    "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13a"
+    "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13l"
   }
 ]

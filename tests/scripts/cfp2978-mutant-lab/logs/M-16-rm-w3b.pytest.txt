@@ -1,0 +1,54 @@
+...........................................................F.F.F.F.F.F.F [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.a [wrapper-canonical]: job2 step \uc218 \ubd88\uc77c\uce58 \u2014 5
+    assert 5 == 6
+     +  where 5 = len([None, None, None, None, None])
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:775: AssertionError: W-16.a [wrapper-canonical]: job2 step \uc218 \ubd88\uc77c\uce58 \u2014 5
+E   AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:265: AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:265: AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:265: AssertionError: [wrapper-canonical] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: W-16.e [wrapper-canonical]: W-3b step \uba85 \ubbf8\uac80\ucd9c \u2014 Run pytest tests (W-3b)
+    assert None is not None
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:873: AssertionError: W-16.e [wrapper-canonical]: W-3b step \uba85 \ubbf8\uac80\ucd9c \u2014 Run pytest tests (W-3b)
+E   AssertionError: W-16.f [wrapper-canonical] step[4]: �� ����ġ
+        ���: 'Run pytest tests (W-3b)'
+        ����: 'Run test_check-parallel-work-sentinel.sh (ȸ�� �� exit 1 ����)'
+    assert 'Run test_che... �� exit 1 ����)' == 'Run pytest tests (W-3b)'
+      
+      - Run pytest tests (W-3b)
+      + Run test_check-parallel-work-sentinel.sh (ȸ�� �� exit 1 ����)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-w3b\tests\scripts\test_cfp2978_workflow_shape.py:946: AssertionError: W-16.f [wrapper-canonical] step[4]: �� ����ġ
+E   AssertionError: W-16.g [wrapper-canonical]: step \uba85 \ubbf8\uac80\ucd9c \u2014 Run pytest tests (W-3b)
+    assert None is not None
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-w3b\\tests\\scripts\\test_cfp2978_workflow_shape.py:979: AssertionError: W-16.g [wrapper-canonical]: step \uba85 \ubbf8\uac80\ucd9c \u2014 Run pytest tests (W-3b)
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_a_wrapper_face_anchor[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_b_job2_coe_paths_empty_strict[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_c_job2_step_shell_all_none[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_d_defaults_run_shell_absent[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_e_pytest_step_run_free_of_a8_idioms[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_f_job2_step_names_pinned[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_g_step_command_shape_pinned[wrapper-canonical]
+7 failed, 68 passed in 1.40s

@@ -54,6 +54,22 @@
       }
     }
   },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 207,
+    "failed_tests": [
+      "test_e1_mctrader_top_concurrency_exists",
+      "test_e2_mctrader_group_equals_pin",
+      "test_e3_mctrader_template_group_absent",
+      "test_e4_mctrader_no_job_concurrency",
+      "test_e5_mctrader_timeout_paths_pinned",
+      "test_oracle_mutation_r1_remove_mctrader_top_concurrency",
+      "test_oracle_taut_template_vs_mctrader_runs_on"
+    ],
+    "stderr_excerpt": ""
+  },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\T-taut",
   "w13_raw": {
     "ownership": {

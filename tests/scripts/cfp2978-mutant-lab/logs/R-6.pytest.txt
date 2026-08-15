@@ -1,10 +1,10 @@
 .....F.......................................................            [100%]
 ================================== FAILURES ===================================
-E   Failed: E5: timeout 경로 집합 불일치 (위반 경로 열거)
-      소실: ['jobs.parallel-work-sentinel.timeout-minutes']
-      신규: ['jobs.parallel-work-sentinel.steps[0].timeout-minutes']
-      값변경: []
-C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-6\tests\scripts\test_cfp2978_workflow_shape.py:325: Failed: E5: timeout 경로 집합 불일치 (위반 경로 열거)
+E   Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
+      �ҽ�: ['jobs.parallel-work-sentinel.timeout-minutes']
+      �ű�: ['jobs.parallel-work-sentinel.steps[0].timeout-minutes']
+      ������: []
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-6\tests\scripts\test_cfp2978_workflow_shape.py:325: Failed: E5: timeout ��� ���� ����ġ (���� ��� ����)
 =========================== short test summary info ===========================
 FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e5_mctrader_timeout_paths_pinned
-1 failed, 60 passed in 0.97s
+1 failed, 60 passed in 0.82s

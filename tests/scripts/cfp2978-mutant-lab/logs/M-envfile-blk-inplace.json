@@ -42,6 +42,14 @@
       }
     }
   },
+  "runtime_face": {
+    "verdict": "GREEN",
+    "returncode": 0,
+    "rc_after_coe": 0,
+    "stdout_lines": 24,
+    "failed_tests": [],
+    "stderr_excerpt": ""
+  },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile-blk-inplace",
   "w13_raw": {
     "ownership": {

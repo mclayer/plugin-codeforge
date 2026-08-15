@@ -32,7 +32,7 @@
       "leg3-own1": "RED: ['jobs.parallel-work-sentinel.steps[3].continue-on-error']",
       "leg3-own2": "GREEN",
       "env-file": "RED: {'parallel-work-sentinel': ['STORY_KEY_PREFIX']} (base={})",
-      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[2]': {'base': ['PR_TITLE', 'GH_TOKEN'], 'mutant': None}, 'jobs.parallel-work-sentinel.steps[3]': {'base': None, 'mutant': ['PR_TITLE', 'GH_TOKEN']}}",
+      "env-keys": "RED: {'jobs.parallel-work-sentinel.steps[3]': {'base': None, 'mutant': ['PR_TITLE', 'GH_TOKEN']}, 'jobs.parallel-work-sentinel.steps[2]': {'base': ['PR_TITLE', 'GH_TOKEN'], 'mutant': None}}",
       "env-ctr": "GREEN",
       "shell-step": "RED: {'parallel-work-sentinel': {'base': [None, None, None], 'mutant': [None, None, None, None]}}",
       "shell-defaults": "GREEN",
@@ -53,6 +53,21 @@
         "parallel-work-sentinel-test": "ubuntu-latest"
       }
     }
+  },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 238,
+    "failed_tests": [
+      "test_f2a_coe_paths_pinned[mctrader]",
+      "test_f2b_coe_ownership_partition_pinned[mctrader]",
+      "test_f4_step_if_pinned[mctrader]",
+      "test_f5_env_keys_pinned[mctrader]",
+      "test_f7_env_file_keys_absent[mctrader]",
+      "test_f8_step_shell_pinned[mctrader]"
+    ],
+    "stderr_excerpt": ""
   },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile",
   "w13_raw": {
