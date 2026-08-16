@@ -210,16 +210,23 @@ ANN_PASS="✓ check-hollow-gate-corpus:"
 ANN_FAIL='::error::\[(SUMMARY|DEP)\]'
 ANN_SUB='::error::\[(SUBSTRATE|BASELINE)\]'
 
+# ★ 사유 문면의 rc-분기 선두 — **`announce_gap` 이 산출했음의 지문**. T-WIRE 가 (3b) conjunct 로
+#   이 값을 요구하므로, 배선이 비공백 상수로 치환되면 그 지문이 없어 즉시 RED 다(F-CR24-1 봉합).
+#   ★ 반드시 `announce_gap` 의 echo 와 **같은 변수**를 쓴다 — 별도 리터럴로 두면 한쪽만 바뀔 때
+#     대조군이 조용히 무력화된다(본 Story 가 반복 관측한 형).
+ANN_MSG_RC0="exit=0 인데 stdout 종점 문면"
+ANN_MSG_RC1="exit=1 인데 stderr 에 loud 실패 마커"
+
 # announce_gap <rc> <outfile> <errfile> — 위반 사유 1줄을 stdout 으로 반환(정상이면 빈 문자열).
 announce_gap() {
   local rc="$1" out="$2" err="$3"
   case "$rc" in
     0)
       grep -qF "$ANN_PASS" "$out" && { echo ""; return 0; }
-      echo "exit=0 인데 stdout 종점 문면 '$ANN_PASS' 부재 — EXIT_PASS 는 최종 emit 직후에만 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**(sys.exit(0)/os._exit 등)를 뜻한다" ;;
+      echo "$ANN_MSG_RC0 '$ANN_PASS' 부재 — EXIT_PASS 는 최종 emit 직후에만 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**(sys.exit(0)/os._exit 등)를 뜻한다" ;;
     1)
       grep -qE "$ANN_FAIL" "$err" && { echo ""; return 0; }
-      echo "exit=1 인데 stderr 에 loud 실패 마커(::error::[SUMMARY]|[DEP]) 부재 — EXIT_FAIL 은 그 2 종점(집계 후 SUMMARY · 의존성 부재 DEP) 직후에만 반환되므로, 이 조합은 어느 종점에도 닿기 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
+      echo "$ANN_MSG_RC1(::error::[SUMMARY]|[DEP]) 부재 — EXIT_FAIL 은 그 2 종점(집계 후 SUMMARY · 의존성 부재 DEP) 직후에만 반환되므로, 이 조합은 어느 종점에도 닿기 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
     3)
       grep -qE "$ANN_SUB" "$err" && { echo ""; return 0; }
       echo "exit=3 인데 stderr 에 loud 실패 마커(::error::[SUBSTRATE]|[BASELINE]) 부재 — EXIT_SUBSTRATE 는 전 경로에서 _error 발화 직후 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**를 뜻한다" ;;
@@ -1007,12 +1014,28 @@ WIRE_SED_1="${WIRE_SED_TPL/CODE/1}"
 #   닿았다는 것 자체가 baseline 배선 미발화의 신호가 되게 한다(도달 시 NOT_RUN 으로 떨어진다).
 WIRE_SED_NOOP='s/^### T-WIRE-never-matches$/### unreachable/'
 
-# wire_case <라벨> <기대 문면> <금지 문면> <helper 출력> <helper rc>
-#   기대 문면 = 그 배선이 **발화했을 때만** 나오는 라벨-한정 거부 문면(**양성 assert**).
-#   금지 문면 = 배선이 무력화됐을 때 대신 나오는 초록 문면. 둘을 함께 봐서 「배선 사라짐」과
-#   「다른 사유로 실패」를 구별한다 — 실패했다는 사실만으로 초록을 주지 않는다.
+# wire_case <라벨> <기대 문면> <금지 문면> <helper 출력> <helper rc> <종점판정 문면>
+#   conjunct (1) helper rc   = 거부했는가            (음성 — 초록이면 배선 미발화)
+#   conjunct (2) 금지 문면   = 초록 문면이 없는가    (음성)
+#   conjunct (3a) 기대 문면  = 그 배선이 **발화했을 때만** 나오는 라벨-한정 거부 문면 (양성)
+#   conjunct (3b) 종점판정 문면 = 그 거부 사유가 **`announce_gap` 이 산출한 내용**인가 (양성)
+#
+# ★ (3b) 가 왜 있나 — **F-CR24-1 반례의 직접 봉합**. (3a) 만 있을 때는 배선을 **비공백 상수**로
+#   치환해도(`base_gap="HARDCODED-NONEMPTY"`) 소비 assert 가 그대로 발화해 라벨-한정 문면이 나오고
+#   케이스가 **초록**이었다(실측: T-WIRE-c ✓ PASS, 배선 사망). 즉 (3a) 는 「소비 assert 가 발화했다」
+#   까지만 증명하고 「`announce_gap` 이 호출됐다」는 증명하지 못한다. (3b) 는 거부 사유 문자열이
+#   `announce_gap` 의 rc-분기 산출물임을 요구하므로 상수 치환이 이 conjunct 를 만족시키지 못한다.
+#   ★ 잔여 천장(알고 안 닫음): 상수가 `announce_gap` 의 문면 자체를 **문자 단위로 복제**하면 여전히
+#     통과한다. (3b) 가 좁히는 것은 「아무 비공백 값」이지 「그 함수의 호출」이 아니다 — 기계 pin 0.
+#
+# ★ 빈 문자열 pin — `want`/`deny`/`want_ann` 중 하나를 `""` 로 중화하면 `grep -qF ""` 가 항상
+#   매치해 그 conjunct 가 조용히 사라진다(중화 1줄, 하네스는 전건 초록). 값 자체를 pin 한다.
 wire_case() {
-  local label="$1" want="$2" deny="$3" out="$4" hrc="$5"
+  local label="$1" want="$2" deny="$3" out="$4" hrc="$5" want_ann="$6"
+  if [ -z "$want" ] || [ -z "$deny" ] || [ -z "$want_ann" ]; then
+    fail_case "$label: 무효 — 판정 문면 인자가 비었다(want='$want' deny='$deny' want_ann='$want_ann'). 빈 문자열은 grep -qF 에서 항상 매치해 해당 conjunct 를 소리 없이 제거한다"
+    return 1
+  fi
   if [ "$hrc" -eq 0 ]; then
     fail_case "$label: helper 가 rc=0 (거부 안 함) — 조용한 종료가 KILL 로 계상됐다 = 배선 미발화"
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
@@ -1028,6 +1051,11 @@ wire_case() {
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
     return 1
   fi
+  if ! printf '%s\n' "$out" | grep -qF "$want_ann"; then
+    fail_case "$label: 종점 판정 문면 '$want_ann' 부재 — 거부는 났으나 그 사유가 announce_gap 산출물이 아니다(배선이 상수 등으로 치환됐을 때의 형)"
+    printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
+    return 1
+  fi
   pass_case "$label"
   return 0
 }
@@ -1036,15 +1064,17 @@ wire_case() {
 #   rc 이탈형 조용한 종료(0→1). 배선이 살아 있으면 「무효 kill — mutant 종점 미도달」,
 #   죽으면 `mut_rc != base_rc` 가 성립해 **KILLED** 로 초록이 난다(F-CR23-1 이 실증한 바로 그 형).
 wire_out="$(mutation_kill_exit "T-WIRE-a probe" "$WIRE_SED_1" "WIRE-silent-exit" "$REPO_ROOT" 0 2>&1)"; wire_rc=$?
-wire_case "T-WIRE-a (mutation_kill_exit mutant 팔 배선 :417): 조용한 rc-flip 을 무효로 거부" \
-  "T-WIRE-a probe: 무효 kill — mutant 종점 미도달" "T-WIRE-a probe: KILLED" "$wire_out" "$wire_rc"
+wire_case "T-WIRE-a (mutation_kill_exit / mutant-arm 배선): 조용한 rc-flip 을 무효로 거부" \
+  "T-WIRE-a probe: 무효 kill — mutant 종점 미도달" "T-WIRE-a probe: KILLED" "$wire_out" "$wire_rc" \
+  "$ANN_MSG_RC1"
 
 # ── (b) `mutation_kill_stdout` **mutant 팔** 배선 (`:491`) ─────────────────────
 #   rc 보존형 조용한 종료(0→0). rc pin 을 통과하고 토큰만 사라지므로, 배선이 죽으면
 #   `✓ PASS: … KILLED … exit=0→0 실측 불변` 이라는 **거짓 초록**이 정확히 재현된다.
 wire_out="$(mutation_kill_stdout "T-WIRE-b probe" "$WIRE_SED_0" "WIRE-silent-exit" "$REPO_ROOT" "census: " 0 2>&1)"; wire_rc=$?
-wire_case "T-WIRE-b (mutation_kill_stdout mutant 팔 배선 :491): rc 보존 조용한 종료를 무효로 거부" \
-  "T-WIRE-b probe: 무효 kill — mutant 종점 미도달" "T-WIRE-b probe: KILLED" "$wire_out" "$wire_rc"
+wire_case "T-WIRE-b (mutation_kill_stdout / mutant-arm 배선): rc 보존 조용한 종료를 무효로 거부" \
+  "T-WIRE-b probe: 무효 kill — mutant 종점 미도달" "T-WIRE-b probe: KILLED" "$wire_out" "$wire_rc" \
+  "$ANN_MSG_RC0"
 
 # ── (c)(d) **baseline 팔** 배선 (`:390` `:465`) ────────────────────────────────
 #   baseline 팔은 무변형 core 를 돌므로 정상 실행에서 gap 이 **구조적으로 항상 빈다** — 즉 이
@@ -1054,8 +1084,8 @@ wire_case "T-WIRE-b (mutation_kill_stdout mutant 팔 배선 :491): rc 보존 조
 WIRE_SILENT="$TEST_TMP/wire_silent_core.py"
 wire_pre="$(mutate_core "T-WIRE 사전(조용한 종료 core)" "$WIRE_SED_0" "WIRE-silent-exit")"
 if [ -z "$wire_pre" ]; then
-  fail_case "T-WIRE-c (mutation_kill_exit baseline 팔 배선 :390): NOT_RUN — 조용한 종료 core 사본 생성 실패"
-  fail_case "T-WIRE-d (mutation_kill_stdout baseline 팔 배선 :465): NOT_RUN — 조용한 종료 core 사본 생성 실패"
+  fail_case "T-WIRE-c (mutation_kill_exit / baseline-arm 배선): NOT_RUN — 조용한 종료 core 사본 생성 실패"
+  fail_case "T-WIRE-d (mutation_kill_stdout / baseline-arm 배선): NOT_RUN — 조용한 종료 core 사본 생성 실패"
 else
   mv "$wire_pre" "$WIRE_SILENT"
   wire_saved_core="$CORE_PY"
@@ -1063,14 +1093,78 @@ else
   CORE_PY="$WIRE_SILENT"
   wire_out="$(mutation_kill_exit "T-WIRE-c probe" "$WIRE_SED_NOOP" "T-WIRE-never-matches" "$REPO_ROOT" 0 2>&1)"; wire_rc=$?
   CORE_PY="$wire_saved_core"
-  wire_case "T-WIRE-c (mutation_kill_exit baseline 팔 배선 :390): 조용히 죽은 대조군을 무효로 거부" \
-    "T-WIRE-c probe: 무효 — baseline 종점 미도달" "T-WIRE-c probe: KILLED" "$wire_out" "$wire_rc"
+  wire_case "T-WIRE-c (mutation_kill_exit / baseline-arm 배선): 조용히 죽은 대조군을 무효로 거부" \
+    "T-WIRE-c probe: 무효 — baseline 종점 미도달" "T-WIRE-c probe: KILLED" "$wire_out" "$wire_rc" \
+    "$ANN_MSG_RC0"
 
   CORE_PY="$WIRE_SILENT"
   wire_out="$(mutation_kill_stdout "T-WIRE-d probe" "$WIRE_SED_NOOP" "T-WIRE-never-matches" "$REPO_ROOT" "census: " 0 2>&1)"; wire_rc=$?
   CORE_PY="$wire_saved_core"
-  wire_case "T-WIRE-d (mutation_kill_stdout baseline 팔 배선 :465): 조용히 죽은 대조군을 무효로 거부" \
-    "T-WIRE-d probe: 무효 — baseline 종점 미도달" "T-WIRE-d probe: KILLED" "$wire_out" "$wire_rc"
+  wire_case "T-WIRE-d (mutation_kill_stdout / baseline-arm 배선): 조용히 죽은 대조군을 무효로 거부" \
+    "T-WIRE-d probe: 무효 — baseline 종점 미도달" "T-WIRE-d probe: KILLED" "$wire_out" "$wire_rc" \
+    "$ANN_MSG_RC0"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# T-WIRE-E = `wire_case` **자신의 conjunct** 대조군 (born-RED · F-CR24-1)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 왜 필요한가 (반증된 논법의 자리). 직전 회차는 「대조군의 대조군 층은 불요 = L5 공집합」이라
+#   결론했다. **실행으로 반증됐다** — `wire_case` 의 (3a) conjunct 를 `if false` 로 중화하니
+#   `PASS=53 FAIL=0 rc=0`, 신호 0 이었다(T-WIRE a~d 전건 초록 유지). 즉 conjunct 자신에게
+#   대조군이 없었다. 아래 6 케이스가 그 층을 닫는다.
+# ★ 형태 = T-ANN 과 동일한 바닥 형태(**양성 assert + 무조건-거부 대조군**). 각 케이스는 그
+#   conjunct 가 **발화했을 때만** 나오는 문면을 요구하므로, conjunct 가 사라지면 즉시 RED 다.
+# ★ 비용 = core 실행 0 (합성 문자열만). `wire_case` 는 명령치환 안에서 돌므로 그 안의
+#   pass_case/fail_case 는 서브셸에 갇혀 부모 카운터를 오염시키지 않는다.
+# ★ 정직 천장 (알고 안 닫음): 이 6 케이스 **자신의** 배선·assert 에는 대조군이 없다(L6).
+#   무한 회귀는 원리적으로 종결되지 않는다 — 「닫았다」가 아니라 **「한 층 더 내렸고 다음 층은
+#   선언 천장에 둔다」**로 기재한다. 이번에는 공집합이라고 주장하지 않는다.
+echo ""
+echo "── T-WIRE-E: wire_case conjunct 자신의 대조군 (born-RED) ─────────────────────"
+
+WE_WANT="WE-want-token"
+WE_DENY="WE-deny-token"
+WE_ANN="WE-ann-token"
+WE_OK="거부함 $WE_WANT 그리고 $WE_ANN"
+
+# id | hrc | helper 출력 | 기대 거부 문면(양성 assert) | 설명
+we_run() {
+  local id="$1" want="$2" deny="$3" out="$4" hrc="$5" ann="$6" expect="$7" desc="$8"
+  local o r
+  o="$(wire_case "T-WIRE-E$id probe" "$want" "$deny" "$out" "$hrc" "$ann" 2>&1)"; r=$?
+  if [ "$r" -eq 0 ]; then
+    fail_case "T-WIRE-E$id ($desc): wire_case 가 통과시켰다 — 해당 conjunct 가 판정에 기여하지 않는다(중화 시 조용히 사라지는 층)"
+    printf '%s\n' "$o" | sed 's/^/        wire_case> /' >&2
+    return 1
+  fi
+  if ! printf '%s\n' "$o" | grep -qF "$expect"; then
+    fail_case "T-WIRE-E$id ($desc): 거부는 났으나 기대 사유 '$expect' 부재 — 거부를 이 conjunct 에 귀속할 수 없다(다른 conjunct 가 먼저 발화)"
+    printf '%s\n' "$o" | sed 's/^/        wire_case> /' >&2
+    return 1
+  fi
+  pass_case "T-WIRE-E$id ($desc): conjunct 가 단독으로 거부를 산출 — 판별력 load-bearing"
+  return 0
+}
+
+we_run 1 "$WE_WANT" "$WE_DENY" "$WE_OK" 0 "$WE_ANN" \
+  "helper 가 rc=0 (거부 안 함)" "conjunct 1 · helper rc"
+we_run 2 "$WE_WANT" "$WE_DENY" "$WE_OK $WE_DENY" 1 "$WE_ANN" \
+  "금지 문면" "conjunct 2 · 금지 문면"
+we_run 3 "$WE_WANT" "$WE_DENY" "다른 사유로 실패 $WE_ANN" 1 "$WE_ANN" \
+  "기대 거부 문면" "conjunct 3a · 라벨-한정 기대 문면"
+we_run 4 "$WE_WANT" "$WE_DENY" "$WE_WANT 인데 사유가 상수" 1 "$WE_ANN" \
+  "종점 판정 문면" "conjunct 3b · announce_gap 산출 사유"
+we_run 5 "" "$WE_DENY" "$WE_OK" 1 "$WE_ANN" \
+  "판정 문면 인자가 비었다" "빈 문자열 pin · want 중화"
+
+# 대조군 — 세 conjunct 를 모두 만족하는 입력은 반드시 통과해야 한다.
+# (없으면 위 5 건은 「항상 거부하는 술어」와 구별되지 않는다 = 무조건-true 검사)
+we_ctl_out="$(wire_case "T-WIRE-E6 probe" "$WE_WANT" "$WE_DENY" "$WE_OK" 1 "$WE_ANN" 2>&1)"; we_ctl_rc=$?
+if [ "$we_ctl_rc" -eq 0 ] && printf '%s\n' "$we_ctl_out" | grep -qF "✓ PASS: T-WIRE-E6 probe"; then
+  pass_case "T-WIRE-E6 대조군: 전 conjunct 만족 입력을 통과 — wire_case 가 무조건-거부 술어가 아님(위 5 건의 관측이 유의미)"
+else
+  fail_case "T-WIRE-E6 대조군: 전 conjunct 만족 입력을 rc=$we_ctl_rc 로 거부 — 대조군이 서지 않으면 위 5 건은 판별력 관측이 아니다"
+  printf '%s\n' "$we_ctl_out" | sed 's/^/        wire_case> /' >&2
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
