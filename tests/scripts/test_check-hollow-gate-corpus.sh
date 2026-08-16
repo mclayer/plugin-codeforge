@@ -176,19 +176,38 @@ census_of() {
 #   (`check_hollow_gate_corpus.py` EXIT_PASS/EXIT_FAIL/EXIT_SUBSTRATE · 2 = argparse usage 전용),
 #   **각 값은 그 rc 를 반환하기 직전에 자기 도달을 스스로 발화한다**. 그래서 rc 마다
 #   「그 rc 가 주장하는 종점에 실제로 닿았다는 양성 증거」를 요구한다 — 전 정의역 total:
-#     rc=0 → stdout `✓ check-hollow-gate-corpus:`      (run() 최종 _emit **직후에만** return EXIT_PASS)
-#     rc=1 → stderr `::error::[SUMMARY]`               (violations 집계 후 유일 실패 종점)
-#     rc=3 → stderr `::error::[SUBSTRATE]`|`[BASELINE]`(전 `return EXIT_SUBSTRATE` 직전 _error — 전수 대조)
+#   **종점 전수 분류 실측** (core 를 직접 훑어 `return EXIT_*` 전건과 그 직전 `_error` 를 대조):
+#     rc=0 → stdout `✓ check-hollow-gate-corpus:`      (`return EXIT_PASS` **1 site** `:1250` — 최종 _emit 직후)
+#     rc=1 → stderr `::error::[SUMMARY]` | `[DEP]`     (`return EXIT_FAIL` **2 site** — 아래 F-CR23-2)
+#     rc=3 → stderr `::error::[SUBSTRATE]`|`[BASELINE]`(`return EXIT_SUBSTRATE` **26 site** 전건 직전 _error)
 #     그 외 → 선언 exit_space 이탈 자체가 위반
 #   crash 유형을 열거하지 않는데도 ⓐ`sys.exit(2)` ⓑ`sys.exit(0)` ⓒ예외 ⓓ`os._exit` 가 **함께**
 #   걸리는 이유가 이것이다: 조용히 죽은 프로세스는 종점 문면을 **낼 수 없다**.
 #
+# ★ F-CR23-2 정정 — rc=1 「유일 실패 종점」 전제는 **거짓이었다**. 종전 주석은 *"EXIT_FAIL 은
+#   violations 집계 후 SUMMARY 발화 직후에**만** 반환된다"* 고 적었으나, 실측은 `return EXIT_FAIL`
+#   이 **2 site** 임을 보인다:
+#     `:1242` ← 직전 `_error(STAGE_SUMMARY, …)`  (집계 종점)
+#     `:835`  ← 직전 `_error(STAGE_DEP, …)`      (pyyaml 부재 = 판정불가 fail-closed)
+#   종전 술어는 후자를 「조용한 종료」로 **오진**했다(재현: yaml import 를 강제 실패시키면
+#   rc=1 · `::error::[DEP]` · SUMMARY 0건인데 위반으로 발화). 오늘 오판이 나지 않은 이유는 술어의
+#   건전성이 아니라 **하네스 밖 전제**(`:124` pyyaml preflight 가 DEP 경로를 도달 불가로 만듦)였고,
+#   주석은 그 전제 대신 **거짓 명제**를 적었다. ⇒ 전제에 기대는 대신 술어를 **실 구조에 맞춘다** —
+#   rc=1 의 종점 집합을 {SUMMARY, DEP} 로 정정한다(이로써 이 leg 은 preflight 유무와 무관하게
+#   total 이다). 느슨해지지 않는다: 두 문면 다 core 가 **loud 하게** 낸 종점 마커이고, 조용한
+#   종료는 여전히 어느 쪽도 내지 못한다.
+#
 # ★ 정직 천장. 이 술어가 닫는 것은 「종점 announce **전** 사망」이다. rc 가 주장하는 종점
-#   문면을 실제로 낸 뒤의 종료는 정의상 그 종점에 닿은 것이라 위반이 아니다. rc=3 은 종점이
-#   ~30개 조기 return 에 분산돼 있어 「**어떤** loud 실패 종점에 닿음」까지만 말하고 「의도한
-#   그 종점」은 말하지 않는다 — 축 귀속은 각 site 의 별도 문면 conjunct(M7 형제 수·leg 순번 등)가 맡는다.
+#   문면을 실제로 낸 뒤의 종료는 정의상 그 종점에 닿은 것이라 위반이 아니다.
+#   **다중 종점 leg(rc=1 = 2개 · rc=3 = 26개)은 「어떤 loud 실패 종점에 닿음」까지만** 말하고
+#   「의도한 그 종점」은 말하지 않는다 — 축 귀속은 각 site 의 별도 문면 conjunct(M7 형제 수·leg
+#   순번, M8 축 집합, M4 census 토큰)가 맡는다.
+#   ★ rc=3 leg 의 잔여 느슨함(실측·미봉합): `[BASELINE]` 은 **비종점**에서도 발화한다
+#     (`:1223` `:1229` — violations 적재 후 SUMMARY 로 흘러 rc=1). 따라서 「`[BASELINE]` 존재」가
+#     「rc=3 종점 도달」을 엄밀히 함의하지는 않는다. 실해가 성립하려면 mutant 가 그 비종점을 지난
+#     뒤 **정확히 rc=3 으로 조용히** 죽어야 해서 오늘 도달 경로는 없다 — **닫지 않고 기재한다**.
 ANN_PASS="✓ check-hollow-gate-corpus:"
-ANN_FAIL="::error::[SUMMARY]"
+ANN_FAIL='::error::\[(SUMMARY|DEP)\]'
 ANN_SUB='::error::\[(SUBSTRATE|BASELINE)\]'
 
 # announce_gap <rc> <outfile> <errfile> — 위반 사유 1줄을 stdout 으로 반환(정상이면 빈 문자열).
@@ -199,8 +218,8 @@ announce_gap() {
       grep -qF "$ANN_PASS" "$out" && { echo ""; return 0; }
       echo "exit=0 인데 stdout 종점 문면 '$ANN_PASS' 부재 — EXIT_PASS 는 최종 emit 직후에만 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**(sys.exit(0)/os._exit 등)를 뜻한다" ;;
     1)
-      grep -qF "$ANN_FAIL" "$err" && { echo ""; return 0; }
-      echo "exit=1 인데 stderr 종점 문면 '$ANN_FAIL' 부재 — EXIT_FAIL 은 violations 집계 후 SUMMARY 발화 직후에만 반환되므로, 이 조합은 집계 도달 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
+      grep -qE "$ANN_FAIL" "$err" && { echo ""; return 0; }
+      echo "exit=1 인데 stderr 에 loud 실패 마커(::error::[SUMMARY]|[DEP]) 부재 — EXIT_FAIL 은 그 2 종점(집계 후 SUMMARY · 의존성 부재 DEP) 직후에만 반환되므로, 이 조합은 어느 종점에도 닿기 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
     3)
       grep -qE "$ANN_SUB" "$err" && { echo ""; return 0; }
       echo "exit=3 인데 stderr 에 loud 실패 마커(::error::[SUBSTRATE]|[BASELINE]) 부재 — EXIT_SUBSTRATE 는 전 경로에서 _error 발화 직후 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**를 뜻한다" ;;
@@ -944,6 +963,115 @@ for ann_case in "b:0:rc 보존형 — 선언 exit_space 안" "c:2:rc 이탈형 �
     fail_case "T-ANN-$ann_id ($ann_desc): announce 술어가 조용한 종료(exit=$ann_rc · Traceback 0건)를 통과시켰다 — 가드 판별력 사망(거짓 KILLED 재유입 경로)"
   fi
 done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# T-WIRE = 종점 announce 술어의 **배선(설치)** 대조군 (born-RED 짝 · F-CR23-1)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 무엇이 틀렸었나 (정직 기재). T-ANN 은 술어 **자신**의 충분성을 양방향으로 닫았다. 그러나
+#   그 술어를 각 오라클에 **설치한 배선**에는 대조군이 없었다 — 배선 1줄을 `gap=""` 로 바꿔도
+#   전건 초록이 baseline 과 **바이트 단위로 구별되지 않으면서**, 라벨은 계속 「양 팔 종점
+#   announce 도달 확인」을 단언했다(F-CR23-1 실증). 본 Story 가 닫으려는 class 가 그것을 닫는
+#   봉합 자신의 배선 층에서 재현된 것이다. 정직 천장이 아니라 **미기재 공백**이었다.
+#
+# ★ 전수 재계수 (열거 정정 — 「N곳」을 상한으로 신뢰하지 않는다). 배선 site 는 **12** 다.
+#   소비 assert 의 방향으로 분류하면:
+#     **양성**(발화 요구) **1** = `:941`(T-ANN-b/c) → 배선 제거 시 스스로 RED = **자기보호**
+#     **음성**(침묵 요구) **11** = `:402` `:426` `:475` `:510` `:787` `:794` `:848` `:879` `:911`
+#                                  `:1164`(ic4_gap1·ic4_gap2 2 배선이 한 assert 공유)
+#   ⇒ 취약 site = **11**. 오늘 이 11 개를 **발화시키는 입력이 하네스 안에 하나도 없다**
+#     (미행사 = 무대조군의 실체). 리뷰 열거(8)에서 빠졌던 3 개 = `:910`(T-ANN-a 대조군) ·
+#     `:1153` · `:1157`(IC-4) — 회부 packet 의 site 특정을 상한으로 쓰지 않은 결과다.
+#
+# ★ 왜 이 형태인가 — **바닥 형태의 재사용**. T-ANN-b/c 가 무한 회귀를 피한 이유는 그것이 술어의
+#   **발화를 요구하는** fixture 이기 때문이다(무력화된 술어로는 원리적으로 만족 불가). 배선
+#   대조군도 **같은 형태**로 세운다: 「배선이 있다」를 세는 presence-lint(= 같은 기전의 반복)가
+#   아니라, **그 배선이 실제로 거부 문면을 낸 것**을 요구한다. 배선이 무력화되면 그 문면이
+#   사라지므로 즉시 RED 다.
+#   ⇒ **회귀 종결**: 본 대조군 자신의 배선도 양성 assert 라 자기보호되므로 「대조군의 대조군」
+#     층은 **불요**다. 남는 것은 T-ANN 이 이미 declare 한 것과 **같은** 천장(케이스 삭제 ·
+#     assert 중화 — 기계 pin 0)이며 **새 층이 아니다**.
+#
+# ★ 이번 회차가 닫는 범위 = 공용 helper 2종의 **4 site**(`:390` `:417` `:465` `:491`). 이 둘은
+#   M1·M2·M3-siteA·M3-siteB·M5(exit 축) + M4(stdout 축)을 운반하므로 blast radius 가 가장 크다.
+#   나머지 **7 site**(M7 2 · M8 2 · T-ANN-a 1 · IC-4 2)는 **알고 안 닫았다** — 각 닫는 조건은
+#   Story §8 「검증 층 스택」 표에 기재한다(「몰랐다」 상태로 두지 않는다).
+echo ""
+echo "── T-WIRE: announce 배선(설치) 대조군 (born-RED) ────────────────────────────"
+
+# 조용한 종료 mutant — T-ANN 과 **동일 주입점**(census emit)에 rc 만 달리한다.
+#   CODE=0 → rc 보존형(기대 rc 와 동값이라 rc pin 을 통과)  CODE=1 → rc 이탈형(flip 을 위조)
+WIRE_SED_TPL='s/        _emit(f"census: {a}={census\[a\]}")/        sys.exit(CODE)  # WIRE-silent-exit/'
+WIRE_SED_0="${WIRE_SED_TPL/CODE/0}"
+WIRE_SED_1="${WIRE_SED_TPL/CODE/1}"
+# (c)(d) 의 mutant 팔은 **의도적으로 도달 불가**다 — baseline 팔 배선만 겨누므로, mutant 팔에
+#   닿았다는 것 자체가 baseline 배선 미발화의 신호가 되게 한다(도달 시 NOT_RUN 으로 떨어진다).
+WIRE_SED_NOOP='s/^### T-WIRE-never-matches$/### unreachable/'
+
+# wire_case <라벨> <기대 문면> <금지 문면> <helper 출력> <helper rc>
+#   기대 문면 = 그 배선이 **발화했을 때만** 나오는 라벨-한정 거부 문면(**양성 assert**).
+#   금지 문면 = 배선이 무력화됐을 때 대신 나오는 초록 문면. 둘을 함께 봐서 「배선 사라짐」과
+#   「다른 사유로 실패」를 구별한다 — 실패했다는 사실만으로 초록을 주지 않는다.
+wire_case() {
+  local label="$1" want="$2" deny="$3" out="$4" hrc="$5"
+  if [ "$hrc" -eq 0 ]; then
+    fail_case "$label: helper 가 rc=0 (거부 안 함) — 조용한 종료가 KILL 로 계상됐다 = 배선 미발화"
+    printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
+    return 1
+  fi
+  if printf '%s\n' "$out" | grep -qF "$deny"; then
+    fail_case "$label: 금지 문면 '$deny' 관측 — 조용한 종료가 초록으로 계상됐다"
+    printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
+    return 1
+  fi
+  if ! printf '%s\n' "$out" | grep -qF "$want"; then
+    fail_case "$label: 기대 거부 문면 '$want' 부재 — announce 배선이 판정에 도달하지 않았다(gap 값 미소비). 다른 사유로 실패한 것은 배선 발화의 증거가 아니다"
+    printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
+    return 1
+  fi
+  pass_case "$label"
+  return 0
+}
+
+# ── (a) `mutation_kill_exit` **mutant 팔** 배선 (`:417`) ───────────────────────
+#   rc 이탈형 조용한 종료(0→1). 배선이 살아 있으면 「무효 kill — mutant 종점 미도달」,
+#   죽으면 `mut_rc != base_rc` 가 성립해 **KILLED** 로 초록이 난다(F-CR23-1 이 실증한 바로 그 형).
+wire_out="$(mutation_kill_exit "T-WIRE-a probe" "$WIRE_SED_1" "WIRE-silent-exit" "$REPO_ROOT" 0 2>&1)"; wire_rc=$?
+wire_case "T-WIRE-a (mutation_kill_exit mutant 팔 배선 :417): 조용한 rc-flip 을 무효로 거부" \
+  "T-WIRE-a probe: 무효 kill — mutant 종점 미도달" "T-WIRE-a probe: KILLED" "$wire_out" "$wire_rc"
+
+# ── (b) `mutation_kill_stdout` **mutant 팔** 배선 (`:491`) ─────────────────────
+#   rc 보존형 조용한 종료(0→0). rc pin 을 통과하고 토큰만 사라지므로, 배선이 죽으면
+#   `✓ PASS: … KILLED … exit=0→0 실측 불변` 이라는 **거짓 초록**이 정확히 재현된다.
+wire_out="$(mutation_kill_stdout "T-WIRE-b probe" "$WIRE_SED_0" "WIRE-silent-exit" "$REPO_ROOT" "census: " 0 2>&1)"; wire_rc=$?
+wire_case "T-WIRE-b (mutation_kill_stdout mutant 팔 배선 :491): rc 보존 조용한 종료를 무효로 거부" \
+  "T-WIRE-b probe: 무효 kill — mutant 종점 미도달" "T-WIRE-b probe: KILLED" "$wire_out" "$wire_rc"
+
+# ── (c)(d) **baseline 팔** 배선 (`:390` `:465`) ────────────────────────────────
+#   baseline 팔은 무변형 core 를 돌므로 정상 실행에서 gap 이 **구조적으로 항상 빈다** — 즉 이
+#   배선을 발화시키는 입력이 하네스에 없다. 대조군을 세우려면 대조군 팔 자신이 조용히 죽어야
+#   하므로, helper 가 baseline 으로 읽는 `$CORE_PY` 를 조용한 종료 사본으로 **1회성 치환**한다
+#   (호출 직후 즉시 원복 — 이후 전 케이스가 무변형 core 로 도는 것이 원복의 관측 증거다).
+WIRE_SILENT="$TEST_TMP/wire_silent_core.py"
+wire_pre="$(mutate_core "T-WIRE 사전(조용한 종료 core)" "$WIRE_SED_0" "WIRE-silent-exit")"
+if [ -z "$wire_pre" ]; then
+  fail_case "T-WIRE-c (mutation_kill_exit baseline 팔 배선 :390): NOT_RUN — 조용한 종료 core 사본 생성 실패"
+  fail_case "T-WIRE-d (mutation_kill_stdout baseline 팔 배선 :465): NOT_RUN — 조용한 종료 core 사본 생성 실패"
+else
+  mv "$wire_pre" "$WIRE_SILENT"
+  wire_saved_core="$CORE_PY"
+
+  CORE_PY="$WIRE_SILENT"
+  wire_out="$(mutation_kill_exit "T-WIRE-c probe" "$WIRE_SED_NOOP" "T-WIRE-never-matches" "$REPO_ROOT" 0 2>&1)"; wire_rc=$?
+  CORE_PY="$wire_saved_core"
+  wire_case "T-WIRE-c (mutation_kill_exit baseline 팔 배선 :390): 조용히 죽은 대조군을 무효로 거부" \
+    "T-WIRE-c probe: 무효 — baseline 종점 미도달" "T-WIRE-c probe: KILLED" "$wire_out" "$wire_rc"
+
+  CORE_PY="$WIRE_SILENT"
+  wire_out="$(mutation_kill_stdout "T-WIRE-d probe" "$WIRE_SED_NOOP" "T-WIRE-never-matches" "$REPO_ROOT" "census: " 0 2>&1)"; wire_rc=$?
+  CORE_PY="$wire_saved_core"
+  wire_case "T-WIRE-d (mutation_kill_stdout baseline 팔 배선 :465): 조용히 죽은 대조군을 무효로 거부" \
+    "T-WIRE-d probe: 무효 — baseline 종점 미도달" "T-WIRE-d probe: KILLED" "$wire_out" "$wire_rc"
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 7. substrate-failure (exit 3) 조건
