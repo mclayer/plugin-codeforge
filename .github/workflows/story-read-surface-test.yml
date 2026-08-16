@@ -49,34 +49,84 @@ name: story-read-surface-test
 #   [실측: wrapper run `31940770806`, job `story-read-surface-test`, branch `cfp-2986-phase2`].
 #
 # ─────────────────────────────────────────────────────────────────────────────
-# ★ post-merge 필수 후속 — 인용 pin bump (담당: Orchestrator, merge 직후 같은 세션)
+# ★ post-merge 필수 후속 = **pin bump ∧ 실행 사본 재착지** (둘의 연접, 택일 아님)
+#   (담당: Orchestrator, merge 직후 같은 세션)
 # ─────────────────────────────────────────────────────────────────────────────
 #  ① 언제    본 PR(wrapper #2997)과 짝 PR(internal-docs #3029)이 **squash-merge 된 직후**.
 #            squash 는 새 커밋 1개를 만들고 head 브랜치를 삭제하므로, 브랜치에만 있던 커밋
 #            SHA 는 그 시점부터 **도달 불가**가 된다.
-#  ② 대상    아래 pin 5 site 중 **브랜치 전용 1건만** 해당한다
-#            [전수 대조 실측 — wrapper `a3d7c56bb`, `git merge-base --is-ancestor` 판정]:
 #
-#     파일:줄                                       SHA          repo            도달성
-#     scripts/lib/check_story_read_surface.py:62   a1888a93     internal-docs   ✗ 브랜치 전용 → bump 대상
-#     scripts/lib/check_story_read_surface.py:62   7d075514     internal-docs   ✓ main 조상 (무조치)
-#     docs/story-read-surface-baseline.yaml:18,48  7d0755140c…  internal-docs   ✓ main 조상 (무조치)
-#     docs/story-read-declaration-registry.yaml:26 a0c84e66d2…  wrapper         ✓ main 조상 (#2992, 무조치)
-#     templates/story-page-structure.md:784        7d075514     internal-docs   ✓ main 조상 (무조치)
+#  ② 불변식  게이트(internal-docs `scripts/lib/compare_story_read_surface_parity.py`)는
+#            `WRAPPER_PINNED_REF` 가 가리키는 **wrapper 커밋의 3 target 바이트**를 urlopen 으로
+#            받아 **internal-docs 로컬 3 target 바이트**와 대조한다. 성립해야 할 등식은
+#              raw(wrapper @ WRAPPER_PINNED_REF)  ==  local(internal-docs)   [3 target 전건]
+#            한쪽만 움직이면 등식이 깨진다 ⇒ 후속은 **연접(∧)이지 선택(∨)이 아니다**.
+#            반사실 [구현리뷰 라운드 2 firsthand]:
+#              pin 미bump  → 브랜치 삭제로 pinned SHA 가 404          → **rc=1**
+#              pin 만 bump → raw(새 커밋) ≠ local(구 사본) drift      → **rc=1**
+#              둘 다(연접) → 3 target 바이트 일치                     → **rc=0**
 #
-#  ③ 새 값   internal-docs #3029 의 **squash-merge 커밋 SHA**
-#            `gh pr view 3029 --repo mclayer/codeforge-internal-docs --json mergeCommit`
-#  ④ 고칠 곳 `scripts/lib/check_story_read_surface.py` **L62** 의 `a1888a93` 을 위 값 앞 8자로
-#            치환한다. 같은 줄의 `7d075514` 는 main 조상이므로 **건드리지 않는다**.
-#            (해당 줄 = `INV_S1_CANON` 근거 주석 "internal-docs 7d075514 → a1888a93")
-#  ⑤ 안 하면 `a1888a93` 이 브랜치 삭제와 함께 사라져 그 주석이 인용한 실측 근거를 아무도
-#            재현할 수 없다 — **dangling provenance(검증 불가)**.
-#            ★ 단 **게이트 rc 는 바뀌지 않는다**: 엔진은 이 SHA 를 fetch 하지 않고(주석 문면
-#            일 뿐) 코퍼스는 `--after-ref`(기본 HEAD)로만 읽는다
-#            [실측: `git_archive_text(repo_root, after_ref, path)` — baseline_tree_sha 는
-#             출력 라벨 전용. 코퍼스 HEAD `8f317f7ce` ≠ baseline `7d075514` 인 채 정상 실행됨].
-#            ⇒ "404 → rc=1 fail-closed 로 전 PR 차단" 은 **본 배선에서 성립하지 않는다.**
-#            실 손상은 차단이 아니라 인용 근거의 영구 소실이다 — 과장 금지(ADR-119).
+#  ③ 대상    아래가 전수다 — 정의역 = **wrapper 트리 ∪ internal-docs 트리**.
+#            ★ 종전 이 표는 정의역이 wrapper 단독이라, 실제로 fetch 되는 **유일한 pin**(A-1)을
+#              통째로 배제했다. A-1 은 다른 pin 과 달리 주석 provenance 가 아니라 **실 fetch
+#              대상**이며, 미bump 의 결과도 인용 소실이 아니라 **게이트 rc=1 차단**이다.
+#            [도달성 = `git merge-base --is-ancestor <sha> origin/main` 전건 firsthand 재판정.
+#             기준: wrapper origin/main `4b30b860`, internal-docs origin/main `abc3bda8`]
+#
+#   [A 계열] pin 값이 가리키는 곳 = **wrapper** 커밋 / pin 이 놓인 곳 = internal-docs
+#     A-1  internal-docs  scripts/lib/compare_story_read_surface_parity.py:82
+#                         (`WRAPPER_PINNED_REF` — 줄번호보다 **심볼명이 정본**. 주석 증감으로
+#                          줄이 밀린 전례가 본 Story 에 있다: `:75`→`:82`)
+#                         ★**실 fetch(urlopen) 대상**            도달성 ✗ (wrapper 브랜치 전용)
+#     A-2  internal-docs  .github/workflows/story-read-surface-check.yml:261
+#                         A-1 과 동값 인용 mirror (주석 축)       도달성 ✗ (동상)
+#     ⇒ 새 값 = **wrapper #2997** squash-merge 커밋 SHA (A-1 은 40자 그대로 / A-2 는 앞 12자)
+#        `gh pr view 2997 --repo mclayer/plugin-codeforge --json mergeCommit`
+#     ⇒ 미이행: A-1 = **rc=1, 전 PR 차단**(fail-closed 실동작) / A-2 = 인용 근거 소실만.
+#
+#   [A-frozen] **무조치 — 동결 감사 기록**(bump 하면 안 되는 site. 정직 고지)
+#     internal-docs `wrapper/stories/CFP-2986-S1.md:1205,:1230` (§9.13 구현리뷰 R2 verdict)
+#       = 리뷰어가 **그 시점에 관측한 값** `c9f8670fd…` 의 기록이다. 링크 생존을 위해 갱신하면
+#         "무엇이 관측됐는가" 를 위조하게 된다 ⇒ post-merge 도달 불가(dangling)를 **감수**한다.
+#       ※ §9 는 Orchestrator 독점면이라 구현 lane 이 편집 대상으로 삼지도 않는다.
+#       ※ 전수 재계수 결과 2곳이다(1곳 아님) — 정의역 = internal-docs tracked 전건 `git grep`.
+#
+#   [B 계열] pin 값이 가리키는 곳 = **internal-docs** 커밋 `a1888a93` / 놓인 곳 = 양 repo
+#     B-1   wrapper        scripts/lib/check_story_read_surface.py:62,66   도달성 ✗ (브랜치 전용)
+#     B-1'  internal-docs  같은 파일·같은 줄의 **byte-identical 실행 사본**  도달성 ✗ (동상)
+#     ⇒ 새 값 = **internal-docs #3029** squash-merge 커밋 SHA 의 **앞 8자**
+#        `gh pr view 3029 --repo mclayer/codeforge-internal-docs --json mergeCommit`
+#     ⇒ 미이행(둘 다 그대로 둠): **게이트 rc 는 바뀌지 않는다.** 엔진은 이 SHA 를 fetch 하지
+#        않고(주석 문면일 뿐) 코퍼스는 `--after-ref`(기본 HEAD)로만 읽는다
+#        [실측: `git_archive_text(repo_root, after_ref, path)` — baseline_tree_sha 는 출력 라벨
+#         전용. 코퍼스 HEAD `8f317f7ce` ≠ baseline `7d075514` 인 채 정상 실행됨].
+#        ⇒ "404 → rc=1 fail-closed 로 전 PR 차단" 은 **B 계열에 한해 성립하지 않는다**(A-1 은
+#          정반대로 성립한다). B 계열 실 손상은 차단이 아니라 인용 근거의 영구 소실
+#          — **dangling provenance(검증 불가)**. 과장 금지(ADR-119).
+#     ⇒ ★ 단 **한쪽만 고치면 rc=1** 이다: B-1 은 parity 3 target 안에 있으므로 wrapper 만
+#          bump 하고 그 커밋으로 pin 을 올리면 ②의 등식이 깨진다. B 계열은 양 repo 동시 편집.
+#
+#   [C 계열] main 조상이라 **무조치** (도달성 ✓ — 브랜치 삭제와 무관)
+#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1228   7d075514
+#     C-2  wrapper + 사본  docs/story-read-surface-baseline.yaml:18,48          7d0755140c…
+#     C-3  wrapper + 사본  docs/story-read-declaration-registry.yaml:26         a0c84e66d2… (wrapper #2992)
+#     C-4  wrapper 단독    templates/story-page-structure.md:784                7d075514
+#     ※ 정의역 밖 1건 정직 고지: `templates/story-page-structure.md:248` 의 `abcd92bf` 는
+#       ADR-014 인용으로 본 PR 쌍이 도입한 pin 이 아니다(도달성 ✓ 확인, 무조치).
+#
+#  ④ 실행 사본 재착지 — parity 3 target 을 wrapper SSOT 로 **byte-identical** 재동기화한다:
+#       scripts/lib/check_story_read_surface.py · docs/story-read-surface-baseline.yaml
+#       · docs/story-read-declaration-registry.yaml
+#     (구현리뷰 라운드 2 FIX 의 실 root cause = 정확히 이 3건의 사본 미전파였다. 사본 일치는
+#      squash 스냅샷으로 자동 성립한다고 **가정하지 말고 실행으로 확인**한다 — 그 미확인 가정이
+#      라운드 2 를 만들었다.)
+#
+#  ⑤ 순서·검증  pin 은 사본보다 **뒤**에 확정한다 (pin 선행 = 반드시 stale).
+#     1) wrapper: B-1 bump 커밋 push ⇒ wrapper main 새 SHA = W2
+#        (B 계열을 손대지 않기로 하면 이 단계 생략, W2 = #2997 merge 커밋)
+#     2) internal-docs: B-1' 동일 bump ∧ A-1 = W2 ∧ A-2 = W2 를 **한 커밋**으로
+#     3) internal-docs 에서 게이트를 실제로 돌려 **rc=0 을 실측**한 뒤에만 완료 단언
+#        (rc 는 추론 대상이 아니다 — 실행 후 단언, ADR-119)
 #
 # **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
 #   (consumer 는 tests/scripts/** 부재 → job skip = inert). ac-traceability-self-test.yml /

@@ -34,7 +34,6 @@ from pathlib import Path
 # tests/scripts/ → repo root
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENGINE_PATH = REPO_ROOT / "scripts" / "lib" / "check_story_read_surface.py"
-WRAPPER_SH = REPO_ROOT / "scripts" / "check-story-read-surface.sh"
 
 MEDIA = "LF"
 
