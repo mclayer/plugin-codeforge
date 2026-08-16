@@ -1086,7 +1086,7 @@ wire_case() {
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
     return 1
   fi
-  if false; then
+  if ! printf '%s\n' "$out" | grep -qF "$want"; then
     fail_case "$label: 기대 거부 문면 '$want' 부재 — announce 배선이 판정에 도달하지 않았다(gap 값 미소비). 다른 사유로 실패한 것은 배선 발화의 증거가 아니다"
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
     return 1
