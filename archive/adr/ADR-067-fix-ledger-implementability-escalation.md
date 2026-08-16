@@ -31,6 +31,13 @@ amendment_log:
     scope_change: "ratchet 강화 only — 기존 §결정 1-7 의미 invariant 변경 0. fix-event-v1 v1.4 additive-optional column (v1.1~v1.3 선례 4회 정합) + max-FIX disjoint 명문화(약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A (강화 방향)."
     breaking: false
     backward_compat: true
+  - date: 2026-08-16
+    amendment: 4
+    cfp: CFP-2985
+    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시."
+    scope_change: "ratchet 강화 방향 — 값공간 확장은 additive(기존 2값 유효 유지, 소급 정규화 0), 카운터 trigger lane 정의역 무변경(확장 0), 데드락 해소는 verdict 부재 구멍을 fail-closed 로 채움(기존 verdict 배정 변경 0), 닫기 조건은 기존 게이트 위에 축 추가(대체 0). 유령 선언 철회는 실효 강제력 0 이던 문면의 제거이므로 통제 약화 0 — ADR-058 §결정 5 역-ratchet 정의역 밖. is_transitional: false 유지."
+    breaking: false
+    backward_compat: true
   - date: 2026-08-18
     amendment: 5   # provisional "5+" — 산술 next 는 4 이나 미머지 브랜치 cfp-2985-fix-telemetry 가 amendment_id 4 선점 active (ADR-RESERVATION row firsthand). D-5a/AC-14 merge 직전 재계산 대상 — 선착 확정 · 후착 재계산 의무 · 결번 허용 · 충돌 금지.
     cfp: CFP-3017
@@ -43,6 +50,7 @@ related_stories:
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
   - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
   - CFP-2480  # Amendment 3 — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR carrier (Epic CFP-2476 E3)
+  - CFP-2985  # Amendment 4 — 원인 판정 값공간 6값 + 카운터 lane disjoint + #2957 데드락 해소 + 정의역 선언 닫기 조건 + 유령 선언 철회
   - CFP-3017  # Amendment 5+ (provisional) — receiver floor 전환 + §2.4 축 5 계약 채택 + §결정 7 위생 확장·근거 정정 + AC-17(b) 정의역 선언 (Epic #3016 E-1)
 related_adrs:
   - ADR-008
@@ -59,6 +67,10 @@ related_adrs:
   - ADR-064
   - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
   - ADR-119   # Amendment 3 — §결정 10② close-time wire 실현 ("수정됨=반증 후 단언")
+  - ADR-181   # Amendment 4 owner_adr — 검증 정의역 결손(P⊋V) 규범. 본 ADR 은 그 FIX 닫기 조건 축의 적용 carrier
+  - ADR-171   # Amendment 4 — 신규 게이트 tier·registry host (warning-first + 승격 3-AND)
+  - ADR-155   # Amendment 4 — _ROW_KEYS closed allow-list (root_cause_class 원장 키 착지면)
+  - ADR-156   # Amendment 4 — 집계 feed. pattern_status uncomputable_missing_key DEFAULT 경로 해소 대상
   - ADR-171   # Amendment 5+ — 신규 검사 warning tier 탄생 원칙 (blocking required context 신설 0)
   - ADR-180   # Amendment 5+ — read_cost 잔여 리스크 축 (floor 는 하한이지 상한 아님 — 팽창 미차단 정직 라벨)
   - ADR-182   # Amendment 5+ — 면 분리(리뷰/증적 정의역 분리) 선례 anchor (AC-17(b) 구조적 은닉)
@@ -384,6 +396,122 @@ replay close-gate 는 §결정 4 cross-lane RESET semantics 와 disjoint — rep
 - `mechanical_enforcement_actions: []` retain (replay close-time 자동 wire = Phase 2 / 후속 carrier, ADR-064 §결정 1 unitary). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test, CI 미배선 — Story A/B 선례 동형 helper).
 - ratchet 강화 방향 (max-FIX disjoint 명문화 + replay fail-mode 2축 + reproducer security invariant codify, 약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A. ADR-070 Amendment 12 + ADR-119 §결정 10② + fix-event-v1 v1.4 sibling cross-ref.
 
+## Amendment 4 (CFP-2985 carrier) — 값공간 확장 ∧ 카운터 disjoint · #2957 데드락 해소 · 정의역 선언 · 유령 선언 철회
+
+> 본 Amendment 는 [ADR-181](ADR-181-verification-domain-deficit-normative.md) 의 **적용 carrier** 다.
+> P/V/D 정의는 ADR-181 §결정 1 이 SSOT 이며 본 문서는 **인용만 하고 재진술하지 않는다**(ADR-181 §결정 4 접합부 규약).
+
+### 9.1 `원인 판정` 값공간 6값 확장 ∧ §결정 1 카운터 trigger lane 불변 (disjoint 명문화)
+
+`fix-event-v1` v1.6 에서 `원인 판정` enum 을 확장한다.
+
+| 값 | 재진입 표적 | 신규 |
+|---|---|---|
+| `설계` | Change Plan 갱신 + 설계 리뷰부터 재실행 | 기존 |
+| `구현` | Change Plan 유지 + 구현 commit append | 기존 |
+| `요구사항` | 요구사항 lane 재진입 (문제 정의 오류) | ★ 신규 |
+| `환경` | 환경·인프라 축 — 산출물 재작성 없음 | ★ 신규 |
+| `설계-리뷰` | 설계 리뷰 자체의 판정 결함 | ★ 신규 |
+| `구현-리뷰` | 구현 리뷰 자체의 판정 결함 | ★ 신규 |
+
+- **채택 근거 (firsthand)**: enum 밖 4축이 실측 **92행(15.6%)** 실사용 중이다. 15.6% 는 이탈이 아니라
+  **값공간 설계 결함의 증상**이다. 특히 `요구사항` 은 `skills/root-cause-decision/SKILL.md` 3rd rung 이
+  1차 가정으로 **지시하는 값**이며(ADR-064 Amendment 13), 계약이 그 지시를 뒤늦게 따라가는 것이다.
+- ★ **§결정 1 카운터 trigger lane 은 확장하지 않는다.** trigger 범위 = `설계-리뷰` / `구현-리뷰`
+  **2 lane 무변경**(`max_fix_per_cycle = 3`). 두 축은 **disjoint** 다 —
+
+  | 축 | 값공간 | 무엇을 결정하는가 |
+  |---|---|---|
+  | `원인 판정` (라우팅) | 6값 | 다음 iteration 이 **어느 lane 으로 재진입**하는가 |
+  | max-FIX 카운터 trigger | 2 lane | **어느 lane 의 재진입 횟수**가 3/3 reassessment 를 유발하는가 |
+
+  값이 `요구사항` 이면 요구사항 lane 으로 재진입하지만 **max-FIX 카운터는 소비하지 않는다**.
+  이는 §결정 8 (replay 는 카운터를 소비하지 않는다) 와 **같은 형태의 disjoint** 이며 새 원리가 아니다.
+- **소급 정규화 금지**: 기존 행은 재저작하지 않는다(append-only invariant, ADR-181 INV-A).
+  집행은 ratchet baseline 동결 + 신규 행만 대상.
+
+### 9.2 #2957 데드락 해소 — 정성 all-miss ∧ 정량 hit 조합의 verdict 부여
+
+**구멍 (firsthand, 본 Amendment 이전)**: §결정 2 는 정성 trigger 3종과 dual metric 을 **결합**해
+escalation 의무를 규정하고, §결정 3 은 `reset_and_redesign` 의 전건을
+"3 trigger 모두 miss **+** dual metric 모두 miss" 로 규정한다. 따라서
+
+- **정성 all-miss ∧ 정량 hit** 조합은 — §결정 2 의 "정량 metric hit + 정성 trigger evaluation 결합" 을
+  충족하지 못해 escalation 의무가 성립하지 않고,
+- 동시에 §결정 3 의 reset 전건("정량도 모두 miss")도 성립하지 않는다.
+
+⇒ verdict 가 **어느 쪽으로도 배정되지 않는데** §결정 1 은 "verdict 수령 전까지 4번째 FIX iteration 자동 진입 금지"
+를 강제한다. **verdict 부재 ∧ 진입 금지의 교집합 = 데드락**이며 mclayer/plugin-codeforge#2957 로 신고돼 있었다.
+
+**해소 (fail-closed)**:
+
+| 정성 trigger (i/ii/iii) | dual metric | verdict |
+|---|---|---|
+| 1+ hit | 무관 | `escalate_to_user` (기존, 무변경) |
+| all-miss | 1+ hit | ★ **`escalate_to_user`** (본 Amendment 신설 — 종전 미배정) |
+| all-miss | all-miss | `reset_and_redesign` 가능 (기존 §결정 3, 무변경) |
+
+- **왜 escalate 인가 (안전 방향)**: 정량 신호(`cumulative_P0 >= 2` / `cumulative_P1 >= 5` /
+  `reviewer_divergence_count >= 2`)가 켜졌다는 것은 **관측 가능한 누적 이상**이 있다는 뜻이고,
+  정성 평가가 그것을 설명하지 못한다는 것은 **평가 술어가 현상을 못 덮는다**는 뜻이다.
+  그 상태에서 reset 을 허용하면 "설명 못 하는 이상 위에서 같은 boundary 재시도" 가 되며,
+  이는 §결정 2 (i) 이 겨냥한 실패 모드 그 자체다. ADR-181 INV-D(정의역 정직)의 직접 적용이다.
+- **기존 배정 변경 0**: 위 표의 1행·3행은 종전과 동일하다. 본 Amendment 는 **여집합만** 채운다.
+- `reasoning_carryover` 3-part 의무는 escalate/reset 무관 동반(§결정 5) — 본 분기도 동일.
+
+### 9.3 FIX 닫기 조건에 검증 정의역 선언 추가 (§결정 8 확장 — 대체 0)
+
+FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` v1.6 trailing optional column).
+
+| 필드 | 내용 |
+|---|---|
+| `verification_domain_enumeration` | **열거 산출 명령** — site 목록이 아니라 목록을 산출한 명령. `reproducer_command` 의 schema 제약(repo-relative 게이트·테스트 호출, raw shell free-string 금지 — §결정 8 INV-SEC-1) 을 **상속** |
+| `verification_domain_coverage` | `x 대 y` — 검사한 site 수 대 열거한 site 수. **확률이 아니라 정직한 미완성 표시** (`3 대 7` = 4개는 아직 안 봤다) |
+
+- **`replay_verdict` 를 대체하지 않는다.** 두 축은 disjoint —
+  `replay_verdict` = 검증 **강도**(고쳤다는 주장의 반증), 정의역 선언 = 검증 **범위**.
+  §결정 8 의 "replay 는 max-FIX 카운터를 소비하지 않는다" disjoint 도 무변경이며,
+  정의역 선언 역시 **카운터를 소비하지 않는다**(카운터 참조 0).
+- **비율 임계 게이트를 두지 않는다** — 분모가 자기신고이므로 임계 판정은 조작 유인을 창출한다.
+  **기록은 요구하되 임계 판정은 하지 않는다.** 잔존 유인(작게 열거할수록 유리)은 ADR-181 §결정 6
+  "유인 이동은 제거가 아니다" 라벨과 함께 **미완화 수용**으로 기록한다.
+- **완전성은 판정하지 않는다** — 열거가 전집합인지 여부는 class 동일성 술어 부재로 기계 판정 불가(`declared`).
+  ADR-181 §결정 1 이 "금지 대상은 `D` 가 비어 있지 않은 것이 아니라 `D` 를 미선언 상태로 두는 것" 이라 규정한 그대로다.
+
+### 9.4 `fix-event-depth-scope-presence` 유령 선언 철회 + 라벨 Retired
+
+**실측 (firsthand @ wrapper `ecfe62d63`)**:
+
+- 위 §결정 4 Amendment 1 본문(`:157`)이 `fix-event-depth-scope-presence` 를 **"mechanical enforcement"** 로 선언한다.
+- 그러나 `grep -c 'fix-event-depth-scope-presence' docs/evidence-checks-registry.yaml` → **0**
+  (파일은 실재, 112 entry). script 0 · workflow 0.
+- 반면 우회 라벨 `hotfix-bypass:fix-event-depth-scope` 는 `ADR-024:1305` **정식 등재** + 8-label macro bundle 편입.
+  ⇒ **게이트는 없는데 그 게이트의 우회 채널만 있다.** 이것이 ADR-181 §결정 3 C-6 의 실물 반례다.
+
+**처분**:
+
+1. §결정 4 Amendment 1 의 "mechanical enforcement" 선언을 **철회**한다. 등재가 아니라 철회인 이유 —
+   등재하면 113번째 warning entry + script + workflow + self-test 를 만들고 ADR-171 §결정 6 의
+   **PR 누적 20 warm-up 을 아무도 요구하지 않은 검사에 대해** 새로 시작해야 한다(ADR-181 §결정 7).
+2. `hotfix-bypass:fix-event-depth-scope` 를 `label-registry-v2.md` 에서 **`Retired` 마킹**한다(삭제 아님 —
+   삭제는 이력 소실). 게이트 없는 bypass 를 활성 상태로 남기면 C-6 도착이 영구화된다.
+   현 시점 `.github/` 안 실 소비자(skip 로직) = **0** 이므로 이 라벨은 오늘 inert 하다.
+   inert 한 것은 소비자가 없기 때문이지 안전 설계 때문이 아니며, 배선은 `if:` 1줄이다.
+3. ★ **본 Story 신규 게이트(`fix-ledger-conformance`)의 우회 채널로 이 라벨을 채택하지 않음을 명시 선언**한다.
+   이름 근접성 때문에 미래에 조용히 배선될 수 있고, 그때 C-6 이
+   "라벨이 게이트보다 먼저 있었다" 에서 **"라벨이 게이트를 죽였다"** 로 실현된다.
+4. 신규 게이트는 **bypass 라벨 없이 출시**한다. 생성 선행조건 = 그 게이트가 RED 를 낸 실 CI run 참조.
+
+### 9.5 declaration-only retain + ratchet 정합
+
+- `mechanical_enforcement_actions: []` retain — 실 checker(`check_fix_ledger_conformance.py` + workflow +
+  discriminating self-test)는 **Phase 2**. carrier = `mclayer/plugin-codeforge#2985` / 만기 `2026-09-15`.
+  이 `[]` 는 ADR-181 §결정 5 ③ 의 형식(carrier·만기 주석 병기)을 따르며, 동일 PR 에 registry entry 가 존재한다.
+  **그 사이 구간에서 9.1~9.4 의 강제력은 0 이며 이는 선언이다** — 이 문장을 지우면 over-claim 이 된다.
+- ratchet 강화 방향: 값공간 additive · 카운터 정의역 무변경 · verdict 여집합 fail-closed 충전 ·
+  닫기 조건 축 추가 · 실효 0 이던 문면 제거. **약화 0** — ADR-058 §결정 5 역-ratchet 정의역 밖.
+- `is_transitional: false` 유지.
+
 ## Amendment 5+ (CFP-3017 carrier, provisional) — receiver floor 전환 + 위생 정의역 확장 + 노출면 근거 정정 + verdict relay 정의역 선언
 
 > **번호 provisional 선언 (D-5a/AC-14)**: 본 Amendment 번호 "5+" 와 아래 결정 번호 10 은 **잠정값**이다. amendment 4 슬롯 + 결정 9 서수는 미머지 브랜치 CFP-2985 가 선점 중임을 firsthand 실측했다 — 재현: `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-RESERVATION.md | grep -n -A4 "adr_number: 67"` (→ `amendment_id: 4 / reserved_by_cfp: CFP-2985 / status: active`) + `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-067-fix-ledger-implementability-escalation.md | grep -n "^### 9\."` (→ 결정 9 서수 `9.1`~`9.5` 점유). 확정 규칙 = **"claim 은 잠정, 착지가 확정"** — 선착은 자기 provisional 값 그대로 / **후착 재계산 = 의무(조건부 아님)**: merge 직전 origin/main fresh 3-way 재확인(① 본 파일 frontmatter `amendment_log` 실제 max ② `ADR-RESERVATION.md` 동일 `adr_number` 하 타 claimant row — 미머지 브랜치 포함 ③ 병렬 open PR 실측) 후 다르면 관련 문면 전부 갱신 / **결번 허용 · 충돌 금지** (선례: ADR-141 amendment 10 · adr_number 173 결번).
@@ -499,6 +627,7 @@ Story §2.4 의 계약↔ADR 5축 어긋남 전건 처분 (AC-6 — 미분류 �
 
 ## 관련 파일
 
+- [ADR-181](ADR-181-verification-domain-deficit-normative.md) — 본 Amendment 4 의 owner_adr (P/V/D 정의·불변식 SSOT).
 - [`skills/fix-ledger-schema/SKILL.md`](../../skills/fix-ledger-schema/SKILL.md) — 본 ADR §결정 1 / §결정 4 / §결정 5 narrative SSOT 본문 (호출 시점 + 핵심 룰).
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) — 본 ADR §결정 5 schema SSOT (v1.2 MINOR bump).
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — 본 ADR §결정 1 / §결정 2 / §결정 6 narrative SSOT (§6.4-6.6 절차).
