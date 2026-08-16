@@ -1,0 +1,7 @@
+{
+  "ac": "AC-1",
+  "measured": false,
+  "reason": "Claude Desktop 앱 미설치 — 운영자 액션 대기. 테스트 환경에서 live run 증거 불가능.",
+  "as_of": "2026-08-13T12:40:45+09:00",
+  "blocking_precondition": "Claude Desktop 앱 설치 및 스케줄 작업 1회 실행"
+}

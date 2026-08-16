@@ -27,6 +27,12 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start-gc-catchup",
             "async": false,
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start-scheduled-task-watchdog",
+            "async": false,
+            "timeout": 10
           }
         ]
       }

@@ -1,0 +1,36 @@
+# 동결 자료 — CFP-2949 Phase 2 FIX14 계기가 된 **실 pytest 산출의 꼬리** (합성 아님).
+#   출처: `python -m pytest -q -p no:cacheprovider -m "not requires_golden" <CI 9파일>`
+#   실행 위치: worktree cfp-2949-routines, HEAD d9218d9fc, 2026-08-16 KST
+#   실 종료코드: 1   (아래 마지막 줄이 그 실행의 요약 줄이다)
+#
+# ★ 이 자료를 갱신하면 판별 근거가 사라진다 — 갱신하지 않는다.
+#   FIX14 이전 `suite_axis()` 는 이 산출에서 `{'suite_passed': 163, 'suite_skipped': 1,
+#   'suite_deselected': 1}` 을 돌려주고 `163 passed, 1 skipped, 1 deselected` 라는
+#   초록 줄을 렌더했다. 실패 1건이 산출에서 사라진 실물이다.
+#
+# ★ 트레이스백 꼬리를 함께 얼려 둔 이유: `... timed out after 60 seconds` 줄이
+#   `60 seconds` 라는 `N word` 토큰을 갖고 있어, 요약 줄 탐색이 줄 형상을 앵커하지
+#   않으면 이 줄을 요약으로 오인할 수 있다. 그 반례를 자료 안에 남긴다.
+
+    
+        # Wait for the writer thread, or time out.  If we time out, the
+        # thread remains writing and the fd left open in case the user
+        # calls communicate again.
+        if hasattr(self, "_stdin_thread"):
+            self._stdin_thread.join(self._remaining_time(endtime))
+            if self._stdin_thread.is_alive():
+                raise TimeoutExpired(self.args, orig_timeout)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['C:\\Program Files\\Git\\bin\\bash.exe', 'C:\\Users\\mccho\\.claude\\worktrees\\plugin-codeforge\\cfp-2949-routines\\hooks\\session-start-scheduled-task-watchdog']' timed out after 60 seconds
+
+..\..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py:1664: TimeoutExpired
+=========================== short test summary info ===========================
+FAILED tests/integration/test_scheduled_task_watchdog_hook.py::test_watchdog_absent_beyond_file_cap_reports_one_line
+1 failed, 163 passed, 1 skipped, 1 deselected in 471.16s (0:07:51)

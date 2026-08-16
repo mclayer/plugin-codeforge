@@ -85,7 +85,7 @@ def test_all_hooks_counted_matches_pin():
                 hooks_list = entry.get("hooks", [])
                 count += len(hooks_list)
 
-    assert count == 25, f"Expected 25 hooks, got {count} (AC-11 scope)"
+    assert count == 26, f"Expected 26 hooks, got {count} (AC-11 scope)"
 
 
 def test_plugin_root_only_reference():
@@ -95,7 +95,7 @@ def test_plugin_root_only_reference():
     stdout 을 들여다볼 때만 보인다 — 게이트로서 판별력 0(위반이 있어도 GREEN).
     plugin 경계 참조는 AC-11 이 판정하겠다고 선언한 대상이므로 FAIL 로 승격한다.
 
-    승격 안전성 실측 (2026-08-14 firsthand): 현행 hooks.json 25 command 의
+    승격 안전성 실측 (2026-08-14 firsthand): 현행 hooks.json 26 command 의
     external env var 참조 = 0건 → 승격해도 GREEN (born-red 아님).
     """
     hooks_data = _load_hooks_json()
@@ -121,7 +121,7 @@ def test_plugin_root_only_reference():
                         )
 
     # 정의역 비공허 — 0건을 훑고 "위반 없음" 을 말하면 공허한 통과다.
-    assert scanned == 25, f"검사 대상 command 25 기대, 실제 {scanned} (AC-11 scope)"
+    assert scanned == 26, f"검사 대상 command 26 기대, 실제 {scanned} (AC-11 scope)"
 
     if external_refs:
         pytest.fail(

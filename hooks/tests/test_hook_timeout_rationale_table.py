@@ -3,9 +3,9 @@
 """S3 (테스트): Hook timeout rationale table AC-4, AC-16.
 
 목적:
-  25개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
+  26개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
 
-AC-4: 테스트 내 rationale 표 (25행) ↔ hooks.json bijection 확인.
+AC-4: 테스트 내 rationale 표 (26행) ↔ hooks.json bijection 확인.
 AC-16: fail-open 계상 3항 (게이트 4종 fail-open / 내부 subprocess 하한 / SessionEnd 특례)
         이 표에 필드로 실재.
 
@@ -61,6 +61,14 @@ TIMEOUT_RATIONALE_TABLE = [
         "session-start-gc-catchup",
         30,
         "§3.2 SessionStart #3: orphan worktree cleanup (file ops 30s cap)",
+    ),
+    (
+        "session-start-scheduled-task-watchdog",
+        10,
+        "§3.2 SessionStart #4: 로컬 스케줄 작업 표식 스캔 — stray-scratch-leak 과 "
+        "동일 범주(읽기전용 filesystem scan ≤10s, network 미접촉)라 같은 10s 예산. "
+        "작업량 bound = -maxdepth 3 · 최대 200 파일 · grep -F(고정 문자열). "
+        "실측 0.364~0.666s (5회, rc=0) — 10s 예산 대비 약 15~27배 여유",
     ),
     # PreToolUse Bash (5개)
     # ↓ 게이트 4종은 AC-16 #1 fail-open 손실을 행 자체에 계상한다 (표 밖 산문 아님).
@@ -357,8 +365,8 @@ def test_ac16_session_end_special_case_documented():
 
 
 def test_hook_timeout_rationale_row_count_matches_pin():
-    """Table 이 정확히 25행임을 확인."""
-    assert len(TIMEOUT_RATIONALE_TABLE) == 25, (
-        f"Expected 25 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
+    """Table 이 정확히 26행임을 확인."""
+    assert len(TIMEOUT_RATIONALE_TABLE) == 26, (
+        f"Expected 26 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
     )
-    print(f"✓ Rationale table has complete 25 rows with bijection to hooks.json")
+    print(f"✓ Rationale table has complete 26 rows with bijection to hooks.json")
