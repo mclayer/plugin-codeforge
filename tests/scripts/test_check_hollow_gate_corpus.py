@@ -514,19 +514,47 @@ def test_ic4_exec_unit_dir_is_reassigned_each_materialize(tmp_path):
         assert "s01" not in nm and "kill" not in nm, f"exec dir 명에 표본/leg 식별자 누설: {nm}"
 
 
-def test_f_cr18_9_exec_root_cleanup_delegation_to_core(tmp_path):
-    """F-CR18-9: leg 별 exec_root 즉시 정리 — core.py 실행 성공 확인.
+def test_f_cr18_9_sibling_invariant_counts_actual_exec_root_dirs(tmp_path):
+    """F-CR18-9 회귀 가드 — 형제 부재 불변식이 **형제 dir 수를 실제로 비교**함을 대조로 확정.
 
-    run_core 실행 시 core.py가 exec_root를 관리하며 정상 종료하는지 확인.
-    (실제 정리 로직은 core.py 내부이며, 정리 여부는 shell script 에서 관측)
+    ★ 위임 금지 (F-CR19-1/-2 정정). 종전 이 자리의 케이스는 술어가 `rc == 0` + `"exec-root:"
+    in out` 2개뿐이었고 docstring 이 정리 관측을 shell 로 미뤘다. shell 은 다시 "형제 pytest
+    병행 확인" 으로 되미뤄 **실 관측자가 0** 이었다(순환 위임). 그 결과 형제 불변식을 통째로
+    제거한 mutant 가 양 suite 전건 생존했다 — 회귀 가드 판별력 = 0.
+    **본 케이스가 그 관측자다.** 위임 문면을 두지 않는다.
+
+    판별자 = 형제 수에 따른 발화/불발화 대조 (한쪽만 보면 무효):
+      · 형제 1개(정상 = leg 별 즉시 정리 후 상태) → violation 0
+      · 형제 2개(정리 파손 = 실행 순번 누설 채널 복원) → violation 1건 ∧ 문면에 **관측 개수 2**
+    형제 불변식 블록을 제거·중화한 mutant 는 두 번째 단언에서 RED 가 된다.
+    (전 실행 경로 축 = shell self-test M7 — 정리 무력화 baseline 대비 exit flip. 두 축은
+     서로를 인용하지 않고 각자 관측한다.)
     """
     _require_substrate()
-    root = build_shadow(tmp_path)
-    mf = write_manifest(tmp_path / "m_f_cr18_9.yaml")
-    rc, out, err = run_core(root, manifest=mf)
-    assert rc == 0, f"core.py 정상 종료 실패: rc={rc}\n{err}"
-    # stdout에 exec-root 경로가 emit 되었는지 확인 (정상 경로 진입 증거)
-    assert "exec-root:" in out, f"exec-root 관측 경로 미관측: {out[:500]}"
+    man = _load_manifest()
+    sample = next(s for s in man["samples"] if s["id"] == "s01")
+    gate = next(g for g in man["gates"] if g["id"] == sample["gate"])
+    exec_root = tmp_path / "exec_sib"
+    exec_root.mkdir()
+
+    def _n_dirs():
+        return len([d for d in exec_root.iterdir() if d.is_dir()])
+
+    first, _fx1, _sha1, err1 = hgc._materialize(
+        exec_root, REPO_ROOT, sample, sample["fixtures"]["kill"], gate["entry"], None)
+    assert err1 is None, err1
+    assert _n_dirs() == 1, f"materialize 1회 후 형제 수 기대 1, 실제 {_n_dirs()}"
+    assert hgc._blinding_violations(first, exec_root) == [], "형제 1개인데 불변식이 오발화"
+
+    # 정리하지 않고 2회차 materialize = leg 별 즉시 정리가 파손된 상태의 재현.
+    second, _fx2, _sha2, err2 = hgc._materialize(
+        exec_root, REPO_ROOT, sample, sample["fixtures"]["clean"], gate["entry"], None)
+    assert err2 is None, err2
+    assert _n_dirs() == 2, f"materialize 2회 후 형제 수 기대 2, 실제 {_n_dirs()}"
+    bad = hgc._blinding_violations(second, exec_root)
+    sib = [b for b in bad if "exec-root 직속 디렉터리" in b]
+    assert len(sib) == 1, f"형제 부재 불변식 미발화 — 형제 2개인데 violations={bad}"
+    assert f"{_n_dirs()}개" in sib[0], f"관측 개수 미반영(실제 형제 {_n_dirs()}): {sib[0]}"
 
 
 def test_ic4_leaked_stamp_in_fixture_is_loud_substrate_failure(tmp_path):

@@ -6,7 +6,10 @@
 #
 # ── positive-control: sanity mutant→RED (결함 앞 RED 를 상시 증명) ────────────────────
 #   본 self-test 는 매 실행마다 판정 core 의 **실 파일 사본**에 결함을 주입(MUTATION-SENTINEL
-#   M1~M6, M3 은 2 site 개별)하고, 무변형 baseline 과 **다른 exit** 이 나오는지 대조한다.
+#   M1~M7, M3 은 2 site 개별)하고, 무변형 baseline 과 **다른 exit** 이 나오는지 대조한다.
+#   예외 = M7: 대상 불변식이 정상 corpus 에서 발화하지 않아 무변형 baseline 으로는 대조군이
+#   성립하지 않으므로 **2단 mutant**(정리 무력화 baseline → 불변식 추가 제거)를 쓴다. 사유는
+#   해당 블록 주석에 기재한다 — 예외를 조용히 두지 않는다.
 #   mutant 가 죽지 않으면(= baseline 과 같은 exit) 본 self-test 가 FAIL 한다. inline hand-copy
 #   금지(ADR-082 §11.A tautology) — 실 core 파일 `cp` 대상만 sed 로 변형한다.
 #   double-guard: (a) sed 가 실제로 치환했는지 sentinel grep 으로 확인 → 미치환 = NOT_RUN FAIL
@@ -439,10 +442,10 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 6. MUTATION-SENTINEL 6축 (M3 은 2 site 개별 mutant)
+# 6. MUTATION-SENTINEL 7축 (M3 은 2 site 개별 mutant / M7 은 2단 mutant)
 # ═══════════════════════════════════════════════════════════════════════════════
 echo ""
-echo "── MUTATION-SENTINEL 6축 (M3 = 2 site 개별) ─────────────────────────────────"
+echo "── MUTATION-SENTINEL 7축 (M3 = 2 site 개별 / M7 = 2단 mutant) ───────────────"
 
 # M1 = I-8 협착 conjunct (kill.fail=1). 중화 시 arm-H(fail_stage=∅)에서 공허 참 → 정상 HOLLOW 전멸.
 #   ★ 이 conjunct 는 본 Story 가 실제로 겪은 born-RED 의 봉합점이다.
@@ -499,6 +502,47 @@ mutation_kill_exit "M5 (IC-4 exec-tree blinding assert)" \
 mutation_kill_exit "M6 (xkill 축-disjoint 검사)" \
   's/                if tgt in legs\["xkill"\].fail_stages:/                if False:  # M6-neutralized/' \
   "M6-neutralized" "$REPO_ROOT" 1 --manifest "$MUT_MANIFEST"
+
+# M7 = 형제 부재 불변식 (F-CR18-9 실행 순번 누설 채널 가드).
+# ★ 2단 mutant 인 이유 (정직 기재): 이 불변식은 정상 corpus 에서 **절대 발화하지 않는다** —
+#   leg 별 즉시 정리가 선행해 exec_root 직속 dir 수가 항상 1 이기 때문이다. 그래서 무변형
+#   core 를 baseline 으로 잡으면 baseline exit=0 이라 대조군이 성립하지 않고(무효 kill),
+#   `mutation_kill_exit` 를 그대로 쓸 수 없다. 정리를 먼저 무력화해 **불변식이 실제로
+#   발화하는 상태**를 baseline 으로 만든 뒤 거기서 불변식만 더 제거한다:
+#     baseline (정리만 무력화)       = 형제 누적 → 불변식 발화 → exit 3
+#     mutant   (정리 + 불변식 무력화) = 무성 통과              → exit 0
+#   mutant 상태가 곧 구현리뷰 iter1 P1 결함(자식이 형제 수로 실행 순번을 역산하는 채널)의
+#   **원상복원**이며, 그 앞에서 RED 를 내는 것이 본 케이스의 판별력이다.
+#   KILLED 판정은 exit flip 만으로 하지 않는다 — baseline stderr 에 **관측된 형제 개수 문면**이
+#   있는지까지 확인해, exit 3 이 다른 substrate 사유로 난 경우를 대조군 실패로 떨어뜨린다.
+SH_M7="$(new_shadow none)"
+MF_M7="$TEST_TMP/manifest_m7.yaml"; reset_mf; emit_manifest "$MF_M7"
+M7_SED_CLEANUP='s/^                        shutil.rmtree(unit_dir, ignore_errors=True)$/                        pass  # M7-cleanup-off/'
+M7_SED_INVARIANT='s/^    if len(siblings) != 1:$/    if False:  # M7-sibling-invariant-off/'
+m7_base="$(mutate_core "M7 baseline" "$M7_SED_CLEANUP" "M7-cleanup-off")"
+# ★ 실측 함정 (본 케이스 작성 중 재현): mutate_core 는 명령치환(서브셸)에서 돌아 MUT_SEQ 증가가
+#   부모에 남지 않는다 → 연속 2회 호출이 **같은 파일명**을 쓰고 두 번째가 첫 번째를 덮어쓴다.
+#   그러면 baseline 이 mutant 와 동일해져 baseline exit=0 이 나오고 "대조군 성립 불가" 로 착지한다
+#   (파일 상단이 경고한 그 함정의 2차 발현). 두 번째 호출 전에 baseline 을 별 경로로 확보한다.
+if [ -n "$m7_base" ]; then cp "$m7_base" "$TEST_TMP/m7_base.py"; m7_base="$TEST_TMP/m7_base.py"; fi
+m7_mut="$(mutate_core "M7 mutant" "$M7_SED_CLEANUP; $M7_SED_INVARIANT" "M7-sibling-invariant-off")"
+if [ -z "$m7_base" ] || [ -z "$m7_mut" ]; then
+  fail_case "M7 (형제 부재 불변식): NOT_RUN — sed 미치환 또는 변형본 syntax invalid (false PASS 금지)"
+elif grep -qF "M7-sibling-invariant-off" "$m7_base"; then
+  # baseline 에 mutant 처치가 섞이면 두 군의 차이가 사라져 대조 자체가 무의미해진다.
+  fail_case "M7 (형제 부재 불변식): baseline 오염 — baseline 에 불변식 제거 처치가 섞였다(대조군 무효)"
+else
+  run_core "$m7_base" "$SH_M7" --manifest "$MF_M7"; m7_base_rc=$CORE_RC
+  m7_base_hit=$(grep -cF "exec-root 직속 디렉터리 2개" "$CORE_ERR")
+  run_core "$m7_mut" "$SH_M7" --manifest "$MF_M7"; m7_mut_rc=$CORE_RC
+  if [ "$m7_base_rc" -ne 3 ] || [ "$m7_base_hit" -lt 1 ]; then
+    fail_case "M7 (형제 부재 불변식): 대조군 성립 불가 — 정리 무력화 baseline exit=$m7_base_rc (기대 3) / '형제 2개' 문면 ${m7_base_hit}건 (기대 ≥1). 무효 kill 금지"
+  elif [ "$m7_mut_rc" -eq "$m7_base_rc" ]; then
+    fail_case "M7 (형제 부재 불변식): SURVIVED (baseline exit=$m7_base_rc == mutant exit=$m7_mut_rc — 불변식이 판별에 기여하지 않음 = 실행 순번 누설 채널 무방비)"
+  else
+    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + '형제 2개' 관측 ${m7_base_hit}건 → 불변식 제거 mutant exit=$m7_mut_rc)"
+  fi
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 7. substrate-failure (exit 3) 조건
@@ -742,17 +786,12 @@ else
   fail_case "정직 천장: PASS 발화에 천장 문면 부재"
 fi
 
-# ─ F-CR18-9 exec_root 순번 격리 통합 관측 (신설) ────────────────────────────────
-# 정상 실행 중 exec_root 직속 디렉터리 수 항상 1 (leg 별 즉시 정리).
-# core.py 실행 완료 후 exec_root는 정리되므로, 정상 종료(rc=0) + exec-root 라인 존재 확인만.
-SH="$(new_shadow none)"
-MF="$TEST_TMP/mf_f_cr18_9.yaml"; reset_mf; emit_manifest "$MF"
-run_core "$CORE_PY" "$SH" --manifest "$MF"
-if [ "$CORE_RC" -eq 0 ] && grep -qF "exec-root:" "$CORE_OUT"; then
-  pass_case "F-CR18-9: 정상 실행 완료 + exec-root 관측 (즉시 정리 작동 — 형제 pytest 병행 확인)"
-else
-  fail_case "F-CR18-9: exit=$CORE_RC 또는 exec-root 라인 미관측 — 정상 종료 실패"
-fi
+# ─ F-CR18-9 회귀 가드는 §6 M7 로 이설 (F-CR19-1/-2 정정) ───────────────────────
+# 종전 이 자리에는 `rc==0` + `exec-root:` 라인 2술어만 보는 케이스가 있었고, 그 라벨이
+# "즉시 정리 작동" 을 PASS 로 발화했다. 실측 결과 형제 부재 불변식과 leg 정리를 **둘 다
+# 제거한 mutant 가 본 suite 전건 생존**했으므로 그 라벨은 **관측하지 않은 것을 초록으로
+# 보고하는 거짓 라벨**이었다. 관측 없는 발화는 무커버리지보다 나쁘다 — 케이스를 삭제하고
+# 실제 판별력을 갖는 M7(§6)로 대체했다.
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 14. 요약

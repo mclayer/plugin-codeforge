@@ -28,6 +28,19 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
   ③ `_run_leg` 이 `env=` 를 주지 않아 자식이 부모 env 전체를 상속 — `GITHUB_WORKSPACE` 등을 경유한
   repo 도달(따라서 manifest/stamp/baseline 원본 read)은 막지 않는다 ④ 시계·파일시스템 mtime 등
   미열거 side-channel 일반. IC-4 는 격리 경계가 아니라 **표면 위생 assert** 다.
+  (c) ⓺ 커밋 표본 파생 provenance 검사의 **정의역 = `build[]` 자기신고분 한정**(F-CR19-3).
+  `_check_sample_provenance()` 는 `build[]` 를 순회하므로, 표본을 `samples[]` 와 `classification[]`
+  에만 등재하고 `build[]` 항목을 **생략하면** 그 표본은 파생 대조를 **한 번도 받지 않고 통과**한다.
+  firsthand 재현(s04 = s02 byte-copy + `gate.py.sample` 자유 편집 1줄 + stamp 재각인, `build[]`
+  미등재): **rc=0 · stderr 0행 · provenance/파생 문면 0건 · `N_armH` 1→2 · `N_detected` 2→3 ·
+  축별 baseline `ok=1` · `verdict: unit=s04 … HOLLOW labels=-` · 최종 PASS 발화**.
+  즉 F-CR18-1 이 지적한 "커밋 표본이
+  선언된 파생물인지 아무도 대조하지 않는다" 는 구멍은 **좁혀졌을 뿐 닫히지 않았다** — 파생을
+  *선언한* 표본은 이제 대조되지만, 파생을 *선언하지 않은* 자유 편집 표본은 여전히 무성 통과한다.
+  검사기 자신이 검사 대상에게 정의역을 물어보는 구조라 자기신고 누락에 구조적으로 무력하다.
+  **닫혔다고 읽지 말 것.** 완전 봉합은 manifest 계약 변경(예: day-1 origin 표본을 제외한 전
+  `samples[]` 에 `build[]` 항목 존재를 의무화)을 요구하며 **설계 소관**이다 — 본 회차는 설계
+  동결 중이므로 계약을 바꾸지 않고 이 공백을 열거만 한다(설계 동결 해제 회차 잔여).
 
 ━━ SCOPE disjoint ━━
   ⊥ ADR-154(hard-gate self-verification 번들 presence/shape 정적 lint — 본 하네스의 day-1 표본
@@ -143,15 +156,28 @@ CFP-2963 / ADR-175 — hollow-gate corpus 판정 하네스 pure core.
   baseline 대조는 **축별**이다(집계 비교 금지). 6축 = 하한(N < baseline = FAIL),
   N_indeterminate = 상한(≥ 1 = exit 1).
 
-━━ MUTATION-SENTINEL (self-test 가 sed 로 죽일 분기 — M1~M6) ━━
+━━ MUTATION-SENTINEL (self-test 가 sed 로 죽일 분기 — M1~M7) ━━
   M1: I-8 협착 conjunct (`kill.fail=1`)            — 제거 시 arm-H 정상 표본이 INDETERMINATE 로 전멸.
   M2: I-11 `¬LIVE ∧ ¬HOLLOW` 가드                  — 제거 시 arm-H(kill 관측 ≡ clean 관측)가 전멸.
   M3: exit_space 검사 (I-4 + T-2ⓐ loud 실패)        — 제거 시 rc 이탈이 조용히 통과.
   M4: census 개별 emit (7축 축별)                   — 제거 시 축 축소가 총합에 숨는다.
-  M5: IC-4 exec-tree blinding assert                — 제거 시 stamp 등 arm 누설 표면 + 형제 unit
-      (= 실행 순번 누설 채널)이 exec dir 에 잔존. 형제 부재 conjunct 는 M5 가 덮는 같은 함수
-      안에 있다(신규 M 번호 없음).
+  M5: IC-4 exec-tree blinding **호출부**            — 제거 시 stamp 등 arm 누설 표면이 exec dir 에 잔존.
+  M7: 형제 부재 불변식 (`len(siblings) != 1`)       — 제거 시 **실행 순번 누설 채널**(자식이 형제
+      dir 수로 leg 순번을 역산)이 무성 복원.
   M6: xkill 축-disjoint 검사                        — 제거 시 상수 footer stage 선언이 공허하게 통과.
+
+  ★ M7 신설 경위 (F-CR19-1/-2 정정 — 종전 단정의 실행 반증):
+    종전 이 자리에는 "형제 부재 conjunct 는 M5 가 덮는 같은 함수 안에 있다(신규 M 번호 없음)" 가
+    적혀 있었다. **실행으로 반증됐다.** M5 시나리오는 fixture 에 `stamp_leak.txt` 를 주입하는
+    구성이라 KILL 을 내는 것은 금지-토큰 분기이고, 형제 conjunct 는 그 시나리오에서 한 번도
+    발화하지 않는다. 실제로 형제 conjunct 만 제거한 mutant 는 self-test·pytest 전건 생존했다
+    (= 회귀 가드 판별력 0). 같은 함수 안에 있다는 사실은 같은 mutant 가 죽인다는 뜻이 아니다.
+    ⇒ 형제 불변식은 **자기 번호(M7)와 자기 대조군**을 갖는다.
+    M7 은 2단 mutant 를 쓴다 — 이 불변식은 정상 corpus 에서 절대 발화하지 않으므로(정리가 선행해
+    형제 수가 항상 1) 무변형 baseline 으로는 대조군이 성립하지 않는다. 정리를 먼저 무력화해
+    발화 상태를 만든 뒤 불변식을 제거해 exit flip(3 → 0)을 본다. 상세 = self-test §6 M7 주석.
+    비대칭 실측(정직 기재): **정리만** 무력화한 mutant 는 불변식이 살아 있는 한 기존 케이스
+    다수가 이미 RED 로 잡는다. 무방비였던 것은 **불변식 축 단독**이며 M7 이 그 축을 겨냥한다.
 
 ADR refs: ADR-175 (결정 SSOT — 동적 hollow 분류 · arm-invariant 판정기 계약 · 분모 단조 하한 ·
   sidecar manifest) / ADR-154 (day-1 표본 게이트 + honest-ceiling 상속) / ADR-151 (§결정7 정직 천장
@@ -478,6 +504,12 @@ def _check_sample_provenance(repo_root, build, samples_by_id):
     를 검사하는 경로가 **전무**했다(manifest 는 파생을 선언만 하고 아무도 대조하지 않았다).
     ⓷ stamp drift 와 disjoint: stamp 는 `<표본 자신의 현재 파일> ↔ <자신의 선언 해시>` 를 보고,
     본 검사는 `<표본> ↔ <다른 표본 + recipe>` 관계를 본다(stamp 를 함께 위조하면 ⓷ 는 통과한다).
+
+    ★ 정의역 공백 — **닫혔다고 읽지 말 것** (F-CR19-3, 모듈 docstring 정직 천장 (c) 와 동일 항목):
+    본 루프는 `build[]` 를 순회한다. 따라서 표본을 `samples[]`·`classification[]` 에만 등재하고
+    `build[]` 항목을 **생략한** 자유 편집 표본은 이 검사에 **한 번도 걸리지 않는다**. 검사기가
+    검사 대상의 자기신고로 정의역을 정하는 구조라 신고 누락에 구조적으로 무력하다. F-CR18-1 의
+    구멍은 **좁혀졌을 뿐 닫히지 않았다**. 완전 봉합 = manifest 계약 변경(설계 소관, 동결 중).
     """
     errs = []
     for b in build:
@@ -602,11 +634,15 @@ def _blinding_violations(unit_dir, exec_root):
       즉 IC-4 가 닫는 것은 "exec tree 표면에 arm 신호가 놓여있음"까지이고, 표면 밖 역산 채널
       (내용 read / env 경유 repo 도달 / 개명 회피)은 열려 있다.
 
-    ━━ 형제 부재 불변식 (F-CR18-9) ━━
+    ━━ 형제 부재 불변식 (F-CR18-9) — MUTATION-SENTINEL M7 ━━
       `exec_root` 직속 하위 디렉터리 수 != 1 = violation. 자식 표본이
       `Path(__file__).resolve().parent.parent.iterdir()` 로 형제 수를 세면 그 값이
       **실행 순번**(kill→clean→empty→xkill)이 되어, fixture 를 한 번도 열지 않고 순번만으로
       기대 마커를 위조할 수 있다 = 실행 순번 누설 채널. leg 별 즉시 정리(caller)의 기계 대조.
+      회귀 가드 = **M7 자기 대조군**(self-test §6, 2단 mutant) + pytest
+      `test_f_cr18_9_sibling_invariant_counts_actual_exec_root_dirs`(형제 1개/2개 대조).
+      ★ 이 conjunct 는 M5 시나리오가 덮지 않는다 — 실행 반증됨(F-CR19-2). 위 docstring 상단
+      MUTATION-SENTINEL 절의 "M7 신설 경위" 참조.
     """
     bad = []
     for p in sorted(unit_dir.rglob("*")):
@@ -999,8 +1035,11 @@ def run(args):
                     #   entry_sha·obs 는 정리 전에 확보되므로 이후 사용에 지장 없다.
                     try:
                         entry_sha = sha
-                        # MUTATION-SENTINEL M5: IC-4 exec-tree blinding assert (manifest/stamp/
-                        # baseline/probe 부재 ∧ `.sample` 잔재 0 ∧ 형제 unit 0). 파손 = exit 3 (⓹).
+                        # MUTATION-SENTINEL M5(호출부) / M7(형제 부재 conjunct — 함수 내부):
+                        # IC-4 exec-tree blinding assert (manifest/stamp/baseline/probe 부재 ∧
+                        # `.sample` 잔재 0 ∧ 형제 unit 0). 파손 = exit 3 (⓹).
+                        # 두 sentinel 은 별 대조군을 갖는다 — 같은 함수라고 같은 mutant 가
+                        # 죽이지 않는다(F-CR19-2 실행 반증).
                         bad = _blinding_violations(unit_dir, exec_root)
                         if bad:
                             _error(STAGE_SUBSTRATE, f"unit={uid} leg={role}: exec-tree blinding 파손 {bad} (⓹).")
