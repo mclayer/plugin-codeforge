@@ -49,6 +49,12 @@
 #      배치한다 — 대조군이 이미 crash 중이면 대조 자체가 성립하지 않는다.
 #      (F-CR20-8 봉합: 종전 라벨은 "exit 은 양쪽 $expect 로 불변" 을 **관측 없이 단정**했고,
 #       실측 결과 crash mutant(rc=1)·rc-flip mutant(rc=9)가 모두 그 문면으로 초록 보고됐다.)
+#      ★ F-CR22-1 봉합 — 위 "crash 0" 은 **부재-assert**(「Traceback 이 없다」)이고, 흔적을 남기지
+#        않는 종료(`sys.exit(N)`·`os._exit`·시그널)는 그 술어의 **정의역 밖**이다. 실측으로
+#        `mutation_kill_exit`·`mutation_kill_stdout`·M7·M8 **4 site 전부** 조용한 종료를 KILLED 로
+#        계상했다(전건 초록). 그래서 판정을 「crash 흔적 부재」가 아니라 **「rc 가 주장하는 종점에
+#        닿았다는 양성 증거」**(§1a `announce_gap`)로 바꾼다 — 재는 것이 **가드 존재**가 아니라
+#        **가드 충분**이다. crash 유형을 열거하지 않으므로 새 종료 형태에 정의역이 종속되지 않는다.
 #
 # ── 검사 대상 (READ-ONLY — 본 self-test 는 repo 실파일을 일절 수정하지 않는다) ────────
 #   scripts/lib/check_hollow_gate_corpus.py        (core)
@@ -156,6 +162,52 @@ verdict_of() {
 # census_of <axis> — stdout `census: <axis>=<int>` 문면에서 값 추출.
 census_of() {
   sed -n "s/^census: $1=\([0-9]*\)$/\1/p" "$CORE_OUT" | head -1
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 1a. 종점 announce 실측 (F-CR22-1 봉합) — "가드 존재" 가 아니라 "가드 충분" 을 잰다
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 무엇이 틀렸었나 (정직 기재). 종전 crash 가드의 판별자는 stderr `Traceback` **단일 문자열**
+#   이었다. 그것은 **부재-assert**(「crash 흔적이 없다」)라서, 흔적을 남기지 않는 종료
+#   (`sys.exit(N)` · `os._exit` · 시그널)는 **술어의 정의역 밖**이다. 문자열을 더 열거하는
+#   봉합은 같은 기전(정의역 열거)의 반복이므로 쓰지 않는다.
+#
+# ★ 교체한 술어 (양성-assert). core 의 선언 exit_space 는 {0,1,3} 이고
+#   (`check_hollow_gate_corpus.py` EXIT_PASS/EXIT_FAIL/EXIT_SUBSTRATE · 2 = argparse usage 전용),
+#   **각 값은 그 rc 를 반환하기 직전에 자기 도달을 스스로 발화한다**. 그래서 rc 마다
+#   「그 rc 가 주장하는 종점에 실제로 닿았다는 양성 증거」를 요구한다 — 전 정의역 total:
+#     rc=0 → stdout `✓ check-hollow-gate-corpus:`      (run() 최종 _emit **직후에만** return EXIT_PASS)
+#     rc=1 → stderr `::error::[SUMMARY]`               (violations 집계 후 유일 실패 종점)
+#     rc=3 → stderr `::error::[SUBSTRATE]`|`[BASELINE]`(전 `return EXIT_SUBSTRATE` 직전 _error — 전수 대조)
+#     그 외 → 선언 exit_space 이탈 자체가 위반
+#   crash 유형을 열거하지 않는데도 ⓐ`sys.exit(2)` ⓑ`sys.exit(0)` ⓒ예외 ⓓ`os._exit` 가 **함께**
+#   걸리는 이유가 이것이다: 조용히 죽은 프로세스는 종점 문면을 **낼 수 없다**.
+#
+# ★ 정직 천장. 이 술어가 닫는 것은 「종점 announce **전** 사망」이다. rc 가 주장하는 종점
+#   문면을 실제로 낸 뒤의 종료는 정의상 그 종점에 닿은 것이라 위반이 아니다. rc=3 은 종점이
+#   ~30개 조기 return 에 분산돼 있어 「**어떤** loud 실패 종점에 닿음」까지만 말하고 「의도한
+#   그 종점」은 말하지 않는다 — 축 귀속은 각 site 의 별도 문면 conjunct(M7 형제 수·leg 순번 등)가 맡는다.
+ANN_PASS="✓ check-hollow-gate-corpus:"
+ANN_FAIL="::error::[SUMMARY]"
+ANN_SUB='::error::\[(SUBSTRATE|BASELINE)\]'
+
+# announce_gap <rc> <outfile> <errfile> — 위반 사유 1줄을 stdout 으로 반환(정상이면 빈 문자열).
+announce_gap() {
+  local rc="$1" out="$2" err="$3"
+  case "$rc" in
+    0)
+      grep -qF "$ANN_PASS" "$out" && { echo ""; return 0; }
+      echo "exit=0 인데 stdout 종점 문면 '$ANN_PASS' 부재 — EXIT_PASS 는 최종 emit 직후에만 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**(sys.exit(0)/os._exit 등)를 뜻한다" ;;
+    1)
+      grep -qF "$ANN_FAIL" "$err" && { echo ""; return 0; }
+      echo "exit=1 인데 stderr 종점 문면 '$ANN_FAIL' 부재 — EXIT_FAIL 은 violations 집계 후 SUMMARY 발화 직후에만 반환되므로, 이 조합은 집계 도달 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
+    3)
+      grep -qE "$ANN_SUB" "$err" && { echo ""; return 0; }
+      echo "exit=3 인데 stderr 에 loud 실패 마커(::error::[SUBSTRATE]|[BASELINE]) 부재 — EXIT_SUBSTRATE 는 전 경로에서 _error 발화 직후 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**를 뜻한다" ;;
+    *)
+      echo "exit=$rc 가 core 선언 exit_space {0,1,3} 밖 (2 = argparse usage 전용) — 판정 core 가 선언한 종점 중 어디에도 닿지 않았다" ;;
+  esac
+  return 0
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -330,11 +382,12 @@ mutate_core() {
 #     자기 형제를 안 본 것이 된다. 그래서 **동일 강도**로 맞춘다.
 mutation_kill_exit() {
   local label="$1" expr="$2" sentinel="$3" root="$4" expect="$5"; shift 5
-  local mut base_rc mut_rc base_tb mut_tb
+  local mut base_rc mut_rc base_tb mut_tb base_gap mut_gap
   local tb_mark="Traceback (most recent call last)"
   run_core "$CORE_PY" "$root" "$@"
   base_rc=$CORE_RC
   base_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
+  base_gap="$(announce_gap "$base_rc" "$CORE_OUT" "$CORE_ERR")"
   # 대조군 crash 가드 — 대조군이 이미 죽어 있으면 어떤 exit 차이도 해당 분기로 귀속되지 않는다.
   if [ "$base_tb" -ge 1 ]; then
     fail_case "$label: 무효 — baseline(무변형) stderr 에 Traceback ${base_tb}건 (exit=$base_rc). 대조군이 이미 crash 라 대조 자체가 성립하지 않는다"
@@ -343,6 +396,11 @@ mutation_kill_exit() {
   fi
   if [ "$base_rc" -ne "$expect" ]; then
     fail_case "$label: baseline 기대 exit=$expect 인데 실제 $base_rc — 대조군 성립 불가(무효 kill)"
+    return 1
+  fi
+  # 대조군 종점 announce (F-CR22-1) — rc 가 맞아도 그 종점에 닿았다는 양성 증거가 없으면 무효.
+  if [ -n "$base_gap" ]; then
+    fail_case "$label: 무효 — baseline 종점 미도달: $base_gap"
     return 1
   fi
   # ★ mutate_core 는 명령치환(서브셸)에서 돌므로 그 안의 전역 대입은 살아남지 않는다.
@@ -356,14 +414,22 @@ mutation_kill_exit() {
   run_core "$mut" "$root" "$@"
   mut_rc=$CORE_RC
   mut_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
+  mut_gap="$(announce_gap "$mut_rc" "$CORE_OUT" "$CORE_ERR")"
   # crash mutant = 무효 kill. rc 가 움직인 원인을 「분기 중화」로 귀속할 수 없다.
   if [ "$mut_tb" -ge 1 ]; then
     fail_case "$label: 무효 kill — mutant stderr 에 Traceback ${mut_tb}건 (exit=$base_rc→$mut_rc). rc 이동 원인이 「분기 중화」인지 「미포착 예외로 인한 조기 사망」인지 구별되지 않는다(rc=1 은 EXIT_FAIL 과 동값)"
     sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
     return 1
   fi
+  # ★ 종점 announce (F-CR22-1) — Traceback 부재-assert 가 못 보는 조용한 종료를 여기서 잡는다.
+  #   rc flip 을 「분기 중화」로 귀속하려면 mutant 가 **끝까지 돌아 종점을 발화**했어야 한다.
+  if [ -n "$mut_gap" ]; then
+    fail_case "$label: 무효 kill — mutant 종점 미도달 (exit=$base_rc→$mut_rc): $mut_gap. rc 이동을 「분기 중화」로 귀속할 수 없다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+    return 1
+  fi
   if [ "$mut_rc" -ne "$base_rc" ]; then
-    pass_case "$label: KILLED (baseline exit=$base_rc → mutant exit=$mut_rc 실측, 판별력 load-bearing · Traceback base=${base_tb}건 mut=${mut_tb}건)"
+    pass_case "$label: KILLED (baseline exit=$base_rc → mutant exit=$mut_rc 실측 · 양 팔 종점 announce 도달 확인, 판별력 load-bearing · Traceback base=${base_tb}건 mut=${mut_tb}건)"
     return 0
   fi
   fail_case "$label: SURVIVED (baseline exit=$base_rc == mutant exit=$mut_rc — 해당 분기가 판별에 기여하지 않음)"
@@ -388,7 +454,7 @@ mutation_kill_exit() {
 #     초록 보고됐다. 라벨이 주장하던 명제가 거짓인데도 통과한 것이다.
 mutation_kill_stdout() {
   local label="$1" expr="$2" sentinel="$3" root="$4" token="$5" expect="$6"
-  local mut base_rc mut_rc base_hit mut_hit base_tb mut_tb
+  local mut base_rc mut_rc base_hit mut_hit base_tb mut_tb base_gap mut_gap
   local tb_mark="Traceback (most recent call last)"
 
   # ── baseline 팔 (대조군) — crash 가드를 대칭 배치한다(대조군이 죽어 있으면 대조 무의미) ──
@@ -396,6 +462,7 @@ mutation_kill_stdout() {
   base_rc=$CORE_RC
   base_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
   base_hit=$(grep -cF "$token" "$CORE_OUT")
+  base_gap="$(announce_gap "$base_rc" "$CORE_OUT" "$CORE_ERR")"
   if [ "$base_tb" -ge 1 ]; then
     fail_case "$label: 무효 — baseline(무변형) stderr 에 Traceback ${base_tb}건 (exit=$base_rc). 대조군이 이미 crash 라 어떤 관측도 해당 분기로 귀속되지 않는다"
     sed 's/^/        base-stderr> /' "$CORE_ERR" >&2
@@ -403,6 +470,10 @@ mutation_kill_stdout() {
   fi
   if [ "$base_rc" -ne "$expect" ]; then
     fail_case "$label: baseline 기대 exit=$expect 인데 실제 $base_rc — 대조군 성립 불가"
+    return 1
+  fi
+  if [ -n "$base_gap" ]; then
+    fail_case "$label: 무효 — baseline 종점 미도달: $base_gap"
     return 1
   fi
 
@@ -417,6 +488,7 @@ mutation_kill_stdout() {
   mut_rc=$CORE_RC
   mut_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
   mut_hit=$(grep -cF "$token" "$CORE_OUT")
+  mut_gap="$(announce_gap "$mut_rc" "$CORE_OUT" "$CORE_ERR")"
 
   # crash mutant = 무효 kill. 토큰 소실(hit=$mut_hit)을 「분기 중화」로 귀속할 수 없다.
   if [ "$mut_tb" -ge 1 ]; then
@@ -429,9 +501,20 @@ mutation_kill_stdout() {
     fail_case "$label: 무효 kill — mutant exit=$mut_rc (기대 $expect · baseline=$base_rc). exit 축이 함께 흔들리면 토큰 소실을 stdout 축 단독 판별로 귀속할 수 없다"
     return 1
   fi
+  # ★ 종점 announce (F-CR22-1) — 여기가 **stdout 축에서 가장 위험한 자리**다.
+  #   위 rc pin 은 rc 가 **이탈**하는 종료만 막는다. 그런데 이 오라클은 '토큰 소실' 을 판별로
+  #   읽으므로, rc 를 **보존한 채** 조용히 죽는 종료(`sys.exit(0)`, 기대 rc 와 동값)가 오면
+  #   ① rc pin 통과 ② 토큰 소실 ③ Traceback 0 → **거짓 KILLED** 가 된다. 실측(F-CR22-1 봉합 시):
+  #   census emit 자리를 `sys.exit(0)` 로 바꾼 mutant 가 `✓ PASS: M4 … KILLED … exit=0→0 실측 불변`
+  #   을 발화하고 전건 PASS=46 FAIL=0 · rc=0 이었다. rc pin 이 이 축을 막는다는 기대는 **거짓**이다.
+  if [ -n "$mut_gap" ]; then
+    fail_case "$label: 무효 kill — mutant 종점 미도달 (exit=$base_rc→$mut_rc, token hit=$base_hit→$mut_hit): $mut_gap. 토큰 소실을 「분기 중화」로 귀속할 수 없다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+    return 1
+  fi
 
   if [ "$base_hit" -ge 1 ] && [ "$mut_hit" -eq 0 ]; then
-    pass_case "$label: KILLED (stdout 축 — baseline '$token' ${base_hit}건 → mutant ${mut_hit}건 / exit=$base_rc→$mut_rc 실측 불변 · Traceback base=${base_tb}건 mut=${mut_tb}건)"
+    pass_case "$label: KILLED (stdout 축 — baseline '$token' ${base_hit}건 → mutant ${mut_hit}건 / exit=$base_rc→$mut_rc 실측 불변 · 양 팔 종점 announce 도달 확인 · Traceback base=${base_tb}건 mut=${mut_tb}건)"
     return 0
   fi
   fail_case "$label: SURVIVED (baseline hit=$base_hit / mutant hit=$mut_hit · exit=$base_rc→$mut_rc 실측 — stdout 토큰 소실 미관측)"
@@ -665,6 +748,10 @@ else
   M7_TB="Traceback (most recent call last)"
   m7_base_tb=$(grep -cF "$M7_TB" "$CORE_ERR")
   cp "$CORE_ERR" "$TEST_TMP/m7_base.err"
+  # ★ 종점 announce (F-CR22-1) — Traceback 가드는 **부재-assert** 라 조용한 종료를 못 본다.
+  #   실측: 이 불변식 자리를 `if sys.exit(2):` 로 바꾼 mutant 가 `✓ PASS: M7 … KILLED …
+  #   mutant exit=2 · Traceback base=0건 mut=0건` 을 발화하고 전건 PASS=46 FAIL=0 · rc=0 이었다.
+  m7_base_gap="$(announce_gap "$m7_base_rc" "$CORE_OUT" "$TEST_TMP/m7_base.err")"
   # ── F-CR20-7 상속분 봉합: 개수 리터럴 단일점 의존 제거 ──────────────────────────
   #   종전: grep -cF "exec-root 직속 디렉터리 2개" — 개수 '2' 를 대조 문면에 **박아** 두었다.
   #   core 문면은 f"...{len(siblings)}개..." 이므로 개수가 관측과 무관한 상수로 바뀌어도 이
@@ -690,22 +777,29 @@ else
   done
   run_core "$m7_mut" "$SH_M7" --manifest "$MF_M7"; m7_mut_rc=$CORE_RC
   m7_mut_tb=$(grep -cF "$M7_TB" "$CORE_ERR")
+  m7_mut_gap="$(announce_gap "$m7_mut_rc" "$CORE_OUT" "$CORE_ERR")"
   if [ "$m7_base_tb" -ge 1 ]; then
     # 대조군 crash 가드 — 대조군이 이미 죽어 있으면 어떤 exit 차이도 불변식 축에 귀속되지 않는다.
     fail_case "M7 (형제 부재 불변식): 무효 — baseline(정리 무력화) stderr 에 Traceback ${m7_base_tb}건 (exit=$m7_base_rc). 대조군이 이미 crash 라 대조 자체가 성립하지 않는다"
     sed 's/^/        base-stderr> /' "$TEST_TMP/m7_base.err" >&2
   elif [ "$m7_base_rc" -ne 3 ] || [ "$m7_base_hit" -lt 1 ]; then
     fail_case "M7 (형제 부재 불변식): 대조군 성립 불가 — 정리 무력화 baseline exit=$m7_base_rc (기대 3) / 형제 불변식 문면 ${m7_base_hit}건 (기대 ≥1). 무효 kill 금지"
+  elif [ -n "$m7_base_gap" ]; then
+    fail_case "M7 (형제 부재 불변식): 무효 — baseline 종점 미도달: $m7_base_gap"
+    sed 's/^/        base-stderr> /' "$TEST_TMP/m7_base.err" >&2
   elif [ "$m7_mut_tb" -ge 1 ]; then
     # mutant crash = 무효 kill. rc 이동 원인을 「불변식 중화」로 귀속할 수 없다.
     fail_case "M7 (형제 부재 불변식): 무효 kill — mutant stderr 에 Traceback ${m7_mut_tb}건 (exit=$m7_base_rc→$m7_mut_rc). rc 이동 원인이 「불변식 중화」인지 「미포착 예외로 인한 조기 사망」인지 구별되지 않는다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+  elif [ -n "$m7_mut_gap" ]; then
+    fail_case "M7 (형제 부재 불변식): 무효 kill — mutant 종점 미도달 (exit=$m7_base_rc→$m7_mut_rc): $m7_mut_gap. rc 이동을 「불변식 중화」로 귀속할 수 없다"
     sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
   elif [ "$m7_leg_ord" -eq 0 ] || [ "$m7_base_sib" != "$m7_leg_ord" ]; then
     fail_case "M7 (형제 부재 불변식): 대조군 무효 — 보고된 형제 수 '$m7_base_sib' 가 발화 leg '$m7_base_leg'(pin 순번 $m7_leg_ord)과 결부되지 않는다. 개수가 관측과 어긋나면 exit 3 을 형제 축으로 귀속할 수 없다"
   elif [ "$m7_mut_rc" -eq "$m7_base_rc" ]; then
     fail_case "M7 (형제 부재 불변식): SURVIVED (baseline exit=$m7_base_rc == mutant exit=$m7_mut_rc — 불변식이 판별에 기여하지 않음 = 실행 순번 누설 채널 무방비)"
   else
-    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + 형제 불변식 문면 ${m7_base_hit}건 · 형제 수 ${m7_base_sib} == 발화 leg '$m7_base_leg' pin 순번 ${m7_leg_ord} 결부 → 불변식 제거 mutant exit=$m7_mut_rc · Traceback base=${m7_base_tb}건 mut=${m7_mut_tb}건)"
+    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + 형제 불변식 문면 ${m7_base_hit}건 · 형제 수 ${m7_base_sib} == 발화 leg '$m7_base_leg' pin 순번 ${m7_leg_ord} 결부 → 불변식 제거 mutant exit=$m7_mut_rc · 양 팔 종점 announce 도달 확인 · Traceback base=${m7_base_tb}건 mut=${m7_mut_tb}건)"
   fi
 fi
 
@@ -742,6 +836,7 @@ m8_base_rc=$CORE_RC
 m8_base_tb=$(grep -cF "$M8_TB" "$CORE_ERR")
 m8_base_axes="$(m8_axes_of "$CORE_OUT")"
 m8_base_n=$(grep -cE '^baseline-cmp: ' "$CORE_OUT")
+m8_base_gap="$(announce_gap "$m8_base_rc" "$CORE_OUT" "$CORE_ERR")"
 m8_ok=1
 if [ "$m8_base_tb" -ge 1 ]; then
   fail_case "M8 대조군: 무효 — baseline(무변형) stderr 에 Traceback ${m8_base_tb}건 (exit=$m8_base_rc). 대조군이 이미 crash 라 어떤 관측도 이 축으로 귀속되지 않는다"
@@ -749,6 +844,9 @@ if [ "$m8_base_tb" -ge 1 ]; then
   m8_ok=0
 elif [ "$m8_base_rc" -ne 0 ]; then
   fail_case "M8 대조군: 성립 불가 — baseline exit=$m8_base_rc (기대 0)"
+  m8_ok=0
+elif [ -n "$m8_base_gap" ]; then
+  fail_case "M8 대조군: 무효 — baseline 종점 미도달: $m8_base_gap"
   m8_ok=0
 elif [ "$m8_base_axes" != "$m8_pin_sorted" ]; then
   fail_case "M8 대조군: 붕괴 — baseline 이 하한 대조한 축 집합 [$m8_base_axes] ≠ self-test pin [$m8_pin_sorted]. 죽이려는 성질이 baseline 에서 관측되지 않으면 mutant 와의 차이는 무의미"
@@ -768,6 +866,7 @@ if [ "$m8_ok" -eq 1 ]; then
     m8_mut_tb=$(grep -cF "$M8_TB" "$CORE_ERR")
     m8_mut_axes="$(m8_axes_of "$CORE_OUT")"
     m8_mut_n=$(grep -cE '^baseline-cmp: ' "$CORE_OUT")
+    m8_mut_gap="$(announce_gap "$m8_mut_rc" "$CORE_OUT" "$CORE_ERR")"
     m8_lost=""
     for m8_a in $m8_base_axes; do
       case " $m8_mut_axes " in *" $m8_a "*) ;; *) m8_lost="$m8_lost $m8_a";; esac
@@ -777,13 +876,74 @@ if [ "$m8_ok" -eq 1 ]; then
       sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
     elif [ "$m8_mut_rc" -ne "$m8_base_rc" ]; then
       fail_case "M8 (하한 대조 정의역): 무효 kill — mutant exit=$m8_mut_rc ≠ baseline exit=$m8_base_rc. exit 축이 함께 흔들리면 축 집합 축소를 stdout 축 단독 판별로 귀속할 수 없다"
+    elif [ -n "$m8_mut_gap" ]; then
+      # ★ 종점 announce (F-CR22-1) — 위 rc 대조는 rc **이탈**만 막는다. rc 를 보존한 채
+      #   조용히 죽으면(예: `baseline-cmp` emit 자리 `sys.exit(0)`) 축 집합이 통째로 비고
+      #   rc=0→0 불변이라 **거짓 KILLED** 가 된다. 실측: 그 mutant 가 `baseline-cmp 6행 → 0행`
+      #   으로 KILLED 를 발화하고 전건 PASS=46 FAIL=0 · rc=0 이었다.
+      fail_case "M8 (하한 대조 정의역): 무효 kill — mutant 종점 미도달 (exit=$m8_base_rc→$m8_mut_rc, baseline-cmp ${m8_base_n}행→${m8_mut_n}행): $m8_mut_gap. 축 소실을 「정의역 축소」로 귀속할 수 없다"
+      sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
     elif [ "$m8_mut_axes" != "$m8_base_axes" ] && [ "$m8_mut_n" -lt "$m8_base_n" ]; then
-      pass_case "M8 (하한 대조 정의역 LOWER_BOUND_AXES): KILLED (stdout 축 — baseline-cmp ${m8_base_n}행 [$m8_base_axes] → mutant ${m8_mut_n}행 [$m8_mut_axes] · 대조 소실 축 =[$m8_lost] / exit=$m8_base_rc→$m8_mut_rc 실측 불변 · Traceback base=${m8_base_tb}건 mut=${m8_mut_tb}건)"
+      pass_case "M8 (하한 대조 정의역 LOWER_BOUND_AXES): KILLED (stdout 축 — baseline-cmp ${m8_base_n}행 [$m8_base_axes] → mutant ${m8_mut_n}행 [$m8_mut_axes] · 대조 소실 축 =[$m8_lost] / exit=$m8_base_rc→$m8_mut_rc 실측 불변 · 양 팔 종점 announce 도달 확인 · Traceback base=${m8_base_tb}건 mut=${m8_mut_tb}건)"
     else
       fail_case "M8 (하한 대조 정의역): SURVIVED (baseline ${m8_base_n}행 [$m8_base_axes] == mutant ${m8_mut_n}행 [$m8_mut_axes] — 하한 대조 정의역을 도려내도 관측이 그대로 = 판별력 0)"
     fi
   fi
 fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# T-ANN = 종점 announce 술어 자신의 판별력 대조군 (born-RED 짝 · F-CR22-1)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 왜 상시 등재하나 (본 Story 계보의 직접 산물). 반복된 형이 「봉합이 자기 대조군을 갖지
+#   않아 다음 회차에 조용히 죽는다」 였다. announce 술어는 M1~M8 · IC-4 가 **공유하는 공용
+#   술어**라 한 번 무력화되면 전 site 가 동시에 눈이 먼다 — 정확히 F-CR22-1 이 실증한 형이다.
+#   그래서 여기서 죽이는 대상은 core 의 어떤 분기가 아니라 **가드 자신의 충분성**이다.
+# ★ 대조군 동반 (무조건-true 술어 차단). 위반만 세면 「항상 위반을 반환하는」 술어와
+#   구별되지 않으므로, 같은 술어를 무변형 실행에도 적용해 위반 0 을 함께 관측한다.
+# ★ 이 3 케이스가 RED 로 뒤집히는 조건 = announce 술어의 정의역이 다시 좁아졌을 때다.
+echo ""
+echo "── T-ANN: 종점 announce 술어 판별력 (born-RED 대조군) ───────────────────────"
+
+# (a) 대조군 — 무변형 실행은 종점을 발화하므로 위반 0 이어야 한다.
+run_core "$CORE_PY" "$REPO_ROOT"
+ann_ctl_rc=$CORE_RC
+ann_ctl_gap="$(announce_gap "$ann_ctl_rc" "$CORE_OUT" "$CORE_ERR")"
+if [ "$ann_ctl_rc" -eq 0 ] && [ -z "$ann_ctl_gap" ]; then
+  pass_case "T-ANN-a 대조군: 무변형 실행(exit=$ann_ctl_rc)에 announce 위반 0 — 술어가 무조건-true 가 아님(대조군 성립)"
+else
+  fail_case "T-ANN-a 대조군: 무변형 실행 exit=$ann_ctl_rc / 위반='$ann_ctl_gap' (기대 exit=0 · 위반 0). 대조군이 서지 않으면 아래 판별력 관측이 무의미"
+fi
+
+# (b)(c) 조용한 종료 mutant 2종 — 종전 `Traceback` 단일점 가드는 **둘 다** 통과시켰다.
+#   ⓑ rc 보존형(`sys.exit(0)`)은 **rc 집합 pin 으로도 안 걸린다**(0 ∈ 선언 exit_space {0,1,3}).
+#     그래서 처방을 rc 집합이 아니라 **종점 도달 양성 증거**로 잡았다 — 이 케이스가 그 차이를
+#     상시 실증한다. ⓒ rc 이탈형(`sys.exit(2)`)은 exit_space 밖 축을 덮는다.
+ANN_TB="Traceback (most recent call last)"
+for ann_case in "b:0:rc 보존형 — 선언 exit_space 안" "c:2:rc 이탈형 — 선언 exit_space 밖"; do
+  ann_id="${ann_case%%:*}"; ann_rest="${ann_case#*:}"
+  ann_code="${ann_rest%%:*}"; ann_desc="${ann_rest#*:}"
+  ann_sed='s/        _emit(f"census: {a}={census\[a\]}")/        sys.exit(CODE)  # ANN-silent-exit/'
+  ann_sed="${ann_sed/CODE/$ann_code}"
+  ann_mut="$(mutate_core "T-ANN-$ann_id" "$ann_sed" "ANN-silent-exit")"
+  if [ -z "$ann_mut" ]; then
+    fail_case "T-ANN-$ann_id: NOT_RUN — sed 미치환 또는 변형본 syntax invalid (false PASS 금지)"
+    continue
+  fi
+  run_core "$ann_mut" "$REPO_ROOT"
+  ann_rc=$CORE_RC
+  ann_tb=$(grep -cF "$ANN_TB" "$CORE_ERR")
+  ann_gap="$(announce_gap "$ann_rc" "$CORE_OUT" "$CORE_ERR")"
+  if [ "$ann_tb" -ne 0 ]; then
+    # 이 mutant 가 Traceback 을 내면 그것은 **종전 가드가 이미 잡는 형**이라, 여기서의 검출을
+    # announce 술어의 판별력으로 귀속할 수 없다(축 귀속 붕괴). 대조 자체를 무효로 떨어뜨린다.
+    fail_case "T-ANN-$ann_id: 대조 무효 — 조용해야 할 mutant 가 Traceback ${ann_tb}건 (exit=$ann_rc). 검출을 announce 축에 귀속할 수 없다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+  elif [ -n "$ann_gap" ]; then
+    pass_case "T-ANN-$ann_id ($ann_desc): 종전 Traceback 가드가 통과시키는 조용한 종료(exit=$ann_rc · Traceback 0건)를 announce 술어가 위반으로 검출 — 가드 충분성 실증"
+  else
+    fail_case "T-ANN-$ann_id ($ann_desc): announce 술어가 조용한 종료(exit=$ann_rc · Traceback 0건)를 통과시켰다 — 가드 판별력 사망(거짓 KILLED 재유입 경로)"
+  fi
+done
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 7. substrate-failure (exit 3) 조건
@@ -987,17 +1147,24 @@ IC4_TB="Traceback (most recent call last)"
 run_wrapper "$REPO_ROOT"
 ic4_rc1=$CORE_RC; ic4_tb1=$(grep -cF "$IC4_TB" "$CORE_ERR")
 ex1="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
+# ★ 종점 announce (F-CR22-1) — 위 실증(emit 후 crash)의 조용한 종료판. exec-root 를 emit 한 뒤
+#   `sys.exit(0)` 로 죽으면 Traceback 0 · rc=0/0 이라 종전 두 가드를 **모두** 통과하고 이름 차이만
+#   남아 초록이 난다. rc=0 이 주장하는 종점(최종 emit) 도달을 양성으로 요구해 그 형을 닫는다.
+ic4_gap1="$(announce_gap "$ic4_rc1" "$CORE_OUT" "$CORE_ERR")"
 run_wrapper "$REPO_ROOT"
 ic4_rc2=$CORE_RC; ic4_tb2=$(grep -cF "$IC4_TB" "$CORE_ERR")
 ex2="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
+ic4_gap2="$(announce_gap "$ic4_rc2" "$CORE_OUT" "$CORE_ERR")"
 if [ "$ic4_tb1" -ge 1 ] || [ "$ic4_tb2" -ge 1 ]; then
   fail_case "IC-4 재배정: 무효 — 실행 stderr 에 Traceback (run1=${ic4_tb1}건 run2=${ic4_tb2}건 · exit=$ic4_rc1/$ic4_rc2). 두 팔 중 하나라도 조기 사망하면 이름 차이를 '재배정' 으로 귀속할 수 없다"
   sed 's/^/        stderr> /' "$CORE_ERR" >&2
 elif [ "$ic4_rc1" -ne 0 ] || [ "$ic4_rc2" -ne 0 ]; then
   # 무변형 corpus 의 정상 종료 exit=0 을 **리터럴 pin** 으로 둔다 (관측 유효성 전제).
   fail_case "IC-4 재배정: 무효 — 무변형 corpus 실행이 exit=$ic4_rc1/$ic4_rc2 (기대 0/0). 실행이 정상 완주하지 않으면 재배정 관측이 성립하지 않는다"
+elif [ -n "$ic4_gap1" ] || [ -n "$ic4_gap2" ]; then
+  fail_case "IC-4 재배정: 무효 — 종점 미도달 (run1: ${ic4_gap1:-정상} / run2: ${ic4_gap2:-정상}). 두 팔 중 하나라도 종점에 닿지 않으면 이름 차이를 '재배정' 으로 귀속할 수 없다"
 elif [ -n "$ex1" ] && [ -n "$ex2" ] && [ "$ex1" != "$ex2" ]; then
-  pass_case "IC-4 재배정: exec dir 명이 실행마다 다름 ($ex1 → $ex2 · 양 팔 exit=$ic4_rc1/$ic4_rc2 · Traceback ${ic4_tb1}/${ic4_tb2}건)"
+  pass_case "IC-4 재배정: exec dir 명이 실행마다 다름 ($ex1 → $ex2 · 양 팔 exit=$ic4_rc1/$ic4_rc2 · 양 팔 종점 announce 도달 확인 · Traceback ${ic4_tb1}/${ic4_tb2}건)"
 else
   fail_case "IC-4 재배정: exec dir 명이 고정/미관측 (ex1='$ex1' ex2='$ex2')"
 fi
