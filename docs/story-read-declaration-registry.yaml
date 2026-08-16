@@ -1,0 +1,78 @@
+# CFP-2986 / ADR-180 §결정 1·8 — lane → 섹션 읽기 선언 레지스트리
+#
+# 무엇인가: `read_cost` 술어의 **정의역**이다 (부속물이 아니다).
+#   read_cost(story) = Σ_{r ∈ readers} [ bytes(parent) + Σ_{c : opens(r,c)} bytes(c) ]
+#   opens(r,c) ⟺ r 이 본 레지스트리 미등재 (보수 default — 전 자식 계상)
+#                ∨ declares(r) ∩ carries(c) ≠ ∅
+#
+# 보수 default 의 방향성: 미등재 reader 는 **모든 자식을 여는 것**으로 계상한다.
+#   ⇒ 레지스트리 불완전은 비용을 과대 계상할 뿐 절대 과소 계상하지 않으며,
+#     따라서 불완전성이 거짓 "개선" 판정을 만들 수 없다 (fail-safe 모델링 default).
+#   같은 이유로 각 행의 `declares` 는 **과소 선언이 위험하고 과대 선언이 안전**하다.
+#
+# ★ 정직 상한 (ADR-180 §결정 1): 이것은 **선언된** 읽기 비용이다.
+#   `Read` 도구에 섹션 주소지정·집행면이 없어 선언과 실제 agent 거동의 일치는 기계 검증 불가 —
+#   **attested, not verified**. "실제 읽기량을 잰다" 고 주장하지 않는다.
+#
+# 행별 `source` 인용 의무 (Change Plan §3.1). 인용 = wrapper repo 경로:줄 (아래 provenance 기준).
+# `carries(c)` 는 본 파일이 아니라 **자식 frontmatter `carries_sections`** 가 선언하며,
+#   게이트가 실행 시점에 파싱해 주입한다 (선언 파싱이지 슬라이싱이 아니다).
+
+schema_version: 1
+introduced_by: CFP-2986
+adr: ADR-180
+provenance:
+  repo: mclayer/plugin-codeforge
+  tree_sha: a0c84e66d2bbe53bb041a6438a94c75b80811a7b
+  media: LF
+  note: source 인용의 줄 번호는 위 트리 기준 실측이다.
+
+# reader_roster(= coverage 분모)는 baseline artifact 가 선언한다 — 본 파일에서 유도하면
+# coverage 가 구성상 항상 1.0 이 되어 항진명제가 된다.
+readers:
+
+  orchestrator:
+    lane: Orchestrator
+    declares: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+    source: 'skills/fix-ledger-schema/SKILL.md:17 (§10 FIX Ledger Orchestrator 단독 관리 monopoly) / plugins/codeforge-test/agents/TestAgent.md:148 (verdict 수령 후 Orchestrator 가 §9.3 append)'
+    note: 전 lane 전이를 조율하며 §9·§10 write monopoly 를 보유한다 — 전 섹션 접촉으로 선언한다.
+
+  requirements:
+    lane: 요구사항
+    declares: ['1', '2', '3', '4', '5', '6']
+    source: 'plugins/codeforge-requirements/agents/RequirementsPLAgent.md:61 (공통 입력 = 사용자 원문 §1 + 관련 ADR §3 + 코드 경로 지도 §4) / :115-118 (§2·§5·§6 write destination)'
+
+  requirements-review:
+    lane: 요구사항리뷰
+    declares: ['1', '2', '3', '4', '5', '6', '7']
+    source: 'plugins/codeforge-review/agents/RequirementsReviewPLAgent.md:182 (요구사항 산출물 Story §1-§7 을 외부사실 의존성 게이트 관점에서 검토)'
+
+  design:
+    lane: 설계
+    declares: ['1', '2', '3', '4', '5', '6', '7', '9']
+    source: 'plugins/codeforge-design/agents/ArchitectPLAgent.md:99 (6 SubAgent 공통 입력 = Story §1-7) / :187 (FIX 시 입력 = Story file §1-7·§9)'
+
+  design-review:
+    lane: 설계리뷰
+    declares: ['1', '2', '3', '4', '5', '6', '7', '9']
+    source: 'plugins/codeforge-review/agents/DesignReviewPLAgent.md:79 (docs/stories/<KEY>.md §1-7) / plugins/codeforge-review/templates/review-pl-base.md:284 (DesignReview lane 진입 직전 PL 이 Story §9 scan)'
+
+  develop:
+    lane: 구현
+    declares: ['5', '6', '8', '10']
+    source: 'plugins/codeforge-develop/agents/DeveloperPLAgent.md:101 (Story §6 NFR spec invariant 표) / :223 (입력 = Story file §8.5 Impl Manifest) / :224 (§10 row append)'
+
+  code-review:
+    lane: 구현리뷰
+    declares: ['5', '8', '9', '10']
+    source: 'plugins/codeforge-review/agents/CodeReviewPLAgent.md:112 (undetermined 보류 시 Story §9 기록) / :139 (Story §9.2 append) / :142 (Story §10 FIX Ledger append)'
+
+  integration-test:
+    lane: 통합테스트
+    declares: ['7', '8', '9']
+    source: 'plugins/codeforge-test/agents/IntegrationTestAgent.md:125 (stories_in_scope 각 Story §8.6 확인) / :224 (per-Story §7.4 measurement evidence path) / :323-325 (Story §9 write boundary)'
+
+  security-test:
+    lane: 보안테스트
+    declares: ['3', '9']
+    source: 'plugins/codeforge-review/agents/SecurityTestPLAgent.md:165 (related_adrs = Story §3 에서 추출) / plugins/codeforge-review/templates/review-pl-base.md:280 (final verdict 후 Story §9 inline append)'
