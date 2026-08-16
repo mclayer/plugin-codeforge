@@ -32,7 +32,15 @@
 #      terminal-marker = stdout `✓ <gate>: …`. rc 는 I-4(선언 exit_space 이탈)에만 쓰인다.
 #      본 self-test 는 verdict 를 rc 로 역추론하지 않고 하네스가 emit 한 `verdict:` 문면을 읽는다.
 #   ③ mutation KILLED ⟺ **baseline(무변형)=기대 exit AND mutant=다른 exit**. 한쪽만 보면 무효.
-#      exit-flip 이 아닌 축(M4 = stdout census 토큰 소실)은 별도 함수로 kill 한다.
+#      exit-flip 이 아닌 축(M4 = stdout census 토큰 소실)은 별도 함수로 kill 하되, 거기서도
+#      **한쪽만 보지 않는다** — stdout 축 KILLED ⟺ baseline token ≥1 ∧ mutant token 0 ∧
+#      **양 팔 exit 을 실측해 둘 다 기대치** ∧ **양 팔 stderr Traceback 0건**. 프로세스가 대상
+#      분기에 **닿기 전 죽어도** 토큰은 똑같이 사라지므로, crash mutant 를 걸러내지 않으면
+#      「해당 분기 중화」와 「조기 사망」이 구별되지 않는다(축 귀속 붕괴). 그러므로 crash mutant 는
+#      KILL 로 계상하지 않고 **무효(FAIL)** 로 떨어뜨린다. 무효 판정은 baseline 팔에도 대칭
+#      배치한다 — 대조군이 이미 crash 중이면 대조 자체가 성립하지 않는다.
+#      (F-CR20-8 봉합: 종전 라벨은 "exit 은 양쪽 $expect 로 불변" 을 **관측 없이 단정**했고,
+#       실측 결과 crash mutant(rc=1)·rc-flip mutant(rc=9)가 모두 그 문면으로 초록 보고됐다.)
 #
 # ── 검사 대상 (READ-ONLY — 본 self-test 는 repo 실파일을 일절 수정하지 않는다) ────────
 #   scripts/lib/check_hollow_gate_corpus.py        (core)
@@ -322,28 +330,70 @@ mutation_kill_exit() {
 }
 
 # mutation_kill_stdout <label> <sed_expr> <sentinel> <root> <token> <expect_rc>
-#   exit-flip 이 아닌 축 전용: baseline stdout 에 token 존재 ∧ mutant stdout 에 소실 = KILLED.
+#   exit-flip 이 아닌 축 전용. KILLED ⟺ **양 팔 crash 0** ∧ **양 팔 exit=expect (실측)** ∧
+#   baseline stdout token ≥1 ∧ mutant stdout token 0.
+#
+#   ★ crash mutant 무효 (F-CR20-8 봉합). 종전 구현은 `base_hit>=1 && mut_hit==0` 두 술어만
+#     보면서 라벨로는 "exit 은 양쪽 $expect 로 불변" 을 단정했다 — mutant 팔의 rc 를 **한 번도
+#     읽지 않은 채** 한 단정이라 관측 없는 발화였다. 토큰이 사라지는 원인은 두 가지다:
+#       (i) 대상 분기가 중화됐다      = 우리가 재려는 판별력
+#      (ii) 프로세스가 그 분기에 **닿기 전 죽었다** = 아무것도 재지 못한 무효 실행
+#     둘을 구별할 신호가 없으면 (ii) 가 KILL 로 계상된다(축 귀속 붕괴). 그래서
+#     **stderr Traceback = crash 신호**를 양 팔 대칭으로 보고, mutant 팔 exit 을 실측해
+#     기대치와 대조한다. crash 또는 exit 이탈이면 pass_case 가 아니라 fail_case 다 —
+#     무효 실행을 초록으로 세지 않는다(본 Story 의 "crash mutant 무효" 규율의 집행 지점).
+#     실측 근거: 이 가드 없이 census emit 자리를 `raise` 로 바꾼 mutant(실제 rc=1·Traceback 1건)와
+#     `sys.exit(9)` 로 바꾼 mutant(실제 rc=9)가 **둘 다** "exit 은 양쪽 0 로 불변" KILLED 로
+#     초록 보고됐다. 라벨이 주장하던 명제가 거짓인데도 통과한 것이다.
 mutation_kill_stdout() {
   local label="$1" expr="$2" sentinel="$3" root="$4" token="$5" expect="$6"
-  local mut base_hit mut_hit
+  local mut base_rc mut_rc base_hit mut_hit base_tb mut_tb
+  local tb_mark="Traceback (most recent call last)"
+
+  # ── baseline 팔 (대조군) — crash 가드를 대칭 배치한다(대조군이 죽어 있으면 대조 무의미) ──
   run_core "$CORE_PY" "$root"
-  if [ "$CORE_RC" -ne "$expect" ]; then
-    fail_case "$label: baseline 기대 exit=$expect 인데 실제 $CORE_RC — 대조군 성립 불가"
+  base_rc=$CORE_RC
+  base_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
+  base_hit=$(grep -cF "$token" "$CORE_OUT")
+  if [ "$base_tb" -ge 1 ]; then
+    fail_case "$label: 무효 — baseline(무변형) stderr 에 Traceback ${base_tb}건 (exit=$base_rc). 대조군이 이미 crash 라 어떤 관측도 해당 분기로 귀속되지 않는다"
+    sed 's/^/        base-stderr> /' "$CORE_ERR" >&2
     return 1
   fi
-  base_hit=$(grep -cF "$token" "$CORE_OUT")
+  if [ "$base_rc" -ne "$expect" ]; then
+    fail_case "$label: baseline 기대 exit=$expect 인데 실제 $base_rc — 대조군 성립 불가"
+    return 1
+  fi
+
+  # ── mutant 팔 ──
   mut="$(mutate_core "$label" "$expr" "$sentinel")"
   if [ -z "$mut" ]; then
     fail_case "$label: NOT_RUN — sed 미치환 또는 변형본 syntax invalid (false PASS 금지)"
     return 1
   fi
+  MUT_PATH="$mut"
   run_core "$mut" "$root"
+  mut_rc=$CORE_RC
+  mut_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
   mut_hit=$(grep -cF "$token" "$CORE_OUT")
+
+  # crash mutant = 무효 kill. 토큰 소실(hit=$mut_hit)을 「분기 중화」로 귀속할 수 없다.
+  if [ "$mut_tb" -ge 1 ]; then
+    fail_case "$label: 무효 kill — mutant stderr 에 Traceback ${mut_tb}건 (exit=$base_rc→$mut_rc, token hit=$base_hit→$mut_hit). 프로세스가 대상 분기 도달 전 사망했을 수 있어 토큰 소실을 판별력으로 계상하지 않는다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+    return 1
+  fi
+  # exit 축 실측 단언 — 라벨이 주장하는 '불변' 을 관측으로 뒷받침한다(무관측 단정 금지).
+  if [ "$mut_rc" -ne "$expect" ]; then
+    fail_case "$label: 무효 kill — mutant exit=$mut_rc (기대 $expect · baseline=$base_rc). exit 축이 함께 흔들리면 토큰 소실을 stdout 축 단독 판별로 귀속할 수 없다"
+    return 1
+  fi
+
   if [ "$base_hit" -ge 1 ] && [ "$mut_hit" -eq 0 ]; then
-    pass_case "$label: KILLED (stdout 축 — baseline '$token' ${base_hit}건 → mutant 0건, exit 은 양쪽 $expect 로 불변)"
+    pass_case "$label: KILLED (stdout 축 — baseline '$token' ${base_hit}건 → mutant ${mut_hit}건 / exit=$base_rc→$mut_rc 실측 불변 · Traceback base=${base_tb}건 mut=${mut_tb}건)"
     return 0
   fi
-  fail_case "$label: SURVIVED (baseline hit=$base_hit / mutant hit=$mut_hit — stdout 토큰 소실 미관측)"
+  fail_case "$label: SURVIVED (baseline hit=$base_hit / mutant hit=$mut_hit · exit=$base_rc→$mut_rc 실측 — stdout 토큰 소실 미관측)"
   return 1
 }
 
