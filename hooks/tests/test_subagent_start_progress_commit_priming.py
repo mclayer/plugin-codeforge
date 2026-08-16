@@ -7,7 +7,7 @@ SubagentStart priming 훅 = pointer-only. stdin JSON payload 를 받아 progress
 pointer 를 additionalContext 로 emit 한다 (filesystem·network·git 조작 0).
 
 INV-T10 행동 계약 3케이스:
-  ① 정상 payload  → additionalContext **내용 대조** (규범 pointer 3요소 — presence 단독 금지)
+  ① 정상 payload  → additionalContext **내용 대조** (emit 3요소 — presence 단독 금지)
   ② 빈·깨진 stdin → rc=0 ∧ 무출력 (fail-open — 세션 차단 0)
   ③ python 부재   → rc=0 (emit 경로 결손이지만 세션 미차단)
 
@@ -15,9 +15,16 @@ born-hollow 방지 3조건 (CFP-2799 교훈 — sibling test_subagent_start_rend
   (i)  대상 분기 실도달 fixture ✓ — ③ 은 PATH 에서 python 보유 디렉터리를 제거한 뒤
        **hook 이 실제로 python 을 못 찾는지 precondition 으로 검증**한다 (못 찾게 만들지
        못했으면 skip — 다른 이유로 통과하는 wrong-reason PASS 금지).
-  (ii) assert = additionalContext **내용** 명시 대조 ✓ — 존재-여부 단독 금지.
-  (iii) 취약 revert → RED firsthand ✓ — 훅의 ADDITIONAL_CONTEXT 문면을 변조하면 ① 이 RED 가
-       되는 것을 실행으로 확인한 뒤 단정했다 (커밋 메시지에 mutant 표 기록).
+  (ii) assert = additionalContext **내용** 명시 대조 ✓ — 존재-여부 단독 금지 +
+       CP §8.2.5(c) 흡수-방지 불변식(조각 출현 정확히 1회).
+  (iii) mutant RED firsthand — **실증 범위를 명시한다** (무조건부 단정 금지):
+       실행으로 RED 를 확인한 변조는 아래 4종이다 —
+         h1 산문 ADR 번호 변조 / h2 적재 단위 의미 반전(의미 단위→시간 주기) /
+         h3 정본 경로 변조 / h4 subject 템플릿 변조.
+       ★ "문면을 변조하면 RED" 라는 **무조건부 일반화는 하지 않는다** — Iter 1 커밋에서
+         mutant 1종(h3)만 실행하고 전체로 일반화했다가 Iter 2 에서 h1·h2 가 7 passed 로
+         생존해 반증됐다 (F-CR-201). 조각이 덮지 않는 문면 변조는 여전히 미검출이다
+         (CP §8.2.5(d) 천장 — 조각-국소 보장이지 문면 전역 봉인이 아님).
 
 anti-theater: stdout 전체가 유효 JSON 1건인지 + hookSpecificOutput 형상 + 내용 문자열 정합.
 """
@@ -45,12 +52,26 @@ pytestmark = pytest.mark.skipif(_BASH is None, reason="bash interpreter 부재 (
 
 _PY_NAMES = ("python3", "python3.exe", "python", "python.exe")
 
-# 규범 pointer 3요소 (ADR-178 §결정 2/5/12 — 훅이 전달해야 하는 내용 오라클).
-#   훅 문면이 표류하면 아래 대조가 깨진다 (presence 아닌 내용 검증의 실체).
+# 판별 조각 — CP §8.2.5(c) 흡수-방지 불변식 + §8.2.5(d) 대조 대상 확정.
+#
+# 계약 (d) 가 확정한 emit 3요소 = 규범 pointer · subject 형식 · 정본 위치
+#   (구 문면의 "self명·앵커" 는 sibling render-discipline 훅에서 전사된 오기재 — 본 훅은 emit 하지
+#    않는다. 존재하지 않는 요소의 대조 요구를 제거한 것이지 요건 추가가 아니다.)
+#   ★ 규범 pointer 요소만 **2 리터럴로 앵커**한다 — 식별 축(ADR 번호+결정 번호)과 적재 단위 축
+#     (의미 단위 vs 시간 주기)이 서로 다른 변조 표적이라 한 리터럴로는 둘 다 못 잡는다
+#     (Iter 2 실증: h1 = 식별 축 변조 / h2 = 적재 단위 축 의미 반전). 요소는 3, 리터럴은 4.
+#
+# 조각 선정 규칙 (CP §8.2.5(c)) — **라인-앵커형**: 각 조각은 대조 컨텍스트에서 정확히 1회만
+#   출현해야 한다. 짧은 토큰(`ADR-178`, `의미 단위`)은 정본 경로·subject 템플릿에 재출현해
+#   count 2 가 되고, 그러면 그 축을 변조해도 다른 출현이 대조를 **흡수**해 비판별이 된다
+#   (Iter 2 F-CR-201 실측: h1·h2 둘 다 7 passed 생존). 아래 assert 가 이 성질을 기계 고정한다.
+#
+# 천장 (CP §8.2.5(d)): 본 불변식은 **조각이 덮는 문면에 한해** 판별을 보장한다. 조각이 덮지
+#   않는 문면 변조는 여전히 미검출이며, "훅 문면이 기계적으로 봉인된다" 를 주장하지 않는다.
 _EXPECTED_FRAGMENTS = (
-    "ADR-178",                                                    # 규범 식별
-    "의미 단위",                                                   # 적재 단위 (시간주기 아님)
-    "[CFP-NNN][WIP]",                                             # subject 형식
+    "ADR-178 §결정 2/5/12",                                        # 규범 pointer — 식별 축
+    "atomic 의미 단위 경계마다",                                    # 규범 pointer — 적재 단위 축
+    "Subject: [CFP-NNN][WIP]",                                     # subject 형식
     "archive/adr/ADR-178-subagent-progress-commit-preservation.md",  # 정본 위치
 )
 
@@ -143,8 +164,14 @@ def test_normal_payload_emits_progress_commit_pointer():
     ctx = hso.get("additionalContext", "")
     assert ctx, "additionalContext 공백 — pointer 미전달"
     for frag in _EXPECTED_FRAGMENTS:
-        assert frag in ctx, (
-            f"규범 pointer 요소 누락: {frag!r} — 훅 문면 표류 (내용 오라클, presence 아님).\n"
+        # CP §8.2.5(c) 흡수-방지 불변식 — presence 가 아니라 **정확히 1회** 를 요구한다.
+        #   count 0 = 문면 표류(변조) / count >= 2 = 조각이 흡수 가능해져 판별력 상실.
+        occurrences = ctx.count(frag)
+        assert occurrences == 1, (
+            f"판별 조각 {frag!r} 출현 {occurrences}회 (정확히 1회여야 한다).\n"
+            f"  0회 = 훅 문면 표류/변조 · 2회 이상 = 다른 출현이 변조를 흡수해 비판별화\n"
+            f"  (Iter 2 F-CR-201: 짧은 토큰 'ADR-178'·'의미 단위' 가 각각 정본 경로·subject "
+            f"템플릿에 재출현해 h1·h2 를 흡수했다)\n"
             f"실제 additionalContext={ctx!r}")
 
 
