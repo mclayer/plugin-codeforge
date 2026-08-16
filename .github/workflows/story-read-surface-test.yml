@@ -1,0 +1,62 @@
+name: story-read-surface-test
+# CFP-2986 Phase 2 / Change Plan §8.1 RTM (normative AC 15건) + §8.2 mutant 배터리 —
+#   Story 성장축 외부화 게이트(scripts/lib/check_story_read_surface.py)의 명명 테스트와
+#   discriminating mutant 배터리를 실 CI red/green 으로 산출한다.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가 (**존재 ≠ 실행** — 본 repo 상습 형상):
+#   tests/ 에는 blanket 수집이 없고 workflow 가 파일을 **이름으로 지목**해야 실행된다.
+#   실측(본 브랜치 기준): tests/scripts/*.py 55개 중 39개가 실행 workflow 0 이다.
+#   그리고 ac-traceability Hop3 는 `ast.FunctionDef` **심볼 존재**만 확인하므로
+#   dead test 위에서도 RTM 이 GREEN 이 될 수 있다 — 실제로 CFP-2976 P0 pytest 3종이
+#   실행 workflow 0 인 사고가 있었다. 본 workflow 가 그 경로를 닫는다.
+#
+# **day-1 hard-fail** (continue-on-error 금지) — self-test 실패 = job red.
+# **non-required** (branch-protection 8-tuple 무변경 — 신규 required context 0).
+#   required 승격은 ADR-171 §결정 6 의 3-AND 사전조건 + ADR-130 §결정 6 의 7일-green 이후
+#   Orchestrator post-merge 소관이다.
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). ac-traceability-self-test.yml /
+#   cfp2701-story-form-parser-contract-test.yml 선례 답습.
+# **unmirrored** (templates/github-workflows/ 미배치): invariant-check parity 는
+#   templates→.github 단방향이라 template counterpart 부재 워크플로는 검사 대상 밖.
+#
+# git 의존: 매체 규약 테스트(`test_gate_uses_archive_not_worktree`)가 `git archive` 를
+#   subprocess 로 실행해 LF 고정(raw CR = 0)을 실측한다 ⇒ `fetch-depth: 0` 불요하나
+#   .git 디렉터리는 필요하므로 checkout 기본 동작(shallow clone + .git 보유)으로 충분하다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  story-read-surface-test:
+    name: story-read-surface-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest + pyyaml)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run pytest §8.1 RTM named-test suite (AC-1..AC-21 — Hop3 실 def resolve, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_story_read_surface.py -q
+
+      - name: Run pytest §8.2 mutant 배터리 (-s = 5-tuple construction 레코드를 CI 로그에 인쇄)
+        run: python3 -m pytest tests/scripts/test_story_read_surface_mutants.py -q -s
