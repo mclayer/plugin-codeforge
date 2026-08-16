@@ -81,7 +81,7 @@ related_files:
   - docs/orchestrator-playbook.md
   - docs/evidence-checks-registry.yaml   # ★ Amendment 4 정정 — Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었고 그 선언은 §9.4 에서 철회됐다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
   - CLAUDE.md
-mechanical_enforcement_actions: []
+mechanical_enforcement_actions: []  # ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). carrier = plugin-codeforge#2985 / 만기 2026-09-15. ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 — 본 빈 리스트는 그 철회 후의 정직 상태다.
 ---
 
 # ADR-067: fix-ledger implementability escalation + max FIX overflow handling
@@ -524,8 +524,20 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
    9곳 더 살아 있다**. 철회를 본 ADR 안에서만 하고 끝내면 "선언은 철회됐는데 그 선언을 인용하는 문서는
    그대로" 라는 상태가 되며, 이는 본 Amendment 가 고발하는 class 의 재생산이다.
 
-   **전수 실측** [wrapper worktree `cfp-2985-fix-telemetry`, 재현 =
+   **전수 실측** [wrapper worktree `cfp-2985-fix-telemetry`, ★ **좌표 immutable ref = `ecfe62d63`**
+   (merge-base — 아래 1~13 의 타 파일 줄번호는 전건 이 SHA 기준이며, carrier 가 merge 되면 이동한다.
+   직전 판은 내부 계수에만 `adf99ed44` 를 병기하고 타 파일 좌표에는 아무 ref 도 안 달아 **같은 표 안에서
+   비대칭**이었다 — 설계리뷰 FIX Iter 2 정정), 재현 =
    `grep -rn 'fix-event-depth-scope-presence' --include='*.md' --include='*.yaml' .`]:
+
+   ★★ **직전 판의 표는 12행이었고 실측은 13이다 (설계리뷰 FIX Iter 2 정정 — 누락 1건 = 13행)**.
+   누락 기전을 정확히 적는다: 직전 판의 열거는 결과에서 본 ADR 자신을 빼려고 **`grep -v 'ADR-067-fix-ledger'`
+   (내용 필터)** 를 썼는데, `archive/adr/ADR-RESERVATION.md:710` 행의 **본문 안에**
+   `verified-via Read worktree archive/adr/ADR-067-fix-ledger-implementability-escalation.md` 라는
+   문자열이 들어 있어 **경로가 아니라 내용으로 매치돼 조용히 탈락**했다. 즉 배제 술어의 정의역이
+   "파일 경로" 여야 하는데 "행 전체" 였다 — **본 Amendment 가 고발하는 검사-정의역 협착 그 class 의 자기 실례**다.
+   정정된 술어 = 경로 기준 배제(`sed` 로 좌표만 추출 후 `grep -v '^./archive/adr/ADR-067-fix-ledger'`).
+   계수 정합: 전체 매치 **25** − 본 ADR 내부 **12** = **13**.
 
    | # | site | 분류 | 처분 carrier |
    |---|---|---|---|
@@ -541,6 +553,7 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
    | 10 | `docs/inter-plugin-contracts/fix-event-v1.md:363` | **동결 이력** — v1.2→v1.3 changelog 항목(dated) | 무접촉 |
    | 11 | `docs/inter-plugin-contracts/label-registry-v2.md:94` | **동결 이력** — Amendment 1 dated 서술 | 무접촉 |
    | 12 | `archive/prune-2026-06/CHECK-VERDICT.md:154` | **동결 이력** — archive 스냅샷 | 무접촉 |
+   | ★ 13 | `archive/adr/ADR-RESERVATION.md:710` | **철회 기술** — 본 Amendment 4 의 예약 row 가 축 ④ 를 서술하며 대상을 이름으로 지목한다(이름을 지우면 무엇이 철회됐는지 알 수 없다). 동시에 registry row 는 append-only(INV-A)라 mutate 금지 | 무접촉 (직전 판 **누락** — 위 기전 참조) |
 
    **본 ADR 안 occurrence 의 분류** — 기준 판 = **`adf99ed44`**(본 처분 5 직전, immutable ref)이며
    그 시점 계수 = **10**. ★ 현재 판의 계수는 여기에 못박지 않는다 — **이 처분 5 문단 자신이 그 문자열을

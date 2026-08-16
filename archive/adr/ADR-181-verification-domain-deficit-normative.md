@@ -164,13 +164,40 @@ dead(X) := (X 를 소비할 수 있는 채널 전집합 C 를 열거한 명령�
 |---|---|---|
 | ① | `docs/evidence-checks-registry.yaml` 에 대응 entry 가 **존재**한다 (tier = `warning` 로 태어남 — ADR-171 §결정 5). script·workflow 가 후속 Phase 면 entry status 필드에 **정직 표기** | 선언-only |
 | ② | 본문이 **아직 존재하지 않는 enforcement 자산을 현재형으로 기술하지 않는다.** 미건설 자산은 미래형 + carrier + 만기로만 | 유령 선언 |
-| ③ | `mechanical_enforcement_actions: []` 는 **carrier Issue 번호 + 만기일 주석 병기 시에만** 적법 | ADR-070 계보 |
+| ③ | `mechanical_enforcement_actions: []` 는 **carrier Issue 번호 + 만기일 주석 병기 시에만** 적법. ★ **주석의 위치 = 그 키와 같은 물리 줄의 trailing 주석**(아래 ③-loc) | ADR-070 계보 |
+
+#### ★ ③-loc — "어느 주석인가" 술어 확정 (설계리뷰 FIX Iter 2 신설)
+
+직전 판의 ③ 은 carrier·만기를 **"주석에 병기"** 라고만 적고 **어느 주석인지 말하지 않았다.** 그 미지정이
+두 해석을 동시에 성립시켰고, 두 해석이 같은 파일에 정반대 판정을 내리므로 **술어가 판정 불가**였다:
+
+| 해석 | 판정 술어 | 이 repo 실측 귀결 |
+|---|---|---|
+| 엄격 — 해당 키와 **같은 물리 줄**의 trailing 주석 | `^mechanical_enforcement_actions:\s*\[\]\s*#(.*)$` 의 캡처 1군에서 carrier·만기 탐색 | ADR-043·ADR-067 = **RED**(주석 0바이트) |
+| 느슨 — frontmatter **아무 데나** carrier·만기 형식이 있으면 충족 | frontmatter 전체 텍스트에서 `#\d+` · `\d{4}-\d{2}-\d{2}` 탐색 | **hollow-GREEN** — ADR-067 frontmatter 는 `#1113`(β2 audit) · `#2957`(데드락 Issue) · `#7`(merge-time 규칙 번호), ADR-043 은 `#2686`(Epic) 을 이미 보유한다. 셋 다 **이 선언의 carrier 가 아니다** |
+
+**채택 = 엄격 해석**(같은 물리 줄 trailing 주석). 근거 3항:
+
+1. **느슨 해석은 항진에 수렴한다** — 위 실측처럼 amendment summary·related_cfps 주석에 박힌 무관한
+   Issue 번호와 무관한 날짜(`date:` 필드 자체가 `\d{4}-\d{2}-\d{2}`)가 **거의 모든 ADR 에서** 매치한다.
+   즉 느슨 술어는 대상을 가르지 못하므로 §결정 2 INV-V 가 금지하는 형상(검사가 있으나 판별력 0)이다.
+2. **결속이 국소여야 정정이 국소다** — carrier·만기는 `[]` **그 값**의 시한부 사유이므로, 값과 주석이
+   떨어지면 값을 채운 뒤에도 주석이 남아 stale 이 된다. 같은 줄이면 값 편집이 주석을 강제로 마주친다.
+3. **기계 판정이 1줄 정규식으로 닫힌다** — frontmatter 전체 파싱·문맥 추론 없이 판정 경로가 적힌다
+   (§결정 6 `normative` 부착 요건).
+
+★ **자기적용 결과**: 본 규칙 확정으로 같은 PR 의 `ADR-043` · `ADR-067` 이 RED 였다(둘 다 `[]` + 주석 0바이트).
+**두 파일에 trailing 주석을 실제로 부여**해 청산했다 — 규칙을 자기 ADR 하나에만 적용하고 형제 둘에는
+적용하지 않는 비대칭이 직전 판의 결함이었다.
 
 - **기계 판정 분해**: ①③ = `normative` (frontmatter·registry 구조 파싱). ② = **`declared`** —
   산문의 시제 판정 술어가 부재한다. 대신 ② 의 기계 대체물로
   **frontmatter `mechanical_enforcement_actions[]` 각 항목의 3단 전건**을 쓴다:
   (가) 리스트 길이 ≥ 1 (나) 각 항목이 repo 내 **실재 실행 파일**로 해석 (다) 그 경로가 workflow `run:` 줄에 **등장**.
   (다)가 마지막 이빨이다 — (나)까지면 "파일만 만들고 안 돌린다" 가 통과한다.
+  ★ (나)(다)의 **술어 민감도 정직 고지**: 항목 스키마가 균질하지 않다(실측 — `action`/`script_path`/
+  `detect_command`/`workflow` 등 13종 키 형상 공존). 따라서 (나)(다) 통과 수는 **경로 추출 술어에 의존**하며
+  단일 정수로 고정되지 않는다. 아래 §결과의 사다리 수치는 그 사실과 함께 읽는다.
 
 #### ★ ③ ↔ (가) 값공간 관계 선언 (§결정 4 의 자기적용 — 미선언 시 판정 불가)
 
@@ -186,9 +213,14 @@ dead(X) := (X 를 소비할 수 있는 채널 전집합 C 를 열거한 명령�
 **관계 = 배타가 아니라 포괄적 OR.** ② 는 아래 둘 중 **하나**로 충족된다:
 
 ```
+trailing := 정규식 ^mechanical_enforcement_actions:\s*\[\]\s*#(.*)$ 의 캡처 1군
+            (해당 키와 같은 물리 줄. frontmatter 의 다른 줄은 정의역 밖 — ③-loc)
+
 admissible(entry) :=
       ( len(mea) >= 1  AND  각 항목이 실재 실행파일  AND  그 경로가 workflow run: 줄에 등장 )   # 사다리 경로
-   OR ( len(mea) == 0  AND  carrier 주석이 /#\d+/ 매치  AND  만기 주석이 /\d{4}-\d{2}-\d{2}/ 매치 )  # 면제 경로
+   OR ( len(mea) == 0  AND  trailing 이 /#\d+/ 매치                                            # 면제 경로
+                       AND  trailing 이 /\d{4}-\d{2}-\d{2}/ 매치
+                       AND  그 날짜 >= 실행 시점 UTC 날짜 )                                     # ★ 경과 판정 leg
 ```
 
 - **왜 AND 가 아닌가**: ①②③ 을 "전건 충족" 으로 묶은 것은 ①·②·③ **항목 간** 관계이지,
@@ -197,9 +229,40 @@ admissible(entry) :=
 - **면제 경로의 천장 (`declared`, 지우고 인용 금지)**: 면제 경로를 택한 선언에 대해 **(다) 는 도달하지 않는다.**
   즉 그 선언은 "돌아가는 검사가 있다" 를 증명하지 않으며, 증명하는 것은 **만기가 박혀 있다** 뿐이다.
   이것은 ADR-070 §D5 면제에 날짜 문자열을 덧댄 것과 **형태가 같다.** 다른 점은 단 하나 —
-  만기 경과가 **기계 판정 가능**하다는 것이다(문자열 비교). 그 차이 외에는 면제이며, 그렇게 부른다.
+  만기 경과가 **기계 판정 가능**하다는 것이다(날짜 비교). 그 차이 외에는 면제이며, 그렇게 부른다.
 - **만기 경과 시 처분**: 면제 경로는 **시한부**다. 만기일이 지난 `[]` 는 면제 경로를 잃고
   사다리 경로만 남으므로 부적법이 된다. 이것이 면제가 영구 회피구가 되지 않는 유일한 기제다.
+
+#### ★ ③-exp — 그 "유일한 기제" 에 검출 주체가 0 이었다 (설계리뷰 FIX Iter 2 정산)
+
+**firsthand 반증 (wrapper `bb2778865`)**: `grep -rn "mechanical_enforcement_actions" scripts/ hooks/ .github/ tests/`
+→ **hit 3건 전부 주석·docstring**(`scripts/check_parallel_dispatch_prompt.py:7` ·
+`.github/workflows/adr-reservation-claim-test.yml:17` · `.github/workflows/adr-uniqueness-check.yml:10`).
+**이 필드를 파싱하는 코드는 repo 에 0 건이다.** 그리고 직전 판의 면제 술어는 만기를 **형식 정규식**으로만 봤다 —
+`\d{4}-\d{2}-\d{2}` 는 `1999-01-01` 도 통과시킨다. ⇒ 만기가 지나도 GREEN 이므로 **실질 무기한 면제**이고,
+그러면 ADR-070 §D5 계보와 구별되지 않는다. "영구 회피구가 되지 않는 유일한 기제" 라는 자기 정당화가
+**그 시점에 근거를 결여**하고 있었다.
+
+**처분 = 정당화 축 강등이 아니라 경과 판정 leg 신설** (택일 근거):
+
+| 선택지 | 판정 | 사유 |
+|---|---|---|
+| (A) 정당화 축을 정직 강등 — "만기는 표기일 뿐" | ✗ | 그렇게 적으면 §결정 5 가 ADR-070 §D5 와 **의미상 동일**해진다. 본 ADR 의 존재 이유(선언-only 비용을 0 에서 양수로) 가 소멸하므로 강등은 ADR 자체를 사문화한다 |
+| ★ (B) **경과 판정 leg 신설** (날짜 비교) | ★ **채택** | 비용이 1줄이다(`date.fromisoformat(m) >= 실행일`). 형식 정규식이 이미 날짜를 캡처하므로 파싱 재작업 0. 강등하면 잃는 것이 크고 신설하면 드는 것이 작다 |
+
+- **재사용 조사 결과 (firsthand)**: `scripts/lib/decision_record_disposition.py` 의 `membership-expiry` ·
+  `phantom-enforcement` 축을 재사용 후보로 검토했으나 **부적합**이다 — 그 모듈의 `membership-expiry` 는
+  **branch-protection required-context 집합의 멤버십** 판정이지 달력 만기가 아니며, 모듈 전체에
+  `datetime`/`date` import 가 **0 건**이다(`grep -n "datetime\|date(" scripts/lib/decision_record_disposition.py`
+  → 매치 0). 즉 재사용할 달력 primitive 가 그 파일에 없다. ⇒ **신규 1줄 비교**로 구현한다.
+- **mutant 5번째 (Phase 2 checker 대조군 의무)**: `(e)` **만기를 과거일로 치환**(예 `2020-01-01`) → **RED**.
+  이 mutant 가 GREEN 이면 경과 판정 leg 이 배선되지 않은 것이며, 그 상태에서 위 (B) 채택 근거는 무효다.
+- ★ **경과 leg 이 도입하는 새 성질 — 시간 의존 판정 (`declared` 천장)**: 같은 커밋이 오늘 GREEN, 만기 후 RED 다.
+  이는 결함이 아니라 **시한부의 정의**이지만, 게이트가 `warning` tier 로 태어나야 하는 이유이기도 하다
+  (ADR-171 §결정 5 warning-first 와 독립적으로 같은 결론). 또한 **잔여일 수는 카운터로 방출**하되
+  **특정 정수를 exit 조건으로 pin 하지 않는다**(INV-C ratchet-in 회피).
+- ★ **여전히 남는 천장**: 만기 도래 시 RED 를 내는 것은 **그 검사가 실제로 배선된 뒤**다. Phase 1 시점에는
+  checker 자체가 미건설이므로 본 leg 도 **선언**이다. 그 사실을 여기 적는다 — 이 문단을 지우고 인용하면 over-claim 이다.
 
 ★ **검사기 정의역 (INV-D 자기적용 — 코퍼스-wide 소급 아님)**: 본 §결정 5 의 기계 검사 정의역 =
 **PR diff forward-only** (해당 PR 이 신규 추가·수정한 ADR 파일). merge-base 시점에 이미 존재하던
@@ -221,8 +284,13 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
   **"registry schema scope 침해 — 실행 가능한 mechanical lint 부재 entry append 는 schema 의미 약화"**
   로 기각했다. 본 §결정 5 ① 은 그 기각안을 되살리므로 반박 없이는 상충이다. **반박 = 그 전제가 거짓이다** —
   기각 논거는 "registry schema 가 미건설 상태를 표현할 수단이 없다" 를 전제하는데,
-  schema 는 `status: deferred-followup` 을 **이미 보유**하며 본 registry 안에 **14 entry 선례**가 있다
-  (firsthand: `grep -c '^    status: deferred-followup' docs/evidence-checks-registry.yaml` → 14).
+  schema 는 `status: deferred-followup` 을 **이미 보유**하며 본 registry 안에 **다수의 선례**가 있다.
+  ★ **고정 정수를 적지 않는다 (설계리뷰 FIX Iter 2 정정)** — 직전 판은 "14 entry 선례" 로 적었으나
+  같은 명령을 지금 실행하면 **15** 다. 본 PR 이 append 한 `fix-ledger-conformance` 행이 스스로를
+  세었기 때문이다(**자기 포함 함정** — 세어 적는 행위가 대상을 늘린다). ⇒ **재현 규칙 + immutable ref** 로 적는다:
+  `grep -c '^    status: deferred-followup' docs/evidence-checks-registry.yaml`
+  — merge-base `ecfe62d63` 시점 = **14**(본 PR 무관 선례), HEAD 시점 = 그 값 + 본 PR append 분.
+  논증에 필요한 것은 "선례가 0 이 아니다" 이며 그 명제는 두 시점 모두에서 참이다.
   미건설 자산을 가리키는 entry 는 schema 의미를 **약화**시키는 것이 아니라 미건설 사실을
   **기계 가독 형태로 고정**한다 — 문면 산문에만 남기는 쪽이 오히려 관측 불가다.
   ⇒ D5-C 는 **부분 채택**: entry append 는 하되 `status` 정직 표기를 **동반 의무**로 부과한다
@@ -293,9 +361,44 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
   **"§결정 5 가 선언-only 를 봉인했다" 고 적으면 그 순간 over-claim 이다** — 봉인한 것이 아니라
   **비용을 0 에서 양수로 올리고 만기를 붙였다.**
 - ★ **§결정 5 의 실 검사 정의역은 PR diff forward-only 이며 코퍼스 소급이 아니다.** 즉 merge-base
-  시점의 기존 선언-only 는 본 ADR 로 **정리되지 않는다.** 코퍼스 실측(본 PR 시점, `archive/adr/ADR-*.md`
-  174 파일 · frontmatter 파싱 기준): 키 부재 84 + 빈 리스트 53 = **137 (78.7%)** 가 사다리 경로 (가)에서
-  미충족이다. 본 ADR 은 그 137 을 건드리지 않으며, **신규 저작이 138 번째가 되는 것만** 막는다.
+  시점의 기존 선언-only 는 본 ADR 로 **정리되지 않는다.**
+
+  ★★ **코퍼스 실측 — 직전 판의 `137 (78.7%)` 은 파서 산물이었다 (설계리뷰 FIX Iter 2 정정)**.
+  직전 판은 "키 부재 84 + 빈 리스트 53 = 137" 로 적었고 **산출 술어를 병기하지 않았다.** 리뷰가 순진
+  행-스캔 파서로 `84/53` 을 재현해 그 값이 **YAML 의미가 아니라 특정 파싱 방식의 산물**임을 확정했다.
+  오분류 11건에는 본 PR 이 `carrier_adr` 로 지정한 **`ADR-171` 자신**(항목 11개 보유)이 포함된다.
+
+  | 축 | 값 |
+  |---|---|
+  | 정의역 | `archive/adr/ADR-*.md` glob = **174 파일** (`ADR-RESERVATION.md` 포함) |
+  | 방법 A — PyYAML frontmatter 파싱 | 키 부재 **84** / 빈 리스트 **42** / 비어있지 않음 **48** |
+  | 방법 B — 원시 grep(파서 무관) | `mechanical_enforcement_actions: []` 리터럴 **42** · 키 보유 **90** ⇒ 90 − 42 = **48** |
+  | 3단 전건 (가) 미충족 | 84 + 42 = **126 (72.4%)** — 두 방법이 독립적으로 일치 |
+
+  재현 명령(정의역·술어 동반):
+
+  ```
+  python -c "import glob,io,yaml;fs=sorted(glob.glob('archive/adr/ADR-*.md'));a=e=n=0
+  for f in fs:
+      t=io.open(f,encoding='utf-8').read(); d=yaml.safe_load(t[3:t.find(chr(10)+'---',3)]) if t.startswith('---') else None
+      v=(d or {}).get('mechanical_enforcement_actions','__MISSING__')
+      a+=v=='__MISSING__'; e+= v!='__MISSING__' and not v; n+= v!='__MISSING__' and bool(v)
+  print(len(fs),a,e,n)"
+  ```
+
+  ★ **사다리 3단 통과 수 (S1 → S2 → S3)** — S1 = **48** (위 두 방법 일치, 견고). S2(항목이 실재 실행
+  파일로 해석) · S3(그 경로가 workflow 텍스트에 등장) 은 **경로 추출 술어에 의존**하며 단일 정수가 아니다:
+  리뷰(Codex) 술어 = **24 → 20**, 본 저작 술어 변종 2종 = **16 → 10** (확장자 `.py/.sh/.js/.ts` 한정) ·
+  **18 → 14** (`.yml/.yaml` 포함, basename 매치). ⇒ **S2·S3 은 정본 정수를 확정하지 않는다** —
+  항목 스키마가 13종 키 형상으로 비균질하기 때문이며(③ 아래 민감도 고지), 확정해야 할 것은 정수가 아니라
+  **술어의 명시**다. S1 = 48 만이 방법-불변이다.
+
+  ★ **수치를 normative AC 로 pin 하지 않는다** — 위 수는 전부 **관측**이며 게이트의 exit 조건이 아니다
+  (INV-C ratchet-in 회피). 본 ADR 은 그 126 을 건드리지 않으며, **신규 저작이 127 번째가 되는 것만** 막는다.
+
+  ★ **정직 고지 (은폐 금지)**: 같은 축에 대해 세션 중 `139 (79.9%)` 라는 값도 보고된 바 있으나,
+  그 값은 **파서 변종 4종 어디에서도 재현되지 않았고 산출 술어가 미상**이다. 재현 불가한 수치는
+  근거로 쓰지 않으며 그 사실을 지우지 않는다(ADR-119 — 재현 불가는 "추정" 으로 표기).
 - 새 ADR 1건 추가 자체가 "선언 1건 추가" 의 가장 값싼 형태일 위험을 진다. 그 위험은 §결정 5 를
   **본 ADR 자신에게 먼저 적용**함으로써만 상쇄되며, 상쇄 여부는 Phase 2 실행으로 판정된다.
 
@@ -305,8 +408,17 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
 - [ADR-171](ADR-171-evidence-enforceable-promotion-framework.md) — `carrier_adr`(framework host). **amendment 0** — §결정 8 근거
 - [ADR-167](ADR-167-adr-amendment-compaction-ratchet.md) — amendment compaction ratchet (ADR-171 무접촉 판정의 비용 근거)
 - [ADR-119](ADR-119-research-before-claims.md) — §결정 10② 반증 규범 (본 ADR 이 정의역 축 보강)
-- `docs/inter-plugin-contracts/fix-event-v1.md` — v1.6 (`원인 판정` 값공간 + 정의역 선언 필드)
-- `docs/inter-plugin-contracts/dev-process-event-v1.md` — v1.1 (`root_cause_class` 원장 키)
+- `docs/inter-plugin-contracts/fix-event-v1.md` — ★ **현 실버전 = `version: "1.5"`**(firsthand `:4`).
+  `원인 판정` 값공간 확장 + 정의역 선언 필드를 담는 **v1.6 MINOR 는 아직 존재하지 않는다** —
+  D-1 / carrier `plugin-codeforge#2985` / 만기 `2026-09-15`
+- `docs/inter-plugin-contracts/dev-process-event-v1.md` — ★ **현 실버전 = `version: "1.0"`**(firsthand `:4`).
+  `root_cause_class` 원장 키를 담는 **v1.1 MINOR 는 아직 존재하지 않는다** —
+  D-19 / carrier `plugin-codeforge#2985` / 만기 `2026-09-15`
+
+★ 직전 판은 위 두 줄을 `v1.6` · `v1.1` 로 **현재형 기술**했다. 이는 본 ADR §결정 5 ②
+("아직 존재하지 않는 enforcement 자산을 현재형으로 기술하지 않는다")의 **자기위반**이었으며,
+같은 파일 frontmatter `related_files` 주석(`:26`·`:27`)이 이미 실버전을 정확히 적고 있어 **자기모순**이기도 했다.
+설계리뷰 FIX Iter 2 에서 정정한다.
 - `docs/evidence-checks-registry.yaml` — `fix-ledger-conformance` entry (owner_adr = 본 ADR)
 - `docs/domain-knowledge/concept/verification-domain-deficit.md` — 개념 서술 SSOT
 
