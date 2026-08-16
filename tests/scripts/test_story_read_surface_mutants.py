@@ -255,9 +255,14 @@ def test_suture_removal_is_detected_by_this_battery(tmp_path):
     print(f"[C-6 대조] 개수·벡터 signature 검출 {len(det_sites)} vs "
           f"boolean-only signature 검출 {len(bool_sites)} "
           f"— boolean-only 가 놓치는 site {sorted(det_sites - bool_sites)}")
-    assert bool_sites <= det_sites, (
-        "boolean-only 가 개수·벡터 signature 보다 더 잡는다 — signature 구성이 잘못됐다 "
-        f"(boolean 전용 검출 {sorted(bool_sites - det_sites)})"
+    # 진부분집합(`<`) — 종전 subset(`<=`) 은 두 집합이 **같아도** 통과해서, signature 를
+    # boolean-only 로 되돌려도 무검출이었다. C-6 처방(개수·벡터)이 load-bearing 이라는
+    # 주장은 "개수·벡터가 boolean 보다 **실제로 더 잡는다**" 로만 성립한다.
+    # `<` 는 종전 취지(boolean 이 더 잡으면 signature 구성 오류)를 포함한다.
+    assert bool_sites < det_sites, (                 # ← C-6 측정 assertion (개수·벡터 우위)
+        "개수·벡터 signature 가 boolean-only 보다 더 잡지 못한다 — C-6 처방이 장식이 됐다 "
+        f"(개수·벡터 전용 검출 {sorted(det_sites - bool_sites)} / "
+        f"boolean 전용 검출 {sorted(bool_sites - det_sites)})"
     )
 
     # 판정 family 별 판정 — 단독 검출이 원칙이되, **기법의 정직한 한계**를 분리 기록한다.
@@ -680,8 +685,14 @@ def test_post_suture_verification_four_axes():
     assert not regressed, f"② 형제 회귀 발생(false RED): {regressed}"
 
     # ③ 검출 정의역 비축소 — 두 축 모두
-    #    (a) mutant 축: RED→non-RED 전이 0
-    assert not not_red
+    #    (a) mutant 로스터 축: 배터리가 산출하는 mutant 전건이 선언 로스터와 일치.
+    #        ①은 "등재된 mutant 가 RED 인가"만 본다. 등록 줄 자체를 지우면 ①은 전건 통과한 채
+    #        로스터만 조용히 줄어든다 — 그 회피 경로를 막는 것이 이 축이다.
+    roster = {m for m in results if not m.startswith("_")}
+    assert roster == FX.DECLARED_MUTANT_IDS, (       # ← §8.4a ③ (a) 측정 assertion
+        f"③ mutant 로스터 축 붕괴 — 누락 {sorted(FX.DECLARED_MUTANT_IDS - roster)} / "
+        f"초과 {sorted(roster - FX.DECLARED_MUTANT_IDS)}"
+    )
     #    (b) 정의역 로스터 축: enforced 4/4 추출 성립 (하나라도 0 이면 정의역 붕괴)
     ctx = FX.canonical_ctx()
     resolve = FX.resolve_file_factory(eng, ctx)

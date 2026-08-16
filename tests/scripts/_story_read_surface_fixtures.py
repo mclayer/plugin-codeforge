@@ -399,6 +399,24 @@ DEFERRED_DOMAINS = ("SELF", "BASE", "AUTHOR", "LEGC")
 # §8.4 정의역 양화 표 — 정량 셀 계열 기대 cardinality (합 104)
 QUANT_DECLARED = {"CORPUS": 22, "SELF": 30, "BASE": 18, "AUTHOR": 10, "LEGC": 24}
 
+# §8.4a ③ 검출 정의역 비축소의 **두 축**을 나란히 선언한다.
+#   (b) 정의역 로스터 축 = 바로 위 `DECLARED_CARDINALITY`
+#   (a) mutant 로스터 축 = 아래 `DECLARED_MUTANT_IDS` — `run_battery` 가 산출해야 하는
+#       mutant 전건. 등록 자체를 지우면 개별 mutant assert 는 전부 통과한 채 배터리만
+#       조용히 줄어든다(무검출 회피 경로). 그 축소를 잡는 유일한 측정면이 이 상수다.
+#       ※ 정직한 한계: `_` 접두 키는 메타(`_tree` 등)라 로스터 대조에서 제외한다.
+DECLARED_MUTANT_IDS = frozenset({
+    "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
+    "M-ANCHOR-NOSECTION", "M-ANCHOR-UNPAIRED",
+    "M-APPEND-CTL-1000", "M-APPEND-CTL-50000", "M-BASIS-RAW",
+    "M-CARD-CROSS", "M-CARD-IN", "M-CARD-VALUE",
+    "M-DANGLING", "M-DEPTH2", "M-DOMAIN", "M-DUP-ROW",
+    "M-E1", "M-E2", "M-E3", "M-E4", "M-EQUIV",
+    "M-FENCE-INJECT", "M-GLOBAL", "M-GLOBALRULE", "M-MARGIN", "M-MIX-min",
+    "M-PREEXIST", "M-REASON-FREEFORM", "M-S3-NOSPLIT",
+    "M-SCAN-ASYM", "M-SCAN-CARD", "M-SCANGLOB", "M-SEC5", "M-SELFPTR", "M-STRAYEND",
+})
+
 DEFAULT_CEILING = 400000
 CARRIER_CEILING = 400000
 
@@ -445,7 +463,7 @@ def build_baseline(*, deferred: bool = True, children: bool = True, **overrides)
     if deferred:
         for name in DEFERRED_DOMAINS:
             domains[name] = {"kind": "quantitative_cells", "status": "deferred",
-                             "reason_code": "PHASE2_MATERIALIZATION"}
+                             "reason_code": "DEFERRED_NOT_MATERIALIZED"}
     scan_set = [STORY_PATH] + ([child_path(SPLIT_ID), child_path(SPLIT_ID_S10)] if children else [])
     base = {
         "schema_version": 1,
