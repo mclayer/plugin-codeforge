@@ -36,6 +36,7 @@ amendment_log:
     cfp: CFP-2985
     summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시."
     scope_change: "ratchet 강화 방향 — 값공간 확장은 additive(기존 2값 유효 유지, 소급 정규화 0), 카운터 trigger lane 정의역 무변경(확장 0), 데드락 해소는 verdict 부재 구멍을 fail-closed 로 채움(기존 verdict 배정 변경 0), 닫기 조건은 기존 게이트 위에 축 추가(대체 0). 유령 선언 철회는 실효 강제력 0 이던 문면의 제거이므로 통제 약화 0 — ADR-058 §결정 5 역-ratchet 정의역 밖. is_transitional: false 유지."
+    reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 축 (4) 가 Amendment 1 의 factual premise("fix-event-depth-scope-presence 가 본 ADR 의 mechanical enforcement 로 집행 중")를 affirmatively-FALSE(registry 0 · script 0 · workflow 0, firsthand)로 판정하고 그 문단의 지위를 "집행 사실 → 철회된 선언"으로 재규정(supersede-in-part)하며 §결정 4 본문 문면을 실제로 치환한다. 선례 동형 = ADR-064 Amendment(:179) — 선행 amendment 의 mechanical enforcement 단정이 affirmatively-FALSE 화 → 해당 clause supersede-in-part 시 reinterpretation: true. 축 (1)(2)(3) 은 순수 additive 이며 true 는 축 (4) 귀속. self-declared — parity lint 는 presence/type 만 검사하고 재해석 의미 판정은 리뷰 축이다(ADR-167 §결정 7 honest ceiling).
     breaking: false
     backward_compat: true
   - date: 2026-08-18
@@ -78,7 +79,7 @@ related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
   - docs/orchestrator-playbook.md
-  - docs/evidence-checks-registry.yaml   # Amendment 1 — fix-event-depth-scope-presence warning-tier entry
+  - docs/evidence-checks-registry.yaml   # ★ Amendment 4 정정 — Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었고 그 선언은 §9.4 에서 철회됐다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
   - CLAUDE.md
 mechanical_enforcement_actions: []
 ---
@@ -178,7 +179,16 @@ Pause-and-resume 의 latency trade-off 는 acceptance — escalation 자체가 �
 
 **ratchet 강화 only**: 본 §결정 4 의 Pause-and-resume 의미 invariant 변경 0 — mechanical input 추가만. backward-compat 100% (2 optional field, 기존 9-column row null 또는 column 생략 valid).
 
-**mechanical enforcement**: `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) — broken-link/path FIX 인데 `affected_paths_with_depth` 누락 시 적발. `hotfix-bypass:fix-event-depth-scope` label 부착 PR = lint skip + audit comment 자동 발의. SSOT = [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml).
+**mechanical enforcement**: ★ **없다 — 본 선언은 Amendment 4(CFP-2985) 에서 철회됐다.** 아래는 철회 기록이다.
+
+> **[철회됨 — 2026-08-16, Amendment 4 §9.4]** Amendment 1(CFP-842) 은 이 자리에서
+> `fix-event-depth-scope-presence` warning-tier lint 를 "mechanical enforcement" 로 **선언했고**,
+> `hotfix-bypass:fix-event-depth-scope` label 부착 PR 을 lint skip + audit comment 채널로 **기술했으며**,
+> SSOT 를 `docs/evidence-checks-registry.yaml` 로 **지목했다**. 그 선언은 실물과 대응하지 않았다 —
+> firsthand 실측: registry entry **0** · script **0** · workflow **0** (Amendment 4 시점 registry 113 entry 전수).
+> ⇒ `affected_paths_with_depth` 누락은 **어떤 기계 검사로도 적발되지 않으며**, 이 필드의 준수는
+> 리뷰 판정 축이다(`declared`). 이 문단을 "검사가 있다" 의 근거로 인용하지 말 것.
+> 대응 라벨은 `label-registry-v2.md` 에서 `Retired` 마킹 대상이다(삭제 아님 — Phase 2 D-21).
 
 cross-ref:
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) v1.3 §2 Schema + §3 항목 (affected_scope / affected_paths_with_depth)
@@ -484,13 +494,20 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
 
 - 위 §결정 4 Amendment 1 본문(`:157`)이 `fix-event-depth-scope-presence` 를 **"mechanical enforcement"** 로 선언한다.
 - 그러나 `grep -c 'fix-event-depth-scope-presence' docs/evidence-checks-registry.yaml` → **0**
-  (파일은 실재, 112 entry). script 0 · workflow 0.
+  (파일은 실재 — merge-base `ecfe62d63` 시점 112 entry / 본 Amendment 커밋 후 **113 entry**,
+  증가분 1 = `fix-ledger-conformance`. `fix-event-depth-scope-presence` 는 **양 시점 모두 0**).
+  script 0 · workflow 0.
 - 반면 우회 라벨 `hotfix-bypass:fix-event-depth-scope` 는 `ADR-024:1305` **정식 등재** + 8-label macro bundle 편입.
   ⇒ **게이트는 없는데 그 게이트의 우회 채널만 있다.** 이것이 ADR-181 §결정 3 C-6 의 실물 반례다.
 
 **처분**:
 
-1. §결정 4 Amendment 1 의 "mechanical enforcement" 선언을 **철회**한다. 등재가 아니라 철회인 이유 —
+1. §결정 4 Amendment 1 의 "mechanical enforcement" 선언을 **철회**한다.
+   ★ **철회는 본 Amendment 커밋에서 문면 치환으로 실집행됐다** — 선언만 남기면 그 자체가 유령이 된다.
+   실집행 좌표 = merge-base `ecfe62d63` 의 `:157` 문단(= 본 Amendment 직전 head 의 `:169`)이며,
+   해당 문단은 현재 `[철회됨 — 2026-08-16, Amendment 4 §9.4]` blockquote 로 치환돼 있다.
+   재현: `git diff ecfe62d63 HEAD -- archive/adr/ADR-067-fix-ledger-implementability-escalation.md`
+   에 **삭제 줄(`-` 접두)이 존재**해야 한다(순수 append 이면 철회 미집행이다). 등재가 아니라 철회인 이유 —
    등재하면 113번째 warning entry + script + workflow + self-test 를 만들고 ADR-171 §결정 6 의
    **PR 누적 20 warm-up 을 아무도 요구하지 않은 검사에 대해** 새로 시작해야 한다(ADR-181 §결정 7).
 2. `hotfix-bypass:fix-event-depth-scope` 를 `label-registry-v2.md` 에서 **`Retired` 마킹**한다(삭제 아님 —

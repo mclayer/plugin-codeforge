@@ -4526,3 +4526,44 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: Active
+
+  # CFP-2985 (ADR-181 owner) — 검증 정의역 결손(P⊋V) 규범의 admission test ① 착지 row.
+  # ★ Phase 1 declarative anchor. script·workflow 실배선 = Phase 2 (Change Plan D-10 / D-11b).
+  #   그 미건설 상태의 정직 표기 = status: deferred-followup (본 registry 내 선례 14 entry).
+  #   ADR-070 §D5-C(:309) 가 "mechanical lint 부재 entry append = registry schema 의미 약화" 로
+  #   이 경로를 선제 기각했으나, 그 반론은 status 값공간이 미건설 상태를 표현하지 못한다는 전제에
+  #   서 있다. 전제가 거짓이다 — deferred-followup 은 schema 가 이미 보유한 값이며 14회 선례가 있다.
+  #   따라서 본 row 는 schema 의미를 약화시키지 않고 미건설 사실을 오히려 기계 가독 형태로 고정한다.
+  - name: fix-ledger-conformance
+    description: |
+      Story §10 FIX Ledger 표의 `원인 판정` 값공간 정합 + 검증 정의역(P/V) 선언 presence 게이트.
+      wrapper CI 가 internal-docs 코퍼스를 pinned-SHA checkout 후 그 repo checker 를 실행한다
+      (코드 = pinned SHA / 코퍼스 = HEAD 분리). 판정축 = enum 멤버십 + 정의역 선언 필드 presence
+      + ratchet(신규 위반만 차단, 소급 정규화 0 — 기존 644행은 baseline 동결).
+      honest ceiling: 본 게이트는 presence/멤버십/ratchet 까지만 — "그 원인 판정이 실제로 옳은가"
+      는 리뷰 판정 축이다(ADR-151 §결정 7 상속). "기계 강제 100%" over-claim 금지.
+      ★ Phase 1 시점 실 강제력 = 0. detect_command·workflow 는 아직 존재하지 않으며(status 참조)
+      그 사실을 여기에 적는 것이 ADR-181 §결정 5 ②(미건설 자산 현재형 기술 금지)의 이행이다.
+    detect_command: bash scripts/check-fix-ledger-conformance.sh    # ★ Phase 2 신설 예정 — 현 시점 미존재 (D-11b)
+    workflow: templates/github-workflows/fix-ledger-conformance.yml # ★ Phase 2 신설 예정 — 현 시점 미존재 (D-10)
+    current_tier: warning
+    # bypass_label: omit — warning tier 비차단 + D-SEC-1 무-라벨 출시(우회 채널 선제 개설 금지).
+    # bypass_audit_lint: omit — bypass_label 미정의. 둘 다 required 승격 carrier 에서 신설.
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-171 §결정 6 (a)
+      failure_threshold: 0          # ADR-171 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2985                  # 게이트 도입 Story 자신
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - outage_runbook              # ADR-171 §결정 6 (iv) — 현재 미보유, 승격 carrier 가 신규 작성
+        - audit_comment_author_lint   # ADR-171 §결정 6 (v) — 현재 미보유
+        - sticky_comment_pattern      # ADR-171 §결정 6 (vi) — 현재 미보유
+    introduced_by: CFP-2985
+    introduced_date: 2026-08-16
+    owner_adr: ADR-181             # 검증 정의역 결손(P⊋V) 규범 — 정의·불변식 SSOT
+    carrier_adr: ADR-171           # evidence-enforceable framework host (ADR-171 amendment 0 — ADR-181 §결정 8)
+    promotion_trigger: advisory
+    status: deferred-followup      # Phase 1 declarative anchor (본 PR) — ADR-181 §결정 5 ① 착지. Wave 2 mechanical wire(script + workflow twin + discriminating self-test) = 본 Story Phase 2 / carrier plugin-codeforge#2985 / 만기 2026-09-15. 그 전까지 실 강제력 0 이며 이는 은폐가 아니라 선언이다(ADR-181 §결정 6 정직 라벨 3분).

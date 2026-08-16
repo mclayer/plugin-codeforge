@@ -23,12 +23,12 @@ related_stories:
 related_cfps:
   - CFP-2985  # carrier — FIX 원인 계측 채널 실채움 + 검증 정의역 선언
 related_files:
-  - docs/inter-plugin-contracts/fix-event-v1.md  # 원인 판정 값공간 + 정의역 선언 필드 (v1.6)
-  - docs/inter-plugin-contracts/dev-process-event-v1.md  # root_cause_class 원장 키 (v1.1)
-  - docs/evidence-checks-registry.yaml  # fix-ledger-conformance entry (owner_adr = 본 ADR)
+  - docs/inter-plugin-contracts/fix-event-v1.md  # 원인 판정 값공간 + 정의역 선언 필드. ★ 현 실버전 = v1.5 — v1.6 MINOR bump 는 본 PR 내 D-1 로 미착지(현재형 기술 금지, §결정 5 ②)
+  - docs/inter-plugin-contracts/dev-process-event-v1.md  # root_cause_class 원장 키. ★ 현 실버전 = v1.0 — v1.1 MINOR bump 는 Phase 2 (D-19 / carrier plugin-codeforge#2985 / 만기 2026-09-15)
+  - docs/evidence-checks-registry.yaml  # fix-ledger-conformance entry (owner_adr = 본 ADR). ★ 본 PR 에 실 append 완료 — 112 → 113 entry
   - docs/domain-knowledge/concept/verification-domain-deficit.md  # 개념 서술 SSOT (본 ADR 이 규범 SSOT)
 is_transitional: false
-mechanical_enforcement_actions: []  # Phase 2 이행 — check_fix_ledger_conformance.py + workflow + discriminating self-test. carrier = plugin-codeforge#2985 / 만기 2026-09-15. 본 빈 리스트는 §결정 5 admission test 하에서만 적법하다 — 동일 PR 에 registry entry 가 존재하고(docs/evidence-checks-registry.yaml, fix-ledger-conformance) 본문이 미건설 자산을 현재형으로 기술하지 않으며 carrier·만기가 병기됐다. 셋 중 하나라도 결여되면 ADR-070 계보 14번째다.
+mechanical_enforcement_actions: []  # Phase 2 이행 — scripts/lib/check_fix_ledger_conformance.py + thin wrapper + workflow twin + discriminating self-test. carrier = plugin-codeforge#2985 / 만기 2026-09-15. ★ 본 빈 리스트는 §결정 5 의 두 충족 경로 중 **면제 경로**(len==0 ∧ carrier ∧ 만기)로 ② 를 충족한다 — 사다리 경로((가)(나)(다)) 가 아니며, 따라서 "돌아가는 검사가 있다" 를 주장하지 않는다(§결정 5 면제 경로 천장 문단 참조). ① = 본 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance (112 → 113, current_tier warning / status deferred-followup) 로 충족 — firsthand 재검증: grep -c 'fix-ledger-conformance' docs/evidence-checks-registry.yaml → 3(정의 1 + 주석 2). 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다.
 ---
 
 # ADR-181: 검증 정의역 결손(P⊋V) 규범 — 정의·정직 불변식·게이트 설계 제약·접합부
@@ -171,7 +171,62 @@ dead(X) := (X 를 소비할 수 있는 채널 전집합 C 를 열거한 명령�
   **frontmatter `mechanical_enforcement_actions[]` 각 항목의 3단 전건**을 쓴다:
   (가) 리스트 길이 ≥ 1 (나) 각 항목이 repo 내 **실재 실행 파일**로 해석 (다) 그 경로가 workflow `run:` 줄에 **등장**.
   (다)가 마지막 이빨이다 — (나)까지면 "파일만 만들고 안 돌린다" 가 통과한다.
-- **자기적용**: 본 ADR frontmatter 가 ③ 형식을 따르며, ① 은 본 ADR 과 같은 PR 에서 충족된다.
+
+#### ★ ③ ↔ (가) 값공간 관계 선언 (§결정 4 의 자기적용 — 미선언 시 판정 불가)
+
+③ 과 (가) 는 **같은 대상**(`frontmatter mechanical_enforcement_actions`)을 보면서 `[]` 에 정반대 값을
+내린다 — ③ 은 적법, (가) 는 부적법. §결정 4 는 이런 쌍에 값공간 관계 선언을 의무화하므로 여기서 선언한다.
+**미선언 상태로 두면 어느 쪽이 exit 를 내는지 결정 불가이며, 그것이 본 §결정 5 를 판정 불가로 만든다.**
+
+| 술어 | 성격 | 정의역 | `[]` 판정 |
+|---|---|---|---|
+| ③ | **admission**(저작 시점 입장 조건) | 신규 규범 항목을 추가하는 **그 PR 의 diff** | carrier + 만기 병기 시 **적법** |
+| (가)(나)(다) | **enforcement-reality**(강제 실재 사다리) | 동일 | 길이 0 이므로 **미충족** |
+
+**관계 = 배타가 아니라 포괄적 OR.** ② 는 아래 둘 중 **하나**로 충족된다:
+
+```
+admissible(entry) :=
+      ( len(mea) >= 1  AND  각 항목이 실재 실행파일  AND  그 경로가 workflow run: 줄에 등장 )   # 사다리 경로
+   OR ( len(mea) == 0  AND  carrier 주석이 /#\d+/ 매치  AND  만기 주석이 /\d{4}-\d{2}-\d{2}/ 매치 )  # 면제 경로
+```
+
+- **왜 AND 가 아닌가**: ①②③ 을 "전건 충족" 으로 묶은 것은 ①·②·③ **항목 간** 관계이지,
+  ② 내부의 두 충족 경로 간 관계가 아니다. 사다리와 면제를 AND 로 읽으면 `[]` 는 영원히 부적법이 되어
+  ③ 이 사문화되고, 반대로 ③ 만 읽으면 사다리가 사문화된다. **둘 다 살아 있어야 ③ 이 의미를 갖는다.**
+- **면제 경로의 천장 (`declared`, 지우고 인용 금지)**: 면제 경로를 택한 선언에 대해 **(다) 는 도달하지 않는다.**
+  즉 그 선언은 "돌아가는 검사가 있다" 를 증명하지 않으며, 증명하는 것은 **만기가 박혀 있다** 뿐이다.
+  이것은 ADR-070 §D5 면제에 날짜 문자열을 덧댄 것과 **형태가 같다.** 다른 점은 단 하나 —
+  만기 경과가 **기계 판정 가능**하다는 것이다(문자열 비교). 그 차이 외에는 면제이며, 그렇게 부른다.
+- **만기 경과 시 처분**: 면제 경로는 **시한부**다. 만기일이 지난 `[]` 는 면제 경로를 잃고
+  사다리 경로만 남으므로 부적법이 된다. 이것이 면제가 영구 회피구가 되지 않는 유일한 기제다.
+
+★ **검사기 정의역 (INV-D 자기적용 — 코퍼스-wide 소급 아님)**: 본 §결정 5 의 기계 검사 정의역 =
+**PR diff forward-only** (해당 PR 이 신규 추가·수정한 ADR 파일). merge-base 시점에 이미 존재하던
+ADR 은 정의역 **밖**이다. 근거 — §결정 5 문면이 "신규 규범 항목을 추가하는 **저작물**" 로 저작 시점을
+scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가 즉시 born-red 가 되어
+**전 PR 자해 차단**이 된다(§결정 7 이 경계하는 비용 발산). 선례 = `adr-amendment-parity` entry 가
+동일하게 "PR diff forward-only, merge-base 대비" 정의역을 쓴다.
+★ **그 scope 술어의 정직한 한계 (`declared`)**: "무엇이 **신규 규범 항목** 추가인가" 는 의미론적 판정이라
+기계 술어로 닫히지 않는다. 기계가 판정하는 것은 "PR 이 ADR 파일을 추가·수정했는가" 까지이며,
+그 안에서 규범 항목 추가 여부는 리뷰 판정 축이다. **이 술어를 `normative` 로 라벨하지 않는다.**
+
+- **자기적용 (실측 기준)**: 본 ADR frontmatter 는 ③ 형식(carrier `plugin-codeforge#2985` + 만기
+  `2026-09-15`)을 따르며 **면제 경로**로 ② 를 충족한다 — 사다리 경로가 아니다(위 천장 문단 적용 대상).
+  ① 은 본 ADR 과 **같은 PR 의 `docs/evidence-checks-registry.yaml` row**(`fix-ledger-conformance`,
+  `current_tier: warning`, `status: deferred-followup`)로 충족된다.
+
+- ★ **ADR-070 §D5-C 정산 (선제 기각안 반박)**: ADR-070 `:309` 는 대안 (D5-C)
+  "declaration-only retain 영역에서도 evidence-checks-registry entry append" 를
+  **"registry schema scope 침해 — 실행 가능한 mechanical lint 부재 entry append 는 schema 의미 약화"**
+  로 기각했다. 본 §결정 5 ① 은 그 기각안을 되살리므로 반박 없이는 상충이다. **반박 = 그 전제가 거짓이다** —
+  기각 논거는 "registry schema 가 미건설 상태를 표현할 수단이 없다" 를 전제하는데,
+  schema 는 `status: deferred-followup` 을 **이미 보유**하며 본 registry 안에 **14 entry 선례**가 있다
+  (firsthand: `grep -c '^    status: deferred-followup' docs/evidence-checks-registry.yaml` → 14).
+  미건설 자산을 가리키는 entry 는 schema 의미를 **약화**시키는 것이 아니라 미건설 사실을
+  **기계 가독 형태로 고정**한다 — 문면 산문에만 남기는 쪽이 오히려 관측 불가다.
+  ⇒ D5-C 는 **부분 채택**: entry append 는 하되 `status` 정직 표기를 **동반 의무**로 부과한다
+  (무표기 append 였다면 ADR-070 의 기각 논거가 그대로 성립했을 것이다).
 
 ### 결정 6 — 정직 라벨 3분 + over-claim 금지
 
@@ -230,6 +285,17 @@ dead(X) := (X 를 소비할 수 있는 채널 전집합 C 를 열거한 명령�
 - INV-D·INV-N·INV-V 는 전부 **천장을 동반**한다 (완전성 미판정 / 자기신고 하한 / 부분 소실 미검출).
   천장 문장을 지운 채 인용하면 그 순간 over-claim 이 된다.
 - §결정 4 접합부는 **전집합 판정 불가**다. 새 술어 도입 시 접합 선언 의무까지만 강제한다.
+- ★ **§결정 5 면제 경로가 (다)의 사정거리를 잘라낸다.** `[]` + carrier + 만기로 태어난 선언에 대해
+  "그 경로가 workflow `run:` 줄에 등장하는가"(마지막 이빨)는 **평가되지 않는다.** 따라서 면제 경로를
+  택한 선언은 강제 실재를 증명하지 않으며, 증명하는 것은 만기가 박혀 있다는 사실뿐이다.
+  이 손실을 감수하는 이유 = 대안(면제 경로 폐지 = `len >= 1` 전면 강제)이 코퍼스 다수를 즉시
+  born-red 로 만들어 **전 PR 자해 차단**이 되기 때문이며, 이는 §결정 7 이 경계하는 비용 발산이다.
+  **"§결정 5 가 선언-only 를 봉인했다" 고 적으면 그 순간 over-claim 이다** — 봉인한 것이 아니라
+  **비용을 0 에서 양수로 올리고 만기를 붙였다.**
+- ★ **§결정 5 의 실 검사 정의역은 PR diff forward-only 이며 코퍼스 소급이 아니다.** 즉 merge-base
+  시점의 기존 선언-only 는 본 ADR 로 **정리되지 않는다.** 코퍼스 실측(본 PR 시점, `archive/adr/ADR-*.md`
+  174 파일 · frontmatter 파싱 기준): 키 부재 84 + 빈 리스트 53 = **137 (78.7%)** 가 사다리 경로 (가)에서
+  미충족이다. 본 ADR 은 그 137 을 건드리지 않으며, **신규 저작이 138 번째가 되는 것만** 막는다.
 - 새 ADR 1건 추가 자체가 "선언 1건 추가" 의 가장 값싼 형태일 위험을 진다. 그 위험은 §결정 5 를
   **본 ADR 자신에게 먼저 적용**함으로써만 상쇄되며, 상쇄 여부는 Phase 2 실행으로 판정된다.
 
