@@ -18,7 +18,7 @@ adr: ADR-180
 baseline_tree_sha: 7d0755140c72b93160cc2792a580443c93d7ffcb   # mclayer/codeforge-internal-docs
 baseline_media: LF                                            # git archive 추출물 (작업트리 스캔 금지)
 frozen_at: '2026-08-16T18:13:20+09:00'
-content_digest: 17df4be5902510386b9a66131d293fb59376a0e14b9e91c9c61fde0d83b85244
+content_digest: ab1382a36922e28390570f3c465f2bfb06682687b614730b5feafe3a42fef466
 
 # --- 목적함수 입력 ---------------------------------------------------------
 # reader_roster = 폐쇄 독자 집합. coverage 의 **분모**이며 registry 와 독립 원본이다
@@ -224,19 +224,19 @@ domains:
   SELF:
     kind: quantitative_cells
     status: deferred
-    reason_code: PHASE2_MATERIALIZATION
+    reason_code: DEFERRED_NOT_MATERIALIZED
   BASE:
     kind: quantitative_cells
     status: deferred
-    reason_code: PHASE2_MATERIALIZATION
+    reason_code: DEFERRED_NOT_MATERIALIZED
   AUTHOR:
     kind: quantitative_cells
     status: deferred
-    reason_code: PHASE2_MATERIALIZATION
+    reason_code: DEFERRED_NOT_MATERIALIZED
   LEGC:
     kind: quantitative_cells
     status: deferred
-    reason_code: PHASE2_MATERIALIZATION
+    reason_code: DEFERRED_NOT_MATERIALIZED
 
 # --- grandfather (ADR-180 §결정 5) -----------------------------------------
 # ceiling(key) = entries[key].ceiling  if key ∈ entries   # grandfather
