@@ -52,6 +52,20 @@ pytestmark = pytest.mark.skipif(_BASH is None, reason="bash interpreter 부재 (
 
 _PY_NAMES = ("python3", "python3.exe", "python", "python.exe")
 
+# ── 영속 filesystem 변경 오라클 토큰셋 (헤더 (b) 선언 회귀) ──────────────────────────
+#   2축 필요: 훅은 shell + 임베디드 python 두 실행 표면을 갖는다. 축 1만 두면 python 안의
+#   파일 조작이 통째로 미검출된다 (CFP-2966 Iter2 F-CR-206 실측).
+#   정직 천장: 리터럴 토큰셋이라 우회 표기(eval·getattr·`__import__`·문자열 조립)는 미검출이다.
+#   "훅이 순수함이 봉인된다" 를 주장하지 않는다 (ADR-151 §결정 7 상속).
+_SHELL_MUTATION_TOKENS = ("mkdir ", "rm ", "mv ", "cp ", "tee ", "git add", "git commit")
+_PYTHON_MUTATION_TOKENS = (
+    "open(",            # 모드 무관 — pointer-only 훅에 파일 open 자체가 불요
+    "os.remove", "os.unlink", "os.rmdir", "os.mkdir", "os.makedirs", "os.rename",
+    "shutil.",
+    ".write_text(", ".unlink(", ".mkdir(",
+    "subprocess",       # 외부 프로세스 경유 우회 차단
+)
+
 # 판별 조각 — CP §8.2.5(c) 흡수-방지 불변식 + §8.2.5(d) 대조 대상 확정.
 #
 # 계약 (d) 가 확정한 emit 3요소 = 규범 pointer · subject 형식 · 정본 위치
@@ -244,7 +258,17 @@ def test_hook_performs_no_git_or_filesystem_mutation():
     exec_lines = _executable_lines()
     assert exec_lines, "실행 라인 추출 실패 — 이 검사가 vacuous 해진다 (정의역 0행 금지)"
     joined = "\n".join(exec_lines)
-    for forbidden in ("mkdir ", "rm ", "mv ", "cp ", "tee ", "git add", "git commit"):
+
+    # 축 1 — shell 리터럴
+    for forbidden in _SHELL_MUTATION_TOKENS:
         assert forbidden not in joined, (
             f"훅이 {forbidden!r} 를 실행한다 — pointer-only 선언 위반 (헤더 (b)).\n"
             f"실행 라인:\n{joined}")
+
+    # 축 2 — 임베디드 python (CFP-2966 구현리뷰 Iter2 F-CR-206)
+    #   훅은 `"$PYTHON_CMD" -c "...")` 로 python 을 임베드한다. 축 1(shell 리터럴)만 보면
+    #   python 안의 파일 조작이 통째로 미검출이다 (M-B 실측: open(...,'w') 주입 → 7 passed 생존).
+    for forbidden in _PYTHON_MUTATION_TOKENS:
+        assert forbidden not in joined, (
+            f"훅의 임베디드 python 이 {forbidden!r} 를 사용한다 — pointer-only 선언 위반 "
+            f"(헤더 (b) 영속 filesystem 변경 0).\n실행 라인:\n{joined}")

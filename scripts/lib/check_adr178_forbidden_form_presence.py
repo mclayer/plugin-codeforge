@@ -91,7 +91,8 @@ PER_FILE_SCAN_CAP = 20000   # 라인 count bound
 MAX_PHYSICAL_LINE_LEN = 8192  # per-physical-line 길이 bound (count cap 과 별개 축)
 MAX_TOKEN_LEN = 200         # 배열 원소 리터럴 길이 bound
 
-# ── regex 3종 (anchored / bounded quantifier — nested quantifier 0) ─────────────────
+# ── regex 3종 (전부 bounded quantifier — nested quantifier 0 / anchored 는 그중 1종) ──
+#   bound 의 근거는 anchor 가 아니라 quantifier 상한이다 (docstring "자원 사용" 절과 동일 문면).
 _BLOCKQUOTE_PREFIX_RE = re.compile(r"^\s{0,80}>\s{0,4}")
 _ARRAY_OPEN_RE = re.compile(r"FORBIDDEN_TOKENS\s{0,4}=\s{0,4}\[")
 _QUOTED_RE = re.compile(r'"([^"\n]{1,%d})"' % MAX_TOKEN_LEN)
