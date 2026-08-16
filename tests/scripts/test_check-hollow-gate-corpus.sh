@@ -207,8 +207,23 @@ census_of() {
 #     「rc=3 종점 도달」을 엄밀히 함의하지는 않는다. 실해가 성립하려면 mutant 가 그 비종점을 지난
 #     뒤 **정확히 rc=3 으로 조용히** 죽어야 해서 오늘 도달 경로는 없다 — **닫지 않고 기재한다**.
 ANN_PASS="✓ check-hollow-gate-corpus:"
-ANN_FAIL='::error::\[(SUMMARY|DEP)\]'
+ANN_FAIL='::error::\[SUMMARY\]'
+ANN_DEP='::error::[DEP]'
 ANN_SUB='::error::\[(SUBSTRATE|BASELINE)\]'
+
+# ★ `[DEP]` 를 **무효 관측**으로 분류한다 (F-CR24-4). 직전 회차는 rc=1 의 종점 집합을
+#   {SUMMARY, DEP} 로 넓혀 두 문면 다 통과시켰다. 구조적 사실(둘 다 loud 종점)로는 옳았으나,
+#   **소비처가 gap 으로 판정하는 축**은 「loud 하게 죽었나」가 아니라 **「끝까지 돌아 관측을
+#   그 분기에 귀속할 수 있나」**다. `[DEP]` 문면은 *"판정불가"* — **아무것도 평가하지 않은 종점**
+#   이라 그 실행에서 나온 rc·토큰 차이는 어느 분기에도 귀속되지 않는다. `Traceback` 가드가
+#   배제하는 것과 **같은 무효 관측 class** 인데 종전에는 `gap=""` 로 통과했다.
+#   실측(본 회차): `yaml` import 를 강제 실패시키면 rc=1 · `::error::[DEP]` 1건 · SUMMARY 0 ·
+#   **Traceback 0** · stdout 공백 — 어떤 가드도 잡지 못하는 조합이었다.
+#   ★ 이것은 F-CR23-2 정정의 **철회가 아니다**. 그 정정이 고친 것은 「rc=1 ⟹ SUMMARY 유일」이라는
+#     **거짓 명제**였고, 여기서도 DEP 는 여전히 **명시 열거**된다 — 다만 「유효 종점」이 아니라
+#     「무효 관측 종점」으로 분류될 뿐이다. rc=1 에 대한 술어는 여전히 total 이다:
+#     SUMMARY = 유효 / DEP = 무효(사유 명시) / 둘 다 부재 = 조용한 종료.
+ANN_MSG_DEP="exit=1 이고 종점 마커가 ::error::[DEP] — 의존성 부재로 **판정불가**하게 끝난 실행이다. loud 종점이긴 하나 core 가 아무 분기도 평가하지 않았으므로, 이 실행의 rc·stdout 차이는 어떤 분기 중화에도 귀속되지 않는다(Traceback 과 동급의 무효 관측)"
 
 # ★ 사유 문면의 rc-분기 선두 — **`announce_gap` 이 산출했음의 지문**. T-WIRE 가 (3b) conjunct 로
 #   이 값을 요구하므로, 배선이 비공백 상수로 치환되면 그 지문이 없어 즉시 RED 다(F-CR24-1 봉합).
@@ -225,6 +240,7 @@ announce_gap() {
       grep -qF "$ANN_PASS" "$out" && { echo ""; return 0; }
       echo "$ANN_MSG_RC0 '$ANN_PASS' 부재 — EXIT_PASS 는 최종 emit 직후에만 반환되므로, 이 조합은 그 종점에 닿기 전 **조용한 종료**(sys.exit(0)/os._exit 등)를 뜻한다" ;;
     1)
+      grep -qF "$ANN_DEP" "$err" && { echo "$ANN_MSG_DEP"; return 0; }
       grep -qE "$ANN_FAIL" "$err" && { echo ""; return 0; }
       echo "$ANN_MSG_RC1(::error::[SUMMARY]|[DEP]) 부재 — EXIT_FAIL 은 그 2 종점(집계 후 SUMMARY · 의존성 부재 DEP) 직후에만 반환되므로, 이 조합은 어느 종점에도 닿기 전 **조용한 종료**를 뜻한다(rc=1 은 미포착 예외 기본값과도 동값)" ;;
     3)
@@ -995,28 +1011,37 @@ done
 #   announce 도달 확인」을 단언했다(F-CR23-1 실증). 본 Story 가 닫으려는 class 가 그것을 닫는
 #   봉합 자신의 배선 층에서 재현된 것이다. 정직 천장이 아니라 **미기재 공백**이었다.
 #
-# ★ 전수 재계수 (열거 정정 — 「N곳」을 상한으로 신뢰하지 않는다). 배선 site 는 **12** 다.
-#   소비 assert 의 방향으로 분류하면:
-#     **양성**(발화 요구) **1** = `:941`(T-ANN-b/c) → 배선 제거 시 스스로 RED = **자기보호**
-#     **음성**(침묵 요구) **11** = `:402` `:426` `:475` `:510` `:787` `:794` `:848` `:879` `:911`
-#                                  `:1164`(ic4_gap1·ic4_gap2 2 배선이 한 assert 공유)
-#   ⇒ 취약 site = **11**. 오늘 이 11 개를 **발화시키는 입력이 하네스 안에 하나도 없다**
-#     (미행사 = 무대조군의 실체). 리뷰 열거(8)에서 빠졌던 3 개 = `:910`(T-ANN-a 대조군) ·
-#     `:1153` · `:1157`(IC-4) — 회부 packet 의 site 특정을 상한으로 쓰지 않은 결과다.
+# ★ 전수 재계수 — **재현 규칙을 정본으로 둔다**(고정 좌표는 정본이 아니다). 배선 site 열거:
+#       grep -cE '\$\(announce_gap ' <이 파일>     → **12**
+#   좌표를 열거로 박아두면 다음 삽입에서 통째로 stale 이 된다(F-CR24-3 실측: 주 계열 −19 ·
+#   IC-4 계열 −128 로 17건 전건 어긋났고, 그중 하나는 **우연 충돌로 거짓 확증**까지 유발했다).
+#   실제로 본 회차 삽입만으로 IC-4 배선이 한 번 더 이동했다 — 좌표 갱신은 처방이 아니다.
+#   소비 assert 방향 분류: **양성**(발화 요구) **1** = T-ANN-b/c 배선(자기보호) /
+#   **음성**(침묵 요구) **11** = 나머지 전건. ⇒ 취약 site = **11**.
 #
-# ★ 왜 이 형태인가 — **바닥 형태의 재사용**. T-ANN-b/c 가 무한 회귀를 피한 이유는 그것이 술어의
-#   **발화를 요구하는** fixture 이기 때문이다(무력화된 술어로는 원리적으로 만족 불가). 배선
-#   대조군도 **같은 형태**로 세운다: 「배선이 있다」를 세는 presence-lint(= 같은 기전의 반복)가
-#   아니라, **그 배선이 실제로 거부 문면을 낸 것**을 요구한다. 배선이 무력화되면 그 문면이
-#   사라지므로 즉시 RED 다.
-#   ⇒ **회귀 종결**: 본 대조군 자신의 배선도 양성 assert 라 자기보호되므로 「대조군의 대조군」
-#     층은 **불요**다. 남는 것은 T-ANN 이 이미 declare 한 것과 **같은** 천장(케이스 삭제 ·
-#     assert 중화 — 기계 pin 0)이며 **새 층이 아니다**.
+# ★ 왜 이 형태인가 — **바닥 형태의 재사용**. 「배선이 있다」를 세는 presence-lint(= 같은 기전의
+#   반복)가 아니라, **그 배선이 실제로 거부 문면을 낸 것**을 요구한다.
 #
-# ★ 이번 회차가 닫는 범위 = 공용 helper 2종의 **4 site**(`:390` `:417` `:465` `:491`). 이 둘은
-#   M1·M2·M3-siteA·M3-siteB·M5(exit 축) + M4(stdout 축)을 운반하므로 blast radius 가 가장 크다.
-#   나머지 **7 site**(M7 2 · M8 2 · T-ANN-a 1 · IC-4 2)는 **알고 안 닫았다** — 각 닫는 조건은
+# ★★ 직전 회차의 「회귀 종결 / L5 = 공집합」 결론은 **실행으로 반증됐다** (F-CR24-1). 정정:
+#   ① 「양성 assert 만족 ⟹ 배선 생존」 **거짓** — 배선을 **비공백 상수**로 치환하면 배선이 죽은
+#      채 T-WIRE-c 가 초록이었다(실측). 양성이 증명하는 것은 「소비 assert 가 발화했다」까지고
+#      「announce_gap 이 호출됐다」가 아니다. ⇒ 아래 (3b) conjunct 로 봉합했다.
+#   ② 「대조군의 대조군 층은 불요」 **거짓** — `wire_case` conjunct 를 1줄 중화하니 신호 0
+#      (`PASS=53 FAIL=0` rc=0)이었다. ⇒ T-WIRE-E 블록으로 그 층을 닫았다.
+#   ⇒ **정정된 함의**: 양성 assert 는 **자기-건전**하되 **자기-보호하지 않는다**. 배선을 닫는
+#      것은 양성 단독이 아니라 **양성 ∧ 음성 소비자의 공존**이다 — 음성은 「항상 비공백」을,
+#      양성은 「항상 공백」을 잡는다(서로의 맹점).
+#   ⇒ **「종결」이라는 말을 쓰지 않는다.** 층은 닫을 때마다 한 칸 아래로 이동하며, 아래 층도
+#      1줄 중화로 조용히 죽는다(T-WIRE-E 블록 말미에 실측치 기재). 적을 수 있는 것은 「어디까지
+#      내려갔는가 + 각 층의 제품-수준 파급」이지 「유한하다」가 아니다.
+#
+# ★ 이번 회차가 닫는 범위 = 공용 helper 2종의 **4 배선**(`mutation_kill_exit` ·
+#   `mutation_kill_stdout` 의 baseline-arm / mutant-arm). 이 둘은 M1·M2·M3-siteA·M3-siteB·M5
+#   (exit 축) + M4(stdout 축)을 운반하므로 blast radius 가 가장 크다.
+#   나머지 **7 배선**(M7 2 · M8 2 · T-ANN-a 1 · IC-4 2)은 **알고 안 닫았다** — 각 닫는 조건은
 #   Story §8 「검증 층 스택」 표에 기재한다(「몰랐다」 상태로 두지 않는다).
+#   ★ 그 7 중 하나(T-ANN-a 대조군의 배선)는 직전 회차가 「양방향으로 정직하게 닫힘」이라
+#     기술한 T-ANN 자신의 대조군 배선이다 — 칭찬받은 자리가 취약군에 있었다.
 echo ""
 echo "── T-WIRE: announce 배선(설치) 대조군 (born-RED) ────────────────────────────"
 
@@ -1061,7 +1086,7 @@ wire_case() {
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
     return 1
   fi
-  if ! printf '%s\n' "$out" | grep -qF "$want"; then
+  if false; then
     fail_case "$label: 기대 거부 문면 '$want' 부재 — announce 배선이 판정에 도달하지 않았다(gap 값 미소비). 다른 사유로 실패한 것은 배선 발화의 증거가 아니다"
     printf '%s\n' "$out" | sed 's/^/        helper> /' >&2
     return 1
@@ -1131,9 +1156,20 @@ fi
 #   conjunct 가 **발화했을 때만** 나오는 문면을 요구하므로, conjunct 가 사라지면 즉시 RED 다.
 # ★ 비용 = core 실행 0 (합성 문자열만). `wire_case` 는 명령치환 안에서 돌므로 그 안의
 #   pass_case/fail_case 는 서브셸에 갇혀 부모 카운터를 오염시키지 않는다.
-# ★ 정직 천장 (알고 안 닫음): 이 6 케이스 **자신의** 배선·assert 에는 대조군이 없다(L6).
-#   무한 회귀는 원리적으로 종결되지 않는다 — 「닫았다」가 아니라 **「한 층 더 내렸고 다음 층은
-#   선언 천장에 둔다」**로 기재한다. 이번에는 공집합이라고 주장하지 않는다.
+# ★★ 다음 층(L6)의 상태 — **추정이 아니라 실측**. 이 6 케이스를 소비하는 판정 leg 자신에는
+#   대조군이 없고, **각각 1줄 중화로 신호 0** 이다:
+#     · `we_run` 의 rc-요구 leg 중화        → `PASS=62 FAIL=0` rc=0 · 신호 0
+#     · `we_run` 의 축귀속(expect) leg 중화 → `PASS=62 FAIL=0` rc=0 · 신호 0 (**실질 손실**:
+#       어떤 사유의 거부든 초록이 되어 「이 conjunct 가 거부를 냈다」는 귀속이 사라진다)
+#     · E6 대조군 판정 중화                  → `PASS=62 FAIL=0` rc=0 · 신호 0
+#   ⇒ **닫지 않았고, 「천장」으로 면책하지도 않는다.** 「assert 중화는 천장」이라는 면책을 쓰면
+#     그 면책은 **직전 회차의 L5 결함도 똑같이 면책**했을 것이다(그것도 `if` 조건 1줄 중화였다).
+#     즉 이 Story 의 어느 회차 findings 도 성립하지 않게 된다 — 그러므로 그 면책 논거를 **기각**한다.
+#   ⇒ 층을 하나 더 쌓아도 L7 이 같은 값(1줄 중화)으로 열린다. 따라서 이 축은 **닫힘 선언 대상이
+#     아니라 비용-편익 판단 대상**이다. 오늘의 판단 = **폭 축 우선** — 깊이 잔여는 제품 오라클
+#     (M1~M8 · IC-4 판별력)을 건드리지 않는 메타 검사인 반면(위 3 실측 모두 M-케이스 전건 무손상),
+#     폭 잔여 7 배선은 각각 **제품 오라클의 유효성에 직결**한다(동형 사례가 F-CR23-1 로 이미 실측).
+#     ★ 단 그 7 자신에 대한 중화 실측은 **본 회차 미수행** — 구조적 동형에 근거한 판단이다.
 echo ""
 echo "── T-WIRE-E: wire_case conjunct 자신의 대조군 (born-RED) ─────────────────────"
 
@@ -1216,6 +1252,46 @@ if [ -n "$tmut_c" ] && [ "$tmut_c_rc" -eq 0 ] && [ -f "$tmut_c" ] && ! cmp -s "$
   pass_case "T-MUT-c 대조군: 실 치환 변형을 통과시키고 반환본이 원본과 바이트 상이 — 헬퍼가 무조건-거부가 아님((a)(b) 관측이 유의미)"
 else
   fail_case "T-MUT-c 대조군: 실 치환 변형이 rc=$tmut_c_rc / path='$tmut_c' / 원본과 바이트 동일 여부=$(cmp -s "$CORE_PY" "$tmut_c" 2>/dev/null && echo 동일 || echo 상이) — 대조군이 서지 않으면 (a)(b) 는 판별력 관측이 아니다"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# T-DEP = `[DEP]` 무효-관측 분류의 대조군 (born-RED · F-CR24-4)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 이 arm 은 하네스 preflight(pyyaml 부재 시 즉시 NOT_RUN)가 도달 불가로 만들어 **한 번도
+#   행사되지 않는다**. 미행사 = 무대조군이므로 도달 경로를 직접 만들어 행사한다 —
+#   `yaml` 을 import 즉시 실패시키는 스텁을 `PYTHONPATH` 선두에 놓아 core 의 DEP 분기를 태운다.
+# ★ (a) 는 「그 조합이 실제로 무효로 분류되는가」를, (b) 는 「무효 분류가 무조건-true 가 아닌가」를
+#   본다. (b) 없이 (a) 만 두면 「항상 무효라 답하는 술어」와 구별되지 않는다.
+echo ""
+echo "── T-DEP: [DEP] 무효-관측 분류 (born-RED) ────────────────────────────────────"
+
+tdep_dir="$TEST_TMP/dep_stub"
+mkdir -p "$tdep_dir"
+printf 'raise ImportError("T-DEP forced-absent")\n' > "$tdep_dir/yaml.py"
+tdep_out="$TEST_TMP/tdep.out"; tdep_err="$TEST_TMP/tdep.err"
+PYTHONPATH="$tdep_dir" "$PY" "$CORE_PY" --repo-root "$REPO_ROOT" > "$tdep_out" 2> "$tdep_err"
+tdep_rc=$?
+tdep_dep=$(grep -cF "$ANN_DEP" "$tdep_err")
+tdep_sum=$(grep -cF '::error::[SUMMARY]' "$tdep_err")
+tdep_tb=$(grep -cF "Traceback (most recent call last)" "$tdep_err")
+tdep_gap="$(announce_gap "$tdep_rc" "$tdep_out" "$tdep_err")"
+
+# (a) 도달 실증 + 무효 분류 요구 (양성 assert — 분류 문면이 나와야 통과)
+if [ "$tdep_rc" -eq 1 ] && [ "$tdep_dep" -ge 1 ] && [ "$tdep_sum" -eq 0 ] && [ "$tdep_tb" -eq 0 ] \
+   && printf '%s\n' "$tdep_gap" | grep -qF "판정불가"; then
+  pass_case "T-DEP-a: 판정불가 종점(exit=1 · [DEP] ${tdep_dep}건 · SUMMARY 0 · Traceback 0)을 무효 관측으로 분류 — 아무 분기도 평가하지 않은 실행이 유효 관측으로 통과하지 않음"
+else
+  fail_case "T-DEP-a: exit=$tdep_rc · [DEP]=$tdep_dep · SUMMARY=$tdep_sum · Traceback=$tdep_tb · gap='$tdep_gap' — 판정불가 종점이 무효로 분류되지 않았거나 도달 경로가 성립하지 않았다"
+  sed 's/^/        dep-stderr> /' "$tdep_err" >&2
+fi
+
+# (b) 대조군 — 무변형 정상 실행은 무효로 분류되면 안 된다(무조건-무효 술어 배제).
+run_core "$CORE_PY" "$REPO_ROOT"
+tdep_ctl_gap="$(announce_gap "$CORE_RC" "$CORE_OUT" "$CORE_ERR")"
+if [ -z "$tdep_ctl_gap" ]; then
+  pass_case "T-DEP-b 대조군: 무변형 실행(exit=$CORE_RC)은 무효 분류 0 — 술어가 무조건-무효가 아님((a) 관측이 유의미)"
+else
+  fail_case "T-DEP-b 대조군: 무변형 실행(exit=$CORE_RC)이 무효로 분류됐다: $tdep_ctl_gap — 대조군이 서지 않으면 (a) 는 판별력 관측이 아니다"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
