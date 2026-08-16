@@ -60,6 +60,12 @@ samples:
     fixtures: { kill: kill, clean: clean, empty: empty, xkill: xkill }
 
 # ── build: 파생 recipe (판정기 projection 제외 — verdict 함수 미투입) ──────────────
+#   ★ 정의역 공백 — **닫혔다고 읽지 말 것** (F-CR19-3 / F-CR20-9 처분). provenance 검사는 이
+#     `build[]` 블록을 순회하므로, 표본을 `samples[]`·`classification[]` 에만 등재하고 여기
+#     `build[]` 항목을 **생략하면 그 표본은 검사에 한 번도 걸리지 않는다** — 검사 대상의
+#     자기신고가 정의역을 정하는 구조라 신고 누락에 구조적으로 무력하다. 완전 봉합 =
+#     manifest 계약 변경(설계 소관, 현재 동결). 근거 문면 SSOT =
+#     `scripts/lib/check_hollow_gate_corpus.py` 모듈 docstring (c) + `_check_provenance` docstring.
 #   - `sample:` 항목 = 커밋 표본의 파생 provenance 기록. **I-1 의 정의역이 아니다** —
 #     I-1(anchor 매치 != 1 = INDETERMINATE)은 run-time recipe unit(`probe:`)에만 도달한다.
 #     커밋 sample unit 은 core 의 units 구성에서 recipe=None 으로 실려 I-1 가드에 구조적으로
