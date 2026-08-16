@@ -15,16 +15,21 @@ related_adrs:
   - ADR-115  # runtime hook enforcement policy (hook_source / hook_decision field origin — Amendment 1 carrier)
   - ADR-142  # Orchestrator-self context 규율 (Amendment 3 carrier — self-context proxy field set allow-list 확장)
   - ADR-155  # dev-process observability substrate (Amendment 4 carrier — dev-process-event redaction 표면 상속·확장)
+  - ADR-067  # Amendment 6 sibling — 같은 Story(CFP-2985)가 개정하는 FIX ledger 축. root_cause_class 값공간의 정의 host
+  - ADR-181  # Amendment 6 sibling — 검증 정의역 결손 규범(P/V/D). 본 Amendment 의 field 확장이 그 규범의 계측 substrate
 related_stories:
   - CFP-283
   - CFP-1744
   - CFP-2572
+  - CFP-2985  # Amendment 6 — dev-process-event index tier Allow-list 18 → 20
 related_cfps:
   - CFP-283
   - CFP-1744
   - CFP-2572
+  - CFP-2985
 related_files:
   - docs/inter-plugin-contracts/stop-event-v1.md
+  - docs/inter-plugin-contracts/dev-process-event-v1.md   # Amendment 6 — §2 index tier 20-field. 본 파일 :169 이 ADR-043 Amendment 의무를 라우팅한다
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
@@ -51,6 +56,11 @@ amendment_log:
     carrier_story: CFP-2850
     reinterpretation: false
     summary: "Amendment (CFP-2850) — spawn-event-v1 Allow-list 4 field 확장: total_tokens(int|null) · model(enum semi-open) · outcome(enum closed) · termination_cause(enum closed). 전부 numeric/enum(free-form 0). opt-in default false / Deny-list no-op inherit / T-INFO-5·7·8 무변경. spawn-event-v1 v1.1→v1.2 MINOR 동반."
+  - amendment: 6
+    date: 2026-08-16
+    carrier_story: CFP-2985
+    reinterpretation: false
+    summary: "Amendment (CFP-2985) — dev-process-event-v1 index tier Allow-list 18 → 20 field 확장: root_cause_class(enum CLOSED-6 | null) · anchor_id(닫힌 형식 상관 ID string | null). 둘 다 trailing optional/nullable(dev-process-event-v1 v1.0→v1.1 MINOR 동반). 발동 근거 = 본 ADR Amendment 4 §(B) 가 dev-process-event index tier 에 대해 'field 추가 = 본 §결정 2 Amendment 의무' 를 명문화했고 계약 dev-process-event-v1.md:169 이 '§2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump' 로 두 의무를 AND 로 건다 — 계약 bump 단독으로 충족되지 않는다. 자기 선례 = Amendment 1(stop-event Allow-list 16→18, MINOR bump 동반) · Amendment 5(spawn-event 19→23, MINOR bump 동반) 둘 다 MINOR 에도 amendment 를 동반했다. T-INFO-8 free-form 0건 invariant 무손상 — root_cause_class 는 CLOSED enum(fix-event-v1 v1.6 `원인 판정` 6값과 값공간 동일), anchor_id 는 자유 서술이 아니라 `<repo-relative path>:<line>` ∪ `§<section-ref>` 닫힌 형식 상관 ID 이며 §결정 2 dev-process index tier 허용 유형에 '상관 ID' 가 이미 포함돼 있다. opt-in/always-on 비대칭(Amendment 4 (A)) · Deny-list(§결정 3) · sanitize SSOT(§결정 4) · isolation(§결정 5) 전건 inherit 무변경. MINOR (additive optional field 2종, ADR-008 SemVer §결정 2)."
 mechanical_enforcement_actions: []
 ---
 
@@ -479,3 +489,48 @@ Epic #2814 W1 Story B (CFP-2850) 가 spawn-event-v1 의 실측 append 를 활성
 - §결정 3 Deny-list regex 6 pattern 무변경 (4 신규 field non-sensitive → 적용 0건, inherit 선언만).
 - §결정 4/5 (sanitize SSOT / isolation) inherit — 정책 자체 무변경.
 - Amendment 1/2/3/4 무변경. transcript content/path HARD invariant(Amendment 2 §D) 무손상 (신규 4 field 전부 numeric/enum, transcript 미도달).
+
+## Amendment 6 (CFP-2985, 2026-08-16) — dev-process-event-v1 index tier Allow-list 18 → 20 field 확장
+
+### 배경
+
+CFP-2985 는 FIX 원인 계측 채널을 실채운다. §10 FIX Ledger 의 `원인 판정` 값공간을 6값으로 확장하고(ADR-067 Amendment 4 §9.1), 그 값을 사람이 읽는 마크다운 표에만 두지 않고 **기계 집계 substrate 에 착지**시킨다. 착지면 = `dev-process-event-v1` index tier 이며, 신규 키 2종(`root_cause_class` · `anchor_id`)을 `_ROW_KEYS` 말미에 nullable optional 로 append 한다.
+
+**본 Amendment 가 의무인 이유 (두 문면이 AND 로 건다 — firsthand)**:
+
+- 계약 `docs/inter-plugin-contracts/dev-process-event-v1.md:169` **전문 verbatim**: "**Allow-list ONLY (v1.x)**: §2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING)." — 선행 conjunct(ADR-043 Amendment 의무)와 SemVer 등급 축은 **직교**한다. MINOR 여도 본 ADR 개정 의무는 잔존한다.
+- 본 ADR **Amendment 4 §(B)** (`:414`) 자신이 dev-process-event index tier 에 대해 "**field 추가 = 본 §결정 2 Amendment 의무**" 를 이미 명문화했다.
+
+★ **자기 선례 2건** — Amendment 1(stop-event Allow-list 16 → 18, stop-event-v1 v1.1 MINOR bump 동반) · Amendment 5(spawn-event Allow-list 19 → 23, spawn-event-v1 v1.2 MINOR bump 동반). **둘 다 MINOR 인데도 amendment 를 동반했다.** "MINOR 이므로 계약 bump 로 충분" 은 본 ADR 의 자기 이력이 반증한다.
+
+### 개정 내용
+
+**(A) §결정 2 Allow-list — dev-process-event index tier 18 → 20 field**. 2 신규 field 전건 trailing optional / nullable:
+
+| field | 타입 | 값공간 | 유형 판정 |
+|---|---|---|---|
+| `root_cause_class` | enum CLOSED-6 또는 null | `fix-event-v1` v1.6 `원인 판정` 6값(`설계` · `구현` · `요구사항` · `환경` · `설계-리뷰` · `구현-리뷰`)과 **동일 값공간** | enum — §결정 2 허용 유형 |
+| `anchor_id` | string 또는 null | **닫힌 형식** 2종 합집합 — repo-relative `<path>:<line>` 형 또는 `§<section-ref>` 형. 자유 서술 아님 | 상관 ID — §결정 2 dev-process index tier 허용 유형에 "상관 ID" 가 이미 포함(Amendment 4 §(B)) |
+
+**(B) §결정 3 Deny-list no-op inherit 선언** — `root_cause_class` 는 CLOSED enum 이라 어느 deny pattern 도 매치 불가. `anchor_id` 는 **repo-relative 경로 형식만** 허용하며 절대/home-prefixed 경로는 Amendment 4 §(C) deny-regex 7종의 신규 pattern 정의역에 그대로 걸린다(우회 신설 0). free-form content field 0건 유지 → Deny-list 적용 0건 inherit 선언(defense-in-depth 선언만, silent bypass 금지).
+
+**(C) §결정 1 / 4 / 5 + T-INFO-5/7/8 inherit·무변경** — Amendment 4 (A) 의 always-on 비대칭(wrapper always-on / consumer opt-in default-false, INV-8 redaction-precedes-always-on) 무약화. sanitize SSOT 통합(§결정 4) / wrapper-vs-consumer isolation(§결정 5) 자동 inherit. T-INFO-5 transcript content·path 절대 미저장 · T-INFO-7 sha256 identity · T-INFO-8 free-form 0건 전부 무변경.
+
+**(D) ★ T-INFO-8 무손상의 전건을 명시한다 (조건부 판정 — 무조건 아님)**. `anchor_id` 는 신규 **string** field 이므로 "free-form string content field 도입 금지"(계약 `:170` v1.x invariant, T-DPE-3/T-INFO-8)와 정면으로 마주친다. 금지 회피가 성립하는 **유일한 전건 = 값공간이 위 (A) 표의 닫힌 형식으로 제약된다는 술어가 실재하는 것**이다. 그 술어가 적재 경계에 없으면 본 판정은 무효이며 `anchor_id` 는 free-form 유입 통로가 된다. ⇒ 적재 경계 형식 술어를 **본 Amendment 의 조건**으로 부과한다(구현 = CFP-2985 Phase 2 D-16).
+
+### 근거
+
+- **Amendment 4 가 dev-process-event channel 을 이미 확정**했으므로 본 Amendment 는 그 확정 channel 의 field-set additive 확장이지 신규 privacy SSOT 신설이 아니다(대안 A reject 정합, 신규 privacy ADR 미신설).
+- **MINOR 정합**(ADR-008 SemVer §결정 2): additive optional field 2종 = backward-compat. 기존 18-field row 는 새 키 부재 = 읽기 시 null 이며 소비자 거동 보존. v1.0 reader 가 2 신규 field 를 skip 가능 → BREAKING 아님.
+- **privacy 방향 = 중립·비약화**. 두 키 모두 이벤트의 **분류·위치 식별자**이지 content 가 아니다. rich content 는 여전히 §6 redacted-blob 표면으로만 도달한다.
+
+### 비-영향
+
+- §결정 1 opt-in default-false 및 Amendment 4 (A) always-on 비대칭 무변경.
+- §결정 2 stop-event 18 / spawn-event 23 / self-context 6 Allow-list **무변경** — 본 Amendment 는 dev-process-event index tier **단독** 확장이다(채널별 Allow-list 는 서로 독립).
+- §결정 3 deny-regex 7종 무변경 (2 신규 field non-sensitive → 적용 0건, inherit 선언만).
+- §결정 4/5 무변경. Amendment 1/2/3/4/5 무변경.
+
+### ★ 정직 천장 (ADR-181 §결정 5 ② 자기적용)
+
+본 Amendment 는 **정책 결정**이며, 그 결정을 실현하는 자산은 아직 **존재하지 않는다**. `_ROW_KEYS` 18 → 20 코드 변경(CFP-2985 Phase 2 D-12) · 계약 §2 index table 20-row 동기(D-19) · 적재 경계 형식 술어(D-16) 전건 **Phase 2** 이며 carrier = `mclayer/plugin-codeforge#2985` / 만기 `2026-09-15`. Amendment 4 가 "실 redaction fn/blob store = Phase 2, 본 Amendment = 정책 결정" 이라 적은 것과 동일 형상이다. **그 사이 구간에서 본 Amendment 의 강제력은 0 이며 이는 선언이다** — 이 문장을 지우면 over-claim 이 된다. `mechanical_enforcement_actions: []` 유지 근거도 동일하다.

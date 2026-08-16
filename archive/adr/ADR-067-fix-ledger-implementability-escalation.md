@@ -34,7 +34,7 @@ amendment_log:
   - date: 2026-08-16
     amendment: 4
     cfp: CFP-2985
-    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시."
+    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시. ★ 설계리뷰 FIX Iter 1 보강 — §9.4 처분 5 로 **철회의 문면 도달 범위**를 정직 선언: 본 ADR 밖에 같은 유령을 현재형으로 기술하는 live 문면이 9곳(fix-event-v1 5 · orchestrator-playbook 1 · story-page-structure 1 · label-registry-v2 2) 실재하며 각각 carrier(D-1/D-25/D-5/D-21)로 배정. 본 ADR 이 '철회 완료' 라 말할 수 있는 범위는 자기 문면 + `related_adrs` live 주장 1건 제거까지이고 나머지 9곳은 carrier merge 전까지 생존한다(over-claim 차단)."
     scope_change: "ratchet 강화 방향 — 값공간 확장은 additive(기존 2값 유효 유지, 소급 정규화 0), 카운터 trigger lane 정의역 무변경(확장 0), 데드락 해소는 verdict 부재 구멍을 fail-closed 로 채움(기존 verdict 배정 변경 0), 닫기 조건은 기존 게이트 위에 축 추가(대체 0). 유령 선언 철회는 실효 강제력 0 이던 문면의 제거이므로 통제 약화 0 — ADR-058 §결정 5 역-ratchet 정의역 밖. is_transitional: false 유지."
     reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 축 (4) 가 Amendment 1 의 factual premise("fix-event-depth-scope-presence 가 본 ADR 의 mechanical enforcement 로 집행 중")를 affirmatively-FALSE(registry 0 · script 0 · workflow 0, firsthand)로 판정하고 그 문단의 지위를 "집행 사실 → 철회된 선언"으로 재규정(supersede-in-part)하며 §결정 4 본문 문면을 실제로 치환한다. 선례 동형 = ADR-064 Amendment(:179) — 선행 amendment 의 mechanical enforcement 단정이 affirmatively-FALSE 화 → 해당 clause supersede-in-part 시 reinterpretation: true. 축 (1)(2)(3) 은 순수 additive 이며 true 는 축 (4) 귀속. self-declared — parity lint 는 presence/type 만 검사하고 재해석 의미 판정은 리뷰 축이다(ADR-167 §결정 7 honest ceiling).
     breaking: false
@@ -63,7 +63,7 @@ related_adrs:
   - ADR-054
   - ADR-058
   - ADR-059
-  - ADR-060   # Amendment 1 carrier — fix-event-depth-scope-presence warning-tier evidence-checks-registry entry
+  - ADR-060   # ★ Amendment 4 정정 — Amendment 1 은 본 ADR-060 을 warning-tier registry entry 의 host 로 지목했으나 그 entry 는 실재 0 이었고(firsthand) 그 지목은 §9.4 에서 철회됐다. 본 ADR-060 이 관련인 실 근거 = evidence-check tier 체계 자체(현행 host = ADR-171 재제정판)
   - ADR-063
   - ADR-064
   - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
@@ -492,7 +492,8 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
 
 **실측 (firsthand @ wrapper `ecfe62d63`)**:
 
-- 위 §결정 4 Amendment 1 본문(`:157`)이 `fix-event-depth-scope-presence` 를 **"mechanical enforcement"** 로 선언한다.
+- 위 §결정 4 Amendment 1 본문이 `fix-event-depth-scope-presence` 를 **"mechanical enforcement"** 로 **선언했었다**
+  (좌표 `:157` 은 merge-base `ecfe62d63` 기준이며, 현재 판에는 그 문면이 **부재**한다 — 아래 처분 1 이 치환했다).
 - 그러나 `grep -c 'fix-event-depth-scope-presence' docs/evidence-checks-registry.yaml` → **0**
   (파일은 실재 — merge-base `ecfe62d63` 시점 112 entry / 본 Amendment 커밋 후 **113 entry**,
   증가분 1 = `fix-ledger-conformance`. `fix-event-depth-scope-presence` 는 **양 시점 모두 0**).
@@ -518,6 +519,42 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
    이름 근접성 때문에 미래에 조용히 배선될 수 있고, 그때 C-6 이
    "라벨이 게이트보다 먼저 있었다" 에서 **"라벨이 게이트를 죽였다"** 로 실현된다.
 4. 신규 게이트는 **bypass 라벨 없이 출시**한다. 생성 선행조건 = 그 게이트가 RED 를 낸 실 CI run 참조.
+5. ★★ **철회의 문면 도달 범위를 정직 선언한다 (설계리뷰 FIX Iter 1 신설 — INV-D 자기적용)**.
+   처분 1 은 **본 ADR 안의 문면**만 치환한다. 그러나 같은 유령을 **현재형으로 기술하는 문면이 본 ADR 밖에
+   9곳 더 살아 있다**. 철회를 본 ADR 안에서만 하고 끝내면 "선언은 철회됐는데 그 선언을 인용하는 문서는
+   그대로" 라는 상태가 되며, 이는 본 Amendment 가 고발하는 class 의 재생산이다.
+
+   **전수 실측** [wrapper worktree `cfp-2985-fix-telemetry`, 재현 =
+   `grep -rn 'fix-event-depth-scope-presence' --include='*.md' --include='*.yaml' .`]:
+
+   | # | site | 분류 | 처분 carrier |
+   |---|---|---|---|
+   | 1 | `docs/inter-plugin-contracts/fix-event-v1.md:29` | ★ live — registry entry 실재를 `related_files` 주석으로 단언 | D-1 (Phase 1) |
+   | 2 | `docs/inter-plugin-contracts/fix-event-v1.md:87` | ★ live — "누락 = warning-tier lint **적발**" (현재형 검출 주장) | D-1 (Phase 1) |
+   | 3 | `docs/inter-plugin-contracts/fix-event-v1.md:258` | ★ live — 동일 문면(schema 주석) | D-1 (Phase 1) |
+   | 4 | `docs/inter-plugin-contracts/fix-event-v1.md:262` | ★ live — registry entry 단언 | D-1 (Phase 1) |
+   | 5 | `docs/inter-plugin-contracts/fix-event-v1.md:388` | ★ live — 요약 목록의 lint 단언 | D-1 (Phase 1) |
+   | 6 | `docs/orchestrator-playbook.md:2873` | ★ live — "누락 시 **적발**" | D-25 (Phase 1) |
+   | 7 | `templates/story-page-structure.md:419` | ★ live — "누락 시 **적발**" | D-5 (Phase 1) |
+   | 8 | `docs/inter-plugin-contracts/label-registry-v2.md:256` | ★ live — 부재 workflow `templates/github-workflows/fix-event-depth-scope-presence.yml` 를 현재형 carrier 로 기술 | D-21 (Phase 2) |
+   | 9 | `docs/inter-plugin-contracts/label-registry-v2.md:1201` | ★ live — 부재 script + 부재 workflow 를 registry description 에서 현재형 기술 | D-21 (Phase 2) |
+   | 10 | `docs/inter-plugin-contracts/fix-event-v1.md:363` | **동결 이력** — v1.2→v1.3 changelog 항목(dated) | 무접촉 |
+   | 11 | `docs/inter-plugin-contracts/label-registry-v2.md:94` | **동결 이력** — Amendment 1 dated 서술 | 무접촉 |
+   | 12 | `archive/prune-2026-06/CHECK-VERDICT.md:154` | **동결 이력** — archive 스냅샷 | 무접촉 |
+
+   **본 ADR 안 occurrence 의 분류** — 기준 판 = **`adf99ed44`**(본 처분 5 직전, immutable ref)이며
+   그 시점 계수 = **10**. ★ 현재 판의 계수는 여기에 못박지 않는다 — **이 처분 5 문단 자신이 그 문자열을
+   포함**하므로 세는 행위가 대상을 늘린다(고정 수치 = 즉시 stale). 재현 규칙 =
+   `git show adf99ed44:archive/adr/ADR-067-fix-ledger-implementability-escalation.md` 에 대한 위 grep.
+   분류: 동결 이력 = `:16`(Amendment 1 dated log entry —
+   amendment_log 는 byte-frozen 이력이며 그 뒤의 Amendment 4 entry 가 철회를 기록하므로 연대기 자체가
+   자기정정한다) / **철회 기술** = `:37`·`:39`·`:70`·`:173`·`:479`·`:483`·`:484`·`:486`(철회 대상을
+   **이름으로 지목**해야 성립하는 문면 — 이름을 지우면 무엇이 철회됐는지 알 수 없다) / **live 주장** =
+   `:57` 1건뿐이었고 본 Amendment 에서 **문면 치환으로 제거**했다.
+
+   ★ **본 처분의 천장**: 위 1~9 의 실 정정은 각 carrier 행에서 일어나며 **본 ADR 은 그것을 지시할 뿐
+   집행하지 않는다.** "철회 완료" 라고 적을 수 있는 범위는 본 ADR 문면 + `:57` 까지이고,
+   나머지 9곳은 **carrier 가 merge 되기 전까지 살아 있다.** 이 문장을 지우면 over-claim 이 된다.
 
 ### 9.5 declaration-only retain + ratchet 정합
 
