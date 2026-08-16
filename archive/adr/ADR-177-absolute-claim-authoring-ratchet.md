@@ -9,7 +9,7 @@ supersedes: null
 amends: null  # new-sibling — ADR-119 §결정 8 이 기계화를 외부 carrier 로 위임했고 ADR-168 §결정 16 은 presence-lint class 라 정의역 disjoint (§결정 1)
 related_adrs:
   - ADR-119  # 검증 후 단언 — 본 ADR 이 기계화하는 규범 원본. §결정 3(검증 ∨ abstention) + §결정 8(Wave 1 declarative-only, 기계화는 후속 carrier CFP 의무)
-  - ADR-168  # write-time self-write verification — §결정 16(resource-safety-claim ↔ proof-link)이 최근친. 본 ADR 은 그 축을 어휘·정의역 양쪽에서 일반화한 별 class (§결정 1)
+  - ADR-168  # write-time self-write verification — §결정 16(resource-safety-claim ↔ proof-link)이 최근친. 본 ADR 은 그 축을 어휘·정의역 양쪽에서 일반화한 별개 class (§결정 1)
   - ADR-171  # evidence-enforceable promotion framework — 신규 check 는 warning-tier entry 로 등록하고 §결정 6 승격 gate 를 거친다
   - ADR-154  # hard-gate self-verification — ADR 형태 판정(A2-5 both-prong) 구조를 본 ADR 이 답습. 게이트 자기검증 축은 disjoint
   - ADR-158  # author-time self-gate — 저작시점 축 kin. 그쪽은 기존 required 게이트의 shift-left, 본 ADR 은 신규 check 라 disjoint

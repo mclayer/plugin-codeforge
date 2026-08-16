@@ -30,6 +30,37 @@ related_files:
   - docs/orchestrator-playbook.md  # 비대화형 호출 계약 서브섹션 + ADR-128 정의역 mirror 5 anchor
   - skills/worktree-lifecycle/SKILL.md  # 정본 절차 SSOT (부트스트랩 지목 대상)
 is_transitional: false
+amendment_log:
+  - amendment: 1
+    date: 2026-08-14
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "§결정 6 heartbeat 기록 조건을 '정상 종료' 에서 'collect_observations() 가 실제 호출되어 반환한 종료 경로' 로 좁힘 — 정지(F1 ∨ F2 ∨ read-failure)·--dry-run 은 미기록, 관측 0건·채널 미지정·채널 조회 실패·신규 0건은 기록(사이클 완주). 본문 §결정 6 행은 삭제 0(문면 대체만). 대가 declare = 의도적 정지 중 매 세션 소음 + watchdog 이 의도적 정지와 관측자 사망을 미구별(선언된 상한). 부수 = A1-4 F1 소유권(ADR-026 §결정 4 + ADR-045 D-7) 신규 기재, A1-5 read-failure 서술을 현 호출 형상 실측 기준으로 정정."
+  - amendment: 2
+    date: 2026-08-15
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "§결정 6 생존 감시의 **판독** 정의역을 채택자 한정으로 좁힘 — heartbeat 파일 부재(absent)는 발화 사유가 아님(미채택 환경의 부재는 사망이 아니라 정상 미채택). 기록 축(Amd 1)과 disjoint — 기록 주체·시점 무변경. 계기 = hooks.json SessionStart 가 전 consumer 무조건 등록이라 미채택 운영자 전원이 매 세션 1줄 수신 → 탐지자 자발적 폐기 위험. 대가 declare = '채택했으나 1회도 미실행' class 가 표식 없이는 구조적 무음(FN 1건 증가)."
+  - amendment: 3
+    date: 2026-08-15
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "Amd 2 판독 정의역을 **채택 표식 판별자 도입 이후** 상태로 정정 + 실배선 상충 해소. Amd 2 는 표식 판별자 이전에 쓰여 absent 가 분기 불가 단일 상태였고 무조건 발화/무조건 침묵 이지선다였다 — 판별자 도입으로 absent 가 (표식 부재 = 미채택 → 무발화) / (표식 존재 = 채택 → 발화) 2 case 로 분화. 상충 원인 = 결정 미확정이 아니라 전사 누락(계획서 4 site 만 갱신하고 본 ADR 누락 → 결정 SSOT 만 정정 이전 상태로 고착). Amd 2 본문 삭제 0(이력 보존, 충돌 시 Amd 3 우선)."
+  - amendment: 4
+    date: 2026-08-15
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "A3-2 대조표를 **2 탐지 축**(채택자 탐지 — 자원 bound 축 / 표식 가시성 축)으로 재작성 + 잔여 (i)(ii)(iii) 축 오분류 정정. A3-2 가 채택자 탐지를 단일 칸으로 둬 서로 다른 두 손실 경로를 뭉뚱그렸고 한 축이 닫혔을 때 칸 전체가 닫힌 것처럼 읽혔다. 근거 = 동결 4 판본 x 8 시나리오 firsthand 실측(스크래치 HOME 격리, 동결 트리 mutate 0). A3-2 본문 삭제 0."
+  - amendment: 5
+    date: 2026-08-15
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "(ㄴ) 탐지 **metric 을 유계 종국(bounded-eventual)으로 고정** + A4-5 이분법 반증 정산. A4-5 가 '소음 vs 미탐지' 를 양 끝점 2택으로 제시한 것은 거짓 — P0(현행)과 P1(pre-FIX6 복원) 사이는 연속이며 P4(주기적 저빈도, 확률 1/P 발화)가 그 위 실재점이다. metric 3종(즉시 per-session / 무계 종국 / 유계 종국)의 값 공간을 닫아 판정 4단계 진동의 근인(metric 미고정)을 제거. 부수 = A5-3 이 Amd 2 대가 1·2항 축 라벨을 오지목 아님으로 정산(명예 회복), A5-6 이 A4-1 측정 도구의 정의역 한정(세션 축 부재)을 declare. Amd 4 본문 삭제 0, 코드·계약·오라클 델타 0."
+  - amendment: 6
+    date: 2026-08-15
+    carrier_story: CFP-2949
+    reinterpretation: true
+    summary: "보고 채널을 **신뢰 경계 객체**로 재판정 — 계획서 §7.1 이 채널을 입력원으로만 그렸으나 같은 객체가 dedup 상태 저장소 + 출력 sink 를 겸해 F-SEC-1(익명 위조로 정당 잔재 영구 억제)·F-SEC-2(private repo 명 공개 채널 노출)가 같은 근인의 두 방향으로 발생. 처분 = (a) §결정 9 ⑧ 의 지위를 승격 조건에서 **도입기 선행 의무**로 전이(유예 철회 — 유예 기간이 결함 활성 구간 전체와 겹쳐 방어 부재 구간 = 노출 창) (b) §결정 6 채널 가시성 파라미터 신설 (c) 채택 술어를 SENTINEL 단독에서 viewerDidAuthor ∧ SENTINEL 로 좁힘(추가 API 호출 0 — 이미 받는 응답 안의 필드) (d) T-SUP-1 분류를 dedup 실패에서 **1차 탐지 false-negative** 로 정정, sev P2 → P1. §결정 9 8항 열거 문면 삭제 0(충돌 시 본 Amendment 우선). 귀속 표기 정정 = ⑧ 의 '(Amendment 1 신설)' 은 도입 커밋 동시성 표기였고 근거 절은 본 Amendment A6-1 이 처음 둔다."
 mechanical_enforcement_actions: []  # Phase 2 이행 — scheduled_task_reconcile.py + §8 명명 테스트(normative 8건, iter5 집계) + playbook/skill 편집. 본 ADR = 결정 SSOT.
 ---
 
@@ -599,7 +630,7 @@ A4-3 은 잔여 3종을 거짓 발화 축으로 라벨한 오염면을 **3면**�
 
 ★★ **FIX10 자기 발현 추기 (위 ★★ 의 한 겹 위 — 은폐 금지)**: 위 문단이 *"오염면을 열거할 때 그 열거 자체를 실측으로 검증하라"* 를 처방했는데, **그 처방을 담은 표 자신이 정본 HEAD 에서 재현 불가**가 됐다. 게다가 직전 라운드(FIX9)가 「이 포인터의 천장」에 *"신규 인용은 절 ID"* 규칙을 세우면서 **기존 행번호 인용은 손대지 않는다**고 명시 유예했고, 하필 그 유예 대상 중 하나가 **본 항의 근거를 지탱하는 줄**이었다. ⇒ 규칙을 세우는 것과 **근거 지탱면에 소급 적용하는 것**은 별개이며, 유예의 정의역을 「근거 지탱 여부」로 자르지 않은 것이 직접 원인이다. 처분은 A5-7 이 규칙 자체를 좁히는 것이다.
 
-★★ **신규 class 판정 — 「줄번호 포인터 stale」 (관계축 게이트의 미선언 사각)**: 본 결함은 그 게이트 정직 천장 ①~⑦ **어디의 발현도 아니다**. 판정 근거 = 그 모듈의 **절 ID 문법이 `A<n>-<m>` 와 `§결정 N` 두 형태뿐**이라(firsthand — `_correction_pointer_cochange.py` 의 `_SEC_ID_ALT`), **`:NNN` 행번호는 값 공간에 아예 없다** ⇒ 게이트는 이 좌표를 읽지도, 해소하지도, 위반으로 셀 수도 없다. ★ **직전 라운드와 판정이 다른 이유**: FIX9 의 「관련 파일」 결손은 인용 정의역(`## Amendment` 헤딩 사슬) **밖**이라 천장 ①·② 의 **발현**으로 귀속하는 것이 맞았다. 본 건은 정의역 **안**의 줄인데도 좌표 형태가 문법 밖이라 **구조적으로 안 보이는** 것이므로 발현이 아니라 **별 class** 다. 인접하되 disjoint 한 것은 천장 ⑤(`Amd 2` 같은 Amendment 레벨 지시자를 절 ID 로 세지 않음) 인데, ⑤ 는 *지목과 인용의 구분 불가*가 사유이고 본 class 는 *좌표가 시간에 따라 썩는다*가 사유라 **기전이 다르다**. ⇒ 천장 목록에 **⑧ 로 추가**되어야 한다.
+★★ **신규 class 판정 — 「줄번호 포인터 stale」 (관계축 게이트의 미선언 사각)**: 본 결함은 그 게이트 정직 천장 ①~⑦ **어디의 발현도 아니다**. 판정 근거 = 그 모듈의 **절 ID 문법이 `A<n>-<m>` 와 `§결정 N` 두 형태뿐**이라(firsthand — `_correction_pointer_cochange.py` 의 `_SEC_ID_ALT`), **`:NNN` 행번호는 값 공간에 아예 없다** ⇒ 게이트는 이 좌표를 읽지도, 해소하지도, 위반으로 셀 수도 없다. ★ **직전 라운드와 판정이 다른 이유**: FIX9 의 「관련 파일」 결손은 인용 정의역(`## Amendment` 헤딩 사슬) **밖**이라 천장 ①·② 의 **발현**으로 귀속하는 것이 맞았다. 본 건은 정의역 **안**의 줄인데도 좌표 형태가 문법 밖이라 **구조적으로 안 보이는** 것이므로 발현이 아니라 **별개 class** 다. 인접하되 disjoint 한 것은 천장 ⑤(`Amd 2` 같은 Amendment 레벨 지시자를 절 ID 로 세지 않음) 인데, ⑤ 는 *지목과 인용의 구분 불가*가 사유이고 본 class 는 *좌표가 시간에 따라 썩는다*가 사유라 **기전이 다르다**. ⇒ 천장 목록에 **⑧ 로 추가**되어야 한다.
 
 ★ **⑧ 의 SSOT 미착지 declare (정직 — 본 라운드가 못 한 것)**: 그 천장 목록의 SSOT 는 `tests/scripts/_correction_pointer_cochange.py` 모듈 docstring 인데, **본 라운드 정의역이 `tests/**` 무접촉**이라 거기에 쓰지 못했다. 본 라운드가 실제로 한 것은 **문서면 선언**(본 항 + 계획서 §9.5 행 24)까지이며, **SSOT docstring 의 ⑧ 등재는 미착지 잔여**다. *"천장에 추가했다"* 로 읽지 말 것 — 추가된 것은 문서면 선언이고 모듈 docstring 은 여전히 ①~⑦ 이다.
 
