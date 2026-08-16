@@ -454,13 +454,28 @@ def test_census_emits_seven_axes_individually():
 
 
 def test_census_axes_are_compared_individually_against_baseline():
-    """baseline 대조는 축별이다 — 총 N 이 불변인 채 arm 간 상계로 판별력이 빠지는 경로를 닫는다."""
+    """baseline 대조가 **하한 6축 각각**에 대해 일어남을 리터럴 pin 으로 확정.
+
+    총 N 이 불변인 채 arm 간 상계로 판별력이 빠지는 경로를 닫는 것이 이 대조의 목적이므로,
+    "축별로 비교한다"가 아니라 **어느 축들을 비교하는가**가 load-bearing 속성이다.
+
+    ★ F-CR20-P1B 정정 — 좌우변 동시 파생 제거. 종전 우변은 `set(hgc.LOWER_BOUND_AXES)` 였고,
+      좌변은 core 가 **그 동일 상수를 순회하며** emit 한 `baseline-cmp:` 행을 파싱한 것이었다.
+      두 변이 같은 원천에서 동시에 파생되므로 상수를 좁히면 양변이 함께 좁아져 **항진**한다
+      (`LOWER_BOUND_AXES = ("N_gates",)` mutant 가 전건 생존 — firsthand 확인). 우변을 리터럴
+      6-set 으로 pin 해 좌우변을 독립시킨다(동일 파일 `FORBIDDEN_MANIFEST_KEYS` pin 과 같은 형식).
+      뒤따르는 `N_indeterminate` 부재 단언은 그 자체로는 부재-assert 라 항진 가능하며,
+      **앞선 positive pin 이 값공간을 고정해줄 때만** 의미를 가진다.
+    """
     _require_substrate()
     rc, out, _err = run_core(REPO_ROOT)
     assert rc == 0
+    expected_lower_bound = {"N_gates", "N_armL", "N_armH", "N_probe", "N_detected", "N_flip"}
     cmp_axes = [ln.split(": ", 1)[1].split(" ")[0] for ln in out.splitlines()
                 if ln.startswith("baseline-cmp: ")]
-    assert set(cmp_axes) == set(hgc.LOWER_BOUND_AXES)
+    assert set(cmp_axes) == expected_lower_bound, f"하한 대조 축 집합 불일치: {cmp_axes}"
+    assert len(cmp_axes) == 6, f"축별 1행 고정 위반(중복·누락): {cmp_axes}"
+    assert set(hgc.LOWER_BOUND_AXES) == expected_lower_bound, tuple(hgc.LOWER_BOUND_AXES)
     assert "N_indeterminate" not in cmp_axes, "N_indeterminate 는 하한이 아니라 상한 축"
 
 
@@ -473,10 +488,21 @@ def _load_manifest():
 
 
 def test_ic4_exec_tree_carries_no_arm_leaking_surface(tmp_path):
-    """exec dir 에 stamp / manifest / baseline / probe 가 **부재**함을 직접 관측한다.
+    """exec dir 에 stamp / manifest / baseline / probe 4종이 **부재**함을 직접 관측한다.
 
     배경: stamp.yaml.sample 의 `source_sha256 == artifact_sha256` 여부가 arm 과 1:1 상관이다
     (s01 참 / s02 거짓). stamp 가 exec dir 로 새면 라벨 역산 채널이 되므로 IC-4 가 그것을 닫는다.
+
+    ★ F-CR20-P1C 정정 — 좌우변 동시 파생 제거. 아래 부재 loop 와 `_blinding_violations()` 는
+      **둘 다** `BLINDING_FORBIDDEN_TOKENS` 를 정의역으로 쓴다. 상수를 좁히면 loop 가 짧아지고
+      violation 도 함께 줄어 양변이 같이 느슨해진다 — `("stamp",)` 로 좁힌 mutant 가 전 suite
+      41 passed 로 생존함을 firsthand 확인했다(4종 선언 중 실검증 1종). `.sample` 잔재 assert 를
+      제외하면 부재-assert 뿐이라 정의역이 비면 전부 공허 참이 된다. 리터럴 4-set pin 으로
+      정의역을 고정한다(동일 파일 `FORBIDDEN_MANIFEST_KEYS` pin 과 같은 형식).
+      ★ 정직 한정: pin 이 보장하는 것은 **선언 토큰 집합의 동일성**까지다. 4종 각각이 실제 누설
+      상황에서 exit 3 을 내는지는 'stamp' 1종만 실행 경로로 밟는다
+      (`test_ic4_leaked_stamp_in_fixture_is_loud_substrate_failure`) — 나머지 3종의 발화 실증은
+      본 회차 잔여다.
     """
     _require_substrate()
     man = _load_manifest()
@@ -493,6 +519,10 @@ def test_ic4_exec_tree_carries_no_arm_leaking_surface(tmp_path):
         assert not any(tok in n.lower() for n in names), f"exec dir 에 '{tok}' 누설: {names}"
     assert not any(n.endswith(".sample") for n in names), f".sample 잔재: {names}"
     assert hgc._blinding_violations(unit_dir, exec_root) == []
+    # ★ 정의역 pin 은 **맨 끝**에 둔다 — 앞쪽에 두면 토큰 상수를 좁힌 mutant 아래서 위의
+    #   상수-무관 단언들(materialize 비어있지 않음 · `.sample` 잔재 0)이 미도달로 가려진다.
+    assert set(hgc.BLINDING_FORBIDDEN_TOKENS) == {"manifest", "stamp", "baseline", "probe"}, \
+        f"blinding 금지 토큰 집합이 선언과 불일치: {tuple(hgc.BLINDING_FORBIDDEN_TOKENS)}"
 
 
 def test_ic4_exec_unit_dir_is_reassigned_each_materialize(tmp_path):
@@ -515,7 +545,7 @@ def test_ic4_exec_unit_dir_is_reassigned_each_materialize(tmp_path):
 
 
 def test_f_cr18_9_sibling_invariant_counts_actual_exec_root_dirs(tmp_path):
-    """F-CR18-9 회귀 가드 — 형제 부재 불변식이 **형제 dir 수를 실제로 비교**함을 대조로 확정.
+    """F-CR18-9 회귀 가드 — 형제 부재 불변식의 발화 + **문면 개수가 관측을 따라옴**을 3점 대조로 확정.
 
     ★ 위임 금지 (F-CR19-1/-2 정정). 종전 이 자리의 케이스는 술어가 `rc == 0` + `"exec-root:"
     in out` 2개뿐이었고 docstring 이 정리 관측을 shell 로 미뤘다. shell 은 다시 "형제 pytest
@@ -523,12 +553,25 @@ def test_f_cr18_9_sibling_invariant_counts_actual_exec_root_dirs(tmp_path):
     제거한 mutant 가 양 suite 전건 생존했다 — 회귀 가드 판별력 = 0.
     **본 케이스가 그 관측자다.** 위임 문면을 두지 않는다.
 
-    판별자 = 형제 수에 따른 발화/불발화 대조 (한쪽만 보면 무효):
-      · 형제 1개(정상 = leg 별 즉시 정리 후 상태) → violation 0
+    ★ F-CR20-7 정정 — 「관측 개수 반영」축의 정의역이 단일점이었다. 종전에는 형제 1개·2개
+    2점만 밟았고 개수 단언이 `f"{_n_dirs()}개" in sib[0]` 이었는데, 그 지점에서 `_n_dirs()` 는
+    **항상 2** 이므로 술어는 리터럴 `"2개"` 와 **동치**였다. 그래서 core 문면의 개수만 `2개` 로
+    상수화하고 술어는 무변경으로 둔 mutant 가 전건 생존했다(firsthand 확인). 형제 **3개** 를
+    1점 더 밟아 정의역을 {1, 2, 3} 으로 넓히고, 두 문면이 **서로 달라야 한다**는 대조를 덧댄다
+    — 어떤 단일 상수 하드코딩도 2점을 동시에 만족할 수 없다.
+
+    판별자 = 형제 수에 따른 발화/불발화 + 문면 개수의 추종 (한쪽만 보면 무효):
+      · 형제 1개(정상 = leg 별 즉시 정리 후 상태)      → violation 0
       · 형제 2개(정리 파손 = 실행 순번 누설 채널 복원) → violation 1건 ∧ 문면에 **관측 개수 2**
-    형제 불변식 블록을 제거·중화한 mutant 는 두 번째 단언에서 RED 가 된다.
-    (전 실행 경로 축 = shell self-test M7 — 정리 무력화 baseline 대비 exit flip. 두 축은
-     서로를 인용하지 않고 각자 관측한다.)
+      · 형제 3개(정리 파손 심화)                       → violation 1건 ∧ 문면에 **관측 개수 3**
+    형제 불변식 블록을 제거·중화한 mutant 는 형제 2개 지점의 발화 단언에서, 문면 개수를 상수화한
+    mutant 는 형제 3개 지점의 개수 단언에서 RED 가 된다.
+
+    (전 실행 경로 축 = shell self-test M7 — 정리 무력화 baseline 대비 exit flip.
+     ★ F-CR20-4 정정: 종전 문면 "두 축은 서로를 인용하지 않고 각자 관측한다"는 **거짓**이었다 —
+     그 문장 자신이 같은 괄호 안에서 shell M7 을 인용하고 있었다(자기 술어 위반). 인용 유무를
+     부정하지 않고, 참인 실질만 남긴다: **양 축은 각자 자기 관측 종점을 보유하며**, 본 docstring
+     이 shell 축을 언급하는 것은 안내이지 판정 위임이 아니다.)
     """
     _require_substrate()
     man = _load_manifest()
@@ -554,7 +597,23 @@ def test_f_cr18_9_sibling_invariant_counts_actual_exec_root_dirs(tmp_path):
     bad = hgc._blinding_violations(second, exec_root)
     sib = [b for b in bad if "exec-root 직속 디렉터리" in b]
     assert len(sib) == 1, f"형제 부재 불변식 미발화 — 형제 2개인데 violations={bad}"
-    assert f"{_n_dirs()}개" in sib[0], f"관측 개수 미반영(실제 형제 {_n_dirs()}): {sib[0]}"
+    # 개수는 **리터럴**로 대조한다 — 종전처럼 `f"{_n_dirs()}개"` 로 쓰면 관측을 다시 파생시킨
+    # 것이라 core 문면과 독립이 아니다. 실제 형제 수는 바로 위 줄에서 이미 pin 되어 있다.
+    assert "2개" in sib[0], f"관측 개수 미반영(실제 형제 2): {sib[0]}"
+
+    # 3점째 — 문면의 개수가 **관측을 따라오는지**. 2점만 밟으면 개수 술어가 리터럴 "2개" 와
+    # 동치라 core 문면을 `2개` 로 상수화한 mutant 가 생존한다(F-CR20-7).
+    third, _fx3, _sha3, err3 = hgc._materialize(
+        exec_root, REPO_ROOT, sample, sample["fixtures"]["empty"], gate["entry"], None)
+    assert err3 is None, err3
+    assert _n_dirs() == 3, f"materialize 3회 후 형제 수 기대 3, 실제 {_n_dirs()}"
+    bad3 = hgc._blinding_violations(third, exec_root)
+    sib3 = [b for b in bad3 if "exec-root 직속 디렉터리" in b]
+    assert len(sib3) == 1, f"형제 부재 불변식 미발화 — 형제 3개인데 violations={bad3}"
+    assert "3개" in sib3[0], f"문면 개수가 관측을 따라오지 않음(실제 형제 3): {sib3[0]}"
+    assert sib[0] != sib3[0], (
+        "형제 2개·3개의 문면이 동일 — 개수가 관측이 아니라 상수에서 온다\n"
+        f"  형제2: {sib[0]}\n  형제3: {sib3[0]}")
 
 
 def test_ic4_leaked_stamp_in_fixture_is_loud_substrate_failure(tmp_path):
