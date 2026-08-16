@@ -1,5 +1,5 @@
 diff --git a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
-index b23d76641..1e0b125f5 100644
+index b23d76641e8530577051fdf0a4b8073561cabc75..1e0b125f5513349d406299881b31ac48c7a832b5 100644
 --- a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
 +++ b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
 @@ -376,0 +377,89 @@ Amd 2 문면이 실배선과 5 라운드 넘게 모순인 채 생존한 직접 

@@ -158,7 +158,7 @@ def test_frozen_fixture_matches_live_git(sha, expect_red):
     (그러므로 SHA 소멸이 커버리지 손실로 이어지지 않는다)."""
     if not sha_available(sha):
         pytest.skip("SHA %s 미해소 — drift 대조만 생략(반사실 판정은 동결본이 수행)" % sha)
-    live_diff = _git("diff", "--no-color", "--no-ext-diff", "-U0",
+    live_diff = _git("diff", "--no-color", "--no-ext-diff", "-U0", "--full-index",
                      "%s^...%s" % (sha, sha), "--", ADR172).stdout
     live_post = _git("show", "%s:%s" % (sha, ADR172)).stdout
     frozen_diff, frozen_images = load_fixture(sha)

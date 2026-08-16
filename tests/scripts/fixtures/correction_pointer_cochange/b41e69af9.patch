@@ -1,5 +1,5 @@
 diff --git a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
-index 17c24a73c..1ca6845f1 100644
+index 17c24a73cbbe0bc58e42049d38772ad2fb0001ad..1ca6845f16109f483eadcf47b55ff7e8a5ab9d9c 100644
 --- a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
 +++ b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
 @@ -344,0 +345,5 @@ Amd 2 `:300` 은 본 결정을 *"false-negative 를 하나 늘리는 방향"* 
