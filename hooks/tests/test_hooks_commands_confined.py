@@ -3,7 +3,7 @@
 """S9 (테스트): Hook commands confined to plugin root (AC-11).
 
 목적 (AC-11):
-  24개 hook command 가 모두 ${CLAUDE_PLUGIN_ROOT} 경유 run-hook.cmd 만 참조.
+  25개 hook command 가 모두 ${CLAUDE_PLUGIN_ROOT} 경유 run-hook.cmd 만 참조.
   plugin 경계 밖 경로 참조·수정 0 검증.
 
 범위 (정직 scope docstring):
@@ -12,7 +12,7 @@
   - 플랫폼·OS 레벨 보안 (권한·프로세스 격리) 는 scope 외
 
 테스트:
-  1. hooks.json 24개 command 전수 순회
+  1. hooks.json 25개 command 전수 순회
   2. 각 command 가 "${CLAUDE_PLUGIN_ROOT}" 포함하는지 확인
   3. 상대 경로 (../ 등) 나 절대 경로(/tmp, /etc 등) 검출 시 FAIL
 """
@@ -33,7 +33,7 @@ def _load_hooks_json() -> dict:
 
 
 def test_all_hook_commands_use_plugin_root():
-    """AC-11: 전 24개 command 가 ${CLAUDE_PLUGIN_ROOT} 경유 run-hook.cmd 만 참조."""
+    """AC-11: 전 25개 command 가 ${CLAUDE_PLUGIN_ROOT} 경유 run-hook.cmd 만 참조."""
     hooks_data = _load_hooks_json()
     violations = []
 
@@ -74,7 +74,7 @@ def test_all_hook_commands_use_plugin_root():
         )
 
 
-def test_all_24_hooks_counted():
+def test_all_hooks_counted_matches_pin():
     """AC-11 count check."""
     hooks_data = _load_hooks_json()
     count = 0
@@ -85,7 +85,7 @@ def test_all_24_hooks_counted():
                 hooks_list = entry.get("hooks", [])
                 count += len(hooks_list)
 
-    assert count == 25, f"Expected 25 hooks, got {count} (AC-11 scope)"
+    assert count == 26, f"Expected 26 hooks, got {count} (AC-11 scope)"
 
 
 def test_plugin_root_only_reference():
@@ -95,7 +95,7 @@ def test_plugin_root_only_reference():
     stdout 을 들여다볼 때만 보인다 — 게이트로서 판별력 0(위반이 있어도 GREEN).
     plugin 경계 참조는 AC-11 이 판정하겠다고 선언한 대상이므로 FAIL 로 승격한다.
 
-    승격 안전성 실측 (2026-08-14 firsthand): 현행 hooks.json 24 command 의
+    승격 안전성 실측 (2026-08-14 firsthand): 현행 hooks.json 26 command 의
     external env var 참조 = 0건 → 승격해도 GREEN (born-red 아님).
     """
     hooks_data = _load_hooks_json()
@@ -121,7 +121,7 @@ def test_plugin_root_only_reference():
                         )
 
     # 정의역 비공허 — 0건을 훑고 "위반 없음" 을 말하면 공허한 통과다.
-    assert scanned == 25, f"검사 대상 command 25 기대, 실제 {scanned} (AC-11 scope)"
+    assert scanned == 26, f"검사 대상 command 26 기대, 실제 {scanned} (AC-11 scope)"
 
     if external_refs:
         pytest.fail(

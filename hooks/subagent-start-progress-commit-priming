@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# SubagentStart hook for codeforge plugin — progress-commit-priming 규범 전달
+#
+# Carrier: CFP-2966 Phase 2 (ADR-178 §결정 2/5/12 — 진행 커밋 선행 적재 규범)
+#
+# 책임 경계:
+#   - 책임: SubagentStart 이벤트에서 서브에이전트로 progress-commit 규범 pointer 3줄 전달.
+#           pointer-only priming (ADR-172 §결정 2 동형 — 절차 재서술 0줄).
+#           fail-open ALWAYS (ADR-115 Amd2 §결정 5).
+#   - 비책임: 실제 진행 커밋 이행은 워커 책임 (규범 문구 advisory).
+#
+# 정적 properties (ADR-115 Amd2 §결정 5 graceful degradation closed-set):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 hook block 금지
+#   (b) 영속 filesystem 변경 0 — 파일 생성·수정·삭제 0 (mkdir/rm/mv/cp/tee 0, 일반 파일로의
+#       리다이렉트 0). 단 `>` 자체가 없는 것은 아니다: `2>/dev/null` · `>/dev/null` (널 디바이스
+#       폐기) 와 `2>&1` 만 사용한다 — "no >" 가 아니라 "영속 대상 write 0" 이 정확한 진술이다.
+#   (c) network call 0
+#   (d) Python 필수 (fail-open degrade) — additionalContext emit 경로 전체가 python 의존이라
+#       python 부재 시 **무출력 + exit 0** 으로 degrade 한다. 세션은 막지 않으나 priming 기능은
+#       결손된다 ("정적 텍스트이므로 불필수" 아님 — JSON 직렬화·emit 이 python 단일 경로).
+#   (e) exit 0 ALWAYS (fail-open)
+#
+# Graceful degradation 2층:
+#   (a) JSON parse 실패 / stdin 읽기 실패 → stdout 무출력 + exit 0
+#   (b) 어떤 내부 실패도 → additionalContext 정적 텍스트만 emit (동적 생성 최소화)
+#
+# one-channel rule (ADR-115 Amendment 2 §결정 3):
+#   marker: [codeforge-wrapper-subagent-start-progress-commit-priming]
+#
+# ADR-115 Amendment 2 3규칙 판정문 (§결정 5 graceful degradation 정합):
+#   ① 하한 불변식: timeout=10s 설정 (ADR-115 Amd2 산정표: SubagentStart 타겟 <10s,
+#      PreToolUse<500ms vs 비PreToolUse<200ms 차등 구조 내 상한 tier).
+#   ② fail-open 계상: 어떤 실패(파일/파서/시스템)도 exit 0 trap 으로 블로킹 금지,
+#      fail-open 의무 이행 확인 (ADR-115 Amd2 L194 "hook 실행 timeout (>5s) → warning 후 turn 계속").
+#   ③ 차등 tier: 본 entry SubagentStart 는 PreToolUse 아니므로 200ms tier 하향이 아닌
+#      10s(관찰형) tier 적용 (§결정 5 graceful degradation 5-layer 중 timeout 계상으로 fail-open).
+# 정본: archive/adr/ADR-115-runtime-hook-enforcement.md Amendment 2 (L14-20), §결정 5 (L182-197).
+#   현황 1줄 (CP §10): ADR-115 §결정 표의 SubagentStart "사용 안 함" 셀 = stale — ADR-143 Amd3
+#   render-discipline 실사용 + 본 entry 로 2번째 실사용 (별도 amendment 발의 = 3문 게이트 미충족, 기록만).
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — fail-open ALWAYS
+trap 'exit 0' ERR
+
+# ── stdin = SubagentStart JSON payload 읽기 ──────────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# payload 가 비어있으면 pass-through (additionalContext 미emit)
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── JSON 유효성 확인 (parse 실패 시 무출력) ────────────────────────────────────
+# Python 사용 가능 여부 확인
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+# python 부재 = emit 경로 부재 → 무출력 + exit 0 (fail-open degrade, 헤더 (d))
+if [ -z "$PYTHON_CMD" ]; then
+  exit 0
+fi
+
+# ── additionalContext 생성 (pointer-only priming, 정적 텍스트) ─────────────────
+#   3요소: (1) 규범 포인터 (2) subject 형식 (3) 정본 위치
+#   길이 제약: compact, 2~3줄 이내
+
+ADDITIONAL_CONTEXT="[progress-commit 규범 전달 — ADR-178 §결정 2/5/12 / CFP-2966]
+작업 중 atomic 의미 단위 경계마다 로컬 git commit 선행 적재 (종료 신호 무관).
+Subject: [CFP-NNN][WIP] <의미 단위 요약>, 정본: archive/adr/ADR-178-subagent-progress-commit-preservation.md"
+
+# ── JSON 출력 구성 (§결정 12 primary reach ③d) ───────────────────────────────
+#   형식: {"hookSpecificOutput": {"hookEventName": "SubagentStart", "additionalContext": "<TEXT>"}}
+#   요구사항: stdout 전체 = 유효 JSON 1건, fail-open exit 0.
+#   ★ 단일 python 스폰 (CFP-2966 구현리뷰 Iter1 P2 ③): 이전 판은 parse 검증용 probe 와 emit 을
+#     각각 스폰해 동일 `json.load` 를 2회 수행했다 (동치 작업 중복 = 매 서브에이전트 스폰마다
+#     인터프리터 기동 1회분 순손실). parse 실패 시 emit 을 건너뛰는 것은 같은 try 안에서 처리된다.
+
+export CFP2966_ADDITIONAL_CONTEXT="$ADDITIONAL_CONTEXT"
+printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, os, sys
+try:
+    json.load(sys.stdin)          # JSON 유효성 — 실패 시 except 로 낙하해 무출력
+    additional_context = os.environ.get('CFP2966_ADDITIONAL_CONTEXT', '')
+    output = {
+        'hookSpecificOutput': {
+            'hookEventName': 'SubagentStart',
+            'additionalContext': additional_context,
+        }
+    }
+    json.dump(output, sys.stdout)
+except Exception:
+    pass
+" 2>/dev/null || true
+
+exit 0

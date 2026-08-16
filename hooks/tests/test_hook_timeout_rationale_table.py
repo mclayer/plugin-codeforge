@@ -3,9 +3,9 @@
 """S3 (테스트): Hook timeout rationale table AC-4, AC-16.
 
 목적:
-  24개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
+  26개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
 
-AC-4: 테스트 내 rationale 표 (24행) ↔ hooks.json bijection 확인.
+AC-4: 테스트 내 rationale 표 (26행) ↔ hooks.json bijection 확인.
 AC-16: fail-open 계상 3항 (게이트 4종 fail-open / 내부 subprocess 하한 / SessionEnd 특례)
         이 표에 필드로 실재.
 
@@ -16,9 +16,9 @@ AC-16 판정 정의역 = **행** (CFP-2965 F5-1):
   (git_branch_delete_merge_gate.GH_TOTAL_BUDGET_SEC) 와 대조한다.
 
 세부:
-  - hooks.json 의 24개 hook 별로 timeout 값 + empirical_source 기술
+  - hooks.json 의 25개 hook 별로 timeout 값 + empirical_source 기술
   - source 는 "Change Plan §3.2 설명" 형태로 명시
-  - bijection: hooks.json 의 hook 개수 = table 행 수 (24)
+  - bijection: hooks.json 의 hook 개수 = table 행 수 (25)
   - 전 행 empirical_source 비어있지 않음 (non-empty)
   - AC-16 체계: 테이블에 위 3항 필드 포함하여 계상
 
@@ -38,7 +38,7 @@ from pathlib import Path
 # S3 (테스트): Hook timeout rationale table (AC-4, AC-16)
 # ==============================================================================
 
-# 변경 전 행동 특성화: hooks.json 의 24개 hook 별 timeout 근거 표
+# 변경 전 행동 특성화: hooks.json 의 25개 hook 별 timeout 근거 표
 # (Change Plan §3.2 verbatim 요약 + AC-16 3항 계상)
 TIMEOUT_RATIONALE_TABLE = [
     # SessionStart
@@ -181,6 +181,12 @@ TIMEOUT_RATIONALE_TABLE = [
         "subagent-start-render-discipline",
         10,
         "§3.2 SubagentStart render: subject/time injection (≤10s)",
+    ),
+    (
+        "subagent-start-progress-commit-priming",
+        10,
+        "§3.2 SubagentStart priming: pointer-only additionalContext emit (정적 3줄 규범 pointer — "
+        "filesystem/network touch 0, git 조작 0, JSON parse 후 stdout 1건), fail-open exit 0 (≤10s)",
     ),
     # SubagentStop
     (
@@ -358,9 +364,9 @@ def test_ac16_session_end_special_case_documented():
     assert timeout == 1, f"SessionEnd 특례 timeout 은 1s (got {timeout})"
 
 
-def test_hook_timeout_rationale_complete_24rows():
-    """Table 이 정확히 24행임을 확인."""
-    assert len(TIMEOUT_RATIONALE_TABLE) == 25, (
-        f"Expected 25 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
+def test_hook_timeout_rationale_row_count_matches_pin():
+    """Table 이 정확히 26행임을 확인."""
+    assert len(TIMEOUT_RATIONALE_TABLE) == 26, (
+        f"Expected 26 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
     )
-    print(f"✓ Rationale table has complete 24 rows with bijection to hooks.json")
+    print(f"✓ Rationale table has complete 26 rows with bijection to hooks.json")
