@@ -36,6 +36,10 @@
 #      terminal-marker = stdout `✓ <gate>: …`. rc 는 I-4(선언 exit_space 이탈)에만 쓰인다.
 #      본 self-test 는 verdict 를 rc 로 역추론하지 않고 하네스가 emit 한 `verdict:` 문면을 읽는다.
 #   ③ mutation KILLED ⟺ **baseline(무변형)=기대 exit AND mutant=다른 exit**. 한쪽만 보면 무효.
+#      exit-flip 축(`mutation_kill_exit`)도 **양 팔 stderr Traceback 0건**을 함께 요구한다 —
+#      core 에 top-level catch-all 이 없어 미포착 예외의 rc=1 이 `EXIT_FAIL` 과 **동값**이라,
+#      가드가 없으면 baseline=0 자리에서 mutant 가 그냥 죽기만 해도 rc flip 이 KILL 로 계상된다.
+#      또한 mutant 는 **존재가 아니라 치환 실증**으로 확인한다(무변형 사본 오인 차단).
 #      exit-flip 이 아닌 축(M4 = stdout census 토큰 소실)은 별도 함수로 kill 하되, 거기서도
 #      **한쪽만 보지 않는다** — stdout 축 KILLED ⟺ baseline token ≥1 ∧ mutant token 0 ∧
 #      **양 팔 exit 을 실측해 둘 다 기대치** ∧ **양 팔 stderr Traceback 0건**. 프로세스가 대상
@@ -291,11 +295,18 @@ mutate_core() {
   local mut="$TEST_TMP/mut_${MUT_SEQ}.py"
   cp "$CORE_PY" "$mut"
   sed -i "$expr" "$mut"
+  # ★ 실패 경로에서 **무변형 사본을 남기지 않는다** (F-CR20 단위 C — latent born-broken).
+  #   `cp` 가 실패 판정보다 앞서므로, 치환이 안 됐는데 파일만 남으면 그 경로에는 **무변형 core**
+  #   가 놓인다. 게다가 `MUT_SEQ` 증가가 명령치환(서브셸) 밖으로 전파되지 않아 전 호출이 **같은
+  #   파일명**을 쓰므로, 하류에서 `[ -f ... ]` 같은 **존재-only** 검사를 하면 무변형 core 를
+  #   mutant 로 착각해 통과시킨다. 파일 존재는 치환의 증거가 아니다 — 실패 시 즉시 지운다.
   if ! grep -qF "$sentinel" "$mut"; then
+    rm -f "$mut"
     echo ""
     return 1
   fi
   if ! "$PY" -m py_compile "$mut" >/dev/null 2>&1; then
+    rm -f "$mut"
     echo ""
     return 1
   fi
@@ -305,12 +316,31 @@ mutate_core() {
 }
 
 # mutation_kill_exit <label> <sed_expr> <sentinel> <root> <expect_base_rc> [args...]
-#   KILLED ⟺ baseline(무변형)=expect_base_rc AND mutant rc != baseline rc.
+#   KILLED ⟺ **양 팔 crash 0** ∧ baseline(무변형)=expect_base_rc ∧ mutant rc != baseline rc.
+#
+#   ★ crash mutant 무효 (F-CR20-8 형제 대칭 봉합). 종전 구현은 `mut_rc != base_rc` 하나만 보고
+#     KILL 을 발화했다. 그런데 core 에는 top-level catch-all 이 없어(`sys.exit(main())` 직접)
+#     **미포착 예외 → 파이썬 기본 rc=1** 이고, 이 값은 `EXIT_FAIL` 과 **정확히 같다**. 따라서
+#     baseline=0 인 자리에서 mutant 가 그냥 죽기만 해도 rc 는 0→1 로 "flip" 하고 하네스는 그것을
+#     판별력으로 계상한다 — 「분기 중화」와 「분기 도달 전 사망」이 **원리적으로 구별되지 않는다**.
+#     실측(본 회차): M1·M2·M3-siteA 3건은 Traceback 0건 = 오늘은 전부 정상 판정 경로였다.
+#     **결함은 오늘의 오판이 아니라 가드 부재**이며, 이 헬퍼는 sentinel **5개**
+#     (M1 · M2 · M3-siteA · M3-siteB · M5)를 운반하므로 실패 시 5 site 가 동시에 눈이 먼다.
+#     형제 `mutation_kill_stdout` 은 이미 같은 가드를 갖고 있다 — 여기만 비워두면 그 봉합이
+#     자기 형제를 안 본 것이 된다. 그래서 **동일 강도**로 맞춘다.
 mutation_kill_exit() {
   local label="$1" expr="$2" sentinel="$3" root="$4" expect="$5"; shift 5
-  local mut base_rc mut_rc
+  local mut base_rc mut_rc base_tb mut_tb
+  local tb_mark="Traceback (most recent call last)"
   run_core "$CORE_PY" "$root" "$@"
   base_rc=$CORE_RC
+  base_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
+  # 대조군 crash 가드 — 대조군이 이미 죽어 있으면 어떤 exit 차이도 해당 분기로 귀속되지 않는다.
+  if [ "$base_tb" -ge 1 ]; then
+    fail_case "$label: 무효 — baseline(무변형) stderr 에 Traceback ${base_tb}건 (exit=$base_rc). 대조군이 이미 crash 라 대조 자체가 성립하지 않는다"
+    sed 's/^/        base-stderr> /' "$CORE_ERR" >&2
+    return 1
+  fi
   if [ "$base_rc" -ne "$expect" ]; then
     fail_case "$label: baseline 기대 exit=$expect 인데 실제 $base_rc — 대조군 성립 불가(무효 kill)"
     return 1
@@ -325,8 +355,15 @@ mutation_kill_exit() {
   MUT_PATH="$mut"
   run_core "$mut" "$root" "$@"
   mut_rc=$CORE_RC
+  mut_tb=$(grep -cF "$tb_mark" "$CORE_ERR")
+  # crash mutant = 무효 kill. rc 가 움직인 원인을 「분기 중화」로 귀속할 수 없다.
+  if [ "$mut_tb" -ge 1 ]; then
+    fail_case "$label: 무효 kill — mutant stderr 에 Traceback ${mut_tb}건 (exit=$base_rc→$mut_rc). rc 이동 원인이 「분기 중화」인지 「미포착 예외로 인한 조기 사망」인지 구별되지 않는다(rc=1 은 EXIT_FAIL 과 동값)"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+    return 1
+  fi
   if [ "$mut_rc" -ne "$base_rc" ]; then
-    pass_case "$label: KILLED (baseline exit=$base_rc → mutant exit=$mut_rc, 판별력 load-bearing)"
+    pass_case "$label: KILLED (baseline exit=$base_rc → mutant exit=$mut_rc 실측, 판별력 load-bearing · Traceback base=${base_tb}건 mut=${mut_tb}건)"
     return 0
   fi
   fail_case "$label: SURVIVED (baseline exit=$base_rc == mutant exit=$mut_rc — 해당 분기가 판별에 기여하지 않음)"
@@ -548,11 +585,14 @@ mutation_kill_exit "M3-siteB (런타임 I-4 · rc ∉ exit_space)" \
 
 # ★ site 독립성: siteB 만 중화해도 siteA 는 살아있어야 한다 (한 번에 둘 다 지우면 분리 불가).
 mut_m3b="$MUT_PATH"
-if [ -n "$mut_m3b" ] && [ -f "$mut_m3b" ]; then
+# ★ 존재-only 금지 (F-CR20 단위 C). `MUT_PATH` 는 `mutate_core` **성공 시에만** 대입되므로 직전
+#   호출이 실패하면 **이전 값이 잔존**하고, 전 mutant 가 같은 파일명을 쓰므로 그 경로 내용이
+#   siteB 처치본이라는 보장이 없다. 존재가 아니라 **치환이 실제로 일어났음**을 판정에 넣는다.
+if [ -n "$mut_m3b" ] && [ -f "$mut_m3b" ] && grep -qF "M3b-neutralized" "$mut_m3b"; then
   run_core "$mut_m3b" "$SH_M3" --manifest "$ES_EMPTY"
   expect_exit "M3 site 독립성: siteB 중화본도 빈 exit_space 는 여전히 loud 실패" 3 "$CORE_RC" "T-2ⓐ loud 실패"
 else
-  fail_case "M3 site 독립성: siteB 변형본 부재 (NOT_RUN)"
+  fail_case "M3 site 독립성: NOT_RUN — siteB 변형본 부재 또는 그 경로 내용에 'M3b-neutralized' 미검출(치환 미실증 = 무변형 core 를 mutant 로 오인할 수 있는 상태)"
 fi
 
 # M4 = census 개별 emit (7축). exit-flip 아님 → stdout 토큰 소실로 kill.
