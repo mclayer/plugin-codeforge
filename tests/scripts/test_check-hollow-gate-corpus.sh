@@ -371,6 +371,21 @@ mutate_core() {
   local label="$1" expr="$2" sentinel="$3"
   MUT_SEQ=$((MUT_SEQ+1))
   local mut="$TEST_TMP/mut_${MUT_SEQ}.py"
+  # ★ 사전 부재 가드 (F-CR24-2) — **presence-assert 봉합**. 아래 사후 존재 검사만으로는
+  #   「sed 가 마커를 도입했다」가 아니라 「마커가 있다」까지만 증명된다. sentinel 이 원본에
+  #   **이미 있으면** 치환 0건이어도 통과해 **무변형 core 가 mutant 로 반환**된다(실증: sentinel
+  #   `"def run"` · 치환 0건 → 두 가드 통과 · `cmp` 원본↔반환본 **바이트 동일**).
+  #   `사전 부재 ∧ 사후 존재` 두 관측이 함께 「이 sed 실행이 이 마커를 만들었다」를 함의한다.
+  #   ★ 이 가드가 `WIRE_SILENT` 전제도 함께 처리한다 — `CORE_PY` 가 조용한 종료 사본으로
+  #     재지정된 구간에서 그 사본이 담은 마커(`WIRE-silent-exit`)를 sentinel 로 넘기면 종전에는
+  #     무변형 사본이 통과했으나 이제 NOT_RUN 으로 떨어진다. 안전 근거가 **sentinel 명명 규율
+  #     하나**였던 것을 기계 검사로 옮긴다.
+  #   ★ 정직 천장: 이 조합도 「sed 가 **의도한 줄**을 쳤다」는 증명하지 않는다. 다른 줄을 치면서
+  #     마커를 도입해도 통과한다 — 축 귀속은 각 케이스의 별도 관측(rc/토큰/축 집합)이 맡는다.
+  if grep -qF "$sentinel" "$CORE_PY"; then
+    echo ""
+    return 1
+  fi
   cp "$CORE_PY" "$mut"
   sed -i "$expr" "$mut"
   # ★ 실패 경로에서 **무변형 사본을 남기지 않는다** (F-CR20 단위 C — latent born-broken).
@@ -1165,6 +1180,42 @@ if [ "$we_ctl_rc" -eq 0 ] && printf '%s\n' "$we_ctl_out" | grep -qF "✓ PASS: T
 else
   fail_case "T-WIRE-E6 대조군: 전 conjunct 만족 입력을 rc=$we_ctl_rc 로 거부 — 대조군이 서지 않으면 위 5 건은 판별력 관측이 아니다"
   printf '%s\n' "$we_ctl_out" | sed 's/^/        wire_case> /' >&2
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# T-MUT = `mutate_core` 변형 성립 가드의 대조군 (born-RED · F-CR24-2)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 왜 상시 등재하나. 「사전 부재 ∧ 사후 존재」 가드는 오늘 하네스가 쓰는 sentinel 6종이
+#   전부 core 에 부재라 **한 번도 행사되지 않는다**. 본 Story 의 기준으로 미행사 = 무대조군이다
+#   — 가드가 조용히 사라져도 아무 케이스가 붉어지지 않으면 그것은 봉합이 아니다.
+echo ""
+echo "── T-MUT: mutate_core 변형 성립 가드 (born-RED) ──────────────────────────────"
+
+# (a) 사전 부재 가드 — sentinel 이 원본에 이미 있고 치환은 0건. 종전 구현은 **무변형 core 를
+#     mutant 로 반환**했다(바이트 동일 실증). 이제 거부해야 한다.
+tmut_a="$(mutate_core "T-MUT-a probe" 's/T-MUT-never-matches-anchor/x/' "def run")"; tmut_a_rc=$?
+if [ -z "$tmut_a" ] && [ "$tmut_a_rc" -ne 0 ]; then
+  pass_case "T-MUT-a (사전 부재 가드): 원본에 이미 있는 sentinel('def run') + 치환 0건 을 거부 — 무변형 core 가 mutant 로 반환되지 않음"
+else
+  fail_case "T-MUT-a (사전 부재 가드): 치환 0건인데 변형본을 반환했다(rc=$tmut_a_rc, path='$tmut_a') — 문면 존재를 치환의 증거로 쓰는 presence-assert 재유입"
+fi
+
+# (b) 사후 존재 가드 — sentinel 이 전후 모두 부재(치환 0건). 이 leg 은 종전에도 있었다.
+tmut_b="$(mutate_core "T-MUT-b probe" 's/T-MUT-never-matches-anchor/x/' "T-MUT-absent-both-sides")"; tmut_b_rc=$?
+if [ -z "$tmut_b" ] && [ "$tmut_b_rc" -ne 0 ]; then
+  pass_case "T-MUT-b (사후 존재 가드): 치환 0건 + 마커 미도입 을 거부"
+else
+  fail_case "T-MUT-b (사후 존재 가드): 치환 0건인데 변형본을 반환했다(rc=$tmut_b_rc, path='$tmut_b')"
+fi
+
+# (c) 대조군 — 실제로 치환되고 마커가 새로 생기는 변형은 반드시 통과해야 한다.
+#     (없으면 (a)(b) 는 「항상 거부하는 헬퍼」와 구별되지 않는다.)
+#     추가로 반환본이 원본과 **바이트 상이**함을 직접 관측한다 — F-CR24-2 의 실증이 `cmp` 동일이었다.
+tmut_c="$(mutate_core "T-MUT-c probe" 's/        _emit(f"census: {a}={census\[a\]}")/        pass  # T-MUT-control-marker/' "T-MUT-control-marker")"; tmut_c_rc=$?
+if [ -n "$tmut_c" ] && [ "$tmut_c_rc" -eq 0 ] && [ -f "$tmut_c" ] && ! cmp -s "$CORE_PY" "$tmut_c"; then
+  pass_case "T-MUT-c 대조군: 실 치환 변형을 통과시키고 반환본이 원본과 바이트 상이 — 헬퍼가 무조건-거부가 아님((a)(b) 관측이 유의미)"
+else
+  fail_case "T-MUT-c 대조군: 실 치환 변형이 rc=$tmut_c_rc / path='$tmut_c' / 원본과 바이트 동일 여부=$(cmp -s "$CORE_PY" "$tmut_c" 2>/dev/null && echo 동일 || echo 상이) — 대조군이 서지 않으면 (a)(b) 는 판별력 관측이 아니다"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
