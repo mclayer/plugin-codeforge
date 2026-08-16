@@ -63,6 +63,12 @@ CORPUS_ACCESS_MEDIUM = "git_archive"
 # 부모 Story 는 trailing newline 이 없고 자식 파일은 POSIX EOF 관행상 있어 순수 이동이 정확히
 # 1 B 어긋난다 — 이 1 B 를 흡수하지 않으면 모든 정상 분할이 false RED(born-broken)다.
 # 중간 공백·들여쓰기·개행·순서는 정규화하지 않는다 — 정규화 폭을 넓히면 실제 정보 손실을 놓친다.
+#   ★ 위 `a1888a93` = internal-docs 브랜치 `feat/CFP-2986-phase2`(PR #3029) 전용 커밋으로
+#     main 조상이 아니다 — squash-merge + 브랜치 삭제 시 도달 불가가 된다. **post-merge 에
+#     머지 커밋 SHA 로 bump 할 것.** 절차 SSOT = `.github/workflows/story-read-surface-test.yml`
+#     헤더 「post-merge 필수 후속」. 같은 줄의 `7d075514` 는 main 조상이라 무조치.
+#     (이 SHA 는 인용 provenance 이지 fetch 대상이 아니다 — 미bump 시 손상은 게이트 차단이
+#      아니라 근거 재현 불가다.)
 INV_S1_CANON = "trailing_newline_only"
 
 # INV-S2 기본 임계 (ADR-180 §결정 4 — Phase 2 에서 코퍼스 분포로 재정)
@@ -1202,7 +1208,28 @@ def run(args: argparse.Namespace) -> Tuple[int, dict]:
 
     deferred = sum(1 for v in verdicts if v.status == "UNDETERMINED")
     violations = sum(1 for v in verdicts if v.status == "RED")
-    scanned = len(opened)   # 실제로 연 코퍼스 파일 수 — "기동" 이 아니라 "검사" 의 값 증거
+    # scanned_count = 게이트가 **실제로 연** 파일 수. exit code 만으로는 "위반 0" 과 "아무것도
+    # 안 열었음" 을 구별할 수 없으므로 값으로 방출한다 (O5 의 원래 목적 — "기동" 이 아니라 "열람").
+    #
+    # ★ 정상 비대칭 — O5(a) 의 '검사 매치 집합' 과 scanned_count 는 **다른 양**이다.
+    #   둘이 같기를 기대하면 안 된다. 정의역이 애초에 다르다.
+    #     · O5(a) 검사 매치 집합 = 코퍼스 **전역 인구조사**. 정의역 = `scan_glob` 전건.
+    #       construction = match_actions_glob(git_tree_paths(after_ref), scan_glob).
+    #       실측 **665** [엔진 wrapper `a3d7c56bb` × 코퍼스 internal-docs `8f317f7ce`,
+    #       glob `*/stories/*.md`] — O5 (a) verdict 에 별도로 인쇄된다.
+    #     · scanned_count = **carrier 로 좁혀 실제로 연** 집합. 정의역 = `carrier_glob`
+    #       (`wrapper/stories/CFP-2986*.md`) + `file_map` 정의역 파일.
+    #       construction = |opened| = resolve_file() 이 연 file_map 파일·그 자식 ∪ carriers 루프.
+    #       실측 **3** = STORY(`wrapper/stories/CFP-2986.md`) + 자식(`…-S1.md`) + CP [동 트리].
+    #   ⇒ **665 vs 3 은 정상값이다.** 이 차이를 "정의역 불일치" 로 읽고 경보하면 상시 오경보다.
+    #     트리거↔검사 정의역 일치 판정은 여기가 아니라 **O5 (a)** 가 단독으로 진다.
+    #   ※ 아래 notice 의 `domain=` 은 scan_glob(=665 쪽 정의역) 라벨이지 scanned_count 의
+    #     정의역이 아니다 — 한 줄에 두 정의역이 인접 인쇄되는 것이 오해의 원천이다.
+    #   ※ baseline `corpus_n: 664` 는 **동결 트리** `7d075514` 기준 p50 산정 분모라 live 665
+    #     (현 HEAD)와 달라도 정상이다 — 트리가 다르다(동결값 ⊥ 현재값).
+    #
+    # ★ 진짜 이상 신호는 아래 `scanned == 0` 뿐이다 (정의역 붕괴 — carrier·앵커 해결 실패).
+    scanned = len(opened)
     print("::notice::story-read-cost scanned_count=%d violations=%d deferred=%d domain=%s tree=%s"
           % (scanned, violations, deferred, scan_domain["scan_glob"], baseline["baseline_tree_sha"]))
     if scanned == 0:

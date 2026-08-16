@@ -13,8 +13,71 @@ name: story-read-surface-test
 #
 # **day-1 hard-fail** (continue-on-error 금지) — self-test 실패 = job red.
 # **non-required** (branch-protection 8-tuple 무변경 — 신규 required context 0).
-#   required 승격은 ADR-171 §결정 6 의 3-AND 사전조건 + ADR-130 §결정 6 의 7일-green 이후
-#   Orchestrator post-merge 소관이다.
+#
+#   ★ 승격 사전조건 = ADR-180 「해소 기준」 **4건 전건 AND**. 넷이 **전부** 충족되고
+#     별도 carrier 가 승격을 명시 결정해야 유효하며, 하나라도 미충족이면 승격 금지다.
+#     (종전 이 헤더는 4번만 인용해 **1/4 만 노출**했다. 그 상태로 승격하면 2·3번 미충족이
+#      그대로 required 로 올라가 게이트 축이 상시 비-GREEN 이 된다.)
+#
+#     1. internal-docs open PR **CONFLICTING 8건** 정리 — 충돌 PR 은 merge ref 부재로
+#        workflow 가 아예 안 돌아 required 가 영구 Pending (ADR-180 §결정 6)
+#     2. **O5 `scanned_count` 3항** 충족 — 분할 자식 경로 fixture 에 대해 (a) workflow 기동
+#        (b) 실제 스캔 대상 포함 (c) 트리거 매치 집합 == 검사 매치 집합 을 **따로** assert
+#        (Change Plan §7.4a — 미충족 = 승격 금지)
+#     3. 정량 레지스트리 **전 정의역 `status: enforced` 전환** — `deferred` 잔존분의
+#        방출값은 GREEN 이 아니라 `UNDETERMINED` 다 (ADR-180 §결정 4 registry shape)
+#     4. ADR-171 §결정 6 **3-AND** 승격 게이트 + ADR-130 §결정 6 **7일-green 창**(repository
+#        단위) 충족 — 승격은 자동이 아니며 이를 측정·집행하는 코드는 현재 0건이다 (§결정 6)
+#
+#   ★ 승격은 "이 파일에서 한 줄 지우기" 가 아니다 — 본 workflow 에는 tier 를 낮추는 스위치가
+#     없다(continue-on-error 0). 승격 = branch protection `required_status_checks.contexts`
+#     에 job name 을 **등재**하는 repo 설정 행위이며 Orchestrator post-merge 소관이다.
+#
+# **정직 상한 — 게이트 본체(rc 축)는 아직 CI 에 배선돼 있지 않다** (위 해소 기준 3 미충족):
+#   본 workflow 가 돌리는 것은 **pytest 자기검증 2종**이지 게이트 판정(rc)이 아니다.
+#   `scripts/check-story-read-surface.sh` 를 호출하는 workflow 는 **현재 0건**이다
+#   [실측 wrapper `a3d7c56bb`: `.github/` 전역에서 `check-story-read-surface` 매치 0].
+#   게이트를 정본 코퍼스에 직접 돌리면 **rc=3(UNDETERMINED)** 이 나온다
+#   [firsthand 2026-08-16: 엔진 wrapper `a3d7c56bb` × 코퍼스 internal-docs `8f317f7ce`
+#    → `scanned_count=3 violations=0 deferred=6`, rc=3. 내역 = SELF/BASE/AUTHOR/LEGC
+#    4정의역 `status: deferred`(해소 기준 3) 4건 + `--before-ref` 부재 INV-S1/S2 2건].
+#   ⇒ **게이트 축은 지금 상태로 승격하면 7일-green 창을 구조적으로 채울 수 없다.** rc=3 은
+#     GREEN 이 아니고(설계 의도대로다) 이를 GREEN 으로 뭉개는 완화는 금지다. 해소 경로는
+#     하나 — 위 **해소 기준 3**(전 정의역 `enforced` 실체화)이며 본 Story 범위 밖이다
+#     (설계 결정 사항 — 구현 lane 이 자체 확장하지 않는다).
+#   본 workflow(pytest 축) 자신은 별개이고 green 이다 — 최근 실행 conclusion=**success**
+#   [실측: wrapper run `31940770806`, job `story-read-surface-test`, branch `cfp-2986-phase2`].
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ post-merge 필수 후속 — 인용 pin bump (담당: Orchestrator, merge 직후 같은 세션)
+# ─────────────────────────────────────────────────────────────────────────────
+#  ① 언제    본 PR(wrapper #2997)과 짝 PR(internal-docs #3029)이 **squash-merge 된 직후**.
+#            squash 는 새 커밋 1개를 만들고 head 브랜치를 삭제하므로, 브랜치에만 있던 커밋
+#            SHA 는 그 시점부터 **도달 불가**가 된다.
+#  ② 대상    아래 pin 5 site 중 **브랜치 전용 1건만** 해당한다
+#            [전수 대조 실측 — wrapper `a3d7c56bb`, `git merge-base --is-ancestor` 판정]:
+#
+#     파일:줄                                       SHA          repo            도달성
+#     scripts/lib/check_story_read_surface.py:62   a1888a93     internal-docs   ✗ 브랜치 전용 → bump 대상
+#     scripts/lib/check_story_read_surface.py:62   7d075514     internal-docs   ✓ main 조상 (무조치)
+#     docs/story-read-surface-baseline.yaml:18,48  7d0755140c…  internal-docs   ✓ main 조상 (무조치)
+#     docs/story-read-declaration-registry.yaml:26 a0c84e66d2…  wrapper         ✓ main 조상 (#2992, 무조치)
+#     templates/story-page-structure.md:784        7d075514     internal-docs   ✓ main 조상 (무조치)
+#
+#  ③ 새 값   internal-docs #3029 의 **squash-merge 커밋 SHA**
+#            `gh pr view 3029 --repo mclayer/codeforge-internal-docs --json mergeCommit`
+#  ④ 고칠 곳 `scripts/lib/check_story_read_surface.py` **L62** 의 `a1888a93` 을 위 값 앞 8자로
+#            치환한다. 같은 줄의 `7d075514` 는 main 조상이므로 **건드리지 않는다**.
+#            (해당 줄 = `INV_S1_CANON` 근거 주석 "internal-docs 7d075514 → a1888a93")
+#  ⑤ 안 하면 `a1888a93` 이 브랜치 삭제와 함께 사라져 그 주석이 인용한 실측 근거를 아무도
+#            재현할 수 없다 — **dangling provenance(검증 불가)**.
+#            ★ 단 **게이트 rc 는 바뀌지 않는다**: 엔진은 이 SHA 를 fetch 하지 않고(주석 문면
+#            일 뿐) 코퍼스는 `--after-ref`(기본 HEAD)로만 읽는다
+#            [실측: `git_archive_text(repo_root, after_ref, path)` — baseline_tree_sha 는
+#             출력 라벨 전용. 코퍼스 HEAD `8f317f7ce` ≠ baseline `7d075514` 인 채 정상 실행됨].
+#            ⇒ "404 → rc=1 fail-closed 로 전 PR 차단" 은 **본 배선에서 성립하지 않는다.**
+#            실 손상은 차단이 아니라 인용 근거의 영구 소실이다 — 과장 금지(ADR-119).
+#
 # **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
 #   (consumer 는 tests/scripts/** 부재 → job skip = inert). ac-traceability-self-test.yml /
 #   cfp2701-story-form-parser-contract-test.yml 선례 답습.
