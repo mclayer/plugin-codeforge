@@ -653,6 +653,18 @@ elif ! grep -qF "M7-cleanup-off" "$m7_mut"; then
   fail_case "M7 (형제 부재 불변식): mutant 저처치 — mutant 에 정리 무력화 처치(M7-cleanup-off)가 없다. 두 팔이 2축 차이라 exit flip 을 불변식 축에 귀속할 수 없다(무효 kill)"
 else
   run_core "$m7_base" "$SH_M7" --manifest "$MF_M7"; m7_base_rc=$CORE_RC
+  # ── F-CR21-1 봉합: crash 가드 (형제 3 site 와 동일 강도) ────────────────────────
+  #   본 판정은 **차분 오라클**(m7_mut_rc != m7_base_rc)이다. 차분 오라클에서 mutant 가 대상
+  #   불변식에 **닿기 전 죽으면** 파이썬 기본 rc=1 이 나오고, 여기 baseline 은 3 이므로 `1 != 3`
+  #   이 성립해 조기 사망이 **flip 으로 보인다**. 형제 `mutation_kill_exit`/`mutation_kill_stdout`
+  #   /M8 이 이미 같은 가드를 갖는데 여기만 비어 있었다 — 그 봉합이 자기 형제를 안 본 자리다.
+  #   실증(F-CR21-1): 불변식 자리를 `{}["M7-sibling-invariant-off"]`(구문 유효·평가 시 KeyError)로
+  #   바꾼 mutant 가 `✓ PASS: M7 … KILLED … mutant exit=1` 을 발화하고 전건 PASS=46 FAIL=0 · rc=0
+  #   이었다. 「불변식 중화」와 「조기 사망」이 원리적으로 구별되지 않는다.
+  #   ★ baseline stderr 는 mutant 팔 run_core 가 $CORE_ERR 를 덮어쓰므로 여기서 별도 보존한다.
+  M7_TB="Traceback (most recent call last)"
+  m7_base_tb=$(grep -cF "$M7_TB" "$CORE_ERR")
+  cp "$CORE_ERR" "$TEST_TMP/m7_base.err"
   # ── F-CR20-7 상속분 봉합: 개수 리터럴 단일점 의존 제거 ──────────────────────────
   #   종전: grep -cF "exec-root 직속 디렉터리 2개" — 개수 '2' 를 대조 문면에 **박아** 두었다.
   #   core 문면은 f"...{len(siblings)}개..." 이므로 개수가 관측과 무관한 상수로 바뀌어도 이
@@ -677,14 +689,23 @@ else
     [ "$m7_r" = "$m7_base_leg" ] && m7_leg_ord=$m7_i
   done
   run_core "$m7_mut" "$SH_M7" --manifest "$MF_M7"; m7_mut_rc=$CORE_RC
-  if [ "$m7_base_rc" -ne 3 ] || [ "$m7_base_hit" -lt 1 ]; then
+  m7_mut_tb=$(grep -cF "$M7_TB" "$CORE_ERR")
+  if [ "$m7_base_tb" -ge 1 ]; then
+    # 대조군 crash 가드 — 대조군이 이미 죽어 있으면 어떤 exit 차이도 불변식 축에 귀속되지 않는다.
+    fail_case "M7 (형제 부재 불변식): 무효 — baseline(정리 무력화) stderr 에 Traceback ${m7_base_tb}건 (exit=$m7_base_rc). 대조군이 이미 crash 라 대조 자체가 성립하지 않는다"
+    sed 's/^/        base-stderr> /' "$TEST_TMP/m7_base.err" >&2
+  elif [ "$m7_base_rc" -ne 3 ] || [ "$m7_base_hit" -lt 1 ]; then
     fail_case "M7 (형제 부재 불변식): 대조군 성립 불가 — 정리 무력화 baseline exit=$m7_base_rc (기대 3) / 형제 불변식 문면 ${m7_base_hit}건 (기대 ≥1). 무효 kill 금지"
+  elif [ "$m7_mut_tb" -ge 1 ]; then
+    # mutant crash = 무효 kill. rc 이동 원인을 「불변식 중화」로 귀속할 수 없다.
+    fail_case "M7 (형제 부재 불변식): 무효 kill — mutant stderr 에 Traceback ${m7_mut_tb}건 (exit=$m7_base_rc→$m7_mut_rc). rc 이동 원인이 「불변식 중화」인지 「미포착 예외로 인한 조기 사망」인지 구별되지 않는다"
+    sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
   elif [ "$m7_leg_ord" -eq 0 ] || [ "$m7_base_sib" != "$m7_leg_ord" ]; then
     fail_case "M7 (형제 부재 불변식): 대조군 무효 — 보고된 형제 수 '$m7_base_sib' 가 발화 leg '$m7_base_leg'(pin 순번 $m7_leg_ord)과 결부되지 않는다. 개수가 관측과 어긋나면 exit 3 을 형제 축으로 귀속할 수 없다"
   elif [ "$m7_mut_rc" -eq "$m7_base_rc" ]; then
     fail_case "M7 (형제 부재 불변식): SURVIVED (baseline exit=$m7_base_rc == mutant exit=$m7_mut_rc — 불변식이 판별에 기여하지 않음 = 실행 순번 누설 채널 무방비)"
   else
-    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + 형제 불변식 문면 ${m7_base_hit}건 · 형제 수 ${m7_base_sib} == 발화 leg '$m7_base_leg' pin 순번 ${m7_leg_ord} 결부 → 불변식 제거 mutant exit=$m7_mut_rc)"
+    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + 형제 불변식 문면 ${m7_base_hit}건 · 형제 수 ${m7_base_sib} == 발화 leg '$m7_base_leg' pin 순번 ${m7_leg_ord} 결부 → 불변식 제거 mutant exit=$m7_mut_rc · Traceback base=${m7_base_tb}건 mut=${m7_mut_tb}건)"
   fi
 fi
 
@@ -952,10 +973,31 @@ for tok in stamp manifest baseline probe; do
   fi
 done
 
-run_wrapper "$REPO_ROOT"; ex1="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
-run_wrapper "$REPO_ROOT"; ex2="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
-if [ -n "$ex1" ] && [ -n "$ex2" ] && [ "$ex1" != "$ex2" ]; then
-  pass_case "IC-4 재배정: exec dir 명이 실행마다 다름 ($ex1 → $ex2)"
+# ── F-CR21-1 전수 분류 산출분: 본 케이스도 **차분 오라클**이다 ────────────────────
+#   판정식 `ex1 != ex2` 의 기대값은 리터럴이 아니라 **다른 실행의 관측**이다. 따라서 차분 축이며
+#   crash 가드가 필수다. 종전에는 `-n` 공백 가드뿐이라, exec-root 를 emit **한 뒤** 죽는 실행에서
+#   두 팔 모두 이름은 남기고 죽어도 `ex1 != ex2` 가 성립해 초록이 났다.
+#   실증(본 회차): core 의 `results = {}` 직후에 `{}["IC4-post-emit-crash"]` 를 주입해 emit 이후
+#   crash 하게 만든 뒤 실행 → 하네스 전체는 PASS=14 FAIL=31 로 무너지는데 **본 케이스만
+#   `✓ PASS: IC-4 재배정 … (hgc-exec-mvk6z1ji → hgc-exec-1t_nq5vg)`** 를 발화했다. 두 팔 다 무효
+#   실행인데 재배정을 관측했다고 보고한 것이다.
+#   ★ 이 site 는 「mutant 판정 site」 열거에는 안 잡힌다(mutant 가 없다). 차분/절대값 축으로
+#     **전 오라클**을 훑어야 드러난다 — 열거 정의역을 mutant site 로 좁힌 것이 F-CR21-1 의 기전이었다.
+IC4_TB="Traceback (most recent call last)"
+run_wrapper "$REPO_ROOT"
+ic4_rc1=$CORE_RC; ic4_tb1=$(grep -cF "$IC4_TB" "$CORE_ERR")
+ex1="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
+run_wrapper "$REPO_ROOT"
+ic4_rc2=$CORE_RC; ic4_tb2=$(grep -cF "$IC4_TB" "$CORE_ERR")
+ex2="$(sed -n 's/^exec-root: \([^ ]*\) .*/\1/p' "$CORE_OUT" | head -1)"
+if [ "$ic4_tb1" -ge 1 ] || [ "$ic4_tb2" -ge 1 ]; then
+  fail_case "IC-4 재배정: 무효 — 실행 stderr 에 Traceback (run1=${ic4_tb1}건 run2=${ic4_tb2}건 · exit=$ic4_rc1/$ic4_rc2). 두 팔 중 하나라도 조기 사망하면 이름 차이를 '재배정' 으로 귀속할 수 없다"
+  sed 's/^/        stderr> /' "$CORE_ERR" >&2
+elif [ "$ic4_rc1" -ne 0 ] || [ "$ic4_rc2" -ne 0 ]; then
+  # 무변형 corpus 의 정상 종료 exit=0 을 **리터럴 pin** 으로 둔다 (관측 유효성 전제).
+  fail_case "IC-4 재배정: 무효 — 무변형 corpus 실행이 exit=$ic4_rc1/$ic4_rc2 (기대 0/0). 실행이 정상 완주하지 않으면 재배정 관측이 성립하지 않는다"
+elif [ -n "$ex1" ] && [ -n "$ex2" ] && [ "$ex1" != "$ex2" ]; then
+  pass_case "IC-4 재배정: exec dir 명이 실행마다 다름 ($ex1 → $ex2 · 양 팔 exit=$ic4_rc1/$ic4_rc2 · Traceback ${ic4_tb1}/${ic4_tb2}건)"
 else
   fail_case "IC-4 재배정: exec dir 명이 고정/미관측 (ex1='$ex1' ex2='$ex2')"
 fi
