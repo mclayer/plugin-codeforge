@@ -165,16 +165,22 @@ ADOPTION_MAX_DEPTH=3
 #     스캔이 전량을 보지 못한 경우도 0 이다("못 찾음" 을 "없음" 으로 결론짓지 않는다).
 _adoption_present_or_undecidable() {
   [[ -d "$TASK_DEF_ROOT" ]] || return 1
-  local f scanned=0
-  # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep.
-  while IFS= read -r f; do
-    [[ -n "$f" ]] || continue
-    scanned=$(( scanned + 1 ))
-    if grep -qsF -- "$ADOPTION_SENTINEL" "$f" 2>/dev/null; then
+
+  # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep · **배치화**.
+  # 이전 구현은 개별 grep 스폰 200회로 느렸다(특히 Windows+Defender 환경).
+  # xargs 로 배치화해 프로세스 개수를 2-3개로 줄인다.
+
+  local files_to_scan=""
+  files_to_scan=$(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f 2>/dev/null | head -n "$ADOPTION_MAX_FILES")
+  local scanned=0
+  scanned=$(echo "$files_to_scan" | wc -l)
+
+  # 표식 탐색: xargs 로 배치 그룹핑해 grep 스폰 최소화
+  if [[ -n "$files_to_scan" ]]; then
+    if echo "$files_to_scan" | xargs grep -lsF -- "$ADOPTION_SENTINEL" 2>/dev/null | grep -q .; then
       return 0                       # 표식 있음
     fi
-  done < <(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f 2>/dev/null \
-             | head -n "$ADOPTION_MAX_FILES")
+  fi
 
   # (a) 파일 상한 소진 → 스캔 밖에 파일이 남아 있을 수 있다 = 판정 불가.
   if (( scanned >= ADOPTION_MAX_FILES )); then
