@@ -389,6 +389,45 @@ def test_watchdog_absent_with_adoption_marker_reports_one_line(tmp_path):
     assert m.group(2) == "unknown", f"age_seconds=unknown 기대, 실제 {m.group(2)!r}"
 
 
+@_SKIP_NO_BASH
+def test_watchdog_filename_with_spaces_finds_sentinel(tmp_path):
+    """①b' **공백 포함 파일명** — 채택 표식이 파일명 안에 공백을 포함해도 발견.
+
+    ★ FIX14-2 회귀 — `xargs` 는 공백에서 단어를 쪼갠다. 파일명이 "My Daily Task.json"
+      이면 xargs 가 이를 "My", "Daily", "Task.json" 으로 분리해 grep 에 넘긴다.
+      그 파일들은 존재하지 않으므로 sentinel 을 못 찾는다(false-negative).
+
+    mutant kill: hook 의 grep 배치화를 `xargs` 로 되돌리기 ⇒ **이 테스트만 RED**.
+    """
+    home, hb = _prepare_home(tmp_path, content=None, adopted=False)
+    assert not hb.exists(), "전제 붕괴: heartbeat 파일이 존재한다"
+
+    # 채택 표식을 **공백 포함 파일명**으로 심는다
+    task_dir = Path(home) / ".claude" / "scheduled-tasks" / "My Daily Task"
+    task_dir.mkdir(parents=True, exist_ok=True)
+    prompt = task_dir / "SKILL.md"
+    prompt.write_text(
+        "codeforge 로컬 잔재 관측\n"
+        "3. scripts/lib/scheduled_task_reconcile.py 를 실행한다.\n",
+        encoding="utf-8", newline="\n",
+    )
+    assert "scheduled_task_reconcile" in prompt.read_text(encoding="utf-8"), (
+        "전제 붕괴: sentinel 미기재"
+    )
+
+    cp = _run_hook(home)
+
+    assert cp.returncode == 0, f"exit 0 기대: rc={cp.returncode}"
+    lines = _marker_lines(cp)
+    assert len(lines) == 1, (
+        f"공백 포함 파일명이어도 sentinel 을 발견해야 한다 "
+        f"(xargs 분리 버그 회귀), 실제 {len(lines)}줄: {lines}"
+    )
+    m = FACT_RE.match(lines[0])
+    assert m is not None, f"사실 줄 형식 불일치: {lines[0]!r}"
+    assert m.group(1) == "absent", f"last_run_epoch=absent 기대: {m.group(1)!r}"
+
+
 # ═══════ ①c 스캔 bound 도달 = 판정 불가 (구현리뷰 iter6 F-CR6-01) ═══════════════
 @_SKIP_NO_BASH
 def test_watchdog_absent_beyond_file_cap_reports_one_line(tmp_path):

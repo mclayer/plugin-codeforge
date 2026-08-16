@@ -168,19 +168,25 @@ _adoption_present_or_undecidable() {
 
   # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep · **배치화**.
   # 이전 구현은 개별 grep 스폰 200회로 느렸다(특히 Windows+Defender 환경).
-  # xargs 로 배치화해 프로세스 개수를 2-3개로 줄인다.
+  # FIX14-2 회귀 수정: xargs 는 공백에서 단어를 쪼갠다. 공백 포함 파일명을 안전하게 처리하려면
+  # find -print0 + read -d '' 로 배열에 저장한 후, null-terminated 배열을 배치로 grep 해야 한다.
 
-  local files_to_scan=""
-  files_to_scan=$(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f 2>/dev/null | head -n "$ADOPTION_MAX_FILES")
-  local scanned=0
-  scanned=$(echo "$files_to_scan" | wc -l)
+  local -a files=()
+  local f
+  while IFS= read -r -d '' f; do
+    files+=("$f")
+    (( ${#files[@]} >= ADOPTION_MAX_FILES )) && break
+  done < <(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f -print0 2>/dev/null)
+  local scanned=${#files[@]}
 
-  # 표식 탐색: xargs 로 배치 그룹핑해 grep 스폰 최소화
-  if [[ -n "$files_to_scan" ]]; then
-    if echo "$files_to_scan" | xargs grep -lsF -- "$ADOPTION_SENTINEL" 2>/dev/null | grep -q .; then
+  # 표식 탐색: 배치 grep (배열 슬라이싱·50 파일씩) — ARG_MAX 회피 + 배치 스폰 최소화.
+  # 프로세스 최소 개수: scanned=200 일 때 ~4회 (개별 200회 대비).
+  local i
+  for (( i=0; i<scanned; i+=50 )); do
+    if grep -lsF -- "$ADOPTION_SENTINEL" "${files[@]:i:50}" 2>/dev/null | grep -q .; then
       return 0                       # 표식 있음
     fi
-  fi
+  done
 
   # (a) 파일 상한 소진 → 스캔 밖에 파일이 남아 있을 수 있다 = 판정 불가.
   if (( scanned >= ADOPTION_MAX_FILES )); then
