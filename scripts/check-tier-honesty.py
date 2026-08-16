@@ -15,6 +15,7 @@
 #   | aggregate            | measurement   | scripts/lib/aggregate_stop_event.py                 |
 #   | presence-lint(L3)    | measurement   | scripts/lib/check_subagent_wait_liveness_presence.py|
 #   | tier-honesty(self)   | measurement   | scripts/check-tier-honesty.py                       |
+#   | progress-commit      | advisory      | archive/adr/ADR-178-...md (§결정 8-1 ceiling 라벨 행) |
 #
 # 검사 2축:
 #   Axis1 (verbatim tier 라벨 존재): 각 lever artifact 에 expected_tier 라벨 문자열 present. 부재 → RED.
@@ -24,10 +25,10 @@
 # 정당 예외: vague-pause 회귀 lint 의 [물리강제] doc-integrity 라벨은 lever registry 대상 아님
 #   (그 라벨은 문서 integrity lint 기제이지 stop-behavior lever 아님 — registry 에 넣지 않는다).
 #
-# home_marker = 5 lever artifact. 전부 부재 시 no-op(consumer). ReDoS-safe (라인 단위, 단일 .* 리터럴 tail).
+# home_marker = 6 lever artifact. 전부 부재 시 no-op(consumer). ReDoS-safe (라인 단위, 단일 .* 리터럴 tail).
 #
 # Usage:
-#   check-tier-honesty.py             # repo root 기준 5 lever artifact 검사
+#   check-tier-honesty.py             # repo root 기준 6 lever artifact 검사
 #   check-tier-honesty.py --self-test # inline fixture mutation oracle (CI step)
 # Exit: 0 = PASS / no-op, 1 = tier 정직 위반, 2 = setup error.
 
@@ -47,12 +48,16 @@ MAX_SCAN_LINE = 8192  # ReDoS 안전 상한 (라인 truncate — 실 tier-선언
 MEAS_LABEL = "tier: [measurement]"
 ADVP_LABEL = "tier: [advisory / priming]"
 VP_ADV_LABEL = "[advisory]"
+# ADR-178 §결정 8-1 advisory ceiling 라벨 (CFP-2966 Phase 2 — §결정 8-4 registry 등재)
+PC_ADV_LABEL = "tier = advisory (ceiling)"
 
 # ── tier-선언 라인 discriminator (label_re) — 매칭 라인 = 그 lever 의 tier 선언 bounded region ──
 MEAS_RE = re.compile(r"tier:\s*\[measurement\]")
 ADVP_RE = re.compile(r"tier:\s*\[advisory / priming\]")
 # vague-pause lever 는 §결정 7 표 행(같은 라인에 vague-pause 앵커 + [advisory] 라벨) — 단일 .* (ReDoS-safe)
 VP_RE = re.compile(r"vague-pause.*\[advisory\]")
+# progress-commit lever 는 ADR-178 §결정 8-1 의 ceiling 라벨 라인 — 고정 리터럴 (quantifier 0)
+PC_RE = re.compile(r"tier = advisory \(ceiling\)")
 
 # ── 긍정 enforcement 토큰 (closed set) — 좁게 정의: "block 금지"/"deny 안 함" 부정 서술은 미매칭 ──
 ENFORCEMENT_TOKENS = ["hard-block", "물리강제", "물리 차단", "강제 차단", "permissionDecision", "blocking-on-pr"]
@@ -94,6 +99,20 @@ LEVERS = [
         "label_re": MEAS_RE,
         "label_desc": MEAS_LABEL,
     },
+    # CFP-2966 Phase 2 / ADR-178 §결정 8-4 — progress-commit 규범의 advisory ceiling 라벨 등재.
+    # Axis1 = §결정 8-1 ceiling 라벨 presence / Axis2 = 그 라벨 라인의 enforcement 토큰 부재.
+    # NOTE: ADR-178 §결정 8-2 는 "100% 기계강제"·"hard-gate" 를 **금지-언급 맥락**으로 담고 있으나,
+    #   Axis2 정의역은 label_re 매칭 라인(= §결정 8-1 단일 라인) 뿐이라 그 서술 라인은 스캔 대상이 아니다
+    #   (ADR-025 lever 가 같은 표 행 안에서 "runtime hard-deny 불가" 부정 서술을 담고도 GREEN 인 것과 동형 —
+    #    closed-set 긍정 토큰만 매칭하므로 정직한 부정·금지 서술은 미매칭).
+    {
+        "name": "progress-commit",
+        "expected_tier": "advisory",
+        "artifact": os.path.join(
+            "archive", "adr", "ADR-178-subagent-progress-commit-preservation.md"),
+        "label_re": PC_RE,
+        "label_desc": PC_ADV_LABEL,
+    },
 ]
 
 
@@ -132,7 +151,7 @@ def scan_lever_content(lever, content):
 def run_lint():
     present = [l for l in LEVERS if os.path.exists(l["artifact"])]
     if not present:
-        print("[tier-honesty] 5 lever artifact 전부 부재 — honest no-op (PASS, consumer degradation).")
+        print(f"[tier-honesty] {len(LEVERS)} lever artifact 전부 부재 — honest no-op (PASS, consumer degradation).")
         return 0
     all_violations = []
     for lever in LEVERS:
@@ -168,6 +187,8 @@ def self_test():
                   "label_re": ADVP_RE, "label_desc": ADVP_LABEL}
     vp_lever = {"name": "vp-fixture", "expected_tier": "advisory", "artifact": "<fixture>",
                 "label_re": VP_RE, "label_desc": VP_ADV_LABEL}
+    pc_lever = {"name": "pc-fixture", "expected_tier": "advisory", "artifact": "<fixture>",
+                "label_re": PC_RE, "label_desc": PC_ADV_LABEL}
 
     green_meas = f"# banner\n# {MEAS_LABEL} self-lever\nbody line\n"
     green_advp = f'"""docstring\n{ADVP_LABEL}\n(NEVER block — deny/block 안 함)\n"""\n'
@@ -175,6 +196,12 @@ def self_test():
     red_strip_meas = "# banner no label\nbody line\n"                         # 라벨 strip
     red_inject_meas = f"# {MEAS_LABEL} " + "물리강제" + " 차단 주입\n"          # measurement lever 물리강제 주입
     red_inject_advp = f"# {ADVP_LABEL} " + "blocking-on-pr" + " 강제 주입\n"    # advisory lever blocking-on-pr 주입
+    # ADR-178 progress-commit lever (§결정 8-4). GREEN 은 같은 ADR 이 다른 라인에서 "hard-gate 금지" 를
+    # 서술해도 Axis2 정의역(label_re 매칭 라인) 밖이라 무영향임을 함께 실증한다.
+    green_pc = (f"1. **{PC_ADV_LABEL}.** 준수는 저작 규율이며 실준수는 비-PR-enforceable 이다.\n"
+                "2. \"100% 기계강제\" · \"hard-gate\" 를 표방하는 서술을 금지한다.\n")
+    red_strip_pc = "1. **tier 라벨 없음.** 준수는 저작 규율이다.\n"
+    red_inject_pc = f"1. **{PC_ADV_LABEL}** " + "물리강제" + " 주입\n"
 
     cases = [
         ("GREEN: measurement lever 정상", meas_lever, green_meas, 0),
@@ -183,6 +210,10 @@ def self_test():
         ("RED: 라벨 strip (measurement tier 라벨 제거)", meas_lever, red_strip_meas, 1),
         ("RED: measurement lever 에 물리강제 긍정주입", meas_lever, red_inject_meas, 1),
         ("RED: advisory lever 에 blocking-on-pr 긍정주입", advp_lever, red_inject_advp, 1),
+        ("GREEN: ADR-178 progress-commit ceiling 라벨 정상 (같은 문서의 hard-gate 금지 서술은 무영향)",
+         pc_lever, green_pc, 0),
+        ("RED: ADR-178 ceiling 라벨 strip", pc_lever, red_strip_pc, 1),
+        ("RED: ADR-178 ceiling 라벨 라인에 물리강제 긍정주입", pc_lever, red_inject_pc, 1),
     ]
     failed = []
     for name, lever, text, expect in cases:

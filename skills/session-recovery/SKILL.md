@@ -28,6 +28,8 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 
 `Read(docs/stories/<KEY>.md)` → 어느 섹션까지 채워졌는지 확인해 재진입 지점 보정.
 
+> **진행 커밋(progress-commit) 회수 pointer (CFP-2966 / [ADR-178](../../archive/adr/ADR-178-subagent-progress-commit-preservation.md) §결정 5-4)**: 이전 세션이 강제 종료됐다면 서브에이전트가 미회수 진행 커밋·dirty 산출물을 남겼을 수 있으므로 재진입 지점 보정과 함께 3-step runbook 을 수행한다 — ① **census**: `git for-each-ref --sort=-committerdate 'refs/heads/cfp-NNN*'` + `git -C <wt> log --oneline @{u}..` + 잔재 스캐너 `dirty`·`unpushed-N` 술어로 열거 ② **무결성 판정**: 각 진행 커밋을 inconclusive 전제로 판정(`[WIP]` 표식이 기계 앵커 — PASS·완료 자동승격 금지) ③ **인계**: fresh 재스폰 packet 에 (브랜치명 · 마지막 진행 커밋 SHA · 미완 표식 요약) 3-tuple 주입(SendMessage resume 아닌 fresh-spawn 경로 — ADR-141 Amd6 정합). 절차·판정 정본 = ADR-178 §결정 5-4 (본 pointer 는 mirror).
+
 ### 7.3 phase label ↔ 재진입 에이전트 매핑
 
 | phase 라벨 | Story file 섹션 | 재진입 에이전트 |
