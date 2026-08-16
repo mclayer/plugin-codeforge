@@ -1,0 +1,20 @@
+{
+  "branch": "cfp-2984-phase2",
+  "integrity_tag": [
+    {
+      "ref": "scripts/lib/check_salvage_bundle.py",
+      "tag": "usable"
+    },
+    {
+      "ref": "blob:sha256:3f2a1c00000000000000000000000000000000000000000000000000009e8d7c",
+      "tag": "suspect"
+    }
+  ],
+  "last_commit_sha": "cdae6c1f7ab34e5f6071829304a5b6c7d8e9f012",
+  "notes_ref": "blob:sha256:3f2a1c00000000000000000000000000000000000000000000000000009e8d7c",
+  "producer": {
+    "agent_type": "DeveloperAgent",
+    "produced_at": "2026-08-15T21:57:29+09:00",
+    "story_key": "CFP-2984"
+  },
+  "resume_p

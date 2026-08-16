@@ -422,6 +422,164 @@ run_mutation "B channel-alive (AC-3)"       mutate_channel_alive      build_red_
 run_mutation "C reason-substantive (AC-2)"  mutate_reason_substantive build_red_ac2
 
 # ═════════════════════════════════════════════════════════════════════════════
+# 6b. CFP-2984 — (a) 배선 shape 변이 3종 (AC-12a, ADDITIVE — 기존 TC 무변경)
+# ═════════════════════════════════════════════════════════════════════════════
+# 왜 추가하나: CFP-2984 는 신설 self-test 25본을 required job `invariant-check` 의
+#   **단일 step 명시 열거**(Change Plan §8.1.1 (a))로 배선했다. 이 shape 고유의 실패 모드
+#   3종은 기존 TC1~TC13 이 커버하지 않는다 — 기존 fixture 는 job 1개당 test 1본 shape 다.
+#     TC14 신설 self-test 1건이 인벤토리에서 누락 → bijection `missing file→record`
+#     TC15 레코드는 있는데 **열거에서 한 줄이 지워짐** → AC-2 `배선 부재`(silent-un-run 재발).
+#          §8.1.1 이 "누군가 N본 열거에서 한 줄을 지우면" 으로 지목한 정확한 잔여.
+#     TC16 열거를 `tests/scripts/*.sh` **glob 로 치환** → basename 이 run 문자열에 미등장해
+#          전건 배선 부재. §8.1.1 의 "glob 금지" 는 선언이 아니라 여기서 실행으로 확인된다.
+# INV-T4 (대조군 없는 오라클 = hollow): 세 RED 는 **같은 shape 의 결함 0 GREEN 대조군**과
+#   짝으로만 판정한다. 대조군이 RED 면 아래 RED 는 아무것도 증명하지 않으므로 그 사실을 FAIL 로 낸다.
+
+CFP2984_JOB="invariant-check"
+CFP2984_WF="invariant-check.yml"
+# fixture corpus (실 25본의 대표 3본 — shape 재현이 목적이지 전수 복제가 아니다).
+CFP2984_FILES="test_stall_predicate.sh test_retry_layer_overlap.sh test_bundle_field_allowlist.sh"
+
+# emit_corpus_workflow <job_id> <basename...> — (a) shape: 단일 step 이 N본을 명시 열거.
+emit_corpus_workflow() {
+  local job="$1"; shift
+  echo "name: $job"
+  echo "on: [push]"
+  echo "jobs:"
+  echo "  $job:"
+  echo "    runs-on: ubuntu-latest"
+  echo "    timeout-minutes: 15"
+  echo "    steps:"
+  echo "      - name: corpus (명시 열거, glob 금지)"
+  echo "        run: |"
+  echo "          set -euo pipefail"
+  echo "          for t in \\"
+  local b
+  for b in "$@"; do echo "            tests/scripts/$b \\"; done
+  echo "          ; do"
+  echo "            bash \"\$t\""
+  echo "          done"
+}
+
+# emit_glob_workflow <job_id> — TC16: 열거 대신 glob (basename 0개 등장).
+emit_glob_workflow() {
+  local job="$1"
+  echo "name: $job"
+  echo "on: [push]"
+  echo "jobs:"
+  echo "  $job:"
+  echo "    runs-on: ubuntu-latest"
+  echo "    timeout-minutes: 15"
+  echo "    steps:"
+  echo "      - name: corpus (glob — 배선 판정 불가 shape)"
+  echo "        run: |"
+  echo "          set -euo pipefail"
+  echo "          for t in tests/scripts/*.sh; do bash \"\$t\"; done"
+}
+
+# build_cfp2984_fixture <root> <files> <records> <wired|__glob__>
+#   3 목록은 공백 구분 문자열 — 의도적 word-splitting(배열 대신 단순 목록).
+build_cfp2984_fixture() {
+  local F="$1" files="$2" recs="$3" wired="$4"
+  mkdir -p "$F/docs" "$F/tests/scripts" "$F/.github/workflows" "$F/templates/github-workflows"
+
+  local b
+  for b in $files "$(basename "$SELF_TEST_PATH")"; do
+    printf '#!/usr/bin/env bash\nexit 0\n' > "$F/tests/scripts/$b"
+  done
+
+  if [ "$wired" = "__glob__" ]; then
+    emit_glob_workflow "$CFP2984_JOB"          > "$F/.github/workflows/$CFP2984_WF"
+  else
+    emit_corpus_workflow "$CFP2984_JOB" $wired > "$F/.github/workflows/$CFP2984_WF"
+  fi
+  emit_workflow "$SELF_JOB" "$(basename "$SELF_TEST_PATH")" > "$F/.github/workflows/$SELF_WF"
+
+  {
+    echo "# fixture inventory (CFP-2984 (a) 배선 shape — 단일 step 명시 열거)"
+    echo "schema_version: '1.0'"
+    echo "${INV_TOP_KEY}:"
+    for b in $recs; do
+      emit_record "tests/scripts/$b" "workflow:$CFP2984_WF:$CFP2984_JOB" "alive" "required" \
+        "present" "N/A" "" "CFP-2984 corpus 레코드 — soak=G2/DAST=G5/real-render 은 runtime 축 무침범, honest-ceiling 은 배선 presence 까지"
+    done
+    emit_record "$SELF_TEST_PATH" "workflow:$SELF_WF:$SELF_JOB" "alive" "non_required" \
+      "present" "N/A" "" "메타-게이트 자기 레코드 — 재귀 AC-9 충족용"
+  } > "$F/$INV_REL"
+}
+
+log ""
+log "══ CFP-2984 (a) 배선 shape — TC14/TC15/TC16 (AC-12a additive) ══"
+EC_CFP2984_GREEN="NOT_RUN"
+if [ "$GATE_PRESENT" != "1" ]; then
+  skip_case "TC14/TC15/TC16 — 게이트 미착륙 (NOT_RUN, false PASS 금지)"
+else
+  # ── GREEN 대조군: 3본 전건 파일·레코드·열거 정합 (결함 0) ──
+  F2G="$(new_fixture_root)"
+  build_cfp2984_fixture "$F2G" "$CFP2984_FILES" "$CFP2984_FILES" "$CFP2984_FILES"
+  log "── CFP-2984 GREEN 대조군 (전건 등재 + 전건 열거) ──"
+  EC_CFP2984_GREEN="$(run_gate "$F2G")"
+  if [ "$EC_CFP2984_GREEN" = "0" ]; then
+    pass_case "TC14a GREEN 대조군 → exit 0 ((a) shape 자체는 통과 — 이후 RED 가 의미를 가진다)"
+  else
+    fail_case "TC14a GREEN 대조군 → exit $EC_CFP2984_GREEN (기대 0). 대조군이 RED 면 아래 RED 는 무의미(INV-T4)"
+  fi
+
+  # ── TC14: 신설 1건 레코드 누락 (파일은 잔존) → missing file→record ──
+  F2R1="$(new_fixture_root)"
+  build_cfp2984_fixture "$F2R1" "$CFP2984_FILES" \
+    "test_retry_layer_overlap.sh test_bundle_field_allowlist.sh" "$CFP2984_FILES"
+  log "── TC14 RED (신설 test_stall_predicate.sh 레코드 누락) ──"
+  EC_CFP2984_R1="$(run_gate "$F2R1")"
+  if [ "$EC_CFP2984_R1" = "1" ]; then
+    pass_case "TC14 RED → exit 1 (신설 self-test 미등재 검출 = bijection 양방향 전칭)"
+  else
+    fail_case "TC14 RED → exit $EC_CFP2984_R1 (기대 1 — 미등재 미검출이면 25본 배선이 조용히 샌다)"
+  fi
+  if [ "$EC_CFP2984_GREEN" = "$EC_CFP2984_R1" ]; then
+    fail_case "TC14 ANTI-THEATER — GREEN(exit=$EC_CFP2984_GREEN) == RED(exit=$EC_CFP2984_R1) = non-discriminating"
+  else
+    pass_case "TC14 ANTI-THEATER discriminating — GREEN($EC_CFP2984_GREEN) ≠ RED($EC_CFP2984_R1)"
+  fi
+
+  # ── TC15: 레코드 유지, 열거에서 한 줄 삭제 → AC-2 배선 부재 ──
+  F2R2="$(new_fixture_root)"
+  build_cfp2984_fixture "$F2R2" "$CFP2984_FILES" "$CFP2984_FILES" \
+    "test_retry_layer_overlap.sh test_bundle_field_allowlist.sh"
+  log "── TC15 RED (열거에서 test_stall_predicate.sh 한 줄 삭제, 레코드는 잔존) ──"
+  EC_CFP2984_R2="$(run_gate "$F2R2")"
+  if [ "$EC_CFP2984_R2" = "1" ]; then
+    pass_case "TC15 RED → exit 1 (열거 1행 삭제 = 배선 부재 검출 — §8.1.1 지목 잔여)"
+  else
+    fail_case "TC15 RED → exit $EC_CFP2984_R2 (기대 1 — 열거 삭제를 못 잡으면 silent-un-run 재발)"
+  fi
+  if [ "$EC_CFP2984_GREEN" = "$EC_CFP2984_R2" ]; then
+    fail_case "TC15 ANTI-THEATER — GREEN(exit=$EC_CFP2984_GREEN) == RED(exit=$EC_CFP2984_R2) = non-discriminating"
+  else
+    pass_case "TC15 ANTI-THEATER discriminating — GREEN($EC_CFP2984_GREEN) ≠ RED($EC_CFP2984_R2)"
+  fi
+
+  # ── TC16: 열거 → glob 치환 → 전건 배선 부재 (glob 금지의 기계적 근거 실행 확인) ──
+  F2R3="$(new_fixture_root)"
+  build_cfp2984_fixture "$F2R3" "$CFP2984_FILES" "$CFP2984_FILES" "__glob__"
+  log "── TC16 RED (열거를 tests/scripts/*.sh glob 으로 치환) ──"
+  EC_CFP2984_R3="$(run_gate "$F2R3")"
+  if [ "$EC_CFP2984_R3" = "1" ]; then
+    pass_case "TC16 RED → exit 1 (glob 은 basename 미등장 → 전건 배선 부재. §8.1.1 glob 금지 = 실행 확인됨)"
+  else
+    fail_case "TC16 RED → exit $EC_CFP2984_R3 (기대 1 — glob 이 통과하면 §8.1.1 의 glob 금지 근거가 거짓)"
+  fi
+  if [ "$EC_CFP2984_GREEN" = "$EC_CFP2984_R3" ]; then
+    fail_case "TC16 ANTI-THEATER — GREEN(exit=$EC_CFP2984_GREEN) == RED(exit=$EC_CFP2984_R3) = non-discriminating"
+  else
+    pass_case "TC16 ANTI-THEATER discriminating — GREEN($EC_CFP2984_GREEN) ≠ RED($EC_CFP2984_R3)"
+  fi
+
+  echo ""
+  echo "CFP-2984 (a) shape RED exit codes: TC14=${EC_CFP2984_R1} TC15=${EC_CFP2984_R2} TC16=${EC_CFP2984_R3} (전건 기대 1) / GREEN 대조군=${EC_CFP2984_GREEN} (기대 0)"
+fi
+
+# ═════════════════════════════════════════════════════════════════════════════
 # 7. Summary
 # ═════════════════════════════════════════════════════════════════════════════
 echo ""

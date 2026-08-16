@@ -74,6 +74,8 @@ prune 조건 = 4 조건 **ALL** (스크립트 헤더 SSOT):
 3. worktree CLEAN (tracked 변경 0 + 알려진 임시파일 외 untracked 0 — 잔여 변경 있으면 절대 prune 금지)
 4. 현재/main worktree 아님 + `locked` 아님
 
+> **중단 이후 회수(salvage) 절차는 여기 없다** — mid-run 사망·stall·한도 도달·429 4-class 의 회수 라우팅·미완결 산출 고정·번들 인계 = [`codeforge:session-recovery`](../session-recovery/SKILL.md) 3부 (본 skill 은 lookup mirror 라 신규 절차 SSOT 를 두지 않는다).
+
 > 과거 SessionStart hook 동기/주기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연). **SessionStart 배제 = 무거운 동기 full-scan 한정** — SessionStart async:true 무시 → 동기 실행 = 지연 회귀라 배제(요구사항리뷰 PASS 확정 외부사실). **단 detached fire-and-forget(즉시 return + 실 스캔 분리 프로세스)는 carve-out**(전제 불성립 → §4a 크래시 보완 트리거, ADR-169 §결정 4). backstop 자동 트리거 = SessionEnd async primary wire + SessionStart detached lazy GC(§4a) + 수동/스케줄 병행.
 
 ## 4a. 잔재 발견(residue discovery) + scratch TTL + orphan 3축 판정 (CFP-2822 / ADR-169)

@@ -1,0 +1,11 @@
+{
+  "rows": [
+    {
+      "executed_at": "2026-08-15T21:40:00+09:00",
+      "note": "자유 텍스트가 원장 row 에 유입됨",
+      "op": "comment_add",
+      "status": "applied",
+      "target_ref": "mclayer/plugin-codeforge#2984"
+    }
+  ]
+}

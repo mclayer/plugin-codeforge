@@ -3,6 +3,24 @@
 parallel_spawn_cap: 7       # Default: low intensity (0 incident/30min) — Phase 0 brainstorm 7-agent baseline
 spawn_stagger_ms: 0         # Default: no stagger (low intensity)
 cascade_circuit_breaker: false  # Default: disabled, opt-in (429 cascade depth ≥ 2 detection)
+# ── AC-26 소비자 분류 (CFP-2984 Phase 2 · additive only — 필드 제거 0, 값 변경 0) ──────────
+# consumer_class 값공간 = 3-enum. 위 튜닝 필드마다 **정확히 하나**로 분류한다:
+#   machine        = 필드를 파싱·소비하는 실행 코드가 존재 (기계 소비자 有)
+#   advisory-only  = 기계 소비자 0 ∧ 산문 지시가 필드 값을 지시하는 site 존재
+#   none           = 기계·advisory 소비자 모두 0 (선언면·인용면만 존재)
+# 실측 기준 (재현 가능 — tests/scripts/test_declared_field_consumer_class.sh 가 동일 기준으로 재측정):
+#   기계   = templates/ 밖 git-tracked *.py/*.sh/*.js/*.ts/*.bats/*.yml 에서 필드를 읽는 site
+#   advisory = *.md 산문에서 `<field> = <값>` 으로 값을 지시하는 site
+#   단순 링크·신설 기록·ADR cross-ref 인용은 소비가 아니다.
+# ★ "미배선"·"unbound"·"N/A" 표기 금지 (ADR-064:1258) — advisory 소비자를 실제 보유한 필드를
+#   미배선으로 적으면 거짓 선언이 합격 조건이 된다. 3-enum 정규화 후 실측과 대조된다.
+# consumer_class: parallel_spawn_cap = advisory-only
+#   consumer_ref: skills/rate-limit-429-mitigation/SKILL.md — intensity 분기가 권고값을 지시
+# consumer_class: spawn_stagger_ms = advisory-only
+#   consumer_ref: skills/rate-limit-429-mitigation/SKILL.md — 동상
+# consumer_class: cascade_circuit_breaker = none
+#   consumer_ref: 없음 — ADR-109 §결정 4/5 는 breaker 정책을 규정하나 본 필드를 읽지 않고,
+#   SKILL.md 의 유일 등장은 ADR-044 링크 인용이라 값 지시가 아니다 (기계 0 ∧ advisory 0)
 
 # CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT — design-review 와 동일 패턴)
 # Trigger: DeveloperPL ready 후 Orchestrator 가 CodeReviewPL spawn
