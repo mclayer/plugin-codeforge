@@ -6,10 +6,14 @@
 #
 # ── positive-control: sanity mutant→RED (결함 앞 RED 를 상시 증명) ────────────────────
 #   본 self-test 는 매 실행마다 판정 core 의 **실 파일 사본**에 결함을 주입(MUTATION-SENTINEL
-#   M1~M7, M3 은 2 site 개별)하고, 무변형 baseline 과 **다른 exit** 이 나오는지 대조한다.
+#   M1~M8, M3 은 2 site 개별)하고, 무변형 baseline 과 **다른 exit** 이 나오는지 대조한다.
 #   예외 = M7: 대상 불변식이 정상 corpus 에서 발화하지 않아 무변형 baseline 으로는 대조군이
 #   성립하지 않으므로 **2단 mutant**(정리 무력화 baseline → 불변식 추가 제거)를 쓴다. 사유는
 #   해당 블록 주석에 기재한다 — 예외를 조용히 두지 않는다.
+#   예외 = M4·M8: 이 두 축은 **exit-flip 이 아니다**(양 팔 exit 불변). 그래서 exit 대조가 아니라
+#   stdout 관측 문면의 소실로 kill 한다 — M4 = census 토큰, M8 = `baseline-cmp:` 축 이름 집합.
+#   exit 축을 함께 실측해 '불변'을 관측으로 뒷받침하고(무관측 단정 금지), crash mutant 는 무효로
+#   떨어뜨린다. 판정 기준 ③ 참조.
 #   mutant 가 죽지 않으면(= baseline 과 같은 exit) 본 self-test 가 FAIL 한다. inline hand-copy
 #   금지(ADR-082 §11.A tautology) — 실 core 파일 `cp` 대상만 sed 로 변형한다.
 #   double-guard: (a) sed 가 실제로 치환했는지 sentinel grep 으로 확인 → 미치환 = NOT_RUN FAIL
@@ -492,10 +496,28 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 6. MUTATION-SENTINEL 7축 (M3 은 2 site 개별 mutant / M7 은 2단 mutant)
+# 6. MUTATION-SENTINEL 8축 (M3 은 2 site 개별 mutant / M7 은 2단 mutant)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ━━ MUTATION-SENTINEL — 무엇을 죽이며 왜 load-bearing 인가 ━━━━━━━━━━━━━━━━━━━━━━━
+#   M1: I-8 협착 conjunct (`kill.fail=1`)           — 제거 시 arm-H 정상 표본이 INDETERMINATE 전멸.
+#   M2: I-11 `¬LIVE ∧ ¬HOLLOW` 가드                 — 제거 시 arm-H(kill 관측 ≡ clean 관측)가 전멸.
+#   M3: exit_space 검사 (2 site — 선언검사 + 런타임 I-4) — 제거 시 rc 이탈이 조용히 통과.
+#   M4: census 축별 개별 emit                       — 제거 시 축 축소가 총합 1줄에 숨는다. (stdout 축)
+#   M5: IC-4 exec-tree blinding **호출부**          — 제거 시 arm 누설 표면이 exec dir 에 잔존.
+#   M6: xkill 축-disjoint 검사                      — 제거 시 상수 footer stage 선언이 공허 통과.
+#   M7: 형제 부재 불변식 (`len(siblings) != 1`)     — 제거 시 실행 순번 누설 채널이 무성 복원.
+#   M8: 하한 대조의 **정의역** (`LOWER_BOUND_AXES`) — 축소 시 baseline 하한 대조가 6축 → 1축으로
+#       도려내져도 하네스 전건이 초록으로 통과한다. 이 tuple 은 "어느 축을 하한 대조하는가"
+#       **그 자체**이므로, 빠진 축은 대조가 **일어나지 않아** census 축소가 무성 통과한다.
+#       M4 와 겹치지 않는다 — M4 는 "축이 stdout 에 보이는가"를, M8 은 "보이는 축이 실제로
+#       대조되는가"를 지킨다(M4 mutant 는 census emit 을 지우고, M8 mutant 는 census 를 그대로
+#       둔 채 대조 루프의 정의역만 좁힌다). (stdout 축 — exit-flip 아님)
+#   ★ 정직 기재: core(`scripts/lib/check_hollow_gate_corpus.py`)의 in-file MUTATION-SENTINEL
+#     절은 여전히 **M1~M7** 로 적혀 있다(M8 미기재). core 는 본 회차 수정 금지 대상(설계 동결·
+#     제품 코드)이라 여기서 갱신하지 못했다 — 문서 drift 를 조용히 두지 않고 잔여로 남긴다.
 # ═══════════════════════════════════════════════════════════════════════════════
 echo ""
-echo "── MUTATION-SENTINEL 7축 (M3 = 2 site 개별 / M7 = 2단 mutant) ───────────────"
+echo "── MUTATION-SENTINEL 8축 (M3 = 2 site 개별 / M7 = 2단 / M4·M8 = stdout 축) ──"
 
 # M1 = I-8 협착 conjunct (kill.fail=1). 중화 시 arm-H(fail_stage=∅)에서 공허 참 → 정상 HOLLOW 전멸.
 #   ★ 이 conjunct 는 본 Story 가 실제로 겪은 born-RED 의 봉합점이다.
@@ -581,16 +603,124 @@ if [ -z "$m7_base" ] || [ -z "$m7_mut" ]; then
 elif grep -qF "M7-sibling-invariant-off" "$m7_base"; then
   # baseline 에 mutant 처치가 섞이면 두 군의 차이가 사라져 대조 자체가 무의미해진다.
   fail_case "M7 (형제 부재 불변식): baseline 오염 — baseline 에 불변식 제거 처치가 섞였다(대조군 무효)"
+elif ! grep -qF "M7-cleanup-off" "$m7_mut"; then
+  # ── F-CR20-1 봉합: mutant **저처치** 가드 (오염 가드의 대칭 위치) ────────────────
+  #   mutant 는 2단 처치("$M7_SED_CLEANUP; $M7_SED_INVARIANT")인데 mutate_core 의 sentinel
+  #   인자는 2번째(M7-sibling-invariant-off) **하나만** 검증한다. 1번째(정리 무력화)가 빠지면
+  #   두 팔이 **2축(정리·불변식) 차이**가 되고, exit flip 3→0 은 정리 복원만으로도 나므로
+  #   불변식 축 귀속이 성립하지 않는다. 바로 위 오염 가드는 baseline 방향(mutant 처치가 baseline
+  #   으로 새는 것)만 막으므로 **반대 방향인 mutant 저처치는 무방비**였다.
+  fail_case "M7 (형제 부재 불변식): mutant 저처치 — mutant 에 정리 무력화 처치(M7-cleanup-off)가 없다. 두 팔이 2축 차이라 exit flip 을 불변식 축에 귀속할 수 없다(무효 kill)"
 else
   run_core "$m7_base" "$SH_M7" --manifest "$MF_M7"; m7_base_rc=$CORE_RC
-  m7_base_hit=$(grep -cF "exec-root 직속 디렉터리 2개" "$CORE_ERR")
+  # ── F-CR20-7 상속분 봉합: 개수 리터럴 단일점 의존 제거 ──────────────────────────
+  #   종전: grep -cF "exec-root 직속 디렉터리 2개" — 개수 '2' 를 대조 문면에 **박아** 두었다.
+  #   core 문면은 f"...{len(siblings)}개..." 이므로 개수가 관측과 무관한 상수로 바뀌어도 이
+  #   검사는 그대로 통과했다(형제 pytest 축과 같은 구멍). 정정 2건:
+  #     (i) **귀속**은 개수 비의존 정규식으로 한다 — 개수가 정당하게 달라져도 귀속은 유지되고,
+  #         "형제 불변식이 발화했다"는 명제만을 판별한다.
+  #    (ii) **개수**는 파싱해 self-test 가 독립 관측한 **발화 leg 의 순번**과 결부시킨다. 정리를
+  #         무력화했으므로 형제는 leg 마다 1씩 누적하고, 최초 위반 시점의 형제 수 == 그 leg 의
+  #         순번이다. leg 이름은 stderr 의 `leg=<role>` 에서 읽고, 순서 리스트는 **self-test 안
+  #         리터럴로 pin** 한다 — core 의 LEG_ROLES 를 읽어오면 좌우변이 동시 파생돼 항진한다.
+  #   ★ 정직 천장(실측에 딸린 잔여): core 는 최초 위반에서 `return EXIT_SUBSTRATE` 하므로 한 실행에
+  #     관측점은 **1개**뿐이고 그 참값은 2다. 참값이 단일한 관측 1개로는 "계산된 2"와 "상수 2"를
+  #     원리적으로 구별할 수 없다 — 이 정정이 없애는 것은 **리터럴 단일점 의존**이지 core 측 개수
+  #     하드코딩 mutant 의 kill 이 아니다. 후자를 닫으려면 참값이 다른 2번째 관측이 필요하고, 그건
+  #     abort 무력화(새 표면)를 요구하므로 여기서 하지 않는다. 못 닫은 것을 닫았다고 적지 않는다.
+  m7_base_hit=$(grep -cE "exec-root 직속 디렉터리 [0-9]+개 \(정확히 1 필요\)" "$CORE_ERR")
+  m7_base_sib=$(sed -n 's/.*exec-root 직속 디렉터리 \([0-9][0-9]*\)개 (정확히 1 필요).*/\1/p' "$CORE_ERR" | head -1)
+  m7_base_leg=$(sed -n 's/^::error::\[SUBSTRATE\] unit=[^ ]* leg=\([a-z]*\): exec-tree blinding 파손.*/\1/p' "$CORE_ERR" | head -1)
+  m7_leg_ord=0; m7_i=0
+  for m7_r in kill clean empty xkill; do          # ★ leg 순서 pin (self-test 리터럴 — core 미참조)
+    m7_i=$((m7_i+1))
+    [ "$m7_r" = "$m7_base_leg" ] && m7_leg_ord=$m7_i
+  done
   run_core "$m7_mut" "$SH_M7" --manifest "$MF_M7"; m7_mut_rc=$CORE_RC
   if [ "$m7_base_rc" -ne 3 ] || [ "$m7_base_hit" -lt 1 ]; then
-    fail_case "M7 (형제 부재 불변식): 대조군 성립 불가 — 정리 무력화 baseline exit=$m7_base_rc (기대 3) / '형제 2개' 문면 ${m7_base_hit}건 (기대 ≥1). 무효 kill 금지"
+    fail_case "M7 (형제 부재 불변식): 대조군 성립 불가 — 정리 무력화 baseline exit=$m7_base_rc (기대 3) / 형제 불변식 문면 ${m7_base_hit}건 (기대 ≥1). 무효 kill 금지"
+  elif [ "$m7_leg_ord" -eq 0 ] || [ "$m7_base_sib" != "$m7_leg_ord" ]; then
+    fail_case "M7 (형제 부재 불변식): 대조군 무효 — 보고된 형제 수 '$m7_base_sib' 가 발화 leg '$m7_base_leg'(pin 순번 $m7_leg_ord)과 결부되지 않는다. 개수가 관측과 어긋나면 exit 3 을 형제 축으로 귀속할 수 없다"
   elif [ "$m7_mut_rc" -eq "$m7_base_rc" ]; then
     fail_case "M7 (형제 부재 불변식): SURVIVED (baseline exit=$m7_base_rc == mutant exit=$m7_mut_rc — 불변식이 판별에 기여하지 않음 = 실행 순번 누설 채널 무방비)"
   else
-    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + '형제 2개' 관측 ${m7_base_hit}건 → 불변식 제거 mutant exit=$m7_mut_rc)"
+    pass_case "M7 (형제 부재 불변식): KILLED (정리 무력화 baseline exit=$m7_base_rc + 형제 불변식 문면 ${m7_base_hit}건 · 형제 수 ${m7_base_sib} == 발화 leg '$m7_base_leg' pin 순번 ${m7_leg_ord} 결부 → 불변식 제거 mutant exit=$m7_mut_rc)"
+  fi
+fi
+
+# M8 = 하한 대조의 **정의역** (`LOWER_BOUND_AXES`). census 축 6개를 baseline 하한과 대조하는
+#      루프의 정의역 그 자체이므로, 이 tuple 을 좁히면 빠진 축은 **대조가 일어나지 않는다**.
+#      실측(본 회차 착수 전): `LOWER_BOUND_AXES = ("N_gates",)` 로 좁힌 mutant 는 rc=0 ·
+#      Traceback 0 · `baseline-cmp:` 6행 → 1행이며, 그 상태로 본 shell self-test 전건이 초록이었다
+#      (변경 전 이 파일의 `baseline-cmp` 참조 = 0건 — load-bearing 성질에 커버리지가 없었다).
+#
+# ★ exit-flip 축이 아니다 — 정상 corpus 는 전 축이 하한을 만족하므로 대조를 도려내도 rc 는 0 그대로다.
+#   그래서 판정을 exit 에 걸지 않고 **stdout 관측 문면**(`baseline-cmp: <axis> ...` 의 축 이름 집합)의
+#   축소로 한다. exit 은 '불변'을 주장하는 대신 **양 팔 실측**해 뒷받침하고(무관측 단정 금지),
+#   crash mutant 는 KILL 로 계상하지 않고 무효(FAIL)로 떨어뜨린다 — 판정 기준 ③ 와 동일 규율.
+#
+# ★ 대조군(자기 대조군 보유): mutant 와 대조하기 **전에** baseline(무변형)에서 6축이 실제로
+#   관측됨을 확인한다. baseline 이 이미 축을 못 내고 있으면 mutant 와의 차이는 아무것도 뜻하지
+#   않는다(무효 kill). M7 에서 실제로 대조군이 붕괴한 전례가 있다 — mutate_core 는 명령치환
+#   (서브셸)에서 돌아 MUT_SEQ 증가가 부모에 전파되지 않으므로 연속 2회 호출이 같은 파일명을
+#   덮어썼다. M8 은 baseline 팔이 **무변형 $CORE_PY** 라 그 함정을 구조적으로 밟지 않는다.
+#
+# ★ 기대값 출처(항진 방지): 6축 이름을 **self-test 안 리터럴로 pin** 한다. core 의 CENSUS_AXES /
+#   LOWER_BOUND_AXES 에서 파생시키면 검사 대상이 곧 기대값의 원천이 되어(좌우변 동시 파생)
+#   상수를 좁힐 때 양변이 함께 좁아져 검사가 **항진**한다.
+M8_PIN_AXES="N_gates N_armL N_armH N_probe N_detected N_flip"   # ← 리터럴 pin 6축 (core 미참조)
+M8_SED='s/^LOWER_BOUND_AXES = tuple(a for a in CENSUS_AXES if a != "N_indeterminate")$/LOWER_BOUND_AXES = ("N_gates",)  # M8-lower-bound-axes-narrowed/'
+M8_TB="Traceback (most recent call last)"
+# 축 이름만 뽑아 정렬 (emit 순서 변경 같은 무해한 리팩터로 오검출하지 않도록 집합 비교)
+m8_axes_of() { sed -n 's/^baseline-cmp: \([A-Za-z_][A-Za-z_0-9]*\) .*/\1/p' "$1" | sort | tr '\n' ' '; }
+m8_pin_sorted="$(printf '%s\n' $M8_PIN_AXES | sort | tr '\n' ' ')"
+
+# ── baseline 팔 (대조군) ──
+run_core "$CORE_PY" "$REPO_ROOT"
+m8_base_rc=$CORE_RC
+m8_base_tb=$(grep -cF "$M8_TB" "$CORE_ERR")
+m8_base_axes="$(m8_axes_of "$CORE_OUT")"
+m8_base_n=$(grep -cE '^baseline-cmp: ' "$CORE_OUT")
+m8_ok=1
+if [ "$m8_base_tb" -ge 1 ]; then
+  fail_case "M8 대조군: 무효 — baseline(무변형) stderr 에 Traceback ${m8_base_tb}건 (exit=$m8_base_rc). 대조군이 이미 crash 라 어떤 관측도 이 축으로 귀속되지 않는다"
+  sed 's/^/        base-stderr> /' "$CORE_ERR" >&2
+  m8_ok=0
+elif [ "$m8_base_rc" -ne 0 ]; then
+  fail_case "M8 대조군: 성립 불가 — baseline exit=$m8_base_rc (기대 0)"
+  m8_ok=0
+elif [ "$m8_base_axes" != "$m8_pin_sorted" ]; then
+  fail_case "M8 대조군: 붕괴 — baseline 이 하한 대조한 축 집합 [$m8_base_axes] ≠ self-test pin [$m8_pin_sorted]. 죽이려는 성질이 baseline 에서 관측되지 않으면 mutant 와의 차이는 무의미"
+  m8_ok=0
+else
+  pass_case "M8 대조군: baseline 이 ${m8_base_n}축을 실제로 하한 대조 (관측 축 집합 == self-test 리터럴 pin — mutant 대조 전제 성립 · N_indeterminate 는 상한 축이라 부재)"
+fi
+
+# ── mutant 팔 ──
+if [ "$m8_ok" -eq 1 ]; then
+  m8_mut="$(mutate_core "M8 mutant" "$M8_SED" "M8-lower-bound-axes-narrowed")"
+  if [ -z "$m8_mut" ]; then
+    fail_case "M8 (하한 대조 정의역 LOWER_BOUND_AXES): NOT_RUN — sed 미치환 또는 변형본 syntax invalid (false PASS 금지)"
+  else
+    run_core "$m8_mut" "$REPO_ROOT"
+    m8_mut_rc=$CORE_RC
+    m8_mut_tb=$(grep -cF "$M8_TB" "$CORE_ERR")
+    m8_mut_axes="$(m8_axes_of "$CORE_OUT")"
+    m8_mut_n=$(grep -cE '^baseline-cmp: ' "$CORE_OUT")
+    m8_lost=""
+    for m8_a in $m8_base_axes; do
+      case " $m8_mut_axes " in *" $m8_a "*) ;; *) m8_lost="$m8_lost $m8_a";; esac
+    done
+    if [ "$m8_mut_tb" -ge 1 ]; then
+      fail_case "M8 (하한 대조 정의역): 무효 kill — mutant stderr 에 Traceback ${m8_mut_tb}건 (exit=$m8_base_rc→$m8_mut_rc). 프로세스가 대조 루프 도달 전 사망했을 수 있어 축 소실을 판별력으로 계상하지 않는다"
+      sed 's/^/        mut-stderr> /' "$CORE_ERR" >&2
+    elif [ "$m8_mut_rc" -ne "$m8_base_rc" ]; then
+      fail_case "M8 (하한 대조 정의역): 무효 kill — mutant exit=$m8_mut_rc ≠ baseline exit=$m8_base_rc. exit 축이 함께 흔들리면 축 집합 축소를 stdout 축 단독 판별로 귀속할 수 없다"
+    elif [ "$m8_mut_axes" != "$m8_base_axes" ] && [ "$m8_mut_n" -lt "$m8_base_n" ]; then
+      pass_case "M8 (하한 대조 정의역 LOWER_BOUND_AXES): KILLED (stdout 축 — baseline-cmp ${m8_base_n}행 [$m8_base_axes] → mutant ${m8_mut_n}행 [$m8_mut_axes] · 대조 소실 축 =[$m8_lost] / exit=$m8_base_rc→$m8_mut_rc 실측 불변 · Traceback base=${m8_base_tb}건 mut=${m8_mut_tb}건)"
+    else
+      fail_case "M8 (하한 대조 정의역): SURVIVED (baseline ${m8_base_n}행 [$m8_base_axes] == mutant ${m8_mut_n}행 [$m8_mut_axes] — 하한 대조 정의역을 도려내도 관측이 그대로 = 판별력 0)"
+    fi
   fi
 fi
 
