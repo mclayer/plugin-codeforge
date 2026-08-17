@@ -861,8 +861,17 @@ def test_boundary_row5_dangling_and_self_pointer():
     )
 
 
-def test_boundary_row6_append_into_split_section_is_green():
-    """§8.3 행 6 — 분할된 섹션에 정상 append (P1-5 born-broken 대조군). false RED 0."""
+def test_boundary_row6_pure_append_no_split_is_green():
+    """§8.3 행 6 — **분할 없는** 순수 append 대조군 (P1-5 born-broken). false RED 0.
+
+    fixture `ctx_append_ctl`(`_story_read_surface_fixtures.py:1100`)은 before/after 를 둘 다
+    `build_story()` 기본값(`split_9`/`split_10` = False, children 없음)으로 만든다 ⇒ 앵커가
+    아예 없어 `anchor_delta = ∅`. 따라서 본 테스트가 실제로 재는 속성은 "**앵커 변동이 없는**
+    순수 append 에서 INV-S1 미발화 ∧ INV-S2 발화 후 GREEN" 이지 "분할된 섹션에 append" 가
+    아니다 (구명 `test_boundary_row6_append_into_split_section_is_green` — R5 F-CR-R5-4 개명).
+    분할 커밋 ∧ 분할 섹션(§9) append 형상은 행 8
+    (`test_boundary_row8_anchor_delta_with_total_growth`)이 덮는다.
+    """
     eng = engine()
     ctx = FX.ctx_append_ctl(1000)
     s1 = FX.run_inv_s1(eng, ctx)
