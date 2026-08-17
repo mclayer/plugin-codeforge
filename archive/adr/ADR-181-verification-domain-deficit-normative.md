@@ -25,10 +25,10 @@ related_cfps:
 related_files:
   - docs/inter-plugin-contracts/fix-event-v1.md  # 원인 판정 값공간 + 정의역 선언 필드. ★ 현 실버전 = v1.5 — v1.6 MINOR bump 는 본 PR 내 D-1 로 미착지(현재형 기술 금지, §결정 5 ②)
   - docs/inter-plugin-contracts/dev-process-event-v1.md  # root_cause_class 원장 키. ★ 현 실버전 = v1.0 — v1.1 MINOR bump 는 Phase 2 (D-19 / carrier plugin-codeforge#2985 / 만기 2026-09-15)
-  - docs/evidence-checks-registry.yaml  # fix-ledger-conformance entry (owner_adr = 본 ADR). ★ 본 PR 에 실 append 완료 — 112 → 113 entry
+  - docs/evidence-checks-registry.yaml  # fix-ledger-conformance + adr-admission entry 2건 (owner_adr = 본 ADR). ★ 본 PR 실 append — 112 → 114 (설계리뷰 FIX Iter 5 정정: 직전 판 "113" 은 append 1건 누락)
   - docs/domain-knowledge/concept/verification-domain-deficit.md  # 개념 서술 SSOT (본 ADR 이 규범 SSOT)
 is_transitional: false
-mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (§결정 5 ③-dt (ii), 설계리뷰 FIX Iter 4). 앞의 세 토큰(carrier / expiry / [repo=...])만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다 — 이 선언은 ADR-181 §결정 5 ③-dt (ii) PFX 선두 앵커 술어로 실제 배선됐다(설계리뷰 FIX Iter 4, 판별 행 18). Phase 2 이행 — scripts/lib/check_fix_ledger_conformance.py + thin wrapper + workflow twin + discriminating self-test. ★ 본 빈 리스트는 §결정 5 의 두 충족 경로 중 **면제 경로**(len==0 ∧ carrier ∧ 만기)로 ② 를 충족한다 — 사다리 경로((가)(나)(다)) 가 아니며, 따라서 "돌아가는 검사가 있다" 를 주장하지 않는다(§결정 5 면제 경로 천장 문단 참조). ① = 본 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance (112 → 113, current_tier warning / status deferred-followup) 로 충족 — firsthand 재검증: grep -c 'fix-ledger-conformance' docs/evidence-checks-registry.yaml → 3(정의 1 + 주석 2). 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다.
+mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (§결정 5 ③-dt (ii), 설계리뷰 FIX Iter 4). 앞의 세 토큰(carrier / expiry / [repo=...])만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다 — 이 선언은 ADR-181 §결정 5 ③-dt (ii) PFX 선두 앵커 술어로 실제 배선됐다(설계리뷰 FIX Iter 4, 판별 행 18). Phase 2 이행 — scripts/lib/check_fix_ledger_conformance.py + thin wrapper + workflow twin + discriminating self-test. ★ 본 빈 리스트는 §결정 5 의 두 충족 경로 중 **면제 경로**(len==0 ∧ carrier ∧ 만기)로 ② 를 충족한다 — 사다리 경로((가)(나)(다)) 가 아니며, 따라서 "돌아가는 검사가 있다" 를 주장하지 않는다(§결정 5 면제 경로 천장 문단 참조). ① = 본 PR 의 docs/evidence-checks-registry.yaml row **2건**(fix-ledger-conformance + adr-admission, current_tier warning / status deferred-followup) 로 충족. ★ 설계리뷰 FIX Iter 5 정정 — 직전 판의 "112 → 113" 과 "grep -c → 3(정의 1 + 주석 2)" 은 **둘 다 stale** 이었다(각각 append 1건 누락 / 신설 row 의 workflow 키가 같은 파일명을 가리켜 출현이 늘었다). 정수 pin 대신 **재현 규칙**으로 적는다 — entry 수: grep -c '^  - name:' docs/evidence-checks-registry.yaml (merge-base ecfe62d63 = 112, HEAD = 그 값 + 본 PR append 분) / 문자열 출현: grep -c 'fix-ledger-conformance' docs/evidence-checks-registry.yaml (HEAD 실측 5 — 정의 1 + detect_command 1 + workflow 2 + 주석 1). 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다.
 ---
 
 # ADR-181: 검증 정의역 결손(P⊋V) 규범 — 정의·정직 불변식·게이트 설계 제약·접합부
@@ -435,6 +435,12 @@ yaml.safe_load 로 각 위치의 탭을 실측 (frontmatter 1블록)
 정규식만 적는 것으로는 부족하다. **어느 엔진에서든 아래 표를 재현하려면 다음 4항을 지켜야 한다.**
 
 1. **모드 = multiline**(`^` `$` 가 줄 경계). `DOTALL` **금지**.
+   ★ **`SCOPE` 와 `DOTALL` 금지는 충돌하지 않는다 (FIX Iter 5 확인, P2-5)** — `SCOPE`(frontmatter 절단)는
+   **정규식이 아니라 블록 절단**이며 두 엔진 모두 정규식 밖에서 수행한다((i-x-B) 첫 행). 즉 `DOTALL` 이
+   지배하는 축(`.` 의 개행 포섭)과 `SCOPE` 가 지배하는 축(검사 대상 문자열의 범위)이 **disjoint** 하다.
+   ★ 오히려 `SCOPE` 는 `DOTALL` 금지를 **덜 중요하게** 만든다 — 검사 문자열이 frontmatter 로 좁혀지면
+   개행을 넘나드는 오매치의 사정거리도 그만큼 줄기 때문이다. 다만 그것은 **완화이지 대체가 아니며**,
+   `DOTALL` 금지는 그대로 유지한다(frontmatter 안에도 개행은 있다).
 2. **공백 문자군 = 스페이스(U+0020)와 탭(U+0009) 2문자만. `\s` 금지.**
    `\s` 는 개행을 포함하므로 행 3·4 를 GREEN 으로 만든다 — 행 단위 엔진에서는 우연히 RED 지만
    버퍼 단위 엔진에서는 GREEN 이라 **판정이 엔진에 의존**한다.
@@ -450,7 +456,23 @@ yaml.safe_load 로 각 위치의 탭을 실측 (frontmatter 1블록)
    ⇒ **규정 표기 = POSIX ERE `[[:blank:]]` / Python·PCRE `[ \t]`**(여기서 `\t` 는 실제 탭). 두 표기는
    같은 2문자 집합을 가리키며, **어느 하나를 다른 엔진에 그대로 옮겨 쓰면 안 된다**(Python `re` 는
    `[[:blank:]]` 를 POSIX 클래스로 해석하지 않는다).
-3. **주석 본문 문자군 = `[^\n]` 만. `.` 금지.** — `.` 은 `DOTALL` 이 켜진 엔진에서 개행을 먹는다.
+3. ★★ **주석 본문 문자군 — 불변식은 "개행에 도달하지 못한다" 이고, 표기는 엔진별이다**
+   (설계리뷰 FIX Iter 5 전면 정정 — 직전 판의 *"`[^\n]` 만, `.` 금지"* 는 **ERE 에서 틀린다**).
+
+   ```
+   grep -E 'a[^\n]b'    "anb" -> 0   "axb" -> 1   "a\b" -> 0     (글자 n·백슬래시를 배제)
+   Python re a[^\n]b    "anb" -> True  "axb" -> True             (개행만 배제)
+   ```
+
+   ⇒ **규정 표기 = POSIX ERE `.` / Python·PCRE `[^\n]`**(+ `DOTALL` 금지). 근거가 엔진마다 다르다:
+   - **ERE(`grep`)에서 `.` 이 안전한 이유는 정규식 의미가 아니라 버퍼 구조다** — `grep` 은 입력을
+     행 단위로 잘라 넘기므로 개행이 애초에 버퍼에 없다. 즉 `.` 은 **구조적으로** 개행에 도달 불가다.
+   - **Python 에서 `.` 이 위험한 이유는 `DOTALL` 이 켜질 수 있기 때문**이다. 그래서 Python 가지는
+     `DOTALL`-면역인 `[^\n]` 을 쓴다.
+   - ★ **오전사 비용 실측 (firsthand)**: ERE 가지의 `.` 을 `[^\n]` 으로 옮겨 적으면 정상형 주석의
+     `[repo=mclayer/plugin-codeforge]` 안 `n`(`plugin`)이 앵커를 깨 **14행이 뒤집히고 행 1(정상형)이 RED** 다.
+     Python 가지에서 `[^\n]` 을 ERE 문면으로 오전사한 경우도 동일하게 **14행 뒤집힘**((0-c) `CBODY`).
+   - **이 항은 `D-CLS` 의 첫 적용 대상**이며 아래 (i-x) 문자군 교차표 3행이 그 기록이다.
 4. ★ **계수는 행 계수가 아니라 출현 계수다.** `grep -c` 는 **매치한 줄 수**를 센다 —
    firsthand: `carrier=#2985 carrier=#1` 한 줄에서 `grep -cE 'carrier=#[1-9][0-9]{0,6}'` → **1**,
    `grep -oE … | wc -l` → **2**. 행 계수를 쓰면 **행 11·12(중복 토큰 = RED)가 통과**하고,
@@ -460,28 +482,79 @@ yaml.safe_load 로 각 위치의 탭을 실측 (frontmatter 1블록)
 즉 **개행을 먹을 수 있는 문자군을 술어에서 전부 제거**하는 것이 행 3·4 를 RED 로 만드는 기제이고,
 **계수 축을 행에서 출현으로 옮기는 것**이 행 11·12 를 RED 로 만드는 기제다.
 
-###### (i-x) ★★ leg 별 2엔진 교차 결과 (설계리뷰 FIX Iter 4 — 직전 판은 `LINE` leg 만 교차했다)
+###### (i-x) ★★ 2엔진 교차 — **문자군 축**(`D-CLS`) + **leg 축**(`D-LEG`) 분리 (FIX Iter 5 전면 재작성)
 
-직전 판은 위 3항을 **`LINE` leg 에 대해서만** 교차 검증하고 나머지 leg 을 검증 없이 같은 문단에 묶었다.
-leg 별로 분해해 다시 실측한다 — **결론이 leg 마다 다르다**:
+직전 판은 두 축을 한 표에 섞어 두었고, 그래서 **leg 축을 전부 통과한 상태에서 문자군이 틀려 있었다.**
+축을 나눠 각각 전수 기재한다. ★ **ERE 가지의 지위 = 규범 구현이 아니라 이식 부록(portability annex)**
+— 그 존재 이유는 **표기 오전사를 잡는 차분 오라클**이며, 실제로 `[ \t]`(Iter 4)와 `[^\n]`(Iter 5)을 잡아냈다.
 
-| leg | POSIX ERE (`grep -E`) 재현 | Python `re` 재현 | 교차 결과 |
+**(i-x-A) 문자군 교차표 (`D-CLS` 이행 — 술어에 등장하는 전 문자군)**
+
+| 문자군 | 쓰이는 곳 | POSIX ERE 규정 표기 | Python `re` 규정 표기 | 오전사 시 무엇이 깨지는가 (firsthand) |
+|---|---|---|---|---|
+| 공백군 | `LINE` 의 키-값·값-주석 사이 | `[[:blank:]]` | `[ \t]` (실제 탭) | ERE 에서 `[ \t]` = {스페이스, `\`, 글자 `t`} — 실탭 미매치 ∧ 글자 t 오매치 |
+| 공백군 | `PFX` 의 토큰 사이 | `[[:blank:]]` | `[ \t]` | 동상. **행 21 이 판별** ((0-c) `BLANK_PFX`) |
+| **주석 본문군** | 캡처 `c` | ★ **`.`** (행 단위 버퍼 = 개행 도달 불가) | ★ **`[^\n]`** (+ `DOTALL` 금지) | ★★ 서로 옮겨 적으면 **14행 뒤집힘 · 행 1 born-red** |
+| 숫자군 | `carrier` · `expiry` | `[0-9]` | `[0-9]` | `\d` 금지 — Python 에서 유니코드 숫자까지 먹는다 |
+| 토큰 경계군 | lookaround 대체 / lookbehind 안 | `[^0-9A-Za-z_-]` | `[^0-9A-Za-z_-]` | 동치 (부정 집합이라 엔진 차 없음) |
+| repo 문자군 | `[repo=owner/name]` | `[A-Za-z0-9_.-]` | `[A-Za-z0-9_.-]` | 집합 안 `.` 은 리터럴 — 밖으로 빼면 임의문자 |
+
+★ **`.` 의 채택 여부 = 엔진별로 정반대이며 그것이 정답이다** — ERE 가지 **채택**(구조적 안전),
+Python 가지 **금지**(`DOTALL` 위험). 직전 판의 무조건 *"`.` 금지"* 는 Python 근거를 ERE 에 그대로
+옮긴 것이었고, 그것이 바로 이 표가 막으려는 오전사다.
+
+**(i-x-B) leg 교차표 (누락 3종 편입 — P0-C 조치 3 / P2-4)**
+
+| leg | POSIX ERE + shell 재현 | Python `re` + `yaml` 재현 | 교차 결과 |
 |---|---|---|---|
-| `LINE` (줄 형태) | 가능 — `[[:blank:]]` 표기 | 가능 — `[ \t]` 표기 | ★ 동치 (표기만 다름) |
-| `CAR` (carrier 출현 계수) | **1패스 불가** — ERE 에 lookaround 부재. 아래 2패스로 우회 | 가능 (lookbehind/lookahead) | ★ **2패스 우회 후 동치** |
-| `EXP` (expiry 출현 계수) | 동상 | 가능 | ★ 2패스 우회 후 동치 |
+| ★ `SCOPE` (frontmatter 절단) | **정규식 아님** — `awk 'NR==1 && /^---$/ {f=1;next} f && /^---$/ {exit} f'` | 줄 배열 절단 | 동치 (**양쪽 다 정규식 밖** — 직전 판은 이 leg 을 교차표에 아예 안 넣었다) |
+| ★ **캡처 `c` 추출** | ★★ **named capture 부재** → `grep -E` 로 줄을 고른 뒤 `sed -E 's/^…#//'` **치환**으로 대체 | `(?P<c>…)` 캡처 | ★★ **기전이 다르다** (매치-후-치환 vs 캡처). ★ **R3 엔진 분열의 원 기전이 이 칸의 미규정이었다** |
+| ★ `mea-missing` (키 부재) | **근사만** — `grep -cE '^"?mechanical_enforcement_actions"?:'` (표기 변형을 손으로 열거) | `"mechanical_enforcement_actions" in yaml.safe_load(fm)` | ★ **비동치** — ERE 는 *표기* 열거, Python 은 *YAML 의미*. 현 fixture 집합에서만 우연히 일치 |
+| `LINE` (줄 형태) | 가능 — `[[:blank:]]` + `.` | 가능 — `[ \t]` + `[^\n]` | 동치 (표기만 다름) |
+| `CAR` / `EXP` (출현 계수) | lookaround 부재 → 2패스 우회 (아래) | lookbehind/lookahead | 동치 |
 | `REPO` (repo 토큰) | 가능 (경계가 `[` `]` 리터럴이라 lookaround 불요) | 가능 | 동치 |
 | `PFX` (선두 배치) | 가능 (`^` 앵커) | 가능 | 동치 |
-| 계수 축 | **`grep -o` 출현 목록 → `wc -l`** 필수 (`grep -c` 금지 — 행 계수) | `len(re.findall())` | 동치 |
-| 날짜 비교 | 외부 계산 필요(shell 산술) | `date.fromisoformat` | 동치 |
+| ★ `fm-parse-error` | ★★ **구현 불가** — shell 에 YAML 파서 부재 | `yaml.safe_load` + `try/except` | ★★ **비동치 · ERE 가지가 `GREEN` 으로 fail-open** (행 14·20 실측) |
+| `over-cap` 의 발행일 | 근사 — `grep -E '^date:'` + `date -u -d` | `yaml.safe_load(fm)["date"]` | 근사 (표기 의존) |
+| 계수 축 | `grep -o` 출현 목록 → `wc -l` (`grep -c` 금지 — 행 계수) | `len(re.findall())` | 동치 |
+| 날짜 비교 | `sort` 사전순 (ISO 8601 이라 성립) + `date -u -d` | `date.fromisoformat` | 동치 |
 
-★ **`CAR`/`EXP` 의 ERE 2패스 우회 (firsthand 도출)** — 단일 ERE 패스로는 재현 불가임을 실측으로 확정했다:
+★★ **2엔진 차분 실행 결과 (firsthand, 본 판 저작 시점)**: (iv) 표 **전 25행**을 두 구현으로 각각 돌려
+`(verdict, exit사유)` 를 비교했다 — **일치 23 / 불일치 2**. 불일치는 **행 14 · 20** 이고 **둘 다
+`fm-parse-error`** 이며 **ERE 가지가 `GREEN`(fail-open)** 이다.
 
-| ERE 시도 | 행 6 (`non-carrier=#3`) | 행 11 (인접 중복) | 8자리 (`#12345678`) | 판정 |
+⇒ ★★★ **이 2행이 ERE 가지를 규범에서 내리는 결정적 근거다.** "엔진 비의존" 은 표기 층에서만 참이고,
+**파서 층에서는 ERE 가지가 원리적으로 도달할 수 없다.** 직전 판이 *"2엔진 18/18"* 이라 적을 수 있었던 것은
+행 14 를 *"정규식 술어 밖"* 으로 **정의역에서 빼 두었기** 때문이며, 정의역을 좁혀 얻은 일치를
+엔진 동치의 근거로 쓴 것이다 — 이 Story 가 반복 고발한 **검사 정의역 협착**의 자기 실례다.
+
+★ **정직 고지 (`declared`)**: "엔진 비의존" 은 이제 다음만 뜻한다 — **(iv) 표의 정규식-판정 가능 부분집합
+(23행)에 대해 두 구현이 일치한다.** 파서 층(2행)은 불일치이며, **전 행 재현은 참조 구현만 달성한다.**
+
+★★ **`CAR`/`EXP` 의 ERE 2패스 우회 — 수용 기준 leg 이 아니라 robustness 선택으로 강등한다**
+(설계리뷰 FIX Iter 5, P1-3 정정)
+
+**직전 판의 채택 근거가 결정표와 어긋나 있었다**: (i-x) 가 1패스를 기각한 두 칸(*"행 11 인접 중복"* ·
+*"8자리"*)은 **결정표 행이 아닌 입력**에서 나왔다 — **행 11 의 두 `carrier` 토큰은 비인접**이고
+8자리 입력은 표에 아예 없었다. ⇒ 처분으로 **두 입력을 실제 행으로 신설**했다(**행 23** 인접 중복 ·
+**행 24** 8자리). 그 뒤 ablation 을 돌린 결과:
+
+> **2패스 → 1패스 (a)형 으로 되돌리면 뒤집히는 행 = 1개(행 23)이며, 그것도 `verdict` 가 아니라
+> `exit 사유`뿐이다** (`carrier-token` → `token-order`). **`verdict` 축 판별 = 0.**
+
+**원인** — `PFX` 가 `carrier=#N` **직후 공백 + `expiry=`** 를 독립 요구하므로, 인접 중복도 8자리 초과도
+`PFX` 에서 이미 걸린다. 즉 2패스는 **`PFX` 와 중복 방어**이며 단독 판별력이 없다.
+
+⇒ **정직 강등**: 2패스는 **exit 사유의 정확성을 위한 robustness 선택**이지 수용 기준 leg 이 아니다.
+1패스로 구현한 checker 도 **(iv) 표를 전건 재현**하며, 그 사실을 숨기지 않는다.
+★ 이 강등은 `D-LEG` L2 를 ablation 으로 승격한 덕에 **드러났다** — 존재-assert 였다면 "행 23 이 판별한다"
+로 통과했을 것이다(행 23 은 실제로 1패스에서 값이 바뀌므로). **verdict 축을 명시한 것이 차이를 만들었다.**
+
+| ERE 시도 | 행 6 (`non-carrier=#3`) | **행 23** (인접 중복) | **행 24** (8자리) | 판정 |
 |---|---|---|---|---|
 | 경계 없음 `carrier=#[1-9][0-9]{0,6}` | **1 (오탐)** | 2 | 1 (오탐) | ✗ |
-| 앞뒤 **양쪽** 경계 교대 — 아래 (a) 형 | 0 | **1 (인접 소비)** | 0 | ✗ |
-| ★ **선행 경계만** + **자릿수 초과 별도 패스** — 아래 (b) 형 | 0 | **2** | **초과 패스가 1 → RED** | ★ 채택 |
+| 앞뒤 **양쪽** 경계 교대 — 아래 (a) 형 | 0 | **1 (인접 소비)** | 1 | 사유만 어긋남 |
+| ★ **선행 경계만** + **자릿수 초과 별도 패스** — 아래 (b) 형 | 0 | **2** | **초과 패스가 1 → RED** | ★ 채택 (robustness) |
 
 ```
 # (a) 부적합 — 후행 경계까지 소비해 인접 토큰이 1로 셈된다
@@ -501,6 +574,9 @@ grep -oE '(^|[^0-9A-Za-z_-])carrier=#[0-9]{8}' | wc -l             # == 0 이어
   경로를 수용 기준의 유일 실현으로 삼으면 재현 조건이 환경 의존이 된다.
 - ★ **정직 고지 (`declared`)**: "엔진 비의존" 은 **표를 재현하는 실현이 각 엔진에 존재한다** 는 뜻이지
   **같은 정규식 문자열이 두 엔진에서 동작한다** 는 뜻이 아니다. 직전 판은 이 둘을 구분하지 않았다.
+  ★ **Iter 5 추가 정정** — 그 진술조차 **파서 층에서는 거짓**이다. ERE 가지에는 `fm-parse-error` 를
+  재현하는 실현이 **존재하지 않는다**(위 (i-x-B)). 따라서 정확한 진술은
+  **"정규식-판정 가능 부분집합에 한해 각 엔진에 실현이 존재한다"** 이다.
 
 ##### (ii) 고정 토큰 형식 — 자유 텍스트 탐색 폐기
 
@@ -508,8 +584,12 @@ grep -oE '(^|[^0-9A-Za-z_-])carrier=#[0-9]{8}' | wc -l             # == 0 이어
 **산문**이다 — firsthand 실측 길이: `ADR-067` **658자** · `ADR-181` **599자** · `ADR-043` **557자**.
 산문 안 자유 탐색은 **부인 문장도 통과**시킨다(행 6). ⇒ **key=value 고정 토큰**으로 전환한다.
 
+★★ **아래 블록의 지위 = (0-a) 3층 중 층 3 — 설명용(non-normative)** (FIX Iter 5).
+판정 SSOT 는 (iv) 결정표이고, 유일 규정 구현은 Python `re` + `yaml.safe_load` 참조 구현이다.
+**이 텍스트가 표·참조 구현과 어긋나면 어긋난 쪽은 이 텍스트다.**
+
 ```
-# 아래는 Python·PCRE 표기다. POSIX ERE 표기는 (i) 4항 + (i-x) 2패스 우회를 따른다.
+# 아래는 Python·PCRE 표기다 (설명용). POSIX ERE 표기는 (i) 3·4항 + (i-x-A) 문자군 교차표를 따른다.
 SCOPE:= 파일 선두 frontmatter 블록 (1행 `---` 부터 다음 단독 `---` 직전까지)   # ★ FIX Iter 4 — 파일 전체 아님
 LINE := ^mechanical_enforcement_actions:[ \t]*\[\][ \t]*#(?P<c>[^\n]*)$      # SCOPE 안에서만, multiline, DOTALL 금지
 CAR  := (?<![0-9A-Za-z_-])carrier=#(?P<n>[1-9][0-9]{0,6})(?![0-9])           # 캡처 c 안에서만
@@ -536,9 +616,22 @@ PFX  := ^[ \t]*carrier=#[1-9][0-9]{0,6}[ \t]+expiry=[0-9]{4}-[0-9]{2}-[0-9]{2}[ 
   `[repo=mclayer/plugin-codeforge]` 접미를 이미 쓰고 있었는데(firsthand 3/3) **술어에 그 토큰이 없었다** —
   R3 이 지목한 "셋 다 이 선언의 carrier 가 아니다" 가 **위치만 고쳐지고 동일성은 미해결**로 남은 자리다.
   ⇒ carrier 를 **repo 한정(repo-qualified)** 으로 만든다. **판별 행 = 행 17**(repo 토큰 제거 → `repo-token` RED).
-  ★ **천장 (`declared`)**: `REPO` 는 **형식 검증에 머문다.** "그 번호의 Issue 가 그 repo 에 실재하는가" 는
-  네트워크 조회이며 **Phase 2 로 정직 이관**한다(carrier `#2985` / 만기 2026-09-15). 이 문단을 지우고
-  인용하면 over-claim 이다 — 현재 봉인된 것은 *아무 숫자나 쓰기* 가 아니라 *아무 repo 나 가리키기* 다.
+  ★★ **천장 (`declared`) — 직전 판의 천장 문장 자체가 over-claim 이었다 (FIX Iter 5, P1-2)**:
+  직전 판은 *"현재 봉인된 것은 아무 숫자나 쓰기가 아니라 **아무 repo 나 가리키기** 다"* 라 적었다.
+  **거짓이다 (firsthand)** — 임의 `owner/name` 이 전부 통과한다:
+
+  ```
+  [repo=mclayer/plugin-codeforge] -> GREEN     [repo=evil/nonexistent]      -> GREEN
+  [repo=mclayer/plugin-codeforg]  -> GREEN     [repo=a/b] · [repo=0/0]      -> GREEN
+  ```
+
+  ⇒ **정본 천장**: `REPO` 가 봉인하는 것은 **repo 토큰의 부재**뿐이다. *어느* repo 인지는 검사하지 않으므로
+  오타 repo·존재하지 않는 repo·타인 repo 가 모두 통과한다. `REPO` 의 실제 이득은 **주석 형태를
+  `owner/name` 을 포함한 3-토큰 정규형으로 강제**해 산문 매설을 어렵게 만드는 것이며, **동일성 검증이 아니다.**
+  "그 번호의 Issue 가 그 repo 에 실재하는가" 는 물론이고 **"그 repo 가 이 repo 인가"** 조차
+  Phase 2 이관 대상이다(carrier `#2985` / 만기 2026-09-15). 이 문단을 지우고 인용하면 over-claim 이다.
+  ★ **왜 지금 리터럴 고정을 안 하는가**: 술어에 `mclayer/plugin-codeforge` 를 박으면 consumer repo 에서
+  본 ADR 을 재사용할 수 없다. 값 고정은 checker 설정 축이지 술어 축이 아니다 — 그 분리를 여기 적는다.
 - ★★ **`PFX` 신설 — "선두 배치" 선언이 미배선이었다 (`D-LEG` L1/L2 적용, FIX Iter 4)**.
   현행 3 ADR 의 주석은 "**앞의 두 토큰만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다**" 라고
   선언하는데, 직전 술어는 **캡처 `c` 전체**에서 토큰을 찾았다 — 즉 **부인 산문 한가운데에 토큰을 매설해도
@@ -548,12 +641,25 @@ PFX  := ^[ \t]*carrier=#[1-9][0-9]{0,6}[ \t]+expiry=[0-9]{4}-[0-9]{2}-[0-9]{2}[ 
   경로는 `PFX` 가 아니라 **`CAR`/`EXP` 의 "캡처 `c` 전체에서 정확히 1회"** 가 막는다(행 11·12) —
   두 leg 이 선두와 접미를 나눠 맡는다.
 
-##### (iii) 판정 술어 (위 표를 만족하는 구현 한 가지)
+##### (iii) 판정 술어 = **참조 구현** (층 2 — normative)
+
+★★ **평가 순서가 leg 목록의 일부다** (FIX Iter 5) — 직전 판은 `mea-missing` 을 `line-form` 주석에
+곁들여 적었을 뿐 **어느 것이 먼저 exit 하는지 적지 않았고**, 그래서 exit 사유가 구현마다 갈렸다.
+아래 순서가 규정이며 (iv) 표의 exit 사유 열이 그 순서의 관측이다.
+
+★★ **`mea-missing` 의 판독 계층 정정 (FIX Iter 5 — 참조 구현 실행이 잡아낸 2건 중 1건)**:
+직전 판의 `mea-missing` 은 **행 정규식**(`^mechanical_enforcement_actions:`)이었다. 그러면
+**행 8(인용 키 `"K": []`)** 이 `mea-missing` 으로 exit 해 표의 기대(`line-form`)와 어긋난다 —
+YAML 상 키는 **존재**하는데 정규식은 부재라고 답하기 때문이다. ⇒ **키 존재 판정을 `yaml.safe_load`
+결과의 키 멤버십으로 옮긴다.** 같은 처분이 §8.D `N3` 에서도 독립적으로 필요했다(둘 다 "물리 줄 문자열"을
+"파싱값" 으로 올리는 동형 처분).
 
 ```
 exempt(file) :=
-      LINE 이 SCOPE(frontmatter 블록) 안에서 정확히 1회 매치   # 0/2+ = RED   [line-form]
-                                                              # 키 자체 부재 = RED [mea-missing]
+      frontmatter YAML 파싱 성공                     # 실패 = RED                 [fm-parse-error]
+  AND "mechanical_enforcement_actions" in 파싱값      # 키 부재 = RED              [mea-missing]
+                                                     # ★ 정규식 아님 — YAML 키 멤버십
+  AND LINE 이 SCOPE(frontmatter 블록) 안에서 정확히 1회 매치   # 0/2+ = RED   [line-form]
   AND CAR 이 캡처 c 안에서 정확히 1회 **출현**     # 0회 = RED / 2회 이상 = RED  [carrier-token]
   AND EXP 이 캡처 c 안에서 정확히 1회 **출현**     # 0회 = RED / 2회 이상 = RED  [expiry-token]
   AND REPO 가 캡처 c 안에서 정확히 1회 **출현**    # 0회 = RED / 2회 이상 = RED  [repo-token]
@@ -574,11 +680,14 @@ admissible(file) := ladder(file) OR exempt(file)
 - ★ **복수 토큰 = 선택 규칙이 아니라 RED** (설계리뷰 R3 N-2 처분). 만기가 2개일 때 `max` 를 택하면
   **fail-open 경로**가 생긴다(먼 날짜를 하나 더 적으면 연장된다). "정확히 1회" 는 선택 문제를
   **발생시키지 않는** 방식으로 닫는다.
-- ★ **키 자체 부재 = RED (`mea-missing`)**. 두 leg 모두 미충족이므로 정의상 귀결이지만,
-  문면에 없으면 checker 저자가 "키 없으면 스킵" 을 자연스럽게 짠다 — 실측 근거: 현행
-  `scripts/check-doc-frontmatter.sh` 는 이 키를 **한 번도 언급하지 않는다**
+- ★ **키 자체 부재 = RED (`mea-missing`)**. 문면에 없으면 checker 저자가 "키 없으면 스킵" 을
+  자연스럽게 짠다 — 실측 근거: 현행 `scripts/check-doc-frontmatter.sh` 는 이 키를 **한 번도 언급하지 않는다**
   (`grep -c mechanical_enforcement_actions scripts/check-doc-frontmatter.sh` → **0**, firsthand).
-  가장 싼 회피구(키를 지운다)가 미봉인이었다. 여기서 명시적으로 봉인한다.
+  ★★ **단, 직전 판의 "가장 싼 회피구(키 삭제)를 봉인한다" 는 over-claim 이다 (FIX Iter 5, ablation 실측)**:
+  이 leg 을 꺼도 **행 10 의 verdict 는 RED 그대로**이고 exit 사유만 `line-form` 으로 바뀐다.
+  키를 지우면 `LINE` 이 매치할 줄이 없어 어차피 RED 이기 때문이다. ⇒ 이 leg 의 실제 기여는
+  **봉인이 아니라 진단 정밀화 + `fm-parse-error` 와의 상호 보완**이다((0-c) 쌍 ablation — 둘을 함께 끄면
+  행 14·20 이 `GREEN` 이 된다). **`LINE` 과 중복 방어**임을 여기 적는다.
 - ★ **frontmatter YAML 파싱 실패 = RED (`fm-parse-error`), skip 아님**. 근거는 본 저작의
   **자기 실례**다 — 아래 ③-key census 를 돌린 파서가 `try/except: continue` 로
   `archive/adr/ADR-082-write-time-self-write-verification-mandate.md` 를 **조용히 탈락**시켰고,
@@ -610,10 +719,18 @@ checker 는 이 토큰을 stdout 으로 방출한다(어느 행에서 걸렸는�
 
 ```
 D    := date: 2026-08-16
-OK   := carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge]
+R    := [repo=mclayer/plugin-codeforge]        # ★ FIX Iter 5 신설 — 생략기호 `[repo=…]` 전면 치환용
+OK   := carrier=#2985 expiry=2026-09-15 R      # (R 은 위 리터럴로 전개된다)
 K    := mechanical_enforcement_actions
+TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 20·21 이 이 상수를 쓴다
 실행일 := 2026-08-17 (UTC)     # 재현용 pin. 행 13(expired)·행 15(over-cap) 판정이 이 값에 의존한다
 ```
+
+★★ **`R` 신설 이유 (FIX Iter 5, P0-D)** — 직전 판은 (iv-0) 에서 *"모든 행을 완전한 바이트 fixture 로
+고정한다"* 고 선언해 놓고 **6행(11·12·13·15·16·18)에 생략기호 `[repo=…]` 를 남겼다.** 리터럴 독법이면
+그 6행은 `REPO` 미매치로 판정이 달라지고, 특히 **행 16**(발행일 leg 의 **유일한 역방향** 판별 행)이
+`RED` 로 바뀌어 **판별이 소멸**한다. ⇒ 상수 `R` 을 정의하고 6행을 전부 치환했다.
+**선언과 표가 어긋난 자리를 표 쪽에서 닫는다.**
 
 ★ **재현 시 `실행일` 을 반드시 위 값으로 pin 할 것** — 그러지 않으면 시간 의존 행(13)의 기대가
 실행 시점에 따라 달라져 "전건 재현" 이 성립하지 않는다. 이것은 (iii) `expired` leg 이 도입한
@@ -645,34 +762,58 @@ K    := mechanical_enforcement_actions
 | 8 | `D` ⏎ `"K": []  # OK` | **RED** | `line-form` | 동상(인용 키) |
 | 9 | `D` ⏎ `K:` ⏎ `  []  # OK` | **RED** | `line-form` | 동상(flow 개행). 구판 `\s` 에서는 GREEN |
 | 10 | `D` ⏎ `status: Accepted` (키 자체 부재) | **RED** | `mea-missing` | **R3 P1** — 가장 싼 회피구(키 삭제) 봉인 leg |
-| 11 | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 [repo=…] carrier=#1` | **RED** | `carrier-token` | **출현 계수 leg 판별** — `grep -c`(행 계수)면 GREEN(firsthand 1 대 2) |
-| 12 | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 [repo=…] expiry=2027-01-01` | **RED** | `expiry-token` | 동상. 먼 날짜를 하나 더 적어 창을 연장하는 경로 봉인 |
-| 13 | `D` ⏎ `K: []  # carrier=#2985 expiry=2020-01-01 [repo=…]` | **RED** | `expired` | 하한(경과) leg 판별. 실행일 pin `2026-08-17` 의존 |
-| 14 | frontmatter YAML 이 **파싱 실패**하는 파일 | **RED** | `fm-parse-error` | **파서 계층 leg** — census 파서가 `ADR-082` 를 조용히 탈락시킨 자기 실례. 정규식 술어 밖 |
-| **15** | `date: 2026-05-13` ⏎ `amendment_log:` ⏎ `  - date: 2026-08-16` ⏎ `K: []  # carrier=#2985 expiry=2026-12-01 [repo=…]` | **RED** | `over-cap` | ★★ **`D-LEG` L2 — 발행일 leg 판별 (정방향)**. frontmatter `date` 독법 = **RED**(상한 2026-11-09) / amendment 저작일 독법 = **GREEN**(2027-02-12) / 실행일 독법 = **GREEN**. **오독하면 판정이 뒤집힌다** |
-| **16** | `D` ⏎ `amendment_log:` ⏎ `  - date: 2026-05-17` ⏎ `K: []  # carrier=#2985 expiry=2027-01-01 [repo=…]` | **GREEN** | — | ★★ **`D-LEG` L2 — 발행일 leg 판별 (역방향)**. frontmatter `date` 독법 = **GREEN**(상한 2027-02-12) / 최신 amendment 독법 = **RED**(2026-11-13). 역방향까지 있어야 leg 이 양쪽으로 고정된다 |
-| **17** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15` (repo 토큰 부재) | **RED** | `repo-token` | ★ **`D-LEG` L2 — `REPO` leg 판별**. 이 행이 GREEN 이면 carrier 가 repo 한정이 아니다 |
-| **18** | `D` ⏎ `K: []  # this is not a carrier=#2985 expiry=2026-09-15 [repo=…]` | **RED** | `token-order` | ★ **`D-LEG` L2 — `PFX` leg 판별**. 부인 산문 안에 토큰을 매설하는 경로. `PFX` 없으면 GREEN |
-| **19** | `D` ⏎ `K: []  # OK` **∧ 본문에 열 0 코드블록으로 같은 줄 1회 재등장** | **GREEN** | — | ★ **`D-LEG` L2 — `SCOPE` leg 판별**. 파일 전체 정의역이면 매치 2회 → `line-form` RED. firsthand 매치수 = 파일 전체 **2** / frontmatter **1** |
+| 11 | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 R carrier=#1` | **RED** | `carrier-token` | **출현 계수 leg 판별** — `grep -c`(행 계수)면 GREEN(firsthand 1 대 2) |
+| 12 | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 R expiry=2027-01-01` | **RED** | `expiry-token` | 동상. 먼 날짜를 하나 더 적어 창을 연장하는 경로 봉인 |
+| 13 | `D` ⏎ `K: []  # carrier=#2985 expiry=2020-01-01 R` | **RED** | `expired` | 하한(경과) leg 판별. 실행일 pin `2026-08-17` 의존 |
+| 14 | `D` ⏎ `K: []  # OK` ⏎ `broken: "unterminated` | **RED** | `fm-parse-error` | **파서 계층 leg** — census 파서가 `ADR-082` 를 조용히 탈락시킨 자기 실례. ★ **FIX Iter 5 — 산문 서술("파싱 실패하는 파일")을 리터럴 바이트로 교체**했고, 참조 구현 승격으로 **정규식 술어 밖이 아니라 정의역 안**이 됐다. ★ ERE 가지는 이 행에서 `GREEN` 으로 fail-open ((i-x-B)) |
+| **15** | `date: 2026-05-13` ⏎ `amendment_log:` ⏎ `  - date: 2026-08-16` ⏎ `K: []  # carrier=#2985 expiry=2026-12-01 R` | **RED** | `over-cap` | ★★ **발행일 leg (정방향)**. frontmatter `date` 독법 = **RED**(상한 2026-11-09) / amendment 저작일 독법 = **GREEN**(2027-02-12) / 실행일 독법 = **GREEN**. **오독하면 판정이 뒤집힌다** |
+| **16** | `D` ⏎ `amendment_log:` ⏎ `  - date: 2026-05-17` ⏎ `K: []  # carrier=#2985 expiry=2027-01-01 R` | **GREEN** | — | ★★ **발행일 leg (역방향)**. frontmatter `date` 독법 = **GREEN**(상한 2027-02-12) / 최신 amendment 독법 = **RED**(2026-11-13). 역방향까지 있어야 leg 이 양쪽으로 고정된다 |
+| **17** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15` (repo 토큰 부재) | **RED** | `repo-token` | ★★ **FIX Iter 5 정정 — 이 행은 `REPO` 를 판별하지 못한다.** `REPO` 를 꺼도 `PFX` 가 `R` 접미를 요구해 RED 이며 **사유만** `token-order` 로 바뀐다. 판별은 행 17b 가 맡는다. 이 행이 재는 것 = **{`REPO`,`PFX`} 쌍** |
+| **17b** | `D` ⏎ `K: []  # OK R` (repo 토큰 **2회**) | **RED** | `repo-token` | ★★ **FIX Iter 5 신설 — `REPO` 의 진짜 판별 행 (P0-A)**. `REPO` 제거 시 `PFX`·`CAR`·`EXP` 전부 통과해 **GREEN**. ablation 실측으로 확정 |
+| **18** | `D` ⏎ `K: []  # this is not a carrier=#2985 expiry=2026-09-15 R` | **RED** | `token-order` | ★ **`PFX` leg 판별**. 부인 산문 안에 토큰을 매설하는 경로. `PFX` 없으면 GREEN |
+| **19** | `D` ⏎ `K: []  # OK` **∧ 본문에 열 0 코드블록으로 같은 줄 1회 재등장** | **GREEN** | — | ★ **`SCOPE` leg 판별**. 파일 전체 정의역이면 매치 2회 → `line-form` RED. firsthand 매치수 = 파일 전체 **2** / frontmatter **1** |
+| **20** | `D` ⏎ `K: []` + `TAB` + `# OK` | **RED** | `fm-parse-error` | ★★ **FIX Iter 5 신설 — `LINE` 공백군의 탭 half 가 도달 불가임을 고정 (P1-4)**. YAML 이 이 위치의 탭을 금지하므로 **어떤 입력으로도 GREEN 이 될 수 없다.** (0-d) 참조 |
+| **21** | `D` ⏎ `K: []  # carrier=#2985` + `TAB` + `expiry=2026-09-15 R` | **GREEN** | — | ★★ **FIX Iter 5 신설 — `PFX` 공백군의 탭 half 판별 (P1-4)**. 주석 본문은 YAML 이 탭을 허용하는 **유일** 위치. 공백군을 스페이스 전용으로 좁히면 `token-order` RED |
+| **22** | `D` ⏎ `K: []  # OK` ⏎ `K: []  # carrier=#2985 expiry=2099-01-01 R` | **RED** | `line-form` | ★★ **FIX Iter 5 신설 — "정확히 1회" 부분 leg 판별**. YAML 중복 키는 합법이라 파싱은 통과한다. "1회 이상" 으로 완화하면 **먼 만기를 한 줄 더 적어 통과**한다 |
+| **23** | `D` ⏎ `K: []  # carrier=#2985 carrier=#1 expiry=2026-09-15 R` | **RED** | `carrier-token` | ★ **FIX Iter 5 신설 — 인접 중복(사이 공백 1)**. ERE 양쪽경계 1패스가 인접 토큰을 1로 세는 경로. ★ 단 verdict 는 `PFX` 가 이미 RED — **사유만** 갈린다((i-x) 2패스 강등 근거) |
+| **24** | `D` ⏎ `K: []  # carrier=#12345678 expiry=2026-09-15 R` | **RED** | `carrier-token` | ★ **FIX Iter 5 신설 — 8자리(자릿수 상한 초과)**. 직전 판이 2패스 채택 근거로 든 입력이 **표에 없었다** — 그 결손을 메운다 |
 
-★★ **실행 확인 (firsthand, 본 판 저작 시점 — 2엔진 독립 실행)**: 위 19행 중 (iii) 술어로 기계 판정
-가능한 **18행**(1~13, 15~19)을 **Python `re`** 와 **POSIX ERE(`grep -E` + (i-x) 2패스)** 로
-각각 실행했다. 결과 = **기대 일치 18/18 · 불일치 0 · 2엔진 간 불일치 0**(판정과 exit 사유가 모두 일치).
-행 14 는 파서 계층 판정이라 정규식 술어 밖이며 checker 구현에서 검증된다.
+★★ **실행 확인 (firsthand, 본 판 저작 시점)**: (iv) 표 **전 25행**을 **참조 구현**(Python `re` +
+`yaml.safe_load`)으로 실행했다 — **기대 일치 25/25 · 불일치 0**(판정과 exit 사유가 모두 일치).
+**이식 부록**(POSIX ERE + shell)으로도 같은 25행을 돌려 **일치 23 / 불일치 2** 를 얻었다 —
+불일치는 **행 14 · 20**, 둘 다 `fm-parse-error` 이며 **ERE 가지가 `GREEN` 으로 fail-open** 한다((i-x-B)).
 
-★ **판별력 실증 (항진 아님)**: 같은 18행을 **구판 `\s` + 자유텍스트 + 파일 전체 정의역** 술어로 돌리면
-**행 3·4·5·6·9·11·12·13·15·17·18 의 11행이 GREEN** 이 되어 기대와 어긋난다. 즉 이 표는 신·구 술어를
-판별하며, 그 판별의 근거가 **각 행의 고정된 입력 바이트**에 있다.
+★★ **직전 판의 *"2엔진 18/18"* 은 행 14 를 정의역에서 빼고 얻은 수치였다.** 이번 판은 참조 구현 승격으로
+그 행을 **정의역 안**에 두었고, 그러자 불일치가 드러났다. **수치가 나빠진 것이 아니라 정의역이 정직해진 것**이며,
+"좁힌 정의역에서 얻은 100%" 를 엔진 동치의 근거로 쓰던 자리를 여기서 닫는다.
 
-★★ **`D-LEG` 자기적용 결과 (이번 판이 무엇을 고쳤는가)**:
+★ **판별력 실증 (항진 아님)**: 같은 25행을 **구판 `\s` + 자유텍스트 + 파일 전체 정의역** 술어로 돌리면
+**17행**(3 · 4 · 5 · 6 · 9 · 11 · 12 · 13 · 14 · 15 · 17 · 17b · 18 · 19 · 20 · 23 · 24)에서 verdict 가 갈린다.
+★ 그 중 **행 19 는 역방향**(신 `GREEN` / 구 `RED`)이다 — 표가 한 방향으로만 조여진 것이 아니라
+**양방향으로 고정**돼 있음을 보인다(단방향이면 "전부 RED 로 만드는 구현" 이 통과한다).
 
-| 이번 판이 다루는 leg | L1 (입력원 리터럴) | L2 (판별 행) | 직전 판 상태 |
-|---|---|---|---|
-| `over-cap` 의 **발행일** | ★ `frontmatter date:` 필드로 고정 (아래 (vi)) | ★ **행 15·16 신설** | L1 ✗ (지시어 `발행일`) · L2 ✗ (행 5 는 세 독법 전부 RED) |
-| `carrier` 의 **동일성** | ★ `[repo=owner/name]` 토큰 | ★ **행 17 신설** | L1 ✗ · L2 ✗ (형식만 검증) |
-| **선두 배치** 선언 | ★ `PFX` 선두 앵커 | ★ **행 18 신설** | L1 ✗ · L2 ✗ (선언만 있고 술어 부재) |
-| `LINE` 의 **정의역** | ★ `SCOPE` = frontmatter 블록 | ★ **행 19 신설** | L1 ✗ ("file 전체" — 자기 문서를 self-RED 로 만드는 값) |
-| `amendment_log` **배제** | 적용 carrier 측(ADR-067 §9.4 처분 7)에서 L1·L2 충족 | ★ Change Plan §8.D 대조군 표 `N3` 행 | L1 ✗ · L2 ✗ (배제가 회피구였다) |
+★★ **`D-LEG` 자기적용 결과 (FIX Iter 5 — L2 를 ablation 으로 재판정)**:
+
+**직전 판의 L2 열은 "판별 행" 을 저자가 **지목**한 것이었다. ablation 으로 재판정하니 3칸이 틀렸다.**
+
+| leg | L1 (입력원 리터럴) | **L2 (ablation verdict 판별)** | 직전 판 지목 | 재판정 |
+|---|---|---|---|---|
+| `over-cap` 의 **발행일** | `frontmatter date:` 필드 | ★ **행 15·16 양방향** | 행 15·16 | ✓ 정확 |
+| `carrier` 의 **동일성** (`REPO`) | `[repo=owner/name]` 토큰 | ★ **행 17b** (신설) | 행 17 | ✗ **틀림** — 행 17 은 `PFX` 가 이미 RED (P0-A) |
+| **선두 배치** (`PFX`) | 캡처 `c` 선두 앵커 | 행 18 | 행 18 | ✓ 정확 |
+| `LINE` 의 **정의역** (`SCOPE`) | frontmatter 블록 | 행 19 | 행 19 | ✓ 정확 |
+| `LINE` 의 **"정확히 1회"** | 매치 수 = 1 | ★ **행 22** (신설) | (미지목) | ✗ **누락** — 직전 판엔 판별 행 0 |
+| `mea-missing` | YAML 키 멤버십 | ★ **없음** (사유만) | "키 삭제 봉인" | ✗ **over-claim** — `LINE` 중복 방어 |
+| `fm-parse-error` | `yaml.safe_load` 예외 | ★ **없음** (사유만) — `MEA` 와 쌍으로만 판별 | (미지목) | ✗ **단독 판별 0** |
+| 공백군 (`LINE`) | `[[:blank:]]` / `[ \t]` | ★ **도달 불가** (행 20 이 증명) | (미지목) | ✗ **신설 불가** (P1-4) |
+| 공백군 (`PFX`) | 동상 | ★ **행 21** (신설) | (미지목) | ✓ 신설 |
+| 주석 본문군 | `.` / `[^\n]` | ★ **14행** (행 1 포함) | (미지목) | ★ **`D-CLS` 로 이관** |
+| ERE **2패스** | 선행 경계 + 초과 패스 | ★ **없음** (사유만) | "1패스 불가" | ✗ **robustness 로 강등** (P1-3) |
+| `amendment_log` **배제** | 적용 carrier 측(ADR-067 §9.4 처분 7) | Change Plan §8.D `N3` ablation 표 | §8.D mutantB | ✓ (§8.D 에서 재설계) |
+
+★★★ **이 표가 이번 판의 요지다** — 직전 판은 **12칸 중 4칸만 정확**했고 나머지는 over-claim·누락·오지목이었다.
+**저자 지목과 실행 산출의 차이가 정확히 그 8칸**이며, 그것이 L2 를 존재-assert 에서 ablation 으로
+올린 이유다. 규칙을 바꾸지 않았다면 이 8칸은 이번에도 통과했을 것이다.
 
 ##### (v) ★ 표기 정규형 선언 — split-brain 처분 (R3 P2 / N-6)
 
@@ -835,14 +976,18 @@ bare scalar 를 "키 없음" 이 아니라 하나의 범주로 세었다면 35 +
 
 ##### (viii) ★ 결정표의 천장 (`declared` — 지우고 인용 금지)
 
-**이 표는 "이제 모든 우회를 막았다" 를 주장하지 않는다.** 표는 **알려진 입력 19종만** 고정하며,
+**이 표는 "이제 모든 우회를 막았다" 를 주장하지 않는다.** 표는 **알려진 입력형만** 고정하며,
 미지 입력형에 대한 완전성은 `declared` 다. 근거 — 입력 공간은 바이트 문자열 전체이고 그 전집합에
-대한 판정은 열거로 닫히지 않는다. 실제로 위 19행 중 **14행이 앞선 4 라운드에서 발견된 것**이며
-(R2·R3 에서 9행 + **R4 에서 5행**: 15·16·17·18·19), 그 사실은 "다음 라운드에 20번째 행이 없다" 를
-함의하지 않는다.
-★ **다만 `D-LEG` 가 바꾼 것이 하나 있다** — 직전 라운드까지 새 행은 **심사가 우회를 발견해야** 생겼다.
-`D-LEG` 이후에는 **leg 을 신설하는 저작 자신이 행을 동반**해야 한다. 즉 "행이 늘어나는 경로" 가
-사후 발견 1개에서 사전 의무 + 사후 발견 2개가 됐다. 완전성은 여전히 아니다.
+대한 판정은 열거로 닫히지 않는다. 실제로 표의 행은 **매 라운드 늘었고**
+(R2·R3 에서 9행 → **R4 에서 5행**(15·16·17·18·19) → **R5 에서 6행**(17b·20·21·22·23·24)),
+그 사실은 "다음 라운드에 새 행이 없다" 를 **함의하지 않는다.**
+★ **행수를 여기 정수로 박지 않는다** — 위 (0-a) 재현 규칙으로 얻는다(자기 포함 함정 회피).
+★ **`D-LEG` 가 바꾼 것** — 직전 라운드까지 새 행은 **심사가 우회를 발견해야** 생겼다.
+`D-LEG` 이후에는 **leg 을 신설하는 저작 자신이 행을 동반**해야 한다.
+★★ **`D-LEG` L2 를 ablation 으로 올리면서 바뀐 것이 하나 더 있다** — 직전 판까지는 저자가
+"이 행이 판별한다" 고 **지목**하면 통과였고, 그래서 **틀린 지목이 통과했다**(위 자기적용 표 8칸).
+이제는 실행이 산출한 차이만 인정되므로, **틀린 지목은 표에 0 으로 찍힌다.**
+그럼에도 ablation 은 **표 안의 행에 대해서만** 차이를 재므로, 표 밖 입력형에 대한 완전성은 여전히 아니다.
 - 이 표가 실제로 개선한 것 = **판정 주체의 존재**다. 직전 판은 심사자마다 독법이 갈렸고 이제는
   갈릴 때 **어느 행이 어긋났는지 지목**할 수 있다. 그것이 매체 전환의 이득이며 완전성은 아니다.
 - 새 입력형이 발견되면 처분은 **행 추가**이며(§결정 7 정의역 확대) 신규 AC·신규 게이트 신설이 아니다.
@@ -907,11 +1052,18 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
 - **자기적용 (실측 기준)**: 본 ADR frontmatter 는 ③ 형식(`carrier=#2985 expiry=2026-09-15
   [repo=mclayer/plugin-codeforge]` 선두 배치)을 따르며 **면제 경로**로 ② 를 충족한다 —
   사다리 경로가 아니다(위 천장 문단 적용 대상).
-  ① 은 본 ADR 과 **같은 PR 의 `docs/evidence-checks-registry.yaml` row**(`fix-ledger-conformance`,
-  `current_tier: warning`, `status: deferred-followup`)로 충족된다.
-- ★★ **FIX Iter 4 자기적용 재검증 (firsthand, 2엔진)**: 이번 판이 신설한 leg 4종
-  (`SCOPE` · `REPO` · `PFX` · `발행일` 리터럴)을 **실 파일 3건**에 적용해 재실행했다 —
-  `ADR-181` · `ADR-067` · `ADR-043` **전건 GREEN**(Python `re` 3/3 ∧ POSIX ERE 3/3, 판정·사유 일치).
+  ① 은 본 ADR 과 **같은 PR 의 `docs/evidence-checks-registry.yaml` row 2건**으로 충족된다 —
+  `fix-ledger-conformance` (원장 축) · **`adr-admission`** (본 §결정 5 자신의 게이트 축), 둘 다
+  `current_tier: warning` / `status: deferred-followup`.
+  ★★ **`adr-admission` 을 본문에 명시한다 (FIX Iter 5, P2-2)** — 직전 판은 이 entry 를 registry 에
+  append 해 놓고 **ADR 문면에서 한 번도 언급하지 않았다**(firsthand: `grep -c 'adr-admission'` 본 파일 → **0**).
+  자기 §결정을 집행할 게이트의 이름이 그 §결정 본문에 없으면 **registry 와 ADR 이 서로를 못 가리키고**,
+  그것이 §결정 4(접합부 규약)가 금지하는 형상이다. 두 row 의 owner_adr = 본 ADR 이며
+  **`adr-admission` 이 (iv) 결정표를 구현하는 checker 의 registry 상 이름**이다.
+- ★★ **FIX Iter 5 자기적용 재검증 (firsthand, 2엔진)**: 이번 판이 바꾼 것
+  (`mea-missing` 의 YAML 계층 이관 · 공백군 위치별 분해 · 주석 본문군 엔진별 표기 · 신규 행 6종)을
+  반영한 **참조 구현**과 **이식 부록**을 **실 파일 3건**에 각각 적용했다 —
+  `ADR-181` · `ADR-067` · `ADR-043` **전건 GREEN**(참조 구현 3/3 ∧ ERE 3/3, 판정·사유 일치).
   즉 규칙을 좁히면서 자기 ADR 을 born-red 로 만들지 않았다. 특히 `over-cap` 은 `발행일` 을
   `date:` 로 고정한 뒤에도 3건 모두 통과한다(여유 6.00x / 1.44x / 1.40x — 위 (vi-3)).
 
