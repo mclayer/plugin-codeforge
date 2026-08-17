@@ -34,9 +34,9 @@ amendment_log:
   - date: 2026-08-16
     amendment: 4
     cfp: CFP-2985
-    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시. ★ 설계리뷰 FIX Iter 1 보강 — §9.4 처분 5 로 **철회의 문면 도달 범위**를 정직 선언: 본 ADR 밖에 같은 유령을 현재형으로 기술하는 live 문면이 9곳(fix-event-v1 5 · orchestrator-playbook 1 · story-page-structure 1 · label-registry-v2 2) 실재하며 각각 carrier(D-1/D-25/D-5/D-21)로 배정. 본 ADR 이 '철회 완료' 라 말할 수 있는 범위는 자기 문면 + `related_adrs` live 주장 1건 제거까지이고 나머지 9곳은 carrier merge 전까지 생존한다(over-claim 차단)."
+    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** [철회됨 — 2026-08-16, Amendment 4 §9.4] — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시. ★ 설계리뷰 FIX Iter 1 보강 — §9.4 처분 5 로 **철회의 문면 도달 범위**를 정직 선언: 본 ADR 밖에 같은 유령을 현재형으로 기술하는 live 문면이 9곳(fix-event-v1 5 · orchestrator-playbook 1 · story-page-structure 1 · label-registry-v2 2) 실재하며 각각 carrier(D-1/D-25/D-5/D-21)로 배정. 본 ADR 이 '철회 완료' 라 말할 수 있는 범위는 자기 문면 + `related_adrs` live 주장 1건 제거까지이고 나머지 9곳은 carrier merge 전까지 생존한다(over-claim 차단)."
     scope_change: "ratchet 강화 방향 — 값공간 확장은 additive(기존 2값 유효 유지, 소급 정규화 0), 카운터 trigger lane 정의역 무변경(확장 0), 데드락 해소는 verdict 부재 구멍을 fail-closed 로 채움(기존 verdict 배정 변경 0), 닫기 조건은 기존 게이트 위에 축 추가(대체 0). 유령 선언 철회는 실효 강제력 0 이던 문면의 제거이므로 통제 약화 0 — ADR-058 §결정 5 역-ratchet 정의역 밖. is_transitional: false 유지."
-    reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 축 (4) 가 Amendment 1 의 factual premise("fix-event-depth-scope-presence 가 본 ADR 의 mechanical enforcement 로 집행 중")를 affirmatively-FALSE(registry 0 · script 0 · workflow 0, firsthand)로 판정하고 그 문단의 지위를 "집행 사실 → 철회된 선언"으로 재규정(supersede-in-part)하며 §결정 4 본문 문면을 실제로 치환한다. 선례 동형 = ADR-064 Amendment(:179) — 선행 amendment 의 mechanical enforcement 단정이 affirmatively-FALSE 화 → 해당 clause supersede-in-part 시 reinterpretation: true. 축 (1)(2)(3) 은 순수 additive 이며 true 는 축 (4) 귀속. self-declared — parity lint 는 presence/type 만 검사하고 재해석 의미 판정은 리뷰 축이다(ADR-167 §결정 7 honest ceiling).
+    reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 축 (4) 가 Amendment 1 의 factual premise("fix-event-depth-scope-presence 가 본 ADR 의 mechanical enforcement 로 집행 중") [철회됨 — 2026-08-16, Amendment 4 §9.4] 를 affirmatively-FALSE(registry 0 · script 0 · workflow 0, firsthand)로 판정하고 그 문단의 지위를 "집행 사실 → 철회된 선언"으로 재규정(supersede-in-part)하며 §결정 4 본문 문면을 실제로 치환한다. 선례 동형 = ADR-064 Amendment(:179) — 선행 amendment 의 mechanical enforcement 단정이 affirmatively-FALSE 화 → 해당 clause supersede-in-part 시 reinterpretation: true. 축 (1)(2)(3) 은 순수 additive 이며 true 는 축 (4) 귀속. self-declared — parity lint 는 presence/type 만 검사하고 재해석 의미 판정은 리뷰 축이다(ADR-167 §결정 7 honest ceiling).
     breaking: false
     backward_compat: true
   - date: 2026-08-18
@@ -81,7 +81,7 @@ related_files:
   - docs/orchestrator-playbook.md
   - docs/evidence-checks-registry.yaml   # [철회됨 — 2026-08-16, Amendment 4 §9.4] Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
   - CLAUDE.md
-mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (ADR-181 §결정 5 ③-dt (ii), 설계리뷰 FIX Iter 3). 앞의 두 토큰만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다. ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 — 본 빈 리스트는 그 철회 후의 정직 상태다.
+mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (ADR-181 §결정 5 ③-dt (ii), 설계리뷰 FIX Iter 4). 앞의 세 토큰(carrier / expiry / [repo=...])만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다 — 이 선언은 ADR-181 §결정 5 ③-dt (ii) PFX 선두 앵커 술어로 실제 배선됐다(설계리뷰 FIX Iter 4, 판별 행 18). ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 — 본 빈 리스트는 그 철회 후의 정직 상태다.
 ---
 
 # ADR-067: fix-ledger implementability escalation + max FIX overflow handling
@@ -609,6 +609,64 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
    - ★ **이 규칙의 천장 (`declared`)**: 배제는 "동결 이력은 정정 대상이 아니다" 라는 **저작 규약**에
      의존하며, 그 규약 자체를 기계가 검증하지는 않는다. 즉 누군가 `amendment_log` 를 사후 편집해도
      본 leg 은 침묵한다(그 축의 검출은 `adr-amendment-parity` 소관이며 본 검사가 아니다).
+
+7. ★★★ **처분 6 의 merge-base 단서가 `실행 명령에 존재하지 않았다` — `N3` leg 신설
+   (설계리뷰 FIX Iter 4 — P0-A, 3자 완전 수렴)**.
+
+   **적발 (firsthand, 3 심사자 각자 독립 mutant 로 재현)**: 신규 `amendment_log` entry 에 현재형
+   유령 주장을 심으면 **N1 = 0 ∧ N2 = 0 = GREEN 통과**한다. 3겹 원인:
+
+   | # | 원인 | 실측 좌표 |
+   |---|---|---|
+   | ① | `amendment_log:` 가 **N2 의 sed 구간보다 앞**이라 구조적으로 바깥 | `amendment_log:` = `:12` / N2 구간 시작 `related_adrs:` = `:48` / `related_files:` = `:66` |
+   | ② | 유령이 **4-space `summary:`** 안에 있어 `grep '^  - '` 에 미매치 | `:16` · `:37` |
+   | ③ | ★ **`N3` leg 부재** — `git merge-base` 가 §8.D 실행 명령 **어디에도 없다** | 판정식이 `N1 + N2 == 0` |
+
+   ★★ **정직 정산 — 위 처분 6 은 이 공격을 이름으로 지목하고 닫혔다고 단언했다.**
+   처분 6 의 두 문장("배제는 merge-base 시점에 이미 존재하던 entry 한정" / "기계 판정 =
+   `git diff merge-base HEAD` 의 추가 줄 여부")은 **규칙으로는 정확했으나 그것을 집행하는 leg 이
+   저작되지 않았다.** 즉 **존재하지 않는 방어를 현재형으로 단언**했고, 그것이 본 ADR §결정 5 ②
+   ("아직 존재하지 않는 enforcement 자산을 현재형으로 기술하지 않는다")가 금지하는 바로 그 형상이다.
+   **처분 6 의 규칙은 유지하고, 그 규칙을 실행하는 leg 을 여기서 신설한다.**
+
+   **`N3` leg (실행 가능 명령 — 의사코드 아님)**:
+
+   ```bash
+   cd <wrapper worktree>
+   F=archive/adr/ADR-067-fix-ledger-implementability-escalation.md
+   AL='/^amendment_log:/,/^related_stories:/p'
+   git show ecfe62d63:"$F" | sed -n "$AL" > /tmp/base_al.txt   # merge-base 시점 동결 이력
+   sed -n "$AL" "$F"                                > /tmp/head_al.txt
+   # 이 PR 이 신규 append 한 줄만 남긴다 (-F 고정문자열 / -x 행 전체 일치 / -v 여집합)
+   grep -Fxv -f /tmp/base_al.txt /tmp/head_al.txt \
+     | grep 'fix-event-depth-scope-presence' | grep -vc '\[철회됨'
+   ```
+
+   판정식 = **`N1 + N2 + N3 == 0`** (각 `grep -c` 는 미매치 시 rc=1 이므로 rc 가 아니라 **출력 정수**로 판정).
+
+   - **`D-LEG` L1 (입력원 리터럴)** — 입력원 = ① merge-base **`ecfe62d63`** ② 대상 파일 경로
+     ③ 블록 경계 `^amendment_log:` ~ `^related_stories:` ④ 마커 리터럴 `[철회됨`.
+     "merge-base 시점" 이라는 지시어가 아니라 **SHA·경로·앵커 리터럴**로 적는다.
+   - **`D-LEG` L2 (판별 행)** — `mutantB`(신규 `amendment_log` entry 에 현재형 유령 주장 주입)를
+     **Change Plan §8.D 대조군 표의 행으로 승격**한다. firsthand 실행 결과:
+
+     | 트리 | N1 | N2 | **N3** | 구 판정식 (`N1+N2`) | 신 판정식 (`N1+N2+N3`) |
+     |---|---|---|---|---|---|
+     | HEAD | 0 | 0 | **0** | GREEN | **GREEN** |
+     | `mutantB` | 0 | 0 | **1** | ★ **GREEN (회피 성공)** | ★ **RED** |
+
+     ⇒ `N3` 이 빠지면 판정이 뒤집힌다 = 판별 행 성립.
+   - ★ **`N3` 이 잡은 첫 대상은 이 PR 자신이었다 (firsthand)**: leg 을 신설하자마자 HEAD 에서
+     **N3 = 2** 가 나왔다 — `:37`(Amendment 4 `summary`)과 `:39`(`reinterpretation` 주석)가
+     유령 문자열을 담으면서 고정 마커 `[철회됨` 을 갖지 않았기 때문이다. 두 줄에 마커를 부여해
+     **N3 = 0** 으로 청산했다. 규칙을 자기 문면에 먼저 적용한 결과이며, 적용하지 않았다면
+     이 leg 은 **자기 PR 에서 RED 인 채로 문서에만 적힌 leg** 이 됐을 것이다.
+   - ★ **`N3` 의 정직 천장 (`declared`)**: `N3` 은 **merge-base 에서 정의상 0** 이다(그 시점에는
+     "신규 append 줄" 이 없다). 따라서 `N3` 의 항진 반증은 BASE 대조가 **아니라 `mutantB`** 가 맡는다 —
+     이 사실을 적지 않으면 "BASE=0 · HEAD=0 이니 leg 이 돈다" 는 공허한 논증이 성립한다.
+   - ★ **`N3` 의 정의역 천장 (`declared`)**: 본 leg 의 정의역은 **이 파일의 `amendment_log` 블록**이다.
+     다른 ADR 의 `amendment_log` 에 같은 유령을 심는 경로는 미탐이며, 그 축은 Phase 2 checker
+     (`adr-admission`, carrier `#2985` / 만기 2026-09-15)의 코퍼스 확장 소관이다.
 
 ### 9.5 declaration-only retain + ratchet 정합
 

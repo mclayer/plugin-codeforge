@@ -4567,3 +4567,50 @@ entries:
     carrier_adr: ADR-171           # evidence-enforceable framework host (ADR-171 amendment 0 — ADR-181 §결정 8)
     promotion_trigger: advisory
     status: deferred-followup      # Phase 1 declarative anchor (본 PR) — ADR-181 §결정 5 ① 착지. Wave 2 mechanical wire(script + workflow twin + discriminating self-test) = 본 Story Phase 2 / carrier plugin-codeforge#2985 / 만기 2026-09-15. 그 전까지 실 강제력 0 이며 이는 은폐가 아니라 선언이다(ADR-181 §결정 6 정직 라벨 3분).
+
+  # --- CFP-2985 설계리뷰 FIX Iter 4 (P1-2) — D-7c admission checker 의 registry 표면 착지 ---
+  #   적발: 직전 판은 D-7c(`check_adr_admission.py`)를 D-표에만 두고 registry 에 append 하지 않았다.
+  #   firsthand: `grep -c 'adr-admission' docs/evidence-checks-registry.yaml` -> 0 (총 113 entry).
+  #   ★ 근거로 대던 위 `fix-ledger-conformance` row 는 **internal-docs 원장 축**(Story 10 표 enum)만
+  #   기술한다 — 본 row 의 축은 **wrapper ADR frontmatter admission**(ADR-181 §결정 5)이며 disjoint.
+  #   즉 ADR-181 §결정 5 ①(신규 규범 항목 = 대응 registry entry 존재)이 **자기 자신에 미적용**이었다.
+  - name: adr-admission
+    description: |
+      ADR-181 §결정 5 admission test 의 기계 판정 표면 — wrapper `archive/adr/ADR-*.md` frontmatter 의
+      `mechanical_enforcement_actions` 면제 경로 적법성(`exempt()`) 검사.
+      판정축 = ADR-181 §결정 5 ③-dt (iv) **결정표 19행 전건 재현**. exit 사유 토큰
+      (line-form / mea-missing / carrier-token / expiry-token / repo-token / token-order /
+      expired / over-cap / fm-parse-error) 을 stdout 으로 방출한다.
+      정의역 = PR diff forward-only (merge-base 대비 추가·수정된 ADR 파일) x frontmatter 블록.
+      코퍼스 소급 0 — merge-base 시점 기존 ADR 은 정의역 밖(grandfather).
+      honest ceiling: "무엇이 신규 규범 항목 추가인가" 는 의미론적 판정이라 기계 술어로 닫히지 않는다.
+      기계가 판정하는 것은 "PR 이 ADR 파일을 추가·수정했는가" 까지이며 그 안의 규범성 판정은 리뷰 축이다
+      (ADR-181 §결정 5 scope 술어 천장 인용, 재진술 아님). 또한 `[repo=...]` 토큰은 **형식만** 본다 —
+      그 Issue 가 실재하는지는 네트워크 조회이며 본 게이트 정의역 밖이다.
+      ★ Phase 1 시점 실 강제력 = 0. detect_command·workflow 는 아직 존재하지 않으며(status 참조)
+      그 사실을 여기에 적는 것이 ADR-181 §결정 5 ②(미건설 자산 현재형 기술 금지)의 이행이다.
+    detect_command: bash scripts/check-adr-admission.sh              # ★ Phase 2 신설 예정 — 현 시점 미존재 (D-7c)
+    workflow: templates/github-workflows/fix-ledger-conformance.yml  # ★ Phase 2 신설 예정 — job name 확정분 재사용 (D-10)
+    current_tier: warning
+    # bypass_label: omit — warning tier 비차단 + 우회 채널 선제 개설 금지(위 row 와 동일 근거).
+    # bypass_audit_lint: omit — bypass_label 미정의.
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-171 §결정 6 (a)
+      failure_threshold: 0          # ADR-171 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2985                  # 게이트 도입 Story 자신
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - decision_table_19row_replay_proof   # ★ 본 row 고유 — 결정표 19행 전건 재현 산출물
+        - two_engine_cross_proof              # ★ 본 row 고유 — Python re / POSIX ERE 교차 산출물
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - outage_runbook              # ADR-171 §결정 6 (iv) — 현재 미보유, 승격 carrier 가 신규 작성
+        - audit_comment_author_lint   # ADR-171 §결정 6 (v) — 현재 미보유
+        - sticky_comment_pattern      # ADR-171 §결정 6 (vi) — 현재 미보유
+    introduced_by: CFP-2985
+    introduced_date: 2026-08-17
+    owner_adr: ADR-181             # admission test SSOT (§결정 5) — 결정표 19행이 수용 기준
+    carrier_adr: ADR-171           # evidence-enforceable framework host (ADR-171 amendment 0)
+    promotion_trigger: advisory
+    status: deferred-followup      # Phase 1 declarative anchor — Wave 2 mechanical wire = 본 Story Phase 2 / carrier plugin-codeforge#2985 / 만기 2026-09-15. 그 전까지 실 강제력 0 이며 이는 은폐가 아니라 선언이다.
