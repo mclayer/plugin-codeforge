@@ -1139,6 +1139,8 @@ def test_post_suture_verification_four_axes():
                 "M-PREEXIST", "M-E1", "M-E2", "M-E4", "M-MIX-min",
                 "M-DEPTH2", "M-DANGLING",
                 "M-ANCHOR-MALFORMED", "M-ANCHOR-UNPAIRED", "M-ANCHOR-DUP", "M-SELFPTR",
+                # 앵커 dark-site 판별자 2종 — 각 방출 site 를 단독 통제한다.
+                "M-ANCHOR-NOID-BOTH", "M-ANCHOR-ORPHAN-END",
                 "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK",
                 "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT",
                 "M-FENCE-UNCLOSED-OUTDOMAIN"]

@@ -190,6 +190,9 @@ CP_PATH = "wrapper/change-plans/cfp-2986.md"
 SPLIT_ID = "CFP-2986-S1"
 SPLIT_ID_S10 = "CFP-2986-S2"
 SPLIT_ID_S4 = "CFP-2986-S3"
+# 어느 begin 과도 짝이 없는 전용 id — `ctx_anchor_orphan_end` 의 고아 end 앵커에만 쓴다.
+# 실 분할 id 계열(S1/S2/S3)과 겹치면 «짝 없음» 이 성립하지 않으므로 별도 값이어야 한다.
+ORPHAN_ANCHOR_ID = "CFP-2986-ORPHAN"
 CHILD_DIR = "wrapper/stories"
 
 READER_ROSTER = ["orchestrator", "requirements", "requirements-review", "design",
@@ -410,11 +413,15 @@ QUANT_DECLARED = {"CORPUS": 22, "SELF": 30, "BASE": 18, "AUTHOR": 10, "LEGC": 24
 #         FIX Iter 14 에서 CP §8.2 신설 6종(INV-S1 3-leg 분해 축)을 추가해 35 → 41.
 #         이어서 미닫힌 fence 축(INV-ANCHOR) 양성 3종을 추가해 41 → 44.
 #         이어서 §8.3 행 12(분할 정착 후 INV-S2) 2종을 추가해 **44 → 46**.
-#       ※ 계수 주의: `run_battery` 는 47 엔트리를 내지만 `_tree` 는 mutant 가 아니라
+#         이어서 앵커 dark-site 판별자 2종(NOID-BOTH / ORPHAN-END)을 추가해 **46 → 48**.
+#       ※ 계수 주의: `run_battery` 는 49 엔트리를 내지만 `_tree` 는 mutant 가 아니라
 #         **메타 sentinel** 이라 로스터 대조에서 제외한다 — 구별 없이 세면 1 만큼 오계수된다.
 DECLARED_MUTANT_IDS = frozenset({
     "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
     "M-ANCHOR-NOSECTION", "M-ANCHOR-UNPAIRED",
+    # 앵커 dark-site 판별자 — 각각 `id= 누락` / `end 미쌍` site 를 **단독** 통제한다.
+    # 기존 M-ANCHOR-MALFORMED 는 두 site 에 RED 가 갈라져 서로를 가려주므로 판별력이 없다.
+    "M-ANCHOR-NOID-BOTH", "M-ANCHOR-ORPHAN-END",
     "M-APPEND-CTL-1000", "M-APPEND-CTL-50000", "M-BASIS-RAW",
     "M-CARD-CROSS", "M-CARD-IN", "M-CARD-VALUE",
     "M-DANGLING", "M-DEPTH2", "M-DOMAIN", "M-DUP-ROW",
@@ -1084,6 +1091,49 @@ def ctx_anchor_dup_end() -> Ctx:
     return ctx.copy_with(story_after=ctx["story_after"].replace(end, end + "\n" + end, 1))
 
 
+def ctx_anchor_noid_both() -> Ctx:
+    """§8.3 행 2 — §9 **begin·end 양쪽**에서 `id=` 제거. `id= 누락` 방출 site 의 **단독 판별자**.
+
+    왜 신설하는가: 기존 `ctx_anchor_malformed` 는 begin 에서만 `id=` 를 지우므로 RED 2건이
+    **서로 다른 두 site** 에서 나온다(`id= 누락` 1건 + 짝 잃은 end 의 `미쌍` 1건). 그 혼합
+    때문에 두 site 중 **어느 쪽을 끊어도 나머지 1건이 남아** «RED>0» 술어를 만족시킨다 —
+    즉 boolean 축에서는 두 site 가 서로를 가려준다. 여기서는 양쪽 앵커의 `id=` 를 함께
+    지워 고아 end 가 애초에 생기지 않게 하고, RED 2건이 **오직 `id= 누락` site 에서만**
+    나오게 한다. 그 site 를 끊으면 이 mutant 의 RED 는 2 → 0 이라 boolean 축에서도 죽는다.
+    ※ 기존 `ctx_anchor_malformed` 는 **변경하지 않는다** — 혼합 케이스는 그것대로 유효하다.
+    """
+    ctx = split_ctx()
+    beg = f"<!-- cfp-split:begin section=9 id={SPLIT_ID} -->"
+    end = f"<!-- cfp-split:end id={SPLIT_ID} -->"
+    story = ctx["story_after"]
+    if story.count(beg) != 1 or story.count(end) != 1:   # fixture 무음 no-op 방지 (born-broken 가드)
+        raise AssertionError(
+            f"§9 앵커 리터럴이 begin {story.count(beg)}건 / end {story.count(end)}건 — 주입 지점 특정 불가")
+    story = story.replace(beg, "<!-- cfp-split:begin section=9 -->", 1)
+    story = story.replace(end, "<!-- cfp-split:end -->", 1)
+    return ctx.copy_with(story_after=story)
+
+
+def ctx_anchor_orphan_end() -> Ctx:
+    """§8.3 행 2 — 짝 없는 `end` 앵커 1줄 **추가**(새 id). `end 미쌍` 방출 site 의 **단독 판별자**.
+
+    §9·§10 기존 2쌍은 그대로 두고 어디에도 속하지 않는 id 의 end 만 1줄 늘리므로, 다른
+    앵커 규칙(오형식·중복·begin 미쌍)은 전혀 발화하지 않는다 — RED 1건이 `end 미쌍` site
+    단독 귀속이다. `ctx_stray_end_only` 와 구별할 것: 그쪽은 **분할 없는** 정본에 stray end
+    를 얹어 INV-S1 축(`M-STRAYEND`)을 재는 fixture 이고, 이쪽은 분할 정본 위에서 INV-ANCHOR
+    축을 잰다.
+    """
+    ctx = split_ctx()
+    end = f"<!-- cfp-split:end id={SPLIT_ID} -->"
+    orphan = f"<!-- cfp-split:end id={ORPHAN_ANCHOR_ID} -->"
+    story = ctx["story_after"]
+    if story.count(end) != 1:                            # fixture 무음 no-op 방지 (born-broken 가드)
+        raise AssertionError(f"§9 end 앵커 리터럴이 {story.count(end)}건 — 주입 지점 특정 불가")
+    if orphan in story:
+        raise AssertionError(f"고아 id `{ORPHAN_ANCHOR_ID}` 가 정본에 이미 존재 — 판별자 성립 불가")
+    return ctx.copy_with(story_after=story.replace(end, end + "\n" + orphan, 1))
+
+
 def ctx_stray_end_only() -> Ctx:
     """anchor_delta 에 section 해결 불가 앵커(end)만 존재 — 강제 진입 fixture.
 
@@ -1722,6 +1772,16 @@ def run_battery(engine) -> dict:
          "§9 begin 앵커에서 `section=9` 만 제거 (id 는 유지) — 오형식 2형"),
         ("M-ANCHOR-DUPEND", ctx_anchor_dup_end,
          "§9 end 앵커를 같은 id 로 1줄 복제 — 유일성 위반(end 측)"),
+        # --- 신설: 방출 site 단독 판별자 2종 ---------------------------------
+        #   위 M-ANCHOR-MALFORMED 는 RED 2건이 `id= 누락` 과 `end 미쌍` **두 site** 로
+        #   갈라져 나와, 한쪽을 끊어도 다른 쪽 1건이 «RED>0» 을 만족시킨다(상호 은폐).
+        #   아래 2종은 각 site 를 단독 통제해 그 은폐를 깬다 — 끊으면 RED 가 0 이 된다.
+        ("M-ANCHOR-NOID-BOTH", ctx_anchor_noid_both,
+         "§9 begin·end **양쪽**에서 `id=` 를 제거 — 고아 end 가 생기지 않아 RED 2건이 "
+         "전부 `id= 누락` site 단독 귀속 (site 혼합 제거)"),
+        ("M-ANCHOR-ORPHAN-END", ctx_anchor_orphan_end,
+         f"기존 2쌍은 그대로 두고 어느 begin 과도 짝이 없는 `end id={ORPHAN_ANCHOR_ID}` 를 "
+         "1줄 추가 — RED 1건이 `end 미쌍` site 단독 귀속"),
     ):
         add(mid, "INV-ANCHOR", anchor_ctl, run_anchor(engine, ctx_fn()), con,
             synthetic_sha(split_base["story_after"]), "INV-ANCHOR parent+children")
