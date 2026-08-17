@@ -207,6 +207,16 @@ def fence_mask(text: str) -> List[bool]:
     return mask
 
 
+def fence_unclosed_at_eof(text: str) -> bool:
+    """EOF 시점에 코드펜스가 닫히지 않았는가.
+
+    말미에 펜스가 될 수 없는 sentinel 줄을 덧대어 `fence_mask` 를 재사용한다 —
+    균형이면 sentinel 은 펜스 밖(False), 미닫힘이면 펜스 안(True).
+    새 파서를 만들지 않고 기존 마스킹 의미론만으로 유도하기 위함이다.
+    """
+    return fence_mask(text + "\nZZZ_SENTINEL")[-1]
+
+
 def _masked_lines(text: str, fence_aware: bool) -> List[Tuple[str, bool]]:
     lines = _lf(text).split("\n")
     if not fence_aware:
@@ -275,6 +285,20 @@ def check_anchor_integrity(text: str, label: str = "", fence_aware: bool = True)
     """앵커 3속성 = 명시 ∧ 쌍 ∧ 유일. 미쌍·중복·오형식 = 정보 손실 축 RED."""
     raw = _raw_anchors(text, fence_aware)
     name = "INV-ANCHOR"
+    # ★ 배치가 load-bearing — 아래 `if not raw: return NOT_FIRED` 보다 반드시 **앞**이다
+    #   (ADR-180 §결정 4 (2)(3)). 미닫힌 fence 의 최악 케이스는 정확히 `raw == []` 이다:
+    #   §8 앞 아무 데나 미닫힌 펜스가 있으면 그 이후 전 줄이 masked 되어 실재하는 앵커가
+    #   0건으로 보이고, 뒤에 두면 이 leg 자체가 도달하지 않는다(검사 정의역 공허).
+    #   fence_aware=False 면 마스킹 의미론이 없으므로 비적용.
+    if fence_aware and fence_unclosed_at_eof(text):
+        return [
+            Verdict(name, True, "RED",
+                    "%s 코드펜스가 EOF 까지 닫히지 않음 — 미닫힘 지점 이후 전 줄이 펜스 내부로 "
+                    "마스킹되어 후속 heading·split 앵커가 통째로 게이트에 비가시가 된다 "
+                    "(앵커 0건은 '앵커 없음' 이 아니라 파싱 붕괴). 이 상태에서는 하류 앵커 판정 "
+                    "결과 자체가 신뢰 불가이므로 여기서 중단한다."
+                    % (label or "(label 미지정)"))
+        ]
     if not raw:
         return [Verdict(name, False, "NOT_FIRED", "split 앵커 없음%s" % (" (%s)" % label if label else ""))]
     verdicts: List[Verdict] = []
