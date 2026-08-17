@@ -97,7 +97,10 @@ SPLIT_ANCHOR_RE = re.compile(r"<!--\s*cfp-split:(begin|end)\b([^>]*?)-->")
 SPLIT_MARKER_RE = re.compile(r"<!--\s*cfp-split:")
 ATTR_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\s>]+)")
 AC_ID_RE = re.compile(r"AC-\d+")
-FENCE_RE = re.compile(r"^\s*(```+|~~~+)")
+# group(1)=펜스 run, group(2)=run 뒤 잔여 문면(info string 판정용).
+# ★잔여를 캡처하는 이유 = CommonMark 은 **닫는** 펜스에 info string 을 금지한다 —
+#   run 만 캡처하면 ```yaml 이 ```markdown 을 닫아버린다(거짓음성). 상세 = `fence_mask`.
+FENCE_RE = re.compile(r"^\s*(```+|~~~+)(.*)$")
 HEADING_ANY_RE = re.compile(r"^(#{1,6})(?:\s|$)")
 HEADING_NUM_RE = re.compile(
     r"^(#{1,6})\s+§?\s*([0-9][0-9A-Za-z]*(?:\.[0-9A-Za-z]+)*)\.?(?=\s|$)"
@@ -189,20 +192,39 @@ def content_canon(text: str) -> str:
 
 
 def fence_mask(text: str) -> List[bool]:
-    """줄별 코드펜스 내부 여부. 펜스 구분줄 자체도 True."""
+    r"""줄별 코드펜스 내부 여부. 펜스 구분줄 자체도 True.
+
+    닫는 펜스 판정 = **info string 부재 ∧ 길이 ≥ 여는 펜스 ∧ 동일 펜스 문자** 3-연접
+    (CommonMark 0.31.2 §4.5 fenced code blocks).
+    ★ 이 3-연접은 봉합이다. 이전 판정은 `m.group(1)[:3] == fence` 하나뿐이라 **거짓음성** 2종을
+      냈다 — 어느 쪽도 404 형태가 아니라 "미닫힘인데 닫혔다고 본다" 형태였다:
+        (D1) info string 무시 — ```yaml 이 ```markdown 을 닫았다(닫는 펜스 info 금지 위반).
+        (D2) `[:3]` 절단 — 여는 run 이 4+ 여도 3자로 잘려 저장돼 **더 짧은** 닫는 펜스가
+             닫았다(닫는 펜스는 여는 펜스 **이상** 길이여야 한다).
+      ⇒ `fence` 에 run 을 **절단 없이 전량** 저장하고, 잔여 문면(group(2))을 info 로 본다.
+    ※ 잔여 CommonMark 이탈은 본 함수 범위 밖으로 남겨 둔다(정직 고지) — ① 들여쓰기 상한
+      미적용(스펙은 0~3칸, `^\s*` 는 무제한 허용) ② backtick 여는 펜스의 info string 안
+      backtick 금지 미적용. 재현 = `fence_unclosed_at_eof` 판정을 markdown-it `commonmark`
+      preset 판정과 대조(양극 대조군 선행 통과 필수).
+    """
     mask: List[bool] = []
     fence: Optional[str] = None
     for line in _lf(text).split("\n"):
         m = FENCE_RE.match(line)
         if fence is None:
             if m:
-                fence = m.group(1)[:3]
+                fence = m.group(1)
                 mask.append(True)
                 continue
             mask.append(False)
         else:
             mask.append(True)
-            if m and m.group(1)[:3] == fence:
+            if (
+                m
+                and m.group(1)[0] == fence[0]
+                and len(m.group(1)) >= len(fence)
+                and m.group(2).strip() == ""
+            ):
                 fence = None
     return mask
 
