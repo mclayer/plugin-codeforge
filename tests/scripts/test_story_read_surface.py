@@ -521,6 +521,32 @@ def test_mutant_red_and_control_green():
         #   같은 배터리가 별도로 확인). 판정 근거 SSOT = `run_battery` 의 M-E3 블록 주석.
         "M-FENCE-UNCLOSED-CHILD": 1, "M-FENCE-UNCLOSED-PARENT": 1,
         "M-FENCE-UNCLOSED-OUTDOMAIN": 1, "M-E3": 0,
+        # 앵커 3속성 축 (INV-ANCHOR) — 종전에는 **한 건도 pin 되지 않아** 이 축만
+        # boolean(«RED>0»)이었다. 그래서 `check_anchor_integrity` 의 방출 site 하나를
+        # 끊어도 형제 site 가 낸 RED 가 개수를 채워 공개 assertion 이 통과했다.
+        # 아래 개수는 **어느 site 가 몇 건을 내는가** 로 유도한 값이다(고정 수치 박기 금지).
+        # 재현: 각 fixture 를 `FX.run_anchor(engine, ctx)` 로 돌려 RED verdict 를 세면 된다.
+        #
+        #   MALFORMED = 2  ← ★혼합. begin 에서만 `id=` 를 지우므로 `id= 누락` 1건 +
+        #                    짝을 잃은 end 의 `end 미쌍` 1건이 **서로 다른 두 site** 에서
+        #                    나온다. 이 2건이 서로를 가려주던 것이 정확히 이 축의 구멍이라,
+        #                    site 단독 판별자 2종(아래)을 따로 세웠다.
+        #   NOID-BOTH = 2  ← begin·end 양쪽 `id=` 제거. 고아 end 가 안 생기므로 2건 **전부**
+        #                    `id= 누락` site 단독 귀속 (그 site 를 끊으면 2 → 0).
+        #   ORPHAN-END = 1 ← 짝 없는 end 1줄 추가. `end 미쌍` site 단독 귀속.
+        #   UNPAIRED = 1   ← end 줄 삭제 → `begin 미쌍` 1건.
+        #   DUP = 1        ← begin 1줄 복제 → `중복 begin` 1건.
+        #   DUPEND = 1     ← end 1줄 복제 → `중복 end` 1건.
+        #   NOSECTION = 1  ← begin 의 `section=` 만 제거(id 유지) → `section= 누락` 1건.
+        #                    id 가 살아 있어 쌍은 성립하므로 미쌍 규칙은 발화하지 않는다.
+        "M-ANCHOR-MALFORMED": 2, "M-ANCHOR-NOID-BOTH": 2, "M-ANCHOR-ORPHAN-END": 1,
+        "M-ANCHOR-UNPAIRED": 1, "M-ANCHOR-DUP": 1, "M-ANCHOR-DUPEND": 1,
+        "M-ANCHOR-NOSECTION": 1,
+        # M-ANCHOR-LOOSE 는 이름만 앵커일 뿐 **INV-S3 CORPUS 축**이다(span_anchor 느슨화).
+        # 3 = 한 정의역이 leg1(집합)·leg2(cardinality)·leg3(값)에서 각 1건씩 낸 합이다 —
+        # `^\|` 로 느슨해진 앵커가 §4.2.2a 의 **첫 표**(미끼)를 물어 6셀만 추출하므로
+        # 22셀 기준 집합·개수·값이 동시에 깨진다. 아래 `vector` assert 가 같은 사실을 잰다.
+        "M-ANCHOR-LOOSE": 3,
     }
     actual = {k: results[k]["injected_red_count"] for k in expected_red_counts}
     assert actual == expected_red_counts, (
@@ -530,6 +556,9 @@ def test_mutant_red_and_control_green():
     assert results["M-CARD-IN"]["vector"] == ["CP_S81_RTM:leg1"]
     assert results["M-DUP-ROW"]["vector"] == ["CP_S81_RTM:leg2"]
     assert results["M-CARD-VALUE"]["vector"] == ["CORPUS:leg3"]
+    # M-ANCHOR-LOOSE 의 개수 3 이 "한 정의역 × 3 leg" 의 합임을 **개수와 독립으로** 재확인한다
+    # (3 이라는 스칼라만으로는 3개 정의역 × 1 leg 와 구별되지 않는다).
+    assert results["M-ANCHOR-LOOSE"]["vector"] == ["CORPUS:leg1", "CORPUS:leg2", "CORPUS:leg3"]
 
 
 # ===========================================================================
