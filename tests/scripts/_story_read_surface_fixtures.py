@@ -408,6 +408,7 @@ QUANT_DECLARED = {"CORPUS": 22, "SELF": 30, "BASE": 18, "AUTHOR": 10, "LEGC": 24
 #       ※ 갱신 원자성: 본 frozenset 과 `run_battery` 등재는 **같은 커밋**이어야 한다
 #         (엄격 집합 동등이라 한쪽만 바뀌면 즉시 RED — 그것이 의도다).
 #         FIX Iter 14 에서 CP §8.2 신설 6종(INV-S1 3-leg 분해 축)을 추가해 35 → 41.
+#         이어서 미닫힌 fence 축(INV-ANCHOR) 양성 3종을 추가해 **41 → 44**.
 DECLARED_MUTANT_IDS = frozenset({
     "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
     "M-ANCHOR-NOSECTION", "M-ANCHOR-UNPAIRED",
@@ -421,6 +422,8 @@ DECLARED_MUTANT_IDS = frozenset({
     # --- FIX Iter 14 신설: INV-S1 3-leg 분해 축 (CP §8.2) — 양성 4 ∧ 대조군 2 ---
     "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK",
     "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL",
+    # --- 신설: 미닫힌 fence 축 (INV-ANCHOR) — 양성 3 (음성 2 = M-E3 + 무주입 split_ctx) ---
+    "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT", "M-FENCE-UNCLOSED-OUTDOMAIN",
 })
 
 DEFAULT_CEILING = 400000
@@ -935,12 +938,85 @@ def ctx_e2_zwsp() -> Ctx:
 
 
 def ctx_e3_fence_phantom() -> Ctx:
-    """M-E3 — 자식 본문에 코드펜스 phantom heading 65 B 주입. digest 불일치 → INV-S1 RED."""
+    """M-E3 — 자식 본문 말미에 **닫힌** 코드펜스 블록 65 B 를 순수 append.
+
+    미닫힌 fence 축(`ctx_fence_unclosed_*` 3종)의 **음성 대조군**이다 — 펜스가 닫혀 있으면
+    마스킹이 그 블록 안에서 끝나므로 후속 앵커·heading 이 전혀 가려지지 않는다.
+    (판정 근거·이력 SSOT = `run_battery` 의 M-E3 블록 주석.)
+    """
     ctx = split_ctx()
     phantom = "```text\n## §9. phantom heading — 펜스 안 위장 구간\n```\n"
     ch = dict(ctx["children"])
     ch[child_path(SPLIT_ID)] = build_child("9", SPLIT_ID, SECTION_9_BODY + phantom)
     return ctx.copy_with(children=ch)
+
+
+# ---------------------------------------------------------------------------
+# 미닫힌 fence 축 (INV-ANCHOR) — 양성 3종. **주입 위치가 서로 다르다**.
+#   동형 3종은 축이 하나뿐이므로, 붕괴가 어디서 시작하느냐로 셋을 가른다:
+#     CHILD     — 자식 파일 본문        ⇒ 부모 온전(가시 앵커 4) · 자식만 붕괴
+#     PARENT    — 부모 정의역 안(§9 앵커 쌍 직후) ⇒ 앵커 일부 생존(가시 2) 상태의 붕괴
+#     OUTDOMAIN — 부모 정의역 밖(§8 heading 앞)   ⇒ ★최악 — 가시 앵커 0
+#   음성 대조군은 **신설하지 않는다**: 닫힌 fence(M-E3) + 무주입 `split_ctx` 가 그 자리다.
+# ---------------------------------------------------------------------------
+
+# 닫는 구분줄이 없는 펜스. 표기 등가변형(`~~~` / 4-backtick / 언어태그 유무 / 들여쓰기)에도
+# 판정이 유지되는지는 `test_fence_unclosed_axis_three_advisory_directions` 가 실행으로 잰다.
+UNCLOSED_FENCE = "```text\n미닫힌 코드펜스 — 종료 구분줄이 없다.\n"
+
+
+def ctx_fence_unclosed_child() -> Ctx:
+    """M-FENCE-UNCLOSED-CHILD — **자식 §9 본문** 첫 줄 직후에 미닫힌 펜스.
+
+    재는 것: 미닫힘 지점 이후 전 줄이 펜스 내부로 마스킹되어 **자식 쪽 파싱이 붕괴**하는가.
+    부모는 무접촉이므로(가시 앵커 4 유지) 붕괴가 자식 파일에 국한된 형상이다 —
+    부모만 보는 검사가 이 축을 통째로 놓치는지가 판별점.
+    """
+    ctx = split_ctx()
+    head, sep, rest = SECTION_9_BODY.partition("\n")
+    ch = dict(ctx["children"])
+    ch[child_path(SPLIT_ID)] = build_child("9", SPLIT_ID, head + sep + UNCLOSED_FENCE + rest)
+    return ctx.copy_with(
+        children=ch,
+        construction="자식 §9 본문 **첫 줄 직후**에 닫는 구분줄 없는 코드펜스 2줄 주입 "
+                     "— 부모 story 무접촉(가시 앵커 4 유지), 자식 파일만 EOF 까지 펜스 미닫힘")
+
+
+def ctx_fence_unclosed_parent() -> Ctx:
+    """M-FENCE-UNCLOSED-PARENT — 부모 story **정의역 안**(§9 앵커 쌍 직후)에 미닫힌 펜스.
+
+    재는 것: **앵커가 일부만 보이는 상태**의 붕괴. §9 쌍은 미닫힘 지점 앞이라 그대로 보이고
+    §10 쌍은 통째로 가려진다(가시 4 → 2). 쌍이 한꺼번에 사라지므로 미쌍·중복 규칙은
+    전혀 발화하지 않는다 — 종전 3속성 검사만으로는 조용히 통과하는 형상이다.
+    """
+    ctx = split_ctx()
+    end = f"<!-- cfp-split:end id={SPLIT_ID} -->\n"
+    story = ctx["story_after"]
+    if story.count(end) != 1:                      # fixture 무음 no-op 방지 (born-broken 가드)
+        raise AssertionError(f"§9 end 앵커 리터럴이 {story.count(end)}건 — 주입 지점 특정 불가")
+    return ctx.copy_with(
+        story_after=story.replace(end, end + UNCLOSED_FENCE, 1),
+        construction="부모 story §9 앵커 쌍 **직후**(end 앵커 줄 바로 아래, §10 heading 앞)에 "
+                     "닫는 구분줄 없는 코드펜스 2줄 주입 — §9 쌍은 가시 잔존, §10 쌍만 마스킹")
+
+
+def ctx_fence_unclosed_outdomain() -> Ctx:
+    """M-FENCE-UNCLOSED-OUTDOMAIN — 부모 story **정의역 밖**(§8 heading 앞)에 미닫힌 펜스.
+
+    재는 것: ★최악 케이스. 앵커 4건이 **전부** 미닫힘 지점 뒤라 통째로 비가시가 되어
+    `_raw_anchors` 가 0 이 된다. 이때 "앵커 0건" 은 *앵커 없음* 이 아니라 *파싱 붕괴* 인데,
+    EOF 미닫힘 leg 이 `if not raw: NOT_FIRED` 보다 **뒤**에 있으면 그 NOT_FIRED 로 조용히
+    빠져나간다(검사 정의역 공허). 실재 4건임은 `parse_anchors(fence_aware=False)` 가 증언한다.
+    """
+    ctx = split_ctx()
+    h8 = "## §8. Test Contract"
+    story = ctx["story_after"]
+    if story.count(h8) != 1:                       # fixture 무음 no-op 방지 (born-broken 가드)
+        raise AssertionError(f"§8 heading 리터럴이 {story.count(h8)}건 — 주입 지점 특정 불가")
+    return ctx.copy_with(
+        story_after=story.replace(h8, UNCLOSED_FENCE + h8, 1),
+        construction="부모 story **§8 heading 바로 앞**(= 전 앵커보다 앞, 정의역 밖)에 닫는 "
+                     "구분줄 없는 코드펜스 2줄 주입 — 실재 앵커 4건이 통째로 비가시(가시 0)")
 
 
 def ctx_anchor_malformed() -> Ctx:
@@ -1552,6 +1628,36 @@ def run_battery(engine) -> dict:
         add(mid, "INV-ANCHOR", anchor_ctl, run_anchor(engine, ctx_fn()), con,
             synthetic_sha(split_base["story_after"]), "INV-ANCHOR parent+children")
 
+    # --- 미닫힌 fence 축 (INV-ANCHOR) — 양성 3종 -----------------------------
+    #  ★ 음성 대조군은 **신설하지 않는다**. 이 축의 음성 2 = 닫힌 fence(M-E3) + 무주입
+    #    `split_base`(= 여기 `anchor_ctl`). 양성 3 ∧ 음성 2 로 배선이 닫힌다:
+    #      · 양성 단독 → 배선을 상수로 바꿔도 대조군이 통과(검사 미호출을 못 잡음)
+    #      · 음성 단독 → "닫힌 펜스는 무해" 만 말할 뿐 미닫힘 방향에 무력
+    #  ★ 주입 **위치**가 셋 다 다르다 — 붕괴 시작점이 자식 / 정의역 안 / 정의역 밖.
+    #    구조 판별자(가시 앵커 · 섹션 수)까지 note 에 실어 "셋이 같은 이유로 RED" 를 배제한다.
+    for mid, ctx_fn, dom in (
+        ("M-FENCE-UNCLOSED-CHILD", ctx_fence_unclosed_child,
+         "INV-ANCHOR 자식 §9 파일"),
+        ("M-FENCE-UNCLOSED-PARENT", ctx_fence_unclosed_parent,
+         "INV-ANCHOR parent §9 앵커 구간"),
+        ("M-FENCE-UNCLOSED-OUTDOMAIN", ctx_fence_unclosed_outdomain,
+         "INV-ANCHOR parent §8 앞(정의역 밖)"),
+    ):
+        ctx_obj = ctx_fn()
+        story = ctx_obj["story_after"]
+        child9 = ctx_obj["children"][child_path(SPLIT_ID)]
+        add(mid, "INV-ANCHOR", anchor_ctl, run_anchor(engine, ctx_obj),
+            ctx_obj["construction"], synthetic_sha(story, child9), dom,
+            note=("가시 앵커 %d/4 · 부모 섹션 %d/11 (무주입 정본 = 4 · 11) — "
+                  "부모 EOF 미닫힘 %s / 자식 §9 EOF 미닫힘 %s. "
+                  "`fence_aware=False` 로 재파싱하면 같은 문서에서 앵커가 %d건 나온다 ⇒ "
+                  "가려진 앵커는 **실재**하며 '앵커 없음' 이 아니라 파싱 붕괴다"
+                  % (len(engine.parse_anchors(story)),
+                     len(engine.split_sections(story)),
+                     engine.fence_unclosed_at_eof(story),
+                     engine.fence_unclosed_at_eof(child9),
+                     len(engine.parse_anchors(story, False)))))
+
     # --- INV-S1 축 ---------------------------------------------------------
     s1_ctl = run_inv_s1(engine, split_base)
     for mid, ctx_fn, con in (
@@ -1593,11 +1699,16 @@ def run_battery(engine) -> dict:
     #       삼켜 섹션 파서를 오도할 수 있다 (형제 사례 #2951 이 같은 계열). 그렇다면 그것은
     #       **손실 축(leg-A)이 아니라 구조·파싱 축**의 일이다.
     #
-    #   ESCALATION (Orchestrator 가 ArchitectPL 로 정식 회부 — 판정 대기): 판정 선택지는
-    #   "M-E3 삭제" 가 아니라 **「어느 축으로 옮길 것인가」** 에 가깝다. 축 이동 여부·방법
-    #   (및 원래 겨냥한 E-3 를 실제로 재기 위한 fixture 재구성 필요 여부)은 **ArchitectPL
-    #   판정 사항이며 QADev 가 정하지 않는다**(설계 결정). 여기서는 로스터 유지 + 실측 반영
-    #   + 표식까지만 한다.
+    #   ★판정 확정 — 축 분리. (3)의 "실 위협" 은 실측 결과 **닫힌 fence 가 아니라 미닫힌
+    #   fence** 였다. 닫힌 펜스는 마스킹이 그 블록 안에서 끝나 후속 heading·앵커를 전혀
+    #   가리지 못한다(그래서 M-E3 는 pure-append 이고 GREEN 이 옳다). 실제로 파서를 무너뜨리는
+    #   것은 **EOF 까지 닫히지 않은 펜스**이며, 그 축은 신설 `M-FENCE-UNCLOSED-*` **3종**이
+    #   담당한다. 따라서 M-E3 는 축을 옮기지 않고, 그 3종의 **음성 대조군**으로 로스터에 남는다
+    #   (양성 3 ∧ 음성 2 — 나머지 하나는 무주입 `split_base`).
+    #   또한 M-E3 는 원 E-3(§9 선두 코드펜스 → 슬라이서 조기 종결)를 **재현하지 않는다**:
+    #   이름은 파서 위협인데 구성은 자식 말미 순수 append 라 손실 축이다. 그 이름-구성 불일치는
+    #   여기 기록으로 남기고, 실 파서 위협의 재현은 미닫힘 축 3종이 맡는다.
+    #   `expect_red=False` 는 실측과 판정 양쪽에서 옳다.
     e3_ctx = ctx_e3_fence_phantom()
     e3_v = run_inv_s1(engine, e3_ctx)
     add("M-E3", "INV-S1", s1_ctl, e3_v,
@@ -1605,14 +1716,17 @@ def run_battery(engine) -> dict:
         "— 기존 줄 삭제·변조 0",
         synthetic_sha(e3_ctx["story_after"], e3_ctx["children"][child_path(SPLIT_ID)]),
         "INV-S1 §9 leg-A", expect_red=False,
-        note=("★ESCALATION(ArchitectPL 회부·판정 대기) — 실측 leg-A PASS(소실 %s · 신규 %s) "
-              "/ leg-B SIGNAL. 종전 RED 는 phantom fence 검출을 **입증하지 않는다**: "
-              "whole-digest 술어 하에서는 어떤 append 든 RED 라 검출 특이성이 0 이었다 "
+        note=("★판정 확정 — **닫힌 fence pure-append 음성 대조군**(미닫힘 축 3종의 짝). "
+              "실측 leg-A PASS(소실 %s · 신규 %s) / leg-B SIGNAL. 종전 must_red 는 phantom "
+              "fence 검출을 **입증한 적이 없다**: whole-digest 술어 하에서는 어떤 append 든 "
+              "RED 라 판별 특이성이 0 이었다(펜스를 아예 빼도 RED · 정상 성장 대조군도 RED) "
               "⇒ 3-leg 분해가 만든 회귀가 아니라 분해가 **드러낸** 선재 hollow. "
               "pure-append 라 손실 축에서 M-SPLIT-GROW-CTL 과 동형 ⇒ must_red 등재 불가. "
-              "단 phantom fence 자체는 실 위협일 수 있고(후속 heading 을 삼켜 섹션 파서 오도, "
-              "형제 사례 #2951) 그것은 **구조·파싱 축**의 일이다 — 판정 선택지는 '삭제' 가 아니라 "
-              "'어느 축으로 옮길 것인가'이며 ArchitectPL 소관(QADev 재설계 금지)"
+              "실 파서 위협은 '닫힌' 이 아니라 **'미닫힌' fence** 였고(닫힌 펜스는 마스킹이 "
+              "블록 안에서 끝나 후속 heading·앵커를 못 가린다) 그 축은 M-FENCE-UNCLOSED-* "
+              "3종이 담당한다. M-E3 는 ADR-180 §결정 4 의 원 E-3(§9 선두 펜스 → 슬라이서 "
+              "조기 종결)를 재현하지 않으며(이름=파서 위협 · 구성=말미 append), 축 이동 없이 "
+              "그 3종의 음성 대조군으로 잔존한다"
               % (reported_lost(e3_v), reported_gained(e3_v))))
 
     # --- INV-S1 3-leg 분해 축 — CP §8.2 신설 6종 (양성 4 ∧ 대조군 2) --------

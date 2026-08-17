@@ -510,10 +510,17 @@ def test_mutant_red_and_control_green():
         "M-DUP-ROW": 1, "M-EQUIV": 0, "M-PREEXIST": 1,
         "M-APPEND-CTL-1000": 0, "M-APPEND-CTL-50000": 0, "M-MARGIN": 0, "M-BASIS-RAW": 0,
         # FIX Iter 14 — INV-S1 3-leg 분해 축. 양성 4 는 **leg-A 1건씩**(leg-B/C 는 비차단
-        # SIGNAL 이라 rc·RED 계수에 미기여) / 대조군 2 는 0. M-E3 는 pure-append 라 0
-        # (실측 재등재 — 근거는 `run_battery` M-E3 블록 주석의 ESCALATION 문면).
+        # SIGNAL 이라 rc·RED 계수에 미기여) / 대조군 2 는 0.
         "M-LOSS-LINE": 1, "M-LOSS-MUTATE": 1, "M-LOSS-NOTATION": 1, "M-LOSS-MASK": 1,
-        "M-SPLIT-GROW-CTL": 0, "M-MIDSPLIT-CTL": 0, "M-E3": 0,
+        "M-SPLIT-GROW-CTL": 0, "M-MIDSPLIT-CTL": 0,
+        # 미닫힌 fence 축 (INV-ANCHOR) — 양성 3 ∧ 음성 2.
+        #   양성 3 은 **각 1건**이다: EOF 미닫힘 leg 은 RED 1건을 내고 즉시 return 하므로
+        #   (하류 앵커 판정 결과가 신뢰 불가라서) 형제 규칙이 덧붙는 일이 없다. 개수가 2+ 로
+        #   변하면 그 early-return 이 깨졌다는 뜻이므로 여기서 잡힌다.
+        #   음성 = M-E3(닫힌 fence pure-append) + 무주입 대조군(`control` 열이 GREEN 임을
+        #   같은 배터리가 별도로 확인). 판정 근거 SSOT = `run_battery` 의 M-E3 블록 주석.
+        "M-FENCE-UNCLOSED-CHILD": 1, "M-FENCE-UNCLOSED-PARENT": 1,
+        "M-FENCE-UNCLOSED-OUTDOMAIN": 1, "M-E3": 0,
     }
     actual = {k: results[k]["injected_red_count"] for k in expected_red_counts}
     assert actual == expected_red_counts, (

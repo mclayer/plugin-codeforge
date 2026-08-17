@@ -591,6 +591,159 @@ def test_loss_axis_three_advisory_directions():
         f"성장 동반 소실 목록 {lost_grow} / 성장 없음 {lost_flat}")
 
 
+# ---------------------------------------------------------------------------
+# 미닫힌 fence 축 (INV-ANCHOR) — 양성 3 ∧ 음성 2, 3방향 자문
+# ---------------------------------------------------------------------------
+
+# 주입 위치별 **구조 판별자** — (가시 앵커, 부모 섹션 수, 부모 EOF 미닫힘, 자식 §9 EOF 미닫힘).
+#   "셋 다 RED" 만 보면 셋이 **같은 이유로** RED 여도 통과한다(축이 하나뿐인데 셋으로 보이는
+#   상태). 붕괴 시작점이 실제로 다르다는 것을 이 벡터가 값으로 고정한다.
+FENCE_AXIS_EXPECTED = {
+    "M-FENCE-UNCLOSED-CHILD":     (4, 11, False, True),
+    "M-FENCE-UNCLOSED-PARENT":    (2,  9, True,  False),
+    "M-FENCE-UNCLOSED-OUTDOMAIN": (0,  7, True,  False),
+}
+FENCE_AXIS_CTX = {
+    "M-FENCE-UNCLOSED-CHILD": FX.ctx_fence_unclosed_child,
+    "M-FENCE-UNCLOSED-PARENT": FX.ctx_fence_unclosed_parent,
+    "M-FENCE-UNCLOSED-OUTDOMAIN": FX.ctx_fence_unclosed_outdomain,
+}
+
+
+def test_fence_unclosed_axis_positive_and_negative_pair():
+    """미닫힌 fence 축 — 양성 3(RED) ∧ 음성 2(GREEN)를 **쌍으로** 확정한다.
+
+    음성 2 = 닫힌 fence(M-E3) + 무주입 `split_ctx`. 신설하지 않고 재사용한다.
+    양성 3 은 주입 **위치**가 달라야 축이 셋이므로, 구조 판별자 벡터까지 값으로 잰다.
+    """
+    eng = engine()
+
+    # 음성 2 — 이 둘이 GREEN 이어야 양성 RED 가 '아무거나 다 RED' 가 아님이 성립한다.
+    base = FX.split_ctx()
+    assert FX.red_count(FX.run_anchor(eng, base)) == 0, "무주입 대조군이 이미 RED = 등가 mutant"
+    e3 = FX.run_anchor(eng, FX.ctx_e3_fence_phantom())
+    assert FX.red_count(e3) == 0, (                       # ← 음성 대조군 측정 assertion
+        f"**닫힌** fence 가 앵커 축에서 RED — 미닫힘이 아니라 펜스 존재 자체를 잡고 있다. "
+        f"{FX.status_vector(e3)}")
+    assert not eng.fence_unclosed_at_eof(
+        FX.ctx_e3_fence_phantom()["children"][FX.child_path(FX.SPLIT_ID)]), (
+        "M-E3 자식이 EOF 미닫힘이면 음성 대조군 자격이 없다")
+    assert len(eng.parse_anchors(base["story_after"])) == 4, "무주입 정본 가시 앵커가 4 가 아니다"
+
+    # 양성 3 — RED 1건씩 ∧ 붕괴 시작점이 서로 다름
+    for mid, (want_vis, want_secs, want_p, want_c) in FENCE_AXIS_EXPECTED.items():
+        ctx = FENCE_AXIS_CTX[mid]()
+        story, child9 = ctx["story_after"], ctx["children"][FX.child_path(FX.SPLIT_ID)]
+        verdicts = FX.run_anchor(eng, ctx)
+
+        assert FX.red_count(verdicts) == 1, (             # ← 양성 측정 assertion
+            f"{mid} RED {FX.red_count(verdicts)}건 (기대 1) — EOF 미닫힘 leg 은 1건 방출 후 "
+            f"즉시 return 해야 한다. {FX.status_vector(verdicts)}")
+        got = (len(eng.parse_anchors(story)), len(eng.split_sections(story)),
+               eng.fence_unclosed_at_eof(story), eng.fence_unclosed_at_eof(child9))
+        assert got == (want_vis, want_secs, want_p, want_c), (   # ← 축 분리 측정 assertion
+            f"{mid} 구조 판별자 실측 {got} != 기대 "
+            f"{(want_vis, want_secs, want_p, want_c)} — 주입 위치가 설계와 다르다. "
+            f"construction={ctx['construction']}")
+
+        # ★ "앵커 0건 = 앵커 없음" 이 아니라 **파싱 붕괴**임을 같은 문서로 반증한다.
+        #   fence-aware 를 끄면 가려졌던 앵커가 4건 그대로 나온다 ⇒ 실재하는데 안 보였을 뿐.
+        assert len(eng.parse_anchors(story, False)) == 4, (
+            f"{mid} — fence-aware 를 꺼도 앵커가 4건이 아니다. 마스킹이 아니라 문서 자체가 "
+            f"달라졌다는 뜻이므로 이 fixture 는 미닫힘 축을 재지 않는다")
+
+    # 붕괴 시작점 3종이 실제로 **서로 다른 형상**인지 (동형 3종 방지)
+    shapes = {mid: FENCE_AXIS_EXPECTED[mid] for mid in FENCE_AXIS_EXPECTED}
+    assert len(set(shapes.values())) == 3, f"주입 위치 3종이 동형이다 — 축이 하나뿐: {shapes}"
+
+
+def test_fence_unclosed_axis_three_advisory_directions():
+    """미닫힌 fence 축 3방향 자문 — ① 제거 ② 주입 ③ 표기 등가변형. 셋 다 **실행**으로 이행한다.
+
+    ① 제거를 두 채널로 각각 이행한다. 한 채널만으로는 "이 RED 가 정확히 그 leg 때문" 이라는
+       귀속이 서지 않는다.
+         (a) `fence_aware=False` — 엔진 내장 우회 스위치. leg 의 `and` 앞항을 끈다.
+         (b) site 봉합 — `check_anchor_integrity` 안 RED 판정 site 를 하나씩 `if False:` 로
+             죽여, **EOF 미닫힘 site 하나만** 3종을 GREEN 으로 되돌린다는 것까지 본다
+             (형제 site 를 죽여도 GREEN 이 되면 귀속이 틀린 것이다).
+    ★ (a) 는 진단용 스위치이지 안전 모드가 아니다 — 끄면 판정만 사라지고 실제 파싱 붕괴
+       위험은 그대로다. 여기서는 "무엇이 RED 를 만들었는가" 의 귀속에만 쓴다.
+    """
+    eng = engine()
+
+    def anchor_with(engine_mod, ctx, fence_aware=True):
+        out = list(engine_mod.check_anchor_integrity(
+            ctx["story_after"], label=FX.STORY_PATH, fence_aware=fence_aware))
+        for path in sorted(ctx["children"]):
+            out.extend(engine_mod.check_anchor_integrity(
+                ctx["children"][path], label=path, fence_aware=fence_aware))
+        return out
+
+    # ② 주입 축 — 봉합 상태에서 3종 RED (양성)
+    for mid, ctx_fn in FENCE_AXIS_CTX.items():
+        assert FX.red_count(anchor_with(eng, ctx_fn())) == 1, f"{mid} 주입이 RED 가 아니다"
+
+    # ① 제거 채널 (a) — fence-aware 를 끄면 3종이 GREEN 으로 **돌아와야** 한다.
+    for mid, ctx_fn in FENCE_AXIS_CTX.items():
+        off = anchor_with(eng, ctx_fn(), fence_aware=False)
+        assert FX.red_count(off) == 0, (                  # ← 제거 축 측정 assertion
+            f"{mid} — fence-aware 를 껐는데도 RED. 이 RED 의 원인이 EOF 미닫힘 leg 이 아니라 "
+            f"형제 앵커 규칙(미쌍·중복·오형식)이라는 뜻이다. {FX.status_vector(off)}")
+
+    # ③ 표기 등가변형 축 — 펜스 표기를 바꿔도 판정이 유지되는가.
+    #    `~~~` / 4-backtick / 언어태그 유무 / 들여쓰기 — 표기를 갈아끼우면 빠져나가는 게이트를 배제.
+    for label, fence in (
+        ("tilde ~~~", "~~~text\n미닫힌 tilde 펜스.\n"),
+        ("4-backtick", "````\n미닫힌 4-backtick 펜스.\n"),
+        ("언어태그 없음", "```\n미닫힌 무태그 펜스.\n"),
+        ("언어태그 bash", "```bash\necho 미닫힌 bash 펜스\n"),
+        ("들여쓴 펜스", "   ```yaml\n   미닫힌 들여쓴 펜스.\n"),
+    ):
+        for mid, ctx_fn in FENCE_AXIS_CTX.items():
+            ctx = _refence(ctx_fn(), fence)
+            assert FX.red_count(FX.run_anchor(eng, ctx)) == 1, (  # ← 등가변형 측정 assertion
+                f"{mid} / {label} — 펜스 표기를 바꾸자 판정이 사라졌다. 표기만 갈아끼우면 "
+                f"통과하는 게이트다")
+
+
+def _refence(ctx, fence: str):
+    """fixture 의 정본 펜스 표기를 등가 표기로 치환한다 (주입 **위치**는 보존)."""
+    story = ctx["story_after"].replace(FX.UNCLOSED_FENCE, fence, 1)
+    kids = {p: t.replace(FX.UNCLOSED_FENCE, fence, 1) for p, t in ctx["children"].items()}
+    changed = (story != ctx["story_after"]) or any(
+        kids[p] != ctx["children"][p] for p in kids)
+    if not changed:                       # 무음 no-op 치환 = 등가변형을 안 잰 것과 같다
+        raise AssertionError("정본 펜스 리터럴을 찾지 못해 표기 치환이 no-op 이 됐다")
+    return ctx.copy_with(story_after=story, children=kids)
+
+
+def test_fence_unclosed_removal_is_attributable_to_the_eof_leg(tmp_path):
+    """① 제거 채널 (b) — **어느 site 를 죽였을 때** 3종이 GREEN 으로 돌아오는가.
+
+    `check_anchor_integrity` 안 RED 판정 site 를 하나씩 봉합한다. 3종을 전부 GREEN 으로
+    되돌리는 site 가 **정확히 하나**여야 귀속이 선다. 여러 site 가 그렇다면 판정이 중복
+    경로에 얹혀 있다는 뜻이고, 하나도 없다면 이 RED 는 봉합 대상 밖에서 나온 것이다.
+    """
+    src = FX.engine_source()
+    sites = [s for s in FX.suture_sites(src) if s[0] == "check_anchor_integrity"]
+    assert len(sites) >= 2, f"`check_anchor_integrity` 판정 site 가 {len(sites)}건 — 대조 불가"
+
+    killers = []
+    for idx, site in enumerate(sites):
+        path = FX.write_engine_variant(
+            tmp_path, FX.make_sutured_source(src, target=site), f"anchor_suture_{idx}")
+        mut = FX.load_engine(path, tag=f"anchor_suture_{idx}")
+        reds = {mid: FX.red_count(FX.run_anchor(mut, fn()))
+                for mid, fn in FENCE_AXIS_CTX.items()}
+        print(f"  suture {site[0]}:{site[1]} -> 미닫힘 3종 red={reds}")
+        if all(v == 0 for v in reds.values()):
+            killers.append(site)
+
+    assert len(killers) == 1, (                           # ← 귀속 측정 assertion
+        f"3종을 전부 GREEN 으로 되돌리는 site 가 {len(killers)}건 (기대 1) — {killers}. "
+        "0 이면 이 RED 의 원인이 봉합 대상 밖이고, 2+ 면 판정이 중복 경로에 얹혀 있다.")
+
+
 def test_before_ref_children_are_resolved_separately():
     """`children_before` 는 장식이 아니다 — 양성 ∧ 음성 쌍으로 load-bearing 을 반증한다.
 
@@ -859,19 +1012,24 @@ def test_post_suture_verification_four_axes():
     # ① 지정 mutant RED
     #    FIX Iter 14 — INV-S1 3-leg 분해 축의 **양성 4종**(leg-A 손실)을 추가 등재.
     #    M-E3 는 여기서 **빠졌다**: pure-append 라 손실 축에서 M-SPLIT-GROW-CTL 과 동형이고,
-    #    종전 RED 는 whole-digest 술어의 무특이성 산물(= 검출 특이성 0)이었다. 근거·에스컬레이션
-    #    문면 SSOT = `_story_read_surface_fixtures.run_battery` 의 M-E3 블록 주석.
+    #    종전 RED 는 whole-digest 술어의 무특이성 산물(= 검출 특이성 0)이었다. 판정 문면
+    #    SSOT = `_story_read_surface_fixtures.run_battery` 의 M-E3 블록 주석(축 분리 확정).
+    #    이어서 미닫힌 fence 축의 **양성 3종**을 추가 등재한다 — M-E3 가 담당하지 **않는**
+    #    실 파서 위협(EOF 미닫힘)이 그 3종이다.
     must_red = ["M-CARD-IN", "M-CARD-VALUE", "M-CARD-CROSS", "M-S3-NOSPLIT", "M-DUP-ROW",
                 "M-SEC5", "M-ANCHOR-LOOSE", "M-GLOBALRULE", "M-DOMAIN",
                 "M-PREEXIST", "M-E1", "M-E2", "M-E4", "M-MIX-min",
                 "M-DEPTH2", "M-DANGLING",
                 "M-ANCHOR-MALFORMED", "M-ANCHOR-UNPAIRED", "M-ANCHOR-DUP", "M-SELFPTR",
-                "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK"]
+                "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK",
+                "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT",
+                "M-FENCE-UNCLOSED-OUTDOMAIN"]
     not_red = [m for m in must_red if results[m]["injected_red_count"] == 0]
     assert not not_red, f"① 지정 mutant 중 RED 미달: {not_red}"
 
     # ② 형제 회귀 0 — GREEN 기대 mutant 는 RED 로 넘어가지 않는다
     #    FIX Iter 14 — 대조군 2종(M-SPLIT-GROW-CTL / M-MIDSPLIT-CTL) + M-E3(실측 재등재) 추가.
+    #    M-E3 는 미닫힘 축 양성 3종의 **음성 대조군**이기도 하다 (닫힌 fence = 무해).
     must_green = ["M-EQUIV", "M-MARGIN", "M-APPEND-CTL-1000", "M-APPEND-CTL-50000",
                   "M-BASIS-RAW", "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL", "M-E3"]
     regressed = [m for m in must_green if results[m]["injected_red_count"] != 0]
@@ -884,7 +1042,15 @@ def test_post_suture_verification_four_axes():
     loss_axis_ctl = {"M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL"}
     assert loss_axis_pos <= set(must_red) and loss_axis_ctl <= set(must_green), (
         "INV-S1 손실 축의 양성 ∧ 음성 쌍 중 한쪽만 등재됐다 — 배선이 닫히지 않는다")
-    for mid in loss_axis_pos | loss_axis_ctl:
+
+    #    미닫힌 fence 축도 같은 쌍 요건을 진다. 음성은 **신설하지 않았다**:
+    #    닫힌 fence(M-E3) + 무주입 대조군(`control` 열)이 그 자리다 — 양성 3 ∧ 음성 2.
+    fence_axis_pos = {"M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT",
+                      "M-FENCE-UNCLOSED-OUTDOMAIN"}
+    assert fence_axis_pos <= set(must_red) and "M-E3" in must_green, (
+        "미닫힌 fence 축의 양성 ∧ 음성 쌍 중 한쪽만 등재됐다 — 배선이 닫히지 않는다")
+
+    for mid in loss_axis_pos | loss_axis_ctl | fence_axis_pos | {"M-E3"}:
         assert results[mid]["control"] == "GREEN", (
             f"{mid} 대조군이 이미 RED — 등가 mutant (admission rule 위반)")
 
