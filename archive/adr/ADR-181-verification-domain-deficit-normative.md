@@ -1179,11 +1179,18 @@ ladder(file) :=
       len(mea) >= 1                                  # 미만 = 사다리 미선택 (사유 없음)
   AND 각 항목에서 경로가 추출된다 (경로 키 closed-set — 아래 ③-key)  [ladder-path-key]
   AND 그 경로가 repo 트리의 blob 으로 실재                          [ladder-path-missing]
-  AND 그 경로가 workflow run: 블롭에서 **호출**된다                  [ladder-unwired]
+  AND 그 경로가 (iv-L) `배선` 을 만족한다                            [ladder-unwired]
+       #   스크립트 축   = 그 경로가 workflow run: 블롭에 **출현**한다   (호출 아님 — 아래 천장)
+       #   workflow 축   = 그 워크플로가 `.github/workflows/` 에 **설치 실재**한다 ((iv-L3) 분기)
        # ★ FIX Iter 10 — 뒤 3연언지의 입력원(repo 상태) 리터럴 = 아래 (iv-L)
        # ★ FIX Iter 11 — "실재 실행 파일"/"run: 줄에 등장" 을 (iv-L) 리터럴로 교체:
        #   실재 = ls-tree 완전일치(blob) · 배선 = 접두 정규화 + 선두주석줄 제거 후 경계 매치
-       #   판별 행 = 43·52·53(경로 키) · 44·49(배선) · 45·50·51·54~58(전건 충족 GREEN) · 46b·48(실재)
+       # ★★ FIX Iter 12 — `호출` 을 **`출현`** 으로 정정한다 (설계리뷰 R12 P0, 3자 수렴).
+       #   술어가 재는 것은 호출이 아니라 출현이며, 그 차이가 (iv-L) β 천장의 전부다.
+       #   `호출` 로 적으면 구현자는 술어보다 **좁은** 것을 짓고, 표는 그 차이를 판별하지 못한다.
+       #   + workflow / workflow_path 원소는 `배선` 을 설치 실재 축으로 분기한다 ((iv-L3))
+       #   판별 행 = 43·52·53(경로 키) · 44·49·50c(배선) · 45·45b·50·50b·51·54~58(전건 충족 GREEN)
+       #             · 46b·48(실재) · 50b(분기 자체) · 50c(설치 실재)
 
 admissible(file) := ladder(file) OR exempt(file)
        # ★ FIX Iter 10 — 둘 다 실패 시 exit 사유 귀속:
@@ -1311,8 +1318,13 @@ Iter 9 는 born-vacuous 를 고치려 골격에 상수 `A` **1줄을 삽입**했
 
 ```
 # 위치 슬롯 행사 행 = 위 표의 행 id 집합 {34, 35, 41, 37, 42} = 5
-# 전체 행 수 = (iv) 표 행 id 전수 계수 (아래 (iv) 표 = 65)
-#   정규식 ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|  로 (iv) 표 본문 행을 세면 65
+# 전체 행 수 = (iv) 표 본문 행 전수 계수 = 65
+#   ★ 행 id 만으로 세면 안 된다 — 이 문서에는 `1`·`34`·`41` 같은 id 를 쓰는 **다른 표**가 있어
+#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|  단독으로는 74 가 나온다 (firsthand, 자기 실측).
+#     (iv) 표 행만 고르려면 **기대 열(3번째 칸)이 GREEN/RED/OUT 인 행**으로 좁힌다:
+#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|.*\|[ \t★]*\**(GREEN|RED|OUT)\**[ \t]*\|   -> 65
+#   ★ 기대 열 앞의 `★` 를 허용하지 않으면 **행 36(`★ **OUT**`) 하나가 조용히 빠져 64** 가 된다
+#     (firsthand — 이 계수 규칙 자신이 born-broken 이었고 자기 실행으로 잡았다)
 # 나머지 = 65 - 5 = 60
 ```
 
@@ -1441,9 +1453,11 @@ RED 를 못 내고**, 그 상태로도 "표 전건 재현" 이 성립해 **check
   항목 단위 (169항목)
      구 PATH_KEYS(8원)  ->  path-missing 123 · path-key 45 · unwired 1
      신 PATH_KEYS(3원)  ->  path-key 164 · path-missing 1 · unwired 4
-  => 사다리 축 대가 = **48파일 전건 RED · PASS 0** (판정은 정정 전후 불변)
+  => 사다리 축 대가 = **48파일 전건 RED · PASS 0** (PATH_KEYS 정정 전후 불변)
   => 정정된 것은 **진단**이다: `ladder-path-missing` 오진단 **122회**(전부 `action` 키)가 소멸하고
      `ladder-path-key`(= "경로 키를 쓰지 않았다") 로 옮겨간다
+  ★ FIX Iter 12 — 이 값은 **workflow 축 분기 이전**의 산출이다. 분기 채택 후 정본은
+    **45 RED / 3 GREEN**(파일) 이며 산출·귀속은 아래 (iv-L3) 대가 블록이 SSOT 다
 ```
 
 ★★★ **FIX Iter 12 정정 — 신 3원 분포 2칸이 재현되지 않았다 (설계리뷰 R12 F-1, PL·Codex 수렴)**.
@@ -1474,6 +1488,8 @@ for p in scripts/check-production-cutover-evidence.sh \
 - ★★ **48 전건 RED 의 의미 (over-claim 차단)** — 이것은 *"지금 48개가 차단된다"* 가 아니라
   **"그 48개 중 하나를 건드리는 PR 은 그 파일에서 RED 를 받는다"** 이다(정의역 = PR diff forward-only).
   면제 축 122 와 **같은 성격의 이연 비용**이며 같은 처분(Phase 2 warning-first)을 받는다.
+  ★ **FIX Iter 12 — 「전건」이 더는 참이 아니다.** workflow 축 분기 후 **45 RED / 3 GREEN** 이며
+  ("전건 RED" 는 분기 이전 상태의 기술), 정본 산출·귀속 파일 3건은 (iv-L3) 대가 블록에 있다.
 - ★ **왜 48 전건이 RED 인가 (원인 귀속)** — 신 술어 기준 사유의 **164/169** 가 `ladder-path-key` 다.
   즉 현행 코퍼스는 사다리를 통과할 **형식으로 쓰여 있지 않다**(대부분 `action: <검사 이름>` 형).
   이는 술어가 가혹해서가 아니라 **`mea` 가 지금까지 자유 서술 필드였기 때문**이며, 그 사실 자체가
@@ -1721,6 +1737,161 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
   **오분류**했다. 오분류의 방향은 fail-closed(정당한 배선을 미배선으로)라 여전히 틀린 답이다.
   ⇒ **선두 주석줄만** 제거하고, trailing 주석 안 경로가 배선으로 셈되는 잔여를 **미탐으로 declare** 한다.
 
+★★★★ **천장 정본 — `배선` 은 「호출」이 아니라 「출현」이다 (FIX Iter 12, 설계리뷰 R12 P0 · 3자 수렴)**
+
+직전 판의 천장은 잔여를 **`trailing 주석` 하나**로만 적었다. **그 열거가 하한이었다** — 선두 주석줄을
+제거한 뒤에도 **비-주석 줄의 문자열 인자·산문**이 전부 `배선` 을 공급한다. 본 문서 자신의 규율
+*"천장은 이름으로 적는다. 뭉뚱그리지 않는다"* 미이행이며, ⇒ **부류를 이름으로 등재**한다:
+
+```
+`배선` 으로 셈되는 비-호출 출현 (declared — 전부 미탐, 지우고 인용 금지)
+  (n-1)  git commit 메시지 문자열          예) -m "Automated by templates/github-workflows/X.yml"
+  (n-2)  PR 본문·이슈 본문 산문             예) Source: `templates/github-workflows/X.yml` (CFP-820 …)
+  (n-3)  echo / printf 로 출력하는 안내문    예) echo "::notice::SSOT: archive/adr/ADR-037-….md …"
+  (n-4)  test -f / [ -f ] 등 존재 검사 인자   예) if [ -f ".codeforge/project.yaml" ]
+  (n-5)  grep 패턴 · grep -v 제외 패턴       예) | grep -v 'docs/evidence-checks-registry.yaml'
+  (n-6)  heredoc 본문 안의 경로 언급
+  (n-7)  행 중간 trailing 주석 (위 항목 — 선두 주석줄 제거가 덮지 않는다)
+  ★ 이 목록은 **하한**이다. "닫힌 집합" 이라 선언하지 않는다 — 이 문서에서 열거를 정본으로 둔 자리가
+    매번 한 칸 옆에서 반증됐다. 정본은 술어(`출현`) 자신이고 목록은 그 술어의 관측 사례다.
+```
+
+- ★★ **문면 근거가 이미 표 안에 있었다** — 행 46b 의 배선 witness 가 `if [ -f ".codeforge/project.yaml" ]`
+  (= (n-4))이고, 행 50·51 의 구 배선 근거가 (n-1)·(n-2) 였다. **사실은 표 안에 있었고 이름이 없었다.**
+- ★★ **천장의 실물 전시 = 행 45b** (`- script_path: docs/evidence-checks-registry.yaml` → **GREEN**).
+  이 경로의 유일한 배선 근거는 `grep -v 'docs/evidence-checks-registry.yaml'` **제외 패턴 1회**다
+  — 즉 *"이 파일을 검사에서 빼라"* 는 문자열이 *"이 파일이 강제된다"* 의 증거로 셈된다.
+  판별 행이 아니라 **천장 전시 행**이며, Phase 2 가 이 형상을 막으려 술어를 좁히면 이 행이 RED 로
+  뒤집혀 표가 그 변경을 **관측**한다(천장을 표 안에 결속하는 유일한 방법이다).
+- ★★★ **비실행 데이터 파일 28종이 `실재 ∧ 배선` 이다** (firsthand — `CLAUDE.md`(출현 13회) ·
+  `docs/orchestrator-playbook.md` · `docs/consumer-guide.md` · `docs/inter-plugin-contracts/*.md` ·
+  `plugins/codeforge-review/agents/*.md` · `review-checklists/{code,design,security}.md` …).
+  ⇒ **임의 ADR 이 `- script_path: CLAUDE.md` 한 줄로 사다리 `admissible` 을 얻는다.** carrier 도 만기도
+  없으므로 **면제 경로(carrier + 180일 상한)보다 값싸다** — 두 충족 경로 중 싼 쪽이 강제를 전혀
+  요구하지 않는다. **Phase 2 checker 착지 전에 이 천장이 문면에 없으면 안 되는 이유가 그것이다.**
+- ★ **왜 지금 술어를 좁히지 않는가 (처분 근거)** — "호출" 을 실제로 재려면 셸 파싱(인용 상태·변수 전개·
+  `bash -c` 중첩)이 필요하고, 그 근사는 위 trailing 주석 항이 실증한 대로 **fail-closed 오분류**를 낸다.
+  ⇒ 본 판은 **술어를 문면과 일치시키고(`출현`) 천장을 이름으로 적는 것**까지 하고, 좁힘은 Phase 2
+  (warning-first 착지) 소관으로 남긴다. **"닫았다" 가 아니라 "무엇이 열려 있는지 적었다"** 이다.
+
+★★★ **천장 — 사다리는 선언과 스크립트의 *관련성*을 묻지 않는다 (`declared`, FIX Iter 12 / R12 F-6)**
+
+어떤 ADR 이든 `- script_path: scripts/check-adr-amendment-parity.sh`(실재 ∧ 배선) 한 줄만 적으면
+사다리가 **GREEN** 이다. 사다리는 그 검사기가 **그 ADR 의 규범**을 강제하는지 묻지 않는다 —
+행 45 · 58 이 그 실물이며, 두 행은 서로 다른 규범을 선언한다고 가정해도 같은 스크립트로 GREEN 이다.
+면제 경로에는 대응 천장 문단이 있고 `REPO` 축에는 *"동일성 검증이 아니다"* 가 있으나 **사다리 축에는
+대응 문장이 0** 이었다. ⇒ **관련성은 미검사이며 사다리는 "무엇이든 하나 실재·배선하면 통과" 라는 것을
+`declared` 로 적는다.** 관련성 판정은 규범↔검사기 매핑을 요구하므로 (iv) 표 매체 밖이며 Phase 2 소관이다.
+
+★★★ **천장 — `배선` 정의역은 `run:` 스칼라 **1홉**이다 (`declared`, FIX Iter 12 / R12 P3-1)**
+
+run블롭은 `run:` 스칼라만 모으므로 **workflow → 테스트 래퍼 → checker** 처럼 1홉을 거치는 정당한 강제가
+`배선=False` 로 떨어진다. firsthand — 최상위 `scripts/*.{sh,py}` 201 중 배선 거짓 89, 그중 basename 이
+run블롭에 등장하는 것 **4**: `check-lane-entry-ownership.sh` · `check-lane-evidence.sh` ·
+`check-verification-floor.sh` · `check-worktree-self-ownership.sh` — 넷 다 테스트 래퍼(`bash tests/scripts/test_*.sh`)
+경유다. ⇒ **래퍼 경유 호출 · `uses:` composite/reusable 액션 안의 호출은 미탐**이라고 적는다.
+방향은 **fail-closed**(정당한 강제를 미배선으로)라 회피구는 아니지만, 문면에 없으면 저자가 born-red 의
+원인을 못 찾는다. ★ GitHub Actions expression 이 대소문자를 무시하므로 `${{ GITHUB.WORKSPACE }}` 표기도
+같은 잔여다(코퍼스 출현 0 — 판별 0).
+
+★★ **천장 — 정규화가 미탐하는 등가 표기 3종 (`declared`, FIX Iter 12 / R12 F-9)**
+
+`Scripts/X`(대소문자) · `scripts//X`(중복 슬래시) · `$RUNNER_WORKSPACE/X`(5번째 접두)는 정규화 대상이
+아니므로 `배선=False` 다(firsthand 전건 False). **방향이 fail-closed** 라 회피구가 아니고, 코퍼스 출현이
+0 이라 **판별 행을 신설하지 않는다**((0-c) 자기적용 — 뒤 경계 `/` 와 같은 처분). 문면에만 적는다.
+
+★★ **접두 4종의 *제거 순서*를 문면에 고정한다 (FIX Iter 12 / R12 P2-2)**
+
+`정규화(t)` 는 순서를 적지 않았는데 **중첩 표기에서 순서가 판정을 뒤집는다**:
+
+```
+t = ${{ github.workspace }}/./scripts/next-phase.sh
+  P-1 -> P-4 순서 : './scripts/next-phase.sh'   배선(scripts/next-phase.sh) = False
+  P-4 -> P-1 순서 : 'scripts/next-phase.sh'     배선(scripts/next-phase.sh) = True
+     (P-1 의 좌측 인접 가드 [A-Za-z0-9_./-] 가 P-4 제거 前에는 앞의 `/` 를 보고 `./` 를 보호한다)
+  코퍼스 출현 `}}/./` + `WORKSPACE}/./` + `WORKSPACE/./` = 0   => 현 65행 판별 0
+```
+
+⇒ **규정 순서 = `P-4` → `P-3` → `P-2` → `P-1`** (긴 접두부터, `./` 를 마지막에). 판별 0 이므로 행을
+신설하지 않고 **문면 고정만** 한다 — `ORDER`(`REPO`↔`PFX`) · 발행일 정규화 순서와 같은 처분이다.
+★ 이것은 `RCHAR`(Iter 7) · CRLF(Iter 8) · 위치 슬롯(Iter 10) · `정의역 우선` 독법(Iter 11)에 이은
+*"판정을 바꾸는 변수가 변수 목록 밖에 있다"* 의 **5번째**이며, 처분도 같다 — **리터럴로 등재**.
+
+###### (iv-L3) ★★★★ `배선` 의 workflow 축 분기 — 워크플로는 `run:` 으로 호출되지 않는다 (FIX Iter 12, R12 P0-ii)
+
+**적발 (Codex F1-ii, firsthand 재현).** `배선` 의 정의역은 `run:` 블롭인데 **워크플로는 `run:` 에서
+호출되는 물건이 아니라 이벤트로 트리거된다.** 두 정의역이 범주부터 어긋나므로, `PATH_KEYS` 에
+`workflow`·`workflow_path` 를 두면서 `배선` 을 `run:` 블롭으로만 정의하면 **두 원소는 구조적으로
+산문 의존**이 된다. 코퍼스 실측이 그것을 그대로 보인다:
+
+```
+# 신 3원이 추출하는 workflow 축 경로 (pin b0cefd3fe)
+templates/github-workflows/claude-md-line-cap.yml            실재=True  배선(run:)=False   <- born-red
+templates/github-workflows/story-init.yml                    실재=True  배선(run:)=False   <- born-red
+templates/github-workflows/production-cutover-evidence.yml   실재=True  배선(run:)=False   <- born-red (2항목)
+templates/github-workflows/retro-alert-pickup-kpi.yml        실재=True  배선(run:)=True    <- (n-1) commit 메시지
+templates/github-workflows/version-3way-atomic.yml           실재=True  배선(run:)=True    <- (n-2) PR 본문 산문
+# `gh workflow run` · `actions/workflows` 형 실 호출의 run블롭 출현 = 0  (firsthand)
+```
+
+⇒ **오탐·미탐이 동시에 열린다** — 정당한 워크플로 선언 4항목이 전부 `ladder-unwired` 로 born-red 이고,
+GREEN 인 2건은 산문으로 **우연히** 성립한다. 이것은 Iter 11 이 스크립트 축에서 봉합한 **α(정당 호출이
+born-red)와 같은 형상이 워크플로 축에서 미봉합**으로 남은 것이다.
+
+★★ **두 처분 중 분기를 택한다 (택일 근거)**
+
+| 처분 | 귀결 | 판정 |
+|---|---|---|
+| ⓐ **분기** — workflow 축의 `배선` 을 설치 실재로 재정의 | 판별 행 2개 신설(50b · 50c) · 기존 행 50 · 51 유지 · `PATH_KEYS` 3원 유지 | ★ **채택** |
+| ⓑ **분리** — `PATH_KEYS` 에서 두 원소 제거 | 행 50 · 51 이 `ladder-path-key` 로 뒤집혀 **기존 판별 행 2개를 되돌린다**. 코퍼스 5항목이 `path-key` 로 이동해 `실재`/`배선` 축의 코퍼스 노출이 1항목으로 축소 | 기각 |
+
+⇒ **ⓐ 채택.** ⓑ 는 R12 범위 잠금의 *"판별 행 되돌림 0"* 을 어기고, `배선` 축이 코퍼스에서 무는 것을
+5항목 → 1항목으로 줄여 **축을 사실상 죽인다**(`D-LEG` L3-ⓐ 합집합 보존 위반).
+★ **원 처방 문면(*"행 50·51 을 실 호출 witness 로 교체"*)은 이행 불가로 판정했다** — `gh workflow run`
+형 실 호출의 run블롭 출현이 **0** 이므로 워크플로 축에는 실 호출 witness 가 **원리적으로 존재하지 않는다**
+(위 firsthand). 대신 분기가 두 행의 GREEN 근거를 산문에서 **설치 실재**로 옮긴다. 이 대체 판단과 그
+근거를 여기 적는 것이 처방 미이행을 감추지 않는 방법이다.
+
+```
+INSTALL(p)  := p 가 `.github/workflows/` 하위면 p 자신,
+               아니면 `.github/workflows/` + basename(p)          # twin 규약 (workflow = templates byte-parity)
+배선_wf(p)  := INSTALL(p) 가 REPO_STATE 트리의 blob 으로 실재       # 설치 실재 축
+
+배선(k, p)  := (k ∈ {workflow, workflow_path})  ?  배선_wf(p)  :  (기존 정규화(run블롭') ∧ 경계)
+               # ★ 분기 기준은 **항목의 경로 키**이지 경로 문자열의 모양이 아니다
+```
+
+- **판별 행 50b** `- workflow: templates/github-workflows/claude-md-line-cap.yml` → **GREEN**.
+  분기를 없애면(= 두 원소도 `run:` 블롭 축) `RED/ladder-unwired` — **α 형상의 워크플로 축 실물**이다.
+- **판별 행 50c** `- workflow: templates/github-workflows/test.yml` → **RED/`ladder-unwired`**.
+  이 템플릿은 실재하나 `.github/workflows/test.yml` **twin 이 없다**(firsthand — 88 템플릿 중 twin 부재 17).
+  `배선_wf` 를 미검사(항상 참)로 두면 **GREEN** — 즉 분기가 **항진이 아님**을 이 행이 고정한다.
+  ★ 두 행이 **양성 ∧ 음성 쌍**이다. 하나만 두면 "분기했다" 는 명제는 참인 채 술어가 공허해질 수 있다.
+
+★★ **분기의 대가를 숫자로 적는다 (`declared` — 지우고 인용 금지)**
+
+```
+# 정의역 = 위 (iii) 대가 산출과 동일 (48파일 169항목 · pin b0cefd3fe)
+분기 없음(구)  파일: GREEN 0 / RED 48   (path-key 44 · path-missing 1 · unwired 3)
+               항목: path-key 164 · path-missing 1 · unwired 4
+분기 채택(신)  파일: GREEN 3 / RED 45   (path-key 44 · path-missing 1)
+               항목: path-key 164 · path-missing 1 · GREEN 4
+GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude-md-line-cap.yml)
+          archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md      (story-init.yml)
+          archive/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md (production-cutover-evidence.yml)
+```
+
+- ★ **대가의 방향이 이번에는 완화다** — 사다리 PASS 가 0 → **3** 이 된다. 즉 분기는 born-red 3건을
+  살리는 대신 **"설치돼 있다" 를 "강제된다" 로 인정**한다. 그 인정의 폭을 여기 적는 것이 천장이다.
+- ★★ **천장 (`declared`) — 설치 실재는 트리거를 보지 않는다.** `on:` 키의 존재·이벤트 종류·
+  `if:` 조건·`workflow_dispatch` 전용 여부를 **묻지 않는다**. 설치돼 있으나 어떤 이벤트로도 발화하지
+  않는 워크플로는 이 축에서 GREEN 이다. 코퍼스에서 이 형상의 출현이 0 이라 **판별 행을 신설하지
+  않는다**((0-c) 자기적용). ★ 트리거를 실제로 재려면 `on` 키를 읽어야 하는데 **YAML 1.1 이 `on` 을
+  boolean `True` 로 파싱**하므로 키 멤버십 술어가 `"on" ∪ True` 여야 한다 — 그 함정을 여기 적어 두어야
+  Phase 2 가 이 축을 넓힐 때 조용히 전건 미검출되지 않는다.
+- ★ **`.github/workflows/` 하위 경로는 분기가 항등**이다(INSTALL(p) = p) — 그래서
+  `.github/workflows/ac-schema-authoring-gate.yml`(실재 거짓)은 분기 전후 모두 `ladder-path-missing` 이다.
+
 ###### (iv-L2) ★★ 사다리 exit 사유 3종 + 사유 귀속 규칙 (`admissible` 의 `OR` 는 무손상)
 
 `(iii)` 은 면제 경로의 exit 사유만 규정했고 **사다리 실패의 사유가 미규정**이었다. 신설:
@@ -1778,6 +1949,7 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
 | **31** | `K: []  # carrier=#2985 expiry=9999-12-31 R` (골격에서 `D` **제거**) | **RED** | `pubdate-missing` | ★★★ **FIX Iter 8 신설 — 발행일 부재 (P1-1)**. `date:` 줄만 지우면 상한 leg 이 **평가되지 않아** 만기 `9999-12-31` 이 통과한다. `PUBDATE` off(부재를 skip) 시 **GREEN**(firsthand) — **"예외·부재 = skip" 이 이 문서에서 세 번째 발현**한 자리다 |
 | **32** | `date: TBD` ⏎ `K: []  # carrier=#2985 expiry=9999-12-31 R` | **RED** | `pubdate-value` | ★★★ **FIX Iter 8 신설 — 발행일 비-날짜 (P1-1)**. `TBD` 는 YAML 이 **문자열로 파싱**하므로 `fm-parse-error` 에 안 걸리고, `fromisoformat` 이 `ValueError` 를 던진다. `PUBDATE` off 시 **GREEN**(firsthand). ★ 행 31 과 **다른 exit** 를 요구하는 이유 = 부재와 오값은 저자에게 다른 정정을 지시한다 |
 | **33** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `other: x` | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 — FM 경계 조작 (P0-B)**. `K` 줄은 절단된 `SCOPE` **안에 남으므로** `LINE` 이 정상 매치하고 전 토큰이 통과한다 — 즉 **`line-form` 이 받아내지 못한다.** 밀려난 것은 뒤 키들이며 그것이 유령의 은신처다. `N0` off 시 **GREEN**(firsthand) |
+| **33b** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `This line is prose.` ⏎ `Other-Key: x` | **GREEN** | — | ★★★ **FIX Iter 12 신설 — `b4` 창의 천장 전시 (R12 F-3)**. 행 33 과 **한 줄만 다르다** — 이른 `---` 직후에 **비-FM-형 평문 1줄**을 넣으면 `b4` 의 창이 그 줄에서 닫혀 **공집합**이 되고, 뒤에 밀려난 키가 몇 개든 검사되지 않는다. 판별 행이 아니라 **천장 전시 행**이다(어느 leg 를 꺼도 GREEN 불변). Phase 2 가 창을 "종단 이후 전체" 로 넓히면 이 행이 RED 로 뒤집혀 표가 그 변경을 관측한다 |
 | **34** | `<FM>` = `D` ⏎ `K: []  # OK` ∧ ★ `prefix` = U+FEFF (**파일 선두** — 골격 1행 `---` **앞**) | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 · ★★★★ FIX Iter 10 위치 정정 (P0)**. 1행이 `^---$` 를 불성립시켜 **FM 시작점이 종단 줄로 밀린다.** 형제 게이트 `scripts/lib/check_doc_frontmatter.py:47` 은 같은 입력에서 **warning 후 continue** 한다(firsthand). ★★ **Iter 9 문면(`<BOM>` 을 `<FM>` 슬롯 선두에)은 상수 `A` 삽입으로 BOM 이 frontmatter 안으로 밀려 `RED/pubdate-missing` 을 냈다** — 표 기대와 불일치이며, 위 위치 슬롯 문단이 그 정정이다. `b1_strip` off 시 **GREEN** |
 | **35** | `<FM>` = 행 1 과 동일 ∧ ★ `eol` = **CRLF** (파일 전체) | **RED** | `fm-boundary` | ★★ **FIX Iter 8 신설 — 줄끝 자유 변수 (P2-2)**. `^---$` 가 `\r` 때문에 불성립한다. 직전 판 `leg-off` 열에 **CRLF 축이 없었고**, 이 행이 그것을 `N0` 아래로 편입한다. ★ **FIX Iter 10** — 줄끝은 `<FM>` 내용이 아니라 **위치 슬롯 `eol`** 이며 그 사실을 위 슬롯 표가 고정한다. `b1_strip` off 시 **GREEN** |
 | **36** | `adr_number: null` ⏎ `D` ⏎ `status: Active` (`K` 부재) | ★ **OUT** | — (검사 없음) | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 3-값화 (P0)**. **`ADR-*.md` 는 파일명 패턴이지 ADR 자격 술어가 아니다.** 이 행이 RED 면 실 파일 `archive/adr/ADR-RESERVATION.md` 가 born-red 다(firsthand — 이 PR 이 그 파일을 수정했고 `K` 키 0 · `adr_number: null`). `DOMAIN` off(파일명 glob 만) 시 **RED/`mea-missing`** — 즉 **제외가 실제로 load-bearing** 임을 이 행이 고정한다. ★★ **기대값이 `GREEN` 이 아니라 `OUT` 인 이유 = 아래 3-값 문단** |
@@ -1790,13 +1962,17 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
 | **43** | `D` ⏎ `K:` ⏎ `  - scripts/check-adr-amendment-parity.sh` (bare scalar 항목 1개) | **RED** | `ladder-path-key` | ★★★★ **FIX Iter 10 신설 — 사다리 (나) 경로 키 판별 (P0)**. 경로 **자체는 완전히 적법**하다(실재 ∧ 배선 ∧ `100755`) — 유일한 결격은 항목이 dict 가 아니라 **bare scalar** 라 `PATH_KEYS` 로 경로를 꺼낼 수 없다는 것뿐이다. 그래서 이 행은 **경로 키 연언지만** 판별한다. `LADDER_KEY` off 시 **GREEN**(firsthand). ★ 코퍼스 실태 근거 = ③-key census 의 **bare scalar 항목 39개** |
 | **44** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-no-atlassian.sh` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 10 신설 — 사다리 (다) workflow 배선 판별 (P0)**. 경로는 **실재**하고(`100755`) 경로 키도 적법하다. 결격은 그 스크립트가 **어떤 workflow `run:` 에도 등장하지 않는다**는 것뿐 — 즉 *"검사기는 있는데 아무도 부르지 않는다"* 라는 본 Story 의 표적 형상 그 자체다. `LADDER_WIRED` off 시 **GREEN**(firsthand). ★★ **FIX Iter 11 수치 정정 (P1-2)** — 직전 판의 *"201 중 83"* 은 **재현 불가**였다. `83` 은 **기각된 술어**(raw run블롭 전체 텍스트 ∧ 부분문자열)의 산출이고, 채택 술어로 다시 재면 **구 술어 95 · 신 술어 89** 다. 값이 우연히 (iv-L) 의 접두 오탐 `83` 과 같아 **상호보강처럼 읽혔다**. 정본 = **최상위 `scripts/*.{sh,py}` 201 중 `배선` 거짓 89** (정의역·산출 술어 = (iv-L) 정규화(run블롭') ∧ 경계) |
 | **45** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-adr-amendment-parity.sh` | **GREEN** | — | ★★★★ **FIX Iter 10 신설 — 사다리 전건 충족 (P0)**. 세 연언지 전부 성립(경로 키 ∧ 실재 ∧ 배선). ★ **이 행이 없으면 사다리는 "무엇을 해도 RED" 인 죽은 가지**이며, 사다리 경로로 적법해지는 길이 실제로 열려 있음을 고정하는 것이 이 행이다(행 1 이 면제 경로에 대해 하는 역할의 사다리 대응). ★ 대상 스크립트를 `adr-amendment-parity` 로 고른 이유 = 위 정의역 표가 **선례로 인용하는 바로 그 게이트**라 인용과 fixture 가 같은 실물을 가리킨다 |
+| **45b** | `D` ⏎ `K:` ⏎ `  - script_path: docs/evidence-checks-registry.yaml` | **GREEN** | — | ★★★★ **FIX Iter 12 신설 — (다) 천장의 실물 전시 (R12 P0, 3자 수렴)**. 이 경로는 **비실행 데이터 파일**이고 유일한 배선 근거는 `grep -v 'docs/evidence-checks-registry.yaml'` **제외 패턴 1회**다 — *"검사에서 빼라"* 는 문자열이 *"강제된다"* 의 증거로 셈된다. **판별 행이 아니라 천장 행**이며(어느 leg 를 꺼도 `LADDER_KEY` off 외에는 GREEN 불변), 현 (다) 로 GREEN 인 것이 **정상 상태**임을 표 안에 고정한다. ★ 이 행이 없으면 Phase 2 구현자는 행 50·51 의 산문 배선을 보고 그 형상을 **정상형으로 학습**한다 |
 | **46** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-adr-admission.sh` | **RED** | `ladder-path-missing` | ★★★★ **FIX Iter 10 신설 — 사다리 (나) 실재 판별 (P0, 자기적용)**. 경로 키는 적법하나 그 파일이 **repo 에 없다** — 그리고 이것은 가공한 이름이 아니라 **본 registry `adr-admission` entry 의 `detect_command` 가 가리키는 실 경로**이며 `status: deferred-followup` 이 미존재를 이미 선언한다(firsthand `git ls-files` 출력 0바이트). ★★ **이 행 단독으로는 사유만 갈린다** — `LADDER_EXIST` off 시 `RED/ladder-unwired` 로 **사유만** 바뀐다(미존재 파일은 배선도 없으므로). **verdict 판별은 신설 행 46b·48 이 맡는다**(FIX Iter 11 — 직전 판의 "필요 입력형이 공집합" 은 아래에서 철회됐다) |
 | **46b** | `D` ⏎ `K:` ⏎ `  - script_path: .codeforge/project.yaml` | **RED** | `ladder-path-missing` | ★★★★ **FIX Iter 11 신설 — `LADDER_EXIST` 의 verdict 판별 (P0-D, 3자 수렴)**. `배선 ∧ ¬실재` 의 **실물 witness** 다 — 이 경로는 run블롭에 **2회 등장**(`if [ -f ".codeforge/project.yaml" ]` · `extract-security-ai.sh` 의 인자)하지만 repo 트리에는 **없다**(consumer 측 파일이라 wrapper 에 없는 것이 정상). `LADDER_EXIST` off 시 **GREEN**(firsthand). ★ 이 행이 직전 판의 *"전수 탐색 0건"* 을 반증한다 |
 | **47** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `Other-Key: x` | **RED** | `fm-boundary` | ★★★ **FIX Iter 10 신설 — `b4` 의 `FM-형 줄` 문자군 판별 (P1)**. 행 33 과 **한 글자만 다르다**(`other` → `Other-Key`). `FM-형 줄` 이 미정의였을 때 성립하던 4독법 중 **`^[a-z_]+:` 독법에서 이 행이 GREEN 으로 새어나간다**(firsthand — `FMLINE` 좁힘 시 47 만 뒤집힘). ⇒ 아래 `b4` 문면 확정과 짝이며, 정의를 적는 것만으로는 부족하고 **오독을 무는 행**이 있어야 고정된다 |
+| **47K** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `Other-Key: x` (`K` = **U+212A KELVIN SIGN**, ASCII `K` 아님) | **RED** | `fm-boundary` | ★★★★ **FIX Iter 12 신설 — `NFC` 의 (iv) 표 내 판별 행 (R12 P1-2, Claude)**. 직전 판은 `NFC` 판별 0 의 사유를 *"표에 NFD 입력 행이 없다"* 로 적었고 **그 사유가 틀렸다** — NFC 정규화가 **단일 ASCII 로 접히는 정준 싱글턴**이 유니코드 전역에 3개 있다(U+037E `;` · U+1FEF `` ` `` · **U+212A `K`**). 행 47 의 `Other-Key` 가 마침 `K` 를 갖고 있어 **한 글자 치환으로 행이 구성된다**. NFC on → `Other-Key` 로 접혀 FM-형 매치 → `RED/fm-boundary` / **NFC off → 매치 실패 → `GREEN`**(firsthand). ⇒ `NFC` 는 더 이상 판별 0 이 아니다 |
 | **48** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/lib` (디렉터리) | **RED** | `ladder-path-missing` | ★★★★ **FIX Iter 11 신설 — `실재` 를 `ls-tree` 완전일치로 올린 것의 판별 (P0-C, Codex)**. 구 문면 `git ls-files -- p` 는 **pathspec** 이라 디렉터리도 출력이 비지 않아 `실재=True` 였고, `scripts/lib` 은 run블롭에 `--cov=scripts/lib` 로 **실제 등장**해 `배선=True` 다 ⇒ 구 술어로는 **검사기 0으로 GREEN**(admission 획득). `실재` 를 `ls-files` pathspec 으로 되돌리면 이 행이 **GREEN**(firsthand). ★ `LADDER_EXIST` off 시에도 **GREEN** — 이 행은 leg 의 **존재**와 그 **형태**를 동시에 판별한다 |
 | **49** | `D` ⏎ `K:` ⏎ `  - script_path: archive/adr/ADR-027-consumer-adoption-protocol.md` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 11 신설 — `배선` 경계 문자군의 verdict 판별 (P0-F)**. 직전 판에서 이 문자군은 **판별 행 0**(껐을 때 48/48 불변)이었고 방향은 fail-open 이었다. 이 경로는 실재하고, run블롭에 **URL 조각으로만** 등장한다 — `- [ADR-027 Amendment 2 §결정 6](../blob/main/archive/adr/ADR-027-consumer-adoption-protocol.md)`. 경계를 **부분문자열**로 낮추면 이 행이 **GREEN**(firsthand). ★ 대상이 `.md` 인 것은 의도적이다 — `실재` 가 실행권한·확장자를 보지 않는다는 (iv-L) 천장의 전시다 |
-| **50** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/retro-alert-pickup-kpi.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow` 의 판별 (P1-1)**. 직전 판은 8원 중 **`script_path` 1원만 행사**했고 축소·확대 mutant 가 양방향으로 48/48 을 통과했다. 이 행은 실재 ∧ 배선을 둘 다 만족하는 실물이라 `workflow` 를 closed-set 에서 빼면 **RED/`ladder-path-key`** 로 뒤집힌다(firsthand) |
-| **51** | `D` ⏎ `K:` ⏎ `  - workflow_path: templates/github-workflows/version-3way-atomic.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow_path` 의 판별 (P1-1)**. 동상. 빼면 **RED/`ladder-path-key`** |
+| **50** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/retro-alert-pickup-kpi.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow` 의 판별 (P1-1)**. 직전 판은 8원 중 **`script_path` 1원만 행사**했고 축소·확대 mutant 가 양방향으로 48/48 을 통과했다. 이 행은 실재 ∧ 배선을 둘 다 만족하는 실물이라 `workflow` 를 closed-set 에서 빼면 **RED/`ladder-path-key`** 로 뒤집힌다(firsthand). ★★★ **FIX Iter 12 — 이 행의 `배선` 근거가 산문이었다 (R12 P0, 3자 수렴)**: 구 술어에서 유일 근거는 `-m "Automated by templates/github-workflows/retro-alert-pickup-kpi.yml"` (**git commit 메시지**)이고 **호출은 0** 이었다. (iv-L3) 분기 후 근거는 `.github/workflows/retro-alert-pickup-kpi.yml` **설치 실재**이며 verdict 는 GREEN 그대로다 — **값이 아니라 근거가 바뀌었고, 그 사실을 지우지 않는다** |
+| **50b** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/claude-md-line-cap.yml` | **GREEN** | — | ★★★★ **FIX Iter 12 신설 — workflow 축 분기의 판별 (R12 P0-ii, Codex)**. 이 워크플로는 실재하고 `.github/workflows/claude-md-line-cap.yml` 로 **설치**돼 있으나 어떤 `run:` 블롭에서도 **호출되지 않는다**(워크플로는 이벤트로 트리거된다). 분기를 없애면 `RED/ladder-unwired` — 즉 **정당한 워크플로 선언이 born-red** 였던 자리다. ★ 코퍼스에서 이 형상이 4항목(3파일) 실재했다 |
+| **50c** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/test.yml` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 12 신설 — `배선_wf`(설치 실재)의 음성 판별 (R12 P0-ii)**. 이 템플릿은 실재하나 `.github/workflows/test.yml` **twin 이 없다**(firsthand — 템플릿 88 중 twin 부재 17). `배선_wf` 를 미검사(항상 참)로 두면 **GREEN**. ★ 행 50b 와 **양성 ∧ 음성 쌍**이며, 둘 다 있어야 분기가 항진이 아님이 고정된다 |
+| **51** | `D` ⏎ `K:` ⏎ `  - workflow_path: templates/github-workflows/version-3way-atomic.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow_path` 의 판별 (P1-1)**. 동상. 빼면 **RED/`ladder-path-key`**. ★★★ **FIX Iter 12 — 동상의 산문 근거**: 구 술어의 유일 근거는 PR 본문 문자열 `Source: templates/github-workflows/version-3way-atomic.yml (CFP-820 …)` 이었다. 분기 후 근거 = 설치 실재 |
 | **52** | `D` ⏎ `K:` ⏎ `  - action: bootstrap-labels` | **RED** | `ladder-path-key` | ★★★★ **FIX Iter 11 신설 — `action` 분리의 판별 (P0-E)**. 코퍼스 dict 항목 **130 중 122** 가 이 형태이고 값은 경로가 아니라 **검사 이름**이다. `action` 을 `PATH_KEYS` 에 되돌리면 이 행이 `RED/ladder-path-missing` 으로 뒤집힌다 — 즉 **오진단**이며, 그것이 코퍼스에서 **122회** 발생하고 있었다 |
 | **53** | `D` ⏎ `K:` ⏎ `  - detect_command: bash scripts/check-claude-md-line-cap.sh` | **RED** | `ladder-path-key` | ★★★ **FIX Iter 11 신설 — `detect_command` 분리의 판별 (P0-E)**. 값이 경로가 아니라 **명령줄**이다(`bash ` 접두 포함). 되돌리면 `RED/ladder-path-missing` 으로 뒤집힌다. ★ 경로가 인자로 **들어있다**는 것과 값이 경로**이다**는 것은 다르다 — 후자만 `PATH_KEYS` 의 계약이다 |
 | **54** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/next-phase.sh` | **GREEN** | — | ★★★★ **FIX Iter 11 신설 — 경로 정규화 접두 (P-1) `./` 의 판별 (P0-A)**. run블롭 등장 형태가 `./scripts/next-phase.sh` 뿐이라 정규화 전에는 앞 경계 불성립으로 **`RED/ladder-unwired`**(born-red). (P-1) 만 끄면 이 행만 뒤집힌다(firsthand) |
