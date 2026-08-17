@@ -93,7 +93,15 @@ review-verdict-v4 `findings[]` 에 신규 **optional** 필드 (MINOR bump v4.17�
 lane PASS = 다음 동시 충족의 명시 판정 (신규 §3.4 로 착지 — 배치 세부는 Change Plan §3, blanket_designrefactor debate 대상):
 
 1. **심사 완결** — 해당 lane 적용분 §5.3 AC 중 `coverage_required=Y` 행 **전수** + packet checklist 전수 심사 선언. 분모 = ADR-145 coverage_required 재사용 (새 완결 술어 발명 = 2-SSOT 금지).
-2. **양성 증거 emit** — `examined_count` 와 `required_count` 를 verdict 에 emit 하고 **등식 `examined_count == required_count`** 로 판정한다 (TestContractArch 이의 #5 채택). `>=` 금지 — 부등식 배선은 `examined_count: 999` 를 GREEN 으로 통과시키는 항진이며 분모 부풀리기 게이밍 통로다. 하한 위반(미완결)과 상한 위반(분모 조작) **양방향 RED**. 잔존-0 음성 단독 선언 금지 (vacuous-PASS 반증).
+2. **양성 증거 emit** — `examined_count` 와 `required_count` 를 verdict 에 emit 하고 **등식 `examined_count == required_count`** 로 판정한다 (TestContractArch 이의 #5 채택). **분자·분모 지시체 고정**: `examined_count` = **분자**(심사한 항목 수) / `required_count` = **분모**(§5.3 AC `coverage_required=Y` 행 수, §결정 4-1). `>=` 금지 — 부등식 배선은 `examined_count: 999` 를 GREEN 으로 통과시키는 항진이며 **분자 부풀리기**(심사 항목 수 과대 신고) 게이밍 통로다. 하한 위반(미완결 — 분자 < 분모)과 상한 위반(분자 과대 신고 — 분자 > 분모) **양방향 RED**. 잔존-0 음성 단독 선언 금지 (vacuous-PASS 반증).
+   - ★ **등식이 잡지 못하는 것 = 분모 축소**: 등식은 분자↔분모 *불일치*만 재므로, 분모(`required_count`)가 함께 줄면 등식은 **성립한 채 GREEN** 이다. 분모 축 방어는 등식이 아닌 별 술어(§결정 4-2a ratchet) + 정직 잔여(§결정 11 말미)로 처분한다 — "등식이 분모 조작을 양방향으로 잡는다"는 서술은 참이 아니다 (설계리뷰 v2 FIX Iter 2 / F2 정정).
+
+**§결정 4-2a — 분모 축소 벡터 ratchet (§결정 8-4 P-A 형판의 분모 축 확장, mechanical floor)**
+
+심사 완결의 분모는 Story §5.3 AC 표의 `coverage_required` 열이므로(§결정 4-1), 그 열의 **`Y`→`N` 축소는 lane 내 판정으로 불가**하며 carrier/ADR 경유를 의무화한다 (§결정 8-4 "열거 ratchet 비대칭"을 분모 축에 확장 — 추가·`N`→`Y` 승격은 자유, 축소만 제약). 검출 술어 = **PR diff 상 §5.3 AC 행의 `coverage_required` 열 `Y`→`N` 변화** (결정론). 입력면이 git diff 라 **day-1 non-vacuous** 하다 — `closed_axes` 류의 이력 의존 vacuity 가 없다는 점이 채택 근거다.
+
+- **기각 — 라운드 간 `required_count` non-decreasing 검사 (B안)**: 전 라운드 `required_count` 의 유일 입수원이 §9 verdict embed 인데, 실측 embed 보유 Story = **11/591** 이고 `closed_axes`·`required_count` 기존 emit = **0** (산출 명령 = §결정 5 census 명령 블록, 기준 SHA internal-docs `2e9e514d`) → day-1 이력이 사실상 0 인 **vacuous 검사 신설**이 되어 본 ADR 이 F1 에서 고발한 class 를 재생산한다. 채택하지 않는다.
+- **강제 지점 정직 (ADR-145 실측 승계 — "무방비" 과장 금지)**: `coverage_required` 는 §5.2 **derived 필드**로 ac-traceability 게이트의 §5-parse **Hop1 에서 재검증되지 않는다** (ADR-145:80 — "derived 필드 verification/coverage_required/phase = §결정6 파생, Hop1 미재검증"). 단 이는 **미강제가 아니라 강제 지점 이동**이다 — 동 ADR:83 verbatim: "derived 필드 완결성은 **미강제 잔여가 아니다** — 계약(requirements-output-v1)·Hop2·review 층에서 실제 강제되며, 게이트의 §5-parse Hop1 만 재검증하지 않는다(강제 지점 이동, 미강제 아님)". 따라서 분모 축의 day-1 방어면 = **본 조항 ratchet(PR diff 결정론) ⊕ 계약·Hop2·review 층(semantic)** 이며, "분모 축소 완전 무방비"로 서술하지 않는다.
 3. **정의역 내 P0/P1 잔존 0** — 단 ADR-139 INV-L2: 미측정 worker = INCONCLUSIVE 로 취급, "잔존 0" ≠ "미측정 0". peer stall/미도달 상태에서 잔존 0 단정 금지.
 4. 위 3항 충족 시 **신규 P2 이하 발견의 존재만으로 PASS 를 차단하지 않는다** — P2 는 PASS 와 동시에 follow-up 착지 (§결정 7). P2 개수 cap 없음 (수치 비목표화 — Goodhart 방어).
 
@@ -179,7 +187,9 @@ lane PASS = 다음 동시 충족의 명시 판정 (신규 §3.4 로 착지 — �
 
 - 정직 라벨 형판 (ADR-159 §결정 6 동형): **"분류 presence 는 testable, 분류가 옳은지는 NOT testable."**
 - **ADR-154 INV-5 ceiling immutable 승계**: 어떤 Amendment 도 분류·완결 판정의 semantic 정확성을 normative(기계강제)로 격상 금지. "100% 기계강제 / hard-gate / 완전 봉인" 표현으로 본 ADR 의 어느 층도 서술 금지.
-- advisory **등급** 신설 0 — 위 advisory 는 관측 층위 라벨이지 severity 등급이 아니다 (ADR-181 §결정 6 인용 — 기존 채널 P2 비차단 + follow-up + declared 재사용).
+- advisory **등급** 신설 0 — 위 advisory 는 관측 층위 라벨이지 severity 등급이 아니다 (ADR-181 §결정 6 "`advisory` 등급 신설 금지" 조항 인용 — 기존 채널 P2 비차단 + follow-up + declared 재사용). ※ 인용은 **내용 앵커**(§결정 6 의 등급-비신설 조항)로 한다 — ADR-181 은 미머지 브랜치(`origin/cfp-2985-fix-telemetry`)라 라인 좌표가 이동한다 (실측: 해당 조항이 리뷰 시점 인용 `:1316` → 현재 `:2493` 로 드리프트).
+- **INCONCLUSIVE 어휘 cross-map**: 본 ADR 의 "미측정 = INCONCLUSIVE"(§결정 4-3, ADR-139 INV-L2 승계) 는 ADR-181 §결정 6 등급표의 **`확인 불가`** 행("본 lane 이 측정하지 않음 (네트워크·권한·비용) — 측정 주체 또는 이관처 1줄 병기")과 동일 지시체다. 신규 등급이 아니라 기존 `확인 불가` 라벨의 본 도메인 적용이며, 그 행이 요구하는 "측정 주체 또는 이관처 1줄 병기"를 §결정 4-3 이 상속한다 (미측정 worker 의 stall 주체·재측정 경로 기재).
+- **분모 축 정직 잔여 (F2 처분 — 등식의 원리적 한계)**: 등식 `examined_count == required_count` 는 **분모 축소를 원리적으로 잡지 못한다** — 등식은 분자↔분모 불일치만 재기 때문이다. 분모 축 방어는 별 술어(§결정 4-2a ratchet)이고, 그 술어의 검출면은 PR diff 이므로 **PR 경계 밖(선행 별 PR 에서 미리 축소)은 잡지 못한다**. 잔여 견제 = 계약·Hop2·review 층 semantic 강제(ADR-145:83) ⊕ AC-19 강등 근거 의무 ⊕ 다중 관측. 어느 것도 100% 차단이 아니다.
 
 ### 결정 12 — 경계 (disjoint/보완 선언)
 
@@ -191,7 +201,7 @@ lane PASS = 다음 동시 충족의 명시 판정 (신규 §3.4 로 착지 — �
 
 ## 결과
 
-**긍정**: ① FIX 라운드 발생 자격이 결정론 필드로 결속 — 자기 준거 루프(감사 기록물 발 finding 의 위장 유입)의 구조 차단 ② PASS 가 소진이 아닌 상태 명제로 판정 — 신규 P2 가 종결을 인질로 잡지 못함 ③ 병리 재개방이 FIX 라운드 대신 carrier/escalation 으로 라우팅 ④ 게이밍 4경로(severity 축·정의역 축·분모 축·drop 축)에 각각 기계 검사 가능한 방어 배치.
+**긍정**: ① FIX 라운드 발생 자격이 결정론 필드로 결속 — 자기 준거 루프(감사 기록물 발 finding 의 위장 유입)의 구조 차단 ② PASS 가 소진이 아닌 상태 명제로 판정 — 신규 P2 가 종결을 인질로 잡지 못함 ③ 병리 재개방이 FIX 라운드 대신 carrier/escalation 으로 라우팅 ④ 게이밍 4경로(severity 축·정의역 축·분모 축·drop 축)에 각각 방어 배치 — 단 **집행 강도는 비대칭**이다: severity·정의역·drop 3축 = mechanical floor(결정론 술어) / **분모 축 = ratchet 절차 술어(PR diff 결정론) ⊕ 계약·Hop2·review 층 semantic 강제(ADR-145:83) ⊕ 정직 잔여(§결정 11 말미)**. "4경로 전건 기계 검사 가능" 은 참이 아니다 (F2 정정 — 등식은 분모 축소를 원리적으로 못 잡는다).
 
 **부정/비용**: ① Phase 2 접촉면이 넓다 (base + 계약 + PL md 2 + checklist 4 + skill 2 + template + host 2 + tests) — 단 계약 의미 변경은 additive MINOR 1회 ② day-1 은 전부 warning-tier — 차단력 0 공백 구간이 존재하며 이는 선언이다 (ADR-171) ③ 분류·완결의 semantic 정확성은 영원히 기계강제 밖 (INV-5 ceiling) — 다중 관측이 유일 견제이고 single-peer degrade 구간에서 그 견제가 0 이 됨을 §결정 8-2 로 부분 완화할 뿐 제거하지 못한다 ④ out 분류 남발 리스크는 관측(계수)으로만 falsifiable — 목표화 금지라 자동 교정 루프 없음 ⑤ ADR-181 미머지 의존 — merge 시 접합부 재검 필요 가능.
 
