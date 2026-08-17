@@ -150,6 +150,45 @@ heading 기반 암묵 경계("다음 heading 까지")를 금지한다.
 >
 > **E-4 의 실 방어 = 본 결정의 앵커 쌍 ∧ §8.4 INV-S2 — 단 `reason_code` 미선언 시에 한한다.** 앵커 쌍은 구간 경계를 문서 구조 우연에서 떼어내 E-1~E-3 계열을 차단하고, INV-S2 는 **앵커 델타 없는 총량 보존 하의 섹션 간 대량 이동**을 직접 검출한다. 정보 무손실 축은 INV-S1(pure-move digest)이 담당한다. **`reason_code` 선언 하에서는 INV-S2 가 신호로 강등되고 E-4 에 대한 차단자가 남지 않는다 — 잔존 위험이다** (아래 정직 한정 · 설계리뷰 R4 B-1).
 
+#### E-3 의 실체 — 코드펜스 위협은 손실 축이 아니라 **파서 축**이다 (FIX Iter 14 · ArchitectPL 판정)
+
+위 표의 E-3 은 「§9 **선두**에 코드펜스 인용 → **슬라이서 조기 종결**」이다. 그런데 로스터 구현 `ctx_e3_fence_phantom` 은 **자식 본문 말미에 3줄 순수 append** 다 — 조기 종결을 재현하지 않는다. **이름은 파서 위협이고 구현은 손실 축 append 인 채로 「must RED」에 등재돼 있었다.**
+
+전 측정 = [ArchitectPLAgent firsthand · v1 = wrapper `676d9605` 엔진 sha256 `411eb51cdda7e4f5…` / v2 = wrapper `6b2fbdc80` 엔진 sha256 `7b508f7fbb995c74…` (`3bebdcf68`↔`6b2fbdc80` 간 엔진 diff 0) · fixture sha256 `ee90f6f1b33c5229…` · 매체 LF · 정의역 = Story 1건]. 재현 규칙 = 두 엔진을 위 SHA 로 pin 해 `check_inv_s1` 을 **import 실행**하고(재구현 금지), 자식/부모 주입 변형을 같은 `split_ctx` 위에서 갈라 판정을 대조한다.
+
+**(1) 종전 RED 는 fence 검출을 입증하지 않는다 — 반사실로 반증**
+
+| 변형 | fence | v1 (whole-digest) | v2 (3-leg) |
+|---|---|---|---|
+| M-E3 현행 (닫힌 fence 3줄 append) | 有 | RED | GREEN |
+| **반사실 — fence 제거, 평문 3줄 append** | **無** | **RED** | GREEN |
+| 반사실 — heading 포함 3줄 append | 無 | RED | GREEN |
+| **M-SPLIT-GROW-CTL (정상 성장 160줄)** | 無 | **RED** | GREEN |
+| 무주입 대조군 | — | GREEN | GREEN |
+
+fence 를 **완전히 제거해도 RED** 다. 결정적으로 v1 은 **정상 성장 대조군까지 RED** 로 냈다 — v1 술어는 「digest 가 달라졌는가」이므로 판별 특이성이 **0** 이고, 그 RED 는 "phantom fence 를 잡았다" 가 아니라 "아무 변경이나 잡았다" 였다. **3-leg 분해가 만든 회귀가 아니라 분해가 드러낸 선재 hollow 다.**
+
+**(2) 닫힌 fence 는 파서 영향 0 · 실 위협은 미닫힌 fence 다**
+
+`fence_mask` 는 닫는 펜스를 못 만나면 상태를 리셋하지 않아 **EOF 까지 전 줄을 masked** 로 만든다 ⇒ `_section_spans`·`_raw_anchors` 가 후속 heading·앵커를 통째로 건너뛴다. 주입 위치별 실측:
+
+| 주입 | `split_sections(after)` | `anchor_delta` | 재조립본 | 전 invariant rc |
+|---|---|---|---|---|
+| 닫힌 fence @자식 (= 현 M-E3) | 무변화 | 앵커 4 · §{9,10} | 무변화 | **0 (GREEN)** |
+| 미닫힌 fence @자식 | 무변화 | 앵커 4 · §{9,10} | **§10·§11 소실** | **0 (GREEN)** |
+| 미닫힌 fence @부모 §9 | **§10·§11 소실** | 앵커 4→**2** · §{9,10}→**{9}** | §10·§11 소실 | **0 (GREEN)** |
+| **미닫힌 fence @부모 §7 (검사 정의역 밖)** | **§8~§11 소실** | **∅** | §8~§11 소실 | **0 (NOT_FIRED)** |
+
+마지막 행이 최악이다 — `anchor_delta = ∅` 이고 `check_anchor_integrity` 가 **"split 앵커 없음"** 으로 NOT_FIRED 한다. 실재하는 앵커 4개가 0개로 보이고 **분할 커밋 전체가 게이트에 보이지 않는다.** INV-ANCHOR·S1·S2·S3·S6 **전건 RED 0** [같은 하네스의 양성 대조 4/4 RED — M-E2·M-ANCHOR-UNPAIRED·M-DANGLING·M-LOSS-LINE — 로 하네스 teeth 실증. 음성 결과가 죽은 하네스의 산물이 아님을 같은 실행에서 보인다]. **v1 도 §7 주입에서 똑같이 NOT_FIRED** 이므로 이는 v1·v2 **공통 선재 구멍**이다.
+
+**(3) 판정 — M-E3 는 GREEN 으로 전환하고 위협은 파서 축으로 이관한다**
+
+두 기대가 같은 형상에 정반대이므로 하나는 반드시 바뀐다. `ctx_e3_fence_phantom` 은 손실 축에서 `M-SPLIT-GROW-CTL` 과 **동일 구성**(소실 0 · 신규 3)이라 must RED 등재가 불가능하다 ⇒ **M-E3 기대 = GREEN**. 로스터에서 **지우지 않는다**(ID 삭제 = 검출 정의역 축소 = 본 Story 가 잡는 결함 그 자체) — 대신 역할을 **「닫힌 fence pure-append 음성 대조군」**(= `fence_aware:true` 완화가 닫힌 펜스를 올바로 흡수함을 보이는 대조군)으로 재정의하고, note 에 **「원 E-3 의 슬라이서 조기 종결을 재현하지 않는다」** 를 명시한다.
+
+실 위협은 **INV-ANCHOR 축**에 신설한다(신규 불변식 축 아님 — 미닫힌 fence 는 *앵커가 보이지 않게 되는* 문제이므로 앵커 무결성의 전제조건이다). 술어 = **EOF 시점 fence 미닫힘**. ★ **배치 제약(load-bearing)**: `check_anchor_integrity` 의 `if not raw: return NOT_FIRED` **앞**에 두어야 한다 — 최악 케이스가 정확히 `raw == []` 이므로 뒤에 두면 검사가 도달하지 않는다.
+
+처방 반증 [firsthand, 술어를 엔진 기존 `fence_mask` 로만 유도 — 상태기계 재구현 0]: **양성 5/5**(backtick 3중·`~~~` 물결·4-backtick 미닫힘 전건 검출) ∧ **음성 6/6**(무주입·닫힌 fence·정본 story 분할/무분할·Change Plan·물결 닫힘 전건 통과) ∧ **기존 fixture `ctx_*` 33개 전수 회귀 거짓양성 0**.
+
 #### 불변식 발화 술어 — INV-S1 ∧ INV-S2 는 발화 조건이 상보적이다 (설계리뷰 R1 P1-5)
 
 `digest(before.§n) == digest(after.§n ∪ children[n])` 을 **무스코프**로 적용하면 분할 이후의 정상 append 가 전부 `before ≠ after` 로 false RED 가 된다(born-broken). 이를 피하려 "분할 커밋 한정" 으로 좁히면 E-4 는 분할 커밋이 아니므로 **유일한 실 방어가 발화하지 않는다.** 양자택일이 모두 파손이므로 **판별 술어**를 명시한다:
@@ -355,6 +394,9 @@ Orchestrator 확정 3(기계강제 필수)과 만나는 지점이므로 명시 �
 - **R-8 INV-S2 봉합 후에도 남는 회피 2종 (잔존 한계 — 회귀 아님).** ① **이동 출처에 이동량 이상 재-append** — 이동 후 출처 섹션의 순 Δ 가 양수가 되어 `∃i: Δ§i ≤ −θ_move` 가 거짓 → GREEN. ② **θ_move 미만 분산 이동** — 총량을 완전 보존한 채 여러 섹션으로 쪼개면 **증가 측** 개별 Δ 가 전부 임계 미만이라 페어 조건이 불성립 → GREEN. 둘 다 봉합 **전후 모두** 통과하므로 봉합의 회귀가 아니다. 임계 하향은 정상 저작 false RED 를 유발해 닫지 못하며, 닫으려면 페어 가정을 버리고 **감소 총합 ↔ 증가 총합** 술어로 가야 하는데 그것은 **R-10 의 false-positive 정의역을 넓힌다** — 교환비 미측정, Phase 2 계량 대상. (Change Plan §8.12 축 A-4·A-5 / Story §7.11 **3면 동시 기록**)
 - **R-9 INV-S3 leg3 의 선언 정의역 한계.** leg3 는 **baseline 에 선언된 셀만** 본다. 선언 밖 신규 정량 셀이 틀린 값으로 태어나면 검출 대상이 아니다 — `coverage_floor` 축의 문제이지 leg3 의 결함은 아니나, **"값 오류를 전부 잡는다" 는 주장은 성립하지 않는다.** (Change Plan §8.12 축 A-6 / Story §7.11 **3면 동시 기록**)
 - **R-10 INV-S2 가 정상 혼합 편집을 발화시킨다 (false-positive 축 — R3 신설).** 감소 ∧ 증가가 같은 커밋에 있는 정상 저작이 발화하며, 그 실물이 **본 Story 자신이 권고하는 보조 레버**다 [실행 확인]. `reason_code: AUTHORED_CONSOLIDATION` 으로 흡수하되 그 흡수는 저작자 선언 의존이라 INV-S2 를 **기록자로 퇴화**시킨다. **오라클의 정직 목록은 양 축(못 잡는 것 ∧ 잘못 잡는 것)이어야 한다** — R2 까지 false-negative 축만 등재한 것이 이 결함이 3 라운드 생존한 직접 원인이다. (Change Plan §8.12 축 B / §8.3 행 11 / Story §7.11 **3면 동시 기록**)
+
+- **R-11 코드펜스 파서 축의 잔여 2종 (FIX Iter 14 · ArchitectPL 판정 — 정직 등재).** ① **미닫힌 fence = 현재 전 invariant 미검출.** §결정 4 「E-3 의 실체」표 4행 전건 rc=0 이며, 최악(부모 §7 주입)은 `anchor_delta = ∅` + INV-ANCHOR "앵커 없음" 으로 **분할 커밋 전체가 게이트에 비가시**가 된다. 봉합(INV-ANCHOR EOF-미닫힘 leg)을 본 Story Phase 2 이행 항목으로 등재하며, **봉합 착지 전까지 이 구멍은 열려 있다** — M-E3 기대를 GREEN 으로 바꾸는 것은 위협을 옮기는 조치이지 없애는 조치가 아니다. ② **원 E-3(슬라이서 조기 종결)의 완화가 저작자 선언에 걸려 있다.** 완화자는 `fence_aware:true` 이며 live baseline 4 정의역(CORPUS·CP_S1_MAPPING·CP_S81_RTM·STORY_S53_AC_TABLE)이 전부 `true` 로 선언돼 현재는 무해하나 [실측], `false` 선언 정의역에서는 원 E-3 이 그대로 부활한다 (실측: `fence_aware=False` 에서 §9 = 20,481 B → **29 B** 조기 종결 / `True` 에서 조기 종결 0). 이는 `M-FENCE-INJECT` 가 이미 load-bearing 을 실증한 축이며, **"코드펜스 위협을 막는다" 는 무조건 선언은 성립하지 않는다.** (Change Plan §8.12 축 A / Story §7.11 **3면 동시 기록**)
+- **R-12 로스터 메타데이터가 구현과 어긋날 수 있고, 그 어긋남을 잡는 검사가 없다 (FIX Iter 14 신설 — 정직 등재).** M-E3 은 **ADR 표의 정의(슬라이서 조기 종결)와 fixture 구현(자식 말미 순수 append)이 다른 것**이었고, Change Plan §8.2 로스터 행은 M-E1~M-E3 의 검출 불변식을 **INV-ANCHOR("앵커 쌍 3속성")로 기재**했으나 실제 배선은 **전건 INV-S1** 이다 [실측 — fixture `add(mid, "INV-S1", …)`]. 즉 **이름·선언·구현 3자가 갈릴 수 있으며 어느 검사도 그 정합을 보지 않는다.** 이 Story 가 M-E3 의 hollow 를 찾아낸 경로는 검사가 아니라 **3-leg 분해가 우연히 드러낸 것**이므로, 같은 class 의 다른 로스터 항목이 남아 있을 가능성을 배제하지 않는다. (Change Plan §8.12 축 A / Story §7.11 **3면 동시 기록**)
 
 > **R-6 이 세운 "3면 동시 기록" 규약을 R-8·R-9 에 소급 적용했다 (설계리뷰 R3 P2).** 종전 R-8·R-9 는 Change Plan §8.12 와 Story §7.11 **2면**에만 있었고 본 ADR §결과에 부재해, 규약을 세운 문서가 그 규약을 자기 항목에 안 지키는 상태였다. R-10 은 신설 시점부터 3면이다.
 
