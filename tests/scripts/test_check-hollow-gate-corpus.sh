@@ -120,6 +120,20 @@ SKIP=0
 #             · pin 직전 **tally 보정** 1행 삽입 — 케이스 소실을 상쇄해 은닉한다.
 #             · 카운터 **호출 site 1토큰** relabel (`fail_case` → `pass_case`) — **117 site**
 #               (`fail_case` 80 · `pass_case` 37, 앵커 grep 정본) 전건이 대상이고 relabel 가드는 0.
+#           ★ 12회차에 **세 얼굴이 더 실측**됐다 — 열거가 하한이라는 판정이 한 회차에 3회 확증됐다.
+#             열거를 늘리는 것이 처방이 아니므로 아래는 **관측 기록**이고, 처방은 §13.5 앵커 대상
+#             교체 하나다:
+#             · **XPOST — 스냅샷-후 주입**(5번째). 종료 가드가 읽던 tally 스냅샷 **이후**에 케이스를
+#               주입하면 총계가 실제로 움직였는데도 요약행이 **과소보고**하고 rc=0 이었다.
+#               대조군 XPIN(스냅샷 **이전** 주입)은 rc=1 ⇒ 판별축은 **스냅샷 상대 위치**.
+#               § 종료 가드 라이브 tally 전환으로 **봉합**(창 축소 — 0 아님).
+#             · **N5 — loop 항목 파라미터 1문자**(6번째). `ann_case` 표의 `c:NONEMPTY:2` → `…:0`
+#               은 leg c 를 leg b 의 **중복으로 붕괴**시켜 rc-이탈 축을 통째로 없앤다. 케이스 수
+#               보존 · 상수 무접촉 · **호출 site census 불변** ⇒ R1 보다 조용하다.
+#               §13.5 `loopdecl` 성분이 **도달**한다(12회차 실측).
+#             · **N4 — assert 술어 리터럴 본문 교체**(7번째, 부분). 침묵·census 불변은 실측 확인.
+#               **커버리지 손실 leg 은 `[hypothesis]`** — 두 리터럴이 포함관계가 아니라 「약화」
+#               판정에 core 발화 조건 실측이 필요한데 아직 하지 않았다. §13.5 **미도달**.
 #     (1)(2) 만 놓고 보면 서로의 삭제를 덮는 것이 맞다(X3·X4 실측). (3) 을 넣으면 그 상호 보호가
 #     깨지고, (4) 를 넣으면 **상수를 건드리지 않고도** 깨진다.
 #   ★ 정직 천장 (전건 실측 — 추론 0):
@@ -145,12 +159,27 @@ SKIP=0
 #       `.github/workflows/adr-amendment-threshold.yml` 로 **CI 배선**돼 있다.
 #     PR 저자는 자기 커밋으로 merge-base 를 바꿀 수 없으므로 「함께 수정」이 무력화된다.
 #     ⇒ 올바른 닫는 조건은 하네스 **「밖」**이 아니라 **「이전 리비전」** — **merge-base 대조 앵커**다.
-#     ★ **본 회차 미채택**이며 사유는 「불가」가 아니라 **효용 정의역**이다: merge-base 대조가 보는
-#       것은 **상수의 변화**뿐이라 위 (4) 총량 보존형(상수 접촉 **0**)에는 **원리적으로 미도달**이다.
-#       즉 M-B 경로만 덮고 현행 지배 class 는 못 덮는다. (이 도달범위 판정은 앵커가 무엇을 읽는지에서
-#       나온 **구조적 도출**이고 **실행 측정이 아니다** — 채택 시 born-RED 대조군이 선결이다.)
-#     Story §8.11.8 #12 = **「미탐색(실행 가능)」**(종전 「무효(구조적 불가)」 표시 철회).
-HGC_EXPECTED_CASE_TOTAL=66   # = 실 케이스 65 + 본 pin 케이스 자신 1
+#     ★★ **종전 미채택 사유는 거짓이었다 — 철회하고 12회차에 착수했다(§13.5).**
+#       종전 문면: *「merge-base 대조가 보는 것은 **상수의 변화**뿐이라 (4) 총량 보존형(상수 접촉 0)
+#       에는 **원리적으로 미도달**이다」*. 이것은 **실행 측정으로 반증**됐다 — merge-base 는 **축**
+#       (「지금 ↔ 이전」)이고 *그 축 위에서 무엇을 앵커할지는 자유 선택*인데, 종전 판단은 **한
+#       인스턴스(스칼라 상수)의 성질을 축 전체의 성질로 일반화**했다. 앵커 대상을 **구성 서명**
+#       (호출 site census · 헬퍼 본체 해시 · loop 항목 선언면 해시)으로 두면 총량 보존형 **5종
+#       전건에 도달**하고 실결함 D1 은 통과한다(거짓 양성 0). 실측 = Story §8.14.
+#       ★ 이 오류는 바로 위 라벨 규율 ⓐ(**반증 시도 후에만 「불가」를 부여한다**)를 **규율 신설
+#       직후 스스로 위반**한 것이다 — 반증을 시도하지 않은 채 「원리적 미도달」을 적었다.
+#       ⇒ 규율 ⓓ 추가: **전칭을 세우기 전에 「내가 고정한 것이 축인가, 축 위의 한 대상인가」를
+#       묻는다.** 축 위의 대상이 자유 선택이면 그 전칭은 성립하지 않는다.
+#     Story §8.11.8 #12 = **「닫힘(도달범위 한정) — 12회차 착수」**(종전 「미탐색」·「무효(구조적
+#       불가)」 표시 전건 철회). 도달범위 한정 = N4(assert 리터럴 본문) 미도달.
+HGC_EXPECTED_CASE_TOTAL=68   # = 실 케이스 65 + §13.5 구성 앵커 2 + 본 pin 케이스 자신 1
+
+# ── 구성 서명 선언 (§13.5 구성 앵커의 in-file 기준값) ───────────────────────────────
+#   ★ 이것은 **새 공유 앵커**다 — §0 (3) 축과 같은 성질을 갖는다(저자가 실측과 함께 갱신하면
+#     정합 이동한다). 종전 상수와 다른 점은 **baseline 이 저자가 쓸 수 없는 리비전**(merge-base)
+#     이라 그 이동이 **고지**된다는 것 하나뿐이다. 「봉인」이 아니다 — §13.5 정직 천장 ⓐ 참조.
+#   ★ 갱신 절차: 실패 문면이 실측 서명을 그대로 출력하므로 그 값을 여기에 옮긴다.
+HGC_DECLARED_COMPOSITION="census=83/40/1 helper=9f1950b3fd0e loopdecl=d3b1cf3a6631"
 
 note() { echo "::notice::$*" >&2; }
 log()  { echo "$*" >&2; }
@@ -1718,6 +1747,113 @@ fi
 # 실제 판별력을 갖는 M7(§6)로 대체했다.
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 13.5. 구성 앵커 — 케이스 집합의 **구성(composition)** 서명 (F-CR29-1 봉합)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 무엇이 열려 있었나. §14 총량 pin 이 재는 것은 **tally 스칼라 합 하나**뿐이라 총량이
+#   보존되는 변경(§0 (4) 축)에는 원리적으로 눈이 없다 — 실측 5종(D2 카운터 본체 1행 ·
+#   R1 호출 site 1토큰 relabel · U2 삭제+tally 보정 · U2B net-zero swap · XPOST 스냅샷-후
+#   주입)이 **전건 rc=0 · 요약행이 baseline 과 문면 동일**로 통과했다.
+#
+# ★ 처방의 형태 = **열거 확장이 아니라 앵커 대상의 교체**다.
+#   종전 판단 「merge-base 대조는 **상수의 변화**만 보므로 총량 보존형에 **원리적으로 미도달**」은
+#   **거짓**이었다(반증 = Story §8.14 실행 측정). merge-base 는 **축**(「지금 ↔ 이전」)이고
+#   *그 축 위에서 무엇을 앵커할지는 자유 선택*인데, 종전 판단은 **한 인스턴스(스칼라 상수)의
+#   성질을 축 전체의 성질로 일반화**했다. 앵커 대상을 **구성 서명**으로 바꾸면 도달한다.
+#   ⇒ 일반 규율: **전칭을 세우기 전에 「내가 고정한 것이 축인가, 축 위의 한 대상인가」를 묻는다.**
+#
+# ★ 서명 3 성분 — 전부 **선언면**(실행 관측면에 흔적을 남기지 않으면서 케이스 집합의 구성·
+#   의미를 정하는 표면). **구조적 class 로 정의**하며 「공격당한 자리」 열거가 아니다:
+#     census   — 카운터 **호출 site 수** 3종 (줄머리 `fail_case` / `pass_case` / `skip_case`)
+#     helper   — 카운터 **헬퍼 정의 본체** 해시
+#     loopdecl — **케이스 생성 반복 항목 선언면** 해시 (`for … in` 헤더행 ∧ 이어지는 인용 항목행).
+#                한 표가 아니라 `ann_case`·`tdep_case`·`pair`·`tok`·`word` **전건**이 같은 술어로 덮인다.
+#
+# ★ **도달범위 = 실측**(구조적 도출 아님 — Story §8.14 배터리):
+#     도달  : D2 · R1 · U2 · U2B · XPOST · N5(leg 파라미터 1문자)
+#     미도달: **N4** — assert 술어의 **리터럴 본문** 교체. 그 축은 「선언면」이 아니라 「단언
+#             내용」이라 본 서명 class **밖**이다. 닫혔다고 적지 않는다.
+#     거짓 양성 **0** : D1(실결함 주입)은 본 앵커를 **통과**한다 — 「무엇이든 RED」인 항진
+#             오라클이 아니라 **대조군이 붙은 판별**이다.
+#
+# ★ **정직 천장 — 본 블록이 하지 않는 것**(전건 실측·선언):
+#   ⓐ RED 를 내는 것은 **선언 정합 leg** 이다. 저자가 구성을 바꾸면서 §0 선언을 **함께** 갱신하면
+#      초록이다. 얻은 것은 「1-편집 무성 우회 → **2-편집 + 의미 있는 선언 diff**」이고 **봉인이
+#      아니다**. 값은 「구성이 움직였다」가 **diff 한 줄로 드러남**이다.
+#   ⓑ baseline leg 의 기준점(merge-base)은 **저자가 쓸 수 없는** 유일 성분이지만, **본 파일은
+#      merge-base 에도 origin/main 에도 부재**(신규 도입)라 **본 PR 에서는 구조적으로 무발화**다.
+#      유효 시점 = 본 파일이 main 에 착지한 **다음 PR 부터**. 그래서 미판정을 `pass` 가 아니라
+#      **`⊘ SKIP`** 으로 낸다 — 관측하지 않은 것을 초록으로 계상하지 않는다.
+#   ⓒ 본 블록 **자신에는 대조군이 없다** — 케이스 삭제는 §14 총량 pin 이 잡지만 본체 무력화
+#      (항상 통과로 만드는 1행)는 여전히 조용하다. 「닫혔다」고 적지 않는다.
+echo ""
+echo "── 구성 앵커 (케이스 집합 구성 서명) ────────────────────────────────────────"
+
+hgc_md5() { "$PY" -c 'import sys,hashlib;print(hashlib.md5(sys.stdin.buffer.read()).hexdigest()[:12])'; }
+hgc_composition_signature() {
+  _hcs_src="$1"
+  _hcs_f=$(awk '/^[[:space:]]*fail_case /{n++} END{print n+0}' "$_hcs_src")
+  _hcs_p=$(awk '/^[[:space:]]*pass_case /{n++} END{print n+0}' "$_hcs_src")
+  _hcs_s=$(awk '/^[[:space:]]*skip_case /{n++} END{print n+0}' "$_hcs_src")
+  _hcs_h=$(sed -n '/^pass_case() {/,/^skip_case() {/p' "$_hcs_src" | hgc_md5)
+  # loopdecl = `for X in` 헤더부터 `; do` 까지의 **항목 선언 블록 전체**(다중행 이어쓰기 포함).
+  #   ★ 줄 단위 정규식(이어쓰기 백슬래시 매칭)을 쓰지 않는다 — 12회차 실측에서 그 술어가
+  #     **헤더만 잡고 항목행을 놓쳤다**(정확히 N5 가 노리는 줄). 블록 술어가 정의상 전수다.
+  _hcs_l=$(awk '/^[[:space:]]*for [a-z_]+ in /{inloop=1} inloop{print; if ($0 ~ /;[[:space:]]*do[[:space:]]*$/) inloop=0}' "$_hcs_src" | hgc_md5)
+  printf 'census=%s/%s/%s helper=%s loopdecl=%s' "$_hcs_f" "$_hcs_p" "$_hcs_s" "$_hcs_h" "$_hcs_l"
+}
+
+hgc_self_src="${BASH_SOURCE[0]}"
+hgc_self_rel="tests/scripts/$(basename -- "$hgc_self_src")"
+hgc_cur_sig="$(hgc_composition_signature "$hgc_self_src")"
+
+if [ "$hgc_cur_sig" = "$HGC_DECLARED_COMPOSITION" ]; then
+  pass_case "구성 앵커(선언 정합): 실측 구성 서명 = §0 선언 [$hgc_cur_sig] — 총량 보존형 구성 변경(카운터 본체 · 호출 site relabel · tally 보정 · net-zero swap · 스냅샷-후 주입 · loop 항목 파라미터)은 본 서명을 움직이므로 선언 미갱신이면 RED 다. ★ 천장: 선언을 **함께** 갱신하는 2-편집은 통과한다 — 봉인이 아니라 「구성 이동이 diff 한 줄로 드러남」이며, assert 리터럴 본문 교체(N4)는 본 서명 class 밖 = 미도달"
+else
+  fail_case "구성 앵커(선언 정합): 실측 [$hgc_cur_sig] ≠ §0 HGC_DECLARED_COMPOSITION [$HGC_DECLARED_COMPOSITION] — 케이스 집합의 **구성**이 바뀌었는데 선언이 갱신되지 않았다(총량은 보존됐을 수 있다). 의도적 변경이면 §0 선언을 실측 서명으로 갱신하라"
+fi
+
+# baseline leg — 기준점을 **저자가 쓸 수 없는 리비전**(merge-base)에 둔다.
+#   ★ F-1 계열 조용실패 방지: `git -C` 를 명시하고(다른 CWD 로의 fall-through 차단),
+#     최상위 일치를 확인하고, `cat-file -e` rc 와 `show` 산출 **비어있지 않음**을 각각 검사한다.
+#   ★ 최상위 판정에 `--show-toplevel` 문자열 대조를 쓰지 않는다 — Windows Git Bash 는
+#     `C:/Users/…` 를 돌려주고 셸 `pwd` 는 `/c/Users/…` 를 돌려줘 **실 worktree 에서도 항상
+#     불일치**한다(12회차 실측 — 첫 구현이 정확히 이 이유로 조용히 NOT_APPLICABLE 로 떨어졌다).
+#     경로 표기에 의존하지 않는 `--show-prefix == ""` 로 판정한다.
+hgc_mb=""
+hgc_mb_state="git 부재 또는 REPO_ROOT 가 work tree 최상위 아님"
+if [ "$(git -C "$REPO_ROOT" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ] \
+   && [ -z "$(git -C "$REPO_ROOT" rev-parse --show-prefix 2>/dev/null)" ]; then
+  hgc_mb="$(git -C "$REPO_ROOT" merge-base --end-of-options origin/main HEAD 2>/dev/null)"
+  [ -n "$hgc_mb" ] || hgc_mb="$(git -C "$REPO_ROOT" merge-base --end-of-options main HEAD 2>/dev/null)"
+  if [ -z "$hgc_mb" ]; then
+    hgc_mb_state="merge-base 미취득 (base ref 부재 또는 shallow clone)"
+  elif git -C "$REPO_ROOT" cat-file -e "$hgc_mb:$hgc_self_rel" 2>/dev/null; then
+    hgc_mb_state="취득"
+  else
+    hgc_mb_state="merge-base 시점 본 파일 부재 (신규 도입)"
+  fi
+fi
+
+if [ "$hgc_mb_state" = "취득" ]; then
+  git -C "$REPO_ROOT" show --end-of-options "$hgc_mb:$hgc_self_rel" > "$TEST_TMP/hgc-base-self.sh" 2>/dev/null
+  if [ ! -s "$TEST_TMP/hgc-base-self.sh" ]; then
+    fail_case "구성 앵커(baseline): cat-file -e 는 성공했는데 show 산출이 비었다 — 조용실패(NOT_RUN)를 초록으로 내지 않는다"
+  else
+    hgc_base_sig="$(hgc_composition_signature "$TEST_TMP/hgc-base-self.sh")"
+    hgc_base_decl="$(sed -n 's/^HGC_DECLARED_COMPOSITION="\(.*\)"$/\1/p' "$TEST_TMP/hgc-base-self.sh")"
+    if [ "$hgc_base_sig" = "$hgc_cur_sig" ]; then
+      pass_case "구성 앵커(baseline): merge-base ${hgc_mb:0:12} 대비 구성 **무이동** [$hgc_cur_sig]"
+    elif [ -n "$hgc_base_decl" ] && [ "$hgc_base_decl" = "$HGC_DECLARED_COMPOSITION" ]; then
+      fail_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동했는데 [$hgc_base_sig → $hgc_cur_sig] §0 선언은 merge-base 와 **동일**하다 — 저자가 쓸 수 없는 기준점 대비 이동이 선언에 반영되지 않았다"
+    else
+      pass_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동 [$hgc_base_sig → $hgc_cur_sig] 하고 §0 선언도 함께 이동했다 — 의도적 변경으로 계상한다. ★ 본 leg 의 값은 RED 가 아니라 **저자가 쓸 수 없는 기준점 대비 「이동했다」는 고지** 자체다"
+    fi
+  fi
+else
+  skip_case "구성 앵커(baseline): **본 실행에서 판정하지 않았다**(NOT_APPLICABLE — 사유 = ${hgc_mb_state}). 관측을 수행하지 않았으므로 커버리지로 읽지 말 것. 본 실행에서 구성 변경에 RED 를 내는 것은 위 **선언 정합 leg 하나**다"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 14. 케이스 총량 pin — 케이스가 tally 에서 조용히 사라지지 않는다 (F-CR26-5 / F-CR25-7)
 # ═══════════════════════════════════════════════════════════════════════════════
 # 기대치의 사유·공격면 **하한 열거**·정직 천장은 §0 `HGC_EXPECTED_CASE_TOTAL` 정의 주석이 SSOT.
@@ -1733,7 +1869,7 @@ echo ""
 echo "── 케이스 총량 pin (은닉 소실 검출) ─────────────────────────────────────────"
 hgc_cases_before_pin=$((PASS+FAIL+SKIP))
 if [ "$hgc_cases_before_pin" -eq $((HGC_EXPECTED_CASE_TOTAL-1)) ]; then
-  pass_case "케이스 총량 pin: 등재 케이스 ${hgc_cases_before_pin}건 = 선언 총량 ${HGC_EXPECTED_CASE_TOTAL} 기준 기대치 $((HGC_EXPECTED_CASE_TOTAL-1))건 — 본 검사가 재는 것은 tally 스칼라 합 하나뿐이다: 총량이 움직이는 증감에 한해 §0 HGC_EXPECTED_CASE_TOTAL 의 명시적 diff 를 강제한다 (검출이 아니라 리뷰 가시성). 총량 보존형 변경(구성 치환·tally 보정·카운터 재분류·카운터 본체 편집)은 상수 접촉 0 으로 본 검사를 통과한다 — §0 공격면 (4) 참조, 그 열거도 하한이다"
+  pass_case "케이스 총량 pin: 등재 케이스 ${hgc_cases_before_pin}건 = 선언 총량 ${HGC_EXPECTED_CASE_TOTAL} 기준 기대치 $((HGC_EXPECTED_CASE_TOTAL-1))건 — 본 검사가 재는 것은 tally 스칼라 합 하나뿐이고, 그것도 **본 검사 발화 시점의 값**이다: 본 검사 이후 구간은 §15 종료 가드의 **라이브 tally** 가 덮는다(F-CR29-2 봉합 — 종전 문면 「총량이 움직이는 증감에 한해 상수 diff 를 강제한다」는 스냅샷-후 주입 XPOST 에서 **거짓**이었다). 총량 보존형 변경(구성 치환·tally 보정·카운터 재분류·카운터 본체 편집)은 상수 접촉 0 으로 **본 검사를 통과**하며, 그쪽은 §13.5 **구성 앵커**가 잡는다 — §0 공격면 (4) 참조, 그 열거도 하한이다"
 else
   fail_case "케이스 총량 pin: 등재 케이스 ${hgc_cases_before_pin}건 ≠ 선언 총량 ${HGC_EXPECTED_CASE_TOTAL} 기준 기대치 $((HGC_EXPECTED_CASE_TOTAL-1))건 — 케이스가 tally 에서 조용히 사라졌거나(loop 항목 삭제·조기 continue·블록 제거) 신설분이 기대치에 미반영이다. 의도적 증감이면 §0 HGC_EXPECTED_CASE_TOTAL 을 함께 갱신하라"
 fi
@@ -1756,12 +1892,21 @@ echo "════════════════════════�
 #   **구성(composition) 변화에는 둘 다 눈이 없다** — 소비자를 늘려도 이 맹점은 줄지 않는다.
 # pin 블록 자신이 삭제되면 총계가 기대치에 미달하고 여기서 rc=1 이 난다(FAIL 은 0 이지만
 # 초록을 내지 않는다 — 「케이스가 줄었는데 남은 것이 전부 통과」를 성공으로 계상하지 않는다).
-hgc_cases_final=$((PASS+FAIL+SKIP))
-if [ "$hgc_cases_final" -ne "$HGC_EXPECTED_CASE_TOTAL" ]; then
-  echo "  ✗ 종료 가드: 케이스 총계 ${hgc_cases_final} ≠ 기대 ${HGC_EXPECTED_CASE_TOTAL} — 총량 pin 자신이 제거됐거나 케이스 집합이 변했다 (초록 금지)"
+# ★ F-CR29-2 봉합 — **스냅샷 제거**. 종전에는 여기서 `hgc_cases_final=$((PASS+FAIL+SKIP))` 를
+#   한 번 떠서 고지행·종료 조건 **두 소비자가 그 스냅샷**을 읽었다. 그래서 스냅샷 **이후**에
+#   케이스를 주입하면 총계가 실제로 움직였는데도(`✓` 67줄) 요약행·가드가 **66 으로 과소보고**하고
+#   rc=0 이었다(XPOST). 대조군 XPIN(스냅샷 **이전** 주입)은 정확히 rc=1 이었으므로 판별축은
+#   「주입 일반」이 아니라 **스냅샷 상대 위치**였다. ⇒ 열거 확장이 아니라 **창 자체를 없앤다** —
+#   두 소비자가 각자 **판정 시점 라이브 tally** 를 읽는다.
+#   ★ 정직 천장 — **창은 0 이 되지 않는다**. 남는 것은 두 자리다:
+#     · 요약행 `echo` 와 아래 판정 사이 → 요약행 수치는 과소보고될 수 있으나 **rc=1 이 난다**.
+#     · 아래 판정과 `exit` 사이 한 자리 → 순차 프로그램에 내재. 「창 제거」가 아니라 **「N 줄 →
+#       2 자리로 축소」**가 정확한 서술이다.
+if [ "$((PASS+FAIL+SKIP))" -ne "$HGC_EXPECTED_CASE_TOTAL" ]; then
+  echo "  ✗ 종료 가드: 케이스 총계 $((PASS+FAIL+SKIP)) ≠ 기대 ${HGC_EXPECTED_CASE_TOTAL} — 총량 pin 자신이 제거됐거나 케이스 집합이 변했다 (초록 금지)"
 fi
 
-if [ "$FAIL" -eq 0 ] && [ "$PASS" -gt 0 ] && [ "$hgc_cases_final" -eq "$HGC_EXPECTED_CASE_TOTAL" ]; then
+if [ "$FAIL" -eq 0 ] && [ "$PASS" -gt 0 ] && [ "$((PASS+FAIL+SKIP))" -eq "$HGC_EXPECTED_CASE_TOTAL" ]; then
   exit 0
 else
   # PASS=0 도 실패다 — 아무 케이스도 돌지 않은 vacuous green 을 초록으로 내지 않는다.
