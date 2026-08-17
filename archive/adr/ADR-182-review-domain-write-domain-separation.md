@@ -198,6 +198,14 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 4. requirements checklist P1 강제 자동룰 재검토 (실질 finding-0 합성 경로 ⓐ).
 5. **AC 게이트 slicing 정정 (TestContractArch 이의 A 후속)**: `ac-traceability-matrix`·`ac-schema-authoring-gate` 의 §-slicing 이 §1 verbatim 내부 헤딩 shadowing (first-match) 으로 본 Story 에 비적용 PASS(vacuous) — last-match/§1-제외 정정 + internal-docs 복사본 parity. **source enum 측 (이의 B) 은 internal-docs `9a25c46a` 로 기정정 완료 (analyst 0 / derived 4 — 원자 결합의 선행 절반 이행)** → 잔여 = **slicing 정정 단독 수행 가능**, 단 정정 후 `test_ac_source_enum_matches_contract_enum` 회귀 확인 의무.
 
+### ADR-183 경계·정합 (병렬 저작 조율)
+
+> 사용자 결정 (2026-08-17): 본 ADR 이 cross-ref 1절을 추가하고 선착 머지, ADR-183 (CFP-3011) 이 후행 정합한다. 본 절은 순수 additive — 기존 §결정 0~5 문면 무변경.
+
+- **상보 축 선언**: ADR-182 = 심사 정의역 **분리** (메타-텍스트 3종 이관 — *무엇이 심사 대상인가*) + severity-gated exit (PASS 의 severity·처분 조건) / ADR-183 (CFP-3011, 병행 저작) = 심사 정의역 **결속** (`scrutiny_domain` per-finding 필드 — *FIX 발생 자격*) + lane PASS **종결 술어** (coverage 명제) + 병리 판별. 두 축 = disjoint-상보: 분리 = 대상 집합 축 / 결속 = finding 자격 축이며, §결정 2 exit 의 severity·처분 조건 ∧ ADR-183 종결 coverage 술어는 **conjunction 으로 양립**한다.
+- **정합 규칙**: 둘 다 accepted 시 최종 PASS = 본 ADR §결정 2 exit ∧ ADR-183 종결 술어. `review-pl-base.md` §3 배선 시 충돌 발견 → **후행 편입자 (ADR-183 / CFP-3011) 정합 의무** (본 ADR 선착 머지 기준). **본 절은 ADR-183 의 결정을 예단·구속하지 않는다** (경계 선언 한정).
+- **저작 시점 실측 라벨**: ADR-183 = 본 절 저작 시점 (2026-08-17) branch `cfp-3011` @`f11b26f2`·PR #3012 state OPEN **미머지** (firsthand: `gh pr view 3012` + `git ls-remote origin cfp-3011`) — 상태 가변 표면이므로 이후 참조 시 재측정 의무 ("미머지" 는 저작 시점 한정 실측. frontmatter `related_adrs` 미등재 사유 = 미머지 가변 대상의 고정 참조 회피).
+
 ### AC 매핑 표 (13건 zero-drop)
 
 **본 Story 의 AC 충족 정의 = 판정 기록 (본 ADR 성문) + 배선 carrier 지정 (Story key 명시)** — **본 Story 가 소유하지 않는 면 (B=CFP-2985 · C=CFP-2986 · 후속 배선 Story · #2988) 이면** 파일 diff 를 충족 조건으로 요구하지 않는다 (AC-3a verification 문면 그대로, 전 AC 로 일반화).
