@@ -300,7 +300,8 @@ dialect 무관 · PR 유무 무관. registry · open-PR 은 **corroboration** �
 **기준을 담지 않는 문서로 옮긴 것**이다 — **정정이 권위 있게 읽혀 재검증을 막은 사례**. 본 Amendment 는 기존 행을 **편집하지 않고
 회부**한다(Amd 1 블록 무변경 원칙 + carrier scope 밖). 처분 = CFP-2994 Change Plan §10 기록 + Orchestrator 회부.
 
-★★ **회부 대상 = 3 site 전수 (초판의 「frontmatter 1곳」 지목은 과소계수)**: frontmatter 만 고치면 **본문 산문이 오귀속을 계속
+★★ **회부 대상 = 전수 (초판의 frontmatter 단일 지목은 과소계수)** — 계수를 성문하지 않고 site 를 **절·성격으로 열거**한다
+(아래 표가 정본이며 닫는 규칙은 grep 명령이다. §A3-8 (2) 자기 적용): frontmatter 만 고치면 **본문 산문이 오귀속을 계속
 발화**하고, 그러면 A3-7 이 스스로 경고한 *"정정이 권위 있게 읽혀 재검증을 막은 사례"* 가 **한 번 더 재생산**된다
 (CFP-2573 `b41807812` 이 이미 1회 그렇게 실패한 자리). 회부 목록은 **행 번호로 앵커하지 않고 절·성격으로 지목**한다(§A3-8).
 재측정 = `grep -n 'ADR-054' archive/adr/ADR-139-background-wait-liveness-gate.md`
