@@ -357,14 +357,98 @@ def _probe_cut(tmp_path, source, name, base_sig):
          r["injected_red_count"], tuple(r["vector"]), r["verdict"])
         for mid, r in real.items()))
     if mism:
-        return True, f"mismatch:{mism[:4]}", mism
+        # 표시는 4건까지만 — 나머지 개수를 **명시**한다. 종전처럼 `mism[:4]` 만 찍으면
+        # 출력만 보고 귀속을 세는 사람이 조용히 과소계수한다(이 Story 의 반복 사고).
+        shown = f"{mism[:4]}" + (f" …+{len(mism) - 4}건" if len(mism) > 4 else "")
+        return True, f"mismatch:{shown}", mism
     if sig != base_sig:
         return False, "ONLY-signature-delta(공개 mismatch 채널 미검출)", []
     return False, "-", []
 
 
+# ---------------------------------------------------------------------------
+# 방출축 **등가 allowlist** — 절단해도 공개채널 무검출인 site 중 «진성 dark 아님» 선언
+# ---------------------------------------------------------------------------
+# ★ 이 allowlist 는 **무한 escape-hatch 가 아니다.** 항목마다 (a) 왜 등가인지 (b) 그
+#   등가성을 어떻게 반증하는지를 문면에 달아야 하고, **근거 없는 추가는 금지**한다.
+#   근거 없이 항목을 늘리는 것은 dark site 를 «선언으로» 통과시키는 것과 같다 — 이 Story 가
+#   잡는 결함 class 그 자체다. 추가하려면 반드시 실측 반증(아래 형식)을 커밋 메시지에 남길 것.
+# ★ 키 = (함수명, detail 문면 앵커). **줄번호로 키를 잡지 않는다** — 소스가 밀리면 조용히
+#   엉뚱한 site 를 가리킨다. 아래 «정확히 1건 매칭» assert 가 앵커 stale 을 잡는다.
+EMISSION_EQUIVALENCE_ALLOWLIST = {
+    ("check_inv_s2", "%s — reason_code=%s 는 폐쇄 enum %s 밖 (강등 불가)"):
+        "등가 mutant — 이 `return` 을 죽이면 바로 아래 무조건 `return [Verdict(..., 'RED', "
+        "detail)]` 로 **fall-through** 하므로 RED-ness 가 보존된다. 소실되는 것은 «폐쇄 enum "
+        "밖이라 강등 불가» 라는 **설명문뿐**이고 status·개수·벡터는 전부 동일하다. "
+        "반증 방법(실측 재현): 도달 입력 `FX.ctx_e4_compensating_move()` 에 reason_code 4형"
+        "(None / 'SECTION_REORG' / 'AUTHORED_CONSOLIDATION' / 폐쇄 enum 밖 자유서술)을 넣어 "
+        "pristine 과 절단본의 `FX.status_vector` 를 대조하면 4형 전부 동일하고, freeform "
+        "arm 에서만 detail 문자열이 갈린다(RED 1→1). 어느 한 형이라도 status 가 갈리면 "
+        "이 등가 선언은 **반증되며 즉시 제거 대상**이다.",
+}
+
+
+def _resolve_allowlist(emit_rows):
+    """allowlist 키를 실 site 로 해소한다. 각 키는 **정확히 1건**에 매칭돼야 한다.
+
+    0 건 = 앵커가 stale (소스에서 사라졌거나 문면이 바뀜) — 조용히 «커버 0» 이 되므로 실패.
+    2+ 건 = 앵커가 비유일 — 어느 site 를 면제하는지 특정 불가이므로 실패.
+    """
+    resolved, bad = {}, []
+    for key in EMISSION_EQUIVALENCE_ALLOWLIST:
+        fn_name, head = key
+        hits = [(f, ln) for f, ln, _k, h in emit_rows if f == fn_name and h == head]
+        if len(hits) != 1:
+            bad.append(f"{key!r} -> 매칭 {len(hits)}건 {hits}")
+        else:
+            resolved[hits[0]] = key
+    return resolved, bad
+
+
+# 방출축 **귀속 선언** — 각 방출 site 를 절단했을 때 공개 mismatch 채널에 나타나야 하는
+# mutant 이름의 합집합. **숫자(arity)가 아니라 이름으로 pin** 한다: 고정 수치는 이 Story
+# 에서 반복 stale 됐고, 무엇보다 "몇 개인가" 는 "무엇이 없어졌는가" 를 말해주지 못한다.
+#
+# ★ 이 pin 이 **잡는 것**: 방출 site 가 삭제·병합되어 그 site 를 단독 통제하던 mutant 가
+#   검출 목록에서 사라지는 축소(= CLA-1 이 지목한 «자기유도 정의역의 조용한 잠식»).
+#   실패 메시지가 사라진 mutant 를 **이름으로** 지목한다.
+# ★ 이 pin 이 **못 잡는 것**(정직 고지):
+#   (1) site A 와 B 의 귀속이 서로 **교환**되는 드리프트는 합집합이 불변이라 통과한다.
+#   (2) **비단독 귀속** mutant 는 자기 site 하나가 사라져도 형제 site 에 남아 합집합이
+#       불변이다 — 실측상 `M-CARD-CROSS` · `M-S3-NOSPLIT` 2종이 `check_inv_s3:899` 와
+#       `:917` 두 site 에 걸쳐 있다(나머지 33종은 단독 귀속). 그 2 site 의 축소는 이 pin
+#       이 아니라 형제 mutant(각각 `M-CARD-IN`·`M-GLOBAL` / `M-DUP-ROW`)가 잡는다.
+#   (3) 실무상 site 를 지우면 pristine 배터리가 먼저 깨져 아래 «전제 가드» 에서 걸린다 —
+#       그래서 그 가드 메시지에도 통제자 교집합을 실어 진단성을 준다.
+#   즉 이 pin 은 **진단 보강**이지 유일 검출면이 아니다. "이것만으로 잠식이 봉인된다" 는
+#   over-claim 이다.
+# ★ `check_inv_s2:837`(등가 allowlist) · `:841`(계약붕괴 채널)은 귀속 0건이라 여기 없다 —
+#   크래시 채널 검출에는 mutant 이름이 실리지 않는다.
+DECLARED_EMISSION_CONTROLLERS = frozenset({
+    # check_anchor_integrity — 7 site (:336 이 fence 3종, 나머지 6 은 각 1종 단독)
+    "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-OUTDOMAIN", "M-FENCE-UNCLOSED-PARENT",
+    "M-ANCHOR-NOID-BOTH", "M-ANCHOR-NOSECTION", "M-ANCHOR-DUP", "M-ANCHOR-DUPEND",
+    "M-ANCHOR-UNPAIRED", "M-ANCHOR-ORPHAN-END",
+    # check_inv_s1 — 4 site (:759 가 6종)
+    "M-STRAYEND", "M-E1", "M-DANGLING",
+    "M-E2", "M-LOSS-LINE", "M-LOSS-MASK", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-SELFPTR",
+    # check_inv_s3 — 7 site
+    "M-DOMAIN", "M-RESOLVE-FAIL", "M-LEG3-NA-BOGUS",
+    "M-FENCE-INJECT", "M-GLOBALRULE", "M-SEC5",
+    "M-CARD-CROSS", "M-CARD-IN", "M-GLOBAL", "M-S3-NOSPLIT",
+    "M-DUP-ROW", "M-CARD-VALUE", "M-PREEXIST",
+    # check_inv_s6 / check_scan_domain — 1 + 3 site
+    "M-DEPTH2", "M-SCAN-ASYM", "M-SCANGLOB", "M-SCAN-CARD",
+})
+
+
 def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
-    """`check_anchor_integrity` 의 RED 방출 site **전건**이 절단 시 배터리에 잡혀야 한다.
+    """RED 방출 site **전건**(`check_` family)이 절단 시 배터리에 잡혀야 한다.
+
+    ※ 이름은 `anchor_` 로 남아 있으나 **방출축 정의역은 R8 에서 `check_` family 전체로
+      확장**됐다(조건축만 `check_anchor_integrity` 유지 — 아래 근거). 개명하지 않는 이유는
+      이 이름이 외부 RTM(AC → named test)의 앵커일 수 있어 개명이 매핑을 조용히 끊기
+      때문이다. **이름이 정의역보다 좁다** — cosmetic 잔여로 명시 등재한다(over-claim 방지).
 
     왜 상시 테스트인가: 종전에는 이 축의 무검출이 `test_suture_removal_is_detected_by_this_battery`
     의 `undetected` 버킷에 담겨 **"중복커버 ← 형제 leg 이 같은 mutant 를 잡는다(게이트 약화 0)"**
@@ -375,33 +459,66 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
 
     설계 3항:
       · **정의역 자동 도출** — site 열거를 하드코딩하지 않고 매 실행 AST 로 재탐색한다
-        (줄번호가 밀려도 따라간다). 열거가 0 이면 즉시 실패 = 정의역 공허 차단.
+        (줄번호가 밀려도 따라간다).
+        ★ 정직 한정 — 아래 `assert emit_sites` 는 **전멸(0건)만** 막고 «7→6» 같은 **잠식은
+          막지 못한다**(열거가 검사 대상에서 자기유도되기 때문). 그 축소를 이름으로 잡는
+          것은 `DECLARED_EMISSION_CONTROLLERS` 귀속 pin 과 전제 가드 메시지다.
+          "열거 0 이면 실패 = 정의역 공허 차단" 은 그 이상을 보증하지 **않는다**.
       · **절단 2축** — ① 방출 statement 만 `pass`(조건·`continue` 유지) ② 조건 `if False:`.
         한 축만 두면 나머지 축의 무력화가 조용히 통과한다.
       · **양성 ∧ 음성 쌍** — 양성만 두면 배선을 상수로 바꿔도 통과한다. 음성 arm =
         무절단 round-trip 사본이 같은 술어에서 «미검출» 이어야 한다. 이 arm 이 없으면
         `ast.unparse` 왕복 자체가 판정을 흔드는 경우 전 site 가 거짓 검출된다.
+
+    ★ 축별 정의역 결정 (R8, 2축 전수 실측 근거) —
+      · **방출축 = `check_` family 24 site 로 확장.** 근거 = 이 축에서 **진성 결함 2건**
+        (`check_inv_s3` 의 파일 해결 실패 · leg3 na_reason enum 밖)이 실제로 나왔다.
+        **결함이 나온 축은 넓힌다.**
+      · **조건축 = `check_anchor_integrity` 8 site 유지(미확장).** 근거 = 2축 전수 실측에서
+        조건축은 **진성 0 / 등가 4**. 결함이 나온 축(방출)은 넓히고, 안 나온 축(조건)은
+        넓히지 않는다. ★ 「부담이 커서」가 **아니다** — 그건 편의이고, 근거는 실측이다.
+        **이 축에서 진성 결함이 나오면 본 판단은 반증되며 재판정 대상이다.**
+        미확장 조건축 실측 3건(재현 가능하게 등재 — 전부 fall-through 등가):
+          - `check_inv_s2:835` (`if reason_code:`) — RED 1→1. `:837` 과 같은 fall-through
+            family. 도달 입력 = `FX.ctx_e4_compensating_move()` + 폐쇄 enum 밖 reason_code.
+          - `check_inv_s3:886` (`if not extracted:`) — RED 1→**2** (leg1/leg2 로 전가).
+            도달 입력 = `FX.ctx_sec5_stub()`.
+          - `check_inv_s1:733` (split 앵커 보유 ∧ 자식 미발견) — RED 2→2 (leg-A 로 전가).
+            도달 입력 = `FX.split_ctx().copy_with(children={})`.
     """
     src = FX.engine_source()
 
-    emit_sites = FX.red_emission_sites(src, ANCHOR_FN)
+    emit_rows = FX.red_emission_sites_family(src)
     cond_sites = [ln for fn, ln in FX.suture_sites(src) if fn == ANCHOR_FN]
-    assert emit_sites, (                                    # ← 정의역 공허 차단 (방출 축)
-        f"`{ANCHOR_FN}` 안에 RED 방출 statement 가 0건 — 정의역이 비었다. "
-        "판정이 없는 게이트는 hollow 이고, 빈 정의역 위의 전건 통과는 공허참이다.")
-    assert cond_sites, (                                    # ← 정의역 공허 차단 (조건 축)
+    assert emit_rows, (                                     # ← 정의역 전멸 차단 (방출 축)
+        "`check_` family 안에 RED 방출 statement 가 0건 — 정의역이 비었다. "
+        "판정이 없는 게이트는 hollow 이고, 빈 정의역 위의 전건 통과는 공허참이다. "
+        "(전멸만 막는다 — 잠식은 아래 귀속 pin 소관)")
+    assert cond_sites, (                                    # ← 정의역 전멸 차단 (조건 축)
         f"`{ANCHOR_FN}` 안에 RED 방출 `if` 조건이 0건 — 조건 축 정의역이 비었다.")
+
+    allowlisted, allow_bad = _resolve_allowlist(emit_rows)
+    assert not allow_bad, (                                 # ← allowlist stale 차단
+        "등가 allowlist 앵커가 실 site 로 해소되지 않는다 — 0건이면 면제가 조용히 «커버 0» "
+        "이 되고, 2+ 건이면 어느 site 를 면제하는지 특정 불가다. 앵커를 갱신하거나 항목을 "
+        "제거하라:\n  " + "\n  ".join(allow_bad))
 
     pristine = engine()
     base_sig = tuple(sorted(
         (mid, r["control"], r["injected"], r["control_red_count"],
          r["injected_red_count"], tuple(r["vector"]), r["verdict"])
         for mid, r in FX.run_battery(pristine).items() if not mid.startswith("_")))
-    assert not _battery_mismatches(pristine), (
-        "무변형 엔진에서 배터리가 이미 불일치 — 절단 판정의 전제가 성립하지 않는다(무효 관측)")
+    pristine_mism = _battery_mismatches(pristine)
+    assert not pristine_mism, (                             # ← 전제 가드 (진단 보강)
+        "무변형 엔진에서 배터리가 이미 불일치 — 절단 판정의 전제가 성립하지 않는다(무효 관측). "
+        f"불일치 {sorted(pristine_mism)}\n"
+        "  ★ 이 중 **선언된 방출 site 통제자**가 있으면 그 site 가 사라졌거나 규칙이 죽었다는 "
+        f"뜻이다(단순 배터리 고장이 아니다): "
+        f"{sorted(set(pristine_mism) & DECLARED_EMISSION_CONTROLLERS)}")
 
-    print(f"\n[앵커 절단 매트릭스] 방출 site {len(emit_sites)}건 "
-          f"{[ln for ln, _k in emit_sites]} / 조건 site {len(cond_sites)}건 {cond_sites}")
+    print(f"\n[절단 매트릭스] 방출 site {len(emit_rows)}건(`check_` family) / "
+          f"조건 site {len(cond_sites)}건(`{ANCHOR_FN}`) / "
+          f"등가 allowlist {len(allowlisted)}건 {sorted(allowlisted)}")
 
     # --- 음성 arm — 무절단 round-trip 은 «미검출» 이어야 한다 -----------------------
     roundtrip = ast.unparse(ast.parse(src))
@@ -412,34 +529,65 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
         f"전 site 의 «검출» 이 무의미하다 (채널={neg_why})")
 
     # --- 양성 arm — 각 site 를 두 방식으로 절단 -----------------------------------
-    undetected, rows = [], []
-    for lineno, kind in emit_sites:
-        cut = FX.make_emission_cut_source(src, ANCHOR_FN, lineno)
-        det, why, mism = _probe_cut(tmp_path, cut, f"anchor_emit_{lineno}", base_sig)
-        # `return [Verdict(...)]` 형태는 방출을 죽이면 함수가 None 을 반환하게 된다.
-        # 그 경우의 검출 채널은 예외(크래시)이며, 그것도 정상적인 검출이다 — 다만
-        # "왜 크래시인가" 를 기록해 «규칙이 죽어서 잡혔다» 와 구별 가능하게 남긴다.
-        if kind == "Return" and ("exception" in why or "load-failure" in why):
-            why += " (return 문 절단 → 반환값 None, 규칙 무력화가 아니라 계약 붕괴로 검출)"
-        rows.append((lineno, kind, "방출절단", det, why))
-        if not det:
-            undetected.append((lineno, kind, "방출절단"))
+    undetected, rows, attributed, stale_allow = [], [], set(), []
+    for fn_name, lineno, kind, _head in emit_rows:
+        cut = FX.make_emission_cut_source(src, fn_name, lineno)
+        det, why, mism = _probe_cut(tmp_path, cut, f"emit_{fn_name}_{lineno}", base_sig)
+        # 채널 분류 (CLA-4) — 크래시 검출은 «규칙이 살아 있는가» 를 잰 것이 **아니다**.
+        # `return [Verdict(...)]` 형태를 죽이면 함수가 None 을 반환해 하류가 크래시한다.
+        # 그것도 검출이지만 **계약 붕괴** 채널이므로 규칙-사멸 검출과 분리 계상한다.
+        if _is_crash_channel(why):
+            why += (" (계약붕괴 채널 — 절단이 반환 계약을 무너뜨려 예외로 터진 것이지, "
+                    "그 site 의 규칙이 죽은 것을 잡은 것이 아니다)")
+        attributed |= set(mism)
+        allow_key = allowlisted.get((fn_name, lineno))
+        rows.append((fn_name, lineno, kind, "방출절단", det, why, allow_key))
+        if not det and allow_key is None:
+            undetected.append((fn_name, lineno, kind, "방출절단"))
+        if det and allow_key is not None:
+            stale_allow.append(f"{fn_name}:{lineno} — 이제 «{why[:40]}» 로 검출된다")
     for lineno in cond_sites:
         cut = FX.make_sutured_source(src, target=(ANCHOR_FN, lineno))
         det, why, mism = _probe_cut(tmp_path, cut, f"anchor_cond_{lineno}", base_sig)
-        rows.append((lineno, "If", "조건절단", det, why))
+        if _is_crash_channel(why):
+            why += " (계약붕괴 채널 — 규칙 사멸 검출이 아니다)"
+        rows.append((ANCHOR_FN, lineno, "If", "조건절단", det, why, None))
         if not det:
-            undetected.append((lineno, "If", "조건절단"))
+            undetected.append((ANCHOR_FN, lineno, "If", "조건절단"))
 
-    for lineno, kind, mode, det, why in rows:
-        print(f"  {lineno:>4} {kind:<6} {mode:<6} {'검출' if det else '미검출':<6} {why}")
+    n_crash = n_rule = 0
+    for fn_name, lineno, kind, mode, det, why, allow_key in rows:
+        mark = "검출" if det else ("등가면제" if allow_key else "미검출")
+        print(f"  {fn_name:<23}{lineno:>5} {kind:<6} {mode:<6} {mark:<6} {why}")
+        if det:
+            n_crash += 1 if _is_crash_channel(why) else 0
+            n_rule += 0 if _is_crash_channel(why) else 1
+    # ★ CLA-4 — "전건 검출" 을 단일 수로 말하지 않는다. 크래시 채널이 몇 건 섞여 있는지
+    #   **정직하게 등재**한다. 이 분해가 없으면 계약붕괴 검출이 규칙 커버로 과대 계상된다.
+    print(f"  [채널 분해] 검출 {n_rule + n_crash}건 = 규칙-사멸 {n_rule}건 + "
+          f"계약붕괴(크래시) {n_crash}건 / 등가면제 {len(allowlisted)}건")
+
+    assert not stale_allow, (                               # ← allowlist 부패 차단
+        "등가 allowlist 항목이 **이제 검출된다** — 면제가 불필요해졌으므로 항목을 제거하라. "
+        "남겨 두면 allowlist 가 근거 없는 escape-hatch 로 굳는다:\n  "
+        + "\n  ".join(stale_allow))
 
     assert not undetected, (                                # ← 양성 arm 측정 assertion
-        f"`{ANCHOR_FN}` 의 판정 site 중 절단해도 배터리가 못 잡는 것이 "
-        f"{len(undetected)}건 있다 — 그 site 가 담당하는 규칙은 무력화해도 게이트가 "
-        "통과한다(dark site). '형제가 커버한다' 는 라벨은 그 규칙의 생존을 증명하지 "
-        "않으므로 무검출로 계상한다:\n  "
-        + "\n  ".join(f"{ln} ({kind}) — {mode}" for ln, kind, mode in undetected))
+        f"판정 site 중 절단해도 배터리가 못 잡는 것이 {len(undetected)}건 있다 — 그 site 가 "
+        "담당하는 규칙은 무력화해도 게이트가 통과한다(dark site). '형제가 커버한다' 는 "
+        "라벨은 그 규칙의 생존을 증명하지 않으므로 무검출로 계상한다. 등가라면 "
+        "**실측 반증과 함께** `EMISSION_EQUIVALENCE_ALLOWLIST` 에 등재하라:\n  "
+        + "\n  ".join(f"{fn}:{ln} ({kind}) — {mode}" for fn, ln, kind, mode in undetected))
+
+    # --- 귀속 pin (CLA-1) — 이름으로 잠식을 잡는다 --------------------------------
+    #   숫자가 아니라 **이름**을 pin 한다. site 가 사라지면 그 site 를 통제하던 mutant 가
+    #   검출 목록에서 빠져 «이 mutant 가 통제하던 방출 site 가 사라졌다» 로 지목된다.
+    assert attributed == DECLARED_EMISSION_CONTROLLERS, (   # ← 귀속 pin 측정 assertion
+        "방출 site 귀속 집합이 선언과 다르다.\n"
+        f"  선언에 있는데 **검출 목록에서 사라진** mutant = {sorted(DECLARED_EMISSION_CONTROLLERS - attributed)}\n"
+        "    → 이 mutant 가 통제하던 방출 site 가 삭제·병합됐거나 귀속이 이동했다.\n"
+        f"  선언에 없는데 새로 나타난 mutant = {sorted(attributed - DECLARED_EMISSION_CONTROLLERS)}\n"
+        "    → 커버가 늘었다면 선언을 같은 커밋에서 갱신하라(갱신 원자성).")
 
 
 # ---------------------------------------------------------------------------

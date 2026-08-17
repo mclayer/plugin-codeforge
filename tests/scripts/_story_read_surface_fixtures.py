@@ -1680,6 +1680,49 @@ def red_emission_sites(source: str, fn_name: str) -> list:
     return sorted(set(out))
 
 
+def red_emission_detail_head(call, limit: int = 60) -> str:
+    """RED `Verdict(...)` 호출이 싣는 **첫 문자열 리터럴**(= detail 포맷문) 앞부분.
+
+    site 를 줄번호가 아니라 **문면**으로 지목하기 위한 앵커다. 줄번호는 소스가 밀리면
+    따라 움직이므로 allowlist·귀속 선언의 키로 쓰면 조용히 엉뚱한 site 를 가리킨다
+    (이 Story 의 반복 교훈: 라인 앵커는 자기 정정으로 이동한다).
+    `detail` 을 변수로 넘기는 site 는 리터럴이 없어 빈 문자열이 되며, 그 경우 이 앵커는
+    **식별자로 쓸 수 없다** — 아래 사용처가 «정확히 1건에 매칭» 을 assert 해 그것을 잡는다.
+    """
+    import ast
+    for sub in ast.walk(call):
+        if isinstance(sub, ast.Constant) and isinstance(sub.value, str) and sub.value != "RED":
+            return sub.value[:limit]
+    return ""
+
+
+def red_emission_sites_family(source: str) -> list:
+    """`check_` family **전 함수**의 RED 방출 statement 를 열거한다 (R8 확장 정의역).
+
+    반환 = [(함수명, lineno, statement 종류, detail 문면 앵커)] 정렬본.
+    `red_emission_sites(source, fn_name)` 의 family 판 — 저쪽은 한 함수만 본다.
+
+    왜 넓히는가: 앵커 함수 하나만 보던 종전 정의역에서 **진성 결함 0** 이었는데, family 로
+    넓히자 `check_inv_s3` 에서 **진성 dark 2건**(파일 해결 실패 · leg3 na_reason enum 밖)이
+    나왔다. **결함이 나온 축은 넓힌다.**
+    """
+    import ast
+    out = []
+    for fn in ast.walk(ast.parse(source)):
+        if not isinstance(fn, ast.FunctionDef) or not _is_check_fn(fn.name):
+            continue
+        for stmt in ast.walk(fn):
+            if not isinstance(stmt, (ast.Expr, ast.Return)):
+                continue
+            for sub in ast.walk(stmt):
+                if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+                        and sub.func.id == "Verdict" and _call_emits_red(sub)):
+                    out.append((fn.name, sub.lineno, type(stmt).__name__,
+                                red_emission_detail_head(sub)))
+                    break
+    return sorted(set(out))
+
+
 def _call_emits_red(call) -> bool:
     """`Verdict(...)` 호출이 status="RED" 를 싣는가 (위치/키워드 인자 양쪽)."""
     import ast
