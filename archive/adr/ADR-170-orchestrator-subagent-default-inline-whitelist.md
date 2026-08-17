@@ -8,6 +8,36 @@ carrier_story: CFP-2869
 supersedes:
   - ADR-039
 amends: null
+amendment_log:
+  # ★ Amendment 1 = CFP-2948 예약 (미머지 브랜치 `origin/cfp-2948`, open PR 없음 — 커밋 `a42b305a5`/`1c48fdddf` 가
+  #   `amendment_log: - amendment: 1` 로 선점). 본 Amendment 2 는 그 slot 을 양보하고 다음 번호를 쓴다.
+  #   cfp-2948 이 폐기되면 번호 1 공백이 잔존한다 — 정직 declare (renumber 요구 안 함, ADR-082 Amd36 1-Y §A ascending 정렬만 의무).
+  # ★ 컨테이너 키 = `amendment_log:` (`amendments:` 아님). 근거 = 들어올 Amd 1 이 `amendment_log:` 를 쓰므로 단일 파일 내
+  #   컨테이너 이종 혼재 회피 + corpus 우세형. 기계 소비자는 양 키 합산이라 선택이 count 를 바꾸지 않는다
+  #   (`scripts/lib/check_adr_amendment_threshold.py:113` `for key in ("amendment_log", "amendments")` — first-key-wins 아님).
+  - amendment: 2
+    date: "2026-08-18"
+    carrier_story: CFP-2994
+    issue: https://github.com/mclayer/plugin-codeforge/issues/2994
+    summary: |
+      저작 ⊥ 전사 (authority) 축 — 기록 표면의 소유자가 타 주체 몫을 자기 것으로 처리하는 **4번째 형태** 신설.
+      (A) 신설 형태 ④ = 「타 주체 저작을 흡수하며 귀속을 자기로 표기」. 기존 3형(① verbatim 전사 + 명시 귀속 = 합법
+      ② 자기 관측으로 덮어쓰기 = 위반 ③ 관측 주체 없이 창작 = 위반) 어디에도 걸리지 않는다 — 내용 무손실 · 덮어쓰기 아님 ·
+      창작 아님이고 **귀속만 틀렸다**. 원 사건(내용 증발)과 피해 축은 다르나 기전(기록 표면 소유자가 타 주체 몫을 자기 것으로
+      처리)은 동형. `[verified — CFP-2994 설계 lane 자기 관측]`: 본 Story 를 진행하는 lane 안에서 deputy 커밋이 lane PL 의
+      미커밋 저작을 자기 커밋에 흡수했고 git log 가 그 귀속을 잘못 말했다.
+      (B) **예외(§결정 2 entry #5)는 좁힐 수 없음 — 확정.** inline whitelist 축소는 ① CFP-2994 §9.1~§9.4 원장 retrofit
+      (Orchestrator 전사)을 소급 위법화하고 ② 본 ADR §결정 2 writer monopoly 와 충돌한다. ⇒ 채택 방향 = 예외 축소가 아니라
+      **분류에 ④를 추가하는 확장**(ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향).
+      (C) **2층(지시 ⊕ 산출물) — 규범 완결 · 기제 공백 정직 declare.** 원 지시 함정(「미수령으로 declare」의 `미수령` 이
+      「공란 아닌 명시 상태값」을 충족)은 셀 공란을 재는 술어에만 작동하고 delta-부호 술어는 통과하지 못한다 `[verified]`.
+      단 지시층 판정은 **압박 당사자만 평가 가능**(반사실 필요) ∧ 지시 표면이 런타임 ephemeral ⇒ 등급 = `normative` 이나
+      **집행 표면 0**. 이 비대칭을 감추지 않는다(ADR-119 §결정 10 outcome-honesty 상속).
+      (D) **`receipt_state` = 도달(arrival) 전용 경계.** 산출물 존재·귀속 기록은 허용, **충분성·품질 판정은 금지** —
+      「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 ADR-139 INV-L4(verdict 판정 = lead 소유)를 침범한다.
+      (E) amendment slot 충돌 오라클 교훈 = ADR-139 Amendment 3 + Change Plan §10 (본 Amendment 는 cross-ref 만).
+      강화(ratchet↑) 방향 — §결정 1~21 · inline whitelist 7-entry count · writer monopoly 전부 무변경, 분류 1형 추가만.
+    sunset_justification: null   # 강화 방향(4번째 형태 추가 = 분류 확장 ratchet↑, 예외 축소 0) — ADR-058 §결정 5 약화 evidence-gate 비대상. §결정 2 7-entry enumeration 무손상.
 reinterpretation: false  # ADR-167 §결정 1(b) — 본 ADR 은 ADR-039 실효 규범의 의미 무변경 재제정(restatement)이지 소급 재해석이 아니다. 신규 저작(재해석 marker false).
 is_transitional: false
 related_adrs:
@@ -476,3 +506,88 @@ Orchestrator 가 spawn-event-v1 (또는 sibling Tier-3 measurement channel) 실�
 ## 해소 기준
 
 N/A — permanent policy (Orchestrator subagent default + inline whitelist 상시 적용, is_transitional: false). 구 ADR-039 의 동일 선언 승계.
+
+## Amendment 2 (CFP-2994 — 저작 ⊥ 전사 4번째 형태 + `receipt_state` 도달-전용 경계 + 2층 공백 declare)
+
+> **[Amendment 2 / CFP-2994, 2026-08-18 KST]** 축 = **authority**(누가 어떤 사실의 기록자인가). 본 Amendment 는 §결정 2 의
+> inline whitelist 7-entry enumeration 을 **변경하지 않는다** — entry 신설 0 · entry 축소 0 · count 무변경. 추가되는 것은
+> **기록 귀속의 분류 1형**이다. carrier = CFP-2994(수령 사실의 single-writer 부재).
+
+### A2-1 — 신설: 저작 ⊥ 전사 위반의 **4번째 형태** ④
+
+기록 표면(Story 절 · 원장 · git 커밋 등)의 소유자가 타 주체의 몫을 처리하는 형태를 다음 4형으로 분류한다. ①~③ 은 기존 분류의
+재기술(의미 무변경)이고 **④ 가 본 Amendment 의 신설분**이다.
+
+| 형태 | 내용 | 판정 |
+|---|---|---|
+| ① | 타 주체 산출을 **verbatim 전사 + 귀속 명시** | 합법 (§결정 2 entry #5 가 허용하는 정확한 형태) |
+| ② | 타 주체 사실을 **자기 관측으로 덮어쓰기** | 위반 |
+| ③ | **관측 주체 없이** 상태를 창작 | 위반 |
+| ④ | **타 주체 저작을 흡수하며 귀속을 자기로 표기** (신설) | 위반 |
+
+**④ 가 기존 3형에 걸리지 않는 이유**: 내용이 무손실이므로 ② 가 아니고, 실 저작이 존재하므로 ③ 도 아니며, 귀속이 없으므로
+① 의 합법 조건(귀속 명시)도 불성립이다. 즉 **세 술어 전건이 거짓인 채 위반이 성립**한다.
+
+**실 발현 `[verified — CFP-2994 설계 lane 자기 관측]`**: 본 Story 를 진행하는 설계 lane 안에서, 한 deputy 의 커밋이 lane PL 의
+미커밋 저작을 함께 스테이징해 자기 커밋에 담았다. 커밋 메시지는 그 deputy 의 작업을 말하는데 담긴 저작의 일부는 PL 것이었고
+**원장(git log)이 그 귀속을 잘못 말한다**. 내용은 무손실이었다. 기전 = 복수 에이전트가 같은 worktree·같은 index 를 공유할 때
+`git add <dir>`/`git add -A` 가 형제의 미커밋 저작을 스테이징한다 — `index.lock` 은 **동시성만** 막고 **범위 침범은 막지 않는다**.
+근거 = Phase 1 PL 산출 §R + 해당 커밋 `--stat`.
+
+★ 원 사건(CFP-2994 §1)과의 관계: 원 사건은 **내용이 증발**했고 본 발현은 **귀속만 틀렸다** — **피해 축이 다르나 기전은 동형**
+(기록 표면의 소유자가 타 주체 몫을 자기 것으로 처리). 두 사건을 같은 심각도로 읽지 말 것.
+
+### A2-2 — 예외(§결정 2 entry #5)는 **좁힐 수 없다** (결론)
+
+*"Orchestrator 가 타 주체의 수령 사실을 §9 에 쓰는 경로를 막으면 된다"* 는 처방은 **성립하지 않는다**:
+
+1. **소급 위법화** — CFP-2994 §9.1~§9.4 의 원장 retrofit 은 Orchestrator 가 타 주체 수령 사실을 전사한 것이며, 그것이
+   §결정 2 entry #5 가 허용하는 정확한 형태다. 예외를 좁히면 **이미 옳게 수행된 전사가 위법**이 된다.
+2. **writer monopoly 와 충돌** — §9/§10 은 Orchestrator write monopoly(entry #5) 이므로, Orchestrator 를 그 표면에서 배제하면
+   기록자가 0 이 된다.
+
+⇒ **채택 방향은 예외 축소가 아니라 분류 확장**이다(A2-1 ④ 추가). ADR-064 §결정 7 evidence-gated symmetric ratchet 상
+**강화 방향**이며 ADR-058 §결정 5 약화 evidence-gate 비대상.
+
+### A2-3 — 2층(지시 ⊕ 산출물): 규범으로 완결 · 기제로 공백
+
+원 사건의 파괴적 지시(*"미수령으로 declare 유지"*)는 **명제가 아니라 지시**다. 두 층을 분리 성문한다.
+
+- **산출물 층** — 기록된 상태값·귀속·근거 셀이 대상. 기계 술어를 붙일 표면이 실재한다.
+- **지시 층** — 발화된 지시가 가산적(additive)인가 파괴적인가가 대상.
+
+★ **원 지시 함정은 재발하지 않는다** `[verified]`: *"미수령으로 declare"* 의 `미수령` 이 「공란 아닌 명시 상태값」 요구를
+충족하는 함정은 **셀 공란을 재는 술어에만** 작동하고, 수신자 산출물의 **delta 부호를 재는 술어는 통과하지 못한다**.
+
+★ **그러나 지시 층은 기제로 공백이다 — 감추지 않는다**:
+
+- **압박 당사자만 평가 가능** — delta 부호 판정에 *"지시가 없었다면 무엇을 썼을지"* 라는 **반사실**이 필요하고, 그것을 아는
+  주체는 지시 수신자 단 하나다. 검출을 하위 주체의 자발적 정직에 위임하는 형상이며 **원 사건의 복구 경로(PL 자진 신고)와 같은 기전**.
+- **관측면 원리적 부재** — 지시는 spawn prompt·메시지 = 런타임 ephemeral.
+
+⇒ 지시 층 규범의 등급 = **`normative` 이나 집행 표면 0**. tier ⊥ 집행을 분리 표기하며, 「차단한다」로 읽히는 문면을 쓰지 않는다
+(ADR-119 §결정 10 outcome-honesty 상속). 실효 이득은 **「1개 누락 → 2개 독립 누락 필요」** 뿐이다.
+
+### A2-4 — `receipt_state` = 도달(arrival) 전용 경계
+
+수령 상태 field 의 정의역을 **도달 사실**로 한정한다.
+
+- **허용** — 산출물이 도달했는가 · 어느 주체 채널에 도달했는가 · 무엇을 근거로 그렇게 판정했는가.
+- **금지** — 도달분의 **충분성 · 품질 · 채택 가치** 판정.
+
+근거: 「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 그 field 는 성과 verdict 가 되고, verdict 판정 권한은 ADR-139 INV-L4
+(*"대기 주체 ↔ 판정 주체 분리 (worker self-attestation 차단, 신뢰 경계)"* — `archive/adr/ADR-139-background-wait-liveness-gate.md:71`
+verbatim)가 lead 에 고정한다. 도달-전용 경계가 **INV-L4 를 침범하지 않는 유일한 형태**다. 상세 = ADR-139 Amendment 3.
+
+### A2-5 — cross-ref
+
+- **ADR-139 Amendment 3** — P-1(수령 사실 single-writer) ↔ INV-L4 정의역 분리 + amendment slot 충돌 오라클 교훈 SSOT.
+- **Change Plan** `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2994-receipt-single-writer.md` §10 — 오라클 교훈 전문.
+- **CFP-2929 (ADR-139 Amendment 2, §결정 8)** — mechanism 축이며 본 authority 축과 disjoint (상세 = ADR-139 Amd 3).
+
+### A2-6 — 정직 천장
+
+- ④ 의 근거는 **1 lane 1회 자기 관측**이다. 빈도·재현율을 주장하지 않는다.
+- 본 Amendment 는 **분류를 추가**할 뿐 **검출 기제를 배선하지 않는다**. 산출물 층 기계 검사의 CI 배선 상태는 CFP-2994 설계
+  결정(착지면 4단) 대기이며, 현 상태는 **강제층 미배선**이다 — 「게이트가 막는다」로 읽히는 문면을 본 Amendment 에 두지 않는다.
+- 지시 층은 A2-3 대로 **집행 표면 0**. 「기계 강제」 주장 금지.
