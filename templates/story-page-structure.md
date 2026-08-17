@@ -724,3 +724,107 @@ Link path 작성 가이드:
 - **필요한 섹션만 읽기**: 프롬프트에 `§X, §Y 참조` 명시 → 에이전트가 `Read(docs/stories/<KEY>.md)` 후 해당 섹션만 참조
 - 전체 file 읽기는 ArchitectAgent (chief author) 설계 진입 1회만 허용 (§1-6 전체 필요)
 - **파일 변경은 lane plugin owner direct edit + Orchestrator 단독 (§10 FIX Ledger)** — codeforge-* CLAUDE.md self-write 표 + CFP-32 fix-event-v1 contract
+
+> ⚠ **위 3개 규약은 원리적으로 강제 불가다 (ADR-180 컨텍스트 축 A)**. `Read` 도구에 섹션 주소지정이 없어
+> `Read(파일)` 는 **파일 전체를 연다** — "필요한 섹션만 읽기" 는 집행면이 없는 자율 준수 규약이며,
+> 같은 형상의 선행 처방 3건(본 규약 · playbook §12 섹션 캐시 · ADR-142 L1)이 모두 실패했다.
+> 실제로 읽지 않게 만드는 유일한 경로는 **섹션을 파일 밖으로 내보내는 것**이다 (아래 §성장축 외부화).
+
+---
+
+## 성장축 외부화 — 앵커 규약 + 섹션 성질 레지스트리 (CFP-2986 / ADR-180)
+
+**목적함수는 파일 크기가 아니라 lane 진입당 실읽기 바이트다.** 줄수·heading 수·섹션 수·
+**자식 포함 총 바이트**는 판정 단위로 채택 금지다 (`claude-md-line-cap` 이 CAP=320 줄을 GREEN 으로
+유지하는 동안 바이트가 +82.4% 자란 것이 "선언한 양 ≠ 재는 양" 의 실증이다).
+
+```
+read_cost(story) = Σ_{r ∈ readers} [ bytes(parent) + Σ_{c ∈ children : opens(r,c)} bytes(c) ]
+
+opens(r,c)  ⟺  r 이 read-declaration registry 에 미등재        (보수 default — 전 자식 계상)
+              ∨  declares(r) ∩ carries(c) ≠ ∅
+```
+
+- 독자 선언 = `docs/story-read-declaration-registry.yaml` (행별 `source:` 인용 의무)
+- 동결·기대집합 = `docs/story-read-surface-baseline.yaml`
+- 게이트 = `scripts/check-story-read-surface.sh` (SSOT = `scripts/lib/check_story_read_surface.py`)
+
+> **정직 상한**: 이것은 **선언된** 읽기 비용이다. 선언과 실제 agent 거동의 일치는 집행면이 없어
+> 기계 검증 불가 — **attested, not verified**. "실제 읽기량을 잰다" 고 주장하지 않는다.
+
+### 앵커 규약 (구간 경계 = 명시 앵커 쌍)
+
+heading 기반 암묵 경계("다음 heading 까지")를 **금지**한다 — heading 강등(+1 B) · U+200B 삽입(+3 B) ·
+코드펜스 phantom heading(+65 B) 세 변형이 전부 섹션을 0 B 로 만들면서 GREEN 을 통과한 실증이 있다.
+
+```markdown
+## 9. 품질 게이트 이력
+
+<!-- cfp-split:begin section=9 id=<KEY>-S1 -->
+*(본문은 <KEY>-S1.md 로 이동 — 순수 이동, 정보 삭제 0)*
+<!-- cfp-split:end id=<KEY>-S1 -->
+```
+
+| 속성 | 규약 |
+|---|---|
+| **명시** | 주석 마커. 문서 구조 우연에 비결합 |
+| **쌍** | `begin` ↔ `end`. 미쌍 = FAIL |
+| **유일** | 파일 내·코퍼스 내 `id` 유일. 중복 = FAIL ("첫 매칭 사용" 금지) |
+| begin 필수 속성 | `section=<N>` ∧ `id=<KEY>-S<N>` |
+| end 필수 속성 | `id=<KEY>-S<N>` 만 (`section=` 없음 — 짝 begin 에서 해결) |
+| stub | **non-empty** 여야 한다 (공백 슬라이스는 drift 로 경고된다) |
+| 이동 성질 | **순수 이동(pure move)** — 변형·요약·재배치·오타수정 0. 정보 삭제 0 |
+
+### 자식 파일 계약
+
+| 항목 | 규약 |
+|---|---|
+| 배치 | **평면** `<stories>/<KEY>-S<N>.md`. **하위 디렉터리 금지** |
+| 배치 근거 | 트리거 glob(Actions `*` 가 `/` 를 안 넘음)과 검사 glob(git pathspec `*` 가 `/` 를 넘음)의 **양방향 비대칭** — 자식만 바뀐 PR 은 워크플로 미기동(무검사), parent+자식 PR 은 자식이 스캔에 혼입 |
+| **자식 자격 판별자** | frontmatter **`carries_sections: [N]`**. ★ 파일명 형상은 판별자가 **아니다** — 코퍼스에는 이름만 동형인 선재 sub-Story 가 다수다(실측 `7d075514`: 이름 매치 19건 중 `carries_sections` 보유 **1건**) |
+| 필수 frontmatter | `story_key` · `doc_type: story_child_file` · `parent_story` · `carries_sections` · `split_anchor_id` |
+| `status` | **미선언** — 라이프사이클 status 는 부모 단독 소유 (중복 선언 = drift 원본) |
+| 깊이 | **≤ 1** — 자식 안 split 마커 금지 (2단 계층 참조는 정확도 0.9126 → 0.6398 붕괴 실증) |
+| heading | 섹션 heading(`## N.`) 자체는 **부모에 잔존** — §1-§11 presence 스키마 게이트 요구 |
+
+### 섹션 성질 레지스트리 (규칙은 섹션 **이름**이 아니라 **성질**에 keyed 된다)
+
+§1-§11 은 단일 부류가 아니다. **이벤트 로그 계열**(append-only · 시간순 · 재생 가능)과
+**서사 문서 계열**(저작물 · 개정 대상 · 재생 불가)에 단일 처방을 균일 적용하면 어느 한쪽은
+반드시 정보 삭제 금지를 위반한다 — 서사에 snapshot = 요약 정본화(손실) / 이벤트 로그에 크기 규약 = 기록 누락(손실).
+
+```yaml
+# 섹션 성질 선언 — 기계 판독 대상. reason_code 는 폐쇄 enum (자유서술 사유 불인정)
+sections:
+  "9":  { append_only: true,  regenerable: true,  read_tier: cold, splittable: true }
+  "10": { append_only: true,  regenerable: true,  read_tier: cold, splittable: true,
+          reason_code: OWNED_BY_PARALLEL_STORY }
+  "5":  { append_only: false, regenerable: false, read_tier: hot,  splittable: false,
+          reason_code: REQUIRED_GATE_PARSER_INPUT }
+  "8":  { append_only: false, regenerable: false, read_tier: hot,  splittable: false,
+          reason_code: REQUIRED_GATE_PARSER_INPUT }
+```
+
+> **일반성의 층위 (정직 고지)**: 이것은 **규칙 층의 일반성이지 효과 층의 일반성이 아니다.**
+> 게이트 규칙은 섹션 번호를 하드코딩하지 않지만(전건 정의역 선언 참조), 데이터 층에서
+> 섹션 정체성이 되돌아오고 실 발화는 §9·§10 에 착지한다 — 귀속 편재가 실측 결론 자체이기 때문이다.
+
+### 효과 분리 (무엇이 막고 무엇이 신호인가)
+
+| 명제 | 효과 | rc |
+|---|---|---|
+| "너무 큰가" (`read_cost > ceiling`) | 비차단 **신호** | rc 무영향 |
+| "정보를 잃었는가" (dangling pointer / 앵커 미쌍·중복·오형식 / pure-move 위반 / 깊이 > 1) | **fail-closed** | rc=1 |
+| 판정 불가 (커버리지 미달 / `deferred` 정의역 / before-ref 부재 / 스캔 정의역 불일치) | **UNDETERMINED** | rc=3 |
+
+`UNDETERMINED` 를 GREEN 과 같은 rc 로 뭉개지 않는다 — 뭉치면 day-1 에 "절감 0"(판정)과
+"측정 불가"(판정 불가)가 구별되지 않아 실읽기량 요건이 공허 통과한다.
+
+### 저작자 체크리스트 (분할 시)
+
+1. 대상 섹션이 성질 레지스트리에서 `splittable: true` 인가
+2. 자식 frontmatter 에 `carries_sections` · `parent_story` · `split_anchor_id` 를 선언했는가
+3. 이동이 **순수 이동**인가 (변형 0 — `git revert` 로 닫히지 않으면 무손실이 아니다)
+4. 부모 stub 이 non-empty 이고 앵커가 쌍·유일인가
+5. 자식 안에 split 마커가 없는가 (깊이 ≤ 1)
+6. 새 독자를 도입했다면 read-declaration registry 에 `source:` 인용과 함께 등재했는가

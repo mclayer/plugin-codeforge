@@ -1,0 +1,249 @@
+# CFP-2986 / ADR-180 — Story 읽기면 게이트 baseline artifact
+#
+# 판정면 = 본 파일의 선언값이다 (before/after 차분면 아님 — ADR-180 §결정 4 P1-C).
+#   차분면에는 절대 앵커가 없어 오염이 일단 착지하면 이후 모든 PR 에서 GREEN 이 된다(영구 무장해제).
+#   실증 = mutant `M-PREEXIST` (Change Plan §8.2).
+#
+# 소비자 = scripts/lib/check_story_read_surface.py (SSOT). 수기 편집 시 content_digest 불일치로 비정상 종료.
+# 규약: 앵커·셀렉터·기대값은 전부 **기계 판독 필드**다 — YAML 주석에 두는 것을 금지한다 (R3 P1-4 / M-COMMENT).
+#       아래 주석은 전부 근거 서술이며, 어떤 판정도 주석을 읽지 않는다.
+
+schema_version: 1
+introduced_by: CFP-2986
+carrier_story: CFP-2986
+adr: ADR-180
+
+# --- 동결 (AC-8) -----------------------------------------------------------
+# 정량 4-tuple 규약: 값 + 기준 트리 SHA + 매체 + 정의역(분모)
+baseline_tree_sha: 7d0755140c72b93160cc2792a580443c93d7ffcb   # mclayer/codeforge-internal-docs
+baseline_media: LF                                            # git archive 추출물 (작업트리 스캔 금지)
+frozen_at: '2026-08-16T18:13:20+09:00'
+content_digest: ab1382a36922e28390570f3c465f2bfb06682687b614730b5feafe3a42fef466
+
+# --- 목적함수 입력 ---------------------------------------------------------
+# reader_roster = 폐쇄 독자 집합. coverage 의 **분모**이며 registry 와 독립 원본이다
+# (분모를 registry 에서 유도하면 coverage 가 구성상 항상 1.0 이 되어 항진명제가 된다).
+reader_roster:
+  - orchestrator
+  - requirements
+  - requirements-review
+  - design
+  - design-review
+  - develop
+  - code-review
+  - integration-test
+  - security-test
+
+# default_ceiling = 동결 트리 코퍼스의 read_cost 분포 p50 (ADR-180 §결정 5).
+# 미분할 파일에서 read_cost = |reader_roster| × bytes(parent) 이므로 p50(read_cost) = 9 × p50(bytes).
+default_ceiling: 327987
+default_ceiling_basis:
+  formula: reader_count_times_corpus_p50_bytes
+  reader_count: 9
+  corpus_p50_bytes: 36443
+  corpus_median_rule: lower_median      # n 이 짝수라 하한 중앙값 채택 (정수 고정)
+  corpus_n: 664
+  corpus_domain: '*/stories/*.md'
+  media: LF
+  tree_sha: 7d0755140c72b93160cc2792a580443c93d7ffcb
+
+# coverage_floor = AC-5 절감 주장의 전제조건. 미달 시 "절감 0"(판정)이 아니라 UNDETERMINED(판정 불가).
+# 값 1.0 근거: reader_roster 는 **폐쇄·열거 가능**한 집합이라 전건 선언이 달성 가능하다.
+# 미등재 reader 1건은 보수 default 로 전 자식을 여는 것으로 계상돼 절감 측정을 그만큼 무의미하게 만든다.
+# ⇒ 임의 문턱이 아니라 "달성 가능한 완전성" 을 문턱으로 삼는다 (fail-closed 방향).
+coverage_floor: 1.0
+coverage_floor_basis: CLOSED_READER_ROSTER_FULL_DECLARATION
+
+# --- 정의역 파일 해결 ------------------------------------------------------
+file_map:
+  STORY: wrapper/stories/CFP-2986.md
+  CP: wrapper/change-plans/cfp-2986-story-growth-axis-externalization.md
+
+# --- 스캔 정의역 (O5 — CP §7.4a 3항 AND) -----------------------------------
+# trigger_glob 은 git pathspec(wildmatch — `*` 가 `/` 를 넘음),
+# scan_glob 은 Actions `on.paths` 글롭(`*` 가 `/` 를 넘지 않음)으로 각각 매칭한다.
+# 두 매처가 다르므로 (a) 등식은 하위 디렉터리 배치가 생기는 순간 깨진다 = 평면 배치 규약의 집행면.
+scan_domain:
+  trigger_glob: '*/stories/*.md'
+  scan_glob: '*/stories/*.md'
+  carrier_glob: 'wrapper/stories/CFP-2986*.md'
+
+# carriers = 게이트가 부모로 평가하는 Story 파일 (자식은 여기 넣지 않는다)
+carriers:
+  - wrapper/stories/CFP-2986.md
+
+# expected_scan_set = O5 (b) 절대 기대집합. 분할 자식 경로를 명시 포함해
+# "그 파일이 실제 스캔 대상에 들어갔는가" 를 트리거 기동 여부와 **따로** assert 한다.
+expected_scan_set:
+  - wrapper/stories/CFP-2986.md
+  - wrapper/stories/CFP-2986-S1.md
+declared_scan_count: 2
+
+# --- INV-S3 정의역 — 정의역별 자족 선언 (R3 P0-1: 전역 추출 규칙 폐기) ------
+# 필수 키 10종 = kind / file / section / span_kind / span_anchor / fence_aware
+#              / cardinality_basis / leg3 / expected / status.  하나라도 누락 = 배선 금지(fail-closed).
+domain_schema:
+  required_keys: [kind, file, section, span_kind, span_anchor, fence_aware,
+                  cardinality_basis, leg3, expected, status]
+  kind_enum:       [quantitative_cells, ac_id_landing]
+  span_kind_enum:  [table, line, section]     # span 이 좁힌다 — 사후 필터 금지
+  basis_enum:      [cell_count, id_occurrence_count]
+  leg3_enum:       [applicable, not_applicable]
+  leg3_na_reason_enum: [NO_VALUE_AXIS]        # 폐쇄 enum — 자유서술 금지
+  status_enum:     [enforced, deferred]       # deferred = UNDETERMINED 방출 (GREEN 아님)
+
+domains:
+  CORPUS:
+    kind: quantitative_cells
+    file: STORY
+    section: '4.2.2a'
+    status: enforced
+    span_kind: table
+    span_anchor: '^\|\s*§9\s*\|\s*§4\s*\|'     # 정본 귀속표 (절 안 4개 표 중 유일 매치)
+    fence_aware: true                          # 펜스 안 '#' = heading 아님 (미적용 시 22->0셀)
+    cardinality_basis: cell_count              # card = |expected| (별도 정수 선언 없음)
+    leg3: applicable
+    expected:                                  # 22셀 전건 — 축약 금지
+      S9.KB: '12.71'
+      S9.PCT: '21.0'
+      S4.KB: '12.29'
+      S4.PCT: '20.3'
+      S7.KB: '10.33'
+      S7.PCT: '17.1'
+      S5.KB: '7.51'
+      S5.PCT: '12.4'
+      S8.KB: '6.68'
+      S8.PCT: '11.0'
+      S2.KB: '5.69'
+      S2.PCT: '9.4'
+      S6.KB: '4.39'
+      S6.PCT: '7.2'
+      S10.KB: '2.54'
+      S10.PCT: '4.2'
+      S3.KB: '0.89'
+      S3.PCT: '1.5'
+      S1.KB: '0.58'
+      S1.PCT: '1.0'
+      S14.KB: '−2.18'
+      S14.PCT: '−3.6'
+  CP_S1_MAPPING:
+    kind: ac_id_landing
+    file: CP
+    section: '1'
+    status: enforced
+    span_kind: line                            # 산문 한 줄 — 표 아님 (전역 규칙 born-broken 지점)
+    span_anchor: '^\*\*수용 기준 \(AC 매핑\)\*\*'
+    fence_aware: true
+    cardinality_basis: id_occurrence_count
+    leg3: not_applicable
+    leg3_na_reason: NO_VALUE_AXIS
+    expected:                                  # 13 키 전건
+      AC-1: 1
+      AC-2: 1
+      AC-5: 1
+      AC-7: 1
+      AC-8: 1
+      AC-10: 1
+      AC-12: 1
+      AC-15: 1
+      AC-17: 1
+      AC-18: 1
+      AC-19: 1
+      AC-20: 1
+      AC-21: 1
+  CP_S81_RTM:
+    kind: ac_id_landing
+    file: CP
+    section: '8.1'
+    status: enforced
+    span_kind: table
+    span_anchor: '^\|\s*AC\s*\|\s*tier\s*\|'
+    fence_aware: true
+    cardinality_basis: id_occurrence_count     # 물리 데이터 행 16 — 한 행이 6 ID 보유
+    leg3: not_applicable
+    leg3_na_reason: NO_VALUE_AXIS
+    expected:                                  # 21 키 전건 — 축약 금지
+      AC-1: 1
+      AC-2: 1
+      AC-3: 1
+      AC-4: 1
+      AC-5: 1
+      AC-6: 1
+      AC-7: 1
+      AC-8: 1
+      AC-9: 1
+      AC-10: 1
+      AC-11: 1
+      AC-12: 1
+      AC-13: 1
+      AC-14: 1
+      AC-15: 1
+      AC-16: 1
+      AC-17: 1
+      AC-18: 1
+      AC-19: 1
+      AC-20: 1
+      AC-21: 1
+  STORY_S53_AC_TABLE:
+    kind: ac_id_landing
+    file: STORY
+    section: '5.3'
+    status: enforced
+    span_kind: table
+    span_anchor: '^\|\s*id\s*\|\s*statement\s*\|'
+    fence_aware: true
+    cardinality_basis: id_occurrence_count     # 절 슬라이스 전체는 43 — 표 span 이 판별자
+    leg3: not_applicable
+    leg3_na_reason: NO_VALUE_AXIS
+    expected:                                  # 21 키 전건 — 축약 금지
+      AC-1: 1
+      AC-2: 1
+      AC-3: 1
+      AC-4: 1
+      AC-5: 1
+      AC-6: 1
+      AC-7: 1
+      AC-8: 1
+      AC-9: 1
+      AC-10: 1
+      AC-11: 1
+      AC-12: 1
+      AC-13: 1
+      AC-14: 1
+      AC-15: 1
+      AC-16: 1
+      AC-17: 1
+      AC-18: 1
+      AC-19: 1
+      AC-20: 1
+      AC-21: 1
+  # 정량 4정의역은 아직 실추출 대상이 아니다 (정량 5정의역 중 실체는 CORPUS 22셀 단독).
+  # enforced 로 두면 Phase 2 실체화 전까지 무조건 RED = born-broken 4건, 조용히 건너뛰면
+  # "파싱 실패 = 결손" 규약 위반. ⇒ 제3의 값 UNDETERMINED 를 방출하고 deferred=<N> 으로 별도 계상한다.
+  # 전 정의역 enforced 전환이 required 승격 사전조건이다 (ADR-180 해소 기준 3).
+  SELF:
+    kind: quantitative_cells
+    status: deferred
+    reason_code: DEFERRED_NOT_MATERIALIZED
+  BASE:
+    kind: quantitative_cells
+    status: deferred
+    reason_code: DEFERRED_NOT_MATERIALIZED
+  AUTHOR:
+    kind: quantitative_cells
+    status: deferred
+    reason_code: DEFERRED_NOT_MATERIALIZED
+  LEGC:
+    kind: quantitative_cells
+    status: deferred
+    reason_code: DEFERRED_NOT_MATERIALIZED
+
+# --- grandfather (ADR-180 §결정 5) -----------------------------------------
+# ceiling(key) = entries[key].ceiling  if key ∈ entries   # grandfather
+#              = default_ceiling       otherwise          # 신규 — 면제 아님
+# ratchet(touched): ceiling ← min(ceiling, metric(HEAD))  # monotonic shrink
+# `entries` 미등재를 "제한 없음" 으로 읽는 구현을 금지한다.
+entries:
+  - story_key: CFP-2986
+    ceiling: 327987
+    ceiling_basis: NO_SELF_EXEMPTION_EQUALS_DEFAULT   # carrier 자기 면제 0 — default 와 동일값

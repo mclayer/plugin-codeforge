@@ -1,0 +1,277 @@
+name: story-read-surface-test
+# CFP-2986 Phase 2 / Change Plan §8.1 RTM (normative AC 15건) + §8.2 mutant 배터리 —
+#   Story 성장축 외부화 게이트(scripts/lib/check_story_read_surface.py)의 명명 테스트와
+#   discriminating mutant 배터리를 실 CI red/green 으로 산출한다.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가 (**존재 ≠ 실행** — 본 repo 상습 형상):
+#   tests/ 에는 blanket 수집이 없고 workflow 가 파일을 **이름으로 지목**해야 실행된다.
+#   실측(본 브랜치 기준): tests/scripts/*.py 55개 중 39개가 실행 workflow 0 이다.
+#   그리고 ac-traceability Hop3 는 `ast.FunctionDef` **심볼 존재**만 확인하므로
+#   dead test 위에서도 RTM 이 GREEN 이 될 수 있다 — 실제로 CFP-2976 P0 pytest 3종이
+#   실행 workflow 0 인 사고가 있었다. 본 workflow 가 그 경로를 닫는다.
+#
+# **day-1 hard-fail** (continue-on-error 금지) — self-test 실패 = job red.
+# **non-required** (branch-protection 8-tuple 무변경 — 신규 required context 0).
+#
+#   ★ 승격 사전조건 = ADR-180 「해소 기준」 **4건 전건 AND**. 넷이 **전부** 충족되고
+#     별도 carrier 가 승격을 명시 결정해야 유효하며, 하나라도 미충족이면 승격 금지다.
+#     (종전 이 헤더는 4번만 인용해 **1/4 만 노출**했다. 그 상태로 승격하면 2·3번 미충족이
+#      그대로 required 로 올라가 게이트 축이 상시 비-GREEN 이 된다.)
+#
+#     1. internal-docs open PR **CONFLICTING 8건** 정리 — 충돌 PR 은 merge ref 부재로
+#        workflow 가 아예 안 돌아 required 가 영구 Pending (ADR-180 §결정 6)
+#     2. **O5 `scanned_count` 3항** 충족 — 분할 자식 경로 fixture 에 대해 (a) workflow 기동
+#        (b) 실제 스캔 대상 포함 (c) 트리거 매치 집합 == 검사 매치 집합 을 **따로** assert
+#        (Change Plan §7.4a — 미충족 = 승격 금지)
+#     3. 정량 레지스트리 **전 정의역 `status: enforced` 전환** — `deferred` 잔존분의
+#        방출값은 GREEN 이 아니라 `UNDETERMINED` 다 (ADR-180 §결정 4 registry shape)
+#     4. ADR-171 §결정 6 **3-AND** 승격 게이트 + ADR-130 §결정 6 **7일-green 창**(repository
+#        단위) 충족 — 승격은 자동이 아니며 이를 측정·집행하는 코드는 현재 0건이다 (§결정 6)
+#
+#   ★ 승격은 "이 파일에서 한 줄 지우기" 가 아니다 — 본 workflow 에는 tier 를 낮추는 스위치가
+#     없다(continue-on-error 0). 승격 = branch protection `required_status_checks.contexts`
+#     에 job name 을 **등재**하는 repo 설정 행위이며 Orchestrator post-merge 소관이다.
+#
+# **정직 상한 — 게이트 본체(rc 축)는 아직 CI 에 배선돼 있지 않다** (위 해소 기준 3 미충족):
+#   본 workflow 가 돌리는 것은 **pytest 자기검증 2종**이지 게이트 판정(rc)이 아니다.
+#   `scripts/check-story-read-surface.sh` 를 호출하는 workflow 는 **현재 0건**이다
+#   [실측 wrapper `a3d7c56bb`: `.github/` 전역에서 `check-story-read-surface` 매치 0].
+#   게이트를 정본 코퍼스에 직접 돌리면 **rc=3(UNDETERMINED)** 이 나온다
+#   [firsthand 2026-08-16: 엔진 wrapper `a3d7c56bb` × 코퍼스 internal-docs `8f317f7ce`
+#    → `scanned_count=3 violations=0 deferred=6`, rc=3. 내역 = SELF/BASE/AUTHOR/LEGC
+#    4정의역 `status: deferred`(해소 기준 3) 4건 + `--before-ref` 부재 INV-S1/S2 2건].
+#   ⇒ **게이트 축은 지금 상태로 승격하면 7일-green 창을 구조적으로 채울 수 없다.** rc=3 은
+#     GREEN 이 아니고(설계 의도대로다) 이를 GREEN 으로 뭉개는 완화는 금지다. 해소 경로는
+#     하나 — 위 **해소 기준 3**(전 정의역 `enforced` 실체화)이며 본 Story 범위 밖이다
+#     (설계 결정 사항 — 구현 lane 이 자체 확장하지 않는다).
+#   본 workflow(pytest 축) 자신은 별개이고 green 이다 — 최근 실행 conclusion=**success**
+#   [실측: wrapper run `31940770806`, job `story-read-surface-test`, branch `cfp-2986-phase2`].
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ post-merge 필수 후속 = **pin bump ∧ 실행 사본 재착지** (둘의 연접, 택일 아님)
+#   (담당: Orchestrator, merge 직후 같은 세션)
+# ─────────────────────────────────────────────────────────────────────────────
+#  ① 언제    본 PR(wrapper #2997)과 짝 PR(internal-docs #3029)이 **squash-merge 된 직후**.
+#            squash 는 새 커밋 1개를 만들고 head 브랜치를 삭제하므로, 브랜치에만 있던 커밋
+#            SHA 는 그 시점부터 **도달 불가**가 된다.
+#
+#  ② 불변식  게이트(internal-docs `scripts/lib/compare_story_read_surface_parity.py`)는
+#            `WRAPPER_PINNED_REF` 가 가리키는 **wrapper 커밋의 3 target 바이트**를 urlopen 으로
+#            받아 **internal-docs 로컬 3 target 바이트**와 대조한다. 성립해야 할 등식은
+#              raw(wrapper @ WRAPPER_PINNED_REF)  ==  local(internal-docs)   [3 target 전건]
+#            한쪽만 움직이면 등식이 깨진다 ⇒ 후속은 **연접(∧)이지 선택(∨)이 아니다**.
+#            반사실 [구현리뷰 라운드 2 firsthand]:
+#              pin 미bump  → 브랜치 삭제로 pinned SHA 가 404          → **rc=1**
+#              pin 만 bump → raw(새 커밋) ≠ local(구 사본) drift      → **rc=1**
+#              둘 다(연접) → 3 target 바이트 일치                     → **rc=0**
+#
+#  ③ 대상    아래가 전수다 — 정의역 = **wrapper 트리 ∪ internal-docs 트리**.
+#            ★ 종전 이 표는 정의역이 wrapper 단독이라, 실제로 fetch 되는 **유일한 pin**(A-1)을
+#              통째로 배제했다. A-1 은 다른 pin 과 달리 주석 provenance 가 아니라 **실 fetch
+#              대상**이며, 미bump 의 결과도 인용 소실이 아니라 **게이트 rc=1 차단**이다.
+#            [도달성 = `git merge-base --is-ancestor <sha> origin/main` 전건 firsthand 재판정.
+#             기준: wrapper origin/main `4b30b860`, internal-docs origin/main `abc3bda8`]
+#
+#   [A 계열] pin 값이 가리키는 곳 = **wrapper** 커밋 / pin 이 놓인 곳 = internal-docs
+#     A-1  internal-docs  scripts/lib/compare_story_read_surface_parity.py:82
+#                         (`WRAPPER_PINNED_REF` — 줄번호보다 **심볼명이 정본**. 주석 증감으로
+#                          줄이 밀린 전례가 본 Story 에 있다: `:75`→`:82`)
+#                         ★**실 fetch(urlopen) 대상**            도달성 ✗ (wrapper 브랜치 전용)
+#     A-2  **bump 대상 아님** — 항목은 지우지 않고 남긴다(지우면 "왜 없는가"가 소실된다).
+#                         종전 문면 = "`…/story-read-surface-check.yml:261` = A-1 과 동값 인용
+#                         mirror". **두 주장 다 지금은 거짓**이고, 깨진 경로가 서로 다르다:
+#                         (가) **값 divergence** — 그 mirror 가 인용하던 값은 `676d960508ef`
+#                              였는데 A-1 pin 은 그 뒤 `b1e08fd3ea3e` → `005c43b682b4…` 로 두 번
+#                              움직였다. 작성 시점(internal-docs `37096659` ↔ wrapper
+#                              `a201e7dd0`, 4분 차)엔 **실제로 동값**이었고 pin bump 가 깼다.
+#                              ⇒ "동값 mirror" 는 **작성 당시 참 → 이후 거짓**.
+#                         (나) **줄 drift** — 그 문면은 같은 날 헤더 증설로 `:261` 밖으로 밀렸고
+#                              `:261` 은 다른 내용이 됐다. 저 파일의 줄번호는 본 Story 내내
+#                              움직인다 ⇒ **새 줄번호도 여기 적지 않는다**(적으면 또 밀린다).
+#                         ★ 바로 위 A-1 이 "줄번호보다 **심볼명이 정본**" 이라 경고해 놓고 A-2 는
+#                           맨 줄번호를 썼다 — **자기 교훈 미적용**이 같은 블록 안에서 재발했다.
+#                           그래서 아래는 줄번호가 아니라 **재현 규칙**으로 지시한다.
+#     ⇒ 현 pin 값의 실 소재 = **재계수 규칙**(고정 수치·고정 줄번호 금지, 매 bump 시점 재실행):
+#        ★ census 명령의 인자(pin 앞 9자)도 **고정 인용하지 않는다** — pin 이 bump 되면 명령
+#          자체가 달라진다. 현 pin 의 정본 = internal-docs
+#          `scripts/lib/compare_story_read_surface_parity.py:82` `WRAPPER_PINNED_REF` 할당문.
+#          거기서 앞 9자를 떠서 두 축을 센다(현재형 인용 / 동결이어야 할 구 pin 인용):
+#            git -C <internal-docs> grep -cE '<현 pin 앞 9자>'   # 현재형 인용 census
+#            git -C <internal-docs> grep -cE '<구 pin 앞 9자>'   # 전건 동결 기록이어야 한다
+#          ※ `grep -c` 는 **매칭 줄 수**이지 occurrence 가 아니다 — 어느 쪽을 셌는지 먼저
+#            선언할 것(아래 수치는 **줄 수 / occurrence** 를 병기한다).
+#        ★ 종전 이 자리의 두 단정("**8건**", 그리고 "check.yml 안 현 pin 인용 = **0건**")은
+#          **둘 다 거짓**이었다. census 정의역에서 `story-read-surface-check.yml` 이 통째로
+#          빠졌고 `CFP-2986-S1.md` 를 1건 적게 셌다 — 감사 실측(internal-docs `dba650cc`):
+#          check.yml **2** / parity **1** / S1.md **6** / CFP-2986.md **2** = **11**.
+#          ★★ 과소계수를 지적하려던 이 문단 자신이 같은 과소계수를 냈다. 「N곳」을 세는
+#             문단은 자기가 세는 정의역을 먼저 적지 않으면 반드시 한 면을 빠뜨린다.
+#        R6 재계수 [internal-docs `4eddfe46`(아래 A-1 착지 반영) × wrapper `f0f50cef6`]:
+#          - 현 pin `cb5687815` : parity.py 1줄/4 occ + S1.md 2줄/3 occ = **3줄 / 7 occ**
+#          - 구 pin `005c43b68` : check.yml 2/2 + parity.py 1/3 + S1.md 8/9 + CFP-2986.md 2/2
+#                                 = **13줄 / 16 occ**
+#        분류(세 갈래):
+#          (a) `CFP-2986-S1.md`·`CFP-2986.md` 인용 = §9/§10 **감사 기록** ⇒ [A-frozen] 과
+#              동일 사유로 **bump 금지**(그 시점 관측값 — 갱신 = 감사 기록 위조).
+#          (b) `story-read-surface-check.yml` 잔존 2줄 = 「구 문면 인용」 + 「측정 시점 pin」
+#              rc 기록. 둘 다 **과거형 동결**이라 bump 대상 아님.
+#          (c) 같은 파일의 「현행 사본 = wrapper `<SHA>`(N B, sha256 …)」 신원 라벨은
+#              **R6 에서 재현 규칙으로 대체돼 사라졌다**(고정 3-튜플 제거 — 값 bump 가 아니라
+#              site 소멸). 즉 종전에 실재하던 bump 대상 1곳이 **해소**됐다.
+#        ⇒ **A 계열 bump 대상 = A-1 단 1곳** — 이 단정은 종전엔 **거짓**이었고((c) 가 실재
+#          했으므로) (c) 해소로 **이제 참이 됐다**. 참이 된 시점을 명시하는 이유는, 같은 문장이
+#          거짓인 채로 한 라운드를 생존했기 때문이다.
+#          ※ 그 "1곳" = `WRAPPER_PINNED_REF` **할당문 1개**이지 그 줄의 전 occurrence 가
+#            아니다(같은 줄 주석의 나머지 3 occ 는 이번 bump 사건의 동결 기록 — 일괄 치환 금지).
+#        ※ 위 수치는 전부 **재산출 대상**이다 — 인용하지 말고 위 두 grep 을 그 시점에 돌릴 것.
+#     ⇒ 새 값(**A-1 전용**) = **wrapper #2997** squash-merge 커밋 SHA — **40자 그대로**
+#        `gh pr view 2997 --repo mclayer/plugin-codeforge --json mergeCommit`
+#     ⇒ 미이행 시: A-1 = **rc=1, 전 PR 차단**(fail-closed 실동작).
+#
+#   [A-frozen] **무조치 — 동결 감사 기록**(bump 하면 안 되는 site. 정직 고지)
+#     = 리뷰어·측정자가 **그 시점에 관측한 값**의 기록이다. 링크 생존을 위해 갱신하면
+#       "무엇이 관측됐는가" 를 위조하게 된다 ⇒ post-merge 도달 불가(dangling)를 **감수**한다.
+#     internal-docs `wrapper/stories/CFP-2986-S1.md` — **4곳**:
+#       :1205, :1230 (`c9f8670fd…`) / :1184, :1215 (`676d96050…`)  [§9 구현리뷰 R2 verdict]
+#       ※ §9 는 Orchestrator 독점면이라 구현 lane 이 편집 대상으로 삼지도 않는다.
+#     ※ 전수 재계수 = **4곳**(종전 이 줄은 "2곳" 이었다). ★ 숫자 4 는 맞았고 **옆에 적힌 정의역
+#       규칙이 틀렸다** — 종전 문면의 "internal-docs tracked 전건 `git grep -nE
+#       'c9f8670f|676d9605'`" 은 실제로 센 정의역이 아니다(그 규칙은 4 가 아니라 16 을 뽑는다).
+#       규칙과 실제 센 것이 어긋나면, 규칙을 돌린 사람은 적어둔 수를 재현하지 못한다.
+#       정의역 계단 — 세 층 전부 **산출 명령과 함께** 남긴다(R6 실측, internal-docs `4eddfe46`.
+#       감사 실측 `dba650cc` 에서는 16/9 가 15/8 이었다 — S1.md 가 그 사이 자랐다. 4 는 불변):
+#         D1 tracked 전건 = **16줄**
+#              git grep -cE 'c9f8670f|676d9605'
+#         D2 S1.md 파일 한정 = **9줄**
+#              git grep -cE 'c9f8670f|676d9605' -- wrapper/stories/CFP-2986-S1.md
+#         D3 S1.md **§9.13 구현리뷰 Round 2 구획** = **4줄**  ← 위 4곳이 실제로 센 정의역
+#              awk '/^### 9\.13 /{f=1} /^### 9\.14 /{f=0} f' wrapper/stories/CFP-2986-S1.md \
+#                | grep -cE 'c9f8670f|676d9605'
+#       (heading 실표기에 `§` 는 없다 — `### 9.13 …` 이다. 패턴을 `§9\.13` 으로 쓰면 0 이 나오고,
+#        그 0 은 "인용이 없다" 와 구별되지 않는다.)
+#       "2곳" 은 pin 의 **구 값 하나만** 세고 같은 기록면의 `676d96050` 인용 2곳을 빠뜨린
+#       결과다 — 값이 아니라 **기록면 전체**가 정의역이다.
+#     ※ 일반화(정의역 경계): 동결 인용은 이 두 값에 그치지 않는다 — 같은 성격의 브랜치 전용
+#       SHA 인용(`a3d7c56b`·`8f317f7c` 등, firsthand 브랜치 전용 확인)이 **wrapper 트리에도**
+#       있다. ⇒ bump 정의역은 "브랜치 전용 SHA 전부" 가 **아니라** A·B 계열(기계 fetch +
+#       살아있는 절차 주석)뿐이다. 동결 기록까지 bump 하면 감사 기록 위조가 된다.
+#       ★ 자기포함 총계를 고정 인용하지 않는다 — **이 블록 자신이 그 SHA 를 인용하므로 열거가
+#         자기를 포함**하고, 총계는 이 문단을 고칠 때마다 변한다(실측 `a201e7dd0` 5 →
+#         `b303a3793` 7). 정본은 수치가 아니라 **재현 규칙**이고, 규칙이 뽑는 불변량은
+#         **열거 줄을 뺀 실 인용 site = 5건**이다 (위 두 커밋과 현행에서 모두 5):
+#           git grep -nE 'a3d7c56b|8f317f7c' -- .   # 전 매치(= 자기포함 총계, 가변)
+#           그중 본 파일 [A-frozen] 블록 줄을 뺀 나머지 = 실 인용 site (불변 5건)
+#             본 파일 「정직 상한」 2줄 + 본 파일 [B 계열] 코퍼스 HEAD 인용 1줄
+#             + scripts/check-story-read-surface.sh:12  (「firsthand 2026-08-16」 주석)
+#             + scripts/lib/check_story_read_surface.py:1379  (「실측 **665**」 주석 — 정본
+#               앵커는 **문면**이고 줄번호는 파생이다. 이 인용은 이미 두 번 밀렸다(:1218→:1357)
+#               ⇒ 줄번호를 쓰려면 **커밋 직전** 아래로 재산출할 것:
+#                 grep -nF '실측 **665**' scripts/lib/check_story_read_surface.py)
+#           (본 파일 3건은 줄번호가 이 블록 편집으로 밀리므로 **절 이름으로** 지시한다.)
+#           ★ 그 면제를 **본 파일에만** 준 것이 잘못이었다 — 기전(줄이 밀린다)은 맞게 봤는데
+#             **정의역을 본 파일로 좁혔다**. 엔진 파일도 자란다: 위 `.py` 인용은 `:1218`(원문)
+#             → R5 가 `:1357` 로 고쳤다. 고정 델타(종전 "+139")를 여기 적지 않는다 — 적는 순간
+#             다음 편집에서 거짓이 되며, 그것이 이 항목이 stale 된 기전 자체다. (R6 실측:
+#             엔진이 1,659 B 자랐음에도 이 앵커는 안 밀렸다 — **드리프트는 예측 대상이 아니라
+#             측정 대상**이라는 뜻이다.) 즉 이 블록은 "정본은 수치가 아니라 **재현
+#             규칙**" 이라 선언해 놓고 **외부 파일 2건은 맨 줄번호로** 앵커했다 — 자기 교훈의
+#             **절반만** 적용. 밀린 `:1218` 슬롯엔 지금 argparse 코드가 들어앉아 **stale 이
+#             그럴듯해 보인다**(`:408`→`strip_stub` 과 동형). ⇒ 외부 파일도 맨 줄번호 단독
+#             금지, **문면 앵커 병기**. 파일별 재계수:
+#               grep -nE 'a3d7c56b|8f317f7c' scripts/lib/check_story_read_surface.py
+#           ★ 교정 대상은 **포인터(줄번호)뿐**이다 — 값(`a3d7c56b`·`8f317f7c`·`7d075514`·
+#             `c9f8670f`·`676d9605`)은 동결 기록이라 **bump 금지**(위 본문과 동일 사유).
+#         (셀 때마다 "열거하는 줄" 을 정의역에 넣을지 **먼저 선언**할 것.)
+#         ※ 종전 이 자리의 "실 매치 6" 은 어느 커밋에서도 재현되지 않는다(5 / 7). 그리고
+#           그것이 반증하려던 "5곳" 은 **열거 줄 제외 정의역에서는 옳았다** — 정의역을 밝히지
+#           않은 채 총계와 비교한 것이 오류다. 수치보다 **정의역 선언이 먼저**다.
+#
+#   [B 계열] pin 값이 가리키는 곳 = **internal-docs** 커밋 `a1888a93` / 놓인 곳 = 양 repo
+#     B-1   wrapper        scripts/lib/check_story_read_surface.py:62,66   도달성 ✗ (브랜치 전용)
+#     B-1'  internal-docs  같은 파일·같은 줄의 **byte-identical 실행 사본**  도달성 ✗ (동상)
+#     ⇒ 새 값 = **internal-docs #3029** squash-merge 커밋 SHA 의 **앞 8자**
+#        `gh pr view 3029 --repo mclayer/codeforge-internal-docs --json mergeCommit`
+#     ⇒ 미이행(둘 다 그대로 둠): **게이트 rc 는 바뀌지 않는다.** 엔진은 이 SHA 를 fetch 하지
+#        않고(주석 문면일 뿐) 코퍼스는 `--after-ref`(기본 HEAD)로만 읽는다
+#        [실측: `git_archive_text(repo_root, after_ref, path)` — baseline_tree_sha 는 출력 라벨
+#         전용. 코퍼스 HEAD `8f317f7ce` ≠ baseline `7d075514` 인 채 정상 실행됨].
+#        ⇒ "404 → rc=1 fail-closed 로 전 PR 차단" 은 **B 계열에 한해 성립하지 않는다**(A-1 은
+#          정반대로 성립한다). B 계열 실 손상은 차단이 아니라 인용 근거의 영구 소실
+#          — **dangling provenance(검증 불가)**. 과장 금지(ADR-119).
+#     ⇒ ★ 단 **한쪽만 고치면 rc=1** 이다: B-1 은 parity 3 target 안에 있으므로 wrapper 만
+#          bump 하고 그 커밋으로 pin 을 올리면 ②의 등식이 깨진다. B 계열은 양 repo 동시 편집.
+#
+#   [C 계열] main 조상이라 **무조치** (도달성 ✓ — 브랜치 삭제와 무관)
+#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1389   7d075514
+#          (`:62`·`:69` 는 실측 정확 — 파일 상단이라 밀리지 않는다. 셋째 인용 = 「baseline
+#           `corpus_n: 664`」 주석이고 종전 `:1228`→R5 `:1367` 로 밀렸었다([A-frozen] 의 `.py`
+#           인용과 동일 원인). 정본 앵커 = 문면, 재계수:
+#             grep -nF 'corpus_n: 664' scripts/lib/check_story_read_surface.py
+#           값 `7d075514` 는 무변경 — main 조상이라 애초 무조치 대상이다.
+#           재계수: `grep -n '7d075514' scripts/lib/check_story_read_surface.py`)
+#     C-2  wrapper + 사본  docs/story-read-surface-baseline.yaml:18,48          7d0755140c…
+#     C-3  wrapper + 사본  docs/story-read-declaration-registry.yaml:26         a0c84e66d2… (wrapper #2992)
+#     C-4  wrapper 단독    templates/story-page-structure.md:784                7d075514
+#     ※ 정의역 밖 1건 정직 고지: `templates/story-page-structure.md:248` 의 `abcd92bf` 는
+#       ADR-014 인용으로 본 PR 쌍이 도입한 pin 이 아니다(도달성 ✓ 확인, 무조치).
+#
+#  ④ 실행 사본 재착지 — parity 3 target 을 wrapper SSOT 로 **byte-identical** 재동기화한다:
+#       scripts/lib/check_story_read_surface.py · docs/story-read-surface-baseline.yaml
+#       · docs/story-read-declaration-registry.yaml
+#     (구현리뷰 라운드 2 FIX 의 실 root cause = 정확히 이 3건의 사본 미전파였다. 사본 일치는
+#      squash 스냅샷으로 자동 성립한다고 **가정하지 말고 실행으로 확인**한다 — 그 미확인 가정이
+#      라운드 2 를 만들었다.)
+#
+#  ⑤ 순서·검증  pin 은 사본보다 **뒤**에 확정한다 (pin 선행 = 반드시 stale).
+#     1) wrapper: B-1 bump 커밋 push ⇒ wrapper main 새 SHA = W2
+#        (B 계열을 손대지 않기로 하면 이 단계 생략, W2 = #2997 merge 커밋)
+#     2) internal-docs: B-1' 동일 bump ∧ A-1 = W2 ∧ A-2 = W2 를 **한 커밋**으로
+#     3) internal-docs 에서 게이트를 실제로 돌려 **rc=0 을 실측**한 뒤에만 완료 단언
+#        (rc 는 추론 대상이 아니다 — 실행 후 단언, ADR-119)
+#
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 tests/scripts/** 부재 → job skip = inert). ac-traceability-self-test.yml /
+#   cfp2701-story-form-parser-contract-test.yml 선례 답습.
+# **unmirrored** (templates/github-workflows/ 미배치): invariant-check parity 는
+#   templates→.github 단방향이라 template counterpart 부재 워크플로는 검사 대상 밖.
+#
+# git 의존: 매체 규약 테스트(`test_gate_uses_archive_not_worktree`)가 `git archive` 를
+#   subprocess 로 실행해 LF 고정(raw CR = 0)을 실측한다 ⇒ `fetch-depth: 0` 불요하나
+#   .git 디렉터리는 필요하므로 checkout 기본 동작(shallow clone + .git 보유)으로 충분하다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  story-read-surface-test:
+    name: story-read-surface-test
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest + pyyaml)
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run pytest §8.1 RTM named-test suite (AC-1..AC-21 — Hop3 실 def resolve, day-1 hard-fail)
+        run: python3 -m pytest tests/scripts/test_story_read_surface.py -q
+
+      - name: Run pytest §8.2 mutant 배터리 (-s = 5-tuple construction 레코드를 CI 로그에 인쇄)
+        run: python3 -m pytest tests/scripts/test_story_read_surface_mutants.py -q -s

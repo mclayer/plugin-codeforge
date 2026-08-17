@@ -83,6 +83,7 @@ Orchestrator 는 해당 레인 진입 직전 아래 스킬을 호출한다. 상�
 - Change Plan / 도메인 지식 / 회고 = `docs/{change-plans,domain-knowledge,retros}/` (owner 에이전트 직접 write).
 - 문서 종류별 위치 SSOT = [docs/doc-locations.yaml](docs/doc-locations.yaml).
 - dogfood 산출물(spec/plan/story 등) = `mclayer/codeforge-internal-docs` repo.
+- Story 성장축(append-heavy §9·§10)은 자식 파일 `<KEY>-S<N>.md` 로 **순수 이동**(앵커 쌍 + non-empty stub 존치, 정보 손실 0) — 목적함수 = lane 진입당 실읽기 바이트, SSOT = [ADR-180](archive/adr/ADR-180-story-growth-axis-externalization.md).
 
 ## 필수 의존성 (세션 개시 확인)
 - Orchestrator 모델 = `fable`(또는 `opus`). **Sonnet/Haiku 세션이면 중단** 후 재시작 — fable 은 valid Orchestrator 세션 모델(self-halt 대상 아님, ADR-141 Amendment 4). **이 '중단' 규범은 Orchestrator 세션 scope 한정** ('## opus default + ADR-141 carve-out (Amendment 1 haiku 7 + Amendment 2 sonnet 14 + Amendment 4 fable 10)' 의 guard 참조; carve-out non-opus(haiku 7 + sonnet 10 + fable 10) subagent 는 정상 — self-refuse 대상 아님).
