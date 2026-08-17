@@ -178,7 +178,7 @@ Orchestrator 수령 → Story §9 final verdict + GitHub comment `[설계리뷰]
 - review_verdict `pl_recommendation: FIX` → Orchestrator §10 FIX Ledger row append → 원인 lane re-spawn (DesignReview FIX = ArchitectPL / CodeReview FIX = DeveloperPL 1차 진단 + ArchitectPL 최종 판정 / SecurityTest FIX = 동일 패턴)
 - debate-protocol-v1 발동 시 transcript = Story §9 append → §10 FIX Ledger `debate_artifact_ref` carry → 원인 lane re-spawn 시 verbatim 입력 (reasoning carryover 보장)
 - max 3 도달 시 = ArchitectPL implementability reassessment (ADR-067 §결정 3) — RESET / escalate / Pause 분기
-- **lane PASS 종결 술어 (ADR-183, Phase 2 배선 예정)**: PASS = 심사 완결(coverage_required=Y 전수 심사, `examined_count == required_count` 등식 — `>=` 금지) ∧ in-domain P0/P1 잔존 0 (미측정 worker = INCONCLUSIVE ≠ 잔존 0, ADR-139 INV-L2) — 신규 P2 는 PASS 와 동시에 follow-up 착지(3문 게이트 + disposition). out finding = pl_recommendation 기여 0, findings[] 구조화 잔존. 닫힌 축 재개방(병리 — CFP-2878 §5 Q1 승계 + anchor_recurrence 4-lane 확대) = FIX 라운드 미생성, carrier 분리/escalation 라우팅 (Epic #3010 child 2 정지 장치의 입력 인터페이스 — 카운터·trigger 술어 무접촉)
+- **lane PASS 종결 술어 (ADR-183, Phase 2 배선 예정)**: PASS = 심사 완결(coverage_required=Y 전수 심사, `examined_count == required_count` 등식 — `>=` 금지) ∧ in-domain P0/P1 잔존 0 (미측정 worker = INCONCLUSIVE ≠ 잔존 0, ADR-139 INV-L2) — 신규 P2 는 PASS 와 동시에 follow-up 착지(3문 게이트 + disposition). out finding = pl_recommendation 기여 0, findings[] 구조화 잔존. 닫힌 축 재개방(병리 — CFP-2878 §5 Q1 승계 + anchor_recurrence 재사용, **규범 scope = 4 lane 전건 / day-1 기계 판정 도달 = 설계리뷰 1 lane, 잔여 3 lane = ★ 선언된 결손** — 입력면이 `closed_axes[]` 이력에 의존, ADR-183 §결정 5 면별 표 SSOT) = FIX 라운드 미생성, carrier 분리/escalation 라우팅 (Epic #3010 child 2 정지 장치의 입력 인터페이스 — 카운터·trigger 술어 무접촉)
 
 **artifact propagation**:
 

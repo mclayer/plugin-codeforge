@@ -104,7 +104,24 @@ lane PASS = 다음 동시 충족의 명시 판정 (신규 §3.4 로 착지 — �
 ### 결정 5 — 라운드 N+1 정상/병리 판별 (승계 + 정의역 확대, 재발명 금지)
 
 - **판별 기준 = CFP-2878 §5 Q1 verbatim 인용 승계** (회고 2026-08-10 §13.1-15): "라운드 N+1 의 결함이 ⑴ N 이 연 seam 의 마감 누락이거나 ⑵ 새 축이면 계속한다. ⑶ N 이 닫았다고 선언한 축의 재개방이면 병리이며 carrier 분리한다." 재작성 금지 — 인용.
-- **검출 기계 술어 = anchor_recurrence 정의역 확대**: review-pl-base §3.2(grep count ≥ 2 → escalation, 현행 DesignReview 단독)를 4 lane 으로 확대한다. 신규 판별 체계 발명 0. §3.2 는 §9 를 읽으므로 결정 1 의 "심사 대상 제외 ≠ 입력 제외"가 이 술어의 생존 전제다.
+- **검출 기계 술어 = anchor_recurrence 재사용 (규범 scope = 4 lane 전건 / day-1 기계 판정 도달 = 설계리뷰 1 lane — 결손 선언 동반)**: review-pl-base §3.2(grep count ≥ 2 → escalation, 현행 DesignReview 단독)의 **규범 scope 를 4 lane 전건으로 정한다**. 신규 판별 체계 발명 0 (기존 anchor_id 식별 체계·기존 술어 재사용). §3.2 는 §9 를 읽으므로 결정 1 의 "심사 대상 제외 ≠ 입력 제외"가 이 술어의 생존 전제다.
+
+**★ 규범 scope ⊋ day-1 기계 판정 도달 — `INV-D` 자기적용 (설계리뷰 v2 FIX Iter 2 / F1, P1)**
+
+현행 §3.2 의 검출 입력면은 base:287 `^### Debate transcript: <anchor_id>` heading grep 이고, 그 heading 은 **설계리뷰 lane 만 생산**한다 — base:203 "DesignReview lane 만 자동 발동" / base:205 "CodeReview / SecurityTest lane 은 deferred CFP-C". 잔여 3 lane 에 그 입력면을 그대로 얹으면 입력이 항상 공집합인 **항진 GREEN** 이 되어, ADR-181 `INV-D`("검사 정의역 ⊇ 선언 정의역. 선언 문면이 실 검사 범위보다 넓으면 위반") 위반 형상 = **본 ADR 이 고발하는 결함의 자기 재생산**이다. 그러므로 아래 면별 표로 결손을 선언한다.
+
+| lane | 검출 입력면 | day-1 기계 판정 도달 | 처분 |
+|---|---|---|---|
+| **설계리뷰** | base:287 `### Debate transcript: <anchor_id>` heading grep (§9) | ★ **예** | §3.2 현행 술어가 판정 (입력면 무변경) |
+| **요구사항리뷰** | verdict `closed_axes[]`(본 §결정 신설 emit) 의 라운드 간 재발 계수 — 기존 anchor_id 식별 체계 재사용 | **아니오** | ★ **선언된 결손** — `closed_axes` 기존 emit **0건** / verdict embed 보유 Story **11/591** → 이력 적립 전까지 입력 공집합 |
+| **구현리뷰** | 동상 (`closed_axes[]` 재발 계수) | **아니오** | ★ **선언된 결손** — 동상. 추가로 CodeReview lane 은 §9/§10 유입구가 구조적으로 부재(Story 파일 미참조 — §컨텍스트 실측) |
+| **보안테스트** | 동상 (`closed_axes[]` 재발 계수) | **아니오** | ★ **선언된 결손** — 동상 (SecurityTest lane 도 Story 파일 미참조) |
+
+- **★ 왜 규범을 좁히지 않는가 (ADR-181 §결정 5 자기적용 형판 답습)**: 규범 scope 를 설계리뷰 1 lane 으로 좁히면 나머지 3 lane 에서 **닫힌 축 재개방이 적법**해진다 (ADR-181 "규범을 좁히면 계약·skill 에서 유령 선언이 적법해진다" 와 동형 논리). 따라서 **처분 = 봉인이 아니라 선언**이다 — 규범 scope 는 4 lane 그대로이고, **기계 판정 면만 1 lane** 이다.
+- **★ over-claim 차단 1문**: *"anchor_recurrence 는 4 lane 에서 기계 검출된다"* 는 문장은 **설계리뷰 lane 에 한정해서만** 참이다 — 지우고 인용하면 over-claim 이다. 잔여 3 lane 은 Phase 2 `closed_axes[]` emit 배선 **이후 라운드 이력이 적립되어야** non-vacuous 해진다 (ADR-171 warning-first + ADR-139 INV-L2 "미측정 = INCONCLUSIVE ≠ 잔존 0" 정합 — day-1 차단력 0 은 선언이다).
+- **★ 결손 carrier + 만기**: 잔여 3 lane 결손의 **carrier = 본 Story CFP-3011 Phase 2** (`closed_axes[]` emit 배선 — Change Plan §5 델타 #2 계약 + #10 인스턴스면 검사) / **만기 = 2026-09-15** (§결정 10 이 상속하는 ADR-181 §결정 5 ③ carrier·만기 병기 형식을 자기 결손에 적용).
+- **census 산출 명령 (기준 SHA = internal-docs `2e9e514d`, 동일 명령 2회 결정론 — 수치 리터럴 단독 금지)**: `grep -rl '^### Debate transcript:' wrapper/stories/ | wc -l` → **10**(파일) / `grep -rn '^### Debate transcript:' wrapper/stories/ | wc -l` → **11**(heading) / `ls wrapper/stories/*.md | wc -l` → **591** / `grep -rn 'closed_axes' wrapper/stories/ | wc -l` → **0** / `grep -rl 'contract: review-verdict-v4' wrapper/stories/ | wc -l` → **11**. 표본 귀속 확인 = heading 보유 3 Story(CFP-442/688/2723) 전건 설계 lane debate 문맥.
+- **base:203 / base:205 동반 개정 (Phase 2 델타 — 두 축 정밀 분리)**: base:203 "DesignReview lane 만 자동 발동" = **debate 자동 dispatch** 축이므로 **유지**한다 (Story §5.7 Non-goal ④ "리뷰 실행 채널 구조(#2948)" 무침범). base:205 열거만 개정 — §3.2 **재발 검사(pre-check)** 는 4 lane 적용 / §3.0·§3.0.5·§3.1·§3.3(debate dispatch·transcript 영속화)은 DesignReview 한정 + CodeReview·SecurityTest deferred CFP-C 유지 + **RequirementsReview lane 도 열거에 명시**(현행 :205 열거에 누락). ★ **"anchor_recurrence pre-check 규범 확장" ≠ "debate 자동 발동 확대"** — 두 축을 한 문면에 섞으면 Non-goal ④ 를 침범하고, 섞지 않으면 최소 델타로 닫힌다.
 - **닫은 축 기록 표면 (판별의 실행 전제)**: 라운드 종결 시 그 라운드가 닫았다고 선언한 축을 verdict `closed_axes[]`(anchor_id 배열 — 기존 anchor_id 식별 체계 재사용, 신규 발명 0)로 emit 하고 §9 embed 로 영속한다. 미기록 = 판별 불가가 아니라 기록 의무 위반.
 - **병리 판정 이벤트 = Epic child 2 정지 장치의 입력 인터페이스**: 병리 판정(닫힌 축 재개방)은 FIX 라운드를 생성하지 않고(§10 Iter 행 append 0) carrier 분리 또는 escalation 경로로 처리한다. 본 ADR 은 이 **이벤트의 발생 계약까지만** 정의한다 — 그것을 소비하는 카운터·trigger 술어·정지 장치는 child 2 소관 (ADR-067 §결정 1~4 무접촉). 부수 경고 전달 의무: 종결 기준이 3/3 도달 빈도를 낮춰 무력 게이트를 더 조용하게 만들 수 있음 — child 2 착수 packet 에 명시 전달.
 
