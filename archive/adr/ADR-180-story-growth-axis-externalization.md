@@ -157,15 +157,33 @@ heading 기반 암묵 경계("다음 heading 까지")를 금지한다.
 ```
 anchor_delta(PR) = anchors(before) Δ anchors(after)        # cfp-split 마커 대칭차
 
+lines(t)       = content_canon(t) 를 줄 분해한 뒤 **공백만인 줄을 제외**한 열
+reasm(§n, ref) = §n 에 앵커가 있으면 strip_stub(§n) ∪ children[ref][n], 없으면 §n
+                 ★ children 은 **각 ref 에서** 해결한다 — before 는 before-ref, after 는 after-ref
+
 INV-S1  발화 ⟺ anchor_delta ≠ ∅                            # 분할 / 역분할 / 앵커 재배치 커밋
         판정  for each section n ∈ sections(anchor_delta):
-                 digest(before.§n) == digest(strip_stub(after.§n) ∪ children[n])
+                 L = multiset(lines(reasm(before.§n, before-ref)))
+                 R = multiset(lines(reasm(after.§n,  after-ref)))
+                 leg-A 무손실  RED    ⟺ (L − R) ≠ ∅    # fail-closed (rc=1, LOSS_AXIS)
+                 leg-B 순수성  SIGNAL ⟺ (R − L) ≠ ∅    # 비차단 — 분할 커밋에 신규 저작 동반
+                 leg-C 순서    SIGNAL ⟺ L 의 줄열이 R 의 줄열의 부분수열이 아님   # 비차단
+                 digest(L 원문) == digest(R 원문) 이면 전 leg PASS (fast path)
+                 leg-A RED 는 **소실 줄 개수 + 최초 소실 줄**을 값으로 방출한다 (개수만 방출 금지)
 
 INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건 없음 (R2 P0-A 봉합)
         판정  RED ⟺ ∃ i≠j :  Δ§i ≤ −θ_move  ∧  Δ§j ≥ +θ_move
               (θ_move = 4,096 B — Phase 2 에서 코퍼스 분포로 재정)
               reason_code ∈ 폐쇄 enum 선언 시 RED → **신호**로 강등 (§결정 7 비차단 축)
 ```
+
+> **판별 술어의 조작적 정의 (설계리뷰 R2 P1-5 예측의 실이행 — FIX Iter 14)**: 종전 판정 `digest(before.§n) == digest(재조립 after.§n)` 은 **무스코프 전체 동일성**이라, 같은 커밋에 섞인 정상 저작을 곧바로 정보 손실로 계상했다. **squash-merge 에서 분할과 이후 §n 성장은 항상 한 커밋**이므로 이 형상은 예외가 아니라 Story 표준 수명주기이고, 따라서 분할을 도입한 Story 는 전부 born-broken 이었다 [firsthand 실측 — 코퍼스 internal-docs `abc3bda8`→`33efe077` / 엔진 wrapper `4dfb11950` / 매체 `git archive` LF / 정의역 = Story 파일 1건: §9 재조립 digest before `274077c7e2a6` ≠ after `fa68b8ddd68d` ⇒ **RED**, 그런데 같은 정의역에서 **소실 줄 0**]. 봉합은 **종전 명제를 버리는 것이 아니라 두 명제로 분해**하는 것이다 — `leg-A ∧ leg-B` 는 (공백 줄·줄 순서를 제외하면) 종전 digest 동일성과 같은 것을 말하며, 달라지는 것은 **차단 축에 무손실 명제만 남긴다**는 점뿐이다. 이는 §결정 7 의 효과 분리(손실 = 차단 / 그 외 = 신호)를 **이미 있는 원칙 그대로** 적용한 것이지 새 완화의 발명이 아니다.
+>
+> **기각한 두 대안과 그 반례 (실측)**: ① **prefix 술어**(`before` 가 `after` 의 바이트 prefix) — 성장이 항상 절 말미에 착지한다는 **append-only 가정**에 의존하는데 그 가정은 **어디서도 강제되지 않는다**: `scripts/lib/check_story_section_ownership.py:92` 는 §9 owner 를 4 lane 으로 열거하고 `:401-402` 는 *"Owner lane writing — Owner writes are allowed even if destructive"* 로 그대로 통과시킨다 [wrapper `4dfb11950` 직접 확인]. 실제로 parent 잔여부 성장(stub 앞 저작)에서 즉시 파손된다. ② **부분수열 술어**(순서 보존 포함) — **절-중간 분할**에서 파손된다. `reassemble` 은 자식 본문을 **항상 절 말미**에 결합하므로(`scripts/lib/check_story_read_surface.py:408-420`) stub 이 절 중간이면 재조립 순서가 저작 순서와 달라진다 — 즉 **순서는 저작자의 사실이 아니라 재조립 산물의 아티팩트**다. 따라서 부분수열은 차단 축에 쓸 수 없고 **비차단 leg-C 로 강등**해 관측만 한다. **공백 줄 제외도 같은 사유다** — `reassemble` 이 part 경계에서 말미 개행을 제거하므로 공백 줄 multiset 은 재조립 산물이다 [실측: 절-말미 pure move 합성에서 공백 포함 시 소실 1줄 오계상, 제외 시 0].
+>
+> **`children` 을 ref 별로 해결하는 이유 (FIX Iter 14 동반 봉합)**: 종전 엔진은 before/after **양쪽 모두 after-ref 자식**으로 재조립했다. 그러면 이미 분할된 §n 에 대해 앵커가 추가·변경돼 발화하더라도, 자식 파일 **안에서 일어난 손실이 양변에 똑같이 반영**돼 상쇄된다 [실측: 자식 3줄 → 1줄(2줄 소실) 형상이 종전 경로에서 **digest 동일 ⇒ PASS**, before-ref 자식으로 해결 시 **leg-A RED**]. `L` 이 "before 의 실제 내용"을 뜻하지 않으면 leg-A 는 정확히 분할-정착 이후 정상 상태에서 공허해진다 — 본 FIX 가 고치는 born-broken 과 **같은 class** 이므로 함께 봉합한다.
+>
+> **정직한 상한 — 이 술어가 못 가르는 것**: ① **§n 내부 재배열**(내용 손실 0) 은 leg-A PASS 이며 leg-C 가 **비차단 신호로 관측만** 한다 ② **공백 줄 손실**은 정의역에서 제외돼 미검사다(정보 손실은 아니나 명시적 비대상) ③ **고다중도 boilerplate 줄** — 동일 문자열이 §n 안에 k 회 출현하면 그 중 1건의 변형은 **총 count 가 감소할 때만** 검출된다 [실측: 표 구분선 `|---|---|` 이 before 12회 / after 14회라 주입 3건 중 1건이 흡수돼 소실 계상 2/3]. 내용 담지 줄은 사실상 유일하므로 실효 범위는 구조 boilerplate 로 한정된다 ④ **`anchor_delta = ∅` 인 커밋의 §n 손실** — INV-S1 이 애초에 미발화다. 분할 정착 이후 자식 파일 내용이 삭제돼도 INV-S1 은 보지 않으며, 일반 삭제 축을 지는 `check_story_section_ownership` 은 owner lane 의 파괴적 write 를 허용하므로 **커버리지 0 구간이 실재**한다. 이는 본 FIX 의 회귀가 아니라 INV-S1 의 원래 정의역 경계(= 분할 시점 무손실)이며, 새 완화를 발명하지 않고 상한으로 등재한다.
 
 > **봉합 (설계리뷰 R2 P0-A) — `∧ |Δ bytes(parent)| ≤ θ_total` conjunct 를 제거한다.** 종전 술어는 `anchor_delta = ∅` 반쪽 **안에서 다시** 총량으로 좁혀, **E-4 회피 비용이 정확히 65 바이트**가 되는 사각을 만들었다(경계 ±1 반전 실증: append 64 B → RED / **65 B → NOT_FIRED**). 정상 라운드 append 가 +19,167 B 이므로 **사각은 예외가 아니라 기본 경로**였다. θ_total 게이팅은 born-broken 회피에 **불필요**하다 — 순수 append 는 감소 섹션이 없어 `∃i: Δ§i ≤ −θ_move` 가 **정의상 거짓**이라 판정식만으로 이미 GREEN 이고, 게이팅은 검출력만 파괴했다. `θ_total` 상수는 본 결정에서 소멸한다.
 >
