@@ -408,7 +408,10 @@ QUANT_DECLARED = {"CORPUS": 22, "SELF": 30, "BASE": 18, "AUTHOR": 10, "LEGC": 24
 #       ※ 갱신 원자성: 본 frozenset 과 `run_battery` 등재는 **같은 커밋**이어야 한다
 #         (엄격 집합 동등이라 한쪽만 바뀌면 즉시 RED — 그것이 의도다).
 #         FIX Iter 14 에서 CP §8.2 신설 6종(INV-S1 3-leg 분해 축)을 추가해 35 → 41.
-#         이어서 미닫힌 fence 축(INV-ANCHOR) 양성 3종을 추가해 **41 → 44**.
+#         이어서 미닫힌 fence 축(INV-ANCHOR) 양성 3종을 추가해 41 → 44.
+#         이어서 §8.3 행 12(분할 정착 후 INV-S2) 2종을 추가해 **44 → 46**.
+#       ※ 계수 주의: `run_battery` 는 47 엔트리를 내지만 `_tree` 는 mutant 가 아니라
+#         **메타 sentinel** 이라 로스터 대조에서 제외한다 — 구별 없이 세면 1 만큼 오계수된다.
 DECLARED_MUTANT_IDS = frozenset({
     "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
     "M-ANCHOR-NOSECTION", "M-ANCHOR-UNPAIRED",
@@ -424,6 +427,8 @@ DECLARED_MUTANT_IDS = frozenset({
     "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL",
     # --- 신설: 미닫힌 fence 축 (INV-ANCHOR) — 양성 3 (음성 2 = M-E3 + 무주입 split_ctx) ---
     "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT", "M-FENCE-UNCLOSED-OUTDOMAIN",
+    # --- 신설: §8.3 행 12 분할 정착 후 INV-S2 (양성 arm 은 기존 M-E4 가 겸한다) ---
+    "M-SETTLED-MOVE", "M-SETTLED-GROW-CTL",
 })
 
 DEFAULT_CEILING = 400000
@@ -754,6 +759,27 @@ def run_inv_s2(engine, ctx, theta_move: int = 4096, reason_code=None):
     return engine.check_inv_s2(ctx["story_before"], ctx["story_after"], theta_move, reason_code)
 
 
+S2_COUNTS_RE = re.compile(r"donors=(\d+)\s+takers=(\d+)")
+
+
+def s2_donor_taker(verdicts):
+    """INV-S2 PASS detail 에서 `(donors, takers)` 를 뽑는다. 미방출이면 None.
+
+    `donors == 0` 이 §8.3 행 12 의 **기전 이름**이다 — 정의역을 parent-only 에서 재조립본으로
+    넓히면 이 값이 바뀌어 음성 arm 이 뒤집히고, 그 실패가 **의식적 재결정을 강제**한다.
+    """
+    for v in verdicts:
+        m = S2_COUNTS_RE.search(getattr(v, "detail", "") or "")
+        if m:
+            return int(m.group(1)), int(m.group(2))
+    return None
+
+
+def s2_fired(verdicts) -> bool:
+    """INV-S2 발화 여부. **`red_count == 0` 은 발화 여부를 못 가른다** — `NOT_FIRED` 도 0 이다."""
+    return any(getattr(v, "fired", False) for v in verdicts)
+
+
 def run_inv_s6(engine, ctx):
     return engine.check_inv_s6(dict(ctx["children"]))
 
@@ -1072,12 +1098,21 @@ def ctx_stray_end_only() -> Ctx:
                "section 해결 가능한 앵커가 0")
 
 
-def _move_bytes_9_to_7(n_lines: int, *, extra_append_bytes: int = 0) -> Ctx:
-    """E-4 보상 이동 — §9 에서 n_lines 를 떼어 §7 로 옮긴다. 총량 Δ = extra_append_bytes."""
+def _s9_tail_split(n_lines: int):
+    """§9 본문을 (잔여 본문, 말미 n_lines 텍스트) 로 가른다.
+
+    미분할 계열(E-4)과 분할 **정착** 계열(§8.3 행 12)이 **같은 바이트**를 옮기도록 slicing 을
+    한 곳에 묶는다. 복제해 두면 한쪽만 바뀌어도 "동일 위협을 분할 상태 하나로만 갈라 대조한다"
+    는 행 12 의 전제가 **조용히** 깨진다 — 그 드리프트를 구조로 막는다.
+    """
     lines = SECTION_9_BODY.split("\n")
     head, moved = lines[:-(n_lines + 1)], lines[-(n_lines + 1):-1]
-    body9 = "\n".join(head) + "\n"
-    moved_text = "\n".join(moved) + "\n"
+    return "\n".join(head) + "\n", "\n".join(moved) + "\n"
+
+
+def _move_bytes_9_to_7(n_lines: int, *, extra_append_bytes: int = 0) -> Ctx:
+    """E-4 보상 이동 — §9 에서 n_lines 를 떼어 §7 로 옮긴다. 총량 Δ = extra_append_bytes."""
+    body9, moved_text = _s9_tail_split(n_lines)
     # 총량 Δ 를 정확히 extra_append_bytes 로 맞춘다 (마지막 1 B 는 개행).
     extra = ("x" * (extra_append_bytes - 1) + "\n") if extra_append_bytes else ""
     before = build_story()
@@ -1312,6 +1347,69 @@ def ctx_midsplit_ctl() -> Ctx:
                 f"나머지 {len(lines) - MIDSPLIT_CUT}줄은 stub **뒤**에 잔존시킨다 "
                 f"(절-중간 분할). 재조립본 = heading + 뒷부분 + 앞부분 이라 multiset 은 "
                 f"보존되고 줄열 순서만 뒤집힌다 ⇒ leg-A/B PASS ∧ leg-C SIGNAL"))
+
+
+SETTLED_MOVE_LINES = 160            # M-E4 와 **동일 줄수** ⇒ 두 arm 이 같은 바이트를 옮긴다
+
+
+def _settled_children(body9: str) -> dict:
+    """분할 정착 상태의 자식 2종 — §9 본문만 파라미터로 받는다."""
+    return {
+        child_path(SPLIT_ID): build_child("9", SPLIT_ID, body9),
+        child_path(SPLIT_ID_S10): build_child("10", SPLIT_ID_S10, SECTION_10_BODY),
+    }
+
+
+def _settled_ctx(after_parent: str, kids_after: dict, construction: str) -> Ctx:
+    """분할이 **이미 정착**한 상태를 before 로 둔다 — before 에도 앵커가 있어야 한다.
+
+    `split_ctx()` 는 분할 **커밋**(before 앵커 0쌍)이라 `anchor_delta ≠ ∅` 이고 INV-S2 가
+    early return 한다. 본 헬퍼는 before·after **양쪽**에 같은 앵커를 두어 `anchor_delta = ∅`
+    을 만들고, 그래야 INV-S2 가 **발화한** 뒤의 거동을 볼 수 있다. 종전 로스터에
+    「`anchors(before) > 0` ∧ INV-S2 발화」 교차가 **공집합**이었던 것이 바로 이 형상의
+    부재 때문이다 (ADR-180 R6 / CP §8.12 A-15).
+    """
+    return Ctx(build_story(split_9=True, split_10=True), after_parent, build_cp(),
+               kids_after, build_baseline(), construction,
+               None, _settled_children(SECTION_9_BODY))
+
+
+def ctx_settled_move() -> Ctx:
+    """M-SETTLED-MOVE (§8.3 행 12 **음성 arm**) — 분할 정착 후 자식 → parent 보상 이동.
+
+    donor 절(§9)이 **자식에 거주**하므로 parent 의 §9 는 stub 뿐이고 `Δ§9 = 0` 이다. 자식
+    안에서 얼마가 빠져나가든 감소 섹션으로 계상되지 않아, 페어 조건은 taker 만 남고
+    성립하지 않는다 ⇒ **FIRED ∧ PASS ∧ `donors == 0`**. 엔진이 taker 를 세고 donor 를 0 으로
+    **자기 문면에 보고**한다는 사실이 기전을 이름으로 고정한다.
+
+    위협의 실체는 M-E4 와 **동일**하다(재조립 총량 Δ = 0 인 순수 이동, 같은 바이트).
+    갈리는 것은 분할 정착 여부 하나뿐이고 그것만으로 RED → PASS 가 된다.
+    """
+    body9, moved_text = _s9_tail_split(SETTLED_MOVE_LINES)
+    return _settled_ctx(
+        build_story(split_9=True, split_10=True, section_7_extra=moved_text),
+        _settled_children(body9),
+        f"§9·§10 분할이 **이미 정착**한 상태(before 앵커 2쌍)에서 §9 **자식 본문** 말미 "
+        f"{SETTLED_MOVE_LINES}줄({len(moved_text.encode('utf-8'))} B)을 parent §7 로 이동 "
+        f"— 재조립 총량 Δ = 0(순수 이동, M-E4 와 같은 바이트). parent 만 보면 §7 만 증가하고 "
+        f"§9 는 stub 이라 Δ§9 = 0 ⇒ **donor 소멸**")
+
+
+def ctx_settled_grow_ctl() -> Ctx:
+    """M-SETTLED-GROW-CTL (§8.3 행 12 **대조군 arm**) — 분할 정착 후 순수 성장. false RED 0.
+
+    자식 **무변경** ∧ parent §7 append ⇒ 재조립 총량이 실제로 증가한다(이동 0). 즉
+    `ctx_settled_move` 와 **정반대 위협**인데도 엔진 판정이 같다 — 그 동일성이 본 셀의
+    사각을 가장 날카롭게 진술한다. 정의역을 재조립본으로 넓히면 음성 arm 만 뒤집혀
+    두 arm 이 갈라지고, 그때 **의식적 재결정이 강제**된다.
+    """
+    growth = _filler("§7 정상 저작", SETTLED_MOVE_LINES)
+    return _settled_ctx(
+        build_story(split_9=True, split_10=True, section_7_extra=growth),
+        _settled_children(SECTION_9_BODY),
+        f"§9·§10 분할 정착 상태에서 자식은 **무변경**으로 두고 parent §7 에 신규 filler "
+        f"{SETTLED_MOVE_LINES}줄({len(growth.encode('utf-8'))} B)을 append — "
+        f"재조립 총량 Δ = +{len(growth.encode('utf-8'))} B(순수 성장, 이동 0)")
 
 
 def ctx_resplit_child_loss(n_lost: int = 2):
@@ -1796,6 +1894,22 @@ def run_battery(engine) -> dict:
         free_ctx["construction"] + " + `reason_code` 를 폐쇄 enum 밖 자유서술로 선언",
         synthetic_sha(free_ctx["story_after"]), "INV-S2",
         note="폐쇄 enum(SECTION_REORG / AUTHORED_CONSOLIDATION) 선언 시에만 SIGNAL 강등")
+
+    # §8.3 행 12 — 분할 **정착** 후 INV-S2 의 거동 (설계리뷰 R6 신설 셀 / CP §8.12 A-15).
+    #   양성 arm 은 위의 **M-E4 가 겸한다** — 같은 배터리 실행에서 검사 liveness 를 실증한다.
+    #   ★ 정직 고지: 아래 두 arm 의 `injected_red_count` 는 0 이고, INV-S2 를 분할 파일에서
+    #     통째로 끄는 변형(`anchor_delta` → `has_split_markers(after)`)에서도 **여전히 0** 이다.
+    #     즉 **이 배터리 레코드만으로는 그 변형을 잡지 못한다.** 잡는 것은
+    #     `test_boundary_row12_*` 의 **`fired is True` 명시 assert** 다 — 등재의 목적은 검출이
+    #     아니라 ③ 로스터 축(등록 줄 삭제 = 조용한 축소) 봉쇄와 거동 고정이다.
+    for mid, ctx_obj in (("M-SETTLED-MOVE", ctx_settled_move()),
+                         ("M-SETTLED-GROW-CTL", ctx_settled_grow_ctl())):
+        v = run_inv_s2(engine, ctx_obj)
+        add(mid, "INV-S2", s2_ctl, v, ctx_obj["construction"],
+            synthetic_sha(ctx_obj["story_after"]), "INV-S2 분할 정착(parent-only 정의역)",
+            expect_red=False,
+            note=f"fired={s2_fired(v)} / (donors, takers)={s2_donor_taker(v)} "
+                 "(발화 후 통과 — 미발화를 통과로 계상 금지. donors=0 이 기전의 이름)")
 
     # M-MARGIN — positive control 페어링 (짝의 RED 없으면 판정 불가)
     m_ctx = ctx_margin()

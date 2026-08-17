@@ -1009,6 +1009,114 @@ def test_boundary_row11_mixed_edit_is_signal_not_block():
     )
 
 
+def _reassembled_bytes(eng, ctx, ref: str) -> int:
+    """`ref` ∈ {before, after} 의 **재조립 총량**(parent ∪ children) 바이트.
+
+    INV-S2 가 보지 **않는** 축이다 — 행 12 의 두 arm 이 서로 다른 위협을 실제로 담고 있음을
+    이 값으로만 증명할 수 있다. 이것이 없으면 두 fixture 를 같은 것으로 만들어도 테스트가
+    통과해버린다(내 하네스 자신의 born-broken 구멍).
+    """
+    if ref == "before":
+        kids = FX.children_before_by_section(eng, ctx) or FX.children_by_section(eng, ctx)
+        return len(eng.reassemble_document(ctx["story_before"], kids).encode("utf-8"))
+    return len(eng.reassemble_document(
+        ctx["story_after"], FX.children_by_section(eng, ctx)).encode("utf-8"))
+
+
+def test_boundary_row12_settled_split_donor_is_invisible_yet_fired():
+    """§8.3 행 12 — 분할 **정착** 후 INV-S2 는 **발화하되** 자식 쪽 donor 를 못 본다.
+
+    3-arm 을 **한 실행**에 둔다. 단독 arm 은 배선을 닫지 못한다:
+      ⓐ 양성(미분할 보상 이동 → RED)이 없으면 ⓑⓒ 의 침묵은 「사각이라 조용한 것」과
+        「검사가 죽어서 조용한 것」이 구별되지 않는다. 그래서 같은 실행에 둔다.
+      ⓑ 음성(분할 정착 보상 이동)은 `donors == 0` 으로 **기전을 이름으로 고정**한다.
+      ⓒ 대조군(분할 정착 순수 성장)은 false RED 0 을 고정한다.
+
+    ★ born-broken 함정 — 판정을 `red_count == 0`(GREEN)으로 적으면 **태어날 때부터 무력**하다.
+      `NOT_FIRED` 도 `red_count = 0` 이므로, INV-S2 를 분할 파일에서 통째로 끄는 변형(발화
+      가드를 `anchor_delta` → `has_split_markers(after_text)` 로 바꾸는, 「분할 파일은 INV-S1
+      소관」이라는 흔한 오해의 코드화)에서 pristine 과 변형이 **똑같이 0** 을 낸다 [실행 확인
+      — 그 변형에 대해 기존 mutant 4-field 전건 불변인 반면 ⓑⓒ 만 `fired` True → False 로
+      반전]. 그래서 **`fired is True` 를 명시 assert** 한다. 행 6 이 *"미발화를 통과로 계상
+      금지"* 로 세운 규율의 동일 적용이며 새 규칙이 아니다.
+
+    종전 로스터에는 「`anchors(before) > 0` ∧ INV-S2 발화」 교차가 **공집합**이어서 이 셀이
+    한 번도 실행된 적이 없었다 — 아래 (0) 이 그 교차를 채운다. 엔진은 **무변경**이다.
+    """
+    eng = engine()
+    pos = FX.ctx_e4_compensating_move()          # ⓐ 미분할 보상 이동 (= 기존 M-E4 재사용)
+    neg = FX.ctx_settled_move()                  # ⓑ 분할 정착 보상 이동
+    ctl = FX.ctx_settled_grow_ctl()              # ⓒ 분할 정착 순수 성장
+
+    v_pos, v_neg, v_ctl = (FX.run_inv_s2(eng, c) for c in (pos, neg, ctl))
+
+    # (0) 전제 — ⓑⓒ 는 **분할 정착** 상태다(before 에도 앵커) ∧ `anchor_delta = ∅`.
+    #     이 둘이 동시에 참이어야 INV-S2 가 발화한 뒤의 거동을 볼 수 있고, 종전 로스터가
+    #     비워 두었던 바로 그 교차다. ⓐ 는 대조를 **분할 상태 하나로만** 가르기 위해 앵커 0.
+    assert len(eng.parse_anchors(pos["story_before"])) == 0, "ⓐ 는 미분할이어야 한다"
+    for label, ctx in (("ⓑ", neg), ("ⓒ", ctl)):
+        n_before = len(eng.parse_anchors(ctx["story_before"]))
+        assert n_before > 0, (
+            f"{label} before 에 앵커가 없다 — 분할 **커밋**이지 **정착** 상태가 아니다. "
+            f"이러면 종전처럼 교차가 다시 공집합이 된다 (실측 anchors(before)={n_before})")
+        assert not eng.anchor_delta(ctx["story_before"], ctx["story_after"]), (
+            f"{label} anchor_delta ≠ ∅ — INV-S2 가 early return 해 A-7② 셀로 새어나간다")
+
+    # (1) ⓐ 양성 — 검사는 **살아 있다**. donor(§9)가 이름으로 보고된다.
+    assert FX.s2_fired(v_pos) is True, "ⓐ INV-S2 미발화 — 양성 arm 이 성립하지 않는다"
+    assert FX.red_count(v_pos) >= 1, (
+        f"ⓐ 미분할 보상 이동이 RED 가 아니다 — 검사가 죽었다면 ⓑⓒ 의 침묵은 무의미하다. "
+        f"{FX.status_vector(v_pos)}")
+    pos_detail = " ".join(getattr(x, "detail", "") or "" for x in v_pos)
+    assert "('9', '7')" in pos_detail, (
+        f"ⓐ 의 donor↔taker 페어가 §9→§7 로 특정되지 않았다 — {pos_detail!r}")
+
+    # (2) ⓑ 음성 — **발화한다.** 그런데 donor 가 0 이다. 이것이 사각의 실체다.
+    assert FX.s2_fired(v_neg) is True, (                  # ← 행 12 born-broken 차단 assertion
+        "ⓑ INV-S2 미발화 — `red_count == 0` 으로 적었다면 여기서 통과했을 자리다. "
+        "미발화를 통과로 계상 금지 (행 6 동일 규율)")
+    assert FX.red_count(v_neg) == 0, (
+        f"ⓑ 가 RED — 본 셀은 **의도적 미커버**로 확정된 거동이다. RED 로 바뀌었다면 "
+        f"정의역이 넓어진 것이므로 ADR-180 R6 결정의 **의식적 재결정**이 필요하다. "
+        f"{FX.status_vector(v_neg)}")
+    dt_neg = FX.s2_donor_taker(v_neg)
+    assert dt_neg is not None, f"ⓑ 가 (donors, takers) 를 방출하지 않았다 — {FX.status_vector(v_neg)}"
+    donors, takers = dt_neg
+    assert donors == 0, (                                 # ← 기전을 이름으로 고정
+        f"ⓑ donors={donors} — 0 이 아니면 parent-only 정의역이 아니다(자식 재조립 도입 등). "
+        f"정의역이 바뀌었다면 축 B-1 false-positive 교환비(미측정)와 함께 재결정하라")
+    assert takers >= 1, (
+        f"ⓑ takers={takers} — taker 마저 0 이면 이동 자체가 θ_move 미만이라 본 arm 이 "
+        f"**공허**하다(사각이 아니라 임계 미달을 재고 있다)")
+
+    # (3) ⓒ 대조군 — 분할 정착 상태의 정상 저작에 false RED 0.
+    assert FX.s2_fired(v_ctl) is True, "ⓒ INV-S2 미발화 — 미발화를 통과로 계상 금지"
+    assert FX.red_count(v_ctl) == 0, (
+        f"ⓒ 분할 정착 후 정상 성장이 false RED — {FX.status_vector(v_ctl)}")
+
+    # (4) 비공허 실증 — ⓑⓒ 가 **서로 다른 위협**을 실제로 담고 있는가.
+    #     엔진이 보지 않는 축(재조립 총량)으로만 판별된다. 이 assert 가 없으면 두 fixture 를
+    #     같은 것으로 만들어도 (2)(3) 이 통과해 본 테스트가 통째로 공허해진다.
+    neg_delta = _reassembled_bytes(eng, neg, "after") - _reassembled_bytes(eng, neg, "before")
+    ctl_delta = _reassembled_bytes(eng, ctl, "after") - _reassembled_bytes(eng, ctl, "before")
+    assert neg_delta == 0, (
+        f"ⓑ 재조립 총량 Δ = {neg_delta} — 0 이어야 **순수 이동**(= M-E4 와 동일 위협)이다. "
+        f"0 이 아니면 이동이 아니라 편집이라 사각의 실물이 아니다")
+    assert ctl_delta > 0, (
+        f"ⓒ 재조립 총량 Δ = {ctl_delta} — 양수여야 **순수 성장**이다. 0 이면 ⓑ 와 같은 "
+        f"fixture 이고 대조군이 성립하지 않는다")
+
+    # (5) 사각의 진술 — 위협이 정반대인데 엔진 판정이 **완전히 같다**.
+    #     parent-only 정의역이 두 형상을 구별하지 못한다는 사실을 값으로 고정한다.
+    fold = lambda v: (FX.s2_fired(v), FX.red_count(v), FX.s2_donor_taker(v),
+                      tuple(sorted(getattr(x, "status", "") for x in v)))
+    assert fold(v_neg) == fold(v_ctl), (
+        f"ⓑⓒ 판정이 갈렸다 — parent-only 정의역이 넓어졌다는 뜻이므로 본 셀의 "
+        f"「의도적 미커버」 결정을 재검토하라. ⓑ={fold(v_neg)} / ⓒ={fold(v_ctl)}")
+    assert fold(v_pos) != fold(v_neg), (
+        "ⓐⓑ 판정이 같다 — 분할 정착 여부가 판정을 가르지 않는다면 본 행이 재는 사각이 없다")
+
+
 # ---------------------------------------------------------------------------
 # §8.4a 봉합 후 검증 4항 — 배터리 자기적용
 # ---------------------------------------------------------------------------
@@ -1040,7 +1148,8 @@ def test_post_suture_verification_four_axes():
     #    FIX Iter 14 — 대조군 2종(M-SPLIT-GROW-CTL / M-MIDSPLIT-CTL) + M-E3(실측 재등재) 추가.
     #    M-E3 는 미닫힘 축 양성 3종의 **음성 대조군**이기도 하다 (닫힌 fence = 무해).
     must_green = ["M-EQUIV", "M-MARGIN", "M-APPEND-CTL-1000", "M-APPEND-CTL-50000",
-                  "M-BASIS-RAW", "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL", "M-E3"]
+                  "M-BASIS-RAW", "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL", "M-E3",
+                  "M-SETTLED-MOVE", "M-SETTLED-GROW-CTL"]
     regressed = [m for m in must_green if results[m]["injected_red_count"] != 0]
     assert not regressed, f"② 형제 회귀 발생(false RED): {regressed}"
 
@@ -1059,7 +1168,16 @@ def test_post_suture_verification_four_axes():
     assert fence_axis_pos <= set(must_red) and "M-E3" in must_green, (
         "미닫힌 fence 축의 양성 ∧ 음성 쌍 중 한쪽만 등재됐다 — 배선이 닫히지 않는다")
 
-    for mid in loss_axis_pos | loss_axis_ctl | fence_axis_pos | {"M-E3"}:
+    #    §8.3 행 12(분할 정착 후 INV-S2)도 같은 쌍 요건을 진다. 양성은 **신설하지 않았다**:
+    #    M-E4(미분할 보상 이동, must_red)가 그 자리를 겸한다 — 양성 1 ∧ 음성 2.
+    #    ★ 정직 고지: 이 세 레코드는 전부 `red_count` 축이라, INV-S2 를 분할 파일에서 끄는
+    #      변형을 **이 축만으로는 못 잡는다**(음성 2종이 NOT_FIRED 로 바뀌어도 0 은 0).
+    #      그 변형을 잡는 유일한 측정면은 `test_boundary_row12_*` 의 `fired is True` 다.
+    settled_axis_ctl = {"M-SETTLED-MOVE", "M-SETTLED-GROW-CTL"}
+    assert settled_axis_ctl <= set(must_green) and "M-E4" in must_red, (
+        "분할 정착 축(§8.3 행 12)의 양성 ∧ 음성 쌍 중 한쪽만 등재됐다 — 배선이 닫히지 않는다")
+
+    for mid in loss_axis_pos | loss_axis_ctl | fence_axis_pos | settled_axis_ctl | {"M-E3"}:
         assert results[mid]["control"] == "GREEN", (
             f"{mid} 대조군이 이미 RED — 등가 mutant (admission rule 위반)")
 
