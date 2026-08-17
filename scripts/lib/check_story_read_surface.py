@@ -580,8 +580,64 @@ def extract_domain(domain: dict, text: str):
 # ---------------------------------------------------------------------------
 # 불변식
 # ---------------------------------------------------------------------------
-def check_inv_s1(before_text: str, after_text: str, children: Dict[str, List[str]]) -> List[Verdict]:
-    """발화: anchor_delta != ∅.  판정: 섹션별 pure-move digest 보존.
+def s1_lines(text: str) -> List[str]:
+    """INV-S1 leg 정의역 — `content_canon(t)` 줄 분해 후 **공백만인 줄 제외**.
+
+    공백 줄을 빼는 이유는 미학이 아니라 **재조립 산물이기 때문**이다. `reassemble()` 이
+    part 경계의 말미 개행을 제거하므로(위 함수 참조) 공백 줄 multiset 은 저작자의 사실이
+    아니라 조립 아티팩트다. 포함하면 절-말미 pure move 에서 소실 1줄이 오계상된다 [설계 실측].
+    """
+    return [ln for ln in content_canon(text).split("\n") if ln.strip()]
+
+
+def _multiset_diff(left: Sequence[str], right: Sequence[str]) -> List[str]:
+    """multiset(left) − multiset(right). 원 순서를 보존해 **최초** 원소를 값으로 방출 가능케 한다.
+
+    집합이 아니라 multiset 이다 — 같은 줄이 3번 나오다 1번으로 줄면 2줄 소실로 센다.
+    (집합 차집합이면 다중도 손실이 통째로 은폐된다.)
+    """
+    remaining: Dict[str, int] = {}
+    for line in right:
+        remaining[line] = remaining.get(line, 0) + 1
+    out: List[str] = []
+    for line in left:
+        if remaining.get(line, 0) > 0:
+            remaining[line] -= 1
+        else:
+            out.append(line)
+    return out
+
+
+def _is_subsequence(small: Sequence[str], big: Sequence[str]) -> bool:
+    """small 이 big 의 부분수열인가 (연속일 필요 없음)."""
+    it = iter(big)
+    return all(any(x == y for y in it) for x in small)
+
+
+def _abbrev(line: str, limit: int = 120) -> str:
+    return line if len(line) <= limit else line[:limit] + "…"
+
+
+def check_inv_s1(before_text: str, after_text: str, children: Dict[str, List[str]],
+                 children_before: Optional[Dict[str, List[str]]] = None) -> List[Verdict]:
+    """발화: anchor_delta != ∅.  판정: 섹션별 **3-leg 분해** (FIX Iter 14 / CP §8.1).
+
+      leg-A 무손실  RED    ⟺ (L − R) ≠ ∅   — fail-closed, rc=1, LOSS_AXIS
+      leg-B 순수성  SIGNAL ⟺ (R − L) ≠ ∅   — 비차단
+      leg-C 순서    SIGNAL ⟺ L 줄열이 R 의 부분수열 아님 — 비차단
+      digest 동일 시 전 leg PASS (fast path)
+
+    종전 판정은 **무스코프 전체 digest 동일성**이라, 같은 커밋에 섞인 정상 저작을 곧바로
+    정보 손실로 계상했다. squash-merge 에서 분할+성장은 항상 한 커밋이므로 그 형상이
+    **표준 수명주기**이고, 따라서 종전 RED 는 순수 오탐이었다 [CP §8.2 실측].
+    분해는 종전 명제의 폐기가 아니라 **2분할**이다 — `leg-A ∧ leg-B` 는 (공백 줄·순서 제외 시)
+    종전 digest 동일성과 같은 것을 말하고, 달라지는 것은 **차단 축에 무손실 명제만 남긴다**는 점뿐.
+
+    ★ `children_before` — 자식은 **각 ref 에서 따로 해결**한다. 종전 엔진은 before/after 양쪽을
+      모두 after-ref 자식으로 재조립해, 자식 파일 안의 손실이 양변에 똑같이 반영돼 **상쇄**됐다
+      [실측: 자식 3줄 → 1줄(2줄 소실)이 종전 경로에서 digest 동일 ⇒ PASS]. `L` 이 "before 의
+      실제 내용"을 뜻하지 않으면 leg-A 는 **분할 정착 이후 정확히 공허**해진다.
+      None 이면 `children` 을 양변에 쓴다(호출부 미갱신 시의 종전 거동 — 단 위 공허화가 남는다).
 
     자식 미발견 = 조용한 skip 아니라 결손(RED).
     """
@@ -592,6 +648,8 @@ def check_inv_s1(before_text: str, after_text: str, children: Dict[str, List[str
     targets = sections_of(delta)
     if not targets:
         return [Verdict(name, True, "RED", "anchor_delta 에 section 해결 불가 앵커만 존재 (오형식)")]
+    kids_after = children or {}
+    kids_before = kids_after if children_before is None else (children_before or {})
     before_sections = split_sections(before_text)
     after_sections = split_sections(after_text)
     verdicts: List[Verdict] = []
@@ -603,30 +661,74 @@ def check_inv_s1(before_text: str, after_text: str, children: Dict[str, List[str
                 Verdict(name, True, "RED", "§%s 이 before/after 한쪽에 부재 (결손)" % key, domain=key)
             )
             continue
-        kids = children.get(key)
         b_has = has_split_markers(b_sec)
         a_has = has_split_markers(a_sec)
-        if (b_has or a_has) and not kids:
+        b_kids = kids_before.get(key)
+        a_kids = kids_after.get(key)
+        if (b_has and not b_kids) or (a_has and not a_kids):
+            side = "before" if (b_has and not b_kids) else "after"
             verdicts.append(
-                Verdict(name, True, "RED", "§%s split 앵커 보유 — 자식 본문 미발견 (결손)" % key, domain=key)
+                Verdict(name, True, "RED",
+                        "§%s split 앵커 보유 — %s-ref 자식 본문 미발견 (결손)" % (key, side),
+                        domain=key)
             )
             continue
-        b_norm = reassemble(b_sec, kids or []) if b_has else b_sec
-        a_norm = reassemble(a_sec, kids or []) if a_has else a_sec
+        b_norm = reassemble(b_sec, b_kids or []) if b_has else b_sec
+        a_norm = reassemble(a_sec, a_kids or []) if a_has else a_sec
         b_digest = digest(content_canon(b_norm))
         a_digest = digest(content_canon(a_norm))
         if b_digest == a_digest:
             verdicts.append(
-                Verdict(name, True, "PASS", "§%s pure-move digest 보존 (%s)" % (key, b_digest[:12]), domain=key)
+                Verdict(name, True, "PASS",
+                        "§%s pure-move digest 보존 (%s) — 전 leg PASS (fast path)"
+                        % (key, b_digest[:12]), domain=key)
+            )
+            continue
+        left = s1_lines(b_norm)
+        right = s1_lines(a_norm)
+        lost = _multiset_diff(left, right)
+        gained = _multiset_diff(right, left)
+        # leg-A — 무손실 (fail-closed). 값 방출 의무 = 소실 줄 수 + **최초** 소실 줄.
+        if lost:
+            verdicts.append(
+                Verdict(name, True, "RED",
+                        "§%s leg-A 무손실 위반 — 소실 %d줄, 최초 소실 줄: %r "
+                        "(digest before=%s after=%s, canon=%s)"
+                        % (key, len(lost), _abbrev(lost[0]), b_digest[:12], a_digest[:12],
+                           INV_S1_CANON),
+                        domain=key, leg="A")
             )
         else:
             verdicts.append(
-                Verdict(
-                    name, True, "RED",
-                    "§%s pure-move 위반 — digest before=%s after=%s (canon=%s)"
-                    % (key, b_digest[:12], a_digest[:12], INV_S1_CANON),
-                    domain=key,
-                )
+                Verdict(name, True, "PASS",
+                        "§%s leg-A 무손실 — 소실 0줄 (digest 는 달라졌으나 정보 손실 없음: "
+                        "신규 %d줄)" % (key, len(gained)), domain=key, leg="A")
+            )
+        # leg-B — 순수성 (비차단). 성장은 손실을 덮지 못하며 별도 축으로 방출된다.
+        if gained:
+            verdicts.append(
+                Verdict(name, True, "SIGNAL",
+                        "§%s leg-B 순수성 — 신규 %d줄 (분할 커밋에 저작이 섞임, 비차단). "
+                        "최초 신규 줄: %r" % (key, len(gained), _abbrev(gained[0])),
+                        domain=key, leg="B")
+            )
+        else:
+            verdicts.append(
+                Verdict(name, True, "PASS", "§%s leg-B 순수성 — 신규 0줄" % key, domain=key, leg="B")
+            )
+        # leg-C — 순서 (비차단). 순서는 저작자의 사실이 아니라 **재조립 산물의 아티팩트**다
+        #   (`reassemble` 이 자식을 항상 절 말미에 결합하므로 절-중간 분할에서 순서가 바뀐다)
+        #   ⇒ 차단 축에 쓸 수 없다. 관측만 한다.
+        if _is_subsequence(left, right):
+            verdicts.append(
+                Verdict(name, True, "PASS", "§%s leg-C 순서 — before 줄열이 after 의 부분수열" % key,
+                        domain=key, leg="C")
+            )
+        else:
+            verdicts.append(
+                Verdict(name, True, "SIGNAL",
+                        "§%s leg-C 순서 — before 줄열이 after 의 부분수열 아님 "
+                        "(재조립 산물일 수 있음, 비차단)" % key, domain=key, leg="C")
             )
     return verdicts
 
@@ -1150,6 +1252,11 @@ def run(args: argparse.Namespace) -> Tuple[int, dict]:
     reader_roster = [str(r) for r in baseline["reader_roster"]]
     cov = coverage(reader_roster, registry)
     floor = float(baseline["coverage_floor"])
+    # ★ before-ref 트리는 carrier 루프 **밖**에서 1회만 조회한다 (루프 안이면 carrier 수만큼
+    #   `git ls-tree` 를 반복한다). before-ref 부재 시 조회 자체를 하지 않는다.
+    before_tree_paths: List[str] = (
+        git_tree_paths(repo_root, args.before_ref) if args.before_ref else []
+    )
     for parent_path in sorted(baseline["carriers"]):
         after_text = git_archive_text(repo_root, after_ref, parent_path)
         opened.add(parent_path)
@@ -1164,7 +1271,15 @@ def run(args: argparse.Namespace) -> Tuple[int, dict]:
             verdicts.append(Verdict("INV-S1", True, "RED", "§%s dangling pointer: %s" % (section, ids)))
         if args.before_ref:
             before_text = git_archive_text(repo_root, args.before_ref, parent_path)
-            verdicts.extend(check_inv_s1(before_text, after_text, _children_by_section(kids)))
+            # ★ 자식은 **before-ref 에서 따로** 해결한다 (FIX Iter 14 — 선재 결함 봉합).
+            #   종전에는 after-ref 자식을 양변에 썼기 때문에, 이미 분할된 §n 의 자식 파일이
+            #   3줄 → 1줄로 줄어도 그 손실이 before/after 양변에 똑같이 반영돼 **상쇄**됐고
+            #   digest 가 동일해져 rc=0 으로 조용히 통과했다. 봉합하지 않으면 leg-A 는
+            #   분할 정착 이후 정확히 공허해진다.
+            kids_before = _children_of(repo_root, args.before_ref, parent_path, before_tree_paths)
+            verdicts.extend(check_inv_s1(before_text, after_text,
+                                         _children_by_section(kids),
+                                         children_before=_children_by_section(kids_before)))
             verdicts.extend(check_inv_s2(before_text, after_text, args.theta_move, args.reason_code))
         else:
             verdicts.append(
