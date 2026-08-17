@@ -3,7 +3,7 @@ adr_number: 183
 title: 리뷰 심사 정의역 결속 + lane PASS 종결 기준 — FIX 발생 자격 축(scrutiny domain) 신설 (⊥ ADR-181 검증 정의역 V ⊥ §10 원인 판정 축)
 status: Proposed
 is_transitional: false
-category: review-governance
+category: governance
 date: 2026-08-17
 carrier_story: CFP-3011
 related_adrs:
