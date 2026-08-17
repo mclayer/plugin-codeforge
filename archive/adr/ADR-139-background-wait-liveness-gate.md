@@ -33,6 +33,8 @@ amendments:
   - amendment_id: 3
     date: "2026-08-18"
     carrier_story: CFP-2994
+    reinterpretation: false  # ADR-167 §결정 1(b) — 순수 additive. INV-L1~L4 · §결정 1~7 · detection≠recovery · 2안 presence lint 전부 본문 문언 무변경이며, 본 Amendment 는 이 ADR 이 **다루지 않았던 객체**(수령 사실)를 처음 규정한다(신규 객체 축 첫 entry). ★ 특히 A3-3 이 성문하는 바가 정확히 「재해석 아님」이다 — 반증된 것은 §결정 7 이 **말한 적 없는** 암묵 추론이지 §결정 7 의 의미가 아니며, 그래서 문면을 *"ADR-139 가 틀린 전제를 깔았다"* 가 아니라 *"ADR-139 가 침묵한 경계선에서 오적용이 발생했다"* 로 고정했다. self-declared, 리뷰 판정 축 (parity lint 는 presence/type 만 검사).
+    direction: strengthen
     issue: https://github.com/mclayer/plugin-codeforge/issues/2994
     summary: |
       **P-1(수령 사실의 single-writer) ↔ INV-L4 정의역 분리** — 신규 객체 축의 첫 entry(약화 아님).

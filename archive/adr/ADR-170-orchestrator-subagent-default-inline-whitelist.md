@@ -18,6 +18,8 @@ amendment_log:
   - amendment: 2
     date: "2026-08-18"
     carrier_story: CFP-2994
+    reinterpretation: false  # ADR-167 §결정 1(b) — 순수 additive. §결정 1~21 본문 문언 무변경 · inline whitelist 7-entry enumeration 무변경 · writer monopoly 무변경이며, 신설분은 저작 ⊥ 전사 분류에 4번째 형태를 **추가**하는 것뿐이다(기존 3형의 의미 소급 재해석 0 — ①~③ 은 재기술이며 판정도 불변). A2-2 가 명시하듯 예외(§결정 2 entry #5) 축소를 채택하지 않은 이유가 바로 소급 위법화 회피다. self-declared, 리뷰 판정 축 (parity lint 는 presence/type 만 검사).
+    direction: strengthen
     issue: https://github.com/mclayer/plugin-codeforge/issues/2994
     summary: |
       저작 ⊥ 전사 (authority) 축 — 기록 표면의 소유자가 타 주체 몫을 자기 것으로 처리하는 **4번째 형태** 신설.
