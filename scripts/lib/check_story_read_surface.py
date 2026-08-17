@@ -202,10 +202,29 @@ def fence_mask(text: str) -> List[bool]:
         (D2) `[:3]` 절단 — 여는 run 이 4+ 여도 3자로 잘려 저장돼 **더 짧은** 닫는 펜스가
              닫았다(닫는 펜스는 여는 펜스 **이상** 길이여야 한다).
       ⇒ `fence` 에 run 을 **절단 없이 전량** 저장하고, 잔여 문면(group(2))을 info 로 본다.
-    ※ 잔여 CommonMark 이탈은 본 함수 범위 밖으로 남겨 둔다(정직 고지) — ① 들여쓰기 상한
-      미적용(스펙은 0~3칸, `^\s*` 는 무제한 허용) ② backtick 여는 펜스의 info string 안
-      backtick 금지 미적용. 재현 = `fence_unclosed_at_eof` 판정을 markdown-it `commonmark`
-      preset 판정과 대조(양극 대조군 선행 통과 필수).
+    ※ CommonMark 이탈 3종 — ①② 와 ③ 은 **성격이 정반대**다. ①② 는 고치면 스펙에 가까워지는
+      **미봉합 잔여**(본 함수 범위 밖으로 남겨 둠, 정직 고지)이고, ③ 은 고치면 게이트가
+      파괴되는 **의도적·필수 동작**(봉합 금지)이다.
+        ① 들여쓰기 상한 미적용 — 스펙은 0~3칸, `^\s*` 는 무제한 허용.
+        ② backtick 여는 펜스의 info string 안 backtick 금지 미적용.
+        ③ html_block(CommonMark 0.31.2 §4.6 HTML blocks) 미인식 — **봉합 금지**(아래 ★).
+      ①② 재현 = `fence_unclosed_at_eof` 판정을 markdown-it `commonmark` preset 판정과
+      대조(양극 대조군 선행 통과 필수).
+    ★ ③ 이 필수인 기전: 분할 앵커가 **HTML 주석**이다(형태 = `parse_anchors` docstring 의
+      리터럴). 따라서 CommonMark 정합 마스킹은 앵커 줄을 코드펜스와 똑같이 걷어내고, 그
+      결과 **앵커 체계 자체가 소멸**한다 — 게이트가 볼 앵커가 0 이 된다.
+      실측 코퍼스 = mclayer/codeforge-internal-docs `be25a720ce64b27254e01ef7b5e3f98bb1f14129`
+      의 `wrapper/stories/CFP-2986.md` (`wc -l` 1,441 줄; `cfp-split` 마커를 가진 줄은 1342·1344
+      **2줄이 전부**). 이 한 코퍼스에 **파서만 바꿔** `parse_anchors(fence_aware=True)` 가
+      돌려주는 의미론 앵커 `(kind, section, id)` 개수:
+        (A) 본 함수 `fence_mask` → **2**
+        (B) markdown-it `commonmark` preset, `fence`+`code_block` 마스킹 → **2**
+        (C) (B) + `html_block` 마스킹 → **0**
+      B→C 에서 같은 코퍼스의 마스킹(True) 줄 수는 32 → 34 로 늘고, 그 **신규 2줄이 정확히
+      위 앵커 2줄**이다 — 1342 `<!-- cfp-split:begin section=9 id=CFP-2986-S1 -->` /
+      1344 `<!-- cfp-split:end id=CFP-2986-S1 -->`. 즉 `html_block` 을 인정한 대가가 곧
+      앵커 전량 소실이다.
+      ⇒ 본 함수의 마스킹 정의역은 **코드펜스 한정**이어야 한다(html_block 확장 금지).
     """
     mask: List[bool] = []
     fence: Optional[str] = None

@@ -18,6 +18,7 @@ QADev 경계: 본 파일은 테스트만 작성. production 코드(scripts/**) R
 from __future__ import annotations
 
 import ast
+import inspect
 import re
 import tokenize
 from io import StringIO
@@ -1232,13 +1233,127 @@ def test_evidence_records_carry_construction_field():
     assert "construction:" in report
 
 
+# ---------------------------------------------------------------------------
+# 매체 규약 — fixture **전수** sweep (커버리지 ∧ 양성 ∧ 음성)
+# ---------------------------------------------------------------------------
+
+# 무인자로 부를 수 없는 fixture 의 대표 인자. 여기 없는 인자-필요 fixture 는 **조용히
+# 건너뛰지 않고** 아래 커버리지 assert 에서 RED 가 된다 (미호출을 GREEN 으로 계상 금지).
+_FIXTURE_ARGS = {
+    "build_child": [(("9", FX.SPLIT_ID, FX.SECTION_9_BODY), {})],
+    "ctx_append_ctl": [((1000,), {})],
+    "ctx_fence": [((), {"fence_aware": aware, "inject": inject})
+                  for aware in (False, True) for inject in (False, True)],
+}
+
+
+def _fixture_names():
+    """정의역 = `dir(FX)` 의 `build_`/`ctx_` 접두 callable **전건** — 동적 산출.
+
+    고정 목록을 하드코딩하지 않는다. 목록을 적어두면 그 목록이 곧 검사에서 빠지는 통로가
+    되고(이 Story 의 반복 교훈: 열거를 정본으로 두지 말고 **재현 규칙**을 정본으로),
+    fixture 가 늘 때 정의역이 따라 늘지 않는다.
+    """
+    return sorted(n for n in dir(FX)
+                  if (n.startswith("build_") or n.startswith("ctx_"))
+                  and callable(getattr(FX, n)))
+
+
+def _required_params(fn):
+    sig = inspect.signature(fn)
+    return [p for p in sig.parameters.values()
+            if p.default is p.empty
+            and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY)]
+
+
+def _iter_texts(obj, path):
+    """fixture 반환값을 재귀 순회해 (경로, 문자열) 을 방출한다.
+
+    str / dict / list / tuple 을 하강한다. `FX.Ctx` 는 `dict` 서브클래스이므로 dict 분기로
+    들어간다(전용 분기 불필요). 경로를 함께 내보내 위반 시 **어느 fixture 의 어느 키**인지
+    지목할 수 있게 한다.
+    """
+    if isinstance(obj, str):
+        yield path, obj
+    elif isinstance(obj, dict):
+        for key, val in obj.items():
+            yield from _iter_texts(val, f"{path}[{key!r}]")
+    elif isinstance(obj, (list, tuple)):
+        for idx, val in enumerate(obj):
+            yield from _iter_texts(val, f"{path}[{idx}]")
+
+
+def _cr_offenders(pairs):
+    """CR 판정 술어 — 계수는 `FX.count_cr` 재사용(중복 구현 금지).
+
+    실 정의역과 음성 대조군이 **같은 함수**를 타야 "대조군이 잡은 술어" 와 "본 판정이 쓴 술어"
+    가 같다는 것이 성립한다.
+    """
+    return [(p, FX.count_cr(t)) for p, t in pairs if FX.count_cr(t)]
+
+
+def _sweep_all_fixtures():
+    """전 fixture 를 호출해 (호출 성공 이름 집합, [(경로, 텍스트)]) 를 낸다."""
+    called, texts = set(), []
+    for name in _fixture_names():
+        fn = getattr(FX, name)
+        if _required_params(fn):
+            calls = _FIXTURE_ARGS.get(name)
+            if calls is None:
+                continue          # 미등재 = 미호출. 커버리지 assert 가 이것을 RED 로 잡는다.
+        else:
+            calls = [((), {})]
+        for idx, (args, kwargs) in enumerate(calls):
+            label = name if len(calls) == 1 else f"{name}#{idx}"
+            texts.extend(_iter_texts(fn(*args, **kwargs), label))
+        called.add(name)
+    return called, texts
+
+
 def test_fixture_media_is_lf_with_zero_raw_cr():
-    """매체 규약 — 전 fixture 는 LF 고정 (raw CR 0). Python b'\\r' 카운트로 센다."""
-    samples = {
-        "story": FX.build_story(),
-        "story_split": FX.build_story(split_9=True, split_10=True),
-        "cp": FX.build_cp(),
-        "child9": FX.build_child("9", FX.SPLIT_ID, FX.SECTION_9_BODY),
-    }
-    for name, text in samples.items():
-        assert FX.count_cr(text) == 0, f"{name} fixture raw CR {FX.count_cr(text)}건"
+    """매체 규약 — **전** fixture 가 LF 고정(raw CR 0). 정의역은 고정 표본이 아니라 동적 산출이다.
+
+    정의역 = `dir(FX)` 의 `build_`/`ctx_` 접두 callable 전건. 무인자는 그대로 호출하고,
+    인자가 필요한 것은 `_FIXTURE_ARGS` 의 대표 인자로 호출한 뒤, 반환값(str/dict/list/tuple —
+    `Ctx` 는 dict 서브클래스)을 **재귀 순회**해 모든 문자열을 `FX.count_cr` 로 센다. 기수를
+    본문에 고정하지 않는다 — 세는 **규칙**만 고정하고 값은 실행이 산출한다.
+    (종전 이 테스트는 4 표본만 보면서 이름·docstring 으로 "전 fixture" 를 주장했다.)
+
+    ★ 전수 sweep 은 **조용히 0건을 수집해도 통과**한다(hollow oracle). 그래서 3축을 함께 건다:
+      · 커버리지 — 열거된 이름이 **전건** 호출됐는가 (인자 recipe 누락분을 건너뛰면 RED)
+      · 양성(자기보호) — 호출 fixture 수·수집 텍스트 수가 비어있지 않은가 (배선 절단 시 RED)
+      · 음성(판별력) — CR 을 심은 객체에 **같은 술어**를 적용하면 검출되는가 (항진명제가 아님)
+    """
+    names = _fixture_names()
+    called, texts = _sweep_all_fixtures()
+    print(f"\n[매체 규약] fixture 열거 {len(names)}기 / 호출 {len(called)}기 / "
+          f"수집 텍스트 {len(texts)}건")
+
+    # 커버리지 — 인자 recipe 가 없어 건너뛴 fixture 가 있으면 정의역이 조용히 좁아진 것이다.
+    assert called == set(names), (                      # ← 커버리지 측정 assertion
+        f"fixture 정의역 협착 — 열거 {len(names)}기 중 미호출 "
+        f"{sorted(set(names) - called)}. 인자가 필요한 신규 fixture 는 `_FIXTURE_ARGS` 에 대표 "
+        "인자를 등재할 것 (건너뛰기는 미검사를 '위반 0' 으로 계상하는 것과 같다)."
+    )
+
+    # 양성 대조군(자기보호) — 하한이지 값 고정이 아니다. 배선이 끊겨 0건이 되면 RED.
+    assert len(called) >= 40, (                         # ← 양성 대조군 측정 assertion
+        f"호출 성공 fixture {len(called)}기 — sweep 배선이 끊겼다(빈 정의역은 무엇도 못 잡는다)")
+    assert len(texts) >= 1000, (                        # ← 양성 대조군 측정 assertion
+        f"수집 텍스트 {len(texts)}건 — 재귀 순회가 하강하지 못했다. "
+        "0건 수집도 '위반 0' 으로 통과하므로 이 하한이 없으면 검사 전체가 공허해진다.")
+
+    # 음성 대조군(판별력) — 같은 술어가 CR 을 실제로 잡는가. 중첩 안에 심어 하강까지 함께 반증.
+    poisoned = {"outer": [{"inner": "정상 줄\n"}, {"inner": "CR 섞인 줄\r\n"}]}
+    caught = _cr_offenders(_iter_texts(poisoned, "negctl"))
+    assert [n for _p, n in caught] == [1], (            # ← 음성 대조군 측정 assertion
+        f"음성 대조군 미검출 — 술어가 항진명제다(무엇을 넣어도 위반 0). 실측 {caught}")
+    assert caught[0][0] == "negctl['outer'][1]['inner']", (
+        f"검출 경로가 주입 위치를 지목하지 못한다 — 실측 {caught[0][0]}")
+
+    # 본 판정 — 전수 정의역에 raw CR 0.
+    offenders = _cr_offenders(texts)
+    assert not offenders, (                             # ← 매체 규약 측정 assertion
+        "fixture 에 raw CR 혼입 — 매체 규약(LF 고정) 위반:\n  "
+        + "\n  ".join(f"{p}: CR {n}건" for p, n in offenders[:10])
+    )
