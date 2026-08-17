@@ -93,13 +93,38 @@ name: story-read-surface-test
 #                           맨 줄번호를 썼다 — **자기 교훈 미적용**이 같은 블록 안에서 재발했다.
 #                           그래서 아래는 줄번호가 아니라 **재현 규칙**으로 지시한다.
 #     ⇒ 현 pin 값의 실 소재 = **재계수 규칙**(고정 수치·고정 줄번호 금지, 매 bump 시점 재실행):
-#          git -C <internal-docs> grep -nE '005c43b68'      # = 현 pin 앞 9자
-#        2026-08-17 firsthand **8건** = A-1(`scripts/lib/compare_story_read_surface_parity.py`
-#        의 `WRAPPER_PINNED_REF`) **1건** + `wrapper/stories/CFP-2986-S1.md` **5건**
-#        + `wrapper/stories/CFP-2986.md` **2건**. 후자 7건은 전부 §9/§10 **감사 기록**이라
-#        [A-frozen] 과 **동일 사유로 bump 금지**(그 시점 관측값의 기록 — 갱신 = 감사 기록 위조).
-#        ⇒ **A 계열 bump 대상 = A-1 단 1곳.** 종전 A-2 에 해당하는 bump 대상은 **실재하지 않는다**
-#          (`story-read-surface-check.yml` 안 현 pin 인용 = **0건**, 위 census 로 firsthand).
+#        ★ census 명령의 인자(pin 앞 9자)도 **고정 인용하지 않는다** — pin 이 bump 되면 명령
+#          자체가 달라진다. 현 pin 의 정본 = internal-docs
+#          `scripts/lib/compare_story_read_surface_parity.py:82` `WRAPPER_PINNED_REF` 할당문.
+#          거기서 앞 9자를 떠서 두 축을 센다(현재형 인용 / 동결이어야 할 구 pin 인용):
+#            git -C <internal-docs> grep -cE '<현 pin 앞 9자>'   # 현재형 인용 census
+#            git -C <internal-docs> grep -cE '<구 pin 앞 9자>'   # 전건 동결 기록이어야 한다
+#          ※ `grep -c` 는 **매칭 줄 수**이지 occurrence 가 아니다 — 어느 쪽을 셌는지 먼저
+#            선언할 것(아래 수치는 **줄 수 / occurrence** 를 병기한다).
+#        ★ 종전 이 자리의 두 단정("**8건**", 그리고 "check.yml 안 현 pin 인용 = **0건**")은
+#          **둘 다 거짓**이었다. census 정의역에서 `story-read-surface-check.yml` 이 통째로
+#          빠졌고 `CFP-2986-S1.md` 를 1건 적게 셌다 — 감사 실측(internal-docs `dba650cc`):
+#          check.yml **2** / parity **1** / S1.md **6** / CFP-2986.md **2** = **11**.
+#          ★★ 과소계수를 지적하려던 이 문단 자신이 같은 과소계수를 냈다. 「N곳」을 세는
+#             문단은 자기가 세는 정의역을 먼저 적지 않으면 반드시 한 면을 빠뜨린다.
+#        R6 재계수 [internal-docs `4eddfe46`(아래 A-1 착지 반영) × wrapper `f0f50cef6`]:
+#          - 현 pin `cb5687815` : parity.py 1줄/4 occ + S1.md 2줄/3 occ = **3줄 / 7 occ**
+#          - 구 pin `005c43b68` : check.yml 2/2 + parity.py 1/3 + S1.md 8/9 + CFP-2986.md 2/2
+#                                 = **13줄 / 16 occ**
+#        분류(세 갈래):
+#          (a) `CFP-2986-S1.md`·`CFP-2986.md` 인용 = §9/§10 **감사 기록** ⇒ [A-frozen] 과
+#              동일 사유로 **bump 금지**(그 시점 관측값 — 갱신 = 감사 기록 위조).
+#          (b) `story-read-surface-check.yml` 잔존 2줄 = 「구 문면 인용」 + 「측정 시점 pin」
+#              rc 기록. 둘 다 **과거형 동결**이라 bump 대상 아님.
+#          (c) 같은 파일의 「현행 사본 = wrapper `<SHA>`(N B, sha256 …)」 신원 라벨은
+#              **R6 에서 재현 규칙으로 대체돼 사라졌다**(고정 3-튜플 제거 — 값 bump 가 아니라
+#              site 소멸). 즉 종전에 실재하던 bump 대상 1곳이 **해소**됐다.
+#        ⇒ **A 계열 bump 대상 = A-1 단 1곳** — 이 단정은 종전엔 **거짓**이었고((c) 가 실재
+#          했으므로) (c) 해소로 **이제 참이 됐다**. 참이 된 시점을 명시하는 이유는, 같은 문장이
+#          거짓인 채로 한 라운드를 생존했기 때문이다.
+#          ※ 그 "1곳" = `WRAPPER_PINNED_REF` **할당문 1개**이지 그 줄의 전 occurrence 가
+#            아니다(같은 줄 주석의 나머지 3 occ 는 이번 bump 사건의 동결 기록 — 일괄 치환 금지).
+#        ※ 위 수치는 전부 **재산출 대상**이다 — 인용하지 말고 위 두 grep 을 그 시점에 돌릴 것.
 #     ⇒ 새 값(**A-1 전용**) = **wrapper #2997** squash-merge 커밋 SHA — **40자 그대로**
 #        `gh pr view 2997 --repo mclayer/plugin-codeforge --json mergeCommit`
 #     ⇒ 미이행 시: A-1 = **rc=1, 전 PR 차단**(fail-closed 실동작).
@@ -110,9 +135,23 @@ name: story-read-surface-test
 #     internal-docs `wrapper/stories/CFP-2986-S1.md` — **4곳**:
 #       :1205, :1230 (`c9f8670fd…`) / :1184, :1215 (`676d96050…`)  [§9 구현리뷰 R2 verdict]
 #       ※ §9 는 Orchestrator 독점면이라 구현 lane 이 편집 대상으로 삼지도 않는다.
-#     ※ 전수 재계수 = **4곳**(종전 이 줄은 "2곳" 이었다). 정의역 = internal-docs tracked 전건
-#       `git grep -nE 'c9f8670f|676d9605'`. "2곳" 은 pin 의 **구 값 하나만** 세고 같은 기록면의
-#       `676d96050` 인용 2곳을 빠뜨린 결과다 — 값이 아니라 **기록면 전체**가 정의역이다.
+#     ※ 전수 재계수 = **4곳**(종전 이 줄은 "2곳" 이었다). ★ 숫자 4 는 맞았고 **옆에 적힌 정의역
+#       규칙이 틀렸다** — 종전 문면의 "internal-docs tracked 전건 `git grep -nE
+#       'c9f8670f|676d9605'`" 은 실제로 센 정의역이 아니다(그 규칙은 4 가 아니라 16 을 뽑는다).
+#       규칙과 실제 센 것이 어긋나면, 규칙을 돌린 사람은 적어둔 수를 재현하지 못한다.
+#       정의역 계단 — 세 층 전부 **산출 명령과 함께** 남긴다(R6 실측, internal-docs `4eddfe46`.
+#       감사 실측 `dba650cc` 에서는 16/9 가 15/8 이었다 — S1.md 가 그 사이 자랐다. 4 는 불변):
+#         D1 tracked 전건 = **16줄**
+#              git grep -cE 'c9f8670f|676d9605'
+#         D2 S1.md 파일 한정 = **9줄**
+#              git grep -cE 'c9f8670f|676d9605' -- wrapper/stories/CFP-2986-S1.md
+#         D3 S1.md **§9.13 구현리뷰 Round 2 구획** = **4줄**  ← 위 4곳이 실제로 센 정의역
+#              awk '/^### 9\.13 /{f=1} /^### 9\.14 /{f=0} f' wrapper/stories/CFP-2986-S1.md \
+#                | grep -cE 'c9f8670f|676d9605'
+#       (heading 실표기에 `§` 는 없다 — `### 9.13 …` 이다. 패턴을 `§9\.13` 으로 쓰면 0 이 나오고,
+#        그 0 은 "인용이 없다" 와 구별되지 않는다.)
+#       "2곳" 은 pin 의 **구 값 하나만** 세고 같은 기록면의 `676d96050` 인용 2곳을 빠뜨린
+#       결과다 — 값이 아니라 **기록면 전체**가 정의역이다.
 #     ※ 일반화(정의역 경계): 동결 인용은 이 두 값에 그치지 않는다 — 같은 성격의 브랜치 전용
 #       SHA 인용(`a3d7c56b`·`8f317f7c` 등, firsthand 브랜치 전용 확인)이 **wrapper 트리에도**
 #       있다. ⇒ bump 정의역은 "브랜치 전용 SHA 전부" 가 **아니라** A·B 계열(기계 fetch +
@@ -125,11 +164,17 @@ name: story-read-surface-test
 #           그중 본 파일 [A-frozen] 블록 줄을 뺀 나머지 = 실 인용 site (불변 5건)
 #             본 파일 「정직 상한」 2줄 + 본 파일 [B 계열] 코퍼스 HEAD 인용 1줄
 #             + scripts/check-story-read-surface.sh:12  (「firsthand 2026-08-16」 주석)
-#             + scripts/lib/check_story_read_surface.py:1357  (「실측 **665**」 주석)
+#             + scripts/lib/check_story_read_surface.py:1379  (「실측 **665**」 주석 — 정본
+#               앵커는 **문면**이고 줄번호는 파생이다. 이 인용은 이미 두 번 밀렸다(:1218→:1357)
+#               ⇒ 줄번호를 쓰려면 **커밋 직전** 아래로 재산출할 것:
+#                 grep -nF '실측 **665**' scripts/lib/check_story_read_surface.py)
 #           (본 파일 3건은 줄번호가 이 블록 편집으로 밀리므로 **절 이름으로** 지시한다.)
 #           ★ 그 면제를 **본 파일에만** 준 것이 잘못이었다 — 기전(줄이 밀린다)은 맞게 봤는데
-#             **정의역을 본 파일로 좁혔다**. 엔진 파일도 자란다: 위 `.py` 인용은 `:1218`→`:1357`
-#             (**+139**) 로 밀려 있었다(R5 교정). 즉 이 블록은 "정본은 수치가 아니라 **재현
+#             **정의역을 본 파일로 좁혔다**. 엔진 파일도 자란다: 위 `.py` 인용은 `:1218`(원문)
+#             → R5 가 `:1357` 로 고쳤다. 고정 델타(종전 "+139")를 여기 적지 않는다 — 적는 순간
+#             다음 편집에서 거짓이 되며, 그것이 이 항목이 stale 된 기전 자체다. (R6 실측:
+#             엔진이 1,659 B 자랐음에도 이 앵커는 안 밀렸다 — **드리프트는 예측 대상이 아니라
+#             측정 대상**이라는 뜻이다.) 즉 이 블록은 "정본은 수치가 아니라 **재현
 #             규칙**" 이라 선언해 놓고 **외부 파일 2건은 맨 줄번호로** 앵커했다 — 자기 교훈의
 #             **절반만** 적용. 밀린 `:1218` 슬롯엔 지금 argparse 코드가 들어앉아 **stale 이
 #             그럴듯해 보인다**(`:408`→`strip_stub` 과 동형). ⇒ 외부 파일도 맨 줄번호 단독
@@ -158,9 +203,11 @@ name: story-read-surface-test
 #          bump 하고 그 커밋으로 pin 을 올리면 ②의 등식이 깨진다. B 계열은 양 repo 동시 편집.
 #
 #   [C 계열] main 조상이라 **무조치** (도달성 ✓ — 브랜치 삭제와 무관)
-#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1367   7d075514
-#          (`:62`·`:69` 는 실측 정확. `:1367` = 「baseline `corpus_n: 664`」 주석 — 종전 `:1228`
-#           은 **+139 stale** 이었다(R5 교정, [A-frozen] `.py:1218` 과 동일 원인·동일 폭).
+#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1389   7d075514
+#          (`:62`·`:69` 는 실측 정확 — 파일 상단이라 밀리지 않는다. 셋째 인용 = 「baseline
+#           `corpus_n: 664`」 주석이고 종전 `:1228`→R5 `:1367` 로 밀렸었다([A-frozen] 의 `.py`
+#           인용과 동일 원인). 정본 앵커 = 문면, 재계수:
+#             grep -nF 'corpus_n: 664' scripts/lib/check_story_read_surface.py
 #           값 `7d075514` 는 무변경 — main 조상이라 애초 무조치 대상이다.
 #           재계수: `grep -n '7d075514' scripts/lib/check_story_read_surface.py`)
 #     C-2  wrapper + 사본  docs/story-read-surface-baseline.yaml:18,48          7d0755140c…
