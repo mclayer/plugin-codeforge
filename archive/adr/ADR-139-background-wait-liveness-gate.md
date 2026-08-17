@@ -201,7 +201,13 @@ CFP-2994 요구사항 lane 이 *"P-1 ↔ INV-L4 정면 충돌"* 로 접수했으
 > (worker self-attestation 차단, 신뢰 경계). 값 순서 불변식: `timeout N < liveness max-wait` (호출부 timeout 이 먼저 터져
 > marker 를 남기고 게이트가 그 이후 관측 — 역순 금지).
 
-— `archive/adr/ADR-139-background-wait-liveness-gate.md:71` **verbatim 인용, 무변경 declare**.
+— 본 파일 **`## 결정` 절 `**INV-L4 (게이트 소유 = Orchestrator/lead 고정)**` 항** **verbatim 인용, 무변경 declare**.
+대조 규칙 = `git grep -n '대기 주체 ↔ 판정 주체 분리' -- archive/adr/ADR-139-*.md`
+(위 blockquote 안의 `plugins/codeforge-review/CLAUDE.md:46` 는 **인용 대상 원문의 일부**이므로 손대지 않는다 — 무변경 declare 준수).
+
+★ **행 번호 앵커 금지 (자기 사례)**: 초판은 이 자리를 `…-gate.md:71` 로 앵커했고, **같은 브랜치의 형제 hunk**(Amendment 3 블록
+자신의 삽입)가 그 행을 밀어내 포인터가 거짓이 됐다 — 현 `:71` = `## 상태` 절 `Accepted (…)` 줄. **인용 내용은 참**이었고
+(INV-L4 축자 일치 · 삭제 0줄) **포인터만 거짓**이었다. 규약 = §A3-8.
 
 축자가 스코프를 *"liveness 게이트"* 로 **자기 한정**하고 「수령 / inbox」 어휘가 0건이므로, INV-L4 는 본 건이 다루는 객체에 대해
 **아무 말도 하지 않는다**. 충돌은 축자가 아니라 **암묵 추론**에서 발생했다(A3-3).
@@ -293,3 +299,35 @@ dialect 무관 · PR 유무 무관. registry · open-PR 은 **corroboration** �
 커밋 `b41807812`(*"F1 NEW-carrier provenance 정정 (ADR-064 §결정1 → ADR-054)"*)로 **한 번 이미 정정한 자리**이며, 그 정정이
 **기준을 담지 않는 문서로 옮긴 것**이다 — **정정이 권위 있게 읽혀 재검증을 막은 사례**. 본 Amendment 는 기존 행을 **편집하지 않고
 회부**한다(Amd 1 블록 무변경 원칙 + carrier scope 밖). 처분 = CFP-2994 Change Plan §10 기록 + Orchestrator 회부.
+
+★★ **회부 대상 = 3 site 전수 (초판의 「frontmatter 1곳」 지목은 과소계수)**: frontmatter 만 고치면 **본문 산문이 오귀속을 계속
+발화**하고, 그러면 A3-7 이 스스로 경고한 *"정정이 권위 있게 읽혀 재검증을 막은 사례"* 가 **한 번 더 재생산**된다
+(CFP-2573 `b41807812` 이 이미 1회 그렇게 실패한 자리). 회부 목록은 **행 번호로 앵커하지 않고 절·성격으로 지목**한다(§A3-8).
+재측정 = `grep -n 'ADR-054' archive/adr/ADR-139-background-wait-liveness-gate.md`
+— 정의역 한정 = **본 §A3-7 · §A3-8 블록 자신의 언급은 회부 대상이 아니다**(회부 기록 자체이므로).
+
+| # | site (절 · 성격) | 오귀속 형태 |
+|---|---|---|
+| 1 | `frontmatter related_adrs` — `ADR-054` 항 인라인 주석 | **직접** — *"new-vs-amendment 기준"* 을 ADR-054 에 귀속 |
+| 2 | `frontmatter related_adrs` — `ADR-064` 항 인라인 주석 | **파생** — *"… 기준 부재 → ADR-054 참조"* 로 redirect (1 을 고쳐도 이 행이 살아남으면 오귀속이 유지된다) |
+| 3 | **`## 컨텍스트` 절 본문 산문**(직교성·1급 mandate 단락) | **직접 · frontmatter 밖** — *"(ADR-054 신규 ADR 도입 = full-lane 강제 — …)"*. ★ **이 site 가 정확히 「frontmatter 만 고치면 남는 것」** |
+
+**정정 방향 (회부 payload)**: 세 site 의 실 근거지는 ADR-054 가 아니라 **ADR-064 §결정 1 도 아니다** — 두 문서 어느 쪽도
+new-vs-amendment 판정 기준을 담지 않는다는 것이 본 항의 관측이다. ⇒ 회부 처분은 *"근거지를 제3의 문서로 다시 옮기는 것"* 이
+아니라 **「기준 문서 부재」를 명시하고 본 ADR 의 신규-carrier 정당화를 §컨텍스트 직교성 논증 자체에 귀속**시키는 것이다
+(ADR-054 는 *Story 처리 flow* cross-ref 로만 잔존). 실 write = 요구사항/Orchestrator 소관.
+
+### A3-8 — B-7 인용 규약의 PUBLIC 산출물 전파 (본 Amendment 신설 규율)
+
+CFP-2994 가 확정한 **B-7 인용 규약**(문서 grep 산출값 성문 금지 · 정본 = 재측정 명령 + 기준 SHA)은 PRIVATE Story·Change Plan
+에만 성문돼 있었고 **PUBLIC wrapper 산출물로 전파되지 않았다**. 그 결과 본 Amendment 저작 중 **자기 브랜치의 형제 hunk 가
+자기 인용 포인터를 깨뜨렸다**(§A3-1 · ADR-170 §A2-4 두 site). 규약을 ADR 산출물에도 적용한다.
+
+1. **행 번호 앵커 금지** — 같은 파일·같은 브랜치 안에서도 형제 편집이 행을 이동시킨다. 정본 = **heading 앵커 + 축자 문자열**,
+   또는 불변이 필요하면 **merge-base SHA pin**(`git show <sha>:<path>`). 검증 = 각 `<path>:<N>` 인용에 대해 해당 행이 인용
+   문자열을 포함하는지 대조.
+2. **문서 grep 산출값 성문 금지** — 「N곳」·「0-hit」류 계수를 본문에 적지 않는다. 정본 = **재측정 명령 + 정의역 한정**
+   (정의역을 명시하지 않으면 명령의 범위와 주장의 범위가 어긋나 그 자체가 본 Story 의 지배 결함 class 가 된다).
+3. **SSOT 종속 declare** — 파생화 처방의 SSOT 는 `ADR-182` §결정 4 가 **#2988 단일**로 못박았다. 따라서 B-7 은 **병렬 SSOT 가
+   아니라 그 처방의 lane-local 적용**이며, 본 §A3-8 은 **재정의가 아니라 적용 선언**이다(이중/삼중 SSOT 회피).
+4. **정직 천장** — 본 규약은 **저작 규율이며 기계 게이트가 없다**. 「기계 강제」·「차단」으로 표기 금지. 위반은 리뷰에서만 잡힌다.

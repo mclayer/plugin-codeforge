@@ -545,8 +545,25 @@ N/A — permanent policy (Orchestrator subagent default + inline whitelist 상�
 
 1. **소급 위법화** — CFP-2994 §9.1~§9.4 의 원장 retrofit 은 Orchestrator 가 타 주체 수령 사실을 전사한 것이며, 그것이
    §결정 2 entry #5 가 허용하는 정확한 형태다. 예외를 좁히면 **이미 옳게 수행된 전사가 위법**이 된다.
-2. **writer monopoly 와 충돌** — §9/§10 은 Orchestrator write monopoly(entry #5) 이므로, Orchestrator 를 그 표면에서 배제하면
-   기록자가 0 이 된다.
+2. **writer monopoly 와 충돌** — **§9 final verdict** 과 **§10 FIX Ledger row append** 는 Orchestrator write monopoly 다
+   (§결정 2 entry #5 축자 4-sub-scope = *"§9 verdict / §10 FIX Ledger row append / §14 Lane Evidence row append /
+   phase transition"*). 그 두 표면에서 Orchestrator 를 배제하면 **기록자가 0** 이 된다.
+
+   ★ **범위 정밀화 (over-claim 제거 — 초판은 「§9/§10」으로 적어 §9 전체를 monopoly 로 읽히게 했다)**: monopoly 는
+   **§9 전체가 아니라 §9 verdict** 에 한정되며, §9 **하위 서술**(lane 산출 기록 · 원장)은 **다중 owner** 다.
+   실행부 실측 `[verified — firsthand, R-CODE 실행부 인용]` = `scripts/lib/check_story_section_ownership.py`
+   `MONOPOLY_SECTIONS = {"10", "10.5", "13", "14"}` (**"9" 부재**) ∧
+   `SECTION_OWNERS["9"] = ["review", "design", "develop", "requirements"]` (동 파일 주석 축자
+   *"various lanes write §9 subsections"*). 같은 entry #5 가 *"lane agent self-write 영역 … = 본 entry scope 외"* 로
+   자기 한정하는 것과 정합한다. 재측정 =
+   `grep -n 'MONOPOLY_SECTIONS\|"9":' scripts/lib/check_story_section_ownership.py`.
+   3번째 독립 관측면 = `archive/adr/ADR-182-review-domain-write-domain-separation.md` §결정 1 (*"**§9 전체 독점 주장만
+   부정확**"*) + §결정 4 (*"§9 는 final verdict 만 Orchestrator monopoly … 하위 서술은 lint `SECTION_OWNERS["9"]` 다중
+   owner"*) — 단 그 ADR 은 `status: Proposed` 이므로 **규범 구속력 약함**으로 라벨하며 본 정밀화는 그것에 의존하지 않는다
+   (실행부 lint + entry #5 축자로 독립 확립).
+
+   ★ **결론 무손상**: A2-2 의 결론(예외를 좁힐 수 없다)은 **근거 1(소급 위법화) 단독으로 존립**한다. 본 정밀화는 근거 2 의
+   *범위*만 좁히며 A2-1 ④ 분류 확장 · A2-3~A2-6 의 규범 산출을 **1 byte도 변경하지 않는다**.
 
 ⇒ **채택 방향은 예외 축소가 아니라 분류 확장**이다(A2-1 ④ 추가). ADR-064 §결정 7 evidence-gated symmetric ratchet 상
 **강화 방향**이며 ADR-058 §결정 5 약화 evidence-gate 비대상.
@@ -577,15 +594,25 @@ N/A — permanent policy (Orchestrator subagent default + inline whitelist 상�
 - **허용** — 산출물이 도달했는가 · 어느 주체 채널에 도달했는가 · 무엇을 근거로 그렇게 판정했는가.
 - **금지** — 도달분의 **충분성 · 품질 · 채택 가치** 판정.
 
-근거: 「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 그 field 는 성과 verdict 가 되고, verdict 판정 권한은 ADR-139 INV-L4
-(*"대기 주체 ↔ 판정 주체 분리 (worker self-attestation 차단, 신뢰 경계)"* — `archive/adr/ADR-139-background-wait-liveness-gate.md:71`
-verbatim)가 lead 에 고정한다. 도달-전용 경계가 **INV-L4 를 침범하지 않는 유일한 형태**다. 상세 = ADR-139 Amendment 3.
+근거: 「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 그 field 는 성과 verdict 가 되고, verdict 판정 권한은 ADR-139 INV-L4 가 lead 에
+고정한다 — 축자 = *"대기 주체 ↔ 판정 주체 분리 (worker self-attestation 차단, 신뢰 경계)"*
+(`archive/adr/ADR-139-background-wait-liveness-gate.md` **`## 결정` 절 `**INV-L4 (게이트 소유 = Orchestrator/lead 고정)**` 항**
+verbatim). 도달-전용 경계가 **INV-L4 를 침범하지 않는 유일한 형태**다. 상세 = ADR-139 Amendment 3 (§A3-1 · §A3-4 (i)).
+
+★ **행 번호 앵커 금지 (자기 사례 — ADR-139 §A3-8 규약 승계)**: 본 인용은 초판에 `…-gate.md:71` 로 적혀 있었고, **같은 브랜치의
+형제 hunk** 가 그 행을 이동시켜 포인터가 거짓이 됐다(현 `:71` = `## 상태` 절 `Accepted (…)` 줄). **인용 내용은 참이었고
+포인터만 거짓**이었다. 대조 규칙 = `git grep -n '대기 주체 ↔ 판정 주체 분리' -- archive/adr/ADR-139-*.md`.
 
 ### A2-5 — cross-ref
 
 - **ADR-139 Amendment 3** — P-1(수령 사실 single-writer) ↔ INV-L4 정의역 분리 + amendment slot 충돌 오라클 교훈 SSOT.
 - **Change Plan** `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2994-receipt-single-writer.md` §10 — 오라클 교훈 전문.
 - **CFP-2929 (ADR-139 Amendment 2, §결정 8)** — mechanism 축이며 본 authority 축과 disjoint (상세 = ADR-139 Amd 3).
+- **ADR-182 (review-domain / write-domain separation, `status: Proposed`)** — 3 접점. ① **§결정 1 · §결정 4** = §9 monopoly
+  범위 정정의 3번째 독립 관측면(A2-2 근거 2 참조). ② **§결정 4** = 원장(§9·§10) 파생화 처방의 **SSOT 를 #2988 단일**로 못박음
+  ⇒ CFP-2994 의 B-7 인용 규약은 **병렬 SSOT 가 아니라 그 처방의 lane-local 적용**으로 종속 관계를 선언한다(ADR-139 §A3-8).
+  ③ **§결정 5** = 소급 transition 3-상태 — CFP-2994 는 **진행중** Story 이므로 *"재개 후 첫 회차부터"* 상태에 해당한다.
+  ★ `status: Proposed` = **규범 구속력 약함**으로 라벨하며 본 Amendment 의 어느 결론도 ADR-182 에 의존하지 않는다.
 
 ### A2-6 — 정직 천장
 
