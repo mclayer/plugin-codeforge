@@ -174,12 +174,30 @@ def test_read_surface_not_increased():
 # ===========================================================================
 
 def test_pure_move_digest_preserved():
-    """AC-2: `digest(before.§n) == digest(strip_stub(after.§n) ∪ children[n])`."""
+    """AC-2 (정보 손실 0): 순수 이동은 **leg-A 무손실** `L − R = ∅` 을 만족한다.
+
+    FIX Iter 14 — 판정 술어가 무스코프 전체 digest 동일성에서 **3-leg 분해**로 바뀌었다
+    (CP §8.1). 차단 축(rc=1)에 남는 명제는 leg-A 뿐이고 leg-B(순수성)·leg-C(순서)는 비차단
+    SIGNAL 이므로, AC-2 의 측정 assertion 도 **digest 동일성 → leg-A 무손실**로 옮긴다.
+    함수명은 RTM AC-2 매핑 앵커(CP §8.1 / Story §8.1.1 / `FX.RTM_NAMED`)라 **유지**한다 —
+    개명하면 Hop3 symbol resolve 가 끊겨 traceability 가 born-missing 이 된다.
+
+    술어가 항진이 아님을 **양방향 쌍**으로 같은 실행에서 보인다:
+      · 손실 방향 — 자식 3 B 변조(M-E2) ⇒ leg-A **RED**
+      · 확대 방향 — 자식 정상 append(M-SPLIT-GROW-CTL) ⇒ leg-A **PASS** (성장 ≠ 손실)
+    한쪽만으로는 닫히지 않는다: 손실 단독이면 술어가 "아무 변경이나" 잡아도 통과하고,
+    확대 단독이면 술어가 상수 PASS 여도 통과한다.
+    """
     eng = engine()
     ctx = FX.split_ctx()
     verdicts = FX.run_inv_s1(eng, ctx)
 
-    assert FX.red_count(verdicts) == 0, (                  # ← AC-2 측정 assertion
+    for sec in ("9", "10"):                                # ← AC-2 측정 assertion (leg-A)
+        lost, gained = FX.s1_leg_a_lost(eng, ctx, sec)
+        assert (lost, gained) == ([], []), (
+            f"순수 이동인데 §{sec} 소실 {len(lost)}줄 / 신규 {len(gained)}줄 — "
+            f"최초 소실 {lost[:1]}")
+    assert FX.red_count(verdicts) == 0, (
         f"순수 이동인데 INV-S1 RED {FX.red_count(verdicts)}건: {FX.status_vector(verdicts)}")
     assert any(v.fired for v in verdicts), (
         "분할 커밋(anchor_delta ≠ ∅)인데 INV-S1 미발화 — 미발화는 통과 계상이 아니다")
@@ -187,9 +205,19 @@ def test_pure_move_digest_preserved():
     assert eng.sections_of(delta) >= {"9", "10"}, (
         f"anchor_delta 섹션 = {eng.sections_of(delta)} — §9·§10 을 포함해야 한다")
 
-    # 변형(정보 손실) 주입 시 반드시 RED — 술어가 항진이 아님을 같은 실행에서 보인다.
-    assert FX.red_count(FX.run_inv_s1(eng, FX.ctx_e2_zwsp())) >= 1, (
-        "U+200B 3 B 주입에도 GREEN 이면 digest 술어가 항진이다")
+    # 손실 방향 — 변형 주입 시 반드시 **leg-A** RED (다른 leg 이 대신 반응하면 안 된다).
+    e2 = FX.run_inv_s1(eng, FX.ctx_e2_zwsp())
+    assert [v for v in e2 if v.leg == "A" and v.status == "RED"], (
+        f"U+200B 3 B 주입에도 leg-A 가 PASS 면 무손실 술어가 항진이다 — {FX.status_vector(e2)}")
+    assert FX.reported_lost(e2) == 1, f"M-E2 소실 실측 {FX.reported_lost(e2)} != 1"
+
+    # 확대 방향 — 자식에 정상 저작을 append 해도 leg-A 는 PASS 여야 한다 (false RED 0).
+    grow = FX.run_inv_s1(eng, FX.ctx_split_grow_ctl())
+    assert FX.red_count(grow) == 0, (
+        f"분할 커밋에 섞인 정상 저작이 정보 손실로 계상됐다(오탐) — {FX.status_vector(grow)}")
+    assert FX.reported_lost(grow) == 0 and FX.reported_gained(grow) > 0, (
+        f"성장이 관측되지 않은 채 GREEN 이면 확대 방향 대조가 공허하다 — "
+        f"소실 {FX.reported_lost(grow)} / 신규 {FX.reported_gained(grow)}")
 
 
 # ===========================================================================
@@ -481,6 +509,11 @@ def test_mutant_red_and_control_green():
         "M-CARD-IN": 1, "M-CARD-VALUE": 1, "M-CARD-CROSS": 2, "M-S3-NOSPLIT": 2,
         "M-DUP-ROW": 1, "M-EQUIV": 0, "M-PREEXIST": 1,
         "M-APPEND-CTL-1000": 0, "M-APPEND-CTL-50000": 0, "M-MARGIN": 0, "M-BASIS-RAW": 0,
+        # FIX Iter 14 — INV-S1 3-leg 분해 축. 양성 4 는 **leg-A 1건씩**(leg-B/C 는 비차단
+        # SIGNAL 이라 rc·RED 계수에 미기여) / 대조군 2 는 0. M-E3 는 pure-append 라 0
+        # (실측 재등재 — 근거는 `run_battery` M-E3 블록 주석의 ESCALATION 문면).
+        "M-LOSS-LINE": 1, "M-LOSS-MUTATE": 1, "M-LOSS-NOTATION": 1, "M-LOSS-MASK": 1,
+        "M-SPLIT-GROW-CTL": 0, "M-MIDSPLIT-CTL": 0, "M-E3": 0,
     }
     actual = {k: results[k]["injected_red_count"] for k in expected_red_counts}
     assert actual == expected_red_counts, (

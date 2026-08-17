@@ -479,6 +479,162 @@ def test_three_advisory_axes_all_executed():
 
 
 # ---------------------------------------------------------------------------
+# INV-S1 3-leg 분해 축 (CP §8.2 신설 6종) — 양성 4 ∧ 대조군 2
+# ---------------------------------------------------------------------------
+
+# CP §8.2 표 + 설계 firsthand 실측치를 실행 가능한 기대값으로 고정한다.
+#   {mutant: (소실 줄수, 신규 줄수, 기대 RED 벡터)}
+LOSS_AXIS_EXPECTED = {
+    "M-LOSS-LINE":      (1, 0, ["9:A"]),
+    "M-LOSS-MUTATE":    (3, 3, ["9:A"]),
+    "M-LOSS-NOTATION":  (2, 5, ["9:A"]),   # 3건 주입 중 1건 다중도 흡수 (CP §8.2 = 소실 2)
+    "M-LOSS-MASK":      (1, 2000, ["9:A"]),
+    "M-SPLIT-GROW-CTL": (0, 160, []),
+    "M-MIDSPLIT-CTL":   (0, 0, []),
+}
+LOSS_AXIS_CTX = {
+    "M-LOSS-LINE": FX.ctx_loss_line,
+    "M-LOSS-MUTATE": FX.ctx_loss_mutate,
+    "M-LOSS-NOTATION": FX.ctx_loss_notation,
+    "M-LOSS-MASK": FX.ctx_loss_mask,
+    "M-SPLIT-GROW-CTL": FX.ctx_split_grow_ctl,
+    "M-MIDSPLIT-CTL": FX.ctx_midsplit_ctl,
+}
+
+
+def test_inv_s1_loss_axis_positive_and_control_pair():
+    """CP §8.2 신설 6종 — 양성 4(leg-A RED) ∧ 대조군 2(GREEN)를 **쌍으로** 확정한다.
+
+    "RED 였다" 는 boolean 은 부족하다 (C-6). **소실 줄 수**가 주입량과 일치해야 그 판정이
+    실제로 *그 주입을* 본 것임이 증명된다. 그래서 값을 **독립 관측면 2개**로 잰다:
+      · 관측면 ① — 엔진 원시 함수 재계산 (`reassemble` → `s1_lines` → `_multiset_diff`)
+      · 관측면 ② — `check_inv_s1` verdict detail 이 **선언한** 수치
+    둘이 어긋나면 어느 한쪽이 틀린 것이므로 그 불일치 자체를 실패로 잡는다.
+    """
+    eng = engine()
+    for mid, (want_lost, want_gained, want_vec) in LOSS_AXIS_EXPECTED.items():
+        ctx = LOSS_AXIS_CTX[mid]()
+        verdicts = FX.run_inv_s1(eng, ctx)
+        lost, gained = FX.s1_leg_a_lost(eng, ctx, "9")
+
+        # 관측면 ① — 원시 재계산
+        assert (len(lost), len(gained)) == (want_lost, want_gained), (   # ← 값 측정 assertion
+            f"{mid} §9 (소실, 신규) 실측 ({len(lost)}, {len(gained)}) != "
+            f"기대 ({want_lost}, {want_gained}). construction={ctx['construction']}")
+
+        # 관측면 ② — 엔진이 선언한 수치와 교차 검증
+        assert FX.reported_lost(verdicts) == want_lost, (
+            f"{mid} 엔진 선언 소실 {FX.reported_lost(verdicts)} != 재계산 {want_lost} "
+            "— 두 관측면이 어긋난다")
+        assert FX.reported_gained(verdicts) == want_gained, (
+            f"{mid} 엔진 선언 신규 {FX.reported_gained(verdicts)} != 재계산 {want_gained}")
+
+        # 판정 벡터 — 차단 축은 leg-A 단독이어야 한다 (leg-B/C 는 SIGNAL 이라 rc 무영향)
+        assert sorted(f"{d}:{l}" for d, l in FX.red_vector(verdicts)) == want_vec, (
+            f"{mid} RED 벡터 실측 {sorted(FX.red_vector(verdicts))} != 기대 {want_vec}")
+
+    # 대조군 GREEN 이 **미발화·미호출의 GREEN 이 아님**을 같은 실행에서 증명한다.
+    #   M-SPLIT-GROW-CTL — 정의역 안 성장이 leg-B SIGNAL 로 실제 관측된 채 leg-A 는 PASS
+    grow = FX.run_inv_s1(eng, FX.ctx_split_grow_ctl())
+    assert any(v.status == "SIGNAL" and v.domain == "9" and v.leg == "B" for v in grow), (
+        f"대조군 성장이 관측되지 않았다 — GREEN 이 공허하다. {FX.status_vector(grow)}")
+    #   M-MIDSPLIT-CTL — 기각안(prefix·부분수열 술어) 반례. 순서는 뒤집히되 차단되지 않는다.
+    mid_v = FX.run_inv_s1(eng, FX.ctx_midsplit_ctl())
+    assert any(v.status == "SIGNAL" and v.domain == "9" and v.leg == "C" for v in mid_v), (
+        f"절-중간 분할인데 leg-C 순서 SIGNAL 이 없다 — 기각안 반례가 성립하지 않는다. "
+        f"{FX.status_vector(mid_v)}")
+    assert FX.red_count(mid_v) == 0, (
+        "순서를 차단 축에 두었다면 이 정상 이동이 false RED 였다 — leg-C 는 비차단이어야 한다")
+
+
+def test_loss_axis_three_advisory_directions():
+    """손실 축 3방향 자문 — ① 제거 ② 주입 ③ 표기 등가변형. 셋 다 **실행**으로 이행한다.
+
+    ③ 이 반복 누출됐다. 여기서는 표기 등가변형(선행 공백 2칸)이 leg-A RED 라는 것과,
+    그 판정에서 **1건이 흡수되는 원인이 표기가 아니라 다중도**라는 것까지 반증한다.
+    """
+    eng = engine()
+
+    # ① 제거 축 — 자식 본문에서 1줄 삭제 ⇒ leg-A RED (소실 1)
+    rm = FX.run_inv_s1(eng, FX.ctx_loss_line())
+    assert FX.red_count(rm) == 1 and FX.reported_lost(rm) == 1
+
+    # ② 주입 축 — 자식 본문에 정상 저작 append ⇒ leg-A PASS ∧ leg-B SIGNAL (GREEN)
+    inj = FX.run_inv_s1(eng, FX.ctx_split_grow_ctl())
+    assert FX.red_count(inj) == 0 and FX.reported_gained(inj) == FX.SPLIT_GROW_NEW_LINES
+
+    # ②' 위장 주입 — 삭제 1 + 대량 append. **성장은 손실을 덮지 못한다.**
+    mask = FX.run_inv_s1(eng, FX.ctx_loss_mask())
+    assert FX.red_count(mask) == 1, (
+        f"신규 {FX.reported_gained(mask)}줄이 소실 1줄을 덮어버렸다 — 두 축이 분리되지 않았다")
+    assert FX.reported_lost(mask) == 1 and FX.reported_gained(mask) == FX.LOSS_MASK_NEW_LINES
+
+    # ③ 표기 등가변형 축 — 선행 공백 2칸. `INV_S1_CANON = trailing_newline_only` 이므로
+    #    들여쓰기는 정규화되지 않고 **원 줄 소실**로 계상된다 (설계 의도, CP §8.2 = RED).
+    notation = FX.run_inv_s1(eng, FX.ctx_loss_notation(inject=True))
+    assert FX.red_count(notation) == 1 and FX.reported_lost(notation) == 2
+
+    #    ③-a 무주입 대조군 — 같은 형상(성장 동반)에서 주입만 빼면 GREEN
+    ctl = FX.run_inv_s1(eng, FX.ctx_loss_notation(inject=False))
+    assert FX.red_count(ctl) == 0 and FX.reported_lost(ctl) == 0, (
+        f"표기 등가변형 대조군이 이미 RED = 등가 mutant. {FX.status_vector(ctl)}")
+
+    #    ③-b 흡수 원인 반증 — 주입 3건인데 소실이 2인 이유가 **표기** 때문이라면,
+    #        성장을 빼도 여전히 2 여야 한다. 실제로는 3 이 된다 ⇒ 원인은 **다중도**다.
+    lost_grow, _g = FX.s1_leg_a_lost(eng, FX.ctx_loss_notation(inject=True, growth=True), "9")
+    lost_flat, _g2 = FX.s1_leg_a_lost(eng, FX.ctx_loss_notation(inject=True, growth=False), "9")
+    assert (len(lost_grow), len(lost_flat)) == (2, 3), (   # ← 흡수 귀속 측정 assertion
+        f"흡수 귀속 반증 실패 — 성장 동반 소실 {len(lost_grow)} / 성장 없음 소실 {len(lost_flat)}, "
+        f"기대 (2, 3)")
+    assert FX.NOTATION_BOILER in lost_flat and FX.NOTATION_BOILER not in lost_grow, (
+        f"흡수된 줄이 고다중도 boilerplate `{FX.NOTATION_BOILER}` 가 아니다 — "
+        f"성장 동반 소실 목록 {lost_grow} / 성장 없음 {lost_flat}")
+
+
+def test_before_ref_children_are_resolved_separately():
+    """`children_before` 는 장식이 아니다 — 양성 ∧ 음성 쌍으로 load-bearing 을 반증한다.
+
+    before-ref 에도 §9 앵커가 있는 형상(재분할)에서만 이 인자가 판정에 들어간다.
+      · 음성(종전 경로, `children_before=None`) — 양변을 **같은 (손실된) 자식**으로 재조립
+        하므로 손실이 상쇄돼 digest 동일 ⇒ fast-path PASS. leg-A 가 **정확히 공허**해진다.
+      · 양성(선언) — L 이 before 의 실제 내용이 되어 소실이 드러난다.
+    이 쌍이 없으면 "자식을 각 ref 에서 따로 해결한다" 는 배선이 미호출이어도 아무도 모른다.
+    """
+    eng = engine()
+    n_lost = 2
+    ctx, victims = FX.ctx_resplit_child_loss(n_lost)
+    assert len(victims) == n_lost
+
+    # 전제 — 재분할이라 anchor_delta 가 §9 를 포함하고 **양쪽에** 앵커가 있다.
+    delta = eng.anchor_delta(ctx["story_before"], ctx["story_after"])
+    assert "9" in eng.sections_of(delta), f"재분할 fixture 가 §9 를 발화시키지 못한다 — {delta}"
+    b_sec = eng.split_sections(ctx["story_before"])["9"]
+    a_sec = eng.split_sections(ctx["story_after"])["9"]
+    assert eng.has_split_markers(b_sec) and eng.has_split_markers(a_sec), (
+        "before/after 양쪽에 앵커가 있어야 before-ref 자식이 판정에 들어간다")
+
+    kids_after = FX.children_by_section(eng, ctx)
+    kids_before = FX.children_before_by_section(eng, ctx)
+    assert kids_before is not None, "fixture 가 children_before 를 선언하지 않았다"
+
+    # 음성 — 종전 경로(4번째 인자 None)는 손실을 통째로 놓친다.
+    legacy = eng.check_inv_s1(ctx["story_before"], ctx["story_after"], kids_after, None)
+    assert FX.red_count(legacy) == 0, (
+        f"음성 대조가 성립하지 않는다 — 종전 경로가 이미 RED 면 신설 인자의 이득을 "
+        f"보일 수 없다. {FX.status_vector(legacy)}")
+
+    # 양성 — before-ref 자식을 따로 해결하면 소실 n_lost 줄이 드러난다.
+    declared = FX.run_inv_s1(eng, ctx)
+    assert FX.red_count(declared) == 1, (                    # ← children_before 측정 assertion
+        f"before-ref 자식 분리 해결이 소실을 드러내지 못했다. {FX.status_vector(declared)}")
+    assert FX.reported_lost(declared) == n_lost, (
+        f"소실 실측 {FX.reported_lost(declared)} != 삭제한 {n_lost}줄")
+    lost, _gained = FX.s1_leg_a_lost(eng, ctx, "9")
+    assert sorted(lost) == sorted(victims), (
+        f"소실로 보고된 줄이 실제 삭제한 줄과 다르다 — 실측 {lost} / 삭제 {victims}")
+
+
+# ---------------------------------------------------------------------------
 # §8.3 경계 조건 11행
 # ---------------------------------------------------------------------------
 
@@ -580,18 +736,49 @@ def test_boundary_row7_reverse_split_preserves_digest():
 
 
 def test_boundary_row8_anchor_delta_with_total_growth():
-    """§8.3 행 8 — 앵커 델타 ∧ 총량 증가 동시 발생: INV-S1 발화(분할분만) ∧ INV-S2 미발화."""
+    """§8.3 행 8 — 앵커 델타 ∧ 총량 증가 동시 발생: INV-S1 발화(분할분만) ∧ INV-S2 미발화.
+
+    ★ 성장은 **`sections(anchor_delta)` 안**(§9)에 주입한다. 종전 fixture 는 §7 에 넣었는데
+      §7 ∉ sections(anchor_delta) = {9, 10} 이라 `red_count(s1) == 0` 이 자기 docstring
+      ("분할분만 판정")에 대해 **공허**했다 — "검사 정의역 밖이라 안 걸린 것"과 "정의역
+      안인데 안 걸린 것"이 같은 GREEN 으로 뭉개졌다. 아래 (a) leg-B SIGNAL assert 가 그
+      공허성을 닫고, (c) 대조가 종전 배치에서는 그 SIGNAL 이 실제로 없음을 보인다.
+    """
     eng = engine()
     ctx = FX.split_ctx()
-    grown = FX.build_story(split_9=True, split_10=True, section_7_extra="w" * 5000)
+    grown = FX.build_story(split_9=True, split_10=True, section_9_extra="w" * 5000)
     ctx = ctx.copy_with(story_after=grown)
 
     s1 = FX.run_inv_s1(eng, ctx)
     s2 = FX.run_inv_s2(eng, ctx)
     assert any(getattr(v, "fired", False) for v in s1), "INV-S1 미발화 (anchor_delta ≠ ∅)"
+
+    # (a) 비공허 실증 — 주입한 성장이 **검사 정의역 안**에서 실제로 관측됐다.
+    delta_sections = eng.sections_of(eng.anchor_delta(ctx["story_before"], ctx["story_after"]))
+    assert "9" in delta_sections, f"성장 주입 섹션 §9 가 anchor_delta 밖 — {sorted(delta_sections)}"
+    grown_signal = [v for v in s1 if getattr(v, "status", None) == "SIGNAL"
+                    and getattr(v, "domain", None) == "9" and getattr(v, "leg", None) == "B"]
+    assert grown_signal, (                                   # ← 행 8 비공허 측정 assertion
+        f"§9(= anchor_delta 섹션) 안에 5,000 B 를 append 했는데 leg-B SIGNAL 이 없다 — "
+        f"성장이 검사 정의역에 들어가지 않았거나 관측되지 않았다. {FX.status_vector(s1)}")
+    lost, gained = FX.s1_leg_a_lost(eng, ctx, "9")
+    assert (len(lost), len(gained)) == (0, 1), (
+        f"§9 성장 실측 (소실, 신규) = ({len(lost)}, {len(gained)}) — 기대 (0, 1)")
+
+    # (b) 본 명제 — 정의역 **안**의 성장인데도 차단 축(leg-A)은 PASS 다.
     assert FX.red_count(s1) == 0, (
-        f"분할분 판정만 해야 하는데 §7 정상 저작까지 RED — {FX.status_vector(s1)}"
-    )
+        f"분할분 판정만 해야 하는데 §9 정상 저작까지 RED — {FX.status_vector(s1)}")
+
+    # (c) 대조 — 같은 5,000 B 를 정의역 **밖**(§7)에 두면 SIGNAL 이 아예 사라진다.
+    #     종전 fixture 가 정확히 이 상태였고, 그래서 (b) 가 공허했다.
+    outside = ctx.copy_with(story_after=FX.build_story(
+        split_9=True, split_10=True, section_7_extra="w" * 5000))
+    s1_out = FX.run_inv_s1(eng, outside)
+    assert not [v for v in s1_out if getattr(v, "status", None) == "SIGNAL"], (
+        f"정의역 밖 성장에서도 SIGNAL 이 나오면 (a) 의 SIGNAL 이 §9 성장 때문임을 "
+        f"증명할 수 없다 — {FX.status_vector(s1_out)}")
+    assert FX.red_count(s1_out) == 0
+
     assert not any(getattr(v, "fired", False) for v in s2), (
         "발화 조건이 anchor_delta 로 상보 분할돼야 한다 — INV-S2 가 같이 발화했다"
     )
@@ -670,19 +857,36 @@ def test_post_suture_verification_four_axes():
     results = FX.run_battery(eng)
 
     # ① 지정 mutant RED
+    #    FIX Iter 14 — INV-S1 3-leg 분해 축의 **양성 4종**(leg-A 손실)을 추가 등재.
+    #    M-E3 는 여기서 **빠졌다**: pure-append 라 손실 축에서 M-SPLIT-GROW-CTL 과 동형이고,
+    #    종전 RED 는 whole-digest 술어의 무특이성 산물(= 검출 특이성 0)이었다. 근거·에스컬레이션
+    #    문면 SSOT = `_story_read_surface_fixtures.run_battery` 의 M-E3 블록 주석.
     must_red = ["M-CARD-IN", "M-CARD-VALUE", "M-CARD-CROSS", "M-S3-NOSPLIT", "M-DUP-ROW",
                 "M-SEC5", "M-ANCHOR-LOOSE", "M-GLOBALRULE", "M-DOMAIN",
-                "M-PREEXIST", "M-E1", "M-E2", "M-E3", "M-E4", "M-MIX-min",
+                "M-PREEXIST", "M-E1", "M-E2", "M-E4", "M-MIX-min",
                 "M-DEPTH2", "M-DANGLING",
-                "M-ANCHOR-MALFORMED", "M-ANCHOR-UNPAIRED", "M-ANCHOR-DUP", "M-SELFPTR"]
+                "M-ANCHOR-MALFORMED", "M-ANCHOR-UNPAIRED", "M-ANCHOR-DUP", "M-SELFPTR",
+                "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK"]
     not_red = [m for m in must_red if results[m]["injected_red_count"] == 0]
     assert not not_red, f"① 지정 mutant 중 RED 미달: {not_red}"
 
     # ② 형제 회귀 0 — GREEN 기대 mutant 는 RED 로 넘어가지 않는다
+    #    FIX Iter 14 — 대조군 2종(M-SPLIT-GROW-CTL / M-MIDSPLIT-CTL) + M-E3(실측 재등재) 추가.
     must_green = ["M-EQUIV", "M-MARGIN", "M-APPEND-CTL-1000", "M-APPEND-CTL-50000",
-                  "M-BASIS-RAW"]
+                  "M-BASIS-RAW", "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL", "M-E3"]
     regressed = [m for m in must_green if results[m]["injected_red_count"] != 0]
     assert not regressed, f"② 형제 회귀 발생(false RED): {regressed}"
+
+    # ①②의 **쌍 요건** — 양성만/음성만으로는 배선이 닫히지 않는다.
+    #    양성 단독: 배선을 비공백 상수로 바꾸면 검사 미호출인데 대조군이 통과한다.
+    #    음성 단독: 확대(성장) 방향에 무력하다.
+    loss_axis_pos = {"M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK"}
+    loss_axis_ctl = {"M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL"}
+    assert loss_axis_pos <= set(must_red) and loss_axis_ctl <= set(must_green), (
+        "INV-S1 손실 축의 양성 ∧ 음성 쌍 중 한쪽만 등재됐다 — 배선이 닫히지 않는다")
+    for mid in loss_axis_pos | loss_axis_ctl:
+        assert results[mid]["control"] == "GREEN", (
+            f"{mid} 대조군이 이미 RED — 등가 mutant (admission rule 위반)")
 
     # ③ 검출 정의역 비축소 — 두 축 모두
     #    (a) mutant 로스터 축: 배터리가 산출하는 mutant 전건이 선언 로스터와 일치.

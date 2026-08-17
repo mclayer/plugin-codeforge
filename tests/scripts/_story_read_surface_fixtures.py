@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -404,6 +405,9 @@ QUANT_DECLARED = {"CORPUS": 22, "SELF": 30, "BASE": 18, "AUTHOR": 10, "LEGC": 24
 #       mutant 전건. 등록 자체를 지우면 개별 mutant assert 는 전부 통과한 채 배터리만
 #       조용히 줄어든다(무검출 회피 경로). 그 축소를 잡는 유일한 측정면이 이 상수다.
 #       ※ 정직한 한계: `_` 접두 키는 메타(`_tree` 등)라 로스터 대조에서 제외한다.
+#       ※ 갱신 원자성: 본 frozenset 과 `run_battery` 등재는 **같은 커밋**이어야 한다
+#         (엄격 집합 동등이라 한쪽만 바뀌면 즉시 RED — 그것이 의도다).
+#         FIX Iter 14 에서 CP §8.2 신설 6종(INV-S1 3-leg 분해 축)을 추가해 35 → 41.
 DECLARED_MUTANT_IDS = frozenset({
     "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
     "M-ANCHOR-NOSECTION", "M-ANCHOR-UNPAIRED",
@@ -414,6 +418,9 @@ DECLARED_MUTANT_IDS = frozenset({
     "M-FENCE-INJECT", "M-GLOBAL", "M-GLOBALRULE", "M-MARGIN", "M-MIX-min",
     "M-PREEXIST", "M-REASON-FREEFORM", "M-S3-NOSPLIT",
     "M-SCAN-ASYM", "M-SCAN-CARD", "M-SCANGLOB", "M-SEC5", "M-SELFPTR", "M-STRAYEND",
+    # --- FIX Iter 14 신설: INV-S1 3-leg 분해 축 (CP §8.2) — 양성 4 ∧ 대조군 2 ---
+    "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK",
+    "M-SPLIT-GROW-CTL", "M-MIDSPLIT-CTL",
 })
 
 DEFAULT_CEILING = 400000
@@ -591,31 +598,51 @@ def engine_read_cost(engine, fx) -> int:
 # ---------------------------------------------------------------------------
 
 class Ctx(dict):
-    """한 판정 실행의 전 입력 — before/after Story, CP, children(path→text), baseline."""
+    """한 판정 실행의 전 입력 — before/after Story, CP, children(path→text), baseline.
+
+    `children_before` (FIX Iter 14 신설) — **before-ref 자식**을 별도로 줄 수 있다.
+    엔진 `check_inv_s1(..., children_before=None)` 은 None 이면 `children` 을 양변에 쓰므로
+    (= 종전 거동), 기본값 None 은 기존 호출부의 판정을 **바이트 단위로 보존**한다.
+    별도로 줘야 하는 형상은 before-ref 에도 앵커가 있는 커밋뿐이다 —
+    재분할(split_id 변경) / 역분할. 그 외에는 엔진이 before 쪽 자식을 아예 참조하지 않는다.
+    """
 
     def __init__(self, story_before, story_after, cp_after, children, baseline,
-                 construction="", cp_before=None):
+                 construction="", cp_before=None, children_before=None):
         super().__init__(
             story_before=story_before, story_after=story_after,
             cp_before=cp_before if cp_before is not None else cp_after,
             cp_after=cp_after, children=dict(children), baseline=baseline,
+            children_before=(None if children_before is None else dict(children_before)),
             construction=construction)
 
     def copy_with(self, **kw):
         d = dict(self)
         d.update(kw)
         return Ctx(d["story_before"], d["story_after"], d["cp_after"], d["children"],
-                   d["baseline"], d.get("construction", ""), d.get("cp_before"))
+                   d["baseline"], d.get("construction", ""), d.get("cp_before"),
+                   d.get("children_before"))
 
 
-def children_by_section(engine, ctx) -> dict:
+def _group_children(engine, mapping) -> dict:
     """{섹션: [자식 본문]} — 판별자는 파일명이 아니라 frontmatter `carries_sections`."""
     out = {}
-    for path in sorted(ctx["children"]):
-        text = ctx["children"][path]
+    for path in sorted(mapping):
+        text = mapping[path]
         for sec in engine.child_carries(text):
             out.setdefault(sec, []).append(engine.child_body(text))
     return out
+
+
+def children_by_section(engine, ctx) -> dict:
+    """after-ref 자식 그룹핑 (종전 시그니처 그대로 — 기존 호출부 무영향)."""
+    return _group_children(engine, ctx["children"])
+
+
+def children_before_by_section(engine, ctx):
+    """before-ref 자식 그룹핑. 미선언(None)이면 None 을 그대로 돌려 엔진의 종전 경로를 탄다."""
+    raw = ctx.get("children_before")
+    return None if raw is None else _group_children(engine, raw)
 
 
 def canonical_ctx(**kw) -> Ctx:
@@ -663,8 +690,61 @@ def run_inv_s3(engine, ctx, *, include_children: bool = True):
 
 
 def run_inv_s1(engine, ctx):
+    """INV-S1 실행 — 자식을 **각 ref 에서 따로** 해결한다 (FIX Iter 14).
+
+    4번째 인자가 None 이면 엔진이 `children` 을 양변에 쓴다(= 종전 거동). `children_before`
+    를 선언한 ctx 에서만 before 쪽이 갈린다 — 그 분기의 load-bearing 은
+    `test_before_ref_children_are_resolved_separately` 가 양성∧음성 쌍으로 반증한다.
+    """
     return engine.check_inv_s1(ctx["story_before"], ctx["story_after"],
-                               children_by_section(engine, ctx))
+                               children_by_section(engine, ctx),
+                               children_before_by_section(engine, ctx))
+
+
+def s1_leg_a_lost(engine, ctx, section: str = "9"):
+    """leg-A 소실 줄 **목록** — 엔진 자신의 원시 함수로 재계산한다 (판정 detail 파싱 아님).
+
+    `check_inv_s1` 이 방출하는 "소실 N줄" 과 **독립 관측면 2개**를 만들기 위한 것이다.
+    둘이 어긋나면 어느 한쪽이 틀린 것이므로 테스트가 그 불일치 자체를 잡는다.
+    """
+    b_sec = engine.split_sections(ctx["story_before"]).get(section)
+    a_sec = engine.split_sections(ctx["story_after"]).get(section)
+    if b_sec is None or a_sec is None:
+        raise AssertionError(f"§{section} 이 before/after 한쪽에 부재 — 소실 계수 정의역 붕괴")
+    kids_a = children_by_section(engine, ctx)
+    kids_b = children_before_by_section(engine, ctx)
+    kids_b = kids_a if kids_b is None else kids_b
+    b_norm = (engine.reassemble(b_sec, kids_b.get(section, []))
+              if engine.has_split_markers(b_sec) else b_sec)
+    a_norm = (engine.reassemble(a_sec, kids_a.get(section, []))
+              if engine.has_split_markers(a_sec) else a_sec)
+    left, right = engine.s1_lines(b_norm), engine.s1_lines(a_norm)
+    return engine._multiset_diff(left, right), engine._multiset_diff(right, left)
+
+
+LOST_RE = re.compile(r"소실 (\d+)줄")
+GAINED_RE = re.compile(r"신규 (\d+)줄")
+
+
+def reported_lost(verdicts, section: str = "9"):
+    """엔진 verdict detail 이 **선언한** 소실 줄 수 (leg-A). 미방출이면 None."""
+    for v in verdicts:
+        if getattr(v, "leg", None) == "A" and getattr(v, "domain", None) == section:
+            m = LOST_RE.search(v.detail)
+            if m:
+                return int(m.group(1))
+            return 0 if "소실 0줄" in v.detail else None
+    return None
+
+
+def reported_gained(verdicts, section: str = "9"):
+    """엔진 verdict detail 이 선언한 신규 줄 수 (leg-A PASS 또는 leg-B). 미방출이면 None."""
+    for v in verdicts:
+        if getattr(v, "leg", None) == "B" and getattr(v, "domain", None) == section:
+            m = GAINED_RE.search(v.detail)
+            if m:
+                return int(m.group(1))
+    return None
 
 
 def run_inv_s2(engine, ctx, theta_move: int = 4096, reason_code=None):
@@ -981,6 +1061,216 @@ def ctx_self_pointer() -> Ctx:
 
 
 # ---------------------------------------------------------------------------
+# 6a. INV-S1 3-leg 분해 mutant — CP §8.2 신설 6종 (FIX Iter 14)
+#
+#   leg-A 무손실  RED    ⟺ (L − R) ≠ ∅   — fail-closed (차단 축)
+#   leg-B 순수성  SIGNAL ⟺ (R − L) ≠ ∅   — 비차단
+#   leg-C 순서    SIGNAL ⟺ L 이 R 의 부분수열 아님 — 비차단
+#
+# ★ 양성 4 ∧ 대조군 2 를 **쌍으로** 등재한다. 한쪽만으로는 배선이 닫히지 않는다 —
+#   양성 단독은 검사 미호출을 못 잡고(대조군이 항상 RED 여도 통과), 음성 단독은
+#   확대 방향(성장)에 무력하다. CP §8.2 "양성 ∧ 음성 쌍" 규약 그대로.
+# ---------------------------------------------------------------------------
+
+def _s9_line(i: int) -> str:
+    """§9 자식 본문의 결정적 filler 줄 — **다중도 1** 이라 주입 1건 = 소실 1건."""
+    return f"§9 verdict 서술 행 — 결정적 filler. #{i:04d}"
+
+
+def _child9(ctx: Ctx, body: str) -> dict:
+    ch = dict(ctx["children"])
+    ch[child_path(SPLIT_ID)] = build_child("9", SPLIT_ID, body)
+    return ch
+
+
+def _drop_line(text: str, target: str) -> str:
+    lines = text.split("\n")
+    if target not in lines:
+        raise AssertionError(f"fixture drift — 삭제 대상 줄 부재: {target!r}")
+    return "\n".join(ln for ln in lines if ln != target)
+
+
+def _indent_once(text: str, target: str) -> str:
+    """`target` 과 정확히 같은 줄 **1건**(최초 출현)에만 선행 공백 2칸을 넣는다."""
+    lines = text.split("\n")
+    for i, ln in enumerate(lines):
+        if ln == target:
+            lines[i] = "  " + ln
+            return "\n".join(lines)
+    raise AssertionError(f"fixture drift — 주입 대상 줄 부재: {target!r}")
+
+
+LOSS_LINE_VICTIM = _s9_line(200)
+LOSS_MUTATE_VICTIMS = tuple(_s9_line(i) for i in (100, 200, 300))
+LOSS_MASK_VICTIM = _s9_line(250)
+LOSS_MASK_NEW_LINES = 2000          # CP §8.2 = 2,000줄 신규 저작으로 위장
+SPLIT_GROW_NEW_LINES = 160          # CP §8.2 설계 실측 대조군(신규 160줄)과 동형
+MIDSPLIT_CUT = 200                  # 절-중간 분할 지점 (§9 본문 줄 인덱스)
+
+# M-LOSS-NOTATION — 고다중도 boilerplate 흡수를 **재현**하기 위한 표 2개.
+# 흡수 조건 = `count_R(x) > count_L(x)`. 즉 같은 커밋의 **정상 성장**이 그 줄의 사본을
+# 하나 더 공급했을 때만 선행공백 주입이 소실로 계상되지 않는다 (설계 실측 3주입/1흡수).
+NOTATION_BOILER = "|---|---|"
+NOTATION_TABLE_A = "| 항목 | 값 |\n" + NOTATION_BOILER + "\n| 채택 | 외부화 |\n"
+NOTATION_TABLE_B = "| 신규 | 값 |\n" + NOTATION_BOILER + "\n| 성장 | 정상 저작 |\n"
+NOTATION_VICTIMS = (_s9_line(50), _s9_line(150), NOTATION_BOILER)
+
+
+def ctx_loss_line() -> Ctx:
+    """M-LOSS-LINE — 자식 본문 **1줄 삭제** (최소 손실). leg-A RED (소실 1)."""
+    ctx = split_ctx()
+    body = _drop_line(SECTION_9_BODY, LOSS_LINE_VICTIM)
+    return ctx.copy_with(
+        children=_child9(ctx, body),
+        construction=(
+            f"§9·§10 순수 이동 분할 위에서 §9 자식 본문의 filler 1줄 "
+            f"({LOSS_LINE_VICTIM!r}, 다중도 1, "
+            f"{len(LOSS_LINE_VICTIM.encode('utf-8'))} B)만 제거 — parent stub·앵커 쌍·§10 무변경. "
+            f"L−R = 1줄 ⇒ leg-A RED, R−L = 0 ⇒ leg-B PASS"))
+
+
+def ctx_loss_mutate() -> Ctx:
+    """M-LOSS-MUTATE — 자식 본문 **3줄 내용 변조**. 변조 = 원 줄 소실 ⇒ leg-A RED (소실 3).
+
+    `서술 행` → `서술 항` (둘 다 UTF-8 3 B) 이라 **줄 길이가 보존**된다 — 길이·바이트수
+    기반 술어였다면 통과했을 형상이며, 파싱 가능성도 유지된다.
+    """
+    ctx = split_ctx()
+    body = SECTION_9_BODY
+    for victim in LOSS_MUTATE_VICTIMS:
+        if victim not in body:
+            raise AssertionError(f"fixture drift — 변조 대상 줄 부재: {victim!r}")
+        body = body.replace(victim, victim.replace("서술 행", "서술 항"), 1)
+    return ctx.copy_with(
+        children=_child9(ctx, body),
+        construction=(
+            "§9 자식 본문 filler 3줄(#0100·#0200·#0300)의 `서술 행` → `서술 항` 치환 "
+            "(각 3 B → 3 B, 줄 길이·바이트수 불변, 마크다운 파싱 가능). "
+            "원 3줄이 R 에서 사라지므로 L−R = 3줄 ⇒ leg-A RED, 치환본 3줄이 R−L ⇒ leg-B SIGNAL"))
+
+
+def ctx_loss_notation(*, inject: bool = True, growth: bool = True) -> Ctx:
+    """M-LOSS-NOTATION — 자식 본문 줄에 **선행 공백 2칸** 삽입 (표기 등가변형 축).
+
+    `INV_S1_CANON = trailing_newline_only` 이라 들여쓰기는 정규화되지 않는다 ⇒ 원 줄 소실.
+    단 **고다중도 boilerplate 줄은 흡수될 수 있다**: `growth=True` 면 같은 커밋의 정상 성장
+    (표 B)이 `|---|---|` 사본을 하나 더 공급해 `count_R > count_L` 이 되고, 그 줄의
+    선행공백 주입은 소실로 계상되지 않는다. 주입 3건 중 1건 흡수 ⇒ **소실 2** (CP §8.2 실측).
+    `growth=False` 는 그 흡수가 **다중도 때문이지 표기 때문이 아님**을 반증하는 대조 축이다
+    (같은 3건 주입이 소실 3이 된다).
+    """
+    before_body = SECTION_9_BODY + NOTATION_TABLE_A
+    child = before_body + (NOTATION_TABLE_B if growth else "")
+    if inject:
+        for victim in NOTATION_VICTIMS:
+            child = _indent_once(child, victim)
+    before = build_story(section_9_body=before_body)
+    after = build_story(split_9=True, split_10=True)
+    children = {
+        child_path(SPLIT_ID): build_child("9", SPLIT_ID, child),
+        child_path(SPLIT_ID_S10): build_child("10", SPLIT_ID_S10, SECTION_10_BODY),
+    }
+    return Ctx(before, after, build_cp(), children, build_baseline(),
+               (f"§9 = SECTION_9_BODY + 표 A(`{NOTATION_BOILER}` 1회) 를 분할, "
+                f"자식은 그 전부 + {'표 B(같은 boilerplate 1회 추가 — 정상 성장)' if growth else '성장 0'}. "
+                f"주입 = 자식 안 3줄(#0050 · #0150 · 표 A 의 `{NOTATION_BOILER}`)에 선행 공백 2칸 "
+                f"1건씩({'inject' if inject else 'no-inject 대조군'}). "
+                f"boilerplate 줄은 L 다중도 1 / R 다중도 {2 if growth else 1} 이라 "
+                f"{'흡수 ⇒ 소실 2' if growth else '흡수 없음 ⇒ 소실 3'}"))
+
+
+def ctx_loss_mask() -> Ctx:
+    """M-LOSS-MASK — **1줄 삭제 + 대량 신규 저작**으로 위장. leg-A RED ∧ leg-B SIGNAL.
+
+    순증 줄수(+1,999)·전체 digest·바이트 총량 어느 것으로 재도 "커졌다" 로만 보이는 형상이다.
+    **성장은 손실을 덮지 못한다** — 두 축이 분리돼 있어야만 이 mutant 가 잡힌다.
+    """
+    ctx = split_ctx()
+    body = _drop_line(SECTION_9_BODY, LOSS_MASK_VICTIM) + _filler("§9 위장 저작", LOSS_MASK_NEW_LINES)
+    return ctx.copy_with(
+        children=_child9(ctx, body),
+        construction=(
+            f"§9 자식 본문에서 filler 1줄({LOSS_MASK_VICTIM!r})을 제거한 뒤 그 말미에 "
+            f"신규 filler {LOSS_MASK_NEW_LINES}줄을 append — 줄 순증 "
+            f"+{LOSS_MASK_NEW_LINES - 1}, 바이트 순증 대폭. "
+            f"L−R = 1줄 ⇒ leg-A RED, R−L = {LOSS_MASK_NEW_LINES}줄 ⇒ leg-B SIGNAL (별도 축)"))
+
+
+def ctx_split_grow_ctl() -> Ctx:
+    """M-SPLIT-GROW-CTL (**대조군**) — 분할 ∧ `sections(anchor_delta)` **안**에 정상 append.
+
+    GREEN 기대 (leg-A PASS ∧ leg-B SIGNAL). 성장을 검사 정의역 **밖**(예: §7)에 주입하면
+    대조군이 공허해진다 — "정의역 밖이라 안 걸린 것"과 "정의역 안인데 안 걸린 것"이
+    같은 GREEN 으로 뭉개지기 때문이다. 그래서 §9(= anchor_delta 섹션) 안에 넣는다.
+    """
+    ctx = split_ctx()
+    body = SECTION_9_BODY + _filler("§9 정상 저작", SPLIT_GROW_NEW_LINES)
+    return ctx.copy_with(
+        children=_child9(ctx, body),
+        construction=(
+            f"§9·§10 분할 커밋의 §9 자식 본문 말미에 신규 filler {SPLIT_GROW_NEW_LINES}줄을 "
+            f"append — 삭제·변조 0. §9 ∈ sections(anchor_delta) = {{9, 10}} 이므로 성장이 "
+            f"**검사 정의역 안**에 있다. L−R = 0 ⇒ leg-A PASS(rc 무영향), "
+            f"R−L = {SPLIT_GROW_NEW_LINES}줄 ⇒ leg-B SIGNAL 이 같은 실행에서 방출"))
+
+
+def ctx_midsplit_ctl() -> Ctx:
+    """M-MIDSPLIT-CTL (**대조군**) — **절-중간** 분할 pure move. stub 뒤에 절 본문이 잔존한다.
+
+    기각안(prefix·부분수열 술어) 반례 고정: `reassemble` 이 자식을 항상 **절 말미**에
+    결합하므로 절-중간 분할은 줄 **순서**가 뒤집힌다. 순서를 차단 축에 두었다면 이 정상
+    이동이 false RED 였다 — 그래서 leg-C 는 비차단 SIGNAL 이다. multiset 은 보존되므로
+    leg-A·leg-B 는 PASS 이고 최종 GREEN 이다.
+    """
+    lines = SECTION_9_BODY.split("\n")
+    part1 = "\n".join(lines[:MIDSPLIT_CUT]) + "\n"     # 자식으로 나가는 앞부분
+    part2 = "\n".join(lines[MIDSPLIT_CUT:])            # parent stub **뒤**에 잔존하는 뒷부분
+    before = build_story()
+    after = build_story(split_9=True, split_10=True, section_9_extra=part2)
+    children = {
+        child_path(SPLIT_ID): build_child("9", SPLIT_ID, part1),
+        child_path(SPLIT_ID_S10): build_child("10", SPLIT_ID_S10, SECTION_10_BODY),
+    }
+    return Ctx(before, after, build_cp(), children, build_baseline(),
+               (f"§9 본문 {len(lines)}줄 중 앞 {MIDSPLIT_CUT}줄만 자식으로 이동하고 "
+                f"나머지 {len(lines) - MIDSPLIT_CUT}줄은 stub **뒤**에 잔존시킨다 "
+                f"(절-중간 분할). 재조립본 = heading + 뒷부분 + 앞부분 이라 multiset 은 "
+                f"보존되고 줄열 순서만 뒤집힌다 ⇒ leg-A/B PASS ∧ leg-C SIGNAL"))
+
+
+def ctx_resplit_child_loss(n_lost: int = 2):
+    """재분할(split_id 변경) — before/after **양쪽에 §9 앵커**가 있는 유일한 형상.
+
+    이때만 `children_before` 가 판정에 들어간다. after-ref 자식에서 n_lost 줄을 지운다.
+      · `children_before` 미선언(종전 경로) — 양변을 같은 (손실된) 자식으로 재조립하므로
+        손실이 **상쇄**돼 digest 동일 ⇒ fast-path PASS. 즉 leg-A 가 공허해진다.
+      · `children_before` 선언 — L 이 before 의 실제 내용이 되어 소실 n_lost 줄이 드러난다.
+    반환 = (ctx, 삭제한 줄 목록).
+    """
+    old, new = SPLIT_ID, SPLIT_ID + "B"
+    before = build_story(split_9=True, split_10=True)
+    after = before.replace(old, new)
+    victims = [_s9_line(400 - n_lost + i) for i in range(n_lost)]
+    lossy = SECTION_9_BODY
+    for victim in victims:
+        lossy = _drop_line(lossy, victim)
+    kids_before = {
+        child_path(old): build_child("9", old, SECTION_9_BODY),
+        child_path(SPLIT_ID_S10): build_child("10", SPLIT_ID_S10, SECTION_10_BODY),
+    }
+    kids_after = {
+        child_path(new): build_child("9", new, lossy),
+        child_path(SPLIT_ID_S10): build_child("10", SPLIT_ID_S10, SECTION_10_BODY),
+    }
+    ctx = Ctx(before, after, build_cp(), kids_after, build_baseline(),
+              (f"§9 를 `{old}` → `{new}` 로 재분할(앵커 id 만 변경, parent stub 본문 동일)하면서 "
+               f"after-ref 자식에서 filler {n_lost}줄({', '.join(repr(v) for v in victims)})을 삭제. "
+               f"anchor_delta 는 §9 를 포함하고 before·after **둘 다** §9 에 앵커를 갖는다"),
+              None, kids_before)
+    return ctx, victims
+
+
+# ---------------------------------------------------------------------------
 # 7. M-SUTURE / dark-path probe — 엔진 판정 줄 소스 변형
 # ---------------------------------------------------------------------------
 
@@ -1270,8 +1560,6 @@ def run_battery(engine) -> dict:
          "— 섹션 로스터에서 §9 소실"),
         ("M-E2", ctx_e2_zwsp,
          "자식 본문 첫 단어 사이에 U+200B(3 B) 삽입 — 재조립 digest 불일치"),
-        ("M-E3", ctx_e3_fence_phantom,
-         "자식 말미에 코드펜스 phantom heading 블록(65 B) 추가 — 재조립 digest 불일치"),
         ("M-DANGLING", ctx_dangling,
          "분할 커밋에서 §9 자식만 제거(dangling pointer) — §10 은 잔존"),
         ("M-SELFPTR", ctx_self_pointer,
@@ -1279,6 +1567,95 @@ def run_battery(engine) -> dict:
     ):
         add(mid, "INV-S1", s1_ctl, run_inv_s1(engine, ctx_fn()), con,
             synthetic_sha(split_base["story_after"]), "INV-S1 §9 재조립 digest")
+
+    # ★ M-E3 — 기대를 **실측에 맞춰** 재등재한다 (FIX Iter 14). 로스터에서 지우지 않는다
+    #   (검출 정의역 축소 = 이 Story 가 잡는 결함 그 자체다).
+    #
+    #   실측 [QADev firsthand, 엔진 wrapper `b1e08fd3e`, 매체 LF, 정의역 = §9 1건]:
+    #     M-E3 = leg-A PASS (소실 0줄 · 신규 3줄) / leg-B SIGNAL (신규 3) / leg-C PASS ⇒ rc 무영향
+    #     (대조 축 M-E2 = leg-A RED, 소실 1줄, 최초 소실 줄
+    #      '채택 = 성장축 외부화 + 실읽기량 목적함수.')
+    #
+    #   ★ 요점은 "M-E3 가 약해졌다" 가 아니라 **"M-E3 가 재던 것이 애초에 그 속성이
+    #     아니었다"** 이다.
+    #
+    #   (1) 종전 RED 는 phantom fence **검출을 입증하지 않는다.** 종전 판정은 무스코프
+    #       전체 digest 동일성이라 **어떤 append 든** RED 였다 — 그 RED 는 "phantom fence 를
+    #       잡았다" 가 아니라 "아무 변경이나 잡았다" 이고, 검출 **특이성이 애초에 0** 이다.
+    #       따라서 M-E3 는 **종전부터 hollow 였을 가능성이 높다**: 3-leg 분해가 만든 회귀가
+    #       아니라, 분해가 **드러낸 선재 상태**다. (CP §8.2 자기 실측 "종전 전체-digest 판정
+    #       RED 는 순수 오탐" 과 같은 class.)
+    #   (2) 구성상으로도 `ctx_e3_fence_phantom` 은 자식 본문 **말미에 3줄을 순수 append**
+    #       할 뿐 기존 줄을 지우거나 바꾸지 않는다 ⇒ 손실 축에서 `M-SPLIT-GROW-CTL` 과
+    #       **동일 구성**이다. 한쪽을 must RED · 다른 쪽을 must GREEN 으로 두면 두 등재가
+    #       **양립 불가**다.
+    #   (3) 단, **phantom fence 자체는 실 위협일 수 있다** — 주입된 fence 가 후속 heading 을
+    #       삼켜 섹션 파서를 오도할 수 있다 (형제 사례 #2951 이 같은 계열). 그렇다면 그것은
+    #       **손실 축(leg-A)이 아니라 구조·파싱 축**의 일이다.
+    #
+    #   ESCALATION (Orchestrator 가 ArchitectPL 로 정식 회부 — 판정 대기): 판정 선택지는
+    #   "M-E3 삭제" 가 아니라 **「어느 축으로 옮길 것인가」** 에 가깝다. 축 이동 여부·방법
+    #   (및 원래 겨냥한 E-3 를 실제로 재기 위한 fixture 재구성 필요 여부)은 **ArchitectPL
+    #   판정 사항이며 QADev 가 정하지 않는다**(설계 결정). 여기서는 로스터 유지 + 실측 반영
+    #   + 표식까지만 한다.
+    e3_ctx = ctx_e3_fence_phantom()
+    e3_v = run_inv_s1(engine, e3_ctx)
+    add("M-E3", "INV-S1", s1_ctl, e3_v,
+        "자식 말미에 코드펜스 phantom heading 블록(65 B / 3줄)을 **순수 append** "
+        "— 기존 줄 삭제·변조 0",
+        synthetic_sha(e3_ctx["story_after"], e3_ctx["children"][child_path(SPLIT_ID)]),
+        "INV-S1 §9 leg-A", expect_red=False,
+        note=("★ESCALATION(ArchitectPL 회부·판정 대기) — 실측 leg-A PASS(소실 %s · 신규 %s) "
+              "/ leg-B SIGNAL. 종전 RED 는 phantom fence 검출을 **입증하지 않는다**: "
+              "whole-digest 술어 하에서는 어떤 append 든 RED 라 검출 특이성이 0 이었다 "
+              "⇒ 3-leg 분해가 만든 회귀가 아니라 분해가 **드러낸** 선재 hollow. "
+              "pure-append 라 손실 축에서 M-SPLIT-GROW-CTL 과 동형 ⇒ must_red 등재 불가. "
+              "단 phantom fence 자체는 실 위협일 수 있고(후속 heading 을 삼켜 섹션 파서 오도, "
+              "형제 사례 #2951) 그것은 **구조·파싱 축**의 일이다 — 판정 선택지는 '삭제' 가 아니라 "
+              "'어느 축으로 옮길 것인가'이며 ArchitectPL 소관(QADev 재설계 금지)"
+              % (reported_lost(e3_v), reported_gained(e3_v))))
+
+    # --- INV-S1 3-leg 분해 축 — CP §8.2 신설 6종 (양성 4 ∧ 대조군 2) --------
+    #  ★ 쌍으로 등재한다: 양성 단독은 **검사 미호출**을 못 잡고(배선을 상수로 바꿔도
+    #    대조군이 통과), 음성 단독은 **확대 방향**(성장)에 무력하다.
+    for mid, ctx_obj in (("M-LOSS-LINE", ctx_loss_line()),
+                         ("M-LOSS-MUTATE", ctx_loss_mutate()),
+                         ("M-LOSS-MASK", ctx_loss_mask())):
+        v = run_inv_s1(engine, ctx_obj)
+        add(mid, "INV-S1", s1_ctl, v, ctx_obj["construction"],
+            synthetic_sha(ctx_obj["story_after"], ctx_obj["children"][child_path(SPLIT_ID)]),
+            "INV-S1 §9 leg-A", exact_vec={("9", "A")},
+            note="소실 %s줄 / 신규 %s줄 (leg-A 차단 · leg-B 비차단 분리)"
+                 % (reported_lost(v), reported_gained(v)))
+
+    # M-LOSS-NOTATION — 대조군은 **같은 형상의 무주입본**(성장 동반)이어야 한다.
+    #   split_base 를 대조군으로 쓰면 "성장 동반" 축이 대조에서 빠져 흡수 현상이 설명 불가가 된다.
+    notation_ctl = ctx_loss_notation(inject=False)
+    notation_inj = ctx_loss_notation(inject=True)
+    notation_v = run_inv_s1(engine, notation_inj)
+    add("M-LOSS-NOTATION", "INV-S1", run_inv_s1(engine, notation_ctl), notation_v,
+        notation_inj["construction"],
+        synthetic_sha(notation_inj["story_after"],
+                      notation_inj["children"][child_path(SPLIT_ID)]),
+        "INV-S1 §9 leg-A", exact_vec={("9", "A")},
+        note=("선행공백 3건 주입 → 소실 %s줄 (1건 흡수 — `%s` 는 같은 커밋의 정상 성장이 "
+              "사본을 하나 더 공급해 L 다중도 1 / R 다중도 2). "
+              "성장 없는 변형(`ctx_loss_notation(growth=False)`)에서는 같은 3건이 소실 3 이다 "
+              "— 흡수 원인이 표기가 아니라 **다중도**임을 반증한다"
+              % (reported_lost(notation_v), NOTATION_BOILER)))
+
+    # 대조군 2 — GREEN 기대. GREEN 이 '검사 미호출' 이 아님을 SIGNAL 방출로 같은 실행에서 보인다.
+    for mid, ctx_obj in (("M-SPLIT-GROW-CTL", ctx_split_grow_ctl()),
+                         ("M-MIDSPLIT-CTL", ctx_midsplit_ctl())):
+        v = run_inv_s1(engine, ctx_obj)
+        sig = sorted("%s:%s" % (_dom(x), _leg(x)) for x in v
+                     if getattr(x, "status", None) == "SIGNAL")
+        add(mid, "INV-S1", s1_ctl, v, ctx_obj["construction"],
+            synthetic_sha(ctx_obj["story_after"], ctx_obj["children"][child_path(SPLIT_ID)]),
+            "INV-S1 §9 leg-A", expect_red=False,
+            note=("GREEN(차단 0) ∧ 비차단 SIGNAL %s — 소실 %s줄 / 신규 %s줄. "
+                  "SIGNAL 이 방출된다는 것이 이 GREEN 이 **미발화·미호출의 GREEN 이 아님**을 "
+                  "같은 실행에서 증명한다" % (sig, reported_lost(v), reported_gained(v))))
 
     # --- INV-S2 축 ---------------------------------------------------------
     add("M-STRAYEND", "INV-S1", s1_ctl, run_inv_s1(engine, ctx_stray_end_only()),
