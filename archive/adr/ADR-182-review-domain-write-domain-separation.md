@@ -9,7 +9,7 @@ carrier_story: CFP-2999
 related_adrs:
   - ADR-067  # §결정 2/3 RESET reassessment — 본 ADR §결정 3 이 positive 기재 의무 신설 (amendment 실배선 = CFP-2985 편입). §결정 8 의 2층 disjoint (닫기 게이트 ⊥ max-FIX 카운터) 무손상 — PASS 층 분리는 본 ADR 신설분
   - ADR-125  # 요구사항리뷰 lane 규범 SSOT — §결정 4 disjoint 를 write 표면 축으로 additive 확장 (amendment 실배선 = 후속 배선 Story). required contexts 무변경 존중
-  - ADR-039  # §10 Orchestrator monopoly 선례 — 신규 증적 monopoly 섹션의 권한 재편 anchor
+  - ADR-039  # §결정 15 Orchestrator-monopoly 4-sub-scope (§9 verdict·§10 Ledger·§14·phase transition — lane self-write 열거에서 §9 제외) — 신규 증적 monopoly 섹션의 권한 재편 anchor. 본 ADR 은 §9 write 권한 무접촉
   - ADR-031  # §14 monopoly 섹션 선례 — 신규 monopoly 섹션 신설 정합 anchor
   - ADR-064  # §결정 5 CFP scope unitary 룰 (별개 CFP 분리 허용) — 판정(본 ADR)/처방(#2988) 분리 구조와 정합. 처방 재정의 금지는 본 ADR 자체 결정
   - ADR-119  # 검증-후-단언 + §결정 9 3문 게이트 — 소급 재분류 기각 근거·정직 천장 라벨 규율
@@ -116,7 +116,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 **경계 (재귀 재생산 차단)**: 위 3종 밖의 것은 이관 대상이 아니다. **본문 정정 write 는 §2-§6 에 잔존한다** — FIX 가 요구사항 명세 자체(모순·오류)를 고치는 write 는 정의상 명세로 가야 하며, §1 은 immutable 구조 분리로 이미 제외되어 실효 FIX write 정의역 = §2-§6 이다. "본문 정정이냐 메타냐" 가 새 심사 대상이 되지 않도록 closed-enum 3종만 이관한다.
 
 **이관 목적지 = 신규 증적 전용 monopoly 섹션** (Story §4.2 이관 목적지 3안 중 (c) — 회귀면 최소):
-- §9 부적격 — lint 실측 `SECTION_OWNERS["9"] = [review, design, develop, requirements]` (다중 owner, NF4-03. Story §5.1 UC-4 의 "§9·§10 Orchestrator 독점" 문면은 §1 전제 오류로 비승계).
+- §9 부적격 — Story §5.1 UC-4 의 「§9·§10 Orchestrator 독점」 중 **§10 은 참** (lint `MONOPOLY_SECTIONS` "10" 등재 ∧ fix-event-v1 append writer = Orchestrator 단독 ∧ ADR-039 §결정 15-②), **§9 전체 독점 주장만 부정확** — §9 final verdict 는 ADR-039 §결정 15-① Orchestrator-monopoly sub-scope 이나, §9 하위 서술(lane 산출 기록)은 lint `SECTION_OWNERS["9"] = [review, design, develop, requirements]` 다중 owner 다 (NF4-03). **비승계 대상 = 「§9 전체 독점」 주장 한정** (Story §5.6 (ii) 「§10 monopoly 는 참, §9 는 아님」 원 분해 승계 — CR-D2-01 정밀화).
 - §10 부적격 — 표 스키마 + B(CFP-2985) 소유면.
 - **섹션 번호는 본 ADR 이 예단하지 않는다** — C(CFP-2986) 편입 시 story-page-structure 정본에서 확정한다 (PR codeforge-internal-docs#3029 의 §9 성장축 외부화 착지 후 정합 확인 의무). write 주체는 monopoly 단일 주체 방향 (ADR-031 §14·ADR-039 §10 monopoly 선례 정합) — 확정 = C 편입 시.
 
@@ -159,7 +159,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 
 - **처방 본문 = #2988 참조 (SSOT 단일화 — 본 ADR 자체 결정)**: 파생화 처방의 정의·taxonomy·집행 메커니즘은 #2988 이 단일 SSOT 이며 본 ADR 에서 재정의하지 않는다 — 이 재정의 금지는 **본 ADR 의 자체 결정**이다 (ADR-064 §결정 5 「CFP scope unitary 룰」은 별개 CFP 분리를 허용하므로 판정(본 ADR)/처방(#2988) 분리 구조와 정합 — 원문 재대조 완료, "single carrier" 는 §결정 5 문면이 아니다). 본 결정은 **적용 범위 boolean 판정만** 수행한다 — "#2988 처방의 적용 정의역에 §9·§10 원장을 포함한다" = **true**. 근거 = §1 (마): Orchestrator 자신이 §9 원장에서 좌표 파생 정수 결함을 냈다 (그 결함을 설명하는 문장 자신에서) — 결함 class 는 write 주체를 가리지 않는다.
 - **적용 경계 조건 (필수)**: **원장을 심사 정의역에 편입하지 않는 조건 하에서만** 적용한다. 원장을 리뷰 심사 정의역에 편입하면 §결정 1 이 끊은 자기증식 고리가 원장 경유로 재개통된다. 원장 품질은 심사 편입이 아니라 파생화 규율 + 기계 lint (실배선 후속) 로 확보한다.
-- **수신자 = §9/§10 write 주체 전원**: §9 는 Orchestrator 단독 정의역이 아니다 — lint 실측 `SECTION_OWNERS["9"] = [review, design, develop, requirements]` (Orchestrator 포함 전 write 주체가 규율 수신자. §1 (마)가 Orchestrator 자기 실증 사례).
+- **수신자 = §9/§10 write 주체 전원**: §10 write = Orchestrator 단독 (ADR-039 §결정 15-②) / §9 는 final verdict 만 Orchestrator monopoly (§결정 15-①) 이고 하위 서술은 lint `SECTION_OWNERS["9"] = [review, design, develop, requirements]` 다중 owner — 따라서 규율 수신자 = Orchestrator + §9 하위 서술 write 4 lane 전원 (§1 (마)가 Orchestrator 자기 실증 사례 — CR-D2-01 정밀화).
 
 ### §결정 5 — 소급 transition 3-상태 (요청 5 — AC-5a/5b/5c)
 
@@ -188,6 +188,8 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 2. section-schema (증적 row 필수 필드 3종 presence).
 3. 본문 side 고정 포인터 1줄 (Story 골격 상수).
 4. PR codeforge-internal-docs#3029 (§9 성장축 외부화) 착지 후 정합 확인 의무 — 역방향 충돌 검사.
+5. **신규 증적 섹션의 소유권 집행 배선**: `scripts/lib/check_story_section_ownership.py` `MONOPOLY_SECTIONS`(또는 `SECTION_OWNERS`) 등재 + 미등재 섹션이 `Unknown section — skip (forward-compat)` (동 스크립트 L394-397 @6bb0e8aa5) 로 무검사 낙하함을 회귀 테스트로 고정 (born-hollow monopoly 차단 — INV-5 집행 채널 정합, CR-D2-02). write 주체가 Orchestrator 로 확정되면 ADR-039 §결정 15 sub-scope 확장 정합 확인 동반 (5번째 sub-scope 추가의 amendment 의무 여부 = §결정 15 원문 재확인 대상 — verbatim 확보분은 inline whitelist entry 축 의무뿐, sub-scope 축은 closed-enum 규율 추론).
+6. **§9 소유권 SSOT 불일치 수렴**: `story-page-structure.md` 「단계별 갱신 책임」 표의 §9.x "Orchestrator 단독" 표기 ↔ lint `SECTION_OWNERS["9"]` 4-lane ↔ ADR-039 §결정 15-① verdict-한정 monopoly — 3자 정합화 (Story §4.2 장벽 1 실측 충돌의 수렴 배정, CR-D2-01 권고 수용).
 
 **비분할면 잔여 배선 = 후속 배선 Story 1건 회부** (본 목록이 SSOT — 발의 3문 게이트 통과: 깨짐 = scope 문면 혼재 + 판정표 실태 괴리 실측 / 강제 요인 = 본 ADR 채택 / 관찰자 무관 필요):
 1. bucket A 수렴 5좌표 정정 (§결정 0 표 — RequirementsReviewPLAgent.md frontmatter `§1-7`·L182 `§1-§7`, codeforge-review.md L23·L170, review-responsibility/SKILL.md L93. 좌표는 @4b30b860 한정 — 정정 시 재현 명령으로 재도출).
@@ -253,4 +255,4 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 - `plugins/codeforge-review/agents/RequirementsReviewPLAgent.md` — bucket A 수렴 2좌표 (후속 배선 Story)
 - `skills/review-responsibility/SKILL.md` — bucket A 수렴 1좌표 (후속 배선 Story)
 - `plugins/codeforge-review/docs/architecture/codeforge-review.md` — bucket A 수렴 2좌표 (후속 배선 Story)
-- `scripts/lib/check_story_section_ownership.py` — `SECTION_OWNERS["9"]` 다중 owner 실측 근거 (무변경)
+- `scripts/lib/check_story_section_ownership.py` — `SECTION_OWNERS["9"]` 다중 owner·`MONOPOLY_SECTIONS` "10" 실측 근거 (본 Story 무접촉 — C 편입 시 신규 증적 섹션 등재 대상, §편입 지시 C-5)
