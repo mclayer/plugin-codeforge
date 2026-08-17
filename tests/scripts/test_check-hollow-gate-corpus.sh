@@ -228,7 +228,7 @@ HGC_EXPECTED_CASE_TOTAL=80   # 65+2+8+4+1=80 ← 산술식 전항을 상수와 *
 #     정합 이동한다). 종전 상수와 다른 점은 **baseline 이 저자가 쓸 수 없는 리비전**(merge-base)
 #     이라 그 이동이 **고지**된다는 것 하나뿐이다. 「봉인」이 아니다 — §13.5 정직 천장 ⓐ 참조.
 #   ★ 갱신 절차: 실패 문면이 실측 서명을 그대로 출력하므로 그 값을 여기에 옮긴다.
-HGC_DECLARED_COMPOSITION="census=96/50/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
+HGC_DECLARED_COMPOSITION="census=97/50/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
 
 note() { echo "::notice::$*" >&2; }
 log()  { echo "$*" >&2; }
@@ -1960,8 +1960,18 @@ hgc_decl_match() { [ "$1" = "$HGC_DECLARED_COMPOSITION" ]; }
 #   를 읽어 위 ARM2 에서 **PASS 문면이 자기가 인쇄한 값에 반증되는** 출력이 났다
 #   (인쇄 `helper=9f80245f9b90` ↔ 선언 `helper=9f1950b3fd0e` 인데 「정합」). 두 값을 나란히 찍어
 #   문면만 읽어도 모순이 보이게 한다.
-# ★ `hgc_cur_sig` 는 삭제하지 않는다 — §13.6 T-SIG(a)(b)(c)(d)(e) 의 기준값이다. 판정 경로만
-#   본 함수로 옮겼다.
+# ★ `hgc_cur_sig`(위 P1 대입)는 **삭제하지 않되 어떤 소비자도 두지 않는다**. 14회차 실측 M-g4 가
+#   그 이유다 — A-1 이 판정 안에서 서명을 **다시** 산출하게 만들면서 같은 사실의 **생산자가 2개**가
+#   됐고(P1 = 위 대입 / P2 = 본 함수 안 산출), §13.5 는 P2 를 쓰는데 §13.6 T-SIG 는 P1 을 읽어
+#   **소비자가 갈렸다**. 그 상태에서 P1 을 `="$HGC_DECLARED_COMPOSITION"` 로 상수화하면 청정
+#   상태에서는 선언값 == 실측이라 **관측면이 없다** — 실측 M-g4: `rc=0 PASS=79 FAIL=0 SKIP=1`,
+#   RED 0(전건 초록). 대조군 (a) 가 「무변형 사본 서명 == 기준값」을 보는데 그 기준값이 상수면
+#   (a) 는 「서명 술어가 무엇이든 이동이 아니다」를 더 이상 **증명하지 않는다** — 그리고 (a) 가
+#   서지 않으면 그것을 전제로 계상되는 b·c·d 관측이 함께 무의미해진다.
+#   ⇒ 처방은 leg 추가가 아니라 **소비자 통일**이다: §13.5 baseline leg 과 §13.6 (a)(b)(c)(d)(e) 가
+#     전부 **판정이 실제로 산출한 값** `hgc_verdict_actual` 을 읽는다. 그러면 P1 은 소비자가 0 이라
+#     상수화해도 **바꿀 수 있는 판정이 없다**(공격 가치 소멸). P1 대입 자체는 존치한다 — 제거는
+#     본 회차 지시 범위 밖이고, 소비자 0 이면 존치 비용이 판정면에 없다.
 hgc_verdict_actual=""
 hgc_composition_verdict() {
   hgc_verdict_actual="$(hgc_composition_signature "$hgc_self_src")"
@@ -2003,12 +2013,12 @@ if [ "$hgc_mb_state" = "취득" ]; then
   else
     hgc_base_sig="$(hgc_composition_signature "$TEST_TMP/hgc-base-self.sh")"
     hgc_base_decl="$(sed -n 's/^HGC_DECLARED_COMPOSITION="\(.*\)"$/\1/p' "$TEST_TMP/hgc-base-self.sh")"
-    if [ "$hgc_base_sig" = "$hgc_cur_sig" ]; then
-      pass_case "구성 앵커(baseline): merge-base ${hgc_mb:0:12} 대비 구성 **무이동** [$hgc_cur_sig]"
+    if [ "$hgc_base_sig" = "$hgc_verdict_actual" ]; then
+      pass_case "구성 앵커(baseline): merge-base ${hgc_mb:0:12} 대비 구성 **무이동** [$hgc_verdict_actual]"
     elif [ -n "$hgc_base_decl" ] && [ "$hgc_base_decl" = "$HGC_DECLARED_COMPOSITION" ]; then
-      fail_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동했는데 [$hgc_base_sig → $hgc_cur_sig] §0 선언은 merge-base 와 **동일**하다 — 저자가 쓸 수 없는 기준점 대비 이동이 선언에 반영되지 않았다"
+      fail_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동했는데 [$hgc_base_sig → $hgc_verdict_actual] §0 선언은 merge-base 와 **동일**하다 — 저자가 쓸 수 없는 기준점 대비 이동이 선언에 반영되지 않았다"
     else
-      pass_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동 [$hgc_base_sig → $hgc_cur_sig] 하고 §0 선언도 함께 이동했다 — 의도적 변경으로 계상한다. ★ 본 leg 의 값은 RED 가 아니라 **저자가 쓸 수 없는 기준점 대비 「이동했다」는 고지** 자체다"
+      pass_case "구성 앵커(baseline): 구성이 merge-base ${hgc_mb:0:12} 대비 이동 [$hgc_base_sig → $hgc_verdict_actual] 하고 §0 선언도 함께 이동했다 — 의도적 변경으로 계상한다. ★ 본 leg 의 값은 RED 가 아니라 **저자가 쓸 수 없는 기준점 대비 「이동했다」는 고지** 자체다"
     fi
   fi
 else
@@ -2056,10 +2066,12 @@ tsig_probe="$TEST_TMP/tsig-probe.sh"
 #     서명 술어가 「무엇이든 이동」(항상 RED)이면 여기서 잡힌다.
 cp -- "$hgc_self_src" "$tsig_probe"
 tsig_a="$(hgc_composition_signature "$tsig_probe")"
-if [ "$tsig_a" = "$hgc_cur_sig" ]; then
-  pass_case "T-SIG-a 대조군: 무변형 사본 서명 == 현재 서명 — 서명 술어가 「무엇이든 이동」이 아니다(대조군 성립). 이것이 서지 않으면 아래 판별력 관측이 무의미하다"
+if [ -z "$hgc_verdict_actual" ]; then
+  fail_case "T-SIG-a 대조군: NOT_RUN — §13.5 판정이 산출값을 남기지 않았다(「hgc_verdict_actual」 공백). 판정 함수가 **호출되지 않았다**는 뜻이고(소비 배선 절단 — §13.6 천장 ⓔ), 기준값이 없으므로 아래 판별력 관측을 계상하지 않는다. ★ 이 분기는 「판정 소비 배선」 축의 **한 부분형**(호출 자체가 사라진 형)만 덮는다 — 호출은 하되 결과를 무시하는 형은 덮지 못한다(실측 M-x3, 천장 ⓔ)"
+elif [ "$tsig_a" = "$hgc_verdict_actual" ]; then
+  pass_case "T-SIG-a 대조군: 무변형 사본 서명 == **판정이 산출한 값** — 서명 술어가 「무엇이든 이동」이 아니다(대조군 성립). 이것이 서지 않으면 아래 판별력 관측이 무의미하다. ★ 기준값을 별도 생산자가 아니라 판정 산출값에서 가져오는 이유 = M-g4(생산자 상수화가 전건 무성) — §13.5 머리 주석 참조"
 else
-  fail_case "T-SIG-a 대조군: 무변형 사본 [$tsig_a] ≠ 현재 [$hgc_cur_sig] — 대조군 불성립이면 아래 관측을 판별력으로 계상할 수 없다"
+  fail_case "T-SIG-a 대조군: 무변형 사본 [$tsig_a] ≠ 판정 산출값 [$hgc_verdict_actual] — 대조군 불성립이면 아래 관측을 판별력으로 계상할 수 없다"
 fi
 
 # (b)(c)(d) 양성 — **성분 1개씩만** 움직이는 탐침. 그 성분이 이동하지 않으면 그 성분의 산출이
@@ -2086,7 +2098,7 @@ for tsig_case in \
   esac
 
   tsig_sig="$(hgc_composition_signature "$tsig_probe")"
-  tsig_before="$(tsig_field "$tsig_comp" "$hgc_cur_sig")"
+  tsig_before="$(tsig_field "$tsig_comp" "$hgc_verdict_actual")"
   tsig_after="$(tsig_field "$tsig_comp" "$tsig_sig")"
 
   # ★ **불변 conjunct** (F-CR31-6 봉합) — 종전 판정은 「대상 성분이 이동했다」만 봤다. 그러면
@@ -2099,7 +2111,7 @@ for tsig_case in \
   tsig_other_notrun=""
   for tsig_oc in census helper loopdecl; do
     if [ "$tsig_oc" != "$tsig_comp" ]; then
-      tsig_ob="$(tsig_field "$tsig_oc" "$hgc_cur_sig")"
+      tsig_ob="$(tsig_field "$tsig_oc" "$hgc_verdict_actual")"
       tsig_oa="$(tsig_field "$tsig_oc" "$tsig_sig")"
       if [ -z "$tsig_ob" ] || [ -z "$tsig_oa" ]; then
         tsig_other_notrun="$tsig_other_notrun $tsig_oc"
@@ -2129,13 +2141,31 @@ done
 #      흔드는 탐침으로 교체했고 그 구성에서는 항진본만 뒤집힌다(아래 leg 이 그 구성이다)]
 #   ⇒ 현재 서명 변수를 일시적으로 다른 값에 두고 **선언값**을 넣는다. 판정이 선언 상수를 보면
 #     일치(참), 자기 자신을 보면 불일치(거짓)다.
-tsig_saved="$hgc_cur_sig"
+#   ★★ **교란 대상은 「실측 서명을 담은 live 변수 전부」다 — 한 개가 아니다** (14회차, 소비자
+#     통일 직후 자기점검에서 검출). 소비자를 `hgc_verdict_actual` 로 통일한 뒤 (e) 가 그 변수
+#     **하나만** 흔들면, 항진 구현이 다른 live 변수(`hgc_cur_sig`)를 참조하는 형은 (e) 를 그대로
+#     통과한다 — 그리고 (f)·(g)·(h) 도 통과한다((f) 는 sentinel 이 어느 변수와도 다르고, (g) 는
+#     탐침 사본이 그 변수와 달라 「불일치」가 기대대로 나오며, (h) 는 실제 대상이라 일치가
+#     나온다). 즉 **통일이 (e) 의 정의역을 좁혀 A-TAUT 를 무성으로 만들 뻔했다**. 봉합이 인접
+#     축을 여는 이 Story 의 지배 class 가 **같은 회차 안에서** 재현된 것이다.
+#   ★ 정직 천장: 아래 교란 목록은 **live 변수의 열거**이므로 **하한**이다. 새 변수에 서명 사본을
+#     하나 더 두고 그것을 참조하는 항진 구현은 여기서 빠져나간다. 다만 **서명을 인라인 재산출**
+#     하는 형(`[ "$1" = "$(hgc_composition_signature "$hgc_self_src")" ]`)은 변수 축이 아니라
+#     (g) 가 잡는다 — 탐침 사본에 대해 $1 과 재산출값이 **함께** 움직여 「일치」가 되기 때문이다.
+#     [반증시도: 완료 — A-TAUT(항진 대상 = `hgc_cur_sig`) / A-TAUT2(항진 대상 =
+#      `hgc_verdict_actual`) 두 변형을 LAB 격리 shim 에서 각각 실행해 **둘 다 (e) 단독 RED** 임을
+#      실측했다. 통일 직후 1-변수 교란본에서는 A-TAUT 가 전건 GREEN 으로 빠져나갔고, 그 관측이
+#      「교란 대상 1개면 충분」을 반증했다. 「새 변수 추가형」은 **미수행** — 열거의 하한 지위는
+#      그대로다]
+tsig_saved="$hgc_verdict_actual"
+tsig_saved_p1="$hgc_cur_sig"
+hgc_verdict_actual="${hgc_verdict_actual}-tsig-perturbed"
 hgc_cur_sig="${hgc_cur_sig}-tsig-perturbed"
 if hgc_decl_match "$HGC_DECLARED_COMPOSITION"; then
-  hgc_cur_sig="$tsig_saved"
+  hgc_verdict_actual="$tsig_saved"; hgc_cur_sig="$tsig_saved_p1"
   pass_case "T-SIG-e (판정 비항진성): 현재 서명 변수를 흔들어도 **선언값**은 일치로 판정 — 판정이 §0 선언 상수에 의존한다(자기 자신과의 대조로 퇴화하지 않았다)"
 else
-  hgc_cur_sig="$tsig_saved"
+  hgc_verdict_actual="$tsig_saved"; hgc_cur_sig="$tsig_saved_p1"
   fail_case "T-SIG-e (판정 비항진성): 현재 서명 변수를 흔들자 **선언값이 불일치로 뒤집혔다** — 판정이 선언 상수가 아니라 현재 서명 자신을 본다(항진화). 이 상태에서는 §13.5 선언 정합 leg 이 **어떤 구성 이동에도 초록**이다"
 fi
 
