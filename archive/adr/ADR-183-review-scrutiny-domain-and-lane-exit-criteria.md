@@ -78,7 +78,7 @@ review-verdict-v4 `findings[]` 에 신규 **optional** 필드 (MINOR bump v4.17�
 |---|---|---|---|
 | ADR-181 V (검증 정의역) | close-time 에 실제 재검사한 site 집합 (실행 도달) | finding 발생 시점의 산출물 class 자격 | 교차 키 없음 |
 | §10 `원인 판정` enum (CFP-2985 소유) | FIX 재진입 라우팅 lane | FIX 발생 자격 | **별 키 착지 — 같은 enum·같은 집계 키 금지 (ADR-181 INV-R 보존)** |
-| `mechanical_category` (review-verdict-v4:145-161) | fast-path 자격 (수정 경량성) | FIX 발생 자격 | 별 키. 상호작용 = §결정 8-5 |
+| `mechanical_category` (review-pl-base.md:145-161) | fast-path 자격 (수정 경량성) | FIX 발생 자격 | 별 키. 상호작용 = §결정 8-5 |
 | `valid/noise` (review-pl-base §3) | finding 의 실재성 | FIX 발생 자격 | 별 키. 우선순위 전순서 = noise 판정 선행 → scrutiny_domain 은 valid finding 에만 의미 부하 (noise 는 어느 값이든 기여 0) |
 
 ### 결정 3 — pl_recommendation 산정: 기존 판정표에 "정의역 내" conjunct 삽입
