@@ -1281,7 +1281,13 @@ def test_post_suture_verification_four_axes():
                 "M-ANCHOR-NOID-BOTH", "M-ANCHOR-ORPHAN-END",
                 "M-LOSS-LINE", "M-LOSS-MUTATE", "M-LOSS-NOTATION", "M-LOSS-MASK",
                 "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT",
-                "M-FENCE-UNCLOSED-OUTDOMAIN"]
+                "M-FENCE-UNCLOSED-OUTDOMAIN",
+                # R8 신설 — `check_inv_s3` 결손 방출 site 2종. 각 site 를 **단독 통제**한다.
+                #   M-RESOLVE-FAIL  = 파일 해결 실패 (실 CLI 도달 가능)
+                #   M-LEG3-NA-BOGUS = leg3 미실행 ∧ enum 밖 (실 CLI 도달 **불가** —
+                #     `load_baseline` 이 적재 시점 ValueError 로 선행 차단. 지키는 것은 직접
+                #     dict 호출 경로의 defense-in-depth 이지 CLI 회귀 봉합이 아니다)
+                "M-RESOLVE-FAIL", "M-LEG3-NA-BOGUS"]
     not_red = [m for m in must_red if results[m]["injected_red_count"] == 0]
     assert not not_red, f"① 지정 mutant 중 RED 미달: {not_red}"
 

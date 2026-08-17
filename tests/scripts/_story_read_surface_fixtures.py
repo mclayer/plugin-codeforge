@@ -436,6 +436,11 @@ DECLARED_MUTANT_IDS = frozenset({
     "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-PARENT", "M-FENCE-UNCLOSED-OUTDOMAIN",
     # --- 신설: §8.3 행 12 분할 정착 후 INV-S2 (양성 arm 은 기존 M-E4 가 겸한다) ---
     "M-SETTLED-MOVE", "M-SETTLED-GROW-CTL",
+    # --- R8 신설: `check_inv_s3` 결손 방출 site 2종 (방출축 24 site 확장에서 드러난 진성 dark) ---
+    #   M-RESOLVE-FAIL   = 파일 해결 실패 (실 CLI 도달 가능)
+    #   M-LEG3-NA-BOGUS  = leg3 미실행 ∧ enum 밖 (실 CLI 도달 **불가** — 정직 한정은
+    #                      `baseline_leg3_na_bogus` docstring 참조)
+    "M-RESOLVE-FAIL", "M-LEG3-NA-BOGUS",
 })
 
 DEFAULT_CEILING = 400000
@@ -476,6 +481,13 @@ def _enforced_domains() -> dict:
             "expected": dict(S53_EXPECTED),
         },
     }
+
+
+# `file == "CP"` 인 enforced 정의역 — M-RESOLVE-FAIL 의 기대 RED 개수 **산출 근거**.
+#   고정 수치를 박지 않고 정의역 선언에서 유도한다. 선언이 늘면 기대치도 같이 움직이고,
+#   엔진이 방출을 멈추면 실측만 0 이 되어 pin 이 어긋난다(두 값의 원천이 서로 독립이다).
+CP_ENFORCED_DOMAINS = tuple(
+    name for name in ENFORCED_DOMAINS if str(_enforced_domains()[name]["file"]) == "CP")
 
 
 def build_baseline(*, deferred: bool = True, children: bool = True, **overrides) -> dict:
@@ -923,6 +935,65 @@ def baseline_basis_global() -> dict:
     for name in ENFORCED_DOMAINS:
         bl["domains"][name]["cardinality_basis"] = "cell_count"
     return bl
+
+
+LEG3_NA_BOGUS_REASON = "BOGUS_NOT_IN_ENUM"
+
+
+def baseline_leg3_na_bogus() -> dict:
+    """M-LEG3-NA-BOGUS — `CP_S81_RTM` 의 `leg3_na_reason` 을 폐쇄 enum 밖 값으로 오염.
+
+    표적 = `check_inv_s3` 의 **leg3 미실행 ∧ enum 밖** RED 방출 site
+    (문면 `"leg3 미실행인데 leg3_na_reason 미선언/enum 밖"`). 종전 로스터에는 이 site 를
+    발화시키는 fixture 가 하나도 없어, 방출을 통째로 죽여도 공개 게이트가 통과했다.
+
+    ★ **정직 한정 — CLI 회귀 봉합이 아니다.** 이 mutant 가 지키는 것은 엔진 함수를 **직접
+      dict 로 호출하는 경로의 defense-in-depth** 이며, 실 CLI 경로(`run()` → `load_baseline`)
+      로는 **도달 불가**하다: `load_baseline` 이 enforced 정의역에 대해
+      `leg3 == "not_applicable" ∧ leg3_na_reason ∉ LEG3_NA_REASON_ENUM` 을 **적재 시점
+      ValueError 로 선행 차단**한다(문면 `"정의역 %s leg3_na_reason 미선언/enum 밖"`,
+      fail-closed 가드). 따라서 "CLI 회귀를 막는다" 로 승격해 읽으면 **over-claim** 이다.
+      단 그 선행 가드가 사라지거나 우회되면 이 site 가 유일한 잔여 방어선이 되므로 등재한다.
+    """
+    bl = build_baseline()
+    dom = bl["domains"]["CP_S81_RTM"]
+    if dom.get("leg3") != "not_applicable":              # born-broken 가드 — 주입 지점 특정
+        raise AssertionError(
+            f"CP_S81_RTM leg3={dom.get('leg3')!r} — `not_applicable` 이 아니면 이 site 에 "
+            "애초에 도달하지 않아 무음 no-op 주입이 된다")
+    if dom.get("leg3_na_reason") == LEG3_NA_BOGUS_REASON:
+        raise AssertionError("정본이 이미 오염값이다 — 대조군 GREEN 이 성립하지 않는다")
+    dom["leg3_na_reason"] = LEG3_NA_BOGUS_REASON
+    return bl
+
+
+def run_inv_s3_resolve_failure(engine, ctx):
+    """M-RESOLVE-FAIL — `resolve_file` 이 `FileNotFoundError` 를 내는 상태에서 INV-S3 실행.
+
+    표적 = `check_inv_s3` 의 **정의역 파일 해결 실패** RED 방출 site
+    (문면 `"정의역 파일 해결 실패: %s"`). 종전 로스터에는 이 site 를 발화시키는 fixture 가
+    없어, 방출을 죽여도 공개 게이트가 통과했다(파일 해결 실패가 **조용한 skip** 이 된다).
+
+    ★ 실 CLI 경로 도달성 **있음**: `run()` 안 `resolve_file` 은 `git_archive_text` 를 try
+      없이 호출하고, 그것은 경로·ref 부재 시 `FileNotFoundError` 를 낸다
+      (문면 `"git archive 실패: ref=%s path=%s"`). 즉 이 mutant 는 실 회귀를 재현한다.
+
+    주입 형상 = `file == "CP"` 인 정의역에서만 해결 실패. RED 개수는 **enforced 정의역 중
+    `file == "CP"` 인 것의 수**에서 유도된다(고정 수치 박기 금지 — `CP_ENFORCED_DOMAINS`).
+    """
+    if not CP_ENFORCED_DOMAINS:                          # born-broken 가드 — 주입 지점 특정
+        raise AssertionError(
+            "enforced 정의역 중 `file == 'CP'` 가 0건 — 주입해도 아무 정의역도 실패하지 "
+            "않아 무음 no-op 이 된다")
+    inner = resolve_file_factory(engine, ctx)
+
+    def resolve(domain):
+        if str(domain["file"]) == "CP":
+            raise FileNotFoundError(
+                "git archive 실패: ref=<synthetic> path=%s" % domain["file"])
+        return inner(domain)
+
+    return engine.check_inv_s3(ctx["baseline"], resolve)
 
 
 def ctx_fence(*, fence_aware: bool, inject: bool) -> Ctx:
@@ -1808,6 +1879,39 @@ def run_battery(engine) -> dict:
            expect_red=False,
            note="기준 전역화의 실 피해 = **검출 상실**. 정의역별 basis 선언에서는 "
                 "같은 주입이 CP_S81_RTM:leg2 RED 다 (M-DUP-ROW 참조)")
+
+    # --- R8 신설: `check_inv_s3` 결손 방출 site 2종 --------------------------
+    #  방출축을 `check_` family 24 site 로 넓히자 이 둘이 **공개채널 무검출**(진성 dark)로
+    #  드러났다 — 방출을 죽여도 게이트가 통과했다. 즉 «파일 해결 실패» 와 «leg3 미실행 ∧
+    #  enum 밖» 이 **조용한 skip** 이 될 수 있었고, 그것은 이 엔진이 §8.4 에서 스스로 금지한
+    #  상태다. 아래 2종이 각 site 를 **단독 통제**한다(끊으면 RED → 0).
+    add("M-RESOLVE-FAIL", "INV-S3", s3_ctl,
+        run_inv_s3_resolve_failure(engine, ctl_ctx),
+        "`resolve_file` 이 `file == 'CP'` 정의역에서만 `FileNotFoundError` 를 내도록 주입 "
+        "— 실 CLI 의 `git_archive_text` 실패(경로·ref 부재)를 재현. "
+        "기대 RED = enforced 정의역 중 file=='CP' 인 %d건 %s (수치 박기 아닌 선언 유도)"
+        % (len(CP_ENFORCED_DOMAINS), list(CP_ENFORCED_DOMAINS)),
+        synthetic_sha(ctl_ctx["story_after"], ctl_ctx["cp_after"]),
+        "INV-S3 file 해결 실패 site",
+        exact_domains=set(CP_ENFORCED_DOMAINS),
+        note="실 CLI 도달 **가능** — `run()` 의 `resolve_file` 이 `git_archive_text` 를 try "
+             "없이 호출하고 그것이 경로·ref 부재 시 FileNotFoundError 를 낸다. "
+             "방출이 죽으면 파일 해결 실패가 조용한 skip 이 된다(§8.4 자기 금지 위반)")
+
+    add("M-LEG3-NA-BOGUS", "INV-S3", s3_ctl,
+        run_inv_s3(engine, ctl_ctx.copy_with(baseline=baseline_leg3_na_bogus())),
+        "`CP_S81_RTM.leg3_na_reason` 을 폐쇄 enum 밖 `%s` 로 오염 "
+        "(leg3 = not_applicable 유지) — leg3 미실행인데 사유가 enum 밖인 상태"
+        % LEG3_NA_BOGUS_REASON,
+        synthetic_sha(ctl_ctx["story_after"], ctl_ctx["cp_after"]),
+        "INV-S3 leg3 na_reason site",
+        exact_vec={("CP_S81_RTM", "leg3")},
+        note="★ 정직 한정 — **CLI 회귀 봉합이 아니다.** 실 CLI 경로(`run()` → `load_baseline`)"
+             "로는 도달 불가하다: `load_baseline` 이 enforced 정의역의 "
+             "`leg3=='not_applicable' ∧ leg3_na_reason ∉ LEG3_NA_REASON_ENUM` 을 **적재 시점 "
+             "ValueError 로 선행 차단**한다(fail-closed). 이 mutant 가 지키는 것은 **직접 dict "
+             "호출 경로의 defense-in-depth** 이며, 다음 라운드에 'CLI 회귀를 막는다' 로 "
+             "승격해 읽으면 over-claim 이다")
 
     # M-DOMAIN — 자식 파일 제외. §4 분할 fixture 위에서만 판별력이 생긴다.
     ctx4 = split_ctx(split_4=True)

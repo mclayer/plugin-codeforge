@@ -547,6 +547,17 @@ def test_mutant_red_and_control_green():
         # `^\|` 로 느슨해진 앵커가 §4.2.2a 의 **첫 표**(미끼)를 물어 6셀만 추출하므로
         # 22셀 기준 집합·개수·값이 동시에 깨진다. 아래 `vector` assert 가 같은 사실을 잰다.
         "M-ANCHOR-LOOSE": 3,
+        # R8 신설 — `check_inv_s3` 결손 방출 site 2종 (방출축 24 site 확장에서 드러난 진성 dark).
+        #   RESOLVE-FAIL = 2  ← ★고정 수치가 아니라 **선언 유도**다. `resolve_file` 이
+        #                      `file == "CP"` 정의역에서만 실패하도록 주입하므로, RED 개수 =
+        #                      enforced 정의역 중 `file == "CP"` 인 것의 수
+        #                      (= `CP_S1_MAPPING`, `CP_S81_RTM` 2건 — `FX.CP_ENFORCED_DOMAINS`).
+        #                      나머지 2 정의역은 file=="STORY" 라 정상 해결돼 PASS 다.
+        #                      재현: `len(FX.CP_ENFORCED_DOMAINS)`.
+        #   LEG3-NA-BOGUS = 1 ← `CP_S81_RTM` **하나만** 오염시킨다. 형제 2개
+        #                      (`CP_S1_MAPPING` · `STORY_S53_AC_TABLE`)도 leg3 not_applicable
+        #                      이지만 사유가 enum 안이라 PASS 이므로 단독 귀속이다.
+        "M-RESOLVE-FAIL": len(FX.CP_ENFORCED_DOMAINS), "M-LEG3-NA-BOGUS": 1,
     }
     actual = {k: results[k]["injected_red_count"] for k in expected_red_counts}
     assert actual == expected_red_counts, (
