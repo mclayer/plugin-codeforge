@@ -7,11 +7,11 @@ category: process
 date: 2026-08-17
 carrier_story: CFP-2999
 related_adrs:
-  - ADR-067  # §결정 2/3 RESET reassessment — 본 ADR §결정 3 이 positive 기재 의무 신설 (amendment 실배선 = CFP-2985 편입). §결정 8 3층 disjoint 보존 (supersede 아님)
+  - ADR-067  # §결정 2/3 RESET reassessment — 본 ADR §결정 3 이 positive 기재 의무 신설 (amendment 실배선 = CFP-2985 편입). §결정 8 의 2층 disjoint (닫기 게이트 ⊥ max-FIX 카운터) 무손상 — PASS 층 분리는 본 ADR 신설분
   - ADR-125  # 요구사항리뷰 lane 규범 SSOT — §결정 4 disjoint 를 write 표면 축으로 additive 확장 (amendment 실배선 = 후속 배선 Story). required contexts 무변경 존중
   - ADR-039  # §10 Orchestrator monopoly 선례 — 신규 증적 monopoly 섹션의 권한 재편 anchor
   - ADR-031  # §14 monopoly 섹션 선례 — 신규 monopoly 섹션 신설 정합 anchor
-  - ADR-064  # §결정 5 single carrier — 요청 4 처방 본문 = #2988 참조만 (재정의 금지)
+  - ADR-064  # §결정 5 CFP scope unitary 룰 (별개 CFP 분리 허용) — 판정(본 ADR)/처방(#2988) 분리 구조와 정합. 처방 재정의 금지는 본 ADR 자체 결정
   - ADR-119  # 검증-후-단언 + §결정 9 3문 게이트 — 소급 재분류 기각 근거·정직 천장 라벨 규율
   - ADR-127  # 전수 full lane 비협상 — 본 ADR 은 심사량 축소 아님 (심사 정의역 재배치)
   - ADR-133  # ADR 번호 atomic claim — 본 ADR 번호 182 발급 경로
@@ -133,12 +133,12 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 > **PASS = P0 0 ∧ P1 0 ∧ 직전 회차 finding 전건 처분 종결 (CLOSED 또는 defer-수신처 지정, REOPENED 0) ∧ 잔여 P2/P3 전건 처분 lifecycle 등재** (deferred-item-lifecycle 연결 — won't-fix 은폐 금지, 미조치 처분으로 덮지 않는다)
 
 - **처분 판정원 (AC-2c)** = ① 리뷰 PL 보고서의 처분 표 (finding-id 별 CLOSED/REOPENED/defer-착지점) ② fix-event-v1 v1.4 `replay_verdict` (FIX-close ground-truth replay). ②의 실배선 = B(CFP-2985) 편입 — 본 ADR 은 판정원 지정까지.
-- **3층 disjoint 보존 (ADR-067 §결정 8 — supersede 아님)**: lane 종료(PASS) ⊥ finding 처분(닫기) ⊥ 카운터 소비(Iter). 본 정밀화는 PASS 층만 건드린다.
+- **3층 분해 + ADR-067 §결정 8 무손상**: 본 ADR 은 lane 종료(PASS) ⊥ finding 처분(닫기) ⊥ 카운터 소비(Iter) 의 3층으로 분해한다. 이 중 **뒤 2층의 disjoint (닫기 게이트 ⊥ max-FIX 카운터) 가 ADR-067 §결정 8 원문**이고 ('층' 어휘·PASS 층 문면은 §결정 8 에 부재 — 원문 재대조 완료), **PASS 층의 분리는 본 ADR 신설분**이다. 따라서 §결정 8 supersede 0 — 본 정밀화는 PASS 층만 건드린다.
 - **"메타-텍스트" 제3항 불요**: §결정 1 (R1) 채택으로 메타-텍스트가 심사 정의역에서 구조적으로 소거되므로 종료 조건에 그 판별 축이 필요 없다 (Story §6.5 R1↔R2 의존 관계. 외부 선행례에도 대응물 부재 — R1 미채택 시에만 필요했을 축).
 - **도달 가능성 근거**: 새 조건의 각 항은 리뷰어 성실성과 양립한다 — P0/P1 은 severity 판정 (리뷰가 이미 수행), 처분 종결은 follow-up 확인 (신규 sweep 아님), 잔여 등재는 기록 행위다. finding 하한이 0 이 아니어도 (bad-fix 상수) P2/P3 잔여는 등재 처분으로 exit 가능하므로 종료 조건이 물리적으로 도달 가능해진다.
 - **MTD-1944 13회차 시뮬레이션 (AC-2b — §1 문면만으로 수행)**: 제1항 P0=0 **충족** (6회차 연속 0) · P1=1 (PL-R13-01) **미충족** / 제2항 처분 7/7 CLOSED **충족** (해당 Story 최초) / 제3항 축 = R1 로 소거. 종합 = **PASS 불성립 (P1 1건) — 판별 가능** 판정. **판별 범위 분할 (정직 천장 승계)**: 제1·2항은 §1 문면만으로 자족 판별. 잔여 finding 의 실행의존 분류는 §1 문면만으로 6건 중 5건 미분류 (RR2 실측) — MTD-1944 재개 시 실 산출물 필요.
 - **외부 정합**: inspection exit = "결함 0" 이 아니라 anomaly 의 처분·follow-up 종결 [source: IEEE 1028-2008, https://standards.ieee.org/standard/1028-2008.html — **verbatim 조항 미확보·2차 corroboration 만** (Story §9.4 확인 불가 기재 승계)]. follow-up 은 시정조치의 완료·유효성 검증 [source: ISO 19011:2018 §6.7]. 업계 release exit = "blocker/critical 0 + 잔여 문서화·수용" 2축 [source: BrowserStack, https://www.browserstack.com/guide/entry-and-exit-criteria-in-software-testing] — 본 정의와 구조 동형.
-- **무접촉 declare**: design-entry sign-off (ADR-159) 의 위치·의미 무변경. required contexts 무변경 (ADR-125 §결정 2 존중 — 신규 required 게이트 0). 본 결정은 심사량 축소가 아니다 (ADR-127 정합 — §1 §6 "리뷰를 줄이자고 말하지 않는다" verbatim 승계).
+- **무접촉 declare**: design-entry sign-off (ADR-159) 의 위치·의미 무변경. required contexts 무변경 (ADR-125 §결정 2 존중 — 신규 required 게이트 0). 본 결정은 심사량 축소가 아니다 (ADR-127 전수 full lane 비협상 정합 — 출처 표기: **Story §1 (verbatim 내부) §6** "리뷰를 줄이자고 말하지 않는다" 문면 승계, ADR-127 자체 문면 아님). **ADR-144 stop taxonomy 무접촉**: 본 정밀화는 PASS 판정 기준의 정밀화이지 lane 실행의 생략·단축 허가가 아니다 (ADR-144 정당 멈춤 3종·ADR-127 전수 full lane 과 disjoint — "생략 후 진행" 오독 금지).
 
 ### §결정 3 — RESET 정당화 구조 축 (요청 3 — AC-3a/3b)
 
@@ -157,7 +157,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 
 **적용을 채택한다.** 원장 write 정의역(§9·§10)에 산문 자기참조 가변 단정(줄 위치·수치·착지 단정) 금지 → **기계 파생 값 또는 재현 규칙 + immutable ref** 규율을 적용한다.
 
-- **처방 본문 = #2988 참조 (single carrier — ADR-064 §결정 5)**: 파생화 처방의 정의·taxonomy·집행 메커니즘은 #2988 이 SSOT 다. 본 결정은 **적용 범위 boolean 판정만** 수행한다 — "#2988 처방의 적용 정의역에 §9·§10 원장을 포함한다" = **true**. 근거 = §1 (마): Orchestrator 자신이 §9 원장에서 좌표 파생 정수 결함을 냈다 (그 결함을 설명하는 문장 자신에서) — 결함 class 는 write 주체를 가리지 않는다.
+- **처방 본문 = #2988 참조 (SSOT 단일화 — 본 ADR 자체 결정)**: 파생화 처방의 정의·taxonomy·집행 메커니즘은 #2988 이 단일 SSOT 이며 본 ADR 에서 재정의하지 않는다 — 이 재정의 금지는 **본 ADR 의 자체 결정**이다 (ADR-064 §결정 5 「CFP scope unitary 룰」은 별개 CFP 분리를 허용하므로 판정(본 ADR)/처방(#2988) 분리 구조와 정합 — 원문 재대조 완료, "single carrier" 는 §결정 5 문면이 아니다). 본 결정은 **적용 범위 boolean 판정만** 수행한다 — "#2988 처방의 적용 정의역에 §9·§10 원장을 포함한다" = **true**. 근거 = §1 (마): Orchestrator 자신이 §9 원장에서 좌표 파생 정수 결함을 냈다 (그 결함을 설명하는 문장 자신에서) — 결함 class 는 write 주체를 가리지 않는다.
 - **적용 경계 조건 (필수)**: **원장을 심사 정의역에 편입하지 않는 조건 하에서만** 적용한다. 원장을 리뷰 심사 정의역에 편입하면 §결정 1 이 끊은 자기증식 고리가 원장 경유로 재개통된다. 원장 품질은 심사 편입이 아니라 파생화 규율 + 기계 lint (실배선 후속) 로 확보한다.
 - **수신자 = §9/§10 write 주체 전원**: §9 는 Orchestrator 단독 정의역이 아니다 — lint 실측 `SECTION_OWNERS["9"] = [review, design, develop, requirements]` (Orchestrator 포함 전 write 주체가 규율 수신자. §1 (마)가 Orchestrator 자기 실증 사례).
 
@@ -194,17 +194,17 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 2. review-pl-base §3 판정표 정밀화 (§결정 2 문면 — 4 lane 공유 base 라 lane-override 여부 포함).
 3. ADR-125 amendment (write 표면 disjoint 축 additive 확장 + 정본 값 `§1-§6` 성문).
 4. requirements checklist P1 강제 자동룰 재검토 (실질 finding-0 합성 경로 ⓐ).
-5. **AC 게이트 slicing 정정 (TestContractArch 이의 A 후속)**: `ac-traceability-matrix`·`ac-schema-authoring-gate` 의 §-slicing 이 §1 verbatim 내부 헤딩 shadowing (first-match) 으로 본 Story 에 비적용 PASS(vacuous) — last-match/§1-제외 정정 + internal-docs 복사본 parity + **source enum 잠복 정정 (이의 B: §5.3 `source: analyst` 4건 ∉ 계약 enum) 과 원자 결합 의무** (slicing 만 고치면 즉시 RED).
+5. **AC 게이트 slicing 정정 (TestContractArch 이의 A 후속)**: `ac-traceability-matrix`·`ac-schema-authoring-gate` 의 §-slicing 이 §1 verbatim 내부 헤딩 shadowing (first-match) 으로 본 Story 에 비적용 PASS(vacuous) — last-match/§1-제외 정정 + internal-docs 복사본 parity. **source enum 측 (이의 B) 은 internal-docs `9a25c46a` 로 기정정 완료 (analyst 0 / derived 4 — 원자 결합의 선행 절반 이행)** → 잔여 = **slicing 정정 단독 수행 가능**, 단 정정 후 `test_ac_source_enum_matches_contract_enum` 회귀 확인 의무.
 
 ### AC 매핑 표 (13건 zero-drop)
 
-**본 Story 의 AC 충족 정의 = 판정 기록 (본 ADR 성문) + 배선 carrier 지정 (Story key 명시)** — B/C 소유면이면 파일 diff 를 충족 조건으로 요구하지 않는다 (AC-3a verification 문면 그대로, 전 AC 로 일반화).
+**본 Story 의 AC 충족 정의 = 판정 기록 (본 ADR 성문) + 배선 carrier 지정 (Story key 명시)** — **본 Story 가 소유하지 않는 면 (B=CFP-2985 · C=CFP-2986 · 후속 배선 Story · #2988) 이면** 파일 diff 를 충족 조건으로 요구하지 않는다 (AC-3a verification 문면 그대로, 전 AC 로 일반화).
 
 | AC | 착지 절 | 충족 형태 | 배선 carrier |
 |---|---|---|---|
 | AC-0 | §결정 0 | 정본 단일값 + 28 hit 3-bucket 전건 종결 + 수렴 계획 5좌표 특정 | 수렴 커밋 = 후속 배선 Story |
 | AC-1a | §결정 1 | 분리 채택 판정 + closed-enum 3종 | scope 문면 = 후속 배선 Story |
-| AC-1b | §결정 1 | 심사 scope 한정 + 이관 3종 목적지 (신규 monopoly 섹션) | 골격 = C (CFP-2986) |
+| AC-1b | §결정 1 | 심사 scope 한정 + 이관 3종 목적지 (신규 monopoly 섹션) | 골격 = C (CFP-2986) / scope 규정 파일 문면 = 후속 배선 Story |
 | AC-1c | §결정 1 | cross-ref 양방향 형식 (row 필수 필드 3종 + 본문 고정 포인터 1줄) | 스키마 = C (CFP-2986) |
 | AC-2a | §결정 2 | severity-gated exit 채택 + 도달 가능성 근거 | base §3 = 후속 배선 Story |
 | AC-2b | §결정 2 | 시뮬레이션 수행 — PASS 불성립(P1 1) 판별 가능 + 판별 범위 분할 | (본 ADR 내 완결) |
@@ -230,7 +230,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 
 - **§1 정량치의 한계**: 46.6%/78.6%/4.2배는 단일 Story(MTD-1944) 실측 + blame 은 12·13회차 한정이며, 13회차 리뷰 산출물은 원격 미push 로 **일부 재현 불가** (Story §4.3 정직 천장 승계). 일반화 근거 = 독립 2사례(CFP-2949·CFP-2908)의 존재 사실뿐. 본 ADR 은 이 수치를 metric 으로 신설하지 않는다 (ADR-067 §결정 6 surface-area metric 기각 선례 — 정성 판정 축으로만 사용).
 - **기계 게이트 가능 vs advisory 구분 (Story §4.2 표 승계)**: §2-§6 내 `[FIX iter` 마커 0건 = 기계 가능(fail-closed) / 메타-텍스트의 목적지 존재 = presence 가능 / 산문형 메타의 §2-§6 부재 = **advisory** / 심사 워커가 실제로 §1-§6 만 봤는가 = **advisory** / P0·P1 0·처분 CLOSED = 기계 가능 / 잔여 분류 정확성 = **advisory** (분류자=수혜자) / RESET column 기재 = presence 가능·값의 정확성 = **advisory** (dual-peer 반증으로 완화, 강제 불가). **"100% 기계강제" 주장 금지** — 위 "가능" 전부를 배선해도 근본(FIX 산출물이 새 심사 대상이 되는 것)은 완전 봉인되지 않는다.
-- **AC 게이트 현황 (TestContractArch 이의 A·B firsthand — 정직 declare)**: `ac-traceability-matrix`·`ac-schema-authoring-gate` 는 본 Story 에서 **비적용 PASS (vacuous)** 상태다 — Story §1 verbatim 내부의 `## 5.` 등 헤딩 shadowing 을 first-match slicing 이 오선택. 따라서 13 AC zero-drop 의 기계 강제 = 현재 0 이며 RTM 은 수기 채널 (RR4 RO-1 + Change Plan §8) 이다. 부가 잠복: §5.3 `source: analyst` 4건 (AC-0/2b/3b/5c) ∉ 계약 enum `("user","derived")` — slicing 정정 시 즉시 RED 이므로 **두 정정은 원자 결합 의무** (§편입 지시 5항. §5.3 실정정 = 요구사항 lane owned — 본 ADR 무접촉, Orchestrator relay 권고 별도).
+- **AC 게이트 현황 (TestContractArch 이의 A·B firsthand — 정직 declare)**: `ac-traceability-matrix`·`ac-schema-authoring-gate` 는 본 Story 에서 **비적용 PASS (vacuous)** 상태다 — Story §1 verbatim 내부의 `## 5.` 등 헤딩 shadowing 을 first-match slicing 이 오선택. 따라서 13 AC zero-drop 의 기계 강제 = 현재 0 이며 RTM 은 수기 채널 (RR4 RO-1 + Change Plan §8) 이다. 부가 (이의 B — **기해소**): §5.3 `source: analyst` 4건 (AC-0/2b/3b/5c) ∉ 계약 enum `("user","derived")` 잠복은 internal-docs `9a25c46a` 에서 정정 완료 (analyst 0 / derived 4 — Orchestrator relay 이행, 원자 결합의 선행 절반). 잔여 = slicing 정정 단독 (§편입 지시 5항) + `test_ac_source_enum_matches_contract_enum` 회귀 확인.
 - **§1 immutable 의 기계 보호 범위**: 기계 검증 슬라이스 = §1 heading 부터 첫 `## 2.` 까지 9행 한정 (verbatim 내부 헤딩 shadowing 동일 기전) — 95행 verbatim 블록의 잔여 86행은 **수기 채널** (sha256 대조). "§1 immutable = 기계 보증" 으로 서술하지 않는다.
 - **외부 인용**: 전건 source 병기. IEEE 1028-2008 은 verbatim 조항 미확보 (2차 corroboration 만 — 유료 표준 원문 미접근, Story §9.4 확인 불가 기재 승계).
 
