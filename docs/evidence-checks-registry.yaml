@@ -4578,9 +4578,19 @@ entries:
     description: |
       ADR-181 §결정 5 admission test 의 기계 판정 표면 — wrapper `archive/adr/ADR-*.md` frontmatter 의
       `mechanical_enforcement_actions` 면제 경로 적법성(`exempt()`) 검사.
-      판정축 = ADR-181 §결정 5 ③-dt (iv) **결정표 19행 전건 재현**. exit 사유 토큰
-      (line-form / mea-missing / carrier-token / expiry-token / repo-token / token-order /
-      expired / over-cap / fm-parse-error) 을 stdout 으로 방출한다.
+      판정축 = ADR-181 §결정 5 ③-dt (iv) **결정표 전 행 전건 재현**.
+      ★ 설계리뷰 FIX Iter 10 정정 — 직전 판의 "결정표 19행" 은 stale 이자 (viii) 이 금지한 정수 pin 이었다
+      (Iter 5 에 19행이었고 그 뒤 25 -> 29 -> 31 -> 41 -> 43 -> 48 로 늘었으나 이 entry 는 미갱신).
+      행수는 계약이 아니라 ADR-181 §결정 5 ③-dt (0-a) 재현 규칙의 산출로 얻는다.
+      exit 사유 토큰 = 면제 경로 11종 (line-form / mea-missing / carrier-token / expiry-token /
+      repo-token / token-order / expiry-value / expired / over-cap / pubdate-missing / pubdate-value)
+      + 경계·정의역 3종 (fm-parse-error / fm-boundary / domain-escape)
+      + 사다리 경로 3종 (ladder-path-key / ladder-path-missing / ladder-unwired)
+      = **17종**. 전부 stdout 으로 방출한다. ★ 직전 판 9종은 Iter 10 시점 기준 8종 누락이었고
+      (그 중 사다리 3종은 Iter 10 신설분 — 그 전까지 결정표는 사다리 가지를 한 행도 판별하지 않았다),
+      나머지 5종(expiry-value / pubdate-missing / pubdate-value / fm-boundary / domain-escape)은
+      Iter 7~9 에 신설됐으나 이 entry 가 미갱신이었다.
+      ★ 이 17 은 재현 규칙의 산출이다 — 재현기 R 을 leg-off 전 조합으로 돌려 방출 토큰을 모은 집합.
       정의역 = PR diff forward-only (merge-base 대비 추가·수정된 ADR 파일) x frontmatter 블록.
       코퍼스 소급 0 — merge-base 시점 기존 ADR 은 정의역 밖(grandfather).
       honest ceiling: "무엇이 신규 규범 항목 추가인가" 는 의미론적 판정이라 기계 술어로 닫히지 않는다.
@@ -4601,7 +4611,12 @@ entries:
         - CFP-2985                  # 게이트 도입 Story 자신
       evidence_artifacts:
         - github_actions_run_history_url
-        - decision_table_19row_replay_proof   # ★ 본 row 고유 — 결정표 19행 전건 재현 산출물
+        - decision_table_full_replay_proof    # ★ 본 row 고유 — 결정표 **전 행** 전건 재현 산출물
+                                              #   (설계리뷰 FIX Iter 10 — 구 키 decision_table_19row_replay_proof
+                                              #    는 정수 pin 이라 행이 늘어도 19행만 재현하면 충족되는 회피구였다.
+                                              #    행수는 ADR-181 ③-dt (0-a) 재현 규칙 산출로 얻는다)
+        - decision_table_ladder_branch_proof  # ★ Iter 10 신설 — 사다리 가지 판별 행(43·44·45·46) 산출물.
+                                              #   stub(len(mea)>=1 만 구현)이 탈락함을 함께 보여야 충족
         - two_engine_cross_proof              # ★ 본 row 고유 — Python re / POSIX ERE 교차 산출물
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
@@ -4610,7 +4625,7 @@ entries:
         - sticky_comment_pattern      # ADR-171 §결정 6 (vi) — 현재 미보유
     introduced_by: CFP-2985
     introduced_date: 2026-08-17
-    owner_adr: ADR-181             # admission test SSOT (§결정 5) — 결정표 19행이 수용 기준
+    owner_adr: ADR-181             # admission test SSOT (§결정 5) — 결정표 **전 행**이 수용 기준 (정수 pin 금지)
     carrier_adr: ADR-171           # evidence-enforceable framework host (ADR-171 amendment 0)
     promotion_trigger: advisory
     status: deferred-followup      # Phase 1 declarative anchor — Wave 2 mechanical wire = 본 Story Phase 2 / carrier plugin-codeforge#2985 / 만기 2026-09-15. 그 전까지 실 강제력 0 이며 이는 은폐가 아니라 선언이다.
