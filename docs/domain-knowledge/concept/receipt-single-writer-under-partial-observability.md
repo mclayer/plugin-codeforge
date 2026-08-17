@@ -40,7 +40,7 @@ sources:
   - https://www.cs.utexas.edu/~lorenzo/corsi/cs380d/papers/p225-chandra.pdf            # Chandra-Toueg — unreliable failure detector, completeness/accuracy
   - https://groups.csail.mit.edu/tds/papers/Halpern/JACM90.pdf                         # Halpern-Moses — common knowledge 도달 불가
   - https://en.wikipedia.org/wiki/Negation_as_failure                                  # negation as failure (Clark 1978)
-  - https://www.cs.utexas.edu/~ear/cs378/CWA.pdf                                       # Reiter 1978 — closed-world assumption. NAF(Clark) 과 별 저자·별 논문 (CFP-2994 귀속 정정)
+  - https://www.cs.ubc.ca/sites/default/files/tr/1977/TR-77-16.pdf                     # Reiter 1978 — closed-world assumption. NAF(Clark) 과 별 저자·별 논문 (CFP-2994 귀속 정정)
   - https://www.cs.utexas.edu/~EWD/transcriptions/EWD06xx/EWD687a.html                 # Dijkstra-Scholten — diffusing computation 종료 검출 (문헌 id = EWD687a)
   - https://en.wikipedia.org/wiki/Huang%27s_algorithm                                  # Huang weight-throwing — 가중치 보존 종료 검출 (정직성 무가정 아님 — 국소화)
   - https://www.cs.utexas.edu/~rossbach/cs380p/papers/Counters.html                    # CRDT G-Counter — ★ 본 개념의 형식 선례에서 제외됨(CFP-2994 P1-8). 현 선례 = G-Set (Shapiro et al. 2011 Spec 11)
@@ -183,7 +183,7 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
 그 한정 위에서, 실행 가능한 목표는:
 
 1. 각 주체가 **자기 관점만** 공표하고(single-writer),
-2. 불일치는 **은폐하지 않고 declare** 하며(differential observability 처방),
+2. 불일치는 **은폐하지 않고 declare** 하며(★ **본 개념 신설분** — 위 RSW-1 정정 블록이 이 의무의 Gray Failure 논문 귀속을 철회했다. 논문이 주는 것은 현상 명명 + 간극 해소 필요성까지이고, 그 처방의 형태는 관측 통합이다),
 3. 정합은 **제3의 독립 관측자**가 항등식으로 검사한다(Attester ≠ Verifier).
 
 ## 경계
@@ -230,5 +230,6 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
 
 ## 변경 이력
 
+- **2026-08-17 KST — CFP-2994 요구사항리뷰 RESET 후 Iter 1 판정 반영 (잔여 P1 2건).** ① RSW-9 실행 목표 2항의 `(differential observability 처방)` 을 **본 개념 신설분** 표기로 교체 — `RSW-1` 정정 블록이 이미 철회한 「불일치 declare 의무 = Gray Failure 논문의 처방」 귀속을 **같은 파일이 재주장**하고 있었다. frontmatter `correction_sweep_required: true` 를 본 파일이 **자기 파일 내 스윕 미완주**로 위반한 형상이며, 리뷰가 실물 확인해 검출했다(정정 전파는 타 문서로 나가기 전에 자기 파일에서 먼저 완주해야 한다). ② CWA 출처 URL 교체 — 구 URL `cs.utexas.edu/~ear/cs378/CWA.pdf` 은 **HTTP 404**(실측), 신 URL `cs.ubc.ca/sites/default/files/tr/1977/TR-77-16.pdf` 은 **HTTP 200**(실측, Reiter, *On Closed World Data Bases*, UBC Technical Report TR-77-16). 귀속 문면(Clark 1978 ↔ Reiter 1978 분리)은 보존.
 - **2026-08-17 KST — CFP-2994 요구사항리뷰 Iter 1~3 판정 전파 (P0 해소).** 본 파일은 carrier Story 의 유일한 영구·cross-Story artifact 인데 Iter 1·2 재설계가 **0% 전파된 채** main 착지 직전이었고, 그 결과 Story 결론의 **부정 명제 5건**을 담고 있었다. 전파 항목: ① 「종결상태 어휘는 taxonomy 소유·재사용」 → **disjoint subject(별 축 `receipt_state`) 판정**으로 교체 ② 2항 계수 항등식 → **2단 분해**(정의역 혼합이 산술적 거짓을 낳음) ③ 형식 선례 **G-Counter → G-Set**(논거 3건 붕괴 — provenance 미검사 / 위조값 영구 고착 / well-known replicas 가정 파손) ④ Halpern-Moses **도출 축소**(불가능성 원천 = 절대적 동시성, 본 건은 1차 지식 `K¹`) ⑤ 문헌 id `EWD687` → **`EWD687a`**. 추가 정정 2건(리뷰가 과잉 계상 방지로 유보했던 항목을 본 lane 이 firsthand 판정): ⑥ **Gray Failure** — 「declare 의무 = 논문의 published remedy」 귀속 철회(논문은 관측 통합까지, 발화 의무는 본 개념 신설분) ⑦ **NAF/CWA 귀속 분리**(Clark 1978 ↔ Reiter 1978). anti-pattern 3건 추가(스폰 상태 월권 / 정정 미전파). frontmatter 에 `correction_sweep_required` 명시 — 본 파일을 정정 전파 인벤토리의 1급 항목으로 등재.
 - 2026-08-16 KST — 초기 작성 (CFP-2994 요구사항 lane, ResearcherAgent Mandate 1·2 산출물). differential observability(Gray Failure HotOS'17) · negation as failure/CWA(Clark 1978) · Chandy-Lamport 전역 스냅샷 · FLP + Chandra-Toueg completeness/accuracy · CALM 정리 · actor/object-capability 권한 경계 · CRDT G-Counter / Kafka offset / AMQP ack / Erlang OTP 산업 선례 · Dijkstra-Scholten + Huang 종료 검출 · 시산표 누락 오류 + RATS(RFC 9334) 독립 검증 · Halpern-Moses common knowledge 불가 를 cited 로 정립. 사내 선행 개념 `subagent-outcome-terminal-state-taxonomy` 어휘 재사용 명시(신규 vocabulary 금지).
