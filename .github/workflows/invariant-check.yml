@@ -24,6 +24,10 @@ concurrency:
 jobs:
   invariant-check:
     runs-on: ubuntu-latest
+    # CFP-2984 Phase 2 (Change Plan §8.1.1 동반 의무 ②) — 현행 job 에 timeout 부재였다.
+    #   self-test corpus 25본을 required job 에 배선하는 이상, 1본 hang 이 전 repo 머지를
+    #   무기한 잠그는 blast radius 를 상한으로 막는다.
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -576,3 +580,73 @@ jobs:
               sys.exit(1)
           print("✓ Packet contract_version: \"1.0\" present in all 3 PL packets")
           EOF
+
+      # ── CFP-2984 Phase 2 — self-test corpus 실행 배선 (Change Plan §8.1.1 (a) 채택) ──────────
+      # (a) = 기존 required job `invariant-check` 안에 dedicated step 추가.
+      #      신규 required context 0 (branch protection 8-tuple 무변경) 으로 "테스트가 required 에서
+      #      돈다" 를 day-1 확보한다. (b) 신규 workflow + required 승격은 post-merge 등록 창·7일
+      #      chicken-egg 로 기각.
+      # 아래 step 들은 python3 + PyYAML 을 요구한다(메타-게이트가 `import yaml`, self-test 픽스처가
+      #      python3 사용). 선행 step 은 이 provisioning 이전에 실행되므로 기존 거동 영향 0.
+      - name: Set up Python (CFP-2984 self-test corpus 전제)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pyyaml (CFP-2984 — 메타-게이트/self-test 가 yaml import)
+        run: pip install pyyaml
+
+      # 배선 무결성 ratchet (§8.1.1 잔여 봉합, chief 채택): ADR-151 메타-게이트 자신은 비-required 라
+      #   아래 열거에서 한 줄이 지워져도 머지를 못 막았다. required job 안에서 메타-게이트를 돌리면
+      #   그 잔여가 닫힌다 — 현행 레코드가 이미 green 이라 도입 즉시 RED 0.
+      - name: CFP-2984 self-test 배선 무결성 (ADR-151 메타게이트 — required tier ratchet)
+        run: bash scripts/check-selftest-execution-liveness.sh
+
+      # ★ glob 금지 (기계적 근거): ADR-151 AC-2 는 `self_test basename in run 문자열` 부분문자열
+      #   매칭으로 배선을 판정한다(scripts/lib/check_selftest_execution_liveness.py:205-207).
+      #   `for f in tests/scripts/*.sh` 로 쓰면 개별 basename 이 run 문자열에 등장하지 않아
+      #   25본 전건이 "배선 부재" RED. 명시 열거 1 step 이면 basename 이 전부 이 문자열 안에 있어
+      #   step 을 25개로 쪼개지 않고도 AC-2 를 만족한다.
+      - name: CFP-2984 self-test corpus (25본 — 명시 열거, glob 금지)
+        run: |
+          set -euo pipefail
+          for t in \
+            tests/scripts/test_check-salvage-bundle.sh \
+            tests/scripts/test_salvage_side_effect_dedup.sh \
+            tests/scripts/test_bundle_field_allowlist.sh \
+            tests/scripts/test_salvage_no_retry_reapply.sh \
+            tests/scripts/test_bundle_pre_push_redaction.sh \
+            tests/scripts/test_salvage_land_scan_domain.sh \
+            tests/scripts/test_nontest_script_execution_liveness.sh \
+            tests/scripts/test_retry_after_derivation.sh \
+            tests/scripts/test_retry_layer_overlap.sh \
+            tests/scripts/test_retry_ladder_no_dead_step.sh \
+            tests/scripts/test_native_multiplier_stance.sh \
+            tests/scripts/test_wait_source_header_class.sh \
+            tests/scripts/test_intensity_branch_no_silent_zero.sh \
+            tests/scripts/test_stall_predicate.sh \
+            tests/scripts/test_termination_record_query.sh \
+            tests/scripts/test_ledger_freshness_guard.sh \
+            tests/scripts/test_split_plan_structure.sh \
+            tests/scripts/test_failure_class_coverage_set.sh \
+            tests/scripts/test_recovery_procedure_class_coverage.sh \
+            tests/scripts/test_incomplete_state_preservation_path.sh \
+            tests/scripts/test_declared_count_vs_actual.sh \
+            tests/scripts/test_declared_tier_vs_actual.sh \
+            tests/scripts/test_declared_field_consumer_class.sh \
+            tests/scripts/test_event_channel_resolution.sh \
+            tests/scripts/test_detection_surface_scope.sh \
+            tests/scripts/test_external_observer_visibility.sh \
+          ; do
+            echo "── $t"
+            bash "$t"
+          done
+
+      # AC-12b 실행자 해소: 위 corpus step 은 self-test 를 통한 **간접** 참조라 실행자로 세지
+      #   않는다(그 술어를 넓히면 RED 를 없애려 정의역을 넓히는 것 = 본 Story 표적 결함).
+      #   설계가 이미 요구한 직접 실행자(Change Plan §5 Phase 2 항목 7 · §8.1 RTM AC-1 행의
+      #   실행 채널 = invariant-check.yml:invariant-check)를 배선으로 충족한다.
+      # ★ CLI 계약 실측: `--validate` 는 `--bundle <path>` 를 요구한다(위치인자 형태는 exit 2
+      #   usage error). scripts/check-salvage-bundle.sh 헤더 + argparse 산출로 확인.
+      - name: CFP-2984 salvage 번들 검증기 직접 실행 (AC-1 검증수단 · AC-12b 실행자)
+        run: bash scripts/check-salvage-bundle.sh --validate --bundle tests/fixtures/cfp2984/salvage/bundle-valid.json

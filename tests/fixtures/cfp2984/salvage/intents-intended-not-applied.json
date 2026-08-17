@@ -1,0 +1,6 @@
+[
+  {
+    "op": "label_add",
+    "target": "mclayer/plugin-codeforge#4242"
+  }
+]

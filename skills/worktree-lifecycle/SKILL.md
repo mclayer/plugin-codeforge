@@ -74,6 +74,8 @@ prune 조건 = 4 조건 **ALL** (스크립트 헤더 SSOT):
 3. worktree CLEAN (tracked 변경 0 + 알려진 임시파일 외 untracked 0 — 잔여 변경 있으면 절대 prune 금지)
 4. 현재/main worktree 아님 + `locked` 아님
 
+> **중단 이후 회수(salvage) 절차는 여기 없다** — mid-run 사망·stall·한도 도달·429 4-class 의 회수 라우팅·미완결 산출 고정·번들 인계 = [`codeforge:session-recovery`](../session-recovery/SKILL.md) 3부 (본 skill 은 lookup mirror 라 신규 절차 SSOT 를 두지 않는다).
+
 > 과거 SessionStart hook 동기/주기 호출은 제거됨 (worktree 90+ 동기 스캔으로 세션 시작 지연). **SessionStart 배제 = 무거운 동기 full-scan 한정** — SessionStart async:true 무시 → 동기 실행 = 지연 회귀라 배제(요구사항리뷰 PASS 확정 외부사실). **단 detached fire-and-forget(즉시 return + 실 스캔 분리 프로세스)는 carve-out**(전제 불성립 → §4a 크래시 보완 트리거, ADR-169 §결정 4). backstop 자동 트리거 = SessionEnd async primary wire + SessionStart detached lazy GC(§4a) + 수동/스케줄 병행.
 
 ## 4a. 잔재 발견(residue discovery) + scratch TTL + orphan 3축 판정 (CFP-2822 / ADR-169)
@@ -94,6 +96,7 @@ bash templates/scripts/check-codeforge-scratch-ttl.sh                           
 - **reporting (AC-8/8a/14/15)**: `[residue-scan] DONE: scanned=N flagged=M`(**always exit 0 advisory**, 기존 `[stale-check]`/`[completion-clean]` output contract 무접촉). 보존-예외 항목별 **사유 + 나이(aging)** 집계 + 임계 초과 **재알림**(지수 backoff base 7d→max 90d + item+reason dedup). **stash census**(건수·나이, **삭제 0** — 가시화-only, git 무만료 = 의도적 사용자 데이터) + **용량 임계 경고** + 순수 관측 집계(삭제수/보존수/회수GB 히스토리). 재알림 상태 = `~/.claude/worktree-gc-state/` JSONL append(크래시 무손상).
 - **크래시 보완 트리거 (AC-3/13)**: SessionEnd best-effort eager + **SessionStart detached lazy GC** 다중화(ADR-169 §결정 4 — "멱등/lock 실증 다중 wire" 완화). 2차 트리거 활성화 전 **mkdir 원자 lock + cooldown + 멱등 remove 선행**(E10 double-delete 0). detach = Windows `Start-Process -WindowStyle Hidden` / POSIX `setsid`·`nohup+disown`(bash nohup 은 harness 트리 wait 시 미분리 가능 주의). OS 스케줄러(ADR-110) = consumer opt-in 보조(주 트리거 아님).
 - **정책 SSOT** = ADR-169(세션 잔재 수명 규약), 절차 SSOT = playbook §3.5. 대상=worktree 클래스 한정(Temp 2단계·stash 는 GC 삭제 경로에 미포함, AC-3).
+- **비대화형(사람 없는) 호출 계약** = [orchestrator-playbook](../../docs/orchestrator-playbook.md) §0a-prime-2 참조 (작업 디렉터리 고정 · 관측-only 3중 게이트 · exit code 비-오라클 · 출력 verdict 어휘 미인용 · 발화 주체). 본 skill 의 절차는 호출 맥락에 따라 분기하지 않는다 — 위 계약은 절차 위에 얹히는 호출측 규약이다.
 
 ## 4b. 완료-게이트 — phase:완료 worktree-clean self-check
 
