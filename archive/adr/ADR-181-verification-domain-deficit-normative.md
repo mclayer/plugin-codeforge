@@ -1223,6 +1223,80 @@ named RED"* 규칙을 **정의역 층까지 관철**하는 유일한 순서다.
 이 표는 표 밖 `INV-D` 자기적용 문단의 **재진술이 아니라 그 문단이 SSOT 인 값의 표 내 결속**이다
 (§결정 4 접합부 규약 — 값이 두 곳에 적히면 어느 쪽이 SSOT 인지 명시한다).
 
+★★★★ **사다리 가지의 판별 행이 0 이었다 — 표가 `admissible` 의 절반만 시험했다 (FIX Iter 10, P0)**
+
+`admissible := ladder OR exempt` 인데 **직전 판 43행 전부가 `mea` 빈 리스트 또는 키 부재**였다.
+그러면 `ladder` 의 첫 연언지 `len(mea) >= 1` 이 전 행에서 거짓이라 **`admissible` 의 값은 항상 `exempt` 가
+결정**하고, 사다리 3연언지(경로 키 · 실재 · workflow 배선)는 **어느 행의 판정에도 참여하지 않는다.**
+
+**firsthand 반증 (재현기 R, 문면 리터럴)**:
+
+```
+stub checker := ladder 를 `len(mea) >= 1` 로만 구현 (경로 키·실재·배선 3연언지 전부 삭제)
+  구 43행 정의역 -> rows=43  match=43  mismatch=0      # ★ 미구현 stub 이 표를 전건 통과
+  신 48행 정의역 -> rows=48  match=45  mismatch=3      # 43 · 44 · 46 에서 탈락
+```
+
+⇒ **이것이 본 Story 의 표적 그 자체다** — *"선언은 있는데 강제가 없다"* 를 잡는 표를 만들면서
+그 표에 *"강제가 실재하는가"* 를 보는 행을 넣지 않았다. `D-LEG` 이 이미 판정문을 갖고 있다 —
+*"구현하지 않아도 표 전건 재현이 성립하는 leg 은 재현해야 할 것의 집합에 없다."*
+
+★ **처분 = 사다리 판별 행 신설(43·44·45·46)이며 수용 기준 축소(B안)의 되돌림이 아니다.**
+B안이 강등한 것은 **유령 탐지(산문 스캔 `N0`~`N3b`)** 이고, 여기서 채우는 것은
+**입장 조건(③) 결정표 자신의 빠진 절반**이다. 두 축은 disjoint 하며, 수용 기준은 여전히
+**(iv) 결정표 단독**이다 — 표 밖으로 나가지 않고 표 안에서 정의역을 넓혔다.
+
+###### (iv-L) ★★ 사다리 leg 의 입력원 리터럴 지정 (`D-LEG` L1)
+
+사다리 3연언지는 **fixture 바이트만으로 판정되지 않는다** — 경로의 실재와 workflow 배선은 **repo 상태**다.
+그 사실을 숨기면 재현자마다 다른 repo 에서 다른 답을 얻는다. ⇒ 입력원을 리터럴로 못 박는다:
+
+```
+REPO_STATE := mclayer/plugin-codeforge  commit b0cefd3fe        # immutable ref (재현 앵커)
+실재(p)    := git -C <REPO_STATE> ls-files -- p  의 출력이 비어 있지 않다
+WF_DOM     := <REPO_STATE>/.github/workflows/*.yml  ∪  *.yaml
+run블롭    := WF_DOM 각 파일에서 `run:` 키의 스칼라 + 그 블록 스칼라 본문만 이어붙인 텍스트
+배선(p)    := run블롭에서 p 가 **경로 경계와 함께** 등장
+              경계 = 앞 (?<![A-Za-z0-9_./-])  ∧  뒤 (?![A-Za-z0-9_.-])
+```
+
+- ★★ **경계 인식이 load-bearing 이다 (firsthand — 이 저작이 처음 쓴 판이 여기서 틀렸다)**.
+  부분문자열 매치로 스캔하면 `templates/scripts/manual-story-init-fallback.sh` 가
+  `scripts/manual-story-init-fallback.sh` 로 **오탐**된다. 두 술어의 산출이 갈린다:
+
+  ```
+  정의역 = run블롭, 패턴 = scripts/<name>.(sh|py)
+    부분문자열 매치 -> 경로 208종 · 그 중 repo 미등재 83
+    경계 인식 매치  -> 경로 116종 · 그 중 repo 미등재  0      # 83 은 전부 접두 오탐이었다
+  ```
+
+  ⇒ 이것은 `CAR` 의 `non-carrier=#3` 경계군(행 28)과 **같은 결함의 경로 축 발현**이다. 같은 처방을 쓴다.
+- ★ **`실행 파일` 의 실행권한 비트는 판정 입력이 아니다 (`declared`)**. 아래 세 실재 경로는 pinned
+  repo state 에서 전부 `100755` 이므로 **두 독법(등재만 / 등재 ∧ 100755) 하 판정이 동일**하다 —
+  즉 이 축은 **판별 0** 이다. Windows 체크아웃에서 mode 비트가 신뢰 불가한 것과 별개로,
+  **표가 이 축을 고정하지 못한다**는 사실을 여기 적는다(지우고 인용하면 over-claim).
+
+###### (iv-L2) ★★ 사다리 exit 사유 3종 + 사유 귀속 규칙 (`admissible` 의 `OR` 는 무손상)
+
+`(iii)` 은 면제 경로의 exit 사유만 규정했고 **사다리 실패의 사유가 미규정**이었다. 신설:
+
+| exit 토큰 | 어느 연언지 |
+|---|---|
+| `ladder-path-key` | 항목에서 경로가 추출되지 않음 (bare scalar 또는 `PATH_KEYS` 밖) |
+| `ladder-path-missing` | 경로가 추출됐으나 `실재(p)` 거짓 |
+| `ladder-unwired` | 경로가 실재하나 `배선(p)` 거짓 |
+
+★★ **verdict 축은 `admissible := ladder OR exempt` 그대로다** — 두 경로를 **모두 평가**하고 OR 를 취한다.
+신설하는 것은 **둘 다 실패했을 때의 사유 귀속**뿐이다:
+
+```
+사유 귀속 := len(mea) >= 1  이면 사다리 토큰,  아니면 면제 토큰
+```
+
+- ★ **왜 dispatch(택일 분기)로 바꾸지 않는가** — `K: []` 줄과 비-빈 리스트 중복 키가 공존하는 입력에서
+  `OR` 와 dispatch 의 verdict 가 갈릴 수 있다. **축을 교체하지 않고 미규정 자리만 확정**한다
+  (`D-LEG` L3-ⓐ 합집합 보존).
+
 | # | 입력 바이트 (`<FM>`) | 기대 | exit 사유 | 무엇을 판별하는가 |
 |---|---|---|---|---|
 | 1 | `D` ⏎ `K: []  # OK` | **GREEN** | — | 의도한 정상형. 이 행이 RED 면 검사기가 규범보다 좁아 자기 ADR 3건이 born-red |
@@ -1268,6 +1342,22 @@ named RED"* 규칙을 **정의역 층까지 관철**하는 유일한 순서다.
 | **40** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-05-01 R` | **RED** | `over-cap` | ★★ **FIX Iter 8 신설 — 상수 `180` 판별 (P2-2)**. `180` 은 판정을 바꾸는 **자유 변수**인데 직전 판 `leg-off` 열에 없었다. `365` 로 넓히면 이 행이 **GREEN**(firsthand). 행 5(`9999-12-31`)는 `365` 로도 RED 라 상수를 판별하지 못한다 |
 | **41** | `A` ⏎ `D` ⏎ `K: []  # OK` — **골격의 FM 종단 `---` 을 제거** ∧ `<BODY>` = 빈 문자열 | **RED** | `fm-boundary` | ★★★ **FIX Iter 9 신설 — `b2` 판별 행 (P0)**. 직전 판 `leg-off` 표는 `N0` 를 **한 덩어리**로만 껐다. `b1`(34·35) · `b3`(14·20) · `b4`(33) 는 판별 행이 있었으나 **`b2` 는 0** 이었고, 판별 0 인 leg 은 **Phase 2 가 빼도 표가 통과**한다(Iter 5 가 `REPO` 로 처분한 형상과 동형). `b2` off(종단 부재 시 파일 끝까지를 FM 으로) 시 **GREEN**(firsthand — FM 이 정상형 3줄이 되어 전 leg 통과). ★ `<BODY>` 를 비우는 것이 load-bearing 이다 — 본문이 있으면 `b2` off 가 `fm-parse-error` 로 떨어져 **verdict 가 안 뒤집히고 사유만 갈린다**(약한 판별) |
 | **42** | base = `adr_number: 67` ⏎ `status: Accepted` (**그 2줄이 base FM 전체**) / HEAD = `A` ⏎ `D` ⏎ `K: []  # OK` (`status` **키 소실**) | **RED** | `fm-boundary` | ★★★ **FIX Iter 9 신설 — `b5` 판별 행 (P0)**. `b5`(top-level 키 보존)는 §8.D `m9` 에서만 관측됐고 **(iv) 정의역 안 판별 행은 0** 이었다. `b5` off 시 **GREEN**(`K` 줄이 정상형이라 전 leg 통과 — firsthand). ★ 이 행이 없으면 Phase 2 checker 가 `b5` 를 통째로 빼도 전 행이 맞는다. ★★ `b5` 는 §8.D 유령 leg 의 `m9`(E1 종단키 제거)를 잡는 **유일 축**이므로, 유령 leg 이 `declared` 로 강등된 뒤에도 (iv) 표 안에 판별이 남아 있어야 한다 |
+| **43** | `D` ⏎ `K:` ⏎ `  - scripts/check-adr-amendment-parity.sh` (bare scalar 항목 1개) | **RED** | `ladder-path-key` | ★★★★ **FIX Iter 10 신설 — 사다리 (나) 경로 키 판별 (P0)**. 경로 **자체는 완전히 적법**하다(실재 ∧ 배선 ∧ `100755`) — 유일한 결격은 항목이 dict 가 아니라 **bare scalar** 라 `PATH_KEYS` 로 경로를 꺼낼 수 없다는 것뿐이다. 그래서 이 행은 **경로 키 연언지만** 판별한다. `LADDER_KEY` off 시 **GREEN**(firsthand). ★ 코퍼스 실태 근거 = ③-key census 의 **bare scalar 항목 39개** |
+| **44** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-no-atlassian.sh` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 10 신설 — 사다리 (다) workflow 배선 판별 (P0)**. 경로는 **실재**하고(`100755`) 경로 키도 적법하다. 결격은 그 스크립트가 **어떤 workflow `run:` 에도 등장하지 않는다**는 것뿐 — 즉 *"검사기는 있는데 아무도 부르지 않는다"* 라는 본 Story 의 표적 형상 그 자체다. `LADDER_WIRED` off 시 **GREEN**(firsthand). ★ pinned repo state 실측 — 최상위 `scripts/*.sh`·`*.py` **201** 중 workflow 미등장 **83** |
+| **45** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-adr-amendment-parity.sh` | **GREEN** | — | ★★★★ **FIX Iter 10 신설 — 사다리 전건 충족 (P0)**. 세 연언지 전부 성립(경로 키 ∧ 실재 ∧ 배선). ★ **이 행이 없으면 사다리는 "무엇을 해도 RED" 인 죽은 가지**이며, 사다리 경로로 적법해지는 길이 실제로 열려 있음을 고정하는 것이 이 행이다(행 1 이 면제 경로에 대해 하는 역할의 사다리 대응). ★ 대상 스크립트를 `adr-amendment-parity` 로 고른 이유 = 위 정의역 표가 **선례로 인용하는 바로 그 게이트**라 인용과 fixture 가 같은 실물을 가리킨다 |
+| **46** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/check-adr-admission.sh` | **RED** | `ladder-path-missing` | ★★★★ **FIX Iter 10 신설 — 사다리 (나) 실재 판별 (P0, 자기적용)**. 경로 키는 적법하나 그 파일이 **repo 에 없다** — 그리고 이것은 가공한 이름이 아니라 **본 registry `adr-admission` entry 의 `detect_command` 가 가리키는 실 경로**이며 `status: deferred-followup` 이 미존재를 이미 선언한다(firsthand `git ls-files` 출력 0바이트). ★★ **verdict 축 판별은 0 이다 (정직 기재)** — `LADDER_EXIST` off 시 이 행은 `RED/ladder-unwired` 로 **사유만** 바뀐다(미존재 파일은 배선도 없으므로). 아래 ★ 문단 참조 |
+| **47** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `Other-Key: x` | **RED** | `fm-boundary` | ★★★ **FIX Iter 10 신설 — `b4` 의 `FM-형 줄` 문자군 판별 (P1)**. 행 33 과 **한 글자만 다르다**(`other` → `Other-Key`). `FM-형 줄` 이 미정의였을 때 성립하던 4독법 중 **`^[a-z_]+:` 독법에서 이 행이 GREEN 으로 새어나간다**(firsthand — `FMLINE` 좁힘 시 47 만 뒤집힘). ⇒ 아래 `b4` 문면 확정과 짝이며, 정의를 적는 것만으로는 부족하고 **오독을 무는 행**이 있어야 고정된다 |
+
+★★ **행 46 의 `LADDER_EXIST` verdict 판별 0 — 무엇을 시도했고 왜 못 만들었는가 (정직 기재)**
+
+verdict 축 판별 행을 만들려면 **`배선(p)` 참 ∧ `실재(p)` 거짓**인 경로가 필요하다. pinned repo state 에서
+그 집합을 전수 탐색한 결과 **0건**이다(firsthand — 위 (iv-L) 경계 인식 스캔: run블롭 경로 116종 전부 실재).
+
+⇒ 세 부류 중 어디에 속하는지 **정확히** 적는다 — `BLANK`(도달 불가 **증명** 보유)도 아니고
+`ORDER`(미탐색)도 아닌 **세 번째**다: **탐색했고, 필요한 입력형이 현 repo 상태에서 공집합이다.**
+repo 상태가 바뀌면 구성 가능하므로 **원리적 도달 불가가 아니다.**
+★ 그럼에도 **leg 제거는 검출된다** — 수용 기준이 `(verdict, exit 사유)` **쌍**이므로 행 46 의 사유
+불일치가 `LADDER_EXIST` 삭제를 문다. `FMPARSE`·`ORDER` 와 같은 처분이다.
 
 ★★★ **행 36 을 3-값으로 — `검사 없음` 과 `통과` 를 같은 칸에 두지 않는다 (FIX Iter 9, P0)**
 
