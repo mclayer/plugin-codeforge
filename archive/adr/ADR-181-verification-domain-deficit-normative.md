@@ -565,59 +565,102 @@ leg 의 **모든 오독 방식**을 판별하는 행 집합을 요구하지 않�
 "행을 늘렸을 뿐 옛 판별을 잃지 않았다" 가 성립한다. **실측 = 구 18 leg 전건 일치.**
 
 ★★★★ **전면 재실행 3 (설계리뷰 FIX Iter 10, `L3-ⓒ`) — 아래 표는 2 iteration stale 이었다.**
-직전 판은 (iv) 표에 행 **31~42** 를 신설하면서 이 표를 **재실행하지 않았다**. 정본 = 아래 **`48행` 열**이며
+직전 판은 (iv) 표에 행 **31~42** 를 신설하면서 이 표를 **재실행하지 않았다**.
 `31행`·`29행` 열은 **이력으로만** 남긴다(덮어쓰면 무엇이 왜 바뀌었는지가 사라진다).
 
-**산출 명령 (정의역 = (iv) 표 최종 48행 · 실행일 pin `2026-08-17` · 위치 슬롯 문면대로 · 경계 우선)**:
+★★★★ **전면 재실행 4 (설계리뷰 FIX Iter 11, `L3-ⓒ`) — 정의역 = (iv) 표 최종 60행.**
+Iter 11 이 신설한 **12행**(46b · 48~58)을 포함해 **전 leg 을 하나씩 다시 껐다**. 정본 = 아래 **`59행` 열**.
+
+**산출 명령 (정의역 = (iv) 표 최종 60행 · 실행일 pin `2026-08-17` · 위치 슬롯 문면대로 · 경계 우선)**:
 
 ```
-재현기 R: leg-off 키를 하나씩(★ 묶음 금지 — H-6) 끄고 48행 전건 재실행,
+재현기 R: leg-off 키를 하나씩(★ 묶음 금지 — H-6) 끄고 60행 전건 재실행,
           (verdict, exit 사유) 쌍이 규정판과 다른 행을 모은다
+  독법 리터럴 — CBODY off  = `[^\n]` 을 ERE 로 오전사한 독법(= "역슬래시도 글자 n 도 아닌 문자")
+                MULTILINE off = `re.M` 제거
+                COUNT off     = 출현 계수 -> 행 계수
+                BOUNDARY off  = CAR·EXP 의 lookaround 제거
+                RCHAR off     = REPO ∧ PFX 의 repo 문자군을 동시에 `[^\]]` 로 확대
 ```
 
-| leg | 31행 기재 | **48행 실측** | 원인 |
-|---|---|---|---|
-| `CBODY` | 19 | **24** | 행 31·32·38·39·40 신설 후 미재실행 |
-| `MULTILINE` | 20 | **25** | 동상 (+ 행 17 이 `MULTILINE` 에만 걸린다) |
-| `OVERCAP` | 2 | **3** | 행 40(상수 180 판별) 신설 후 미재실행 |
-| `REPO` | 3 | 3 | 불변 |
-| `COUNT` | 4 | 4 | 불변 |
+★★★★ **Iter 10 의 `CBODY`=24 · `MULTILINE`=25 를 철회한다 — 심사 보고치 `22`·`23` 이 옳았다**
 
-★ **정직 고지 (`declared`)**: 본 재실행의 `CBODY` = **24** · `MULTILINE` = **25** 는
-**43행 부분집합에서도 같은 값**이다(firsthand — 신설 행 43~47 은 이 두 leg 을 건드리지 않는다).
-심사 측이 같은 축에 보고한 `22` · `23` 은 **본 재현기로 재현되지 않았고 그 산출 술어를 직접 보지 못했다.**
-어느 쪽이 맞다고 단정하지 않으며 **잔여로 남긴다** — `35 대 36` 키 종류 잔여와 같은 처분이다.
-가르는 지점은 `CBODY` off 의 독법(ERE 오전사 `[^\\n]`)과 `MULTILINE` off 의 독법(`re.M` 제거)이므로,
-**두 독법을 위 산출 블록에 리터럴로 적어** 다음 재현자가 차이를 좁힐 수 있게 한다.
+Iter 10 은 이 두 값을 **잔여**로 남기며 *"심사 보고 22·23 은 본 재현기로 재현되지 않았다"* 고 적었다.
+Iter 11 이 **문면에서 다시 구현한 재현기**(H-5c — 이전 판 코드 재사용 0)로 돌린 결과:
 
-| leg-off | **48행** | 31행 | 29행 | 뒤집힌 행 (`on` -> `off`) — 48행 기준 | verdict 축 판별 |
+```
+정의역 60행 (48행의 상위집합 — 신설 11행은 둘 중 어느 leg 도 건드리지 않는다)
+  CBODY    off -> 뒤집힌 행 22 (verdict 7 = 1·16·19·21·28·38·39 / 사유만 15)
+  MULTILINE off -> 뒤집힌 행 23 (verdict 7 = 동일 / 사유만 16 — 행 17 이 추가)
+```
+
+⇒ **상위집합에서 22·23 이 나왔으므로 48행 부분집합에서 24·25 는 성립할 수 없다.**
+
+★ **철회 전에 독법 공간을 먼저 열거했다** (아래 `leg-off` 독법 규율의 자기적용) — `CBODY` off 는
+독법이 넷 성립하며, **넷 중 어느 것도 24 를 내지 않는다**:
+
+```
+CBODY off 독법        뒤집힌 행 / verdict 판별
+  C1  `.` (Python · DOTALL 금지 — `[^\n]` 과 등가)        0 / 0
+  C2  `[^\n]` 을 ERE 문자군으로 오전사 (역슬래시·글자 n 배제)  22 / 7    ★ 규정
+  C3  `.` + DOTALL                                     1 / 0
+  C4  `[^n]` (글자 n 만 배제)                             22 / 7
+```
+
+⇒ Iter 10 수치를 **철회**하고 심사 보고치를 채택한다. 규정 독법 = **C2**(ERE 부록과 Python 참조 구현
+사이의 실 오전사 경로이며, (i-x-A) 문자군 교차표가 이미 *"주석 본문군은 엔진별로 정반대"* 로 지목한 축이다).
+★ 이 정정은 **본 저작의 자기 수치를 낮추는 방향**이다 — 판별이 줄었다는 사실을 감추지 않는다.
+
+| leg-off | **60행** | 48행 | 31행 | 뒤집힌 행 (`on` -> `off`) — **60행 기준** | verdict 축 판별 |
 |---|---|---|---|---|---|
-| `SCOPE` | **1** | 1 | 1 | 19 | ✓ 1 |
-| `LINE`(정확히 1회) | **1** | 1 | 1 | 22 | ✓ 1 |
-| `MEA` | **2** | 2 | 2 | verdict 27 · 사유만 10 | ✓ 1 |
-| `CAR` | **5** | 5 | 5 | verdict 11 · 사유만 6 · 23 · 24 · 26 | ✓ 1 |
-| `EXP` | **1** | 1 | 1 | 12 | ✓ 1 |
-| `REPO` | **3** | 3 | 2 | verdict 17b · 사유만 17 · 30 | ✓ 1 |
-| `PFX` | **2** | 2 | 2 | 18 · 25 | ✓ 2 |
-| `EXPIRED` | **1** | 1 | 1 | 13 | ✓ 1 |
-| `OVERCAP` | ★ **3** | 2 | 2 | 5 · 15 · **40** | ✓ 3 |
-| `FMPARSE`(=`b3`) | **2** | 2 | 2 | 14 · 20 (`RED` -> ★ **`OUT`**) | ★ ✓ 2 (Iter 10 정정 — 아래) |
+| `SCOPE` | **1** | 1 | 1 | verdict 19 | ✓ 1 |
+| `LINE`(정확히 1회) | **1** | 1 | 1 | verdict 22 | ✓ 1 |
+| `MEA` | **2** | 2 | 2 | verdict 27 / 사유만 10 | ✓ 1 |
+| `CAR` | **5** | 5 | 5 | verdict 11 / 사유만 6 · 23 · 24 · 26 | ✓ 1 |
+| `EXP` | **1** | 1 | 1 | verdict 12 | ✓ 1 |
+| `REPO` | **3** | 3 | 3 | verdict 17b / 사유만 17 · 30 | ✓ 1 |
+| `PFX` | **2** | 2 | 2 | verdict 18 · 25 | ✓ 2 |
+| `EXPIRED` | **1** | 1 | 1 | verdict 13 | ✓ 1 |
+| `OVERCAP` | **3** | 3 | 2 | verdict 5 · 15 · 40 | ✓ 3 |
+| `FMPARSE`(=`b3`) | **2** | 2 | 2 | verdict 14 · 20 (`RED` -> `OUT`) | ✓ 2 |
 | `BLANK` | **0** | 0 | 0 | — | ✗ 도달 불가 증명 보유 ((0-d)) |
-| `BLANK_PFX` | **1** | 1 | 1 | 21 | ✓ 1 |
-| `CBODY` | ★ **24** | 19 | 17 | verdict 7: 1 · 16 · 19 · 21 · 28 · **38** · **39** / 사유만 17 | ✓ 7 |
+| `BLANK_PFX` | **1** | 1 | 1 | verdict 21 | ✓ 1 |
+| `CBODY` | ★ **22** | ~~24~~ 철회 | 19 | verdict 1 · 16 · 19 · 21 · 28 · 38 · 39 / 사유만 15행 | ✓ 7 |
 | `COUNT` | **4** | 4 | 4 | verdict 11 · 12 · 17b / 사유만 23 | ✓ 3 |
-| `DIGIT` | **1** | 1 | 1 | 25 | ✓ 1 |
-| `LEADDIGIT` | **1** | 1 | 1 | 26 | ✓ 1 |
-| `BOUNDARY` | **2** | 2 | 2 | verdict 28 · 사유만 24 | ✓ 1 (★ 묶음 — 아래) |
-| `PUBDATE` = 최신 amendment | **2** | 2 | 2 | 15 · 16 | ✓ **양방향** |
-| `PUBDATE` = 실행일 | ★ **3** | 1 | 1 | verdict 15 · 사유만 31 · 32 | ✓ 1 |
-| `RCHAR` | **1** | 1 | 0 | 30 | ✓ 1 |
-| `MULTILINE` | ★ **25** | 20 | 18 | verdict 7: 1 · 16 · 19 · 21 · 28 · **38** · **39** / 사유만 18 | ✓ 7 |
-| `CAPDIGITS` | **1** | 1 | 1 | 24 | ✓ 1 |
-| `ORDER` | **2** | 2 | 1 | 사유만 17 · 30 | ✗ **사유만** (정직 기재 — 아래) |
-| `EXPVALUE` | **1** | 1 | 0 | 29 | ✓ 1 |
-| ★ `b1` / `b1_strip` / `b2` / `b4` / `b5` | — | — | — | (iv) 표 아래 **`N0` 5분해** 표가 SSOT | 위 표 참조 |
-| ★ `LADDER_KEY` / `LADDER_WIRED` / `LADDER_EXIST` | — | — | — | (iv) 표 아래 **사다리 leg** 표가 SSOT | 43 / 44 / 46 |
+| `DIGIT` | **1** | 1 | 1 | verdict 25 | ✓ 1 |
+| `LEADDIGIT` | **1** | 1 | 1 | verdict 26 | ✓ 1 |
+| `BOUNDARY` | **2** | 2 | 2 | verdict 28 / 사유만 24 | ✓ 1 (★ 묶음 — 아래) |
+| `PUBDATE` = 최신 amendment | **2** | 2 | 2 | verdict 15 · 16 | ✓ **양방향** |
+| `PUBDATE` = 실행일 | **1**(A) / **3**(B ★ 규정) | 3 | 1 | verdict 15 / (B 는 추가로 사유만 31 · 32) | ✓ 1 |
+| `RCHAR` | **1** | 1 | 1 | verdict 30 | ✓ 1 |
+| `MULTILINE` | ★ **23** | ~~25~~ 철회 | 20 | verdict 1 · 16 · 19 · 21 · 28 · 38 · 39 / 사유만 16행 | ✓ 7 |
+| `CAPDIGITS` | **1** | 1 | 1 | verdict 24 | ✓ 1 |
+| `ORDER` | **2** | 2 | 2 | 사유만 17 · 30 | ✗ **사유만** (정직 기재 — 아래) |
+| `EXPVALUE` | **1** | 1 | 1 | verdict 29 | ✓ 1 |
+| ★ `CAP180` (상수 180 -> 365) | **2** | — | — | verdict 15 · 40 | ✓ 2 |
+| `PUBDATE` front-end (부재·오값 skip) | **2** | 2 | — | verdict 31 · 32 | ✓ 2 |
+| `b1`(β 독법) | **2** | 2 | — | verdict 34 · 35 | ✓ 2 |
+| `b2` | **1** | 1 | — | verdict 41 | ✓ 1 |
+| `b4` | **2** | 2 | — | verdict 33 · 47 | ✓ 2 |
+| `b5` | **1** | 1 | — | verdict 42 | ✓ 1 |
+| `FMLINE` 좁힘 (`^[a-z_]+:`) | **1** | 1 | — | verdict 47 | ✓ 1 |
+| `D-ESCAPE` | **1** | 1 | — | verdict 37 (`RED/domain-escape` -> ★ **`OUT`**) | ✓ 1 |
+| `NFC` | ★ **0** | — | — | — | ✗ **0** — (iv) 표에 NFD 입력 행이 없다 (아래 잔여) |
+| ★ `LADDER_KEY` (= `PATH_KEYS` drop `script_path`) | **11** | 1 | — | verdict 45 · 54 · 55 · 56 · 57 · 58 / 사유만 44 · 46 · 46b · 48 · 49 | ✓ 6 |
+| ★ `PATH_KEYS` drop `workflow` | **1** | — | — | verdict 50 | ✓ 1 |
+| ★ `PATH_KEYS` drop `workflow_path` | **1** | — | — | verdict 51 | ✓ 1 |
+| ★ `PATH_KEYS` add `action` | **1** | — | — | 사유만 52 | ✗ **사유만** (확대 방향 — (vii) 정직 기재) |
+| ★ `PATH_KEYS` add `detect_command` | **1** | — | — | 사유만 53 | ✗ **사유만** (동상) |
+| ★ `LADDER_WIRED` | **2** | 1 | — | verdict 44 · 49 | ✓ 2 |
+| ★ `LADDER_EXIST` | **3** | 1 | — | verdict 46b · 48 / 사유만 46 | ✓ **2** (직전 판 0 — 철회됨) |
+| ★ `EXIST` 독법 (`ls-tree` 완전일치 -> `ls-files` pathspec) | **1** | — | — | verdict 48 | ✓ 1 |
+| ★ `WIRE` 경로 정규화 (접두 4종 전부) | **4** | — | — | verdict 54 · 55 · 56 · 57 | ✓ 4 |
+| ★ `WIRE` 접두 (P-1) `./` | **1** | — | — | verdict 54 | ✓ 1 |
+| ★ `WIRE` 접두 (P-2) `$GITHUB_WORKSPACE/` | **1** | — | — | verdict 55 | ✓ 1 |
+| ★ `WIRE` 접두 (P-3) `${GITHUB_WORKSPACE}/` | **1** | — | — | verdict 56 | ✓ 1 (★ 주석제거 on 일 때만 — (iv-L) β-(2)) |
+| ★ `WIRE` 접두 (P-4) `${{ github.workspace }}/` | **1** | — | — | verdict 57 | ✓ 1 |
+| ★ `WIRE` 선두 주석줄 제거 | ★ **0** | — | — | — | ✗ **0** — 표 내 판별 부재. 주입 대조군 + 쌍 조합 = (iv-L) β |
+| ★ `WIRE` 경계 문자군 | **1** | ~~0~~ | — | verdict 49 | ✓ 1 (직전 판 0 — P0-F 봉합) |
 
 ★★ **`FMPARSE` 의 지위가 뒤집혔다 (FIX Iter 10)** — 직전 판은 *"단독 off 는 `MEA` 가 받아내 여전히 RED,
 사유만 바뀜"* 이라 적었다(아래 ★ *"여전히 판별 0 인 leg"* 표). **48행 재실행 실측은 다르다**:
@@ -1127,10 +1170,12 @@ exempt(file) :=
 ladder(file) :=
       len(mea) >= 1                                  # 미만 = 사다리 미선택 (사유 없음)
   AND 각 항목에서 경로가 추출된다 (경로 키 closed-set — 아래 ③-key)  [ladder-path-key]
-  AND 그 경로가 repo 내 실재 실행 파일                              [ladder-path-missing]
-  AND 그 경로가 workflow run: 줄에 등장                             [ladder-unwired]
+  AND 그 경로가 repo 트리의 blob 으로 실재                          [ladder-path-missing]
+  AND 그 경로가 workflow run: 블롭에서 **호출**된다                  [ladder-unwired]
        # ★ FIX Iter 10 — 뒤 3연언지의 입력원(repo 상태) 리터럴 = 아래 (iv-L)
-       #   판별 행 = 43(경로 키) · 44(배선) · 45(전건 충족 GREEN) · 46(실재)
+       # ★ FIX Iter 11 — "실재 실행 파일"/"run: 줄에 등장" 을 (iv-L) 리터럴로 교체:
+       #   실재 = ls-tree 완전일치(blob) · 배선 = 접두 정규화 + 선두주석줄 제거 후 경계 매치
+       #   판별 행 = 43·52·53(경로 키) · 44·49(배선) · 45·50·51·54~58(전건 충족 GREEN) · 46b·48(실재)
 
 admissible(file) := ladder(file) OR exempt(file)
        # ★ FIX Iter 10 — 둘 다 실패 시 exit 사유 귀속:
@@ -1358,6 +1403,41 @@ RED 를 못 내고**, 그 상태로도 "표 전건 재현" 이 성립해 **check
   checker 를 짓지 않으므로 이 비용은 **선언**이며, 승격 조건·완화 정책은 Phase 2 소관이다
   (carrier `#2985` / 만기 2026-09-15). **"닫혔다" 가 아니라 "값을 알고 미룬다"** 이다.
 
+★★★★ **사다리 축의 대가도 숫자로 적는다 (FIX Iter 11, P0-E — 직전 판 미산출)**
+
+직전 판은 면제 축 대가 **122** 만 계산하고 *"나머지 48 = 사다리 경로 별도 판정"* 이라 적은 채
+**그 48 을 한 번도 돌리지 않았다.** 대가를 declare 하겠다는 규율이 **한쪽 가지에만 적용**된 것이다.
+같은 정의역·같은 pin 으로 사다리 술어를 전건 실행한 산출:
+
+```
+# 산출 명령 (정의역 = archive/adr/ADR-*.md glob 174 · mea 비-빈리스트 48파일 169항목 · pin b0cefd3fe)
+재현기 C-L: (iii) ladder 술어를 문면 리터럴로 구현해 48파일 전건 실행
+  파일 단위 (항목 전건 충족 = GREEN)
+     구 PATH_KEYS(8원)  ->  GREEN 0 / RED 48    사유: path-missing 26 · path-key 21 · unwired 1
+     신 PATH_KEYS(3원)  ->  GREEN 0 / RED 48    사유: path-key 44 · path-missing 2 · unwired 2
+  항목 단위 (169항목)
+     구 PATH_KEYS(8원)  ->  path-missing 123 · path-key 45 · unwired 1
+     신 PATH_KEYS(3원)  ->  path-key 164 · unwired 3 · path-missing 2
+  => 사다리 축 대가 = **48파일 전건 RED · PASS 0** (판정은 정정 전후 불변)
+  => 정정된 것은 **진단**이다: `ladder-path-missing` 오진단 **122회**(전부 `action` 키)가 소멸하고
+     `ladder-path-key`(= "경로 키를 쓰지 않았다") 로 옮겨간다
+```
+
+- ★ **두 축의 합이 코퍼스와 맞는다 (정합 확인)** — `mea` 키 부재 **84** · 빈 리스트 **42** · 비-빈 리스트
+  **48** = **174**. 여기서 `ADR-RESERVATION.md` 1건(`¬ADRQ`)을 빼면 위 면제 축의 `mea-missing` **83** 이고,
+  빈 리스트 42 에서 PASS 3(본 Story 가 만든 ADR-043·067·181)을 빼면 **39** 다. 즉
+  **83 + 39 + 48 + 3 = 173 = ADRQ 만족 파일수**. 두 축이 겹치지도 새지도 않는다.
+- ★★ **48 전건 RED 의 의미 (over-claim 차단)** — 이것은 *"지금 48개가 차단된다"* 가 아니라
+  **"그 48개 중 하나를 건드리는 PR 은 그 파일에서 RED 를 받는다"** 이다(정의역 = PR diff forward-only).
+  면제 축 122 와 **같은 성격의 이연 비용**이며 같은 처분(Phase 2 warning-first)을 받는다.
+- ★ **왜 48 전건이 RED 인가 (원인 귀속)** — 신 술어 기준 사유의 **164/169** 가 `ladder-path-key` 다.
+  즉 현행 코퍼스는 사다리를 통과할 **형식으로 쓰여 있지 않다**(대부분 `action: <검사 이름>` 형).
+  이는 술어가 가혹해서가 아니라 **`mea` 가 지금까지 자유 서술 필드였기 때문**이며, 그 사실 자체가
+  본 Story 의 문제 제기(선언이 강제로 이어지지 않는다)와 같은 관측이다.
+- ★ **`실재`/`배선` 축이 실제로 무는 것은 4항목뿐이다** — 신 술어 항목 단위에서 `path-missing` 2 ·
+  `unwired` 3. 나머지는 경로 키 층에서 이미 걸린다. **사다리 뒤 두 연언지의 코퍼스 노출은 작다**는
+  사실을 적어 둔다(작다는 것이 불필요하다는 뜻은 아니다 — 판별 행 44·46·46b·48·49 가 그 축을 고정한다).
+
 ★★★ **평가 순서 = 경계 우선 (FIX Iter 9, P0)**
 
 `ADRQ(t)` 의 **첫 연언지가 "frontmatter 파싱 성공"** 이므로, 정의역을 leg 보다 먼저 적용하면
@@ -1367,11 +1447,51 @@ RED 를 못 내고**, 그 상태로도 "표 전건 재현" 이 성립해 **check
 **firsthand 대조 (문면 리터럴, 상수 `A` 포함 — ★★★★ FIX Iter 10 최종 48행 전면 재실행, `L3-ⓒ`)**:
 
 ```
-정의역 = (iv) 표 최종 48행 · 실행일 pin 2026-08-17 · 위치 슬롯 문면대로 · 행37 base=1줄 · 행36 기대=OUT
-재현기 R: 경계 우선            -> rows=48  match=48  mismatch=0
-재현기 R: 정의역 우선          -> rows=48  match=43  mismatch=5
+정의역 = (iv) 표 최종 60행 · 실행일 pin 2026-08-17 · 위치 슬롯 문면대로 · 행37 base=1줄 · 행36 기대=OUT
+재현기 R: 경계 우선                      -> rows=60  match=60  mismatch=0
+재현기 R: 정의역 우선 (독법 β — 규정)      -> rows=60  match=55  mismatch=5
     불일치 = 14 · 20 · 34 · 35 · 41      # 다섯 행 전부 RED -> OUT
+재현기 R: 정의역 우선 (독법 α)            -> rows=60  match=57  mismatch=3
+    불일치 = 14 · 20 · 41
 ```
+
+★★★★ **FIX Iter 11 — `정의역 우선` 의 독법이 자유 변수였다 (자기 적발, P1)**
+
+Iter 10 이 기록한 `mismatch=5` 는 **재현되지 않는다** — 문면대로 다시 구현하면 **3** 이 나온다.
+원인은 계산이 아니라 **미규정 독법**이다. `정의역 우선` 은 *"ADRQ 를 leg 보다 먼저 적용한다"* 까지만
+적혀 있고, **frontmatter 를 어떻게 찾는지**를 적지 않았다:
+
+| 독법 | frontmatter 위치 탐색 | 행 34(BOM) · 35(CRLF) | mismatch |
+|---|---|---|---|
+| **α** | 관용 — 선두 형태와 무관하게 첫 단독 `---` 을 종단으로 삼는다 | 파싱 성공 → `ADRQ` 성립 → 경계 leg 이 `RED/fm-boundary` | **3** |
+| **β** ★ **규정** | `b1`(파일이 정확히 `---`+LF 로 시작)을 **위치 탐색 전제**로 쓴다 | FM 미발견 → `¬ADRQ` → **`OUT`** | **5** |
+
+⇒ **β 를 규정 독법으로 고정**한다(위 산출 블록에 리터럴로 적었다). 근거 = β 가 **실 오구현 모형**이다
+(`---` 를 여는 표식으로 삼아 FM 을 찾는 것이 통상 구현이며, `b1`(β) ablation 독법 선택과 같은 논리다).
+★ **결론은 두 독법에서 동일하다** — 어느 쪽이든 `RED → OUT` 방향의 정의역 층 fail-open 이 나오므로
+**경계 우선 채택 근거는 무손상**이다. 바뀐 것은 *"몇 행이냐"* 뿐이며, 그 숫자를 재현 가능하게 만든 것이
+이 정정이다. ★ 이것은 Iter 7 `RCHAR`(문자군 누락) · Iter 8 CRLF(줄끝 축 누락) · Iter 10 위치 슬롯에 이은
+**같은 형상 4번째** — *판정을 바꾸는 변수가 변수 목록 밖에 있다* — 이며, 처분도 같다: **독법을 리터럴로 등재**.
+
+★★★ **일반화 — `leg-off` 열은 leg 을 열거하지만 `leg-off` 의 *독법*은 열거하지 않았다 (FIX Iter 11)**
+
+Iter 11 재실행에서 **세 leg 의 수치가 독법에 따라 갈렸다**. 세 건 모두 leg 이름은 표에 있었고
+**그 leg 을 어떻게 끄는지가 없었다**:
+
+| leg-off | 독법 갈림 | 채택 |
+|---|---|---|
+| `CBODY` | `[^\n]` 을 Python 문자군으로 읽는가 / ERE 로 오전사한 문자군으로 읽는가 | **후자** (22행) |
+| 평가 순서 `정의역 우선` | frontmatter 위치 탐색이 관용인가 / `b1` 전제인가 | **후자 β** (5행) |
+| `PUBDATE` = 실행일 | 상한 기준일만 교체인가 / 발행일 축 자체를 미사용인가 | **후자 B** (3행) |
+
+★★ **본 저작의 자기 실례 (정직 기재)** — 세 번째 건에서 본 저작은 독법 A 만 돌려 보고
+*"구 기재 `31 · 32` 는 재현 실패"* 라고 **먼저 적었다.** 독법 B 를 돌리자 구 기재가 **정확히 재현**됐고
+그 문장을 철회했다. **하나의 독법에서 재현되지 않았다는 것은 재현 실패가 아니다** — 독법 공간을
+먼저 열거해야 한다. 이것이 `(0-c)` 에 붙는 규율이다:
+
+> **`leg-off` 열의 각 행은 leg 의 *이름*이 아니라 leg 을 끄는 *연산*을 적는다.** 연산이 둘 이상
+> 성립하면 **전부 열거하고 하나를 규정으로 지정**한다. 지정 없는 leg-off 수치는 **재현 불가**이며,
+> 그 수치의 불일치를 근거로 어느 쪽을 철회해서도 안 된다.
 
 ★★ **직전 판의 `36/5` · `40/1` 은 stale 이었다 (FIX Iter 10 정정)** — 계산 착오가 아니라 **미재실행**이다.
 두 수치 모두 **41행 시절 조합**에서만 재현되며, 그 뒤 행 41·42 가 신설되고 행 36 이 3-값화됐는데
@@ -1402,6 +1522,8 @@ named RED"* 규칙을 **정의역 층까지 관철**하는 유일한 순서다.
 stub checker := ladder 를 `len(mea) >= 1` 로만 구현 (경로 키·실재·배선 3연언지 전부 삭제)
   구 43행 정의역 -> rows=43  match=43  mismatch=0      # ★ 미구현 stub 이 표를 전건 통과
   신 48행 정의역 -> rows=48  match=45  mismatch=3      # 43 · 44 · 46 에서 탈락
+  ★ FIX Iter 11 최종 60행 -> rows=60  match=52  mismatch=8
+     탈락 행 = 43 · 44 · 46 · 46b · 48 · 49 · 52 · 53
 ```
 
 ⇒ **이것이 본 Story 의 표적 그 자체다** — *"선언은 있는데 강제가 없다"* 를 잡는 표를 만들면서
@@ -1588,7 +1710,7 @@ firsthand (pinned state)
 | **34** | `<FM>` = `D` ⏎ `K: []  # OK` ∧ ★ `prefix` = U+FEFF (**파일 선두** — 골격 1행 `---` **앞**) | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 · ★★★★ FIX Iter 10 위치 정정 (P0)**. 1행이 `^---$` 를 불성립시켜 **FM 시작점이 종단 줄로 밀린다.** 형제 게이트 `scripts/lib/check_doc_frontmatter.py:47` 은 같은 입력에서 **warning 후 continue** 한다(firsthand). ★★ **Iter 9 문면(`<BOM>` 을 `<FM>` 슬롯 선두에)은 상수 `A` 삽입으로 BOM 이 frontmatter 안으로 밀려 `RED/pubdate-missing` 을 냈다** — 표 기대와 불일치이며, 위 위치 슬롯 문단이 그 정정이다. `b1_strip` off 시 **GREEN** |
 | **35** | `<FM>` = 행 1 과 동일 ∧ ★ `eol` = **CRLF** (파일 전체) | **RED** | `fm-boundary` | ★★ **FIX Iter 8 신설 — 줄끝 자유 변수 (P2-2)**. `^---$` 가 `\r` 때문에 불성립한다. 직전 판 `leg-off` 열에 **CRLF 축이 없었고**, 이 행이 그것을 `N0` 아래로 편입한다. ★ **FIX Iter 10** — 줄끝은 `<FM>` 내용이 아니라 **위치 슬롯 `eol`** 이며 그 사실을 위 슬롯 표가 고정한다. `b1_strip` off 시 **GREEN** |
 | **36** | `adr_number: null` ⏎ `D` ⏎ `status: Active` (`K` 부재) | ★ **OUT** | — (검사 없음) | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 3-값화 (P0)**. **`ADR-*.md` 는 파일명 패턴이지 ADR 자격 술어가 아니다.** 이 행이 RED 면 실 파일 `archive/adr/ADR-RESERVATION.md` 가 born-red 다(firsthand — 이 PR 이 그 파일을 수정했고 `K` 키 0 · `adr_number: null`). `DOMAIN` off(파일명 glob 만) 시 **RED/`mea-missing`** — 즉 **제외가 실제로 load-bearing** 임을 이 행이 고정한다. ★★ **기대값이 `GREEN` 이 아니라 `OUT` 인 이유 = 아래 3-값 문단** |
-| **37** | base = `adr_number: 67` (**그 1줄이 base FM 전체**) / HEAD = `adr_number: null` ⏎ `D` ⏎ `K: []  # OK` | **RED** | `domain-escape` | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 base 리터럴화 (P0)**. 행 36 의 제외만 두면 **실 ADR 이 `adr_number` 를 null 로 바꿔 정의역을 빠져나간다.** `D-ESCAPE` off 시 **GREEN**(firsthand). ★ 이 Story 가 *"동결 이력 배제 = 복제 템플릿"* 으로 이미 겪은 형태이며, 처방도 같다 — **배제에 provenance 를 붙인다**. ★★ **직전 판의 `…` 생략기호가 exit 축에서 load-bearing 이었다 — 아래 문단** |
+| **37** | base = `adr_number: 67` (**그 1줄이 base FM 전체**) / HEAD = `adr_number: null` ⏎ `D` ⏎ `K: []  # OK` | **RED** | `domain-escape` | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 base 리터럴화 (P0)**. 행 36 의 제외만 두면 **실 ADR 이 `adr_number` 를 null 로 바꿔 정의역을 빠져나간다.** `D-ESCAPE` off 시 ★ **`OUT`**(firsthand — **FIX Iter 11 정정**, 구 기재 "GREEN" 은 재현 실패. ⓐ 가지를 없애면 `¬ADRQ(head)` 가 ⓑ 로 떨어져 **검사가 아예 돌지 않는다** — GREEN 보다 나쁜 결과이며 `(verdict, exit)` 쌍 기준으로는 동일하게 검출된다). ★ 이 Story 가 *"동결 이력 배제 = 복제 템플릿"* 으로 이미 겪은 형태이며, 처방도 같다 — **배제에 provenance 를 붙인다**. ★★ **직전 판의 `…` 생략기호가 exit 축에서 load-bearing 이었다 — 아래 문단** |
 | **38** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-08-17 R` (만기 == 실행일) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 하한 경계 등호 (P2-2)**. `>=` 를 `>` 로 오전사하면 **당일 만기가 탈락**해 RED. 직전 판 `leg-off` 열에 **등호 축이 없었다** |
 | **39** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-02-12 R` (만기 == 발행일+180) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 상한 경계 등호 (P2-2)**. `<=` 를 `<` 로 오전사하면 **정확히 상한인 날짜가 탈락**해 RED |
 | **40** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-05-01 R` | **RED** | `over-cap` | ★★ **FIX Iter 8 신설 — 상수 `180` 판별 (P2-2)**. `180` 은 판정을 바꾸는 **자유 변수**인데 직전 판 `leg-off` 열에 없었다. `365` 로 넓히면 이 행이 **GREEN**(firsthand). 행 5(`9999-12-31`)는 `365` 로도 RED 라 상수를 판별하지 못한다 |
@@ -1610,17 +1732,39 @@ firsthand (pinned state)
 | **55** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/retro-retry-helper.sh` | **GREEN** | — | ★★★★ **FIX Iter 11 신설 — 접두 (P-2) `$GITHUB_WORKSPACE/` 의 판별 (P0-A)**. 동상. (P-2) 만 끄면 이 행만 뒤집힌다 |
 | **56** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/extract-security-ai.sh` | **GREEN** | — | ★★★★ **FIX Iter 11 신설 — 접두 (P-3) `${GITHUB_WORKSPACE}/` 의 판별 (P0-A) ∧ 주석제거 leg 의 쌍 판별 (P0-B)**. 실 호출 2줄이 이 접두를 쓴다. ★★ **이 행의 (P-3) 판별은 주석제거가 켜져 있을 때만 성립**한다 — 꺼져 있으면 같은 파일을 가리키는 주석 한 줄이 배선을 대신 공급해 (P-3) off 에서도 GREEN 이다(위 (iv-L) β-(2) 쌍 조합 실측) |
 | **57** | `D` ⏎ `K:` ⏎ `  - script_path: scripts/bootstrap-labels.sh` | **GREEN** | — | ★★★★ **FIX Iter 11 신설 — 접두 (P-4) `${{ github.workspace }}/` 의 판별 (P0-A)**. 동상. (P-4) 만 끄면 이 행만 뒤집힌다 |
+| **58** | `D` ⏎ `"K":` ⏎ `  - script_path: scripts/check-adr-amendment-parity.sh` (**인용 키** + 사다리) | **GREEN** | — | ★★★ **FIX Iter 11 신설 — (v) 표기 정규형이 사다리 가지에 미적용임을 표로 고정 (P1-5)**. 행 8(`"K": []  # OK`)은 같은 인용 키로 **`RED/line-form`** 인데 이 행은 **GREEN** 이다 — (v) 의 *"제약은 면제 경로 한정"* 이 선언으로만 있었고 **판별이 없었다**. 두 행의 차이가 곧 **판독 계층의 차이**(정규식 표기 층 대 PyYAML 파싱 결과)이며, 그 비대칭이 이제 표 안에 있다 |
 
-★★ **행 46 의 `LADDER_EXIST` verdict 판별 0 — 무엇을 시도했고 왜 못 만들었는가 (정직 기재)**
+★★★★ **직전 판의 "세 번째 부류 = 필요 입력형이 공집합" 을 철회한다 (FIX Iter 11, P0-D · 3자 수렴)**
 
-verdict 축 판별 행을 만들려면 **`배선(p)` 참 ∧ `실재(p)` 거짓**인 경로가 필요하다. pinned repo state 에서
-그 집합을 전수 탐색한 결과 **0건**이다(firsthand — 위 (iv-L) 경계 인식 스캔: run블롭 경로 116종 전부 실재).
+직전 판은 이 자리에 *"`배선 ∧ ¬실재` 를 전수 탐색한 결과 **0건**"* 이라 적고 그것을
+`BLANK`·`ORDER` 와 구별되는 **제3부류**로 명명했다. **반증됐다** — 심사 3자가 각각 witness 를 냈고
+(PL 6건 · Claude 26종 · Codex 1건), 본 저작도 재현했다.
 
-⇒ 세 부류 중 어디에 속하는지 **정확히** 적는다 — `BLANK`(도달 불가 **증명** 보유)도 아니고
-`ORDER`(미탐색)도 아닌 **세 번째**다: **탐색했고, 필요한 입력형이 현 repo 상태에서 공집합이다.**
-repo 상태가 바뀌면 구성 가능하므로 **원리적 도달 불가가 아니다.**
-★ 그럼에도 **leg 제거는 검출된다** — 수용 기준이 `(verdict, exit 사유)` **쌍**이므로 행 46 의 사유
-불일치가 `LADDER_EXIST` 삭제를 문다. `FMPARSE`·`ORDER` 와 같은 처분이다.
+★★ **오류의 정체는 계산이 아니라 정의역이다.** 그 *"전수"* 탐색의 정의역은
+`scripts/*.{sh,py}` 로 **좁혀져 있었고**, 그 사실이 문면에 적히지 않았다.
+**이 Story 가 열한 라운드 고발해 온 "검사 정의역 협착" 이, 정의역 협착을 정직하게 기재하겠다고 쓴
+문단 자신에서 재발한 것**이다. ⇒ 탐색 정의역을 **명시**하고 다시 돌린다:
+
+```
+탐색 정의역 S := 정규화(run블롭') 안 정규식 `[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)+` 의 distinct 토큰 전체
+                 (즉 `/` 를 1개 이상 포함하는 경로꼴 토큰 — 확장자·디렉터리 제한 없음)
+대조 대상   := git ls-tree -r --name-only b0cefd3fe   (blob 1647 · 파생 디렉터리 226)
+
+|S| = 407
+  배선 참 ∧ 실재(ls-tree 완전일치) 거짓 ∧ 디렉터리 아님   ->  92종      # 직전 판 주장 = 0
+  배선 참 ∧ 실재 거짓 ∧ 디렉터리                          ->   7종      # archive/adr · scripts/lib · tests/unit …
+```
+
+- **채택 witness (행 46b)** = **`.codeforge/project.yaml`** — run블롭에 2회 등장하고 repo 에는 없다
+  (consumer 측 파일이므로 wrapper 에 없는 것이 **정상 상태**다. 가공한 이름이 아니다).
+- **채택 witness (행 48)** = **`scripts/lib`** — 디렉터리 부류의 대표. 구 `실재` 독법(ls-files pathspec)
+  에서는 `실재=True` 였고 `--cov=scripts/lib` 로 배선까지 참이라 **GREEN 이 나던** 입력이다.
+- ⇒ `LADDER_EXIST` 는 이제 **verdict 축 판별 2행**(46b · 48)을 가진다. 직전 판이 *"사유만 바뀐다"* 로
+  남겨 둔 자리가 실제로는 **fail-open 이 열려 있던 자리**였다.
+
+★ **일반화 (규율로 승격)**: *"전수 탐색했고 0건"* 이라는 문장은 **탐색 정의역을 함께 적지 않으면
+주장으로 성립하지 않는다.** 본 문서에서 같은 형상이 세 번 나왔다 — census glob(P0-C) · `b4` 의 `FM-형 줄`
+미정의(Iter 10) · 그리고 이 문단. 처분도 셋 다 같다: **정의역을 리터럴로 적고 다시 돌린다.**
 
 ★★★ **행 36 을 3-값으로 — `검사 없음` 과 `통과` 를 같은 칸에 두지 않는다 (FIX Iter 9, P0)**
 
@@ -1681,7 +1825,11 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
              ⓒ ADRQ(head)                                 -> 정의역 안 ((iii) 판정)
 ```
 
-- ★★ **ⓐ 가 없으면 제외 자신이 회피구다** — 행 37 이 그 판별이다. `D-ESCAPE` off 시 GREEN(firsthand).
+- ★★ **ⓐ 가 없으면 제외 자신이 회피구다** — 행 37 이 그 판별이다. `D-ESCAPE` off 시
+  **`OUT`(정의역 밖)** 이다(firsthand — ★ **FIX Iter 11 정정**: 직전 판 3곳이 *"GREEN"* 이라 적었으나
+  재실측은 `OUT` 이다. `¬ADRQ(head)` 인 입력에서 ⓐ 가지를 없애면 ⓑ 로 떨어지므로 검사가 아예 돌지 않는다.
+  ★★ **정정 방향이 중요하다** — `OUT` 은 GREEN 보다 **나쁜** 결과다. "통과했다" 가 아니라
+  **"검사가 사라졌다"** 이며, 그것이 바로 이 문서가 행 36 을 3-값화하며 고발한 형상이다).
 - ★★ **ⓑ 를 `domain-escape` 로 두지 않는 이유 (자기 적발, 정직 기재)**: 본 저작이 처음 쓴 판은
   **신규 파일의 ¬ADRQ 도 RED** 로 뒀고, 그 결과 **(iv) 표 fixture 전건이 born-red** 였다(골격에
   `adr_number` 가 없으므로). 신규 registry 파일도 같은 false-RED 를 받는다. ⇒ ⓑ 는 정의역 밖으로 둔다.
@@ -1770,9 +1918,12 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
   이 되어 유령 leg 이 **0 → 6 RED**(전면 false-RED)로 뒤집힌다. ⇒ front-end 가 **입력을 NFC 로 정규화**해
   검사를 정규화-불변으로 만든다. 정규화 후 NFD 입력도 **GREEN**(firsthand), `NFC` off 시 **RED 6**(판별).
 
-★★★★ **실행 확인 (firsthand, FIX Iter 10 — 최종 48행 전건 재실행 · 문면 리터럴)**: (iv) 표 **전 48행**을
+★★★★ **실행 확인 (firsthand, FIX Iter 11 — 최종 60행 전건 재실행 · 문면 리터럴)**: (iv) 표 **전 60행**을
 front-end 인스턴스화 구현(Python `re` + `yaml.safe_load` + NFC 정규화 + pinned repo state 조회)으로
-실행했다 — **기대 일치 48/48 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
+실행했다 — **기대 일치 60/60 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
+★ 재현기는 **이전 판 코드를 재사용하지 않고 문면에서 다시 구현**했다(H-5c). 그 결과 이번 판이
+잡아낸 것 = ① Iter 10 의 `CBODY`/`MULTILINE` 수치 철회 ② `정의역 우선` 독법 미규정 ③ `D-ESCAPE` off 의
+`GREEN` → `OUT` 정정 — 셋 다 **재사용했으면 그대로 상속됐을** 값이다.
 
 ```
 재현기 R: 상수 A 삽입 · 위치 슬롯 문면대로 · 경계 우선 · 행37 base=1줄 · 행36 기대=OUT
@@ -1838,20 +1989,25 @@ b1 off (β)  = ★ 선두 BOM·CR 을 제거한 뒤 진행       -> 34 · 35 GRE
 
 | leg-off | 뒤집히는 행 | 방향 |
 |---|---|---|
-| `PUBDATE` = 실행일 off | 15 · 31 · 32 | 15 는 RED → GREEN · 31 · 32 는 사유만 |
+| `PUBDATE` = 실행일 off | **15** (독법 A) / **15 · 31 · 32** (독법 B ★ 규정) | ★ **FIX Iter 11 — 이 leg-off 도 독법이 둘이었다**. **A** = 상한 기준일만 실행일로 교체(발행일 front-end 유지) → **행 15 만** (RED → GREEN). **B** = 발행일 축 자체를 실행일로 대체(front-end 미사용) → 행 15 (RED → GREEN) + 행 31 · 32 (`pubdate-missing`/`pubdate-value` → `over-cap`, **사유만**). 구 기재 `15 · 31 · 32` 는 **B 에서 재현된다** ⇒ **B 를 규정 독법으로 고정**(발행일을 안 읽는 구현이 실 오구현 모형이다) |
 | `PUBDATE` = 최신 amendment off | 15 · 16 | RED → GREEN · GREEN → RED (**양방향**) |
 | `EXPVALUE` off | 29 | RED → **GREEN** |
 | ★ `DOMAIN`(ADR 자격 술어) off | **36 · 37** | 36 은 `OUT` → **RED/mea-missing** · ★ **37 은 RED → GREEN** (아래 얽힘) |
-| `D-ESCAPE` off | 37 | RED → **GREEN** |
+| `D-ESCAPE` off | 37 | RED → ★ **`OUT`** (FIX Iter 11 정정 — 구 기재 "GREEN" 은 재현 실패) |
 | 하한 등호 `>=`→`>` | 38 | GREEN → **RED** |
 | 상한 등호 `<=`→`<` | 39 | GREEN → **RED** |
 | 상수 `180`→`365` | 15 · **40** | RED → **GREEN** |
-| ★ 평가 순서 `경계 우선` → `정의역 우선` | 14 · 20 · 34 · 35 · **41** | RED → **OUT** (정의역 층 fail-open) |
+| ★ 평가 순서 `경계 우선` → `정의역 우선` (독법 β) | 14 · 20 · 34 · 35 · **41** | RED → **OUT** (정의역 층 fail-open). ★ 독법 α 는 **3행**(14 · 20 · 41) — 위 독법 표 |
 | ★ `FMLINE` 좁힘 (`b4` 의 FM-형 줄을 `^[a-z_]+:` 로) | **47** | RED → **GREEN** |
-| ★ `LADDER_KEY` off | **43** | RED → **GREEN** |
-| ★ `LADDER_WIRED` off | **44** | RED → **GREEN** |
-| ★ `LADDER_EXIST` off | **46** | `ladder-path-missing` → `ladder-unwired` (**사유만** — 위 정직 문단) |
-| `NFC` off | (유령 leg 축 — `ADR-067` NFD 판 **0 → 6 RED**) | GREEN → **RED** |
+| ★ `LADDER_KEY` off (= `PATH_KEYS` 에서 `script_path` 제거) | **45 · 54 · 55 · 56 · 57 · 58** verdict / 44 · 46 · 46b · 48 · 49 사유만 | GREEN → **RED/`ladder-path-key`** |
+| ★ `LADDER_WIRED` off | **44 · 49** | RED → **GREEN** |
+| ★ `LADDER_EXIST` off | **46b · 48** verdict / 46 사유만 | RED → **GREEN** (★ FIX Iter 11 — 직전 판의 *"사유만 · verdict 판별 0"* 은 **철회**됐다) |
+| ★ `EXIST` 독법 `ls-tree` 완전일치 → `ls-files` pathspec | **48** | RED → **GREEN** (디렉터리가 실재로 셈된다) |
+| ★ `WIRE` 경로 정규화 off (접두 4종) | **54 · 55 · 56 · 57** | GREEN → **RED/`ladder-unwired`** (접두 1종씩 끄면 각 1행) |
+| ★ `WIRE` 경계 문자군 off (부분문자열) | **49** | RED → **GREEN** (URL 조각이 배선으로 셈된다) |
+| ★ `WIRE` 선두 주석줄 제거 off | **없음** | ✗ **0** — 표 내 판별 부재. 주입 대조군 = (iv-L) β-(1) |
+| ★ `PATH_KEYS` add `action` / `detect_command` | 52 / 53 | 사유만 (`ladder-path-key` → `ladder-path-missing`) |
+| `NFC` off | ★ **(iv) 표 안에서는 없음** | ✗ **0** — 판별은 §8.D 유령 leg 축(`ADR-067` NFD 판 0 → 6 RED)에만 있고, 그 축은 **B안으로 `declared` 강등**됐다 ⇒ 수용 기준 안에 `NFC` 판별이 **없다**(FIX Iter 11 적발, 아래 잔여) |
 
 ★★ **`DOMAIN` off 가 행 37 도 뒤집는다 — 두 leg 이 얽혀 있다 (FIX Iter 10, P2 정정)**. 직전 판은
 `DOMAIN` off 의 뒤집힘을 **행 36 하나**로 적었으나 실측은 **2행**이다. `domain-escape`(ⓐ 가지)는
@@ -1998,6 +2154,18 @@ Iter 6 은 **그 Iter 5 판정 자체에서 3칸이 더 틀렸음**을 드러냈
   거의 0 이다. 반면 표기 다양성을 허용하면 술어가 YAML 파서와 정규식 사이에서 영원히 어긋난다.
 - ★ **`ladder` 경로에는 이 제약이 없다** — 사다리는 **정규식 표기 층이 아니라 PyYAML 파싱 결과 위에서**
   판정하므로 표기 자유다. 제약은 면제 경로 한정이다. 두 leg 의 판독 계층이 다르다는 사실을 여기 적는다.
+  ★★ **FIX Iter 11 (P1-5) — 이 한정이 선언으로만 있고 판별 행이 없었다.** 선언은 다음 라운드가
+  다른 독법을 채택하면 그만이므로 **비대칭을 표로 고정**한다(`D-LEG` L2 자기적용):
+
+  ```
+  firsthand (동일한 인용 키 `"mechanical_enforcement_actions"` · 가지만 다름)
+    행  8  "K": []  # OK                                  -> RED / line-form     (면제 가지)
+    행 58  "K": ⏎ - script_path: <실재 ∧ 배선 경로>          -> GREEN               (사다리 가지)
+    행 45  K:   ⏎ - script_path: <같은 경로>                -> GREEN               (평문 키 대조)
+  ```
+
+  ⇒ 표기 제약이 **면제 가지에서만 무는 것**이 실행으로 관측된다. 행 45 는 음성 대조다 —
+  인용 여부가 사다리 판정을 바꾸지 않음을 같은 실행에서 보인다.
 
 ★★★ **접합부 선언 — (v) ↔ (iii) 사다리 술어 (FIX Iter 10, §결정 4 자기적용)**
 
@@ -2092,11 +2260,38 @@ pin 은 "잔여일 수" 같은 **관측 카운터를 exit 조건으로 삼는 �
 경로를 꺼내는지 미선언이라 (나)(다)가 판정 불가였다. 확정:
 
 ```
-PATH_KEYS := ["script_path", "workflow", "detect_command", "action",
-              "script", "path", "check", "workflow_path"]      # closed-set
+PATH_KEYS := ["script_path", "workflow", "workflow_path"]       # closed-set (FIX Iter 11 — 8원 -> 3원)
+NON_PATH_KEYS := ["action", "check", "detect_command", "script", "path"]
+                 # 경로 추출원이 **아니다**. 아래 근거표 참조
 경로 추출 = 항목이 dict 이고 PATH_KEYS 중 1개 이상 보유 → 그 값들이 경로 후보
 항목이 bare scalar(문자열) → 경로 키 부재 ⇒ 사다리 미충족 (RED)
 ```
+
+★★★★ **FIX Iter 11 — 8원 중 1원만 행사됐고, 그 중 하나는 경로가 아니었다 (P0-E · P1-1)**
+
+직전 판의 8원 closed-set 은 (iv) 표에서 **`script_path` 1원만** 행사했다 — 축소 mutant(원소 제거)도
+확대 mutant(원소 추가)도 48행을 **양방향으로 통과**했다. 즉 나머지 7원은 **아무것도 고정하지 않는
+문면**이었다. 동시에 코퍼스를 재면 그 중 두 원소는 **값이 경로가 아니다**:
+
+| 키 | 코퍼스 dict 항목 보유 수 | 값의 실제 형태 | 처분 | 판별 행 |
+|---|---|---|---|---|
+| `script_path` | 2 | `scripts/check-production-cutover-evidence.sh` — 경로 | **유지** | 44 · 45 · 46 · 46b · 48 · 49 · 54~57 |
+| `workflow` | 3 | `templates/github-workflows/story-init.yml` — 경로 | **유지** | **50** |
+| `workflow_path` | 2 | `templates/github-workflows/production-cutover-evidence.yml` — 경로 | **유지** | **51** |
+| `action` | **122** | `auto-phase-label` · `bypass-label-counter` … — **검사 이름** (경로꼴 값 **0/122**) | **분리** | **52** |
+| `detect_command` | 1 | `bash scripts/check-claude-md-line-cap.sh` — **명령줄** | **분리** | **53** |
+| `check` · `script` · `path` | **0 · 0 · 0** | — | **제거** | (아래 근거) |
+
+- ★★ **`action` 분리가 이번 라운드 최대 실효다** — 130 dict 항목 중 **122** 가 `action` 이고 그 값은
+  전부 검사 이름이라, 구 술어는 그것을 경로로 읽어 `ladder-path-missing` 을 **122회 오진단**했다.
+  판정(RED)은 같지만 **저자에게 지시하는 정정이 정반대**다(*"경로를 고쳐라"* 대 *"경로 키를 써라"*).
+- ★ **`check`·`script`·`path` 제거 근거** = **코퍼스 사용 0 ∧ 표 판별 행 0**. 남겨 두면 정확히
+  *"8원 중 1원만 행사"* 결함이 3원만큼 잔존한다. 제거 방향은 **fail-closed**(그 키를 쓰는 미래 항목은
+  `ladder-path-key` RED 로 떨어져 저자가 `script_path` 로 개명하게 된다)이므로 구멍을 열지 않는다.
+- ★ **확대 mutant 는 verdict 가 아니라 사유로 잡힌다 (정직 기재)** — `action`·`detect_command` 를
+  되돌리면 행 52·53 이 `RED/ladder-path-key` → `RED/ladder-path-missing` 으로 **사유만** 갈린다.
+  수용 기준이 `(verdict, exit)` **쌍**이라 검출되지만, **verdict 축 판별은 0** 이라는 사실을 적는다.
+  축소 mutant 는 verdict 축으로 잡힌다(50·51 이 GREEN → RED).
 
 ★ **census (firsthand, 재현 명령 병기 — 정수 pin 아님)**:
 
