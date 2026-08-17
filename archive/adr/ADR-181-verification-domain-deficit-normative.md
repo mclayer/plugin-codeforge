@@ -1023,10 +1023,15 @@ checker 는 이 토큰을 stdout 으로 방출한다(어느 행에서 걸렸는�
 
 ```
 ---
+adr_number: 999
 <FM>
 ---
 <BODY>
 ```
+
+★★ **2행 = 상수 `A` (FIX Iter 9 실물 삽입)**. 이 줄이 없으면 전 fixture 가 정의역 밖으로 떨어져
+표가 공허해진다(위 상수 블록 아래 ★★★ 문단). 행 36·37 은 자기 `<FM>` 첫 줄이 `adr_number: null`
+이므로 **YAML 중복 키 규칙(뒤가 이긴다)** 으로 이 상수를 덮어쓴다 — 두 행만 `¬ADRQ(head)` 다.
 
 ★★ **`<BODY>` 슬롯 신설 (설계리뷰 FIX Iter 6, P2)** — 직전 판의 골격에는 frontmatter 슬롯만 있었고,
 그래서 **행 19 만 홀로 비-리터럴**이었다(*"본문에 열 0 코드블록으로 같은 줄 1회 재등장"* 이라는 산문 서술).
@@ -1052,6 +1057,7 @@ checker 는 이 토큰을 stdout 으로 방출한다(어느 행에서 걸렸는�
 **공통 상수** (행마다 재기술하지 않는다):
 
 ```
+A    := adr_number: 999                        # ★ FIX Iter 9 신설 — 골격 1줄 (born-vacuous 해소, 아래 ★★★)
 D    := date: 2026-08-16
 R    := [repo=mclayer/plugin-codeforge]        # ★ FIX Iter 5 신설 — 생략기호 `[repo=…]` 전면 치환용
 OK   := carrier=#2985 expiry=2026-09-15 R      # (R 은 위 리터럴로 전개된다)
@@ -1059,6 +1065,28 @@ K    := mechanical_enforcement_actions
 TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 20·21 이 이 상수를 쓴다
 실행일 := 2026-08-17 (UTC)     # 재현용 pin. 행 13(expired)·행 15(over-cap) 판정이 이 값에 의존한다
 ```
+
+★★★ **`A` 를 상수 블록·골격에 **실물로** 넣는다 — 직전 판은 선언만 하고 실물이 없었다 (FIX Iter 9, P0)**
+
+직전 판은 아래 (P0-C) 문단에서 *"골격 상수 추가: `A := adr_number: 999` 를 (iv-0) 공통 골격에 넣어
+fixture 가 정의역 안임을 명시한다"* 라고 **선언**했으나, **상수 블록에도 골격에도 그 줄이 없었다**
+(`grep 'adr_number: 999' ADR-181-*.md` → **선언 문장 1건**, 골격·상수 0건 — firsthand).
+
+★★ **결과 = 표가 born-vacuous 였다.** 문면 그대로(빠진 조각을 메우지 않고) 재현하면 골격 fixture 에
+`adr_number` 가 없으므로 **전 행이 `¬ADRQ(head)` → ⓑ 정의역 밖**으로 떨어진다 — 즉 **RED 를 기대한 32행이
+RED 를 못 내고**, 그 상태로도 "표 전건 재현" 이 성립해 **checker 미구현으로도 표가 통과**한다.
+수용 기준이 표 단독인 이상 이것은 **수용 기준 자신의 공허**다.
+
+**firsthand 재현 (문면 리터럴 · 상수 `A` 부재 · 정의역 우선 평가)**:
+
+```
+python adr181_literal.py --order domain-first --row37-base oneline
+  -> rows=41  match=1  mismatch=40      # 유일 일치 = 행 37 (base 가 ADRQ 라 domain-escape 가 성립)
+```
+
+⇒ 그래서 `A` 를 **상수 블록 1줄 + 골격 1줄**로 넣는다. `adr_number` 는 어느 leg 에도 참여하지 않으므로
+**행 1~35·38~40 의 기대는 하나도 바뀌지 않는다**(아래 최종 재실행으로 확인). 행 36·37 만 이 상수를
+`null` 로 덮어쓴다(YAML 중복 키 = 뒤가 이긴다).
 
 ★★ **`R` 신설 이유 (FIX Iter 5, P0-D)** — 직전 판은 (iv-0) 에서 *"모든 행을 완전한 바이트 fixture 로
 고정한다"* 고 선언해 놓고 **6행(11·12·13·15·16·18)에 생략기호 `[repo=…]` 를 남겼다.** 리터럴 독법이면
@@ -1077,9 +1105,65 @@ TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 2
 | 축 | 값 |
 |---|---|
 | **파일 정의역 (P)** | **PR diff forward-only** — 해당 PR 이 추가·수정한 `archive/adr/ADR-*.md` **중 `ADRQ` 를 만족하는 것** (merge-base 대비). ★★ **FIX Iter 8 (P0-C)** — `ADR-*.md` 는 **후보 열거자(파일명 패턴)** 이고 자격 술어가 아니다. `ADRQ` 정의·양방향 처분(`domain-escape`)·판별 행(36·37) = 위 (iv) 표 아래 문단 |
-| 정의역 **밖** | ① merge-base 시점에 이미 존재하던 ADR (코퍼스 소급 0 — 소급하면 전 PR 자해 차단) ② `¬ADRQ` 파일 (`ADR-RESERVATION.md` 형 — 번호 레지스트리이지 ADR 이 아니다). ★ 단 **자격 박탈**(base 는 `ADRQ` ∧ head 는 `¬ADRQ`)은 정의역 밖이 아니라 **RED `domain-escape`** |
+| 정의역 **밖** | ① **이 PR 이 건드리지 않은** ADR (merge-base 이후 diff 0 — 코퍼스 소급 0, 소급하면 전 PR 자해 차단) ② `¬ADRQ` 파일 (`ADR-RESERVATION.md` 형 — 번호 레지스트리이지 ADR 이 아니다). ★ 단 **자격 박탈**(base 는 `ADRQ` ∧ head 는 `¬ADRQ`)은 정의역 밖이 아니라 **RED `domain-escape`** |
 | **파일 내 정의역** | `SCOPE` = frontmatter 블록 (본문 제외 — 위 (ii) `SCOPE`) |
+| ★ **평가 순서** | **경계 우선** — `b1`·`b2`·`b3`·`b4`·`b5` → `ADRQ`(정의역) → (iii) leg. 아래 ★★ 참조 |
 | 선례 | `adr-amendment-parity` entry 가 동일하게 "PR diff forward-only, merge-base 대비" 를 쓴다 |
+
+★★★ **정의역 독법 택일 — "추가·수정" 이 정본이고 "merge-base 기존은 밖" 은 그 하위 절이다 (FIX Iter 9, P0)**
+
+직전 판은 같은 값을 두 문면에 적으면서 **서로 배제하는 두 독법**을 낳았다 — 위 표 1행 *"해당 PR 이
+**추가·수정**한"* ∧ 표 2행·§결정 5 말미 *"merge-base 시점에 이미 존재하던 ADR 은 정의역 밖"*.
+**두 독법은 동시에 참일 수 없다**(수정된 ADR 은 merge-base 시점에 이미 존재한다).
+
+| 독법 | 귀결 | 판정 |
+|---|---|---|
+| ⓐ **추가 ∪ 수정** (touched) | 산문 1바이트 수정 PR 이 그 파일을 정의역으로 끌어들인다 → 코퍼스 **122 파일이 touch 되는 즉시 RED** | ★ **채택** |
+| ⓑ **추가만** (newly added) | `domain-escape`(ⓐ 가지)가 **원리적으로 발동 불가** — 자격 박탈은 base 존재를 전제한다 ⇒ **행 37 사망 · `D-ESCAPE` leg 소멸** | 기각 |
+
+⇒ **ⓐ 채택.** 근거 = ⓑ 는 leg 을 하나 죽이고(L3-ⓐ 축 제거 0 위반), *"신규 규범 항목을 추가하는
+저작물"* 이라는 §결정 5 의 scope 문면은 **수정으로도 성립**한다(수정이 규범 항목을 추가한다).
+"merge-base 시점에 이미 존재하던 ADR 은 밖" 은 **이 PR 이 건드리지 않은 파일**을 뜻하는 것으로 좁혀
+읽고, 표 2행·§결정 5 말미 문면을 그렇게 교체했다.
+
+★★ **채택의 대가를 숫자로 적는다 (`declared` — 지우고 인용 금지)**. (iii) 면제 술어를 **문면 리터럴로**
+코퍼스 전건 실행한 산출:
+
+```
+# 산출 명령 (정의역 = archive/adr/ADR-*.md ∩ ADRQ, 실행일 pin 2026-08-17)
+PYTHONIOENCODING=utf-8 python scratch/adr181_corpus.py     # (iii) 면제 술어 문면 리터럴 구현
+  ADRQ 만족 173 / 174
+  mea-missing        83      # 키부재
+  line-form          56      #  \
+  carrier-token      31      #   > 이 둘 중 "빈 리스트인데 면제 미성립" = 39
+  PASS(면제 성립)      3      # ADR-043 · ADR-067 · ADR-181 (본 Story 가 만든 3건)
+  => 면제 경로 RED = 83 + 39 = 122      (나머지 48 = 비-빈리스트 = 사다리 경로 별도 판정)
+```
+
+- ★ **이 122 는 "지금 RED" 가 아니라 "touch 되면 RED"** 다 — 정의역이 PR diff forward-only 이므로
+  건드리지 않은 파일은 평가되지 않는다. 그러나 **아무 ADR 이나 한 줄 고치는 PR 은 그 파일에서 RED** 다.
+- ★ **처분 = Phase 2 checker 도입 시 warning-first 로 착지**(ADR-171 §결정 5 선례). 본 Phase 1 은
+  checker 를 짓지 않으므로 이 비용은 **선언**이며, 승격 조건·완화 정책은 Phase 2 소관이다
+  (carrier `#2985` / 만기 2026-09-15). **"닫혔다" 가 아니라 "값을 알고 미룬다"** 이다.
+
+★★★ **평가 순서 = 경계 우선 (FIX Iter 9, P0)**
+
+`ADRQ(t)` 의 **첫 연언지가 "frontmatter 파싱 성공"** 이므로, 정의역을 leg 보다 먼저 적용하면
+**파싱·경계가 깨진 입력이 전부 `¬ADRQ` → ⓑ → 정의역 밖**이 된다. 그러면 이 문서가 세 번 고발한
+**"예외 = skip"** 이 leg 층이 아니라 **정의역 층에서 부활**한다.
+
+**firsthand 대조 (문면 리터럴, 상수 `A` 포함)**:
+
+```
+python adr181_literal.py --skeleton-a --order domain-first   -> match 36 / mismatch 5
+    불일치 = 14(fm-parse-error) · 20(fm-parse-error) · 34(fm-boundary) · 35(fm-boundary) · 36
+    -> 네 행이 전부 `OUT`(검사 없음) 으로 떨어진다 = 정의역 층 fail-open
+python adr181_literal.py --skeleton-a --order boundary-first -> match 40 / mismatch 1  (36 만)
+```
+
+⇒ **규정 = 경계 우선**: `b1`·`b2`·`b3`(파싱)·`b4`·`b5` 를 **먼저** 평가해 위반이면 즉시 RED 를 내고,
+그 뒤에 `ADRQ` 로 정의역을 가른다. 이것이 (iii) 의 *"모든 파싱 예외·필수값 부재는 skip 이 아니라
+named RED"* 규칙을 **정의역 층까지 관철**하는 유일한 순서다.
 
 이 표는 표 밖 `INV-D` 자기적용 문단의 **재진술이 아니라 그 문단이 SSOT 인 값의 표 내 결속**이다
 (§결정 4 접합부 규약 — 값이 두 곳에 적히면 어느 쪽이 SSOT 인지 명시한다).
@@ -1122,11 +1206,40 @@ TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 2
 | **33** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `other: x` | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 — FM 경계 조작 (P0-B)**. `K` 줄은 절단된 `SCOPE` **안에 남으므로** `LINE` 이 정상 매치하고 전 토큰이 통과한다 — 즉 **`line-form` 이 받아내지 못한다.** 밀려난 것은 뒤 키들이며 그것이 유령의 은신처다. `N0` off 시 **GREEN**(firsthand) |
 | **34** | `<BOM>` + `D` ⏎ `K: []  # OK` (선두 U+FEFF) | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 — 선두 BOM (P0-B)**. 1행이 `^---$` 를 불성립시켜 **FM 시작점이 종단 줄로 밀린다.** 형제 게이트 `scripts/lib/check_doc_frontmatter.py:47` 은 같은 입력에서 **warning 후 continue** 한다(firsthand). `N0` off 시 **GREEN** |
 | **35** | 행 1 과 동일 바이트를 **CRLF 줄끝**으로 | **RED** | `fm-boundary` | ★★ **FIX Iter 8 신설 — 줄끝 자유 변수 (P2-2)**. `^---$` 가 `\r` 때문에 불성립한다. 직전 판 `leg-off` 열에 **CRLF 축이 없었고**, 이 행이 그것을 `N0` 아래로 편입한다. `N0` off 시 **GREEN** |
-| **36** | `adr_number: null` ⏎ `D` ⏎ `status: Active` (`K` 부재) | **GREEN** | — | ★★★ **FIX Iter 8 신설 — `ADR-RESERVATION` 형 GREEN 기대 양성 판별 행 (P0-C)**. **`ADR-*.md` 는 파일명 패턴이지 ADR 자격 술어가 아니다.** 이 행이 RED 면 실 파일 `archive/adr/ADR-RESERVATION.md` 가 born-red 다(firsthand — 이 PR 이 그 파일을 수정했고 `K` 키 0 · `adr_number: null`). `DOMAIN` off(파일명 glob 만) 시 **RED/`mea-missing`** — 즉 **제외가 실제로 load-bearing** 임을 이 행이 고정한다 |
-| **37** | base = `adr_number: 67` ⏎ … / HEAD = `adr_number: null` ⏎ `D` ⏎ `K: []  # OK` | **RED** | `domain-escape` | ★★★ **FIX Iter 8 신설 — 제외가 회피구가 되지 않게 (P0-C 역방향)**. 행 36 의 제외만 두면 **실 ADR 이 `adr_number` 를 null 로 바꿔 정의역을 빠져나간다.** `D-ESCAPE` off 시 **GREEN**(firsthand). ★ 이 Story 가 *"동결 이력 배제 = 복제 템플릿"* 으로 이미 겪은 형태이며, 처방도 같다 — **배제에 provenance 를 붙인다** |
+| **36** | `adr_number: null` ⏎ `D` ⏎ `status: Active` (`K` 부재) | ★ **OUT** | — (검사 없음) | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 3-값화 (P0)**. **`ADR-*.md` 는 파일명 패턴이지 ADR 자격 술어가 아니다.** 이 행이 RED 면 실 파일 `archive/adr/ADR-RESERVATION.md` 가 born-red 다(firsthand — 이 PR 이 그 파일을 수정했고 `K` 키 0 · `adr_number: null`). `DOMAIN` off(파일명 glob 만) 시 **RED/`mea-missing`** — 즉 **제외가 실제로 load-bearing** 임을 이 행이 고정한다. ★★ **기대값이 `GREEN` 이 아니라 `OUT` 인 이유 = 아래 3-값 문단** |
+| **37** | base = `adr_number: 67` (**그 1줄이 base FM 전체**) / HEAD = `adr_number: null` ⏎ `D` ⏎ `K: []  # OK` | **RED** | `domain-escape` | ★★★ **FIX Iter 8 신설 · FIX Iter 9 로 base 리터럴화 (P0)**. 행 36 의 제외만 두면 **실 ADR 이 `adr_number` 를 null 로 바꿔 정의역을 빠져나간다.** `D-ESCAPE` off 시 **GREEN**(firsthand). ★ 이 Story 가 *"동결 이력 배제 = 복제 템플릿"* 으로 이미 겪은 형태이며, 처방도 같다 — **배제에 provenance 를 붙인다**. ★★ **직전 판의 `…` 생략기호가 exit 축에서 load-bearing 이었다 — 아래 문단** |
 | **38** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-08-17 R` (만기 == 실행일) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 하한 경계 등호 (P2-2)**. `>=` 를 `>` 로 오전사하면 **당일 만기가 탈락**해 RED. 직전 판 `leg-off` 열에 **등호 축이 없었다** |
 | **39** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-02-12 R` (만기 == 발행일+180) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 상한 경계 등호 (P2-2)**. `<=` 를 `<` 로 오전사하면 **정확히 상한인 날짜가 탈락**해 RED |
 | **40** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-05-01 R` | **RED** | `over-cap` | ★★ **FIX Iter 8 신설 — 상수 `180` 판별 (P2-2)**. `180` 은 판정을 바꾸는 **자유 변수**인데 직전 판 `leg-off` 열에 없었다. `365` 로 넓히면 이 행이 **GREEN**(firsthand). 행 5(`9999-12-31`)는 `365` 로도 RED 라 상수를 판별하지 못한다 |
+| **41** | `A` ⏎ `D` ⏎ `K: []  # OK` — **골격의 FM 종단 `---` 을 제거** ∧ `<BODY>` = 빈 문자열 | **RED** | `fm-boundary` | ★★★ **FIX Iter 9 신설 — `b2` 판별 행 (P0)**. 직전 판 `leg-off` 표는 `N0` 를 **한 덩어리**로만 껐다. `b1`(34·35) · `b3`(14·20) · `b4`(33) 는 판별 행이 있었으나 **`b2` 는 0** 이었고, 판별 0 인 leg 은 **Phase 2 가 빼도 표가 통과**한다(Iter 5 가 `REPO` 로 처분한 형상과 동형). `b2` off(종단 부재 시 파일 끝까지를 FM 으로) 시 **GREEN**(firsthand — FM 이 정상형 3줄이 되어 전 leg 통과). ★ `<BODY>` 를 비우는 것이 load-bearing 이다 — 본문이 있으면 `b2` off 가 `fm-parse-error` 로 떨어져 **verdict 가 안 뒤집히고 사유만 갈린다**(약한 판별) |
+| **42** | base = `adr_number: 67` ⏎ `status: Accepted` (**그 2줄이 base FM 전체**) / HEAD = `A` ⏎ `D` ⏎ `K: []  # OK` (`status` **키 소실**) | **RED** | `fm-boundary` | ★★★ **FIX Iter 9 신설 — `b5` 판별 행 (P0)**. `b5`(top-level 키 보존)는 §8.D `m9` 에서만 관측됐고 **(iv) 정의역 안 판별 행은 0** 이었다. `b5` off 시 **GREEN**(`K` 줄이 정상형이라 전 leg 통과 — firsthand). ★ 이 행이 없으면 Phase 2 checker 가 `b5` 를 통째로 빼도 전 행이 맞는다. ★★ `b5` 는 §8.D 유령 leg 의 `m9`(E1 종단키 제거)를 잡는 **유일 축**이므로, 유령 leg 이 `declared` 로 강등된 뒤에도 (iv) 표 안에 판별이 남아 있어야 한다 |
+
+★★★ **행 36 을 3-값으로 — `검사 없음` 과 `통과` 를 같은 칸에 두지 않는다 (FIX Iter 9, P0)**
+
+직전 판의 기대 열은 `GREEN`/`RED` 2-값이었고 행 36(`ADR-RESERVATION` 형)에 **`GREEN`** 이 적혀 있었다.
+그러나 그 행이 실제로 얻는 산출은 **"정의역 밖 = 검사 없음"** 이지 "검사가 돌아 통과" 가 아니다.
+**수용 기준을 `(verdict, exit)` 쌍으로 못 박은 문서가 이 둘을 구별하지 않으면**, 정의역을 잘못 좁혀
+검사가 통째로 사라진 구현이 **행 36 에서 정상으로 보인다** — 이 Story 가 아홉 라운드 고발한
+**검사 정의역 협착**이 수용 기준 자신 안에 남아 있는 자리다.
+
+⇒ 기대 열 값공간 = **`GREEN` / `RED` / `OUT`** 3-값. `OUT` = `ADRQ` 불성립 ∧ 자격 박탈 아님(ⓑ 가지).
+행 36 만 `OUT` 이며, `DOMAIN` off 시 `RED/mea-missing` 으로 뒤집히는 판별은 그대로 유효하다.
+
+★★★ **행 37 base 의 `…` 를 리터럴로 — 생략기호가 exit 축에서 load-bearing 이었다 (FIX Iter 9, P0)**
+
+직전 판 행 37 의 base 는 `adr_number: 67` ⏎ **`…`** 였다. **Iter 5 가 `[repo=…]` 를 상수 `R` 로 치환하며
+폐기한 바로 그 형상이 신설 행에서 재도입**된 것이다. 두 독법이 **다른 exit** 를 낸다(firsthand):
+
+```
+python adr181_literal.py --skeleton-a --order boundary-first --row37-base oneline
+  -> row 37 = RED/domain-escape      (기대 일치)
+python adr181_literal.py --skeleton-a --order boundary-first --row37-base real
+  -> row 37 = RED/fm-boundary        (기대 불일치 — b5 가 먼저 문다)
+```
+
+`…` 를 "실제 ADR frontmatter" 로 읽으면 base 에 `status`·`title` 등 top-level 키가 있고 HEAD 골격에는
+없으므로 **`b5`(키 보존)가 `domain-escape` 보다 먼저 물어** 사유가 갈린다. ⇒ base 를 **`adr_number: 67`
+그 1줄이 base FM 전체**로 리터럴 고정한다. (`b5` 자체의 판별은 신설 행 42 가 맡는다 — 두 축 분리.)
 
 ★★★ **정의역 술어를 양방향으로 — `ADR-*.md` 는 파일명 패턴이지 자격 술어가 아니다 (FIX Iter 8, P0-C)**
 
@@ -1218,26 +1331,44 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
   이 되어 유령 leg 이 **0 → 6 RED**(전면 false-RED)로 뒤집힌다. ⇒ front-end 가 **입력을 NFC 로 정규화**해
   검사를 정규화-불변으로 만든다. 정규화 후 NFD 입력도 **GREEN**(firsthand), `NFC` off 시 **RED 6**(판별).
 
-★★★ **실행 확인 (firsthand, FIX Iter 8 — 최종 41행 전건 재실행)**: (iv) 표 **전 41행**을
+★★★ **실행 확인 (firsthand, FIX Iter 9 — 최종 43행 전건 재실행 · 문면 리터럴)**: (iv) 표 **전 43행**을
 front-end 인스턴스화 구현(Python `re` + `yaml.safe_load` + NFC 정규화)으로 실행했다 —
-**기대 일치 41/41 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
-★ **구 31행 부분집합의 산출이 Iter 7 기재와 전건 동일**하다 — 즉 **행 10개를 늘리고 front-end 를
-도입하면서 옛 행의 기대를 하나도 바꾸지 않았다**(L3-ⓑ 대조). 특히 골격 상수 `A` 추가와
-NFC 정규화는 **행 1~30 의 판정에 무영향**임을 실행으로 확인했다.
+**기대 일치 43/43 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
+
+```
+python adr181_literal.py --skeleton-a --order boundary-first --row37-base oneline --row36-out
+  -> rows=43  match=43  mismatch=0
+```
+
+★★★ **이 산출은 Iter 8 의 "41/41" 을 대체한다 — 그 값은 재현 불가였다 (정직 정정, FIX Iter 9)**.
+Iter 8 이 기록한 41/41 은 **골격에 없던 상수 `A` 를 재구현자가 각자 메운 뒤**의 값이었고, 문면
+그대로 돌리면 **1/41** 이다(위 born-vacuous 문단). 세 심사자와 저작자가 **각자 조용히 같은 조각을
+메워** 같은 수치에 도달했으므로 **N자 독립 수렴이 결함을 은폐했다.** 상세 = Change Plan §13.11.
+
+★ **회귀 0 (L3-ⓑ 대조)**: 구 40행(1~40)의 기대는 이번 판에서 **행 36 하나만** 바뀌었고(`GREEN` → `OUT`,
+2-값 → 3-값 정정) 나머지 39행은 불변이다. 골격 상수 `A` 와 NFC 정규화가 행 1~35·38~40 판정에
+무영향임을 실행으로 확인했다.
 
 ★★ **`leg-off` 판별 소재 (firsthand — 신설 leg 전건 판별 보유)**:
 
 | leg-off | 뒤집히는 행 | 방향 |
 |---|---|---|
-| `N0`(경계) off | 14 · 20 · 33 · 34 · 35 | RED → **GREEN** |
+| `N0`(경계) off | 14 · 20 · 33 · 34 · 35 · **41** · **42** | RED → **GREEN** |
+| ★ `b2` 단독 off (종단 부재 → 파일 끝까지) | **41** | RED → **GREEN** (firsthand) |
+| ★ `b5` 단독 off (base 키 보존 미검사) | **42** | RED → **GREEN** (firsthand) |
 | `PUBDATE` off | 31 · 32 | RED → **GREEN** |
 | `EXPVALUE` off | 29 | RED → **GREEN** |
-| `DOMAIN`(ADR 자격 술어) off | **36** | GREEN → **RED** (제외가 load-bearing) |
+| `DOMAIN`(ADR 자격 술어) off | **36** | **OUT** → **RED** (제외가 load-bearing) |
 | `D-ESCAPE` off | 37 | RED → **GREEN** |
 | 하한 등호 `>=`→`>` | 38 | GREEN → **RED** |
 | 상한 등호 `<=`→`<` | 39 | GREEN → **RED** |
 | 상수 `180`→`365` | 15 · **40** | RED → **GREEN** |
+| ★ 평가 순서 `경계 우선` → `정의역 우선` | 14 · 20 · 34 · 35 | RED → **OUT** (정의역 층 fail-open) |
 | `NFC` off | (유령 leg 축 — `ADR-067` NFD 판 **0 → 6 RED**) | GREEN → **RED** |
+
+★★ **`b2`·`b5` 단독 판별 행이 없으면 Phase 2 가 두 leg 을 빼도 표가 전건 통과**했다 — Iter 5 가 `REPO`
+에서, Iter 6 이 `MEA` 에서 이미 겪은 형상이며, **`N0` 를 한 덩어리로 껐기 때문에 안 보였다.**
+leg 을 묶어서 끄는 ablation 은 **묶음 안의 판별 0 을 가린다** — 이것을 (0) `D-LEG` L2 의 부칙으로 적는다.
 
 ★ **판별 행 0 인 신설 leg 은 없다.** 직전 판이 `mea-missing` 에서 *"판별 0 = 중복 방어"* 라 적었다가
 행 27 로 반증당한 자리와 같은 실수를 피하려면, **신설 시점에 판별 행을 함께 만드는 것**이 유일한 방법이다.
