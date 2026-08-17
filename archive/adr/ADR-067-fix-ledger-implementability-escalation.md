@@ -79,9 +79,9 @@ related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
   - docs/orchestrator-playbook.md
-  - docs/evidence-checks-registry.yaml   # ★ Amendment 4 정정 — Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었고 그 선언은 §9.4 에서 철회됐다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
+  - docs/evidence-checks-registry.yaml   # [철회됨 — 2026-08-16, Amendment 4 §9.4] Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
   - CLAUDE.md
-mechanical_enforcement_actions: []  # ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). carrier = plugin-codeforge#2985 / 만기 2026-09-15. ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 — 본 빈 리스트는 그 철회 후의 정직 상태다.
+mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (ADR-181 §결정 5 ③-dt (ii), 설계리뷰 FIX Iter 3). 앞의 두 토큰만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다. ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 — 본 빈 리스트는 그 철회 후의 정직 상태다.
 ---
 
 # ADR-067: fix-ledger implementability escalation + max FIX overflow handling
@@ -568,6 +568,47 @@ FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` 
    ★ **본 처분의 천장**: 위 1~9 의 실 정정은 각 carrier 행에서 일어나며 **본 ADR 은 그것을 지시할 뿐
    집행하지 않는다.** "철회 완료" 라고 적을 수 있는 범위는 본 ADR 문면 + `:57` 까지이고,
    나머지 9곳은 **carrier 가 merge 되기 전까지 살아 있다.** 이 문장을 지우면 over-claim 이 된다.
+
+6. ★★ **`amendment_log` 배제 규칙 확정 + "전수" 주장의 정의역 정합 (설계리뷰 FIX Iter 3 — P0-D)**.
+
+   **적발된 비대칭**: `:16`(Amendment 1 의 `amendment_log[].summary`)은 유령 lint 를 **현재형**으로
+   보유한다 — 문면 말미 `… fix-event-depth-scope-presence warning-tier lint (advisory only) 동반.`
+   이 줄은 §8.D 음성 leg 의 N1(본문 `**mechanical enforcement**:` 앵커)·N2(`related_*` 블록)
+   **어디에도 안 걸려** N=0 GREEN 이 나온다. 반면 같은 class 인 `:70`(`related_files` 주석)은
+   **Iter 1 에 정정됐다.** 즉 처리 비대칭이었고, 위 처분 5 는 "전수" 를 단언했다.
+   **침묵하지 않고 택일해 선언한다.**
+
+   | 선택지 | 판정 | 사유 |
+   |---|---|---|
+   | ① `amendment_log[].summary` 를 음성 leg 정의역에 **편입** + `:16` 정정 | ✗ | dated log entry 를 사후 편집하는 것은 **"과거 amendment 가 무엇을 선언했는가" 자체를 바꾸는 행위**다. Amendment 1 은 실제로 그 lint 를 동반한다고 선언**했다** — 그 사실을 지우면 왜 Amendment 4 가 철회를 해야 했는지 근거가 소멸한다. 철회의 올바른 형식은 원문 삭제가 아니라 **후속 entry 의 기록**이며 그것은 이미 `:37` 축 (4) 에 있다 |
+   | ★ ② **배제 규칙 제정** (`amendment_log` = 동결 이력) | ★ **채택** | 아래 규칙 + 일관성 검증 |
+
+   **채택 규칙 (기계 판정 가능)**:
+
+   ```
+   음성 leg 정의역 = ADR 파일의 다음 표면
+     IN : 본문 산문 · related_adrs · related_files · mechanical_enforcement_actions trailing
+     OUT: amendment_log[] 의 모든 필드 —  단, 배제는 merge-base 시점에 이미 존재하던 entry 한정
+          (그 PR 이 신규 append 한 amendment_log entry 는 정의역 IN)
+   ```
+
+   - **왜 `:70` 정정과 일관되는가**: `related_files` 는 **dated 가 아니고 append-only 도 아닌
+     live 포인터 목록**이다. 읽는 사람은 그것을 "지금 이 ADR 이 가리키는 파일" 로 읽지
+     "2026-05-17 에 그렇게 생각했던 기록" 으로 읽지 않는다. 반면 `amendment_log[]` 항목은
+     `date` 필드를 **자기 안에 보유**하며 연대기로 읽힌다. **두 표면은 독자 계약이 다르다** —
+     따라서 하나는 정정하고 하나는 배제하는 것이 비대칭이 아니라 **표면별 정합**이다.
+   - **왜 merge-base 단서가 필요한가**: 단서 없이 `amendment_log` 전체를 배제하면
+     **새 amendment_log entry 에 유령 주장을 심는 것이 회피구**가 된다. 배제 근거는
+     "이미 동결된 이력" 이지 "log 라는 이름" 이 아니므로, 동결되지 않은(=이 PR 이 방금 쓴)
+     entry 는 배제 사유가 성립하지 않는다. 기계 판정 = `git diff merge-base HEAD` 의 추가 줄 여부.
+   - ★ **위 처분 5 의 "전수" 주장 정합**: 처분 5 의 전수는 **열거의 전수**(repo-wide grep 13 site
+     분류)이고 §8.D 음성 leg 은 **검사의 정의역**이다. 두 축이 다르며 직전 판은 그 차이를 적지
+     않아 "전수인데 왜 `:16` 을 안 잡나" 가 성립했다. 정정 = 처분 5 의 전수는
+     **"열거 전수 ∧ 검사 정의역은 위 IN 집합"** 으로 읽는다. `:16` 은 **열거에는 포함**되고
+     (분류 = 동결 이력) **검사 정의역에서는 배제**된다 — 그 두 사실이 동시에 참이다.
+   - ★ **이 규칙의 천장 (`declared`)**: 배제는 "동결 이력은 정정 대상이 아니다" 라는 **저작 규약**에
+     의존하며, 그 규약 자체를 기계가 검증하지는 않는다. 즉 누군가 `amendment_log` 를 사후 편집해도
+     본 leg 은 침묵한다(그 축의 검출은 `adr-amendment-parity` 소관이며 본 검사가 아니다).
 
 ### 9.5 declaration-only retain + ratchet 정합
 
