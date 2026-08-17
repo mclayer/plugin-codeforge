@@ -305,6 +305,121 @@ def test_suture_removal_is_detected_by_this_battery(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 앵커 축 방출 site 전건 — 절단 2축 상시 매트릭스 (dark-site 예약 차단)
+# ---------------------------------------------------------------------------
+
+ANCHOR_FN = "check_anchor_integrity"
+
+
+def _probe_cut(tmp_path, source, name, base_sig):
+    """변형 소스를 사본으로 로드해 배터리를 돌리고 (검출 여부, 검출 채널) 을 낸다.
+
+    검출 = 배터리가 **불일치를 낸다** — 로드 실패 / 배터리 예외 / mutant verdict 불일치 /
+    개수·벡터 signature 변화 중 하나. 무변형 대조군이 이 술어에서 «미검출» 이어야
+    술어가 항진이 아니다(아래 음성 arm 이 그것을 잰다).
+    """
+    try:
+        path = FX.write_engine_variant(tmp_path, source, name)
+        mut = FX.load_engine(path, tag=name)
+    except Exception as exc:  # noqa: BLE001 - 로드 실패도 검출이다
+        return True, f"load-failure:{type(exc).__name__}"
+    try:
+        res = FX.run_battery(mut)
+    except Exception as exc:  # noqa: BLE001 - 배터리 예외도 검출이다
+        return True, f"battery-exception:{type(exc).__name__}"
+    real = {mid: r for mid, r in res.items() if not mid.startswith("_")}
+    mism = sorted(mid for mid, r in real.items() if r["verdict"] != "기대일치")
+    sig = tuple(sorted(
+        (mid, r["control"], r["injected"], r["control_red_count"],
+         r["injected_red_count"], tuple(r["vector"]), r["verdict"])
+        for mid, r in real.items()))
+    if mism:
+        return True, f"mismatch:{mism[:4]}"
+    if sig != base_sig:
+        return True, "count/vector-signature-delta"
+    return False, "-"
+
+
+def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
+    """`check_anchor_integrity` 의 RED 방출 site **전건**이 절단 시 배터리에 잡혀야 한다.
+
+    왜 상시 테스트인가: 종전에는 이 축의 무검출이 `test_suture_removal_is_detected_by_this_battery`
+    의 `undetected` 버킷에 담겨 **"중복커버 ← 형제 leg 이 같은 mutant 를 잡는다(게이트 약화 0)"**
+    로 *출력만* 되고 실패하지 않았다. 그 "게이트 약화 0" 은 **검증된 적 없는 라벨**이다 —
+    형제 leg 이 잡는 것은 «그 mutant 가 RED 인가» 뿐이고, 끊긴 site 가 담당하던 규칙이
+    살아 있는지는 아무도 안 봤다. 실제로 `id= 누락` 과 `end 미쌍` 두 site 는 서로의 RED 로
+    개수를 채워 주며 boolean 축에서 상호 은폐 상태였다.
+
+    설계 3항:
+      · **정의역 자동 도출** — site 열거를 하드코딩하지 않고 매 실행 AST 로 재탐색한다
+        (줄번호가 밀려도 따라간다). 열거가 0 이면 즉시 실패 = 정의역 공허 차단.
+      · **절단 2축** — ① 방출 statement 만 `pass`(조건·`continue` 유지) ② 조건 `if False:`.
+        한 축만 두면 나머지 축의 무력화가 조용히 통과한다.
+      · **양성 ∧ 음성 쌍** — 양성만 두면 배선을 상수로 바꿔도 통과한다. 음성 arm =
+        무절단 round-trip 사본이 같은 술어에서 «미검출» 이어야 한다. 이 arm 이 없으면
+        `ast.unparse` 왕복 자체가 판정을 흔드는 경우 전 site 가 거짓 검출된다.
+    """
+    src = FX.engine_source()
+
+    emit_sites = FX.red_emission_sites(src, ANCHOR_FN)
+    cond_sites = [ln for fn, ln in FX.suture_sites(src) if fn == ANCHOR_FN]
+    assert emit_sites, (                                    # ← 정의역 공허 차단 (방출 축)
+        f"`{ANCHOR_FN}` 안에 RED 방출 statement 가 0건 — 정의역이 비었다. "
+        "판정이 없는 게이트는 hollow 이고, 빈 정의역 위의 전건 통과는 공허참이다.")
+    assert cond_sites, (                                    # ← 정의역 공허 차단 (조건 축)
+        f"`{ANCHOR_FN}` 안에 RED 방출 `if` 조건이 0건 — 조건 축 정의역이 비었다.")
+
+    pristine = engine()
+    base_sig = tuple(sorted(
+        (mid, r["control"], r["injected"], r["control_red_count"],
+         r["injected_red_count"], tuple(r["vector"]), r["verdict"])
+        for mid, r in FX.run_battery(pristine).items() if not mid.startswith("_")))
+    assert not _battery_mismatches(pristine), (
+        "무변형 엔진에서 배터리가 이미 불일치 — 절단 판정의 전제가 성립하지 않는다(무효 관측)")
+
+    print(f"\n[앵커 절단 매트릭스] 방출 site {len(emit_sites)}건 "
+          f"{[ln for ln, _k in emit_sites]} / 조건 site {len(cond_sites)}건 {cond_sites}")
+
+    # --- 음성 arm — 무절단 round-trip 은 «미검출» 이어야 한다 -----------------------
+    roundtrip = ast.unparse(ast.parse(src))
+    neg_det, neg_why = _probe_cut(tmp_path, roundtrip, "anchor_noop", base_sig)
+    print(f"  음성 arm  무절단 round-trip -> {'검출(★항진)' if neg_det else '미검출'} {neg_why}")
+    assert not neg_det, (                                   # ← 음성 arm 측정 assertion
+        "절단하지 않은 round-trip 사본이 «검출» 로 판정됐다 — 검출 술어가 항진이라 "
+        f"전 site 의 «검출» 이 무의미하다 (채널={neg_why})")
+
+    # --- 양성 arm — 각 site 를 두 방식으로 절단 -----------------------------------
+    undetected, rows = [], []
+    for lineno, kind in emit_sites:
+        cut = FX.make_emission_cut_source(src, ANCHOR_FN, lineno)
+        det, why = _probe_cut(tmp_path, cut, f"anchor_emit_{lineno}", base_sig)
+        # `return [Verdict(...)]` 형태는 방출을 죽이면 함수가 None 을 반환하게 된다.
+        # 그 경우의 검출 채널은 예외(크래시)이며, 그것도 정상적인 검출이다 — 다만
+        # "왜 크래시인가" 를 기록해 «규칙이 죽어서 잡혔다» 와 구별 가능하게 남긴다.
+        if kind == "Return" and ("exception" in why or "load-failure" in why):
+            why += " (return 문 절단 → 반환값 None, 규칙 무력화가 아니라 계약 붕괴로 검출)"
+        rows.append((lineno, kind, "방출절단", det, why))
+        if not det:
+            undetected.append((lineno, kind, "방출절단"))
+    for lineno in cond_sites:
+        cut = FX.make_sutured_source(src, target=(ANCHOR_FN, lineno))
+        det, why = _probe_cut(tmp_path, cut, f"anchor_cond_{lineno}", base_sig)
+        rows.append((lineno, "If", "조건절단", det, why))
+        if not det:
+            undetected.append((lineno, "If", "조건절단"))
+
+    for lineno, kind, mode, det, why in rows:
+        print(f"  {lineno:>4} {kind:<6} {mode:<6} {'검출' if det else '미검출':<6} {why}")
+
+    assert not undetected, (                                # ← 양성 arm 측정 assertion
+        f"`{ANCHOR_FN}` 의 판정 site 중 절단해도 배터리가 못 잡는 것이 "
+        f"{len(undetected)}건 있다 — 그 site 가 담당하는 규칙은 무력화해도 게이트가 "
+        "통과한다(dark site). '형제가 커버한다' 는 라벨은 그 규칙의 생존을 증명하지 "
+        "않으므로 무검출로 계상한다:\n  "
+        + "\n  ".join(f"{ln} ({kind}) — {mode}" for ln, kind, mode in undetected))
+
+
+# ---------------------------------------------------------------------------
 # M-COMMENT — 실행 오라클 (기대값은 주석이 아니라 선언 파일에)
 # ---------------------------------------------------------------------------
 

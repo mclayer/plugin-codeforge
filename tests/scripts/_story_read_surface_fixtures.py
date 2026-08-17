@@ -1582,6 +1582,97 @@ def make_probed_source(source: str) -> str:
     return ast.unparse(tree)
 
 
+def red_emission_sites(source: str, fn_name: str) -> list:
+    """`fn_name` 안에서 RED `Verdict(...)` 를 **방출하는 statement** 를 열거한다.
+
+    반환 = [(Verdict 생성자 lineno, statement 종류)] — 종류 ∈ {"Expr", "Return"}.
+    `suture_sites` 와 정의역이 **다르다**: 저쪽은 `ast.If`(조건) 단위라 자체 방출자가
+    아닌 컨테이너 If 까지 세고, 조건이 없는 방출(`return [Verdict(...)]` 직행)은 그
+    조건 하나에 뭉뚱그려진다. 이쪽은 방출 statement 자체를 1:1 로 센다. 두 정의역을
+    **함께** 써야 «조건이 죽었다» 와 «방출이 죽었다» 가 갈라진다.
+
+    ★ 줄번호 하드코딩 금지 — 매 실행 AST 재탐색이라 소스가 밀려도 따라간다.
+    """
+    import ast
+    out = []
+    for fn in ast.walk(ast.parse(source)):
+        if not isinstance(fn, ast.FunctionDef) or fn.name != fn_name:
+            continue
+        for stmt in ast.walk(fn):
+            if not isinstance(stmt, (ast.Expr, ast.Return)):
+                continue
+            for sub in ast.walk(stmt):
+                if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+                        and sub.func.id == "Verdict" and _call_emits_red(sub)):
+                    out.append((sub.lineno, type(stmt).__name__))
+                    break
+    return sorted(set(out))
+
+
+def _call_emits_red(call) -> bool:
+    """`Verdict(...)` 호출이 status="RED" 를 싣는가 (위치/키워드 인자 양쪽)."""
+    import ast
+    vals = [a.value for a in call.args if isinstance(a, ast.Constant)]
+    vals += [k.value.value for k in call.keywords if isinstance(k.value, ast.Constant)]
+    return "RED" in vals
+
+
+def make_emission_cut_source(source: str, fn_name: str, lineno: int) -> str:
+    """방출 statement **하나만** `pass` 로 치환한 소스를 반환한다 (조건·`continue` 는 유지).
+
+    `make_sutured_source` 와 짝을 이루는 **두 번째 절단축**이다. 저쪽은 조건을 `if False:`
+    로 죽이므로 "조건이 판정을 좌우하는가" 를 재고, 이쪽은 조건을 살린 채 방출만 죽이므로
+    "그 방출이 실제로 배터리에 도달하는가" 를 잰다. 한 축만 쓰면 나머지 축의 무력화가
+    조용히 통과한다.
+
+    ★ 최내곽 statement(`ast.Expr` / `ast.Return`)만 친다. `ast.walk` 로 아무 노드나 매칭해
+      치환하면 **FunctionDef 가 통째로** `pass` 가 되어(→ 심볼 자체가 사라져) "검출됐다" 는
+      착시가 생긴다 — 그건 판정 무력화 검출이 아니라 로드 실패다. 치환 후 함수 존속을
+      아래에서 assert 로 확인한다.
+    """
+    import ast
+
+    def holds(stmt) -> bool:
+        return any(isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+                   and sub.func.id == "Verdict" and sub.lineno == lineno
+                   and _call_emits_red(sub)
+                   for sub in ast.walk(stmt))
+
+    class Cut(ast.NodeTransformer):
+        def __init__(self):
+            self.applied = 0
+            self._fn = None
+
+        def visit_FunctionDef(self, node):  # noqa: N802 - ast API
+            prev, self._fn = self._fn, node.name
+            self.generic_visit(node)
+            self._fn = prev
+            return node
+
+        def _cut_stmt(self, node):
+            self.generic_visit(node)
+            if self._fn == fn_name and holds(node):
+                self.applied += 1
+                return ast.copy_location(ast.Pass(), node)
+            return node
+
+        visit_Expr = _cut_stmt
+        visit_Return = _cut_stmt
+
+    tree = ast.parse(source)
+    tr = Cut()
+    tree = tr.visit(tree)
+    ast.fix_missing_locations(tree)
+    if tr.applied != 1:
+        raise AssertionError(
+            f"방출 절단 지점 {tr.applied}건 (기대 1) — fn={fn_name} lineno={lineno}")
+    out = ast.unparse(tree)
+    if not any(isinstance(n, ast.FunctionDef) and n.name == fn_name
+               for n in ast.walk(ast.parse(out))):
+        raise AssertionError(f"방출 절단이 `{fn_name}` 를 통째로 제거했다 — 절단 대상 오식별")
+    return out
+
+
 def make_sutured_source(source: str, target=None) -> str:
     """지정 site(또는 전체)의 `if <test>:` 를 `if False:` 로 치환한 소스를 반환한다."""
     import ast
