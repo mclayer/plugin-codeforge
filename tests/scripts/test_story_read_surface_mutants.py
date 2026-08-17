@@ -311,22 +311,45 @@ def test_suture_removal_is_detected_by_this_battery(tmp_path):
 ANCHOR_FN = "check_anchor_integrity"
 
 
-def _probe_cut(tmp_path, source, name, base_sig):
-    """변형 소스를 사본으로 로드해 배터리를 돌리고 (검출 여부, 검출 채널) 을 낸다.
+# 검출 채널 분류 (F-CR-R8-5 / CLA-4) — **크래시 채널**과 **규칙-사멸 채널**은 다른 것을 잰다.
+#   · 규칙-사멸(`mismatch:`)  = 그 site 가 담당하던 규칙이 죽어 mutant 판정이 뒤집혔다.
+#   · 계약붕괴(`load-failure:` / `battery-exception:`) = 절단이 함수 계약 자체를 무너뜨려
+#     (반환값 None → `begins[None]` 혼합키 `sorted` 크래시, 속성 부재 AttributeError 등)
+#     예외로 터졌다. 「규칙이 살아 있는가」를 잰 것이 **아니다**.
+# 둘을 뭉쳐 "전건 검출" 이라 부르면 크래시로 잡힌 site 를 규칙 커버로 과대 계상한다.
+# 라벨링은 **site 종류(`kind == "Return"`)가 아니라 채널 문면**으로 판정한다 — 그래야
+# 조건축 `:349`(TypeError) · 방출축 `check_inv_s2:841` · 조건축 `check_inv_s1:724`
+# (AttributeError) 처럼 site 종류가 달라도 같은 규칙이 일관 적용된다.
+CRASH_CHANNEL_PREFIXES = ("load-failure:", "battery-exception:")
 
-    검출 = 배터리가 **불일치를 낸다** — 로드 실패 / 배터리 예외 / mutant verdict 불일치 /
-    개수·벡터 signature 변화 중 하나. 무변형 대조군이 이 술어에서 «미검출» 이어야
-    술어가 항진이 아니다(아래 음성 arm 이 그것을 잰다).
+
+def _is_crash_channel(why: str) -> bool:
+    return str(why).startswith(CRASH_CHANNEL_PREFIXES)
+
+
+def _probe_cut(tmp_path, source, name, base_sig):
+    """변형 소스를 사본으로 로드해 배터리를 돌리고 (검출 여부, 검출 채널, 불일치 mutant) 를 낸다.
+
+    검출 = **공개 게이트가 실패하는 상태** — 로드 실패 / 배터리 예외 / mutant verdict 불일치.
+    무변형 대조군이 이 술어에서 «미검출» 이어야 술어가 항진이 아니다(음성 arm 이 그것을 잰다).
+
+    ★ F-CR-R8-1 — `signature-delta` **단독**은 «검출» 이 아니다.
+      개수·벡터 signature 는 이 매트릭스 **내부 전용** 신호이지 공개 게이트의 실패 조건이
+      아니다(`test_mutant_red_and_control_green` 이 보는 것은 verdict 불일치 · pin 된 개수
+      벡터이고, signature tuple 자체를 보는 공개 assertion 은 없다). 그 상태를 «검출» 로
+      계상하면 매트릭스가 **자기가 막겠다고 선언한 dark site 를 통과로 센다** — R7 이 P0 로
+      규정한 상태가 정확히 `signature-delta 전용` 이다. 그래서 여기서는 «미검출» 로 떨어뜨리고,
+      그 사실을 채널 문면에 남겨 «절단해도 아무 일 없음(`-`)» 과 구별한다.
     """
     try:
         path = FX.write_engine_variant(tmp_path, source, name)
         mut = FX.load_engine(path, tag=name)
     except Exception as exc:  # noqa: BLE001 - 로드 실패도 검출이다
-        return True, f"load-failure:{type(exc).__name__}"
+        return True, f"load-failure:{type(exc).__name__}", []
     try:
         res = FX.run_battery(mut)
     except Exception as exc:  # noqa: BLE001 - 배터리 예외도 검출이다
-        return True, f"battery-exception:{type(exc).__name__}"
+        return True, f"battery-exception:{type(exc).__name__}", []
     real = {mid: r for mid, r in res.items() if not mid.startswith("_")}
     mism = sorted(mid for mid, r in real.items() if r["verdict"] != "기대일치")
     sig = tuple(sorted(
@@ -334,10 +357,10 @@ def _probe_cut(tmp_path, source, name, base_sig):
          r["injected_red_count"], tuple(r["vector"]), r["verdict"])
         for mid, r in real.items()))
     if mism:
-        return True, f"mismatch:{mism[:4]}"
+        return True, f"mismatch:{mism[:4]}", mism
     if sig != base_sig:
-        return True, "count/vector-signature-delta"
-    return False, "-"
+        return False, "ONLY-signature-delta(공개 mismatch 채널 미검출)", []
+    return False, "-", []
 
 
 def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
@@ -382,7 +405,7 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
 
     # --- 음성 arm — 무절단 round-trip 은 «미검출» 이어야 한다 -----------------------
     roundtrip = ast.unparse(ast.parse(src))
-    neg_det, neg_why = _probe_cut(tmp_path, roundtrip, "anchor_noop", base_sig)
+    neg_det, neg_why, _neg_mism = _probe_cut(tmp_path, roundtrip, "anchor_noop", base_sig)
     print(f"  음성 arm  무절단 round-trip -> {'검출(★항진)' if neg_det else '미검출'} {neg_why}")
     assert not neg_det, (                                   # ← 음성 arm 측정 assertion
         "절단하지 않은 round-trip 사본이 «검출» 로 판정됐다 — 검출 술어가 항진이라 "
@@ -392,7 +415,7 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
     undetected, rows = [], []
     for lineno, kind in emit_sites:
         cut = FX.make_emission_cut_source(src, ANCHOR_FN, lineno)
-        det, why = _probe_cut(tmp_path, cut, f"anchor_emit_{lineno}", base_sig)
+        det, why, mism = _probe_cut(tmp_path, cut, f"anchor_emit_{lineno}", base_sig)
         # `return [Verdict(...)]` 형태는 방출을 죽이면 함수가 None 을 반환하게 된다.
         # 그 경우의 검출 채널은 예외(크래시)이며, 그것도 정상적인 검출이다 — 다만
         # "왜 크래시인가" 를 기록해 «규칙이 죽어서 잡혔다» 와 구별 가능하게 남긴다.
@@ -403,7 +426,7 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
             undetected.append((lineno, kind, "방출절단"))
     for lineno in cond_sites:
         cut = FX.make_sutured_source(src, target=(ANCHOR_FN, lineno))
-        det, why = _probe_cut(tmp_path, cut, f"anchor_cond_{lineno}", base_sig)
+        det, why, mism = _probe_cut(tmp_path, cut, f"anchor_cond_{lineno}", base_sig)
         rows.append((lineno, "If", "조건절단", det, why))
         if not det:
             undetected.append((lineno, "If", "조건절단"))
