@@ -56,6 +56,8 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 **Consumer merge-gate boundary** (ADR-132 / CFP-2469): consumer repo 의 게이트 강제력 = **2-layer** — (a) advisory hook 層 (UserPromptSubmit warning-inject-only, block 아님) ↔ (b) mechanical branch protection 層 (GitHub native `required_status_checks` merge 실차단). dead-gate(게이트 workflow 가 PR 마다 돌지만 `required_status_checks.contexts[]` 미등록 = merge 차단력 0) 해소 = mechanical 層 자동 충전 (`scripts/wire-branch-protection.*` operator gh auth GET-merge-PUT). 권한 경계: 자동 배선 = operator org-admin gh auth (codeforge PAT 미사용 — ADR-066 §결정 2 6-scope 무손상). 형상: `enforce_admins:true`(admin 우회 무력화 차단) + `review_count` solo=0/team≥1(deadlock 회피). 등록 context set = consumer 실제 배포 workflow job 표시명 ∩ codeforge 게이트(정적 manifest 복사 금지 — wrapper-self context 영구 pending 차단).
 
+**수령 사실(receipt)의 기록 authority 경계** (ADR-139 Amendment 3 / ADR-170 Amendment 2 / CFP-2994): 기록 authority 는 **객체에 따라** 갈린다 — **verdict**(성과·liveness 판정)은 산출물·marker·rc 로 타자 검증이 가능하므로 lead 에 고정되고(ADR-139 INV-L4 — INV-L1~L4 및 §결정 1~7 무변경), **수령 사실**(통지·핸드오프 도달)은 상대 inbox 를 열거할 수단이 없어 타자 검증이 물리적으로 불가하므로 **수신 주체 단독 발행**이다. 두 객체는 disjoint 이며, 후자는 INV-L4 의 예외가 아니라 **그 정의역 밖 신설 entry** 다(약화 방향 없음 — ADR-064 §결정 7 symmetric ratchet 상 강화). 파생 규율: 수령 상태 표기(`receipt_state`)는 **도달(arrival) 전용** 경계 — 산출물 존재·귀속 기록은 허용하되 **충분성·품질·채택 가치 판정은 금지**(그 판정은 lead 잔존). 기록 귀속 위반 분류는 ADR-170 Amendment 2 가 저작 ⊥ 전사 축에 「타 주체 저작을 흡수하며 귀속을 자기로 표기」 형태를 추가해 확장한다(§결정 2 inline whitelist enumeration 무변경 — entry 신설·축소 없음).
+
 ## 인터페이스 계약
 
 모듈 간 계약 surface = `docs/inter-plugin-contracts/` (wrapper 단일 원본 — ADR-118 D5, sibling sync 폐지). `[verified: MANIFEST.yaml @ HEAD fb06a04]`:
