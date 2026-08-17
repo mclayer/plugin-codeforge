@@ -222,7 +222,7 @@ INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건
 >
 > **`children` 을 ref 별로 해결하는 이유 (FIX Iter 14 동반 봉합)**: 종전 엔진은 before/after **양쪽 모두 after-ref 자식**으로 재조립했다. 그러면 이미 분할된 §n 에 대해 앵커가 추가·변경돼 발화하더라도, 자식 파일 **안에서 일어난 손실이 양변에 똑같이 반영**돼 상쇄된다 [실측: 자식 3줄 → 1줄(2줄 소실) 형상이 종전 경로에서 **digest 동일 ⇒ PASS**, before-ref 자식으로 해결 시 **leg-A RED**]. `L` 이 "before 의 실제 내용"을 뜻하지 않으면 leg-A 는 정확히 분할-정착 이후 정상 상태에서 공허해진다 — 본 FIX 가 고치는 born-broken 과 **같은 class** 이므로 함께 봉합한다.
 >
-> **정직한 상한 — 이 술어가 못 가르는 것**: ① **§n 내부 재배열**(내용 손실 0) 은 leg-A PASS 이며 leg-C 가 **비차단 신호로 관측만** 한다 ② **공백 줄 손실**은 정의역에서 제외돼 미검사다(정보 손실은 아니나 명시적 비대상) ③ **고다중도 boilerplate 줄** — 동일 문자열이 §n 안에 k 회 출현하면 그 중 1건의 변형은 **총 count 가 감소할 때만** 검출된다 [실측: 표 구분선 `|---|---|` 이 before 12회 / after 14회라 주입 3건 중 1건이 흡수돼 소실 계상 2/3]. 내용 담지 줄은 사실상 유일하므로 실효 범위는 구조 boilerplate 로 한정된다 ④ **`anchor_delta = ∅` 인 커밋의 §n 손실** — INV-S1 이 애초에 미발화다. 분할 정착 이후 자식 파일 내용이 삭제돼도 INV-S1 은 보지 않으며, 일반 삭제 축을 지는 `check_story_section_ownership` 은 owner lane 의 파괴적 write 를 허용하므로 **커버리지 0 구간이 실재**한다. 이는 본 FIX 의 회귀가 아니라 INV-S1 의 원래 정의역 경계(= 분할 시점 무손실)이며, 새 완화를 발명하지 않고 상한으로 등재한다 ⑤ **`anchor_delta ≠ ∅` 커밋에서 정의역 밖 섹션(`n ∉ sections(anchor_delta)`)의 손실 (구현리뷰 R4 P1-3 신설)** — 분할 커밋에 동반된 **앵커 없는 절**의 소실을 INV-S1 은 `targets = sections_of(delta)` 로 좁혀 **아예 보지 않고**(`scripts/lib/check_story_read_surface.py:672`), INV-S2 는 `anchor_delta != ∅` 라 **early return NOT_FIRED** 한다(`:772` — `"anchor_delta != ∅ (분할 커밋 — INV-S1 반쪽)"`) ⇒ **전 leg RED 0** [firsthand 실행 — 앵커 **없는** §7 에서 2줄 소실 = **전 leg PASS** / 동일 규칙의 소실을 앵커 **있는** §9 에서 = **leg-A RED**. 즉 판별자는 「소실 여부」가 아니라 「앵커 보유 여부」다. 기준 wrapper `895195709` · internal-docs `b6f94863` / `git archive` LF raw CR=0 / 정의역 = Story 파일 1건].
+> **정직한 상한 — 이 술어가 못 가르는 것**: ① **§n 내부 재배열**(내용 손실 0) 은 leg-A PASS 이며 leg-C 가 **비차단 신호로 관측만** 한다 ② **공백 줄 손실**은 정의역에서 제외돼 미검사다(정보 손실은 아니나 명시적 비대상) ③ **고다중도 boilerplate 줄** — 동일 문자열이 §n 안에 k 회 출현하면 그 중 1건의 변형은 **총 count 가 감소할 때만** 검출된다 [실측: 표 구분선 `|---|---|` 이 before 12회 / after 14회라 주입 3건 중 1건이 흡수돼 소실 계상 2/3]. 내용 담지 줄은 사실상 유일하므로 실효 범위는 구조 boilerplate 로 한정된다 ④ **`anchor_delta = ∅` 인 커밋의 §n 손실** — INV-S1 이 애초에 미발화다. 분할 정착 이후 자식 파일 내용이 삭제돼도 INV-S1 은 보지 않으며, 일반 삭제 축을 지는 `check_story_section_ownership` 은 owner lane 의 파괴적 write 를 허용하므로 **커버리지 0 구간이 실재**한다. 이는 본 FIX 의 회귀가 아니라 INV-S1 의 원래 정의역 경계(= 분할 시점 무손실)이며, 새 완화를 발명하지 않고 상한으로 등재한다 ⑤ **`anchor_delta ≠ ∅` 커밋에서 정의역 밖 섹션(`n ∉ sections(anchor_delta)`)의 손실 (구현리뷰 R4 P1-3 신설)** — 분할 커밋에 동반된 **앵커 없는 절**의 소실을 INV-S1 은 `targets = sections_of(delta)` 로 좁혀 **아예 보지 않고**(`scripts/lib/check_story_read_surface.py` `check_inv_s1()` 의 `targets = sections_of(delta)` — 줄번호보다 **심볼명이 정본**, 현행 `:672`), INV-S2 는 `anchor_delta != ∅` 라 **early return NOT_FIRED** 한다(`check_inv_s2()` 선두 guard `if anchor_delta(before_text, after_text):` 와 그 body `return [Verdict(name, False, "NOT_FIRED", "anchor_delta != ∅ (분할 커밋 — INV-S1 반쪽)")]` — 현행 `:772-773` [wrapper `2f8872de8` 실측]) ⇒ **전 leg RED 0** [firsthand 실행 — 앵커 **없는** §7 에서 2줄 소실 = **전 leg PASS** / 동일 규칙의 소실을 앵커 **있는** §9 에서 = **leg-A RED**. 즉 판별자는 「소실 여부」가 아니라 「앵커 보유 여부」다. 기준 wrapper `895195709` · internal-docs `b6f94863` / `git archive` LF raw CR=0 / 정의역 = Story 파일 1건].
 >
 > **소진성 주장의 철회 (구현리뷰 R4 P1-3)**: 위 열거를 **소진적**으로 제시한 것은 거짓이었다 — ④ 는 `anchor_delta` 축의 **한 행만** 등재했고 ⑤ 가 빠졌다. 손실축 정의역은 1차원 열거가 아니라 **2차원**이다: `anchor_delta ∈ {∅, ≠∅}` × `n ∈ / ∉ sections(anchor_delta)`. INV-S1 이 실제로 검사하는 셀은 **「`anchor_delta ≠ ∅` ∧ `n ∈ sections(anchor_delta)`」 단 하나**이고 나머지는 전부 미검사다(`anchor_delta = ∅` 행은 `targets` 가 정의상 공집합이라 두 열이 함께 비고, `≠ ∅` 행의 정의역 밖 열이 ⑤ 다). 이 재기술은 열거가 아니라 **분할**이므로 소진적이다 — 이후 이 축의 상한은 열거로 적지 않는다. **누락의 기전은 「축을 세지 않고 사례를 셌다」** 이며, 같은 class 의 재발을 막는 것은 새 항목 추가가 아니라 **per-cell 분해**다. ⑤ 를 차단 축으로 덮지 **않는** 결정과 그 근거 = 아래 「앵커 없는 절의 손실은 차단 축을 두지 않는다」 소절.
 
@@ -261,6 +261,39 @@ INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건
 > **INV-S1 digest 분기의 실행 범위 (설계리뷰 R5 — 정직 고지 정밀화 · R6 A-1 scope 정정)**: digest 분기는 **무변경 정본 배터리에서 미진입**이다(미발화를 통과로 계상하지 않는다 — CP §13.2). **미진입의 근거는 마커 개수가 아니라 `anchor_delta` 가 대칭차라는 사실이다** — 무변경 파일은 `anchors(before) = anchors(after)` 이므로 마커가 몇 개든 `anchor_delta = ∅` 다. 종전 기재 *"현행 3파일에 `cfp-split` 마커가 **0**"* 은 **철회한다 (R6 A-1)** — 실계수는 **리터럴 7**(STORY 2 / CP 3 / ADR 2)이며, 이 계수는 **마커를 논하는 산문이 자기 계수에 포함되는 자기참조 계수**라 트리마다 변한다(본 문단 자신이 1건). 술어로 파싱하면 값이 **해석마다 갈린다**: CP `:390` 문면 그대로(`section` ∧ `id` 필수) = **1**(CP `:128` begin 만 — `:130` end 는 `section=` 부재, §3.4 예시와의 괴리로 기등재 (C)) / kind-only 완화 = **2**(begin·end 1쌍) / **fence-aware = 0**(CP `:128`·`:130` 은 코드펜스 **안**). 즉 종전 "0" 은 **fence-aware 해석에서만 참**이었는데, `anchors(f)` 의 fence-awareness 는 **INV-S3 정의역 필드로만 선언되고 앵커 스캔 술어에는 미선언**이다 — 이 비대칭은 Story `:2052` 가 검출 공백으로 이미 등재했다(전문 비복제, 포인터 참조). **결론은 무변경으로 생존**: 이를 *"INV-S1 검출력 미검증"* 이라 기술하는 것은 **과대**이고(위 M-SPLIT / M-LOSS 가 무손실 **GREEN** / 소실 **RED** 로 판별력 실증), 정확한 한정은 **"본 배터리 한정 미실행"** 이다. [실계수 4-tuple — 값 = 위 기재치 / 기준 트리 internal-docs `06c9e91d` · wrapper `334f6ab04` / 매체 `git archive` LF raw CR=0 / 정의역 = Story·CP·ADR 3파일]
 
 **봉합안도 못 잡는 것 (§8.12 등재)**: ① **이동 출처에 이동량 이상 재-append** — §9→§4 로 8,000 B 이동 후 §9 에 9,000 B 재-append 하면 §9 의 순 Δ 가 **양수**라 `∃i: Δ§i ≤ −θ_move` 가 거짓 → **GREEN** [실행 확인] ② **θ_move 미만 분산 이동** — §9→§4/§5/§6 으로 3,673 / 3,353 / 3,879 B(총 10,905 B, 총량 완전 보존)를 쪼개 옮기면 개별 Δ 가 전부 임계 미만이라 **GREEN** [실행 확인]. 두 회피는 종전·봉합안 **양쪽 모두** 통과하므로 봉합의 회귀가 아니라 **잔존 한계**로 정직 등재한다.
+
+#### 분할 정착 후 INV-S2 는 **발화하되 자식 쪽 donor 를 못 본다** — 정의역이 parent-only 다 (설계리뷰 R6)
+
+**INV-S2 축도 열거가 아니라 per-cell 분해로 적는다** (`:227` 이 손실축에서 확립한 규율의 이식 — 같은 class 의 재발을 막는 것은 항목 추가가 아니라 분해다). 보상 이동 축의 정의역 = `anchor_delta ∈ {∅, ≠∅}` × `donor 절의 거처 ∈ {parent, child}`.
+
+| | donor ∈ parent | donor ∈ child(분할 정착) |
+|---|---|---|
+| `anchor_delta ≠ ∅` | 미발화 — early return (CP §8.12 A-7②) | 미발화 — 동일 셀 |
+| `anchor_delta = ∅` | **검사됨** — `M-E4` 가 RED 로 실증 | **★ 발화하되 무력** — 본 소절 |
+
+**미검사 셀은 하나이고, 그 셀이 본 Story 가 만드는 정상 상태다.** `check_inv_s2()` 는 `split_sections(before_text)` / `split_sections(after_text)` 로 **parent 텍스트만** 슬라이싱한다 — INV-S1 과 달리 `∪ children[n]` 재조립을 하지 않는다. 따라서 §n 이 자식 파일로 외부화되고 나면 parent 의 §n 은 stub 뿐이라 `Δ§n ≈ 0` 이고, 자식 안에서 얼마가 빠져나가든 **감소 섹션으로 계상되지 않는다**. 페어 조건 `∃ i≠j: Δ§i ≤ −θ_move ∧ Δ§j ≥ +θ_move` 는 taker 만 남고 donor 가 소멸해 성립하지 않는다.
+
+[firsthand 실행 — 엔진 `check_inv_s2` 를 import 해 직접 판정. **동일 위협(§9 → §7 보상 이동, 총량 보존)을 분할 전후로만 갈라** 대조: 미분할 = `FIRED` **RED** `[('9','7')]` / 분할 정착 = `FIRED` **PASS** `donors=0 takers=1`. 엔진이 taker 를 세고 donor 를 **0 으로 보고**한다는 사실이 기전을 자기 문면으로 드러낸다. 기준 wrapper `2f8872de8` / 매체 LF / 정의역 = 합성 Story 1건 + 자식 2건.]
+
+**A-7② 와 다른 셀이다** — 7② 는 `anchor_delta ≠ ∅` 라 INV-S2 가 **미발화**(early return)이고, 본 항은 `= ∅` 라 **발화한 뒤** 정의역 협착으로 무력하다. **A-11 과도 다른 축이다** — 11 은 같은 `= ∅` 행이지만 위협이 **순수 소실**(INV-S1 소관)이고 본 항은 **보상 이동**(INV-S2 소관)이다. 셋은 2×2 의 서로 다른 칸이며 어느 것도 나머지를 함의하지 않는다.
+
+**성질상 A-7② 보다 무겁다**: 7② 는 공격자가 분할 앵커를 **함께 실어야** 성립하는 능동 회피지만, 본 항은 **아무것도 하지 않아도 성립하는 안식 상태**다. 그리고 본 Story 의 주 레버(성장축 외부화)가 성공할수록 자식 거주 섹션이 늘어 **이 사각이 단조 확대**된다 — 처방이 자기 관측면을 갉는 구조다. 이 자기 잠식 성질은 A-11 과 공유하며, 두 항은 「분할 정착 후 자식 내부는 두 불변식 모두의 정의역 밖」이라는 **한 문장으로 요약되는 형제**다.
+
+**결정: 차단 축도 정의역 확대도 하지 않는다 — 의도적 미커버로 확정하고 fixture 로 거동을 고정한다.** 근거 3항. ① INV-S2 는 애초에 **비차단 신호 축**(§결정 7)이라 미검출의 손실은 차단이 아니라 **신호 1건**이다. ② 정의역을 재조립본으로 넓히면 축 B-1(정상 혼합 편집 false-positive)의 정의역이 함께 넓어지는데, 그 교환비는 **코퍼스 분포로만 정할 수 있고 현재 미측정**이다(축 B-2) — 미측정 교환비 위에서 차단·발화 범위를 넓히는 것은 born-broken 위험이다. ③ 위 「앵커 없는 절」 소절이 형제 셀에서 **대안 6종을 실행 기각**하고 내린 결론과 동형이며, 본 항만 다르게 처분할 근거가 없다. **새 완화를 발명하지 않는다.**
+
+**단, 「의도적 미커버」는 측정한 뒤에만 선언할 수 있다.** 종전에는 이 셀을 **선언한 적도 실행한 적도 없었다** — 로스터 37 fixture 중 `anchors(before) > 0` 인 것이 `ctx_resplit_child_loss` **1건**뿐이고 그것은 `anchor_delta ≠ ∅`(재분할)이라 INV-S2 가 미발화한다. 즉 **`anchors(before) > 0` ∧ INV-S2 발화** 교차가 **공집합**이어서, 분할 정착 후 INV-S2 의 거동은 **한 번도 실행된 적이 없다**. 미실행 구간을 상한으로 적는 것은 정직 기록이 아니라 미측정의 은폐다 — 그래서 아래 fixture 를 **동반 의무**로 건다.
+
+**재현 규칙 (수치를 계약으로 두지 않는다 — `:430` 정량 인용 규약)**: 위 교차 공집합은 트리마다 재계수한다. `_story_read_surface_fixtures` 를 import 해 전 `ctx_*` factory 를 build 한 뒤 각 ctx 에 대해 `len(parse_anchors(story_before)) > 0 ∧ any(v.fired for v in check_inv_s2(...))` 를 세면 된다. 고정 수치(37 / 1 / 0)는 **관측 시점 값**이며 계약은 **교차가 공집합이라는 술어**다.
+
+**동반 fixture 규격 (§8.3 행 12 / Phase 2 배선 — 엔진 무변경, 테스트만 신설)**. 3-arm 을 **한 배터리에** 등재한다. 단독 arm 은 배선을 닫지 못한다.
+
+- **양성 arm** = 미분할 보상 이동 → INV-S2 `FIRED` ∧ **RED**. (기존 `M-E4` 재사용 — 검사가 살아 있음을 같은 실행에서 실증한다. 없으면 아래 두 arm 은 「검사가 죽어서 조용한 것」과 구별되지 않는다.)
+- **음성 arm** = 분할 정착 보상 이동 → INV-S2 `FIRED` ∧ `PASS` ∧ **`donors == 0`**. `donors == 0` 이 기전을 이름으로 고정한다 — 정의역을 재조립본으로 바꾸면 이 arm 이 뒤집혀 **의식적 재결정을 강제**한다.
+- **대조군 arm** = 분할 정착 순수 성장 → INV-S2 `FIRED` ∧ `PASS`. false RED 0.
+
+> **★ 이 fixture 의 born-broken 함정 (실행 확인)**: 판정을 **`red_count == 0`(GREEN)으로 적으면 태어날 때부터 무력하다.** `NOT_FIRED` 도 `red_count == 0` 이므로, INV-S2 를 분할 파일에서 통째로 꺼버리는 변형(발화 가드를 `anchor_delta` 대신 `has_split_markers(after_text)` 로 바꾸는, 「분할 파일은 INV-S1 소관」이라는 흔한 오해의 코드화)에서 **pristine 과 변형이 똑같이 `red_count = 0`** 을 낸다 [실행 확인 — 동일 ctx 에서 pristine `fired=True/PASS` vs 변형 `fired=False/NOT_FIRED`, 양쪽 `red_count = 0`]. 따라서 판정은 반드시 **`fired is True` 를 명시 assert** 해야 한다. 이는 §8.3 행 6 이 *"미발화를 통과로 계상 금지 (R2 P1-E)"* 로 이미 세운 규율의 **동일 적용**이며, 새 규칙이 아니다.
+
+**비중복 실증 (기존 로스터가 못 잡는 것을 잡는가)** — 위 변형을 주입해 전수 대조했다: 기존 mutant **전건이 pristine 과 판정 동일**(변경 0)인 반면 신설 3-arm 중 분할 정착 2 arm 이 `fired` 반전으로 **검출**한다. 즉 이 변형은 **현행 로스터에 완전히 비가시**이며 신설 arm 이 유일 검출자다 — 패딩이 아니다. [firsthand 실행 — `run_battery(pristine)` vs `run_battery(변형)` 의 `verdict`/`red_count`/`vector`/`domains` 4-field 전수 비교. 기준 wrapper `2f8872de8`. 배터리 엔트리 수는 `DECLARED_MUTANT_IDS` 와 일치하며 `_tree` 는 mutant 가 아닌 메타 sentinel 이라 계수에서 제외한다.]
 
 #### 앵커 없는 절의 손실은 차단 축을 두지 않는다 — 판별자는 「앵커 보유」가 아니라 「무손실 계약」이다 (구현리뷰 R4 P1-3)
 
