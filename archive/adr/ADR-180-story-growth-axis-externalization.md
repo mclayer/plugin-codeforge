@@ -270,7 +270,7 @@ INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건
 
 **원리적 반증 (동일 바이트 diff · 상반 의도)**: `M-LOSS-7`(악의적 소실)과 `M-CONSOL-7`(§4.2.2a 가 권고하는 중복 서술 정리)은 after 텍스트가 **같은 객체**이고 술어 4종 전건이 **같은 답**을 낸다. 판별 대상은 저작 의도인데 술어 정의역은 텍스트다 ⇒ 임계·정규식·순증판별 어느 조정으로도 닫히지 않는다.
 
-**대안 5종 전건 반증** [firsthand 하네스 — 엔진 함수 `importlib` import(재구현 0) / 기준 wrapper `895195709` · internal-docs `b6f94863` / `git archive` LF raw CR=0 / 코퍼스 = `CFP-2986.md` 208,917 B + 자식 `CFP-2986-S1.md` 184,212 B / `anchor_delta = {(begin,9,CFP-2986-S1), (end,9,CFP-2986-S1)}` ⇒ `targets = {9}`. **엔진 사본 2본 무의존 실증** — 파일 전체는 다르나(wrapper 66,631 B / internal-docs 65,035 B) 판정 경로 6함수(`check_inv_s1` 6,333 B · `check_inv_s2` 1,893 B · `anchor_delta` · `sections_of` · `s1_lines` · `_multiset_diff`)는 **전건 byte-identical** 이고 배터리를 internal-docs 사본으로 교차 재실행해도 **판정 전건 동일**하다. 따라서 본 절의 **라인 번호는 wrapper 사본 기준**이며 사본별로 다를 수 있으므로 판정은 라인이 아니라 **병기한 문면**을 정본으로 읽는다]:
+**대안 6종 기각 — 실행 대조 5종((a)·(b)·(c-1)·(c-2)·(c-3), 아래 표) ∧ 논리 기각 1종((d), 배터리 불요)** [firsthand 하네스 — 엔진 함수 `importlib` import(재구현 0) / 기준 wrapper `895195709` · internal-docs `b6f94863` / `git archive` LF raw CR=0 / 코퍼스 = `CFP-2986.md` 208,917 B + 자식 `CFP-2986-S1.md` 184,212 B / `anchor_delta = {(begin,9,CFP-2986-S1), (end,9,CFP-2986-S1)}` ⇒ `targets = {9}`. **엔진 사본 2본 무의존 실증** — 파일 전체는 다르나(wrapper 66,631 B / internal-docs 65,035 B) 판정 경로 6함수(`check_inv_s1` 6,333 B · `check_inv_s2` 1,893 B · `anchor_delta` · `sections_of` · `s1_lines` · `_multiset_diff`)는 **전건 byte-identical** 이고 배터리를 internal-docs 사본으로 교차 재실행해도 **판정 전건 동일**하다. 따라서 본 절의 **라인 번호는 wrapper 사본 기준**이며 사본별로 다를 수 있으므로 판정은 라인이 아니라 **병기한 문면**을 정본으로 읽는다]:
 
 | 술어 | M0 순수분할 (대조군) | 참 손실 §7 2줄 | 정상 저작 §8 placeholder→실내용 | 순증 위장 §7 −2줄 ∧ +60줄 | 판정 |
 |---|---|---|---|---|---|
