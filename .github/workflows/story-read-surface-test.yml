@@ -78,11 +78,31 @@ name: story-read-surface-test
 #                         (`WRAPPER_PINNED_REF` — 줄번호보다 **심볼명이 정본**. 주석 증감으로
 #                          줄이 밀린 전례가 본 Story 에 있다: `:75`→`:82`)
 #                         ★**실 fetch(urlopen) 대상**            도달성 ✗ (wrapper 브랜치 전용)
-#     A-2  internal-docs  .github/workflows/story-read-surface-check.yml:261
-#                         A-1 과 동값 인용 mirror (주석 축)       도달성 ✗ (동상)
-#     ⇒ 새 값 = **wrapper #2997** squash-merge 커밋 SHA (A-1 은 40자 그대로 / A-2 는 앞 12자)
+#     A-2  **bump 대상 아님** — 항목은 지우지 않고 남긴다(지우면 "왜 없는가"가 소실된다).
+#                         종전 문면 = "`…/story-read-surface-check.yml:261` = A-1 과 동값 인용
+#                         mirror". **두 주장 다 지금은 거짓**이고, 깨진 경로가 서로 다르다:
+#                         (가) **값 divergence** — 그 mirror 가 인용하던 값은 `676d960508ef`
+#                              였는데 A-1 pin 은 그 뒤 `b1e08fd3ea3e` → `005c43b682b4…` 로 두 번
+#                              움직였다. 작성 시점(internal-docs `37096659` ↔ wrapper
+#                              `a201e7dd0`, 4분 차)엔 **실제로 동값**이었고 pin bump 가 깼다.
+#                              ⇒ "동값 mirror" 는 **작성 당시 참 → 이후 거짓**.
+#                         (나) **줄 drift** — 그 문면은 같은 날 헤더 증설로 `:261` 밖으로 밀렸고
+#                              `:261` 은 다른 내용이 됐다. 저 파일의 줄번호는 본 Story 내내
+#                              움직인다 ⇒ **새 줄번호도 여기 적지 않는다**(적으면 또 밀린다).
+#                         ★ 바로 위 A-1 이 "줄번호보다 **심볼명이 정본**" 이라 경고해 놓고 A-2 는
+#                           맨 줄번호를 썼다 — **자기 교훈 미적용**이 같은 블록 안에서 재발했다.
+#                           그래서 아래는 줄번호가 아니라 **재현 규칙**으로 지시한다.
+#     ⇒ 현 pin 값의 실 소재 = **재계수 규칙**(고정 수치·고정 줄번호 금지, 매 bump 시점 재실행):
+#          git -C <internal-docs> grep -nE '005c43b68'      # = 현 pin 앞 9자
+#        2026-08-17 firsthand **8건** = A-1(`scripts/lib/compare_story_read_surface_parity.py`
+#        의 `WRAPPER_PINNED_REF`) **1건** + `wrapper/stories/CFP-2986-S1.md` **5건**
+#        + `wrapper/stories/CFP-2986.md` **2건**. 후자 7건은 전부 §9/§10 **감사 기록**이라
+#        [A-frozen] 과 **동일 사유로 bump 금지**(그 시점 관측값의 기록 — 갱신 = 감사 기록 위조).
+#        ⇒ **A 계열 bump 대상 = A-1 단 1곳.** 종전 A-2 에 해당하는 bump 대상은 **실재하지 않는다**
+#          (`story-read-surface-check.yml` 안 현 pin 인용 = **0건**, 위 census 로 firsthand).
+#     ⇒ 새 값(**A-1 전용**) = **wrapper #2997** squash-merge 커밋 SHA — **40자 그대로**
 #        `gh pr view 2997 --repo mclayer/plugin-codeforge --json mergeCommit`
-#     ⇒ 미이행: A-1 = **rc=1, 전 PR 차단**(fail-closed 실동작) / A-2 = 인용 근거 소실만.
+#     ⇒ 미이행 시: A-1 = **rc=1, 전 PR 차단**(fail-closed 실동작).
 #
 #   [A-frozen] **무조치 — 동결 감사 기록**(bump 하면 안 되는 site. 정직 고지)
 #     = 리뷰어·측정자가 **그 시점에 관측한 값**의 기록이다. 링크 생존을 위해 갱신하면
@@ -104,9 +124,19 @@ name: story-read-surface-test
 #           git grep -nE 'a3d7c56b|8f317f7c' -- .   # 전 매치(= 자기포함 총계, 가변)
 #           그중 본 파일 [A-frozen] 블록 줄을 뺀 나머지 = 실 인용 site (불변 5건)
 #             본 파일 「정직 상한」 2줄 + 본 파일 [B 계열] 코퍼스 HEAD 인용 1줄
-#             + scripts/check-story-read-surface.sh:12
-#             + scripts/lib/check_story_read_surface.py:1218
+#             + scripts/check-story-read-surface.sh:12  (「firsthand 2026-08-16」 주석)
+#             + scripts/lib/check_story_read_surface.py:1357  (「실측 **665**」 주석)
 #           (본 파일 3건은 줄번호가 이 블록 편집으로 밀리므로 **절 이름으로** 지시한다.)
+#           ★ 그 면제를 **본 파일에만** 준 것이 잘못이었다 — 기전(줄이 밀린다)은 맞게 봤는데
+#             **정의역을 본 파일로 좁혔다**. 엔진 파일도 자란다: 위 `.py` 인용은 `:1218`→`:1357`
+#             (**+139**) 로 밀려 있었다(R5 교정). 즉 이 블록은 "정본은 수치가 아니라 **재현
+#             규칙**" 이라 선언해 놓고 **외부 파일 2건은 맨 줄번호로** 앵커했다 — 자기 교훈의
+#             **절반만** 적용. 밀린 `:1218` 슬롯엔 지금 argparse 코드가 들어앉아 **stale 이
+#             그럴듯해 보인다**(`:408`→`strip_stub` 과 동형). ⇒ 외부 파일도 맨 줄번호 단독
+#             금지, **문면 앵커 병기**. 파일별 재계수:
+#               grep -nE 'a3d7c56b|8f317f7c' scripts/lib/check_story_read_surface.py
+#           ★ 교정 대상은 **포인터(줄번호)뿐**이다 — 값(`a3d7c56b`·`8f317f7c`·`7d075514`·
+#             `c9f8670f`·`676d9605`)은 동결 기록이라 **bump 금지**(위 본문과 동일 사유).
 #         (셀 때마다 "열거하는 줄" 을 정의역에 넣을지 **먼저 선언**할 것.)
 #         ※ 종전 이 자리의 "실 매치 6" 은 어느 커밋에서도 재현되지 않는다(5 / 7). 그리고
 #           그것이 반증하려던 "5곳" 은 **열거 줄 제외 정의역에서는 옳았다** — 정의역을 밝히지
@@ -128,7 +158,11 @@ name: story-read-surface-test
 #          bump 하고 그 커밋으로 pin 을 올리면 ②의 등식이 깨진다. B 계열은 양 repo 동시 편집.
 #
 #   [C 계열] main 조상이라 **무조치** (도달성 ✓ — 브랜치 삭제와 무관)
-#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1228   7d075514
+#     C-1  wrapper + 사본  scripts/lib/check_story_read_surface.py:62,69,1367   7d075514
+#          (`:62`·`:69` 는 실측 정확. `:1367` = 「baseline `corpus_n: 664`」 주석 — 종전 `:1228`
+#           은 **+139 stale** 이었다(R5 교정, [A-frozen] `.py:1218` 과 동일 원인·동일 폭).
+#           값 `7d075514` 는 무변경 — main 조상이라 애초 무조치 대상이다.
+#           재계수: `grep -n '7d075514' scripts/lib/check_story_read_surface.py`)
 #     C-2  wrapper + 사본  docs/story-read-surface-baseline.yaml:18,48          7d0755140c…
 #     C-3  wrapper + 사본  docs/story-read-declaration-registry.yaml:26         a0c84e66d2… (wrapper #2992)
 #     C-4  wrapper 단독    templates/story-page-structure.md:784                7d075514
