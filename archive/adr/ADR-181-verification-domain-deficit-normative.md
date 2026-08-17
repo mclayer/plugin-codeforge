@@ -255,11 +255,12 @@ awk '/^\| # \| 입력 바이트/{f=1;next} f&&!/^\|/{exit} f' <이 파일> \
   | grep -cE '^\| (\*\*)?[0-9]+[a-z]?(\*\*)? \|'
 ```
 
-★ **자기 검증 (firsthand — 설계리뷰 FIX Iter 7 재실행)** — 위 명령의 매치 id 열거 =
-`1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 17b 18 19 20 21 22 23 24 25 26 27 28 29 30` (**31개**).
+★ **자기 검증 (firsthand — 설계리뷰 FIX Iter 8 재실행)** — 위 명령의 매치 id 열거 =
+`1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 17b 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40` (**41개**).
 계수만 맞고 대상이 틀리는 경우를 배제하려면 **id 열거까지 확인**한다 — 계수는 서로 다른 두 오류가
 상쇄돼도 맞을 수 있다.
-★ **직전 판 대비 = 29 -> 31** (신설 행 **29**·**30**). 이 수치는 수용 기준이 아니라 **재현 규칙의 산출**이며,
+★ **직전 판 대비 = 31 -> 41** (신설 행 **31**~**40**. Iter 7 판 = 29 -> 31, 신설 행 29·30).
+이 수치는 수용 기준이 아니라 **재현 규칙의 산출**이며,
 행수를 계약으로 두지 않는다는 위 규율은 그대로다 — 여기 적는 이유는 **재현자가 같은 수를 얻는지**를
 대조할 앵커가 필요하기 때문이다.
 
@@ -758,11 +759,24 @@ Python 가지 **금지**(`DOTALL` 위험). 직전 판의 무조건 *"`.` 금지"
 | 계수 축 | `grep -o` 출현 목록 → `wc -l` (`grep -c` 금지 — 행 계수) | `len(re.findall())` | 동치 |
 | 날짜 비교 | `sort` 사전순 (ISO 8601 이라 성립) + `date -u -d` | `date.fromisoformat` | 동치 |
 
-★★ **2엔진 차분 실행 결과 (firsthand — ★ FIX Iter 7 최종 31행 재실행)**: (iv) 표 **전 31행**을
-두 구현으로 각각 돌려 `(verdict, exit사유)` 를 비교했다 — **일치 27 / 불일치 4**.
-불일치는 **행 14 · 20 · 27 · 29** 이며 **넷 다 ERE 가지가 `GREEN`(fail-open)** 이다
-(14·20 = `fm-parse-error` · 27 = `mea-missing` · ★ **29 = `expiry-value`**).
-★ 이력: Iter 6 판(29행) = 일치 26 / 불일치 3 · Iter 5 판(25행) = 일치 23 / 불일치 2.
+★★★ **2엔진 차분 실행 결과 (firsthand — ★ FIX Iter 8 최종 41행 재실행)**: (iv) 표 **전 41행**을
+두 구현으로 각각 돌려 `(verdict, exit사유)` 를 비교했다 — **일치 32 / 불일치 9**.
+불일치는 **두 부류**로 갈리며, 이 구분이 Iter 8 에서 처음 관측됐다:
+
+| 부류 | 행 | ERE 가지 거동 |
+|---|---|---|
+| **ERE `GREEN` = fail-open** (7) | 14 · 20 · 27 · 29 · **31** · **32** · **33** | 파서·값 계층을 못 봐서 통과시킨다 |
+| **ERE `RED` 이나 exit 사유 상이** (2) | **34** · **35** | 규정판 `fm-boundary` / ERE `mea-missing` — ERE 가 **fail-closed** 된다 |
+
+★★ **34·35 는 ERE 가 오히려 닫히는 자리다 (정직 기재)** — `awk` 절단은 1행이 `^---$` 여야 `f` 를 세우므로
+BOM·CRLF 에서 **`SCOPE` 가 통째로 비고**, 그 결과 `mea-missing` 이 물어 RED 가 된다. 즉 *"ERE 는 언제나
+더 느슨하다"* 는 **거짓**이며 축마다 방향이 다르다. 두 가지의 exit 사유가 다르므로 **수용 기준(전 행
+`(verdict, exit)` 재현)은 여전히 ERE 가지가 충족하지 못한다** — 그러나 그 미충족의 성격이 다르다는 것을
+적지 않으면 다음 심사가 *"ERE 는 전부 fail-open"* 이라는 틀린 일반화를 근거로 쓴다.
+★ **행 29 정정 반영** — 구 바이트(`2026-02-30`)에서는 ERE 가 `expired` 로 **RED** 였고 직전 판이 적은
+*"ERE `GREEN`"* 은 재현되지 않았다. 신 바이트(`2026-09-31`)로 교체한 뒤에야 그 기재가 참이 된다.
+★ 이력: Iter 7 판(31행) = 일치 27 / 불일치 4 · Iter 6 판(29행) = 일치 26 / 불일치 3 ·
+Iter 5 판(25행) = 일치 23 / 불일치 2.
 ★ **신설 행 30 은 ERE 도 규정과 일치**한다(`REPO` 출현 계수 **0** -> `RED/repo-token`, firsthand) —
 즉 행이 늘 때마다 불일치가 느는 것이 아니라 **파서 층 행에서만** 는다.
 
@@ -972,7 +986,7 @@ admissible(file) := ladder(file) OR exempt(file)
   **봉인이 아니라 진단 정밀화 + `fm-parse-error` 와의 상호 보완**이다((0-c) 쌍 ablation — 둘을 함께 끄면
   행 14·20 이 `GREEN` 이 된다). **`LINE` 과 중복 방어**임을 여기 적는다.
 - ★★ **`expiry-value` 신설 — `EXP` 는 형식만 보고 값을 안 본다 (설계리뷰 FIX Iter 7, P1-4)**.
-  `EXP` 의 `[0-9]{4}-[0-9]{2}-[0-9]{2}` 는 **`expiry=2026-02-30` 을 통과시킨다** — 형식 합치이나
+  `EXP` 의 `[0-9]{4}-[0-9]{2}-[0-9]{2}` 는 **`expiry=2026-09-31` 을 통과시킨다** — 형식 합치이나
   **달력에 없는 날짜**이고, 직전 판 29행 정의역 **어디에도 없었으며**, `date.fromisoformat` 은
   여기서 **`ValueError` 를 던진다.** 즉 술어 문면대로 구현하면 **예외로 죽거나**, 구현자가
   자연스럽게 `try/except: continue` 를 넣으면 **그 항목이 조용히 탈락해 GREEN(fail-open)** 이 된다.
@@ -984,7 +998,7 @@ admissible(file) := ladder(file) OR exempt(file)
     같은 구멍을 연다. **"예외 = skip" 은 이 문서에서 두 번 나타난 fail-open 기전**이므로,
     본 술어의 **모든** 파싱 예외는 skip 이 아니라 **named RED** 라는 것을 규칙으로 적는다.
   - ★ **왜 `EXP` 정규식을 좁히지 않는가**: 정규식으로 달력을 표현하려면 윤년·월별 일수를 인코딩해야
-    하고((viii) 오독 공간 확대), 그렇게 해도 `2026-02-30` 은 막아도 `2027-02-29` 는 규칙이 또 갈린다.
+    하고((viii) 오독 공간 확대), 그렇게 해도 `2026-09-31` 은 막아도 `2027-02-29` 는 규칙이 또 갈린다.
     **값 판정은 값 파서에 맡기고 술어는 형식만 본다** — 대신 **예외 처분을 명시**해 fail-open 을 닫는다.
 - ★ **frontmatter YAML 파싱 실패 = RED (`fm-parse-error`), skip 아님**. 근거는 본 저작의
   **자기 실례**다 — 아래 ③-key census 를 돌린 파서가 `try/except: continue` 로
@@ -1062,8 +1076,8 @@ TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 2
 
 | 축 | 값 |
 |---|---|
-| **파일 정의역 (P)** | **PR diff forward-only** — 해당 PR 이 추가·수정한 `archive/adr/ADR-*.md` (merge-base 대비) |
-| 정의역 **밖** | merge-base 시점에 이미 존재하던 ADR (코퍼스 소급 0 — 소급하면 전 PR 자해 차단) |
+| **파일 정의역 (P)** | **PR diff forward-only** — 해당 PR 이 추가·수정한 `archive/adr/ADR-*.md` **중 `ADRQ` 를 만족하는 것** (merge-base 대비). ★★ **FIX Iter 8 (P0-C)** — `ADR-*.md` 는 **후보 열거자(파일명 패턴)** 이고 자격 술어가 아니다. `ADRQ` 정의·양방향 처분(`domain-escape`)·판별 행(36·37) = 위 (iv) 표 아래 문단 |
+| 정의역 **밖** | ① merge-base 시점에 이미 존재하던 ADR (코퍼스 소급 0 — 소급하면 전 PR 자해 차단) ② `¬ADRQ` 파일 (`ADR-RESERVATION.md` 형 — 번호 레지스트리이지 ADR 이 아니다). ★ 단 **자격 박탈**(base 는 `ADRQ` ∧ head 는 `¬ADRQ`)은 정의역 밖이 아니라 **RED `domain-escape`** |
 | **파일 내 정의역** | `SCOPE` = frontmatter 블록 (본문 제외 — 위 (ii) `SCOPE`) |
 | 선례 | `adr-amendment-parity` entry 가 동일하게 "PR diff forward-only, merge-base 대비" 를 쓴다 |
 
@@ -1101,11 +1115,135 @@ TAB  := U+0009 실제 탭 1문자                     # ★ FIX Iter 5 — 행 2
 | **26** | `D` ⏎ `K: []  # carrier=#0985 expiry=2026-09-15 R` | **RED** | `carrier-token` | ★★ **FIX Iter 6 신설 — 선두 숫자군 `[1-9]` 판별 (P1)**. `[1-9]` 를 `[0-9]` 로 넓히면 선행 0 이 통과해 **GREEN**. 첫 자리 0 금지는 Issue 번호가 0 으로 시작하지 않는다는 계약의 배선이며, 넓히면 `#0985` 와 `#985` 가 **같은 carrier 로 두 번 적힐 수 있다** |
 | **27** | `D` ⏎ `title: "long title text` ⏎ `K: []  # OK"` (다중행 스칼라 — 그 안에 정상형 1줄) | **RED** | `mea-missing` | ★★★ **FIX Iter 6 신설 — `MEA` 의 진짜 판별 행 (P0)**. YAML 파싱은 성공하고 `LINE` 은 col-0 에서 매치하지만 **키는 존재하지 않는다**(문자열 안이다). `MEA` 제거 시 **GREEN**. ★ **인용부호 3변종 전부 동일하게 뒤집힌다** — 이 행은 `LINE`(물리 줄)이 **원리적으로 도달 불가**한 층을 `MEA`(YAML 의미)가 맡음을 고정한다. Iter 5 의 "`MEA` 는 중복 방어" 는 **반증됨** |
 | **28** | `D` ⏎ `K: []  # OK non-carrier=#3` | **GREEN** | — | ★★ **FIX Iter 6 신설 — 토큰 경계군 `[^0-9A-Za-z_-]` 판별 (P2)**. 경계를 빼면 접미 산문의 `non-carrier=#3` 이 **2회째 출현**으로 셈돼 `carrier-token` RED. ★ 직전 판의 (i-x) ERE 표는 이 판별을 *"행 6"* 열에서 주장했으나 **행 6 의 실제 바이트에는 `carrier=#N` 이 아예 없다**(전 형태 계수 0) — **표에 없는 입력으로 판별을 주장**한 자리를 실제 행으로 메운다 |
-| **29** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-02-30 R` | **RED** | `expiry-value` | ★★★ **FIX Iter 7 신설 — 값 불가능 만기 (P1-4)**. 형식은 `EXP` 를 통과하나 **2026년 2월 30일은 없다**. `date.fromisoformat` 이 `ValueError` 를 던지며, 구현자가 `try/except: continue` 를 넣으면 **GREEN fail-open**. 직전 판 29행 정의역에 **이 입력이 없어** 수용 기준이 그 fail-open 을 잡지 못했다. `EXPVALUE` 제거 시 **GREEN** (firsthand). ★ `fm-parse-error` 와 **같은 "예외=skip" 기전의 두 번째 발현** |
-| **30** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin codeforge]` (repo 값에 **공백**) | **RED** | `repo-token` | ★★★ **FIX Iter 7 신설 — repo 문자군 `[A-Za-z0-9_.-]` 판별 (P1-3 반례 ①)**. 이 문자군은 `REPO`·`PFX` 둘의 판정을 바꾸는 자유 변수인데 **직전 판 `leg-off` 열에 없었다**. `[^\]]` 로 넓히면 공백 포함 값이 통과해 **GREEN**. ★ 본 ADR 이 (i-x-A) 에서 문자군을 전수 열거한다고 선언하면서 **이 문자군만 빠뜨린** 자리를 메운다 |
+| **29** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-31 R` | **RED** | `expiry-value` | ★★★ **FIX Iter 8 바이트 교체 (P1-3)** — 구 바이트 `2026-02-30` 은 **fail-open fixture 가 아니었다**: 실행일 pin `2026-08-17` 보다 **과거**라 ERE 가지가 사전순 비교로 `expired` 를 먼저 물어 **RED** 이고, 따라서 아래 (i-x-B) 가 이 행에 적은 *"ERE `GREEN`"* 은 **재현 실패**였다. `2026-09-31` 은 실행일보다 **미래** ∧ 상한(`2027-02-12`) **이내**라 ERE 가 세 leg 을 전부 통과해 **`GREEN`** 이 되고, 그제서야 이 행이 파서 계층 불일치를 판별한다. **firsthand 2엔진** — 구 `2026-02-30`: Python `RED/expiry-value` · ERE `RED/expired` / 신 `2026-09-31`: Python `RED/expiry-value` · ERE **`GREEN`**. ★★★ **FIX Iter 7 원 취지** — 형식은 `EXP` 를 통과하나 **9월 31일은 없다**. `date.fromisoformat` 이 `ValueError` 를 던지며, 구현자가 `try/except: continue` 를 넣으면 **GREEN fail-open**. 직전 판 29행 정의역에 **이 입력이 없어** 수용 기준이 그 fail-open 을 잡지 못했다. `EXPVALUE` 제거 시 **GREEN** (firsthand). ★ `fm-parse-error` 와 **같은 "예외=skip" 기전의 두 번째 발현** |
+| **30** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin codeforge]` (repo 값에 **공백**) | **RED** | `repo-token` | ★★★ **FIX Iter 7 신설 — repo 문자군 `[A-Za-z0-9_.-]` 판별 (P1-3 반례 ①)**. 이 문자군은 `REPO`·`PFX` 둘의 판정을 바꾸는 자유 변수인데 **직전 판 `leg-off` 열에 없었다**. `[^\]]` 로 넓히면 공백 포함 값이 통과해 **GREEN**. ★ 본 ADR 이 (i-x-A) 에서 문자군을 전수 열거한다고 선언하면서 **이 문자군만 빠뜨린** 자리를 메운다. ★★ **FIX Iter 8 (P2-3) — `RCHAR` 의 leg-off 는 단일 site 치환이 아니다**: `REPO` 와 `PFX` 가 **같은 문자군을 각자 보유**하므로 **둘을 동시에** `[^\]]` 로 넓혀야 이 행이 GREEN 이 된다. `REPO` 한 곳만 넓히면 `PFX` 가 여전히 물어 **RED/`token-order`** 이고, 재현자는 *"판별이 없다"* 로 오판한다 |
+| **31** | `K: []  # carrier=#2985 expiry=9999-12-31 R` (골격에서 `D` **제거**) | **RED** | `pubdate-missing` | ★★★ **FIX Iter 8 신설 — 발행일 부재 (P1-1)**. `date:` 줄만 지우면 상한 leg 이 **평가되지 않아** 만기 `9999-12-31` 이 통과한다. `PUBDATE` off(부재를 skip) 시 **GREEN**(firsthand) — **"예외·부재 = skip" 이 이 문서에서 세 번째 발현**한 자리다 |
+| **32** | `date: TBD` ⏎ `K: []  # carrier=#2985 expiry=9999-12-31 R` | **RED** | `pubdate-value` | ★★★ **FIX Iter 8 신설 — 발행일 비-날짜 (P1-1)**. `TBD` 는 YAML 이 **문자열로 파싱**하므로 `fm-parse-error` 에 안 걸리고, `fromisoformat` 이 `ValueError` 를 던진다. `PUBDATE` off 시 **GREEN**(firsthand). ★ 행 31 과 **다른 exit** 를 요구하는 이유 = 부재와 오값은 저자에게 다른 정정을 지시한다 |
+| **33** | `D` ⏎ `K: []  # OK` ⏎ `---` ⏎ `other: x` | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 — FM 경계 조작 (P0-B)**. `K` 줄은 절단된 `SCOPE` **안에 남으므로** `LINE` 이 정상 매치하고 전 토큰이 통과한다 — 즉 **`line-form` 이 받아내지 못한다.** 밀려난 것은 뒤 키들이며 그것이 유령의 은신처다. `N0` off 시 **GREEN**(firsthand) |
+| **34** | `<BOM>` + `D` ⏎ `K: []  # OK` (선두 U+FEFF) | **RED** | `fm-boundary` | ★★★ **FIX Iter 8 신설 — 선두 BOM (P0-B)**. 1행이 `^---$` 를 불성립시켜 **FM 시작점이 종단 줄로 밀린다.** 형제 게이트 `scripts/lib/check_doc_frontmatter.py:47` 은 같은 입력에서 **warning 후 continue** 한다(firsthand). `N0` off 시 **GREEN** |
+| **35** | 행 1 과 동일 바이트를 **CRLF 줄끝**으로 | **RED** | `fm-boundary` | ★★ **FIX Iter 8 신설 — 줄끝 자유 변수 (P2-2)**. `^---$` 가 `\r` 때문에 불성립한다. 직전 판 `leg-off` 열에 **CRLF 축이 없었고**, 이 행이 그것을 `N0` 아래로 편입한다. `N0` off 시 **GREEN** |
+| **36** | `adr_number: null` ⏎ `D` ⏎ `status: Active` (`K` 부재) | **GREEN** | — | ★★★ **FIX Iter 8 신설 — `ADR-RESERVATION` 형 GREEN 기대 양성 판별 행 (P0-C)**. **`ADR-*.md` 는 파일명 패턴이지 ADR 자격 술어가 아니다.** 이 행이 RED 면 실 파일 `archive/adr/ADR-RESERVATION.md` 가 born-red 다(firsthand — 이 PR 이 그 파일을 수정했고 `K` 키 0 · `adr_number: null`). `DOMAIN` off(파일명 glob 만) 시 **RED/`mea-missing`** — 즉 **제외가 실제로 load-bearing** 임을 이 행이 고정한다 |
+| **37** | base = `adr_number: 67` ⏎ … / HEAD = `adr_number: null` ⏎ `D` ⏎ `K: []  # OK` | **RED** | `domain-escape` | ★★★ **FIX Iter 8 신설 — 제외가 회피구가 되지 않게 (P0-C 역방향)**. 행 36 의 제외만 두면 **실 ADR 이 `adr_number` 를 null 로 바꿔 정의역을 빠져나간다.** `D-ESCAPE` off 시 **GREEN**(firsthand). ★ 이 Story 가 *"동결 이력 배제 = 복제 템플릿"* 으로 이미 겪은 형태이며, 처방도 같다 — **배제에 provenance 를 붙인다** |
+| **38** | `D` ⏎ `K: []  # carrier=#2985 expiry=2026-08-17 R` (만기 == 실행일) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 하한 경계 등호 (P2-2)**. `>=` 를 `>` 로 오전사하면 **당일 만기가 탈락**해 RED. 직전 판 `leg-off` 열에 **등호 축이 없었다** |
+| **39** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-02-12 R` (만기 == 발행일+180) | **GREEN** | — | ★★ **FIX Iter 8 신설 — 상한 경계 등호 (P2-2)**. `<=` 를 `<` 로 오전사하면 **정확히 상한인 날짜가 탈락**해 RED |
+| **40** | `D` ⏎ `K: []  # carrier=#2985 expiry=2027-05-01 R` | **RED** | `over-cap` | ★★ **FIX Iter 8 신설 — 상수 `180` 판별 (P2-2)**. `180` 은 판정을 바꾸는 **자유 변수**인데 직전 판 `leg-off` 열에 없었다. `365` 로 넓히면 이 행이 **GREEN**(firsthand). 행 5(`9999-12-31`)는 `365` 로도 RED 라 상수를 판별하지 못한다 |
 
-★★ **실행 확인 (firsthand, FIX Iter 7 저작 시점 — 최종 31행 재실행)**: (iv) 표 **전 31행**을
-Python `re` + `yaml.safe_load` 구현으로 실행했다 — **기대 일치 31/31 · 불일치 0**
+★★★ **정의역 술어를 양방향으로 — `ADR-*.md` 는 파일명 패턴이지 자격 술어가 아니다 (FIX Iter 8, P0-C)**
+
+**적발 (firsthand — 이 PR 이 자기 표 하에서 born-red 였다)**:
+
+```
+정의역 = PR diff ∩ archive/adr/ADR-*.md      (아래 재현 명령)
+  glob 매치 174 파일 중 ADR-RESERVATION.md 포함        -> True
+  이 PR 이 수정한 파일에 포함                          -> True (commit 03a88fa1f, +11)
+  그 파일의 mechanical_enforcement_actions 키          -> 0    (부재)
+  그 파일의 adr_number                                 -> null (번호 레지스트리이지 ADR 이 아니다)
+  => 위 (iii) 로는 RED / mea-missing.  (iii) 는 "키 없으면 스킵" 을 명시 금지하므로 구현 재량 아님
+```
+
+```
+python -c "import glob,io,yaml;fs=sorted(glob.glob('archive/adr/ADR-*.md'));
+print(len(fs));t=io.open('archive/adr/ADR-RESERVATION.md',encoding='utf-8').read();
+d=yaml.safe_load(t[3:t.find(chr(10)+'---',3)]);
+print('mea' , 'mechanical_enforcement_actions' in d, 'adr_number', d.get('adr_number'))"
+```
+
+★★ **7 라운드가 싸운 것은 미탐(선언 ⊋ 검사)인데, deny-list 로 넓히자 오탐(검사 ⊋ 선언)이 나왔다 —
+같은 접합부의 반대 부호다.** 위 처분 9(ADR-067)가 정의역을 여집합으로 넓힌 것과 **같은 자리**에서
+방향만 뒤집힌 결함이 나타났고, 따라서 처방도 **한쪽 방향 술어가 아니라 양방향 술어**여야 한다.
+
+```
+ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'] is not None
+           # ★ 타입 불문 — 실측상 int 171 · str 2 (`ADR-005` '005' · `ADR-008` '008') · null 1
+           #   int 만 자격으로 두면 그 2건이 정의역 밖으로 떨어진다 (좁힘 오류)
+
+정의역(f) := ⓐ base 에 f 존재 ∧ ADRQ(base) ∧ ¬ADRQ(head)  -> RED [domain-escape]   # 자격 박탈
+             ⓑ ¬ADRQ(head) (ⓐ 아님)                       -> 정의역 **밖** (검사 없음)
+             ⓒ ADRQ(head)                                 -> 정의역 안 ((iii) 판정)
+```
+
+- ★★ **ⓐ 가 없으면 제외 자신이 회피구다** — 행 37 이 그 판별이다. `D-ESCAPE` off 시 GREEN(firsthand).
+- ★★ **ⓑ 를 `domain-escape` 로 두지 않는 이유 (자기 적발, 정직 기재)**: 본 저작이 처음 쓴 판은
+  **신규 파일의 ¬ADRQ 도 RED** 로 뒀고, 그 결과 **(iv) 표 fixture 전건이 born-red** 였다(골격에
+  `adr_number` 가 없으므로). 신규 registry 파일도 같은 false-RED 를 받는다. ⇒ ⓑ 는 정의역 밖으로 둔다.
+- ★ **그래서 남는 잔여 (`declared`)**: **신규 파일을 `adr_number` 없이 만들어 규범을 선언**하는 경로는
+  본 술어로 미탐이다. 지우고 인용하면 over-claim 이다. (형제 게이트가 `adr_number` 를 별도로 요구하는지는
+  본 저작에서 **확인하지 않았다** — 확인 불가로 남기며 근거로 쓰지 않는다.)
+- ★ **골격 상수 추가**: `A := adr_number: 999` 를 (iv-0) 공통 골격에 넣어 **fixture 가 정의역 안**임을
+  명시한다. `adr_number` 는 어느 leg 에도 참여하지 않으므로 **기존 행의 기대는 하나도 바뀌지 않는다**
+  (firsthand — 행 1~30 전건 불변). 행 36·37 만 이 상수를 `null` 로 덮어쓴다.
+
+★★★ **발행일 처분 — 값 정규화는 leg 이 아니라 front-end 소관이다 (FIX Iter 8, P1-1)**
+
+`(iii)` 의 `발행일 := 같은 frontmatter 의 date: 필드 값` 은 **부재·비-날짜·타입** 셋 다 미규정이었다.
+★ **결정적 (firsthand)**: PyYAML 은 `date: 2026-08-16` 을 **`datetime.date` 로 이미 변환**하므로
+`date.fromisoformat(발행일)` 을 **문면대로** 적용하면 정상 ADR 전건에서 **`TypeError`** 가 난다.
+즉 직전 판의 술어는 **born-broken** 이었고, 구현자가 그것을 `try/except` 로 덮으면 상한 leg 이 통째로
+증발한다(행 5·31·32 가 동시에 GREEN 이 된다).
+
+```
+발행일 정규화 (front-end — leg 이 재구현하지 않는다)
+  'date' ∉ fm  또는  값이 None            -> RED [pubdate-missing]
+  값이 datetime                            -> .date()
+  값이 date                                -> 그대로              # PyYAML 자동 변환 경로 (정상형 전건)
+  값이 str                                 -> fromisoformat, 예외 시 RED [pubdate-value]
+  그 외 타입                                -> RED [pubdate-value]
+```
+
+- ★ **정의역 겹침 정직 기재**: `date: 2026-13-01` 형(형식은 날짜꼴이나 달력 밖)은 **`yaml.safe_load`
+  자체가 `ValueError`** 를 던지므로 `fm-parse-error` 가 **먼저** 문다(firsthand). 즉 `pubdate-value` 의
+  실 정의역은 *"YAML 이 문자열로 넘긴 비-날짜"* 이며, 이 경계를 적지 않으면 재현자가 행 32 의 바이트를
+  `2026-13-01` 로 바꿔 놓고 exit 불일치를 결함으로 오인한다.
+- ★ **`fm-parse-error` 계보 3번째다** — 파서 예외(행 14) · 날짜 값 예외(행 29) · **발행일 부재·오값**(행 31·32).
+  세 번 같은 기전이 나왔으므로 (iii) 의 **"모든 파싱 예외·필수값 부재는 skip 이 아니라 named RED"** 규칙을
+  발행일 축에도 적용한 것이며, 새 규칙이 아니라 **기존 규칙의 미도달 자리를 메운 것**이다.
+
+★★★ **`fm-boundary` 신설 — `SCOPE` 는 검사의 전체집합인데 그 경계가 문면 allow-조건이었다 (FIX Iter 8, P0-B)**
+
+```
+경계 판정 (front-end — (ii) SCOPE 절단에 선행한다)
+  b1  파일이 정확히 `---` + 개행으로 시작            # BOM·선행 공백·CRLF 불허
+  b2  1행 이후 첫 단독 `^---$` 존재 = FM 종단
+  b3  FM 텍스트가 YAML 로 파싱되고 결과가 mapping    # 위반 = fm-parse-error (기존)
+  b4  FM 종단 다음 줄부터 첫 비-FM-형·비-공백 줄까지, FM-형 줄이 0
+  b5  base 존재 시 keys(FM_head) ⊇ keys(FM_base)
+  b1·b2·b4·b5 위반 = RED [fm-boundary]
+```
+
+- **왜 `line-form` 이 받아내지 못하는가** — 행 33 이 그 실물이다. 이른 `---` 을 `K` 줄 **뒤**에 넣으면
+  `K` 는 절단된 `SCOPE` 안에 남아 `LINE` 이 정상 1회 매치하고 전 토큰이 통과한다. 밀려나는 것은
+  **뒤 키들**이며, `SCOPE` 축소는 그 자체로는 어떤 leg 도 물지 않는다.
+- ★ **입력 정규화도 front-end 소관 (P2-2 `NFC` 축)**: 유니코드 정규화 형식은 판정을 바꾸는 자유 변수다 —
+  **firsthand**: `ADR-067` HEAD 는 NFC 이고, 같은 파일을 **NFD 로 정규화하면 정확 철회토큰 매치가 7 → 0**
+  이 되어 유령 leg 이 **0 → 6 RED**(전면 false-RED)로 뒤집힌다. ⇒ front-end 가 **입력을 NFC 로 정규화**해
+  검사를 정규화-불변으로 만든다. 정규화 후 NFD 입력도 **GREEN**(firsthand), `NFC` off 시 **RED 6**(판별).
+
+★★★ **실행 확인 (firsthand, FIX Iter 8 — 최종 41행 전건 재실행)**: (iv) 표 **전 41행**을
+front-end 인스턴스화 구현(Python `re` + `yaml.safe_load` + NFC 정규화)으로 실행했다 —
+**기대 일치 41/41 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
+★ **구 31행 부분집합의 산출이 Iter 7 기재와 전건 동일**하다 — 즉 **행 10개를 늘리고 front-end 를
+도입하면서 옛 행의 기대를 하나도 바꾸지 않았다**(L3-ⓑ 대조). 특히 골격 상수 `A` 추가와
+NFC 정규화는 **행 1~30 의 판정에 무영향**임을 실행으로 확인했다.
+
+★★ **`leg-off` 판별 소재 (firsthand — 신설 leg 전건 판별 보유)**:
+
+| leg-off | 뒤집히는 행 | 방향 |
+|---|---|---|
+| `N0`(경계) off | 14 · 20 · 33 · 34 · 35 | RED → **GREEN** |
+| `PUBDATE` off | 31 · 32 | RED → **GREEN** |
+| `EXPVALUE` off | 29 | RED → **GREEN** |
+| `DOMAIN`(ADR 자격 술어) off | **36** | GREEN → **RED** (제외가 load-bearing) |
+| `D-ESCAPE` off | 37 | RED → **GREEN** |
+| 하한 등호 `>=`→`>` | 38 | GREEN → **RED** |
+| 상한 등호 `<=`→`<` | 39 | GREEN → **RED** |
+| 상수 `180`→`365` | 15 · **40** | RED → **GREEN** |
+| `NFC` off | (유령 leg 축 — `ADR-067` NFD 판 **0 → 6 RED**) | GREEN → **RED** |
+
+★ **판별 행 0 인 신설 leg 은 없다.** 직전 판이 `mea-missing` 에서 *"판별 0 = 중복 방어"* 라 적었다가
+행 27 로 반증당한 자리와 같은 실수를 피하려면, **신설 시점에 판별 행을 함께 만드는 것**이 유일한 방법이다.
+
+★★ **이력 (직전 판 기록 보존)**: FIX Iter 7 저작 시점 — (iv) 표 **전 31행**을
+Python `re` + `yaml.safe_load` 구현으로 실행 — **기대 일치 31/31 · 불일치 0**
 (판정과 exit 사유가 **모두** 일치). ★ 그 중 **구 29행 부분집합의 산출이 Iter 6 기재와 전건 동일**하다 —
 즉 **행 2개를 늘리면서 옛 행의 기대를 하나도 바꾸지 않았다**(L3-ⓑ 대조).
 
@@ -1316,6 +1454,7 @@ PATH_KEYS := ["script_path", "workflow", "detect_command", "action",
 ★ **census (firsthand, 재현 명령 병기 — 정수 pin 아님)**:
 
 정의역 = `archive/adr/ADR-*.md` glob (174 파일, `ADR-RESERVATION.md` 포함).
+★★ **이것은 `census` 정의역이며 `검사` 정의역이 아니다 (FIX Iter 8, P0-C)** — census 는 *코퍼스 실태 관측*이므로 `ADR-RESERVATION.md` 를 포함해 세는 것이 옳고, 검사는 *ADR 자격 술어(`ADRQ`)* 로 걸러야 옳다. 두 축을 같은 glob 문자열로 적어 둔 것이 P0-C 의 원인이며, **여기서 두 축을 명시적으로 분리**한다(처분 6 이 세운 "열거의 전수 ≠ 검사의 정의역" 2축 구분의 세 번째 적용).
 ★ **재현 시 순진 파서를 쓰지 말 것** — `try/except: continue` 는 `ADR-082` 를 조용히 떨어뜨린다.
 파싱 실패 파일은 **탈락시키지 말고 mea 블록만 격리 재파싱**하거나 **오류로 보고**해야 아래 값이 나온다:
 
@@ -1563,7 +1702,7 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
 
   | 축 | 값 |
   |---|---|
-  | 정의역 | `archive/adr/ADR-*.md` glob = **174 파일** (`ADR-RESERVATION.md` 포함) |
+  | 정의역 | `archive/adr/ADR-*.md` glob = **174 파일** (`ADR-RESERVATION.md` 포함). ★ **census 축** — 검사 정의역(`ADRQ` 필터)과 다르다 (FIX Iter 8 P0-C) |
   | 방법 A — PyYAML frontmatter 파싱 | 키 부재 **84** / 빈 리스트 **42** / 비어있지 않음 **48** |
   | 방법 B — 원시 grep(파서 무관) | `mechanical_enforcement_actions: []` 리터럴 **42** · 키 보유 **90** ⇒ 90 − 42 = **48** |
   | 3단 전건 (가) 미충족 | 84 + 42 = **126 (72.4%)** — 두 방법이 독립적으로 일치 |
