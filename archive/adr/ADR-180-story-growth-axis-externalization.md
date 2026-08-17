@@ -307,7 +307,14 @@ print(len(names), len(built), len(both), sorted(both))
 PY
 ```
 
-고정 수치는 **관측 시점 값**이며 계약은 **교차가 공집합이라는 술어**다. 위 명령 실측 — wrapper `a6f492986`(3-arm 배선 직전) = `36 34 0` / wrapper `e7e075727`(§8.3 행 12 3-arm 배선 후) = `38 36 2`, 후자의 교차 2건 = `ctx_settled_move` · `ctx_settled_grow_ctl` 로 **바로 아래 「동반 의무」로 건 fixture 자신**이다.
+**「교차 공집합」은 관측이지 불변식이 아니다.** 이 절 자신이 그 공백을 **결함**으로 판정하고 fixture 배선을 **동반 의무**로 걸었고, 그 의무의 이행이 곧 교차를 비지 않게 만든다 — 공집합을 불변식으로 읽으면 **처방의 성공이 곧 불변식 위반**이 되는 자기모순이다. 그래서 아래는 수치가 아니라 **트리 붙은 관측 2건 + 술어 1건**이다.
+
+- **관측 A** — wrapper `a6f492986`(3-arm 배선 **직전**) = `36 34 0`. 교차 **0** 은 분할 정착 후 INV-S2 의 거동이 **한 번도 실행된 적 없음**을 뜻한다. 이것이 위에서 판정한 **결함**이다.
+- **관측 B** — wrapper `e7e075727`(§8.3 행 12 3-arm 배선 **후**) = `38 36 2`. 교차 2건 = `ctx_settled_move` · `ctx_settled_grow_ctl` 로 **바로 아래 「동반 의무」로 건 fixture 자신**이다. **교차가 비지 않게 된 것이 처방 이행의 지표**이며, 되돌아 0 이 되면 그 셀이 다시 미실행이 된 것이므로 **회귀**다.
+
+> **계약 = 수치가 아니라 술어** — 「**분할 정착 형상(`anchors(before) > 0` ∧ `anchor_delta = ∅`)이 배터리에 실재하고, 그 위에서 INV-S2 의 거동이 실제로 실행된다**」.
+
+★ **「실행된다」를 「위협이 차단된다」로 읽지 말 것.** 사각 자체는 위 결정대로 **의도적 미커버**로 남는다 — 행 12 가 고정한 것은 사각의 *해소*가 아니라 **사각이 존재한다는 사실**이다. 더욱이 신설 레코드 2종은 배터리 축에서 `has_split_markers` 변형을 **검출하지 못하며**, 유일 검출면은 `test_boundary_row12_settled_split_donor_is_invisible_yet_fired` 의 **`fired is True` assert** 하나다 [firsthand 실행, wrapper `61a761c3e` — 발화 가드를 `anchor_delta` → `has_split_markers(after_text)` 로 바꾼 변형에서 배터리 **ID 46건 전수 4-field(`verdict`/`injected_red_count`/`vector`/`domains`) 변화 0건**(신설 2종 포함, 양쪽 `기대일치 / 0 / [] / []`) ∧ 같은 변형에서 두 arm 의 `fired` 만 `True → False` 반전(`red_count` 는 `0 → 0` 불변) ∧ 행-12 테스트는 pristine **PASS** / 변형 **FAIL** 이고 최초 실패 지점이 정확히 그 `fired is True` assert. ★ 이 판정은 **변형이 실제로 주입됐는지를 `NT.ENGINE` 실측으로 falsify 한 뒤**에만 발화했다 — 주입 경로를 확인하지 않은 첫 시도에서는 같은 테스트가 변형에서도 **PASS 로 보였다**(테스트 모듈이 자기 모듈 수준 `ENGINE` 을 잡고 있어 `ENGINE_PATH` 패치가 도달하지 않는다). 하네스 자기검증 없이는 정반대 결론이 나온다].
 
 **동반 fixture 규격 (§8.3 행 12 / Phase 2 배선 — 엔진 무변경, 테스트만 신설)**. 3-arm 을 **한 배터리에** 등재한다. 단독 arm 은 배선을 닫지 못한다.
 
