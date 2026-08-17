@@ -443,6 +443,35 @@ DECLARED_MUTANT_IDS = frozenset({
     "M-RESOLVE-FAIL", "M-LEG3-NA-BOGUS",
 })
 
+# §8.4a ③ 의 **세 번째** 축 — 개수 pin 로스터. `test_mutant_red_and_control_green` 의
+# `expected_red_counts` 가 **가져야 하는 하한 집합**이다.
+#
+# 왜 필요한가: 종전 대조는 `{k: results[k][...] for k in expected_red_counts}` 로 **pin dict
+# 자신을 순회**했다 ⇒ 항목을 지우면 그 mutant 의 개수가 조용히 검사에서 빠지고 테스트는
+# 그대로 통과한다(실측: pin 3건 삭제 → `1 passed` exit 0). 삭제를 잡는 유일한 방법은
+# **다른 파일에 선언된 하한**과 대조하는 것이다 (`DECLARED_MUTANT_IDS` 와 동형 패턴).
+#
+# ★ 무엇이 load-bearing 이고 무엇이 여분인가 — **정직 고지**:
+#   · 이 pin 들은 **load-bearing 이 아니라 여분(독립 확인) 채널**이다. 실측: 앵커 pin 8종을
+#     **전부 제거**하고 `check_anchor_integrity:350` 방출을 절단해도 같은 테스트의 공개
+#     assertion 은 여전히 RED 다 — 단독 통제자 mutant(`M-ANCHOR-NOID-BOTH`)가 boolean
+#     채널(`verdict != "기대일치"`)에서 verdict 를 뒤집기 때문이다.
+#   · 따라서 여기서 **전수 pin 을 강제하지 않는다.** RED 1 짜리 mutant 는 절단 시 0 으로
+#     붕괴해 boolean 채널이 잡으므로 개수 pin 의 한계 이득이 낮다. 이 상수의 목적은
+#     "개수 채널이 **줄어드는 것**" 만 막는 것이다(추가는 자유 — 포함관계 `<=`).
+# ★ 한계(over-claim 방지): pin 항목과 이 선언을 **함께** 지우면 통과한다. 선언 기반 래칫의
+#   본질적 한계이며, 이것은 삭제 비용을 올릴 뿐 삭제를 불가능하게 만들지 않는다.
+PINNED_RED_COUNT_IDS = frozenset({
+    "M-ANCHOR-DUP", "M-ANCHOR-DUPEND", "M-ANCHOR-LOOSE", "M-ANCHOR-MALFORMED",
+    "M-ANCHOR-NOID-BOTH", "M-ANCHOR-NOSECTION", "M-ANCHOR-ORPHAN-END", "M-ANCHOR-UNPAIRED",
+    "M-APPEND-CTL-1000", "M-APPEND-CTL-50000", "M-BASIS-RAW",
+    "M-CARD-CROSS", "M-CARD-IN", "M-CARD-VALUE", "M-DUP-ROW", "M-E3", "M-EQUIV",
+    "M-FENCE-UNCLOSED-CHILD", "M-FENCE-UNCLOSED-OUTDOMAIN", "M-FENCE-UNCLOSED-PARENT",
+    "M-LEG3-NA-BOGUS", "M-LOSS-LINE", "M-LOSS-MASK", "M-LOSS-MUTATE", "M-LOSS-NOTATION",
+    "M-MARGIN", "M-MIDSPLIT-CTL", "M-PREEXIST", "M-RESOLVE-FAIL", "M-S3-NOSPLIT",
+    "M-SPLIT-GROW-CTL",
+})
+
 DEFAULT_CEILING = 400000
 CARRIER_CEILING = 400000
 

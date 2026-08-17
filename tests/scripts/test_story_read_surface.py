@@ -559,6 +559,21 @@ def test_mutant_red_and_control_green():
         #                      이지만 사유가 enum 안이라 PASS 이므로 단독 귀속이다.
         "M-RESOLVE-FAIL": len(FX.CP_ENFORCED_DOMAINS), "M-LEG3-NA-BOGUS": 1,
     }
+    # ★ F-CR-R8-4 — pin 로스터 축소 래칫.
+    #   아래 대조는 **pin dict 자신을 순회**하므로, 항목을 지우면 그 mutant 의 개수가 조용히
+    #   검사에서 빠지고 테스트는 그대로 통과한다(실측: pin 3건 삭제 → `1 passed` exit 0 /
+    #   pin 값 ±1 → exit 1 이므로 남은 pin 은 assertion 에 도달하기는 한다).
+    #   삭제를 잡는 유일한 방법은 **다른 파일에 선언된 하한**과 대조하는 것이다.
+    #   포함관계(`<=`)로 둔다 — 추가는 자유, **제거만** 막는다.
+    #   정직 고지: 이 pin 들은 load-bearing 이 아니라 **여분(독립 확인) 채널**이다. 근거·한계
+    #   SSOT = `FX.PINNED_RED_COUNT_IDS` 주석 (앵커 pin 8종 전부 제거 + `:350` 절단에서도
+    #   단독 통제자 mutant 가 boolean 채널로 여전히 RED 를 낸다는 실측 포함).
+    missing_pins = FX.PINNED_RED_COUNT_IDS - set(expected_red_counts)
+    assert not missing_pins, (                            # ← pin 로스터 축소 래칫
+        f"선언된 개수 pin 이 사라졌다 — {sorted(missing_pins)}. 대조가 pin dict 자신을 "
+        "순회하므로 항목 삭제는 «위반 0» 이 아니라 «미검사» 다(조용한 정의역 축소). "
+        "의도적 제거라면 `FX.PINNED_RED_COUNT_IDS` 를 **같은 커밋에서** 함께 갱신하라.")
+
     actual = {k: results[k]["injected_red_count"] for k in expected_red_counts}
     assert actual == expected_red_counts, (
         f"위반 개수 벡터 불일치\n  기대 {expected_red_counts}\n  실측 {actual}")
