@@ -208,18 +208,27 @@ SKIP=0
 #       묻는다.** 축 위의 대상이 자유 선택이면 그 전칭은 성립하지 않는다.
 #     Story §8.11.8 #12 = **「닫힘(도달범위 한정) — 12회차 착수」**(종전 「미탐색」·「무효(구조적
 #       불가)」 표시 전건 철회). 도달범위 한정 = N4(assert 리터럴 본문) 미도달.
-HGC_EXPECTED_CASE_TOTAL=79   # = 실 케이스 65 + §13.5 구성 앵커 2 + §13.6 T-SIG 8 + §13.7 T-FALS 3
-                             #   + 본 pin 케이스 자신 1   (분해 합 = 79, 값과 일치)
+HGC_EXPECTED_CASE_TOTAL=80   # 65+2+8+4+1=80 ← 산술식 전항을 상수와 **같은 줄에** 둔다
+                             # 항 대응: 실 케이스 65 · §13.5 구성 앵커 2 · §13.6 T-SIG 8 ·
+                             #          §13.7 T-FALS 4 · **본 pin 케이스 자신 1**
                              # ★ 종전 주석의 분해 합은 76 인데 값이 77 이었다 — 「본 pin 자신 1」
-                             #   항이 빠져 있었다(14회차 F-CR31-4). 값 77 이 옳고 분해가 틀렸다.
-                             #   이 자리는 **분해 합 == 값**을 저자가 눈으로 검산할 수 있어야 한다.
+                             #   항이 빠져 있었다(14회차 F-CR31-4). 값 77 이 옳았고 분해가 틀렸다.
+                             # ★★ **왜 산술식을 한 줄에 두는가** (14회차 실측). 분해를 두 물리행에
+                             #   걸쳐 쓰면 **줄 단위로 읽는 소비자**가 뒷줄의 항을 못 보고 「합이 1
+                             #   모자란다」는 **거짓 불일치**를 낸다. 본 회차에 실제로 발생했다 —
+                             #   인계자가 첫 줄만 읽고 「F-CR31-4 미이행」으로 판정했고, 두 리비전
+                             #   원문 + python 산술 재계산으로 **반증**됐다(둘 다 MATCH 였다).
+                             #   결함은 산술이 아니라 **분해가 읽는 창보다 길다**는 것이었다.
+                             #   ⇒ 같은 class 를 이 파일이 이미 겪었다(§0 census 주석이 자기 선언과
+                             #   모순한 채 3 리비전 생존). 검산 가능성은 **소비자의 창 안**에 있어야
+                             #   성립한다.
 
 # ── 구성 서명 선언 (§13.5 구성 앵커의 in-file 기준값) ───────────────────────────────
 #   ★ 이것은 **새 공유 앵커**다 — §0 (3) 축과 같은 성질을 갖는다(저자가 실측과 함께 갱신하면
 #     정합 이동한다). 종전 상수와 다른 점은 **baseline 이 저자가 쓸 수 없는 리비전**(merge-base)
 #     이라 그 이동이 **고지**된다는 것 하나뿐이다. 「봉인」이 아니다 — §13.5 정직 천장 ⓐ 참조.
 #   ★ 갱신 절차: 실패 문면이 실측 서명을 그대로 출력하므로 그 값을 여기에 옮긴다.
-HGC_DECLARED_COMPOSITION="census=93/49/1 helper=9f1950b3fd0e loopdecl=d2663b9e38cf"
+HGC_DECLARED_COMPOSITION="census=96/50/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
 
 note() { echo "::notice::$*" >&2; }
 log()  { echo "$*" >&2; }
@@ -2080,10 +2089,32 @@ for tsig_case in \
   tsig_before="$(tsig_field "$tsig_comp" "$hgc_cur_sig")"
   tsig_after="$(tsig_field "$tsig_comp" "$tsig_sig")"
 
-  if [ -z "$tsig_before" ] || [ -z "$tsig_after" ]; then
-    fail_case "T-SIG-$tsig_id ($tsig_comp): NOT_RUN — 성분 추출 실패 (before='$tsig_before' after='$tsig_after'). 관측하지 못한 것을 초록으로 내지 않는다"
+  # ★ **불변 conjunct** (F-CR31-6 봉합) — 종전 판정은 「대상 성분이 이동했다」만 봤다. 그러면
+  #   **전 성분이 무너진 탐침**도 양성으로 계상된다: 14회차 리뷰가 탐침 b 생성을 **빈 파일**로
+  #   치환하자 [91/47/1 → 0/0/0] 이 되었는데 census 가 「이동」했으므로 초록이었다.
+  #   탐침이 **겨눈 것**을 움직였다는 증거가 되려면 **나머지 두 성분은 불변**이어야 한다.
+  #   ⇒ 판정 = 「대상 성분 이동 **∧** 나머지 두 성분 불변」. 이 conjunct 가 들어가야 성분별
+  #     분해(per-cell)가 비로소 load-bearing 하다 — 분해만으로는 이득이 없다(F-CR31-5).
+  tsig_other_moved=""
+  tsig_other_notrun=""
+  for tsig_oc in census helper loopdecl; do
+    if [ "$tsig_oc" != "$tsig_comp" ]; then
+      tsig_ob="$(tsig_field "$tsig_oc" "$hgc_cur_sig")"
+      tsig_oa="$(tsig_field "$tsig_oc" "$tsig_sig")"
+      if [ -z "$tsig_ob" ] || [ -z "$tsig_oa" ]; then
+        tsig_other_notrun="$tsig_other_notrun $tsig_oc"
+      elif [ "$tsig_ob" != "$tsig_oa" ]; then
+        tsig_other_moved="$tsig_other_moved ${tsig_oc}[$tsig_ob→$tsig_oa]"
+      fi
+    fi
+  done
+
+  if [ -z "$tsig_before" ] || [ -z "$tsig_after" ] || [ -n "$tsig_other_notrun" ]; then
+    fail_case "T-SIG-$tsig_id ($tsig_comp): NOT_RUN — 성분 추출 실패 (before='$tsig_before' after='$tsig_after' 나머지성분 추출실패='${tsig_other_notrun# }'). 관측하지 못한 것을 초록으로 내지 않는다"
+  elif [ -n "$tsig_other_moved" ]; then
+    fail_case "T-SIG-$tsig_id ($tsig_comp / $tsig_desc): 대상 성분 [$tsig_before → $tsig_after] 와 **함께 나머지 성분도 이동**했다 (${tsig_other_moved# }) — 탐침이 **겨눈 것**을 움직였다는 증거가 아니다. 탐침 생성이 대상 파일을 통째로 무너뜨려도(예: 빈 파일) 「이동했다」만 보면 양성으로 계상되던 구멍이다(F-CR31-6)"
   elif [ "$tsig_before" != "$tsig_after" ]; then
-    pass_case "T-SIG-$tsig_id ($tsig_comp / $tsig_desc): 탐침이 $tsig_comp 성분을 이동시켰다 [$tsig_before → $tsig_after] — 이 성분의 산출이 상수로 치환되지 않았다는 **양성 증거**"
+    pass_case "T-SIG-$tsig_id ($tsig_comp / $tsig_desc): 탐침이 $tsig_comp 성분**만** 이동시켰다 [$tsig_before → $tsig_after] · 나머지 두 성분 불변 — 이 성분의 산출이 상수로 치환되지 않았다는 **양성 증거**이며, 불변 conjunct 가 붙어 있어 「전 성분이 무너진 탐침」을 양성으로 계상하지 않는다"
   else
     fail_case "T-SIG-$tsig_id ($tsig_comp / $tsig_desc): 그 성분을 직접 움직이는 탐침에도 $tsig_comp 가 [$tsig_before] 로 **불변** — 이 성분의 산출이 상수로 치환됐다(서명이 입력을 읽지 않는다). 이 상태에서는 §13.5 가 해당 축의 어떤 구성 이동에도 초록이다"
   fi
@@ -2178,6 +2209,14 @@ echo "── T-FALS: 「불가」 주장의 반증시도 필드 (born-RED 대조
 FALS_VOCAB='원리적|구조적 불가|닫히지 않는다|내재|불가능'
 FALS_FIELD='[반증시도:'
 
+# ★ 어휘 **감산 방향** 하한 (F-CR31-2). 아래는 `FALS_VOCAB` 와 **독립인 리터럴**이며 T-FALS-d 가
+#   토큰별로 개별 fixture 를 태워 「등재 어휘가 **각각** 살아 있는가」를 잰다.
+#   ★★ **파생 금지가 이 배선의 전부다.** 이 목록을 `FALS_VOCAB` 에서 파생시키면(예: 같은 변수를
+#     읽어 fixture 를 만들면) 어휘가 줄 때 fixture 도 같이 줄어 카운트가 맞아떨어져 **여전히
+#     초록**이다 — 본 Story 가 반복 관측한 자기참조 hollow 형이다. 두 리터럴이 **어긋나는 것**이
+#     바로 T-FALS-d 가 내는 신호이므로, 어휘를 의도적으로 바꾸려면 **둘 다** 고쳐야 한다.
+FALS_REQUIRED_VOCAB='원리적|구조적 불가|닫히지 않는다|내재|불가능'
+
 # 대상 파일의 주석 블록 중 「불가」 어휘를 품고도 반증시도 필드가 없는 블록의 시작 줄번호.
 fals_scan() {
   awk -v vocablist="$FALS_VOCAB" -v field="$FALS_FIELD" '
@@ -2222,6 +2261,46 @@ if [ "$fals_self_n" -eq 0 ]; then
   pass_case "T-FALS-c (본체): 하네스의 「불가」 계열 주장 전건이 반증시도 필드를 동반 — 라벨을 붙이는 자리에서 「시도했는가」가 기계적으로 요구된다. ★ 어휘 집합은 **하한**이며 새 표현은 빠져나간다(§13.7 주석에 그 실측 근거 기재)"
 else
   fail_case "T-FALS-c (본체): 반증시도 필드 없는 「불가」 주장 블록 ${fals_self_n}건 (시작 줄: $(printf '%s' "$fals_self" | tr '\n' ' ')) — 「불가」를 단정하려면 반증 시도 여부를 같은 블록에 적어라. 시도하지 않았으면 **그렇게 적어라**(미수행도 유효한 값이다)"
+fi
+
+# (d) **어휘 감산 방향** — (a)(b) 의 합성 fixture 2종은 `원리적` **한 토큰만** 태운다. 그래서
+#   `FALS_VOCAB` 를 `'원리적'` 하나로 줄이는 5→1 감산에 (a)(b)(c) 가 **전건 초록**이었다
+#   (14회차 리뷰 ARM5 실측: 무필드 블록 주입 + 감산 → FAIL=0). 즉 종전 배선은 「어휘가 있다」를
+#   재고 「등재 어휘가 **각각** 살아 있다」를 재지 않았다. 특히 본 Story 가 실측으로 필요성을
+#   증명한 토큰조차 고정 케이스가 0 이었다(§13.7 머리 주석의 §15 미검출 사건이 그 토큰이다).
+# ⇒ 독립 리터럴 `FALS_REQUIRED_VOCAB` 의 토큰마다 **무필드 fixture 1건**을 개별 생성해 전건
+#   검출되는지 본다. 어휘가 감산되면 그 토큰의 fixture 가 미검출로 떨어져 RED 다.
+# ★ 정직 천장 — 닫히는 것은 **감산 방향 무성** 하나뿐이다. **가산 방향**(등재되지 않은 새 표현이
+#   빠져나가는 것)은 그대로 열려 있고, Codex 가 10/10 우회를 실증한 **선언된 열림**이다. 어휘
+#   집합의 「하한」 지위는 그대로다 — 「봉인」·「닫았다」로 읽지 말 것.
+#   [반증시도: 완료 — 본 회차 구현이 LAB 격리 shim 에서 (i) `FALS_VOCAB` 5→1 감산 (ii) 토큰 1개
+#    (`내재`)만 제거 두 변형을 각각 실행해 본 leg 의 RED 를 실측했고, 무변형 null-control 이
+#    GREEN 임을 함께 실측했다. 가산 방향은 **미수행** — 새 표현을 만들어 빠져나가는지는 재지
+#    않았고, 그 축이 닫혔다고 적지 않는다]
+fals_req_missing=""
+fals_req_n=0
+fals_req_saved_ifs="$IFS"
+IFS='|'
+for fals_tok in $FALS_REQUIRED_VOCAB; do
+  IFS="$fals_req_saved_ifs"
+  if [ -n "$fals_tok" ]; then
+    fals_req_n=$((fals_req_n+1))
+    printf '# 이 축은 %s 에 해당한다고 적는다\n# 부연 서술 한 줄\nfals_req_fixture_code=1\n' \
+      "$fals_tok" > "$TEST_TMP/fals-req.sh"
+    if [ "$(fals_scan "$TEST_TMP/fals-req.sh" | grep -c . || true)" -lt 1 ]; then
+      fals_req_missing="$fals_req_missing $fals_tok"
+    fi
+  fi
+  IFS='|'
+done
+IFS="$fals_req_saved_ifs"
+
+if [ "$fals_req_n" -lt 1 ]; then
+  fail_case "T-FALS-d (어휘 감산): 필수 어휘 목록이 비어 fixture 를 **1건도 돌리지 않았다** — 0 회 순회를 커버리지로 계상하지 않는다(vacuous green 금지). FALS_REQUIRED_VOCAB 가 비었거나 분리자가 깨졌다"
+elif [ -n "$fals_req_missing" ]; then
+  fail_case "T-FALS-d (어휘 감산): 필수 어휘 ${fals_req_n}종 중 **미검출**[${fals_req_missing# }] — 그 토큰이 FALS_VOCAB 에서 빠졌다(감산). 이 상태에서는 그 표현으로 쓴 「불가」 단정이 무필드로도 (a)(b)(c) 전건을 초록으로 통과한다. 어휘를 의도적으로 줄이려면 FALS_REQUIRED_VOCAB 도 함께 고쳐라 — 두 리터럴이 어긋나는 것이 본 leg 의 신호다"
+else
+  pass_case "T-FALS-d (어휘 감산): 필수 어휘 ${fals_req_n}종 **각각**에 무필드 fixture 를 개별 생성해 전건 검출 — 어휘 집합이 조용히 줄면 여기서 RED 다((a)(b) 는 한 토큰만 태우므로 5→1 감산에 초록이었다). ★ 천장: 닫히는 것은 **감산 방향** 하나뿐이고 **가산 방향**(등재 안 된 새 표현이 빠져나감)은 여전히 열린 채다 — 어휘 집합은 그대로 **하한**이다"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
