@@ -281,9 +281,33 @@ INV-S2  발화 ⟺ anchor_delta = ∅                            # 총량 조건
 
 **결정: 차단 축도 정의역 확대도 하지 않는다 — 의도적 미커버로 확정하고 fixture 로 거동을 고정한다.** 근거 3항. ① INV-S2 는 애초에 **비차단 신호 축**(§결정 7)이라 미검출의 손실은 차단이 아니라 **신호 1건**이다. ② 정의역을 재조립본으로 넓히면 축 B-1(정상 혼합 편집 false-positive)의 정의역이 함께 넓어지는데, 그 교환비는 **코퍼스 분포로만 정할 수 있고 현재 미측정**이다(축 B-2) — 미측정 교환비 위에서 차단·발화 범위를 넓히는 것은 born-broken 위험이다. ③ 위 「앵커 없는 절」 소절이 형제 셀에서 **대안 6종을 실행 기각**하고 내린 결론과 동형이며, 본 항만 다르게 처분할 근거가 없다. **새 완화를 발명하지 않는다.**
 
-**단, 「의도적 미커버」는 측정한 뒤에만 선언할 수 있다.** 종전에는 이 셀을 **선언한 적도 실행한 적도 없었다** — 로스터 37 fixture 중 `anchors(before) > 0` 인 것이 `ctx_resplit_child_loss` **1건**뿐이고 그것은 `anchor_delta ≠ ∅`(재분할)이라 INV-S2 가 미발화한다. 즉 **`anchors(before) > 0` ∧ INV-S2 발화** 교차가 **공집합**이어서, 분할 정착 후 INV-S2 의 거동은 **한 번도 실행된 적이 없다**. 미실행 구간을 상한으로 적는 것은 정직 기록이 아니라 미측정의 은폐다 — 그래서 아래 fixture 를 **동반 의무**로 건다.
+**단, 「의도적 미커버」는 측정한 뒤에만 선언할 수 있다.** 종전에는 이 셀을 **선언한 적도 실행한 적도 없었다** — 로스터 `ctx_*` factory **34건**(= 총 36건 중 required 인자 0 이라 무인자 build 가능한 것. 기준 트리 wrapper `a6f492986` = 아래 3-arm 배선 **직전**) 중 `anchors(before) > 0` 인 것이 `ctx_resplit_child_loss` **1건**뿐이고 그것은 `anchor_delta ≠ ∅`(재분할)이라 INV-S2 가 미발화한다. 즉 **`anchors(before) > 0` ∧ INV-S2 발화** 교차가 **공집합**이어서, 분할 정착 후 INV-S2 의 거동은 **한 번도 실행된 적이 없다**. 미실행 구간을 상한으로 적는 것은 정직 기록이 아니라 미측정의 은폐다 — 그래서 아래 fixture 를 **동반 의무**로 건다.
 
-**재현 규칙 (수치를 계약으로 두지 않는다 — `:430` 정량 인용 규약)**: 위 교차 공집합은 트리마다 재계수한다. `_story_read_surface_fixtures` 를 import 해 전 `ctx_*` factory 를 build 한 뒤 각 ctx 에 대해 `len(parse_anchors(story_before)) > 0 ∧ any(v.fired for v in check_inv_s2(...))` 를 세면 된다. 고정 수치(37 / 1 / 0)는 **관측 시점 값**이며 계약은 **교차가 공집합이라는 술어**다.
+**재현 규칙 (수치를 계약으로 두지 않는다 — `:430` 정량 인용 규약)**: 위 교차 공집합은 트리마다 재계수한다. `_story_read_surface_fixtures` 를 import 해 전 `ctx_*` factory 를 build 한 뒤 각 ctx 에 대해 `len(parse_anchors(story_before)) > 0 ∧ any(v.fired for v in check_inv_s2(...))` 를 세면 된다. **열거·build 규칙을 함께 고정하지 않으면 재계수자마다 분모가 갈린다** — ① 열거 = 모듈 최상위 `ctx_*` 함수 중 `__module__` 이 fixture 모듈인 것 ② build 정의역 = **required 파라미터 0** 인 것만(기본값 보유는 포함 — `ctx_resplit_child_loss(n_lost=2)`), 따라서 `ctx_append_ctl(n_bytes)` · `ctx_fence(*, fence_aware, inject)` 2건은 정의역 밖 ③ 반환이 `(Ctx, aux)` 튜플인 factory 가 있어 `Ctx` 를 골라내야 한다. **수치를 인용하지 말고 아래 명령을 돌려라** — 산출 3수 = (factory 총계 / 무인자 build 가능 / 교차).
+
+```
+python - <<'PY'
+import sys, inspect
+sys.path.insert(0, "tests/scripts")
+import _story_read_surface_fixtures as F
+E = F.load_engine()
+names = sorted(n for n, o in vars(F).items()
+               if n.startswith("ctx_") and inspect.isfunction(o) and o.__module__ == F.__name__)
+built = {}
+for n in names:
+    try:
+        r = getattr(F, n)()
+    except TypeError:
+        continue                                    # required 인자 보유 = build 정의역 밖
+    built[n] = r if isinstance(r, F.Ctx) else next(x for x in r if isinstance(x, F.Ctx))
+both = [n for n, c in built.items()                 # 헬퍼 `F.s2_fired` 는 3-arm 커밋 신설분이라
+        if len(E.parse_anchors(c["story_before"])) > 0   # 과거 트리에 없다 — 인라인으로만 쓴다
+        and any(getattr(v, "fired", False) for v in F.run_inv_s2(E, c))]
+print(len(names), len(built), len(both), sorted(both))
+PY
+```
+
+고정 수치는 **관측 시점 값**이며 계약은 **교차가 공집합이라는 술어**다. 위 명령 실측 — wrapper `a6f492986`(3-arm 배선 직전) = `36 34 0` / wrapper `e7e075727`(§8.3 행 12 3-arm 배선 후) = `38 36 2`, 후자의 교차 2건 = `ctx_settled_move` · `ctx_settled_grow_ctl` 로 **바로 아래 「동반 의무」로 건 fixture 자신**이다.
 
 **동반 fixture 규격 (§8.3 행 12 / Phase 2 배선 — 엔진 무변경, 테스트만 신설)**. 3-arm 을 **한 배터리에** 등재한다. 단독 arm 은 배선을 닫지 못한다.
 
