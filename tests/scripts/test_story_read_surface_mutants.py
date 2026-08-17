@@ -475,16 +475,26 @@ def test_anchor_red_sites_are_each_detected_under_both_cuts(tmp_path):
         (`check_inv_s3` 의 파일 해결 실패 · leg3 na_reason enum 밖)이 실제로 나왔다.
         **결함이 나온 축은 넓힌다.**
       · **조건축 = `check_anchor_integrity` 8 site 유지(미확장).** 근거 = 2축 전수 실측에서
-        조건축은 **진성 0 / 등가 4**. 결함이 나온 축(방출)은 넓히고, 안 나온 축(조건)은
+        조건축은 **진성 0 / 등가 3**. 결함이 나온 축(방출)은 넓히고, 안 나온 축(조건)은
         넓히지 않는다. ★ 「부담이 커서」가 **아니다** — 그건 편의이고, 근거는 실측이다.
         **이 축에서 진성 결함이 나오면 본 판단은 반증되며 재판정 대상이다.**
-        미확장 조건축 실측 3건(재현 가능하게 등재 — 전부 fall-through 등가):
-          - `check_inv_s2:835` (`if reason_code:`) — RED 1→1. `:837` 과 같은 fall-through
-            family. 도달 입력 = `FX.ctx_e4_compensating_move()` + 폐쇄 enum 밖 reason_code.
-          - `check_inv_s3:886` (`if not extracted:`) — RED 1→**2** (leg1/leg2 로 전가).
-            도달 입력 = `FX.ctx_sec5_stub()`.
-          - `check_inv_s1:733` (split 앵커 보유 ∧ 자식 미발견) — RED 2→2 (leg-A 로 전가).
-            도달 입력 = `FX.split_ctx().copy_with(children={})`.
+        미확장 조건축 실측 3건(재현 가능하게 등재 — 전부 RED 보존, 형제 leg 로 전가):
+          - `check_inv_s2:835` (`if reason_code:`) — RED 1→1, status 벡터 **동일**. `:837`
+            과 같은 fall-through family. 도달 입력 =
+            `FX.run_inv_s2(eng, FX.ctx_e4_compensating_move(), reason_code="그냥 정리했음")`.
+          - `check_inv_s3:886` (`if not extracted:`) — RED 1→**2** (leg1 → leg1+leg2 전가,
+            즉 **늘어난다**). 도달 입력 = `FX.run_inv_s3(eng, FX.ctx_sec5_stub())`.
+          - `check_inv_s1:733` (split 앵커 보유 ∧ 자식 미발견) — RED 2→2 (정의역 레벨 →
+            leg-A 전가). 도달 입력 =
+            `FX.run_inv_s1(eng, FX.split_ctx().copy_with(children={}))`.
+        ※ 인계받은 "등가 4" 는 **2축 합산**이다 — 조건축 3 + 방출축 1(`check_inv_s2:837`,
+          아래 allowlist). 조건축 단독은 3 이다(전수 재계수 firsthand).
+
+    ★ 크래시(계약붕괴) 채널 site — family 전수 실측 3건. 그중 2건이 현재 정의역 안이다:
+      · `check_inv_s2:841` (방출축, TypeError) — 정의역 **안**, 아래 표에 라벨된다.
+      · `check_anchor_integrity:349` (조건축, TypeError) — 정의역 **안**, 라벨된다.
+      · `check_inv_s1:724` (조건축, AttributeError) — 조건축 미확장이라 정의역 **밖**.
+        같은 채널 규칙이 적용될 site 이지만 현재 매트릭스에는 나타나지 않는다(정직 고지).
     """
     src = FX.engine_source()
 
