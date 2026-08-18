@@ -62,6 +62,85 @@ ng() {
   FAIL=$((FAIL+1))
 }
 
+# ═════════════════════════════════════════════════════════════════════════════
+# CFP-2995 AC-17 — 판별기 SSOT + gate 모드 조기 분기 (Change Plan §3.8 / §9.8)
+#
+#   흡수 근거(§9.8): 신규 `.sh` 를 만들면 ADR-151 인벤토리 bijection(전수 enroll)과 실행자
+#   명시 열거(invariant-check.yml)가 Phase 1 에서 동시에 깨진다 — **등재해도 RED, 안 해도 RED**.
+#   ⇒ 이미 열거돼 있고 이미 phase 1·2 인 본 파일에 싣는다.
+#   ★ 정직 비용(숨기지 않는다): 응집이 나빠진다 — 「번들 pre-push redaction」 self-test 안에
+#     「Story 범위 경계 판정」이 들어간다. 주제 정합보다 **실행 가능성**을 택한 대가다.
+#
+#   판정기는 **단일 정본**이다: gate 모드(실 PR)와 self-test 모드(합성 경로)가 같은
+#   `ac17_judge` 를 통과한다 — 두 벌로 두면 판별력 leg 이 실 판정과 무관해진다.
+# ═════════════════════════════════════════════════════════════════════════════
+
+AC17_BASELINE="6bb0e8aa5be0c5bec9bcb9c672174417e633eacb"
+AC17_LIVE=".github/workflows/ac-traceability-matrix.yml"
+AC17_TWIN="templates/github-workflows/ac-traceability-matrix.yml"
+AC17_STEP_NAME="AC-17 scope-boundary gate"
+AC17_FLOOR="scripts/lib/check_salvage_bundle.py"
+
+# ac17_extract_deny <원문.md> — 원문에서 접근 금지 목록을 추출(1행 1경로).
+#   앵커 = 「AC-17 기계 가드의 목록 대상」 문자열. Story §4.3(g) 와 §5.4 non-goal 8 이
+#   **둘 다** 이 문자열을 담는다(원문 실측 2 hit) — 좌표가 아니라 **내용 유래** 앵커다.
+#   §3.9 방출 어휘 폐집합: 호출부는 **개수만** 방출하고 목록 자체를 로그에 싣지 않는다
+#   (PRIVATE Story 원문이 PUBLIC Actions 로그에 비가역 착지하는 것을 막는다).
+ac17_extract_deny() {
+  python3 - "$1" <<'AC17PY'
+import io, re, sys
+MARK = "AC-17 기계 가드의 목록 대상"
+PATH = re.compile(r'`([A-Za-z0-9_][A-Za-z0-9_./-]*\.(?:py|sh|yml|yaml|md))`')
+try:
+    lines = io.open(sys.argv[1], encoding="utf-8", newline="").read().split("\n")
+except OSError:
+    sys.exit(2)
+deny = set()
+for line in lines:
+    if MARK in line:
+        deny.update(PATH.findall(line))
+for p in sorted(deny):
+    print(p)
+AC17PY
+}
+
+# ac17_judge <금지목록파일> <변경경로파일> — AC-17 판정기(단일 정본).
+#   판정 축 ② = 양 피연산자 non-empty **선확인**(부재-assert 항진 차단 — 빈 집합끼리의
+#     「변경 0건」은 언제나 참이라 판정이 아니다).
+#   floor 대조 = §4.3(g)·§5.4 non-goal 8 소유면 원소 포함 확인(**과소모집 차단** — 목록이
+#     불완전한 채로 판정하면 가장 최근에 생긴 경계에 정확히 구멍이 뚫린다).
+#   방출 = 개수 + 사유 enum **만**(§3.9 폐집합).
+ac17_judge() {
+  local deny="$1" changed="$2" n
+  if [ ! -s "$deny" ];    then echo "undecidable: 금지 목록 공허 — 판정 축 ② 미충족"; return 1; fi
+  if [ ! -s "$changed" ]; then echo "undecidable: 변경 경로 집합 공허 — 판정 축 ② 미충족"; return 1; fi
+  if ! grep -qxF "$AC17_FLOOR" "$deny"; then
+    echo "undecidable: 금지 목록 floor 미충족 — 소유면 원소 과소모집"
+    return 1
+  fi
+  # grep 의 rc 는 pass/fail 신호가 아니다(무매치 rc=1 = 위반 0 = 정상). 하류 카운터 n 이
+  #   유일 판정 신호이며 아래에서 그 값으로 단언한다 — exit-masking 아닌 counter-backup.
+  n="$( { grep -xFf "$deny" "$changed" || true; } | wc -l | tr -d '[:space:]' )"
+  echo "violations=$n"
+  [ "$n" -eq 0 ]
+}
+
+# gate 모드 — ac-traceability-matrix.yml 의 additive step 이 **실 PR** 로 위임하는 경로.
+#   이 분기는 self-test 픽스처를 만들지 않고 즉시 판정 후 종료한다(러너 시간 0 낭비).
+if [ "${CFP2995_AC17_MODE:-}" = "gate" ]; then
+  AC17_GATE_DENY="$TMPROOT/ac17-gate-deny.txt"
+  AC17_GATE_RC=0
+  ac17_extract_deny "${CFP2995_AC17_SOURCE:?}" > "$AC17_GATE_DENY" || AC17_GATE_RC=$?
+  if [ "$AC17_GATE_RC" -ne 0 ]; then
+    echo "undecidable: 원문 판독 실패 — fail-closed"
+    exit 1
+  fi
+  AC17_GATE_RC=0
+  ac17_judge "$AC17_GATE_DENY" "${CFP2995_AC17_CHANGED:?}" || AC17_GATE_RC=$?
+  exit "$AC17_GATE_RC"
+fi
+
+
 assert_eq() { # <name> <expected> <actual> [note]
   if [ "$2" = "$3" ]; then
     ok "$1 (= $3)${4:+ — $4}"
@@ -825,6 +904,203 @@ if [ "$SUT_PRESENT" -eq 1 ]; then
       fi
     fi
   fi
+fi
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Part 6 — CFP-2995 AC-17 범위 경계 + §3.8.2 ADDITIVE-ONLY 4-정의역 (신규 Part)
+# ═════════════════════════════════════════════════════════════════════════════
+echo
+echo "── Part 6: AC-17 범위 경계 판별기 + ADDITIVE-ONLY 4-정의역 ──"
+
+# ── 6-1. 판별력 (§8-fixture AC-17) — 금지 표면 내부 1건 / 외부 0건 으로 갈리는가 ──
+#   한쪽만 보면 항진과 구별되지 않는다. 두 합성 경로를 **같은** 판정기에 통과시킨다.
+AC17_DENY_F="$TMPROOT/ac17-deny.txt"
+printf '%s\n' "$AC17_FLOOR" > "$AC17_DENY_F"
+AC17_CH_IN="$TMPROOT/ac17-changed-inside.txt"
+printf '%s\n' "$AC17_FLOOR" "docs/stories/CFP-2995.md" > "$AC17_CH_IN"
+AC17_CH_OUT="$TMPROOT/ac17-changed-outside.txt"
+printf '%s\n' "docs/stories/CFP-2995.md" "archive/adr/ADR-179-agent-salvage-bundle-handoff.md" > "$AC17_CH_OUT"
+
+AC17_IN_RC=0
+AC17_IN_OUT="$(ac17_judge "$AC17_DENY_F" "$AC17_CH_IN")" || AC17_IN_RC=$?
+AC17_OUT_RC=0
+AC17_OUT_OUT="$(ac17_judge "$AC17_DENY_F" "$AC17_CH_OUT")" || AC17_OUT_RC=$?
+
+if [ "$AC17_IN_OUT" = "violations=1" ] && [ "$AC17_IN_RC" -ne 0 ] \
+   && [ "$AC17_OUT_OUT" = "violations=0" ] && [ "$AC17_OUT_RC" -eq 0 ]; then
+  ok "AC-17 판별력 — 내부 합성 경로 1건(RED) / 외부 합성 경로 0건(GREEN) 으로 갈린다"
+else
+  ng "AC-17 판별력 미성립 — 판정기가 두 합성 경로를 구별하지 못한다" \
+     "inside='$AC17_IN_OUT' rc=$AC17_IN_RC (기대 violations=1 ∧ rc!=0)" \
+     "outside='$AC17_OUT_OUT' rc=$AC17_OUT_RC (기대 violations=0 ∧ rc=0)"
+fi
+
+# ── 6-2. floor 음성 대조 — 목록 과소모집이 조용히 GREEN 이 되지 않는다 ──
+AC17_DENY_SHORT="$TMPROOT/ac17-deny-short.txt"
+printf '%s\n' "docs/irrelevant.md" > "$AC17_DENY_SHORT"
+AC17_FL_RC=0
+AC17_FL_OUT="$(ac17_judge "$AC17_DENY_SHORT" "$AC17_CH_OUT")" || AC17_FL_RC=$?
+case "$AC17_FL_OUT:$AC17_FL_RC" in
+  undecidable:*floor*:0) ng "AC-17 floor 음성대조 — 사유는 맞으나 rc=0 (fail-closed 미성립)" ;;
+  undecidable:*floor*)   ok "AC-17 floor 음성대조 — 소유면 과소모집이 undecidable(RED) 로 접힌다" ;;
+  *) ng "AC-17 floor 음성대조 실패 — 불완전 목록이 판정을 통과했다" \
+        "out='$AC17_FL_OUT' rc=$AC17_FL_RC (기대 undecidable:*floor* ∧ rc!=0)" ;;
+esac
+
+# ── 6-3. 공허 정의역 음성 대조 — 판정 축 ②(부재-assert 항진 차단) ──
+: > "$TMPROOT/ac17-empty.txt"
+AC17_EM_RC=0
+AC17_EM_OUT="$(ac17_judge "$AC17_DENY_F" "$TMPROOT/ac17-empty.txt")" || AC17_EM_RC=$?
+case "$AC17_EM_OUT:$AC17_EM_RC" in
+  undecidable:*공허*:0) ng "AC-17 공허 음성대조 — 사유는 맞으나 rc=0 (fail-closed 미성립)" ;;
+  undecidable:*공허*)   ok "AC-17 공허 음성대조 — 빈 변경 집합이 「위반 0」이 아니라 undecidable(RED)" ;;
+  *) ng "AC-17 공허 음성대조 실패 — 빈 집합이 충족으로 계상됐다" \
+        "out='$AC17_EM_OUT' rc=$AC17_EM_RC (기대 undecidable:*공허* ∧ rc!=0)" ;;
+esac
+
+# ── 6-4. 동결 2 파일 무변경 (AC-12 인접 — 본 Story 는 읽기만 한다) ──
+for AC17_FZ in "scripts/lib/check_salvage_bundle.py" "scripts/lib/redact_dev_process_content.py"; do
+  AC17_FZ_RC=0
+  git -C "$REPO_ROOT" diff --quiet "$AC17_BASELINE" -- "$AC17_FZ" || AC17_FZ_RC=$?
+  if [ "$AC17_FZ_RC" -eq 0 ]; then
+    ok "동결 파일 무변경(기저선 대비 diff 0) — $AC17_FZ"
+  else
+    ng "동결 파일이 변경됐다 — $AC17_FZ" "AC-12 byte-identical 보존 위반 (rc=$AC17_FZ_RC)"
+  fi
+done
+
+# ── 6-5. born-RED 짝 — AC-17 step 이 두 사본 모두에 실재 + 기저선에는 부재 ──
+#   부재-assert 가 아니라 **positive assert** 다: 「없지 않다」가 아니라 「있다」를 단언한다.
+for AC17_F in "$AC17_LIVE" "$AC17_TWIN"; do
+  if [ ! -f "$REPO_ROOT/$AC17_F" ]; then
+    ng "AC-17 배선 대상 부재: $AC17_F"
+  elif grep -qF "$AC17_STEP_NAME" "$REPO_ROOT/$AC17_F"; then
+    ok "AC-17 step 실재(positive assert) — $AC17_F"
+  else
+    ng "AC-17 step 부재 — $AC17_F" "born-RED 짝의 GREEN 측 미착지"
+  fi
+done
+
+if cmp -s "$REPO_ROOT/$AC17_LIVE" "$REPO_ROOT/$AC17_TWIN"; then
+  ok "ac-traceability-matrix.yml live ↔ template twin byte 동일"
+else
+  ng "live ↔ template twin 불일치" "invariant-check parity leg 이 EXIT 1 로 접는다"
+fi
+
+# 음성 대조 — 기저선 리비전에는 step 이 **없어야** 한다(검사가 항진이 아님을 보인다).
+AC17_BASE_OK=0
+git -C "$REPO_ROOT" cat-file -e "${AC17_BASELINE}^{commit}" 2>/dev/null || AC17_BASE_OK=$?
+if [ "$AC17_BASE_OK" -ne 0 ]; then
+  ng "기저선 리비전 미판독: $AC17_BASELINE" "undecidable — fail-closed(§3.8.1)"
+elif git -C "$REPO_ROOT" archive "$AC17_BASELINE" "$AC17_LIVE" 2>/dev/null | tar -xO 2>/dev/null \
+     | grep -qF "$AC17_STEP_NAME"; then
+  ng "born-RED 음성대조 실패 — 기저선에 이미 AC-17 step 이 있다(검사가 항진)"
+else
+  ok "born-RED 음성대조 — 기저선 ${AC17_BASELINE} 에 AC-17 step 부재(RED 측 실증)"
+fi
+
+# ── 6-6. §3.8.2 ADDITIVE-ONLY 4-정의역 차분 판정 (live + template twin 양쪽 동일 적용) ──
+#   기저선 = **계약 상수**(동적 기저선 금지 — 착지 후 양변이 같아져 공허참=항진이 된다).
+#   각 정의역: 착지 후 ⊇ 착지 전 ∧ 착지 전 원소에 대응하는 step 노드가 byte 동일.
+#   규율 2: 공허 정의역은 `vacuous: <정의역명>` 명시 방출 + 계상 제외 + **leg RED**
+#           (제외 ≠ 무시 — 공허를 빼고 남은 것만으로 PASS 를 주지 않는다).
+AC17_ADD_OUT="$TMPROOT/ac17-additivity.txt"
+AC17_ADD_RC=0
+python3 - "$REPO_ROOT" "$AC17_BASELINE" "$AC17_LIVE" "$AC17_TWIN" > "$AC17_ADD_OUT" 2>&1 <<'AC17ADDPY' || AC17_ADD_RC=$?
+import hashlib, json, os, subprocess, sys
+root, baseline = sys.argv[1], sys.argv[2]
+paths = sys.argv[3:]
+try:
+    import yaml
+except ImportError:
+    print("undecidable: PyYAML 부재 — additivity 판정불가(fail-closed)")
+    sys.exit(1)
+
+def at_baseline(rel):
+    a = subprocess.run(["git", "-C", root, "archive", baseline, rel], capture_output=True)
+    if a.returncode != 0:
+        return None
+    t = subprocess.run(["tar", "-xO"], input=a.stdout, capture_output=True)
+    if t.returncode != 0 or not t.stdout:
+        return None
+    return t.stdout.decode("utf-8")
+
+def domains(text):
+    doc = yaml.safe_load(text)
+    jobs = doc.get("jobs") or {}
+    a, c, d = {}, set(), set()
+    for job in jobs.values():
+        for st in (job.get("steps") or []):
+            if "name" in st:
+                idx = "name:" + st["name"]
+            elif "uses" in st:
+                idx = "uses:" + st["uses"]
+            else:
+                idx = "run-sha256:" + hashlib.sha256((st.get("run") or "").encode("utf-8")).hexdigest()
+            a[idx] = json.dumps(st, sort_keys=True, ensure_ascii=False)
+            if "uses" in st:
+                c.add(st["uses"])
+            d |= set((st.get("env") or {}).keys())
+        c |= set((job.get("outputs") or {}).keys())
+    d |= set((doc.get("env") or {}).keys())
+    return {"a_step_nodes": a, "b_job_keys": set(jobs), "c_action_pins": c, "d_env_keys": d}
+
+rc = 0
+for rel in paths:
+    pre_text = at_baseline(rel)
+    if pre_text is None:
+        print("undecidable: 기저선 리비전 미판독 — " + rel)
+        rc = 1
+        continue
+    try:
+        with open(os.path.join(root, rel), encoding="utf-8") as fh:
+            post = domains(fh.read())
+        pre = domains(pre_text)
+    except Exception as exc:
+        print("undecidable: 추출기 파손 — " + rel + " (" + type(exc).__name__ + ")")
+        rc = 1
+        continue
+    for key in ("a_step_nodes", "b_job_keys", "c_action_pins", "d_env_keys"):
+        pre_s, post_s = set(pre[key]), set(post[key])
+        if not pre_s or not post_s:
+            print("vacuous: " + key + " (" + rel + ") — 계상 제외 + leg RED")
+            rc = 1
+            continue
+        if not pre_s <= post_s:
+            print("VIOLATION " + key + " (" + rel + ") 착지 전 원소 소실: " + repr(sorted(pre_s - post_s)))
+            rc = 1
+            continue
+        if key == "a_step_nodes":
+            drift = [k for k in pre[key] if pre[key][k] != post[key][k]]
+            if drift:
+                print("VIOLATION a_step_nodes (" + rel + ") 기존 step 편집: " + repr(drift))
+                rc = 1
+                continue
+        print("OK " + key + " (" + rel + "): 착지 전 " + str(len(pre_s)) + " ⊆ 착지 후 " + str(len(post_s)))
+sys.exit(rc)
+AC17ADDPY
+
+if [ "$AC17_ADD_RC" -eq 0 ]; then
+  ok "ADDITIVE-ONLY 4-정의역 — 양 사본 전건 착지 후 ⊇ 착지 전 ∧ 기존 step byte 동일"
+  sed 's/^/    /' "$AC17_ADD_OUT"
+else
+  ng "ADDITIVE-ONLY 4-정의역 위반 (rc=$AC17_ADD_RC)" "$(sed 's/^/  /' "$AC17_ADD_OUT")"
+fi
+
+# ── 6-7. 방출 어휘 폐집합 (§3.9) — sentinel 비출현이 계약이다 ──
+#   판정기 방출문에 원문 인용·금지목록 덤프가 섞이면 PRIVATE Story 가 PUBLIC 로그에 착지한다.
+AC17_VOCAB_BAD=0
+for AC17_EMIT in "$AC17_IN_OUT" "$AC17_OUT_OUT" "$AC17_FL_OUT" "$AC17_EM_OUT"; do
+  case "$AC17_EMIT" in
+    violations=[0-9]*|undecidable:*|not-applicable:*) ;;
+    *) AC17_VOCAB_BAD=$((AC17_VOCAB_BAD+1)) ;;
+  esac
+done
+if [ "$AC17_VOCAB_BAD" -eq 0 ]; then
+  ok "AC-17 방출 어휘 폐집합 — 4 방출 전건이 {violations=N · undecidable: · not-applicable:} 안"
+else
+  ng "AC-17 방출 어휘 폐집합 위반 $AC17_VOCAB_BAD 건" "폐집합 밖 어휘가 방출됐다(§3.9)"
 fi
 
 echo
