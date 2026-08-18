@@ -27,6 +27,9 @@ related_files:
   - plugins/codeforge-review/agents/RequirementsReviewPLAgent.md  # Phase 2 — 동형
   - skills/root-cause-decision/SKILL.md  # Phase 2 — 2-strike 처방-층 전환 별 조항
   - templates/story-page-structure.md  # Phase 2 — §9 verdict embed PASS-라운드 의무화 (:364 개정)
+  - scripts/lib/review_exit_criteria.py  # Phase 2 신규 — 실행 SSOT (AC-23 실행층 전환): normalize_coverage_cell·count_checklist_required·count_checklist_examined leaf
+  - tests/scripts/_review_exit_fixtures.py  # Phase 2 신규 — fixture 빌더 (_ac_matrix_fixtures.py 형판 sibling)
+  - tests/scripts/fixtures/review_exit_criteria/  # Phase 2 신규 — census baseline 스냅샷 (reach-baseline.json)
 related_stories:
   - CFP-3011
   - CFP-2985  # ADR-181 carrier — 경계 상대 (FIX 닫기 축 / 본 ADR = FIX 열기 축)
@@ -94,6 +97,8 @@ review-verdict-v4 `findings[]` 에 신규 **optional** 필드 (MINOR bump v4.17�
 
 lane PASS = 다음 동시 충족의 명시 판정. 착지면 = review-pl-base 의 **신규 `### lane PASS 종결 술어 (심사 정의역 결속 — ADR-183)` 절** (이하 "종결 술어 절"). 배치 세부는 Change Plan §3.3.
 
+**★ 실행층 전환 선언 (AC-23 최초 발동 — 설계리뷰 3회차 2-strike 성립, 사용자 결정 2026-08-19 verbatim "실행층 전환")**: 분모 정규화(D-1)·토큰 해소·checklist 축 분모 단위의 세부 규칙 **정본 = Phase 2 실행 SSOT** — `scripts/lib/review_exit_criteria.py`(`normalize_coverage_cell` / `count_checklist_required` / `count_checklist_examined`) + `tests/scripts/_review_exit_fixtures.py` + `tests/scripts/test_review_scrutiny_domain.py`·`tests/scripts/test_review_exit_criteria.py` + **mutant 계약 M1~M16**. 본 문서는 그 정본을 **참조**한다 (산문 재기술 금지 — 같은 산문 층 4번째 처방 금지). 산문에 남는 것 = **fail-closed 방향 3개**(① 미해소 = `UNDECIDABLE` RED ② 분모 0 = RED ③ 표면-존재 4분기 폐쇄) + 착지 좌표 + 포인터. 근거 = 3라운드 공통 근인("ADR 산문으로 정의역/값 규칙을 기술하는 층 자체가 매 라운드 자기 정의역을 새 사각으로 재생산" — Story §9.10) + 형판 선례(`check_ac_traceability_matrix.py` 가 동일 문제를 코드 4-값 enum + 가드로 이미 폐쇄).
+
 **★ heading 레벨 + 번호 namespace 절단 (설계리뷰 v2 FIX Iter 2 / F3, P1)** — 종결 술어는 **4 리뷰 lane 보편** 명제인데, base 의 `§3.x` 번호는 `### Adversarial debate`(base:201) 블록이 소유하고 그 블록은 `:203`/`:205` 로 **DesignReview 한정 scope** 를 선언한다. 따라서 신규 절을 그 블록의 `####` 자식으로 넣거나 `§3.4` 로 명명하면 **이름·구조가 멤버십을 신호**해 4-lane 보편 술어가 문면상 design 전용으로 정당 해석된다 (AC-1·AC-2 충돌). 처분 3항 — 전건 동시 적용:
 
 1. **heading 레벨 = `###` 형제 절** — `### Adversarial debate` 블록(§3.3 종료) **직후**에 배치해 물리 인접(참조 근접성)은 유지하되 부모 scope 상속을 절단한다.
@@ -103,39 +108,18 @@ lane PASS = 다음 동시 충족의 명시 판정. 착지면 = review-pl-base �
 동시 충족 4항:
 
 1. **심사 완결** — 해당 lane 적용분 §5.3 AC 중 **`coverage_required` 가 그 lane 을 커버 대상으로 지시하는 행** 전수 심사 ∧ packet checklist 전수 심사, **두 축 각각의 선언**. 분모 = ADR-145 `coverage_required` 재사용 (새 완결 술어 발명 = 2-SSOT 금지).
-   - **★ 두 축은 등식 정의역이 다르다 (설계리뷰 3회차 FIX Iter 3 / P1-1)**: 등식 `examined_count == required_count`(§결정 4-2)의 정의역은 **§5.3 AC 행 축 단독**이다. checklist 축은 그 등식 안에 들어가지 않으며 **별 선언**(`checklist_examined` / `checklist_required` 쌍 emit + 동일 등식 형식)으로 판정한다. 두 축을 한 등식에 섞으면 **딜레마가 성립**한다 — checklist 항목을 분자에 더하면 `분자 > 분모` 가 상시 성립해 **항상-RED**, 분모에도 더하면 정의역이 ADR-145 `coverage_required` 밖으로 나가 2-SSOT, 아예 빼면 checklist 축이 **측정되지 않는 vacuous** 축으로 남는다. ∴ **같은 형식·별 등식 2벌**이 유일한 비모순 해다 (같은 *규칙* 두 벌 금지와 무관 — 규칙은 하나, 정의역이 둘).
+   - **★ 두 축은 등식 정의역이 다르다 (설계리뷰 3회차 FIX Iter 3 / P1-1)**: 등식 `examined_count == required_count`(§결정 4-2)의 정의역은 **§5.3 AC 행 축 단독**이다. checklist 축은 그 등식 안에 들어가지 않으며 **별 선언**(`checklist_examined` / `checklist_required` 쌍 emit + 동일 등식 형식)으로 판정한다. 두 축을 한 등식에 섞으면 **딜레마가 성립**한다 — checklist 항목을 분자에 더하면 `분자 > 분모` 가 상시 성립해 **항상-RED**, 분모에도 더하면 정의역이 ADR-145 `coverage_required` 밖으로 나가 2-SSOT, 아예 빼면 checklist 축이 **측정되지 않는 vacuous** 축으로 남는다. ∴ **같은 형식·별 등식 2벌**이 유일한 비모순 해다 (같은 *규칙* 두 벌 금지와 무관 — 규칙은 하나, 정의역이 둘). **checklist 축 fail-closed floor (Iter 4 F-2 처분 — fail-closed 방향 ② 의 checklist 축 인스턴스)**: `checklist_required == 0` → **RED**. 분모 항목 단위·판별자의 정본 = 실행 SSOT `count_checklist_required` + `F-CHK-*` fixture — 후보 산식 5개가 5~154 로 갈리는 단위 결정을 **산문으로 확정하지 않는다** (산문 확정 = 4번째 같은-층 처방). checklist 표면 원리적 부재 = `null` 비적용 positive declare (침묵 통과 금지 — 축 B-1 형판 상속). 집행력 = `declared` (§결정 11 Iter 4 재판정 — Phase 2 M13 kill 실증 시 승격).
 
-**★ 분모 술어 정규화 — born-ambiguous 차단 (설계리뷰 v2 FIX Iter 2 / P0, TestContractArch consult)**
+**★ 분모 술어 — 결정 근거 요지 + 실행층 전환 (Iter 2 P0 결정 자체는 존속, Iter 4 는 정본 위치만 이전)**
 
-직전 판은 분모를 `coverage_required=Y` 로 적었는데, 그 **literal 배선은 실 corpus 에서 분모를 거의 항상 0 으로 만든다** — `0 == 0` 이 등식을 충족하므로 AC-18 이 금지한 **vacuous-PASS 가 본 ADR 의 신설 술어로 재입장**한다 (본 Story 가 고발하는 결함의 자기 재생산). 실측 3항:
+- **literal `Y` 배선 확정 기각 (결정 존속 — 요지)**: 게이트 파서는 그 열을 읽지 않고(`_scan_ac_table` 추출 컬럼 4개, workflow·sh hit 0), 정본 스키마 의미는 **list** 이며(`templates/story-page-structure.md:202` · `scripts/lib/ac_id.py:124`), 실 corpus 에서 literal `Y` 배선 하 분모 0 Story = **99/107 (92.5%)** — `0 == 0` 이 등식을 충족해 AC-18 이 금지한 vacuous-PASS 가 재입장한다. **산출 명령 + 기준 SHA + 값 공간 3-정의역 병기 + "동일 명령이 아니라 동일 결론 3회" 정직 선언의 정본 = Change Plan §2 재현 명령 블록**(internal-docs `2e9e514d`) — 본 문서는 수치 상세를 재기술하지 않는다.
 
-- **게이트는 그 열을 읽지 않는다**: `scripts/lib/check_ac_traceability_matrix.py` 의 `_scan_ac_table` 이 잡는 컬럼 = `id`/`source`/`tier`/`statement` **4개뿐**이고 `coverage_required` 는 동 파일 docstring(`:431`) 1건에만 등장한다. `.github/workflows/ac-traceability-matrix.yml`·`scripts/check-ac-traceability-matrix.sh` hit **0**. (재현: `grep -n 'coverage_required' scripts/lib/check_ac_traceability_matrix.py` / `grep -c coverage_required .github/workflows/ac-traceability-matrix.yml scripts/check-ac-traceability-matrix.sh`)
-- **정본 스키마 의미 = list**: `templates/story-page-structure.md:202` = "`coverage_required` | derived (파생) | 커버 **의무 대상**: `design` ∧ `§8_test`" + `scripts/lib/ac_id.py:124` = `list` 아니면 format-only 위반. 즉 boolean 표기만 인정하면 정본 스키마를 boolean 으로 **재용도**해 §결정 4-1 이 피하려던 **2-SSOT 가 다른 문으로 진입**한다.
-- **결정적 corpus 수치 (3 독립 구현 정확 일치 — deputy / PL / chief)**: Story **591** 본 중 AC 표 signature(`id`∧`source`∧`tier` 헤더) 보유 **107**, 그중 `coverage_required` 열 보유 **96** / 열 부재 **11**, literal `Y` 배선 하 **분모 0 이 되는 Story = 99/107 (92.5%)**.
-  - **★ 산출 명령 + 기준 SHA 병기 (설계리뷰 3회차 FIX Iter 3 / P2-1 — 본 §결정이 스스로 요구하는 "산출 명령 없는 수치는 증거 아님" 의 자기 적용)**. 기준 SHA = internal-docs `2e9e514d`, cwd = internal-docs worktree 루트.
-    - Story 총수 **591**: `ls wrapper/stories/*.md | wc -l`
-    - signature 보유 **107** / 열 보유 **96** / 열 부재 **11** / 분모 0 **99**: AC 표 헤더(`id`∧`source`∧`tier`)와 `coverage_required` 열 인덱스를 판정해야 하므로 순수 grep 으로 환원되지 않는다 — 재현 = **파서 스크립트 1본**(각 구현이 독립 작성: deputy = repo 자기 파서 `_scan_ac_table` 재사용 / PL = 파일 전역 `| AC-` 행 파서 / chief = signature 보유 표 전역 스캔). **동일 명령이 아니라 동일 결론 3회**가 이 수치의 근거다 — 이 사실 자체를 명시한다 (단일 명령 재현 불가를 숨기지 않는다).
-    - 값 공간 수치는 **파싱 정의역 의존**이라 단일 정본이 없다 (아래 항 병기).
-    - 토큰 축 실측(위 폐쇄 매핑 표 우측 열): PL 정의역 파서 — list-form 셀 **543** / distinct 토큰 **344** / `design` 249 · `§8_test` 113 · `test` 29 · `review` 23 · `tests` 15 · `docs` 15 · `ci` 14, `code`·`security`·`requirements` **0**. (리뷰 정의역 파서는 `design` 265 · `§8_test` 121 로 계수가 달랐고 `test` 29 · `review` 23 은 일치 — **0-cell 결론은 두 정의역 모두 동일**. 계수 차 = 파싱 정의역 차, 폐기 대신 병기.)
-- **값 공간 수치는 파싱 정의역에 의존 — 정의역 병기 (폐기 아님)**: 셀 총수/distinct/`Y` literal = deputy(§5-절 한정 파서) **1187 / 78 / 112** · PL(파일 전역 `| AC-` 행 파서) **1333 / 243 / 96** · chief(signature 보유 표 전역 스캔) **1207 / 87 / 112**. 세 수치는 각자 정의역에서 참이며, 상위 표기 실측 = `yes` 374 / `true` 144 / `no` 119 / `Y` 112 / `design, §8_test` 54 / `design` 52 / `false` 38 / `design ∧ §8_test` 27 / `N` 23 / `[design, §8_test]` 22 / `[design, review]` 22 / `y` 22 (chief 정의역). **값 공간 열거는 하한이며 닫힌 집합이 아니다.**
+- **D-1 분모 정규화 (`declared` — Iter 4 실행층 전환, Phase 2 승격 조건부)**: 판정 골격 = `strip` + `casefold` 후 **4-값 폐쇄 enum** — `AFFIRM`(lane-agnostic 긍정 = 전 lane 커버 지시) / `NEGATE`(제외) / `LIST_RESOLVED`(list-form 해소 — 해소 판정의 정본은 실행 SSOT) / `UNDECIDABLE`. **fail-closed 방향 ① (산문 잔존 불변식)**: 미해소 표기·빈 셀·`[]`·열 부재 = `UNDECIDABLE` → **RED**. 값 집합·delimiter·lane→토큰 매핑의 **정본 = 실행 SSOT** `normalize_coverage_cell` + `F-DENOM-*`·`F-TOKEN-*` fixture — 본 문서는 재기술하지 않는다. 재발명 0 = `check_ac_traceability_matrix.py:103` `APPLIC_UNDECIDABLE` 형판 재사용.
 
-- **D-1 분모 정규화 (mechanical floor)**: 판정 = `strip` + `casefold` 후 — **AFFIRM** `{y, yes, true}` = **전 lane 커버 지시**(lane-agnostic 긍정) / **NEGATE** `{n, no, false}` = 제외 / **list-form** = 아래 **폐쇄 매핑 표**의 lane→토큰 membership 으로 판정 / **빈 셀·`[]`·열 부재·위 어디에도 없는 표기 = `UNDECIDABLE` → fail-closed RED**. 재발명 0 = `check_ac_traceability_matrix.py:103` `APPLIC_UNDECIDABLE` 형판 재사용.
+**★ 토큰 해소 — 실행층 이전 (`declared`, Iter 4 F-3·F-5 처분 — 구 축 C 1·2항의 매핑 표·delimiter 열거 전체 제거, 폐쇄 결정 자체는 존속)**: 폐쇄 매핑·delimiter 의 **정본 = 실행 SSOT** `normalize_coverage_cell` + `F-TOKEN-*` fixture. **문서 층 불변식 (fail-closed 방향 ① 의 토큰 축 인스턴스)**: 매핑은 폐쇄이며 미해소 = `UNDECIDABLE` → **RED**. **부분해소 셀**(해소 토큰 ≥1 ∧ 미해소 토큰 ≥1)의 판정 정본 = 실행 SSOT — `F-TOKEN-PARTIAL`(부분해소 → RED) + `M14`(해소 판정 약화 시 그 fixture 만 kill, `F-TOKEN-UNRESOLVED` 는 RED 생존 — 비대칭 assert)가 **행동으로 고정**한다 (F-3 처분: 양화사 규칙 문장을 산문에 다시 쓰지 않는다). 집행력 = **`declared`** — 직전 판의 `mechanical floor` 는 리뷰 F-3 이 반증(부분해소 GREEN 흡수 독법 실재)했으므로 하향하며, 승격 조건 = Phase 2 코드 + fixture + mutant 착지 ∧ M14 kill 실증 (ADR-171 3-AND 경로). ※ 직전 판 매핑 표의 `implementation` 7 은 **열-오귀속 수치**였다 (F-5 — `coverage_required` 열 한정 실측 0, 행 전체 hit 는 statement/phase 열 소재) — 표 제거로 오귀속 착지면 자체가 소멸하며, 열 한정 실측의 정본 = Change Plan §2 census.
 
-**★ 토큰 정의역 폐쇄 (mechanical floor — 설계리뷰 3회차 FIX Iter 3 / P1-3, 2자 수렴)**: 직전 판의 "lane 대응 토큰 membership" 은 **매핑을 정의하지 않아** 술어가 판정 불가였다 (같은 셀이 lane 에 따라 포함·제외 양쪽으로 읽힘). 처분 3항 —
-
-1. **lane → 커버 지시 토큰 폐쇄 매핑** (`casefold` 후 정확 일치):
-
-| lane | 커버 지시 토큰 (closed set) | corpus 실측 출현 (PL 정의역) |
-|---|---|---|
-| 설계리뷰 | `design` | **249** |
-| 구현리뷰 | `code`, `implementation` | `code` **0** / `implementation` 7 |
-| 보안테스트 | `security` | **0** |
-| 요구사항리뷰 | `requirements`, `requirements-review` | **0** |
-| 교차 축 (lane 전용 아님 — 위 lane 판정에 단독 기여 0) | `§8_test`, `test`, `tests`, `review`, `docs`, `ci` | 113 / 29 / 15 / 23 / 15 / 14 |
-
-2. **delimiter 열거 폐쇄 + 미해소 = fail-closed**: list-form 분해 delimiter = `,` `;` `/` `∧` `+` `&` `and` 및 외곽 `[` `]` **폐쇄 열거**. 분해 후 남은 토큰이 위 매핑·교차 축 어디에도 없으면 그 셀은 **`UNDECIDABLE` → RED**(토큰 축에도 fail-closed 적용). **열거는 하한**이며 닫힌 집합이 아니다 — 미열거 delimiter 는 토큰 미해소로 귀결되어 **RED 로 드러나고 GREEN 으로 흡수되지 않는다**. 이 fail-closed 성질이 `mechanical floor` 라벨을 유지시키는 근거다 (미해소를 통과시키는 배선이면 라벨은 `declared` 로 하향해야 한다 — ADR-154 INV-5 정합).
-3. **0-cell lane 정직 declare**: `code` · `security` · `requirements`(-review) 리터럴은 현 corpus list-form 에 **0회** 등장한다. ∴ 구현리뷰·보안테스트·요구사항리뷰 lane 의 분모는 현 corpus 에서 **전량 AFFIRM 경로**(lane-agnostic 긍정 611 셀)로만 형성되고 **list-form 축은 그 3 lane 에 대해 day-1 vacuous** 하다. 이 사실을 선언하며, 그 3 lane 에서 list-form 축이 분모를 만들지 못한다는 이유로 종결 술어가 비적용이 되지는 않는다(AFFIRM 축이 분모를 형성하고, 그래도 0 이면 축 B-3 가 RED 를 낸다).
-4. **fixture 는 corpus 실토큰으로 구성**한다 — 가공 토큰(`docs` 단독 조합 등 실재하지 않는 형상) 대신 실측 상위 토큰(`design` · `§8_test` · `test` · `review` · `tests` · `integration`)과 실측 prose 오염 셀(`yes (문서면)` 6 · `human-gate` 5 · `기계` 13)을 쓴다 (Phase 2 §8).
+- **0-cell lane 정직 declare (구 축 C 3항 존속 축약 + Iter 4 F-7 한계 declare)**: `code` · `security` · `requirements`(-review) 리터럴은 현 corpus list-form 에 **0회** — 구현리뷰·보안테스트·요구사항리뷰 3 lane 의 분모는 day-1 전량 AFFIRM 경로로만 형성되고 list-form 축은 그 3 lane 에 대해 vacuous 하다 (그래도 분모 0 이면 축 B-3 가 RED — 종결 술어 비적용 아님). **F-7 처분 (AC-2 긴장의 계약면 등재)**: AFFIRM 은 lane-agnostic 이므로 그 3 lane 의 분모는 동일 집합이 되고, lane 별 변별은 design lane 에서만 실질이다. AC-2 의 lane 단위 개별 식별은 정의역 계약(§결정 1~2) 층에서 충족되며 분모 계수 층에서는 day-1 미변별임을 선언한다.
+- **fixture corpus (구 축 C 4항 축약)**: fixture 는 corpus 실토큰·실측 오염 셀로 구성한다 — 구성 목록의 정본 = 실행 SSOT fixture 정의 (Change Plan §8).
 - **D-2 표면 존재 정의역 = 형판 4분기 전건 승계 (mechanical floor — 설계리뷰 3회차 FIX Iter 3 / P1-2, 3자 독립 수렴)**: 직전 판은 `signature present ∧ required_count == 0` **한 분기만** 승계해, signature 가 **부재**하는 경우를 술어 정의역 밖에 남겼다 (그 구간은 기존 required 게이트가 잡아 줄 것이라는 **암묵 의존** — §결정 4-2a 가 스스로 금지한 형상). 처분 = 형판의 폐쇄 분기 집합을 **전건** 승계한다. 형판 정본 = `scripts/lib/check_ac_traceability_matrix.py` `:100-103` 4-값 (확인: `grep -n '^APPLIC_' scripts/lib/check_ac_traceability_matrix.py`).
 
 | # | signature | AC 선언 claim | 판정 | 승계 형판 |
@@ -145,8 +129,8 @@ lane PASS = 다음 동시 충족의 명시 판정. 착지면 = review-pl-base �
 | B-3 | present | — (∧ `required_count == 0`) | **RED** — 표는 있는데 분모가 0 = vacuous `0 == 0` 차단 | `APPLIC_SURFACE_EMPTY`(:101) 를 "행은 있는데 **분모**가 0" 으로 한 칸 이동 |
 | B-4 | present | — (∧ `required_count >= 1`) | 등식 판정 진입 (§결정 4-2) | `APPLIC_SURFACE_PRESENT`(:102) |
 
-  - **분기 집합은 폐쇄**다 — 위 4행이 `signature × claim × required_count` 조합을 전부 덮으며, 어느 조합도 판정 없이 통과하지 않는다. 현 corpus 99/107 이 정확히 B-3 형상이므로 이 floor 없이는 신설 등식이 실질적으로 항진이다 (계수 명령 = 아래 P2-1 블록).
-  - **귀속 정정 (리뷰 처방의 실측 기각 1건)**: 리뷰 처방은 "부재 ∧ AC-claim present = RED (`NO_AC_SURFACE`)" 로 적었으나, 형판 실측상 `APPLIC_NO_AC_SURFACE`(:100) 는 **PASS 분기**(signature 부재 ∧ claim 부재 = 비적용 positive)이고 RED 분기는 `APPLIC_UNDECIDABLE`(:103) 이다. 위 표는 실측 귀속을 따른다 — 처방의 **구조(3→전건 승계)는 채택**, **형판 이름 귀속만 정정**.
+  - **분기 집합은 폐쇄**다 — 위 4행이 `signature × claim × required_count` 조합을 전부 덮으며, 어느 조합도 판정 없이 통과하지 않는다. 현 corpus 99/107 이 정확히 B-3 형상이므로 이 floor 없이는 신설 등식이 실질적으로 항진이다 (계수 명령 정본 = Change Plan §2 재현 명령 블록 — 구 P2-1 블록은 Iter 4 실행층 전환으로 그쪽에 일원화).
+  - **분기 계수 정정 (Iter 4 F-1 — 기록 진실성 정정)**: 리뷰 처방은 형판을 **3분기**로 기술해 `:102`(`APPLIC_SURFACE_PRESENT`) 를 누락했다 (실 undercount) — 본 표는 4-값 전건을 승계하며, **형판 이름 귀속은 처방과 동일하다** (처방 원문은 RED 를 `APPLIC_UNDECIDABLE`(:103) 에, `APPLIC_NO_AC_SURFACE`(:100) 를 PASS 분기에 정확히 귀속했다 — dr2 원문 대조, peer-claude-dr3 F-1 증거). 직전 판이 이 자리에 적었던 "리뷰 처방의 형판-이름 오귀속을 실측 기각했다"는 취지의 서술은 **거짓 귀속**이라 제거한다. 오귀속의 발생 지점(chief 오독 vs 중계 왜곡)은 중계 packet 미보존으로 **확인 불가** (Story §9.10 판정 승계).
 - **Story §5.3 AC 표 자체는 무접촉** (요구사항 lane 소유) — 본 처분은 그 표를 **읽는 쪽**의 술어만 정규화한다.
 2. **양성 증거 emit** — `examined_count` 와 `required_count` 를 verdict 에 emit 하고 **등식 `examined_count == required_count`** 로 판정한다 (TestContractArch 이의 #5 채택). **분자·분모 지시체 고정 (동일 정의역 강제 — 설계리뷰 3회차 FIX Iter 3 / P1-1)**: 두 계수는 **같은 정의역 위에서** 정의된다 — 정의역 = *해당 lane 적용분 §5.3 AC 행 집합*. `required_count` = 그 정의역 중 `coverage_required` 가 **해당 lane 을 커버 대상으로 지시하는** 행 수(§결정 4-1 **D-1 정규화 기준**. literal `=Y` 일치 아님 ∧ 축 B 4분기 적용 대상) / `examined_count` = **그 동일 정의역(§5.3 AC 행) 내에서 심사 완료로 선언된 행 수**. 분자는 "심사한 항목 수" 라는 무한정 계수가 **아니다** — 정의역 밖 항목(packet checklist·§8 테스트·산문 점검 항목)은 분자에 계상 금지이며 checklist 축은 §결정 4-1 1항의 별 등식으로 판정한다. `>=` 금지 — 부등식 배선은 `examined_count: 999` 를 GREEN 으로 통과시키는 항진이며 **분자 부풀리기**(심사 항목 수 과대 신고) 게이밍 통로다. 하한 위반(미완결 — 분자 < 분모)과 상한 위반(분자 과대 신고 — 분자 > 분모) **양방향 RED**. 잔존-0 음성 단독 선언 금지 (vacuous-PASS 반증).
    - ★ **등식이 잡지 못하는 것 = 분모 축소**: 등식은 분자↔분모 *불일치*만 재므로, 분모(`required_count`)가 함께 줄면 등식은 **성립한 채 GREEN** 이다. 분모 축 방어는 등식이 아닌 별 술어(§결정 4-2a ratchet) + 정직 잔여(§결정 11 말미)로 처분한다 — "등식이 분모 조작을 양방향으로 잡는다"는 서술은 참이 아니다 (설계리뷰 v2 FIX Iter 2 / F2 정정).
@@ -162,8 +146,8 @@ lane PASS = 다음 동시 충족의 명시 판정. 착지면 = review-pl-base �
 4. 위 3항 충족 시 **신규 P2 이하 발견의 존재만으로 PASS 를 차단하지 않는다** — P2 는 PASS 와 동시에 follow-up 착지 (§결정 7). P2 개수 cap 없음 (수치 비목표화 — Goodhart 방어).
 
 - **2-control 상속 (ADR-154 §결정 5)**: 완결 판정 장치에 positive-control(분모 AFFIRM 행 1개를 examined 에서 의도 제거 → 반드시 RED, curated 1-mutant 상시) ⊕ internal-control identity-probe 를 건다 (측정 exit code 재사용 금지 — 파싱 결과 축).
-  - **★ identity-probe 축 확장 = 행 수 ⊕ 버킷 4-계수 (P1, TestContractArch consult)**: probe 가 `len(ac_rows)` 만 emit 하면 **D-1 정규화 함수가 통째로 죽어도 행 수는 보존**되어 미검출이다. 따라서 probe 축 = `len(ac_rows)` ⊕ **버킷 4-계수**(`affirm` / `negate` / `undecidable` / `absent`) ↔ sentinel 대조.
-  - **음성 대조군 의무 (축 확장의 정당화 조건)**: 정규화를 상수 반환으로 치환한 mutant 에서 버킷이 `(n,0,0,0)` 로 붕괴해 **불일치 RED** 가 나야 한다 — 같은 mutant 에서 행 수는 보존되므로 `len`-only probe 는 GREEN 이다. 이 대조군이 RED 를 내지 못하면 축 확장은 정당화되지 않는다 (존재-assert 단독 금지 형판).
+  - **★ identity-probe 축 = 행 수 ⊕ 버킷 5-계수 (Iter 2 P1-2 채택 → Iter 4 consult 이의 #2 정밀화 — 처분의 역전이 아니라 실행층 정밀화)**: probe 가 `len(ac_rows)` 만 emit 하면 **D-1 정규화 함수가 통째로 죽어도 행 수는 보존**되어 미검출이다. 따라서 probe 축 = `len(ac_rows)` ⊕ **버킷 5-계수**(`affirm` / `negate` / `list_resolved` / `undecidable` / `absent`) ↔ sentinel 대조. **5-계수 근거 1줄**: 직전 판 4-계수는 정규화 enum 의 충실한 histogram 이 아니어서 `LIST_RESOLVED → AFFIRM` 붕괴가 행 수·4-계수 **양쪽에서 불변** = 미검출 (M16 blind spot) — 5-계수 정렬 시에만 M16 이 죽는다. 세부(붕괴 mutant·생존 assert)는 실행 SSOT (Change Plan §8 M13~M16 표).
+  - **음성 대조군 의무 (축 확장의 정당화 조건)**: 정규화를 상수 반환으로 치환한 mutant 에서 버킷이 `(n,0,0,0,0)` 로 붕괴해 **불일치 RED** 가 나야 한다 — 같은 mutant 에서 행 수는 보존되므로 `len`-only probe 는 GREEN 이다. 이 대조군이 RED 를 내지 못하면 축 확장은 정당화되지 않는다 (존재-assert 단독 금지 형판).
 - **ADR-067 §결정 8 disjoint 형판 인용**: 본 종결 술어는 max-FIX cap 의 **대체가 아니라** 정상 종료 조건의 신설이다. 카운터 소비·escalation trigger 와 disjoint axis — §결정 1~4 무접촉.
 - **PASS verdict 의 §9 embed 의무화**: PASS 라운드의 review-verdict yaml embed 는 "권장"(story-page-structure.md:364, CFP-410)에서 **의무**로 승격한다 (PASS 라운드 한정 — FIX 라운드는 권장 유지). 근거 = verdict 는 ephemeral 이고 이를 읽는 CI 가 0 이라(TestContractArch F-1 실측) 종결 양성 증거의 유일한 영속·기계검사 표면이 §9 embed 다. 검사 subject = §9 h3 heading 의 `verdict: PASS` 앵커 조건부 (관행 실재 — 계약화는 Phase 2). 회피 구멍(헤딩에서 verdict 어휘 제거) = 정직 declare, 기계 봉인 주장 금지.
 
@@ -253,6 +237,7 @@ lane PASS = 다음 동시 충족의 명시 판정. 착지면 = review-pl-base �
 - advisory **등급** 신설 0 — 위 advisory 는 관측 층위 라벨이지 severity 등급이 아니다 (ADR-181 §결정 6 "`advisory` 등급 신설 금지" 조항 인용 — 기존 채널 P2 비차단 + follow-up + declared 재사용). ※ 인용은 **내용 앵커**(§결정 6 의 등급-비신설 조항)로 한다 — ADR-181 은 미머지 브랜치(`origin/cfp-2985-fix-telemetry`)라 라인 좌표가 이동한다 (실측: 해당 조항이 리뷰 시점 인용 `:1316` → 현재 `:2493` 로 드리프트).
 - **INCONCLUSIVE 어휘 cross-map**: 본 ADR 의 "미측정 = INCONCLUSIVE"(§결정 4-3, ADR-139 INV-L2 승계) 는 ADR-181 §결정 6 등급표의 **`확인 불가`** 행("본 lane 이 측정하지 않음 (네트워크·권한·비용) — 측정 주체 또는 이관처 1줄 병기")과 동일 지시체다. 신규 등급이 아니라 기존 `확인 불가` 라벨의 본 도메인 적용이며, 그 행이 요구하는 "측정 주체 또는 이관처 1줄 병기"를 §결정 4-3 이 상속한다 (미측정 worker 의 stall 주체·재측정 경로 기재).
 - **분모 축 정직 잔여 (F2 처분 — 등식의 원리적 한계)**: 등식 `examined_count == required_count` 는 **분모 축소를 원리적으로 잡지 못한다** — 등식은 분자↔분모 불일치만 재기 때문이다. 분모 축 방어는 별 술어(§결정 4-2a ratchet)이고, 그 술어의 검출면은 PR diff 이므로 **PR 경계 밖(선행 별 PR 에서 미리 축소)은 잡지 못한다**. 잔여 견제 = 계약·Hop2·review 층 semantic 강제(ADR-145:83) ⊕ AC-19 강등 근거 의무 ⊕ 다중 관측. 어느 것도 100% 차단이 아니다.
+- **Iter 4 집행력 라벨 재판정 (AC-23 실행층 전환)**: 정본이 Phase 2 실행 SSOT 로 이전된 축 — **D-1 분모 정규화 · 토큰 해소(구 축 C) · checklist 축 floor** — 의 라벨은 `mechanical floor` → **`declared`** 하향한다 (리뷰 F-3 이 구 축 C 라벨을 이미 반증 — 부분해소 GREEN 흡수 독법 실재). 승격 조건 = Phase 2 코드 + fixture + mutant 착지 ∧ **M13~M16 kill 실증** (ADR-171 3-AND 경로). 축 B 표면-존재 4분기 · examined 등식 · §결정 4-2a ratchet 등 **산문 골격이 자족 판정 가능한 항은 기존 라벨 유지**.
 
 ### 결정 12 — 경계 (disjoint/보완 선언)
 
@@ -277,6 +262,7 @@ N/A — permanent policy (is_transitional: false). 재검토 trigger: ① ADR-18
 ## 관련 파일
 
 - `plugins/codeforge-review/templates/review-pl-base.md` — Phase 2 1차 착지면
+- `scripts/lib/review_exit_criteria.py` + `tests/scripts/_review_exit_fixtures.py` + `tests/scripts/fixtures/review_exit_criteria/` — Phase 2 실행 SSOT (AC-23 실행층 전환 — D-1·토큰·checklist 세부 규칙 정본)
 - `docs/inter-plugin-contracts/review-verdict-v4.md` — v4.18 MINOR (Phase 2)
 - `skills/root-cause-decision/SKILL.md` / `skills/fix-ledger-schema/SKILL.md` — §결정 6 착지 / cross-ref
 - `plugins/codeforge-review/docs/architecture/codeforge-review.md` — 4 영역 갱신 (Phase 1 동반)
