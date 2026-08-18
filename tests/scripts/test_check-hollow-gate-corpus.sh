@@ -313,7 +313,15 @@ hgc_on_exit() {
     hgc_end_ok || echo "  ✗ 종점 미도달: 요약 이전에 종료됐다(도달 마커 미설정) — 조기 종료를 초록으로 내지 않는다"
     hgc_exit_forced=1
   fi
-  cleanup
+  # ★ `cleanup` 을 **서브셸에서** 부른다. 본 회차 구현이 착수 중 자기점검으로 잡은 자리다:
+  #   guard 를 이 함수에 넣어도 `cleanup` 본문에 `exit 0` 1행을 넣으면 그 exit 이 **guard 보다
+  #   먼저** 발화해 rc 를 0 으로 가로챈다(리뷰가 `X-TRAP` 으로 실측한 그 형). 즉 합류가
+  #   rc 결정권을 trap 으로 옮기면서 **trap 이 부르는 헬퍼**가 새 무지목 원소가 됐다 — 이 Story 의
+  #   지배 class(봉합이 인접 축을 연다)가 **내 봉합에서 같은 턴에** 재현된 것이다.
+  #   서브셸에 가두면 그 `exit` 은 서브셸만 끝내고 아래 rc 결정이 그대로 선다.
+  #   ★ 부수 효과: 리뷰가 `undetermined` 로 보류한 `X-TRAP` 비결정(명령치환 서브셸 발화 의심)도
+  #     이 격리 안으로 들어온다. 단 **기전은 여전히 미규명**이며 「그 기전을 닫았다」로 적지 않는다.
+  ( cleanup )
   [ "$hgc_exit_forced" -eq 0 ] || exit 1
 }
 trap hgc_on_exit EXIT
