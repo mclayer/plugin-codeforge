@@ -3343,7 +3343,7 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
   |---|---|
   | 정의역 | `archive/adr/ADR-*.md` glob = **174 파일** (`ADR-RESERVATION.md` 포함). ★ **census 축** — 검사 정의역(`ADRQ` 필터)과 다르다 (FIX Iter 8 P0-C) |
   | 방법 A — PyYAML frontmatter 파싱 | 키 부재 **84** / 빈 리스트 **42** / 비어있지 않음 **48** |
-  | 방법 B — 원시 grep(파서 무관) | `mechanical_enforcement_actions: []` 리터럴 **42** · 키 보유 **90** ⇒ 90 − 42 = **48** |
+  | 방법 B — 원시 grep(파서 무관 · ★ **줄 선두 앵커 필수** — 아래 재현 명령) | 빈 리스트 **42** · 키 보유 **90** ⇒ 90 − 42 = **48** |
   | 3단 전건 (가) 미충족 | 84 + 42 = **126 (72.4%)** — 두 방법이 독립적으로 일치 |
 
   재현 명령(정의역·술어 동반):
@@ -3355,6 +3355,18 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
       v=(d or {}).get('mechanical_enforcement_actions','__MISSING__')
       a+=v=='__MISSING__'; e+= v!='__MISSING__' and not v; n+= v!='__MISSING__' and bool(v)
   print(len(fs),a,e,n)"
+    -> 174 84 42 48
+
+  # 방법 B — 원시 grep. 정의역은 같은 glob 이며 ★ **줄 선두 앵커가 load-bearing** 이다
+  grep -lE '^mechanical_enforcement_actions: \[\]' archive/adr/ADR-*.md | wc -l    # -> 42
+  grep -lE '^mechanical_enforcement_actions:'      archive/adr/ADR-*.md | wc -l    # -> 90
+    -> 90 - 42 = 48    (방법 A 의 48 과 독립적으로 일치)
+  # ★ 음성 대조 — 앵커를 떼면 58 / 100 이 나와 차가 **42** 로 어긋나고 "두 방법 일치" 가 깨진다.
+  #   차이 10 = 키가 frontmatter 가 아니라 **본문 산문**에만 있는 파일
+  #   (ADR-042 · 054 · 123 · 124 · 125 · 126 · 133 · 140 · 157 · ADR-RESERVATION).
+  #   즉 앵커는 서식이 아니라 **정의를 세는 술어**이며, 이 문서가 (0-a) 에서 이미 채택한 형태다.
+  # ★ 끝 앵커를 붙여도 안 된다 — `\[\][[:space:]]*$` 로 좁히면 후행 주석(`[]  # ...`) 보유 행이
+  #   전부 빠져 42 가 **8** 이 된다. 본 ADR 자신의 frontmatter 가 그 탈락분에 포함된다.
   ```
 
   ★ **사다리 3단 통과 수 (S1 → S2 → S3)** — S1 = **48** (위 두 방법 일치, 견고). S2(항목이 실재 실행
