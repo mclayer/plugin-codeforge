@@ -58,7 +58,22 @@ STATE_ENUM = {"observed", "unobserved"}
 # state == unobserved 일 때 허용되는 구체 사유 — "왜 관측하지 못했는가" 를 지시해야 한다.
 #   parse-error = P2-3(CFP-2984) 봉합분. 응답은 왔으나 파싱이 깨져 셀 수 없었던 경우 —
 #   구 구현에서 이 상태가 "관측했고 0건" 으로 접히던 것이 silent-zero 자기모순이었다.
-CONCRETE_REASONS = {"credential-absent", "fetch-error", "fetch-status-missing", "parse-error"}
+#   ★ CFP-2995 — 4 → 12 원소. watchdog 의 값 공간 확장과 **분리 불가**한 동반 변경이다
+#     (미갱신 시 신규 사유가 전건 "구체 사유 집합 밖" 으로 RED — 의도된 결합).
+#   HTTP 축 5: 비-2xx 응답을 한 사유로 접지 않는다 — 401/403(자격증명 교체) · 404(URL·권한,
+#     Jira 가 "이슈 부재 또는 권한 없음" 으로 문서화) · 429(우리 cadence) · 5xx(벤더 장애,
+#     escalation 주체가 반대) · other(위 넷에 배정되지 않은 비-2xx **잔여 전칭**: 1xx·3xx·잔여 4xx).
+#   AC-2 축 3: 보고된 수집량이 관측 가능한 전체를 나타내지 않는 세 경로 —
+#     element-shape-unexpected(원소 무신호 드롭) · count-unresolved(산출 실패) · page-truncated(부분관측).
+CONCRETE_REASONS = {
+    # 기존 4
+    "credential-absent", "fetch-error", "fetch-status-missing", "parse-error",
+    # HTTP 축 5 (CFP-2995)
+    "http-error-auth", "http-error-not-found", "http-error-rate-limited",
+    "http-error-server", "http-error-other",
+    # AC-2 축 3 (CFP-2995)
+    "element-shape-unexpected", "count-unresolved", "page-truncated",
+}
 
 
 def load(path):
