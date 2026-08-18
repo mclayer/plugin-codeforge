@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-rm-collect",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "w16_a, b, c, d, f, g RED (w16_e 미포함)",
+  "expected": "w16_a, b, c, d, f RED (w16_e 미포함) + 봉투 핀 RED",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [
@@ -9,8 +9,7 @@
       "test_w16_b_job2_coe_paths_empty_strict[wrapper-canonical]",
       "test_w16_c_job2_step_shell_all_none[wrapper-canonical]",
       "test_w16_d_defaults_run_shell_absent[wrapper-canonical]",
-      "test_w16_f_job2_step_names_pinned[wrapper-canonical]",
-      "test_w16_g_step_command_shape_pinned[wrapper-canonical]"
+      "test_w16_f_job2_step_names_pinned[wrapper-canonical]"
     ],
     "errored_legs": [],
     "verdict": "RED"
@@ -51,18 +50,11 @@
   },
   "runtime_face": {
     "verdict": "RED",
-    "returncode": 1,
-    "rc_after_coe": 1,
-    "stdout_lines": 262,
-    "failed_tests": [
-      "test_w16_a_wrapper_face_anchor[wrapper-canonical]",
-      "test_w16_b_job2_coe_paths_empty_strict[wrapper-canonical]",
-      "test_w16_c_job2_step_shell_all_none[wrapper-canonical]",
-      "test_w16_d_defaults_run_shell_absent[wrapper-canonical]",
-      "test_w16_f_job2_step_names_pinned[wrapper-canonical]",
-      "test_w16_g_step_command_shape_pinned[wrapper-canonical]"
-    ],
-    "stderr_excerpt": ""
+    "returncode": 4,
+    "rc_after_coe": 4,
+    "stdout_lines": 2,
+    "failed_tests": [],
+    "stderr_excerpt": "ERROR: file or directory not found: tests/scripts/test_cfp2978_envelope_pin.py\n\n"
   },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-rm-collect",
   "w13_raw": {

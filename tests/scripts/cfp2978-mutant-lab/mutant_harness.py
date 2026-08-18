@@ -597,13 +597,13 @@ def m_16_twin_drift(t: str) -> str:
 
 def m_composite_13i_13k(t: str) -> str:
     """복합: '; true' 추가 + step 'shell: bash {0}' (동시 적용)."""
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = (
-        "        shell: bash {0}\n"
-        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
+    new_run = "        shell: bash {0}\n" + A_J2_RUNPYTEST_BODY.replace(" -q\n", " -q ; true\n")
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13i+M-13k",
     )
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i+M-13k")
 
 
 def m_composite_13i_13l(t: str) -> str:
@@ -613,10 +613,13 @@ def m_composite_13i_13l(t: str) -> str:
         t, "permissions:\n",
         "defaults:\n  run:\n    shell: bash {0}\n\npermissions:\n", "M-13i+M-13l/defaults")
     # 그 후 pytest step에 '; true' 추가
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i+M-13l/run")
+    new_run = A_J2_RUNPYTEST_BODY.replace(" -q\n", " -q ; true\n")
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13i+M-13l/run",
+    )
 
 
 def m_13a(t: str) -> str:
@@ -996,12 +999,15 @@ def build_run_tree(mid: str) -> Path:
 
     # ── tests/scripts: pytest test 파일 4개 + conftest
     shutil.copy2(CONFTEST, run_dir / "tests" / "scripts" / "conftest.py")
-    for test_file in [
-        "test_cfp2976_sentinel_prefix.py",
-        "test_cfp2978_workflow_shape.py",
-        "test_cfp2978_resource_scan_shape.py",
-        "test_consumer_asset_currency.py",
-    ]:
+    # ★ 복사 목록은 **job2 가 실제로 실행하는 목록에서 파생**한다 (2026-08-19 정정).
+    #   손으로 적은 사본을 두면 job2 목록이 늘 때 갈리고, 갈린 순간 runtime_face 가
+    #   `ERROR: file or directory not found` 로 **무변이 baseline 에서도 RED** 가 되어
+    #   판별력이 0 이 된다 — 그 면의 RED 는 mutant 검출이 아니라 **하네스 결함**이다.
+    #   ★실측(정정 전): `--baseline` 의 runtime_face = RED, 전 M-16 mutant 가 동일
+    #     stderr(`test_cfp2978_envelope_pin.py` 부재) ⇒ 항진 RED.
+    #   ★재현: `--baseline` 산출의 runtime_face verdict 가 GREEN 이어야 한다
+    #     (무변이가 RED 면 어떤 mutant 의 RED 도 검출 근거가 못 된다).
+    for test_file in sorted({Path(p).name for p in J2_PYTEST_FILES.split()}):
         src = REPO_ROOT / "tests" / "scripts" / test_file
         if src.exists():
             shutil.copy2(src, run_dir / "tests" / "scripts" / test_file)
@@ -1011,6 +1017,9 @@ def build_run_tree(mid: str) -> Path:
     for lib_file in [
         "check_parallel_work_sentinel.py",
         "check_consumer_asset_currency.py",
+        # ★ W-21 참조 구현 — `test_cfp2978_envelope_pin.py` 가 import 한다.
+        #   미배치면 그 테스트가 skip 이 아니라 **수집 ERROR** 로 죽는다.
+        "envelope_pin.py",
     ]:
         src = REPO_ROOT / "scripts" / "lib" / lib_file
         if src.exists():
@@ -1212,8 +1221,67 @@ def baseline() -> Dict[str, object]:
     return {"pytest": {k: v for k, v in p.items() if k != "raw"}, "w13": w, "straw": s, "runtime": rt}
 
 
+def selfcheck_anchors() -> int:
+    """★ 앵커 정합 전수 자기검사 (2026-08-19 신설).
+
+    왜 필요한가 — 이 하네스의 앵커는 `.github/workflows/parallel-work-sentinel-check.yml`
+    문면 **리터럴**이라 그 파일이 편집되면 조용히 죽는다. `_replace_once` 는
+    fail-closed 라 「조용히 GREEN」은 아니지만, **그 mutant 를 실제로 돌릴 때까지
+    아무도 모른다** — 즉 결함의 발견이 우연에 달려 있다.
+    2026-08-19 실측: W-3b(파일목록 4→5) · W-3b-1(로스터 6→12) · W-3d(V1b) 착지로
+    wrapper workflow 대상 mutant 다수 + COMPOSITES 2종이 동시에 ANCHOR-MISS 였다.
+
+    ⇒ 한 명령으로 **전수** 확인한다. 판정 = **미적중 이름 집합이 공집합**
+      (개수 assert 금지 — 일반 규칙 ①: 카디널리티 형 금지, 이름 집합으로 판정).
+
+    사용:  python tests/scripts/cfp2978-mutant-lab/mutant_harness.py --selfcheck
+           exit 0 = 전건 적중 / exit 1 = 미적중 이름 나열
+    ★ `.github/workflows/**` 편집 직후 · 핀 채취 직전에 돌릴 것.
+    """
+    faces = {
+        "live": REPO_ROOT / ".github" / "workflows" / "parallel-work-sentinel-check.yml",
+        "twin": REPO_ROOT / "templates" / "github-workflows" / "parallel-work-sentinel-check.yml",
+    }
+    rc = 0
+    for face_name, path in faces.items():
+        if not path.exists():
+            print(f"[{face_name}] MISSING FILE: {path}")
+            rc = 1
+            continue
+        text = path.read_text(encoding="utf-8")
+        miss = []
+        for mid, (target, fn, _e) in MUTANTS.items():
+            if not target.endswith("parallel-work-sentinel-check.yml"):
+                continue
+            try:
+                fn(text)
+            except BaseException:  # noqa: BLE001 — _replace_once 는 SystemExit 을 던진다
+                miss.append(mid)
+        for label, (_mids, fn, _e) in COMPOSITES.items():
+            try:
+                fn(text)
+            except BaseException:  # noqa: BLE001
+                miss.append(f"COMPOSITE:{label}")
+        print(f"[{face_name}] ANCHOR-MISS 이름집합 = {sorted(miss)}")
+        if miss:
+            rc = 1
+    a, b = faces["live"], faces["twin"]
+    if a.exists() and b.exists():
+        parity = a.read_text(encoding="utf-8") == b.read_text(encoding="utf-8")
+        print(f"[byte-parity] live == templates twin : {parity}")
+        if not parity:
+            rc = 1
+    if rc:
+        print("\n★ 미적중 발생 — 앵커 상수(J2_PYTEST_FILES / J2_COLLECT_ROSTER /"
+              " A_J2_RUNPYTEST_* / A_J2_COLLECT)를 현행 job2 문면으로 재동기화할 것."
+              " 흩어진 리터럴이 아니라 **그 블록 한 곳만** 고치면 된다.")
+    return rc
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--selfcheck", action="store_true",
+                    help="앵커 정합 전수 자기검사 (미적중 이름 집합 공집합 판정)")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--baseline", action="store_true")
     ap.add_argument("--run", nargs="*", default=None)
@@ -1227,6 +1295,8 @@ def main() -> int:
                     help="COMPOSITES 로스터의 모든 복합 mutant 실행")
     a = ap.parse_args()
 
+    if a.selfcheck:
+        return selfcheck_anchors()
     if a.list:
         for k, (t, _, e) in MUTANTS.items():
             print(f"{k:16} target={t:24} expected={e}")

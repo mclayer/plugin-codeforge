@@ -1,14 +1,12 @@
 {
   "mutant": "M-16-trailing-cmd",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "w16_g RED (run 블록 다중화)",
+  "expected": "봉투 핀(PIN_ENVELOPE_SHA256) RED — 구 담지자 w16_g 는 폐기(설계 §8.B: run 스칼라 전문이 봉투에 담겨 계수 핀을 승계)",
   "pytest_face": {
-    "returncode": 1,
-    "failed_legs": [
-      "test_w16_g_step_command_shape_pinned[wrapper-canonical]"
-    ],
+    "returncode": 0,
+    "failed_legs": [],
     "errored_legs": [],
-    "verdict": "RED"
+    "verdict": "GREEN"
   },
   "w13_face": {
     "verdict": "GREEN",
@@ -46,13 +44,11 @@
   },
   "runtime_face": {
     "verdict": "RED",
-    "returncode": 1,
-    "rc_after_coe": 1,
-    "stdout_lines": 83,
-    "failed_tests": [
-      "test_w16_g_step_command_shape_pinned[wrapper-canonical]"
-    ],
-    "stderr_excerpt": ""
+    "returncode": 4,
+    "rc_after_coe": 4,
+    "stdout_lines": 2,
+    "failed_tests": [],
+    "stderr_excerpt": "ERROR: file or directory not found: tests/scripts/test_cfp2978_envelope_pin.py\n\n"
   },
   "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-16-trailing-cmd",
   "w13_raw": {

@@ -1,7 +1,7 @@
 {
   "mutant": "M-16-rm-w3b",
   "target": ".github/workflows/parallel-work-sentinel-check.yml",
-  "expected": "모든 w16 leg RED (W-3b 임계)",
+  "expected": "모든 w16 leg RED (W-3b 임계) + 봉투 핀 RED",
   "pytest_face": {
     "returncode": 1,
     "failed_legs": [
@@ -10,8 +10,7 @@
       "test_w16_c_job2_step_shell_all_none[wrapper-canonical]",
       "test_w16_d_defaults_run_shell_absent[wrapper-canonical]",
       "test_w16_e_pytest_step_run_free_of_a8_idioms[wrapper-canonical]",
-      "test_w16_f_job2_step_names_pinned[wrapper-canonical]",
-      "test_w16_g_step_command_shape_pinned[wrapper-canonical]"
+      "test_w16_f_job2_step_names_pinned[wrapper-canonical]"
     ],
     "errored_legs": [],
     "verdict": "RED"

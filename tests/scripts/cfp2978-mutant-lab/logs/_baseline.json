@@ -132,11 +132,11 @@
     }
   },
   "runtime": {
-    "verdict": "GREEN",
-    "returncode": 0,
-    "rc_after_coe": 0,
-    "stdout_lines": 24,
+    "verdict": "RED",
+    "returncode": 4,
+    "rc_after_coe": 4,
+    "stdout_lines": 2,
     "failed_tests": [],
-    "stderr_excerpt": ""
+    "stderr_excerpt": "ERROR: file or directory not found: tests/scripts/test_cfp2978_envelope_pin.py\n\n"
   }
 }
