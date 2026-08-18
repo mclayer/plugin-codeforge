@@ -49,6 +49,17 @@ ADR-125 / CFP-2326 이 **요구사항리뷰 lane 을 9번째 lane 으로 신설*
 
 ratchet 강화 방향(관측 lane 축 순증 1, 감축 0). is_transitional: false 정합. 약화 방향(lane 목록 재축소)은 ADR-058 §결정 5 sunset_justification 의무. Cross-ref: ADR-125 (요구사항리뷰 lane 신설) / ADR-121 · CFP-2782 (배포 2 lane 물리 제거) / ADR-064 Amendment 16 (같은 carrier CFP-2914 의 peer co-dispatch leg 신설 — 본 Amendment 가 그 leg 의 lane 축 SSOT 를 정합화).
 
+**Amendment 4 (2026-08-18, CFP-3017)** — **§결정 1 evidence row `transcript` field 의 `50자 이내` producer cap 처분 (Q-1 `함께 정산` 사용자 확정 — Story CFP-3017 §5.5) + 위생 invariant 신설 + 의무 주체 정의역 한정.** §결정 1 은 FROZEN 이므로 본 처분은 Amendment 의무 대상이다(직접 편집 금지 — Amendment 3 선례 동형). Amendment 번호 4 = 파일 내 max(3) 다음 슬롯이며 경합 부재를 firsthand 실측했다 — `origin/main`·미머지 브랜치 `origin/cfp-2985-fix-telemetry` 양쪽 `ADR-RESERVATION.md` 에 `adr_number: 31` amendment row 0건(grep rc=1) + wrapper open PR 전수(`gh pr list --repo mclayer/plugin-codeforge --state open` 8건, 2026-08-18) 중 본 파일 접촉 0건.
+
+1. **producer cap 제거 + 서술 술어 전환 (ADR-067 Amendment 5+ 와 동일 형상 — CFP-3017 sibling)**: §결정 1 schema 의 `transcript: <inline summary 50자 이내 또는 internal-docs decision archive link>` 문면에서 **`50자 이내` 생산자 상한을 제거**하고, 길이 규범을 숫자 아닌 서술 술어로 전환한다 — **무손실 수용, 또는 표식된 절단**(head 보존 + tail 절단 + **필수 sentinel + 원본 포인터 + 원본 크기**, 절단 주체 = 수용측, **침묵 절단 금지**; `receiver_min_accept: unbounded` + `truncation_policy: marked-truncation-required` 동형). 숫자 리터럴 0 — 실측상 이 cap 은 집행된 적이 없다: `git grep -c "transcript" 6cc9a3a7b31836dc09b35ebdd0cc2b8c1f2a4454 -- scripts/check-lane-evidence.sh` → **rc=1 (hit 0 = 50자 cap 미집행)**. 즉 `transcript` 는 이미 사실상 무제한이며, 본 Amendment 는 규범 문면을 실태에 정합화하고 아래 위생 문면을 신설한다.
+2. **위생 invariant 신설 (ADR-067 §결정 7 어휘 재사용 — 신규 어휘 0)**: `transcript` 값(inline summary 형)에 PII / secret / credential / API key / private absolute-path 포함 금지. 위반 발견 시 **fail-fast — 자동 redact 금지** (§14 는 committed evidence trail — 자동 치환은 원장 변조. 재저작으로 처리). 우선순위 근거 3: ① `transcript` = **required · 전 lane 전 spawn** — 노출 빈도가 구조적으로 최대 (ADR-067 `reasoning_carryover` 는 optional + 비-debate max-FIX 3/3 한정) ② 길이가 억제 수단으로 작동한 적 없음 (위 rc=1 실측) ③ 값의 성질 — 워커 발화 **원문 조각**은 설계 어휘 요약보다 붙여넣기 유입 확률이 높다.
+3. ★**의무 주체 정의역 한정 (본 Amendment 의 경계 조항)**: 본 Amendment 의 위생·수용 의무 주체는 **「§14 에 값을 써넣는 Orchestrator」(Amendment 1 의 Orchestrator-owned delegate 포함)로 한정한다 — 이는 append 시점 의무이지 schema 확장·값 생산자(lane PL) 측 의무가 아니며, 본 ADR 의 자기 정의역 한정(『본 ADR 는 wrapper Orchestrator self-write 영역만 다룸. Lane plugin 자체의 spawn-side instrumentation … 은 별도 cross-plugin CFP — 본 Epic 비-범위』)을 넘지 않는다.** spawn-side instrumentation 은 본 Amendment 무접촉.
+4. **미러 표면 동반 정정 — Phase 2 + 착지 순서 조건부**: `templates/story-page-structure.md` 의 두 좌표(evidence row 예시 `transcript: <inline 50자 OR link>` + 열 정의 표 행 `50자 inline OR link`)는 본 ADR schema 의 재기재 미러다. 재현(행 번호 인용 금지 — CFP-2986 이 동 파일을 in-flight 변경 중): `git grep -n "transcript" 6cc9a3a7b31836dc09b35ebdd0cc2b8c1f2a4454 -- archive/adr/ADR-031-lane-spawn-evidence-trail.md templates/story-page-structure.md`. 실 편집 = **Phase 2, CFP-2986 선착 후** rebase + 위 재현 명령 재실행으로 위치 재탐색.
+5. **정직 라벨 (효과 상한)**: 본 처분의 집행면은 현재 0 이다 — `check-lane-evidence.sh` 는 `transcript` 값을 검사하지 않으며, 위생 fail-fast 는 **저작 규율**이다 (기계 차단 아님, "100% 기계강제" 아님). 검사를 신설한다면 ADR-171 warning tier 로 태어난다 (신규 blocking required context 0).
+6. **수용기준 3행 (신설 규범 자기 수용기준 — 투입물의 성질로 명명, 양성 ∧ 음성 공존 의무)**: **양성** = 5-금지항목 무위반 ∧ (절단 시) sentinel·원본 포인터·원본 크기 동반한 `transcript` 값 → GREEN / **음성** = 그 값에서 요소 1개 제거(금지항목 1종 포함 또는 무표식 절단) → RED / **배선 자기보호** = 검사 배선·호출 제거 → RED.
+
+ratchet 방향 정직 기술 (혼합 — "강화 only" 아님): 생산자 상한 문면은 소멸하나(집행 실적 0 인 문면의 실태 정합화 — 실효 약화 0), 위생 invariant + 표식 절단 술어는 신설(강화)된다. Amendment 2 면제·Amendment 3 lane 축과 직교 — 12 field schema 의 field 수·field 명 무변경, `transcript` field 의 값 제약 문면만 처분. Cross-ref: ADR-067 Amendment 5+ (CFP-3017 sibling — `reasoning_carryover` 동일 형상 처분 + §결정 7 위생 정의역 확장의 transcript 편입 carrier 가 본 Amendment) / ADR-171 (warning tier 탄생 원칙) / Story CFP-3017 §5.5 Q-1 사용자 확정.
+
 ## 컨텍스트
 
 CFP-124 진단 (2026-05-06) §1.3 architectural root cause A1:
@@ -215,3 +226,9 @@ N/A — permanent policy
 - `plugins/codeforge-develop/agents/QADeveloperAgent.md` (Phase 2 — #2247 짝, distinct-marker 가이드 신설)
 - `templates/scripts/detect-repo-kind.py` (무변경 — SSOT 재사용 대상)
 - Story 정본: GitHub Issue mclayer/plugin-codeforge#2270 (wrapper-self dogfood, ADR-013 dogfood-out)
+
+### Amendment 4 (CFP-3017) 관련 파일
+- `archive/adr/ADR-067-fix-ledger-implementability-escalation.md` (Amendment 5+ provisional — CFP-3017 sibling, `reasoning_carryover` 동일 형상 처분 + §결정 7 위생 정의역의 transcript 편입)
+- `templates/story-page-structure.md` (Phase 2 — `transcript` 두 좌표 미러 정정, CFP-2986 선착 후 재현 명령으로 위치 재탐색)
+- `scripts/check-lane-evidence.sh` (무변경 — `transcript` 미검사 실측[rc=1]의 근거 파일. 검사 신설 시 ADR-171 warning tier 별 carrier)
+- Story 정본: `mclayer/codeforge-internal-docs` `wrapper/stories/CFP-3017.md` §5.5 Q-1 (사용자 확정 `함께 정산`)
