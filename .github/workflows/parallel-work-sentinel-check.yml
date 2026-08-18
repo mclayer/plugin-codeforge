@@ -136,6 +136,19 @@ jobs:
         id: run-pytest
         run: |
           set -euo pipefail
-          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py -q
+          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py -q 2>&1 | tee /tmp/pytest_run.txt
+          # skip 봉인 (설계 §8.3 DR4-7 / W-3b-1 (iv)) — 로스터 등재는 **존재**만
+          # 담지하고 **활성화**는 담지하지 않는다. @pytest.mark.skip 이 붙으면
+          # collect 로스터 12줄은 전건 통과하고 실행 rc 도 0 이라 무발화로 샌다.
+          # 그래서 실행 산출에서 skipped 0 을 별도 확인한다.
+          # 분기에 `&&` 를 쓰는 이유: A8 rc 흡수 관용구 금지 목록(W-16.e)이 셸
+          # 조건문 관용구 1종을 봉인하므로 그 문면을 이 step 에 쓸 수 없다.
+          # 후행 echo 는 필수다 — `&&` 가 마지막 명령이면 미매치 시 rc 1 이 되어
+          # 거짓 RED 가 난다 (bash -e firsthand 실측).
+          grep -qE '[0-9]+ skipped' /tmp/pytest_run.txt && {
+            echo "::error::skipped 검출 — 로스터 등재 테스트가 비활성화됐다 (skip 봉인 위반)"
+            exit 1
+          }
+          echo "skip 봉인 통과 — 실행 산출에 skipped 0"
       - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)
         run: bash tests/scripts/test_check-parallel-work-sentinel.sh
