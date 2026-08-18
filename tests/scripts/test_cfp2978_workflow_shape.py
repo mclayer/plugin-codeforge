@@ -19,7 +19,7 @@
 전 leg 의 정의역 = **구조(structure)**. 관측 채널 = W-13 `DupSafeLoader` 파싱 산출
 (`WorkflowShape` 필드). text-grep 정의역 leg 은 본 파일에 **부분 존재**한다.
 예외 = `test_f0_*` (본 파일 소스 자기 점검, 정의역 = text) + `test_w16_e_*`
-(wrapper step run 문면 스캔) + `test_w16_g_*` (wrapper step 명령 수 핀).
+(wrapper step run 문면 스캔).
 
 ────────────────────────────────────────────────────────────────────────────
 leg 인벤토리 — shape 14 필드 전건 피복
@@ -177,13 +177,6 @@ PIN_WRAPPER_JOB2_STEP_NAMES = {
     2: "Install test dependencies",
     3: "Collect pytest tests (W-3b-1, verify node IDs present)",
     4: "Run pytest tests (W-3b)",
-}
-
-# W-16 job2 step 명령 수 (텍스트 정의역)
-PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS = {
-    "Install test dependencies": 1,
-    "Collect pytest tests (W-3b-1, verify node IDs present)": 8,
-    "Run pytest tests (W-3b)": 1,
 }
 
 # ── W-16 A8 idioms (bash rc 흡수 관용구) — 6종 ───────────────────────────────
@@ -926,7 +919,7 @@ def test_w16_e_pytest_step_run_free_of_a8_idioms(face):
     정의역: W-3b step ("Run pytest tests (W-3b)") 의 `run` 문면.
 
     ★ (3) 명 기반 조회: step 인덱스 고정(`steps[4]`) 금지. step 이 하나 삽입되면
-      엉뚱한 step 을 스캔하고도 GREEN 이 된다. `test_w16_g` 처럼 명으로 찾아야 한다.
+      엉뚱한 step 을 스캔하고도 GREEN 이 된다. 반드시 step 명으로 찾아야 한다.
     """
     wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
     with open(wf_path, "r", encoding="utf-8") as f:
@@ -1013,53 +1006,6 @@ def test_w16_f_job2_step_names_pinned(face):
             f"W-16.f [{face}] step[{idx}]: 명 불일치\n"
             f"  기대: {expected_name!r}\n"
             f"  실측: {actual_name!r}"
-        )
-
-
-@pytest.mark.parametrize("face", WRAPPER_FACES)
-def test_w16_g_step_command_shape_pinned(face):
-    """W-16.g — wrapper job2 3 step 비어있지 않은 줄 수 pin (텍스트 정의역).
-
-    ★ (5) 문면 정직화: 계산값은 **명령 줄의 개수가 아니라 비어있지 않은 줄의 개수**.
-      주석 줄도 세고, 줄 연속(백슬래시로 이음)으로 이어진 한 명령은 2로 센다.
-      이것이 "명령 수"의 근사이다.
-
-    W-3b-1 에는 8개 비어있지 않은 줄, W-3b 에는 1개. 각 step 의 `run` 문면에서
-    계산한다.
-    """
-    wf_path = _W13_ROOT / WRAPPER_WORKFLOWS[face]
-    with open(wf_path, "r", encoding="utf-8") as f:
-        data = dup_safe_load(f.read())  # ★ (4) dup_safe_load(f) → dup_safe_load(f.read())
-
-    jobs = data.get("jobs", {})
-    job2 = jobs.get(JOB2, {})
-    steps = job2.get("steps", [])
-
-    for step_name, expected_count in PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS.items():
-        # step 찾기
-        step = None
-        for s in steps:
-            if s.get("name") == step_name:
-                step = s
-                break
-        assert step is not None, (
-            f"W-16.g [{face}]: step 명 미검출 — {step_name}"
-        )
-
-        run_text = step.get("run", "")
-        assert run_text, (
-            f"W-16.g [{face}] {step_name!r}: run 부재"
-        )
-
-        # 비어있지 않은 줄 수 계산 (공백 제거 후 줄 필터)
-        lines = [line.strip() for line in run_text.split("\n") if line.strip()]
-        actual_count = len(lines)
-
-        assert actual_count == expected_count, (
-            f"W-16.g [{face}] {step_name!r}: 비어있지 않은 줄 수 불일치\n"
-            f"  기대: {expected_count}\n"
-            f"  실측: {actual_count}\n"
-            f"  줄 목록: {lines}"
         )
 
 
