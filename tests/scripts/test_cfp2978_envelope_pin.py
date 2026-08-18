@@ -109,13 +109,15 @@ def test_envelope_pin_reference_matches_landed_pin():
        (설계 §8.3 라인 315·437 — Q-E-R1 미완화, 작위 승격)
     """
     # ★ 3-way 결속 검증 — 두 상수가 동일성을 유지해야 함 (같은 산출자에서 나온 값)
+    # (설계 동반 의무 8 — 유지 필수)
     assert PIN_P1_EVIDENCE["envelope_sha256"] == PIN_ENVELOPE_SHA256, \
         f"PIN_P1_EVIDENCE 결속 위반: {PIN_P1_EVIDENCE['envelope_sha256']} != {PIN_ENVELOPE_SHA256}"
 
-    # ★ TODO: envelope_pin.py 에서 실제 봉투 계산 함수 import 및 검증
-    # from scripts.lib.envelope_pin import compute_envelope
-    # envelope = compute_envelope('.github/workflows/parallel-work-sentinel-check.yml', 'parallel-work-sentinel-test')
-    # assert envelope.sha256 == PIN_ENVELOPE_SHA256, f"{envelope.sha256} != {PIN_ENVELOPE_SHA256}"
+    # ★ 실 대조: 현행 workflow 봉투 sha 산출 → PIN과 동일성 검증
+    # (좌변=대상 산출, 우변=frozen literal — 항진 방지)
+    envelope = compute_envelope(WF_PATH, JOB2)
+    assert envelope.sha256 == PIN_ENVELOPE_SHA256, \
+        f"Envelope sha mismatch: computed={envelope.sha256}, expected={PIN_ENVELOPE_SHA256}"
 
 
 def test_envelope_pin_domain_derivation_selfcheck():
