@@ -405,7 +405,9 @@ Epic #3016 E-1 (CFP-3017). 사용자 확정 Q-2 = `쓰는 쪽 상한 제거 + �
 
 **AC-1 「차등 근거 명시」= 차등 없음 (긍정 답변)**: 두 cap 의 유래가 서로 다르고 어느 쪽도 필드 성질에서 도출되지 않았다. 차등의 근거가 애초에 부재하므로, 관측된 median 차이(1.22× vs 0.83×)를 새 차등의 근거로 삼으면 **드리프트 값을 사후 정당화**하는 것이 된다. ⇒ 두 sub-field 동일 처분 — 침묵 통과가 아니라 "차등 근거 = 부재임을 실측으로 확정"한 답변이다.
 
-**정직 라벨 (효과 상한 — AC-13)**:
+**정직 라벨 (효과 상한 — AC-13)** — `tier = advisory (effect-ceiling)`:
+
+> ★ 위 한 줄이 **본 ceiling 의 tier 선언 라인**이며 `check-tier-honesty.py` `LEVERS` lever `cfp3017-effect-ceiling` 의 `label_re` 앵커다(선례 형식 — `progress-commit` lever 의 `tier = advisory (ceiling)` 동형, 리터럴은 disjoint). Axis1 = 이 라인 present / Axis2 = **이 라인**에 긍정 enforcement 토큰 부재. 아래 서술 bullet 은 근거이지 tier 선언이 아니다.
 - 기계 소비자 **0** — 재현: `git grep -lE "reasoning_carryover|invariant_summary|disputed_claims" 6cc9a3a7b -- plugins/ scripts/ .github/ hooks/` → rc=1. ⇒ floor 는 **advisory** — "집행된다"고 서술하지 않는다.
 - **floor 는 하한이지 상한이 아니다** — ADR-180 `read_cost` 팽창을 막지 못한다. 유일 실질 완화책(포인터 외부화)은 `story-read-declaration-registry.yaml`(CFP-2986 in-flight 신설)에 하드 의존 ⇒ read_cost 상한 미해결은 **알려진 잔여 리스크로 명시 라벨**한다(Non-goal 로 은닉하지 않는다).
 - **외부 표준 인용 폭**: *producer hard cap 부재* = 3/3 지지 / *receiver floor 채택* = **1/3(RFC 5424 §6.1)만** 지지 [source: https://datatracker.ietf.org/doc/html/rfc5424 — "Any transport receiver MUST be able to accept messages of up to and including 480 octets"]. OTel 은 producer-side opt-in unbounded-default(`AttributeValueLengthLimit` Default=Infinity)이지 receiver floor 아님 [source: https://opentelemetry.io/docs/specs/otel/common/]. A2A 는 **침묵**(지지도 반박도 아님) [source: https://a2a-protocol.org/latest/specification/]. "3 표준 전부 receiver floor" 서술 = 과대인용 — 금지.
