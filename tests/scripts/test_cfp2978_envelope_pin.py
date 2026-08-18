@@ -196,15 +196,15 @@ def test_envelope_pin_coverage_table_witnesses():
 # 보조 함수 (로스터 미등재) — 로스터 제약상 생략 또는 실 구현 필요
 # ============================================================================
 
-def _test_envelope_pin_sweep_derivation_completeness():
-    r"""[로스터 미등재·pytest skip] Sweep 로스터 파생이 완전한지 확인.
+def test_envelope_pin_sweep_derivation_completeness():
+    r"""[로스터 미등재] Sweep 로스터 파생이 완전한지 확인.
 
     정의역 = 적용역 − 봉투 spine
     spine = top-level `jobs` 키 · JOB2 키 · `jobs` 합성 래퍼 노드
 
-    ★ 함수명 prefix `_` 으로 pytest discovery 회피 (구현 대기 중).
     ★ 로스터 미등재 함수 — 공허 pass 금지:
        Change Plan §8.B 명세 직독 후 sweep roster(role column) 파싱으로 파생.
+    ★ RED 상태 유지 (착지 전까지 미구현 정직 신호).
     """
     raise NotImplementedError(
         "Sweep derivation completeness test not yet implemented. "
