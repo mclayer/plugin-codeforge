@@ -227,7 +227,7 @@ firsthand: `grep -n skill archive/adr/ADR-181-*.md` → **1건**(위 scope 문�
   증거를 보존하고 있었다). ★★ **grep 계수 오독 차단 (Iter 13 자기적용)** — 위 두 인용부는 **교체 전
   문자열의 이력 전시**이지 규정 문면이 아니다. 그래서 Iter 13 이후 `실재 실행 파일` 의 **출현 수는 오히려
   2 → 3 으로 늘어난다**(정의 줄 1이 사라지고 이력 인용 2가 생겼다). **계수만 보고 "미교체" 로 읽지 말 것** —
-  판정 기준은 개수가 아니라 *"규정 술어 자리에 그 문자열이 있는가"* 이며, 그 자리는 이제 (iv-L) 리터럴이다. 이 줄대로 구현하면 (iv) 표 65행 중 **6행 불일치**(verdict born-red 4 =
+  판정 기준은 개수가 아니라 *"규정 술어 자리에 그 문자열이 있는가"* 이며, 그 자리는 이제 (iv-L) 리터럴이다. 이 줄대로 구현하면 (iv) 표 **65행 판(R13 시점) 기준 6행 불일치**(verdict born-red 4 =
   45b · 50 · 50b · 51)였다.
   (다)가 마지막 이빨이다 — (나)까지면 "파일만 만들고 안 돌린다" 가 통과한다.
   ★ (나) 의 **경로 키 closed-set 은 아래 ③-dt (vii) `③-key` 가 확정**한다 (설계리뷰 FIX Iter 3 신설 —
@@ -580,16 +580,20 @@ leg 의 **모든 오독 방식**을 판별하는 행 집합을 요구하지 않�
 직전 판은 (iv) 표에 행 **31~42** 를 신설하면서 이 표를 **재실행하지 않았다**.
 `31행`·`29행` 열은 **이력으로만** 남긴다(덮어쓰면 무엇이 왜 바뀌었는지가 사라진다).
 
-★★★★ **전면 재실행 5 (설계리뷰 FIX Iter 12, `L3-ⓒ`) — 정의역 = (iv) 표 최종 65행.**
-Iter 12 가 신설한 **5행**(33b · 45b · 47K · 50b · 50c)을 포함해 **전 leg 을 하나씩 다시 껐다**.
-정본 = 아래 **`65행` 열**. ★ 직전 판은 본문에 *"최종 60행"* 이라 쓰고 열 라벨은 `59행` 이라 적어
-**두 수가 문면 안에서 갈렸다**(R12 F-5) — 라벨과 본문을 `65행` 으로 일치시킨다.
+★★★★ **전면 재실행 6 (설계 FIX Iter 13, `L3-ⓒ`) — 정의역 = (iv) 표 최종 67행.**
+Iter 13 이 신설한 **2행**(50d · 58b)을 포함해 **전 leg(52종)을 하나씩 다시 껐다**.
+정본 = 아래 **`67행` 열**. **변화한 leg 은 4 뿐**이며(`PATH_KEYS drop workflow` 3→5 ·
+`LADDER_WIRED` 3→4 · `WF_BRANCH` 1→2 · `WIRE_WF` 1→2) 나머지 48 leg 은 65행 값과 **동일**하다 —
+신설 2행이 사다리 축만 행사하기 때문이다. ★ 직전 판(Iter 12, 전면 재실행 5)의 정의역은 **65행**이었고
+그 산출은 아래 열의 미변경 48 leg 에 그대로 살아 있다.
+★ **이력**: Iter 11 판은 본문 *"최종 60행"* 과 열 라벨 `59행` 이 갈렸고(R12 F-5), Iter 12 가 라벨·본문을
+`65행` 으로 일치시켰다. **열 라벨은 매 판 「현 최종 표」를 가리키며 갱신된다**(`48행`·`31행` 열은 이력 보존).
 
-**산출 명령 (정의역 = (iv) 표 최종 65행 · 실행일 pin `2026-08-17` · 위치 슬롯 문면대로 · 경계 우선
-· workflow 축 분기 on)**:
+**산출 명령 (정의역 = (iv) 표 최종 67행 · 실행일 pin `2026-08-17` · 위치 슬롯 문면대로 · 경계 우선
+· workflow 축 분기 on · 다중 경로 키 **ALL** 독법)**:
 
 ```
-재현기 R: leg-off 키를 하나씩(★ 묶음 금지 — H-6) 끄고 65행 전건 재실행,
+재현기 R: leg-off 키를 하나씩(★ 묶음 금지 — H-6) 끄고 67행 전건 재실행,
           (verdict, exit 사유) 쌍이 규정판과 다른 행을 모은다
   독법 리터럴 — CBODY off  = `[^\n]` 을 ERE 로 오전사한 독법(= "역슬래시도 글자 n 도 아닌 문자")
                 MULTILINE off = `re.M` 제거
@@ -617,6 +621,8 @@ Iter 11 이 **문면에서 다시 구현한 재현기**(H-5c — 이전 판 코�
   CBODY    off -> 뒤집힌 행 23 (verdict 8 = 위 7행 + 33b / 사유만 15)
   MULTILINE off -> 뒤집힌 행 24 (verdict 8 = 동일 / 사유만 16)
   # 늘어난 1 은 신설 행 33b 하나이며, 24·25 를 낼 수 있는 독법은 여전히 없다 (철회 근거 무손상)
+★ FIX Iter 13 재실행 (정의역 67행) — **불변 23 · 24**
+  # 신설 2행(50d · 58b)은 둘 다 사다리 축 행이라 `CBODY`/`MULTILINE` 을 행사하지 않는다 (firsthand)
 ```
 
 ⇒ **상위집합에서 22·23 이 나왔으므로 48행 부분집합에서 24·25 는 성립할 수 없다.**
@@ -636,7 +642,7 @@ CBODY off 독법        뒤집힌 행 / verdict 판별
 사이의 실 오전사 경로이며, (i-x-A) 문자군 교차표가 이미 *"주석 본문군은 엔진별로 정반대"* 로 지목한 축이다).
 ★ 이 정정은 **본 저작의 자기 수치를 낮추는 방향**이다 — 판별이 줄었다는 사실을 감추지 않는다.
 
-| leg-off | **65행** | 48행 | 31행 | 뒤집힌 행 (`on` -> `off`) — **65행 기준** | verdict 축 판별 |
+| leg-off | **67행** | 48행 | 31행 | 뒤집힌 행 (`on` -> `off`) — **67행 기준** | verdict 축 판별 |
 |---|---|---|---|---|---|
 | `SCOPE` | **1** | 1 | 1 | verdict 19 | ✓ 1 |
 | `LINE`(정확히 1회) | **1** | 1 | 1 | verdict 22 | ✓ 1 |
@@ -673,13 +679,13 @@ CBODY off 독법        뒤집힌 행 / verdict 판별
 | `NFC` | ★ **1** (60행 0) | — | — | verdict **47K** | ✓ 1 (★ FIX Iter 12 — 판별 0 해소, 아래 ★★★) |
 | ★ `LADDER_KEY` (= `PATH_KEYS` **drop `script_path`**) | **12** (60행 11) | 1 | — | verdict 45 · **45b** · 54 · 55 · 56 · 57 · 58 / 사유만 44 · 46 · 46b · 48 · 49 | ✓ 7 |
 | ★★ **경로 키 연언지 제거** (= `ladder` 에서 *"각 항목에서 경로가 추출된다"* 연언지 자체를 빼고 추출 실패 항목은 skip) | **3** | — | — | verdict 43 · 52 · 53 | ✓ 3 (★ FIX Iter 12 신설 — 아래 ★★★) |
-| ★ `PATH_KEYS` drop `workflow` | **3** (60행 1) | — | — | verdict 50 · **50b** / 사유만 **50c** | ✓ 2 |
+| ★ `PATH_KEYS` drop `workflow` | **5** (65행 3 · 60행 1) | — | — | verdict 50 · **50b** · **50d** · **58b** / 사유만 **50c** | ✓ 4 (★ FIX Iter 13 — 신설 50d · 58b 가 추가로 뒤집힌다) |
 | ★ `PATH_KEYS` drop `workflow_path` | **1** | — | — | verdict 51 | ✓ 1 |
 | ★ `PATH_KEYS` add `action` | **1** | — | — | 사유만 52 | ✗ **사유만** (확대 방향 — (vii) 정직 기재) |
 | ★ `PATH_KEYS` add `detect_command` | **1** | — | — | 사유만 53 | ✗ **사유만** (동상) |
-| ★ `LADDER_WIRED` (배선 연언지 전체 — 두 분기 모두) | **3** (60행 2) | 1 | — | verdict 44 · 49 · **50c** | ✓ 3 |
-| ★★ `WF_BRANCH` (= (iv-L3) 분기 제거 — workflow 축도 `run:` 블롭으로 판정) | **1** | — | — | verdict **50b** | ✓ 1 (★ FIX Iter 12 신설) |
-| ★★ `WIRE_WF` (= `배선_wf` 미검사 — 설치 실재를 항상 참으로) | **1** | — | — | verdict **50c** | ✓ 1 (★ FIX Iter 12 신설) |
+| ★ `LADDER_WIRED` (배선 연언지 전체 — 두 분기 모두) | **4** (65행 3 · 60행 2) | 1 | — | verdict 44 · 49 · **50c** · **58b** | ✓ 4 (★ FIX Iter 13 — 58b 추가. ★ 신설 **50d 는 여기서 뒤집히지 않는다** — 그 부류에서 배선 연언지가 항등이라 공허하기 때문이며, 그 공허가 50d 가 전시하는 천장이다) |
+| ★★ `WF_BRANCH` (= (iv-L3) 분기 제거 — workflow 축도 `run:` 블롭으로 판정) | **2** (65행 1) | — | — | verdict **50b** · **50d** | ✓ 2 (★ FIX Iter 12 신설 · Iter 13 에 50d 추가) |
+| ★★ `WIRE_WF` (= `배선_wf` 미검사 — 설치 실재를 항상 참으로) | **2** (65행 1) | — | — | verdict **50c** · **58b** | ✓ 2 (★ FIX Iter 12 신설 · Iter 13 에 58b 추가) |
 | ★ `LADDER_EXIST` | **3** | 1 | — | verdict 46b · 48 / 사유만 46 | ✓ **2** (직전 판 0 — 철회됨) |
 | ★ `EXIST` 독법 (`ls-tree` 완전일치 -> `ls-files` pathspec) | **1** | — | — | verdict 48 | ✓ 1 |
 | ★ `WIRE` 경로 정규화 (접두 4종 전부) | **4** | — | — | verdict 54 · 55 · 56 · 57 | ✓ 4 |
@@ -999,7 +1005,7 @@ Python 가지 **금지**(`DOTALL` 위험). 직전 판의 무조건 *"`.` 금지"
 | 계수 축 | `grep -o` 출현 목록 → `wc -l` (`grep -c` 금지 — 행 계수) | `len(re.findall())` | 동치 |
 | 날짜 비교 | `sort` 사전순 (ISO 8601 이라 성립) + `date -u -d` | `date.fromisoformat` | 동치 |
 
-★★★★ **stale 고지 (FIX Iter 11 · 12) — 아래 2엔진 차분은 43행 시절 산출이며 60행에서도 65행에서도 재실행하지 않았다.**
+★★★★ **stale 고지 (FIX Iter 11 · 12 · 13) — 아래 2엔진 차분은 43행 시절 산출이며 60행 · 65행 · 67행 어디에서도 재실행하지 않았다 (★ 세 판째 미실행 · R13 심사 3자도 전원 미실행).**
 Iter 10(행 43~47 신설)과 Iter 11(행 46b · 48~58 신설) 두 라운드 모두 이 표를 **재실행하지 않았다**
 (`L3-ⓒ` 미이행 2회 누적). 재실행하려면 POSIX ERE + shell 가지를 신설 17행에 대해 다시 구현해야 하는데,
 **신설 행이 전부 사다리 축**이고 사다리는 `pinned repo state 조회`를 요구하므로 **ERE 가지에 원리적으로 부재**다
@@ -1007,7 +1013,7 @@ Iter 10(행 43~47 신설)과 Iter 11(행 46b · 48~58 신설) 두 라운드 모�
 사다리 축의 2엔진 차분은 **미측정 잔여**로 declare 하며, ERE 는 규범 구현이 아니라 **이식 부록**이므로
 수용 기준(= (iv) 표 단독)에는 영향이 없다. 지우지 않고 정의역을 좁혀 남긴다.
 
-★★★ **2엔진 차분 실행 결과 (firsthand — FIX Iter 9 최종 43행 재실행 · ★ 60행 · 65행 미재실행)**: (iv) 표 **전 43행**을
+★★★ **2엔진 차분 실행 결과 (firsthand — FIX Iter 9 최종 43행 재실행 · ★ 60행 · 65행 · 67행 미재실행)**: (iv) 표 **전 43행**을
 두 구현으로 각각 돌려 `(verdict, exit사유)` 를 비교했다 — **일치 32 / 불일치 11**.
 신설 행 **41**(FM 종단 부재) · **42**(base 키 소실) 은 둘 다 ERE **GREEN**(firsthand — (i-x) ERE 이식 부록 가지 실행)
 이므로 fail-open 부류에 들어간다. `b5` 는 base 비교를 요구하므로 shell 가지에 **원리적으로 부재**다.
@@ -1385,18 +1391,19 @@ Iter 9 는 born-vacuous 를 고치려 골격에 상수 `A` **1줄을 삽입**했
 ★ **나머지 60행은 네 슬롯 전부 기본값**이며, 그 사실을 여기 적는 것이 (iv-0) *"산문 서술 금지"* 의 이행이다.
 ★★ **FIX Iter 12 정정 — 직전 판은 `44` 였다.** 위치 슬롯 행사 행이 5 이고 (iv) 표가 60행이던 시점에도
 `60 - 5 = 55` 였으므로 `44` 는 그때 이미 stale 이었다(행 41·42 신설 이후 미갱신). Iter 12 가 5행을
-신설해 표가 **65행**이 되었으므로 정본은 **60** 이다. **산출 명령** — 이 수치는 세지 말고 다음으로 낸다:
+신설해 표가 **65행**이 되었고, ★ **FIX Iter 13 이 2행(50d · 58b)을 더 신설해 표가 67행이 되었으므로 정본은 62** 다(신설 7행 전부 위치 슬롯 행사 **0** — 전부 `<FM>` 슬롯 안 바이트). **산출 명령** — 이 수치는 세지 말고 다음으로 낸다:
 
 ```
-# 위치 슬롯 행사 행 = 위 표의 행 id 집합 {34, 35, 41, 37, 42} = 5
-# 전체 행 수 = (iv) 표 본문 행 전수 계수 = 65
+# 위치 슬롯 행사 행 = 위 표의 행 id 집합 {34, 35, 41, 37, 42} = 5   (신설 7행 전부 행사 0 — 불변)
+# 전체 행 수 = (iv) 표 본문 행 전수 계수 = 67      (Iter 12 시점 65 · Iter 13 이 50d · 58b 신설)
 #   ★ 행 id 만으로 세면 안 된다 — 이 문서에는 `1`·`34`·`41` 같은 id 를 쓰는 **다른 표**가 있어
-#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|  단독으로는 74 가 나온다 (firsthand, 자기 실측).
+#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|  단독으로는 76 이 나온다 (firsthand, 자기 실측. Iter 12 시점 74).
+#   ★ 행 id 문자 부분은 **[a-zA-Z]** 여야 한다 — [a-c] 로 좁히면 47K 와 50d 가 조용히 빠진다
 #     (iv) 표 행만 고르려면 **기대 열(3번째 칸)이 GREEN/RED/OUT 인 행**으로 좁힌다:
-#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|.*\|[ \t★]*\**(GREEN|RED|OUT)\**[ \t]*\|   -> 65
+#     ^\|\s*\**\s*([0-9]+[a-zA-Z]?)\s*\**\s*\|.*\|[ \t★]*\**(GREEN|RED|OUT)\**[ \t]*\|   -> 67
 #   ★ 기대 열 앞의 `★` 를 허용하지 않으면 **행 36(`★ **OUT**`) 하나가 조용히 빠져 64** 가 된다
 #     (firsthand — 이 계수 규칙 자신이 born-broken 이었고 자기 실행으로 잡았다)
-# 나머지 = 65 - 5 = 60
+# 나머지 = 67 - 5 = 62      (Iter 12 시점 = 65 - 5 = 60)
 ```
 
 ★ `<FENCE>` 를 토큰으로 적는 이유는 **이 블록 자신이 코드펜스 안**이라 중첩이 불가능하기 때문이다
@@ -1578,9 +1585,10 @@ for p in scripts/check-production-cutover-evidence.sh \
 **firsthand 대조 (문면 리터럴, 상수 `A` 포함 — ★★★★ FIX Iter 10 최종 48행 전면 재실행, `L3-ⓒ`)**:
 
 ```
-정의역 = (iv) 표 최종 65행 · 실행일 pin 2026-08-17 · 위치 슬롯 문면대로 · 행37 base=1줄 · 행36 기대=OUT
-재현기 R: 경계 우선                      -> rows=65  match=65  mismatch=0     # ★ Iter 12 재실행
-★ 아래 두 줄은 **60행 시절 산출이며 65행에서 재실행하지 않았다** (Iter 12 정직 고지 — `L3-ⓒ` 미이행 잔여).
+정의역 = (iv) 표 최종 67행 · 실행일 pin 2026-08-17 · 위치 슬롯 문면대로 · 행37 base=1줄 · 행36 기대=OUT
+재현기 R: 경계 우선                      -> rows=65  match=65  mismatch=0     # ★ Iter 12 재실행 (65행 판)
+재현기 R: 경계 우선 · 다중키 ALL          -> rows=67  match=67  mismatch=0     # ★ Iter 13 재실행 (현 정본)
+★ 아래 두 줄은 **60행 시절 산출이며 65행·67행에서 재실행하지 않았다** (Iter 12·13 정직 고지 — `L3-ⓒ` 미이행 잔여).
   신설 5행(33b · 45b · 47K · 50b · 50c)은 모두 `b1` 이 성립하고 frontmatter 가 파싱되므로 `ADRQ` 를
   만족한다 — 그래서 **정의역 우선으로 바꿔도 `OUT` 으로 떨어지지 않는다는 것이 문면상의 추론**이지만,
   **추론은 측정이 아니다.** 다음 판이 재실행해 이 고지를 지워야 한다.
@@ -1660,6 +1668,7 @@ stub checker := ladder 를 `len(mea) >= 1` 로만 구현 (경로 키·실재·�
   ★ FIX Iter 11 최종 60행 -> rows=60  match=52  mismatch=8
      탈락 행 = 43 · 44 · 46 · 46b · 48 · 49 · 52 · 53
   ★ FIX Iter 12 최종 65행 -> rows=65  match=56  mismatch=9      # 신설 50c 가 추가로 탈락
+  ★ FIX Iter 13 최종 67행 -> rows=67  match=57  mismatch=10     # 신설 58b 가 추가로 탈락 (50d 는 stub 에서도 GREEN)
      탈락 행 = 43 · 44 · 46 · 46b · 48 · 49 · 50c · 52 · 53
 ```
 
@@ -1732,7 +1741,7 @@ run블롭'   := run블롭에서 주석줄을 빈 줄로 치환한 텍스트
   이제 **행 49** 를 가진다 — 경계를 부분문자열로 낮추면 그 행이 `RED/ladder-unwired` → **GREEN** 으로 샌다.
 - ★★ **뒤 경계에 `/` 를 추가하지 않는다 (판별 0 이라서)** — Codex 가 지적한 앞/뒤 비대칭(`앞`에만 `/`)은
   실재를 `ls-tree` 완전일치로 올리는 순간 **판정에 도달하지 않는다**(디렉터리는 blob 이 아니므로
-  `실재` 에서 먼저 떨어진다). 뒤 경계에 `/` 를 넣는 변형을 **최종 65행 전체**에 돌린 결과 **뒤집히는 행 0** 이므로,
+  `실재` 에서 먼저 떨어진다). 뒤 경계에 `/` 를 넣는 변형을 **최종 67행 전체**에 돌린 결과 **뒤집히는 행 0** 이므로,
   (★ FIX Iter 12 — 구 기재 `59행` 은 그 시점 표가 이미 60행이라 stale 이었다. Iter 12 의 5행 신설 후 재실행했고
   뒤집힘은 여전히 0 이다. 산출 명령 = 아래 (0-c) ablation 표의 `WIRE 뒤 경계에 / 추가` 행과 같은 재현기·같은 정의역)
   **판별 0 인 leg 을 신설하지 않는다**는 (0-c) 를 여기에도 적용해 **넣지 않는다**. γ 는 `실재` 축 단독으로 닫힌다.
@@ -1945,7 +1954,7 @@ t = ${{ github.workspace }}/./scripts/next-phase.sh
   P-1 -> P-4 순서 : './scripts/next-phase.sh'   배선(scripts/next-phase.sh) = False
   P-4 -> P-1 순서 : 'scripts/next-phase.sh'     배선(scripts/next-phase.sh) = True
      (P-1 의 좌측 인접 가드 [A-Za-z0-9_./-] 가 P-4 제거 前에는 앞의 `/` 를 보고 `./` 를 보호한다)
-  코퍼스 출현 `}}/./` + `WORKSPACE}/./` + `WORKSPACE/./` = 0   => 현 65행 판별 0
+  코퍼스 출현 `}}/./` + `WORKSPACE}/./` + `WORKSPACE/./` = 0   => 현 67행 판별 0
 ```
 
 ⇒ **규정 순서 = `P-4` → `P-3` → `P-2` → `P-1`** (긴 접두부터, `./` 를 마지막에). 판별 0 이므로 행을
@@ -2091,7 +2100,7 @@ GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude
   사다리의 *"마지막 이빨"* 인 세 번째 연언지가 그 경로 부류에서 **항진 = 3연언지가 2연언지로 공허화**한다.
 
   ```
-  # 주입 실증 (대조군 = (iv) 표 65행 baseline 65/65 선통과 확인 후 주입 — firsthand)
+  # 주입 실증 (대조군 = (iv) 표 baseline 전건 선통과 확인 후 주입 — firsthand). ★ Iter 13 에서 판별 행 50d 로 착지
   주입  - workflow: .github/workflows/invariant-check.yml
      규정판              GREEN
      LADDER_WIRED off    GREEN   <- 배선 연언지를 통째로 꺼도 불변 = 공허
@@ -2104,11 +2113,13 @@ GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude
 
   ⇒ **INV-V(검사가 있으나 판별력 0)가 수용 기준 안에서 성립하는 입력 부류다.** 이 문서가 열두 라운드
   고발해 온 형상이며 **이번 분기가 새로 만들었다** — 그 사실을 지우지 않고 적는다.
-  ★ **판별 행이 규칙상 요구되나 이번 판은 신설하지 않았다** — (0-c) 자기적용의 예외(*"코퍼스 출현 0 → 문면
-  고정만"*)에 **해당하지 않으므로**(도달 1항목) 행이 있어야 옳다. 행 후보 `- workflow: .github/workflows/invariant-check.yml`
-  → **GREEN** 을 **사전 실측**해 두었고(위 블록), 신설 시 (0-c) 의 `WF_BRANCH` 가 1 → 2(50b · 신설행)로 이동한다.
-  보류 사유는 **R13 처분의 정지 기준(범위 잠금 1회 한정)** 이며, 이월처는 Change Plan §12.3 잔여다.
-  **"닫았다" 가 아니라 "무엇이 열려 있는지 적었고 닫는 비용을 재 두었다"** 이다.
+  ★★ **판별 행 `50d` 를 신설해 이 천장을 표 안에 결속했다 (FIX Iter 13)** — (0-c) 자기적용의
+  예외(*"코퍼스 출현 0 → 문면 고정만"*)에 **해당하지 않으므로**(도달 1항목, ADR-158) 행이 있어야 옳다.
+  ★ 다만 그 행의 지위를 과장하지 않는다 — `50d` 는 **유일 판별자가 아니며**(`WF_BRANCH` · `PATH_KEYS drop
+  workflow` 둘 다 50b 가 이미 문다), `INSTALL` 의 항등 분기를 제거하는 mutant조차 뒤집지 못한다
+  (firsthand: WF_DOM **116 전건**에서 항등 분기 제거로 `배선_wf` 가 바뀌는 경로 **0**).
+  ⇒ `50d` 는 **천장 전시 행**이고 **전시 대상이 그 관측 불가 자체**다. Phase 2 가 이 부류를 좁히면
+  그 행이 RED 로 뒤집혀 표가 변경을 관측한다 — **천장을 표 안에 결속하는 유일한 방법**(45b 선례).
 
 ###### (iv-L2) ★★ 사다리 exit 사유 3종 + 사유 귀속 규칙 (`admissible` 의 `OR` 는 무손상)
 
@@ -2190,7 +2201,7 @@ GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude
 | **50** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/retro-alert-pickup-kpi.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow` 의 판별 (P1-1)**. 직전 판은 8원 중 **`script_path` 1원만 행사**했고 축소·확대 mutant 가 양방향으로 48/48 을 통과했다. 이 행은 실재 ∧ 배선을 둘 다 만족하는 실물이라 `workflow` 를 closed-set 에서 빼면 **RED/`ladder-path-key`** 로 뒤집힌다(firsthand). ★★★ **FIX Iter 12 — 이 행의 `배선` 근거가 산문이었다 (R12 P0, 3자 수렴)**: 구 술어에서 유일 근거는 `-m "Automated by templates/github-workflows/retro-alert-pickup-kpi.yml"` (**git commit 메시지**)이고 **호출은 0** 이었다. (iv-L3) 분기 후 근거는 `.github/workflows/retro-alert-pickup-kpi.yml` **설치 실재**이며 verdict 는 GREEN 그대로다 — **값이 아니라 근거가 바뀌었고, 그 사실을 지우지 않는다** |
 | **50b** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/claude-md-line-cap.yml` | **GREEN** | — | ★★★★ **FIX Iter 12 신설 — workflow 축 분기의 판별 (R12 P0-ii, Codex)**. 이 워크플로는 실재하고 `.github/workflows/claude-md-line-cap.yml` 로 **설치**돼 있으나 어떤 `run:` 블롭에서도 **호출되지 않는다**(워크플로는 이벤트로 트리거된다). 분기를 없애면 `RED/ladder-unwired` — 즉 **정당한 워크플로 선언이 born-red** 였던 자리다. ★ 코퍼스에서 이 형상이 4항목(3파일) 실재했다 |
 | **50c** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/test.yml` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 12 신설 — `배선_wf`(설치 실재)의 음성 판별 (R12 P0-ii)**. 이 템플릿은 실재하나 `.github/workflows/test.yml` **twin 이 없다**(firsthand — 템플릿 88 중 twin 부재 17). `배선_wf` 를 미검사(항상 참)로 두면 **GREEN**. ★ 행 50b 와 **양성 ∧ 음성 쌍**이며, 둘 다 있어야 분기가 항진이 아님이 고정된다. ★★ **FIX Iter 13 — 셀 서사가 원인을 오도했다 (R13 Claude P2-2)**: *"twin 이 없다"* 는 누락이 아니라 **의도된 배제**다 — twin 부재 17 중 **16 이 `CONSUMER_ONLY_WORKFLOWS` 등재**(consumer 배포용 seed, wrapper self-app 미운용)이고 **이 행의 대상 `test.yml` 이 바로 그 16 중 하나**(제외목록 13번)다. 제외목록 밖은 1건(`test-yaml-ext-fixture.yaml`)뿐이며 그마저 게이트 정의역(`*.yml`) 밖이다. 행의 **음성 판별 기능은 무손상**이며(`WIRE_WF` off -> GREEN), 정정 대상은 서사뿐이다 |
-| **50d** | `D` ⏎ `K:` ⏎ `  - workflow: .github/workflows/invariant-check.yml` | **GREEN** | — | ★★★★ **FIX Iter 13 신설 — (iv-L3) 항등의 *양성* 전시 (설계리뷰 R13 Claude P1-3)**. `.github/workflows/` 하위 경로는 `INSTALL(p) = p` 이므로 **`배선_wf(p) ≡ 실재(p)`** 이고, 실재가 참이면 사다리의 세 번째 연언지가 **항진**이 된다. firsthand: `LADDER_WIRED` off **GREEN 불변** · `WIRE_WF` off **GREEN 불변**(둘 다 공허) · `WF_BRANCH` off → **RED/`ladder-unwired`**. ⇒ 이 GREEN 은 **전적으로 (iv-L3) 분기의 산물**이며 배선 leg 은 판정에 기여하지 않는다 — **INV-V(검사가 있으나 판별력 0)의 표 안 전시**다. 직전 판은 이 항등을 **음성** 사례(`ac-schema-authoring-gate.yml`, 실재 거짓)로만 적었고 양성 쪽에 행이 **0** 이었다. 코퍼스 도달 = `ADR-158`(현재 실재 거짓 — 착지 순간 발현). ★ 판별 축 = `WF_BRANCH`(50b 와 같은 leg 을 무는 **2번째** 행이며, 50b 는 templates 축 · 이 행은 설치 축이라 **INSTALL 두 가지가 각각 행사**된다) |
+| **50d** | `D` ⏎ `K:` ⏎ `  - workflow: .github/workflows/invariant-check.yml` | **GREEN** | — | ★★★★ **FIX Iter 13 신설 — (iv-L3) 항등의 *양성* 전시 (설계리뷰 R13 Claude P1-3)**. `.github/workflows/` 하위 경로는 `INSTALL(p) = p` 이므로 **`배선_wf(p) ≡ 실재(p)`** 이고, 실재가 참이면 사다리의 세 번째 연언지가 **항진**이 된다. firsthand: `LADDER_WIRED` off **GREEN 불변** · `WIRE_WF` off **GREEN 불변**(둘 다 공허) · `WF_BRANCH` off → **RED/`ladder-unwired`**. ⇒ 이 GREEN 은 **전적으로 (iv-L3) 분기의 산물**이며 배선 leg 은 판정에 기여하지 않는다 — **INV-V(검사가 있으나 판별력 0)의 표 안 전시**다. 직전 판은 이 항등을 **음성** 사례(`ac-schema-authoring-gate.yml`, 실재 거짓)로만 적었고 양성 쪽에 행이 **0** 이었다. 코퍼스 도달 = `ADR-158`(현재 실재 거짓 — 착지 순간 발현). ★★ **이 행의 판별 지위를 과장하지 않는다 (정직 기재)** — verdict 뒤집힘은 `WF_BRANCH`·`PATH_KEYS drop workflow` 에서 나오지만 **둘 다 50b 가 이미 문다** ⇒ **표 내 유일 판별자 지위는 0**. 더 나아가 `INSTALL` 의 **항등 분기를 제거하는 mutant조차 이 행을 뒤집지 못한다** — `.github/workflows/X` 를 basename 매핑해도 다시 `.github/workflows/X` 라 결과가 같기 때문이다(firsthand: WF_DOM **116 전건**에서 항등 분기 제거로 `배선_wf` 가 바뀌는 경로 **0**). ⇒ 이 행은 판별 행이 아니라 **천장 전시 행**(45b · 33b 부류)이며, **전시 대상이 바로 그 관측 불가 자체**다. Phase 2 가 이 부류를 좁히면 이 행이 RED 로 뒤집혀 표가 그 변경을 관측한다 |
 | **51** | `D` ⏎ `K:` ⏎ `  - workflow_path: templates/github-workflows/version-3way-atomic.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow_path` 의 판별 (P1-1)**. 동상. 빼면 **RED/`ladder-path-key`**. ★★★ **FIX Iter 12 — 동상의 산문 근거**: 구 술어의 유일 근거는 PR 본문 문자열 `Source: templates/github-workflows/version-3way-atomic.yml (CFP-820 …)` 이었다. 분기 후 근거 = 설치 실재 |
 | **52** | `D` ⏎ `K:` ⏎ `  - action: bootstrap-labels` | **RED** | `ladder-path-key` | ★★★★ **FIX Iter 11 신설 — `action` 분리의 판별 (P0-E)**. 코퍼스 dict 항목 **130 중 122** 가 이 형태이고 값은 경로가 아니라 **검사 이름**이다. `action` 을 `PATH_KEYS` 에 되돌리면 이 행이 `RED/ladder-path-missing` 으로 뒤집힌다 — 즉 **오진단**이며, 그것이 코퍼스에서 **122회** 발생하고 있었다 |
 | **53** | `D` ⏎ `K:` ⏎ `  - detect_command: bash scripts/check-claude-md-line-cap.sh` | **RED** | `ladder-path-key` | ★★★ **FIX Iter 11 신설 — `detect_command` 분리의 판별 (P0-E)**. 값이 경로가 아니라 **명령줄**이다(`bash ` 접두 포함). 되돌리면 `RED/ladder-path-missing` 으로 뒤집힌다. ★ 경로가 인자로 **들어있다**는 것과 값이 경로**이다**는 것은 다르다 — 후자만 `PATH_KEYS` 의 계약이다 |
@@ -2354,7 +2365,7 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
   b1~b5  ->  ADRQ  ->  ★ 발행일 정규화  ->  (iii) leg 순서(mea-missing -> line-form -> ...)
 ```
 
-- ★ **판별 행 0 이다 (정직 기재)** — 이 순서를 바꿔도 뒤집히는 행이 **없다**(firsthand — ★ **FIX Iter 11 최종 60행 재실행**: 발행일 정규화를 (iii) leg 뒤로 미룬 변주에서 뒤집힌 행 **0**). ★ **FIX Iter 12 고지 — 이 변주는 65행에서 재실행하지 않았다**(`L3-ⓒ` 미이행 잔여). 신설 5행은 발행일 축을 행사하지 않으므로 결과가 바뀌지 않으리라 **추론**하나, 추론은 측정이 아니다.
+- ★ **판별 행 0 이다 (정직 기재)** — 이 순서를 바꿔도 뒤집히는 행이 **없다**(firsthand — ★ **FIX Iter 11 최종 60행 재실행**: 발행일 정규화를 (iii) leg 뒤로 미룬 변주에서 뒤집힌 행 **0**). ★ **FIX Iter 12 · 13 고지 — 이 변주는 65행에서도 67행에서도 재실행하지 않았다**(`L3-ⓒ` 미이행 잔여). 신설 7행(Iter 12 의 5 + Iter 13 의 2)은 발행일 축을 행사하지 않으므로 결과가 바뀌지 않으리라 **추론**하나, 추론은 측정이 아니다.
   발행일 결손을 가진 행(31 · 32)은 다른 leg 을 **전부 통과**하도록 만들어져 있어, 순서와 무관하게
   같은 사유로 exit 하기 때문이다.
 - ★ **그럼에도 규정한다** — 순서 미규정은 *"구현마다 사유가 갈릴 수 있다"* 는 뜻이고, 수용 기준이
@@ -2425,17 +2436,17 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
   이 되어 유령 leg 이 **0 → 6 RED**(전면 false-RED)로 뒤집힌다. ⇒ front-end 가 **입력을 NFC 로 정규화**해
   검사를 정규화-불변으로 만든다. 정규화 후 NFD 입력도 **GREEN**(firsthand), `NFC` off 시 **RED 6**(판별).
 
-★★★★ **실행 확인 (firsthand, FIX Iter 12 — 최종 65행 전건 재실행 · 문면 리터럴)**: (iv) 표 **전 65행**을
+★★★★ **실행 확인 (firsthand, FIX Iter 13 — 최종 67행 전건 재실행 · 문면 리터럴)**: (iv) 표 **전 67행**을
 front-end 인스턴스화 구현(Python `re` + `yaml.safe_load` + NFC 정규화 + pinned repo state 조회)으로
-실행했다 — **기대 일치 65/65 · 불일치 0**(판정과 exit 사유가 **모두** 일치).
+실행했다 — ★ **FIX Iter 13 재실행: 기대 일치 67/67 · 불일치 0**(판정과 exit 사유가 **모두** 일치. Iter 12 시점 65/65).
 
 ```
 재현기 R: 상수 A 삽입 · 위치 슬롯 문면대로 · 경계 우선 · 행37 base=1줄 · 행36 기대=OUT
-          · workflow 축 분기 on ((iv-L3))
-  -> rows=65  match=65  mismatch=0
+          · workflow 축 분기 on ((iv-L3)) · 다중 경로 키 ALL 독법
+  -> rows=67  match=67  mismatch=0        # ★ FIX Iter 13 (Iter 12 시점 65/65)
 
 대조군 (재현기가 항진이 아님을 먼저 실증 — 해석은 그 뒤에)
-  stub(사다리 3연언지 전부 삭제)  -> rows=65  match=56  mismatch=9
+  stub(사다리 3연언지 전부 삭제)  -> rows=67  match=57  mismatch=10
      탈락 행 = 43 · 44 · 46 · 46b · 48 · 49 · 50c · 52 · 53
   LADDER_WIRED off              -> 뒤집힘 3 (44 · 49 · 50c)
   NFC off                       -> 뒤집힘 1 (47K)
@@ -2535,9 +2546,9 @@ b1 off (β)  = ★ 선두 BOM·CR 을 제거한 뒤 진행       -> 34 · 35 GRE
 | ★ `FMLINE` 좁힘 (`b4` 의 FM-형 줄을 `^[a-z_]+:` 로) | **47 · 47K** | RED → **GREEN** |
 | ★ `LADDER_KEY` off (= `PATH_KEYS` 에서 `script_path` **원소** 제거) | **45 · 45b · 54 · 55 · 56 · 57 · 58** verdict / 44 · 46 · 46b · 48 · 49 사유만 | GREEN → **RED/`ladder-path-key`** |
 | ★★ 경로 키 **연언지** 제거 (원소 제거와 **다른 연산** — FIX Iter 12) | **43 · 52 · 53** | RED → **GREEN** |
-| ★ `LADDER_WIRED` off (배선 연언지 전체) | **44 · 49 · 50c** | RED → **GREEN** |
-| ★★ `WF_BRANCH` off ((iv-L3) 분기 제거 — FIX Iter 12) | **50b** | GREEN → **RED/`ladder-unwired`** |
-| ★★ `WIRE_WF` off (설치 실재 미검사 — FIX Iter 12) | **50c** | RED → **GREEN** |
+| ★ `LADDER_WIRED` off (배선 연언지 전체) | **44 · 49 · 50c · 58b** | RED → **GREEN** |
+| ★★ `WF_BRANCH` off ((iv-L3) 분기 제거 — FIX Iter 12 · Iter 13 에 50d 추가) | **50b · 50d** | GREEN → **RED/`ladder-unwired`** |
+| ★★ `WIRE_WF` off (설치 실재 미검사 — FIX Iter 12 · Iter 13 에 58b 추가) | **50c · 58b** | RED → **GREEN** |
 | ★ `LADDER_EXIST` off | **46b · 48** verdict / 46 사유만 | RED → **GREEN** (★ FIX Iter 11 — 직전 판의 *"사유만 · verdict 판별 0"* 은 **철회**됐다) |
 | ★ `EXIST` 독법 `ls-tree` 완전일치 → `ls-files` pathspec | **48** | RED → **GREEN** (디렉터리가 실재로 셈된다) |
 | ★ `WIRE` 경로 정규화 off (접두 4종) | **54 · 55 · 56 · 57** | GREEN → **RED/`ladder-unwired`** (접두 1종씩 끄면 각 1행) |
@@ -2567,7 +2578,7 @@ leg 을 묶어서 끄는 ablation 은 **묶음 안의 판별 0 을 가린다** �
 그 문장은 **19줄 위 자기 표**(`★ `WIRE` 선두 주석줄 제거 off | 없음 | ✗ 0`)와 정면으로 모순이었다.
 같은 절 안에서 표와 산문이 갈렸다는 뜻이며, Phase 2 가 이 산문을 규칙으로 읽으면 *"모든 신설 leg 은 표 안
 판별을 갖는다"* 를 전제해 **주입 대조군을 검증 계획에서 누락**한다. ★ Iter 12 가 신설한 leg 3종
-(`경로 키 연언지 제거` · `WF_BRANCH` · `WIRE_WF`)은 **전부 표 내 판별을 갖는다**(3 · 1 · 1).
+(`경로 키 연언지 제거` · `WF_BRANCH` · `WIRE_WF`)은 **전부 표 내 판별을 갖는다**(★ FIX Iter 13 재실행 후 **3 · 2 · 2** — 신설 행 50d 가 `WF_BRANCH` 에, 58b 가 `WIRE_WF` 에 각각 추가되었다. Iter 12 시점 산출은 3 · 1 · 1 이었다).
 그리고 직전 판이 `mea-missing` 에서 *"판별 0 = 중복 방어"* 라 적었다가
 행 27 로 반증당한 자리와 같은 실수를 피하려면, **신설 시점에 판별 행을 함께 만드는 것**이 유일한 방법이다.
 
@@ -2830,19 +2841,22 @@ NON_PATH_KEYS := ["action", "check", "detect_command", "script", "path"]
   **분기 채택의 적발 근거가 2항목**이 되고 `ADR-072` 는 분기 이전에 이미 GREEN 이다. 방향은 **fail-open**.
 - ★★ **이것은 *"판정을 바꾸는 변수가 변수 목록 밖에 있다"* 의 6번째**다 (`RCHAR` Iter 7 · CRLF Iter 8 ·
   위치 슬롯 Iter 10 · `정의역 우선` 독법 Iter 11 · 접두 제거 순서 Iter 12 에 이어). 처분도 같다 — **리터럴로 등재**.
-- ★★★ **표 내 판별은 현재 `0` 이다 (정직 기재 — 이번 판은 행을 신설하지 않았다)**. (iv) 표 65행 중 경로 키를
-  2개 이상 보유한 항목을 가진 행은 **0**(firsthand)이므로 **65/65 는 ALL·ANY 어느 독법에서도 불변**이고,
-  표는 이 축의 변경을 **관측하지 못한다**. 코퍼스 도달이 2 이므로 (0-c) 자기적용의 예외(*"출현 0 → 문면
-  고정만"*)에 **해당하지 않으며 행이 있어야 옳다.** 행 후보와 그 판정을 **사전 실측**해 둔다:
+- ★★★ **판별 행 `58b` 를 신설했다 (FIX Iter 13) — 직전 상태는 표 내 판별 `0` 이었다.** 구 65행 판에는
+  경로 키를 2개 이상 보유한 항목을 가진 행이 **0**(firsthand)이라 **65/65 가 ALL·ANY 어느 독법에서도
+  불변**이었고 표가 이 축의 변경을 **관측하지 못했다**. 코퍼스 도달이 2 이므로 (0-c) 자기적용의
+  예외(*"출현 0 → 문면 고정만"*)에 **해당하지 않는다**:
 
   ```
-  후보  D ⏎ K: ⏎   - script_path: scripts/check-adr-amendment-parity.sh
-                    workflow: templates/github-workflows/test.yml
-     ALL(규정) -> RED/`ladder-unwired`      ANY -> GREEN        # 이 축의 유일 판별자
-     신설 시 (0-c) 이동 = `PATH_KEYS drop workflow` 3→5 · `LADDER_WIRED` 3→4 · `WIRE_WF` 1→2 · stub 9→10
+  행 58b  D / K: /   - script_path: scripts/check-adr-amendment-parity.sh
+                       workflow: templates/github-workflows/test.yml
+     ALL(규정) -> RED/ladder-unwired      ANY -> GREEN        # 이 축의 유일 판별자
+     (0-c) 이동 = PATH_KEYS drop workflow 3->5 · LADDER_WIRED 3->4 · WIRE_WF 1->2 · stub 9->10 (재실행 반영필)
   ```
 
-  보류 사유는 **R13 처분의 정지 기준(범위 잠금 1회 한정)** 이며 이월처는 Change Plan §12.3 잔여다.
+  ★★ **이 행을 `판별 0 declare` 로 대체하지 않은 이유** — 그 축은 **단지 미행사인 게 아니라 구현 간에
+  이미 갈라져 있었다.** 검증필 하네스(65/65 · 52 leg 전건 일치)에 이 입력을 넣자 규정(ALL)과 **다른
+  답(GREEN)** 이 나왔고 원인은 사다리 함수의 `break`(pick-first = ANY)였다. `declare` 로 두면 그 갈림이
+  **계속 검출되지 않는다.**
 - ★★ **이 미규정은 Iter 12 가 만든 것이 아니다** — (vii) 은 Iter 11 판이다. 그럼에도 **살아 있는 자유 변수**라
   적는다. ★ 실증 1례: R13 심사자 한 명의 **같은 세션 두 하네스가 이 축에서 갈렸고**(fixture 층 pick-first ↔
   코퍼스 층 ALL), 본 저작도 그 fixture 하네스에 위 후보 행을 넣었을 때 규정과 **다른 답(GREEN)** 을 받았다.
@@ -3110,22 +3124,22 @@ scope 로 삼고, 소급 적용하면 코퍼스 전수 `[]`·키부재 다수가
 
 ★★★ **수용 기준 판 스탬프 (설계 FIX Iter 13 시점 — R14 심사자 진입점)**
 
-**Iter 13 = 문면 전용 판이다 — 수용 기준(= (iv) 표) 은 바이트 단위로 무변경이다.**
-
 | 축 | 값 | 재현 |
 |---|---|---|
-| ③-dt (iv) 결정표 행 | **65 (무변경)** — Iter 13 신설 **0** · 삭제 **0** | `RE_ID` 74 / `RE_ROW` 65 · 표 구간 연속 · id 중복 0 |
-| 기존 65행 `(입력 바이트, 기대, 사유)` 변경 | **0** | `529bdefad` 판과 3열 전건 대조 (firsthand) |
-| (0-c) ablation 표 본문 행 | **51 (무변경)** — 신설 leg **0** | 값 이동 0 (행을 안 넣었으므로 연쇄 갱신 대상 0) |
-| Iter 13 편집 범위 | 문면 · 천장 · 접합부 선언 · (iv) 표 **5번째 열(판별 설명)** 2셀(33b · 50c) | `git diff` 17 hunk · +206 / −14 (삭제분은 전부 **같은 자리 교체**) |
-| ★ 문면만 닫고 **표는 열어 둔 축 2** | ① `.github/workflows/` 항등에서 배선 연언지 공허(INV-V) ② 다중 `PATH_KEYS` ALL↔ANY | 판별 행 후보·기대·연쇄 비용을 **사전 실측**해 Change Plan §12.3 **U-13a · U-13b · U-13c** 에 기재 |
+| ③-dt (iv) 결정표 행 | **67** — Iter 13 신설 **2**(`50d` · `58b`) · 삭제 **0** | `RE_ID` 76 / `RE_ROW` 67 · 표 구간 연속 · id 중복 0 · ★ 행 id 정규식은 `[a-zA-Z]` (「`[a-c]`」로 좁히면 `47K`·`50d` 누락) |
+| 기존 65행 `(입력 바이트, 기대, 사유)` 변경 | **0** | `529bdefad` 판과 3열 전건 대조 (firsthand) — **되돌림 0 · additive only** |
+| 문면 리터럴 전건 재현 | `rows=67 match=67 mismatch=0` | 대조군 stub **`57/10`** · `LADDER_WIRED` off **4** · `WF_BRANCH` off **2** · `WIRE_WF` off **2** · `NFC` off 1 |
+| (0-c) ablation 표 본문 행 | **51 (무변경)** — 신설 leg **0** | 전 52 leg 재실행 후 **값이 이동한 leg = 4** (`PATH_KEYS drop workflow` 3→5 · `LADDER_WIRED` 3→4 · `WF_BRANCH` 1→2 · `WIRE_WF` 1→2), 나머지 48 leg 불변 |
+| 위치 슬롯 나머지 | **62** = 67 − 5 | 신설 7행(Iter 12 의 5 + Iter 13 의 2) 전부 위치 슬롯 행사 **0** |
+| 신설 leg 3종 판별 | **3 · 2 · 2** (Iter 12 시점 3 · 1 · 1) | `경로 키 연언지 제거` 3 · `WF_BRANCH` {50b, 50d} · `WIRE_WF` {50c, 58b} |
+| ★ 판별 지위 정직 고지 | `58b` = 다중키 ALL↔ANY 축의 **유일 판별자**. `50d` = **유일 판별자 아님**(천장 전시 행) | `50d` 의 두 판별 축은 50b 가 이미 물고, `INSTALL` 항등 분기 제거 mutant 는 WF_DOM **116 전건**에서 관측 불가(0) |
 | 미실행 잔여 (세 판째) | **2엔진(ERE/awk) 차분** — R13 심사 3자도 전원 미실행 | 43행 시절 산출이 그대로 남아 있다 |
 | REPO_STATE pin | `b0cefd3fe` (무변경) | (iv-L) 리터럴 |
 
-★ **위 Iter 12 스탬프의 2행은 이제 stale 이다** — *"표 내 판별 0 인 leg = 1"*(실제 (0-c) 65행 열 0 인 행은
-`BLANK` · `WIRE` 선두 주석줄 제거 **2**) · *"65행 미재실행 잔여 … `DOMAIN`/`ORDER`"*(R13 PL 이 65행에서
-독립 측정해 ADR 기재값과 일치 확인). **R13 정정 목록 밖이라 Iter 13 은 고치지 않고 기재만 한다**
-(Change Plan §12.3 U-13e) — 이 문서에서 *"목록 밖은 손대지 않는다"* 가 범위 잠금의 내용이기 때문이다.
+★ **위 Iter 12 스탬프의 2행은 이제 stale 이다** — *"표 내 판별 0 인 leg = 1"*(실제 (0-c) 열 0 인 행은
+`BLANK` · `WIRE` 선두 주석줄 제거 **2**) · *"65행 미재실행 잔여 … `DOMAIN`/`ORDER`"*(R13 PL 이 독립
+재현기로 65행에서 측정해 ADR 기재값과 일치 확인). **R13 정정 목록 밖이라 Iter 13 은 고치지 않고 기재만
+한다**(Change Plan §12.3 U-13e) — 이 문서에서 *"목록 밖은 손대지 않는다"* 가 범위 잠금의 내용이기 때문이다.
 
 **긍정**
 
