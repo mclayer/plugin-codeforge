@@ -6,9 +6,17 @@ Under test: archive/adr/ADR-182-review-domain-write-domain-separation.md
 계약 tier (Change Plan §8.12 정직 천장 승계):
   · 13 AC named test = 문서-파싱 presence assert — 기계 라벨 상한 = presence.
     검출력·의미 완결성은 비강제 (CEILING_DISCLOSURE — "완전 봉인" 주장 금지).
+  · probe 판정 정의역 = RTM 판정원이 지정한 「§결정 N 절 slice」 (구현리뷰 iter1
+    F-CR1-01 정산 — 술어 정의역 = 주장 정의역. 문서-전역 substring 협착 금지:
+    절 밖 동일 문자열이 절-국소 소멸을 가리는 경로 차단).
   · 가드 3종 = 오라클 자기방어 (RTM 비매핑):
-      - test_adr182_clause_probe_red_on_removed_clause:
-        13 AC probe 전건에 대해 앵커 제거 mutant RED ∧ 미주입 대조군 GREEN 동시 실증.
+      - test_adr182_clause_probe_red_on_removed_clause — 3축 동시 실증:
+        ⑴ 미주입 대조군 GREEN (실 문서 probe 전건 통과)
+        ⑵ 전역 mutant RED (앵커 전 출현 제거 사본 — 유지 축)
+        ⑶ 절-국소 mutant RED (주장 §결정 절 안의 출현만 제거한 사본 — F-CR1-01 ③.
+           전역 축과 서로 맹점 보완: probe 가 전역 탐색으로 퇴행하면 본 축이 RED)
+        + count==1 구조적 backstop (F-CR1-01 ④ — 앵커 다중 출현 희석 재발을 형태로
+        봉인. 재발 시 처방 = 검사 완화가 아니라 앵커의 절-유일 형태 정밀화).
         mutant 는 in-memory 사본 + pytest tmp_path 스크래치 — repo 오염 0.
       - test_cfp2999_story_section5_resolves_to_real_section:
         이의 A (§1 verbatim 내부 헤딩 shadowing → first-match slicing vacuous) 회귀.
@@ -25,6 +33,10 @@ Under test: archive/adr/ADR-182-review-domain-write-domain-separation.md
     `LC_ALL=C`) 을 성문했는지의 presence 만 검사 (AC-0 앵커).
   · 좌표 파생 정수 금지 — 본 파일의 유일 수치 상수는 ADR-182 §결정 5 표의
     3-상태 계약 (스펙 상수, 좌표 비파생).
+
+CI 실행 채널 (F-CR1-02 정산): `.github/workflows/cfp2999-adr182-contract-test.yml`
+  — on.paths {ADR-182, 본 파일} + push(main), day-1 hard-fail · non-required
+  (branch protection 8-tuple 무접촉).
 
 부재 처리 (ADR-178 test 선례 동형 — 무조건 skip 은 false-negative 채널):
   · `ADR182_PATH` 명시 지정인데 부재 → fail (명시 요청의 setup error)
@@ -80,104 +92,175 @@ def adr182_content() -> str:
     return _load_adr(adr_path)
 
 
-# ── probe 명세: AC-id → load-bearing 문면 앵커 목록 (ADR-182 verbatim 조각) ──
-# probe 판정 = 앵커 전건 존재. 가드가 앵커별 제거 mutant RED 를 실증하므로
-# 각 앵커는 실제로 판정에 기여한다 (항진 probe 차단).
-PROBE_SPECS: dict[str, list[str]] = {
-    "AC-0": [
-        "### §결정 0 — 심사 정의역 정본 = Story §1-§6 단일값 (AC-0 선결)",
-        "(표기 정본 = `§1-§6`)",
-        "**3-bucket 전건 분류 (28/28 종결 — 미분류 잔량 0)**",
-        "census·통제 fixture 공히 `git grep`(byte-mode, locale 무관) 또는 `LC_ALL=C grep` 로 실행한다",
-        "**좌표 유효 범위 = @4b30b860 한정**",
-        "NF4-04: bucket C 수신자 = 본 ADR",
-    ],
-    "AC-1a": [
-        "**분리를 채택한다.**",
-        "**메타-텍스트 3종 (closed-enum)**",
-        "**FIX 회차 마커**",
-        "**census·측정 기록**",
-        "**회귀 방지 규율**",
-    ],
-    "AC-1b": [
-        "**본문 정정 write 는 §2-§6 에 잔존한다**",
-        "**이관 목적지 = 신규 증적 전용 monopoly 섹션**",
-        "이관 목적지 3안 중 (c)",
-        "§9 부적격",
-        "§10 부적격",
-    ],
-    "AC-1c": [
-        "**cross-ref 양방향 요건 (AC-1c — 추적성 보상, 무보상 통과 차단)**",
-        "`{finding-id, 대상 섹션 heading 앵커, 정정 커밋 SHA}`",
-        "**라인 번호 등 좌표 파생 정수는 금지**",
-        "고정 포인터 1줄",
-    ],
-    "AC-2a": [
-        "**PASS 조건을 severity-gated exit 로 정밀화한다.**",
-        "PASS = P0 0 ∧ P1 0 ∧ 직전 회차 finding 전건 처분 종결",
-        "**도달 가능성 근거**",
-    ],
-    "AC-2b": [
-        "**MTD-1944 13회차 시뮬레이션 (AC-2b — §1 문면만으로 수행)**",
-        "**PASS 불성립 (P1 1건) — 판별 가능**",
-        "**판별 범위 분할 (정직 천장 승계)**",
-        "6건 중 5건 미분류",
-    ],
-    "AC-2c": [
-        "**처분 판정원 (AC-2c)**",
-        "리뷰 PL 보고서의 처분 표",
-        "`replay_verdict`",
-        "②의 실배선 = B(CFP-2985) 편입",
-    ],
-    "AC-3a": [
-        "**RESET 정당화에 positive 기재 의무를 신설한다.**",
-        "「**구조 변경** (corrective action",
-        "「**술어 개선** (correction",
-        "**술어 개선 단독으로는 동일 카운터 내 재-RESET 불가.**",
-        "**기재 위치** = §10 FIX Ledger RESET row 신규 column",
-    ],
-    "AC-3b": [
-        "**판별 불가 분기 (AC-3b)**",
-        "**RESET 불허 — ESCALATE**",
-        "판별 불가를 RESET 통과 경로로 쓸 수 없다",
-    ],
-    "AC-4a": [
-        "**적용을 채택한다.**",
-        "**적용 범위 boolean 판정만**",
-        "적용 정의역에 §9·§10 원장을 포함한다",
-        "**원장을 심사 정의역에 편입하지 않는 조건 하에서만** 적용한다",
-        "**수신자 = §9/§10 write 주체 전원**",
-    ],
-    "AC-5a": [
-        "### §결정 5 — 소급 transition 3-상태 (요청 5 — AC-5a/5b/5c)",
-        "| **신규** (본 판정 확정 후 개시) |",
-        "| **진행중·BLOCKED** (MTD-1944 포함) |",
-        "| **완료** |",
-    ],
-    "AC-5b": [
-        "**MTD-1944 조항 (AC-5b)**",
-        "**14회차부터 신 exit 조건 적용**",
-        "기존 RESET 5회 유효 보존",
-        "**max-FIX 카운터 2/3 동결값 이월 — 재산정 금지**",
-    ],
-    "AC-5c": [
-        "**조정 규칙 (AC-5c — 사전 명문화)**",
-        "① 완료 Story 제외",
-        "② 기존 RESET 마커 유효",
-        "③ 신규 마커부터 신 규칙",
-        "완료 Story 전수 재스캔은 발의하지 않는다",
-    ],
+def _decision_section_span(content: str, n: int) -> tuple[int, int]:
+    """§결정 N 절의 (start, end) 문자 span.
+
+    종료 lookahead = 다음 h1~h3 헤딩 또는 EOF (F-CR1-03 정산 — h3 한정이던
+    구판 `(?=^### |\\Z)` 는 h2 경계 미인식 latent 과포획 채널).
+    """
+    m = re.search(
+        rf"^### §결정 {n} — .*?(?=^#{{1,3}} |\Z)",
+        content,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    assert m, f"§결정 {n} 절 슬라이스 실패"
+    return m.span()
+
+
+def _decision_section(content: str, n: int) -> str:
+    s, e = _decision_section_span(content, n)
+    return content[s:e]
+
+
+# ── probe 명세: AC-id → (RTM 판정원 §결정 N, load-bearing 문면 앵커 목록) ──
+# probe 판정 정의역 = 해당 §결정 절 slice (F-CR1-01 ② — RTM 판정원 결속).
+# 각 앵커는 문서-전역 유일 (가드 1 count==1 backstop) ∧ 절 내 소재 — 다중 출현이던
+# 2건은 절-유일 형태로 정밀화 (AC-1c 본문 side 행 / AC-2c 판정원 ② 항).
+PROBE_SPECS: dict[str, dict] = {
+    "AC-0": {
+        "section": 0,
+        "anchors": [
+            "### §결정 0 — 심사 정의역 정본 = Story §1-§6 단일값 (AC-0 선결)",
+            "(표기 정본 = `§1-§6`)",
+            "**3-bucket 전건 분류 (28/28 종결 — 미분류 잔량 0)**",
+            "census·통제 fixture 공히 `git grep`(byte-mode, locale 무관) 또는 `LC_ALL=C grep` 로 실행한다",
+            "**좌표 유효 범위 = @4b30b860 한정**",
+            "NF4-04: bucket C 수신자 = 본 ADR",
+        ],
+    },
+    "AC-1a": {
+        "section": 1,
+        "anchors": [
+            "**분리를 채택한다.**",
+            "**메타-텍스트 3종 (closed-enum)**",
+            "**FIX 회차 마커**",
+            "**census·측정 기록**",
+            "**회귀 방지 규율**",
+        ],
+    },
+    "AC-1b": {
+        "section": 1,
+        "anchors": [
+            "**본문 정정 write 는 §2-§6 에 잔존한다**",
+            "**이관 목적지 = 신규 증적 전용 monopoly 섹션**",
+            "이관 목적지 3안 중 (c)",
+            "§9 부적격",
+            "§10 부적격",
+        ],
+    },
+    "AC-1c": {
+        "section": 1,
+        "anchors": [
+            "**cross-ref 양방향 요건 (AC-1c — 추적성 보상, 무보상 통과 차단)**",
+            "`{finding-id, 대상 섹션 heading 앵커, 정정 커밋 SHA}`",
+            "**라인 번호 등 좌표 파생 정수는 금지**",
+            "- **본문 side** = Story 골격에 고정 포인터 1줄",
+        ],
+    },
+    "AC-2a": {
+        "section": 2,
+        "anchors": [
+            "**PASS 조건을 severity-gated exit 로 정밀화한다.**",
+            "PASS = P0 0 ∧ P1 0 ∧ 직전 회차 finding 전건 처분 종결",
+            "**도달 가능성 근거**",
+        ],
+    },
+    "AC-2b": {
+        "section": 2,
+        "anchors": [
+            "**MTD-1944 13회차 시뮬레이션 (AC-2b — §1 문면만으로 수행)**",
+            "**PASS 불성립 (P1 1건) — 판별 가능**",
+            "**판별 범위 분할 (정직 천장 승계)**",
+            "6건 중 5건 미분류",
+        ],
+    },
+    "AC-2c": {
+        "section": 2,
+        "anchors": [
+            "**처분 판정원 (AC-2c)**",
+            "리뷰 PL 보고서의 처분 표",
+            "② fix-event-v1 v1.4 `replay_verdict`",
+            "②의 실배선 = B(CFP-2985) 편입",
+        ],
+    },
+    "AC-3a": {
+        "section": 3,
+        "anchors": [
+            "**RESET 정당화에 positive 기재 의무를 신설한다.**",
+            "「**구조 변경** (corrective action",
+            "「**술어 개선** (correction",
+            "**술어 개선 단독으로는 동일 카운터 내 재-RESET 불가.**",
+            "**기재 위치** = §10 FIX Ledger RESET row 신규 column",
+        ],
+    },
+    "AC-3b": {
+        "section": 3,
+        "anchors": [
+            "**판별 불가 분기 (AC-3b)**",
+            "**RESET 불허 — ESCALATE**",
+            "판별 불가를 RESET 통과 경로로 쓸 수 없다",
+        ],
+    },
+    "AC-4a": {
+        "section": 4,
+        "anchors": [
+            "**적용을 채택한다.**",
+            "**적용 범위 boolean 판정만**",
+            "적용 정의역에 §9·§10 원장을 포함한다",
+            "**원장을 심사 정의역에 편입하지 않는 조건 하에서만** 적용한다",
+            "**수신자 = §9/§10 write 주체 전원**",
+        ],
+    },
+    "AC-5a": {
+        "section": 5,
+        "anchors": [
+            "### §결정 5 — 소급 transition 3-상태 (요청 5 — AC-5a/5b/5c)",
+            "| **신규** (본 판정 확정 후 개시) |",
+            "| **진행중·BLOCKED** (MTD-1944 포함) |",
+            "| **완료** |",
+        ],
+    },
+    "AC-5b": {
+        "section": 5,
+        "anchors": [
+            "**MTD-1944 조항 (AC-5b)**",
+            "**14회차부터 신 exit 조건 적용**",
+            "기존 RESET 5회 유효 보존",
+            "**max-FIX 카운터 2/3 동결값 이월 — 재산정 금지**",
+        ],
+    },
+    "AC-5c": {
+        "section": 5,
+        "anchors": [
+            "**조정 규칙 (AC-5c — 사전 명문화)**",
+            "① 완료 Story 제외",
+            "② 기존 RESET 마커 유효",
+            "③ 신규 마커부터 신 규칙",
+            "완료 Story 전수 재스캔은 발의하지 않는다",
+        ],
+    },
 }
 
 
 def _probe(content: str, ac_id: str) -> list[str]:
-    """AC probe 실행 — 부재 앵커 목록 반환 (빈 list = 통과)."""
-    return [a for a in PROBE_SPECS[ac_id] if a not in content]
+    """AC probe 실행 — RTM 판정원 §결정 절 slice 안에서 탐색, 부재 앵커 목록 반환.
+
+    정의역 한정 (F-CR1-01 ②): 절 slice 실패 시 전 앵커 부재로 보고 (fail-closed —
+    절 자체가 사라지면 그 AC 의 판정원이 소멸한 것).
+    """
+    spec = PROBE_SPECS[ac_id]
+    try:
+        section = _decision_section(content, spec["section"])
+    except AssertionError:
+        return list(spec["anchors"])  # 절 소멸 = 전 앵커 부재 (fail-closed)
+    return [a for a in spec["anchors"] if a not in section]
 
 
 def _assert_probe(content: str, ac_id: str) -> None:
     missing = _probe(content, ac_id)
-    assert not missing, f"{ac_id} load-bearing 앵커 부재: {missing}"
+    assert not missing, (
+        f"{ac_id} load-bearing 앵커가 §결정 {PROBE_SPECS[ac_id]['section']} 절에 부재: {missing}"
+    )
 
 
 # ── 13 AC named tests (Change Plan §8.1 RTM 후보명 그대로 — Hop3 ast 대상) ──
@@ -242,15 +325,11 @@ def test_adr182_transition_rule_three_states(adr182_content):
 
     presence 앵커에 더해 §결정 5 표의 데이터 행 수 = 3 을 구조적으로 assert 한다
     (Change Plan §8.1 "표 형태 강제" — 상태 행 추가·삭제 양방향 검출).
+    슬라이스 = 공유 helper (h1~h3 종료 lookahead — F-CR1-03 정산).
     """
     _assert_probe(adr182_content, "AC-5a")
-    m = re.search(
-        r"^### §결정 5 —.*?(?=^### |\Z)", adr182_content, flags=re.MULTILINE | re.DOTALL
-    )
-    assert m, "§결정 5 절 슬라이스 실패"
-    state_rows = [
-        ln for ln in m.group(0).splitlines() if re.match(r"^\| \*\*", ln)
-    ]
+    section = _decision_section(adr182_content, 5)
+    state_rows = [ln for ln in section.splitlines() if re.match(r"^\| \*\*", ln)]
     assert len(state_rows) == EXPECTED_TRANSITION_STATE_ROWS, (
         f"transition 표 상태 행 수 {len(state_rows)} ≠ 스펙 상수 "
         f"{EXPECTED_TRANSITION_STATE_ROWS} (신규/진행중·BLOCKED/완료): {state_rows}"
@@ -270,37 +349,59 @@ def test_adr182_recount_rule_predeclared(adr182_content):
 # ── 가드 3종 (RTM 비매핑 — 오라클 자기방어) ──
 
 
-def test_adr182_clause_probe_red_on_removed_clause(adr182_content, tmp_path):
-    """가드 1: 조항 제거 mutant RED ∧ 미주입 대조군 GREEN 동시 실증.
+def _section_local_mutant(content: str, section_n: int, anchor: str) -> str:
+    """주장 §결정 절 안의 앵커 출현만 제거한 사본 (절 밖 출현은 보존 — F-CR1-01 ③)."""
+    s, e = _decision_section_span(content, section_n)
+    return content[:s] + content[s:e].replace(anchor, "") + content[e:]
 
-    미주입 대조군 GREEN: 실 ADR 문서가 13 AC probe 전건 통과.
-    제거 mutant RED: 각 AC 의 각 앵커를 제거한 in-memory 사본에서 해당 probe 가
-      반드시 실패 — probe 가 앵커에 실제로 배선돼 있음을 반증 가능 형태로 고정
-      (항진 probe 면 mutant 에서도 GREEN → 본 가드가 RED).
+
+def test_adr182_clause_probe_red_on_removed_clause(adr182_content, tmp_path):
+    """가드 1: 3축 대조군 — 미주입 GREEN ∧ 전역 mutant RED ∧ 절-국소 mutant RED + count==1.
+
+    ⑴ 미주입 대조군 GREEN: 실 ADR 문서가 13 AC probe 전건 통과.
+    ⑵ count==1 backstop (F-CR1-01 ④): 앵커 전건 문서-전역 출현 1회 — 다중 출현
+       희석 (절 밖 동일 문자열이 절-국소 소멸을 가리는 형태) 재발을 형태로 봉인.
+    ⑶ 전역 mutant RED (유지 축): 앵커 전 출현 제거 사본에서 해당 probe 실패.
+    ⑷ 절-국소 mutant RED (F-CR1-01 ③): 주장 §결정 절 안의 출현만 제거한 사본에서
+       해당 probe 실패 — probe 가 문서-전역 substring 탐색으로 퇴행하면 (절 밖
+       출현이 남아 있는 한) 본 축이 RED 로 반증한다. 전역 축과 서로 맹점 보완.
     스크래치 사본: 대표 mutant 1본은 tmp_path (repo 밖 스크래치) 파일로도 실증 —
       로더 seam (`_load_adr`) 경유 경로 동일성 확인. repo 오염 0.
     """
-    # 미주입 대조군 GREEN (전건)
+    # ⑴ 미주입 대조군 GREEN (전건)
     for ac_id in PROBE_SPECS:
         assert not _probe(adr182_content, ac_id), f"대조군 GREEN 실패: {ac_id}"
 
-    # 제거 mutant RED (앵커별 전건 — in-memory 스크래치 사본)
-    for ac_id, anchors in PROBE_SPECS.items():
-        for anchor in anchors:
-            mutant = adr182_content.replace(anchor, "")
-            assert anchor not in mutant  # 제거 자체의 sanity
-            missing = _probe(mutant, ac_id)
-            assert missing, (
-                f"mutant GREEN — probe 미배선 결함: {ac_id} 앵커 제거에도 통과: {anchor!r}"
+    for ac_id, spec in PROBE_SPECS.items():
+        for anchor in spec["anchors"]:
+            # ⑵ count==1 구조적 backstop (문서-전역)
+            n_occ = adr182_content.count(anchor)
+            assert n_occ == 1, (
+                f"{ac_id} 앵커 문서-전역 출현 {n_occ}회 (1회 계약 위반 — 다중 출현 희석 "
+                f"채널. 처방 = 앵커의 절-유일 형태 정밀화): {anchor!r}"
+            )
+            # ⑶ 전역 mutant RED (in-memory 스크래치 사본)
+            g_mutant = adr182_content.replace(anchor, "")
+            assert _probe(g_mutant, ac_id), (
+                f"전역 mutant GREEN — probe 미배선 결함: {ac_id} 앵커 제거에도 통과: {anchor!r}"
+            )
+            # ⑷ 절-국소 mutant RED (주장 절 안 출현만 제거 — 절 밖 보존)
+            l_mutant = _section_local_mutant(adr182_content, spec["section"], anchor)
+            assert _probe(l_mutant, ac_id), (
+                f"절-국소 mutant GREEN — probe 정의역이 주장 절 밖으로 협착: "
+                f"{ac_id} §결정 {spec['section']} 절 내 제거에도 통과: {anchor!r}"
             )
 
     # 대표 mutant 1본 — tmp_path 스크래치 파일 + 로더 경유 (repo 오염 0)
-    rep_ac, rep_anchor = "AC-1a", PROBE_SPECS["AC-1a"][0]
+    rep_spec = PROBE_SPECS["AC-1a"]
+    rep_anchor = rep_spec["anchors"][0]
     mutant_file = tmp_path / "adr182_mutant.md"
     mutant_file.write_text(
-        adr182_content.replace(rep_anchor, ""), encoding="utf-8", newline="\n"
+        _section_local_mutant(adr182_content, rep_spec["section"], rep_anchor),
+        encoding="utf-8",
+        newline="\n",
     )
-    assert _probe(_load_adr(mutant_file), rep_ac), "파일 mutant RED 실패 (로더 seam)"
+    assert _probe(_load_adr(mutant_file), "AC-1a"), "파일 mutant RED 실패 (로더 seam)"
 
 
 def test_cfp2999_story_section5_resolves_to_real_section():
@@ -352,7 +453,9 @@ def test_ac_source_enum_matches_contract_enum():
     이의 B: Story §5.3 `source: analyst` 4건 ∉ 계약 enum — internal-docs `9a25c46a`
     기정정. 본 가드는 wrapper 측 계약 (`scripts/lib/ac_id.py`) 이 결함 값을 실제로
     기각하는지 실행으로 고정한다 (presence 상한 초과 — 양성 ∧ 음성 쌍):
-      양성(기각): source="analyst" → 'source' 위반 메시지 발생.
+      양성(기각): source="analyst" → 'source' enum 위반 메시지 발생 (술어 =
+        `"'source'" in v and "enum" in v` — F-CL-004 정산: 다른 필드 메시지의
+        무관 'source' 포함 오탐 경로 봉인, 양성/음성 술어 대칭화).
       음성(통과): source="derived"/"user" → 'source' 위반 0.
     """
     import ac_id  # conftest 가 scripts/lib 를 sys.path 주입
@@ -363,9 +466,11 @@ def test_ac_source_enum_matches_contract_enum():
     assert "analyst" not in ac_id.SOURCE_ENUM
 
     base = {"id": "AC-0", "statement": "x", "tier": "normative"}
-    # 양성: 결함 값 기각
+    # 양성: 결함 값 기각 (enum 위반 메시지로 좁힘 — F-CL-004)
     bad = ac_id.validate_ac_record({**base, "source": "analyst"})
-    assert any("source" in v for v in bad), f"결함 값 'analyst' 미기각: {bad}"
+    assert any("'source'" in v and "enum" in v for v in bad), (
+        f"결함 값 'analyst' 미기각 (또는 메시지 형식 이탈): {bad}"
+    )
     # 음성: 계약 값 통과
     for ok_val in ac_id.SOURCE_ENUM:
         ok = ac_id.validate_ac_record({**base, "source": ok_val})
