@@ -1902,8 +1902,13 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
   비실행 := A 에서 확장자 {.sh .py .js .ts .ps1} 를 **제외**                             #      = 27
   ★ + `CLAUDE.md` 1                                                                   #      = 28  ← 본문의 28
      (`CLAUDE.md` 는 슬래시가 없어 `S` 의 토큰 규칙(슬래시 ≥ 1)상 **`S` 밖**이다 — 그래서 별도 가산)
-  ★ 정의역을 bare filename 허용(슬래시 ≥ 0)으로 넓히면 **29** 가 된다(+`requirements.txt`).
-    확장자 집합을 {… .mjs .cmd .bat} 로 넓히면 26, {.sh .py} 로 좁히면 33 이다.
+  ★ 정의역을 bare filename 허용(슬래시 ≥ 0)으로 넓히면 **29** 가 된다(+`requirements.txt`. 이 값은
+    `CLAUDE.md` **가산** base — bare filename 을 허용하면 `CLAUDE.md` 가 `S` 안으로 들어오기 때문).
+  ★ 확장자 집합을 {… .mjs .cmd .bat} 로 넓히면 **26**(+`CLAUDE.md` 가산 시 27),
+    {.sh .py} 로 좁히면 **33**(가산 시 34)이다.
+    ★ **FIX Iter 14 — base 병기 (R14 PL P2-3).** 직전 판은 이 두 변주를 `CLAUDE.md` **미가산**으로
+    산출해 놓고 headline `28`(가산)과 나란히 적어 **같은 문단 안에서 base 가 갈렸다.**
+    이 절의 규율(*"수치는 정의역에 민감하니 정의역을 함께 적는다"*)의 자기 위반이었다.
   ```
 
   ★★ **같은 (iv-L) 절 안의 다른 `28`(위 *"주석줄에서만 배선 = 28종"*)과 이 `28` 은 disjoint 한 두 집합이다**
@@ -2374,8 +2379,16 @@ ADRQ(t) := frontmatter 파싱 성공 ∧ 'adr_number' ∈ fm ∧ fm['adr_number'
   **신규 파일의 ¬ADRQ 도 RED** 로 뒀고, 그 결과 **(iv) 표 fixture 전건이 born-red** 였다(골격에
   `adr_number` 가 없으므로). 신규 registry 파일도 같은 false-RED 를 받는다. ⇒ ⓑ 는 정의역 밖으로 둔다.
 - ★ **그래서 남는 잔여 (`declared`)**: **신규 파일을 `adr_number` 없이 만들어 규범을 선언**하는 경로는
-  본 술어로 미탐이다. 지우고 인용하면 over-claim 이다. (형제 게이트가 `adr_number` 를 별도로 요구하는지는
-  본 저작에서 **확인하지 않았다** — 확인 불가로 남기며 근거로 쓰지 않는다.)
+  본 술어로 미탐이다. 지우고 인용하면 over-claim 이다.
+  ★★ **FIX Iter 14 — 형제 게이트 접합부를 실측으로 확정 (R14 Codex F-7).** 직전 판은 *"형제 게이트가
+  `adr_number` 를 별도로 요구하는지 확인하지 않았다 — 확인 불가"* 로 남겼다. 그 정직 처분 자체는
+  ADR-119 이행으로 옳았으나, **1개 명령으로 닫히는 것을 미확인으로 과대 기재**한 것이었다.
+  실측(pin `b0cefd3fe`): `git show b0cefd3fe:scripts/lib/check_doc_frontmatter.py | grep -n adr_number`
+  → `:30  "archive/adr": {"adr_number", "title", "status", "category", "date"}` —
+  `archive/adr` **REQUIRED 키 집합에 `adr_number` 포함**이며, 이 게이트는 branch protection
+  **required context**(`doc frontmatter schema (CFP-28 — strict)`)다. ⇒ **§결정 4 접합부 선언**:
+  본 술어의 ⓑ(`OUT`)로 빠지는 *"`adr_number` 없는 신규 `archive/adr` 파일"* 은 **형제 required 게이트가
+  merge 전에 차단**한다. 본 표의 verdict·행 기대는 무변경(접합 선언이지 술어 변경이 아니다).
 - ★ **골격 상수 추가**: `A := adr_number: 999` 를 (iv-0) 공통 골격에 넣어 **fixture 가 정의역 안**임을
   명시한다. `adr_number` 는 어느 leg 에도 참여하지 않으므로 **기존 행의 기대는 하나도 바뀌지 않는다**
   (firsthand — 행 1~30 전건 불변). 행 36·37 만 이 상수를 `null` 로 덮어쓴다.
