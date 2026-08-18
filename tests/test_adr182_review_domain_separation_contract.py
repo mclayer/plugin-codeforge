@@ -12,9 +12,10 @@ Under test: archive/adr/ADR-182-review-domain-write-domain-separation.md
   · 가드 3종 = 오라클 자기방어 (RTM 비매핑):
       - test_adr182_clause_probe_red_on_removed_clause — 3축 동시 실증:
         ⑴ 미주입 대조군 GREEN (실 문서 probe 전건 통과)
-        ⑵ 전역 mutant RED (앵커 전 출현 제거 사본 — 유지 축)
-        ⑶ 절-국소 mutant RED (주장 §결정 절 안의 출현만 제거한 사본 — F-CR1-01 ③.
-           전역 축과 서로 맹점 보완: probe 가 전역 탐색으로 퇴행하면 본 축이 RED)
+        ⑵ 전역 mutant RED (앵커 전 출현 제거 사본 — "문면이 문서에 있다" 축)
+        ⑶ relocation mutant RED (앵커를 주장 §결정 절 밖 타 절로 **이동** 한 사본 —
+           F-CL2-001 정산. count==1 불변 ∧ 전역 탐색 GREEN 이라 ② [판정원 절 결속]
+           만 판별. 제거 계열 mutant 는 전역 퇴행 probe 에서도 RED 라 ② 무판별)
         + count==1 구조적 backstop (F-CR1-01 ④ — 앵커 다중 출현 희석 재발을 형태로
         봉인. 재발 시 처방 = 검사 완화가 아니라 앵커의 절-유일 형태 정밀화).
         mutant 는 in-memory 사본 + pytest tmp_path 스크래치 — repo 오염 0.
@@ -349,22 +350,63 @@ def test_adr182_recount_rule_predeclared(adr182_content):
 # ── 가드 3종 (RTM 비매핑 — 오라클 자기방어) ──
 
 
-def _section_local_mutant(content: str, section_n: int, anchor: str) -> str:
-    """주장 §결정 절 안의 앵커 출현만 제거한 사본 (절 밖 출현은 보존 — F-CR1-01 ③)."""
-    s, e = _decision_section_span(content, section_n)
-    return content[:s] + content[s:e].replace(anchor, "") + content[e:]
+# relocation 목적지 — §결정 0 자신이 출처일 때의 대체 (출처≠목적지 보장).
+_RELOCATION_TARGET_FALLBACK = 1
+
+
+def _section_relocated_mutant(content: str, section_n: int, anchor: str) -> str:
+    """주장 §결정 절의 앵커를 **타 §결정 절로 이동** (제거 아님) — ② 성질 전용 판별자.
+
+    성질: `count == 1` 불변 ∧ 문서-전역 탐색 **GREEN** ∧ 절-slice 탐색 **RED**.
+    따라서 `_probe` 가 문서-전역 substring 으로 퇴행하면 본 축이 RED 로 반증한다.
+
+    구판 `_section_local_mutant` (절 안 출현만 제거) 는 판별자가 아니었다 — ⑵
+    `count == 1` 이 성립하는 순간 "절 안 출현만 제거" ≡ "전 출현 제거" 가 되어
+    전역 축과 **byte 동일** (구현리뷰 iter2 F-CL2-001 · 57/57 실측). 제거 계열
+    mutant 는 전역 퇴행 probe 에서도 RED 라 원리적으로 ② 를 판별할 수 없다.
+
+    사후조건을 helper 안에서 self-assert 한다 — mutant 가 조용히 다른 mutant
+    (제거·복제) 로 퇴화하는 채널을 형태로 봉인.
+    """
+    target_n = _RELOCATION_TARGET_FALLBACK if section_n == 0 else 0
+    _, target_end = _decision_section_span(content, target_n)
+    injected = content[:target_end] + anchor + "\n" + content[target_end:]
+
+    s, e = _decision_section_span(injected, section_n)  # 삽입 후 좌표 재탐색
+    body = injected[s:e]
+    assert anchor in body, (
+        f"§결정 {section_n} 절에 원 출현 부재 — relocation 전제 붕괴: {anchor!r}"
+    )
+    mutant = injected[:s] + body.replace(anchor, "", 1) + injected[e:]
+
+    assert mutant.count(anchor) == 1, (
+        f"relocation 이 count==1 을 깨뜨림 (제거·복제로 퇴화): {anchor!r}"
+    )
+    assert anchor not in _decision_section(mutant, section_n), (
+        f"주장 절에 앵커 잔존 — 이동 실패: {anchor!r}"
+    )
+    return mutant
 
 
 def test_adr182_clause_probe_red_on_removed_clause(adr182_content, tmp_path):
-    """가드 1: 3축 대조군 — 미주입 GREEN ∧ 전역 mutant RED ∧ 절-국소 mutant RED + count==1.
+    """가드 1: 3축 대조군 — 미주입 GREEN ∧ 전역 mutant RED ∧ relocation mutant RED + count==1.
 
     ⑴ 미주입 대조군 GREEN: 실 ADR 문서가 13 AC probe 전건 통과.
     ⑵ count==1 backstop (F-CR1-01 ④): 앵커 전건 문서-전역 출현 1회 — 다중 출현
        희석 (절 밖 동일 문자열이 절-국소 소멸을 가리는 형태) 재발을 형태로 봉인.
-    ⑶ 전역 mutant RED (유지 축): 앵커 전 출현 제거 사본에서 해당 probe 실패.
-    ⑷ 절-국소 mutant RED (F-CR1-01 ③): 주장 §결정 절 안의 출현만 제거한 사본에서
-       해당 probe 실패 — probe 가 문서-전역 substring 탐색으로 퇴행하면 (절 밖
-       출현이 남아 있는 한) 본 축이 RED 로 반증한다. 전역 축과 서로 맹점 보완.
+    ⑶ 전역 mutant RED (앵커 존재 축): 앵커 전 출현 제거 사본에서 해당 probe 실패.
+       "이 문면이 문서에 있다" 를 잰다 — probe 정의역이 전역이든 절이든 RED 라
+       ② 성질은 판별하지 못한다.
+    ⑷ relocation mutant RED (② 성질 축 — 구현리뷰 iter2 F-CL2-001 정산): 앵커를
+       주장 §결정 절 밖 **타 절로 이동** 한 사본에서 해당 probe 실패. count==1 이
+       유지되고 문서-전역으로는 여전히 발견되므로, 전역 탐색으로 퇴행한 probe 는
+       이 사본을 GREEN 으로 통과시킨다 → 본 축만이 ② (판정원 절 결속) 를 잰다.
+       각 반복은 그 GREEN 성질까지 함께 assert 해 축이 ⑶ 의 중복으로 퇴화하는
+       채널을 봉인한다.
+       · 구판 ⑷ (절 안 출현만 제거) 는 판별자가 아니었다 — ⑵ count==1 하에서
+         전역 제거와 **byte 동일** (57/57 실측) 이라 회귀 보호 0 이었다.
+       · 정의역: 절 헤딩 자체인 앵커 2/57 제외 (이동 = 절 구조 재편). 대체 커버 =
+         절 소멸 fail-closed 경로 + ⑶.
     스크래치 사본: 대표 mutant 1본은 tmp_path (repo 밖 스크래치) 파일로도 실증 —
       로더 seam (`_load_adr`) 경유 경로 동일성 확인. repo 오염 0.
     """
@@ -385,11 +427,24 @@ def test_adr182_clause_probe_red_on_removed_clause(adr182_content, tmp_path):
             assert _probe(g_mutant, ac_id), (
                 f"전역 mutant GREEN — probe 미배선 결함: {ac_id} 앵커 제거에도 통과: {anchor!r}"
             )
-            # ⑷ 절-국소 mutant RED (주장 절 안 출현만 제거 — 절 밖 보존)
-            l_mutant = _section_local_mutant(adr182_content, spec["section"], anchor)
-            assert _probe(l_mutant, ac_id), (
-                f"절-국소 mutant GREEN — probe 정의역이 주장 절 밖으로 협착: "
-                f"{ac_id} §결정 {spec['section']} 절 내 제거에도 통과: {anchor!r}"
+            # ⑷ relocation mutant RED — ② (판정원 절 결속) 성질 **전용** 판별자
+            if anchor.lstrip().startswith("#"):
+                # 절 헤딩 자체인 앵커 (2/57) 는 이동이 곧 절 구조 재편이라 "조항
+                # 이동" 이 아니다 → 본 축 정의역에서 제외 (정직 declare).
+                # 대체 커버 = 절 소멸 fail-closed 경로 (`_probe` except 분기) + ⑶.
+                continue
+            r_mutant = _section_relocated_mutant(adr182_content, spec["section"], anchor)
+            assert _probe(r_mutant, ac_id), (
+                f"relocation mutant GREEN — probe 가 판정원 절 결속을 잃고 문서-전역 "
+                f"탐색으로 퇴행: {ac_id} 앵커가 §결정 {spec['section']} 절 밖으로 "
+                f"이동했는데도 통과: {anchor!r}"
+            )
+            # ⑷ 판별자 자기증명: 같은 mutant 를 문서-전역으로 탐색하면 GREEN 이어야
+            # 한다. 전역에서도 RED 면 본 축은 ⑶ 의 중복이라 ② 를 판별하지 못한다
+            # (iter1 결함 형태 = 제거 계열 mutant 로의 퇴화 — 형태로 봉인).
+            assert not [a for a in spec["anchors"] if a not in r_mutant], (
+                f"relocation mutant 가 문서-전역 탐색에서도 RED — ⑷ 가 ⑶ 전역 축의 "
+                f"중복으로 퇴화 (② 성질 무판별): {ac_id} {anchor!r}"
             )
 
     # 대표 mutant 1본 — tmp_path 스크래치 파일 + 로더 경유 (repo 오염 0)
@@ -397,7 +452,7 @@ def test_adr182_clause_probe_red_on_removed_clause(adr182_content, tmp_path):
     rep_anchor = rep_spec["anchors"][0]
     mutant_file = tmp_path / "adr182_mutant.md"
     mutant_file.write_text(
-        _section_local_mutant(adr182_content, rep_spec["section"], rep_anchor),
+        _section_relocated_mutant(adr182_content, rep_spec["section"], rep_anchor),
         encoding="utf-8",
         newline="\n",
     )
@@ -455,7 +510,9 @@ def test_ac_source_enum_matches_contract_enum():
     기각하는지 실행으로 고정한다 (presence 상한 초과 — 양성 ∧ 음성 쌍):
       양성(기각): source="analyst" → 'source' enum 위반 메시지 발생 (술어 =
         `"'source'" in v and "enum" in v` — F-CL-004 정산: 다른 필드 메시지의
-        무관 'source' 포함 오탐 경로 봉인, 양성/음성 술어 대칭화).
+        무관 'source' 포함 오탐 경로 봉인. 양성 술어 좁힘 — 음성은 `"'source'" in v`
+        로 더 넓게 유지한다 (오기각을 더 민감하게 잡는 안전 방향. F-CL2-003 정산:
+        구 문구 "대칭화" 는 실코드와 어긋난 과대 서술이었다).
       음성(통과): source="derived"/"user" → 'source' 위반 0.
     """
     import ac_id  # conftest 가 scripts/lib 를 sys.path 주입
