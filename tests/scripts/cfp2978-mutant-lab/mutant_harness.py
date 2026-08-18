@@ -551,7 +551,29 @@ def m_16_coe_job2(t: str) -> str:
 
 
 def m_16_trailing_cmd(t: str) -> str:
-    """W-3b run block 에 후행 명령 1줄 추가 (W-3b 블록 스칼라화 축)."""
+    """W-3b run block 에 후행 명령 1줄 추가 (W-3b 블록 스칼라화 축).
+
+    ★ 오라클 재지정 (구 담지자 `w16_g` 폐기 — 설계 §8.B / §5.1 W-16):
+      `test_w16_g_step_command_shape_pinned` 와 `PIN_WRAPPER_JOB2_STEP_COMMAND_COUNTS`
+      가 삭제되어 이 변이의 기대 킬러가 사라졌다. 승계자 = **봉투 핀**
+      (`PIN_ENVELOPE_SHA256`) — 봉투가 job2 의 `run` 스칼라 **전문**을 담으므로
+      후행 명령 1줄이 붙으면 봉투 sha 가 이동한다.
+
+    ★ 이 승계는 **추론이 아니라 실측**이다. 재현 (수치 리터럴을 박지 않는다 —
+      명령만 적는다. 두 산출이 **다르면** 검출 성립):
+        python scripts/lib/envelope_pin.py .github/workflows/parallel-work-sentinel-check.yml --job2 parallel-work-sentinel-test
+        # 위 파일 사본의 W-3b run 블록 말미에 임의 명령 1줄을 덧붙인 뒤 동일 실행
+      음성 대조(동반 의무 — 없으면 「무엇이든 RED」인 항진과 구별 불가):
+        봉투 **밖**(`jobs.parallel-work-sentinel` 하위) 변경은 sha 를 움직이지
+        않아야 한다. firsthand 3종(job-level 키 주입 / step 통째 주입 /
+        step name 변경) 전건 불변 확인.
+
+    ★ 관측면 단서 (RED 를 **누가** 보는가 — 오라클 성립 ≠ 하네스 관측):
+      `run_pytest_face` 는 `test_cfp2978_workflow_shape.py` 단일 파일만 실행하고
+      그 파일은 봉투를 보지 않는다 ⇒ 정적 면은 이 변이에 GREEN 이다. 봉투 RED 는
+      **담지 테스트가 실행면에 포함되고 그 테스트가 실제로 착지 형상과 핀을
+      대조할 때** 비로소 관측된다.
+    """
     # ★ run 은 이미 블록 스칼라(W-3d V1b)이므로 「후행 명령 1줄 추가」가 현행 판본.
     new_run = A_J2_RUNPYTEST_BODY + '          echo "Pytest completed"\n'
     return _replace_once(
@@ -684,7 +706,7 @@ MUTANTS: Dict[str, Tuple[str, Callable[[str], str], str]] = {
     "M-16-rm-install":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_install,    "w16_a, b, c, d, f RED (w16_e 미포함) + 봉투 핀 RED"),
     "M-16-rm-collect":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_collect,    "w16_a, b, c, d, f RED (w16_e 미포함) + 봉투 핀 RED"),
     "M-16-coe-job2":     (".github/workflows/parallel-work-sentinel-check.yml", m_16_coe_job2,      "w16_b RED (leg③ — job2 coe 주입)"),
-    "M-16-trailing-cmd": (".github/workflows/parallel-work-sentinel-check.yml", m_16_trailing_cmd,  "봉투 핀(PIN_ENVELOPE_SHA256) RED — 구 담지자 w16_g 는 폐기(설계 §8.B: run 스칼라 전문이 봉투에 담겨 계수 핀을 승계)"),
+    "M-16-trailing-cmd": (".github/workflows/parallel-work-sentinel-check.yml", m_16_trailing_cmd,  "봉투 핀(PIN_ENVELOPE_SHA256) RED — 구 담지자 w16_g 폐기, 봉투가 run 스칼라 전문을 담아 승계(설계 §8.B, sha 이동 firsthand 실측 + 음성 대조 3종). ★ pytest_face 는 봉투를 보지 않는다 — 관측 조건은 m_16_trailing_cmd docstring"),
     "M-16-job-defaults-shell": (".github/workflows/parallel-work-sentinel-check.yml", m_16_job_defaults_shell, "w16_d RED (A5 축 — job defaults.run.shell)"),
     "M-16-twin-drift":   ("templates/github-workflows/parallel-work-sentinel-check.yml", m_16_twin_drift, "[wrapper-twin] RED ∧ [wrapper-canonical] GREEN (독립성)"),
 }
