@@ -28,12 +28,13 @@ try:
 except ImportError as e:
     raise ImportError(f"Failed to import envelope_pin or workflow_shape: {e}") from e
 
-# ★ 잠정 핀 값 (미확정 — DevPL 최종 채취 대기)
+# ★ 확정 핀 값 — DevPL 채취 (워크플로 동결 형상 a1dd631f6, 로스터 13 착지 후)
+# ★ .github/ ∧ templates/ 양쪽 산출 동일 확인 (봉투 층 byte-parity)
 # 대상: .github/workflows/parallel-work-sentinel-check.yml
 # JOB2: parallel-work-sentinel-test
 # 산출 명령:
 #   python -c "import sys;sys.path.insert(0,'scripts/lib');from envelope_pin import compute_envelope;print(compute_envelope('.github/workflows/parallel-work-sentinel-check.yml','parallel-work-sentinel-test').sha256)"
-PIN_ENVELOPE_SHA256 = "7eba9178f01c10f3e3dcc9e2a8b4c2559afcf54dbdde0bf5ece575e71681c84c"
+PIN_ENVELOPE_SHA256 = "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9"
 
 # ★ 3-way 결속 상수 (설계 §8.3 라인 315·437 — L-STRUCT 라운드 보강)
 # PIN_P1_EVIDENCE = 구현 동반 의무 8 (W-3b-1 viii + §8.3 i)
@@ -44,12 +45,13 @@ PIN_ENVELOPE_SHA256 = "7eba9178f01c10f3e3dcc9e2a8b4c2559afcf54dbdde0bf5ece575e71
 #   (b) 구조적 사각: lossy 봉투 mutual blind ∧ 핀 공모 편집 무력 (Q-E-R1)
 #   (c) 성질 집합이 빠뜨린 축은 재지 않음 (피복표 함수성 한계)
 PIN_P1_EVIDENCE = {
-    "envelope_sha256": "7eba9178f01c10f3e3dcc9e2a8b4c2559afcf54dbdde0bf5ece575e71681c84c",
+    "envelope_sha256": "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9",
 }
 
 # ★ 1단계: 정의역 파생 유틸
 WF_PATH = os.path.join(REPO_ROOT, ".github", "workflows", "parallel-work-sentinel-check.yml")
 JOB2 = "parallel-work-sentinel-test"
+TPL_PATH = os.path.join(REPO_ROOT, "templates", "github-workflows", "parallel-work-sentinel-check.yml")
 
 # spine 정의 — 전 sweep 공통 전제 (sweep별 예외 열거 금지)
 # spine = top-level `jobs` 키 + `jobs.<JOB2>` 키 + `jobs` 합성 래퍼 노드
@@ -108,8 +110,10 @@ def test_envelope_pin_reference_matches_landed_pin():
     ★ 3-way 결속: PIN_P1_EVIDENCE["envelope_sha256"] == PIN_ENVELOPE_SHA256
        (설계 §8.3 라인 315·437 — Q-E-R1 미완화, 작위 승격)
     """
-    # ★ 3-way 결속 검증 — 두 상수가 동일성을 유지해야 함 (같은 산출자에서 나온 값)
-    # (설계 동반 의무 8 — 유지 필수)
+    # ★ 3-way 결속 검증 (설계 동반 의무 8 — 유지 필수)
+    # ★★이 assert 는 **보증이 아니다** — 같은 파일 안 두 리터럴의 자기정합이라
+    #   lossy 봉투를 구조적으로 못 본다 (설계 L876 UM-2 (b) declare).
+    #   실 보증은 아래 「실 대조」 2축(.github ∧ templates)이 담지한다.
     assert PIN_P1_EVIDENCE["envelope_sha256"] == PIN_ENVELOPE_SHA256, \
         f"PIN_P1_EVIDENCE 결속 위반: {PIN_P1_EVIDENCE['envelope_sha256']} != {PIN_ENVELOPE_SHA256}"
 
@@ -117,7 +121,11 @@ def test_envelope_pin_reference_matches_landed_pin():
     # (좌변=대상 산출, 우변=frozen literal — 항진 방지)
     envelope = compute_envelope(WF_PATH, JOB2)
     assert envelope.sha256 == PIN_ENVELOPE_SHA256, \
-        f"Envelope sha mismatch: computed={envelope.sha256}, expected={PIN_ENVELOPE_SHA256}"
+        f"Envelope sha mismatch (.github): computed={envelope.sha256}, expected={PIN_ENVELOPE_SHA256}"
+
+    # ★ templates/ 사본도 같은 봉투여야 한다 (consumer 전파 정본 — 봉투 층 parity)
+    envelope_tpl = compute_envelope(TPL_PATH, JOB2)
+    assert envelope_tpl.sha256 == PIN_ENVELOPE_SHA256,         f"Envelope sha mismatch (templates): computed={envelope_tpl.sha256}, expected={PIN_ENVELOPE_SHA256}"
 
 
 def test_envelope_pin_domain_derivation_selfcheck():
