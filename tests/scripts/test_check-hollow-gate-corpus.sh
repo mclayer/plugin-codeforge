@@ -208,9 +208,13 @@ SKIP=0
 #       묻는다.** 축 위의 대상이 자유 선택이면 그 전칭은 성립하지 않는다.
 #     Story §8.11.8 #12 = **「닫힘(도달범위 한정) — 12회차 착수」**(종전 「미탐색」·「무효(구조적
 #       불가)」 표시 전건 철회). 도달범위 한정 = N4(assert 리터럴 본문) 미도달.
-HGC_EXPECTED_CASE_TOTAL=80   # 65+2+8+4+1=80 ← 산술식 전항을 상수와 **같은 줄에** 둔다
-                             # 항 대응: 실 케이스 65 · §13.5 구성 앵커 2 · §13.6 T-SIG 8 ·
-                             #          §13.7 T-FALS 4 · **본 pin 케이스 자신 1**
+HGC_EXPECTED_CASE_TOTAL=93   # 65+2+4+8+5+4+4+1=93 ← 산술식 전항을 상수와 **같은 줄에** 둔다
+                             # 항 대응: 실 케이스 65 · §13.5 구성 앵커 2 · §13.5b T-DECL 4 ·
+                             #          §13.6 T-SIG 8 · §13.7 T-FALS 5 · §13.8 T-RC 4 ·
+                             #          §13.9 T-END 4 · **본 pin 케이스 자신 1**
+                             # ★ 15회차 증분 +13: T-DECL 4(기준값 독립성 = 축 ⓑ) ·
+                             #   T-FALS +1(형제 결박 (e) = 축 ⓒ) · T-RC 4 · T-END 4(판정 이후
+                             #   구간 = 축 ⓐ). 세 축 전부 **14회차 열거에 지목이 0** 이었다.
                              # ★ 종전 주석의 분해 합은 76 인데 값이 77 이었다 — 「본 pin 자신 1」
                              #   항이 빠져 있었다(14회차 F-CR31-4). 값 77 이 옳았고 분해가 틀렸다.
                              # ★★ **왜 산술식을 한 줄에 두는가** (14회차 실측). 분해를 두 물리행에
@@ -228,7 +232,7 @@ HGC_EXPECTED_CASE_TOTAL=80   # 65+2+8+4+1=80 ← 산술식 전항을 상수와 *
 #     정합 이동한다). 종전 상수와 다른 점은 **baseline 이 저자가 쓸 수 없는 리비전**(merge-base)
 #     이라 그 이동이 **고지**된다는 것 하나뿐이다. 「봉인」이 아니다 — §13.5 정직 천장 ⓐ 참조.
 #   ★ 갱신 절차: 실패 문면이 실측 서명을 그대로 출력하므로 그 값을 여기에 옮긴다.
-HGC_DECLARED_COMPOSITION="census=97/50/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
+HGC_DECLARED_COMPOSITION="census=114/63/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
 
 note() { echo "::notice::$*" >&2; }
 log()  { echo "$*" >&2; }
@@ -258,8 +262,61 @@ if ! command -v "$PY" >/dev/null 2>&1; then
 fi
 
 TEST_TMP="$(mktemp -d)"
+
+# ── 판정 **이후** 구간 (rc 사상 · 종점 도달) — §13.8 T-RC / §13.9 T-END 의 피탐침 표면 ──
+# ★ 무엇이 열려 있었나 (15회차 F-CR32-2 · F-CR32-3). §13.6 ⓓ 가 세운 원소 열거
+#   (입력파일 → 서명산출 → 생산자대입 → 인자 → 술어 → 선언상수 → 판정소비 → 인쇄 → 집계 → rc)
+#   는 **판정 경로**에는 촘촘했으나 **판정 이후**에는 지목이 0 이었다. 리뷰 실측 2형 —
+#     · 종료 조건식을 `if true` 로 치환 → 케이스가 정직하게 RED 를 찍어도(77/2/1) **rc=0**
+#     · §13.5 직전에 `exit 0` **1행** → 요약행 · 종료가드 · 15 케이스가 통째 소실인데 **rc=0**
+#       (마커 65 · 요약행 0 · RED ∅)
+#   소비면 실측 = `templates/github-workflows/hollow-gate-corpus-test.yml:91` 이
+#   `run: bash tests/scripts/test_check-hollow-gate-corpus.sh` 로 **rc 단독 소비**(요약행 · 마커
+#   assert 0)라 두 형 모두 CI 에서 **GREEN 착지**한다.
+# ⇒ 처방 3항:
+#   ⓐ rc 결정을 **이름 있는 무인자 술어**로 뽑는다 — 호출 site 에 인자 자리를 남기지 않는
+#      §13.6 (g)(h) 규율의 재적용이며, 그래야 born-RED 가 술어를 탐침할 수 있다.
+#   ⓑ 종점 도달을 **양성 마커**로 세운다. 「조용한 종료가 없었다」는 부재-assert 는 조용한 종료를
+#      정의상 못 본다 — §1a `announce_gap` 이 같은 이유로 세운 규율을 이 파일 자신에 적용한다.
+#   ⓒ 둘 다 `EXIT` trap 에 합류시켜 **정상 종료 경로를 우회해도** rc 가 선다.
+# ★ ⓒ 는 §15 가 「닫는 조건은 확정됐으나 배선 미수행」으로 등재해 둔 잔여의 **이행**이다.
+#   ★★ **합류와 born-RED 짝을 같은 회차에 함께** 넣는다. 합류만 하면 rc 결정권이 trap 으로
+#     옮겨갈 뿐 그 자리가 다시 무지목이 되어 **결정권만 이동하고 무방비**가 된다(15회차 리뷰
+#     §9.32.4 ★ 지적). 그래서 §13.9 T-END 가 trap **배선 자체**를 양성 · 음성으로 잰다.
+# ★ **서브셸 격리** — 본 하네스는 서명 산출을 명령치환으로 부른다. 15회차 리뷰가 `cleanup` 에
+#   `exit 0` 을 넣은 arm 에서 **비결정 부작용**(RED 집합이 실행마다 다름)을 실측해 그 arm 을
+#   `undetermined` 로 보류했고, 기전 후보는 EXIT trap 이 명령치환 서브셸에서도 발화해 산출을
+#   절단하는 경로였다. ⇒ 본 guard 는 **메인 셸에서만** 동작한다(`BASHPID` 대조). 기전이
+#   미확정이므로 「그 기전을 막았다」가 아니라 **정의역을 좁혀 비결정을 만들지 않는다**로 적는다.
+#   [반증시도: 완료 — 본 회차 구현이 최소 재현 스크립트 2본으로 (i) 조기 `exit 0` 을 trap 이
+#    rc=1 로 뒤집음 (ii) 정상 경로는 rc=0 보존 (iii) 명령치환 안에서 guard 가 발화하지 않음
+#    (iv) `trap -p EXIT` 가 명령치환 안에서도 판독되고 `trap -p USR2` 는 공백 — 넷을 실행
+#    확인했다. 서브셸 발화 **기전 자체**의 규명은 **미수행**이며, guard 는 그 기전이 참이든
+#    거짓이든 메인 셸 밖에서 아무 것도 하지 않으므로 어느 쪽이어도 부작용이 없다]
+HGC_MAIN_PID="${BASHPID:-$$}"
+HGC_REACHED_END=0
+
+# rc 사상 술어 — **인자를 받지 않는다**. 탐침은 라이브 전역을 일시 교란해 부른다(§13.6 (e) 규율).
+hgc_exit_ok() {
+  [ "$FAIL" -eq 0 ] && [ "$PASS" -gt 0 ] && [ "$((PASS+FAIL+SKIP))" -eq "$HGC_EXPECTED_CASE_TOTAL" ]
+}
+# 종점 도달 술어 — **양성 마커**. 조기 종료는 마커를 세우지 못한다.
+hgc_end_ok() { [ "$HGC_REACHED_END" = "1" ]; }
+# 최종 판정 = 두 축의 곱. trap 과 정상 종료 경로가 **같은 술어**를 읽는다(소비자 분기 금지 —
+#   §13.5 머리 주석 M-g4 가 「같은 사실의 생산자가 2개」에서 무성이 났음을 실측한 그 교훈).
+hgc_final_ok() { hgc_end_ok && hgc_exit_ok; }
+
 cleanup() { rm -rf "$TEST_TMP" 2>/dev/null; }
-trap cleanup EXIT
+hgc_on_exit() {
+  hgc_exit_forced=0
+  if [ "${BASHPID:-$$}" = "$HGC_MAIN_PID" ] && ! hgc_final_ok; then
+    hgc_end_ok || echo "  ✗ 종점 미도달: 요약 이전에 종료됐다(도달 마커 미설정) — 조기 종료를 초록으로 내지 않는다"
+    hgc_exit_forced=1
+  fi
+  cleanup
+  [ "$hgc_exit_forced" -eq 0 ] || exit 1
+}
+trap hgc_on_exit EXIT
 
 # ── NOT_RUN 가드: 검사 대상 부재 = 무엇도 검증하지 못함 → 즉시 exit 1 (false PASS 금지) ──
 missing=""
@@ -2026,6 +2083,106 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 13.5b. T-DECL = §13.5 **기준값 자신의 독립성** born-RED 짝 (F-CR32-1 봉합 · 축 ⓑ)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 무엇이 열려 있었나. §13.5 는 「실측 서명 == 선언 상수」를 재는데, **그 선언 상수 자신이
+#   실행시점에 실측에서 파생될 수 있다**는 데에 지목이 0 이었다. 15회차 리뷰 실측(F-CR32-1) —
+#   `hgc_cur_sig=` 다음 줄에 선언 상수를 서명 산출로 재대입하는 **1행**을 삽입하면 좌우변이
+#   동시 파생돼 §13.5 가 항진하고 `rc=0 · 79/0/1 · RED ∅` 였다.
+# ★★ **이것은 새 결함이 아니라 아는 결함이 열거 밖에서 재발한 것이다.** 본 하네스는 같은
+#   「좌우변 동시 파생 = 항진」 class 를 이미 **3 site 에서 명시 방어**한다 —
+#     · `:983`  leg 순서를 **self-test 안 리터럴로 pin**(core 의 `LEG_ROLES` 를 읽어오면 좌우변이
+#               동시 파생돼 항진한다 — 그 사유가 그 자리에 그대로 적혀 있다)
+#     · `:1046` 6축 이름을 **리터럴 pin**(core 의 `CENSUS_AXES`/`LOWER_BOUND_AXES` 파생 금지 —
+#               "상수를 좁힐 때 양변이 함께 좁아져 검사가 항진한다")
+#     · `:2303` `FALS_REQUIRED_VOCAB` 를 `FALS_VOCAB` 와 **독립 리터럴**로 두고 **어긋남 자체를
+#               신호**로 삼음("파생 금지가 이 배선의 전부다")
+#   정작 **구성 앵커의 기준값만 무방비**였다. 게다가 그 이동을 고지하도록 설계된 §13.5 baseline
+#   leg 은 본 PR 전 기간 `⊘ SKIP`(사유 = merge-base 시점 본 파일 부재)이라, 저자가 쓸 수 없는
+#   기준점 대비 대조가 이 Story 내내 **0회** 수행됐다.
+# ⇒ 처방은 **새 방식 발명이 아니라 위 3 site 와 동형 적용**이다: 기준값은 **파일 리터럴**이어야
+#   하고, 라이브 값이 그 리터럴과 어긋나면 **그 어긋남 자체가 신호**다. 술어는 세 conjunct 를
+#   함께 요구한다 —
+#     ⓐ `^HGC_DECLARED_COMPOSITION=` 정의행이 **정확히 1개**  (재대입 1행 삽입을 잡는다)
+#     ⓑ 그 리터럴 == **라이브 값**                            (값이 덮였음을 잡는다)
+#     ⓒ 리터럴 안에 명령치환·역따옴표 **부재**                (리터럴 자리를 파생식으로 바꾼 형)
+#   리뷰가 실측한 1행 삽입형은 ⓐ 와 ⓑ 를 **동시에** 깬다. 아래 (b)(c)(d) 는 conjunct 를 **하나씩**
+#   깨는 탐침이다 — 뭉쳐 재면 어느 conjunct 가 죽어도 다른 하나가 가려주므로(§13.6 F-CR31-5 가
+#   per-cell 분해를 요구한 것과 같은 사유) conjunct 별로 각각 태운다.
+# ★ 정직 천장 — 재는 것은 **`^HGC_DECLARED_COMPOSITION=` 로 시작하는 줄의 문면**이다. 변수를
+#   우회해 값을 주입하는 형(`eval` · `declare -g` · 별칭 변수를 §13.5 가 읽도록 함께 고치는
+#   2-편집)은 이 술어의 **정의역 밖**이다. 「봉인」이 아니라 **1-편집 자기파생 형태**를 닫는다.
+#   [반증시도: 완료 — 리뷰가 실측한 1행 삽입형을 LAB 격리 사본에서 **실행**해 본 leg 이 RED 를
+#    내는지 확인했고 무변형 null-control 이 GREEN 임을 함께 실측했다. `declare -g` 우회형은
+#    **미수행** — 정의역 밖임을 위에 명시했고 닫았다고 적지 않는다]
+echo ""
+echo "── T-DECL: 구성 앵커 **기준값**의 독립성 (born-RED 대조군) ──────────────────"
+
+tdecl_lines_of()  { grep -c '^HGC_DECLARED_COMPOSITION=' "$1" 2>/dev/null || true; }
+tdecl_literal_of() { sed -n 's/^HGC_DECLARED_COMPOSITION="\(.*\)"$/\1/p' "$1" | head -1; }
+
+# 판정 = **무인자**. 대상 결박이 함수 안이라 호출 site 에 인자 자리를 남기지 않는다(§13.6 (g)(h) 규율).
+hgc_decl_pin_verdict() {
+  tdecl_n="$(tdecl_lines_of "$hgc_self_src")"
+  tdecl_lit="$(tdecl_literal_of "$hgc_self_src")"
+  case "$tdecl_lit" in
+    *'$('*|*'`'*) return 1 ;;
+  esac
+  [ "$tdecl_n" -eq 1 ] && [ "$tdecl_lit" = "$HGC_DECLARED_COMPOSITION" ]
+}
+
+# 탐침 결박 helper — 판정이 읽는 **전역**을 흔든다(§13.6 (g) 가 `hgc_self_src` 를 흔드는 것과 동형).
+tdecl_verdict_on() {
+  tdecl_saved_src="$hgc_self_src"
+  hgc_self_src="$1"
+  tdecl_rv=1; hgc_decl_pin_verdict && tdecl_rv=0
+  hgc_self_src="$tdecl_saved_src"
+  return "$tdecl_rv"
+}
+
+tdecl_probe="$TEST_TMP/tdecl-probe.sh"
+
+# (a) 음성 — 실제 본체에 대해서는 **참**이어야 한다. 술어가 「무엇이든 위반」이면 여기서 RED.
+if hgc_decl_pin_verdict; then
+  pass_case "T-DECL-a (음성): 본체의 §0 선언이 **독립 리터럴** — 정의행 1개 · 리터럴 == 라이브 값 · 파생식 부재. 술어가 「무엇이든 위반」이 아니다((b)(c)(d) 와 짝으로만 의미가 있다)"
+else
+  fail_case "T-DECL-a (음성): 본체 §0 선언이 독립 리터럴 조건을 깼다 — 정의행 ${tdecl_n}개 / 리터럴 [$tdecl_lit] / 라이브 [$HGC_DECLARED_COMPOSITION]. 기준값이 실측에서 파생되면 §13.5 는 **어떤 구성 이동에도 초록**이다"
+fi
+
+# (b) 양성 ⓐ — 재대입 1행을 **추가**하면 정의행이 2개가 된다(리뷰 F-CR32-1 재현형).
+cp -- "$hgc_self_src" "$tdecl_probe"
+printf '%s="$(hgc_composition_signature "$hgc_self_src")"\n' 'HGC_DECLARED_COMPOSITION' >> "$tdecl_probe"
+if [ "$(tdecl_lines_of "$tdecl_probe")" -lt 2 ]; then
+  fail_case "T-DECL-b (양성 · 정의행 중복): NOT_RUN — 탐침 생성이 정의행을 2개로 만들지 못했다(실측 $(tdecl_lines_of "$tdecl_probe")개). 처치되지 않은 탐침으로 판별력을 계상하지 않는다"
+elif tdecl_verdict_on "$tdecl_probe"; then
+  fail_case "T-DECL-b (양성 · 정의행 중복): 선언 상수를 **서명 산출로 재대입하는 1행**이 추가된 탐침에도 판정이 **참** — conjunct ⓐ(정의행 정확히 1개)가 죽었다. 이 상태에서 15회차 F-CR32-1(1행 삽입 → 좌우변 동시 파생 → §13.5 항진)이 무성으로 통과한다"
+else
+  pass_case "T-DECL-b (양성 · 정의행 중복): 재대입 1행이 추가된 탐침을 **거짓**으로 판정 — conjunct ⓐ 가 살아 있다. 이것이 15회차 리뷰가 실측한 F-CR32-1 형(「rc=0 · 79/0/1 · RED ∅」)의 지목이다"
+fi
+
+# (c) 양성 ⓑ — 정의행은 1개인데 그 **값**이 라이브와 어긋나는 형.
+sed 's|^HGC_DECLARED_COMPOSITION=.*|HGC_DECLARED_COMPOSITION="census=0/0/0 helper=tdecl loopdecl=tdecl"|' \
+  "$hgc_self_src" > "$tdecl_probe"
+if [ "$(tdecl_literal_of "$tdecl_probe")" = "$HGC_DECLARED_COMPOSITION" ]; then
+  fail_case "T-DECL-c (양성 · 값 불일치): NOT_RUN — 탐침의 리터럴이 라이브 값과 여전히 같다(sed 미치환). 무처치 탐침으로 판별력을 계상하지 않는다"
+elif tdecl_verdict_on "$tdecl_probe"; then
+  fail_case "T-DECL-c (양성 · 값 불일치): 리터럴이 라이브 값과 **다른** 탐침에도 판정이 참 — conjunct ⓑ(리터럴 == 라이브)가 죽었다. 정의행 개수만 세고 값을 보지 않으면 라이브 값을 덮는 형이 빠져나간다"
+else
+  pass_case "T-DECL-c (양성 · 값 불일치): 리터럴이 라이브 값과 다른 탐침을 **거짓**으로 판정 — conjunct ⓑ 가 살아 있다((b) 가 세는 개수와 **독립**인 축이다)"
+fi
+
+# (d) 양성 ⓒ — 정의행 1개 · 값도 형식상 읽히지만 리터럴 자리가 **파생식**인 형.
+sed 's|^HGC_DECLARED_COMPOSITION=.*|HGC_DECLARED_COMPOSITION="$(hgc_composition_signature "$hgc_self_src")"|' \
+  "$hgc_self_src" > "$tdecl_probe"
+if [ "$(tdecl_lines_of "$tdecl_probe")" -ne 1 ]; then
+  fail_case "T-DECL-d (양성 · 파생 문면): NOT_RUN — 탐침 정의행이 1개가 아니다(실측 $(tdecl_lines_of "$tdecl_probe")개). 이 leg 은 **개수는 정상인데 문면이 파생식**인 형을 재야 하므로 무효다"
+elif tdecl_verdict_on "$tdecl_probe"; then
+  fail_case "T-DECL-d (양성 · 파생 문면): 리터럴 자리가 **명령치환**인 탐침에도 판정이 참 — conjunct ⓒ(파생식 부재)가 죽었다. 정의행을 1개로 유지한 채 그 자리를 파생식으로 바꾸는 형이 (b)(c) 를 모두 통과한다"
+else
+  pass_case "T-DECL-d (양성 · 파생 문면): 리터럴 자리가 명령치환인 탐침을 **거짓**으로 판정 — conjunct ⓒ 가 살아 있다. ★ 재는 것은 **문면**이므로 「eval」·「declare -g」 우회는 정의역 밖이다(머리 주석 천장)"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 13.6. T-SIG = §13.5 구성 앵커 **자신의** 판별력 대조군 (born-RED 짝 · F-CR30-2 봉합)
 # ═══════════════════════════════════════════════════════════════════════════════
 # ★ 무엇이 열려 있었나. 본 하네스는 자기 술어에 born-RED 대조군을 붙이는 확립된 패턴을 갖고
@@ -2344,12 +2501,52 @@ else
 fi
 
 # (c) 본체 — 하네스 자신의 「불가」 주장은 전건 반증시도 필드를 동반해야 한다.
-fals_self="$(fals_scan "$hgc_self_src")"
-fals_self_n="$(printf '%s' "$fals_self" | grep -c . || true)"
-if [ "$fals_self_n" -eq 0 ]; then
+# ★★ **판정 전체를 무인자 함수 안에 둔다** (F-CR32-4 봉합 · 축 ⓒ = 형제 블록 결박). 종전에는
+#   이 자리가 `fals_scan "$hgc_self_src"` 라 **스캔 대상이 호출 site 의 인자**로 노출돼 있었고,
+#   그 1 토큰을 다른 파일(예: 위 합성 fixture)로 재조준하면 본체 위반이 통째로 사라져 (c) 가
+#   **무성으로 초록**이었다(15회차 리뷰 실측: `rc=0 · 79/0/1` = null-control 과 동일).
+#   ★ 이것은 새 class 가 아니라 **F-CR31-1(§13.5 의 인자 자리)과 같은 class 의 형제 site 가
+#     미소인**된 것이다. 14회차가 §13.5 의 인자 자리를 닫으면서 세운 처방(§13.6 (g)(h) — 판정
+#     전체를 함수 안에 넣어 호출 site 에 인자 자리를 남기지 않는다)을 **여기에 동형 적용**한다.
+#     ⇒ 일반형: 봉합은 **자기 site 만** 닫는다. 같은 class 의 형제 site 를 함께 훑지 않으면
+#       다음 회차에 그 형제가 그대로 공격면이 된다.
+fals_self_verdict() {
+  fals_self="$(fals_scan "$hgc_self_src")"
+  fals_self_n="$(printf '%s' "$fals_self" | grep -c . || true)"
+  [ "$fals_self_n" -eq 0 ]
+}
+
+if fals_self_verdict; then
   pass_case "T-FALS-c (본체): 하네스의 「불가」 계열 주장 전건이 반증시도 필드를 동반 — 라벨을 붙이는 자리에서 「시도했는가」가 기계적으로 요구된다. ★ 어휘 집합은 **하한**이며 새 표현은 빠져나간다(§13.7 주석에 그 실측 근거 기재)"
 else
   fail_case "T-FALS-c (본체): 반증시도 필드 없는 「불가」 주장 블록 ${fals_self_n}건 (시작 줄: $(printf '%s' "$fals_self" | tr '\n' ' ')) — 「불가」를 단정하려면 반증 시도 여부를 같은 블록에 적어라. 시도하지 않았으면 **그렇게 적어라**(미수행도 유효한 값이다)"
+fi
+
+# (e) 양성 — **(c) 의 짝**. 본체 사본에 무필드 「불가」 블록을 주입하고 **같은 무인자 판정**을 걸면
+#   검출 ≥1(거짓)이어야 한다. (c) 단독은 자기-보호를 못 한다: 스캔 대상이 엉뚱한 파일로 재조준
+#   되거나 스캔이 상수로 죽어도 「위반 0」이라 초록이다. (e) 는 **위반이 실재하는 대상**을 걸어
+#   그 초록이 「깨끗해서」인지 「눈이 멀어서」인지 가른다 — §13.6 (g)(h) 가 세운 양성 ∧ 음성 규율.
+#   ★ 결박을 흔드는 방식으로 탐침한다: 판정이 읽는 전역 `hgc_self_src` 를 주입 사본에 일시
+#     결박한다. 판정 본문이 그 전역을 더 이상 읽지 않도록 재조준되면(= F-CR32-4 그 형) 주입
+#     블록이 스캔되지 않아 검출 0 → 본 leg 이 RED 다.
+fals_e_probe="$TEST_TMP/fals-e-probe.sh"
+cp -- "$hgc_self_src" "$fals_e_probe"
+printf '\n# T-FALS-e 주입 블록 — 이 축은 원리적으로 닫히지 않는다\n# 부연 서술 한 줄 (반증시도 필드 없음)\nfals_e_probe_code=1\n' >> "$fals_e_probe"
+fals_e_saved_src="$hgc_self_src"
+hgc_self_src="$fals_e_probe"
+fals_e_rv=1; fals_self_verdict && fals_e_rv=0
+fals_e_seen="$fals_self_n"
+hgc_self_src="$fals_e_saved_src"
+# 판정 globals 를 실제 본체 기준으로 되돌린다 — 이후 문면이 탐침 값을 인용하지 않게 한다.
+#   ★ rc 를 `|| true` 로 삼키지 않는다(exit-masking 금지) — 분기로 명시 소비한다.
+if fals_self_verdict; then fals_e_restored=1; else fals_e_restored=0; fi
+
+if ! grep -q 'T-FALS-e 주입 블록' "$fals_e_probe"; then
+  fail_case "T-FALS-e (양성 · 대상 결박): NOT_RUN — 탐침에 무필드 「불가」 블록이 주입되지 않았다. 처치되지 않은 탐침으로 판별력을 계상하지 않는다"
+elif [ "$fals_e_rv" -eq 0 ]; then
+  fail_case "T-FALS-e (양성 · 대상 결박): 무필드 「불가」 블록을 주입한 사본을 판정 대상에 걸었는데 **위반 0**(검출 ${fals_e_seen}건) — 본체 스캔이 대상을 읽지 않는다. 스캔 대상이 다른 파일로 재조준됐거나(15회차 F-CR32-4 형: 「fals_scan」 인자 1-토큰 치환) 스캔 자체가 상수로 죽었다. 이 상태에서 (c) 의 초록은 「깨끗해서」가 아니라 **「눈이 멀어서」**다"
+else
+  pass_case "T-FALS-e (양성 · 대상 결박): 무필드 「불가」 블록을 주입한 사본에서 위반 ${fals_e_seen}건 검출 — 본체 스캔이 **결박된 대상을 실제로 읽는다**는 양성 증거. (c) 와 짝으로만 의미가 있다: (c) 단독은 재조준·상수화에 초록이고, (e) 단독은 본체가 실제로 깨끗한지 말하지 않는다"
 fi
 
 # (d) **어휘 감산 방향** — (a)(b) 의 합성 fixture 2종은 `원리적` **한 토큰만** 태운다. 그래서
@@ -2390,6 +2587,131 @@ elif [ -n "$fals_req_missing" ]; then
   fail_case "T-FALS-d (어휘 감산): 필수 어휘 ${fals_req_n}종 중 **미검출**[${fals_req_missing# }] — 그 토큰이 FALS_VOCAB 에서 빠졌다(감산). 이 상태에서는 그 표현으로 쓴 「불가」 단정이 무필드로도 (a)(b)(c) 전건을 초록으로 통과한다. 어휘를 의도적으로 줄이려면 FALS_REQUIRED_VOCAB 도 함께 고쳐라 — 두 리터럴이 어긋나는 것이 본 leg 의 신호다"
 else
   pass_case "T-FALS-d (어휘 감산): 필수 어휘 ${fals_req_n}종 **각각**에 무필드 fixture 를 개별 생성해 전건 검출 — 어휘 집합이 조용히 줄면 여기서 RED 다((a)(b) 는 한 토큰만 태우므로 5→1 감산에 초록이었다). ★ 천장: 닫히는 것은 **감산 방향** 하나뿐이고 **가산 방향**(등재 안 된 새 표현이 빠져나감)은 여전히 열린 채다 — 어휘 집합은 그대로 **하한**이다"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13.8. T-RC = **rc 사상** 의 born-RED 짝 (F-CR32-2 봉합 · 축 ⓐ)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 결함 서술과 처방은 preamble `hgc_exit_ok` 정의 자리가 SSOT — 여기서는 **탐침 구성**만 적는다.
+# ★ 탐침 = 라이브 전역(`PASS`/`FAIL`/`SKIP`)을 **합성 값**으로 일시 교란하고 무인자 술어를 부른 뒤
+#   복원한다(§13.6 (e) 가 서명 변수를 흔드는 것과 동형).
+#   ★★ **합성 값을 쓰는 이유** — 라이브 값을 그대로 쓰면 앞선 leg 의 RED 가 이 leg 의 판정에
+#     새어 들어와 **RED 집합이 실행마다 달라진다**. 15회차 리뷰의 `X-TRAP` arm 이 정확히 그
+#     비결정 때문에 `undetermined` 처분을 받았다(두 실행이 서로 다른 RED 집합을 냈다). 같은
+#     함정을 반복하지 않는다 — 아래 네 조합은 전부 **선언 총량으로부터의 상수 산술**이라
+#     실행 간 결정적이고, 실 tally 와 독립이다.
+# ★ conjunct 3개(`FAIL==0` · `PASS>0` · `총합==선언총량`)를 **하나씩** 깬다. 뭉쳐 재면 어느
+#   conjunct 가 죽어도 나머지가 가려준다 — §13.6 F-CR31-5 가 per-cell 분해를 요구한 그 사유다.
+# ★ 정직 천장 — 재는 것은 **술어**다. 이 술어를 **부르는 자리**(종료 블록 · `hgc_on_exit` 배선)는
+#   §13.9 T-END 가 따로 잰다. 둘을 합쳐도 「rc 가 항상 옳다」가 되지는 않는다: 예컨대 §13.5
+#   호출부에 `|| true` 를 붙이는 형(M-x3)은 케이스가 정상 발화해 세 conjunct 가 전부 정합이라
+#   **양쪽 정의역 밖**이고 여전히 열려 있다(잔여 #12).
+#   [반증시도: 완료 — 본 회차 구현이 LAB 격리 사본에서 (i) 종료 조건식 `if true` 치환 (ii) 조기
+#    `exit 0` 삽입 (iii) M-x3(`|| true`) 세 형을 각각 실행해 배선 후 rc 를 실측했고, 앞의 둘은
+#    RED, 셋째는 여전히 GREEN 임을 관측했다. 셋째를 닫는 시도는 **미수행**(잔여 #12)]
+echo ""
+echo "── T-RC: rc 사상의 판별력 (born-RED 대조군) ─────────────────────────────────"
+
+trc_sp="$PASS"; trc_sf="$FAIL"; trc_ss="$SKIP"
+PASS=$((HGC_EXPECTED_CASE_TOTAL-1)); FAIL=0; SKIP=1
+trc_clean=1; hgc_exit_ok && trc_clean=0
+PASS=$((HGC_EXPECTED_CASE_TOTAL-2)); FAIL=1; SKIP=1
+trc_fail=1; hgc_exit_ok && trc_fail=0
+PASS=0; FAIL=0; SKIP="$HGC_EXPECTED_CASE_TOTAL"
+trc_pass=1; hgc_exit_ok && trc_pass=0
+PASS=$((HGC_EXPECTED_CASE_TOTAL-1)); FAIL=0; SKIP=0
+trc_total=1; hgc_exit_ok && trc_total=0
+PASS="$trc_sp"; FAIL="$trc_sf"; SKIP="$trc_ss"
+
+# (a) 음성 — 청정 합성값에서는 **참**이어야 한다. 술어가 「무엇이든 거짓」이면 여기서 RED.
+if [ "$trc_clean" -eq 0 ]; then
+  pass_case "T-RC-a (음성): 청정 합성 tally(FAIL=0 · PASS>0 · 총합==선언총량)에서 rc 술어가 **참** — 술어가 「무엇이든 거짓」이 아니다. (b)(c)(d) 와 짝으로만 의미가 있다"
+else
+  fail_case "T-RC-a (음성): 청정 합성 tally 인데 rc 술어가 **거짓** — 술어가 항상-거짓으로 죽었다. 이 상태에서는 정상 실행도 rc=1 이라 아래 양성 leg 의 RED 가 판별력을 뜻하지 않는다"
+fi
+
+# (b) 양성 ⓐ — `FAIL>0` 이면 거짓이어야 한다. **종료 조건식을 `if true` 로 치환한 형이 여기서 잡힌다.**
+if [ "$trc_fail" -eq 0 ]; then
+  fail_case "T-RC-b (양성 · FAIL conjunct): 「FAIL=1」 인 합성 tally 에도 rc 술어가 **참** — conjunct 「FAIL==0」 이 죽었다. 15회차 리뷰 실측이 이 형이다: 케이스가 정직하게 RED 를 찍어도(77/2/1) 종료 조건이 항진이면 rc=0 이고, 소비면(workflow)은 rc **단독** 소비라 CI 에 GREEN 착지한다"
+else
+  pass_case "T-RC-b (양성 · FAIL conjunct): 「FAIL=1」 합성 tally 를 **거짓**으로 판정 — RED 가 실제로 rc 로 사상된다. 이것이 F-CR32-2(rc 절단)의 지목이다"
+fi
+
+# (c) 양성 ⓑ — `PASS==0` (vacuous green) 이면 거짓이어야 한다.
+if [ "$trc_pass" -eq 0 ]; then
+  fail_case "T-RC-c (양성 · PASS conjunct): 「PASS=0」 인 합성 tally 에도 rc 술어가 **참** — conjunct 「PASS>0」 이 죽었다. 아무 케이스도 통과하지 않은 vacuous green 이 rc=0 으로 나간다"
+else
+  pass_case "T-RC-c (양성 · PASS conjunct): 「PASS=0」 합성 tally 를 **거짓**으로 판정 — vacuous green 이 rc 로 새지 않는다((b) 가 세는 축과 **독립**이다)"
+fi
+
+# (d) 양성 ⓒ — 총합이 선언 총량과 어긋나면 거짓이어야 한다(§14 pin 의 짝 소비자 축).
+if [ "$trc_total" -eq 0 ]; then
+  fail_case "T-RC-d (양성 · 총합 conjunct): 총합이 선언 총량과 어긋나는 합성 tally 에도 rc 술어가 **참** — conjunct 「총합==선언총량」 이 죽었다. 케이스가 조용히 사라져도 rc=0 이 된다(§14 pin 의 짝 소비자가 무력화된 상태)"
+else
+  pass_case "T-RC-d (양성 · 총합 conjunct): 총합 불일치 합성 tally 를 **거짓**으로 판정 — 은닉 소실이 rc 로 사상된다"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13.9. T-END = **종점 도달 · trap 배선** 의 born-RED 짝 (F-CR32-3 봉합 · 축 ⓐ)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 왜 이 블록이 §13.8 과 **따로** 있어야 하나. `EXIT` trap 합류는 rc 결정권을 종료 블록에서
+#   trap 으로 **옮긴다**. 옮기기만 하면 그 자리가 다시 무지목이 되어 「결정권만 이동하고 무방비」가
+#   된다(15회차 리뷰 §9.32.4 ★). ⇒ **합류와 같은 회차에** 그 배선 자체를 재는 짝을 넣는다.
+# ★ (a)(b) 는 **술어**를, (c)(d) 는 **배선**을 잰다 — 서로를 덮지 못하는 별 축이다:
+#   술어가 옳아도 trap 이 등록돼 있지 않으면 조기 종료가 그대로 rc=0 이고, trap 이 등록돼 있어도
+#   술어가 항진이면 아무 것도 걸러지지 않는다.
+# ★ (d) 가 필요한 이유 = **판독기 자신의 비항진성**. `trap -p` 가 무엇을 물어도 비지 않은 값을
+#   돌려주면 (c) 는 배선이 없어도 초록이다. 등록한 적 없는 시그널을 물어 **공백**임을 확인한다.
+#   이것이 이 파일이 반복 학습한 「양성 ∧ 음성 공존」의 배선 축 적용이다.
+# ★ 정직 천장 — (c) 가 재는 것은 **`trap -p EXIT` 문면에 핸들러 이름이 있다**는 것이지 그 핸들러가
+#   **무엇을 하는가**가 아니다. 핸들러 본문을 비워도 (c) 는 초록이다. 본문의 판정은 (a)(b) 가
+#   같은 술어(`hgc_final_ok`)를 직접 태워 덮지만, **「trap 이 그 술어를 실제로 부른다」**는 결박은
+#   어느 leg 도 재지 않는다 — 선언된 열림이다.
+#   [반증시도: 완료 — 본 회차 구현이 최소 재현 스크립트로 (i) 마커 미설정 상태의 조기 `exit 0` 이
+#    trap 에 의해 rc=1 로 뒤집힘 (ii) 마커 설정 시 rc=0 보존 (iii) `trap -p EXIT` 가 명령치환
+#    안에서도 판독되고 `trap -p USR2` 는 공백 — 셋을 실행 확인했다. 「trap 본문이 술어를 부르는
+#    결박」을 재는 leg 은 **미수행**이며 위에 열림으로 적었다]
+echo ""
+echo "── T-END: 종점 도달 · EXIT trap 배선 (born-RED 대조군) ──────────────────────"
+
+tend_se="$HGC_REACHED_END"; tend_sp="$PASS"; tend_sf="$FAIL"; tend_ss="$SKIP"
+PASS=$((HGC_EXPECTED_CASE_TOTAL-1)); FAIL=0; SKIP=1
+HGC_REACHED_END=1
+tend_reached=1; hgc_final_ok && tend_reached=0
+HGC_REACHED_END=0
+tend_early=1; hgc_final_ok && tend_early=0
+HGC_REACHED_END="$tend_se"; PASS="$tend_sp"; FAIL="$tend_sf"; SKIP="$tend_ss"
+
+tend_trap="$(trap -p EXIT 2>/dev/null)"
+tend_trap_null="$(trap -p USR2 2>/dev/null)"
+
+# (a) 음성 — 마커가 서 있고 tally 가 청정이면 **참**.
+if [ "$tend_reached" -eq 0 ]; then
+  pass_case "T-END-a (음성 · 술어): 종점 마커 설정 + 청정 합성 tally 에서 최종 술어가 **참** — 술어가 「무엇이든 거짓」이 아니다"
+else
+  fail_case "T-END-a (음성 · 술어): 마커가 서 있고 tally 도 청정인데 최종 술어가 **거짓** — 항상-거짓으로 죽었다. 이 상태에서는 정상 실행이 rc=1 이 된다"
+fi
+
+# (b) 양성 — 마커가 없으면 **거짓**. §13.5 직전 `exit 0` 1행 형이 여기서 잡힌다.
+if [ "$tend_early" -eq 0 ]; then
+  fail_case "T-END-b (양성 · 술어): 종점 마커 **미설정**인데 최종 술어가 **참** — 종점 도달 conjunct 가 죽었다. 15회차 리뷰 실측이 이 형이다: §13.5 직전 「exit 0」 1행에 요약행·종료가드·15 케이스가 통째 소실되는데 rc=0 이었다(마커 65 · 요약행 0 · RED ∅)"
+else
+  pass_case "T-END-b (양성 · 술어): 종점 마커 미설정을 **거짓**으로 판정 — 조기 종료가 rc 로 사상된다. ★ **양성 마커**라서 성립한다: 「조용한 종료가 없었다」는 부재-assert 였다면 흔적을 남기지 않는 종료를 정의상 못 본다(§1a 「announce_gap」 과 같은 규율)"
+fi
+
+# (c) 배선 양성 — `EXIT` trap 에 핸들러가 실제로 등록돼 있어야 한다.
+case "$tend_trap" in
+  *hgc_on_exit*)
+    pass_case "T-END-c (양성 · 배선): 「EXIT」 trap 에 종료 guard 가 등록돼 있다 [$tend_trap] — 합류가 문면으로 확인된다. ★ 천장: 재는 것은 **이름의 존재**이지 핸들러가 무엇을 하는가가 아니다(머리 주석)" ;;
+  *)
+    fail_case "T-END-c (양성 · 배선): 「EXIT」 trap 에 종료 guard 가 없다 [$tend_trap] — 배선이 떨어졌다. 술어(a)(b)가 아무리 옳아도 **호출되지 않으면** 조기 종료가 그대로 rc=0 으로 나간다" ;;
+esac
+
+# (d) 배선 음성 — 판독기가 「무엇이든 반환」이 아님을 확인한다.
+if [ -z "$tend_trap_null" ]; then
+  pass_case "T-END-d (음성 · 배선 판독기): 등록한 적 없는 시그널의 trap 조회가 **공백** — 판독기가 「무엇이든 반환」이 아니다. (c) 단독은 판독기가 상수를 뱉어도 초록이므로 이 짝이 있어야 (c) 가 증거가 된다"
+else
+  fail_case "T-END-d (음성 · 배선 판독기): 등록한 적 없는 시그널의 trap 조회가 비지 않았다 [$tend_trap_null] — 판독기가 항상-비공백이라 (c) 의 초록을 배선 증거로 계상할 수 없다"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2441,6 +2763,10 @@ echo "════════════════════════�
 #     · 요약행 `echo` 와 아래 판정 사이 → 요약행 수치는 과소보고될 수 있으나 **rc=1 이 난다**.
 #     · 아래 판정과 `exit` 사이 한 자리 → 「창 제거」가 아니라 **「N 줄 → 2 자리로 축소」**가
 #       현 상태의 정확한 서술이다.
+#     ★★ **15회차 갱신** — 두 번째 자리는 이제 `EXIT` trap 합류로 덮인다(아래 ★★ 참조).
+#       `hgc_on_exit` 가 종료 직전 **라이브 tally 를 다시** 읽으므로 판정과 `exit` 사이에 케이스를
+#       주입해도 trap 이 재평가한다. 다만 **요약행 과소보고 자체는 그대로**다 — 덮이는 것은 rc 이지
+#       stdout 수치가 아니다. 「창이 0 이 됐다」로 읽지 말 것.
 #   ★★ **종전 라벨 「이 자리는 순차 프로그램에 내재라 닫히지 않는다」를 철회한다** (13회차
 #     F-CR30-5). 그 라벨은 **반증 시도 없이** 붙었고, 13회차에 **실행으로 반증**됐다 —
 #     3-arm 대조: ⓐ 판정 `then` 분기의 `exit` 직전 케이스 주입 · trap 없음 → rc=0(창 실재)
@@ -2449,17 +2775,42 @@ echo "════════════════════════�
 #     즉 이 자리는 **순차 프로그램 내재가 아니라 「미탐색(실행 가능)」**이었다. 닫는 조건도
 #     확정돼 있다: **종료 시점 라이브 tally 재검을 `EXIT` trap 축에 합류**시키는 것이며, 본
 #     하네스는 이미 `trap cleanup EXIT` 를 보유하므로 합류 비용이 작다.
-#     ⇒ 현재 상태 = **열려 있으나 닫는 방법이 알려짐**. 「원리적 불가」로 적지 않는다.
-#     [반증시도: 완료 — 위 3-arm 이 그 시도이고 ⓑ 가 rc=1 로 반증했다. 대조군 ⓒ 가 「무엇이든
-#      RED」가 아님을 함께 보인다. 본 회차 구현은 라벨 철회까지 수행했고 trap 합류 **배선은
-#      하지 않았다**(측정은 13회차 리뷰의 실행 측정 인용)]
+#   ★★ **15회차 — 그 배선을 이행했다.** preamble 의 `hgc_on_exit` 가 `trap … EXIT` 로 등록돼
+#     종료 직전 `hgc_final_ok`(종점 마커 ∧ 라이브 tally)를 재평가하고, 거짓이면 rc 를 1 로 세운다.
+#     ⇒ 이 자리의 상태 = **열림 → 배선됨**. 단 세 가지를 함께 읽어야 한다:
+#       ⓐ 덮이는 것은 **rc** 다 — 요약행 stdout 과소보고는 그대로 남는다(위 정직 천장).
+#       ⓑ **합류는 rc 결정권을 trap 으로 옮긴다.** 옮기기만 하면 그 자리가 다시 무지목이 되므로
+#         (15회차 리뷰 §9.32.4) 같은 회차에 §13.9 T-END 가 trap **배선 자체**를 양성 · 음성으로
+#         재도록 born-RED 짝을 함께 넣었다. 배선을 떼면 T-END-c 가, 판독기가 「무엇이든 반환」이면
+#         T-END-d 가 발화한다.
+#       ⓒ **M-x3(§13.5 호출부 `|| true`)는 이 합류로 닫히지 않는다** — 그 형은 케이스가 정상
+#         발화해 마커 · FAIL · 총합이 전부 정합이라 trap 의 정의역 밖이다. 잔여 #12 로 존치한다.
+#     [반증시도: 완료 — 13회차 3-arm 이 닫는 조건을 세웠고, **본 회차 구현이 배선 후 실행으로
+#      확인**했다: (i) 조기 `exit 0` 주입 arm 이 rc=1 로 뒤집힘 (ii) 무변형 null-control 이 rc=0
+#      (항진 아님) (iii) M-x3 arm 은 배선 후에도 GREEN — 즉 합류가 덮는 축과 덮지 않는 축을
+#      각각 관측했다. **`trap` 발화 기전의 서브셸 경로 규명은 미수행**(preamble 참조)]
 #   ★ 왜 이 자리에서 두 번 연속 같은 실패가 났는지 = §13.7 T-FALS 가 그 대답이다(규율 재기재가
 #     아니라 필드 강제).
 if [ "$((PASS+FAIL+SKIP))" -ne "$HGC_EXPECTED_CASE_TOTAL" ]; then
   echo "  ✗ 종료 가드: 케이스 총계 $((PASS+FAIL+SKIP)) ≠ 기대 ${HGC_EXPECTED_CASE_TOTAL} — 총량 pin 자신이 제거됐거나 케이스 집합이 변했다 (초록 금지)"
 fi
 
-if [ "$FAIL" -eq 0 ] && [ "$PASS" -gt 0 ] && [ "$((PASS+FAIL+SKIP))" -eq "$HGC_EXPECTED_CASE_TOTAL" ]; then
+# ★ 종점 도달 **양성 마커** (F-CR32-3 봉합). 이 줄 **앞** 어디서 종료해도 마커가 서지 않으므로
+#   `hgc_on_exit` 가 rc 를 1 로 세운다. 종전에는 §13.5 직전 `exit 0` 1행에 요약행 · 종료가드 ·
+#   15 케이스가 통째 소실되고도 rc=0 이었다.
+HGC_REACHED_END=1
+
+# ★ rc 사상은 **위 preamble 의 무인자 술어 하나**가 정한다(F-CR32-2 봉합). 종전에는 이 자리에
+#   조건식이 인라인으로 있어 `if true` 1-토큰 치환에 RED 80 건이 통째로 rc=0 이 됐고, 그 자리에
+#   지목(대조군)이 0 이었다. 이제 §13.8 T-RC 가 이 술어를 born-RED 로 탐침하며, **같은 술어를**
+#   `hgc_on_exit` 도 읽으므로 이 호출부를 통째로 우회해도(예: `if true`) trap 이 다시 잰다.
+#   ★ 정직 천장 — 닫히는 것은 **rc 사상 · 종점 도달** 두 축이다. 「§13.5 가 판정을 소비하는가」
+#     (M-x3 = 호출부에 `|| true` 부착) 는 **여전히 열린 채**다: 그 형은 케이스가 정상 발화해
+#     FAIL 도 총합도 마커도 전부 정합이라 본 guard 의 정의역 밖이다. 닫는 조건은 종전대로
+#     「`✗` 발화 수와 `FAIL` 계수의 정합을 독립 assert」(잔여 #12)이며 본 회차 미착수다.
+#     [반증시도: 완료 — 본 회차 구현이 trap 합류 **후** M-x3 arm 을 재실행해 여전히 GREEN 임을
+#      실측했다. 합류가 이 축을 닫지 **않음**을 관측으로 확인한 것이며, 닫혔다고 적지 않는다]
+if hgc_final_ok; then
   exit 0
 else
   # PASS=0 도 실패다 — 아무 케이스도 돌지 않은 vacuous green 을 초록으로 내지 않는다.
