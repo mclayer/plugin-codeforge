@@ -23,12 +23,15 @@ D-2 짝 관측 (핵심):
   - 용도: §8.3 D-2 구세대 blob 대조군
 """
 
+import ast
 import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
+import types
+import urllib.error
 from pathlib import Path
 from typing import Tuple, Dict, Any, List
 import importlib.util
@@ -932,6 +935,333 @@ def test_d3_consumer_execution_gate_static_shape(face):
 
 
 # ============================================================================
+# D-4: 3-leg 구현 (금지 4키 투영, 파일 응답 거부, AST 키-접근)
+# ============================================================================
+def test_d4_leg1_ingest_funnel_projects_four_keys():
+    """
+    D-4-γ (AC-5 D-4): _http_get_listing 실 함수가 금지 4키를 투영 폐기하는지 검증.
+
+    정의역: 실행 산출 (runtime 객체).
+
+    절차:
+      1. gate.urllib 를 shim 으로 치환 (production seam 신설 0)
+      2. 금지 4키(content/download_url/git_url/_links) 포함 rich listing 주입
+      3. _http_get_listing 실 함수 산출에서 entry 별 per-cell 집합 동일성 assert
+      4. 양성 앵커 AND (부재-assert 금지):
+         - degradation is None
+         - len(assets) == 2
+         - assets[0] remote_sha == 주입값
+    """
+    spec = importlib.util.spec_from_file_location("check_consumer_asset_currency", GATE_PATH)
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    repo = create_temp_git_repo()
+    try:
+        # repo setup (신세대)
+        with open(Path(__file__).resolve().parents[2] / ASSET_PATH, "rb") as f:
+            current_content = f.read()
+        write_asset_to_repo(repo, ASSET_PATH, current_content)
+
+        current_sha = get_blob_sha(repo, ASSET_PATH)
+        other_sha = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+
+        # pin 작성 (2개 asset)
+        pin_data = {
+            "schema_version": 1,
+            "role": "consumer",
+            "source_repo": "wrapper/plugin-codeforge",
+            "assets": [
+                {
+                    "path": ASSET_PATH,
+                    "blob_sha": current_sha,
+                    "pinned_at": "2026-08-15T00:00:00Z",
+                    "pinned_by_story": "CFP-2978",
+                },
+                {
+                    "path": "scripts/lib/other_file.py",
+                    "blob_sha": other_sha,
+                    "pinned_at": "2026-08-15T00:00:00Z",
+                    "pinned_by_story": "CFP-2978",
+                }
+            ],
+        }
+        pin_file = os.path.join(repo, ".codeforge-asset-pins.json")
+        with open(pin_file, "w") as f:
+            json.dump(pin_data, f)
+
+        # load pin
+        pin_raw = gate.load_pin(pin_file)
+        pin = gate.validate_pin(pin_raw)
+        root = repo
+
+        # === Shim: 금지 4키 포함 rich listing ===
+        original_http_get = gate._http_get_listing
+
+        def stub_rich_listing(*args, **kwargs):
+            """금지 4키(content/download_url/git_url/_links) 포함 listing 반환"""
+            return {
+                "entries": [
+                    {
+                        "sha": current_sha,
+                        "name": "check_parallel_work_sentinel.py",
+                        "path": ASSET_PATH,
+                        "type": "file",
+                        "content": "base64:aGVsbG8gd29ybGQ=",  # 금지
+                        "download_url": "https://raw.githubusercontent.com/...",  # 금지
+                        "git_url": "https://api.github.com/repos/.../git/blobs/...",  # 금지
+                        "_links": {"self": "...", "git": "..."},  # 금지
+                    },
+                    {
+                        "sha": other_sha,
+                        "name": "other_file.py",
+                        "path": "scripts/lib/other_file.py",
+                        "type": "file",
+                        "content": "base64:...",  # 금지
+                        "download_url": "...",  # 금지
+                        "git_url": "...",  # 금지
+                        "_links": {...},  # 금지
+                    }
+                ],
+                "degradation": None,
+                "status_code": 200,
+                "ratelimit_reset": None,
+                "auth_rejected": False,
+            }
+
+        gate._http_get_listing = stub_rich_listing
+        result = gate.evaluate(pin, root, offline=False)
+        payload = result["payload"]
+
+        # === 양성 앵커 AND (부재-assert 금지) ===
+        # 양성: degradation is None
+        assert payload.get("degradation") is None, (
+            f"D-4-γ leg1: degradation should be None, got {payload.get('degradation')}"
+        )
+
+        # 양성: len(assets) == 2
+        assets = payload.get("assets", [])
+        assert len(assets) == 2, (
+            f"D-4-γ leg1: len(assets) should be 2, got {len(assets)}"
+        )
+
+        # 양성: assets[0] remote_sha == 주입값
+        assert assets[0].get("remote_sha") == current_sha, (
+            f"D-4-γ leg1: assets[0]['remote_sha'] should be {current_sha}, "
+            f"got {assets[0].get('remote_sha')}"
+        )
+
+        # 핵심: per-cell 집합 동일성 검증
+        expected_asset_keys = {"path", "local_sha", "pin_sha", "remote_sha", "q1", "q2"}
+        for i, asset in enumerate(assets):
+            asset_keys = set(asset.keys())
+            assert asset_keys == expected_asset_keys, (
+                f"D-4-γ leg1: asset[{i}] keys mismatch\n"
+                f"  expected: {sorted(expected_asset_keys)}\n"
+                f"  actual: {sorted(asset_keys)}"
+            )
+
+        print(f"\n[D-4-γ leg1 GREEN] Rich listing stripped to projection")
+        print(f"  degradation: {payload.get('degradation')}")
+        print(f"  assets count: {len(assets)}")
+        print(f"  assets[0] remote_sha: {assets[0].get('remote_sha')}")
+        print(f"  assets[0] keys: {sorted(assets[0].keys())}")
+
+        # Restore
+        gate._http_get_listing = original_http_get
+
+    finally:
+        import shutil
+        shutil.rmtree(repo, ignore_errors=True)
+
+
+def test_d4_leg2_file_level_response_rejected():
+    """
+    D-4-δ (AC-5 D-4): 파일-단위 응답이 거부되는지 검증.
+
+    정의역: 실행 산출.
+
+    절차:
+      1. shim 으로 파일-단위 응답(entries가 dict, content base64 포함) 주입
+      2. production 코드가 entries가 리스트가 아님을 감지해
+         degradation == "upstream_payload_invalid" 설정
+      3. assets None/empty assert + verdict == "fetch-failed"
+    """
+    spec = importlib.util.spec_from_file_location("check_consumer_asset_currency", GATE_PATH)
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    repo = create_temp_git_repo()
+    try:
+        # repo setup (신세대)
+        with open(Path(__file__).resolve().parents[2] / ASSET_PATH, "rb") as f:
+            current_content = f.read()
+        write_asset_to_repo(repo, ASSET_PATH, current_content)
+
+        current_sha = get_blob_sha(repo, ASSET_PATH)
+
+        # pin 작성
+        pin_data = {
+            "schema_version": 1,
+            "role": "consumer",
+            "source_repo": "wrapper/plugin-codeforge",
+            "assets": [
+                {
+                    "path": ASSET_PATH,
+                    "blob_sha": current_sha,
+                    "pinned_at": "2026-08-15T00:00:00Z",
+                    "pinned_by_story": "CFP-2978",
+                }
+            ],
+        }
+        pin_file = os.path.join(repo, ".codeforge-asset-pins.json")
+        with open(pin_file, "w") as f:
+            json.dump(pin_data, f)
+
+        # load pin
+        pin_raw = gate.load_pin(pin_file)
+        pin = gate.validate_pin(pin_raw)
+        root = repo
+
+        # === Shim: 파일-단위 응답(entries가 dict, 리스트 아님) ===
+        original_http_get = gate._http_get_listing
+
+        def stub_file_response(*args, **kwargs):
+            """파일-단위 응답: entries는 None (거부 상태)
+
+            설계: 파일-단위 응답을 거부할 때
+            degradation == "upstream_payload_invalid" ∧ entries is None
+            """
+            return {
+                "entries": None,  # 파일 응답 거부: entries None
+                "degradation": "upstream_payload_invalid",
+                "status_code": 200,
+                "ratelimit_reset": None,
+                "auth_rejected": False,
+            }
+
+        gate._http_get_listing = stub_file_response
+        result = gate.evaluate(pin, root, offline=False)
+        payload = result["payload"]
+
+        # === 검증: upstream_payload_invalid ∧ assets None/empty ===
+        assert payload.get("degradation") == "upstream_payload_invalid", (
+            f"D-4-δ leg2: degradation should be 'upstream_payload_invalid', "
+            f"got {payload.get('degradation')}"
+        )
+
+        assets = payload.get("assets", [])
+        assert len(assets) == 0, (
+            f"D-4-δ leg2: assets should be empty, got {len(assets)}"
+        )
+
+        assert payload.get("verdict") == "fetch-failed", (
+            f"D-4-δ leg2: verdict should be 'fetch-failed', got {payload.get('verdict')}"
+        )
+
+        print(f"\n[D-4-δ leg2 GREEN] File-level response rejected")
+        print(f"  degradation: {payload.get('degradation')}")
+        print(f"  verdict: {payload.get('verdict')}")
+        print(f"  assets: {payload.get('assets')}")
+
+        # Restore
+        gate._http_get_listing = original_http_get
+
+    finally:
+        import shutil
+        shutil.rmtree(repo, ignore_errors=True)
+
+
+def test_d4_leg3_no_forbidden_key_access_literal():
+    """
+    D-4-β (AC-5 D-4): 금지 4키에 대한 str-상수 키-접근이 없는지 검증.
+
+    정의역: AST 의 키-접근 위치 상수만.
+      - ast.Subscript.slice 가 str 상수
+      - .get/.pop/.setdefault 첫 인자가 str 상수
+
+    양성 앵커 AND (형태 독립):
+      - AST 에 _project_entry FunctionDef 실재
+      - Call 실재
+    """
+    import ast
+
+    # production 코드 읽기
+    gate_source = GATE_PATH.read_text(encoding="utf-8")
+    tree = ast.parse(gate_source)
+
+    forbidden_keys = {"content", "download_url", "git_url", "_links"}
+    found_accesses = []
+    found_project_entry_def = False
+    found_project_entry_call = False
+
+    # === AST 순회: 금지 키 str-상수 접근 탐색 ===
+    class ForbiddenKeyFinder(ast.NodeVisitor):
+        def visit_Subscript(self, node):
+            # ast.Subscript.slice 가 str 상수인 경우
+            if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
+                if node.slice.value in forbidden_keys:
+                    found_accesses.append(f"Subscript['{node.slice.value}']")
+            self.generic_visit(node)
+
+        def visit_Call(self, node):
+            # .get/.pop/.setdefault 첫 인자가 str 상수
+            if isinstance(node.func, ast.Attribute):
+                if node.func.attr in ("get", "pop", "setdefault"):
+                    if node.args and isinstance(node.args[0], ast.Constant):
+                        if isinstance(node.args[0].value, str):
+                            if node.args[0].value in forbidden_keys:
+                                found_accesses.append(
+                                    f".{node.func.attr}('{node.args[0].value}')"
+                                )
+            self.generic_visit(node)
+
+        def visit_FunctionDef(self, node):
+            nonlocal found_project_entry_def
+            if node.name == "_project_entry":
+                found_project_entry_def = True
+            self.generic_visit(node)
+
+    # AST 순회
+    visitor = ForbiddenKeyFinder()
+    visitor.visit(tree)
+
+    # === 금지 4키 Call 탐색 ===
+    class ProjectEntryCallFinder(ast.NodeVisitor):
+        def visit_Call(self, node):
+            if isinstance(node.func, ast.Name) and node.func.id == "_project_entry":
+                nonlocal found_project_entry_call
+                found_project_entry_call = True
+            self.generic_visit(node)
+
+    call_finder = ProjectEntryCallFinder()
+    call_finder.visit(tree)
+
+    # === 검증 ===
+    # 금지 키 str-상수 접근 없어야 함 (정의역: AST str-상수 접근만)
+    assert len(found_accesses) == 0, (
+        f"D-4-β leg3: Found {len(found_accesses)} forbidden key accesses\n"
+        f"  accesses: {found_accesses}"
+    )
+
+    # 양성 앵커 AND: _project_entry FunctionDef 실재
+    assert found_project_entry_def, (
+        "D-4-β leg3: _project_entry FunctionDef not found in AST"
+    )
+
+    # 양성 앵커 AND: Call 실재
+    assert found_project_entry_call, (
+        "D-4-β leg3: _project_entry Call not found in AST"
+    )
+
+    print(f"\n[D-4-β leg3 GREEN] No forbidden key str-constant access detected")
+    print(f"  forbidden keys: {sorted(forbidden_keys)}")
+    print(f"  accesses found: {len(found_accesses)}")
+    print(f"  _project_entry def: {found_project_entry_def}")
+    print(f"  _project_entry call: {found_project_entry_call}")
+
+
+# ============================================================================
 # 출력 필드 구조 검증 (실행 기반)
 # ============================================================================
 def test_output_field_structure_success():
@@ -1051,6 +1381,545 @@ def test_output_field_structure_degrade():
     finally:
         import shutil
         shutil.rmtree(repo, ignore_errors=True)
+
+
+
+# ============================================================================
+# D-4 (§8.3): 금지 7항 ① 봉인 falsify — 3 leg
+# ============================================================================
+#
+# 설계 SSOT = Change Plan §8.3 「D-4 leg 정의 (3 leg — 술어형·정의역 문면 선언)」.
+#
+# ★ 왜 3 leg 인가: §7.3 ① 은 **투영 축 ∧ 채널 축의 논리곱**이라 한 축만 검사하면
+#   다른 축 mutant 가 생존한다. γ(투영) · δ(채널) · β(조기 경보) 로 나눈다.
+#
+# ★ D-1 과의 차이 (seam 깊이): D-1 은 `gate._http_get_listing` **함수 전체**를 stub 해
+#   하류(evaluate)를 실코드로 돌린다. D-4 γ·δ 는 그 함수 **자신**이 판정 대상이므로
+#   한 층 더 아래인 `gate.urllib` 을 치환한다 — production seam 신설 0(§3.4 결정에
+#   응답 주입 seam 이 없다), 테스트 측 모듈 속성 치환뿐.
+#
+# ★ 정직 천장 (CP §8.3 「D-4 의 정직 천장 (declared — 원리적 3종)」):
+#   1. β 는 **키-접근 축 조기 경보**이지 전수 봉인이 아니다 — 동적 키 · bulk key-free
+#      접근 6형(`dict(raw)`·`{**raw}`·`.items()`·`.values()`·`json.dumps`·`deepcopy`)은
+#      원리적으로 AST 상수 스캔 밖이며, **현 production 관용구 자체가 이미 동적**이다
+#      (`raw.get(k)` 의 k = Name). 그 전량을 γ 가 **산출 축에서 백스톱**한다.
+#   2. 2차 ingest 신설(β2) · 타 모듈 fetch 는 본 3 leg 정의역 밖.
+#   3. consumer 측 사본 개조 = cross-repo (§8.3 D-3 천장 · §7.6 R-2 승계).
+#   ⇒ "금지 7항 전체를 기계 봉인했다" 도 "전수" 도 **아니다**.
+
+# 상류 listing 이 실어 보낼 수 있는 금지 4키 (§7.3 ①)
+FORBIDDEN_UPSTREAM_KEYS = ("content", "download_url", "git_url", "_links")
+# `_project_entry` 투영 후 살아남아야 하는 키 **집합** (카디널리티 아님 — 일반 규칙 1)
+PROJECTED_KEYS = frozenset({"sha", "name", "path", "type"})
+# β 정의역에 편입하는 키-접근 메서드
+KEY_ACCESSOR_METHODS = ("get", "pop", "setdefault")
+
+# mutant 앵커 (전건 유일성 assert 후 치환 — 오귀속 방지)
+_ANCHOR_CALLSITE = 'result["entries"] = [_project_entry(e) for e in parsed]'
+_ANCHOR_CHANNEL = "    if not isinstance(parsed, list):"
+_ANCHOR_PROJECT_BODY = '    return {k: raw.get(k) for k in ("sha", "name", "path", "type")}'
+_ANCHOR_PROJECT_DOCSTRING = '"""상류 listing entry 를'
+
+# 표기 등가변형 (dict 리터럴 형) — 의미 동일, 표기만 다름. 대조군은 **GREEN 유지**여야 한다.
+_EQUIV_PROJECT_BODY = (
+    "    return {\n"
+    '        "sha": raw.get("sha"),\n'
+    '        "name": raw.get("name"),\n'
+    '        "path": raw.get("path"),\n'
+    '        "type": raw.get("type"),\n'
+    "    }"
+)
+
+# 주입 payload — 금지 4키를 **전건 포함**한 rich listing (2 entry)
+_D4_SHA_A = "a" * 40
+_D4_SHA_B = "b" * 40
+_D4_RICH_LISTING = [
+    {
+        "sha": _D4_SHA_A, "name": "check_parallel_work_sentinel.py",
+        "path": ASSET_PATH, "type": "file",
+        "content": "QkFTRTY0LVBBWUxPQUQtQQ==", "download_url": "https://example.invalid/raw/a",
+        "git_url": "https://api.github.invalid/blobs/a",
+        "_links": {"self": "https://api.github.invalid/a"},
+        "size": 17814, "url": "https://api.github.invalid/contents/a",
+        "html_url": "https://example.invalid/a",
+    },
+    {
+        "sha": _D4_SHA_B, "name": "check_consumer_asset_currency.py",
+        "path": "scripts/lib/check_consumer_asset_currency.py", "type": "file",
+        "content": "QkFTRTY0LVBBWUxPQUQtQg==", "download_url": "https://example.invalid/raw/b",
+        "git_url": "https://api.github.invalid/blobs/b",
+        "_links": {"self": "https://api.github.invalid/b"},
+        "size": 655, "url": "https://api.github.invalid/contents/b",
+    },
+]
+# 파일-단위 응답 (디렉토리 listing 이 아니다 — §3.3 채널 결정 위반형)
+_D4_FILE_LEVEL_RESPONSE = {
+    "sha": "c" * 40, "name": "check_parallel_work_sentinel.py", "path": ASSET_PATH,
+    "type": "file", "encoding": "base64", "content": "QkFTRTY0LUZJTEUtTEVWRUw=",
+    "download_url": "https://example.invalid/raw/c",
+    "git_url": "https://api.github.invalid/blobs/c",
+    "_links": {"self": "https://api.github.invalid/c"},
+}
+
+_D4_URL = "https://api.github.invalid/repos/mclayer/plugin-codeforge/contents/scripts/lib"
+
+
+def _load_gate_module(source: str = None, name: str = "d4_gate"):
+    """게이트 모듈을 **fresh 객체**로 로드. `source` 주면 그 변이 소스로 로드.
+
+    반환 = (module, mutant_path|None). 변이 사본은 호출측이 `_drop_mutant` 로 정리한다.
+
+    ★ 매 leg 이 fresh 모듈을 쓰므로 D-1 식 save/restore 가 필요 없다 (전역 누수 0).
+    ★ 변이 소스 경로는 F-0 이 세운 관용구(tmpfile → 로드 → finally unlink)를 재사용한다.
+    """
+    if source is None:
+        spec = importlib.util.spec_from_file_location(name, GATE_PATH)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module, None
+
+    fd, path = tempfile.mkstemp(suffix=".py", prefix="d4_mutant_")
+    os.write(fd, source.encode("utf-8"))
+    os.close(fd)
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module, path
+
+
+def _drop_mutant(path) -> None:
+    """변이 사본 정리 (잠긴 상태면 무시 — F-0 관용구)."""
+    if not path:
+        return
+    try:
+        if os.path.exists(path):
+            os.unlink(path)
+    except (OSError, PermissionError):
+        pass
+
+
+def _mutate_once(source: str, anchor: str, replacement: str, tag: str) -> str:
+    """앵커 **유일성 assert 후** 1회 치환. 적중·유일성 실패 시 즉시 RED.
+
+    ★ 하네스 자기검증: 앵커가 0회면 mutant 가 무주입인 채 "대조군 통과"로 오독되고,
+      2회 이상이면 죽인 줄과 죽었다고 기록한 줄이 어긋난다(오귀속 무발화).
+    """
+    hits = source.count(anchor)
+    assert hits == 1, f"D-4 mutant[{tag}]: 앵커 적중 {hits}회 (1이어야 함) — {anchor!r}"
+    mutated = source.replace(anchor, replacement, 1)
+    assert mutated != source, f"D-4 mutant[{tag}]: 치환이 소스를 바꾸지 못했다"
+    return mutated
+
+
+class _D4FakeResponse:
+    """`opener.open()` 이 반환하는 context manager 응답 대역."""
+
+    def __init__(self, body: bytes, status: int, headers):
+        self._body = body
+        self.status = status
+        self.headers = headers
+
+    def read(self, size=-1):
+        return self._body if size is None or size < 0 else self._body[:size]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _install_urllib_shim(gate, body: bytes, status: int = 200, headers=None) -> Dict[str, Any]:
+    """`gate.urllib` 을 테스트측 shim 으로 치환하고 **탑승 원장**을 반환한다.
+
+    ★ mock-seam 동반 assertion 의무: 주입만 하고 검증하지 않으면 enforcement 0 이다.
+      반환 원장(seam)은 실 함수가 이 shim 을 **실제로 탔음**을 증명하는 데 쓴다 —
+      shim 이 안 타면 원장은 0/None 인 채 남으므로 공허 통과가 불가능하다.
+    """
+    seam: Dict[str, Any] = {
+        "request_ctor": 0, "build_opener": 0, "open": 0,
+        "url": None, "method": None, "headers_added": [], "handlers": [], "timeout": None,
+    }
+
+    class _ShimRequest:
+        def __init__(self, url, method="GET"):
+            seam["request_ctor"] += 1
+            seam["url"] = url
+            seam["method"] = method
+
+        def add_header(self, key, value):
+            seam["headers_added"].append(key)
+
+    class _ShimOpener:
+        def open(self, request, timeout=None):
+            seam["open"] += 1
+            seam["timeout"] = timeout
+            return _D4FakeResponse(body, status, {} if headers is None else headers)
+
+    def _shim_build_opener(*handlers):
+        seam["build_opener"] += 1
+        seam["handlers"] = [getattr(h, "__name__", type(h).__name__) for h in handlers]
+        return _ShimOpener()
+
+    gate.urllib = types.SimpleNamespace(
+        request=types.SimpleNamespace(Request=_ShimRequest, build_opener=_shim_build_opener),
+        # 실 예외 클래스 — `except urllib.error.HTTPError` 절이 의미를 유지해야 한다.
+        error=types.SimpleNamespace(HTTPError=urllib.error.HTTPError),
+    )
+    return seam
+
+
+def _seam_violations(seam: Dict[str, Any], gate) -> List[str]:
+    """shim 경로 **실제 탑승** 검증 (mock-seam 동반 assertion)."""
+    bad: List[str] = []
+    if seam["request_ctor"] != 1:
+        bad.append(f"Request 생성 {seam['request_ctor']}회 (1 기대)")
+    if seam["build_opener"] != 1:
+        bad.append(f"build_opener {seam['build_opener']}회 (1 기대)")
+    if seam["open"] != 1:
+        bad.append(f"opener.open {seam['open']}회 (1 기대)")
+    if seam["url"] != _D4_URL:
+        bad.append(f"url 미전달 — {seam['url']!r}")
+    if "_NoRedirect" not in seam["handlers"]:
+        bad.append(f"_NoRedirect 핸들러 미전달 — {seam['handlers']}")
+    if seam["timeout"] != gate.HTTP_TIMEOUT_SEC:
+        bad.append(f"timeout 미전달 — {seam['timeout']!r} (기대 {gate.HTTP_TIMEOUT_SEC})")
+    missing = {"Accept", "X-GitHub-Api-Version", "User-Agent"} - set(seam["headers_added"])
+    if missing:
+        bad.append(f"헤더 미부착 — {sorted(missing)}")
+    return bad
+
+
+def _leg1_violations(result: Dict[str, Any]) -> List[str]:
+    """D-4-γ 술어 **단일 정의** — 양성·음성·대조군이 전부 이 함수를 통과한다.
+
+    ★ 술어를 한 번만 정의하는 이유: 음성 대조가 술어를 **재구현**하면 그 대조는
+      술어가 아니라 사본을 falsify 한 것이 되어 항진이 남는다.
+    """
+    bad: List[str] = []
+    # ── 양성 앵커 AND (부재-assert 금지 — 빈 리스트·미도달로 공허 만족 불가) ──
+    if result.get("degradation") is not None:
+        bad.append(f"degradation={result.get('degradation')!r} (None 기대)")
+    entries = result.get("entries")
+    if not isinstance(entries, list):
+        bad.append(f"entries 형 {type(entries).__name__} (list 기대)")
+        return bad
+    if len(entries) != 2:
+        bad.append(f"entries 길이 {len(entries)} (2 기대 — 비공허 앵커)")
+        return bad
+    if entries[0].get("sha") != _D4_SHA_A:
+        bad.append(f"entries[0].sha={entries[0].get('sha')!r} (주입값 미도달)")
+    # ── per-cell 집합 동일성 (카디널리티 아님) ──
+    for idx, entry in enumerate(entries):
+        if set(entry) != set(PROJECTED_KEYS):
+            leaked = sorted(set(entry) - set(PROJECTED_KEYS))
+            dropped = sorted(set(PROJECTED_KEYS) - set(entry))
+            bad.append(f"entries[{idx}] 키집합 불일치 — 유출={leaked} 누락={dropped}")
+    return bad
+
+
+def _leg2_violations(result: Dict[str, Any]) -> List[str]:
+    """D-4-δ 술어 **단일 정의** — 파일-단위 응답이 거부됐는가."""
+    bad: List[str] = []
+    if result.get("degradation") != "upstream_payload_invalid":
+        bad.append(f"degradation={result.get('degradation')!r} (upstream_payload_invalid 기대)")
+    if result.get("entries") is not None:
+        bad.append(f"entries={result.get('entries')!r} (None 기대 — 채널 밖 payload 흡수)")
+    # 양성 앵커: 전송은 성공했고(200) **payload 형태**로 거부됐음을 결속.
+    # 이게 없으면 upstream_unreachable 로 죽은 경우와 구별되지 않는다.
+    if result.get("status_code") != 200:
+        bad.append(f"status_code={result.get('status_code')!r} (200 기대 — 전송 성공 앵커)")
+    return bad
+
+
+def _d4_key_access_constants(tree) -> List[Tuple[str, int, str]]:
+    """β 정의역 파생 — **AST 키-접근 위치의 str 상수만**.
+
+    포함: `X["k"]` (Subscript.slice 가 str 상수) · `X.get/pop/setdefault("k")` 첫 인자.
+    제외: docstring · 주석 · 일반 문자열 리터럴 — **텍스트 정의역이 아니다**.
+    (§7.3 문면 자체가 금지키를 인용하므로 텍스트 grep 오라클이면 born-RED 다.)
+    """
+    found: List[Tuple[str, int, str]] = []
+    index_cls = getattr(ast, "Index", None)  # 3.8 이하 호환 — 3.9+ 는 미생성
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Subscript):
+            sl = node.slice
+            if index_cls is not None and isinstance(sl, index_cls):
+                sl = getattr(sl, "value", sl)
+            if isinstance(sl, ast.Constant) and isinstance(sl.value, str):
+                found.append((sl.value, node.lineno, "subscript"))
+        elif isinstance(node, ast.Call):
+            fn = node.func
+            if isinstance(fn, ast.Attribute) and fn.attr in KEY_ACCESSOR_METHODS and node.args:
+                first = node.args[0]
+                if isinstance(first, ast.Constant) and isinstance(first.value, str):
+                    found.append((first.value, node.lineno, f"{fn.attr}()"))
+    return found
+
+
+def _leg3_violations(tree) -> List[str]:
+    """D-4-β 술어 **단일 정의** — 금지키 부재 ∧ 양성 앵커 ∧ 정의역 비공허."""
+    bad: List[str] = []
+    domain = _d4_key_access_constants(tree)
+
+    # ── 양성 앵커 1: 정의역 비공허 + 알려진 witness 포함 ──────────────────────
+    # (없으면 "금지키 0" 이 빈 정의역에서 **공허 참**이 된다.)
+    if not domain:
+        bad.append("β 정의역 공허 — 키-접근 상수 0개")
+        return bad
+    values = {v for v, _, _ in domain}
+    witness_missing = {"entries", "degradation", "sha"} - values
+    if witness_missing:
+        bad.append(f"β 정의역 witness 누락 {sorted(witness_missing)} — 파생 유틸 고장 의심")
+
+    # ── 양성 앵커 2: 투영 함수 실재 ∧ 호출부 실재 (형태 독립) ─────────────────
+    fdefs = [n for n in ast.walk(tree)
+             if isinstance(n, ast.FunctionDef) and n.name == "_project_entry"]
+    if len(fdefs) != 1:
+        bad.append(f"_project_entry FunctionDef {len(fdefs)}개 (1 기대)")
+    callsites = [n for n in ast.walk(tree)
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                 and n.func.id == "_project_entry"]
+    if not callsites:
+        bad.append("_project_entry 호출부 0개 — 투영 함수가 호출되지 않는다(우회)")
+
+    # ── 금지키 부재 (위 양성 앵커와 AND 로만 계상) ────────────────────────────
+    for value, lineno, form in domain:
+        if value in FORBIDDEN_UPSTREAM_KEYS:
+            bad.append(f"금지키 접근 — {value!r} @L{lineno} ({form})")
+    return bad
+
+
+def test_d4_leg1_ingest_funnel_projects_four_keys():
+    """
+    D-4-γ (§8.3): **실행 산출** 위에서 ingest funnel 이 4키만 투영함을 반증.
+
+    정의역 = `_http_get_listing` **실 함수**의 런타임 산출 (정적 grep 아님).
+    seam = `gate.urllib` 테스트측 치환 → 실 함수가 파싱·투영을 그대로 수행한다.
+
+    관측 4종:
+      (양성) 금지 4키를 전건 실은 rich listing → 산출 entry 키집합 == 4키 ∧ 양성 앵커
+      (음성 γ-1) `_project_entry` 투영 확대(`dict(raw)`) → RED
+      (음성 γ-2) 호출부 우회(helper **무손상**, 호출 자체를 건너뜀) → RED
+      (대조군) 표기 등가변형(dict 리터럴 형) → **GREEN 유지** (과민 오라클 아님)
+    """
+    body = json.dumps(_D4_RICH_LISTING).encode("utf-8")
+    source = GATE_PATH.read_text(encoding="utf-8")
+
+    # ── (양성) ───────────────────────────────────────────────────────────────
+    gate, _ = _load_gate_module(name="d4_leg1_pristine")
+    seam = _install_urllib_shim(gate, body)
+    result = gate._http_get_listing(_D4_URL, None)
+
+    seam_bad = _seam_violations(seam, gate)
+    assert not seam_bad, f"D-4-γ seam 미탑승 — {seam_bad}"
+    violations = _leg1_violations(result)
+    assert not violations, f"D-4-γ 양성 RED — {violations}"
+
+    print("\n[D-4-γ 양성]")
+    print(f"  seam: open={seam['open']} handlers={seam['handlers']} timeout={seam['timeout']}")
+    print(f"  seam: url={seam['url']} headers={seam['headers_added']}")
+    print(f"  degradation={result['degradation']} status={result['status_code']} "
+          f"len(entries)={len(result['entries'])}")
+    for i, e in enumerate(result["entries"]):
+        print(f"  entries[{i}] 키집합 = {sorted(e)}")
+    injected_forbidden = sorted(set(_D4_RICH_LISTING[0]) & set(FORBIDDEN_UPSTREAM_KEYS))
+    leaked_all = sorted(set().union(*[set(e) for e in result["entries"]])
+                        & set(FORBIDDEN_UPSTREAM_KEYS))
+    print(f"  주입 금지키 = {injected_forbidden} → 산출 유출 = {leaked_all} (빈 리스트 = 봉인)")
+
+    # ── (음성 γ-1) 투영 확대 ─────────────────────────────────────────────────
+    gate_g1, _ = _load_gate_module(name="d4_leg1_mutant_widen")
+    _install_urllib_shim(gate_g1, body)
+    gate_g1._project_entry = lambda raw: dict(raw)
+    result_g1 = gate_g1._http_get_listing(_D4_URL, None)
+    violations_g1 = _leg1_violations(result_g1)
+    assert violations_g1, "D-4-γ 음성 γ-1 대조 실패 — 투영 확대 mutant 가 통과했다(항진)"
+    print("\n[D-4-γ 음성 γ-1 — return dict(raw)]")
+    print(f"  entries[0] 키집합 = {sorted(result_g1['entries'][0])}")
+    print(f"  술어 violations = {violations_g1}")
+
+    # ── (음성 γ-2) 호출부 우회 (helper 무손상) ───────────────────────────────
+    mutated = _mutate_once(source, _ANCHOR_CALLSITE,
+                           'result["entries"] = list(parsed)  # MUTANT: callsite bypass', "γ-2")
+    gate_g2, mpath = _load_gate_module(mutated, name="d4_leg1_mutant_bypass")
+    try:
+        _install_urllib_shim(gate_g2, body)
+        # helper 무손상 실증 — mutant 가 helper 를 건드리지 않았음을 먼저 못박는다.
+        assert set(gate_g2._project_entry(_D4_RICH_LISTING[0])) == set(PROJECTED_KEYS), \
+            "γ-2 전제 붕괴: helper 가 손상됐다 (우회 mutant 가 아니게 된다)"
+        result_g2 = gate_g2._http_get_listing(_D4_URL, None)
+        violations_g2 = _leg1_violations(result_g2)
+        assert violations_g2, "D-4-γ 음성 γ-2 대조 실패 — 호출부 우회 mutant 가 통과했다(항진)"
+        print("\n[D-4-γ 음성 γ-2 — 호출부 우회, helper 무손상]")
+        print(f"  helper 단독 산출 키집합 = {sorted(gate_g2._project_entry(_D4_RICH_LISTING[0]))}")
+        print(f"  entries[0] 키집합 = {sorted(result_g2['entries'][0])}")
+        print(f"  술어 violations = {violations_g2}")
+    finally:
+        _drop_mutant(mpath)
+
+    # ── (대조군) 표기 등가변형 → GREEN 유지 ──────────────────────────────────
+    equiv = _mutate_once(source, _ANCHOR_PROJECT_BODY, _EQUIV_PROJECT_BODY, "equiv")
+    gate_eq, epath = _load_gate_module(equiv, name="d4_leg1_equiv")
+    try:
+        _install_urllib_shim(gate_eq, body)
+        result_eq = gate_eq._http_get_listing(_D4_URL, None)
+        violations_eq = _leg1_violations(result_eq)
+        assert not violations_eq, f"D-4-γ 대조군 false RED — 표기 등가변형에서 {violations_eq}"
+        print("\n[D-4-γ 대조군 — dict 리터럴 등가변형]")
+        print(f"  entries[0] 키집합 = {sorted(result_eq['entries'][0])} / violations = {violations_eq}")
+    finally:
+        _drop_mutant(epath)
+
+
+def test_d4_leg2_file_level_response_rejected():
+    """
+    D-4-δ (§8.3): **파일-단위 응답**(디렉토리 listing 아님)이 거부됨을 반증.
+
+    정의역 = 실행 산출. §3.3 「디렉토리 listing 채널」 결정을 코드에서 지키는
+    유일한 줄(`isinstance(parsed, list)`)에 falsifier 를 붙인다.
+
+    관측 3종:
+      (양성) 파일-단위 dict(`content` base64 전문 포함) → upstream_payload_invalid ∧ entries None
+      (음성 δ) 채널 스왑(dict 수용) mutant → RED
+      (판별 대조군) 정상 디렉토리 listing → **거부되지 않음** (무조건 거부 오라클 아님)
+    """
+    body = json.dumps(_D4_FILE_LEVEL_RESPONSE).encode("utf-8")
+    source = GATE_PATH.read_text(encoding="utf-8")
+
+    # ── (양성) ───────────────────────────────────────────────────────────────
+    gate, _ = _load_gate_module(name="d4_leg2_pristine")
+    seam = _install_urllib_shim(gate, body)
+    result = gate._http_get_listing(_D4_URL, None)
+
+    seam_bad = _seam_violations(seam, gate)
+    assert not seam_bad, f"D-4-δ seam 미탑승 — {seam_bad}"
+    violations = _leg2_violations(result)
+    assert not violations, f"D-4-δ 양성 RED — {violations}"
+
+    print("\n[D-4-δ 양성 — 파일-단위 응답]")
+    print(f"  seam: open={seam['open']} url={seam['url']} timeout={seam['timeout']}")
+    print(f"  주입 payload 키 = {sorted(_D4_FILE_LEVEL_RESPONSE)}")
+    print(f"  degradation={result['degradation']!r} entries={result['entries']!r} "
+          f"status={result['status_code']}")
+
+    # ── (음성 δ) 채널 스왑 ───────────────────────────────────────────────────
+    mutated = _mutate_once(
+        source, _ANCHOR_CHANNEL,
+        "    if not isinstance(parsed, (list, dict)):  # MUTANT: channel swap", "δ")
+    gate_d, mpath = _load_gate_module(mutated, name="d4_leg2_mutant_swap")
+    try:
+        _install_urllib_shim(gate_d, body)
+        result_d = gate_d._http_get_listing(_D4_URL, None)
+        violations_d = _leg2_violations(result_d)
+        assert violations_d, "D-4-δ 음성 대조 실패 — 채널 스왑 mutant 가 통과했다(항진)"
+        print("\n[D-4-δ 음성 δ — 파일-단위 dict 수용]")
+        print(f"  degradation={result_d['degradation']!r} entries={result_d['entries']!r}")
+        print(f"  술어 violations = {violations_d}")
+    finally:
+        _drop_mutant(mpath)
+
+    # ── (판별 대조군) 정상 listing 은 거부되지 않는다 ────────────────────────
+    gate_ok, _ = _load_gate_module(name="d4_leg2_contrast")
+    _install_urllib_shim(gate_ok, json.dumps(_D4_RICH_LISTING).encode("utf-8"))
+    result_ok = gate_ok._http_get_listing(_D4_URL, None)
+    assert _leg2_violations(result_ok), \
+        "D-4-δ 판별 대조군 실패 — 정상 listing 까지 거부형이면 채널 특정이 아니다"
+    assert result_ok["degradation"] is None and isinstance(result_ok["entries"], list), \
+        f"D-4-δ 판별 대조군: 정상 listing 이 거부됐다 — {result_ok['degradation']!r}"
+    print("\n[D-4-δ 판별 대조군 — 정상 디렉토리 listing]")
+    print(f"  degradation={result_ok['degradation']!r} len(entries)={len(result_ok['entries'])} (거부 아님)")
+
+
+def test_d4_leg3_no_forbidden_key_access_literal():
+    """
+    D-4-β (§8.3): **AST 키-접근 위치 상수** 정의역에 금지 4키가 없음을 반증.
+
+    정의역 = `ast.Subscript.slice` str 상수 + `.get/.pop/.setdefault` 첫 인자 str 상수.
+    **텍스트 정의역 아님 · 전수 아님** — docstring/주석은 구성상 정의역 밖이다
+    (§7.3 문면 자체가 금지키를 인용하므로 텍스트 grep 오라클이면 born-RED).
+
+    관측 7종:
+      (양성) 현 production → violations 0 ∧ 정의역 비공허 ∧ 양성 앵커 성립
+      (텍스트 대조) 같은 파일 **텍스트에는 금지키가 실재** → 정의역 ≠ 텍스트 실증
+      (음성 β-1) 키-접근 위치에 `raw["content"]` 주입 → RED
+      (음성 β-2) `.get("download_url")` 주입 → RED
+      (음성 앵커) 호출부 우회 mutant → 앵커 축에서 RED (앵커가 장식이 아님을 실증)
+      (대조군 1) docstring 에 금지키 주입 → GREEN 유지
+      (대조군 2) 표기 등가변형(dict 리터럴) → GREEN 유지
+
+    ★ 정직 천장: β 는 **조기 경보**다. 동적 키·bulk key-free 접근은 원리적으로 정의역
+      밖이며 현 production 관용구(`raw.get(k)`, k=Name) 자체가 이미 동적이다.
+      그 전량의 백스톱은 γ(leg 1) 의 산출 축 집합 동일성이다.
+    """
+    source = GATE_PATH.read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=str(GATE_PATH))
+
+    # ── (양성) ───────────────────────────────────────────────────────────────
+    violations = _leg3_violations(tree)
+    assert not violations, f"D-4-β 양성 RED — {violations}"
+
+    domain = _d4_key_access_constants(tree)
+    values = sorted({v for v, _, _ in domain})
+    print("\n[D-4-β 양성]")
+    print(f"  정의역 크기 = {len(domain)} (distinct {len(values)}) — 비공허 실증")
+    print(f"  distinct 값 = {values}")
+    print(f"  금지키 히트 = {[d for d in domain if d[0] in FORBIDDEN_UPSTREAM_KEYS]}")
+
+    # ── (텍스트 대조) 정의역 ≠ 텍스트 ───────────────────────────────────────
+    text_counts = {k: source.count(k) for k in FORBIDDEN_UPSTREAM_KEYS}
+    assert all(c > 0 for c in text_counts.values()), (
+        f"D-4-β 텍스트 대조 전제 붕괴 — 금지키가 텍스트에서 사라졌다 {text_counts}. "
+        "이 대조는 '텍스트 grep 오라클이면 born-RED' 를 실증하는 자리다"
+    )
+    print("\n[D-4-β 텍스트 대조 — 정의역 != 텍스트]")
+    print(f"  텍스트 등장수 = {text_counts} (전건 >0)")
+    print("  AST 키-접근 정의역 히트 = 0  => 텍스트 grep 오라클이었다면 born-RED")
+
+    # ── (음성 β-1) subscript 위치 주입 ──────────────────────────────────────
+    m1 = _mutate_once(source, _ANCHOR_PROJECT_BODY,
+                      '    _leak = raw["content"]  # MUTANT: beta-1\n' + _ANCHOR_PROJECT_BODY,
+                      "β-1")
+    v1 = _leg3_violations(ast.parse(m1))
+    assert any("content" in x for x in v1), \
+        f"D-4-β 음성 β-1 대조 실패 — subscript 금지키가 미검출(항진). violations={v1}"
+    print("\n[D-4-β 음성 β-1 — raw[\"content\"] 주입]")
+    print(f"  violations = {v1}")
+
+    # ── (음성 β-2) accessor 위치 주입 ───────────────────────────────────────
+    m2 = _mutate_once(source, _ANCHOR_PROJECT_BODY,
+                      '    _leak = raw.get("download_url")  # MUTANT: beta-2\n' + _ANCHOR_PROJECT_BODY,
+                      "β-2")
+    v2 = _leg3_violations(ast.parse(m2))
+    assert any("download_url" in x for x in v2), \
+        f"D-4-β 음성 β-2 대조 실패 — .get() 금지키가 미검출(항진). violations={v2}"
+    print("\n[D-4-β 음성 β-2 — raw.get(\"download_url\") 주입]")
+    print(f"  violations = {v2}")
+
+    # ── (음성 앵커) 호출부 우회 → 앵커 축 RED ───────────────────────────────
+    m3 = _mutate_once(source, _ANCHOR_CALLSITE,
+                      'result["entries"] = list(parsed)  # MUTANT: callsite bypass', "β-anchor")
+    v3 = _leg3_violations(ast.parse(m3))
+    assert any("호출부" in x for x in v3), \
+        f"D-4-β 앵커 대조 실패 — 호출부 우회가 앵커 축에서 미검출. violations={v3}"
+    print("\n[D-4-β 음성 앵커 — 호출부 우회]")
+    print(f"  violations = {v3}")
+
+    # ── (대조군 1) docstring 금지키 주입 → GREEN 유지 ───────────────────────
+    m4 = _mutate_once(source, _ANCHOR_PROJECT_DOCSTRING,
+                      '"""content download_url git_url _links — 상류 listing entry 를',
+                      "docstring")
+    v4 = _leg3_violations(ast.parse(m4))
+    assert not v4, f"D-4-β 대조군 false RED — docstring 금지키가 정의역에 샜다: {v4}"
+    print("\n[D-4-β 대조군 1 — docstring 금지키 주입]")
+    print(f"  violations = {v4} (정의역 밖 실증)")
+
+    # ── (대조군 2) 표기 등가변형 → GREEN 유지 ───────────────────────────────
+    m5 = _mutate_once(source, _ANCHOR_PROJECT_BODY, _EQUIV_PROJECT_BODY, "equiv")
+    v5 = _leg3_violations(ast.parse(m5))
+    assert not v5, f"D-4-β 대조군 false RED — 표기 등가변형(dict 리터럴)에서 {v5}"
+    print("\n[D-4-β 대조군 2 — dict 리터럴 등가변형]")
+    print(f"  violations = {v5} (앵커 형태 독립)")
 
 
 if __name__ == "__main__":

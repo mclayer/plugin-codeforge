@@ -117,6 +117,69 @@ A_JOB1_FIRST_STEP = (
 A_STEP_COE = (
     "        continue-on-error: ${{ env.SENTINEL_TIER != 'blocking' }}"
 )
+
+# ── ★ wrapper job2 run 블록 문면 — **단일 원본** (2026-08-19 정정) ───────────
+#  왜 상수로 올렸나: 아래 M-13h~k · M-16-* 7개 함수가 이 문면을 **각자 리터럴로
+#  복제**하고 있었고, CFP-2978 W-3b(파일목록 4→5) · W-3b-1(로스터 6→12) ·
+#  W-3d(V1b `set -euo pipefail`) 착지로 문면이 이동하자 **7개가 동시에
+#  ANCHOR-MISS** 로 죽었다.
+#  ★재현 명령 (수치를 박지 않는다 — 이름 집합으로 판정한다):
+#    python - <<'PY'
+#    import importlib.util,sys
+#    s=importlib.util.spec_from_file_location("mh", "tests/scripts/cfp2978-mutant-lab/mutant_harness.py")
+#    m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
+#    live=open(".github/workflows/parallel-work-sentinel-check.yml",encoding="utf-8").read()
+#    miss=[k for k,v in m.MUTANTS.items()
+#          if v[0].endswith("parallel-work-sentinel-check.yml")
+#          and (lambda f: (f(live), False)[1] if not _try(f,live) else True)(v[1])]
+#    PY
+#   ⇒ 판정 = *"wrapper workflow 대상 mutant 중 ANCHOR-MISS 인 **이름 집합이 공집합**"*
+#     (개수 assert 금지 — 일반 규칙 ①).
+#  ★ job2 가 다시 편집되면 **여기만** 고친다.
+J2_PYTEST_FILES = (
+    "tests/scripts/test_cfp2976_sentinel_prefix.py "
+    "tests/scripts/test_consumer_asset_currency.py "
+    "tests/scripts/test_cfp2978_workflow_shape.py "
+    "tests/scripts/test_cfp2978_resource_scan_shape.py "
+    "tests/scripts/test_cfp2978_envelope_pin.py"
+)
+#  collect step 의 node-ID 로스터 (W-3b-1 — 순서까지 문면 그대로)
+J2_COLLECT_ROSTER = (
+    "test_2976_a_derive_from_overlay",
+    "test_2976_b_fail_closed",
+    "test_2976_c_determined_contract",
+    "test_d4_leg1_ingest_funnel_projects_four_keys",
+    "test_d4_leg2_file_level_response_rejected",
+    "test_d4_leg3_no_forbidden_key_access_literal",
+    "test_envelope_pin_reference_matches_landed_pin",
+    "test_envelope_pin_domain_derivation_selfcheck",
+    "test_envelope_pin_coverage_table_witnesses",
+    "test_ac4_leg1_determined_is_true_and_lists_present",
+    "test_ac4_leg2_branch_names_match_corpus_regex",
+    "test_ac4_leg3_excluded_self_repo_is_slug",
+)
+A_J2_RUNPYTEST_HEAD = (
+    "      - name: Run pytest tests (W-3b)\n"
+    "        id: run-pytest\n"
+)
+A_J2_RUNPYTEST_BODY = (
+    "        run: |\n"
+    "          set -euo pipefail\n"
+    f"          python3 -m pytest {J2_PYTEST_FILES} -q\n"
+)
+A_J2_COLLECT = (
+    "      - name: Collect pytest tests (W-3b-1, verify node IDs present)\n"
+    "        id: collect\n"
+    "        run: |\n"
+    "          set -euo pipefail\n"
+    f"          python3 -m pytest {J2_PYTEST_FILES} --collect-only -q"
+    " > /tmp/pytest_collected.txt 2>&1\n"
+    "          cat /tmp/pytest_collected.txt\n"
+) + "".join(
+    f'          grep -q "{_n}" /tmp/pytest_collected.txt'
+    f' || {{ echo "ERROR: {_n} not found"; exit 1; }}\n'
+    for _n in J2_COLLECT_ROSTER
+)
 A_MARKET_JOB2_RUNS_ON = (
     "    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}\n"
     "    steps:\n"
@@ -393,45 +456,50 @@ def _job2_run(repl: str, label: str) -> Callable[[str], str]:
 
 def m_13h(t: str) -> str:
     """'Run pytest tests (W-3b)' step 의 run block 을 `|| :` 우회로 변경."""
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = (
-        "        run: |\n"
-        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q || :\n"
+    new_run = A_J2_RUNPYTEST_BODY.replace(" -q\n", " -q || :\n")
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13h",
     )
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13h")
 
 
 def m_13i(t: str) -> str:
     """'Run pytest tests (W-3b)' step 의 run block 을 `; true` 형태로 변경."""
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q ; true\n"
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13i")
+    new_run = A_J2_RUNPYTEST_BODY.replace(" -q\n", " -q ; true\n")
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13i",
+    )
 
 
 def m_13j(t: str) -> str:
     """'Run pytest tests (W-3b)' step 의 run block 을 `set +e` + `exit 0` 으로 변경 (둘 다)."""
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = (
-        "        run: |\n"
-        "          set +e\n"
-        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-        "          exit 0\n"
+    # ★ V1b(`set -euo pipefail`) 착지 후이므로 「set +e 로 교체 + 말미 exit 0」이
+    #   원 의도(rc 흡수)의 현행 판본이다.
+    new_run = A_J2_RUNPYTEST_BODY.replace(
+        "          set -euo pipefail\n", "          set +e\n"
+    ) + "          exit 0\n"
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13j",
     )
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13j")
 
 
 def m_13k(t: str) -> str:
     """'Run pytest tests (W-3b)' step 에 step-level shell 주입."""
-    anchor = "      - name: Run pytest tests (W-3b)\n        id: run-pytest\n"
-    old_run = "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-    new_run = (
-        "        shell: bash {0}\n"
-        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
+    new_run = "        shell: bash {0}\n" + A_J2_RUNPYTEST_BODY
+    return _replace_once(
+        t,
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-13k",
     )
-    return _replace_once(t, anchor + old_run, anchor + new_run, "M-13k")
 
 
 def m_13l(t: str) -> str:
@@ -449,12 +517,7 @@ def m_13l(t: str) -> str:
 def m_16_rm_w3b(t: str) -> str:
     """'Run pytest tests (W-3b)' step 통째 제거 (job2 에서)."""
     return _replace_once(
-        t,
-        "      - name: Run pytest tests (W-3b)\n"
-        "        id: run-pytest\n"
-        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n",
-        "",
-        "M-16-rm-w3b"
+        t, A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY, "", "M-16-rm-w3b"
     )
 
 
