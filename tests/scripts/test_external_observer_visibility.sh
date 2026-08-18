@@ -851,14 +851,33 @@ if [ "$BAND_TRUSTED" = "1" ]; then
   else
     bad "AC-19/축0" "curl -sS 가 실재하지 않는다 — 진단 억제가 복원됐을 수 있다"
   fi
-  BADOPT=""
-  for o in '%{json}' '%{header_json}' ' -v ' ' --trace' ' -D ' ' -L '; do
-    if grep -qF -- "$o" "$WORKFLOW"; then BADOPT="$BADOPT $o"; fi
-  done
+  # ★ 주석 문면 배제 — AC-4 가 세운 것과 같은 규율이고, 여기엔 그 이유의 **실물**이 있다:
+  #   이 workflow 의 정직 주석이 금지 토큰을 **인용**하므로 파일 전체를 훑으면 검사가
+  #   자기 주석에 걸려 RED 가 된다(실제로 한 번 그렇게 됐다). 정정문이 그 문자열을
+  #   인용해 계수가 늘어나는 형태 — **판정은 계수가 아니라 위치로** 한다.
+  #   ★ 정직 범위: 아래 6 토큰만 기계 검사한다. `-i` 는 계약상 금지이나 토큰이 너무
+  #     일반적이라(예: `sed -i`) 거짓양성 없이 검사할 수 없다 — 리뷰 판정면으로 남긴다.
+  forbidden_opts() { # <workflow> → 검출된 금지 옵션 목록 (없으면 빈 문자열)
+    local wf="$1" o out=""
+    grep -v '^[[:space:]]*#' "$wf" > "$WORK/nc.txt" || true
+    for o in '%{json}' '%{header_json}' ' -v ' ' --trace' ' -D ' ' -L '; do
+      if grep -qF -- "$o" "$WORK/nc.txt"; then out="$out $o"; fi
+    done
+    printf '%s' "$out"
+  }
+  BADOPT="$(forbidden_opts "$WORKFLOW")"
   if [ -z "$BADOPT" ]; then
-    ok "AC-19/argv 계약: 금지 옵션(%{json}·%{header_json}·-v·--trace·-D·-L) 0"
+    ok "AC-19/argv 계약: 실 argv 에 금지 옵션(%{json}·%{header_json}·-v·--trace·-D·-L) 0"
   else
     bad "AC-19/argv 계약" "금지 옵션 검출:$BADOPT"
+  fi
+  # 판별력 — 주석 배제가 검사를 **공허하게** 만들지 않았음을 실증한다.
+  #   실 argv 에 금지 옵션을 넣은 변형본은 반드시 검출돼야 한다.
+  mutate V5 "$(printf 'curl -sS -X GET\tcurl -sS -v -X GET')"
+  if [ -n "$(forbidden_opts "$WORK/V5.yml")" ]; then
+    ok "AC-19/argv 계약 판별력: argv 에 -v 를 넣은 변형본이 검출됨 (주석 배제 후에도 살아있다)"
+  else
+    bad "AC-19/argv 계약 판별력" "금지 옵션을 실 argv 에 넣었는데 검출되지 않는다 — 주석 배제가 검사를 공허하게 만들었다"
   fi
 
   if curl_diag_present "$WORK/ac5t"; then
