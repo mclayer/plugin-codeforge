@@ -132,7 +132,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 
 > **PASS = P0 0 ∧ P1 0 ∧ 직전 회차 finding 전건 처분 종결 (CLOSED 또는 defer-수신처 지정, REOPENED 0) ∧ 잔여 P2/P3 전건 처분 lifecycle 등재** (deferred-item-lifecycle 연결 — won't-fix 은폐 금지, 미조치 처분으로 덮지 않는다)
 
-- **처분 판정원 (AC-2c)** = ① 리뷰 PL 보고서의 처분 표 (finding-id 별 CLOSED/REOPENED/defer-착지점) ② fix-event-v1 v1.4 `replay_verdict` (FIX-close ground-truth replay). ②의 실배선 = B(CFP-2985) 편입 — 본 ADR 은 판정원 지정까지.
+- **처분 판정원 (AC-2c)** = ① 리뷰 PL 보고서의 처분 표 (finding-id 단위 CLOSED/REOPENED/defer-착지점) ② fix-event-v1 v1.4 `replay_verdict` (FIX-close ground-truth replay). ②의 실배선 = B(CFP-2985) 편입 — 본 ADR 은 판정원 지정까지.
 - **3층 분해 + ADR-067 §결정 8 무손상**: 본 ADR 은 lane 종료(PASS) ⊥ finding 처분(닫기) ⊥ 카운터 소비(Iter) 의 3층으로 분해한다. 이 중 **뒤 2층의 disjoint (닫기 게이트 ⊥ max-FIX 카운터) 가 ADR-067 §결정 8 원문**이고 ('층' 어휘·PASS 층 문면은 §결정 8 에 부재 — 원문 재대조 완료), **PASS 층의 분리는 본 ADR 신설분**이다. 따라서 §결정 8 supersede 0 — 본 정밀화는 PASS 층만 건드린다.
 - **"메타-텍스트" 제3항 불요**: §결정 1 (R1) 채택으로 메타-텍스트가 심사 정의역에서 구조적으로 소거되므로 종료 조건에 그 판별 축이 필요 없다 (Story §6.5 R1↔R2 의존 관계. 외부 선행례에도 대응물 부재 — R1 미채택 시에만 필요했을 축).
 - **도달 가능성 근거**: 새 조건의 각 항은 리뷰어 성실성과 양립한다 — P0/P1 은 severity 판정 (리뷰가 이미 수행), 처분 종결은 follow-up 확인 (신규 sweep 아님), 잔여 등재는 기록 행위다. finding 하한이 0 이 아니어도 (bad-fix 상수) P2/P3 잔여는 등재 처분으로 exit 가능하므로 종료 조건이 물리적으로 도달 가능해진다.
