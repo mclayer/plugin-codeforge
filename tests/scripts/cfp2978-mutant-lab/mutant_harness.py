@@ -534,20 +534,7 @@ def m_16_rm_install(t: str) -> str:
 
 def m_16_rm_collect(t: str) -> str:
     """'Collect pytest tests (W-3b-1, ...)' step 통째 제거 (job2 에서)."""
-    anchor = (
-        "      - name: Collect pytest tests (W-3b-1, verify node IDs present)\n"
-        "        id: collect\n"
-        "        run: |\n"
-        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py --collect-only -q > /tmp/pytest_collected.txt 2>&1\n"
-        "          cat /tmp/pytest_collected.txt\n"
-        "          grep -q \"test_2976_a_derive_from_overlay\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_a_derive_from_overlay not found\"; exit 1; }\n"
-        "          grep -q \"test_2976_b_fail_closed\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_b_fail_closed not found\"; exit 1; }\n"
-        "          grep -q \"test_2976_c_determined_contract\" /tmp/pytest_collected.txt || { echo \"ERROR: test_2976_c_determined_contract not found\"; exit 1; }\n"
-        "          grep -q \"test_ac4_leg1_determined_is_true_and_lists_present\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg1_determined_is_true_and_lists_present not found\"; exit 1; }\n"
-        "          grep -q \"test_ac4_leg2_branch_names_match_corpus_regex\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg2_branch_names_match_corpus_regex not found\"; exit 1; }\n"
-        "          grep -q \"test_ac4_leg3_excluded_self_repo_is_slug\" /tmp/pytest_collected.txt || { echo \"ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found\"; exit 1; }\n"
-    )
-    return _replace_once(t, anchor, "", "M-16-rm-collect")
+    return _replace_once(t, A_J2_COLLECT, "", "M-16-rm-collect")
 
 
 def m_16_coe_job2(t: str) -> str:
@@ -565,17 +552,13 @@ def m_16_coe_job2(t: str) -> str:
 
 def m_16_trailing_cmd(t: str) -> str:
     """W-3b run block 에 후행 명령 1줄 추가 (W-3b 블록 스칼라화 축)."""
+    # ★ run 은 이미 블록 스칼라(W-3d V1b)이므로 「후행 명령 1줄 추가」가 현행 판본.
+    new_run = A_J2_RUNPYTEST_BODY + '          echo "Pytest completed"\n'
     return _replace_once(
         t,
-        "      - name: Run pytest tests (W-3b)\n"
-        "        id: run-pytest\n"
-        "        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n",
-        "      - name: Run pytest tests (W-3b)\n"
-        "        id: run-pytest\n"
-        "        run: |\n"
-        "          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q\n"
-        "          echo \"Pytest completed\"\n",
-        "M-16-trailing-cmd"
+        A_J2_RUNPYTEST_HEAD + A_J2_RUNPYTEST_BODY,
+        A_J2_RUNPYTEST_HEAD + new_run,
+        "M-16-trailing-cmd",
     )
 
 
@@ -694,11 +677,11 @@ MUTANTS: Dict[str, Tuple[str, Callable[[str], str], str]] = {
     "R-7":           ("mctrader-sentinel.yml", r7_coe_step_to_job2,  "leg③ RED (relocation)"),
     "T-taut":        ("mctrader-sentinel.yml", t_taut_overwrite,     "straw GREEN ∧ real RED"),
     # W-16 신규 — 정의역 확장 축
-    "M-16-rm-w3b":       (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_w3b,        "모든 w16 leg RED (W-3b 임계)"),
-    "M-16-rm-install":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_install,    "w16_a, b, c, d, f, g RED (w16_e 미포함)"),
-    "M-16-rm-collect":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_collect,    "w16_a, b, c, d, f, g RED (w16_e 미포함)"),
+    "M-16-rm-w3b":       (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_w3b,        "모든 w16 leg RED (W-3b 임계) + 봉투 핀 RED"),
+    "M-16-rm-install":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_install,    "w16_a, b, c, d, f RED (w16_e 미포함) + 봉투 핀 RED"),
+    "M-16-rm-collect":   (".github/workflows/parallel-work-sentinel-check.yml", m_16_rm_collect,    "w16_a, b, c, d, f RED (w16_e 미포함) + 봉투 핀 RED"),
     "M-16-coe-job2":     (".github/workflows/parallel-work-sentinel-check.yml", m_16_coe_job2,      "w16_b RED (leg③ — job2 coe 주입)"),
-    "M-16-trailing-cmd": (".github/workflows/parallel-work-sentinel-check.yml", m_16_trailing_cmd,  "w16_g RED (run 블록 다중화)"),
+    "M-16-trailing-cmd": (".github/workflows/parallel-work-sentinel-check.yml", m_16_trailing_cmd,  "봉투 핀(PIN_ENVELOPE_SHA256) RED — 구 담지자 w16_g 는 폐기(설계 §8.B: run 스칼라 전문이 봉투에 담겨 계수 핀을 승계)"),
     "M-16-job-defaults-shell": (".github/workflows/parallel-work-sentinel-check.yml", m_16_job_defaults_shell, "w16_d RED (A5 축 — job defaults.run.shell)"),
     "M-16-twin-drift":   ("templates/github-workflows/parallel-work-sentinel-check.yml", m_16_twin_drift, "[wrapper-twin] RED ∧ [wrapper-canonical] GREEN (독립성)"),
 }
