@@ -117,7 +117,7 @@ jobs:
       - name: Collect pytest tests (W-3b-1, verify node IDs present)
         id: collect
         run: |
-          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py --collect-only -q > /tmp/pytest_collected.txt 2>&1
+          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py --collect-only -q > /tmp/pytest_collected.txt 2>&1
           cat /tmp/pytest_collected.txt
           grep -q "test_2976_a_derive_from_overlay" /tmp/pytest_collected.txt || { echo "ERROR: test_2976_a_derive_from_overlay not found"; exit 1; }
           grep -q "test_2976_b_fail_closed" /tmp/pytest_collected.txt || { echo "ERROR: test_2976_b_fail_closed not found"; exit 1; }
@@ -127,6 +127,6 @@ jobs:
           grep -q "test_ac4_leg3_excluded_self_repo_is_slug" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found"; exit 1; }
       - name: Run pytest tests (W-3b)
         id: run-pytest
-        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q
+        run: python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py -q
       - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)
         run: bash tests/scripts/test_check-parallel-work-sentinel.sh
