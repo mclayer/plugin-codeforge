@@ -1241,6 +1241,8 @@ exempt(file) :=
 ladder(file) :=
       len(mea) >= 1                                  # 미만 = 사다리 미선택 (사유 없음)
   AND 각 항목에서 경로가 추출된다 (경로 키 closed-set — 아래 ③-key)  [ladder-path-key]
+       # ★★ FIX Iter 13 — 항목이 `PATH_KEYS` 를 **복수 보유**하면 보유 값 **전건(ALL)** 에 아래 두
+       #   연언지를 적용한다 (선언 ANY 아님). 미규정이던 자리이며 (vii) 의 *"경로 후보"* 를 함께 정정한다.
   AND 그 경로가 repo 트리의 blob 으로 실재                          [ladder-path-missing]
   AND 그 경로가 (iv-L) `배선` 을 만족한다                            [ladder-unwired]
        #   스크립트 축   = 그 경로가 workflow run: 블롭에 **출현**한다   (호출 아님 — 아래 천장)
@@ -2745,9 +2747,47 @@ pin 은 "잔여일 수" 같은 **관측 카운터를 exit 조건으로 삼는 �
 PATH_KEYS := ["script_path", "workflow", "workflow_path"]       # closed-set (FIX Iter 11 — 8원 -> 3원)
 NON_PATH_KEYS := ["action", "check", "detect_command", "script", "path"]
                  # 경로 추출원이 **아니다**. 아래 근거표 참조
-경로 추출 = 항목이 dict 이고 PATH_KEYS 중 1개 이상 보유 → 그 값들이 경로 후보
+경로 추출 = 항목이 dict 이고 PATH_KEYS 중 1개 이상 보유 → 그 값 **전건(ALL)** 이 경로
+             # ★ FIX Iter 13 — 구 문면은 "그 값들이 경로 **후보**" 였다. "후보" 는 선언(ANY)의 어법이고
+             #   문서의 코퍼스 수치는 **연언(ALL)에서만** 재현된다. 아래 정직 기재 참조.
 항목이 bare scalar(문자열) → 경로 키 부재 ⇒ 사다리 미충족 (RED)
 ```
+
+★★★★ **FIX Iter 13 — 다중 경로 키 항목의 연언/선언이 미규정이었다 (설계리뷰 R13 Codex F-C · Claude P1-4)**
+
+`(iii)` 은 단수(*"각 항목에서 **경로가** 추출된다"*), 여기는 복수(*"그 값**들이** 경로 **후보**"*)로 적혀
+있었고, 어느 쪽도 **한 항목이 경로 키를 2개 이상 가질 때**를 규정하지 않았다. 그 미규정이 자유 변수로
+남으면 **분기 채택의 근거 수치 자체가 갈린다**:
+
+```
+# 산출 명령 = (iii) 대가 산출과 동일 정의역 (archive/adr/ADR-*.md 174 · mea 비-빈 48파일 169항목 · pin b0cefd3fe)
+독법 ALL(규정)  분기 없음(구)  파일 GREEN 0 / RED 48    항목 unwired 4 · path-key 164 · path-missing 1
+독법 ANY        분기 없음(구)  파일 GREEN 1 / RED 47    항목 unwired 2 · GREEN 2 · path-key 164 · path-missing 1
+독법 ALL / ANY  분기 채택(신)  둘 다 파일 GREEN 3 · 항목 GREEN 4        # 신 축에서는 두 독법이 일치
+코퍼스 도달 = 2 항목 (전부 ADR-072 — `script_path`(배선 참) ∧ `workflow_path`(구 배선 거짓) 동시 보유)
+```
+
+- ⇒ **규정 = ALL.** ANY 로 구현하면 (iv-L3) 대가 블록의 *"정당한 워크플로 선언 **4항목**이 born-red"* 라는
+  **분기 채택의 적발 근거가 2항목**이 되고 `ADR-072` 는 분기 이전에 이미 GREEN 이다. 방향은 **fail-open**.
+- ★★ **이것은 *"판정을 바꾸는 변수가 변수 목록 밖에 있다"* 의 6번째**다 (`RCHAR` Iter 7 · CRLF Iter 8 ·
+  위치 슬롯 Iter 10 · `정의역 우선` 독법 Iter 11 · 접두 제거 순서 Iter 12 에 이어). 처분도 같다 — **리터럴로 등재**.
+- ★★★ **표 내 판별은 현재 `0` 이다 (정직 기재 — 이번 판은 행을 신설하지 않았다)**. (iv) 표 65행 중 경로 키를
+  2개 이상 보유한 항목을 가진 행은 **0**(firsthand)이므로 **65/65 는 ALL·ANY 어느 독법에서도 불변**이고,
+  표는 이 축의 변경을 **관측하지 못한다**. 코퍼스 도달이 2 이므로 (0-c) 자기적용의 예외(*"출현 0 → 문면
+  고정만"*)에 **해당하지 않으며 행이 있어야 옳다.** 행 후보와 그 판정을 **사전 실측**해 둔다:
+
+  ```
+  후보  D ⏎ K: ⏎   - script_path: scripts/check-adr-amendment-parity.sh
+                    workflow: templates/github-workflows/test.yml
+     ALL(규정) -> RED/`ladder-unwired`      ANY -> GREEN        # 이 축의 유일 판별자
+     신설 시 (0-c) 이동 = `PATH_KEYS drop workflow` 3→5 · `LADDER_WIRED` 3→4 · `WIRE_WF` 1→2 · stub 9→10
+  ```
+
+  보류 사유는 **R13 처분의 정지 기준(범위 잠금 1회 한정)** 이며 이월처는 Change Plan §12.3 잔여다.
+- ★★ **이 미규정은 Iter 12 가 만든 것이 아니다** — (vii) 은 Iter 11 판이다. 그럼에도 **살아 있는 자유 변수**라
+  적는다. ★ 실증 1례: R13 심사자 한 명의 **같은 세션 두 하네스가 이 축에서 갈렸고**(fixture 층 pick-first ↔
+  코퍼스 층 ALL), 본 저작도 그 fixture 하네스에 위 후보 행을 넣었을 때 규정과 **다른 답(GREEN)** 을 받았다.
+  같은 저자의 두 구현이 갈린다는 것이 이 미규정이 실재한다는 가장 강한 증거다.
 
 ★★★★ **FIX Iter 11 — 8원 중 1원만 행사됐고, 그 중 하나는 경로가 아니었다 (P0-E · P1-1)**
 
