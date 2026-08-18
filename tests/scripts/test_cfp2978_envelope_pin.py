@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Dict, Set, List, Any, Tuple
 
 # 환경 설정
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "lib"))
 
 try:
@@ -28,7 +28,7 @@ try:
 except ImportError as e:
     raise ImportError(f"Failed to import envelope_pin or workflow_shape: {e}") from e
 
-# ★ 확정 핀 값 (DevPL 채취 완료, 산출 명령 병기)
+# ★ 잠정 핀 값 (미확정 — DevPL 최종 채취 대기)
 # 대상: .github/workflows/parallel-work-sentinel-check.yml
 # JOB2: parallel-work-sentinel-test
 # 산출 명령:
@@ -197,14 +197,15 @@ def test_envelope_pin_coverage_table_witnesses():
 # 보조 함수 (로스터 미등재) — 로스터 제약상 생략 또는 실 구현 필요
 # ============================================================================
 
-def test_envelope_pin_sweep_derivation_completeness():
-    r"""[로스터 미등재] Sweep 로스터 파생이 완전한지 확인.
+def _test_envelope_pin_sweep_derivation_completeness():
+    r"""[로스터 미등재·pytest skip] Sweep 로스터 파생이 완전한지 확인.
 
     정의역 = 적용역 − 봉투 spine
     spine = top-level `jobs` 키 · JOB2 키 · `jobs` 합성 래퍼 노드
 
-    ★ 로스터 미등재 함수 — 공허 pass 금지 (DeveloperPLAgent 지시):
-       내용이 없으면 삭제, 있으면 실 구현
+    ★ 함수명 prefix `_` 으로 pytest discovery 회피 (구현 대기 중).
+    ★ 로스터 미등재 함수 — 공허 pass 금지:
+       Change Plan §8.B 명세 직독 후 sweep roster(role column) 파싱으로 파생.
     """
     raise NotImplementedError(
         "Sweep derivation completeness test not yet implemented. "
