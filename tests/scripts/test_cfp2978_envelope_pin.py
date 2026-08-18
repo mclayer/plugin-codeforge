@@ -137,8 +137,11 @@ def test_envelope_pin_domain_derivation_selfcheck():
     assert len(mapping_nodes_excluding_spine) > 0, \
         "Domain (mapping nodes excluding spine) is empty — FAIL on non-emptiness"
 
-    # ★ 고정 수치 assert 제거 — workflow 구조 변화에 따라 개수가 달라짐
-    # (정의역 파생 유틸의 정확성은 아래 알려진 경로 포함 assert로 검증)
+    # ★ Census 항등식: |전체 mapping| = |spine| + |spine 제외| (workflow 변화 대응)
+    # 고정 수치 대신 관계 assert 사용 → workflow 구조 변화에 자동 적응
+    # 파생이 깨지면 즉시 RED (숫자 stale 회피)
+    assert len(all_mapping_nodes) == len(SPINE_PATHS) + len(mapping_nodes_excluding_spine), \
+        f"Census identity failed: |all|={len(all_mapping_nodes)} != |spine|={len(SPINE_PATHS)} + |excluding|={len(mapping_nodes_excluding_spine)}"
 
     # (ii) 알려진 경로 포함 assert — 실 구체 경로가 파생 집합에 있는지 확인
     # 예: job2 의 steps 안 특정 step 의 mapping
