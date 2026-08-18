@@ -29,8 +29,27 @@ jobs:
     #   무기한 잠그는 blast radius 를 상한으로 막는다.
     timeout-minutes: 15
     steps:
+      # CFP-2995 축 B — fetch-depth 미지정 = shallow(depth 1). 그 상태에서는 CFP-2984 self-test
+      #   corpus 의 기저선 대조 leg 이 기저선 커밋 객체를 러너에서 못 읽는다. 축 A 가 그것을
+      #   undecidable 로 정직하게 방출하게 만들었지만, 축 A 만으로는 CI 에서 그 leg 이 영구
+      #   판정 불가라 판별력이 0 이다(hollow). 기저선을 실제로 판독 가능하게 하는 것이 본 배선.
+      #
+      #   depth 0(전 이력)을 택한 이유 — 기저선은 **계약 상수**(동적 기저선 금지: 착지 후 양변이
+      #     같아져 공허참=항진이 된다)라 main 이 전진할수록 필요한 depth 가 단조 증가한다.
+      #     유한 depth 는 언젠가 조용히 부족해지고, 그 순간의 증상은 다시 undecidable 이다.
+      #
+      #   대안(검사 스크립트가 필요 시 `git fetch --depth=1 origin <sha>` 로 객체 회수)을
+      #     택하지 않은 이유: (a) 현행 self-test 는 픽스처 전량이 mktemp -d 로컬 repo 인 hermetic
+      #     계약이라 테스트 시점 네트워크 의존을 새로 들이게 된다 (b) SHA 직접 fetch 는 서버측
+      #     uploadpack 설정에 의존해 이식성이 낮다.
+      #
+      #   parity 영향 0 — templates/github-workflows/invariant-check.yml 은 부재하고, 아래
+      #     "Workflow parity" step 의 loop 은 templates → .github 단방향 walk 이라 미검출
+      #     (CONSUMER_ONLY_WORKFLOWS 등재 불요).
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Workflow parity (templates ↔ .github)
         run: |
