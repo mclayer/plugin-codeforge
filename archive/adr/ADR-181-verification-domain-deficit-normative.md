@@ -1826,6 +1826,19 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
   (n-5)  grep 패턴 · grep -v 제외 패턴       예) | grep -v 'docs/evidence-checks-registry.yaml'
   (n-6)  heredoc 본문 안의 경로 언급
   (n-7)  행 중간 trailing 주석 (위 항목 — 선두 주석줄 제거가 덮지 않는다)
+  ★★ (n-8)  **실행 코드 안의 비-호출 경로** (FIX Iter 13 — R13 3자 수렴. 위 7 부류가 전부 *"문자열이
+             코드가 아닌 자리"* 축이라, 그 축만 막으면 된다는 오독을 낳는다. **지배 축은 이쪽이다** —
+             경로가 실행되는 코드 안에 있으되 **호출 대상이 아니라 데이터**로 등장한다):
+      · 파일 속성 변경 인자     chmod +x scripts/read_version_pin.py        ★ "실행 가능하게 만들었으나
+                                                                            부르지 않는다" — 표적 형상 최근접
+      · 데이터·baseline 입력 인자  --baseline docs/kpi/governance-bloat-baseline.json  ·  --manifest .claude/_overlay/project.yaml
+      · 변수 할당 우변         EXISTING_JSON_FILE="docs/kpi/retro-alert-pickup-rate.json"
+      · 문자열 **동등 비교** 피연산자  [ "$path" = "docs/inter-plugin-contracts/label-registry-v2.md" ]   ((n-4) 존재검사 아님)
+      · shell case 패턴 분기 인자  case "$path" in docs/inter-plugin-contracts/*.md|…/MANIFEST.yaml)
+      · for 루프 대상 목록 원소   for f in docs/retros/*.md            (그 파일은 **검사의 대상**이지 강제자가 아니다)
+      · 스크립트 언어 리터럴 안 파일 읽기 인자  ReadAllText((Join-Path $env:GITHUB_WORKSPACE 'hooks/run-hook.cmd'))
+      ⇒ 위 witness 는 전부 firsthand 이며 각 경로의 **run블롭 출현 1회 = 유일 근거**다(예: `label-registry-v2.md`
+        실재 ∧ 배선, 유일 출현이 그 `=` 비교 한 줄). 즉 **임의 ADR 이 그 경로 한 줄로 `admissible` 을 얻는다.**
   ★ 이 목록은 **하한**이다. "닫힌 집합" 이라 선언하지 않는다 — 이 문서에서 열거를 정본으로 둔 자리가
     매번 한 칸 옆에서 반증됐다. 정본은 술어(`출현`) 자신이고 목록은 그 술어의 관측 사례다.
 ```
@@ -1840,6 +1853,21 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
 - ★★★ **비실행 데이터 파일 28종이 `실재 ∧ 배선` 이다** (firsthand — `CLAUDE.md`(출현 13회) ·
   `docs/orchestrator-playbook.md` · `docs/consumer-guide.md` · `docs/inter-plugin-contracts/*.md` ·
   `plugins/codeforge-review/agents/*.md` · `review-checklists/{code,design,security}.md` …).
+  ★★ **FIX Iter 13 — 산출 명령·정의역을 병기한다 (R13 PL P2-4 · Claude P2-3).** 이 수치는 **정의역에
+  민감**해서, 적지 않으면 재현자가 26·27·29·33 을 얻고 *"재현 실패"* 로 오판한다:
+
+  ```
+  집합 A := { t ∈ S | t ∈ ls-tree(b0cefd3fe) ∧ 배선(t) }                              # |A| = 256
+  비실행 := A 에서 확장자 {.sh .py .js .ts .ps1} 를 **제외**                             #      = 27
+  ★ + `CLAUDE.md` 1                                                                   #      = 28  ← 본문의 28
+     (`CLAUDE.md` 는 슬래시가 없어 `S` 의 토큰 규칙(슬래시 ≥ 1)상 **`S` 밖**이다 — 그래서 별도 가산)
+  ★ 정의역을 bare filename 허용(슬래시 ≥ 0)으로 넓히면 **29** 가 된다(+`requirements.txt`).
+    확장자 집합을 {… .mjs .cmd .bat} 로 넓히면 26, {.sh .py} 로 좁히면 33 이다.
+  ```
+
+  ★★ **같은 (iv-L) 절 안의 다른 `28`(위 *"주석줄에서만 배선 = 28종"*)과 이 `28` 은 disjoint 한 두 집합이다**
+  — 저쪽은 `S` 안 **주석-only 토큰**(그중 repo 실재 **0**), 이쪽은 **실재 ∧ 배선인 비실행 파일**이다.
+  두 수가 같은 것은 우연이며 **상호보강이 아니다**(이 문서가 `83` 에서 이미 자백한 함정의 재발 방지).
   ⇒ **임의 ADR 이 `- script_path: CLAUDE.md` 한 줄로 사다리 `admissible` 을 얻는다.** carrier 도 만기도
   없으므로 **면제 경로(carrier + 180일 상한)보다 값싸다** — 두 충족 경로 중 싼 쪽이 강제를 전혀
   요구하지 않는다. **Phase 2 checker 착지 전에 이 천장이 문면에 없으면 안 되는 이유가 그것이다.**
@@ -1886,9 +1914,15 @@ S := set(re.findall(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", 정규화(run블롭
 
 run블롭은 `run:` 스칼라만 모으므로 **workflow → 테스트 래퍼 → checker** 처럼 1홉을 거치는 정당한 강제가
 `배선=False` 로 떨어진다. firsthand — 최상위 `scripts/*.{sh,py}` 201 중 배선 거짓 89, 그중 basename 이
-run블롭에 등장하는 것 **4**: `check-lane-entry-ownership.sh` · `check-lane-evidence.sh` ·
-`check-verification-floor.sh` · `check-worktree-self-ownership.sh` — 넷 다 테스트 래퍼(`bash tests/scripts/test_*.sh`)
-경유다. ⇒ **래퍼 경유 호출 · `uses:` composite/reusable 액션 안의 호출은 미탐**이라고 적는다.
+run블롭에 등장하는 것 **4** (★ **FIX Iter 13 — 산출 술어를 병기한다**: 이 `4` 는 basename **부분문자열**
+매치이며, `배선` 과 같은 **경계 매치로 재면 0** 이다. 술어 없이는 재현 불가 수치였다 — R13 PL P2-2):
+`check-lane-entry-ownership.sh` · `check-lane-evidence.sh` · `check-verification-floor.sh` ·
+`check-worktree-self-ownership.sh`. ★★ **FIX Iter 13 정정 — 직전 판의 *"넷 다 `bash tests/scripts/test_*.sh`
+경유"* 는 4건 중 2건에서 거짓이다**(firsthand): 래퍼가 **두 위치로 갈린다** — `tests/scripts/test_*.sh` **2**
+(`check-lane-entry-ownership.sh` · `check-worktree-self-ownership.sh`) / 최상위 `scripts/test-*.sh` **2**
+(`scripts/test-check-lane-evidence.sh` · `scripts/test-check-verification-floor.sh`). Phase 2 가 1홉 천장을
+좁히며 문면이 지목한 `tests/scripts/` 만 정의역에 넣으면 **절반이 조용히 빠진다**.
+⇒ **래퍼 경유 호출 · `uses:` composite/reusable 액션 안의 호출은 미탐**이라고 적는다.
 방향은 **fail-closed**(정당한 강제를 미배선으로)라 회피구는 아니지만, 문면에 없으면 저자가 born-red 의
 원인을 못 찾는다. ★ GitHub Actions expression 이 대소문자를 무시하므로 `${{ GITHUB.WORKSPACE }}` 표기도
 같은 잔여다(코퍼스 출현 0 — 판별 0).
@@ -1946,10 +1980,30 @@ born-red)와 같은 형상이 워크플로 축에서 미봉합**으로 남은 �
 
 ⇒ **ⓐ 채택.** ⓑ 는 R12 범위 잠금의 *"판별 행 되돌림 0"* 을 어기고, `배선` 축이 코퍼스에서 무는 것을
 5항목 → 1항목으로 줄여 **축을 사실상 죽인다**(`D-LEG` L3-ⓐ 합집합 보존 위반).
-★ **원 처방 문면(*"행 50·51 을 실 호출 witness 로 교체"*)은 이행 불가로 판정했다** — `gh workflow run`
-형 실 호출의 run블롭 출현이 **0** 이므로 워크플로 축에는 실 호출 witness 가 **원리적으로 존재하지 않는다**
-(위 firsthand). 대신 분기가 두 행의 GREEN 근거를 산문에서 **설치 실재**로 옮긴다. 이 대체 판단과 그
-근거를 여기 적는 것이 처방 미이행을 감추지 않는 방법이다.
+★ **원 처방 문면(*"행 50·51 을 실 호출 witness 로 교체"*)은 이행 불가로 판정했다** — 워크플로 축에는
+실 호출 witness 가 **원리적으로 존재하지 않는다**. 대신 분기가 두 행의 GREEN 근거를 산문에서 **설치 실재**로
+옮긴다. 이 대체 판단과 그 근거를 여기 적는 것이 처방 미이행을 감추지 않는 방법이다.
+
+★★ **FIX Iter 13 — 그 "원리적 부재" 의 탐색 정의역을 결론에 맞춰 넓혀 적는다 (설계리뷰 R13 PL P2-3 ·
+Claude P3-2 · Codex F1-ii).** 직전 판은 `run블롭` 안에서 2형만 세고 *"원리적"* 을 단정했다 — 그것은 이 문서
+자신의 규율(*"'전수 탐색했고 0건' 은 **탐색 정의역을 함께 적지 않으면** 주장으로 성립하지 않는다"*) 미이행이다.
+**값은 바뀌지 않는다** — 3자 심사가 각각 독립으로 넓혀 반증을 시도했고 전부 실패했다.
+
+```
+# 정의역 = pin b0cefd3fe 의 .github/workflows/*.y(a)ml 전문 116 파일  (run블롭은 그 부분집합)
+# 산출 = 리터럴 부분문자열 계수 (`:` 붙은 키 형태는 별도 열)
+                                run블롭   전문 116파일   성격
+gh workflow run                     0          0        실 호출 — 부재
+REST actions/workflows              0          0        실 호출 — 부재
+uses: ./.github/workflows/          0          0        local reusable 호출 — 부재
+workflow_call                       0          2        ★ 둘 다 **YAML 주석** (`workflow_call:` 키 = 0) — 호출 아님
+workflow_run                        0          4        ★ 전부 **YAML 주석**(제거 이력 기술, `workflow_run:` 키 = 0)
+workflow_dispatch                   1         82        **트리거 선언**(키 형태 `workflow_dispatch:` = 68 = 보유 파일 68).
+                                                        run블롭 1건은 산문 문장 안(`… monthly cron / workflow_dispatch).`)
+```
+
+⇒ **6형 전건에서 caller 가 0 이다.** `workflow_call`/`workflow_run`/`workflow_dispatch` 는 **피호출·트리거
+선언**이지 호출이 아니며, 호출 어법 3형(`gh workflow run` · REST · local `uses:`)은 전문에서도 출현 0 이다.
 
 ```
 INSTALL(p)  := p 가 `.github/workflows/` 하위면 p 자신,
@@ -2132,7 +2186,7 @@ GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude
 | **49** | `D` ⏎ `K:` ⏎ `  - script_path: archive/adr/ADR-027-consumer-adoption-protocol.md` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 11 신설 — `배선` 경계 문자군의 verdict 판별 (P0-F)**. 직전 판에서 이 문자군은 **판별 행 0**(껐을 때 48/48 불변)이었고 방향은 fail-open 이었다. 이 경로는 실재하고, run블롭에 **URL 조각으로만** 등장한다 — `- [ADR-027 Amendment 2 §결정 6](../blob/main/archive/adr/ADR-027-consumer-adoption-protocol.md)`. 경계를 **부분문자열**로 낮추면 이 행이 **GREEN**(firsthand). ★ 대상이 `.md` 인 것은 의도적이다 — `실재` 가 실행권한·확장자를 보지 않는다는 (iv-L) 천장의 전시다 |
 | **50** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/retro-alert-pickup-kpi.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow` 의 판별 (P1-1)**. 직전 판은 8원 중 **`script_path` 1원만 행사**했고 축소·확대 mutant 가 양방향으로 48/48 을 통과했다. 이 행은 실재 ∧ 배선을 둘 다 만족하는 실물이라 `workflow` 를 closed-set 에서 빼면 **RED/`ladder-path-key`** 로 뒤집힌다(firsthand). ★★★ **FIX Iter 12 — 이 행의 `배선` 근거가 산문이었다 (R12 P0, 3자 수렴)**: 구 술어에서 유일 근거는 `-m "Automated by templates/github-workflows/retro-alert-pickup-kpi.yml"` (**git commit 메시지**)이고 **호출은 0** 이었다. (iv-L3) 분기 후 근거는 `.github/workflows/retro-alert-pickup-kpi.yml` **설치 실재**이며 verdict 는 GREEN 그대로다 — **값이 아니라 근거가 바뀌었고, 그 사실을 지우지 않는다** |
 | **50b** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/claude-md-line-cap.yml` | **GREEN** | — | ★★★★ **FIX Iter 12 신설 — workflow 축 분기의 판별 (R12 P0-ii, Codex)**. 이 워크플로는 실재하고 `.github/workflows/claude-md-line-cap.yml` 로 **설치**돼 있으나 어떤 `run:` 블롭에서도 **호출되지 않는다**(워크플로는 이벤트로 트리거된다). 분기를 없애면 `RED/ladder-unwired` — 즉 **정당한 워크플로 선언이 born-red** 였던 자리다. ★ 코퍼스에서 이 형상이 4항목(3파일) 실재했다 |
-| **50c** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/test.yml` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 12 신설 — `배선_wf`(설치 실재)의 음성 판별 (R12 P0-ii)**. 이 템플릿은 실재하나 `.github/workflows/test.yml` **twin 이 없다**(firsthand — 템플릿 88 중 twin 부재 17). `배선_wf` 를 미검사(항상 참)로 두면 **GREEN**. ★ 행 50b 와 **양성 ∧ 음성 쌍**이며, 둘 다 있어야 분기가 항진이 아님이 고정된다 |
+| **50c** | `D` ⏎ `K:` ⏎ `  - workflow: templates/github-workflows/test.yml` | **RED** | `ladder-unwired` | ★★★★ **FIX Iter 12 신설 — `배선_wf`(설치 실재)의 음성 판별 (R12 P0-ii)**. 이 템플릿은 실재하나 `.github/workflows/test.yml` **twin 이 없다**(firsthand — 템플릿 88 중 twin 부재 17). `배선_wf` 를 미검사(항상 참)로 두면 **GREEN**. ★ 행 50b 와 **양성 ∧ 음성 쌍**이며, 둘 다 있어야 분기가 항진이 아님이 고정된다. ★★ **FIX Iter 13 — 셀 서사가 원인을 오도했다 (R13 Claude P2-2)**: *"twin 이 없다"* 는 누락이 아니라 **의도된 배제**다 — twin 부재 17 중 **16 이 `CONSUMER_ONLY_WORKFLOWS` 등재**(consumer 배포용 seed, wrapper self-app 미운용)이고 **이 행의 대상 `test.yml` 이 바로 그 16 중 하나**(제외목록 13번)다. 제외목록 밖은 1건(`test-yaml-ext-fixture.yaml`)뿐이며 그마저 게이트 정의역(`*.yml`) 밖이다. 행의 **음성 판별 기능은 무손상**이며(`WIRE_WF` off -> GREEN), 정정 대상은 서사뿐이다 |
 | **51** | `D` ⏎ `K:` ⏎ `  - workflow_path: templates/github-workflows/version-3way-atomic.yml` | **GREEN** | — | ★★★ **FIX Iter 11 신설 — `PATH_KEYS` 원소 `workflow_path` 의 판별 (P1-1)**. 동상. 빼면 **RED/`ladder-path-key`**. ★★★ **FIX Iter 12 — 동상의 산문 근거**: 구 술어의 유일 근거는 PR 본문 문자열 `Source: templates/github-workflows/version-3way-atomic.yml (CFP-820 …)` 이었다. 분기 후 근거 = 설치 실재 |
 | **52** | `D` ⏎ `K:` ⏎ `  - action: bootstrap-labels` | **RED** | `ladder-path-key` | ★★★★ **FIX Iter 11 신설 — `action` 분리의 판별 (P0-E)**. 코퍼스 dict 항목 **130 중 122** 가 이 형태이고 값은 경로가 아니라 **검사 이름**이다. `action` 을 `PATH_KEYS` 에 되돌리면 이 행이 `RED/ladder-path-missing` 으로 뒤집힌다 — 즉 **오진단**이며, 그것이 코퍼스에서 **122회** 발생하고 있었다 |
 | **53** | `D` ⏎ `K:` ⏎ `  - detect_command: bash scripts/check-claude-md-line-cap.sh` | **RED** | `ladder-path-key` | ★★★ **FIX Iter 11 신설 — `detect_command` 분리의 판별 (P0-E)**. 값이 경로가 아니라 **명령줄**이다(`bash ` 접두 포함). 되돌리면 `RED/ladder-path-missing` 으로 뒤집힌다. ★ 경로가 인자로 **들어있다**는 것과 값이 경로**이다**는 것은 다르다 — 후자만 `PATH_KEYS` 의 계약이다 |
