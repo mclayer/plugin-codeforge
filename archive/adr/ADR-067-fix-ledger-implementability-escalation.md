@@ -31,14 +31,23 @@ amendment_log:
     scope_change: "ratchet 강화 only — 기존 §결정 1-7 의미 invariant 변경 0. fix-event-v1 v1.4 additive-optional column (v1.1~v1.3 선례 4회 정합) + max-FIX disjoint 명문화(약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A (강화 방향)."
     breaking: false
     backward_compat: true
+  - date: 2026-08-18
+    amendment: 5   # provisional "5+" — 산술 next 는 4 이나 미머지 브랜치 cfp-2985-fix-telemetry 가 amendment_id 4 선점 active (ADR-RESERVATION row firsthand). D-5a/AC-14 merge 직전 재계산 대상 — 선착 확정 · 후착 재계산 의무 · 결번 허용 · 충돌 금지.
+    cfp: CFP-3017
+    summary: "reasoning_carryover 길이 규범 producer cap → receiver floor 전환 (Q-2 사용자 확정, Story CFP-3017 §5.5): §결정 5 의 '≤2 lines (≤200 chars 권장)' 길이 권장 문면과 계약 fix-event-v1 의 max_length: 50/100 hard cap 을 모두 무효화(§2.4 축 1·2 — 제3의 처분)하고 receiver_min_accept: unbounded(숫자 아닌 열거 술어) + truncation_policy: marked-truncation-required(head 보존 + tail 절단 + 필수 sentinel + 원본 포인터 + 원본 크기, 절단 주체 = 수신자, 침묵 절단 금지)로 대체. + §2.4 축 5(발화 조건) 계약 문면 채택 — 보존 허용을 발화 조건 무관으로 확대(의무 발동 조건 비-debate max-FIX 3/3 은 무변경). + §결정 7 위생 invariant 정의역 확장 — disputed_claims(유지) + invariant_summary(위치 유래 협착 해소) + transcript_ref(포인터 — 금지 축 = private absolute-path) + lane_evidence.transcript(carrier = ADR-031 Amendment 4 sibling). fail-fast 유지 · 자동 redact 금지. + §결정 7 노출면 근거 정정(AC-19 무조건) — 'public PR description 자동 mirror' 철회, 실측 = cross-repo Issue comment mirror(carryover 미도달), 살아있는 근거 = consumer repo 공개성 단독, §8.4 형 내부 정합화(§8.4 머리 어구 'public PR mirror surface' 도 정정 대상). + AC-17(b) scope 분리 정의역 선언 — §결정 5 anti-anchoring 문장('Full transcript verbatim 회피') 무변경, 그 정의역(금지 객체 = debate transcript / 금지 슬롯 = transcript_ref 포인터 필드)만 선언하고 verdict relay 전달면(dispatch packet)은 정의역 밖 — 면 분리(감사면 = §10 원장 + review-verdict artifact + §9 전량 보존·변경 0 / 전달면 = finding 본문 + base SHA + 재현 명령, 직전 판정값 생략 — 재명명 금지)."
+    scope_change: "혼합 방향 정직 기술 — 'ratchet 강화 only' 아님: ① 위생 invariant 정의역 확장(3 sub-field + transcript) + 노출면 근거 정정 = 강화 ② 길이 규범 = 방향 전환(생산자 상한 문면 소멸 + 수신자 수용 술어 신설 — 집행 실적 0 인 cap[기계 소비자 0 실측]의 실태 정합화라 실효 약화 0, 단 규범 문면상 생산자 제약은 제거됨) ③ §2.4 축 5 = 보존 허용 조건 확대(계약 기실무 문면 채택 — ADR 로 재동기화하면 채널이 좁아져 본 Story 목적과 정면 역행) ④ §결정 5 anti-anchoring 문장 = 무변경 + 정의역 선언 additive. evidence-gated symmetric ratchet — 확대 방향 evidence = 계약 v1.2~v1.5 실무 문면 + Story §5.5 Q-2 사용자 확정 + fact packet F-2 실측."
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
   - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
   - CFP-2480  # Amendment 3 — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR carrier (Epic CFP-2476 E3)
+  - CFP-3017  # Amendment 5+ (provisional) — receiver floor 전환 + §2.4 축 5 계약 채택 + §결정 7 위생 확장·근거 정정 + AC-17(b) 정의역 선언 (Epic #3016 E-1)
 related_adrs:
   - ADR-008
   - ADR-024
+  - ADR-031  # Amendment 5+ sibling — lane_evidence.transcript(Q-1) 동일 형상 처분 carrier (ADR-031 Amendment 4, CFP-3017)
   - ADR-039
   - ADR-050   # parallel-epic-conflict-coordination (file disambiguation — ADR-050 number 가 multi-repo-story-key 와 share)
   - ADR-052
@@ -50,6 +59,9 @@ related_adrs:
   - ADR-064
   - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
   - ADR-119   # Amendment 3 — §결정 10② close-time wire 실현 ("수정됨=반증 후 단언")
+  - ADR-171   # Amendment 5+ — 신규 검사 warning tier 탄생 원칙 (blocking required context 신설 0)
+  - ADR-180   # Amendment 5+ — read_cost 잔여 리스크 축 (floor 는 하한이지 상한 아님 — 팽창 미차단 정직 라벨)
+  - ADR-182   # Amendment 5+ — 면 분리(리뷰/증적 정의역 분리) 선례 anchor (AC-17(b) 구조적 은닉)
 related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
@@ -371,6 +383,117 @@ replay close-gate 는 §결정 4 cross-lane RESET semantics 와 disjoint — rep
 
 - `mechanical_enforcement_actions: []` retain (replay close-time 자동 wire = Phase 2 / 후속 carrier, ADR-064 §결정 1 unitary). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test, CI 미배선 — Story A/B 선례 동형 helper).
 - ratchet 강화 방향 (max-FIX disjoint 명문화 + replay fail-mode 2축 + reproducer security invariant codify, 약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A. ADR-070 Amendment 12 + ADR-119 §결정 10② + fix-event-v1 v1.4 sibling cross-ref.
+
+## Amendment 5+ (CFP-3017 carrier, provisional) — receiver floor 전환 + 위생 정의역 확장 + 노출면 근거 정정 + verdict relay 정의역 선언
+
+> **번호 provisional 선언 (D-5a/AC-14)**: 본 Amendment 번호 "5+" 와 아래 결정 번호 10 은 **잠정값**이다. amendment 4 슬롯 + 결정 9 서수는 미머지 브랜치 CFP-2985 가 선점 중임을 firsthand 실측했다 — 재현: `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-RESERVATION.md | grep -n -A4 "adr_number: 67"` (→ `amendment_id: 4 / reserved_by_cfp: CFP-2985 / status: active`) + `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-067-fix-ledger-implementability-escalation.md | grep -n "^### 9\."` (→ 결정 9 서수 `9.1`~`9.5` 점유). 확정 규칙 = **"claim 은 잠정, 착지가 확정"** — 선착은 자기 provisional 값 그대로 / **후착 재계산 = 의무(조건부 아님)**: merge 직전 origin/main fresh 3-way 재확인(① 본 파일 frontmatter `amendment_log` 실제 max ② `ADR-RESERVATION.md` 동일 `adr_number` 하 타 claimant row — 미머지 브랜치 포함 ③ 병렬 open PR 실측) 후 다르면 관련 문면 전부 갱신 / **결번 허용 · 충돌 금지** (선례: ADR-141 amendment 10 · adr_number 173 결번).
+
+Epic #3016 E-1 (CFP-3017). 사용자 확정 Q-2 = `쓰는 쪽 상한 제거 + 받는 쪽 최소 수용량` (Story CFP-3017 §5.5, 2026-08-18 — 재논의 금지 설계 입력). 신규 §결정 10 추가 only — §결정 1~8 의 헤딩·본문은 무편집(이력 보존)이며, §결정 5 의 길이 권장 문면·발화 조건 축소 문면과 §결정 7 의 노출면 근거 문장이 아래 명시 범위에서 **본 Amendment 로 대체**된다.
+
+### 결정 10 — receiver floor 전환 + 위생 정의역 확장 + 노출면 근거 정정 + verdict relay 정의역 선언 (번호 provisional — 상단 선언 참조)
+
+#### 10.1 Q-2: producer cap → receiver floor 전환 (숫자 리터럴 0)
+
+처분 대상 2겹 — (a) §결정 5 의 `invariant_summary` `constraints: ["≤2 lines (≤200 chars 권장)"]` soft 권장 문면 (b) 계약 fix-event-v1 §3 의 `max_length: 50` / `max_length: 100` hard cap (실 편집 = Phase 2). **§2.4 축 1·2 의 처분 = 제3의 처분(무효화)** — ADR 값으로의 재동기화도, 계약값 채택도 아니다. 양쪽 모두 아래 2-part 형상으로 대체된다:
+
+| key | 값 | 성격 |
+|---|---|---|
+| `receiver_min_accept` | **`unbounded`** (숫자 아닌 열거 술어) | 검증 가능한 key 보존 — `max_length` 슬롯 1:1 치환. AC-1 (다) 분기 술어("생산자 상한 문면 부재 ∧ 수용 하한 규범 존재") 충족 |
+| `truncation_policy` | **`marked-truncation-required`** | head 보존 + tail 절단 + **필수 sentinel + 원본 포인터 + 원본 크기**, 절단 주체 = **수신자**, **침묵 절단 금지** |
+
+**숫자를 쓰지 않는 이유 3**: ① 실효 수용 창(집행면의 줄 위치·줄 길이 창)은 문서화된 적이 없고, 어떤 N 을 선언해도 그 창 아래에서 거짓이 된다 — receiver floor 규범은 실제 수신 코드의 처리 창이 N 이상일 때만 참이므로 순서를 뒤집으면 규범이 공허해진다 ② 오늘 폐지하는 50/100 이 정확히 "산문에 숫자를 박은 결과"다(전사 drift — Story §2.3: 50 은 `transcript_ref` inline fallback 값의 전이, 100 은 상류 antecedent 0) ③ 집행면 창이 바뀌어도 서술 술어는 낡지 않는다. ⇒ **p90/관측 max 근접 산정 기준 제안은 기각** — 숫자를 쓰지 않으므로 산정 기준 자체가 무의미하다.
+
+**AC-1 「차등 근거 명시」= 차등 없음 (긍정 답변)**: 두 cap 의 유래가 서로 다르고 어느 쪽도 필드 성질에서 도출되지 않았다. 차등의 근거가 애초에 부재하므로, 관측된 median 차이(1.22× vs 0.83×)를 새 차등의 근거로 삼으면 **드리프트 값을 사후 정당화**하는 것이 된다. ⇒ 두 sub-field 동일 처분 — 침묵 통과가 아니라 "차등 근거 = 부재임을 실측으로 확정"한 답변이다.
+
+**정직 라벨 (효과 상한 — AC-13)**:
+- 기계 소비자 **0** — 재현: `git grep -lE "reasoning_carryover|invariant_summary|disputed_claims" 6cc9a3a7b -- plugins/ scripts/ .github/ hooks/` → rc=1. ⇒ floor 는 **advisory** — "집행된다"고 서술하지 않는다.
+- **floor 는 하한이지 상한이 아니다** — ADR-180 `read_cost` 팽창을 막지 못한다. 유일 실질 완화책(포인터 외부화)은 `story-read-declaration-registry.yaml`(CFP-2986 in-flight 신설)에 하드 의존 ⇒ read_cost 상한 미해결은 **알려진 잔여 리스크로 명시 라벨**한다(Non-goal 로 은닉하지 않는다).
+- **외부 표준 인용 폭**: *producer hard cap 부재* = 3/3 지지 / *receiver floor 채택* = **1/3(RFC 5424 §6.1)만** 지지 [source: https://datatracker.ietf.org/doc/html/rfc5424 — "Any transport receiver MUST be able to accept messages of up to and including 480 octets"]. OTel 은 producer-side opt-in unbounded-default(`AttributeValueLengthLimit` Default=Infinity)이지 receiver floor 아님 [source: https://opentelemetry.io/docs/specs/otel/common/]. A2A 는 **침묵**(지지도 반박도 아님) [source: https://a2a-protocol.org/latest/specification/]. "3 표준 전부 receiver floor" 서술 = 과대인용 — 금지.
+- **disanalogy**: RFC 5424 의 receiver 는 고정 buffer·물리 truncate 연산을 가진 daemon 이다. 본 시스템의 "수신자"는 Story 파일 셀을 프롬프트로 읽는 LLM 이며 **truncate 연산이 시스템에 존재하지 않는다** — 길면 더 많은 토큰을 읽을 뿐(비용↑) 잘리지 않는다.
+
+#### 10.2 §2.4 축 5 — 계약 채택 + 본 ADR 개정 (5축 중 유일하게 처분 방향이 다른 축)
+
+Story §2.4 의 계약↔ADR 5축 어긋남 전건 처분 (AC-6 — 미분류 잔량 0):
+
+| # | 축 | 처분 | 소재 |
+|---|---|---|---|
+| 1 | `invariant_summary` 길이 (4× 협착 + soft→hard) | **제3의 처분 — 무효화** (10.1 형상 대체) | 본 Amendment + 계약 Phase 2 |
+| 2 | `disputed_claims` 길이 (상한 신설) | **제3의 처분 (1 과 동형)** | 동상 |
+| 3 | `disputed_claims` 타입 (축소) | **재동기화** — 계약이 §결정 5 원값 `list[string] \| string` 복원 | 계약 Phase 2 (AC-3) |
+| 4 | 보안 invariant (계약 누락) | **재동기화 + 원자 결합** — §결정 7 을 계약에 이식, 같은 PR (AC-4) | 계약 Phase 2 |
+| 5 | 발화 조건 (**확대 — 방향 반대**) | **계약 채택 + 본 ADR 개정** (아래) | 본 Amendment |
+
+**축 5 개정 내용**: §결정 5 의 disjoint scope 3분기 중 **보존을 금지·축소하는 부분** — "debate 발동 FIX 시 = `reasoning_carryover = null`" 및 "일반 FIX = 양 field 모두 null 또는 생략"의 **null 강제 해석** — 을 계약의 기실무 문면(*"debate_artifact_ref 와 직교 — debate 발동 여부와 무관하게 reasoning 보존 가능"*, fix-event-v1 §3)에 맞춰 개정한다: **어느 발화 조건에서도 보존 가능(허용 확대)**. **의무 발동 조건(비-debate max-FIX 3/3 시 `reasoning_carryover` 의무)은 무변경.**
+
+**왜 축 1~4 방향(ADR 로 재동기화)이 아닌가**: 축 1~4 는 계약이 ADR 보다 좁거나 문면이 없어 ADR 쪽으로의 재동기화가 자연스럽다. 축 5 는 **반대 — 계약이 이미 넓다.** ADR 문면으로 재동기화하면 채널이 좁아져(비-debate max-FIX 3/3 한정 회귀) 본 Story 의 목적(carryover 손실 감축)과 **정면 역행**한다. 축 5(발화 조건 = WHEN)와 anti-anchoring(전달 내용 = WHAT, 10.4)은 **직교 sub-issue** 라 같은 처분을 강제하지 않는다.
+
+#### 10.3 §결정 7 위생 invariant 정의역 확장 + fail-fast 유지
+
+| 대상 | 처분 | 근거 |
+|---|---|---|
+| `disputed_claims` | 유지 | §결정 7 원 대상 |
+| `invariant_summary` | **확장 YES** | 현행이 `disputed_claims` 단독인 것은 의도된 협착이 아니라 **위치 유래** — §결정 5 YAML 에서 `security_invariant:` 키가 `disputed_claims` sub-field 아래에만 달려 있다 |
+| `transcript_ref` | **확장하되 형태 다름** | 포인터 필드 ⇒ 금지 축 = 값 전문이 아니라 **private absolute-path** (§8.4 INV-SEC-1 어휘 재사용, 신규 어휘 0) |
+| `lane_evidence.transcript` (Q-1) | **확장 YES — 우선순위 최상** | carrier = **ADR-031 Amendment 4** (CFP-3017 sibling). 의무 주체를 §14 append 시점 Orchestrator 로 한정해 ADR-031 자기 정의역 배제선 무저촉 |
+
+**transcript 최우선 근거 3**: ① required · 전 lane 전 spawn — 노출 빈도가 구조적으로 최대(`reasoning_carryover` 는 optional + 비-debate max-FIX 3/3 한정) ② 길이가 억제 수단으로 작동한 적 없음 — 재현: `git grep -c "transcript" 6cc9a3a7b -- scripts/check-lane-evidence.sh` → rc=1 (50자 cap 미집행) ③ 값의 성질이 더 위험 — 워커 발화 **원문 조각** vs 설계 어휘 요약.
+
+**fail-fast 유지 · 자동 redact 금지 (근거 3)**: ① 자동 redact 는 검출 가능성을 전제하는데 그 전제가 거짓 — 유일 집행 detector `_validate_reproducer_command` 의 `_SECRET_TOKENS` 는 **인자 이름**(`--token`/`token=`/`password=`)을 매치하지 값 형태를 매치하지 않고, 산문 필드에는 인자 이름이 없다 ⇒ redact 대상 식별 자체가 불성립 — 식별 못 하는 것을 자동 치환하면 거짓 보증만 생긴다 ② redact 는 원장을 변조한다 — §10 은 audit trail 이고 본 ADR 원문이 `audit 가능성`을 사유로 든다 ③ cap 폐지는 이 선택의 입력이 아니다 — cap 은 detector 도 redactor 도 아니었다.
+
+**정직 라벨**: fail-fast 는 현재 **저작 규율**이다 — 집행 코드 0, 재현: `git grep -n "SCAN-A" 6cc9a3a7b -- scripts/ .github/ hooks/` → rc=1. "기계 차단"·"100% 기계강제"로 서술하지 않는다. 위생 검사를 신설한다면 ADR-171 warning tier 로 태어난다.
+
+#### 10.4 AC-17 (b) — scope 분리 정의역 선언 (§결정 5 anti-anchoring 문장 무변경)
+
+**개정 0 선언**: §결정 5 `transcript_ref` description 말미 문장 — *"Full transcript verbatim 회피 (Codex D6 — 이전 framing 고정 차단)"* — 은 **문면 그대로 유지된다.** 본 Amendment 는 그 문장을 개정하지 않는다.
+
+**정의역 선언 (additive)**: 그 문장의 금지 **객체** = debate/FIX transcript(직전 라운드 대화·판정 사고 과정 전문)이고, 금지 **슬롯** = `transcript_ref` **포인터 필드**(전문 인라인 대신 링크)다 — 문장의 실 소재가 §결정 5 YAML 의 `transcript_ref` sub-field `description:` 멀티라인 마지막 줄임을 실측으로 확인했다(재현: `git show 6cc9a3a7b:archive/adr/ADR-067-fix-ledger-implementability-escalation.md | grep -n "Full transcript verbatim"`). **verdict relay 전달면(리뷰 verdict → FIX 워커 dispatch packet)은 그 정의역 밖이다** — 전달면의 객체 = review finding 본문(수리 대상 site 사실), 슬롯 = dispatch packet. 객체·슬롯 둘 다 다르다.
+
+★**정직 병기 (over-claim 차단 — 필수)**: 이 실측은 *"저촉 없음"의 증명이 아니다* — §결정 5 본문 상단이 3-part 구조 전체의 근거를 서술하므로 확대 해석 여지가 남는다. 요구사항 lane(Story §2.6)의 "정면 저촉" 판정을 **뒤집는 것이 아니라 폭을 좁히는** 실측이다.
+
+**구조적 은닉 = 면 분리** (선례 2건 위 확장 — `transcript_ref` "전문은 §9, 포인터만 전달" + ADR-182 리뷰/증적 정의역 분리. 신규 개념 아님):
+
+| 면 | 담는 것 | 변경 |
+|---|---|---|
+| **감사면** — §10 원장 + review-verdict artifact + §9 라운드 기록 | 직전 판정값(결론·점수·severity) **전량 보존** | **0** |
+| **전달면** — dispatch packet | finding **본문** + base SHA + 재현 명령. 직전 판정값 **미포함** | 신설 (packet 구성 규칙) |
+
+- **재명명 금지 — 생략이다**: 판정값을 다른 이름으로 감싸면 감사 시 **매핑 테이블**이 필요해지고 그 테이블이 새 결합점·새 유출면이 된다. 감사면에 원본이 있으므로 생략의 정보 손실은 0 이다.
+- **왜 "지시"가 아니라 "구조"인가**: anchoring 은 실증된 편향이고 매개체는 **직전 점수·판정값**이며, 지시형 완화(conventional strategies)로는 제거되지 않는다 — *"can not be eliminated by conventional strategies"* [source: arXiv 2505.15392, Understanding the Anchoring Effect of LLM] + reference answer score bias [source: arXiv 2506.22316, Evaluating Scoring Bias in LLM-as-a-Judge]. 따라서 packet **구성 규칙**이 그 필드를 담지 않는다 — 읽는 쪽에 "무시하라"고 말하지 않는다.
+- **부수 이득**: 전달면에서 판정값을 빼면 packet payload 가 줄어 spawn gate scan-cap 압박(THR-2)이 같은 방향으로 완화된다.
+
+**수용기준 3행 (신설 packet 구성 규칙 — 투입물의 성질로 명명, 양성 ∧ 음성 같은 라운드 공존 의무)**:
+
+| 대조군 | 투입물 | 기대 |
+|---|---|---|
+| 양성 | 은닉 설계를 적용한 dispatch 산출물 (직전 판정값 0 ∧ finding 본문·base SHA·재현 명령 완비) | GREEN |
+| 음성 | 그 산출물에 직전 판정값 **1종**(결론 또는 점수 또는 severity) 재삽입 | RED |
+| 배선 자기보호 | 전달면 구성 규칙 검사의 배선·호출 제거 | RED |
+
+검사 실물 배선 = Phase 2 + **ADR-171 warning tier** — 현 시점 실효는 저작 규율이다 (fail-open·bypass 가능, 기계 강제 아님 — 정직 라벨).
+
+#### 10.5 §결정 7 노출면 근거 정정 (AC-19 — 무조건, Q-2 분기 무관)
+
+**철회**: §결정 7 근거 문장 *"§10 FIX Ledger = public PR description 에 자동 mirror (`fix-ledger-sync.yml` Action) — secret 노출 surface"* 는 실측과 다르다 — 실 미러 = `octokit.rest.issues.createComment` 에 의한 **Issue comment** (재현: internal-docs `.github/workflows/fix-ledger-sync.yml` 에 `grep -n "issues.createComment"`), 그리고 미러 파서는 `cells[0]`~`cells[6]` 만 참조하므로 `reasoning_carryover` 는 **미러에 도달하지 않는다**.
+
+| 근거 | 참인가 | carryover 위생을 지지하는가 |
+|---|---|---|
+| ① wrapper repo 가 PUBLIC | 참 | **아니다** — wrapper `docs/stories/` 추적 0행이라 carryover 가 wrapper 추적면에 존재할 경로 없음 |
+| ② Issue comment 미러가 PUBLIC 으로 나감 (PRIVATE→PUBLIC cross-repo egress) | 참 | **아니다** — carryover 는 미러에 안 실린다. ②가 지지하는 것은 `트리거`·`원인 판정`·`재실행 범위` 다 |
+| ③ consumer repo 공개성은 프로젝트별 | 참 (구조적) | **그렇다 — 유일한 살아있는 근거. §결정 7 은 ③ 단독으로 선다** |
+
+**①②를 carryover 근거로 재사용하는 것도 같은 class 의 재발이다** — AC-19 는 `PR description` 표현만 금지하지만, ①②를 뭉뚱그려 인용하면 §결정 7 이 두 번째 거짓 근거를 얻는다.
+
+**대체 문안 (§8.4 형 채택)**: *"§10 FIX Ledger 는 cross-repo Issue comment 로 미러되며(`fix-ledger-sync.yml` → 대상 Story Issue), 또한 consumer 프로젝트에서는 Story 파일 자체가 공개 추적면에 놓일 수 있다. `reasoning_carryover` 에 대한 노출 근거는 **후자**다 — 현행 미러 파서는 앞쪽 셀만 참조하므로 carryover 는 미러에 도달하지 않는다."*
+
+★**AC-19 는 새 저작이 아니다** — §8.4 의 괄호 `(fix-ledger-sync.yml → Story Issue comment mirror)` 가 이미 정확했다. 즉 본 ADR 안에 §결정 7 거짓 근거의 자기교정 판본이 이미 존재하며, 본 항은 **§8.4 형으로의 내부 정합화**다. 단 **§8.4 머리 어구 `public PR mirror surface` 도 정정 대상이다** — "PR mirror" 는 실측(Issue comment)과 다르고 "public" 은 wrapper-self 축에서 carryover 미도달이라 실 근거가 아니다. §8.4 의 그 어구는 위 대체 문안으로 읽는다 (INV-SEC-1/INV-SEC-2 의 금지 내용 자체는 무변경 — 노출면 **명명**만 정정).
+
+**계보 전파**: 그 모호 어구를 계약이 이미 상속했다 — 재현: `git grep -nE "INV-SEC|public PR mirror" 6cc9a3a7b -- docs/inter-plugin-contracts/fix-event-v1.md`. 철회된 근거의 계보가 ADR 밖으로 번진 상태이며(선례상 v1.4 `reproducer_command` 가 동형 인용 1회 실발생), 본 Story Phase 2 가 그 계약 파일을 여는 PR 이므로 **같은 PR 안에서 §8.4 형으로 동반 정정**한다 (AC-4 원자 결합).
+
+#### 10.6 경계 · declaration-only retain
+
+- **형제 계약 일반화 = 범위 밖**: stop-event-v1 / decision-packet-v2 / test-verdict-v2 의 soft 권장(120~500 대역)으로의 producer→receiver 원칙 일반화는 관찰 보고 + 별 carrier — 본 1줄 note 가 전부다.
+- `mechanical_enforcement_actions: []` retain — 신규 blocking required context 신설 0, 본 Amendment 파생 검사는 전부 ADR-171 warning tier 로 태어난다 (Phase 2 carrier). 효과 상한 정직 라벨: 본 Amendment 는 "라운드 수 감소"를 성과로 주장하지 않는다.
+- §결정 1~4·6·8 무접촉 — max-FIX 카운터·RESET semantics·replay disjoint 의미 invariant 변경 0.
 
 ## 관련 파일
 
