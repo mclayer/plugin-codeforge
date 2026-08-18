@@ -43,6 +43,7 @@ SECRET='AKIAIOSFODNN7EXAMPLE'
 
 PASS=0
 FAIL=0
+UNDEC=0
 
 TMPROOT="$(mktemp -d)"
 trap 'rm -rf "$TMPROOT"' EXIT
@@ -60,6 +61,22 @@ ng() {
   shift
   for l in "$@"; do echo "    $l"; done
   FAIL=$((FAIL+1))
+}
+
+# undec — 제3상태 방출기. 「판정 불가」를 「위반」으로 접지 않는다(§3.8.1 4-arm 라우팅,
+#   `vacuous:` / `invalid:` 선례와 동형).
+#   ★ 이 helper 가 없던 동안 CI 는 기저선 커밋 미판독을 「동결 파일이 변경됐다」로 방출했다 —
+#     shallow checkout(depth 1) 에서 rc≠0 이 {변경됨(rc=1)} 과 {객체 부재(rc=128)} 를 한 칸으로
+#     접은 결과다. 검사기가 0/실패를 낼 때 「대상 부재」와 「규칙 파손」을 구별하지 못하면
+#     본 Story §1 이 표적하는 「미관측을 관측된 값으로 보고」가 검사기 자신에게서 재현된다.
+#   계상 규율: PASS 아님 ∧ FAIL 아님 — **충족 계상에서 제외**한다. 다만 leg 귀결은 fail-closed
+#     (종료코드 3): 「못 읽었으니 통과」는 같은 병의 반대 방향이므로 GREEN 으로 접지 않는다.
+#     세 상태가 출력에서 갈린다 — `OK PASS:` / `X FAIL:` / `? UNDECIDABLE:`.
+undec() {
+  echo "? UNDECIDABLE: $1"
+  shift
+  for l in "$@"; do echo "    $l"; done
+  UNDEC=$((UNDEC+1))
 }
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -959,15 +976,33 @@ case "$AC17_EM_OUT:$AC17_EM_RC" in
         "out='$AC17_EM_OUT' rc=$AC17_EM_RC (기대 undecidable:*공허* ∧ rc!=0)" ;;
 esac
 
+# ── 6-3.5. 기저선 판독 가능성 1회 판정 (하류 6-4 / 6-5 / 6-6 / Part 7 [E] 공유) ──
+#   판정을 가르는 축은 여기 하나다: **읽힘 ∧ 동일 / 읽힘 ∧ 다름 / 못 읽음**.
+#   못 읽음의 관측된 원인 = 러너 checkout 이 shallow(depth 1) 라 기저선 커밋 객체가 부재.
+#   → 축 B 가 .github/workflows/invariant-check.yml 의 checkout 에 fetch-depth: 0 을 배선해
+#     이 상태를 해소한다. 축 A(본 절)만 있으면 CI 에서 영구 undecidable = 판별력 0 이 된다.
+AC17_BASE_READ=1
+git -C "$REPO_ROOT" cat-file -e "${AC17_BASELINE}^{commit}" 2>/dev/null || AC17_BASE_READ=0
+AC17_BASE_WHY="기저선 ${AC17_BASELINE} 커밋 객체 미판독 — shallow checkout 의심(fetch-depth 미지정)"
+AC17_BASE_WHY2="판정 불가이지 위반 아님 — 이 leg 은 충족 계상에서 제외되고 종료코드 3(fail-closed)으로 귀결한다"
+
 # ── 6-4. 동결 2 파일 무변경 (AC-12 인접 — 본 Story 는 읽기만 한다) ──
+#   `git diff --quiet` 의 rc 는 3분된다: 0=차분 없음 / 1=차분 있음 / 그 외(128 등)=git 자체 실패.
+#   rc≠0 을 통째로 「변경됨」에 매핑하면 **판독 실패가 위반으로 승격**한다(원 결함).
 for AC17_FZ in "scripts/lib/check_salvage_bundle.py" "scripts/lib/redact_dev_process_content.py"; do
+  if [ "$AC17_BASE_READ" -eq 0 ]; then
+    undec "동결 파일 판정 불가 — $AC17_FZ" "$AC17_BASE_WHY" "$AC17_BASE_WHY2"
+    continue
+  fi
   AC17_FZ_RC=0
   git -C "$REPO_ROOT" diff --quiet "$AC17_BASELINE" -- "$AC17_FZ" || AC17_FZ_RC=$?
-  if [ "$AC17_FZ_RC" -eq 0 ]; then
-    ok "동결 파일 무변경(기저선 대비 diff 0) — $AC17_FZ"
-  else
-    ng "동결 파일이 변경됐다 — $AC17_FZ" "AC-12 byte-identical 보존 위반 (rc=$AC17_FZ_RC)"
-  fi
+  case "$AC17_FZ_RC" in
+    0) ok "동결 파일 무변경(기저선 대비 diff 0) — $AC17_FZ" ;;
+    1) ng "동결 파일이 변경됐다 — $AC17_FZ" "AC-12 byte-identical 보존 위반 (diff 실재)" ;;
+    *) undec "동결 파일 판정 불가 — $AC17_FZ" \
+             "git diff 자체가 실패했다(rc=$AC17_FZ_RC) — 차분 관측에 도달하지 못했다" \
+             "$AC17_BASE_WHY2" ;;
+  esac
 done
 
 # ── 6-5. born-RED 짝 — AC-17 step 이 두 사본 모두에 실재 + 기저선에는 부재 ──
@@ -989,10 +1024,8 @@ else
 fi
 
 # 음성 대조 — 기저선 리비전에는 step 이 **없어야** 한다(검사가 항진이 아님을 보인다).
-AC17_BASE_OK=0
-git -C "$REPO_ROOT" cat-file -e "${AC17_BASELINE}^{commit}" 2>/dev/null || AC17_BASE_OK=$?
-if [ "$AC17_BASE_OK" -ne 0 ]; then
-  ng "기저선 리비전 미판독: $AC17_BASELINE" "undecidable — fail-closed(§3.8.1)"
+if [ "$AC17_BASE_READ" -eq 0 ]; then
+  undec "born-RED 음성대조 판정 불가 — 기저선 미판독" "$AC17_BASE_WHY" "$AC17_BASE_WHY2"
 elif git -C "$REPO_ROOT" archive "$AC17_BASELINE" "$AC17_LIVE" 2>/dev/null | tar -xO 2>/dev/null \
      | grep -qF "$AC17_STEP_NAME"; then
   ng "born-RED 음성대조 실패 — 기저선에 이미 AC-17 step 이 있다(검사가 항진)"
@@ -1015,7 +1048,7 @@ try:
     import yaml
 except ImportError:
     print("undecidable: PyYAML 부재 — additivity 판정불가(fail-closed)")
-    sys.exit(1)
+    sys.exit(3)
 
 def at_baseline(rel):
     a = subprocess.run(["git", "-C", root, "archive", baseline, rel], capture_output=True)
@@ -1046,12 +1079,16 @@ def domains(text):
     d |= set((doc.get("env") or {}).keys())
     return {"a_step_nodes": a, "b_job_keys": set(jobs), "c_action_pins": c, "d_env_keys": d}
 
-rc = 0
+# 종료코드 3분 — 1=실 위반(부분집합 파괴/기존 step 편집/공허 정의역) / 3=판정 불가(기저선
+#   미판독·추출기 파손) / 0=충족. 판정 불가를 1 로 접으면 「위반 없음」을 관측하지 못한 상태가
+#   「위반 있음」으로 승격한다. 둘 다 fail-closed 지만 **방출 어휘와 계상이 갈린다**.
+violations = 0
+undecidables = 0
 for rel in paths:
     pre_text = at_baseline(rel)
     if pre_text is None:
         print("undecidable: 기저선 리비전 미판독 — " + rel)
-        rc = 1
+        undecidables += 1
         continue
     try:
         with open(os.path.join(root, rel), encoding="utf-8") as fh:
@@ -1059,34 +1096,36 @@ for rel in paths:
         pre = domains(pre_text)
     except Exception as exc:
         print("undecidable: 추출기 파손 — " + rel + " (" + type(exc).__name__ + ")")
-        rc = 1
+        undecidables += 1
         continue
     for key in ("a_step_nodes", "b_job_keys", "c_action_pins", "d_env_keys"):
         pre_s, post_s = set(pre[key]), set(post[key])
         if not pre_s or not post_s:
+            # 공허 정의역은 판정 불가가 아니라 **오라클 결함**이다(양변을 읽고도 빌 수 있다).
+            #   기존 규율(계상 제외 + leg RED) 유지 — 기저선 미판독과 다른 축이다.
             print("vacuous: " + key + " (" + rel + ") — 계상 제외 + leg RED")
-            rc = 1
+            violations += 1
             continue
         if not pre_s <= post_s:
             print("VIOLATION " + key + " (" + rel + ") 착지 전 원소 소실: " + repr(sorted(pre_s - post_s)))
-            rc = 1
+            violations += 1
             continue
         if key == "a_step_nodes":
             drift = [k for k in pre[key] if pre[key][k] != post[key][k]]
             if drift:
                 print("VIOLATION a_step_nodes (" + rel + ") 기존 step 편집: " + repr(drift))
-                rc = 1
+                violations += 1
                 continue
         print("OK " + key + " (" + rel + "): 착지 전 " + str(len(pre_s)) + " ⊆ 착지 후 " + str(len(post_s)))
-sys.exit(rc)
+sys.exit(1 if violations else (3 if undecidables else 0))
 AC17ADDPY
 
-if [ "$AC17_ADD_RC" -eq 0 ]; then
-  ok "ADDITIVE-ONLY 4-정의역 — 양 사본 전건 착지 후 ⊇ 착지 전 ∧ 기존 step byte 동일"
-  sed 's/^/    /' "$AC17_ADD_OUT"
-else
-  ng "ADDITIVE-ONLY 4-정의역 위반 (rc=$AC17_ADD_RC)" "$(sed 's/^/  /' "$AC17_ADD_OUT")"
-fi
+case "$AC17_ADD_RC" in
+  0) ok "ADDITIVE-ONLY 4-정의역 — 양 사본 전건 착지 후 ⊇ 착지 전 ∧ 기존 step byte 동일"
+     sed 's/^/    /' "$AC17_ADD_OUT" ;;
+  3) undec "ADDITIVE-ONLY 4-정의역 판정 불가" "$(sed 's/^/  /' "$AC17_ADD_OUT")" "$AC17_BASE_WHY2" ;;
+  *) ng "ADDITIVE-ONLY 4-정의역 위반 (rc=$AC17_ADD_RC)" "$(sed 's/^/  /' "$AC17_ADD_OUT")" ;;
+esac
 
 # ── 6-7. 방출 어휘 폐집합 (§3.9) — sentinel 비출현이 계약이다 ──
 #   판정기 방출문에 원문 인용·금지목록 덤프가 섞이면 PRIVATE Story 가 PUBLIC 로그에 착지한다.
@@ -1164,6 +1203,11 @@ def ok(msg):
 
 def ng(msg, detail=""):
     RESULTS.append("NG\t" + msg + "\t" + detail)
+
+
+def un(msg, detail=""):
+    """제3상태 — 판정에 필요한 입력을 못 읽었다. 위반도 충족도 아니다(shell `undec` 로 라우팅)."""
+    RESULTS.append("UN\t" + msg + "\t" + detail)
 
 
 # ── SUT 로드 (실 탐지기 — 대역 아님) ─────────────────────────────────────────
@@ -1448,8 +1492,8 @@ for sid, rel, pred in SITES:
     if len(hits) == 1 and not lint(hits[0]):
         pre_ok += 1
 if pre_unread:
-    ng("음성 대조 판정 불가 — 기저선 %s 미판독 %d 사이트" % (BASELINE[:9], pre_unread),
-       "undecidable — fail-closed")
+    un("[E] 음성 대조 판정 불가 — 기저선 %s 미판독 %d 사이트" % (BASELINE[:9], pre_unread),
+       "착지 전 상태를 못 읽었다 = 판별력 결여가 아니라 미관측 (shallow checkout 의심)")
 elif pre_ok == 0:
     ok("[E] 음성 대조 — 착지 전 4 사이트 전건 lint 미충족 (검사가 항진이 아니다)")
 else:
@@ -1457,7 +1501,8 @@ else:
        "lint 가 착지 전후를 구별하지 못한다 = 판별력 0")
 
 sys.stdout.write("\n".join(RESULTS) + "\n")
-sys.exit(1 if any(r.startswith("NG") for r in RESULTS) else 0)
+sys.exit(1 if any(r.startswith("NG") for r in RESULTS)
+         else (3 if any(r.startswith("UN") for r in RESULTS) else 0))
 AC1314PY
 
 if [ ! -s "$AC1314_OUT" ]; then
@@ -1467,6 +1512,7 @@ else
     case "$AC1314_V" in
       OK) ok "$AC1314_M" ;;
       NG) ng "$AC1314_M" "$AC1314_D" ;;
+      UN) undec "$AC1314_M" "$AC1314_D" "$AC17_BASE_WHY2" ;;
       *)  ng "AC-13/14 leg 출력 파손" "$AC1314_V $AC1314_M" ;;
     esac
   done < "$AC1314_OUT"
@@ -1478,11 +1524,21 @@ echo " Test Summary"
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
-if [ "$FAIL" -eq 0 ]; then
+echo "UNDECIDABLE: $UNDEC"
+# 종료코드 3분 — 0=충족 / 1=실 위반 / 3=판정 불가(fail-closed).
+#   3 은 GREEN 이 아니다: 판정에 필요한 입력을 못 읽은 상태를 통과로 접으면 「미관측을 관측된 0
+#   으로 보고」가 되어 본 Story 가 표적하는 형태 그대로가 된다. 동시에 「위반」으로도 접지
+#   않는다 — 그 방향은 이 검사가 실제로 산출했던 거짓 단정(「동결 파일이 변경됐다」)이다.
+if [ "$FAIL" -eq 0 ] && [ "$UNDEC" -eq 0 ]; then
   echo "OK All $PASS cases pass — 4-변종/primitive 정의역/술어 협착/대조군 3종/mutant 4종 + CFP-2995 AC-17 범위경계·additivity + AC-13/14 사이트 대조·대조군 4종 결박"
   echo "   (보장 범위 = L1 경유 착지 경로 한정. raw git push 우회는 L1 정의역 밖 — L3 사후 탐지.)"
   exit 0
+elif [ "$FAIL" -eq 0 ]; then
+  echo "? $UNDEC case(s) undecidable — 충족 계상 제외 ∧ GREEN 아님 (fail-closed)"
+  echo "   판정 불가는 위반 단정의 근거가 아니다. 기저선 커밋 객체 부재가 원인이면"
+  echo "   러너 checkout 의 fetch-depth 를 확인하라(.github/workflows/invariant-check.yml)."
+  exit 3
 else
-  echo "X $FAIL case(s) failed"
+  echo "X $FAIL case(s) failed / $UNDEC undecidable"
   exit 1
 fi
