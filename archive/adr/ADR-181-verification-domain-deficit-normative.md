@@ -2032,7 +2032,9 @@ Claude P3-2 · Codex F1-ii).** 직전 판은 `run블롭` 안에서 2형만 세�
 gh workflow run                     0          0        실 호출 — 부재
 REST actions/workflows              0          0        실 호출 — 부재
 uses: ./.github/workflows/          0          0        local reusable 호출 — 부재
-workflow_call                       0          2        ★ 둘 다 **YAML 주석** (`workflow_call:` 키 = 0) — 호출 아님
+workflow_call                       2          2        ★ YAML 키 형태 `workflow_call:` = **0**. run블롭 출현 2 =
+                                                        `invariant-check.yml:38-39` 의 **`run:` 블록 스칼라 안 셸 주석**
+                                                        (YAML 주석 아님 — 주석줄 제거판 `run블롭'` 에서는 0) — 호출 아님
 workflow_run                        0          4        ★ 전부 **YAML 주석**(제거 이력 기술, `workflow_run:` 키 = 0)
 workflow_dispatch                   1         82        **트리거 선언**(키 형태 `workflow_dispatch:` = 68 = 보유 파일 68).
                                                         run블롭 1건은 산문 문장 안(`… monthly cron / workflow_dispatch).`)
@@ -2040,6 +2042,15 @@ workflow_dispatch                   1         82        **트리거 선언**(키
 
 ⇒ **6형 전건에서 caller 가 0 이다.** `workflow_call`/`workflow_run`/`workflow_dispatch` 는 **피호출·트리거
 선언**이지 호출이 아니며, 호출 어법 3형(`gh workflow run` · REST · local `uses:`)은 전문에서도 출현 0 이다.
+
+★★ **FIX Iter 14 — `workflow_call` run블롭 열의 정의역 병기 (R14 PL P2-2 · Codex F-6 수렴).** 직전 판은
+이 칸을 `0` 으로 적고 성격을 *"YAML 주석"* 이라 했다. **두 값은 둘 다 참이며 정의역이 다르다** —
+**YAML 키 독법 = 0**(`workflow_call:` 키 부재, firsthand `git grep -nE '^\s*workflow_call:' b0cefd3fe -- .github/workflows` → rc=1)
+· **run블롭 출현 독법 = 2**. 폐기가 아니라 **병기**가 정정이다. 성격 라벨도 정정한다 — 실물은
+`invariant-check.yml:38-39` 의 **`run:` 블록 스칼라 안 셸 주석**이며(firsthand — 두 줄 모두 "Workflow parity"
+step 의 `run: |` 안), YAML 주석이라면 파서가 걷어내 run블롭에 **도달조차 못 한다**. 층을 잘못 짚으면
+Phase 2 가 이 부류를 무해로 오분류한다 — (iv-L) β 가 *"주석 한 줄이 배선을 공급한다"* 며 load-bearing 으로
+다룬 **바로 그 부류**이기 때문이다. ★ **결론(실 호출 witness 0)은 무손상** — 셸 주석도 호출이 아니다.
 
 ```
 INSTALL(p)  := p 가 `.github/workflows/` 하위면 p 자신,
