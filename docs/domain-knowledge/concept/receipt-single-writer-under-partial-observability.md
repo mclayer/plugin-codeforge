@@ -217,7 +217,21 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
     >
     > **결정적 구별 = 관측자 상대성.** `수령`/`미수령` 은 subagent 의 성질이 아니다 — 같은 subagent 의 같은 종료에 대해 **수신자마다 값이 다르다**(carrier 사건에서 4축은 Orchestrator 기준 `미수령` ∧ PL 기준 `수령` 이 **동시에 참**이었다). `outcome`/`termination_cause` 는 관측자와 무관한 단일 값을 갖는다. ⇒ **관측자 상대적인 축을 관측자 절대적인 축의 enum 에 밀어넣는 것이 곧 conflate** 이며, "3번째 divergent vocabulary 신설 금지" 가 실제로 금지하는 것을 오히려 범하게 된다.
     >
-    > 그 금지의 scope 는 축자상 **outcome / recovery-action 계열 vocabulary** 한정이지 전 축에 대한 무제한 어휘 금지가 아니다. ⇒ **별 축 신설은 위반이 아니다.** 단 `receipt_state` 를 **어느 문서에 성문할지**(본 파일 / 그 taxonomy 의 경계 절 / ADR carrier)는 carrier Story 의 설계 lane 미결 문항이다 — **판정은 확정, 배치는 미확정.**
+    > 그 금지의 scope 는 축자상 **outcome / recovery-action 계열 vocabulary** 한정이지 전 축에 대한 무제한 어휘 금지가 아니다. ⇒ **별 축 신설은 위반이 아니다.**
+>
+> ★★ **배치 확정 (CFP-2994 설계 lane — 초판의 「설계 lane 미결 문항」 해소)**: 초판은 이 자리에 *"`receipt_state` 를 **어느 문서에 성문할지**(본 파일 / 그 taxonomy 의 경계 절 / ADR carrier)는 carrier Story 의 설계 lane 미결 문항이다 — 판정은 확정, **배치는 미확정**"* 을 남겼다. **설계 lane 이 풀었다.** 그리고 답은 「문서 하나」가 아니었다 — **물음 자체가 세 층을 한 덩어리로 묶고 있었다.** 확정된 배치는 3층 분할이다.
+>
+> | 층 | 무엇을 성문하나 | 정본 |
+> |---|---|---|
+> | **경계 규범** | `receipt_state` 가 무엇을 기록할 수 **있는가** = **도달(arrival) 전용**. 허용 = 도달 여부 · 도달 채널 귀속 · 판정 근거 / **금지 = 충분성 · 품질 · 채택 가치** | `archive/adr/ADR-139-background-wait-liveness-gate.md` 의 **「Amendment 3」 → 「A3-4 — 경계 3항 (성문)」 (ii)** ∧ `archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md` 의 **「Amendment 2」 → 「A2-4 — receipt_state = 도달(arrival) 전용 경계」**. 두 조항이 서로를 paired 로 명시한다 |
+> | **값역 · 표기 규약** | CLOSED 5값 · 원장 9열 signature · 표기 규약 W-1~W-8 · 착지 토큰 | **Story-local 문서 schema** — `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2994-receipt-single-writer.md` 의 **「§4.2 컨텍스트 · 이벤트 스키마 + 타입 정의」 (a)** ∧ **「§11.1 Schema 변경」**(4→5값 = MINOR 실발동). ★ **inter-plugin contract 아님** — 같은 문서 **「§13.C Cross-plugin coordination」** 이 *"MANIFEST 등재 대상 아님"* 으로 확정 |
+> | **개념 서술 · anti-pattern** | **왜** 그 경계가 필요한가 · 위반 형상 | **본 파일 유지** — SSOT 이동 없음. 개념 층의 정본은 여기다 |
+>
+> **경계 규범이 개념 doc 이 아니라 ADR 로 간 이유**: 「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 그 field 는 **성과 verdict** 가 되고, verdict 판정 권한은 ADR-139 의 `INV-L4` 가 lead 에 고정한다(축자 = *"대기 주체 ↔ 판정 주체 분리"*). **도달-전용 경계는 INV-L4 를 침범하지 않는 유일한 형태**다. ⇒ 이 조항의 성질은 개념 서술이 아니라 **권한 경계**이며, 권한 경계의 정본은 규범 carrier 여야 한다.
+>
+> ★ **값역이 두 ADR 어디에도 없는 것은 drift 가 아니라 3층 분할의 귀결이다** `[verified]`. 정의역 = 위 두 ADR 전문 @ wrapper `03b7025b9` · 명령 = `git grep -c '<토큰>' 03b7025b9 -- archive/adr/ADR-139-*.md archive/adr/ADR-170-*.md` · 결과 = `단-미상` · `미스폰` · `9열` · `W-1` 전건 0 **이면서 같은 명령이 `receipt_state` · `INV-L4` 에는 hit 를 낸다**(양성 대조군 — 이 0 은 grep 사망이 아니다). 값역을 ADR 에서 찾지 못한 독자가 그것을 **누락으로 읽지 않도록** 여기 적어 둔다.
+>
+> ★ **동명이의 주의 (전사 함정 — 본 파일이 직접 피한 자리)**: carrier Story 의 리뷰 축은 이 부재를 *"ADR-170 Amd 2 가 자기 scope 를 「§결정 2 enumeration 무변경」으로 명시하므로 ADR 은 enum carrier 가 아니다"* 로 설명한다. **그 문장을 이 파일에 그대로 옮기면 오귀속이 된다** — ADR-170 이 「무변경」이라 선언한 enumeration 은 **inline whitelist 7-entry** 이지 `receipt_state` 값역이 아니다. 두 enum 이 **같은 단어를 공유할 뿐 별개 대상**이며, 이는 본 파일이 RSW-2 에서 지목하는 **정의역 위반**의 어휘 판본이다. ⇒ 부재의 정본 근거는 위 3층 분할이지 그 인용문이 아니다.
   - **타임아웃 상수 값** — 대기 시간의 구체 수치는 운영 튜닝 영역. 본 개념은 "판정이 취소 가능하고 비파괴적일 것"만 요구한다(RSW-4).
 - **Anti-pattern**:
   - 발신자가 수신자 채널에 대해 `state:assertion` 발행(RSW-6 월권).
