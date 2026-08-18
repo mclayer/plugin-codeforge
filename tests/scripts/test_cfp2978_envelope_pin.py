@@ -21,6 +21,19 @@ from typing import Dict, Set, List, Any
 # 착지 형상 sha256 — 값 없으면 explicit FAIL
 PIN_ENVELOPE_SHA256 = "__PLACEHOLDER_ENVELOPE_SHA256_INJECT_HERE__"
 
+# ★ 3-way 결속 상수 (설계 §8.3 라인 315·437 — L-STRUCT 라운드 보강)
+# PIN_P1_EVIDENCE = 구현 동반 의무 8 (W-3b-1 viii + §8.3 i)
+# 스키마: {"envelope_sha256": PIN_ENVELOPE_SHA256, ...}
+# 갱신 규약: W-3b·W-21 봉투 입력 변경 시 같은 커밋에 동시 갱신
+# ★ 3가지 한계 (설계 UM-16 조건부성 명기):
+#   (a) 대조군 미작성 (UM-2)
+#   (b) 구조적 사각: lossy 봉투 mutual blind ∧ 핀 공모 편집 무력 (Q-E-R1)
+#   (c) 성질 집합이 빠뜨린 축은 재지 않음 (피복표 함수성 한계)
+PIN_P1_EVIDENCE = {
+    "envelope_sha256": "__PLACEHOLDER_ENVELOPE_SHA256_INJECT_HERE__",
+    # 추가 필드는 설계 문서 없음 — placeholder 상태에서 명시적 FAIL하도록 설계
+}
+
 
 # ============================================================================
 # 피복 검증표 파싱 유틸 (재현 규칙)
@@ -97,11 +110,18 @@ def test_envelope_pin_reference_matches_landed_pin():
 
     ★ 봉투 정규화 함수를 import 해서 현행 repo 의 workflow 파일을 읽어
        sha 를 계산하고 PIN 과 동일성 검증한다.
+
+    ★ 3-way 결속: PIN_P1_EVIDENCE["envelope_sha256"] == PIN_ENVELOPE_SHA256
+       (설계 §8.3 라인 315·437 — Q-E-R1 미완화, 작위 승격)
     """
     if PIN_ENVELOPE_SHA256.startswith("__PLACEHOLDER_"):
         raise AssertionError(
             "PIN_ENVELOPE_SHA256 placeholder 미정. DevPL 이 값을 주입해야 함."
         )
+
+    # ★ 3-way 결속 검증 — 두 상수가 동일성을 유지해야 함 (같은 산출자에서 나온 값)
+    assert PIN_P1_EVIDENCE["envelope_sha256"] == PIN_ENVELOPE_SHA256, \
+        f"PIN_P1_EVIDENCE 결속 위반: {PIN_P1_EVIDENCE['envelope_sha256']} != {PIN_ENVELOPE_SHA256}"
 
     # ★ TODO: envelope_pin.py 에서 실제 봉투 계산 함수 import
     # from scripts.lib.envelope_pin import calculate_envelope_pin
