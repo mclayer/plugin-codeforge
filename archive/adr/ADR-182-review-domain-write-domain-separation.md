@@ -1,7 +1,7 @@
 ---
 adr_number: 182
 title: 리뷰 심사 정의역·FIX 증적 정의역 분리 + severity-gated exit — 종료 조건 도달 가능화
-status: Proposed
+status: Accepted
 is_transitional: false
 category: process
 date: 2026-08-17
@@ -33,7 +33,7 @@ related_stories:
 
 ## 상태
 
-Proposed (2026-08-17) — CFP-2999 (mclayer/plugin-codeforge#2999) Phase 1 설계 carrier. **판정-only**: 본 ADR 은 5개 요청의 정책 판정을 성문까지만 수행한다. 실 파일면 배선은 §편입 지시(binding direction)가 carrier 별로 위임하며, 본 ADR 채택 시점의 wrapper 변경 표면 = 본 파일 + ADR-RESERVATION row 가 전부다. B(CFP-2985)·C(CFP-2986) 소유면 파일은 직접 수정하지 않는다.
+Accepted (2026-08-18 — Phase 1 PR #3015 merge `6cc9a3a7b` 로 채택. Proposed 2026-08-17) — CFP-2999 (mclayer/plugin-codeforge#2999) Phase 1 설계 carrier. **판정-only**: 본 ADR 은 5개 요청의 정책 판정을 성문까지만 수행한다. 실 파일면 배선은 §편입 지시(binding direction)가 carrier 별로 위임하며, 본 ADR 채택 시점의 wrapper 변경 표면 = 본 파일 + ADR-RESERVATION row 가 전부다. B(CFP-2985)·C(CFP-2986) 소유면 파일은 직접 수정하지 않는다.
 
 ## 컨텍스트
 
@@ -132,7 +132,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 
 > **PASS = P0 0 ∧ P1 0 ∧ 직전 회차 finding 전건 처분 종결 (CLOSED 또는 defer-수신처 지정, REOPENED 0) ∧ 잔여 P2/P3 전건 처분 lifecycle 등재** (deferred-item-lifecycle 연결 — won't-fix 은폐 금지, 미조치 처분으로 덮지 않는다)
 
-- **처분 판정원 (AC-2c)** = ① 리뷰 PL 보고서의 처분 표 (finding-id 별 CLOSED/REOPENED/defer-착지점) ② fix-event-v1 v1.4 `replay_verdict` (FIX-close ground-truth replay). ②의 실배선 = B(CFP-2985) 편입 — 본 ADR 은 판정원 지정까지.
+- **처분 판정원 (AC-2c)** = ① 리뷰 PL 보고서의 처분 표 (finding-id 단위 CLOSED/REOPENED/defer-착지점) ② fix-event-v1 v1.4 `replay_verdict` (FIX-close ground-truth replay). ②의 실배선 = B(CFP-2985) 편입 — 본 ADR 은 판정원 지정까지.
 - **3층 분해 + ADR-067 §결정 8 무손상**: 본 ADR 은 lane 종료(PASS) ⊥ finding 처분(닫기) ⊥ 카운터 소비(Iter) 의 3층으로 분해한다. 이 중 **뒤 2층의 disjoint (닫기 게이트 ⊥ max-FIX 카운터) 가 ADR-067 §결정 8 원문**이고 ('층' 어휘·PASS 층 문면은 §결정 8 에 부재 — 원문 재대조 완료), **PASS 층의 분리는 본 ADR 신설분**이다. 따라서 §결정 8 supersede 0 — 본 정밀화는 PASS 층만 건드린다.
 - **"메타-텍스트" 제3항 불요**: §결정 1 (R1) 채택으로 메타-텍스트가 심사 정의역에서 구조적으로 소거되므로 종료 조건에 그 판별 축이 필요 없다 (Story §6.5 R1↔R2 의존 관계. 외부 선행례에도 대응물 부재 — R1 미채택 시에만 필요했을 축).
 - **도달 가능성 근거**: 새 조건의 각 항은 리뷰어 성실성과 양립한다 — P0/P1 은 severity 판정 (리뷰가 이미 수행), 처분 종결은 follow-up 확인 (신규 sweep 아님), 잔여 등재는 기록 행위다. finding 하한이 0 이 아니어도 (bad-fix 상수) P2/P3 잔여는 등재 처분으로 exit 가능하므로 종료 조건이 물리적으로 도달 가능해진다.
@@ -188,7 +188,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 2. section-schema (증적 row 필수 필드 3종 presence).
 3. 본문 side 고정 포인터 1줄 (Story 골격 상수).
 4. PR codeforge-internal-docs#3029 (§9 성장축 외부화) 착지 후 정합 확인 의무 — 역방향 충돌 검사.
-5. **신규 증적 섹션의 소유권 집행 배선**: `scripts/lib/check_story_section_ownership.py` `MONOPOLY_SECTIONS`(또는 `SECTION_OWNERS`) 등재 + 미등재 섹션이 `Unknown section — skip (forward-compat)` (동 스크립트 L394-397 @6bb0e8aa5) 로 무검사 낙하함을 회귀 테스트로 고정 (born-hollow monopoly 차단 — INV-5 집행 채널 정합, CR-D2-02). write 주체가 Orchestrator 로 확정되면 = ADR-039 §결정 15 5번째 sub-scope 추가 → **별도 ADR Amendment 의무** (ADR-039 원문 「5번째 entry 의 4-sub-scope 는 closed enum. 5번째 sub-scope 추가 = 별도 ADR Amendment 의무」 L430 @6bb0e8aa5 verbatim — 설계리뷰 iter3 CR-D3-02 로 추론 라벨 → verbatim 승격).
+5. **신규 증적 섹션의 소유권 집행 배선**: `scripts/lib/check_story_section_ownership.py` `MONOPOLY_SECTIONS`(또는 `SECTION_OWNERS`) 등재 + 미등재 섹션이 `Unknown section — skip (forward-compat)` (동 스크립트 L394-397 @6bb0e8aa5) 로 무검사 낙하함을 회귀 테스트로 고정 (born-hollow monopoly 차단 — INV-5 집행 채널 정합, CR-D2-02). write 주체가 Orchestrator 로 확정되면 = ADR-039 §결정 15 5번째 sub-scope 추가 → **별도 ADR Amendment 의무** (ADR-039 원문 「5번째 entry 의 4-sub-scope (…) 는 **closed enum**. 5번째 sub-scope 추가 = 별도 ADR Amendment 의무 (…)」 L430 @6bb0e8aa5 축약 인용 (load-bearing fragment verbatim — 괄호 열거·후속 rationale 은 (…) 로 생략) — 설계리뷰 iter3 CR-D3-02 로 추론 라벨 → verbatim 승격, DR4 CR-D4-02 로 축약 인용 라벨 정밀화).
 6. **§9 소유권 SSOT 불일치 수렴**: `story-page-structure.md` 「단계별 갱신 책임」 표의 §9.x "Orchestrator 단독" 표기 ↔ lint `SECTION_OWNERS["9"]` 4-lane ↔ ADR-039 §결정 15-① verdict-한정 monopoly — 3자 정합화 (Story §4.2 장벽 1 실측 충돌의 수렴 배정, CR-D2-01 권고 수용).
 
 **비분할면 잔여 배선 = 후속 배선 Story 1건 회부** (본 목록이 SSOT — 발의 3문 게이트 통과: 깨짐 = scope 문면 혼재 + 판정표 실태 괴리 실측 / 강제 요인 = 본 ADR 채택 / 관찰자 무관 필요):
@@ -232,7 +232,7 @@ git grep -nE '§ ?1 ?(-|–|—|~) ?(§)? ?[67]' 4b30b860 -- plugins/codeforge-r
 |---|---|---|
 | NF4-01 | **해소** | §결정 0 — 3-bucket 필터를 §4.1(d) 이행 전 선적용, ADR-125 4좌표 사전 배정 해제 (firsthand 분류: A delta-0 1 · C 종결 3) |
 | NF4-02 | **해소** | §결정 0 — 엔진 고정 명문화 (census·fixture 동일 엔진 `git grep` byte-mode / `grep -E` 시 `LC_ALL=C` 의무) + 본 census 에서 이행 실증 |
-| NF4-03 | **해소** | §결정 1·4 — UC-4 「§9·§10 독점」 중 §10 monopoly·§9 final-verdict monopoly 는 **참** (lint `MONOPOLY_SECTIONS`·fix-event-v1 writer·ADR-039 §결정 15-①/②), 비승계 = 「§9 전체 독점」 주장 한정 (§9 하위 서술 = lint 다중 owner — §결정 0 L119 3항 분해와 동일 문면), 이관 목적지 = 신규 monopoly 섹션 (§9 아님) |
+| NF4-03 | **해소** | §결정 1·4 — UC-4 「§9·§10 독점」 중 §10 monopoly·§9 final-verdict monopoly 는 **참** (lint `MONOPOLY_SECTIONS`·fix-event-v1 writer·ADR-039 §결정 15-①/②), 비승계 = 「§9 전체 독점」 주장 한정 (§9 하위 서술 = lint 다중 owner — §결정 1 L119 3항 분해와 동일 문면), 이관 목적지 = 신규 monopoly 섹션 (§9 아님) |
 | NF4-04 | **해소** | §결정 0 — bucket C 수신자 = 본 설계 lane (본 ADR), 기록 artifact = census 분류 표 (좌표 병기·@4b30b860 한정 — presence-testable) |
 | NF4-05 | **해소** | 본 ADR 의 capture-recapture 인용 귀속 = **Petersson, Thelin, Runeson & Wohlin, "Capture–recapture in software inspections after 10 years research", Journal of Systems and Software 72(2):249-264, 2004** (Story §6.6 원문은 무접촉 — 정정 귀속은 본 ADR 부터 사용) |
 
