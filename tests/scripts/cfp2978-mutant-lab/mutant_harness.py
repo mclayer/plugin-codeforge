@@ -1334,8 +1334,24 @@ def main() -> int:
         out.append(r)
         print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
         print("-" * 78)
-    (LOG_DIR / "summary.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    # ★ 결함 C-2 (2026-08-19 신설) — **부분 실행이 전수 로스터 산출을 파괴하지 않는다**.
+    #   구 문면은 `--run <일부>` 도 `summary.json` 을 통째로 덮어썼다. 실사고:
+    #   `--run` 4종 실행 1회로 35-entry 전수 산출이 4-entry 로 소실됐다 (본 커밋에서
+    #   immutable ref `c54550f01` 로부터 복원). 「무인자 가드」(결함 C)는 인자가
+    #   **0개**인 경우만 막았고, **부분 집합**인 경우가 여집합으로 남아 있었다 —
+    #   이 Story 가 반복해 맞은 *"가드의 정의역이 위험의 정의역보다 좁다"* 형태.
+    #   ⇒ `summary.json` 은 **전수 실행(--run-all)일 때만** 기록하고, 부분 실행은
+    #     `summary.partial.json` 으로 분리한다.
+    if a.run_all:
+        (LOG_DIR / "summary.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    else:
+        (LOG_DIR / "summary.partial.json").write_text(
+            json.dumps({"note": "부분 실행 산출 — 전수 로스터 산출(summary.json) 아님",
+                        "ran": ids, "results": out},
+                       ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+        print(f"[partial] {len(ids)} mutant 실행 — summary.partial.json 기록 "
+              f"(summary.json 무접촉: 전수 산출 보존)")
     return 0
 
 
