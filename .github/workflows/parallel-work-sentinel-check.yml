@@ -129,6 +129,7 @@ jobs:
           grep -q "test_envelope_pin_reference_matches_landed_pin" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_reference_matches_landed_pin not found"; exit 1; }
           grep -q "test_envelope_pin_domain_derivation_selfcheck" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_domain_derivation_selfcheck not found"; exit 1; }
           grep -q "test_envelope_pin_coverage_table_witnesses" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_coverage_table_witnesses not found"; exit 1; }
+          grep -q "test_envelope_pin_sweep_derivation_completeness" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_sweep_derivation_completeness not found"; exit 1; }
           grep -q "test_ac4_leg1_determined_is_true_and_lists_present" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg1_determined_is_true_and_lists_present not found"; exit 1; }
           grep -q "test_ac4_leg2_branch_names_match_corpus_regex" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg2_branch_names_match_corpus_regex not found"; exit 1; }
           grep -q "test_ac4_leg3_excluded_self_repo_is_slug" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found"; exit 1; }
