@@ -1,8 +1,8 @@
 ---
 title: codeforge-review lane 구조 (요구사항리뷰 / 설계리뷰 / 구현리뷰 / 보안테스트 — 산출물 검수)
-last_captured: 2026-07-25
-captured_at_sha: 5bbe94cba  # D7 provenance — 검증 시점 코드 commit anchor (CFP-2828 Phase 2, CodexReviewAgent.md dispatch 재배선 반영)
-last_update_cfp: CFP-2911  # interfaces 축 갱신 — ADR-081 §결정 D17(Amendment 16) 신설 반영: Codex promptfile prompt-injection 방어층 강화(nonce CSPRNG 불가측성·파일명 미포함 late-bound / delimiter 블록 개수 1 + terminal INV / born-broken 술어 협착[is_sentinel_line nonce-결합 full-line 판정·앵커 outside-scope count] / 판독측 지시 full-block 기계강제 helper `assert_directive_placement` — SSOT=whitelist `## 판독측 지시 marker` 절 + emit-nonce/--nonce write-required helper CLI). D16 언어 축 ⊥ D17 injection 축 disjoint. honest ceiling(delimiting tier, "완전 차단" 아님). 이전 CFP-2884 = ADR-081 §결정 D16(Amendment 15) 신설 반영: Codex worker promptfile 3-구획 언어 경계(A 영어 지시문 / B 인용 원문 verbatim / C 한글 요약 additive 병기) + promptfile UTF-8 round-trip fail-closed 배선(dispatch 직전 assert, 실패 = inconclusive). 직전 CFP-2828 = dispatch 재배선 — CodexReviewAgent dispatch primitive 을 companion 브로커(node) → `codex exec` 직접 단일 primitive 로 재배선(ADR-081 §결정 D15): hermetic read-only sandbox + `-o out.json` result-via-file + AC-6 소비 재검증(fail-closed 5단계) + option-first timeout wall-clock 가드. 그 직전 CFP-2813 = model tier 실측(ADR-141) + RequirementsReview lane 다축(ADR-125 Amd2/Amd3) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1)
+last_captured: 2026-08-17
+captured_at_sha: 6bb0e8aa5  # D7 provenance — 검증 시점 코드 commit anchor (CFP-3011 Phase 1, ADR-183 심사 정의역·종결 술어 설계 반영 — Phase 2 배선 전 계약 예고 포함)
+last_update_cfp: CFP-3011  # 4 영역 갱신 — ADR-183 신설 반영: ① 경계 — 심사 정의역(scrutiny domain, FIX 발생 자격 축) 신설: §9/§10 감사 기록면 = out(FIX 라운드 미발생, 입력·증거로는 계속 read — "심사 대상 제외 ≠ 입력 제외"), 침해 속성(기록값≠실측·결손·재현 불가·secret 착지) = in 예외. :43 ADR-022 인용 historical 표기 정정(Deprecated — 현행 규범 = review-verdict-v4 "PL pl_recommendation = final verdict") ② 인터페이스 — review_verdict v4.18 예고: findings[].scrutiny_domain(in|out|out-provisional closed-enum) + domain_basis + verdict-level scrutiny_counts/examined_count/required_count/closed_axes[] (전부 optional additive MINOR — 집행 "부재=RED" 는 base 절차 축) ③ 데이터 흐름 — PL synthesis 에 scrutiny_domain 산정(선행 계약 조회) 단계 + lane PASS 종결 술어(심사 완결 등식 + in-domain P0/P1 잔존 0 + INCONCLUSIVE 취급) + 병리 판정 이벤트 = FIX 라운드 미생성·carrier/escalation 라우팅(Epic #3010 child 2 입력) ④ 모듈 — base 책임에 심사 정의역 결속·종결 판정 추가. 이전 CFP-2911 = interfaces 축 갱신 — ADR-081 §결정 D17(Amendment 16) 신설 반영: Codex promptfile prompt-injection 방어층 강화(nonce CSPRNG 불가측성·파일명 미포함 late-bound / delimiter 블록 개수 1 + terminal INV / born-broken 술어 협착[is_sentinel_line nonce-결합 full-line 판정·앵커 outside-scope count] / 판독측 지시 full-block 기계강제 helper `assert_directive_placement` — SSOT=whitelist `## 판독측 지시 marker` 절 + emit-nonce/--nonce write-required helper CLI). D16 언어 축 ⊥ D17 injection 축 disjoint. honest ceiling(delimiting tier, "완전 차단" 아님). 이전 CFP-2884 = ADR-081 §결정 D16(Amendment 15) 신설 반영: Codex worker promptfile 3-구획 언어 경계(A 영어 지시문 / B 인용 원문 verbatim / C 한글 요약 additive 병기) + promptfile UTF-8 round-trip fail-closed 배선(dispatch 직전 assert, 실패 = inconclusive). 직전 CFP-2828 = dispatch 재배선 — CodexReviewAgent dispatch primitive 을 companion 브로커(node) → `codex exec` 직접 단일 primitive 로 재배선(ADR-081 §결정 D15): hermetic read-only sandbox + `-o out.json` result-via-file + AC-6 소비 재검증(fail-closed 5단계) + option-first timeout wall-clock 가드. 그 직전 CFP-2813 = model tier 실측(ADR-141) + RequirementsReview lane 다축(ADR-125 Amd2/Amd3) + review-verdict wrapper 단일 원본(ADR-118 D5) + ADR-166 read protocol + per-PR 현행화 게이트(ADR-078 Amd3/ADR-112 Amd1)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -27,7 +27,7 @@ codeforge-review = **4 review lane (요구사항리뷰 + 설계리뷰 + 구현�
 | **ClaudeReviewAgent** | Worker (lane-agnostic) — opus | PL packet 수신 → checklist 항목 수행 → finding return. lane 도메인은 packet 으로 주입 (worker 본문 hard-coded 0건). **Codex 와 필수 peer 병렬** |
 | **CodexReviewAgent** | Worker (lane-agnostic) — haiku (ADR-141 Amd1 외부위임 — 실 추론 = 외부 Codex) | 동일 packet 수신 → 독립 관점 finding return. ADR-070/081 verify-before-trust + boilerplate 적용. **Claude 와 필수 peer 병렬**. **dispatch primitive = `codex exec` 직접 단일 primitive** (companion 브로커 `node` 우회 폐지 — ADR-081 §결정 D15 / CFP-2828): 정적 리뷰 + 실행검증 2-트랙이 hermetic read-only sandbox(config 격리) 단일 primitive 로 수렴 → verdict 는 `-o out.json` result-via-file 채널로 수신 → **AC-6 소비 재검증(fail-closed 5단계)** 통과 후에만 `verdict` 필드 소비(텍스트 태그 스캔 폐지). own-Bash 실행표면 확대 0 (`node` dead-permission 은퇴 → 순 표면 감소) |
 
-**공통 base** `templates/review-pl-base.md` = 4 PL 공유 SSOT (severity 종합 / dedup / noise 분류 / 보고 형식 / escalation / FIX Ledger / 워커 의존성). 각 PL md 본문은 lane-specific 4 항목만 (checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트). **ADR-166 (CFP-2813): 리뷰 PL 4 전원 = G2 mandatory 소비자** — 심사 대상 관련 Living Architecture 선행 read (per-PL 예외 0, 주입 표면 = 본 base — CFP-2813 Phase 2 배선. RequirementsReviewPL 편입 근거 = ADR-125 Amd3 결정 B 내부적합 축의 현재상태 대조 mandate).
+**공통 base** `templates/review-pl-base.md` = 4 PL 공유 SSOT (severity 종합 / dedup / noise 분류 / **심사 정의역 결속 + lane PASS 종결 술어 (ADR-183, CFP-3011 — Phase 2 배선 예정)** / 보고 형식 / escalation / FIX Ledger / 워커 의존성). 각 PL md 본문은 lane-specific 4 항목만 (checklist packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트). **ADR-166 (CFP-2813): 리뷰 PL 4 전원 = G2 mandatory 소비자** — 심사 대상 관련 Living Architecture 선행 read (per-PL 예외 0, 주입 표면 = 본 base — CFP-2813 Phase 2 배선. RequirementsReviewPL 편입 근거 = ADR-125 Amd3 결정 B 내부적합 축의 현재상태 대조 mandate).
 
 **4 lane checklist** = `templates/review-checklists/{requirements,design,code,security}.md` — 각 lane 의 항목 + 자동 P0 룰. PL 이 packet `checklist_path` 로 worker 전달.
 
@@ -40,11 +40,13 @@ codeforge-review = **4 review lane (요구사항리뷰 + 설계리뷰 + 구현�
 | 경계 영역 | owner |
 |---|---|
 | review_verdict_packet 구성 (PL synthesis only) | RequirementsReviewPLAgent / DesignReviewPLAgent / CodeReviewPLAgent / SecurityTestPLAgent (4 PL 각 lane 별) |
-| GitHub comment `[요구사항-리뷰]` / `[설계리뷰]` / `[구현리뷰]` / `[보안테스트]` prefix 발화 | Orchestrator (CFP-61 / ADR-022 — PL packet 받아 최종 write) |
+| GitHub comment `[요구사항-리뷰]` / `[설계리뷰]` / `[구현리뷰]` / `[보안테스트]` prefix 발화 | Orchestrator (CFP-61 유래 — PL packet 받아 최종 write. 구 근거 ADR-022 = **Deprecated, historical 표기** — 현행 규범 = review-verdict-v4 "PL pl_recommendation = final verdict", ADR-183 §결정 12-5) |
 | Story §9 (lane verdict mirror) | Orchestrator (PL packet 수령 후 최종 write, lane plugin self-write 영역 외) |
 | `phase:요구사항-리뷰 → phase:설계` / `phase:설계-리뷰 → phase:구현` / `phase:구현-리뷰 → phase:보안테스트` / `phase:보안테스트 → phase:완료` transition label | Orchestrator |
 | `templates/review-pl-base.md` (공통 SSOT) / `templates/review-checklists/*.md` / `agents/*.md` runtime SSOT | 본 lane plugin maintainer |
 | `docs/architecture/codeforge-review.md` (본 doc) | ArchitectAgent write monopoly (**per-PR 현행화** — ADR-078 Amd3 / ADR-112 Amd1: `plugins/codeforge-review/**` 변경 PR = 본 doc 본문 갱신 OR `[living-arch-no-impact]` declare closed-binary, CFP-2813 게이트 강제) |
+
+**심사 정의역 경계 (scrutiny domain — ADR-183 / CFP-3011, Phase 2 배선 예정)**: FIX 라운드 발생 자격의 축 — 각 lane 의 기존 `scope_globs ∩ category_enum` 이 FIX-eligible 정의역의 양성 열거 (신규 선언면 0, 결속만 신설). 감사 기록면(§9/§10 원장·카운터·서식·집계 — ADR-180 §결정 3 이벤트 로그 계열)은 out — FIX 라운드를 열지 못하나 **리뷰 입력(증거·anchor_recurrence 판별 재료)으로는 계속 read** ("심사 대상 제외 ≠ 입력 제외"). 예외 = 침해 속성(기록값≠실측 / 결손 / 재현 명령 부재·실패 / secret 착지 — 의도 무관 관찰 술어) 은 표면 위치 불문 in. ADR-181 검증 정의역 V(close-time 실행 도달)·§10 `원인 판정`(재진입 라우팅)과 별 축 — 교차 키 없음 (INV-R 보존).
 
 **Drift-avoidance discipline 경계** (lane plugin CLAUDE.md 명시):
 
@@ -88,7 +90,7 @@ lane 간 + lane 내부 계약 surface — kind:contract producer / kind:registry
 
 | contract | role | SSOT pointer |
 |---|---|---|
-| `review_verdict` | 4 PL (RequirementsReview/Design/Code/SecurityTest) → Orchestrator 핸드오프 packet — `lane` enum (requirements-review / design / code / security, v4.13 CFP-2326) + `pl_recommendation` enum (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) + `findings[]` (severity + type + anchor_id — `living-architecture-not-updated` 포함, ADR-112) + boolean self-check carrier field (mechanical / boundary / dimensional / marketplace_sync_declared / living_architecture_updated) | `docs/inter-plugin-contracts/review-verdict-v4.md` (**wrapper 단일 원본 — ADR-118 D5**, sibling sync 폐지) |
+| `review_verdict` | 4 PL (RequirementsReview/Design/Code/SecurityTest) → Orchestrator 핸드오프 packet — `lane` enum (requirements-review / design / code / security, v4.13 CFP-2326) + `pl_recommendation` enum (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) + `findings[]` (severity + type + anchor_id — `living-architecture-not-updated` 포함, ADR-112) + boolean self-check carrier field (mechanical / boundary / dimensional / marketplace_sync_declared / living_architecture_updated) + **심사 정의역·종결 양성 증거 필드 축 (ADR-183 예고, Phase 2 — findings[].scrutiny_domain closed-enum·domain_basis + verdict-level scrutiny_counts·examined/required_count·closed_axes[], 전부 optional additive; "부재=RED" 집행 = base 절차 축)** | `docs/inter-plugin-contracts/review-verdict-v4.md` (**wrapper 단일 원본 — ADR-118 D5**, sibling sync 폐지) |
 
 **Host (kind:registry — sibling sync 면제, ADR-010 §결정 2)** — 본 lane 이 발동 / 참여:
 
@@ -134,7 +136,7 @@ Orchestrator → DesignReviewPLAgent spawn (lane PL, one-shot per attempt)
   │
   ├─ 2 worker return (one-shot, stateless) — 독립 관점 finding[] PL 에 input
   │
-  ├─ PL synthesis: dedup (anchor_id collapse) → severity 높은 쪽 채택 → noise 분류 → review_verdict_packet 초안
+  ├─ PL synthesis: dedup (anchor_id collapse) → severity 높은 쪽 채택 → noise 분류 → scrutiny_domain 산정 (선행 계약 조회, in|out|out-provisional — ADR-183, Phase 2 배선 예정) → review_verdict_packet 초안
   │
   ├─ divergence_detected check (동일 anchor_id 에 severity / FIX vs PASS 발산)
   │     │
@@ -176,6 +178,7 @@ Orchestrator 수령 → Story §9 final verdict + GitHub comment `[설계리뷰]
 - review_verdict `pl_recommendation: FIX` → Orchestrator §10 FIX Ledger row append → 원인 lane re-spawn (DesignReview FIX = ArchitectPL / CodeReview FIX = DeveloperPL 1차 진단 + ArchitectPL 최종 판정 / SecurityTest FIX = 동일 패턴)
 - debate-protocol-v1 발동 시 transcript = Story §9 append → §10 FIX Ledger `debate_artifact_ref` carry → 원인 lane re-spawn 시 verbatim 입력 (reasoning carryover 보장)
 - max 3 도달 시 = ArchitectPL implementability reassessment (ADR-067 §결정 3) — RESET / escalate / Pause 분기
+- **lane PASS 종결 술어 (ADR-183, Phase 2 배선 예정)**: PASS = 심사 완결(`coverage_required` 가 해당 lane 을 커버 대상으로 지시하는 행 전수 심사 — 값 판정은 D-1 정규화[4-값 폐쇄 enum AFFIRM/NEGATE/LIST_RESOLVED/UNDECIDABLE, 미해소 표기 = UNDECIDABLE fail-closed — 값 집합·매핑 세부 정본은 Phase 2 실행 SSOT `scripts/lib/review_exit_criteria.py` + fixture, AC-23 실행층 전환 2026-08-19] ∧ D-2 분모 floor[표 signature 있는데 분모 0 = RED], `examined_count == required_count` 등식 — `>=` 금지, `examined_count`=분자·`required_count`=분모) ∧ in-domain P0/P1 잔존 0 (미측정 worker = INCONCLUSIVE ≠ 잔존 0, ADR-139 INV-L2) — 신규 P2 는 PASS 와 동시에 follow-up 착지(3문 게이트 + disposition). out finding = pl_recommendation 기여 0, findings[] 구조화 잔존. 닫힌 축 재개방(병리 — CFP-2878 §5 Q1 승계 + anchor_recurrence 재사용, **규범 scope = 4 lane 전건 / day-1 기계 판정 도달 = 설계리뷰 1 lane, 잔여 3 lane = ★ 선언된 결손** — 입력면이 `closed_axes[]` 이력에 의존, ADR-183 §결정 5 면별 표 SSOT) = FIX 라운드 미생성, carrier 분리/escalation 라우팅 (Epic #3010 child 2 정지 장치의 입력 인터페이스 — 카운터·trigger 술어 무접촉)
 
 **artifact propagation**:
 
