@@ -1103,6 +1103,375 @@ else
   ng "AC-17 방출 어휘 폐집합 위반 $AC17_VOCAB_BAD 건" "폐집합 밖 어휘가 방출됐다(§3.9)"
 fi
 
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Part 7 — CFP-2995 AC-13/14: ADR-179 F-12 정정 사이트 문면 lint + 실행 대조
+#
+#   AC-13 = 재위치 앵커로 식별한 4 사이트(J1~J4)가 각각 「탐지 여부」를 진술하는가.
+#   AC-14 = 그 진술의 함의가 D1(bare 11) ∪ D2(문맥 래핑 6) = 17 입력에서 실 탐지기
+#           실행 결과와 일치하며 어느 입력에서도 미결정으로 남지 않는가.
+#
+#   ★ 대조군 4종을 함께 싣고 **각각 RED 임을 단언**한다 — 대조군이 없으면 「이식 오류」를
+#     잡는 기계 leg 이 0 이다. 네 대조군은 **서로 다른 축**에서 RED 를 낸다:
+#       OLD(정확성) · DRAFT(전역성) · WRONG_TOTAL(정확성·argmax) · GLOBAL_OVERREACH(정의역)
+#   ★ per-witness 방출 — 수치 일치만으로 충족 계상하지 않는다. 「다른 이유로 RED 인」
+#     대조군이 조건을 통과하는 것을 막기 위해 판정을 낸 **입력 id 집합**을 방출한다.
+#   ★ GLOBAL_OVERREACH 는 aggregate RED 로 계상하지 않는다 — `D1 단독 GREEN` ∧
+#     `D1∪D2 RED` 의 **논리곱**이며, D1 이 RED 면 `invalid:` 방출 + **leg RED**
+#     (계상 제외 ≠ 무시 — 정의역 축 유일 대조군의 무효화는 판별력 상실이다).
+#
+#   ★ 정직 잔여 (숨기지 않는다):
+#     (1) 저작 규율 2(「임계 수치 리터럴 금지」)는 **기계 검사하지 않는다.** 정정문이
+#         종전 거짓을 「」로 인용해 반증할 때 그 인용이 수치를 정당하게 담기 때문이다
+#         (착지문 J2 가 실제로 그렇다) — 계수 기반 금지는 옳은 문면을 RED 로 만든다.
+#         ⇒ 본 leg 은 **하한 지시자의 positive assert**(상수 이름 또는 「하한」)만 재고,
+#         리터럴 금지는 **리뷰 판정면**으로 남긴다.
+#     (2) `DRAFT`·`GLOBAL_OVERREACH` 술어의 정본은 internal-docs 리비전이나 wrapper CI
+#         에서 그 repo 를 읽을 수 없다 ⇒ 술어를 **코드로 인라인**하고 출처를 immutable
+#         ref 로 주석에 핀한다(`WRONG_TOTAL` 이 계획서에서 인라인된 것과 같은 형태).
+#         인라인 사본과 원본의 일치는 리뷰 판정면이다.
+# ═════════════════════════════════════════════════════════════════════════════
+echo
+echo "── Part 7: AC-13/14 ADR-179 사이트 문면 lint + 17 입력 실행 대조 + 대조군 4종 ──"
+
+AC1314_OUT="$TMPROOT/ac1314.out"
+AC1314_RC=0
+python3 - "$REPO_ROOT" "$AC17_BASELINE" > "$AC1314_OUT" 2>&1 <<'AC1314PY' || AC1314_RC=$?
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""CFP-2995 AC-13/14 — ADR-179 F-12 정정 사이트 문면 lint + 실행 대조 + 대조군 4종.
+
+호출: python3 ac1314.py <REPO_ROOT> <BASELINE_SHA> <결과파일>
+결과파일 = 1행 1판정, "OK<TAB>메시지" 또는 "NG<TAB>메시지<TAB>상세".
+"""
+import base64
+import importlib.util
+import io
+import math
+import os
+import re
+import subprocess
+import sys
+
+ROOT, BASELINE = sys.argv[1], sys.argv[2]
+RESULTS = []
+
+
+def ok(msg):
+    RESULTS.append("OK\t" + msg)
+
+
+def ng(msg, detail=""):
+    RESULTS.append("NG\t" + msg + "\t" + detail)
+
+
+# ── SUT 로드 (실 탐지기 — 대역 아님) ─────────────────────────────────────────
+spec = importlib.util.spec_from_file_location(
+    "rd", os.path.join(ROOT, "scripts", "lib", "redact_dev_process_content.py"))
+rd = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(rd)
+
+MIN_LEN = rd.CLOUD_GENERIC_MIN_LEN
+MIN_ENT = rd.CLOUD_ENTROPY_MIN
+TOKEN_RE = re.compile(r"[A-Za-z0-9_-]+")   # 탐지기 문자 클래스(점 없음) 근사 — 최대 연속 토큰
+
+
+def ent(s):
+    if not s:
+        return 0.0
+    return -sum((s.count(c) / len(s)) * math.log2(s.count(c) / len(s)) for c in set(s))
+
+
+def toks(s):
+    return TOKEN_RE.findall(s)
+
+
+# ══════════════════ 입력 집합 D1(11) ∪ D2(6) = 17 ════════════════════════════
+def b64(b):
+    return base64.urlsafe_b64encode(b).decode().rstrip("=")
+
+
+HDR = b64(b'{"alg":"HS256","typ":"JWT"}')
+HDR_NONE = b64(b'{"alg":"none","typ":"JWT"}')
+PL_STD = b64(b'{"sub":"1234567890","name":"John Doe","iat":1516239022}')
+PL_SHORT = "eyJhIjoxfQ"
+SIG43 = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+SIG39 = SIG43[:39]
+PL_G = "A" * 22 + "B" * 22
+HDR_HI = "Zm9vYmFyOTk3M3F3ZXJ0eXVpb3Bhc2RmZ2hqa2x6eGN2Ym5tMTIzNDU2Nzg5MFFXRVJUWVVJ"[:70]
+J_TOKEN = "PXm5m5UsXbHV2Hk24bN8uWiHWUW5UitmJHHJV4bt"          # 40자 ent 4.087
+K_TOKEN = "rcroucuWNo6WbnzokrrWk96JcbbcrGWooNch4c9HWhYNG"     # 45자 ent 3.895
+
+MEET = HDR + "." + PL_STD + "." + SIG43
+FAIL = HDR + "." + PL_SHORT + "." + SIG43[:20]
+
+
+def envdump(tok):
+    return "\n".join(["SESSION_TOKEN=" + tok] + ["VAR%d=value%d" % (i, i) for i in range(1, 10)])
+
+
+# (id, 부류, 조건, 텍스트) — D1 은 bare(문맥 표지 없음), D2 는 문맥 래핑.
+D1 = [
+    ("a", None, None, HDR + "." + PL_STD + "." + SIG43),
+    ("b", None, None, HDR + "." + PL_STD + "." + SIG39),
+    ("c", None, None, HDR_NONE + "." + PL_STD),
+    ("d", None, None, HDR + "." + PL_SHORT + "." + SIG39),
+    ("e", None, None, "A" * 41),
+    ("f", None, None, HDR + "." + PL_SHORT + "." + SIG43),
+    ("g", None, None, HDR + "." + PL_G + "." + SIG43),
+    ("h", None, None, HDR_HI + "." + PL_SHORT + ".abcdef"),
+    ("i", None, None, "A" * 160 + SIG43),
+    ("j", None, None, J_TOKEN),
+    ("k", None, None, K_TOKEN),
+]
+D2 = [
+    ("w1", "header",     "meet", "Authorization: Bearer " + MEET),
+    ("w2", "credential", "meet", "token: " + MEET),
+    ("w3", "envdump",    "meet", envdump(MEET)),
+    ("w4", "header",     "fail", "Authorization: Bearer " + FAIL),
+    ("w5", "credential", "fail", "token: " + FAIL),
+    ("w6", "envdump",    "fail", envdump(FAIL)),
+]
+ALL = D1 + D2
+
+# ── D2 셀 non-empty 선확인 (§8-fixture — 3 부류 × {meet,fail} = 6 셀) ─────────
+CELLS = [(k, c) for k in ("header", "credential", "envdump") for c in ("meet", "fail")]
+vac = [(k, c) for k, c in CELLS if not [x for x in D2 if x[1] == k and x[2] == c]]
+if vac:
+    for k, c in vac:
+        ng("vacuous: D2/%s/%s — 셀 공허" % (k, c), "leg RED (총 개수 일치만으로 충족 계상 불가)")
+else:
+    ok("D2 셀 전수 non-empty 선확인 — 3 부류 × {조건충족, 조건미달} = 6 셀 전건 비공허")
+
+if len(ALL) != 17:
+    ng("입력 집합 크기 %d (기대 17)" % len(ALL), "D1 11 ∪ D2 6")
+else:
+    ok("실행 대조 입력 집합 = D1 11 ∪ D2 6 = 17")
+
+# ── 관측축 = 탐지 여부 (redaction_rules_fired 비어있지 않은가) ────────────────
+ACTUAL = {}
+for cid, klass, cond, text in ALL:
+    _t, audit = rd.redact(text)
+    fired = audit["redaction_rules_fired"]
+    ACTUAL[cid] = bool(fired)
+
+# ══════════════════ 술어 5종 (착지문 + 대조군 4) ═════════════════════════════
+# 반환: True(탐지 함의) / False(미탐지 함의) / None(미결정 — 함의하지 않음)
+
+def is_jwtish(text):
+    parts = text.split(".")
+    return len(parts) in (2, 3) and all(parts) and all(TOKEN_RE.fullmatch(p) for p in parts)
+
+
+def any_meets(text):
+    return any(len(t) >= MIN_LEN and ent(t) >= MIN_ENT for t in toks(text))
+
+
+def pred_landed(cid, klass, cond, text):
+    """착지문 — 정의역 한정(문맥 표지 없는 단독 입력) + 존재 양화 + 문맥 3부류 위임절."""
+    if klass in ("header", "credential", "envdump"):
+        return True          # 위임절: 그 문맥 룰이 선행 발화해 탐지·차단된다
+    return any_meets(text)
+
+
+def pred_old(cid, klass, cond, text):
+    """OLD — wrapper @6bb0e8aa5 ADR-179 :195 표 행.
+    셀1 `JWT — alg=none 또는 서명 39자 이하` · 셀4 `통과 (룰 0 발화)`.
+    그 밖의 입력에 대해서는 아무것도 함의하지 않는다(미결정)."""
+    if not is_jwtish(text):
+        return None
+    parts = text.split(".")
+    alg_none = len(parts) == 2 or (len(parts) == 3 and not parts[2])
+    short_sig = len(parts) == 3 and len(parts[2]) <= 39
+    return False if (alg_none or short_sig) else None
+
+
+def pred_draft(cid, klass, cond, text):
+    """DRAFT — internal-docs @f2790210 blob 7cba3e3a §10.1.
+    셀1 `JWT — 세 세그먼트 중 어느 하나도 길이 조건과 엔트로피 조건을 함께 충족하지 않는 경우`
+    · 셀2·3·4 무변(= 통과). 정의역이 「세 세그먼트」로 한정된 **부분 술어**."""
+    parts = text.split(".")
+    if not (is_jwtish(text) and len(parts) == 3):
+        return None
+    if any(len(p) >= MIN_LEN and ent(p) >= MIN_ENT for p in parts):
+        return None          # 이 경우는 셀1 정의역 밖 — 함의 없음
+    return False
+
+
+def pred_wrong_total(cid, klass, cond, text):
+    """WRONG_TOTAL — 계획서 §8-fixture 인라인(저자 합성 반사실, repo 사본 없음).
+    「가장 긴 토큰 하나만 판정」 = argmax 단일 선택(존재 양화가 아님)."""
+    ts = toks(text)
+    if not ts:
+        return False
+    t = max(ts, key=len)
+    return len(t) >= MIN_LEN and ent(t) >= MIN_ENT
+
+
+def pred_global_overreach(cid, klass, cond, text):
+    """GLOBAL_OVERREACH — internal-docs @ce1d1c0c blob d21205d8 §10.1 (라) site 1 iter1 착지문.
+    착지문과 같은 존재 양화이나 **정의역 한정과 위임절이 없다**(전칭)."""
+    return any_meets(text)
+
+
+PREDS = [
+    ("landed",           pred_landed),
+    ("OLD",              pred_old),
+    ("DRAFT",            pred_draft),
+    ("WRONG_TOTAL",      pred_wrong_total),
+    ("GLOBAL_OVERREACH", pred_global_overreach),
+]
+
+
+def evaluate(fn, subset):
+    undec, mism = [], []
+    for cid, klass, cond, text in subset:
+        imp = fn(cid, klass, cond, text)
+        if imp is None:
+            undec.append(cid)
+        elif imp != ACTUAL[cid]:
+            mism.append(cid)
+    return undec, mism
+
+
+REPORT = {}
+for name, fn in PREDS:
+    REPORT[name] = {"all": evaluate(fn, ALL), "d1": evaluate(fn, D1), "d2": evaluate(fn, D2)}
+
+# ── AC-14: 착지문은 17 입력 전건 미결정 0 · 불일치 0 ─────────────────────────
+lu, lm = REPORT["landed"]["all"]
+if not lu and not lm:
+    ok("AC-14 착지문 실행 대조 — D1∪D2 17 입력 전건 미결정 0 · 불일치 0")
+else:
+    ng("AC-14 착지문 실행 대조 실패 — 미결정 %d · 불일치 %d" % (len(lu), len(lm)),
+       "미결정 증인=%s · 불일치 증인=%s" % (lu or "없음", lm or "없음"))
+
+# ── 대조군 3종: RED + per-witness 방출 ───────────────────────────────────────
+for name in ("OLD", "DRAFT", "WRONG_TOTAL"):
+    u, m = REPORT[name]["all"]
+    if u or m:
+        ok("대조군 %s = RED (미결정 %d · 불일치 %d) — 증인 미결정=%s 불일치=%s"
+           % (name, len(u), len(m), u or "없음", m or "없음"))
+    else:
+        ng("대조군 %s 가 RED 가 아니다 — 검사가 이식 오류를 잡지 못한다" % name,
+           "미결정 0 · 불일치 0 (착지문과 같은 판정)")
+
+# ── GLOBAL_OVERREACH: D1 단독 GREEN ∧ D1∪D2 RED 의 **논리곱** ────────────────
+gu1, gm1 = REPORT["GLOBAL_OVERREACH"]["d1"]
+gua, gma = REPORT["GLOBAL_OVERREACH"]["all"]
+d1_green = not gu1 and not gm1
+all_red = bool(gua or gma)
+gud2, gmd2 = REPORT["GLOBAL_OVERREACH"]["d2"]
+if not d1_green:
+    ng("invalid: GLOBAL_OVERREACH (D1 not GREEN) — 계상 제외 + leg RED",
+       "D1 미결정=%s 불일치=%s · 정의역 축 유일 대조군의 무효화는 「검사가 판별력을 잃었다」"
+       % (gu1 or "없음", gm1 or "없음"))
+elif not all_red:
+    ng("GLOBAL_OVERREACH 논리곱 미성립 — D1∪D2 가 RED 가 아니다",
+       "D2 확장의 판별력이 실증되지 않았다")
+else:
+    ok("대조군 GLOBAL_OVERREACH = D1 단독 GREEN ∧ D1∪D2 RED (논리곱 성립) — "
+       "D2 불일치 증인=%s (D2 없이는 검출 불가)" % (gmd2 or "없음"))
+
+# ══════════════════ AC-13 사이트 문면 lint (J1~J4) ═══════════════════════════
+ADR_REL = "archive/adr/ADR-179-agent-salvage-bundle-handoff.md"
+SH_REL = "tests/scripts/test_bundle_pre_push_redaction.sh"
+
+SITES = [
+    ("J1", ADR_REL, lambda l: l.lstrip().startswith("|") and "alg=none" in l),
+    ("J2", ADR_REL, lambda l: l.lstrip().startswith("① **표준 JWT 는 차단된다")),
+    ("J3", ADR_REL, lambda l: "정정된 문면: **밖 =" in l),
+    # ★ (바) 규율 자기적용 — 이 검사기는 자기가 스캔하는 파일 안에 산다.
+    #   앵커 문자열을 소스에 **연속으로** 적으면 그 줄 자신이 2번째 hit 가 돼 앵커 유일성을
+    #   스스로 깨뜨린다(실제로 깨뜨렸고 본 leg 이 그것을 검출했다) ⇒ 런타임 결합으로 분리한다.
+    ("J4", SH_REL,  lambda l: ("ADR-179 §" + "7 F-12") in l),
+]
+# 3요소 + 부정 분기 + 정의역 한정절 (상수 이름 또는 「하한」 — 수치 리터럴 아님)
+AXES = [
+    ("독립 판정", ["독립 판정", "독립으로", "독립 판정이라"]),
+    ("길이 하한", ["길이 하한", "CLOUD_GENERIC_MIN_LEN"]),
+    ("엔트로피 하한", ["엔트로피 하한", "CLOUD_ENTROPY_MIN"]),
+    ("부정 분기", ["하나도 없으면", "하나도 존재하지 않으면"]),
+    ("정의역 한정절", ["정의역은 다른 룰의 문맥 표지 없이", "술어의 정의역은 다른 룰의 문맥 표지 없이",
+                  "문맥 표지 없이 단독으로 주어진 입력", "문맥 표지 없는 단독 입력"]),
+]
+
+
+def read_lines(rel):
+    with io.open(os.path.join(ROOT, rel), encoding="utf-8", newline="") as fh:
+        return fh.read().split("\n")
+
+
+def at_baseline(rel):
+    a = subprocess.run(["git", "-C", ROOT, "archive", BASELINE, rel], capture_output=True)
+    if a.returncode != 0:
+        return None
+    t = subprocess.run(["tar", "-xO"], input=a.stdout, capture_output=True)
+    if t.returncode != 0 or not t.stdout:
+        return None
+    return t.stdout.decode("utf-8").split("\n")
+
+
+def lint(line):
+    return [nm for nm, alts in AXES if not any(a in line for a in alts)]
+
+
+post_missing = 0
+for sid, rel, pred in SITES:
+    lines = read_lines(rel)
+    hits = [l for l in lines if pred(l)]
+    if len(hits) != 1:
+        ng("AC-13 %s 앵커 유일성 실패 — %d hit (기대 1)" % (sid, len(hits)),
+           "재위치 앵커가 착지 후 파일에 정확히 한 번 등장해야 한다")
+        post_missing += 1
+        continue
+    miss = lint(hits[0])
+    if miss:
+        ng("AC-13 %s 문면 미충족 — 결손 축 %s" % (sid, miss), rel)
+        post_missing += 1
+    else:
+        ok("AC-13 %s — 앵커 hit=1 ∧ 5축(독립·길이하한·엔트로피하한·부정분기·정의역한정) 전건 충족" % sid)
+
+if post_missing == 0:
+    ok("AC-13 착지 후 사이트 전수 = 4 · 미충족 0")
+
+# ── [E] 음성 대조 — 착지 전 4 사이트는 같은 lint 를 통과하지 못한다 ──────────
+pre_ok = 0
+pre_unread = 0
+for sid, rel, pred in SITES:
+    lines = at_baseline(rel)
+    if lines is None:
+        pre_unread += 1
+        continue
+    hits = [l for l in lines if pred(l)]
+    if len(hits) == 1 and not lint(hits[0]):
+        pre_ok += 1
+if pre_unread:
+    ng("음성 대조 판정 불가 — 기저선 %s 미판독 %d 사이트" % (BASELINE[:9], pre_unread),
+       "undecidable — fail-closed")
+elif pre_ok == 0:
+    ok("[E] 음성 대조 — 착지 전 4 사이트 전건 lint 미충족 (검사가 항진이 아니다)")
+else:
+    ng("[E] 음성 대조 실패 — 착지 전 사이트 %d 개가 이미 lint 를 통과한다" % pre_ok,
+       "lint 가 착지 전후를 구별하지 못한다 = 판별력 0")
+
+sys.stdout.write("\n".join(RESULTS) + "\n")
+sys.exit(1 if any(r.startswith("NG") for r in RESULTS) else 0)
+AC1314PY
+
+if [ ! -s "$AC1314_OUT" ]; then
+  ng "AC-13/14 leg 무출력 (rc=$AC1314_RC)" "undecidable — 하네스가 판정을 내지 못했다(fail-closed)"
+else
+  while IFS="$(printf '\t')" read -r AC1314_V AC1314_M AC1314_D; do
+    case "$AC1314_V" in
+      OK) ok "$AC1314_M" ;;
+      NG) ng "$AC1314_M" "$AC1314_D" ;;
+      *)  ng "AC-13/14 leg 출력 파손" "$AC1314_V $AC1314_M" ;;
+    esac
+  done < "$AC1314_OUT"
+fi
+
 echo
 echo "═══════════════════════════════════════════════════════════════════════════"
 echo " Test Summary"
@@ -1110,7 +1479,7 @@ echo "════════════════════════�
 echo "PASS: $PASS"
 echo "FAIL: $FAIL"
 if [ "$FAIL" -eq 0 ]; then
-  echo "OK All $PASS cases pass — 4-변종/primitive 정의역/술어 협착/대조군 3종/mutant 4종 결박"
+  echo "OK All $PASS cases pass — 4-변종/primitive 정의역/술어 협착/대조군 3종/mutant 4종 + CFP-2995 AC-17 범위경계·additivity + AC-13/14 사이트 대조·대조군 4종 결박"
   echo "   (보장 범위 = L1 경유 착지 경로 한정. raw git push 우회는 L1 정의역 밖 — L3 사후 탐지.)"
   exit 0
 else
