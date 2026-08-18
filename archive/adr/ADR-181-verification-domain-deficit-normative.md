@@ -1926,12 +1926,50 @@ born-red)와 같은 형상이 워크플로 축에서 미봉합**으로 남은 �
 
 ```
 INSTALL(p)  := p 가 `.github/workflows/` 하위면 p 자신,
-               아니면 `.github/workflows/` + basename(p)          # twin 규약 (workflow = templates byte-parity)
+               아니면 `.github/workflows/` + basename(p)          # basename twin — ★ 내용 동일성 미검사 (아래 천장)
 배선_wf(p)  := INSTALL(p) 가 REPO_STATE 트리의 blob 으로 실재       # 설치 실재 축
 
 배선(k, p)  := (k ∈ {workflow, workflow_path})  ?  배선_wf(p)  :  (기존 정규화(run블롭') ∧ 경계)
                # ★ 분기 기준은 **항목의 경로 키**이지 경로 문자열의 모양이 아니다
 ```
+
+★★★ **천장 (`declared`) — `배선_wf` 는 basename 존재만 본다. 「선언한 바이트가 설치돼 있다」가 아니다
+(FIX Iter 13 — 설계리뷰 R13 3자 수렴: PL P1-1 · Codex F-B · Claude P2-1)**
+
+직전 판은 `INSTALL` 옆에 *"twin 규약 (workflow = templates **byte-parity**)"* 이라 적었다. **술어는 parity 를
+보지 않는다** — 즉 이름이 술어보다 강했고, 그것은 R12 P0(*"「호출」이라 적고 「출현」을 잰다"*)와 **같은 class** 가
+그 P0 를 봉합하려 신설한 분기 안에서 재발한 것이다. 이름을 술어에 맞추고, 그 차이의 실물을 여기 적는다.
+
+```
+# 산출 명령 (pin b0cefd3fe · git ls-tree -r --name-only · blob 동일 ⇔ git rev-parse <pin>:<path> 동일)
+templates/github-workflows/*.y(a)ml         = 88
+  twin 존재 (INSTALL(p) 가 트리에 실재)        = 71      twin 부재 = 17
+  twin 존재 ∧ blob SHA 동일                   = 70
+★ twin 존재 ∧ blob SHA 상이                   =  1  ->  templates/github-workflows/story-init.yml
+    diff b0cefd3fe:templates/…/story-init.yml  b0cefd3fe:.github/…/story-init.yml -> 13 insertions(+), 7 deletions(-)
+```
+
+- ★★ **그 1건이 이 분기가 살린 GREEN 3 중 `ADR-013` 의 유일 witness 다.** 즉 `ADR-013` 의 사다리 GREEN 은
+  *"내가 선언한 그 템플릿이 강제된다"* 로 읽히지만 실제 도는 것은 **다른 내용의 파일**이다 — 템플릿 쪽 강제
+  로직을 비워도 설치본이 그대로면 `배선_wf` 는 계속 GREEN 이고 **선언 쪽 무력화가 관측되지 않는다**.
+- ★★★ **§결정 4 접합부 선언 (자기적용 — 직전 판 누락)**: repo 에는 같은 대상을 보는 **실 byte-parity 게이트**가
+  있다 — `.github/workflows/invariant-check.yml` 의 *"Workflow parity (templates ↔ .github)"* step. 두 술어의
+  값공간 관계를 여기서 선언한다(미선언이 §결정 4 위반이었다):
+
+| 술어 | 정의역 | 무엇을 보는가 | `story-init.yml` 판정 |
+|---|---|---|---|
+| ADR-181 `배선_wf` | `WF_DOM` = `*.yml` **∪** `*.yaml` (템플릿 88) | basename twin 의 **blob 존재** | **참**(GREEN 공급) |
+| repo parity 게이트 | `for f in templates/github-workflows/*.yml` (**`*.yaml` 제외**, 87) ∖ `CONSUMER_ONLY_WORKFLOWS` **18원** | 내용 **완전 동일**(`diff -q`) | **정의역 밖**(제외목록 **1번 항목**) |
+
+- ⇒ **`twin 규약 = byte-parity` 는 전건 성립이 아니다.** parity 게이트는 `story-init.yml` 에 **적용된 적이 없고**
+  (제외목록 1번), 두 술어는 정의역 자체가 다르다(`*.yaml` 포함 여부 · 제외목록 유무). 직전 판은 이 게이트를
+  **0회** 언급했다(firsthand `grep -c "invariant-check\|CONSUMER_ONLY"` = 0).
+- ★ **twin 부재 17 의 성격도 여기 적는다** — 17 중 **16 이 `CONSUMER_ONLY_WORKFLOWS` 등재**(consumer 배포용
+  seed 로 **의도적 self-app 미운용**)이고, 제외목록 밖은 **1**(`test-yaml-ext-fixture.yaml`)뿐이며 그마저
+  게이트 정의역(`*.yml`) 밖이다. 즉 *"twin 이 없다"* 의 지배 원인은 누락이 아니라 **의도된 배제**다.
+- ★ **좁히지 않는 이유** — `배선_wf` 에 parity 연언지를 붙이면 `ADR-013` 이 born-red 가 되는데, 그 RED 는
+  *"강제되지 않는다"* 가 아니라 *"설치본이 템플릿보다 새롭다"* 를 뜻해 **저자에게 잘못된 정정을 지시**한다
+  (`action` 오진단 122 와 같은 형상). ⇒ 본 판은 **천장을 이름으로 적는 데까지** 하고 좁힘은 Phase 2 소관으로 둔다.
 
 - **판별 행 50b** `- workflow: templates/github-workflows/claude-md-line-cap.yml` → **GREEN**.
   분기를 없애면(= 두 원소도 `run:` 블롭 축) `RED/ladder-unwired` — **α 형상의 워크플로 축 실물**이다.
@@ -1963,6 +2001,30 @@ GREEN 3 = archive/adr/ADR-012-wrapper-claudemd-ssot-boundary.md          (claude
   Phase 2 가 이 축을 넓힐 때 조용히 전건 미검출되지 않는다.
 - ★ **`.github/workflows/` 하위 경로는 분기가 항등**이다(INSTALL(p) = p) — 그래서
   `.github/workflows/ac-schema-authoring-gate.yml`(실재 거짓)은 분기 전후 모두 `ladder-path-missing` 이다.
+- ★★★★ **천장 (`declared`) — 그 항등의 *양성* 쪽에서 배선 연언지는 판정에 기여하지 않는다
+  (FIX Iter 13 — 설계리뷰 R13 Claude P1-3. 직전 판은 항등을 *음성* 사례로만 적었다)**.
+  `.github/workflows/` 하위 경로는 `INSTALL(p) = p` 이므로 **`배선_wf(p) ≡ 실재(p)`** 이고, 실재가 참이면
+  사다리의 *"마지막 이빨"* 인 세 번째 연언지가 그 경로 부류에서 **항진 = 3연언지가 2연언지로 공허화**한다.
+
+  ```
+  # 주입 실증 (대조군 = (iv) 표 65행 baseline 65/65 선통과 확인 후 주입 — firsthand)
+  주입  - workflow: .github/workflows/invariant-check.yml
+     규정판              GREEN
+     LADDER_WIRED off    GREEN   <- 배선 연언지를 통째로 꺼도 불변 = 공허
+     WIRE_WF off         GREEN   <- 설치 실재 leg 을 꺼도 불변 = 공허
+     WF_BRANCH off       RED/ladder-unwired   <- 이 GREEN 은 전적으로 신설 분기의 산물
+  # 전수 사실: WF_DOM 116 파일 전건이 `배선_wf` 참 ∧ `배선(run블롭')` 거짓 (즉 이 부류 전체가 위와 같다)
+  # 코퍼스 도달: ADR-158 이 `.github/workflows/ac-schema-authoring-gate.yml` 선언 (현재 실재 거짓 —
+  #             그 파일이 착지하는 순간 GREEN 이 되고, 그 GREEN 에서 배선 leg 은 아무 일도 하지 않는다)
+  ```
+
+  ⇒ **INV-V(검사가 있으나 판별력 0)가 수용 기준 안에서 성립하는 입력 부류다.** 이 문서가 열두 라운드
+  고발해 온 형상이며 **이번 분기가 새로 만들었다** — 그 사실을 지우지 않고 적는다.
+  ★ **판별 행이 규칙상 요구되나 이번 판은 신설하지 않았다** — (0-c) 자기적용의 예외(*"코퍼스 출현 0 → 문면
+  고정만"*)에 **해당하지 않으므로**(도달 1항목) 행이 있어야 옳다. 행 후보 `- workflow: .github/workflows/invariant-check.yml`
+  → **GREEN** 을 **사전 실측**해 두었고(위 블록), 신설 시 (0-c) 의 `WF_BRANCH` 가 1 → 2(50b · 신설행)로 이동한다.
+  보류 사유는 **R13 처분의 정지 기준(범위 잠금 1회 한정)** 이며, 이월처는 Change Plan §12.3 잔여다.
+  **"닫았다" 가 아니라 "무엇이 열려 있는지 적었고 닫는 비용을 재 두었다"** 이다.
 
 ###### (iv-L2) ★★ 사다리 exit 사유 3종 + 사유 귀속 규칙 (`admissible` 의 `OR` 는 무손상)
 
