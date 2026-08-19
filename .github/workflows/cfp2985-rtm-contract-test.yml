@@ -1,0 +1,92 @@
+name: cfp2985 RTM contract test
+
+# CFP-2985 Phase 2 — Change Plan §8.1.1 RTM 이 확정한 **명명 테스트 43** 의 실행 채널.
+#
+# 왜 전용 workflow 인가:
+#   이 repo 의 silent-un-run 봉인 게이트(`check_selftest_execution_liveness.py`)는 정의역이
+#   `tests/scripts/*.sh` 라 `tests/**/*.py` 를 **원리적으로 못 잡는다**. 배선이 없으면
+#   43 테스트는 "존재하는데 실행되지 않는" dead test 가 되고, 그 위의 GREEN 은 거짓이다.
+#   (선례: `story-section10-time-lint` 의 self-test 스텝이 생성 이래 `No module named pytest`
+#    로 한 번도 import 를 넘긴 적이 없었다 — 존재 ≠ 실행.)
+#
+# §8.C CI 실행 보장 계약을 **본 스위트 자신에** 적용:
+#   C-1  호출 `run:` 줄 실재            -> "Run CFP-2985 RTM contract suite" step
+#   C-2  의존성 해소 step 실재          -> "Install test dependencies" (pytest + pyyaml — stdlib-only 아님)
+#   C-3  `continue-on-error` 부재       -> 본 파일에 該 키 0 (day-1 hard-fail, ADR-151 §결정5)
+#   C-4  `paths`·`paths-ignore` 부재    -> 두 키 모두 부재. job-level `if:` 도 두지 않는다.
+#        ★ 본 스위트는 path-filter 를 **둘 수 없다** — AC-11 leg1 이 wrapper 전역 `.md`
+#          455 파일을 스캔하므로, 임의의 문서 변경이 유령 컬럼 지시를 새로 들일 수 있다.
+#          경로로 좁히면 정확히 그 경로가 미검사로 남는다.
+#   C-5  수집 테스트 수 non-zero        -> `--collect-only` 로 **먼저 세고** 0 이면 그 자리에서 실패.
+#                                          (스위트 안 `test_ac3_collected_test_count_non_zero` 와 이중.)
+#
+# ★ C-9-dom ⓓ 선언: 본 workflow 는 **타 repo 코드를 취득하지 않는다.** fetch 채널
+#   ⓐ(`actions/checkout` 의 `ref:`) · ⓑ(`run:` 안 git clone/fetch/checkout) ·
+#   ⓒ(curl/wget tarball) 전건 부재이므로 `fetch_channels_found=0` 을 **값으로 방출**한다 —
+#   "검사할 게 없어서 통과" 와 "검사했는데 통과" 는 다른 사실이다.
+#
+# ★ 정직 천장 (declared): Story · Change Plan 은 internal-docs repo 소재라 wrapper CI 에
+#   **비가시**하다. 따라서 `CFP2985_INTERNAL_DOCS` 는 여기서 주입되지 않으며, 그 축의
+#   **실물 대조 leg 은 CI 에서 실행되지 않는다.** 각 테스트의 discriminating core
+#   (합성 대조군 · mutant · wrapper-local 실물)는 그대로 실행된다. 이 두 줄을 지우고
+#   "43 테스트가 CI 에서 전건 검증된다" 고 인용하면 over-claim 이다.
+#   (internal-docs 축 상시 배선 = pinned-SHA cross-repo checkout 필요 — carrier #2985.)
+#
+# **non-required**: branch protection 8-tuple 무접촉 (required context 신설 0).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cfp2985-rtm-contract-test:
+    name: cfp2985 RTM contract test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        # fetch-depth 0 — AC-13 이 merge-base `ecfe62d63` 의 label-registry 를
+        # `git show` 로 읽어 신규 bypass entry delta 를 낸다 (shallow 면 판정불가).
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies (C-2)
+        run: |
+          python3 -m pip install --disable-pip-version-check --quiet pytest pyyaml
+          python3 -c "import pytest, yaml; print('pytest', pytest.__version__, 'pyyaml', yaml.__version__)"
+
+      - name: Declare fetch channels (C-9-dom rule d)
+        run: |
+          echo "fetch_channels_found=0"
+          echo "fetch_scan_depth_exhausted=0"
+
+      - name: Assert collected test count is non-zero (C-5)
+        run: |
+          python3 -m pytest tests/cfp2985 --collect-only -q > /tmp/cfp2985-collect.txt 2>&1
+          COLLECTED=$(grep -cE '::test_' /tmp/cfp2985-collect.txt)
+          echo "collected_tests=$COLLECTED"
+          if [ "$COLLECTED" -eq 0 ]; then
+            echo "::error::수집 테스트 수 0 — dead test 위 GREEN (C-5 위반)"
+            exit 1
+          fi
+
+      - name: Run CFP-2985 RTM contract suite (C-1, day-1 hard-fail)
+        # internal-docs 축은 미주입 -> 각 테스트의 실물 leg 은 조용히 건너뛰고
+        # discriminating core 는 실행된다 (위 정직 천장 참조).
+        run: |
+          python3 -m pytest tests/cfp2985 -v -ra
