@@ -273,11 +273,20 @@ class RepoState:
     ``배선_wf`` = ``INSTALL(p)`` 가 트리의 blob 으로 실재 (**설치 실재**).
     """
 
+    # git I/O 는 rev 당 1회면 충분하다 — ablation 재실행이 leg 당 116 blob 을 다시 읽으면
+    # (0-c) 전면 재실행이 실무상 불가능해진다. **파생 텍스트는 캐시하지 않는다**
+    # (`strip_comment_lines`·`normalize_paths` 가 ablation 대상이므로 매번 다시 만든다).
+    _TREE_CACHE: dict[tuple[str, str | None], set[str]] = {}
+    _RAW_RUN_CACHE: dict[tuple[str, str | None], str] = {}
+
     def __init__(self, rev: str, repo_root: str | None = None) -> None:
         self.rev = rev
         self.repo_root = repo_root
-        self._tree: set[str] | None = None
         self._wire_text: str | None = None
+
+    @property
+    def _key(self) -> tuple[str, str | None]:
+        return (self.rev, self.repo_root)
 
     # -- git primitives ----------------------------------------------------
     def _git(self, *args: str) -> str:
@@ -294,10 +303,34 @@ class RepoState:
 
     @property
     def tree(self) -> set[str]:
-        if self._tree is None:
+        cached = RepoState._TREE_CACHE.get(self._key)
+        if cached is None:
             out = self._git("ls-tree", "-r", "--name-only", self.rev)
-            self._tree = {ln for ln in out.split("\n") if ln}
-        return self._tree
+            cached = {ln for ln in out.split("\n") if ln}
+            RepoState._TREE_CACHE[self._key] = cached
+        return cached
+
+    @property
+    def raw_run_blob(self) -> str:
+        """``run블롭`` — WF_DOM 각 파일의 ``run:`` 스칼라만 이어붙인 **원문**."""
+        cached = RepoState._RAW_RUN_CACHE.get(self._key)
+        if cached is not None:
+            return cached
+        blobs: list[str] = []
+        for path in sorted(self.tree):
+            if not path.startswith(".github/workflows/"):
+                continue
+            if not (path.endswith(".yml") or path.endswith(".yaml")):
+                continue
+            try:
+                content = self._git("show", f"{self.rev}:{path}")
+                doc = yaml.safe_load(content)
+            except Exception:
+                continue
+            _collect_run_scalars(doc, blobs)
+        cached = "\n".join(blobs)
+        RepoState._RAW_RUN_CACHE[self._key] = cached
+        return cached
 
     def exists(self, path: str) -> bool:
         """``실재(p)`` — 완전일치 blob 존재. 실행권한 비트·확장자는 보지 않는다."""
@@ -307,20 +340,7 @@ class RepoState:
     def wire_text(self) -> str:
         """``정규화(run블롭')`` — 판정 텍스트 (주석줄 제거 후 접두 정규화)."""
         if self._wire_text is None:
-            blobs: list[str] = []
-            for path in sorted(self.tree):
-                if not path.startswith(".github/workflows/"):
-                    continue
-                if not (path.endswith(".yml") or path.endswith(".yaml")):
-                    continue
-                try:
-                    content = self._git("show", f"{self.rev}:{path}")
-                    doc = yaml.safe_load(content)
-                except Exception:
-                    continue
-                _collect_run_scalars(doc, blobs)
-            raw = "\n".join(blobs)
-            self._wire_text = normalize_paths(strip_comment_lines(raw))
+            self._wire_text = normalize_paths(strip_comment_lines(self.raw_run_blob))
         return self._wire_text
 
     def wired_script(self, path: str) -> bool:
@@ -356,46 +376,130 @@ class RepoState:
 # --------------------------------------------------------------------------
 # (iii) 판정 술어 — 면제 축 / 사다리 축
 # --------------------------------------------------------------------------
-def exempt(fm: dict, fm_text: str, as_of: _dt.date, pubdate: _dt.date) -> str | None:
+# ★ ablation seam — ADR-181 (0-c) 는 leg-off 재실행을 **최종 표 전체**에 요구한다
+#   (`D-LEG` L3-ⓒ). 아래 3 hook 은 그 재실행이 **두 번째 구현을 저작하지 않고**
+#   가능하도록 둔 이음매다(같은 저자의 두 구현이 갈리는 함정 회피 — (vii) FIX Iter 13).
+#   규정 구현은 이 기본값이며, 갈아끼우는 주체는 scripts/lib/adr181_leg_ablation.py 뿐이다.
+def _parse_expiry(raw: str) -> tuple[_dt.date | None, str | None]:
+    try:
+        return _dt.date.fromisoformat(raw), None
+    except ValueError:
+        return None, R_EXPIRY_VALUE
+
+
+PARSE_EXPIRY = _parse_expiry
+LOWER_BOUND_OK = lambda expiry, as_of: expiry >= as_of        # noqa: E731  하한(경과)
+UPPER_BOUND_OK = lambda expiry, cap: expiry <= cap            # noqa: E731  상한(무한 만기)
+
+
+# ``SCOPE`` — LINE 의 탐색 정의역. 파일 전체로 넓히면 본문 col-0 예시 1줄로 self-RED 가
+# 된다((ii) `SCOPE` 신설 문단, 판별 행 19). ablation seam.
+SCOPE_OF = lambda fm_text, full_text: fm_text     # noqa: E731
+
+
+class _ExemptCtx:
+    """면제 leg 평가 문맥. ``comment``·``raw_expiry`` 는 지연 계산이라 앞 leg 을 꺼도 뒤 leg 이 산다."""
+
+    __slots__ = ("fm", "scope", "as_of", "pubdate", "expiry", "_comment")
+
+    def __init__(self, fm: dict, scope: str, as_of: _dt.date, pubdate: _dt.date) -> None:
+        self.fm = fm
+        self.scope = scope
+        self.as_of = as_of
+        self.pubdate = pubdate
+        self.expiry: _dt.date | None = None
+        self._comment: str | None = None
+
+    @property
+    def comment(self) -> str:
+        if self._comment is None:
+            m = RE_LINE.search(self.scope)
+            self._comment = m.group("c") if m else ""
+        return self._comment
+
+    @property
+    def raw_expiry(self) -> str | None:
+        found = RE_EXP.findall(self.comment)
+        return found[0] if found else None
+
+
+# mea 키 존재 — 정규식이 아니라 **YAML 키 멤버십** (행 8·27 이 이 계층을 판별한다)
+def _leg_mea_missing(ctx: _ExemptCtx) -> str | None:
+    return R_MEA_MISSING if MEA_KEY not in ctx.fm else None
+
+
+# LINE 이 SCOPE(frontmatter 블록) 안에서 정확히 1회 매치
+def _leg_line_form(ctx: _ExemptCtx) -> str | None:
+    return R_LINE_FORM if len(RE_LINE.findall(ctx.scope)) != 1 else None
+
+
+# 복수 토큰 = 선택 규칙이 아니라 RED — max 를 택하면 fail-open 경로가 생긴다
+def _leg_carrier_token(ctx: _ExemptCtx) -> str | None:
+    return R_CARRIER_TOKEN if len(RE_CAR.findall(ctx.comment)) != 1 else None
+
+
+def _leg_expiry_token(ctx: _ExemptCtx) -> str | None:
+    return R_EXPIRY_TOKEN if len(RE_EXP.findall(ctx.comment)) != 1 else None
+
+
+def _leg_repo_token(ctx: _ExemptCtx) -> str | None:
+    return R_REPO_TOKEN if len(RE_REPO.findall(ctx.comment)) != 1 else None
+
+
+# PFX 가 캡처 c 의 **선두**에 매치 (부인 산문 안 토큰 매설 봉인)
+def _leg_token_order(ctx: _ExemptCtx) -> str | None:
+    return R_TOKEN_ORDER if RE_PFX.match(ctx.comment) is None else None
+
+
+# 값 판정은 값 파서에 맡기고 술어는 형식만 본다 — 예외는 skip 이 아니라 named RED
+def _leg_expiry_value(ctx: _ExemptCtx) -> str | None:
+    raw = ctx.raw_expiry
+    if raw is None:
+        return None
+    ctx.expiry, reason = PARSE_EXPIRY(raw)
+    return reason
+
+
+def _leg_expired(ctx: _ExemptCtx) -> str | None:
+    if ctx.expiry is None:
+        return None
+    return None if LOWER_BOUND_OK(ctx.expiry, ctx.as_of) else R_EXPIRED
+
+
+def _leg_over_cap(ctx: _ExemptCtx) -> str | None:
+    if ctx.expiry is None:
+        return None
+    cap = ctx.pubdate + _dt.timedelta(days=EXPIRY_CAP_DAYS)
+    return None if UPPER_BOUND_OK(ctx.expiry, cap) else R_OVER_CAP
+
+
+# ★ **평가 순서가 leg 목록의 일부다** (ADR-181 (iii) FIX Iter 5). 순서가 바뀌면 사유가
+#   바뀌고, 사유는 수용 기준의 축이다. leg-off = 이 목록에서 그 원소를 제거하는 연산이다.
+EXEMPT_LEGS: list[tuple[str, object]] = [
+    (R_MEA_MISSING, _leg_mea_missing),
+    (R_LINE_FORM, _leg_line_form),
+    (R_CARRIER_TOKEN, _leg_carrier_token),
+    (R_EXPIRY_TOKEN, _leg_expiry_token),
+    (R_REPO_TOKEN, _leg_repo_token),
+    (R_TOKEN_ORDER, _leg_token_order),
+    (R_EXPIRY_VALUE, _leg_expiry_value),
+    (R_EXPIRED, _leg_expired),
+    (R_OVER_CAP, _leg_over_cap),
+]
+
+
+def exempt(fm: dict, fm_text: str, as_of: _dt.date, pubdate: _dt.date,
+           full_text: str | None = None) -> str | None:
     """``exempt(file)`` — 성립이면 ``None``, 실패면 exit 사유 토큰.
 
     leg 평가 순서가 규정이며 (iv) 표의 ``exit 사유`` 열이 그 순서의 관측이다.
     """
-    # mea 키 존재 — 정규식이 아니라 **YAML 키 멤버십** (행 8·27 이 이 계층을 판별한다)
-    if MEA_KEY not in fm:
-        return R_MEA_MISSING
-
-    # LINE 이 SCOPE(frontmatter 블록) 안에서 정확히 1회 매치
-    matches = RE_LINE.findall(fm_text)
-    if len(matches) != 1:
-        return R_LINE_FORM
-    comment = RE_LINE.search(fm_text).group("c")
-
-    # 복수 토큰 = 선택 규칙이 아니라 RED (max 를 택하면 fail-open 경로가 생긴다)
-    cars = RE_CAR.findall(comment)
-    if len(cars) != 1:
-        return R_CARRIER_TOKEN
-    exps = RE_EXP.findall(comment)
-    if len(exps) != 1:
-        return R_EXPIRY_TOKEN
-    repos = RE_REPO.findall(comment)
-    if len(repos) != 1:
-        return R_REPO_TOKEN
-
-    # PFX 가 캡처 c 의 **선두**에 매치 (부인 산문 매설 봉인)
-    if RE_PFX.match(comment) is None:
-        return R_TOKEN_ORDER
-
-    # 값 판정은 값 파서에 맡기고 술어는 형식만 본다 — 예외는 skip 이 아니라 named RED
-    try:
-        expiry = _dt.date.fromisoformat(exps[0])
-    except ValueError:
-        return R_EXPIRY_VALUE
-
-    if not (expiry >= as_of):
-        return R_EXPIRED
-    if not (expiry <= pubdate + _dt.timedelta(days=EXPIRY_CAP_DAYS)):
-        return R_OVER_CAP
+    ctx = _ExemptCtx(fm, SCOPE_OF(fm_text, full_text if full_text is not None else fm_text),
+                     as_of, pubdate)
+    for _name, leg in EXEMPT_LEGS:
+        reason = leg(ctx)
+        if reason is not None:
+            return reason
     return None
 
 
@@ -428,14 +532,14 @@ def ladder(fm: dict, repo: RepoState) -> tuple[bool, str | None]:
 
 
 def admissible(fm: dict, fm_text: str, as_of: _dt.date, pubdate: _dt.date,
-               repo: RepoState) -> Verdict:
+               repo: RepoState, full_text: str | None = None) -> Verdict:
     """``admissible(file) := ladder(file) OR exempt(file)``.
 
     두 경로를 **모두 평가**하고 OR 를 취한다. 사유 귀속만 (iv-L2) 규칙을 따른다 —
     ``len(mea) >= 1`` 이면 사다리 토큰, 아니면 면제 토큰.
     """
     ladder_ok, ladder_reason = ladder(fm, repo)
-    exempt_reason = exempt(fm, fm_text, as_of, pubdate)
+    exempt_reason = exempt(fm, fm_text, as_of, pubdate, full_text)
     if ladder_ok or exempt_reason is None:
         return Verdict(GREEN, None)
 
@@ -443,6 +547,25 @@ def admissible(fm: dict, fm_text: str, as_of: _dt.date, pubdate: _dt.date,
     if isinstance(items, list) and len(items) >= 1:
         return Verdict(RED, ladder_reason)
     return Verdict(RED, exempt_reason)
+
+
+# --------------------------------------------------------------------------
+# 정의역 — ADRQ 양방향 처분 (ablation seam: ⓐ 가지 = `D-ESCAPE`, 술어 = `DOMAIN`)
+# --------------------------------------------------------------------------
+def domain_verdict(head_fm: dict, base_fm: dict | None) -> Verdict | None:
+    """``None`` = 정의역 안 ((iii) 판정으로 진행).
+
+    ⓐ 자격 박탈(base 는 ``ADRQ`` ∧ head 는 ``¬ADRQ``) = RED ``domain-escape``.
+    ⓑ 그 외 ``¬ADRQ`` = ``OUT`` (정의역 밖 = **검사 없음**, 통과가 아니다).
+
+    ★ ⓐ 가 없으면 제외 자신이 회피구다 — 실 ADR 이 ``adr_number`` 를 null 로 바꿔
+    정의역을 빠져나간다(판별 행 37; ⓐ 제거 시 ``OUT`` = GREEN 보다 나쁜 결과).
+    """
+    if adrq(head_fm):
+        return None
+    if base_fm is not None and adrq(base_fm):
+        return Verdict(RED, R_DOMAIN_ESCAPE)
+    return Verdict(OUT, None)
 
 
 # --------------------------------------------------------------------------
@@ -479,17 +602,16 @@ def evaluate(head_text: str, base_text: str | None, as_of: _dt.date,
         return Verdict(RED, R_FM_BOUNDARY)
 
     # 정의역 — ADRQ 양방향 처분
-    if not adrq(head_fm):
-        if base_fm is not None and adrq(base_fm):
-            return Verdict(RED, R_DOMAIN_ESCAPE)   # ⓐ 자격 박탈
-        return Verdict(OUT, None)                  # ⓑ 정의역 밖 = 검사 없음
+    domain = domain_verdict(head_fm, base_fm)
+    if domain is not None:
+        return domain
 
     # 발행일 정규화 (front-end — (iii) leg 앞)
     pubdate, pub_reason = resolve_pubdate(head_fm)
     if pub_reason is not None:
         return Verdict(RED, pub_reason)
 
-    return admissible(head_fm, fm_text, as_of, pubdate, repo)
+    return admissible(head_fm, fm_text, as_of, pubdate, repo, head_text)
 
 
 # --------------------------------------------------------------------------
