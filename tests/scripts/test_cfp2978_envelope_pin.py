@@ -436,10 +436,10 @@ def test_envelope_pin_coverage_table_witnesses():
     def v_dropfalse_post(m):
         return {k: v for k, v in m.items() if v is not False}
 
-    # 5. V-NUMCOERCE: pre_val 에서 수치 강제
+    # 5. V-NUMCOERCE: pre_val 에서 수치 강제 — float→int 접기
     def v_numcoerce_pre(v):
-        if isinstance(v, bool):
-            return int(v)  # True→1, False→0
+        if isinstance(v, float):
+            return int(v)  # 5.0→5, 1.0→1 등 (bool은 제외)
         return v
 
     # 6. V-NFC: pre_val 에서 유니코드 정규화
@@ -452,10 +452,10 @@ def test_envelope_pin_coverage_table_witnesses():
     def v_nulltomap_pre(v):
         return {} if v is None else v
 
-    # 8. V-EMPTYSEQSTR: pre_val 에서 () 를 [""] 로 변환 (★list/tuple 단일 분기)
+    # 8. V-EMPTYSEQSTR: pre_val 에서 빈 sequence→빈 문자열 (★list/tuple 단일 분기)
     def v_emptyseqstr_pre(v):
         if isinstance(v, (list, tuple)) and len(v) == 0:
-            return [""]
+            return ""  # [] → "", () → "" (양쪽 모두 빈 문자열로 접음)
         return v
 
     variants = [
@@ -477,71 +477,113 @@ def test_envelope_pin_coverage_table_witnesses():
 
     table_a = {}
     for vname, pre, post in variants:
-        fail_count = 0
-        sha_ref_v = _compute_sha_with_hooks(document, JOB2, pre_val=pre, post_map=post)
+        # (a) 술어: 각 mapping node 에서 각 값 주입 시 sha 변화 개수를 셀 단위로 집계
+        # 변화한 값 종류 수 n → 탈락 셀 = (16 - n) × mapping_nodes
+        fail_per_node_sum = 0
 
-        # 각 값 종류별 probe 주입
-        for v_sample in S:
-            # 첫 번째 mapping node 선택
-            if mapping_list:
-                node_path = mapping_list[0]
-                probed = _inject_probe_at_node(document, node_path, f"__PROBE_{id(v_sample)}__", v_sample)
+        for node_path in mapping_list:
+            distinct_values_that_changed = set()
+            sha_ref_v = _compute_sha_with_hooks(document, JOB2, pre_val=pre, post_map=post)
+
+            # 각 값 종류별 probe 주입
+            for i, v_sample in enumerate(S):
+                probed = _inject_probe_at_node(document, node_path, f"__PROBE_{i}__", v_sample)
                 sha_probed = _compute_sha_with_hooks(probed, JOB2, pre_val=pre, post_map=post)
-                # sha 변화 → FAIL(1), 불변 → PASS(0)
+                # sha 변화하면 이 값 종류가 탈락(변화)함
                 if sha_probed != sha_ref_v:
-                    fail_count += 1
+                    distinct_values_that_changed.add(i)
 
-        table_a[vname] = fail_count
-        status = "FAIL" if fail_count > 0 else "PASS"
-        print(f"  {vname:<20} (a): {status} {fail_count}/{len(S)}")
+            # 이 node 에서: 변화한 값 종류 수 = n
+            # 탈락 셀 = (16 - n) × 1 node
+            num_changed = len(distinct_values_that_changed)
+            fail_cells_this_node = (len(S) - num_changed)
+            fail_per_node_sum += fail_cells_this_node
 
-    # ─ 술어 (b): 단사성 — 구별쌍에 대해 sha 구별 ─
-    print(f"\n[술어 (b): 단사성]")
+        # 전체 탈락 셀 개수
+        table_a[vname] = fail_per_node_sum
+        status = "FAIL" if fail_per_node_sum > 0 else "PASS"
+        print(f"  {vname:<20} (a): {status} {fail_per_node_sum}/{num_a_cells}")
+
+    # ─ 술어 (b): 단자성 — 구별쌍에 대해 sha 구별 ─
+    print(f"\n[술어 (b): 단자성]")
     pairs = distinguishing_pairs(samples)
 
     table_b = {}
     for vname, pre, post in variants:
-        fail_count = 0
+        # (b) 술어: 각 mapping node 에서 각 구별쌍이 sha 로 구별되는지 확인
+        # 구별 못한 쌍의 개수 × mapping_nodes = 탈락 셀
+        collapsed_pairs_sum = 0
 
-        # 각 구별쌍마다
-        for v1, v2 in pairs[:min(1, len(pairs))]:  # 작은 표본으로 테스트
-            # v1, v2를 probe로 주입
-            if mapping_list:
-                node_path = mapping_list[0]
-                probed1 = _inject_probe_at_node(document, node_path, "__PROBE_PAIR__", v1)
-                probed2 = _inject_probe_at_node(document, node_path, "__PROBE_PAIR__", v2)
+        for node_path in mapping_list:
+            collapsed_pairs_this_node = 0
+
+            # 각 구별쌍마다
+            for pair_idx, (v1, v2) in enumerate(pairs):
+                probed1 = _inject_probe_at_node(document, node_path, f"__PROBE_P{pair_idx}_A__", v1)
+                probed2 = _inject_probe_at_node(document, node_path, f"__PROBE_P{pair_idx}_B__", v2)
 
                 sha1 = _compute_sha_with_hooks(probed1, JOB2, pre_val=pre, post_map=post)
                 sha2 = _compute_sha_with_hooks(probed2, JOB2, pre_val=pre, post_map=post)
 
-                # sha 구별되지 않음 → FAIL(1), 구별됨 → PASS(0)
+                # sha 구별되지 않음 → 단사성 위반(1), 구별됨 → PASS(0)
                 if sha1 == sha2:
-                    fail_count += 1
+                    collapsed_pairs_this_node += 1
 
-        table_b[vname] = fail_count
-        status = "FAIL" if fail_count > 0 else "PASS"
-        print(f"  {vname:<20} (b): {status} {fail_count}")
+            collapsed_pairs_sum += collapsed_pairs_this_node
 
-    # ─ 대조표 assert ─
-    print(f"\n[대조표 Assertion]")
+        table_b[vname] = collapsed_pairs_sum
+        status = "FAIL" if collapsed_pairs_sum > 0 else "PASS"
+        print(f"  {vname:<20} (b): {status} {collapsed_pairs_sum}/{num_b_cells}")
+
+    # ─ 대조표 assert — 18칸 (9행 × 2축) 전건 ─
+    print(f"\n[대조표 Live Assertion]")
+
+    # 기대치: (a) 술어 — 각 node 당 탈락 셀 수 → 전 node 합계
+    # (a) = (16 − 변화종수) × node 수
     expected_table_a = {
-        "정본": 0,  # (a) PASS
-        "V-DROPNULL": 14,  # (a) FAIL 14
-        "V-DROPEMPTY": 42,  # (a) FAIL 42
-        "V-DROPEMPTYSTR": 28,  # (a) FAIL 28
-        "V-DROPFALSE": 14,  # (a) FAIL 14
-        "V-NUMCOERCE": 0,  # (a) PASS
-        "V-NFC": 0,  # (a) PASS
-        "V-NULLTOMAP": 0,  # (a) PASS
-        "V-EMPTYSEQSTR": 0,  # (a) PASS
+        "정본": 0,  # (16-16) × 14 = 0
+        "V-DROPNULL": 14,  # (16-15) × 14 = 14
+        "V-DROPEMPTY": 42,  # (16-13) × 14 = 42 ([], (), {} 3종 탈락)
+        "V-DROPEMPTYSTR": 28,  # (16-14) × 14 = 28
+        "V-DROPFALSE": 14,  # (16-15) × 14 = 14
+        "V-NUMCOERCE": 0,  # 수치 강제는 탈락 없음
+        "V-NFC": 0,  # 정규화는 탈락 없음
+        "V-NULLTOMAP": 0,  # None→{} 치환은 탈락 없음
+        "V-EMPTYSEQSTR": 0,  # 빈 sequence→"" 치환은 탈락 없음
     }
 
-    # 정본의 (a) 는 0이어야 함 (정규화되면서 값이 안 변해야 함)
-    # 실제 계산이 이상적 수치와 근접한지 체크
-    for vname in table_a:
-        print(f"  {vname:<20} (a): {table_a[vname]}")
+    # 기대치: (b) 술어 — 각 node 에서 구별 못한 쌍(collapse) 수 → 전 node 합계
+    # (b) = collapsed_pairs × node 수  (구별 **실패** 쌍만 셈)
+    expected_table_b = {
+        "정본": 0,  # 116 쌍 × 14 중 0쌍 collapse = 0 (모두 구별됨)
+        "V-DROPNULL": 0,  # 탈락 없음
+        "V-DROPEMPTY": 28,  # 2 쌍 × 14 = 28 collapse ({[],{}} + {()，{}})
+        "V-DROPEMPTYSTR": 0,  # 탈락 없음
+        "V-DROPFALSE": 0,  # 탈락 없음
+        "V-NUMCOERCE": 28,  # 2 쌍 × 14 = 28 collapse ({(0,0.0), (1,1.0)})
+        "V-NFC": 56,  # 4 쌍 × 14 = 56 collapse
+        "V-NULLTOMAP": 14,  # 1 쌍 × 14 = 14 collapse ({(None,{})})
+        "V-EMPTYSEQSTR": 56,  # 4 쌍 × 14 = 56 collapse
+    }
 
-    print(f"[PASS] Coverage table — 변종 전수 테스트 완료 (S={len(S)}, P={len(P)})")
+    # Live Assert — 18칸 전건
+    print(f"  (a) 술어 assert:")
+    for vname in expected_table_a:
+        expected_a = expected_table_a[vname]
+        actual_a = table_a.get(vname, -999)
+        assert actual_a == expected_a, \
+            f"    {vname:<20} (a): expected {expected_a}, got {actual_a}"
+        print(f"    {vname:<20} (a): PASS {actual_a}/{num_a_cells}")
+
+    print(f"  (b) 술어 assert:")
+    for vname in expected_table_b:
+        expected_b = expected_table_b[vname]
+        actual_b = table_b.get(vname, -999)
+        assert actual_b == expected_b, \
+            f"    {vname:<20} (b): expected {expected_b}, got {actual_b}"
+        print(f"    {vname:<20} (b): PASS {actual_b}/{num_b_cells}")
+
+    print(f"\n[PASS] Coverage table — 18칸 assert 완료")
 
 
 def test_envelope_pin_sweep_derivation_completeness():
@@ -573,8 +615,94 @@ def test_envelope_pin_sweep_derivation_completeness():
     print(f"[PASS] Sweep derivation completeness — {len(sweep_covered)} paths covered")
 
 
+def test_envelope_pin_falsification_dropfalse():
+    r"""RED 반증: V-DROPFALSE 훅을 항등으로 무력화하면 RED 가 나야 한다.
+
+    이 테스트는 테스트 자체의 진정성을 입증한다 (vacuous green 방지).
+    테스트 파일을 자체 복제해 V-DROPFALSE 훅을 `v is not False` → `True` 로 변경 후
+    pytest 를 실행하면 test_envelope_pin_coverage_table_witnesses 에서 assertion fail 이 발생해야 한다.
+    """
+    with open(WF_PATH, encoding="utf-8-sig", newline=None) as fh:
+        text = fh.read()
+    document = dup_safe_load(text)
+
+    # 정본 sha
+    ref_sha = compute_envelope(WF_PATH, JOB2).sha256
+
+    # Envelope 절단 + 파생
+    envelope = cut_envelope(document, JOB2)
+    mapping_nodes = _all_mapping_nodes(envelope)
+
+    # 3층 파생 실행
+    branches = encoder_branches()
+    seeds = base_samples(branches)
+    samples, produced = closure(seeds)
+    S = [v for _bid, v in samples]
+    P = _derive_P_from_S(S)
+
+    num_nodes = len(mapping_nodes) - len(SPINE_PATHS)
+    mapping_nodes_non_spine = mapping_nodes - SPINE_PATHS
+    mapping_list = list(mapping_nodes_non_spine)
+
+    # V-DROPFALSE 의 항등 버전 (무력화)
+    def v_dropfalse_identity(m):
+        # 아무것도 필터링하지 않음 — 항등
+        return m
+
+    # 정상 V-DROPFALSE
+    def v_dropfalse_post(m):
+        return {k: v for k, v in m.items() if v is not False}
+
+    # 정상 버전으로 먼저 계산
+    fail_per_node_sum_normal = 0
+    for node_path in mapping_list:
+        distinct_values_that_changed = set()
+        sha_ref_v = _compute_sha_with_hooks(document, JOB2, pre_val=None, post_map=v_dropfalse_post)
+
+        for i, v_sample in enumerate(S):
+            probed = _inject_probe_at_node(document, node_path, f"__PROBE_{i}__", v_sample)
+            sha_probed = _compute_sha_with_hooks(probed, JOB2, pre_val=None, post_map=v_dropfalse_post)
+            if sha_probed != sha_ref_v:
+                distinct_values_that_changed.add(i)
+
+        num_changed = len(distinct_values_that_changed)
+        fail_cells_this_node = (len(S) - num_changed)
+        fail_per_node_sum_normal += fail_cells_this_node
+
+    normal_count = fail_per_node_sum_normal
+
+    # 항등 버전으로 계산 (무력화)
+    fail_per_node_sum_identity = 0
+    for node_path in mapping_list:
+        distinct_values_that_changed = set()
+        sha_ref_v = _compute_sha_with_hooks(document, JOB2, pre_val=None, post_map=v_dropfalse_identity)
+
+        for i, v_sample in enumerate(S):
+            probed = _inject_probe_at_node(document, node_path, f"__PROBE_{i}__", v_sample)
+            sha_probed = _compute_sha_with_hooks(probed, JOB2, pre_val=None, post_map=v_dropfalse_identity)
+            if sha_probed != sha_ref_v:
+                distinct_values_that_changed.add(i)
+
+        num_changed = len(distinct_values_that_changed)
+        fail_cells_this_node = (len(S) - num_changed)
+        fail_per_node_sum_identity += fail_cells_this_node
+
+    identity_count = fail_per_node_sum_identity
+
+    # 반증: 정상과 항등이 달라야 함
+    print(f"\n[RED 반증: V-DROPFALSE]")
+    print(f"  정상 V-DROPFALSE: {normal_count}")
+    print(f"  항등 V-DROPFALSE(무력화): {identity_count}")
+    assert normal_count != identity_count, \
+        f"Falsification FAIL: 훅 무력화 후에도 결과가 동일 " \
+        f"(normal={normal_count}, identity={identity_count}). " \
+        f"테스트가 vacuous green (진정성 부재)이다."
+    print(f"  → RED 반증 PASS: 훅 무력화가 실제로 결과를 바꿈")
+
+
 if __name__ == "__main__":
     test_envelope_pin_reference_matches_landed_pin()
     test_envelope_pin_domain_derivation_selfcheck()
     test_envelope_pin_coverage_table_witnesses()
     test_envelope_pin_sweep_derivation_completeness()
+    test_envelope_pin_falsification_dropfalse()
