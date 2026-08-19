@@ -23,6 +23,13 @@ related_stories:
   - CFP-2823   # Amendment 1 carrier — §결정 1 감지집합 session/usage-limit class 편입 + fable-리밋 failover 합성
   - CFP-2944   # Amendment 2 carrier — 한도류 신호 판별식 D primary 이관 (본 ADR 소유 아님, 침범 금지)
   - CFP-2984   # Amendment 3 carrier — dead tenant 참조 정정 + 대기원 헤더 의미 정정 + dangling related_files 청산 + CB threshold telemetry-gated 재선언 + declaration-only 처분 + §결정 2 backoff single-SSOT
+  - CFP-2967   # Amendment 4 carrier — §결정 4 telemetry 실채움 인계 수취(breaker 자동 무장 금지) + §결정 8.2 write ownership 확정 + OR-1 하한 declare
+related_cfps:   # CFP-2967 Amendment 4 - related_stories mirror (key newly introduced, full mirror not partial)
+  - CFP-1354
+  - CFP-2823
+  - CFP-2944
+  - CFP-2984
+  - CFP-2967
 related_adrs:
   - ADR-039
   - ADR-044
@@ -37,6 +44,7 @@ related_adrs:
   - ADR-108
   - ADR-141   # Amendment 1 — fable-리밋 opus failover override carrier (§결정 3 step2 dead slot re-tenant)
   - ADR-179   # Amendment 3 — salvage 번들 회수·인계 규약. 본 ADR = 신호 감지·재시도 remedy 축 / ADR-179 = remedy 발동 후 회수 판정 축 (disjoint)
+  - ADR-043   # Amendment 4 sibling — 본 채널의 privacy·공표 경계 소유(ADR-043 Amendment 7 = allow-list 7 필드 + bound (2')). 본 ADR = 운영·write ownership·기록 어휘 축 (disjoint)
 mechanical_enforcement_actions:
   - 429-retry-evidence-presence   # Amendment 3 처분 = **승격 후보 유지**(3종 중 유일). 대상 = §결정 8.1 marker regex — 구체 정본이 실재하고 marker 제거 mutant 가 discriminating. 승격 실행은 Phase 2 이며 discriminating mutant 실증 동반 의무(ADR-171 §결정 6), warning-first 로 태어난다(ADR-171 §결정 5)
   # debate-parallel-cap-check   — Amendment 3 처분 = **승격 기각 (always-green hollow)**. 대상 field `parallel_spawn_cap` 이 team-spec 7 file 에 전건 실재(3-hit/파일 실측)라 presence 검사가 구조적 항상-GREEN. 선언만 남기면 "기계 강제가 있다" 는 over-claim
@@ -134,6 +142,46 @@ amendments:
       선언 지위**만 정정한다. ADR-064 §결정 7 evidence-gated symmetric ratchet: 강화 evidence =
       ① `:54`·`:341` 자기 인식 ↔ 규범 본문 불일치 firsthand ② telemetry 데이터원 기계 append
       0건 firsthand ③ team-spec 7 file 3-field 전건 실재 firsthand.
+  - amendment: 4
+    carrier_story: CFP-2967
+    date: 2026-08-19
+    reinterpretation: true   # 순수 additive 아님 — 2건이 기존 조항의 지위·정의역을 재규정한다. ① Amendment 3 (4) 의 §결정 4 "telemetry 실채움 전까지 미발동" 선언을 **유지하되 사유를 교체**한다(데이터원 부재 → 임계 미검증). 데이터원이 채워진 뒤에도 breaker 는 미발동이며(U-2 사용자 확정), 이 재선언 없이는 실채움이 곧 자동 무장으로 오독된다. ② §결정 8.2 dual-tier 서술의 지위를 "두 파일이 있다"에서 "파일별 단독 writer 가 정해져 있다"로 재규정하고 집계기의 event tier write 권한을 read-only 로 강등한다. 방향 = 전건 강화(완화 0)이나 지위 재규정이 실재하므로 false 로 적을 수 없다. self-declared — 의미 판정은 리뷰 lane 축.
+    scope: >-
+      **Amendment 2 절(본문 `## Amendment 2` 블록) 무접촉** — `status: Proposed` ∧ CFP-2944
+      소유이므로 그 안의 바이트를 하나도 바꾸지 않는다(Amendment 3 A3-0 동형 승계). 개정 5건:
+      (1) **§결정 4 telemetry 실채움 인계 수취·종결** — Amendment 3 (4) 가 "telemetry 실채움 =
+      본 Amendment scope 밖(계측 채널 실채움은 병렬 Story 소관)" 으로 인계했고 CFP-2967 축 ① 이
+      그 수취인이다. 단 **U-2 사용자 확정 = circuit breaker threshold 자동 무장 금지** — 데이터가
+      채워져도 §결정 4 는 미발동 유지하며 미발동의 사유만 "데이터원 부재" → "임계 미검증" 으로
+      바뀐다. 3-window threshold 의 `[hypothesis]` 태그 해소(임계 재보정)는 별건이며 본 Story
+      정의역 밖(ADR-068 I-5 dimensional empirical grounding — 데이터 존재는 측정의 시작점이지
+      완료점이 아니다). (2) **§결정 8.2 producer/aggregator write ownership 확정** —
+      `429-incident-history.jsonl`(event tier) = producer 단독 writer(append-only, kernel-atomic
+      append, read-modify-write 금지) / `429-incident.json`(aggregate tier) = 집계기 단독 writer /
+      집계기의 event tier 접근 = **read-only 강등**. 현행 위반 3종을 firsthand 실측으로 적시하고
+      처분한다(V-1 주간 요약행을 event log 에 write — 키 집합 공유 0개 / V-2 동주
+      `history_lines.pop()` / V-3 `seek(0);truncate()` 전체 재작성). 소유권 분리가 append-truncate
+      레이스·동주 중복 집계·행 순서 의존 3종을 정의역에서 소거한다. aggregate tier 는
+      `marker_incident_count`·`event_incident_count`·합 `weekly_incident_count` 를 분리 노출한다.
+      (3) **OR-1 잔여 declare** — 본 채널의 429 계수는 **항상 하한(lower bound)이며 상한이 아니다.
+      낮은 intensity bucket 을 "부하가 낮다"의 증거로 사용 금지(훅 timeout fail-open 의 부분 유실이
+      정확히 고부하 구간에 집중되므로 편향 방향이 확정적). 편향 크기는 미측정. (4) **기록 어휘 ≠
+      감지 어휘 분리** — `StopFailure` matcher 토큰 `rate_limit`(언더스코어)는 §결정 1 감지집합의
+      어느 literal 과도 다른 값공간이며, `error_pattern` 값공간에 그것이 들어가는 것이 §결정 1
+      감지집합에 원소를 추가하지 않음을 명시한다. **§결정 1 closed-set invariant 미발동 — detection
+      literal 무증감.** (5) **§결정 10 90일 retention ↔ event tier 보존 요구 정의역 한정** — 보존
+      요구의 정의역은 집계기 실행 경로이며 명시적 age-bounded 회전 actor 는 그 정의역 밖이다(무조건
+      영구 무삭제로 읽으면 retention 조항과 자기모순). 상세 = 본문 `## Amendment 4`.
+    sunset_justification: >-
+      N/A — `is_transitional: false` permanent policy 유지(§해소 기준 무변경). 방향 = **강화**:
+      (a) 단독 writer 확정으로 이력 파괴·중복 집계 경로를 정의역에서 제거 (b) breaker 자동 무장을
+      명시 금지해 근거 없는 상수의 fail-closed 오작동 차단 (c) 계수의 하한 성격을 declare 해
+      과소 산출을 "부하 낮음" 으로 오독하는 경로 차단 (d) 기록/감지 어휘 분리로 closed-set
+      invariant 오염과 원시 에러 텍스트 기록을 동시 차단 — 어느 항목도 기존 통제를 완화하지
+      않는다. §결정 1 detection literal · §결정 2 backoff 수치 · §결정 4 threshold 수치 ·
+      §결정 3 slot ordinal 전건 **무변경**. ADR-064 §결정 7 evidence-gated symmetric ratchet:
+      강화 evidence = ① 집계기 event-tier write 3종 firsthand(base `7a12d0a0f`) ② repo PUBLIC ∧
+      착지 파일 git tracked firsthand ③ `StopFailure` matcher 값공간 벤더 문서 firsthand.
 ---
 
 # ADR-109: in-process Anthropic infra 429 surgical mitigation framework
@@ -193,6 +241,7 @@ amendments:
 - **Single SSOT**: 본 §결정 1 = detection enum 단일 source. **ADR-141 Amendment 6** / `codeforge:rate-limit-429-mitigation` skill body / `docs/orchestrator-playbook.md` §3.0.12 = consumer cross-ref only (중복 정의 차단). *prior 열거의 `ADR-057 §결정 2` 는 moot/dead 라 소비자 목록에서 교체* [Amendment 3 정정].
 - **4-tuple expansion rationale**: 사용자 발화 verbatim `"Server is temporarily limiting"` (Story §1) = 기존 3-pattern SSOT 미커버 (ArchitectAnalyst gap closure verified Grep — `"Server is temporarily limiting"` = 기존 SSOT 어디에도 등장 0).
 - **closed-set invariant**: 5번째 pattern 추가 시 본 ADR Amendment 의무 (ratchet 강화 방향, ADR-064 §결정 7 정합).
+- **[Amendment 4 A4-4 정정 포인터]** 본 절의 closed-set invariant 는 **기록 어휘에는 발동하지 않는다** — `StopFailure` 훅 matcher 의 `rate_limit` 토큰이 event log `error_pattern` 값공간에 들어가도 본 절 detection literal 은 **무증감**이다(두 값공간 disjoint). 판정 = A4-4.
 
 ### §결정 2 — Exp-backoff curve + Retry-After header 우선
 
@@ -238,6 +287,7 @@ Circuit breaker open trigger = 3 window 모두 충족 (AND):
   - 따라서 본 §결정 4 는 **telemetry 실채움 전까지 미발동(non-firing) 상태임을 명시 선언**한다. threshold 수치는 무변경이며, 이 선언은 값 확정이 아니라 **지위 정직화**다 — 발동 불가 게이트를 발동 가능한 것처럼 두면 hollow gate 가 GREEN 으로 위장된다.
   - **동일 데이터원 공유 표면 declare**: `codeforge:rate-limit-429-mitigation` skill body 의 intensity 분기(`count_429_incidents_last_30min()`) 도 같은 파일에 걸려 있어 **동일 결함을 공유**한다 — intensity 는 상시 `0` 으로 낙하한다. 데이터원 부재를 침묵으로 삼키지 말고 **명시 보고**할 것.
   - **telemetry 실채움 = 본 Amendment scope 밖**(계측 채널 실채움은 병렬 Story 소관). 본 Amendment 는 미발동 사실의 **declare 까지만** 한다.
+- **[Amendment 4 A4-1 정정 포인터]** 위 Amendment 3 의 인계는 **수취·종결**됐다(축 ① producer 가 기계 append 경로를 닫는다 — 규범 확정 = Amendment 4 / 실착지 = Phase 2). **단 본 절 3-window 는 데이터가 흘러도 미발동을 유지**하며, 바뀌는 것은 미발동의 **사유뿐**이다: *데이터원 부재* → *임계 미검증(measurement pending)*. `[hypothesis]` 태그 해소(임계 재보정)는 별건이다. 본 절을 "telemetry 가 채워졌으니 breaker 가 살아났다" 로 읽으면 정확히 반대다.
 
 ### §결정 5 — Cascade depth ≥ 2 → user manual resume only
 
@@ -246,6 +296,7 @@ Circuit breaker open trigger = 3 window 모두 충족 (AND):
 - **자동 재시도 금지** (ADR-057 §결정 2 invariant verbatim 답습)
 - **user manual resume only** — `AskUserQuestion` escalation 또는 사용자 turn 대기
 - **`docs/kpi/429-incident-history.jsonl` `cascade_depth` field append-only event log** (ADR-106 운영 metric → PMOAgent input 회로 정합)
+- **[Amendment 4 Cross-ref 정정 포인터]** 본 절은 Amendment 4 에서 **무변경**이다 — Amendment 4 가 신설하는 event tier 는 429 marker 의 **§14 only** 배타(§결정 9)를 건드리지 않는다.
 
 ### §결정 6 — 429 vs 529 disjoint 분기
 
@@ -278,11 +329,14 @@ Retry sequence 자체 implementation 위치 = `codeforge:rate-limit-429-mitigati
 \[429-auto-retry: count=\d+, final_status=(success|failed)\]
 ```
 
+- **[Amendment 4 A4-2 정정 포인터]** 본 절 §14 Lane Evidence 마커 유래 계수는 aggregate tier 에서 `marker_incident_count` 로 **분리 노출**된다(event tier 유래 `event_incident_count` 와의 합집합은 주간 집계에서만 성립). 본 절 마커에는 timestamp 가 없어 30분 window 에는 **원리적으로 기여하지 못한다**.
+
 #### §결정 8.2 KPI dual-tier
 
 - `docs/kpi/429-incident.json` — weekly aggregate (cron, `rate-limit-fallback.json` precedent 답습)
 - `docs/kpi/429-incident-history.jsonl` — append-only event log (ADR-106 `operational-signal-history.jsonl` precedent 답습)
 - **schema**: §결정 10 secret redaction matrix 정합
+- **[Amendment 4 A4-2 정정 포인터]** 본 절 dual-tier 위에 **단독 writer 규범**이 확정됐다 — event tier write = producer 단독, 집계기는 event tier **read-only**. 현행 집계기 위반(요약행을 event tier 에 write · `history_lines.pop()` 로 선행 행 제거)이 적시·처분됐다. **코드는 아직 그대로다**(처분 규정이지 수리 아님) — 실착지는 Phase 2.
 
 ### §결정 9 — §10 FIX Ledger vs §14 telemetry axis disjoint (ADR-067 RESET contamination 차단)
 
@@ -291,6 +345,7 @@ Retry sequence 자체 implementation 위치 = `codeforge:rate-limit-429-mitigati
 - **429 incident marker** (`[429-auto-retry: count=N, final_status=...]`) = **§14 only** (운영 phase metric, ADR-104 정합)
 - **§10 row append 금지**: 429 retry → fix:* label 미부착 + ADR-067 RESET counter 영향 0 (invariant 보존)
 - **boundary violation 차단 invariant**: 본 §결정 9 = ADR-067 RESET contamination 차단 정합 (운영 phase telemetry vs governance FIX disjoint axis 명시 의무)
+- **[Amendment 4 Cross-ref 정정 포인터]** 본 절은 Amendment 4 에서 **무변경**이다 — Amendment 4 가 신설하는 event tier(`429-incident-history.jsonl` 기계 append)는 §10 FIX Ledger 에 등재되지 **않는다**(축 disjoint 유지 — ADR-067 RESET contamination 차단 무손상).
 
 ### §결정 10 — Secret redaction matrix (unconditional invariant ADR-068 I-3)
 
@@ -306,6 +361,8 @@ Retry sequence 자체 implementation 위치 = `codeforge:rate-limit-429-mitigati
 
 - **Retention**: 90일 raw event JSONL + 영구 weekly aggregate JSON (dual-tier — ADR-058 §결정 5 sunset_justification 면제, governance 영구 보존)
 - **unconditional invariant rationale** (ADR-068 I-3 정합): org_id / account_id 수집 자체 금지 (defense-in-depth) — 후속 redaction step 의존 0 (collection-time strip)
+- **[Amendment 4 A4-4 정정 포인터 — 미해소 잔여]** 위 matrix 의 **`error_message`** 행과 event tier 실 스키마 필드명 **`error_pattern`** 이 **불일치**한다. 그 행은 본 채널 `error_pattern` 에 대한 **원문 기록 허가가 아니며**, 기록 어휘 SSOT 는 ADR-043 Amendment 7 (B) 폐쇄 enum 이다. **행 자체의 명칭 정정은 Amendment 4 가 수행하지 않았다** — `ADR-179:137` 이 이 행을 이름으로 인용해 cross-ADR 동반 수정을 요구하기 때문이며, 정정은 별건이다.
+- **[Amendment 4 A4-5 정정 포인터]** 위 Retention 90일 회전과 Amendment 4 의 "집계기는 event tier 행을 제거하지 않는다" 요구는 **층이 달라 병존**한다 — 후자의 정의역은 **집계기 실행 경로**이며 age-bounded 회전 actor 는 그 정의역 밖이다. 그 회전 actor 는 아직 존재하지 않으므로, 그것을 근거로 보존 요구를 약화하지 말 것.
 
 ## 결과
 
@@ -547,6 +604,7 @@ D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 
 - **본 Amendment 가 Amendment 2 에 요구하는 변경 = 0건.** Amendment 2 착지 여부와 무관하게 본 Amendment 는 완전하게 성립한다.
 - **절 경계 note (정직)**: 본 Amendment 를 파일 말미에 append 함으로써 Amendment 2 의 **암묵 종단자가 EOF 에서 `## Amendment 3` heading 으로 바뀐다**. Amendment 2 는 자기 절 경계를 EOF 로 정의하는 조항을 두지 않으므로 규범 영향은 없으나, 절 경계를 파일 끝에 결박해 읽는 도구가 있다면 이 사실이 입력이다.
 - **금지 확인**: Amendment 2 흡수·재정의·착지 0 / Amendment 2 문면 인라인 복제 0 / Amendment 2 고유 식별자(판별식·출력값·rung 번호)를 본 Amendment normative 문면에 사용 0.
+- **[Amendment 4 A4-0 정정 포인터]** 본 절의 Amendment 2 무접촉 규율은 **A4-0 이 승계**한다. 또한 Amendment 4 를 파일 말미에 append 함으로써 **Amendment 3 의 암묵 종단자가 EOF 에서 `## Amendment 4` heading 으로 바뀐다** — 위 "절 경계 note" 가 Amendment 2 에 대해 기술한 것과 같은 형상이 Amendment 3 자신에게 적용된다.
 
 ### A3-1. dead tenant 참조 정정 — 실행분과 **보류분**
 
@@ -613,3 +671,122 @@ D-iii(회복 가능)는 **예측**이므로 반증 축이 없으면 D-out-1 이 
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — `Superseded`(by ADR-141). §결정 2 = moot/dead(본 Amendment 정정 대상) / **§결정 4 · §결정 6 = 유효**(미분류 remedy 라우팅 배타 지배 — 정정 대상 아님, 치환 시 라우팅 단절).
 - [ADR-171](ADR-171-evidence-enforceable-promotion-framework.md) §결정 5·6 — declaration-only 승격은 warning-first + evidence-gate.
 - [ADR-119](ADR-119-research-before-claims.md) — A3-2 태그 비해소 근거(증거 등급 불일치 시 abstention 유지).
+
+
+## Amendment 4 (CFP-2967 — §결정 4 telemetry 실채움 인계 수취·종결 + §결정 8.2 write ownership 확정 + OR-1 하한 declare + 기록 어휘/감지 어휘 분리 + retention 정의역 한정)
+
+**날짜**: 2026-08-19 KST · **carrier**: CFP-2967 · **status**: Proposed (Phase 1 draft) · **방향**: **강화**(단독 writer 확정 · 자동 무장 금지 · 계수 하한 성격 declare · 어휘 분리, 약화 0).
+
+### A4-0. 정의역 — Amendment 2 무접촉 (비협상)
+
+**`## Amendment 2` 절 전체는 본 Amendment 의 정의역 밖이다.** 그 절은 `status: Proposed` 이고 CFP-2944 소유이며, Proposed 조항 위에 normative 를 쌓으면 (a) 착지 실패 시 본 조항이 참조 대상 부재로 born-stale 이 되고 (b) 타 Story 소유 구조를 개변하게 된다. 본 Amendment 는 그 절 안의 **바이트를 하나도 바꾸지 않는다** (Amendment 3 A3-0 규율 승계).
+
+- **본 Amendment 가 Amendment 2 에 요구하는 변경 = 0건.** 착지 여부와 무관하게 본 Amendment 는 완전하게 성립한다.
+- **절 경계 note (정직)**: 본 Amendment 를 파일 말미에 append 함으로써 **Amendment 3 의 암묵 종단자가 EOF 에서 `## Amendment 4` heading 으로 바뀐다**. Amendment 3 은 자기 절 경계를 EOF 로 정의하는 조항을 두지 않으므로 규범 영향은 없으나, 절 경계를 파일 끝에 결박해 읽는 도구가 있다면 이 사실이 입력이다.
+- **금지 확인**: Amendment 2 흡수·재정의·착지 0 / 문면 인라인 복제 0 / 고유 식별자(판별식 D·출력 4치·rung 번호)를 본 Amendment normative 문면에 사용 0.
+
+### A4-1. §결정 4 — telemetry 실채움 인계 **수취·종결** (단 breaker 자동 무장은 금지)
+
+Amendment 3 (4) 는 §결정 4 circuit breaker 를 "telemetry 실채움 전까지 **미발동(non-firing)**" 으로 재선언하면서, 그 실채움을 명시적으로 인계했다 — 본 ADR §결정 4 verbatim: "**telemetry 실채움 = 본 Amendment scope 밖**(계측 채널 실채움은 병렬 Story 소관). 본 Amendment 는 미발동 사실의 **declare 까지만** 한다."
+
+**CFP-2967 축 ① 이 그 인계의 수취인이다.** 신규 producer 를 `StopFailure` 훅(matcher `rate_limit`)으로 등록해 per-incident 행을 `docs/kpi/429-incident-history.jsonl` 에 기계 append 하고, 집계기가 그것을 읽어 `docs/kpi/429-incident.json` 을 write 한다. Amendment 3 이 지목한 "기계 append 경로 0건" 은 이로써 닫힌다(착지 = Phase 2).
+
+**★ 그러나 수취되는 것은 데이터원뿐이며, breaker 는 자동으로 무장되지 않는다 (U-2 사용자 확정).**
+
+- **§결정 4 3-window threshold 는 데이터가 채워져도 미발동을 유지한다.** 임계 재보정(`[hypothesis]` 태그 해소)은 **별건**이며 본 Story 정의역 밖이다.
+- 근거: 그 threshold 3종은 자기 문면이 `[hypothesis] baseline 추정` 이고 "post-deploy actual incident rate 측정 후 사용자 확인" 을 조건으로 건다. **데이터원이 채워지는 순간은 그 측정의 시작점이지 완료점이 아니다.** 근거 없는 상수를 데이터 존재만으로 무장시키는 것은 ADR-068 I-5 dimensional empirical grounding 위반이며, 하필 첫 무장이 잘못된 임계로 일어나면 그 오작동은 **작업 전면 봉쇄**(fail-closed) 형태로 나타난다 — 관측 채널을 켠 대가로 가용성을 잃는 교환이다.
+- ⇒ **Amendment 3 의 미발동 선언은 본 Amendment 착지 후에도 유효하다.** 바뀌는 것은 미발동의 **사유**뿐이다: 종전 *"데이터원 부재"* → 이후 *"임계 미검증(measurement pending)"*. 본 절을 "telemetry 가 채워졌으니 breaker 가 살아났다" 로 읽으면 정확히 반대다.
+
+**인계 항목별 정확한 회계 (종결/미종결 분리)**
+
+| 인계 항목 (Amendment 3 지목) | 처분 |
+|---|---|
+| 기계 append 경로 0건 | **종결** — 축 ① producer 가 닫는다 (규범 확정 = 본 Amendment / 실착지 = Phase 2) |
+| breaker 가 구조적으로 open 될 수 없음 | **미종결 · 의도적 유지** — U-2. 구조적 불가에서 **정책적 미발동**으로 성격만 전환된다 |
+| intensity 상시 `0` 낙하 (동일 데이터원 공유 표면) | **부분 종결** — 데이터가 흐르면 `0` 낙하는 해소되나, 부재·신선도 축의 판정 형상은 축 ① 설계 소관이며 본 Amendment 는 그 결과를 단정하지 않는다 |
+
+### A4-2. §결정 8.2 — producer/aggregator write ownership 확정 (현행 위반 3종 적시·처분)
+
+**신설 규범 (단독 writer 확정)**
+
+| tier | 파일 | 단독 writer | 접근 규약 |
+|---|---|---|---|
+| event | `docs/kpi/429-incident-history.jsonl` | **producer** | append-only. **kernel-atomic append**(POSIX `O_APPEND` 단일 write / Windows `FILE_APPEND_DATA`). **read-modify-write 금지** |
+| aggregate | `docs/kpi/429-incident.json` | **집계기** | 전체 재작성 허용(단독 소유) |
+
+- **집계기의 event tier 접근 = read-only 강등.** 집계기는 event log 에 **어떤 바이트도 쓰지 않는다.**
+- read-modify-write 금지의 근거는 이 repo 자신의 봉인이다 — `scripts/lib/append_spawn_event.py` 가 형제 구현을 이름으로 지목해 **복사 금지**를 선언하고(`append_stop_event.py _atomic_append` = lost-update bug: whole-file read + `os.replace` 는 rename 만 원자적이고 read-modify-write 전체는 아니다) 대체 primitive 를 제공한다. 본 채널의 표적 시나리오가 **다수 서브에이전트 동시 429 버스트**라 동시 append 는 예외가 아니라 **모달 케이스**이며, lost-update 는 사건이 가장 몰릴 때 계수를 깎아 완화 기제를 굶기는 방향으로 정확히 틀린다.
+
+**현행 위반 3종** — firsthand, base `7a12d0a0f`. 수치·좌표가 아니라 **재현 명령**을 정본으로 둔다:
+
+| # | 위반 | 재현 (`scripts/lib/measure_429_incident.py`) | 처분 |
+|---|---|---|---|
+| **V-1** | 집계기가 **주간 요약행을 event log 에 write** 한다. 그 행의 키 집합 `{week, measured_at, weekly_incident_count, cascade_incidents, max_cascade_depth, gate_status}` 은 per-incident 스키마 `{timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}` 과 **공유 키 0개** — 한 파일에 해상도가 다른 두 레코드형이 섞인다 | `grep -n "current_entry = {" ` 로 요약행 구성 지점 ∧ `grep -n "429-incident-history.jsonl"` 로 기록 대상 확인(`history_file` 기본값) | **제거** — 요약행은 aggregate tier 로 이동 |
+| **V-2** | 동주 요약행 **`history_lines.pop()`** — 마지막 줄만 보고 같은 주면 삭제 | `grep -n "history_lines.pop()"` | **제거** — append-only 계약 위반이자 **행 순서 가정 의존**. per-incident 행이 요약행 뒤에 붙으면 pop 이 빗나가 같은 주 요약행이 **중복 누적**된다 |
+| **V-3** | **`fp.seek(0)` → `fp.truncate()`** 로 파일 전체 재작성 | `grep -n "fp.truncate()"` | **제거** — append-only 파일의 truncate 는 이력 파괴 경로다 |
+
+**★ 정직 정정 (과장 차단)**: "집계기가 truncate 로 파괴한 이력이 실재한다" 는 **과장**이다 — `docs/kpi/429-incident.json` 의 `measured_at` 이 `null` 이고 해당 파일 git 이력 전건이 feature 커밋이므로 **집계기는 이 파일에 한 번도 실행된 적이 없다**. 파괴는 **경로만 실재하고 미발생**이다. 이 정정은 위험을 낮추지 않는다 — 배선되는 순간이 **첫 실행이자 첫 파괴**이므로 born-broken 판정을 오히려 **강화**한다.
+
+**소유권 분리가 닫는 것 (부수 — "고친다" 가 아니라 "발생 기제를 없앤다")**
+
+- **producer append ↔ 집계기 truncate 레이스** — 집계기가 read 한 뒤 truncate 하기 전 producer 가 append 하면 그 행이 소실된다. 순차 fixture 로는 잡히지 않는 경합이며, 집계기가 event tier 를 쓰지 않으면 정의역에서 사라진다.
+- **동주 중복 집계** — V-2 의 귀결. 요약행이 event tier 에 없으면 발생 불가.
+- **행 순서 의존** — 판독자가 "마지막 줄" 에 의존하는 구조가 제거된다. 이것은 부수 효과 이상이다: `docs/kpi/*.jsonl` 에 `merge=union` 을 검토할 수 있게 만드는 **전제조건**이다(현행은 전제 미충족이라 검토 자체가 불가). `.gitattributes` 에 `merge=` 속성이 0건이라 병렬 브랜치 append 가 말단행에서 매번 충돌하는 현행 문제의 해소 경로이나, **본 Amendment 는 `merge=union` 을 채택하지 않는다** — 채택은 read-time dedup 실재를 두 번째 전제로 요구하며 그 판정은 별건이다 `[source: git-scm.com/docs/gitattributes — union 은 추가된 줄을 임의 순서로 남기며 "Do not use this if you do not understand the implications."]`.
+
+**가산항 분리 노출 (aggregate tier 규약)**: `429-incident.json` 은 `marker_incident_count`(§결정 8.1 §14 Lane Evidence 마커 유래) · `event_incident_count`(event tier 유래) · 합 `weekly_incident_count` 를 **따로** 둔다. 훗날 두 모집단이 겹치기 시작해도 합 안에 조용히 흡수되지 않고 **보인다**. 두 모집단의 합집합은 **해상도가 호환되는 유일 지점인 주간 집계에서만** 일어난다 — §14 마커에는 timestamp 가 없어 30분 window 에 **원리적으로 기여 불가**하므로 event tier 에서의 합집합은 애초에 성립하지 않는다.
+
+### A4-3. OR-1 — 본 채널의 429 계수는 항상 **하한**이다 (잔여 declare)
+
+> **OR-1**: 본 채널이 산출하는 429 계수는 **항상 하한(lower bound)이며 상한이 아니다. 낮은 intensity bucket 을 "부하가 낮다" 의 증거로 사용하는 것을 금지한다.**
+
+- **근거**: producer 는 훅이고 훅은 timeout 시 fail-open 으로 낙하한다(해당 사건 미기록). 만료 확률은 호스트 부하와 함께 오르므로 **유실은 정확히 고부하 구간에 집중**된다.
+- **전손과 부분 유실의 비대칭**: 채널이 전면 정지하면 신선도 축이 그것을 잡아 보수 fallback 으로 낙하시킨다 — 즉 **전손은 안전 방향으로 민다**. 그러나 **부분 유실은 신선도를 정상으로 유지한 채 계수만 낮춰** bucket 을 과소 산출하며, 이 구간에는 대응하는 안전장치가 없다.
+- **"완화 불가" 가 아니다 (과대 declare 금지)**: 시스템 수준 완화는 실재한다 — 훅 예산 헤드룸 / producer 자기부하 제거 / 소비측 낙하 방향 반전. OR-1 이 declare 하는 것은 이 완화들이 **닫지 못하는 부분 유실 구간의 편향 방향**이지 "아무 완화도 없다" 가 아니다.
+- **편향 크기는 미측정**이며 그 측정 채널 신설은 본 Story 범위 밖이다 — 방향만 확정이다.
+
+### A4-4. 기록 어휘 ≠ 감지 어휘 (§결정 1 closed-set invariant **미발동** 명시)
+
+`StopFailure` 훅의 matcher 는 error type 을 필터하며 그 값 예시에 **`rate_limit`(언더스코어)** 이 포함된다 `[source: code.claude.com/docs/en/hooks — 직접 WebFetch 2026-08-19: `rate_limit` · `overloaded` · `authentication_failed` · `billing_error` · `server_error` 등 열거]`. 이 토큰은 §결정 1 감지집합(+ Amendment 1 확장)의 **어느 literal 과도 다른 값공간**이다.
+
+**분리 규범 (본 Amendment 신설)**
+
+| 어휘 | 값공간 SSOT | 무엇을 정하는가 |
+|---|---|---|
+| **감지 어휘** (detection vocabulary) | 본 ADR §결정 1 closed-set (+ Amendment 1) | 무엇을 429/한도류로 **판정할 것인가** |
+| **기록 어휘** (record vocabulary) | ADR-043 Amendment 7 (B) `error_pattern` 값공간 | 무엇을 event log 에 **적을 것인가** |
+
+- 두 값공간은 **disjoint 한 목적**을 가지며 서로의 원소를 상속하지 않는다.
+- ⇒ **`error_pattern` 값공간에 `rate_limit` 이 들어가는 것은 §결정 1 감지집합에 원소를 추가하지 않는다.** 따라서 **§결정 1 closed-set invariant("5번째 pattern 추가 = 본 ADR Amendment 의무")는 본 Amendment 에서 미발동**이며, detection literal 은 **무증감**이다.
+- **분리를 명시하지 않으면 두 오작동이 발생한다**: (a) 누군가 `rate_limit` 을 5번째 감지 literal 로 오해해 추가하고 closed-set invariant 를 건드린다 — 감지집합은 판정 정의역이라 원소 추가가 오탐을 낳는다 (b) producer 가 감지 literal 과 매칭을 맞추려 **원시 에러 텍스트**를 기록해 §결정 10 redaction matrix 와 ADR-043 Amendment 7 (B)(`error_pattern` = 폐쇄 enum only)를 **동시에** 위반한다. **(b) 는 공개 착지면과 직결되므로 P0** 다.
+- **★ 명칭 불일치 실측 — 미해소 잔여 declare (본 Amendment 는 matrix 행을 고치지 않는다)**: §결정 10 redaction matrix 는 **`error_message`** 를 `verbatim (4-tuple enum match only, no user prompt verbatim)` 로 규정하는데, event tier 실 스키마의 필드명은 **`error_pattern`** 이다 (`docs/kpi/429-incident-history.jsonl:3` 자기 헤더 verbatim: `# Schema: {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}`) — **matrix 가 명명하는 필드와 스키마가 명명하는 필드가 다르다.** 이 불일치는 "matrix 에 `error_message = verbatim` 이 있으니 에러 원문을 적어도 된다" 는 오독 경로를 연다.
+  - **본 Amendment 의 판정**: 그 matrix 행은 본 채널 `error_pattern` 에 대한 **원문 기록 허가가 아니다.** 본 채널의 기록 어휘 SSOT 는 ADR-043 Amendment 7 (B)(폐쇄 enum only)이며 위 (b) 금지가 우선한다.
+  - **matrix 행 자체의 명칭 정정은 본 Amendment 가 수행하지 않는다.** ⇒ **미해소 잔여**이며 정정은 별건이다.
+    - **★ 이월 사유 정정 (설계리뷰 1회차 F-5 · P2)**: 초판은 사유를 "타 표면을 조사하지 않았다" 로 적었으나 그것은 **거짓**이다 — 조사는 수행됐고(1 grep) 답도 나와 있다. 재현: `grep -rn "error_message" --include=*.md --include=*.py --include=*.yaml --include=*.yml --include=*.sh .` → 본 ADR 자신을 제외한 **교차 소비 표면 = `ADR-179-agent-salvage-bundle-handoff.md:137` 단 1건** (`scripts/lib/**.py` 히트는 무관한 지역 변수·docstring 이라 본 matrix 행의 소비자가 아니다 — **계수 축 명시 (설계리뷰 2회차 P2-2)**: 위 `grep -rn` 은 **행** 단위 출력이라 `scripts/lib` 하위 히트는 **6 행 / 4 파일** 이다. 초판이 적은 "4건" 은 파일 수 축으로는 참, 병기 명령의 출력 축(행)으로는 거짓이었다. 축을 재현 명령에 맞춰 고정한다 — 행 수 = `grep -rn "error_message" scripts/lib --include=*.py | wc -l`, 파일 수 = 같은 명령의 `-rln` 판. 어느 축이든 본 판정(교차 소비 표면 1건)은 무영향). **그 실측 결과는 이월을 약화시키는 게 아니라 더 강하게 정당화한다** — ADR-179:137 이 이 행을 **이름으로**("§결정 10 `error_message` 행의 no user prompt verbatim 상속") 인용하므로, matrix 행을 `error_pattern` 으로 rename 하면 그 인용이 **가리킬 대상을 잃는다**. 즉 정정은 ADR-179 동반 수정을 요구하는 cross-ADR 작업이며 본 Amendment 의 정의역 밖이다. ⇒ **정정된 사유 = 미조사가 아니라 cross-ADR 파급이 실측으로 확인됨.** 그때까지 오독 차단은 본 판정 문면이 담당하고, 본 절을 근거로 "matrix 가 정합해졌다" 고 읽으면 over-claim 이다.
+- **부수 (구현 함정)**: 현행 문자열 가드 `_SAFE_STR_RE = ^[0-9A-Za-z_\-:\.]{0,128}$` 는 공백을 허용하지 않아 §결정 1 literal 중 공백을 포함하는 값이 그대로는 통과하지 못한다. 해결은 **화이트리스트에 공백을 추가하는 것이 아니라 값을 토큰화하는 것**이다 — 기록 어휘가 폐쇄 enum 인 이상 토큰이 정본이고 원문은 애초에 기록 대상이 아니다. 이 함정을 화이트리스트 완화로 풀면 (b) 경로가 열린다.
+
+### A4-5. §결정 10 90일 retention ↔ event tier 보존 요구 — 정의역 한정
+
+§결정 10 Retention 은 "**90일 raw event JSONL** + 영구 weekly aggregate JSON" 을 규정한다. 한편 본 Story 는 event tier 에 "집계기 실행 후 선행 행이 전건 보존된다" 는 요구를 둔다. 두 규범을 **무조건**으로 읽으면 자기모순이다 — 90일 회전이 곧 선행 행 삭제이므로.
+
+- **정의역 한정**: 그 보존 요구의 정의역은 **집계기 실행 경로**다. 규범 내용은 "집계기는 event tier 에서 어떤 행도 제거하지 않는다" 이며, **명시적 age-bounded 회전 actor(90일 retention 이행 주체)는 그 정의역 밖**이다. 그 actor 의 삭제는 위반이 아니다.
+- **두 규범은 층이 다르다** — 하나는 *누가 쓸 수 있는가*(ownership), 다른 하나는 *얼마나 오래 남는가*(retention). 층이 다르므로 충돌이 아니라 병존이다.
+- **양방향 오독 차단**: 회전 actor 는 **아직 존재하지 않는다**(본 Story 가 신설하지 않는다). 존재하지 않는 actor 를 근거로 보존 요구를 약화하지 말 것이며, 반대로 보존 요구를 근거로 §결정 10 retention 조항을 무효화하지도 말 것.
+
+### A4-6. 정직 천장
+
+1. 본 Amendment 는 **규범 확정**이며, producer 신설·집계기 read-only 강등을 실현하는 코드 변경은 전건 **Phase 2**(carrier = `mclayer/plugin-codeforge#2967`). **그 사이 구간에서 본 Amendment 의 강제력은 0 이며 이는 선언이다.**
+2. **V-1 / V-2 / V-3 은 "고쳤다" 가 아니라 "위반으로 판정하고 처분을 규정했다" 이다.** 코드는 아직 그대로다 — 본 절을 근거로 "집계기가 read-only 가 됐다" 고 읽으면 over-claim 이다.
+3. **breaker 는 여전히 미발동이다**(A4-1 / U-2). 데이터가 흐르기 시작해도 §결정 4 는 발동하지 않는다.
+4. **OR-1 의 편향 크기는 미측정이다.** 확정된 것은 **방향**(하한)뿐이며, 그 하한이 실제 값과 얼마나 벌어지는지는 모른다 — 방향 확정을 크기 확정으로 승격시키지 말 것. 훅 만료 확률의 절대값 역시 미측정이다.
+5. **`## Amendment 2` 절 무접촉**(A4-0). 본 Amendment 가 그 절에 요구하는 변경은 0건이며, 그 절의 착지 여부와 무관하게 본 Amendment 는 완전 성립한다.
+6. **`mechanical_enforcement_actions` 무증감** — 본 Amendment 는 기계 강제 action 을 신설하지 않는다. Amendment 3 이 남긴 승격 후보 1종·기각 2종 주석은 무접촉이며, 본 Amendment 의 규범(단독 writer·어휘 분리)에 대응하는 기계검사의 설계·착지는 Phase 2 소관이다.
+
+### Cross-ref
+
+- **§결정 4** / **§결정 8.2** / **§결정 10** — 본 Amendment 의 개정 대상.
+- **§결정 1** detection closed-set — **무접촉**(literal 무증감, A4-4).
+- **§결정 5** / **§결정 9** — 무변경. 429 marker 의 **§14 only** 배타 유지 ∧ 본 Amendment 의 event tier 는 §10 FIX Ledger 에 등재되지 **않는다**(축 disjoint 유지 — ADR-067 RESET contamination 차단 무손상).
+- **`## Amendment 2`** — **무접촉**(A4-0). 본 Amendment 는 그 조항에 normative 의존 0.
+- [ADR-043](ADR-043-codeforge-telemetry-privacy-policy.md) **Amendment 7** — sibling. 본 채널의 **privacy·공표 경계·allow-list 7 필드·bound (2')** 는 그쪽 소유이고, 본 Amendment 는 **운영·write ownership·인계 수취·기록 어휘** 소유(disjoint). `error_pattern` 은 두 문면이 만나는 유일 지점이며 값공간 SSOT = ADR-043 Amendment 7 (B), 값공간이 §결정 1 과 disjoint 라는 판정 = 본 A4-4.
+- [ADR-068](ADR-068-boundary-completeness-invariants.md) I-5 — A4-1 U-2 의 근거(dimensional empirical grounding — 근거 없는 상수 무장 금지).
+- [ADR-179](ADR-179-agent-salvage-bundle-handoff.md) — remedy 발동 후 회수 판정 축(본 ADR = 감지·재시도·계측 축, disjoint).

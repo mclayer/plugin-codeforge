@@ -22,6 +22,18 @@
 #   토큰 2개 이상 = **선언 모호 → RED**(2번째 토큰을 심어 site 를 지우는 회피 차단).
 #   registry 별 **최소 선언 site 수 floor** — 미달 = RED(선언 라인 통째 삭제 회피 차단).
 #
+# ★ floor 는 리터럴이 아니라 **런타임 파생**이다 (CFP-2967 — 실사건 회귀 방지).
+#   과거 이 파일은 전 케이스에 floor 를 `:2` 리터럴로 넘겼다. 그 2 는 "당시 ADR-109 의 선언
+#   site 가 2 개" 라는 **문면 사실에서 파생된 수치**였고, ADR-109 Amendment 4 가 선언 site 를
+#   3 개로 늘리자 site 1 개를 지우는 변형(M1a·M3b)이 `2 >= 2` 로 **통과하며 판별력을 잃었다**
+#   — 실사건: CFP-2967 Phase 1 PR 에서 invariant-check RED(PASS=8 FAIL=2). 절대값 floor 는
+#   문면이 자랄 때마다 수기 갱신을 요구하고, 갱신을 잊으면 **조용히** 무력해진다.
+#   ⇒ mutant 판정은 절대값이 아니라 **델타**로 한다: floor = `count_sites()` 가 산출한
+#     **실 repo 원본의 현재 site 수**. site 를 1 개라도 지우는 변형은 문면 크기와 무관하게
+#     항상 RED 이며, 앞으로 Amendment 가 site 를 더 늘려도 이 파일은 손댈 필요가 없다.
+#   ⇒ 실 repo 대조군에만 `REGISTRY_MIN_SITES` 를 쓴다. 이것은 파생 수치가 아니라 "registry
+#     ADR 은 선언 site 를 최소 2 개 유지한다" 는 **정책 상수**(ratchet)라 문면 성장과 무관하다.
+#
 # 3방향 mutant (전부 실 문서 사본에 변형 적용):
 #   ① 제거      M1a = 선언 bold 라인 삭제               → floor RED
 #               M1b = **오라클의 대조 로직 삭제** → 위반 픽스처가 통과 → 검출력 소실 실증
@@ -233,6 +245,29 @@ assert_verdict() {
   fi
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# floor 런타임 파생 (위 ★ 참조). floor 0 으로 스캔해 site 라인을 계수한다 —
+#   "몇 개여야 한다" 를 적지 않고 "지금 몇 개인가" 를 **측정**한다.
+REGISTRY_MIN_SITES=2   # 정책 상수(ratchet). 문면 성장 시 갱신 대상 아님.
+
+count_sites() { # <root> <relpath> → 선언 site 수 (stdout)
+  local root="$1" rel="$2" n
+  run_check "$root" "$rel:0"
+  if crash_marker "$CHECK_OUT"; then
+    echo "SETUP FAIL: count_sites 오라클 크래시 — $rel (기준 산출 불가)" >&2
+    printf '%s
+' "$CHECK_OUT" >&2
+    exit 1
+  fi
+  n="$(printf '%s
+' "$CHECK_OUT" | grep -c "^  site $rel:" || true)"
+  if [ "$n" -lt "$REGISTRY_MIN_SITES" ]; then
+    echo "SETUP FAIL: $rel 선언 site $n 개 < 정책 최소 $REGISTRY_MIN_SITES — 기준 산출 불가" >&2
+    exit 1
+  fi
+  printf '%s' "$n"
+}
+
 # 실 ADR 을 tmpdir 로 복제 후 변형 (원본 무접촉)
 build_corpus() {
   local dst="$1"
@@ -256,42 +291,49 @@ PY
 
 echo "── AC-6 declared count vs actual table rows"
 
+# 기준 site 수 = 실 repo 원본에서 런타임 산출 (리터럴 금지 — 위 ★ 참조)
+BASE_SITES_109="$(count_sites "$REPO_ROOT" "$ADR109")"
+BASE_SITES_179="$(count_sites "$REPO_ROOT" "$ADR179")"
+MUTANT_FLOORS=("$ADR109:$BASE_SITES_109" "$ADR179:$BASE_SITES_179")
+echo "   기준(원본 실측) site: ADR-109=$BASE_SITES_109 · ADR-179=$BASE_SITES_179"      "/ 정책 최소=$REGISTRY_MIN_SITES — mutant 는 이 기준 대비 **감소**를 RED 로 본다"
+
 # ── 대조군: 실 repo A 소유 ADR 무변조 ───────────────────────────────────────
-assert_verdict "baseline/실 repo A 소유 ADR 무변조" PASS "$REPO_ROOT" "$ADR109:2" "$ADR179:2"
+#   여기만 정책 상수 floor. 파생값을 쓰면 floor==실측이라 항진(자기 자신과 비교)이 된다.
+assert_verdict "baseline/실 repo A 소유 ADR 무변조" PASS "$REPO_ROOT"   "$ADR109:$REGISTRY_MIN_SITES" "$ADR179:$REGISTRY_MIN_SITES"
 echo "$CHECK_OUT" | sed 's/^/    /'
 
 # ── ① 제거 (a) 선언 bold 라인 삭제 → floor RED ──────────────────────────────
 build_corpus "$WORK/m1a"
 patch_file "$WORK/m1a/$ADR109" "**정정 실행 (7행)**
 " ""
-assert_verdict "M1a ①제거: 선언 bold 라인 삭제" RED "$WORK/m1a" "$ADR109:2" "$ADR179:2"
+assert_verdict "M1a ①제거: 선언 bold 라인 삭제" RED "$WORK/m1a" "${MUTANT_FLOORS[@]}"
 
 # ── ② 주입 (a) 표 row 1개 삭제 ─────────────────────────────────────────────
 build_corpus "$WORK/m2a"
 patch_file "$WORK/m2a/$ADR109" "| 본 ADR | §결과 > 긍정 | 동상 |
 " ""
-assert_verdict "M2a ②주입: 표 row 1개 삭제" RED "$WORK/m2a" "$ADR109:2" "$ADR179:2"
+assert_verdict "M2a ②주입: 표 row 1개 삭제" RED "$WORK/m2a" "${MUTANT_FLOORS[@]}"
 
 # ── ② 주입 (b) 표 row 1개 위조 삽입 ────────────────────────────────────────
 build_corpus "$WORK/m2b"
 patch_file "$WORK/m2b/$ADR179" "| ⑩ | \`notes_ref\`" "| ⑪ | \`fake_field\` | 참조형 |
 | ⑩ | \`notes_ref\`"
-assert_verdict "M2b ②주입: 표 row 1개 위조 삽입" RED "$WORK/m2b" "$ADR109:2" "$ADR179:2"
+assert_verdict "M2b ②주입: 표 row 1개 위조 삽입" RED "$WORK/m2b" "${MUTANT_FLOORS[@]}"
 
 # ── ③ 등가변형 (a) 정형 선언 수치를 한글 수사로 ────────────────────────────
 build_corpus "$WORK/m3a"
 patch_file "$WORK/m3a/$ADR179" "**선언 열거 수 = 10**" "**선언 열거 수 = 열**"
-assert_verdict "M3a ③등가변형: 정형 수치 한글 수사('열')" RED "$WORK/m3a" "$ADR109:2" "$ADR179:2"
+assert_verdict "M3a ③등가변형: 정형 수치 한글 수사('열')" RED "$WORK/m3a" "${MUTANT_FLOORS[@]}"
 
 # ── ③ 등가변형 (b) 산문 선언 수치를 한글 수사로 → 토큰 소실 → floor RED ────
 build_corpus "$WORK/m3b"
 patch_file "$WORK/m3b/$ADR109" "**정정 실행 (7행)**" "**정정 실행 (일곱 행)**"
-assert_verdict "M3b ③등가변형: 산문 수치 한글 수사('일곱 행')" RED "$WORK/m3b" "$ADR109:2" "$ADR179:2"
+assert_verdict "M3b ③등가변형: 산문 수치 한글 수사('일곱 행')" RED "$WORK/m3b" "${MUTANT_FLOORS[@]}"
 
 # ── ③ 등가변형 (c) 2번째 count 토큰 주입 → 선언 모호 ───────────────────────
 build_corpus "$WORK/m3c"
 patch_file "$WORK/m3c/$ADR109" "**정정 실행 (7행)**" "**정정 실행 (7행) — 총 9종**"
-assert_verdict "M3c ③등가변형: 2번째 토큰 주입(선언 모호)" RED "$WORK/m3c" "$ADR109:2" "$ADR179:2"
+assert_verdict "M3c ③등가변형: 2번째 토큰 주입(선언 모호)" RED "$WORK/m3c" "${MUTANT_FLOORS[@]}"
 
 # ── ① 제거 (b) 오라클 자신의 대조 로직 삭제 → 검출력 소실 실증 ─────────────
 # 위반 픽스처(M2a)를 **대조 로직 없는 오라클**에 통과시켜, 그 로직이 load-bearing 임을 보인다.
@@ -304,13 +346,13 @@ new = '        if False:  # MUTANT M1b — declared-vs-actual 대조 로직 제�
 io.open(sys.argv[2], "w", encoding="utf-8", newline="\n").write(src.replace(old, new, 1))
 PY
 CHECKER="checker_nocmp.py" assert_verdict \
-  "M1b ①제거: 대조 로직 제거 오라클이 위반 픽스처를 통과(검출력 소실 실증)" PASS "$WORK/m2a" "$ADR109:2" "$ADR179:2"
+  "M1b ①제거: 대조 로직 제거 오라클이 위반 픽스처를 통과(검출력 소실 실증)" PASS "$WORK/m2a" "${MUTANT_FLOORS[@]}"
 # 위 leg 의 의미: 같은 입력에 대해 정본 오라클은 RED(M2a), 로직 제거 오라클은 PASS
 #   ⇒ 그 대조 로직이 유일 검출 경로임이 실증됐다. presence-only 오라클이면 둘 다 PASS 였을 것.
 
 # ── 형제 회귀: 봉합이 정상 site 검출력을 파괴하지 않았는가 ─────────────────
 build_corpus "$WORK/sib"
-assert_verdict "형제/무변조 사본 재확인" PASS "$WORK/sib" "$ADR109:2" "$ADR179:2"
+assert_verdict "형제/무변조 사본 재확인" PASS "$WORK/sib" "${MUTANT_FLOORS[@]}"
 # registry 대상 파일 부재도 fail-closed 인가
 assert_verdict "형제/registry 대상 파일 부재 = fail-closed" RED "$WORK/sib" "archive/adr/ADR-000-nonexistent.md:1"
 
