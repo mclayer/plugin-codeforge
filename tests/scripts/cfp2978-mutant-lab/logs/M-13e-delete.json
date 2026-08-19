@@ -1,0 +1,112 @@
+{
+  "mutant": "M-13e-delete",
+  "target": "mctrader-sentinel.yml",
+  "expected": "exit 2 (P-1 file_missing)",
+  "pytest_face": {
+    "returncode": 1,
+    "failed_legs": [
+      "test_e1_mctrader_top_concurrency_exists",
+      "test_e2_mctrader_group_equals_pin",
+      "test_e3_mctrader_template_group_absent",
+      "test_e4_mctrader_no_job_concurrency",
+      "test_e5_mctrader_timeout_paths_pinned",
+      "test_f0_oracle_bound_to_w13_not_reimplemented",
+      "test_f10_job_defaults_run_shell_absent[mctrader]",
+      "test_f1_job_ids_pinned[mctrader]",
+      "test_f2a_coe_paths_pinned[mctrader]",
+      "test_f2b_coe_ownership_partition_pinned[mctrader]",
+      "test_f3_job_if_pinned[mctrader]",
+      "test_f4_step_if_pinned[mctrader]",
+      "test_f5_env_keys_pinned[mctrader]",
+      "test_f6_container_env_keys_absent[mctrader]",
+      "test_f7_env_file_keys_absent[mctrader]",
+      "test_f8_step_shell_pinned[mctrader]",
+      "test_f9_defaults_run_shell_absent[mctrader]",
+      "test_oracle_mutation_r1_remove_mctrader_top_concurrency",
+      "test_oracle_taut_template_vs_mctrader_runs_on"
+    ],
+    "errored_legs": [],
+    "verdict": "RED"
+  },
+  "w13_face": {
+    "verdict": "RED",
+    "red_legs": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5",
+      "env-ctr",
+      "env-file",
+      "env-keys",
+      "leg3-own1",
+      "leg3-own2"
+    ],
+    "legs": {
+      "E1": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "E2": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "E3": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "E4": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "E5": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "leg3-own1": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "leg3-own2": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "env-file": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "env-keys": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "env-ctr": "RED: ShapeError[workflow_file_missing] (CLI exit 2)",
+      "E6[backtest]": "GREEN",
+      "E7[backtest]": "GREEN",
+      "E6[engine]": "GREEN",
+      "E7[engine]": "GREEN",
+      "E6[market]": "GREEN",
+      "E7[market]": "GREEN",
+      "E8": "GREEN"
+    }
+  },
+  "straw_face": {
+    "verdict": "RED",
+    "detail": "ShapeError[workflow_file_missing]"
+  },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 771,
+    "failed_tests": [
+      "test_f0_oracle_bound_to_w13_not_reimplemented",
+      "test_e1_mctrader_top_concurrency_exists",
+      "test_e2_mctrader_group_equals_pin",
+      "test_e3_mctrader_template_group_absent",
+      "test_e4_mctrader_no_job_concurrency",
+      "test_e5_mctrader_timeout_paths_pinned",
+      "test_f1_job_ids_pinned[mctrader]",
+      "test_f2a_coe_paths_pinned[mctrader]",
+      "test_f2b_coe_ownership_partition_pinned[mctrader]",
+      "test_f3_job_if_pinned[mctrader]",
+      "test_f4_step_if_pinned[mctrader]",
+      "test_f5_env_keys_pinned[mctrader]",
+      "test_f6_container_env_keys_absent[mctrader]",
+      "test_f7_env_file_keys_absent[mctrader]",
+      "test_f8_step_shell_pinned[mctrader]",
+      "test_f9_defaults_run_shell_absent[mctrader]",
+      "test_f10_job_defaults_run_shell_absent[mctrader]",
+      "test_oracle_mutation_r1_remove_mctrader_top_concurrency",
+      "test_oracle_taut_template_vs_mctrader_runs_on"
+    ],
+    "stderr_excerpt": ""
+  },
+  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13e-delete",
+  "w13_raw": {
+    "sentinel_error": {
+      "error_kind": "workflow_file_missing",
+      "message": "workflow file not found (or not a regular file): C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13e-delete\\tests\\fixtures\\cfp2978\\mctrader-sentinel.yml",
+      "path": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13e-delete\\tests\\fixtures\\cfp2978\\mctrader-sentinel.yml"
+    },
+    "market_runs_on": {
+      "parallel-work-sentinel": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}",
+      "parallel-work-sentinel-test": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}"
+    },
+    "market_delta": {
+      "parallel-work-sentinel-test": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}"
+    }
+  }
+}

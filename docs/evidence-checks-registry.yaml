@@ -4426,6 +4426,26 @@ entries:
     carrier_adr: ADR-171
     promotion_trigger: advisory
     status: Active
+
+  - name: consumer-asset-currency-check
+    description: |
+      CFP-2978 — consumer 자산(센티널 py 등) 버전 currency 게이트 (vendor 관리).
+      wrapper 정본과 consumer 사본의 blob sha 일치 여부를 Q1(로컬 git) + Q2(원격 REST) 2단으로
+      비교하고, drift 시 fail-closed 신호 emit(warning-tier 비차단 advisory).
+      Pin 파일 `.codeforge-asset-pins.json` = 스냅샷 SSOT (§3.4).
+      honest ceiling: pin 부재/schema 무효 = exit 2(setup error fail-closed) · drift 검출 = 신호 emit
+      (판정 충분성/완전성은 review 판정 축). 자산 격차 동치 복구 = separate PR 착수 게이트(binary choice).
+    detect_command: bash scripts/check-consumer-asset-currency.sh
+    workflow: templates/github-workflows/consumer-asset-currency-check.yml
+    current_tier: warning
+    introduced_by: CFP-2978
+    introduced_date: 2026-08-15
+    owner_adr: ADR-176
+    carrier_adr: ADR-171
+    recurrence:
+      count: 0
+      promotion_trigger: none
+    status: Active
   - name: absolute-claim-ratchet
     description: |
       신규 절대주장 줄의 결박 동반 검사 (diff-scoped ratchet) — `origin/main...HEAD`

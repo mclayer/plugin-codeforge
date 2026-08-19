@@ -1,0 +1,13 @@
+......................................F................................. [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: F6 [mctrader]: container.env \ud0a4 \uc8fc\uc785 \uac80\ucd9c \u2014 {'parallel-work-sentinel': ['INJECTED_CTR_KEY']}
+    assert {'parallel-wo...TED_CTR_KEY']} == {}
+      
+      Left contains 1 more item:
+      {'parallel-work-sentinel': ['INJECTED_CTR_KEY']}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envctr\\tests\\scripts\\test_cfp2978_workflow_shape.py:604: AssertionError: F6 [mctrader]: container.env \ud0a4 \uc8fc\uc785 \uac80\ucd9c \u2014 {'parallel-work-sentinel': ['INJECTED_CTR_KEY']}
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f6_container_env_keys_absent[mctrader]
+1 failed, 74 passed in 0.90s

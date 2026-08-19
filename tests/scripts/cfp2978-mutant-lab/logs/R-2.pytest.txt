@@ -1,0 +1,25 @@
+..FF.................................................................... [ 96%]
+.F.                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: E2: group ����ġ
+        ���: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+        ����: ${{ github.sha }}
+    assert '${{ github.sha }}' == '${{ github.w...hub.run_id }}'
+      
+      - ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+      + ${{ github.sha }}
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-2\tests\scripts\test_cfp2978_workflow_shape.py:334: AssertionError: E2: group ����ġ
+E   AssertionError: E3 �缺 ��Ŀ ����: group='${{ github.sha }}' != �� ���ͷ�
+    assert '${{ github.sha }}' == '${{ github.w...hub.run_id }}'
+      
+      - ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+      + ${{ github.sha }}
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\R-2\tests\scripts\test_cfp2978_workflow_shape.py:353: AssertionError: E3 �缺 ��Ŀ ����: group='${{ github.sha }}' != �� ���ͷ�
+E   AssertionError: R-1: \uc575\ucee4 \ubbf8\uc801\uc911 \u2014 \ubcc0\uc774 \ubb34\ud6a8. fixture \ubb38\uba74\uc774 \ubc14\ub00c\uc5c8\ub2e4\uba74 \uc575\ucee4\ub97c \uac31\uc2e0\ud558\ub77c.
+    assert "concurrency:\n  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: true\n" in 'name: Parallel Work Sentinel Check (CFP-967 / ADR-073 Amendment 2)\n# Security: third-party actions are SHA-pinned pe...eck-parallel-work-sentinel.sh (ȸ�� �� exit 1 ����)\n        run: bash tests/scripts/test_check-parallel-work-sentinel.sh\n'
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\R-2\\tests\\scripts\\test_cfp2978_workflow_shape.py:1015: AssertionError: R-1: \uc575\ucee4 \ubbf8\uc801\uc911 \u2014 \ubcc0\uc774 \ubb34\ud6a8. fixture \ubb38\uba74\uc774 \ubc14\ub00c\uc5c8\ub2e4\uba74 \uc575\ucee4\ub97c \uac31\uc2e0\ud558\ub77c.
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e2_mctrader_group_equals_pin
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e3_mctrader_template_group_absent
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_oracle_mutation_r1_remove_mctrader_top_concurrency
+3 failed, 72 passed in 1.63s

@@ -1,0 +1,60 @@
+.................F...F........F...F.......F...F......................... [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: F2a [mctrader]: coe_paths ����ġ (���� ��� ����)
+        ����: ['jobs.parallel-work-sentinel.steps[3].continue-on-error']
+        ���: ['jobs.parallel-work-sentinel.steps[2].continue-on-error']
+    assert ['jobs.parall...nue-on-error'] == ['jobs.parall...nue-on-error']
+      
+      At index 0 diff: 'jobs.parallel-work-sentinel.steps[3].continue-on-error' != 'jobs.parallel-work-sentinel.steps[2].continue-on-error'
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-envfile\tests\scripts\test_cfp2978_workflow_shape.py:469: AssertionError: F2a [mctrader]: coe_paths ����ġ (���� ��� ����)
+E   AssertionError: F2b [mctrader]: continue-on-error �Ҽ� ���� ����
+        ����: {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[3].continue-on-error'], 'parallel-work-sentinel-test': []}
+        ���: {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[2].continue-on-error'], 'parallel-work-sentinel-test': []}
+    assert {'parallel-wo...nel-test': []} == {'parallel-wo...nel-test': []}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[3].continue-on-error']} != {'parallel-work-sentinel': ['jobs.parallel-work-sentinel.steps[2].continue-on-error']}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-envfile\tests\scripts\test_cfp2978_workflow_shape.py:491: AssertionError: F2b [mctrader]: continue-on-error �Ҽ� ���� ����
+E   AssertionError: F4 [mctrader]: step_if ����ġ
+        ����: {'parallel-work-sentinel': [None, None, "${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}", "${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}"], 'parallel-work-sentinel-test': [None, None, None]}
+        ���: {'parallel-work-sentinel': [None, "${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}", "${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}"], 'parallel-work-sentinel-test': [None, None, None]}
+    assert {'parallel-wo..., None, None]} == {'parallel-wo..., None, None]}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel': [None, None, "${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel...kup') }}", "${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}"]} != {'parallel-work-sentinel': [None, "${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-...kup') }}", "${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}"]}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-envfile\tests\scripts\test_cfp2978_workflow_shape.py:564: AssertionError: F4 [mctrader]: step_if ����ġ
+E   Failed: F5 [mctrader]: env_keys ����ġ (���� ��� ����)
+      �ҽ� ���: ['jobs.parallel-work-sentinel.steps[2]']
+      �ű� ���: ['jobs.parallel-work-sentinel.steps[3]']
+      Ű ����: []
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-envfile\tests\scripts\test_cfp2978_workflow_shape.py:587: Failed: F5 [mctrader]: env_keys ����ġ (���� ��� ����)
+E   AssertionError: [mctrader] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 4, 'parallel-work-sentinel-test': 3}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 3}
+    assert {'parallel-wo...inel-test': 3} == {'parallel-wo...inel-test': 3}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel': 4} != {'parallel-work-sentinel': 3}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile\\tests\\scripts\\test_cfp2978_workflow_shape.py:240: AssertionError: [mctrader] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 4, 'parallel-work-sentinel-test': 3}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 3}
+E   AssertionError: [mctrader] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 4, 'parallel-work-sentinel-test': 3}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 3}
+    assert {'parallel-wo...inel-test': 3} == {'parallel-wo...inel-test': 3}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel': 4} != {'parallel-work-sentinel': 3}
+      Use -v to get more diff
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envfile\\tests\\scripts\\test_cfp2978_workflow_shape.py:240: AssertionError: [mctrader] \uc591\uc131 \uc575\ucee4 \uc2e4\ud328 \u2014 step \uc218={'parallel-work-sentinel': 4, 'parallel-work-sentinel-test': 3}, \uae30\ub300={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 3}
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2a_coe_paths_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f2b_coe_ownership_partition_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f4_step_if_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f5_env_keys_pinned[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f7_env_file_keys_absent[mctrader]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_f8_step_shell_pinned[mctrader]
+6 failed, 69 passed in 0.99s

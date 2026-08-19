@@ -75,7 +75,6 @@ jobs:
           # 읽어 sentinel 에 주입한다. read 관례 = story-init.yml prefix-read step 차용(yq 우선 + python fallback).
           # warning-tier 비차단 정합: 파일/키 부재 시 기본값 "CFP" 로 degrade (story-init 의 exit 1 과 달리 비차단).
           cfg=".claude/_overlay/project.yaml"
-          STORY_KEY_PREFIX="CFP"
           if [ -f "$cfg" ]; then
             if command -v yq >/dev/null 2>&1; then
               _prefix="$(yq -r '.github.story_key_prefix // ""' "$cfg" 2>/dev/null || true)"
@@ -102,7 +101,7 @@ jobs:
   # 아님을 보증: prefix 미스매치 title 은 안 잡히고 일치 title 만 잡힌다 + prefix 하드코딩 복귀 시 RED.
   # wrapper-self 전용 게이트 — `if: github.repository == 'mclayer/plugin-codeforge'` 라 consumer 로
   # byte-identical 전파돼도 consumer repository 에선 skip (responsibility-marker-drift-check.yml 답습).
-  # sentinel 본체는 stdlib(json/re/os)만 사용 → PyYAML 불요, gh mock seam 사용 → gh 인증 불요.
+  # sentinel 본체(test_check-parallel-work-sentinel.sh)는 stdlib(json/re/os)만 사용하고, pytest 테스트는 PyYAML을 필요로 함.
   parallel-work-sentinel-test:
     name: parallel-work-sentinel discriminating test (mutation 생존 0)
     if: github.repository == 'mclayer/plugin-codeforge'
@@ -113,5 +112,60 @@ jobs:
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install --quiet pytest pyyaml
+      - name: Collect pytest tests (W-3b-1, verify node IDs present)
+        id: collect
+        run: |
+          set -euo pipefail
+          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py --collect-only -q > /tmp/pytest_collected.txt 2>&1
+          cat /tmp/pytest_collected.txt
+          grep -q "test_2976_a_derive_from_overlay" /tmp/pytest_collected.txt || { echo "ERROR: test_2976_a_derive_from_overlay not found"; exit 1; }
+          grep -q "test_2976_b_fail_closed" /tmp/pytest_collected.txt || { echo "ERROR: test_2976_b_fail_closed not found"; exit 1; }
+          grep -q "test_2976_c_determined_contract" /tmp/pytest_collected.txt || { echo "ERROR: test_2976_c_determined_contract not found"; exit 1; }
+          grep -q "test_d4_leg1_ingest_funnel_projects_four_keys" /tmp/pytest_collected.txt || { echo "ERROR: test_d4_leg1_ingest_funnel_projects_four_keys not found"; exit 1; }
+          grep -q "test_d4_leg2_file_level_response_rejected" /tmp/pytest_collected.txt || { echo "ERROR: test_d4_leg2_file_level_response_rejected not found"; exit 1; }
+          grep -q "test_d4_leg3_no_forbidden_key_access_literal" /tmp/pytest_collected.txt || { echo "ERROR: test_d4_leg3_no_forbidden_key_access_literal not found"; exit 1; }
+          grep -q "test_envelope_pin_reference_matches_landed_pin" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_reference_matches_landed_pin not found"; exit 1; }
+          grep -q "test_envelope_pin_domain_derivation_selfcheck" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_domain_derivation_selfcheck not found"; exit 1; }
+          grep -q "test_envelope_pin_coverage_table_witnesses" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_coverage_table_witnesses not found"; exit 1; }
+          grep -q "test_envelope_pin_sweep_derivation_completeness" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_sweep_derivation_completeness not found"; exit 1; }
+          grep -q "test_envelope_pin_cli_three_verdicts" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_cli_three_verdicts not found"; exit 1; }
+          grep -q "test_envelope_pin_derivation_negative_control" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_derivation_negative_control not found"; exit 1; }
+          grep -q "test_envelope_pin_falsification_dropfalse" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_falsification_dropfalse not found"; exit 1; }
+          grep -q "test_envelope_pin_matches_predicate" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_matches_predicate not found"; exit 1; }
+          grep -q "test_envelope_pin_premise_witnesses_pe1_to_pe4" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_premise_witnesses_pe1_to_pe4 not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_a_applicable_leaf_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_a_applicable_leaf_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_b_applicable_mapping_collision_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_b_applicable_mapping_collision_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_c_nonapplicable_jobs_other_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_c_nonapplicable_jobs_other_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_d_value_padding_absorbed_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_d_value_padding_absorbed_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_e_nonabsorbed_padding_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_e_nonabsorbed_padding_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_f_datastructure_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_f_datastructure_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_g_value_kind_fidelity_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_g_value_kind_fidelity_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_h_key_type_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_h_key_type_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_i_text_layer_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_i_text_layer_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_j_negative_control_redirect_misclassification" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_j_negative_control_redirect_misclassification not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_j_serialization_notation_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_j_serialization_notation_universal not found"; exit 1; }
+          grep -q "test_ac4_leg1_determined_is_true_and_lists_present" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg1_determined_is_true_and_lists_present not found"; exit 1; }
+          grep -q "test_ac4_leg2_branch_names_match_corpus_regex" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg2_branch_names_match_corpus_regex not found"; exit 1; }
+          grep -q "test_ac4_leg3_excluded_self_repo_is_slug" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found"; exit 1; }
+      - name: Run pytest tests (W-3b)
+        id: run-pytest
+        run: |
+          set -euo pipefail
+          python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py tests/scripts/test_cfp2978_envelope_pin.py -q 2>&1 | tee /tmp/pytest_run.txt
+          # skip 봉인 (설계 §8.3 DR4-7 / W-3b-1 (iv)) — 로스터 등재는 **존재**만
+          # 담지하고 **활성화**는 담지하지 않는다. @pytest.mark.skip 이 붙으면
+          # collect 로스터 12줄은 전건 통과하고 실행 rc 도 0 이라 무발화로 샌다.
+          # 그래서 실행 산출에서 skipped 0 을 별도 확인한다.
+          # 분기에 `&&` 를 쓰는 이유: A8 rc 흡수 관용구 금지 목록(W-16.e)이 셸
+          # 조건문 관용구 1종을 봉인하므로 그 문면을 이 step 에 쓸 수 없다.
+          # 후행 echo 는 필수다 — `&&` 가 마지막 명령이면 미매치 시 rc 1 이 되어
+          # 거짓 RED 가 난다 (bash -e firsthand 실측).
+          grep -qE '[0-9]+ skipped' /tmp/pytest_run.txt && {
+            echo "::error::skipped 검출 — 로스터 등재 테스트가 비활성화됐다 (skip 봉인 위반)"
+            exit 1
+          }
+          echo "skip 봉인 통과 — 실행 산출에 skipped 0"
       - name: Run test_check-parallel-work-sentinel.sh (회귀 시 exit 1 차단)
         run: bash tests/scripts/test_check-parallel-work-sentinel.sh

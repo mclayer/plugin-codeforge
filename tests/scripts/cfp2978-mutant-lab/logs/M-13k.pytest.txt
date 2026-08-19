@@ -1,0 +1,16 @@
+...............................................................F........ [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.c [wrapper-canonical]: step_shell ����ġ
+        ����: {'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None, None, 'bash {0}', None]}
+        ���: {'parallel-work-sentinel': [None, None, None], 'parallel-work-sentinel-test': [None, None, None, None, None, None]}
+    assert {'parallel-wo...h {0}', None]} == {'parallel-wo..., None, None]}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': [None, None, None, None, 'bash {0}', None]} != {'parallel-work-sentinel-test': [None, None, None, None, None, None]}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-13k\tests\scripts\test_cfp2978_workflow_shape.py:820: AssertionError: W-16.c [wrapper-canonical]: step_shell ����ġ
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_c_job2_step_shell_all_none[wrapper-canonical]
+1 failed, 74 passed in 1.08s

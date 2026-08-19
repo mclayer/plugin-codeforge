@@ -1,0 +1,156 @@
+{
+  "mutant": "M-envctr",
+  "target": "mctrader-sentinel.yml",
+  "expected": "RED (container_env_keys)",
+  "pytest_face": {
+    "returncode": 1,
+    "failed_legs": [
+      "test_f6_container_env_keys_absent[mctrader]"
+    ],
+    "errored_legs": [],
+    "verdict": "RED"
+  },
+  "w13_face": {
+    "verdict": "RED",
+    "red_legs": [
+      "env-ctr"
+    ],
+    "legs": {
+      "E1": "GREEN",
+      "E2": "GREEN",
+      "E3": "GREEN",
+      "E4": "GREEN",
+      "E5": "GREEN",
+      "leg3-own1": "GREEN",
+      "leg3-own2": "GREEN",
+      "env-file": "GREEN",
+      "env-keys": "GREEN",
+      "env-ctr": "RED: {'parallel-work-sentinel': ['INJECTED_CTR_KEY']}",
+      "shell-step": "GREEN",
+      "shell-defaults": "GREEN",
+      "E6[backtest]": "GREEN",
+      "E7[backtest]": "GREEN",
+      "E6[engine]": "GREEN",
+      "E7[engine]": "GREEN",
+      "E6[market]": "GREEN",
+      "E7[market]": "GREEN",
+      "E8": "GREEN"
+    }
+  },
+  "straw_face": {
+    "verdict": "GREEN",
+    "detail": {
+      "runs_on": {
+        "parallel-work-sentinel": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}",
+        "parallel-work-sentinel-test": "ubuntu-latest"
+      }
+    }
+  },
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 51,
+    "failed_tests": [
+      "test_f6_container_env_keys_absent[mctrader]"
+    ],
+    "stderr_excerpt": ""
+  },
+  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envctr",
+  "w13_raw": {
+    "ownership": {
+      "coe_paths": [
+        "jobs.parallel-work-sentinel.steps[2].continue-on-error"
+      ],
+      "owned_by(job1)": [
+        "jobs.parallel-work-sentinel.steps[2].continue-on-error"
+      ],
+      "owned_by(job2)": [],
+      "bare_startswith(job1)": [
+        "jobs.parallel-work-sentinel.steps[2].continue-on-error"
+      ],
+      "bare_startswith(job2)": [],
+      "bare_misclassifies": false
+    },
+    "sentinel_shape": {
+      "path": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-envctr\\tests\\fixtures\\cfp2978\\mctrader-sentinel.yml",
+      "job_ids": [
+        "parallel-work-sentinel",
+        "parallel-work-sentinel-test"
+      ],
+      "top_concurrency": {
+        "group": "${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}",
+        "cancel-in-progress": true
+      },
+      "concurrency_paths": [
+        "concurrency"
+      ],
+      "coe_paths": [
+        "jobs.parallel-work-sentinel.steps[2].continue-on-error"
+      ],
+      "timeout_paths": {
+        "jobs.parallel-work-sentinel.timeout-minutes": 10,
+        "jobs.parallel-work-sentinel-test.timeout-minutes": 10
+      },
+      "job_if": {
+        "parallel-work-sentinel": null,
+        "parallel-work-sentinel-test": "github.repository == 'mclayer/plugin-codeforge'"
+      },
+      "step_if": {
+        "parallel-work-sentinel": [
+          null,
+          "${{ contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}",
+          "${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:parallel-work-sentinel-pickup') }}"
+        ],
+        "parallel-work-sentinel-test": [
+          null,
+          null,
+          null
+        ]
+      },
+      "env_keys": {
+        "workflow": [
+          "SENTINEL_TIER"
+        ],
+        "jobs.parallel-work-sentinel.steps[2]": [
+          "PR_TITLE",
+          "GH_TOKEN"
+        ]
+      },
+      "container_env_keys": {
+        "parallel-work-sentinel": [
+          "INJECTED_CTR_KEY"
+        ]
+      },
+      "env_file_keys": {},
+      "step_shell": {
+        "parallel-work-sentinel": [
+          null,
+          null,
+          null
+        ],
+        "parallel-work-sentinel-test": [
+          null,
+          null,
+          null
+        ]
+      },
+      "defaults_run_shell": null,
+      "job_defaults_run_shell": {
+        "parallel-work-sentinel": null,
+        "parallel-work-sentinel-test": null
+      },
+      "runs_on": {
+        "parallel-work-sentinel": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}",
+        "parallel-work-sentinel-test": "ubuntu-latest"
+      }
+    },
+    "market_runs_on": {
+      "parallel-work-sentinel": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}",
+      "parallel-work-sentinel-test": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}"
+    },
+    "market_delta": {
+      "parallel-work-sentinel-test": "${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '[\"ubuntu-latest\"]') }}"
+    }
+  }
+}

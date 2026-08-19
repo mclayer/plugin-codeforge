@@ -1,0 +1,11 @@
+...................................................................F.... [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.e [wrapper-canonical]: A8 idiom regex `|| :` \uac80\ucd9c \u2014 W-3b step run \ubb38\uba74
+    assert not <re.Match object; span=(208, 212), match='|| :'>
+     +  where <re.Match object; span=(208, 212), match='|| :'> = <function search at 0x0000021FFF7D7690>('\\|\\| :', 'python3 -m pytest tests/scripts/test_cfp2976_sentinel_prefix.py tests/scripts/test_consumer_asset_currency.py tests/scripts/test_cfp2978_workflow_shape.py tests/scripts/test_cfp2978_resource_scan_shape.py -q || :\n')
+     +    where <function search at 0x0000021FFF7D7690> = re.search
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13h\\tests\\scripts\\test_cfp2978_workflow_shape.py:924: AssertionError: W-16.e [wrapper-canonical]: A8 idiom regex `|| :` \uac80\ucd9c \u2014 W-3b step run \ubb38\uba74
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_e_pytest_step_run_free_of_a8_idioms[wrapper-canonical]
+1 failed, 74 passed in 0.92s

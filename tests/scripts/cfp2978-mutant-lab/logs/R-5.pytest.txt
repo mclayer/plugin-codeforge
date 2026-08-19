@@ -1,0 +1,9 @@
+............F........................................................... [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: E8: market job2 \uc758 \ub85c\uceec \uac1c\uc870\uac00 \uc18c\uc2e4\ub428 (\uc815\ubcf8\uc73c\ub85c \ubcf5\uadc0) \u2014 delta={}, runs_on={'parallel-work-sentinel': '${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \\'["ubuntu-latest"]\\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}
+    assert 'parallel-work-sentinel-test' in {}
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\R-5\\tests\\scripts\\test_cfp2978_workflow_shape.py:437: AssertionError: E8: market job2 \uc758 \ub85c\uceec \uac1c\uc870\uac00 \uc18c\uc2e4\ub428 (\uc815\ubcf8\uc73c\ub85c \ubcf5\uadc0) \u2014 delta={}, runs_on={'parallel-work-sentinel': '${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \\'["ubuntu-latest"]\\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_e8_market_job2_runs_on_custom
+1 failed, 74 passed in 0.90s

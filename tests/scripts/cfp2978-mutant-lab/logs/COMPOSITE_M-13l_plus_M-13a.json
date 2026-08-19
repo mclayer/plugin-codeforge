@@ -1,0 +1,45 @@
+{
+  "composite": "M-13l+M-13a",
+  "applied": [
+    "M-13l",
+    "M-13a"
+  ],
+  "runtime_face": {
+    "verdict": "RED",
+    "returncode": 1,
+    "rc_after_coe": 1,
+    "stdout_lines": 123,
+    "failed_tests": [
+      "test_2976_c_determined_contract",
+      "test_c1_currency_match_current_blob",
+      "test_d2_born_broken_old_blob_paired_observation"
+    ],
+    "stderr_excerpt": ""
+  },
+  "w13_face": {
+    "verdict": "GREEN",
+    "red_legs": [],
+    "legs": {
+      "E1": "GREEN",
+      "E2": "GREEN",
+      "E3": "GREEN",
+      "E4": "GREEN",
+      "E5": "GREEN",
+      "leg3-own1": "GREEN",
+      "leg3-own2": "GREEN",
+      "env-file": "GREEN",
+      "env-keys": "GREEN",
+      "env-ctr": "GREEN",
+      "shell-step": "GREEN",
+      "shell-defaults": "GREEN",
+      "E6[backtest]": "GREEN",
+      "E7[backtest]": "GREEN",
+      "E6[engine]": "GREEN",
+      "E7[engine]": "GREEN",
+      "E6[market]": "GREEN",
+      "E7[market]": "GREEN",
+      "E8": "GREEN"
+    }
+  },
+  "run_dir": "C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13l_plus_M-13a"
+}

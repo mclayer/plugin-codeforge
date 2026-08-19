@@ -1,0 +1,46 @@
+...........................................................F.F.F.F...F.. [ 98%]
+.                                                                        [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.a [wrapper-canonical]: job2 step 수 불일치 — 5
+    assert 5 == 6
+     +  where 5 = len([None, None, None, None, None])
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-collect\tests\scripts\test_cfp2978_workflow_shape.py:841: AssertionError: W-16.a [wrapper-canonical]: job2 step 수 불일치 — 5
+E   AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-collect\tests\scripts\test_cfp2978_workflow_shape.py:331: AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-collect\tests\scripts\test_cfp2978_workflow_shape.py:331: AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+    assert {'parallel-wo...inel-test': 5} == {'parallel-wo...inel-test': 6}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'parallel-work-sentinel-test': 5} != {'parallel-work-sentinel-test': 6}
+      Use -v to get more diff
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-collect\tests\scripts\test_cfp2978_workflow_shape.py:331: AssertionError: [wrapper-canonical] 양성 앵커 실패 — step 수={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 5}, 기대={'parallel-work-sentinel': 3, 'parallel-work-sentinel-test': 6}
+E   AssertionError: W-16.f [wrapper-canonical] step[3]: 명 불일치
+        기대: 'Collect pytest tests (W-3b-1, verify node IDs present)'
+        실측: 'Run pytest tests (W-3b)'
+    assert 'Run pytest tests (W-3b)' == 'Collect pyte... IDs present)'
+      
+      - Collect pytest tests (W-3b-1, verify node IDs present)
+      + Run pytest tests (W-3b)
+C:\Users\mccho\AppData\Local\Temp\claude\c--workspace-mclayer-plugin-codeforge\5d775507-319e-44aa-a978-46cc2af066fd\scratchpad\cfp2978-runs\M-16-rm-collect\tests\scripts\test_cfp2978_workflow_shape.py:1005: AssertionError: W-16.f [wrapper-canonical] step[3]: 명 불일치
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_a_wrapper_face_anchor[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_b_job2_coe_paths_empty_strict[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_c_job2_step_shell_all_none[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_d_defaults_run_shell_absent[wrapper-canonical]
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_f_job2_step_names_pinned[wrapper-canonical]
+5 failed, 68 passed in 1.68s

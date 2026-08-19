@@ -1,0 +1,10 @@
+.................................................................F...... [ 96%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+E   AssertionError: W-16.d [wrapper-canonical]: defaults_run_shell \uc874\uc7ac \u2014 'bash {0}'
+    assert 'bash {0}' is None
+     +  where 'bash {0}' = WorkflowShape(path='C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-31...${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || \'["ubuntu-latest"]\') }}', 'parallel-work-sentinel-test': 'ubuntu-latest'}).defaults_run_shell
+C:\\Users\\mccho\\AppData\\Local\\Temp\\claude\\c--workspace-mclayer-plugin-codeforge\\5d775507-319e-44aa-a978-46cc2af066fd\\scratchpad\\cfp2978-runs\\M-13l\\tests\\scripts\\test_cfp2978_workflow_shape.py:837: AssertionError: W-16.d [wrapper-canonical]: defaults_run_shell \uc874\uc7ac \u2014 'bash {0}'
+=========================== short test summary info ===========================
+FAILED tests/scripts/test_cfp2978_workflow_shape.py::test_w16_d_defaults_run_shell_absent[wrapper-canonical]
+1 failed, 74 passed in 1.57s
