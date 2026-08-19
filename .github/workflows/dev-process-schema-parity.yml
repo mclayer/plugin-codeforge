@@ -1,0 +1,66 @@
+name: dev-process-schema-parity
+# CFP-2985 D-11c / ADR-181 §결정 3 — `dev-process-event-v1` 계약 §2 표 <-> `_ROW_KEYS` 원자성의
+#   **실 강제자**. Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 왜 필요한가 (dead-gate 소생):
+#   계약 §2 index schema table 과 `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS` 는
+#   doc↔code parity SSOT 로 선언돼 있으나, 그 원자성을 **실제로 재는 주체가 CI 에 0** 이었다.
+#   즉 "동일 커밋에 옮긴다" 는 저작 규율일 뿐 강제가 아니었다(Change Plan §3.2 제약 1 표).
+#   본 workflow 가 그 강제자다.
+#
+# ★ 배선 대상 3종은 **신규 저작이 아니라 소생**이다 (Change Plan D-11c — 전건 기존 자산):
+#   a) tests/scripts/test_dev_process_schema_gate_wrappers.py  — 기존 9 test, 실행 workflow 0 이었음
+#   b) scripts/lib/append_dev_process_event.py --self-test     — `_ROW_KEYS` 길이 하드 assert 발화 경로
+#   c) tests/unit/test_dev_process_ship_time_parity.py         — ★ 계약 §2 표를 파싱해 `_ROW_KEYS` 와
+#      대조하는 **repo 유일의 doc↔code parity 측정기**. dead 판정 3채널 전건 확인분
+#      (이름 인용 0 / tests/unit glob 러너의 `-k` 필터가 제외 / lint.yml 수집 정의역 밖).
+#      D-11c 의 목적이 바로 그 원자성 강제인데 **그것을 재는 테스트가 이미 있으면서 죽어 있었다.**
+#
+# §8.C 이행: C-1 실행 run 줄 / C-2 의존성 설치 step / C-3 continue-on-error 부재 /
+#            C-4 paths·paths-ignore 부재 ∧ job `if:` 부재 / C-5 수집 테스트 수 non-zero
+# ★ **day-1 hard-fail** — 본 workflow 는 warning tier 가 아니다. parity 위반 = job red.
+#   (admission 게이트[fix-ledger-conformance.yml]의 warning-first 와 다른 축이다: 이쪽은
+#    "새 규범의 입장료" 가 아니라 **기존 계약의 자기정합**이므로 유예 근거가 없다.)
+# **non-required**: branch protection contexts 무변경 (required context 신설 0).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dev-process-schema-parity:
+    name: dev-process-schema-parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (C-2)
+        run: |
+          python3 -m pip install --disable-pip-version-check --quiet pytest pyyaml
+          python3 -c "import yaml; print('pyyaml', yaml.__version__)"
+
+      - name: Primitive self-test — _ROW_KEYS hard anchor (C-1)
+        run: |
+          python3 scripts/lib/append_dev_process_event.py --self-test
+
+      - name: Schema gate wrappers (C-1, C-5)
+        run: |
+          python3 -m pytest -v tests/scripts/test_dev_process_schema_gate_wrappers.py
+
+      - name: doc-to-code parity measurer (C-1, C-5) — contract section 2 table vs _ROW_KEYS
+        run: |
+          python3 -m pytest -v tests/unit/test_dev_process_ship_time_parity.py
