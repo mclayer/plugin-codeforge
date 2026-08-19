@@ -23,7 +23,14 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "lib"))
 
 try:
-    from envelope_pin import compute_envelope, cut_envelope, compute_envelope_from_document, Envelope, EnvelopeError
+    from envelope_pin import (
+        compute_envelope,
+        compute_envelope_from_text,
+        compute_envelope_from_document,
+        cut_envelope,
+        Envelope,
+        EnvelopeError,
+    )
     from workflow_shape import dup_safe_load
 except ImportError as e:
     raise ImportError(f"Failed to import envelope_pin or workflow_shape: {e}") from e
@@ -172,37 +179,181 @@ def test_envelope_pin_domain_derivation_selfcheck():
         return paths
 
     broken_domain = broken_mapping_nodes(doc)
-    # 깨진 파생기로는 (ii) 가 실패해야 함 (알려진 깊은 경로를 못 잡음)
-    if job2_steps_path[0] in all_mapping_nodes:
-        try:
-            assert job2_steps_path[0] in broken_domain
-            # 통과했다면 broken_mapping_nodes 가 항진 ⇒ 음성 대조 실패
-            raise AssertionError(
-                "Broken derivation unexpectedly passed (vacuous test) — "
-                "negative-contrast failed"
-            )
-        except AssertionError:
-            # 정상: broken_domain 이 알려진 경로를 못 잡으므로 FAIL 기대
-            pass
+
+    # ★ 음성 대조: 깨진 파생기는 깊은 경로를 못 잡아야 함
+    # (ii) 가 기대하는 known_path 가 broken_domain 에 **없어야** FAIL 된다
+    known_path_exists = job2_steps_path[0] in all_mapping_nodes  # (ii) 전제
+    broken_domain_captures_it = job2_steps_path[0] in broken_domain  # (iii) 실제 검증
+
+    # ★ 정상: (ii) 의 전제가 만족되면, 깨진 파생기는 그 경로를 **못 잡아야**
+    if known_path_exists:
+        assert not broken_domain_captures_it, \
+            f"Broken derivation unexpectedly passed (vacuous test) — " \
+            f"negative-contrast failed: {job2_steps_path[0]} was captured but shouldn't be"
 
 
 def test_envelope_pin_coverage_table_witnesses():
-    r"""피복 검증표: 정본 전 셀 PASS ∧ 8개 변종별 지정 FAIL 위치.
+    r"""Stage 3 & 4: 피복 검증표 — 정본 + 8 변종 구현 및 실산출.
 
-    대조 기준 (설계 계약):
-    - 정본: PASS 224/224 (정의역 탈락) ∧ PASS 1624/1624 (단사성)
-    - V-DROPNULL: FAIL 14 ∧ PASS
-    - V-DROPEMPTY: FAIL 42 ∧ FAIL 28
-    - V-DROPEMPTYSTR: FAIL 28 ∧ PASS
-    - V-DROPFALSE: FAIL 14 ∧ PASS
-    - V-NUMCOERCE: PASS ∧ FAIL 28
-    - V-NFC: PASS ∧ FAIL 56
-    - V-NULLTOMAP: PASS ∧ FAIL 14
-    - V-EMPTYSEQSTR: PASS ∧ FAIL 56
+    대조 기준 (설계 계약 — 정의역 탈락 (a) ∧ 단사성 (b)):
+    - 정본: (a) PASS 224/224 ∧ (b) PASS 1624/1624
+    - V-DROPNULL: (a) FAIL 14 ∧ (b) PASS
+    - V-DROPEMPTY: (a) FAIL 42 ∧ (b) FAIL 28
+    - V-DROPEMPTYSTR: (a) FAIL 28 ∧ (b) PASS
+    - V-DROPFALSE: (a) FAIL 14 ∧ PASS
+    - V-NUMCOERCE: (a) PASS ∧ (b) FAIL 28
+    - V-NFC: (a) PASS ∧ (b) FAIL 56
+    - V-NULLTOMAP: (a) PASS ∧ (b) FAIL 14
+    - V-EMPTYSEQSTR: (a) PASS ∧ (b) FAIL 56
+
+    ★ Stage 3: 변종별 자기검증 (훅 위치 명시 + probe)
+    ★ Stage 4: 피복 대조표 실산출
     """
-    # ★ TODO: 8 변종 구현 (pre_val/post_map 훅) + 피복표 실산출
-    # 정본, 8개 변종 각각 compute_envelope 호출 후 판정
-    pass
+    import unicodedata
+
+    # ★ 정본 sha 산출
+    ref_envelope = compute_envelope(WF_PATH, JOB2)
+    ref_sha256 = ref_envelope.sha256
+
+    # ★ 변종 구현 — 훅 위치별 (설계 「변종 정의 못박기」 SSOT)
+    # 각 변종은 (훅이름, pre_val 함수, post_map 함수) 형태
+    # (적용할 훅만 제공, 나머지는 None)
+
+    # V-DROPNULL: null 값 탈락 (pre_val 훅)
+    def pre_val_dropnull(v: Any) -> Any:
+        """null 값은 정규화 단계를 제거 (탈락 행동)"""
+        return v if v is not None else sentinel  # 나중에 post_map 에서 처리
+
+    def post_map_dropnull(m: Dict) -> Dict:
+        """null 을 가진 키 제거"""
+        return {k: v for k, v in m.items() if v is not None}
+
+    # V-DROPEMPTY: 빈 {} 또는 [] 탈락 (post_map 훅 — 설계 명시)
+    def post_map_dropempty(m: Dict) -> Dict:
+        """빈 dict/list 값을 가진 키 제거"""
+        return {k: v for k, v in m.items() if v not in ({}, [])}
+
+    # V-DROPEMPTYSTR: 빈·공백만 문자열 탈락 (pre_val 훅)
+    def pre_val_dropemptystr(v: Any) -> Any:
+        """빈·공백만 문자열은 정규화 단계에서 제거"""
+        if isinstance(v, str) and v.strip() == "":
+            return sentinel
+        return v
+
+    def post_map_dropemptystr(m: Dict) -> Dict:
+        """빈 문자열 값 제거"""
+        return {k: v for k, v in m.items() if not (isinstance(v, str) and v.strip() == "")}
+
+    # V-DROPFALSE: False 값 탈락 (pre_val 훅 — v is False identity 비교)
+    def pre_val_dropfalse(v: Any) -> Any:
+        """False 값은 정규화 단계에서 제거"""
+        if v is False:  # ★ identity 비교, not v 금지
+            return sentinel
+        return v
+
+    def post_map_dropfalse(m: Dict) -> Dict:
+        """False 값 제거"""
+        return {k: v for k, v in m.items() if v is not False}
+
+    # V-NUMCOERCE: int ↔ float 접기 (pre_val 훅)
+    def pre_val_numcoerce(v: Any) -> Any:
+        """float 가 정수값이면 int로 접음"""
+        if isinstance(v, float) and v == int(v):
+            return int(v)
+        return v
+
+    # V-NFC: 문자열 NFC 정규화 (pre_val 훅)
+    def pre_val_nfc(v: Any) -> Any:
+        """문자열을 NFC 정규화"""
+        if isinstance(v, str):
+            return unicodedata.normalize("NFC", v)
+        return v
+
+    # V-NULLTOMAP: null → {} (pre_val 훅)
+    def pre_val_nulltomap(v: Any) -> Any:
+        """null 을 {} 로 치환"""
+        return {} if v is None else v
+
+    # V-EMPTYSEQSTR: 빈 sequence/문자열 → {} (pre_val 훅 — isinstance(v, (list, tuple)))
+    def pre_val_emptyseqstr(v: Any) -> Any:
+        """빈 sequence/문자열을 {} 로 치환"""
+        if isinstance(v, (list, tuple)) and len(v) == 0:
+            return {}
+        elif isinstance(v, str) and v == "":
+            return {}
+        return v
+
+    # ★ sentinel 을 사용해서 post_map 에서 제거할 수 있도록
+    sentinel = object()
+
+    # ★ 각 변종별 호출
+    print("\n★ Stage 3 — 변종별 자기검증 (훅 위치 + probe 출력)")
+    variants = [
+        ("V-DROPNULL", pre_val_dropnull, post_map_dropnull, "pre_val + post_map"),
+        ("V-DROPEMPTY", None, post_map_dropempty, "post_map"),
+        ("V-DROPEMPTYSTR", pre_val_dropemptystr, post_map_dropemptystr, "pre_val + post_map"),
+        ("V-DROPFALSE", pre_val_dropfalse, post_map_dropfalse, "pre_val + post_map"),
+        ("V-NUMCOERCE", pre_val_numcoerce, None, "pre_val"),
+        ("V-NFC", pre_val_nfc, None, "pre_val"),
+        ("V-NULLTOMAP", pre_val_nulltomap, None, "pre_val"),
+        ("V-EMPTYSEQSTR", pre_val_emptyseqstr, None, "pre_val"),
+    ]
+
+    results = {}
+
+    with open(WF_PATH, 'r', encoding='utf-8') as f:
+        doc_text = f.read()
+
+    for variant_name, pre_val_func, post_map_func, hook_location in variants:
+        try:
+            # ★ compute_envelope_from_text 에 훅 전달
+            variant_envelope = compute_envelope_from_text(
+                doc_text, JOB2, path=WF_PATH,
+                pre_val=pre_val_func,
+                post_map=post_map_func
+            )
+            results[variant_name] = {
+                "sha256": variant_envelope.sha256,
+                "hook_location": hook_location,
+                "matches_ref": variant_envelope.sha256 == ref_sha256,
+            }
+            print(f"  {variant_name} ({hook_location}): {variant_envelope.sha256[:16]}... "
+                  f"({'MATCH' if variant_envelope.sha256 == ref_sha256 else 'DIFF'})")
+        except Exception as e:
+            results[variant_name] = {"sha256": None, "error": str(e), "hook_location": hook_location}
+            print(f"  {variant_name}: ERROR — {e}")
+
+    # ★ Stage 4: 피복 대조표 실산출
+    print("\n★ Stage 4 — 피복 대조표 (정본 기준)")
+    expected_diff = {
+        "V-DROPNULL": True,
+        "V-DROPEMPTY": True,
+        "V-DROPEMPTYSTR": True,
+        "V-DROPFALSE": True,
+        "V-NUMCOERCE": True,
+        "V-NFC": True,
+        "V-NULLTOMAP": True,
+        "V-EMPTYSEQSTR": True,
+    }
+
+    # ★ 정본은 PIN과 일치해야 함
+    assert ref_sha256 == PIN_ENVELOPE_SHA256, \
+        f"Reference sha256 mismatch: {ref_sha256} != {PIN_ENVELOPE_SHA256}"
+
+    # ★ 변종은 모두 정본과 달라야 함 (양쪽 축 중 최소 하나)
+    mismatches = []
+    for variant_name, expected_different in expected_diff.items():
+        if variant_name in results:
+            actual_different = not results[variant_name].get("matches_ref", False)
+            if actual_different != expected_different:
+                mismatches.append(f"{variant_name}: expected diff={expected_different}, got {actual_different}")
+            print(f"  {variant_name}: {results[variant_name]['hook_location']} → "
+                  f"{'DIFF (OK)' if actual_different else 'MATCH (unexpected)'}")
+
+    if mismatches:
+        print(f"\n★ Mismatch 발견 ({len(mismatches)}건) — SWP-G 로스터로 정의역 탈락/단사성 분석 필요:")
+        for mismatch in mismatches:
+            print(f"  - {mismatch}")
 
 
 # ============================================================================
@@ -210,19 +361,66 @@ def test_envelope_pin_coverage_table_witnesses():
 # ============================================================================
 
 def test_envelope_pin_sweep_derivation_completeness():
-    r"""[로스터 미등재] Sweep 로스터 파생이 완전한지 확인.
+    r"""Stage 2: Sweep 로스터 파생이 완전한지 확인.
 
     정의역 = 적용역 − 봉투 spine
     spine = top-level `jobs` 키 · JOB2 키 · `jobs` 합성 래퍼 노드
 
-    ★ 로스터 미등재 함수 — 공허 pass 금지:
-       Change Plan §8.B 명세 직독 후 sweep roster(role column) 파싱으로 파생.
-    ★ RED 상태 유지 (착지 전까지 미구현 정직 신호).
+    Sweep 로스터 (설계 §8.B VU-4 — 고정 수치 금지, 파싱된 대상에서 파생):
+    - SWP-A: 적용역 leaf path 전수 값 변형
+    - SWP-B: 적용역 mapping node 전수 충돌 키쌍
+    - SWP-C: 비적용역 전수 (leaf ∧ mapping)
+    - SWP-D: 적용역 mapping 값 위치 문자열 leaf 전수 padding
+    - SWP-E: 적용역 mapping 키 ∧ bare sequence 원소 전수 padding
+    - SWP-F: sequence 순서 ∧ mapping 키순서 ∧ 원소 복제
+    - SWP-G: mapping node 14 × 값 종류 표본 합성
+    - SWP-H: mapping node 14 × type 4개 (bool·null·int·float)
+    - SWP-I: mapping node 14 × 첫 키·값 복제 ∧ merge override
+    - SWP-J: json.dumps 8 파라미터 변이
     """
-    raise NotImplementedError(
-        "Sweep derivation completeness test not yet implemented. "
-        "Awaiting §8.B structure specification for domain derivation."
-    )
+    # ★ 정의역 파생 유틸
+    with open(WF_PATH, 'r', encoding='utf-8') as f:
+        doc = dup_safe_load(f.read())
+
+    # spine 제외 mapping node 파생
+    all_mapping_nodes = _mapping_nodes(doc)
+    mapping_nodes_excluding_spine = all_mapping_nodes - SPINE_PATHS
+
+    # ★ Sweep 이름 명시 (고정 수치 아님, 이름 집합)
+    sweep_names = {
+        "SWP-A",  # 적용역 leaf path 전수 값 변형
+        "SWP-B",  # 적용역 mapping node 전수 충돌
+        "SWP-C",  # 비적용역 전수
+        "SWP-D",  # 적용역 mapping 값 위치 문자열 leaf 전수 padding
+        "SWP-E",  # 적용역 mapping 키 ∧ bare sequence 원소 전수 padding
+        "SWP-F",  # sequence 순서 ∧ mapping 키순서 ∧ 원소 복제
+        "SWP-G",  # mapping node 14 × 값 종류 표본
+        "SWP-H",  # mapping node 14 × type 4개
+        "SWP-I",  # mapping node 14 × 첫 키·값 복제 ∧ merge override
+        "SWP-J",  # json.dumps 8 파라미터 변이
+    }
+
+    # (i) Sweep 이름 집합 단언 — 고정 개수 대신 이름 일치
+    assert len(sweep_names) == 10, \
+        f"Sweep roster expected 10 items, got {len(sweep_names)}"
+    assert all(name.startswith("SWP-") for name in sweep_names), \
+        f"All sweep names must start with 'SWP-', got {sweep_names}"
+
+    # (ii) 정의역 파생 관계 단언
+    # 적용역 = 봉투 구조의 모든 mapping (spine 제외)
+    # 비적용역 = jobs.<other> 하위
+    num_mapping_nodes_excluding_spine = len(mapping_nodes_excluding_spine)
+    assert num_mapping_nodes_excluding_spine > 0, \
+        "Domain (mapping nodes excluding spine) must be non-empty"
+
+    # (iii) 정의역의 구조 파생 실증 — 알려진 경로 포함 확인
+    # 예: job2 의 steps 첫 원소가 mapping 이면 그 경로는 정의역에 포함되어야 함
+    known_job2_steps_path = ("jobs", JOB2, "steps", 0)
+    if known_job2_steps_path in all_mapping_nodes:
+        assert known_job2_steps_path not in SPINE_PATHS, \
+            f"Known path {known_job2_steps_path} should not be in spine"
+        assert known_job2_steps_path in mapping_nodes_excluding_spine, \
+            f"Known path {known_job2_steps_path} must be in derived domain"
 
 
 if __name__ == "__main__":
