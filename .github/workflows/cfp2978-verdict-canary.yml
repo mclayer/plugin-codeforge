@@ -1,0 +1,151 @@
+name: cfp2978-verdict-canary
+# CFP-2978 W-20 — `L-CANARY` 담지체 (Change Plan §5.1 / §8.B, AC-13 leg ③ 의 P3).
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 무엇을 재는가 (런타임 negative control)
+#   leg ③ = **P1 ∧ P2 ∧ P3** 논리곱이며 본 workflow 는 **P3** 단독 담지자다.
+#     P1 = kill 관측(착지 형상 C0 에서 pytest 실패가 job2 conclusion 에 도달)
+#     P2 = 봉투 동일성(`L-STRUCT`, job2 안 정적 층)
+#     P3 = **판정 채널 자체가 중성화되지 않았다** ← 본 workflow
+#
+#   `tests/scripts/cfp2978_verdict_canary_fixture.py` 는 **의도적으로 실패**하는 픽스처다.
+#   판정 채널(pytest 계층)이 정상이면 그 픽스처는 실패한다(rc=1). `conftest.py` 계층에서
+#   판정을 중성화하는 변이(`M-CANARY` — §8.B 로스터 「(5) 런타임 1」)가 들어가면 픽스처가
+#   **통과해 버리고**(rc=0), 본 workflow 가 그것을 **RED 로 잡는다**.
+#   ⇒ canary 는 「픽스처가 실패함」을 성공 조건으로 삼는 **역-게이트**다.
+#
+# ★왜 job2(`parallel-work-sentinel-check.yml` 의 `parallel-work-sentinel-test`) **밖**인가
+#   canary 를 job2 **안**에 두면 job2 를 죽이는 우회가 canary 도 **함께** 죽여 P3 가 P1·P2 와
+#   독립이 되지 못한다. 검출기의 실행 기반이 **보호 대상 밖**에 있어야 논리곱이 닫힌다
+#   (§8.B D-5 (a) ∧ (b) 병존 / 구현 동반 의무 5). 이 파일이 job2 와 **다른 workflow** 인 것은
+#   비용이 아니라 **계약**이다 — 같은 workflow 로 합치면 `Q-E-R5` 순환이 되살아난다.
+#
+# ★`templates/github-workflows/` twin 없음 (.github-only)
+#   parity 루프가 `templates/` → `.github/` **단방향**이라(`invariant-check.yml` L53
+#   `for f in templates/github-workflows/*.yml`) `.github`-only 파일은 구조적으로 미검출이며,
+#   org 관례도 동일하다 — 선례 `ac-traceability-self-test.yml` · `adr-reservation-claim-test.yml`
+#   (양쪽 다 twin 부재 firsthand 확인 @`9932fe5e`). twin 을 만들면 consumer 로 전파되는데
+#   consumer 에는 `tests/scripts/**` 가 없어 편익 0 · 비용 有.
+#
+# **day-1 hard-fail** (continue-on-error 금지) — canary 실패 = job red.
+# **non-required** (branch-protection 8-tuple 무변경 — 신규 required context 0).
+#   기존 job2 도 `Q-E-R6` 로 동일 천장 아래 있으므로 **신규 부채 0**.
+# **wrapper-self-only**: repo-guard `if: github.repository == 'mclayer/plugin-codeforge'`
+#   (consumer 는 `tests/scripts/**` 부재 → job skip = inert).
+#
+# 정직 한계
+#   `UM-1` — 본 workflow 의 **GHA 실행 관측 = [미실측]**. 로컬 성립과 GHA 성립은 별 사실이며
+#   Phase 2 첫 run 에서 관측한다. ★**미실행인 채로 P3 를 leg ③ 논리곱 항에 계상 금지.**
+#   `Q-E-R3` 잔여 = **canary 자신의 삭제** (본 workflow 는 자기 삭제를 막지 못한다).
+#   본 workflow 는 판정 채널 중성화의 **완전 봉인을 주장하지 않는다** — 재는 것은
+#   *"이 픽스처의 실패가 실패로 관측되는가"* 단일 명제다.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cfp2978-verdict-canary:
+    name: cfp2978-verdict-canary (L-CANARY — AC-13 leg ③ P3)
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps (pytest)
+        run: python -m pip install --quiet pytest
+
+      # ── P3 본 판정 ────────────────────────────────────────────────────────────
+      # 픽스처를 **실제 위치에서** 돌린다 — 그래야 `tests/scripts/conftest.py` 를 포함한
+      # 진짜 conftest 사슬이 적용되고, 그 층의 중성화가 사정거리 안에 들어온다.
+      - name: L-CANARY negative control (픽스처가 실패해야 GREEN)
+        run: |
+          set -euo pipefail
+          OUT="${RUNNER_TEMP}/canary_real.txt"
+          rc=0
+          python -m pytest tests/scripts/cfp2978_verdict_canary_fixture.py -q > "${OUT}" 2>&1 || rc=$?
+          cat "${OUT}"
+          echo "[cfp2978-verdict-canary] real-check pytest rc=${rc} (기대 1 = 픽스처 실패 = 판정 채널 정상)"
+
+          # ★RED 를 검출로 읽기 전에 사유를 확인한다 — rc 별 정체 분기.
+          #   rc=1 만이 "판정 채널 정상"이고, 나머지는 전부 **검출이 아니라** 다른 사건이다.
+          case "${rc}" in
+            1) : ;;
+            0)
+              echo "::error::[cfp2978-verdict-canary] P3 위반 — 의도적 실패 픽스처가 PASS 했다. 판정 채널(pytest 계층) 중성화 의심 = M-CANARY."
+              exit 1 ;;
+            5)
+              echo "::error::[cfp2978-verdict-canary] 픽스처 미수집 (rc=5). 검출이 아니라 canary 자신의 배선 결함 — 경로·파일명 확인."
+              exit 1 ;;
+            *)
+              echo "::error::[cfp2978-verdict-canary] pytest 비정상 종료 rc=${rc}. 검출이 아니라 실행 기반 결함 (수집 오류·내부 오류·사용법 오류)."
+              exit 1 ;;
+          esac
+
+          # 동일성 — rc 만 보면 **무관한 실패도 rc=1** 이라 "어떤 RED" 와 "그 RED" 가 구별되지 않는다.
+          # 요약줄 · 센티넬 리터럴 · 기대 node id 3중으로 못박는다.
+          grep -q '^1 failed' "${OUT}" || {
+            echo "::error::[cfp2978-verdict-canary] '1 failed' 요약줄 부재 — 실패 건수가 기대와 다르다."; exit 1; }
+          grep -q 'CFP2978-VERDICT-CANARY-MUST-FAIL' "${OUT}" || {
+            echo "::error::[cfp2978-verdict-canary] 센티넬 리터럴 부재 — 실패 정체가 canary 픽스처가 아니다."; exit 1; }
+          grep -q 'cfp2978_verdict_canary_fixture\.py::test_cfp2978_verdict_canary_must_fail' "${OUT}" || {
+            echo "::error::[cfp2978-verdict-canary] 기대 node id 부재 — 다른 테스트가 실패했다."; exit 1; }
+
+          echo "[cfp2978-verdict-canary] P3 GREEN — 판정 채널 liveness 확인 (그 픽스처가 그 사유로 실패)"
+
+      # ── 판별력 자기증명 (양성 대조) ──────────────────────────────────────────
+      # 위 step 은 "픽스처가 실패했다" 만 확인한다. 그것만으로는 **rc==1 판별이 실제로
+      # 뒤집히는지** 알 수 없다 — 무조건 통과하는 게이트도 앞 절반은 만족시킨다.
+      # ⇒ `M-CANARY` 를 격리 lab 에 실제로 주입해 픽스처가 **PASS 로 뒤집히는 것**을 관측한다.
+      #   뒤집히지 않으면 위 판별은 **hollow** 이므로 job 을 RED 로 만든다.
+      # repo 의 실 `conftest.py` 는 건드리지 않는다 (CI 작업본 오염 0) — lab 은 RUNNER_TEMP 소재.
+      - name: L-CANARY discriminating self-test (M-CANARY 주입 → 판별 뒤집힘 관측)
+        run: |
+          set -euo pipefail
+          LAB="${RUNNER_TEMP}/mcanary"
+          rm -rf "${LAB}"; mkdir -p "${LAB}"
+          cp tests/scripts/cfp2978_verdict_canary_fixture.py "${LAB}/"
+
+          # M-CANARY (§8.B 신 mutant 로스터 「(5) 런타임 1」) — conftest 계층 판정 채널 중성화.
+          # 보고 layer 를 가로채 실패를 통과로 바꾼다: 어떻게 실패했든(assert/raise/xfail 무관)
+          # 전부 흡수하므로 "판정 채널 중성화" 의 대표 변이로 성립한다.
+          cat > "${LAB}/conftest.py" <<'PY'
+          import pytest
+
+
+          @pytest.hookimpl(hookwrapper=True)
+          def pytest_runtest_makereport(item, call):
+              outcome = yield
+              rep = outcome.get_result()
+              if rep.outcome == "failed":
+                  rep.outcome = "passed"
+                  rep.longrepr = None
+          PY
+
+          OUT="${RUNNER_TEMP}/canary_mutant.txt"
+          rc=0
+          python -m pytest "${LAB}/cfp2978_verdict_canary_fixture.py" -q > "${OUT}" 2>&1 || rc=$?
+          cat "${OUT}"
+          echo "[cfp2978-verdict-canary] mutant-check pytest rc=${rc} (기대 0 = 중성화가 실패를 삼킴)"
+
+          if [ "${rc}" -ne 0 ]; then
+            echo "::error::[cfp2978-verdict-canary] 양성 대조 실패 — M-CANARY 주입에도 rc=${rc} (0 기대). 중성화 변이가 실효하지 않으므로 본 canary 의 rc==1 판별은 판별력이 실증되지 않았다 (hollow 의심)."
+            exit 1
+          fi
+          grep -q '^1 passed' "${OUT}" || {
+            echo "::error::[cfp2978-verdict-canary] 양성 대조 산출에 '1 passed' 부재 — 뒤집힘 정체 불명."; exit 1; }
+
+          echo "[cfp2978-verdict-canary] 양성 대조 GREEN — M-CANARY 주입 시 픽스처가 PASS 로 뒤집힌다 ⇒ 앞 step 의 rc==1 판별은 실제 판별력을 가진다 (양성 ∧ 음성 공존)"
