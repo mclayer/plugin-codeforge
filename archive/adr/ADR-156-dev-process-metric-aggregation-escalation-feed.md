@@ -52,7 +52,9 @@ A(#2687, ADR-155)가 `dev-process-event-v1` substrate(9번째 Tier-3 persistent 
 
 ### 근본 mismatch + 외부 정당성
 
-B 가 원하는 상관 차원(예: 결점을 발견한 리뷰어의 origin-lane, cycle-time 6-point subtype, §D-9 pattern 키 anchor_id/root_cause_class)의 상당수가 A 의 18-field index 에 **부재**하다 `[verified: append_dev_process_event.py:130-149]`. B 는 이 gap 을 재정의(A 침범)하지 않고 honest-degrade(근사·uncomputable-flag)로 흡수하며, 원할 시 A 계약 amendment 로 올린다(B 결정 아님).
+B 가 원하는 상관 차원(예: 결점을 발견한 리뷰어의 origin-lane, cycle-time 6-point subtype)의 상당수가 A index 에 **부재**하다 `[verified: append_dev_process_event.py _ROW_KEYS 정의부 — origin-lane/expected-lane/6-point subtype 키 0개 @ wrapper 28f773a69]`. B 는 이 gap 을 재정의(A 침범)하지 않고 honest-degrade(근사·uncomputable-flag)로 흡수하며, 원할 시 A 계약 amendment 로 올린다(B 결정 아님).
+
+★ **[철회됨 — 2026-08-19, CFP-2985 D-12]** 직전 판의 위 열거에는 `§D-9 pattern 키 anchor_id/root_cause_class` 가 부재 항목으로 들어 있었고 index 크기를 `18-field` 로 적었다. 둘 다 **더 이상 성립하지 않는다** — CFP-2985 D-12 가 `_ROW_KEYS` 를 18 → **20** 으로 확장하며 `root_cause_class`(enum CLOSED-6) · `anchor_id`(닫힌 형식 상관 위치) 를 말미 append 했다 `[verified: append_dev_process_event.py _ROW_KEYS 정의부 말미 2키 + --self-test 의 len(_ROW_KEYS) == 20 assert @ wrapper 28f773a69]`. 부재가 존치되는 항목(origin/expected-lane · 6-point subtype)만 위 문장에 남겼다.
 
 이 회로는 codeforge 가 이미 검증한 패턴 ADR-045 §D-9(cross-Story pattern_count ≥ 2 → ADR escalation)를 답습한다. 단 도메인이 disjoint 하다: ADR-045 = 개발 후 회고(retro), ADR-106 = 배포 후 운영(operational), **본 ADR = 개발 과정(dev-process)**. ADR-106 이 이미 §D-9 를 amendment 하지 않고 **NEW ADR 로 disjoint feed 를 추가**한 선례를 남겼다(§경계 disjoint 표로 명시, ADR-045 본문 무변경) `[verified: ADR-106:2,109,192-202]`. 본 ADR 이 3번째 disjoint 도메인을 동형으로 추가한다.
 
@@ -78,7 +80,7 @@ B 는 A `dev-process-event-v1` substrate 를 **read-only 소비**만 한다.
 | ② fixloop | fix_attempt_count(distinct fix_id) + fix_iteration_count(§10 재진입) 분리 | distinct fix_id 를 "iteration"으로 단일 표기 금지(과대집계) |
 | ③ defect-attribution + should-have-caught | detecting_lane×family×type + review-responsibility heuristic | origin/expected-lane substrate 부재 → advisory / unattributed → uncomputable / 기계 게이트 detection 불가 시 honest-degrade |
 | ④ selfref-recurrence | 동일 defect_id 재출현 + 4-tuple{family,type,ttd,detecting_lane} | defect_id=sha256(...) best-effort(normalized-location 무보장) / self-ref candidate(heuristic) ⊥ 일반 recurrence(기계) |
-| ⑤ trend + §D-9 feed | bucketed time-series(forecast 금지) + pattern_count | anchor_id/root_cause_class substrate 부재 → uncomputable-by-substrate PRIMARY(§결정 4) |
+| ⑤ trend + §D-9 feed | bucketed time-series(forecast 금지) + pattern_count | substrate 有 → computable 의무(uncomputable 이면 silent drop) / substrate 無 → uncomputable_missing_key + null 이 정직-null (CFP-2985 D-14 반전 후 2분할, §결정 4) |
 | ⑥ token-cost | spawn-event-v1 weighted 4-class cost + top-N concentration | 3-gap 미해소 → null + upstream_gap_flags / cache 1h-2× helper 미유도 → honest-null |
 
 **정직 천장 (ADR-119)**: exact-count/guaranteed-unique 주장 금지 — `query_with_stats()` 관측치(`rows_total`/`rows_deduped`/`duplicates_collapsed`) 상속 `[verified: query_dev_process_event.py:194-207]`. **"측정된 0(measured-0)" ≠ "미측정(dormant/empty)"** — stats 로 구분 표기(fabricated 0 금지). 인과 주장 금지("telemetry 가 결점 줄인다" 금지), 재발**률** = 측정치. (INV-B5)
@@ -93,9 +95,16 @@ B 는 A `dev-process-event-v1` substrate 를 **read-only 소비**만 한다.
 
 **★closure machinery 미복제 (ADR-106 divergence)**: ADR-106 §결정 4 는 무한 발산 방지 closure 3원칙(dedup / max-depth / escalate_user)을 정의한다. **B 는 이를 복제하지 않는다** — B 는 PASSIVE read-time feeder(pattern_count 산출 + N=2 eligibility 신호만), auto-executing loop(cron → 자동 Issue → 자동 Epic chain)가 아니다. dedup/max-depth 는 self-executing loop 의 발산 억제 기제이므로 producer-only feeder 에 불필요하다. escalation loop 의 발산 억제·인간 게이트 = PMOAgent §D-9(decider) 소관.
 
-### §결정 4 — AC-19 uncomputable = §D-9 feed 의 PRIMARY 경로 (정직 프레이밍)
+### §결정 4 — AC-19 §D-9 feed 정직 프레이밍 (substrate 상태 2분할 — CFP-2985 D-12/D-14 로 PRIMARY 경로 반전)
 
-§D-9 pattern 키 `anchor_id`/`root_cause_class` 는 A `_ROW_KEYS` 18-field 에 **부재** `[verified: append_dev_process_event.py:130-149]`. 따라서 `pattern_count=null` + `pattern_status='uncomputable_missing_key'` 가 **DEFAULT 경로**(edge 가 아님)이고 escalation feed 는 생성되지 않는다. 설계는 §D-9 feed 를 "producer-defined, currently uncomputable-by-substrate" 로 정직하게 프레이밍한다 — feed schema 는 landed(schema-pin, Change Plan §4.7) 이나 실 pattern_count 는 substrate 가 키를 제공할 때(A amendment)까지 null.
+§D-9 pattern 키 `anchor_id`/`root_cause_class` 는 A `_ROW_KEYS` 에 **실재**한다 — CFP-2985 D-12 가 `_ROW_KEYS` 를 18 → **20** 으로 확장하며 두 키를 말미 append 했다 `[verified: append_dev_process_event.py _ROW_KEYS 정의부 말미 2키 + --self-test 의 len(_ROW_KEYS) == 20 assert @ wrapper 28f773a69]`. 따라서 §D-9 산출 경로는 **substrate 상태에 따른 2분할**이다(CFP-2985 D-14 반전, AC-19):
+
+- **substrate 有**(`root_cause_distribution` non-empty) → `pattern_count` **computable 의무**. uncomputable 을 내면 관측 가능한 것을 산출하지 않은 **silent drop** = 위반.
+- **substrate 無**(빈 분포) → `pattern_count=null` + `pattern_status='uncomputable_missing_key'` 가 정직-null. 값을 내면 없는 substrate 로 지어낸 **fabricate** = 위반 (negative-domain 대조군 — 반전 전 검출력 그대로 보존).
+
+설계의 정직-프레이밍 원칙은 유지된다 — 바뀐 것은 원칙이 아니라 **경험적 전제**(키 부재)다. feed schema 는 landed(schema-pin, Change Plan §4.7).
+
+★ **[철회됨 — 2026-08-19, CFP-2985 D-12/D-14]** 본 절의 직전 문면은 "`pattern_count=null` + `pattern_status='uncomputable_missing_key'` 가 **DEFAULT 경로**(edge 가 아님)이고 escalation feed 는 생성되지 않는다 / 실 pattern_count 는 substrate 가 키를 제공할 때(A amendment)까지 null" 이었다. 그 A 계약 amendment 가 **실제로 착지**했으므로(dev-process-event-v1 v1.1 — §2 index 20-row) 전건이 성립하지 않는다. 본 철회는 §결정 4 의 정직-프레이밍 결정을 **약화하지 않는다** — 검사 방향이 단방향(uncomputable 강제)에서 양방향(silent drop ∧ fabricate 동시 금지)으로 **강화**됐다(ADR-058 §결정 5 ratchet 방향 정합).
 
 ### §결정 5 — 신규 formal 계약 미신설 + de-facto KPI schema-pin + 0-API/measurement-tier 상속
 
@@ -116,7 +125,7 @@ B 는 A `dev-process-event-v1` substrate 를 **read-only 소비**만 한다.
 
 ### 부정 / trade-off
 
-- **substrate gap 상 정밀도 한계** — cycle-time coarse residency(6-point 부재) / should-have-caught advisory(origin-lane 부재) / §D-9 uncomputable-by-substrate(anchor_id/root_cause_class 부재) / token-cost 3-gap(spawn-event-v1). 정밀화는 A 계약 amendment(B 귀속 아님) 또는 upstream(spawn-event-v1 3-gap) 해소 필요.
+- **substrate gap 상 정밀도 한계** — cycle-time coarse residency(6-point 부재) / should-have-caught advisory(origin-lane 부재) / token-cost 3-gap(spawn-event-v1). 정밀화는 A 계약 amendment(B 귀속 아님) 또는 upstream(spawn-event-v1 3-gap) 해소 필요. ★ **§D-9 축(anchor_id/root_cause_class)은 본 한계에서 해제됨 (2026-08-19, CFP-2985 D-12)** — 여기서 말한 "A 계약 amendment" 가 곧 `_ROW_KEYS` 18 → 20 확장으로 착지했다.
 - **dormant 실측 부재** — capture 미배선(landing ≠ activation) 상태에선 B 산출 = honest-zero snapshot. 실 가치 = activation 이후. 이는 A 의 "정의는 landed, 실측은 defer" 자세 상속.
 - **declaration-only Phase 1** — 본 ADR = 집계 정책 정의 layer. 실 mechanism(aggregate_dev_process_event.py + 6 compute fn + KPI dual-file write + lint/self-test) = Phase 2 carrier(`mechanical_enforcement_actions: []`). pattern_count ≥ 2 recurrence 시 follow-up CFP MUST promote to mechanical lint(ADR-084 precedent).
 
@@ -128,7 +137,7 @@ B 는 A `dev-process-event-v1` substrate 를 **read-only 소비**만 한다.
 | EC-2 | malformed-only ledger | malformed_skipped + honesty_note 보존, 정상 row 로만 집계(empty 와 상태 구분) |
 | EC-3 | 6-point subtype 부재 | residency 로 정직 표기, time-to-PASS over-label 금지 |
 | EC-4 | negative/reverse-duration | duration 집계 EXCLUDE + negative_duration_count/clock_anomaly_count(§7.4.3 clock) |
-| EC-5 | anchor_id/root_cause_class 부재 | pattern_count=null + uncomputable_missing_key(PRIMARY 경로, §결정 4) |
+| EC-5 | anchor_id/root_cause_class **값** 부재 (키는 실재 — CFP-2985 D-12) | pattern_count=null + uncomputable_missing_key. ★ D-14 반전 후 **PRIMARY 경로 아님** — 값 실재 시 computable 이 의무이고 본 EC 는 negative-domain 대조군이다(§결정 4) |
 | EC-6 | token-cost 3-gap 미해소 | 파생 null + upstream_gap_flags / cache 1h-2× helper 미유도 → honest-null |
 | EC-7 | consumer_scope missing | scope_unknown bucket / §D-9 pattern_count = within-scope only |
 | EC-8 | self-test tautology | 독립 fixture 기대값 oracle(자기 계산값 self-match 금지, CFP-2673 drift-0 선례 답습 금지) |
@@ -199,3 +208,4 @@ N/A — permanent policy
 | 날짜 (KST) | CFP | 변경 |
 |---|---|---|
 | 2026-07-15 | CFP-2688 | 최초 작성 — dev-process metric aggregation 정책 (5 결정: §1 B=집계 ONLY A⊥C 경계 INV-B1/B2/B3 + §2 6 지표 산식 + honest-degrade 천장 INV-B5 + §3 §D-9 dev-domain feed EXTEND producer↔decider 분리 closure machinery 미복제 + §4 AC-19 uncomputable PRIMARY 경로 + §5 신규 formal 계약 미신설 de-facto KPI schema-pin 0-API/measurement-tier 상속). 3-domain disjoint 표(retro[ADR-045]/operational[ADR-106]/dev-process[ADR-156]) — ADR-045/ADR-106 본문 무변경 invariant. ADR-106 NEW ADR precedent 동형(closure machinery 미복제 divergence). ArchitectAgent chief author direct write. Epic #2686 Story B. 번호 156 = GH_TOKEN 부재로 OCC atomic claim primitive 미실행 → ADR-133 §결정4 fallback(fresh git ls-tree 실측): `git fetch origin main` + `git ls-tree --name-only origin/main archive/adr/` numeric max = ADR-155(140~148·150~155 존재, 149 orphan gap 존치, 156 collision-free) 2026-07-15 KST origin/main f5cd56a6. CFP-2680 row 153 / CFP-2684 row 154 / CFP-2687 row 155 동일 fallback 선례. dual-key 3-leg 정합: filename ADR-156-dev-process-metric-aggregation-escalation-feed.md ∧ frontmatter adr_number: 156 ∧ RESERVATION row 156. 신규 required context 0(Phase 1 doc/ADR only, branch-protection 7-tuple 무변경) / inter-plugin 계약 무변경(신규 formal 계약 미신설, de-facto KPI schema-pin) / 신규 category 0(governance 재사용). ADR-058 §결정 5 강화(ratchet) 방향, sunset_justification N/A. |
+| 2026-08-19 | CFP-2985 | ★ **문면 정정 (결정 변경 0 · amendment 미신설)** — §결정 4 의 **경험적 전제** 철회·정정. CFP-2985 D-12 가 A `_ROW_KEYS` 를 18 → 20 으로 확장(`root_cause_class`·`anchor_id` 말미 append)하고 D-14 가 I4 게이트 방향을 반전시켜, "anchor_id/root_cause_class substrate 부재 → uncomputable = PRIMARY 경로" 라는 **현재형 단정이 거짓**이 됐다(ADR-181 INV-D — 성립하지 않는 주장을 문면에 남기지 않는다). 정정 site 6 = §컨텍스트 동인 · §결정 2 지표표 ⑤ row · §결정 4 heading · §결정 4 본문 · 결과/부정 substrate gap 항 · EC-5. 정직-프레이밍 **결정 자체는 유지**되고 검사 방향만 단방향 → 양방향(silent drop ∧ fabricate)으로 **강화**(ADR-058 §결정 5 ratchet 정합, 약화 evidence 의무 미발동) → 형식 amendment 미신설(frontmatter amendment_log entry 0 유지, ADR-167 임계 무소모). `[verified: append_dev_process_event.py _ROW_KEYS 정의부 20키 + --self-test 의 len(_ROW_KEYS) == 20 assert @ wrapper 28f773a69]` |

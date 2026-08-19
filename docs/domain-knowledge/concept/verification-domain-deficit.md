@@ -4,14 +4,14 @@ type: domain-knowledge
 slug: verification-domain-deficit
 title: Verification-domain deficit (검증 정의역 결손 — 처방 정의역 P ⊋ 검증 정의역 V, D = P \ V 가 다음 회차의 결함이 된다)
 status: Active
-updated: 2026-08-15
+updated: 2026-08-19
 carrier_story: CFP-2985
 related_adrs:
   - ADR-067  # fix-ledger implementability escalation — affected_scope / affected_paths_with_depth 도입 (선행 부분시도, warning-tier)
   - ADR-070  # verify-before-trust — FIX close 시점 적용, replay_verdict 3-상태 disposition
   - ADR-119  # research-before-claims Amd 2 — "수정됨 = 반증 후 단언" close-time wire
-  - ADR-155  # dev-process observability substrate — _ROW_KEYS 18-field allow-list (집계 기질)
-  - ADR-156  # metric aggregation escalation feed — root_cause_class uncomputable_missing_key DEFAULT 경로
+  - ADR-155  # dev-process observability substrate — _ROW_KEYS closed allow-list (집계 기질). ★ CFP-2985 D-12 로 18 → 20 field
+  - ADR-156  # metric aggregation escalation feed — root_cause_class pattern feed. ★ CFP-2985 D-14 로 uncomputable DEFAULT → substrate 2분할 반전
 related_concepts:
   - vacuous-pass                             # 퇴화 사례 (V = ∅). 본 개념은 진부분집합 사례 (∅ ⊊ V ⊊ P)
   - mutation-based-hollow-gate-detection     # 게이트가 "무엇을 검증하는가" 를 반증 — 본 개념의 detector 축 자매
@@ -162,7 +162,9 @@ variant analysis 가 산업에서 작동하는 이유는 "비슷한 걸 찾아�
 
 ### VD-6: 집계 기질(substrate)이 없으면 필드는 존재해도 데이터가 되지 않는다
 
-codeforge 의 dev-process-event 원장은 **content-blind allow-list** 다 — `scripts/lib/append_dev_process_event.py:391` 는 `_ROW_KEYS` 밖 kwarg 을 **drop** 한다. 그리고 `:514` 는 `len(_ROW_KEYS) == 18` 을 self-test 로 고정한다. 계약 문서 `dev-process-event-v1.md:95` 는 §2 필드표와 `_ROW_KEYS` 의 byte-consistency 를 요구하고 born-drift 를 FAIL 로 규정한다.
+codeforge 의 dev-process-event 원장은 **content-blind allow-list** 다 — `scripts/lib/append_dev_process_event.py` 의 `append()` 는 `_ROW_KEYS` 밖 kwarg 을 **drop** 한다(docstring "allow-list(_ROW_KEYS) 밖 kwarg 은 **drop**"). 그리고 같은 파일 `--self-test` 의 parity guard 가 `len(_ROW_KEYS)` 를 **하드 정수로 고정**한다. 계약 문서 `dev-process-event-v1.md` §2 말미 note("Phase 2 = doc↔code parity SSOT")는 §2 필드표와 `_ROW_KEYS` 의 byte-consistency 를 요구하고 born-drift 를 FAIL 로 규정한다.
+
+★ **[정정 — 2026-08-19, CFP-2985 D-12]** 직전 판은 위 세 앵커를 **행 번호 리터럴**(`:391` drop / `:514` `len(_ROW_KEYS) == 18` / `dev-process-event-v1.md:95`)로 적었다. 그 좌표는 전건 이동했고 고정값 `18` 은 **거짓이 됐다** — CFP-2985 D-12 가 `_ROW_KEYS` 를 18 → **20** 으로 확장했다 `[verified: append_dev_process_event.py _ROW_KEYS 정의부 20키 + --self-test 의 len(_ROW_KEYS) == 20 assert @ wrapper 28f773a69]`. 본 판은 VD-5 를 자기적용해 행 번호 대신 **내용 앵커**(함수·docstring·note 제목)로 지목한다 — 편집마다 밀리는 좌표를 정본으로 두면 이 문단 자신이 다음 회차의 `D` 원소가 된다.
 
 **함의 (born-broken 함정)**: Story 문서에 원인 값을 아무리 성실히 적어도, 그 키가 `_ROW_KEYS` 에 없으면 원장 계층에서 **조용히 버려진다**. "필드를 채웠다" 와 "집계된다" 는 별개 명제이며, 후자는 계약 amendment + parity self-test 갱신 + 문서표 동반 수정이라는 확정 cascade 를 요구한다. ADR-164 는 정확히 이 cascade 비용 때문에 상관 ID 추가안을 **기각한 선례**다 (`ADR-164:75`).
 
@@ -208,7 +210,7 @@ codeforge 의 dev-process-event 원장은 **content-blind allow-list** 다 — `
 | [ADR-119](../../../archive/adr/ADR-119-research-before-claims.md) | §결정 10② "수정됨 = 반증 후 단언" — 반증은 규정하나 **반증의 정의역은 미규정**. 본 개념이 그 공백 |
 | [ADR-070](../../../archive/adr/ADR-070-codex-verify-before-trust.md) | verify-before-trust. amendment 13건 전건 `mechanical_enforcement_actions: []` = 선언-only 계보 반면교사 |
 | [ADR-155](../../../archive/adr/ADR-155-dev-process-observability-substrate.md) | `_ROW_KEYS` closed allow-list — 집계 기질. 키 부재 시 silent drop(VD-6)의 실물 지점 |
-| [ADR-156](../../../archive/adr/ADR-156-dev-process-metric-aggregation-escalation-feed.md) | 집계 회로. `pattern_status = uncomputable_missing_key` 를 **정직-null 로 보고 중** — 결손 공개의 모범 |
+| 집계 회로. substrate **無** 일 때 `pattern_status = uncomputable_missing_key` + null 을 **정직-null 로 보고** — 결손 공개의 모범. ★ CFP-2985 D-12/D-14 로 **키 부재 → 값 부재**로 결손 층위가 이동했고(키는 실재) 검사 방향도 substrate 2분할로 반전 |
 | [ADR-151](../../../archive/adr/ADR-151-selftest-execution-liveness-inventory.md) | §결정 7 `presence ≠ truth` — 본 문서 전 규칙의 천장 규범 |
 
 ## 변경 이력
@@ -217,3 +219,4 @@ codeforge 의 dev-process-event 원장은 **content-blind allow-list** 다 — `
 |---|---|---|
 | 2026-08-15 | 최초 작성 — 정의 · 외부 선행 개념 매핑 · 핵심 규칙 VD-1~VD-6 · 안티패턴 · 자기적용 | CFP-2985 요구사항 lane |
 | 2026-08-16 | `## 컨텍스트` · `## 경계` · `## 관련 ADR` · `## 변경 이력` 신설 (doc section schema STRICT 충족) + 규범 SSOT = ADR-181 명시. **개념 내용 변경 0** — 섹션 골격과 경계 선언만 추가 | CFP-2985 설계 lane (ArchitectAgent) |
+| 2026-08-19 | ★ **문면 정정** — CFP-2985 D-12 의 `_ROW_KEYS` 18 → 20 확장으로 거짓이 된 현재형 단정 4 site 정정 (frontmatter ADR-155/ADR-156 주석 · VD-6 본문의 행번호·`18` 리터럴 · 관련 ADR 표 ADR-156 row). VD-6 의 **명제는 무변경** — 좌표를 행번호에서 내용 앵커로 바꾸고 고정값 `18` 을 제거했다(VD-5 자기적용). **개념 정의 · P/V/D 형식화 · 안티패턴 · 경계 무접촉** | CFP-2985 구현 lane |
