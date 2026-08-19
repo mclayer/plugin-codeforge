@@ -87,6 +87,7 @@ Closes #<Story Issue 번호>
 -->
 
 - 요구사항: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (story=<KEY>, iteration=N, agent=RequirementsPLAgent)
+- 요구사항-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (gate:requirements-review-pass)
 - 설계: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (...)
 - 설계-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (gate:design-review-pass)
 - 구현: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (...)

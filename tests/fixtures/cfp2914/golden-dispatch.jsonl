@@ -1,0 +1,48 @@
+# Provenance: Synthetic fixture for CFP-2914 Phase 2 test suite
+# Generated: 2026-08-13 07:08:55 KST
+# Purpose: AC-1 codispatch denominator axes + AC-12a effective-3-state ladder
+#
+# Schema version: spawn-event-v1 (§2.1 contract)
+# Physical line count: 47 (20 comment/metadata + 27 JSON data rows; synthetic, reduced from real 139)
+# Key field preservation: duration_ms, tool_call_count, termination_cause, outcome, timestamp, story_key, lane_label, agent_type
+# Sensitive field removal: None (no credentials in test data)
+# Real data shapes preserved (CP §8.7):
+#   - duration_ms null: 3 rows
+#   - unattributed: 0 rows (intentional minimal)
+#   - (normal, success, tool_call_count=0): 2 rows (rules discriminator)
+#   - agent_type "claude": 0 rows (strict peer identity)
+#
+# Logical coverage (CFP-2869/2875/2902 firsthand reference axis):
+#   - Multiple stories (CFP-STORY-A, CFP-STORY-B) for cross-story grouping
+#   - Multiple lanes (구현, 설계-리뷰, 구현-리뷰) for lane-level census
+#   - Mixed peer/non-peer agents for strict/loose enumeration
+#   - Co-dispatch window violations (>60s) and conformances
+#   - Three-state ladder discriminators (zero_output, tool_call_count 0, null, partial outcome)
+
+{"event_id":"ev-001","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:00:00Z","duration_ms":5000,"tool_call_count":2,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"DeveloperAgent"}
+{"event_id":"ev-002","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:00:10Z","duration_ms":6000,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"QADeveloperAgent"}
+{"event_id":"ev-003","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:01:30Z","duration_ms":4000,"tool_call_count":0,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"CodeReviewPLAgent"}
+{"event_id":"ev-004","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:02:00Z","duration_ms":3000,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"ClaudeReviewAgent"}
+{"event_id":"ev-005","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:02:15Z","duration_ms":null,"tool_call_count":0,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-006","schema_version":"spawn-event-v1","story_key":"CFP-STORY-A","timestamp":"2026-08-13T00:03:00Z","duration_ms":2000,"tool_call_count":0,"outcome":"partial","termination_cause":"normal","lane_label":"설계-리뷰","agent_type":"DesignReviewPLAgent"}
+{"event_id":"ev-007","schema_version":"spawn-event-v1","story_key":"CFP-STORY-B","timestamp":"2026-08-13T06:00:00Z","duration_ms":8000,"tool_call_count":3,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"DeveloperAgent"}
+{"event_id":"ev-008","schema_version":"spawn-event-v1","story_key":"CFP-STORY-B","timestamp":"2026-08-13T06:00:05Z","duration_ms":7500,"tool_call_count":2,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"InfraEngineerAgent"}
+{"event_id":"ev-009","schema_version":"spawn-event-v1","story_key":"CFP-STORY-B","timestamp":"2026-08-13T06:01:10Z","duration_ms":5000,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"ClaudeReviewAgent"}
+{"event_id":"ev-010","schema_version":"spawn-event-v1","story_key":"CFP-STORY-B","timestamp":"2026-08-13T06:01:20Z","duration_ms":null,"tool_call_count":null,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-011","schema_version":"spawn-event-v1","story_key":"CFP-STORY-B","timestamp":"2026-08-13T06:02:00Z","duration_ms":3000,"tool_call_count":0,"outcome":"success","termination_cause":"zero_output","lane_label":"설계-리뷰","agent_type":"DesignReviewPLAgent"}
+{"event_id":"ev-012","schema_version":"spawn-event-v1","story_key":"CFP-STORY-C","timestamp":"2026-08-13T12:00:00Z","duration_ms":10000,"tool_call_count":5,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"DeveloperPLAgent"}
+{"event_id":"ev-013","schema_version":"spawn-event-v1","story_key":"CFP-STORY-C","timestamp":"2026-08-13T12:00:08Z","duration_ms":9800,"tool_call_count":4,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"DataEngineerAgent"}
+{"event_id":"ev-014","schema_version":"spawn-event-v1","story_key":"CFP-STORY-C","timestamp":"2026-08-13T12:00:15Z","duration_ms":9500,"tool_call_count":3,"outcome":"partial","termination_cause":"normal","lane_label":"구현","agent_type":"InfraEngineerAgent"}
+{"event_id":"ev-015","schema_version":"spawn-event-v1","story_key":"CFP-STORY-C","timestamp":"2026-08-13T12:01:30Z","duration_ms":6000,"tool_call_count":2,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"ClaudeReviewAgent"}
+{"event_id":"ev-016","schema_version":"spawn-event-v1","story_key":"CFP-STORY-C","timestamp":"2026-08-13T12:01:40Z","duration_ms":5800,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-017","schema_version":"spawn-event-v1","story_key":"CFP-STORY-D","timestamp":"2026-08-13T18:00:00Z","duration_ms":2000,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"설계-리뷰","agent_type":"ClaudeReviewAgent"}
+{"event_id":"ev-018","schema_version":"spawn-event-v1","story_key":"CFP-STORY-D","timestamp":"2026-08-13T18:00:50Z","duration_ms":1900,"tool_call_count":0,"outcome":"success","termination_cause":"normal","lane_label":"설계-리뷰","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-019","schema_version":"spawn-event-v1","story_key":"CFP-STORY-E","timestamp":"2026-08-13T20:00:00Z","duration_ms":37677,"tool_call_count":0,"outcome":"success","termination_cause":"normal","lane_label":"보안-테스트","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-020","schema_version":"spawn-event-v1","story_key":"CFP-STORY-E","timestamp":"2026-08-13T20:00:30Z","duration_ms":null,"tool_call_count":null,"outcome":"partial","termination_cause":"zero_output","lane_label":"보안-테스트","agent_type":"ClaudeReviewAgent"}
+{"event_id":"ev-021","schema_version":"spawn-event-v1","story_key":"CFP-STORY-F","timestamp":"2026-08-13T22:00:00Z","duration_ms":4000,"tool_call_count":2,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"DeveloperAgent"}
+{"event_id":"ev-022","schema_version":"spawn-event-v1","story_key":"CFP-STORY-F","timestamp":"2026-08-13T22:00:45Z","duration_ms":null,"tool_call_count":null,"outcome":"success","termination_cause":"normal","lane_label":"구현","agent_type":"QADeveloperAgent"}
+{"event_id":"ev-023","schema_version":"spawn-event-v1","story_key":"CFP-STORY-F","timestamp":"2026-08-13T22:01:10Z","duration_ms":2500,"tool_call_count":1,"outcome":"partial","termination_cause":"normal","lane_label":"구현-리뷰","agent_type":"CodexReviewAgent"}
+{"event_id":"ev-024","schema_version":"spawn-event-v1","story_key":"CFP-STORY-G","timestamp":"2026-08-13T23:59:00Z","duration_ms":1000,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"요구사항","agent_type":"RequirementsAnalystAgent"}
+{"event_id":"ev-025","schema_version":"spawn-event-v1","story_key":"CFP-STORY-G","timestamp":"2026-08-14T00:00:30Z","duration_ms":900,"tool_call_count":0,"outcome":"success","termination_cause":"normal","lane_label":"요구사항","agent_type":"DomainAgent"}
+{"event_id":"ev-026","schema_version":"spawn-event-v1","story_key":"CFP-STORY-H","timestamp":"2026-08-14T02:00:00Z","duration_ms":3000,"tool_call_count":0,"outcome":"partial","termination_cause":"normal","lane_label":"설계","agent_type":"ArchitectAgent"}
+{"event_id":"ev-027","schema_version":"spawn-event-v1","story_key":"CFP-STORY-H","timestamp":"2026-08-14T02:00:05Z","duration_ms":2900,"tool_call_count":1,"outcome":"success","termination_cause":"normal","lane_label":"설계","agent_type":"RefactorAgent"}

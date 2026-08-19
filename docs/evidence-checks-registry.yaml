@@ -107,6 +107,17 @@ entries:
       framework / promotion gate input / lint warning condition 모두 무관 (description-only narrative).
       CFP-509 schema v1.2 (ADR-060 Amendment 6) 에 `recurrence:` field 정식 도입 — 본 entry 는
       schema-level count: 2 보유 (CFP-500 FIX-5 + CFP-451 transient 2회 historical evidence).
+
+      detect_command ↔ workflow 결속 이행 (CFP-2914): 본 entry 는 `detect_command`(bash
+      scripts/check-lane-evidence.sh) 와 `workflow`(.github/workflows/lane-evidence-check.yml) 를
+      한 쌍으로 선언해 왔으나, **그 둘은 실제로 같은 것을 실행하지 않았다** — CFP-2914 직전 HEAD 실측상
+      workflow 는 `.github/scripts/check-lane-evidence-block.mjs`(PR body 블록 presence·중복 heading
+      검사)만 실행했고, `detect_command` 의 bash 스크립트(Story §14 row + parallelization timing 검사)를
+      호출하는 step 은 **부재**했다. workflow 자신의 주석이 그 분리를 명시한다("lint script 별도 —
+      scripts/check-lane-evidence.sh") — 즉 `detect_command` 는 로컬 실행 전용이었고 CI 도달 경로가 없었다.
+      CFP-2914 §5.2 행 #2 가 workflow 에 bash step 을 신설해 **이 결속을 처음 이행**한다.
+      본 registry 편집은 그 사실의 **서술 갱신**이며, 배선 실물 확인은 같은 PR 의 workflow diff 소관이다
+      (신규 entry 신설 0 · tier `warning` 유지 — 신규 check 는 warning 출생, C-7).
     detect_command: bash scripts/check-lane-evidence.sh
     workflow: .github/workflows/lane-evidence-check.yml
     current_tier: warning            # manifest 미부착 — Phase 2 backfill 시점 정합 (§결정 13 표)

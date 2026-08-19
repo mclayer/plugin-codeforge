@@ -30,10 +30,25 @@
 #     docs/inter-plugin-contracts/gate-lane-map-v1.yaml 소비 (병렬 table 금지 — phase-gate-mergeable.yml
 #     lanePrefixForGate 와 동일 canonical datum). warning-tier (Check 1-5 패턴 fail-counted, local-only).
 #
+# CFP-2914 (AC-2a) review-peer co-dispatch 관측 leg 신설:
+#   check_peer_codispatch() — 리뷰 4-lane (요구사항-리뷰 / 설계-리뷰 / 구현-리뷰 / 보안-테스트) 에서
+#   ClaudeReviewAgent / CodexReviewAgent 2 peer 가 같은 (lane, iteration) 그룹에 60초 내로 개시
+#   선언됐는지 관측. 산출 성격 = 관측 채널(로그 산출) — 산출은 로그뿐이다 (warning-tier · FAIL 미계상 ·
+#   exit code 무변경 · merge 영향 0 · 전 경로 return 0).
+#   ★ 설계 leg (check_parallelization) 는 무손상 존치 — 내부 분기 추가가 아니라 형제 함수 신설이다
+#     (설계 leg 회귀 표면 0 · 출력 bit-identical 보존).
+#   ★ 비대칭 은폐 금지 (정직 문면): 본 Story 는 peer leg 만 2축 키잉(신원·그룹화)으로 정정하고,
+#     설계 leg 는 같은 그룹화 결함(서로 다른 iteration 의 row 를 한 그룹으로 합침)을 보유한 채
+#     존치한다. 두 leg 의 판정 품질은 비대칭이며 이 사실을 지운 채 "관측 배선을 복원했다" 로
+#     요약하면 over-claim 이다. (관찰됨 · 미조치 — 설계 leg 수정은 출력 bit-identical 보존 의무와
+#     정면 충돌하고, timing 분기의 owner 는 ADR-044 §결정 5 로 본 Story scope 밖이다.)
+#   RF-3: 두 leg 공유 측정 술어 _evaluate_spawn_timing() + 임계 상수 SPAWN_TIMING_THRESHOLD_S
+#     단일 정의 site 추출 (임계값이 두 곳에 하드코딩되면 drift).
+#
 # Usage:
 #   bash scripts/check-lane-evidence.sh [--story <path>] [--pr <number>] [--strict] [--quiet]
 #                                        [--check-parallelization]
-#                                        [--pr-labels-file <f>] [--pr-block-file <f>]  # CFP-2652 gap c self-test seam
+#                                        [--pr-labels-file <f>] [--pr-block-file <f>]  # self-test seam ∧ CI production 입력
 #
 # Defaults:
 #   --story: docs/stories/<KEY>.md (auto-detect from git branch `cfp-N-...`)
@@ -53,8 +68,13 @@ STORY_PATH=""
 PR_NUMBER=""
 CHECK_PARALLELIZATION=0
 EXEMPT_SECTION_14=0   # ADR-031 Amendment 2 (CFP-2270): wrapper-self dogfood §14 면제 플래그
-# CFP-2652 gap (c): test-injection seam — gh fetch 대신 파일에서 PR labels/block 주입 (self-test 용).
-#   미설정 시 gh CLI 경로(production) 사용. label↔block write-back Check 7 의 discriminating self-test 지원.
+# --pr-labels-file / --pr-block-file: gh fetch 대신 파일에서 PR labels/block 주입. 미설정 시 gh CLI 경로.
+#   CFP-2652 gap (c) 도입 시점에는 self-test 전용 injection seam 이었다 (label↔block write-back Check 7 의
+#   discriminating self-test 지원).
+#   ★ CFP-2914 (AC-5) 정정 — 현재는 self-test seam 이자 **production 입력 경로**다:
+#     .github/workflows/lane-evidence-check.yml 의 bash step 이 PR body·labels 를 $RUNNER_TEMP 파일로
+#     떨어뜨린 뒤 이 두 인자로 주입한다 (스크립트 인자 직접 보간 0). "self-test 용" 단독 서술은 실재와
+#     불일치이므로 폐기한다 (미정정 시 declared-not-bound 를 본 Story 안에서 재생산).
 PR_LABELS_FILE=""
 PR_BLOCK_FILE=""
 
@@ -65,8 +85,8 @@ while [ $# -gt 0 ]; do
         --story) STORY_PATH="$2"; shift 2 ;;
         --pr) PR_NUMBER="$2"; shift 2 ;;
         --check-parallelization) CHECK_PARALLELIZATION=1; shift ;;
-        --pr-labels-file) PR_LABELS_FILE="$2"; shift 2 ;;   # CFP-2652 gap c self-test seam
-        --pr-block-file) PR_BLOCK_FILE="$2"; shift 2 ;;     # CFP-2652 gap c self-test seam
+        --pr-labels-file) PR_LABELS_FILE="$2"; shift 2 ;;   # self-test seam ∧ CI production 입력 (CFP-2914)
+        --pr-block-file) PR_BLOCK_FILE="$2"; shift 2 ;;     # self-test seam ∧ CI production 입력 (CFP-2914)
         -h|--help)
             sed -n '/^# check-lane-evidence/,/^# Effective date/p' "$0" | sed 's/^# \?//'
             exit 0
@@ -80,6 +100,20 @@ log_err() { printf '%s\n' "$1" >&2; }
 
 # Lane names (한국어 8종 — CFP-2326 / ADR-125: 요구사항-리뷰 9번째 lane 추가)
 declare -a LANES=("요구사항" "요구사항-리뷰" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트")
+
+# ── CFP-2914 RF-3: 두 leg 가 공유하는 유일 임계 상수 — 단일 정의 site ────────────────
+#   설계 leg (check_parallelization) 와 peer leg (check_peer_codispatch) 가 이 상수 하나만 본다.
+#   리터럴 60 을 다른 곳에 다시 적으면 그 즉시 drift 표면이 생긴다 (메시지 문자열 포함 — 아래
+#   설계 leg 메시지도 리터럴이 아니라 이 상수를 보간한다. 보간 결과는 byte 동일하므로 설계 leg
+#   출력 bit-identical 은 무손상).
+readonly SPAWN_TIMING_THRESHOLD_S=60
+
+# CFP-2914 §3.3.4.2 규칙 1 — peer 리뷰 대상 lane closed-set. 파일 내부 1곳, 정확 일치 lookup.
+#   `*리뷰*` substring 금지: 그 실패 양식이 '보안-테스트' 그룹을 통째로 누락시킨 전례를 낳았다.
+PEER_REVIEW_LANES=("요구사항-리뷰" "설계-리뷰" "구현-리뷰" "보안-테스트")
+
+# CFP-2914 §3.3.4.2 규칙 2 — peer 신원 closed-set. `agent` 선두 토큰 정확 일치 대상.
+PEER_AGENT_IDS=("ClaudeReviewAgent" "CodexReviewAgent")
 
 # Auto-detect story path from branch
 auto_detect_story() {
@@ -274,6 +308,92 @@ extract_pr_lanes() {
     printf '%s' "$block" | grep -E '^- ' | sed -E 's/^-[[:space:]]*([^:]+):.*/\1/' | tr -d ' ' | sort -u
 }
 
+# ── CFP-2914 RF-3 — 두 leg 공유 **측정** 술어 ──────────────────────────────────────────
+# _evaluate_spawn_timing <expected_min_rows> <row_count> <valid_ts_count> <ts_array_name>
+#
+#   측정만 수행한다. 로그 0줄 · 판정 0건 · 문면 0건 · 항상 return 0.
+#   공유하는 것은 측정(state + diff + 임계 비교)이고 공유하지 않는 것은 판정과 문면이다 —
+#   같은 상태라도 두 leg 에서 무게가 다르기 때문이다 (설계 leg 의 below_expected = advisory
+#   WARN / peer leg 의 below_expected = group-level '판정 불가' 라는 1급 산출).
+#   ★ 문면을 이 술어 안에 넣으면 설계 leg 출력에 새 문장이 섞여 '설계 leg 출력 bit-identical'
+#     이 즉시 깨진다. 문면은 전적으로 caller 소유다.
+#
+#   ★ 입력 전제 (caller 책임 — 본 함수는 검증하지 않는다):
+#     row_count / valid_ts_count / ts_array 는 caller 가 이미 필터를 통과시킨 값이다
+#     (peer leg = lane 정확일치 ∧ agent 선두토큰 정확일치 ∧ 동일 iteration).
+#     본 함수는 "몇 개를 셌는가" 를 묻지 않고 "센 것들이 임계 안에 있는가" 만 잰다.
+#     caller 가 필터를 빠뜨려도 본 함수는 그 사실을 알 수 없다.
+#
+#   out-global (호출 직후 읽기). 접두 SPAWN_TIMING_ 강제 — 진단 leg 의 실효 3-상태 enum
+#   (EFFECTIVE/INDETERMINATE/NON_EFFECTIVE) 과 값공간이 섞이지 않게 한다. 두 enum 은 disjoint:
+#   3-상태 = "산출을 냈는가"(원장 입력) / 아래 4-상태 = "측정이 가능한가"(§14 row 입력).
+#
+#   SPAWN_TIMING_STATE — 4-state. 값 나열이 아니라 **의미** (ADR-068 I-1):
+#     env_absent       관측 단위 자체가 0 = 환경 부재.
+#                      설계 leg = `- lane: 설계` 행 0 (env=0) / peer leg = PEER-0 (peer 신원 0종).
+#     evidence_absent  단위는 있으나 유효 spawned_at 이 결손 = 등식 가드 불성립
+#                      (valid_ts_count != row_count). 시각 증거만 없는 상태이지 환경 부재가 아니다.
+#                      ★ 이 상태가 timing 분기 도달을 막는다 — 없으면 'row 2 ∧ 유효 시각 1' 형상이
+#                        min == max 로 diff = 0s 허위 통과를 낸다.
+#     below_expected   등식 완비이나 기대 하한 미만. 설계 leg = 6 미달(fan-out 미달 의심) /
+#                      peer leg = PEER-1 = group-level '판정 불가'.
+#                      ★ 어느 leg 에서도 통과 판정으로 접히지 않는다.
+#     measurable       하한 이상 ∧ 등식 완비 → diff 산출 가능. 설계 leg = 분기 (iv) / peer leg = PEER-2.
+#
+#   SPAWN_TIMING_DIFF      int 초 (max-min). measurable 일 때만 유의미, 그 외 -1
+#   SPAWN_TIMING_WITHIN    1 = diff < SPAWN_TIMING_THRESHOLD_S / 0 = 미달. measurable 아니면 -1
+#   SPAWN_TIMING_ROWS      관측 row 수 (필터 통과분). ★ 세는 대상이 leg 마다 다르다 —
+#                          설계 leg = `- lane: 설계` **행 수** / peer leg = **distinct peer 신원 수**.
+#                          이 키 비대칭을 지우면 "동형이니 row 수를 그대로 쓰면 된다" 는 오독이 복원된다.
+#   SPAWN_TIMING_EXPECTED  기대 하한 (설계 leg 6 / peer leg 2)
+#
+#   구현 메모: ts_array 는 nameref (bash 4.3+) 로 받는다. 이 파일은 이미 declare -A / ${var^^}
+#   로 bash 4+ 에 의존하며, local -n 사용으로 bash 4.3+ 하한을 명시한다.
+_evaluate_spawn_timing() {
+    local expected_min="$1" row_count="$2" valid_ts_count="$3"
+    local -n _sts_ref="$4"
+
+    SPAWN_TIMING_EXPECTED="$expected_min"
+    SPAWN_TIMING_ROWS="$row_count"
+    SPAWN_TIMING_DIFF=-1
+    SPAWN_TIMING_WITHIN=-1
+
+    if [ "$row_count" -eq 0 ]; then
+        SPAWN_TIMING_STATE="env_absent"
+        return 0
+    fi
+    # 등식 가드. valid_ts_count <= row_count 불변이므로 != 는 < 와 동치이며, 등식 형태로 적어
+    # "완비인가" 라는 의도를 코드에 남긴다.
+    if [ "$valid_ts_count" -ne "$row_count" ]; then
+        SPAWN_TIMING_STATE="evidence_absent"
+        return 0
+    fi
+    if [ "$row_count" -lt "$expected_min" ]; then
+        SPAWN_TIMING_STATE="below_expected"
+        return 0
+    fi
+
+    # 여기 도달 = 등식 완비 ∧ 하한 이상 → 배열 원소 1개 이상 보장 (index-0 안전).
+    SPAWN_TIMING_STATE="measurable"
+    local min_ts max_ts ts
+    min_ts="${_sts_ref[0]}"
+    max_ts="${_sts_ref[0]}"
+    for ts in "${_sts_ref[@]}"; do
+        [ "$ts" -lt "$min_ts" ] && min_ts="$ts"
+        [ "$ts" -gt "$max_ts" ] && max_ts="$ts"
+    done
+    SPAWN_TIMING_DIFF=$(( max_ts - min_ts ))
+    # ★ 임계 비교 단일 site (RF-3). 두 leg 의 단일 실패점이므로, 이 비교 연산자 하나를 변조하면
+    #   양 leg 의 경계 케이스가 동시에 무너져야 한다 — 그것이 "단일 실패점이 실제로 단일인가" 의
+    #   직접 증거다.
+    if [ "$SPAWN_TIMING_DIFF" -lt "$SPAWN_TIMING_THRESHOLD_S" ]; then
+        SPAWN_TIMING_WITHIN=1
+    else
+        SPAWN_TIMING_WITHIN=0
+    fi
+    return 0
+}
+
 # CFP-137 Phase 2: Parallelization check
 # TEAM-DESIGN 6 deputy spawned_at diff < 60s (ADR-044 §결정 5)
 # Deputy roles (현 6 permanent — CFP-2471 stale roster 정정):
@@ -351,23 +471,246 @@ check_parallelization() {
 
     # (iv) design_rows >= 6 AND spawned_at_count == design_rows → 기존 timing diff (<60s) 검사.
     #   (spawned_at_count == design_rows >= 6 보장 → timestamps 6+ 개, min/max index-0 안전)
-    local min_ts max_ts
-    min_ts="${timestamps[0]}"
-    max_ts="${timestamps[0]}"
-    for ts in "${timestamps[@]}"; do
-        [ "$ts" -lt "$min_ts" ] && min_ts="$ts"
-        [ "$ts" -gt "$max_ts" ] && max_ts="$ts"
-    done
-
-    local diff=$(( max_ts - min_ts ))
-    if [ "$diff" -lt 60 ]; then
-        log "[PARALLELIZATION OK] TEAM-DESIGN deputy spawned_at diff = ${diff}s < 60s (${#timestamps[@]} rows)"
+    #   CFP-2914 RF-3: min/max 산출 · diff · 임계 비교를 공유 술어 _evaluate_spawn_timing() 단일
+    #   site 로 이관. 위 (i)~(iii) 사다리의 분기 조건 · 로그 문면 · 평가 순서는 무변경이고,
+    #   아래 메시지의 60 리터럴은 ${SPAWN_TIMING_THRESHOLD_S} 보간으로 대체되나 보간 결과가
+    #   byte 동일하므로 설계 leg 출력 bit-identical 이 보존된다. 문면은 caller(본 함수) 소유 —
+    #   술어는 문면 0건이다.
+    _evaluate_spawn_timing 6 "$design_rows" "$spawned_at_count" timestamps
+    local diff="$SPAWN_TIMING_DIFF"
+    if [ "$SPAWN_TIMING_WITHIN" -eq 1 ]; then
+        log "[PARALLELIZATION OK] TEAM-DESIGN deputy spawned_at diff = ${diff}s < ${SPAWN_TIMING_THRESHOLD_S}s (${#timestamps[@]} rows)"
     else
-        log_err "[PARALLELIZATION WARN] TEAM-DESIGN deputy spawned_at diff = ${diff}s >= 60s — Parallelization 기준 미달 (ADR-044 §결정 5). diff > 60s = sequential spawn 의심"
+        log_err "[PARALLELIZATION WARN] TEAM-DESIGN deputy spawned_at diff = ${diff}s >= ${SPAWN_TIMING_THRESHOLD_S}s — Parallelization 기준 미달 (ADR-044 §결정 5). diff > ${SPAWN_TIMING_THRESHOLD_S}s = sequential spawn 의심"
         # NOTE: advisory only — not counted as fail (no agent teams enforcement in env=0 contexts)
         # If strict mode is required for parallelization, use --strict with this flag
-        log_err "  (advisory: diff >= 60s 는 FAIL 아님. Strict parallelization enforcement 는 CFP-137 후속 CFP scope)"
+        log_err "  (advisory: diff >= ${SPAWN_TIMING_THRESHOLD_S}s 는 FAIL 아님. Strict parallelization enforcement 는 CFP-137 후속 CFP scope)"
     fi
+    return 0
+}
+
+# ── CFP-2914 (AC-2a) — review-peer co-dispatch 관측 leg (형제 함수) ──────────────────────
+# 리뷰 4-lane 에서 ClaudeReviewAgent / CodexReviewAgent 2 peer 가 같은 (lane, iteration) 그룹에
+# 60초 내로 개시 선언됐는지 관측한다. 산출 = 관측 채널(로그 산출) — 산출은 로그뿐이다.
+#
+# 2축 키잉 규약 1~7 — 규약을 어기면 판정 자체가 무의미해진다:
+#   1 lane 축     PEER_REVIEW_LANES 정확 일치 (substring 금지).
+#   2 그룹 키     (lane 정확일치, iteration). 서로 다른 iteration 의 row 를 co-dispatch 비교
+#                 대상으로 묶지 않는다 — §14 iteration 의 계약 의미가 dispatch round 식별자다.
+#   3 신원 계수   agent 값 좌측 trim 후 첫 [공백 또는 '('] 직전까지의 **선두 토큰** 이
+#                 PEER_AGENT_IDS 에 정확 일치할 때만 peer 1 로 계수.
+#                 substring 금지 · 토큰경계 regex 금지 — 둘 다 실측 FP 가 동일하다. 함정은
+#                 경계가 아니라 **한 row 의 agent 가 여러 신원을 서술**하는 것이다:
+#                 `agent: DesignReviewPLAgent (codeforge-review@mclayer) + ClaudeReviewAgent +
+#                 CodexReviewAgent` → 이 row 는 PL row 로 분류하고 peer 계수 0 이 정답.
+#   4 collapse    같은 (lane, iteration) 그룹 안에서 동일 peer 신원이 2행 이상이면 spawned_at
+#                 **최소값을 대표**로 collapse. 파일 출현 순서 의존 금지 — 순서에 의존하면 문서
+#                 편집만으로 판정이 바뀌어 재현성이 붕괴한다.
+#                 ★ 정직 라벨: 동일 peer 신원이 같은 (lane, iteration) 에 2행인 형상은 **실 코퍼스
+#                   0건**이다. 즉 규칙 4 는 관측된 결함의 수리가 아니라 순서 의존을 사전 차단하는
+#                   **합성 전용 방어 규칙**이며 그 fixture 도 합성이다. "실물에서 관측됐다" 로
+#                   쓰면 거짓이다.
+#   5 정규화      spawned_at 값에서 주변 따옴표 strip + 후행 주석(# 이후) strip + **CR strip**
+#                 후 date -d 파싱. CR strip 은 같은 파일 내 방어 비대칭의 정산이다 —
+#                 load_gate_lane_map() 은 line="${line%$'\r'}" 로 CR 을 벗기는데
+#                 check_parallelization() 의 awk 는 CR 처리가 0건이다. 신규 leg 는 명시한다.
+#   6 TZ-less     offset(±HH:MM / ±HHMM) 도 Z 도 보유하지 않은 값은 파싱 성공으로 계상하지
+#                 않는다 → evidence_absent 낙하. 근거 = GNU date -d "2026-05-12T16:05:30" 은
+#                 파싱에 성공하되 러너의 로컬 TZ 로 해석하며, KST↔UTC 차 32,400초는 60초 임계의
+#                 540배라 한 그룹에 혼재하면 판정이 무의미해진다.
+#                 ★ 정직 라벨: 현 코퍼스에 TZ-less 값은 **0건**이다 — 관측된 결함의 수리가 아니라
+#                   **미발생 결함의 사전 봉쇄**이며, 이 성격을 숨기지 않는다.
+#   7 iteration   결측 = 판정 **비대상** 낙하 (위반 계상 금지). 결측 row 를 한 그룹으로 병합하지
+#                 않는다. iteration 이 정수 아닌 자유 서술이면 그 문자열 자체가 그룹 키가 되어
+#                 결과적으로 판정 불가 방향으로만 degrade 한다 (canonical 정규화 미채택 —
+#                 free-text → key 승격 표면을 하나 더 만들지 않기 위함).
+#
+# ★ 등식 가드: peer_rows >= 2 ∧ peer_ts_count == peer_rows 둘 다 충족할 때만 timing 분기에
+#   도달한다 (술어의 evidence_absent 가 집행). 미승계 시 'PL 1행이 두 peer 명을 서술' 하는 실물
+#   형상이 peer_rows 2 ∧ 유효 시각 1 → min == max → diff = 0s 허위 통과를 낸다.
+#
+# lane closed-set 을 gate-lane-map-v1.yaml 외부 SSOT 로 승격하지 않는 근거 = **의미 disjoint**.
+#   그 registry 가 담는 것은 'gate 라벨 → lane 매핑' 이고 본 leg 가 필요한 것은 'peer 리뷰 대상
+#   lane 집합' 이다. 값이 일부 겹친다는 이유로 서로 다른 관심사를 한 SSOT 에 묶으면 의미 결합이
+#   생긴다. 승격 trigger = **peer 대상 lane 집합을 소비하는 2번째 지점이 생길 때**.
+check_peer_codispatch() {
+    local yaml="$1"
+    if [ -z "$yaml" ]; then
+        log_err "[PEER CO-DISPATCH N/A] §14 YAML block 없음 — skip"
+        return 0
+    fi
+
+    # §14 row 평탄화: 레코드 1행 = lane <US> iteration <US> agent <US> spawned_at.
+    #   따옴표/주석/CR strip 은 규칙 5. agent 는 선두 토큰 추출을 위해 원문(trim 만) 유지.
+    #   ★ 구분자가 US(0x1f)인 이유: TAB 은 IFS whitespace 라서 `IFS=$'\t' read` 가 연속 구분자를
+    #     하나로 접어 **빈 필드를 소멸**시킨다 (iteration 결측 row 에서 agent 값이 iteration 칸으로
+    #     밀려 들어가 규칙 7 이 무력화된다 — 실측 확인). US 는 IFS whitespace 가 아니므로 빈 필드가
+    #     보존되고, 값 안의 공백도 그대로 남는다 (lane `설계 리뷰` 같은 비정합 표기 보존).
+    local records
+    records="$(printf '%s' "$yaml" | awk '
+        function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+        function kv(line,   v) { v = line; sub(/^[^:]*:[[:space:]]*/, "", v); return trim(v) }
+        function clean(v,   f, l) {
+            sub(/[[:space:]]*#.*$/, "", v)
+            v = trim(v)
+            if (length(v) >= 2) {
+                f = substr(v, 1, 1); l = substr(v, length(v), 1)
+                if (f == l && (f == "\"" || f == "\047")) v = substr(v, 2, length(v) - 2)
+            }
+            return trim(v)
+        }
+        BEGIN { OFS = "\037"; have = 0 }
+        { sub(/\r$/, "") }
+        /^[[:space:]]*-[[:space:]]+lane:/ {
+            if (have) print lane, iter, agent, sat
+            have = 1; lane = clean(kv($0)); iter = ""; agent = ""; sat = ""
+            next
+        }
+        have && /^[[:space:]]*iteration:/  { if (iter  == "") iter  = clean(kv($0)); next }
+        have && /^[[:space:]]*agent:/      { if (agent == "") agent = kv($0);        next }
+        have && /^[[:space:]]*spawned_at:/ { if (sat   == "") sat   = clean(kv($0)); next }
+        END { if (have) print lane, iter, agent, sat }
+    ')"
+
+    local -a group_keys=()
+    declare -A group_seen=() peer_seen=() peer_min=() lane_group_count=() lane_peer=()
+    local nonconformant=0 missing_iteration=0
+    local lane iter agent sat ident key mkey prev epoch x in_lane is_peer
+
+    while IFS=$'\037' read -r lane iter agent sat; do
+        [ -n "$lane" ] || continue
+
+        # 규칙 1 — lane 축 정확 일치.
+        in_lane=0
+        for x in "${PEER_REVIEW_LANES[@]}"; do
+            if [ "$lane" = "$x" ]; then in_lane=1; break; fi
+        done
+        if [ "$in_lane" -eq 0 ]; then
+            # 리뷰-유사 표기인데 closed-set 미매칭이면 별도 계상 (판정 모집단 미진입).
+            #   이 heuristic 매칭은 **카운터 전용**이며 어떤 판정에도 입력되지 않는다.
+            if printf '%s' "$lane" | grep -qiE '리뷰|review|보안|security'; then
+                nonconformant=$((nonconformant + 1))
+            fi
+            continue
+        fi
+
+        # 규칙 7 — iteration 결측은 판정 비대상.
+        if [ -z "$iter" ]; then
+            missing_iteration=$((missing_iteration + 1))
+            continue
+        fi
+
+        # 규칙 2 — 그룹 키 = (lane 정확일치, iteration). 합성 키 구분자도 US(0x1f) — 값에 등장할 수
+        #   없는 제어문자라 키 충돌이 구조적으로 불가능하다.
+        key="${lane}"$'\037'"${iter}"
+        if [ -z "${group_seen[$key]:-}" ]; then
+            group_seen["$key"]=1
+            group_keys+=("$key")
+            lane_group_count["$lane"]=$(( ${lane_group_count[$lane]:-0} + 1 ))
+        fi
+
+        # 규칙 3 — 신원 축: 선두 토큰 정확 일치 (substring 금지).
+        ident="${agent%%[[:space:](]*}"
+        is_peer=0
+        for x in "${PEER_AGENT_IDS[@]}"; do
+            if [ "$ident" = "$x" ]; then is_peer=1; break; fi
+        done
+        [ "$is_peer" -eq 1 ] || continue
+
+        mkey="${key}"$'\037'"${ident}"
+        peer_seen["$mkey"]=1
+        lane_peer["${lane}"$'\037'"${ident}"]=1
+
+        # 규칙 5·6 — 정규화된 spawned_at → epoch. TZ 미보유 값은 파싱 시도조차 하지 않는다.
+        epoch=""
+        if [[ "$sat" =~ ([Zz]|[+-][0-9]{2}:?[0-9]{2})$ ]]; then
+            epoch="$(date -d "$sat" +%s 2>/dev/null || date -jf '%Y-%m-%dT%H:%M:%SZ' "$sat" +%s 2>/dev/null || true)"
+            [[ "$epoch" =~ ^[0-9]+$ ]] || epoch=""
+        fi
+        if [ -n "$epoch" ]; then
+            # 규칙 4 — 동일 신원 다중 행은 최소값 대표 (순서 무관 = 재현 가능).
+            prev="${peer_min[$mkey]:-}"
+            if [ -z "$prev" ] || [ "$epoch" -lt "$prev" ]; then
+                peer_min["$mkey"]="$epoch"
+            fi
+        fi
+    done <<< "$records"
+
+    # ── 산출 ① 범위 선언 (보장 / 미보장 대구) ────────────────────────────────────────
+    log "[PEER CO-DISPATCH SCOPE] 관측 채널(로그 산출) — 산출은 로그뿐이다 (warning-tier · FAIL 미계상 · exit code 무변경 · merge 영향 0)"
+    log "  보장: (lane 정확일치 ∧ agent 선두토큰 정확일치 ∧ 동일 iteration) 으로 묶인 그룹 안에서 '선언된' spawned_at 값들의 diff 가 ${SPAWN_TIMING_THRESHOLD_S}초 내인가."
+    log "  미보장: 실제 spawn 동시성 · peer 가 실제로 산출을 냈는지(실효 판정은 원장 입력 진단 leg 소관) · §14 에 기록되지 않은 peer · 자기단언 값 자체의 진위."
+
+    # ── 산출 ② 그룹별 co-dispatch 판정 (PEER-N (co-dispatch scope) = timing 판정의 유일 입력) ──
+    local total_groups="${#group_keys[@]}"
+    local g_lane g_iter peer_rows peer_ts_count id
+    local -a peer_epochs=()
+    if [ "$total_groups" -eq 0 ]; then
+        log "[PEER CO-DISPATCH N/A] 판정 대상 그룹 0개 — (리뷰 4-lane 정확일치 ∧ iteration 보유) 조건을 만족하는 §14 row 부재. 판정 대상 부재이지 'peer 부재' 아님"
+    else
+        for key in "${group_keys[@]}"; do
+            g_lane="${key%%$'\037'*}"
+            g_iter="${key##*$'\037'}"
+            peer_rows=0
+            peer_ts_count=0
+            peer_epochs=()
+            # 신원 순회는 closed-set 선언 순서 고정 — 문서 출현 순서와 무관하게 재현된다.
+            for id in "${PEER_AGENT_IDS[@]}"; do
+                [ -n "${peer_seen[${key}$'\037'${id}]:-}" ] || continue
+                peer_rows=$((peer_rows + 1))
+                prev="${peer_min[${key}$'\037'${id}]:-}"
+                if [ -n "$prev" ]; then
+                    peer_ts_count=$((peer_ts_count + 1))
+                    peer_epochs+=("$prev")
+                fi
+            done
+
+            _evaluate_spawn_timing 2 "$peer_rows" "$peer_ts_count" peer_epochs
+            case "$SPAWN_TIMING_STATE" in
+                env_absent)
+                    log "[PEER CO-DISPATCH N/A] ${g_lane} / iteration ${g_iter} — PEER-0 (co-dispatch scope) 판정 불가: 행-단위 peer 증거 부재 (선두토큰 정확일치 peer 신원 0종). ★ '행-단위 peer 증거 부재' 이지 'peer 부재' 가 아니다 — ①진짜 미스폰 과 ②띄웠으나 §14 에 기록하지 않음 은 이 채널로 원리적 구별 불가이며, PL 1행이 dual-peer 를 서술한 실물 형상도 여기로 낙하한다"
+                    ;;
+                evidence_absent)
+                    log "[PEER CO-DISPATCH N/A] ${g_lane} / iteration ${g_iter} — PEER-${peer_rows} (co-dispatch scope) 판정 불가: 등식 가드 불성립 (peer 신원 ${peer_rows}종 중 유효 spawned_at ${peer_ts_count}종 — peer_ts_count != peer_rows). 시각 증거 결손이므로 timing 분기에 도달하지 않는다 (TZ-less · malformed · 미기입 포함)"
+                    ;;
+                below_expected)
+                    log "[PEER CO-DISPATCH N/A] ${g_lane} / iteration ${g_iter} — PEER-${peer_rows} (co-dispatch scope) 판정 불가: distinct peer 신원 ${peer_rows}종 < ${SPAWN_TIMING_EXPECTED}종 이라 co-dispatch 비교 대상이 성립하지 않는다. ★ 판정 불가는 어떤 경로로도 통과 판정으로 접히지 않는다 — group-level '판정 불가' 자체가 1급 산출이다"
+                    ;;
+                measurable)
+                    if [ "$SPAWN_TIMING_WITHIN" -eq 1 ]; then
+                        log "[PEER CO-DISPATCH PASS] ${g_lane} / iteration ${g_iter} — PEER-${peer_rows} (co-dispatch scope) peer 신원 ${peer_rows}종 spawned_at diff = ${SPAWN_TIMING_DIFF}s < ${SPAWN_TIMING_THRESHOLD_S}s"
+                        log "  (ceiling — 자기단언 채널: 이 판정이 말하는 것은 '선언된 spawned_at 값이 ${SPAWN_TIMING_THRESHOLD_S}초 내' 이지 '실제로 ${SPAWN_TIMING_THRESHOLD_S}초 내에 spawn 됐다' 가 아니다. §14 는 저작자 자기단언 채널이며 그 진위는 어떤 keying 규약으로도 교정되지 않는다 — 실측 반례: 8행 전건 동일 시각 자기단언이 diff = 0s 통과를 냈고, 그 8행 중 6행의 agent 값이 '— PL 단독 통합' 으로 미스폰을 자인했다)"
+                    else
+                        log_err "[PEER CO-DISPATCH WARN] ${g_lane} / iteration ${g_iter} — PEER-${peer_rows} (co-dispatch scope) peer 신원 ${peer_rows}종 spawned_at diff = ${SPAWN_TIMING_DIFF}s >= ${SPAWN_TIMING_THRESHOLD_S}s — 선언 시각 기준 co-dispatch 미달 (순차 개시 의심). 관측 채널 — FAIL 아님, enforcement 미구현"
+                    fi
+                    ;;
+            esac
+        done
+    fi
+
+    # ── 산출 ③ lane 누적 커버리지 (whether 물음 전용 — co-dispatch 판정 입력 아님) ──────────
+    local cov_ids cov_n cov_printed=0
+    for x in "${PEER_REVIEW_LANES[@]}"; do
+        [ -n "${lane_group_count[$x]:-}" ] || continue
+        cov_ids=""
+        cov_n=0
+        for id in "${PEER_AGENT_IDS[@]}"; do
+            if [ -n "${lane_peer[${x}$'\037'${id}]:-}" ]; then
+                cov_n=$((cov_n + 1))
+                cov_ids="${cov_ids:+$cov_ids }${id}"
+            fi
+        done
+        log "[PEER COVERAGE] ${x} — PEER coverage (lane 누적) = ${cov_n}종${cov_ids:+ (${cov_ids})} / 관측 그룹 ${lane_group_count[$x]}개"
+        cov_printed=1
+    done
+    if [ "$cov_printed" -eq 1 ]; then
+        log "  (PEER coverage (lane 누적) 은 whether(커버리지) 물음 전용이다 — lane 전체 iteration 의 합집합이라 '라운드 1 에 Claude, 라운드 3 에 Codex' 도 2종으로 세어진다. 따라서 이 수치는 co-dispatch(when) 판정에 입력되지 않으며 위 co-dispatch 판정 줄에도 등장하지 않는다)"
+    fi
+
+    # ── 산출 ④ lane 표기 비정합 · iteration 결측 카운터 ─────────────────────────────────
+    log "[PEER LANE-LABEL] lane_label_nonconformant: ${nonconformant} (리뷰-유사 표기인데 closed-set 미매칭 → 판정 모집단 미진입) / iteration 결측 판정 비대상 row: ${missing_iteration}"
+    log "  (분리 ≠ 해소: 표기 비정합을 진짜 PEER-0(미기록)과 다른 카운터로 분리했을 뿐 비정합 자체가 해소된 것은 아니다. canonical 정규화는 채택하지 않았다 — free-text → key 승격 표면을 하나 더 만들지 않기 위함이며, §14 lane 의 진짜 처방은 schema 층 enum 집행으로 본 Story scope 밖이다)"
+
     return 0
 }
 
@@ -455,6 +798,11 @@ run_check() {
     # CFP-137 Phase 2 / ADR-044 §결정 5 Parallelization measurable verification
     if [ $CHECK_PARALLELIZATION -eq 1 ]; then
         check_parallelization "$story_yaml"
+        # Check 6b (CFP-2914 AC-2a): review-peer co-dispatch 관측 leg.
+        #   설계 leg 와 나란히 호출하는 형제 함수다 — check_parallelization() 내부에 분기를 더하지
+        #   않으므로 설계 leg 의 회귀 표면이 0 이다. 반환값은 설계 leg 와 동일하게 버려진다
+        #   (전 경로 return 0, FAIL count 미증가 — warning tier).
+        check_peer_codispatch "$story_yaml"
     fi
 
     # Check 7 (CFP-2652 gap c): PR label `gate:<lane>-pass` ↔ `## Lane evidence` 블록 lane PASS 행 정합.

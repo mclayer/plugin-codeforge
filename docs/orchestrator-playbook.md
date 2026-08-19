@@ -691,7 +691,9 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 
 **위반 시**: ADR-064 §결정 4 위반. spawn prompt 에 sequential 선택 사유 명시 없이 sequential dispatch = ADR-039 §결정 7 `policy_violation_subdecision` 발화 채널.
 
-**Mechanical enforcement**: `parallel-dispatch-prompt-check` warning tier lint (ADR-171 evidence-enforceable framework 정합) — `scripts/check-parallel-dispatch-prompt.sh` + `templates/github-workflows/parallel-dispatch-prompt-check.yml` (`continue-on-error: true`, bypass label `hotfix-bypass:parallel-dispatch-prompt`).
+**Mechanical enforcement — 현행 배선 상태 = 미배선(호출자 0)**: `parallel-dispatch-prompt-check` warning tier lint 는 **선언이며 집행되지 않는다**. CFP-2914 firsthand 실측(2026-08-13) — 선언된 4-piece 중 실재하는 것은 `scripts/check_parallel_dispatch_prompt.py` 1개뿐이고 그 파일을 호출하는 workflow·hook·shim 은 0개다. 나머지는 전건 부재다: shim `scripts/check-parallel-dispatch-prompt.sh`(부재) · `templates/github-workflows/parallel-dispatch-prompt-check.yml`(부재) · `.github/workflows/parallel-dispatch-prompt-check.yml`(부재) · `docs/evidence-checks-registry.yaml` 의 `parallel-dispatch-prompt-check` entry(부재). 실재 파일명(`check_parallel_dispatch_prompt.py`)과 선언 파일명(`.sh`)의 불일치도 애초부터 존재했다.
+
+즉 위 4-분기 결정 tree 와 6 enum 은 **Orchestrator·PL 이 스스로 지키는 규범**이며, 이를 강제하는 CI 게이트는 현재 없다. bypass label `hotfix-bypass:parallel-dispatch-prompt` 역시 우회할 집행 대상이 없다. **검사 항목 삭제 0** — 본 문면은 정정이며 규범 자체는 무손상이다. 재배선 시 본 declare 를 제거한다. SSOT = ADR-064 Amendment 16(binding 지위 "집행 사실 → 선언" 재규정) + `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §8.
 
 **env=0 / env=1 동등성** (registry §6.4):
 - env=0 (default subagent context, ADR-039) — Orchestrator round-trip polyfill, PL 이 batch N task multi-instance subagent dispatch 1 round trip 안에 spawn

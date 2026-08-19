@@ -1,6 +1,6 @@
 # Team spec — 요구사항 lane
 # ADR-109 §결정 4 + ADR-044 Amendment 2 신설 (429 incident throttle policy)
-parallel_spawn_cap: 7       # Default: low intensity (0 incident/30min) — Phase 0 brainstorm 7-agent baseline
+parallel_spawn_cap: 13      # Default: low intensity (0 incident/30min) — roster 산술(9 deputy + 4-tuple sub-tuple 4). CFP-2914 / parallel-dispatch-protocol-v1 v1.2 §6.2 worker_count_max. 구 값 7 = Phase 0 brainstorm 7-agent baseline
 spawn_stagger_ms: 0         # Default: no stagger (low intensity)
 cascade_circuit_breaker: false  # Default: disabled, opt-in (429 cascade depth ≥ 2 detection)
 # ── AC-26 소비자 분류 (CFP-2984 Phase 2 · additive only — 필드 제거 0, 값 변경 0) ──────────

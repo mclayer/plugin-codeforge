@@ -157,6 +157,17 @@ progress_narration_verbosity: full
 # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
 # Consumer overlay default 영역. ADR-064 §결정 7 ratchet — evidence-gated symmetric ratchet (강화·약화 양방향 + 양방향 evidence 의무).
 # 변경 시 ADR-058 §결정 5 sunset_justification 의무.
+# ★ 현행 미배선 (CFP-2914 firsthand 실측): 아래 4 knob 은 **선언된 enforcement 효과가 소비되지
+#   않는다** — schema 검증(validate_config.py 의 known-key/타입 선언 표)만 일어난다. 4 knob 전건
+#   grep 결과 값을 **읽어 분기하는 코드 site 는 0건**이다(본 예제 파일 + validate_config.py 선언 표가
+#   전부). 유일한 추가 등장은 1번 knob 이며, 그것도 config 값 읽기가 아니라 고아 스크립트
+#   scripts/check_parallel_dispatch_prompt.py(호출자 0)가 **문서 텍스트에서 같은 이름의 문자열을
+#   정규식 매칭**하는 것이다 — 이 overlay 값과 결속되지 않는다. 그 lint 자체도 미배선(호출자 0 —
+#   parallel-dispatch-protocol-v1 §8 declare 참조)이라 3번 knob 의 'warn'/'block' 구분 역시 무효과다.
+#   knob 을 **제거하지 않는 이유**: 제거만 BREAKING 이다 — overlay/hooks/validate_config.py 의
+#   _check_unknown_keys 가 unknown key 를 reject 하고 main() 이 sys.exit(4) → SessionStart 훅 abort
+#   → 이미 값을 써 둔 consumer 의 세션이 깨진다. 따라서 처분 = (iv) 문언 정정(하위호환 무손상).
+#   재배선 시 본 미배선 declare 를 제거한다.
 parallel_dispatch:
   # 1. pl_autonomous_parallel_authority — PL 의 자율 병렬 권한 default
   #    enum 3-value (registry §6.1):
@@ -164,18 +175,23 @@ parallel_dispatch:
   #      optional — consumer 가 명시적 sequential fallback 활성 (확장 channel)
   #      disabled — broken-baseline 회피 advisory only (ratchet 차단 영역 — sunset_justification 의무)
   #    변경 금지 — consumer 축소 불허 (ADR-064 §결정 7 ratchet 강제)
+  #    현행 미배선: 선언된 enforcement 효과는 소비되지 않음 (schema 검증만).
   pl_autonomous_parallel_authority: required
 
   # 2. plan_dag_hint_required — Orchestrator spawn prompt 에 DAG hint 박제 의무 여부
   #    true (default) = §3.0.14 의무 4 항목 prompt 박제 (ADR-064 §결정 4 강제)
   #    false (확장 영역) = consumer 명시적 opt-out (별 hotfix-bypass label 의무)
+  #    현행 미배선: 선언된 enforcement 효과는 소비되지 않음 (schema 검증만).
   plan_dag_hint_required: true
 
   # 3. dispatch_prompt_validation — `parallel-dispatch-prompt-check` lint enforcement level
   #    'warn' (default) = ADR-060 warning tier (continue-on-error: true)
   #    'block' (확장 영역) = consumer 자체 blocking enforcement (별 carrier CFP 의무)
+  #    현행 미배선: 선언된 enforcement 효과는 소비되지 않음 (schema 검증만) — 지목 대상 lint 가
+  #    호출자 0 이므로 'warn' 과 'block' 이 동일 결과(무효과)다.
   dispatch_prompt_validation: warn
 
   # 4. wall_clock_measurement — PMOAgent retro 에 wall-clock 기록 의무
   #    true (default) = Story 단위 timestamp delta 기록 (MCT-160 sunset gate 측정 carrier)
+  #    현행 미배선: 선언된 enforcement 효과는 소비되지 않음 (schema 검증만).
   wall_clock_measurement: true

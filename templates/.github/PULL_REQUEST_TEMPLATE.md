@@ -58,6 +58,26 @@ Closes #<Story Issue 번호>
 - [ ] 성능 테스트: baseline 대비 mean ≤ +10%
 - [ ] 보안 테스트 PASS (Dependabot/CodeQL/Secret Scanning + Claude/Codex Security)
 
+## Lane evidence
+
+<!--
+  CFP-126 / ADR-031 — Phase 2 PR 의무 블록.
+  ⚠️ STRICT FORMAT (CFP-1857 / lane-evidence-check.yml):
+    - heading = `## Lane evidence` (h2 ONLY, NOT h3 `###`)
+    - body = 8-row simple list, 각 row = `- <lane>: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>`
+    - lane name = 요구사항 / 요구사항-리뷰 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트
+    - TABLE format 금지 (markdown table 미인식 → check fails)
+  Bypass: BYPASS_LANE_EVIDENCE=1 + BYPASS_LANE_EVIDENCE_REASON env 양 의무.
+-->
+- 요구사항: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 요구사항-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 설계: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 설계-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 구현: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 구현-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 구현-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+- 보안-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+
 ### FIX 이력
 <!-- docs/stories/<KEY>.md §10 FIX Ledger 참조 -->
 - 구현 리뷰 FIX iteration: <N>회 (최대 3)

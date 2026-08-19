@@ -214,7 +214,15 @@ if datasource_absent(src):
 intensity = count_429_incidents_last_30min(src)
 
 if intensity == 0:  # Low intensity
-    parallel_spawn_cap = 7  # default (parallel-dispatch-protocol-v1 §6.2 worker_count_max)
+    parallel_spawn_cap = 13  # default (parallel-dispatch-protocol-v1 v1.2 §6.2 worker_count_max — CFP-2914)
+    # ★ 13 은 '검증된 안전값'이 아니다 — 아래 두 단서를 반드시 함께 읽는다.
+    #  ① 경험칙 초과 사실: CFP-2914 Story §6.1 F-14 = "동시 3~5 우세, 병렬 호출 5~10 cap 후
+    #     concurrency limiter" (확신도 '추정(강)', 1차 규격 아님). 13 은 이 경험칙을 넘는다.
+    #     본 배정은 1차 규격(계약 정의 + roster 산술: 9 deputy + 4-tuple sub-tuple 4)을 택했고
+    #     경험칙을 채택하지 않았다. 갈림 기록 = Change Plan §3.4.4 / Story §7 R-3.
+    #  ② 429 관측 의무: 발생 시 ADR-109 exp-backoff + `Retry-After` 준수 + §10 FIX Ledger 또는
+    #     Story 관측 기록에 남긴다. **재시도 실패를 이유로 peer·deputy 를 빼는 것은 C-4·C-5 위반**이다.
+    #     (acceleration limits 축은 조회 불가 = 미판정 — '안전/문제 없음'으로 서술 금지, Change Plan §3.5.)
     spawn_stagger_ms = 0    # no stagger
     fallback_mode = "parallel"
 

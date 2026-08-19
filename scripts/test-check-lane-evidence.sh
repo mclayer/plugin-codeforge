@@ -519,7 +519,7 @@ assert_out "TC-C4 dogfood §14 면제 확인([N/A] 병존)" "$out" "[N/A]" ""
 # 0 = 단일 SSOT clean / 1 = 병렬 table·drift 검출.
 ssot_single_ok() {
     local script="$1" workflow="$2" ssot="$3" v=0 n
-    n="$(grep -cE '^gate:[a-z-]+-pass: ' "$ssot" 2>/dev/null)"; [ "${n:-0}" -eq 3 ] || v=1
+    n="$(grep -cE '^gate:[a-z-]+-pass: ' "$ssot" 2>/dev/null)"; [ "${n:-0}" -eq 4 ] || v=1
     grep -q 'load_gate_lane_map' "$script" 2>/dev/null || v=1
     grep -q 'gate-lane-map-v1.yaml' "$script" 2>/dev/null || v=1
     grep -qE 'GATE_LANE_MAP\["gate:' "$script" 2>/dev/null && v=1   # 하드코딩 병렬 table 금지 (literal gate: key 대입 — SSOT-driven "$key" 와 구별, ASCII locale-safe)
@@ -564,6 +564,26 @@ if [ -s "$MW" ] && ! ssot_single_ok "$SCRIPT_SRC" "$MW" "$SSOT_SRC"; then
 else
     echo "FAIL MUT-SSOT(JS 하드코딩 literal) 미검출 (mutation 생존 또는 apply 실패)"; FAIL=$((FAIL+1))
 fi
+
+# ══ CFP-2914 pytest suite fork (AC-2a·AC-3·AC-4) ══
+# 3파일 전건 실행: peer_codispatch(AC-4) + diagnostic(AC-2a) + surfaces(AC-3)
+PYTEST_FILES=(
+  "$REPO_ROOT/tests/scripts/test_cfp2914_peer_codispatch.py"
+  "$REPO_ROOT/tests/scripts/test_cfp2914_diagnostic.py"
+  "$REPO_ROOT/tests/scripts/test_cfp2914_surfaces.py"
+)
+
+for PYTEST_FILE in "${PYTEST_FILES[@]}"; do
+  PYOUT="$(mktemp)"; PYEC=0
+  "$PY" -m pytest "$PYTEST_FILE" -q > "$PYOUT" 2>&1 || PYEC=$?
+  PYTEST_BASENAME="$(basename "$PYTEST_FILE")"
+  if [ "$PYEC" -eq 0 ]; then echo "PASS CFP-2914 pytest $PYTEST_BASENAME: exit 0"; PASS=$((PASS+1));
+  else echo "FAIL CFP-2914 pytest $PYTEST_BASENAME: exit $PYEC"; sed 's/^/    | /' "$PYOUT"; FAIL=$((FAIL+1)); fi
+  # ★ distinct-marker 의무 (exit-code-only 금지): 정규식 '[0-9]+ passed' — xpassed 배제
+  if grep -Eq '[0-9]+ passed' "$PYOUT"; then echo "PASS CFP-2914 pytest $PYTEST_BASENAME: distinct-marker"; PASS=$((PASS+1));
+  else echo "FAIL CFP-2914 pytest $PYTEST_BASENAME: distinct-marker ('N passed' 부재 = 전량 skip/미실행)"; FAIL=$((FAIL+1)); fi
+  rm -f "$PYOUT"
+done
 
 echo ""
 echo "=== Summary: PASS=$PASS FAIL=$FAIL ==="
