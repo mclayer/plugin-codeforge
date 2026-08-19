@@ -266,6 +266,52 @@ CARRIER_RE = re.compile(r"#\d+")
 DUEDATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
+# ---------------------------------------------------------------------------
+# 10 FIX Ledger 컬럼 집합 + 유령 컬럼 지시 술어 (AC-11 · AC-6 공용)
+# ---------------------------------------------------------------------------
+# fix-event-v1 이 정의하는 10 표 컬럼 (계약 문면에서 파생 — 하드코딩 열거가 아니라 대조용 기본값).
+SECTION10_COLUMNS = frozenset({
+    "Iter", "시각", "레인", "트리거", "원인 판정", "재실행 범위", "RESET?",
+    "debate_artifact_ref", "reasoning_carryover", "affected_scope",
+    "affected_paths_with_depth", "reproducer_command", "replay_verdict",
+})
+
+# 정당 사용(집계 축 `root_cause_class` / `root_cause_distribution`)과 반드시 구별한다.
+# 무차별 grep 봉합은 false RED + 실동작 스크립트 파괴다 (4.3 E-7).
+_COLREF_RE = re.compile(
+    r"([A-Za-z_][A-Za-z0-9_]*(?:\s*\+\s*[A-Za-z_][A-Za-z0-9_]*)*)\s*(?:column|컬럼)"
+)
+_DIRECTIVE_CTX_RE = re.compile(r"(§\s*10|FIX Ledger row|10 FIX Ledger)")
+_RECORD_RE = re.compile(r"(기록|record)")
+
+
+def contract_section10_columns(contract_text):
+    """계약 문서의 10 표 헤더 행에서 컬럼명 집합을 뽑는다 (열거 하드코딩 대체)."""
+    for header, _rows in md_tables(contract_text):
+        cells = [c.strip() for c in header]
+        if "Iter" in cells and any("원인" in c for c in cells):
+            return {c for c in cells if c}
+    return set(SECTION10_COLUMNS)
+
+
+def phantom_column_directives(text, columns=None):
+    """10 표에 **없는** 컬럼명으로 기록을 지시하는 site 목록 -> [(lineno, 컬럼명, 줄)].
+
+    술어를 "10 표 기록 지시" 문맥으로 좁힌다 — 무차별 `root_cause` grep 은
+    `root_cause_class` 정당 사용 32 파일을 false RED 로 만든다 (4.3 E-7).
+    """
+    cols = set(columns) if columns else set(SECTION10_COLUMNS)
+    hits = []
+    for lineno, ln in enumerate(text.split("\n"), 1):
+        if not _DIRECTIVE_CTX_RE.search(ln) or not _RECORD_RE.search(ln):
+            continue
+        for m in _COLREF_RE.finditer(ln):
+            for name in [p.strip() for p in m.group(1).split("+")]:
+                if name and name not in cols:
+                    hits.append((lineno, name, ln.strip()))
+    return hits
+
+
 def run_rc(argv, cwd=None, env=None):
     """rc 를 파이프 없이 얻는다 (규율 7). (rc, stdout, stderr) 반환."""
     e = dict(os.environ)
