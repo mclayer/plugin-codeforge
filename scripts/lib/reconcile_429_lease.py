@@ -134,22 +134,26 @@ def reconcile(ledger_dir: Path, stop_event_file: Path) -> dict:
     age_mean = statistics.mean(ages_seconds) if ages_seconds else None
 
     # 4-status 판정 (TTL 미확정이므로 orphan_expired 판정 = age 분포 보고만)
-    # 순서 중요: no_data → stop_without_lease → aligned → orphan_expired
+    # 주의: stop_without_lease 는 "구조적 증인" — 정확한 판별은 불가능하나 관측됨
+    # 순서 중요: no_data → orphan_expired → aligned → stop_without_lease
     status = "no_data"
 
     if active_lease_count == 0 and matching_stop_count == 0:
         # 케이스: 파일 없음 / lease 0 / stop 0
         status = "no_data"
-    elif active_lease_count == 0 and matching_stop_count > 0:
-        # 케이스: lease 0 but stops > 0 — BS-1(resume) 의 직접 증인
-        # SubagentStop 이 발화했는데 대응 SubagentStart 가 없음 = resume
-        status = "stop_without_lease"
-    elif active_lease_count > 0 and active_lease_count <= matching_stop_count:
-        # 케이스: acquired 만큼 released (정상 상태)
+    elif active_lease_count > matching_stop_count:
+        # 케이스: active > stops (일부 lease 미해제/만료 = 분명한 orphan)
+        status = "orphan_expired"
+    elif active_lease_count <= matching_stop_count and (active_lease_count > 0 or matching_stop_count == 0):
+        # 케이스: (active <= stops AND active > 0) OR (active == 0 AND stops == 0)
+        # 정상 진행 또는 대칭
         status = "aligned"
     else:
-        # 케이스: active > stops (일부 lease 미해제/만료)
-        status = "orphan_expired"
+        # 케이스: active == 0 AND stops > 0
+        # 유일한 모호한 경우: (1) 완료+해제 (2) resume 또는 (3) 만료+회수
+        # 이 경우 구조적으로 resume 증인이 될 수 있음 (BS-1 potentially observed)
+        # 단, phase A 에서는 TTL 미확정이라 "orphan_expired" 와는 다른 분류
+        status = "stop_without_lease"
 
     # 나이가 있으면 정렬
     ages_seconds_sorted = sorted(ages_seconds) if ages_seconds else []
