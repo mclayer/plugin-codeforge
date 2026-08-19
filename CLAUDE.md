@@ -56,7 +56,7 @@ Orchestrator 는 해당 레인 진입 직전 아래 스킬을 호출한다. 상�
 | 설계 | `codeforge:deputy-mandate` |
 | 설계리뷰 / 구현리뷰 / 보안테스트 | `codeforge:review-responsibility` |
 | 배포 / lane owner path 확인 | `codeforge:lane-self-write-boundary` |
-| FIX 루프 | `codeforge:root-cause-decision` + `codeforge:fix-ledger-schema` |
+| FIX 루프 | `codeforge:root-cause-decision` + `codeforge:fix-ledger-schema` (닫기 시 **검증 정의역 선언** 동반 — 처방 정의역 P ⊋ 검증 정의역 V 의 결손 D 를 미선언으로 두지 않는다. 규범 SSOT = [ADR-181](archive/adr/ADR-181-verification-domain-deficit-normative.md), 적용 = ADR-067 Amd 4. ★ Phase 1 = 선언, 기계 강제는 Phase 2 — carrier #2985 / 만기 2026-09-15) |
 | 요구사항 접수 직후 | `codeforge:story-cutoff-classification` (모든 변경 Story 작성 의무 — 면제·단축 0, ADR-127) |
 | Story/Epic flow 결정 | `codeforge:story-epic-flow-preflight` |
 | 코딩 작업 개시 직전 / Story·PR 완결 직후 | `codeforge:worktree-lifecycle` |

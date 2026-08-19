@@ -38,11 +38,20 @@ amendment_log:
     scope_change: "혼합 방향 정직 기술 — 'ratchet 강화 only' 아님: ① 위생 invariant 정의역 확장(3 sub-field + transcript) + 노출면 근거 정정 = 강화 ② 길이 규범 = 방향 전환(생산자 상한 문면 소멸 + 수신자 수용 술어 신설 — 집행 실적 0 인 cap[기계 소비자 0 실측]의 실태 정합화라 실효 약화 0, 단 규범 문면상 생산자 제약은 제거됨) ③ §2.4 축 5 = 보존 허용 조건 확대(계약 기실무 문면 채택 — ADR 로 재동기화하면 채널이 좁아져 본 Story 목적과 정면 역행) ④ §결정 5 anti-anchoring 문장 = 무변경 + 정의역 선언 additive. evidence-gated symmetric ratchet — 확대 방향 evidence = 계약 v1.2~v1.5 실무 문면 + Story §5.5 Q-2 사용자 확정 + fact packet F-2 실측."
     breaking: false
     backward_compat: true
+  - date: 2026-08-16
+    amendment: 4
+    cfp: CFP-2985
+    summary: "ADR-181(검증 정의역 결손 규범) 적용 carrier — 4 축. (1) `원인 판정` 값공간 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` 추가, fix-event-v1 v1.6 MINOR) ∧ §결정 1 max-FIX 카운터 trigger lane 2종(`설계-리뷰`/`구현-리뷰`) **불변** — 두 축이 disjoint 임을 명문화(라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다). 실측 근거 = enum 밖 4축이 92행(15.6%) 실사용 — 이탈이 아니라 값공간 설계 결함의 증상. (2) #2957 데드락 해소 — §결정 2 3 trigger 정성 all-miss ∧ dual metric hit 조합에 verdict 부재였던 구멍을 `escalate_to_user` 로 fail-closed 부여(§결정 3 의 reset 전건 '3 trigger 모두 miss + dual metric 모두 miss' 를 침범하지 않는 여집합 배정). (3) FIX 닫기 조건에 **검증 정의역 선언(P/V)** 추가 — `replay_verdict`(검증 강도) 를 대체하지 않고 범위 축으로 병렬 확장(§결정 8 disjoint 유지). 정의 SSOT = ADR-181 §결정 1, 재진술 금지. (4) `fix-event-depth-scope-presence` 유령 선언 **철회** [철회됨 — 2026-08-16, Amendment 4 §9.4] — §결정 4 Amendment 1 이 mechanical enforcement 로 선언했으나 registry 112 entry 중 0 · script 0 · workflow 0(firsthand). 대응 라벨 `hotfix-bypass:fix-event-depth-scope` 는 label-registry-v2 에서 `Retired` 마킹(삭제 아님) + 본 Story 신규 게이트의 우회 채널로 **비채택** 명시. ★ 설계리뷰 FIX Iter 1 보강 — §9.4 처분 5 로 **철회의 문면 도달 범위**를 정직 선언: 본 ADR 밖에 같은 유령을 현재형으로 기술하는 live 문면이 9곳(fix-event-v1 5 · orchestrator-playbook 1 · story-page-structure 1 · label-registry-v2 2) 실재하며 각각 carrier(D-1/D-25/D-5/D-21)로 배정. 본 ADR 이 '철회 완료' 라 말할 수 있는 범위는 자기 문면 + `related_adrs` live 주장 1건 제거까지이고 나머지 9곳은 carrier merge 전까지 생존한다(over-claim 차단)."
+    scope_change: "ratchet 강화 방향 — 값공간 확장은 additive(기존 2값 유효 유지, 소급 정규화 0), 카운터 trigger lane 정의역 무변경(확장 0), 데드락 해소는 verdict 부재 구멍을 fail-closed 로 채움(기존 verdict 배정 변경 0), 닫기 조건은 기존 게이트 위에 축 추가(대체 0). 유령 선언 철회는 실효 강제력 0 이던 문면의 제거이므로 통제 약화 0 — ADR-058 §결정 5 역-ratchet 정의역 밖. is_transitional: false 유지."
+    reinterpretation: true  # ADR-167 §결정 1(b) — 순수 additive 아님. 축 (4) 가 Amendment 1 의 factual premise("fix-event-depth-scope-presence 가 본 ADR 의 mechanical enforcement 로 집행 중") [철회됨 — 2026-08-16, Amendment 4 §9.4] 를 affirmatively-FALSE(registry 0 · script 0 · workflow 0, firsthand)로 판정하고 그 문단의 지위를 "집행 사실 → 철회된 선언"으로 재규정(supersede-in-part)하며 §결정 4 본문 문면을 실제로 치환한다. 선례 동형 = ADR-064 Amendment(:179) — 선행 amendment 의 mechanical enforcement 단정이 affirmatively-FALSE 화 → 해당 clause supersede-in-part 시 reinterpretation: true. 축 (1)(2)(3) 은 순수 additive 이며 true 는 축 (4) 귀속. self-declared — parity lint 는 presence/type 만 검사하고 재해석 의미 판정은 리뷰 축이다(ADR-167 §결정 7 honest ceiling).
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
   - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
   - CFP-2480  # Amendment 3 — FIX ground-truth replay ↔ max-FIX disjoint + fix-event-v1 v1.4 MINOR carrier (Epic CFP-2476 E3)
+  - CFP-2985  # Amendment 4 — 원인 판정 값공간 6값 + 카운터 lane disjoint + #2957 데드락 해소 + 정의역 선언 닫기 조건 + 유령 선언 철회
   - CFP-3017  # Amendment 5+ (provisional) — receiver floor 전환 + §2.4 축 5 계약 채택 + §결정 7 위생 확장·근거 정정 + AC-17(b) 정의역 선언 (Epic #3016 E-1)
 related_adrs:
   - ADR-008
@@ -54,11 +63,15 @@ related_adrs:
   - ADR-054
   - ADR-058
   - ADR-059
-  - ADR-060   # Amendment 1 carrier — fix-event-depth-scope-presence warning-tier evidence-checks-registry entry
+  - ADR-060   # ★ Amendment 4 정정 — Amendment 1 은 본 ADR-060 을 warning-tier registry entry 의 host 로 지목했으나 그 entry 는 실재 0 이었고(firsthand) 그 지목은 §9.4 에서 철회됐다. 본 ADR-060 이 관련인 실 근거 = evidence-check tier 체계 자체(현행 host = ADR-171 재제정판)
   - ADR-063
   - ADR-064
   - ADR-070   # Amendment 3 — FIX-close verify-before-trust (replay_verdict = §결정 D9 3-상태 disposition 정합, E3 sibling)
   - ADR-119   # Amendment 3 — §결정 10② close-time wire 실현 ("수정됨=반증 후 단언")
+  - ADR-181   # Amendment 4 owner_adr — 검증 정의역 결손(P⊋V) 규범. 본 ADR 은 그 FIX 닫기 조건 축의 적용 carrier
+  - ADR-171   # Amendment 4 — 신규 게이트 tier·registry host (warning-first + 승격 3-AND)
+  - ADR-155   # Amendment 4 — _ROW_KEYS closed allow-list (root_cause_class 원장 키 착지면)
+  - ADR-156   # Amendment 4 — 집계 feed. pattern_status uncomputable_missing_key DEFAULT 경로 해소 대상
   - ADR-171   # Amendment 5+ — 신규 검사 warning tier 탄생 원칙 (blocking required context 신설 0)
   - ADR-180   # Amendment 5+ — read_cost 잔여 리스크 축 (floor 는 하한이지 상한 아님 — 팽창 미차단 정직 라벨)
   - ADR-182   # Amendment 5+ — 면 분리(리뷰/증적 정의역 분리) 선례 anchor (AC-17(b) 구조적 은닉)
@@ -66,9 +79,9 @@ related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
   - docs/orchestrator-playbook.md
-  - docs/evidence-checks-registry.yaml   # Amendment 1 — fix-event-depth-scope-presence warning-tier entry
+  - docs/evidence-checks-registry.yaml   # [철회됨 — 2026-08-16, Amendment 4 §9.4] Amendment 1 은 여기에 fix-event-depth-scope-presence warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었다. 본 파일이 관련인 실 근거 = Amendment 4 가 append 한 fix-ledger-conformance entry (owner_adr ADR-181)
   - CLAUDE.md
-mechanical_enforcement_actions: []
+mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (ADR-181 §결정 5 ③-dt (ii), 설계리뷰 FIX Iter 4). 앞의 세 토큰(carrier / expiry / [repo=...])만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다 — 이 선언은 ADR-181 §결정 5 ③-dt (ii) PFX 선두 앵커 술어로 실제 배선됐다(설계리뷰 FIX Iter 4, 판별 행 18). ADR-181 §결정 5 ③ 면제 경로 — Amendment 4(원인 판정 6값 + 정의역 선언 닫기 조건 + 유령 선언 철회)의 기계 강제는 Phase 2 이행(신규 checker fix-ledger-conformance + workflow twin + discriminating self-test = D-7/D-7b/D-10). ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg). ★ Amendment 1 이 mechanical enforcement 로 선언했던 fix-event-depth-scope-presence 는 §9.4 에서 철회됐다 [철회됨 — 2026-08-16, Amendment 4 §9.4] — 본 빈 리스트는 그 철회 후의 정직 상태다.
 ---
 
 # ADR-067: fix-ledger implementability escalation + max FIX overflow handling
@@ -166,7 +179,16 @@ Pause-and-resume 의 latency trade-off 는 acceptance — escalation 자체가 �
 
 **ratchet 강화 only**: 본 §결정 4 의 Pause-and-resume 의미 invariant 변경 0 — mechanical input 추가만. backward-compat 100% (2 optional field, 기존 9-column row null 또는 column 생략 valid).
 
-**mechanical enforcement**: `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) — broken-link/path FIX 인데 `affected_paths_with_depth` 누락 시 적발. `hotfix-bypass:fix-event-depth-scope` label 부착 PR = lint skip + audit comment 자동 발의. SSOT = [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml).
+**mechanical enforcement**: ★ **없다 — 본 선언은 Amendment 4(CFP-2985) 에서 철회됐다.** 아래는 철회 기록이다.
+
+> **[철회됨 — 2026-08-16, Amendment 4 §9.4]** Amendment 1(CFP-842) 은 이 자리에서
+> `fix-event-depth-scope-presence` warning-tier lint 를 "mechanical enforcement" 로 **선언했고**,
+> `hotfix-bypass:fix-event-depth-scope` label 부착 PR 을 lint skip + audit comment 채널로 **기술했으며**,
+> SSOT 를 `docs/evidence-checks-registry.yaml` 로 **지목했다**. 그 선언은 실물과 대응하지 않았다 —
+> firsthand 실측: registry entry **0** · script **0** · workflow **0** (Amendment 4 시점 registry 113 entry 전수).
+> ⇒ `affected_paths_with_depth` 누락은 **어떤 기계 검사로도 적발되지 않으며**, 이 필드의 준수는
+> 리뷰 판정 축이다(`declared`). 이 문단을 "검사가 있다" 의 근거로 인용하지 말 것.
+> 대응 라벨은 `label-registry-v2.md` 에서 `Retired` 마킹 대상이다(삭제 아님 — Phase 2 D-21).
 
 cross-ref:
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) v1.3 §2 Schema + §3 항목 (affected_scope / affected_paths_with_depth)
@@ -384,6 +406,726 @@ replay close-gate 는 §결정 4 cross-lane RESET semantics 와 disjoint — rep
 - `mechanical_enforcement_actions: []` retain (replay close-time 자동 wire = Phase 2 / 후속 carrier, ADR-064 §결정 1 unitary). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test, CI 미배선 — Story A/B 선례 동형 helper).
 - ratchet 강화 방향 (max-FIX disjoint 명문화 + replay fail-mode 2축 + reproducer security invariant codify, 약화 0 — replay 가 카운터를 소비하지 않음을 명시해 정직성·수렴 양립). is_transitional: false 유지. ADR-058 §결정 5 sunset_justification N/A. ADR-070 Amendment 12 + ADR-119 §결정 10② + fix-event-v1 v1.4 sibling cross-ref.
 
+## Amendment 4 (CFP-2985 carrier) — 값공간 확장 ∧ 카운터 disjoint · #2957 데드락 해소 · 정의역 선언 · 유령 선언 철회
+
+> 본 Amendment 는 [ADR-181](ADR-181-verification-domain-deficit-normative.md) 의 **적용 carrier** 다.
+> P/V/D 정의는 ADR-181 §결정 1 이 SSOT 이며 본 문서는 **인용만 하고 재진술하지 않는다**(ADR-181 §결정 4 접합부 규약).
+
+### 9.1 `원인 판정` 값공간 6값 확장 ∧ §결정 1 카운터 trigger lane 불변 (disjoint 명문화)
+
+`fix-event-v1` v1.6 에서 `원인 판정` enum 을 확장한다.
+
+| 값 | 재진입 표적 | 신규 |
+|---|---|---|
+| `설계` | Change Plan 갱신 + 설계 리뷰부터 재실행 | 기존 |
+| `구현` | Change Plan 유지 + 구현 commit append | 기존 |
+| `요구사항` | 요구사항 lane 재진입 (문제 정의 오류) | ★ 신규 |
+| `환경` | 환경·인프라 축 — 산출물 재작성 없음 | ★ 신규 |
+| `설계-리뷰` | 설계 리뷰 자체의 판정 결함 | ★ 신규 |
+| `구현-리뷰` | 구현 리뷰 자체의 판정 결함 | ★ 신규 |
+
+- **채택 근거 (firsthand)**: enum 밖 4축이 실측 **92행(15.6%)** 실사용 중이다. 15.6% 는 이탈이 아니라
+  **값공간 설계 결함의 증상**이다. 특히 `요구사항` 은 `skills/root-cause-decision/SKILL.md` 3rd rung 이
+  1차 가정으로 **지시하는 값**이며(ADR-064 Amendment 13), 계약이 그 지시를 뒤늦게 따라가는 것이다.
+- ★ **§결정 1 카운터 trigger lane 은 확장하지 않는다.** trigger 범위 = `설계-리뷰` / `구현-리뷰`
+  **2 lane 무변경**(`max_fix_per_cycle = 3`). 두 축은 **disjoint** 다 —
+
+  | 축 | 값공간 | 무엇을 결정하는가 |
+  |---|---|---|
+  | `원인 판정` (라우팅) | 6값 | 다음 iteration 이 **어느 lane 으로 재진입**하는가 |
+  | max-FIX 카운터 trigger | 2 lane | **어느 lane 의 재진입 횟수**가 3/3 reassessment 를 유발하는가 |
+
+  값이 `요구사항` 이면 요구사항 lane 으로 재진입하지만 **max-FIX 카운터는 소비하지 않는다**.
+  이는 §결정 8 (replay 는 카운터를 소비하지 않는다) 와 **같은 형태의 disjoint** 이며 새 원리가 아니다.
+- **소급 정규화 금지**: 기존 행은 재저작하지 않는다(append-only invariant, ADR-181 INV-A).
+  집행은 ratchet baseline 동결 + 신규 행만 대상.
+
+### 9.2 #2957 데드락 해소 — 정성 all-miss ∧ 정량 hit 조합의 verdict 부여
+
+**구멍 (firsthand, 본 Amendment 이전)**: §결정 2 는 정성 trigger 3종과 dual metric 을 **결합**해
+escalation 의무를 규정하고, §결정 3 은 `reset_and_redesign` 의 전건을
+"3 trigger 모두 miss **+** dual metric 모두 miss" 로 규정한다. 따라서
+
+- **정성 all-miss ∧ 정량 hit** 조합은 — §결정 2 의 "정량 metric hit + 정성 trigger evaluation 결합" 을
+  충족하지 못해 escalation 의무가 성립하지 않고,
+- 동시에 §결정 3 의 reset 전건("정량도 모두 miss")도 성립하지 않는다.
+
+⇒ verdict 가 **어느 쪽으로도 배정되지 않는데** §결정 1 은 "verdict 수령 전까지 4번째 FIX iteration 자동 진입 금지"
+를 강제한다. **verdict 부재 ∧ 진입 금지의 교집합 = 데드락**이며 mclayer/plugin-codeforge#2957 로 신고돼 있었다.
+
+**해소 (fail-closed)**:
+
+| 정성 trigger (i/ii/iii) | dual metric | verdict |
+|---|---|---|
+| 1+ hit | 무관 | `escalate_to_user` (기존, 무변경) |
+| all-miss | 1+ hit | ★ **`escalate_to_user`** (본 Amendment 신설 — 종전 미배정) |
+| all-miss | all-miss | `reset_and_redesign` 가능 (기존 §결정 3, 무변경) |
+
+- **왜 escalate 인가 (안전 방향)**: 정량 신호(`cumulative_P0 >= 2` / `cumulative_P1 >= 5` /
+  `reviewer_divergence_count >= 2`)가 켜졌다는 것은 **관측 가능한 누적 이상**이 있다는 뜻이고,
+  정성 평가가 그것을 설명하지 못한다는 것은 **평가 술어가 현상을 못 덮는다**는 뜻이다.
+  그 상태에서 reset 을 허용하면 "설명 못 하는 이상 위에서 같은 boundary 재시도" 가 되며,
+  이는 §결정 2 (i) 이 겨냥한 실패 모드 그 자체다. ADR-181 INV-D(정의역 정직)의 직접 적용이다.
+- **기존 배정 변경 0**: 위 표의 1행·3행은 종전과 동일하다. 본 Amendment 는 **여집합만** 채운다.
+- `reasoning_carryover` 3-part 의무는 escalate/reset 무관 동반(§결정 5) — 본 분기도 동일.
+
+### 9.3 FIX 닫기 조건에 검증 정의역 선언 추가 (§결정 8 확장 — 대체 0)
+
+FIX "수정됨" close 시점에 아래 2 필드를 요구한다 (`fix-event-v1` v1.6 trailing optional column).
+
+| 필드 | 내용 |
+|---|---|
+| `verification_domain_enumeration` | **열거 산출 명령** — site 목록이 아니라 목록을 산출한 명령. `reproducer_command` 의 schema 제약(repo-relative 게이트·테스트 호출, raw shell free-string 금지 — §결정 8 INV-SEC-1) 을 **상속** |
+| `verification_domain_coverage` | `x 대 y` — 검사한 site 수 대 열거한 site 수. **확률이 아니라 정직한 미완성 표시** (`3 대 7` = 4개는 아직 안 봤다) |
+
+- **`replay_verdict` 를 대체하지 않는다.** 두 축은 disjoint —
+  `replay_verdict` = 검증 **강도**(고쳤다는 주장의 반증), 정의역 선언 = 검증 **범위**.
+  §결정 8 의 "replay 는 max-FIX 카운터를 소비하지 않는다" disjoint 도 무변경이며,
+  정의역 선언 역시 **카운터를 소비하지 않는다**(카운터 참조 0).
+- **비율 임계 게이트를 두지 않는다** — 분모가 자기신고이므로 임계 판정은 조작 유인을 창출한다.
+  **기록은 요구하되 임계 판정은 하지 않는다.** 잔존 유인(작게 열거할수록 유리)은 ADR-181 §결정 6
+  "유인 이동은 제거가 아니다" 라벨과 함께 **미완화 수용**으로 기록한다.
+- **완전성은 판정하지 않는다** — 열거가 전집합인지 여부는 class 동일성 술어 부재로 기계 판정 불가(`declared`).
+  ADR-181 §결정 1 이 "금지 대상은 `D` 가 비어 있지 않은 것이 아니라 `D` 를 미선언 상태로 두는 것" 이라 규정한 그대로다.
+
+### 9.4 `fix-event-depth-scope-presence` 유령 선언 철회 + 라벨 Retired
+
+**실측 (firsthand @ wrapper `ecfe62d63`)**:
+
+- 위 §결정 4 Amendment 1 본문이 `fix-event-depth-scope-presence` 를 **"mechanical enforcement"** 로 **선언했었다**
+  (좌표 `:157` 은 merge-base `ecfe62d63` 기준이며, 현재 판에는 그 문면이 **부재**한다 — 아래 처분 1 이 치환했다).
+- 그러나 `grep -c 'fix-event-depth-scope-presence' docs/evidence-checks-registry.yaml` → **0**
+  (파일은 실재 — merge-base `ecfe62d63` 시점 112 entry / 본 Amendment 커밋 후 **113 entry**,
+  증가분 1 = `fix-ledger-conformance`. `fix-event-depth-scope-presence` 는 **양 시점 모두 0**).
+  script 0 · workflow 0.
+- 반면 우회 라벨 `hotfix-bypass:fix-event-depth-scope` 는 `ADR-024:1305` **정식 등재** + 8-label macro bundle 편입.
+  ⇒ **게이트는 없는데 그 게이트의 우회 채널만 있다.** 이것이 ADR-181 §결정 3 C-6 의 실물 반례다.
+
+**처분**:
+
+1. §결정 4 Amendment 1 의 "mechanical enforcement" 선언을 **철회**한다.
+   ★ **철회는 본 Amendment 커밋에서 문면 치환으로 실집행됐다** — 선언만 남기면 그 자체가 유령이 된다.
+   실집행 좌표 = merge-base `ecfe62d63` 의 `:157` 문단(= 본 Amendment 직전 head 의 `:169`)이며,
+   해당 문단은 현재 `[철회됨 — 2026-08-16, Amendment 4 §9.4]` blockquote 로 치환돼 있다.
+   재현: `git diff ecfe62d63 HEAD -- archive/adr/ADR-067-fix-ledger-implementability-escalation.md`
+   에 **삭제 줄(`-` 접두)이 존재**해야 한다(순수 append 이면 철회 미집행이다). 등재가 아니라 철회인 이유 —
+   등재하면 113번째 warning entry + script + workflow + self-test 를 만들고 ADR-171 §결정 6 의
+   **PR 누적 20 warm-up 을 아무도 요구하지 않은 검사에 대해** 새로 시작해야 한다(ADR-181 §결정 7).
+2. `hotfix-bypass:fix-event-depth-scope` 를 `label-registry-v2.md` 에서 **`Retired` 마킹**한다(삭제 아님 —
+   삭제는 이력 소실). 게이트 없는 bypass 를 활성 상태로 남기면 C-6 도착이 영구화된다.
+   현 시점 `.github/` 안 실 소비자(skip 로직) = **0** 이므로 이 라벨은 오늘 inert 하다.
+   inert 한 것은 소비자가 없기 때문이지 안전 설계 때문이 아니며, 배선은 `if:` 1줄이다.
+3. ★ **본 Story 신규 게이트(`fix-ledger-conformance`)의 우회 채널로 이 라벨을 채택하지 않음을 명시 선언**한다.
+   이름 근접성 때문에 미래에 조용히 배선될 수 있고, 그때 C-6 이
+   "라벨이 게이트보다 먼저 있었다" 에서 **"라벨이 게이트를 죽였다"** 로 실현된다.
+4. 신규 게이트는 **bypass 라벨 없이 출시**한다. 생성 선행조건 = 그 게이트가 RED 를 낸 실 CI run 참조.
+5. ★★ **철회의 문면 도달 범위를 정직 선언한다 (설계리뷰 FIX Iter 1 신설 — INV-D 자기적용)**.
+   처분 1 은 **본 ADR 안의 문면**만 치환한다. 그러나 같은 유령을 **현재형으로 기술하는 문면이 본 ADR 밖에
+   9곳 더 살아 있다**. 철회를 본 ADR 안에서만 하고 끝내면 "선언은 철회됐는데 그 선언을 인용하는 문서는
+   그대로" 라는 상태가 되며, 이는 본 Amendment 가 고발하는 class 의 재생산이다.
+
+   **전수 실측** [wrapper worktree `cfp-2985-fix-telemetry`, ★ **좌표 immutable ref = `ecfe62d63`**
+   (merge-base — 아래 1~13 의 타 파일 줄번호는 전건 이 SHA 기준이며, carrier 가 merge 되면 이동한다.
+   직전 판은 내부 계수에만 `adf99ed44` 를 병기하고 타 파일 좌표에는 아무 ref 도 안 달아 **같은 표 안에서
+   비대칭**이었다 — 설계리뷰 FIX Iter 2 정정), 재현 =
+   `grep -rn 'fix-event-depth-scope-presence' --include='*.md' --include='*.yaml' .`]:
+
+   ★★ **직전 판의 표는 12행이었고 실측은 13이다 (설계리뷰 FIX Iter 2 정정 — 누락 1건 = 13행)**.
+   누락 기전을 정확히 적는다: 직전 판의 열거는 결과에서 본 ADR 자신을 빼려고 **`grep -v 'ADR-067-fix-ledger'`
+   (내용 필터)** 를 썼는데, `archive/adr/ADR-RESERVATION.md:710` 행의 **본문 안에**
+   `verified-via Read worktree archive/adr/ADR-067-fix-ledger-implementability-escalation.md` 라는
+   문자열이 들어 있어 **경로가 아니라 내용으로 매치돼 조용히 탈락**했다. 즉 배제 술어의 정의역이
+   "파일 경로" 여야 하는데 "행 전체" 였다 — **본 Amendment 가 고발하는 검사-정의역 협착 그 class 의 자기 실례**다.
+   정정된 술어 = 경로 기준 배제(`sed` 로 좌표만 추출 후 `grep -v '^./archive/adr/ADR-067-fix-ledger'`).
+   계수 정합: 전체 매치 **25** − 본 ADR 내부 **12** = **13**.
+
+   | # | site | 분류 | 처분 carrier |
+   |---|---|---|---|
+   | 1 | `docs/inter-plugin-contracts/fix-event-v1.md:29` | ★ live — registry entry 실재를 `related_files` 주석으로 단언 | D-1 (Phase 1) |
+   | 2 | `docs/inter-plugin-contracts/fix-event-v1.md:87` | ★ live — "누락 = warning-tier lint **적발**" (현재형 검출 주장) | D-1 (Phase 1) |
+   | 3 | `docs/inter-plugin-contracts/fix-event-v1.md:258` | ★ live — 동일 문면(schema 주석) | D-1 (Phase 1) |
+   | 4 | `docs/inter-plugin-contracts/fix-event-v1.md:262` | ★ live — registry entry 단언 | D-1 (Phase 1) |
+   | 5 | `docs/inter-plugin-contracts/fix-event-v1.md:388` | ★ live — 요약 목록의 lint 단언 | D-1 (Phase 1) |
+   | 6 | `docs/orchestrator-playbook.md:2873` | ★ live — "누락 시 **적발**" | D-25 (Phase 1) |
+   | 7 | `templates/story-page-structure.md:419` | ★ live — "누락 시 **적발**" | D-5 (Phase 1) |
+   | 8 | `docs/inter-plugin-contracts/label-registry-v2.md:256` | ★ live — 부재 workflow `templates/github-workflows/fix-event-depth-scope-presence.yml` 를 현재형 carrier 로 기술 | D-21 (Phase 2) |
+   | 9 | `docs/inter-plugin-contracts/label-registry-v2.md:1201` | ★ live — 부재 script + 부재 workflow 를 registry description 에서 현재형 기술 | D-21 (Phase 2) |
+   | 10 | `docs/inter-plugin-contracts/fix-event-v1.md:363` | **동결 이력** — v1.2→v1.3 changelog 항목(dated) | 무접촉 |
+   | 11 | `docs/inter-plugin-contracts/label-registry-v2.md:94` | **동결 이력** — Amendment 1 dated 서술 | 무접촉 |
+   | 12 | `archive/prune-2026-06/CHECK-VERDICT.md:154` | **동결 이력** — archive 스냅샷 | 무접촉 |
+   | ★ 13 | `archive/adr/ADR-RESERVATION.md:710` | **철회 기술** — 본 Amendment 4 의 예약 row 가 축 ④ 를 서술하며 대상을 이름으로 지목한다(이름을 지우면 무엇이 철회됐는지 알 수 없다). 동시에 registry row 는 append-only(INV-A)라 mutate 금지 | 무접촉 (직전 판 **누락** — 위 기전 참조) |
+
+   **본 ADR 안 occurrence 의 분류** — 기준 판 = **`adf99ed44`**(본 처분 5 직전, immutable ref)이며
+   그 시점 계수 = **10**. ★ 현재 판의 계수는 여기에 못박지 않는다 — **이 처분 5 문단 자신이 그 문자열을
+   포함**하므로 세는 행위가 대상을 늘린다(고정 수치 = 즉시 stale). 재현 규칙 =
+   `git show adf99ed44:archive/adr/ADR-067-fix-ledger-implementability-escalation.md` 에 대한 위 grep.
+   분류: 동결 이력 = `:16`(Amendment 1 dated log entry —
+   amendment_log 는 byte-frozen 이력이며 그 뒤의 Amendment 4 entry 가 철회를 기록하므로 연대기 자체가
+   자기정정한다) / **철회 기술** = `:37`·`:39`·`:70`·`:173`·`:479`·`:483`·`:484`·`:486`(철회 대상을
+   **이름으로 지목**해야 성립하는 문면 — 이름을 지우면 무엇이 철회됐는지 알 수 없다) / **live 주장** =
+   `:57` 1건뿐이었고 본 Amendment 에서 **문면 치환으로 제거**했다.
+
+   ★ **본 처분의 천장**: 위 1~9 의 실 정정은 각 carrier 행에서 일어나며 **본 ADR 은 그것을 지시할 뿐
+   집행하지 않는다.** "철회 완료" 라고 적을 수 있는 범위는 본 ADR 문면 + `:57` 까지이고,
+   나머지 9곳은 **carrier 가 merge 되기 전까지 살아 있다.** 이 문장을 지우면 over-claim 이 된다.
+
+6. ★★ **`amendment_log` 배제 규칙 확정 + "전수" 주장의 정의역 정합 (설계리뷰 FIX Iter 3 — P0-D)**.
+
+   **적발된 비대칭**: `:16`(Amendment 1 의 `amendment_log[].summary`)은 유령 lint 를 **현재형**으로
+   보유한다 — 문면 말미 `… fix-event-depth-scope-presence warning-tier lint (advisory only) 동반.`
+   이 줄은 §8.D 음성 leg 의 N1(본문 `**mechanical enforcement**:` 앵커)·N2(`related_*` 블록)
+   **어디에도 안 걸려** N=0 GREEN 이 나온다. 반면 같은 class 인 `:70`(`related_files` 주석)은
+   **Iter 1 에 정정됐다.** 즉 처리 비대칭이었고, 위 처분 5 는 "전수" 를 단언했다.
+   **침묵하지 않고 택일해 선언한다.**
+
+   | 선택지 | 판정 | 사유 |
+   |---|---|---|
+   | ① `amendment_log[].summary` 를 음성 leg 정의역에 **편입** + `:16` 정정 | ✗ | dated log entry 를 사후 편집하는 것은 **"과거 amendment 가 무엇을 선언했는가" 자체를 바꾸는 행위**다. Amendment 1 은 실제로 그 lint 를 동반한다고 선언**했다** — 그 사실을 지우면 왜 Amendment 4 가 철회를 해야 했는지 근거가 소멸한다. 철회의 올바른 형식은 원문 삭제가 아니라 **후속 entry 의 기록**이며 그것은 이미 `:37` 축 (4) 에 있다 |
+   | ★ ② **배제 규칙 제정** (`amendment_log` = 동결 이력) | ★ **채택** | 아래 규칙 + 일관성 검증 |
+
+   **채택 규칙 (기계 판정 가능)**:
+
+   ```
+   음성 leg 정의역 = ADR 파일의 다음 표면
+     IN : 본문 산문 · related_adrs · related_files · mechanical_enforcement_actions trailing
+     OUT: amendment_log[] 의 모든 필드 —  단, 배제는 merge-base 시점에 이미 존재하던 entry 한정
+          (그 PR 이 신규 append 한 amendment_log entry 는 정의역 IN)
+   ```
+
+   ★★ **supersede — 위 블록은 이력이다 (설계리뷰 FIX Iter 7, 처분 8 이 정본)**. 위 `IN` 열거는
+   **allow-list** 였고, 그 열거 4항 중 **도달 leg 이 실재하는 것은 2항뿐**이었다(firsthand — 아래 처분 8).
+   즉 *"검사한다고 선언한 표면"* 과 *"검사가 도달하는 표면"* 이 갈렸고, 그것은 이 Story 가
+   ADR-181 `INV-D` 로 정의한 **검증 정의역 결손(P ⊋ V)** 그 자체다.
+   **정본 = 아래 처분 8 의 leg 별 정의역 표(deny-list).** 위 블록은 덮어쓰지 않고 남긴다 —
+   덮어쓰면 무엇이 왜 바뀌었는지가 사라지고 같은 교환을 다음 라운드가 다시 한다.
+
+   - **왜 `:70` 정정과 일관되는가**: `related_files` 는 **dated 가 아니고 append-only 도 아닌
+     live 포인터 목록**이다. 읽는 사람은 그것을 "지금 이 ADR 이 가리키는 파일" 로 읽지
+     "2026-05-17 에 그렇게 생각했던 기록" 으로 읽지 않는다. 반면 `amendment_log[]` 항목은
+     `date` 필드를 **자기 안에 보유**하며 연대기로 읽힌다. **두 표면은 독자 계약이 다르다** —
+     따라서 하나는 정정하고 하나는 배제하는 것이 비대칭이 아니라 **표면별 정합**이다.
+   - **왜 merge-base 단서가 필요한가**: 단서 없이 `amendment_log` 전체를 배제하면
+     **새 amendment_log entry 에 유령 주장을 심는 것이 회피구**가 된다. 배제 근거는
+     "이미 동결된 이력" 이지 "log 라는 이름" 이 아니므로, 동결되지 않은(=이 PR 이 방금 쓴)
+     entry 는 배제 사유가 성립하지 않는다. 기계 판정 = `git diff merge-base HEAD` 의 추가 줄 여부.
+   - ★ **위 처분 5 의 "전수" 주장 정합**: 처분 5 의 전수는 **열거의 전수**(repo-wide grep 13 site
+     분류)이고 §8.D 음성 leg 은 **검사의 정의역**이다. 두 축이 다르며 직전 판은 그 차이를 적지
+     않아 "전수인데 왜 `:16` 을 안 잡나" 가 성립했다. 정정 = 처분 5 의 전수는
+     **"열거 전수 ∧ 검사 정의역은 위 IN 집합"** 으로 읽는다. `:16` 은 **열거에는 포함**되고
+     (분류 = 동결 이력) **검사 정의역에서는 배제**된다 — 그 두 사실이 동시에 참이다.
+   - ★ **이 규칙의 천장 (`declared`)**: 배제는 "동결 이력은 정정 대상이 아니다" 라는 **저작 규약**에
+     의존하며, 그 규약 자체를 기계가 검증하지는 않는다. 즉 누군가 `amendment_log` 를 사후 편집해도
+     본 leg 은 침묵한다(그 축의 검출은 `adr-amendment-parity` 소관이며 본 검사가 아니다).
+
+7. ★★★ **처분 6 의 merge-base 단서가 `실행 명령에 존재하지 않았다` — `N3` leg 신설
+   (설계리뷰 FIX Iter 4 — P0-A, 3자 완전 수렴)**.
+
+   **적발 (firsthand, 3 심사자 각자 독립 mutant 로 재현)**: 신규 `amendment_log` entry 에 현재형
+   유령 주장을 심으면 **N1 = 0 ∧ N2 = 0 = GREEN 통과**한다. 3겹 원인:
+
+   | # | 원인 | 실측 좌표 |
+   |---|---|---|
+   | ① | `amendment_log:` 가 **N2 의 sed 구간보다 앞**이라 구조적으로 바깥 | `amendment_log:` = `:12` / N2 구간 시작 `related_adrs:` = `:48` / `related_files:` = `:66` |
+   | ② | 유령이 **4-space `summary:`** 안에 있어 `grep '^  - '` 에 미매치 | `:16` · `:37` |
+   | ③ | ★ **`N3` leg 부재** — `git merge-base` 가 §8.D 실행 명령 **어디에도 없다** | 판정식이 `N1 + N2 == 0` |
+
+   ★★ **정직 정산 — 위 처분 6 은 이 공격을 이름으로 지목하고 닫혔다고 단언했다.**
+   처분 6 의 두 문장("배제는 merge-base 시점에 이미 존재하던 entry 한정" / "기계 판정 =
+   `git diff merge-base HEAD` 의 추가 줄 여부")은 **규칙으로는 정확했으나 그것을 집행하는 leg 이
+   저작되지 않았다.** 즉 **존재하지 않는 방어를 현재형으로 단언**했고, 그것이 본 ADR §결정 5 ②
+   ("아직 존재하지 않는 enforcement 자산을 현재형으로 기술하지 않는다")가 금지하는 바로 그 형상이다.
+   **처분 6 의 규칙은 유지하고, 그 규칙을 실행하는 leg 을 여기서 신설한다.**
+
+   **`N3` leg (실행 가능 명령 — 의사코드 아님)**:
+
+   ```bash
+   cd <wrapper worktree>
+   F=archive/adr/ADR-067-fix-ledger-implementability-escalation.md
+   AL='/^amendment_log:/,/^related_stories:/p'
+   git show ecfe62d63:"$F" | sed -n "$AL" > /tmp/base_al.txt   # merge-base 시점 동결 이력
+   sed -n "$AL" "$F"                                > /tmp/head_al.txt
+   # 이 PR 이 신규 append 한 줄만 남긴다 (-F 고정문자열 / -x 행 전체 일치 / -v 여집합)
+   grep -Fxv -f /tmp/base_al.txt /tmp/head_al.txt \
+     | grep 'fix-event-depth-scope-presence' | grep -vc '\[철회됨'
+   ```
+
+   판정식 = **`N1 + N2 + N3 == 0`** (각 `grep -c` 는 미매치 시 rc=1 이므로 rc 가 아니라 **출력 정수**로 판정).
+
+   - **`D-LEG` L1 (입력원 리터럴)** — 입력원 = ① merge-base **`ecfe62d63`** ② 대상 파일 경로
+     ③ 블록 경계 `^amendment_log:` ~ `^related_stories:` ④ 마커 리터럴 `[철회됨`.
+     "merge-base 시점" 이라는 지시어가 아니라 **SHA·경로·앵커 리터럴**로 적는다.
+   - **`D-LEG` L2 (판별 행)** — `mutantB`(신규 `amendment_log` entry 에 현재형 유령 주장 주입)를
+     **Change Plan §8.D 대조군 표의 행으로 승격**한다. firsthand 실행 결과:
+
+     | 트리 | N1 | N2 | **N3** | 구 판정식 (`N1+N2`) | 신 판정식 (`N1+N2+N3`) |
+     |---|---|---|---|---|---|
+     | HEAD | 0 | 0 | **0** | GREEN | **GREEN** |
+     | `mutantB` | 0 | 0 | **1** | ★ **GREEN (회피 성공)** | ★ **RED** |
+
+     ⇒ `N3` 이 빠지면 판정이 뒤집힌다 = 판별 행 성립.
+   - ★ **`N3` 이 잡은 첫 대상은 이 PR 자신이었다 (firsthand)**: leg 을 신설하자마자 HEAD 에서
+     **N3 = 2** 가 나왔다 — `:37`(Amendment 4 `summary`)과 `:39`(`reinterpretation` 주석)가
+     유령 문자열을 담으면서 고정 마커 `[철회됨` 을 갖지 않았기 때문이다. 두 줄에 마커를 부여해
+     **N3 = 0** 으로 청산했다. 규칙을 자기 문면에 먼저 적용한 결과이며, 적용하지 않았다면
+     이 leg 은 **자기 PR 에서 RED 인 채로 문서에만 적힌 leg** 이 됐을 것이다.
+   - ★ **`N3` 의 정직 천장 (`declared`)**: `N3` 은 **merge-base 에서 정의상 0** 이다(그 시점에는
+     "신규 append 줄" 이 없다). 따라서 `N3` 의 항진 반증은 BASE 대조가 **아니라 `mutantB`** 가 맡는다 —
+     이 사실을 적지 않으면 "BASE=0 · HEAD=0 이니 leg 이 돈다" 는 공허한 논증이 성립한다.
+   - ★ **`N3` 의 정의역 천장 (`declared`)**: 본 leg 의 정의역은 **이 파일의 `amendment_log` 블록**이다.
+     다른 ADR 의 `amendment_log` 에 같은 유령을 심는 경로는 미탐이며, 그 축은 Phase 2 checker
+     (`adr-admission`, carrier `#2985` / 만기 2026-09-15)의 코퍼스 확장 소관이다.
+
+8. ★★★ **처분 7 의 재설계(Iter 5)가 축을 `교환`해 회귀 2건을 냈다 — `N3` 합집합 확정
+   (설계리뷰 FIX Iter 6 — P0, 3자 수렴)**.
+
+   Iter 5 는 위 `N3` 을 **4축 재설계**했다 — ① 물리 줄 → **파싱값** ② 줄-집합 차분 →
+   **entry-provenance(번호)** ③ 줄 → **출현** 단위 ④ 부분문자열 → **정확 토큰**.
+   ③④ 는 순증이었으나 **①② 는 옛 축을 대체**했고, 그래서 옛 축이 덮던 영역을 그대로 잃었다.
+
+   **적발 2건 (firsthand — 규정 문면을 그대로 구현해 재현)**:
+
+   | # | 잃은 것 | 실측 |
+   |---|---|---|
+   | ① | **번호만 보므로 내용 변경을 못 본다** | 동결 entry(Amendment 1)의 `summary` 를 편집해 새 유령 주장을 삽입하면 번호는 그대로 `1` → 정의역 밖 → `N3 = 0`. **Iter 4 판(물리 줄)은 검출** |
+   | ② | **파싱값만 보므로 YAML 주석을 못 본다** | 이 파일 frontmatter 의 유령 **물리 줄 출현 5** 대 **`amendment_log` 파싱값 출현 2** ⇒ **3건이 주석 전용**. **Iter 4 판은 검출** |
+
+   ★★ **마커가 inert 였다 (결정적 실증)**: `reinterpretation:` 줄 주석의 철회토큰을 **제거해도**
+   Iter 5 판 `N3` 은 **0 불변**이다 — 그 줄이 파싱값 정의역 밖이라 토큰이 판정에 아무 영향을 주지
+   않았다. 즉 **처분 7 이 "청산했다" 고 적은 두 마커 중 하나는 장식**이었다.
+   합집합 후에는 같은 조작이 **1 = RED** 를 낸다(**load-bearing 으로 전환**).
+
+   **규정 (Iter 6 정본)** — `D-LEG` **L3-ⓐ**(축은 교환이 아니라 합집합) 이행:
+
+   ```
+   정의역 A := yaml.safe_load(frontmatter)["amendment_log"] 각 entry 의 스칼라 필드 파싱값
+   정의역 B := frontmatter `^amendment_log:` ~ `^related_stories:` 구간 물리 줄 중
+               merge-base(ecfe62d63) 의 같은 구간 줄 집합에 없는 줄     # 주석·비스칼라를 덮는다
+   신규판정(A) := 번호 부재  ∪  번호 동일 ∧ 내용 상이(그 차이 필드의 base 대비 증분만)
+   신규판정(B) := 줄-집합 차분
+   주장단위   := 각 출현 (A·B 공통)      철회토큰 := 정확 토큰 형식 (처분 7 과 동일)
+   판정       := N1 + N2 + N3a + N3b == 0
+   ```
+
+   - **"증분만" 인 이유**: 동결 entry 를 건드리면 그 entry 전체가 정의역에 들어오는 설계면,
+     오타 수정 하나가 **동결 이력의 옛 출현 전부**를 live 주장으로 오탐한다.
+   - ★★ **두 축의 맹점이 disjoint 하다** — `A` 는 주석을, `B` 는 byte-identical 복제와 줄 분할을
+     못 본다. **그래서 합집합이 둘 다 닫고, 어느 축도 잉여가 아니다.**
+   - ★ **`B` 는 Iter 4 판의 부활이 아니다** — 배제 단위를 **줄 → 출현**, 마커를 **부분문자열 →
+     정확 토큰**으로 올린 채 되살린다. **회귀를 되돌리되 개선은 유지**한다.
+   - **`D-LEG` L3-ⓑ (H-5 실행 기록)** — mutant 6종 x 3판 대조를 **같은 실행에서** 산출했다
+     (Change Plan §8.D). 검출 집합: Iter 4 = `{2,5,6}` · Iter 5 = `{1,2,3,4}` ·
+     **Iter 6 합집합 = `{1,2,3,4,5,6}`** ⇒ **`Iter6 ⊇ Iter4 ∪ Iter5`, 잃은 검출 0**.
+     HEAD 는 합집합 후에도 **0**(자기 PR born-red 아님).
+   - ★ **정직 정산 — 처분 7 도 "닫혔다" 고 단언했다.** 처분 7 의 4축은 **각각은 옳았고 조합이 틀렸다**:
+     새 축이 더 강하다는 명제와 옛 축이 잡던 것을 다 잡는다는 명제가 **다르다는 것을 검사하지 않았다.**
+     그 검사(H-5)는 Change Plan §8.2 에 **이미 규정돼 있었고 적용이 0회**였다 — 처방은 규칙 신설이 아니라
+     **절차 배선**이며 ADR-181 §결정 5 ③-dt (0) `D-LEG` **L3** 로 못 박았다.
+   - ★ **잔존 천장 (`declared`)**: 합집합이 닫은 것은 **표기·위치·단위·토큰·provenance 축**이며
+     **의미 축**(유령을 동의어·의역으로 바꾼 주장)은 `A`·`B` 둘 다 미탐이다. 정의역도 여전히
+     **이 파일**이며 코퍼스 확장은 Phase 2 소관(위 처분 7 천장 그대로 상속).
+
+9. ★★★ **처분 6 의 `IN` 열거가 allow-list 였다 — 검사 정의역을 여집합(deny-list)으로 전환
+   (설계리뷰 FIX Iter 7 — P0-A·P0-B, 3자 완전 수렴)**.
+
+   **적발 (firsthand)**: 처분 6 은 `IN : 본문 산문 · related_adrs · related_files ·
+   mechanical_enforcement_actions trailing` 을 **"채택 규칙(기계 판정 가능)"** 으로 선언했다.
+   그 4항 중 **도달 leg 이 실재하는 것은 2항뿐**이었다.
+
+   | 선언된 IN 표면 | 도달 leg | 실측 |
+   |---|---|---|
+   | `related_adrs` · `related_files` | N2 | 도달 ✓ |
+   | `mechanical_enforcement_actions` trailing | ★ **없음** | N2 의 `grep '^  - '` 필터가 col-0 키 줄을 배제한다. 이 줄은 **repo 최장 산문 표면**이다 (firsthand 658자) |
+   | **본문 산문** | ★ **없음** | N1 앵커 `^\*\*mechanical enforcement\*\*:` 매치 = **1줄**(`:170`)이고 **그 줄의 유령 출현은 0**(철회 문장으로 치환됨). 본문 유령 보유 줄 **9** 중 N1 도달 **0** |
+
+   ★★ **이것이 이 Story 가 ADR-181 `INV-D` 로 정의한 검증 정의역 결손(P ⊋ V) 그 자체이며,
+   `INV-D` 를 정의하는 PR 안에서 성립했다.** 3방향 오라클(제거·주입·표기등가) 전건에서
+   `합 = 0 GREEN` 이 불변이었고, 대조군(`related_files` 주입 → RED)은 성립하므로 **오라클 항진이 아니라
+   정의역 결손**이다.
+
+   ★★★ **공통 뿌리 = "열거한 것만 본다"**. 처분 6 의 `IN`, N2 의 `^  - ` 필터, N1 의 앵커 —
+   셋 다 **allow-list** 다. allow-list 는 **빠뜨린 것이 문면에 남지 않아 안 보이고**, deny-list 는
+   **뺀 것이 문면에 남아 보인다.** 이 Story 가 반복 학습한 *"교환이 아니라 합집합"* 을
+   **정의역 축**에 적용한 형태이며, P0-A·P0-B·7번째 회피 경로가 **한 처방으로 닫힌다.**
+
+   **규정 (Iter 7 정본 — 처분 6 의 `IN`/`OUT` 열거를 supersede)**:
+
+   ```
+   FM     := 파일 선두 frontmatter 블록 (1행 `^---$` 부터 다음 단독 `^---$` 직전까지의 내부 물리 줄)
+   E1     := `^amendment_log:` 줄부터 **그 뒤 첫 col-0 키 줄**(`^[A-Za-z_][A-Za-z0-9_.-]*:`) 직전까지
+             종단 부재 시 E1 = 그 1줄만            # ★ supersede — 처분 10 P1-5 (분할 근거로 FM 끝까지)
+             (명시 배제 사유: 이 구간은 N3a·N3b 가 전담한다 — 처분 8)
+
+   N2 정의역 := FM − E1                            # ★ deny-list. 열거가 아니라 여집합
+   N1 정의역 := 본문 물리 줄 중 `^\*\*mechanical enforcement\*\*:` 매치 줄
+                                                   # ★ allow-list 잔존 — 원 선언 site. 아래 천장 참조
+   N3a·N3b 정의역 := E1 (처분 8 그대로. ★ 단 `B` 의 신규판정은 아래 P0-C 로 집합 -> multiset 차분)
+
+   주장단위  := N1·N2·N3b = 물리 줄 1개 / N3a = 스칼라 필드 값 1개
+   철회토큰  := \[철회됨 — [0-9]{4}-[0-9]{2}-[0-9]{2}, Amendment [0-9]+ §[0-9]+(\.[0-9]+)*\]
+   retracted := **단위 안 유령 출현 수 ≤ 단위 안 정확 철회토큰 수**      # ★ 어순 무관 (선치·후치 동등)
+   live(단위) := max(0, 출현 수 − 토큰 수)
+   판정      := N1 + N2 + N3a + N3b == 0
+   ```
+
+   - ★★ **P0-B 봉합 — 정확 토큰이 형제 leg 에 전파됐다.** 직전 판의 N1·N2 는 여전히
+     `grep -vc '\[철회됨'`(부분문자열)이었고, `related_files` 에 `[철회됨 아님 — …]` 를 붙이면
+     **전 leg 0 = GREEN** 이었다. 처분 7 이 `N3` 축에서 이미 봉합한 class 가 **형제에 미도달**해
+     표면만 이동한 상태였다(Iter 2 가 스스로 결함이라 부른 형상). ⇒ N1·N2 를 **N3 와 동일한 정확 토큰**으로
+     올린다. **firsthand 판별**: 위조 토큰 mutant = **1 RED** / 부분문자열 leg-off = **0 GREEN**.
+   - ★★ **P1-2 봉합 — 마커 어순이 후치 전용이었다.** 처분 7·8 의 `retracted(i)` 는 구간
+     `[occ_i, occ_{i+1})` 만 보므로 **마커가 유령 뒤에 와야만** 철회로 인정했다. 그런데 한국어 자연 어순은
+     선치이고 **이 파일 `related_files` 의 현행 마커가 실제로 선치**다(firsthand). 후치 전용을 그대로 두고
+     정확 토큰만 올렸다면 **자기 PR 이 born-red** 가 된다. ⇒ 단위를 **줄/필드 값 전체**로 올리고 판정을
+     **출현 수 ≤ 마커 수**로 바꾼다 — 선치·후치를 모두 인정하면서 **경로 2(동거)의 1-마커-전체면제**는
+     계속 막는다(마커 1 · 유령 2 = RED, firsthand).
+   - ★ **7번째 회피 경로(`related_stories` 블록)가 같은 처방으로 닫힌다** — 이 블록은 N3b 종단 앞이고
+     N2 시작 뒤라 **어느 정의역에도 없었다.** deny-list 는 여집합이므로 **열거를 고치지 않아도 포함**된다.
+     이것이 allow-list → deny-list 전환의 실물 이득이다(firsthand: 주입 → **1 RED** / allow-list leg-off → **0 GREEN**).
+
+   ★★ **선언 정의역 = 검사 정의역을 구조로 보장한다 (P0-A ② 처분 — 택일: 좁힘 + 넓힘 동시)**.
+   직전 판은 정의역을 **leg 과 독립된 산문 열거**로 선언했고, 그래서 열거가 leg 을 앞질러 갈 수 있었다.
+   ⇒ **선언을 leg 별로 분해**해 각 leg 이 자기 정의역을 스스로 선언하게 한다.
+
+   ★★★★ **문면 삭제 (설계리뷰 FIX Iter 10, P0)** — 직전 판은 여기에 *"그러면 「선언했는데 도달 leg 0」
+   이 **구조적으로 불가능**해진다(선언이 leg 에서 파생되므로)"* 라고 적었다. **철회한다.**
+
+   - **거짓임이 같은 라운드에 두 번 실증됐다** — 둘 다 *"선언했는데 도달 leg 0"* 의 실물이다:
+     ① **ADR-181 §결정 5** 의 scope 는 `ADR·계약·skill` **3면**인데 기계 판정 정의역은 **ADR 1면**뿐이었고
+     결손 선언이 **0건**이었다(`INV-D` 자기위반). ② **(iv) 결정표**가 `admissible := ladder OR exempt` 를
+     수용 기준으로 걸어 놓고 **사다리 가지 판별 행이 43행 중 0** 이었다 — 사다리 3연언지를 **구현하지 않은
+     stub 이 표를 전건 통과**했다(firsthand `43/43`).
+   - **왜 파생이 도달을 보장하지 못하는가**: "선언이 leg 에서 파생된다" 는 **그 leg 이 존재하는 범위 안에서만**
+     참이다. 위 두 사례는 **선언의 scope 가 leg 집합보다 넓은** 경우이며, 파생 규칙은 그 초과분에 대해
+     아무 말도 하지 않는다. 즉 봉인된 것은 *"선언 ⊃ 검사"* 가 아니라 *"열거된 leg 들 사이의 불일치"* 다.
+   - ★★ **이것이 세 번째로 반증된 *구조적으로 불가능* 선언이다** (① 처분 9 합집합 ② 처분 10 front-end
+     ③ 본 문장). 앞 둘은 인스턴스가 삭제됐는데 **이 원발 문장만 평서 단정으로 생존**해 있었다 —
+     같은 class 를 세는 계수는 정정하면서 **그 class 의 원본은 놔둔 비대칭**이며, 처분 11 근거 1항의
+     `2회` 를 **3회**로 정정한다.
+   - ★ **정본 (bounded)**: leg 별 정의역 선언이 주는 것은 **"열거된 leg 각각에 대해 선언과 검사가 같다"**
+     이며, **"선언 전체가 검사로 덮인다"** 가 아니다. 후자는 scope 와 leg 집합을 대조해야만 알 수 있고
+     그 대조는 **기계 술어가 아니라 저작 규율**이다(`INV-D`).
+
+   | leg | 정의역 (선언 = 검사) | 판별 입력 (firsthand) | 규정판 | leg-off |
+   |---|---|---|---|---|
+   | **N1** | 본문 중 `^\*\*mechanical enforcement\*\*:` 매치 줄 | 그 줄을 Amendment 1 원형으로 복원 | **1 RED** | 0 GREEN |
+   | **N2** | `FM − E1` (**deny-list**) | ① mea trailing 산문에 유령 ② `related_stories` 에 유령 ③ 위조 토큰 | **각 1 RED** | 각 0 GREEN |
+   | **N3a** | E1 파싱값 (신규·변경 entry) | 처분 8 mutant 1~6 | 처분 8 표 | 처분 8 표 |
+   | **N3b** | E1 물리 줄 (base 구간 줄 집합 밖) | 처분 8 mutant 1~6 | 처분 8 표 | 처분 8 표 |
+
+   ★★ **본문 산문은 검사 정의역에서 `좁힌다` — 침묵이 아니라 택일 선언**. 본문 전체를 deny-list 로
+   넓히는 안을 **실행해 기각**했다 (firsthand):
+
+   ★ **계수를 정수로 못박지 않는다 — 이 문단 자신이 본문에 유령을 추가하므로 세는 행위가 대상을 늘린다**
+   (처분 5 가 같은 함정을 만난 자리와 동형). 기준 판 = **`ad3263910`**(본 처분 9 직전, immutable ref),
+   재현 규칙 = 아래 명령. 그 시점 산출 = 유령 보유 줄 **9** / 정확 토큰 보유 **0** /
+   본문 deny-list 판 HEAD 값 **9 = 즉시 born-red**.
+
+   ```
+   git show ad3263910:archive/adr/ADR-067-fix-ledger-implementability-escalation.md \
+     | sed -n '74,$p' | grep -c 'fix-event-depth-scope-presence'     # 본문 = FM 종단(73행) 다음부터
+   ```
+
+   - 그 줄들에 마커를 박으려면 **실행 명령 리터럴 안**에 마커가 들어간다 — 그 중 한 줄은
+     처분 7 의 **leg 명령 자신**(`grep -vc` 로 철회 토큰을 거르는 파이프라인)이고 둘은 census grep 이다.
+     **명령을 훼손하지 않고는 마커를 박을 수 없다.**
+   - 코드펜스 배제로 우회하는 안도 기각했다 — (a) 이 파일의 펜스는 **들여쓰기** 형태라
+     `^```` 앵커가 **2/6 만 잡는다**(firsthand: `grep -c '^```'` → 2, `grep -cE '^[ ]+```'` → 6),
+     (b) 더 결정적으로 **펜스·코드스팬 배제 자신이 회피구**다 — 유령을 백틱 안에 넣고 주장은 평문으로 쓰면
+     면제된다. **배제 규칙이 공격자에게 열린 문이면 그것은 방어가 아니다.**
+   - ⇒ **택일 = 좁힘.** 본문 산문은 **기계 검사 정의역 밖**이며 **열거 축**(처분 5 의 repo-wide grep
+     13-site 분류) 소관이다. 이 분리는 처분 6 이 이미 세운 *"열거의 전수 ≠ 검사의 정의역"* 2축 구분의
+     **적용**이며, 결함은 그 구분을 세워 놓고 `IN` 열거에 본문을 적은 것이었다.
+   - ★ **독자 계약 근거 (처분 6 의 논거 계승)**: frontmatter 필드는 **선언면**(다른 도구가 선언으로 읽는 표면)
+     이고 본문 §9.4 는 **서술면**(철회 서사)이다. 선언면의 유령은 **그 자체가 live 선언**이고,
+     서술면의 유령은 **이름 지목**이다 — 표면별 정합이지 비대칭이 아니다.
+   - ★ **잔여 (`declared`)**: 본문에 평문으로 live 주장을 심는 경로는 **N1 앵커에 걸리지 않으면 미탐**이다
+     (firsthand: 본문 평문 mutant = **0 GREEN**). 지우고 인용하면 over-claim 이다.
+
+   ★ **정상형 토큰은 유령 판정 대상이 아니다 (판별 행 고정)**: `carrier=` · `expiry=` · `[repo=` 는
+   ADR-181 §결정 5 ③-dt 의 **면제 선언 토큰**이지 유령 문자열이 아니다. 셋만 담은 줄을 `related_files` 에
+   주입한 mutant = **0 GREEN**(firsthand) — 즉 deny-list 확장이 **정상 표면을 오탐하지 않는다.**
+   이 행이 없으면 *"넓혔으니 안전하다"* 가 검증되지 않은 채 남는다.
+
+   ★ **E1 종단의 fail-closed 전환 — 판별은 `결합`이다 (정직 기재)**: 종단을 이름 `related_stories:` 에
+   pin 하면 그 키가 사라졌을 때 배제가 frontmatter 를 **끝까지 삼킨다.** col-0 키 정규식으로 바꿔 닫았으나,
+   **verdict 축 단독 판별 행은 0** 이다 — 삼켜진 구간을 **N3b 가 그대로 받아내기 때문**이다
+   (firsthand: 종단키 제거 mutant = 규정판 **1 RED** / 이름-pin leg-off 도 **1 RED**).
+   잔여 1경로(base E1 줄을 frontmatter 다른 위치에 **byte-identical 복제**)는 **도달 불가**다 —
+   base E1 의 유령 보유·무마커 줄은 **1개**(4-space `summary:` 매핑 키)이고, 이를 frontmatter 내
+   amendment_log 밖 **5개 위치에 삽입한 결과 5/5 가 YAML 파싱 실패**다(firsthand).
+   ⇒ (0-d) `BLANK` 과 같은 **도달 불가 증명 보유** 부류이며, *"아직 안 찾은 것"* 이 아니다.
+   ★ 단 이 증명은 **현행 base E1 내용에 결속**된다 — 미래 base 에 top-level 로도 유효한 형태의
+   유령 보유 줄이 들어오면 도달 가능해진다(carrier `#2985` / 만기 `2026-09-15`).
+
+   ★★★ **부수 발견 — `N3b` 의 줄-집합 차분이 7번째가 아니라 8번째 경로를 열어 두고 있었다
+   (설계리뷰 FIX Iter 7 자체 발견, P0-C)**.
+
+   위 처분 8 의 H-5 대조를 **Iter 7 판정식으로 재실행**하던 중, `경로 1 복제` 를 **키 경쟁에서 지도록**
+   배치한 변종이 **전 leg 을 통과**했다 (firsthand):
+
+   ```
+   구성 = base amendment_log 의 유령 보유·무마커 줄을 신규 entry 의 **기존 summary 앞**에 삽입
+     A(파싱값) : YAML 중복 키는 **뒤에 오는 값이 이긴다** -> Amendment 4 의 summary 파싱값 불변 -> 0
+     B(줄집합) : 삽입 줄이 base 구간 줄 집합에 **있다** -> "신규 아님" -> 0
+     => 합 0 = GREEN   (문면에는 유령이 보이는데 두 축 모두 놓친다)
+   ```
+
+   ★ **처분 8 의 `경로 1` 과 같은 이름이되 다른 배치**다 — 처분 8 이 실증한 복제는 중복 키가 **이기는**
+   배치라 A 가 잡았고, **지는** 배치는 A 가 원리적으로 못 본다(파서가 버린 값이므로). 즉
+   *"A 가 복제를 막는다"* 는 **배치 조건부 참**이었고 조건이 적혀 있지 않았다.
+
+   **규정 (Iter 7 — `B` 의 신규판정만 교체, A 무접촉)**:
+
+   ```
+   신규판정(B) := 줄-**집합** 차분  ->  줄-**multiset** 차분
+                  base 구간의 같은 줄 사본 수를 하나씩 소진하고 **초과 사본**을 신규로 센다
+   ```
+
+   - ★ **엄격 확대다 (L3-ⓐ)** — 집합 차분이 신규로 판정하던 줄은 multiset 차분도 전부 신규로 판정한다
+     (base 사본 수 0 이면 초과 사본이므로). 따라서 **잃는 검출이 정의상 0** 이며, 늘어나는 것은
+     *"base 에 있는 줄을 한 벌 더 복사한 경우"* 뿐이다.
+   - ★★ **실행 대조 (firsthand — 처분 8 의 6 mutant 전건 재실행)**:
+
+     | 입력 | 규정판 (multiset) | `B` 집합 차분 leg-off |
+     |---|---|---|
+     | HEAD | **0 GREEN** | 0 GREEN |
+     | 1 복제 (키 경쟁 **패배** 배치) | ★ **1 RED** | ★ **0 GREEN** |
+     | 2 동거 | 2 RED | 2 RED |
+     | 3 분할 | 1 RED | 1 RED |
+     | 4 위조 토큰 | 2 RED | 2 RED |
+     | 5 동결 entry 편집 | 3 RED | 3 RED |
+     | 6 신규 entry 주석 | 1 RED | 1 RED |
+
+     ⇒ **판별 행 = `1 복제`** (verdict 축) · **회귀 0** (2~6 전건 불변) · **HEAD born-red 아님**.
+   - ★★ **이 발견의 출처가 요점이다** — 심사가 아니라 **H-5 대조를 실제로 재실행한 행위**가 잡았다.
+     `D-LEG` L3-ⓑ 가 요구하는 것이 *"전임 판이 잡던 것을 새 판도 잡는가"* 인데, 그 대조를 돌리려면
+     **전임 mutant 를 다시 구성**해야 하고 그 과정에서 **구성의 자유도**(어디에 삽입하는가)가 드러났다.
+     ⇒ **H-5 는 회귀 검사이면서 동시에 탐색 도구다.** 표를 옮겨 적기만 했다면 이 경로는 살아남았다.
+   - ★ **잔여 (`declared`)**: multiset 차분은 **줄 단위**다. base 줄을 **한 글자 바꿔** 복제하면 초과 사본이
+     아니라 신규 줄이 되어 **B 가 잡지만**, 반대로 base 에 없는 형태로 유령을 심으면서 A 도 피하는 조합은
+     여전히 **의미 축 회피**(동의어·의역)로 열려 있다 — 처분 8 의 천장 그대로 상속.
+
+   ★★ **`D-LEG` L3-ⓐ 준수 (축 제거 0)**: 본 처분은 **어느 leg 도 제거하지 않는다.** N1 은 도달 유령이
+   0 이어도 **존치**하며(판별 입력 = 앵커 복원 mutant, 규정판 1 RED), N2 는 정의역이 **확대**되고,
+   N3a·N3b 는 처분 8 그대로다. 바뀐 것은 **정의역의 표현 방식(열거 → 여집합)**·**마커 술어(부분문자열 →
+   정확 토큰)**·**단위 판정(후치 구간 → 출현 수 ≤ 마커 수)** 셋이며 **전부 확대 방향**이다.
+
+10. ★★★ **`형제 미도달` 이 4번째다 — leg 별 재구현을 폐지하고 단일 front-end 인스턴스화로 전환
+    (설계리뷰 FIX Iter 8 — P0-A·P0-B, 3자 수렴 + Codex 비대칭 진단)**.
+
+    **적발 (firsthand)**: 같은 class 가 라운드마다 **자리만 바꿔** 재발했다.
+
+    | 라운드 | 봉합한 자리 | 형제 미도달 | 검출자 |
+    |---|---|---|---|
+    | Iter 5 | 정확 토큰 → `N3` 만 | `N1`·`N2` 는 부분문자열 잔존 | Iter 7 심사 |
+    | Iter 7 | 축 합집합(파싱값 ∪ 물리 줄) → `N3` 만 | `N1`·`N2` 는 물리 줄 단일 축 | Iter 8 심사 (P0-A) |
+    | Iter 7 | 파싱 실패 = RED 규정 | 그 규정을 집행하는 leg 이 형제에 없음 | Iter 8 심사 (P0-B) |
+
+    ★★ **처방을 가리킨 것은 `비대칭` 이다** — 같은 기법(`3 분할`)이 `E1` 안에서는 **RED**(`N3a` 가
+    파싱값 축을 보유)인데 자리만 `N2` 로 옮기면 **GREEN** 이었다. 같은 입력이 자리에 따라 갈리면
+    결함은 그 leg 이 아니라 **leg 이 각자 정의역을 재구현하는 구조**에 있다.
+    ⇒ **또 `형제에 전파` 하면 5번째가 온다.** 전파는 매번 열거이고, 열거는 이 처분 9 가 이미
+    allow-list 로 지목해 폐기한 형상이다.
+
+    **규정 (Iter 8 정본 — 처분 9 의 leg 별 정의역 표를 `front-end 파생`으로 재기술. 판정식 확장)**:
+
+    ```
+    FE(head_text, base_text)  =  단일 front-end. 정의역 추출·정규화를 여기서만 한다.
+      ── 경계 (b1..b5) ──────────────────────────────────────────────────
+      b1  head_text 가 정확히 `---` + 개행으로 시작       # BOM·선행 공백 불허
+      b2  1행 이후 첫 단독 `^---$` 존재 = FM 종단
+      b3  FM 텍스트가 YAML 로 파싱되고 결과가 mapping
+      b4  FM 종단 다음 줄부터 첫 비-FM-형·비-공백 줄까지, FM-형 줄이 0
+            FM-형 := `^[A-Za-z_][A-Za-z0-9_.-]*:` 또는 `^[ ]+- ` 또는 `^[ ]+[A-Za-z_][A-Za-z0-9_.-]*:`
+      b5  base_text 존재 시 keys(FM_head) ⊇ keys(FM_base)     # top-level 키 보존
+      b1·b2·b4·b5 위반 = `fm-boundary` / b3 위반 = `fm-parse-error`   # 둘 다 RED, skip 아님
+      ── 정규화 (전 leg 공통 · 재구현 금지) ────────────────────────────
+      occ(u)  := 단위 u 안 유령 문자열 출현 수
+      tok(u)  := 단위 u 안 **정확 철회토큰** 출현 수   # 처분 9 정규식 그대로
+      live(u) := max(0, occ(u) − tok(u))               # 어순 무관 (처분 9 그대로)
+      ── 축 (전 leg 공통 · leg 은 region 만 고른다) ────────────────────
+      units(region) := 축 P ∪ 축 V                     # ★ 합집합. leg 이 축을 고르지 않는다
+        축 P := region 의 물리 줄 각각
+        축 V := region 에 대응하는 파싱값의 str 스칼라 각각 (list·dict 재귀 하강)
+
+    leg = region 선택 + FE 인스턴스화 (자기 정규화·자기 축 보유 금지)
+      N0  := FE 경계 위반 시 1                          # ★ 신설 — 전체집합 무결성
+      N1  := Σ live(u) for u in units(BODY ∩ `^\*\*mechanical enforcement\*\*:` 매치 줄)
+      N2  := Σ live(u) for u in units(FM − E1)
+      N3a := Σ live(u) for u in units(E1 신규·변경 entry)          # 처분 8 provenance 그대로
+      N3b := Σ live(u) for u in units(E1 물리 줄 multiset 차분)     # 처분 9 P0-C 그대로
+      판정 := N0 + N1 + N2 + N3a + N3b == 0
+    ```
+
+    - ★★ **`N0` = P0-B 봉합 (전체집합 경계 조작)**. 처분 9 의 deny-list 는 `N2 := FM − E1` 로
+      **부분집합 선택만** 여집합화했고 **전체집합 `FM` 의 경계는 여전히 문면 allow-조건**이었다.
+      `FM` 을 줄이면 `N2`·`N3a`·`N3b` 가 **함께** 줄어 유령이 살아 있는데 전 leg 0 = GREEN 이다.
+      **firsthand 3 경로** — 이른 단독 `---`(FM 중간 삽입) · **선두 BOM**(`^---$` 불성립으로 FM 시작점이
+      종단 줄로 밀림) · FM YAML 파싱 실패. 셋 다 규정판 **1 RED** / `N0` off **0 GREEN**,
+      대조군(경계 조작만 제거하고 유령은 그대로) = **1 RED**.
+    - ★★ **`b4` 와 `b5` 는 서로의 맹점을 덮는다 (교환 아님 — L3-ⓐ)**. `b4`(종단 직후 잔여 FM-형 줄)는
+      **merge-base 가 없는 신규 파일**을 덮고 `b5`(키 보존)는 못 덮는다. `b5` 는 `---` 를 **비-FM-형 줄**
+      (산문 연속행) 앞에 넣어 `b4` 의 스캔이 즉시 멈추는 배치를 덮고 `b4` 는 못 덮는다.
+      **firsthand 판별 (각자 단독 판별 행 보유)** — `b4` off 에서 신규파일 mutant가 **RED → GREEN**,
+      `b5` off 에서 비-FM-형 앞 삽입 mutant가 **RED → GREEN**, 둘 다 off 면 **두 mutant 모두 GREEN**.
+    - ★★ **`③ fm-parse-error = RED, skip 아님` 이 여기서 처음 집행된다.** ADR-181 §결정 5 ③-dt (iii) 는
+      이 규정을 이미 보유했으나 **본 §9.4 의 leg 중 어느 것도 그것을 실행하지 않았다**
+      (`N3a` 가 `safe_load` 에 의존하면서 예외 시 무정의). 규정과 집행의 괴리가 P0-B 의 절반이며,
+      front-end 로 올리면 **한 자리에서 집행되고 네 leg 이 그 판정을 상속**한다.
+    - ★★ **형제 게이트에도 같은 class 가 실재한다 (firsthand, 정직 기재)**:
+      `scripts/lib/check_doc_frontmatter.py` 는 FM 을 `text.split("\n---\n", 1)[0]` 로 자르므로
+      **이른 단독 `---` 이 조용히 절단**하고(`:89`·`:160` 무보고 `continue`), 선두 BOM 은
+      `text.startswith("---\n")` 불성립으로 `:47` **warning 후 continue** 한다. 본 처분은 그 게이트를
+      고치지 않는다 — **본 §9.4 의 leg 집합에 대해서만** 닫으며, 형제 게이트 정정은 정의역 밖이다
+      (carrier `#2985` / 만기 `2026-09-15`).
+    - ★★ **축 합집합의 front-end 승격 = P0-A 봉합**. 처분 8 의 `A ∪ B` 는 **`N3` 안에서만** 성립했다.
+      `units()` 로 올리면 **FM 을 region 으로 삼는 leg**(`N2`·`N3a`·`N3b`)이 같은 합집합을 **상속**한다.
+      **firsthand 판별** — 처분 8 표의 `3 분할` 을 자리만 `E1` → `N2`(FM 안 이중인용 스칼라, 줄끝
+      백슬래시)로 옮긴 mutant: 규정판 **1 RED** / 축 합집합 off **0 GREEN**.
+      대조군(같은 주장 한 줄) = 규정판 **2 RED**(P·V 이중 계수) / 축 합집합 off **1 RED**.
+      - ★★★ **문면 삭제 (처분 11, FIX Iter 9)** — 직전 판은 여기에 *"`N1`·`N2` 도 같은 합집합을
+        상속하고 (…) **축을 고를 자유가 없다** — *형제 미도달* 이 구조적으로 불가능해진다"* 라고
+        적었다. **`N1` 에 대해 거짓이므로 그 문장을 삭제했다**(철회는 문면 삭제로만 성립 — 이 Story 규율).
+        **`N1` 의 region 은 BODY 이고 BODY 에는 파싱 계층이 없다** — 축 V 로 인스턴스화할 것이
+        **구조적으로 없다**(공집합). **firsthand**: 앵커 줄 안에서 유령을 두 물리 줄로 분할하거나
+        `<!---->` 로 splice 하면 `축P=0 축V=0` → **GREEN**, 대조군(한 줄) = `축P=1 축V=0` → **RED**.
+        ⇒ front-end 승격이 실제로 준 것은 *"전 leg 이 축을 못 고른다"* 가 아니라
+        **"파싱 계층을 가진 region 의 leg 이 축을 못 고른다"** 이다. 이것이 **두 번째로 반증된
+        *구조적으로 불가능* 선언**이며(첫 번째 = 처분 9 합집합), 그 반복이 아래 처분 11 의 근거 1항이다.
+        ★★ **FIX Iter 10 — 세 번째가 나왔다**: 위 P0-A ② 처분의 *"선언했는데 도달 leg 0 이 구조적으로
+        불가능"* 문장이 **원발 자리에서 철회 표기 없이 생존**해 있었고, 같은 라운드에 **두 건**으로 반증됐다
+        (ADR-181 §결정 5 scope 3면 대 검사 1면 · (iv) 결정표 사다리 판별 행 0). ⇒ 이 계보의 계수는 **3회**다.
+        ★★★★ **FIX Iter 11 — 네 번째가 나왔고, 이번엔 "불가능" 이 아니라 "공집합" 이라는 이름을 쓰고 있었다**:
+        ADR-181 (iv) 표 행 46 아래 문단이 `LADDER_EXIST` 의 verdict 판별 행을 만들 수 없는 이유를
+        *"탐색했고 필요한 입력형(`배선 ∧ ¬실재`)이 현 repo 상태에서 **공집합**"* 이라 적고 이를
+        `BLANK`·`ORDER` 와 구별되는 **제3부류**로 명명했다. **심사 3자가 각각 witness 를 제시해 반증**했고
+        본 저작도 재현했다(`.codeforge/project.yaml` 등 — 정의역 `|S|=407` 에서 92 + 디렉터리 7).
+        ⇒ 이 계보의 계수는 **4회**이며, 네 건의 공통 기전이 이번에 드러났다 —
+        **넷 다 "없다" 를 주장하면서 그 주장의 정의역을 적지 않았다.**
+        처분도 그래서 하나로 통일된다: *"없다" 는 **탐색 정의역을 리터럴로 병기할 때만** 주장이 된다.*
+        (근거 문서 = ADR-181 (iv) 표 아래 "제3부류 철회" 문단 + (iv-L) β 정직 기재)
+    - ★ **재귀 하강으로 통일 — 처분 9 의 `N3` 하강 미규정 잔여가 닫힌다.** 처분 9 는 `A` 축을
+      "entry 매핑의 1단계 값 중 str" 로 한정하고 중첩 컨테이너 도입 시를 **미규정 잔여**로 남겼다
+      (carrier `#2985` / 만기 2026-09-15). `units()` 의 축 V 가 **list·dict 재귀 하강**이므로 그 잔여는
+      **소멸**한다. 현행 스키마에 중첩이 0 이라 **HEAD 값은 불변**(born-red 아님, firsthand)이며,
+      따라서 이것은 검증 불가능한 규정이 아니라 **판별 대상이 생기는 즉시 유효한 확대**다.
+    - ★ **엄격 확대 (L3-ⓐ 축 제거 0)**: `N1`·`N2`·`N3a`·`N3b` 어느 것도 제거·축소되지 않았다.
+      바뀐 것은 ⓐ 정규화·축의 **소재**(leg 각자 → front-end 단일) ⓑ `N0` **신설** ⓒ 축 V 하강 규칙
+      **통일** 셋이며 전부 확대 방향이다. **회귀 0** — 처분 8·9 의 mutant 전건에서 verdict 불변(firsthand).
+    - ★ **정직 기재 — exit 사유가 이동한 행이 1개 있다.** 처분 9 의 `m9`(E1 종단키 제거 + 유령)는
+      규정판 verdict 가 **RED 로 동일**하나 사유가 `ghost-live`(N2) → **`fm-boundary`(N0)** 로 옮겼다.
+      `b5` 가 top-level 키 소실을 먼저 물기 때문이며, `b5` off 에서는 다시 `N2` 가 받는다(**RED 유지**).
+      **이중 방어**이지 검출 이동이 아니다 — 이 문장을 지우면 다음 심사가 표 대조에서 불일치를 재발견한다.
+    - ★★★ **`E1` 종단 부재 처분 정정 — 배제가 아니라 분할이다 (P1-5, 처분 9 의 fail-closed 판을 supersede)**.
+      처분 9 는 *"종단 부재 시 `E1` = 그 1줄만 (fail-closed — 배제가 frontmatter 를 삼키지 못한다)"* 로 뒀다.
+      **그 판이 동결 이력을 오탐한다 (firsthand)**: `amendment_log` 블록을 FM 마지막 키로 옮기는
+      **주장 불변 서식 변경**만으로 `N2 = 1 RED` 가 난다 — 옮겨진 블록이 `E1`(1줄) 밖으로 나와
+      **provenance 가 없는 `N2`** 로 떨어지고, 거기서 base 동결 entry 의 무마커 유령이 live 로 셈되기 때문이다.
+      ⇒ **종단 부재 시 `E1` := `amendment_log` ~ FM 끝**으로 되돌리되, 근거를 바꾼다:
+      **`FM = (FM − E1) ⊎ E1` 는 배제가 아니라 분할**이며 **어느 물리 줄도 두 정의역 밖으로 못 나간다.**
+      `E1` 은 오히려 **더 강한 검사**(provenance 보유)를 받으므로 삼킴이 fail-open 이 아니다.
+      **firsthand 대조** — 서식 이동만: 분할판 **0 GREEN** / 처분 9 판 **1 RED**(오탐 재현) ·
+      서식 이동 **+ 실 유령 주입**: 분할판 **1 RED**(진짜 주입은 잡는다) · 종단키 제거 + 유령: 분할판 **1 RED**(`fm-boundary`).
+      - ★★ **리뷰 처방에서 이탈한 지점 (자기표시)**: 리뷰는 삼킴 방지를 **별도 leg `[e1-unterminated]` = RED**
+        로 분리하라 했으나 **채택하지 않았다** — 코퍼스 실측상 `amendment_log` 가 FM 마지막 키인 ADR 이
+        **174 중 28**(정상 배치)이라 그 leg 은 **28건을 false-RED** 로 만든다. 삼킴이 회피구가 되지 않는
+        보장은 **분할 성질 + `b5`(키 보존)** 가 이미 제공한다.
+      - ★ **"주입분 기여 0" 은 재현되지 않았다 (정직 기재)**: 리뷰는 오탐이 진짜 주입을 **가린다(계수가 같다)**
+        고 적었으나 실측은 서식이동만 **1** → 실주입 추가 시 **2** 로 **기여 1** 이다. 오탐 자체는 재현되므로
+        처분은 유지하되, 재현되지 않은 하위 주장을 그대로 인용하지 않는다.
+    - ★ **`P1-4` 카운트 보존 이동 — 재현 실패 (정직 기재)**: 리뷰는 *"multiset 은 카운트 증가만 닫고
+      보존 이동은 GREEN"* 이라 적었다. `E1` 안 유령 보유 줄을 같은 `E1` 안 다른 위치로 옮긴 mutant 를
+      구성해 실행한 결과 **규정판·축합집합off·집합차분·(축합집합off ∧ 집합차분 = Iter 7 판) 전 열에서 `1 RED`**
+      였다 — `N3b` 의 multiset 이 불변이어도 **`N3a` 의 entry-provenance 가 소유 entry 변화를 잡는다.**
+      대조군(복제) = **2 RED**. ⇒ **이동 축은 이미 닫혀 있으며**, 남는 것은 *"파싱값도 multiset 도 불변인
+      순수 재배열"* 인데 그것은 **주장 불변**이므로 GREEN 이 옳다(결함 아님). 재현되지 않은 지적을
+      처분한 척하지 않는다 — 대신 위 이동 mutant 를 **회귀 입력으로 편입**한다.
+    - ★ **입력 정규화도 front-end 소관 (P2-2 `NFC` 축)**: 유니코드 정규화 형식은 판정을 바꾸는 자유 변수다.
+      **firsthand** — 이 파일 HEAD 는 NFC 이고, **NFD 로 정규화하면 정확 철회토큰 매치가 6 → 0** 이 되어
+      **0 → 6 RED** 로 전면 false-RED 가 된다.
+      ★ **계수 정정 (FIX Iter 9)** — 직전 판의 `7` 은 **실측 `6`** 이다(2 도구 교차 · 산출 명령 병기):
+
+      ```
+      F=archive/adr/ADR-067-fix-ledger-implementability-escalation.md
+      grep -oE '\[철회됨 — [0-9]{4}-[0-9]{2}-[0-9]{2}, Amendment [0-9]+ §[0-9]+(\.[0-9]+)*\]' "$F" | wc -l
+        -> 6
+      python -c "...re.findall(정확 철회토큰, NFC 원문)..."   -> 6   ·   NFD 정규화 후 -> 0
+      ```
+
+      **결론 `0 → 6 RED` 는 무손상**이다 — 마커를 잃는 단위가 6 개이므로 뒤집히는 수도 6 이다.
+      바뀐 것은 **좌변 계수 표기**뿐이며, `7` 은 어느 도구로도 재현되지 않았다. ⇒ front-end 가 입력을 **NFC 로 정규화**해 검사를
+      정규화-불변으로 만든다(정규화 후 NFD 입력도 **0 GREEN**, `NFC` off 시 **6 RED** = 판별 행).
+    - ★ **코드펜스 계수는 정수로 못박지 않는다 (P2-4)** — 처분 9 가 이 자리에 적은 `2/6` 은 **즉시 stale**
+      이 됐다(이 처분 자신이 펜스를 추가하므로 — 처분 5 의 site 계수·(0-c) `leg` 외연과 **같은 계보**).
+      ⇒ **재현 규칙 + immutable ref** 로 적는다. 기준 판 = **`ad3263910`**(처분 9 직전) 산출 = 열0 **2** /
+      들여쓴 **6**. 현재 판 산출은 **아래 명령으로 얻는다** — 적는 즉시 틀리므로 여기 정수를 쓰지 않는다.
+
+      ```
+      grep -cE '^```'    archive/adr/ADR-067-fix-ledger-implementability-escalation.md   # 열0 펜스
+      grep -cE '^[ ]+```' archive/adr/ADR-067-fix-ledger-implementability-escalation.md  # 들여쓴 펜스
+      ```
+
+      ★ **결론은 무변경**: 어느 산출이든 **열0 앵커가 전 펜스를 잡지 못한다**는 사실이 코드펜스 배제안의
+      기각 근거이며, 그 근거는 계수의 특정 값이 아니라 **두 계수가 다르다는 것**에 결속된다.
+    - ★ **잔여 (`declared`)**: ⓐ **의미 축 회피**(동의어·의역)는 처분 8 천장 그대로 미탐이다.
+      ⓑ **본문 평문 live 주장**은 `N1` 앵커 밖이면 미탐이다(처분 9 의 좁힘 택일 — firsthand `0 GREEN`).
+      ⓒ `b4` 는 **종단 직후 연속 구간**만 보므로, 빈 줄과 비-FM-형 줄을 앞세운 배치는 `b5` 에만 의존한다
+      (신규 파일이면 `b5` 부재 = 미탐). 세 잔여를 지우고 인용하면 over-claim 이다.
+
+11. ★★★★ **처분 11 (설계 FIX Iter 9) — 유령 leg 을 수용 기준에서 내리고 `declared` 관측 도구로 강등한다**
+
+    **성격**: 이 처분은 축을 **더하지 않는다**. 처분 6~10 이 매 라운드 해 온 것(정의역 확대 · 토큰 정밀화 ·
+    축 합집합 · front-end 승격)과 **반대 방향**이며, **약속을 실제 지킬 수 있는 크기로 맞추는 것**이다.
+    Orchestrator 처분 = **B안**(사용자 escalation 반려 후 결착, 재논의 금지).
+
+    | 축 | 처분 10 까지 | **처분 11 이후** |
+    |---|---|---|
+    | 유령 탐지 `N0`·`N1`·`N2`·`N3a`·`N3b` (산문 스캔) | 수용 기준 | ★ **`declared` 관측 도구** — 계속 실행·기록하되 **합격 판정에 쓰지 않는다** |
+    | 수용 기준 | (iv) 결정표 ∧ 유령 leg | ★ **ADR-181 §결정 5 ③-dt (iv) 입장 조건 결정표 단독** |
+    | 실 강제 | 없음 (Phase 1) | Phase 2 checker `fix-ledger-conformance` (carrier `#2985` / 만기 `2026-09-15`) |
+
+    - **강등 ≠ 폐기.** mutant 코퍼스 · 대조표 · ablation 열은 **전부 존치**하며 계속 돌린다. H-5 가
+      실증했듯 이 실행은 **탐색 도구로서 실제 결함을 냈고**(처분 9 의 P1-5, 처분 10 의 형제 미도달,
+      이번 판의 조합 회피) 그 가치는 수용 기준 지위와 **무관**하다. 바뀌는 것은 산출에 합격/불합격을
+      걸지 않는다는 것 하나다. **L3-ⓐ(축 제거 0) 위반 아님** — 제거된 leg 은 0 이다.
+
+    **근거 4항**
+
+    | # | 근거 |
+    |---|---|
+    | 1 | **산문 스캔 표면은 원리적으로 열려 있다.** 9 라운드에서 회피 경로 **10종** — BOM · CRLF · ZWSP · 줄접합 · YAML 중복키 · rename · 이른 `---` · 앵커 안 삽입 · **조합** · 열거자 밖 디렉터리. 그리고 *"구조적으로 불가능"* 선언 **3회**(처분 9 합집합 · 처분 10 front-end · ★ 처분 P0-A ② 정의역 파생)가 **모두 다음 라운드에 반증**됐다 — 두 번째 반증이 위 처분 10 의 삭제된 문장이고, ★ **세 번째는 FIX Iter 10 에 원발 자리에서 철회**됐다(그 전까지 앞 둘만 인스턴스 삭제된 **비대칭** 상태였다). 계수가 2 에서 3 으로 오른 것 자체가 근거 1항을 약화시키지 않는다 — **강화한다** |
+    | 2 | **입장 조건(③)은 frontmatter 라는 닫힌 구조 위의 술어다** — 정의역이 유한·열거 가능하고 결정표로 판정이 고정된다. **기계 강제가 실제로 가능한 자리는 여기다** |
+    | 3 | **이 ADR 자신의 정직 불변식** — *지킬 수 없는 경계를 지킨다고 선언하지 마라*(ADR-181 §결정 2 `INV-N`·§결정 6). 수용 기준에 둔 채로는 매 라운드 "닫혔다" 를 쓰게 되고 매 라운드 반증된다 |
+    | 4 | **무한 축 추가 경주를 구조적으로 종료**한다 |
+
+    **천장 — 무엇이 미탐인가 (이름으로 적는다)**
+
+    | # | 미탐 경로 | 실측 |
+    |---|---|---|
+    | **T-1** | ★★ **조합 회피 일반 미탐** — `분할` ∧ `키경쟁 패배` 동시 적용 시 전 leg 통과. **각각 단독은 RED 1** | 단독 `RED 1`/`RED 1` · **조합 `GREEN 0`** · 대조군(한 줄) `RED 2` (firsthand). ★ **재료 두 개가 이미 자기 mutant 코퍼스 안**(`x1 분할` · `e1 복제`)에 있었는데 **H-5 가 하나씩만 돌려 안 드러났다** |
+    | **T-2** | ★★ **`N1` 은 축 V 가 구조적 공집합** — BODY 에 파싱 계층 부재. 앵커 줄 **안**의 분할·`<!---->` splice 가 GREEN | 대조군(한 줄) `RED` / 분할 `GREEN` / splice `GREEN` (firsthand). 처분 10 의 *"N1 도 상속"* 문장은 **삭제** |
+    | **T-3** | **의미 축 미탐**(동의어·의역) — 유령 문자열 자체가 앵커이므로 전 축 미탐 | 처분 8 천장 그대로. 닫힌 적 없음 |
+    | **T-4** | **표기 축 잔여** — ZWSP(U+200B) · 주석 splice 는 **전 자리** 통과. NFC 정규화는 ZWSP 를 제거하지 않는다 | T-2 splice 열이 동형 |
+    | **T-5** | **rename 회피** — provenance 키(`b5`·`D-ESCAPE`)가 **경로 동일성**에 결속 | 미실측 — **미탐 후보**로만 적는다(실측 없이 단정하지 않는다) |
+    | **T-6** | **열거자 밖 디렉터리** — 정의역 열거자가 `archive/adr/ADR-*.md` 이므로 `plugins/*/docs/adr/` 등은 밖 | ADR-181 정의역 표 1행 |
+
+    - ★ **`b5` 는 (iv) 표 안에 판별을 남긴다** — 유령 leg 의 `m9` 를 잡는 유일 축이었으므로, 강등 후에도
+      입장 조건 결정표에 **행 42** 로 판별이 존치한다(ADR-181 (iv) 신설 행). `b2` 도 같은 이유로 **행 41**.
+    - ★ **"이제 닫혔다" 류 문장을 §9.4 전역에서 제거·범위 정정했다.** 남은 서술은 전부
+      *"이 mutant 는 이 판에서 RED 였다"* 형태의 **관측 기록**이며 경계 주장이 아니다.
+    - ★ **Phase 2 실 checker 착지는 선택이 아니라 필수다** — 수용 기준이 표 단독이 되었으므로,
+      표가 강제되지 않으면 이 ADR 의 기계 강제는 **0** 이다. carrier `#2985` / 만기 `2026-09-15`.
+
+### 9.5 declaration-only retain + ratchet 정합
+
+- `mechanical_enforcement_actions: []` retain — 실 checker(`check_fix_ledger_conformance.py` + workflow +
+  discriminating self-test)는 **Phase 2**. carrier = `mclayer/plugin-codeforge#2985` / 만기 `2026-09-15`.
+  이 `[]` 는 ADR-181 §결정 5 ③ 의 형식(carrier·만기 주석 병기)을 따르며, 동일 PR 에 registry entry 가 존재한다.
+  **그 사이 구간에서 9.1~9.4 의 강제력은 0 이며 이는 선언이다** — 이 문장을 지우면 over-claim 이 된다.
+- ratchet 강화 방향: 값공간 additive · 카운터 정의역 무변경 · verdict 여집합 fail-closed 충전 ·
+  닫기 조건 축 추가 · 실효 0 이던 문면 제거. **약화 0** — ADR-058 §결정 5 역-ratchet 정의역 밖.
+- `is_transitional: false` 유지.
+
 ## Amendment 5+ (CFP-3017 carrier, provisional) — receiver floor 전환 + 위생 정의역 확장 + 노출면 근거 정정 + verdict relay 정의역 선언
 
 > **번호 provisional 선언 (D-5a/AC-14)**: 본 Amendment 번호 "5+" 와 아래 결정 번호 10 은 **잠정값**이다. amendment 4 슬롯 + 결정 9 서수는 미머지 브랜치 CFP-2985 가 선점 중임을 firsthand 실측했다 — 재현: `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-RESERVATION.md | grep -n -A4 "adr_number: 67"` (→ `amendment_id: 4 / reserved_by_cfp: CFP-2985 / status: active`) + `git show origin/cfp-2985-fix-telemetry:archive/adr/ADR-067-fix-ledger-implementability-escalation.md | grep -n "^### 9\."` (→ 결정 9 서수 `9.1`~`9.5` 점유). 확정 규칙 = **"claim 은 잠정, 착지가 확정"** — 선착은 자기 provisional 값 그대로 / **후착 재계산 = 의무(조건부 아님)**: merge 직전 origin/main fresh 3-way 재확인(① 본 파일 frontmatter `amendment_log` 실제 max ② `ADR-RESERVATION.md` 동일 `adr_number` 하 타 claimant row — 미머지 브랜치 포함 ③ 병렬 open PR 실측) 후 다르면 관련 문면 전부 갱신 / **결번 허용 · 충돌 금지** (선례: ADR-141 amendment 10 · adr_number 173 결번).
@@ -499,6 +1241,7 @@ Story §2.4 의 계약↔ADR 5축 어긋남 전건 처분 (AC-6 — 미분류 �
 
 ## 관련 파일
 
+- [ADR-181](ADR-181-verification-domain-deficit-normative.md) — 본 Amendment 4 의 owner_adr (P/V/D 정의·불변식 SSOT).
 - [`skills/fix-ledger-schema/SKILL.md`](../../skills/fix-ledger-schema/SKILL.md) — 본 ADR §결정 1 / §결정 4 / §결정 5 narrative SSOT 본문 (호출 시점 + 핵심 룰).
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) — 본 ADR §결정 5 schema SSOT (v1.2 MINOR bump).
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — 본 ADR §결정 1 / §결정 2 / §결정 6 narrative SSOT (§6.4-6.6 절차).
