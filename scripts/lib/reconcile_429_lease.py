@@ -133,23 +133,22 @@ def reconcile(ledger_dir: Path, stop_event_file: Path) -> dict:
     age_max = max(ages_seconds) if ages_seconds else None
     age_mean = statistics.mean(ages_seconds) if ages_seconds else None
 
-    # 4-status 판정 (TTL 미확정이므로 expire 판정 불가 — age 분포만 보고)
+    # 4-status 판정 (TTL 미확정이므로 orphan_expired 판정 = age 분포 보고만)
+    # 순서 중요: no_data → stop_without_lease → aligned → orphan_expired
     status = "no_data"
+
     if active_lease_count == 0 and matching_stop_count == 0:
+        # 케이스: 파일 없음 / lease 0 / stop 0
         status = "no_data"
-    elif active_lease_count <= matching_stop_count:
+    elif active_lease_count == 0 and matching_stop_count > 0:
+        # 케이스: lease 0 but stops > 0 — BS-1(resume) 의 직접 증인
+        # SubagentStop 이 발화했는데 대응 SubagentStart 가 없음 = resume
+        status = "stop_without_lease"
+    elif active_lease_count > 0 and active_lease_count <= matching_stop_count:
+        # 케이스: acquired 만큼 released (정상 상태)
         status = "aligned"
-    elif active_lease_count > 0 and matching_stop_count == 0:
-        # stop_without_lease 는 stop 이 없는데도 lease 가 있는 경우
-        # 하지만 stop-event 자체가 없으면 이것은 "no_data" 범주
-        if len(stops) > 0:
-            # stop-event 는 있는데 hook_source 가 429 관련 아님 → stop_without_lease
-            status = "stop_without_lease"
-        else:
-            # 완전히 no_data
-            status = "no_data"
     else:
-        # active > 0 ∧ matching_stop > 0 인데 active > stop 이면 orphaned
+        # 케이스: active > stops (일부 lease 미해제/만료)
         status = "orphan_expired"
 
     # 나이가 있으면 정렬
