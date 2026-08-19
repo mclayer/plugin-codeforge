@@ -38,7 +38,6 @@ try:
         compute_envelope_from_text,
         compute_envelope_from_document,
         cut_envelope,
-        Envelope,
         EnvelopeError,
         ENVELOPE_ERROR_KINDS,
     )
@@ -1808,33 +1807,69 @@ def test_envelope_pin_coverage_table_witnesses():
     # ─ 대조표 assert — 18칸 (9행 × 2축) 전건 ─
     print(f"\n[대조표 Live Assertion]")
 
-    # 기대치: (a) 술어 — 각 node 당 탈락 셀 수 → 전 node 합계
-    # (a) = (16 − 변화종수) × node 수
-    expected_table_a = {
-        "정본": 0,  # (16-16) × 14 = 0
-        "V-DROPNULL": 14,  # (16-15) × 14 = 14
-        "V-DROPEMPTY": 42,  # (16-13) × 14 = 42 ([], (), {} 3종 탈락)
-        "V-DROPEMPTYSTR": 28,  # (16-14) × 14 = 28
-        "V-DROPFALSE": 14,  # (16-15) × 14 = 14
-        "V-NUMCOERCE": 0,  # 수치 강제는 탈락 없음
-        "V-NFC": 0,  # 정규화는 탈락 없음
-        "V-NULLTOMAP": 0,  # None→{} 치환은 탈락 없음
-        "V-EMPTYSEQSTR": 0,  # 빈 sequence→"" 치환은 탈락 없음
+    # ★★ 칸 기대치는 **파생식**이다 — 구 판본의 `14`/`28`/`42`/`56` **리터럴을 제거**한다
+    #   (파생 규칙이 주석에만 살면 워크플로 형상이 바뀔 때 표가 조용히 거짓이 된다).
+    #
+    #   기대치 = (변종별 상수) × `num_nodes`
+    #     (a) 상수 = 그 변종이 **흡수하는 값 종류 수** = `len(S) − 변화종수`
+    #     (b) 상수 = 그 변종이 **구별하지 못하는 쌍 수**
+    #   ★ 두 상수는 **변종 술어의 성질**이지 대상 형상의 성질이 아니다 ⇒ 형상이 바뀌면
+    #     `num_nodes`(∧ `len(S)`) 만 움직이고 상수는 불변이다.
+    #   ★★ 그리고 이 상수들은 표에만 살지 않는다 — 아래에서 **최소 문서(mapping node 1개)**
+    #     위에서 **독립 재측정**해 대조한다. 상수가 표에만 살면 그것이 곧 「손으로 적은 열거」다.
+    VARIANT_ABSORBED_KINDS = {          # (a) 흡수 값 종류 수
+        "정본": 0,
+        "V-DROPNULL": 1,                # None
+        "V-DROPEMPTY": 3,               # {} · [] · () (정규화 후 [] 로 도달)
+        "V-DROPEMPTYSTR": 2,            # "" · 공백만 문자열(strip 후 "")
+        "V-DROPFALSE": 1,               # False (★identity 술어 — `not v` 는 *다른 변종*)
+        "V-NUMCOERCE": 0,
+        "V-NFC": 0,
+        "V-NULLTOMAP": 0,
+        "V-EMPTYSEQSTR": 0,
     }
+    VARIANT_COLLAPSED_PAIRS = {         # (b) 구별 실패 쌍 수
+        "정본": 0,
+        "V-DROPNULL": 0,
+        "V-DROPEMPTY": 2,
+        "V-DROPEMPTYSTR": 0,
+        "V-DROPFALSE": 0,
+        "V-NUMCOERCE": 2,               # (0,0.0) · (1,1.0)
+        "V-NFC": 4,
+        "V-NULLTOMAP": 1,               # (None,{})
+        "V-EMPTYSEQSTR": 4,             # ★`()` 포함 구성 — `list` 단독은 흡수쌍을 가르는 *다른 변종*
+    }
+    assert set(VARIANT_ABSORBED_KINDS) == {v for v, _p, _q in variants}, "변종 집합 불일치 (a)"
+    assert set(VARIANT_COLLAPSED_PAIRS) == {v for v, _p, _q in variants}, "변종 집합 불일치 (b)"
 
-    # 기대치: (b) 술어 — 각 node 에서 구별 못한 쌍(collapse) 수 → 전 node 합계
-    # (b) = collapsed_pairs × node 수  (구별 **실패** 쌍만 셈)
-    expected_table_b = {
-        "정본": 0,  # 116 쌍 × 14 중 0쌍 collapse = 0 (모두 구별됨)
-        "V-DROPNULL": 0,  # 탈락 없음
-        "V-DROPEMPTY": 28,  # 2 쌍 × 14 = 28 collapse ({[],{}} + {()，{}})
-        "V-DROPEMPTYSTR": 0,  # 탈락 없음
-        "V-DROPFALSE": 0,  # 탈락 없음
-        "V-NUMCOERCE": 28,  # 2 쌍 × 14 = 28 collapse ({(0,0.0), (1,1.0)})
-        "V-NFC": 56,  # 4 쌍 × 14 = 56 collapse
-        "V-NULLTOMAP": 14,  # 1 쌍 × 14 = 14 collapse ({(None,{})})
-        "V-EMPTYSEQSTR": 56,  # 4 쌍 × 14 = 56 collapse
-    }
+    expected_table_a = {v: n * num_nodes for v, n in VARIANT_ABSORBED_KINDS.items()}
+    expected_table_b = {v: n * num_nodes for v, n in VARIANT_COLLAPSED_PAIRS.items()}
+
+    # ★ 독립 재측정 — 최소 문서(mapping node **1개**) 위에서 변종 상수를 다시 얻는다.
+    #   14 node 대상 측정과 **다른 입력**이므로 두 산출의 일치가 곧 「상수 × node 수」 파생식의
+    #   근거다(둘이 갈리면 파생식 자체가 거짓이므로 여기서 먼저 터진다).
+    pair_idx = _distinguishing_pair_indices(S)
+
+    def _minimal_variant_profile(pre, post):
+        base_doc = {"jobs": {JOB2: {"anchor": "x"}}}
+        ref_min = _compute_sha_with_hooks(base_doc, JOB2, pre_val=pre, post_map=post)
+        shas = []
+        for value in S:
+            probe_doc = copy.deepcopy(base_doc)
+            probe_doc["jobs"][JOB2]["__PROBE_KIND__"] = value
+            shas.append(_compute_sha_with_hooks(probe_doc, JOB2, pre_val=pre, post_map=post))
+        absorbed = sum(1 for sha in shas if sha == ref_min)
+        collapsed = sum(1 for i, j in pair_idx if shas[i] == shas[j])
+        return absorbed, collapsed
+
+    for vname, pre, post in variants:
+        measured = _minimal_variant_profile(pre, post)
+        declared = (VARIANT_ABSORBED_KINDS[vname], VARIANT_COLLAPSED_PAIRS[vname])
+        assert measured == declared, (
+            f"{vname}: 변종 상수가 최소 문서 재측정과 어긋난다 — "
+            f"declared(흡수,붕괴)={declared} measured={measured}")
+    print(f"  [변종 상수 독립 재측정] 9 변종 × (흡수, 붕괴) 전건 일치 "
+          f"(파생식 = 상수 × num_nodes={num_nodes})")
 
     # Live Assert — 18칸 전건
     print(f"  (a) 술어 assert:")
@@ -2063,12 +2098,7 @@ def test_envelope_pin_matches_predicate():
 
 
 if __name__ == "__main__":
-    test_envelope_pin_reference_matches_landed_pin()
-    test_envelope_pin_domain_derivation_selfcheck()
-    test_envelope_pin_derivation_negative_control()
-    test_envelope_pin_coverage_table_witnesses()
-    test_envelope_pin_sweep_derivation_completeness()
-    test_envelope_pin_falsification_dropfalse()
-    test_envelope_pin_premise_witnesses_pe1_to_pe4()
-    test_envelope_pin_cli_three_verdicts()
-    test_envelope_pin_matches_predicate()
+    # ★ 직접 실행도 **pytest 에 위임**한다 — 손으로 적은 호출 목록은 신규 테스트를 조용히
+    #   빠뜨리는 자리이고(이 파일이 이미 담지하는 결함 형태 그 자체), parametrize 된
+    #   음성 대조는 인자 없이 호출할 수도 없다.
+    sys.exit(pytest.main([__file__, "-q", "-s"]))
