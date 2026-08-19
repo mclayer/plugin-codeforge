@@ -345,7 +345,7 @@ Retry sequence 자체 implementation 위치 = `codeforge:rate-limit-429-mitigati
 - **429 incident marker** (`[429-auto-retry: count=N, final_status=...]`) = **§14 only** (운영 phase metric, ADR-104 정합)
 - **§10 row append 금지**: 429 retry → fix:* label 미부착 + ADR-067 RESET counter 영향 0 (invariant 보존)
 - **boundary violation 차단 invariant**: 본 §결정 9 = ADR-067 RESET contamination 차단 정합 (운영 phase telemetry vs governance FIX disjoint axis 명시 의무)
-- **[Amendment 4 Cross-ref 정정 포인터]** 본 절은 Amendment 4 에서 **무변경**이다 — Amendment 4 가 신설하는 event tier(`429-incident-history.jsonl` 기계 append)는 §10 FIX Ledger 와 여전히 disjoint 하며 ADR-067 RESET contamination 차단은 무손상이다.
+- **[Amendment 4 Cross-ref 정정 포인터]** 본 절은 Amendment 4 에서 **무변경**이다 — Amendment 4 가 신설하는 event tier(`429-incident-history.jsonl` 기계 append)는 §10 FIX Ledger 에 등재되지 **않는다**(축 disjoint 유지 — ADR-067 RESET contamination 차단 무손상).
 
 ### §결정 10 — Secret redaction matrix (unconditional invariant ADR-068 I-3)
 
@@ -785,7 +785,7 @@ Amendment 3 (4) 는 §결정 4 circuit breaker 를 "telemetry 실채움 전까�
 
 - **§결정 4** / **§결정 8.2** / **§결정 10** — 본 Amendment 의 개정 대상.
 - **§결정 1** detection closed-set — **무접촉**(literal 무증감, A4-4).
-- **§결정 5** / **§결정 9** — 무변경. 429 marker 의 **§14 only** 배타 유지 ∧ 본 Amendment 의 event tier 는 §10 FIX Ledger 와 여전히 disjoint(ADR-067 RESET contamination 차단 무손상).
+- **§결정 5** / **§결정 9** — 무변경. 429 marker 의 **§14 only** 배타 유지 ∧ 본 Amendment 의 event tier 는 §10 FIX Ledger 에 등재되지 **않는다**(축 disjoint 유지 — ADR-067 RESET contamination 차단 무손상).
 - **`## Amendment 2`** — **무접촉**(A4-0). 본 Amendment 는 그 조항에 normative 의존 0.
 - [ADR-043](ADR-043-codeforge-telemetry-privacy-policy.md) **Amendment 7** — sibling. 본 채널의 **privacy·공표 경계·allow-list 7 필드·bound (2')** 는 그쪽 소유이고, 본 Amendment 는 **운영·write ownership·인계 수취·기록 어휘** 소유(disjoint). `error_pattern` 은 두 문면이 만나는 유일 지점이며 값공간 SSOT = ADR-043 Amendment 7 (B), 값공간이 §결정 1 과 disjoint 라는 판정 = 본 A4-4.
 - [ADR-068](ADR-068-boundary-completeness-invariants.md) I-5 — A4-1 U-2 의 근거(dimensional empirical grounding — 근거 없는 상수 무장 금지).
