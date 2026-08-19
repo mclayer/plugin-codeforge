@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# StopFailure hook for codeforge plugin — 429 incident event tier record (record-only)
+#
+# Carrier: CFP-2967 Phase 2 (구현) — Change Plan §3.1 / §5 #1 / §7.4.
+#
+# 책임 경계 (얇은 dispatch — 로직 0):
+#   - `StopFailure`(matcher rate_limit) 발화 시 producer 를 1회 호출한다. 그 밖 책임 0.
+#   - 판정·집계·필터·payload 해석은 이 파일에 없다. producer 도 payload 를 읽지 않는다
+#     (Change Plan §7.3 bound (2') — 착지 행은 timestamp 제외 전 필드가 상수).
+#   - **record-only** — 게이트가 아니다. 출력·exit code 가 소비되지 않으며 block 절대 금지.
+#   - exit code 항상 0 (graceful degradation).
+#
+# 정적 properties:
+#   (a) set -euo pipefail + trap exit 0 — 어떤 실패도 턴 처리를 막지 않는다 (fail-open ALWAYS)
+#   (b) stdout 출력 없음 — block/permissionDecision 절대 미등장
+#   (c) network call 0 · git 조작 0
+#   (d) Python 호출 = 외부 .py 파일 (ADR-061 Amendment 3 — heredoc 금지)
+#   (e) stdin payload 는 **drain-and-discard** — 변수에 담지 않고 파싱도 하지 않는다.
+#       읽어서 버리는 이유는 파이프 writer 측 EPIPE 회피뿐이며, 소비 경로는 0이다.
+#
+# Graceful degradation:
+#   (a) bash interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (b) Python 부재 / producer 부재 / producer 오류 → stderr WARN + exit 0 (기록 생략)
+#   (c) consumer 체크아웃 → producer 자신이 착지면 floor 로 write 를 생략 (§7.3)
+#
+# one-channel rule marker: [codeforge-429-incident-record]
+#
+# Sibling hook axis:
+#   hooks/stop           = Stop 담당 (stop-time advisory + ledger)
+#   hooks/subagent-stop  = SubagentStop 담당 (verify-before-trust advisory + ledger)
+#   본 hook              = StopFailure 담당 (429 incident event tier 1행 기록)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — record-only 훅이 턴을 죽이지 않는다
+trap 'exit 0' ERR
+
+MARKER='[codeforge-429-incident-record]'
+
+# ── stdin drain-and-discard (파싱 0 · 변수 저장 0) ────────────────────────────
+# payload 를 소비하지 않는다. 여기서 값을 뽑아 producer 에 넘기는 순간 bound (2') 가 깨진다.
+cat >/dev/null 2>&1 || true
+
+# ── Python 인터프리터 결정 ────────────────────────────────────────────────────
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+  >&2 printf '%s WARN: Python interpreter not found — 429 incident 기록 생략\n' "$MARKER"
+  exit 0
+fi
+
+# ── producer 경로 결정 (형제 훅 subagent-stop 관용구 답습) ────────────────────
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+APPEND_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_429_incident.py" ]; then
+  APPEND_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_429_incident.py"
+elif [ -f "scripts/lib/append_429_incident.py" ]; then
+  APPEND_SCRIPT="scripts/lib/append_429_incident.py"
+fi
+
+if [ -z "$APPEND_SCRIPT" ]; then
+  >&2 printf '%s WARN: append_429_incident.py not found — 429 incident 기록 생략\n' "$MARKER"
+  exit 0
+fi
+
+# ── producer 호출 (인자 0 — 착지 루트는 producer 가 해석, payload 유래 값 전달 0) ──
+# stdin 은 /dev/null 로 봉한다: producer 가 payload 를 읽을 수 있는 경로 자체를 남기지 않는다.
+"$PYTHON_CMD" "$APPEND_SCRIPT" </dev/null || true
+
+# ── 항상 exit 0 (record-only — block 금지) ───────────────────────────────────
+exit 0
