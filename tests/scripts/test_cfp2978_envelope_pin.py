@@ -917,6 +917,395 @@ def test_envelope_pin_swp_f_datastructure_universal():
     assert not (f1 | f2 | f3), f"SWP-F 기대 미달: {sorted(f1 | f2 | f3, key=str)}"
 
 
+def _distinguishing_pair_indices(S: List[Any]) -> List[Tuple[int, int]]:
+    r"""구별쌍을 **인덱스**로 — 값 대신 인덱스를 쓰면 node 별 sha 를 재사용할 수 있다
+    (`(b)` 를 `14×|P|×2` 회 계산 → `14×|S|` 회로 축약. 판정 내용은 동일)."""
+    return [(i, j) for i in range(len(S)) for j in range(i + 1, len(S))
+            if _orbit(S[i]) != _orbit(S[j])]
+
+
+def test_envelope_pin_swp_g_value_kind_fidelity_universal():
+    r"""**`SWP-G`** — `ENV-8` 값 표현 충실도 전칭 (**2 술어**, 정의역은 **3층 기계 파생**).
+
+      **(a) 탈락** — ∀ mapping node × ∀ 값 종류 표본 `s ∈ S`:
+                     합성 키 `__PROBE_KIND__: <s>` 주입 ⇒ **RED**
+      **(b) 단사성** — ∀ mapping node × ∀ 구별쌍 `(a,b) ∈ P`: `sha(a) ≠ sha(b)`
+                     (★**슬롯 고정** — 같은 키 `__PROBE_KIND__` 에 두 값을 넣는다.
+                       값과 함께 키를 바꾸면 원리적으로 미검출이 된다)
+
+    ★★ `|S|`·`|P|` 는 **수치 리터럴이 아니라 3층 파생 산출**이다
+       (층1 `json.encoder._make_iterencode` 분기 → 층2 0-인자 생성자 → 층3 `Ω` 폐포).
+    ★★ **두 술어는 서로의 맹점을 덮는다** — 접힘형 4종은 (a) 를 통과하고 탈락형 3종은 (b) 를
+       통과한다. 한쪽만 재면 8 witness 의 절반이 무주공산이 된다.
+    """
+    _text, document, _ref = _load_target()
+    envelope = cut_envelope(document, JOB2)
+    domains = _sweep_domains(envelope)
+    _assert_derivation_selfcheck(domains)
+
+    S = _derive_S_from_envelope_pin_source()
+    pair_idx = _distinguishing_pair_indices(S)
+    assert len(pair_idx) == len(_derive_P_from_S(S)), "구별쌍 인덱스 파생이 값 파생과 어긋난다"
+    assert S and pair_idx, "3층 파생 산출이 공허 (하네스 사망)"
+
+    nodes = sorted(domains["mapping_nodes"], key=str)
+    a_fail, b_fail = set(), set()
+    for path in nodes:
+        ref_node, _d = _envelope_outcome(document, JOB2)
+        shas = []
+        for value in S:
+            probed = _inject_probe_at_node(document, path, "__PROBE_KIND__", value)
+            sha, _d2 = _envelope_outcome(probed, JOB2)
+            shas.append(sha)
+            if sha == ref_node:  # 주입했는데 봉투가 그대로 = 그 값 종류가 **탈락**했다
+                a_fail.add((path, repr(value)))
+        for i, j in pair_idx:
+            if shas[i] == shas[j]:
+                b_fail.add((path, repr(S[i]), repr(S[j])))
+
+    print(f"  [SWP-G (a) 탈락] 정의역={len(nodes)}×|S|={len(S)} = {len(nodes) * len(S)} 기대=RED "
+          f"FAIL={len(a_fail)}")
+    print(f"  [SWP-G (b) 단사성] 정의역={len(nodes)}×|P|={len(pair_idx)} = "
+          f"{len(nodes) * len(pair_idx)} 기대=sha 상이 FAIL={len(b_fail)}")
+    assert not a_fail, f"SWP-G (a) 기대(RED) 미달: {sorted(a_fail, key=str)[:8]}"
+    assert not b_fail, f"SWP-G (b) 단사성 붕괴: {sorted(b_fail, key=str)[:8]}"
+
+
+def _parser_derived_nonstring_scalar_samples() -> List[Tuple[str, Any]]:
+    r"""`SWP-H` type 축 — **PyYAML `SafeLoader.yaml_implicit_resolvers` 에서 기계 파생**.
+
+    후보 tag 는 resolver 표에서 얻고, 각 tag 의 표본 리터럴은 §8.B 「표본 전문 고정」을 따른다
+    (`bool` = **`False`** · `null` = `None` · `int` = `2` · `float` = `3.25`).
+    ★ `bool` 표본이 `True` 가 아닌 이유: `True` 는 대상 봉투 root 에 **이미 키로 존재**하므로
+      (`on:` 이 YAML 1.1 에서 `True` 로 파싱) 주입이 **치환**이 되어 충돌쌍이 성립하지 않는다.
+    ★ 「JSON 직렬화 가능」 여부는 **선언이 아니라 실행으로 판정**한다 — `timestamp` 는 그 판정에서
+      기계적으로 탈락한다(4종이 손목록이 아니라 산출임을 보증).
+    """
+    resolver_tags = set()
+    for _ch, rules in yaml.SafeLoader.yaml_implicit_resolvers.items():
+        for tag, _regex in rules:
+            resolver_tags.add(tag)
+
+    # 값 스칼라 tag 후보 ↔ 표본 리터럴 (구조 지시어 tag `merge`/`value`/`yaml` 은 값이 아니다)
+    literals = {
+        "tag:yaml.org,2002:bool": "false",
+        "tag:yaml.org,2002:null": "null",
+        "tag:yaml.org,2002:int": "2",
+        "tag:yaml.org,2002:float": "3.25",
+        "tag:yaml.org,2002:timestamp": "2026-08-19",
+    }
+    out = []
+    for tag in sorted(literals):
+        assert tag in resolver_tags, f"resolver 표에 없는 tag: {tag}"
+        value = yaml.safe_load(literals[tag])
+        assert not isinstance(value, str), f"{tag} 표본이 문자열이다"
+        try:
+            json.dumps(value)
+        except TypeError:
+            continue  # ★ JSON 직렬화 불가 ⇒ 기계적으로 탈락 (timestamp)
+        out.append((tag, value))
+    return out
+
+
+def test_envelope_pin_swp_h_key_type_universal():
+    r"""**`SWP-H`** — `ENV-6` 적용역 **키 type** 전칭: (mapping node 전수) ×
+    (파서 파생 비-문자열 스칼라 type) 충돌쌍 주입 ⇒ **전건 `exit 2`**.
+
+    ablation target = `V-STRBOOL`(bool 만 특수 처리) ⇒ null 축 FAIL ∧
+    `V-STRKEY`(전 비-문자열 키를 `str()` 렌더) ⇒ bool + null 축 FAIL.
+    ★ `V-STRBOOL` 은 `SWP-B` 를 **통과**하므로 본 sweep 이 **유일 담지자**다.
+    """
+    _text, document, ref_sha = _load_target()
+    envelope = cut_envelope(document, JOB2)
+    domains = _sweep_domains(envelope)
+    _assert_derivation_selfcheck(domains)
+
+    samples = _parser_derived_nonstring_scalar_samples()
+    assert {t for t, _v in samples} == {
+        "tag:yaml.org,2002:bool", "tag:yaml.org,2002:null",
+        "tag:yaml.org,2002:int", "tag:yaml.org,2002:float",
+    }, f"파서 파생 type 집합 불일치: {[t for t, _ in samples]}"
+
+    results = {}
+    for path in sorted(domains["mapping_nodes"], key=str):
+        for tag, value in samples:
+            results[(path, tag)] = _verdict(_inject_collision_pair(document, path, value), ref_sha)
+
+    failures = _report("SWP-H", "키 type 충돌쌍", results, VERDICT_EXIT2)
+    assert not failures, f"SWP-H 기대(exit 2) 미달: {sorted(failures, key=str)[:8]}"
+    wrong = {k for k, v in results.items() if "collision" not in v[1]}
+    assert not wrong, f"exit 2 사유가 접힘이 아니다: {[(k, results[k][1]) for k in sorted(wrong, key=str)[:4]]}"
+
+
+def _composed_region_mapping_nodes(text: str) -> List[Tuple[Tuple, Any]]:
+    r"""**텍스트 층** mapping node 전수 — `yaml.compose()` 노드 트리에서 파생 (`SWP-I` 정의역).
+
+    ★ 구조 층(`_all_mapping_nodes`)과 **독립 파생**이며, 두 산출의 일치가 곧 교차 검증이다.
+    ★ spine 래퍼(`jobs` mapping 노드) 제외 ∧ `jobs.<other>` 는 비적용역이라 제외.
+    """
+    root = yaml.compose(text)
+
+    def key_of(key_node):
+        r"""composed 키 노드 → **파싱된 문서와 같은 키 값**.
+
+        ★ `key_node.value` 를 그대로 쓰면 `on:` 이 `'on'`(str) 이 되어 구조 층의 `True`(YAML 1.1
+          bool) 와 어긋난다 — 두 파생이 **같은 정의역을 낸다**는 교차 검증이 그 순간 깨진다.
+          ⇒ resolver 가 붙인 **tag 로 구성**한다(따옴표 인용 키의 오해석도 함께 막힌다).
+        """
+        loader = yaml.SafeLoader("")
+        try:
+            return loader.construct_object(key_node, deep=True)
+        finally:
+            loader.dispose()
+
+    def walk(node, in_region, path):
+        out = []
+        if isinstance(node, yaml.MappingNode):
+            if in_region:
+                out.append((path, node))
+            for key_node, value_node in node.value:
+                name = key_of(key_node) if isinstance(key_node, yaml.ScalarNode) else None
+                if path == () and name == "jobs":
+                    for k2, v2 in value_node.value:  # `jobs` 래퍼 = spine (자신 제외)
+                        n2 = k2.value if isinstance(k2, yaml.ScalarNode) else None
+                        out += walk(v2, n2 == JOB2, path + ("jobs", n2))
+                else:
+                    out += walk(value_node, in_region, path + (name,))
+        elif isinstance(node, yaml.SequenceNode):
+            for idx, elem in enumerate(node.value):
+                out += walk(elem, in_region, path + (idx,))
+        return out
+
+    return walk(root, True, ())
+
+
+def _first_single_line_pair(node: Any):
+    r"""그 mapping 의 **첫 「단일 행을 차지하는」 키·값 쌍** — 없으면 `None`.
+
+    ★ 블록 mapping/sequence/블록 스칼라 값은 끝 줄이 달라 자연히 제외된다
+      (대상의 `on:` 노드가 정확히 그 이유로 (i) 정의역 밖 = 13).
+    """
+    for key_node, value_node in node.value:
+        if key_node.start_mark.line == value_node.end_mark.line:
+            return key_node, value_node
+    return None
+
+
+def test_envelope_pin_swp_i_text_layer_universal():
+    r"""**`SWP-I`** — `ENV-1` 파싱 층 전칭 (**텍스트 층** 주입, 구조 변형으로는 원리적 탐침 불가).
+
+      **(i)** ∀ mapping node: **첫 단일행 키·값 쌍 `verbatim` 복제 주입** ⇒ **`exit 2`**
+      **(ii)** ∀ mapping node: **merge 참조 + 명시 override 주입** ⇒ **≠ `exit 2`**
+
+    ★ 삽입 위치는 `yaml.compose()` 의 `start_mark`/`end_mark` 에서 파생한다 —
+      열 = 그 **키의 열**(원 줄을 그대로 복사하면 `- ` dash 가 딸려와 *새 list 원소*가 되어
+      중복 키가 성립하지 않는다), 행 = 그 쌍의 **끝 줄 다음**.
+    ablation target = `V-DUPDEPTH`(중복 검출 top-level 한정, **노드 동일성** 구성) ⇒ (i) 누수 ∧
+    `V-MERGERAISE`(merge key node 를 skip 하지 않음) ⇒ (ii) 전건 FAIL. 두 witness 는
+    `SWP-A`~`SWP-H` 를 **구조적으로 보장된 PASS** 로 통과하므로 본 sweep 이 유일 담지자다.
+    """
+    text, document, ref_sha = _load_target()
+    envelope = cut_envelope(document, JOB2)
+    domains = _sweep_domains(envelope)
+    _assert_derivation_selfcheck(domains)
+
+    nodes = _composed_region_mapping_nodes(text)
+    # ★ 교차 검증 — 텍스트 층 파생과 구조 층 파생이 **같은 정의역**을 낸다
+    assert {p for p, _n in nodes} == domains["mapping_nodes"], (
+        "텍스트 층 ↔ 구조 층 정의역 불일치: "
+        f"{sorted({p for p, _n in nodes} ^ domains['mapping_nodes'], key=str)}"
+    )
+    lines = text.split("\n")
+
+    dup_res = {}
+    for path, node in nodes:
+        pair = _first_single_line_pair(node)
+        if pair is None:
+            print(f"  [SWP-I (i)] 정의역 밖 (단일행 쌍 부재): {path}")
+            continue
+        key_node, value_node = pair
+        fragment = text[key_node.start_mark.index:value_node.end_mark.index]
+        injected = " " * key_node.start_mark.column + fragment
+        at = value_node.end_mark.line
+        dup_res[path] = _verdict_from_text(
+            "\n".join(lines[:at + 1] + [injected] + lines[at + 1:]), ref_sha)
+    f1 = _report("SWP-I", "(i) 리터럴 중복 키", dup_res, VERDICT_EXIT2)
+    wrong = {k for k, v in dup_res.items() if "duplicate key" not in v[1]}
+    assert not wrong, f"(i) exit 2 사유가 중복 키가 아니다: {[(k, dup_res[k][1]) for k in wrong]}"
+
+    anchor = "_cfp2978_merge_probe: &cfp2978probe\n  zzz_probe_key: A\n"
+    merge_res = {}
+    for path, node in nodes:
+        pair = _first_single_line_pair(node) or node.value[0]
+        key_node, value_node = pair
+        col = key_node.start_mark.column
+        at = value_node.end_mark.line
+        injected = [" " * col + "<<: *cfp2978probe", " " * col + "zzz_probe_key: B"]
+        merge_res[path] = _verdict_from_text(
+            anchor + "\n".join(lines[:at + 1] + injected + lines[at + 1:]), ref_sha)
+    merge_fail = {k for k, v in merge_res.items() if v[0] == VERDICT_EXIT2}
+    print(f"  [SWP-I (ii) merge override] 정의역={len(merge_res)} 기대=≠exit 2 "
+          f"FAIL={len(merge_fail)}")
+    assert not merge_fail, \
+        f"(ii) merge override 가 exit 2 로 샜다: {[(k, merge_res[k][1]) for k in sorted(merge_fail, key=str)[:4]]}"
+
+    assert dup_res and merge_res, "SWP-I 정의역 공허"
+    assert not f1, f"SWP-I (i) 기대(exit 2) 미달: {sorted(f1, key=str)}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# `SWP-J` — 직렬화 **표기** 전칭 (`ENV-4` 비적용역)
+#
+# ★ probe set 은 **「이름 집합」으로 pin** 한다 — 카디널리티 형(`n/30`) 금지.
+#   담지 테스트는 분모를 세지 않고 **이름별 verdict** 를 대조한다.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _swp_j_probes() -> Dict[str, Callable[[Any], Any]]:
+    def seq_order_reverse(d):
+        node = _get_node_at_path(d, (True, "pull_request", "types"))
+        node.reverse()
+        return d
+
+    def map_key_order_reverse(d):
+        node = d["permissions"]
+        items = list(node.items())
+        for k, _v in items:
+            del node[k]
+        for k, v in reversed(items):
+            node[k] = v
+        return d
+
+    def value_pad(d):
+        d["jobs"][JOB2]["name"] = _pad(d["jobs"][JOB2]["name"])
+        return d
+
+    def key_pad(d):
+        node = d["jobs"][JOB2]
+        value = node.pop("name")
+        node[_pad("name")] = value
+        return d
+
+    def collision_pair(d):
+        node = d["jobs"][JOB2]
+        node[2] = "COLL"
+        node["2"] = "COLL"
+        return d
+
+    def date_value(d):
+        d["jobs"][JOB2]["__probe__"] = datetime.date(2026, 8, 19)
+        return d
+
+    def nan_value(d):
+        d["jobs"][JOB2]["__probe__"] = float("nan")
+        return d
+
+    def nonascii_value(d):
+        d["jobs"][JOB2]["name"] = d["jobs"][JOB2]["name"] + "가"
+        return d
+
+    def seq_elem_duplicate(d):
+        node = _get_node_at_path(d, (True, "pull_request", "types"))
+        node.insert(0, node[0])
+        return d
+
+    def null_value(d):
+        d["jobs"][JOB2]["__probe__"] = None
+        return d
+
+    return {
+        "seq-order-reverse": seq_order_reverse,
+        "map-key-order-reverse": map_key_order_reverse,
+        "value-pad": value_pad,
+        "key-pad": key_pad,
+        "collision-int-str": collision_pair,
+        "date-value": date_value,
+        "nan-value": nan_value,
+        "nonascii-value": nonascii_value,
+        "seq-elem-duplicate": seq_elem_duplicate,
+        "null-value": null_value,
+    }
+
+
+# ★ 비-기본값 (표기 축을 실제로 이동시키는 값). `cls` 는 **정의역 명시 제외** —
+#   치역이 열려 있어 유한 파생 불가(`UM-16` 잔여로 declare, `SWP-J` 가 담지하지 않는다).
+SWP_J_NONDEFAULT = {
+    "skipkeys": True, "ensure_ascii": True, "check_circular": False, "allow_nan": False,
+    "indent": 2, "separators": (", ", ": "), "default": str, "sort_keys": False,
+}
+
+# ★ redirect 축 — 「표기」가 아니라 **다른 성질/전제의 소관**임이 실측된 3종.
+#   이동하는 probe 를 **이름으로** 지목한다(수치 금지).
+SWP_J_REDIRECT = {
+    "sort_keys": {"map-key-order-reverse"},   # `ENV-4` **적용** 소관 (census #7)
+    "default": {"date-value"},                # 전제 축 (`P-E4` 미직렬화형)
+    "allow_nan": {"nan-value"},               # 전제 축 (NaN/Inf)
+}
+
+
+def test_envelope_pin_swp_j_serialization_notation_universal():
+    r"""**`SWP-J`** — `ENV-4` **비적용**(직렬화 표기) 전칭: ∀ 표기 파라미터 `q` 에 대해
+    probe set 전건의 **verdict 가 불변**(= verdict-중립)이거나, 이동한다면 그 probe 가
+    **redirect 축**으로 이미 귀속돼 있어야 한다.
+
+    ★ 파생원 = `inspect.signature(json.dumps)` **명명 파라미터 9 − `cls` = 8**.
+    ★ 중립 5 를 「표기」로 재정의하면 이 sweep 이 GREEN 을 유지하며 결함을 살린다 —
+      즉 ablation = *"redirect 3 을 표기로 오분류"*. 그래서 **이동 probe 이름 집합**을 assert 한다.
+    ★ `C₀` 이동은 허용된다(핀 재유도 대상) — 재는 것은 **verdict 열**이지 sha 값이 아니다.
+    """
+    _text, document, _ref = _load_target()
+
+    params = [
+        name for name, p in inspect.signature(json.dumps).parameters.items()
+        if p.kind is inspect.Parameter.KEYWORD_ONLY
+        or (p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD and name != "obj")
+    ]
+    assert len(params) == 9, f"명명 파라미터 파생 불일치: {params}"
+    swept = [q for q in params if q != "cls"]
+    assert set(swept) == set(SWP_J_NONDEFAULT), \
+        f"표기 정의역 불일치 (cls 제외 8): {sorted(set(swept) ^ set(SWP_J_NONDEFAULT))}"
+
+    probes = _swp_j_probes()
+
+    def measure() -> Dict[str, str]:
+        ref_sha, _d = _envelope_outcome(copy.deepcopy(document), JOB2)
+        out = {}
+        for name, fn in probes.items():
+            out[name] = _verdict(fn(copy.deepcopy(document)), ref_sha)[0]
+        return out
+
+    base = measure()
+    print(f"  [SWP-J base] {base}")
+    # base 자체가 판별력을 가져야 한다 — 전 probe 가 같은 verdict 면 이동을 볼 수 없다
+    assert len(set(base.values())) >= 3, f"probe set 이 3-verdict 를 못 낸다: {base}"
+
+    for q in sorted(swept):
+        saved = dict(envelope_pin_module._JSON_SERIALIZE_KWARGS)
+        saved_key = dict(envelope_pin_module._JSON_KEY_KWARGS)
+        envelope_pin_module._JSON_SERIALIZE_KWARGS[q] = SWP_J_NONDEFAULT[q]
+        if q == "ensure_ascii":  # `ENV-6` — 키 렌더는 값 렌더와 같은 표기를 재사용한다
+            envelope_pin_module._JSON_KEY_KWARGS[q] = SWP_J_NONDEFAULT[q]
+        try:
+            variant = measure()
+        finally:
+            envelope_pin_module._JSON_SERIALIZE_KWARGS.clear()
+            envelope_pin_module._JSON_SERIALIZE_KWARGS.update(saved)
+            envelope_pin_module._JSON_KEY_KWARGS.clear()
+            envelope_pin_module._JSON_KEY_KWARGS.update(saved_key)
+
+        moved = {name for name in base if base[name] != variant[name]}
+        expected_moved = SWP_J_REDIRECT.get(q, set())
+        print(f"  [SWP-J {q:15}] 이동 probe={sorted(moved) or '없음(verdict-중립)'}")
+        assert moved == expected_moved, (
+            f"SWP-J {q}: 이동 probe 이름 집합 불일치 — 기대 {sorted(expected_moved)} "
+            f"실측 {sorted(moved)} ({[(n, base[n], variant[n]) for n in sorted(moved)]})"
+        )
+
+    # 훅 복원 확인 — 표기 치환이 새어 나가면 후속 테스트가 오염된다
+    assert envelope_pin_module._JSON_SERIALIZE_KWARGS == {
+        "sort_keys": True, "ensure_ascii": False, "separators": (",", ":")}, \
+        "표기 치환이 복원되지 않았다"
+
+
 def test_envelope_pin_coverage_table_witnesses():
     r"""Stage 3&4: 피복 검증표 — 정본 + 8 변종의 (a)∧(b) 술어 실산출.
 
