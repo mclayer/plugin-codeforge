@@ -213,6 +213,21 @@ def check_stats_propagation(snaps, metric_names, violations):
             )
 
 
+def _trend_field(tr, key):
+    """trend snapshot 에서 필드 1개 조회 — **승격분과 overall 원본을 모두 본다**.
+
+    ★ CFP-2985 — `_build_snapshot` 은 §D-9 feed 4필드(pattern_count / pattern_status /
+      anchor_id / root_cause_class)만 top-level 로 승격하고 `root_cause_distribution` ·
+      `honesty_note` 는 `overall` 에만 둔다. 두 층을 구분 없이 top-level 로만 읽으면
+      **정의역이 어긋난다** — 실 snapshot 에서 substrate 는 언제나 부재로 보이고,
+      substrate 가 실재하게 되는 날 `pattern_status`(승격)만 computable 로 바뀌어
+      I4 가 정상 산출을 fabricate 로 오판한다(born-wrong false positive).
+    """
+    if key in tr:
+        return tr.get(key)
+    return (tr.get("overall") or {}).get(key)
+
+
 def check_pattern_uncomputable_default(valid_snaps, violations):
     """I4 — pattern 산출 정직성. ★CFP-2985 D-14 로 **방향 반전** (AC-19).
 
@@ -230,7 +245,7 @@ def check_pattern_uncomputable_default(valid_snaps, violations):
     tr = valid_snaps["trend"]
     status = tr.get("pattern_status")
     count = tr.get("pattern_count")
-    substrate_present = bool(tr.get("root_cause_distribution") or {})
+    substrate_present = bool(_trend_field(tr, "root_cause_distribution") or {})
 
     if substrate_present:
         if status != "computable" or count is None:
@@ -250,6 +265,36 @@ def check_pattern_uncomputable_default(valid_snaps, violations):
                 "검출력을 그대로 보존, AC-19)"
                 % (status, count)
             )
+
+
+def check_trend_note_matches_state(agg, valid_snaps, violations):
+    """I11 — trend.honesty_note 의 substrate 서술이 실 pattern_status 와 정합 (CFP-2985).
+
+    직전 판의 note 는 **정적 문자열**이라 substrate 가 실재하는 computable 경로에서도
+    "substrate 부재 → uncomputable" 을 계속 주장했다. 산출이 자기 자신에 대해 내는 거짓이며
+    본 Story 가 표적하는 계보다(ADR-181 INV-D).
+
+    양 방향 모두 위반이다 — 한쪽만 보면 hollow:
+      · computable   인데 부재 문구  → 산출을 깎아내리는 거짓(under-claim)
+      · uncomputable 인데 실재 문구  → 없는 substrate 를 있다고 하는 거짓(over-claim)
+    """
+    tr = valid_snaps["trend"]
+    status = _trend_field(tr, "pattern_status")
+    note = _trend_field(tr, "honesty_note") or ""
+    present_tok = agg._TREND_NOTE_SUBSTRATE_PRESENT
+    absent_tok = agg._TREND_NOTE_SUBSTRATE_ABSENT
+    want, unwanted = ((present_tok, absent_tok) if status == "computable"
+                      else (absent_tok, present_tok))
+    if want not in note:
+        violations.append(
+            "(I11/note-state-mismatch) trend pattern_status=%r 인데 honesty_note 에 %r 서술 부재 "
+            "— 산출 상태와 문면이 어긋난다 (정적 문자열 의심, CFP-2985)" % (status, want)
+        )
+    if unwanted in note:
+        violations.append(
+            "(I11/note-state-mismatch) trend pattern_status=%r 인데 honesty_note 가 반대 상태 "
+            "서술 %r 을 주장한다 — 성립하지 않는 주장 (CFP-2985)" % (status, unwanted)
+        )
 
 
 def check_token_honest_null(valid_snaps, violations):
@@ -363,6 +408,34 @@ def check_order_preserving_negative_duration(agg, violations, compute_fn=None):
 
 # ─────────────────────── check 오케스트레이션 (실 산출 위) ──────────────────────────────
 
+def _unwired_invariants(run_checks_src, declared_names):
+    """선언된 check_* 중 run_checks 본문에서 호출되지 않는 이름 (pure — 대조군 가능)."""
+    return sorted(n for n in declared_names if (n + "(") not in run_checks_src)
+
+
+def check_all_invariants_wired(violations):
+    """I12 — 선언된 불변식이 전부 run_checks 에 **배선**돼 있는가 (CFP-2985).
+
+    ★ 왜 필요한가 (firsthand): NC 대조군은 check 함수를 **직접** 호출하므로 배선을 보지 못한다.
+      임의의 check_* 를 run_checks 에서 지워도 --selftest 와 shell 스위트가 전건 GREEN 이었다
+      (본 Story 가 신설한 I11 뿐 아니라 선재 `check_token_honest_null` 로도 재현). 즉 "검사가
+      존재하는 것" 과 "검사가 돌아가는 것" 사이에 관측 채널이 없었다.
+
+    ★ 정직 천장: 이것은 **소스 구조 검사**이지 동작 검사가 아니다. "선언됐는데 호출 0" class 만
+      잡는다. 호출은 하되 인자를 틀리게 주거나 결과를 버리는 class 는 못 잡는다 — over-claim 금지.
+    """
+    import inspect
+    declared = [n for n, o in globals().items()
+                if n.startswith("check_") and inspect.isfunction(o)
+                and n != "check_all_invariants_wired"]
+    missing = _unwired_invariants(inspect.getsource(run_checks), declared)
+    if missing:
+        violations.append(
+            "(I12/unwired-invariant) 선언됐지만 run_checks 에 배선되지 않은 불변식: %s "
+            "— 검사가 존재하는 것과 돌아가는 것은 다르다 (CFP-2985)" % ", ".join(missing)
+        )
+
+
 def run_checks(agg, bundle):
     """실 round-trip 산출 위에서 전 불변식 검증 → violations list."""
     violations = []
@@ -379,12 +452,14 @@ def run_checks(agg, bundle):
     check_no_overclaim(all_blob, forbidden, violations)
     check_stats_propagation(valid_snaps, metric_names, violations)
     check_pattern_uncomputable_default(valid_snaps, violations)
+    check_trend_note_matches_state(agg, valid_snaps, violations)
     check_token_honest_null(valid_snaps, violations)
     check_no_blob_deref(all_blob, violations)
     check_cycletime_label(valid_snaps, violations)
     check_no_escalation_action(valid_snaps, violations)
     check_strip_set_constant_and_idempotent(agg, violations)
     check_order_preserving_negative_duration(agg, violations)
+    check_all_invariants_wired(violations)
     return violations
 
 
@@ -479,10 +554,65 @@ def _selftest(_args):
     #    substrate 가 실재하는데 uncomputable 이면 silent drop 이다.
     #    이 대조군이 없으면 반전된 분기가 무검증으로 남는다(hollow).
     q_mut = copy.deepcopy(bundle["valid"])
-    q_mut["trend"]["root_cause_distribution"] = {"설계": 2}
+    q_mut["trend"]["overall"]["root_cause_distribution"] = {"설계": 2}
     v = []
     check_pattern_uncomputable_default(q_mut, v)
     results.append(("NC4b (substrate 有인데 uncomputable → I4 RED / silent drop)", True, v))
+
+    # ── NC11a/NC11b: ★CFP-2985 — honesty_note 가 실 상태에서 유도되는지 **양 방향** 대조군.
+    #    한쪽만 두면 hollow 다: 정적 문자열은 한 방향에서는 우연히 맞기 때문이다.
+    #    (분기 자체의 실증은 실 compute_trend 를 substrate 有/無 rows 로 각각 돌리는 아래 pair)
+    st_probe = {"rows_total": 2, "rows_deduped": 2, "duplicates_collapsed": 0,
+                "honesty_note": "probe"}
+    rows_absent = [{"timestamp_utc": "2026-08-19T01:00:00Z", "event_type": "e", "story_key": "S1"}]
+    rows_present = [
+        {"timestamp_utc": "2026-08-19T01:00:00Z", "event_type": "e", "story_key": "S1",
+         "anchor_id": "A", "root_cause_class": "설계"},
+        {"timestamp_utc": "2026-08-19T02:00:00Z", "event_type": "e", "story_key": "S2",
+         "anchor_id": "A", "root_cause_class": "설계"},
+    ]
+    # NC11a — substrate 無 산출에 substrate-有 서술을 주입 → I11 RED (over-claim 방향)
+    a_mut = copy.deepcopy(bundle["valid"])
+    a_mut["trend"] = agg.compute_trend(rows_absent, st_probe)
+    a_mut["trend"]["honesty_note"] = a_mut["trend"]["honesty_note"].replace(
+        agg._TREND_NOTE_SUBSTRATE_ABSENT, agg._TREND_NOTE_SUBSTRATE_PRESENT)
+    v = []
+    check_trend_note_matches_state(agg, a_mut, v)
+    results.append(("NC11a (substrate 無인데 실재 서술 → I11 RED / over-claim)", True, v))
+
+    # NC11b — substrate 有 산출에 substrate-無 서술을 주입 → I11 RED (under-claim 방향)
+    b_mut = copy.deepcopy(bundle["valid"])
+    b_mut["trend"] = agg.compute_trend(rows_present, st_probe)
+    b_mut["trend"]["honesty_note"] = b_mut["trend"]["honesty_note"].replace(
+        agg._TREND_NOTE_SUBSTRATE_PRESENT, agg._TREND_NOTE_SUBSTRATE_ABSENT)
+    v = []
+    check_trend_note_matches_state(agg, b_mut, v)
+    results.append(("NC11b (substrate 有인데 부재 서술 → I11 RED / under-claim)", True, v))
+
+    # POSITIVE-11 — 손대지 않은 실 산출 양 분기는 GREEN 이어야 한다 (항진 아님을 여기서 막는다)
+    for tag, rr, expect_status in (("無", rows_absent, "uncomputable_missing_key"),
+                                   ("有", rows_present, "computable")):
+        p_snap = copy.deepcopy(bundle["valid"])
+        p_snap["trend"] = agg.compute_trend(rr, st_probe)
+        v = []
+        if p_snap["trend"].get("pattern_status") != expect_status:
+            v.append("(setup) substrate %s 인데 pattern_status=%r (기대 %r)"
+                     % (tag, p_snap["trend"].get("pattern_status"), expect_status))
+        check_trend_note_matches_state(agg, p_snap, v)
+        results.append(("POSITIVE-11%s (substrate %s 실 산출 → I11 GREEN)"
+                        % ("a" if tag == "無" else "b", tag), False, v))
+
+    # ── NC12: ★CFP-2985 — 배선 검사(I12) 자체의 대조군. pure fn 이라 소스 텍스트로 통제한다.
+    v = []
+    if _unwired_invariants("check_a(x)\n", ["check_a", "check_b"]) != ["check_b"]:
+        pass  # 미검출 = 아래 append 없음 → 대조군이 GREEN 으로 떨어져 FAIL 표시된다
+    else:
+        v.append("(I12/unwired-invariant) 배선 누락 검출: check_b")
+    results.append(("NC12 (run_checks 배선 누락 → I12 RED)", True, v))
+    v = []
+    if _unwired_invariants("check_a(x)\ncheck_b(y)\n", ["check_a", "check_b"]):
+        v.append("(setup) 전건 배선인데 누락으로 판정")
+    results.append(("POSITIVE-12 (전건 배선 → I12 GREEN)", False, v))
 
     # ── NC5: token honest-null — total_weighted_cost_usd fabricate → I5 RED ──
     t_mut = copy.deepcopy(bundle["valid"])

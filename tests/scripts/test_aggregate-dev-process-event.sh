@@ -98,8 +98,14 @@ assert_has "lint --selftest: distinct-marker (discriminating)" "$(cat "$OUT2")" 
 #   유도되므로 등재 소실이 곧 RED 다.
 assert_has "lint --selftest: NC10 order-preserving RED 행" "$(cat "$OUT2")" "[OK] NC10"
 assert_has "lint --selftest: NC4b substrate-有 silent-drop RED 행" "$(cat "$OUT2")" "[OK] NC4b"
+# I11 — honesty_note 가 실 상태에서 유도되는지의 양 방향 대조군 + 실 산출 양 분기 positive.
+assert_has "lint --selftest: NC11a over-claim RED 행" "$(cat "$OUT2")" "[OK] NC11a"
+assert_has "lint --selftest: NC11b under-claim RED 행" "$(cat "$OUT2")" "[OK] NC11b"
+assert_has "lint --selftest: POSITIVE-11a substrate-無 실산출 GREEN 행" "$(cat "$OUT2")" "[OK] POSITIVE-11a"
+assert_has "lint --selftest: POSITIVE-11b substrate-有 실산출 GREEN 행" "$(cat "$OUT2")" "[OK] POSITIVE-11b"
+assert_has "lint --selftest: NC12 배선누락 RED 행" "$(cat "$OUT2")" "[OK] NC12"
 # 요약 명부는 producer 가 results 에서 유도해 찍는다 — 여기서 전문을 pin 해 lockstep 을 만든다.
-assert_has "lint --selftest: negative-control 명부 종합" "$(cat "$OUT2")" "negative-control 11종 [NC1 NC2 NC3 NC4 NC4b NC5 NC6 NC7 NC8 NC9 NC10] 전부 RED"
+assert_has "lint --selftest: negative-control 명부 종합" "$(cat "$OUT2")" "negative-control 14종 [NC1 NC2 NC3 NC4 NC4b NC11a NC11b NC12 NC5 NC6 NC7 NC8 NC9 NC10] 전부 RED"
 
 # ══ 케이스 3: lint check (real query_with_stats round-trip) — exit 0 + distinct-marker ══
 OUT3="$WORK/lint_check.out"; EC=0

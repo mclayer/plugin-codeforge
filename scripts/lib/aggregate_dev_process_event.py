@@ -614,13 +614,48 @@ def compute_trend(rows, stats):
         #   않는다** — 분포는 이 별도 키로 낸다.
         #   ★ key = `_norm_root_cause_value` 정규화 후 값 (장식·공백·대소문자 변형 흡수, D-13).
         "root_cause_distribution": root_cause_distribution,
-        "honesty_note": (
-            "observational time-series only — forecast/prediction/projection 필드 부재(negative control). "
-            "pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, "
-            "edge 아님). §D-9 feed = producer-defined, currently uncomputable-by-substrate. escalation ACTION "
-            "미산출(B=producer, PMOAgent=decider — INV-B3). within-scope only(cross-scope union 금지)."
-        ),
+        # ★ CFP-2985 — 본 note 의 substrate 서술은 **실 상태에서 유도**한다.
+        #   직전 판은 "substrate 부재 → uncomputable_missing_key … currently uncomputable-by-substrate"
+        #   를 **정적 문자열로 항상** emit 했다. D-12 로 `_ROW_KEYS` 에 anchor_id/root_cause_class 가
+        #   실재하게 된 뒤에도 computable 경로에서 같은 문구가 나갔고, 그것은 산출이 스스로에 대해
+        #   내는 **거짓 주장**이다 (ADR-181 INV-D — 성립하지 않는 주장을 문면에 남기지 않는다).
+        #   note 는 pattern_status 와 같은 관측에서 유도되므로 둘은 정의상 어긋날 수 없다.
+        "honesty_note": _trend_honesty_note(has_anchor, has_rcc, pattern_status),
     }
+
+
+# ★ CFP-2985 — I11 정합 검사가 지목하는 sentinel. 두 문구는 서로의 부분문자열이 아니다
+#   (부분문자열이면 "반대 문구 부재" 검사가 원리적으로 성립하지 않는다).
+_TREND_NOTE_SUBSTRATE_PRESENT = "substrate 실재 → computable-by-substrate"
+_TREND_NOTE_SUBSTRATE_ABSENT = "substrate 부재 → uncomputable-by-substrate"
+
+
+def _trend_honesty_note(has_anchor, has_rcc, pattern_status):
+    """trend honesty_note — substrate 서술을 실 관측에서 유도 (정적 문자열 금지).
+
+    불변 서술(forecast 부재 / escalation ACTION 미산출 / within-scope)은 산출 형태가
+    바뀌지 않으므로 그대로 두고, **상태 의존 서술만** 분기한다.
+    """
+    if pattern_status == "computable":
+        substrate_clause = (
+            "pattern_count = anchor_id/root_cause_class %s — 관측된 값에서 산출"
+            "(substrate 부재 시 DEFAULT = uncomputable_missing_key + null). "
+            "§D-9 feed = producer-defined." % _TREND_NOTE_SUBSTRATE_PRESENT
+        )
+    else:
+        missing = [n for n, present in (("anchor_id", has_anchor),
+                                        ("root_cause_class", has_rcc)) if not present]
+        substrate_clause = (
+            "pattern_count = %s %s — uncomputable_missing_key(DEFAULT, edge 아님) + null. "
+            "§D-9 feed = producer-defined." % ("/".join(missing) or "substrate",
+                                               _TREND_NOTE_SUBSTRATE_ABSENT)
+        )
+    return (
+        "observational time-series only — forecast/prediction/projection 필드 부재(negative control). "
+        + substrate_clause
+        + " escalation ACTION 미산출(B=producer, PMOAgent=decider — INV-B3). "
+          "within-scope only(cross-scope union 금지)."
+    )
 
 
 # ═══════════════════════ 지표⑥ token-cost (§4.6, AC-20/21/22) ══════════════════════════
