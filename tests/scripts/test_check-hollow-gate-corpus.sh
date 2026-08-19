@@ -208,10 +208,16 @@ SKIP=0
 #       묻는다.** 축 위의 대상이 자유 선택이면 그 전칭은 성립하지 않는다.
 #     Story §8.11.8 #12 = **「닫힘(도달범위 한정) — 12회차 착수」**(종전 「미탐색」·「무효(구조적
 #       불가)」 표시 전건 철회). 도달범위 한정 = N4(assert 리터럴 본문) 미도달.
-HGC_EXPECTED_CASE_TOTAL=93   # 65+2+4+8+5+4+4+1=93 ← 산술식 전항을 상수와 **같은 줄에** 둔다
+HGC_EXPECTED_CASE_TOTAL=97   # 65+2+4+4+8+5+4+4+1=97 ← 산술식 전항을 상수와 **같은 줄에** 둔다
                              # 항 대응: 실 케이스 65 · §13.5 구성 앵커 2 · §13.5b T-DECL 4 ·
-                             #          §13.6 T-SIG 8 · §13.7 T-FALS 5 · §13.8 T-RC 4 ·
-                             #          §13.9 T-END 4 · **본 pin 케이스 자신 1**
+                             #          §13.5c T-EXP 4 · §13.6 T-SIG 8 · §13.7 T-FALS 5 ·
+                             #          §13.8 T-RC 4 · §13.9 T-END 4 · **본 pin 케이스 자신 1**
+                             # ★★ 16회차 증분 +4: §13.5c **T-EXP** — 본 상수 **자신의** 기준값
+                             #   독립성 born-RED 짝(F-CP16-1). 15회차가 봉합한 축 ⓑ 의 처방이
+                             #   「기준값」 일반으로 서술됐는데 형제 앵커인 **본 상수에는 지목이
+                             #   0** 이었다. 1-편집(`HGC_EXPECTED_CASE_TOTAL=$((PASS+FAIL+SKIP+1))`)
+                             #   으로 아래 (3) 축이 통째로 항진한다 — 실측 armB2 rc=1 92/1/1 →
+                             #   armC2 rc=0 93/0/1. **처방·경계·정직 천장은 §13.5c 머리 주석 SSOT.**
                              # ★ 15회차 증분 +13: T-DECL 4(기준값 독립성 = 축 ⓑ) ·
                              #   T-FALS +1(형제 결박 (e) = 축 ⓒ) · T-RC 4 · T-END 4(판정 이후
                              #   구간 = 축 ⓐ). 세 축 전부 **14회차 열거에 지목이 0** 이었다.
@@ -232,7 +238,7 @@ HGC_EXPECTED_CASE_TOTAL=93   # 65+2+4+8+5+4+4+1=93 ← 산술식 전항을 상�
 #     정합 이동한다). 종전 상수와 다른 점은 **baseline 이 저자가 쓸 수 없는 리비전**(merge-base)
 #     이라 그 이동이 **고지**된다는 것 하나뿐이다. 「봉인」이 아니다 — §13.5 정직 천장 ⓐ 참조.
 #   ★ 갱신 절차: 실패 문면이 실측 서명을 그대로 출력하므로 그 값을 여기에 옮긴다.
-HGC_DECLARED_COMPOSITION="census=114/63/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
+HGC_DECLARED_COMPOSITION="census=121/67/1 helper=9f1950b3fd0e loopdecl=75665d9dab76"
 
 note() { echo "::notice::$*" >&2; }
 log()  { echo "$*" >&2; }
@@ -2194,7 +2200,131 @@ if [ "$(tdecl_lines_of "$tdecl_probe")" -ne 1 ]; then
 elif tdecl_verdict_on "$tdecl_probe"; then
   fail_case "T-DECL-d (양성 · 파생 문면): 리터럴 자리가 **명령치환**인 탐침에도 판정이 참 — conjunct ⓒ(파생식 부재)가 죽었다. 정의행을 1개로 유지한 채 그 자리를 파생식으로 바꾸는 형이 (b)(c) 를 모두 통과한다"
 else
-  pass_case "T-DECL-d (양성 · 파생 문면): 리터럴 자리가 명령치환인 탐침을 **거짓**으로 판정 — conjunct ⓒ 가 살아 있다. ★ 재는 것은 **문면**이므로 「eval」·「declare -g」 우회는 정의역 밖이다(머리 주석 천장)"
+  pass_case "T-DECL-d (양성 · 파생 문면): 리터럴 자리가 명령치환인 탐침을 **거짓**으로 판정 — **ⓑ∨ⓒ** 가 파생 문면을 거부한다. ★ 「conjunct ⓒ 가 살아 있다」로 읽지 말 것(16회차 문면 정정) — ⓒ 만 깨는 탐침은 구성 불가이고, ⓒ 를 죽인 kill-arm 실측에서 본 leg 은 **RED 로 서지 않았다**(rc=0 · 92/0/1). ⓒ 는 독립 축이 아니라 defense-in-depth 다 — 상세는 §13.5c 정직 천장 ⓑ. ★ 재는 것은 **문면**이므로 「eval」·「declare -g」 우회는 정의역 밖이다(머리 주석 천장)"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 13.5c. T-EXP = §14 **총량 앵커 기준값 자신의 독립성** born-RED 짝 (F-CP16-1 봉합)
+# ═══════════════════════════════════════════════════════════════════════════════
+# ★ 무엇이 열려 있었나. 바로 위 §13.5b T-DECL 이 15회차에 봉합한 축 ⓑ(기준값 독립성)는 **처방이
+#   「기준값」 일반으로 서술돼 있는데 적용은 `HGC_DECLARED_COMPOSITION` 한 앵커에만** 걸려 있었다.
+#   형제 앵커 `HGC_EXPECTED_CASE_TOTAL`(§0 정의 · §14 pin · §15 종료 가드 · `hgc_exit_ok` 가
+#   소비)에는 지목이 **0** 이었다. 규칙을 써 놓고 **자기 산출물의 나머지에 전파하지 않은 형**이며,
+#   이 Story 가 반복해 온 class 다.
+# ★ 16회차 실측 (peer 발화 → 리뷰 firsthand 재현 → 구현 firsthand 재현, 3자 독립 일치) —
+#     armB2  총량 축 **단독** 교란 `PASS=$((PASS+1))` 1행                 → rc=1 · 92/1/1 · RED 2
+#     armC2  armB2 + `HGC_EXPECTED_CASE_TOTAL=$((PASS+FAIL+SKIP+1))` 1행  → rc=0 · 93/0/1 · RED 0
+#   armC2 는 파일 리터럴이 `93` 인데 **「선언 총량 94」를 인쇄하며 PASS** 한다. 세 소비자가 전부
+#   자기가 센 값과 자기를 비교하게 되므로 F-CR26-5 **원 회귀 class(우발적 케이스 소실)의 거짓
+#   초록이 문면 그대로 복원**된다. 구성 서명 3성분은 **byte 동일**이라 §13.5 정의역 밖이고, CI 는
+#   rc 를 단독 소비하므로(`hollow-gate-corpus-test.yml` stdout assert 0건) **GREEN 착지**한다.
+# ★ 교란재 규율 — 재현에 `pass_case` 삽입을 **쓰지 않는다**. 그 줄은 §13.5 census 성분 술어
+#   (`/^[[:space:]]*pass_case /`)에 걸려 구성 앵커가 **함께** 발화하므로, 처치를 얹어도 rc=1 이
+#   남아 **「재현 실패」라는 거짓 반증**이 된다(16회차 실측: `pass_case` 형 RED 4 ·
+#   `PASS=$((PASS+1))` 형 RED 2). 총량 축을 **단독 격리**하는 교란만 판정 근거가 된다.
+# ⇒ 처방은 **새 방식 발명이 아니라 §13.5b T-DECL 동형 복제**다. 술어는 같은 세 conjunct 를 함께
+#   요구한다 —
+#     ⓐ `^HGC_EXPECTED_CASE_TOTAL=` 정의행이 **정확히 1개**  (재대입 1행 삽입을 잡는다)
+#     ⓑ 그 리터럴 == **라이브 값**                            (값이 덮였음을 잡는다)
+#     ⓒ 리터럴 안에 명령치환·역따옴표 **부재**                (리터럴 자리를 파생식으로 바꾼 형)
+#   아래 (b)(c)(d) 는 conjunct 를 하나씩 겨누는 탐침이다 — 뭉쳐 재면 어느 conjunct 가 죽어도
+#   다른 하나가 가려준다(§13.6 F-CR31-5 per-cell 규율).
+#
+# ★★ **적용 경계는 내가 그은 저작 판단이며, 그 경계를 세는 술어는 없다 — 기계 판정 불가.**
+#   본 파일 최상위 대문자 대입 변수는 **61종**이고, 그중 「정의행 개수 가드」 보유는 본 블록 신설
+#   **전 1종**(`HGC_DECLARED_COMPOSITION`) · **후 2종**이다. 나머지 **59종**에 적용하지 않은 것은
+#   **내 판단**이다 — 판단 기준은 「그 변수가 **판정의 기준값**으로 소비되는가」인데, 이 기준을
+#   **기계가 세는 술어는 존재하지 않는다**(「기준값인가」는 의미 판정이지 문면 판정이 아니다).
+#   ★ 그러므로 다음 문장은 **쓰지 않는다** — *「기준값 앵커를 닫았다」* · *「61종을 커버한다」* ·
+#     *「전 앵커 커버」*. 쓸 수 있는 것은 **「지목된 2종에 born-RED 짝을 붙였다」** 하나뿐이며,
+#     **무지목 59종 중 실제로 기준값인 것이 0 이라는 관측도 관측 수단도 없다**. 이는 15회차
+#     「열거 = 하한」 한정과 동형이고, 그 한정은 **본 finding 이 정확히 그 열거 밖에서 나옴으로써
+#     한 회차 만에 실증**됐다 — 같은 일이 본 블록에도 일어날 수 있다.
+#   [재현] grep -oE '^[A-Z][A-Z0-9_]*=' "$0" | sort -u | wc -l     ← 최상위 대문자 대입 **종수**
+#   [재현] grep -cE '^t(decl|exp)_lines_of\(\)' "$0"               ← 정의행 개수 가드 **보유 종수**
+#
+# ★ 정직 천장 (3항).
+#   ⓐ 재는 것은 **`^HGC_EXPECTED_CASE_TOTAL=` 로 시작하는 줄의 문면**이다. `eval` · `declare -g` ·
+#     별칭 변수를 §14 가 읽도록 함께 고치는 2-편집은 이 술어의 **정의역 밖**이다. 「봉인」이
+#     아니라 **1-편집 자기파생 형태**를 닫는다.
+#   ⓑ ★★ **conjunct ⓒ 는 독립 판별력이 없다 — ⓑ 에 흡수된다(실측).** ⓒ 만 깨는 탐침은 **구성
+#     불가**다: ⓑ 가 성립하려면 추출 문면이 라이브 정수와 **문자열로 같아야** 하는데 파생식
+#     문면은 정의상 그 정수와 다르다. kill-arm 실측도 같다 — ⓒ 를 죽여도 (d) 가 **RED 로 서지
+#     않는다**(ⓑ 가 먼저 잡는다). ⇒ ⓒ 는 **defense-in-depth 이지 독립 축이 아니고**, (d) 는
+#     「ⓒ 가 살아 있다」가 아니라 **「ⓑ∨ⓒ 가 파생 문면을 거부한다」**의 증거다.
+#     ★★ 이 성질은 **§13.5b T-DECL-d 가 그대로 갖는다** — 동형 복제라 함께 상속했고, T-DECL 쪽
+#        kill-arm(`case` 패턴을 절대 미매칭으로 치환)을 **실행해 확인**했다: `rc=0 · 92/0/1` ·
+#        **T-DECL-d 는 PASS 를 유지**했다. 즉 15회차 봉합의 (d) 라벨(「conjunct ⓒ 가 살아
+#        있다」)도 **같은 만큼만 참**이며, 그 문면은 본 회차에 함께 정정했다. 잔여 등재 대상.
+#   ⓒ [반증시도: 완료 — armB2/armC2 를 LAB 격리 사본에서 **실행**해 봉합 전 rc=0(무성 통과) ·
+#      봉합 후 rc=1 을 실측했고, conjunct 별 kill-arm 3본으로 (b)(c)(d) 판별력을 각각 쟀다.
+#      **3짝 중 2짝만 섰다** — 결과는 ⓑ 항에 적은 그대로이며 「3짝 전건 성립」으로 적지 않는다]
+echo ""
+echo "── T-EXP: 총량 앵커 **기준값**의 독립성 (born-RED 대조군) ───────────────────"
+
+texp_lines_of()   { grep -c '^HGC_EXPECTED_CASE_TOTAL=' "$1" 2>/dev/null || true; }
+texp_literal_of() { sed -n 's/^HGC_EXPECTED_CASE_TOTAL=\([^ #]*\).*$/\1/p' "$1" | head -1; }
+
+# 판정 = **무인자**. 대상 결박이 함수 안이라 호출 site 에 인자 자리를 남기지 않는다(§13.6 (g)(h) 규율).
+hgc_exp_pin_verdict() {
+  texp_n="$(texp_lines_of "$hgc_self_src")"
+  texp_lit="$(texp_literal_of "$hgc_self_src")"
+  case "$texp_lit" in
+    *'$('*|*'`'*) return 1 ;;
+  esac
+  [ "$texp_n" -eq 1 ] && [ "$texp_lit" = "$HGC_EXPECTED_CASE_TOTAL" ]
+}
+
+# 탐침 결박 helper — 판정이 읽는 **전역**을 흔든다(§13.5b `tdecl_verdict_on` 과 동형).
+texp_verdict_on() {
+  texp_saved_src="$hgc_self_src"
+  hgc_self_src="$1"
+  texp_rv=1; hgc_exp_pin_verdict && texp_rv=0
+  hgc_self_src="$texp_saved_src"
+  return "$texp_rv"
+}
+
+texp_probe="$TEST_TMP/texp-probe.sh"
+
+# (a) 음성 — 실제 본체에 대해서는 **참**이어야 한다. 술어가 「무엇이든 위반」이면 여기서 RED.
+if hgc_exp_pin_verdict; then
+  pass_case "T-EXP-a (음성): 본체의 §0 총량 선언이 **독립 리터럴** — 정의행 1개 · 리터럴 == 라이브 값 · 파생식 부재. 술어가 「무엇이든 위반」이 아니다((b)(c)(d) 와 짝으로만 의미가 있다)"
+else
+  fail_case "T-EXP-a (음성): 본체 §0 총량 선언이 독립 리터럴 조건을 깼다 — 정의행 ${texp_n}개 / 리터럴 [$texp_lit] / 라이브 [$HGC_EXPECTED_CASE_TOTAL]. 기준값이 라이브 tally 에서 파생되면 §14 pin · §15 종료 가드 · hgc_exit_ok 세 소비자가 **전부 자기가 센 값과 자기를 비교**한다"
+fi
+
+# (b) 양성 ⓐ — 재대입 1행을 **추가**하면 정의행이 2개가 된다(F-CP16-1 armC2 재현형).
+cp -- "$hgc_self_src" "$texp_probe"
+printf '%s=$((PASS+FAIL+SKIP+1))\n' 'HGC_EXPECTED_CASE_TOTAL' >> "$texp_probe"
+if [ "$(texp_lines_of "$texp_probe")" -lt 2 ]; then
+  fail_case "T-EXP-b (양성 · 정의행 중복): NOT_RUN — 탐침 생성이 정의행을 2개로 만들지 못했다(실측 $(texp_lines_of "$texp_probe")개). 처치되지 않은 탐침으로 판별력을 계상하지 않는다"
+elif texp_verdict_on "$texp_probe"; then
+  fail_case "T-EXP-b (양성 · 정의행 중복): 총량 상수를 **라이브 tally 파생식으로 재대입하는 1행**이 추가된 탐침에도 판정이 **참** — conjunct ⓐ(정의행 정확히 1개)가 죽었다. 이 상태에서 F-CP16-1(armC2: 교란 1행 + 재대입 1행 → rc=0 · RED 0 · 「선언 총량 94」 인쇄)이 무성으로 통과한다"
+else
+  pass_case "T-EXP-b (양성 · 정의행 중복): 라이브 tally 파생 재대입 1행이 추가된 탐침을 **거짓**으로 판정 — conjunct ⓐ 가 살아 있다. 이것이 16회차 F-CP16-1 형(armB2 rc=1 RED 2 → armC2 rc=0 RED 0)의 지목이다"
+fi
+
+# (c) 양성 ⓑ — 정의행은 1개인데 그 **값**이 라이브와 어긋나는 형.
+sed 's|^HGC_EXPECTED_CASE_TOTAL=.*|HGC_EXPECTED_CASE_TOTAL=0   # texp probe|' \
+  "$hgc_self_src" > "$texp_probe"
+if [ "$(texp_literal_of "$texp_probe")" = "$HGC_EXPECTED_CASE_TOTAL" ]; then
+  fail_case "T-EXP-c (양성 · 값 불일치): NOT_RUN — 탐침의 리터럴이 라이브 값과 여전히 같다(sed 미치환). 무처치 탐침으로 판별력을 계상하지 않는다"
+elif texp_verdict_on "$texp_probe"; then
+  fail_case "T-EXP-c (양성 · 값 불일치): 리터럴이 라이브 값과 **다른** 탐침에도 판정이 참 — conjunct ⓑ(리터럴 == 라이브)가 죽었다. 정의행 개수만 세고 값을 보지 않으면 라이브 값을 덮는 형이 빠져나간다"
+else
+  pass_case "T-EXP-c (양성 · 값 불일치): 리터럴이 라이브 값과 다른 탐침을 **거짓**으로 판정 — conjunct ⓑ 가 살아 있다((b) 가 세는 개수와 **독립**인 축이다)"
+fi
+
+# (d) 양성 ⓒ — 정의행 1개인데 리터럴 자리가 **파생식**인 형.
+#     ★ 이 leg 이 서는 것은 **ⓑ∨ⓒ** 이지 ⓒ 단독이 아니다(머리 주석 정직 천장 ⓑ — 실측).
+sed 's|^HGC_EXPECTED_CASE_TOTAL=.*|HGC_EXPECTED_CASE_TOTAL=$((PASS+FAIL+SKIP+1))   # texp probe|' \
+  "$hgc_self_src" > "$texp_probe"
+if [ "$(texp_lines_of "$texp_probe")" -ne 1 ]; then
+  fail_case "T-EXP-d (양성 · 파생 문면): NOT_RUN — 탐침 정의행이 1개가 아니다(실측 $(texp_lines_of "$texp_probe")개). 이 leg 은 **개수는 정상인데 문면이 파생식**인 형을 재야 하므로 무효다"
+elif texp_verdict_on "$texp_probe"; then
+  fail_case "T-EXP-d (양성 · 파생 문면): 리터럴 자리가 **산술치환**인 탐침에도 판정이 참 — ⓑ 와 ⓒ 가 **함께** 죽었다. 정의행을 1개로 유지한 채 그 자리를 파생식으로 바꾸는 형이 (b)(c) 를 모두 통과한다"
+else
+  pass_case "T-EXP-d (양성 · 파생 문면): 리터럴 자리가 산술치환인 탐침을 **거짓**으로 판정 — **ⓑ∨ⓒ** 가 파생 문면을 거부한다. ★ 「ⓒ 가 살아 있다」로 읽지 말 것 — ⓒ 만 깨는 탐침은 구성 불가이며(파생식 문면 ≠ 라이브 정수), kill-arm 실측에서 ⓒ 를 죽여도 이 leg 은 RED 로 서지 않았다. ⓒ 는 defense-in-depth 다"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
