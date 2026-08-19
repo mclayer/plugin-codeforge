@@ -3,9 +3,9 @@
 """S3 (테스트): Hook timeout rationale table AC-4, AC-16.
 
 목적:
-  26개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
+  28개 hook × timeout 값 × empirical_source (Change Plan §3.2 verbatim) bijection 검증.
 
-AC-4: 테스트 내 rationale 표 (26행) ↔ hooks.json bijection 확인.
+AC-4: 테스트 내 rationale 표 (28행) ↔ hooks.json bijection 확인.
 AC-16: fail-open 계상 3항 (게이트 4종 fail-open / 내부 subprocess 하한 / SessionEnd 특례)
         이 표에 필드로 실재.
 
@@ -170,6 +170,18 @@ TIMEOUT_RATIONALE_TABLE = [
     ),
     # Stop
     ("stop", 10, "§3.2 Stop: cleanup message (≤10s)"),
+    # StopFailure (CFP-2967 — 신규 이벤트)
+    (
+        "stopfailure-429-incident-record",
+        5,
+        "§3.2 StopFailure 429 기록 (CFP-2967): entry 0 인 **신규 이벤트**라 기존 예산 기여 0. "
+        "공식 문서 verbatim \"All matching hooks run in parallel.\" ⇒ 이벤트별 wall = "
+        "**max, not Σ**. 발화 빈도 = 정상 턴 **0회**(턴 사망 시에만). 작업량 = stdin "
+        "drain-and-discard + Python 1회 fork + 상수 1행 append(원장 read 0, payload 파싱 0). "
+        "**record-only** — 출력·exit code 가 소비되지 않아 구조적으로 게이트가 아니며, "
+        "만료의 실손실은 '차단 실패'가 아니라 **미기록 incident 1건**이다. "
+        "만료 확률 절대값은 **미측정 — declare**(추정치 기재 금지)",
+    ),
     # SessionEnd (AC-16 특례: async timeout 1)
     (
         "session-end",
@@ -187,6 +199,17 @@ TIMEOUT_RATIONALE_TABLE = [
         10,
         "§3.2 SubagentStart priming: pointer-only additionalContext emit (정적 3줄 규범 pointer — "
         "filesystem/network touch 0, git 조작 0, JSON parse 후 stdout 1건), fail-open exit 0 (≤10s)",
+    ),
+    (
+        "subagent-start-429-lease",
+        5,
+        "§3.2 SubagentStart 429 lease (CFP-2967): lease 파일 1건 생성만 수행 — host-local "
+        "`.claude/ledger/**` 고정, network 0 · git 조작 0 · repo walk 0 이라 sibling "
+        "render-discipline(10s)보다 작업량이 구조적으로 작다. 같은 이벤트의 형제 훅과 "
+        "**병렬 실행**되므로 이벤트 wall = max(Σ 아님) 이며 5s 는 현 max(10s)를 올리지 않는다. "
+        "record-only 관측 — 만료의 실손실 = lease 1건 미기록이고, 설계가 증감 쌍이 아니라 "
+        "**만료 기반 reconcile** 이라 유실이 상한을 영구 잠그지 않는다(`stop_without_lease` 로 흡수). "
+        "만료 확률 절대값은 **미측정 — declare**",
     ),
     # SubagentStop
     (
@@ -365,8 +388,16 @@ def test_ac16_session_end_special_case_documented():
 
 
 def test_hook_timeout_rationale_row_count_matches_pin():
-    """Table 이 정확히 26행임을 확인."""
-    assert len(TIMEOUT_RATIONALE_TABLE) == 26, (
-        f"Expected 26 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
+    """Table 이 정확히 28행임을 확인.
+
+    pin 갱신 이력: 26 → **28** (CFP-2967 Phase 2). 증분 +2 = `StopFailure`
+    `stopfailure-429-incident-record` 1건 + `SubagentStart` `subagent-start-429-lease` 1건.
+    ★ 이 값은 문서 문면에서 베끼지 않는다 — 정본은 명령이 낸다:
+        python -c "import json,sys;d=json.load(sys.stdin);print(sum(1 for ev in d['hooks'].values() for m in ev for h in m.get('hooks',[]) if h.get('timeout') is not None))" < hooks/hooks.json
+    (2026-08-19 실측 산출 = 28. pin 상수만 고치고 표 본체를 안 고치면
+    test_hook_timeout_rationale_bijection 이 RED — 두 site 동시 갱신 의무.)
+    """
+    assert len(TIMEOUT_RATIONALE_TABLE) == 28, (
+        f"Expected 28 rationale rows, got {len(TIMEOUT_RATIONALE_TABLE)}"
     )
-    print(f"✓ Rationale table has complete 26 rows with bijection to hooks.json")
+    print(f"✓ Rationale table has complete 28 rows with bijection to hooks.json")
