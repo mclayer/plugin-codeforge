@@ -4,14 +4,15 @@ type: domain-knowledge
 slug: receipt-single-writer-under-partial-observability
 title: 수령 사실의 single-writer — 부분 관측(differential observability) 하에서 비단조 단언(negative assertion)을 발신자가 발행할 수 없는 이유
 status: Active
-updated: 2026-08-17
+updated: 2026-08-18
 carrier_story: CFP-2994
 # ★ 정정 전파 대상 (CFP-2994 M3 인벤토리 1급 항목) — 본 파일은 carrier Story 의 유일한 영구·cross-Story
 #   artifact 다. Story 가 판정을 정정할 때마다 본 파일 전수 스윕이 의무이며, 미전파는 P0 로 취급한다.
 #   근거 = CFP-2994 요구사항리뷰 Iter 3 P0 (Iter 1·2 재설계가 본 파일에 0% 전파된 채 main 착지 직전이었음).
 correction_sweep_required: true
 related_adrs:
-  - ADR-170  # orchestrator↔subagent 기본규율 — 발신자 권한 경계의 성문 후보 carrier
+  - ADR-170  # orchestrator↔subagent 기본규율 — Amendment 2 A2-4 가 receipt_state 도달-전용 경계의 확정 carrier (CFP-2994 설계 lane)
+  - ADR-139  # background-wait liveness gate — Amendment 3 A3-4 (ii) 가 ADR-170 A2-4 와 paired 확정 carrier. INV-L4 가 verdict 권한을 lead 에 고정
   - ADR-073  # verify-before-assert — 관측 scope 초과 단언 금지의 상위 규범
   - ADR-119  # research-before-claims — 게이트 verdict = proxy 아닌 ground-truth
   - ADR-093  # 완료 보고 4-field schema — 수령 판정 3종(status/usage/본문)의 착지면
@@ -150,9 +151,19 @@ fan-out 완결 판정은 **종료 검출** 문헌의 보존 불변식과 동형�
 > | 단 | 정의역 | 항등식 |
 > |---|---|---|
 > | **1단** | roster (선언된 fan-out 축 전수) | `roster == 스폰 + 미스폰 + 단-미상` |
-> | **2단** | spawned (실제 스폰된 축) | `스폰 == 수령 + 미수령 + 미상 + 기타 종결` |
+> | **2단** | spawned (실제 스폰된 축) | `스폰 == 수령 + 미수령 + 미상` |
 >
 > ★ **정정 (CFP-2994 요구사항리뷰 RESET 후 Iter 3 · P1-C)**: 위 두 항등식의 항 이름에서 수식어 ` declare` 접미를 제거했다(`미스폰 declare` → **`미스폰`**, `미수령 declare` → **`미수령`**). carrier Story §5.3 의 규약 W-5 및 강제층 술어 EF-4 ⑥ 가 상태값 셀을 **CLOSED 5값 verbatim**(`수령`·`미수령`·`미상`·`미스폰`·`단-미상`)으로 성문하므로 `미스폰 declare` 는 **값역 밖**이며, 이 표기를 정본으로 두면 채택 원장이 born-broken 이 된다. 본 파일의 다른 `declare` 는 전부 **동사 용법**(불일치를 은폐하지 않고 발화할 의무 / 원 사건의 파괴적 지시 인용)이며 상태값 이름의 일부가 아니다.
+>
+> ★★ **정정 (CFP-2994 설계 lane 결정 C-7 — 4번째 항 `기타 종결` 은 도달 불가 dead term `[refuted]`)**: 위 2단 항등식은 초판에 `스폰 == 수령 + 미수령 + 미상 + 기타 종결` 이라는 **4-term** 으로 성문돼 있었다. **`기타 종결` 은 상태값 CLOSED 값역에 대응 값이 없다** — 바로 위 P1-C 정정이 **같은 파일에서** 이미 값역을 5값 verbatim(`수령`·`미수령`·`미상`·`미스폰`·`단-미상`)으로 못박았으므로, 이 4번째 항은 **어떤 원장 행으로도 채워질 수 없는 도달 불가 항**이었다. ⇒ **본 파일 안에 모순이 상주하고 있었다**(정정 전파를 자기 파일에서 먼저 완주하지 못한 두 번째 사례 — 첫 사례 = 「변경 이력」 2026-08-17 RESET 후 Iter 1 ①).
+>
+> **숨어 있던 이유 = 그 항이 항상 0 이기 때문이다.** [ceiling: 값역 도달성 논증 — 기타 종결 이 receipt_state CLOSED 5값 중 어느 값에도 대응하지 않는다는 사실에서 따라온다. 이 명제를 재는 검사기·test 자산은 internal-docs 소관이라 본 repo tests 정의역 밖] 도달 불가 항은 합에 0 만 기여하므로 항등식은 계속 성립했고, 독자도 검사기도 이상을 관측할 신호를 받지 못했다. 이것은 본 파일이 **RSW-8 에서 지목하는 누락 오류(errors of omission)의 자기 사례**다 — 빠진 것이 균형을 깨지 않으면 균형 검사는 그것을 잡지 못한다.
+>
+> ⇒ **정본 = 3-term** `스폰 == 수령 + 미수령 + 미상`. 이 제거는 **값역을 넘지 않고 산술을 바꾸지 않는다**(무손실) — 대안이던 「6번째 상태값 신설」은 carrier Story 의 **신규 어휘 0** 제약 위반이라 기각됐다.
+>
+> ★ **개념 층 신설 — INV-5**: 음성 검사(4-term 재삽입 시 RED)만 두면 **또 다른 dead term 의 신설이 무방비**다. 따라서 항 단위 금지가 아니라 성질 단위 불변식을 둔다 — ***항등식 term 전수가 상태값 값역에서 도달 가능하다.*** 이는 RSW-8 의 **독립 출처** 요건, RSW-7 의 **중첩 비합성** 요건과 같은 층의 **3번째 구성 요건**이며, 「도달 불가 항이 항등식의 검출력을 조용히 갉아먹는다」는 일반 형상을 닫는다.
+>
+> 근거 = `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2994-receipt-single-writer.md` **`## §3. 도입할 설계` → `### §3.4 Phase 2 필수 코드 항목 C-1~C-9 (Phase 3 검수 항목)` → `#### C-7 — ⑦ `기타 종결` 제거 + INV-5`** 절.
 >
 > **2단 좌변이 0 이면 그 항등식은 vacuous** 하며(무조건 참 = 검출력 0), 그 사실을 명시하지 않은 채 *"항등식 성립"* 을 근거로 쓰는 것은 `vacuous-pass` 형상이다. **`단-미상`** = 어느 단에 속하는지 자체가 판별 불가한 축(예: 스폰 주체가 기록자 본인이 아니어서 스폰 여부를 관측할 수 없는 축)을 위한 값으로, 한 방향으로 분모를 편향시키지 않기 위해 존재한다.
 
@@ -207,7 +218,21 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
     >
     > **결정적 구별 = 관측자 상대성.** `수령`/`미수령` 은 subagent 의 성질이 아니다 — 같은 subagent 의 같은 종료에 대해 **수신자마다 값이 다르다**(carrier 사건에서 4축은 Orchestrator 기준 `미수령` ∧ PL 기준 `수령` 이 **동시에 참**이었다). `outcome`/`termination_cause` 는 관측자와 무관한 단일 값을 갖는다. ⇒ **관측자 상대적인 축을 관측자 절대적인 축의 enum 에 밀어넣는 것이 곧 conflate** 이며, "3번째 divergent vocabulary 신설 금지" 가 실제로 금지하는 것을 오히려 범하게 된다.
     >
-    > 그 금지의 scope 는 축자상 **outcome / recovery-action 계열 vocabulary** 한정이지 전 축에 대한 무제한 어휘 금지가 아니다. ⇒ **별 축 신설은 위반이 아니다.** 단 `receipt_state` 를 **어느 문서에 성문할지**(본 파일 / 그 taxonomy 의 경계 절 / ADR carrier)는 carrier Story 의 설계 lane 미결 문항이다 — **판정은 확정, 배치는 미확정.**
+    > 그 금지의 scope 는 축자상 **outcome / recovery-action 계열 vocabulary** 한정이지 전 축에 대한 무제한 어휘 금지가 아니다. ⇒ **별 축 신설은 위반이 아니다.**
+>
+> ★★ **배치 확정 (CFP-2994 설계 lane — 초판의 「설계 lane 미결 문항」 해소)**: 초판은 이 자리에 *"`receipt_state` 를 **어느 문서에 성문할지**(본 파일 / 그 taxonomy 의 경계 절 / ADR carrier)는 carrier Story 의 설계 lane 미결 문항이다 — 판정은 확정, **배치는 미확정**"* 을 남겼다. **설계 lane 이 풀었다.** 그리고 답은 「문서 하나」가 아니었다 — **물음 자체가 세 층을 한 덩어리로 묶고 있었다.** 확정된 배치는 3층 분할이다.
+>
+> | 층 | 무엇을 성문하나 | 정본 |
+> |---|---|---|
+> | **경계 규범** | `receipt_state` 가 무엇을 기록할 수 **있는가** = **도달(arrival) 전용**. 허용 = 도달 여부 · 도달 채널 귀속 · 판정 근거 / **금지 = 충분성 · 품질 · 채택 가치** | `archive/adr/ADR-139-background-wait-liveness-gate.md` 의 **「Amendment 3」 → 「A3-4 — 경계 3항 (성문)」 (ii)** ∧ `archive/adr/ADR-170-orchestrator-subagent-default-inline-whitelist.md` 의 **「Amendment 2」 → 「A2-4 — receipt_state = 도달(arrival) 전용 경계」**. 두 조항이 서로를 paired 로 명시한다 |
+> | **값역 · 표기 규약** | CLOSED 5값 · 원장 9열 signature · 표기 규약 W-1~W-8 · 착지 토큰 | **Story-local 문서 schema** — `mclayer/codeforge-internal-docs` `wrapper/change-plans/cfp-2994-receipt-single-writer.md` 의 **「§4.2 컨텍스트 · 이벤트 스키마 + 타입 정의」 (a)** ∧ **「§11.1 Schema 변경」**(4→5값 = MINOR 실발동). ★ **inter-plugin contract 아님** — 같은 문서 **「§13.C Cross-plugin coordination」** 이 *"MANIFEST 등재 대상 아님"* 으로 확정 |
+> | **개념 서술 · anti-pattern** | **왜** 그 경계가 필요한가 · 위반 형상 | **본 파일 유지** — SSOT 이동 없음. 개념 층의 정본은 여기다 |
+>
+> **경계 규범이 개념 doc 이 아니라 ADR 로 간 이유**: 「받았다 ⇒ 쓸 만하다」 함의가 붙는 순간 그 field 는 **성과 verdict** 가 되고, verdict 판정 권한은 ADR-139 의 `INV-L4` 가 lead 에 고정한다(축자 = *"대기 주체 ↔ 판정 주체 분리"*). **도달-전용 경계는 INV-L4 를 침범하지 않는 유일한 형태**다. ⇒ 이 조항의 성질은 개념 서술이 아니라 **권한 경계**이며, 권한 경계의 정본은 규범 carrier 여야 한다.
+>
+> ★ **값역이 두 ADR 어디에도 없는 것은 drift 가 아니라 3층 분할의 귀결이다** `[verified]`. 정의역 = 위 두 ADR 전문 @ wrapper `03b7025b9` · 명령 = `git grep -c '<토큰>' 03b7025b9 -- archive/adr/ADR-139-*.md archive/adr/ADR-170-*.md` · 결과 = `단-미상` · `미스폰` · `9열` · `W-1` 전건 0 **이면서 같은 명령이 `receipt_state` · `INV-L4` 에는 hit 를 낸다**(양성 대조군 — 이 0 은 grep 사망이 아니다). 값역을 ADR 에서 찾지 못한 독자가 그것을 **누락으로 읽지 않도록** 여기 적어 둔다. [ceiling: 근거 3-tuple 이 같은 줄에 이미 병기됨 — 정의역(두 ADR 원문 @ 03b7025b9) · 명령(git grep -c) · 양성 대조군(같은 명령이 receipt_state 와 INV-L4 에는 hit). 사람이 재현할 수 있으나 본 repo tests 자산으로는 미배선]
+>
+> ★ **동명이의 주의 (전사 함정 — 본 파일이 직접 피한 자리)**: carrier Story 의 리뷰 축은 이 부재를 *"ADR-170 Amd 2 가 자기 scope 를 「§결정 2 enumeration 무변경」으로 명시하므로 ADR 은 enum carrier 가 아니다"* 로 설명한다. **그 문장을 이 파일에 그대로 옮기면 오귀속이 된다** — ADR-170 이 「무변경」이라 선언한 enumeration 은 **inline whitelist 7-entry** 이지 `receipt_state` 값역이 아니다. 두 enum 이 **같은 단어를 공유할 뿐 별개 대상**이며, 이는 본 파일이 RSW-2 에서 지목하는 **정의역 위반**의 어휘 판본이다. ⇒ 부재의 정본 근거는 위 3층 분할이지 그 인용문이 아니다.
   - **타임아웃 상수 값** — 대기 시간의 구체 수치는 운영 튜닝 영역. 본 개념은 "판정이 취소 가능하고 비파괴적일 것"만 요구한다(RSW-4).
 - **Anti-pattern**:
   - 발신자가 수신자 채널에 대해 `state:assertion` 발행(RSW-6 월권).
@@ -222,9 +247,17 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
 
 ## 관련 ADR
 
-> 본 파일 작성 시점에 ResearcherAgent 는 외부 개념 축 전담으로 아래 ADR **원문을 읽지 않았다**. 아래 매핑은 CFP-2994 입력 패킷이 제공한 좌표 기반 **후보**이며, 확정 매핑은 요구사항리뷰·설계 lane 소관이다.
+> ★ **정정 (CFP-2994 설계 lane 정정 전파 스윕 — 초판 disclaimer 의 정의역 축소)**: 초판은 *"아래 ADR **원문을 읽지 않았다** … 매핑은 좌표 기반 **후보**이며, 확정 매핑은 요구사항리뷰·설계 lane 소관"* 을 **5건 전체**에 걸었다. 그 disclaimer 는 이제 **2건에서 해소, 4건에서 존속**한다 — 통째로 지우는 것은 over-claim 이다.
+>
+> | 상태 | ADR | 근거 |
+> |---|---|---|
+> | **확정 (firsthand 실독)** | **ADR-170** · **ADR-139** | 본 스윕이 wrapper `03b7025b9` 에서 두 파일 원문을 직접 읽고 조항 앵커를 대조했다. 설계 lane 이 배치를 확정했고(위 「경계」 절 3층 표) 두 조항이 서로를 paired 로 명시한다 |
+> | **후보 존속 (미실독)** | ADR-073 · ADR-119 · ADR-093 · ADR-084 | 본 스윕의 정의역은 `receipt_state` 배치 문항이 지목한 2건뿐이다. 나머지 4건은 **읽지 않았고** 좌표 기반 후보로 남는다 |
 
-- **ADR-170** — orchestrator↔subagent 기본규율. RSW-5(단조/비단조 분할) · RSW-6(권한 경계)의 성문 carrier 후보.
+
+- **ADR-170** `[확정 — firsthand]` — orchestrator↔subagent 기본규율. RSW-5(단조/비단조 분할)의 성문 carrier = **Amendment 2 「A2-5 — 메시지 종별: 단조 ⊥ 비단조 + 소유자 동의 요구」**(판정 술어를 라벨 열거가 아니라 **효과의 단조성**으로 두어 RSW-5 를 그대로 승계). RSW-6(권한 경계)의 성문 carrier = **Amendment 2 「A2-4」** 의 도달-전용 경계.
+  ★ **정직 declare**: A2-5 · A2-3 는 자기 등급을 *"`normative` 이나 집행 표면 0"* 으로 명시한다(발화 채널에 hook matcher 0). ⇒ 본 개념이 ADR 로 성문됐다는 사실은 **사후 지목 가능성**을 뜻하지 사전 차단을 뜻하지 않는다 — RSW-4 가 요구하는 「비파괴·취소 가능」과 같은 등급의 정직 천장이다.
+- **ADR-139** `[확정 — firsthand]` — background-wait liveness gate. **Amendment 3 「A3-4 — 경계 3항 (성문)」 (ii)** 가 `receipt_state` 를 **도달 전용**으로 한정하고, 그 근거로 `INV-L4`(대기 주체 ↔ 판정 주체 분리)가 verdict 권한을 lead 에 고정함을 든다. ★ 같은 Amendment 「A3-4」 (iii) 이 본 개념에 대한 **비자명한 보강**을 담는다 — depth ≥ 1 에서는 **전 주체가 worker ∧ receiver 를 겸하므로** 「worker 는 판정하지 않는다」와 「receiver 만 수령을 기록한다」가 같은 주체에 동시에 걸리고, ⇒ **규범 문구로는 분리를 지킬 수 없고 산출물 schema 의 field 분리로만 지켜진다**(수령 기록 field ⊥ verdict field, 기록자를 field 단위로 고정). 이는 본 파일 RSW-6 의 단일 주체 서술이 **중첩 fan-out 에서 겸직으로 무너지는 지점**을 메운다.
 - **ADR-073** — verify-before-assert. RSW-2(관측 scope 초과 단언 금지)의 상위 규범.
 - **ADR-119** — research-before-claims. "게이트 verdict = proxy 아닌 outcome ground-truth" 가 RSW-8(자기보고 ≠ 근거)과 동근.
 - **ADR-093** — 완료 보고 4-field schema. 수령 판정 3종(완료 통지 status / usage 메트릭 / 본문 실재)이 착지하는 면.
@@ -232,6 +265,7 @@ Halpern-Moses 는 비동기·비신뢰 채널에서 **common knowledge `C_G φ`(
 
 ## 변경 이력
 
+- **2026-08-18 KST — CFP-2994 설계 lane 정정 전파 스윕 (§10.8 회부 이행 · `correction_sweep_required` 발동).** 설계 lane 이 소유권 경계를 지켜 본문을 고치지 않고 회부한 무효화 2건 + 본 스윕이 추가 발굴한 1건을 전파했다. ① **항등식 dead term 제거** — 2단 항등식이 `기타 종결` 을 포함한 4-term 이었으나 그 값은 상태값 CLOSED 값역에 **대응 값이 없다**. 바로 위 P1-C 정정이 **같은 파일에서** 값역을 5값 verbatim 으로 못박은 뒤였으므로 **본 파일 안에 모순이 상주**하고 있었고, **그 항이 항상 0 인 덕분에 숨어 있었다**(RSW-8 누락 오류의 자기 사례). [ceiling: 위 RSW-7 정정 블록의 값역 도달성 논증을 재기술한 것 — 근거는 그 절에 있고 본 줄은 이력 요약이다. 검사기·test 자산은 internal-docs 소관] 정본 = 3-term + **INV-5** 를 항 단위 금지가 아니라 성질 단위 불변식(*항등식 term 전수가 값역에서 도달 가능*)으로 개념층 신설. ② **「설계 lane 미결 문항」 해소** — `receipt_state` 배치가 **3층 분할**로 확정(경계 규범 = ADR 2건 / 값역·표기 = Story-local 문서 schema / 개념 서술 = 본 파일). 「어느 문서 하나에 넣을까」라는 물음 자체가 층을 섞고 있었다. ③ **본 스윕 추가 발굴** — 「관련 ADR」 절의 *"원문을 읽지 않았다 … 확정 매핑은 타 lane 소관"* disclaimer 가 ②를 정면으로 되돌리는 stale 표면이었다(그대로 두면 하류가 확정된 배치를 다시 후보로 읽는다). 정의역을 **2건 해소 / 4건 존속**으로 축소하고 **ADR-139 를 신규 등재**(초판은 frontmatter·본문 양쪽에서 이 carrier 를 통째로 누락). ★ **전사 함정 1건 회피**: 리뷰 축이 값역의 ADR 부재를 *"ADR-170 Amd 2 = §결정 2 enumeration 무변경"* 으로 설명하나, 그 enumeration 은 **inline whitelist 7-entry** 이지 `receipt_state` 값역이 아니다 — **같은 단어를 공유하는 별개 enum** 이라 그대로 옮기면 오귀속이 된다(RSW-2 정의역 위반의 어휘 판본). 부재 근거를 3층 분할로 교체하고 양성 대조군 동반 실측으로 pin 했다.
 - **2026-08-17 KST — CFP-2994 요구사항리뷰 RESET 후 Iter 1 판정 반영 (잔여 P1 2건).** ① RSW-9 실행 목표 2항의 `(differential observability 처방)` 을 **본 개념 신설분** 표기로 교체 — `RSW-1` 정정 블록이 이미 철회한 「불일치 declare 의무 = Gray Failure 논문의 처방」 귀속을 **같은 파일이 재주장**하고 있었다. frontmatter `correction_sweep_required: true` 를 본 파일이 **자기 파일 내 스윕 미완주**로 위반한 형상이며, 리뷰가 실물 확인해 검출했다(정정 전파는 타 문서로 나가기 전에 자기 파일에서 먼저 완주해야 한다). ② CWA 출처 URL 교체 — 구 URL `cs.utexas.edu/~ear/cs378/CWA.pdf` 은 **HTTP 404**(실측), 신 URL `cs.ubc.ca/sites/default/files/tr/1977/TR-77-16.pdf` 은 **HTTP 200**(실측, Reiter, *On Closed World Data Bases*, UBC Technical Report TR-77-16). 귀속 문면(Clark 1978 ↔ Reiter 1978 분리)은 보존.
 - **2026-08-17 KST — CFP-2994 요구사항리뷰 Iter 1~3 판정 전파 (P0 해소).** 본 파일은 carrier Story 의 유일한 영구·cross-Story artifact 인데 Iter 1·2 재설계가 **0% 전파된 채** main 착지 직전이었고, 그 결과 Story 결론의 **부정 명제 5건**을 담고 있었다. 전파 항목: ① 「종결상태 어휘는 taxonomy 소유·재사용」 → **disjoint subject(별 축 `receipt_state`) 판정**으로 교체 ② 2항 계수 항등식 → **2단 분해**(정의역 혼합이 산술적 거짓을 낳음) ③ 형식 선례 **G-Counter → G-Set**(논거 3건 붕괴 — provenance 미검사 / 위조값 영구 고착 / well-known replicas 가정 파손) ④ Halpern-Moses **도출 축소**(불가능성 원천 = 절대적 동시성, 본 건은 1차 지식 `K¹`) ⑤ 문헌 id `EWD687` → **`EWD687a`**. 추가 정정 2건(리뷰가 과잉 계상 방지로 유보했던 항목을 본 lane 이 firsthand 판정): ⑥ **Gray Failure** — 「declare 의무 = 논문의 published remedy」 귀속 철회(논문은 관측 통합까지, 발화 의무는 본 개념 신설분) ⑦ **NAF/CWA 귀속 분리**(Clark 1978 ↔ Reiter 1978). anti-pattern 3건 추가(스폰 상태 월권 / 정정 미전파). frontmatter 에 `correction_sweep_required` 명시 — 본 파일을 정정 전파 인벤토리의 1급 항목으로 등재.
 - 2026-08-16 KST — 초기 작성 (CFP-2994 요구사항 lane, ResearcherAgent Mandate 1·2 산출물). differential observability(Gray Failure HotOS'17) · negation as failure/CWA(Clark 1978) · Chandy-Lamport 전역 스냅샷 · FLP + Chandra-Toueg completeness/accuracy · CALM 정리 · actor/object-capability 권한 경계 · CRDT G-Counter / Kafka offset / AMQP ack / Erlang OTP 산업 선례 · Dijkstra-Scholten + Huang 종료 검출 · 시산표 누락 오류 + RATS(RFC 9334) 독립 검증 · Halpern-Moses common knowledge 불가 를 cited 로 정립. 사내 선행 개념 `subagent-outcome-terminal-state-taxonomy` 어휘 재사용 명시(신규 vocabulary 금지).
