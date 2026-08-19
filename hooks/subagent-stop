@@ -258,5 +258,42 @@ if [ -n "$APPEND_SELF_CONTEXT_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
     || true
 fi
 
+# ── 429 lease release (CFP-2967 Phase 2 — workerC lease acquire/release) ───────
+#
+# SubagentStop = subagent 진출 시점 → lease 파일 삭제 (agent_id 단위).
+# 유실 = 무해 (reconcile::expire 가 read-time 만료로 흡수).
+# fail-open (exit 0 불변).
+
+RELEASE_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/release_429_lease.py" ]; then
+  RELEASE_SCRIPT="${PLUGIN_ROOT}/scripts/lib/release_429_lease.py"
+elif [ -f "scripts/lib/release_429_lease.py" ]; then
+  RELEASE_SCRIPT="scripts/lib/release_429_lease.py"
+fi
+
+# 헬퍼 존재 시 실행
+if [ -n "$RELEASE_SCRIPT" ] && [ -n "$PYTHON_CMD" ]; then
+  # payload 에서 agent_id 추출 (acquire 와 동일 로직)
+  RELEASE_AGENT_ID=""
+  if [ -n "${PAYLOAD:-}" ]; then
+    RELEASE_AGENT_ID="$(printf '%s' "${PAYLOAD}" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    sys.stdout.write(data.get('agent_id', ''))
+except Exception:
+    sys.stdout.write('')
+" 2>/dev/null || true)"
+  fi
+
+  # agent_id 가 있으면 release 호출
+  if [ -n "$RELEASE_AGENT_ID" ]; then
+    "$PYTHON_CMD" "$RELEASE_SCRIPT" \
+      --agent-id "$RELEASE_AGENT_ID" \
+      2>/dev/null || true
+  fi
+fi
+
 # ── 항상 exit 0 (ADR-115 §결정 2 — block 금지) ───────────────────────────────
 exit 0

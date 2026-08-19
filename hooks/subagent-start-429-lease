@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# SubagentStart hook for codeforge plugin — 429 subagent concurrency lease acquire
+#
+# Carrier: CFP-2967 Phase 2 (workerC — lease acquire/release + reconcile 4-status)
+#
+# 책임 경계 (Change Plan §3.5 / §7.4):
+#   - 책임: SubagentStart 이벤트에서 신규 서브에이전트 진입 시 lease 파일 생성.
+#           agent_id 를 payload 에서 추출해 acquire_429_lease.py 호출.
+#           fail-open ALWAYS (exit 0 never blocks SubagentStart).
+#   - 비책임: lease 정합 판정 (reconcile 소관)
+#
+# 정적 properties (Change Plan §3.5 rule-of-three):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 hook block 금지
+#   (b) filesystem touch 0 (tracked 경로) — .claude/ledger/ 만 (gitignore)
+#   (c) network call 0
+#   (d) Python 호출 — 신규 acquire_429_lease.py (stdlib only, 3rd-party 금지)
+#   (e) exit 0 ALWAYS (fail-open)
+#
+# Graceful degradation 3층:
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) JSON parse 실패 / stdin 읽기 실패 → stdout 무출력 + exit 0
+#   (c) 헬퍼 실패(lease acquire) → stderr warning + exit 0 (block 금지)
+#
+# one-channel rule (Change Plan §3.5):
+#   marker: [codeforge-wrapper-subagent-start-429-lease]
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — fail-open ALWAYS
+trap 'exit 0' ERR
+
+# ── stdin = SubagentStart JSON payload 읽기 ──────────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# payload 가 비어있으면 pass-through
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── agent_id 추출 (SubagentStart input 에서 쿼리) ────────────────────────────
+AGENT_ID=""
+PYTHON_CMD=""
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -n "$PYTHON_CMD" ]; then
+  AGENT_ID="$(printf '%s' "$PAYLOAD" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    sys.stdout.write(data.get('agent_id', ''))
+except Exception:
+    sys.stdout.write('')
+" 2>/dev/null || true)"
+fi
+
+# agent_id 가 비어있으면 skip (payload 미포함 또는 parse 실패)
+if [ -z "$AGENT_ID" ]; then
+  exit 0
+fi
+
+# ── Python 헬퍼 경로 결정 ─────────────────────────────────────────────────────
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+ACQUIRE_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/acquire_429_lease.py" ]; then
+  ACQUIRE_SCRIPT="${PLUGIN_ROOT}/scripts/lib/acquire_429_lease.py"
+elif [ -f "scripts/lib/acquire_429_lease.py" ]; then
+  ACQUIRE_SCRIPT="scripts/lib/acquire_429_lease.py"
+fi
+
+# 헬퍼 미존재 → graceful skip (exit 0)
+if [ -z "$ACQUIRE_SCRIPT" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-start-429-lease] WARN: acquire_429_lease.py not found — lease acquire skipped\n'
+  exit 0
+fi
+
+# ── Python 인터프리터 확인 ────────────────────────────────────────────────────
+if [ -z "$PYTHON_CMD" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-start-429-lease] WARN: Python interpreter not found — lease acquire skipped\n'
+  exit 0
+fi
+
+# ── lease acquire 실행 ────────────────────────────────────────────────────────
+"$PYTHON_CMD" "$ACQUIRE_SCRIPT" \
+  --agent-id "$AGENT_ID" \
+  2>/dev/null || true
+
+# ── 항상 exit 0 (block 금지) ──────────────────────────────────────────────────
+exit 0
