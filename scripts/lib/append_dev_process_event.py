@@ -705,6 +705,45 @@ def _self_test():
     # ★ 판별력 대조 — 두 필드가 allow-list 밖 kwarg 처럼 drop 되지 않음을 별 축으로 고정
     check("root_cause_class" in r7 and "anchor_id" in r7, "[c7] 신규 필드가 row 에서 소실")
 
+    # ── 케이스 8 (★CFP-2985 `FX-U/c`): **프로덕션 생산 지시 문면**을 입력으로 삼는 2-part 연언 ──
+    #
+    #   /a·/b 는 저자가 고른 합성 입력이라 "생산자가 무엇을 만드는지" 에 대해 아무것도 말하지 않는다.
+    #   /c 의 입력은 **repo 파일에서 파생**되므로 저자가 형식을 되돌리는 순간 자동으로 어긋난다.
+    #   c1(양성) 단독이면 술어를 전부-수용으로 약화시켜 통과할 수 있고,
+    #   c2(음성) 단독이면 생산자가 무엇을 만드는지 여전히 말하지 않는다 — 공존이 배선을 닫는다.
+    #
+    #   추출 규칙: 생산 지시 줄(`- **anchor_id**` 로 시작)의 **backtick 토큰 전건**이 적재돼야 한다.
+    #   ⇒ 기각 형상을 그 줄에 예시로 적을 수 없다(적으면 RED). 기각 형상 경고는 **다른 줄**에 쓴다.
+    _repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    _producer_rel = "plugins/codeforge-requirements/agents/RequirementsPLAgent.md"
+    _producer = os.path.join(_repo_root, _producer_rel)
+    check(os.path.exists(_producer), f"[c1] 생산자 문면 파일 부재: {_producer_rel}")
+    if os.path.exists(_producer):
+        with open(_producer, encoding="utf-8") as f:
+            _plines = [ln.rstrip("\n") for ln in f]
+        _instr = [ln for ln in _plines if ln.lstrip().startswith("- **anchor_id**")]
+        # vacuity 가드 1 — 생산 지시 줄이 0 이면 추출이 조용히 0건이 된다
+        check(len(_instr) >= 1,
+              f"[c1] {_producer_rel} 에서 `- **anchor_id**` 생산 지시 줄 0건 — 추출 정의역 소실")
+        _lits = []
+        for ln in _instr:
+            parts = ln.split("`")
+            _lits.extend(t.strip() for t in parts[1::2] if t.strip())
+        # vacuity 가드 2 — 리터럴 0건이면 아래 전칭이 공허 참이 된다
+        check(len(_lits) >= 1,
+              f"[c1] 생산 지시 줄에서 backtick 형식 리터럴 0건 추출 — 전칭 assert 가 공허해진다")
+        # c1 (양성) — 추출 리터럴 전건이 D-16 적재 술어에 수용된다
+        _rejected = [t for t in _lits if _norm_anchor_id(t) is None]
+        check(not _rejected,
+              "[c1] 생산자가 **거부될 값**을 지시하고 있다 — 추출 리터럴 %r 이 적재 술어에 거부됨 "
+              "(D-24 미착지 또는 되돌림). 원장 anchor_id 는 null 로 비고 pattern_count 는 산출 불가."
+              % (_rejected,))
+    # c2 (음성) — ⓑ 형상은 여전히 거부된다 (술어 과관대화 시 RED = c1 항진 차단)
+    check(_norm_anchor_id("cfp-2985-requirements-divergence-1") is None,
+          "[c2] ⓑ Story-scoped 형상이 수용됨 — 적재 술어가 과관대해져 c1 이 항진이 된다")
+    check(_norm_anchor_id("CFP-2985-requirements-divergence-1") is None,
+          "[c2] 대문자 ⓑ 형상이 수용됨 — casefold 경로 약화")
+
     # ── 케이스 6: monotonic timestamp (prev 주입 시 MAX(prev+1ms) — design literal) ──
     ts = _utc_z_monotonic("2099-01-01T00:00:00.500Z")
     check(ts == "2099-01-01T00:00:00.501Z", f"[c6] monotonic +1ms 미보장: {ts}")
@@ -729,7 +768,8 @@ def _self_test():
         "[append_dev_process_event --self-test] PASS "
         f"(_ROW_KEYS={len(_ROW_KEYS)} fields; round-trip OK; content-blind OK; "
         f"event_id 결정성 OK; taxonomy+audit OK; invalid-enum→None OK; "
-        f"raw-id→sha256 OK; monotonic OK; root_cause_class/anchor_id 적재 경계 OK)"
+        f"raw-id→sha256 OK; monotonic OK; root_cause_class/anchor_id 적재 경계 OK; "
+        f"FX-U/c 생산자 문면 c1 양성 ∧ c2 음성 OK)"
     )
     return 0
 

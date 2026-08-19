@@ -219,7 +219,8 @@ Marker 부재 = 암묵적 `[hypothesis]` (안전 방향 default). consumer overl
 - **divergence_type**: `semantic` 또는 `factual`
 - **min_rounds**: 3, **max_rounds**: 5, **soft_default**: 4
 - **참여자**: 본 PL (synthesizer) + Codex worker (proactive check 발화자)
-- **anchor_id**: 본 PL이 생성 (예: `cfp-NNN-requirements-divergence-1`) — 재발 escalation 추적용
+- **anchor_id**: 본 PL이 생성 (예: `§5.3` — 권장 형식 `§<section-ref>`) — 재발 escalation 추적용
+- **anchor 형식 요구 (CFP-2985 / ADR-181 · 비협상)**: anchor 는 **Story 에 독립인 결함 class 식별자**여야 한다. Story key 를 접두한 형상(cfp-<숫자>-… 형)은 적재 술어 `_norm_anchor_id` 가 **거부**한다 — 같은 anchor 를 공유하는 distinct Story 수가 정의상 1 로 고정돼 재발 탐지(`pattern_count`)가 구조적으로 무력화되기 때문이다. 즉 거부는 문체 취향이 아니라 집계 정의에서 나온다. 수용 형식 = 위 권장형 또는 repo-relative 경로에 줄번호를 붙인 형(path 뒤 콜론 + 정수). 거부되면 원장 `anchor_id` 는 null 로 비고 재발 escalation 은 발동하지 못한다.
 
 debate 라운드 진행은 ADR-059 정의. soft_default 4 라운드 도달 시 본 PL final synthesis 작성, 의견 통합 결과를 Story §2/§5/§6에 재반영. anchor 재발 (동일 anchor_id가 2개 이상 Story에 escalate) 시 ArchitectAgent 진입 보류 + 사용자 ESCALATE.
 
