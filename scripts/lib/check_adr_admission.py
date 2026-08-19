@@ -673,6 +673,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="warning = RED 를 보고하되 rc=0 (ADR-171 §결정 5 warning-first)")
     args = parser.parse_args(argv)
 
+    # Windows 기본 콘솔 코덱(CP949)에서 한글·em-dash 출력이 UnicodeEncodeError 로 죽는다.
+    # firsthand — RED 경로에서만 발화해 GREEN 경로 테스트로는 관측되지 않았다.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
     as_of = (_dt.date.fromisoformat(args.as_of) if args.as_of
              else _dt.datetime.now(_dt.timezone.utc).date())
     repo = RepoState(args.repo_state or args.head_ref, args.repo_root)
@@ -704,8 +710,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         if verdict.verdict == RED:
             reds.append((path, verdict.reason))
 
+    # stdout 필수 키 — `corpus_scanned` 는 "검사할 게 없어서 통과" 와 "검사했는데 통과" 를
+    # 구분 가능하게 만든다 (§8.C vacuous 가드와 동형). ★ 정직 고지: 정의역이
+    # **PR diff forward-only** 이므로 ADR 을 건드리지 않은 PR 의 0 은 **정상**이다.
+    # 그래서 0 을 exit 조건으로 삼지 않고 **값으로 방출**만 한다 — 여기서 exit 1 을 내면
+    # 전 PR 이 born-red 가 된다. 이 문장을 지우고 인용하면 over-claim 이다.
     print(
-        f"rows_checked={rows_checked} green={counts[GREEN]} "
+        f"rows_checked={rows_checked} corpus_scanned={len(paths)} "
+        f"vacuous={1 if rows_checked == 0 else 0} green={counts[GREEN]} "
         f"red={counts[RED]} out={counts[OUT]} as_of={as_of.isoformat()} "
         f"repo_state={repo.rev} tier={args.tier}"
     )

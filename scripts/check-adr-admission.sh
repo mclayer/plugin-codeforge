@@ -13,4 +13,5 @@ if [ "${1:-}" = "--self-test" ]; then
   exec python3 "$SCRIPT_DIR/lib/adr181_table_reproducer.py" "$@"
 fi
 
+export PYTHONIOENCODING="${PYTHONIOENCODING:-utf-8}"
 exec python3 "$SCRIPT_DIR/lib/check_adr_admission.py" "$@"
