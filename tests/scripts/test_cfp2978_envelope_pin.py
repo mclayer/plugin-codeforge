@@ -2052,23 +2052,37 @@ def test_envelope_pin_cli_three_verdicts():
     assert (r0.returncode, r0.stdout.strip()) == (0, PIN_ENVELOPE_SHA256), \
         f"exit 0 갈래 실패: rc={r0.returncode} stdout={r0.stdout!r} stderr={r0.stderr!r}"
 
+    def _payload(proc, branch: str) -> Dict[str, Any]:
+        r"""stderr 마지막 줄을 도메인 payload 로 파싱 — ★**rc 를 먼저 단언**한다.
+
+        rc 를 확인하지 않고 파싱하면 rc 가 어긋난 순간 `IndexError`/`JSONDecodeError` 가 나서
+        **RED 의 사유가 「단언 실패」가 아니라 「하네스 사망」으로 흐려진다**
+        (이 Story 의 규율 — *"RED 를 검출로 읽기 전에 사유를 확인하라"*).
+        """
+        tail = proc.stderr.strip().splitlines()
+        assert tail, (f"{branch}: stderr 가 비었다 — rc={proc.returncode} "
+                      f"stdout={proc.stdout.strip()!r} (도메인 payload 미방출)")
+        return json.loads(tail[-1])
+
     # ── exit 1 (RED) — 핀 불일치
     r1 = _run_cli(WF_PATH, "--job2", JOB2, "--expect", "0" * 64)
-    payload1 = json.loads(r1.stderr.strip().splitlines()[-1])
-    assert (r1.returncode, payload1["verdict"], payload1["actual"]) == \
-        (1, "RED", PIN_ENVELOPE_SHA256), f"exit 1 갈래 실패: rc={r1.returncode} {payload1}"
+    assert r1.returncode == 1, \
+        f"exit 1 갈래 rc 불일치: rc={r1.returncode} stdout={r1.stdout.strip()!r} stderr={r1.stderr.strip()!r}"
+    payload1 = _payload(r1, "exit 1")
+    assert (payload1["verdict"], payload1["actual"]) == ("RED", PIN_ENVELOPE_SHA256), \
+        f"exit 1 갈래 payload 실패: {payload1}"
 
     # ── exit 2 (meta-error) — `P-E4` 입력 읽기 구간 (파일 부재)
     r2 = _run_cli(os.path.join(REPO_ROOT, "no", "such", "workflow.yml"), "--job2", JOB2)
-    payload2 = json.loads(r2.stderr.strip().splitlines()[-1])
-    assert (r2.returncode, payload2["error_kind"]) == (2, "envelope_meta_error"), \
-        f"exit 2(P-E4) 갈래 실패: rc={r2.returncode} {payload2}"
+    assert r2.returncode == 2, \
+        f"exit 2(P-E4) 갈래 rc 불일치: rc={r2.returncode} stderr={r2.stderr.strip()!r}"
+    assert _payload(r2, "exit 2(P-E4)")["error_kind"] == "envelope_meta_error"
 
     # ── exit 2 (meta-error) — `P-E3` 전제 위반 (job 부재)
     r3 = _run_cli(WF_PATH, "--job2", "no-such-job")
-    payload3 = json.loads(r3.stderr.strip().splitlines()[-1])
-    assert (r3.returncode, payload3["error_kind"]) == (2, "envelope_job_absent"), \
-        f"exit 2(P-E3) 갈래 실패: rc={r3.returncode} {payload3}"
+    assert r3.returncode == 2, \
+        f"exit 2(P-E3) 갈래 rc 불일치: rc={r3.returncode} stderr={r3.stderr.strip()!r}"
+    assert _payload(r3, "exit 2(P-E3)")["error_kind"] == "envelope_job_absent"
 
     # ── 채취 모드 — `--expect` 미지정이면 GREEN 을 **주장하지 않는다**(sha 만 낸다)
     r4 = _run_cli(WF_PATH, "--job2", JOB2)
