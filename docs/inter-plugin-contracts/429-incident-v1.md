@@ -63,7 +63,11 @@ Orchestrator fable 모델 rate-limit (HTTP 429) 발생 시 fail-safe fail-over �
 - Deny-list 단독 = unknown unknown 위험
 - 2-layer defense in depth (Allow-list + Deny-list)
 
-### 3.2 기록 어휘 ≠ 감지 어휘 (명시 분리 의무)
+### 3.2 tier: [advisory / priming]
+
+본 계약 파일의 핵심 역할(axis ②) = **관측만, enforcement 비차용** (ADR-163 §결정 10 / 범위 한정 서술 — 기계 tier-honesty lint 정의역).
+
+### 3.3 기록 어휘 ≠ 감지 어휘 (명시 분리 의무)
 
 `StopFailure` matcher 가 주는 토큰 `rate_limit`(언더스코어)는 ADR-109 §결정 1 감지집합 literal 중 **어느 것도 아니다**. `error_pattern` 의 값공간은 감지집합 ∪ `{"rate_limit"}` 이며 이는 **§결정 1 감지집합에 원소를 추가하지 않는다**(NG-2 무저촉).
 

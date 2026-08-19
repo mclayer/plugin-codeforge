@@ -113,6 +113,17 @@ LEVERS = [
         "label_re": PC_RE,
         "label_desc": PC_ADV_LABEL,
     },
+    # CFP-2967 Phase 2 / ADR-109 Amendment 6 — 429-incident 관측 채널 advisory tier 선언.
+    # axis ② (lease 관측 = host-local control-state) = 관측만, enforcement 비차용 (ADR-163 §결정 10).
+    # Axis1 = tier 라벨 presence / Axis2 = 그 라벨 라인의 enforcement 토큰 부재.
+    {
+        "name": "429-incident-advisory",
+        "expected_tier": "advisory",
+        "artifact": os.path.join(
+            "docs", "inter-plugin-contracts", "429-incident-v1.md"),
+        "label_re": ADVP_RE,
+        "label_desc": ADVP_LABEL,
+    },
 ]
 
 
@@ -152,7 +163,7 @@ def run_lint():
     present = [l for l in LEVERS if os.path.exists(l["artifact"])]
     if not present:
         print(f"[tier-honesty] {len(LEVERS)} lever artifact 전부 부재 — honest no-op (PASS, consumer degradation).")
-        return 0
+        return 0  # CFP-2967 Phase 2: LEVERS 7 (6 + 429-incident-advisory)
     all_violations = []
     for lever in LEVERS:
         if not os.path.exists(lever["artifact"]):
@@ -173,7 +184,7 @@ def run_lint():
         for v in all_violations:
             print("  " + v)
         return 1
-    print(f"[tier-honesty] PASS — {len(LEVERS)} lever 전부 자기 tier 라벨 verbatim 존재 + "
+    print(f"[tier-honesty] PASS — {len(LEVERS)} lever (progress-commit + 429-incident-advisory + 5기존) 전부 자기 tier 라벨 verbatim 존재 + "
           "measurement/advisory lever 에 긍정 enforcement 언어 0 (tier 정직 meta-gate).")
     return 0
 
