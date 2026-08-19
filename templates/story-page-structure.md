@@ -405,24 +405,34 @@ PL(RequirementsPL / ArchitectPLAgent)이 병렬 서브 에이전트 결과 통�
 
 ### §10. FIX Ledger (FIX 카운터 SSOT)
 
-**현재 schema** = fix-event-v1 v1.3 (CFP-842, 11 column). v1.x optional 누락 시 backward-compat (column 생략 또는 null 허용).
+**현재 schema** = fix-event-v1 v1.6 (CFP-2985, 15 column). v1.x optional 누락 시 backward-compat (column 생략 또는 null 허용).
 
-| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover | affected_scope | affected_paths_with_depth |
-|------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|----------------|---------------------------|
-| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰 | ... | 설계 | ... | — | null | null | single-file | null |
+| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover | affected_scope | affected_paths_with_depth | reproducer_command | replay_verdict | verification_domain_enumeration | verification_domain_coverage |
+|------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|----------------|---------------------------|--------------------|----------------|---------------------------------|------------------------------|
+| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰 | ... | 설계 | ... | — | null | null | single-file | null | null | null | null | null |
 | ... |
 
 시각 column(표시 표면) = KST `+09:00` 초 포함 `YYYY-MM-DDTHH:MM:SS+09:00` (display layer — ADR-079 §결정 2, §결정 5 V-3 / CFP-2879 adjudication). machine event 층 UTC strict = [fix-event-v1 §3](../docs/inter-plugin-contracts/fix-event-v1.md) (contract field layer — 두 layer disjoint co-exist, §14 field #4/#5 동형).
 
-**Column SSOT** = [fix-event-v1 §2 Schema](../docs/inter-plugin-contracts/fix-event-v1.md). v1.3 신규 2 column:
+**Column SSOT** = [fix-event-v1 §2 Schema](../docs/inter-plugin-contracts/fix-event-v1.md) — 본 템플릿은 column 을 자체 선언하지 않고 그 표를 복사한다. `원인 판정` 값공간(v1.6 = 6값)도 같은 SSOT 소관이다.
+
+v1.3 신규 2 column:
 - `affected_scope` — enum (single-file / cross-module / cross-repo / cross-plugin), optional, RESET 결정 input
-- `affected_paths_with_depth` — array of {path, depth}, **broken-link / path 정정 FIX 시 의무** (그 외 optional). 누락 시 `fix-event-depth-scope-presence` warning-tier lint 적발
+- `affected_paths_with_depth` — array of {path, depth}, **broken-link / path 정정 FIX 시 의무** (그 외 optional). 누락 = **리뷰 판정 축(`declared`)** — 그 판정을 내리는 검출 lint 는 실재하지 않는다. ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 7행] 직전 판이 여기서 현재형으로 기술하던 `fix-event-depth-scope-presence` warning-tier lint 는 registry 0 · script 0 · workflow 0(firsthand)이었고 그 선언은 철회됐다
+
+v1.4 신규 2 column:
+- `reproducer_command` — object {command, base_sha}, FIX replay 대상 finding 한정 의무 (환원불가 finding = null). command 는 repo-relative 게이트·테스트 호출 형태만
+- `replay_verdict` — enum (PASS / falsified / replay-impossible / undetermined), FIX 닫기 시점 replay disposition (검증 **강도** 축)
+
+v1.6 신규 2 column:
+- `verification_domain_enumeration` — 처방 정의역(P) site 를 **산출하는 명령** (열거 결과 목록이 아니다). schema 제약 = `reproducer_command.command` 상속
+- `verification_domain_coverage` — `x 대 y` 형식 (x = 실제 재검사한 site 수, y = 위 명령이 산출한 site 수). 비율이 아니다. 공허 값(`0 대 0` · `1 대 1` · 대시 · null · 공란) = 선언 부재와 동치. 검증 **범위** 축이며 `replay_verdict` 와 disjoint (대체 아닌 병렬 확장)
 
 Orchestrator (또는 Orchestrator-owned delegate subagent — ADR-031 §결정 1 Amendment 1) 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지). "현재 사이클" count는 RESET 마커 이후 iteration만 합산. §10 commit이 main에 push되면 `fix-ledger-sync.yml` Action이 자동:
 - Story Issue에 `[FIX #N]` 코멘트 mirror
 - `fix:<레인>-retry` 라벨 부착
 
-기존 7/8/9-column row 도 valid (v1.x backward-compat). v1.3 column 추가는 trailing optional column 추가 — `fix-ledger-sync.yml` regex 비충돌.
+기존 7/8/9/11/13-column row 도 valid (v1.x backward-compat). v1.3 · v1.4 · v1.6 column 추가는 전부 trailing optional column 추가 — `fix-ledger-sync.yml` regex 비충돌 (선례 5회). v1.6 의 `원인 판정` enum 확장은 column 개수·순서·헤더 텍스트 무접촉이라 고정 색인 소비자에게 형식 영향 0.
 
 ### §10.5 Git Ops Log (CFP-139 / GitOpsAgent self-write)
 

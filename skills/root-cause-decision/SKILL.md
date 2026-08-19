@@ -18,7 +18,26 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 
 설계 리뷰 FIX는 DeveloperPL 개입 없이 ArchitectPLAgent 직접 회귀. 구현 리뷰·구현 테스트·보안 테스트 FIX는 DeveloperPL 1차 원인 진단 → Orchestrator 경유 → ArchitectPLAgent 최종 판정. 모든 경우 evidence pack(Change Plan 버전 + 리뷰 findings + 테스트 로그) 첨부 의무. Story file §10 FIX Ledger에 누적.
 
+## `원인 판정` 값공간 = 6값 (fix-event-v1 v1.6, CFP-2985) — 본 skill = decision rule SSOT
+
+계약 [fix-event-v1 §2](../../docs/inter-plugin-contracts/fix-event-v1.md) 의 `원인 판정` 필드가 `decision_rule_ssot` 로 **본 파일**을 지목한다. **값공간 정본은 계약**이 갖고, **어느 값을 고르는가의 규칙**이 본 skill 소관이다. 값공간 = `설계` / `구현` / `요구사항` / `환경` / `설계-리뷰` / `구현-리뷰` (뒤 4값 = v1.6 additive, 기존 2값 유효 — [ADR-067](../../archive/adr/ADR-067-fix-ledger-implementability-escalation.md) Amendment 4 §9.1).
+
+| 값 | 재진입 표적 (ADR-067 Amd 4 §9.1) | 본 skill 안의 선택 규칙 |
+|---|---|---|
+| `설계` | Change Plan 갱신 + 설계 리뷰부터 재실행 | 아래 decision table "설계 원인 escalate 조건" 충족 시 |
+| `구현` | Change Plan 유지 + 구현 commit append | 아래 decision table 1차 가정이 `구현` 이고 escalate 조건 미충족 시 |
+| `요구사항` | 요구사항 lane 재진입 (문제 정의 오류) | 아래 "3rd rung escalation" — runtime 실패가 표면 증상-anchored 진단 OR 설계 escalation 종점 반복 FAIL (ADR-064 §결정 13) |
+| `환경` | 환경·인프라 축 — 산출물 재작성 없음 | ★ **미저작 (`declared`)** — 아래 참조 |
+| `설계-리뷰` | 설계 리뷰 자체의 판정 결함 | ★ **미저작 (`declared`)** — 아래 참조 |
+| `구현-리뷰` | 구현 리뷰 자체의 판정 결함 | ★ **미저작 (`declared`)** — 아래 참조 |
+
+★ **미저작 3값의 정직 선언**: `환경` · `설계-리뷰` · `구현-리뷰` 는 ADR-067 Amendment 4 §9.1 이 **재진입 표적만** 규정했고, "어떤 실패가 이 값으로 판정되는가" 의 진입 술어는 본 skill 을 포함해 **어느 문서에도 아직 없다**. 값이 실사용 중이라는 사실(enum 밖 4축 실측 92행)과 진입 규칙 존재는 별개이며, 규칙이 없는 것을 있는 것처럼 적으면 이 Story 가 고발하는 class 의 재생산이다. ⇒ 세 값 판정은 현재 **ArchitectPL 판단**이며 기계 판정 경로 0.
+
+★ **값공간(6) ↔ max-FIX 카운터 trigger lane(2) disjoint** (ADR-067 Amendment 4 §9.1): max-FIX 3/3 카운터를 유발하는 lane 은 `설계-리뷰` / `구현-리뷰` **2 lane 무변경**이다. 값이 `요구사항`·`환경` 이면 그 축으로 재진입하되 **카운터를 소비하지 않는다**. 값공간이 6값이 됐다고 카운터 정의역이 확장되지 않는다 (상세 = [`codeforge:fix-ledger-schema`](../fix-ledger-schema/SKILL.md)).
+
 ## 원인 판정 테이블
+
+> 아래 "1차 가정" 칸의 값은 위 6값 공간의 원소다 — 표에 등장하지 않는 3값(`환경` · `설계-리뷰` · `구현-리뷰`)은 진입 술어 미저작 상태 그대로다.
 
 | Failure 유형 | 1차 가정 | 설계 원인 escalate 조건 |
 |---|---|---|
@@ -75,7 +94,7 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 
 > **dev-process-event Port-B emit anchor (CFP-2817 — 배선 규율, 로직 아님)**: FIX 원인 판정(6-point `cause`) 시점은 Orchestrator 의 dev-process Port-B emit 지점이다 (playbook §14.7 step 5.5). Orchestrator(-owned delegate)가 `emit_dev_process_event.py lane-transition --transition-kind cause --fix-iter <Iter> ...` 로 `lane_transition` 을 emit 하며, 앞선 FIX 검출(`fix-detected`) 시점에는 `verdict`(FAIL) + `defect_finding` 도 동반 emit 한다. **호출 주체 = Orchestrator 독점**(AC-7, ADR-039 §결정 3) — root-cause 진단을 수행하는 lane/DeveloperPL 은 emit 을 직접 호출하지 않는다(직접 append = policy_violation). seq 채번(`derive_seq`, fix_iter 필수)·시각 소스·defect_type verdict-v4 vocab 규율 = playbook §14.7 SSOT. non-blocking record-only(ADR-115) — emit 실패가 FIX 판정 흐름을 막지 않는다.
 
-### FIX-close 시점 ground-truth replay 의무 (CFP-2480 / ADR-070 Amendment 12 + ADR-119 §결정 10②)
+### FIX-close 시점 닫기 조건 — ground-truth replay(검증 강도) + 검증 정의역 선언(검증 범위) (CFP-2480 / ADR-070 Amendment 12 + ADR-119 §결정 10② · CFP-2985 / ADR-067 Amendment 4 §9.3)
 
 > 진단 시점(위 decision table)은 falsification discipline 을 강제하나, **닫기 시점은 공백** 이었다 — E3 가 이 공백을 메운다. 본 3rd rung generative invariant sweep 의 close-time Codex 자동화 layer (중복 게이트 아님 — 진단=falsify 발화 / 닫기=replay 반증 후 close, 같은 Popper 비대칭의 다른 시점).
 
@@ -88,6 +107,15 @@ FIX "수정됨" 으로 §10 FIX Ledger 를 닫기 전, 원 finding 을 정당화
 - **replay-impossible**: 실행 가능 명령으로 환원 불가한 finding (코드 P1 가독성·의미 판정 등) = `replay_verdict: replay-impossible` + **사유 명시 의무** (silent 면제 금지). 사람 검토 후보로 별도 disposition.
 - **replay FAIL = max-FIX 카운터 disjoint** (`codeforge:fix-ledger-schema` 참조): replay `falsified` 는 닫기 거부((A)축 fail-closed)지 새 FIX iter 아님 — max-FIX 3/3 소비 안 함. 무한거부 backstop = fix-attempt 카운터.
 - **결정 SSOT**: `scripts/lib/fix_replay_disposition.py` (pure function `decide_replay_disposition(packet)` → (verdict, provenance), INV-FR1~5 + INV-FR-FLAKY-1~3 + provenance 동반). concept SSOT = `docs/domain-knowledge/concept/fix-ground-truth-replay.md` (F-1~F-5).
+
+**닫기 조건의 두 번째 축 — 검증 정의역(P / V) 선언 (ADR-067 Amendment 4 §9.3)**. replay 가 "고쳤다는 주장" 을 반증한다면, 정의역 선언은 "**어디까지 보고 그렇게 말하는가**" 를 기록한다. 두 축은 disjoint 이며 한쪽이 다른 쪽을 면제하지 않는다.
+
+- **P / V / D 정의는 [ADR-181 §결정 1](../../archive/adr/ADR-181-verification-domain-deficit-normative.md) 을 인용**한다 — 본 skill 은 재진술하지 않는다 (재진술 = 값공간 분기, ADR-181 §결정 4 접합부 규약).
+- `verification_domain_enumeration` (v1.6) = 처방 정의역(P) site 를 **산출하는 명령**이지 열거 결과 목록이 아니다. schema 제약 = `reproducer_command` 상속 (repo-relative 게이트·테스트 호출 형태만, raw shell free-string 금지, PII/secret/private absolute-path 금지).
+- `verification_domain_coverage` (v1.6) = `x 대 y` — x = 닫기 시점 실제 재검사·재실행·재관찰한 site 수, y = 위 명령이 산출한 site 수. **비율·확률이 아니다.** 공허 값(`0 대 0` · `1 대 1` 자기 자신 1건뿐 · 대시 · `null` · 공란) = 선언 부재와 동치.
+- **원인 판정과 정의역의 접합**: 위 decision table 이 "이 원인 때문에 깨졌다" 고 말하는 순간 **같은 원인이 성립하는 모든 자리**가 P 에 들어온다 — 1차 가정을 `설계`(경계·패턴 축)로 판정해 놓고 V 를 finding 이 난 단일 파일로 두면, 그 자리들이 곧 `D` 다. `x < y` 는 위반이 아니라 상시 상태이며, 금지 대상은 `D` 가 비어 있지 않은 것이 아니라 **`D` 를 미선언 상태로 두는 것**이다.
+- **비율 임계 게이트 없음 · 완전성 미판정(`declared`)** — 분모가 자기신고라 임계 판정은 조작 유인을 만들고, 열거가 전집합인지는 class 동일성 술어 부재로 기계 판정 불가다. 기록은 요구하되 임계 판정은 하지 않는다.
+- **max-FIX 카운터 무관** — 정의역 선언은 카운터를 소비하지 않는다 (replay disjoint 와 동형).
 
 ## iteration 가설 차별화 원칙
 

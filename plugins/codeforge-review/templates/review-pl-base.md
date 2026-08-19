@@ -245,7 +245,7 @@ divergence detection 결과 `divergence_detected: true` 시 PL 이 다음 branch
    → debate Round 0 dispatch 안 함
    → PL inline 판정 (양 worker finding 의 reasoning trail 검토 후 final verdict 결정)
    → transcript Story §9 append 면제 (debate 미발동)
-   → §10 FIX Ledger row append 의무 보존 (resolution column 에 PL inline reasoning verbose 기록)
+   → §10 FIX Ledger row append 의무 보존 (원인 판정 + 재실행 범위 칸에 PL inline reasoning verbose 기록)
    → debate_artifact_ref = null
 4. (a) OR (b) 미충족 (multi-file 또는 P0 critical):
    → dispatch_mode = "auto_on_divergence" (표준 multi-round debate)
@@ -258,7 +258,9 @@ divergence detection 결과 `divergence_detected: true` 시 PL 이 다음 branch
 
 **review-verdict-v4 packet 의 dispatch_mode 필드**: PL 이 Phase 1 verdict packet 작성 시 `trigger.dispatch_mode` 채움 (v1.1 required). `mechanical_fast_path_inline` 채택 시 packet 의 `worker_dialog_rounds: 0` + `findings[]` PL inline judgment 결과 반영.
 
-**FIX 통합 (mechanical_fast_path_inline 시)**: §3.3 Transcript 영속화 절차 면제. 대신 §10 FIX Ledger row 의 resolution column 에 PL inline reasoning verbose 기록 의무 — audit trail 보존 forcing function. ArchitectPLAgent re-spawn 시 §10 row 의 root_cause + resolution column 만으로 redesign context 충족 (debate transcript 부재 인지).
+**FIX 통합 (mechanical_fast_path_inline 시)**: §3.3 Transcript 영속화 절차 면제. 대신 §10 FIX Ledger row 의 `원인 판정` + `재실행 범위` 칸에 PL inline reasoning verbose 기록 의무 — audit trail 보존 forcing function. ArchitectPLAgent re-spawn 시 그 두 칸만으로 redesign context 충족 (debate transcript 부재 인지).
+
+> ★ **[철회됨 — CFP-2985, Change Plan §4.3]** 직전 판은 위 두 자리(`§3.0.5` branch logic 3항 · 본 문단)에서 §10 FIX Ledger row 의 `resolution` · `root_cause` **두 칸**에 기록을 지시했다. 그 두 이름은 [fix-event-v1 §2 Schema](../../../docs/inter-plugin-contracts/fix-event-v1.md) 의 칸 집합에 **부재**했다(firsthand). 본 base 를 상속하는 리뷰 PL 4종(CodeReview · DesignReview · RequirementsReview · SecurityTest)이 전부 존재하지 않는 칸 이름을 배우던 경로이며, §10 칸 이름의 단일 정의처는 fix-event-v1 §2 다. 그 지시는 철회됐다.
 
 ADR cross-ref:
 - ADR-059 §결정 6 (Amendment 1, CFP-533) — protocol-level dispatch_mode SSOT

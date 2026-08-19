@@ -2885,7 +2885,7 @@ debate-protocol-v1 v1.1 의 debate_artifact_ref pattern과 직교 — debate 발
 
 **v1.3 depth-aware scope 필드 의무 (CFP-842, broken-link/path 정정 FIX 한정)**:
 
-`affected_paths_with_depth` 필드는 broken-link / path 정정 FIX (cross-module relative path adjust / doc-location-registry move / link target 갱신 등) 시 **의무**. 그 외 FIX (logic bug / API change / perf regression / wording desync 등) = optional. 누락 시 `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) 적발.
+`affected_paths_with_depth` 필드는 broken-link / path 정정 FIX (cross-module relative path adjust / doc-location-registry move / link target 갱신 등) 시 **의무**. 그 외 FIX (logic bug / API change / perf regression / wording desync 등) = optional. 누락 = **리뷰 판정 축(`declared`)** — 그 판정을 내리는 검출 lint 는 실재하지 않는다. ★ [철회됨 — 2026-08-16, [ADR-067](../archive/adr/ADR-067-fix-ledger-implementability-escalation.md) Amendment 4 §9.4 처분 5 표 6행] 직전 판이 여기서 현재형으로 기술하던 `fix-event-depth-scope-presence` warning-tier lint 는 registry 0 · script 0 · workflow 0(firsthand)이었고 그 선언은 철회됐다.
 
 기록 형식:
 ```yaml
