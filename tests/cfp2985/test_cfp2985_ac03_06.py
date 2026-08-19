@@ -214,13 +214,27 @@ def hollow_declaration(value):
 
 
 def declaration_present(text, marker):
-    """고정 마커 앵커 + 뒤 내용 non-empty. 마커 표기는 정규화 후 매칭(전각 콜론·공백 변형 허용)."""
-    norm = text.replace("：", ":").replace(" ", " ")
+    """고정 마커 앵커 + 뒤 내용 non-empty. 마커 표기는 정규화 후 매칭(전각 콜론 · 공백 변형 허용).
+
+    두 배치 형상을 **모두** 인정한다 — 설계는 선언을 10 표의 trailing optional column 으로
+    둘 수도, 문서 `키: 값` 줄로 둘 수도 있다 (5.4 AC-4 의 "10 행 배치 / machine 층 배치"
+    조건부 mutant 가 그 두 형상을 가리킨다). 한 형상만 보면 다른 형상이 vacuous GREEN 이 된다.
+    """
+    norm = re.sub(r"[：]", ":", text)
+    norm = re.sub(r"[  -​　]", " ", norm)
     pat = re.compile(r"%s\s*[:=]\s*(.+)$" % re.escape(marker), re.M)
     for m in pat.finditer(norm):
         val = m.group(1).strip()
         if val and not hollow_declaration(val):
             return True
+    # 표 컬럼 배치 — 헤더 셀에 마커가 있으면 그 열의 데이터 셀이 non-hollow 여야 한다.
+    for header, rows in S.md_tables(norm):
+        idx = next((k for k, h in enumerate(header) if marker in h), -1)
+        if idx < 0:
+            continue
+        for cells in rows:
+            if len(cells) > idx and not hollow_declaration(cells[idx]):
+                return True
     return False
 
 
@@ -229,7 +243,10 @@ def test_ac4_verification_domain_declaration_present():
 
     RTM: 5.3 verification "고정 마커 앵커 정규식 + 뒤 내용 non-empty".
     """
+    # 구분자 행이 없으면 마크다운 표가 아니다 — fixture 자신이 malformed 이면
+    # "표 배치에서 인식 안 됨" 이 술어 결함처럼 보인다 (본 하네스가 1회 자기검출).
     ctl = ("| Iter | 원인 판정 | %s | %s |\n"
+           "|---|---|---|---|\n"
            "| 1 | 설계 | `bash scripts/check-adr-admission.sh --list` | 12 대 12 |\n"
            % (VD_ENUM_FIELD, VD_COVERAGE_FIELD))
     doc_ctl = ("%s: bash scripts/check-adr-admission.sh --list\n"
@@ -408,6 +425,8 @@ def test_ac6_enumerated_site_mutation_all_red():
     # (2) 실 site 실행 — 열거 3 site 각각에 유령 컬럼 지시를 주입해 검출을 확인한다.
     contract = S.wrapper_text(S.CONTRACT_FIX_EVENT_REL)
     cols = S.contract_section10_columns(contract)
+    assert cols, ("계약에서 10 컬럼 집합을 파싱하지 못했다 — 판정불가(fail-closed). "
+                  "정본 표는 ```markdown 펜스 안에 있다.")
     sites = [S.CONTRACT_DEBATE_REL, S.REVIEW_PL_BASE_REL, S.CONTRACT_FIX_EVENT_REL]
     injected = "10 FIX Ledger row 의 `phantom_ac6 column` 에 기록 의무\n"
 

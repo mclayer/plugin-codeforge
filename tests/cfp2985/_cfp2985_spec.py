@@ -202,9 +202,15 @@ def split_cells(row):
     return cells
 
 
-def md_tables(text):
-    """[(header_cells, [row_cells...])] — 펜스 제외. 빈 줄이 표를 끊는다."""
-    lines = strip_fenced(text.split("\n"))
+def md_tables(text, include_fenced=False):
+    """[(header_cells, [row_cells...])] — 빈 줄이 표를 끊는다.
+
+    include_fenced=False (기본): 코드펜스 안 표는 제외한다 (예시를 원장으로 세지 않는다).
+    include_fenced=True: 펜스 안 표도 센다 — 계약 문서는 정본 컬럼 선언을 ```markdown 펜스
+      **안에** 두므로, 그 선언을 읽으려면 이 경로가 필요하다 (firsthand: fix-event-v1 의
+      10 표 2개가 전부 펜스 안이라 기본 경로로는 0건이었다).
+    """
+    lines = text.split("\n") if include_fenced else strip_fenced(text.split("\n"))
     tables, i, n = [], 0, len(lines)
     while i < n:
         if _is_pipe_row(lines[i]) and i + 1 < n and _is_separator_row(lines[i + 1]):
@@ -396,8 +402,9 @@ def wf_invocation_contract(wf_text):
 # ---------------------------------------------------------------------------
 # 10 FIX Ledger 컬럼 집합 + 유령 컬럼 지시 술어 (AC-11 · AC-6 공용)
 # ---------------------------------------------------------------------------
-# fix-event-v1 이 정의하는 10 표 컬럼 (계약 문면에서 파생 — 하드코딩 열거가 아니라 대조용 기본값).
-SECTION10_COLUMNS = frozenset({
+# 합성 fixture 전용 컬럼 집합. **실 판정 입력이 아니다** — 실 컬럼은 계약 문면에서 파싱한다
+# (contract_section10_columns). 이 상수를 판정 경로에 쓰면 계약 drift 가 보이지 않는다.
+SYNTHETIC_SECTION10_COLUMNS = frozenset({
     "Iter", "시각", "레인", "트리거", "원인 판정", "재실행 범위", "RESET?",
     "debate_artifact_ref", "reasoning_carryover", "affected_scope",
     "affected_paths_with_depth", "reproducer_command", "replay_verdict",
@@ -413,24 +420,42 @@ _RECORD_RE = re.compile(r"(기록|record)")
 
 
 def contract_section10_columns(contract_text):
-    """계약 문서의 10 표 헤더 행에서 컬럼명 집합을 뽑는다 (열거 하드코딩 대체)."""
-    for header, _rows in md_tables(contract_text):
-        cells = [c.strip() for c in header]
+    """계약 문서의 10 표 헤더에서 컬럼명 집합. 못 찾으면 **None**(판정불가).
+
+    ★ 조용한 fallback 을 두지 않는다 (firsthand 1건): 직전 판은 못 찾으면 하드코딩
+      상수를 돌려줬고, 계약의 정본 표가 ```markdown 펜스 **안에** 있어 실제로 한 번도
+      파싱되지 않은 채 상수가 쓰였다. "못 읽었다" 가 "읽었다" 로 둔갑하는 경로이며
+      이 Story 가 겨냥한 결함 class 그 자체다. 호출자는 None 을 fail-closed 로 다룬다.
+    """
+    best = None
+    for header, _rows in md_tables(contract_text, include_fenced=True):
+        cells = [c.strip() for c in header if c.strip()]
         if "Iter" in cells and any("원인" in c for c in cells):
-            return {c for c in cells if c}
-    return set(SECTION10_COLUMNS)
+            if best is None or len(cells) > len(best):
+                best = set(cells)
+    return best
 
 
-def phantom_column_directives(text, columns=None):
+def phantom_column_directives(text, columns):
     """10 표에 **없는** 컬럼명으로 기록을 지시하는 site 목록 -> [(lineno, 컬럼명, 줄)].
 
     술어를 "10 표 기록 지시" 문맥으로 좁힌다 — 무차별 `root_cause` grep 은
     `root_cause_class` 정당 사용 32 파일을 false RED 로 만든다 (4.3 E-7).
+
+    ★ 수식어 오탐 차단 (firsthand 1건): `` `reproducer_command` optional column `` 형은
+      "column" 바로 앞 낱말이 **수식어**(`optional`)라 그것을 컬럼명으로 읽으면 정당 문면이
+      위반으로 뒤집힌다. ⇒ 같은 줄에 **백틱 인용된 계약 컬럼**이 있으면 그 참조는 정당으로 본다.
+      천장 (`declared`): 한 줄이 정당 컬럼과 유령 컬럼을 **함께** 지시하면 그 줄은 놓친다.
+      이 규칙은 false RED(정당 문면 파괴)를 우선 차단하는 쪽으로 기운 선택이며, 그 대가를 여기 적는다.
     """
-    cols = set(columns) if columns else set(SECTION10_COLUMNS)
+    assert columns, "컬럼 집합 미지정 — 판정불가를 GREEN 으로 둔갑시키지 않는다 (fail-closed)"
+    cols = set(columns)
     hits = []
     for lineno, ln in enumerate(text.split("\n"), 1):
         if not _DIRECTIVE_CTX_RE.search(ln) or not _RECORD_RE.search(ln):
+            continue
+        quoted = set(re.findall(r"`([^`]+)`", ln))
+        if quoted & cols:
             continue
         for m in _COLREF_RE.finditer(ln):
             for name in [p.strip() for p in m.group(1).split("+")]:
