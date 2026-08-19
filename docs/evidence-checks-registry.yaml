@@ -4597,10 +4597,19 @@ entries:
       기계가 판정하는 것은 "PR 이 ADR 파일을 추가·수정했는가" 까지이며 그 안의 규범성 판정은 리뷰 축이다
       (ADR-181 §결정 5 scope 술어 천장 인용, 재진술 아님). 또한 `[repo=...]` 토큰은 **형식만** 본다 —
       그 Issue 가 실재하는지는 네트워크 조회이며 본 게이트 정의역 밖이다.
-      ★ Phase 1 시점 실 강제력 = 0. detect_command·workflow 는 아직 존재하지 않으며(status 참조)
-      그 사실을 여기에 적는 것이 ADR-181 §결정 5 ②(미건설 자산 현재형 기술 금지)의 이행이다.
-    detect_command: bash scripts/check-adr-admission.sh              # ★ Phase 2 신설 예정 — 현 시점 미존재 (D-7c)
-    workflow: templates/github-workflows/fix-ledger-conformance.yml  # ★ Phase 2 신설 예정 — job name 확정분 재사용 (D-10)
+      ★ Phase 2 착지 (CFP-2985) — detect_command·workflow 가 **실재한다**.
+      구현 = `scripts/lib/check_adr_admission.py` (참조 구현: Python `re` + `yaml.safe_load`)
+      + thin wrapper `scripts/check-adr-admission.sh`.
+      수용 기준 재현기 = `scripts/lib/adr181_table_reproducer.py` (`--self-test` 로 위임) —
+      기대값·pin 2종(REPO_STATE / 실행일)을 ADR-181 (iv) 표에서 **파싱**하며 정수 pin 0.
+      판별력 실증 = `scripts/lib/adr181_leg_ablation.py` — (0-c) leg-off 재실행.
+      ★ 실 강제력 천장 (`declared`): tier=warning 이므로 admission RED 는 **PR 을 차단하지 않는다**
+      (ADR-171 §결정 5 warning-first — born-blocking 금지). 차단하는 것은 self-test·ablation 뿐이다.
+      ★ 사다리 축 천장: `배선` 이 재는 것은 **출현**(스크립트 축)과 **설치 실재**(workflow 축)이지
+      강제 자체가 아니다 — 사다리 GREEN 은 `declared` 이며 "기계 강제된다" 의 단정이 아니다
+      (ADR-181 (iv-L) `dead()` 접합부 · §결정 3 C-2 인용, 재진술 아님).
+    detect_command: bash scripts/check-adr-admission.sh              # D-7c (thin wrapper -> scripts/lib/check_adr_admission.py)
+    workflow: templates/github-workflows/fix-ledger-conformance.yml  # D-10 (twin: .github/workflows/ — byte-identical)
     current_tier: warning
     # bypass_label: omit — warning tier 비차단 + 우회 채널 선제 개설 금지(위 row 와 동일 근거).
     # bypass_audit_lint: omit — bypass_label 미정의.
@@ -4628,4 +4637,4 @@ entries:
     owner_adr: ADR-181             # admission test SSOT (§결정 5) — 결정표 **전 행**이 수용 기준 (정수 pin 금지)
     carrier_adr: ADR-171           # evidence-enforceable framework host (ADR-171 amendment 0)
     promotion_trigger: advisory
-    status: deferred-followup      # Phase 1 declarative anchor — Wave 2 mechanical wire = 본 Story Phase 2 / carrier plugin-codeforge#2985 / 만기 2026-09-15. 그 전까지 실 강제력 0 이며 이는 은폐가 아니라 선언이다.
+    status: active                 # ★ Phase 2 착지 (CFP-2985) — script + workflow twin + discriminating self-test(결정표 67행 전건 재현 ∧ leg ablation) 전건 실재. current_tier=warning 이므로 admission RED 는 PR 미차단이며 그 사실은 위 description 의 천장 문단이 declare 한다(은폐 아님).

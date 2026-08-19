@@ -8,10 +8,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 [ "$#" -eq 0 ] && cd "$SCRIPT_DIR/.."
 
+export PYTHONIOENCODING="${PYTHONIOENCODING:-utf-8}"
+
 if [ "${1:-}" = "--self-test" ]; then
   shift
   exec python3 "$SCRIPT_DIR/lib/adr181_table_reproducer.py" "$@"
 fi
 
-export PYTHONIOENCODING="${PYTHONIOENCODING:-utf-8}"
 exec python3 "$SCRIPT_DIR/lib/check_adr_admission.py" "$@"

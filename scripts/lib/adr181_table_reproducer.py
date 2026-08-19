@@ -268,6 +268,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
 
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
     adr_path = args.adr
     if args.repo_root:
         adr_path = os.path.join(args.repo_root, args.adr)

@@ -1,0 +1,91 @@
+name: fix-ledger-conformance
+# CFP-2985 / ADR-181 §결정 5 ③-dt — ADR admission test (신규 규범 선언의 입장료).
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+#
+# 무엇을 재는가:
+#   PR 이 추가·수정한 archive/adr/ADR-*.md 중 ADRQ 를 만족하는 파일이
+#   ① registry entry ② 면제(carrier+만기) 또는 사다리((가)(나)(다)) 중 하나
+#   를 갖추었는지 판정한다. 수용 기준 = ADR-181 §결정 5 ③-dt (iv) 결정표 전 행
+#   (verdict, exit 사유) 전건 재현이며, 그 재현 자체를 아래 self-test step 이 실행한다.
+#
+# §8.C CI 실행 보장 계약 이행:
+#   C-1  checker 실행 `run:` 줄 실재            -> "ADR admission test" step
+#   C-2  의존성 해소 step 실재                  -> "Install dependencies" step (PyYAML 필요, stdlib-only 아님)
+#   C-3  `continue-on-error` 부재               -> 본 파일에 該 키 0
+#   C-4  `paths`·`paths-ignore` 부재 ∧ job `if:` 가 status 를 미report 로 만들지 않음
+#        -> 두 키 모두 부재 · job-level `if:` 부재 (repo-guard 도 두지 않는다 — 본 checker 는
+#           consumer repo 의 archive/adr/ 에도 그대로 적용되는 generic 게이트다)
+#   C-5  수집 테스트 수 non-zero                -> self-test step 이 `rows_checked=` 를 방출
+#   C-6  vacuous 관측                           -> checker 가 `corpus_scanned`·`vacuous` 를 값으로 방출
+#   C-9  checker fetch ref = 40자 commit SHA    -> 아래 C-9-dom ⓓ 선언 참조
+#
+# ★ C-9-dom ⓓ 선언 (ADR-181 / Change Plan §8.C-9-dom):
+#   **본 workflow 는 타 repo 코드를 취득하지 않는다.** 검사 대상(archive/adr/**)과 checker
+#   (scripts/**) 가 **둘 다 본 repo** 에 있으므로 fetch 채널 ⓐ(`actions/checkout` 의 `ref:`) ·
+#   ⓑ(`run:` 안 git clone/fetch/checkout) · ⓒ(curl/wget tarball) 이 전부 부재하다.
+#   그 사실을 은닉하지 않기 위해 `fetch_channels_found=0` 을 **값으로 방출**한다 —
+#   "검사할 게 없어서 통과" 와 "검사했는데 통과" 는 다른 사실이기 때문이다.
+#   ★ 정직 고지: internal-docs 원장 checker(D-7/D-7b) 는 **아직 이 job 에 배선돼 있지 않다.**
+#   그 leg 이 붙는 시점에 ⓑ 채널이 생기며 40자 SHA pin assert 가 그때 발효한다
+#   (carrier #2985 / 만기 2026-09-15). 지금 이 파일이 SHA pin 을 assert 한다고 적으면 over-claim 이다.
+#
+# tier: **warning-first** (ADR-171 §결정 5/6 — born-blocking 금지).
+#   checker 는 `--tier warning` 에서 RED 를 **보고하되 rc=0** 이다. 따라서 본 job 은
+#   admission RED 로 red 가 되지 않는다. 다만 **self-test(결정표 재현) 는 hard-fail** 이다 —
+#   그것이 red 를 못 내면 게이트가 이빨 없는 fence 가 된다(CFP-881 evidence-registry-check-test 선례).
+# **non-required**: branch protection contexts 무변경 (required context 신설 0).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fix-ledger-conformance:
+    name: fix-ledger-conformance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (C-2)
+        run: |
+          python3 -m pip install --disable-pip-version-check --quiet pyyaml
+          python3 -c "import yaml; print('pyyaml', yaml.__version__)"
+
+      - name: Declare fetch channels (C-9-dom rule d)
+        run: |
+          echo "fetch_channels_found=0"
+          echo "fetch_scan_depth_exhausted=0"
+          echo "본 workflow 는 타 repo 코드를 취득하지 않는다 (검사 대상·checker 전건 self-repo)."
+
+      - name: Decision table full replay (C-5 — 수용 기준 전건 재현, hard-fail)
+        run: |
+          bash scripts/check-adr-admission.sh --self-test
+
+      - name: Leg ablation replay (판별력 실증 — hard-fail)
+        run: |
+          python3 scripts/lib/adr181_leg_ablation.py
+
+      - name: ADR admission test (C-1 — warning tier)
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
+        run: |
+          bash scripts/check-adr-admission.sh \
+            --base-ref "$BASE_REF" \
+            --head-ref HEAD \
+            --tier warning
