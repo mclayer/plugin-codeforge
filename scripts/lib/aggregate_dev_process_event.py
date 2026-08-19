@@ -541,6 +541,22 @@ def compute_trend(rows, stats):
     # §D-9 pattern feed — anchor_id/root_cause_class 키 substrate 존재 여부 관측
     has_anchor = any(r.get("anchor_id") is not None for r in rows)
     has_rcc = any(r.get("root_cause_class") is not None for r in rows)
+
+    # ★ AC-16 leg3 (CFP-2985 D-13) — `root_cause_distribution` 은 **AND 게이트 밖**이다.
+    #   gate = `has_rcc` **단독** (Change Plan §3.3).
+    #   근거: §1 요구(원인별 분포)의 실질 충족은 leg3 뿐이고 `pattern_count` 는 분포가 아니라
+    #   최대 group 크기 scalar 다. AND 게이트 안에 두면 `anchor_id` 축의 품질 문제가
+    #   §1 요구 충족을 볼모로 잡는다 — 두 관심사는 분리한다(defense in depth).
+    #   ★ 정직 고지: substrate 부재 시 값은 **빈 dict** 이며 그것이 정상 관측이다
+    #   (fabricate 하지 않는다). leg3 충족은 `_ROW_KEYS` 에 `root_cause_class` 가 실재하고
+    #   non-null 값이 emit 되는 시점부터다.
+    root_cause_distribution: dict = {}
+    if has_rcc:
+        for r in rows:
+            c = r.get("root_cause_class")
+            if c is None:
+                continue
+            root_cause_distribution[c] = root_cause_distribution.get(c, 0) + 1
     if has_anchor and has_rcc:
         # (미도래 경로 — 현재 substrate 18-field 에 부재. within-scope distinct story_key count)
         grouping = {}
@@ -569,6 +585,10 @@ def compute_trend(rows, stats):
         "pattern_status": pattern_status,
         "anchor_id": anchor_id,
         "root_cause_class": root_cause_class,
+        # ★ AC-16 leg3 — has_rcc 단독 gate (AND 게이트 밖). §4.4 집계 산출 계약.
+        #   `root_cause_class`(top-level scalar) 는 schema-pin 대상이라 **map 으로 타입 변경하지
+        #   않는다** — 분포는 이 별도 키로 낸다.
+        "root_cause_distribution": root_cause_distribution,
         "honesty_note": (
             "observational time-series only — forecast/prediction/projection 필드 부재(negative control). "
             "pattern_count = anchor_id/root_cause_class substrate 부재 → uncomputable_missing_key(DEFAULT, "
