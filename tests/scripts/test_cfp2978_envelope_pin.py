@@ -18,6 +18,8 @@ import inspect
 import re
 import subprocess
 import datetime
+import contextlib
+from collections import namedtuple
 from typing import Dict, Set, List, Any, Tuple, Optional, Callable
 import unicodedata
 import copy
@@ -617,103 +619,9 @@ def test_envelope_pin_domain_derivation_selfcheck():
               f" — bare 담지 distinct sequence = {len(bare_carriers)}")
 
     print("[PASS] Domain derivation selfcheck (a)+(b) ∧ P-E5 ∧ P-E6-a")
-
-
-# ★ 자기검사 (c) 용 **퇴화 파생 유틸** — 정의역을 인위 축소한다 (§8.B `DERIVE-*`).
-#   ★ 규칙으로 정의하고 크기를 하드코딩하지 않는다 (형상이 바뀌면 크기도 따라간다).
-DEGENERATE_DERIVERS: Dict[str, Callable[[Any], set]] = {
-    "DERIVE-EMPTY": lambda env: set(),
-    "DERIVE-TOPONLY": lambda env: {p for p in _all_leaf_paths(env) if len(p) <= 1},
-    "DERIVE-SHALLOW": lambda env: {p for p in _all_leaf_paths(env) if len(p) <= 2},
-}
-
-
-def _defective_deep_lossy(document: Any) -> Any:
-    r"""**결함 구현 `V-LOSSY-DEEP`** — `jobs.<JOB2>.steps[i].name` 을 봉투에서 **탈락**시킨다.
-
-    `ENV-5`(*"봉투는 `jobs.<JOB2>` 서브트리를 **전문** 담는다"*) 위반이다.
-    ★ 구성 방식 **전문 고정** = 정본 파이프라인 **앞단의 문서 전처리**(정규화기 복제 0 —
-      §8.B 「변종은 정본의 변종이어야 한다」 규율 준수).
-    """
-    doc = copy.deepcopy(document)
-    steps = doc.get("jobs", {}).get(JOB2, {}).get("steps", [])
-    for step in steps:
-        if isinstance(step, dict):
-            step.pop("name", None)
-    return doc
-
-
-def _leaf_mutation_failures(document: Any, domain: set,
-                            transform: Optional[Callable[[Any], Any]] = None) -> set:
-    r"""`SWP-A` 술어(leaf 변형 ⇒ RED)를 **주어진 정의역** 위에서 실행 — 기대 미달 원소 집합."""
-    tf = transform or (lambda d: d)
-    ref_sha, _detail = _envelope_outcome(tf(document), JOB2)
-    failures = set()
-    for path in domain:
-        mutated = _set_at_path(document, path, _mutate_leaf(_get_node_at_path(document, path)))
-        verdict, _d = _verdict(tf(mutated), ref_sha)
-        if verdict != VERDICT_RED:
-            failures.add(path)
-    return failures
-
-
-def test_envelope_pin_derivation_negative_control():
-    r"""★ 파생 유틸 자기검사 **(c) 음성 대조** — 퇴화 유틸에서는 결함 구현이 **검출되지 않는다**.
-
-    §8.B: *"(a) 단독은 불충분하다 — `DERIVE-TOPONLY` 는 **비공허(1)** 이면서 여전히 무력하다."*
-    ⇒ 정의역을 인위 축소한 유틸 3종을 **실제로 주입**해 *"검출은 정의역에서 온다"* 를 실증한다.
-    """
-    _text, document, _ref = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    full_domain = _sweep_domains(envelope)["leaves"]
-
-    # 정본 구현 위에서는 전 정의역이 기대(RED) 를 만족한다 — 음성 대조의 base
-    assert _leaf_mutation_failures(document, full_domain) == set(), \
-        "base FAIL — 정본이 SWP-A 전칭을 만족하지 않는다 (born-RED)"
-
-    detected_full = _leaf_mutation_failures(document, full_domain, _defective_deep_lossy)
-    print(f"[음성 대조] 전 정의역({len(full_domain)}) — V-LOSSY-DEEP 검출 {len(detected_full)}건: "
-          f"{sorted(detected_full, key=str)}")
-    assert detected_full, "결함 구현 V-LOSSY-DEEP 이 **전 정의역에서도** 미검출 (sweep 무력)"
-
-    for name, deriver in DEGENERATE_DERIVERS.items():
-        shrunk = deriver(envelope)
-        detected = _leaf_mutation_failures(document, shrunk, _defective_deep_lossy)
-        print(f"[음성 대조] {name:16} 정의역={len(shrunk):3}  V-LOSSY-DEEP 검출={len(detected)}")
-        assert detected == set(), \
-            f"{name} 이 결함을 검출했다 — 음성 대조 전제 붕괴 (퇴화 유틸 정의 재점검)"
-        assert shrunk < full_domain, f"{name} 이 정의역을 축소하지 않았다"
-
-    # ★ (a) 단독 불충분의 실증 — DERIVE-TOPONLY 는 **비공허**이면서 무력하다
-    assert len(DEGENERATE_DERIVERS["DERIVE-TOPONLY"](envelope)) > 0, \
-        "DERIVE-TOPONLY 가 공허하면 (a) 단독 불충분을 실증하지 못한다"
-
-    print("[PASS] 파생 유틸 자기검사 (c) — 검출은 정의역에서 온다")
-
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Sweep 로스터 `SWP-A` ~ `SWP-J` (§8.B 「sweep 로스터」 — 정의역은 전건 기계 파생)
-#
-# ★ 각 sweep 은 **실행 이전에** `_assert_derivation_selfcheck` 를 통과한다
-#   (기대 산출이 정의상 균일하므로, 그 균일이 판별인지 하네스 사망인지 먼저 가른다).
-# ★ 기대 verdict 는 `VU-4`(전건 기대 verdict) 단위를 재사용한다 — 새 규율 갈래 0.
+# 정의역 파생 보조 (sweep 반쪽이 공유)
 # ─────────────────────────────────────────────────────────────────────────────
-
-def _report(sweep: str, half: str, results: Dict[Any, Tuple[str, str]], expected: str) -> set:
-    r"""sweep 반쪽 1개의 산출 보고 + 기대 미달 원소 집합 반환.
-
-    ★ 실패는 **이름(경로)으로 지목**한다 — 카디널리티 형(`n/N`) 단독 assert 금지
-      (수치를 assert 로 옮기면 형상 변화에서 born-broken 이 된다).
-    """
-    failures = {k: v for k, v in results.items() if v[0] != expected}
-    dist: Dict[str, int] = {}
-    for verdict, _d in results.values():
-        dist[verdict] = dist.get(verdict, 0) + 1
-    print(f"  [{sweep} {half}] 정의역={len(results)} 기대={expected} 산출={dist}")
-    for k, v in sorted(failures.items(), key=str)[:8]:
-        print(f"      FAIL {k} → {v[0]} {v[1][:110]}")
-    return set(failures)
-
 
 def _non_applicable_domains(document: Any) -> Tuple[set, set]:
     r"""`ENV-5` **비적용역** = `jobs.<other>` 단독 (여집합 자기 가드) — `SWP-C` 정의역."""
@@ -727,248 +635,11 @@ def _non_applicable_domains(document: Any) -> Tuple[set, set]:
     return leaves, mappings
 
 
-def test_envelope_pin_swp_a_applicable_leaf_universal():
-    r"""**`SWP-A`** — `ENV-5` 적용역 **leaf 전수** 변형 ⇒ **전건 RED** (census #9).
-
-    ablation target = `V-PARTIAL`(step 키를 부분만 봉투에 담는 구현). 1점 probe 로는
-    원리적 미검출 — 그 구현은 기존 16 셀을 전건 통과한다.
-    ★ 부수 조건(census #6) — `ENV-3` **비적용**(값 위치): 전건 RED ∧ **`exit 2` 0**
-      ⇒ 값 위치는 충돌 경로를 발동시키지 않는다.
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    results = {}
-    for path in sorted(domains["leaves"], key=str):
-        mutated = _set_at_path(document, path, _mutate_leaf(_get_node_at_path(document, path)))
-        results[path] = _verdict(mutated, ref_sha)
-
-    failures = _report("SWP-A", "적용역 leaf 변형", results, VERDICT_RED)
-    assert not failures, f"SWP-A 기대(RED) 미달: {sorted(failures, key=str)}"
-    exit2 = {k for k, v in results.items() if v[0] == VERDICT_EXIT2}
-    assert not exit2, f"census #6 위반 — 값 위치가 충돌 경로를 발동시켰다: {sorted(exit2, key=str)}"
-
-
-def test_envelope_pin_swp_b_applicable_mapping_collision_universal():
-    r"""**`SWP-B`** — `ENV-3` 적용역 **mapping node 전수**(임의 depth) 충돌 ⇒ **전건 `exit 2`**.
-
-    probe **전문 고정** = 해당 mapping 에 `2: "COLL"` ∧ `"2": "COLL"` **동시 주입**.
-    ★ 구 probe `True`/`"true"` 는 봉투 root 에서 「주입」이 아니라 **「치환」**이었다
-      (root 의 `on:` 이 YAML 1.1 에서 bool `True` 키). 교체 probe 는 대상 int 키 0 이라
-      **전 노드에서 주입**이 된다.
-    ablation target = `V-TOPCOL`(충돌검사 top-level 한정) ⇒ 13/14 FAIL.
-    ★ `exit 2` 를 **사유까지** 확인한다 — 아무 예외나 `exit 2` 로 세면 하네스 사망이 검출로 위장된다.
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    results = {}
-    for path in sorted(domains["mapping_nodes"], key=str):
-        results[path] = _verdict(_inject_collision_pair(document, path, 2), ref_sha)
-
-    failures = _report("SWP-B", "적용역 mapping 충돌", results, VERDICT_EXIT2)
-    assert not failures, f"SWP-B 기대(exit 2) 미달: {sorted(failures, key=str)}"
-    wrong_reason = {k for k, v in results.items() if "collision" not in v[1]}
-    assert not wrong_reason, \
-        f"exit 2 사유가 접힘이 아니다 (하네스 사망 의심): {[(k, results[k][1]) for k in wrong_reason]}"
-
-
-def test_envelope_pin_swp_c_nonapplicable_jobs_other_universal():
-    r"""**`SWP-C`** — `ENV-5` **비적용역**(`jobs.<other>` 단독) 전수 변형 ∧ 충돌 ⇒ **전건 GREEN**.
-
-    ablation target = `V-ALLJOBS`(봉투 scope 를 문서 전문으로 확대) ⇒ 과잉 RED ∧
-    ★`V-NORMFIRST`(**정규화를 봉투 절단보다 먼저**) ⇒ 충돌 축이 `exit 2` 로 샌다.
-    ⇒ 「절단이 먼저」라는 **순서 계약**의 유일 판별자가 이 sweep 의 충돌 반쪽이다.
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    _assert_derivation_selfcheck(_sweep_domains(envelope))
-
-    other_leaves, other_maps = _non_applicable_domains(document)
-    assert other_leaves and other_maps, "P-E5 — 비적용역 정의역이 공허 (전건 GREEN 이 공허 참)"
-
-    mut = {}
-    for path in sorted(other_leaves, key=str):
-        mutated = _set_at_path(document, path, _mutate_leaf(_get_node_at_path(document, path)))
-        mut[path] = _verdict(mutated, ref_sha)
-    f1 = _report("SWP-C", "비적용역 leaf 변형", mut, VERDICT_GREEN)
-
-    col = {}
-    for path in sorted(other_maps, key=str):
-        col[path] = _verdict(_inject_collision_pair(document, path, 2), ref_sha)
-    f2 = _report("SWP-C", "비적용역 충돌(순서 계약)", col, VERDICT_GREEN)
-
-    assert not (f1 | f2), f"SWP-C 기대(GREEN) 미달: {sorted(f1 | f2, key=str)}"
-
-
-def test_envelope_pin_swp_d_value_padding_absorbed_universal():
-    r"""**`SWP-D`** — `ENV-2` 적용역 **mapping 값 문자열 leaf 전수** padding ⇒ **전건 GREEN**.
-
-    ablation target = `V-NOSTRIP`(값 strip 제거) ⇒ 전건 FAIL. 구 3점 담지로는 여집합이 남았다.
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    results = {}
-    for path in sorted(domains["map_value_string_leaves"], key=str):
-        results[path] = _verdict(
-            _set_at_path(document, path, _pad(_get_node_at_path(document, path))), ref_sha)
-
-    failures = _report("SWP-D", "적용역 값 padding", results, VERDICT_GREEN)
-    assert not failures, f"SWP-D 기대(GREEN) 미달: {sorted(failures, key=str)}"
-
-
-def test_envelope_pin_swp_e_nonabsorbed_padding_universal():
-    r"""**`SWP-E`** — `ENV-2` **비적용역** 전칭: **mapping 문자열 키 전수** ∧ ★**bare sequence
-    문자열 원소 전수** padding(양끝 2칸) ⇒ **전건 RED**.
-
-    ablation target = `V-KEYSTRIP-DEEP`(키 strip 을 depth ≥ 1 에만) ⇒ 27/34 FAIL —
-    그 구현은 `C₀` 가 정본과 **동일**하고 top-level 키 1점 셀을 **통과**한다.
-    ★★ **bare 반쪽이 독법 `A0`(sequence 직접 원소까지 strip)의 유일 판별자**다 —
-       `A0` 구현은 `C₀` 동일이라 핀 대조로는 원리적으로 못 잡는다.
-    ★ spine 키 2종(top-level `jobs` · JOB2)은 정의역 밖 — 포함하면 정본이 FAIL 2/36(born-RED).
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    key_res = {}
-    for map_path, key in sorted(domains["string_keys"], key=str):
-        key_res[(map_path, key)] = _verdict(
-            _rename_key(document, map_path, key, _pad(key)), ref_sha)
-    f1 = _report("SWP-E", "적용역 문자열 키 padding", key_res, VERDICT_RED)
-
-    bare_res = {}
-    for seq_path, idx in sorted(domains["bare_sequence_string_elements"], key=str):
-        elem = _get_node_at_path(document, seq_path)[idx]
-        bare_res[(seq_path, idx)] = _verdict(
-            _set_at_path(document, seq_path + (idx,), _pad(elem)), ref_sha)
-    f2 = _report("SWP-E", "bare sequence 원소 padding", bare_res, VERDICT_RED)
-
-    assert bare_res, "bare 반쪽 정의역 공허 — `ENV-2` 비적용역 활성화 축이 무검증"
-    assert not (f1 | f2), f"SWP-E 기대(RED) 미달: {sorted(f1 | f2, key=str)}"
-
-    # ★ 전칭 축소 declare (`P-E6`-b, non-blocking) — verdict 불변
-    carriers = {seq for seq, _ in domains["bare_sequence_string_elements"]}
-    if len(carriers) < 2:
-        print("  [universal-narrowed: SWP-E.bare = observed-single-sequence]"
-              f" carriers={sorted(carriers, key=str)}")
-
-
-def test_envelope_pin_swp_f_datastructure_universal():
-    r"""**`SWP-F`** — `ENV-4`·`ENV-7` 적용역 전칭 (**세 반쪽 전부 필수**).
-
-      (1) sequence(길이 ≥ 2) 전수 **순서 역전** ⇒ **RED**   … `ENV-4` sequence conjunct
-      (2) mapping(키 ≥ 2) 전수 **키 순서 역전**  ⇒ **GREEN** … `ENV-4` mapping conjunct
-      (3) sequence 전수 **원소 1개 복제**(선두 원소를 앞에 삽입) ⇒ **RED** … `ENV-7` 다중도
-
-    ★★ `ENV-4` 는 **연언**이고 두 conjunct 의 **판별자가 다르다** — (1) 의 ablation 은
-       `V-SORTSCALARSEQ`, (2) 의 ablation 은 `sort_keys=False`(`V-NOSORTKEYS`).
-       한쪽만 재면 다른 쪽이 「장식」으로 오라벨된다.
-    ★ (3) 의 ablation = `V-SEQDEDUP`(**equality 기반** — hashable-only 구현은 다른 함수다).
-       실패 원소는 **이름 집합**으로 지목한다(카디널리티 형 금지).
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    seqs = sorted(domains["sequences"], key=str)
-    long_seqs = [p for p in seqs if len(_get_node_at_path(envelope, p)) >= 2]
-
-    order = {}
-    for path in long_seqs:
-        order[path] = _verdict(
-            _set_at_path(document, path, list(reversed(_get_node_at_path(document, path)))), ref_sha)
-    f1 = _report("SWP-F", "sequence 순서 역전", order, VERDICT_RED)
-
-    keyorder = {}
-    for path in sorted(domains["mapping_nodes"], key=str):
-        node = _get_node_at_path(envelope, path)
-        if len(node) < 2:
-            continue
-        doc2 = copy.deepcopy(document)
-        target = doc2 if not path else _get_node_at_path(doc2, path)
-        items = list(target.items())
-        for k, _v in items:
-            del target[k]
-        for k, v in reversed(items):
-            target[k] = v
-        keyorder[path] = _verdict(doc2, ref_sha)
-    f2 = _report("SWP-F", "mapping 키순서 역전", keyorder, VERDICT_GREEN)
-
-    dup = {}
-    for path in seqs:
-        node = _get_node_at_path(document, path)
-        dup[path] = _verdict(_set_at_path(document, path, [node[0]] + list(node)), ref_sha)
-    f3 = _report("SWP-F", "sequence 원소 복제(다중도)", dup, VERDICT_RED)
-
-    # ★ 이름 집합 assert — 다중도 정의역이 두 sequence 를 **둘 다** 담는다
-    assert set(dup) == {(True, "pull_request", "types"), ("jobs", JOB2, "steps")}, \
-        f"다중도 정의역 이름 집합 불일치: {sorted(dup, key=str)}"
-    assert len(keyorder) >= 2, "mapping 키순서 반쪽 정의역이 1점 이하 — 전칭 미달"
-    assert not (f1 | f2 | f3), f"SWP-F 기대 미달: {sorted(f1 | f2 | f3, key=str)}"
-
-
 def _distinguishing_pair_indices(S: List[Any]) -> List[Tuple[int, int]]:
     r"""구별쌍을 **인덱스**로 — 값 대신 인덱스를 쓰면 node 별 sha 를 재사용할 수 있다
     (`(b)` 를 `14×|P|×2` 회 계산 → `14×|S|` 회로 축약. 판정 내용은 동일)."""
     return [(i, j) for i in range(len(S)) for j in range(i + 1, len(S))
             if _orbit(S[i]) != _orbit(S[j])]
-
-
-def test_envelope_pin_swp_g_value_kind_fidelity_universal():
-    r"""**`SWP-G`** — `ENV-8` 값 표현 충실도 전칭 (**2 술어**, 정의역은 **3층 기계 파생**).
-
-      **(a) 탈락** — ∀ mapping node × ∀ 값 종류 표본 `s ∈ S`:
-                     합성 키 `__PROBE_KIND__: <s>` 주입 ⇒ **RED**
-      **(b) 단사성** — ∀ mapping node × ∀ 구별쌍 `(a,b) ∈ P`: `sha(a) ≠ sha(b)`
-                     (★**슬롯 고정** — 같은 키 `__PROBE_KIND__` 에 두 값을 넣는다.
-                       값과 함께 키를 바꾸면 원리적으로 미검출이 된다)
-
-    ★★ `|S|`·`|P|` 는 **수치 리터럴이 아니라 3층 파생 산출**이다
-       (층1 `json.encoder._make_iterencode` 분기 → 층2 0-인자 생성자 → 층3 `Ω` 폐포).
-    ★★ **두 술어는 서로의 맹점을 덮는다** — 접힘형 4종은 (a) 를 통과하고 탈락형 3종은 (b) 를
-       통과한다. 한쪽만 재면 8 witness 의 절반이 무주공산이 된다.
-    """
-    _text, document, _ref = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    S = _derive_S_from_envelope_pin_source()
-    pair_idx = _distinguishing_pair_indices(S)
-    assert len(pair_idx) == len(_derive_P_from_S(S)), "구별쌍 인덱스 파생이 값 파생과 어긋난다"
-    assert S and pair_idx, "3층 파생 산출이 공허 (하네스 사망)"
-
-    nodes = sorted(domains["mapping_nodes"], key=str)
-    a_fail, b_fail = set(), set()
-    for path in nodes:
-        ref_node, _d = _envelope_outcome(document, JOB2)
-        shas = []
-        for value in S:
-            probed = _inject_probe_at_node(document, path, "__PROBE_KIND__", value)
-            sha, _d2 = _envelope_outcome(probed, JOB2)
-            shas.append(sha)
-            if sha == ref_node:  # 주입했는데 봉투가 그대로 = 그 값 종류가 **탈락**했다
-                a_fail.add((path, repr(value)))
-        for i, j in pair_idx:
-            if shas[i] == shas[j]:
-                b_fail.add((path, repr(S[i]), repr(S[j])))
-
-    print(f"  [SWP-G (a) 탈락] 정의역={len(nodes)}×|S|={len(S)} = {len(nodes) * len(S)} 기대=RED "
-          f"FAIL={len(a_fail)}")
-    print(f"  [SWP-G (b) 단사성] 정의역={len(nodes)}×|P|={len(pair_idx)} = "
-          f"{len(nodes) * len(pair_idx)} 기대=sha 상이 FAIL={len(b_fail)}")
-    assert not a_fail, f"SWP-G (a) 기대(RED) 미달: {sorted(a_fail, key=str)[:8]}"
-    assert not b_fail, f"SWP-G (b) 단사성 붕괴: {sorted(b_fail, key=str)[:8]}"
 
 
 def _parser_derived_nonstring_scalar_samples() -> List[Tuple[str, Any]]:
@@ -1005,36 +676,6 @@ def _parser_derived_nonstring_scalar_samples() -> List[Tuple[str, Any]]:
             continue  # ★ JSON 직렬화 불가 ⇒ 기계적으로 탈락 (timestamp)
         out.append((tag, value))
     return out
-
-
-def test_envelope_pin_swp_h_key_type_universal():
-    r"""**`SWP-H`** — `ENV-6` 적용역 **키 type** 전칭: (mapping node 전수) ×
-    (파서 파생 비-문자열 스칼라 type) 충돌쌍 주입 ⇒ **전건 `exit 2`**.
-
-    ablation target = `V-STRBOOL`(bool 만 특수 처리) ⇒ null 축 FAIL ∧
-    `V-STRKEY`(전 비-문자열 키를 `str()` 렌더) ⇒ bool + null 축 FAIL.
-    ★ `V-STRBOOL` 은 `SWP-B` 를 **통과**하므로 본 sweep 이 **유일 담지자**다.
-    """
-    _text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
-
-    samples = _parser_derived_nonstring_scalar_samples()
-    assert {t for t, _v in samples} == {
-        "tag:yaml.org,2002:bool", "tag:yaml.org,2002:null",
-        "tag:yaml.org,2002:int", "tag:yaml.org,2002:float",
-    }, f"파서 파생 type 집합 불일치: {[t for t, _ in samples]}"
-
-    results = {}
-    for path in sorted(domains["mapping_nodes"], key=str):
-        for tag, value in samples:
-            results[(path, tag)] = _verdict(_inject_collision_pair(document, path, value), ref_sha)
-
-    failures = _report("SWP-H", "키 type 충돌쌍", results, VERDICT_EXIT2)
-    assert not failures, f"SWP-H 기대(exit 2) 미달: {sorted(failures, key=str)[:8]}"
-    wrong = {k for k, v in results.items() if "collision" not in v[1]}
-    assert not wrong, f"exit 2 사유가 접힘이 아니다: {[(k, results[k][1]) for k in sorted(wrong, key=str)[:4]]}"
 
 
 def _composed_region_mapping_nodes(text: str) -> List[Tuple[Tuple, Any]]:
@@ -1091,66 +732,371 @@ def _first_single_line_pair(node: Any):
     return None
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Sweep 로스터 `SWP-A` ~ `SWP-J` (§8.B 「sweep 로스터」)
+#
+# ★ 정의역은 전건 **「적용역 − 봉투 spine」에서 기계 파생** (손목록·1점 하드코딩 0).
+# ★ 각 sweep 은 실행 **이전에** `_assert_derivation_selfcheck` 를 통과한다
+#   (기대 산출이 정의상 균일하므로, 그 균일이 판별인지 **하네스 사망**인지 먼저 가른다).
+# ★ 한 sweep 은 1+ 개의 **반쪽(half)** 으로 이뤄진다 — 연언 성질(`ENV-4`)·양 술어(`ENV-8`)는
+#   반쪽 하나만 재면 나머지가 「장식」으로 **오라벨**된다.
+# ★★ 반쪽 정의는 `_sweep_halves()` **단일 출처**다 — sweep 테스트와 음성 대조가 **같은 정의**를
+#   쓴다. 두 벌로 두면 이 Story 의 지배 결함(*"검사 정의역이 주장 범위와 어긋남"*)이 정확히
+#   그 틈에서 재발한다.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_Half = namedtuple("_Half", "sweep half domain cell ok expect")
+
+
+def _elem_path(elem: Any) -> Tuple:
+    r"""반쪽 원소에서 **경로 성분**을 뽑는다 (퇴화 정의역 필터의 depth 기준).
+
+    원소 형태는 반쪽마다 다르다 — 경로 단독 `(k, ...)` · 합성 `((경로), 키/인덱스/tag/표본)`.
+    합성은 **첫 성분이 tuple** 이라는 사실로 판별한다.
+    """
+    if isinstance(elem, tuple) and elem and isinstance(elem[0], tuple):
+        return elem[0]
+    return elem
+
+
+def _sweep_halves(document: Any, text: str) -> List[_Half]:
+    r"""`SWP-A`~`SWP-I` 의 **반쪽 전수** 를 구성한다 (정의역 ∧ 셀 ∧ 기대).
+
+    ★ `SWP-J` 는 정의역이 대상 구조가 아니라 **직렬화기 시그니처**에 살아서 형태가 다르다
+      — 별 테스트가 담지하고 본 목록에는 없다(로스터 테스트가 그 사실을 명시 assert 한다).
+    """
+    envelope = cut_envelope(document, JOB2)
+    domains = _sweep_domains(envelope)
+    _assert_derivation_selfcheck(domains)          # ★ sweep 실행 **이전** 자기검사 (a)+(b)
+    ref = _envelope_outcome(document, JOB2)[0]
+
+    def is_red(r):
+        return r[0] == VERDICT_RED
+
+    def is_green(r):
+        return r[0] == VERDICT_GREEN
+
+    def is_exit2(r):
+        return r[0] == VERDICT_EXIT2
+
+    halves: List[_Half] = []
+
+    # ── `SWP-A` — `ENV-5` 적용역 leaf 전수 변형 ⇒ 전건 RED
+    def cell_a(path):
+        return _verdict(
+            _set_at_path(document, path, _mutate_leaf(_get_node_at_path(document, path))), ref)
+
+    halves.append(_Half("SWP-A", "적용역 leaf 변형", domains["leaves"], cell_a, is_red, VERDICT_RED))
+
+    # ── `SWP-B` — `ENV-3` 적용역 mapping 전수 충돌 ⇒ 전건 exit 2
+    def cell_b(path):
+        return _verdict(_inject_collision_pair(document, path, 2), ref)
+
+    halves.append(_Half("SWP-B", "적용역 mapping 충돌", domains["mapping_nodes"],
+                        cell_b, is_exit2, VERDICT_EXIT2))
+
+    # ── `SWP-C` — `ENV-5` 비적용역(`jobs.<other>` 단독) ⇒ 전건 GREEN
+    other_leaves, other_maps = _non_applicable_domains(document)
+    halves.append(_Half("SWP-C", "비적용역 leaf 변형", other_leaves, cell_a, is_green, VERDICT_GREEN))
+    halves.append(_Half("SWP-C", "비적용역 충돌(순서 계약)", other_maps, cell_b, is_green, VERDICT_GREEN))
+
+    # ── `SWP-D` — `ENV-2` 적용역 값 문자열 leaf padding ⇒ 전건 GREEN (흡수)
+    def cell_d(path):
+        return _verdict(_set_at_path(document, path, _pad(_get_node_at_path(document, path))), ref)
+
+    halves.append(_Half("SWP-D", "적용역 값 padding", domains["map_value_string_leaves"],
+                        cell_d, is_green, VERDICT_GREEN))
+
+    # ── `SWP-E` — `ENV-2` 비적용역(키 ∧ bare sequence 원소) padding ⇒ 전건 RED
+    def cell_e_key(elem):
+        map_path, key = elem
+        return _verdict(_rename_key(document, map_path, key, _pad(key)), ref)
+
+    def cell_e_bare(elem):
+        seq_path, idx = elem
+        return _verdict(_set_at_path(document, seq_path + (idx,),
+                                     _pad(_get_node_at_path(document, seq_path)[idx])), ref)
+
+    halves.append(_Half("SWP-E", "적용역 문자열 키 padding", domains["string_keys"],
+                        cell_e_key, is_red, VERDICT_RED))
+    halves.append(_Half("SWP-E", "bare sequence 원소 padding",
+                        domains["bare_sequence_string_elements"], cell_e_bare, is_red, VERDICT_RED))
+
+    # ── `SWP-F` — `ENV-4`(연언 2 conjunct) ∧ `ENV-7`(다중도). 세 반쪽 전부 필수
+    long_seqs = {p for p in domains["sequences"] if len(_get_node_at_path(envelope, p)) >= 2}
+    multi_key_maps = {p for p in domains["mapping_nodes"] if len(_get_node_at_path(envelope, p)) >= 2}
+
+    def cell_f_order(path):
+        return _verdict(
+            _set_at_path(document, path, list(reversed(_get_node_at_path(document, path)))), ref)
+
+    def cell_f_keyorder(path):
+        doc2 = copy.deepcopy(document)
+        target = doc2 if not path else _get_node_at_path(doc2, path)
+        items = list(target.items())
+        for k, _v in items:
+            del target[k]
+        for k, v in reversed(items):
+            target[k] = v
+        return _verdict(doc2, ref)
+
+    def cell_f_dup(path):
+        node = _get_node_at_path(document, path)
+        return _verdict(_set_at_path(document, path, [node[0]] + list(node)), ref)
+
+    halves.append(_Half("SWP-F", "sequence 순서 역전", long_seqs, cell_f_order, is_red, VERDICT_RED))
+    halves.append(_Half("SWP-F", "mapping 키순서 역전", multi_key_maps,
+                        cell_f_keyorder, is_green, VERDICT_GREEN))
+    halves.append(_Half("SWP-F", "sequence 원소 복제(다중도)", domains["sequences"],
+                        cell_f_dup, is_red, VERDICT_RED))
+
+    # ── `SWP-G` — `ENV-8` 값 표현 충실도. (a) 탈락 ∧ (b) 단사성 (★슬롯 고정)
+    S = _derive_S_from_envelope_pin_source()
+    pair_idx = _distinguishing_pair_indices(S)
+    _probe_sha: Dict[Tuple, Optional[str]] = {}
+
+    def probe_sha(path, i):
+        key = (path, i)
+        if key not in _probe_sha:
+            probed = _inject_probe_at_node(document, path, "__PROBE_KIND__", S[i])
+            _probe_sha[key] = _envelope_outcome(probed, JOB2)[0]
+        return _probe_sha[key]
+
+    def cell_g_a(elem):
+        path, i = elem
+        sha = probe_sha(path, i)
+        if sha is None:
+            return (VERDICT_EXIT2, f"주입 값 {S[i]!r} 이 exit 2")
+        return (VERDICT_RED if sha != ref else VERDICT_GREEN, "")
+
+    def cell_g_b(elem):
+        path, i, j = elem
+        if probe_sha(path, i) == probe_sha(path, j):
+            return ("붕괴", f"{S[i]!r} ~ {S[j]!r} 이 같은 봉투로 접혔다")
+        return ("구별", "")
+
+    dom_g_a = {(p, i) for p in domains["mapping_nodes"] for i in range(len(S))}
+    dom_g_b = {(p, i, j) for p in domains["mapping_nodes"] for i, j in pair_idx}
+    halves.append(_Half("SWP-G", "(a) 정의역 탈락", dom_g_a, cell_g_a, is_red, VERDICT_RED))
+    halves.append(_Half("SWP-G", "(b) 단사성", dom_g_b, cell_g_b, lambda r: r[0] == "구별", "구별"))
+
+    # ── `SWP-H` — `ENV-6` 적용역 키 type 전칭 (파서 파생 비-문자열 스칼라 type)
+    type_samples = dict(_parser_derived_nonstring_scalar_samples())
+
+    def cell_h(elem):
+        path, tag = elem
+        return _verdict(_inject_collision_pair(document, path, type_samples[tag]), ref)
+
+    dom_h = {(p, tag) for p in domains["mapping_nodes"] for tag in type_samples}
+    halves.append(_Half("SWP-H", "키 type 충돌쌍", dom_h, cell_h, is_exit2, VERDICT_EXIT2))
+
+    # ── `SWP-I` — `ENV-1` 파싱 층 전칭 (**텍스트 층** 주입)
+    composed = dict(_composed_region_mapping_nodes(text))
+    lines = text.split("\n")
+    dup_domain = {p for p, node in composed.items() if _first_single_line_pair(node) is not None}
+
+    def cell_i_dup(path):
+        key_node, value_node = _first_single_line_pair(composed[path])
+        fragment = text[key_node.start_mark.index:value_node.end_mark.index]
+        injected = " " * key_node.start_mark.column + fragment
+        at = value_node.end_mark.line
+        return _verdict_from_text("\n".join(lines[:at + 1] + [injected] + lines[at + 1:]), ref)
+
+    def cell_i_merge(path):
+        node = composed[path]
+        key_node, value_node = _first_single_line_pair(node) or node.value[0]
+        col = key_node.start_mark.column
+        at = value_node.end_mark.line
+        injected = [" " * col + "<<: *cfp2978probe", " " * col + "zzz_probe_key: B"]
+        anchor = "_cfp2978_merge_probe: &cfp2978probe\n  zzz_probe_key: A\n"
+        return _verdict_from_text(
+            anchor + "\n".join(lines[:at + 1] + injected + lines[at + 1:]), ref)
+
+    halves.append(_Half("SWP-I", "(i) 리터럴 중복 키", dup_domain, cell_i_dup, is_exit2, VERDICT_EXIT2))
+    halves.append(_Half("SWP-I", "(ii) merge override", set(composed), cell_i_merge,
+                        lambda r: r[0] != VERDICT_EXIT2, "≠ exit 2"))
+
+    return halves
+
+
+def _run_half(half: _Half, domain: Optional[set] = None) -> Tuple[Dict[Any, Tuple[str, str]], set]:
+    r"""반쪽 1개 실행 — `(셀별 산출, 기대 미달 원소 집합)`."""
+    dom = half.domain if domain is None else domain
+    results = {elem: half.cell(elem) for elem in sorted(dom, key=str)}
+    return results, {e for e, r in results.items() if not half.ok(r)}
+
+
+def _print_half(half: _Half, results: Dict[Any, Tuple[str, str]], failures: set) -> None:
+    r"""산출 보고 — 실패는 **이름(원소)으로 지목**한다(카디널리티 형 단독 assert 금지)."""
+    dist: Dict[str, int] = {}
+    for verdict, _d in results.values():
+        dist[verdict] = dist.get(verdict, 0) + 1
+    print(f"  [{half.sweep} {half.half}] 정의역={len(results)} 기대={half.expect} 산출={dist}")
+    for elem in sorted(failures, key=str)[:6]:
+        print(f"      FAIL {elem} -> {results[elem][0]} {results[elem][1][:100]}")
+
+
+def _assert_sweep(sweep_id: str) -> Dict[str, Dict[Any, Tuple[str, str]]]:
+    r"""한 sweep 의 **반쪽 전건** 을 정본 정의역 위에서 실행하고 기대 미달 0 을 단언한다."""
+    text, document, _pin = _load_target()
+    halves = [h for h in _sweep_halves(document, text) if h.sweep == sweep_id]
+    assert halves, f"{sweep_id} 반쪽이 로스터에 등록되지 않았다"
+
+    out, all_fail = {}, set()
+    for half in halves:
+        results, failures = _run_half(half)
+        _print_half(half, results, failures)
+        assert results, f"{sweep_id} {half.half} 정의역 **공허** — 「전건 기대 verdict」가 공허 참"
+        out[half.half] = results
+        all_fail |= {(half.half, e) for e in failures}
+    assert not all_fail, f"{sweep_id} 기대 미달: {sorted(all_fail, key=str)[:8]}"
+    return out
+
+
+def test_envelope_pin_swp_a_applicable_leaf_universal():
+    r"""**`SWP-A`** — `ENV-5` 적용역 **leaf 전수** 변형 ⇒ **전건 RED** (census #9).
+
+    변형 연산자 **전문 고정** = str ⇒ 위치 1 에 `MUT` 삽입 / bool ⇒ 반전 / int ⇒ `+1` /
+    그 외 ⇒ `"MUT"` 치환.
+    ablation target = `V-PARTIAL`(step 키를 부분만 봉투에 담는 구현) — 기존 16 셀을 전건 통과한다.
+    ★ 부수 조건(census #6) — `ENV-3` **비적용**(값 위치): 전건 RED ∧ **`exit 2` 0**.
+    """
+    out = _assert_sweep("SWP-A")
+    exit2 = {e for e, r in out["적용역 leaf 변형"].items() if r[0] == VERDICT_EXIT2}
+    assert not exit2, f"census #6 위반 — 값 위치가 충돌 경로를 발동시켰다: {sorted(exit2, key=str)}"
+
+
+def test_envelope_pin_swp_b_applicable_mapping_collision_universal():
+    r"""**`SWP-B`** — `ENV-3` 적용역 **mapping node 전수**(임의 depth) 충돌 ⇒ **전건 `exit 2`**.
+
+    probe **전문 고정** = `2: "COLL"` ∧ `"2": "COLL"` 동시 주입 (구 probe `True`/`"true"` 는
+    봉투 root 에서 「주입」이 아니라 **「치환」**이었다 — `on:` 이 YAML 1.1 bool `True` 키).
+    ablation target = `V-TOPCOL`(충돌검사 top-level 한정).
+    ★ `exit 2` 를 **사유까지** 확인한다 — 아무 예외나 세면 하네스 사망이 검출로 위장된다.
+    """
+    out = _assert_sweep("SWP-B")
+    wrong = {e: r[1] for e, r in out["적용역 mapping 충돌"].items() if "collision" not in r[1]}
+    assert not wrong, f"exit 2 사유가 접힘이 아니다 (하네스 사망 의심): {list(wrong.items())[:4]}"
+
+
+def test_envelope_pin_swp_c_nonapplicable_jobs_other_universal():
+    r"""**`SWP-C`** — `ENV-5` **비적용역**(`jobs.<other>` 단독) 전수 변형 ∧ 충돌 ⇒ **전건 GREEN**.
+
+    ablation target = `V-ALLJOBS`(봉투 scope 를 문서 전문으로 확대) ∧
+    ★`V-NORMFIRST`(**정규화를 봉투 절단보다 먼저**) ⇒ 충돌 축이 `exit 2` 로 샌다.
+    ⇒ 「절단이 먼저」라는 **순서 계약**의 유일 판별자가 이 sweep 의 충돌 반쪽이다.
+    ★ 정의역 비공허는 전제 `P-E5`(`|jobs| ≥ 2`) — 미충족이면 「전건 GREEN」이 공허 참이 된다.
+    """
+    _assert_sweep("SWP-C")
+
+
+def test_envelope_pin_swp_d_value_padding_absorbed_universal():
+    r"""**`SWP-D`** — `ENV-2` 적용역 **mapping 값 문자열 leaf 전수** padding ⇒ **전건 GREEN**.
+
+    ablation target = `V-NOSTRIP`(값 strip 제거). 구 3점 담지로는 여집합이 남았다.
+    """
+    _assert_sweep("SWP-D")
+
+
+def test_envelope_pin_swp_e_nonabsorbed_padding_universal():
+    r"""**`SWP-E`** — `ENV-2` **비적용역** 전칭: **mapping 문자열 키 전수** ∧ ★**bare sequence
+    문자열 원소 전수** padding(양끝 2칸) ⇒ **전건 RED**.
+
+    ablation target = `V-KEYSTRIP-DEEP`(키 strip 을 depth ≥ 1 에만) — `C₀` 가 정본과 **동일**하고
+    top-level 키 1점 셀을 **통과**한다.
+    ★★ **bare 반쪽이 독법 `A0`(sequence 직접 원소까지 strip)의 유일 판별자**다 —
+       `A0` 구현은 `C₀` 동일이라 **핀 대조로는 원리적으로 못 잡는다**.
+    ★ spine 키 2종(top-level `jobs` · JOB2)은 정의역 밖 — 포함하면 정본이 FAIL 2/36(born-RED).
+    """
+    _assert_sweep("SWP-E")
+    _text, document, _pin = _load_target()
+    domains = _sweep_domains(cut_envelope(document, JOB2))
+    # ★ 전칭 축소 declare (`P-E6`-b, non-blocking) — verdict 불변
+    carriers = {seq for seq, _idx in domains["bare_sequence_string_elements"]}
+    if len(carriers) < 2:
+        print("  [universal-narrowed: SWP-E.bare = observed-single-sequence]"
+              f" carriers={sorted(carriers, key=str)}")
+
+
+def test_envelope_pin_swp_f_datastructure_universal():
+    r"""**`SWP-F`** — `ENV-4`·`ENV-7` 적용역 전칭 (**세 반쪽 전부 필수**).
+
+      (1) sequence(길이 >= 2) 전수 **순서 역전** ⇒ **RED**   … `ENV-4` sequence conjunct
+      (2) mapping(키 >= 2) 전수 **키 순서 역전**  ⇒ **GREEN** … `ENV-4` mapping conjunct
+      (3) sequence 전수 **원소 1개 복제**(선두 원소를 앞에 삽입) ⇒ **RED** … `ENV-7` 다중도
+
+    ★★ `ENV-4` 는 **연언**이고 두 conjunct 의 **판별자가 다르다** — (1) ablation `V-SORTSCALARSEQ`,
+       (2) ablation `sort_keys=False`(`V-NOSORTKEYS`). 한쪽만 재면 다른 쪽이 「장식」으로 오라벨된다.
+    ★ (3) ablation = `V-SEQDEDUP`(**equality 기반** — hashable-only 구현은 *다른 함수*다).
+    """
+    out = _assert_sweep("SWP-F")
+    # ★ 이름 집합 assert — 다중도 정의역이 두 sequence 를 **둘 다** 담는다 (카디널리티 형 금지)
+    assert set(out["sequence 원소 복제(다중도)"]) == {
+        (True, "pull_request", "types"), ("jobs", JOB2, "steps")}, \
+        f"다중도 정의역 이름 집합 불일치: {sorted(out['sequence 원소 복제(다중도)'], key=str)}"
+    assert len(out["mapping 키순서 역전"]) >= 2, "mapping 키순서 반쪽 정의역이 1점 이하 — 전칭 미달"
+
+
+def test_envelope_pin_swp_g_value_kind_fidelity_universal():
+    r"""**`SWP-G`** — `ENV-8` 값 표현 충실도 전칭 (**2 술어**, 정의역은 **3층 기계 파생**).
+
+      **(a) 탈락** — ∀ mapping node × ∀ 값 종류 표본 `s ∈ S`: `__PROBE_KIND__: <s>` ⇒ **RED**
+      **(b) 단사성** — ∀ mapping node × ∀ 구별쌍 `(a,b) ∈ P`: `sha(a) != sha(b)`
+        (★**슬롯 고정** — 같은 키에 두 값을 넣는다. 값과 함께 키를 바꾸면 원리적 미검출)
+
+    ★★ `|S|`·`|P|` 는 **수치 리터럴이 아니라 3층 파생 산출**이다.
+    ★★ **두 술어는 서로의 맹점을 덮는다** — 접힘형 4종(`V-NUMCOERCE`·`V-NFC`·`V-NULLTOMAP`·
+       `V-EMPTYSEQSTR`)은 (a) 를 통과하고, 탈락형 3종(`V-DROPNULL`·`V-DROPEMPTYSTR`·
+       `V-DROPFALSE`)은 (b) 를 통과한다 ⇒ **한쪽만 구현하면 8 witness 중 절반이 원리적 미검출**.
+    """
+    S = _derive_S_from_envelope_pin_source()
+    assert len(_distinguishing_pair_indices(S)) == len(_derive_P_from_S(S)), \
+        "구별쌍 인덱스 파생이 값 파생과 어긋난다"
+    _assert_sweep("SWP-G")
+
+
+def test_envelope_pin_swp_h_key_type_universal():
+    r"""**`SWP-H`** — `ENV-6` 적용역 **키 type** 전칭: (mapping node 전수) ×
+    (파서 파생 비-문자열 스칼라 type) 충돌쌍 주입 ⇒ **전건 `exit 2`**.
+
+    ablation target = `V-STRBOOL`(bool 만 특수 처리 — `bool`→`json.dumps(k)` · 그 외 비-문자열
+    →`str(k)`) ∧ `V-STRKEY`(전 비-문자열 키를 `str()` 렌더).
+    ★ `V-STRBOOL` 은 `SWP-B` 를 **통과**하므로 본 sweep 이 **유일 담지자**다.
+    """
+    samples = _parser_derived_nonstring_scalar_samples()
+    assert {t for t, _v in samples} == {
+        "tag:yaml.org,2002:bool", "tag:yaml.org,2002:null",
+        "tag:yaml.org,2002:int", "tag:yaml.org,2002:float",
+    }, f"파서 파생 type 집합 불일치: {[t for t, _ in samples]}"
+    out = _assert_sweep("SWP-H")
+    wrong = {e: r[1] for e, r in out["키 type 충돌쌍"].items() if "collision" not in r[1]}
+    assert not wrong, f"exit 2 사유가 접힘이 아니다: {list(wrong.items())[:4]}"
+
+
 def test_envelope_pin_swp_i_text_layer_universal():
-    r"""**`SWP-I`** — `ENV-1` 파싱 층 전칭 (**텍스트 층** 주입, 구조 변형으로는 원리적 탐침 불가).
+    r"""**`SWP-I`** — `ENV-1` 파싱 층 전칭 (**텍스트 층** 주입 — 파싱 이전 사건은 구조 변형으로
+    원리적으로 탐침되지 않는다).
 
       **(i)** ∀ mapping node: **첫 단일행 키·값 쌍 `verbatim` 복제 주입** ⇒ **`exit 2`**
       **(ii)** ∀ mapping node: **merge 참조 + 명시 override 주입** ⇒ **≠ `exit 2`**
 
-    ★ 삽입 위치는 `yaml.compose()` 의 `start_mark`/`end_mark` 에서 파생한다 —
-      열 = 그 **키의 열**(원 줄을 그대로 복사하면 `- ` dash 가 딸려와 *새 list 원소*가 되어
-      중복 키가 성립하지 않는다), 행 = 그 쌍의 **끝 줄 다음**.
-    ablation target = `V-DUPDEPTH`(중복 검출 top-level 한정, **노드 동일성** 구성) ⇒ (i) 누수 ∧
-    `V-MERGERAISE`(merge key node 를 skip 하지 않음) ⇒ (ii) 전건 FAIL. 두 witness 는
-    `SWP-A`~`SWP-H` 를 **구조적으로 보장된 PASS** 로 통과하므로 본 sweep 이 유일 담지자다.
+    ★ 삽입 위치는 `yaml.compose()` 의 `start_mark`/`end_mark` 에서 파생 — 열 = 그 **키의 열**
+      (원 줄을 그대로 복사하면 `- ` dash 가 딸려와 *새 list 원소*가 되어 중복 키가 성립하지 않는다),
+      행 = 그 쌍의 **끝 줄 다음**.
+    ablation target = `V-DUPDEPTH`(중복 검출 top-level 한정, ★**노드 동일성** 구성) ∧
+    `V-MERGERAISE`(merge key node 를 skip 하지 않음). 두 witness 는 `SWP-A`~`SWP-H` 를
+    **구조적으로 보장된 PASS** 로 통과하므로 본 sweep 이 유일 담지자다.
     """
-    text, document, ref_sha = _load_target()
-    envelope = cut_envelope(document, JOB2)
-    domains = _sweep_domains(envelope)
-    _assert_derivation_selfcheck(domains)
+    text, document, _pin = _load_target()
+    # ★ 교차 검증 — **텍스트 층 파생**과 **구조 층 파생**이 같은 정의역을 낸다 (독립 2 파생)
+    composed = {p for p, _n in _composed_region_mapping_nodes(text)}
+    structural = _sweep_domains(cut_envelope(document, JOB2))["mapping_nodes"]
+    assert composed == structural, \
+        f"텍스트 층 ↔ 구조 층 정의역 불일치: {sorted(composed ^ structural, key=str)}"
 
-    nodes = _composed_region_mapping_nodes(text)
-    # ★ 교차 검증 — 텍스트 층 파생과 구조 층 파생이 **같은 정의역**을 낸다
-    assert {p for p, _n in nodes} == domains["mapping_nodes"], (
-        "텍스트 층 ↔ 구조 층 정의역 불일치: "
-        f"{sorted({p for p, _n in nodes} ^ domains['mapping_nodes'], key=str)}"
-    )
-    lines = text.split("\n")
-
-    dup_res = {}
-    for path, node in nodes:
-        pair = _first_single_line_pair(node)
-        if pair is None:
-            print(f"  [SWP-I (i)] 정의역 밖 (단일행 쌍 부재): {path}")
-            continue
-        key_node, value_node = pair
-        fragment = text[key_node.start_mark.index:value_node.end_mark.index]
-        injected = " " * key_node.start_mark.column + fragment
-        at = value_node.end_mark.line
-        dup_res[path] = _verdict_from_text(
-            "\n".join(lines[:at + 1] + [injected] + lines[at + 1:]), ref_sha)
-    f1 = _report("SWP-I", "(i) 리터럴 중복 키", dup_res, VERDICT_EXIT2)
-    wrong = {k for k, v in dup_res.items() if "duplicate key" not in v[1]}
-    assert not wrong, f"(i) exit 2 사유가 중복 키가 아니다: {[(k, dup_res[k][1]) for k in wrong]}"
-
-    anchor = "_cfp2978_merge_probe: &cfp2978probe\n  zzz_probe_key: A\n"
-    merge_res = {}
-    for path, node in nodes:
-        pair = _first_single_line_pair(node) or node.value[0]
-        key_node, value_node = pair
-        col = key_node.start_mark.column
-        at = value_node.end_mark.line
-        injected = [" " * col + "<<: *cfp2978probe", " " * col + "zzz_probe_key: B"]
-        merge_res[path] = _verdict_from_text(
-            anchor + "\n".join(lines[:at + 1] + injected + lines[at + 1:]), ref_sha)
-    merge_fail = {k for k, v in merge_res.items() if v[0] == VERDICT_EXIT2}
-    print(f"  [SWP-I (ii) merge override] 정의역={len(merge_res)} 기대=≠exit 2 "
-          f"FAIL={len(merge_fail)}")
-    assert not merge_fail, \
-        f"(ii) merge override 가 exit 2 로 샜다: {[(k, merge_res[k][1]) for k in sorted(merge_fail, key=str)[:4]]}"
-
-    assert dup_res and merge_res, "SWP-I 정의역 공허"
-    assert not f1, f"SWP-I (i) 기대(exit 2) 미달: {sorted(f1, key=str)}"
+    out = _assert_sweep("SWP-I")
+    wrong = {e: r[1] for e, r in out["(i) 리터럴 중복 키"].items() if "duplicate key" not in r[1]}
+    assert not wrong, f"(i) exit 2 사유가 중복 키가 아니다: {list(wrong.items())[:4]}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1158,12 +1104,12 @@ def test_envelope_pin_swp_i_text_layer_universal():
 #
 # ★ probe set 은 **「이름 집합」으로 pin** 한다 — 카디널리티 형(`n/30`) 금지.
 #   담지 테스트는 분모를 세지 않고 **이름별 verdict** 를 대조한다.
+# ★ 정의역이 대상 구조가 아니라 **직렬화기 시그니처**에 살아서 `_sweep_halves` 형태에 맞지 않는다.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _swp_j_probes() -> Dict[str, Callable[[Any], Any]]:
     def seq_order_reverse(d):
-        node = _get_node_at_path(d, (True, "pull_request", "types"))
-        node.reverse()
+        _get_node_at_path(d, (True, "pull_request", "types")).reverse()
         return d
 
     def map_key_order_reverse(d):
@@ -1181,14 +1127,12 @@ def _swp_j_probes() -> Dict[str, Callable[[Any], Any]]:
 
     def key_pad(d):
         node = d["jobs"][JOB2]
-        value = node.pop("name")
-        node[_pad("name")] = value
+        node[_pad("name")] = node.pop("name")
         return d
 
     def collision_pair(d):
-        node = d["jobs"][JOB2]
-        node[2] = "COLL"
-        node["2"] = "COLL"
+        d["jobs"][JOB2][2] = "COLL"
+        d["jobs"][JOB2]["2"] = "COLL"
         return d
 
     def date_value(d):
@@ -1226,7 +1170,7 @@ def _swp_j_probes() -> Dict[str, Callable[[Any], Any]]:
     }
 
 
-# ★ 비-기본값 (표기 축을 실제로 이동시키는 값). `cls` 는 **정의역 명시 제외** —
+# ★ 비-기본값 (표기 축을 실제로 이동시키는 값). `cls`(값 렌더러) 는 **정의역 명시 제외** —
 #   치역이 열려 있어 유한 파생 불가(`UM-16` 잔여로 declare, `SWP-J` 가 담지하지 않는다).
 SWP_J_NONDEFAULT = {
     "skipkeys": True, "ensure_ascii": True, "check_circular": False, "allow_nan": False,
@@ -1242,17 +1186,23 @@ SWP_J_REDIRECT = {
 }
 
 
+def _swp_j_measure(document: Any, probes: Dict[str, Callable[[Any], Any]]) -> Dict[str, str]:
+    ref, _d = _envelope_outcome(copy.deepcopy(document), JOB2)
+    return {name: _verdict(fn(copy.deepcopy(document)), ref)[0] for name, fn in probes.items()}
+
+
 def test_envelope_pin_swp_j_serialization_notation_universal():
     r"""**`SWP-J`** — `ENV-4` **비적용**(직렬화 표기) 전칭: ∀ 표기 파라미터 `q` 에 대해
     probe set 전건의 **verdict 가 불변**(= verdict-중립)이거나, 이동한다면 그 probe 가
     **redirect 축**으로 이미 귀속돼 있어야 한다.
 
     ★ 파생원 = `inspect.signature(json.dumps)` **명명 파라미터 9 − `cls` = 8**.
-    ★ 중립 5 를 「표기」로 재정의하면 이 sweep 이 GREEN 을 유지하며 결함을 살린다 —
-      즉 ablation = *"redirect 3 을 표기로 오분류"*. 그래서 **이동 probe 이름 집합**을 assert 한다.
+    ★ ablation = *"redirect 3 을 표기로 오분류"* — 그러면 `ENV-4` **적용** 판별(#7)과 **전제 축**이
+      각각 무주공산이 된다. 그래서 **이동 probe 이름 집합**을 assert 하고, 형제 음성 대조가
+      그 오분류를 실제로 주입해 검출됨을 실증한다.
     ★ `C₀` 이동은 허용된다(핀 재유도 대상) — 재는 것은 **verdict 열**이지 sha 값이 아니다.
     """
-    _text, document, _ref = _load_target()
+    _text, document, _pin = _load_target()
 
     params = [
         name for name, p in inspect.signature(json.dumps).parameters.items()
@@ -1265,33 +1215,13 @@ def test_envelope_pin_swp_j_serialization_notation_universal():
         f"표기 정의역 불일치 (cls 제외 8): {sorted(set(swept) ^ set(SWP_J_NONDEFAULT))}"
 
     probes = _swp_j_probes()
-
-    def measure() -> Dict[str, str]:
-        ref_sha, _d = _envelope_outcome(copy.deepcopy(document), JOB2)
-        out = {}
-        for name, fn in probes.items():
-            out[name] = _verdict(fn(copy.deepcopy(document)), ref_sha)[0]
-        return out
-
-    base = measure()
+    base = _swp_j_measure(document, probes)
     print(f"  [SWP-J base] {base}")
-    # base 자체가 판별력을 가져야 한다 — 전 probe 가 같은 verdict 면 이동을 볼 수 없다
     assert len(set(base.values())) >= 3, f"probe set 이 3-verdict 를 못 낸다: {base}"
 
     for q in sorted(swept):
-        saved = dict(envelope_pin_module._JSON_SERIALIZE_KWARGS)
-        saved_key = dict(envelope_pin_module._JSON_KEY_KWARGS)
-        envelope_pin_module._JSON_SERIALIZE_KWARGS[q] = SWP_J_NONDEFAULT[q]
-        if q == "ensure_ascii":  # `ENV-6` — 키 렌더는 값 렌더와 같은 표기를 재사용한다
-            envelope_pin_module._JSON_KEY_KWARGS[q] = SWP_J_NONDEFAULT[q]
-        try:
-            variant = measure()
-        finally:
-            envelope_pin_module._JSON_SERIALIZE_KWARGS.clear()
-            envelope_pin_module._JSON_SERIALIZE_KWARGS.update(saved)
-            envelope_pin_module._JSON_KEY_KWARGS.clear()
-            envelope_pin_module._JSON_KEY_KWARGS.update(saved_key)
-
+        with _patched_serialize_kwargs(q, SWP_J_NONDEFAULT[q]):
+            variant = _swp_j_measure(document, probes)
         moved = {name for name in base if base[name] != variant[name]}
         expected_moved = SWP_J_REDIRECT.get(q, set())
         print(f"  [SWP-J {q:15}] 이동 probe={sorted(moved) or '없음(verdict-중립)'}")
@@ -1300,10 +1230,401 @@ def test_envelope_pin_swp_j_serialization_notation_universal():
             f"실측 {sorted(moved)} ({[(n, base[n], variant[n]) for n in sorted(moved)]})"
         )
 
-    # 훅 복원 확인 — 표기 치환이 새어 나가면 후속 테스트가 오염된다
     assert envelope_pin_module._JSON_SERIALIZE_KWARGS == {
         "sort_keys": True, "ensure_ascii": False, "separators": (",", ":")}, \
-        "표기 치환이 복원되지 않았다"
+        "표기 치환이 복원되지 않았다 (후속 테스트 오염)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ablation witness (§8.B 「변종 정의 못박기」 — 구성 방식 **전문 고정**)
+#
+# ★★ witness 는 **정본의 변종**이어야 한다 — 정규화기를 복제하면 그 순간 "다른 함수"가 되고
+#    표의 수치가 재현되지 않는다. ⇒ 전건 **참조 구현 모듈 속성의 런타임 치환**으로 구성하고
+#    (`envelope_pin.py` **무접촉**), 원 함수를 감싸 최소 변형만 얹는다.
+# ★★ witness 가 born-broken 이면 「판별 有」가 **거짓**이 된다(`V-DROPEMPTY` 를 `pre_val` 로
+#    만들면 (a) 가 PASS 로 조용히 통과). ⇒ 음성 대조는 **정본 정의역에서 반드시 검출**을 요구한다.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@contextlib.contextmanager
+def _patched_envelope_pin(**attrs):
+    r"""참조 구현 모듈 속성을 일시 치환 (원상 복구 보장).
+
+    ★ `compute_envelope_from_document` 는 `cut_envelope`·`_normalize_mapping` 을 **모듈 전역**으로
+      조회하므로, 모듈 속성 치환이 곧 「그 파이프라인의 변종」이 된다.
+    """
+    saved = {name: getattr(envelope_pin_module, name) for name in attrs}
+    try:
+        for name, value in attrs.items():
+            setattr(envelope_pin_module, name, value)
+        yield
+    finally:
+        for name, value in saved.items():
+            setattr(envelope_pin_module, name, value)
+
+
+@contextlib.contextmanager
+def _patched_serialize_kwargs(param: str, value: Any):
+    r"""직렬화 표기 파라미터 1개를 비-기본값으로 치환 (`SWP-J` 전용)."""
+    saved = dict(envelope_pin_module._JSON_SERIALIZE_KWARGS)
+    saved_key = dict(envelope_pin_module._JSON_KEY_KWARGS)
+    try:
+        envelope_pin_module._JSON_SERIALIZE_KWARGS[param] = value
+        if param == "ensure_ascii":  # `ENV-6` — 키 렌더는 값 렌더와 같은 표기를 재사용한다
+            envelope_pin_module._JSON_KEY_KWARGS[param] = value
+        yield
+    finally:
+        envelope_pin_module._JSON_SERIALIZE_KWARGS.clear()
+        envelope_pin_module._JSON_SERIALIZE_KWARGS.update(saved)
+        envelope_pin_module._JSON_KEY_KWARGS.clear()
+        envelope_pin_module._JSON_KEY_KWARGS.update(saved_key)
+
+
+def _w_lossy_deep():
+    r"""`V-LOSSY-DEEP` — `jobs.<JOB2>.steps[i].name` 을 봉투에서 **탈락**(`ENV-5` 위반)."""
+    orig = envelope_pin_module.cut_envelope
+
+    def cut(document, job2, *, path=None):
+        env = copy.deepcopy(orig(document, job2, path=path))  # ★ 원 문서 오염 금지
+        for step in env.get("jobs", {}).get(job2, {}).get("steps", []) or []:
+            if isinstance(step, dict):
+                step.pop("name", None)
+        return env
+
+    return {"cut_envelope": cut}
+
+
+def _w_topcol():
+    r"""`V-TOPCOL` — 충돌검사를 **봉투 root 한정**으로 축소.
+
+    ★ 구성 **전문 고정** = **노드 동일성**(`cut_envelope` 가 만든 root 객체와 `is` 비교).
+      깊이 카운터는 금지 구성이다 — 중첩 노드를 depth 1 로 오인해 *같은 이름의 다른 함수*가 된다.
+    """
+    orig_cut = envelope_pin_module.cut_envelope
+    orig_norm = envelope_pin_module._normalize_mapping
+    state = {"root": None}
+
+    def cut(document, job2, *, path=None):
+        env = orig_cut(document, job2, path=path)
+        state["root"] = id(env)
+        return env
+
+    def norm(node, *, pre_val, post_map):
+        if id(node) == state["root"]:
+            return orig_norm(node, pre_val=pre_val, post_map=post_map)
+        folded = {}
+        for key, value in node.items():          # 렌더 키 기준 last-wins 로 접힘을 **흡수**
+            folded[envelope_pin_module._render_key(key)] = value
+        return orig_norm(folded, pre_val=pre_val, post_map=post_map)
+
+    return {"cut_envelope": cut, "_normalize_mapping": norm}
+
+
+def _w_alljobs():
+    r"""`V-ALLJOBS` — 봉투 scope 를 **문서 전문**으로 확대 (`ENV-5` 비적용역 침범)."""
+    orig = envelope_pin_module.cut_envelope
+
+    def cut(document, job2, *, path=None):
+        orig(document, job2, path=path)          # 전제 `P-E1`~`P-E3` 는 그대로 통과시킨다
+        return copy.deepcopy(document)
+
+    return {"cut_envelope": cut}
+
+
+def _w_nostrip():
+    r"""`V-NOSTRIP` — 값 strip 제거 (`ENV-2` 흡수 축 소거)."""
+    orig = envelope_pin_module._normalize_map_value
+
+    def norm_val(value, *, pre_val, post_map):
+        if isinstance(value, str):
+            return value
+        return orig(value, pre_val=pre_val, post_map=post_map)
+
+    return {"_normalize_map_value": norm_val}
+
+
+def _w_keystrip():
+    r"""`V-KEYSTRIP` — **키에도** strip 적용 (`ENV-2` 비적용역 침범).
+
+    ★ 설계의 `V-KEYSTRIP-DEEP`(depth ≥ 1 한정)의 **depth-무관 형제**다 — 이름을 구분해 적는다
+      (같은 이름으로 부르면 수치가 갈리는 자리다).
+    """
+    orig = envelope_pin_module._render_key
+
+    def render(key):
+        return key.strip() if isinstance(key, str) else orig(key)
+
+    return {"_render_key": render}
+
+
+def _w_seqdedup():
+    r"""`V-SEQDEDUP` — sequence 원소 중복 제거 (`ENV-7` 다중도 소거).
+
+    ★ 구성 **전문 고정** = **equality 기반**(`any(e == x for x in out)`) — 해시 불가 원소 포함
+      전 원소에 적용. hashable-only(`set` 기반)는 mapping 원소를 조용히 통과시키는 *다른 함수*다.
+    """
+    orig = envelope_pin_module._normalize_sequence
+
+    def norm_seq(node, *, pre_val, post_map):
+        out = orig(node, pre_val=pre_val, post_map=post_map)
+        res: List[Any] = []
+        for elem in out:
+            if not any(elem == seen for seen in res):
+                res.append(elem)
+        return res
+
+    return {"_normalize_sequence": norm_seq}
+
+
+def _w_dropnull():
+    r"""`V-DROPNULL` — 정규화 **후**(`post_map` 위치) `None` 값 탈락 (`ENV-8`(a) 위반)."""
+    orig = envelope_pin_module._normalize_mapping
+
+    def norm(node, *, pre_val, post_map):
+        out = orig(node, pre_val=pre_val, post_map=post_map)
+        return {k: v for k, v in out.items() if v is not None}
+
+    return {"_normalize_mapping": norm}
+
+
+def _w_strkey():
+    r"""`V-STRKEY` — 전 비-문자열 키를 `str()` 로 렌더 (`ENV-6` 렌더 동일성 위반).
+
+    ★ `str(True) == 'True' != 'true'` 라 `ENV-3` fail-closed 가 **한 번도 발동하지 않는다**.
+    """
+    def render(key):
+        return key if isinstance(key, str) else str(key)
+
+    return {"_render_key": render}
+
+
+def _dup_loader_variant(root_only: bool, merge_raise: bool):
+    r"""`ENV-1` 파싱 층 변종 로더 — `dup_safe_load` 치환용."""
+    class _Variant(yaml.SafeLoader):
+        _root_node = None
+
+        def construct_document(self, node):
+            self._root_node = node          # ★ 노드 동일성 포착 (깊이 카운터 금지)
+            return super().construct_document(node)
+
+        def construct_mapping(self, node, deep=False):
+            if merge_raise:
+                for key_node, _v in node.value:
+                    if getattr(key_node, "tag", None) == "tag:yaml.org,2002:merge":
+                        raise yaml.constructor.ConstructorError(
+                            "while constructing a mapping", node.start_mark,
+                            "merge key rejected (V-MERGERAISE)", key_node.start_mark)
+            if not root_only or node is self._root_node:
+                seen = set()
+                for key_node, _v in node.value:
+                    if getattr(key_node, "tag", None) == "tag:yaml.org,2002:merge":
+                        continue
+                    try:
+                        key = self.construct_object(key_node, deep=deep)
+                    except yaml.constructor.ConstructorError:
+                        continue
+                    try:
+                        duplicated = key in seen
+                    except TypeError:
+                        continue
+                    if duplicated:
+                        raise yaml.constructor.ConstructorError(
+                            "while constructing a mapping", node.start_mark,
+                            f"duplicate key {key!r}", key_node.start_mark)
+                    seen.add(key)
+            return super().construct_mapping(node, deep=deep)
+
+    return lambda text: yaml.load(text, Loader=_Variant)
+
+
+def _w_dupdepth():
+    r"""`V-DUPDEPTH` — 중복 키 검출을 **봉투 root 한정**(노드 동일성)으로 축소 (`ENV-1` 위반)."""
+    return {"dup_safe_load": _dup_loader_variant(root_only=True, merge_raise=False)}
+
+
+def _w_mergeraise():
+    r"""`V-MERGERAISE` — merge key node 를 skip 하지 않아 정상 merge 를 `exit 2` 로 낸다."""
+    return {"dup_safe_load": _dup_loader_variant(root_only=False, merge_raise=True)}
+
+
+# ★ sweep ↔ ablation target 배정 (§8.B 피복표 「ablation target」 열).
+#   sweep 별로 **그 sweep 이 잡아야 하는 결함 구현**을 지목한다.
+SWEEP_ABLATIONS: Dict[str, List[Tuple[str, Callable[[], Dict[str, Any]]]]] = {
+    "SWP-A": [("V-LOSSY-DEEP", _w_lossy_deep)],
+    "SWP-B": [("V-TOPCOL", _w_topcol)],
+    "SWP-C": [("V-ALLJOBS", _w_alljobs)],
+    "SWP-D": [("V-NOSTRIP", _w_nostrip)],
+    "SWP-E": [("V-KEYSTRIP", _w_keystrip)],
+    "SWP-F": [("V-SEQDEDUP", _w_seqdedup)],
+    "SWP-G": [("V-DROPNULL", _w_dropnull)],
+    "SWP-H": [("V-STRKEY", _w_strkey)],
+    "SWP-I": [("V-DUPDEPTH", _w_dupdepth), ("V-MERGERAISE", _w_mergeraise)],
+}
+
+# ★ 퇴화 정의역 필터 (§8.B `DERIVE-*`) — **규칙으로 정의**하고 크기를 하드코딩하지 않는다.
+DEGENERATE_DOMAIN_FILTERS: Dict[str, Callable[[set], set]] = {
+    "DERIVE-EMPTY": lambda dom: set(),
+    "DERIVE-TOPONLY": lambda dom: {e for e in dom if len(_elem_path(e)) <= 1},
+    "DERIVE-SHALLOW": lambda dom: {e for e in dom if len(_elem_path(e)) <= 2},
+}
+
+
+@pytest.mark.parametrize("sweep_id", sorted(SWEEP_ABLATIONS))
+def test_envelope_pin_derivation_negative_control(sweep_id):
+    r"""★ 파생 유틸 자기검사 **(c) 음성 대조** — **sweep 별**로 *"검출은 정의역에서 온다"* 를 실증.
+
+    §8.B: *"(a) 단독은 불충분하다 — `DERIVE-TOPONLY` 는 **비공허(1)** 이면서 여전히 무력하다."*
+    ⇒ 전역 1회로 두면 *"어느 한 sweep 은 정의역에서 검출력이 온다"* 만 실증하고 **나머지 sweep 의
+      정의역은 무인증**으로 남는다 — 그게 정확히 다음 층에서 뚫리는 형태다.
+
+    각 sweep × 각 ablation witness 에 대해:
+      (1) **정본 정의역**에서 그 witness 가 **검출**된다 (기대 미달 원소 ≥ 1)
+          ★ witness 가 born-broken(미검출)이면 「판별 有」가 거짓이므로 이 assert 가 먼저 터진다.
+      (2) **`DERIVE-EMPTY`**(정의역 0)에서는 **검출 0** — 검출이 셀이 아니라 **정의역**에서 옴을 실증
+      (3) `DERIVE-TOPONLY`/`DERIVE-SHALLOW` 산출은 **관측 사실로 출력**한다.
+          ★ 여전히 검출되는 witness 도 있다(그 결함이 얕은 정의역에도 발현하는 경우) —
+            그 사실을 **숨기지 않고 그대로 적는다**. 없는 상실을 지어내지 않는다.
+    """
+    text, document, _pin = _load_target()
+
+    for witness_name, builder in SWEEP_ABLATIONS[sweep_id]:
+        patch = builder()
+        with _patched_envelope_pin(**patch):
+            halves = [h for h in _sweep_halves(document, text) if h.sweep == sweep_id]
+            assert halves, f"{sweep_id} 반쪽 부재"
+
+            full_detected, matrix = 0, {}
+            for half in halves:
+                _results, failures = _run_half(half)
+                full_detected += len(failures)
+                for deg_name, deg_filter in DEGENERATE_DOMAIN_FILTERS.items():
+                    shrunk = deg_filter(half.domain)
+                    _r2, f2 = _run_half(half, shrunk)
+                    key = (deg_name, half.half)
+                    matrix[key] = (len(shrunk), len(f2))
+
+        print(f"  [음성 대조 {sweep_id} × {witness_name}] 정본 정의역 검출={full_detected}")
+        for (deg_name, half_name), (size, detected) in sorted(matrix.items()):
+            print(f"      {deg_name:16} {half_name:28} 정의역={size:5} 검출={detected}")
+
+        # (1) witness 는 정본 정의역에서 **반드시 검출**된다 (born-broken witness 차단)
+        assert full_detected > 0, (
+            f"{sweep_id} 의 ablation target {witness_name} 이 **정본 정의역에서도 미검출** — "
+            f"sweep 이 무력하거나 witness 가 born-broken 이다")
+        # (2) 정의역이 0 이면 검출도 0 — 검출은 셀이 아니라 정의역에서 온다
+        empty_detected = sum(d for (deg, _h), (_s, d) in matrix.items() if deg == "DERIVE-EMPTY")
+        assert empty_detected == 0, f"DERIVE-EMPTY 에서 검출 {empty_detected} — 음성 대조 전제 붕괴"
+
+
+def test_envelope_pin_swp_j_negative_control_redirect_misclassification():
+    r"""★ `SWP-J` 의 음성 대조 — ablation = *"**redirect 3 을 표기로 오분류**"*.
+
+    `SWP-J` 는 정의역이 대상 구조가 아니라 **직렬화기 시그니처**에 살아서 퇴화 *정의역* 축이
+    형제 sweep 과 다르다. 대신 설계가 지목한 ablation 을 **실제로 주입**한다 — redirect 축을
+    「표기(중립)」로 오분류하면 `ENV-4` **적용** 판별(#7)과 **전제 축**이 각각 무주공산이 되므로,
+    그 오분류 아래에서 sweep 이 **불일치를 낸다**(= 검출)를 실증한다.
+    """
+    _text, document, _pin = _load_target()
+    probes = _swp_j_probes()
+    base = _swp_j_measure(document, probes)
+
+    misclassified: Dict[str, set] = {}          # ★ redirect 3 을 통째로 「중립」으로 오분류
+    detected = []
+    for q in sorted(SWP_J_NONDEFAULT):
+        with _patched_serialize_kwargs(q, SWP_J_NONDEFAULT[q]):
+            variant = _swp_j_measure(document, probes)
+        moved = {n for n in base if base[n] != variant[n]}
+        if moved != misclassified.get(q, set()):
+            detected.append((q, sorted(moved)))
+
+    print(f"  [음성 대조 SWP-J × redirect-오분류] 검출 축={detected}")
+    assert {q for q, _m in detected} == set(SWP_J_REDIRECT), (
+        "redirect 축을 「표기」로 오분류했는데 sweep 이 그 사실을 검출하지 못했다: "
+        f"{detected}")
+
+    # ★ 정의역 declare — 설계 자유도 표의 `0/30` 은 **`separators`·`ensure_ascii` 행**에 붙은
+    #   수치이고, `SWP-J` 로스터 행은 「중립 5 ∧ redirect 3」을 명시한다. 본 sweep 산출은
+    #   양쪽과 일치한다. 단 본 probe set 은 **합성 값**(NaN·date)을 포함하므로, 그 값들이
+    #   **실 대상에 부재**함을 실측해 「착지 형상의 verdict 는 불변」임을 함께 세운다.
+    leaves = _all_leaf_paths(cut_envelope(document, JOB2))
+    values = [_get_node_at_path(document, p) for p in leaves]
+    assert not [v for v in values if isinstance(v, float) and v != v], "대상에 NaN 값 실재"
+    assert not [v for v in values if isinstance(v, (datetime.date, datetime.datetime))], \
+        "대상에 date/datetime 값 실재"
+    print("  [SWP-J 정의역 declare] 실 대상 leaf 에 NaN 0 · date 0 — "
+          "redirect 3 은 **합성 probe 정의역**에서만 이동한다 (착지 형상 verdict 불변)")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 로스터 완전성 (§8.B 「sweep 로스터」 ∧ `VU-4` 전칭 단위)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ★ 로스터는 **재현 규칙으로 지목**한다 — *"§8.B 피복표에서 역할 열이 `(sweep)` 인 행 전수"*.
+#   현행 = `SWP-A`~`SWP-J` 10종. 각 id 는 담지 테스트 함수 1개와 결속된다.
+SWEEP_ROSTER: Dict[str, str] = {
+    "SWP-A": "test_envelope_pin_swp_a_applicable_leaf_universal",
+    "SWP-B": "test_envelope_pin_swp_b_applicable_mapping_collision_universal",
+    "SWP-C": "test_envelope_pin_swp_c_nonapplicable_jobs_other_universal",
+    "SWP-D": "test_envelope_pin_swp_d_value_padding_absorbed_universal",
+    "SWP-E": "test_envelope_pin_swp_e_nonabsorbed_padding_universal",
+    "SWP-F": "test_envelope_pin_swp_f_datastructure_universal",
+    "SWP-G": "test_envelope_pin_swp_g_value_kind_fidelity_universal",
+    "SWP-H": "test_envelope_pin_swp_h_key_type_universal",
+    "SWP-I": "test_envelope_pin_swp_i_text_layer_universal",
+    "SWP-J": "test_envelope_pin_swp_j_serialization_notation_universal",
+}
+
+
+def test_envelope_pin_sweep_derivation_completeness():
+    r"""**로스터 완전성** — `SWP-A`~`SWP-J` **10종 전건**이 실 담지 테스트로 존재하고, 정의역이
+    **적용역 전체를 덮으며**, spine 이 **실제로 제외**돼 있는가.
+
+    ★★ 구 판본은 `sweep_covered := mapping_nodes − SPINE_PATHS` 로 집합을 **구성한 뒤**
+       `p ∈ SPINE ∨ p ∈ sweep_covered ∨ len(p) > 0` 을 단언했다 — 앞 두 항이 구성상 전체를
+       덮으므로 **삼중 항진**이고, `_all_mapping_nodes` 를 `{()}` 로 파괴해도 통과했다.
+       ⇒ 본 판본은 **독립 파생끼리 대조**한다(구성한 것을 확인하지 않는다).
+    """
+    text, document, _pin = _load_target()
+    envelope = cut_envelope(document, JOB2)
+    domains = _sweep_domains(envelope)
+
+    # (1) 로스터 10종 전건이 **실재하는 담지 테스트**와 결속
+    assert set(SWEEP_ROSTER) == {f"SWP-{c}" for c in "ABCDEFGHIJ"}, \
+        f"로스터 id 집합 불일치: {sorted(SWEEP_ROSTER)}"
+    for sweep_id, fn_name in sorted(SWEEP_ROSTER.items()):
+        fn = globals().get(fn_name)
+        assert callable(fn), f"{sweep_id} 담지 테스트 {fn_name} 부재"
+        assert sweep_id in (fn.__doc__ or ""), f"{fn_name} docstring 이 {sweep_id} 를 지목하지 않는다"
+
+    # (2) `SWP-A`~`SWP-I` 는 반쪽 등록 ∧ 정의역 비공허 / `SWP-J` 는 형태가 달라 별 담지
+    halves = _sweep_halves(document, text)
+    registered = {h.sweep for h in halves}
+    assert registered == {f"SWP-{c}" for c in "ABCDEFGHI"}, \
+        f"반쪽 등록 sweep 집합 불일치: {sorted(registered)}"
+    assert "SWP-J" not in registered, "SWP-J 는 구조 정의역 sweep 이 아니다 (별 담지)"
+    for half in halves:
+        assert half.domain, f"{half.sweep} {half.half} 정의역 공허"
+
+    # (3) **적용역 전체 피복** — 위치 4 범주가 각각 sweep 정의역에 담긴다 (여집합 0)
+    covered_paths = set()
+    for half in halves:
+        covered_paths |= {_elem_path(e) for e in half.domain}
+    census = (domains["leaves"] | domains["mapping_nodes"] | domains["sequences"]
+              | {p for p, _k in domains["string_keys"]}
+              | {p for p, _k in domains["nonstring_keys"]}
+              | {p for p, _i in domains["bare_sequence_string_elements"]})
+    uncovered = census - covered_paths
+    assert not uncovered, f"sweep 정의역이 덮지 않는 적용역 위치: {sorted(uncovered, key=str)}"
+
+    # (4) spine 이 **실제로 제외**됐다 (포함하면 정본이 born-RED 가 되는 자리)
+    assert ("jobs",) not in domains["mapping_nodes"], "spine 합성 래퍼가 정의역에 남았다"
+    assert ((), "jobs") not in domains["string_keys"], "spine 키(top-level jobs)가 정의역에 남았다"
+    assert (("jobs",), JOB2) not in domains["string_keys"], "spine 키(JOB2)가 정의역에 남았다"
+
+    # (5) **비-문자열 키 1종**을 이름 집합으로 pin (`SWP-E` 가 제외한 그 원소 — 카디널리티 형 금지)
+    assert domains["nonstring_keys"] == {((), True)}, \
+        f"비-문자열 키 이름 집합 불일치: {sorted(domains['nonstring_keys'], key=str)}"
+
+    print(f"[PASS] 로스터 완전성 — sweep {len(SWEEP_ROSTER)}종 · 반쪽 {len(halves)} · "
+          f"피복 위치 {len(covered_paths)} · 미피복 0")
 
 
 def test_envelope_pin_coverage_table_witnesses():
@@ -1533,35 +1854,6 @@ def test_envelope_pin_coverage_table_witnesses():
         print(f"    {vname:<20} (b): PASS {actual_b}/{num_b_cells}")
 
     print(f"\n[PASS] Coverage table — 18칸 assert 완료")
-
-
-def test_envelope_pin_sweep_derivation_completeness():
-    r"""Stage 2: Sweep 로스터 완전성 — 모든 mapping nodes 커버.
-
-    SWP-A~SWP-J 10개 sweep에서 파생하는 witness 가 모든 mapping node 를 테스트하는가.
-    """
-    with open(WF_PATH, encoding="utf-8-sig", newline=None) as fh:
-        text = fh.read()
-    document = dup_safe_load(text)
-
-    envelope = cut_envelope(document, JOB2)
-    mapping_nodes = _all_mapping_nodes(envelope)
-
-    # Sweep 로스터 (정본 구현에서 테스트되는 path 집합)
-    # 최소한: spine paths (jobs, jobs.JOB2) + 각 단계의 with 의존성
-    sweep_covered = set()
-
-    # ★ 음성 대조: spine 경로는 sweep 제외
-    for path in mapping_nodes:
-        if path not in SPINE_PATHS:
-            sweep_covered.add(path)
-
-    # 모든 mapping node 가 spine 이거나 sweep 에 포함되어야 함
-    for path in mapping_nodes:
-        assert path in SPINE_PATHS or path in sweep_covered or len(path) > 0, \
-            f"Path {path} not covered by sweep"
-
-    print(f"[PASS] Sweep derivation completeness — {len(sweep_covered)} paths covered")
 
 
 def test_envelope_pin_falsification_dropfalse():
