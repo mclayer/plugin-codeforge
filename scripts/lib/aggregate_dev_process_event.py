@@ -520,6 +520,29 @@ def compute_selfref_recurrence(rows, stats):
 
 # ═══════════════════════ 지표⑤ trend + §D-9 feed (§4.5, AC-16/17/18/19) ════════════════
 
+# ★ CFP-2985 D-13 — `root_cause_class` 표기 정규화 (Story §5.4 AC-16 mutant3).
+#   요구: "원인 값을 장식·대소문자 변형해 원장에 투입 → 집계 결과 분포가 **동일**(정규화 후 집계)".
+#   정규화하지 않으면 `설계` / `**설계**` / ` 설계 ` 가 **서로 다른 3 bucket** 으로 갈라져
+#   분포가 표기 변형에 지배된다(값이 아니라 형식이 집계를 결정 — §3.4 와 동형 결함).
+#   ★ 정직 천장: 흡수하는 것은 **양끝 장식·공백·ASCII 대소문자**뿐이다. 어휘 자체가 다른 값
+#   (오타·동의어·enum 밖 토큰)은 정규화 대상이 아니며 **별 bucket 으로 그대로 방출**한다
+#   (silent drop 0 — 값공간 강제는 적재 경계[append_dev_process_event] 소관, 집계는 형태만 본다).
+#   ★ 정규식 미사용 — 본 모듈의 "regex 파싱 경로 부재" 선언(파일 헤더)을 깨지 않는다.
+_RCC_TRIM_CHARS = "*_`~" + "\u00a0" + "\u3000"   # markdown emphasis + code span + strikethrough + NBSP/ideographic space
+
+
+def _norm_root_cause_value(raw):
+    """원인값 표기 정규화 — 양끝 공백·장식 제거 후 casefold. 빈 값·None → None."""
+    if raw is None:
+        return None
+    s = str(raw)
+    prev = None
+    while prev != s:                      # 장식·공백이 교대로 감싼 경우까지 (`** 설계 **`)
+        prev = s
+        s = s.strip().strip(_RCC_TRIM_CHARS)
+    return s.casefold() if s else None
+
+
 def compute_trend(rows, stats):
     """지표⑤ 추세(bucketed observational, NO forecast) + §D-9 pattern feed (pure fn).
 
@@ -553,7 +576,7 @@ def compute_trend(rows, stats):
     root_cause_distribution: dict = {}
     if has_rcc:
         for r in rows:
-            c = r.get("root_cause_class")
+            c = _norm_root_cause_value(r.get("root_cause_class"))   # ★ 정규화 후 집계 (mutant3)
             if c is None:
                 continue
             root_cause_distribution[c] = root_cause_distribution.get(c, 0) + 1
@@ -588,6 +611,7 @@ def compute_trend(rows, stats):
         # ★ AC-16 leg3 — has_rcc 단독 gate (AND 게이트 밖). §4.4 집계 산출 계약.
         #   `root_cause_class`(top-level scalar) 는 schema-pin 대상이라 **map 으로 타입 변경하지
         #   않는다** — 분포는 이 별도 키로 낸다.
+        #   ★ key = `_norm_root_cause_value` 정규화 후 값 (장식·공백·대소문자 변형 흡수, D-13).
         "root_cause_distribution": root_cause_distribution,
         "honesty_note": (
             "observational time-series only — forecast/prediction/projection 필드 부재(negative control). "
