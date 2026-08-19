@@ -519,8 +519,8 @@ def test_envelope_pin_coverage_table_witnesses():
 
             # 각 구별쌍마다
             for pair_idx, (v1, v2) in enumerate(pairs):
-                probed1 = _inject_probe_at_node(document, node_path, f"__PROBE_P{pair_idx}_A__", v1)
-                probed2 = _inject_probe_at_node(document, node_path, f"__PROBE_P{pair_idx}_B__", v2)
+                probed1 = _inject_probe_at_node(document, node_path, "__PROBE_KIND__", v1)
+                probed2 = _inject_probe_at_node(document, node_path, "__PROBE_KIND__", v2)
 
                 sha1 = _compute_sha_with_hooks(probed1, JOB2, pre_val=pre, post_map=post)
                 sha2 = _compute_sha_with_hooks(probed2, JOB2, pre_val=pre, post_map=post)
