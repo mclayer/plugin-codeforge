@@ -40,36 +40,49 @@ detected = "rate limit" in response_body
 - **False-positive 차단**: regex wildcard 0 (closed-set only). user prompt body verbatim match 차단 (response source verify, TLS layer). fable-리밋 failover 감지 scope = error/termination notification 표면 한정 (subagent substantive output 본문 NOT — false-positive hazard, ADR-141 A6-1).
 - **529 disjoint** (ADR-109 §결정 6): HTTP 529 status code = retry 무의미 영역 — 본 skill 영역 외 (longer cooldown 60s base max 300s separate axis). 529 = failover 감지집합 NOT-IN (pool-agnostic overload, ADR-109 §결정1 Amendment 1 (e)).
 
+#### Step 1.1 — 산출 고정 (대기 진입 **전** — ADR-179 §결정 7)
+
+탐지 직후 · **대기 진입 전**에 부분 산출을 먼저 고정한다. 대기·재시도는 그 다음이다.
+
+- 고정 대상·형식 = [ADR-179](../../archive/adr/ADR-179-agent-salvage-bundle-handoff.md) §결정 2 salvage 번들(reference-first 얇은 인덱스). 본 skill 은 **착지 시점만** 규정하고 번들 스키마를 재정의하지 않는다 (pointer only).
+- 고정 실패 시 degrade = ADR-179 §결정 8 사다리(primary → F1 → F2 → F3). **degrade 경로에 §결정 2 backoff 재적용 금지** — 회수는 재시도 축이 아니다 (ADR-179 §결정 6).
+- 회수 자체의 **재시도 예산 = 0**. 사다리의 재시도 예산은 본 절차 소관 (ADR-179 §결정 7 표 `429 계열` 행).
+
 ### Step 2 — 대기 (Backoff)
 
 ADR-109 §결정 2 exp-backoff curve full jitter (Marc Brooker AWS Architecture Blog 2015 verbatim).
 
-#### Step 2.1 — Retry-After header 우선
+#### Step 2.1 — 대기원 헤더 (wait source)
 
-`Retry-After` 또는 `anthropic-ratelimit-*-reset` header presence 시 header 값 적용 (exp-backoff override):
+대기원 = **`retry-after` 한정**(초 단위 상대값). `anthropic-ratelimit-*-reset` 계열은 **RFC 3339 절대시각**이라 대기원이 **아니다** — 잔여 창 계산 정보로만 쓴다. 근거·SSOT = [ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md) §결정 2 (Amendment 3 정정).
+
+**헤더 의미 클래스표 (정본 — 대조 대상, 하드코딩 사본 금지)**
+
+```header-semantic-class
+# [source: https://platform.claude.com/docs/en/api/rate-limits]
+# <header token> | <semantic class> | <대기원 자격>
+retry-after | relative-seconds | eligible
+anthropic-ratelimit-*-reset | absolute-rfc3339 | ineligible
+```
 
 ```
-wait_seconds = parse_retry_after_header(response.headers)
+wait_seconds = parse_retry_after_header(response.headers)   # 입력 = retry-after 만
+# retry-after 부재 → header 유래 대기 산출 0 (reset 계열로 대체 산출 금지)
 ```
 
 #### Step 2.2 — Exp-backoff curve (header 부재 시)
 
-```
-wait_seconds = random_uniform(0, min(60, base * 2^attempt))
-# base = 1s, attempt = 0..5 (max 6 attempts)
-# 1s → 2s → 4s → 8s → 16s → 32s nominal, jittered (full jitter algorithm)
-```
+곡선·파라미터의 **수치는 본 문서에 기재하지 않는다.** 단일 SSOT = [ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md) §결정 2 (Amendment 3 "Single SSOT — backoff 파라미터"). formula · base · single-attempt cap · max attempts · nominal 계열 · 누적 budget **전건**을 그 절에서 읽어 적용한다.
 
-- **single attempt cap = 60s** (max wait per individual retry)
-- **total max attempts = 6** (cumulative wall-clock ≤ 75s budget, EC-1 정합)
-- **jitter rationale**: no-overlap retry distribution (contention avoidance proven, AWS verbatim)
+- **재기재 금지 사유 (사변 아님 — 관측된 divergence)**: 구 사본은 cap 을 상한 **안**(`min(...)`)으로 옮겨 SSOT 가 열어둔 자유도를 사본이 결정했다. 두 문서를 읽은 두 사람이 서로 다른 구현을 얻었다. 사본을 지우는 것이 정정이다.
+- **jitter rationale**: no-overlap retry distribution (contention avoidance proven) — empirical-source 인용은 ADR-109 §결정 2 소재.
 
 ### Step 3 — 재시도 (Retry sequential composition)
 
 ADR-109 §결정 3 sequential composition (within-model timing axis → cross-model substitution axis disjoint cross-ref).
 
 ```
-attempt 1: same-model retry (within-model timing axis, 본 ADR 신설)
+attempt 1: same-model timing 경로 (경로 키 `same-model-timing`) — SSOT = ADR-109 §결정 3 step1 + §결정 2
   ├── success → §14 Lane Evidence marker write [429-auto-retry: count=1, final_status=success] → return
   └── failure → attempt 2
 
@@ -77,12 +90,69 @@ attempt 2: cross-model substitution (step2 slot) — 현 tenant = ADR-141 Amendm
            (fable-리밋 → opus failover, max 1회 per-spawn-attempt, cross-model axis cross-ref)
            prior tenant: ADR-057 §결정 2 (Sonnet → Opus) — ADR-141 로 moot/dead (dead-mark 보존)
   ├── success → §14 marker [429-auto-retry: count=2, final_status=success] → return
-  └── failure (opus 도 429) → attempt 3..6 (soak 6 attempts)
+  └── failure (opus 도 리밋) → attempts 3..N (soak)
 
-attempts 3-6: 6 attempts soak (§결정 2 max 6 attempts cap)
+attempts 3..N: soak (경로 키 `soak`) — SSOT = ADR-109 §결정 3 step3 + §결정 2 max attempts
   ├── any success → §14 marker → return
-  └── all fail → §결정 4 circuit breaker open → §결정 5 user manual resume only
+  └── all fail → ADR-109 §결정 4 circuit breaker open → ADR-109 §결정 5 user manual resume only
+                 (경로 키 `manual-resume`, SSOT = ADR-109 §결정 3 step4)
 ```
+
+> `N` = ADR-109 §결정 2 max attempts. 본 문서는 그 수치를 재기재하지 않는다 (Step 2.2 pointer 규율).
+
+#### Step 3.0 — 재시도 사다리 레지스트리 (native ∪ codeforge 통합)
+
+본 표 = **재시도를 발행하는 단계**의 통합 레지스트리다. codeforge 사다리만 담으면 `distinct(층) = {codeforge}` 가 되어 **공집합 위 항진**(구조적 항상-GREEN)이므로, **네이티브 행 등재가 필요조건**이다.
+
+- **`층` 값공간 (본 표가 유일 정의 site)** = `native` 또는 `codeforge`. 미기재·값공간 밖 = **fail-closed**.
+- **`slot` ordinal 1..4 = frozen** — SSOT = ADR-109 §결정 3 "slot ordinal frozen". 번호를 당기면 ADR-141 A6-2 의 "step1 bypass → step2 직행" 이 *"soak 을 bypass 하고 soak 으로 직행"* 이라는 자기모순이 된다. **dead 인 것은 tenant 이지 slot 이 아니다.** 네이티브 행은 §결정 3 ordinal 을 갖지 않으므로 `-`.
+- **`대상 클래스` 값공간 = ADR-109 §결정 1 Amendment 1 (b) code-fence 6 literal.** 본 표는 그 fence 를 **참조**하며 재열거하지 않는다 (하드코딩 사본 금지 · 단일 SSOT).
+- **`층` 은 선언인 동시에 검사 대상** — 검사는 `SSOT`·`mechanism_ref` 열에서 층을 **독립 도출**해 선언 라벨과 교차검증한다. 불일치 = fail-closed.
+
+**네이티브 커버 정본 앵커 (closed set — 앵커 의무·유일성·클래스 정합의 대조 정본)**
+
+```native-cover-anchor
+# <anchor> | <axis> | <커버 클래스 (6-literal 중)>
+# 출처: Story CFP-2984 §6.3.2 커버 경계 표(835 / 836 / 837 / 854) + §6.3.3 승수(855).
+CHANGELOG:835 | non-retry | rate limit, quota exceeded, 429, Server is temporarily limiting
+CHANGELOG:836 | non-retry | rate limit, quota exceeded, 429, Server is temporarily limiting
+CHANGELOG:837 | non-retry | usage limit, session limit
+CHANGELOG:854 | retry | rate limit, quota exceeded, 429, Server is temporarily limiting
+CHANGELOG:855 | retry | rate limit, quota exceeded, 429, Server is temporarily limiting
+```
+
+- `층=native` 행은 **`axis: retry` 앵커만** 인용할 수 있다 — 본 레지스트리 정의역 = 재시도 **발행**. `non-retry` 앵커(부분 산출 반환 · 오분류 보고)를 인용해 네이티브를 참칭하는 경로를 닫는다.
+- **앵커 유일성**: 한 앵커를 2개 이상의 `층=native` 행이 주장할 수 없다.
+- `CLAUDE_CODE_RETRY_WATCHDOG` 와 `CLAUDE_CODE_MAX_RETRIES` 는 **같은 CHANGELOG 조항(`855`) 한 변경**이라 앵커 유일성 하에서 2 행으로 분리할 수 없다 — 1 행에 두 env 를 tenant 로 병기한다 (없는 앵커를 지어내지 않는다).
+
+| slot | 경로 키 | 층 | 대상 클래스 | tenant | SSOT | mechanism_ref |
+|---|---|---|---|---|---|---|
+| - | `native-transient-retry` | native | rate limit, quota exceeded, 429, Server is temporarily limiting | harness 자동 backoff 재시도 | harness CHANGELOG | CHANGELOG:854 |
+| - | `native-retry-multiplier` | native | rate limit, quota exceeded, 429, Server is temporarily limiting | `CLAUDE_CODE_MAX_RETRIES` 기본 상한 + `CLAUDE_CODE_RETRY_WATCHDOG` 활성 시 상향 | harness CHANGELOG | CHANGELOG:855 |
+| 1 | `same-model-timing` | codeforge | session limit, usage limit | ADR-109 §결정 2 backoff (한도 계열 진입 대기) | ADR-109 §결정 3 step1 | - |
+| 2 | `cross-model-substitution` | codeforge | session limit, usage limit | ADR-141 Amendment 6 fable→opus fresh re-spawn | ADR-141 Amendment 6 | - |
+| 3 | `soak` | codeforge | session limit, usage limit | ADR-109 §결정 2 max attempts soak | ADR-109 §결정 3 step3 | - |
+| 4 | `manual-resume` | codeforge | session limit, usage limit | ADR-109 §결정 5 user manual resume only | ADR-109 §결정 3 step4 | - |
+
+> **중첩 금지 — 실제 중첩 제거의 결과**: transient 429 계열(base 4-tuple)의 재시도 **발행은 네이티브 전담**이다. codeforge 사다리는 네이티브가 재시도하지 **않는** 한도 계열(`session limit` / `usage limit`)만 발행한다. 두 층의 대상 클래스 교집합 = **공집합**. 구 문면은 attempt 1 이 transient 429 를 대상으로 삼아 네이티브 승수 × codeforge 사다리 **중첩을 지시**하고 있었고, 그것이 retry amplification 의 자기생산이었다.
+>
+> **정직 천장 (over-claim 금지)**: 위 fail-closed 검사가 닫는 것은 **중복형 오라벨**(진짜 codeforge 단계를 유효 앵커 복사로 native 위장)뿐이다. **치환형**(네이티브 행 자체가 없고 codeforge 동작 서술 하나만 `native` 로 적힌 경우)은 "이 서술의 행위 주체가 누구인가" 라는 자연어 의미 판정으로 환원되어 **잔여**이며, **사람 검토(advisory)** 에 귀속된다. 본 절을 "층 오라벨 완전 봉쇄" 로 서술하지 말 것.
+
+#### Step 3.0b — 네이티브 재시도 승수에 대한 명시 입장
+
+증폭식 `N x M` 의 **N**(네이티브 승수)에 대한 codeforge 의 입장을 구조화 필드로 고정한다. **미기재 = 검사 실패(fail-closed).**
+
+```native-multiplier-stance
+# stance 값공간 (closed 3-enum) = 수용 | 상한 재설정 | 관측만
+# <multiplier> | <값> | <발동 조건> | <stance>
+dominant: CLAUDE_CODE_MAX_RETRIES
+CLAUDE_CODE_MAX_RETRIES | 기본 상한 15 | 상시 (현 지배 승수) | 수용
+CLAUDE_CODE_RETRY_WATCHDOG | 활성 시 300 (15 cap 해제) | watchdog 활성일 때만 — 호스트 env·settings 둘 다 미설정 실측 | 관측만
+```
+
+- **`300` 은 현행값이 아니다** — 상류 문면 verbatim = "watchdog **now raises** … to 300 **and lifts the cap of 15**" 이므로 **watchdog 활성이 전제**다. 현 지배 승수 = `CLAUDE_CODE_MAX_RETRIES` 기본 상한 **15**. `300` 을 현행으로 인용하면 위험을 20배 과장한다.
+- **`수용` 의 뜻** = codeforge 가 N 을 낮추지 않는다는 것이지 `N x M` 을 방치한다는 뜻이 아니다. M 측 통제는 Step 3.0 레지스트리의 중첩 금지(대상 클래스 교집합 = 공집합)가 담당한다.
+- **`관측만` 의 뜻** = watchdog 을 켜지 않는 현 상태의 기록이며, 켜면 N 이 300 으로 올라 증폭식이 바뀐다는 사실의 가시화다. 켜는 결정은 본 skill 밖.
 
 #### Step 3.1 — Circuit breaker open (ADR-109 §결정 4 3-window AND)
 
@@ -129,7 +199,19 @@ fable subagent 리밋 감지 (error/termination notification 표면 한정)
 Phase 0 brainstorm 7-agent burst + debate round + deputy fan-out 진입 직전 cap lookup. `docs/kpi/429-incident-history.jsonl` 직전 30분 window incident count 기준:
 
 ```
-intensity = count_429_incidents_last_30min()
+src = load("docs/kpi/429-incident-history.jsonl")
+
+# 데이터원 부재 3형태(파일 없음 / 빈 파일 / DATA 행 0)는 모두 "부재" 로 정규화한다.
+# 부재를 intensity == 0 (Low) 으로 삼키는 것 = silent-zero → 금지 (ADR-109 §결정 4 Amendment 3).
+if datasource_absent(src):
+    report("429 telemetry 데이터원 부재 — intensity 미판정")   # 명시 보고 의무
+    bucket = "unknown_absent_datasource"    # Low 로 낙하 금지 (부재 != 0건)
+    parallel_spawn_cap = 4
+    spawn_stagger_ms = 5000
+    fallback_mode = "sequential_2batch"
+    return
+
+intensity = count_429_incidents_last_30min(src)
 
 if intensity == 0:  # Low intensity
     parallel_spawn_cap = 7  # default (parallel-dispatch-protocol-v1 §6.2 worker_count_max)
@@ -150,6 +232,7 @@ else:  # High intensity (>= 2)
 - **Phase 0 brainstorm 7-agent spawn** (`codeforge:codeforge-brainstorm`): low/medium/high intensity bucket 적용
 - **Debate round N+1**: round-level cascade detection (직전 2 round 누적 429 ≥ 2건 → `pause_reason: 429_cascade_throttle` + `AskUserQuestion`)
 - **Deputy 6+3+1 + 4-tuple fan-out**: ArchitectPLAgent 단일-메시지 multi-tool spawn 직전 동일 lookup 적용
+- **★ 데이터원 부재 = 침묵 금지**: `docs/kpi/429-incident-history.jsonl` 의 기계 append 경로가 0건이라 count 는 항구적으로 0 이다 (ADR-109 §결정 4 Amendment 3 telemetry-gated 재선언). 부재를 Low 로 낙하시키면 "관측 결과 한산함" 과 "관측 자체가 없음" 이 구분 불가해진다 — 위 `unknown_absent_datasource` 분기가 그 구분을 강제한다.
 
 ## Anti-pattern guard (RefactorAgent 권고 정합)
 

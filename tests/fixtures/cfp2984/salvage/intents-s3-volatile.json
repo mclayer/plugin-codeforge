@@ -1,0 +1,18 @@
+[
+  {
+    "op": "comment_add",
+    "target": "mclayer/plugin-codeforge#2984",
+    "body": {
+      "title": "salvage 인계 요약",
+      "labels": [
+        "phase:구현"
+      ],
+      "note": "재개점 고정",
+      "created_at": "2026-08-15T23:59:59+09:00"
+    },
+    "nonce": "8a1f",
+    "retry_count": 3,
+    "session_id": "sess-xyz",
+    "created_at": "2026-08-15T23:59:59+09:00"
+  }
+]

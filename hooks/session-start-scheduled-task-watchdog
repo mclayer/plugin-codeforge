@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# hooks/session-start-scheduled-task-watchdog — SessionStart 스케줄 작업 생존 감시
+#
+# Carrier: CFP-2949 Phase 2 — SessionStart heartbeat 판독 hook
+#
+# 동작:
+#   - 스케줄 작업(별도 CLI)이 매일 1회 기동해 heartbeat 파일을 남긴다.
+#   - 본 hook 은 claudecode 세션 시작 시 그 heartbeat 를 판독해 경과를 측정한다.
+#   - 발화 정의역 = **채택자 한정** (구현리뷰 iter5 F-CR5-06, ArchitectPL 설계 판정).
+#     본 hook 은 전 consumer 세션에 등록되므로, heartbeat 부재를 무조건 사망으로 읽으면
+#     미채택 환경 전체가 매 세션 1줄을 받는다 — 관측 **대상의 부재**를 관측의 **실패**로
+#     오분류하는 것이다.
+#
+#   - heartbeat 부재는 **채택 표식으로 3분기**한다 (구현리뷰 iter6 F-CR6-01 — 못 찾음 ≠ 없음):
+#       (ㄱ) 표식 **부재 확정**(bound 안에서 전량 확인) + heartbeat 부재
+#            → **미채택 = 정상 침묵**, 무발화.
+#       (ㄴ) 표식 **존재** + heartbeat 부재 → **"채택했는데 한 번도 안 돌았다" = 실 이상**,
+#            사실 1줄 발화(`last_run_epoch=absent`).
+#       (ㄷ) **판정 불가**(스캔 bound 도달 — 파일 상한 소진 ∨ 깊이 상한 밖 내용 존재)
+#            → 사실 1줄 발화. (ㄴ)와 **같은 줄**을 낸다.
+#     ★ 무조건 침묵으로 두면 (ㄴ) class 가 구조적 무음이 되어 **false-negative 를 하나
+#       늘린다**. 표식 판별자가 그 손실을 되돌린다 — 침묵은 미채택에만 적용된다.
+#     ★ (ㄷ) 를 (ㄱ) 에 합치면 그 손실이 **bound 밖에서 그대로 되살아난다** — iter6 실측:
+#       sentinel 이 실재하는데 스캔 순서 251번째면 침묵, depth 4 에 있으면 침묵이었다.
+#       "못 찾음" 과 "없음" 을 가르면 작업량 bound(비용 축)를 유지한 채 손실이 사라진다.
+#       대가는 발화 방향의 오탐이며, 아래 "정직 천장" (iv) 에 선언한다.
+#   - 내용 파싱불능(invalid) 또는 age > threshold(stale) → 사실 1줄 발화.
+#     (heartbeat 가 존재한다 = 최소 1회 돌았다 = 채택했다 ⇒ 표식 검사 불요.)
+#   - 그 외(heartbeat 신선) 무발화.
+#   - 어떤 경우든 조용히 종료(부수효과 0, 판독만).
+#
+# 채택 표식 (신규 파일 0건 — **기존 산물**을 표식으로 쓴다):
+#   `~/.claude/scheduled-tasks/**` 안에 우리 CLI 를 지목하는 태스크 정의가 있으면 채택.
+#     · 이 디렉터리는 스케줄 작업을 저장하면 **반드시 생기는 앱 산물**이다 — 우리가 만드는
+#       파일이 아니다(ADR-172 "관련 파일": `~/.claude/scheduled-tasks/<task-name>/SKILL.md`,
+#       repo 밖 user-level). 신규 플래그·신규 파일 0건.
+#     · **scratch 밖**이라 codeforge-scratch TTL purge 대상이 아니다(§결정 6 이 F2 를
+#       scratch 밖에 둔 것과 같은 이유).
+#     · 판별자를 디렉터리 **존재**가 아니라 **sentinel 내용**으로 둔다 — 운영자가 우리와
+#       무관한 다른 스케줄 작업만 갖고 있을 때 오탐하지 않기 위해서다. sentinel 은
+#       ADR-172 §결정 2 박제 프롬프트가 지목하는 우리 CLI 모듈명이다.
+#
+# 정직 천장 (탐지 손실 0 의 정의역 — 은폐 금지):
+#   "탐지 손실 0" 은 조건부다 — 성립 범위 = 표식이 관측 가능한 정의역. [ceiling: 조건부 명제의 mention]
+#   ADR-172 Amd 4 A4-2: **자원 bound 축은 폐쇄, 표식 가시성 축은 잔존**.
+#   다음은 잔여이며 **축을 함께** 적는다.
+#     (i)  [탐지 축] 벤더가 `~/.claude/scheduled-tasks` 를 rename·이전하면 표식이 부재가 되어
+#          (ㄴ) class 가 조용히 구조적 무음으로 되돌아간다(ADR-172 결과 9 의 vacuous-pass
+#          class — 이름·경로 결박 검사의 알려진 성질).
+#     (ii) [탐지 축] 운영자가 프롬프트를 바꿔 써 sentinel 이 사라지면 같은 결과가 된다.
+#     (iii) [탐지 축] 앱이 태스크 정의를 파일 아닌 형태로 보관하거나 다른 HOME 에 두면 안 보인다.
+#          ★ 단 **HOME↔USERPROFILE 축 어긋남**은 (iii) 에서 분리됐다 — 그 갈래는 이제
+#            writer 동형화로 닫혔고(아래 `_state_base` 절), 남은 잔여는 (v)(vi) 다.
+#   위 **세 경우**(i·ii·iii)는 **탐지 축의 손실 경로**다 — 진짜 채택자가 heartbeat 부재
+#   상태일 때 pre-FIX6 은 발화했고 현행은 침묵한다(A4-1 실측 E·F). 거짓 발화를 만들지
+#   않는다는 것은 **다른 축의 사실**이며 탐지 손실이 없다는 뜻이 아니다 — 종전 문면은 이
+#   셋을 거짓 발화 축으로 라벨했고 그 오분류를 A4-3 이 정정했다.
+#     (iv) [거짓 발화 축] **스캔 bound 도달 = 판정 불가**(파일 상한 소진 ∨ 깊이 상한 밖 내용)는
+#          위 셋과 **반대 방향**이다 — 미채택 환경이라도 발화한다. 즉 태스크 정의가
+#          200 파일을 넘거나 depth 4 이상에 무엇이든 있으면, sentinel 이 전혀 없어도
+#          heartbeat 부재 시 매 세션 1줄이 나간다(**거짓 발화 가능 = 선언된 대가**).
+#          이 방향을 택한 이유는 반대 선택(bound 도달 → 침묵)이 (ㄴ) class 를 bound
+#          밖에서 되살리기 때문이다. 오탐은 시끄럽고 무음은 보이지 않는다.
+#
+# 자원 안전 (ADR-168 §결정 16 — 무증거 안전성 단정 금지):
+#   [비용 축] 표식 탐색은 `-maxdepth 3` · 최대 200 파일 · 리터럴 grep 으로 **작업량을
+#   bound** 한다(정규식 backtracking 없음 — 고정 문자열). 판정 불가 판별용 깊이 probe 도
+#   `-print -quit` 로 **첫 항목에서 중단**한다. 이는 **bounded degradation** 이지
+#   "임의 입력 무해" 단정이 아니다.
+#   [탐지 축 — 비용 축과 별개 명제] 위 bound 는 **탐지를 깎지 않는다**: bound 도달은
+#   "표식 없음" 이 아니라 "판정 불가" 로 결론되어 발화측에 붙기 때문이다(위 (ㄷ)).
+#   단 이 명제는 **본 hook 이 보는 정의역 안**에서만 성립하며, (i)(ii)(iii) 은 여전히
+#   잔여다 — "탐지 손실 0" 을 무조건 명제로 읽어서는 안 된다.
+#   회귀 가드 = `tests/integration/test_scheduled_task_watchdog_hook.py`
+#   (bound 축 = 그 파일의 `..._beyond_file_cap_...` · `..._beyond_max_depth_...`).
+#
+# Bypass:
+#   BYPASS_SCHEDULED_TASK_WATCHDOG=1 → 즉시 audit 1줄 + 종료
+#
+# Tunable:
+#   SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS — 임계값(초). 기본 = 172800 (2일)
+#
+set -uo pipefail
+trap 'exit 0' ERR
+
+# ── Bypass ──
+if [[ "${BYPASS_SCHEDULED_TASK_WATCHDOG:-}" == "1" ]]; then
+  >&2 printf '[scheduled-task-watchdog] bypass env BYPASS_SCHEDULED_TASK_WATCHDOG=1\n'
+  exit 0
+fi
+
+# ── 상태 경로 base 유도: **writer 동형화** (ADR-172 Amendment 6 / A6-7 F-SEC-5) ──
+#   writer(CLI)는 python `expanduser("~")` 로 상태 경로를 정한다. Windows 의 `ntpath` 는
+#   **HOME 을 보지 않는다** — USERPROFILE → HOMEDRIVE+HOMEPATH 순으로만 본다.
+#   종전 reader(이 hook)는 heartbeat 와 채택 표식을 **둘 다 `${HOME}`** 으로 유도했다.
+#   두 env 가 갈리면 그 둘이 **함께 이동**해 "표식 부재 + heartbeat 부재" = 미채택으로
+#   떨어져 **침묵**한다 — 채택자인데 감시가 조용히 무장해제된다(적대자 없이도 성립).
+#
+#   실측 (동일 호스트, HOME=A · USERPROFILE=B 로 갈라 세움):
+#     · python `expanduser("~")`          → **B** (USERPROFILE)
+#     · bash `${HOME}`                    → **A**
+#     · CLI 가 heartbeat 를 실제로 쓴 위치 → **B**  ⇒ reader 는 A 를 보고 침묵했다
+#     · ntpath 우선순위 3-leg 실측: USERPROFILE 우선 / 부재 시 HOMEDRIVE+HOMEPATH /
+#       셋 다 부재면 `~` 미확장 (어느 경우에도 **HOME 미참조**)
+#
+#   ⇒ reader 의 base 유도를 writer 와 **동형화**한다(플랫폼별 우선순위 일치).
+#     이는 계획서 §8.12 제약 4 가 기각한 *env 축 신설*이 아니다 — 신규 env·신규 파일 0건이며
+#     이미 존재하는 축을 writer 와 **같은 규칙으로 읽을 뿐**이다.
+#
+#   정직 잔여 (선언 — 은폐 금지):
+#     (v) [탐지 축] reader 와 writer 가 **서로 다른 런타임**일 때(예: hook 은 Git Bash,
+#         CLI 는 WSL python) 플랫폼 판별이 갈려 다시 어긋날 수 있다. 동형화는 *같은
+#         플랫폼 규칙을 쓰는 짝*에서 성립하며, 런타임이 갈리는 형상까지 덮지 않는다.
+#     (vi) [탐지 축] Windows 축이 전부 부재하면 writer 는 `~` 를 확장하지 못하는데
+#         reader 는 `${HOME}` 으로 폴백한다(실용 하한). 그 코너에서는 두 축이 다시 갈린다.
+_is_windows_like() {
+  case "${OSTYPE:-}" in
+    msys*|cygwin*|win32*) return 0 ;;
+  esac
+  case "$(uname -s 2>/dev/null || echo)" in
+    MINGW*|MSYS*|CYGWIN*|Windows*) return 0 ;;
+  esac
+  return 1
+}
+
+_state_base() {
+  local base=""
+  if _is_windows_like; then
+    if [[ -n "${USERPROFILE:-}" ]]; then
+      base="${USERPROFILE}"                      # ntpath 1순위
+    elif [[ -n "${HOMEDRIVE:-}" && -n "${HOMEPATH:-}" ]]; then
+      base="${HOMEDRIVE}${HOMEPATH}"             # ntpath 2순위
+    else
+      base="${HOME:-/tmp}"                       # 잔여 (vi) — writer 와 갈릴 수 있다
+    fi
+  else
+    base="${HOME:-/tmp}"                         # POSIX: posixpath 는 HOME
+  fi
+  # MSYS 형식 변환 — USERPROFILE 은 Windows 형(`C:\Users\x`)으로 온다.
+  base="${base//\\//}"
+  base="${base%/}"
+  printf '%s' "${base:-/tmp}"
+}
+
+# ── 설정 ──
+STATE_BASE="$(_state_base)"
+GC_STATE_DIR="${STATE_BASE}/.claude/worktree-gc-state"
+HEARTBEAT_FILE="${GC_STATE_DIR}/scheduled-task-last-run.epoch"
+THRESHOLD_SECONDS="${SCHEDULED_TASK_WATCHDOG_THRESHOLD_SECONDS:-172800}"
+
+# 임계값이 숫자가 아니면 기본값 적용
+[[ "$THRESHOLD_SECONDS" =~ ^[0-9]+$ ]] || THRESHOLD_SECONDS=172800
+
+# 채택 표식 — 앱이 만드는 태스크 정의 (신규 파일 0건, scratch 밖). 위 헤더 참조.
+#   ★ heartbeat 와 **같은 base** 를 쓴다. 둘이 다른 base 를 쓰면 "표식은 있는데
+#     heartbeat 는 없다"(ㄴ)와 "둘 다 없다"(ㄱ)의 구별이 축 어긋남으로 오염된다.
+TASK_DEF_ROOT="${STATE_BASE}/.claude/scheduled-tasks"
+ADOPTION_SENTINEL="scheduled_task_reconcile"
+ADOPTION_MAX_FILES=200
+ADOPTION_MAX_DEPTH=3
+
+# 반환 0 = "표식 있음 **또는** 판정 불가" / 반환 1 = "표식 없음이 **확정**".
+#   ★ 이름이 `_present` 가 아닌 이유: 반환 0 은 표식 존재를 뜻하지 않는다. bound 도달로
+#     스캔이 전량을 보지 못한 경우도 0 이다("못 찾음" 을 "없음" 으로 결론짓지 않는다).
+_adoption_present_or_undecidable() {
+  [[ -d "$TASK_DEF_ROOT" ]] || return 1
+
+  # 작업량 bound: 깊이 3 · 최대 200 파일 · **고정 문자열**(-F) grep · **배치화**.
+  # 이전 구현은 개별 grep 스폰 200회로 느렸다(특히 Windows+Defender 환경).
+  # FIX14-2 회귀 수정: xargs 는 공백에서 단어를 쪼갠다. 공백 포함 파일명을 안전하게 처리하려면
+  # find -print0 + read -d '' 로 배열에 저장한 후, null-terminated 배열을 배치로 grep 해야 한다.
+
+  local -a files=()
+  local f
+  while IFS= read -r -d '' f; do
+    files+=("$f")
+    (( ${#files[@]} >= ADOPTION_MAX_FILES )) && break
+  done < <(find "$TASK_DEF_ROOT" -maxdepth "$ADOPTION_MAX_DEPTH" -type f -print0 2>/dev/null)
+  local scanned=${#files[@]}
+
+  # 표식 탐색: 배치 grep (배열 슬라이싱·50 파일씩) — ARG_MAX 회피 + 배치 스폰 최소화.
+  # 프로세스 최소 개수: scanned=200 일 때 ~4회 (개별 200회 대비).
+  local i
+  for (( i=0; i<scanned; i+=50 )); do
+    if grep -lsF -- "$ADOPTION_SENTINEL" "${files[@]:i:50}" 2>/dev/null | grep -q .; then
+      return 0                       # 표식 있음
+    fi
+  done
+
+  # (a) 파일 상한 소진 → 스캔 밖에 파일이 남아 있을 수 있다 = 판정 불가.
+  if (( scanned >= ADOPTION_MAX_FILES )); then
+    return 0
+  fi
+
+  # (b) 깊이 상한 **밖** 내용 존재 → 판정 불가. `-print -quit` 로 첫 항목에서 중단하므로
+  #     존재 확인 비용은 상수에 가깝다(내용을 읽지 않는다 — grep 를 걸지 않는다).
+  #     depth N+1 만 봐도 충분하다: 더 깊은 곳에 무언가 있으면 그 조상이 depth N+1 에 있다.
+  local beyond=""
+  beyond="$(find "$TASK_DEF_ROOT" -mindepth "$(( ADOPTION_MAX_DEPTH + 1 ))" \
+                 -maxdepth "$(( ADOPTION_MAX_DEPTH + 1 ))" -print -quit 2>/dev/null)"
+  if [[ -n "$beyond" ]]; then
+    return 0
+  fi
+
+  return 1                           # 표식 없음 — bound **안에서 전량 확인**한 뒤의 결론
+}
+
+# ── heartbeat 판독 ──
+_now() { date +%s 2>/dev/null || echo ""; }
+
+now="$(_now)"
+last_epoch=""
+age_seconds="unknown"
+
+if [[ -f "$HEARTBEAT_FILE" ]]; then
+  last_epoch="$(cat "$HEARTBEAT_FILE" 2>/dev/null || echo "")"
+
+  # 파싱 검증: 정수인지 확인
+  if [[ "$last_epoch" =~ ^[0-9]+$ ]]; then
+    # 유효한 epoch 값
+    if [[ -n "$now" ]]; then
+      age_seconds=$(( now - last_epoch ))
+      # 음수 보정 (시계 이상 또는 미래 값)
+      (( age_seconds < 0 )) && age_seconds=0
+    fi
+  else
+    # 파싱불능 → stale 취급
+    last_epoch="invalid"
+    age_seconds="unknown"
+  fi
+else
+  # 파일 부재
+  last_epoch="absent"
+fi
+
+# ── 판정 및 발화 ──
+should_report=false
+
+if [[ "$last_epoch" == "absent" ]]; then
+  # heartbeat 부재를 **채택 표식으로 3분기** (구현리뷰 iter6 F-CR6-01 — 못 찾음 ≠ 없음).
+  #   표식 부재 **확정** → 미채택 = 정상 침묵 / 표식 존재 → "채택했는데 한 번도 안 돌았다"
+  #   / 스캔 bound 도달 → **판정 불가**, 발화(fail-safe over-report).
+  # ★ 무조건 침묵은 후자 둘을 구조적 무음으로 만들어 false-negative 를 늘린다.
+  if _adoption_present_or_undecidable; then
+    should_report=true
+  else
+    should_report=false
+  fi
+elif [[ "$last_epoch" == "invalid" ]]; then
+  # 파싱불능 → 보고
+  should_report=true
+elif [[ "$age_seconds" != "unknown" ]]; then
+  # age 를 알 수 있으면 비교
+  if (( age_seconds > THRESHOLD_SECONDS )); then
+    should_report=true
+  fi
+fi
+
+# 발화: 사실만 (verdict 어휘 금지: PASS/FAIL/OK/정상/문제없음)
+if [[ "$should_report" == "true" ]]; then
+  >&2 printf '[scheduled-task-watchdog] last_run_epoch=%s age_seconds=%s threshold_seconds=%s\n' \
+    "$last_epoch" "$age_seconds" "$THRESHOLD_SECONDS"
+fi
+
+exit 0

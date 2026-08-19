@@ -1,0 +1,114 @@
+name: correction-pointer co-change
+
+# 신규 정정 블록이 지목한 **선행 절의 co-change** 검사 (diff-scoped, 관계 축).
+#   대상 = `origin/main...HEAD` 3-dot diff 의 추가 줄 중, Amendment 절 안에 있는 것.
+#   판정·정직 천장 = tests/scripts/_correction_pointer_cochange.py 모듈 docstring 이 SSOT.
+#
+# ── absolute-claim ratchet 과 **별 workflow** 로 둔 이유 ──────────────────────────
+#   두 검사는 축이 같아 보이지만(둘 다 origin/main...HEAD 추가 줄) **정의역이
+#   disjoint** 하다: ratchet 은 한 줄 안의 **어휘**를, 본 검사는 편집 사이의 **관계**를
+#   본다. 합칠 때 실제로 치르는 비용은 셋이다.
+#     · 승격 경로가 묶인다 — required 승격은 **job name 리터럴** 기준 7일 green 적립을
+#       요구한다(ADR-130 §결정 6, rename = 적립 리셋). 한 workflow 에 얹으면 한쪽의
+#       red 가 다른 쪽 적립을 끊고, 한쪽만 승격시킬 수도 없다.
+#     · 이름이 거짓이 된다 — `absolute-claim ratchet` 이라는 이름 아래 관계 검사가
+#       돌면 로그 독자가 무엇이 걸렸는지 오독한다.
+#     · 수명이 묶인다 — 한쪽을 폐기할 때 다른 쪽 파일까지 건드려야 한다.
+#   반대로 나눠서 치르는 비용은 checkout + setup-python 중복 실행뿐이다.
+#   Story 전용 workflow(cfp2949-scheduled-task-test.yml)에 얹지 않는 이유도 같다 —
+#   검사 정의역이 repo 전역이라 수명·이름이 그 Story 에 묶이면 안 되고, 그 workflow 의
+#   pytest 인자 목록은 §8.7 Impl Manifest 의 SSOT 라(`impl_manifest.py:ci_test_files`)
+#   거기 파일을 더하면 선언 수치가 흔들린다.
+#
+# ── 트리거를 pull_request 로 좁힌 이유 ────────────────────────────────────────────
+#   main 위에서는 `origin/main...HEAD` 가 빈 diff 라 판정 대상이 없다. 그 실행까지
+#   green 으로 세면 승격 근거가 실측 없는 green 으로 희석된다.
+#
+# ── required 아님 ────────────────────────────────────────────────────────────────
+#   branch protection 8-tuple 무변경. 승격하지 않는 이유는 적립 기간만이 아니다 —
+#   모듈 천장 ⑦ 대로 이 검사는 **참조와 뒤집기를 구분하지 못해** 오발화가 실재한다
+#   (실측: `§결정 4`). 위반 목록은 사람이 읽어야 하는 **후보 목록**이지 확정 결함
+#   목록이 아니므로, 지금 merge 를 막게 두지 않는다. 막지 않으므로 bypass 도 두지 않는다.
+
+on:
+  pull_request:
+    branches: [main]
+
+# repo 관례 — 같은 PR 의 앞선 실행을 취소한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cochange:
+    name: correction-pointer co-change
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # 3-dot diff 는 origin/main 실물을 요구한다. shallow 체크아웃이면 base 가
+          # 해소되지 않아 검사가 통째로 미판정이 된다.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      # 미판정을 조용한 통과로 흘리지 않기 위한 명시 확인 — base 가 없으면 여기서 죽는다.
+      - name: Verify base ref resolvable (silent no-op 차단)
+        run: |
+          git rev-parse --verify --quiet "origin/main^{commit}" >/dev/null || {
+            echo "::error::origin/main 미해소 — co-change 검사가 미판정으로 통과할 수 있다 (fetch-depth: 0 확인)"
+            exit 1
+          }
+
+      # 위반을 (파일, 절 ID) 단위로 열거한다. co-change 로 통과한 건도 함께 열거해
+      # 이 검사의 느슨함(천장 ① — 어떤 편집이든 통과)이 로그에 남게 한다.
+      - name: correction-pointer co-change (diff-scoped)
+        run: python tests/scripts/_correction_pointer_cochange.py
+
+      # 자기 적용 — 본 게이트가 새로 쓴 줄들이 형제 게이트(ADR-177 절대주장 ratchet)의
+      # **동반 완화를 끈** 판정을 통과해야 한다. 게이트를 만들면서 게이트를 어기는
+      # 상태를 남기지 않는다.
+      - name: Self-application (absolute-claim ratchet, strict — 본 게이트 자기 파일)
+        if: always()
+        run: |
+          python tests/scripts/_absolute_claim_ratchet.py --strict \
+            --only tests/scripts/_correction_pointer_cochange.py \
+            --only tests/scripts/test_correction_pointer_cochange.py \
+            --only .github/workflows/correction-pointer-cochange.yml
+
+  selftest:
+    name: correction-pointer co-change selftest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # 반사실 2건은 동결 fixture 로도 돌지만, live git 대조(drift 오라클)가
+          # skip 으로 새지 않게 전체 이력을 갖춰 둔다.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      # 반사실 2건(8266e0e82 RED / b41e69af9 GREEN) · 대조군 · mutant 5종 · 천장 각인.
+      - name: Run co-change discriminating tests
+        run: python -m pytest tests/scripts/test_correction_pointer_cochange.py -v -ra
+
+      # 동결 fixture 가 실물 git 출력에서 떨어져 나갔는지 별도로 드러낸다.
+      # 두 SHA 가 사라진 뒤(squash-merge 등)에는 drift 대조만 생략되고 반사실 판정은
+      # 동결본으로 계속 돈다 — 그 사실을 로그에 남긴다.
+      - name: Report frozen-fixture drift coverage
+        if: always()
+        run: |
+          python -m pytest tests/scripts/test_correction_pointer_cochange.py \
+            -k "frozen_fixture or live_git" -v -ra

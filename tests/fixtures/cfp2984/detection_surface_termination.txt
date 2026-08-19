@@ -1,0 +1,12 @@
+surface: termination-notification
+origin: CFP-2984 AC-15 픽스처 ② — "동일 문자열을 담은 오류·종료 통지 표면"
+source: |
+  본문 1행은 ADR-109 Amendment 1 (a) 가 기록한 **2026-07-24 firsthand 실관측** 문자열이다
+  (CFP-2823 진행 중 fable PL 이 세션 리밋으로 mid-run 조기종료하며 발화). 픽스처가 임의
+  창작 문면이 아니라 실관측에 결속됨을 명시한다 — ADR-119 검증-후-단언.
+note: |
+  발동 표면 2종(spawn-시점 거부 ∪ mid-run 조기종료 task-notification) 중 (b) 에 해당한다.
+  픽스처 ① 과 **같은 리터럴**을 담되 표면만 다르다 — 즉 두 픽스처의 유일 차이가 표면이므로,
+  판정이 갈리면 그 원인은 정의역 제한밖에 없다(단일 변인 통제).
+---
+Agent terminated early due to an API error: You've hit your session limit · resets 10:20pm (Asia/Seoul)

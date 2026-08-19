@@ -1,0 +1,10 @@
+diff --git a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
+index 17c24a73cbbe0bc58e42049d38772ad2fb0001ad..1ca6845f16109f483eadcf47b55ff7e8a5ab9d9c 100644
+--- a/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
++++ b/archive/adr/ADR-172-local-scheduled-task-residue-observation.md
+@@ -344,0 +345,5 @@ Amd 2 `:300` 은 본 결정을 *"false-negative 를 하나 늘리는 방향"* 
++> ★ **후속 Amendment 2건이 위 절에 도달한다 — 귀속을 분리해 기재한다.**
++>
++> - **Amendment 4 가 위 3-regime 표를 재작성한다** (`:335`-`:341` — A4-2 헤더 문면 자체가 *"A3-2 대조표 재작성"*). 위 표는 **채택자 탐지를 단일 칸**으로 뒀고 그 칸이 **서로 다른 두 손실 경로를 뭉갰다** — 한 축(자원 bound)이 닫혔을 때 칸 전체가 닫힌 것처럼 읽힌다. 정정 정본 = **A4-2**(탐지 칸을 **자원 bound 축 / 표식 가시성 축 2 축으로 분해**). ⇒ *"제거한 델타는 **거짓 발화뿐**"* 은 **표식 가시성 축을 계상하지 않은 서술**이다. ★ **본 bullet 은 Amendment 4 시점 누락의 사후 보완**이며 **Amendment 5 가 뒤집은 문면이 아니다** — 본 라운드 공로로 계상하지 않는다(`:370` 과 동일 처리).
++> - **Amendment 5 가 위 절에 새 지위를 부여한다**: A4-3 이 축 오분류의 기원으로 *"Amd 2 본문"* 을 지목한 것이 **오지목**임이 실측으로 드러나면서, **ADR 안에서 축을 실제로 옮긴 표면 = 본 A3-2**(*"탐지 손실 0"* 서술)로 **새로 지목**됐다. 정본 = **A5-3**. 위 문면은 **삭제하지 않고 이력으로 보존**하며, 충돌 시 **후속 Amendment 가 우선**한다(A4-2 → A5-3 순).
++

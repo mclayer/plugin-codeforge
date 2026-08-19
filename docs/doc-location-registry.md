@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.3  
-**Last regen**: 2026-08-05T06:19:17Z  
-**Registered doc types**: 20
+**Last regen**: 2026-08-15T15:04:30Z  
+**Registered doc types**: 21
 
 ## Summary table
 
@@ -32,6 +32,7 @@
 | 18 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
 | 19 | `system_invariants` | single_repo | `codeforge-design:ArchitectAgent` | CFP-2361 |
 | 20 | `runbook` | single_repo | `codeforge-develop:InfraEngineerAgent` | CFP-2591 |
+| 21 | `story_child_file` | dogfood / mode_b / multi_repo_hub / multi_repo_impl / single_repo | `orchestrator` | CFP-2986 |
 
 ## Per-doc-type details
 
@@ -430,4 +431,41 @@
   > 첫 entry = deferred-followup-reconcile enforce outage runbook (§7.2.3 (iv) 의무 선-충족, Stage 1+2
   > shadow 시점엔 self-block 불가 — 미래 flip PR 대비 사전 문서화).
   > owner = InfraEngineerAgent (배포·운영 자산). parallel-edit policy = append-only (게이트별 독립 추가).
+
+### `story_child_file`
+
+- **single_repo**: `<owner-repo>/docs/stories/<KEY>-S<N>.md`
+- **mode_b**: `<hub-repo>/docs/stories/<KEY>-S<N>.md`
+- **multi_repo_hub**: `<hub-repo>/docs/stories/<KEY>-S<N>.md`
+- **multi_repo_impl**: `<impl-repo>/docs/stories/<KEY>-S<N>.md`
+- **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>-S<N>.md`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-2986
+- **naming_pattern**: `[A-Z]+-[0-9]+-S[0-9]+\.md`
+- **frontmatter_required**: True
+- **examples**:
+  - mclayer/codeforge-internal-docs/wrapper/stories/CFP-2986-S1.md (dogfood — ADR-180 §결정 2 성장축 외부화 자기적용, Phase 2 착지)
+
+  **notes**:
+  > CFP-2986 / ADR-180 §결정 2·4·5 carrier — Story 성장축(append-heavy 섹션) 외부화 목적지 SSOT.
+  > "목적지 선재" — 실 게이트(Phase 2)보다 위치 등록이 먼저다 (Change Plan §5 Phase 1 표).
+  > 평면 배치 (depth <= 1) — 부모 Story 와 같은 디렉터리. 하위 디렉터리 금지 근거 = Actions `on.paths`
+  > glob(`*/stories/*.md` — `*` 가 `/` 미통과, 미매치) 과 git pathspec(wildmatch 기본값에서 `*` 가 `/` 통과, 매치)
+  > 의 양방향 비대칭 (ADR-180 §결정 5-3 / Change Plan §3.5 firsthand 실측). 자식만 바뀐 PR = workflow 미기동,
+  > parent+자식 PR = 기동 후 자식이 스캔 대상 포함 — 어느 쪽도 의도한 정의역이 아니다.
+  > 부모<->자식 결합 = 앵커 쌍 `<!-- cfp-split:begin section=N id=<KEY>-S<M> -->` … `:end` (ADR-180 §결정 4,
+  > 3속성 = 명시 ∧ 쌍 ∧ 유일, 부모 stub 은 non-empty) + 자식 frontmatter `carries_sections: [N]` 선언 파싱
+  > (슬라이싱 아님 — Change Plan §3.1 `carries(c)`).
+  > pure move invariant — 정보 삭제 0. 부모에서 자식으로 옮길 뿐 총량 보존.
+  > owner = orchestrator: 섹션 성질 레지스트리에서 `splittable: true` 인 실 외부화 대상은 §9·§10 이고
+  > 둘 다 Orchestrator write monopoly 다. 자식은 부모 섹션의 소유권을 그대로 승계하며 신규 owner 를 도입하지 않는다
+  > (§5·§8 은 `splittable: false` — required 게이트 파서 입력).
+  > **경로 확정 범위 (정직 한정)**: ADR-180 이 문면으로 못박은 것은 dogfood variant(`wrapper/stories/CFP-NNNN-SN.md`)
+  > 단독이다. 나머지 4 variant 는 "자식은 부모와 같은 디렉터리에 평면 배치" 불변식에서 story_file variant 를 파생한
+  > 값이며 실사용 사례는 아직 0 이다.
+  > **Phase 1 은 작동하는 게이트를 주장하지 않는다** (ADR-180 §결정 8 자기 구속) — 구조 불변식 검사
+  > (`check-story-read-surface`) · baseline · lane 읽기선언 레지스트리는 전부 Phase 2 산출물이고 현재 미배선이다.
+  > 본 entry 는 위치 SSOT 의 선재 등록일 뿐이다. parallel-edit policy = append-only.
+  > naming_pattern 주의: 기존 `CFP-NNNN-SN.md` 18건은 Epic 하위 sub-Story(= story_file doc type)로 파일명 형상만
+  > 동형이며 본 doc type 이 아니다 — 판별자는 파일명이 아니라 앵커 쌍 ∧ `carries_sections` frontmatter 다.
 

@@ -1,0 +1,97 @@
+name: absolute-claim ratchet
+
+# 신규 절대주장 줄의 **결박 동반** 검사 (diff-scoped ratchet).
+#   대상 = `origin/main...HEAD` 3-dot diff 의 추가 줄. 기존 재고는 정의역 밖이다.
+#   판정·정직 천장 = tests/scripts/_absolute_claim_ratchet.py 모듈 docstring 이 SSOT.
+#
+# ── 이 workflow 가 CFP-2949 test workflow 와 분리된 이유 ──────────────────────────
+#   검사 정의역이 repo 전역(모든 추가 줄)이라 Story 전용 workflow 에 얹으면 수명과
+#   이름이 그 Story 에 묶인다. required 승격은 job name 리터럴 기준 7일 green 적립을
+#   요구하므로(rename = 적립 리셋), 이름을 Story 와 분리해 두는 편이 승격 경로를 남긴다.
+#   또 CFP-2949 스위트 인자 목록에 얹으면 수집 수가 바뀌어 §8.7 Impl Manifest 선언과
+#   충돌한다 — 두 검사의 정의역을 섞지 않는다.
+#
+# ── 트리거를 pull_request 로 좁힌 이유 ────────────────────────────────────────────
+#   main 위에서는 `origin/main...HEAD` 가 빈 diff 라 판정 대상이 없다. 그 실행까지
+#   green 으로 세면 승격 근거가 실측 없는 green 으로 희석된다.
+#
+# ── required 아님 (warning-tier) ─────────────────────────────────────────────────
+#   branch protection 8-tuple 무변경. required 승격은 7일 green 적립 선행이라 별도
+#   Story 소관이며, 승격 시에는 bypass env + audit 규약을 함께 신설해야 한다
+#   (지금은 merge 를 막지 않으므로 bypass 를 두지 않는다).
+
+on:
+  pull_request:
+    branches: [main]
+
+# repo 관례 (실측 118 workflow 중 115 보유) — 같은 PR 의 앞선 실행을 취소한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ratchet:
+    name: absolute-claim ratchet
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # 3-dot diff 는 origin/main 실물을 요구한다. shallow 체크아웃이면 base 가
+          # 해소되지 않아 검사가 통째로 미판정이 된다.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      # 미판정을 조용한 통과로 흘리지 않기 위한 명시 확인 — base 가 없으면 여기서 죽는다.
+      - name: Verify base ref resolvable (silent no-op 차단)
+        run: |
+          git rev-parse --verify --quiet "origin/main^{commit}" >/dev/null || {
+            echo "::error::origin/main 미해소 — ratchet 이 미판정으로 통과할 수 있다 (fetch-depth: 0 확인)"
+            exit 1
+          }
+
+      # 위반 줄을 file:line + 토큰 + 판정 사유로 열거한다. 동반 강제로 통과한 줄도
+      # 함께 열거해 이 검사의 느슨함이 로그에 남게 한다.
+      - name: absolute-claim ratchet (diff-scoped)
+        run: python tests/scripts/_absolute_claim_ratchet.py
+
+      # 자기 적용 — 게이트 자신의 파일은 동반 완화를 끈 상태로도 통과해야 한다.
+      - name: Self-application (strict — 게이트 자기 파일)
+        run: |
+          python tests/scripts/_absolute_claim_ratchet.py --strict \
+            --only tests/scripts/_absolute_claim_ratchet.py \
+            --only tests/scripts/test_absolute_claim_ratchet.py \
+            --only .github/workflows/absolute-claim-ratchet.yml
+
+  selftest:
+    name: absolute-claim ratchet selftest
+    if: github.repository == 'mclayer/plugin-codeforge'
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON_LINUX_JSON || '["ubuntu-latest"]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # live 축(브랜치 diff 실측) 검사가 skip 으로 새지 않게 base 를 갖춰 둔다.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify base ref resolvable (silent skip 차단)
+        run: |
+          git rev-parse --verify --quiet "origin/main^{commit}" >/dev/null || {
+            echo "::error::origin/main 미해소 — live 검사가 skip 으로 새어 통과할 수 있다"
+            exit 1
+          }
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Run ratchet discriminating tests
+        run: python -m pytest tests/scripts/test_absolute_claim_ratchet.py -v -ra
