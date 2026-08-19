@@ -566,8 +566,6 @@ firsthand 실측 3건 (본 Amendment 저작 시점 재현):
 
 **정의역 진입 논거 (본 Amendment 자신이 시제를 끝낸다)**: 종래 "429 채널은 ADR-043 미등재이므로 본 ADR 정의역 밖" 이라는 판정이 가능했고 그 사실 서술은 참이었다. 그러나 **본 Amendment 가 바로 그 등재를 수행**하므로 그 근거는 착지 순간 자기무효화한다. 또한 "정의역 밖" 은 "안전하다" 를 함의하지 않는다 — 정의역 밖이란 본 ADR 의 보호를 받지 못한다는 뜻이기도 하다. 따라서 본 채널은 정의역 밖에 기대어 설 수 없고 **정의역 안에서 명시적 비대칭 예외**로 선다.
 
-### Amendment 내용
-
 **(A) §결정 1 always-on 비대칭 — 신규 채널 적용 ∧ Amendment 4 bound (2) 승계 불가 정정**
 
 - **wrapper-self dogfood scope = always-on** — codeforge family 자기 운영 계측이 채널 목적. always-on = **checkout-identity 파생**(consumer overlay 의 user-settable bool 아님). Amendment 4 (A) 형상 답습.
@@ -604,14 +602,14 @@ stop-event(18) · spawn-event(23) · self-context(6) · dev-process index tier(2
 | `timestamp` | string (REQUIRED) | **offset-aware** ISO 8601 절대 순간. naive(offset 없는 값) = 계약 위반 | Public (§결정 10 `timestamp` 행) |
 | `final_status` | enum (REQUIRED) | `{success, failed}` — closed | Public (§결정 10 enum 행) |
 | `lane` | enum \| null | codeforge lane 어휘 closed-set ∪ null. 자유 서술 금지 | Public (§결정 10 enum 행) |
-| `agent_role` | enum \| null | **역할 어휘 closed-set `{PL, deputy, worker}` ∪ null**. 미매칭 non-empty 값 → `null` 로 낙하(free-form leak 차단, spawn-event `outcome` 선례 동형 — `append_spawn_event.py` 가 미제공·미매칭을 `None` 으로 두고 default 승격하지 않는다). 값 추가 = 본 §결정 2 Amendment 의무 | Public (§결정 10 enum 행) |
+| `agent_role` | enum \| null | **역할 어휘 closed-set `{PL, deputy, worker}` ∪ null** — 본 행이 **규범 정본**이다. **동반 갱신 의무 (설계리뷰 2회차 F-G · P2)**: 같은 3-토큰을 `skills/rate-limit-429-mitigation/SKILL.md` 기록 템플릿(`"agent_role": "<PL|deputy|worker>"`)이 **별 site 로 보유**한다. 두 site 는 현재 값이 일치하나 **동반 갱신 의무가 명문화돼 있지 않으면 장래에 갈라진다** — 본 행을 개정하는 변경은 그 템플릿을 같은 PR 에서 함께 갱신해야 하며, 반대 방향(템플릿만 갱신)은 금지한다. 재현 = `grep -rn 'PL|deputy|worker' --include=*.md archive/adr skills`. 미매칭 non-empty 값 → `null` 로 낙하(free-form leak 차단, spawn-event `outcome` 선례 동형 — `append_spawn_event.py` 가 미제공·미매칭을 `None` 으로 두고 default 승격하지 않는다). 값 추가 = 본 §결정 2 Amendment 의무 | Public (§결정 10 enum 행) |
 | `retry_count` | int ≥ 0 \| null | numeric | Public (§결정 10 enum 행) |
 | `cascade_depth` | int ≥ 0 \| null | numeric | Public (§결정 10 enum 행) |
 | `error_pattern` | enum \| null | **폐쇄 enum only. 원시 에러 텍스트 절대 금지.** 값공간 규정은 ADR-109 Amendment 4 소관(기록 어휘 ⊥ 감지 어휘 분리) | Public — 단 enum 인 한에서만 |
 
 - **미상 필드 = `null` 명시, 키 생략 금지** — 생략은 "스키마에 없던 필드" 와 "값 미상" 을 구별 불가하게 만들어, 나중에 필드가 추가될 때 과거 행의 의미가 소급 변한다.
 - **필드 추가 = 본 §결정 2 Amendment 의무** (Allow-list ONLY silent expansion 차단 — Amendment 1 / 5 / 6 선례 동형).
-- **★ `agent_role` 값공간 정정 (설계리뷰 1회차 F-6 · P1)**: 본 Amendment 초판은 이 행을 "roster-derived **agent 명** ∪ `unknown-agent`" 로 적었다. 그것은 **축을 잘못 고른 것**이다 — `unknown-agent` fallback 은 spawn-event 의 **`agent_type`**(roster 파생 agent 명) 축 토큰이고, 본 필드는 이름이 말하듯 **role** 축이다. 초판은 semi-open 이라는 *형태* 를 `model` 선례에서 옳게 빌려오면서 *내용* 을 인접 필드에서 잘못 빌려왔다. **firsthand 실측 3축이 전건 role 어휘를 가리킨다**: ① 기록 템플릿 SSOT `skills/rate-limit-429-mitigation/SKILL.md` 가 `"agent_role": "<PL|deputy|worker>"` 로 **폐쇄 3-토큰**을 이미 규정 ② 실 데이터 `docs/kpi/429-incident-history.jsonl` 의 seed 2행 = `"PL"` · `"worker"` (그 3-토큰의 부분집합) ③ agent 명 축은 `agent_type` 이라는 **별 필드**로 이미 존재. **초판 문면을 적용하면 기존 seed 2행이 곧바로 계약 위반이 된다** — 데이터가 규범을 반증하는 배치이므로 규범 쪽이 틀렸다. 정정 방향은 semi-open → closed 이므로 **ratchet-up**(값공간 축소 = 통제 강화)이며 완화 0. 현 producer 는 이 필드를 **항구적 null** 로 두므로(ADR-109 Amendment 4 · Change Plan §4.1) 실 데이터 영향은 0이고, 정정의 효용은 **미래에 이 필드를 채우려는 구현자가 두 정본에서 반대 지시를 받지 않게 하는 것**이다.
+- **★ `agent_role` 값공간 정정 (설계리뷰 1회차 F-6 · P1)**: 본 Amendment 초판은 이 행을 "roster-derived **agent 명** ∪ `unknown-agent`" 로 적었다. 그것은 **축을 잘못 고른 것**이다 — `unknown-agent` fallback 은 spawn-event 의 **`agent_type`**(roster 파생 agent 명) 축 토큰이고, 본 필드는 이름이 말하듯 **role** 축이다. 초판은 semi-open 이라는 *형태* 를 `model` 선례에서 옳게 빌려오면서 *내용* 을 인접 필드에서 잘못 빌려왔다. **firsthand 실측 3축이 전건 role 어휘를 가리킨다**: ① 기록 템플릿 SSOT `skills/rate-limit-429-mitigation/SKILL.md` 가 `"agent_role": "<PL|deputy|worker>"` 로 **폐쇄 3-토큰**을 이미 규정 ② 실 데이터 `docs/kpi/429-incident-history.jsonl` 의 seed 2행 = `"PL"` · `"worker"` (그 3-토큰의 부분집합) ③ agent 명 축은 `agent_type` 이라는 **별 필드**로 이미 존재. **초판 문면을 적용하면 기존 seed 2행이 곧바로 계약 위반이 된다** — 데이터가 규범을 반증하는 배치이므로 규범 쪽이 틀렸다. 정정 방향은 **형태 축 semi-open → closed 강화**다. 단 *"값공간 축소"* 를 **집합 포함관계로 읽으면 성립하지 않는다** (설계리뷰 2회차 P2-3 · F-G) — 신 집합 `{PL, deputy, worker}` 는 구 문면의 집합(roster 파생 agent 명 ∪ `unknown-agent`)의 **부분집합이 아니며 원소를 하나도 공유하지 않는다**. 정확한 서술은 **축 정정**(agent 명 축 → role 축) **+ 형태 강화**(open-ended → closed 3 원소 ∪ null)다. **완화 0 의 근거는 포함관계가 아니라 landed base 대비 순수 additive 라는 사실이다** — `agent_role` 값공간 규정은 본 Amendment 가 처음 세우는 것이고 base `7a12d0a0f` 에 완화 대상이 될 선행 규정이 존재하지 않는다. 현 producer 는 이 필드를 **항구적 null** 로 두므로(ADR-109 Amendment 4 · Change Plan §4.1) 실 데이터 영향은 0이고, 정정의 효용은 **미래에 이 필드를 채우려는 구현자가 두 정본에서 반대 지시를 받지 않게 하는 것**이다.
 
 **FORBIDDEN — 공개면 착지 금지 (비망라 예시)**
 
