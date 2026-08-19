@@ -51,9 +51,11 @@ WF_PATH = os.path.join(REPO_ROOT, ".github", "workflows", "parallel-work-sentine
 JOB2 = "parallel-work-sentinel-test"
 TPL_PATH = os.path.join(REPO_ROOT, "templates", "github-workflows", "parallel-work-sentinel-check.yml")
 
+# ★ Spine 정의역 — 봉투 합성 래퍼 노드만 (ENV-5 최상위 래퍼)
+# ("jobs",) = 합성 래퍼 (probe 주입 시 무가시 — C₀ 동일)
+# ("jobs", JOB2) = JOB2 서브트리 본체는 제외 금지 (ENV-5 최상위가 무검증으로 남음)
 SPINE_PATHS = {
     ("jobs",),
-    ("jobs", JOB2),
 }
 
 
@@ -322,13 +324,16 @@ def test_envelope_pin_domain_derivation_selfcheck():
     r"""Stage 1: 정의역 파생 자기검사 — S, P, mapping_nodes 비공허 + 음성 대조.
 
     음성 대조: 잘못된 경로는 매핑 노드 집합에 없어야 함.
+
+    ★ 정의역 = 전체 mapping nodes − spine (ENV-5 래퍼 제외)
     """
     with open(WF_PATH, encoding="utf-8-sig", newline=None) as fh:
         text = fh.read()
     document = dup_safe_load(text)
 
     envelope = cut_envelope(document, JOB2)
-    mapping_nodes = _all_mapping_nodes(envelope)
+    all_mapping_nodes = _all_mapping_nodes(envelope)
+    mapping_nodes = all_mapping_nodes - SPINE_PATHS  # spine 제외 정의역
     S = _derive_S_from_envelope_pin_source()
     P = _derive_P_from_S(S)
 
