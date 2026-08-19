@@ -167,10 +167,29 @@ fix_event_schema:
   "원인 판정":
     type: enum
     values:
-      - 설계      # → Change Plan 갱신, 설계 리뷰부터 재실행
-      - 구현      # → Change Plan 유지, 구현 commit append
-    decision_rule_ssot: CLAUDE.md "원인 판정 decision table" 섹션
+      - 설계        # → Change Plan 갱신, 설계 리뷰부터 재실행
+      - 구현        # → Change Plan 유지, 구현 commit append
+      - 요구사항     # v1.6 — 요구사항 자체가 틀렸거나 미확정 → 요구사항 lane 재진입 (산출물 재작성으로 환원되지 않는다)
+      - 환경        # v1.6 — 인프라·러너·외부 서비스·자격증명 원인 → 환경 처분 (Change Plan·구현 무접촉)
+      - 설계-리뷰    # v1.6 — 설계는 옳고 리뷰 판정·판정 정의역이 틀렸다 → 설계리뷰 재실행
+      - 구현-리뷰    # v1.6 — 구현은 옳고 리뷰 판정·판정 정의역이 틀렸다 → 구현리뷰 재실행
+    introduced_in: "1.6"        # 뒤 4값 확장분. `설계`/`구현` 2값 = v1.0 (값 제거 0 → MINOR)
+    decision_rule_ssot: skills/root-cause-decision/SKILL.md
     decided_by: ArchitectPLAgent (chief judge — DeveloperPL 1차 진단과 병렬)
+    rule: |
+      ★ v1.6 값공간 확장 = **재진입 라우팅 축**이며 ADR-067 §결정 1 의 max-FIX 카운터 trigger lane 2종
+      (설계-리뷰 / 구현-리뷰) 과 **disjoint** 다 — 값공간이 6값이 됐다고 카운터 정의역이 확장되지 않는다.
+      확장 근거 = enum 밖 4축(요구사항 / 환경 / 설계-리뷰 / 구현-리뷰)이 실 원장에서 이미 사용 중이었다는 실측이며,
+      이는 기록자 이탈이 아니라 **값공간 설계 결함의 증상**이다 (ADR-067 Amendment 4 축 (1)).
+      ★ 본 블록이 값공간 SSOT 다. `dev-process-event-v1` 의 `root_cause_class` 값공간이 이를 상속하며,
+      결함 class 축(`defect_family`)과 **같은 enum·같은 집계 키로 합치지 않는다** (ADR-181 INV-R 범주 분리 —
+      두 축을 교차 집계하는 키를 만들면 범주 오류다).
+      ★ decision_rule_ssot 정정 (v1.6): 구 값은 CLAUDE.md 의 "원인 판정 decision table" 섹션이었으나
+      그 문자열은 CLAUDE.md 에 **부재**한다 (dangling pointer, firsthand). 실 SSOT = 위 skill 파일.
+    cross_ref:
+      - archive/adr/ADR-067-fix-ledger-implementability-escalation.md (Amendment 4 축 (1) — 6값 확장 ∧ 카운터 lane 2종 불변)
+      - archive/adr/ADR-181-verification-domain-deficit-normative.md (INV-R 범주 분리 — 라우팅 축 ↔ 결함 class 축)
+      - skills/root-cause-decision/SKILL.md (원인 판정 decision table 실 위치 — decision_rule_ssot)
 
   "재실행 범위":
     type: string
@@ -266,11 +285,15 @@ fix_event_schema:
       그 외 FIX (logic bug, API change, perf regression 등) = null 또는 column 생략 허용.
       각 row 의 path 가 depth 별로 정정 규칙이 달라지는 영역 (예: depth >= 2 인 file 은 `../../` 추가 의무) 의 mechanical reasoning trace 보존.
       CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson — depth 정보 부재가 directly carrier.
-      broken-link/path FIX 인데 본 필드 누락 = `fix-event-depth-scope-presence` warning-tier lint 적발 (advisory only, blocking-on-pr 미승격).
+      broken-link/path FIX 인데 본 필드 누락 = **리뷰 판정 축(`declared`)** — 그 판정을 내리는 검출 lint 는 실재하지 않는다.
+      ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 3행] v1.3 판은 이 자리에서
+      `fix-event-depth-scope-presence` warning-tier lint 가 누락을 적발한다고 **현재형**으로 기술했으나
+      그 lint 는 registry 0 · script 0 · workflow 0 이었고(firsthand) 그 선언은 철회됐다.
+      의무 자체는 유효하며 바뀐 것은 **집행 주체**다 (기계 검출 → 리뷰 판정).
       Producer = Orchestrator (FIX Ledger writer monopoly 유지 — CFP-32).
     cross_ref:
       - docs/adr/ADR-067-fix-ledger-implementability-escalation.md (Amendment 1 §결정 4 cross-lane RESET scope 정합)
-      - docs/evidence-checks-registry.yaml (fix-event-depth-scope-presence — warning-tier broken-link/path FIX lint)
+      - docs/evidence-checks-registry.yaml  # ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 4행] v1.3 판은 여기서 `fix-event-depth-scope-presence` warning-tier entry 를 현재형으로 지목했으나 실재 0 건이었다. 본 파일이 관련인 실 근거 = `fix-ledger-conformance` entry (owner_adr ADR-181)
       - docs/orchestrator-playbook.md (§6.7 §10 관리 세부 — broken-link/path FIX 시 depth annotation 의무)
 
   "reproducer_command":
@@ -330,6 +353,47 @@ fix_event_schema:
       - scripts/lib/fix_replay_disposition.py (decide_replay_disposition SSOT)
       - docs/domain-knowledge/concept/fix-ground-truth-replay.md (F-1 close=Retest / F-3 false-close 양방향 차단)
 
+  "verification_domain_enumeration":
+    type: "string | null"
+    optional: true            # v1.6 신규 — FIX 닫기 조건의 범위 축 (CFP-2985 / ADR-181 + ADR-067 Amendment 4 축 (3))
+    introduced_in: "1.6"
+    description: "검증 정의역(V) 선언의 열거 축 — 처방 정의역(P) site 를 산출하는 명령. 열거 결과 목록이 아니다"
+    rule: |
+      ★ P / V / D 정의는 **ADR-181 §결정 1 을 인용**한다. 본 계약은 정의를 재진술하지 않는다
+      (재진술 = 값공간 분기 = ADR-181 §결정 4 접합부 위반).
+      ★ 값 = **열거 산출 명령**이며 열거 결과 목록이 아니다 — 목록은 커밋이 지나면 조용히 stale 이 되고
+      그 stale 을 알려주는 채널이 0 이다. 명령은 재실행으로 반증 가능하다.
+      schema 제약 = `reproducer_command.command` **상속**: repo-relative 게이트·테스트 호출 형태만
+      (예: bash scripts/check-doc-frontmatter.sh / grep -rn '<패턴>' docs plugins templates),
+      raw shell free-string 금지 = stored-command injection vector 차단 (SecurityArch THR-E3-2).
+      INV-SEC-1 (의무): PII / secret / credential / API key / private absolute-path 금지 (public PR mirror surface).
+      미사용 FIX = null 또는 column 생략 (backward-compat — 기존 13-column row valid).
+      Producer = Orchestrator (FIX Ledger writer monopoly 유지 — CFP-32).
+    cross_ref:
+      - archive/adr/ADR-181-verification-domain-deficit-normative.md (§결정 1 P/V/D 정의 SSOT — 본 필드는 인용만 한다)
+      - archive/adr/ADR-067-fix-ledger-implementability-escalation.md (Amendment 4 축 (3) — FIX 닫기 조건에 정의역 선언 추가)
+      - docs/domain-knowledge/concept/verification-domain-deficit.md (서술 SSOT — 규범 SSOT 는 ADR-181, 충돌 시 ADR 정본)
+
+  "verification_domain_coverage":
+    type: "string | null"
+    optional: true            # v1.6 신규 (CFP-2985)
+    introduced_in: "1.6"
+    description: "검증 정의역 선언의 범위 축 — x 대 y (x = 재검사한 site 수 / y = 열거 명령이 산출한 site 수). 확률 아님"
+    rule: |
+      형식 = x 대 y (또는 x/y). **비율·확률이 아니다** — 분자·분모 둘 다 정수 site 수다.
+      x < y 는 위반이 아니라 **상시 상태**다 (ADR-181 §결정 1 — P ⊋ V). 본 계약이 금지하는 것은
+      D = P − V 가 비어 있지 않은 것이 아니라 **D 를 미선언 상태로 두는 것**이다.
+      ★ 공허 값 = 선언 부재와 동치이며 닫기 조건을 충족하지 않는다 — 0 대 0 (열거 자체가 vacuous) ·
+      1 대 1 (자기 자신 1건만 = 결손 축이 존재하지 않는 척) · 대시 · null · 공란.
+      ★ `replay_verdict` 와 **disjoint**: replay_verdict = 검증 **강도**(원 reproducer 가 실제로 GREEN 인가),
+      본 필드 = 검증 **범위**(같은 원인이 성립하는 자리 중 몇 개를 봤는가). 대체가 아니라 병렬 확장이며
+      둘 중 하나가 채워졌다고 다른 하나가 면제되지 않는다 (ADR-067 Amendment 4 축 (3) — §결정 8 disjoint 유지).
+      미사용 FIX = null 또는 column 생략 (backward-compat — 기존 13-column row valid).
+      Producer = Orchestrator (FIX Ledger writer monopoly 유지 — CFP-32).
+    cross_ref:
+      - archive/adr/ADR-181-verification-domain-deficit-normative.md (§결정 1 — D 미선언 금지 / §결정 6 정직 라벨 3분)
+      - archive/adr/ADR-067-fix-ledger-implementability-escalation.md (Amendment 4 축 (3))
+
 append_rules:
   writer:
     - "Orchestrator 단독 (CFP-32 ζ arc F1부터)"
@@ -374,6 +438,20 @@ counter_semantics:
 - **v1.2 → v1.3 (CFP-842 / ADR-067 Amendment 1)**: `affected_scope` + `affected_paths_with_depth` 2 optional 필드 추가. SemVer MINOR — backward-compat 100% 보장 (기존 9-column row valid, column 자체 생략 = null 처리). RESET 범위·재스폰 lane 결정 mechanical 정확도 input + broken-link/path 정정 FIX 시 over-correction regression chain (CFP-770 §8 lesson) 직접 차단. `affected_paths_with_depth` 는 broken-link / path 정정 FIX 영역 한정 의무 (그 외 optional). `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) 가 Phase 2 carrier — broken-link/path FIX 인데 depth 누락 시 적발.
 - **v1.3 → v1.4 (CFP-2480 / ADR-067 Amendment 3 + ADR-070 Amendment 12 + ADR-119 §결정 10②)**: `reproducer_command` (object: command + base_sha) + `replay_verdict` (enum) 2 optional 필드 추가. SemVer MINOR — backward-compat 100% 보장 (기존 11-column row valid, column 자체 생략 = null 처리). FIX ground-truth replay close-gate carrier — "수정됨" close = 원 reproducer 재실행 GREEN(외부 Retest, ADR-119 §결정 10② close-time wire) 반증 후에만 성립. `reproducer_command.command` schema 제약 = repo-relative 게이트/테스트 호출 형태만 (raw shell free-string 금지 = stored-command injection vector 차단, SecurityArch THR-E3-2) + INV-SEC-1 (PII/secret/credential/private-path 금지, ADR-067 §결정 7 동형). `replay_verdict` = ADR-070 §결정 D9 3-상태 disposition 정합 매핑 + INV-SEC-2 (stdout 최소 발췌). replay FAIL(falsified) = max-FIX 카운터 disjoint (닫기 게이트, ADR-067 Amendment 3). 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance + discriminating test). `fix-ledger-sync.yml` regex = trailing optional column 비충돌 (v1.1~v1.3 선례 4회 정합). FIX replay mechanical wire (close-time replay 자동화) = Phase 2 / 후속 carrier.
 - **v1.4 → v1.5 (CFP-2879 / ADR-079 Amendment 4)**: `시각` field 표면 재분류 — §10 markdown 표 시각 칸(표시 표면) = display layer, ADR-079 §결정 2 초-KST `+09:00` 정본 (ADR-079 §결정 5 V-3 dual-clock 기결정의 계약 문면 전파 + 상호 cross-ref). machine event 층 UTC strict Z 는 보존 (sealed pre-decision CFP-295 / Issue #302 값·machine 층 무변경). SemVer MINOR — field 추가·삭제 0, enum 무변경, 기존 행 소급 무효화 0, backward-compat 100% (§2 표 `시각` 설명 / §2 예시 표 / §3 constraints / §4 첫 bullet / `## v1.5` 절 문면 정정만). 상세 = `## v1.5` 절.
+- **v1.5 → v1.6 (CFP-2985 / ADR-181 + ADR-067 Amendment 4)**: `원인 판정` enum **2값 → 6값** 확장(`요구사항` · `환경` · `설계-리뷰` · `구현-리뷰` additive) + `verification_domain_enumeration` · `verification_domain_coverage` 2 optional 필드 추가 (14·15 번째 trailing column). SemVer MINOR — enum 값 **제거 0** (기존 `설계`/`구현` 행 소급 무효화 0) · 필드 삭제 0 · backward-compat 100% (기존 13-column row valid, column 자체 생략 = null 처리). `fix-ledger-sync.yml` regex = trailing optional column 비충돌 (v1.1~v1.5 선례 5회 정합) 이며 enum 확장은 column 개수·순서·헤더 텍스트 무접촉이라 `cells[4]` 고정 색인 소비자에게 형식 영향 0. ★ 값공간 6값 = **재진입 라우팅 축**이며 ADR-067 §결정 1 max-FIX 카운터 trigger lane 2종과 **disjoint**. ★ 동반 정정 2건 — (a) `decision_rule_ssot` dangling (구 값이 가리키던 CLAUDE.md 문자열 부재, 실 SSOT = `skills/root-cause-decision/SKILL.md`, §2 표 · §3 schema 2 site), (b) `fix-event-depth-scope-presence` 유령 lint **현재형 주장 5 site** 를 철회 문면으로 정정 (ADR-067 Amendment 4 §9.4 처분 5 표 1~5행 — 본 §4 의 v1.2 → v1.3 bullet 은 **동결 이력이라 무접촉**, 같은 표 10행). 상세 = `## v1.6` 절.
+
+## v1.6 (2026-08-19, CFP-2985)
+
+- `원인 판정` enum **2값 → 6값** — `요구사항` · `환경` · `설계-리뷰` · `구현-리뷰` additive (기존 `설계`/`구현` 무손상, 값 제거 0 → MINOR)
+- 확장 근거 = enum 밖 4축이 실 원장에서 **이미 사용 중**이었다는 실측 — 기록자 이탈이 아니라 **값공간 설계 결함의 증상**이다 (ADR-067 Amendment 4 축 (1))
+- ★ **라우팅 축 ↔ 카운터 정의역 disjoint 명문화** — 6값은 재진입 라우팅 축이며 ADR-067 §결정 1 의 max-FIX 카운터 trigger lane 2종(`설계-리뷰` / `구현-리뷰`)은 **불변**이다. 값공간 확장이 카운터 정의역을 확장하지 않는다
+- `verification_domain_enumeration` · `verification_domain_coverage` 2 optional 필드 신설 — FIX 닫기 조건의 **범위 축**. `replay_verdict`(**강도** 축)를 대체하지 않고 병렬 확장한다 (ADR-067 Amendment 4 축 (3) — 둘 중 하나가 채워졌다고 다른 하나가 면제되지 않는다)
+- P / V / D 정의는 **ADR-181 §결정 1 을 인용**하며 본 계약이 재진술하지 않는다 (재진술 = 값공간 분기 = ADR-181 §결정 4 접합부 위반). 서술 SSOT = `docs/domain-knowledge/concept/verification-domain-deficit.md`, 규범 SSOT = ADR-181 (충돌 시 ADR 정본)
+- `decision_rule_ssot` **dangling 정정** — 구 값이 가리키던 CLAUDE.md 의 "원인 판정 decision table" 섹션은 그 파일에 **부재하는 문자열**이었다(firsthand). 실 SSOT = `skills/root-cause-decision/SKILL.md` (§2 표 · §3 schema 2 site). 본 계약 밖 dangling 잔여는 flag only — 라우팅하지 않는다
+- ★ **유령 lint 현재형 주장 5 site 철회 도달** — `fix-event-depth-scope-presence` 는 registry 0 · script 0 · workflow 0 (firsthand)이며 ADR-067 Amendment 4 §9.4 처분 5 가 그 선언을 철회했다. 본 판이 철회를 **문면에 도달**시킨 site = frontmatter `related_files` · §2 표 `affected_paths_with_depth` 설명 · §3 rule · §3 cross_ref · `## v1.3` 요약 (처분 5 표 1~5행). `## 4. 변경 규칙` 의 v1.2 → v1.3 bullet 은 **동결 이력이라 무접촉**(같은 표 10행)
+- ★ **본 절 자신의 문자열 계수 주의** — 위 bullet 은 철회 대상을 **이름으로 지목**해야 성립하는 **철회 기술**이지 live 주장이 아니다(이름을 지우면 무엇이 철회됐는지 알 수 없다). ADR-067 §9.4 처분 5 의 자기분류(`철회 기술` = 무접촉)와 같은 class 다. 따라서 이 문자열의 repo-wide **계수는 정정 후 늘 수 있으며**, 판정 기준은 계수가 아니라 **그 문면이 현재형 검출 주장을 하는가**다
+- ★ **정직 천장 (`declared`)** — 본 판이 신설한 2 필드의 **기입 여부·값 정합을 검사하는 게이트는 현 시점 존재하지 않는다**. carrier = `docs/evidence-checks-registry.yaml` 의 `fix-ledger-conformance` entry (owner_adr ADR-181, `current_tier: warning`)이며 script·workflow 는 Phase 2 다. 본 계약은 이 축에 대해 "기계 강제" 를 주장하지 않는다 (ADR-181 §결정 3 8항 미충족 상태의 정직 표기)
+- Backward compat: 100% — enum 값 제거 0 · 필드 삭제 0 · 기존 13-column row 소급 무효화 0 (14·15번째 trailing optional column)
 
 ## v1.5 (2026-08-06, CFP-2879)
 
@@ -396,7 +474,7 @@ counter_semantics:
 - affected_scope optional enum 신설 (single-file / cross-module / cross-repo / cross-plugin)
 - affected_paths_with_depth optional array 신설 ({path, depth} per file)
 - ADR-067 Amendment 1 §결정 4 binding — cross-lane RESET scope-aware mechanical 정확도 확보
-- broken-link/path 정정 FIX 영역 한정 affected_paths_with_depth 의무 (lint warning-tier `fix-event-depth-scope-presence`)
+- broken-link/path 정정 FIX 영역 한정 affected_paths_with_depth 의무 — ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 5행] 당시 동반 선언한 `fix-event-depth-scope-presence` warning-tier lint 는 **실재하지 않았다**(registry 0 · script 0 · workflow 0, firsthand). 의무 자체는 유효하며 판정 축은 리뷰(`declared`)다
 - CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly 차단
 - Backward compat: 100% (2 optional field, 기존 row null 또는 column 생략 모두 valid)
 
