@@ -22,6 +22,24 @@ name: dev-process-schema-parity
 #   (admission 게이트[fix-ledger-conformance.yml]의 warning-first 와 다른 축이다: 이쪽은
 #    "새 규범의 입장료" 가 아니라 **기존 계약의 자기정합**이므로 유예 근거가 없다.)
 # **non-required**: branch protection contexts 무변경 (required context 신설 0).
+#
+# ★★ **CP 문면과의 divergence (`declared`)** — Change Plan §5 D-11c 는 배선 대상을
+#   `.github/workflows/` **+ twin `templates/github-workflows/`** 로 적었으나, 본 착지는
+#   **`.github`-only** 다 (twin 미보유). 이탈 근거 3항 (firsthand):
+#   ⓐ 위 3 run 줄이 참조하는 `tests/scripts/**` · `tests/unit/**` 는 **wrapper 전용 경로**다.
+#      templates/ twin 은 consumer 로 복사되는 seed 인데, consumer repo 에는 그 경로가 없으므로
+#      복사 즉시 **born-red** 가 된다. 선언만 하고 성립하지 않는 게이트를 출하하는 것은
+#      본 Story 가 표적으로 삼는 결함 계보(ADR-181 검증 정의역 결손) 그 자체다.
+#   ⓑ repo 관례에 **선례가 실재**한다 — 순수 self-test workflow 는 `.github`-only 로 둔다.
+#      firsthand 계수: twin 없는 `.github/workflows/*.yml` = **50개**. 동종 예 =
+#      `evidence-registry-check-test.yml` · `dev-process-metrics-test.yml`(동일 도메인) ·
+#      `selftest-execution-liveness-test.yml` · `cfp2985-rtm-contract-test.yml`.
+#   ⓒ `invariant-check.yml` 의 Workflow parity loop 은 `templates/github-workflows/*.yml` 를
+#      walk 하는 **단방향**이라 `.github`-only 파일을 미검출한다. 역방향 기전인
+#      `CONSUMER_ONLY_WORKFLOWS` 는 "twin 은 있고 self-app copy 는 면제" 를 담는 목록이므로
+#      **wrapper-only 를 담지 못한다** — 즉 등재로는 ⓐ 를 해소할 수 없다.
+#   ⇒ 처분 = twin 제거, `.github`-only 유지. **이는 CP 문면 이탈이며 은폐가 아니라 선언이다.**
+#      CP §5 D-11c 행의 "+ **twin** `templates/github-workflows/`" 문면 정정 = Phase 2 마감 편집 대상.
 
 on:
   pull_request:
