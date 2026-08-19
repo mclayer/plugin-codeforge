@@ -52,6 +52,14 @@ amendments:
     by: "CFP-2725"
     date: "2026-07-17"
     title: "결정 A(사용자 최종 확정 = 리뷰 PASS 후·설계 진입 전 위치 정밀화) + 결정 B(내부 시스템 적합성 4번째 disjoint 검증 축 — Amd2 internal-invariant 선례 답습)"
+  - number: 4
+    by: "CFP-2782"
+    date: "2026-07-22"
+    title: "canonical 작업레인 수 10 → 8 (ADR-121 deploy·deploy-review 2 lane 물리 제거 반영)"
+  - number: 5
+    by: "CFP-3022"
+    date: "2026-08-19"
+    title: "§결정 6 declarative-only → 실 판정 분기 승격 + 4축 발동 관측 레코드 의무 (ADR-184 짝) + 축 지목 정본화(식별자 리터럴 집합, 서수 인용 금지)"
 amendment_log:
   - by: "CFP-2341"
     date: "2026-06-18"
@@ -83,6 +91,16 @@ amendment_log:
       Amendment 1 canonical=10(요구사항리뷰 추가 시점) = frozen 역사 기록(0건 변경, Event Sourcing). §결정 1~6 + Amendment 1/2/3 의미 불변 — lane 신설 결정 자체 무변경, 수치 SSOT(10→8)만 갱신. ADR 본체 status = Proposed 유지.
     direction: corrective
     sunset_justification: "canonical lane count 10 → 8 = ADR-121 deploy·deploy-review 2 lane 물리 제거 반영(numeric SSOT sync). 요구사항리뷰 lane §결정 1~6 게이트·라벨·worker 무손상 — lane 신설 결정 자체 무변경, 수치 표기만 정본화. count 하향은 정책 약화가 아니라 상위 ADR-121 로 제거된 lane 의 SSOT 반영(reflect-upstream). ADR-058 §결정 5 / ADR-064 §결정 7 정합 — governance surface(요구사항리뷰 게이트) 약화 0. is_transitional: false 유지. 원복(deploy lane 재도입)은 별 Story 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
+  - by: "CFP-3022"
+    date: "2026-08-19"
+    scope: |
+      Amendment 5 — §결정 6 의 declarative-only 조건부 발동을 실 판정 분기로 승격하고, 요구사항리뷰 4축 각각의 발동 여부를 라운드 단위 관측 레코드로 남길 의무를 신설한다(짝 = ADR-184, 동일 carrier·동일 PR). §결정 6 문면은 무손상 — append-only 이며 supersede 아님.
+      승격의 정확한 범위: 발동 판정이 리뷰어 재량 선언에 머무르지 않고 (applicable/capable/executed/yield) 4 직교 필드 레코드로 남는다. 무조건화 아님 / 리뷰어 재량 escalation 제거 아님 / declarative-only 를 fail-closed 로 전복함도 아님 — 셋 중 하나라도 하면 별 Amendment 의무.
+      축 지목 정본화: 축 = 식별자 리터럴 집합 {external-fact-dependency, internal-invariant, ac-decomposition-completeness, internal-fitness}. 서수 인용 금지(본 ADR 자신이 같은 대상을 3번째/4번째 두 수로 부르는 내부 모순 보유 — 두 표기는 서로 다른 집합을 센 결과이며 frozen 역사로 보존, byte 0건 변경).
+      frontmatter amendments[] 기계 동기화: Amendment 4 row 가 amendments[] 에 누락(amendment_log 4건·본문 헤딩 4건 대비 amendments[] 3건)돼 있어 backfill 후 5 를 append 한다 — 의미 변경 0, 목록 mirror 정합만. 미backfill 시 [1,2,3,5] 비연속 자기선언이 되어 '추출기가 놓쳤다' 는 거짓 신호를 손으로 만들게 된다.
+      §결정 1~6 + Amendment 1/2/3/4 의미 불변. ADR 본체 status = Proposed 유지.
+    direction: additive
+    sunset_justification: "본 Amendment 는 약화가 아니라 additive 관측 의무 신설이다 — §결정 6 의 발동 게이트 문면·리뷰어 재량 escalation·abstention escape 전부 무손상이며, 심사 강도 축소 0(ADR-127 리뷰 무조건 수행·ADR-044 peer floor 무접촉). 신규 required CI context 0(branch protection 8-tuple 무변경). 정직 상한은 ADR-152 를 승계해 명시 잔존한다 — 무발동 은폐만 기계 식별되고 억지 발동의 applicable 진리성은 원리적 결정불가로 남으며, 본 Amendment 는 그 한계를 없앤다고 주장하지 않는다. is_transitional: false 유지. 원복은 별도 Story 의 명시 결정으로만 가능하며 그 경우에도 ADR-058 §결정 5 약화 evidence-gate 를 따른다."
 ---
 
 # ADR-125: 요구사항리뷰 lane 신설 (9번째 lane)
@@ -403,6 +421,77 @@ Amendment 1 의 canonical=10(요구사항리뷰 추가 시점 정본) = **frozen
 | ADR-121 | canonical count 10→8 authority (deploy·deploy-review lane deprecate) |
 | ADR-125 Amendment 1 | canonical=10 정본화 — frozen 역사 (본 Amendment 가 10→8 갱신) |
 | ADR-072 Amendment 5 | ProductionEvidenceDeputy RELOCATE (sibling — 동일 CFP-2782) |
+
+## Amendment 5 (2026-08-19) — CFP-3022 — §결정 6 declarative-only → 실 판정 분기 승격 + 4축 발동 관측 레코드 의무
+
+### 성격
+
+본 Amendment 는 **append-only 승격**이다 — §결정 6 의 문면을 **supersede 하지 않는다**. §결정 6 이 선언한 조건부 발동(declarative-only)이 선언에 그치지 않고 **실 판정 분기로 배선**되게 하고, 그 판정 결과를 **라운드 단위 관측 레코드**로 남길 의무를 신설한다. 레코드의 구조·착지 위치·정직 상한 SSOT = **[ADR-184](ADR-184-requirements-review-axis-activation-record.md)** (동일 carrier CFP-3022, 동일 Phase 1 PR 착지). 본 Amendment 는 그 규범을 **본 lane 에 결속**하는 짝이며, ADR-184 본문을 여기서 재기술하지 않는다(이중 SSOT 회피).
+
+§결정 1~6 + Amendment 1/2/3/4 의미 불변. ADR 본체 status = Proposed 유지.
+
+### A5.1 — 승격의 정확한 범위 (무엇이 변하고 무엇이 안 변하는가)
+
+| 변한다 | 변하지 않는다 |
+|---|---|
+| 발동 판정이 **리뷰어 재량 선언에 머무르지 않고** `applicable` / `capable` / `executed` / `yield` 4 직교 필드 레코드로 남는다 | **무조건화 아님** — §결정 6 의 "매 Story 강제 발동 아님" 은 그대로다. 조건 미성립 축은 정상 N/A 로 기록된다 (ADR-127: N/A 는 단축이 아니라 정식 분류의 정상 결과) |
+| 미발동 축도 **판정 근거(reason)를 동반**해야 한다 — 근거 없는 침묵은 더 이상 통과가 아니다 | **리뷰어 재량 escalation 제거 아님** — §결정 6 의 "경계(?) 항목은 리뷰어 판단으로 단계③ escalation 가능" 은 무손상. escalation 했다면 그 사실이 레코드에 남을 뿐이다 |
+| `yield:0`(발동했고 결함 0)이 **양성 정보**로 기록된다 — "돌았고 깨끗함" 과 "안 돌았음" 이 분리된다 | **declarative-only → fail-closed 전복 아님** — 게이트가 발동 자체를 강제하지 않는다. 강제되는 것은 **기록**이지 발동이 아니다 |
+| 축별 분모(`applicable:true` 건수)가 생성되어 사후 집계가 가능해진다 | **abstention escape 무손상** — 출처 확보 불가 시 "확인 불가/추정" 명시 후 진행(ADR-119 §결정 3.2). 그 경우도 레코드는 남는다 |
+
+**위 표 우측 열 항목 중 하나라도 실제로 바꾸는 변경은 본 Amendment 의 범위 밖이며 별도 Amendment 의무를 발생시킨다** — §결정 6 을 무조건화하거나, 리뷰어 재량 escalation 을 제거하거나, declarative-only 를 fail-closed 로 전복하는 경우가 그것이다.
+
+### A5.2 — 4축 발동 관측 레코드 의무 (규범 본문 = ADR-184)
+
+요구사항리뷰 lane 은 매 리뷰 라운드마다 **4축 각각에 대해 발동 레코드 1건**을 산출한다. 규범 상세는 ADR-184 소관이며 본 절은 결속만 선언한다.
+
+| 항목 | 값 | ADR-184 근거 |
+|---|---|---|
+| 레코드 정의역 | **라운드(리뷰 iteration) 당**. Story 당 아님. 유일성 키 = `(story_key, iteration, axis_id)` | §결정 2 |
+| 착지 | 2층 — 층1 `review-verdict-v4` packet `axis_activation[]`(lane-conditional optional array) / 층2 Story §9 요구사항리뷰 서브섹션 | §결정 1 |
+| 필드 | `applicable` / `capable` / `executed` / `yield` 4 직교 + `reason`(미발동 시) + `payload_ref`(발동 시) | §결정 3 |
+| 정직 상한 | **무발동 은폐만 기계 식별.** 억지 발동은 자기모순형만 잡히고 `applicable` 진리성은 **원리적 결정불가** — 완화(dual-peer · 표본 감사 · 3-tuple 교차)는 **불일치 검출이지 진리 검증이 아니다** | §결정 4 |
+
+**정직 표기 (ADR-152 승계)**: 본 Amendment 는 "억지 발동과 무발동 은폐를 둘 다 기계 구별한다" 고 주장하지 않는다. presence 게이트는 activation 을 강제하지 못한다는 상한이 그대로 적용된다.
+
+### A5.3 — `ac-decomposition-completeness` 의 구조적 특수성
+
+이 축은 본 lane 의 **유일한 무조건 축**이므로 `applicable` 이 **상수 true** 다. `applicable` 이 상수인 축에는 A5.2 가 특정한 결정불가 지점이 **존재하지 않는다** — 기록자가 그 필드로 거짓말할 값 공간이 없다. ⇒ 4축 중 **유일하게 self-attestation 위조 표면이 구조적으로 0** 이며, 감사 가능성 면에서 온전하다. `applicable ≠ true` 로 기록된 이 축의 레코드는 즉시 기계 검출 대상이다.
+
+### A5.4 — 축 지목 정본화 (append-only, frozen 역사 보존)
+
+**정본 = 축 식별자 리터럴 집합** `{external-fact-dependency, internal-invariant, ac-decomposition-completeness, internal-fitness}` (4원소). 하류 배선·게이트·레코드 스키마는 **이 리터럴 집합으로만** 축을 지목한다.
+
+**서수 인용 금지.** 본 ADR 은 같은 대상을 두 수로 부른다 — Amendment 3 결정 B 의 **제목**은 "**4번째** disjoint 축", 같은 Amendment 의 **본문·배경·cross-ref 표**는 "패턴의 **3번째** disjoint 축". 이는 오타가 아니라 **서로 다른 집합을 센 결과**다:
+
+| 표기 | 세는 정의역 |
+|---|---|
+| **4** | 요구사항리뷰 lane 의 **전 축** (`external-fact-dependency` · `internal-invariant` · `ac-decomposition-completeness` · `internal-fitness`) |
+| **3** | **additive-disjoint-axis 패턴 계보만** (`external-fact-dependency` → `internal-invariant` → `internal-fitness`) |
+
+3-계열 독법에서 탈락하는 축이 하필 `ac-decomposition-completeness`(계보가 다름 — ADR-145 / CFP-2603 유래)이고, 하필 그 축이 본 lane 의 **유일한 무조건 축**이다. ⇒ 축 레코드를 **서수 기준으로** 배선하면 3-계열 독법을 따르는 구현자가 그 축의 레코드를 만들지 않고도 스키마를 통과시킨다. 이것이 본 Amendment 가 지목 방식을 정본화하는 실 사유다(표기 미학이 아니다).
+
+**두 표기 자체는 frozen 역사 기록으로 보존한다 — byte 0건 변경.** Amendment 3 본문은 그대로 두고, 본 절이 **정본 지목 방식**만 append 로 확정한다(Amendment 4 가 canonical=10 을 frozen 역사로 보존한 것과 동일 패턴 — Event Sourcing). 서수 표기를 소급 치환하면 그 표기가 어느 집합을 세었는지의 기록이 소실된다.
+
+### A5.5 — frontmatter `amendments[]` 기계 동기화 (의미 변경 0)
+
+본 Amendment 착지 직전 실측상 `amendments[]` 는 3 row(1·2·3)인 반면 `amendment_log[]` 는 4건, 본문 `## Amendment N` 헤딩도 4건이었다 — **Amendment 4 row 가 `amendments[]` 에서만 누락**된 mirror drift 다. 본 Amendment 는 4 를 backfill 한 뒤 5 를 append 한다.
+
+**backfill 하는 이유**: 하지 않으면 자기선언 집합이 `[1,2,3,5]` 가 되어 **비연속**이 된다. 비연속 자기선언은 "추출기가 무언가를 놓쳤다" 는 신뢰도 판별 신호로 쓰이므로, backfill 없이 5 만 append 하면 **거짓 신호를 손으로 만들어 넣는 것**이 된다. 내용 변경 0 — `amendment_log[]` 와 본문에 이미 있는 사실의 목록 mirror 정합일 뿐이다.
+
+### cross-ref (Amendment 5)
+
+| ADR | 관계 |
+|---|---|
+| [ADR-184](ADR-184-requirements-review-axis-activation-record.md) | **짝 (동일 carrier CFP-3022)** — 축 발동 레코드의 구조·정의역·정직 상한 규범 SSOT. 본 Amendment 는 그 규범을 본 lane 에 결속만 한다 |
+| ADR-152 | 정직 천장 승계 — presence 게이트는 activation 을 강제하지 못한다. A5.2 정직 표기의 근거 |
+| ADR-127 | "N/A 는 단축이 아니라 정식 분류의 정상 결과" — A5.1 정상 N/A 기록의 규범 근거. 리뷰 무조건 수행 무손상 |
+| ADR-044 | peer floor (SoD: implementer ≠ certifier) — A5.2 완화 경로. **무손상**(심사 강도 축소 0) |
+| ADR-119 | 검사연극 금지 + abstention escape — A5.1 우측 열 무손상 항목의 출처 |
+| ADR-124 | §결정 6 의 상위 anchor(외부사실 의존 게이트). 발동 게이트 자체 **무약화** — 본 Amendment 는 발동이 아니라 기록을 강제한다 |
+| ADR-125 Amendment 3 | 결정 B 의 축 카운트 두 표기 = **frozen 역사**(byte 0건 변경). A5.4 가 정본 지목 방식만 append |
+| ADR-125 Amendment 4 | frozen-역사 보존 패턴의 선례(canonical=10 보존) — A5.4 가 그 패턴을 답습 |
+
 
 ## sunset_justification (ADR-058 §결정 5 — 약화 evidence-gate)
 
