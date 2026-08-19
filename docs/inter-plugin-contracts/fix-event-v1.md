@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: fix-event
-version: "1.5"
+version: "1.6"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/fix-event-v1.md
@@ -12,6 +12,7 @@ authors:
   - ArchitectAgent (CFP-526 — v1.2 MINOR bump, reasoning_carryover optional field)
   - ArchitectAgent (CFP-842 — v1.3 MINOR bump, depth-aware scope optional fields)
   - ArchitectAgent (CFP-2480 — v1.4 MINOR bump, FIX ground-truth replay optional fields: reproducer_command + replay_verdict)
+  - ArchitectAgent (CFP-2985 — v1.6 MINOR bump, `원인 판정` enum 6값 확장 + 검증 정의역 선언 2 optional fields: verification_domain_enumeration + verification_domain_coverage)
 related_adrs:
   - ADR-008
   - ADR-009 (CFP-31 — §10 Orchestrator 단독 owner 결정)
@@ -21,12 +22,13 @@ related_adrs:
   - ADR-070 (CFP-2480 — verify-before-trust FIX-close 시점 적용, replay_verdict = §결정 D9 3-상태 disposition 정합 매핑, reproducer = [hypothesis] → PL falsify → [verified] close)
   - ADR-079 (CFP-2879 — v1.5 §10 markdown 표 시각 칸(표시 표면) display 재분류: §결정 2 초-KST 정본 + §결정 5 V-3 dual-clock 기결정의 계약 문면 전파, 상호 cross-ref)
   - ADR-119 (CFP-2480 — §결정 10② close-time wire 실현, "수정됨=반증 후 단언" mechanical carrier)
+  - ADR-181 (CFP-2985 — 검증 정의역 결손(P/V/D) 규범 SSOT. v1.6 `verification_domain_*` 2 필드의 규범 host — 본 계약은 정의를 재진술하지 않고 §결정 1 을 인용한다)
 related_files:
   - docs/orchestrator-playbook.md (§6.4 / §6.7 narrative SSOT — 본 registry와 cross-ref)
   - .github/workflows/fix-ledger-sync.yml (§10 행 commit 감지 → label/comment mirror)
   - templates/story-page-structure.md (Story §10 표 schema)
   - docs/inter-plugin-contracts/debate-protocol-v1.md (debate_artifact_ref consumer)
-  - docs/evidence-checks-registry.yaml (CFP-842 — fix-event-depth-scope-presence warning-tier entry)
+  - docs/evidence-checks-registry.yaml  # ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 1행] CFP-842 판은 이 자리에서 `fix-event-depth-scope-presence` warning-tier entry 가 실재한다고 단언했으나 실측 0 건이었다(registry 0 · script 0 · workflow 0, firsthand). 본 파일이 관련인 실 근거 = `fix-ledger-conformance` entry (owner_adr ADR-181, current_tier warning)
 amendment_log:
   - date: 2026-05-11
     version: "1.1"
@@ -52,6 +54,12 @@ amendment_log:
     summary: "FIX ground-truth replay 2 optional 필드 추가 — reproducer_command (finding 정당화한 실패 명령 verbatim + base SHA 동반, 생성 시점 저장; schema 제약 = repo-relative 게이트/테스트 호출 형태만, raw shell free-string 금지 = stored-command injection vector 차단; INV-SEC-1 PII/secret/credential/private-path 금지) + replay_verdict (닫기 시점 enum: PASS / falsified / replay-impossible / undetermined; ADR-070 §결정 D9 3-상태 disposition 정합 매핑; INV-SEC-2 stdout 최소 발췌). FIX '수정됨' close = 원 reproducer 재실행 GREEN(외부 Retest) 반증 후에만 성립 (ADR-119 §결정 10② close-time wire 실현). 12/13 번째 column 으로 §10 표 확장. replay FAIL = 닫기 게이트(close 거부)지 max-FIX 카운터 소비 아님 (ADR-067 Amendment 3 disjoint). replay-impossible = 실행 가능 명령 환원 불가 finding 의 사유 동반 disposition (silent 면제 금지)."
     breaking: false
     backward_compat: true  # 기존 11-column row valid (reproducer_command / replay_verdict 누락 = null 처리)
+  - date: 2026-08-19
+    version: "1.6"
+    cfp: CFP-2985
+    summary: "`원인 판정` enum 2값 → 6값 확장(`요구사항`·`환경`·`설계-리뷰`·`구현-리뷰` additive — 기존 2값 유효, 값 제거 0) + `verification_domain_enumeration`·`verification_domain_coverage` 2 optional 필드 신설(14/15 번째 trailing column — FIX 닫기 조건의 범위 축, `replay_verdict` 강도 축과 disjoint 병렬 확장). 값공간 6값 = 재진입 라우팅 축이며 ADR-067 §결정 1 max-FIX 카운터 trigger lane 2종(설계-리뷰/구현-리뷰)은 불변 — 라우팅 값공간 확장이 카운터 정의역을 확장하지 않는다. P/V/D 정의는 ADR-181 §결정 1 인용(재진술 금지). 동반 정정 2건: (a) `decision_rule_ssot` dangling — 구 값 `CLAUDE.md \"원인 판정 decision table\" 섹션` 은 CLAUDE.md 에 부재하는 문자열이었고 실 SSOT 는 `skills/root-cause-decision/SKILL.md` (2 site), (b) `fix-event-depth-scope-presence` 유령 lint 현재형 주장 5 site 를 철회 문면으로 정정(ADR-067 Amendment 4 §9.4 처분 5 표 1~5행 — `## 4. 변경 규칙` v1.2→v1.3 bullet 은 동결 이력이라 무접촉)."
+    breaking: false
+    backward_compat: true  # 기존 13-column row valid (verification_domain_* 누락 = null 처리) · enum 값 제거 0 → 기존 `설계`/`구현` 행 소급 무효화 0
   - date: 2026-08-06
     version: "1.5"
     cfp: CFP-2879
@@ -78,28 +86,31 @@ amendment_log:
 | 시각 | ISO8601 string | required | machine event 층(직렬화 값·미래 machine export) = UTC strict — Z suffix 필수, `2026-04-29T12:34:56Z` (CFP-295 / Issue #302 — +00:00 / bare datetime 불허). **§10 markdown 표 시각 칸(표시 표면) = display layer — ADR-079 §결정 2 초-KST `YYYY-MM-DDTHH:MM:SS+09:00` 정본** (ADR-079 §결정 5 V-3 dual-clock 재배정). 두 층 disjoint co-exist — §14 Lane Evidence dual-layer (ADR-079 §결정 9, story-page-structure §14 field #4/#5) 동형. (주: `fix-ledger-sync.yml` Action mirror 는 CFP-2879 §7.1 ② 실측상 `시각` 을 소비하지도 자체 시각값을 emit 하지도 않으므로 machine carrier 아님 — 코멘트 시각 = GitHub `created_at` 플랫폼 메타데이터. 현 machine 층 물리 carrier = `## v1.5` 절 참조.) |
 | 레인 | enum | required | 요구사항 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 |
 | 트리거 | string | required | 실패 원문 요약 (예: "DesignReviewPL P0 × 2", "성능 mean +15%", "SecurityTestPL P0 × 1 (SQL injection)") |
-| 원인 판정 | enum | required | 설계 / 구현 (ArchitectPL 최종 판정. CLAUDE.md "원인 판정 decision table" SSOT) |
+| 원인 판정 | enum | required | 설계 / 구현 / 요구사항 / 환경 / 설계-리뷰 / 구현-리뷰 (**v1.6, CFP-2985** — 뒤 4값 additive. ArchitectPL 최종 판정. decision rule SSOT = `skills/root-cause-decision/SKILL.md`). ★ 본 값공간 = **재진입 라우팅 축**이며 ADR-067 §결정 1 의 max-FIX 카운터 trigger lane 2종(`설계-리뷰` / `구현-리뷰`)과 **disjoint** — 값공간이 6값이 됐다고 카운터 정의역이 확장되지 않는다 |
 | 재실행 범위 | string | required | 어떤 산출물·step부터 다시 진행하는지 (예: "Change Plan §3 재작성", "DeveloperAgent 재스폰") |
 | RESET? | string | required | "—" (RESET 없음) 또는 "RESET <레인>" (해당 lane 카운터 리셋) |
 | debate_artifact_ref | string \| null | **optional (v1.1, CFP-391)** | debate-protocol-v1 발동된 FIX event 시 Story §9 debate transcript section anchor link (예: `#debate-transcript-DR-001`). 미발동 FIX 시 `null` 또는 column 자체 생략 (backward-compat — 기존 7-column row valid) |
 | reasoning_carryover | object \| null | **optional (v1.2, CFP-526)** | ArchitectPL re-spawn 시 architectural amnesia 차단 — 직전 finding + reasoning 전달 (ADR-067 §결정 5). 3-part structured YAML: `invariant_summary` (50자 이내, immutable boundary 요약) / `disputed_claims` (100자 이내, unresolved 영역) / `transcript_ref` (Story §9 anchor link). 미사용 시 `null` 또는 column 생략 (backward-compat — 기존 8-column row valid) |
 | affected_scope | enum \| null | **optional (v1.3, CFP-842)** | 결함의 affected layer depth — enum `single-file` (1 file 안 isolated) / `cross-module` (동일 repo 안 2+ top-level dir) / `cross-repo` (2+ repo, 단일 plugin family) / `cross-plugin` (2+ plugin family 또는 marketplace mirror 영역). RESET 범위·재스폰 lane 결정 mechanical 정확도 확보 (ADR-067 §결정 4 cross-lane RESET 정합). 미사용 시 `null` 또는 column 생략 (backward-compat — 기존 9-column row valid) |
-| affected_paths_with_depth | array of object \| null | **optional (v1.3, CFP-842)** | broken-link / path 정정 FIX 시 의무 — 영향 file 별 `{path: string, depth: integer}` array. `depth` = file 의 root 로부터 dir depth (e.g. `docs/adr/ADR-067.md` = 2, `templates/github-workflows/fix-ledger-sync.yml` = 2, `CLAUDE.md` = 0). 정정 규칙 적용 범위 (예: `depth >= 2 then path adjust = '../../'`) 의 mechanical reasoning trace 보존 + over-correction regression chain (CFP-770 §8 CR-005→CR-006→CR-007 lesson) 직접 차단. broken-link / path 정정 외 FIX = `null` 또는 column 생략 (backward-compat 9-column row valid). broken-link/path FIX 인데 본 필드 누락 = `fix-event-depth-scope-presence` warning-tier lint 적발 |
+| affected_paths_with_depth | array of object \| null | **optional (v1.3, CFP-842)** | broken-link / path 정정 FIX 시 의무 — 영향 file 별 `{path: string, depth: integer}` array. `depth` = file 의 root 로부터 dir depth (e.g. `docs/adr/ADR-067.md` = 2, `templates/github-workflows/fix-ledger-sync.yml` = 2, `CLAUDE.md` = 0). 정정 규칙 적용 범위 (예: `depth >= 2 then path adjust = '../../'`) 의 mechanical reasoning trace 보존 + over-correction regression chain (CFP-770 §8 CR-005→CR-006→CR-007 lesson) 직접 차단. broken-link / path 정정 외 FIX = `null` 또는 column 생략 (backward-compat 9-column row valid). broken-link/path FIX 인데 본 필드 누락 = **리뷰 판정 축(`declared`)** — 그 판정을 내리는 검출 lint 는 실재하지 않는다. ★ [철회됨 — 2026-08-16, ADR-067 Amendment 4 §9.4 처분 5 표 2행] v1.3 판이 여기서 현재형으로 기술하던 `fix-event-depth-scope-presence` warning-tier lint 는 registry 0 · script 0 · workflow 0(firsthand)이었고 그 선언은 철회됐다 |
 | reproducer_command | object \| null | **optional (v1.4, CFP-2480)** | FIX ground-truth replay 의 원 reproducer — finding 을 정당화한 실패 명령 verbatim + base SHA. 2-part: `command` (string, **schema 제약 = repo-relative 게이트/테스트 호출 형태만** — 예: `bash scripts/check-plugin-version-bump-self.sh --self-test` 또는 `pytest tests/foo::test_bar`; raw shell free-string 금지 = stored-command injection vector 차단, SecurityArch THR-E3-2) + `base_sha` (string, finding 정당화 시점 base SHA — reproduce-before-fix 결정론 기준, InfraOp SHA-pin). finding 생성 시점 저장 (닫기 시점 재실행 가능하도록). **INV-SEC-1 (의무)**: PII / secret / credential / API key / private absolute-path 금지 (public PR mirror surface — ADR-067 §결정 7 동형). FIX replay 대상 finding 한정 의무 (환원불가 finding = `null`). 누락 = backward-compat (기존 11-column row valid, null 처리) |
 | replay_verdict | enum \| null | **optional (v1.4, CFP-2480)** | FIX "수정됨" 닫기 시점 replay disposition. enum = `PASS` (원 reproducer 결정론적 GREEN 재현 + PL falsify 통과 → close 허용, 외부 Retest) / `falsified` (여전히 RED → close 거부, (A)축 fail-closed) / `replay-impossible` (실행 가능 명령 환원 불가 finding — 사유 동반 의무, silent 면제 금지) / `undetermined` (flaky 다회 미충족 또는 mixed → 보류 quarantine, false-GREEN+false-RED 양방향 차단). ADR-070 §결정 D9 3-상태 disposition 정합 매핑. 결정 SSOT = `scripts/lib/fix_replay_disposition.py` (pure function + provenance 동반, artifact 없이 close 경로 0 — Story A INV-G4 동형). **INV-SEC-2 (의무)**: verdict 동반 stdout 발췌는 exit + 모순 라인만 최소 (전체 dump 금지). replay FAIL(`falsified`) = 닫기 게이트지 max-FIX 카운터 소비 아님 (ADR-067 Amendment 3 disjoint). 누락 = backward-compat (기존 12-column row valid, null 처리) |
+| verification_domain_enumeration | string \| null | **optional (v1.6, CFP-2985)** | FIX 닫기 시점 **검증 정의역(V) 선언**의 열거 축 — 처방 정의역(P) site 를 **산출하는 명령**이다(열거 결과 목록이 아니다: 목록은 커밋이 지나면 조용히 stale 이 되고 그 stale 을 알려주는 채널이 0 이다). P / V / D 정의 = ADR-181 §결정 1 **인용**(본 계약 재진술 금지). schema 제약 = `reproducer_command.command` 상속 — repo-relative 게이트·테스트 호출 형태만(예: `bash scripts/check-adr-admission.sh --list`), raw shell free-string 금지(stored-command injection vector 차단, SecurityArch THR-E3-2) + **INV-SEC-1** (PII/secret/credential/private absolute-path 금지). 누락 = backward-compat (기존 13-column row valid, null 처리) |
+| verification_domain_coverage | string \| null | **optional (v1.6, CFP-2985)** | 검증 정의역 선언의 **범위 축** — `x 대 y` 형식(x = 닫기 시점 실제 재검사·재실행·재관찰한 site 수, y = 위 열거 명령이 산출한 site 수). **비율·확률이 아니다**(분자·분모 둘 다 정수 site 수). `x < y` 는 위반이 아니라 상시 상태이며(ADR-181 §결정 1 — P ⊋ V), 본 계약이 금지하는 것은 `D = P − V` 가 비어 있지 않은 것이 아니라 **D 를 미선언 상태로 두는 것**이다. 공허 값(`0 대 0` · `1 대 1` 자기 자신 1건뿐 · 대시 · `null` · 공란) = 선언 부재와 동치. `replay_verdict`(검증 **강도** 축)와 **disjoint** — 대체 아닌 병렬 확장. 누락 = backward-compat (기존 13-column row valid, null 처리) |
 
-§10 행 markdown 형식 예시 (v1.4 — 13 column):
+§10 행 markdown 형식 예시 (v1.6 — 15 column):
 
 ```markdown
-| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover | affected_scope | affected_paths_with_depth | reproducer_command | replay_verdict |
-|------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|----------------|---------------------------|--------------------|----------------|
-| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — | null | null | single-file | null | null | null |
-| 2    | 2026-04-29T23:22:00+09:00 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | RESET 구현-리뷰 | null | null | cross-module | null | null | null |
-| 3    | 2026-04-30T18:00:00+09:00 | 보안-테스트 | SecurityTestPL P0 × 1 (SQL injection) | 구현 | DeveloperAgent 재스폰 | — | null | null | single-file | null | null | null |
-| 4    | 2026-05-11T20:00:00+09:00 | 설계-리뷰   | debate-protocol-v1 FIX (anchor F-001 severity divergence) | 설계 | ArchitectAgent re-run with transcript | — | #debate-transcript-F-001 | {invariant_summary: "API contract immutable", disputed_claims: "rate-limit scope", transcript_ref: "#debate-transcript-F-001"} | cross-plugin | null | null | null |
-| 5    | 2026-05-17T20:00:00+09:00 | 구현-리뷰   | CodeReviewPL P1 broken-link x 3 (CR-005 over-correction) | 구현 | DeveloperAgent 재스폰 (path adjust) | — | null | null | cross-module | [{path: "docs/adr/ADR-067.md", depth: 2}, {path: "templates/github-workflows/fix-ledger-sync.yml", depth: 2}, {path: "CLAUDE.md", depth: 0}] | null | null |
-| 6    | 2026-06-30T20:00:00+09:00 | 구현-리뷰   | CodeReviewPL P0 × 1 (version-bump under-bump, 정책팩 실행 포착) | 구현 | DeveloperAgent 재스폰 (MINOR→bump) — close 시 replay | — | null | null | single-file | null | {command: "bash scripts/check-plugin-version-bump-self.sh --self-test", base_sha: "50b333b5"} | PASS |
-| 7    | 2026-06-30T21:30:00+09:00 | 구현-리뷰   | CodeReviewPL P1 naming 가독성 (환원불가) | 구현 | DeveloperAgent 재스폰 | — | null | null | single-file | null | null | replay-impossible |
+| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover | affected_scope | affected_paths_with_depth | reproducer_command | replay_verdict | verification_domain_enumeration | verification_domain_coverage |
+|------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|----------------|---------------------------|--------------------|----------------|---------------------------------|------------------------------|
+| 1    | 2026-04-29T19:15:00+09:00 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — | null | null | single-file | null | null | null | null | null |
+| 2    | 2026-04-29T23:22:00+09:00 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | RESET 구현-리뷰 | null | null | cross-module | null | null | null | null | null |
+| 3    | 2026-04-30T18:00:00+09:00 | 보안-테스트 | SecurityTestPL P0 × 1 (SQL injection) | 구현 | DeveloperAgent 재스폰 | — | null | null | single-file | null | null | null | null | null |
+| 4    | 2026-05-11T20:00:00+09:00 | 설계-리뷰   | debate-protocol-v1 FIX (anchor F-001 severity divergence) | 설계 | ArchitectAgent re-run with transcript | — | #debate-transcript-F-001 | {invariant_summary: "API contract immutable", disputed_claims: "rate-limit scope", transcript_ref: "#debate-transcript-F-001"} | cross-plugin | null | null | null | null | null |
+| 5    | 2026-05-17T20:00:00+09:00 | 구현-리뷰   | CodeReviewPL P1 broken-link x 3 (CR-005 over-correction) | 구현 | DeveloperAgent 재스폰 (path adjust) | — | null | null | cross-module | [{path: "docs/adr/ADR-067.md", depth: 2}, {path: "templates/github-workflows/fix-ledger-sync.yml", depth: 2}, {path: "CLAUDE.md", depth: 0}] | null | null | null | null |
+| 6    | 2026-06-30T20:00:00+09:00 | 구현-리뷰   | CodeReviewPL P0 × 1 (version-bump under-bump, 정책팩 실행 포착) | 구현 | DeveloperAgent 재스폰 (MINOR→bump) — close 시 replay | — | null | null | single-file | null | {command: "bash scripts/check-plugin-version-bump-self.sh --self-test", base_sha: "50b333b5"} | PASS | null | null |
+| 7    | 2026-06-30T21:30:00+09:00 | 구현-리뷰   | CodeReviewPL P1 naming 가독성 (환원불가) | 구현 | DeveloperAgent 재스폰 | — | null | null | single-file | null | null | replay-impossible | null | null |
+| 8    | 2026-08-19T12:00:00+09:00 | 구현-리뷰   | CodeReviewPL P0 × 1 (요구사항 자체가 미확정 — 구현 결함 아님) | 요구사항 | 요구사항 lane 재진입 (§1 재확정 후 설계부터) | RESET 구현-리뷰 | null | null | cross-module | null | null | null | `grep -rn 'affected_scope' docs plugins templates` | 3 대 12 |
 ```
 
 시각 칸 = 표시 표면 (ADR-079 §결정 2 초-KST `+09:00`). machine 층 UTC 는 §3 참조.
@@ -116,7 +127,7 @@ amendment_log:
 
 시각 칸 = 표시 표면 (ADR-079 §결정 2 초-KST `+09:00`). machine 층 UTC 는 §3 참조.
 
-기존 `fix-ledger-sync.yml` Action 의 regex 는 7-column 기준 — v1.1 8 번째 column 추가는 regex non-blocking (extra trailing column 허용). v1.2 9 번째 column / v1.3 10·11 번째 column / v1.4 12·13 번째 column (reproducer_command / replay_verdict) 도 동일하게 trailing optional column 추가로 regex 비충돌 (v1.1~v1.3 선례 4회 정합). v1.x 동안 모든 형식 공존 가능.
+기존 `fix-ledger-sync.yml` Action 의 regex 는 7-column 기준 — v1.1 8 번째 column 추가는 regex non-blocking (extra trailing column 허용). v1.2 9 번째 column / v1.3 10·11 번째 column / v1.4 12·13 번째 column (reproducer_command / replay_verdict) / **v1.6 14·15 번째 column (verification_domain_enumeration / verification_domain_coverage)** 도 동일하게 trailing optional column 추가로 regex 비충돌 (v1.1~v1.6 선례 5회 정합). v1.x 동안 모든 형식 공존 가능. ★ v1.6 의 `원인 판정` enum 확장은 column **개수·순서·헤더 텍스트를 건드리지 않으므로**(값공간만 확장) `cells[4]` 고정 색인 소비자에게 형식 영향 0 이다 — 다만 그 칸의 **값 종류가 2 → 6** 으로 늘었으므로 값 whitelist 를 하드코딩한 하류 소비자는 갱신 대상이다(현 시점 하드코딩 소비자 = 실측 0).
 
 ## 3. 항목
 
