@@ -349,7 +349,9 @@ codeforge family Story 의 debate transcript 위치 = `<internal-docs-clone>/<pl
 - (a) single-file scope: `divergence anchor_id[*]` 추출 → file path 1개만 포함 (multi-file divergence 는 cross-file 영향 = 표준 debate 의무)
 - (b) severity ≤ critical: `severity in {P1, P2}` (P0 critical 영역은 표준 debate 의무 — high-stake decision 영역)
 
-조건 모호 시 fallback (auto_on_divergence) — 안전 방향 정합. PL inline judgment 의 audit anchor = Story §10 FIX Ledger row 의 resolution column (root_cause + fix verbose 기록 의무).
+조건 모호 시 fallback (auto_on_divergence) — 안전 방향 정합. PL inline judgment 의 audit anchor = Story §10 FIX Ledger row 의 `원인 판정` + `재실행 범위` 칸 (verbose 기록 의무).
+
+> ★ **[철회됨 — CFP-2985, Change Plan §4.3]** 직전 판은 이 자리에서 §10 FIX Ledger row 의 `resolution` · `root_cause` **두 칸**에 기록을 의무 지시했다. 그 두 이름은 [fix-event-v1 §2 Schema](fix-event-v1.md) 의 칸 집합에 **부재**했고(firsthand), `kind: registry` `status: Active` 계약이 타 계약에 없는 칸에 기록 의무를 거는 **계약 대 계약 모순**이었다. §10 칸 이름의 단일 정의처 = fix-event-v1 §2 이며 본 계약은 칸 이름을 자체 선언하지 않는다. 그 지시는 철회됐다.
 
 **ADR cross-ref**:
 
