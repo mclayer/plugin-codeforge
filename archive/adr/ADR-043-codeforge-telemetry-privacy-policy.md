@@ -17,22 +17,27 @@ related_adrs:
   - ADR-155  # dev-process observability substrate (Amendment 4 carrier — dev-process-event redaction 표면 상속·확장)
   - ADR-067  # Amendment 6 sibling — 같은 Story(CFP-2985)가 개정하는 FIX ledger 축. root_cause_class 값공간의 정의 host
   - ADR-181  # Amendment 6 sibling — 검증 정의역 결손 규범(P/V/D). 본 Amendment 의 field 확장이 그 규범의 계측 substrate
+  - ADR-109  # Amendment 7 sibling — 429 완화 프레임워크(본 채널의 운영·스키마 SSOT). ADR-109 Amendment 4 가 write ownership·기록 어휘를, 본 Amendment 가 privacy·공표 경계를 소유 (disjoint)
 related_stories:
   - CFP-283
   - CFP-1744
   - CFP-2572
   - CFP-2985  # Amendment 6 — dev-process-event index tier Allow-list 18 → 20
+  - CFP-2967  # Amendment 7 carrier - 429-incident channel privacy (publication boundary)
 related_cfps:
   - CFP-283
   - CFP-1744
   - CFP-2572
   - CFP-2985
+  - CFP-2967
 related_files:
   - docs/inter-plugin-contracts/stop-event-v1.md
   - docs/inter-plugin-contracts/dev-process-event-v1.md   # Amendment 6 — §2 index tier 20-field. 본 파일 :169 이 ADR-043 Amendment 의무를 라우팅한다
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
+  - docs/kpi/429-incident-history.jsonl   # Amendment 7 - 429-incident channel event tier (git tracked = PUBLIC landing surface)
+  - docs/kpi/429-incident.json            # Amendment 7 - 429-incident channel weekly aggregate tier
 is_transitional: false
 amendment_log:
   - amendment: 1
@@ -61,6 +66,11 @@ amendment_log:
     carrier_story: CFP-2985
     reinterpretation: false
     summary: "Amendment (CFP-2985) — dev-process-event-v1 index tier Allow-list 18 → 20 field 확장: root_cause_class(enum CLOSED-6 | null) · anchor_id(닫힌 형식 상관 ID string | null). 둘 다 trailing optional/nullable(dev-process-event-v1 v1.0→v1.1 MINOR 동반). 발동 근거 = 본 ADR Amendment 4 §(B) 가 dev-process-event index tier 에 대해 'field 추가 = 본 §결정 2 Amendment 의무' 를 명문화했고 계약 dev-process-event-v1.md:169 이 '§2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump' 로 두 의무를 AND 로 건다 — 계약 bump 단독으로 충족되지 않는다. 자기 선례 = Amendment 1(stop-event Allow-list 16→18, MINOR bump 동반) · Amendment 5(spawn-event 19→23, MINOR bump 동반) 둘 다 MINOR 에도 amendment 를 동반했다. T-INFO-8 free-form 0건 invariant 무손상 — root_cause_class 는 CLOSED enum(fix-event-v1 v1.6 `원인 판정` 6값과 값공간 동일), anchor_id 는 자유 서술이 아니라 `<repo-relative path>:<line>` ∪ `§<section-ref>` 닫힌 형식 상관 ID 이며 §결정 2 dev-process index tier 허용 유형에 '상관 ID' 가 이미 포함돼 있다. opt-in/always-on 비대칭(Amendment 4 (A)) · Deny-list(§결정 3) · sanitize SSOT(§결정 4) · isolation(§결정 5) 전건 inherit 무변경. MINOR (additive optional field 2종, ADR-008 SemVer §결정 2)."
+  - amendment: 7
+    date: 2026-08-19
+    carrier_story: CFP-2967
+    reinterpretation: true   # 순수 additive 아님 — Amendment 4 의 always-on "4중 bound" 중 (2)(capture ≠ exfiltration / host 절대 미이탈)의 **승계 지위**를 재규정한다. (2) 의 보호력은 "전송하지 않는다"는 사실 전제에서 나오는데 본 채널의 착지면은 git tracked 공개 repo 라 그 전제가 거짓이다 → 본 채널에 한해 승계 대상에서 제외하고 대체 bound (2')(publication-safe closed vocabulary)를 세운다. Amendment 4 문면 byte 무변경 ∧ dev-process-event-v1 scope 에서 (2) 는 무손상 유효. 방향 = 강화(완화 0)이나 지위 재규정이 실재하므로 false 로 적을 수 없다. self-declared — 의미 판정은 리뷰 lane 축.
+    summary: "Amendment (CFP-2967) — 429-incident telemetry channel privacy 확정. 본 채널은 §결정 2 allow-list 관장 채널 중 **공표 경계(publication boundary)를 넘는 최초**다 (firsthand: mclayer/plugin-codeforge = PUBLIC ∧ docs/kpi/429-incident-history.jsonl = git tracked ⟷ 기존 4채널[stop-event·spawn-event·self-context·dev-process]은 전건 .claude/ledger/ = .gitignore:38 host-local). (A) §결정 1 always-on 비대칭을 본 채널에 적용(wrapper-self always-on = checkout-identity 파생 / consumer opt-in default-false 무약화 + **착지면 floor 신설** — consumer 는 opt-in 을 켜도 tracked 경로에 쓰지 않는다; scope 판별자는 repo 신원 사실 유도 fail-closed, env·config bool 판별 금지) ∧ **Amendment 4 bound (2) 승계 불가 정정** — (2) 는 host 미이탈 사실 전제에 의존하는데 본 채널에서 그 전제가 거짓이라 verbatim 승계 시 ADR 에 거짓 단정이 박힌다. 대체 **bound (2') publication-safe closed vocabulary** 신설(위치 봉쇄 결손을 내용 봉쇄로 상쇄 — 전 필드가 정적 열거 가능한 폐쇄 어휘 ∧ whole-object 직렬화 경로 구조적 부재). 나머지 3 bound(wrapper-self 한정 / INV-8 redaction-precedes-always-on / transparency notice) 승계. (B) §결정 2 에 429-incident 별 channel allow-list **7 필드 고정** 등재 — {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern} (SSOT = docs/kpi/429-incident-history.jsonl:3 자기 헤더), 각 필드 폐쇄 값공간 규정 + error_pattern 원시 에러 텍스트 금지 + FORBIDDEN(transcript_path·cwd·prompt_id·permission_mode·agent_id·raw session_id·에러 원문) 명시. (C) §결정 3 처리 순서 규범화 — allow-list projection → 폐쇄 값공간 validate → deny-list(no-op assertion) → write 이며 **deny-list 매치 = redact 성공이 아니라 projection 결함 신호**(필터 신뢰로의 퇴행 차단), validate 실패 = 프라이버시 축 fail-closed. §결정 2 기존 4채널 field-set · §결정 3 deny-regex 7종 pattern · §결정 4/5 · T-INFO-5/7/8 전건 무변경. MINOR (additive channel allow-list + 순서 규정 + consumer floor 강화, ADR-008 SemVer §결정 2). 실 producer·validator = Phase 2 — 그 사이 강제력 0 (정직 천장)."
 mechanical_enforcement_actions: []  # carrier=#2985 expiry=2026-09-15 [repo=mclayer/plugin-codeforge] — ★ 고정 토큰 형식 (ADR-181 §결정 5 ③-dt (ii), 설계리뷰 FIX Iter 4). 앞의 세 토큰(carrier / expiry / [repo=...])만이 기계 판정 입력이며 이하 산문은 판정 정의역 밖이다 — 이 선언은 ADR-181 §결정 5 ③-dt (ii) PFX 선두 앵커 술어로 실제 배선됐다(설계리뷰 FIX Iter 4, 판별 행 18). ADR-181 §결정 5 ③ 면제 경로 — Amendment 6(index tier Allow-list 18 → 20)의 기계 강제는 Phase 2 이행(계약 §2 표 ↔ scripts/lib/append_dev_process_event.py _ROW_KEYS parity self-test 의 workflow caller 확보 = D-11c/D-12/D-19). ★ 면제 경로이므로 사다리 (다)("그 경로가 workflow run: 줄에 등장") 는 평가되지 않는다 — 본 줄은 "돌아가는 검사가 있다" 를 주장하지 않으며 주장하는 것은 만기가 박혀 있다는 사실뿐이다(ADR-181 §결정 5 면제 천장 문단). ①(registry entry 존재) = 같은 PR 의 docs/evidence-checks-registry.yaml row fix-ledger-conformance 로 충족. 만기 경과 시 면제 경로를 잃고 사다리 경로만 남으므로 부적법 전환된다(§결정 5 ③-exp 경과 판정 leg).
 ---
 
@@ -534,3 +544,117 @@ CFP-2985 는 FIX 원인 계측 채널을 실채운다. §10 FIX Ledger 의 `원�
 ### ★ 정직 천장 (ADR-181 §결정 5 ② 자기적용)
 
 본 Amendment 는 **정책 결정**이며, 그 결정을 실현하는 자산은 아직 **존재하지 않는다**. `_ROW_KEYS` 18 → 20 코드 변경(CFP-2985 Phase 2 D-12) · 계약 §2 index table 20-row 동기(D-19) · 적재 경계 형식 술어(D-16) 전건 **Phase 2** 이며 carrier = `mclayer/plugin-codeforge#2985` / 만기 `2026-09-15`. Amendment 4 가 "실 redaction fn/blob store = Phase 2, 본 Amendment = 정책 결정" 이라 적은 것과 동일 형상이다. **그 사이 구간에서 본 Amendment 의 강제력은 0 이며 이는 선언이다** — 이 문장을 지우면 over-claim 이 된다. `mechanical_enforcement_actions: []` 유지 근거도 동일하다.
+
+
+## Amendment 7 (CFP-2967, 2026-08-19) — `429-incident` telemetry channel privacy (공표 경계 최초 통과 + always-on 비대칭 + bound (2) 승계 불가 정정)
+
+### 배경
+
+CFP-2967 축 ① 이 429 사건 관측 배선을 재생한다. 신규 producer 를 `StopFailure` 훅(matcher `rate_limit`)으로 등록해 per-incident 행을 `docs/kpi/429-incident-history.jsonl` 에 append 하고, 집계기가 그것을 읽어 `docs/kpi/429-incident.json`(주간 집계)만 write 한다. 본 Amendment 는 그 채널의 privacy 규약을 §결정 1/2/3 에 attach 해 codify 한다.
+
+**★ 본 Amendment 를 앞선 6건과 다르게 만드는 단일 사실 — 착지면이 공개 표면이다.**
+
+firsthand 실측 3건 (본 Amendment 저작 시점 재현):
+
+| # | 사실 | 재현 명령 · 산출 |
+|---|---|---|
+| P-1 | `mclayer/plugin-codeforge` = **PUBLIC** | `gh repo view mclayer/plugin-codeforge --json visibility,isPrivate` → `{"isPrivate":false,"visibility":"PUBLIC"}` |
+| P-2 | 착지 파일 = **git tracked** ⟷ 기존 채널 = **gitignored** | `git ls-tree -r origin/main --name-only -- docs/kpi/` 에 `429-incident-history.jsonl` 실재 / `git check-ignore -v .claude/ledger/stop-event.jsonl` → `.gitignore:38:.claude/ledger/` |
+| P-3 | 기존 4채널(stop-event · spawn-event · self-context · dev-process)의 착지 부모 = `.claude/ledger/` | `hooks/subagent-stop:97` = `LEDGER_FILE="${CLAUDE_PROJECT_DIR}/.claude/ledger/stop-event.jsonl"` / `scripts/lib/append_spawn_event.py:156` · `scripts/lib/append_dev_process_event.py:161` = `_DEFAULT_PARENT_REL = os.path.join(".claude", "ledger")` (self-context 는 spawn-event 와 공유 channel) |
+
+⇒ **본 채널은 §결정 2 가 관장하는 telemetry channel 중 공표 경계(publication boundary)를 넘는 최초의 것이다.** tracked 파일은 `git push` 로 공개 저장소에 전송된다. 선례가 0 이므로 "기존 채널이 하던 대로" 라는 답습 경로가 성립하지 않는다.
+
+**정의역 진입 논거 (본 Amendment 자신이 시제를 끝낸다)**: 종래 "429 채널은 ADR-043 미등재이므로 본 ADR 정의역 밖" 이라는 판정이 가능했고 그 사실 서술은 참이었다. 그러나 **본 Amendment 가 바로 그 등재를 수행**하므로 그 근거는 착지 순간 자기무효화한다. 또한 "정의역 밖" 은 "안전하다" 를 함의하지 않는다 — 정의역 밖이란 본 ADR 의 보호를 받지 못한다는 뜻이기도 하다. 따라서 본 채널은 정의역 밖에 기대어 설 수 없고 **정의역 안에서 명시적 비대칭 예외**로 선다.
+
+### Amendment 내용
+
+**(A) §결정 1 always-on 비대칭 — 신규 채널 적용 ∧ Amendment 4 bound (2) 승계 불가 정정**
+
+- **wrapper-self dogfood scope = always-on** — codeforge family 자기 운영 계측이 채널 목적. always-on = **checkout-identity 파생**(consumer overlay 의 user-settable bool 아님). Amendment 4 (A) 형상 답습.
+- **consumer 배포 scope = opt-in default-false 무약화** — ADR-064 §결정 7 extend-only. **T-DPE-9 consumer floor 하방 override 불가** 상속.
+  - **★ 착지면 floor (본 Amendment 신설)**: consumer 가 opt-in 을 **켜더라도** 본 채널은 **git tracked 경로에 쓰지 않는다**. opt-in 은 "기록 여부" 를 열 뿐 "공표 여부" 를 열지 않는다 — 두 축은 분리되며, consumer 측 공표는 어떤 설정으로도 켜지지 않는다.
+  - **scope 판별자 = repo 신원 사실에서 유도, fail-closed** — 판별 불확정 시 **consumer floor 로 낙하**한다. **환경변수·config bool 로 판별 금지**: 그 값은 consumer 가 설정 가능하므로 프라이버시 게이트의 우회면이 된다. (가용성 축이 fail-open 인 것과 방향이 반대인 것은 의도다 — 축마다 fail 방향이 다르며, 프라이버시 축의 fail-open 은 되돌릴 수 없다.)
+- **INV-8 redaction-precedes-always-on(비협상 floor)** 상속 — always-on 이더라도 projection·validate 가 항상 선행하며, always-on 이 그것을 **우회하지 못한다**.
+
+**★ Amendment 4 의 always-on 4중 bound 중 (2) 는 본 채널에 승계 불가하다.**
+
+Amendment 4 (A) 원문 **verbatim**:
+
+> (2) capture ≠ exfiltration — blob host-local + 0-API + cross-host leak 금지 = **host 절대 미이탈**(VS Code/GitHub CLI telemetry 논쟁 본질 = 전송; host-local 미전송은 다른 위험 프로파일)
+
+이 bound 의 보호력은 전적으로 **"전송하지 않는다"** 라는 **사실 전제**에서 나온다. 본 채널에서 그 전제는 **거짓**이다(P-1 ∧ P-2 — tracked 파일은 push 로 공개 전송된다). 문면만 옮겨 적으면 ADR 에 **거짓 단정**이 박히고, 이후 감사자는 존재하지 않는 보호를 실재하는 것으로 읽는다.
+
+- **정정의 정의역 = 본 채널 한정.** **Amendment 4 의 bound (2) 는 `dev-process-event-v1` scope 에서 무손상 유효**하다 — 그 채널의 blob 은 host-local 이며 사실 전제가 여전히 참이다. 본 Amendment 는 Amendment 4 의 문면을 **바꾸지 않는다**(byte 무접촉); 본 채널의 승계 대상에서 제외할 뿐이다.
+- **나머지 3 bound 는 이름 그대로 승계**: (1) wrapper-self 한정(consumer opt-in-false) / (3) **INV-8 redaction-precedes-always-on(비협상 floor)** / (4) transparency notice 권고(기여자 대상 NOTICE).
+
+**대체 bound (2') — publication-safe closed vocabulary (본 Amendment 신설)**
+
+> **(2') capture ≠ exposure — 착지면이 공개이므로 위치 봉쇄가 부재한다. 그 결손을 내용 봉쇄로 상쇄한다: 본 채널이 기록하는 전 필드는 아래 (B) 가 정적으로 열거하는 폐쇄 어휘에 속해야 하며, producer 는 payload 객체 전체 또는 그 부분집합을 whole-object 로 직렬화하는 경로(`json.dumps(payload)` 류)를 구조적으로 갖지 않는다. 통제의 진술 형태는 "무엇이 나가지 않는가" 가 아니라 "무엇만 나갈 수 있는가" 다.**
+
+(2) 와 (2') 의 차이는 강도가 아니라 **의존하는 사실의 종류**다 — (2) 는 *파일이 어디에 있는가*(위치. 배포·설정으로 변할 수 있다)에 의존하고, (2') 는 *코드가 무엇을 쓸 수 있는가*(값공간. 코드 변경 없이는 변하지 않는다)에 의존한다. 공개 착지면에서 남는 것은 후자뿐이다.
+
+**★ 통제 주체 전환의 정직 declare**: [ADR-109](ADR-109-in-process-429-mitigation-framework.md) `## Amendment 2` (g) 는 이 공개 착지면을 **이미 인지**하고, 통제를 **저작 규율**에 맡긴 뒤 "규율 미준수 시 유출 가능성 잔존" 을 수용 리스크로 declare 했다. 본 Story 는 producer 를 **모델 저작 → 기계**로 옮긴다 — 코드는 규율을 읽지 않으므로 그 통제는 **구속할 주체를 잃는다**. 잔여 리스크의 성격이 *조건부*("규율 미준수 시")에서 **무조건**("매 사건마다")으로 전환되며, (2') 는 정확히 그 전환에 대한 응답이다. 동시에 기계 producer 는 저작 규율이 원리적으로 못 하던 **기계 층 통제**를 설치할 수 있다 — 다만 **종결은 기계검사로만 성립하며 본 Amendment 의 선언은 그 검사가 아니다**(아래 정직 천장 2·3항).
+
+**(B) §결정 2 — `429-incident` 별 channel allow-list = 7 필드 고정 (폐쇄 값공간)**
+
+stop-event(18) · spawn-event(23) · self-context(6) · dev-process index tier(20) 와 **별도 channel allow-list**. 이 필드 집합은 신설이 아니라 **기존 선언 스키마의 확정 등재**다 — SSOT 자기 헤더 `docs/kpi/429-incident-history.jsonl:3` verbatim: `# Schema: {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}`.
+
+| field | 타입 | 값공간 (폐쇄) | 유형 판정 |
+|---|---|---|---|
+| `timestamp` | string (REQUIRED) | **offset-aware** ISO 8601 절대 순간. naive(offset 없는 값) = 계약 위반 | Public (§결정 10 `timestamp` 행) |
+| `final_status` | enum (REQUIRED) | `{success, failed}` — closed | Public (§결정 10 enum 행) |
+| `lane` | enum \| null | codeforge lane 어휘 closed-set ∪ null. 자유 서술 금지 | Public (§결정 10 enum 행) |
+| `agent_role` | enum \| null | roster-derived agent 명 ∪ `unknown-agent` fallback ∪ null (semi-open — spawn-event `model` 필드 선례 답습, free-form leak 차단) | Public (§결정 10 enum 행) |
+| `retry_count` | int ≥ 0 \| null | numeric | Public (§결정 10 enum 행) |
+| `cascade_depth` | int ≥ 0 \| null | numeric | Public (§결정 10 enum 행) |
+| `error_pattern` | enum \| null | **폐쇄 enum only. 원시 에러 텍스트 절대 금지.** 값공간 규정은 ADR-109 Amendment 4 소관(기록 어휘 ⊥ 감지 어휘 분리) | Public — 단 enum 인 한에서만 |
+
+- **미상 필드 = `null` 명시, 키 생략 금지** — 생략은 "스키마에 없던 필드" 와 "값 미상" 을 구별 불가하게 만들어, 나중에 필드가 추가될 때 과거 행의 의미가 소급 변한다.
+- **필드 추가 = 본 §결정 2 Amendment 의무** (Allow-list ONLY silent expansion 차단 — Amendment 1 / 5 / 6 선례 동형).
+
+**FORBIDDEN — 공개면 착지 금지 (비망라 예시)**
+
+`StopFailure` 훅 payload 에는 아래 **공통 필드가 실재한다** `[source: code.claude.com/docs/en/hooks — 본 Amendment 저작 시점 직접 WebFetch 2026-08-19]`: `session_id` · `prompt_id` · `transcript_path` · `cwd` · `permission_mode` · `hook_event_name` · `effort` (+ 조건부 `agent_id` · `agent_type`). 이 중 다음은 본 채널 착지 **금지**다:
+
+`transcript_path` · `cwd` · `prompt_id` · `permission_mode` · `agent_id` · **raw** `session_id` · **에러 원문 텍스트**.
+
+- 근거: 경로·작업 디렉터리는 사용자 홈 디렉터리명·고객사 디렉터리명을 그대로 담고, `transcript_path` 는 **T-INFO-5**(transcript content/path 절대 미저장 — Amendment 2 §D)의 정면 대상이며, raw `session_id` 는 **T-INFO-7**(sha256 identity) 위반이다. 공개 착지면에서 이 셋의 유출은 되돌릴 수 없다.
+- **★ 이 FORBIDDEN 열거는 규범이 아니라 귀결의 가시화이며, 비망라다.** 규범은 (B) 의 **allow-list ONLY 7 필드**다. 근거는 본 Amendment 저작 중 firsthand 로 드러났다 — 설계 lane 이 인계한 공통 필드 열거는 8종이었으나 벤더 문서를 직접 확인하니 `effort` 가 추가로 실재해 **9종**이었다. **손으로 적은 금지 목록은 벤더 payload 변경으로 즉시 stale 이 되며, 그 stale 이 유출 경로가 되지 않는 유일한 이유가 allow-list ONLY 다.** 금지 목록을 늘리는 방향으로 안전을 추구하지 말 것.
+
+**(C) §결정 3 — 처리 순서 규정 + deny-list 매치의 의미 재규정**
+
+본 채널의 capture 경로는 다음 순서를 갖는다. **순서 자체가 규범**이다:
+
+```
+allow-list projection → 폐쇄 값공간 validate → deny-list(no-op assertion) → write
+```
+
+- **projection 이 1급**이며 payload 는 그 이전에 어떤 write 경로에도 도달하지 않는다. deny-list 는 마지막에 온다.
+- **deny-list 매치 = "redact 성공" 이 아니라 projection 결함 신호로 해석한다.** 폐쇄 어휘만 통과한 뒤라면 deny-regex 는 원리적으로 no-op 이어야 하므로, 매치가 발생했다는 것은 **앞 단계가 샜다는 증거**다. 매치를 redact 로 흡수해 통과시키면 통제의 무게중심이 projection 에서 필터로 되돌아간다 — defense-in-depth 의 2차 층을 1차 층으로 승격시키는 퇴행이며, 본 Amendment 는 그 퇴행을 금지한다.
+- **validate 실패 처분 = 프라이버시 축 fail-closed** — 해당 필드는 `null` 로 낙하하거나 행이 기록되지 않는다. **원문 통과는 어떤 경우에도 허용되지 않는다.**
+- **부수 제약 (기존 문자열 가드 재사용 시)**: 현행 `_SAFE_STR_RE = ^[0-9A-Za-z_\-:\.]{0,128}$` 는 공백을 허용하지 않아, ADR-109 §결정 1 감지 literal 중 공백을 포함하는 값은 그대로는 통과하지 못한다. 해결은 **화이트리스트에 공백을 추가하는 것이 아니라 값을 토큰화하는 것**이다 — `error_pattern` 이 폐쇄 enum 인 이상 토큰이 정본이고 원문은 애초에 기록 대상이 아니다.
+- §결정 3 의 **deny-regex 7종 pattern 자체는 무증감**이다 — 본 (C) 는 적용 순서와 매치 해석만 규정한다.
+
+### 근거
+
+- **§결정 1 이 "future ledger 자동 inherit" 를 이미 명문화**했고 Amendment 4 가 always-on 비대칭 형상을 확립했다 ⇒ 본 Amendment 는 그 형상의 신규 채널 적용 + 착지면 축 확장이지 **신규 privacy SSOT 신설이 아니다**(대안 A reject 정합 — 신규 privacy ADR 미신설. 본 채널의 architectural·운영 SSOT = ADR-109, privacy 는 본 ADR-043 확장).
+- **ADR-008 SemVer = MINOR**: additive channel allow-list(429-incident 7 field) + 처리 순서 규정 + consumer 착지면 floor 신설. 기존 채널의 field-set·regex pattern·기본 정책 증감이 0 이므로 backward-compat 이며, v1.0 reader 는 신규 channel allow-list 를 skip 가능하다.
+  - **정직 단서**: bound (2) → (2') 는 additive 가 아니라 **대체**다. 그럼에도 MINOR 로 계상하는 근거는 ① 정정의 정의역이 신규 채널 한정이고 ② Amendment 4 의 (2) 는 자기 scope 에서 무변경으로 유효하며 ③ 대체 방향이 *거짓이 된 근거(위치)* → *성립하는 근거(내용)* 이라 통제 완화가 0 이라는 것이다. "bound 를 하나 뺐다" 로 읽으면 오독이다.
+- **공표 경계 최초 통과의 정직 codify** (ADR-119) — 선례 0 인 표면을 선례가 있는 것처럼 처리하지 않는다. 위치 봉쇄가 부재하다는 사실을 감추는 대신 문면에 적고, 그 자리에 내용 봉쇄를 세운다.
+
+### 비-영향
+
+- §결정 1 consumer opt-in default-false 기본 정책 **무변경** — 본 채널은 wrapper-self 비대칭 추가이며, consumer 방향 변경은 하방 강화(착지면 floor 신설)뿐이다.
+- §결정 2 stop-event 18 / spawn-event 23 / self-context 6 / dev-process index tier 20 Allow-list **무변경** — 429-incident 는 별 channel allow-list 이며 채널별 목록은 서로 독립이다.
+- §결정 3 deny-regex **7종 pattern 무변경** (본 Amendment 는 순서·해석만 규정, pattern 증감 0).
+- §결정 4(sanitize SSOT 통합) / §결정 5(wrapper-vs-consumer isolation) inherit — 정책 자체 무변경.
+- **Amendment 4 문면 byte 무변경** — bound (2) 는 `dev-process-event-v1` scope 에서 무손상 유효하며, 본 Amendment 는 그 문면을 고치지 않고 **본 채널의 승계 대상에서 제외**할 뿐이다.
+- Amendment 1 / 2 / 3 / 5 / 6 무변경. **T-INFO-5**(transcript content·path 절대 미저장) · **T-INFO-7**(sha256 identity) · **T-INFO-8**(free-form 0건) 전건 무변경 — 7 필드가 전건 enum / numeric / offset-aware timestamp 이므로 free-form 유입 0.
+
+### ★ 정직 천장 (ADR-119 / ADR-181 §결정 5 ② 자기적용)
+
+1. 본 Amendment 는 **정책 결정**이며, 그 결정을 실현하는 자산은 아직 **존재하지 않는다**. producer 훅 등록 · allow-list projection · 폐쇄 값공간 validator · deny-list no-op assertion 전건 **Phase 2**(carrier = `mclayer/plugin-codeforge#2967`). **그 사이 구간에서 본 Amendment 의 강제력은 0 이며 이는 선언이다** — 이 문장을 지우면 over-claim 이 된다. Amendment 4 가 "실 redaction fn/blob store = Phase 2, 본 Amendment = 정책 결정" 이라 적은 것과 동일 형상이다.
+2. **(2') 는 코드가 아니다.** "whole-object 직렬화를 구조적으로 금지" 는 그 금지를 관측하는 기계검사가 착지해야 성립한다. 본 문면만으로 "구조적으로 봉인됐다" 고 읽으면 over-claim 이며, 봉인의 증명은 **discriminating mutant**(예: projection 을 우회해 payload 를 직렬화하는 변이)가 RED 를 내는 것으로만 성립한다.
+3. **[ADR-109](ADR-109-in-process-429-mitigation-framework.md) `## Amendment 2` (g) 의 declared residual 은 본 Amendment 로 종결되지 않는다.** 본 Amendment 는 종결의 **조건**을 규정할 뿐이며, 종결 판정은 Phase 2 기계검사 착지 이후의 별 판정이다. 또한 그 절은 `status: Proposed` 이고 CFP-2944 소유이므로 본 Amendment 는 **인용만 하고 바이트를 접촉하지 않는다** — 본 Amendment 가 그 절에 요구하는 변경은 0건이며, 그 절의 착지 여부와 무관하게 본 Amendment 는 완전하게 성립한다.
+4. **`StopFailure` 전용 payload 스키마는 미확보다.** 위 (B) 가 인용한 것은 **공통** 필드이며, `StopFailure` 고유 필드의 존재·타입·granularity 는 벤더 문서에 명시가 없다 — producer 가 payload 필드에 의존하는 지점은 각각 **"vendor-unverified"** 로 라벨해야 하고 `[verified]` 표기를 쓰지 않는다. 미확보 구간을 "정상적으로는 이런 payload 일 것" 이라는 2차 추정으로 메우지 말 것.
+5. `mechanical_enforcement_actions` 줄은 **무접촉** — 본 Amendment 는 기계 강제 action 을 신설하지 않으며, 현행 `[]` 및 그 고정 토큰 주석은 CFP-2985 소유다.
