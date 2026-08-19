@@ -130,6 +130,22 @@ jobs:
           grep -q "test_envelope_pin_domain_derivation_selfcheck" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_domain_derivation_selfcheck not found"; exit 1; }
           grep -q "test_envelope_pin_coverage_table_witnesses" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_coverage_table_witnesses not found"; exit 1; }
           grep -q "test_envelope_pin_sweep_derivation_completeness" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_sweep_derivation_completeness not found"; exit 1; }
+          grep -q "test_envelope_pin_cli_three_verdicts" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_cli_three_verdicts not found"; exit 1; }
+          grep -q "test_envelope_pin_derivation_negative_control" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_derivation_negative_control not found"; exit 1; }
+          grep -q "test_envelope_pin_falsification_dropfalse" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_falsification_dropfalse not found"; exit 1; }
+          grep -q "test_envelope_pin_matches_predicate" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_matches_predicate not found"; exit 1; }
+          grep -q "test_envelope_pin_premise_witnesses_pe1_to_pe4" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_premise_witnesses_pe1_to_pe4 not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_a_applicable_leaf_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_a_applicable_leaf_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_b_applicable_mapping_collision_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_b_applicable_mapping_collision_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_c_nonapplicable_jobs_other_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_c_nonapplicable_jobs_other_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_d_value_padding_absorbed_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_d_value_padding_absorbed_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_e_nonabsorbed_padding_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_e_nonabsorbed_padding_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_f_datastructure_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_f_datastructure_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_g_value_kind_fidelity_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_g_value_kind_fidelity_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_h_key_type_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_h_key_type_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_i_text_layer_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_i_text_layer_universal not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_j_negative_control_redirect_misclassification" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_j_negative_control_redirect_misclassification not found"; exit 1; }
+          grep -q "test_envelope_pin_swp_j_serialization_notation_universal" /tmp/pytest_collected.txt || { echo "ERROR: test_envelope_pin_swp_j_serialization_notation_universal not found"; exit 1; }
           grep -q "test_ac4_leg1_determined_is_true_and_lists_present" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg1_determined_is_true_and_lists_present not found"; exit 1; }
           grep -q "test_ac4_leg2_branch_names_match_corpus_regex" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg2_branch_names_match_corpus_regex not found"; exit 1; }
           grep -q "test_ac4_leg3_excluded_self_repo_is_slug" /tmp/pytest_collected.txt || { echo "ERROR: test_ac4_leg3_excluded_self_repo_is_slug not found"; exit 1; }

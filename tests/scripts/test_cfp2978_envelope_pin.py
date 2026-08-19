@@ -46,14 +46,14 @@ except ImportError as e:
     raise ImportError(f"Failed to import envelope_pin or workflow_shape: {e}") from e
 
 # ★ 핀 값 — DevPL 채취 (워크플로 동결 형상)
-PIN_ENVELOPE_SHA256 = "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9"
+PIN_ENVELOPE_SHA256 = "88aefea6410325bd5570f25b2e36d0334ca14d56d0818fc71722d1dc958cbeed"
 
 # ★★ `PIN_P1_EVIDENCE` 는 **독립 리터럴**이다 — `PIN_ENVELOPE_SHA256` 을 참조해 파생하면
 #    아래 3-way 결속의 세 번째 변이 `X == X` 가 되어 **항진**하고, §8.3 이 요구하는
 #    「두 거처를 같은 커밋에서 함께 갱신한다」는 규율이 **구조적으로 반증 불가**가 된다.
 #    (핀 재채취 시 이 줄과 위 줄을 **둘 다** 고쳐야 한다 — 그것이 검사 대상인 규율이다.)
 PIN_P1_EVIDENCE = {
-    "envelope_sha256": "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9",
+    "envelope_sha256": "88aefea6410325bd5570f25b2e36d0334ca14d56d0818fc71722d1dc958cbeed",
 }
 
 # ★ 작업 경로
