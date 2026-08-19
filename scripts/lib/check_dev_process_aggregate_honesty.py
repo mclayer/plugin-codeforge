@@ -18,8 +18,10 @@
 #   I2 no over-claim wording   : 산출 blob 에 _FORBIDDEN_POSITIVE_CLAIMS(exact-count/guaranteed-
 #                               unique/…) 등장 0 (AC-4).
 #   I3 stats propagation       : 각 snapshot.stats.honesty_note 전파 present (AC-4).
-#   I4 pattern uncomputable    : trend.pattern_status == 'uncomputable_missing_key' (DEFAULT) +
-#                               pattern_count is None (AC-19, edge 아님).
+#   I4 pattern substrate-dir   : ★CFP-2985 D-14 로 **방향 반전**. 정의역 2분할 —
+#                               substrate 有(root_cause_distribution non-empty) → computable 의무
+#                               (uncomputable = silent drop). substrate 無 → uncomputable_missing_key
+#                               + null 이 정직-null (computable = fabricate). (AC-19)
 #   I5 token honest-null       : token-cost total_weighted_cost_usd is None(actuals 有에도) +
 #                               upstream_gap_flags ⊇ {per_call_missing, cache_ttl_split_missing} (AC-22).
 #   I6 no blob deref keys       : 산출 blob 에 '_blob'/'_blob_deref_available' 키 0 (§7.5).
@@ -31,7 +33,7 @@
 #                               clock-step 신호 소실 방지, §7.4.3).
 #
 # ★discriminating power (born-broken guard / false-oracle 금지): --selftest 는 positive control
-#   (실 aggregate → 전 검증 GREEN) + NC1~NC10(각 불변식을 in-memory 로 위반시킨 산출 → 대응 검증
+#   (실 aggregate → 전 검증 GREEN) + NC1~NC10+NC4b(각 불변식을 in-memory 로 위반시킨 산출 → 대응 검증
 #   RED)로 판별성을 실증한다. presence-grep 이면 mutation 에도 GREEN(false-oracle) — 본 lint 는 실
 #   값 assert 라 mutation 시 RED 발화(discriminating).
 #
@@ -212,15 +214,42 @@ def check_stats_propagation(snaps, metric_names, violations):
 
 
 def check_pattern_uncomputable_default(valid_snaps, violations):
-    """I4 — trend pattern_status=uncomputable_missing_key(DEFAULT) + pattern_count None (AC-19)."""
+    """I4 — pattern 산출 정직성. ★CFP-2985 D-14 로 **방향 반전** (AC-19).
+
+    반전 전 방향은 "uncomputable 이 DEFAULT 여야 정직" 이었다. 그것은 anchor_id/
+    root_cause_class 가 `_ROW_KEYS` 에 **부재**하던 시절의 방향이며, D-12 로 substrate 가
+    실재하는 지금 그 방향을 유지하면 **집계가 되는 것 자체가 위반**이 된다.
+
+    반전 후 = 정의역 2분할 (negative-domain 대조군 보존 — 검출력 감소 0):
+      · substrate 有(root_cause_distribution non-empty) → computable 의무.
+        uncomputable 이면 **silent drop** — 관측 가능한 것을 안 냈다.
+      · substrate 無(빈 분포)                          → uncomputable_missing_key + null 이 정직-null.
+        computable 이면 **fabricate** — 없는 substrate 로 값을 지어냈다.
+    ★ 함수명은 유지한다 — 호출자(cmd_check/_selftest)와 RTM 오라클이 이 이름으로 지목한다.
+    """
     tr = valid_snaps["trend"]
-    if tr.get("pattern_status") != "uncomputable_missing_key" or tr.get("pattern_count") is not None:
-        violations.append(
-            "(I4/pattern-uncomputable) trend pattern_status=%r/pattern_count=%r — "
-            "uncomputable_missing_key(DEFAULT)+null 아님 (anchor_id/root_cause_class substrate "
-            "부재 = PRIMARY 경로, edge 아님, AC-19)"
-            % (tr.get("pattern_status"), tr.get("pattern_count"))
-        )
+    status = tr.get("pattern_status")
+    count = tr.get("pattern_count")
+    substrate_present = bool(tr.get("root_cause_distribution") or {})
+
+    if substrate_present:
+        if status != "computable" or count is None:
+            violations.append(
+                "(I4/pattern-silent-drop) trend pattern_status=%r/pattern_count=%r — "
+                "root_cause_class substrate 가 실재(root_cause_distribution non-empty)하는데 "
+                "computable 이 아니다. 관측 가능한 것을 산출하지 않은 silent drop "
+                "(CFP-2985 D-14 반전 후 PRIMARY 경로, AC-19)"
+                % (status, count)
+            )
+    else:
+        if status != "uncomputable_missing_key" or count is not None:
+            violations.append(
+                "(I4/pattern-fabricate) trend pattern_status=%r/pattern_count=%r — "
+                "substrate 부재(root_cause_distribution 빈 dict)인데 uncomputable_missing_key+null 이 "
+                "아니다. 없는 substrate 로 값을 fabricate (negative-domain 대조군 — 반전 전 "
+                "검출력을 그대로 보존, AC-19)"
+                % (status, count)
+            )
 
 
 def check_token_honest_null(valid_snaps, violations):
@@ -387,7 +416,7 @@ def cmd_check(_args):
         return 1
 
     print("check-dev-process-aggregate-honesty: PASS — I1 measured-0≠dormant / I2 no-over-claim / "
-          "I3 stats-propagation / I4 pattern-uncomputable-DEFAULT / I5 token-honest-null / "
+          "I3 stats-propagation / I4 pattern-substrate-directional / I5 token-honest-null / "
           "I6 no-blob-deref / I7 cycletime='lane residency' / I8 no-escalation-action / "
           "I9 strip-set=CODE-CONST(2-run 유일 diff) / I10 order-preserving negative_duration>0. "
           "★execution-backed(실 port round-trip, mock-seam 아님) — presence-grep false-oracle 아님.")
@@ -397,7 +426,7 @@ def cmd_check(_args):
 # ─────────────────────── --selftest (discriminating negative-control) ─────────────────
 
 def _selftest(_args):
-    """positive control(실 aggregate → GREEN) + NC1~NC10(각 불변식 위반 산출 → 대응 검증 RED).
+    """positive control(실 aggregate → GREEN) + NC1~NC10+NC4b(각 불변식 위반 산출 → 대응 검증 RED).
 
     각 NC 는 실 산출을 in-memory 로 mutate(원본 무수정) → 대응 검증이 RED 발화함을 증명
     (presence-grep 이면 mutation 에도 GREEN = false-oracle; 실 값 assert 라 discriminating).
@@ -444,7 +473,16 @@ def _selftest(_args):
     p_mut["trend"]["pattern_count"] = 5
     v = []
     check_pattern_uncomputable_default(p_mut, v)
-    results.append(("NC4 (pattern computable 위조 → I4 RED)", True, v))
+    results.append(("NC4 (substrate 無인데 computable 위조 → I4 RED / fabricate)", True, v))
+
+    # ── NC4b: ★CFP-2985 D-14 반전으로 생긴 **신 방향** 대조군 —
+    #    substrate 가 실재하는데 uncomputable 이면 silent drop 이다.
+    #    이 대조군이 없으면 반전된 분기가 무검증으로 남는다(hollow).
+    q_mut = copy.deepcopy(bundle["valid"])
+    q_mut["trend"]["root_cause_distribution"] = {"설계": 2}
+    v = []
+    check_pattern_uncomputable_default(q_mut, v)
+    results.append(("NC4b (substrate 有인데 uncomputable → I4 RED / silent drop)", True, v))
 
     # ── NC5: token honest-null — total_weighted_cost_usd fabricate → I5 RED ──
     t_mut = copy.deepcopy(bundle["valid"])
@@ -501,7 +539,7 @@ def _selftest(_args):
     print("=" * 80)
     if all_ok:
         print("[check-dev-process-aggregate-honesty --selftest] PASS — positive GREEN + "
-              "NC1~NC10 전부 RED (discriminating: 각 honest-degrade 불변식이 실 값 assert 로 "
+              "NC1~NC10+NC4b 전부 RED (discriminating: 각 honest-degrade 불변식이 실 값 assert 로 "
               "mutation 을 죽임 — presence-grep false-oracle 아님).")
         return 0
     print("[check-dev-process-aggregate-honesty --selftest] FAIL — 판별성 위반 (위 FAIL 행 참조).")
@@ -514,7 +552,7 @@ def main():
         "(CFP-2688 Phase 2 — execution-backed real port round-trip, §8.6)"
     )
     p.add_argument("--selftest", action="store_true",
-                   help="discriminating negative-control (positive GREEN + NC1~NC10 RED 증명)")
+                   help="discriminating negative-control (positive GREEN + NC1~NC10+NC4b RED 증명)")
     args = p.parse_args()
     if args.selftest:
         return _selftest(args)
