@@ -13,22 +13,24 @@ Stage 4: PROBE 주입 기법 + 대조표 실산출
 
 import sys
 import json
-import hashlib
 import os
-import ast
 import inspect
 import re
-from itertools import combinations
-from pathlib import Path
+import subprocess
+import datetime
 from typing import Dict, Set, List, Any, Tuple, Optional, Callable
 import unicodedata
 import copy
+
+import pytest
+import yaml
 
 # 환경 설정
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "lib"))
 
 try:
+    import envelope_pin as envelope_pin_module  # ★ SWP-J 표기 파라미터 치환용 (모듈 객체)
     from envelope_pin import (
         compute_envelope,
         compute_envelope_from_text,
@@ -36,7 +38,7 @@ try:
         cut_envelope,
         Envelope,
         EnvelopeError,
-        _normalize_map_value,  # Internal — 3층 파생용 분석
+        ENVELOPE_ERROR_KINDS,
     )
     from workflow_shape import dup_safe_load
 except ImportError as e:
@@ -44,12 +46,20 @@ except ImportError as e:
 
 # ★ 핀 값 — DevPL 채취 (워크플로 동결 형상)
 PIN_ENVELOPE_SHA256 = "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9"
-PIN_P1_EVIDENCE = {"envelope_sha256": PIN_ENVELOPE_SHA256}
+
+# ★★ `PIN_P1_EVIDENCE` 는 **독립 리터럴**이다 — `PIN_ENVELOPE_SHA256` 을 참조해 파생하면
+#    아래 3-way 결속의 세 번째 변이 `X == X` 가 되어 **항진**하고, §8.3 이 요구하는
+#    「두 거처를 같은 커밋에서 함께 갱신한다」는 규율이 **구조적으로 반증 불가**가 된다.
+#    (핀 재채취 시 이 줄과 위 줄을 **둘 다** 고쳐야 한다 — 그것이 검사 대상인 규율이다.)
+PIN_P1_EVIDENCE = {
+    "envelope_sha256": "642b78520053da0d2394fc2183bc239afae5187460e22f6762d1267539962ca9",
+}
 
 # ★ 작업 경로
 WF_PATH = os.path.join(REPO_ROOT, ".github", "workflows", "parallel-work-sentinel-check.yml")
 JOB2 = "parallel-work-sentinel-test"
 TPL_PATH = os.path.join(REPO_ROOT, "templates", "github-workflows", "parallel-work-sentinel-check.yml")
+ENVELOPE_PIN_SCRIPT = os.path.join(REPO_ROOT, "scripts", "lib", "envelope_pin.py")
 
 # ★ Spine 정의역 — 봉투 합성 래퍼 노드만 (ENV-5 최상위 래퍼)
 # ("jobs",) = 합성 래퍼 (probe 주입 시 무가시 — C₀ 동일)
@@ -57,6 +67,19 @@ TPL_PATH = os.path.join(REPO_ROOT, "templates", "github-workflows", "parallel-wo
 SPINE_PATHS = {
     ("jobs",),
 }
+
+# ★ Spine **키** 위치 (§8.B 「봉투 spine declare」 (i)·(ii)) — 봉투 구성이 *선택자로 소비*하는
+#   구조 키 2종. 이 둘의 rename 은 내용 축이 아니라 전제 축에서 `exit 2` 가 되므로
+#   키 정의역(`SWP-E`)에서 제외한다. (제외하지 않으면 정본이 FAIL 2/36 = born-RED)
+SPINE_KEY_POSITIONS = {
+    ((), "jobs"),
+    (("jobs",), JOB2),
+}
+
+# ★ verdict 3값 (§8.B — `exit 0`/`exit 1`/`exit 2` 의 in-process 동형 라벨)
+VERDICT_GREEN = "GREEN"
+VERDICT_RED = "RED"
+VERDICT_EXIT2 = "exit 2"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -76,6 +99,83 @@ def _all_mapping_nodes(node: Any, path: Tuple = ()) -> set:
             child_path = path + (idx,)
             paths.update(_all_mapping_nodes(elem, child_path))
     return paths
+
+
+def _all_leaf_paths(node: Any, path: Tuple = ()) -> set:
+    r"""scalar leaf 경로 전수 — mapping 값 위치 ∧ sequence 직접 원소 **양쪽** (`SWP-A` 정의역)."""
+    paths = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            paths |= _all_leaf_paths(value, path + (key,))
+    elif isinstance(node, (list, tuple)):
+        for idx, elem in enumerate(node):
+            paths |= _all_leaf_paths(elem, path + (idx,))
+    else:
+        paths.add(path)
+    return paths
+
+
+def _all_sequence_paths(node: Any, path: Tuple = ()) -> set:
+    r"""sequence(list/tuple) 경로 전수 (`SWP-F` 정의역)."""
+    paths = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            paths |= _all_sequence_paths(value, path + (key,))
+    elif isinstance(node, (list, tuple)):
+        paths.add(path)
+        for idx, elem in enumerate(node):
+            paths |= _all_sequence_paths(elem, path + (idx,))
+    return paths
+
+
+def _all_map_value_string_leaves(node: Any, path: Tuple = ()) -> set:
+    r"""**mapping 값 위치**의 문자열 leaf 전수 (`SWP-D` 정의역 — `ENV-2` **적용역**).
+
+    ★ sequence 의 **직접** 원소는 제외한다(독법 `A` 의 비적용역 — 그쪽은 `SWP-E` 소관).
+    """
+    paths = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, str):
+                paths.add(path + (key,))
+            else:
+                paths |= _all_map_value_string_leaves(value, path + (key,))
+    elif isinstance(node, (list, tuple)):
+        for idx, elem in enumerate(node):
+            if not isinstance(elem, str):
+                paths |= _all_map_value_string_leaves(elem, path + (idx,))
+    return paths
+
+
+def _all_key_positions(node: Any, path: Tuple = ()) -> set:
+    r"""`(그 키를 보유한 mapping 의 경로, 키)` 전수 (`SWP-E` 키 반쪽 정의역 — `ENV-2` 비적용역)."""
+    positions = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            positions.add((path, key))
+            positions |= _all_key_positions(value, path + (key,))
+    elif isinstance(node, (list, tuple)):
+        for idx, elem in enumerate(node):
+            positions |= _all_key_positions(elem, path + (idx,))
+    return positions
+
+
+def _bare_sequence_string_elements(node: Any, path: Tuple = ()) -> set:
+    r"""`(sequence 경로, 인덱스)` — 직접 원소가 str 인 자리 전수 (`SWP-E` bare 반쪽).
+
+    ★ 이 정의역이 `ENV-2` **비적용역**의 활성화 축(`on.pull_request.types`)을 담는다.
+    """
+    positions = set()
+    if isinstance(node, dict):
+        for key, value in node.items():
+            positions |= _bare_sequence_string_elements(value, path + (key,))
+    elif isinstance(node, (list, tuple)):
+        for idx, elem in enumerate(node):
+            if isinstance(elem, str):
+                positions.add((path, idx))
+            else:
+                positions |= _bare_sequence_string_elements(elem, path + (idx,))
+    return positions
 
 
 def encoder_branches() -> List[Tuple[str, str, Any]]:
@@ -273,24 +373,139 @@ def _get_node_at_path(node: Any, path: Tuple) -> Any:
 
 def _inject_probe_at_node(document: Any, path: Tuple, probe_key: str,
                           probe_value: Any) -> Any:
-    r"""한 path 의 mapping node 에 probe 주입."""
+    r"""한 path 의 노드에 probe 주입 — mapping 은 **키**, ★sequence 는 **원소**.
+
+    ★★ 구 판본은 `isinstance(target, dict)` 일 때만 주입하고 그 외에는 **원본을 그대로**
+       돌려줬다. 그 조용한 no-op 때문에 sequence 원소 위치(`ENV-2` **비적용역**)가 통째로
+       사각이 됐다 — 주입이 일어나지 않았는데 「sha 무변화」가 「흡수」로 **오독**된다.
+    ⇒ (i) sequence 확장 (ii) 미지원 노드는 **조용히 통과시키지 않고 raise**
+       (하네스 사망을 verdict 로 위장하지 않는다 — 「RED 를 검출로 읽기 전에 사유 확인」).
+    """
     doc = copy.deepcopy(document)
-    if not path:
-        target = doc
-    else:
-        target = _get_node_at_path(doc, path)
+    target = doc if not path else _get_node_at_path(doc, path)
     if isinstance(target, dict):
         target[probe_key] = probe_value
+    elif isinstance(target, list):
+        target.append(probe_value)
+    else:
+        raise TypeError(
+            f"probe 주입 불가 노드 {path!r}: {type(target).__name__} "
+            f"(mapping/sequence 아님 — 정의역 파생이 잘못됐다)"
+        )
     return doc
 
 
-def _compute_sha_with_hooks(document: Any, job2: str, pre_val=None, post_map=None) -> Optional[str]:
-    r"""document 를 정규화 후 sha 반환 (hook 적용)."""
+# ─────────────────────────────────────────────────────────────────────────────
+# 헬퍼: verdict 산출 (§8.B verdict 3값 — CLI `main()` 번역 규칙의 in-process 동형)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _envelope_outcome(document: Any, job2: str, *, pre_val=None,
+                      post_map=None) -> Tuple[Optional[str], str]:
+    r"""참조 구현 호출 1회의 산출 — `(sha_or_None, detail)`.
+
+    ★★ bare `except:` **금지**. CLI `main()` 이 *전 예외* 를 `exit 2` 로 번역하는 것은 맞지만,
+       그 번역을 재현하면서 **예외 정체를 버리면** 「`exit 2` 인가」와 「하네스가 죽었나」가
+       구별 불가가 된다 — `SWP-B`/`SWP-H`/`SWP-I` 는 `exit 2` 를 **기대** verdict 로 삼으므로
+       그 순간 sweep 자신이 항진 위험을 진다. ⇒ **detail 에 예외 정체를 보존**한다.
+    ★ `try` 블록은 참조 구현 호출 **한 줄만** 감싼다 — 문서 변형·probe 주입은 블록 **밖**
+      (하네스 자신의 버그가 `exit 2` 로 위장되지 않는다).
+    """
     try:
         env = compute_envelope_from_document(document, job2, pre_val=pre_val, post_map=post_map)
-        return env.sha256
-    except:
-        return None
+    except EnvelopeError as exc:  # P-E1~P-E3
+        return (None, f"EnvelopeError:{exc.error_kind}: {exc}")
+    except Exception as exc:  # noqa: BLE001 — P-E4 (접힘·직렬화 불가·전 구간 미포착)
+        return (None, f"{type(exc).__name__}: {exc}")
+    return (env.sha256, "")
+
+
+def _verdict(document: Any, ref_sha: str, *, pre_val=None,
+             post_map=None) -> Tuple[str, str]:
+    r"""문서 1건의 verdict — `(GREEN|RED|exit 2, detail)`."""
+    sha, detail = _envelope_outcome(document, JOB2, pre_val=pre_val, post_map=post_map)
+    if sha is None:
+        return (VERDICT_EXIT2, detail)
+    return (VERDICT_GREEN if sha == ref_sha else VERDICT_RED, "")
+
+
+def _verdict_from_text(text: str, ref_sha: str) -> Tuple[str, str]:
+    r"""**텍스트 층** verdict (`SWP-I` 전용 — 파싱 이전 사건은 구조 변형으로 탐침 불가)."""
+    try:
+        env = compute_envelope_from_text(text, JOB2)
+    except EnvelopeError as exc:
+        return (VERDICT_EXIT2, f"EnvelopeError:{exc.error_kind}: {exc}")
+    except Exception as exc:  # noqa: BLE001
+        return (VERDICT_EXIT2, f"{type(exc).__name__}: {exc}")
+    return (VERDICT_GREEN if env.sha256 == ref_sha else VERDICT_RED, "")
+
+
+def _compute_sha_with_hooks(document: Any, job2: str, pre_val=None, post_map=None) -> Optional[str]:
+    r"""document 를 정규화 후 sha 반환 (hook 적용). `exit 2` 는 `None` (구 시그니처 보존)."""
+    return _envelope_outcome(document, job2, pre_val=pre_val, post_map=post_map)[0]
+
+
+def _load_target() -> Tuple[str, Any, str]:
+    r"""대상 워크플로 → `(원문 텍스트, 파싱된 문서, 정본 sha)`."""
+    with open(WF_PATH, encoding="utf-8-sig", newline=None) as fh:
+        text = fh.read()
+    document = dup_safe_load(text)
+    return text, document, compute_envelope(WF_PATH, JOB2).sha256
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 헬퍼: 변형 연산자 (§8.B — 「전문 고정」. 이름이 구현을 결정하지 못하면 수치가 재현되지 않는다)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _mutate_leaf(value: Any) -> Any:
+    r"""`SWP-A`/`SWP-C` 변형 연산자 **전문 고정**:
+    str ⇒ 위치 1 에 토큰 `MUT` 삽입 / bool ⇒ 반전 / int ⇒ `+1` / 그 외 ⇒ `"MUT"` 치환.
+
+    ★ bool 검사가 int 검사보다 **먼저**여야 한다 (`bool` 은 `int` 의 서브클래스).
+    """
+    if isinstance(value, str):
+        return value[:1] + "MUT" + value[1:]
+    if isinstance(value, bool):
+        return not value
+    if isinstance(value, int):
+        return value + 1
+    return "MUT"
+
+
+def _pad(value: str) -> str:
+    r"""`SWP-D`/`SWP-E` padding 연산자 **전문 고정** = 양끝 2칸."""
+    return "  " + value + "  "
+
+
+def _set_at_path(document: Any, path: Tuple, value: Any) -> Any:
+    r"""경로 끝 원소를 치환한 **사본** 반환 (mapping 키 · sequence 인덱스 공용)."""
+    doc = copy.deepcopy(document)
+    parent = doc if len(path) == 1 else _get_node_at_path(doc, path[:-1])
+    parent[path[-1]] = value
+    return doc
+
+
+def _rename_key(document: Any, map_path: Tuple, key: Any, new_key: Any) -> Any:
+    r"""mapping 의 키를 rename 한 **사본** 반환 (원 삽입 순서 보존 — 키순서 축과 교락 금지)."""
+    doc = copy.deepcopy(document)
+    node = doc if not map_path else _get_node_at_path(doc, map_path)
+    items = list(node.items())
+    for k, _v in items:
+        del node[k]
+    for k, v in items:
+        node[new_key if k == key else k] = v
+    return doc
+
+
+def _inject_collision_pair(document: Any, map_path: Tuple, raw_key: Any) -> Any:
+    r"""`SWP-B`/`SWP-H` probe **전문 고정** — `{raw_key: "COLL"}` ∧ `{json 렌더(raw_key): "COLL"}`
+    동시 주입. 두 키는 파싱 층에서 **서로 다른 키**지만 키 렌더 후 **같은 문자열로 접힌다**
+    ⇒ `ENV-3` fail-closed 가 발동해야 한다(`exit 2`).
+    """
+    doc = copy.deepcopy(document)
+    node = doc if not map_path else _get_node_at_path(doc, map_path)
+    node[raw_key] = "COLL"
+    node[json.dumps(raw_key, ensure_ascii=False)] = "COLL"
+    return doc
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -320,41 +535,160 @@ def test_envelope_pin_reference_matches_landed_pin():
     print(f"[PASS] Reference PIN: {PIN_ENVELOPE_SHA256}")
 
 
-def test_envelope_pin_domain_derivation_selfcheck():
-    r"""Stage 1: 정의역 파생 자기검사 — S, P, mapping_nodes 비공허 + 음성 대조.
+def _sweep_domains(envelope: Any) -> Dict[str, Any]:
+    r"""전 sweep 공통 정의역 — **「적용역 − 봉투 spine」에서 기계 파생** (§8.B spine declare).
 
-    음성 대조: 잘못된 경로는 매핑 노드 집합에 없어야 함.
-
-    ★ 정의역 = 전체 mapping nodes − spine (ENV-5 래퍼 제외)
+    ★ 손목록·1점 하드코딩 0. 반환 키가 곧 sweep 정의역 이름이다.
     """
-    with open(WF_PATH, encoding="utf-8-sig", newline=None) as fh:
-        text = fh.read()
-    document = dup_safe_load(text)
+    key_positions = _all_key_positions(envelope) - SPINE_KEY_POSITIONS
+    return {
+        "mapping_nodes": _all_mapping_nodes(envelope) - SPINE_PATHS,
+        "leaves": _all_leaf_paths(envelope),
+        "sequences": _all_sequence_paths(envelope),
+        "map_value_string_leaves": _all_map_value_string_leaves(envelope),
+        "string_keys": {(p, k) for p, k in key_positions if isinstance(k, str)},
+        "nonstring_keys": {(p, k) for p, k in key_positions if not isinstance(k, str)},
+        "bare_sequence_string_elements": _bare_sequence_string_elements(envelope),
+    }
 
+
+# ★ 자기검사 (b) — **알려진 경로 포함** assert 의 앵커. 대상 워크플로에서 실재를 실측 확인했다
+#   (`steps[3]` = "Collect pytest tests" 의 `run` · `steps[1]` = "Set up Python" 의 `with`).
+KNOWN_LEAF_PATH = ("jobs", JOB2, "steps", 3, "run")
+KNOWN_MAPPING_PATH = ("jobs", JOB2, "steps", 1, "with")
+
+
+def _assert_derivation_selfcheck(domains: Dict[str, Any]) -> None:
+    r"""★ **파생 유틸 자기검사 (a)+(b)** — 모든 sweep 이 **실행 이전에** 호출한다.
+
+    §8.B 「파생 유틸 자기검사 의무」: sweep 의 기대 산출은 **정의상 균일**(`27/27`·`14/14` …)
+    이라 *"산출 열이 균일하면 판별이 아니라 **하네스 사망**을 먼저 의심하라"* 규율의 적용
+    대상이 정확히 sweep 자신이다. 파생 유틸이 **빈 집합**을 돌려주면 *"전건 기대 verdict"* 가
+    **공허 참**이 되어 sweep 이 통과한다.
+    """
+    # (a) 비공허 — 전 정의역
+    for name, dom in domains.items():
+        assert len(dom) > 0, f"자기검사 (a) FAIL — 파생 정의역 {name!r} 이 공허 (하네스 사망 의심)"
+    # (b) 알려진 경로 포함 — 비공허만으로는 `DERIVE-TOPONLY`(1) 를 못 잡는다
+    assert KNOWN_LEAF_PATH in domains["leaves"], \
+        f"자기검사 (b) FAIL — 알려진 leaf {KNOWN_LEAF_PATH} 가 파생 집합에 부재"
+    assert KNOWN_MAPPING_PATH in domains["mapping_nodes"], \
+        f"자기검사 (b) FAIL — 알려진 mapping {KNOWN_MAPPING_PATH} 가 파생 집합에 부재"
+
+
+def test_envelope_pin_domain_derivation_selfcheck():
+    r"""★ 파생 유틸 자기검사 (a) 비공허 ∧ (b) **알려진 경로 포함** (§8.B 자기검사 의무).
+
+    (c) 음성 대조는 형제 테스트(`..._derivation_negative_control`)가 낸다 — 그쪽이
+    **퇴화 유틸을 실제로 주입해** *"검출은 정의역에서 온다"* 를 실증한다.
+    ★ 구 판본의 *"`('nonexistent',)` 가 집합에 없다"* 는 (c) 가 아니었다 — 어떤 퇴화 유틸도
+      그 assert 를 통과하므로 **판별력 0**.
+    """
+    _text, document, _ref = _load_target()
     envelope = cut_envelope(document, JOB2)
-    all_mapping_nodes = _all_mapping_nodes(envelope)
-    mapping_nodes = all_mapping_nodes - SPINE_PATHS  # spine 제외 정의역
+    domains = _sweep_domains(envelope)
+
+    _assert_derivation_selfcheck(domains)
+
     S = _derive_S_from_envelope_pin_source()
     P = _derive_P_from_S(S)
-
-    # 비공허 검사
-    assert len(mapping_nodes) > 0, "No mapping nodes found"
     assert len(S) > 0, "S is empty"
     assert len(P) > 0, "P is empty"
 
-    num_nodes = len(mapping_nodes)
-    num_a_cells = num_nodes * len(S)
-    num_b_cells = num_nodes * len(P)
+    for name in sorted(domains):
+        print(f"[파생] {name:32} = {len(domains[name])}")
+    print(f"[파생] |S|={len(S)}, |P|={len(P)}")
+    print(f"[자기검사 (b)] {KNOWN_LEAF_PATH} ∈ leaves ∧ {KNOWN_MAPPING_PATH} ∈ mapping_nodes")
 
-    print(f"[파생] mapping_nodes={num_nodes}, |S|={len(S)}, |P|={len(P)}")
-    print(f"[파생] (a) cells={num_a_cells}, (b) cells={num_b_cells}")
+    # ★ `P-E5`(blocking) — `|jobs| ≥ 2`. 미충족이면 `SWP-C` 정의역이 0 이 되어
+    #   「전건 GREEN」이 **공허 참**이 된다 (오라클 사망 ⇒ blocking).
+    assert len(document["jobs"]) >= 2, \
+        f"P-E5 위반 — |jobs| = {len(document['jobs'])} < 2 (SWP-C 정의역 공허)"
 
-    # 음성 대조: 임의의 잘못된 경로는 집합에 없어야 함
-    false_path = ("nonexistent",)
-    assert false_path not in mapping_nodes, \
-        "False path should not be in mapping_nodes"
+    # ★ `P-E6`-a(blocking) — 길이 ≥ 2 sequence ≥ 2 (`SWP-F` 순서·다중도 반쪽의 비공허 전제)
+    long_seqs = [p for p in domains["sequences"] if len(_get_node_at_path(envelope, p)) >= 2]
+    assert len(long_seqs) >= 2, f"P-E6-a 위반 — 길이 ≥ 2 sequence {len(long_seqs)} < 2"
 
-    print(f"[PASS] Domain derivation selfcheck")
+    # ★ `P-E6`-b(declare 전용 — `exit 2` 로 내지 않는다). 미충족 시 **전칭 축소 마커**만 산출하고
+    #   verdict 는 불변. 정의역이 0 이 아니라 **1** 이라 오라클은 살아 있고 주장 범위만 좁다.
+    bare_carriers = {seq for seq, _idx in domains["bare_sequence_string_elements"]}
+    if len(bare_carriers) < 2:
+        print("[universal-narrowed: SWP-E.bare = observed-single-sequence]"
+              f" — bare 담지 distinct sequence = {len(bare_carriers)}")
+
+    print("[PASS] Domain derivation selfcheck (a)+(b) ∧ P-E5 ∧ P-E6-a")
+
+
+# ★ 자기검사 (c) 용 **퇴화 파생 유틸** — 정의역을 인위 축소한다 (§8.B `DERIVE-*`).
+#   ★ 규칙으로 정의하고 크기를 하드코딩하지 않는다 (형상이 바뀌면 크기도 따라간다).
+DEGENERATE_DERIVERS: Dict[str, Callable[[Any], set]] = {
+    "DERIVE-EMPTY": lambda env: set(),
+    "DERIVE-TOPONLY": lambda env: {p for p in _all_leaf_paths(env) if len(p) <= 1},
+    "DERIVE-SHALLOW": lambda env: {p for p in _all_leaf_paths(env) if len(p) <= 2},
+}
+
+
+def _defective_deep_lossy(document: Any) -> Any:
+    r"""**결함 구현 `V-LOSSY-DEEP`** — `jobs.<JOB2>.steps[i].name` 을 봉투에서 **탈락**시킨다.
+
+    `ENV-5`(*"봉투는 `jobs.<JOB2>` 서브트리를 **전문** 담는다"*) 위반이다.
+    ★ 구성 방식 **전문 고정** = 정본 파이프라인 **앞단의 문서 전처리**(정규화기 복제 0 —
+      §8.B 「변종은 정본의 변종이어야 한다」 규율 준수).
+    """
+    doc = copy.deepcopy(document)
+    steps = doc.get("jobs", {}).get(JOB2, {}).get("steps", [])
+    for step in steps:
+        if isinstance(step, dict):
+            step.pop("name", None)
+    return doc
+
+
+def _leaf_mutation_failures(document: Any, domain: set,
+                            transform: Optional[Callable[[Any], Any]] = None) -> set:
+    r"""`SWP-A` 술어(leaf 변형 ⇒ RED)를 **주어진 정의역** 위에서 실행 — 기대 미달 원소 집합."""
+    tf = transform or (lambda d: d)
+    ref_sha, _detail = _envelope_outcome(tf(document), JOB2)
+    failures = set()
+    for path in domain:
+        mutated = _set_at_path(document, path, _mutate_leaf(_get_node_at_path(document, path)))
+        verdict, _d = _verdict(tf(mutated), ref_sha)
+        if verdict != VERDICT_RED:
+            failures.add(path)
+    return failures
+
+
+def test_envelope_pin_derivation_negative_control():
+    r"""★ 파생 유틸 자기검사 **(c) 음성 대조** — 퇴화 유틸에서는 결함 구현이 **검출되지 않는다**.
+
+    §8.B: *"(a) 단독은 불충분하다 — `DERIVE-TOPONLY` 는 **비공허(1)** 이면서 여전히 무력하다."*
+    ⇒ 정의역을 인위 축소한 유틸 3종을 **실제로 주입**해 *"검출은 정의역에서 온다"* 를 실증한다.
+    """
+    _text, document, _ref = _load_target()
+    envelope = cut_envelope(document, JOB2)
+    full_domain = _sweep_domains(envelope)["leaves"]
+
+    # 정본 구현 위에서는 전 정의역이 기대(RED) 를 만족한다 — 음성 대조의 base
+    assert _leaf_mutation_failures(document, full_domain) == set(), \
+        "base FAIL — 정본이 SWP-A 전칭을 만족하지 않는다 (born-RED)"
+
+    detected_full = _leaf_mutation_failures(document, full_domain, _defective_deep_lossy)
+    print(f"[음성 대조] 전 정의역({len(full_domain)}) — V-LOSSY-DEEP 검출 {len(detected_full)}건: "
+          f"{sorted(detected_full, key=str)}")
+    assert detected_full, "결함 구현 V-LOSSY-DEEP 이 **전 정의역에서도** 미검출 (sweep 무력)"
+
+    for name, deriver in DEGENERATE_DERIVERS.items():
+        shrunk = deriver(envelope)
+        detected = _leaf_mutation_failures(document, shrunk, _defective_deep_lossy)
+        print(f"[음성 대조] {name:16} 정의역={len(shrunk):3}  V-LOSSY-DEEP 검출={len(detected)}")
+        assert detected == set(), \
+            f"{name} 이 결함을 검출했다 — 음성 대조 전제 붕괴 (퇴화 유틸 정의 재점검)"
+        assert shrunk < full_domain, f"{name} 이 정의역을 축소하지 않았다"
+
+    # ★ (a) 단독 불충분의 실증 — DERIVE-TOPONLY 는 **비공허**이면서 무력하다
+    assert len(DEGENERATE_DERIVERS["DERIVE-TOPONLY"](envelope)) > 0, \
+        "DERIVE-TOPONLY 가 공허하면 (a) 단독 불충분을 실증하지 못한다"
+
+    print("[PASS] 파생 유틸 자기검사 (c) — 검출은 정의역에서 온다")
 
 
 def test_envelope_pin_coverage_table_witnesses():
@@ -700,9 +1034,134 @@ def test_envelope_pin_falsification_dropfalse():
     print(f"  → RED 반증 PASS: 훅 무력화가 실제로 결과를 바꿈")
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 전제 witness (`P-E1`~`P-E4`) ∧ CLI 3-verdict ∧ 대조기 술어
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_envelope_pin_premise_witnesses_pe1_to_pe4():
+    r"""전제 `P-E1`~`P-E4` witness — `EnvelopeError.error_kind` **4종 전수**.
+
+    ★ `P-E1`~`P-E3` 는 `cut_envelope` 가 직접 raise 한다.
+    ★ `P-E4`(`envelope_meta_error`)는 **라이브러리가 raise 하지 않는다** — CLI `main()` 의
+      광역 포획이 그 등급을 고정한다(전 구간 미포착 예외 = `exit 2`). ⇒ 이 kind 의 실
+      witness 는 형제 CLI 테스트가 낸다(여기서는 어휘 집합 ∧ 광역 포획 대상 예외 실재만).
+    ★ 정직 기재 — 4종을 전부 `pytest.raises` 로 세우려고 `EnvelopeError("envelope_meta_error", …)`
+      를 **직접 생성해 assert 하는 것은 항진**이다(내가 만든 값을 내가 확인). 하지 않는다.
+    """
+    # P-E1 — top-level 이 mapping 아님
+    with pytest.raises(EnvelopeError) as e1:
+        compute_envelope_from_document(["not", "a", "mapping"], JOB2)
+    assert e1.value.error_kind == "envelope_root_not_mapping"
+
+    # P-E2 — `jobs` 부재 ∧ `jobs` 비-mapping (연언이라 위반 kind 는 1종)
+    with pytest.raises(EnvelopeError) as e2a:
+        compute_envelope_from_document({"name": "x"}, JOB2)
+    assert e2a.value.error_kind == "envelope_jobs_missing"
+    with pytest.raises(EnvelopeError) as e2b:
+        compute_envelope_from_document({"jobs": "not-a-mapping"}, JOB2)
+    assert e2b.value.error_kind == "envelope_jobs_missing"
+
+    # P-E3 — JOB2 ∉ jobs
+    with pytest.raises(EnvelopeError) as e3:
+        compute_envelope_from_document({"jobs": {"other-job": {}}}, JOB2)
+    assert e3.value.error_kind == "envelope_job_absent"
+
+    # P-E4 — 「전 구간 미포착 예외」의 in-process 실재 확인 (등급 고정은 CLI 소관)
+    #   (i) `ENV-3` 접힘 (ii) JSON 직렬화 불가형(비인용 date **값**)
+    collision_doc = {"jobs": {JOB2: {"a": 1}}, 2: "COLL", "2": "COLL"}
+    sha_c, detail_c = _envelope_outcome(collision_doc, JOB2)
+    assert sha_c is None and "collision" in detail_c, f"접힘이 예외로 종결되지 않았다: {detail_c}"
+    date_doc = {"jobs": {JOB2: {"when": datetime.date(2026, 8, 19)}}}
+    sha_d, detail_d = _envelope_outcome(date_doc, JOB2)
+    assert sha_d is None and "TypeError" in detail_d, f"직렬화 불가형이 통과했다: {detail_d}"
+
+    # 어휘 집합 — 신규 어휘 발명 금지 (4종이 값 공간 전부)
+    assert set(ENVELOPE_ERROR_KINDS) == {
+        "envelope_root_not_mapping", "envelope_jobs_missing",
+        "envelope_job_absent", "envelope_meta_error",
+    }
+    with pytest.raises(ValueError):  # self-guard — 미지 kind 는 생성 자체가 금지
+        EnvelopeError("no_such_kind", "x")
+
+    print(f"[PASS] P-E1~P-E4 witness — kinds={sorted(ENVELOPE_ERROR_KINDS)}")
+
+
+def _run_cli(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, ENVELOPE_PIN_SCRIPT, *args],
+        capture_output=True, text=True, encoding="utf-8", cwd=REPO_ROOT,
+    )
+
+
+def test_envelope_pin_cli_three_verdicts():
+    r"""CLI **3-verdict 전건** — `exit 0`(GREEN) / `exit 1`(RED) / `exit 2`(meta-error).
+
+    ★★ **exit code 단독 판정 금지**. interpreter 표준 exit(파일 부재 `2` 등)이 도메인
+       `exit 2` 와 **우연히 일치**하면 fork 가 안 일어나도 통과하는 거짓 GREEN 이 된다.
+       ⇒ 매 갈래에서 **도메인 고유 stdout/stderr sentinel 을 병행 assert** 한다
+       (`(returncode, sentinel)` 튜플 동시 판정 — 부분일치 차단):
+         exit 0 → stdout == 64자 핀 hex  ·  exit 1 → stderr payload `verdict == "RED"`
+         exit 2 → stderr payload `error_kind ∈ ENVELOPE_ERROR_KINDS`
+       ★ 미 fork 시 stdout 은 빈 문자열 / stderr 은 interpreter 에러 텍스트라 `json.loads`
+         가 실패한다 ⇒ sentinel assert 가 genuine 실패한다(실측 확인).
+    """
+    # ── exit 0 (GREEN) — 핀 대조 일치
+    r0 = _run_cli(WF_PATH, "--job2", JOB2, "--expect", PIN_ENVELOPE_SHA256)
+    assert (r0.returncode, r0.stdout.strip()) == (0, PIN_ENVELOPE_SHA256), \
+        f"exit 0 갈래 실패: rc={r0.returncode} stdout={r0.stdout!r} stderr={r0.stderr!r}"
+
+    # ── exit 1 (RED) — 핀 불일치
+    r1 = _run_cli(WF_PATH, "--job2", JOB2, "--expect", "0" * 64)
+    payload1 = json.loads(r1.stderr.strip().splitlines()[-1])
+    assert (r1.returncode, payload1["verdict"], payload1["actual"]) == \
+        (1, "RED", PIN_ENVELOPE_SHA256), f"exit 1 갈래 실패: rc={r1.returncode} {payload1}"
+
+    # ── exit 2 (meta-error) — `P-E4` 입력 읽기 구간 (파일 부재)
+    r2 = _run_cli(os.path.join(REPO_ROOT, "no", "such", "workflow.yml"), "--job2", JOB2)
+    payload2 = json.loads(r2.stderr.strip().splitlines()[-1])
+    assert (r2.returncode, payload2["error_kind"]) == (2, "envelope_meta_error"), \
+        f"exit 2(P-E4) 갈래 실패: rc={r2.returncode} {payload2}"
+
+    # ── exit 2 (meta-error) — `P-E3` 전제 위반 (job 부재)
+    r3 = _run_cli(WF_PATH, "--job2", "no-such-job")
+    payload3 = json.loads(r3.stderr.strip().splitlines()[-1])
+    assert (r3.returncode, payload3["error_kind"]) == (2, "envelope_job_absent"), \
+        f"exit 2(P-E3) 갈래 실패: rc={r3.returncode} {payload3}"
+
+    # ── 채취 모드 — `--expect` 미지정이면 GREEN 을 **주장하지 않는다**(sha 만 낸다)
+    r4 = _run_cli(WF_PATH, "--job2", JOB2)
+    assert (r4.returncode, r4.stdout.strip()) == (0, PIN_ENVELOPE_SHA256)
+
+    print("[PASS] CLI 3-verdict — exit 0 / 1 / 2 전건 (sentinel 병행 assert)")
+
+
+def test_envelope_pin_matches_predicate():
+    r"""대조기 술어 `Envelope.matches()` **직접 호출** — 양성 ∧ 음성 공존.
+
+    ★ 이 술어가 어디서도 호출되지 않으면 `return True` 오구현이 **전 스위트를 통과**한다
+      (핀 대조 테스트는 `env.sha256 == PIN` 을 직접 비교하므로 `matches` 를 우회한다).
+    """
+    env = compute_envelope(WF_PATH, JOB2)
+
+    # 양성 — 일치
+    assert env.matches(PIN_ENVELOPE_SHA256) is True
+    # 흡수 축 — 대소문자·양끝 공백은 흡수한다 (docstring 계약)
+    assert env.matches("  " + PIN_ENVELOPE_SHA256.upper() + "\n") is True
+    # ★ 음성 — 불일치는 반드시 False (`return True` 오구현 판별자)
+    assert env.matches("0" * 64) is False
+    assert env.matches(PIN_ENVELOPE_SHA256[:-1] + "0") is False
+    assert env.matches("") is False
+
+    print("[PASS] matches() — 양성 3 ∧ 음성 3 공존")
+
+
 if __name__ == "__main__":
     test_envelope_pin_reference_matches_landed_pin()
     test_envelope_pin_domain_derivation_selfcheck()
+    test_envelope_pin_derivation_negative_control()
     test_envelope_pin_coverage_table_witnesses()
     test_envelope_pin_sweep_derivation_completeness()
     test_envelope_pin_falsification_dropfalse()
+    test_envelope_pin_premise_witnesses_pe1_to_pe4()
+    test_envelope_pin_cli_three_verdicts()
+    test_envelope_pin_matches_predicate()
