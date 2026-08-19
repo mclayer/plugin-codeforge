@@ -208,8 +208,8 @@ class TestDarkPathConsumerScopeOptIn:
             assert tracked_write_allowed(root) is False, \
                 "consumer checkout should not allow tracked writes"
 
-    def test_consumer_optin_on_discriminating_write_allowed(self):
-        """consumer scope + opt-in ON: write 1건 발생 ∧ tracked 경로 밖.
+    def test_consumer_optin_on_writes_untracked_floor_only(self):
+        """consumer scope + opt-in ON: write 1건 발생 ∧ tracked 경로 밖 (§8.10 dark-path).
 
         이 테스트는 판별자 자체의 write 가 아니라, 판별 결과를 **호출자가 사용해**
         write 를 제어하는 기전을 검증한다 (시나리오 simulation).
