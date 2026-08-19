@@ -748,6 +748,9 @@ Amendment 3 (4) 는 §결정 4 circuit breaker 를 "telemetry 실채움 전까�
 - 두 값공간은 **disjoint 한 목적**을 가지며 서로의 원소를 상속하지 않는다.
 - ⇒ **`error_pattern` 값공간에 `rate_limit` 이 들어가는 것은 §결정 1 감지집합에 원소를 추가하지 않는다.** 따라서 **§결정 1 closed-set invariant("5번째 pattern 추가 = 본 ADR Amendment 의무")는 본 Amendment 에서 미발동**이며, detection literal 은 **무증감**이다.
 - **분리를 명시하지 않으면 두 오작동이 발생한다**: (a) 누군가 `rate_limit` 을 5번째 감지 literal 로 오해해 추가하고 closed-set invariant 를 건드린다 — 감지집합은 판정 정의역이라 원소 추가가 오탐을 낳는다 (b) producer 가 감지 literal 과 매칭을 맞추려 **원시 에러 텍스트**를 기록해 §결정 10 redaction matrix 와 ADR-043 Amendment 7 (B)(`error_pattern` = 폐쇄 enum only)를 **동시에** 위반한다. **(b) 는 공개 착지면과 직결되므로 P0** 다.
+- **★ 명칭 불일치 실측 — 미해소 잔여 declare (본 Amendment 는 matrix 행을 고치지 않는다)**: §결정 10 redaction matrix 는 **`error_message`** 를 `verbatim (4-tuple enum match only, no user prompt verbatim)` 로 규정하는데, event tier 실 스키마의 필드명은 **`error_pattern`** 이다 (`docs/kpi/429-incident-history.jsonl:3` 자기 헤더 verbatim: `# Schema: {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}`) — **matrix 가 명명하는 필드와 스키마가 명명하는 필드가 다르다.** 이 불일치는 "matrix 에 `error_message = verbatim` 이 있으니 에러 원문을 적어도 된다" 는 오독 경로를 연다.
+  - **본 Amendment 의 판정**: 그 matrix 행은 본 채널 `error_pattern` 에 대한 **원문 기록 허가가 아니다.** 본 채널의 기록 어휘 SSOT 는 ADR-043 Amendment 7 (B)(폐쇄 enum only)이며 위 (b) 금지가 우선한다.
+  - **matrix 행 자체의 명칭 정정은 본 Amendment 가 수행하지 않는다.** §결정 10 matrix 는 본 채널 전용이 아니고 `error_message` 를 소비하는 타 표면의 존재 여부를 **본 Story 에서 조사하지 않았다** — 미조사 상태로 Accepted 본체 표의 필드명을 고치면 확인되지 않은 파급을 만든다. ⇒ **미해소 잔여**이며 정정은 별건이다. 그때까지 오독 차단은 본 판정 문면이 담당하고, 본 절을 근거로 "matrix 가 정합해졌다" 고 읽으면 over-claim 이다.
 - **부수 (구현 함정)**: 현행 문자열 가드 `_SAFE_STR_RE = ^[0-9A-Za-z_\-:\.]{0,128}$` 는 공백을 허용하지 않아 §결정 1 literal 중 공백을 포함하는 값이 그대로는 통과하지 못한다. 해결은 **화이트리스트에 공백을 추가하는 것이 아니라 값을 토큰화하는 것**이다 — 기록 어휘가 폐쇄 enum 인 이상 토큰이 정본이고 원문은 애초에 기록 대상이 아니다. 이 함정을 화이트리스트 완화로 풀면 (b) 경로가 열린다.
 
 ### A4-5. §결정 10 90일 retention ↔ event tier 보존 요구 — 정의역 한정
