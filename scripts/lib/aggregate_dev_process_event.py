@@ -602,7 +602,9 @@ def compute_trend(rows, stats):
         anchor_id = None
         root_cause_class = None
     else:
-        pattern_count = None  # ★DEFAULT — uncomputable_missing_key
+        # ★ CFP-2985 D-14 반전 후 — 본 분기(substrate 無)는 PRIMARY/DEFAULT 경로가 아니라
+        #   negative-domain 대조군이다. 값을 내면 fabricate = 위반.
+        pattern_count = None  # 정직-null (uncomputable_missing_key)
         pattern_status = "uncomputable_missing_key"
         anchor_id = None
         root_cause_class = None
@@ -646,14 +648,14 @@ def _trend_honesty_note(has_anchor, has_rcc, pattern_status):
     if pattern_status == "computable":
         substrate_clause = (
             "pattern_count = anchor_id/root_cause_class %s — 관측된 값에서 산출"
-            "(substrate 부재 시 DEFAULT = uncomputable_missing_key + null). "
+            "(substrate 부재 시에만 uncomputable_missing_key + null — 대조군 경로). "
             "§D-9 feed = producer-defined." % _TREND_NOTE_SUBSTRATE_PRESENT
         )
     else:
         missing = [n for n, present in (("anchor_id", has_anchor),
                                         ("root_cause_class", has_rcc)) if not present]
         substrate_clause = (
-            "pattern_count = %s %s — uncomputable_missing_key(DEFAULT, edge 아님) + null. "
+            "pattern_count = %s %s — uncomputable_missing_key(정직-null, negative-domain 대조군) + null. "
             "§D-9 feed = producer-defined." % ("/".join(missing) or "substrate",
                                                _TREND_NOTE_SUBSTRATE_ABSENT)
         )
@@ -1130,7 +1132,7 @@ def _self_test():
     check(rec_plus["recurrence_count"] - rec["recurrence_count"] == 1,
           "[metamorphic-rec] recurrence delta != 1")
 
-    # ═══ AC-16/17/19: trend negative-control + no-action + pattern uncomputable(DEFAULT) ═══
+    # ═══ AC-16/17/19: trend negative-control + no-action + pattern uncomputable(substrate 無 대조군) ═══
     tr_rows = [
         _mk_row("lane_transition", "SA", "구현", "t1", "2026-07-15T10:00:00Z"),
         _mk_row("lane_transition", "SB", "설계", "t2", "2026-07-16T10:00:00Z"),
@@ -1143,9 +1145,10 @@ def _self_test():
     # AC-17: escalation ACTION 필드 부재 (B=producer)
     check("adr_draft_emitted" not in tr and "escalate_user" not in tr,
           "[AC-17] escalation action 필드 존재(INV-B3 위반)")
-    # AC-19 DEFAULT: anchor_id/root_cause_class 부재 → pattern_count null + uncomputable_missing_key
+    # AC-19 negative-domain: fixture 에 anchor_id/root_cause_class **값**이 없다(키는 실재 — D-12)
+    #   → pattern_count null + uncomputable_missing_key 가 정직-null
     check(tr["pattern_count"] is None and tr["pattern_status"] == "uncomputable_missing_key",
-          "[AC-19] pattern uncomputable DEFAULT 아님: %s/%s" % (tr["pattern_count"], tr["pattern_status"]))
+          "[AC-19] substrate 無 대조군이 정직-null 아님: %s/%s" % (tr["pattern_count"], tr["pattern_status"]))
     check(len(tr["time_series"]) == 2, "[trend] bucket %s != 2" % len(tr["time_series"]))
 
     # ═══ AC-21/22: token-cost class-weighted 4-class + 3-gap flags + no capture-fix ═══
@@ -1297,7 +1300,7 @@ def _self_test():
         "AC-9 attempt3/iter1; AC-10 null-fix-id; AC-11 non_ambient/denom 1/2; "
         "AC-12 capture_subject lane/gate/undetermined 1/1/1; AC-13 shc 2/1 advisory; "
         "AC-14 recur1 4-tuple; AC-15 self-ref1/missing1; AC-16 no-forecast; AC-17 no-action; "
-        "AC-19 pattern uncomputable-DEFAULT; AC-21 class-weighted probe != flat-sum, 1h honest-null; "
+        "AC-19 pattern uncomputable(substrate 無 대조군); AC-21 class-weighted probe != flat-sum, 1h honest-null; "
         "AC-22 3-gap flags/no-capture-fix/honest-null; AC-5 measured-0≠dormant; AC-4 stats-propagation; "
         "no-blob-deref; AC-6 append-only; idem-2axis(strip=CODE-CONST); AC-23 per-story)"
     )
