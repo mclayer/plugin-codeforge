@@ -661,6 +661,35 @@ jobs:
             bash "$t"
           done
 
+      # ── CFP-2967 Phase 2 pytest suite (§8.0 BL-2·BL-3 hollow-gate 차단) ────────────────────
+      # BL-2: test_failover_detection_classifier.py 실행 채널 0 → 배선
+      # BL-3: 명명 테스트 22본 ast presence-only 추상 → 한 수단(본 step)으로 실행+검증
+      #
+      # ★ exit-masking (|| true) 금지 — ADR-171 §결정 5.
+      # ★ basename 명시 열거 (glob 금지) — ADR-151 AC-2 + 배선 가시성 명시.
+      #
+      # 파일 목록 = Change Plan §8.1 RTM 표 매핑 심볼 정본:
+      #   AC-6 / AC-7 / AC-8 / AC-9 / AC-10 / AC-16 → tests/scripts/test_cfp2967_429_observability.py
+      #   AC-13 → tests/scripts/test_cfp2967_ac13_domain.py
+      #   AC-17 → tests/scripts/test_cfp2967_ac17_site_pin.py
+      #   AC-19 → tests/scripts/test_cfp2967_scope_discriminator.py
+      #   AC-9 property → tests/scripts/test_cfp2967_freshness_property.py
+      #   AC-10 concurrency → tests/scripts/test_cfp2967_concurrent_append.py
+      #   AC-12a → tests/scripts/test_failover_detection_classifier.py (BL-2 배선)
+      #   AC-6 LEVERS → hooks/tests/test_hook_timeout_rationale_table.py
+      - name: CFP-2967 Phase 2 pytest suite (§8.0 BL-2·BL-3)
+        run: |
+          set -euo pipefail
+          python3 -m pytest -xvs \
+            tests/scripts/test_cfp2967_429_observability.py \
+            tests/scripts/test_cfp2967_ac13_domain.py \
+            tests/scripts/test_cfp2967_ac17_site_pin.py \
+            tests/scripts/test_cfp2967_scope_discriminator.py \
+            tests/scripts/test_cfp2967_freshness_property.py \
+            tests/scripts/test_cfp2967_concurrent_append.py \
+            tests/scripts/test_failover_detection_classifier.py \
+            hooks/tests/test_hook_timeout_rationale_table.py
+
       # AC-12b 실행자 해소: 위 corpus step 은 self-test 를 통한 **간접** 참조라 실행자로 세지
       #   않는다(그 술어를 넓히면 RED 를 없애려 정의역을 넓히는 것 = 본 Story 표적 결함).
       #   설계가 이미 요구한 직접 실행자(Change Plan §5 Phase 2 항목 7 · §8.1 RTM AC-1 행의
