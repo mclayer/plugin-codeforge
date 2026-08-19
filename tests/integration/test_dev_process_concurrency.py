@@ -5,7 +5,7 @@ Under test: scripts/lib/append_dev_process_event.py (append_event → _append_js
 
 두 축을 분리 검증 (정직 — 설계 §7.4.1 honest-ceiling 반영):
   · INTEGRITY (cross-platform GREEN): 병렬 append 하에서도 landed row 는 절대 torn/interleaved
-    되지 않는다 — 각 줄 valid JSON dict, 정확히 18 키. (single os.write per small row.)
+    되지 않는다 — 각 줄 valid JSON dict, 정확히 20 키. (single os.write per small row.)
   · NO-LOST-UPDATE (count == writes): cross-platform GREEN (CFP-2817 FIX Iter 3). POSIX os.O_APPEND
     단일-write = 이미 kernel-atomic. Windows = FILE_APPEND_DATA(ctypes CreateFileW, FILE_WRITE_DATA
     불포함) kernel-atomic append 로 MSVCRT lseek-then-write 대체 → 완료행 clobber 0. iter1 win32
@@ -110,7 +110,7 @@ class TestConcurrentAppendNoLostUpdate:
             assert p.returncode == 0, f"CLI exit {p.returncode}: {err.decode(errors='replace')}"
 
         lines = [ln for ln in ledger.read_text(encoding="utf-8").splitlines() if ln.strip()]
-        # (a) 무결성: 각 줄 valid JSON + 18 키 (distinct-marker — exit0 단독 판정 금지)
+        # (a) 무결성: 각 줄 valid JSON + 20 키 (distinct-marker — exit0 단독 판정 금지)
         for ln in lines:
             row = json.loads(ln)
             assert tuple(row.keys()) == ade._ROW_KEYS

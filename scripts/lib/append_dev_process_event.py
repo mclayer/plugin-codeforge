@@ -110,6 +110,17 @@ _TTD_UNATTRIBUTED = "unattributed"
 # consumer_scope closed enum (ADR-163 §결정 9 isolation marker)
 _CONSUMER_SCOPES = {"wrapper", "consumer"}
 
+# ★ CFP-2985 D-12 — root_cause_class CLOSED-6.
+#   값공간 ≡ fix-event-v1 v1.6 `원인 판정` enum (계약 §4.2 값공간 선언).
+#   ★ INV-R: `defect_family`(결함 class 축)와 **교차 집계 금지** — 본 enum 은 재진입 라우팅 축이다.
+_ROOT_CAUSE_CLASSES = {
+    "설계", "구현", "요구사항", "환경", "설계-리뷰", "구현-리뷰",
+}
+
+# ★ CFP-2985 D-16(적재 술어) — anchor_id 닫힌 형식 2종 (계약 §4.2 J-2 전건).
+#   `§<section-ref>` (권장) ∪ `<repo-relative path>:<line>`. bounded token 상한.
+_ANCHOR_ID_MAXLEN = 200
+
 # redaction_rules_fired closed enum (audit — 규칙명만, 매칭 secret 원문/hash 절대 미기록 T-DPE-8)
 # ★SSOT = redact_dev_process_content.RULE_NAMES — audit dict 의 producer 가 소유하는 rule 어휘.
 #   본 consumer 는 producer 어휘를 그대로 import 해 gate (ADR-140 DRY — 복붙 drift 차단).
@@ -130,7 +141,8 @@ except Exception:  # pragma: no cover — sibling 미착지 시 fidelity 보존 
         })
 
 
-# ─────────────────────── 19→18 index 필드 정확 키 순서 (parity SSOT) ───────────────────
+# ─────────────────────── 20 index 필드 정확 키 순서 (parity SSOT) ─────────────────────
+# (이력: 19→18 [CFP-2687] → 18→20 [CFP-2985 D-12 — root_cause_class · anchor_id 말미 append])
 # ★★ 계약 dev-process-event-v1.md §2 index schema table 과 EXACTLY 일치해야 한다.
 #     wave-2 parity self-test = 계약 §2(동적 파싱) vs 본 tuple(하드코딩 code anchor) 대조.
 #     순서·멤버 born-drift = FAIL. 필드 추가/삭제/순서변경 = 계약 amendment 의무.
@@ -153,6 +165,8 @@ _ROW_KEYS = (
     "defect_type",              # SEMI-OPEN (verdict-v4 ∪ unknown-type) | null (defect events)
     "time_to_detection",        # DERIVED measure (ordinal/ts-delta/unattributed) | null (defect events)
     "detecting_lane",           # enum (lane_label) | null (defect events)
+    "root_cause_class",         # ★CFP-2985 D-12 — enum CLOSED-6 | null (fix_transition 등)
+    "anchor_id",                # ★CFP-2985 D-12 — 닫힌 형식 상관 위치 | null (INV-R 정의역 밖)
 )
 
 
@@ -306,6 +320,55 @@ def _norm_defect_family(raw):
     return _norm_enum(raw, _DEFECT_FAMILIES, None)
 
 
+def _norm_root_cause_class(raw):
+    """root_cause_class — CLOSED-6 이면 그대로, 아니면 None (§4.2 값공간 선언).
+
+    ★ 경계 분담 (정직 선언): **적재 경계는 값공간(closed enum)만** 본다.
+      표기 변형(장식·공백·대소문자) 흡수는 **집계 층**
+      (`aggregate_dev_process_event._norm_root_cause_value`, D-13) 책임이며,
+      그 층은 본 primitive 를 거치지 않고 원장에 들어온 행(§10 표 파생 등)도 본다.
+      두 층은 정의역이 다르므로 같은 술어의 중복이 아니다.
+    ★ 비-멤버 → None 은 `_norm_defect_family` 와 동일한 graceful 계약이다
+      (reject 아닌 흡수 — record-only, ADR-115).
+    """
+    return _norm_enum(raw, _ROOT_CAUSE_CLASSES, None)
+
+
+def _norm_anchor_id(raw):
+    """anchor_id — 닫힌 형식 2종만 적재. 그 외(Story-scoped 포함) → None.
+
+    ★ 왜 술어가 필요한가 (계약 §4.2 J-2): index tier 의 "free-form string content field
+      도입 금지" 를 회피하는 **전건이 형식 술어의 실재**다. 술어 없이 string 필드를 두면
+      그 판정이 무효가 된다 — 즉 본 함수는 선택이 아니라 필드 도입의 조건이다.
+    ★ Story-scoped 형상(`cfp-<digits>-…`) 거부 근거 (Change Plan §3.4 처분 1):
+      `pattern_count` = 같은 (anchor_id, root_cause_class) 를 공유하는 distinct story_key 수.
+      anchor 에 Story key 가 접두되면 group 당 story_key 가 정의상 1 → `pattern_count ≡ 1`
+      고정. 조용히 섞이면 값이 아니라 **형식이 집계를 지배**한다.
+    ★ 정직 잔여 (`declared`): (a) `<path>:<line>` 은 커밋 간 drift 한다 —
+      계약은 anchor_id 안정성을 **보증하지 않는다**(§4.2 J-1: 상관 ID freeze 4종 미편입).
+      (b) 거부 대상 접두는 현행 Story KEY(`cfp`) 한정이며 타 KEY 접두 일반화는 미착지.
+    ★ 정규식 미사용 (모듈 관례 — self-test 국소 import 외 module-level `re` 0).
+    """
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s or len(s) > _ANCHOR_ID_MAXLEN:
+        return None
+    low = s.casefold()
+    if low.startswith("cfp-"):                    # ⓑ 기각 형상 — Story-scoped
+        tail = low[4:]
+        if tail and tail[0].isdigit():
+            return None
+    if s.startswith("§"):                          # ⓐ 권장 형식 — §<section-ref>
+        return s if len(s) > 1 else None
+    if ":" in s:                                   # ⓑ <repo-relative path>:<line>
+        path_part, _, line_part = s.rpartition(":")
+        if (path_part and line_part.isdigit()
+                and not path_part.startswith("/") and ":" not in path_part):
+            return s
+    return None
+
+
 def _norm_defect_type(raw, is_defect_event):
     """defect_type — SEMI-OPEN. 값 있으면 bounded token 으로 수용, 없으면:
        defect event → unknown-type fallback / 그 외 → None.
@@ -423,6 +486,8 @@ def build_row(**index_fields):
     defect_type = _norm_defect_type(index_fields.get("defect_type"), is_defect_event)
     time_to_detection = _norm_time_to_detection(index_fields.get("time_to_detection"))
     detecting_lane = _norm_enum(index_fields.get("detecting_lane"), _LANE_LABELS, None)
+    root_cause_class = _norm_root_cause_class(index_fields.get("root_cause_class"))
+    anchor_id = _norm_anchor_id(index_fields.get("anchor_id"))
 
     # timestamp — caller 가 prev 주입 시 monotonic, 아니면 wall-clock UTC Z
     timestamp_utc = _utc_z_monotonic(index_fields.get("prev_timestamp_utc"))
@@ -451,6 +516,8 @@ def build_row(**index_fields):
         "defect_type": defect_type,
         "time_to_detection": time_to_detection,
         "detecting_lane": detecting_lane,
+        "root_cause_class": root_cause_class,
+        "anchor_id": anchor_id,
     }
     # 방어적 정합: row 키 == _ROW_KEYS (순서·멤버) — 구성 오류 조기 검출
     assert tuple(row.keys()) == _ROW_KEYS, "build_row key drift vs _ROW_KEYS"
@@ -510,8 +577,8 @@ def _self_test():
         if not cond:
             failures.append(msg)
 
-    # ── parity guard: build_row 키 순서 == _ROW_KEYS, 길이 18 ──
-    check(len(_ROW_KEYS) == 18, f"_ROW_KEYS 길이 {len(_ROW_KEYS)} != 18")
+    # ── parity guard: build_row 키 순서 == _ROW_KEYS, 길이 20 (CFP-2985 D-12) ──
+    check(len(_ROW_KEYS) == 20, f"_ROW_KEYS 길이 {len(_ROW_KEYS)} != 20")
     check(len(set(_ROW_KEYS)) == len(_ROW_KEYS), "_ROW_KEYS 중복 키 존재")
 
     tmpdir = tempfile.mkdtemp(prefix="dev-process-selftest-")
@@ -608,6 +675,36 @@ def _self_test():
     check(_is_sha256_hex(r5["defect_id"]), "[c5] raw defect_id 가 sha256 처리 안 됨")
     check(_is_sha256_hex(r5["fix_id"]), "[c5] raw fix_id 가 sha256 처리 안 됨")
 
+    # ── 케이스 7 (★CFP-2985 D-12/D-16): root_cause_class · anchor_id 적재 경계 ──
+    #   양성 ∧ 음성 공존 — 수용만 보면 술어가 상시 참이어도 통과한다(판별력 0).
+    eid7 = append_event(
+        ledger_path=ledger, event_type="fix_transition", emit_source="agent",
+        story_key="CFP-2985", lane_label="구현-리뷰",
+        root_cause_class="설계-리뷰", anchor_id="§5.3",
+    )
+    check(eid7 is not None, "[c7] 신규 2 필드 정상값에 row 미기록")
+    with open(ledger, encoding="utf-8") as f:
+        rows = [json.loads(ln) for ln in f if ln.strip()]
+    r7 = rows[-1]
+    check(tuple(r7.keys()) == _ROW_KEYS, "[c7] row 키 순서 != _ROW_KEYS (20-field parity)")
+    check(r7["root_cause_class"] == "설계-리뷰", f"[c7] CLOSED-6 멤버 손상: {r7['root_cause_class']!r}")
+    check(r7["anchor_id"] == "§5.3", f"[c7] §<section-ref> 형식 거부됨: {r7['anchor_id']!r}")
+    # 음성 leg — 값공간 밖 / Story-scoped 형상은 적재되지 않는다
+    check(_norm_root_cause_class("설계-리뷰-리뷰") is None, "[c7] CLOSED-6 밖 값이 적재됨")
+    check(_norm_root_cause_class("**설계**") is None,
+          "[c7] 장식 변형이 적재 경계를 통과 — 표기 흡수는 집계 층 책임(D-13)이며 여기선 비-멤버다")
+    check(_norm_root_cause_class(None) is None, "[c7] None 이 값으로 바뀜")
+    check(_norm_anchor_id("cfp-2985-requirements-divergence-1") is None,
+          "[c7] Story-scoped anchor 가 적재됨 — pattern_count 가 정의상 1 로 고정된다(§3.4)")
+    check(_norm_anchor_id("CFP-2985-foo") is None, "[c7] 대문자 Story-scoped 형상 미거부")
+    check(_norm_anchor_id("docs/inter-plugin-contracts/fix-event-v1.md:81")
+          == "docs/inter-plugin-contracts/fix-event-v1.md:81", "[c7] <path>:<line> 형식 거부됨")
+    check(_norm_anchor_id("/etc/passwd:1") is None, "[c7] 절대경로 anchor 가 적재됨")
+    check(_norm_anchor_id("자유 서술 텍스트") is None, "[c7] free-form 문자열이 적재됨 (J-2 위반)")
+    check(_norm_anchor_id("§" + "x" * 300) is None, "[c7] bounded token 상한 미작동")
+    # ★ 판별력 대조 — 두 필드가 allow-list 밖 kwarg 처럼 drop 되지 않음을 별 축으로 고정
+    check("root_cause_class" in r7 and "anchor_id" in r7, "[c7] 신규 필드가 row 에서 소실")
+
     # ── 케이스 6: monotonic timestamp (prev 주입 시 MAX(prev+1ms) — design literal) ──
     ts = _utc_z_monotonic("2099-01-01T00:00:00.500Z")
     check(ts == "2099-01-01T00:00:00.501Z", f"[c6] monotonic +1ms 미보장: {ts}")
@@ -632,7 +729,7 @@ def _self_test():
         "[append_dev_process_event --self-test] PASS "
         f"(_ROW_KEYS={len(_ROW_KEYS)} fields; round-trip OK; content-blind OK; "
         f"event_id 결정성 OK; taxonomy+audit OK; invalid-enum→None OK; "
-        f"raw-id→sha256 OK; monotonic OK)"
+        f"raw-id→sha256 OK; monotonic OK; root_cause_class/anchor_id 적재 경계 OK)"
     )
     return 0
 

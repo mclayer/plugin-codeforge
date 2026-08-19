@@ -36,7 +36,7 @@ _MODULE_SRC = Path(agg.__file__).read_text(encoding="utf-8", errors="replace")
 
 
 def _mk(*args, **kwargs):
-    """aggregator 의 18-field fixture helper 재사용 (composition-derived)."""
+    """aggregator 의 20-field fixture helper 재사용 (composition-derived)."""
     return agg._mk_row(*args, **kwargs)
 
 

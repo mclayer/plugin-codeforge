@@ -547,8 +547,9 @@ def compute_trend(rows, stats):
     """지표⑤ 추세(bucketed observational, NO forecast) + §D-9 pattern feed (pure fn).
 
     pattern_count = count(distinct story_key) for same {anchor_id, root_cause_class} within window.
-    ★anchor_id/root_cause_class = _ROW_KEYS 18-field 부재 → pattern_count=null +
-      pattern_status='uncomputable_missing_key' 가 DEFAULT 경로(edge 아님, AC-19).
+    ★anchor_id/root_cause_class = _ROW_KEYS **20-field 에 실재**(CFP-2985 D-12) — 즉 이제
+      uncomputable 은 **키 부재**가 아니라 **값 부재**(전건 null) 경로다. 값이 전건 null 이면
+      pattern_count=null + pattern_status='uncomputable_missing_key' (AC-19).
     escalation action(adr_draft_emitted/escalate_user) 미포함 — B=producer, PMO=decider(INV-B3).
     within-scope only (cross-scope union 금지).
     """
@@ -581,7 +582,7 @@ def compute_trend(rows, stats):
                 continue
             root_cause_distribution[c] = root_cause_distribution.get(c, 0) + 1
     if has_anchor and has_rcc:
-        # (미도래 경로 — 현재 substrate 18-field 에 부재. within-scope distinct story_key count)
+        # (substrate 20-field 실재 — non-null 값 emit 시 도달. within-scope distinct story_key count)
         grouping = {}
         for r in rows:
             a = r.get("anchor_id")
@@ -914,7 +915,7 @@ def _mk_row(event_type, story_key, lane_label, event_id, ts,
             consumer_scope="wrapper", defect_id=None, fix_id=None,
             defect_family=None, defect_type=None, time_to_detection=None,
             detecting_lane=None):
-    """18-field dev-process index row (self-test fixture — composition-derived)."""
+    """20-field dev-process index row (self-test fixture — composition-derived)."""
     return {
         "event_id": event_id, "schema_version": "dev-process-event-v1",
         "event_type": event_type, "emit_source": "agent", "timestamp_utc": ts,

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: dev-process-event
-version: "1.0"
+version: "1.1"
 schema_version: dev-process-event-v1
 status: Active
 canonical_repo: mclayer/plugin-codeforge
@@ -36,8 +36,13 @@ amendment_log:
   - id: A1
     date: 2026-07-25
     carrier: CFP-2817 (Epic #2814 W1 P0-1)
-    class: amendment_log-only  # no version bump — 18필드·event_id 산식·allow-list 무변경
+    class: amendment_log-only  # no version bump — 18필드(A1 당시, 현 20)·event_id 산식·allow-list 무변경
     change: "§4 producer-normative seq 채번 규율 명문화(causal-state 파생, 원장-read·primitive-internal·random-UUID 금지, 4 불변식+실패방향). §2 필드1 dangling '§11.6' 참조 정정(→CFP-2687 change-plan §11.6). §3.3 발화 주체 주석(Orchestrator write / review lane semantic-source, AC-7)."
+  - id: A2
+    date: 2026-08-19
+    carrier: CFP-2985 (D-19 / D-12)
+    class: MINOR  # v1.0 -> v1.1 — optional field 2개 말미 append (ADR-008 제2 backward-compat)
+    change: "§2 index schema 18 → 20 필드 — `root_cause_class`(enum CLOSED-6) + `anchor_id`(닫힌 형식 상관 ID) 말미 append (전건 nullable optional). §2.1 declared allow-list 동반 확장. 본 bump 는 `append_dev_process_event._ROW_KEYS` 18 → 20 과 **동일 커밋**이다(Change Plan §5-ord 3 원자성). ADR-043 §결정 2 Amendment 6 (index tier Allow-list 18 → 20) 동반."
 attribution:
   external_soft_align: "OpenTelemetry Logs Data Model / CloudEvents / ECS (typed append-only event) · W3C Trace Context (correlation ID) · git blob/IPFS CID (content-addressed blob) · gitleaks/crypto-shredding (redaction) · Elasticsearch ILM hot/warm/cold (retention). 전부 soft-align(map only) — 외부 OTel GenAI semconv 는 Development/unstable 이라 hard-freeze 대상 아님 (Story §6.4 R5). Sources = Story CFP-2687 §6.5."
 ---
@@ -67,9 +72,9 @@ attribution:
 
 **상충 지점 명시(AC-18)**: index=content-free ↔ Story 가 요구하는 rich content(프롬프트·diff·findings·산출물)는 index row 스키마로는 수용 불가 — 이 긴장을 2계층으로 화해한다(index 는 여전히 content-free, blob 은 redaction-후 산물 → no-conflict).
 
-## 2. Schema (index tier — 18 필드 Allow-list ONLY)
+## 2. Schema (index tier — 20 필드 Allow-list ONLY)
 
-각 index-tier row = **18 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §6 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
+각 index-tier row = **20 필드 Allow-list**(아래 표 순서·멤버 = §4 변경 규칙 SSOT). **free-form string content field 0개** — T-DPE-3/T-INFO-8 구조적 차단(rich content 는 §6 redacted-blob 표면으로만). 필드 적용성(applicability)은 event_type 별로 다르다(nullable 축 참조).
 
 | # | 필드 | 타입 | nullable | 적용 event_type | 설명 |
 |---|---|---|---|---|---|
@@ -91,8 +96,10 @@ attribution:
 | 16 | `defect_type` | string (SEMI-OPEN) \| null | nullable | defect_finding / fix_transition | taxonomy — review-verdict-v4 type-derived ∪ `unknown-type`(fallback). 그 외 = null |
 | 17 | `time_to_detection` | number \| `"unattributed"` \| null | nullable | defect_finding | taxonomy — **DERIVED measure**(ordinal lane-distance ∨ ts-delta). 도입점 불명 = `unattributed`. 그 외 = null |
 | 18 | `detecting_lane` | enum (lane_label) \| null | nullable | defect_finding | taxonomy — 결점 검출 lane(lane_label enum, CLOSED). 그 외 = null |
+| 19 | `root_cause_class` | enum (CLOSED 6) \| null | nullable | fix_transition | FIX 원인 판정 값공간 — `{설계, 구현, 요구사항, 환경, 설계-리뷰, 구현-리뷰}` (fix-event-v1 v1.6 `원인 판정` enum 과 동일 값공간). ★ **INV-R**: `defect_family`(결함 class 축)과 교차 집계 금지 — 본 축은 재진입 라우팅 축이다. 비-멤버 = null(흡수, reject 아님). 그 외 event = null |
+| 20 | `anchor_id` | string (CLOSED 형식 2종) \| null | nullable | fix_transition / defect_finding | 상관 위치 ID — 허용 형식 = `§<section-ref>`(권장) ∪ `<repo-relative path>:<line>`. ★ **free-form 아님** — 형식 술어(`_norm_anchor_id`)가 적재 경계이며, 그 술어의 실재가 §4.2 J-2(index tier free-form string content field 0개) 를 유지하는 전건이다. Story-scoped 형상(`cfp-<digits>-…`) 거부 — Story key 접두 시 `pattern_count ≡ 1` 고정(집계 무효화). bounded token(≤200). ★ 정직 잔여: `<path>:<line>` 은 커밋 간 drift 하며 본 계약은 anchor 안정성을 보증하지 않는다(§4.2 J-1 상관 ID freeze 4종 미편입). 그 외 = null |
 
-> **Phase 2 = doc↔code parity SSOT**: 위 18 필드 순서·멤버 = `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS`(Python-hardcoded EXTERNAL code anchor)와 **byte-consistent** 해야 한다. wave-2 parity self-test = 본 §2 table(동적 파싱) vs `_ROW_KEYS`(동적 파싱) 대조 — **born-drift = FAIL**(doc vs code, `check_self_context_telemetry_allowlist.py` S1 external-anchor 구조 선례).
+> **Phase 2 = doc↔code parity SSOT**: 위 20 필드 순서·멤버 = `scripts/lib/append_dev_process_event.py` 의 `_ROW_KEYS`(Python-hardcoded EXTERNAL code anchor)와 **byte-consistent** 해야 한다. wave-2 parity self-test = 본 §2 table(동적 파싱) vs `_ROW_KEYS`(동적 파싱) 대조 — **born-drift = FAIL**(doc vs code, `check_self_context_telemetry_allowlist.py` S1 external-anchor 구조 선례).
 
 ### 2.1 declared allow-list (permitted index field names)
 
@@ -102,7 +109,8 @@ index tier 에 저장 가능한 필드명 allow-list(닫힌 목록). **§2 필�
 event_id · schema_version · event_type · emit_source · timestamp_utc ·
 story_key · lane_label · consumer_scope · defect_id · fix_id · blob_ref ·
 redaction_applied · redaction_count · redaction_rules_fired ·
-defect_family · defect_type · time_to_detection · detecting_lane
+defect_family · defect_type · time_to_detection · detecting_lane ·
+root_cause_class · anchor_id
 ```
 
 각 원소의 값 유형은 enum / numeric / sha256-hash / 상관 ID / blob-ref / emit_source discriminator 중 하나로만 제한된다(free-form content = 0, AC-7). append primitive 는 이 allow-list 밖 kwarg 를 **drop** 한다(content-blind — `append_dev_process_event.build_row`).
@@ -166,7 +174,7 @@ noise_discard:
 
 ## 4. 변경 규칙
 
-- **Allow-list ONLY (v1.x)**: §2 18 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING).
+- **Allow-list ONLY (v1.x)**: §2 20 필드 외 새 필드 추가 = ADR-043 §결정 2 Amendment 의무 + 본 계약 version bump. optional field 추가 = MINOR(backward-compat, ADR-008 §결정 2). 필수 field 추가 / field 삭제 / enum 값 제거 = MAJOR(v2.0 BREAKING).
 - **free-form string content field 도입 금지 (v1.x invariant)**: T-DPE-3/T-INFO-8 구조적 mitigation 보존. rich content 는 §6 redacted-blob 표면으로만.
 - **event_type enum(8) / noise-discard(5) 변경**: additive = MINOR(Amendment 동반) / 값 제거 = MAJOR.
 - **4 상관 ID freeze 변경**: 이름·scope·생성시점·안정성 규칙 변경 = **계약 amendment 의무**(B·C 병렬 전제 — freeze).
@@ -174,7 +182,7 @@ noise_discard:
 - **`_ROW_KEYS` parity**: §2 필드 순서·멤버는 `append_dev_process_event._ROW_KEYS` 와 항상 일치(born-drift = FAIL). 한쪽 변경 = 양쪽 동반 + amendment.
 - **opt-in / always-on 정책 변경**: α 비대칭(wrapper always-on / consumer opt-in-false) 약화 = ADR-043/ADR-064 amendment 의무(BREAKING — privacy invariant 위반).
 - **retention tier / blob 정량**: 수치(proposal)는 empirical 조정 = minor commentary. tier 개수·spill 방향 변경 = ADR-163 §결정 4 amendment.
-- **`seq` 채번 규율 (producer-normative — event_id disambiguator SSOT, 18필드 무변경·미persist)**: `seq` 는 §2 필드1 `event_id` 산입 disambiguator 이며 index row 에 **미persist**(`_ROW_KEYS` 부재 — 무변경). producer(Orchestrator-owned delegate)는 `seq` 를 **causal-state 파생**으로만 채번한다 — `seq = f(transition_kind ‖ fix_iter ‖ reset_generation ‖ ordinal)`. transition_kind = ADR-038 6-point 전이 종류 토큰(`enter/pass/fix-detected/cause/re-enter/complete`, `scripts/jira-channel/progress-format.sh` 어휘 재사용); fix_iter = 해당 FIX 사이클의 §10 FIX Ledger Iter 값(§10 row 의 persisted 필드가 아니라 Orchestrator 가 그 row 쓰기 직전 보유한 causal state — Iter:fix_id = 1:N 이므로 Iter 재사용 금지); reset_generation = 해당 lane 의 §10 RESET 마커 누적 세대(RESET 경계 재발 disambiguation); ordinal = 동일 (transition_kind, fix_iter, reset_generation) 내 복수 시도(verdict 복수발생·동일 Iter defect 재검출)의 attempt 서브카운터. **금지**: 원장 tail-read 채번·primitive 내부 자동 채번·random UUID — 전부 at-least-once 멱등 붕괴(재시도가 다른 원장 상태 관측 → 다른 seq → 중복 행 + read-time dedup 무력화). **불변식 4**: ① 동일 논리 이벤트 재시도 → 동일 값 **재계산·재사용**(동일 event_id, 멱등 — 재계산 결과가 attempt 마다 달라지면 안 됨); ② 별개 논리 전이 → 상이 값(소실 0); ③ **실패방향 원칙** — 채번 불확실 시 fallback 은 **가시적 중복 방향만** 허용, `seq` 재사용에 의한 silent loss 금지; ④ `seq` 미persist·primitive 원장 read 금지 하에서 세션 재기동 후 §10 FIX Ledger + phase label 로부터 재구성 가능. `seq` 채번 로직 SSOT = emit 계층 pure 함수(`emit_dev_process_event.derive_seq`); primitive(`append_dev_process_event.py`)는 `seq` 를 통과만 시킨다(원장 read 금지 불변식 무손상).
+- **`seq` 채번 규율 (producer-normative — event_id disambiguator SSOT, 20필드 무변경·미persist)**: `seq` 는 §2 필드1 `event_id` 산입 disambiguator 이며 index row 에 **미persist**(`_ROW_KEYS` 부재 — 무변경). producer(Orchestrator-owned delegate)는 `seq` 를 **causal-state 파생**으로만 채번한다 — `seq = f(transition_kind ‖ fix_iter ‖ reset_generation ‖ ordinal)`. transition_kind = ADR-038 6-point 전이 종류 토큰(`enter/pass/fix-detected/cause/re-enter/complete`, `scripts/jira-channel/progress-format.sh` 어휘 재사용); fix_iter = 해당 FIX 사이클의 §10 FIX Ledger Iter 값(§10 row 의 persisted 필드가 아니라 Orchestrator 가 그 row 쓰기 직전 보유한 causal state — Iter:fix_id = 1:N 이므로 Iter 재사용 금지); reset_generation = 해당 lane 의 §10 RESET 마커 누적 세대(RESET 경계 재발 disambiguation); ordinal = 동일 (transition_kind, fix_iter, reset_generation) 내 복수 시도(verdict 복수발생·동일 Iter defect 재검출)의 attempt 서브카운터. **금지**: 원장 tail-read 채번·primitive 내부 자동 채번·random UUID — 전부 at-least-once 멱등 붕괴(재시도가 다른 원장 상태 관측 → 다른 seq → 중복 행 + read-time dedup 무력화). **불변식 4**: ① 동일 논리 이벤트 재시도 → 동일 값 **재계산·재사용**(동일 event_id, 멱등 — 재계산 결과가 attempt 마다 달라지면 안 됨); ② 별개 논리 전이 → 상이 값(소실 0); ③ **실패방향 원칙** — 채번 불확실 시 fallback 은 **가시적 중복 방향만** 허용, `seq` 재사용에 의한 silent loss 금지; ④ `seq` 미persist·primitive 원장 read 금지 하에서 세션 재기동 후 §10 FIX Ledger + phase label 로부터 재구성 가능. `seq` 채번 로직 SSOT = emit 계층 pure 함수(`emit_dev_process_event.derive_seq`); primitive(`append_dev_process_event.py`)는 `seq` 를 통과만 시킨다(원장 read 금지 불변식 무손상).
 
 ## 5. 상관 ID freeze + 결점 taxonomy (B·C 공유 — AC-4/5)
 

@@ -93,7 +93,7 @@ class TestContentBlind:
         assert "/home/mccho" not in serialized
 
     def test_row_keys_exactly_allowlist_18(self, tmp_path):
-        """실제 emit 된 row 키 == _ROW_KEYS (순서·멤버), 정확히 18개."""
+        """실제 emit 된 row 키 == _ROW_KEYS (순서·멤버), 정확히 20개."""
         ledger = tmp_path / "dev-process-event.jsonl"
         ade.append_event(
             ledger_path=str(ledger),
@@ -102,7 +102,7 @@ class TestContentBlind:
         )
         row = _read_rows(ledger)[0]
         assert tuple(row.keys()) == ade._ROW_KEYS
-        assert len(row) == 18
+        assert len(row) == 20
 
     def test_negative_control_leaked_content_row_is_detected(self):
         """[negative control] content 가 새어든 row 는 content-blind assertion 이 잡아낸다.

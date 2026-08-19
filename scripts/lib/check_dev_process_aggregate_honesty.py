@@ -70,12 +70,12 @@ def _import_under_test():
     return agg, qdp
 
 
-# ─────────────────────── synthetic fixture (18-field dev-process row) ─────────────────
+# ─────────────────────── synthetic fixture (20-field dev-process row) ─────────────────
 
 def _row(event_type, story_key, lane_label, event_id, ts,
          consumer_scope="wrapper", defect_id=None, fix_id=None,
          defect_family=None, defect_type=None, time_to_detection=None,
-         detecting_lane=None):
+         detecting_lane=None, root_cause_class=None, anchor_id=None):
     return {
         "event_id": event_id, "schema_version": "dev-process-event-v1",
         "event_type": event_type, "emit_source": "agent", "timestamp_utc": ts,
@@ -84,6 +84,7 @@ def _row(event_type, story_key, lane_label, event_id, ts,
         "redaction_applied": False, "redaction_count": 0, "redaction_rules_fired": [],
         "defect_family": defect_family, "defect_type": defect_type,
         "time_to_detection": time_to_detection, "detecting_lane": detecting_lane,
+        "root_cause_class": root_cause_class, "anchor_id": anchor_id,
     }
 
 
