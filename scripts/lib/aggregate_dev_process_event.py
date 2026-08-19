@@ -121,9 +121,16 @@ _HONESTY_TIER = (
     "[measurement] tier STRICT — dev-process 지표는 관측치일 뿐 인과/verdict 아님. "
     "measured-0 ≠ dormant(미측정). exact-count/guaranteed-unique 주장 금지(port 관측치 상속)."
 )
+# ★ CFP-2985 — D-12 로 `_ROW_KEYS` 에 anchor_id/root_cause_class 가 실재하게 된 뒤에도
+#   본 상수는 두 키를 **부재 목록에 그대로** 두고 pattern_count 를 "uncomputable(default)"
+#   로 단정해 왔다. `_trend_honesty_note` 는 D-14 에서 상태-유도로 고쳤으나 본 상수는
+#   같은 정정을 받지 못한 **형제 site** 였고, 그 결과 한 모듈이 같은 산출물(tier_honesty ⊥
+#   trend.honesty_note)에 서로 반대되는 substrate 서술을 동시에 실었다.
+#   부재가 존치되는 항목(transition_point / origin-lane)만 남긴다 (ADR-181 INV-D).
 _HONESTY_DEGRADE = (
-    "substrate gap → honest-degrade: transition_point/anchor_id/root_cause_class/origin-lane 부재. "
-    "cycletime=coarse residency, should-have-caught=advisory heuristic, pattern_count=uncomputable(default), "
+    "substrate gap → honest-degrade: transition_point/origin-lane 부재. "
+    "cycletime=coarse residency, should-have-caught=advisory heuristic, "
+    "pattern_count=substrate 상태 2분할(有 → computable 의무 / 無 → uncomputable_missing_key+null), "
     "token-cost=honest-null(3-gap). null+uncomputable_reason 로 표기, fabricated 0 금지."
 )
 
