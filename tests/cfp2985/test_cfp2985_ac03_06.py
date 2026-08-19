@@ -10,126 +10,27 @@ import re
 import sys
 from pathlib import Path
 
-import pytest
-import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _cfp2985_spec as S  # noqa: E402
 
 # Change Plan 5 D-10 — checker 를 호출하는 workflow (job name `fix-ledger-conformance`).
-CHECKER_WORKFLOW_REL = ".github/workflows/fix-ledger-conformance.yml"
-CHECKER_TOKENS = ("check-adr-admission", "check_adr_admission",
-                  "check-fix-ledger-conformance", "check_fix_ledger_conformance")
+CHECKER_WORKFLOW_REL = S.CHECKER_WORKFLOW_REL
 
 # 본 스위트를 부르는 workflow (8.C 를 스위트 자신에 적용 — "존재하는데 실행되지 않으면 dead test").
 SUITE_WORKFLOW_REL = ".github/workflows/cfp2985-rtm-contract-test.yml"
 
 
 # ---------------------------------------------------------------------------
-# AC-3 술어 — 8.C C-1 ~ C-5
+# AC-3 술어 — 8.C C-1 ~ C-5  (단일 정의처 = _cfp2985_spec, AC-9 와 공용)
 # ---------------------------------------------------------------------------
-def _load(wf_text):
-    d = yaml.safe_load(wf_text)
-    # PyYAML 은 bare `on:` 을 boolean True 키로 읽는다 (YAML 1.1) — 두 표기를 합친다.
-    if isinstance(d, dict) and True in d and "on" not in d:
-        d = dict(d)
-        d["on"] = d.pop(True)
-    return d
-
-
-def _jobs(d):
-    return (d or {}).get("jobs") or {}
-
-
-def _steps(d):
-    for job in _jobs(d).values():
-        for st in (job or {}).get("steps") or []:
-            yield st
-
-
-def wf_has_checker_invocation(wf_text, tokens=CHECKER_TOKENS):
-    """C-1 — checker 실행 `run:` 줄이 실재한다."""
-    d = _load(wf_text)
-    for st in _steps(d):
-        run = st.get("run") or ""
-        if any(tok in run for tok in tokens):
-            return True
-    return False
-
-
-def wf_has_dependency_resolution(wf_text):
-    """C-2 — 의존성 해소 step 실재. stdlib-only 면 **그 사실을 선언**한 문면으로 대체 가능.
-
-    ★ 명령 문자열 자체에 결속하지 않는다 (5.4 AC-3 mutant3: `pip install` 등가 변형은
-      GREEN 유지가 정상 — 실 판정은 C-5 수집 테스트 수 non-zero 가 진다).
-    """
-    d = _load(wf_text)
-    for st in _steps(d):
-        run = st.get("run") or ""
-        uses = st.get("uses") or ""
-        if re.search(r"(pip\s+install|pip3\s+install|python\s+-m\s+pip\s+install|"
-                     r"uv\s+pip\s+install|poetry\s+install|npm\s+(ci|install)|apt-get\s+install)", run):
-            return True
-        if "setup-python" in uses and (st.get("with") or {}).get("python-version"):
-            # 인터프리터만 깔고 끝나는 형상은 의존성 해소가 아니다 — 아래 stdlib 선언과 함께여야 한다.
-            continue
-    if re.search(r"stdlib[- ]only", wf_text, re.I):
-        return True
-    return False
-
-
-def wf_no_continue_on_error(wf_text):
-    """C-3 — `continue-on-error` 부재 (tier 강등 차단)."""
-    d = _load(wf_text)
-    for job in _jobs(d).values():
-        if "continue-on-error" in (job or {}):
-            return False
-        for st in (job or {}).get("steps") or []:
-            if "continue-on-error" in (st or {}):
-                return False
-    return True
-
-
-def wf_no_path_filters(wf_text):
-    """C-4 (앞 절) — `paths` · `paths-ignore` 부재.
-
-    무관 변경 PR 에서 workflow 레벨 skip 이 나면 required context 가 **pending 으로 잔존**한다.
-    """
-    d = _load(wf_text)
-    on = (d or {}).get("on")
-    if isinstance(on, dict):
-        for ev in on.values():
-            if isinstance(ev, dict) and ("paths" in ev or "paths-ignore" in ev):
-                return False
-    return True
-
-
-def wf_job_if_always_reports(wf_text):
-    """C-4 (뒤 절) — job 레벨 `if:` 가 status 를 미report 로 만들지 않는다.
-
-    ★ 해석 seam (리뷰 대상으로 명시): 허용 = 표현식의 변수가 `github.repository` 뿐인
-      repo 가드. PR 내용(`github.event…` · `contains(…)` · label · path)에 조건을 거는
-      `if:` 는 "대상 변경이 없는 PR 에서도 결론을 report" 요구와 정면 충돌하므로 위반이다.
-    """
-    d = _load(wf_text)
-    for job in _jobs(d).values():
-        cond = (job or {}).get("if")
-        if cond is None:
-            continue
-        expr = str(cond)
-        vars_used = set(re.findall(r"github\.[A-Za-z_.]+", expr)) | set(
-            re.findall(r"\b(contains|startsWith|endsWith)\s*\(", expr))
-        if vars_used - {"github.repository"}:
-            return False
-    return True
-
-
-def wf_invocation_contract(wf_text):
-    """C-1 ∧ C-2 ∧ C-3 ∧ C-4 (합성 판정 — 개별 leg 은 위 4 함수)."""
-    return (wf_has_checker_invocation(wf_text) and wf_has_dependency_resolution(wf_text)
-            and wf_no_continue_on_error(wf_text) and wf_no_path_filters(wf_text)
-            and wf_job_if_always_reports(wf_text))
+wf_has_checker_invocation = S.wf_has_checker_invocation
+wf_has_dependency_resolution = S.wf_has_dependency_resolution
+wf_no_continue_on_error = S.wf_no_continue_on_error
+wf_no_path_filters = S.wf_no_path_filters
+wf_job_if_always_reports = S.wf_job_if_always_reports
+wf_invocation_contract = S.wf_invocation_contract
 
 
 _WF_CONTROL = """name: fix ledger conformance

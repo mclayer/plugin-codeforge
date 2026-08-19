@@ -31,6 +31,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import yaml
+
 # tests/cfp2985/ -> tests/ -> repo root
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -264,6 +266,131 @@ SHA40_RE = re.compile(r"\b[0-9a-f]{40}\b")
 ISO8601_KST_RE = re.compile(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:?00\b")
 CARRIER_RE = re.compile(r"#\d+")
 DUEDATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+# ---------------------------------------------------------------------------
+# workflow YAML 술어 (8.C C-1~C-4 — AC-3 · AC-9 공용)
+# ---------------------------------------------------------------------------
+CHECKER_WORKFLOW_REL = ".github/workflows/fix-ledger-conformance.yml"
+CHECKER_TOKENS = ("check-adr-admission", "check_adr_admission",
+                  "check-fix-ledger-conformance", "check_fix_ledger_conformance")
+
+
+def wf_load(wf_text):
+    d = yaml.safe_load(wf_text)
+    # PyYAML 은 bare `on:` 을 boolean True 키로 읽는다 (YAML 1.1) — 두 표기를 합친다.
+    if isinstance(d, dict) and True in d and "on" not in d:
+        d = dict(d)
+        d["on"] = d.pop(True)
+    return d
+
+
+def wf_jobs(d):
+    return (d or {}).get("jobs") or {}
+
+
+def wf_steps(d):
+    for job in wf_jobs(d).values():
+        for st in (job or {}).get("steps") or []:
+            yield st
+
+
+_NON_INVOKING_HEADS = frozenset({"echo", "printf", ":", "true", "false", "cat", "#"})
+
+
+def _strip_quoted(s):
+    """따옴표 안 내용을 지운다 — 인용된 이름은 **호출이 아니라 언급**이다."""
+    return re.sub(r"'[^']*'|\"[^\"]*\"", " ", s)
+
+
+def wf_has_checker_invocation(wf_text, tokens=CHECKER_TOKENS):
+    """C-1 — checker 실행 `run:` 줄이 실재한다.
+
+    ★ 문자열 **출현**이 아니라 **명령 위치**를 본다. 직전 판은 출현만 봤고,
+      `run: echo 'bash scripts/check-adr-admission.sh 는 나중에'` 가 그대로 통과했다
+      (본 하네스가 mutant 로 자기검출). 이름 grep 은 dead-gate 를 못 잡는다 —
+      이 Story 가 "dead 판정 술어를 이름 grep 에서 소비자 정의역으로 교체" 한 것과 같은 축이다.
+    """
+    for st in wf_steps(wf_load(wf_text)):
+        for line in (st.get("run") or "").split("\n"):
+            bare = _strip_quoted(line)
+            if not any(tok in bare for tok in tokens):
+                continue
+            words = bare.strip().split()
+            while words and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0]):
+                words = words[1:]                     # 선행 env 대입은 건너뛴다
+            if not words:
+                continue
+            head = words[0].lstrip("-")
+            if head.startswith("#") or head in _NON_INVOKING_HEADS:
+                continue
+            return True
+    return False
+
+
+def wf_has_dependency_resolution(wf_text):
+    """C-2 — 의존성 해소 step 실재. stdlib-only 면 **그 사실을 선언**한 문면으로 대체 가능.
+
+    명령 문자열 자체에 결속하지 않는다 (5.4 AC-3 mutant3: `pip install` 등가 변형은
+    GREEN 유지가 정상 — 실 판정은 C-5 수집 테스트 수 non-zero 가 진다).
+    """
+    for st in wf_steps(wf_load(wf_text)):
+        run = st.get("run") or ""
+        if re.search(r"(pip3?\s+install|python3?\s+-m\s+pip\s+install|uv\s+pip\s+install|"
+                     r"poetry\s+install|npm\s+(ci|install)|apt-get\s+install)", run):
+            return True
+    return bool(re.search(r"stdlib[- ]only", wf_text, re.I))
+
+
+def wf_no_continue_on_error(wf_text):
+    """C-3 — `continue-on-error` 부재 (tier 강등 차단)."""
+    d = wf_load(wf_text)
+    for job in wf_jobs(d).values():
+        if "continue-on-error" in (job or {}):
+            return False
+        for st in (job or {}).get("steps") or []:
+            if "continue-on-error" in (st or {}):
+                return False
+    return True
+
+
+def wf_no_path_filters(wf_text):
+    """C-4 (앞 절) — `paths` · `paths-ignore` 부재.
+
+    무관 변경 PR 에서 workflow 레벨 skip 이 나면 context 가 **pending 으로 잔존**한다.
+    """
+    on = (wf_load(wf_text) or {}).get("on")
+    if isinstance(on, dict):
+        for ev in on.values():
+            if isinstance(ev, dict) and ("paths" in ev or "paths-ignore" in ev):
+                return False
+    return True
+
+
+def wf_job_if_always_reports(wf_text):
+    """C-4 (뒤 절) — job 레벨 `if:` 가 status 를 미report 로 만들지 않는다.
+
+    해석 seam (리뷰 대상으로 명시): 허용 = 표현식의 변수가 `github.repository` 뿐인
+    repo 가드. PR 내용(`github.event…` · `contains(…)` · label · path)에 조건을 거는
+    `if:` 는 "대상 변경이 없는 PR 에서도 결론을 report" 요구와 정면 충돌하므로 위반이다.
+    """
+    for job in wf_jobs(wf_load(wf_text)).values():
+        cond = (job or {}).get("if")
+        if cond is None:
+            continue
+        expr = str(cond)
+        used = set(re.findall(r"github\.[A-Za-z_.]+", expr)) | set(
+            re.findall(r"\b(contains|startsWith|endsWith)\s*\(", expr))
+        if used - {"github.repository"}:
+            return False
+    return True
+
+
+def wf_invocation_contract(wf_text):
+    """C-1 ∧ C-2 ∧ C-3 ∧ C-4 (합성 판정 — 개별 leg 은 위 5 함수)."""
+    return (wf_has_checker_invocation(wf_text) and wf_has_dependency_resolution(wf_text)
+            and wf_no_continue_on_error(wf_text) and wf_no_path_filters(wf_text)
+            and wf_job_if_always_reports(wf_text))
 
 
 # ---------------------------------------------------------------------------
