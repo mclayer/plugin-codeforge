@@ -333,5 +333,55 @@ def main():
     return 1
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# AC-12a: Concurrent subagent limit reached 신호는 감지집합에서 **제외**(미감지)
+# (§8.1 RTM: normative — 기계 강제 / ADR-109 NG-2 "감지 집합 literal 증감 금지")
+# ══════════════════════════════════════════════════════════════════════════════
+def test_ac12a_concurrent_limit_signal_not_detected():
+    """AC-12a 양성 assertion — `Concurrent subagent limit reached` 는 감지되지 않는다."""
+    concurrent_limit_signal = "Concurrent subagent limit reached"
+    verdict = classify_exit(concurrent_limit_signal, ENUM)
+
+    assert verdict == 1, (
+        "Concurrent subagent limit signal should NOT be detected (RED=1), "
+        "but classifier returned %d (GREEN=0). "
+        "This is intentional: NG-2 forbids adding new literals to detection enum." % verdict
+    )
+
+
+def test_ac12a_seventh_literal_mutant_red():
+    """AC-12a mutant kill — 7번째 리터럴을 감지 enum 에 추가한 mutant 에서 RED."""
+    # mutant: "Concurrent subagent limit reached" 을 7번째 literal 로 추가
+    concurrent_limit_signal = "Concurrent subagent limit reached"
+    original_enum = ENUM[:6]  # 원래 6개 literal
+
+    mutant_enum = original_enum + [concurrent_limit_signal]  # 7번째 추가
+    assert len(mutant_enum) == 7, "Mutation should add 1 literal (got %d)" % len(mutant_enum)
+
+    # baseline (원래 enum): concurrent limit 신호 미감지
+    baseline = classify_exit(concurrent_limit_signal, original_enum)
+    assert baseline == 1, "Baseline (original enum) should return RED(1) for concurrent limit signal"
+
+    # mutant (7개 literal): concurrent limit 신호 **감지** → GREEN 으로 변함
+    mutated = classify_exit(concurrent_limit_signal, mutant_enum)
+    assert mutated == 0, (
+        "Mutant with added literal should detect concurrent limit signal (GREEN=0), "
+        "but classifier returned %d (RED=1). Mutation not effective." % mutated
+    )
+
+    # discriminating: baseline(RED=1) ≠ mutated(GREEN=0)
+    assert baseline != mutated, (
+        "Baseline and mutant should differ (discriminating). "
+        "baseline=%d mutated=%d" % (baseline, mutated)
+    )
+
+
+# ── AC-12a 검증 리스트에 추가 (standalone 실행용) ──
+_CHECKS.extend([
+    ("AC12a positive: Concurrent subagent limit 신호 감지되지 않음", test_ac12a_concurrent_limit_signal_not_detected),
+    ("AC12a mutant: 7번째 literal 추가 mutant → RED flip", test_ac12a_seventh_literal_mutant_red),
+])
+
+
 if __name__ == "__main__":
     sys.exit(main())
