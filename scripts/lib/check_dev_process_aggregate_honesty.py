@@ -538,9 +538,15 @@ def _selftest(_args):
             print("        · %s" % vv)
     print("=" * 80)
     if all_ok:
+        # ★ CFP-2985 — 요약 문면을 **실 results 에서 유도**한다. 직전 판은 negative-control
+        #   명부를 정적 리터럴("NC1~NC10+NC4b")로 적었고, 그래서 대조군을 목록에서 빼도
+        #   요약은 그 이름을 계속 주장했다(firsthand mutant: NC4b 등재 제거 → 행은 사라지는데
+        #   요약 문자열은 불변). 성립하지 않는 주장을 문면에 남기지 않는다.
+        nc_roster = [label.split(" ", 1)[0] for label, expect_red, _ in results if expect_red]
         print("[check-dev-process-aggregate-honesty --selftest] PASS — positive GREEN + "
-              "NC1~NC10+NC4b 전부 RED (discriminating: 각 honest-degrade 불변식이 실 값 assert 로 "
-              "mutation 을 죽임 — presence-grep false-oracle 아님).")
+              "negative-control %d종 [%s] 전부 RED (discriminating: 각 honest-degrade 불변식이 "
+              "실 값 assert 로 mutation 을 죽임 — presence-grep false-oracle 아님)."
+              % (len(nc_roster), " ".join(nc_roster)))
         return 0
     print("[check-dev-process-aggregate-honesty --selftest] FAIL — 판별성 위반 (위 FAIL 행 참조).")
     return 1
@@ -552,7 +558,7 @@ def main():
         "(CFP-2688 Phase 2 — execution-backed real port round-trip, §8.6)"
     )
     p.add_argument("--selftest", action="store_true",
-                   help="discriminating negative-control (positive GREEN + NC1~NC10+NC4b RED 증명)")
+                   help="discriminating negative-control (positive GREEN + 전 negative-control RED 증명 — 명부는 산출에서 유도)")
     args = p.parse_args()
     if args.selftest:
         return _selftest(args)

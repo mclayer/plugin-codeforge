@@ -91,10 +91,15 @@ assert_has "aggregator --self-test: distinct-marker (idem-2axis)" "$(cat "$OUT1"
 # ══ 케이스 2: lint --selftest (discriminating negative-control) — exit 0 + distinct-marker ══
 OUT2="$WORK/lint_selftest.out"; EC=0
 "$PY" "$LINT" --selftest > "$OUT2" 2>&1 || EC=$?
-assert_eq "lint --selftest: exit 0 (positive GREEN + NC1~NC10 RED)" "$EC" "0" "판별성 실증 이어야"
+assert_eq "lint --selftest: exit 0 (positive GREEN + 전 negative-control RED)" "$EC" "0" "판별성 실증 이어야"
 assert_has "lint --selftest: distinct-marker (discriminating)" "$(cat "$OUT2")" "discriminating"
-assert_has "lint --selftest: NC10 order-preserving RED 관측" "$(cat "$OUT2")" "NC10"
-assert_has "lint --selftest: positive GREEN + NC RED 종합" "$(cat "$OUT2")" "NC1~NC10 전부 RED"
+# ★ CFP-2985 D-15 — 행 마커(`[OK] <NC>`)를 assert 한다. 요약 문자열만 보면 대조군을 목록에서
+#   빼도 통과한다(firsthand mutant: NC4b 등재 제거 → 요약 불변, 행만 소실). 행은 실 results 에서
+#   유도되므로 등재 소실이 곧 RED 다.
+assert_has "lint --selftest: NC10 order-preserving RED 행" "$(cat "$OUT2")" "[OK] NC10"
+assert_has "lint --selftest: NC4b substrate-有 silent-drop RED 행" "$(cat "$OUT2")" "[OK] NC4b"
+# 요약 명부는 producer 가 results 에서 유도해 찍는다 — 여기서 전문을 pin 해 lockstep 을 만든다.
+assert_has "lint --selftest: negative-control 명부 종합" "$(cat "$OUT2")" "negative-control 11종 [NC1 NC2 NC3 NC4 NC4b NC5 NC6 NC7 NC8 NC9 NC10] 전부 RED"
 
 # ══ 케이스 3: lint check (real query_with_stats round-trip) — exit 0 + distinct-marker ══
 OUT3="$WORK/lint_check.out"; EC=0
