@@ -87,6 +87,36 @@ def _parse_stop_event_file(stop_event_file: Path) -> list:
     return events
 
 
+def _parse_release_failed_file(release_failed_file: Path) -> set:
+    """release-failed.jsonl 파싱 — agent_id 집합 반환.
+
+    각 행: {"timestamp": "...", "agent_id": "..."}
+    실패 행은 스킵
+    반환: set of agent_ids
+    """
+    agent_ids = set()
+    if not release_failed_file.exists():
+        return agent_ids
+
+    try:
+        with open(release_failed_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                try:
+                    record = json.loads(line)
+                    agent_id = record.get("agent_id")
+                    if agent_id:
+                        agent_ids.add(agent_id)
+                except json.JSONDecodeError:
+                    pass  # 파싱 실패 행 스킵
+    except Exception:
+        pass
+
+    return agent_ids
+
+
 def _calculate_age_seconds(renewed_at_iso: str) -> float:
     """renewed_at (ISO8601 UTC) 로부터 현재까지 경과 초.
 
@@ -116,8 +146,12 @@ def reconcile(ledger_dir: Path, stop_event_file: Path) -> dict:
     # stop-event 수집
     stops = _parse_stop_event_file(stop_event_file)
 
+    # release-failed 파일 수집 (stop_without_lease 판정용)
+    release_failed_agents = _parse_release_failed_file(ledger_dir / "429-release-failed.jsonl")
+
     active_lease_count = len(leases)
     matching_stop_count = len([s for s in stops if s.get("hook_source") in ("stop", "subagent-stop")])
+    release_failed_count = len(release_failed_agents)
 
     # 나이 계산 (orphaned leases only)
     ages_seconds = []
@@ -133,22 +167,30 @@ def reconcile(ledger_dir: Path, stop_event_file: Path) -> dict:
     age_max = max(ages_seconds) if ages_seconds else None
     age_mean = statistics.mean(ages_seconds) if ages_seconds else None
 
-    # 4-status 판정 (TTL 미확정이므로 orphan_expired 판정 = age 분포 보고만)
-    # 순서 중요: no_data → stop_without_lease → aligned → orphan_expired
+    # 4-status 판정 (순서 중요 — release_failed 가 확실한 증거)
+    # ★ stop_without_lease 는 release-failed.jsonl 행 존재로 사건 기록됨
+    # §3.5 "release 시점에 lease 파일 부재를 감지하면 그 사실을 기록하라"
     status = "no_data"
 
-    if active_lease_count == 0 and matching_stop_count == 0:
+    if release_failed_count > 0:
+        # 케이스: release-failed 기록 존재 = 사건으로 확인된 stop_without_lease
+        # SubagentStop 이 lease 파일을 찾지 못함 = acquire 미발화 또는 orphan
+        # 이것이 BS-1(resume)의 직접 증인이다
+        status = "stop_without_lease"
+    elif active_lease_count == 0 and matching_stop_count == 0:
         # 케이스: 파일 없음 / lease 0 / stop 0
         status = "no_data"
-    elif active_lease_count == 0 and matching_stop_count > 0:
-        # 케이스: lease 0 but stops > 0 — BS-1(resume) 의 직접 증인
-        # SubagentStop 이 발화했는데 대응 SubagentStart 가 없음 = resume
-        status = "stop_without_lease"
-    elif active_lease_count > 0 and active_lease_count <= matching_stop_count:
-        # 케이스: acquired 만큼 released (정상 상태)
+    elif active_lease_count > matching_stop_count:
+        # 케이스: active > stops (일부 lease 미해제/만료)
+        status = "orphan_expired"
+    elif active_lease_count <= matching_stop_count and (active_lease_count > 0 or matching_stop_count == 0):
+        # 케이스: (active <= stops AND active > 0) OR (active == 0 AND stops == 0)
+        # 정상 진행 또는 대칭
         status = "aligned"
     else:
-        # 케이스: active > stops (일부 lease 미해제/만료)
+        # 케이스: active == 0 AND stops > 0 (AND release_failed == 0)
+        # 이 경우는 이제 도달 불가능 (release_failed_count > 0 이면 위에서 처리)
+        # 남은 경우: 만료된 orphan (TTL 무관)
         status = "orphan_expired"
 
     # 나이가 있으면 정렬
@@ -158,6 +200,7 @@ def reconcile(ledger_dir: Path, stop_event_file: Path) -> dict:
         "status": status,
         "active_leases": active_lease_count,
         "matching_stops": matching_stop_count,
+        "release_failed_count": release_failed_count,
         "orphaned_leases": max(0, active_lease_count - matching_stop_count),
         "orphaned_ages_seconds": ages_seconds_sorted,
         "age_min_seconds": age_min,

@@ -28,7 +28,7 @@ from pathlib import Path
 def release_lease(agent_id: str, ledger_dir: Path) -> None:
     """lease 파일 삭제 (agent_id 단위).
 
-    파일 미존재 = 무해 (release 유실은 reconcile::expire 이 흡수)
+    파일 미존재 = stop_without_lease 사건으로 기록 (BS-1 resume 증거)
     삭제 실패 → stderr warning + return (exit 0 유지)
     """
     try:
@@ -37,14 +37,52 @@ def release_lease(agent_id: str, ledger_dir: Path) -> None:
         # 파일이 존재하면 삭제
         if lease_file.exists():
             lease_file.unlink()
+        else:
+            # 파일 미존재 → release 신호 없음 = SubagentStart 미발화
+            # (정상 stop 과 달리 lease 가 없는 경우 = resume 또는 orphan)
+            # 이 사건을 기록해서 reconcile 이 stop_without_lease 를 판정 가능하게 함
+            _record_release_without_lease(agent_id, ledger_dir)
 
     except FileNotFoundError:
-        # 이미 없음 = 무해
+        # 이미 없음 = _record_release_without_lease 이미 호출됨
         pass
     except Exception as e:
         # fail-open: stderr warning 만 출력하고 계속 진행
         print(
             f"[codeforge-wrapper-release-429-lease] WARN: lease release failed — {e}",
+            file=sys.stderr
+        )
+
+
+def _record_release_without_lease(agent_id: str, ledger_dir: Path) -> None:
+    """lease 파일 부재를 기록.
+
+    파일: .claude/ledger/429-release-failed.jsonl
+    행: {"timestamp": "<UTC Z>", "agent_id": "<id>"}
+
+    용도: reconcile 이 이 파일을 읽어서 stop_without_lease 판정
+    """
+    try:
+        release_failed_file = ledger_dir / "429-release-failed.jsonl"
+
+        # 행 생성
+        now_utc = datetime.datetime.now(tz=datetime.timezone.utc)
+        timestamp = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        record = {
+            "timestamp": timestamp,
+            "agent_id": agent_id
+        }
+
+        # append-only 로 기록
+        with open(release_failed_file, "a", encoding="utf-8") as f:
+            import json as json_module
+            f.write(json_module.dumps(record, ensure_ascii=False) + "\n")
+
+    except Exception as e:
+        # fail-open: 기록 실패도 exit 0
+        print(
+            f"[codeforge-wrapper-release-429-lease] WARN: failed to record release-without-lease — {e}",
             file=sys.stderr
         )
 
